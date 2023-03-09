@@ -1,0 +1,15 @@
+/.gradle
+/.idea
+/out
+/build
+*.iml
+*.ipr
+*.iws
+**/build/
+*.hprof
+/.sessions
+/sessionStore
+*.log
+h2.trace.db
+temp.js
+temp.xml

@@ -1,0 +1,185 @@
+package io.kudos.base.data.json
+
+import com.fasterxml.jackson.annotation.JsonInclude.Include
+import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule
+import org.soul.base.data.json.JsonTool
+import kotlin.reflect.KClass
+
+/**
+ * json工具类(基于jackson)
+ * 注意事项：
+ * 1.支持数据类和普通类,必须有空构造函数，要映射的属性必须是可读可写的(var)
+ *
+ * @author K
+ * @since 1.0.0
+ */
+object JsonKit {
+
+    /**
+     * 返回json串中指定属性名的属性值
+     *
+     * @param jsonStr 待解析的json串
+     * @param propertyName 属性名
+     * @return 属性值，如果找不到属性，则返回null
+     * @author K
+     * @since 1.0.0
+     */
+    fun getPropertyValue(jsonStr: String, propertyName: String): Any? {
+        val map = fromJson(jsonStr, Map::class)!!
+        return map[propertyName]
+    }
+
+    /**
+     * 将简单的Json串格式化成页面显示的字符串(去掉花括号、引号及最后面可能的逗号)
+     *
+     * @param simpleJsonStr 简单的Json串格式化(如：{"A":"b","B":'b'} ), 为空将返回空串
+     * @return 页面显示的字符串(如：A:b, B:b)
+     * @author K
+     * @since 1.0.0
+     */
+    fun jsonToDisplay(simpleJsonStr: String): String {
+        return JsonTool.jsonToDisplay(simpleJsonStr)
+    }
+
+    /**
+     * 反序列化, 将json串解析为指定Class的实例
+     *
+     * @param T 目标类型
+     * @param json json串
+     * @param clazz Class
+     * @param mapper json转换器，为null时该方法内部将新建一个默认的转换器
+     * @return Class的实例，出错时返回null
+     * @author K
+     * @since 1.0.0
+     */
+    fun <T : Any> fromJson(json: String, clazz: KClass<T>, mapper: ObjectMapper? = null): T? {
+        return JsonTool.fromJson(json, clazz.java, mapper)
+    }
+
+    /**
+     * 反序列化, 将json串解析为TypeReference子类泛型参数变量指定的Class的实例
+     *
+     * @param T 目标类型
+     * @param json json串
+     * @param typeReference TypeReference子类，用来指定泛型参数
+     * @param mapper json转换器，为null时该方法内部将新建一个默认的转换器
+     * @return TypeReference子类泛型参数变量指定的Class的实例，出错时返回null
+     * @author K
+     * @since 1.0.0
+     */
+    fun <T> fromJson(json: String, typeReference: TypeReference<T>, mapper: ObjectMapper? = null): T? {
+        return JsonTool.fromJson(json, typeReference, mapper)
+    }
+
+    /**
+     * 序列化，将对象转为json串
+     *
+     * @param obj 要序列化的对象，可以是一般对象，也可以是Collection或数组， 如果集合为空集合, 返回"[]"
+     * @param mapper json转换器，为null时该方法内部将新建一个默认的转换器
+     * @return 序列化后的json串
+     * @author K
+     * @since 1.0.0
+     */
+    fun toJson(obj: Any, mapper: ObjectMapper? = null): String {
+        return JsonTool.toJson(obj, mapper)
+    }
+
+    /**
+     * 输出jsonP格式的数据
+     *
+     * @param functionName 函数名
+     * @param obj 待序列化的对象，其json对象将作为函数的参数
+     * @return jsonP字符串
+     * @author K
+     * @since 1.0.0
+     */
+    fun toJsonP(functionName: String, obj: Any): String {
+        return JsonTool.toJsonP(functionName, obj)
+    }
+
+    /**
+     * 当json里含有bean的部分属性时，用json串中的值更新该bean的该部分属性
+     *
+     * @param T bean类型
+     * @param jsonString json串
+     * @param obj 待更新的bean
+     * @param mapper json转换器，为null时该方法内部将新建一个默认的转换器
+     * @return 更新后的bean，失败时返回null
+     * @author K
+     * @since 1.0.0
+     */
+    fun <T: Any> updateBean(jsonString: String, obj: T, mapper: ObjectMapper? = null): T? {
+        return JsonTool.updateBean(jsonString, obj, mapper)
+    }
+
+    /**
+     * 创建指定Include枚举元素的json转换器
+     *
+     * @param include Include枚举元素
+     * @return json转换器
+     * @author K
+     * @since 1.0.0
+     */
+    fun createMapper(include: Include): ObjectMapper {
+        return JsonTool.createMapper(include)
+    }
+
+    /**
+     * 创建只输出非Null且非Empty(如List.isEmpty)的属性到Json字符串的json转换器
+     *
+     * @return json转换器
+     * @author K
+     * @since 1.0.0
+     */
+    fun createNonEmptyMapper(): ObjectMapper {
+        return JsonTool.createNonEmptyMapper()
+    }
+
+    /**
+     * 创建只输出初始值被改变的属性到Json字符串的json转换器
+     *
+     * @return json转换器
+     * @author K
+     * @since 1.0.0
+     */
+    fun createNonDefaultMapper(): ObjectMapper {
+        return createMapper(Include.NON_DEFAULT)
+    }
+
+    /**
+     * 设定使用Enum的toString方法来读写Enum,
+     * 注意本方法一定要在Mapper创建后, 所有的读写动作之前調用.
+     *
+     * @param mapper json转换器
+     * @author K
+     * @since 1.0.0
+     */
+    fun enableEnumUseToString(mapper: ObjectMapper) {
+        return JsonTool.enableEnumUseToString(mapper)
+    }
+
+    /**
+     * 支持使用Jaxb的Annotation，使得实体类上的annotation不用与Jackson耦合。
+     * 默认会先查找jaxb的annotation，如果找不到再找jackson的。
+     *
+     * @param mapper json转换器
+     * @author K
+     * @since 1.0.0
+     */
+    fun enableJaxbAnnotation(mapper: ObjectMapper) = mapper.registerModule(JaxbAnnotationModule())
+
+    /**
+     * 允许单引号
+     * 允许不带引号的字段名称
+     *
+     * @param mapper json转换器
+     * @author K
+     * @since 1.0.0
+     */
+    fun enableSimple(mapper: ObjectMapper) {
+        JsonTool.enableSimple(mapper)
+    }
+
+}
