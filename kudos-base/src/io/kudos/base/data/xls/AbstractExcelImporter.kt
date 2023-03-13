@@ -25,7 +25,7 @@ import kotlin.reflect.full.primaryConstructor
  * 1. Excel第一行为列描述信息，并非要导入的数据，在导入时第一行会被忽略
  * 2. 行对象类支持数据类和普通类。
  *    为数据类时，属性必须全部定义在主构造函数中，可以是只读的(val);为普通类时，必须存在空构造函数，属性只能是可读可写的(var)。
- * 3. 数据校验的默认实现是Kuark的bean校验方式(ValidationKit)
+ * 3. 数据校验的默认实现是Kudos的bean校验方式(ValidationKit)
  * 4. 错误消息全部通过IllegalStateException异常抛出
  * 5. 如果需要对单元格的值作特殊处理，可重写getPropertyValue方法
  * 6. 如果需要复杂的校验逻辑，可重写validate方法

@@ -1,7 +1,7 @@
 object Version {
     const val KOTLIN = "1.8.10"
     const val SOUL = "5.0.0.0-SNAPSHOT"
-    const val KTORM = "3.6.0"
+    const val KTORM = "3.2.0"
 }
 
 plugins {
@@ -29,10 +29,12 @@ allprojects {
 
     repositories {
         maven { url = uri("https://maven.aliyun.com/repository/public") }
+        maven { url = uri("https://maven.aliyun.com/repository/google") }
         mavenCentral()
-        google()
-        maven { url = uri("https://repo1.maven.org/maven2/") }
-        maven { url = uri("https://mvnrepository.com/") }
+//        google() // 大陆访问不了
+        maven { url = uri("https://repo1.maven.org/maven2") }
+//        maven { url = uri("https://mvnrepository.com") } // 会导致下载maven-metadata.xml时卡很久
+        maven { url = uri("https://central.sonatype.com") }
         maven {
             isAllowInsecureProtocol = true
             url = uri("http://nexus.soulworld.net/repository/maven-public")
@@ -47,7 +49,7 @@ allprojects {
         plugin("io.spring.dependency-management")
     }
 
-    // 为了不让主工程生成src相关的目录
+    // 为了不让主工程生成src、resources、test、testresources四个目录
     sourceSets {
         main {
             kotlin {
@@ -160,6 +162,8 @@ subprojects {
         dependencies {
             // soul
             dependency("org.soul:soul-base:${Version.SOUL}")
+            dependency("org.soul:soul-context:${Version.SOUL}")
+            dependency("org.soul:soul-ability-data-rdb-jdbc:${Version.SOUL}")
 
             // commons
 //            dependency("org.apache.commons:commons-lang3:3.10")

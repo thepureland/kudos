@@ -1,7 +1,7 @@
 package io.kudos.base.support.payload
 
-import org.apache.poi.ss.formula.DataValidationEvaluator.OperatorEnum
 import org.soul.base.query.Criterion
+import org.soul.base.query.enums.OperatorEnum
 import org.soul.base.support.logic.AndOr
 import kotlin.reflect.KClass
 
