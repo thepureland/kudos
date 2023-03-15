@@ -1,6 +1,9 @@
 
 rootProject.name = "kudos"
+
 include("kudos-base")
+
+include("kudos-context")
 
 include("kudos-ability")
 include("kudos-ability:kudos-ability-data")
@@ -13,7 +16,9 @@ include("kudos-ability:kudos-ability-data:kudos-ability-data-rdb:kudos-ability-d
 findProject(":kudos-ability:kudos-ability-data:kudos-ability-data-rdb:kudos-ability-data-rdb-ktorm")?.name = "kudos-ability-data-rdb-ktorm"
 
 include("kudos-ms")
-include("kudos-context")
+
+
+
 include("kudos-test")
 include("kudos-test:kudos-test-common")
 findProject(":kudos-test:kudos-test-common")?.name = "kudos-test-common"

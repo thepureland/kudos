@@ -128,10 +128,15 @@ object I18nKit {
         val otherLocales = ArrayList(supportLocales)
         //去除默认语言
         otherLocales.remove(defaultLocale)
-        for (type in types) {
-            //initI18nByType(type,defaultLocale,Arrays.asList(defaultLocale),"");
-            initI18nByType(type, defaultLocale, otherLocales, "")
+        if (types.isEmpty()) {
+            initI18nByType("", defaultLocale, otherLocales, "")
+        } else {
+            for (type in types) {
+                //initI18nByType(type,defaultLocale,Arrays.asList(defaultLocale),"");
+                initI18nByType(type, defaultLocale, otherLocales, "")
+            }
         }
+
     }
 
     /**

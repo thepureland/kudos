@@ -33,7 +33,7 @@ internal class PackageKitTest {
         // in file
         var packages = PackageKit.getPackages("io.kudos.base.*", true)
         assert(packages.contains("io.kudos.base.lang"))
-        assert(packages.contains("io.kudos.base.log"))
+        assert(packages.contains("io.kudos.base.logger"))
 
         // in jar using package pattern
         packages = PackageKit.getPackages("org.apache.**.lang3", true)

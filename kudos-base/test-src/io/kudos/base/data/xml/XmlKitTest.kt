@@ -2,14 +2,14 @@ package io.kudos.base.data.xml
 
 import io.kudos.base.bean.Address
 import io.kudos.base.lang.string.countMatches
+import jakarta.xml.bind.annotation.*
+import jakarta.xml.bind.annotation.adapters.XmlAdapter
+import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import javax.xml.bind.annotation.*
-import javax.xml.bind.annotation.adapters.XmlAdapter
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter
 
 /**
  * XmlKit测试用例

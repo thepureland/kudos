@@ -16,7 +16,8 @@ internal class AbstractExcelImporterTest {
 
     @Test
     fun import() {
-        val path = PathKit.getProjectRootPath() + "/build/resources/test/TestExcelImporer.xls"
+
+        val path = PathKit.getResourcePath("TestExcelImporer.xls")
 
         // 行对象类为数据类方式
         assertEquals(3, TestStudentExcelImporter().import(File(path)).size)

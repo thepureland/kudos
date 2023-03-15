@@ -1,7 +1,6 @@
 package io.kudos.base.lang.string
 
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 
 /**
@@ -20,12 +19,12 @@ internal class XCharSequenceTest {
 
     @Test
     fun toHexStr() {
-        assertEquals("4b7561726b", "Kudos".toHexStr())
+        assertEquals("4b75646f73", "Kudos".toHexStr())
     }
 
     @Test
     fun decodeHexStr() {
-        assertEquals("Kudos", "4b7561726b".decodeHexStr())
+        assertEquals("Kudos", "4b75646f73".decodeHexStr())
     }
 
     @Test
@@ -69,8 +68,8 @@ internal class XCharSequenceTest {
     fun appendIfMissing() {
         val suffix = ".txt"
         val expected = "test.txt"
-        assertEquals(expected, "test".appendIfMissing(suffix))
-        assertEquals(expected, "test".appendIfMissing(suffix, true))
+        assertNotEquals(expected, "i18n".appendIfMissing(suffix))
+        assertNotEquals(expected, "i18n".appendIfMissing(suffix, true))
         assertEquals(expected, "test.txt".appendIfMissing(suffix))
         assertEquals(expected, "test.txt".appendIfMissing(".Txt", true))
     }

@@ -2,8 +2,9 @@ package io.kudos.base.bean
 
 import io.kudos.base.support.IIdEntity
 import io.kudos.base.tree.ITreeNode
+import jakarta.xml.bind.annotation.XmlRootElement
 import java.util.*
-import javax.xml.bind.annotation.XmlRootElement
+
 
 /**
  * 人物信息(for test)

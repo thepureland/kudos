@@ -111,7 +111,7 @@ object PathKit {
      * @author K
      * @since 1.0.0
      */
-    fun getProjectRootPath(): String = System.getProperty("user.dir")
+    fun getProjectRootPath(): String = PathTool.getProjectRootPath()
 
     /**
      * 得到程序运行时的路径
@@ -157,5 +157,7 @@ object PathKit {
      * @since 1.0.0
      */
     fun getUserDirectory(): File = FileUtils.getUserDirectory()
+
+
 
 }
