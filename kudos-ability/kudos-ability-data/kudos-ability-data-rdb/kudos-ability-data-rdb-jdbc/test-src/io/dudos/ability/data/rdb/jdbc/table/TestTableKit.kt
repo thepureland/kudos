@@ -37,8 +37,8 @@ internal object TestTableKit {
 
     private fun operateTestTable(operate: String) {
         val resources: Array<Resource> = ClassPathScanner.scanForResources(SCRIPT_CLASSPATH, operate, SCRIPT_SUFFIX)
-        val createTableSql: String = resources[0].loadAsString("UTF-8")!!
-        SpringKit.getBean(JdbcTemplate::class).execute(createTableSql)
+        val sql = resources[0].loadAsString("UTF-8")!!
+        SpringKit.getBean(JdbcTemplate::class).execute(sql)
     }
 
 }

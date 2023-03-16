@@ -1,6 +1,7 @@
 package io.kudos.ability.data.rdb.ktorm.support
 
 import io.dudos.ability.data.rdb.jdbc.kit.RdbKit
+import io.kudos.ability.data.rdb.ktorm.init.EnableKtorm
 import io.kudos.ability.data.rdb.ktorm.kit.getDatabase
 import io.kudos.ability.data.rdb.ktorm.table.TestTable
 import io.kudos.ability.data.rdb.ktorm.table.TestTableDao
@@ -28,6 +29,7 @@ import java.time.LocalDateTime
  * @author K
  * @since 1.0.0
  */
+@EnableKtorm
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 internal class BaseReadOnlyDaoTest : SpringTest() {
 

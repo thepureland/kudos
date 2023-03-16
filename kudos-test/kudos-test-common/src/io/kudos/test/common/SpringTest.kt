@@ -13,7 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest
 open class SpringTest {
 
     constructor() {
-        SystemKit.setEnvVars(mapOf("spring.cloud.config.enabled" to "false"))
+//        SystemKit.setEnvVars(mapOf("spring.cloud.config.enabled" to "false"))
     }
 
 }

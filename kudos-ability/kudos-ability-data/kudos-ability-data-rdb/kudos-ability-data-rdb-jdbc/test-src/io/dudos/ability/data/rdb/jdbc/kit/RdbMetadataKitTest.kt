@@ -1,5 +1,6 @@
 package io.dudos.ability.data.rdb.jdbc.kit
 
+import io.dudos.ability.data.rdb.jdbc.init.EnableJdbc
 import io.dudos.ability.data.rdb.jdbc.table.TestTableKit
 import io.kudos.test.common.SpringTest
 import org.junit.jupiter.api.AfterAll
@@ -15,6 +16,7 @@ import org.soul.ability.data.rdb.jdbc.metadata.TableTypeEnum
  * @author K
  * @since 1.0.0
  */
+@EnableJdbc
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 internal class RdbMetadataKitTest : SpringTest() {
 
