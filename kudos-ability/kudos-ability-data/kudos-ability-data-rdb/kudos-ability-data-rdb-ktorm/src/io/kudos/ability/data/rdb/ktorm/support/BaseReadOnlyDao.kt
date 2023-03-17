@@ -371,7 +371,9 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
     override fun inSearch(property: String, values: Collection<*>, vararg orders: Order): List<E> {
         val column = ColumnHelper.columnOf(table(), property)[property]!!
         var entitySequence = entitySequence().filter { column.inCollection(values) }
-        entitySequence = entitySequence.sorted { sortOf(*orders) }
+        sortOf(*orders).forEach { orderExp ->
+            entitySequence = entitySequence.sortedBy { orderExp }
+        }
         return entitySequence.toList()
     }
 
@@ -696,8 +698,9 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
             val fullExpression = processWhere(propMap, logic, false, whereConditionFactory)
             entitySequence = entitySequence.filter { fullExpression!! }
         }
-
-        entitySequence = entitySequence.sorted { sortOf(*orders) }
+        sortOf(*orders).forEach { orderExp ->
+            entitySequence = entitySequence.sortedBy { orderExp }
+        }
         return entitySequence.toList()
     }
 
@@ -755,7 +758,9 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         entitySequence = entitySequence.filter { CriteriaConverter.convert(criteria, table()) }
 
         // sort
-        entitySequence = entitySequence.sorted { sortOf(*orders) }
+        sortOf(*orders).forEach { orderExp ->
+            entitySequence = entitySequence.sortedBy { orderExp }
+        }
 
         // paging
         if (pageNo != 0 && pageSize != 0) {
@@ -867,6 +872,6 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
 
 // 解决ktorm总是要调用到可变参数的inList方法的问题及泛型问题
 @Suppress(Consts.Suppress.UNCHECKED_CAST)
-private fun <T : Any> ColumnDeclaring<T>.inCollection(list: Collection<*>): InListExpression<T> {
+private fun <T : Any> ColumnDeclaring<T>.inCollection(list: Collection<*>): InListExpression {
     return InListExpression(left = asExpression(), values = list.map { wrapArgument(it as T?) })
 }

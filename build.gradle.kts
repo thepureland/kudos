@@ -1,7 +1,7 @@
 object Version {
     const val KOTLIN = "1.8.10"
     const val SOUL = "5.0.0.0-SNAPSHOT"
-    const val KTORM = "3.2.0"
+    const val KTORM = "3.6.0"
 }
 
 plugins {
