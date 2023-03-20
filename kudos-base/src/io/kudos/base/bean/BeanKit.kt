@@ -49,7 +49,7 @@ object BeanKit {
      */
     fun <T : Any> copyProperties(destClass: KClass<T>, srcObj: Any, propertyMap: Map<String, String>? = null): T {
         val destObj = destClass.getEmptyConstructor()!!.call()
-        io.kudos.base.bean.BeanKit.copyProperties(srcObj, destObj, propertyMap)
+        copyProperties(srcObj, destObj, propertyMap)
         return destObj
     }
 
@@ -74,8 +74,8 @@ object BeanKit {
 
         for ((srcPropertyName, destPropertyName) in map!!) {
             if (srcPropertyName.isNotBlank() && destPropertyName.isNotBlank()) {
-                val result = io.kudos.base.bean.BeanKit.getProperty(srcObj, srcPropertyName)
-                io.kudos.base.bean.BeanKit.setProperty(destObj, destPropertyName, result)
+                val result = getProperty(srcObj, srcPropertyName)
+                setProperty(destObj, destPropertyName, result)
             }
         }
         return destObj
@@ -95,7 +95,7 @@ object BeanKit {
      */
     fun <T> copyPropertiesExcludeId(src: IIdEntity<T>, dest: IIdEntity<T>): IIdEntity<T> {
         val id = dest.id
-        io.kudos.base.bean.BeanKit.copyProperties(src, dest, null)
+        copyProperties(src, dest, null)
         dest.id = id
         return dest
     }
@@ -150,7 +150,7 @@ object BeanKit {
     fun <T> resetPropertiesExcludeId(entity: IIdEntity<T>) {
         val id = entity.id
         val emptyEntity: IIdEntity<T> = entity::class.getEmptyConstructor()!!.call()
-        io.kudos.base.bean.BeanKit.copyProperties(emptyEntity, entity, null)
+        copyProperties(emptyEntity, entity, null)
         entity.id = id
     }
 
@@ -165,7 +165,7 @@ object BeanKit {
      * @since 1.0.0
      */
     fun <T : Any> batchCopyProperties(targetClass: KClass<T>, srcObjs: Collection<Any>): List<T> =
-        srcObjs.map { io.kudos.base.bean.BeanKit.copyProperties(targetClass, it) }
+        srcObjs.map { copyProperties(targetClass, it) }
 
     //region 封装org.apache.commons.beanutils.BeanUtils和PropertyUtils
     /**

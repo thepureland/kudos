@@ -7,6 +7,7 @@ object Version {
 plugins {
     kotlin("jvm") version "1.8.10"
     id("io.spring.dependency-management") version "1.0.10.RELEASE"
+    id("org.openjfx.javafxplugin") version "0.0.8"
 }
 
 /* 插件的配置需要在buildscript元素中 */
@@ -46,6 +47,7 @@ allprojects {
         plugin("kotlin")
         plugin("idea")
         plugin("io.spring.dependency-management")
+        plugin("org.openjfx.javafxplugin")
     }
 
     // 为了不让主工程生成src、resources、test、testresources四个目录
@@ -165,6 +167,23 @@ subprojects {
 //            dependency("io.ktor:ktor-client-core-jvm:${Version.KTOR}")
 //            dependency("io.ktor:ktor-client-apache:${Version.KTOR}")
 //            dependency("io.ktor:ktor-server-tests:${Version.KTOR}")
+
+            // javafx
+//            dependency("de.roskenet:springboot-javafx-support:2.1.6")
+//            dependency("org.openjfx:javafx-controls:12.0.1")
+            dependency("org.controlsfx:controlsfx:8.40.10")
+
+            // tools
+            dependency("org.freemarker:freemarker:2.3.30")
+
+
+            // test
+            dependency("org.springframework.boot:spring-boot-starter-aop:3.0.4")
+            dependency("org.springframework.boot:spring-boot-starter-test:3.0.4")
+            dependency("com.h2database:h2:2.1.214")
+            dependency("org.postgresql:postgresql:42.2.20")
+            dependency("org.ktorm:ktorm-support-postgresql:${Version.KTORM}")
+
         }
     }
 
