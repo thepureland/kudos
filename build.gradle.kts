@@ -50,7 +50,7 @@ allprojects {
         plugin("org.openjfx.javafxplugin")
     }
 
-    // 为了不让主工程生成src、resources、test、testresources四个目录
+    // 为了不让父工程生成src、resources、test、testresources四个目录
     sourceSets {
         main {
             kotlin {
@@ -100,31 +100,6 @@ subprojects {
 //        enabled = false
 //    }
 
-    sourceSets {
-        main {
-            kotlin {
-                setSrcDirs(listOf("src"))
-            }
-            java {
-                setSrcDirs(listOf("src"))
-            }
-            resources {
-                setSrcDirs(listOf("resources"))
-            }
-        }
-        test {
-            kotlin {
-                setSrcDirs(listOf("test-src"))
-            }
-            java {
-                setSrcDirs(listOf("test-src"))
-            }
-            resources {
-                setSrcDirs(listOf("test-resources"))
-            }
-        }
-    }
-
     dependencies {
         // kotlin
         implementation("org.jetbrains.kotlin:kotlin-reflect:${Version.KOTLIN}")
@@ -146,6 +121,16 @@ subprojects {
             dependency("org.soul:soul-base:${Version.SOUL}")
             dependency("org.soul:soul-context:${Version.SOUL}")
             dependency("org.soul:soul-ability-data-rdb-jdbc:${Version.SOUL}")
+            dependency("org.soul:soul-ability-data-rdb-flyway:${Version.SOUL}")
+            dependency("org.soul:soul-ability-data-memdb-redis:${Version.SOUL}")
+            dependency("org.soul:soul-ability-data-docdb-mongo:${Version.SOUL}")
+            dependency("org.soul:soul-ability-cache-common:${Version.SOUL}")
+            dependency("org.soul:soul-ability-cache-local:${Version.SOUL}")
+            dependency("org.soul:soul-ability-cache-redis:${Version.SOUL}")
+            dependency("org.soul:soul-ability-web-springmvc:${Version.SOUL}")
+            dependency("org.soul:soul-ability-communication-netty:${Version.SOUL}")
+            dependency("org.soul:soul-ability-communication-websocket:${Version.SOUL}")
+
 
             // data
             dependency("org.ktorm:ktorm-core:${Version.KTORM}")
