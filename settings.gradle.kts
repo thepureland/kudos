@@ -224,3 +224,5 @@ include("kudos-ms:kudos-ms-workflow:kudos-ms-workflow-common")
 findProject(":kudos-ms:kudos-ms-workflow:kudos-ms-workflow-common")?.name = "kudos-ms-workflow-common"
 include("kudos-ms:kudos-ms-workflow:kudos-ms-workflow-service")
 findProject(":kudos-ms:kudos-ms-workflow:kudos-ms-workflow-service")?.name = "kudos-ms-workflow-service"
+include("kudos-ms:kudos-ms-fserver:kudos-ms-fserver-api-view")
+findProject(":kudos-ms:kudos-ms-fserver:kudos-ms-fserver-api-view")?.name = "kudos-ms-fserver-api-view"

@@ -1,5 +1,6 @@
 dependencies {
     api(project(":kudos-context"))
+    api("org.soul:soul-ms-sys-api-service")
 }
 
 sourceSets {
