@@ -4,6 +4,7 @@ import com.baomidou.dynamic.datasource.spring.boot.autoconfigure.DynamicDataSour
 import com.baomidou.dynamic.datasource.spring.boot.autoconfigure.DynamicDataSourceCreatorAutoConfiguration
 import io.kudos.base.logger.LoggerFactory
 import io.kudos.context.init.ContextAutoConfiguration
+import io.kudos.context.init.EnableContext
 import org.soul.ability.data.rdb.jdbc.datasource.DefaultDatasourceProxy
 import org.soul.ability.data.rdb.jdbc.datasource.DefaultDynamicDataSourceLoad
 import org.soul.ability.data.rdb.jdbc.datasource.IDataSourceProxy
@@ -24,6 +25,7 @@ import javax.annotation.PostConstruct
  * @author K
  * @since 1.0.0
  */
+@EnableContext
 @ComponentScan(
     basePackages = [
 //        "com.baomidou.dynamic.datasource",

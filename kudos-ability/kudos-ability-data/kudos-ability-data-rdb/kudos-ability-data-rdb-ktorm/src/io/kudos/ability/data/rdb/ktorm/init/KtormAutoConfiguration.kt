@@ -1,5 +1,6 @@
 package io.kudos.ability.data.rdb.ktorm.init
 
+import io.kudos.ability.data.rdb.jdbc.init.EnableJdbc
 import io.kudos.ability.data.rdb.jdbc.init.JdbcAutoConfiguration
 import io.kudos.base.logger.LoggerFactory
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
@@ -13,6 +14,7 @@ import javax.annotation.PostConstruct
  * @author K
  * @since 1.0.0
  */
+@EnableJdbc
 @ComponentScan(
     basePackages = [
         "io.kudos.ability.data.rdb.ktorm"
