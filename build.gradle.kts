@@ -127,6 +127,7 @@ subprojects {
             dependency("org.soul:soul-ability-cache-common:${Version.SOUL}")
             dependency("org.soul:soul-ability-cache-local:${Version.SOUL}")
             dependency("org.soul:soul-ability-cache-redis:${Version.SOUL}")
+            dependency("org.soul:soul-ability-cache-interservice:${Version.SOUL}")
             dependency("org.soul:soul-ability-web-springmvc:${Version.SOUL}")
             dependency("org.soul:soul-ability-communication-netty:${Version.SOUL}")
             dependency("org.soul:soul-ability-communication-websocket:${Version.SOUL}")

@@ -1,7 +1,7 @@
-package io.dudos.ability.data.rdb.jdbc.kit
+package io.kudos.ability.data.rdb.jdbc.kit
 
-import io.dudos.ability.data.rdb.jdbc.init.EnableJdbc
-import io.dudos.ability.data.rdb.jdbc.table.TestTableKit
+import io.kudos.ability.data.rdb.jdbc.init.EnableJdbc
+import io.kudos.ability.data.rdb.jdbc.table.TestTableKit
 import io.kudos.test.common.SpringTest
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.*

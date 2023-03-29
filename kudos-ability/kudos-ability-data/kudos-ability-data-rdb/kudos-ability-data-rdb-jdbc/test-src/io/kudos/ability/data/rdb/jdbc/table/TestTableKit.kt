@@ -1,4 +1,4 @@
-package io.dudos.ability.data.rdb.jdbc.table
+package io.kudos.ability.data.rdb.jdbc.table
 
 import io.kudos.context.kit.SpringKit
 import org.soul.base.scanner.classpath.ClassPathScanner

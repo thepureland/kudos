@@ -1,4 +1,4 @@
-package io.dudos.ability.data.rdb.jdbc.metadata
+package io.kudos.ability.data.rdb.jdbc.metadata
 
 import org.soul.ability.data.rdb.jdbc.metadata.Column
 import org.soul.ability.data.rdb.jdbc.metadata.RdbTypeEnum

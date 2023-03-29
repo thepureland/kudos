@@ -1,6 +1,6 @@
 package io.kudos.ability.data.rdb.ktorm.support
 
-import io.dudos.ability.data.rdb.jdbc.kit.RdbKit
+import io.kudos.ability.data.rdb.jdbc.kit.RdbKit
 import io.kudos.ability.data.rdb.ktorm.kit.getDatabase
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.lang.GenericKit

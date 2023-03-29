@@ -1,6 +1,6 @@
 package io.kudos.tools.codegen.core
 
-import io.dudos.ability.data.rdb.jdbc.kit.RdbMetadataKit
+import io.kudos.ability.data.rdb.jdbc.kit.RdbMetadataKit
 import io.kudos.ability.data.rdb.ktorm.metadata.kotlinType
 import io.kudos.ability.data.rdb.ktorm.support.*
 import io.kudos.base.bean.BeanKit

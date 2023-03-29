@@ -1,6 +1,6 @@
 package io.kudos.tools.codegen.biz
 
-import io.dudos.ability.data.rdb.jdbc.kit.RdbMetadataKit
+import io.kudos.ability.data.rdb.jdbc.kit.RdbMetadataKit
 import io.kudos.base.bean.BeanKit
 import io.kudos.tools.codegen.core.CodeGeneratorContext
 import io.kudos.tools.codegen.dao.CodeGenColumnDao

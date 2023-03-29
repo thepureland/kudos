@@ -1,4 +1,4 @@
-package io.dudos.ability.data.rdb.jdbc.kit
+package io.kudos.ability.data.rdb.jdbc.kit
 
 import com.zaxxer.hikari.HikariDataSource
 import javax.sql.DataSource

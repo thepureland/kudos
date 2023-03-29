@@ -1,7 +1,7 @@
 package io.kudos.tools.codegen.fx.controller
 
-import io.dudos.ability.data.rdb.jdbc.kit.DataSourceKit
-import io.dudos.ability.data.rdb.jdbc.kit.RdbKit
+import io.kudos.ability.data.rdb.jdbc.kit.DataSourceKit
+import io.kudos.ability.data.rdb.jdbc.kit.RdbKit
 import io.kudos.base.io.FilenameKit
 import io.kudos.base.io.PathKit
 import io.kudos.base.lang.SystemKit

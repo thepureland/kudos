@@ -226,3 +226,7 @@ include("kudos-ms:kudos-ms-workflow:kudos-ms-workflow-service")
 findProject(":kudos-ms:kudos-ms-workflow:kudos-ms-workflow-service")?.name = "kudos-ms-workflow-service"
 include("kudos-ms:kudos-ms-fserver:kudos-ms-fserver-api-view")
 findProject(":kudos-ms:kudos-ms-fserver:kudos-ms-fserver-api-view")?.name = "kudos-ms-fserver-api-view"
+include("kudos-ability:kudos-ability-cache:kudos-ability-cache-interservice")
+findProject(":kudos-ability:kudos-ability-cache:kudos-ability-cache-interservice")?.name = "kudos-ability-cache-interservice"
+include("kudos-ability:kudos-ability-cache:kudos-ability-cache-remote:kudos-ability-cache-remote-redis")
+findProject(":kudos-ability:kudos-ability-cache:kudos-ability-cache-remote:kudos-ability-cache-remote-redis")?.name = "kudos-ability-cache-remote-redis"

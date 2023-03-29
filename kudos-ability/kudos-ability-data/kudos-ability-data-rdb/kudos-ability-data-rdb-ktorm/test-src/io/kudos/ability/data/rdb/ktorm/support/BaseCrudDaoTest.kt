@@ -7,6 +7,7 @@ import io.kudos.ability.data.rdb.ktorm.table.TestTableKit
 import io.kudos.ability.data.rdb.ktorm.table.TestTables
 import io.kudos.base.support.payload.SearchPayload
 import io.kudos.base.support.payload.UpdatePayload
+import io.kudos.context.init.EnableContext
 import io.kudos.test.common.SpringTest
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertEquals

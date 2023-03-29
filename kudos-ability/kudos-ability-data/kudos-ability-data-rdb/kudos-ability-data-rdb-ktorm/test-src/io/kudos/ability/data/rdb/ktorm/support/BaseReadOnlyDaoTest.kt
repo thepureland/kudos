@@ -1,6 +1,6 @@
 package io.kudos.ability.data.rdb.ktorm.support
 
-import io.dudos.ability.data.rdb.jdbc.kit.RdbKit
+import io.kudos.ability.data.rdb.jdbc.kit.RdbKit
 import io.kudos.ability.data.rdb.ktorm.init.EnableKtorm
 import io.kudos.ability.data.rdb.ktorm.kit.getDatabase
 import io.kudos.ability.data.rdb.ktorm.table.TestTable

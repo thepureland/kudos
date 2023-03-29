@@ -1,4 +1,4 @@
-package io.dudos.ability.data.rdb.jdbc.kit
+package io.kudos.ability.data.rdb.jdbc.kit
 
 import org.soul.ability.data.rdb.jdbc.metadata.RdbTypeEnum
 import org.soul.ability.data.rdb.jdbc.tool.RdbTool
