@@ -2,6 +2,7 @@ package io.kudos.context.init
 
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
 import java.lang.annotation.Inherited
+import kotlin.reflect.KClass
 
 
 /**
@@ -16,5 +17,15 @@ import java.lang.annotation.Inherited
 @Inherited
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.ANNOTATION_CLASS, AnnotationTarget.CLASS)
-@ImportAutoConfiguration(ComponentInitializerImportSelector::class)
-annotation class EnableKudos()
+@ImportAutoConfiguration(ComponentInitializerSelector::class)
+annotation class EnableKudos(
+
+    /**
+     * 要排除的初始化器类
+     *
+     * @author K
+     * @since 1.0.0
+     */
+    val exclusions: Array<KClass<out IComponentInitializer>> = []
+
+)

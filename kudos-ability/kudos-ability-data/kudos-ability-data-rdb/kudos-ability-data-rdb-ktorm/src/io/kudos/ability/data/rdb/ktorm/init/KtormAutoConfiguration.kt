@@ -1,6 +1,5 @@
 package io.kudos.ability.data.rdb.ktorm.init
 
-import io.kudos.ability.data.rdb.jdbc.init.EnableJdbc
 import io.kudos.ability.data.rdb.jdbc.init.JdbcAutoConfiguration
 import io.kudos.base.logger.LoggerFactory
 import io.kudos.context.init.IComponentInitializer
@@ -15,7 +14,6 @@ import javax.annotation.PostConstruct
  * @author K
  * @since 1.0.0
  */
-@EnableJdbc
 @ComponentScan(
     basePackages = [
         "io.kudos.ability.data.rdb.ktorm"
@@ -28,20 +26,8 @@ open class KtormAutoConfiguration : IComponentInitializer {
 
     private val logger = LoggerFactory.getLogger(this)
 
-    @Bean("int")
-    open fun int(): Pair<Int, Int> {
-        logger.info("KtormAutoConfiguration::int()")
-        return Pair(1, 2)
-    }
-
-    @Bean("int2")
-    open fun int2(): Pair<Int, Int> {
-        logger.info("KtormAutoConfiguration::int2()")
-        return Pair(1, 2)
-    }
-
     @PostConstruct
-    open fun init() {
+    override fun init() {
         logger.info("【kudos-ability-data-rdb-ktorm】初始化完成.")
     }
 

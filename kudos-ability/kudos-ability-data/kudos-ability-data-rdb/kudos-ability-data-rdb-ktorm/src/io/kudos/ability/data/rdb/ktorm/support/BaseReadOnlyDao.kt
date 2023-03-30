@@ -371,9 +371,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
     override fun inSearch(property: String, values: Collection<*>, vararg orders: Order): List<E> {
         val column = ColumnHelper.columnOf(table(), property)[property]!!
         var entitySequence = entitySequence().filter { column.inCollection(values) }
-        sortOf(*orders).forEach { orderExp ->
-            entitySequence = entitySequence.sortedBy { orderExp }
-        }
+        entitySequence = entitySequence.sortedBy(*sortBy(*orders))
         return entitySequence.toList()
     }
 
@@ -483,7 +481,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
             val orders = listSearchPayload.orders
             if (CollectionKit.isNotEmpty(orders)) {
                 val orderExps = sortOf(*orders!!.toTypedArray())
-                query = query.orderBy(*orderExps.toTypedArray())
+                query = query.orderBy(orderExps)
             }
         }
 
@@ -567,7 +565,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
             entitySequence = entitySequence.filter { CriteriaConverter.convert(criteria, table()) }
         }
         return entitySequence.aggregateColumns {
-            org.ktorm.dsl.sum(ColumnHelper.columnOf(table(), property)[property] as Column<Number>)
+            sum(ColumnHelper.columnOf(table(), property)[property] as Column<Number>)
         } as Number
     }
 
@@ -578,7 +576,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
             entitySequence = entitySequence.filter { CriteriaConverter.convert(criteria, table()) }
         }
         return entitySequence.aggregateColumns {
-            org.ktorm.dsl.avg(ColumnHelper.columnOf(table(), property)[property] as Column<Number>)
+            avg(ColumnHelper.columnOf(table(), property)[property] as Column<Number>)
         } as Number
     }
 
@@ -589,7 +587,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
             entitySequence = entitySequence.filter { CriteriaConverter.convert(criteria, table()) }
         }
         return entitySequence.aggregateColumns {
-            org.ktorm.dsl.max(ColumnHelper.columnOf(table(), property)[property] as Column<Comparable<Any>>)
+            max(ColumnHelper.columnOf(table(), property)[property] as Column<Comparable<Any>>)
         }
     }
 
@@ -600,7 +598,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
             entitySequence = entitySequence.filter { CriteriaConverter.convert(criteria, table()) }
         }
         return entitySequence.aggregateColumns {
-            org.ktorm.dsl.min(ColumnHelper.columnOf(table(), property)[property] as Column<Comparable<Any>>)
+            min(ColumnHelper.columnOf(table(), property)[property] as Column<Comparable<Any>>)
         }
     }
 
@@ -620,6 +618,13 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         } else {
             emptyList()
         }
+    }
+
+    private fun sortBy(vararg orders: Order): Array<(T)->OrderByExpression> {
+        val orderByExps = sortOf(*orders)
+        val orderExpressions = mutableListOf<(T)->OrderByExpression>()
+        orderByExps.forEach { orderByExp -> orderExpressions.add { orderByExp } }
+        return orderExpressions.toTypedArray()
     }
 
     @Suppress(Consts.Suppress.UNCHECKED_CAST)
@@ -698,9 +703,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
             val fullExpression = processWhere(propMap, logic, false, whereConditionFactory)
             entitySequence = entitySequence.filter { fullExpression!! }
         }
-        sortOf(*orders).forEach { orderExp ->
-            entitySequence = entitySequence.sortedBy { orderExp }
-        }
+        entitySequence = entitySequence.sortedBy(*sortBy(*orders))
         return entitySequence.toList()
     }
 
@@ -723,7 +726,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         }
 
         // order
-        query = query.orderBy(*sortOf(*orders).toTypedArray())
+        query = query.orderBy(sortOf(*orders))
 
         // result
         return processResult(query, returnColumnMap)
@@ -745,7 +748,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         val returnColumnMap = ColumnHelper.columnOf(table(), *returnProperties.toTypedArray())
         var query = querySource().select(returnColumnMap.values)
         query = query.where { column.inCollection(values) }
-        query = query.orderBy(*sortOf(*orders).toTypedArray())
+        query = query.orderBy(sortOf(*orders))
         return processResult(query, returnColumnMap)
     }
 
@@ -758,9 +761,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         entitySequence = entitySequence.filter { CriteriaConverter.convert(criteria, table()) }
 
         // sort
-        sortOf(*orders).forEach { orderExp ->
-            entitySequence = entitySequence.sortedBy { orderExp }
-        }
+        entitySequence = entitySequence.sortedBy(*sortBy(*orders))
 
         // paging
         if (pageNo != 0 && pageSize != 0) {
@@ -782,7 +783,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         query = query.where { CriteriaConverter.convert(criteria, table()) }
 
         // order
-        query = query.orderBy(*sortOf(*orders).toTypedArray())
+        query = query.orderBy(sortOf(*orders))
 
         // paging
         if (pageNo != 0 && pageSize != 0) {
@@ -863,7 +864,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
     protected fun getColumns(returnType: KClass<*>): Map<String, Column<Any>> {
         val entityProperties = getEntityProperties()
         val properties = returnType.memberProperties.map { it.name }
-        val returnProps = entityProperties.intersect(properties) // 取交集,保证要查询的列一定存在
+        val returnProps = entityProperties.intersect(properties.toSet()) // 取交集,保证要查询的列一定存在
         return ColumnHelper.columnOf(table(), *returnProps.toTypedArray())
     }
 
