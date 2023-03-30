@@ -1,5 +1,6 @@
 dependencies {
     api("org.soul:soul-base")
+    api("io.github.classgraph:classgraph")
 }
 
 sourceSets {

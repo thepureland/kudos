@@ -196,6 +196,9 @@ subprojects {
             dependency("org.soul:soul-ms-workflow-common:${Version.SOUL}")
             dependency("org.soul:soul-ms-workflow-service:${Version.SOUL}")
 
+            // base
+            dependency("io.github.classgraph:classgraph:4.8.157")
+
             // data
             dependency("org.ktorm:ktorm-core:${Version.KTORM}")
             dependency("org.ktorm:ktorm-jackson:${Version.KTORM}")

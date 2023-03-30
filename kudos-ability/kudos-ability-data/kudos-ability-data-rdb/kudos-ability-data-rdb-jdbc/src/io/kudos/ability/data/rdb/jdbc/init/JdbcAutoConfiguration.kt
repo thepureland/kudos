@@ -5,6 +5,7 @@ import com.baomidou.dynamic.datasource.spring.boot.autoconfigure.DynamicDataSour
 import io.kudos.base.logger.LoggerFactory
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.EnableContext
+import io.kudos.context.init.IComponentInitializer
 import org.soul.ability.data.rdb.jdbc.datasource.DefaultDatasourceProxy
 import org.soul.ability.data.rdb.jdbc.datasource.DefaultDynamicDataSourceLoad
 import org.soul.ability.data.rdb.jdbc.datasource.IDataSourceProxy
@@ -44,7 +45,7 @@ import javax.annotation.PostConstruct
 @AutoConfigureAfter(ContextAutoConfiguration::class)
 @EnableAutoConfiguration
 @ImportAutoConfiguration(DynamicDataSourceCreatorAutoConfiguration::class, DynamicDataSourceAutoConfiguration::class)
-open class JdbcAutoConfiguration {
+open class JdbcAutoConfiguration : IComponentInitializer {
 
     private val logger = LoggerFactory.getLogger(this)
 

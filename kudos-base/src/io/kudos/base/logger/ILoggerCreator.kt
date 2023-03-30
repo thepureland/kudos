@@ -8,7 +8,7 @@ import kotlin.reflect.KClass
  * @author K
  * @since 1.0.0
  */
-interface LoggerCreator {
+interface ILoggerCreator {
 
     /**
      * 创建日志记录器

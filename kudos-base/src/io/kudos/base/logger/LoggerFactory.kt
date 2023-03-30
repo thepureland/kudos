@@ -11,7 +11,7 @@ import kotlin.reflect.KClass
  */
 object LoggerFactory {
 
-    private val loggerCreator: LoggerCreator = Slf4jLoggerCreator()
+    private val loggerCreator: ILoggerCreator = Slf4jLoggerCreator()
 
     /**
      * 获取日志记录器

@@ -3,6 +3,7 @@ package io.kudos.ability.data.rdb.ktorm.init
 import io.kudos.ability.data.rdb.jdbc.init.EnableJdbc
 import io.kudos.ability.data.rdb.jdbc.init.JdbcAutoConfiguration
 import io.kudos.base.logger.LoggerFactory
+import io.kudos.context.init.IComponentInitializer
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.context.annotation.*
 import javax.annotation.PostConstruct
@@ -23,7 +24,7 @@ import javax.annotation.PostConstruct
     )]
 )
 @AutoConfigureAfter(JdbcAutoConfiguration::class)
-open class KtormAutoConfiguration {
+open class KtormAutoConfiguration : IComponentInitializer {
 
     private val logger = LoggerFactory.getLogger(this)
 

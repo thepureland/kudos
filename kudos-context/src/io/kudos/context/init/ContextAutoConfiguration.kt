@@ -18,7 +18,7 @@ import javax.annotation.PostConstruct
 )
 @AutoConfigureOrder(Ordered.HIGHEST_PRECEDENCE)
 @Configuration
-open class ContextAutoConfiguration {
+open class ContextAutoConfiguration : IComponentInitializer {
 
     private val logger = LoggerFactory.getLogger(this)
 
