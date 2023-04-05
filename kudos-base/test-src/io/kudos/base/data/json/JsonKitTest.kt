@@ -1,6 +1,6 @@
 package io.kudos.base.data.json
 
-import com.fasterxml.jackson.core.type.TypeReference
+import com.alibaba.fastjson.TypeReference
 import io.kudos.base.bean.Address
 import io.kudos.base.bean.Person
 import io.kudos.base.time.toLocalDate
@@ -84,7 +84,7 @@ internal class JsonKitTest {
     fun testToJson() {
         val jsonStr =
             """[{"id":"id","parentId":null,"children":[],"name":"Mike","sex":"male","age":25,"weight":0.0,"birthday":60528873600,"address":{"province":"hunan","city":"changsha","street":"wuyilu","zipcode":"410000"},"goods":["sporting","singing","dancing"],"contact":{"student":"Tom","teacher":"Lucy"},"active":null}]"""
-        assertEquals(jsonStr.length, JsonKit.toJson(listOf(person)).length)
+        assertEquals(jsonStr.length, JsonKit.toJson(listOf(person), true).length)
     }
 
     @Test
@@ -104,9 +104,10 @@ internal class JsonKitTest {
 
     @Test
     fun toJsonP() {
-        val jsonP =
+        val expected =
             """func({"id":"id","parentId":null,"children":[],"name":"Mike","sex":"male","age":25,"weight":0.0,"birthday":60528873600,"address":{"province":"hunan","city":"changsha","street":"wuyilu","zipcode":"410000"},"goods":["sporting","singing","dancing"],"contact":{"student":"Tom","teacher":"Lucy"},"active":null})"""
-        assertEquals(jsonP.length, JsonKit.toJsonP("func", person).length)
+        val fact = JsonKit.toJsonP("func", person, true)
+        assertEquals(expected.length, fact.length)
     }
 
 }
