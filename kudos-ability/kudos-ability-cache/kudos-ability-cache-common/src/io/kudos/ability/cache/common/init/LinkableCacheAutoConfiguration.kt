@@ -18,6 +18,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.ComponentScan
 import org.springframework.context.annotation.Primary
 import org.springframework.context.annotation.PropertySource
+import javax.annotation.PostConstruct
 
 
 /**
@@ -64,6 +65,7 @@ open class LinkableCacheAutoConfiguration : IComponentInitializer {
     @ConditionalOnMissingBean
     open fun cacheNotifyListener(): CacheNotifyListener = CacheNotifyListener()
 
+    @PostConstruct
     override fun init() {
         logger.info("【kudos-ability-cache-linkable】初始化完成.")
     }
