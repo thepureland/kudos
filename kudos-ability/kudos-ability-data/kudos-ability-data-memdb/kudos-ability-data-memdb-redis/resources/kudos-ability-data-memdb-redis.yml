@@ -16,9 +16,9 @@ kudos:
             min-idle: 0
             timeout: 3000 # 连接超时时间（毫秒）
             key-serializer: string #RedisSerializerEnum 枚举类
-            hashkey-serializer: jdk
-            value-serializer: jdk
-            hashvalue-serializer: jdk
+            hashkey-serializer: string
+            value-serializer: fastjson #jackson默认不支持jdk8的LocalDateTime、LocalDate、LocalTime
+            hashvalue-serializer: fastjson #jackson默认不支持jdk8的LocalDateTime、LocalDate、LocalTime
     #        cluster:
     #          max-redirects: 3 # 集群模式下，集群最大转发的数量
     #          nodes: # 集群模式下，逗号分隔的键值对（主机：端口）形式的服务器列表

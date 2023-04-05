@@ -1,5 +1,6 @@
 package io.kudos.base.bean
 
+import io.kudos.base.time.toLocalDate
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -22,7 +23,7 @@ internal class BeanKitTest {
             name = "Mike"
             sex = "male"
             age = 25
-            birthday = Date(60528873600000L)
+            birthday = Date(60528873600000L).toLocalDate()
             address = Address().apply {
                 province = "hunan"
                 city = "changsha"
@@ -37,7 +38,7 @@ internal class BeanKitTest {
 
     @Test
     fun shallowClone() {
-        val dest = io.kudos.base.bean.BeanKit.shallowClone(person)
+        val dest = BeanKit.shallowClone(person)
         assertEquals(person, dest)
         assertTrue(person.address === dest.address) // 证明是浅克隆
         assertEquals(true, dest.active)
@@ -54,7 +55,7 @@ internal class BeanKitTest {
     @Test
     fun copyProperties() {
         val dest = Person()
-        io.kudos.base.bean.BeanKit.copyProperties(person, dest)
+        BeanKit.copyProperties(person, dest)
         assertEquals(person, dest)
         assertTrue(person.address === dest.address) // 证明是浅克隆
         assertEquals(true, dest.active)
@@ -62,7 +63,7 @@ internal class BeanKitTest {
 
     @Test
     fun extract() {
-        val map: Map<String, Any?> = io.kudos.base.bean.BeanKit.extract(person)
+        val map: Map<String, Any?> = BeanKit.extract(person)
         assertEquals(person.age, map["age"])
         assertEquals(person.name, map["name"])
         assertEquals(person.sex, map["sex"])
@@ -75,18 +76,18 @@ internal class BeanKitTest {
 
     @Test
     fun getProperty() {
-        assertEquals(person.age, io.kudos.base.bean.BeanKit.getProperty(person, "age"))
-        assertEquals(person.goods?.get(0), io.kudos.base.bean.BeanKit.getProperty(person, "goods[0]"))
-        assertEquals(person.contact?.get("student"), io.kudos.base.bean.BeanKit.getProperty(person, "contact(student)"))
-        assertEquals(person.address?.province, io.kudos.base.bean.BeanKit.getProperty(person, "address.province"))
-        assertEquals(true, io.kudos.base.bean.BeanKit.getProperty(person, "active"))
+        assertEquals(person.age, BeanKit.getProperty(person, "age"))
+        assertEquals(person.goods?.get(0), BeanKit.getProperty(person, "goods[0]"))
+        assertEquals(person.contact?.get("student"), BeanKit.getProperty(person, "contact(student)"))
+        assertEquals(person.address?.province, BeanKit.getProperty(person, "address.province"))
+        assertEquals(true, BeanKit.getProperty(person, "active"))
     }
 
     @Test
     fun setProperty() {
-        io.kudos.base.bean.BeanKit.setProperty(person, "address.zipcode", "361000")
+        BeanKit.setProperty(person, "address.zipcode", "361000")
         assertEquals("361000", person.address?.zipcode)
-        io.kudos.base.bean.BeanKit.setProperty(person, "isActive", "361000")
+        BeanKit.setProperty(person, "isActive", "361000")
         assertEquals(true, person.active)
     }
 
@@ -96,14 +97,14 @@ internal class BeanKitTest {
         val srcObj = Couple("key", list)
         val propertyMap = mapOf("first" to "second", "second[0]" to "first")
 
-        val dest = io.kudos.base.bean.BeanKit.copyProperties(Couple::class, srcObj, propertyMap)
+        val dest = BeanKit.copyProperties(Couple::class, srcObj, propertyMap)
         assertEquals(srcObj.first, dest.second)
         assertEquals(srcObj.second!![0], dest.first)
     }
 
     @Test
     fun copyPropertiesToClassInstance() {
-        val dest: Person = io.kudos.base.bean.BeanKit.copyProperties(Person::class, person)
+        val dest: Person = BeanKit.copyProperties(Person::class, person)
         assertEquals(person, dest)
         assertTrue(person.address === dest.address) // 证明是浅克隆
         assertEquals(true, dest.active)
@@ -112,7 +113,7 @@ internal class BeanKitTest {
     @Test
     fun copyPropertiesExcludeId() {
         val dest = Person()
-        io.kudos.base.bean.BeanKit.copyPropertiesExcludeId(person, dest)
+        BeanKit.copyPropertiesExcludeId(person, dest)
         assertEquals(person.age, dest.age)
         assertTrue(person.address === dest.address)
         assertNull(dest._getId())
@@ -122,7 +123,7 @@ internal class BeanKitTest {
     @Test
     fun copyPropertiesExclude() {
         val dest = Person()
-        io.kudos.base.bean.BeanKit.copyPropertiesExclude(person, dest, "age", "address")
+        BeanKit.copyPropertiesExclude(person, dest, "age", "address")
         assertEquals(person._getId(), dest._getId())
         assertEquals(0, dest.age)
         assertNull(dest.address)
@@ -132,8 +133,8 @@ internal class BeanKitTest {
 
     @Test
     fun resetPropertiesExcludeId() {
-        val p: Person = io.kudos.base.bean.BeanKit.shallowClone(person)
-        io.kudos.base.bean.BeanKit.resetPropertiesExcludeId(p)
+        val p: Person = BeanKit.shallowClone(person)
+        BeanKit.resetPropertiesExcludeId(p)
         assertNull(p.name)
         assertNull(p.address)
         assertEquals(person._getId(), p._getId())
@@ -142,8 +143,8 @@ internal class BeanKitTest {
 
     @Test
     fun batchCopyProperties() {
-        val persons = listOf<Person>(person, person)
-        val results = io.kudos.base.bean.BeanKit.batchCopyProperties(Person::class, persons)
+        val persons = listOf(person, person)
+        val results = BeanKit.batchCopyProperties(Person::class, persons)
         assertEquals(persons.size.toLong(), results.size.toLong())
         assertEquals(persons[0].name, results[0].name)
         assertEquals(persons[1].weight, results[1].weight, 0.0)

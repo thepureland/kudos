@@ -8,18 +8,18 @@ import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
 
 @Component
-open class LocalCacheTestService {
+open class CacheTestService {
 
 //    @Autowired
 //    private lateinit var self: CacheTestService
 
     fun getData(id: String): String {
-        return SpringKit.getBean(LocalCacheTestService::class).getFromDB(id)
+        return SpringKit.getBean(CacheTestService::class).getFromDB(id)
     }
 
     @Cacheable(cacheNames = ["test"], key = "#id")
     open fun getFromDB(id: String): String {
-        LoggerFactory.getLogger(LocalCacheTestService::class).info("模拟去db查询~~~$id")
+        LoggerFactory.getLogger(CacheTestService::class).info("模拟去db查询~~~$id")
         return RandomStringKit.uuidWithoutDelimiter()
     }
 

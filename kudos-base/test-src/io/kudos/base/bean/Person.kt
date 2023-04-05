@@ -1,8 +1,13 @@
 package io.kudos.base.bean
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import com.fasterxml.jackson.databind.annotation.JsonSerialize
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer
 import io.kudos.base.support.IIdEntity
 import io.kudos.base.tree.ITreeNode
 import jakarta.xml.bind.annotation.XmlRootElement
+import java.time.LocalDate
 import java.util.*
 
 
@@ -22,7 +27,9 @@ class Person : IIdEntity<String>, ITreeNode<String?> {
     var sex: String? = null
     var age = 0
     var weight = 0.0
-    var birthday: Date? = null
+    @get:JsonSerialize(using = LocalDateSerializer::class)
+    @get:JsonDeserialize(using = LocalDateDeserializer::class)
+    var birthday: LocalDate? = null
     var address: Address? = null
     var goods: List<String>? = null
     var contact: Map<String, String>? = null

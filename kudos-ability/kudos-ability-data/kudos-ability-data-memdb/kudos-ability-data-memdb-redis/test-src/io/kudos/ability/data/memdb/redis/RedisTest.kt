@@ -1,10 +1,14 @@
 package io.kudos.ability.data.memdb.redis
 
+import io.kudos.base.time.toLocalDateTime
 import io.kudos.test.common.SpringTest
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.redis.core.RedisTemplate
+import java.io.Serializable
+import java.time.LocalDateTime
+import java.util.*
 
 /**
  * redis测试用例
@@ -22,6 +26,23 @@ internal class RedisTest : SpringTest() {
         val pair = Pair("1st", "2nd")
         redisTemplate.opsForValue().set("test", pair)
         assertTrue(redisTemplate.opsForValue().get("test") == pair)
+
+        val obj = TestObject("module", 18, "name", Date().toLocalDateTime())
+        redisTemplate.opsForValue().set("obj", obj)
+        assertTrue(redisTemplate.opsForValue().get("obj") == obj)
     }
+
+}
+
+data class TestObject(
+    val module: String?,
+    val age: Int?,
+    val name: String?,
+//        @get:JsonSerialize(using = LocalDateTimeSerializer::class)
+//        @set:JsonDeserialize(using = LocalDateTimeDeserializer::class)
+    var time: LocalDateTime?,
+) : Serializable {
+
+    constructor(): this(null, null, null, null)
 
 }

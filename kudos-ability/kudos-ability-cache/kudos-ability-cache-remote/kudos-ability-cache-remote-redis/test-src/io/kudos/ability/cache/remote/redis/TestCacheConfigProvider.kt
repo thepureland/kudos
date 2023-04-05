@@ -1,4 +1,4 @@
-package io.kudos.ability.cache.local.caffeine
+package io.kudos.ability.cache.remote.redis
 
 import org.soul.ability.cache.common.enums.CacheStrategy
 import org.soul.ability.cache.common.support.CacheConfig
@@ -12,7 +12,7 @@ class TestCacheConfigProvider: ICacheConfigProvider {
 
     private val cacheConfig = CacheConfig().apply {
         name = "test"
-        strategyDictCode = CacheStrategy.SINGLE_LOCAL.name
+        strategyDictCode = CacheStrategy.REMOTE.name
         ttl = Int.MAX_VALUE
     }
 

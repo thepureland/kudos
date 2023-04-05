@@ -42,7 +42,9 @@ open class RedisAutoConfiguration : IComponentInitializer {
 
     @Bean(name = ["soulRedisTemplate"])
     @ConditionalOnMissingBean
-    open fun redisTemplateMap(soulRedisProperties: SoulRedisProperties): SoulRedisTemplate {
+    open fun redisTemplateMap(
+        soulRedisProperties: SoulRedisProperties
+    ): SoulRedisTemplate {
         val redisMap = soulRedisProperties.redisMap
         val redisTemplateMap = mutableMapOf<String, RedisTemplate<Any, Any?>>()
         redisMap.forEach { (key, properties) ->
@@ -73,16 +75,15 @@ open class RedisAutoConfiguration : IComponentInitializer {
      */
     private fun createRedisTemplate(
         redisConnectionFactory: RedisConnectionFactory,
-        redisProperties: RedisExtProperties
+        redisProperties: RedisExtProperties,
     ): RedisTemplate<Any, Any?> {
         val redisTemplate = RedisTemplate<Any, Any?>()
         redisTemplate.connectionFactory = redisConnectionFactory
         redisTemplate.keySerializer = redisProperties.keySerializer()
-        //hash的key序列化
         redisTemplate.hashKeySerializer = redisProperties.hashkeySerializer()
-        //设置value的序列化方式
         redisTemplate.valueSerializer = redisProperties.valueSerializer()
         redisTemplate.hashValueSerializer = redisProperties.hashvalueSerializer()
+        redisTemplate.afterPropertiesSet()
         return redisTemplate
     }
 
