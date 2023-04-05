@@ -1,5 +1,5 @@
 dependencies {
-    api(project(":kudos-base"))
+    api(project(":kudos-context"))
     api("org.springframework.boot:spring-boot-starter-aop")
     api("org.springframework.boot:spring-boot-starter-test")
 

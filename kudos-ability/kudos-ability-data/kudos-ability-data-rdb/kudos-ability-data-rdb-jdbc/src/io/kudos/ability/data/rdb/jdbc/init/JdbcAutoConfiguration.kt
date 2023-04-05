@@ -32,7 +32,7 @@ import javax.annotation.PostConstruct
     ],
     excludeFilters = [ComponentScan.Filter(
         type = FilterType.ASSIGNABLE_TYPE,
-        classes = [JdbcAutoConfiguration::class, RdbJdbcConfiguration::class]
+        classes = [RdbJdbcConfiguration::class]
     )]
 )
 @PropertySource(
@@ -40,7 +40,7 @@ import javax.annotation.PostConstruct
     factory = SoulPropertySourceFactory::class
 )
 @AutoConfigureAfter(ContextAutoConfiguration::class)
-@EnableAutoConfiguration
+@EnableAutoConfiguration // 不然dynamic data source会找不到
 @ImportAutoConfiguration(DynamicDataSourceCreatorAutoConfiguration::class, DynamicDataSourceAutoConfiguration::class)
 open class JdbcAutoConfiguration : IComponentInitializer {
 

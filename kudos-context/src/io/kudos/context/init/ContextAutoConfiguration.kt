@@ -9,12 +9,7 @@ import javax.annotation.PostConstruct
 
 
 @Import(SoulContextBeanDefinitionRegistrar::class)
-@ComponentScan(
-    basePackages = ["io.kudos.context"],
-    excludeFilters = [ComponentScan.Filter(
-        type = FilterType.ASSIGNABLE_TYPE, classes = [ContextAutoConfiguration::class]
-    )]
-)
+@ComponentScan(basePackages = ["io.kudos.context"])
 @AutoConfigureOrder(Ordered.HIGHEST_PRECEDENCE)
 @Configuration // 会使用cglib,碰巧使该类比较早被实例化
 open class ContextAutoConfiguration : IComponentInitializer {

@@ -1,6 +1,5 @@
 package io.kudos.ability.data.rdb.jdbc.kit
 
-import io.kudos.context.init.EnableKudos
 import io.kudos.test.common.SpringTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -12,7 +11,6 @@ import org.soul.ability.data.rdb.jdbc.metadata.RdbTypeEnum
  * @author K
  * @since 1.0.0
  */
-@EnableKudos
 internal class RdbKitTest : SpringTest() {
 
     private val url = "jdbc:h2:~/h2;auto_server=true;DATABASE_TO_LOWER=TRUE"

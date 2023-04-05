@@ -14,13 +14,7 @@ import javax.annotation.PostConstruct
  * @author K
  * @since 1.0.0
  */
-@ComponentScan(
-    basePackages = [
-        "io.kudos.ability.data.rdb.ktorm"
-    ], excludeFilters = [ComponentScan.Filter(
-        type = FilterType.ASSIGNABLE_TYPE, classes = [KtormAutoConfiguration::class]
-    )]
-)
+@ComponentScan(basePackages = ["io.kudos.ability.data.rdb.ktorm"])
 @AutoConfigureAfter(JdbcAutoConfiguration::class)
 open class KtormAutoConfiguration : IComponentInitializer {
 

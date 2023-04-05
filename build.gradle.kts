@@ -31,11 +31,11 @@ allprojects {
     repositories {
         maven { url = uri("https://maven.aliyun.com/repository/public") }
         maven { url = uri("https://maven.aliyun.com/repository/google") }
-        mavenCentral()
-//        google() // 大陆访问不了
-        maven { url = uri("https://repo1.maven.org/maven2") }
-//        maven { url = uri("https://mvnrepository.com") } // 会导致下载maven-metadata.xml时卡很久
-        maven { url = uri("https://central.sonatype.com") }
+//        mavenCentral()
+////        google() // 大陆访问不了
+//        maven { url = uri("https://repo1.maven.org/maven2") }
+////        maven { url = uri("https://mvnrepository.com") } // 会导致下载maven-metadata.xml时卡很久
+//        maven { url = uri("https://central.sonatype.com") }
         maven {
             isAllowInsecureProtocol = true
             url = uri("http://nexus.soulworld.net/repository/maven-public")
@@ -109,9 +109,10 @@ subprojects {
     }
 
     dependencyManagement {
-        resolutionStrategy {
-            cacheChangingModulesFor(0, "seconds")
-        }
+//        resolutionStrategy {
+//            cacheChangingModulesFor(0, "seconds")
+//            cacheDynamicVersionsFor(0, "seconds")
+//        }
 
         imports {
 //            mavenBom("com.alibaba.cloud:spring-cloud-alibaba-dependencies:${Version.ALIBABA_CLOUD}")
