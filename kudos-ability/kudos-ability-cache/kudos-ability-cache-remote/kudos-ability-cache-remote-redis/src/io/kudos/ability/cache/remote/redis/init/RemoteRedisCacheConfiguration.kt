@@ -4,7 +4,7 @@ import io.kudos.ability.cache.common.init.BaseCacheConfiguration
 import io.kudos.ability.cache.common.init.LinkableCacheAutoConfiguration
 import io.kudos.ability.data.memdb.redis.init.RedisAutoConfiguration
 import io.kudos.base.logger.LoggerFactory
-import org.soul.ability.cache.redis.support.SoulRedisCacheManager
+import org.soul.ability.cache.remote.redis.support.SoulRedisCacheManager
 import org.soul.ability.data.memdb.redis.SoulRedisTemplate
 import org.soul.ability.data.memdb.redis.starter.properties.SoulRedisProperties
 import org.springframework.beans.factory.annotation.Value
@@ -16,7 +16,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.cache.CacheManager
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.DependsOn
 import org.springframework.data.redis.cache.RedisCacheConfiguration
 import org.springframework.data.redis.cache.RedisCacheWriter
 import org.springframework.data.redis.serializer.RedisSerializationContext
@@ -34,38 +33,37 @@ import java.util.*
 @AutoConfigureAfter(RedisAutoConfiguration::class)
 @EnableConfigurationProperties(CacheProperties::class)
 @Configuration
-open class RedisCacheConfiguration : BaseCacheConfiguration() {
+@ConditionalOnProperty(prefix = "kudos.ability.cache", name = ["enabled"], havingValue = "true", matchIfMissing = false)
+open class RemoteRedisCacheConfiguration : BaseCacheConfiguration() {
 
     private val log = LoggerFactory.getLogger(this)
 
-    @get:Value("\${kudos.ability.cache.remoteStore}")
+    @Value("\${kudos.ability.cache.remoteStore}")
     private val remoteStore: String? = null
 
     @Bean(name = ["soulRemoteCacheManager"])
-    @DependsOn("soulRedisTemplate")
-    @ConditionalOnProperty(
-        prefix = "kudos.ability.cache",
-        name = ["enabled"],
-        havingValue = "true",
-        matchIfMissing = false
-    )
-    open fun remoteCacheManager(soulRedisTemplate: SoulRedisTemplate, soulRedisProperties: SoulRedisProperties): CacheManager {
+    open fun remoteCacheManager(
+        soulRedisTemplate: SoulRedisTemplate,
+        soulRedisProperties: SoulRedisProperties
+    ): CacheManager {
         var redisTemplate = soulRedisTemplate.getRedisTemplate(remoteStore)
         if (redisTemplate == null) {
             log.warn("找不到${remoteStore}对应的redis配置，使用默认的redis配置")
             redisTemplate = soulRedisTemplate.defaultRedisTemplate
         }
-        val redisCacheConfiguration = RedisCacheConfiguration
+        val keySerializationPair =
+            RedisSerializationContext.SerializationPair.fromSerializer(SoulRedisTemplate.REDIS_KEY_SERIALIZER)
+        val valueSerializationPair =
+            RedisSerializationContext.SerializationPair.fromSerializer(soulRedisProperties.redisMap[remoteStore]!!.valueSerializer())
+        val defaultRedisCacheConfiguration = RedisCacheConfiguration
             .defaultCacheConfig()
             .disableCachingNullValues()
             .entryTtl(Duration.ofSeconds(900)) //默认15分钟
-            .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(SoulRedisTemplate.REDIS_KEY_SERIALIZER))
-            .serializeValuesWith(
-                RedisSerializationContext.SerializationPair.fromSerializer(soulRedisProperties.redisMap[remoteStore]!!.valueSerializer())
-            )
+            .serializeKeysWith(keySerializationPair)
+            .serializeValuesWith(valueSerializationPair)
         val connectionFactory = redisTemplate!!.connectionFactory
         val redisCacheWriter = RedisCacheWriter.nonLockingRedisCacheWriter(connectionFactory)
-        return SoulRedisCacheManager(redisCacheWriter, redisCacheConfiguration)
+        return SoulRedisCacheManager(redisCacheWriter, defaultRedisCacheConfiguration)
     }
 
 }

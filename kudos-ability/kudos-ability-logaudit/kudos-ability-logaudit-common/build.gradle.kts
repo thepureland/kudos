@@ -1,6 +1,6 @@
 dependencies {
     api(project(":kudos-context"))
-    api("org.soul:soul-ability-logaudit-common")
+    api("org.soul:soul-ability-log-audit-common")
 }
 
 sourceSets {

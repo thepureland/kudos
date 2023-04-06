@@ -1,6 +1,6 @@
 dependencies {
     api(project(":kudos-context"))
-    api("org.soul:soul-ability-stream-kafka")
+    api("org.soul:soul-ability-distributed-stream-kafka")
 }
 
 sourceSets {

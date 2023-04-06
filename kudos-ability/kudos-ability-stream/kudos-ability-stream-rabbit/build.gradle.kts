@@ -1,6 +1,6 @@
 dependencies {
     api(project(":kudos-context"))
-    api("org.soul:soul-ability-stream-rabbit")
+    api("org.soul:soul-ability-distributed-stream-rabbit")
 }
 
 sourceSets {

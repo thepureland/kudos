@@ -1,6 +1,6 @@
 dependencies {
     api(project(":kudos-context"))
-    api("org.soul:soul-ability-stream-rocketmq")
+    api("org.soul:soul-ability-distributed-stream-rocketmq")
 }
 
 sourceSets {

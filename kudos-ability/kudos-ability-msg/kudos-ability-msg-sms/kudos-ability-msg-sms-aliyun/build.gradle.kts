@@ -1,6 +1,6 @@
 dependencies {
     api(project(":kudos-context"))
-    api("org.soul:soul-ability-msg-sms-aliyun")
+    api("org.soul:soul-ability-comm-sms-aliyun")
 }
 
 sourceSets {

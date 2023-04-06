@@ -1,6 +1,6 @@
 dependencies {
     api(project(":kudos-context"))
-    api("org.soul:soul-ability-communication-websocket")
+    api("org.soul:soul-ability-comm-websocket")
 
     testImplementation(project(":kudos-test:kudos-test-common"))
 }

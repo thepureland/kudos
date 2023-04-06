@@ -1,6 +1,6 @@
 dependencies {
     api(project(":kudos-context"))
-    api("org.soul:soul-ability-communication-netty")
+    api("org.soul:soul-ability-comm-netty")
 
     testImplementation(project(":kudos-test:kudos-test-common"))
 }

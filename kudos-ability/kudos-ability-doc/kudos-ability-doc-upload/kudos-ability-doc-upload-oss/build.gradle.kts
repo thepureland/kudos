@@ -1,6 +1,6 @@
 dependencies {
     api(project(":kudos-context"))
-    api("org.soul:soul-ability-upload-oss")
+    api("org.soul:soul-ability-file-oss")
 }
 
 sourceSets {

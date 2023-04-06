@@ -1,6 +1,6 @@
 dependencies {
     api(project(":kudos-context"))
-    api("org.soul:soul-ability-notify-mq")
+    api("org.soul:soul-ability-distributed-notify-mq")
 }
 
 sourceSets {

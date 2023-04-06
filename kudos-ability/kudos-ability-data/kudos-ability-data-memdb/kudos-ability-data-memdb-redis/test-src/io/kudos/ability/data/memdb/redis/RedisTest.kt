@@ -30,6 +30,11 @@ internal class RedisTest : SpringTest() {
         val obj = TestObject("module", 18, "name", Date().toLocalDateTime())
         redisTemplate.opsForValue().set("obj", obj)
         assertTrue(redisTemplate.opsForValue().get("obj") == obj)
+
+        // 只有jdk序列化方式才可以
+//        val map = mapOf(obj to "value")
+//        redisTemplate.opsForValue().set("map", map)
+//        assertTrue((redisTemplate.opsForValue().get("map") as Map<*, *>)[obj] == "value")
     }
 
 }

@@ -1,6 +1,6 @@
 dependencies {
     api(project(":kudos-context"))
-    api("org.soul:soul-ability-doc-swagger")
+    api("org.soul:soul-ability-web-swagger")
 }
 
 sourceSets {

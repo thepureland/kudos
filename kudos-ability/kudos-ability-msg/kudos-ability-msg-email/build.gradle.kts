@@ -1,6 +1,6 @@
 dependencies {
     api(project(":kudos-context"))
-    api("org.soul:soul-ability-msg-email")
+    api("org.soul:soul-ability-comm-email")
 }
 
 sourceSets {

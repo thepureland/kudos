@@ -1,6 +1,6 @@
 dependencies {
     api(project(":kudos-context"))
-    api("org.soul:soul-ability-upload-minio")
+    api("org.soul:soul-ability-file-minio")
 }
 
 sourceSets {
