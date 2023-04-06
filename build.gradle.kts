@@ -199,7 +199,7 @@ subprojects {
 
             // base
             dependency("io.github.classgraph:classgraph:4.8.157")
-            dependency("com.alibaba:fastjson:2.0.26")
+//            dependency("com.alibaba:fastjson:2.0.26")
 
             // data
             dependency("org.ktorm:ktorm-core:${Version.KTORM}")

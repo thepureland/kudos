@@ -1,7 +1,7 @@
 dependencies {
     api("org.soul:soul-base")
     api("io.github.classgraph:classgraph")
-    api("com.alibaba:fastjson")
+//    api("com.alibaba:fastjson")
 }
 
 sourceSets {
