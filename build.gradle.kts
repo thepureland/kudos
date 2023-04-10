@@ -38,7 +38,7 @@ allprojects {
 //        maven { url = uri("https://central.sonatype.com") }
         maven {
             isAllowInsecureProtocol = true
-            url = uri("http://nexus.soulworld.net/repository/maven-public")
+            url = uri("https://nexus.soulworld.net/#browse/browse:maven-public")
         }
         mavenLocal()
     }
