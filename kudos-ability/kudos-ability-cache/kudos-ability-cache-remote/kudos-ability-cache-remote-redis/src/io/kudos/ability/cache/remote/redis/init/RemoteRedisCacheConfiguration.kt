@@ -33,7 +33,7 @@ import java.util.*
 @AutoConfigureAfter(RedisAutoConfiguration::class)
 @EnableConfigurationProperties(CacheProperties::class)
 @Configuration
-@ConditionalOnProperty(prefix = "kudos.ability.cache", name = ["enabled"], havingValue = "true", matchIfMissing = false)
+@ConditionalOnProperty(prefix = "kudos.ability.cache", name = ["enabled"], havingValue = "true", matchIfMissing = true)
 open class RemoteRedisCacheConfiguration : BaseCacheConfiguration() {
 
     private val log = LoggerFactory.getLogger(this)

@@ -37,7 +37,7 @@ import javax.annotation.PostConstruct
     value = ["classpath:kudos-ability-linkable-cache.yml"],
     factory = SoulPropertySourceFactory::class
 )
-@ConditionalOnProperty(prefix = "kudos.ability.cache", name = ["enabled"], havingValue = "true", matchIfMissing = false)
+@ConditionalOnProperty(prefix = "kudos.ability.cache", name = ["enabled"], havingValue = "true", matchIfMissing = true)
 @AutoConfigureAfter(ContextAutoConfiguration::class)
 @EnableCaching(proxyTargetClass = true)
 open class LinkableCacheAutoConfiguration : IComponentInitializer {

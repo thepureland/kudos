@@ -1,6 +1,9 @@
 dependencies {
-    api(project(":kudos-context"))
-    api("org.soul:soul-ability-cache-interservice")
+    api(project(":kudos-ability:kudos-ability-cache:kudos-ability-cache-common"))
+    api("org.soul:soul-ability-cache-interservice-client")
+    compileOnly(project(":kudos-ability:kudos-ability-distributed:kudos-ability-distributed-client"))
+
+    testImplementation(project(":kudos-test:kudos-test-common"))
 }
 
 sourceSets {

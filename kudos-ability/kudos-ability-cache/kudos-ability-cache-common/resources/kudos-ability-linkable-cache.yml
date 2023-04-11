@@ -2,7 +2,7 @@ kudos:
   ability:
     cache:
       version:
-      enabled: false
+      enabled: true
       remoteStore: data
 
 

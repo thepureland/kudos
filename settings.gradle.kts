@@ -7,6 +7,10 @@ include("kudos-ability:kudos-ability-cache:kudos-ability-cache-common")
 findProject(":kudos-ability:kudos-ability-cache:kudos-ability-cache-common")?.name = "kudos-ability-cache-common"
 include("kudos-ability:kudos-ability-cache:kudos-ability-cache-interservice")
 findProject(":kudos-ability:kudos-ability-cache:kudos-ability-cache-interservice")?.name = "kudos-ability-cache-interservice"
+include("kudos-ability:kudos-ability-cache:kudos-ability-cache-interservice:kudos-ability-cache-interservice-client")
+findProject(":kudos-ability:kudos-ability-cache:kudos-ability-cache-interservice:kudos-ability-cache-interservice-client")?.name = "kudos-ability-cache-interservice-client"
+include("kudos-ability:kudos-ability-cache:kudos-ability-cache-interservice:kudos-ability-cache-interservice-provider")
+findProject(":kudos-ability:kudos-ability-cache:kudos-ability-cache-interservice:kudos-ability-cache-interservice-provider")?.name = "kudos-ability-cache-interservice-provider"
 include("kudos-ability:kudos-ability-cache:kudos-ability-cache-local")
 findProject(":kudos-ability:kudos-ability-cache:kudos-ability-cache-local")?.name = "kudos-ability-cache-local"
 include("kudos-ability:kudos-ability-cache:kudos-ability-cache-local:kudos-ability-cache-local-caffeine")

@@ -105,7 +105,6 @@ subprojects {
         implementation("org.jetbrains.kotlin:kotlin-reflect:${Version.KOTLIN}")
         implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
         implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.6.4")
-        testImplementation("org.springframework.boot:spring-boot-starter-test:3.0.4")
     }
 
     dependencyManagement {
@@ -115,6 +114,7 @@ subprojects {
 //        }
 
         imports {
+//            mavenBom("org.soul:soul-dependencies:${Version.SOUL}")
 //            mavenBom("com.alibaba.cloud:spring-cloud-alibaba-dependencies:${Version.ALIBABA_CLOUD}")
         }
         dependencies {
@@ -128,7 +128,9 @@ subprojects {
             dependency("org.soul:soul-ability-cache-common:${Version.SOUL}")
             dependency("org.soul:soul-ability-cache-local-caffeine:${Version.SOUL}")
             dependency("org.soul:soul-ability-cache-remote-redis:${Version.SOUL}")
-            dependency("org.soul:soul-ability-cache-interservice:${Version.SOUL}")
+            dependency("org.soul:soul-ability-cache-interservice-client:${Version.SOUL}")
+            dependency("org.soul:soul-ability-cache-interservice-common:${Version.SOUL}")
+            dependency("org.soul:soul-ability-cache-interservice-provider:${Version.SOUL}")
             dependency("org.soul:soul-ability-web-springmvc:${Version.SOUL}")
             dependency("org.soul:soul-ability-comm-netty:${Version.SOUL}")
             dependency("org.soul:soul-ability-comm-websocket:${Version.SOUL}")
@@ -138,7 +140,7 @@ subprojects {
             dependency("org.soul:soul-ability-captcha-web:${Version.SOUL}")
             dependency("org.soul:soul-ability-distributed-client:${Version.SOUL}")
             dependency("org.soul:soul-ability-distributed-config:${Version.SOUL}")
-            dependency("org.soul:soul-ability-distributed-discovery:${Version.SOUL}")
+            dependency("org.soul:soul-ability-distributed-discovery-nacos:${Version.SOUL}")
             dependency("org.soul:soul-ability-distributed-lock:${Version.SOUL}")
             dependency("org.soul:soul-ability-distributed-tx:${Version.SOUL}")
             dependency("org.soul:soul-ability-distributed-client:${Version.SOUL}")
@@ -232,8 +234,8 @@ subprojects {
 
 
             // test
-            dependency("org.springframework.boot:spring-boot-starter-aop:3.0.4")
-            dependency("org.springframework.boot:spring-boot-starter-test:3.0.4")
+            dependency("org.springframework.boot:spring-boot-starter-test:2.7.2")
+            dependency("org.springframework.boot:spring-boot-starter-aop:2.7.2")
             dependency("com.h2database:h2:2.1.214")
             dependency("org.postgresql:postgresql:42.2.20")
             dependency("org.ktorm:ktorm-support-postgresql:${Version.KTORM}")

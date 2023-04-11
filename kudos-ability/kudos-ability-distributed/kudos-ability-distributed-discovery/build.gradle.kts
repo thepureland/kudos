@@ -1,6 +1,6 @@
 dependencies {
     api(project(":kudos-context"))
-    api("org.soul:soul-ability-distributed-discovery")
+//    api("org.soul:soul-ability-distributed-discovery")
 }
 
 sourceSets {
