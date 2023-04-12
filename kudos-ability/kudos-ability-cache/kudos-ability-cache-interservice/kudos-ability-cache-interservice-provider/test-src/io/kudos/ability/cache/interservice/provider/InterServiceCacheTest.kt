@@ -8,24 +8,22 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cloud.openfeign.EnableFeignClients
-import org.springframework.context.annotation.ComponentScan
-import org.springframework.context.annotation.FilterType
 import java.io.Closeable
 
 
 @EnableFeignClients
-@ComponentScan(basePackages = [
-    "io.kudos.ability.cache.interservice.provider",
-], excludeFilters = [
-    ComponentScan.Filter(
-        type = FilterType.ASSIGNABLE_TYPE,
-        classes = [ProviderApplication::class]
-    ),
-    ComponentScan.Filter(
-        type = FilterType.ASSIGNABLE_TYPE,
-        classes = [MockProvider::class]
-    ),
-])
+//@ComponentScan(basePackages = [
+//    "io.kudos.ability.cache.interservice.provider",
+//], excludeFilters = [
+//    ComponentScan.Filter(
+//        type = FilterType.ASSIGNABLE_TYPE,
+//        classes = [ProviderApplication::class]
+//    ),
+//    ComponentScan.Filter(
+//        type = FilterType.ASSIGNABLE_TYPE,
+//        classes = [MockProvider::class]
+//    ),
+//])
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 open class InterServiceCacheTest :SpringTest() {
 

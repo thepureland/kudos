@@ -4,6 +4,7 @@ dependencies {
     api("org.soul:soul-ability-cache-remote-redis")
 
     testImplementation(project(":kudos-test:kudos-test-common"))
+    testImplementation(project(":kudos-ability:kudos-ability-cache:kudos-ability-cache-local:kudos-ability-cache-local-caffeine"))
 }
 
 sourceSets {
