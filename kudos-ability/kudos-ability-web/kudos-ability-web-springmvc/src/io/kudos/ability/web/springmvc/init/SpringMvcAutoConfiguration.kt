@@ -64,9 +64,10 @@ open class SpringMvcAutoConfiguration : IComponentInitializer, WebMvcConfigurer,
     @Value("\${soul.ability.web.swagger.production:true}")
     private val swaggerProduction = false
 
-    @Primary
-    @Bean
-    open fun servletWebServerFactory() = ServletWebServerFactory()
+
+//    @Primary
+//    @Bean
+//    open fun servletWebServerFactory() = ServletWebServerFactory()
 
 //    open fun webServerFactory(): TomcatServletWebServerFactory {
 //        val factory = TomcatServletWebServerFactory()

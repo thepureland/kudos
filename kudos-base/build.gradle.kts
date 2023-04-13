@@ -1,7 +1,8 @@
 dependencies {
     api("org.soul:soul-base")
     api("io.github.classgraph:classgraph")
-//    api("com.alibaba:fastjson")
+
+    testImplementation(project(":kudos-test:kudos-test-common"))
 }
 
 sourceSets {
