@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>io.kudos</groupId>
+        <artifactId>kudos-ability-distributed-config</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>kudos-ability-distributed-config-nacos</artifactId>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.kudos</groupId>
+            <artifactId>kudos-context</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.soul</groupId>
+            <artifactId>soul-ability-distributed-config-nacos</artifactId>
+        </dependency>
+
+        <!-- test -->
+        <dependency>
+            <groupId>io.kudos</groupId>
+            <artifactId>kudos-test-common</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+            <scope>test</scope>
+            <optional>true</optional>
+        </dependency>
+    </dependencies>
+
+
+</project>

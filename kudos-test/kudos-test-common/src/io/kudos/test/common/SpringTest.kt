@@ -1,6 +1,5 @@
 package io.kudos.test.common
 
-import io.kudos.base.lang.SystemKit
 import org.springframework.boot.test.context.SpringBootTest
 
 /**

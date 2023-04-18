@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>io.kudos</groupId>
+        <artifactId>kudos-ability</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <name>kudos-ability-security</name>
+    <artifactId>kudos-ability-security</artifactId>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>kudos-ability-security-captcha</module>
+        <module>kudos-ability-security-common</module>
+        <module>kudos-ability-security-spring</module>
+    </modules>
+
+</project>
