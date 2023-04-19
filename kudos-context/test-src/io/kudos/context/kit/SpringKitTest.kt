@@ -2,26 +2,29 @@ package io.kudos.context.kit
 
 import io.kudos.context.support.AnotherTestBean
 import io.kudos.context.support.ITestBean
-import io.kudos.test.common.SpringTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
+import org.springframework.boot.autoconfigure.SpringBootApplication
+import org.springframework.boot.test.context.SpringBootTest
 
-internal open class SpringKitTest: SpringTest() {
+@SpringBootTest
+@SpringBootApplication(scanBasePackages = ["io.kudos.context"])
+internal open class SpringKitTest {
 
     @Test
-    fun getBean() {
+    fun getBeanByName() {
         assertNotNull(SpringKit.getBean("testBean"))
     }
 
     @Test
-    fun testGetBean() {
+    fun getBeanByType() {
         assertNotNull(SpringKit.getBean(AnotherTestBean::class))
     }
 
     @Test
     fun getProperty() {
-        assertEquals("false", SpringKit.getProperty("spring.cloud.config.enabled"))
+        assertEquals("true", SpringKit.getProperty("kudos.context.test"))
     }
 
     @Test
