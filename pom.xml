@@ -22,7 +22,9 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <kotlin.code.style>official</kotlin.code.style>
+        <maven.compiler.source>17</maven.compiler.source>
         <kotlin.compiler.jvmTarget>17</kotlin.compiler.jvmTarget>
+        <kotlin.compiler.incremental>true</kotlin.compiler.incremental>
         <submodule.target.prefix>${project.basedir}/submodule-targets</submodule.target.prefix>
         <kudos.version>1.0.0-SNAPSHOT</kudos.version>
         <kotlin.version>1.8.10</kotlin.version>
@@ -83,8 +85,6 @@
                 <directory>test-resources</directory>
             </testResource>
         </testResources>
-
-        <directory>${project.basedir}/build/${}</directory>
 
         <plugins>
             <plugin>

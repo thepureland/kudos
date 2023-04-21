@@ -22,7 +22,7 @@
             <groupId>io.kudos</groupId>
             <artifactId>kudos-ability-distributed-client</artifactId>
             <version>1.0.0-SNAPSHOT</version>
-            <scope>provider</scope>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.soul</groupId>

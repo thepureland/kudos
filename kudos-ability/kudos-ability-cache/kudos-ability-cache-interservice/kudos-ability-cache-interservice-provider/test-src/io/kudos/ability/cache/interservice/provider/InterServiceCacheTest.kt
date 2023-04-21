@@ -12,18 +12,6 @@ import java.io.Closeable
 
 
 @EnableFeignClients
-//@ComponentScan(basePackages = [
-//    "io.kudos.ability.cache.interservice.provider",
-//], excludeFilters = [
-//    ComponentScan.Filter(
-//        type = FilterType.ASSIGNABLE_TYPE,
-//        classes = [ProviderApplication::class]
-//    ),
-//    ComponentScan.Filter(
-//        type = FilterType.ASSIGNABLE_TYPE,
-//        classes = [MockProvider::class]
-//    ),
-//])
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 open class InterServiceCacheTest :SpringTest() {
 

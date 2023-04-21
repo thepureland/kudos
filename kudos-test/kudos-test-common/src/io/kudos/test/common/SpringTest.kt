@@ -9,10 +9,4 @@ import org.springframework.boot.test.context.SpringBootTest
  * @since 1.0.0
  */
 @SpringBootTest(classes = [TestApplication::class])
-open class SpringTest {
-
-    constructor() {
-//        SystemKit.setEnvVars(mapOf("spring.cloud.config.enabled" to "false"))
-    }
-
-}
+open class SpringTest

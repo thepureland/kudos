@@ -13,6 +13,7 @@ import org.soul.ability.web.springmvc.handler.BadRequestExceptionHandler
 import org.soul.ability.web.springmvc.handler.GlobalExceptionHandler
 import org.soul.ability.web.springmvc.handler.GlobalResponseBodyHandler
 import org.soul.ability.web.springmvc.init.DefaultWebContextInitializer
+import org.soul.ability.web.springmvc.init.ServletWebServerFactory
 import org.soul.ability.web.springmvc.init.SoulRequestContextListener
 import org.soul.context.core.IContextInitializer
 import org.soul.context.core.SoulPropertySourceFactory
@@ -23,7 +24,6 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
-import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory
 import org.springframework.boot.web.servlet.ServletListenerRegistrationBean
 import org.springframework.boot.web.servlet.ServletRegistrationBean
 import org.springframework.context.annotation.*
@@ -48,13 +48,7 @@ import javax.annotation.PostConstruct
 @EnableWebMvc
 @AutoConfigureAfter(ContextAutoConfiguration::class)
 @PropertySource(value = ["classpath:kudos-ability-web-springmvc.yml"], factory = SoulPropertySourceFactory::class)
-@ComponentScan(
-    excludeFilters = [ComponentScan.Filter(
-        type = FilterType.ASSIGNABLE_TYPE,
-        classes = [TomcatServletWebServerFactory::class]
-    )]
-)
-open class SpringMvcAutoConfiguration : IComponentInitializer, WebMvcConfigurer, BeanFactoryPostProcessor {
+open class SpringMvcAutoConfiguration : IComponentInitializer, WebMvcConfigurer {
 
     private val log = LoggerFactory.getLogger(this)
 
@@ -64,24 +58,8 @@ open class SpringMvcAutoConfiguration : IComponentInitializer, WebMvcConfigurer,
     @Value("\${soul.ability.web.swagger.production:true}")
     private val swaggerProduction = false
 
-
-//    @Primary
-//    @Bean
-//    open fun servletWebServerFactory() = ServletWebServerFactory()
-
-//    open fun webServerFactory(): TomcatServletWebServerFactory {
-//        val factory = TomcatServletWebServerFactory()
-//        factory.addConnectorCustomizers(TomcatConnectorCustomizer { connector: Connector ->
-//            // 解决用tomcat时，get请求传入特殊字符报400错误的问题
-//            connector.setProperty("relaxedPathChars", "\"<>[\\]^`{|}")
-//            connector.setProperty("relaxedQueryChars", "\"<>[\\]^`{|}")
-//        })
-//        return factory
-//    }
-
-//    @Primary
-//    @Bean
-//    open fun servletWebServerApplicationContext() = ServletWebServerApplicationContext()
+    @Bean
+    open fun servletWebServerFactory() = ServletWebServerFactory()
 
     @Bean
     @ConditionalOnMissingBean
@@ -179,17 +157,6 @@ open class SpringMvcAutoConfiguration : IComponentInitializer, WebMvcConfigurer,
     @PostConstruct
     override fun init() {
         log.info("【kudos-ability-web-springmvc】初始化完成.")
-    }
-
-    override fun postProcessBeanFactory(beanFactory: ConfigurableListableBeanFactory) {
-        val beanNames = beanFactory.getBeanNamesForType(ServletWebServerFactory::class.java, true, false)
-        for (beanName in beanNames) {
-            val beanDefinition = beanFactory.getBeanDefinition(beanName)
-            if (beanName == "tomcatServletWebServerFactory") {
-                // 将 Bean 设置为非自动装配候选对象，以便在解析依赖关系时不会选择它
-                beanDefinition.isAutowireCandidate = false
-            }
-        }
     }
 
 }
