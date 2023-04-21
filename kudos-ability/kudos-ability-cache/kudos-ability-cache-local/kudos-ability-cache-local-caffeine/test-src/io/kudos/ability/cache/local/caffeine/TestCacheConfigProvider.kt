@@ -3,9 +3,14 @@ package io.kudos.ability.cache.local.caffeine
 import org.soul.ability.cache.common.enums.CacheStrategy
 import org.soul.ability.cache.common.support.CacheConfig
 import org.soul.ability.cache.common.support.ICacheConfigProvider
-import org.springframework.stereotype.Component
 
-@Component
+
+/**
+ * 模拟缓存配置信息提供者
+ *
+ * @author K
+ * @since 1.0.0
+ */
 class TestCacheConfigProvider: ICacheConfigProvider {
 
     private val CACHE_NAME = "test"

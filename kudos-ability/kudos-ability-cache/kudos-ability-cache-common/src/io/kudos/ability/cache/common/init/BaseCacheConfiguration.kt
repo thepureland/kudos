@@ -1,6 +1,7 @@
 package io.kudos.ability.cache.common.init
 
 import org.soul.ability.cache.common.batch.DefaultKeysGenerator
+import org.soul.ability.cache.common.batch.IKeysGenerator
 import org.soul.ability.cache.common.starter.properties.CacheItemsProperties
 import org.soul.ability.cache.common.starter.properties.CacheVersionConfig
 import org.soul.ability.cache.common.support.ContextKeyGenerator
@@ -43,6 +44,6 @@ open class BaseCacheConfiguration {
 
     @Bean("defaultKeysGenerator")
     @ConditionalOnMissingBean
-    open fun keysGenerator(): DefaultKeysGenerator = DefaultKeysGenerator()
+    open fun keysGenerator(): IKeysGenerator = DefaultKeysGenerator()
 
 }

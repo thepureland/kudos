@@ -8,7 +8,13 @@ import org.springframework.stereotype.Service
 import java.io.Serializable
 import java.time.LocalDateTime
 
-@Service
+
+/**
+ * 批量缓存测试模拟服务
+ *
+ * @author K
+ * @since 1.0.0
+ */
 @CacheConfig(cacheNames = ["test"])
 open class BatchCacheableTestService {
 

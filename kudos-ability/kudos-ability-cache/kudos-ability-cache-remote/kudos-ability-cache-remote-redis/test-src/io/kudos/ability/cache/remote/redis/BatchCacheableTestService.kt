@@ -4,11 +4,9 @@ import io.kudos.base.logger.LoggerFactory
 import org.soul.ability.cache.common.batch.BatchCacheable
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.Cacheable
-import org.springframework.stereotype.Service
 import java.io.Serializable
 import java.time.LocalDateTime
 
-@Service
 @CacheConfig(cacheNames = ["test"])
 open class BatchCacheableTestService {
 

@@ -20,7 +20,7 @@ import java.util.concurrent.CountDownLatch
  * @since 1.0.0
  */
 @EnableKudosTest
-@Import(CacheTestService::class)
+@Import(CacheTestService::class, TestCacheConfigProvider::class)
 @ContextConfiguration(loader = LocalRemoteCacheTest.LocalRemoteCacheContextLoader::class)
 internal class LocalRemoteCacheTest {
 

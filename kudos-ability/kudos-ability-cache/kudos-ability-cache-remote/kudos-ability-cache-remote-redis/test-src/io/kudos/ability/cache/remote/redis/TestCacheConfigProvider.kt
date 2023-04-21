@@ -3,9 +3,7 @@ package io.kudos.ability.cache.remote.redis
 import org.soul.ability.cache.common.enums.CacheStrategy
 import org.soul.ability.cache.common.support.CacheConfig
 import org.soul.ability.cache.common.support.ICacheConfigProvider
-import org.springframework.stereotype.Component
 
-@Component
 class TestCacheConfigProvider: ICacheConfigProvider {
 
     private val CACHE_NAME = "test"

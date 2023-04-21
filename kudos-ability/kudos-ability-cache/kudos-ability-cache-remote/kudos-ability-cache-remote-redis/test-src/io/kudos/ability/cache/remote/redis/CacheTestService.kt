@@ -5,9 +5,7 @@ import io.kudos.base.logger.LoggerFactory
 import io.kudos.context.kit.SpringKit
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.cache.annotation.Cacheable
-import org.springframework.stereotype.Component
 
-@Component
 open class CacheTestService {
 
 //    @Autowired
