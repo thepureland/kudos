@@ -1,33 +1,26 @@
 package io.kudos.ability.cache.interservice.provider
 
-import io.kudos.context.kit.SpringKit
-import io.kudos.test.common.SpringTest
-import org.junit.jupiter.api.AfterAll
-import org.junit.jupiter.api.BeforeAll
+import io.kudos.test.common.EnableKudosTest
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.cloud.openfeign.EnableFeignClients
-import java.io.Closeable
+import org.springframework.context.annotation.Import
 
 
+/**
+ * 服务间缓存测试用例
+ *
+ * @author K
+ * @since 1.0.0
+ */
+@EnableKudosTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 @EnableFeignClients
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-open class InterServiceCacheTest :SpringTest() {
+@Import(MockProvider::class)
+open class InterServiceCacheTest {
 
     @Autowired
     private lateinit var proxy: IMockProxy
-
-    @BeforeAll
-    open fun startupProvider() {
-        ProviderApplication.main(emptyArray())
-    }
-
-    @AfterAll
-    open fun shutdownProvider() {
-        (SpringKit.getApplicationContext() as Closeable).close()
-    }
-
 
     @Test
     fun same() {

@@ -19,8 +19,6 @@ import org.soul.context.core.IContextInitializer
 import org.soul.context.core.SoulPropertySourceFactory
 import org.soul.context.locale.DateFormattor
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.beans.factory.config.BeanFactoryPostProcessor
-import org.springframework.beans.factory.config.ConfigurableListableBeanFactory
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
@@ -55,11 +53,13 @@ open class SpringMvcAutoConfiguration : IComponentInitializer, WebMvcConfigurer 
     /**
      * Swagger是否屏蔽生产环境
      */
-    @Value("\${soul.ability.web.swagger.production:true}")
-    private val swaggerProduction = false
+    @Value("\${kudos.ability.web.swagger.production:true}")
+    private val swaggerProduction = true
+
 
     @Bean
-    open fun servletWebServerFactory() = ServletWebServerFactory()
+    @ConditionalOnMissingBean
+    open fun webServerFactory() = ServletWebServerFactory()
 
     @Bean
     @ConditionalOnMissingBean

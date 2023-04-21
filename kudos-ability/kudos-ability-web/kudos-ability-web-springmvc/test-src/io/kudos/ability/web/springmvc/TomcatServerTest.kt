@@ -4,6 +4,12 @@ import io.kudos.test.common.TestSpringBootContextLoader
 import org.springframework.test.context.ContextConfiguration
 
 
+/**
+ * tomcat服务器测试用例
+ *
+ * @author K
+ * @since 5.0.0
+ */
 @ContextConfiguration(loader = TomcatServerTest.TomcatServerTestContextLoader::class)
 open class TomcatServerTest : BaseWebServerTest() {
 

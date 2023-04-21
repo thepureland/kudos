@@ -6,6 +6,12 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 
+/**
+ * 模拟Controller
+ *
+ * @author K
+ * @since 1.0.0
+ */
 @RestController
 open class MockProvider {
 

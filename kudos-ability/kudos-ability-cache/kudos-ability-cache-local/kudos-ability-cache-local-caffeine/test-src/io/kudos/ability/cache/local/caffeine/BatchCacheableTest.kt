@@ -1,6 +1,6 @@
 package io.kudos.ability.cache.local.caffeine
 
-import io.kudos.test.common.SpringTest
+import io.kudos.test.common.EnableKudosTest
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
@@ -12,8 +12,9 @@ import java.util.concurrent.CountDownLatch
  * @author K
  * @since 1.0.0
  */
+@EnableKudosTest
 @ContextConfiguration(loader = LocalCacheTestContextLoader::class)
-class BatchCacheableTest : SpringTest() {
+class BatchCacheableTest {
 
     @Autowired
     private lateinit var testCacheService: BatchCacheableTestService

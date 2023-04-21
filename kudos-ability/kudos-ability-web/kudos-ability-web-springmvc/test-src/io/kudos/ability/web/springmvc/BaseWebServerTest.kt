@@ -2,7 +2,7 @@ package io.kudos.ability.web.springmvc
 
 import io.kudos.base.data.json.JsonKit
 import io.kudos.base.net.http.HttpClientKit
-import io.kudos.context.init.EnableKudos
+import io.kudos.test.common.EnableKudosTest
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
@@ -13,9 +13,14 @@ import java.net.http.HttpResponse
 import java.time.Duration
 
 
-@EnableKudos
-@Import(TestController::class)
-@SpringBootTest(classes = [BaseWebServerTest::class], webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
+/**
+ * web server测试用例基类
+ *
+ * @author K
+ * @since 5.0.0
+ */
+@Import(MockController::class)
+@EnableKudosTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 abstract class BaseWebServerTest {
 
     @Test

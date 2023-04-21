@@ -8,7 +8,7 @@ import io.kudos.ability.data.rdb.ktorm.table.TestTableKit
 import io.kudos.ability.data.rdb.ktorm.table.TestTables
 import io.kudos.base.support.payload.ListSearchPayload
 import io.kudos.base.support.payload.SearchPayload
-import io.kudos.test.common.SpringTest
+import io.kudos.test.common.EnableKudosTest
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeAll
@@ -28,8 +28,9 @@ import java.time.LocalDateTime
  * @author K
  * @since 1.0.0
  */
+@EnableKudosTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-internal class BaseReadOnlyDaoTest : SpringTest() {
+internal class BaseReadOnlyDaoTest {
 
     @Autowired
     private lateinit var testTableDao: TestTableDao

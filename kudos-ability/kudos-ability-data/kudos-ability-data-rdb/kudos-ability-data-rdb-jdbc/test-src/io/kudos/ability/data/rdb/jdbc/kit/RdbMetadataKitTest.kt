@@ -1,7 +1,7 @@
 package io.kudos.ability.data.rdb.jdbc.kit
 
 import io.kudos.ability.data.rdb.jdbc.table.TestTableKit
-import io.kudos.test.common.SpringTest
+import io.kudos.test.common.EnableKudosTest
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeAll
@@ -15,8 +15,9 @@ import org.soul.ability.data.rdb.jdbc.metadata.TableTypeEnum
  * @author K
  * @since 1.0.0
  */
+@EnableKudosTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-internal class RdbMetadataKitTest : SpringTest() {
+internal class RdbMetadataKitTest {
 
     @BeforeAll
     fun setUp() {

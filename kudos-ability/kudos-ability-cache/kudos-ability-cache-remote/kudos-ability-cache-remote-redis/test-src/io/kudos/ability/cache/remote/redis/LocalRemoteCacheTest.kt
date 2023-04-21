@@ -1,6 +1,6 @@
 package io.kudos.ability.cache.remote.redis
 
-import io.kudos.test.common.SpringTest
+import io.kudos.test.common.EnableKudosTest
 import io.kudos.test.common.TestSpringBootContextLoader
 import org.junit.jupiter.api.Test
 import org.soul.ability.cache.common.MixCacheManager
@@ -19,9 +19,10 @@ import java.util.concurrent.CountDownLatch
  * @author K
  * @since 1.0.0
  */
+@EnableKudosTest
 @Import(CacheTestService::class)
 @ContextConfiguration(loader = LocalRemoteCacheTest.LocalRemoteCacheContextLoader::class)
-internal class LocalRemoteCacheTest : SpringTest() {
+internal class LocalRemoteCacheTest {
 
     @Autowired
     private lateinit var cacheTestService: CacheTestService

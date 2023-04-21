@@ -1,6 +1,9 @@
 package io.kudos.context.init
 
+import org.springframework.boot.SpringBootConfiguration
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
+import org.springframework.boot.autoconfigure.web.servlet.ServletWebServerFactoryAutoConfiguration
 import java.lang.annotation.Inherited
 import kotlin.reflect.KClass
 
@@ -17,7 +20,8 @@ import kotlin.reflect.KClass
 @Inherited
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.ANNOTATION_CLASS, AnnotationTarget.CLASS)
-@ImportAutoConfiguration(ComponentInitializerSelector::class)
+@ImportAutoConfiguration(value = [ComponentInitializerSelector::class])
+@EnableAutoConfiguration(exclude = [ServletWebServerFactoryAutoConfiguration::class])
 annotation class EnableKudos(
 
     /**

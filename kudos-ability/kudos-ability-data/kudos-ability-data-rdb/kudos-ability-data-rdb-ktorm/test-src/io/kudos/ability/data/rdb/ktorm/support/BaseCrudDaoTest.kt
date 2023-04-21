@@ -6,7 +6,7 @@ import io.kudos.ability.data.rdb.ktorm.table.TestTableKit
 import io.kudos.ability.data.rdb.ktorm.table.TestTables
 import io.kudos.base.support.payload.SearchPayload
 import io.kudos.base.support.payload.UpdatePayload
-import io.kudos.test.common.SpringTest
+import io.kudos.test.common.EnableKudosTest
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -24,8 +24,9 @@ import java.time.LocalDateTime
  * @author K
  * @since 1.0.0
  */
+@EnableKudosTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-internal open class BaseCrudDaoTest : SpringTest() {
+internal open class BaseCrudDaoTest {
 
     @Autowired
     private lateinit var testTableDao: TestTableDao

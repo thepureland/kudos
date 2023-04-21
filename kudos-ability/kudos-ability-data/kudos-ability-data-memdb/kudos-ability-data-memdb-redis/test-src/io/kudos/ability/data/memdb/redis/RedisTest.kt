@@ -1,7 +1,7 @@
 package io.kudos.ability.data.memdb.redis
 
 import io.kudos.base.time.toLocalDateTime
-import io.kudos.test.common.SpringTest
+import io.kudos.test.common.EnableKudosTest
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -16,7 +16,8 @@ import java.util.*
  * @author K
  * @since 1.0.0
  */
-internal class RedisTest : SpringTest() {
+@EnableKudosTest
+internal class RedisTest {
 
     @Autowired
     private lateinit var redisTemplate: RedisTemplate<Any, Any?>

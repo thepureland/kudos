@@ -1,6 +1,6 @@
 package io.kudos.ability.cache.remote.redis
 
-import io.kudos.test.common.SpringTest
+import io.kudos.test.common.EnableKudosTest
 import io.kudos.test.common.TestSpringBootContextLoader
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -18,9 +18,10 @@ import org.springframework.test.context.ContextConfiguration
  * @author K
  * @since 1.0.0
  */
+@EnableKudosTest
 @Import(CacheTestService::class)
 @ContextConfiguration(loader = NoCacheTest.NoCacheTestContextLoader::class)
-internal class NoCacheTest : SpringTest() {
+internal class NoCacheTest {
 
     @Autowired
     private lateinit var cacheTestService: CacheTestService
