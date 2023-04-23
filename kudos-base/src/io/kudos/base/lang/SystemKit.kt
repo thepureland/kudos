@@ -2,13 +2,11 @@ package io.kudos.base.lang
 
 import io.kudos.base.lang.string.StringKit
 import io.kudos.base.logger.LoggerFactory
-import io.kudos.base.support.Consts
 import org.soul.base.lang.SystemTool
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStream
 import java.io.InputStreamReader
-import java.util.*
 import java.util.regex.Pattern
 
 /**
@@ -21,18 +19,18 @@ object SystemKit {
 
     private val log = LoggerFactory.getLogger(this)
 
-    /**
-     * 设置系统环境变量
-     *
-     * @param vars Map(变量名，变量值)
-     * @author https://blog.csdn.net/n1007530194/article/details/97130931
-     * @author K
-     * @since 1.0.0
-     */
-    @Suppress(Consts.Suppress.UNCHECKED_CAST)
-    fun setEnvVars(vars: Map<String, String>) {
-        SystemTool.setEnvVars(vars)
-    }
+//    /**
+//     * 设置系统环境变量
+//     *
+//     * @param vars Map(变量名，变量值)
+//     * @author https://blog.csdn.net/n1007530194/article/details/97130931
+//     * @author K
+//     * @since 1.0.0
+//     */
+//    @Suppress(Consts.Suppress.UNCHECKED_CAST)
+//    fun setEnvVars(vars: Map<String, String>) {
+//        SystemTool.setEnvVars(vars)
+//    }
 
     /**
      * 执行单个系统命令

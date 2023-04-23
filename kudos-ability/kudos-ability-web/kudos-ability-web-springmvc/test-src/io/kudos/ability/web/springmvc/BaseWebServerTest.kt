@@ -5,6 +5,7 @@ import io.kudos.base.net.http.HttpClientKit
 import io.kudos.test.common.EnableKudosTest
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.context.annotation.Import
 import java.net.URI
 import java.net.http.HttpClient
@@ -20,12 +21,15 @@ import java.time.Duration
  * @since 5.0.0
  */
 @Import(MockController::class)
-@EnableKudosTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
+@EnableKudosTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 abstract class BaseWebServerTest {
+
+    @LocalServerPort
+    private val port = 8080
 
     @Test
     fun get() {
-        val url = "http://localhost:8880/test/get"
+        val url = "http://localhost:${port}/test/get"
         val httpClientBuilder = HttpClient.newBuilder()
             .version(HttpClient.Version.HTTP_2)
             .connectTimeout(Duration.ofSeconds(5))
