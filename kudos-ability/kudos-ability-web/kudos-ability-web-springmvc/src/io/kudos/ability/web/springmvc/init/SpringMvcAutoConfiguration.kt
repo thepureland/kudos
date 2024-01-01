@@ -1,12 +1,10 @@
 package io.kudos.ability.web.springmvc.init
 
-import com.fasterxml.jackson.databind.json.JsonMapper
+import com.fasterxml.jackson.databind.SerializationFeature
 import io.kudos.base.logger.LoggerFactory
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
 import io.kudos.context.kit.SpringKit
-import org.soul.ability.web.common.consts.WebCommonConst
-import org.soul.ability.web.common.init.I18nDictServlet
 import org.soul.ability.web.common.session.SessionManager
 import org.soul.ability.web.springmvc.CorsHandlerInterceptor
 import org.soul.ability.web.springmvc.handler.BadRequestExceptionHandler
@@ -15,16 +13,15 @@ import org.soul.ability.web.springmvc.handler.GlobalResponseBodyHandler
 import org.soul.ability.web.springmvc.init.DefaultWebContextInitializer
 import org.soul.ability.web.springmvc.init.ServletWebServerFactory
 import org.soul.ability.web.springmvc.init.SoulRequestContextListener
+import org.soul.ability.web.springmvc.starter.properties.GlobalResponseProperties
 import org.soul.context.core.IContextInitializer
 import org.soul.context.core.SoulPropertySourceFactory
-import org.soul.context.locale.DateFormattor
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.web.servlet.ServletListenerRegistrationBean
-import org.springframework.boot.web.servlet.ServletRegistrationBean
-import org.springframework.context.annotation.*
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.PropertySource
 import org.springframework.http.converter.HttpMessageConverter
 import org.springframework.http.converter.StringHttpMessageConverter
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter
@@ -56,6 +53,9 @@ open class SpringMvcAutoConfiguration : IComponentInitializer, WebMvcConfigurer 
     @Value("\${kudos.ability.web.swagger.production:true}")
     private val swaggerProduction = true
 
+    @Bean
+    @ConditionalOnMissingBean
+    open fun globalResponseProperties() = GlobalResponseProperties()
 
     @Bean
     @ConditionalOnMissingBean
@@ -74,15 +74,15 @@ open class SpringMvcAutoConfiguration : IComponentInitializer, WebMvcConfigurer 
         return registrationBean
     }
 
-    @Bean
-    @ConditionalOnBean
-    open fun i18nDictService(): ServletRegistrationBean<I18nDictServlet> {
-        val registrationBean = ServletRegistrationBean(
-            I18nDictServlet(), WebCommonConst.DICT_URL_GET, WebCommonConst.DICT_URL_ALL
-        )
-        registrationBean.setLoadOnStartup(1)
-        return registrationBean
-    }
+//    @Bean
+//    @ConditionalOnBean
+//    open fun i18nDictService(): ServletRegistrationBean<I18nDictServlet> {
+//        val registrationBean = ServletRegistrationBean(
+//            I18nDictServlet(), WebCommonConst.DICT_URL_GET, WebCommonConst.DICT_URL_ALL
+//        )
+//        registrationBean.setLoadOnStartup(1)
+//        return registrationBean
+//    }
 
     @Bean
     @ConditionalOnMissingBean
@@ -135,13 +135,12 @@ open class SpringMvcAutoConfiguration : IComponentInitializer, WebMvcConfigurer 
     }
 
     override fun extendMessageConverters(converters: List<HttpMessageConverter<*>?>) {
-        val mapper = JsonMapper()
-        mapper.dateFormat = DateFormattor()
         for (converter in converters) {
             if (converter is StringHttpMessageConverter) {
                 converter.defaultCharset = StandardCharsets.UTF_8
-            } else if (converter is MappingJackson2HttpMessageConverter) {
-                converter.objectMapper.dateFormat = DateFormattor()
+            }
+            if (converter is MappingJackson2HttpMessageConverter) {
+                converter.objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, true)
             }
         }
     }

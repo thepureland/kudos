@@ -3,11 +3,11 @@ package io.kudos.ability.web.springmvc.controller
 import io.kudos.base.support.biz.IBaseCrudBiz
 import io.kudos.base.support.payload.FormPayload
 import io.kudos.base.support.payload.ListSearchPayload
+import jakarta.validation.Valid
 import org.soul.base.support.result.IJsonResult
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
-import javax.validation.Valid
 
 
 /**

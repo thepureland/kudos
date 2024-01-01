@@ -23,7 +23,7 @@ object RdbMetadataKit {
      * @author K
      * @since 1.0.0
      */
-    fun getTablesByType(vararg tableTypes: TableTypeEnum?, conn: Connection? = null): List<Table<*>> =
+    fun getTablesByType(vararg tableTypes: TableTypeEnum?, conn: Connection? = null): List<Table> =
         RdbMetadataTool.getTablesByType(tableTypes, conn)
 
     /**
@@ -35,7 +35,7 @@ object RdbMetadataKit {
      * @author K
      * @since 1.0.0
      */
-    fun getTableByName(tableName: String, conn: Connection? = null): Table<*>? =
+    fun getTableByName(tableName: String, conn: Connection? = null): Table? =
         RdbMetadataTool.getTableByName(tableName, conn)
 
     /**

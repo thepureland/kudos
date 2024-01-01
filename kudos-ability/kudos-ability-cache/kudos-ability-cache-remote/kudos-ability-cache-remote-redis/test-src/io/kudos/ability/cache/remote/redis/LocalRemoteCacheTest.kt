@@ -2,6 +2,7 @@ package io.kudos.ability.cache.remote.redis
 
 import io.kudos.test.common.EnableKudosTest
 import io.kudos.test.common.TestSpringBootContextLoader
+import io.kudos.test.common.container.RedisTestContainer
 import org.junit.jupiter.api.Test
 import org.soul.ability.cache.common.MixCacheManager
 import org.soul.ability.cache.common.enums.CacheStrategy
@@ -10,6 +11,10 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.cache.CacheManager
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.ContextConfiguration
+import org.springframework.test.context.DynamicPropertyRegistry
+import org.springframework.test.context.DynamicPropertySource
+import org.testcontainers.junit.jupiter.Container
+import org.testcontainers.junit.jupiter.Testcontainers
 import java.util.concurrent.CountDownLatch
 
 
@@ -22,7 +27,23 @@ import java.util.concurrent.CountDownLatch
 @EnableKudosTest
 @Import(CacheTestService::class, TestCacheConfigProvider::class)
 @ContextConfiguration(loader = LocalRemoteCacheTest.LocalRemoteCacheContextLoader::class)
+@Testcontainers(disabledWithoutDocker = true)
 internal class LocalRemoteCacheTest {
+
+    companion object {
+
+        @Container
+//        @ServiceConnection(type = [RedisConnectionDetails::class], name = "redis")
+        @JvmStatic
+        var redisContainer = RedisTestContainer.CONTAINER
+
+        @DynamicPropertySource
+        @JvmStatic
+        fun property(registry: DynamicPropertyRegistry) {
+            RedisTestContainer.properties(registry)
+        }
+
+    }
 
     @Autowired
     private lateinit var cacheTestService: CacheTestService

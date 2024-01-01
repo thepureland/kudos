@@ -1,10 +1,15 @@
 package io.kudos.ability.cache.remote.redis
 
 import io.kudos.test.common.EnableKudosTest
+import io.kudos.test.common.container.RedisTestContainer
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.ContextConfiguration
+import org.springframework.test.context.DynamicPropertyRegistry
+import org.springframework.test.context.DynamicPropertySource
+import org.testcontainers.junit.jupiter.Container
+import org.testcontainers.junit.jupiter.Testcontainers
 import java.util.concurrent.CountDownLatch
 
 /**
@@ -16,10 +21,26 @@ import java.util.concurrent.CountDownLatch
 @EnableKudosTest
 @ContextConfiguration(loader = RemoteCacheTestContextLoader::class)
 @Import(BatchCacheableTestService::class, TestCacheConfigProvider::class)
+@Testcontainers(disabledWithoutDocker = true)
 class BatchCacheableTest {
 
     @Autowired
     private lateinit var testCacheService: BatchCacheableTestService
+
+    companion object {
+
+        @Container
+//        @ServiceConnection(type = [RedisConnectionDetails::class], name = "redis")
+        @JvmStatic
+        var redisContainer = RedisTestContainer.CONTAINER
+
+        @DynamicPropertySource
+        @JvmStatic
+        fun property(registry: DynamicPropertyRegistry) {
+            RedisTestContainer.properties(registry)
+        }
+
+    }
 
     @Test
     fun test() {

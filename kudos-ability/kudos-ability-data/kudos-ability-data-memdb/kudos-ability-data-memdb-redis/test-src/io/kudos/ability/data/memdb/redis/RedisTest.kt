@@ -2,10 +2,15 @@ package io.kudos.ability.data.memdb.redis
 
 import io.kudos.base.time.toLocalDateTime
 import io.kudos.test.common.EnableKudosTest
+import io.kudos.test.common.container.RedisTestContainer
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.redis.core.RedisTemplate
+import org.springframework.test.context.DynamicPropertyRegistry
+import org.springframework.test.context.DynamicPropertySource
+import org.testcontainers.junit.jupiter.Container
+import org.testcontainers.junit.jupiter.Testcontainers
 import java.io.Serializable
 import java.time.LocalDateTime
 import java.util.*
@@ -17,10 +22,28 @@ import java.util.*
  * @since 1.0.0
  */
 @EnableKudosTest
+@Testcontainers(disabledWithoutDocker = true)
 internal class RedisTest {
+
+    companion object {
+
+        @Container
+//        @ServiceConnection(type = [RedisConnectionDetails::class], name = "redis")
+        @JvmStatic
+        var redisContainer = RedisTestContainer.CONTAINER
+
+        @DynamicPropertySource
+        @JvmStatic
+        fun property(registry: DynamicPropertyRegistry) {
+            RedisTestContainer.properties(registry)
+        }
+
+    }
+
 
     @Autowired
     private lateinit var redisTemplate: RedisTemplate<Any, Any?>
+
 
     @Test
     fun test() {

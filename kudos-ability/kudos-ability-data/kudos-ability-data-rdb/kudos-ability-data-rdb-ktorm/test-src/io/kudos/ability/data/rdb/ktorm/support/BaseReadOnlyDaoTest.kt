@@ -8,12 +8,8 @@ import io.kudos.ability.data.rdb.ktorm.table.TestTableKit
 import io.kudos.ability.data.rdb.ktorm.table.TestTables
 import io.kudos.base.support.payload.ListSearchPayload
 import io.kudos.base.support.payload.SearchPayload
-import io.kudos.test.common.EnableKudosTest
-import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
 import org.ktorm.dsl.eq
 import org.soul.base.query.Criteria
 import org.soul.base.query.Criterion
@@ -28,9 +24,9 @@ import java.time.LocalDateTime
  * @author K
  * @since 1.0.0
  */
-@EnableKudosTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-internal class BaseReadOnlyDaoTest {
+@Disabled
+internal open class BaseReadOnlyDaoTest {
 
     @Autowired
     private lateinit var testTableDao: TestTableDao
@@ -112,11 +108,12 @@ internal class BaseReadOnlyDaoTest {
         assertEquals("name1", results.last().name)
 
         // 多个排序条件
+        //! 排序时，null值在各种数据库中，有的在前，有的在后
         val orders = arrayOf(Order.asc(TestTable::height.name), Order.desc(TestTable::name.name))
         results = testTableDao.oneSearch(TestTable::active.name, true, *orders)
         assertEquals(8, results.size)
-        assertEquals("name5", results.first().name)
-        assertEquals("name4", results[5].name)
+        assert(results.first().name in setOf("name5", "name8"))
+        assert(results[5].name in setOf("name4", "name9"))
     }
 
     @Test

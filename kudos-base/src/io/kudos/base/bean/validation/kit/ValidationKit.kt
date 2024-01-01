@@ -1,8 +1,8 @@
 package io.kudos.base.bean.validation.kit
 
+import jakarta.validation.ConstraintViolation
+import jakarta.validation.Validator
 import org.soul.base.bean.validation.tool.ValidationTool
-import javax.validation.ConstraintViolation
-import javax.validation.Validator
 import kotlin.reflect.KClass
 
 /**

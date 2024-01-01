@@ -10,12 +10,13 @@ import org.soul.ability.data.rdb.jdbc.datasource.DefaultDynamicDataSourceLoad
 import org.soul.ability.data.rdb.jdbc.datasource.IDataSourceProxy
 import org.soul.ability.data.rdb.jdbc.datasource.IDynamicDataSourceLoad
 import org.soul.ability.data.rdb.jdbc.starter.RdbJdbcConfiguration
-import org.soul.context.core.SoulPropertySourceFactory
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
-import org.springframework.context.annotation.*
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.ComponentScan
+import org.springframework.context.annotation.FilterType
 import javax.annotation.PostConstruct
 
 
@@ -34,10 +35,6 @@ import javax.annotation.PostConstruct
         type = FilterType.ASSIGNABLE_TYPE,
         classes = [RdbJdbcConfiguration::class]
     )]
-)
-@PropertySource(
-    value = ["classpath:soul-ability-data-rdb-jdbc.yml"],
-    factory = SoulPropertySourceFactory::class
 )
 @AutoConfigureAfter(ContextAutoConfiguration::class)
 @EnableAutoConfiguration // 不然dynamic data source会找不到

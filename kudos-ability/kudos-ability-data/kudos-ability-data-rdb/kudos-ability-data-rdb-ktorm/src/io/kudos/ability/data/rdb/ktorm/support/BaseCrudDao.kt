@@ -53,11 +53,20 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
     override fun insertOnly(entity: E, vararg propertyNames: String): PK {
         val properties = entity.properties
         val columns = ColumnHelper.columnOf(table(), *propertyNames)
-        return database().insertAndGenerateKey(table()) {
-            columns.forEach { (propertyName, column) ->
-                set(column, properties[propertyName])
+        return if (entity.id == null) {
+            database().insertAndGenerateKey(table()) {
+                columns.forEach { (propertyName, column) ->
+                    set(column, properties[propertyName])
+                }
+            } as PK
+        } else {
+            database().insert(table()) {
+                columns.forEach { (propertyName, column) ->
+                    set(column, properties[propertyName])
+                }
             }
-        } as PK
+            entity.id as PK
+        }
     }
 
     override fun insertExclude(entity: E, vararg excludePropertyNames: String): PK {

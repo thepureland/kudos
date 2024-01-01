@@ -18,10 +18,10 @@
             <artifactId>kudos-context</artifactId>
             <version>1.0.0-SNAPSHOT</version>
         </dependency>
-        <dependency>
+        <!--<dependency>
             <groupId>org.soul</groupId>
             <artifactId>soul-ability-web-swagger</artifactId>
-        </dependency>
+        </dependency>-->
 
         <!-- test -->
         <dependency>

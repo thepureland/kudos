@@ -2,8 +2,8 @@ package io.kudos.ability.cache.common.kit
 
 
 import io.kudos.base.logger.LoggerFactory
-import org.soul.ability.cache.common.kit.CacheTool
 import org.soul.ability.cache.common.support.CacheConfig
+import org.soul.ability.cache.common.tools.CacheTool
 import org.springframework.cache.Cache
 import kotlin.reflect.KClass
 
