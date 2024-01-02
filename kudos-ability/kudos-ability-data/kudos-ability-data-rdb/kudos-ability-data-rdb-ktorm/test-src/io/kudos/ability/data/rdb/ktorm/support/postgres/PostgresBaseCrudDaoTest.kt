@@ -7,6 +7,7 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.junit.jupiter.Container
+import org.testcontainers.junit.jupiter.Testcontainers
 
 @EnableKudosTest
 @ActiveProfiles("postgres")
@@ -14,14 +15,14 @@ internal class PostgresBaseCrudDaoTest : BaseCrudDaoTest() {
 
     companion object {
 
-        @Container
-        @JvmStatic
-        val postgresContainer = PostgresTestContainer.CONTAINER
+//        @Container
+//        @JvmStatic
+//        val postgresContainer = PostgresTestContainer.CONTAINER
 
         @DynamicPropertySource
         @JvmStatic
-        fun property(registry: DynamicPropertyRegistry) {
-            PostgresTestContainer.properties(registry)
+        fun registerProperties(registry: DynamicPropertyRegistry) {
+            PostgresTestContainer.start(registry)
         }
 
     }

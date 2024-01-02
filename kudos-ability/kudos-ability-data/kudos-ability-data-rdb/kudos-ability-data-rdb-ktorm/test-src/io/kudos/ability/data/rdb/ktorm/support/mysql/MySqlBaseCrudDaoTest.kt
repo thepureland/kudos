@@ -7,10 +7,8 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.junit.jupiter.Container
-import org.testcontainers.junit.jupiter.Testcontainers
 
 @EnableKudosTest
-@Testcontainers(disabledWithoutDocker = true)
 @ActiveProfiles("mysql")
 internal class MySqlBaseCrudDaoTest : BaseCrudDaoTest() {
 
@@ -22,8 +20,8 @@ internal class MySqlBaseCrudDaoTest : BaseCrudDaoTest() {
 
         @DynamicPropertySource
         @JvmStatic
-        fun property(registry: DynamicPropertyRegistry) {
-            MySqlTestContainer.properties(registry)
+        fun registerProperties(registry: DynamicPropertyRegistry) {
+            MySqlTestContainer.start(registry)
         }
 
     }

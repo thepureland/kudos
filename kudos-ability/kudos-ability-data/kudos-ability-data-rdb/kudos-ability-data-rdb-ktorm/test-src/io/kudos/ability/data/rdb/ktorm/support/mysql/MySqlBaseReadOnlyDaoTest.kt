@@ -11,7 +11,6 @@ import org.testcontainers.junit.jupiter.Testcontainers
 
 
 @EnableKudosTest
-@Testcontainers(disabledWithoutDocker = true)
 @ActiveProfiles("mysql")
 internal class MySqlBaseReadOnlyDaoTest : BaseReadOnlyDaoTest() {
     companion object {
@@ -22,8 +21,8 @@ internal class MySqlBaseReadOnlyDaoTest : BaseReadOnlyDaoTest() {
 
         @DynamicPropertySource
         @JvmStatic
-        fun property(registry: DynamicPropertyRegistry) {
-            MySqlTestContainer.properties(registry)
+        fun registerProperties(registry: DynamicPropertyRegistry) {
+            MySqlTestContainer.start(registry)
         }
 
     }

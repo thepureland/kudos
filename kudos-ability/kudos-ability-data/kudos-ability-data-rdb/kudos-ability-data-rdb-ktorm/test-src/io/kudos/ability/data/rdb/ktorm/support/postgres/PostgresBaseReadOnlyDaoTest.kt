@@ -11,20 +11,19 @@ import org.testcontainers.junit.jupiter.Testcontainers
 
 
 @EnableKudosTest
-@Testcontainers(disabledWithoutDocker = true)
 @ActiveProfiles("postgres")
 internal class PostgresBaseReadOnlyDaoTest : BaseReadOnlyDaoTest() {
 
     companion object {
 
-        @Container
-        @JvmStatic
-        val postgresContainer = PostgresTestContainer.CONTAINER
+//        @Container
+//        @JvmStatic
+//        val postgresContainer = PostgresTestContainer.CONTAINER
 
         @DynamicPropertySource
         @JvmStatic
-        fun property(registry: DynamicPropertyRegistry) {
-            PostgresTestContainer.properties(registry)
+        fun registerProperties(registry: DynamicPropertyRegistry) {
+            PostgresTestContainer.start(registry)
         }
 
     }

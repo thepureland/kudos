@@ -16,6 +16,7 @@ import org.soul.base.query.Criterion
 import org.soul.base.query.enums.OperatorEnum
 import org.soul.base.query.sort.Order
 import org.springframework.beans.factory.annotation.Autowired
+import org.testcontainers.junit.jupiter.Testcontainers
 import java.time.LocalDateTime
 
 /**
@@ -26,6 +27,7 @@ import java.time.LocalDateTime
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Disabled
+@Testcontainers(disabledWithoutDocker = true)
 internal open class BaseReadOnlyDaoTest {
 
     @Autowired

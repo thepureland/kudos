@@ -11,7 +11,6 @@ import org.springframework.cache.CacheManager
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
-import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import java.util.concurrent.CountDownLatch
 
@@ -29,17 +28,12 @@ internal class RemoteCacheTest {
 
     companion object {
 
-        @Container
-//        @ServiceConnection(type = [RedisConnectionDetails::class], name = "redis")
-        @JvmStatic
-        var redisContainer = RedisTestContainer.CONTAINER
-
         @DynamicPropertySource
         @JvmStatic
         fun registerProperties(registry: DynamicPropertyRegistry) {
             registry.add("kudos.ability.cache.enabled") { "true" }
             registry.add("kudos.cache.config.strategy") { CacheStrategy.REMOTE.name }
-            RedisTestContainer.properties(registry)
+            RedisTestContainer.start(registry)
         }
 
     }

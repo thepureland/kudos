@@ -2,26 +2,27 @@ package io.kudos.test.common.container
 
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.testcontainers.containers.FixedHostPortGenericContainer
-
+import org.testcontainers.containers.wait.strategy.Wait
 
 /**
- * mysql测试容器
+ * nacos-server测试容器
  *
  * @author K
  * @since 1.0.0
  */
-object MySqlTestContainer {
+object NacosTestContainer {
 
-    private const val IMAGE_NAME = "mysql:5.7.44"
+    private const val IMAGE_NAME = "nacos/nacos-server:v2.2.3"
 
-    const val PORT = 23306
-
-    const val DATABASE = "test"
+    const val PORT = 28848
 
     private var CONTAINER = FixedHostPortGenericContainer(IMAGE_NAME)
-        .withFixedExposedPort(PORT, 3306)
-        .withEnv("MYSQL_DATABASE", DATABASE)
-        .withEnv("MYSQL_ROOT_PASSWORD", "mysql")
+        .withEnv("MODE", "standalone")
+        .withFixedExposedPort(PORT, 8848)
+        .withFixedExposedPort(29848, 9848)
+        .withFixedExposedPort(29849, 9849)
+        .waitingFor(Wait.forHttp("/nacos"))
+
 
     fun start(registry: DynamicPropertyRegistry?): FixedHostPortGenericContainer<*> {
         CONTAINER.start()
@@ -32,11 +33,7 @@ object MySqlTestContainer {
     }
 
     private fun registerProperties(registry: DynamicPropertyRegistry) {
-        registry.add("spring.datasource.dynamic.datasource.mysql.url") {
-            "jdbc:mysql://${CONTAINER.host}:${PORT}/${CONTAINER.envMap["MYSQL_DATABASE"]}"
-        }
-        registry.add("spring.datasource.dynamic.datasource.mysql.username") { "root" }
-        registry.add("spring.datasource.dynamic.datasource.mysql.password") { CONTAINER.envMap["MYSQL_ROOT_PASSWORD"] }
+
     }
 
     fun getContainer() = CONTAINER
@@ -44,7 +41,7 @@ object MySqlTestContainer {
     @JvmStatic
     fun main(args: Array<String>) {
         start(null)
-        println("mysql localhost port: $PORT")
+        println("nacos localhost port: $PORT")
         Thread.sleep(Long.MAX_VALUE)
     }
 

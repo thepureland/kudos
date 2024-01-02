@@ -15,6 +15,7 @@ import org.soul.base.query.Criteria
 import org.soul.base.query.enums.OperatorEnum
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.transaction.annotation.Transactional
+import org.testcontainers.junit.jupiter.Testcontainers
 import java.time.LocalDateTime
 
 /**
@@ -25,6 +26,7 @@ import java.time.LocalDateTime
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Disabled
+@Testcontainers(disabledWithoutDocker = true)
 internal open class BaseCrudDaoTest {
 
     @Autowired

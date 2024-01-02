@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
-import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import java.io.Serializable
 import java.time.LocalDateTime
@@ -27,15 +26,10 @@ internal class RedisTest {
 
     companion object {
 
-        @Container
-//        @ServiceConnection(type = [RedisConnectionDetails::class], name = "redis")
-        @JvmStatic
-        var redisContainer = RedisTestContainer.CONTAINER
-
         @DynamicPropertySource
         @JvmStatic
-        fun property(registry: DynamicPropertyRegistry) {
-            RedisTestContainer.properties(registry)
+        fun registerProperties(registry: DynamicPropertyRegistry) {
+            RedisTestContainer.start(registry)
         }
 
     }

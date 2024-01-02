@@ -4,17 +4,40 @@ import org.springframework.test.context.DynamicPropertyRegistry
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.utility.DockerImageName
 
+
+/**
+ * redis测试容器
+ *
+ * @author K
+ * @since 1.0.0
+ */
 object RedisTestContainer {
 
-    val CONTAINER = GenericContainer(DockerImageName.parse("redis:7.2.2")).withExposedPorts(6379)
+    const val IMAGE_NAME_REDIS = "redis:7.2.2"
 
-    fun properties(registry: DynamicPropertyRegistry) {
-        // 本来通过@Testcontainers就会自动启动容器，但这里手动启动它，原因为：
-        // 确保properties()执行时，容器已经启动完毕，以便此时获取容器的一些初始化变量
+    private var CONTAINER = GenericContainer(DockerImageName.parse(IMAGE_NAME_REDIS))
+        .withExposedPorts(6379)
+
+    fun start(registry: DynamicPropertyRegistry?): GenericContainer<*> {
         CONTAINER.start()
+        if (registry != null) {
+            registerProperties(registry)
+        }
+        return CONTAINER
+    }
 
+    private fun registerProperties(registry: DynamicPropertyRegistry) {
         registry.add("kudos.ability.data.redis.redis-map.data.host") { CONTAINER.host }
         registry.add("kudos.ability.data.redis.redis-map.data.port") { CONTAINER.firstMappedPort }
+    }
+
+    fun getContainer() = CONTAINER
+
+    @JvmStatic
+    fun main(args: Array<String>) {
+        start(null)
+        println("redis localhost port: ${CONTAINER.firstMappedPort}")
+        Thread.sleep(Long.MAX_VALUE)
     }
 
 }
