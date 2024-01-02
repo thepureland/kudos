@@ -13,7 +13,7 @@ import org.testcontainers.utility.DockerImageName
  */
 object RedisTestContainer {
 
-    const val IMAGE_NAME_REDIS = "redis:7.2.2"
+    private const val IMAGE_NAME_REDIS = "redis:7.2.2"
 
     private var CONTAINER = GenericContainer(DockerImageName.parse(IMAGE_NAME_REDIS))
         .withExposedPorts(6379)

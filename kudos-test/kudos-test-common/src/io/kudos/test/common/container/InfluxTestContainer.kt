@@ -13,7 +13,7 @@ import org.testcontainers.utility.DockerImageName
  */
 object InfluxTestContainer {
 
-    const val IMAGE_NAME = "influxdb:2.7.4-alpine"
+    private const val IMAGE_NAME = "influxdb:2.7.4-alpine"
 
     private var CONTAINER = GenericContainer(DockerImageName.parse(IMAGE_NAME))
         .withExposedPorts(8086)

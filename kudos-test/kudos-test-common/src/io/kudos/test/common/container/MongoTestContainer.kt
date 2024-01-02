@@ -13,7 +13,7 @@ import org.testcontainers.utility.DockerImageName
  */
 object MongoTestContainer {
 
-    const val IMAGE_NAME = "mongo:7.0.4"
+    private const val IMAGE_NAME = "mongo:7.0.4"
 
     const val USERNAME = "root"
     const val PASSWORD = "123456"
