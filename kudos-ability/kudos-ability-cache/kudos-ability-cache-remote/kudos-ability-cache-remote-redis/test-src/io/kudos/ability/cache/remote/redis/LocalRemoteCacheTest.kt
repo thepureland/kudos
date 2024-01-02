@@ -1,7 +1,6 @@
 package io.kudos.ability.cache.remote.redis
 
 import io.kudos.test.common.EnableKudosTest
-import io.kudos.test.common.TestSpringBootContextLoader
 import io.kudos.test.common.container.RedisTestContainer
 import org.junit.jupiter.api.Test
 import org.soul.ability.cache.common.MixCacheManager
@@ -10,7 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.cache.CacheManager
 import org.springframework.context.annotation.Import
-import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.junit.jupiter.Container
@@ -26,7 +24,6 @@ import java.util.concurrent.CountDownLatch
  */
 @EnableKudosTest
 @Import(CacheTestService::class, TestCacheConfigProvider::class)
-@ContextConfiguration(loader = LocalRemoteCacheTest.LocalRemoteCacheContextLoader::class)
 @Testcontainers(disabledWithoutDocker = true)
 internal class LocalRemoteCacheTest {
 
@@ -39,7 +36,9 @@ internal class LocalRemoteCacheTest {
 
         @DynamicPropertySource
         @JvmStatic
-        fun property(registry: DynamicPropertyRegistry) {
+        fun registerProperties(registry: DynamicPropertyRegistry) {
+            registry.add("kudos.ability.cache.enabled") { "true" }
+            registry.add("kudos.cache.config.strategy") { CacheStrategy.LOCAL_REMOTE.name }
             RedisTestContainer.properties(registry)
         }
 
@@ -88,17 +87,6 @@ internal class LocalRemoteCacheTest {
             latch.countDown()
         }.start()
         latch.await()
-    }
-
-    class LocalRemoteCacheContextLoader : TestSpringBootContextLoader() {
-
-        override fun getDynamicProperties(): Map<String, String> {
-            return mapOf(
-                "kudos.ability.cache.enabled" to "true",
-                "kudos.cache.config.strategy" to CacheStrategy.LOCAL_REMOTE.name
-            )
-        }
-
     }
 
 }

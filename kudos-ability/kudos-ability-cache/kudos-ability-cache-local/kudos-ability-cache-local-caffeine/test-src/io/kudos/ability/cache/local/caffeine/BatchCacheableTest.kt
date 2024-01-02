@@ -2,9 +2,11 @@ package io.kudos.ability.cache.local.caffeine
 
 import io.kudos.test.common.EnableKudosTest
 import org.junit.jupiter.api.Test
+import org.soul.ability.cache.common.enums.CacheStrategy
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Import
-import org.springframework.test.context.ContextConfiguration
+import org.springframework.test.context.DynamicPropertyRegistry
+import org.springframework.test.context.DynamicPropertySource
 import java.util.concurrent.CountDownLatch
 
 /**
@@ -14,12 +16,22 @@ import java.util.concurrent.CountDownLatch
  * @since 1.0.0
  */
 @EnableKudosTest
-@ContextConfiguration(loader = LocalCacheTestContextLoader::class)
 @Import(BatchCacheableTestService::class, TestCacheConfigProvider::class)
 class BatchCacheableTest {
 
     @Autowired
     private lateinit var testCacheService: BatchCacheableTestService
+
+    companion object {
+
+        @DynamicPropertySource
+        @JvmStatic
+        private fun registerProperties(registry: DynamicPropertyRegistry) {
+            registry.add("kudos.ability.cache.enabled") { "true" }
+            registry.add("cache.config.strategy") { CacheStrategy.SINGLE_LOCAL.name }
+        }
+
+    }
 
     @Test
     fun test() {

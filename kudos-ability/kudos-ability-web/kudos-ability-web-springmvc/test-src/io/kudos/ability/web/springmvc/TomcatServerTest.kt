@@ -1,7 +1,7 @@
 package io.kudos.ability.web.springmvc
 
-import io.kudos.test.common.TestSpringBootContextLoader
-import org.springframework.test.context.ContextConfiguration
+import org.springframework.test.context.DynamicPropertyRegistry
+import org.springframework.test.context.DynamicPropertySource
 
 
 /**
@@ -10,15 +10,14 @@ import org.springframework.test.context.ContextConfiguration
  * @author K
  * @since 5.0.0
  */
-@ContextConfiguration(loader = TomcatServerTest.TomcatServerTestContextLoader::class)
 open class TomcatServerTest : BaseWebServerTest() {
 
-    class TomcatServerTestContextLoader : TestSpringBootContextLoader() {
+    companion object {
 
-        override fun getDynamicProperties(): Map<String, String> {
-            return mapOf(
-                "kudos.ability.web.springmvc.server" to "TOMCAT"
-            )
+        @DynamicPropertySource
+        @JvmStatic
+        private fun registerProperties(registry: DynamicPropertyRegistry) {
+            registry.add("kudos.ability.web.springmvc.server") { "TOMCAT" }
         }
 
     }

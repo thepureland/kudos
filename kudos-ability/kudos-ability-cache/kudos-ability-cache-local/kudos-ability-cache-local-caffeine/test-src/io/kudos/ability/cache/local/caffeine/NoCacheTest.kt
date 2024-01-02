@@ -1,7 +1,6 @@
 package io.kudos.ability.cache.local.caffeine
 
 import io.kudos.test.common.EnableKudosTest
-import io.kudos.test.common.TestSpringBootContextLoader
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.soul.ability.cache.common.MixCacheManager
@@ -9,7 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.cache.CacheManager
 import org.springframework.context.annotation.Import
-import org.springframework.test.context.ContextConfiguration
+import org.springframework.test.context.DynamicPropertyRegistry
+import org.springframework.test.context.DynamicPropertySource
 
 
 /**
@@ -20,7 +20,6 @@ import org.springframework.test.context.ContextConfiguration
  */
 @EnableKudosTest
 @Import(CacheTestService::class)
-@ContextConfiguration(loader = NoCacheTest.NoCacheTestContextLoader::class)
 internal class NoCacheTest {
 
     @Autowired
@@ -37,6 +36,17 @@ internal class NoCacheTest {
     @Autowired(required = false)
     private lateinit var mixCacheManager: MixCacheManager
 
+
+    companion object {
+
+        @DynamicPropertySource
+        @JvmStatic
+        private fun registerProperties(registry: DynamicPropertyRegistry) {
+            registry.add("kudos.ability.cache.enabled") { "false" }
+        }
+
+    }
+
     @Test
     fun testNoCache() {
         assertThrows<UninitializedPropertyAccessException> { localCacheManager }
@@ -47,14 +57,6 @@ internal class NoCacheTest {
         val value1 = cacheTestService.getFromDB(key)
         val value2 = cacheTestService.getFromDB(key)
         assert(value1 != value2)
-    }
-
-    class NoCacheTestContextLoader : TestSpringBootContextLoader() {
-
-        override fun getDynamicProperties(): Map<String, String> {
-            return mapOf("kudos.ability.cache.enabled" to "false")
-        }
-
     }
 
 }
