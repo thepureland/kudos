@@ -18,7 +18,7 @@ import java.time.Duration
  * web server测试用例基类
  *
  * @author K
- * @since 5.0.0
+ * @since 1.0.0
  */
 @Import(MockController::class)
 @EnableKudosTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)

@@ -4,12 +4,17 @@ import io.kudos.ability.data.rdb.jdbc.kit.RdbKit
 import io.kudos.ability.data.rdb.ktorm.kit.getDatabase
 import io.kudos.ability.data.rdb.ktorm.table.TestTable
 import io.kudos.ability.data.rdb.ktorm.table.TestTableDao
-import io.kudos.ability.data.rdb.ktorm.table.TestTableKit
 import io.kudos.ability.data.rdb.ktorm.table.TestTables
 import io.kudos.base.support.payload.ListSearchPayload
 import io.kudos.base.support.payload.SearchPayload
+<<<<<<< HEAD
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertEquals
+=======
+import io.kudos.test.common.EnableKudosTest
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
+>>>>>>> 2cd8499 (maven convert to gradle & add tests for some modules)
 import org.ktorm.dsl.eq
 import org.soul.base.query.Criteria
 import org.soul.base.query.Criterion
@@ -25,24 +30,17 @@ import java.time.LocalDateTime
  * @author K
  * @since 1.0.0
  */
+<<<<<<< HEAD
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Disabled
 @Testcontainers(disabledWithoutDocker = true)
+=======
+@EnableKudosTest
+>>>>>>> 2cd8499 (maven convert to gradle & add tests for some modules)
 internal open class BaseReadOnlyDaoTest {
 
     @Autowired
     private lateinit var testTableDao: TestTableDao
-
-    @BeforeAll
-    fun setUp() {
-        TestTableKit.create()
-        TestTableKit.insert()
-    }
-
-    @AfterAll
-    fun tearDown() {
-        TestTableKit.drop()
-    }
 
 
     //region Search

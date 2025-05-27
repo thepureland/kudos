@@ -1,0 +1,6 @@
+spring:
+  cloud:
+    stream:
+      kafka:
+        binder:
+          brokers: ${soul.ability.distributed.stream.mq-config.kafka-brokers}

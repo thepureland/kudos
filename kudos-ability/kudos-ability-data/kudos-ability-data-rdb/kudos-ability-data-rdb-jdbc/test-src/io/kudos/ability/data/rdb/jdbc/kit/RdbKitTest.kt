@@ -14,7 +14,7 @@ import org.soul.ability.data.rdb.jdbc.metadata.RdbTypeEnum
 @EnableKudosTest
 internal class RdbKitTest {
 
-    private val url = "jdbc:h2:~/h2;auto_server=true;DATABASE_TO_LOWER=TRUE"
+    private var url = "jdbc:h2:~/h2/ds1;AUTO_SERVER=TRUE;AUTO_SERVER_PORT=9092;DATABASE_TO_LOWER=TRUE;"
 
     @Test
     fun getDataSource() {

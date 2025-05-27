@@ -9,6 +9,10 @@ kudos:
             port: 6379 #单机模式下使用
             password:
             database: 0 # 使用数据库的索引编号，一个示例有16个数据库 0 到 15
+<<<<<<< HEAD
+=======
+#            ssl: false
+>>>>>>> 2cd8499 (maven convert to gradle & add tests for some modules)
             max-active: -1
             max-idle: 10
             max-wait: -1ms

@@ -829,7 +829,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
 
     protected fun getEntityProperties(): List<String> {
         return table().entityClass!!.memberProperties
-            .filter { it.name != "entityClass" && it.name != "properties" }
+            .filter { it.name !in setOf("entityClass", "properties", "changedProperties") }
             .map { it.name }
     }
 
@@ -855,7 +855,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         val criterions = searchPayload.criterions
         if (CollectionKit.isNotEmpty(criterions)) {
             criterions!!.forEach {
-                resultMap[it.property] = Pair(it.operator, it.getValue())
+                resultMap[it.property] = Pair(it.operator, it.value)
             }
         }
         return resultMap

@@ -1,0 +1,5 @@
+soul:
+  ability:
+    file:
+      local:
+        base-path: ${user.home}/fserver/upload

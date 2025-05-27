@@ -5,7 +5,6 @@ import com.baomidou.dynamic.datasource.spring.boot.autoconfigure.DynamicDataSour
 import io.kudos.base.logger.LoggerFactory
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
-import org.soul.ability.data.rdb.jdbc.datasource.DefaultDatasourceProxy
 import org.soul.ability.data.rdb.jdbc.datasource.DefaultDynamicDataSourceLoad
 import org.soul.ability.data.rdb.jdbc.datasource.IDataSourceProxy
 import org.soul.ability.data.rdb.jdbc.datasource.IDynamicDataSourceLoad
@@ -37,17 +36,17 @@ import javax.annotation.PostConstruct
     )]
 )
 @AutoConfigureAfter(ContextAutoConfiguration::class)
-@EnableAutoConfiguration // 不然dynamic data source会找不到
-@ImportAutoConfiguration(DynamicDataSourceCreatorAutoConfiguration::class, DynamicDataSourceAutoConfiguration::class)
+//@EnableAutoConfiguration // 不然dynamic data source会找不到
+//@ImportAutoConfiguration(DynamicDataSourceCreatorAutoConfiguration::class, DynamicDataSourceAutoConfiguration::class)
 open class JdbcAutoConfiguration : IComponentInitializer {
 
     private val logger = LoggerFactory.getLogger(this)
 
-    @Bean("dataSourceProxy")
-    @ConditionalOnMissingBean
-    open fun dataSourceProxy(): IDataSourceProxy {
-        return DefaultDatasourceProxy()
-    }
+//    @Bean("dataSourceProxy")
+//    @ConditionalOnMissingBean
+//    open fun dataSourceProxy(): IDataSourceProxy {
+//        return DefaultDatasourceProxy()
+//    }
 
     @Bean("dynamicDataSourceLoad")
     @ConditionalOnMissingBean

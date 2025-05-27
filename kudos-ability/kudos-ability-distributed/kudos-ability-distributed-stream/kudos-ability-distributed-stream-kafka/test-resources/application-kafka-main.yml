@@ -1,0 +1,15 @@
+spring:
+  cloud:
+    stream:
+      function:
+        #配置消费者消费的方法名称，按bindings顺序，多个以英文分号隔开
+        definition: consumer
+      bindings:
+        consumer-in-0:
+          destination: KAFKA_TEST_TOPIC
+
+feign:
+  hystrix:
+    enabled: false
+  httpclient:
+    connection-timeout: 30000

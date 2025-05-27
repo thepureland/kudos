@@ -2,7 +2,6 @@ package io.kudos.ability.data.rdb.ktorm.support
 
 import io.kudos.ability.data.rdb.ktorm.table.TestTable
 import io.kudos.ability.data.rdb.ktorm.table.TestTableDao
-import io.kudos.ability.data.rdb.ktorm.table.TestTableKit
 import io.kudos.ability.data.rdb.ktorm.table.TestTables
 import io.kudos.base.support.payload.SearchPayload
 import io.kudos.base.support.payload.UpdatePayload
@@ -24,24 +23,18 @@ import java.time.LocalDateTime
  * @author K
  * @since 1.0.0
  */
+<<<<<<< HEAD
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Disabled
 @Testcontainers(disabledWithoutDocker = true)
+=======
+@EnableKudosTest
+>>>>>>> 2cd8499 (maven convert to gradle & add tests for some modules)
 internal open class BaseCrudDaoTest {
 
     @Autowired
     private lateinit var testTableDao: TestTableDao
 
-    @BeforeAll
-    fun setUp() {
-        TestTableKit.create()
-        TestTableKit.insert()
-    }
-
-    @AfterAll
-    fun tearDown() {
-        TestTableKit.drop()
-    }
 
     //region Insert
 

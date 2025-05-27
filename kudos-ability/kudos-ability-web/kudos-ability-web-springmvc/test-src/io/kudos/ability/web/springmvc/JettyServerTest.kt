@@ -8,7 +8,7 @@ import org.springframework.test.context.DynamicPropertySource
  * jetty服务器测试用例
  *
  * @author K
- * @since 5.0.0
+ * @since 1.0.0
  */
 open class JettyServerTest : BaseWebServerTest() {
 

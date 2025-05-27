@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: rdbNotifyTest
+feign:
+  httpclient:
+    connection-timeout: 30000

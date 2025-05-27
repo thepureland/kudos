@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestController
  * 模拟Controller
  *
  * @author K
- * @since 5.0.0
+ * @since 1.0.0
  */
 @RestController
 @RequestMapping("/test")

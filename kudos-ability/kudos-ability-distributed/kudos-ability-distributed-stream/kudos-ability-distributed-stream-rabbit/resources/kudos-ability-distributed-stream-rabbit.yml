@@ -1,0 +1,8 @@
+spring:
+  rabbitmq:
+    host: ${soul.ability.distributed.stream.mq-config.rabbitmq.host}
+    username: ${soul.ability.distributed.stream.mq-config.rabbitmq.username}
+    password: ${soul.ability.distributed.stream.mq-config.rabbitmq.password}
+    port: ${soul.ability.distributed.stream.mq-config.rabbitmq.port}
+    virtual-host: ${soul.ability.distributed.stream.mq-config.rabbitmq.virtual-host}
+    addresses: ${soul.ability.distributed.stream.mq-config.rabbitmq.addresses}

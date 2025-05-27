@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: rdbNotifyMs
+
+server:
+  port: 8011
+  servlet:
+    context-path: /ms

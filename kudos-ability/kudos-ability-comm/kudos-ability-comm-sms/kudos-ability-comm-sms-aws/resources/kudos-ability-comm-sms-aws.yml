@@ -1,0 +1,10 @@
+kudos:
+  ability:
+    comm:
+      sms:
+        aws:
+          proxy: #正向代理配置信息
+            enable: false
+            url: http://localhost:1234
+            username: username
+            password: password

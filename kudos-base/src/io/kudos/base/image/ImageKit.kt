@@ -1,11 +1,29 @@
 package io.kudos.base.image
 
-import org.soul.base.image.ImageTool
+import io.kudos.base.io.PathKit
+import io.kudos.base.logger.LoggerFactory
+import org.apache.batik.anim.dom.SAXSVGDocumentFactory
+import org.apache.batik.bridge.BridgeContext
+import org.apache.batik.bridge.GVTBuilder
+import org.apache.batik.bridge.UserAgentAdapter
+import org.apache.batik.gvt.renderer.ConcreteImageRendererFactory
+import org.w3c.dom.NodeList
+import org.w3c.dom.svg.SVGDocument
+import org.w3c.dom.svg.SVGElement
+import java.awt.*
+import java.awt.geom.AffineTransform
+import java.awt.image.AffineTransformOp
 import java.awt.image.BufferedImage
-import java.io.File
-import java.io.IOException
+import java.io.*
 import java.net.URI
-
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.util.*
+import javax.imageio.ImageIO
+import javax.imageio.stream.MemoryCacheImageInputStream
+import javax.swing.*
+import kotlin.collections.iterator
+import kotlin.math.min
 
 /**
  * 图片处理工具类
@@ -23,9 +41,7 @@ object ImageKit {
      * @author K
      * @since 1.0.0
      */
-    fun readImageFromFile(imageFile: File): BufferedImage {
-        return ImageTool.readImageFromFile(imageFile)
-    }
+    fun readImageFromFile(imageFile: File): BufferedImage = readImageFromFile(imageFile.path)
 
     /**
      * 从文件读取图片
@@ -35,9 +51,7 @@ object ImageKit {
      * @author K
      * @since 1.0.0
      */
-    fun readImageFromFile(imagePath: String): BufferedImage {
-        return ImageTool.readImageFromFile(imagePath)
-    }
+    fun readImageFromFile(imagePath: String): BufferedImage = ImageIO.read(Files.newInputStream(Paths.get(imagePath)))
 
     /**
      * 从URI读取文件
@@ -47,9 +61,7 @@ object ImageKit {
      * @author K
      * @since 1.0.0
      */
-    fun readImageFromUri(imageUri: URI): BufferedImage {
-        return ImageTool.readImageFromUri(imageUri)
-    }
+    fun readImageFromUri(imageUri: URI): BufferedImage = ImageIO.read(imageUri.toURL().openStream())
 
     /**
      * 从URI读取文件
@@ -59,9 +71,7 @@ object ImageKit {
      * @author K
      * @since 1.0.0
      */
-    fun readImageFromUri(imageUriStr: String): BufferedImage {
-        return ImageTool.readImageFromUri(imageUriStr)
-    }
+    fun readImageFromUri(imageUriStr: String): BufferedImage = readImageFromUri(URI.create(imageUriStr))
 
     /**
      * 写图片到文件
@@ -72,9 +82,8 @@ object ImageKit {
      * @author K
      * @since 1.0.0
      */
-    fun writeImage(bufferedImage: BufferedImage, imageFormat: String, imagePath: String) {
-        ImageTool.writeImage(bufferedImage, imageFormat, imagePath)
-    }
+    fun writeImage(bufferedImage: BufferedImage, imageFormat: String, imagePath: String) =
+        ImageIO.write(bufferedImage, imageFormat, Files.newOutputStream(Paths.get(imagePath)))
 
     /**
      * 将图片转换为字符串表示
@@ -86,7 +95,8 @@ object ImageKit {
      * @since 1.0.0
      */
     fun imageToString(imageFile: File, imageFormat: String): String {
-        return ImageTool.imageToString(imageFile, imageFormat)
+        val bufferedImage = readImageFromFile(imageFile)
+        return imageToString(bufferedImage, imageFormat)
     }
 
     /**
@@ -99,7 +109,8 @@ object ImageKit {
      * @since 1.0.0
      */
     fun imageToString(imageUri: URI, imageFormat: String): String {
-        return ImageTool.imageToString(imageUri, imageFormat)
+        val bufferedImage = readImageFromUri(imageUri)
+        return imageToString(bufferedImage, imageFormat)
     }
 
     /**
@@ -112,7 +123,11 @@ object ImageKit {
      * @since 1.0.0
      */
     fun imageToString(bufferedImage: BufferedImage, imageFormat: String): String {
-        return ImageTool.imageToString(bufferedImage, imageFormat)
+        return ByteArrayOutputStream().use {
+            ImageIO.write(bufferedImage, imageFormat, it)
+            val byteArray = it.toByteArray()
+            String(Base64.getEncoder().encode(byteArray))
+        }
     }
 
     /**
@@ -124,7 +139,11 @@ object ImageKit {
      * @since 1.0.0
      */
     fun stringToImage(imgStr: String): BufferedImage {
-        return ImageTool.stringToImage(imgStr)
+        val decoder = Base64.getDecoder()
+        val imageByte = decoder.decode(imgStr)
+        return ByteArrayInputStream(imageByte).use {
+            ImageIO.read(it)
+        }
     }
 
 
@@ -139,7 +158,36 @@ object ImageKit {
      * @since 1.0.0
      */
     fun scale(srcImageFile: String, height: Int, width: Int, hasFiller: Boolean = true): BufferedImage {
-        return ImageTool.scale(srcImageFile, height, width, hasFiller)
+        val ratio: Double // 缩放比例
+        val file = File(srcImageFile)
+        val srcImage: BufferedImage = ImageIO.read(file)
+        var destImage = srcImage.getScaledInstance(width, height, BufferedImage.SCALE_SMOOTH)
+        // 计算比例
+        if (srcImage.height > height || srcImage.width > width) {
+            ratio = if (srcImage.height > srcImage.width) {
+                height.toDouble() / srcImage.height
+            } else {
+                width.toDouble() / srcImage.width
+            }
+            val op = AffineTransformOp(AffineTransform.getScaleInstance(ratio, ratio), null)
+            destImage = op.filter(srcImage, null)
+        }
+        if (hasFiller) { // 补白
+            val image = BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
+            val graphic = image.createGraphics()
+            graphic.color = Color.white
+            graphic.fillRect(0, 0, width, height)
+            if (width == destImage.getWidth(null)) graphic.drawImage(
+                destImage, 0, (height - destImage.getHeight(null)) / 2, destImage.getWidth(null),
+                destImage.getHeight(null), Color.white, null
+            ) else graphic.drawImage(
+                destImage, (width - destImage.getWidth(null)) / 2, 0, destImage.getWidth(null),
+                destImage.getHeight(null), Color.white, null
+            )
+            graphic.dispose()
+            destImage = image
+        }
+        return destImage as BufferedImage
     }
 
     /**
@@ -153,7 +201,41 @@ object ImageKit {
      * @since 1.0.0
      */
     fun readMemoryImage(imgBytes: ByteArray, format: String? = null): BufferedImage {
-        return ImageTool.readMemoryImage(imgBytes, format)
+        // 将字节数组转为InputStream，再转为MemoryCacheImageInputStream
+        val imageInputstream = MemoryCacheImageInputStream(ByteArrayInputStream(imgBytes))
+        // 获取所有能识别数据流格式的ImageReader对象
+        val it = if (format == null) {
+            var imageReaders = ImageIO.getImageReaders(imageInputstream)
+//            if (!imageReaders.hasNext()) {
+//                imageReaders = ImageIO.getImageReaders(FileImageInputStream(File(srcFilePath)))
+//            }
+            imageReaders
+        } else {
+            ImageIO.getImageReadersByFormatName(format)
+        }
+        // 迭代器遍历尝试用ImageReader对象进行解码
+        while (it.hasNext()) {
+            val imageReader = it.next()
+            // 设置解码器的输入流
+            imageReader.setInput(imageInputstream, true, true)
+            // 图像文件格式后缀
+            val suffix: String = imageReader.formatName.trim().lowercase()
+            // 图像宽度
+            val width: Int = imageReader.getWidth(0)
+            // 图像高度
+            val height: Int = imageReader.getHeight(0)
+            System.out.printf("format %s,%dx%d\n", suffix, width, height)
+            try {
+                // 解码成功返回BufferedImage对象
+                // 0即为对第0张图像解码(gif格式会有多张图像),前面获取宽度高度的方法中的参数0也是同样的意思
+                return imageReader.read(0, imageReader.defaultReadParam)
+            } catch (e: Exception) {
+                imageReader.dispose()
+                // 如果解码失败尝试用下一个ImageReader解码
+            }
+        }
+        imageInputstream.close()
+        throw IOException("unsupported image format")
     }
 
     /**
@@ -164,7 +246,26 @@ object ImageKit {
      * @since 1.0.0
      */
     fun showImage(bufferedImage: BufferedImage) {
-        ImageTool.showImage(bufferedImage)
+        class ImagePanel(var image: BufferedImage) : JPanel() {
+
+            override fun paintComponent(g: Graphics) {
+                val x: Int = (width - image.width) / 2
+                val y: Int = (height - image.height) / 2
+                g.drawImage(image, x, y, this)
+            }
+
+            override fun getPreferredSize(): Dimension {
+                return Dimension(image.width, image.height)
+            }
+        }
+
+        val panel = ImagePanel(bufferedImage)
+        val f = JFrame()
+        f.defaultCloseOperation = JFrame.EXIT_ON_CLOSE
+        f.add(panel)
+        f.setLocation(200, 200)
+        f.isVisible = true
+        f.pack()
     }
 
     /**
@@ -179,7 +280,72 @@ object ImageKit {
      * @since 1.0.0
      */
     fun renderSvgToImage(xmlContent: String, width: Int, height: Int): BufferedImage {
-        return ImageTool.renderSvgToImage(xmlContent, width, height)
+        return renderSvgToImage(xmlContent, width, height, false, null, null)
     }
+
+    private fun renderSvgToImage(
+        xmlContent: String,
+        width: Int,
+        height: Int,
+        stretch: Boolean,
+        idRegex: String?,
+        replacementColor: Color?,
+    ): BufferedImage {
+        // the following is necessary so that batik knows how to resolve URI fragments
+        // (#myLinearGradient). Otherwise the resolution fails and you cannot render.
+        val uri = "${PathKit.getTempDirectoryPath()}/temp.svg"
+        val df = SAXSVGDocumentFactory("org.apache.xerces.parsers.SAXParser")
+        val document = df.createSVGDocument(uri, StringReader(xmlContent))
+        if (idRegex != null && replacementColor != null) {
+            replaceFill(document, idRegex, replacementColor)
+        }
+        return renderToImage(document, width, height, stretch)
+    }
+
+    private fun renderToImage(document: SVGDocument?, width: Int, height: Int, stretch: Boolean): BufferedImage {
+        val rendererFactory = ConcreteImageRendererFactory()
+        val renderer = rendererFactory.createStaticImageRenderer()
+        val builder = GVTBuilder()
+        val ctx = BridgeContext(UserAgentAdapter())
+        ctx.setDynamicState(BridgeContext.STATIC)
+        val rootNode = builder.build(ctx, document)
+        renderer.tree = rootNode
+        val docWidth = ctx.documentSize.width.toFloat()
+        val docHeight = ctx.documentSize.height.toFloat()
+        var xscale = width / docWidth
+        var yscale = height / docHeight
+        if (!stretch) {
+            val scale = xscale.coerceAtMost(yscale)
+            xscale = scale
+            yscale = scale
+        }
+        val px = AffineTransform.getScaleInstance(xscale.toDouble(), yscale.toDouble())
+        val tx = (-0 + (width / xscale - docWidth) / 2).toDouble()
+        val ty = (-0 + (height / yscale - docHeight) / 2).toDouble()
+        px.translate(tx, ty)
+        //cgn.setViewingTransform(px);
+        renderer.updateOffScreen(width, height)
+        renderer.tree = rootNode
+        renderer.transform = px
+        //renderer.clearOffScreen();
+        renderer.repaint(Rectangle(0, 0, width, height))
+        return renderer.offScreen
+    }
+
+    private fun replaceFill(document: SVGDocument, idRegex: String, color: Color) {
+        val colorCode = String.format("#%02x%02x%02x", color.red, color.green, color.blue)
+        val children = document.getElementsByTagName("*")
+        for (i in 0 until children.length) {
+            if (children.item(i) is SVGElement) {
+                val element = children.item(i) as SVGElement
+                if (element.id.matches(Regex(idRegex))) {
+                    var style = element.getAttributeNS(null, "style")
+                    style = style.replaceFirst("fill:#[a-zA-z0-9]+".toRegex(), "fill:$colorCode")
+                    element.setAttributeNS(null, "style", style)
+                }
+            }
+        }
+    }
+
 
 }

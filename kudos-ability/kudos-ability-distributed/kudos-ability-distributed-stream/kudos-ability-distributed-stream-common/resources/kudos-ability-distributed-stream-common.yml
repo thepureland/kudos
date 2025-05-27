@@ -1,0 +1,33 @@
+kudos:
+  ability:
+    distributed:
+      stream:
+        enable: true
+        save-exception: false
+
+
+spring:
+  cloud:
+    stream:
+      kafka:
+        binder:
+          brokers: localhost:9092
+  flyway:
+    locations:
+      - classpath:db/stream/postgresql
+
+#TODO
+soul:
+  ability:
+    distributed:
+      stream:
+        enable: true
+        save-exception: false
+    flyway:
+      #fly数据源配置
+      datasource-config:
+        stream: master
+    jdbc:
+      package-data-source:
+        #service包使用数据源。_context代表为从sys_datasource匹配
+        org.soul.ability.distributed.stream.common.service: master

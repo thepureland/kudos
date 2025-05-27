@@ -6,8 +6,6 @@ import com.google.zxing.MultiFormatWriter
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
 import io.kudos.base.image.ImageKit
 import io.kudos.base.io.FilenameKit
-import org.soul.base.image.qrcode.QRcodeTool
-import org.soul.base.qrcode.QRCodeTool
 import java.awt.image.BufferedImage
 import java.io.File
 import javax.imageio.ImageIO
@@ -66,7 +64,7 @@ object QrCodeKit {
         sideLength: Int = 300, logoSideLength: Int = sideLength / 5, margin: Int = 0
     ): BufferedImage {
         val logoImage = ImageKit.scale(logoImagePath, logoSideLength, logoSideLength, true)
-        return genQrCode(content, logoImage, sideLength, margin)
+        return genQrCode(content, logoImage!!, sideLength, margin)
     }
 
     /**

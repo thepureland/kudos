@@ -21,7 +21,8 @@ import kotlin.reflect.KClass
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.ANNOTATION_CLASS, AnnotationTarget.CLASS)
 @ImportAutoConfiguration(value = [ComponentInitializerSelector::class])
-@EnableAutoConfiguration(exclude = [ServletWebServerFactoryAutoConfiguration::class])
+@EnableAutoConfiguration
+//@EnableAutoConfiguration(exclude = [ServletWebServerFactoryAutoConfiguration::class])
 annotation class EnableKudos(
 
     /**

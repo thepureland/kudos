@@ -1,11 +1,19 @@
 package io.kudos.ability.cache.remote.redis
 
 import io.kudos.test.common.EnableKudosTest
+<<<<<<< HEAD
 import io.kudos.test.common.container.RedisTestContainer
+=======
+import io.kudos.test.container.RedisTestContainer
+>>>>>>> 2cd8499 (maven convert to gradle & add tests for some modules)
 import org.junit.jupiter.api.Test
 import org.soul.ability.cache.common.enums.CacheStrategy
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Import
+<<<<<<< HEAD
+=======
+import org.springframework.test.context.ContextConfiguration
+>>>>>>> 2cd8499 (maven convert to gradle & add tests for some modules)
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.junit.jupiter.Testcontainers
@@ -67,6 +75,14 @@ class BatchCacheableTest {
         assert(map["1::3::6::7"]!!.first().time == map["1::4::5::7"]!!.first().time)
         assert(map["1::4::5::7"]!!.first().time == map["1::3::5::7"]!!.first().time)
         assert(map["1::3::5::7"]!!.first().time == map["1::4::6::7"]!!.first().time)
+    }
+
+    companion object {
+        @JvmStatic
+        @DynamicPropertySource
+        fun registerProperties(registry: DynamicPropertyRegistry?) {
+            RedisTestContainer.start(registry)
+        }
     }
 
 }

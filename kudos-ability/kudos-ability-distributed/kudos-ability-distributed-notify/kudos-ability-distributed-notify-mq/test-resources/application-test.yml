@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: notifyTest
+
+feign:
+  hystrix:
+    enabled: false
+  httpclient:
+    connection-timeout: 30000
+
+server:
+  port: 0

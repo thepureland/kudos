@@ -1,0 +1,13 @@
+spring:
+  cloud:
+    stream:
+      rocketmq:
+        binder:
+          name-server: ${soul.ability.distributed.stream.mq-config.rock-mq-name-server}
+        bindings:
+          mqNotify-out-0:
+            producer:
+              group: mqNotify_1
+      bindings:
+        mqNotify-out-0:
+          destination: mqNotify
