@@ -1,23 +1,26 @@
 package io.kudos.ability.distributed.notify.rdb.init
 
-import jakarta.annotation.PostConstruct
+import io.kudos.ability.distributed.notify.common.api.INotifyProducer
+import io.kudos.ability.distributed.notify.common.support.NotifyListenerBeanPostProcessor
+import io.kudos.ability.distributed.notify.rdb.producer.NotifyRdbProducer
+import io.kudos.ability.distributed.notify.rdb.support.AppNotifyServlet
+import io.kudos.base.logger.LoggerFactory
+import io.kudos.context.init.IComponentInitializer
 import org.mybatis.spring.annotation.MapperScan
 import org.soul.ability.distributed.notify.rdb.entity.SysApp
+import org.soul.ability.distributed.notify.rdb.service.ISysAppService
 import org.soul.ability.distributed.notify.rdb.service.SysAppService
 import org.soul.ability.distributed.notify.rdb.support.AppCheckServlet
-import org.soul.ability.distributed.notify.rdb.support.AppNotifyServlet
 import org.soul.ability.distributed.notify.rdb.support.TaskProperties
 import org.soul.base.lang.string.StringTool
-import org.soul.base.log.Log
-import org.soul.base.log.LogFactory
 import org.soul.context.core.SoulPropertySourceFactory
-import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.web.context.WebServerInitializedEvent
 import org.springframework.boot.web.servlet.ServletRegistrationBean
 import org.springframework.context.ApplicationListener
 import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.ComponentScan
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Import
 import org.springframework.context.annotation.PropertySource
 import org.springframework.core.env.Environment
 import org.springframework.scheduling.annotation.AsyncConfigurer
@@ -34,25 +37,38 @@ import javax.management.ObjectName
 import javax.management.Query
 
 /**
+ * 基于关系型数据库的通知的自动配置类
+ *
  * @author Fei
+ * @author K
  * @date 2022/12/20 11:58
- * @since 5.0.0
+ * @since 1.0.0
  */
 @Configuration
 @EnableScheduling
 @EnableAsync
-@ComponentScan(basePackages = ["org.soul.ability.distributed.notify.rdb"])
 @PropertySource(
     value = ["classpath:soul-ability-distributed-notify-rdb.yml"],
     factory = SoulPropertySourceFactory::class
 )
 @MapperScan(value = ["org.soul.ability.distributed.notify.rdb.mapper"])
-class NotifyRdbAutoConfiguration : ApplicationListener<WebServerInitializedEvent?>, AsyncConfigurer {
-    @Autowired
-    private val sysAppService: SysAppService? = null
+@Import(NotifyListenerBeanPostProcessor::class)
+open class NotifyRdbAutoConfiguration
+    : ApplicationListener<WebServerInitializedEvent>, AsyncConfigurer, IComponentInitializer {
 
-    @Autowired
-    private val taskProperties: TaskProperties? = null
+    private val logger = LoggerFactory.getLogger(this)
+
+    @Bean
+    @ConditionalOnMissingBean
+    open fun sysAppService() : ISysAppService = SysAppService()
+
+    @Bean
+    @ConditionalOnMissingBean
+    open fun notifyRdbProducer() : INotifyProducer = NotifyRdbProducer()
+
+    @Bean
+    @ConditionalOnMissingBean
+    open fun taskProperties() = TaskProperties()
 
     override fun onApplicationEvent(event: WebServerInitializedEvent) {
         logger.info("开始注册应用...")
@@ -66,7 +82,7 @@ class NotifyRdbAutoConfiguration : ApplicationListener<WebServerInitializedEvent
         app.setProtocol(protocol)
         app.setIp(this.serverIp)
         app.setPort(getServerPort(protocol, event))
-        val result = sysAppService!!.addApp(app)
+        val result = sysAppService().addApp(app)
         if (result) {
             logger.info("应用注册成功。")
         }
@@ -100,7 +116,7 @@ class NotifyRdbAutoConfiguration : ApplicationListener<WebServerInitializedEvent
         val proExp = Query.match(Query.attr("protocol"), Query.value(protocol))
         val names = server.queryNames(name, proExp)
         for (n in names) {
-            val catalina = n.getDomain()
+            val catalina = n.domain
             if ("Catalina" == catalina) {
                 return n.getKeyProperty("port").toInt()
             }
@@ -109,15 +125,15 @@ class NotifyRdbAutoConfiguration : ApplicationListener<WebServerInitializedEvent
     }
 
     @Bean
-    fun appCheckServlet(): ServletRegistrationBean<AppCheckServlet?> {
-        val bean = ServletRegistrationBean<AppCheckServlet?>(AppCheckServlet(), "/errors/app-check.html")
+    open fun appCheckServlet(): ServletRegistrationBean<AppCheckServlet?> {
+        val bean = ServletRegistrationBean(AppCheckServlet(), "/errors/app-check.html")
         bean.setLoadOnStartup(1)
         return bean
     }
 
     @Bean
-    fun appNotifyServlet(): ServletRegistrationBean<AppNotifyServlet?> {
-        val bean = ServletRegistrationBean<AppNotifyServlet?>(AppNotifyServlet(), "/errors/app-notify.html")
+    open fun appNotifyServlet(): ServletRegistrationBean<AppNotifyServlet?> {
+        val bean = ServletRegistrationBean(AppNotifyServlet(), "/errors/app-notify.html")
         bean.setLoadOnStartup(1)
         return bean
     }
@@ -125,20 +141,21 @@ class NotifyRdbAutoConfiguration : ApplicationListener<WebServerInitializedEvent
     @Bean("appNotifyExecutor")
     override fun getAsyncExecutor(): Executor {
         val taskExecutor = ThreadPoolTaskExecutor()
+        val taskProperties = taskProperties()
         // 配置核心线程池数量
-        taskExecutor.setCorePoolSize(taskProperties!!.getCorePoolSize())
+        taskExecutor.corePoolSize = taskProperties.corePoolSize
         // 配置最大线程池数量
-        taskExecutor.setMaxPoolSize(taskProperties.getMaxPoolSize())
+        taskExecutor.maxPoolSize = taskProperties.maxPoolSize
         /** 线程池所使用的缓冲队列 */
-        taskExecutor.setQueueCapacity(taskProperties.getQueueCapacity())
+        taskExecutor.queueCapacity = taskProperties.queueCapacity
         // 等待时间 （默认为0，此时立即停止）
-        taskExecutor.setAwaitTerminationSeconds(taskProperties.getAwaitSeconds())
+        taskExecutor.setAwaitTerminationSeconds(taskProperties.awaitSeconds)
         // 空闲线程存活时间
-        taskExecutor.setKeepAliveSeconds(taskProperties.getKeepAliveSeconds())
+        taskExecutor.keepAliveSeconds = taskProperties.keepAliveSeconds
         // 等待任务在关机时完成--表明等待所有线程执行完
-        taskExecutor.setWaitForTasksToCompleteOnShutdown(taskProperties.isShutdown())
+        taskExecutor.setWaitForTasksToCompleteOnShutdown(taskProperties.isShutdown)
         // 线程池名称前缀
-        taskExecutor.setThreadNamePrefix(taskProperties.getThreadNamePrefix())
+        taskExecutor.threadNamePrefix = taskProperties.threadNamePrefix
         // 线程池拒绝策略
         taskExecutor.setRejectedExecutionHandler(ThreadPoolExecutor.DiscardOldestPolicy())
         // 线程池初始化
@@ -147,12 +164,6 @@ class NotifyRdbAutoConfiguration : ApplicationListener<WebServerInitializedEvent
         return taskExecutor
     }
 
-    @PostConstruct
-    fun init() {
-        logger.info("[soul-ability-distributed-notify-rdb]初始化完成...")
-    }
+    override fun getComponentName() = "kudos-ability-distributed-notify-rdb"
 
-    companion object {
-        private val logger: Log = LogFactory.getLog(NotifyRdbAutoConfiguration::class.java)
-    }
 }

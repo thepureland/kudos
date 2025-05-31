@@ -3,4 +3,4 @@ spring:
     stream:
       kafka:
         binder:
-          brokers: ${soul.ability.distributed.stream.mq-config.kafka-brokers}
+          brokers: localhost:9092

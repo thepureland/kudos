@@ -1,7 +1,8 @@
-package io.kudos.ability.distributed.stream.rabbit.main
+package io.kudos.ability.distributed.stream.rocketmq.main
 
+import com.alibaba.fastjson.JSONObject
 import io.kudos.ability.distributed.stream.common.annotations.MqConsumer
-import io.kudos.ability.distributed.stream.rabbit.data.RabbitMqSimpleMsg
+import io.kudos.ability.distributed.stream.rocketmq.data.RocketMqSimpleMsg
 import io.kudos.base.logger.LoggerFactory
 import org.soul.ability.distributed.stream.common.model.model.StreamMessageVo
 import org.springframework.messaging.Message
@@ -9,14 +10,14 @@ import org.springframework.stereotype.Component
 import java.util.function.Consumer
 
 /**
- * RabbitMq测试消费者
+ * RocketMQ测试消费者
  *
  * @author shane
  * @author  K
  * @since 1.0.0
  */
 @Component
-open class RabbitMqConsumerHandler {
+open class RocketMqConsumerHandler {
     
     private val log = LoggerFactory.getLogger(this)
     val defaultMsg: String = "Hello simple msg"
@@ -24,11 +25,12 @@ open class RabbitMqConsumerHandler {
     var errorFlag = false
 
     @MqConsumer(bindingName = "consumer-in-0")
-    fun consumer(): Consumer<Message<StreamMessageVo<RabbitMqSimpleMsg>>?> {
-        return Consumer { msg: Message<StreamMessageVo<RabbitMqSimpleMsg>>? ->
+    fun consumer(): Consumer<Message<StreamMessageVo<JSONObject>>?> {
+        return Consumer { msg: Message<StreamMessageVo<JSONObject>>? ->
             //获取消息体
-            val streamMsgVo: StreamMessageVo<RabbitMqSimpleMsg> = msg!!.getPayload()
-            val simpleMsg = streamMsgVo.getData()
+            val streamMsgVo : StreamMessageVo<JSONObject> = msg!!.getPayload()
+            val simpleMsgJson = streamMsgVo.getData()
+            val simpleMsg = simpleMsgJson.toJavaObject(RocketMqSimpleMsg::class.java)
             log.info("receive message: ${simpleMsg.msg}")
             //记录日志
             if (this.defaultMsg == simpleMsg.msg) {

@@ -16,6 +16,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.cache.CacheManager
 import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
 import org.springframework.data.redis.cache.RedisCacheConfiguration
 import org.springframework.data.redis.cache.RedisCacheWriter
 import org.springframework.data.redis.serializer.RedisSerializationContext
@@ -28,10 +29,10 @@ import java.time.Duration
  * @author K
  * @since 1.0.0
  */
+@Configuration
 @AutoConfigureBefore(LinkableCacheAutoConfiguration::class)
 @AutoConfigureAfter(RedisAutoConfiguration::class)
 @EnableConfigurationProperties(CacheProperties::class)
-//@Configuration
 @ConditionalOnProperty(prefix = "kudos.ability.cache", name = ["enabled"], havingValue = "true", matchIfMissing = true)
 open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentInitializer {
 

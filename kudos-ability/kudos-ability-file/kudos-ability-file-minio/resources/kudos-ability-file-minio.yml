@@ -1,10 +1,10 @@
-soul:
+kudos:
   ability:
     file:
       minio:
         endpoint: http://127.0.0.1:9000
-        accessKey: dp-fs-admin
-        secretKey: dp-fs-admin
+        accessKey: admin
+        secretKey: 12345678
         public-endpoint: http://127.0.0.1:9000
         sts:
           access-token:

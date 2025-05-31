@@ -3,7 +3,7 @@ CREATE TABLE IF NOT exists"sys_app" (
     "app_name" varchar(64) NOT NULL,
     "protocol" varchar(10) NOT NULL,
     "ip" varchar(128) NOT NULL,
-    "port" int2 NOT NULL,
+    "port" int4 NOT NULL,
     "frequency" int2 DEFAULT 1,
     "status" varchar(32) DEFAULT 'active',
     "last_heart_time" timestamp DEFAULT now()

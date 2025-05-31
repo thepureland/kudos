@@ -5,14 +5,14 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 
 /**
- * kafka生产者Feign客户端
+ * RabbitMq生产者Feign客户端
  *
  * @author shane
  * @author K
  * @since 1.0.0
  */
-@FeignClient(value = "kafkamsp")
-interface IKafkaProducerClient {
+@FeignClient(value = "rabbit-ms-p")
+interface IRabbitMqProducerClient {
 
     @RequestMapping("/producer/send")
     fun send(@RequestParam("message") message: String?)

@@ -1,17 +1,17 @@
-package io.kudos.ability.distributed.stream.rabbit.producer
+package io.kudos.ability.distributed.stream.rocketmq.producer
 
-import io.kudos.ability.distributed.stream.rabbit.data.RabbitMqSimpleMsg
+import io.kudos.ability.distributed.stream.rocketmq.data.RocketMqSimpleMsg
 
 
 /**
- * RabbitMq测试生產者服务接口
+ * RocketMQ测试生產者服务接口
  *
  * @author shane
  * @author K
  * @since 1.0.0
  */
-interface IRabbitMqProducerService {
+interface IRocketMqProducerService {
 
-    fun producer(msg: RabbitMqSimpleMsg)
+    fun producer(msg: RocketMqSimpleMsg)
 
 }

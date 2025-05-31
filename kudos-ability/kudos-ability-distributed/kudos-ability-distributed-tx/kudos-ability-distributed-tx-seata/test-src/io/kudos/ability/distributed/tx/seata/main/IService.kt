@@ -1,17 +1,19 @@
 package io.kudos.ability.distributed.tx.seata.main
 
-import org.soul.ability.distributed.tx.seata.data.TestTable
+import io.kudos.ability.distributed.tx.seata.data.TestTable
+
 
 /**
  * 主应用的service接口
  *
- * @author will
- * @since 5.1.1
+ * @author K
+ * @since 1.0.0
  */
 interface IService {
-    fun getById(id: Int?): TestTable?
 
-    val globalTxId: String?
+    fun getById(id: Int): TestTable
+
+    fun getGlobalTxId(): String?
 
     /**
      * 本地依赖时，正常执行
@@ -42,4 +44,5 @@ interface IService {
      * 本地依赖时，全局事务异常
      */
     fun onGlobalErrorRemote()
+
 }

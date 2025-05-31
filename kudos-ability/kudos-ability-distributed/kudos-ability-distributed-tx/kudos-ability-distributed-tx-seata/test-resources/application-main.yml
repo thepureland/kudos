@@ -31,8 +31,8 @@ spring:
           username: pg
           password: postgres
           init:
-            schema: sql/pg/schema.sql
-            data: sql/pg/data.sql
+            schema: sql/postgres/schema.sql
+            data: sql/postgres/data.sql
 #        mysql:
 #          type: com.zaxxer.hikari.HikariDataSource
 #          hikari:
@@ -54,10 +54,5 @@ spring:
       discovery:
         server-addr: localhost:28848
 
-feign:
-  hystrix:
-    enabled: false
-  httpclient:
-    connection-timeout: 30000
 
 

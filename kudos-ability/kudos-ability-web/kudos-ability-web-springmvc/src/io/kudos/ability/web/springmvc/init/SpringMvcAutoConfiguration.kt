@@ -3,7 +3,6 @@ package io.kudos.ability.web.springmvc.init
 import com.fasterxml.jackson.databind.SerializationFeature
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
-import io.kudos.context.kit.SpringKit
 import org.soul.ability.web.common.consts.WebCommonConst
 import org.soul.ability.web.common.init.DictI18nServlet
 import org.soul.ability.web.common.session.SessionManager
@@ -18,18 +17,19 @@ import org.soul.context.core.IContextInitializer
 import org.soul.context.core.SoulPropertySourceFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.web.servlet.ServletListenerRegistrationBean
 import org.springframework.boot.web.servlet.ServletRegistrationBean
 import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.PropertySource
 import org.springframework.http.converter.HttpMessageConverter
 import org.springframework.http.converter.StringHttpMessageConverter
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter
 import org.springframework.web.context.request.RequestContextListener
 import org.springframework.web.filter.FormContentFilter
-import org.springframework.web.servlet.HandlerInterceptor
 import org.springframework.web.servlet.config.annotation.*
 import java.nio.charset.StandardCharsets
 import java.util.*
@@ -41,13 +41,13 @@ import java.util.*
  * @author K
  * @since 1.0.0
  */
+@Configuration
 @EnableWebMvc
 @AutoConfigureAfter(ContextAutoConfiguration::class)
 @PropertySource(
     value = ["classpath:kudos-ability-web-springmvc.yml", "classpath:kudos-ability-web-springmvc-global.yml"],
     factory = SoulPropertySourceFactory::class
 )
-
 open class SpringMvcAutoConfiguration : IComponentInitializer, WebMvcConfigurer {
 
     /**
@@ -67,15 +67,15 @@ open class SpringMvcAutoConfiguration : IComponentInitializer, WebMvcConfigurer 
 
     @Bean(IGlobalExceptionProcess.BEAN_NAME)
     @ConditionalOnMissingBean
-    fun globalExceptionProcess(): IGlobalExceptionProcess = DefaultGlobalExceptionProcess()
+    open fun globalExceptionProcess(): IGlobalExceptionProcess = DefaultGlobalExceptionProcess()
 
     @Bean(IGlobalErrorI18nService.BEAN_NAME)
     @ConditionalOnMissingBean
-    fun globalErrorI18nService(): IGlobalErrorI18nService = DefaultGlobalErrorI18nService()
+    open fun globalErrorI18nService(): IGlobalErrorI18nService = DefaultGlobalErrorI18nService()
 
     @Bean(IGlobalResponseBodyProcess.BEAN_NAME)
     @ConditionalOnMissingBean
-    fun globalResponseBodyProcess(): IGlobalResponseBodyProcess = DefaultGlobalResponseBodyProcess()
+    open fun globalResponseBodyProcess(): IGlobalResponseBodyProcess = DefaultGlobalResponseBodyProcess()
 
 
     @Bean
@@ -97,9 +97,8 @@ open class SpringMvcAutoConfiguration : IComponentInitializer, WebMvcConfigurer 
         return registrationBean
     }
 
-
     @Bean
-    @ConditionalOnMissingBean
+    @ConditionalOnBean
     open fun i18nDictService(): ServletRegistrationBean<DictI18nServlet> {
         val registrationBean = ServletRegistrationBean(
             DictI18nServlet(), WebCommonConst.DICT_URL_GET, WebCommonConst.DICT_URL_ALL
@@ -141,7 +140,7 @@ open class SpringMvcAutoConfiguration : IComponentInitializer, WebMvcConfigurer 
 
 
     override fun addInterceptors(registry: InterceptorRegistry) {
-        val corsHandlerInterceptor = SpringKit.getBean("corsHandlerInterceptor") as HandlerInterceptor
+        val corsHandlerInterceptor = corsHandlerInterceptor()
         registry.addInterceptor(corsHandlerInterceptor).addPathPatterns("/**")
     }
 

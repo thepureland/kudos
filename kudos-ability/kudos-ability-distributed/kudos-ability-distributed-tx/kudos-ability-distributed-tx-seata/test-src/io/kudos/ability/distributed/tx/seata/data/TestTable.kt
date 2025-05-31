@@ -5,10 +5,11 @@ import org.soul.base.bean.IEntity
 /**
  * 测试表数据库实体
  *
- * @author will
- * @since 5.1.1
+ * @author K
+ * @since 1.0.0
  */
 class TestTable : IEntity<Int?> {
+    
     private var id: Int? = null
 
     var balance: Double? = null
@@ -20,4 +21,5 @@ class TestTable : IEntity<Int?> {
     override fun setId(id: Int?) {
         this.id = id
     }
+    
 }

@@ -1,5 +1,6 @@
 package io.kudos.ability.file.minio.init
 
+import io.kudos.context.init.IComponentInitializer
 import io.kudos.context.spring.YamlPropertySourceFactory
 import io.minio.MinioClient
 import jakarta.annotation.PostConstruct
@@ -12,6 +13,7 @@ import org.soul.ability.file.minio.starter.properties.AccessTokenServerPropertie
 import org.soul.ability.file.minio.starter.properties.MinioProperties
 import org.soul.base.log.Log
 import org.soul.base.log.LogFactory
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -27,53 +29,45 @@ import java.net.URL
  * @since 1.0.0
  */
 @Configuration
-@PropertySource(value = ["classpath:kudos-ability-file-minio.yml"], factory = YamlPropertySourceFactory::class)
-class MinioAutoConfiguration {
+@PropertySource(
+    value = ["classpath:kudos-ability-file-minio.yml"],
+    factory = YamlPropertySourceFactory::class
+)
+open class MinioAutoConfiguration : IComponentInitializer {
+
     @Bean
-    @Throws(MalformedURLException::class)
-    fun minioClient(minioProperties: MinioProperties): MinioClient {
-        return MinioClient.builder().endpoint(URL(minioProperties.getEndpoint()))
-            .credentials(minioProperties.getAccessKey(), minioProperties.getSecretKey()).build()
+    @ConditionalOnMissingBean
+    open fun minioClient(minioProperties: MinioProperties): MinioClient {
+        return MinioClient.builder().endpoint(URL(minioProperties.endpoint))
+            .credentials(minioProperties.accessKey, minioProperties.secretKey).build()
     }
 
     @Bean
+    @ConditionalOnMissingBean
     @ConfigurationProperties(prefix = "kudos.ability.file.minio")
-    fun minioProperties(): MinioProperties {
-        return MinioProperties()
-    }
+    open fun minioProperties() = MinioProperties()
 
     @Bean
+    @ConditionalOnMissingBean
     @ConfigurationProperties(prefix = "kudos.ability.file.minio.sts.access-token")
-    fun accessTokenProperties(): AccessTokenServerProperties {
-        return AccessTokenServerProperties()
-    }
+    open fun accessTokenProperties() = AccessTokenServerProperties()
 
     @Bean
-    fun minioUploadService(): MinioUploadService {
-        return MinioUploadService()
-    }
+    @ConditionalOnMissingBean
+    open fun minioUploadService() = MinioUploadService()
 
     @Bean
-    fun minioDownLoadService(): MinioDownLoadService {
-        return MinioDownLoadService()
-    }
+    @ConditionalOnMissingBean
+    open fun minioDownLoadService() = MinioDownLoadService()
 
     @Bean
-    fun minioDeleteService(): MinioDeleteService {
-        return MinioDeleteService()
-    }
+    @ConditionalOnMissingBean
+    open fun minioDeleteService() = MinioDeleteService()
 
     @Bean
-    fun minioClientBuilderFactory(): MinioClientBuilderFactory {
-        return MinioClientBuilderFactory()
-    }
+    @ConditionalOnMissingBean
+    open fun minioClientBuilderFactory() = MinioClientBuilderFactory()
 
-    @PostConstruct
-    fun init() {
-        LOG.info("[soul-ability-file-minio]初始化完成...")
-    }
+    override fun getComponentName() = "soul-ability-file-minio"
 
-    companion object {
-        private val LOG: Log = LogFactory.getLog(MinioConfiguration::class.java)
-    }
 }

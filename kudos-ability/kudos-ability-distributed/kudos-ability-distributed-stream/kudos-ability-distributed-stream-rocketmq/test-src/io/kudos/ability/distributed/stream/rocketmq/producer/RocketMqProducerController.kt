@@ -1,6 +1,6 @@
-package io.kudos.ability.distributed.stream.rabbit.producer
+package io.kudos.ability.distributed.stream.rocketmq.producer
 
-import io.kudos.ability.distributed.stream.rabbit.data.RabbitMqSimpleMsg
+import io.kudos.ability.distributed.stream.rocketmq.data.RocketMqSimpleMsg
 import io.kudos.base.logger.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.RequestMapping
@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 /**
- * RabbitMq测试 生產者 controller
+ * RocketMQ测试 生產者 controller
  *
  * @author shane
  * @author K
@@ -16,12 +16,12 @@ import org.springframework.web.bind.annotation.RestController
  */
 @RestController
 @RequestMapping("/producer")
-open class RabbitMqProducerController {
+open class RocketMqProducerController {
 
     private val log = LoggerFactory.getLogger(this)
 
     @Autowired
-    private lateinit var producerService: IRabbitMqProducerService
+    private lateinit var producerService: IRocketMqProducerService
 
     /**
      * 發送mq信息
@@ -29,7 +29,7 @@ open class RabbitMqProducerController {
     @RequestMapping("/send")
     fun send(@RequestParam("message") message: String?) {
         log.info("########## send: $message")
-        producerService.producer(RabbitMqSimpleMsg(message))
+        producerService.producer(RocketMqSimpleMsg(message))
     }
 
 }

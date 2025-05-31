@@ -7,9 +7,9 @@ import org.springframework.stereotype.Repository
 /**
  * 测试表数据访问对象
  *
- * @author will
- * @since 5.1.1
+ * @author K
+ * @since 1.0.0
  */
 @Mapper
 @Repository
-interface TestTableMapper : IBaseCrudMapper<TestTable?, Int?>
+interface TestTableMapper : IBaseCrudMapper<TestTable, Int>

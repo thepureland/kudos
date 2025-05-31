@@ -1,24 +1,21 @@
 package io.kudos.ability.distributed.notify.rdb.ms
 
-import org.soul.context.context.EnableSoul
-import org.soul.context.core.SoulPropertySourceFactory
-import org.springframework.boot.autoconfigure.SpringBootApplication
+import io.kudos.ability.distributed.notify.rdb.ms.common.NotifyRdbMsController
+import io.kudos.ability.distributed.notify.rdb.ms.common.NotifyRdbMsService
+import io.kudos.ability.distributed.notify.rdb.ms.common.RdbDataSourceNotifyListener
+import io.kudos.context.init.EnableKudos
+import io.kudos.context.spring.YamlPropertySourceFactory
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient
-import org.springframework.context.annotation.ComponentScan
+import org.springframework.context.annotation.Import
 import org.springframework.context.annotation.PropertySource
 import org.springframework.test.context.ActiveProfiles
 
 @EnableDiscoveryClient
-@ComponentScan(
-    basePackages = [ //                "org.soul.ability.distributed.notify.test.rdb.common",
-        "org.soul.ability.distributed.notify.test.rdb.ms"
-    ]
-)
 @PropertySource(
     value = ["classpath:application-ms.yml"
-    ], factory = SoulPropertySourceFactory::class
+    ], factory = YamlPropertySourceFactory::class
 )
-@EnableSoul
+@EnableKudos
 @ActiveProfiles("ms")
-@SpringBootApplication
-class RdbMsApplication 
+@Import(NotifyRdbMsController::class, NotifyRdbMsService::class, RdbDataSourceNotifyListener::class)
+open class RdbMsApplication

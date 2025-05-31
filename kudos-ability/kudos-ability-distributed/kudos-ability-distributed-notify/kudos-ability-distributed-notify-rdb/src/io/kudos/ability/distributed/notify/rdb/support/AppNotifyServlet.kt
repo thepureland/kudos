@@ -1,12 +1,11 @@
 package io.kudos.ability.distributed.notify.rdb.support
 
+import io.kudos.ability.distributed.notify.common.model.NotifyMessageVo
+import io.kudos.ability.distributed.notify.common.support.NotifyListenerItem
 import jakarta.servlet.http.HttpServlet
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
-import org.soul.ability.distributed.notify.common.model.NotifyMessageVo
-import org.soul.ability.distributed.notify.common.support.NotifyListenerItem
 import org.soul.base.data.json.JsonTool
-import java.io.IOException
 
 /**
  * @author Fei
@@ -14,21 +13,21 @@ import java.io.IOException
  * @since 5.0.0
  */
 class AppNotifyServlet : HttpServlet() {
-    @Throws(IOException::class)
+
     override fun doGet(req: HttpServletRequest, resp: HttpServletResponse) {
         this.doPost(req, resp)
     }
 
-    @Throws(IOException::class)
     override fun doPost(req: HttpServletRequest, resp: HttpServletResponse) {
         val msg = req.getHeader("msgBody")
 
-        val messageVo = JsonTool.fromJson<NotifyMessageVo<*>>(msg, NotifyMessageVo::class.java)
+        val messageVo = JsonTool.fromJson(msg, NotifyMessageVo::class.java)
 
-        val listener = NotifyListenerItem.get(messageVo.getNotifyType())
+        val listener = NotifyListenerItem.get(messageVo.notifyType)
         if (listener != null) {
             listener.notifyProcess(messageVo)
-            resp.getWriter().print("notify successful!")
-        } else resp.getWriter().print("Could not found the listener!")
+            resp.writer.print("notify successful!")
+        } else resp.writer.print("Could not found the listener!")
     }
+
 }

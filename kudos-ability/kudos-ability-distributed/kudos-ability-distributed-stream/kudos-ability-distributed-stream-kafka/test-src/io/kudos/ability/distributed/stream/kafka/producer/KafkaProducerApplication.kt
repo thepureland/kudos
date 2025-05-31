@@ -1,24 +1,24 @@
 package io.kudos.ability.distributed.stream.kafka.producer
 
-import org.soul.context.context.EnableSoul
-import org.soul.context.core.SoulPropertySourceFactory
-import org.springframework.boot.autoconfigure.SpringBootApplication
+import io.kudos.context.init.EnableKudos
+import io.kudos.context.spring.YamlPropertySourceFactory
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient
 import org.springframework.context.annotation.Import
 import org.springframework.context.annotation.PropertySource
+import org.springframework.kafka.annotation.EnableKafka
 
 /**
- * kafka 生產者微服务应用
+ * kafka测试生產者微服务应用
  *
  * @author shane
+ * @author K
  * @since 5.1.1
  */
+@EnableKudos
 @EnableDiscoveryClient
 @PropertySource(
     value = ["classpath:application-kafka-producer.yml"
-    ], factory = SoulPropertySourceFactory::class
+    ], factory = YamlPropertySourceFactory::class
 )
-@EnableSoul
-@SpringBootApplication
 @Import(KafkaProducerController::class, KafkaProducerService::class)
-class KafkaProducerApplication 
+open class KafkaProducerApplication

@@ -1,14 +1,14 @@
-package io.kudos.ability.distributed.stream.rabbit.main
+package io.kudos.ability.distributed.stream.rocketmq.main
 
 
 /**
- * RabbitMq测试服务接口
+ * RocketMQ测试服务接口
  *
  * @author shane
  * @author K
  * @since 1.0.0
  */
-interface IRabbitMqMainService {
+interface IRocketMqMainService {
 
     fun sendAndReceiveMessage(): String?
 

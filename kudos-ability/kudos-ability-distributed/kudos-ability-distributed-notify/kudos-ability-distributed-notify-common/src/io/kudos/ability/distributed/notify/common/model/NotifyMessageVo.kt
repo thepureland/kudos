@@ -1,4 +1,4 @@
-package io.kudos.ability.distributed.notify.model
+package io.kudos.ability.distributed.notify.common.model
 
 import java.io.Serial
 import java.io.Serializable
@@ -8,22 +8,22 @@ import java.io.Serializable
  * 日期： 2022/11/14 12:08
  * 描述：
  */
-class NotifyMessageVo<T> : Serializable {
+class NotifyMessageVo<T : Serializable> : Serializable {
     /**
      * 通知类型
      */
-    var notifyType: String? = null
+    lateinit var notifyType: String
 
     /**
      * 消息内容
      */
     var messageBody: T? = null
 
-    constructor(messageBody: T?) {
+    constructor(messageBody: T) {
         this.messageBody = messageBody
     }
 
-    constructor(notifyType: String?, messageBody: T?) {
+    constructor(notifyType: String, messageBody: T) {
         this.notifyType = notifyType
         this.messageBody = messageBody
     }

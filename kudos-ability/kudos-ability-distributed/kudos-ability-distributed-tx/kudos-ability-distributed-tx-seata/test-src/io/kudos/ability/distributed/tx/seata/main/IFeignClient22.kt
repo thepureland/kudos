@@ -5,8 +5,8 @@ import org.springframework.cloud.openfeign.FeignClient
 /**
  * 微服务应用2的Feign客户端
  *
- * @author will
- * @since 5.1.1
+ * @author K
+ * @since 1.0.0
  */
-@FeignClient(value = "ms22")
+@FeignClient("ms22")
 interface IFeignClient22 : IClient2

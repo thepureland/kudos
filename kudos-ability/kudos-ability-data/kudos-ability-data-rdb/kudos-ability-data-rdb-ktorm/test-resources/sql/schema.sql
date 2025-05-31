@@ -1,3 +1,4 @@
+drop TABLE IF EXISTS "test_table";
 CREATE TABLE IF NOT EXISTS "test_table"
 (
     "id"            int2 not null,

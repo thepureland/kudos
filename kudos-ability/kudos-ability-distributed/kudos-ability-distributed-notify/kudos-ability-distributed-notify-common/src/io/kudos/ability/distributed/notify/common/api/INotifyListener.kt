@@ -1,6 +1,7 @@
-package io.kudos.ability.distributed.notify.api
+package io.kudos.ability.distributed.notify.common.api
 
-import io.kudos.ability.distributed.notify.model.NotifyMessageVo
+import io.kudos.ability.distributed.notify.common.model.NotifyMessageVo
+import java.io.Serializable
 
 
 /**
@@ -8,8 +9,10 @@ import io.kudos.ability.distributed.notify.model.NotifyMessageVo
  * 日期： 2022/11/14 14:14
  * 描述：
  */
-interface INotifyListener<T> {
-    fun notifyType(): String?
+interface  INotifyListener {
 
-    fun notifyProcess(notifyMessageVo: NotifyMessageVo<T?>?)
+    fun notifyType(): String
+
+    fun notifyProcess(notifyMessageVo: NotifyMessageVo<out Serializable>)
+
 }

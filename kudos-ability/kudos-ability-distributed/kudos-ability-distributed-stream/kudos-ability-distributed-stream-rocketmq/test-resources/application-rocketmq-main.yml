@@ -13,7 +13,12 @@ spring:
         definition: consumer
       bindings:
         consumer-in-0:
-          destination: RABBIT_TEST_TOPIC
+          destination: ROCKETMQ_TEST_TOPIC
+          content-type: application/json
+          group: unitTest
+          consumer:
+            concurrency: 5
+
   datasource:
     dynamic:
       primary: postgres
@@ -40,13 +45,3 @@ spring:
           username: pg
           password: postgres
 
-feign:
-  hystrix:
-    enabled: false
-  httpclient:
-    connection-timeout: 30000
-
-logging:
-  level:
-    root: DEBUG
-#    com.alibaba.cloud: DEBUG

@@ -1,14 +1,14 @@
 package io.kudos.ability.distributed.stream.rabbit
 
-import io.kudos.ability.distributed.stream.kafka.main.IKafkaMainService
-import io.kudos.ability.distributed.stream.kafka.main.KafkaConsumerHandler
-import io.kudos.ability.distributed.stream.kafka.main.KafkaMainService
-import io.kudos.ability.distributed.stream.kafka.producer.KafkaProducerApplication
+import io.kudos.ability.distributed.stream.rabbit.main.IRabbitMqMainService
+import io.kudos.ability.distributed.stream.rabbit.main.RabbitMqConsumerHandler
+import io.kudos.ability.distributed.stream.rabbit.main.RabbitMqMainService
+import io.kudos.ability.distributed.stream.rabbit.producer.RabbitMqProducerApplication
 import io.kudos.base.net.IpKit
 import io.kudos.test.common.init.EnableKudosTest
-import io.kudos.test.container.KafkaTestContainer
 import io.kudos.test.container.NacosTestContainer
 import io.kudos.test.container.PostgresTestContainer
+import io.kudos.test.container.RabbitMqTestContainer
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -27,7 +27,7 @@ import java.util.concurrent.TimeoutException
 
 
 /**
- * kafka测试用例
+ * RabbitMq测试用例
  *
  * @author shane
  * @author K
@@ -37,14 +37,12 @@ import java.util.concurrent.TimeoutException
 @EnableFeignClients
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Testcontainers(disabledWithoutDocker = true)
-@Import(KafkaConsumerHandler::class, KafkaMainService::class)
-@ActiveProfiles("kafka-main")
-open class RabbitTest {
+@Import(RabbitMqConsumerHandler::class, RabbitMqMainService::class)
+@ActiveProfiles("rabbit-main")
+open class RabbitMqTest {
 
     @Autowired
-    private lateinit var mainService: IKafkaMainService
-
-    private val kafkaContainer = KafkaTestContainer.container
+    private lateinit var mainService: IRabbitMqMainService
 
     private val EXECUTOR = Executors.newFixedThreadPool(3)
 
@@ -53,9 +51,14 @@ open class RabbitTest {
         val url = "jdbc:postgresql://${IpKit.getLocalIp()}:${PostgresTestContainer.PORT}/${PostgresTestContainer.DATABASE}"
         val args = arrayOf(
             "--spring.datasource.dynamic.datasource.postgres.url=$url",
-            "--spring.cloud.stream.kafka.binder.brokers=${kafkaContainer.host}:${kafkaContainer.firstMappedPort}",
-        )
-        SpringApplication.run(KafkaProducerApplication::class.java, *args)
+            "--spring.rabbitmq.host=${IpKit.getLocalIp()}",
+            "--spring.rabbitmq.username=guest",
+            "--spring.rabbitmq.password=guest",
+            "--spring.rabbitmq.port=${RabbitMqTestContainer.PORT}",
+            "--spring.rabbitmq.virtual-host=/",
+            "--spring.rabbitmq.addresses=${IpKit.getLocalIp()}:${RabbitMqTestContainer.PORT}"
+            )
+        SpringApplication.run(RabbitMqProducerApplication::class.java, *args)
     }
 
 
@@ -71,7 +74,7 @@ open class RabbitTest {
         } catch (e: Exception) {
             throw e
         } catch (_ : TimeoutException) {
-            throw RuntimeException("等待时间超过30秒，mq接收异常")
+            throw RuntimeException("等待时间超过5秒，mq接收异常")
         } finally {
             future.cancel(true)
         }
@@ -99,15 +102,15 @@ open class RabbitTest {
         private fun registerProperties(registry: DynamicPropertyRegistry?) {
             val postgresThread = Thread { PostgresTestContainer.start(registry) }
             val nacosThread = Thread { NacosTestContainer.start(registry) }
-            val kafkaThread = Thread { KafkaTestContainer.start(registry) }
+            val rabbitThread = Thread { RabbitMqTestContainer.start(registry) }
 
             postgresThread.start()
             nacosThread.start()
-            kafkaThread.start()
+            rabbitThread.start()
 
             postgresThread.join()
             nacosThread.join()
-            kafkaThread.join()
+            rabbitThread.join()
         }
     }
 

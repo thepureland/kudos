@@ -3,7 +3,8 @@ package io.kudos.ability.log.audit.mq
 import org.soul.base.ienums.ICodeEnum
 
 enum class TestModuleEnum(code: String, trans: String) : ICodeEnum {
-    DEMO(TestModuleEnum.Companion.MODULE_DEMO, "测试模块");
+
+    DEMO("demo", "测试模块");
 
     private val code: String?
     private val trans: String?

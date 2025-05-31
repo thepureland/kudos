@@ -5,12 +5,14 @@ import io.kudos.ability.distributed.notify.common.model.NotifyMessageVo
 import io.kudos.ability.distributed.notify.mq.common.NotifyTypeEnum
 import org.soul.base.log.Log
 import org.soul.base.log.LogFactory
+import org.soul.context.core.CommonContext
+import org.soul.context.core.ContextParam
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.annotation.Bean
 import org.springframework.stereotype.Service
-import java.io.Serializable
 
 @Service
-class NotifyMqMsService {
+open class NotifyMqMsService {
     private val log: Log = LogFactory.getLog(NotifyMqMsService::class.java)
 
     @Autowired
@@ -19,11 +21,21 @@ class NotifyMqMsService {
 
     private val registryMap: MutableMap<Int?, String?> = HashMap<Int?, String?>()
 
-    fun process(key: String?): Boolean {
-        val messageVo: NotifyMessageVo<*> = NotifyMessageVo<Any?>()
-        messageVo.notifyType = NotifyTypeEnum.DS.getCode()
+    @Bean
+    fun contextParam(): ContextParam {
+        val context = ContextParam()
+        // 这个数据类型目前是Integer类型, 像配置文件定义的db1,db2这种字符串会有问题
+        // jdbc模块也有相同问题, 后续建议统一调整为Object类型,并自动对String,Integer,Long等常用类型进行转换
+        context.username = "notifyMqTestUser"
+        CommonContext.set(context)
+        return context
+    }
+
+    fun process(key: String): Boolean {
+        val messageVo = NotifyMessageVo<String>()
+        messageVo.notifyType = NotifyTypeEnum.DS.code
         messageVo.messageBody = key
-        return notifyProducer!!.notify<Serializable?>(messageVo)
+        return notifyProducer!!.notify(messageVo)
     }
 
     fun collection(port: Int?, appKey: String, key: String?): Boolean {

@@ -7,14 +7,16 @@ import org.springframework.context.ApplicationListener
 import org.springframework.stereotype.Component
 
 @Component
-class MsApplicationListener : ApplicationListener<ApplicationReadyEvent?> {
-    @Autowired
-    private val mainClinet: IMainClinet? = null
+open class MsApplicationListener : ApplicationListener<ApplicationReadyEvent> {
 
     @Autowired
-    private val msConfig: MsConfig? = null
+    private lateinit var mainClinet: IMainClinet
+
+    @Autowired
+    private lateinit var msConfig: MsConfig
 
     override fun onApplicationEvent(event: ApplicationReadyEvent) {
-        mainClinet!!.registry(msConfig!!.getAppKey(), msConfig.getPort())
+        mainClinet.registry(msConfig.appKey, msConfig.port)
     }
+
 }

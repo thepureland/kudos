@@ -1,63 +1,49 @@
 package io.kudos.ability.distributed.tx.seata
 
-import org.junit.jupiter.api.Disabled
+import io.kudos.ability.distributed.tx.seata.main.Service
+import io.kudos.test.common.init.EnableKudosTest
 import org.junit.jupiter.api.Test
-import org.soul.ability.distributed.tx.seata.main.IFeignClient11
 import org.springframework.context.annotation.Import
-import java.util.function.Supplier
+import org.springframework.test.context.DynamicPropertyRegistry
+import org.springframework.test.context.DynamicPropertySource
 
 /**
  * seata-AT模式测试用例
  *
- * @author will
- * @since 5.1.1
+ * @author K
+ * @since 1.0.0
  */
-@SoulTest
-@SpringBootApplication
-@Import(IFeignClient11::class, IFeignClient21::class, Service::class)
-@Disabled("避免与XaSeataTest一起跑时，造成其全局事务失效。但是单个跑都是没问题。")
-class AtSeataTest : SeataTestBase() {
-    override fun getTxServiceGroup(): String {
-        return "other_tx_group"
-    }
+@EnableKudosTest
+@Import(Service::class)
+open class AtSeataTest : SeataTestBase() {
 
-    override fun getDataSourceProxyMode(): String {
-        return "AT"
-    }
+    override fun txServiceGroup() = "other_tx_group"
 
-    override fun getApp1Port(): Int {
-        return 28181
-    }
+    override fun dataSourceProxyMode() = "AT"
 
-    override fun getApp2Port(): Int {
-        return 28182
-    }
+    override fun app1Port() = 28181
 
-    override fun getApp1Name(): String {
-        return "ms12"
-    }
+    override fun app2Port() = 28182
 
-    override fun getApp2Name(): String {
-        return "ms22"
-    }
+    override fun app1Name() = "ms12"
+
+    override fun app2Name() = "ms22"
 
     @Test
-    override fun localTx() {
-        super.localTx()
-    }
+    override fun localTx() = super.localTx()
 
     @Test
-    override fun remoteTx() {
-        super.remoteTx()
-    }
+    override fun remoteTx() = super.remoteTx()
 
     companion object {
+        @JvmStatic
         @DynamicPropertySource
         private fun changeProperties(registry: DynamicPropertyRegistry) {
-            registry.add("seata.service.vgroup-mapping.other_tx_group", Supplier { "default" })
-            registry.add("seata.tx-service-group", Supplier { "other_tx_group" })
-            registry.add("seata.data-source-proxy-mode", Supplier { "AT" })
-            SeataTestBase.Companion.registerProperties(registry)
+            registry.add("seata.service.vgroup-mapping.other_tx_group") { "default" }
+            registry.add("seata.tx-service-group") { "other_tx_group" }
+            registry.add("seata.data-source-proxy-mode") { "AT" }
+            startContainer(registry)
         }
     }
+
 }

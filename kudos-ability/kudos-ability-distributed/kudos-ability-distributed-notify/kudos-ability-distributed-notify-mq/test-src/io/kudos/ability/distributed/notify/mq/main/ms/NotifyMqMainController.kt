@@ -7,31 +7,32 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/main")
-class NotifyMqMainController {
+open class NotifyMqMainController {
+
     @Autowired
-    private val notifyMqMsService: NotifyMqMsService? = null
+    private lateinit var notifyMqMsService: NotifyMqMsService
 
     @RequestMapping("/collection")
     fun collection(
-        @RequestParam("port") port: Int?,
-        @RequestParam("appKey") appKey: String?,
-        @RequestParam("key") key: String?
+        @RequestParam("port") port: Int,
+        @RequestParam("appKey") appKey: String,
+        @RequestParam("key") key: String
     ): Boolean {
-        return notifyMqMsService!!.collection(port, appKey, key)
+        return notifyMqMsService.collection(port, appKey, key)
     }
 
     @RequestMapping("/change")
-    fun change(@RequestParam("key") key: String?): Boolean {
-        return notifyMqMsService!!.process(key)
+    fun change(@RequestParam("key") key: String): Boolean {
+        return notifyMqMsService.process(key)
     }
 
     @RequestMapping("/sync")
-    fun sync(@RequestParam("key") key: String?): Boolean {
-        return notifyMqMsService!!.isSync(key)
+    fun sync(@RequestParam("key") key: String): Boolean {
+        return notifyMqMsService.isSync(key)
     }
 
     @RequestMapping("/registry")
-    fun registry(@RequestParam("appKey") appKey: String?, @RequestParam("port") port: Int?): Boolean {
-        return notifyMqMsService!!.registry(appKey, port)
+    fun registry(@RequestParam("appKey") appKey: String, @RequestParam("port") port: Int?): Boolean {
+        return notifyMqMsService.registry(appKey, port)
     }
 }

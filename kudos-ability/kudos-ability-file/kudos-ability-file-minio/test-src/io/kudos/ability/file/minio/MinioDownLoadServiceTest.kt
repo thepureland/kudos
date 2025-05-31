@@ -1,6 +1,7 @@
 package io.kudos.ability.file.minio
 
-import io.kudos.test.common.EnableKudosTest
+import io.kudos.test.common.init.EnableKudosTest
+import io.kudos.test.container.MinioTestContainer
 import org.junit.jupiter.api.*
 import org.soul.ability.file.common.IDownLoadService
 import org.soul.ability.file.common.IUploadService
@@ -14,6 +15,9 @@ import org.soul.base.exception.ServiceException
 import org.soul.base.lang.string.RandomStringTool
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.io.InputStreamResource
+import org.springframework.core.io.InputStreamSource
+import org.springframework.test.context.DynamicPropertyRegistry
+import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.junit.jupiter.Testcontainers
 
 /**
@@ -27,34 +31,35 @@ import org.testcontainers.junit.jupiter.Testcontainers
 @TestInstance(value = TestInstance.Lifecycle.PER_CLASS)
 @Testcontainers(disabledWithoutDocker = true)
 internal class MinioDownLoadServiceTest {
-    @Autowired
-    private val downLoadService: IDownLoadService? = null
 
     @Autowired
-    private val uploadService: IUploadService? = null
+    private lateinit var downLoadService: IDownLoadService
+
+    @Autowired
+    private lateinit var uploadService: IUploadService
 
     private var uploadFileResult: UploadFileResult? = null
 
     @BeforeAll
-    private fun before_download() {
+    fun before_download() {
         val bucketName = RandomStringTool.uuid()
         val tenantId = RandomStringTool.uuid()
         val resourceAsStream =
-            MinioUploadServiceTest::class.java.getClassLoader().getResourceAsStream("files/test-file.txt")
-        val uploadFileModel: UploadFileModel<*> = UploadFileModel<Any?>()
-        uploadFileModel.setBucketName(bucketName)
-        uploadFileModel.setCategory("test")
-        uploadFileModel.setTenantId(tenantId)
-        uploadFileModel.setFileSuffix(".txt")
-        uploadFileModel.setInputStreamSource(InputStreamResource(resourceAsStream))
-        this.uploadFileResult = uploadService!!.fileUpload(uploadFileModel)
+            MinioDownLoadServiceTest::class.java.getClassLoader().getResourceAsStream("files/test-file.txt")
+        val uploadFileModel = UploadFileModel<InputStreamSource>()
+        uploadFileModel.bucketName = bucketName
+        uploadFileModel.category = "test"
+        uploadFileModel.tenantId = tenantId
+        uploadFileModel.fileSuffix = ".txt"
+        uploadFileModel.inputStreamSource = InputStreamResource(resourceAsStream)
+        this.uploadFileResult = uploadService.fileUpload(uploadFileModel)
     }
 
     @Test
     fun download_with_default_minio_client() {
         try {
-            val downloadFileModel = DownloadFileModel.from(uploadFileResult!!.getFilePath())
-            val rs = downLoadService!!.download(downloadFileModel)
+            val downloadFileModel = DownloadFileModel.from(uploadFileResult!!.filePath)
+            val rs = downLoadService.download(downloadFileModel)
             Assertions.assertTrue(rs.size > 0)
         } catch (e: Exception) {
             e.printStackTrace()
@@ -63,17 +68,17 @@ internal class MinioDownLoadServiceTest {
 
     @Test
     fun download_with_specify_access_key_without_auth() {
-        val downloadFileModel = DownloadFileModel.from(uploadFileResult!!.getFilePath())
+        val downloadFileModel = DownloadFileModel.from(uploadFileResult!!.filePath)
 
         val accessKeyServerParam = AccessKeyServerParam()
-        accessKeyServerParam.setAccessKey("test")
-        accessKeyServerParam.setSecretKey("test")
-        downloadFileModel.setAuthServerParam(accessKeyServerParam)
+        accessKeyServerParam.accessKey = "test"
+        accessKeyServerParam.secretKey = "test"
+        downloadFileModel.authServerParam = accessKeyServerParam
 
         try {
-            val rs = downLoadService!!.download(downloadFileModel)
+            val rs = downLoadService.download(downloadFileModel)
         } catch (e: ServiceException) {
-            Assertions.assertTrue(e.getErrorCode() === FileErrorCode.FILE_ACCESS_DENY)
+            Assertions.assertTrue(e.errorCode === FileErrorCode.FILE_ACCESS_DENY)
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -91,25 +96,37 @@ internal class MinioDownLoadServiceTest {
      * 2) 指定tenantId
      * 3) 指定headerValue
      */
-    @Disabled("依赖外部配置,请手工执行")
     @Test
+    @Disabled("依赖外部配置,请手工执行")
+    //TODO
     fun download_with_specify_access_token_with_auth() {
         //warning: 请确保bucket name : docs存在 ,且默认 private访问权限
         //warning: 请确保 fullPath变量指向的文件存在
         //warning: 请确认保headerValue的Session ID能通过安全认证,正常访问 AccessToken Endpoint
 
-        val fullPath = "/docs/0/avatar.png"
+        val fullPath = "/docs/0/minio.png"
         val downloadFileModel = DownloadFileModel.from(fullPath)
 
         val accessTokenServerParam = AccessTokenServerParam()
-        accessTokenServerParam.setHeaderValue("e49f172d-e29c-44af-9f93-88c5a8285479") // 有效的SID
-        downloadFileModel.setAuthServerParam(accessTokenServerParam)
+        accessTokenServerParam.headerValue = "e49f172d-e29c-44af-9f93-88c5a8285479" // 有效的SID
+        downloadFileModel.authServerParam = accessTokenServerParam
 
         try {
-            val rs = downLoadService!!.download(downloadFileModel)
+            val rs = downLoadService.download(downloadFileModel)
             Assertions.assertTrue(rs.size > 0)
         } catch (e: Exception) {
             Assertions.assertNull(e)
         }
     }
+
+    companion object {
+
+        @JvmStatic
+        @DynamicPropertySource
+        fun property(registry: DynamicPropertyRegistry) {
+            MinioTestContainer.start(registry)
+        }
+
+    }
+
 }

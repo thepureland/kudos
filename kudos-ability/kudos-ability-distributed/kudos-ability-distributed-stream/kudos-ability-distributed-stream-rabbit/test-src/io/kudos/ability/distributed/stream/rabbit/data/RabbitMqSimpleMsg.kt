@@ -9,4 +9,4 @@ import java.io.Serializable
  * @author K
  * @since 1.0.0
  */
-class KafkaSimpleMsg(var msg: String?) : Serializable
+class RabbitMqSimpleMsg(var msg: String?) : Serializable

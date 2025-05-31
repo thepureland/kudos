@@ -1,60 +1,67 @@
 package io.kudos.ability.distributed.tx.seata
 
+import io.kudos.ability.distributed.tx.seata.main.IService
+import io.kudos.ability.distributed.tx.seata.ms1.Application1
+import io.kudos.ability.distributed.tx.seata.ms2.Application2
+import io.kudos.base.net.IpKit
+import io.kudos.test.container.PostgresTestContainer
+import io.kudos.test.container.SeataTestContainer
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
-import org.junit.jupiter.api.function.Executable
-import org.soul.ability.distributed.tx.seata.data.TestTableKit
+import org.mybatis.spring.annotation.MapperScan
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.SpringApplication
+import org.springframework.cloud.openfeign.EnableFeignClients
+import org.springframework.test.context.ActiveProfiles
+import org.springframework.test.context.DynamicPropertyRegistry
+import org.springframework.test.context.jdbc.Sql
 import org.testcontainers.junit.jupiter.Testcontainers
 
 /**
  * seata分布式事务测试用例基类
  *
- * @author will
- * @since 5.1.1
+ * @author K
+ * @since 1.0.0
  */
 @EnableFeignClients
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Testcontainers(disabledWithoutDocker = true)
 @ActiveProfiles("main")
+@Sql(
+    scripts = ["/sql/postgres/reset.sql"],
+    executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD
+)
+@MapperScan("io.kudos.ability.distributed.tx.seata.data")
 abstract class SeataTestBase {
+    
     @Autowired
-    private val service: IService? = null
-
-    @BeforeEach
-    fun beforeEach() {
-        TestTableKit.delete()
-        TestTableKit.insert()
-    }
+    private lateinit var service: IService
 
     @BeforeAll
     fun setUp() {
-        TestTableKit.create()
-
-        val url: String = "jdbc:postgresql://%s:%s/%s".formatted(
-            IpTool.getLocalIp(),
-            TestContainerPostgres.PORT,
-            TestContainerPostgres.DATABASE
-        )
-        val args1 = arrayOf<String?>(
+        val url = "jdbc:postgresql://${IpKit.getLocalIp()}:${PostgresTestContainer.PORT}/${PostgresTestContainer.DATABASE}"
+        val args1 = arrayOf(
             "--seata.service.vgroup-mapping.default_tx_group=default",
             "--seata.service.vgroup-mapping.other_tx_group=default",
-            "--seata.tx-service-group=" + this.txServiceGroup,
-            "--seata.data-source-proxy-mode=" + this.dataSourceProxyMode,
-            "--spring.datasource.dynamic.datasource.postgres.url=" + url,
-            "--spring.application.name=" + this.app1Name,
-            "--server.port=" + this.app1Port
+            "--seata.tx-service-group=${txServiceGroup()}",
+            "--seata.data-source-proxy-mode=${dataSourceProxyMode()}",
+            "--spring.datasource.dynamic.datasource.postgres.url=$url",
+            "--spring.application.name=${app1Name()}",
+            "--server.port=${app1Port()}"
         )
         SpringApplication.run(Application1::class.java, *args1)
 
-        val args2 = arrayOf<String?>(
+        val args2 = arrayOf(
             "--seata.service.vgroup-mapping.default_tx_group=default",
             "--seata.service.vgroup-mapping.other_tx_group=default",
-            "--seata.tx-service-group=" + this.txServiceGroup,
-            "--seata.data-source-proxy-mode=" + this.dataSourceProxyMode,
-            "--spring.datasource.dynamic.datasource.postgres.url=" + url,
-            "--spring.application.name=" + this.app2Name,
-            "--server.port=" + this.app2Port
+            "--seata.tx-service-group=${txServiceGroup()}",
+            "--seata.data-source-proxy-mode=${dataSourceProxyMode()}",
+            "--spring.datasource.dynamic.datasource.postgres.url=$url",
+            "--spring.application.name=${app2Name()}",
+            "--server.port=${app2Port()}"
         )
         SpringApplication.run(Application2::class.java, *args2)
     }
@@ -69,19 +76,19 @@ abstract class SeataTestBase {
      */
     open fun localTx() {
         // 分支事务异常，全部回滚
-        Assertions.assertThrows<Exception?>(Exception::class.java, Executable { service.onBranchErrorLocal() })
-        assertEquals(100.0, service.getById(1).getBalance())
-        assertEquals(200.0, service.getById(2).getBalance())
+        Assertions.assertThrows(Exception::class.java) { service.onBranchErrorLocal() }
+        assertEquals(100.0, service.getById(1).balance)
+        assertEquals(200.0, service.getById(2).balance)
 
         // 全局事务异常，全部回滚
-        Assertions.assertThrows<Exception?>(Exception::class.java, Executable { service.onGlobalErrorLocal() })
-        assertEquals(100.0, service.getById(1).getBalance())
-        assertEquals(200.0, service.getById(2).getBalance())
+        Assertions.assertThrows(Exception::class.java) { service.onGlobalErrorLocal() }
+        assertEquals(100.0, service.getById(1).balance)
+        assertEquals(200.0, service.getById(2).balance)
 
         // 无异常，分支事务全部提交
         service.normalLocal()
-        assertEquals(50.0, service.getById(1).getBalance())
-        assertEquals(250.0, service.getById(2).getBalance())
+        assertEquals(50.0, service.getById(1).balance)
+        assertEquals(250.0, service.getById(2).balance)
     }
 
     /**
@@ -89,37 +96,45 @@ abstract class SeataTestBase {
      */
     open fun remoteTx() {
         // 分支事务异常，全部回滚
-        Assertions.assertThrows<Exception?>(Exception::class.java, Executable { service.onBranchErrorRemote() })
-        assertEquals(100.0, service.getById(1).getBalance())
-        assertEquals(200.0, service.getById(2).getBalance())
+        Assertions.assertThrows(Exception::class.java) { service.onBranchErrorRemote() }
+        assertEquals(100.0, service.getById(1).balance)
+        assertEquals(200.0, service.getById(2).balance)
 
         // 全局事务异常，全部回滚
-        Assertions.assertThrows<Exception?>(Exception::class.java, Executable { service.onGlobalErrorRemote() })
-        assertEquals(100.0, service.getById(1).getBalance())
-        assertEquals(200.0, service.getById(2).getBalance())
+        Assertions.assertThrows(Exception::class.java) { service.onGlobalErrorRemote() }
+        assertEquals(100.0, service.getById(1).balance)
+        assertEquals(200.0, service.getById(2).balance)
 
         // 无异常，分支事务全部提交
         service.normalRemote()
-        assertEquals(50.0, service.getById(1).getBalance())
-        assertEquals(250.0, service.getById(2).getBalance())
+        assertEquals(50.0, service.getById(1).balance)
+        assertEquals(250.0, service.getById(2).balance)
     }
 
-    protected abstract val txServiceGroup: String?
+    protected abstract fun txServiceGroup(): String
 
-    protected abstract val dataSourceProxyMode: String?
+    protected abstract fun dataSourceProxyMode(): String
 
-    protected abstract val app1Port: Int
+    protected abstract fun app1Port(): Int
 
-    protected abstract val app2Port: Int
+    protected abstract fun app2Port(): Int
 
-    protected abstract val app1Name: String?
+    protected abstract fun app1Name(): String
 
-    protected abstract val app2Name: String?
+    protected abstract fun app2Name(): String
 
     companion object {
-        protected fun registerProperties(registry: DynamicPropertyRegistry?) {
-            TestContainerPostgres.start(registry)
-            TestContainerSeata.start(registry)
+        @JvmStatic
+        protected fun startContainer(registry: DynamicPropertyRegistry) {
+            val postgresThread = Thread { PostgresTestContainer.start(registry) }
+            val seataThread = Thread { SeataTestContainer.start(registry) }
+
+            postgresThread.start()
+            seataThread.start()
+
+            postgresThread.join()
+            seataThread.join()
         }
     }
+
 }

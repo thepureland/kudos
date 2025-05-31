@@ -1,4 +1,4 @@
-package io.kudos.ability.distributed.stream.rabbit.main
+package io.kudos.ability.distributed.stream.rocketmq.main
 
 import io.kudos.base.logger.LoggerFactory
 import org.soul.ability.distributed.stream.common.iservice.IStreamExceptionService
@@ -7,27 +7,27 @@ import org.springframework.stereotype.Service
 import java.util.*
 
 /**
- * RabbitMq测试服务
+ * RocketMQ测试服务
  * 
  * @author shane
  * @author K
  * @since 1.0.0
  */
 @Service
-class RabbitMqMainService : IRabbitMqMainService {
+class RocketMqMainService : IRocketMqMainService {
     
     private val log = LoggerFactory.getLogger(this)
     
-    private val topicName = "RABBIT_TEST_TOPIC"
+    private val topicName = "ROCKETMQ_TEST_TOPIC"
 
     @Autowired
-    private lateinit var producerClient: IRabbitMqProducerClient
+    private lateinit var producerClient: IRocketMqProducerClient
 
     @Autowired
     private lateinit var streamExceptionService: IStreamExceptionService
 
     @Autowired
-    private lateinit var consumerHandler: RabbitMqConsumerHandler
+    private lateinit var consumerHandler: RocketMqConsumerHandler
     
     private val result = "SUCCESS"
 
@@ -37,7 +37,7 @@ class RabbitMqMainService : IRabbitMqMainService {
         var flag = true
         while (flag) {
             Thread.sleep(1000)
-            log.info("{0}", consumerHandler.flag)
+            log.info("${consumerHandler.flag}")
             // 待消费者接收信息后修改 flag 为 false
             if (consumerHandler.flag) {
                 flag = false

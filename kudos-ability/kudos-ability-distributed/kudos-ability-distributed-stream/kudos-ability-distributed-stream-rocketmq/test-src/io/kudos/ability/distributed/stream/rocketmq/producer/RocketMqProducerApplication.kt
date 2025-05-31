@@ -1,4 +1,4 @@
-package io.kudos.ability.distributed.stream.rabbit.producer
+package io.kudos.ability.distributed.stream.rocketmq.producer
 
 import io.kudos.context.init.EnableKudos
 import io.kudos.context.spring.YamlPropertySourceFactory
@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Import
 import org.springframework.context.annotation.PropertySource
 
 /**
- * RabbitMq测试生產者微服务应用
+ * RocketMQ测试生產者微服务应用
  *
  * @author shane
  * @author K
@@ -16,8 +16,8 @@ import org.springframework.context.annotation.PropertySource
 @EnableKudos
 @EnableDiscoveryClient
 @PropertySource(
-    value = ["classpath:application-rabbit-producer.yml"
+    value = ["classpath:application-rocketmq-producer.yml"
     ], factory = YamlPropertySourceFactory::class
 )
-@Import(RabbitMqProducerController::class, RabbitMqProducerService::class)
-open class RabbitMqProducerApplication
+@Import(RocketMqProducerController::class, RocketMqProducerService::class)
+open class RocketMqProducerApplication

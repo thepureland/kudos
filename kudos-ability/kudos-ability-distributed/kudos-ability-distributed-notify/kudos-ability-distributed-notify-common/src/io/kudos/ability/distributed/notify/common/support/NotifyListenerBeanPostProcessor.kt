@@ -1,7 +1,6 @@
-package io.kudos.ability.distributed.notify.support
+package io.kudos.ability.distributed.notify.common.support
 
-import io.kudos.ability.distributed.notify.api.INotifyListener
-import org.springframework.beans.BeansException
+import io.kudos.ability.distributed.notify.common.api.INotifyListener
 import org.springframework.beans.factory.config.BeanPostProcessor
 import org.springframework.stereotype.Component
 
@@ -11,13 +10,14 @@ import org.springframework.stereotype.Component
  * 描述：
  */
 @Component
-class NotifyListenerBeanPostProcessor : BeanPostProcessor {
-    @Throws(BeansException::class)
+open class NotifyListenerBeanPostProcessor : BeanPostProcessor {
+
     override fun postProcessAfterInitialization(bean: Any, beanName: String): Any {
-        if (bean is INotifyListener<*>) {
+        if (bean is INotifyListener) {
             val listener = bean
             NotifyListenerItem.put(listener.notifyType(), listener)
         }
         return bean
     }
+
 }

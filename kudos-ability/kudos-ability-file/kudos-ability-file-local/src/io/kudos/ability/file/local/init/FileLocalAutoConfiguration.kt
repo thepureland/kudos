@@ -1,49 +1,37 @@
 package io.kudos.ability.file.local.init
 
-import jakarta.annotation.PostConstruct
+import io.kudos.context.init.IComponentInitializer
 import org.soul.ability.file.local.LocalDeleteService
 import org.soul.ability.file.local.LocalDownLoadService
 import org.soul.ability.file.local.LocalUploadService
-import org.soul.ability.file.local.starter.FileLocalConfiguration
 import org.soul.ability.file.local.starter.properties.LocalProperties
-import org.soul.base.log.Log
-import org.soul.base.log.LogFactory
 import org.soul.context.core.SoulPropertySourceFactory
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.PropertySource
 
+
 @Configuration
-@PropertySource(value = ["classpath:soul-ability-file-local.yml"], factory = SoulPropertySourceFactory::class)
-class FileLocalAutoConfiguration {
-    @Bean
-    fun localUploadService(): LocalUploadService {
-        return LocalUploadService()
-    }
+@PropertySource(
+    value = ["classpath:soul-ability-file-local.yml"],
+    factory = SoulPropertySourceFactory::class
+)
+open class FileLocalAutoConfiguration : IComponentInitializer {
 
     @Bean
-    fun localDownLoadService(): LocalDownLoadService {
-        return LocalDownLoadService()
-    }
+    open fun localUploadService() = LocalUploadService()
 
     @Bean
-    fun localDeleteService(): LocalDeleteService {
-        return LocalDeleteService()
-    }
+    open fun localDownLoadService() = LocalDownLoadService()
+
+    @Bean
+    open fun localDeleteService() = LocalDeleteService()
 
     @Bean
     @ConfigurationProperties(prefix = "soul.ability.file.local")
-    fun localProperties(): LocalProperties {
-        return LocalProperties()
-    }
+    open fun localProperties() = LocalProperties()
 
-    @PostConstruct
-    fun init() {
-        LOG.info("[soul-ability-file-local]初始化完成...")
-    }
+    override fun getComponentName() = "soul-ability-file-local"
 
-    companion object {
-        private val LOG: Log = LogFactory.getLog(FileLocalConfiguration::class.java)
-    }
 }

@@ -1,59 +1,59 @@
 package io.kudos.ability.distributed.tx.seata.main
 
+import io.kudos.ability.distributed.tx.seata.TxException
+import io.kudos.ability.distributed.tx.seata.data.TestTable
+import io.kudos.ability.distributed.tx.seata.data.TestTableMapper
+import io.kudos.ability.distributed.tx.seata.ms1.IService1
+import io.kudos.ability.distributed.tx.seata.ms1.Service1
+import io.kudos.ability.distributed.tx.seata.ms2.IService2
+import io.kudos.ability.distributed.tx.seata.ms2.Service2
 import io.seata.core.context.RootContext
 import io.seata.spring.annotation.GlobalTransactional
-import org.soul.ability.distributed.tx.seata.TxException
 import org.soul.base.log.Log
 import org.soul.base.log.LogFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.context.annotation.Import
 import org.springframework.stereotype.Service
 
 /**
  * 主应用的service
  *
- * @author will
- * @since 5.1.1
+ * @author K
+ * @since 1.0.0
  */
 @Service
-@ComponentScan(
-    basePackages = ["org.soul.ability.distributed.tx.seata.ms1", "org.soul.ability.distributed.tx.seata.ms2"
-    ]
-)
-class Service : IService {
+@Import(Service1::class, Service2::class)
+open class Service : IService {
+
     @Value("\${seata.data-source-proxy-mode}")
     private val dataSourceProxyMode: String? = null
 
     @Autowired
-    private val service1: IService1? = null
+    private lateinit var service1: IService1
 
     @Autowired
-    private val service2: IService2? = null
+    private lateinit var service2: IService2
 
     @Autowired
-    private val feignClient11: IFeignClient11? = null
+    private lateinit var feignClient11: IFeignClient11
 
     @Autowired
-    private val feignClient12: IFeignClient12? = null
+    private lateinit var feignClient12: IFeignClient12
 
     @Autowired
-    private val feignClient21: IFeignClient21? = null
+    private lateinit var feignClient21: IFeignClient21
 
     @Autowired
-    private val feignClient22: IFeignClient22? = null
+    private lateinit var feignClient22: IFeignClient22
 
     @Autowired
-    private val testTableMapper: TestTableMapper? = null
+    private lateinit var testTableMapper: TestTableMapper
 
-    private val log: Log? = LogFactory.getLog(Service::class.java)
-
-    override fun getById(id: Int?): TestTable {
-        return testTableMapper.get(id)
-    }
+    override fun getById(id: Int): TestTable = testTableMapper.get(id)
 
     @GlobalTransactional
-    override fun getGlobalTxId(): String? {
-        return RootContext.getXID()
-    }
+    override fun getGlobalTxId(): String? = RootContext.getXID()
 
     @GlobalTransactional
     override fun normalLocal() {
@@ -95,23 +95,20 @@ class Service : IService {
 
     private val client1: IClient1?
         get() {
-            if ("AT" == dataSourceProxyMode) {
-                return feignClient12
-            } else if ("XA" == dataSourceProxyMode) {
-                return feignClient11
-            } else {
-                return null
+            return when (dataSourceProxyMode) {
+                "AT" -> feignClient12
+                "XA" -> feignClient11
+                else -> null
             }
         }
 
     private val client2: IClient2?
         get() {
-            if ("AT" == dataSourceProxyMode) {
-                return feignClient22
-            } else if ("XA" == dataSourceProxyMode) {
-                return feignClient21
-            } else {
-                return null
+            return when (dataSourceProxyMode) {
+                "AT" -> feignClient22
+                "XA" -> feignClient21
+                else -> null
             }
         }
+
 }

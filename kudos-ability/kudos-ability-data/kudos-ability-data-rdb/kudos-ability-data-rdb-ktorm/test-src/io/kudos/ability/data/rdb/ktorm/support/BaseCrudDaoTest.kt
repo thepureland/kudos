@@ -5,20 +5,16 @@ import io.kudos.ability.data.rdb.ktorm.table.TestTableDao
 import io.kudos.ability.data.rdb.ktorm.table.TestTables
 import io.kudos.base.support.payload.SearchPayload
 import io.kudos.base.support.payload.UpdatePayload
+import io.kudos.test.common.init.EnableKudosTest
+import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Disabled
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
-import org.junit.jupiter.api.assertThrows
 import org.ktorm.dsl.eq
 import org.ktorm.dsl.like
 import org.soul.base.query.Criteria
 import org.soul.base.query.enums.OperatorEnum
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.context.annotation.Import
 import org.springframework.transaction.annotation.Transactional
-import org.testcontainers.junit.jupiter.Testcontainers
 import java.time.LocalDateTime
 
 /**
@@ -27,10 +23,7 @@ import java.time.LocalDateTime
  * @author K
  * @since 1.0.0
  */
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@Testcontainers(disabledWithoutDocker = true)
-@Import(TestTableDao::class)
-@Disabled("该父类不是直接测试类")
+@EnableKudosTest
 internal open class BaseCrudDaoTest {
 
     @Autowired

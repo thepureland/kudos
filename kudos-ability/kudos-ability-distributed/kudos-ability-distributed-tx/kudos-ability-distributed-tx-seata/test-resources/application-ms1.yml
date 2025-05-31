@@ -1,6 +1,4 @@
 spring:
-#  application:
-#    name: ms1
   datasource:
     dynamic:
       primary: postgres
@@ -35,9 +33,3 @@ spring:
         file-extension: yml
       discovery:
         server-addr: 127.0.0.1:28848
-
-
-
-feign:
-  hystrix:
-    enabled: false

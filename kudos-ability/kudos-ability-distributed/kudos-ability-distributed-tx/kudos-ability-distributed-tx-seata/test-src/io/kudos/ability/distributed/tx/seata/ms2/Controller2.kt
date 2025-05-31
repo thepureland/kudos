@@ -8,25 +8,27 @@ import org.springframework.web.bind.annotation.RestController
 /**
  * 微服务应用2的Controller
  *
- * @author will
- * @since 5.1.1
+ * @author K
+ * @since 1.0.0
  */
 @RestController
 @RequestMapping("/controller2")
-class Controller2 {
+open class Controller2 {
+
     @Autowired
-    private val service2: IService2? = null
+    private lateinit var service2: IService2
 
     /**
      * 扣减账户余额
      */
     @RequestMapping("/increase")
-    fun decrease(@RequestParam("id") id: Int?, @RequestParam("money") money: Double?) {
-        service2!!.increase(id, money)
+    fun decrease(@RequestParam("id") id: Int, @RequestParam("money") money: Double) {
+        service2.increase(id, money)
     }
 
     @RequestMapping("/increaseFail")
-    fun increaseFail(id: Int?, money: Double?) {
-        service2!!.increaseFail(id, money)
+    fun increaseFail(id: Int, money: Double) {
+        service2.increaseFail(id, money)
     }
+
 }

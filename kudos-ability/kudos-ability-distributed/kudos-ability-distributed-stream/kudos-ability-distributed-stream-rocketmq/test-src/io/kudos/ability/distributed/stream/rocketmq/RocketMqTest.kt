@@ -1,14 +1,14 @@
-package io.kudos.ability.distributed.stream.rabbit
+package io.kudos.ability.distributed.stream.rocketmq
 
-import io.kudos.ability.distributed.stream.rabbit.main.IRabbitMqMainService
-import io.kudos.ability.distributed.stream.rabbit.main.RabbitMqConsumerHandler
-import io.kudos.ability.distributed.stream.rabbit.main.RabbitMqMainService
-import io.kudos.ability.distributed.stream.rabbit.producer.RabbitMqProducerApplication
+import io.kudos.ability.distributed.stream.rocketmq.main.IRocketMqMainService
+import io.kudos.ability.distributed.stream.rocketmq.main.RocketMqConsumerHandler
+import io.kudos.ability.distributed.stream.rocketmq.main.RocketMqMainService
+import io.kudos.ability.distributed.stream.rocketmq.producer.RocketMqProducerApplication
 import io.kudos.base.net.IpKit
 import io.kudos.test.common.init.EnableKudosTest
 import io.kudos.test.container.NacosTestContainer
 import io.kudos.test.container.PostgresTestContainer
-import io.kudos.test.container.RabbitMqTestContainer
+import io.kudos.test.container.RocketMqTestContainer
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -27,7 +27,7 @@ import java.util.concurrent.TimeoutException
 
 
 /**
- * RabbitMq测试用例
+ * RocketMQ测试用例
  *
  * @author shane
  * @author K
@@ -37,12 +37,12 @@ import java.util.concurrent.TimeoutException
 @EnableFeignClients
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Testcontainers(disabledWithoutDocker = true)
-@Import(RabbitMqConsumerHandler::class, RabbitMqMainService::class)
-@ActiveProfiles("rabbit-main")
-open class RabbitMqTest {
+@Import(RocketMqConsumerHandler::class, RocketMqMainService::class)
+@ActiveProfiles("rocketmq-main")
+open class RocketMqTest {
 
     @Autowired
-    private lateinit var mainService: IRabbitMqMainService
+    private lateinit var mainService: IRocketMqMainService
 
     private val EXECUTOR = Executors.newFixedThreadPool(3)
 
@@ -51,14 +51,9 @@ open class RabbitMqTest {
         val url = "jdbc:postgresql://${IpKit.getLocalIp()}:${PostgresTestContainer.PORT}/${PostgresTestContainer.DATABASE}"
         val args = arrayOf(
             "--spring.datasource.dynamic.datasource.postgres.url=$url",
-            "--spring.rabbitmq.host=${IpKit.getLocalIp()}",
-            "--spring.rabbitmq.username=guest",
-            "--spring.rabbitmq.password=guest",
-            "--spring.rabbitmq.port=${RabbitMqTestContainer.PORT}",
-            "--spring.rabbitmq.virtual-host=/",
-            "--spring.rabbitmq.addresses=${IpKit.getLocalIp()}:${RabbitMqTestContainer.PORT}"
-            )
-        SpringApplication.run(RabbitMqProducerApplication::class.java, *args)
+            "--spring.cloud.stream.rocketmq.binder.name-server=${RocketMqTestContainer.NAMESRV_ADDR}"
+        )
+        SpringApplication.run(RocketMqProducerApplication::class.java, *args)
     }
 
 
@@ -70,7 +65,7 @@ open class RabbitMqTest {
         val task = Callable<String?> { mainService.sendAndReceiveMessage() }
         val future = EXECUTOR.submit<String?>(task)
         try {
-            future.get(5, TimeUnit.SECONDS)
+            future.get(30, TimeUnit.SECONDS)
         } catch (e: Exception) {
             throw e
         } catch (_ : TimeoutException) {
@@ -88,7 +83,7 @@ open class RabbitMqTest {
         val task = Callable<String?> { mainService.errorMessage() }
         val future = EXECUTOR.submit<String?>(task)
         try {
-            future.get(5, TimeUnit.SECONDS)
+            future.get(15, TimeUnit.SECONDS)
         } catch (_: TimeoutException) {
             println("消费信息时异常，造成获取结果超时！")
         } finally {
@@ -102,15 +97,15 @@ open class RabbitMqTest {
         private fun registerProperties(registry: DynamicPropertyRegistry?) {
             val postgresThread = Thread { PostgresTestContainer.start(registry) }
             val nacosThread = Thread { NacosTestContainer.start(registry) }
-            val rabbitThread = Thread { RabbitMqTestContainer.start(registry) }
+            val rocketMqThread = Thread { RocketMqTestContainer.start(registry) }
 
             postgresThread.start()
             nacosThread.start()
-            rabbitThread.start()
+            rocketMqThread.start()
 
             postgresThread.join()
             nacosThread.join()
-            rabbitThread.join()
+            rocketMqThread.join()
         }
     }
 

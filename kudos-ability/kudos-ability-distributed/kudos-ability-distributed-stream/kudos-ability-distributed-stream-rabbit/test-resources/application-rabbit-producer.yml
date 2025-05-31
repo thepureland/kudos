@@ -1,6 +1,6 @@
 spring:
   application:
-    name: kafkamsp
+    name: rabbit-ms-p
   datasource:
     dynamic:
       primary: postgres
@@ -42,29 +42,13 @@ spring:
 #        #生产者
         producer-out-0:
           #主题名称
-          destination: KAFKA_TEST_TOPIC
-#        producer-out-0:
-#          destination: KAFKA_TEST_TOPIC
-#          content-type: application/json
-#        consumer-in-1:
-#          destination: KAFKA_TEST_TOPIC
-#          group: test-group                # 一定要指定 group
-#          content-type: application/json   # 或 text/plain，看你的消息格式
+          destination: RABBIT_TEST_TOPIC
 
-soul:
-  ability:
-    jdbc:
-      package-data-source:
-        #service包使用数据源。_context代表为从sys_datasource匹配
-        org.soul.ability.distributed.stream.common.service: postgres
 
 server:
-  port: 8183
+  port: 0
 
-feign:
-  hystrix:
-    enabled: false
 
-logging:
-  level:
-    root: DEBUG
+#logging:
+#  level:
+#    root: DEBUG

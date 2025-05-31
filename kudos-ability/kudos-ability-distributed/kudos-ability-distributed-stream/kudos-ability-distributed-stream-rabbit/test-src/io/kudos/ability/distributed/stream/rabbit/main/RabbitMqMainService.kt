@@ -7,27 +7,27 @@ import org.springframework.stereotype.Service
 import java.util.*
 
 /**
- * kafka测试服务
+ * RabbitMq测试服务
  * 
  * @author shane
  * @author K
  * @since 1.0.0
  */
 @Service
-class KafkaMainService : IKafkaMainService {
+class RabbitMqMainService : IRabbitMqMainService {
     
     private val log = LoggerFactory.getLogger(this)
     
-    private val topicName = "KAFKA_TEST_TOPIC"
+    private val topicName = "RABBIT_TEST_TOPIC"
 
     @Autowired
-    private lateinit var producerClient: IKafkaProducerClient
+    private lateinit var producerClient: IRabbitMqProducerClient
 
     @Autowired
     private lateinit var streamExceptionService: IStreamExceptionService
 
     @Autowired
-    private lateinit var consumerHandler: KafkaConsumerHandler
+    private lateinit var consumerHandler: RabbitMqConsumerHandler
     
     private val result = "SUCCESS"
 

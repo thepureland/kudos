@@ -1,15 +1,14 @@
 package io.kudos.ability.distributed.stream.kafka.producer
 
 import io.kudos.ability.distributed.stream.kafka.data.KafkaSimpleMsg
-import org.soul.base.log.Log
-import org.soul.base.log.LogFactory
+import io.kudos.base.logger.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 /**
- * kafka 生產者 controller
+ * kafka测试 生產者 controller
  *
  * @author shane
  * @author K
@@ -17,18 +16,20 @@ import org.springframework.web.bind.annotation.RestController
  */
 @RestController
 @RequestMapping("/producer")
-class KafkaProducerController {
-    private val log: Log = LogFactory.getLog(KafkaProducerController::class.java)
+open class KafkaProducerController {
+
+    private val log = LoggerFactory.getLogger(this)
 
     @Autowired
-    private val producerService: IKafkaProducerService? = null
+    private lateinit var producerService: IKafkaProducerService
 
     /**
      * 發送mq信息
      */
     @RequestMapping("/send")
     fun send(@RequestParam("message") message: String?) {
-        log.info("########## send: {0}", message)
-        producerService!!.producer(KafkaSimpleMsg(message))
+        log.info("########## send: $message")
+        producerService.producer(KafkaSimpleMsg(message))
     }
+
 }

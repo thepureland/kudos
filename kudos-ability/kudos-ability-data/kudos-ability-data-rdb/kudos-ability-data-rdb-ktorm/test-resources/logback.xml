@@ -25,7 +25,4 @@
     <logger name="org.springframework.security.access.method.DelegatingMethodSecurityMetadataSource" level="DEBUG"/>
     <logger name="org.springframework.core.env.PropertySourcesPropertyResolver" level="DEBUG"/>
 
-    <!-- 开启 Ktorm SQL 日志 -->
-    <logger name="org.ktorm.database.Database" level="INFO" />
-
 </configuration>

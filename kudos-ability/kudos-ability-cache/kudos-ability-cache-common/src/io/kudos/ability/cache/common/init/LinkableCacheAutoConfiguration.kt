@@ -3,18 +3,18 @@ package io.kudos.ability.cache.common.init
 import io.kudos.base.logger.LoggerFactory
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
+import io.kudos.context.spring.YamlPropertySourceFactory
 import org.soul.ability.cache.common.CacheHandlerBeanPostProcessor
 import org.soul.ability.cache.common.MixCacheInitializing
 import org.soul.ability.cache.common.MixCacheManager
 import org.soul.ability.cache.common.batch.BatchCacheableAspect
 import org.soul.ability.cache.common.notify.CacheNotifyListener
-import org.soul.context.core.SoulPropertySourceFactory
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.cache.annotation.EnableCaching
 import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.ComponentScan
+import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Primary
 import org.springframework.context.annotation.PropertySource
 
@@ -25,16 +25,10 @@ import org.springframework.context.annotation.PropertySource
  * @author K
  * @since 1.0.0
  */
-@ComponentScan(
-    basePackages = [
-        "io.kudos.ability.cache.common",
-        "io.kudos.ability.cache.local",
-        "io.kudos.ability.cache.remote",
-    ],
-)
+@Configuration
 @PropertySource(
     value = ["classpath:kudos-ability-linkable-cache.yml"],
-    factory = SoulPropertySourceFactory::class
+    factory = YamlPropertySourceFactory::class
 )
 @ConditionalOnProperty(prefix = "kudos.ability.cache", name = ["enabled"], havingValue = "true", matchIfMissing = true)
 @AutoConfigureAfter(ContextAutoConfiguration::class)

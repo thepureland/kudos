@@ -1,6 +1,6 @@
 package io.kudos.ability.distributed.stream.rabbit.producer
 
-import io.kudos.ability.distributed.stream.kafka.data.KafkaSimpleMsg
+import io.kudos.ability.distributed.stream.rabbit.data.RabbitMqSimpleMsg
 import io.kudos.base.logger.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.RequestMapping
@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 /**
- * kafka测试 生產者 controller
+ * RabbitMq测试 生產者 controller
  *
  * @author shane
  * @author K
@@ -16,12 +16,12 @@ import org.springframework.web.bind.annotation.RestController
  */
 @RestController
 @RequestMapping("/producer")
-open class KafkaProducerController {
+open class RabbitMqProducerController {
 
     private val log = LoggerFactory.getLogger(this)
 
     @Autowired
-    private lateinit var producerService: IKafkaProducerService
+    private lateinit var producerService: IRabbitMqProducerService
 
     /**
      * 發送mq信息
@@ -29,7 +29,7 @@ open class KafkaProducerController {
     @RequestMapping("/send")
     fun send(@RequestParam("message") message: String?) {
         log.info("########## send: $message")
-        producerService.producer(KafkaSimpleMsg(message))
+        producerService.producer(RabbitMqSimpleMsg(message))
     }
 
 }

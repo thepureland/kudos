@@ -3,4 +3,4 @@ spring:
     name: notifyMs
 
 server:
-  port: 8002
+  port: 0

@@ -2,10 +2,7 @@ package io.kudos.ability.data.memdb.redis
 
 import io.kudos.base.time.toLocalDateTime
 import io.kudos.test.common.init.EnableKudosTest
-<<<<<<< HEAD:kudos-ability/kudos-ability-data/kudos-ability-data-memdb/kudos-ability-data-memdb-redis/test-src/io/kudos/ability/data/memdb/redis/RedisTest.kt
-=======
 import io.kudos.test.container.RedisTestContainer
->>>>>>> 2cd8499 (maven convert to gradle & add tests for some modules):kudos-ability/kudos-ability-data/kudos-ability-data-memdb/kudos-ability-data-memdb-redis/test-src/io/kudos/ability/data/memdb/redis/RedisTemplateTest.kt
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -25,26 +22,10 @@ import java.util.*
  */
 @EnableKudosTest
 @Testcontainers(disabledWithoutDocker = true)
-<<<<<<< HEAD:kudos-ability/kudos-ability-data/kudos-ability-data-memdb/kudos-ability-data-memdb-redis/test-src/io/kudos/ability/data/memdb/redis/RedisTest.kt
-internal class RedisTest {
-=======
 internal class RedisTemplateTest {
->>>>>>> 2cd8499 (maven convert to gradle & add tests for some modules):kudos-ability/kudos-ability-data/kudos-ability-data-memdb/kudos-ability-data-memdb-redis/test-src/io/kudos/ability/data/memdb/redis/RedisTemplateTest.kt
-
-    companion object {
-
-        @DynamicPropertySource
-        @JvmStatic
-        fun registerProperties(registry: DynamicPropertyRegistry) {
-            RedisTestContainer.start(registry)
-        }
-
-    }
-
 
     @Autowired
     private lateinit var redisTemplate: RedisTemplate<Any, Any?>
-
 
     @Test
     fun test() {

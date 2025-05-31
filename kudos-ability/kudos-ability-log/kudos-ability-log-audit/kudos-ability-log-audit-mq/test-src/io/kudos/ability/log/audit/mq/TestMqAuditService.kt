@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component
 
 @Component
 class TestMqAuditService {
+
     @Audit(opType = DictOpType.CREATE, moduleCode = "AAA：sys_module表的code")
     fun saveLog() {
         println(1111)
@@ -17,6 +18,8 @@ class TestMqAuditService {
     }
 
     class SaveModel : BaseEditModel<String?>() {
+        @JvmField
         var code: String? = null
     }
+
 }

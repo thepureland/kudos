@@ -1,52 +1,47 @@
 package io.kudos.ability.distributed.stream.kafka.main
 
-import org.soul.ability.distributed.stream.kafka.data.KafkaSimpleMsg
-import org.soul.base.log.Log
-import org.soul.base.log.LogFactory
+import io.kudos.ability.distributed.stream.common.annotations.MqConsumer
+import io.kudos.ability.distributed.stream.kafka.data.KafkaSimpleMsg
+import io.kudos.base.logger.LoggerFactory
+import org.soul.ability.distributed.stream.common.model.model.StreamMessageVo
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
 import java.util.function.Consumer
 
+/**
+ * kafka测试消费者
+ *
+ * @author shane
+ * @author  K
+ * @since 1.0.0
+ */
 @Component
-class KafkaConsumerHandler {
-    private val log: Log = LogFactory.getLog(KafkaConsumerHandler::class.java)
+open class KafkaConsumerHandler {
+    
+    private val log = LoggerFactory.getLogger(this)
     val defaultMsg: String = "Hello simple msg"
+    var flag = false
+    var errorFlag = false
 
     @MqConsumer(bindingName = "consumer-in-0")
     fun consumer(): Consumer<Message<StreamMessageVo<KafkaSimpleMsg>>?> {
         return Consumer { msg: Message<StreamMessageVo<KafkaSimpleMsg>>? ->
             //获取消息体
             val streamMsgVo: StreamMessageVo<KafkaSimpleMsg> = msg!!.getPayload()
-            val simpleMsg: KafkaSimpleMsg = streamMsgVo.getData()
-            log.info("receive message: {0}", simpleMsg.getMsg())
+            val simpleMsg = streamMsgVo.getData()
+            log.info("receive message: ${simpleMsg.msg}")
             //记录日志
-            if (this.defaultMsg == simpleMsg.getMsg()) {
-                Companion.flag = true
-                log.info("is Test Message: {0}", Companion.flag)
+            if (this.defaultMsg == simpleMsg.msg) {
+                flag = true
+                log.info("is Test Message: true")
             }
-            log.info("before error: {0}", Companion.errorFlag)
+            log.info("before error: $errorFlag")
             //模拟消费异常
-            if (Companion.errorFlag) {
-                log.info("模拟消费异常: {0}, {1}", "start up", Companion.errorFlag)
+            if (errorFlag) {
+                log.info("模拟消费异常: start up, true")
                 throw RuntimeException("mock consumer exception")
             }
         }
     }
 
-    var flag: Boolean
-        get() = Companion.flag
-        set(flag) {
-            Companion.flag = flag
-        }
-
-    var errorFlag: Boolean
-        get() = Companion.errorFlag
-        set(errorFlag) {
-            Companion.errorFlag = errorFlag
-        }
-
-    companion object {
-        private var flag = false
-        private var errorFlag = false
-    }
 }

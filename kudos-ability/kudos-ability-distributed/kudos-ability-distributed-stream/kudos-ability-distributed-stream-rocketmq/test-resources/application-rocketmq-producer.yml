@@ -1,6 +1,6 @@
 spring:
   application:
-    name: rabbit-ms-p
+    name: rocket-ms-p
   datasource:
     dynamic:
       primary: postgres
@@ -42,22 +42,11 @@ spring:
 #        #生产者
         producer-out-0:
           #主题名称
-          destination: RABBIT_TEST_TOPIC
-
-soul:
-  ability:
-    jdbc:
-      package-data-source:
-        #service包使用数据源。_context代表为从sys_datasource匹配
-        org.soul.ability.distributed.stream.common.service: postgres
+          destination: ROCKETMQ_TEST_TOPIC
+          content-type: application/json
+          group: unitTest
 
 server:
-  port: 8183
+  port: 0
 
-feign:
-  hystrix:
-    enabled: false
 
-logging:
-  level:
-    root: DEBUG

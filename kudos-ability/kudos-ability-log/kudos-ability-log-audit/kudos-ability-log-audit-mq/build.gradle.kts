@@ -1,6 +1,6 @@
 dependencies {
     api(project(":kudos-context"))
-    api("org.soul:soul-ability-comm-email")
+    api("org.soul:soul-ability-log-audit-mq")
 
-    testImplementation(project(":kudos-test:kudos-test-container"))
+    testImplementation(project(":kudos-test:kudos-test-common"))
 }

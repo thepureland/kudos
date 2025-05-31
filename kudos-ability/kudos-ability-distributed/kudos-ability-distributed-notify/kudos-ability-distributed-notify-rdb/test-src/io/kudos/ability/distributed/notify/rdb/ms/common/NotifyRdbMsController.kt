@@ -6,19 +6,20 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-class NotifyRdbMsController {
-    @Autowired
-    private val notifyMqMsService: NotifyRdbMsService? = null
+open class NotifyRdbMsController {
 
     @Autowired
-    private val rdbDataSourceNotifyListener: RdbDataSourceNotifyListener? = null
+    private lateinit var notifyMqMsService: NotifyRdbMsService
+
+    @Autowired
+    private lateinit var rdbDataSourceNotifyListener: RdbDataSourceNotifyListener
 
     @RequestMapping("/change")
     fun change(@RequestParam("key") key: String?): Boolean {
-        return notifyMqMsService!!.process(key)
+        return notifyMqMsService.process(key)
     }
 
     @get:RequestMapping("/key")
     val key: String?
-        get() = rdbDataSourceNotifyListener!!.getKey()
+        get() = rdbDataSourceNotifyListener.key
 }

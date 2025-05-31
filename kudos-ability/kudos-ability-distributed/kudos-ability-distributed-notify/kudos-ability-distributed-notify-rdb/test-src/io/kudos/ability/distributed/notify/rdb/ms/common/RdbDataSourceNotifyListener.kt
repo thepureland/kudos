@@ -1,25 +1,28 @@
 package io.kudos.ability.distributed.notify.rdb.ms.common
 
+import io.kudos.ability.distributed.notify.common.api.INotifyListener
+import io.kudos.ability.distributed.notify.common.model.NotifyMessageVo
 import io.kudos.ability.distributed.notify.rdb.common.NotifyTypeEnum
-import org.soul.ability.distributed.notify.common.api.INotifyListener
-import org.soul.ability.distributed.notify.common.model.NotifyMessageVo
-import org.soul.base.log.Log
-import org.soul.base.log.LogFactory
+import io.kudos.base.logger.LoggerFactory
+import org.springframework.stereotype.Component
 
-class RdbDataSourceNotifyListener : INotifyListener<Any?> {
+
+@Component
+open class RdbDataSourceNotifyListener : INotifyListener {
+
     var key: String? = null
         private set
 
     private var port: Int? = null
 
-    private val log: Log = LogFactory.getLog(RdbDataSourceNotifyListener::class.java)
+    private val log = LoggerFactory.getLogger(this)
 
     override fun notifyType(): String {
-        return NotifyTypeEnum.DS.getCode()
+        return NotifyTypeEnum.DS.code
     }
 
     override fun notifyProcess(notifyMessageVo: NotifyMessageVo<*>) {
-        key = notifyMessageVo.getMessageBody() as String?
+        key = notifyMessageVo.messageBody as String?
         log.info("notifyProcess port:{0}, key:{1}", port, key)
     }
 

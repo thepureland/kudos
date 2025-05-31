@@ -11,21 +11,5 @@ dependencies {
     testImplementation("org.postgresql:postgresql:42.7.5")
     testImplementation("org.ktorm:ktorm-support-postgresql:4.1.1")
 
-//    // mysql
-//    testImplementation("mysql:mysql-connector-java:8.0.33")
-//    testImplementation("org.ktorm:ktorm-support-mysql:4.1.1")
-
-    // sqlite
-//    testImplementation("org.ktorm:ktorm-support-sqlite")
-//    testImplementation("org.xerial:sqlite-jdbc:3.30.1")
-
-    // oracle
-//    testImplementation("com.oracle.database.jdbc:ojdbc10:19.11.0.0")
-//    testImplementation("org.ktorm:ktorm-support-oracle")
-
-    // sqlserver
-//    testImplementation("com.microsoft.sqlserver:mssql-jdbc:9.2.1.jre11")
-//    testImplementation("org.ktorm:ktorm-support-sqlserver")
-
-    testImplementation(project(":kudos-test:kudos-test-container"))
+    testImplementation(project(":kudos-test:kudos-test-common"))
 }

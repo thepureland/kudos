@@ -1,104 +1,114 @@
 package io.kudos.ability.distributed.stream.kafka
 
-import org.soul.ability.distributed.stream.kafka.main.IKafkaMainService
+import io.kudos.ability.distributed.stream.kafka.main.IKafkaMainService
+import io.kudos.ability.distributed.stream.kafka.main.KafkaConsumerHandler
+import io.kudos.ability.distributed.stream.kafka.main.KafkaMainService
+import io.kudos.ability.distributed.stream.kafka.producer.KafkaProducerApplication
+import io.kudos.base.net.IpKit
+import io.kudos.test.common.init.EnableKudosTest
+import io.kudos.test.container.KafkaTestContainer
+import io.kudos.test.container.NacosTestContainer
+import io.kudos.test.container.PostgresTestContainer
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInstance
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.SpringApplication
+import org.springframework.cloud.openfeign.EnableFeignClients
+import org.springframework.context.annotation.Import
+import org.springframework.test.context.ActiveProfiles
+import org.springframework.test.context.DynamicPropertyRegistry
+import org.springframework.test.context.DynamicPropertySource
+import org.testcontainers.junit.jupiter.Testcontainers
+import java.util.concurrent.Callable
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
+
+/**
+ * kafka测试用例
+ *
+ * @author shane
+ * @author K
+ * @since 1.0.0
+ */
 @EnableKudosTest
-@SpringBootTest
 @EnableFeignClients
-@ComponentScan(
-    basePackages = ["org.soul.ability.distributed.stream.kafka.main"
-    ]
-)
-@org.springframework.context.annotation.PropertySource(
-    value = ["classpath:application-kafka-main.yml"
-    ], factory = SoulPropertySourceFactory::class
-)
-@org.junit.jupiter.api.TestInstance(org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS)
-@org.testcontainers.junit.jupiter.Testcontainers(disabledWithoutDocker = true)
-@SpringBootApplication(exclude = [DataSourceAutoConfiguration::class])
-class KafkaTest {
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@Testcontainers(disabledWithoutDocker = true)
+@Import(KafkaConsumerHandler::class, KafkaMainService::class)
+@ActiveProfiles("kafka-main")
+open class KafkaTest {
+
     @Autowired
-    private val mainService: IKafkaMainService? = null
-    private val kafkaContainer: GenericContainer<*> = TestContainerKafka.getContainer()
-    private var producerApplication: ConfigurableApplicationContext? = null
+    private lateinit var mainService: IKafkaMainService
+
+    private val kafkaContainer = KafkaTestContainer.container
+
+    private val EXECUTOR = Executors.newFixedThreadPool(3)
 
     @BeforeAll
-    @kotlin.Throws(java.lang.InterruptedException::class)
     fun setUp() {
-        val url: kotlin.String = "jdbc:postgresql://%s:%s/%s".formatted(
-            IpTool.getLocalIp(),
-            TestContainerPostgres.PORT,
-            TestContainerPostgres.DATABASE
+        val url = "jdbc:postgresql://${IpKit.getLocalIp()}:${PostgresTestContainer.PORT}/${PostgresTestContainer.DATABASE}"
+        val args = arrayOf(
+            "--spring.datasource.dynamic.datasource.postgres.url=$url",
+            "--spring.cloud.stream.kafka.binder.brokers=${kafkaContainer.host}:${kafkaContainer.firstMappedPort}",
         )
-        val args: kotlin.Array<kotlin.String?> = kotlin.arrayOf<kotlin.String>(
-            "--spring.datasource.dynamic.datasource.postgres.url=" + url,
-            "--soul.ability.distributed.stream.mq-config.kafka-brokers=" + kafkaContainer.getHost() + ":" + kafkaContainer.getFirstMappedPort()
-        )
-        producerApplication = SpringApplication.run(KafkaProducerApplication::class.java, *args)
+        SpringApplication.run(KafkaProducerApplication::class.java, *args)
     }
 
-    @AfterAll
-    fun tearDown() {
-        if (producerApplication != null) {
-            producerApplication.close()
-        }
-    }
 
     /**
      * 发送与接收测试
      */
-    @org.junit.jupiter.api.Test
+    @Test
     fun sendAndReceiveMessageTest() {
-        val task: java.util.concurrent.Callable<kotlin.String?> =
-            object : java.util.concurrent.Callable<kotlin.String?> {
-                @kotlin.Throws(java.lang.Exception::class)
-                override fun call(): kotlin.String {
-                    return mainService.sendAndReceiveMessage()
-                }
-            }
-        val future: java.util.concurrent.Future<kotlin.String?> =
-            KafkaTest.Companion.EXECUTOR.submit<kotlin.String?>(task)
+        val task = Callable<String?> { mainService.sendAndReceiveMessage() }
+        val future = EXECUTOR.submit<String?>(task)
         try {
-            future.get(30, java.util.concurrent.TimeUnit.SECONDS)
-        } catch (e: java.lang.Exception) {
-            throw java.lang.RuntimeException("等待时间超过30秒，mq接收异常")
+            future.get(5, TimeUnit.SECONDS)
+        } catch (e: Exception) {
+            throw e
+        } catch (_ : TimeoutException) {
+            throw RuntimeException("等待时间超过5秒，mq接收异常")
         } finally {
             future.cancel(true)
         }
     }
 
     /**
-     * 消化信息异常测试 StreamException
+     * 消费信息异常测试
      */
-    @org.junit.jupiter.api.Test
+    @Test
     fun streamExceptionTest() {
-        val task: java.util.concurrent.Callable<kotlin.String?> =
-            object : java.util.concurrent.Callable<kotlin.String?> {
-                @kotlin.Throws(java.lang.Exception::class)
-                override fun call(): kotlin.String {
-                    return mainService.errorMessage()
-                }
-            }
-        val future: java.util.concurrent.Future<kotlin.String?> =
-            KafkaTest.Companion.EXECUTOR.submit<kotlin.String?>(task)
+        val task = Callable<String?> { mainService.errorMessage() }
+        val future = EXECUTOR.submit<String?>(task)
         try {
-            future.get(30, java.util.concurrent.TimeUnit.SECONDS)
-        } catch (e: java.lang.Exception) {
-            throw java.lang.RuntimeException("等待时间超过30秒，mq接收异常")
+            future.get(5, TimeUnit.SECONDS)
+        } catch (_: TimeoutException) {
+            println("消费信息时异常，造成获取结果超时！")
         } finally {
             future.cancel(true)
         }
     }
 
     companion object {
+        @JvmStatic
         @DynamicPropertySource
-        @kotlin.Throws(java.lang.InterruptedException::class)
         private fun registerProperties(registry: DynamicPropertyRegistry?) {
-            TestContainerPostgres.start(registry)
-            TestContainerNacos.start(registry)
-            TestContainerKafka.start(registry)
-        }
+            val postgresThread = Thread { PostgresTestContainer.start(registry) }
+            val nacosThread = Thread { NacosTestContainer.start(registry) }
+            val kafkaThread = Thread { KafkaTestContainer.start(registry) }
 
-        private val EXECUTOR: ExecutorService = Executors.newFixedThreadPool(3)
+            postgresThread.start()
+            nacosThread.start()
+            kafkaThread.start()
+
+            postgresThread.join()
+            nacosThread.join()
+            kafkaThread.join()
+        }
     }
+
 }

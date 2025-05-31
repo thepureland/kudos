@@ -1,6 +1,6 @@
-package io.kudos.ability.distributed.notify.api
+package io.kudos.ability.distributed.notify.common.api
 
-import io.kudos.ability.distributed.notify.model.NotifyMessageVo
+import io.kudos.ability.distributed.notify.common.model.NotifyMessageVo
 import java.io.Serializable
 
 
@@ -10,14 +10,16 @@ import java.io.Serializable
  * 描述：
  */
 interface INotifyProducer {
+
     /**
      * 集群节点消息发送
      *
      * @param messageVo
      */
-    fun <T : Serializable?> notify(messageVo: NotifyMessageVo<T?>?): Boolean
+    fun notify(messageVo: NotifyMessageVo<out Serializable>): Boolean
 
     companion object {
-        const val BEAN_NAME: String = "notifyMqProduce"
+        const val BEAN_NAME: String = "notifyMqProducer"
     }
+
 }

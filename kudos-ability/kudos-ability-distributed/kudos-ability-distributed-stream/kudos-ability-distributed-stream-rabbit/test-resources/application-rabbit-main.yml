@@ -13,14 +13,7 @@ spring:
         definition: consumer
       bindings:
         consumer-in-0:
-          destination: KAFKA_TEST_TOPIC
-#        producer-out-0:
-#          destination: KAFKA_TEST_TOPIC
-#          content-type: application/json
-#        consumer-in-1:
-#          destination: KAFKA_TEST_TOPIC
-#          group: test-group                # 一定要指定 group
-#          content-type: application/json   # 或 text/plain，看你的消息格式
+          destination: RABBIT_TEST_TOPIC
   datasource:
     dynamic:
       primary: postgres
@@ -47,13 +40,8 @@ spring:
           username: pg
           password: postgres
 
-feign:
-  hystrix:
-    enabled: false
-  httpclient:
-    connection-timeout: 30000
 
-logging:
-  level:
-    root: DEBUG
+#logging:
+#  level:
+#    root: DEBUG
 #    com.alibaba.cloud: DEBUG

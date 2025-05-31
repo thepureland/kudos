@@ -1,10 +1,7 @@
 package io.kudos.ability.cache.remote.redis
 
 import io.kudos.test.common.init.EnableKudosTest
-<<<<<<< HEAD
-=======
 import io.kudos.test.container.RedisTestContainer
->>>>>>> 2cd8499 (maven convert to gradle & add tests for some modules)
 import org.junit.jupiter.api.Test
 import org.soul.ability.cache.common.MixCacheManager
 import org.soul.ability.cache.common.enums.CacheStrategy
@@ -12,9 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.cache.CacheManager
 import org.springframework.context.annotation.Import
-<<<<<<< HEAD
-=======
->>>>>>> 2cd8499 (maven convert to gradle & add tests for some modules)
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.junit.jupiter.Testcontainers
@@ -79,14 +73,6 @@ internal class RemoteCacheTest {
             latch.countDown()
         }.start()
         latch.await()
-    }
-
-    companion object {
-        @JvmStatic
-        @DynamicPropertySource
-        fun registerProperties(registry: DynamicPropertyRegistry?) {
-            RedisTestContainer.start(registry)
-        }
     }
 
 }

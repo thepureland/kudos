@@ -7,9 +7,8 @@ import io.kudos.ability.data.rdb.ktorm.table.TestTableDao
 import io.kudos.ability.data.rdb.ktorm.table.TestTables
 import io.kudos.base.support.payload.ListSearchPayload
 import io.kudos.base.support.payload.SearchPayload
-import org.junit.jupiter.api.*
-import org.junit.jupiter.api.Assertions.assertEquals
 import io.kudos.test.common.init.EnableKudosTest
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.ktorm.dsl.eq
 import org.soul.base.query.Criteria
@@ -17,8 +16,6 @@ import org.soul.base.query.Criterion
 import org.soul.base.query.enums.OperatorEnum
 import org.soul.base.query.sort.Order
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.context.annotation.Import
-import org.testcontainers.junit.jupiter.Testcontainers
 import java.time.LocalDateTime
 
 /**
@@ -28,10 +25,6 @@ import java.time.LocalDateTime
  * @since 1.0.0
  */
 @EnableKudosTest
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@Testcontainers(disabledWithoutDocker = true)
-@Import(TestTableDao::class)
-@Disabled("该父类不是直接测试类")
 internal open class BaseReadOnlyDaoTest {
 
     @Autowired
@@ -103,12 +96,11 @@ internal open class BaseReadOnlyDaoTest {
         assertEquals("name1", results.last().name)
 
         // 多个排序条件
-        //! 排序时，null值在各种数据库中，有的在前，有的在后
         val orders = arrayOf(Order.asc(TestTable::height.name), Order.desc(TestTable::name.name))
         results = testTableDao.oneSearch(TestTable::active.name, true, *orders)
         assertEquals(8, results.size)
-        assert(results.first().name in setOf("name5", "name8"))
-        assert(results[5].name in setOf("name4", "name9"))
+        assertEquals("name5", results.first().name)
+        assertEquals("name4", results[5].name)
     }
 
     @Test

@@ -1,28 +1,27 @@
-package io.kudos.ability.distributed.notify.support
+package io.kudos.ability.distributed.notify.common.support
 
-import io.kudos.ability.distributed.notify.api.INotifyProducer
-import io.kudos.ability.distributed.notify.model.NotifyMessageVo
-import org.soul.base.log.Log
-import org.soul.base.log.LogFactory
+import io.kudos.ability.distributed.notify.common.api.INotifyProducer
+import io.kudos.ability.distributed.notify.common.model.NotifyMessageVo
+import io.kudos.base.logger.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import java.io.Serializable
 
 @Component
 class NotifyTool {
+
+    private val log = LoggerFactory.getLogger(this)
+
     @Autowired(required = false)
     private val notifyProducer: INotifyProducer? = null
 
-    fun notify(messageVo: NotifyMessageVo<*>?): Boolean {
+    fun notify(messageVo: NotifyMessageVo<out Serializable>): Boolean {
         if (notifyProducer != null) {
-            return notifyProducer.notify<Serializable?>(messageVo)
+            return notifyProducer.notify(messageVo)
         } else {
             log.warn("未引入NotifyProduce实现..")
             return false
         }
     }
 
-    companion object {
-        private val log: Log = LogFactory.getLog(NotifyTool::class.java)
-    }
 }

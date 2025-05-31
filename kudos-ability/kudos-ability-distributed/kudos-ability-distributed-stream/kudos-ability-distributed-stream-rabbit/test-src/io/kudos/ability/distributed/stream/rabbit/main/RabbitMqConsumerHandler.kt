@@ -1,7 +1,7 @@
 package io.kudos.ability.distributed.stream.rabbit.main
 
 import io.kudos.ability.distributed.stream.common.annotations.MqConsumer
-import io.kudos.ability.distributed.stream.kafka.data.KafkaSimpleMsg
+import io.kudos.ability.distributed.stream.rabbit.data.RabbitMqSimpleMsg
 import io.kudos.base.logger.LoggerFactory
 import org.soul.ability.distributed.stream.common.model.model.StreamMessageVo
 import org.springframework.messaging.Message
@@ -9,14 +9,14 @@ import org.springframework.stereotype.Component
 import java.util.function.Consumer
 
 /**
- * kafka测试消费者
+ * RabbitMq测试消费者
  *
  * @author shane
  * @author  K
  * @since 1.0.0
  */
 @Component
-open class KafkaConsumerHandler {
+open class RabbitMqConsumerHandler {
     
     private val log = LoggerFactory.getLogger(this)
     val defaultMsg: String = "Hello simple msg"
@@ -24,10 +24,10 @@ open class KafkaConsumerHandler {
     var errorFlag = false
 
     @MqConsumer(bindingName = "consumer-in-0")
-    fun consumer(): Consumer<Message<StreamMessageVo<KafkaSimpleMsg>>?> {
-        return Consumer { msg: Message<StreamMessageVo<KafkaSimpleMsg>>? ->
+    fun consumer(): Consumer<Message<StreamMessageVo<RabbitMqSimpleMsg>>?> {
+        return Consumer { msg: Message<StreamMessageVo<RabbitMqSimpleMsg>>? ->
             //获取消息体
-            val streamMsgVo: StreamMessageVo<KafkaSimpleMsg> = msg!!.getPayload()
+            val streamMsgVo: StreamMessageVo<RabbitMqSimpleMsg> = msg!!.getPayload()
             val simpleMsg = streamMsgVo.getData()
             log.info("receive message: ${simpleMsg.msg}")
             //记录日志
