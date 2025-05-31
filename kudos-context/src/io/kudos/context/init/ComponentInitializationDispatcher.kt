@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component
  *  @since 1.0.0
  */
 @Component
-class ComponentInitializationDispatcher : SmartInstantiationAwareBeanPostProcessor, BeanFactoryAware {
+open class ComponentInitializationDispatcher : SmartInstantiationAwareBeanPostProcessor, BeanFactoryAware {
 
     private lateinit var beanFactory: ConfigurableListableBeanFactory
 

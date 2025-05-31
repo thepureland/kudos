@@ -1,4 +1,4 @@
-package io.kudos.test.common
+package io.kudos.test.common.init
 
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.test.context.SpringBootContextLoader

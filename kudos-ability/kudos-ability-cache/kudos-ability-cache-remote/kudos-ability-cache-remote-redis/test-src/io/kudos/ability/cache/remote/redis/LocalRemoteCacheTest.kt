@@ -3,7 +3,7 @@ package io.kudos.ability.cache.remote.redis
 import io.kudos.test.common.init.EnableKudosTest
 <<<<<<< HEAD
 =======
-import io.kudos.test.common.TestSpringBootContextLoader
+import io.kudos.test.common.init.TestSpringBootContextLoader
 import io.kudos.test.container.RedisTestContainer
 >>>>>>> 2cd8499 (maven convert to gradle & add tests for some modules)
 import org.junit.jupiter.api.Test

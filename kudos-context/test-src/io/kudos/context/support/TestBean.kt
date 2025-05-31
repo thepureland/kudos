@@ -4,4 +4,4 @@ import org.springframework.stereotype.Service
 
 
 @Service("testBean")
-class TestBean : ITestBean
+open class TestBean : ITestBean

@@ -1,4 +1,4 @@
-package io.kudos.test.common
+package io.kudos.test.common.init
 
 import io.kudos.base.logger.LoggerFactory
 import org.springframework.boot.context.event.ApplicationEnvironmentPreparedEvent

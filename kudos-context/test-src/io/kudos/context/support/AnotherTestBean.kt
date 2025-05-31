@@ -4,5 +4,5 @@ import org.springframework.stereotype.Service
 
 
 @Service
-class AnotherTestBean: ITestBean {
+open class AnotherTestBean: ITestBean {
 }

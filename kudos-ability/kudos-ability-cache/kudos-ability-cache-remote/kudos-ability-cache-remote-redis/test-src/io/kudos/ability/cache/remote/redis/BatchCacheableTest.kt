@@ -1,17 +1,11 @@
 package io.kudos.ability.cache.remote.redis
 
 import io.kudos.test.common.init.EnableKudosTest
-<<<<<<< HEAD
-=======
 import io.kudos.test.container.RedisTestContainer
->>>>>>> 2cd8499 (maven convert to gradle & add tests for some modules)
 import org.junit.jupiter.api.Test
-import org.soul.ability.cache.common.enums.CacheStrategy
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Import
-<<<<<<< HEAD
-=======
->>>>>>> 2cd8499 (maven convert to gradle & add tests for some modules)
+import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.junit.jupiter.Testcontainers
@@ -24,24 +18,13 @@ import java.util.concurrent.CountDownLatch
  * @since 1.0.0
  */
 @EnableKudosTest
+@ContextConfiguration(loader = RemoteCacheTestContextLoader::class)
 @Import(BatchCacheableTestService::class, TestCacheConfigProvider::class)
 @Testcontainers(disabledWithoutDocker = true)
 class BatchCacheableTest {
 
     @Autowired
     private lateinit var testCacheService: BatchCacheableTestService
-
-    companion object {
-
-        @DynamicPropertySource
-        @JvmStatic
-        fun registerProperties(registry: DynamicPropertyRegistry) {
-            registry.add("kudos.ability.cache.enabled") { "true" }
-            registry.add("kudos.cache.config.strategy") { CacheStrategy.REMOTE.name }
-            RedisTestContainer.start(registry)
-        }
-
-    }
 
     @Test
     fun test() {
