@@ -1,24 +1,23 @@
-package io.kudos.ability.web.ktor.base.engines
+package io.kudos.ability.web.ktor.base.spring
 
-import io.ktor.client.request.get
-import io.ktor.client.statement.bodyAsText
-import io.ktor.server.response.respondText
-import io.ktor.server.routing.get
-import io.ktor.server.routing.routing
-import io.ktor.server.testing.testApplication
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
+import io.ktor.server.testing.*
 import io.kudos.ability.web.ktor.base.init.installPlugins
-import io.kudos.test.common.init.EnableKudosTest
+import io.kudos.context.kit.SpringKit
+import org.junit.jupiter.api.assertThrows
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * ktor自带内存虚拟引擎测试
+ * Ktor不整合Spring的测试用例
  *
  * @author K
  * @since 1.0.0
  */
-@EnableKudosTest
-class VirtualEngineTest {
+class KtorWithoutSpringTest {
 
     @Test
     fun testRoot() = testApplication {
@@ -32,9 +31,10 @@ class VirtualEngineTest {
         }
 
         val client = createClient {}
-
         val response = client.get("/")
         assertEquals("Hello World!", response.bodyAsText())
+
+        assertThrows<NullPointerException> { SpringKit.getApplicationContext() }
     }
 
 }

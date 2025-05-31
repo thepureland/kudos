@@ -39,4 +39,4 @@ kudos:
     web:
       ktor:
         engine:
-          name: netty
+          name: test

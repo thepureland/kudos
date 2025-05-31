@@ -3,11 +3,14 @@ package io.kudos.ability.web.ktor.base.engines
 import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
-import io.ktor.server.engine.*
-import io.ktor.server.netty.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.kudos.ability.web.ktor.base.init.KtorContext
+import io.kudos.test.common.init.EnableKudosTest
 import kotlinx.coroutines.runBlocking
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.test.context.DynamicPropertyRegistry
+import org.springframework.test.context.DynamicPropertySource
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -20,32 +23,41 @@ import kotlin.test.assertEquals
  * @author K
  * @since 1.0.0
  */
+@EnableKudosTest
 class NettyEngineTest {
 
-    private val PORT = 9591
-    private var engine: EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Configuration>? = null
+    companion object {
+
+        @JvmStatic
+        @DynamicPropertySource
+        private fun registerProperties(registry: DynamicPropertyRegistry) {
+            registry.add("kudos.ability.web.ktor.engine.name") { "netty" }
+        }
+
+    }
+
+    @Value("\${ktor.deployment.port}")
+    private var port : Int? = null
 
     @BeforeTest
     fun setup() {
-        engine = embeddedServer(Netty, PORT) {
-            routing {
-                get("/") {
-                    call.respondText("Hello World!")
-                }
+        KtorContext.application.routing {
+            get("/") {
+                call.respondText("Hello Netty!")
             }
-        }.start(wait = false)
+        }
     }
 
     @AfterTest
     fun teardown() {
-        engine?.stop(2000L, 3000L)
+        KtorContext.application.engine.stop(2000L, 3000L)
     }
 
     @Test
     fun testRoot() = runBlocking {
         val client = HttpClient()
-        val response = client.get("http://localhost:$PORT/")
-        assertEquals("Hello World!", response.bodyAsText())
+        val response = client.get("http://localhost:$port/")
+        assertEquals("Hello Netty!", response.bodyAsText())
     }
 
 }
