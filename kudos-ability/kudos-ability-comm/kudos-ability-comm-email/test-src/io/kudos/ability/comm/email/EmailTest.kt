@@ -1,6 +1,6 @@
 package io.kudos.ability.comm.email
 
-import io.kudos.test.common.EnableKudosTest
+import io.kudos.test.common.init.EnableKudosTest
 import io.kudos.test.container.SmtpTestContainer
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll

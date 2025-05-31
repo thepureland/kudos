@@ -1,7 +1,7 @@
 package io.kudos.ability.comm.websocket.netty
 
 import io.kudos.base.logger.LoggerFactory
-import io.kudos.test.common.EnableKudosTest
+import io.kudos.test.common.init.EnableKudosTest
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.soul.ability.comm.websocket.common.session.IWebSocketManager

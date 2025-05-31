@@ -1,6 +1,6 @@
 package io.kudos.ability.comm.sms.aliyun
 
-import io.kudos.test.common.EnableKudosTest
+import io.kudos.test.common.init.EnableKudosTest
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test

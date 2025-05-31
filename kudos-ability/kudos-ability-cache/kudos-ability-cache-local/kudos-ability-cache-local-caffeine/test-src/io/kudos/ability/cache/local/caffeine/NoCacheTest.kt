@@ -1,6 +1,6 @@
 package io.kudos.ability.cache.local.caffeine
 
-import io.kudos.test.common.EnableKudosTest
+import io.kudos.test.common.init.EnableKudosTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.soul.ability.cache.common.MixCacheManager

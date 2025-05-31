@@ -1,9 +1,8 @@
 package io.kudos.ability.data.memdb.redis
 
 import io.kudos.base.time.toLocalDateTime
-import io.kudos.test.common.EnableKudosTest
+import io.kudos.test.common.init.EnableKudosTest
 <<<<<<< HEAD:kudos-ability/kudos-ability-data/kudos-ability-data-memdb/kudos-ability-data-memdb-redis/test-src/io/kudos/ability/data/memdb/redis/RedisTest.kt
-import io.kudos.test.common.container.RedisTestContainer
 =======
 import io.kudos.test.container.RedisTestContainer
 >>>>>>> 2cd8499 (maven convert to gradle & add tests for some modules):kudos-ability/kudos-ability-data/kudos-ability-data-memdb/kudos-ability-data-memdb-redis/test-src/io/kudos/ability/data/memdb/redis/RedisTemplateTest.kt

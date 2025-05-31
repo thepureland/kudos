@@ -1,25 +1,18 @@
 package io.kudos.ability.web.springmvc.init
 
 import com.fasterxml.jackson.databind.SerializationFeature
-import io.kudos.base.logger.LoggerFactory
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
 import io.kudos.context.kit.SpringKit
-<<<<<<< HEAD
-=======
 import org.soul.ability.web.common.consts.WebCommonConst
 import org.soul.ability.web.common.init.DictI18nServlet
->>>>>>> 2cd8499 (maven convert to gradle & add tests for some modules)
 import org.soul.ability.web.common.session.SessionManager
 import org.soul.ability.web.springmvc.CorsHandlerInterceptor
 import org.soul.ability.web.springmvc.handler.*
 import org.soul.ability.web.springmvc.init.DefaultWebContextInitializer
 import org.soul.ability.web.springmvc.init.ServletWebServerFactory
 import org.soul.ability.web.springmvc.init.SoulRequestContextListener
-<<<<<<< HEAD
-=======
 import org.soul.ability.web.springmvc.starter.properties.GlobalRequestProperties
->>>>>>> 2cd8499 (maven convert to gradle & add tests for some modules)
 import org.soul.ability.web.springmvc.starter.properties.GlobalResponseProperties
 import org.soul.context.core.IContextInitializer
 import org.soul.context.core.SoulPropertySourceFactory
@@ -28,10 +21,7 @@ import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.web.servlet.ServletListenerRegistrationBean
-<<<<<<< HEAD
-=======
 import org.springframework.boot.web.servlet.ServletRegistrationBean
->>>>>>> 2cd8499 (maven convert to gradle & add tests for some modules)
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.PropertySource
 import org.springframework.http.converter.HttpMessageConverter
@@ -43,7 +33,6 @@ import org.springframework.web.servlet.HandlerInterceptor
 import org.springframework.web.servlet.config.annotation.*
 import java.nio.charset.StandardCharsets
 import java.util.*
-import javax.annotation.PostConstruct
 
 
 /**
@@ -61,17 +50,12 @@ import javax.annotation.PostConstruct
 
 open class SpringMvcAutoConfiguration : IComponentInitializer, WebMvcConfigurer {
 
-    private val log = LoggerFactory.getLogger(this)
-
     /**
      * Swagger是否屏蔽生产环境
      */
     @Value("\${kudos.ability.web.swagger.production:true}")
     private val swaggerProduction = true
 
-    @Bean
-    @ConditionalOnMissingBean
-    open fun globalResponseProperties() = GlobalResponseProperties()
 
     @Bean
     @ConditionalOnMissingBean
@@ -113,19 +97,9 @@ open class SpringMvcAutoConfiguration : IComponentInitializer, WebMvcConfigurer 
         return registrationBean
     }
 
-<<<<<<< HEAD
-//    @Bean
-//    @ConditionalOnBean
-//    open fun i18nDictService(): ServletRegistrationBean<I18nDictServlet> {
-//        val registrationBean = ServletRegistrationBean(
-//            I18nDictServlet(), WebCommonConst.DICT_URL_GET, WebCommonConst.DICT_URL_ALL
-//        )
-//        registrationBean.setLoadOnStartup(1)
-//        return registrationBean
-//    }
-=======
+
     @Bean
-    @ConditionalOnBean
+    @ConditionalOnMissingBean
     open fun i18nDictService(): ServletRegistrationBean<DictI18nServlet> {
         val registrationBean = ServletRegistrationBean(
             DictI18nServlet(), WebCommonConst.DICT_URL_GET, WebCommonConst.DICT_URL_ALL
@@ -133,7 +107,6 @@ open class SpringMvcAutoConfiguration : IComponentInitializer, WebMvcConfigurer 
         registrationBean.setLoadOnStartup(1)
         return registrationBean
     }
->>>>>>> 2cd8499 (maven convert to gradle & add tests for some modules)
 
     @Bean
     @ConditionalOnMissingBean
@@ -204,9 +177,6 @@ open class SpringMvcAutoConfiguration : IComponentInitializer, WebMvcConfigurer 
         }
     }
 
-    @PostConstruct
-    override fun init() {
-        log.info("【kudos-ability-web-springmvc】初始化完成.")
-    }
+    override fun getComponentName() = "kudos-ability-web-springmvc"
 
 }

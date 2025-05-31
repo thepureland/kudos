@@ -1,24 +1,27 @@
 package io.kudos.context.init
 
-import io.kudos.base.logger.LoggerFactory
-import org.soul.context.context.SoulContextBeanDefinitionRegistrar
-import org.springframework.boot.autoconfigure.AutoConfigureOrder
-import org.springframework.context.annotation.*
-import org.springframework.core.Ordered
-import javax.annotation.PostConstruct
+import org.soul.context.tool.SpringTool
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Import
 
 
-@Import(SoulContextBeanDefinitionRegistrar::class)
-@ComponentScan(basePackages = ["io.kudos.context"])
-@AutoConfigureOrder(Ordered.HIGHEST_PRECEDENCE)
-@Configuration // 会使用cglib,碰巧使该类比较早被实例化
+/**
+ * 上下文自动配置类
+ *
+ * @author K
+ * @since 1.0.0
+ */
+@Configuration
+//@AutoConfigureOrder(Ordered.HIGHEST_PRECEDENCE)
+@Import(ComponentInitializationDispatcher::class)
 open class ContextAutoConfiguration : IComponentInitializer {
 
-    private val logger = LoggerFactory.getLogger(this)
+    @Bean
+    @ConditionalOnMissingBean
+    open fun springTool() = SpringTool()
 
-    @PostConstruct
-    override fun init() {
-        logger.info("【kudos-context】初始化完成.")
-    }
+    override fun getComponentName() = "kudos-context"
 
 }

@@ -1,6 +1,6 @@
 package io.kudos.ability.comm.websocket.spring
 
-import io.kudos.test.common.EnableKudosTest
+import io.kudos.test.common.init.EnableKudosTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.mockito.ArgumentMatchers

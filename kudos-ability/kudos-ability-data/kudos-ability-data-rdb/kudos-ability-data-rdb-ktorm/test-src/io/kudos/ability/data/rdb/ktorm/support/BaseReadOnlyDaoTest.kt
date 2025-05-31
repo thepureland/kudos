@@ -7,20 +7,17 @@ import io.kudos.ability.data.rdb.ktorm.table.TestTableDao
 import io.kudos.ability.data.rdb.ktorm.table.TestTables
 import io.kudos.base.support.payload.ListSearchPayload
 import io.kudos.base.support.payload.SearchPayload
-<<<<<<< HEAD
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertEquals
-=======
-import io.kudos.test.common.EnableKudosTest
-import org.junit.jupiter.api.Assertions.assertEquals
+import io.kudos.test.common.init.EnableKudosTest
 import org.junit.jupiter.api.Test
->>>>>>> 2cd8499 (maven convert to gradle & add tests for some modules)
 import org.ktorm.dsl.eq
 import org.soul.base.query.Criteria
 import org.soul.base.query.Criterion
 import org.soul.base.query.enums.OperatorEnum
 import org.soul.base.query.sort.Order
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.annotation.Import
 import org.testcontainers.junit.jupiter.Testcontainers
 import java.time.LocalDateTime
 
@@ -30,13 +27,11 @@ import java.time.LocalDateTime
  * @author K
  * @since 1.0.0
  */
-<<<<<<< HEAD
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@Disabled
-@Testcontainers(disabledWithoutDocker = true)
-=======
 @EnableKudosTest
->>>>>>> 2cd8499 (maven convert to gradle & add tests for some modules)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@Testcontainers(disabledWithoutDocker = true)
+@Import(TestTableDao::class)
+@Disabled("该父类不是直接测试类")
 internal open class BaseReadOnlyDaoTest {
 
     @Autowired

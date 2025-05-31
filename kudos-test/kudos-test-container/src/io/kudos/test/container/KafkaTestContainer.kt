@@ -1,26 +1,50 @@
 package io.kudos.test.container
 
+import io.kudos.base.logger.LoggerFactory
 import org.springframework.test.context.DynamicPropertyRegistry
-import org.testcontainers.kafka.KafkaContainer
+import org.testcontainers.kafka.ConfluentKafkaContainer
 import org.testcontainers.utility.DockerImageName
-import java.util.function.Supplier
 
+/**
+ * kafka测试容器
+ *
+ * @author shane
+ * @author K
+ * @since 1.0.0
+ */
 object KafkaTestContainer {
-    private const val IMAGE_NAME = "confluentinc/cp-kafka:7.4.0"
 
-    val container: KafkaContainer = KafkaContainer(DockerImageName.parse(IMAGE_NAME))
+    private const val IMAGE_NAME = "confluentinc/cp-kafka:7.9.1"
 
-    fun start(registry: DynamicPropertyRegistry?): KafkaContainer {
+    private var imageName = DockerImageName
+        .parse(IMAGE_NAME)
+        .asCompatibleSubstituteFor("apache/kafka")
+
+    val container = ConfluentKafkaContainer(imageName)
+
+
+    fun start(registry: DynamicPropertyRegistry?): ConfluentKafkaContainer {
+        LoggerFactory.getLogger(this).info("Starting Kafka container...")
+        println(">>>>>>>>>>>>>>>>>>>> Starting Kafka container...")
         container.start() // 防止属性注册时，容器还未启动完成.
         if (registry != null) {
             registerProperties(registry)
         }
+        println(">>>>>>>>>>>>>>>>>>>> Kafka container started.")
         return container
     }
 
     private fun registerProperties(registry: DynamicPropertyRegistry) {
-        registry.add(
-            "kudos.ability.distributed.stream.mq-config.kafka-brokers",
-            Supplier { container.getHost() + ":" + container.getFirstMappedPort() })
+        registry.add("spring.cloud.stream.kafka.binder.brokers") {
+            "${container.host}:${container.firstMappedPort}"
+        }
     }
+
+    @JvmStatic
+    fun main(args: Array<String>) {
+        start(null)
+        println("kafka started.")
+        Thread.sleep(Long.Companion.MAX_VALUE)
+    }
+
 }

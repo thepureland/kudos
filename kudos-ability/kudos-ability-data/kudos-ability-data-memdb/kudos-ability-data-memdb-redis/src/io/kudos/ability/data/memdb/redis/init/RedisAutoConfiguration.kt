@@ -1,6 +1,5 @@
 package io.kudos.ability.data.memdb.redis.init
 
-import io.kudos.base.logger.LoggerFactory
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
 import org.soul.ability.data.memdb.redis.SoulRedisConnectFactory
@@ -16,7 +15,6 @@ import org.springframework.context.annotation.ComponentScan
 import org.springframework.context.annotation.PropertySource
 import org.springframework.data.redis.connection.RedisConnectionFactory
 import org.springframework.data.redis.core.RedisTemplate
-import javax.annotation.PostConstruct
 
 
 /**
@@ -32,8 +30,6 @@ import javax.annotation.PostConstruct
 )
 @AutoConfigureAfter(ContextAutoConfiguration::class)
 open class RedisAutoConfiguration : IComponentInitializer {
-
-    private val logger = LoggerFactory.getLogger(this)
 
     @Bean
     @ConditionalOnMissingBean
@@ -87,9 +83,6 @@ open class RedisAutoConfiguration : IComponentInitializer {
         return redisTemplate
     }
 
-    @PostConstruct
-    override fun init() {
-        logger.info("【kudos-ability-data-memdb-redis】初始化完成.")
-    }
+    override fun getComponentName() = "kudos-ability-data-memdb-redis"
 
 }

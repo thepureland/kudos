@@ -20,8 +20,8 @@ spring:
         postgres:
           driver-class-name: org.postgresql.Driver
           url: jdbc:postgresql://localhost:5432/test
-          username: postgres
+          username: pg
           password: postgres
-#          init:
-#            schema: sql/schema.sql
-#            data: sql/data.sql
+          init:
+            schema: sql/schema.sql
+            data: sql/data.sql

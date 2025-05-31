@@ -2,7 +2,7 @@ package io.kudos.ability.cache.interservice
 
 import io.kudos.ability.cache.interservice.client.IMockProxy
 import io.kudos.ability.cache.interservice.provider.MockMsApplication
-import io.kudos.test.common.EnableKudosTest
+import io.kudos.test.common.init.EnableKudosTest
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance

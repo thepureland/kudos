@@ -1,7 +1,7 @@
 package io.kudos.ability.comm.websocket.netty
 
 import io.kudos.base.logger.LoggerFactory
-import io.kudos.test.common.EnableKudosTest
+import io.kudos.test.common.init.EnableKudosTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.mockito.ArgumentMatchers

@@ -1,1 +1,0 @@
-org.springframework.boot.autoconfigure.EnableAutoConfiguration=io.kudos.ability.data.rdb.ktorm.init.KtormAutoConfiguration

@@ -1,9 +1,8 @@
 package io.kudos.test.container
 
-import org.soul.base.net.IpTool
+import io.kudos.base.net.IpKit
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.testcontainers.containers.FixedHostPortGenericContainer
-import java.util.function.Supplier
 
 /**
  * rabbit mq测试容器
@@ -13,27 +12,38 @@ import java.util.function.Supplier
  * @since 1.0.0
  */
 object RabbitMqTestContainer {
-    const val IMAGE_NAME: String = "rabbitmq:3.7.25-management-alpine"
-    const val PORT: Int = 25672
-    val container: FixedHostPortGenericContainer<*> = FixedHostPortGenericContainer<Any?>(IMAGE_NAME)
+    
+    const val IMAGE_NAME = "rabbitmq:3.7.25-management-alpine"
+    
+    const val PORT = 25672
+    
+    val container = FixedHostPortGenericContainer(IMAGE_NAME)
         .withFixedExposedPort(PORT, 5672)
 
     fun start(registry: DynamicPropertyRegistry?): FixedHostPortGenericContainer<*> {
+        println(">>>>>>>>>>>>>>>>>>>> Starting RabbitMQ container...")
         container.start()
         if (registry != null) {
             registerProperties(registry)
         }
+        println(">>>>>>>>>>>>>>>>>>>> RabbitMQ container started.")
         return container
     }
 
     private fun registerProperties(registry: DynamicPropertyRegistry) {
-        registry.add("soul.ability.distributed.stream.mq-config.rabbitmq.host", Supplier { IpTool.getLocalIp() })
-        registry.add("soul.ability.distributed.stream.mq-config.rabbitmq.username", Supplier { "guest" })
-        registry.add("soul.ability.distributed.stream.mq-config.rabbitmq.password", Supplier { "guest" })
-        registry.add("soul.ability.distributed.stream.mq-config.rabbitmq.port", Supplier { PORT })
-        registry.add("soul.ability.distributed.stream.mq-config.rabbitmq.virtual-host", Supplier { "/" })
-        registry.add(
-            "soul.ability.distributed.stream.mq-config.rabbitmq.addresses",
-            Supplier { IpTool.getLocalIp() + ":" + PORT })
+        registry.add("spring.rabbitmq.host") { IpKit.getLocalIp() }
+        registry.add("spring.rabbitmq.username") { "guest" }
+        registry.add("spring.rabbitmq.password") { "guest" }
+        registry.add("spring.rabbitmq.port") { PORT }
+        registry.add("spring.rabbitmq.virtual-host") { "/" }
+        registry.add("spring.rabbitmq.addresses") { "${IpKit.getLocalIp()}:$PORT" }
     }
+
+    @JvmStatic
+    fun main(args: Array<String>) {
+        start(null)
+        println("rabbit mq localhost port: $PORT")
+        Thread.sleep(Long.Companion.MAX_VALUE)
+    }
+
 }

@@ -20,7 +20,6 @@ import org.springframework.data.redis.cache.RedisCacheConfiguration
 import org.springframework.data.redis.cache.RedisCacheWriter
 import org.springframework.data.redis.serializer.RedisSerializationContext
 import java.time.Duration
-import javax.annotation.PostConstruct
 
 
 /**
@@ -66,9 +65,6 @@ open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentIni
         return SoulRedisCacheManager(redisCacheWriter, defaultRedisCacheConfiguration)
     }
 
-    @PostConstruct
-    override fun init() {
-        log.info("【kudos-ability-cache-remote-redis】初始化完成.")
-    }
+    override fun getComponentName() = "kudos-ability-cache-remote-redis"
 
 }

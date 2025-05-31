@@ -1,12 +1,10 @@
 package io.kudos.ability.comm.email.init
 
-import io.kudos.base.logger.LoggerFactory
 import io.kudos.context.init.IComponentInitializer
 import org.soul.ability.comm.email.handler.EmailHandler
 import org.springframework.beans.factory.annotation.Configurable
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean
-import javax.annotation.PostConstruct
 
 
 /**
@@ -22,9 +20,6 @@ open class EmailAutoConfiguration : IComponentInitializer {
     @ConditionalOnMissingBean
     open fun emailHandler() = EmailHandler()
 
-    @PostConstruct
-    override fun init() {
-        LoggerFactory.getLogger(this).info("【kudos-ability-comm-email】初始化完成.")
-    }
+    override fun getComponentName() = "kudos-ability-comm-email"
 
 }

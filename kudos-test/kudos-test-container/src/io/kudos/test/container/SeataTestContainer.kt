@@ -4,7 +4,6 @@ import org.soul.base.net.IpTool
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.testcontainers.containers.BindMode
 import org.testcontainers.containers.FixedHostPortGenericContainer
-import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.Network
 import org.testcontainers.containers.wait.strategy.Wait
 
@@ -15,15 +14,16 @@ import org.testcontainers.containers.wait.strategy.Wait
  * @since 1.0.0
  */
 object SeataTestContainer {
+
     private const val IMAGE_NAME = "seataio/seata-server:2.0.0-slim"
 
-    const val WEB_PORT: Int = 27091
+    const val WEB_PORT = 27091
 
-    const val SERVICE_PORT: Int = 28091
+    const val SERVICE_PORT = 28091
 
-    private val testSoulNet: Network? = Network.newNetwork()
+    private val testSoulNet = Network.newNetwork()
 
-    private val CONTAINER: FixedHostPortGenericContainer<*> = FixedHostPortGenericContainer<SELF?>(IMAGE_NAME)
+    private val CONTAINER = FixedHostPortGenericContainer(IMAGE_NAME)
         .withFixedExposedPort(WEB_PORT, 7091)
         .withFixedExposedPort(SERVICE_PORT, 28091)
         .withEnv("SEATA_IP", IpTool.getLocalIp())
@@ -33,7 +33,8 @@ object SeataTestContainer {
             "/seata-server/resources/application.yml",
             BindMode.READ_ONLY
         )
-        .waitingFor(Wait.forHttp("/"))
+//        .waitingFor(Wait.forHttp("/").forPort(7091))
+        .waitingFor(Wait.forListeningPort())
 
     init {
         // 启动nacos-server
@@ -41,25 +42,26 @@ object SeataTestContainer {
     }
 
     fun start(registry: DynamicPropertyRegistry?): FixedHostPortGenericContainer<*> {
+        println(">>>>>>>>>>>>>>>>>>>> Starting Seata container...")
         CONTAINER.start()
         if (registry != null) {
             registerProperties(registry)
         }
+        println(">>>>>>>>>>>>>>>>>>>> Seata container started.")
         return CONTAINER
     }
 
     private fun registerProperties(registry: DynamicPropertyRegistry?) {
     }
 
-    val container: GenericContainer<*>
-        get() = CONTAINER
+    val container: FixedHostPortGenericContainer<*>? = CONTAINER
 
-    @Throws(InterruptedException::class)
     @JvmStatic
     fun main(args: Array<String>) {
         start(null)
-        System.out.printf("nacos localhost web-port: %s%n", NacosTestContainer.PORT)
-        System.out.printf("seata localhost web-port: %s, service-port：%s%n", WEB_PORT, SERVICE_PORT)
+        println("nacos localhost web-port: ${NacosTestContainer.PORT}")
+        println("seata localhost web-port: $WEB_PORT, service-port：$SERVICE_PORT")
         Thread.sleep(Long.Companion.MAX_VALUE)
     }
+
 }

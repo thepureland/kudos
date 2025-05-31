@@ -1,8 +1,6 @@
 package io.kudos.ability.distributed.discovery.nacos.init
 
-import io.kudos.base.logger.LoggerFactory
 import io.kudos.context.init.IComponentInitializer
-import jakarta.annotation.PostConstruct
 import org.springframework.context.annotation.Configuration
 
 
@@ -13,7 +11,7 @@ import org.springframework.context.annotation.Configuration
  * @since 1.0.0
  */
 @Configuration
-open class NacosDiscoveryAutoConfiguration: IComponentInitializer {
+open class NacosDiscoveryAutoConfiguration : IComponentInitializer {
 
 //    @Bean
 //    open fun feignContextWebFilter(): FilterRegistrationBean<FeignContextWebFilter> {
@@ -30,9 +28,6 @@ open class NacosDiscoveryAutoConfiguration: IComponentInitializer {
 //        return registration
 //    }
 
-    @PostConstruct
-    override fun init() {
-        LoggerFactory.getLogger(this).info("【kudos-ability-distributed-discovery-nacos】初始化完成.")
-    }
+    override fun getComponentName() = "kudos-ability-distributed-discovery-nacos"
 
 }

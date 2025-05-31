@@ -14,11 +14,12 @@ import javax.sql.DataSource
  * @author soul
  */
 class SeataDatasourceProxy : IDataSourceProxy {
+
     @Value("\${seata.data-source-proxy-mode}")
     private val proxyMode: String? = null
 
     @Value("\${seata.enable-auto-data-source-proxy}")
-    private val enableProxy: Boolean? = null
+    private var enableProxy: Boolean = true
 
     override fun proxyDatasource(dataSource: DataSource): DataSource? {
         if (enableProxy) {
@@ -34,7 +35,7 @@ class SeataDatasourceProxy : IDataSourceProxy {
         } catch (e: Exception) {
             throw IllegalArgumentException("代理数据源失败", e)
         }
-        throw IllegalArgumentException("Unknown dataSourceProxyMode: " + proxyMode)
+        throw IllegalArgumentException("Unknown dataSourceProxyMode: $proxyMode")
     }
 
     override fun isSeata(): Boolean {

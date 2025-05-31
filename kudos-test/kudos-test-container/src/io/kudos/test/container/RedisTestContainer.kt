@@ -12,16 +12,18 @@ import org.testcontainers.utility.DockerImageName
  */
 object RedisTestContainer {
 
-    const val IMAGE_NAME_REDIS: String = "redis:8.0"
+    const val IMAGE_NAME_REDIS = "redis:8.0"
 
     val CONTAINER = GenericContainer(DockerImageName.parse(IMAGE_NAME_REDIS))
         .withExposedPorts(6379)
 
     fun start(registry: DynamicPropertyRegistry?): GenericContainer<*> {
+        println(">>>>>>>>>>>>>>>>>>>> Starting Redis container...")
         CONTAINER.start()
         if (registry != null) {
             registerProperties(registry)
         }
+        println(">>>>>>>>>>>>>>>>>>>> Redis container started.")
         return CONTAINER
     }
 
@@ -37,7 +39,7 @@ object RedisTestContainer {
     @JvmStatic
     fun main(args: Array<String>) {
         start(null)
-        println("redis localhost port: " + CONTAINER.getFirstMappedPort())
+        println("redis localhost port: ${CONTAINER.firstMappedPort}")
         Thread.sleep(Long.Companion.MAX_VALUE)
     }
 

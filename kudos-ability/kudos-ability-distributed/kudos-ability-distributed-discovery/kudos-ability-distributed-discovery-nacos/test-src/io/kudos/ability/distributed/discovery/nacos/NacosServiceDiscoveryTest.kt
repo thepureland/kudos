@@ -1,6 +1,6 @@
 package io.kudos.ability.distributed.discovery.nacos
 
-import io.kudos.test.common.EnableKudosTest
+import io.kudos.test.common.init.EnableKudosTest
 import io.kudos.test.container.NacosTestContainer
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.BeforeAll

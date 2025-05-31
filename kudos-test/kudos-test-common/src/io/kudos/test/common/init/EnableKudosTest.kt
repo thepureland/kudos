@@ -1,7 +1,6 @@
-package io.kudos.test.common
+package io.kudos.test.common.init
 
-import org.springframework.boot.SpringApplication
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration
+import io.kudos.test.common.TestApplication
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment
 import org.springframework.core.annotation.AliasFor

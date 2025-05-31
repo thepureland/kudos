@@ -1,9 +1,7 @@
 package io.kudos.ability.distributed.lock.redisson.init
 
-import io.kudos.base.logger.LoggerFactory
 import io.kudos.context.init.IComponentInitializer
 import io.kudos.context.spring.YamlPropertySourceFactory
-import jakarta.annotation.PostConstruct
 import org.redisson.Redisson
 import org.redisson.api.RedissonClient
 import org.redisson.config.BaseConfig
@@ -33,8 +31,6 @@ import org.springframework.context.annotation.PropertySource
     factory = YamlPropertySourceFactory::class
 )
 open class RedissonLockAutoConfiguration : IComponentInitializer {
-
-    private val log = LoggerFactory.getLogger(this)
 
     @Bean(name = [RedissonLockTool.REDISSON_CLIENT_BEAN_NAME], destroyMethod = "shutdown")
     open fun redisson(properties: RedissonProperties): RedissonClient? {
@@ -114,9 +110,6 @@ open class RedissonLockAutoConfiguration : IComponentInitializer {
     @Bean
     open fun redissonLocker() = RedissonLocker()
 
-    @PostConstruct
-    override fun init() {
-        log.info("【kudos-ability-distributed-lock-redisson】初始化完成.")
-    }
+    override fun getComponentName() = "kudos-ability-distributed-lock-redisson"
 
 }

@@ -13,16 +13,18 @@ import org.testcontainers.utility.DockerImageName
  */
 object SmtpTestContainer {
 
-    const val IMAGE_NAME: String = "namshi/smtp:latest"
+    const val IMAGE_NAME = "namshi/smtp:latest"
 
     val container = GenericContainer(DockerImageName.parse(IMAGE_NAME))
         .withExposedPorts(25)
 
     fun start(registry: DynamicPropertyRegistry?): GenericContainer<*> {
+        println(">>>>>>>>>>>>>>>>>>>> Starting Smtp container...")
         container.start()
         if (registry != null) {
             registerProperties(registry)
         }
+        println(">>>>>>>>>>>>>>>>>>>> Smtp container started.")
         return container
     }
 
@@ -32,7 +34,7 @@ object SmtpTestContainer {
     @JvmStatic
     fun main(args: Array<String>) {
         start(null)
-        println("smtp localhost port: " + container.firstMappedPort)
+        println("smtp localhost port: ${container.firstMappedPort}")
         Thread.sleep(Long.Companion.MAX_VALUE)
     }
 }

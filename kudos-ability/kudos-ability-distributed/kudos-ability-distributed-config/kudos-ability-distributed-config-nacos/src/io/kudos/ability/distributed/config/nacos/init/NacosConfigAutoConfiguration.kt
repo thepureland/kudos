@@ -1,9 +1,7 @@
 package io.kudos.ability.distributed.config.nacos.init
 
-import io.kudos.base.logger.LoggerFactory
 import io.kudos.context.init.IComponentInitializer
 import org.springframework.boot.autoconfigure.AutoConfiguration
-import javax.annotation.PostConstruct
 
 
 /**
@@ -15,11 +13,6 @@ import javax.annotation.PostConstruct
 @AutoConfiguration
 open class NacosConfigAutoConfiguration: IComponentInitializer {
 
-
-
-    @PostConstruct
-    override fun init() {
-        LoggerFactory.getLogger(this).info("【kudos-ability-distributed-config-nacos】初始化完成.")
-    }
+    override fun getComponentName() = "kudos-ability-distributed-config-nacos"
 
 }

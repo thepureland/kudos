@@ -2,7 +2,7 @@ package io.kudos.ability.distributed.lock.redisson
 
 import io.kudos.ability.distributed.lock.redisson.kit.RedissonLockKit
 import io.kudos.base.logger.LoggerFactory
-import io.kudos.test.common.EnableKudosTest
+import io.kudos.test.common.init.EnableKudosTest
 import io.kudos.test.container.RedisTestContainer
 import org.junit.jupiter.api.Test
 import org.soul.ability.distributed.lock.common.annotations.DistributedLock

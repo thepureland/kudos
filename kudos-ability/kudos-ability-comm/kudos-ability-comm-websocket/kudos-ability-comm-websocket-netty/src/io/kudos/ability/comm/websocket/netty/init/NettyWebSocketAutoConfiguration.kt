@@ -1,6 +1,5 @@
 package io.kudos.ability.comm.websocket.netty.init
 
-import io.kudos.base.logger.LoggerFactory
 import io.kudos.context.init.IComponentInitializer
 import io.kudos.context.spring.YamlPropertySourceFactory
 import org.soul.ability.comm.websocket.common.api.IWebsocketSenderAPI
@@ -21,7 +20,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Import
 import org.springframework.context.annotation.PropertySource
-import javax.annotation.PostConstruct
 
 
 /**
@@ -64,9 +62,6 @@ open class NettyWebSocketAutoConfiguration : IComponentInitializer {
     @ConfigurationProperties(prefix = "kudos.ability.comm.websocket.netty")
     open fun nettyWebsocketProperties() = NettyWebsocketProperties()
 
-    @PostConstruct
-    override fun init() {
-        LoggerFactory.getLogger(this).info("【kudos-ability-comm-websocket-netty】初始化完成.")
-    }
+    override fun getComponentName() = "kudos-ability-comm-websocket-netty"
 
 }

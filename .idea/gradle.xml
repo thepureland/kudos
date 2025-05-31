@@ -57,6 +57,8 @@
             <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-ui" />
             <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-ui/kudos-ability-ui-javafx" />
             <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-web" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-web/kudos-ability-web-common" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-web/kudos-ability-web-servlet" />
             <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-web/kudos-ability-web-springmvc" />
             <option value="$PROJECT_DIR$/kudos-base" />
             <option value="$PROJECT_DIR$/kudos-context" />

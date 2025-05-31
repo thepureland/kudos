@@ -19,7 +19,7 @@ object NacosTestContainer {
 
     const val PORT = 28848
 
-    val container = GenericContainer<Nothing>(IMAGE_NAME).apply {
+    val container = GenericContainer(IMAGE_NAME).apply {
         withEnv("MODE", "standalone")
 
         // 1. 声明容器要“暴露”的端口（必须和镜像 Dockerfile EXPOSE 一致）
@@ -40,10 +40,12 @@ object NacosTestContainer {
 
 
     fun start(registry: DynamicPropertyRegistry?): GenericContainer<*> {
+        println(">>>>>>>>>>>>>>>>>>>> Starting Nacos container...")
         container.start()
         if (registry != null) {
             registerProperties(registry)
         }
+        println(">>>>>>>>>>>>>>>>>>>> Nacos container started.")
         return container
     }
 
@@ -53,7 +55,7 @@ object NacosTestContainer {
     @JvmStatic
     fun main(args: Array<String>) {
         start(null)
-        println("nacos localhost port: " + PORT)
+        println("nacos localhost port: $PORT")
         Thread.sleep(Long.Companion.MAX_VALUE)
     }
 

@@ -1,11 +1,7 @@
 spring:
   datasource:
     dynamic:
-<<<<<<< HEAD
-      primary: master
-=======
       primary: ds1
->>>>>>> 2cd8499 (maven convert to gradle & add tests for some modules)
       hikari:
         connection-timeout: 30000
         validation-timeout: 5000
@@ -15,17 +11,12 @@ spring:
         max-pool-size: 10
         min-idle: 10
         initialization-fail-timeout: 1
-<<<<<<< HEAD
-        is-auto-commit: true
-=======
         is-auto-commit: false
->>>>>>> 2cd8499 (maven convert to gradle & add tests for some modules)
         is-read-only: false
         is-isolate-internal-queries: false
         is-register-mbeans: false
         is-allow-pool-suspension: false
       datasource:
-<<<<<<< HEAD
         master:
           hikari:
             is-auto-commit: false
@@ -33,7 +24,6 @@ spring:
           url: jdbc:h2:~/h2;auto_server=true;DATABASE_TO_LOWER=TRUE;
           username: sa
           password: sa
-=======
         ds1:
           driver-class-name: org.h2.Driver
           url: jdbc:h2:~/h2-ds1;auto_server=true;DATABASE_TO_LOWER=TRUE;
@@ -66,4 +56,3 @@ spring:
 #          init:
 #            schema: sql/schema.sql
 #            data: sql/data.sql
->>>>>>> 2cd8499 (maven convert to gradle & add tests for some modules)

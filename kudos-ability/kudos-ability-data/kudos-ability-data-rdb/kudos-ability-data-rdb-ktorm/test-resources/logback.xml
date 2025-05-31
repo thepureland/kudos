@@ -26,6 +26,6 @@
     <logger name="org.springframework.core.env.PropertySourcesPropertyResolver" level="DEBUG"/>
 
     <!-- 开启 Ktorm SQL 日志 -->
-    <logger name="org.ktorm.database.Database" level="TRACE" />
+    <logger name="org.ktorm.database.Database" level="INFO" />
 
 </configuration>

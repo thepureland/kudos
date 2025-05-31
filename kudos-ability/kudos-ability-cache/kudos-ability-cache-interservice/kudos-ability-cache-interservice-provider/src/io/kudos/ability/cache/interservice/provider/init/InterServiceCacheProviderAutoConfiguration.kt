@@ -9,7 +9,6 @@ import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.context.annotation.Bean
-import javax.annotation.PostConstruct
 
 
 /**
@@ -42,9 +41,6 @@ open class InterServiceCacheProviderAutoConfiguration : IComponentInitializer {
     @ConditionalOnMissingBean
     open fun clientCacheableAspect() = ClientCacheableAspect()
 
-    @PostConstruct
-    override fun init() {
-        logger.info("【kudos-ability-cache-interservice-provider】初始化完成.")
-    }
+    override fun getComponentName() = "kudos-ability-cache-interservice-provider"
 
 }

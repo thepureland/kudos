@@ -1,8 +1,7 @@
 package io.kudos.ability.cache.remote.redis
 
-import io.kudos.test.common.EnableKudosTest
+import io.kudos.test.common.init.EnableKudosTest
 <<<<<<< HEAD
-import io.kudos.test.common.container.RedisTestContainer
 =======
 import io.kudos.test.common.TestSpringBootContextLoader
 import io.kudos.test.container.RedisTestContainer

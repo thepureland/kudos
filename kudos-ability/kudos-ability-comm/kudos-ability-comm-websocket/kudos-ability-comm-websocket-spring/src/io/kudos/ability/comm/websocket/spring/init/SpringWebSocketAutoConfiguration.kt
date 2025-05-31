@@ -1,9 +1,7 @@
 package io.kudos.ability.comm.websocket.spring.init
 
-import io.kudos.base.logger.LoggerFactory
 import io.kudos.context.init.IComponentInitializer
 import io.kudos.context.spring.YamlPropertySourceFactory
-import jakarta.annotation.PostConstruct
 import org.soul.ability.comm.websocket.common.handler.WebSocketConnector
 import org.soul.ability.comm.websocket.common.session.IWebSocketManager
 import org.soul.ability.comm.websocket.common.session.distributed.DistributedWebSocketManager
@@ -65,10 +63,6 @@ open class SpringWebSocketAutoConfiguration : WebSocketConfigurer, IComponentIni
     @ConditionalOnProperty(prefix = "kudos.ability.comm.websocket", name = ["mode"], havingValue = "distributed")
     open fun distributedWebSocketManager(): IWebSocketManager = DistributedWebSocketManager()
 
-
-    @PostConstruct
-    override fun init() {
-        LoggerFactory.getLogger(this).info("【kudos-ability-comm-websocket-spring】初始化完成.")
-    }
+    override fun getComponentName() = "kudos-ability-comm-websocket-spring"
 
 }

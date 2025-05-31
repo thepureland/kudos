@@ -1,11 +1,15 @@
 dependencies {
-    api(project(":kudos-ability:kudos-ability-distributed:kudos-ability-distributed-stream:kudos-ability-distributed-stream-common"))
-    api("org.soul:soul-ability-distributed-stream-rocketmq")
+    api(project(":kudos-ability:kudos-ability-data:kudos-ability-data-rdb:kudos-ability-data-rdb-jdbc"))
+    api("io.seata:seata-spring-boot-starter:2.0.0")
+    api("com.alibaba.cloud:spring-cloud-starter-alibaba-seata:2023.0.1.2") {
+        exclude("io.seata", "seata-spring-boot-starter")
+    }
 
     testImplementation(project(":kudos-test:kudos-test-container"))
+    testImplementation("org.soul:soul-ability-data-rdb-mybatis")
+//    testImplementation("org.springframework.boot:spring-boot-starter-web")
     testImplementation(project(":kudos-ability:kudos-ability-distributed:kudos-ability-distributed-client:kudos-ability-distributed-client-feign"))
     testImplementation(project(":kudos-ability:kudos-ability-distributed:kudos-ability-distributed-discovery:kudos-ability-distributed-discovery-nacos"))
     testImplementation("org.postgresql:postgresql")
-    testImplementation("org.flywaydb:flyway-database-postgresql:11.8.2") // flyway-core 8.2.1及以后的版本 单独包flyway-core 不再支持postgres
-    testImplementation("org.springframework.boot:spring-boot-starter-web")
+    testImplementation("com.mysql:mysql-connector-j:9.3.0")
 }

@@ -1,7 +1,7 @@
 package io.kudos.ability.comm.websocket.spring
 
 import io.kudos.base.logger.LoggerFactory
-import io.kudos.test.common.EnableKudosTest
+import io.kudos.test.common.init.EnableKudosTest
 import io.kudos.test.container.RedisTestContainer
 import org.junit.jupiter.api.*
 import org.soul.ability.comm.websocket.common.session.IWebSocketManager

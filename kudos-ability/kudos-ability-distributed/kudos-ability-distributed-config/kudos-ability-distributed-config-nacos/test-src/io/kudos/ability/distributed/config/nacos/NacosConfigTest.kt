@@ -2,9 +2,8 @@ package io.kudos.ability.distributed.config.nacos
 
 import com.alibaba.nacos.api.NacosFactory
 import com.alibaba.nacos.api.config.ConfigService
-import io.kudos.test.common.EnableKudosTest
+import io.kudos.test.common.init.EnableKudosTest
 import io.kudos.test.container.NacosTestContainer
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeAll

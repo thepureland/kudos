@@ -2,7 +2,7 @@ package io.kudos.ability.distributed.client.feign
 
 import io.kudos.ability.distributed.client.feign.client.IFeignClient
 import io.kudos.ability.distributed.client.feign.ms.MockMsApplication
-import io.kudos.test.common.EnableKudosTest
+import io.kudos.test.common.init.EnableKudosTest
 import io.kudos.test.container.NacosTestContainer
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
