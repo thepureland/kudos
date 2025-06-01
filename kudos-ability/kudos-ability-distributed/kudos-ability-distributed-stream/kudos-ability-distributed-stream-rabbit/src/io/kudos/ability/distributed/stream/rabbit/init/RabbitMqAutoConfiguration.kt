@@ -1,8 +1,10 @@
 package io.kudos.ability.distributed.stream.rabbit.init
 
 import io.kudos.ability.distributed.stream.common.init.StreamCommonConfiguration
+import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
 import io.kudos.context.spring.YamlPropertySourceFactory
+import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.PropertySource
 
@@ -13,6 +15,7 @@ import org.springframework.context.annotation.PropertySource
  * @since 1.0.0
  */
 @Configuration
+@AutoConfigureAfter(ContextAutoConfiguration::class)
 @PropertySource(
     value = [
         "classpath:kudos-ability-distributed-stream-common.yml",

@@ -42,8 +42,8 @@ import java.util.*
  * @since 1.0.0
  */
 @Configuration
-@EnableWebMvc
 @AutoConfigureAfter(ContextAutoConfiguration::class)
+@EnableWebMvc
 @PropertySource(
     value = ["classpath:kudos-ability-web-springmvc.yml", "classpath:kudos-ability-web-springmvc-global.yml"],
     factory = SoulPropertySourceFactory::class

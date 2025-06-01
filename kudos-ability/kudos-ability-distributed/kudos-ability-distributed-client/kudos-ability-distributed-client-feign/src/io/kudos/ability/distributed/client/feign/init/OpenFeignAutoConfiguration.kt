@@ -3,10 +3,12 @@ package io.kudos.ability.distributed.client.feign.init
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import feign.RequestInterceptor
+import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
 import org.soul.ability.distributed.client.openfeign.fallback.GlobalFeignFallBackFactory
 import org.soul.ability.distributed.client.openfeign.interceptor.GlobalHeaderRequestInterceptor
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -21,6 +23,7 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
  * @since 1.0.0
  */
 @Configuration
+@AutoConfigureAfter(ContextAutoConfiguration::class)
 open class OpenFeignAutoConfiguration: IComponentInitializer {
 
     @Autowired

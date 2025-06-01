@@ -1,5 +1,6 @@
 package io.kudos.ability.comm.websocket.spring.init
 
+import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
 import io.kudos.context.spring.YamlPropertySourceFactory
 import org.soul.ability.comm.websocket.common.handler.WebSocketConnector
@@ -11,6 +12,7 @@ import org.soul.ability.comm.websocket.spring.WsMessageHandler
 import org.soul.ability.data.memdb.redis.starter.SoulRedisConfiguration
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.*
@@ -25,6 +27,7 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
  * @since 1.0.0
  */
 @Configuration
+@AutoConfigureAfter(ContextAutoConfiguration::class)
 @EnableWebSocket
 @PropertySource(
     value = ["classpath:kudos-ability-comm-websocket-spring.yml"],

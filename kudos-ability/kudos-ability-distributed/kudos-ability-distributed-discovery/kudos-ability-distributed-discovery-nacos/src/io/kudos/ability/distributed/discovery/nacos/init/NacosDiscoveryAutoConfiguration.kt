@@ -1,6 +1,9 @@
 package io.kudos.ability.distributed.discovery.nacos.init
 
+import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
+import org.springframework.boot.autoconfigure.AutoConfigureAfter
+import org.springframework.boot.autoconfigure.AutoConfigureOrder
 import org.springframework.context.annotation.Configuration
 
 
@@ -11,6 +14,7 @@ import org.springframework.context.annotation.Configuration
  * @since 1.0.0
  */
 @Configuration
+@AutoConfigureAfter(ContextAutoConfiguration::class)
 open class NacosDiscoveryAutoConfiguration : IComponentInitializer {
 
 //    @Bean

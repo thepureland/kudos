@@ -5,6 +5,7 @@ import io.kudos.ability.distributed.notify.common.support.NotifyListenerBeanPost
 import io.kudos.ability.distributed.notify.rdb.producer.NotifyRdbProducer
 import io.kudos.ability.distributed.notify.rdb.support.AppNotifyServlet
 import io.kudos.base.logger.LoggerFactory
+import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
 import org.mybatis.spring.annotation.MapperScan
 import org.soul.ability.distributed.notify.rdb.entity.SysApp
@@ -14,6 +15,7 @@ import org.soul.ability.distributed.notify.rdb.support.AppCheckServlet
 import org.soul.ability.distributed.notify.rdb.support.TaskProperties
 import org.soul.base.lang.string.StringTool
 import org.soul.context.core.SoulPropertySourceFactory
+import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.web.context.WebServerInitializedEvent
 import org.springframework.boot.web.servlet.ServletRegistrationBean
@@ -45,6 +47,7 @@ import javax.management.Query
  * @since 1.0.0
  */
 @Configuration
+@AutoConfigureAfter(ContextAutoConfiguration::class)
 @EnableScheduling
 @EnableAsync
 @PropertySource(

@@ -3,9 +3,11 @@ package io.kudos.ability.web.ktor.base.init
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.kudos.base.logger.LoggerFactory
+import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
 import jakarta.annotation.PreDestroy
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import java.util.concurrent.CompletableFuture
@@ -20,6 +22,7 @@ import java.util.concurrent.CompletableFuture
  * @since 1.0.0
  */
 @Configuration
+@AutoConfigureAfter(ContextAutoConfiguration::class)
 open class KtorAutoConfiguration : IComponentInitializer {
 
     private val logger = LoggerFactory.getLogger(this)
@@ -32,7 +35,7 @@ open class KtorAutoConfiguration : IComponentInitializer {
 
     @Bean
     open fun ktorEngine() : EmbeddedServer<*, *>? {
-        logger.info("##### 开始初始化bean startKtorEngine")
+        logger.info("初始化 ktorEngine ...")
         if (engineName.isNullOrBlank()) {
             error("kudos.ability.web.ktor.engine.name丢失！")
         }

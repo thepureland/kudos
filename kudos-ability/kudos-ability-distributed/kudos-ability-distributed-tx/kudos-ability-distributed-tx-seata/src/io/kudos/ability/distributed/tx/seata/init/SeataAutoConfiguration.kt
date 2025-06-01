@@ -1,9 +1,12 @@
 package io.kudos.ability.distributed.tx.seata.init
 
+import io.kudos.ability.data.rdb.jdbc.init.JdbcAutoConfiguration
 import io.kudos.base.logger.LoggerFactory
 import io.kudos.context.init.IComponentInitializer
 import io.kudos.context.spring.YamlPropertySourceFactory
 import org.soul.ability.data.rdb.jdbc.datasource.IDataSourceProxy
+import org.springframework.boot.autoconfigure.AutoConfigureAfter
+import org.springframework.boot.autoconfigure.AutoConfigureOrder
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
@@ -20,6 +23,7 @@ import org.springframework.context.annotation.PropertySource
  * @since 1.0.0
  */
 @Configuration
+@AutoConfigureAfter(JdbcAutoConfiguration::class)
 @PropertySource(
     value = ["classpath:kudos-ability-distributed-tx-seata.yml"],
     factory = YamlPropertySourceFactory::class

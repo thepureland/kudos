@@ -1,5 +1,6 @@
 package io.kudos.ability.comm.websocket.netty.init
 
+import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
 import io.kudos.context.spring.YamlPropertySourceFactory
 import org.soul.ability.comm.websocket.common.api.IWebsocketSenderAPI
@@ -14,6 +15,7 @@ import org.soul.ability.comm.websocket.netty.WebsocketNettyServer
 import org.soul.ability.comm.websocket.netty.starter.properties.NettyWebsocketProperties
 import org.soul.ability.data.memdb.redis.starter.SoulRedisConfiguration
 import org.springframework.beans.factory.annotation.Configurable
+import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.ConfigurationProperties
@@ -29,6 +31,7 @@ import org.springframework.context.annotation.PropertySource
  * @since 1.0.0
  */
 @Configurable
+@AutoConfigureAfter(ContextAutoConfiguration::class)
 @PropertySource(
     value = ["classpath:kudos-ability-comm-websocket-netty.yml"],
     factory = YamlPropertySourceFactory::class

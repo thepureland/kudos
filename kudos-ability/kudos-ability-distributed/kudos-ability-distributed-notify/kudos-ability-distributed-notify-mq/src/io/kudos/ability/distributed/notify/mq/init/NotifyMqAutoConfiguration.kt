@@ -7,10 +7,12 @@ import io.kudos.ability.distributed.notify.common.support.NotifyListenerBeanPost
 import io.kudos.ability.distributed.notify.common.support.NotifyListenerItem
 import io.kudos.ability.distributed.notify.mq.producer.NotifyMqProducer
 import io.kudos.base.logger.LoggerFactory
+import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
 import io.kudos.context.spring.YamlPropertySourceFactory
 import org.soul.ability.distributed.stream.common.annotations.MqConsumer
 import org.soul.ability.distributed.stream.common.model.model.StreamMessageVo
+import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -27,6 +29,7 @@ import java.util.function.Consumer
  * @since 1.0.0
  */
 @Configuration
+@AutoConfigureAfter(ContextAutoConfiguration::class)
 @PropertySource(
     value = [
         "classpath:kudos-ability-distributed-notify-mq-consumer.yml",

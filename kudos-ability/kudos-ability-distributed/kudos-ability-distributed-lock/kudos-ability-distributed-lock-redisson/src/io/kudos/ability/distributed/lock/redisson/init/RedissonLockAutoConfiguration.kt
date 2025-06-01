@@ -1,5 +1,6 @@
 package io.kudos.ability.distributed.lock.redisson.init
 
+import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
 import io.kudos.context.spring.YamlPropertySourceFactory
 import org.redisson.Redisson
@@ -14,6 +15,7 @@ import org.soul.ability.distributed.lock.redisson.locker.RedissonLocker
 import org.soul.ability.distributed.lock.redisson.starter.properties.RedissonBaseConfigProperties
 import org.soul.ability.distributed.lock.redisson.starter.properties.RedissonProperties
 import org.soul.base.lang.string.StringTool
+import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -26,6 +28,7 @@ import org.springframework.context.annotation.PropertySource
  * @since 1.0.0
  */
 @Configuration
+@AutoConfigureAfter(ContextAutoConfiguration::class)
 @PropertySource(
     value = ["classpath:kudos-ability-distributed-lock-redisson.yml"],
     factory = YamlPropertySourceFactory::class
