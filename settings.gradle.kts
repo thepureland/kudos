@@ -84,7 +84,7 @@ include("kudos-ability:kudos-ability-log:kudos-ability-log-audit:kudos-ability-l
 include("kudos-ability:kudos-ability-ui:kudos-ability-ui-javafx")
 
 // web
-include("kudos-ability:kudos-ability-web:kudos-ability-web-ktor:kudos-ability-web-ktor-base")
+include("kudos-ability:kudos-ability-web:kudos-ability-web-ktor")
 include("kudos-ability:kudos-ability-web:kudos-ability-web-springmvc")
 
 
