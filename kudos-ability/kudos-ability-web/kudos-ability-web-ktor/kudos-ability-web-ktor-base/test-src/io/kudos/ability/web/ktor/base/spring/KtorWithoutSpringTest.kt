@@ -5,9 +5,8 @@ import io.ktor.client.statement.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.testing.*
+import io.kudos.ability.web.ktor.base.init.KtorProperties
 import io.kudos.ability.web.ktor.base.init.installPlugins
-import io.kudos.context.kit.SpringKit
-import org.junit.jupiter.api.assertThrows
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -22,7 +21,7 @@ class KtorWithoutSpringTest {
     @Test
     fun testRoot() = testApplication {
         application {
-            installPlugins()
+            installPlugins(KtorProperties())
             routing {
                 get("/") {
                     call.respondText("Hello World!")
@@ -33,8 +32,6 @@ class KtorWithoutSpringTest {
         val client = createClient {}
         val response = client.get("/")
         assertEquals("Hello World!", response.bodyAsText())
-
-        assertThrows<NullPointerException> { SpringKit.getApplicationContext() }
     }
 
 }

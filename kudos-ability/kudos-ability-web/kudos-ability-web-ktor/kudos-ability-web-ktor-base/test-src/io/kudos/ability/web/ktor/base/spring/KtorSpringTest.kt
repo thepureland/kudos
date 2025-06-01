@@ -9,6 +9,7 @@ import io.kudos.ability.web.ktor.base.init.KtorAutoConfiguration
 import io.kudos.ability.web.ktor.base.init.installPlugins
 import io.kudos.context.kit.SpringKit
 import io.kudos.test.common.init.EnableKudosTest
+import org.junit.jupiter.api.TestInstance
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull

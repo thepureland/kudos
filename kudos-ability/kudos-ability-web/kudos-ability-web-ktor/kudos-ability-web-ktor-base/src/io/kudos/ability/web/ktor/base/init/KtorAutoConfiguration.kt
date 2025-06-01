@@ -6,8 +6,9 @@ import io.kudos.base.logger.LoggerFactory
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
 import jakarta.annotation.PreDestroy
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
+import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import java.util.concurrent.CompletableFuture
@@ -27,24 +28,24 @@ open class KtorAutoConfiguration : IComponentInitializer {
 
     private val logger = LoggerFactory.getLogger(this)
 
-    @Value("\${kudos.ability.web.ktor.engine.name}")
-    private var engineName: String? = null
-
-    @Value("\${ktor.deployment.port}")
-    private var port : Int? = null
+    @Bean
+    @ConditionalOnMissingBean
+    @ConfigurationProperties(prefix = "kudos.ability.web.ktor")
+    open fun ktorProperties() = KtorProperties()
 
     @Bean
-    open fun ktorEngine() : EmbeddedServer<*, *>? {
+    open fun ktorEngine(ktorProperties: KtorProperties) : EmbeddedServer<*, *>? {
         logger.info("初始化 ktorEngine ...")
-        if (engineName.isNullOrBlank()) {
+        val engineName = ktorProperties.engine.name
+        if (engineName.isBlank()) {
             error("kudos.ability.web.ktor.engine.name丢失！")
         }
 
-        if (engineName!!.lowercase() == "test") {
+        if (engineName.lowercase() == "test") {
             logger.info("engineName配置为test, 将使用测试用例中Ktor内置的虚拟内存测试引擎。")
             return null
         } else {
-            val engineClassName = when (engineName!!.lowercase()) {
+            val engineClassName = when (engineName.lowercase()) {
                 "cio" -> "io.ktor.server.cio.CIO"
                 "netty" -> "io.ktor.server.netty.Netty"
                 "jetty" -> "io.ktor.server.jetty.jakarta.Jetty"
@@ -57,9 +58,10 @@ open class KtorAutoConfiguration : IComponentInitializer {
                 .get(null) as ApplicationEngineFactory<*, *>
 
             val started = CompletableFuture<Unit>()
-            val server = embeddedServer(factory, port!! ) {
+            val port = ktorProperties.engine.port
+            val server = embeddedServer(factory, port!!) {
                 KtorContext.application = this
-                installPlugins()
+                installPlugins(ktorProperties)
                 monitor.subscribe(ApplicationStarted) {
                     logger.info("$engineName 引擎启动成功，port：$port")
                     started.complete(Unit)
@@ -77,8 +79,8 @@ open class KtorAutoConfiguration : IComponentInitializer {
      */
     @PreDestroy
     open fun shutDownKtor() {
-        val ktor = ktorEngine()
-        ktor?.engine?.let {
+        KtorContext.application.engine.let {
+            val engineName = KtorProperties().engine.name
             logger.info(">>> Spring Context 关闭，准备关闭 $engineName 引擎...")
             // gracePeriod = 0 秒，timeout = 1 秒，可以根据需要调整
             it.stop(2000L, 3000L)

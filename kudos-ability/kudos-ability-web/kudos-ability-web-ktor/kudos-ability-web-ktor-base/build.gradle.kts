@@ -7,17 +7,16 @@ dependencies {
     api(project(":kudos-context"))
 
     // 配置文件支持yaml
-    api("io.ktor:ktor-server-config-yaml-jvm")
-    // 核心功能
     api("io.ktor:ktor-server-core-jvm")
-
-    // 可选模块，内容协商 + JSON
+//    api("io.ktor:ktor-server-test-host-jvm")
+    api("io.ktor:ktor-server-config-yaml-jvm")
     api("io.ktor:ktor-server-content-negotiation-jvm")
     api("io.ktor:ktor-serialization-kotlinx-json-jvm")
+    api("io.ktor:ktor-server-status-pages-jvm")
+    api("io.ktor:ktor-server-websockets-jvm")
+
     // 日志
 //    api("io.ktor:ktor-server-call-logging-jvm")
-    // 状态页
-//    api("io.ktor:ktor-server-status-pages-jvm")
 //    // CORS 插件示例
 //    api("io.ktor:ktor-server-cors-jvm")
 //    // 服务端推送SSE

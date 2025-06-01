@@ -6,9 +6,10 @@ import io.ktor.client.statement.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.kudos.ability.web.ktor.base.init.KtorContext
+import io.kudos.ability.web.ktor.base.init.KtorProperties
 import io.kudos.test.common.init.EnableKudosTest
 import kotlinx.coroutines.runBlocking
-import org.springframework.beans.factory.annotation.Value
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import kotlin.test.AfterTest
@@ -26,6 +27,9 @@ import kotlin.test.assertEquals
 @EnableKudosTest
 class TomcatEngineTest {
 
+    @Autowired
+    private lateinit var ktorProperties: KtorProperties
+
     companion object {
 
         @JvmStatic
@@ -35,9 +39,6 @@ class TomcatEngineTest {
         }
 
     }
-
-    @Value("\${ktor.deployment.port}")
-    private var port : Int? = null
 
     @BeforeTest
     fun setup() {
@@ -56,7 +57,7 @@ class TomcatEngineTest {
     @Test
     fun testRoot() = runBlocking {
         val client = HttpClient()
-        val response = client.get("http://localhost:$port/")
+        val response = client.get("http://localhost:${ktorProperties.engine.port}/")
         assertEquals("Hello Tomcat!", response.bodyAsText())
     }
 

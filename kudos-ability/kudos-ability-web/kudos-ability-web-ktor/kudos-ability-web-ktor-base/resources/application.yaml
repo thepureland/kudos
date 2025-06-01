@@ -1,7 +1,7 @@
 ktor:
-  application:
-    modules:
-      - io.kudos.ability.web.ktor.base.init.KtorPluginsKt.module
+#  application:
+#    modules:
+#      - io.kudos.ability.web.ktor.base.init.KtorPluginsKt.module
 #      - com.example.RoutingKt.configureRouting
 #      - com.example.SerializationKt.configureSerialization
 #      - com.example.SocketsKt.configureSockets
@@ -40,3 +40,11 @@ kudos:
       ktor:
         engine:
           name: netty
+          port: ${ktor.deployment.port}
+        plugins:
+          content-negotiation:
+            enabled: true
+          status-pages:
+            enabled: true
+          web-socket:
+            enabled: true
