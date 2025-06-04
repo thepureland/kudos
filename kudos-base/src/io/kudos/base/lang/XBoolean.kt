@@ -1,7 +1,5 @@
 package io.kudos.base.lang
 
-import org.apache.commons.lang3.BooleanUtils
-
 /**
  * kotlin.Boolean扩展函数
  *
@@ -9,10 +7,6 @@ import org.apache.commons.lang3.BooleanUtils
  * @since 1.0.0
  */
 
-
-// vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-// 封装org.apache.commons.lang3.BooleanUtils
-// vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
 /**
  * 将boolean转化为int, 0当作false
@@ -26,7 +20,7 @@ import org.apache.commons.lang3.BooleanUtils
  * @author K
  * @since 1.0.0
  */
-fun Boolean.toInt(): Int = BooleanUtils.toInteger(this)
+fun Boolean.toInt(): Int = if (this) 1 else 0
 
 
 /**
@@ -41,7 +35,7 @@ fun Boolean.toInt(): Int = BooleanUtils.toInteger(this)
  * @author K
  * @since 1.0.0
  */
-fun Boolean.toStringTrueFalse(): String = BooleanUtils.toStringTrueFalse(this)
+fun Boolean.toStringTrueFalse(): String = toString()
 
 /**
  * 将Boolean转化为String, 返回`'on'`, `'off'`
@@ -55,7 +49,7 @@ fun Boolean.toStringTrueFalse(): String = BooleanUtils.toStringTrueFalse(this)
  * @author K
  * @since 1.0.0
  */
-fun Boolean.toStringOnOff(): String = BooleanUtils.toStringOnOff(this)
+fun Boolean.toStringOnOff(): String = if (this) "on" else "off"
 
 /**
  * 将Boolean转化为String, 返回`'yes'`, `'no'`
@@ -70,7 +64,7 @@ fun Boolean.toStringOnOff(): String = BooleanUtils.toStringOnOff(this)
  * @author K
  * @since 1.0.0
  */
-fun toStringYesNo(bool: Boolean?): String = BooleanUtils.toStringYesNo(bool)
+fun Boolean.toStringYesNo(): String = if (this) "yes" else "no"
 
 /**
  * 将Boolean转化为String, 返回输入的某个匹配的字符串
@@ -86,8 +80,8 @@ fun toStringYesNo(bool: Boolean?): String = BooleanUtils.toStringYesNo(bool)
  * @author K
  * @since 1.0.0
  */
-fun Boolean.toString(trueString: String?, falseString: String?): String =
-    BooleanUtils.toString(this, trueString, falseString)
+fun Boolean.toString(trueString: String?, falseString: String?): String? =
+    if (this) trueString else falseString
 
 /**
  * 对一组boolean进行逻辑与操作
@@ -105,7 +99,11 @@ fun Boolean.toString(trueString: String?, falseString: String?): String =
  * @author K
  * @since 1.0.0
  */
-fun Array<Boolean>.and(): Boolean = BooleanUtils.and(*this)
+fun Array<Boolean>.and(): Boolean {
+    require(isNotEmpty()) { "Boolean 数组不能为空" }
+    // 只要有一个 false，则结果为 false
+    return all { it }
+}
 
 
 /**
@@ -125,7 +123,12 @@ fun Array<Boolean>.and(): Boolean = BooleanUtils.and(*this)
  * @author K
  * @since 1.0.0
  */
-fun Array<Boolean>.or(): Boolean = BooleanUtils.or(*this)
+fun Array<Boolean>.or(): Boolean {
+    require(isNotEmpty()) { "Boolean 数组不能为空" }
+    // 只要有一个 true，则结果为 true
+    return any { it }
+
+}
 
 /**
  * 对一组boolean进行逻辑异或操作
@@ -144,8 +147,9 @@ fun Array<Boolean>.or(): Boolean = BooleanUtils.or(*this)
  * @author K
  * @since 1.0.0
  */
-fun Array<Boolean>.xor(): Boolean = BooleanUtils.xor(*this)
-
-// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-// 封装org.apache.commons.lang3.BooleanUtils
-// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+fun Array<Boolean>.xor(): Boolean {
+    require(this.isNotEmpty()) { "Boolean 数组不能为空" }
+    // 统计 true 的个数，看是否为奇数
+    val trueCount = count { it }
+    return trueCount % 2 == 1
+}

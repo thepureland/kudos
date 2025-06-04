@@ -8,5 +8,6 @@ dependencies {
     api("org.apache.xmlgraphics:batik-bridge:1.19")
     api("io.github.classgraph:classgraph:4.8.179")
 
+    testImplementation(kotlin("test"))  // kotlin.test + JUnit5
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }

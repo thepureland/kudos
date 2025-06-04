@@ -1,7 +1,5 @@
 package io.kudos.base.lang
 
-import org.apache.commons.lang3.CharUtils
-
 /**
  * kotlin.Char扩展函数
  *
@@ -10,9 +8,6 @@ import org.apache.commons.lang3.CharUtils
  */
 
 
-// vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-// 封装org.apache.commons.lang3.CharUtils
-// vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
 /**
  * 将char转化为其Unicode编码的字符串
@@ -26,7 +21,8 @@ import org.apache.commons.lang3.CharUtils
  * @author K
  * @since 1.0.0
  */
-fun Char.unicodeEscaped(): String = CharUtils.unicodeEscaped(this)
+fun Char.unicodeEscaped(): String = String.format("\\u%04x", code)
+
 
 /**
  * 检测给定的char是否为7位的ASCII码
@@ -44,7 +40,7 @@ fun Char.unicodeEscaped(): String = CharUtils.unicodeEscaped(this)
  * @author K
  * @since 1.0.0
  */
-fun Char.isAscii(): Boolean = CharUtils.isAscii(this)
+fun Char.isAscii(): Boolean = code < 128
 
 /**
  * 检测给定的char是否为7位可打印的ASCII码
@@ -62,7 +58,7 @@ fun Char.isAscii(): Boolean = CharUtils.isAscii(this)
  * @author K
  * @since 1.0.0
  */
-fun Char.isAsciiPrintable(): Boolean = CharUtils.isAsciiPrintable(this)
+fun Char.isAsciiPrintable(): Boolean = code in 32..126
 
 /**
  * 检测给定的char是否为7位ASCII码的控制字符
@@ -80,7 +76,7 @@ fun Char.isAsciiPrintable(): Boolean = CharUtils.isAsciiPrintable(this)
  * @author K
  * @since 1.0.0
  */
-fun Char.isAsciiControl(): Boolean = CharUtils.isAsciiControl(this)
+fun Char.isAsciiControl(): Boolean = code < 32 || code == 127
 
 /**
  * 检测给定的char是否为7位ASCII码的字母
@@ -98,7 +94,7 @@ fun Char.isAsciiControl(): Boolean = CharUtils.isAsciiControl(this)
  * @author K
  * @since 1.0.0
  */
-fun Char.isAsciiAlpha(): Boolean = CharUtils.isAsciiAlpha(this)
+fun Char.isAsciiAlpha(): Boolean = code in 65..90 || code in 97..122
 
 /**
  * 检测给定的char是否为7位ASCII码的大写字母
@@ -116,7 +112,7 @@ fun Char.isAsciiAlpha(): Boolean = CharUtils.isAsciiAlpha(this)
  * @author K
  * @since 1.0.0
  */
-fun Char.isAsciiAlphaUpper(): Boolean = CharUtils.isAsciiAlphaUpper(this)
+fun Char.isAsciiAlphaUpper(): Boolean = code in 65..90
 
 /**
  * 检测给定的char是否为7位ASCII码的大写字母
@@ -134,7 +130,7 @@ fun Char.isAsciiAlphaUpper(): Boolean = CharUtils.isAsciiAlphaUpper(this)
  * @author K
  * @since 1.0.0
  */
-fun Char.isAsciiAlphaLower(): Boolean = CharUtils.isAsciiAlphaLower(this)
+fun Char.isAsciiAlphaLower(): Boolean = code in 97..122
 
 /**
  * 检测给定的char是否为7位ASCII码的数字
@@ -152,7 +148,7 @@ fun Char.isAsciiAlphaLower(): Boolean = CharUtils.isAsciiAlphaLower(this)
  * @author K
  * @since 1.0.0
  */
-fun Char.isAsciiNumeric(): Boolean = CharUtils.isAsciiNumeric(this)
+fun Char.isAsciiNumeric(): Boolean = code in 48..57
 
 /**
  * 检测给定的char是否为7位ASCII码的字母或数字
@@ -170,8 +166,4 @@ fun Char.isAsciiNumeric(): Boolean = CharUtils.isAsciiNumeric(this)
  * @author K
  * @since 1.0.0
  */
-fun Char.isAsciiAlphanumeric(): Boolean = CharUtils.isAsciiAlphanumeric(this)
-
-// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-// 封装org.apache.commons.lang3.CharUtils
-// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+fun Char.isAsciiAlphanumeric(): Boolean = isAsciiAlpha() || isAsciiNumeric()
