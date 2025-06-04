@@ -11,7 +11,6 @@ import io.kudos.test.common.init.EnableKudosTest
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Disabled
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import kotlin.test.AfterTest

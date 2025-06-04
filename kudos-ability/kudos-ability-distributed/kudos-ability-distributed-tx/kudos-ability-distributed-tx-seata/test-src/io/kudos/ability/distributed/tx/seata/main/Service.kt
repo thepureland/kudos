@@ -9,8 +9,6 @@ import io.kudos.ability.distributed.tx.seata.ms2.IService2
 import io.kudos.ability.distributed.tx.seata.ms2.Service2
 import io.seata.core.context.RootContext
 import io.seata.spring.annotation.GlobalTransactional
-import org.soul.base.log.Log
-import org.soul.base.log.LogFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Import

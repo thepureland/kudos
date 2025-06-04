@@ -1,5 +1,6 @@
 package io.kudos.base.lang.string
 
+import io.kudos.base.lang.string.RandomStringKit.random
 import org.soul.base.lang.string.RandomStringTool
 import java.util.*
 

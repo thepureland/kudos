@@ -24,8 +24,6 @@
  */
 package io.kudos.ability.ui.javafx.controls.wizard
 
-import io.kudos.base.lang.collections.MapKit
-import io.kudos.base.lang.string.StringKit
 import javafx.beans.property.ObjectProperty
 import javafx.beans.property.SimpleObjectProperty
 import javafx.collections.FXCollections
@@ -150,7 +148,7 @@ class Wizard constructor(title: String = "") {
      * Tests if this Wizard has properties.
      * @return true if this Wizard has properties.
      */
-    fun hasProperties(): Boolean = MapKit.isNotEmpty(properties)
+    fun hasProperties(): Boolean = !properties.isNullOrEmpty()
 
     // --- UserData
     /**
@@ -292,7 +290,7 @@ class Wizard constructor(title: String = "") {
             var settingName = n.id
 
             // but if the id is not set, we will use a generic naming scheme
-            if (StringKit.isEmpty(settingName)) {
+            if (settingName.isNullOrEmpty()) {
                 settingName = "page_.setting_$settingCounter"
             }
             settings[settingName] = setting

@@ -1,16 +1,17 @@
 package io.kudos.base.image
 
 import io.kudos.base.io.PathKit
-import io.kudos.base.logger.LoggerFactory
 import org.apache.batik.anim.dom.SAXSVGDocumentFactory
 import org.apache.batik.bridge.BridgeContext
 import org.apache.batik.bridge.GVTBuilder
 import org.apache.batik.bridge.UserAgentAdapter
 import org.apache.batik.gvt.renderer.ConcreteImageRendererFactory
-import org.w3c.dom.NodeList
 import org.w3c.dom.svg.SVGDocument
 import org.w3c.dom.svg.SVGElement
-import java.awt.*
+import java.awt.Color
+import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Rectangle
 import java.awt.geom.AffineTransform
 import java.awt.image.AffineTransformOp
 import java.awt.image.BufferedImage
@@ -21,9 +22,8 @@ import java.nio.file.Paths
 import java.util.*
 import javax.imageio.ImageIO
 import javax.imageio.stream.MemoryCacheImageInputStream
-import javax.swing.*
-import kotlin.collections.iterator
-import kotlin.math.min
+import javax.swing.JFrame
+import javax.swing.JPanel
 
 /**
  * 图片处理工具类

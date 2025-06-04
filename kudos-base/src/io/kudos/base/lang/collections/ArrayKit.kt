@@ -10,16 +10,6 @@ package io.kudos.base.lang.collections
 object ArrayKit {
 
     /**
-     * 检测数组是否为null或空
-     *
-     * @param array 数组
-     * @return true: 数组为null或空，反之为false
-     * @author K
-     * @since 1.0.0
-     */
-    fun isEmpty(array: Array<*>?): Boolean = array == null || array.isEmpty()
-
-    /**
      * 检测字节数组是否为null或空
      *
      * @param array 字节数组

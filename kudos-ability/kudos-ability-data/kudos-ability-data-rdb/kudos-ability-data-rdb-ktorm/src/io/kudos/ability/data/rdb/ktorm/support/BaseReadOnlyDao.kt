@@ -4,7 +4,6 @@ import io.kudos.ability.data.rdb.jdbc.kit.RdbKit
 import io.kudos.ability.data.rdb.ktorm.kit.getDatabase
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.lang.GenericKit
-import io.kudos.base.lang.collections.CollectionKit
 import io.kudos.base.lang.reflect.newInstance
 import io.kudos.base.support.Consts
 import io.kudos.base.support.GroupExecutor
@@ -23,7 +22,6 @@ import org.soul.base.query.Criteria
 import org.soul.base.query.enums.OperatorEnum
 import org.soul.base.query.sort.Order
 import org.soul.base.support.logic.AndOr
-import kotlin.collections.forEach
 import kotlin.reflect.KClass
 import kotlin.reflect.full.memberProperties
 
@@ -479,8 +477,8 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         // order
         if (listSearchPayload != null) {
             val orders = listSearchPayload.orders
-            if (CollectionKit.isNotEmpty(orders)) {
-                val orderExps = sortOf(*orders!!.toTypedArray())
+            if (!orders.isNullOrEmpty()) {
+                val orderExps = sortOf(*orders.toTypedArray())
                 query = query.orderBy(orderExps)
             }
         }
@@ -498,7 +496,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         val returnProperties = listSearchPayload?.returnProperties ?: emptyList()
         val mapList = processResult(query, returnColumnMap)
         return when {
-            CollectionKit.isEmpty(returnProperties) -> {
+            returnProperties.isEmpty() -> {
                 val beanList = mutableListOf<Any>()
                 mapList.forEach { map ->
                     val bean = if (listSearchPayload?.returnEntityClass != null) {
@@ -802,11 +800,9 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
 
         // select
         val returnProperties = searchPayload?.returnProperties ?: emptyList()
-        val props = if (CollectionKit.isEmpty(returnProperties)) {
+        val props = returnProperties.ifEmpty {
             val returnEntityClass = searchPayload?.returnEntityClass
             returnEntityClass?.memberProperties?.map { it.name } ?: entityProperties
-        } else {
-            returnProperties
         }
         val returnProps = entityProperties.intersect(props) // 取交集,保证要查询的列一定存在
         val returnColumnMap = ColumnHelper.columnOf(table(), *returnProps.toTypedArray())
@@ -847,14 +843,14 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
             resultMap[prop] = Pair(operator, value)
         }
         val nullProperties = searchPayload.nullProperties
-        if (CollectionKit.isNotEmpty(nullProperties)) {
-            nullProperties!!.forEach {
+        if (!nullProperties.isNullOrEmpty()) {
+            nullProperties.forEach {
                 resultMap[it] = Pair(OperatorEnum.IS_NULL, null)
             }
         }
         val criterions = searchPayload.criterions
-        if (CollectionKit.isNotEmpty(criterions)) {
-            criterions!!.forEach {
+        if (!criterions.isNullOrEmpty()) {
+            criterions.forEach {
                 resultMap[it.property] = Pair(it.operator, it.value)
             }
         }

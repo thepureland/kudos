@@ -1,6 +1,5 @@
 package io.kudos.base.tree
 
-import io.kudos.base.lang.collections.CollectionKit
 import org.soul.base.query.sort.Direction
 import org.soul.base.support.ICallback
 
@@ -51,7 +50,7 @@ object TreeKit {
     private fun <T, R> depth(node: ITreeNode<T>, callback: ICallback<ITreeNode<T>, R>) {
         callback.execute(node)
         val children = node._getChildren()
-        if (CollectionKit.isNotEmpty(children)) {
+        if (children.isNotEmpty()) {
             for (subNode in children) {
                 depth(subNode, callback)
             }

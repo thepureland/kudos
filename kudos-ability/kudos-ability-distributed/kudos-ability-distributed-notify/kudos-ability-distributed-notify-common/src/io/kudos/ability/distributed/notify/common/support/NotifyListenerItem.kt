@@ -1,7 +1,6 @@
 package io.kudos.ability.distributed.notify.common.support
 
 import io.kudos.ability.distributed.notify.common.api.INotifyListener
-import java.io.Serializable
 
 
 /**

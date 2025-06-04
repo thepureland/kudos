@@ -1,11 +1,9 @@
 package io.kudos.base.tree
 
-import io.kudos.base.lang.collections.CollectionKit
 import io.kudos.base.logger.LoggerFactory
 import io.kudos.base.support.Consts
 import org.soul.base.query.sort.Direction
 import org.soul.base.support.ICallback
-import java.util.*
 
 /**
  * 列表到树结构的转换器
@@ -78,7 +76,7 @@ object ListToTreeConverter {
 
         nodeList.forEach {
             val origChildren = it._getChildren()
-            if (CollectionKit.isNotEmpty(origChildren)) {
+            if (origChildren.isNotEmpty()) {
                 val children = sort(origChildren as List<E>, direction)
                 (origChildren as MutableList).clear()
                 origChildren.addAll(children)

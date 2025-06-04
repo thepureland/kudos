@@ -1,6 +1,5 @@
 package io.kudos.base.i18n
 
-import io.kudos.base.lang.string.StringKit
 import io.kudos.base.lang.string.right
 import io.kudos.base.logger.LoggerFactory
 import org.soul.base.scanner.classpath.ClassPathScanner
@@ -224,7 +223,7 @@ object I18nKit {
             }
             val keyValueMap = moduleMap[module]
             for ((key, value) in keyValueMapDef) {
-                if (!keyValueMap!!.containsKey(key) || StringKit.isBlank(keyValueMap[key])) {
+                if (!keyValueMap!!.containsKey(key) || keyValueMap[key].isNullOrBlank()) {
                     keyValueMap[key] = value
                     //                    LOG.debug("i18n:缺失语言:{0},类型:{1},模块:{2},键:{3}",locale,type,module,key);
                 }

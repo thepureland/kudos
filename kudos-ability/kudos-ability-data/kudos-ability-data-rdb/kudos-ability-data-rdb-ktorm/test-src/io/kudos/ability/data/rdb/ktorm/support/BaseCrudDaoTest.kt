@@ -6,9 +6,10 @@ import io.kudos.ability.data.rdb.ktorm.table.TestTables
 import io.kudos.base.support.payload.SearchPayload
 import io.kudos.base.support.payload.UpdatePayload
 import io.kudos.test.common.init.EnableKudosTest
-import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.ktorm.dsl.eq
 import org.ktorm.dsl.like
 import org.soul.base.query.Criteria

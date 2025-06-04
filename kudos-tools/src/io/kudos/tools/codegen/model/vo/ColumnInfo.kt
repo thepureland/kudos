@@ -1,7 +1,9 @@
 package io.kudos.tools.codegen.model.vo
 
-import io.kudos.base.lang.string.StringKit
-import javafx.beans.property.*
+import javafx.beans.property.BooleanProperty
+import javafx.beans.property.SimpleBooleanProperty
+import javafx.beans.property.SimpleStringProperty
+import javafx.beans.property.StringProperty
 
 /**
  * 列信息值对象
@@ -69,7 +71,7 @@ class ColumnInfo {
     }
 
     fun getComment(): String? =
-        if (StringKit.isNotBlank(getCustomComment())) getCustomComment() else origComment
+        if (!getCustomComment().isNullOrBlank()) getCustomComment() else origComment
 
     fun getColumn(): String? = name
 }

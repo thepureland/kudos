@@ -1,7 +1,7 @@
 package io.kudos.base.io
 
 import io.github.classgraph.ClassGraph
-import kotlin.reflect.*
+import kotlin.reflect.KClass
 
 
 /**

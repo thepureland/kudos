@@ -1,7 +1,6 @@
 package io.kudos.base.bean
 
 import io.kudos.base.lang.SerializationKit
-import io.kudos.base.lang.collections.MapKit
 import io.kudos.base.lang.reflect.getEmptyConstructor
 import io.kudos.base.support.Consts
 import io.kudos.base.support.IIdEntity
@@ -65,14 +64,14 @@ object BeanKit {
      * @since 1.0.0
      */
     fun <T : Any> copyProperties(srcObj: Any, destObj: T, propertyMap: Map<String, String>? = null): T {
-        val map = if (MapKit.isEmpty(propertyMap)) { // 将拷贝所有源对象的属性
+        val map = if (propertyMap.isNullOrEmpty()) { // 将拷贝所有源对象的属性
             val desProps = destObj::class.memberProperties.map { it.name }
             srcObj::class.memberProperties
                 .filter { desProps.contains(it.name) }
                 .associate { it.name to it.name }
         } else propertyMap
 
-        for ((srcPropertyName, destPropertyName) in map!!) {
+        for ((srcPropertyName, destPropertyName) in map) {
             if (srcPropertyName.isNotBlank() && destPropertyName.isNotBlank()) {
                 val result = getProperty(srcObj, srcPropertyName)
                 setProperty(destObj, destPropertyName, result)

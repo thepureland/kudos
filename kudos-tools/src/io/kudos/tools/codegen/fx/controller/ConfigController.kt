@@ -5,7 +5,6 @@ import io.kudos.ability.data.rdb.jdbc.kit.RdbKit
 import io.kudos.base.io.FilenameKit
 import io.kudos.base.io.PathKit
 import io.kudos.base.lang.SystemKit
-import io.kudos.base.lang.string.StringKit
 import io.kudos.context.core.KudosContext
 import io.kudos.context.core.KudosContextHolder
 import io.kudos.tools.codegen.model.vo.Config
@@ -155,27 +154,27 @@ class ConfigController : Initializable {
         }
 
         // package prefix
-        if (StringKit.isBlank(packagePrefixTextField.text)) {
+        if (packagePrefixTextField.text.isNullOrBlank()) {
             throw Exception("请填写包名前缀！")
         }
 
         // test module
-        if (StringKit.isBlank(moduleTextField.text)) {
+        if (moduleTextField.text.isNullOrBlank()) {
             throw Exception("请填写模块名！")
         }
 
         // test location
-        if (StringKit.isBlank(locationTextField.text)) {
+        if (locationTextField.text.isNullOrBlank()) {
             throw Exception("代码生成目录不存在！")
         }
 
         // author location
-        if (StringKit.isBlank(authorTextField.text)) {
+        if (authorTextField.text.isNullOrBlank()) {
             throw Exception("请填写作者！")
         }
 
         // version location
-        if (StringKit.isBlank(versionTextField.text)) {
+        if (versionTextField.text.isNullOrBlank()) {
             throw Exception("请填写版本号！")
         }
     }

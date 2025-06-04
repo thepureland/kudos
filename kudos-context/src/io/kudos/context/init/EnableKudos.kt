@@ -1,9 +1,7 @@
 package io.kudos.context.init
 
-import org.springframework.boot.SpringBootConfiguration
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
-import org.springframework.boot.autoconfigure.web.servlet.ServletWebServerFactoryAutoConfiguration
 import java.lang.annotation.Inherited
 import kotlin.reflect.KClass
 

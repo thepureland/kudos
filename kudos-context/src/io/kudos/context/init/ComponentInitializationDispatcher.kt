@@ -13,7 +13,6 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.AnnotationUtils
 import org.springframework.stereotype.Component
-import java.util.LinkedHashSet
 
 /**
  * 组件初始化调度器

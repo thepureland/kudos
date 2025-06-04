@@ -26,7 +26,7 @@ import kotlin.reflect.KClass
 fun Map<*, *>.toArrOfArr(): Array<Array<Any?>> {
     var arr: Array<Array<Any?>>? = null
     if (this.isNotEmpty()) {
-        arr = Array<Array<Any?>>(this.size) { arrayOfNulls(2) }
+        arr = Array(this.size) { arrayOfNulls(2) }
         var i = 0
         for ((key, value) in this) {
             arr[i][0] = key
@@ -201,7 +201,7 @@ fun <K : Any?, V : Any?> Map<K, V>.lazyMap(transformerFactory: Transformer): Map
  */
 @Suppress(Consts.Suppress.UNCHECKED_CAST)
 fun <K : Any?, V : Any?> Map<K, MutableCollection<out V>?>.multiValueMap(): Map<K, ArrayList<V>> =
-    MapUtils.multiValueMap(this) as Map<K, java.util.ArrayList<V>>
+    MapUtils.multiValueMap(this) as Map<K, ArrayList<V>>
 
 /**
  * 创建一个多值的map，它支持将单值加入(通过调用Map.put(key, value))到key对应的集合中

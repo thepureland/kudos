@@ -1,7 +1,6 @@
 package io.kudos.test.common.init
 
 import io.kudos.context.init.EnableKudos
-import org.springframework.boot.autoconfigure.SpringBootApplication
 
 /**
  * 单元测试的springboot启动类

@@ -2,12 +2,7 @@ package io.kudos.ability.distributed.notify.mq
 
 import io.kudos.ability.distributed.notify.mq.common.IMainClinet
 import io.kudos.ability.distributed.notify.mq.main.MainApplication
-import io.kudos.ability.distributed.notify.mq.main.ms.NotifyMqMainController
-import io.kudos.ability.distributed.notify.mq.main.ms.NotifyMqMsService
 import io.kudos.ability.distributed.notify.mq.ms.MsApplication
-import io.kudos.ability.distributed.notify.mq.ms.common.DataSourceNotifyListener
-import io.kudos.ability.distributed.notify.mq.ms.common.MsApplicationListener
-import io.kudos.ability.distributed.notify.mq.ms.common.MsConfig
 import io.kudos.base.net.IpKit
 import io.kudos.context.spring.YamlPropertySourceFactory
 import io.kudos.test.common.init.EnableKudosTest
@@ -21,7 +16,6 @@ import org.soul.base.lang.string.RandomStringTool
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.SpringApplication
 import org.springframework.cloud.openfeign.EnableFeignClients
-import org.springframework.context.annotation.Import
 import org.springframework.context.annotation.PropertySource
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource

@@ -1,5 +1,7 @@
 package io.kudos.base.lang
 
+import io.kudos.base.lang.EnumKit.generateBitVector
+import io.kudos.base.lang.EnumKit.processBitVector
 import io.kudos.base.support.Consts
 import org.soul.base.enums.EnumTool
 import org.soul.base.ienums.ICodeEnum

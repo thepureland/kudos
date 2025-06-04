@@ -1,16 +1,11 @@
 package io.kudos.base.lang.collections
 
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Test
 
 internal class ArrayKitTest {
 
-    @Test
-    fun isEmpty() {
-        assert(ArrayKit.isEmpty(null))
-        assert(ArrayKit.isEmpty(emptyArray<Int>()))
-        assertFalse(ArrayKit.isEmpty(arrayOf(1, 2)))
-    }
+
 
     @Test
     fun isByteArrayEmpty() {

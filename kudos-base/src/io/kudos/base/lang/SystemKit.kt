@@ -1,6 +1,5 @@
 package io.kudos.base.lang
 
-import io.kudos.base.lang.string.StringKit
 import io.kudos.base.logger.LoggerFactory
 import org.soul.base.lang.SystemTool
 import java.io.BufferedReader
@@ -64,7 +63,7 @@ object SystemKit {
         if (process != null) {
             message = loadStream(process.inputStream)
             val errorMsg = loadStream(process.errorStream)
-            if (StringKit.isNotEmpty(errorMsg)) {
+            if (errorMsg.isNotEmpty()) {
                 message = errorMsg
             }
             process.destroy()

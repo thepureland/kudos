@@ -1,5 +1,6 @@
 package io.kudos.base.io
 
+import io.kudos.base.io.FileKit.checksum
 import io.kudos.base.support.Consts
 import org.apache.commons.io.LineIterator
 import org.apache.commons.io.filefilter.IOFileFilter

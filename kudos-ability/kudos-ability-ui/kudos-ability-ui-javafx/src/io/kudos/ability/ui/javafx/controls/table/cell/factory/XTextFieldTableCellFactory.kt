@@ -1,7 +1,7 @@
 package io.kudos.ability.ui.javafx.controls.table.cell.factory
 
-import io.kudos.base.support.Consts
 import io.kudos.ability.ui.javafx.controls.XTextFieldTableCell
+import io.kudos.base.support.Consts
 import javafx.scene.control.TableCell
 import javafx.scene.control.TableColumn
 import javafx.util.Callback

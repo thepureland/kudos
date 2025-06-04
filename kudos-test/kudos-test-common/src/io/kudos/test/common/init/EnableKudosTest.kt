@@ -1,10 +1,6 @@
 package io.kudos.test.common.init
 
-import io.kudos.context.init.ComponentInitializerSelector
 import io.kudos.context.init.IComponentInitializer
-import org.springframework.boot.SpringBootConfiguration
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration
-import org.springframework.boot.autoconfigure.ImportAutoConfiguration
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment
 import org.springframework.core.annotation.AliasFor

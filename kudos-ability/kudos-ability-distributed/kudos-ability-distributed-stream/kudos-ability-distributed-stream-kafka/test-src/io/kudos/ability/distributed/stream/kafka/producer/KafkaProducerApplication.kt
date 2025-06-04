@@ -5,7 +5,6 @@ import io.kudos.context.spring.YamlPropertySourceFactory
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient
 import org.springframework.context.annotation.Import
 import org.springframework.context.annotation.PropertySource
-import org.springframework.kafka.annotation.EnableKafka
 
 /**
  * kafka测试生產者微服务应用

@@ -1,6 +1,6 @@
 package io.kudos.ability.web.ktor.base.init
 
-import io.ktor.server.application.Application
+import io.ktor.server.application.*
 
 
 /**
