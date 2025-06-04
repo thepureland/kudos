@@ -1,12 +1,8 @@
 package io.kudos.base.lang.collections
 
 import io.kudos.base.support.Consts
-import org.apache.commons.collections.Factory
-import org.apache.commons.collections.MapUtils
-import org.apache.commons.collections.Transformer
 import java.io.PrintStream
 import java.util.*
-import kotlin.reflect.KClass
 
 /**
  * kotlin.Map扩展函数
@@ -23,19 +19,16 @@ import kotlin.reflect.KClass
  * @author K
  * @since 1.0.0
  */
-fun Map<*, *>.toArrOfArr(): Array<Array<Any?>> {
-    var arr: Array<Array<Any?>>? = null
-    if (this.isNotEmpty()) {
-        arr = Array(this.size) { arrayOfNulls(2) }
-        var i = 0
-        for ((key, value) in this) {
-            arr[i][0] = key
-            arr[i][1] = value
-            i++
-        }
+fun Map<*, *>.toArrOfArr(): Array<Array<Any?>> =
+    if (this.isEmpty()) {
+        emptyArray()
+    } else {
+        // entries.toList() 保证 Map 顺序，mapIndexed 构建二维 Array
+        this.entries
+            .map { (k, v) -> arrayOf(k, v) }
+            .toTypedArray()
     }
-    return arr ?: Array<Array<Any?>>(0) { arrayOfNulls(0) }
-}
+
 
 
 /**
@@ -49,22 +42,16 @@ fun Map<*, *>.toArrOfArr(): Array<Array<Any?>> {
  * @since 1.0.0
  */
 fun <K, V> Map<*, *>.containsAll(subMap: Map<K, V>): Boolean {
-    if (this.isEmpty() || subMap.isEmpty()) {
-        return false
-    }
-    for ((key, value) in subMap) {
-        if (!this.containsKey(key)
-            || value == null && this[key] != null || value != null && (this[key] == null || value != this[key])
-        ) {
+    if (this.isEmpty() || subMap.isEmpty()) return false
+    for ((k, v) in subMap) {
+        if (!this.containsKey(k)
+            || (v == null && this[k] != null)
+            || (v != null && this[k] != v)) {
             return false
         }
     }
     return true
 }
-
-// vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-// 封装org.apache.commons.collections.MapUtils
-// vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
 
 // Conversion methods
@@ -77,10 +64,17 @@ fun <K, V> Map<*, *>.containsAll(subMap: Map<K, V>): Boolean {
  * @author K
  * @since 1.0.0
  */
-fun ResourceBundle.toMap(): MutableMap<Any?, Any?>? = MapUtils.toMap(this)
+fun ResourceBundle.toMap(): MutableMap<String, Any?> {
+    val result = mutableMapOf<String, Any?>()
+    for (key in this.keySet()) {
+        result[key] = this.getObject(key)
+    }
+    return result
+}
 
 
 //region Printing
+
 /**
  * 将指定的Map的内容分行打印
  * 该方法打印出Map的良好格式的字符串描述。
@@ -92,7 +86,8 @@ fun ResourceBundle.toMap(): MutableMap<Any?, Any?>? = MapUtils.toMap(this)
  * @author K
  * @since 1.0.0
  */
-fun Map<*, *>.verbosePrint(out: PrintStream, label: Any?) = MapUtils.verbosePrint(out, label, this)
+fun Map<*, *>.verbosePrint(out: PrintStream, label: Any?)
+    = verbosePrintInternal(out, label, this, mutableListOf(), debug = false)
 
 /**
  * 将指定的Map的内容分行打印
@@ -105,7 +100,8 @@ fun Map<*, *>.verbosePrint(out: PrintStream, label: Any?) = MapUtils.verbosePrin
  * @author K
  * @since 1.0.0
  */
-fun Map<*, *>.debugPrint(out: PrintStream, label: Any?) = MapUtils.debugPrint(out, label, this)
+fun Map<*, *>.debugPrint(out: PrintStream, label: Any?)
+    = verbosePrintInternal(out, label, this, mutableListOf(), debug = true)
 
 //endregion Printing
 
@@ -122,121 +118,110 @@ fun Map<*, *>.debugPrint(out: PrintStream, label: Any?) = MapUtils.debugPrint(ou
  * @since 1.0.0
  */
 @Suppress(Consts.Suppress.UNCHECKED_CAST)
-fun <K, V> Map<K?, V?>.invertMap(): Map<V?, K?> = MapUtils.invertMap(this) as Map<V?, K?>
+fun <K, V> Map<K, V>.invertMap(): Map<V, K> {
+    val result = mutableMapOf<V, K>()
+    for ((k, v) in this) {
+        result[v] = k
+    }
+    return result
+}
+
 
 /**
- * 返回一个"懒惰"的Map， 它的值将被按需加载
- * 当传给返回的map的[Map.get]方法的key未在map中出现时，
- * 指定的工厂将创建一个新对象， 并将key和该对象放入Map
- * 例如:
+ * 递归打印。lineage 用来追踪上层已经打印过的 Map，以避免循环引用导致无限递归。
  *
- * <pre>
- * val factory = object: Factory() {
- * override fun create(): Any {
- * return Date()
- * }
- * }
- * val lazyMap = HashMap().lazyMap(factory)
- * val obj = lazyMap.get("test")
- * </pre>
- *
- *
- * 当上面的代码被执行时，`obj`将包含一个新的`Date`实例。
- * 而且， 这个`Date`实例为Map中key为 `"test"`关联的对象。
- *
- *
- * @param K Key
- * @param V Value
- * @param factory 创建新对象的工厂
- * @return 指定Map的"懒惰"map
- * @author K
- * @since 1.0.0
+ * @param out      输出流
+ * @param label    本次打印所用的标签，可以为 null
+ * @param map      要打印的 Map，可以为 null
+ * @param lineage  已经进入递归打印的上层 Map 链表，用于检测循环引用
+ * @param debug    如果为 true，则在打印每个非 Map 值时输出其类型名；否则仅输出值本身
  */
-@Suppress(Consts.Suppress.UNCHECKED_CAST)
-fun <K : Any?, V : Any?> Map<K, V>.lazyMap(factory: Factory): Map<K, V> = MapUtils.lazyMap(this, factory) as Map<K, V>
+private fun verbosePrintInternal(
+    out: PrintStream,
+    label: Any?,
+    map: Map<*, *>?,
+    lineage: MutableList<Map<*, *>>,
+    debug: Boolean
+) {
+    // 根据当前递归深度决定缩进空格数，每层两个空格
+    fun printIndent(level: Int) {
+        repeat(level) { out.print("  ") }
+    }
 
-/**
- * 返回一个"懒惰"的Map， 它的值将被按需加载
- * 当传给返回的map的[Map.get]方法的key未在map中出现时，
- * 指定的工厂将创建一个新对象， 并将key和该对象放入Map.
- * 这里的工厂是一个[Transformer]， 它被传入要转换为value的key。
- * 例如:
- * <pre>
- * val factory = object: Transformer() {
- * override fun transform(mapKey: Any): Any {
- * return File(mapKey)
- * }
- * }
- * val lazyMap = HashMap().lazyMap(factory)
- * val obj = lazyMap.get("C:/dev")
- * </pre>
- *
- * 当上面的代码被执行时，`obj`将包含一个新的`File`实例。
- * 而且， 这个`File`实例为Map中key为 `"C:/dev"`关联的对象。
- *
- * 如果一个"懒惰"的map被一个同步的map包装，结果将是一个简单的缓存。
- * 当要获取的对象不在缓存中时，缓存将自己调用转换工厂来创建该对象，
- * 所有操作都是在同步块中完成的。
- *
- * @param K Key
- * @param V Value
- * @param transformerFactory 创建新对象的工厂
- * @return 指定Map的"懒惰"map
- * @author K
- * @since 1.0.0
- */
-@Suppress(Consts.Suppress.UNCHECKED_CAST)
-fun <K : Any?, V : Any?> Map<K, V>.lazyMap(transformerFactory: Transformer): Map<K, V> =
-    MapUtils.lazyMap(this, transformerFactory) as Map<K, V>
+    // 1. 首先打印 label 和 map 是否为 null
+    printIndent(lineage.size)
+    if (map == null) {
+        // 如果 Map 本身为 null，直接打印 "label = null" 或 "null"
+        if (label != null) {
+            out.print(label)
+            out.print(" = ")
+        }
+        out.println("null")
+        return
+    }
 
-/**
- * 创建一个多值的map，它支持将单值加入(通过调用Map.put(key, value))到key对应的集合中
- *
- * @param K Key
- * @param V Value
- * @return 一个多值的Map，它的value的类型为ArrayList
- * @see org.apache.commons.collections.map.MultiValueMap
- * @author K
- * @since 1.0.0
- */
-@Suppress(Consts.Suppress.UNCHECKED_CAST)
-fun <K : Any?, V : Any?> Map<K, MutableCollection<out V>?>.multiValueMap(): Map<K, ArrayList<V>> =
-    MapUtils.multiValueMap(this) as Map<K, ArrayList<V>>
+    // 2. 如果传了 label 且 map 不为 null，就先打印 "label ="
+    if (label != null) {
+        printIndent(lineage.size)
+        out.print(label)
+        out.println(" = ")
+    }
 
-/**
- * 创建一个多值的map，它支持将单值加入(通过调用Map.put(key, value))到key对应的集合中
- *
- *
- * @param K Key
- * @param V Value
- * @param collectionClass 返回的map的值的类型(必须包含public的无参构造器并且实现Collection接口)
- * @return 一个多值的Map，它的value的类型为指定的collectionClass
- * @see org.apache.commons.collections.map.MultiValueMap
- * @author K
- * @since 1.0.0
- */
-@Suppress(Consts.Suppress.UNCHECKED_CAST)
-fun <K : Any?, V : Any?, C : Collection<V>> Map<K, MutableCollection<out V>?>.multiValueMap(
-    collectionClass: KClass<C>
-): Map<K, C> = MapUtils.multiValueMap(this, collectionClass.java) as Map<K, C>
+    // 3. 打开大括号，开始打印当前 Map 的内容
+    printIndent(lineage.size)
+    out.println("{")
 
-/**
- * 创建一个多值的map，它支持将单值加入(通过调用Map.put(key, value))到key对应的集合中
- * 集合将由指定的集合工厂创建
- *
- * @param K Key
- * @param V Value
- * @param collectionFactory 创建返回的Map的值的集合的工厂
- * @return 一个多值的Map，它的value的类型为指定的集合工厂创建的集合
- * @see org.apache.commons.collections.map.MultiValueMap
- * @author K
- * @since 1.0.0
- */
-@Suppress(Consts.Suppress.UNCHECKED_CAST)
-fun <K : Any?, V : Any?> Map<K, MutableCollection<V>?>.multiValueMap(
-    collectionFactory: Factory?
-): Map<K, MutableCollection<V>?> = MapUtils.multiValueMap(this, collectionFactory) as Map<K, MutableCollection<V>?>
+    // 4. 将当前 map 加入 lineage，以便后续检测循环引用
+    lineage.add(map)
 
-// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-// 封装org.apache.commons.collections.MapUtils
-// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    // 5. 遍历 map 中的每一个 entry
+    for ((childKey, childValue) in map.entries) {
+        // 如果 value 也是一个 Map，且不在 ancestry 中，就对其递归打印
+        if (childValue is Map<*, *> && !lineage.contains(childValue)) {
+            // 递归调用：将 childKey 作为下一层的 label，childValue 作为下层要打印的 Map
+            verbosePrintInternal(
+                out,
+                childKey ?: "null",
+                childValue,
+                lineage,
+                debug
+            )
+        } else {
+            // 否则要么 value 不是 Map，要么虽然是 Map 但已经在 lineage 中（循环引用）
+            printIndent(lineage.size)
+
+            // 打印 key
+            out.print(childKey)
+
+            // 打印分隔符 " => "
+            out.print(" => ")
+
+            if (childValue is Map<*, *>) {
+                // 如果 childValue 是 Map 且已经在 lineage 中，说明发生了循环引用
+                val idx = lineage.indexOf(childValue)
+                if (idx == 0) {
+                    // 如果同一层（刚好是传进来的那个 map），表明它指向自己
+                    out.println("(this Map)")
+                } else {
+                    // 否则，指向祖先中的某一级
+                    out.println("(ancestor[$idx] Map)")
+                }
+            } else {
+                // 普通值或 null 都走这里
+                out.print(childValue)
+                if (debug && childValue != null) {
+                    // debug 模式下，额外输出类型信息
+                    out.print(" (${childValue.javaClass.name})")
+                }
+                out.println()
+            }
+        }
+    }
+
+    // 6. 当前 Map 的所有 entries 打印完毕，从 lineage 中移除
+    lineage.removeAt(lineage.lastIndex)
+
+    // 7. 缩进并打印右括号，结束本层
+    printIndent(lineage.size)
+    out.println("}")
+}

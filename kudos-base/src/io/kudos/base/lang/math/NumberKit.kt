@@ -1,6 +1,7 @@
 package io.kudos.base.lang.math
 
-import org.apache.commons.lang3.math.NumberUtils
+import java.math.BigDecimal
+import java.math.BigInteger
 
 /**
  * 数值工具类
@@ -10,10 +11,6 @@ import org.apache.commons.lang3.math.NumberUtils
  */
 object NumberKit {
 
-    // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-    // 封装org.apache.commons.lang3.math.NumberUtils
-    // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-    // -----------------------------------------------------------------------
 
     /**
      * 将字符串转换为Number
@@ -33,7 +30,44 @@ object NumberKit {
      * @author K
      * @since 1.0.0
      */
-    fun createNumber(str: String?): Number = NumberUtils.createNumber(str)
+    fun createNumber(str: String?): Number? {
+        if (str == null) return null
+        // 先检查是否为十六进制（可带正负号）
+        val s = str.trim()
+        if (s.isEmpty()) throw NumberFormatException("空字符串不能转换为数字")
+        val lower = s.lowercase()
+        return when {
+            lower.startsWith("0x") -> {
+                // 例如 "0xFF" ⇒ 255
+                BigInteger(lower.substring(2), 16)
+            }
+
+            lower.startsWith("-0x") -> {
+                // 例如 "-0x1A" ⇒ -26
+                BigInteger(lower.substring(3), 16).negate()
+            }
+            // 判断是否包含小数点或科学计数法
+            s.contains('.') || lower.contains('e') -> {
+                // 直接用 BigDecimal 解析
+                try {
+                    BigDecimal(s)
+                } catch (ex: Exception) {
+                    throw NumberFormatException("无法将 \"$s\" 转换为 BigDecimal: ${ex.message}")
+                }
+            }
+
+            else -> {
+                // 普通整数，尝试用 BigInteger 解析
+                try {
+                    // 支持以 0 开头的八进制? Java 不再默认识别八进制，统一用 BigInteger 十进制
+                    BigInteger(s)
+                } catch (ex: Exception) {
+                    throw NumberFormatException("无法将 \"$s\" 转换为整数: ${ex.message}")
+                }
+            }
+        }
+    }
+
 
     /**
      * 检查指定的字符串是否只包含数字字符
@@ -44,7 +78,11 @@ object NumberKit {
      * @author K
      * @since 1.0.0
      */
-    fun isDigits(str: String?): Boolean = NumberUtils.isDigits(str)
+    fun isDigits(str: String?): Boolean {
+        if (str.isNullOrEmpty()) return false
+        // 只要所有字符都是 0..9，即视为数字
+        return str.all { it in '0'..'9' }
+    }
 
     /**
      * 检查指定的字符串是否只为java的数值
@@ -57,10 +95,28 @@ object NumberKit {
      * @author K
      * @since 1.0.0
      */
-    fun isNumber(str: String?): Boolean = NumberUtils.isCreatable(str)
+    fun isNumber(str: String?): Boolean {
+        if (str.isNullOrEmpty()) return false
+        val s = str.trim()
+        if (s.isEmpty()) return false
 
-    // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    // 封装org.apache.commons.lang3.math.NumberUtils
-    // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        // 检查十六进制
+        val lower = s.lowercase()
+        if (lower.startsWith("0x") || lower.startsWith("-0x")) {
+            // 后面至少要有一个十六进制字符
+            val hexPart = if (lower.startsWith("0x")) lower.substring(2) else lower.substring(3)
+            if (hexPart.isEmpty()) return false
+            return hexPart.all { it in '0'..'9' || it in 'a'..'f' }
+        }
+
+        // 带小数点或科学记数法，则尝试 BigDecimal 解析
+        return try {
+            BigDecimal(s)
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
 
 }
+

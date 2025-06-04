@@ -37,7 +37,7 @@ class XKClassTest {
         val dog = Dog::class.newInstance()
         assertEquals(0, dog.age)
 
-        assertThrows<IllegalStateException> { Animal::class.newInstance() }
+        assertThrows<IllegalArgumentException> { Animal::class.newInstance() }
     }
 
     @Test
