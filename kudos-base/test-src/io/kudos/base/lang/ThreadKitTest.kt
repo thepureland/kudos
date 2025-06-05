@@ -1,6 +1,6 @@
 package io.kudos.base.lang
 
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
 
 internal class ThreadKitTest {
 

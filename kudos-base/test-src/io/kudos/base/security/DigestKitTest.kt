@@ -1,8 +1,8 @@
 package io.kudos.base.security
 
 import io.kudos.base.lang.string.EncodeKit
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 internal class DigestKitTest {
 

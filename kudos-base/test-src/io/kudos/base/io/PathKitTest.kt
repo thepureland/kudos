@@ -1,7 +1,7 @@
 package io.kudos.base.io
 
-import org.junit.jupiter.api.Test
 import java.io.File
+import kotlin.test.Test
 
 internal class PathKitTest {
 

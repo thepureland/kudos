@@ -1,9 +1,9 @@
 package io.kudos.base.time
 
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Test
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 internal class XZonedDateTimeTest {
 

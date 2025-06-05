@@ -1,8 +1,8 @@
 package io.kudos.base.time
 
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Test
 import java.util.*
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 /**
  * XDate单元测试类

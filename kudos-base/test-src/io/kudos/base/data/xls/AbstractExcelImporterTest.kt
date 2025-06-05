@@ -2,9 +2,9 @@ package io.kudos.base.data.xls
 
 import io.kudos.base.io.PathKit
 import jakarta.validation.constraints.NotNull
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Test
 import java.io.File
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 /**
  * AbstractExcelImporter测试用例

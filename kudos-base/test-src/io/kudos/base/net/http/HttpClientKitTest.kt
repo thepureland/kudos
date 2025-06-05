@@ -1,13 +1,13 @@
 package io.kudos.base.net.http
 
 import io.kudos.base.image.ImageKit
-import org.junit.jupiter.api.Test
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.time.Duration
 import javax.imageio.ImageIO
+import kotlin.test.Test
 
 /**
  * HttpClientKit测试用例

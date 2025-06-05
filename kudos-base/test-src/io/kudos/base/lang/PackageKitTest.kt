@@ -3,7 +3,7 @@ package io.kudos.base.lang
 import io.kudos.base.lang.string.EncodeKit
 import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.StringUtils
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
 
 /**
  * PackageKit测试用例

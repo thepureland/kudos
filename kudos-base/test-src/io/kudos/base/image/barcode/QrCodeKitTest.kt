@@ -2,7 +2,7 @@ package io.kudos.base.image.barcode
 
 import io.kudos.base.image.ImageKit
 import io.kudos.base.io.PathKit
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
 
 internal class QrCodeKitTest {
 

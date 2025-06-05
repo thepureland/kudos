@@ -1,6 +1,7 @@
 package io.kudos.base.security
 
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
+
 
 internal class Base36KitTest {
 

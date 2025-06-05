@@ -1,10 +1,11 @@
 package io.kudos.base.i18n
 
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
+
 
 /**
  * I18nKit测试用例
@@ -14,7 +15,7 @@ import org.junit.jupiter.api.assertThrows
  */
 internal class I18nKitTest {
 
-    @BeforeEach
+    @BeforeTest
     fun setup() {
         I18nKit.initI18n(setOf("zh_CN", "zh_TW", "en_US"), setOf(), "zh_CN")
     }
@@ -59,7 +60,7 @@ internal class I18nKitTest {
     @Test
     fun initI18n() {
         // 默认Locale不在支持的列表中，初始化失败 (相当于未调用初始化方法initI18n，以默认的zh_CN处理)
-        assertThrows<IllegalStateException> { I18nKit.initI18n(setOf(), setOf(""), "en_US") }
+        assertFailsWith<IllegalStateException> { I18nKit.initI18n(setOf(), setOf(""), "en_US") }
         assertEquals("中文简体", I18nKit.getLocalStr("language.zh_CN", "kudos-base-test", "", "zh_TW"))
 
         // 重新初始化

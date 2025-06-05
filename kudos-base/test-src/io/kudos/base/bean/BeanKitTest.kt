@@ -1,10 +1,12 @@
 package io.kudos.base.bean
 
 import io.kudos.base.time.toLocalDate
-import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
 import java.util.*
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 /**
  * BeanKit测试用例
@@ -16,7 +18,7 @@ internal class BeanKitTest {
 
     private lateinit var person: Person
 
-    @BeforeEach
+    @BeforeTest
     fun setUp() {
         person = Person().apply {
             id = "id"

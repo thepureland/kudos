@@ -1,11 +1,13 @@
 package io.kudos.base.support.enums
 
 import io.kudos.base.lang.EnumKit
-import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.Test
 import org.soul.base.enums.YesNotEnum
 import org.soul.base.ienums.ICodeEnum
 import kotlin.reflect.KClass
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 /**
  * EnumKit测试用例

@@ -1,10 +1,10 @@
 package io.kudos.base.time
 
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneId
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 internal class XLocalDateTimeTest {
 

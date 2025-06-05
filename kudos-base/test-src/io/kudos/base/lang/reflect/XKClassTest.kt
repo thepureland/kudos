@@ -1,17 +1,16 @@
 package io.kudos.base.lang.reflect
 
 import io.kudos.base.support.Consts
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertDoesNotThrow
-import org.junit.jupiter.api.assertThrows
 import org.soul.base.bean.validation.constraint.annotaions.AtLeast
 import org.soul.base.bean.validation.constraint.annotaions.NotNullOn
 import org.soul.base.enums.SexEnum
 import org.soul.base.ienums.ICodeEnum
 import java.io.Serializable
 import kotlin.reflect.full.starProjectedType
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 
 /**
  * XKClass测试用例
@@ -37,7 +36,7 @@ class XKClassTest {
         val dog = Dog::class.newInstance()
         assertEquals(0, dog.age)
 
-        assertThrows<IllegalArgumentException> { Animal::class.newInstance() }
+        assertFailsWith<IllegalArgumentException> { Animal::class.newInstance() }
     }
 
     @Test
@@ -90,12 +89,12 @@ class XKClassTest {
 
     @Test
     fun getMemberProperty() {
-        assertDoesNotThrow { Parrot::class.getMemberProperty("age") }
-        assertDoesNotThrow { Parrot::class.getMemberProperty("height") }
-        assertDoesNotThrow { Parrot::class.getMemberProperty("name") }
-        assertThrows<NoSuchElementException> { Parrot::class.getMemberProperty("weight") } // private
-        assertThrows<NoSuchElementException> { Parrot::class.getMemberProperty("xxxxx") }
-        assertThrows<NoSuchElementException> { Parrot::class.getMemberProperty("ageValue") } // 只是参数，未定义为属性
+        Parrot::class.getMemberProperty("age")
+        Parrot::class.getMemberProperty("height")
+        Parrot::class.getMemberProperty("name")
+        assertFailsWith<NoSuchElementException> { Parrot::class.getMemberProperty("weight") } // private
+        assertFailsWith<NoSuchElementException> { Parrot::class.getMemberProperty("xxxxx") }
+        assertFailsWith<NoSuchElementException> { Parrot::class.getMemberProperty("ageValue") } // 只是参数，未定义为属性
     }
 
     @Test
@@ -104,18 +103,18 @@ class XKClassTest {
         assertEquals(3, Parrot::class.getMemberPropertyValue(parrot, "age"))
         assertEquals(0.0, Parrot::class.getMemberPropertyValue(parrot, "height"))
         assertEquals("polly", Parrot::class.getMemberPropertyValue(parrot, "name"))
-        assertThrows<NoSuchElementException> { Parrot::class.getMemberPropertyValue(parrot, "weight") }
-        assertThrows<NoSuchElementException> { Parrot::class.getMemberPropertyValue(parrot, "xxxxx") }
-        assertThrows<NoSuchElementException> { Parrot::class.getMemberPropertyValue(parrot, "ageValue") }
+        assertFailsWith<NoSuchElementException> { Parrot::class.getMemberPropertyValue(parrot, "weight") }
+        assertFailsWith<NoSuchElementException> { Parrot::class.getMemberPropertyValue(parrot, "xxxxx") }
+        assertFailsWith<NoSuchElementException> { Parrot::class.getMemberPropertyValue(parrot, "ageValue") }
     }
 
     @Test
     fun getMemberFunction() {
-        assertDoesNotThrow { Parrot::class.getMemberFunction("sleep") }
-        assertDoesNotThrow { Parrot::class.getMemberFunction("move") }
-        assertDoesNotThrow { Parrot::class.getMemberFunction("fly") }
-        assertDoesNotThrow { Parrot::class.getMemberFunction("speak", *Parrot::speak.parameters.toTypedArray()) }
-        assertThrows<NoSuchElementException> { Parrot::class.getMemberFunction("xxxxx") }
+        Parrot::class.getMemberFunction("sleep")
+        Parrot::class.getMemberFunction("move")
+        Parrot::class.getMemberFunction("fly")
+        Parrot::class.getMemberFunction("speak", *Parrot::speak.parameters.toTypedArray())
+        assertFailsWith<NoSuchElementException> { Parrot::class.getMemberFunction("xxxxx") }
     }
 
     @Test

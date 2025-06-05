@@ -6,12 +6,12 @@ import io.kudos.base.logger.ILoggerCreator
 import io.kudos.base.logger.slf4j.Slf4jLoggerCreator
 import jakarta.validation.Constraint
 import jakarta.xml.bind.annotation.XmlRootElement
-import org.junit.jupiter.api.Test
 import org.soul.base.bean.validation.constraint.annotaions.AtLeast
 import org.soul.base.exception.CustomRuntimeException
 import org.soul.base.exception.ObjectNotFoundException
 import kotlin.reflect.KClass
 import kotlin.system.measureTimeMillis
+import kotlin.test.Test
 
 
 /**

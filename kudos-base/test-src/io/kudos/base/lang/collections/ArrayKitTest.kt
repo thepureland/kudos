@@ -1,11 +1,10 @@
 package io.kudos.base.lang.collections
 
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
+import kotlin.test.assertFalse
+
 
 internal class ArrayKitTest {
-
-
 
     @Test
     fun isByteArrayEmpty() {

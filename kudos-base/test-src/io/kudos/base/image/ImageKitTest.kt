@@ -1,8 +1,8 @@
 package io.kudos.base.image
 
 import io.kudos.base.io.PathKit
-import org.junit.jupiter.api.Test
 import java.io.File
+import kotlin.test.Test
 
 internal class ImageKitTest {
 
