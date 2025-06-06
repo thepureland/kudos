@@ -3,7 +3,7 @@ package io.kudos.base.lang
 import io.kudos.base.lang.reflect.getMemberFunction
 import io.kudos.base.lang.reflect.getMemberProperty
 import io.kudos.base.support.Consts
-import org.soul.base.support.ICallback
+import io.kudos.base.support.ICallback
 import java.io.Serializable
 import kotlin.test.Test
 import kotlin.test.assertEquals

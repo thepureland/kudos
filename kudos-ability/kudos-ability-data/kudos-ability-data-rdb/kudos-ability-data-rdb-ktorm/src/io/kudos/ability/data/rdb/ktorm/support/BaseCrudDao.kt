@@ -1,9 +1,12 @@
 package io.kudos.ability.data.rdb.ktorm.support
 
 import io.kudos.base.bean.BeanKit
+import io.kudos.base.query.Criteria
+import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.support.Consts
 import io.kudos.base.support.GroupExecutor
 import io.kudos.base.support.dao.IBaseCrudDao
+import io.kudos.base.support.logic.AndOrEnum
 import io.kudos.base.support.payload.SearchPayload
 import io.kudos.base.support.payload.UpdatePayload
 import org.ktorm.dsl.*
@@ -14,9 +17,6 @@ import org.ktorm.entity.update
 import org.ktorm.schema.Column
 import org.ktorm.schema.ColumnDeclaring
 import org.ktorm.schema.Table
-import org.soul.base.query.Criteria
-import org.soul.base.query.enums.OperatorEnum
-import org.soul.base.support.logic.AndOr
 import java.time.LocalDateTime
 import kotlin.reflect.full.superclasses
 
@@ -244,7 +244,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
         }
 
         val updateColumnMap = ColumnHelper.columnOf(table(), *updatePropertyMap.keys.toTypedArray())
-        val andOr = searchPayload?.andOr ?: AndOr.AND
+        val andOr = searchPayload?.andOr ?: AndOrEnum.AND
         val whereExpression = processWhere(wherePropertyMap, andOr, true, whereConditionFactory)
         whereExpression ?: throw IllegalArgumentException("不能做无条件的数据库表的更新操作！")
 
@@ -360,7 +360,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
             getWherePropertyMap(searchPayload, entityProperties)
         }
 
-        val andOr = searchPayload?.andOr ?: AndOr.AND
+        val andOr = searchPayload?.andOr ?: AndOrEnum.AND
         val whereExpression = processWhere(wherePropertyMap, andOr, true, whereConditionFactory)
         whereExpression ?: throw IllegalArgumentException("不能做无条件的数据库表的删除操作！")
         return entitySequence().removeIf { whereExpression }

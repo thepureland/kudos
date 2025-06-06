@@ -4,7 +4,7 @@ import freemarker.cache.MultiTemplateLoader
 import freemarker.cache.URLTemplateLoader
 import freemarker.template.Configuration
 import io.kudos.base.io.FileKit
-import io.kudos.base.logger.LoggerFactory
+import io.kudos.base.logger.LogFactory
 import io.kudos.tools.codegen.biz.CodeGenFileBiz
 import io.kudos.tools.codegen.biz.CodeGenObjectBiz
 import io.kudos.tools.codegen.core.merge.CodeMerger
@@ -25,7 +25,7 @@ class CodeGenerator(
     private val genFiles: List<GenFile>
 ) {
 
-    private val log = LoggerFactory.getLogger(this)
+    private val log = LogFactory.getLog(this)
 
     fun generate() {
         genFiles.forEach { executeGenerate(it) }

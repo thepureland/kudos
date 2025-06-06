@@ -1,6 +1,13 @@
 package io.kudos.base.security
 
-import org.soul.base.security.CryptoTool
+import io.kudos.base.lang.string.EncodeKit
+import io.kudos.base.logger.LogFactory
+import java.io.UnsupportedEncodingException
+import java.security.SecureRandom
+import javax.crypto.Cipher
+import javax.crypto.KeyGenerator
+import javax.crypto.Mac
+import javax.crypto.spec.SecretKeySpec
 
 /**
  * 加密工具类
@@ -13,6 +20,29 @@ import org.soul.base.security.CryptoTool
  */
 object CryptoKit {
 
+    private val logger = LogFactory.getLog(this)
+
+    private const val AES = "AES"
+    private const val HMACSHA1 = "HmacSHA1"
+    private const val HTB = "_HTB"
+
+    private val KEY = CryptoKey.KEY_DEFAULT
+
+    private const val PREFIX = "┼"
+    private const val CHARSET = "UTF-8"
+
+    private const val DEFAULT_HMACSHA1_KEYSIZE = 160 //RFC2401
+
+    private const val DEFAULT_AES_KEYSIZE = 128
+    private const val DEFAULT_IVSIZE = 16
+
+    private val DIGITS = charArrayOf(
+        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
+    )
+
+
+    private val random = SecureRandom()
+
     //-- HMAC-SHA1 funciton --//
     /**
      * 使用HMAC-SHA1进行消息签名, 返回字节数组,长度为20字节
@@ -23,7 +53,12 @@ object CryptoKit {
      * @author K
      * @since 1.0.0
      */
-    fun hmacSha1(input: ByteArray, key: ByteArray): ByteArray = CryptoTool.hmacSha1(input, key)
+    fun hmacSha1(input: ByteArray, key: ByteArray): ByteArray {
+        val secretKey = SecretKeySpec(key, HMACSHA1)
+        val mac = Mac.getInstance(HMACSHA1)
+        mac.init(secretKey)
+        return mac.doFinal(input)
+    }
 
     /**
      * 校验HMAC-SHA1签名是否正确.
@@ -35,8 +70,10 @@ object CryptoKit {
      * @author K
      * @since 1.0.0
      */
-    fun isMacValid(expected: ByteArray, input: ByteArray, key: ByteArray): Boolean =
-        CryptoTool.isMacValid(expected, input, key)
+    fun isMacValid(expected: ByteArray, input: ByteArray, key: ByteArray): Boolean {
+        val actual = hmacSha1(input, key)
+        return expected.contentEquals(actual)
+    }
 
     /**
      * 生成HMAC-SHA1密钥,返回字节数组,长度为160位(20字节).
@@ -46,7 +83,12 @@ object CryptoKit {
      * @author K
      * @since 1.0.0
      */
-    fun generateHmacSha1Key(): ByteArray = CryptoTool.generateHmacSha1Key()
+    fun generateHmacSha1Key(): ByteArray {
+        val keyGenerator = KeyGenerator.getInstance(HMACSHA1)
+        keyGenerator.init(DEFAULT_HMACSHA1_KEYSIZE)
+        val secretKey = keyGenerator.generateKey()
+        return secretKey.encoded
+    }
 
     //region AES
     /**
@@ -58,7 +100,13 @@ object CryptoKit {
      * @author K
      * @since 1.0.0
      */
-    fun aesEncrypt(input: String, password: String): String = CryptoTool.aesEncrypt(input, password)
+    fun aesEncrypt(input: String, password: String): String {
+        val result = aes(
+            input.toByteArray(charset(CHARSET)),
+            password.toByteArray(charset(CHARSET)), Cipher.ENCRYPT_MODE
+        )
+        return aesEncryptBytes(result, password)
+    }
 
     /**
      * 将使用aes加密字节数组进行解密
@@ -69,7 +117,22 @@ object CryptoKit {
      * @author K
      * @since 1.0.0
      */
-    fun aesDecrypt(content: ByteArray, password: String): ByteArray = CryptoTool.aesDecrypt(content, password)
+    fun aesDecrypt(content: ByteArray, password: String): ByteArray {
+        return aes(
+            content, password.toByteArray(charset(CHARSET)),
+            Cipher.DECRYPT_MODE
+        )
+    }
+
+    private fun aes(input: ByteArray, password: ByteArray, mode: Int): ByteArray {
+        val generator = KeyGenerator.getInstance(AES)
+        val secureRandom = SecureRandom.getInstance("SHA1PRNG")
+        secureRandom.setSeed(password)
+        generator.init(128, secureRandom)
+        val cipher = Cipher.getInstance(AES)
+        cipher.init(mode, generator.generateKey())
+        return cipher.doFinal(input)
+    }
 
     /**
      * 将使用aes加密并转为十六进制的字符串进行解密
@@ -80,7 +143,16 @@ object CryptoKit {
      * @author K
      * @since 1.0.0
      */
-    fun aesDecrypt(contentHex: String, password: String): String  = CryptoTool.aesDecrypt(contentHex, password)
+    fun aesDecrypt(contentHex: String, password: String): String {
+        val bytes = aesDecryptBytes(contentHex, password)
+        val result = aesDecrypt(bytes, password)
+        try {
+            return String(result, charset(CHARSET))
+        } catch (e: UnsupportedEncodingException) {
+            logger.error(e)
+        }
+        return ""
+    }
 
     /**
      * 使用AES加密原始字符串，返回其十六进制表示
@@ -90,7 +162,7 @@ object CryptoKit {
      * @author K
      * @since 1.0.0
      */
-    fun aesEncrypt(input: String): String = CryptoTool.aesEncrypt(input)
+    fun aesEncrypt(input: String): String = PREFIX + aesEncrypt(input, KEY)
 
     /**
      * 将使用aes加密并转为十六进制的字符串进行解密，兼容未加密的历史数据
@@ -100,7 +172,14 @@ object CryptoKit {
      * @author K
      * @since 1.0.0
      */
-    fun aesDecrypt(contentHex: String): String = CryptoTool.aesDecrypt(contentHex)
+    fun aesDecrypt(contentHex: String): String {
+        return if (contentHex.startsWith(PREFIX)) { // 有加密过的
+            val content = contentHex.replaceFirst(PREFIX.toRegex(), "")
+            aesDecrypt(content, KEY)
+        } else { // 未加密的历史数据
+            contentHex
+        }
+    }
 
     //endregion
 
@@ -111,7 +190,11 @@ object CryptoKit {
      * @author K
      * @since 1.0.0
      */
-    fun generateIV(): ByteArray = CryptoTool.generateIV()
+    fun generateIV(): ByteArray {
+        val bytes = ByteArray(DEFAULT_IVSIZE)
+        random.nextBytes(bytes)
+        return bytes
+    }
 
     /**
      * 将字节数组编码为十六进制表示的字符数组
@@ -121,7 +204,19 @@ object CryptoKit {
      * @author K
      * @since 1.0.0
      */
-    fun encodeHex(data: ByteArray): CharArray = CryptoTool.encodeHex(data)
+    fun encodeHex(data: ByteArray): CharArray {
+        val l = data.size
+        val out = CharArray(l shl 1)
+        // two characters form the hex value.
+        var i = 0
+        var j = 0
+        while (i < l) {
+            out[j++] = DIGITS[0xF0 and data[i].toInt() ushr 4]
+            out[j++] = DIGITS[0x0F and data[i].toInt()]
+            i++
+        }
+        return out
+    }
 
     /**
      * 将十六进制编码的字节数组解码
@@ -131,6 +226,47 @@ object CryptoKit {
      * @author K
      * @since 1.0.0
      */
-    fun decodeHex(bytes: ByteArray): ByteArray = CryptoTool.decodeHex(bytes)
+    fun decodeHex(bytes: ByteArray): ByteArray {
+        val iLen = bytes.size
+        // 两个字符表示一个字节，所以字节数组长度是字符串长度除以2
+        val arrOut = ByteArray(iLen / 2)
+        var i = 0
+        while (i < iLen) {
+            val strTmp = String(bytes, i, 2)
+            arrOut[i / 2] = strTmp.toInt(16).toByte()
+            i += 2
+        }
+        return arrOut
+    }
+
+    /**
+     * 判断解密方式：转换大小写
+     *
+     * @param input
+     * @param password
+     * @return
+     */
+    private fun aesDecryptBytes(input: String, password: String): ByteArray {
+        return if (password.isNotBlank() && password.startsWith(HTB)) {
+            EncodeKit.decodeHex(input.lowercase())
+        } else {
+            EncodeKit.decodeHex(input)
+        }
+    }
+
+    /**
+     * 判断加密方式：转换大小写
+     *
+     * @param bytes
+     * @param password
+     * @return
+     */
+    private fun aesEncryptBytes(bytes: ByteArray, password: String): String {
+        return if (password.isNotBlank() && password.startsWith(HTB)) {
+            EncodeKit.encodeHex(bytes).uppercase()
+        } else {
+            EncodeKit.encodeHex(bytes)
+        }
+    }
 
 }

@@ -1,7 +1,17 @@
 package io.kudos.base.data.xml
 
-import io.kudos.base.support.Consts
-import org.soul.base.data.xml.XmlTool
+import jakarta.xml.bind.JAXBContext
+import jakarta.xml.bind.JAXBElement
+import jakarta.xml.bind.Marshaller
+import jakarta.xml.bind.Unmarshaller
+import jakarta.xml.bind.annotation.XmlAnyElement
+import org.xml.sax.InputSource
+import java.io.StringReader
+import java.io.StringWriter
+import java.util.concurrent.ConcurrentHashMap
+import javax.xml.namespace.QName
+import javax.xml.parsers.SAXParserFactory
+import javax.xml.transform.sax.SAXSource
 import kotlin.reflect.KClass
 
 /**
@@ -16,6 +26,8 @@ import kotlin.reflect.KClass
  */
 object XmlKit {
 
+    private val jaxbContexts = ConcurrentHashMap<KClass<*>, JAXBContext>()
+
     /**
      * 序列化(编组)，按指定编码将bean转为xml
      *
@@ -26,7 +38,9 @@ object XmlKit {
      * @since 1.0.0
      */
     fun toXml(root: Any, encoding: String = "UTF-8"): String {
-        return XmlTool.toXml(root, encoding)
+        val writer = StringWriter()
+        createMarshaller(root::class, encoding).marshal(root, writer)
+        return writer.toString()
     }
 
     /**
@@ -41,8 +55,12 @@ object XmlKit {
      * @author K
      * @since 1.0.0
      */
-    fun <T : Any> toXml(root: Collection<T>, rootName: String, clazz: KClass<T>, encoding: String = "UTF-8"): String {
-        return XmlTool.toXml(root, rootName, clazz.java, encoding)
+    fun <T: Any> toXml(root: Collection<T>, rootName: String, clazz: KClass<T>, encoding: String = "UTF-8"): String {
+        val wrapper = CollectionWrapper(root)
+        val wrapperElement = JAXBElement(QName(rootName), CollectionWrapper::class.java, wrapper)
+        val writer = StringWriter()
+        createMarshaller(clazz, encoding).marshal(wrapperElement, writer)
+        return writer.toString()
     }
 
     /**
@@ -56,11 +74,61 @@ object XmlKit {
      * @author K
      * @since 1.0.0
      */
-    @Suppress(Consts.Suppress.UNCHECKED_CAST)
     fun <T : Any> fromXml(xml: String, clazz: KClass<T>, ignoreNameSpace: Boolean = false): T {
-        return if (ignoreNameSpace)
-            XmlTool.fromXml(xml, clazz.java)
-        else XmlTool.fromXmlIgnoreNameSpace(xml, clazz.java)
+        val reader = StringReader(xml)
+        val sax = SAXParserFactory.newInstance()
+        sax.isNamespaceAware = ignoreNameSpace
+        val xmlReader = sax.newSAXParser().xmlReader
+        val source = SAXSource(xmlReader, InputSource(reader))
+        return createUnmarshaller(clazz).unmarshal(source) as T
     }
+
+    /**
+     * 创建Marshaller并设定encoding. 线程不安全，需要每次创建或pooling。
+     *
+     * @param clazz 类
+     * @param encoding 编码名称,缺省为UTF-8
+     * @return Marshaller
+     * @author K
+     * @since 1.0.0
+     */
+    private fun createMarshaller(clazz: KClass<*>, encoding: String = "UTF-8"): Marshaller {
+        val jaxbContext: JAXBContext = getJaxbContext(clazz)
+        val marshaller: Marshaller = jaxbContext.createMarshaller()
+        marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true) //格式化输出，即按标签自动换行，否则就是一行输出
+        marshaller.setProperty(Marshaller.JAXB_FRAGMENT, false); //是否省略xml头信息，默认不省略（false）
+//        marshaller.setProperty(Marshaller.JAXB_NO_NAMESPACE_SCHEMA_LOCATION, "")
+        if (encoding.isNotBlank()) {
+            marshaller.setProperty(Marshaller.JAXB_ENCODING, encoding)
+        }
+        return marshaller
+    }
+
+    /**
+     * 创建UnMarshaller. 线程不安全，需要每次创建或pooling。
+     *
+     * @param clazz 类
+     * @return UnMarshaller
+     * @author K
+     * @since 1.0.0
+     */
+    private fun createUnmarshaller(clazz: KClass<*>): Unmarshaller = getJaxbContext(clazz).createUnmarshaller()
+
+    private fun getJaxbContext(clazz: KClass<*>): JAXBContext {
+        var jaxbContext = JAXBContext.newInstance(clazz.java, CollectionWrapper::class.java)
+        jaxbContexts.putIfAbsent(clazz, jaxbContext)
+        return jaxbContext
+    }
+
+    /**
+     * 封装Root Element 是 Collection的情况.
+     *
+     * @author K
+     * @since 1.0.0
+     */
+    class CollectionWrapper(
+        @set:XmlAnyElement
+        var item: Collection<*>
+    )
 
 }

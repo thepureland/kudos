@@ -1,6 +1,6 @@
 package io.kudos.test.common.init
 
-import io.kudos.base.logger.LoggerFactory
+import io.kudos.base.logger.LogFactory
 import org.springframework.boot.context.event.ApplicationEnvironmentPreparedEvent
 import org.springframework.context.ApplicationListener
 import org.springframework.core.env.ConfigurableEnvironment
@@ -15,7 +15,7 @@ import org.springframework.core.env.MapPropertySource
 class DynamicPropertiesListener(private val dynamicProperties: Map<String, String>) :
     ApplicationListener<ApplicationEnvironmentPreparedEvent> {
 
-    private val log = LoggerFactory.getLogger(this)
+    private val log = LogFactory.getLog(this)
 
     override fun onApplicationEvent(event: ApplicationEnvironmentPreparedEvent) {
         val env = event.environment as ConfigurableEnvironment

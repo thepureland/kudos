@@ -1,7 +1,6 @@
 package io.kudos.base.support.result
 
 import io.kudos.base.support.IIdEntity
-import org.soul.base.support.result.IJsonResult
 
 
 /**

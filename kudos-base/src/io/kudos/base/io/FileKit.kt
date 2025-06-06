@@ -1,14 +1,17 @@
 package io.kudos.base.io
 
-import io.kudos.base.io.FileKit.checksum
-import io.kudos.base.support.Consts
+import de.idyl.winzipaes.AesZipFileEncrypter
+import de.idyl.winzipaes.impl.AESEncrypter
+import de.idyl.winzipaes.impl.AESEncrypterBC
+import org.apache.commons.io.FileUtils
 import org.apache.commons.io.LineIterator
 import org.apache.commons.io.filefilter.IOFileFilter
-import org.soul.base.io.FileTool
 import java.io.*
 import java.math.BigInteger
 import java.net.URL
 import java.util.zip.Checksum
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 
 /**
  * 文件工具类
@@ -37,12 +40,41 @@ object FileKit {
      * @since 1.0.0
      */
     fun zip(file: File, fileName: String?, password: String?): File? {
-        return FileTool.zip(file, fileName, password)
+        var filename: String? = fileName
+        val zipFile: File?
+        var enc: AesZipFileEncrypter? = null
+        var input: InputStream? = null
+        var zipOut: ZipOutputStream? = null
+        try {
+            zipFile = File.createTempFile(PREFIX_TEMP_FILE, ".zip")
+            if (!password.isNullOrBlank()) {
+                val aesEncrypter: AESEncrypter = AESEncrypterBC()
+                aesEncrypter.init(password, 0)
+                enc = AesZipFileEncrypter(zipFile, aesEncrypter)
+                if (!filename.isNullOrBlank()) {
+                    filename = file.name
+                }
+                enc.add(file, filename, password)
+            } else {
+                input = FileInputStream(file)
+                zipOut = ZipOutputStream(FileOutputStream(zipFile))
+                zipOut.putNextEntry(ZipEntry(file.name))
+                var temp: Int
+                while ((input.read().also { temp = it }) != -1) {
+                    zipOut.write(temp)
+                }
+            }
+        } finally {
+            enc?.close()
+            input?.close()
+            zipOut?.close()
+        }
+        return zipFile
     }
 
 
     // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-    // 封装org.apache.commons.io.FileTool
+    // 封装org.apache.commons.io.FileUtils
     // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
     /**
@@ -54,7 +86,7 @@ object FileKit {
      * @author K
      * @since 1.0.0
      */
-    fun getFile(directory: File, vararg names: String): File = FileTool.getFile(directory, *names)
+    fun getFile(directory: File, vararg names: String): File = FileUtils.getFile(directory, *names)
 
     /**
      * 从指定的名字集构造一个文件对象
@@ -64,7 +96,7 @@ object FileKit {
      * @author K
      * @since 1.0.0
      */
-    fun getFile(vararg names: String): File = FileTool.getFile(*names)
+    fun getFile(vararg names: String): File = FileUtils.getFile(*names)
 
     /**
      * 为指定的文件对象打开一个[FileInputStream]， 比简单地调用
@@ -79,7 +111,7 @@ object FileKit {
      * @author K
      * @since 1.0.0
      */
-    fun openInputStream(file: File): FileInputStream = FileTool.openInputStream(file)
+    fun openInputStream(file: File): FileInputStream = FileUtils.openInputStream(file)
 
     /**
      * 为指定的文件对象打开一个[FileOutputStream]， 检查并创建父目录如果它不存在的话。
@@ -97,7 +129,7 @@ object FileKit {
      * @since 1.0.0
      */
     fun openOutputStream(file: File, append: Boolean = false): FileOutputStream =
-        FileTool.openOutputStream(file, append)
+        FileUtils.openOutputStream(file, append)
 
     /**
      * 返回文件大小的可读版本，输入参数代表字节数
@@ -111,7 +143,7 @@ object FileKit {
      * @author K
      * @since 1.0.0
      */
-    fun byteCountToDisplaySize(size: BigInteger): String = FileTool.byteCountToDisplaySize(size)
+    fun byteCountToDisplaySize(size: BigInteger): String = FileUtils.byteCountToDisplaySize(size)
 
     /**
      * 返回文件大小的可读版本，输入参数代表字节数
@@ -125,7 +157,7 @@ object FileKit {
      * @author K
      * @since 1.0.0
      */
-    fun byteCountToDisplaySize(size: Long): String = FileTool.byteCountToDisplaySize(size)
+    fun byteCountToDisplaySize(size: Long): String = FileUtils.byteCountToDisplaySize(size)
 
     /**
      * 实现Unix上"touch"的相同行为。它创建一个大小为0的新文件，或者如果指定的文件存在，
@@ -136,7 +168,7 @@ object FileKit {
      * @author K
      * @since 1.0.0
      */
-    fun touch(file: File): Unit = FileTool.touch(file)
+    fun touch(file: File): Unit = FileUtils.touch(file)
 
     /**
      * 将包含File实例的容器转换为数组。这样做主要是为了处理
@@ -148,7 +180,7 @@ object FileKit {
      * @since 1.0.0
      */
     fun convertFileCollectionToFileArray(files: Collection<File>): Array<File> =
-        FileTool.convertFileCollectionToFileArray(files)
+        FileUtils.convertFileCollectionToFileArray(files)
 
     /**
      * 查找指定目录及其子目录下的文件，所有找到的文件将由IOFileFilter过滤。
@@ -166,7 +198,7 @@ object FileKit {
      * @since 1.0.0
      */
     fun listFiles(directory: File, fileFilter: IOFileFilter, dirFilter: IOFileFilter?): Collection<File> =
-        FileTool.listFiles(directory, fileFilter, dirFilter)
+        FileUtils.listFiles(directory, fileFilter, dirFilter)
 
     /**
      * 在给定的目录(子目录可选)中查找文件
@@ -182,7 +214,7 @@ object FileKit {
      * @since 1.0.0
      */
     fun listFilesAndDirs(directory: File, fileFilter: IOFileFilter, dirFilter: IOFileFilter?): Collection<File> =
-        FileTool.listFilesAndDirs(directory, fileFilter, dirFilter)
+        FileUtils.listFilesAndDirs(directory, fileFilter, dirFilter)
 
     /**
      * 允许迭代指定目录中的文件(子目录可选)
@@ -199,7 +231,7 @@ object FileKit {
      * @since 1.0.0
      */
     fun iterateFiles(directory: File, fileFilter: IOFileFilter, dirFilter: IOFileFilter?): Iterator<File> =
-        FileTool.iterateFiles(directory, fileFilter, dirFilter)
+        FileUtils.iterateFiles(directory, fileFilter, dirFilter)
 
     /**
      * 允许迭代指定目录中的文件(子目录可选)
@@ -217,7 +249,7 @@ object FileKit {
      * @since 1.0.0
      */
     fun iterateFilesAndDirs(directory: File, fileFilter: IOFileFilter, dirFilter: IOFileFilter?): Iterator<File> =
-        FileTool.iterateFilesAndDirs(directory, fileFilter, dirFilter)
+        FileUtils.iterateFilesAndDirs(directory, fileFilter, dirFilter)
 
     /**
      * 查找指定目录(子目录是可选的)中匹配扩展名的文件
@@ -229,9 +261,8 @@ object FileKit {
      * @author K
      * @since 1.0.0
      */
-    @Suppress(Consts.Suppress.UNCHECKED_CAST)
     fun listFiles(directory: File, extensions: Array<String>?, recursive: Boolean): List<File> =
-        FileTool.listFiles(directory, extensions, recursive) as List<File>
+        FileUtils.listFiles(directory, extensions, recursive) as List<File>
 
     /**
      * 查找指定目录(子目录是可选的)中匹配扩展名的文件.
@@ -245,7 +276,7 @@ object FileKit {
      * @since 1.0.0
      */
     fun iterateFiles(directory: File, extensions: Array<String>?, recursive: Boolean): Iterator<File> =
-        FileTool.iterateFiles(directory, extensions, recursive)
+        FileUtils.iterateFiles(directory, extensions, recursive)
 
     /**
      * 检查两个文件的内容是否相等
@@ -259,7 +290,7 @@ object FileKit {
      * @author K
      * @since 1.0.0
      */
-    fun contentEquals(file1: File, file2: File): Boolean = FileTool.contentEquals(file1, file2)
+    fun contentEquals(file1: File, file2: File): Boolean = FileUtils.contentEquals(file1, file2)
 
     /**
      * 检查两个文件的内容是否相等
@@ -275,7 +306,7 @@ object FileKit {
      * @since 1.0.0
      */
     fun contentEqualsIgnoreEOL(file1: File, file2: File, charsetName: String?): Boolean =
-        FileTool.contentEqualsIgnoreEOL(file1, file2, charsetName)
+        FileUtils.contentEqualsIgnoreEOL(file1, file2, charsetName)
 
     /**
      * 将一个`URL` 转换为一个 `File`
@@ -285,7 +316,7 @@ object FileKit {
      * @author K
      * @since 1.0.0
      */
-    fun toFile(url: URL): File? = FileTool.toFile(url)
+    fun toFile(url: URL): File? = FileUtils.toFile(url)
 
     /**
      * 将每一个`URL` 都转换为 `File`
@@ -304,7 +335,7 @@ object FileKit {
      * @author K
      * @since 1.0.0
      */
-    fun toFiles(urls: Array<URL?>): Array<File?> = FileTool.toFiles(urls)
+    fun toFiles(urls: Array<URL>): Array<File?> = FileUtils.toFiles(*urls)
 
     /**
      * 将每一个`File` 都转换为 `URL`
@@ -316,7 +347,7 @@ object FileKit {
      * @author K
      * @since 1.0.0
      */
-    fun toURLs(files: Array<File?>): Array<URL?> = FileTool.toURLs(files)
+    fun toURLs(files: Array<File>): Array<URL?> = FileUtils.toURLs(*files)
 
     /**
      * 拷贝一个文件到指定目录，可以指定是否保留文件的日期
@@ -336,7 +367,7 @@ object FileKit {
      * @since 1.0.0
      */
     fun copyFileToDirectory(srcFile: File, destDir: File, preserveFileDate: Boolean = true): Unit =
-        FileTool.copyFileToDirectory(srcFile, destDir, preserveFileDate)
+        FileUtils.copyFileToDirectory(srcFile, destDir, preserveFileDate)
 
     /**
      * 拷贝一个文件到新的位置，可以指定是否保留文件的日期
@@ -356,7 +387,7 @@ object FileKit {
      * @since 1.0.0
      */
     fun copyFile(srcFile: File, destFile: File, preserveFileDate: Boolean = true): Unit =
-        FileTool.copyFile(srcFile, destFile, preserveFileDate)
+        FileUtils.copyFile(srcFile, destFile, preserveFileDate)
 
     /**
      * 从指定的文件拷贝字节到`OutputStream`
@@ -369,7 +400,7 @@ object FileKit {
      * @author K
      * @since 1.0.0
      */
-    fun copyFile(input: File, output: OutputStream): Long = FileTool.copyFile(input, output)
+    fun copyFile(input: File, output: OutputStream): Long = FileUtils.copyFile(input, output)
 
     /**
      * 拷贝一个目录到目标目录下，保留文件日期
@@ -389,7 +420,7 @@ object FileKit {
      * @since 1.0.0
      */
     fun copyDirectoryToDirectory(srcDir: File, destDir: File): Unit =
-        FileTool.copyDirectoryToDirectory(srcDir, destDir)
+        FileUtils.copyDirectoryToDirectory(srcDir, destDir)
 
     /**
      * 拷贝整个目录到一个新的位置，可以指定是否保留文件的日期
@@ -410,7 +441,7 @@ object FileKit {
      * @since 1.0.0
      */
     fun copyDirectory(srcDir: File, destDir: File, preserveFileDate: Boolean = true): Unit =
-        FileTool.copyDirectory(srcDir, destDir, preserveFileDate)
+        FileUtils.copyDirectory(srcDir, destDir, preserveFileDate)
 
     /**
      * 拷贝一个过滤过的目录到一个新的位置，可以指定是否保留文件日期
@@ -447,7 +478,7 @@ object FileKit {
      * @since 1.0.0
      */
     fun copyDirectory(srcDir: File, destDir: File, filter: FileFilter?, preserveFileDate: Boolean = true): Unit =
-        FileTool.copyDirectory(srcDir, destDir, filter, preserveFileDate)
+        FileUtils.copyDirectory(srcDir, destDir, filter, preserveFileDate)
 
     /**
      * 从URL中按字节拷贝其内容到一个文件
@@ -468,7 +499,7 @@ object FileKit {
      * @author K
      * @since 1.0.0
      */
-    fun copyURLToFile(source: URL, destination: File): Unit = FileTool.copyURLToFile(source, destination)
+    fun copyURLToFile(source: URL, destination: File): Unit = FileUtils.copyURLToFile(source, destination)
 
     /**
      * 从URL中按字节拷贝其内容到一个文件
@@ -488,7 +519,7 @@ object FileKit {
      * @since 1.0.0
      */
     fun copyURLToFile(source: URL, destination: File, connectionTimeout: Int, readTimeout: Int): Unit =
-        FileTool.copyURLToFile(source, destination, connectionTimeout, readTimeout)
+        FileUtils.copyURLToFile(source, destination, connectionTimeout, readTimeout)
 
     /**
      * 从[InputStream]拷贝字节到一个文件
@@ -505,7 +536,7 @@ object FileKit {
      * @since 1.0.0
      */
     fun copyInputStreamToFile(source: InputStream, destination: File): Unit =
-        FileTool.copyInputStreamToFile(source, destination)
+        FileUtils.copyInputStreamToFile(source, destination)
 
     /**
      * 递归删除一个目录
@@ -515,7 +546,7 @@ object FileKit {
      * @author K
      * @since 1.0.0
      */
-    fun deleteDirectory(directory: File): Unit = FileTool.deleteDirectory(directory)
+    fun deleteDirectory(directory: File): Unit = FileUtils.deleteDirectory(directory)
 
     /**
      * 删除一个文件，不会抛出异常。如果为目录，删除它及其所有子目录
@@ -529,7 +560,7 @@ object FileKit {
      * @author K
      * @since 1.0.0
      */
-    fun deleteQuietly(file: File): Boolean = FileTool.deleteQuietly(file)
+    fun deleteQuietly(file: File): Boolean = FileUtils.deleteQuietly(file)
 
     /**
      * 检查父目录是否包含子目录(或文件)
@@ -546,7 +577,7 @@ object FileKit {
      * @author K
      * @since 1.0.0
      */
-    fun directoryContains(directory: File, child: File): Boolean? = FileTool.directoryContains(directory, child)
+    fun directoryContains(directory: File, child: File): Boolean? = FileUtils.directoryContains(directory, child)
 
     /**
      * 清空指定目录，而不是删除它
@@ -556,7 +587,7 @@ object FileKit {
      * @author K
      * @since 1.0.0
      */
-    fun cleanDirectory(directory: File): Unit = FileTool.cleanDirectory(directory)
+    fun cleanDirectory(directory: File): Unit = FileUtils.cleanDirectory(directory)
 
     /**
      * 等待一个文件的创建，实行超时
@@ -569,7 +600,7 @@ object FileKit {
      * @author K
      * @since 1.0.0
      */
-    fun waitFor(file: File, seconds: Int): Boolean = FileTool.waitFor(file, seconds)
+    fun waitFor(file: File, seconds: Int): Boolean = FileUtils.waitFor(file, seconds)
 
     /**
      * 读取一个文件的内容为字符串。该文件总是关闭着。
@@ -582,7 +613,7 @@ object FileKit {
      * @author K
      * @since 1.0.0
      */
-    fun readFileToString(file: File, encoding: String? = null): String = FileTool.readFileToString(file, encoding)
+    fun readFileToString(file: File, encoding: String? = null): String = FileUtils.readFileToString(file, encoding)
 
     /**
      * 从指定的文件读取内容到字节数组. 该文件总是关闭着。
@@ -593,7 +624,7 @@ object FileKit {
      * @author K
      * @since 1.0.0
      */
-    fun readFileToByteArray(file: File): ByteArray = FileTool.readFileToByteArray(file)
+    fun readFileToByteArray(file: File): ByteArray = FileUtils.readFileToByteArray(file)
 
     /**
      * 逐行读取指定文件的内容到字符串列表。该文件总是关闭着。
@@ -606,7 +637,7 @@ object FileKit {
      * @author K
      * @since 1.0.0
      */
-    fun readLines(file: File, encoding: String? = null): List<String> = FileTool.readLines(file, encoding)
+    fun readLines(file: File, encoding: String? = null): List<String> = FileUtils.readLines(file, encoding)
 
     /**
      * 返回文件中每行的迭代器
@@ -637,7 +668,7 @@ object FileKit {
      * @author K
      * @since 1.0.0
      */
-    fun lineIterator(file: File, encoding: String? = null): LineIterator = FileTool.lineIterator(file, encoding)
+    fun lineIterator(file: File, encoding: String? = null): LineIterator = FileUtils.lineIterator(file, encoding)
 
     /**
      * 将一个字符串写入到文件中，如果文件不存在将被创建
@@ -651,7 +682,7 @@ object FileKit {
      * @since 1.0.0
      */
     fun writeStringToFile(file: File, data: String, encoding: String? = null): Unit =
-        FileTool.writeStringToFile(file, data, encoding)
+        FileUtils.writeStringToFile(file, data, encoding)
 
     /**
      * 将一个字符串写入到文件中，如果文件不存在将被创建
@@ -666,7 +697,7 @@ object FileKit {
      * @since 1.0.0
      */
     fun writeStringToFile(file: File, data: String, encoding: String? = null, append: Boolean): Unit =
-        FileTool.writeStringToFile(file, data, encoding, append)
+        FileUtils.writeStringToFile(file, data, encoding, append)
 
     /**
      * 将一个字符序列写入到文件中，如果文件不存在将被创建
@@ -681,7 +712,7 @@ object FileKit {
      * @since 1.0.0
      */
     fun write(file: File, data: CharSequence, encoding: String? = null, append: Boolean = false): Unit =
-        FileTool.write(file, data, encoding, append)
+        FileUtils.write(file, data, encoding, append)
 
     /**
      * 将一个字节数组写入到文件中，使用虚拟机默认的编码，如果文件不存在将被创建
@@ -694,7 +725,7 @@ object FileKit {
      * @since 1.0.0
      */
     fun writeByteArrayToFile(file: File, data: ByteArray, append: Boolean = false): Unit =
-        FileTool.writeByteArrayToFile(file, data, append)
+        FileUtils.writeByteArrayToFile(file, data, append)
 
     /**
      * 将容器中每个元素的toString()值逐行地写入到指定的文件。
@@ -718,7 +749,7 @@ object FileKit {
         lineEnding: String? = null,
         append: Boolean = false
     ): Unit =
-        FileTool.writeLines(file, encoding, lines, lineEnding, append)
+        FileUtils.writeLines(file, encoding, lines, lineEnding, append)
 
     /**
      * 删除一个文件。如果为目录，删除它及其所有子目录
@@ -732,7 +763,7 @@ object FileKit {
      * @author K
      * @since 1.0.0
      */
-    fun forceDelete(file: File): Unit = FileTool.forceDelete(file)
+    fun forceDelete(file: File): Unit = FileUtils.forceDelete(file)
 
     /**
      * 当java虚拟机退出时，删除指定的文件或目录。如果是目录，删除该目录及其所有子目录。
@@ -742,7 +773,7 @@ object FileKit {
      * @author K
      * @since 1.0.0
      */
-    fun forceDeleteOnExit(file: File): Unit = FileTool.forceDeleteOnExit(file)
+    fun forceDeleteOnExit(file: File): Unit = FileUtils.forceDeleteOnExit(file)
 
     /**
      * 创建目录，包含任何需要但不存在的父目录。
@@ -754,7 +785,7 @@ object FileKit {
      * @author K
      * @since 1.0.0
      */
-    fun forceMkdir(directory: File): Unit = FileTool.forceMkdir(directory)
+    fun forceMkdir(directory: File): Unit = FileUtils.forceMkdir(directory)
 
     /**
      * 返回指定文件或目录的大小。
@@ -768,7 +799,7 @@ object FileKit {
      * @author K
      * @since 1.0.0
      */
-    fun sizeOf(file: File): Long = FileTool.sizeOf(file)
+    fun sizeOf(file: File): Long = FileUtils.sizeOf(file)
 
     /**
      * 返回指定文件或目录的大小。
@@ -782,7 +813,7 @@ object FileKit {
      * @author K
      * @since 1.0.0
      */
-    fun sizeOfAsBigInteger(file: File): BigInteger = FileTool.sizeOfAsBigInteger(file)
+    fun sizeOfAsBigInteger(file: File): BigInteger = FileUtils.sizeOfAsBigInteger(file)
 
     /**
      * 递归计算目录的大小(所有文件的大小之和)
@@ -792,7 +823,7 @@ object FileKit {
      * @author K
      * @since 1.0.0
      */
-    fun sizeOfDirectory(directory: File): Long = FileTool.sizeOfDirectory(directory)
+    fun sizeOfDirectory(directory: File): Long = FileUtils.sizeOfDirectory(directory)
 
     /**
      * 递归计算目录的大小(所有文件的大小之和)
@@ -802,7 +833,7 @@ object FileKit {
      * @author K
      * @since 1.0.0
      */
-    fun sizeOfDirectoryAsBigInteger(directory: File): BigInteger = FileTool.sizeOfDirectoryAsBigInteger(directory)
+    fun sizeOfDirectoryAsBigInteger(directory: File): BigInteger = FileUtils.sizeOfDirectoryAsBigInteger(directory)
 
     /**
      * 检查指定的第一个文件是否比第二文件新(修改日期)
@@ -814,7 +845,7 @@ object FileKit {
      * @author K
      * @since 1.0.0
      */
-    fun isFileNewer(file: File, reference: File): Boolean = FileTool.isFileNewer(file, reference)
+    fun isFileNewer(file: File, reference: File): Boolean = FileUtils.isFileNewer(file, reference)
 
     /**
      * 检查指定的文件的修改日期是否比指定的日期新
@@ -826,7 +857,7 @@ object FileKit {
      * @author K
      * @since 1.0.0
      */
-    fun isFileNewer(file: File, timeMillis: Long): Boolean = FileTool.isFileNewer(file, timeMillis)
+    fun isFileNewer(file: File, timeMillis: Long): Boolean = FileUtils.isFileNewer(file, timeMillis)
 
     /**
      * 检查指定的第一个文件是否比第二文件旧(修改日期)
@@ -838,7 +869,7 @@ object FileKit {
      * @author K
      * @since 1.0.0
      */
-    fun isFileOlder(file: File, reference: File): Boolean = FileTool.isFileOlder(file, reference)
+    fun isFileOlder(file: File, reference: File): Boolean = FileUtils.isFileOlder(file, reference)
 
     /**
      * 检查指定的文件的修改日期是否比指定的日期旧
@@ -849,7 +880,7 @@ object FileKit {
      * @author K
      * @since 1.0.0
      */
-    fun isFileOlder(file: File, timeMillis: Long): Boolean = FileTool.isFileOlder(file, timeMillis)
+    fun isFileOlder(file: File, timeMillis: Long): Boolean = FileUtils.isFileOlder(file, timeMillis)
 
     /**
      * 计算文件的校验和，使用CRC32校验和算法。返回校验和。
@@ -861,7 +892,7 @@ object FileKit {
      * @author K
      * @since 1.0.0
      */
-    fun checksumCRC32(file: File): Long = FileTool.checksumCRC32(file)
+    fun checksumCRC32(file: File): Long = FileUtils.checksumCRC32(file)
 
     /**
      * 使用指定的校验和对象计算文件的校验和。
@@ -879,7 +910,7 @@ object FileKit {
      * @author K
      * @since 1.0.0
      */
-    fun checksum(file: File, checksum: Checksum): Checksum = FileTool.checksum(file, checksum)
+    fun checksum(file: File, checksum: Checksum): Checksum = FileUtils.checksum(file, checksum)
 
     /**
      * 移动一个目录到另一个目录
@@ -893,7 +924,7 @@ object FileKit {
      * @author K
      * @since 1.0.0
      */
-    fun moveDirectory(srcDir: File, destDir: File): Unit = FileTool.moveDirectory(srcDir, destDir)
+    fun moveDirectory(srcDir: File, destDir: File): Unit = FileUtils.moveDirectory(srcDir, destDir)
 
     /**
      * 移动一个目录到另一个目录
@@ -909,7 +940,7 @@ object FileKit {
      * @since 1.0.0
      */
     fun moveDirectoryToDirectory(src: File, destDir: File, createDestDir: Boolean): Unit =
-        FileTool.moveDirectoryToDirectory(src, destDir, createDestDir)
+        FileUtils.moveDirectoryToDirectory(src, destDir, createDestDir)
 
     /**
      * 移动一个文件
@@ -923,7 +954,7 @@ object FileKit {
      * @author K
      * @since 1.0.0
      */
-    fun moveFile(srcFile: File, destFile: File): Unit = FileTool.moveFile(srcFile, destFile)
+    fun moveFile(srcFile: File, destFile: File): Unit = FileUtils.moveFile(srcFile, destFile)
 
     /**
      * 移动一个文件
@@ -939,7 +970,7 @@ object FileKit {
      * @since 1.0.0
      */
     fun moveFileToDirectory(srcFile: File, destDir: File, createDestDir: Boolean): Unit =
-        FileTool.moveFileToDirectory(srcFile, destDir, createDestDir)
+        FileUtils.moveFileToDirectory(srcFile, destDir, createDestDir)
 
     /**
      * 移动一个文件或目录到目标目录
@@ -954,7 +985,7 @@ object FileKit {
      * @since 1.0.0
      */
     fun moveToDirectory(src: File, destDir: File, createDestDir: Boolean): Unit =
-        FileTool.moveToDirectory(src, destDir, createDestDir)
+        FileUtils.moveToDirectory(src, destDir, createDestDir)
 
     /**
      * 确定指定的文件是否是一个符号链接，而不是一个实际的文件。
@@ -969,10 +1000,10 @@ object FileKit {
      * @author K
      * @since 1.0.0
      */
-    fun isSymlink(file: File): Boolean = FileTool.isSymlink(file)
+    fun isSymlink(file: File): Boolean = FileUtils.isSymlink(file)
 
     // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    // 封装org.apache.commons.io.FileTool
+    // 封装org.apache.commons.io.FileUtils
     // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 }

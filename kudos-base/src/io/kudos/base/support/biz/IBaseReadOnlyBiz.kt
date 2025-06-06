@@ -1,10 +1,10 @@
 package io.kudos.base.support.biz
 
+import io.kudos.base.query.Criteria
+import io.kudos.base.query.sort.Order
 import io.kudos.base.support.IIdEntity
 import io.kudos.base.support.payload.ListSearchPayload
 import io.kudos.base.support.payload.SearchPayload
-import org.soul.base.query.Criteria
-import org.soul.base.query.sort.Order
 import kotlin.reflect.KClass
 
 /**

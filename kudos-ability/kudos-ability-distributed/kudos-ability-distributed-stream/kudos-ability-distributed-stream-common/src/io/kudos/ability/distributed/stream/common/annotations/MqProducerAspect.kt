@@ -1,6 +1,6 @@
 package io.kudos.ability.distributed.stream.common.annotations
 
-import io.kudos.base.logger.LoggerFactory
+import io.kudos.base.logger.LogFactory
 import org.aspectj.lang.JoinPoint
 import org.aspectj.lang.annotation.AfterReturning
 import org.aspectj.lang.annotation.Aspect
@@ -22,7 +22,7 @@ open class MqProducerAspect {
     @Autowired
     private lateinit var producerHelper: StreamProducerHelper
 
-    private val log = LoggerFactory.getLogger(this)
+    private val log = LogFactory.getLog(this)
 
     @Pointcut("@annotation(io.kudos.ability.distributed.stream.common.annotations.MqProducer)")
     open fun producerPointcut() {

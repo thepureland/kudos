@@ -1,8 +1,13 @@
 package io.kudos.base.cn
 
-import org.soul.base.cn.IdCardNoTool
-import org.soul.base.cn.ProvinceEnum
-import org.soul.base.enums.SexEnum
+import io.kudos.base.enums.impl.ProvinceEnum
+import io.kudos.base.enums.impl.SexEnum
+import io.kudos.base.lang.string.isNumeric
+import java.text.ParseException
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 /**
  * 身份证工具类.
@@ -11,6 +16,28 @@ import org.soul.base.enums.SexEnum
  * @since 1.0.0
  */
 object IdCardNoKit {
+
+    /** 中国大陆公民身份证号码最小长度。  */
+    private const val MAINLAND_ID_MIN_LENGTH = 15
+
+    /** 中国大陆公民身份证号码最大长度。  */
+    private const val MAINLAND_ID_MAX_LENGTH = 18
+
+    /**
+     * 每位加权因子
+     */
+    private val power = intArrayOf(7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2)
+
+    /**
+     * 第18位校检码
+     */
+    private val verifyCode = arrayOf("1", "0", "X", "9", "8", "7", "6", "5", "4", "3", "2")
+
+    /** 最低年限  */
+    private const val MIN = 1930
+
+    /** 台湾身份首字母对应数字  */
+    private val twFirstCode = mutableMapOf<String, Int>()
 
     /**
      * 将15位身份证号码转换为18位(大陆)
@@ -21,7 +48,41 @@ object IdCardNoKit {
      * @since 1.0.0
      */
     fun convert15To18(idCardNo15: String): String? {
-        return IdCardNoTool.convert15To18(idCardNo15)
+        if (idCardNo15.isBlank() || idCardNo15.length != MAINLAND_ID_MIN_LENGTH) {
+            return null
+        }
+        var idCard18: String
+        if (idCardNo15.isNumeric()) {
+            // 获取出生年月日
+            val birthday = idCardNo15.substring(6, 12)
+            var birthDate: Date? = null
+            try {
+                birthDate = SimpleDateFormat("yyMMdd").parse(birthday)
+            } catch (e: ParseException) {
+                e.printStackTrace()
+            }
+            val cal = Calendar.getInstance()
+            if (birthDate != null) {
+                cal.time = birthDate
+            }
+            // 获取出生年(完全表现形式,如：2010)
+            val sYear = cal[Calendar.YEAR].toString()
+            idCard18 = idCardNo15.substring(0, 6) + sYear + idCardNo15.substring(8)
+            // 转换字符数组
+            val cArr = idCard18.toCharArray()
+            val iCard = converCharToInt(cArr)
+            val iSum17 = getPowerSum(iCard)
+            // 获取校验位
+            val sVal = getCheckCode18(iSum17)
+            idCard18 += if (sVal.isNotEmpty()) {
+                sVal
+            } else {
+                return null
+            }
+        } else {
+            return null
+        }
+        return idCard18
     }
 
     /**
@@ -33,7 +94,9 @@ object IdCardNoKit {
      * @since 1.0.0
      */
     fun isIdCardNo(str: CharSequence): Boolean {
-        return IdCardNoTool.isIdCardNo(str.toString())
+        return if (str.isBlank()) {
+            false
+        } else isIdCardNo18(str) || isIdCardNo15(str) || isHkIdCardNo(str) || isMacauIdCardNo(str) || isTwIdCardNo(str)
     }
 
     /**
@@ -45,7 +108,29 @@ object IdCardNoKit {
      * @since 1.0.0
      */
     fun isIdCardNo18(str: CharSequence): Boolean {
-        return IdCardNoTool.isIdCardNo18(str.toString())
+        if (str.isBlank()) {
+            return false
+        }
+        var bTrue = false
+        if (str.length == MAINLAND_ID_MAX_LENGTH) {
+            // 前17位
+            val code17 = str.substring(0, 17)
+            // 第18位
+            if (code17.isNumeric()) {
+                val cArr = code17.toCharArray()
+                val iCard = converCharToInt(cArr)
+                val iSum17 = getPowerSum(iCard)
+                // 获取校验位
+                val `val` = getCheckCode18(iSum17)
+                if (`val`.isNotEmpty()) {
+                    val code18 = str.last().toString()
+                    if (`val`.equals(code18, ignoreCase = true)) {
+                        bTrue = true
+                    }
+                }
+            }
+        }
+        return bTrue
     }
 
     /**
@@ -57,7 +142,39 @@ object IdCardNoKit {
      * @since 1.0.0
      */
     fun isIdCardNo15(str: CharSequence): Boolean {
-        return IdCardNoTool.isIdCardNo15(str.toString())
+        if (str.isBlank()) {
+            return false
+        }
+        if (str.length != MAINLAND_ID_MIN_LENGTH) {
+            return false
+        }
+        if (str.isNumeric()) {
+            val proCode = str.substring(0, 2)
+            if (ProvinceEnum.enumOf(proCode) == null) {
+                return false
+            }
+            val birthCode = str.substring(6, 12)
+            var birthDate: Date? = null
+            try {
+                birthDate = SimpleDateFormat("yy").parse(birthCode.substring(0, 2))
+            } catch (e: ParseException) {
+                e.printStackTrace()
+            }
+            val cal = Calendar.getInstance()
+            if (birthDate != null) {
+                cal.time = birthDate
+            }
+            if (!valiDate(
+                    cal[Calendar.YEAR], Integer.valueOf(birthCode.substring(2, 4)),
+                    Integer.valueOf(birthCode.substring(4, 6))
+                )
+            ) {
+                return false
+            }
+        } else {
+            return false
+        }
+        return true
     }
 
     /**
@@ -69,7 +186,24 @@ object IdCardNoKit {
      * @since 1.0.0
      */
     fun isTwIdCardNo(str: CharSequence): Boolean {
-        return IdCardNoTool.isTwIdCardNo(str.toString())
+        if (str.isBlank()) {
+            return false
+        }
+        if (!str.matches("^[a-zA-Z][0-9]{9}$".toRegex())) {
+            return false
+        }
+        val start = str.substring(0, 1)
+        val mid = str.substring(1, 9)
+        val end = str.substring(9, 10)
+        val iStart = twFirstCode[start] ?: return false
+        var sum = iStart / 10 + iStart % 10 * 9
+        val chars = mid.toCharArray()
+        var iflag = 8
+        for (c in chars) {
+            sum += Integer.valueOf(c.toString() + "") * iflag
+            iflag--
+        }
+        return (if (sum % 10 == 0) 0 else 10 - sum % 10) == Integer.valueOf(end)
     }
 
     /**
@@ -84,7 +218,35 @@ object IdCardNoKit {
      * @since 1.0.0
      */
     fun isHkIdCardNo(str: CharSequence): Boolean {
-        return IdCardNoTool.isHkIdCardNo(str.toString())
+        if (str.isBlank()) {
+            return false
+        }
+        if (!str.matches("^[A-Z]{1,2}[0-9]{6}\\(?[0-9A]\\)?$".toRegex())) {
+            return false
+        }
+        var card = str.replace("[\\(|\\)]".toRegex(), "")
+        var sum: Int
+        if (card.length == 9) {
+            sum = ((card.substring(0, 1).uppercase(Locale.getDefault()).toCharArray()[0].code - 55) * 9
+                    + (card.substring(1, 2).uppercase(Locale.getDefault()).toCharArray()[0].code - 55) * 8)
+            card = card.substring(1, 9)
+        } else {
+            sum = 522 + (card.substring(0, 1).uppercase(Locale.getDefault()).toCharArray()[0].code - 55) * 8
+        }
+        val mid = card.substring(1, 7)
+        val end = card.substring(7, 8)
+        val chars = mid.toCharArray()
+        var iflag = 7
+        for (c in chars) {
+            sum += Integer.valueOf(c.toString() + "") * iflag
+            iflag--
+        }
+        sum = if ("A" == end.uppercase(Locale.getDefault())) {
+            sum + 10
+        } else {
+            sum + Integer.valueOf(end)
+        }
+        return sum % 11 == 0
     }
 
     /**
@@ -96,7 +258,50 @@ object IdCardNoKit {
      * @since 1.0.0
      */
     fun isMacauIdCardNo(str: CharSequence): Boolean {
-        return IdCardNoTool.isMacauIdCardNo(str.toString())
+        return !str.isBlank() && str.matches("^[1|5|7][0-9]{6}\\(?[0-9A-Z]\\)?$".toRegex())
+    }
+
+    private fun converCharToInt(ca: CharArray): IntArray {
+        val len = ca.size
+        val iArr = IntArray(len)
+        for (i in 0 until len) {
+            iArr[i] = ca[i].code - 48
+        }
+        return iArr
+    }
+
+    /**
+     * 将身份证的每位和对应位的加权因子相乘之后，再得到和值
+     *
+     * @param iArr
+     * @return 身份证编码。
+     * @author K
+     * @since 1.0.0
+     */
+    private fun getPowerSum(iArr: IntArray): Int {
+        var iSum = 0
+        if (power.size == iArr.size) {
+            for (i in iArr.indices) {
+                for (j in power.indices) {
+                    if (i == j) {
+                        iSum += iArr[i] * power[j]
+                    }
+                }
+            }
+        }
+        return iSum
+    }
+
+    /**
+     * 将power和值与11取模获得余数进行校验码判断
+     *
+     * @param iSum
+     * @return 校验位
+     * @author K
+     * @since 1.0.0
+     */
+    private fun getCheckCode18(iSum: Int): String {
+        return verifyCode[iSum % 11]
     }
 
     /**
@@ -108,19 +313,49 @@ object IdCardNoKit {
      * @since 1.0.0
      */
     fun getBirthday(idCardNo: String): String? {
-        return IdCardNoTool.getBirthday(idCardNo)
+        var idNo = idCardNo
+        if (idNo.isBlank()) {
+            return null
+        }
+        val len = idNo.length
+        if (len < MAINLAND_ID_MIN_LENGTH) {
+            return null
+        } else if (len == MAINLAND_ID_MIN_LENGTH) {
+            idNo = convert15To18(idNo)!!
+        }
+        return idNo.substring(6, 14)
     }
 
     /**
      * 根据身份证号获取性别(仅限大陆和台湾)
      *
-     * @param idCardNo 身份证号，为null返回Sex.UNKNOWN
+     * @param idCardNo 身份证号，为null返回SexEnum.UNKNOWN
      * @return 性别枚举
      * @author K
      * @since 1.0.0
      */
     fun getSex(idCardNo: String): SexEnum {
-        return IdCardNoTool.getSex(idCardNo)
+        var idNo = idCardNo
+        if (idNo.isBlank()) {
+            return SexEnum.SECRET
+        }
+        if (isTwIdCardNo(idNo)) {
+            return if (idNo[1] == '1') SexEnum.MALE else SexEnum.FEMALE
+        }
+        if (idNo.length != MAINLAND_ID_MIN_LENGTH && idNo.length != MAINLAND_ID_MAX_LENGTH) {
+            return SexEnum.SECRET
+        }
+        val sGender: SexEnum
+        if (idNo.length == MAINLAND_ID_MIN_LENGTH) {
+            idNo = convert15To18(idNo)!!
+        }
+        val sCardNum = idNo.substring(16, 17)
+        sGender = if (sCardNum.toInt() % 2 != 0) {
+            SexEnum.MALE
+        } else {
+            SexEnum.FEMALE
+        }
+        return sGender
     }
 
     /**
@@ -132,7 +367,98 @@ object IdCardNoKit {
      * @since 1.0.0
      */
     fun getProvince(idCardNo: String): ProvinceEnum? {
-        return IdCardNoTool.getProvince(idCardNo)
+        if (idCardNo.isBlank()) {
+            return null
+        }
+        var code: String? = null
+        if (isIdCardNo15(idCardNo) || isIdCardNo18(idCardNo)) {
+            code = idCardNo.substring(0, 2)
+        } else if (isHkIdCardNo(idCardNo)) {
+            return ProvinceEnum.XIANG_GANG
+        } else if (isTwIdCardNo(idCardNo)) {
+            return ProvinceEnum.TAI_WAN
+        } else if (isMacauIdCardNo(idCardNo)) {
+            return ProvinceEnum.AO_MEN
+        }
+        return if (code == null) {
+            null
+        } else {
+            ProvinceEnum.enumOf(code)
+        }
+    }
+
+    /**
+     * 验证小于当前日期 是否有效
+     *
+     * @param iYear 待验证日期(年)
+     * @param iMonth 待验证日期(月 1-12)
+     * @param iDate 待验证日期(日)
+     * @return 是否有效
+     * @author K
+     * @since 1.0.0
+     */
+    private fun valiDate(iYear: Int, iMonth: Int, iDate: Int): Boolean {
+        val cal = Calendar.getInstance()
+        val year = cal[Calendar.YEAR]
+        val datePerMonth: Int
+        if (iYear < MIN || iYear >= year) {
+            return false
+        }
+        if (iMonth < 1 || iMonth > 12) {
+            return false
+        }
+        datePerMonth = when (iMonth) {
+            4, 6, 9, 11 -> 30
+            2 -> {
+                val dm =
+                    (iYear % 4 == 0 && iYear % 100 != 0 || iYear % 400 == 0) && iYear > MIN && iYear < year
+                if (dm) 29 else 28
+            }
+            else -> 31
+        }
+        return iDate in 1..datePerMonth
+    }
+
+    //	/** 香港身份首字母对应数字 */
+    //	private static Map<String, Integer> hkFirstCode = new HashMap<String, Integer>();
+    init {
+        twFirstCode["A"] = 10
+        twFirstCode["B"] = 11
+        twFirstCode["C"] = 12
+        twFirstCode["D"] = 13
+        twFirstCode["E"] = 14
+        twFirstCode["F"] = 15
+        twFirstCode["G"] = 16
+        twFirstCode["H"] = 17
+        twFirstCode["J"] = 18
+        twFirstCode["K"] = 19
+        twFirstCode["L"] = 20
+        twFirstCode["M"] = 21
+        twFirstCode["N"] = 22
+        twFirstCode["P"] = 23
+        twFirstCode["Q"] = 24
+        twFirstCode["R"] = 25
+        twFirstCode["S"] = 26
+        twFirstCode["T"] = 27
+        twFirstCode["U"] = 28
+        twFirstCode["V"] = 29
+        twFirstCode["X"] = 30
+        twFirstCode["Y"] = 31
+        twFirstCode["W"] = 32
+        twFirstCode["Z"] = 33
+        twFirstCode["I"] = 34
+        twFirstCode["O"] = 35
+
+//		hkFirstCode.put("A", 1);
+//		hkFirstCode.put("B", 2);
+//		hkFirstCode.put("C", 3);
+//		hkFirstCode.put("R", 18);
+//		hkFirstCode.put("U", 21);
+//		hkFirstCode.put("Z", 26);
+//		hkFirstCode.put("X", 24);
+//		hkFirstCode.put("W", 23);
+//		hkFirstCode.put("O", 15);
+//		hkFirstCode.put("N", 14);
     }
 
 }

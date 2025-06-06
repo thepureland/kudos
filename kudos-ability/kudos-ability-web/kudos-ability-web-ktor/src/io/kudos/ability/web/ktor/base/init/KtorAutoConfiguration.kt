@@ -2,7 +2,7 @@ package io.kudos.ability.web.ktor.base.init
 
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
-import io.kudos.base.logger.LoggerFactory
+import io.kudos.base.logger.LogFactory
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
 import jakarta.annotation.PreDestroy
@@ -26,7 +26,7 @@ import java.util.concurrent.CompletableFuture
 @AutoConfigureAfter(ContextAutoConfiguration::class)
 open class KtorAutoConfiguration : IComponentInitializer {
 
-    private val logger = LoggerFactory.getLogger(this)
+    private val logger = LogFactory.getLog(this)
 
     @Bean
     @ConditionalOnMissingBean

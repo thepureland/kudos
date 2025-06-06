@@ -14,8 +14,8 @@ internal class ImageKitTest {
         val image = File("${PathKit.getProjectRootPath()}/resources/logo.png")
         val imageStr = ImageKit.imageToString(image, "png")
         println(imageStr)
-        ImageKit.showImage(ImageKit.stringToImage(imageStr))
-        Thread.sleep(3000)
+//        ImageKit.showImage(ImageKit.stringToImage(imageStr))
+//        Thread.sleep(3000)
     }
 
 }

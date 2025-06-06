@@ -1,9 +1,9 @@
 package io.kudos.base.net
 
 import io.kudos.base.lang.SystemKit
-import org.soul.base.net.NetworkTool
 import java.io.BufferedReader
 import java.io.InputStreamReader
+import java.net.Socket
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
@@ -15,6 +15,9 @@ import java.util.regex.Pattern
  */
 object NetworkKit {
 
+    const val LOCALHOST_IP = "127.0.0.1"
+    const val ANYHOST_IP = "0.0.0.0"
+
     /**
      * 判断端口是否启用
      *
@@ -23,7 +26,14 @@ object NetworkKit {
      * @author K
      * @since 1.0.0
      */
-    fun isPortActive(ip: String, port: Int): Boolean = NetworkTool.isPortInUse(ip, port)
+    fun isPortActive(ip: String, port: Int): Boolean {
+        try {
+            Socket(ip, port).close()
+            return true
+        } catch (e: Exception) {
+            return false
+        }
+    }
 
     /**
      * 获取MAC地址

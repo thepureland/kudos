@@ -1,7 +1,7 @@
 package io.kudos.base.cn
 
-import org.soul.base.cn.ProvinceEnum
-import org.soul.base.enums.SexEnum
+import io.kudos.base.enums.impl.ProvinceEnum
+import io.kudos.base.enums.impl.SexEnum
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse

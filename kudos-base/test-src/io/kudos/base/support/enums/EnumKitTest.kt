@@ -1,9 +1,8 @@
 package io.kudos.base.support.enums
 
+import io.kudos.base.enums.ienums.IDictEnum
+import io.kudos.base.enums.impl.YesNotEnum
 import io.kudos.base.lang.EnumKit
-import org.soul.base.enums.YesNotEnum
-import org.soul.base.ienums.ICodeEnum
-import kotlin.reflect.KClass
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -17,8 +16,8 @@ import kotlin.test.assertTrue
  */
 internal class EnumKitTest {
 
-    private val enumClass: KClass<TimeUnit> = TimeUnit::class
-    private val enumClassStr: String = TimeUnit::class.java.name
+    private val enumClass = TimeUnit::class
+    private val enumClassStr = TimeUnit::class.java.name
 
     @Test
     fun enumOf() {
@@ -102,7 +101,7 @@ internal class EnumKitTest {
         }
     }
 
-    internal enum class TimeUnit(val codeStr: String, var transStr: String) : ICodeEnum {
+    internal enum class TimeUnit(val codeStr: String, var transStr: String) : IDictEnum {
         YEAR("1", "年"),
         MONTH("2", "月"),
         WEEK("3", "周"),
@@ -130,9 +129,9 @@ internal class EnumKitTest {
             }
         }
 
-        override fun getCode(): String = codeStr
+        override val code: String = codeStr
 
-        override fun getTrans(): String = transStr
+        override val trans: String = transStr
 
     }
 

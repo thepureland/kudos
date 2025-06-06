@@ -1,10 +1,11 @@
 package io.kudos.base.lang
 
+import io.kudos.base.enums.ienums.IDictEnum
 import io.kudos.base.lang.EnumKit.generateBitVector
 import io.kudos.base.lang.EnumKit.processBitVector
-import io.kudos.base.support.Consts
-import org.soul.base.enums.EnumTool
-import org.soul.base.ienums.ICodeEnum
+import io.kudos.base.lang.reflect.isEnum
+import io.kudos.base.logger.LogFactory
+import org.apache.commons.lang3.EnumUtils
 import java.util.*
 import kotlin.reflect.KClass
 
@@ -16,6 +17,8 @@ import kotlin.reflect.KClass
  */
 object EnumKit {
 
+    private val LOG = LogFactory.getLog(this)
+
     /**
      * 根据字典枚举全类名字符串和字典代码，取得对应的枚举元素的译文
      *
@@ -26,7 +29,14 @@ object EnumKit {
      * @author K
      * @since 1.0.0
      */
-    fun trans(enumClassStr: String, code: String): String? = EnumTool.trans(enumClassStr, code)
+    fun trans(enumClassStr: String, code: String): String? {
+        val enumClazz = enumOf(enumClassStr, code)
+        if (enumClazz != null) {
+            return enumClazz.trans
+        }
+        LOG.error("枚举类【${enumClassStr}】，不存在code为【${code}】的枚举元素！")
+        return null
+    }
 
     /**
      * 根据字典枚举类型和字典代码，取得对应的枚举元素
@@ -39,7 +49,18 @@ object EnumKit {
      * @author K
      * @since 1.0.0
      */
-    fun <E : ICodeEnum> enumOf(enumClass: KClass<E>, code: String): E? = EnumTool.enumOf(enumClass.java, code)
+    fun <E : IDictEnum> enumOf(enumClass: KClass<E>, code: String): E? {
+        assert(enumClass.isEnum()) { "指定的类【${enumClass}】非枚举类" }
+        require(code.isNotBlank()) { "字典代码参数不能为空" }
+
+        for (e in enumClass.java.enumConstants) {
+            if (e.code == code) {
+                return e
+            }
+        }
+        LOG.error("枚举类【${enumClass}】不存在code为【$code】的枚举元素！")
+        return null
+    }
 
     /**
      * 根据枚举全类名和字典代码，取得对应的枚举元素
@@ -51,7 +72,12 @@ object EnumKit {
      * @author K
      * @since 1.0.0
      */
-    fun enumOf(enumClassStr: String, code: String): ICodeEnum? = EnumTool.enumOf(enumClassStr, code)
+    fun enumOf(enumClassStr: String, code: String): IDictEnum? {
+        require(code.isNotBlank()) { "字典代码参数不能为空" }
+
+        val enumClazz = getCodeEnumClass(enumClassStr)
+        return enumOf(enumClazz, code)
+    }
 
     /**
      * 取得字典枚举的所有代码及其翻译信息
@@ -61,7 +87,15 @@ object EnumKit {
      * @author K
      * @since 1.0.0
      */
-    fun getCodeMap(enumClass: KClass<out ICodeEnum>): Map<String, String> = EnumTool.getCodeMap(enumClass.java)
+
+    fun getCodeMap(enumClass: KClass<out IDictEnum>): Map<String, String> {
+        val enumConstants = enumClass.java.enumConstants as Array<IDictEnum>
+        val codeMap = mutableMapOf<String, String>()
+        for (e in enumConstants) {
+            codeMap.put(e.code, e.trans)
+        }
+        return codeMap
+    }
 
     /**
      * 取得字典枚举的所有代码及其翻译信息
@@ -72,7 +106,10 @@ object EnumKit {
      * @author K
      * @since 1.0.0
      */
-    fun getCodeMap(enumClassStr: String): Map<String, String> = EnumTool.getCodeMap(enumClassStr)
+    fun getCodeMap(enumClassStr: String): Map<String, String> {
+        val codeEnumClass = getCodeEnumClass(enumClassStr)
+        return getCodeMap(codeEnumClass)
+    }
 
     /**
      * 根据枚举全类名，取得对应的枚举元素
@@ -83,8 +120,19 @@ object EnumKit {
      * @author K
      * @since 1.0.0
      */
-    @Suppress(Consts.Suppress.UNCHECKED_CAST)
-    fun getCodeEnumClass(enumClassStr: String): KClass<out ICodeEnum> = EnumTool.getCodeEnumClass(enumClassStr).kotlin
+    fun getCodeEnumClass(enumClassStr: String): KClass<out IDictEnum> {
+        require(!enumClassStr.isBlank()) { "字典枚举全类名参数不能为空" }
+
+        require(!enumClassStr.isBlank()) { "enumClass参数不能为空！" }
+        val enumClazz = try {
+            Class.forName(enumClassStr)
+        } catch (e: ClassNotFoundException) {
+            throw IllegalArgumentException("类【${enumClassStr}】不存在！")
+        }
+        require(enumClazz.isEnum) { "类【${enumClassStr}】不是枚举！" }
+        require(IDictEnum::class.java.isAssignableFrom(enumClazz)) { "类【${enumClassStr}】没有实现【${IDictEnum::class}】接口！" }
+        return enumClazz.kotlin as KClass<out IDictEnum>
+    }
 
 
     /**
@@ -97,7 +145,7 @@ object EnumKit {
      * @author K
      * @since 1.0.0
      */
-    fun <E : Enum<E>> getEnumMap(enumClass: KClass<E>): Map<String, E> = EnumTool.getEnumMap(enumClass.java)
+    fun <E : Enum<E>> getEnumMap(enumClass: KClass<E>): Map<String, E> = EnumUtils.getEnumMap(enumClass.java)
 
     /**
      * 将枚举中的元素放以List的形式返回
@@ -110,7 +158,7 @@ object EnumKit {
      * @author K
      * @since 1.0.0
      */
-    fun <E : Enum<E>> getEnumList(enumClass: KClass<E>): List<E> = EnumTool.getEnumList(enumClass.java)
+    fun <E : Enum<E>> getEnumList(enumClass: KClass<E>): List<E> = EnumUtils.getEnumList(enumClass.java)
 
     /**
      * 检查指定是名字是否为指定的枚举类的有效枚举元素
@@ -124,7 +172,7 @@ object EnumKit {
      * @since 1.0.0
      */
     fun <E : Enum<E>> isValidEnum(enumClass: KClass<E>, enumName: String?): Boolean =
-        EnumTool.isValidEnum(enumClass.java, enumName)
+        EnumUtils.isValidEnum(enumClass.java, enumName)
 
     /**
      * 根据枚举元素名称获取对应的枚举元素，如果没找到返回null
@@ -137,7 +185,7 @@ object EnumKit {
      * @author K
      * @since 1.0.0
      */
-    fun <E : Enum<E>> getEnum(enumClass: KClass<E>, enumName: String?): E = EnumTool.getEnum(enumClass.java, enumName)
+    fun <E : Enum<E>> getEnum(enumClass: KClass<E>, enumName: String?): E = EnumUtils.getEnum(enumClass.java, enumName)
 
     /**
      * 创建一个long型位向量来表示指定的枚举子集。
@@ -154,7 +202,7 @@ object EnumKit {
      * @since 1.0.0
      */
     fun <E : Enum<E>> generateBitVector(enumClass: KClass<E>, values: Iterable<E>): Long =
-        EnumTool.generateBitVector(enumClass.java, values)
+        EnumUtils.generateBitVector(enumClass.java, values)
 
     /**
      * 创建一个long型位向量来表示指定的枚举数组
@@ -171,7 +219,7 @@ object EnumKit {
      * @since 1.0.0
      */
     fun <E : Enum<E>> generateBitVector(enumClass: KClass<E>, vararg values: E): Long =
-        EnumTool.generateBitVector(enumClass.java, *values)
+        EnumUtils.generateBitVector(enumClass.java, *values)
 
     /**
      * 将[generateBitVector]创建的长整形值转换为它所表示的枚举元素集合
@@ -187,6 +235,6 @@ object EnumKit {
      * @since 1.0.0
      */
     fun <E : Enum<E>> processBitVector(enumClass: KClass<E>, value: Long): EnumSet<E> =
-        EnumTool.processBitVector(enumClass.java, value)
+        EnumUtils.processBitVector(enumClass.java, value)
 
 }

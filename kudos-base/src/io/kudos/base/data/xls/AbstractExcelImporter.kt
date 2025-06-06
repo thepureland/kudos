@@ -6,7 +6,7 @@ import io.kudos.base.lang.GenericKit
 import io.kudos.base.lang.reflect.getMemberProperty
 import io.kudos.base.lang.reflect.newInstance
 import io.kudos.base.lang.string.toType
-import io.kudos.base.logger.LoggerFactory
+import io.kudos.base.logger.LogFactory
 import io.kudos.base.support.Consts
 import jxl.Cell
 import jxl.CellType
@@ -35,7 +35,7 @@ import kotlin.reflect.full.primaryConstructor
  */
 abstract class AbstractExcelImporter<T : Any> : IExcelImporter<T> {
 
-    private val log = LoggerFactory.getLogger(AbstractExcelImporter::class)
+    private val log = LogFactory.getLog(AbstractExcelImporter::class)
 
     /**
      * 上传的excel文件的输入流

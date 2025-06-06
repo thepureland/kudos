@@ -1,6 +1,11 @@
 package io.kudos.base.net.ftp
 
-import org.soul.base.net.ftp.FtpClientTool
+import org.apache.commons.net.ftp.FTPClient
+import org.apache.commons.net.ftp.FTPReply
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import java.io.OutputStream
 
 
 /**
@@ -33,6 +38,43 @@ class FtpClientKit {
         pathname: String,
         filename: String,
         localpath: String
-    ): Boolean = FtpClientTool.download(hostname, port, username, password, pathname, filename, localpath)
+    ): Boolean {
+        var flag = false
+        val ftpClient: FTPClient = FTPClient()
+        try {
+            //连接FTP服务器
+            ftpClient.connect(hostname, port)
+            //登录FTP服务器
+            ftpClient.login(username, password)
+            //验证FTP服务器是否登录成功
+            val replyCode: Int = ftpClient.replyCode
+            if (!FTPReply.isPositiveCompletion(replyCode)) {
+                return false
+            }
+            //切换FTP目录
+            ftpClient.changeWorkingDirectory(pathname)
+            val ftpFiles = ftpClient.listFiles()
+            for (file in ftpFiles) {
+                if (filename.equals(file.name, ignoreCase = true)) {
+                    val localFile = File("$localpath/${file.name}")
+                    val os: OutputStream = FileOutputStream(localFile)
+                    ftpClient.retrieveFile(file.name, os)
+                    os.close()
+                }
+            }
+            ftpClient.logout()
+            flag = true
+        } catch (e: Exception) {
+            e.printStackTrace()
+        } finally {
+            if (ftpClient.isConnected) {
+                try {
+                    ftpClient.logout()
+                } catch (e: IOException) {
+                }
+            }
+        }
+        return flag
+    }
 
 }

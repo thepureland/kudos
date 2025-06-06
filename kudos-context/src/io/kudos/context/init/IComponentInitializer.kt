@@ -1,6 +1,6 @@
 package io.kudos.context.init
 
-import io.kudos.base.logger.LoggerFactory
+import io.kudos.base.logger.LogFactory
 
 
 /**
@@ -27,7 +27,7 @@ interface IComponentInitializer {
      * @since 1.0.0
      */
     fun beforeInit() {
-        LoggerFactory.getLogger(this).info(">>>>>>>>>>>>>>>>>>>>  组件【${getComponentName()}】开始初始化...")
+        LogFactory.getLog(this).info(">>>>>>>>>>>>>>>>>>>>  组件【${getComponentName()}】开始初始化...")
     }
 
     /**
@@ -37,7 +37,7 @@ interface IComponentInitializer {
      * @since 1.0.0
      */
     fun afterInit() {
-        LoggerFactory.getLogger(this).info("<<<<<<<<<<<<<<<<<<<<  组件【${getComponentName()}】初始化完成.")
+        LogFactory.getLog(this).info("<<<<<<<<<<<<<<<<<<<<  组件【${getComponentName()}】初始化完成.")
     }
 
 }

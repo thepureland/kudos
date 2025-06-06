@@ -2,7 +2,7 @@ package io.kudos.ability.distributed.stream.kafka.main
 
 import io.kudos.ability.distributed.stream.common.annotations.MqConsumer
 import io.kudos.ability.distributed.stream.kafka.data.KafkaSimpleMsg
-import io.kudos.base.logger.LoggerFactory
+import io.kudos.base.logger.LogFactory
 import org.soul.ability.distributed.stream.common.model.model.StreamMessageVo
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
@@ -18,7 +18,7 @@ import java.util.function.Consumer
 @Component
 open class KafkaConsumerHandler {
     
-    private val log = LoggerFactory.getLogger(this)
+    private val log = LogFactory.getLog(this)
     val defaultMsg: String = "Hello simple msg"
     var flag = false
     var errorFlag = false

@@ -1,6 +1,6 @@
 package io.kudos.ability.comm.websocket.netty
 
-import io.kudos.base.logger.LoggerFactory
+import io.kudos.base.logger.LogFactory
 import io.kudos.test.common.init.EnableKudosTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -60,7 +60,7 @@ class NettyWebSocketLocalTokenTest {
     }
 
     companion object {
-        private val LOG = LoggerFactory.getLogger(this)
+        private val LOG = LogFactory.getLog(this)
 
         @JvmStatic
         @DynamicPropertySource

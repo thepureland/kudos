@@ -1,12 +1,12 @@
 package io.kudos.ability.data.rdb.ktorm.support
 
+import io.kudos.base.query.Criteria
+import io.kudos.base.query.Criterion
 import org.ktorm.dsl.and
 import org.ktorm.dsl.or
 import org.ktorm.schema.Column
 import org.ktorm.schema.ColumnDeclaring
 import org.ktorm.schema.Table
-import org.soul.base.query.Criteria
-import org.soul.base.query.Criterion
 
 /**
  * Criteria转换器，可将Criteria转换为Ktorm查询条件表达式
@@ -77,7 +77,7 @@ internal object CriteriaConverter {
 
     private fun convertCriterion(criterion: Criterion, table: Table<*>): ColumnDeclaring<Boolean>? {
         val column = ColumnHelper.columnOf(table, criterion.property)[criterion.property] as Column<Any>
-        val value = criterion.getValue()
+        val value = criterion.value
         return SqlWhereExpressionFactory.create(column, criterion.operator, value)
     }
 

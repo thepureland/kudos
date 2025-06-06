@@ -1,7 +1,7 @@
 package io.kudos.ability.distributed.tx.seata.init
 
 import io.kudos.ability.data.rdb.jdbc.init.JdbcAutoConfiguration
-import io.kudos.base.logger.LoggerFactory
+import io.kudos.base.logger.LogFactory
 import io.kudos.context.init.IComponentInitializer
 import io.kudos.context.spring.YamlPropertySourceFactory
 import org.soul.ability.data.rdb.jdbc.datasource.IDataSourceProxy
@@ -30,7 +30,7 @@ import org.springframework.context.annotation.PropertySource
 @EnableAutoConfiguration(exclude = [DataSourceAutoConfiguration::class])
 open class SeataAutoConfiguration : IComponentInitializer {
 
-    private val log = LoggerFactory.getLogger(this)
+    private val log = LogFactory.getLog(this)
 
     @Primary
     @Bean("dataSourceProxy")

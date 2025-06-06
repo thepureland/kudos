@@ -1,6 +1,9 @@
 package io.kudos.base.lang.string
 
-import org.soul.base.lang.string.EncodeTool
+import org.apache.commons.codec.binary.Base64
+import org.apache.commons.codec.binary.Hex
+import java.net.URLDecoder
+import java.net.URLEncoder
 
 /**
  * 封装各种格式的编码解码工具类
@@ -16,6 +19,9 @@ import org.soul.base.lang.string.EncodeTool
  */
 object EncodeKit {
 
+    private const val DEFAULT_URL_ENCODING = "UTF-8"
+    private val BASE62 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".toCharArray()
+
     /**
      * Hex编码
      *
@@ -24,7 +30,7 @@ object EncodeKit {
      * @author K
      * @since 1.0.0
      */
-    fun encodeHex(input: ByteArray): String = EncodeTool.encodeHex(input)
+    fun encodeHex(input: ByteArray): String = Hex.encodeHexString(input)
 
     /**
      * Hex解码
@@ -34,7 +40,7 @@ object EncodeKit {
      * @author K
      * @since 1.0.0
      */
-    fun decodeHex(input: String): ByteArray = EncodeTool.decodeHex(input)
+    fun decodeHex(input: String): ByteArray = Hex.decodeHex(input.toCharArray())
 
     /**
      * Base64编码
@@ -44,7 +50,7 @@ object EncodeKit {
      * @author K
      * @since 1.0.0
      */
-    fun encodeBase64(input: ByteArray): String = EncodeTool.encodeBase64(input)
+    fun encodeBase64(input: ByteArray): String = Base64.encodeBase64String(input)
 
     /**
      * Base64编码, URL安全(将Base64中的URL非法字符'+'和'/'转为'-'和'_', 见RFC3548).
@@ -54,7 +60,7 @@ object EncodeKit {
      * @author K
      * @since 1.0.0
      */
-    fun encodeUrlSafeBase64(input: ByteArray): String = EncodeTool.encodeUrlSafeBase64(input)
+    fun encodeUrlSafeBase64(input: ByteArray): String = Base64.encodeBase64URLSafeString(input)
 
     /**
      * Base64解码
@@ -64,7 +70,7 @@ object EncodeKit {
      * @author K
      * @since 1.0.0
      */
-    fun decodeBase64(input: String): ByteArray = EncodeTool.decodeBase64(input)
+    fun decodeBase64(input: String): ByteArray = Base64.decodeBase64(input)
 
     /**
      * Base62编码
@@ -74,7 +80,13 @@ object EncodeKit {
      * @author K
      * @since 1.0.0
      */
-    fun encodeBase62(input: ByteArray): String = EncodeTool.encodeBase62(input)
+    fun encodeBase62(input: ByteArray): String {
+        val chars = CharArray(input.size)
+        for (i in input.indices) {
+            chars[i] = BASE62[(input[i].toInt() and 0xFF) % BASE62.size]
+        }
+        return String(chars)
+    }
 
     /**
      * URL 编码, Encode默认为UTF-8.
@@ -84,7 +96,7 @@ object EncodeKit {
      * @author K
      * @since 1.0.0
      */
-    fun urlEncode(part: String): String = EncodeTool.urlEncode(part)
+    fun urlEncode(part: String): String = URLEncoder.encode(part, DEFAULT_URL_ENCODING)
 
     /**
      * URL 解码, Encode默认为UTF-8.
@@ -94,6 +106,6 @@ object EncodeKit {
      * @author K
      * @since 1.0.0
      */
-    fun urlDecode(part: String): String = EncodeTool.urlDecode(part)
+    fun urlDecode(part: String): String = URLDecoder.decode(part, DEFAULT_URL_ENCODING)
 
 }

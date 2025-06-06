@@ -1,6 +1,6 @@
 package io.kudos.test.container
 
-import io.kudos.base.logger.LoggerFactory
+import io.kudos.base.logger.LogFactory
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.testcontainers.kafka.ConfluentKafkaContainer
 import org.testcontainers.utility.DockerImageName
@@ -24,7 +24,7 @@ object KafkaTestContainer {
 
 
     fun start(registry: DynamicPropertyRegistry?): ConfluentKafkaContainer {
-        LoggerFactory.getLogger(this).info("Starting Kafka container...")
+        LogFactory.getLog(this).info("Starting Kafka container...")
         println(">>>>>>>>>>>>>>>>>>>> Starting Kafka container...")
         container.start() // 防止属性注册时，容器还未启动完成.
         if (registry != null) {

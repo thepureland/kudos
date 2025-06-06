@@ -1,6 +1,6 @@
 package io.kudos.ability.distributed.stream.kafka.main
 
-import io.kudos.base.logger.LoggerFactory
+import io.kudos.base.logger.LogFactory
 import org.soul.ability.distributed.stream.common.iservice.IStreamExceptionService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -16,7 +16,7 @@ import java.util.*
 @Service
 open class KafkaMainService : IKafkaMainService {
     
-    private val log = LoggerFactory.getLogger(this)
+    private val log = LogFactory.getLog(this)
     
     private val topicName = "KAFKA_TEST_TOPIC"
 

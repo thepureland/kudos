@@ -1,10 +1,10 @@
 package io.kudos.ability.data.rdb.ktorm.support
 
+import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.support.Consts
 import org.ktorm.dsl.*
 import org.ktorm.schema.Column
 import org.ktorm.schema.ColumnDeclaring
-import org.soul.base.query.enums.OperatorEnum
 
 /**
  * 查询条件表达式工厂

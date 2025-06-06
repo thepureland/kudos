@@ -1,7 +1,7 @@
 package io.kudos.base.io
 
+import org.apache.commons.io.IOUtils
 import org.apache.commons.io.LineIterator
-import org.soul.base.io.IoTool
 import java.io.*
 import java.net.URI
 import java.net.URL
@@ -16,7 +16,7 @@ import java.net.URLConnection
 object IoKit {
 
     // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-    // 封装org.apache.commons.io.IoTool
+    // 封装org.apache.commons.io.IOUtils
     // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
     /**
@@ -26,7 +26,7 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun close(conn: URLConnection?): Unit = IoTool.close(conn)
+    fun close(conn: URLConnection?): Unit = IOUtils.close(conn)
 
     //region toBuffered
     /**
@@ -46,7 +46,7 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun toBufferedInputStream(input: InputStream?): InputStream? = IoTool.toBufferedInputStream(input)
+    fun toBufferedInputStream(input: InputStream?): InputStream? = IOUtils.toBufferedInputStream(input)
 
     /**
      * 如果指定的reader是[BufferedReader]，直接返回，否则，
@@ -57,7 +57,7 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun toBufferedReader(reader: Reader?): BufferedReader? = IoTool.toBufferedReader(reader)
+    fun toBufferedReader(reader: Reader?): BufferedReader? = IOUtils.toBufferedReader(reader)
     //endregion toBuffered
 
     //region read toByteArray
@@ -73,7 +73,7 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun toByteArray(input: InputStream): ByteArray = IoTool.toByteArray(input)
+    fun toByteArray(input: InputStream): ByteArray = IOUtils.toByteArray(input)
 
     /**
      * 读取`InputStream`的内容为`byte[]`.
@@ -91,7 +91,7 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun toByteArray(input: InputStream, size: Long): ByteArray = IoTool.toByteArray(input, size)
+    fun toByteArray(input: InputStream, size: Long): ByteArray = IOUtils.toByteArray(input, size)
 
     /**
      * 读取`InputStream`的内容为`byte[]`.
@@ -105,7 +105,7 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun toByteArray(input: InputStream, size: Int): ByteArray = IoTool.toByteArray(input, size)
+    fun toByteArray(input: InputStream, size: Int): ByteArray = IOUtils.toByteArray(input, size)
 
     /**
      * 读取`Reader`的内容为`byte[]`，使用指定的编码
@@ -120,7 +120,7 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun toByteArray(input: Reader, encoding: String? = null): ByteArray = IoTool.toByteArray(input, encoding)
+    fun toByteArray(input: Reader, encoding: String? = null): ByteArray = IOUtils.toByteArray(input, encoding)
 
     /**
      * 读取`URI`指向的内容为`byte[]`
@@ -131,7 +131,7 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun toByteArray(uri: URI): ByteArray = IoTool.toByteArray(uri)
+    fun toByteArray(uri: URI): ByteArray = IOUtils.toByteArray(uri)
 
     /**
      * 读取`URL`指向的内容为`byte[]`
@@ -142,7 +142,7 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun toByteArray(url: URL): ByteArray = IoTool.toByteArray(url)
+    fun toByteArray(url: URL): ByteArray = IOUtils.toByteArray(url)
 
     /**
      * 读取`URLConnection`指向的内容为`byte[]`
@@ -153,7 +153,7 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun toByteArray(urlConn: URLConnection): ByteArray = IoTool.toByteArray(urlConn)
+    fun toByteArray(urlConn: URLConnection): ByteArray = IOUtils.toByteArray(urlConn)
     //endregion read toByteArray
 
     //region read char[]
@@ -174,7 +174,7 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun toCharArray(`is`: InputStream, encoding: String? = null): CharArray = IoTool.toCharArray(`is`, encoding)
+    fun toCharArray(`is`: InputStream, encoding: String? = null): CharArray = IOUtils.toCharArray(`is`, encoding)
 
     /**
      * 读取`Reader`的内容为`char[]`.
@@ -186,7 +186,7 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun toCharArray(input: Reader): CharArray = IoTool.toCharArray(input)
+    fun toCharArray(input: Reader): CharArray = IOUtils.toCharArray(input)
     //endregion read char[]
 
     //region read toString
@@ -206,7 +206,7 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun toString(input: InputStream, encoding: String? = null): String = IoTool.toString(input, encoding)
+    fun toString(input: InputStream, encoding: String? = null): String = IOUtils.toString(input, encoding)
 
     /**
      * 读取`Reader`的内容为字符串.
@@ -218,7 +218,7 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun toString(input: Reader): String = IoTool.toString(input)
+    fun toString(input: Reader): String = IOUtils.toString(input)
 
     /**
      * 读取`URI`指向的内容为字符串.
@@ -231,7 +231,7 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun toString(uri: URI, encoding: String? = null): String = IoTool.toString(uri, encoding)
+    fun toString(uri: URI, encoding: String? = null): String = IOUtils.toString(uri, encoding)
 
     /**
      * 读取`URL`指向的内容为字符串.
@@ -245,7 +245,7 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun toString(url: URL, encoding: String? = null): String = IoTool.toString(url, encoding)
+    fun toString(url: URL, encoding: String? = null): String = IOUtils.toString(url, encoding)
 
     /**
      * 读取`byte[]`的内容为字符串，使用指定的编码
@@ -259,7 +259,7 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun toString(input: ByteArray, encoding: String? = null): String = IoTool.toString(input, encoding)
+    fun toString(input: ByteArray, encoding: String? = null): String = IOUtils.toString(input, encoding)
     //endregion read toString
 
     //region readLines
@@ -277,7 +277,7 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun readLines(input: InputStream, encoding: String? = null): List<String> = IoTool.readLines(input, encoding)
+    fun readLines(input: InputStream, encoding: String? = null): List<String> = IOUtils.readLines(input, encoding)
 
     /**
      * 读取`InputStream`的内容为字符串列表，每行一个实体
@@ -289,7 +289,7 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun readLines(input: Reader): List<String> = IoTool.readLines(input)
+    fun readLines(input: Reader): List<String> = IOUtils.readLines(input)
     //endregion readLines
 
     //region lineIterator
@@ -305,13 +305,13 @@ object IoKit {
      *
      * <pre>
      * try {
-     * LineIterator it = IoTool.lineIterator(reader);
+     * LineIterator it = IOUtils.lineIterator(reader);
      * while (it.hasNext()) {
      * String line = it.nextLine();
      * // / 对line的处理
      * }
      * } finally {
-     * IoTool.closeQuietly(reader);
+     * IOUtils.closeQuietly(reader);
      * }
      * </pre>
      * @param reader 要读取的`Reader`
@@ -319,7 +319,7 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun lineIterator(reader: Reader): LineIterator = IoTool.lineIterator(reader)
+    fun lineIterator(reader: Reader): LineIterator = IOUtils.lineIterator(reader)
 
     /**
      * 返回`InputStream`的一个行迭代器，使用指定的编码(null为平台默认编码)
@@ -333,13 +333,13 @@ object IoKit {
      *
      * <pre>
      * try {
-     * LineIterator it = IoTool.lineIterator(stream, &quot;UTF-8&quot;);
+     * LineIterator it = IOUtils.lineIterator(stream, &quot;UTF-8&quot;);
      * while (it.hasNext()) {
      * String line = it.nextLine();
      * // / 对line的处理
      * }
      * } finally {
-     * IoTool.closeQuietly(stream);
+     * IOUtils.closeQuietly(stream);
      * }
      * </pre>
      * @param input 要读取的`InputStream`, 不能为null
@@ -350,7 +350,7 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun lineIterator(input: InputStream, encoding: String? = null): LineIterator = IoTool.lineIterator(input, encoding)
+    fun lineIterator(input: InputStream, encoding: String? = null): LineIterator = IOUtils.lineIterator(input, encoding)
     //endregion lineIterator
 
     //region toInputStream
@@ -367,7 +367,7 @@ object IoKit {
      * @since 1.0.0
      */
     fun toInputStream(input: CharSequence, encoding: String? = null): InputStream =
-        IoTool.toInputStream(input, encoding)
+        IOUtils.toInputStream(input, encoding)
 
     /**
      * 转换指定的字符串为InputStream，使用指定的编码
@@ -381,7 +381,7 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun toInputStream(input: String, encoding: String? = null): InputStream = IoTool.toInputStream(input, encoding)
+    fun toInputStream(input: String, encoding: String? = null): InputStream = IOUtils.toInputStream(input, encoding)
     //endregion toInputStream
 
     //region write byte[]
@@ -394,7 +394,7 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun write(data: ByteArray, output: OutputStream): Unit = IoTool.write(data, output)
+    fun write(data: ByteArray, output: OutputStream): Unit = IOUtils.write(data, output)
 
     /**
      * 将一个`byte[]`的内容写入一个`Writer`,
@@ -410,7 +410,7 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun write(data: ByteArray, output: Writer, encoding: String? = null): Unit = IoTool.write(data, output, encoding)
+    fun write(data: ByteArray, output: Writer, encoding: String? = null): Unit = IOUtils.write(data, output, encoding)
     //endregion write byte[]
 
     //region write char[]
@@ -423,7 +423,7 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun write(data: CharArray, output: Writer): Unit = IoTool.write(data, output)
+    fun write(data: CharArray, output: Writer): Unit = IOUtils.write(data, output)
 
     /**
      * 将一个`char[]`的内容写入一个`OutputStream`,
@@ -440,7 +440,7 @@ object IoKit {
      * @since 1.0.0
      */
     fun write(data: CharArray, output: OutputStream, encoding: String? = null): Unit =
-        IoTool.write(data, output, encoding)
+        IOUtils.write(data, output, encoding)
     //endregion write char[]
 
     //region write CharSequence
@@ -453,7 +453,7 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun write(data: CharSequence, output: Writer): Unit = IoTool.write(data, output)
+    fun write(data: CharSequence, output: Writer): Unit = IOUtils.write(data, output)
 
     /**
      * 将一个`CharSequence`的内容写入一个`OutputStream`,
@@ -471,7 +471,7 @@ object IoKit {
      * @since 1.0.0
      */
     fun write(data: CharSequence, output: OutputStream, encoding: String? = null): Unit =
-        IoTool.write(data, output, encoding)
+        IOUtils.write(data, output, encoding)
     //endregion write CharSequence
 
     //region write String
@@ -484,7 +484,7 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun write(data: String, output: Writer): Unit = IoTool.write(data, output)
+    fun write(data: String, output: Writer): Unit = IOUtils.write(data, output)
 
     /**
      * 将一个`CharSequence`的内容写入一个`OutputStream`,
@@ -501,7 +501,7 @@ object IoKit {
      * @since 1.0.0
      */
     fun write(data: String, output: OutputStream, encoding: String? = null): Unit =
-        IoTool.write(data, output, encoding)
+        IOUtils.write(data, output, encoding)
     //endregion write String
 
     //region writeLines
@@ -522,7 +522,7 @@ object IoKit {
      */
     fun writeLines(
         lines: Collection<*>, lineEnding: String? = null, output: OutputStream, encoding: String? = null
-    ): Unit = IoTool.writeLines(lines, lineEnding, output, encoding)
+    ): Unit = IOUtils.writeLines(lines, lineEnding, output, encoding)
 
     /**
      * 将容器中的每个一元素的toString()结果逐行写入到`Writer`中
@@ -535,7 +535,7 @@ object IoKit {
      * @since 1.0.0
      */
     fun writeLines(lines: Collection<*>, lineEnding: String? = null, writer: Writer): Unit =
-        IoTool.writeLines(lines, lineEnding, writer)
+        IOUtils.writeLines(lines, lineEnding, writer)
     //endregion writeLines
 
     //region copy from InputStream
@@ -554,7 +554,7 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun copy(input: InputStream, output: OutputStream): Int = IoTool.copy(input, output)
+    fun copy(input: InputStream, output: OutputStream): Int = IOUtils.copy(input, output)
 
     /**
      * 从一个大的(超过2GB)`InputStream`中拷贝字节到`OutputStream`中
@@ -567,7 +567,7 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun copyLarge(input: InputStream, output: OutputStream): Long = IoTool.copyLarge(input, output)
+    fun copyLarge(input: InputStream, output: OutputStream): Long = IOUtils.copyLarge(input, output)
 
     /**
      * 从一个大的(超过2GB)`InputStream`中拷贝字节到`OutputStream`中
@@ -582,7 +582,7 @@ object IoKit {
      * @since 1.0.0
      */
     fun copyLarge(input: InputStream, output: OutputStream, buffer: ByteArray): Long =
-        IoTool.copyLarge(input, output, buffer)
+        IOUtils.copyLarge(input, output, buffer)
 
     /**
      * 从一个大的(超过2GB)`InputStream`中拷贝所有或部分字节到`OutputStream`中，
@@ -599,7 +599,7 @@ object IoKit {
      * @since 1.0.0
      */
     fun copyLarge(input: InputStream, output: OutputStream, inputOffset: Long, length: Long): Long =
-        IoTool.copyLarge(input, output, inputOffset, length)
+        IOUtils.copyLarge(input, output, inputOffset, length)
 
     /**
      * 从一个大的(超过2GB)`InputStream`中拷贝所有或部分字节到`OutputStream`中，
@@ -617,7 +617,7 @@ object IoKit {
      * @since 1.0.0
      */
     fun copyLarge(input: InputStream, output: OutputStream, inputOffset: Long, length: Long, buffer: ByteArray): Long =
-        IoTool.copyLarge(input, output, inputOffset, length, buffer)
+        IOUtils.copyLarge(input, output, inputOffset, length, buffer)
 
     /**
      * 将`InputStream`的内容拷贝到`Writer`，使用指定的编码
@@ -634,7 +634,7 @@ object IoKit {
      * @since 1.0.0
      */
     fun copy(input: InputStream, output: Writer, encoding: String? = null): Unit =
-        IoTool.copy(input, output, encoding)
+        IOUtils.copy(input, output, encoding)
     //endregion copy from InputStream
 
     //region copy from Reader
@@ -653,7 +653,7 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun copy(input: Reader, output: Writer): Int = IoTool.copy(input, output)
+    fun copy(input: Reader, output: Writer): Int = IOUtils.copy(input, output)
 
     /**
      * 将字符从大的(超过2GB)`Reader` 拷贝到 `Writer`.
@@ -666,7 +666,7 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun copyLarge(input: Reader, output: Writer): Long = IoTool.copyLarge(input, output)
+    fun copyLarge(input: Reader, output: Writer): Long = IOUtils.copyLarge(input, output)
 
     /**
      * 将字符从大的(超过2GB)`Reader` 拷贝到 `Writer`.
@@ -680,7 +680,7 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun copyLarge(input: Reader, output: Writer, buffer: CharArray): Long = IoTool.copyLarge(input, output, buffer)
+    fun copyLarge(input: Reader, output: Writer, buffer: CharArray): Long = IOUtils.copyLarge(input, output, buffer)
 
     /**
      * 将所有或部分字符从大的(超过2GB)`Reader` 拷贝到 `Writer`，
@@ -697,7 +697,7 @@ object IoKit {
      * @since 1.0.0
      */
     fun copyLarge(input: Reader, output: Writer, inputOffset: Long, length: Long): Long =
-        IoTool.copyLarge(input, output, inputOffset, length)
+        IOUtils.copyLarge(input, output, inputOffset, length)
 
     /**
      * 将所有或部分字符从大的(超过2GB)`Reader` 拷贝到 `Writer`，
@@ -715,7 +715,7 @@ object IoKit {
      * @since 1.0.0
      */
     fun copyLarge(input: Reader, output: Writer, inputOffset: Long, length: Long, buffer: CharArray): Long =
-        IoTool.copyLarge(input, output, inputOffset, length, buffer)
+        IOUtils.copyLarge(input, output, inputOffset, length, buffer)
 
     /**
      * 将`Reader` 的内容拷贝到 `OutputStream`，
@@ -734,7 +734,7 @@ object IoKit {
      * @since 1.0.0
      */
     fun copy(input: Reader, output: OutputStream, encoding: String? = null): Unit =
-        IoTool.copy(input, output, encoding)
+        IOUtils.copy(input, output, encoding)
     //endregion copy from Reader
 
     //region content equals
@@ -749,7 +749,7 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun contentEquals(input1: InputStream, input2: InputStream): Boolean = IoTool.contentEquals(input1, input2)
+    fun contentEquals(input1: InputStream, input2: InputStream): Boolean = IOUtils.contentEquals(input1, input2)
 
     /**
      * 检查两个Reader的内容是否相等
@@ -762,7 +762,7 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun contentEquals(input1: Reader, input2: Reader): Boolean = IoTool.contentEquals(input1, input2)
+    fun contentEquals(input1: Reader, input2: Reader): Boolean = IOUtils.contentEquals(input1, input2)
 
     /**
      * 检查两个Reader的内容是否相等，忽略EOL字符
@@ -775,7 +775,7 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun contentEqualsIgnoreEOL(input1: Reader, input2: Reader): Boolean = IoTool.contentEqualsIgnoreEOL(input1, input2)
+    fun contentEqualsIgnoreEOL(input1: Reader, input2: Reader): Boolean = IOUtils.contentEqualsIgnoreEOL(input1, input2)
     //endregion content equals
 
     //region skip
@@ -791,7 +791,7 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun skip(input: InputStream, toSkip: Long): Long = IoTool.skip(input, toSkip)
+    fun skip(input: InputStream, toSkip: Long): Long = IOUtils.skip(input, toSkip)
 
     /**
      * 从字符流中跳过部分字符。该实现保证会在放弃之前读取尽可能多的字符，
@@ -806,7 +806,7 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun skip(input: Reader, toSkip: Long): Long = IoTool.skip(input, toSkip)
+    fun skip(input: Reader, toSkip: Long): Long = IOUtils.skip(input, toSkip)
 
     /**
      * 跳过请求的字节数，或如果没有足够的字节数将失败
@@ -822,7 +822,7 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun skipFully(input: InputStream, toSkip: Long): Unit = IoTool.skipFully(input, toSkip)
+    fun skipFully(input: InputStream, toSkip: Long): Unit = IOUtils.skipFully(input, toSkip)
 
     /**
      * 跳过请求的字符数，或如果没有足够的字符数将失败
@@ -838,7 +838,7 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun skipFully(input: Reader?, toSkip: Long): Unit = IoTool.skipFully(input, toSkip)
+    fun skipFully(input: Reader?, toSkip: Long): Unit = IOUtils.skipFully(input, toSkip)
     //endregion skip
 
     //region read
@@ -856,7 +856,7 @@ object IoKit {
      * @since 1.0.0
      */
     fun read(input: Reader, buffer: CharArray, offset: Int, length: Int): Int =
-        IoTool.read(input, buffer, offset, length)
+        IOUtils.read(input, buffer, offset, length)
 
     /**
      * 从字符流中读取字符。该实现保证在放弃前尽可能多的读取字符。
@@ -869,7 +869,7 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun read(input: Reader, buffer: CharArray): Int? = IoTool.read(input, buffer)
+    fun read(input: Reader, buffer: CharArray): Int? = IOUtils.read(input, buffer)
 
     /**
      * 从字节流中读取字节。该实现保证在放弃前尽可能多的读取字节。
@@ -885,7 +885,7 @@ object IoKit {
      * @since 1.0.0
      */
     fun read(input: InputStream, buffer: ByteArray, offset: Int, length: Int): Int =
-        IoTool.read(input, buffer, offset, length)
+        IOUtils.read(input, buffer, offset, length)
 
     /**
      * 从字节流中读取字符。该实现保证在放弃前尽可能多的读取字节。
@@ -898,7 +898,7 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun read(input: InputStream, buffer: ByteArray): Int = IoTool.read(input, buffer)
+    fun read(input: InputStream, buffer: ByteArray): Int = IOUtils.read(input, buffer)
 
     /**
      * 读取请求数量的字符，或如果没有足够数量的字符时将失败
@@ -918,7 +918,7 @@ object IoKit {
      * @since 1.0.0
      */
     fun readFully(input: Reader, buffer: CharArray, offset: Int, length: Int): Int =
-        IoTool.read(input, buffer, offset, length)
+        IOUtils.read(input, buffer, offset, length)
 
     /**
      * 读取请求数量的字符，或如果没有足够数量的字符时将失败
@@ -934,7 +934,7 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun readFully(input: Reader, buffer: CharArray): Unit = IoTool.readFully(input, buffer)
+    fun readFully(input: Reader, buffer: CharArray): Unit = IOUtils.readFully(input, buffer)
 
     /**
      * 读取请求数量的字节，或如果没有足够数量的字节时将失败
@@ -952,7 +952,7 @@ object IoKit {
      * @since 1.0.0
      */
     fun readFully(input: InputStream, buffer: ByteArray, offset: Int, length: Int): Unit =
-        IoTool.readFully(input, buffer, offset, length)
+        IOUtils.readFully(input, buffer, offset, length)
 
     /**
      * 读取请求数量的字节，或如果没有足够数量的字节时将失败
@@ -967,11 +967,11 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun readFully(input: InputStream, buffer: ByteArray): Unit = IoTool.readFully(input, buffer)
+    fun readFully(input: InputStream, buffer: ByteArray): Unit = IOUtils.readFully(input, buffer)
     //endregion read
 
     // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    // 封装org.apache.commons.io.IoTool
+    // 封装org.apache.commons.io.IOUtils
     // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 }

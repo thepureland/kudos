@@ -1,9 +1,9 @@
 package io.kudos.base.tree
 
-import io.kudos.base.logger.LoggerFactory
+import io.kudos.base.logger.LogFactory
+import io.kudos.base.query.sort.DirectionEnum
 import io.kudos.base.support.Consts
-import org.soul.base.query.sort.Direction
-import org.soul.base.support.ICallback
+import io.kudos.base.support.ICallback
 
 /**
  * 列表到树结构的转换器
@@ -13,7 +13,7 @@ import org.soul.base.support.ICallback
  */
 object ListToTreeConverter {
 
-    private val LOG = LoggerFactory.getLogger(ListToTreeConverter::class)
+    private val LOG = LogFactory.getLog(ListToTreeConverter::class)
 
 
     /**
@@ -30,7 +30,7 @@ object ListToTreeConverter {
      */
     fun <T, E : ITreeNode<T>> convert(
         treeNodeList: List<E>,
-        direction: Direction? = null,
+        direction: DirectionEnum? = null,
         callback: ICallback<E, Unit>? = null
     ): List<E> {
         val treeNodeMap = HashMap<T, E>(treeNodeList.size, 1f)
@@ -64,14 +64,14 @@ object ListToTreeConverter {
 
 
     @Suppress(Consts.Suppress.UNCHECKED_CAST)
-    private fun <T, E : ITreeNode<T>> sort(nodes: List<E>, direction: Direction): List<E> {
+    private fun <T, E : ITreeNode<T>> sort(nodes: List<E>, direction: DirectionEnum): List<E> {
         if (nodes.first() !is Comparable<*>) {
             error("类${nodes.first()::class.simpleName}必须实现Comparable接口！")
         }
 
         val nodeList = nodes.sortedWith { o1, o2 ->
             val result = (o1 as Comparable<E>).compareTo(o2)
-            if (direction == Direction.ASC) result else 0 - result
+            if (direction == DirectionEnum.ASC) result else 0 - result
         }
 
         nodeList.forEach {

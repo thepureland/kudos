@@ -4,7 +4,7 @@ import com.baomidou.dynamic.datasource.creator.DataSourceCreator
 import com.baomidou.dynamic.datasource.creator.DefaultDataSourceCreator
 import com.baomidou.dynamic.datasource.event.DataSourceInitEvent
 import com.baomidou.dynamic.datasource.spring.boot.autoconfigure.DynamicDataSourceProperties
-import io.kudos.base.logger.LoggerFactory
+import io.kudos.base.logger.LogFactory
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
 import org.soul.ability.data.rdb.jdbc.aop.DynamicDataSourceAspect
@@ -39,7 +39,7 @@ import org.springframework.context.annotation.Primary
 //@ImportAutoConfiguration(DynamicDataSourceCreatorAutoConfiguration::class, DynamicDataSourceAutoConfiguration::class)
 open class JdbcAutoConfiguration : IComponentInitializer {
 
-    private val logger = LoggerFactory.getLogger(this)
+    private val logger = LogFactory.getLog(this)
 
 //    @Bean("dataSourceProxy")
 //    @ConditionalOnMissingBean

@@ -1,8 +1,10 @@
 package io.kudos.base.bean.validation.kit
 
+import io.kudos.base.bean.validation.support.ValidationContext
 import jakarta.validation.ConstraintViolation
+import jakarta.validation.Validation
 import jakarta.validation.Validator
-import org.soul.base.bean.validation.tool.ValidationTool
+import org.hibernate.validator.HibernateValidator
 import kotlin.reflect.KClass
 
 /**
@@ -30,7 +32,9 @@ object ValidationKit {
         failFast: Boolean = true
     ): Set<ConstraintViolation<T>> {
         val classes = groups.map { it.java }.toTypedArray()
-        return ValidationTool.validateBean(bean, classes, failFast)
+        val validator = getValidator(failFast)
+        ValidationContext.set(validator, bean)
+        return validator.validate(bean, *classes)
     }
 
     /**
@@ -52,7 +56,9 @@ object ValidationKit {
         failFast: Boolean = true
     ): Set<ConstraintViolation<T>> {
         val classes = groups.map { it.java }.toTypedArray()
-        return ValidationTool.validateProperty(bean, property, classes, failFast)
+        val validator = getValidator(failFast)
+        ValidationContext.set(validator, bean)
+        return validator.validateProperty(bean, property, *classes)
     }
 
     /**
@@ -76,7 +82,7 @@ object ValidationKit {
         failFast: Boolean = true
     ): Set<ConstraintViolation<T>> {
         val classes = groups.map { it.java }.toTypedArray()
-        return ValidationTool.validateValue(beanClass.java, property, value, classes, failFast)
+        return getValidator(failFast).validateValue(beanClass.java, property, value, *classes)
     }
 
     /**
@@ -88,7 +94,16 @@ object ValidationKit {
      * @since 1.0.0
      */
     fun getValidator(failFast: Boolean = true): Validator {
-        return ValidationTool.getValidator(failFast)
+        ValidationContext.setFailFast(failFast)
+        if (ValidationContext.validator == null) {
+            val validatorFactory = Validation.byProvider(HibernateValidator::class.java)
+                .configure()
+                .failFast(failFast)
+//            .addProperty( "hibernate.validator.fail_fast", "true" )
+                .buildValidatorFactory()
+            ValidationContext.validator = validatorFactory.validator
+        }
+        return ValidationContext.validator!!
     }
 
 }

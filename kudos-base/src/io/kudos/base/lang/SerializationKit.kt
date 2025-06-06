@@ -1,6 +1,6 @@
 package io.kudos.base.lang
 
-import org.soul.base.lang.SerializationTool
+import org.apache.commons.lang3.SerializationUtils
 import java.io.InputStream
 import java.io.OutputStream
 import java.io.Serializable
@@ -13,6 +13,10 @@ import java.io.Serializable
  */
 object SerializationKit {
 
+    // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+    // 封装org.apache.commons.lang3.SerializationUtils
+    // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+
     /**
      * 对指定的对象深度克隆
      * 该方法比直接在对象图中的所有对象重写克隆方法慢很多倍. 但是, 对于复杂的对象图, 或那些不支持深底克隆的对象, 这提供了另一种实现. 当然, 所有对象都必须实现 `Serializable`接口.
@@ -24,7 +28,7 @@ object SerializationKit {
      * @author K
      * @since 1.0.0
      */
-    fun <T : Serializable?> clone(obj: T): T = SerializationTool.clone(obj)
+    fun <T : Serializable?> clone(obj: T): T = SerializationUtils.clone(obj)
 
     /**
      * 序列化一个对象到指定的输出流
@@ -38,7 +42,7 @@ object SerializationKit {
      * @author K
      * @since 1.0.0
      */
-    fun serialize(obj: Serializable?, outputStream: OutputStream?) = SerializationTool.serialize(obj, outputStream)
+    fun serialize(obj: Serializable?, outputStream: OutputStream?) = SerializationUtils.serialize(obj, outputStream)
 
     /**
      * 将一个对象序列化为字节数组
@@ -49,7 +53,7 @@ object SerializationKit {
      * @author K
      * @since 1.0.0
      */
-    fun serialize(obj: Serializable?): ByteArray = SerializationTool.serialize(obj)
+    fun serialize(obj: Serializable?): ByteArray = SerializationUtils.serialize(obj)
 
     /**
      * 从输入流中反序列化一个对象
@@ -63,7 +67,7 @@ object SerializationKit {
      * @author K
      * @since 1.0.0
      */
-    fun deserialize(inputStream: InputStream?): Any = SerializationTool.deserialize(inputStream)
+    fun deserialize(inputStream: InputStream?): Any = SerializationUtils.deserialize(inputStream)
 
     /**
      * 从字节数组中反序列化一个对象
@@ -75,6 +79,9 @@ object SerializationKit {
      * @author K
      * @since 1.0.0
      */
-    fun deserialize(objectData: ByteArray?): Any = SerializationTool.deserialize(objectData)
+    fun deserialize(objectData: ByteArray?): Any = SerializationUtils.deserialize(objectData)
 
+    // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    // 封装org.apache.commons.lang3.SerializationUtils
+    // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 }

@@ -1,7 +1,7 @@
 package io.kudos.base.tree
 
-import org.soul.base.query.sort.Direction
-import org.soul.base.support.ICallback
+import io.kudos.base.query.sort.DirectionEnum
+import io.kudos.base.support.ICallback
 
 /**
  * 树操作工具类
@@ -25,7 +25,7 @@ object TreeKit {
      */
     fun <T, E : ITreeNode<T>> convertListToTree(
         treeNodeList: List<E>,
-        direction: Direction? = null,
+        direction: DirectionEnum? = null,
         callback: ICallback<E, Unit>? = null
     ): List<E> {
         return ListToTreeConverter.convert(treeNodeList, direction, callback)

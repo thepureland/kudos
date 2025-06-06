@@ -1,10 +1,10 @@
 package io.kudos.base.support.biz
 
+import io.kudos.base.query.Criteria
 import io.kudos.base.support.Consts
 import io.kudos.base.support.IIdEntity
 import io.kudos.base.support.payload.SearchPayload
 import io.kudos.base.support.payload.UpdatePayload
-import org.soul.base.query.Criteria
 
 /**
  * 基于关系型数据库表的基础业务操作接口

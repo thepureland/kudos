@@ -2,7 +2,7 @@ package io.kudos.ability.distributed.tx.seata.ms1
 
 import io.kudos.ability.distributed.tx.seata.data.TestTable
 import io.kudos.ability.distributed.tx.seata.data.TestTableMapper
-import io.kudos.base.logger.LoggerFactory
+import io.kudos.base.logger.LogFactory
 import io.seata.core.context.RootContext
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -19,7 +19,7 @@ open class Service1 : IService1 {
     @Autowired
     private lateinit var testTableMapper: TestTableMapper
 
-    private val log = LoggerFactory.getLogger(this)
+    private val log = LogFactory.getLog(this)
 
     override fun getById(id: Int): TestTable = testTableMapper.get(id)
 

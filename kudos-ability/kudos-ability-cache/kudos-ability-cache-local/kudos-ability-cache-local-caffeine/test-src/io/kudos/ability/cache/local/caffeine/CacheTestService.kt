@@ -1,7 +1,7 @@
 package io.kudos.ability.cache.local.caffeine
 
 import io.kudos.base.lang.string.RandomStringKit
-import io.kudos.base.logger.LoggerFactory
+import io.kudos.base.logger.LogFactory
 import io.kudos.context.kit.SpringKit
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.cache.annotation.Cacheable
@@ -21,7 +21,7 @@ open class CacheTestService {
 
     @Cacheable(cacheNames = ["test"], key = "#id")
     open fun getFromDB(id: String): String {
-        LoggerFactory.getLogger(CacheTestService::class).info("模拟去db查询~~~$id")
+        LogFactory.getLog(CacheTestService::class).info("模拟去db查询~~~$id")
         return RandomStringKit.uuidWithoutDelimiter()
     }
 

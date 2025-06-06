@@ -3,7 +3,7 @@ package io.kudos.ability.cache.remote.redis.init
 import io.kudos.ability.cache.common.init.BaseCacheConfiguration
 import io.kudos.ability.cache.common.init.LinkableCacheAutoConfiguration
 import io.kudos.ability.data.memdb.redis.init.RedisAutoConfiguration
-import io.kudos.base.logger.LoggerFactory
+import io.kudos.base.logger.LogFactory
 import io.kudos.context.init.IComponentInitializer
 import org.soul.ability.cache.remote.redis.support.SoulRedisCacheManager
 import org.soul.ability.data.memdb.redis.SoulRedisTemplate
@@ -36,7 +36,7 @@ import java.time.Duration
 @ConditionalOnProperty(prefix = "kudos.ability.cache", name = ["enabled"], havingValue = "true", matchIfMissing = true)
 open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentInitializer {
 
-    private val log = LoggerFactory.getLogger(this)
+    private val log = LogFactory.getLog(this)
 
     @Value("\${kudos.ability.cache.remoteStore}")
     private val remoteStore: String? = null

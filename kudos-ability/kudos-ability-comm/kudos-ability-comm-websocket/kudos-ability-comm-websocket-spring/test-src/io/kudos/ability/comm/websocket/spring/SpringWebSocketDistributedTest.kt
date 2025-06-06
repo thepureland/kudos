@@ -1,6 +1,6 @@
 package io.kudos.ability.comm.websocket.spring
 
-import io.kudos.base.logger.LoggerFactory
+import io.kudos.base.logger.LogFactory
 import io.kudos.test.common.init.EnableKudosTest
 import io.kudos.test.container.RedisTestContainer
 import org.junit.jupiter.api.*
@@ -73,7 +73,7 @@ class SpringWebSocketDistributedTest {
     }
 
     companion object {
-        private val LOG = LoggerFactory.getLogger(this)
+        private val LOG = LogFactory.getLog(this)
 
         @JvmStatic
         @DynamicPropertySource

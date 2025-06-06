@@ -4,8 +4,7 @@ import com.alibaba.fastjson2.JSON
 import com.alibaba.fastjson2.JSONWriter
 import com.alibaba.fastjson2.TypeReference
 import io.kudos.base.bean.BeanKit
-import io.kudos.base.logger.LoggerFactory
-import org.soul.base.lang.string.StringTool
+import io.kudos.base.logger.LogFactory
 import kotlin.reflect.KClass
 
 /**
@@ -18,7 +17,7 @@ import kotlin.reflect.KClass
  */
 object JsonKit {
 
-    private val log = LoggerFactory.getLogger(this)
+    private val log = LogFactory.getLog(this)
 
     /**
      * 返回json串中指定属性名的属性值
@@ -47,7 +46,7 @@ object JsonKit {
      * @since 1.0.0
      */
     fun jsonToDisplay(simpleJsonStr: String): String {
-        if (StringTool.isBlank(simpleJsonStr)) {
+        if (simpleJsonStr.isBlank()) {
             return ""
         }
         var displayStr = simpleJsonStr.replaceFirst("^\\{".toRegex(), "")

@@ -1,10 +1,10 @@
 package io.kudos.base.lang.reflect
 
+import io.kudos.base.bean.validation.constraint.annotaions.AtLeast
+import io.kudos.base.bean.validation.constraint.annotaions.NotNullOn
+import io.kudos.base.enums.impl.SexEnum
+import io.kudos.base.enums.ienums.IDictEnum
 import io.kudos.base.support.Consts
-import org.soul.base.bean.validation.constraint.annotaions.AtLeast
-import org.soul.base.bean.validation.constraint.annotaions.NotNullOn
-import org.soul.base.enums.SexEnum
-import org.soul.base.ienums.ICodeEnum
 import java.io.Serializable
 import kotlin.reflect.full.starProjectedType
 import kotlin.test.Test
@@ -49,7 +49,7 @@ class XKClassTest {
 
     @Test
     fun isInterface() {
-        assert(ICodeEnum::class.isInterface())
+        assert(IDictEnum::class.isInterface())
         assertFalse(NotNullOn::class.isInterface())
         assertFalse(AbstractList::class.isInterface())
         assertFalse(XKClassTest::class.isInterface())
@@ -60,7 +60,7 @@ class XKClassTest {
     @Test
     fun isAbstractClass() {
         assert(AbstractList::class.isAbstractClass())
-        assertFalse(ICodeEnum::class.isAbstractClass())
+        assertFalse(IDictEnum::class.isAbstractClass())
         assertFalse(NotNullOn::class.isAbstractClass())
         assertFalse(XKClassTest::class.isAbstractClass())
         assertFalse(SexEnum::class.isAbstractClass())
@@ -71,7 +71,7 @@ class XKClassTest {
     fun isAnnotation() {
         assert(NotNullOn::class.isAnnotation())
         assertFalse(AbstractList::class.isAnnotation())
-        assertFalse(ICodeEnum::class.isAnnotation())
+        assertFalse(IDictEnum::class.isAnnotation())
         assertFalse(XKClassTest::class.isAnnotation())
         assertFalse(SexEnum::class.isAnnotation())
         assertFalse(SexEnum.FEMALE::class.isAnnotation())

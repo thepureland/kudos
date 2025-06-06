@@ -1,8 +1,9 @@
 package io.kudos.base.lang.string
 
-import io.kudos.base.lang.string.RandomStringKit.random
-import org.soul.base.lang.string.RandomStringTool
+import org.apache.commons.lang3.RandomStringUtils
+import java.security.SecureRandom
 import java.util.*
+import kotlin.math.abs
 
 /**
  * 随机字符串工具类
@@ -12,6 +13,8 @@ import java.util.*
  */
 object RandomStringKit {
 
+    private val random = SecureRandom()
+
     /**
      * 封装java的UUID
      *
@@ -19,7 +22,7 @@ object RandomStringKit {
      * @author K
      * @since 1.0.0
      */
-    fun uuid(): String = RandomStringTool.uuid()
+    fun uuid(): String = UUID.randomUUID().toString()
 
     /**
      * 封装java的UUID, 中间无"-"分割.
@@ -37,7 +40,7 @@ object RandomStringKit {
      * @author K
      * @since 1.0.0
      */
-    fun randomLong(): String = RandomStringTool.randomLong().toString()
+    fun randomLong(): String = abs(random.nextLong()).toString()
 
     /**
      * 基于Base62编码的SecureRandom随机生成bytes.
@@ -47,10 +50,14 @@ object RandomStringKit {
      * @author K
      * @since 1.0.0
      */
-    fun randomBase62(length: Int): String = RandomStringTool.randomBase62(length)
+    fun randomBase62(length: Int): String {
+        val randomBytes = ByteArray(length)
+        random.nextBytes(randomBytes)
+        return EncodeKit.encodeBase62(randomBytes)
+    }
 
     // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-    // 封装org.apache.commons.lang3.RandomStringTool
+    // 封装org.apache.commons.lang3.RandomStringUtils
     // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
     /**
@@ -62,7 +69,7 @@ object RandomStringKit {
      * @author K
      * @since 1.0.0
      */
-    fun random(count: Int): String = RandomStringTool.random(count)
+    fun random(count: Int): String = RandomStringUtils.random(count)
 
     /**
      * 创建一个指定长度的随机串
@@ -73,7 +80,7 @@ object RandomStringKit {
      * @author K
      * @since 1.0.0
      */
-    fun randomAscii(count: Int): String = RandomStringTool.randomAscii(count)
+    fun randomAscii(count: Int): String = RandomStringUtils.randomAscii(count)
 
     /**
      * 创建一个指定长度的随机串
@@ -84,7 +91,7 @@ object RandomStringKit {
      * @author K
      * @since 1.0.0
      */
-    fun randomAlphabetic(count: Int): String = RandomStringTool.randomAlphabetic(count)
+    fun randomAlphabetic(count: Int): String = RandomStringUtils.randomAlphabetic(count)
 
     /**
      * 创建一个指定长度的随机串
@@ -95,7 +102,7 @@ object RandomStringKit {
      * @author K
      * @since 1.0.0
      */
-    fun randomAlphanumeric(count: Int): String = RandomStringTool.randomAlphanumeric(count)
+    fun randomAlphanumeric(count: Int): String = RandomStringUtils.randomAlphanumeric(count)
 
     /**
      * 创建一个指定长度的随机串
@@ -106,7 +113,7 @@ object RandomStringKit {
      * @author K
      * @since 1.0.0
      */
-    fun randomNumeric(count: Int): String = RandomStringTool.randomNumeric(count)
+    fun randomNumeric(count: Int): String = RandomStringUtils.randomNumeric(count)
 
     /**
      * 创建一个指定长度的随机串
@@ -120,7 +127,7 @@ object RandomStringKit {
      * @since 1.0.0
      */
     fun random(count: Int, letters: Boolean, numbers: Boolean): String =
-        RandomStringTool.random(count, letters, numbers)
+        RandomStringUtils.random(count, letters, numbers)
 
     /**
      * 创建一个指定长度的随机串
@@ -136,7 +143,7 @@ object RandomStringKit {
      * @since 1.0.0
      */
     fun random(count: Int, start: Int, end: Int, letters: Boolean, numbers: Boolean): String =
-        RandomStringTool.random(count, start, end, letters, numbers)
+        RandomStringUtils.random(count, start, end, letters, numbers)
 
     /**
      * 创建一个随机串, 使用默认的随机源
@@ -156,7 +163,7 @@ object RandomStringKit {
      */
     fun random(
         count: Int, start: Int, end: Int, letters: Boolean, numbers: Boolean, vararg chars: Char
-    ): String = RandomStringTool.random(count, start, end, letters, numbers, *chars)
+    ): String = RandomStringUtils.random(count, start, end, letters, numbers, *chars)
 
     /**
      * 创建一个随机串, 使用提供的随机源
@@ -182,7 +189,7 @@ object RandomStringKit {
      */
     fun random(
         count: Int, start: Int, end: Int, letters: Boolean, numbers: Boolean, chars: CharArray?, random: Random?
-    ): String = RandomStringTool.random(count, start, end, letters, numbers, chars, random)
+    ): String = RandomStringUtils.random(count, start, end, letters, numbers, chars, random)
 
     /**
      * 创建一个指定长度的随机串
@@ -195,7 +202,7 @@ object RandomStringKit {
      * @author K
      * @since 1.0.0
      */
-    fun random(count: Int, chars: String? = null): String = RandomStringTool.random(count, chars)
+    fun random(count: Int, chars: String? = null): String = RandomStringUtils.random(count, chars)
 
     /**
      * 创建一个指定长度的随机串
@@ -208,10 +215,10 @@ object RandomStringKit {
      * @author K
      * @since 1.0.0
      */
-    fun random(count: Int, vararg chars: Char): String = RandomStringTool.random(count, *chars)
+    fun random(count: Int, vararg chars: Char): String = RandomStringUtils.random(count, *chars)
 
     // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    // 封装org.apache.commons.lang3.RandomStringTool
+    // 封装org.apache.commons.lang3.RandomStringUtils
     // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 }

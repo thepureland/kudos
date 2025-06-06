@@ -4,7 +4,7 @@ import io.kudos.ability.distributed.notify.common.api.INotifyProducer
 import io.kudos.ability.distributed.notify.common.support.NotifyListenerBeanPostProcessor
 import io.kudos.ability.distributed.notify.rdb.producer.NotifyRdbProducer
 import io.kudos.ability.distributed.notify.rdb.support.AppNotifyServlet
-import io.kudos.base.logger.LoggerFactory
+import io.kudos.base.logger.LogFactory
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
 import org.mybatis.spring.annotation.MapperScan
@@ -59,7 +59,7 @@ import javax.management.Query
 open class NotifyRdbAutoConfiguration
     : ApplicationListener<WebServerInitializedEvent>, AsyncConfigurer, IComponentInitializer {
 
-    private val logger = LoggerFactory.getLogger(this)
+    private val logger = LogFactory.getLog(this)
 
     @Bean
     @ConditionalOnMissingBean

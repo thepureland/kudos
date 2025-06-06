@@ -9,9 +9,9 @@ import kotlin.reflect.KClass
  * @author K
  * @since 1.0.0
  */
-object LoggerFactory {
+object LogFactory {
 
-    private val loggerCreator: ILoggerCreator = Slf4jLoggerCreator()
+    private val logCreator: ILogCreator = Slf4jLoggerCreator()
 
     /**
      * 获取日志记录器
@@ -21,7 +21,7 @@ object LoggerFactory {
      * @author K
      * @since 1.0.0
      */
-    fun getLogger(clazz: KClass<*>): ILogger = loggerCreator.createLog(clazz)
+    fun getLog(clazz: KClass<*>): ILog = logCreator.createLog(clazz)
 
     /**
      * 获取日志记录器
@@ -31,6 +31,6 @@ object LoggerFactory {
      * @author K
      * @since 1.0.0
      */
-    fun getLogger(any: Any): ILogger = loggerCreator.createLog(any::class)
+    fun getLog(any: Any): ILog = logCreator.createLog(any::class)
 
 }

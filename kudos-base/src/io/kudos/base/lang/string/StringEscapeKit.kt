@@ -1,8 +1,6 @@
 package io.kudos.base.lang.string
 
-import org.apache.commons.lang3.StringEscapeUtils
-import org.soul.base.lang.string.StringEscapeTool
-
+import org.apache.commons.text.StringEscapeUtils
 
 /**
  * 字符串转义工具类
@@ -13,7 +11,7 @@ import org.soul.base.lang.string.StringEscapeTool
 object StringEscapeKit {
 
     // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-    // 封装org.apache.commons.text.StringEscapeTool
+    // 封装org.apache.commons.text.StringEscapeUtils
     // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
     //region Java and JavaScript
@@ -34,7 +32,7 @@ object StringEscapeKit {
      * @author K
      * @since 1.0.0
      */
-    fun escapeJava(input: String?): String = StringEscapeTool.escapeJava(input)
+    fun escapeJava(input: String?): String = StringEscapeUtils.escapeJava(input)
 
     /**
      * 使用EcmaScript的字符串规则将指定的字符串转义
@@ -54,7 +52,7 @@ object StringEscapeKit {
      * @author K
      * @since 1.0.0
      */
-    fun escapeEcmaScript(input: String?): String = StringEscapeTool.escapeEcmaScript(input)
+    fun escapeEcmaScript(input: String?): String = StringEscapeUtils.escapeEcmaScript(input)
 
     /**
      * 解码指定的转义后java字符串
@@ -65,7 +63,7 @@ object StringEscapeKit {
      * @author K
      * @since 1.0.0
      */
-    fun unescapeJava(input: String?): String = StringEscapeTool.unescapeJava(input)
+    fun unescapeJava(input: String?): String = StringEscapeUtils.unescapeJava(input)
 
     /**
      * 解码指定的转义后EcmaScript字符串
@@ -77,7 +75,7 @@ object StringEscapeKit {
      * @author K
      * @since 1.0.0
      */
-    fun unescapeEcmaScript(input: String?): String = StringEscapeTool.unescapeEcmaScript(input)
+    fun unescapeEcmaScript(input: String?): String = StringEscapeUtils.unescapeEcmaScript(input)
     //endregion Java and JavaScript
 
     //region HTML and XML
@@ -100,7 +98,7 @@ object StringEscapeKit {
      * @author K
      * @since 1.0.0
      */
-    fun escapeHtml4(input: String?): String = StringEscapeTool.escapeHtml4(input)
+    fun escapeHtml4(input: String?): String = StringEscapeUtils.escapeHtml4(input)
 
     /**
      * 使用HTML的实体将指定的字符串转义
@@ -111,7 +109,7 @@ object StringEscapeKit {
      * @author K
      * @since 1.0.0
      */
-    fun escapeHtml3(input: String?): String = StringEscapeTool.escapeHtml3(input)
+    fun escapeHtml3(input: String?): String = StringEscapeUtils.escapeHtml3(input)
 
     /**
      * 解码指定的转义后HTML 4.0实体字符串
@@ -123,7 +121,7 @@ object StringEscapeKit {
      * @author K
      * @since 1.0.0
      */
-    fun unescapeHtml4(input: String?): String = StringEscapeTool.unescapeHtml4(input)
+    fun unescapeHtml4(input: String?): String = StringEscapeUtils.unescapeHtml4(input)
 
     /**
      * 解码指定的转义后HTML 3.0实体字符串
@@ -133,14 +131,14 @@ object StringEscapeKit {
      * @author K
      * @since 1.0.0
      */
-    fun unescapeHtml3(input: String?): String = StringEscapeTool.unescapeHtml3(input)
+    fun unescapeHtml3(input: String?): String = StringEscapeUtils.unescapeHtml3(input)
 
     /**
      * 使用XML的实体将指定的字符串转义
      * 例如: <tt>"bread" & "butter"</tt> => <tt>&amp;quot;bread&amp;quot; &amp;amp; &amp;quot;butter&amp;quot;</tt>.
      * 仅支持5个基本的XML实体 (gt, lt, quot, amp, apos). 不支持 DTDs 或外部实体.
      * 请注意大于0x7f的Unicode字符不会被转义. 如果想被转义, 可以这样做:
-     * `StringEscapeTool.ESCAPE_XML.with( NumericEntityEscaper.between(0x7f, Integer.MAX_VALUE) );`
+     * `StringEscapeUtils.ESCAPE_XML.with( NumericEntityEscaper.between(0x7f, Integer.MAX_VALUE) );`
      *
      * @param input 要转义的 `String` , 可以为null
      * @return 一个新的转义后的字符串, `null`将返回`null`
@@ -155,7 +153,7 @@ object StringEscapeKit {
      * 例如: <tt>"bread" & "butter"</tt> => <tt>&amp;quot;bread&amp;quot; &amp;amp; &amp;quot;butter&amp;quot;</tt>.
      * 仅支持5个基本的XML实体 (gt, lt, quot, amp, apos). 不支持 DTDs 或外部实体.
      * 请注意大于0x7f的Unicode字符不会被转义. 如果想被转义, 可以这样做:
-     * `StringEscapeTool.ESCAPE_XML.with( NumericEntityEscaper.between(0x7f, Integer.MAX_VALUE) );`
+     * `StringEscapeUtils.ESCAPE_XML.with( NumericEntityEscaper.between(0x7f, Integer.MAX_VALUE) );`
      *
      * @param input 要转义的 `String` , 可以为null
      * @return 一个新的转义后的字符串, `null`将返回`null`
@@ -176,7 +174,7 @@ object StringEscapeKit {
      * @author K
      * @since 1.0.0
      */
-    fun unescapeXml(input: String?): String = StringEscapeTool.unescapeXml(input)
+    fun unescapeXml(input: String?): String = StringEscapeUtils.unescapeXml(input)
     //endregion HTML and XML
 
     /**
@@ -191,7 +189,7 @@ object StringEscapeKit {
      * @author K
      * @since 1.0.0
      */
-    fun escapeCsv(input: String?): String = StringEscapeTool.escapeCsv(input)
+    fun escapeCsv(input: String?): String = StringEscapeUtils.escapeCsv(input)
 
     /**
      * 解码转义过的csv列的值
@@ -205,10 +203,10 @@ object StringEscapeKit {
      * @author K
      * @since 1.0.0
      */
-    fun unescapeCsv(input: String?): String = StringEscapeTool.unescapeCsv(input)
+    fun unescapeCsv(input: String?): String = StringEscapeUtils.unescapeCsv(input)
 
     // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    // 封装org.apache.commons.text.StringEscapeTool
+    // 封装org.apache.commons.text.StringEscapeUtils
     // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 }

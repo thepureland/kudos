@@ -1,7 +1,7 @@
 package io.kudos.context.init
 
 import io.kudos.base.io.ScanKit
-import io.kudos.base.logger.LoggerFactory
+import io.kudos.base.logger.LogFactory
 import org.springframework.context.annotation.ImportSelector
 import org.springframework.core.type.AnnotationMetadata
 import kotlin.reflect.KClass
@@ -16,7 +16,7 @@ import kotlin.reflect.KClass
  */
 open class ComponentInitializerSelector : ImportSelector {
 
-    private val log = LoggerFactory.getLogger(this)
+    private val log = LogFactory.getLog(this)
 
     override fun selectImports(importingClassMetadata: AnnotationMetadata): Array<String> {
         val exclusionComponentInitializer = getExclusionComponentInitializer(importingClassMetadata)

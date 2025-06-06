@@ -2,7 +2,7 @@ package io.kudos.ability.distributed.stream.rabbit.producer
 
 import io.kudos.ability.distributed.stream.common.annotations.MqProducer
 import io.kudos.ability.distributed.stream.rabbit.data.RabbitMqSimpleMsg
-import io.kudos.base.logger.LoggerFactory
+import io.kudos.base.logger.LogFactory
 import org.soul.context.core.CommonContext
 import org.soul.context.core.ContextParam
 import org.springframework.context.annotation.Bean
@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service
 @Service
 open class RabbitMqProducerService : IRabbitMqProducerService {
 
-    private val log = LoggerFactory.getLogger(this)
+    private val log = LogFactory.getLog(this)
 
     @Bean
     fun contextParam(): ContextParam {

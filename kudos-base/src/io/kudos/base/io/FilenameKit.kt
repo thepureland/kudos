@@ -1,8 +1,7 @@
 package io.kudos.base.io
 
+import org.apache.commons.io.FilenameUtils
 import org.apache.commons.io.IOCase
-import org.soul.base.io.CaseSensitivityEnum
-import org.soul.base.io.FilenameTool
 
 /**
  * 文件名工具类
@@ -13,7 +12,7 @@ import org.soul.base.io.FilenameTool
 object FilenameKit {
 
     // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-    // 封装org.apache.commons.io.FilenameTool
+    // 封装org.apache.commons.io.FilenameUtils
     // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
     //region normalize
@@ -51,7 +50,7 @@ object FilenameKit {
      * @author K
      * @since 1.0.0
      */
-    fun normalize(filename: String?): String? = FilenameTool.normalize(filename)
+    fun normalize(filename: String?): String? = FilenameUtils.normalize(filename)
 
     /**
      * 标准化文件路径，移除两个和一个点的部分。能够指定要使用的分隔符
@@ -88,7 +87,7 @@ object FilenameKit {
      * @author K
      * @since 1.0.0
      */
-    fun normalize(filename: String, unixSeparator: Boolean): String = FilenameTool.normalize(filename, unixSeparator)
+    fun normalize(filename: String, unixSeparator: Boolean): String = FilenameUtils.normalize(filename, unixSeparator)
 
     /**
      * 标准化文件路径，移除两个和一个点的部分，并移除结尾的任何分隔符
@@ -124,7 +123,7 @@ object FilenameKit {
      * @author K
      * @since 1.0.0
      */
-    fun normalizeNoEndSeparator(filename: String?): String? = FilenameTool.normalizeNoEndSeparator(filename)
+    fun normalizeNoEndSeparator(filename: String?): String? = FilenameUtils.normalizeNoEndSeparator(filename)
 
     /**
      * 标准化文件路径，移除两个和一个点的部分，并移除结尾的任何分隔符. 能够指定要使用的分隔符
@@ -160,7 +159,7 @@ object FilenameKit {
      * @since 1.0.0
      */
     fun normalizeNoEndSeparator(filename: String?, unixSeparator: Boolean = false): String? =
-        FilenameTool.normalizeNoEndSeparator(filename, unixSeparator)
+        FilenameUtils.normalizeNoEndSeparator(filename, unixSeparator)
     //endregion normalize
 
     /**
@@ -195,7 +194,7 @@ object FilenameKit {
      * @since 1.0.0
      */
     fun concat(basePath: String?, fullFilenameToAdd: String?): String? =
-        FilenameTool.concat(basePath, fullFilenameToAdd)
+        FilenameUtils.concat(basePath, fullFilenameToAdd)
 
     /**
      * 检查父目录是否包含指定的子目录或文件
@@ -212,7 +211,7 @@ object FilenameKit {
      * @since 1.0.0
      */
     fun directoryContains(canonicalParent: String, canonicalChild: String?): Boolean =
-        FilenameTool.directoryContains(canonicalParent, canonicalChild)
+        FilenameUtils.directoryContains(canonicalParent, canonicalChild)
 
     //region separatorsTo
     /**
@@ -223,7 +222,7 @@ object FilenameKit {
      * @author K
      * @since 1.0.0
      */
-    fun separatorsToUnix(path: String?): String? = FilenameTool.separatorsToUnix(path)
+    fun separatorsToUnix(path: String?): String? = FilenameUtils.separatorsToUnix(path)
 
     /**
      * 将所有分隔符转换为Windows格式的分隔符
@@ -233,7 +232,7 @@ object FilenameKit {
      * @author K
      * @since 1.0.0
      */
-    fun separatorsToWindows(path: String?): String? = FilenameTool.separatorsToWindows(path)
+    fun separatorsToWindows(path: String?): String? = FilenameUtils.separatorsToWindows(path)
 
     /**
      * 将所有分隔符转换为当前系统格式的分隔符
@@ -243,7 +242,7 @@ object FilenameKit {
      * @author K
      * @since 1.0.0
      */
-    fun separatorsToSystem(path: String?): String? = FilenameTool.separatorsToSystem(path)
+    fun separatorsToSystem(path: String?): String? = FilenameUtils.separatorsToSystem(path)
     //endregion separatorsTo
 
     /**
@@ -275,7 +274,7 @@ object FilenameKit {
      * @author K
      * @since 1.0.0
      */
-    fun getPrefixLength(filename: String?): Int = FilenameTool.getPrefixLength(filename)
+    fun getPrefixLength(filename: String?): Int = FilenameUtils.getPrefixLength(filename)
 
     //region indexOf
     /**
@@ -288,7 +287,7 @@ object FilenameKit {
      * @author K
      * @since 1.0.0
      */
-    fun indexOfLastSeparator(filename: String?): Int = FilenameTool.indexOfLastSeparator(filename)
+    fun indexOfLastSeparator(filename: String?): Int = FilenameUtils.indexOfLastSeparator(filename)
 
     /**
      * 返回最后一个扩展分隔符(一个.)的下标
@@ -301,7 +300,7 @@ object FilenameKit {
      * @author K
      * @since 1.0.0
      */
-    fun indexOfExtension(filename: String?): Int = FilenameTool.indexOfExtension(filename)
+    fun indexOfExtension(filename: String?): Int = FilenameUtils.indexOfExtension(filename)
     //endregion indexOf
 
     /**
@@ -332,7 +331,7 @@ object FilenameKit {
      * @author K
      * @since 1.0.0
      */
-    fun getPrefix(filename: String): String? = FilenameTool.getPrefix(filename)
+    fun getPrefix(filename: String): String? = FilenameUtils.getPrefix(filename)
 
     /**
      * 返回文件名的扩展名
@@ -352,7 +351,7 @@ object FilenameKit {
      * @author K
      * @since 1.0.0
      */
-    fun getExtension(filename: String): String? = FilenameTool.getExtension(filename)
+    fun getExtension(filename: String): String? = FilenameUtils.getExtension(filename)
 
     //region getPath
     /**
@@ -375,7 +374,7 @@ object FilenameKit {
      * @author K
      * @since 1.0.0
      */
-    fun getPath(filename: String?): String? = FilenameTool.getPath(filename)
+    fun getPath(filename: String?): String? = FilenameUtils.getPath(filename)
 
     /**
      * 返回完整路径的不带前缀的路径, 它同样不包括末尾的目录分隔符
@@ -397,7 +396,7 @@ object FilenameKit {
      * @author K
      * @since 1.0.0
      */
-    fun getPathNoEndSeparator(filename: String?): String? = FilenameTool.getPathNoEndSeparator(filename)
+    fun getPathNoEndSeparator(filename: String?): String? = FilenameUtils.getPathNoEndSeparator(filename)
 
     /**
      * 返回指定文件的完整路径，它包含前缀和路径
@@ -424,7 +423,7 @@ object FilenameKit {
      * @author K
      * @since 1.0.0
      */
-    fun getFullPath(filename: String?): String? = FilenameTool.getFullPath(filename)
+    fun getFullPath(filename: String?): String? = FilenameUtils.getFullPath(filename)
 
     /**
      * 返回指定文件的完整路径，它包含前缀和路径, 并且不包括末尾的目录分隔符
@@ -451,7 +450,7 @@ object FilenameKit {
      * @author K
      * @since 1.0.0
      */
-    fun getFullPathNoEndSeparator(filename: String?): String? = FilenameTool.getFullPathNoEndSeparator(filename)
+    fun getFullPathNoEndSeparator(filename: String?): String? = FilenameUtils.getFullPathNoEndSeparator(filename)
     //endregion getPath
 
     //region getName
@@ -473,7 +472,7 @@ object FilenameKit {
      * @author K
      * @since 1.0.0
      */
-    fun getName(filename: String?): String? = FilenameTool.getName(filename)
+    fun getName(filename: String?): String? = FilenameUtils.getName(filename)
 
     /**
      * 返回完整文件名去掉路径和扩展名后的名称
@@ -493,7 +492,7 @@ object FilenameKit {
      * @author K
      * @since 1.0.0
      */
-    fun getBaseName(filename: String?): String? = FilenameTool.getBaseName(filename)
+    fun getBaseName(filename: String?): String? = FilenameUtils.getBaseName(filename)
     //endregion getName
 
     /**
@@ -514,7 +513,7 @@ object FilenameKit {
      * @author K
      * @since 1.0.0
      */
-    fun removeExtension(filename: String?): String? = FilenameTool.removeExtension(filename)
+    fun removeExtension(filename: String?): String? = FilenameUtils.removeExtension(filename)
 
     //region equals
     /**
@@ -528,7 +527,7 @@ object FilenameKit {
      * @author K
      * @since 1.0.0
      */
-    fun equals(filename1: String?, filename2: String?): Boolean = FilenameTool.equals(filename1, filename2)
+    fun equals(filename1: String?, filename2: String?): Boolean = FilenameUtils.equals(filename1, filename2)
 
     /**
      * 检查两个文件名是否相等, 依赖于操作系统的大小写规则。
@@ -542,7 +541,7 @@ object FilenameKit {
      * @since 1.0.0
      */
     fun equalsOnSystem(filename1: String?, filename2: String?): Boolean =
-        FilenameTool.equalsOnSystem(filename1, filename2)
+        FilenameUtils.equalsOnSystem(filename1, filename2)
 
     /**
      * 标准化两个文件名后，比较它们是否相等
@@ -556,7 +555,7 @@ object FilenameKit {
      * @since 1.0.0
      */
     fun equalsNormalized(filename1: String?, filename2: String?): Boolean =
-        FilenameTool.equalsNormalized(filename1, filename2)
+        FilenameUtils.equalsNormalized(filename1, filename2)
 
     /**
      * 标准化两个文件名后，比较它们是否相等, 依赖于操作系统的大小写规则。
@@ -571,7 +570,7 @@ object FilenameKit {
      * @since 1.0.0
      */
     fun equalsNormalizedOnSystem(filename1: String?, filename2: String?): Boolean =
-        FilenameTool.equalsNormalizedOnSystem(filename1, filename2)
+        FilenameUtils.equalsNormalizedOnSystem(filename1, filename2)
 
     /**
      * 检查是否两个文件名相等， 可以选择是否标准化和大小写比较规则。
@@ -585,7 +584,7 @@ object FilenameKit {
      * @since 1.0.0
      */
     fun equals(filename1: String?, filename2: String?, normalized: Boolean, caseSensitivity: Boolean?): Boolean =
-        FilenameTool.equals(filename1, filename2, normalized, adaptCaseSensitivity(caseSensitivity))
+        FilenameUtils.equals(filename1, filename2, normalized, adaptCaseSensitivity(caseSensitivity))
     //endregion equals
 
     //region isExtension
@@ -599,7 +598,7 @@ object FilenameKit {
      * @author K
      * @since 1.0.0
      */
-    fun isExtension(filename: String?, extension: String?): Boolean = FilenameTool.isExtension(filename, extension)
+    fun isExtension(filename: String?, extension: String?): Boolean = FilenameUtils.isExtension(filename, extension)
 
     /**
      * 检查文件的扩展名是否为指定的扩展名数组中的一个
@@ -611,8 +610,8 @@ object FilenameKit {
      * @author K
      * @since 1.0.0
      */
-    fun isExtension(filename: String?, extensions: Array<String?>?): Boolean =
-        FilenameTool.isExtension(filename, extensions)
+    fun isExtension(filename: String?, extensions: Array<String?>): Boolean =
+        FilenameUtils.isExtension(filename, *extensions)
 
     /**
      * 检查文件的扩展名是否为指定的扩展名容器中的一个
@@ -625,7 +624,7 @@ object FilenameKit {
      * @since 1.0.0
      */
     fun isExtension(filename: String?, extensions: Collection<String?>?): Boolean =
-        FilenameTool.isExtension(filename, extensions)
+        FilenameUtils.isExtension(filename, extensions)
     //endregion isExtension
 
     //region wildcard
@@ -656,7 +655,7 @@ object FilenameKit {
      * @since 1.0.0
      */
     fun wildcardMatch(filename: String?, wildcardMatcher: String?): Boolean =
-        FilenameTool.wildcardMatch(filename, wildcardMatcher)
+        FilenameUtils.wildcardMatch(filename, wildcardMatcher)
 
     /**
      * <p>
@@ -686,7 +685,7 @@ object FilenameKit {
      * @since 1.0.0
      */
     fun wildcardMatchOnSystem(filename: String?, wildcardMatcher: String?): Boolean =
-        FilenameTool.wildcardMatchOnSystem(filename, wildcardMatcher)
+        FilenameUtils.wildcardMatchOnSystem(filename, wildcardMatcher)
 
     /**
      * 判断文件名是匹配指定的可能带有通配符的字符串，可以指定大小写敏感规则
@@ -700,18 +699,18 @@ object FilenameKit {
      * @since 1.0.0
      */
     fun wildcardMatch(filename: String?, wildcardMatcher: String?, caseSensitivity: Boolean?): Boolean =
-        FilenameTool.wildcardMatch(filename, wildcardMatcher, adaptCaseSensitivity(caseSensitivity))
+        FilenameUtils.wildcardMatch(filename, wildcardMatcher, adaptCaseSensitivity(caseSensitivity))
     //endregion wildcard
 
-    private fun adaptCaseSensitivity(caseSensitivity: Boolean?): CaseSensitivityEnum =
+    private fun adaptCaseSensitivity(caseSensitivity: Boolean?): IOCase =
         when (caseSensitivity) {
-            null -> CaseSensitivityEnum.SYSTEM
-            true -> CaseSensitivityEnum.SENSITIVE
-            false -> CaseSensitivityEnum.INSENSITIVE
+            null -> IOCase.SYSTEM
+            true -> IOCase.SENSITIVE
+            false -> IOCase.INSENSITIVE
         }
 
     // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    // 封装org.apache.commons.io.FilenameTool
+    // 封装org.apache.commons.io.FilenameUtils
     // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 }

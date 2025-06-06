@@ -1,8 +1,8 @@
 package io.kudos.base.support.payload
 
-import org.soul.base.query.Criterion
-import org.soul.base.query.enums.OperatorEnum
-import org.soul.base.support.logic.AndOr
+import io.kudos.base.query.Criterion
+import io.kudos.base.query.enums.OperatorEnum
+import io.kudos.base.support.logic.AndOrEnum
 import kotlin.reflect.KClass
 
 
@@ -20,7 +20,7 @@ import kotlin.reflect.KClass
 open class SearchPayload {
 
     /** 各属性间的查询逻辑关系，默认为AND */
-    open var andOr: AndOr = AndOr.AND
+    open var andOr: AndOrEnum = AndOrEnum.AND
 
     /** 值为null的属性的列表 */
     open var nullProperties: List<String>? = null

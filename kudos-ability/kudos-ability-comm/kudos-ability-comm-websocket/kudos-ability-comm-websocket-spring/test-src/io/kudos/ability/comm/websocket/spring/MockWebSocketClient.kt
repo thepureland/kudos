@@ -1,6 +1,6 @@
 package io.kudos.ability.comm.websocket.spring
 
-import io.kudos.base.logger.LoggerFactory
+import io.kudos.base.logger.LogFactory
 import org.java_websocket.client.WebSocketClient
 import org.java_websocket.handshake.ServerHandshake
 import java.net.URI
@@ -14,7 +14,7 @@ import java.net.URI
  */
 class MockWebSocketClient(serverUri: URI) : WebSocketClient(serverUri) {
 
-    private val LOG = LoggerFactory.getLogger(this)
+    private val LOG = LogFactory.getLog(this)
 
     override fun onOpen(serverHandshake: ServerHandshake?) {
         LOG.info("ws-client连接成功！")

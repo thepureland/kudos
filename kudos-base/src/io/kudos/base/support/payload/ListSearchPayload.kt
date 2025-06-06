@@ -1,6 +1,6 @@
 package io.kudos.base.support.payload
 
-import org.soul.base.query.sort.Order
+import io.kudos.base.query.sort.Order
 
 /**
  * 列表查询条件项载体

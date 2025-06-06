@@ -1,7 +1,7 @@
 package io.kudos.ability.cache.interservice.provider.init
 
 import io.kudos.ability.cache.common.init.LinkableCacheAutoConfiguration
-import io.kudos.base.logger.LoggerFactory
+import io.kudos.base.logger.LogFactory
 import io.kudos.context.init.IComponentInitializer
 import org.soul.ability.cache.interservice.provider.ClientCacheableAspect
 import org.soul.ability.cache.interservice.provider.web.ClientCacheWebFilter
@@ -22,7 +22,7 @@ import org.springframework.context.annotation.Configuration
 @AutoConfigureAfter(LinkableCacheAutoConfiguration::class)
 open class InterServiceCacheProviderAutoConfiguration : IComponentInitializer {
 
-    private val logger = LoggerFactory.getLogger(this)
+    private val logger = LogFactory.getLog(this)
 
     @Bean
     @ConditionalOnMissingBean

@@ -1,7 +1,7 @@
 package io.kudos.ability.distributed.lock.redisson
 
 import io.kudos.ability.distributed.lock.redisson.kit.RedissonLockKit
-import io.kudos.base.logger.LoggerFactory
+import io.kudos.base.logger.LogFactory
 import io.kudos.test.common.init.EnableKudosTest
 import io.kudos.test.container.RedisTestContainer
 import org.junit.jupiter.api.Test
@@ -29,7 +29,7 @@ open class RedissonLockSingleTest {
     @Autowired
     private lateinit var testLockByAnnotation: TestLockByAnnotation
 
-    val log = LoggerFactory.getLogger(this)
+    val log = LogFactory.getLog(this)
 
     /** 锁测试共享变量 */
     private var lockCount = 10

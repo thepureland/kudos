@@ -2,7 +2,7 @@ package io.kudos.ability.distributed.notify.common.support
 
 import io.kudos.ability.distributed.notify.common.api.INotifyProducer
 import io.kudos.ability.distributed.notify.common.model.NotifyMessageVo
-import io.kudos.base.logger.LoggerFactory
+import io.kudos.base.logger.LogFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import java.io.Serializable
@@ -10,7 +10,7 @@ import java.io.Serializable
 @Component
 class NotifyTool {
 
-    private val log = LoggerFactory.getLogger(this)
+    private val log = LogFactory.getLog(this)
 
     @Autowired(required = false)
     private val notifyProducer: INotifyProducer? = null

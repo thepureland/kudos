@@ -1,6 +1,6 @@
 package io.kudos.base.lang
 
-import org.soul.base.lang.ThreadTool
+import io.kudos.base.logger.LogFactory
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.TimeUnit
 import kotlin.reflect.KClass
@@ -13,6 +13,8 @@ import kotlin.reflect.KClass
  */
 object ThreadKit {
 
+    private val LOG = LogFactory.getLog(ThreadKit::class)
+
     /**
      * 让当前线程休眠指定的毫秒数, 并忽略InterruptedException.
      *
@@ -21,7 +23,11 @@ object ThreadKit {
      * @since 1.0.0
      */
     fun sleep(millis: Long) {
-        ThreadTool.sleep(millis)
+        try {
+            Thread.sleep(millis)
+        } catch (e: InterruptedException) {
+            LOG.error(e)
+        }
     }
 
     /**
@@ -33,7 +39,11 @@ object ThreadKit {
      * @since 1.0.0
      */
     fun sleep(duration: Long, unit: TimeUnit) {
-        ThreadTool.sleep(duration, unit)
+        try {
+            Thread.sleep(unit.toMillis(duration))
+        } catch (e: InterruptedException) {
+            LOG.error(e)
+        }
     }
 
     /**
@@ -49,7 +59,23 @@ object ThreadKit {
      * @since 1.0.0
      */
     fun gracefulShutdown(pool: ExecutorService, shutdownTimeout: Int, shutdownNowTimeout: Int, timeUnit: TimeUnit) {
-        ThreadTool.gracefulShutdown(pool, shutdownTimeout, shutdownNowTimeout, timeUnit)
+        pool.shutdown() // Disable new tasks from being submitted
+        try {
+            // Wait a while for existing tasks to terminate
+            if (!pool.awaitTermination(shutdownTimeout.toLong(), timeUnit)) {
+                pool.shutdownNow() // Cancel currently executing tasks
+                // Wait a while for tasks to respond to being cancelled
+                if (!pool.awaitTermination(shutdownNowTimeout.toLong(), timeUnit)) {
+                    LOG.warn("线程池未结束!")
+                }
+            }
+        } catch (ie: InterruptedException) {
+            LOG.error(ie)
+            // (Re-)Cancel if current thread also interrupted
+            pool.shutdownNow()
+            // Preserve interrupt status
+            Thread.currentThread().interrupt()
+        }
     }
 
     /**
@@ -62,7 +88,15 @@ object ThreadKit {
      * @since 1.0.0
      */
     fun normalShutdown(pool: ExecutorService, timeout: Int, timeUnit: TimeUnit?) {
-        ThreadTool.normalShutdown(pool, timeout, timeUnit)
+        try {
+            pool.shutdownNow()
+            if (!pool.awaitTermination(timeout.toLong(), timeUnit)) {
+                LOG.warn("线程池未结束!")
+            }
+        } catch (ie: InterruptedException) {
+            LOG.error(ie)
+            Thread.currentThread().interrupt()
+        }
     }
 
     /**
@@ -75,7 +109,22 @@ object ThreadKit {
      * @since 1.0.0
      */
     fun printStackTraceOnNotCallByClass(clazz: KClass<*>) {
-        ThreadTool.printStackTraceOnNotCallByClass(clazz.java)
+        if (LOG.isDebugEnabled()) {
+            var find = false
+            val stackTrace = getStackTrace()
+            for (elem in stackTrace) {
+                if (elem.className == clazz.java.name) {
+                    find = true
+                    break
+                }
+            }
+            if (!find) {
+                LOG.warn("方法栈里不含指定类: $clazz")
+                for (elem in stackTrace) {
+                    LOG.warn(elem.toString())
+                }
+            }
+        }
     }
 
     /**
@@ -86,7 +135,11 @@ object ThreadKit {
      * @since 1.0.0
      */
     fun printStackTrace() {
-        ThreadTool.printStackTrace()
+        if (LOG.isDebugEnabled()) {
+            for (elem in getStackTrace()) {
+                LOG.debug(elem.toString())
+            }
+        }
     }
 
     /**
@@ -96,6 +149,6 @@ object ThreadKit {
      * @author K
      * @since 1.0.0
      */
-    fun getStackTrace(): Array<StackTraceElement> = ThreadTool.getStackTrace()
+    fun getStackTrace(): Array<StackTraceElement> = Thread.currentThread().stackTrace
 
 }

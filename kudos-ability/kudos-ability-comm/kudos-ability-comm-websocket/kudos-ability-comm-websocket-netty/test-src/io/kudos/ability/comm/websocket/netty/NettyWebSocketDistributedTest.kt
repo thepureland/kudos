@@ -1,6 +1,6 @@
 package io.kudos.ability.comm.websocket.netty
 
-import io.kudos.base.logger.LoggerFactory
+import io.kudos.base.logger.LogFactory
 import io.kudos.test.common.init.EnableKudosTest
 import io.kudos.test.container.RedisTestContainer
 import org.junit.jupiter.api.*
@@ -74,7 +74,7 @@ class NettyWebSocketDistributedTest {
     }
 
     companion object {
-        private val LOG = LoggerFactory.getLogger(this)
+        private val LOG = LogFactory.getLog(this)
 
         @JvmStatic
         @DynamicPropertySource

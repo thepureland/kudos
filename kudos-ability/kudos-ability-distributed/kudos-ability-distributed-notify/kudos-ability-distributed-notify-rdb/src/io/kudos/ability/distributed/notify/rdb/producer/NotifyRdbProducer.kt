@@ -2,7 +2,7 @@ package io.kudos.ability.distributed.notify.rdb.producer
 
 import io.kudos.ability.distributed.notify.common.api.INotifyProducer
 import io.kudos.ability.distributed.notify.common.model.NotifyMessageVo
-import io.kudos.base.logger.LoggerFactory
+import io.kudos.base.logger.LogFactory
 import org.soul.ability.distributed.notify.rdb.entity.SysApp
 import org.soul.ability.distributed.notify.rdb.service.ISysAppService
 import org.soul.base.data.json.JsonTool
@@ -23,7 +23,7 @@ import java.util.function.Consumer
  */
 open class NotifyRdbProducer : INotifyProducer {
 
-    private val LOG = LoggerFactory.getLogger(this)
+    private val LOG = LogFactory.getLog(this)
 
     @Autowired
     private lateinit var sysAppService: ISysAppService

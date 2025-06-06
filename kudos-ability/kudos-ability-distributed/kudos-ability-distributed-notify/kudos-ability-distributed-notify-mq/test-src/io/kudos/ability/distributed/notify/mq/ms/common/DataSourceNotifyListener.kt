@@ -4,7 +4,7 @@ import io.kudos.ability.distributed.notify.common.api.INotifyListener
 import io.kudos.ability.distributed.notify.common.model.NotifyMessageVo
 import io.kudos.ability.distributed.notify.mq.common.IMainClinet
 import io.kudos.ability.distributed.notify.mq.common.NotifyTypeEnum
-import io.kudos.base.logger.LoggerFactory
+import io.kudos.base.logger.LogFactory
 import jakarta.annotation.PostConstruct
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
@@ -13,7 +13,7 @@ import java.io.Serializable
 @Component
 open class DataSourceNotifyListener : INotifyListener {
 
-    private val log = LoggerFactory.getLogger(this)
+    private val log = LogFactory.getLog(this)
 
     @Autowired
     private lateinit var mainClinet: IMainClinet

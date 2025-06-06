@@ -1,11 +1,13 @@
 package io.kudos.base.lang
 
-import io.kudos.base.logger.LoggerFactory
-import org.soul.base.lang.SystemTool
+import io.kudos.base.logger.LogFactory
+import org.apache.commons.lang3.SystemUtils
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStream
 import java.io.InputStreamReader
+import java.lang.management.ManagementFactory
+import java.util.*
 import java.util.regex.Pattern
 
 /**
@@ -16,20 +18,43 @@ import java.util.regex.Pattern
  */
 object SystemKit {
 
-    private val log = LoggerFactory.getLogger(this)
+    private val log = LogFactory.getLog(this::class)
 
-//    /**
-//     * 设置系统环境变量
-//     *
-//     * @param vars Map(变量名，变量值)
-//     * @author https://blog.csdn.net/n1007530194/article/details/97130931
-//     * @author K
-//     * @since 1.0.0
-//     */
-//    @Suppress(Consts.Suppress.UNCHECKED_CAST)
-//    fun setEnvVars(vars: Map<String, String>) {
-//        SystemTool.setEnvVars(vars)
-//    }
+    /**
+     * 设置系统环境变量
+     *
+     * @param vars Map(变量名，变量值)
+     * @author https://blog.csdn.net/n1007530194/article/details/97130931
+     * @author K
+     * @since 1.0.0
+     */
+    fun setEnvVars(vars: Map<String, String>) {
+        try {
+            val processEnvironmentClass = Class.forName("java.lang.ProcessEnvironment")
+            val theEnvironmentField = processEnvironmentClass.getDeclaredField("theEnvironment")
+            theEnvironmentField.isAccessible = true
+            val env = theEnvironmentField.get(null) as MutableMap<String, String>
+            env.putAll(vars)
+            val theCaseInsensitiveEnvironmentField =
+                processEnvironmentClass.getDeclaredField("theCaseInsensitiveEnvironment")
+            theCaseInsensitiveEnvironmentField.isAccessible = true
+            val cienv = theCaseInsensitiveEnvironmentField.get(null) as MutableMap<String, String>
+            cienv.putAll(vars)
+        } catch (e: NoSuchFieldException) {
+            val classes = Collections::class.java.declaredClasses
+            val env = System.getenv()
+            for (cl in classes) {
+                if ("java.util.Collections\$UnmodifiableMap" == cl.name) {
+                    val field = cl.getDeclaredField("m")
+                    field.isAccessible = true
+                    val obj = field.get(env)
+                    val map = obj as MutableMap<String, String>
+                    map.clear()
+                    map.putAll(vars)
+                }
+            }
+        }
+    }
 
     /**
      * 执行单个系统命令
@@ -111,7 +136,14 @@ object SystemKit {
      * @author K
      * @since 1.0.0
      */
-    fun isDebug(): Boolean = SystemTool.isDebug()
+    fun isDebug(): Boolean {
+        for (arg in ManagementFactory.getRuntimeMXBean().inputArguments) {
+            if (debugPattern.matcher(arg).find()) {
+                return true
+            }
+        }
+        return false
+    }
 
     /**
      * 是否为windows操作系统
@@ -131,6 +163,9 @@ object SystemKit {
      */
     fun getUser(): String = System.getProperty("user.name")
 
+    // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+    // 封装org.apache.commons.lang3.SystemUtils
+    // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
     /**
      * 获取java home目录, 并以`File`返回
      *
@@ -140,7 +175,7 @@ object SystemKit {
      * @author K
      * @since 1.0.0
      */
-    fun getJavaHome(): File = SystemTool.getJavaHome()
+    fun getJavaHome(): File = SystemUtils.getJavaHome()
 
     /**
      * 获取IO临时目录, 并以`File`返回
@@ -151,7 +186,7 @@ object SystemKit {
      * @author K
      * @since 1.0.0
      */
-    fun getJavaIoTmpDir(): File = SystemTool.getJavaIoTmpDir()
+    fun getJavaIoTmpDir(): File = SystemUtils.getJavaIoTmpDir()
 
     /**
      * 获取用户目录, 并以`File`返回
@@ -162,7 +197,7 @@ object SystemKit {
      * @author K
      * @since 1.0.0
      */
-    fun getUserDir(): File = SystemTool.getUserDir()
+    fun getUserDir(): File = SystemUtils.getUserDir()
 
     /**
      * 获取用户home目录, 并以`File`返回
@@ -173,7 +208,7 @@ object SystemKit {
      * @author K
      * @since 1.0.0
      */
-    fun getUserHome(): File = SystemTool.getUserHome()
+    fun getUserHome(): File = SystemUtils.getUserHome()
 
     /**
      * 检测 [.JAVA_AWT_HEADLESS] 値是否为 `true`.
@@ -183,6 +218,10 @@ object SystemKit {
      * @author K
      * @since 1.0.0
      */
-    fun isJavaAwtHeadless(): Boolean = SystemTool.isJavaAwtHeadless()
+    fun isJavaAwtHeadless(): Boolean = SystemUtils.isJavaAwtHeadless()
+
+    // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    // 封装org.apache.commons.lang3.SystemUtils
+    // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 }

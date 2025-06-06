@@ -1,9 +1,9 @@
 package io.kudos.base.i18n
 
 import io.kudos.base.lang.string.right
-import io.kudos.base.logger.LoggerFactory
-import org.soul.base.scanner.classpath.ClassPathScanner
-import org.soul.base.scanner.support.Resource
+import io.kudos.base.logger.LogFactory
+import io.kudos.base.scanner.classpath.ClassPathScanner
+import io.kudos.base.scanner.support.Resource
 import java.io.InputStreamReader
 import java.util.*
 
@@ -98,7 +98,7 @@ object I18nKit {
     fun isSupport(locale: String): Boolean = supportLocales.contains(locale)
 
 
-    private val log = LoggerFactory.getLogger(I18nKit::class)
+    private val log = LogFactory.getLog(I18nKit::class)
     private const val DEFAULT_BASE_PATH = "i18n/"
     const val DICT_I18N_KEY = "dicts"
 

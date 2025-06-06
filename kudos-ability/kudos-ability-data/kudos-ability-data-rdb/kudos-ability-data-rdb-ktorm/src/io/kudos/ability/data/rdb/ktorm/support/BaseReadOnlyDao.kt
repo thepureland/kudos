@@ -5,9 +5,13 @@ import io.kudos.ability.data.rdb.ktorm.kit.getDatabase
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.lang.GenericKit
 import io.kudos.base.lang.reflect.newInstance
+import io.kudos.base.query.Criteria
+import io.kudos.base.query.enums.OperatorEnum
+import io.kudos.base.query.sort.Order
 import io.kudos.base.support.Consts
 import io.kudos.base.support.GroupExecutor
 import io.kudos.base.support.dao.IBaseReadOnlyDao
+import io.kudos.base.support.logic.AndOrEnum
 import io.kudos.base.support.payload.ListSearchPayload
 import io.kudos.base.support.payload.SearchPayload
 import org.ktorm.database.Database
@@ -18,10 +22,6 @@ import org.ktorm.expression.OrderByExpression
 import org.ktorm.schema.Column
 import org.ktorm.schema.ColumnDeclaring
 import org.ktorm.schema.Table
-import org.soul.base.query.Criteria
-import org.soul.base.query.enums.OperatorEnum
-import org.soul.base.query.sort.Order
-import org.soul.base.support.logic.AndOr
 import kotlin.reflect.KClass
 import kotlin.reflect.full.memberProperties
 
@@ -199,7 +199,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
     //region andSearch
 
     override fun andSearch(properties: Map<String, *>, vararg orders: Order): List<E> {
-        return doSearchEntity(properties, AndOr.AND, null, *orders)
+        return doSearchEntity(properties, AndOrEnum.AND, null, *orders)
     }
 
     /**
@@ -217,13 +217,13 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         vararg orders: Order,
         whereConditionFactory: ((Column<Any>, Any?) -> ColumnDeclaring<Boolean>?)? = null
     ): List<E> {
-        return doSearchEntity(properties, AndOr.AND, whereConditionFactory, *orders)
+        return doSearchEntity(properties, AndOrEnum.AND, whereConditionFactory, *orders)
     }
 
     override fun andSearchProperty(
         properties: Map<String, *>, returnProperty: String, vararg orders: Order
     ): List<*> {
-        val results = doSearchProperties(properties, AndOr.AND, listOf(returnProperty), null, *orders)
+        val results = doSearchProperties(properties, AndOrEnum.AND, listOf(returnProperty), null, *orders)
         return results.flatMap { it.values }
     }
 
@@ -244,7 +244,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         vararg orders: Order,
         whereConditionFactory: ((Column<Any>, Any?) -> ColumnDeclaring<Boolean>?)? = null
     ): List<*> {
-        val results = doSearchProperties(properties, AndOr.AND, listOf(returnProperty), whereConditionFactory, *orders)
+        val results = doSearchProperties(properties, AndOrEnum.AND, listOf(returnProperty), whereConditionFactory, *orders)
         return results.flatMap { it.values }
     }
 
@@ -253,7 +253,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         returnProperties: Collection<String>,
         vararg orders: Order
     ): List<Map<String, *>> {
-        return doSearchProperties(properties, AndOr.AND, returnProperties, null, *orders)
+        return doSearchProperties(properties, AndOrEnum.AND, returnProperties, null, *orders)
     }
 
     /**
@@ -273,7 +273,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         vararg orders: Order,
         whereConditionFactory: ((Column<Any>, Any?) -> ColumnDeclaring<Boolean>?)? = null
     ): List<Map<String, *>> {
-        return doSearchProperties(properties, AndOr.AND, returnProperties, whereConditionFactory, *orders)
+        return doSearchProperties(properties, AndOrEnum.AND, returnProperties, whereConditionFactory, *orders)
     }
 
     //endregion andSearch
@@ -282,7 +282,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
     //region orSearch
 
     override fun orSearch(properties: Map<String, *>, vararg orders: Order): List<E> {
-        return doSearchEntity(properties, AndOr.OR, null, *orders)
+        return doSearchEntity(properties, AndOrEnum.OR, null, *orders)
     }
 
     /**
@@ -300,7 +300,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         vararg orders: Order,
         whereConditionFactory: ((Column<Any>, Any?) -> ColumnDeclaring<Boolean>?)? = null
     ): List<E> {
-        return doSearchEntity(properties, AndOr.OR, whereConditionFactory, *orders)
+        return doSearchEntity(properties, AndOrEnum.OR, whereConditionFactory, *orders)
     }
 
     override fun orSearchProperty(
@@ -308,7 +308,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         returnProperty: String,
         vararg orders: Order,
     ): List<*> {
-        val results = doSearchProperties(properties, AndOr.OR, listOf(returnProperty), null, *orders)
+        val results = doSearchProperties(properties, AndOrEnum.OR, listOf(returnProperty), null, *orders)
         return results.flatMap { it.values }
     }
 
@@ -329,7 +329,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         vararg orders: Order,
         whereConditionFactory: ((Column<Any>, Any?) -> ColumnDeclaring<Boolean>?)? = null
     ): List<*> {
-        val results = doSearchProperties(properties, AndOr.OR, listOf(returnProperty), whereConditionFactory, *orders)
+        val results = doSearchProperties(properties, AndOrEnum.OR, listOf(returnProperty), whereConditionFactory, *orders)
         return results.flatMap { it.values }
     }
 
@@ -338,7 +338,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         returnProperties: Collection<String>,
         vararg orders: Order
     ): List<Map<String, *>> {
-        return doSearchProperties(properties, AndOr.OR, returnProperties, null, *orders)
+        return doSearchProperties(properties, AndOrEnum.OR, returnProperties, null, *orders)
     }
 
     /**
@@ -358,7 +358,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         vararg orders: Order,
         whereConditionFactory: ((Column<Any>, Any?) -> ColumnDeclaring<Boolean>?)? = null
     ): List<Map<String, *>> {
-        return doSearchProperties(properties, AndOr.OR, returnProperties, whereConditionFactory, *orders)
+        return doSearchProperties(properties, AndOrEnum.OR, returnProperties, whereConditionFactory, *orders)
     }
 
     //endregion orSearch
@@ -607,7 +607,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
             val orderExpressions = mutableListOf<OrderByExpression>()
             orders.forEach {
                 val column = ColumnHelper.columnOf(table(), it.property)[it.property]!!
-                val orderByExpression = if (it.isAscending) {
+                val orderByExpression = if (it.isAscending()) {
                     column.asc()
                 } else column.desc()
                 orderExpressions.add(orderByExpression)
@@ -628,7 +628,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
     @Suppress(Consts.Suppress.UNCHECKED_CAST)
     protected fun processWhere(
         propertyMap: Map<String, Pair<OperatorEnum, *>>,
-        andOr: AndOr?,
+        andOr: AndOrEnum?,
         ignoreNull: Boolean = false,
         whereConditionFactory: ((Column<Any>, Any?) -> ColumnDeclaring<Boolean>?)? = null
     ): ColumnDeclaring<Boolean>? {
@@ -678,7 +678,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
             var fullExpression = expressions[0]
             expressions.forEachIndexed { index, expression ->
                 if (index != 0) {
-                    fullExpression = if (andOr == AndOr.AND) {
+                    fullExpression = if (andOr == AndOrEnum.AND) {
                         fullExpression.and(expression)
                     } else {
                         fullExpression.or(expression)
@@ -691,7 +691,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
 
     private fun doSearchEntity(
         propertyMap: Map<String, *>?,
-        logic: AndOr?,
+        logic: AndOrEnum?,
         whereConditionFactory: ((Column<Any>, Any?) -> ColumnDeclaring<Boolean>?)? = null,
         vararg orders: Order
     ): List<E> {
@@ -707,7 +707,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
 
     private fun doSearchProperties(
         propertyMap: Map<String, *>?,
-        logic: AndOr?,
+        logic: AndOrEnum?,
         returnProperties: Collection<String>,
         whereConditionFactory: ((Column<Any>, Any?) -> ColumnDeclaring<Boolean>?)? = null,
         vararg orders: Order
@@ -814,7 +814,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         } else {
             getWherePropertyMap(searchPayload, entityProperties)
         }
-        val andOr = searchPayload?.andOr ?: AndOr.AND
+        val andOr = searchPayload?.andOr ?: AndOrEnum.AND
         val fullExpression = processWhere(propMap, andOr, true, whereConditionFactory)
         if (fullExpression != null) {
             query = query.where { fullExpression }

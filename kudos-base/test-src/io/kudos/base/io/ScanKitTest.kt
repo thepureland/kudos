@@ -2,13 +2,10 @@ package io.kudos.base.io
 
 import io.kudos.base.bean.Person
 import io.kudos.base.bean.validation.kit.ValidationKit
-import io.kudos.base.logger.ILoggerCreator
+import io.kudos.base.error.ObjectNotFoundException
+import io.kudos.base.logger.ILogCreator
 import io.kudos.base.logger.slf4j.Slf4jLoggerCreator
-import jakarta.validation.Constraint
 import jakarta.xml.bind.annotation.XmlRootElement
-import org.soul.base.bean.validation.constraint.annotaions.AtLeast
-import org.soul.base.exception.CustomRuntimeException
-import org.soul.base.exception.ObjectNotFoundException
 import kotlin.reflect.KClass
 import kotlin.system.measureTimeMillis
 import kotlin.test.Test
@@ -24,31 +21,21 @@ internal class ScanKitTest {
 
     @Test
     fun findClassesWithAnnotation() {
-        // 当前jar中就有
-        var basePackage = "io.kudos.base"
+        val basePackage = "io.kudos.base"
         val annoClass = XmlRootElement::class
         var classes: List<KClass<*>>
-        var timeMillis = measureTimeMillis {
+        val timeMillis = measureTimeMillis {
             classes = ScanKit.findClassesWithAnnotation(basePackage, annoClass)
         }
         println("findClassesWithAnnotation-1耗时${timeMillis}ms")
         assert(classes.contains(Person::class))
-
-        // 依赖的jar中的
-        basePackage = "org.soul.base"
-        val annoClazz = Constraint::class
-        timeMillis = measureTimeMillis {
-            classes = ScanKit.findClassesWithAnnotation(basePackage, annoClazz)
-        }
-        println("findClassesWithAnnotation-2耗时${timeMillis}ms")
-        assert(classes.contains(AtLeast::class))
     }
 
     @Test
     fun findSubclassesOf() {
         // 类
-        var basePackage = "org.soul.base"
-        val clazz = CustomRuntimeException::class
+        var basePackage = "io.kudos.base"
+        val clazz = RuntimeException::class
         var classes: List<KClass<*>>
         var timeMillis = measureTimeMillis {
             classes = ScanKit.findSubclassesOf(basePackage, clazz)
@@ -58,7 +45,7 @@ internal class ScanKitTest {
 
         // 接口,不通过
         basePackage = "io.kudos.base"
-        val iClazz = ILoggerCreator::class
+        val iClazz = ILogCreator::class
         timeMillis = measureTimeMillis {
             classes = ScanKit.findSubclassesOf(basePackage, iClazz)
         }
@@ -70,7 +57,7 @@ internal class ScanKitTest {
     fun findImplementations() {
         // 接口
         var basePackage = "io.kudos.base"
-        val iClazz = ILoggerCreator::class
+        val iClazz = ILogCreator::class
         var classes: List<KClass<*>>
         var timeMillis = measureTimeMillis {
             classes = ScanKit.findImplementations(basePackage, iClazz)
@@ -79,8 +66,8 @@ internal class ScanKitTest {
         assert(classes.contains(Slf4jLoggerCreator::class))
 
         // 类,不通过
-        basePackage = "org.soul.base"
-        val clazz = CustomRuntimeException::class
+        basePackage = "io.kudos.base"
+        val clazz = RuntimeException::class
         timeMillis = measureTimeMillis {
             classes = ScanKit.findImplementations(basePackage, clazz)
         }

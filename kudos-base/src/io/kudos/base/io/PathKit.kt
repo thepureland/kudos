@@ -1,7 +1,6 @@
 package io.kudos.base.io
 
 import org.apache.commons.io.FileUtils
-import org.soul.base.io.PathTool
 import java.io.File
 import java.net.URLDecoder
 import kotlin.reflect.KClass
@@ -51,7 +50,6 @@ object PathKit {
      *  @since 1.0.0
      */
     fun getClasspath(clazz: KClass<*>): String {
-        PathTool.getClassesPath()
         var c = clazz.java
         while (c.isMemberClass || c.isAnonymousClass) {
             c = c.enclosingClass // Get the actual enclosing file
@@ -111,7 +109,7 @@ object PathKit {
      * @author K
      * @since 1.0.0
      */
-    fun getProjectRootPath(): String = PathTool.getProjectRootPath()
+    fun getProjectRootPath(): String = System.getProperty("user.dir")
 
     /**
      * 得到程序运行时的路径
@@ -157,7 +155,5 @@ object PathKit {
      * @since 1.0.0
      */
     fun getUserDirectory(): File = FileUtils.getUserDirectory()
-
-
 
 }

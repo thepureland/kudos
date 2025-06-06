@@ -1,6 +1,6 @@
 package io.kudos.ability.cache.common.init
 
-import io.kudos.base.logger.LoggerFactory
+import io.kudos.base.logger.LogFactory
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
 import io.kudos.context.spring.YamlPropertySourceFactory
@@ -35,7 +35,7 @@ import org.springframework.context.annotation.PropertySource
 @EnableCaching(proxyTargetClass = true)
 open class LinkableCacheAutoConfiguration : IComponentInitializer {
 
-    private val logger = LoggerFactory.getLogger(this)
+    private val logger = LogFactory.getLog(this)
 
     @Primary
     @Bean(name = ["cacheManager"])

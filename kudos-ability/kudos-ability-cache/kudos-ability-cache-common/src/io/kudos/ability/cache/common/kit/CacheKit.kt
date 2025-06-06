@@ -1,7 +1,7 @@
 package io.kudos.ability.cache.common.kit
 
 
-import io.kudos.base.logger.LoggerFactory
+import io.kudos.base.logger.LogFactory
 import org.soul.ability.cache.common.support.CacheConfig
 import org.soul.ability.cache.common.tools.CacheTool
 import org.springframework.cache.Cache
@@ -16,7 +16,7 @@ import kotlin.reflect.KClass
  */
 object CacheKit {
 
-    private val log = LoggerFactory.getLogger(this)
+    private val log = LogFactory.getLog(this)
 
     /**
      * 是否开启缓存。必须是全局开关和指定的缓存开关都开启，才算开启

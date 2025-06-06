@@ -1,6 +1,7 @@
 package io.kudos.base.net.http
 
 import io.kudos.base.image.ImageKit
+import java.awt.image.BufferedImage
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -30,8 +31,9 @@ internal class HttpClientKitTest {
         val response =
             HttpClientKit.asyncRequest(httpClientBuilder, httpRequestBuilder, HttpResponse.BodyHandlers.ofInputStream())
         val body = response.body()
-        ImageKit.showImage(ImageIO.read(body))
-        Thread.sleep(3000)
+        val image = ImageIO.read(body)
+//        ImageKit.showImage(image)
+//        Thread.sleep(3000)
     }
 
 }

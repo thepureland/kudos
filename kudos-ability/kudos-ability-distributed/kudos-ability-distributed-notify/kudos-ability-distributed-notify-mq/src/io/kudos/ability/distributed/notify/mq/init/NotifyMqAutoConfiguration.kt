@@ -6,7 +6,7 @@ import io.kudos.ability.distributed.notify.common.model.NotifyMessageVo
 import io.kudos.ability.distributed.notify.common.support.NotifyListenerBeanPostProcessor
 import io.kudos.ability.distributed.notify.common.support.NotifyListenerItem
 import io.kudos.ability.distributed.notify.mq.producer.NotifyMqProducer
-import io.kudos.base.logger.LoggerFactory
+import io.kudos.base.logger.LogFactory
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
 import io.kudos.context.spring.YamlPropertySourceFactory
@@ -40,7 +40,7 @@ import java.util.function.Consumer
 @Import(NotifyListenerBeanPostProcessor::class)
 open class NotifyMqAutoConfiguration : IComponentInitializer {
 
-    private val log = LoggerFactory.getLogger(this)
+    private val log = LogFactory.getLog(this)
 
     @Bean(name = [INotifyProducer.BEAN_NAME])
     @ConditionalOnMissingBean

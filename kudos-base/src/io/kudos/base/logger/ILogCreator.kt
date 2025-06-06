@@ -8,7 +8,7 @@ import kotlin.reflect.KClass
  * @author K
  * @since 1.0.0
  */
-interface ILoggerCreator {
+interface ILogCreator {
 
     /**
      * 创建日志记录器
@@ -18,6 +18,6 @@ interface ILoggerCreator {
      * @author K
      * @since 1.0.0
      */
-    fun createLog(clazz: KClass<*>): ILogger
+    fun createLog(clazz: KClass<*>): ILog
 
 }

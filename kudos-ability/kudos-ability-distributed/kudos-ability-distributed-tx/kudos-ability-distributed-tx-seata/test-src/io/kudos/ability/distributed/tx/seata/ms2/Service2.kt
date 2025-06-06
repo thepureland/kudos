@@ -2,7 +2,7 @@ package io.kudos.ability.distributed.tx.seata.ms2
 
 import io.kudos.ability.distributed.tx.seata.TxException
 import io.kudos.ability.distributed.tx.seata.data.TestTableMapper
-import io.kudos.base.logger.LoggerFactory
+import io.kudos.base.logger.LogFactory
 import io.seata.core.context.RootContext
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -19,7 +19,7 @@ open class Service2 : IService2 {
     @Autowired
     private lateinit var testTableMapper: TestTableMapper
 
-    private val log = LoggerFactory.getLogger(this)
+    private val log = LogFactory.getLog(this)
 
     //    @Transactional // 可加可不加
     override fun increase(id: Int, money: Double) {

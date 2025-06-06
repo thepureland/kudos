@@ -1,6 +1,6 @@
 package io.kudos.ability.cache.remote.redis
 
-import io.kudos.base.logger.LoggerFactory
+import io.kudos.base.logger.LogFactory
 import org.soul.ability.cache.common.batch.BatchCacheable
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.Cacheable
@@ -10,7 +10,7 @@ import java.time.LocalDateTime
 @CacheConfig(cacheNames = ["test"])
 open class BatchCacheableTestService {
 
-    private val log = LoggerFactory.getLogger(this)
+    private val log = LogFactory.getLog(this)
 
     private var allData = listOf(
         TestCacheObject("1", 2, "5", null, 7),
