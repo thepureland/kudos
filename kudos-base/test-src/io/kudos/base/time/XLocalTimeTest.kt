@@ -4,6 +4,12 @@ import java.time.LocalTime
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
+/**
+ * test for XLocalTime.kt
+ *
+ * @author K
+ * @since 1.0.0
+ */
 internal class XLocalTimeTest {
 
     private val localTime = LocalTime.of(17, 15, 1)

@@ -5,6 +5,12 @@ import java.time.ZonedDateTime
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
+/**
+ * test for XZonedDateTime.kt
+ *
+ * @author K
+ * @since 1.0.0
+ */
 internal class XZonedDateTimeTest {
 
     private val zonedDateTime = ZonedDateTime.of(2021, 9, 10, 17, 15, 1, 0, ZoneId.systemDefault())

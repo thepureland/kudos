@@ -1,4 +1,5 @@
 dependencies {
+    implementation(project(":kudos-context"))
     api(project(":kudos-test:kudos-test-common"))
     api("org.testcontainers:testcontainers:1.21.0") {
         exclude("junit", "junit")

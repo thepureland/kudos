@@ -74,12 +74,11 @@ object SerializationKit {
      *
      * @param objectData 字节数组, 不能为 null
      * @return 反序列化后的对象
-     * @throws IllegalArgumentException 如果 `objectData` 为 `null`
      * @throws org.apache.commons.lang3.SerializationException (运行时) 如果反序列化失败
      * @author K
      * @since 1.0.0
      */
-    fun deserialize(objectData: ByteArray?): Any = SerializationUtils.deserialize(objectData)
+    fun deserialize(objectData: ByteArray): Any? = SerializationUtils.deserialize(objectData)
 
     // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     // 封装org.apache.commons.lang3.SerializationUtils

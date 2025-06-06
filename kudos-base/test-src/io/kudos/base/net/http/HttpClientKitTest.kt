@@ -1,7 +1,5 @@
 package io.kudos.base.net.http
 
-import io.kudos.base.image.ImageKit
-import java.awt.image.BufferedImage
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest

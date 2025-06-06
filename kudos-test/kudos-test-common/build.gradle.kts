@@ -1,6 +1,4 @@
 dependencies {
-    api(project(":kudos-context")) {
-        exclude("io.kudos", "kudos-test-common")
-    }
+    implementation(project(":kudos-context"))
     api("org.springframework.boot:spring-boot-starter-test")
 }

@@ -4,6 +4,12 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 
+/**
+ * test for GroupExecutor
+ *
+ * @author K
+ * @since 1.0.0
+ */
 internal class GroupExecutorTest {
 
     @Test

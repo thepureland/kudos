@@ -26,7 +26,7 @@ import java.util.*
  */
 object Base36Kit {
 
-    private const val KEY = 999966699996669999L
+    const val KEY = 999966699996669999L
 
     /**
      * 对源字符串进行加密，并在头部增加一个字符作为源字符串的校验码

@@ -4,6 +4,12 @@ import java.time.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
+/**
+ * test for XLocalDate.kt
+ *
+ * @author K
+ * @since 1.0.0
+ */
 internal class XLocalDateTest {
 
     @Test

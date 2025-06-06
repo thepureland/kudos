@@ -6,6 +6,12 @@ import java.time.ZoneId
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
+/**
+ * test for XLocalDateTime.kt
+ *
+ * @author K
+ * @since 1.0.0
+ */
 internal class XLocalDateTimeTest {
 
     private val localDateTime = LocalDateTime.of(2021, 9, 10, 17, 15, 1)

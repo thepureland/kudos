@@ -46,7 +46,7 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun toBufferedInputStream(input: InputStream?): InputStream? = IOUtils.toBufferedInputStream(input)
+    fun toBufferedInputStream(input: InputStream): InputStream? = IOUtils.toBufferedInputStream(input)
 
     /**
      * 如果指定的reader是[BufferedReader]，直接返回，否则，

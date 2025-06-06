@@ -36,7 +36,7 @@ class GoogleAuthenticator {
      * @param timeMsec The time in msec (System.currentTimeMillis() for example)
      * @return
      */
-    fun check_code(secret: String?, code: Long, timeMsec: Long): Boolean {
+    fun check_code(secret: String, code: Long, timeMsec: Long): Boolean {
         val codec = Base32()
         val decodedKey = codec.decode(secret)
         // convert unix msec time into a 30 second "window"
@@ -107,7 +107,7 @@ class GoogleAuthenticator {
         }
 
         @Throws(NoSuchAlgorithmException::class, InvalidKeyException::class)
-        private fun verify_code(key: ByteArray, t: Long): Int {
+        internal fun verify_code(key: ByteArray, t: Long): Int {
             val data = ByteArray(8)
             var value = t
             run {

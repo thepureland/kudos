@@ -15,15 +15,13 @@ import kotlin.reflect.KClass
  */
 abstract class AbstractGroupSequenceProvider<T : Any?> : DefaultGroupSequenceProvider<T> {
 
-    override fun getValidationGroups(bean: T?): MutableList<Class<*>> {
+    override fun getValidationGroups(klass: Class<*>?, bean: T?): List<Class<*>?>? {
         val defaultGroupSequence = mutableListOf<Class<*>>()
         val beanClass = GenericKit.getSuperClassGenricClass(this::class)
         defaultGroupSequence.add(beanClass.java) // 必须添加Bean类自己，否则Default分组都不会执行了，会抛错
-
         if (bean != null) {
             getGroups(bean).forEach { defaultGroupSequence.add(it.java) }
         }
-
         return defaultGroupSequence
     }
 

@@ -23,36 +23,49 @@ object SystemKit {
     /**
      * 设置系统环境变量
      *
+     * 尝试先通过修改 ProcessEnvironment.theEnvironment，如果不允许（如模块化环境导致反射失败），
+     * 再回退到修改 Collections\$UnmodifiableMap 的方式。
+     *
      * @param vars Map(变量名，变量值)
-     * @author https://blog.csdn.net/n1007530194/article/details/97130931
+     * @author ChatGPT
      * @author K
      * @since 1.0.0
      */
     fun setEnvVars(vars: Map<String, String>) {
+        // 第一种方式：尝试修改 java.lang.ProcessEnvironment.theEnvironment / theCaseInsensitiveEnvironment
         try {
-            val processEnvironmentClass = Class.forName("java.lang.ProcessEnvironment")
-            val theEnvironmentField = processEnvironmentClass.getDeclaredField("theEnvironment")
-            theEnvironmentField.isAccessible = true
-            val env = theEnvironmentField.get(null) as MutableMap<String, String>
+            val peClass = Class.forName("java.lang.ProcessEnvironment")
+            val envField = peClass.getDeclaredField("theEnvironment").apply { isAccessible = true }
+            @Suppress("UNCHECKED_CAST")
+            val env: MutableMap<String, String> = envField.get(null) as MutableMap<String, String>
             env.putAll(vars)
-            val theCaseInsensitiveEnvironmentField =
-                processEnvironmentClass.getDeclaredField("theCaseInsensitiveEnvironment")
-            theCaseInsensitiveEnvironmentField.isAccessible = true
-            val cienv = theCaseInsensitiveEnvironmentField.get(null) as MutableMap<String, String>
+
+            val cienvField = peClass.getDeclaredField("theCaseInsensitiveEnvironment").apply { isAccessible = true }
+            @Suppress("UNCHECKED_CAST")
+            val cienv: MutableMap<String, String> = cienvField.get(null) as MutableMap<String, String>
             cienv.putAll(vars)
-        } catch (e: NoSuchFieldException) {
+
+            return  // 如果这一段没有抛异常，就直接返回
+        } catch (ignore: Throwable) {
+            // 任何反射失败都走下面的备用分支
+        }
+
+        // 第二种方式：修改 Collections$UnmodifiableMap 底层的 m 字段
+        try {
+            val env: MutableMap<String, String> = System.getenv() as MutableMap<String, String>
             val classes = Collections::class.java.declaredClasses
-            val env = System.getenv()
             for (cl in classes) {
-                if ("java.util.Collections\$UnmodifiableMap" == cl.name) {
-                    val field = cl.getDeclaredField("m")
-                    field.isAccessible = true
-                    val obj = field.get(env)
-                    val map = obj as MutableMap<String, String>
-                    map.clear()
-                    map.putAll(vars)
+                if (cl.name == "java.util.Collections\$UnmodifiableMap") {
+                    val mField = cl.getDeclaredField("m").apply { isAccessible = true }
+                    @Suppress("UNCHECKED_CAST")
+                    val internal: MutableMap<String, String> = mField.get(env) as MutableMap<String, String>
+                    internal.clear()
+                    internal.putAll(vars)
+                    return
                 }
             }
+        } catch (_: Throwable) {
+            // 兜底：如果这里也失败，就不做任何事
         }
     }
 

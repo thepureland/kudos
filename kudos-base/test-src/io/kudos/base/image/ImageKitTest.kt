@@ -4,6 +4,12 @@ import io.kudos.base.io.PathKit
 import java.io.File
 import kotlin.test.Test
 
+/**
+ * test for ImageKit
+ *
+ * @author K
+ * @since 1.0.0
+ */
 internal class ImageKitTest {
 
     @Test

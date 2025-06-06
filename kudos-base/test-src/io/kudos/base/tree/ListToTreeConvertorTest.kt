@@ -3,16 +3,22 @@ package io.kudos.base.tree
 import kotlin.test.Test
 
 
+/**
+ * test for ListToTreeConverter
+ *
+ * @author K
+ * @since 1.0.0
+ */
 internal class ListToTreeConvertorTest {
 
     @Test
     fun testConvert() {
         val list = listOf(
-            TestRecord("10", null, "根结点10"),
-            TestRecord("11", "10", "10的子结点11"),
-            TestRecord("12", "10", "10的子结点12"),
-            TestRecord("20", null, "根结点20"),
-            TestRecord("21", "20", "20的子结点21")
+            TestTreeNode("10", null, "根结点10"),
+            TestTreeNode("11", "10", "10的子结点11"),
+            TestTreeNode("12", "10", "10的子结点12"),
+            TestTreeNode("20", null, "根结点20"),
+            TestTreeNode("21", "20", "20的子结点21")
         )
         val treeList = ListToTreeConverter.convert(list)
         var result = treeList.size == 2
@@ -29,35 +35,6 @@ internal class ListToTreeConvertorTest {
         val treeNode21 = treeNode20._getChildren()[0]
         result = result && "21" == treeNode21._getId()
         assert(result)
-    }
-
-    internal class TestRecord : ITreeNode<String> {
-        var id: String
-            private set
-        var parentId: String? = null
-            private set
-        var name: String? = null
-            private set
-        var childern = mutableListOf<ITreeNode<String>>()
-
-        constructor(id: String, parentId: String?, name: String?) : super() {
-            this.id = id
-            this.parentId = parentId
-            this.name = name
-        }
-
-        companion object {
-            private const val serialVersionUID = -3832151541461087421L
-        }
-
-        override fun _getId(): String = id
-
-        override fun _getParentId(): String? = parentId
-
-        override fun _getChildren(): MutableList<ITreeNode<String>> {
-            return childern
-        }
-
     }
 
 }

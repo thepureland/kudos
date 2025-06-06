@@ -32,7 +32,7 @@ object StringEscapeKit {
      * @author K
      * @since 1.0.0
      */
-    fun escapeJava(input: String?): String = StringEscapeUtils.escapeJava(input)
+    fun escapeJava(input: String?): String? = StringEscapeUtils.escapeJava(input)
 
     /**
      * 使用EcmaScript的字符串规则将指定的字符串转义
@@ -52,7 +52,7 @@ object StringEscapeKit {
      * @author K
      * @since 1.0.0
      */
-    fun escapeEcmaScript(input: String?): String = StringEscapeUtils.escapeEcmaScript(input)
+    fun escapeEcmaScript(input: String?): String? = StringEscapeUtils.escapeEcmaScript(input)
 
     /**
      * 解码指定的转义后java字符串
@@ -63,7 +63,7 @@ object StringEscapeKit {
      * @author K
      * @since 1.0.0
      */
-    fun unescapeJava(input: String?): String = StringEscapeUtils.unescapeJava(input)
+    fun unescapeJava(input: String?): String? = StringEscapeUtils.unescapeJava(input)
 
     /**
      * 解码指定的转义后EcmaScript字符串
@@ -75,7 +75,7 @@ object StringEscapeKit {
      * @author K
      * @since 1.0.0
      */
-    fun unescapeEcmaScript(input: String?): String = StringEscapeUtils.unescapeEcmaScript(input)
+    fun unescapeEcmaScript(input: String?): String? = StringEscapeUtils.unescapeEcmaScript(input)
     //endregion Java and JavaScript
 
     //region HTML and XML
@@ -98,7 +98,7 @@ object StringEscapeKit {
      * @author K
      * @since 1.0.0
      */
-    fun escapeHtml4(input: String?): String = StringEscapeUtils.escapeHtml4(input)
+    fun escapeHtml4(input: String?): String? = StringEscapeUtils.escapeHtml4(input)
 
     /**
      * 使用HTML的实体将指定的字符串转义
@@ -109,7 +109,7 @@ object StringEscapeKit {
      * @author K
      * @since 1.0.0
      */
-    fun escapeHtml3(input: String?): String = StringEscapeUtils.escapeHtml3(input)
+    fun escapeHtml3(input: String?): String? = StringEscapeUtils.escapeHtml3(input)
 
     /**
      * 解码指定的转义后HTML 4.0实体字符串
@@ -121,7 +121,7 @@ object StringEscapeKit {
      * @author K
      * @since 1.0.0
      */
-    fun unescapeHtml4(input: String?): String = StringEscapeUtils.unescapeHtml4(input)
+    fun unescapeHtml4(input: String?): String? = StringEscapeUtils.unescapeHtml4(input)
 
     /**
      * 解码指定的转义后HTML 3.0实体字符串
@@ -131,7 +131,7 @@ object StringEscapeKit {
      * @author K
      * @since 1.0.0
      */
-    fun unescapeHtml3(input: String?): String = StringEscapeUtils.unescapeHtml3(input)
+    fun unescapeHtml3(input: String?): String? = StringEscapeUtils.unescapeHtml3(input)
 
     /**
      * 使用XML的实体将指定的字符串转义
@@ -146,7 +146,7 @@ object StringEscapeKit {
      * @author K
      * @since 1.0.0
      */
-    fun escapeXml10(input: String?): String = StringEscapeUtils.escapeXml10(input)
+    fun escapeXml10(input: String?): String? = StringEscapeUtils.escapeXml10(input)
 
     /**
      * 使用XML的实体将指定的字符串转义
@@ -161,7 +161,7 @@ object StringEscapeKit {
      * @author K
      * @since 1.0.0
      */
-    fun escapeXml11(input: String?): String = StringEscapeUtils.escapeXml11(input)
+    fun escapeXml11(input: String?): String? = StringEscapeUtils.escapeXml11(input)
 
     /**
      * 解码指定的转义后XML实体字符串
@@ -174,7 +174,7 @@ object StringEscapeKit {
      * @author K
      * @since 1.0.0
      */
-    fun unescapeXml(input: String?): String = StringEscapeUtils.unescapeXml(input)
+    fun unescapeXml(input: String?): String? = StringEscapeUtils.unescapeXml(input)
     //endregion HTML and XML
 
     /**
@@ -189,7 +189,7 @@ object StringEscapeKit {
      * @author K
      * @since 1.0.0
      */
-    fun escapeCsv(input: String?): String = StringEscapeUtils.escapeCsv(input)
+    fun escapeCsv(input: String?): String? = StringEscapeUtils.escapeCsv(input)
 
     /**
      * 解码转义过的csv列的值
@@ -203,7 +203,7 @@ object StringEscapeKit {
      * @author K
      * @since 1.0.0
      */
-    fun unescapeCsv(input: String?): String = StringEscapeUtils.unescapeCsv(input)
+    fun unescapeCsv(input: String?): String? = StringEscapeUtils.unescapeCsv(input)
 
     // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     // 封装org.apache.commons.text.StringEscapeUtils

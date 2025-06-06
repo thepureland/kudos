@@ -4,6 +4,12 @@ import kotlin.test.Test
 import kotlin.test.assertFalse
 
 
+/**
+ * test for ArrayKit
+ *
+ * @author K
+ * @since 1.0.0
+ */
 internal class ArrayKitTest {
 
     @Test

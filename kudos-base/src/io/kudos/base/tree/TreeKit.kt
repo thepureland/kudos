@@ -32,19 +32,17 @@ object TreeKit {
     }
 
     /**
-     * 深度遍历树，并执行回调
+     * 深度优先遍历树，并执行回调
      *
      * @param T 树结点惟一标识的类型
      * @param R 回调返回值类型
-     * @param nodes 树结点列表
-     * @param callback 回调
+     * @param rootNode 树的根结点
+     * @param callback 回调函数
      * @author K
      * @since 1.0.0
      */
-    fun <T, R> depthTraverse(nodes: List<ITreeNode<T>>, callback: ICallback<ITreeNode<T>, R>) {
-        for (node in nodes) {
-            depth(node, callback)
-        }
+    fun <T, R> depthTraverse(rootNode: ITreeNode<T>, callback: ICallback<ITreeNode<T>, R>) {
+        depth(rootNode, callback)
     }
 
     private fun <T, R> depth(node: ITreeNode<T>, callback: ICallback<ITreeNode<T>, R>) {
@@ -55,7 +53,6 @@ object TreeKit {
                 depth(subNode, callback)
             }
         }
-
     }
 
 }
