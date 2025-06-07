@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Import
 
-@EnableKudosTest
+@EnableKudosTest(properties = ["spring.flyway.enabled=false"])
 @Import(TestMqAuditService::class)
 class TestMqAuditServiceApplication {
 

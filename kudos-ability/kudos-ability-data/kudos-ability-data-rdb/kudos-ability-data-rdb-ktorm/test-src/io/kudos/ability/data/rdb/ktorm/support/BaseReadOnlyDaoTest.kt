@@ -5,16 +5,16 @@ import io.kudos.ability.data.rdb.ktorm.kit.getDatabase
 import io.kudos.ability.data.rdb.ktorm.table.TestTable
 import io.kudos.ability.data.rdb.ktorm.table.TestTableDao
 import io.kudos.ability.data.rdb.ktorm.table.TestTables
+import io.kudos.base.query.Criteria
+import io.kudos.base.query.Criterion
+import io.kudos.base.query.enums.OperatorEnum
+import io.kudos.base.query.sort.Order
 import io.kudos.base.support.payload.ListSearchPayload
 import io.kudos.base.support.payload.SearchPayload
 import io.kudos.test.common.init.EnableKudosTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.ktorm.dsl.eq
-import org.soul.base.query.Criteria
-import org.soul.base.query.Criterion
-import org.soul.base.query.enums.OperatorEnum
-import org.soul.base.query.sort.Order
 import org.springframework.beans.factory.annotation.Autowired
 import java.time.LocalDateTime
 
