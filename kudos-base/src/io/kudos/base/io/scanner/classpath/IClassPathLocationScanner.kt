@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.kudos.base.scanner.classpath
+package io.kudos.base.io.scanner.classpath
 
 import java.io.IOException
 import java.net.URL
@@ -21,7 +21,7 @@ import java.net.URL
 /**
  * Scans for classpath resources in this location.
  */
-interface ClassPathLocationScanner {
+interface IClassPathLocationScanner {
     /**
      * Finds the resource names below this location on the classpath under this locationUrl.
      *

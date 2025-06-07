@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.kudos.base.scanner.classpath
+package io.kudos.base.io.scanner.classpath
 
-import io.kudos.base.scanner.support.Resource
+import io.kudos.base.io.scanner.support.Resource
 import io.kudos.base.io.FileKit
 import io.kudos.base.logger.LogFactory
 import java.io.IOException
@@ -31,7 +31,7 @@ import kotlin.reflect.KClass
  */
 object ClassPathScanner {
     
-    private val logger = LogFactory.getLog(ClassPathScanner::class)
+    private val logger = LogFactory.getLog(this)
 
     /**
      * Scans the classpath for resources under the specified location, starting
@@ -161,7 +161,7 @@ object ClassPathScanner {
      * @param protocol The protocol of the location url to scan.
      * @return The location scanner or `null` if it could not be created.
      */
-    private fun createLocationScanner(protocol: String): ClassPathLocationScanner? {
+    private fun createLocationScanner(protocol: String): IClassPathLocationScanner? {
         if ("file" == protocol) {
             return FileSystemClassPathLocationScanner()
         }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.kudos.base.scanner.classpath
+package io.kudos.base.io.scanner.classpath
 
 import java.io.IOException
 import java.net.JarURLConnection
@@ -25,7 +25,7 @@ import java.util.jar.JarFile
 /**
  * ClassPathLocationScanner for jar files.
  */
-class JarFileClassPathLocationScanner : ClassPathLocationScanner {
+class JarFileClassPathLocationScanner : IClassPathLocationScanner {
 
     override fun findResourceNames(location: String, locationUrl: URL): Set<String> {
         val jarFile = getJarFromUrl(locationUrl)

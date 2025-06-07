@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.kudos.base.scanner.filesystem
+package io.kudos.base.io.scanner.filesystem
 
-import io.kudos.base.scanner.support.Resource
+import io.kudos.base.io.scanner.support.Resource
 import io.kudos.base.logger.LogFactory
 import java.io.File
 import java.io.IOException
@@ -28,7 +28,7 @@ import java.util.*
  */
 object FileSystemScanner {
 
-    private val log = LogFactory.getLog(FileSystemScanner::class)
+    private val log = LogFactory.getLog(this)
 
     /**
      * Scans the FileSystem for resources under the specified location, starting

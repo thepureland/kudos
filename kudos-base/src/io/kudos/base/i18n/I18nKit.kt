@@ -2,8 +2,8 @@ package io.kudos.base.i18n
 
 import io.kudos.base.lang.string.right
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.scanner.classpath.ClassPathScanner
-import io.kudos.base.scanner.support.Resource
+import io.kudos.base.io.scanner.classpath.ClassPathScanner
+import io.kudos.base.io.scanner.support.Resource
 import java.io.InputStreamReader
 import java.util.*
 

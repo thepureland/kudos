@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.kudos.base.scanner.classpath
+package io.kudos.base.io.scanner.classpath
 
 import io.kudos.base.io.FileKit
 import io.kudos.base.logger.LogFactory
@@ -26,9 +26,9 @@ import java.util.*
 /**
  * ClassPathLocationScanner for the file system.
  */
-class FileSystemClassPathLocationScanner : ClassPathLocationScanner {
+class FileSystemClassPathLocationScanner : IClassPathLocationScanner {
 
-    private val logger = LogFactory.getLog(FileSystemClassPathLocationScanner::class)
+    private val logger = LogFactory.getLog(this)
 
 
     @Throws(IOException::class)

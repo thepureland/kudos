@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.kudos.base.scanner.classpath
+package io.kudos.base.io.scanner.classpath
 
-import io.kudos.base.scanner.support.Resource
+import io.kudos.base.io.scanner.support.Resource
 import io.kudos.base.io.IoKit
 import java.io.InputStreamReader
 import java.io.Reader
