@@ -23,7 +23,7 @@ subprojects {
 
     dependencies {
         add("implementation", platform("org.soul:soul-dependencies:${Version.SOUL}"))
-        add("testImplementation", kotlin("test")) // kotlin.test + JUnit5
+        add("testImplementation", kotlin("test-junit5")) // kotlin.test + JUnit5
     }
 
     tasks.withType<Test> {
