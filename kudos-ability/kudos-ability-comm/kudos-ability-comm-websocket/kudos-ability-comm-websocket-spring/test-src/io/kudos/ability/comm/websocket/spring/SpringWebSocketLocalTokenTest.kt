@@ -1,16 +1,14 @@
 package io.kudos.ability.comm.websocket.spring
 
+import io.kudos.base.lang.ThreadKit
+import io.kudos.base.logger.LogFactory
 import io.kudos.test.common.init.EnableKudosTest
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito
 import org.soul.ability.comm.websocket.common.model.WsUser
 import org.soul.ability.comm.websocket.common.session.auth.WebSocketAuthErrorCode
 import org.soul.base.exception.ServiceException
-import org.soul.base.lang.ThreadTool
-import org.soul.base.log.Log
-import org.soul.base.log.LogFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.mock.mockito.MockBean
@@ -21,6 +19,7 @@ import org.springframework.test.context.DynamicPropertySource
 import java.net.URI
 import java.util.concurrent.TimeUnit
 import java.util.function.Supplier
+import kotlin.test.Test
 
 
 /**
@@ -57,14 +56,14 @@ class SpringWebSocketLocalTokenTest {
         try {
             val client = MockWebSocketClient(URI(ws))
             client.connectBlocking(10, TimeUnit.SECONDS)
-            ThreadTool.sleep(1000)
+            ThreadKit.sleep(1000)
         } catch (e: Exception) {
             LOG.error(e)
         }
     }
 
     companion object {
-        private val LOG: Log = LogFactory.getLog(SpringWebSocketLocalTokenTest::class.java)
+        private val LOG = LogFactory.getLog(SpringWebSocketLocalTokenTest::class)
 
         @JvmStatic
         @DynamicPropertySource

@@ -1,25 +1,26 @@
 package io.kudos.ability.file.minio
 
+import io.kudos.base.lang.string.RandomStringKit
 import io.kudos.test.common.init.EnableKudosTest
 import io.kudos.test.container.MinioTestContainer
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Disabled
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
-import org.junit.jupiter.api.function.Executable
 import org.soul.ability.file.common.IUploadService
 import org.soul.ability.file.common.auth.AccessKeyServerParam
 import org.soul.ability.file.common.auth.AccessTokenServerParam
 import org.soul.ability.file.common.code.FileErrorCode
 import org.soul.ability.file.common.entity.UploadFileModel
 import org.soul.base.exception.ServiceException
-import org.soul.base.lang.string.RandomStringTool
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.io.InputStreamResource
 import org.springframework.core.io.InputStreamSource
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.junit.jupiter.Testcontainers
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 /**
  * minio下载操作测试用例
@@ -47,8 +48,8 @@ internal class MinioUploadServiceTest {
      */
     @Test
     fun fileUpload_with_default_minio_client() {
-        val bucketName = RandomStringTool.uuid()
-        val tenantId = RandomStringTool.uuid()
+        val bucketName = RandomStringKit.uuid()
+        val tenantId = RandomStringKit.uuid()
         val resourceAsStream =
             MinioUploadServiceTest::class.java.getClassLoader().getResourceAsStream("files/test-file.txt")
         val uploadFileModel = UploadFileModel<InputStreamSource>()
@@ -58,9 +59,9 @@ internal class MinioUploadServiceTest {
         uploadFileModel.fileSuffix = ".txt"
         uploadFileModel.inputStreamSource = InputStreamResource(resourceAsStream)
         val uploadFileResult = uploadService.fileUpload(uploadFileModel)
-        Assertions.assertTrue(uploadFileResult.filePath.startsWith("/$bucketName"))
-        Assertions.assertTrue(uploadFileResult.filePath.contains(tenantId))
-        Assertions.assertTrue(uploadFileResult.filePath.endsWith(".txt"))
+        assertTrue(uploadFileResult.filePath.startsWith("/$bucketName"))
+        assertTrue(uploadFileResult.filePath.contains(tenantId))
+        assertTrue(uploadFileResult.filePath.endsWith(".txt"))
     }
 
     /**
@@ -74,8 +75,8 @@ internal class MinioUploadServiceTest {
      */
     @Test
     fun fileUpload_with_specify_access_key_without_auth() {
-        val bucketName = RandomStringTool.uuid()
-        val tenantId = RandomStringTool.uuid()
+        val bucketName = RandomStringKit.uuid()
+        val tenantId = RandomStringKit.uuid()
         val resourceAsStream =
             MinioUploadServiceTest::class.java.getClassLoader().getResourceAsStream("files/test-file.txt")
         val uploadFileModel = UploadFileModel<InputStreamSource>()
@@ -90,10 +91,8 @@ internal class MinioUploadServiceTest {
         accessKeyServerParam.secretKey = "test"
         uploadFileModel.authServerParam = accessKeyServerParam
 
-        val se = Assertions.assertThrows<ServiceException>(ServiceException::class.java, Executable {
-            val uploadFileResult = uploadService.fileUpload(uploadFileModel)
-        })
-        Assertions.assertEquals(se.errorCode, FileErrorCode.FILE_ACCESS_DENY)
+        val se = assertFailsWith<ServiceException> { uploadService.fileUpload(uploadFileModel) }
+        assertEquals(se.errorCode, FileErrorCode.FILE_ACCESS_DENY)
     }
 
     /**
@@ -122,13 +121,11 @@ internal class MinioUploadServiceTest {
         uploadFileModel.inputStreamSource = InputStreamResource(resourceAsStream)
 
         val accessTokenServerParam = AccessTokenServerParam()
-        accessTokenServerParam.headerValue = RandomStringTool.uuid() //无效AccessToken
+        accessTokenServerParam.headerValue = RandomStringKit.uuid() //无效AccessToken
         uploadFileModel.authServerParam = accessTokenServerParam
 
-        val se = Assertions.assertThrows<ServiceException>(ServiceException::class.java, Executable {
-            val uploadFileResult = uploadService.fileUpload(uploadFileModel)
-        })
-        Assertions.assertEquals(se.errorCode, FileErrorCode.FILE_ACCESS_DENY)
+        val se = assertFailsWith<ServiceException> { uploadService.fileUpload(uploadFileModel)        }
+        assertEquals(se.errorCode, FileErrorCode.FILE_ACCESS_DENY)
     }
 
     /**
@@ -163,8 +160,8 @@ internal class MinioUploadServiceTest {
         uploadFileModel.authServerParam = accessTokenServerParam
 
         val uploadFileResult = uploadService.fileUpload(uploadFileModel)
-        Assertions.assertTrue(uploadFileResult.filePath.startsWith("/$bucketName"))
-        Assertions.assertTrue(uploadFileResult.filePath.endsWith(".txt"))
+        assertTrue(uploadFileResult.filePath.startsWith("/$bucketName"))
+        assertTrue(uploadFileResult.filePath.endsWith(".txt"))
     }
 
     companion object {

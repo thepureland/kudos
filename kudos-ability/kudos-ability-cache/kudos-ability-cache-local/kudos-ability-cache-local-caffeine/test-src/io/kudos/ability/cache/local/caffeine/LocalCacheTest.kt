@@ -1,7 +1,6 @@
 package io.kudos.ability.cache.local.caffeine
 
 import io.kudos.test.common.init.EnableKudosTest
-import org.junit.jupiter.api.Test
 import org.soul.ability.cache.common.MixCacheManager
 import org.soul.ability.cache.common.enums.CacheStrategy
 import org.springframework.beans.factory.annotation.Autowired
@@ -11,6 +10,7 @@ import org.springframework.context.annotation.Import
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import java.util.concurrent.CountDownLatch
+import kotlin.test.Test
 
 
 /**

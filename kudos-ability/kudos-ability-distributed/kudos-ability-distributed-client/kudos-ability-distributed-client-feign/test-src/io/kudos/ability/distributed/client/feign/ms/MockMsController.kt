@@ -1,6 +1,6 @@
 package io.kudos.ability.distributed.client.feign.ms
 
-import org.soul.base.bean.Pair
+import org.soul.base.bean.Pair //TODO
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping

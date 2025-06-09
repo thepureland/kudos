@@ -4,7 +4,6 @@ import io.kudos.ability.distributed.lock.redisson.kit.RedissonLockKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.test.common.init.EnableKudosTest
 import io.kudos.test.container.RedisTestContainer
-import org.junit.jupiter.api.Test
 import org.soul.ability.distributed.lock.common.annotations.DistributedLock
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Import
@@ -13,6 +12,7 @@ import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.junit.jupiter.Testcontainers
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import kotlin.test.Test
 
 
 /**

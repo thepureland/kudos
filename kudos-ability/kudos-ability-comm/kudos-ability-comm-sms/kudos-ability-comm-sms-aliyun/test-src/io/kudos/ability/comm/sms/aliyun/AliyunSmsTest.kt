@@ -1,23 +1,19 @@
 package io.kudos.ability.comm.sms.aliyun
 
+import io.kudos.base.io.FileKit
+import io.kudos.base.io.IoKit
+import io.kudos.base.lang.SystemKit
+import io.kudos.base.logger.LogFactory
 import io.kudos.test.common.init.EnableKudosTest
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.soul.ability.comm.sms.aliyun.handler.AliyunSmsHandler
 import org.soul.ability.comm.sms.aliyun.model.AliyunSmsRequest
-import org.soul.base.io.FileTool
-import org.soul.base.io.IoTool
-import org.soul.base.lang.SystemTool
-import org.soul.base.lang.collections.CollectionTool
-import org.soul.base.lang.collections.MapTool
-import org.soul.base.lang.string.StringTool
-import org.soul.base.log.Log
-import org.soul.base.log.LogFactory
 import org.springframework.beans.factory.annotation.Autowired
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 /**
  * 阿里云发送短信测试用例
@@ -52,18 +48,18 @@ class AliyunSmsTest {
      * 读取配置文件内容
      */
     private fun readProperties(): MutableMap<String?, String?>? {
-        val path = SystemTool.getUserHome().toString() + TEST_SMS_FILE
-        val file = FileTool.getFile(path)
-        if (file == null || !file.exists()) {
+        val path = SystemKit.getUserHome().toString() + TEST_SMS_FILE
+        val file = FileKit.getFile(path)
+        if (!file.exists()) {
             LOG.warn("测试的配置文件:{0}不存在", path)
             return null
         }
         val data: MutableMap<String?, String?> = HashMap<String?, String?>()
-        val inputStream = FileTool.openInputStream(file)
-        val body = IoTool.readLines(inputStream)
-        if (CollectionTool.isNotEmpty(body)) {
-            for (line in body!!) {
-                if (StringTool.isNotBlank(line) && !line!!.startsWith("#") && !line.startsWith("//") && line.indexOf(
+        val inputStream = FileKit.openInputStream(file)
+        val body = IoKit.readLines(inputStream)
+        if (body.isNotEmpty()) {
+            for (line in body) {
+                if (line.isNotBlank() && !line.startsWith("#") && !line.startsWith("//") && line.indexOf(
                         "="
                     ) != -1
                 ) {
@@ -73,16 +69,16 @@ class AliyunSmsTest {
                 }
             }
         }
-        IoTool.closeQuietly(inputStream)
+        inputStream.close()
         return data
     }
 
     @BeforeAll
     fun init() {
         val data = readProperties()
-        if (MapTool.isNotEmpty(data)) {
+        if (!data.isNullOrEmpty()) {
             smsRequest = AliyunSmsRequest().apply {
-                region = data!!["region"]
+                region = data["region"]
                 accessKeyId = data["accessKeyId"]
                 accessKeySecret = data["accessKeySecret"]
                 phoneNumbers = data["phoneNumbers"]
@@ -111,15 +107,15 @@ class AliyunSmsTest {
             }
         }
         latch.await(30, TimeUnit.SECONDS)
-        Assertions.assertEquals("OK", code[0])
+        assertEquals("OK", code[0])
     }
 
     companion object {
-        private val LOG: Log = LogFactory.getLog(AliyunSmsTest::class.java)
+        private val LOG = LogFactory.getLog(this)
 
         /**
          * 存放测试账号的文件
          */
-        private const val TEST_SMS_FILE = "\\.soul-test\\test-aliyun-sms.properties"
+        private const val TEST_SMS_FILE = "\\.kudos-test\\test-aliyun-sms.properties"
     }
 }

@@ -1,15 +1,17 @@
 package io.kudos.ability.file.local
 
+import io.kudos.base.io.FileKit
 import io.kudos.test.common.init.EnableKudosTest
 import jakarta.annotation.Resource
-import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.Test
 import org.soul.ability.file.common.IDeleteService
 import org.soul.ability.file.common.entity.DeleteFileModel
 import org.soul.ability.file.local.starter.properties.LocalProperties
 import org.soul.base.exception.ServiceException
-import org.soul.base.io.FileTool
 import java.io.File
+import kotlin.test.Test
+import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 /**
  * 本地文件服务器删除操作测试用例
@@ -51,7 +53,7 @@ internal class LocalDeleteServiceTest {
         val bucketName = "__"
         val filePath = "__"
         val fullPath = "${localProperties.basePath}/$bucketName/$filePath"
-        FileTool.forceMkdir(File(fullPath))
+        FileKit.forceMkdir(File(fullPath))
 
         val model = DeleteFileModel()
         model.bucketName = bucketName
@@ -62,13 +64,13 @@ internal class LocalDeleteServiceTest {
     @Test
     fun delete_path_no_exist() {
         val model = DeleteFileModel()
-        assertThrows(ServiceException::class.java, { deleteService.delete(model) })
+        assertFailsWith<ServiceException> { deleteService.delete(model) }
 
         model.bucketName = "_"
-        assertThrows(ServiceException::class.java) { deleteService.delete(model) }
+        assertFailsWith<ServiceException> { deleteService.delete(model) }
 
         model.filePath = "_"
-        assertThrows(ServiceException::class.java) { deleteService.delete(model) }
+        assertFailsWith<ServiceException> { deleteService.delete(model) }
     }
 
     @Test
@@ -76,7 +78,7 @@ internal class LocalDeleteServiceTest {
         val bucketName = "__"
         val filePath = "__temp__.txt"
         val fullPath = "${localProperties.basePath}/$bucketName/$filePath"
-        FileTool.touch(File(fullPath))
+        FileKit.touch(File(fullPath))
 
         val model = DeleteFileModel()
         model.bucketName = bucketName

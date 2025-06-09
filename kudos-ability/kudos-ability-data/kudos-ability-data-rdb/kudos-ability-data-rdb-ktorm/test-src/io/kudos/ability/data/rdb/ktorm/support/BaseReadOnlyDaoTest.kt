@@ -12,11 +12,11 @@ import io.kudos.base.query.sort.Order
 import io.kudos.base.support.payload.ListSearchPayload
 import io.kudos.base.support.payload.SearchPayload
 import io.kudos.test.common.init.EnableKudosTest
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Test
 import org.ktorm.dsl.eq
 import org.springframework.beans.factory.annotation.Autowired
 import java.time.LocalDateTime
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 /**
  * BaseReadOnlyDao测试用例

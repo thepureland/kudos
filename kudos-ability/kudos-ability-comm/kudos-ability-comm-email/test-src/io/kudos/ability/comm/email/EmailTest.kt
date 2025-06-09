@@ -2,9 +2,7 @@ package io.kudos.ability.comm.email
 
 import io.kudos.test.common.init.EnableKudosTest
 import io.kudos.test.container.SmtpTestContainer
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.soul.ability.comm.email.enums.EmailStatusEnum
 import org.soul.ability.comm.email.handler.EmailHandler
@@ -15,6 +13,8 @@ import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.junit.jupiter.Testcontainers
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 /**
  * 测试发送邮件
@@ -63,7 +63,7 @@ class EmailTest {
             }
         }
         latch.await(30, TimeUnit.SECONDS)
-        Assertions.assertEquals(EmailStatusEnum.SUCCESS, emailStatusEnum.first())
+        assertEquals(EmailStatusEnum.SUCCESS, emailStatusEnum.first())
     }
 
     @Test
@@ -82,7 +82,7 @@ class EmailTest {
             }
         }
         latch.await(30, TimeUnit.SECONDS)
-        Assertions.assertEquals(EmailStatusEnum.SUCCESS, emailStatusEnum.first())
+        assertEquals(EmailStatusEnum.SUCCESS, emailStatusEnum.first())
     }
 
     companion object {

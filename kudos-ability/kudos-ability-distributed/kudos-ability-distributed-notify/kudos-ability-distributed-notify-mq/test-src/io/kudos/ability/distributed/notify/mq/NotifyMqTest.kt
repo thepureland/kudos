@@ -3,6 +3,7 @@ package io.kudos.ability.distributed.notify.mq
 import io.kudos.ability.distributed.notify.mq.common.IMainClinet
 import io.kudos.ability.distributed.notify.mq.main.MainApplication
 import io.kudos.ability.distributed.notify.mq.ms.MsApplication
+import io.kudos.base.lang.string.RandomStringKit
 import io.kudos.base.net.IpKit
 import io.kudos.context.spring.YamlPropertySourceFactory
 import io.kudos.test.common.init.EnableKudosTest
@@ -10,9 +11,7 @@ import io.kudos.test.container.NacosTestContainer
 import io.kudos.test.container.PostgresTestContainer
 import io.kudos.test.container.RocketMqTestContainer
 import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
-import org.soul.base.lang.string.RandomStringTool
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.SpringApplication
 import org.springframework.cloud.openfeign.EnableFeignClients
@@ -20,6 +19,7 @@ import org.springframework.context.annotation.PropertySource
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.junit.jupiter.Testcontainers
+import kotlin.test.Test
 
 @EnableKudosTest
 @EnableFeignClients
@@ -53,7 +53,7 @@ open class NotifyMqTest {
     /* 因 NotifyListenerItem 宣告静态变数，测试用例为同一jvm下，故无法模拟两组相同微服务测试，listener会被后盖前。 */
     @Test
     fun mqNotifyTest() {
-        val key = RandomStringTool.random(8, true, true)
+        val key = RandomStringKit.random(8, true, true)
         mainClinet.change(key)
         var countTime = System.currentTimeMillis()
         while (!mainClinet.sync(key)) {

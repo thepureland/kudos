@@ -1,9 +1,11 @@
 package io.kudos.ability.data.rdb.jdbc.kit
 
 import io.kudos.test.common.init.EnableKudosTest
-import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.Test
 import org.soul.ability.data.rdb.jdbc.metadata.TableTypeEnum
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 
 /**
  * RdbMetadataKit测试用例

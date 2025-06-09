@@ -2,10 +2,10 @@ package io.kudos.ability.distributed.tx.seata
 
 import io.kudos.ability.distributed.tx.seata.main.Service
 import io.kudos.test.common.init.EnableKudosTest
-import org.junit.jupiter.api.Test
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
+import kotlin.test.Test
 
 /**
  * seata-AT模式测试用例

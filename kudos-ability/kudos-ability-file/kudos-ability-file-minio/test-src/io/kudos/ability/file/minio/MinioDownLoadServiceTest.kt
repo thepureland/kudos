@@ -1,8 +1,11 @@
 package io.kudos.ability.file.minio
 
+import io.kudos.base.lang.string.RandomStringKit
 import io.kudos.test.common.init.EnableKudosTest
 import io.kudos.test.container.MinioTestContainer
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.TestInstance
 import org.soul.ability.file.common.IDownLoadService
 import org.soul.ability.file.common.IUploadService
 import org.soul.ability.file.common.auth.AccessKeyServerParam
@@ -12,13 +15,15 @@ import org.soul.ability.file.common.entity.DownloadFileModel
 import org.soul.ability.file.common.entity.UploadFileModel
 import org.soul.ability.file.common.entity.UploadFileResult
 import org.soul.base.exception.ServiceException
-import org.soul.base.lang.string.RandomStringTool
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.io.InputStreamResource
 import org.springframework.core.io.InputStreamSource
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.junit.jupiter.Testcontainers
+import kotlin.test.Test
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 /**
  * minio下载操作测试用例
@@ -42,8 +47,8 @@ internal class MinioDownLoadServiceTest {
 
     @BeforeAll
     fun before_download() {
-        val bucketName = RandomStringTool.uuid()
-        val tenantId = RandomStringTool.uuid()
+        val bucketName = RandomStringKit.uuid()
+        val tenantId = RandomStringKit.uuid()
         val resourceAsStream =
             MinioDownLoadServiceTest::class.java.getClassLoader().getResourceAsStream("files/test-file.txt")
         val uploadFileModel = UploadFileModel<InputStreamSource>()
@@ -60,7 +65,7 @@ internal class MinioDownLoadServiceTest {
         try {
             val downloadFileModel = DownloadFileModel.from(uploadFileResult!!.filePath)
             val rs = downLoadService.download(downloadFileModel)
-            Assertions.assertTrue(rs.size > 0)
+            assertTrue(rs.size > 0)
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -78,7 +83,7 @@ internal class MinioDownLoadServiceTest {
         try {
             val rs = downLoadService.download(downloadFileModel)
         } catch (e: ServiceException) {
-            Assertions.assertTrue(e.errorCode === FileErrorCode.FILE_ACCESS_DENY)
+            assertTrue(e.errorCode === FileErrorCode.FILE_ACCESS_DENY)
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -113,9 +118,9 @@ internal class MinioDownLoadServiceTest {
 
         try {
             val rs = downLoadService.download(downloadFileModel)
-            Assertions.assertTrue(rs.size > 0)
+            assertTrue(rs.size > 0)
         } catch (e: Exception) {
-            Assertions.assertNull(e)
+            assertNull(e)
         }
     }
 

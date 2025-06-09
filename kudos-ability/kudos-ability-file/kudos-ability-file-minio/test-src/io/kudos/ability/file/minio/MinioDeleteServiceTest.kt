@@ -1,12 +1,11 @@
 package io.kudos.ability.file.minio
 
+import io.kudos.base.io.FileKit
 import io.kudos.test.common.init.EnableKudosTest
 import io.kudos.test.container.MinioTestContainer
 import io.minio.admin.MinioAdminClient
 import io.minio.admin.UserInfo
 import jakarta.annotation.Resource
-import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.soul.ability.file.common.IDeleteService
 import org.soul.ability.file.common.IUploadService
@@ -14,14 +13,16 @@ import org.soul.ability.file.common.auth.AccessKeyServerParam
 import org.soul.ability.file.common.entity.DeleteFileModel
 import org.soul.ability.file.common.entity.UploadFileModel
 import org.soul.base.exception.ServiceException
-import org.soul.base.io.FileTool
-import org.soul.base.lang.string.StringTool
 import org.springframework.core.io.FileSystemResource
 import org.springframework.core.io.InputStreamSource
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.junit.jupiter.Testcontainers
 import java.io.File
+import kotlin.test.Test
+import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 
 /**
@@ -47,32 +48,32 @@ internal class MinioDeleteServiceTest {
     fun delete_path_invalid() {
         val model = DeleteFileModel()
         model.bucketName = ".."
-        Assertions.assertFalse(deleteService.delete(model))
+        assertFalse(deleteService.delete(model))
 
         model.bucketName = "a/../b"
-        Assertions.assertFalse(deleteService.delete(model))
+        assertFalse(deleteService.delete(model))
 
         model.filePath = ".."
-        Assertions.assertFalse(deleteService.delete(model))
+        assertFalse(deleteService.delete(model))
 
         model.filePath = ".."
-        Assertions.assertFalse(deleteService.delete(model))
+        assertFalse(deleteService.delete(model))
 
         model.filePath = "a/../b"
-        Assertions.assertFalse(deleteService.delete(model))
+        assertFalse(deleteService.delete(model))
     }
 
     @Test
     fun delete_path_no_exist() {
         val model = DeleteFileModel()
-        Assertions.assertThrows(ServiceException::class.java) { deleteService.delete(model) }
+        assertFailsWith<ServiceException> { deleteService.delete(model) }
 
         model.bucketName = "no_exist"
-        Assertions.assertThrows(ServiceException::class.java) { deleteService.delete(model) }
+        assertFailsWith<ServiceException> { deleteService.delete(model) }
 
         model.bucketName = "no_exist"
         model.filePath = "_"
-        Assertions.assertThrows(ServiceException::class.java) { deleteService.delete(model) }
+        assertFailsWith<ServiceException> { deleteService.delete(model) }
     }
 
     /**
@@ -86,7 +87,7 @@ internal class MinioDeleteServiceTest {
 
         //create local file
         val localFile = File(localPath)
-        FileTool.touch(localFile)
+        FileKit.touch(localFile)
 
         val uploadFileModel = UploadFileModel<InputStreamSource>()
         uploadFileModel.bucketName = bucketName
@@ -95,14 +96,14 @@ internal class MinioDeleteServiceTest {
 
         //upload to minio
         val uploadFileResult = uploadService.fileUpload(uploadFileModel)
-        Assertions.assertTrue(StringTool.isNotBlank(uploadFileResult.filePath))
+        assertFalse(uploadFileResult.filePath.isNullOrBlank())
 
         //delete local file
-        FileTool.forceDelete(localFile)
+        FileKit.forceDelete(localFile)
 
         //delete minio file
         val model = DeleteFileModel.from(uploadFileResult.filePath)
-        Assertions.assertTrue(deleteService.delete(model))
+        assertTrue(deleteService.delete(model))
     }
 
     /**
@@ -121,7 +122,7 @@ internal class MinioDeleteServiceTest {
 
         //create local file
         val localFile = File(localPath)
-        FileTool.touch(localFile)
+        FileKit.touch(localFile)
 
         val uploadFileModel = UploadFileModel<InputStreamSource>()
         uploadFileModel.bucketName = bucketName
@@ -130,17 +131,17 @@ internal class MinioDeleteServiceTest {
 
         //upload to minio
         val uploadFileResult = uploadService.fileUpload(uploadFileModel)
-        Assertions.assertTrue(StringTool.isNotBlank(uploadFileResult.filePath))
+        assertFalse(uploadFileResult.filePath.isNullOrBlank())
 
         //delete local file
-        FileTool.forceDelete(localFile)
+        FileKit.forceDelete(localFile)
 
         //delete minio file
         val model = DeleteFileModel.from(uploadFileResult.filePath)
         //指定用户名
         //waring: minio需要手工创建以下用户,并授权
         model.authServerParam = AccessKeyServerParam(DELETE_ONLY_USER, DELETE_ONLY_USER_SECRET)
-        Assertions.assertTrue(deleteService.delete(model))
+        assertTrue(deleteService.delete(model))
     }
 
     companion object {

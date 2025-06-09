@@ -1,15 +1,13 @@
 package io.kudos.ability.comm.websocket.netty
 
+import io.kudos.base.lang.ThreadKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.test.common.init.EnableKudosTest
 import org.junit.jupiter.api.AfterAll
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.soul.ability.comm.websocket.common.session.IWebSocketManager
 import org.soul.ability.comm.websocket.netty.starter.properties.NettyWebsocketProperties
-import org.soul.base.lang.ThreadTool
 import org.soul.base.support.model.websocket.WebsocketMsgRequest
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -20,6 +18,8 @@ import java.net.URI
 import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.function.Supplier
+import kotlin.test.Test
+import kotlin.test.assertTrue
 
 /**
  * netty websocket本地模式测试用例
@@ -50,7 +50,7 @@ class NettyWebSocketLocalTest {
         val ws = "ws://localhost:${nettyWebsocketProperties.port}/ws.do?wsToken=${mockWsUser.token}"
         client = MockWebSocketClient(URI(ws))
         client.connectBlocking(10, TimeUnit.SECONDS)
-        ThreadTool.sleep(1000)
+        ThreadKit.sleep(1000)
     }
 
     @Test
@@ -69,9 +69,9 @@ class NettyWebSocketLocalTest {
     @AfterAll
     fun destroy() {
         LOG.info("关闭ws连接...")
-        ThreadTool.sleep(1000)
+        ThreadKit.sleep(1000)
         client.close()
-        ThreadTool.sleep(1000)
+        ThreadKit.sleep(1000)
     }
 
     companion object {

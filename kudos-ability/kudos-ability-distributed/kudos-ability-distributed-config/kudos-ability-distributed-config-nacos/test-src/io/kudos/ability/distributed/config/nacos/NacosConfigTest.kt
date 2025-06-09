@@ -4,10 +4,7 @@ import com.alibaba.nacos.api.NacosFactory
 import com.alibaba.nacos.api.config.ConfigService
 import io.kudos.test.common.init.EnableKudosTest
 import io.kudos.test.container.NacosTestContainer
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.soul.ability.distributed.config.nacos.listener.AbstractConfigChangeListener
 import org.soul.ability.distributed.config.nacos.listener.NacosConfigServiceListener
@@ -15,6 +12,9 @@ import org.soul.base.bean.Single
 import org.springframework.beans.factory.annotation.Value
 import org.testcontainers.junit.jupiter.Testcontainers
 import java.util.*
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 /**
  * nacos作为配置中心的测试用例

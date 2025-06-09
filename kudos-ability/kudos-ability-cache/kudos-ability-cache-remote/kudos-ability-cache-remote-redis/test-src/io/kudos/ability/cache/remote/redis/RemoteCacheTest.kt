@@ -2,7 +2,6 @@ package io.kudos.ability.cache.remote.redis
 
 import io.kudos.test.common.init.EnableKudosTest
 import io.kudos.test.container.RedisTestContainer
-import org.junit.jupiter.api.Test
 import org.soul.ability.cache.common.MixCacheManager
 import org.soul.ability.cache.common.enums.CacheStrategy
 import org.springframework.beans.factory.annotation.Autowired
@@ -13,6 +12,7 @@ import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.junit.jupiter.Testcontainers
 import java.util.concurrent.CountDownLatch
+import kotlin.test.Test
 
 
 /**

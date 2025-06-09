@@ -8,15 +8,15 @@ import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.support.payload.SearchPayload
 import io.kudos.base.support.payload.UpdatePayload
 import io.kudos.test.common.init.EnableKudosTest
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import org.ktorm.dsl.eq
 import org.ktorm.dsl.like
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertNotNull
 
 /**
  * BaseDao测试用例
@@ -218,7 +218,7 @@ internal open class BaseCrudDaoTest {
         entity.name = "name"
 
         // Criteria为空
-        assertThrows<IllegalArgumentException> { testTableDao.updateWhen(entity, Criteria()) }
+        assertFailsWith<IllegalArgumentException> { testTableDao.updateWhen(entity, Criteria()) }
 
         // 满足Criteria条件
         var criteria = Criteria.add(TestTable::name.name, OperatorEnum.EQ, "name1")
@@ -248,7 +248,7 @@ internal open class BaseCrudDaoTest {
     open fun updatePropertiesWhen() {
         // Criteria为空
         val properties = mapOf(TestTable::id.name to -2, TestTable::name.name to "name") // 主键应该要不会被更新
-        assertThrows<IllegalArgumentException> { testTableDao.updatePropertiesWhen(-1, properties, Criteria()) }
+        assertFailsWith<IllegalArgumentException> { testTableDao.updatePropertiesWhen(-1, properties, Criteria()) }
 
         // 满足Criteria条件
         var criteria = Criteria.add(TestTable::name.name, OperatorEnum.EQ, "name1")
@@ -344,7 +344,7 @@ internal open class BaseCrudDaoTest {
         assertEquals("name", entities[2].name)
 
         // 存在主键为null的实体
-        assertThrows<IllegalArgumentException> { testTableDao.batchUpdate(listOf(TestTable {})) }
+        assertFailsWith<IllegalArgumentException> { testTableDao.batchUpdate(listOf(TestTable {})) }
     }
 
     @Test
@@ -392,12 +392,12 @@ internal open class BaseCrudDaoTest {
 
 
         // 无条件
-        assertThrows<IllegalArgumentException> {
+        assertFailsWith<IllegalArgumentException> {
             testTableDao.batchUpdateWhen(updatePayload1)
         }
         val searchPayload1 = SearchPayload1()
         updatePayload1.searchPayload = searchPayload1
-        assertThrows<IllegalArgumentException> {
+        assertFailsWith<IllegalArgumentException> {
             testTableDao.batchUpdateWhen(updatePayload1)
         }
 
@@ -545,7 +545,7 @@ internal open class BaseCrudDaoTest {
         assert(testTableDao.get(-1) == null)
 
         // 主键为null
-        assertThrows<IllegalStateException> { testTableDao.delete(TestTable {}) }
+        assertFailsWith<IllegalStateException> { testTableDao.delete(TestTable {}) }
     }
 
     @Test
@@ -577,13 +577,13 @@ internal open class BaseCrudDaoTest {
         val searchPayload1 = SearchPayload1()
 
         // 无条件
-        assertThrows<IllegalArgumentException> {
+        assertFailsWith<IllegalArgumentException> {
             testTableDao.batchDeleteWhen()
         }
-        assertThrows<IllegalArgumentException> {
+        assertFailsWith<IllegalArgumentException> {
             testTableDao.batchDeleteWhen(searchPayload1)
         }
-        assertThrows<IllegalArgumentException> {
+        assertFailsWith<IllegalArgumentException> {
             testTableDao.batchDeleteWhen { _, _ -> null }
         }
 

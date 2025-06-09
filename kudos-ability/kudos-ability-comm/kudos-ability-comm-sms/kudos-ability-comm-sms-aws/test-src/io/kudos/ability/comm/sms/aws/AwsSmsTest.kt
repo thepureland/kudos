@@ -1,25 +1,21 @@
 package io.kudos.ability.comm.sms.aws
 
+import io.kudos.base.io.FileKit
+import io.kudos.base.io.IoKit
+import io.kudos.base.lang.SystemKit
+import io.kudos.base.logger.LogFactory
 import io.kudos.test.common.init.EnableKudosTest
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.soul.ability.comm.sms.aws.handler.AwsSmsHandler
 import org.soul.ability.comm.sms.aws.model.AwsSmsRequest
-import org.soul.base.io.FileTool
-import org.soul.base.io.IoTool
-import org.soul.base.lang.SystemTool
-import org.soul.base.lang.collections.CollectionTool
-import org.soul.base.lang.collections.MapTool
-import org.soul.base.lang.string.StringTool
-import org.soul.base.log.Log
-import org.soul.base.log.LogFactory
 import org.springframework.beans.factory.annotation.Autowired
 import software.amazon.awssdk.http.HttpStatusFamily
 import java.io.File
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 /**
  * 亚马逊发送短信测试用例
@@ -52,18 +48,18 @@ class AwsSmsTest {
      * 读取配置文件内容
      */
     private fun readProperties(): MutableMap<String?, String?>? {
-        val path = SystemTool.getUserHome().toString() + TEST_SMS_FILE
-        val file: File? = FileTool.getFile(path)
+        val path = SystemKit.getUserHome().toString() + TEST_SMS_FILE
+        val file: File? = FileKit.getFile(path)
         if (file == null || !file.exists()) {
             LOG.warn("测试的配置文件:{0}不存在", path)
             return null
         }
         val data: MutableMap<String?, String?> = HashMap<String?, String?>()
-        val inputStream = FileTool.openInputStream(file)
-        val body = IoTool.readLines(inputStream)
-        if (CollectionTool.isNotEmpty(body)) {
-            for (line in body!!) {
-                if (StringTool.isNotBlank(line) && !line!!.startsWith("#") && !line.startsWith("//") && line.indexOf(
+        val inputStream = FileKit.openInputStream(file)
+        val body = IoKit.readLines(inputStream)
+        if (body.isNotEmpty()) {
+            for (line in body) {
+                if (line.isNotBlank() && !line.startsWith("#") && !line.startsWith("//") && line.indexOf(
                         "="
                     ) != -1
                 ) {
@@ -73,16 +69,16 @@ class AwsSmsTest {
                 }
             }
         }
-        IoTool.closeQuietly(inputStream)
+        inputStream.close()
         return data
     }
 
     @BeforeAll
     fun init() {
         val data = readProperties()
-        if (MapTool.isNotEmpty(data)) {
+        if (!data.isNullOrEmpty()) {
             smsRequest = AwsSmsRequest().apply {
-                region = data!!["region"]
+                region = data["region"]
                 accessKeyId = data["accessKeyId"]
                 accessKeySecret = data["accessKeySecret"]
                 phoneNumber = data["phoneNumber"]
@@ -109,16 +105,16 @@ class AwsSmsTest {
             }
         }
         latch.await(5, TimeUnit.SECONDS)
-        Assertions.assertEquals(HttpStatusFamily.SUCCESSFUL, code[0])
+        assertEquals(HttpStatusFamily.SUCCESSFUL, code[0])
     }
 
     companion object {
-        private val LOG: Log = LogFactory.getLog(AwsSmsTest::class.java)
+        private val LOG = LogFactory.getLog(AwsSmsTest::class)
 
         /**
          * 存放测试账号的文件
          */
-        private const val TEST_SMS_FILE = "\\.soul-test\\test-aws-sms.properties"
+        private const val TEST_SMS_FILE = "\\.kudos-test\\test-aws-sms.properties"
     }
 
 }

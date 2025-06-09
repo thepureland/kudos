@@ -3,8 +3,6 @@ package io.kudos.ability.data.memdb.redis
 import io.kudos.base.time.toLocalDateTime
 import io.kudos.test.common.init.EnableKudosTest
 import io.kudos.test.container.RedisTestContainer
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.test.context.DynamicPropertyRegistry
@@ -13,6 +11,8 @@ import org.testcontainers.junit.jupiter.Testcontainers
 import java.io.Serializable
 import java.time.LocalDateTime
 import java.util.*
+import kotlin.test.Test
+import kotlin.test.assertTrue
 
 /**
  * redis测试用例

@@ -1,20 +1,20 @@
 package io.kudos.ability.distributed.client.feign
 
+import org.soul.base.bean.Pair //TODO
 import io.kudos.ability.distributed.client.feign.client.IFeignClient
 import io.kudos.ability.distributed.client.feign.ms.MockMsApplication
 import io.kudos.test.common.init.EnableKudosTest
 import io.kudos.test.container.NacosTestContainer
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
-import org.junit.jupiter.api.function.Executable
-import org.soul.base.bean.Pair
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.SpringApplication
 import org.springframework.cloud.openfeign.EnableFeignClients
 import org.springframework.test.context.ActiveProfiles
 import org.testcontainers.junit.jupiter.Testcontainers
+import kotlin.test.Test
+import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 /**
  * openFeign调用测试
@@ -43,14 +43,14 @@ open class OpenFeignTest {
     @Test
     fun test() {
         // 测试get方式的请求
-        Assertions.assertTrue(feignClient.get())
+        assertTrue(feignClient.get())
 
         // 测试post方式的请求
         val result = feignClient.post(Pair<Int?, String?>(1, "name"))
-        Assertions.assertTrue(result!!.getValue()!!)
+        assertTrue(result!!.value!!)
 
         // 测试异常抛回
-        Assertions.assertThrows(RuntimeException::class.java, Executable { feignClient.exception() })
+        assertFailsWith<RuntimeException> { feignClient.exception() }
     }
 
 }

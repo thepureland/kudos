@@ -1,8 +1,6 @@
 package io.kudos.ability.cache.remote.redis
 
 import io.kudos.test.common.init.EnableKudosTest
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import org.soul.ability.cache.common.MixCacheManager
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
@@ -10,6 +8,8 @@ import org.springframework.cache.CacheManager
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
+import kotlin.test.Test
+import kotlin.test.assertFailsWith
 
 
 /**
@@ -49,9 +49,9 @@ internal class NoCacheTest {
 
     @Test
     fun testNoCache() {
-        assertThrows<UninitializedPropertyAccessException> { localCacheManager }
-        assertThrows<UninitializedPropertyAccessException> { remoteCacheManager }
-        assertThrows<UninitializedPropertyAccessException> { mixCacheManager }
+        assertFailsWith<UninitializedPropertyAccessException> { localCacheManager }
+        assertFailsWith<UninitializedPropertyAccessException> { remoteCacheManager }
+        assertFailsWith<UninitializedPropertyAccessException> { mixCacheManager }
 
         val key = "key"
         val value1 = cacheTestService.getFromDB(key)

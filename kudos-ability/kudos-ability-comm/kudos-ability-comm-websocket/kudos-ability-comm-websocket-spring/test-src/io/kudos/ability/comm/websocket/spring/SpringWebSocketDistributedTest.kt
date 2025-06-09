@@ -1,11 +1,13 @@
 package io.kudos.ability.comm.websocket.spring
 
+import io.kudos.base.lang.ThreadKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.test.common.init.EnableKudosTest
 import io.kudos.test.container.RedisTestContainer
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.TestInstance
 import org.soul.ability.comm.websocket.common.session.IWebSocketManager
-import org.soul.base.lang.ThreadTool
 import org.soul.base.support.model.websocket.WebsocketMsgRequest
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -17,6 +19,8 @@ import org.testcontainers.junit.jupiter.Testcontainers
 import java.net.URI
 import java.util.concurrent.TimeUnit
 import java.util.function.Supplier
+import kotlin.test.Test
+import kotlin.test.assertTrue
 
 /**
  * spring websocket分布式模式测试用例
@@ -48,7 +52,7 @@ class SpringWebSocketDistributedTest {
         val ws = "ws://localhost:$port/ws.do?wsToken=${mockWsUser.token}"
         client = MockWebSocketClient(URI(ws))
         client.connectBlocking(10, TimeUnit.SECONDS)
-        ThreadTool.sleep(1000)
+        ThreadKit.sleep(1000)
     }
 
     @Test
@@ -61,15 +65,15 @@ class SpringWebSocketDistributedTest {
         val websocketMsg = WebsocketMsgRequest<Any?>()
         websocketMsg.content = "hello"
         val success = webSocketManager.sendMessageToUser(mockWsUser.tenantId, mockWsUser.userId, websocketMsg)
-        Assertions.assertTrue(success)
+        assertTrue(success)
     }
 
     @AfterAll
     fun destroy() {
         LOG.info("关闭ws连接...")
-        ThreadTool.sleep(1000)
+        ThreadKit.sleep(1000)
         client.close()
-        ThreadTool.sleep(1000)
+        ThreadKit.sleep(1000)
     }
 
     companion object {

@@ -3,7 +3,6 @@ package io.kudos.ability.web.springmvc
 import io.kudos.base.data.json.JsonKit
 import io.kudos.base.net.http.HttpClientKit
 import io.kudos.test.common.init.EnableKudosTest
-import org.junit.jupiter.api.Test
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.context.annotation.Import
@@ -12,6 +11,7 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.time.Duration
+import kotlin.test.Test
 
 
 /**

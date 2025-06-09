@@ -1,8 +1,6 @@
 package io.kudos.ability.file.local
 
 import io.kudos.test.common.init.EnableKudosTest
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Test
 import org.soul.ability.file.common.entity.UploadFileModel
 import org.soul.ability.file.local.LocalUploadService
 import org.springframework.beans.factory.annotation.Autowired
@@ -10,6 +8,8 @@ import org.springframework.core.io.InputStreamResource
 import java.lang.String
 import java.util.*
 import kotlin.arrayOf
+import kotlin.test.Test
+import kotlin.test.assertTrue
 import kotlin.text.contains
 
 /**

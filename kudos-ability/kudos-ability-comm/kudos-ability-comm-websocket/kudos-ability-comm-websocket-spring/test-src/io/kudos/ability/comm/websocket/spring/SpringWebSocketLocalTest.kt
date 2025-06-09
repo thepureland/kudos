@@ -1,11 +1,10 @@
 package io.kudos.ability.comm.websocket.spring
 
+import io.kudos.base.lang.ThreadKit
+import io.kudos.base.logger.LogFactory
 import io.kudos.test.common.init.EnableKudosTest
 import org.junit.jupiter.api.*
 import org.soul.ability.comm.websocket.common.session.IWebSocketManager
-import org.soul.base.lang.ThreadTool
-import org.soul.base.log.Log
-import org.soul.base.log.LogFactory
 import org.soul.base.support.model.websocket.WebsocketMsgRequest
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -47,7 +46,7 @@ class SpringWebSocketLocalTest {
         val ws = "ws://localhost:$port/ws.do?wsToken=${mockWsUser.token}"
         client = MockWebSocketClient(URI(ws))
         client.connectBlocking(10, TimeUnit.SECONDS)
-        ThreadTool.sleep(1000)
+        ThreadKit.sleep(1000)
     }
 
     @Test
@@ -66,13 +65,13 @@ class SpringWebSocketLocalTest {
     @AfterAll
     fun destroy() {
         LOG.info("关闭ws连接...")
-        ThreadTool.sleep(1000)
+        ThreadKit.sleep(1000)
         client.close()
-        ThreadTool.sleep(1000)
+        ThreadKit.sleep(1000)
     }
 
     companion object {
-        private val LOG: Log = LogFactory.getLog(SpringWebSocketLocalTest::class.java)
+        private val LOG = LogFactory.getLog(SpringWebSocketLocalTest::class)
 
         @JvmStatic
         @DynamicPropertySource

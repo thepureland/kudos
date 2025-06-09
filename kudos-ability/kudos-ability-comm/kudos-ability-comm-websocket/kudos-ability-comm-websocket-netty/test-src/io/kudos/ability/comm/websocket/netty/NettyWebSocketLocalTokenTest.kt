@@ -2,7 +2,6 @@ package io.kudos.ability.comm.websocket.netty
 
 import io.kudos.base.logger.LogFactory
 import io.kudos.test.common.init.EnableKudosTest
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito
@@ -18,6 +17,7 @@ import org.springframework.test.context.DynamicPropertySource
 import java.net.URI
 import java.util.*
 import java.util.concurrent.TimeUnit
+import kotlin.test.Test
 
 /**
  * netty websocket本地模式token测试用例
