@@ -1,5 +1,4 @@
 plugins {
-    kotlin("plugin.serialization") version libs.versions.kotlin
     id("io.ktor.plugin") version libs.versions.ktor // 自动带入 BOM
 }
 
@@ -11,7 +10,6 @@ dependencies {
 //    api("io.ktor:ktor-server-test-host-jvm")
     api("io.ktor:ktor-server-config-yaml-jvm")
     api("io.ktor:ktor-server-content-negotiation-jvm")
-    api("io.ktor:ktor-serialization-kotlinx-json-jvm")
     api("io.ktor:ktor-server-status-pages-jvm")
     api("io.ktor:ktor-server-websockets-jvm")
 
@@ -29,7 +27,7 @@ dependencies {
 
 
     // 测试相关
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:${libs.versions.kotlin.get()}")
+//    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:${libs.versions.kotlin.get()}")
     testImplementation("io.ktor:ktor-server-test-host-jvm")
     testImplementation("io.ktor:ktor-client-content-negotiation-jvm")
     testImplementation("io.ktor:ktor-server-netty-jvm")

@@ -3,6 +3,8 @@ package io.kudos.base.bean
 import io.kudos.base.support.IIdEntity
 import io.kudos.base.tree.ITreeNode
 import jakarta.xml.bind.annotation.XmlRootElement
+import kotlinx.serialization.Contextual
+import kotlinx.serialization.Serializable
 import java.time.LocalDate
 
 
@@ -13,6 +15,7 @@ import java.time.LocalDate
  * @since 1.0.0
  */
 @XmlRootElement
+@Serializable
 class Person : IIdEntity<String>, ITreeNode<String?> {
 
     override var id: String? = null
@@ -22,6 +25,7 @@ class Person : IIdEntity<String>, ITreeNode<String?> {
     var sex: String? = null
     var age = 0
     var weight = 0.0
+    @Contextual
     var birthday: LocalDate? = null
     var address: Address? = null
     var goods: List<String>? = null

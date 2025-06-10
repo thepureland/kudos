@@ -1,7 +1,11 @@
+plugins {
+    // 启用 Kotlin Serialization 插件，使编译期能生成序列化器
+    kotlin("plugin.serialization") version libs.versions.kotlin
+}
+
 dependencies {
     api("org.jetbrains.kotlin:kotlin-reflect:${libs.versions.kotlin}")
     api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${libs.versions.kotlinxCoroutines}}")
-//    api("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:${libs.versions.kotlinxCoroutines}") {}
 
     // bean
     api("commons-beanutils:commons-beanutils:1.11.0")
@@ -25,8 +29,7 @@ dependencies {
     api("org.glassfish:jakarta.el:5.0.0-M1")
 
     // json
-    api("com.fasterxml.jackson.core:jackson-databind:2.19.0")
-    api("com.alibaba.fastjson2:fastjson2:2.0.57")
+    api("io.ktor:ktor-serialization-kotlinx-json-jvm:${libs.versions.ktor.get()}")
 
     // log
     api("org.slf4j:jcl-over-slf4j:2.0.17")

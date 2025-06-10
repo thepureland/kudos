@@ -8,6 +8,7 @@ import java.io.Serializable
  * @author K
  * @since 1.0.0
  */
+@kotlinx.serialization.Serializable
 class Address : Serializable {
 
     var province: String? = null

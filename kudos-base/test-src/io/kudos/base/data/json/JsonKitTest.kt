@@ -1,6 +1,5 @@
 package io.kudos.base.data.json
 
-import com.alibaba.fastjson2.TypeReference
 import io.kudos.base.bean.Address
 import io.kudos.base.bean.Person
 import io.kudos.base.time.toLocalDate
@@ -49,7 +48,7 @@ internal class JsonKitTest {
             }
         """
         assertEquals(true, JsonKit.getPropertyValue(jsonStr, "active"))
-        assertEquals(1, JsonKit.getPropertyValue(jsonStr, "status"))
+        assertEquals(1L, JsonKit.getPropertyValue(jsonStr, "status"))
         assertEquals("description ", JsonKit.getPropertyValue(jsonStr, "des"))
         assertEquals("oh, err msg", JsonKit.getPropertyValue(jsonStr, "message"))
         assertEquals(null, JsonKit.getPropertyValue(jsonStr, "no_exist"))
@@ -63,11 +62,11 @@ internal class JsonKitTest {
 
     @Test
     fun fromJson() {
-        assertEquals(null, JsonKit.fromJson("", Person::class))
-        assertEquals(null, JsonKit.fromJson("sdfsdf", Person::class))
+        assertEquals(null, JsonKit.fromJson<Person>(""))
+        assertEquals(null, JsonKit.fromJson<Person>("sdfsdf"))
 
         val json = "[\"abc\",\"cde\"]"
-        val strings = JsonKit.fromJson(json, Array<String>::class)!!
+        val strings = JsonKit.fromJson<Array<String>>(json)!!
         assertEquals(strings[0], "abc")
         assertEquals(strings[1], "cde")
     }
@@ -76,7 +75,7 @@ internal class JsonKitTest {
     fun testFromJson() {
         val jsonStr =
             """[{"id":"id","parentId":null,"children":[],"name":"Mike","sex":"male","age":25,"weight":0.0,"birthday":60528873600,"address":{"province":"hunan","city":"changsha","street":"wuyilu","zipcode":"410000"},"goods":["sporting","singing","dancing"],"contact":{"student":"Tom","teacher":"Lucy"},"active":null}]"""
-        val persons = JsonKit.fromJson(jsonStr, object : TypeReference<List<Person>>() {})
+        val persons = JsonKit.fromJson<List<Person>>(jsonStr)
         assertEquals(1, persons!!.size)
     }
 

@@ -1,6 +1,5 @@
 package io.kudos.base.query.sort
 
-import com.fasterxml.jackson.annotation.JsonCreator
 import java.util.*
 
 /**
@@ -15,7 +14,8 @@ enum class DirectionEnum {
     DESC;
 
     companion object Companion {
-        @JsonCreator
+
+//        @JsonCreator //TODO
         fun fromString(value: String): DirectionEnum {
             return try {
                 valueOf(value.uppercase(Locale.US))
@@ -24,6 +24,7 @@ enum class DirectionEnum {
                 error(msg)
             }
         }
+
     }
 
 }
