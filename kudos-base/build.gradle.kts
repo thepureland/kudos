@@ -48,7 +48,7 @@ dependencies {
     api("com.google.zxing:core:3.5.3")
 
     // zip
-    api("de.idyl:winzipaes:1.0.1")
+    api("net.lingala.zip4j:zip4j:2.11.5")
 
     // svg
     api("org.apache.xmlgraphics:batik-dom:1.19")

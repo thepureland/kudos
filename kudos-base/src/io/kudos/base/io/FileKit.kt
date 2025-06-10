@@ -1,8 +1,11 @@
 package io.kudos.base.io
 
-import de.idyl.winzipaes.AesZipFileEncrypter
-import de.idyl.winzipaes.impl.AESEncrypter
-import de.idyl.winzipaes.impl.AESEncrypterBC
+import io.kudos.base.io.FileKit.checksum
+import io.kudos.base.logger.LogFactory
+import net.lingala.zip4j.ZipFile
+import net.lingala.zip4j.model.ZipParameters
+import net.lingala.zip4j.model.enums.AesKeyStrength
+import net.lingala.zip4j.model.enums.EncryptionMethod
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.LineIterator
 import org.apache.commons.io.filefilter.IOFileFilter
@@ -10,8 +13,6 @@ import java.io.*
 import java.math.BigInteger
 import java.net.URL
 import java.util.zip.Checksum
-import java.util.zip.ZipEntry
-import java.util.zip.ZipOutputStream
 
 /**
  * 文件工具类
@@ -29,47 +30,48 @@ object FileKit {
      */
     const val PREFIX_TEMP_FILE: String = "FileKit_"
 
+    private val log = LogFactory.getLog(this)
+
     /**
      * 压缩单个文件成zip压缩包并加密
      *
      * @param file 文件实体
-     * @param fileName 压缩包里面文件的完整名字，如果此值为空，则默认取file.getName()。
+     * @param fileName 压缩包里面文件的完整名字，如果此值为空，则默认取 file.name
      * @param password 加密密码，明文传入，如果为空，则不会加密
-     * @return 压缩包文件实体 (此File文件实体存储在系统的临时目录，用完请调用file.delete()删除之)
+     * @return 压缩包 File 对象 (此 File 存储在系统临时目录，用完请调用 file.delete() 删除之)
      * @author K
      * @since 1.0.0
      */
     fun zip(file: File, fileName: String?, password: String?): File? {
-        var filename: String? = fileName
-        val zipFile: File?
-        var enc: AesZipFileEncrypter? = null
-        var input: InputStream? = null
-        var zipOut: ZipOutputStream? = null
-        try {
-            zipFile = File.createTempFile(PREFIX_TEMP_FILE, ".zip")
+        // 临时生成 zip 文件
+        val zipFile = File.createTempFile("zip_temp_", ".zip")
+        val nameInZip = fileName.takeUnless { it.isNullOrBlank() } ?: file.name
+        return try {
             if (!password.isNullOrBlank()) {
-                val aesEncrypter: AESEncrypter = AESEncrypterBC()
-                aesEncrypter.init(password, 0)
-                enc = AesZipFileEncrypter(zipFile, aesEncrypter)
-                if (!filename.isNullOrBlank()) {
-                    filename = file.name
+                // 使用 AES-256 加密
+                val zip = ZipFile(zipFile, password.toCharArray())
+                val params = ZipParameters().apply {
+                    isEncryptFiles = true
+                    encryptionMethod = EncryptionMethod.AES
+                    aesKeyStrength = AesKeyStrength.KEY_STRENGTH_256
+                    fileNameInZip = nameInZip
                 }
-                enc.add(file, filename, password)
+                zip.addFile(file, params)
             } else {
-                input = FileInputStream(file)
-                zipOut = ZipOutputStream(FileOutputStream(zipFile))
-                zipOut.putNextEntry(ZipEntry(file.name))
-                var temp: Int
-                while ((input.read().also { temp = it }) != -1) {
-                    zipOut.write(temp)
+                // 无加密，直接打包
+                val zip = ZipFile(zipFile)
+                val params = ZipParameters().apply {
+                    fileNameInZip = nameInZip
                 }
+                zip.addFile(file, params)
             }
-        } finally {
-            enc?.close()
-            input?.close()
-            zipOut?.close()
+            zipFile
+        } catch (e: Exception) {
+            // 发生错误时删除临时文件
+            log.error(e)
+            zipFile.delete()
+            null
         }
-        return zipFile
     }
 
 
