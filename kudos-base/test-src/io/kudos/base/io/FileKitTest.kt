@@ -1,5 +1,6 @@
 package io.kudos.base.io
 
+import io.kudos.base.lang.SystemKit
 import org.apache.commons.io.filefilter.TrueFileFilter
 import java.io.*
 import java.math.BigInteger
@@ -637,8 +638,14 @@ internal class FileKitTest {
         assertFalse(dir.exists())
 
         // 删除不存在时抛 FileNotFound
-        assertFailsWith<FileNotFoundException> {
-            FileKit.forceDelete(File(tempDir, "nofd"))
+        if (SystemKit.isWindowsOS()) {
+            assertFailsWith<IOException> {
+                FileKit.forceDelete(File(tempDir, "nofd"))
+            }
+        } else {
+            assertFailsWith<FileNotFoundException> {
+                FileKit.forceDelete(File(tempDir, "nofd"))
+            }
         }
     }
 
@@ -822,15 +829,17 @@ internal class FileKitTest {
 
     @Test
     fun isSymlinkWhenSupportedReturnsTrue() {
-        val target = File(tempDir, "target.txt")
-        target.writeText("t")
-        val link = File(tempDir, "link.ln")
-        try {
-            Files.createSymbolicLink(link.toPath(), target.toPath())
-            assertTrue(FileKit.isSymlink(link))
-        } catch (_: UnsupportedOperationException) {
-            // 如果此环境不支持符号链接，则其应返回 false
-            assertFalse(FileKit.isSymlink(link))
+        if (!SystemKit.isWindowsOS()) {
+            val target = File(tempDir, "target.txt")
+            target.writeText("t")
+            val link = File(tempDir, "link.ln")
+            try {
+                Files.createSymbolicLink(link.toPath(), target.toPath())
+                assertTrue(FileKit.isSymlink(link))
+            } catch (_: UnsupportedOperationException) {
+                // 如果此环境不支持符号链接，则其应返回 false
+                assertFalse(FileKit.isSymlink(link))
+            }
         }
     }
 }

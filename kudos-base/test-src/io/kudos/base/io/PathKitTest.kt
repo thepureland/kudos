@@ -1,5 +1,6 @@
 package io.kudos.base.io
 
+import io.kudos.base.lang.SystemKit
 import org.apache.commons.io.FileUtils
 import java.io.File
 import java.net.URLDecoder
@@ -89,7 +90,11 @@ internal class PathKitTest {
         val windowsBase = File("C:\\proj")
         val windowsFile = File("C:\\proj\\sub\\f.txt")
         val relWin = PathKit.getRelativePath(windowsBase, windowsFile)
-        assertEquals("/sub/f.txt", relWin)
+        if (SystemKit.isWindowsOS()) {
+            assertEquals("sub/f.txt", relWin)
+        } else {
+            assertEquals("/sub/f.txt", relWin)
+        }
     }
 
     @Test

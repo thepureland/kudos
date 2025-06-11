@@ -1,5 +1,6 @@
 package io.kudos.base.io
 
+import io.kudos.base.lang.SystemKit
 import java.io.File
 import kotlin.test.*
 
@@ -21,26 +22,33 @@ internal class FilenameKitTest {
 
     @Test
     fun normalizeSimplePaths() {
-        // “/foo//” → “/foo/”
-        val raw1 = "/foo//"
-        val norm1 = FilenameKit.normalize(raw1)
-        assertEquals("/foo/", norm1)
+        if (SystemKit.isWindowsOS()) {
+            // “/foo//” → “\foo/”
+            assertEquals("\\foo\\", FilenameKit.normalize("/foo//"))
 
-        // “/foo/./” → “/foo/”
-        val raw2 = "/foo/./"
-        assertEquals("/foo/", FilenameKit.normalize(raw2))
+            // “/foo/./” → “\foo/”
+            assertEquals("\\foo\\", FilenameKit.normalize("/foo/./"))
 
-        // “/foo/../bar” → “/bar”
-        val raw3 = "/foo/../bar"
-        assertEquals("/bar", FilenameKit.normalize(raw3))
+            // “/foo/../bar” → “\bar”
+            assertEquals("\\bar", FilenameKit.normalize("/foo/../bar"))
 
-        // “foo/bar/..” → “foo/”
-        val raw4 = "foo/bar/.."
-        assertEquals("foo/", FilenameKit.normalize(raw4))
+            // “foo/bar/..” → “foo\”
+            assertEquals("foo\\", FilenameKit.normalize("foo/bar/.."))
+        } else {
+            // “/foo//” → “/foo/”
+            assertEquals("/foo/", FilenameKit.normalize("/foo//"))
 
+            // “/foo/./” → “/foo/”
+            assertEquals("/foo/", FilenameKit.normalize("/foo/./"))
+
+            // “/foo/../bar” → “/bar”
+            assertEquals("/bar", FilenameKit.normalize("/foo/../bar"))
+
+            // “foo/bar/..” → “foo/”
+            assertEquals("foo/", FilenameKit.normalize("foo/bar/.."))
+        }
         // “../foo” → null (no parent)
-        val raw5 = "../foo"
-        assertNull(FilenameKit.normalize(raw5))
+        assertNull(FilenameKit.normalize("../foo"))
     }
 
     @Test
@@ -60,12 +68,21 @@ internal class FilenameKitTest {
 
     @Test
     fun normalizeNoEndSeparatorSimplePaths() {
-        // “/foo//” → “/foo”
-        assertEquals("/foo", FilenameKit.normalizeNoEndSeparator("/foo//"))
-        // “/foo/./” → “/foo”
-        assertEquals("/foo", FilenameKit.normalizeNoEndSeparator("/foo/./"))
-        // “/foo/../bar/” → “/bar”
-        assertEquals("/bar", FilenameKit.normalizeNoEndSeparator("/foo/../bar/"))
+        if (SystemKit.isWindowsOS()) {
+            // “/foo//” → “\foo”
+            assertEquals("\\foo", FilenameKit.normalizeNoEndSeparator("/foo//"))
+            // “/foo/./” → “\foo”
+            assertEquals("\\foo", FilenameKit.normalizeNoEndSeparator("/foo/./"))
+            // “/foo/../bar/” → “\bar”
+            assertEquals("\\bar", FilenameKit.normalizeNoEndSeparator("/foo/../bar/"))
+        } else {
+            // “/foo//” → “/foo”
+            assertEquals("\\foo", FilenameKit.normalizeNoEndSeparator("/foo//"))
+            // “/foo/./” → “/foo”
+            assertEquals("\\foo", FilenameKit.normalizeNoEndSeparator("/foo/./"))
+            // “/foo/../bar/” → “/bar”
+            assertEquals("\\bar", FilenameKit.normalizeNoEndSeparator("/foo/../bar/"))
+        }
         // “foo/bar/..” → “foo”
         assertEquals("foo", FilenameKit.normalizeNoEndSeparator("foo/bar/.."))
         // “../foo” → null
@@ -85,13 +102,21 @@ internal class FilenameKitTest {
 
     @Test
     fun concatSimplePaths() {
-        assertEquals("/foo/bar", FilenameKit.concat("/foo", "bar"))
-        assertEquals("/bar", FilenameKit.concat("/foo", "/bar"))
-        assertEquals("C:/bar", FilenameKit.concat("C:/foo", "C:/bar"))
+        if (SystemKit.isWindowsOS()) {
+            assertEquals("\\foo\\bar", FilenameKit.concat("/foo", "bar"))
+            assertEquals("\\bar", FilenameKit.concat("/foo", "/bar"))
+            assertEquals("C:\\bar", FilenameKit.concat("C:/foo", "C:/bar"))
+            // when base ends with filename
+            assertEquals("\\foo\\c.txt\\bar", FilenameKit.concat("/foo/c.txt", "bar"))
+        } else {
+            assertEquals("/foo/bar", FilenameKit.concat("/foo", "bar"))
+            assertEquals("/bar", FilenameKit.concat("/foo", "/bar"))
+            assertEquals("C:/bar", FilenameKit.concat("C:/foo", "C:/bar"))
+            // when base ends with filename
+            assertEquals("/foo/c.txt/bar", FilenameKit.concat("/foo/c.txt", "bar"))
+        }
         // invalid → parent “/foo” + “../../baz” has no valid parent
         assertNull(FilenameKit.concat("/foo", "../../baz"))
-        // when base ends with filename
-        assertEquals("/foo/c.txt/bar", FilenameKit.concat("/foo/c.txt", "bar"))
     }
 
     @Test
