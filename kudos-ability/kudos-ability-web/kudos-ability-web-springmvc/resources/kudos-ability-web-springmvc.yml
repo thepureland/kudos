@@ -1,0 +1,15 @@
+kudos:
+  ability:
+    web:
+      springmvc:
+        server: TOMCAT #TOMCAT、JETTY、UNDERTOW三选一
+      swagger:
+        production: true
+
+soul:
+  ability:
+    web:
+      springmvc:
+        server: ${kudos.ability.web.springmvc.server}
+      swagger:
+        production: ${kudos.ability.web.swagger.production}

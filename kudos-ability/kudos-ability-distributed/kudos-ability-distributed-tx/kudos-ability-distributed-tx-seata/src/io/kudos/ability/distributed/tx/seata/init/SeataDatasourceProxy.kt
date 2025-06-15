@@ -1,0 +1,54 @@
+package io.kudos.ability.distributed.tx.seata.init
+
+import com.baomidou.dynamic.datasource.enums.SeataMode
+import io.seata.core.model.BranchType
+import io.seata.rm.datasource.DataSourceProxy
+import io.seata.rm.datasource.xa.DataSourceProxyXA
+import org.soul.ability.data.rdb.jdbc.datasource.IDataSourceProxy
+import org.springframework.beans.factory.annotation.Value
+import javax.sql.DataSource
+
+/**
+ * Seata数据源代理,支持AT/XA
+ *
+ * @author soul
+ */
+class SeataDatasourceProxy : IDataSourceProxy {
+
+    @Value("\${seata.data-source-proxy-mode}")
+    private val proxyMode: String? = null
+
+    @Value("\${seata.enable-auto-data-source-proxy}")
+    private var enableProxy: Boolean = true
+
+    override fun proxyDatasource(dataSource: DataSource): DataSource? {
+        if (enableProxy) {
+            return dataSource
+        }
+        try {
+            if (BranchType.AT.name.equals(proxyMode, ignoreCase = true)) {
+                return DataSourceProxy(dataSource)
+            }
+            if (BranchType.XA.name.equals(proxyMode, ignoreCase = true)) {
+                return DataSourceProxyXA(dataSource)
+            }
+        } catch (e: Exception) {
+            throw IllegalArgumentException("代理数据源失败", e)
+        }
+        throw IllegalArgumentException("Unknown dataSourceProxyMode: $proxyMode")
+    }
+
+    override fun isSeata(): Boolean {
+        return true
+    }
+
+    override fun seataMode(): SeataMode? {
+        if (BranchType.AT.name.equals(proxyMode, ignoreCase = true)) {
+            return SeataMode.AT
+        }
+        if (BranchType.XA.name.equals(proxyMode, ignoreCase = true)) {
+            return SeataMode.XA
+        }
+        return null
+    }
+}

@@ -1,0 +1,15 @@
+kudos:
+  ability:
+    cache:
+      version:
+      enabled: true
+      remoteStore: data
+
+
+
+soul:
+  ability:
+    cache:
+      version: ${kudos.ability.cache.version}
+      enabled: ${kudos.ability.cache.enabled}
+      remoteStore: ${kudos.ability.cache.remoteStore}

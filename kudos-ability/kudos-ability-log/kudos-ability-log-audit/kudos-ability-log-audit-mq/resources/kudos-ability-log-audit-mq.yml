@@ -1,0 +1,10 @@
+spring:
+  cloud:
+    stream:
+      bindings:
+        #生产者
+        logAudit-out-0:
+          #主题名称
+          destination: LOG_AUDIT_TOPIC
+          #分组名称
+          group: logAudit

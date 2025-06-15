@@ -1,0 +1,52 @@
+spring:
+  application:
+    name: rocket-ms-p
+  datasource:
+    dynamic:
+      primary: postgres
+      hikari:
+        connection-timeout: 30000
+        validation-timeout: 5000
+        idle-timeout: 600000
+        leak-detection-threshold: 0
+        max-lifetime: 1800000
+        max-pool-size: 10
+        min-idle: 10
+        initialization-fail-timeout: 1
+        is-auto-commit: false
+        is-read-only: false
+        is-isolate-internal-queries: false
+        is-register-mbeans: false
+        is-allow-pool-suspension: false
+      datasource:
+        postgres:
+          hikari:
+            is-auto-commit: false
+          driver-class-name: org.postgresql.Driver
+          url: jdbc:postgresql://localhost:5432/test
+          username: pg
+          password: postgres
+  cloud:
+    nacos:
+      config:
+        server-addr: 127.0.0.1:28848
+        namespace: public
+        file-extension: yml
+      discovery:
+        server-addr: 127.0.0.1:28848
+    stream:
+      function:
+        #配置消费者消费的方法名称，按bindings顺序，多个以英文分号隔开
+        definition: producer
+      bindings:
+#        #生产者
+        producer-out-0:
+          #主题名称
+          destination: ROCKETMQ_TEST_TOPIC
+          content-type: application/json
+          group: unitTest
+
+server:
+  port: 0
+
+

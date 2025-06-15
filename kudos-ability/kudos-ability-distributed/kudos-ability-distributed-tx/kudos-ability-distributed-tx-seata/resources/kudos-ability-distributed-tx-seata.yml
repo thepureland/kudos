@@ -1,0 +1,52 @@
+seata:
+  enabled: true
+  tx-service-group: default_tx_group
+  # 是否自动开启数据源代理
+  enable-auto-data-source-proxy: true
+  # 数据源代理模式，使用XA模式
+  data-source-proxy-mode: XA
+  client:
+    rm:
+      lock:
+        # 校验或占用全局锁重试间隔，单位ms
+        retry-interval: 10
+        # 校验或占用全局锁重试次数
+        retry-times: 30
+        # 分支事务与其它全局回滚事务冲突时锁策略,true，优先释放本地锁让回滚成功
+        retry-policy-branch-rollback-on-conflict: true
+    tm:
+      # 一阶段全局提交结果上报TC重试次数
+      commit-retry-count: 5
+      # 一阶段全局回滚结果上报TC重试次数
+      rollback-retry-count: 5
+      # 分布式事物超时时间
+      default-global-transaction-timeout: 600000
+      # 降级开关,false 不打开
+      degrade-check: false
+      degrade-check-period: 2000
+      degrade-check-allow-times: 10
+    undo:
+      log-serialization: jackson
+  service:
+    # 全局事务开关
+    disable-global-transaction: false
+    vgroup-mapping:
+      default_tx_group: default
+  # 配置中心，需要和 seata server 保持一致
+  config:
+    type: file
+    nacos:
+      namespace:
+      server-addr: 127.0.0.1:38848
+      group: DEFAULT_GROUP
+      data-id: seataServer.properties
+  # 注册中心，需要和 seata server 保持一致
+  registry:
+    type: nacos
+    nacos:
+      application: seata-server
+      group: DEFAULT_GROUP
+      namespace:
+      server-addr: 127.0.0.1:38848
+  log:
+    exception-rate: 100

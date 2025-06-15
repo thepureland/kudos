@@ -1,0 +1,50 @@
+ktor:
+#  application:
+#    modules:
+#      - io.kudos.ability.web.ktor.base.init.KtorPluginsKt.module
+#      - com.example.RoutingKt.configureRouting
+#      - com.example.SerializationKt.configureSerialization
+#      - com.example.SocketsKt.configureSockets
+  deployment:
+    # common
+#    host: 0.0.0.0
+    port: 8080  # or $PORT or "$PORT:8080"
+    connectionGroupSize: 2 # A count of threads used to accept new connections and start call processing.
+    workerGroupSize: 5 # A size of the event group for processing connections, parsing messages, and doing the engine's internal work.
+    callGroupSize: 10  # A minimum size of a thread pool used to process application calls.
+    shutdownGracePeriod: 2000  # A maximum time in milliseconds for a server to stop accepting new requests.
+    shutdownTimeout: 3000 # A maximum time in milliseconds to wait until the server stops completely.
+#    watch:  # Watch paths used for auto-reloading.
+#    rootPath: / # A servlet context path.
+#    shutdown:
+#      url:  # A shutdown URL. Note that this option uses the Shutdown URL plugin.
+
+
+    # netty
+    maxInitialLineLength: 2048
+    maxHeaderSize: 1024
+    maxChunkSize: 42
+
+#    sslPort: 8443
+#  security:
+#    ssl:
+#      keyStore: keystore.jks
+#      keyAlias: sampleAlias  # An alias for the SSL key store.
+#      keyStorePassword: foobar
+#      privateKeyPassword: foobar
+
+
+kudos:
+  ability:
+    web:
+      ktor:
+        engine:
+          name: netty
+          port: ${ktor.deployment.port}
+        plugins:
+          content-negotiation:
+            enabled: true
+          status-pages:
+            enabled: true
+          web-socket:
+            enabled: true

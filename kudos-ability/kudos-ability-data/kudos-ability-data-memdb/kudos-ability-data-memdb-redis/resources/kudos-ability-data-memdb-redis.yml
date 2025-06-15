@@ -1,0 +1,33 @@
+kudos:
+  ability:
+    data:
+      redis:
+        default-redis: data
+        redis-map:
+          data:
+            host: localhost #单机模式下使用
+            port: 6379 #单机模式下使用
+            password:
+            database: 0 # 使用数据库的索引编号，一个示例有16个数据库 0 到 15
+#            ssl: false
+            max-active: -1
+            max-idle: 10
+            max-wait: -1ms
+            min-idle: 0
+            timeout: 3000 # 连接超时时间（毫秒）
+            key-serializer: string #RedisSerializerEnum 枚举类
+            hashkey-serializer: string
+            value-serializer: fastjson #jackson默认不支持jdk8的LocalDateTime、LocalDate、LocalTime
+            hashvalue-serializer: fastjson #jackson默认不支持jdk8的LocalDateTime、LocalDate、LocalTime
+    #        cluster:
+    #          max-redirects: 3 # 集群模式下，集群最大转发的数量
+    #          nodes: # 集群模式下，逗号分隔的键值对（主机：端口）形式的服务器列表
+    #            - 127.0.0.1:6379
+    #            - 127.0.0.1:6380
+
+
+
+#soul:
+#  ability:
+#    data:
+#      redis: ${kudos.ability.data.redis}

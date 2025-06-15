@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="GradleMigrationSettings" migrationVersion="1" />
+  <component name="GradleSettings">
+    <option name="linkedExternalProjectsSettings">
+      <GradleProjectSettings>
+        <compositeConfiguration>
+          <compositeBuild compositeDefinitionSource="SCRIPT">
+            <builds>
+              <build path="$PROJECT_DIR$/buildSrc" name="buildSrc">
+                <projects>
+                  <project path="$PROJECT_DIR$/buildSrc" />
+                </projects>
+              </build>
+            </builds>
+          </compositeBuild>
+        </compositeConfiguration>
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/buildSrc" />
+            <option value="$PROJECT_DIR$/kudos-ability" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-cache" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-cache/kudos-ability-cache-common" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-cache/kudos-ability-cache-interservice" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-cache/kudos-ability-cache-interservice/kudos-ability-cache-interservice-client" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-cache/kudos-ability-cache-interservice/kudos-ability-cache-interservice-provider" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-cache/kudos-ability-cache-local" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-cache/kudos-ability-cache-local/kudos-ability-cache-local-caffeine" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-cache/kudos-ability-cache-remote" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-cache/kudos-ability-cache-remote/kudos-ability-cache-remote-redis" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-comm" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-comm/kudos-ability-comm-email" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-comm/kudos-ability-comm-sms" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-comm/kudos-ability-comm-sms/kudos-ability-comm-sms-aliyun" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-comm/kudos-ability-comm-sms/kudos-ability-comm-sms-aws" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-comm/kudos-ability-comm-websocket" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-comm/kudos-ability-comm-websocket/kudos-ability-comm-websocket-netty" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-comm/kudos-ability-comm-websocket/kudos-ability-comm-websocket-spring" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-data" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-data/kudos-ability-data-memdb" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-data/kudos-ability-data-memdb/kudos-ability-data-memdb-redis" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-data/kudos-ability-data-rdb" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-data/kudos-ability-data-rdb/kudos-ability-data-rdb-flyway" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-data/kudos-ability-data-rdb/kudos-ability-data-rdb-jdbc" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-data/kudos-ability-data-rdb/kudos-ability-data-rdb-ktorm" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-distributed" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-distributed/kudos-ability-distributed-client" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-distributed/kudos-ability-distributed-client/kudos-ability-distributed-client-feign" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-distributed/kudos-ability-distributed-config" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-distributed/kudos-ability-distributed-config/kudos-ability-distributed-config-nacos" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-distributed/kudos-ability-distributed-discovery" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-distributed/kudos-ability-distributed-discovery/kudos-ability-distributed-discovery-nacos" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-distributed/kudos-ability-distributed-lock" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-distributed/kudos-ability-distributed-lock/kudos-ability-distributed-lock-redisson" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-distributed/kudos-ability-distributed-notify" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-distributed/kudos-ability-distributed-notify/kudos-ability-distributed-notify-common" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-distributed/kudos-ability-distributed-notify/kudos-ability-distributed-notify-mq" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-distributed/kudos-ability-distributed-notify/kudos-ability-distributed-notify-rdb" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-distributed/kudos-ability-distributed-stream" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-distributed/kudos-ability-distributed-stream/kudos-ability-distributed-stream-common" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-distributed/kudos-ability-distributed-stream/kudos-ability-distributed-stream-kafka" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-distributed/kudos-ability-distributed-stream/kudos-ability-distributed-stream-rabbit" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-distributed/kudos-ability-distributed-stream/kudos-ability-distributed-stream-rocketmq" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-distributed/kudos-ability-distributed-tx" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-distributed/kudos-ability-distributed-tx/kudos-ability-distributed-tx-seata" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-file" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-file/kudos-ability-file-local" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-file/kudos-ability-file-minio" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-log" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-log/kudos-ability-log-audit" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-log/kudos-ability-log-audit/kudos-ability-log-audit-mq" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-log/kudos-ability-log-audit/kudos-ability-log-audit-rdb" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-ui" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-ui/kudos-ability-ui-javafx" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-web" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-web/kudos-ability-web-ktor" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-web/kudos-ability-web-springmvc" />
+            <option value="$PROJECT_DIR$/kudos-base" />
+            <option value="$PROJECT_DIR$/kudos-context" />
+            <option value="$PROJECT_DIR$/kudos-ms" />
+            <option value="$PROJECT_DIR$/kudos-ms/kudos-ms-sys" />
+            <option value="$PROJECT_DIR$/kudos-ms/kudos-ms-sys/kudos-ms-sys-service" />
+            <option value="$PROJECT_DIR$/kudos-test" />
+            <option value="$PROJECT_DIR$/kudos-test/kudos-test-common" />
+            <option value="$PROJECT_DIR$/kudos-test/kudos-test-container" />
+            <option value="$PROJECT_DIR$/kudos-tools" />
+          </set>
+        </option>
+      </GradleProjectSettings>
+    </option>
+  </component>
+</project>

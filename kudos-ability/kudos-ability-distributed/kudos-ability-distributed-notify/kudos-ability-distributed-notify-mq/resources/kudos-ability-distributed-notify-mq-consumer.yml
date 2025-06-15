@@ -1,0 +1,15 @@
+spring:
+  cloud:
+    function:
+      definition: mqNotify;
+    stream:
+      rocketmq:
+        binder:
+          name-server: localhost:9876
+        bindings:
+          mqNotify-in-0:
+            consumer:
+              concurrency: 2 # 根据group，相同则为集群，不同则为广播
+      bindings:
+        mqNotify-in-0:
+          destination: mqNotify #topic

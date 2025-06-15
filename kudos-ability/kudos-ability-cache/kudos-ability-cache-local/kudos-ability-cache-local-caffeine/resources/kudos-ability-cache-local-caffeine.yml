@@ -1,0 +1,4 @@
+spring:
+  cache:
+    caffeine:
+      spec: maximumSize=150, expireAfterAccess=3600s
