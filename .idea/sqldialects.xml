@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SqlDialectMappings">
+    <file url="file://$PROJECT_DIR$/kudos-ability/kudos-ability-data/kudos-ability-data-rdb/kudos-ability-data-rdb-flyway/test-resources/sql/module1/h2/V1.0.1__init_scheme.sql" dialect="H2" />
+    <file url="file://$PROJECT_DIR$/kudos-ability/kudos-ability-data/kudos-ability-data-rdb/kudos-ability-data-rdb-flyway/test-resources/sql/module1/postgresql/V1.0.1__init_scheme.sql" dialect="H2" />
+    <file url="file://$PROJECT_DIR$/kudos-ability/kudos-ability-data/kudos-ability-data-rdb/kudos-ability-data-rdb-flyway/test-resources/sql/module1/postgresql/V1.0.2__init_data.sql" dialect="H2" />
+    <file url="file://$PROJECT_DIR$/kudos-ms/kudos-ms-sys/kudos-ms-sys-service/resources/db/h2/V1.0.1__init_scheme.sql" dialect="H2" />
+    <file url="file://$PROJECT_DIR$/kudos-ms/kudos-ms-sys/kudos-ms-sys-service/resources/db/h2/data.sql" dialect="H2" />
+    <file url="file://$PROJECT_DIR$/kudos-ms/kudos-ms-sys/kudos-ms-sys-service/resources/db/h2/scheme.sql" dialect="H2" />
+    <file url="PROJECT" dialect="H2" />
+  </component>
+</project>

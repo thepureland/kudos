@@ -1,0 +1,28 @@
+kudos:
+  ability:
+    flyway:
+      #fly数据源配置
+      datasource-config:
+        #demo：代表resource下db/{demo}/模块,对应的jdbc多数据源的数据源名
+        demo: master
+
+spring:
+  flyway:
+    # 启用Flyway功能
+    enabled: true
+    # 禁用Flyway的clean命令，使用clean命令会删除schema下的所有表
+    clean-disabled: true
+    # 在执行migrate命令时需要有flyway_schema_history表，通过baseline命令可以生成该表
+    baseline-on-migrate: true
+    # 指定baseline版本号，低于该版本的SQL脚本在migrate是不会执行
+    baseline-version: 0
+    # 设置字符编码
+    encoding: UTF-8
+    # 不允许不按顺序迁移
+    out-of-order: false
+    # 设置Flyway管控的schema，不设置的话为datasourcel.url中指定的schema
+    #schemas: yt-boss
+    # 执行migrate时开启校验
+    validate-on-migrate: false
+    # 是否进行占位符替换
+    placeholder-replacement: false

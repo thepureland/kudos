@@ -1,0 +1,13 @@
+spring:
+  cloud:
+    stream:
+      rocketmq:
+        binder:
+          name-server: localhost:9876
+        bindings:
+          mqNotify-out-0:
+            producer:
+              group: mqNotify_1
+      bindings:
+        mqNotify-out-0:
+          destination: mqNotify

@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: inter-service-test
+
+
+#logging:
+#  level:
+#    root: DEBUG
+#    com.alibaba.cloud: DEBUG

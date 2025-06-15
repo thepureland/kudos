@@ -1,0 +1,13 @@
+soul:
+  ability:
+    web:
+      springmvc:
+        global:
+          request:
+            context-init-exclude:        # 全局请求数据, 忽略的URL, 以下URL请求不进行 IContextInitializer初始化
+              - /actuator/**
+
+          response:
+            packages-to-exclude:          # 全局响应数据,忽略的包,即,以下包处理类不进行WebResult封装
+              - org.springdoc.webmvc.ui
+

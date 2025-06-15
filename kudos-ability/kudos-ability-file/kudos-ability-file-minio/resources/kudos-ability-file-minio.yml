@@ -1,0 +1,21 @@
+kudos:
+  ability:
+    file:
+      minio:
+        endpoint: http://127.0.0.1:9000
+        accessKey: admin
+        secretKey: 12345678
+        public-endpoint: http://127.0.0.1:9000
+        sts:
+          access-token:
+            # TODO: 以下配置靠近spring security oauth2. 考虑直接使用oauth2-client处理
+            # spring.security.oauth2.client.registration
+            enabled: false
+            client-id: minio
+            client-secret: "minio"
+            authorization-grant-type: "client_credentials"
+            client-authentication-method: "client_secret_basic"
+            end-point: http://127.0.0.1:10001/oauth2/token        # Access Token Endpoint
+
+            # Endpoint Session ID (基于请求头,业务Token认证)
+            header-name: Authentication-Info                      # Endpoint Session ID (基于请头头,Token认证)

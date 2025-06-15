@@ -1,0 +1,72 @@
+spring:
+#  flyway:
+#    enabled: true
+#    locations: sql/h2
+  datasource:
+    dynamic:
+      primary: ds1
+      hikari:
+        connection-timeout: 30000
+        validation-timeout: 5000
+        idle-timeout: 600000
+        leak-detection-threshold: 0
+        max-lifetime: 1800000
+        max-pool-size: 10
+        min-idle: 10
+        initialization-fail-timeout: 1
+        is-auto-commit: false
+        is-read-only: false
+        is-isolate-internal-queries: false
+        is-register-mbeans: false
+        is-allow-pool-suspension: false
+      datasource:
+        master:
+          hikari:
+            is-auto-commit: false
+          driver-class-name: org.h2.Driver
+          url: jdbc:h2:~/h2;auto_server=true;DATABASE_TO_LOWER=TRUE;
+          username: sa
+          password: sa
+        ds1:
+          driver-class-name: org.h2.Driver
+          url: jdbc:h2:tcp://localhost:1521/mem:test;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;
+          username: sa
+          password:
+#          init:
+#            schema: sql/schema.sql
+#            data: sql/data.sql
+        ds2:
+          driver-class-name: org.h2.Driver
+          url: jdbc:h2:~/h2-ds2;auto_server=true;DATABASE_TO_LOWER=TRUE;
+          username: sa
+          password: sa
+#          init:
+#            schema: sql/schema.sql
+#            data: sql/data.sql
+        3:
+          driver-class-name: org.h2.Driver
+          url: jdbc:h2:~/h2-ds2;auto_server=true;DATABASE_TO_LOWER=TRUE;
+          username: sa
+          password: sa
+#          init:
+#            schema: sql/schema.sql
+#            data: sql/data.sql
+#        ch:
+#          driver-class-name: com.clickhouse.jdbc.ClickHouseDriver
+#          url: jdbc:clickhouse://localhost:8123/test
+#          username: default
+#          password: 123456
+#          init:
+#            schema: sql/schema.sql
+#            data: sql/data.sql
+
+
+kudos:
+  ability:
+    flyway:
+      #fly数据源配置
+      datasource-config:
+        #demo：代表resource下db/{demo}/模块,对应的jdbc多数据源的数据源名
+        module1: ds1
+        module2: ds1
+        moduleX: no_exists

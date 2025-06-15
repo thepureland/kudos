@@ -1,0 +1,22 @@
+${AnsiColor.BRIGHT_YELLOW}${AnsiStyle.BOLD}
+                                                  dddddddd
+KKKKKKKKK    KKKKKKK                              d::::::d
+K:::::::K    K:::::K                              d::::::d
+K:::::::K    K:::::K                              d::::::d
+K:::::::K   K::::::K                              d:::::d
+KK::::::K  K:::::KKKuuuuuu    uuuuuu      ddddddddd:::::d    ooooooooooo       ssssssssss
+  K:::::K K:::::K   u::::u    u::::u    dd::::::::::::::d  oo:::::::::::oo   ss::::::::::s
+  K::::::K:::::K    u::::u    u::::u   d::::::::::::::::d o:::::::::::::::oss:::::::::::::s
+  K:::::::::::K     u::::u    u::::u  d:::::::ddddd:::::d o:::::ooooo:::::os::::::ssss:::::s
+  K:::::::::::K     u::::u    u::::u  d::::::d    d:::::d o::::o     o::::o s:::::s  ssssss
+  K::::::K:::::K    u::::u    u::::u  d:::::d     d:::::d o::::o     o::::o   s::::::s
+  K:::::K K:::::K   u::::u    u::::u  d:::::d     d:::::d o::::o     o::::o      s::::::s
+KK::::::K  K:::::KKKu:::::uuuu:::::u  d:::::d     d:::::d o::::o     o::::ossssss   s:::::s
+K:::::::K   K::::::Ku:::::::::::::::uud::::::ddddd::::::ddo:::::ooooo:::::os:::::ssss::::::s
+K:::::::K    K:::::K u:::::::::::::::u d:::::::::::::::::do:::::::::::::::os::::::::::::::s
+K:::::::K    K:::::K  uu::::::::uu:::u  d:::::::::ddd::::d oo:::::::::::oo  s:::::::::::ss
+KKKKKKKKK    KKKKKKK    uuuuuuuu  uuuu   ddddddddd   ddddd   ooooooooooo     sssssssssss
+${AnsiBackground.WHITE}${AnsiColor.RED}${AnsiStyle.UNDERLINE}
+:: Kudos ::                   (v1.0.0.SNAPSHOOT)
+:: Kotlin ::                  (v2.1.21)
+:: Spring Boot ::             (v${spring-boot.version})

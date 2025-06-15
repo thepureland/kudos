@@ -1,0 +1,58 @@
+server:
+  port: 0
+
+spring:
+  application:
+    name: main-at
+  datasource:
+    dynamic:
+      primary: postgres
+      hikari:
+        connection-timeout: 30000
+        validation-timeout: 5000
+        idle-timeout: 600000
+        leak-detection-threshold: 0
+        max-lifetime: 1800000
+        max-pool-size: 10
+        min-idle: 10
+        initialization-fail-timeout: 1
+        is-auto-commit: false
+        is-read-only: false
+        is-isolate-internal-queries: false
+        is-register-mbeans: false
+        is-allow-pool-suspension: false
+      datasource:
+        postgres:
+          type: com.zaxxer.hikari.HikariDataSource
+          hikari:
+            is-auto-commit: false
+          driver-class-name: org.postgresql.Driver
+          url: jdbc:postgresql://localhost:25432/test
+          username: pg
+          password: postgres
+          init:
+            schema: sql/postgres/schema.sql
+            data: sql/postgres/data.sql
+#        mysql:
+#          type: com.zaxxer.hikari.HikariDataSource
+#          hikari:
+#            is-auto-commit: false
+#          driver-class-name: com.mysql.cj.jdbc.Driver
+#          url: jdbc:mysql://mysql:3306/test
+#          username: root
+#          password: mysql
+#          init:
+#            schema: sql/mysql/schema.sql
+#            data: sql/mysql/data.sql
+
+  cloud:
+    nacos:
+      config:
+        server-addr: localhost:38848
+        namespace: public
+        file-extension: yml
+      discovery:
+        server-addr: localhost:38848
+
+
+
