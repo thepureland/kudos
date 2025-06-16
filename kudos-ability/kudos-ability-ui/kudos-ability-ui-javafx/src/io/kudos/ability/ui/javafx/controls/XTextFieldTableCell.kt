@@ -1,6 +1,5 @@
 package io.kudos.ability.ui.javafx.controls
 
-import io.kudos.base.support.Consts
 import javafx.beans.value.ChangeListener
 import javafx.beans.value.ObservableValue
 import javafx.scene.Node
@@ -136,7 +135,7 @@ class XTextFieldTableCell<S, T> @JvmOverloads constructor(converter: StringConve
     /**
      * @param oldTable
      */
-    @Suppress(Consts.Suppress.UNCHECKED_CAST)
+    @Suppress("UNCHECKED_CAST")
     private fun uninstallTerminatingListener(oldTable: TableView<S?>?) {
         if (oldTable is XTableView<*>) {
             (oldTable.terminatingCellProperty() as ObservableValue<*>).removeListener(terminatingListener as ChangeListener<in Any>)

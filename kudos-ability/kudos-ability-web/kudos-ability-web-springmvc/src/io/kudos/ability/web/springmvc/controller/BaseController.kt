@@ -1,7 +1,6 @@
 package io.kudos.ability.web.springmvc.controller
 
 import io.kudos.base.lang.GenericKit
-import io.kudos.base.support.Consts
 import org.soul.base.bean.validation.teminal.TeminalConstraintsCreator
 import org.springframework.web.bind.annotation.GetMapping
 import kotlin.reflect.KClass
@@ -41,7 +40,7 @@ open class BaseController<F: Any> {
      * @author K
      * @since 1.0.0
      */
-    @Suppress(Consts.Suppress.UNCHECKED_CAST)
+    @Suppress("UNCHECKED_CAST")
     open fun getFormModelClass(): KClass<F> {
         return GenericKit.getSuperClassGenricClass(this::class, 5) as KClass<F>
     }

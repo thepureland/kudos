@@ -31,6 +31,7 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.web.context.request.RequestContextListener
 import org.springframework.web.filter.FormContentFilter
 import org.springframework.web.servlet.config.annotation.*
+import org.springframework.web.util.pattern.PathPatternParser
 import java.nio.charset.StandardCharsets
 import java.util.*
 
@@ -153,8 +154,7 @@ open class SpringMvcAutoConfiguration : IComponentInitializer, WebMvcConfigurer 
     }
 
     override fun configurePathMatch(configurer: PathMatchConfigurer) {
-        //允许去掉后缀的匹配
-        configurer.isUseSuffixPatternMatch = true
+        configurer.patternParser = PathPatternParser()
     }
 
     override fun extendMessageConverters(converters: List<HttpMessageConverter<*>?>) {

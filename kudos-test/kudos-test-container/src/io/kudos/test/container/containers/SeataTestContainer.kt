@@ -7,7 +7,6 @@ import io.kudos.test.container.kit.bindingPort
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.testcontainers.containers.BindMode
 import org.testcontainers.containers.GenericContainer
-import org.testcontainers.containers.Network
 import org.testcontainers.containers.wait.strategy.Wait
 
 /**

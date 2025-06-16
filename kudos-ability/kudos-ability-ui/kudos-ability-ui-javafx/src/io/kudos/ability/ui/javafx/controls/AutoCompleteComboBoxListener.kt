@@ -1,6 +1,5 @@
 package io.kudos.ability.ui.javafx.controls
 
-import io.kudos.base.support.Consts
 import javafx.collections.FXCollections
 import javafx.collections.ObservableList
 import javafx.event.EventHandler
@@ -67,7 +66,7 @@ class AutoCompleteComboBoxListener<T>(private val comboBox: ComboBox<Any>?) : Ev
 
     init {
         sb = StringBuilder()
-        @Suppress(Consts.Suppress.UNCHECKED_CAST)
+        @Suppress("UNCHECKED_CAST")
         data = comboBox!!.items as ObservableList<T>
         comboBox.isEditable = true
         comboBox.onKeyPressed = EventHandler { comboBox.hide() }

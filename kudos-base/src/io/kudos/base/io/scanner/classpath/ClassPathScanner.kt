@@ -15,8 +15,8 @@
  */
 package io.kudos.base.io.scanner.classpath
 
-import io.kudos.base.io.scanner.support.Resource
 import io.kudos.base.io.FileKit
+import io.kudos.base.io.scanner.support.Resource
 import io.kudos.base.logger.LogFactory
 import java.io.IOException
 import java.lang.reflect.Modifier

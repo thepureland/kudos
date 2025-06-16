@@ -12,6 +12,7 @@ import io.kudos.tools.codegen.core.merge.PrivateContentEraser
 import io.kudos.tools.codegen.model.vo.GenFile
 import javafx.scene.control.Alert
 import java.io.File
+import java.net.URI
 import java.net.URL
 
 /**
@@ -53,10 +54,10 @@ class CodeGenerator(
 
     private fun newFreeMarkerConfiguration(): Configuration {
         val templateRootDir = CodeGeneratorContext.config.getTemplateInfo()!!.rootDir
-        val root = URL("file:$templateRootDir")
+        val root = URI("file:$templateRootDir").toURL()
         val multiTemplateLoader = MultiTemplateLoader(arrayOf(
             object : URLTemplateLoader() {
-                override fun getURL(template: String): URL = URL(root, template)
+                override fun getURL(template: String): URL = root.toURI().resolve(template).toURL()
             }
         ))
         val conf = Configuration(Configuration.VERSION_2_3_30)

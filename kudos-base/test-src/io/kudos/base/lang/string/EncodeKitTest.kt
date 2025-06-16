@@ -2,11 +2,7 @@ package io.kudos.base.lang.string
 
 import org.apache.commons.codec.DecoderException
 import java.nio.charset.StandardCharsets
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 /**
  * test for EncodeKit

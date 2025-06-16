@@ -2,7 +2,6 @@ package io.kudos.ability.web.springmvc.controller
 
 import io.kudos.base.error.ObjectNotFoundException
 import io.kudos.base.lang.GenericKit
-import io.kudos.base.support.Consts
 import io.kudos.base.support.biz.IBaseReadOnlyBiz
 import io.kudos.base.support.payload.FormPayload
 import io.kudos.base.support.payload.ListSearchPayload
@@ -43,7 +42,7 @@ open class BaseReadOnlyController<PK : Any, B : IBaseReadOnlyBiz<PK, *>, S : Lis
      * @since 1.0.0
      */
     @PostMapping("/search")
-    @Suppress(Consts.Suppress.UNCHECKED_CAST)
+    @Suppress("UNCHECKED_CAST")
     open fun search(@RequestBody searchPayload: S): Pair<List<R>, Int> {
         return biz.pagingSearch(searchPayload) as Pair<List<R>, Int>
     }
@@ -56,7 +55,7 @@ open class BaseReadOnlyController<PK : Any, B : IBaseReadOnlyBiz<PK, *>, S : Lis
      * @since 1.0.0
      */
     @GetMapping("/get")
-    @Suppress(Consts.Suppress.UNCHECKED_CAST)
+    @Suppress("UNCHECKED_CAST")
     open fun get(id: PK): F {
         if (resultClass == null) {
             resultClass = GenericKit.getSuperClassGenricClass(this::class, 5) as KClass<F>
@@ -72,7 +71,7 @@ open class BaseReadOnlyController<PK : Any, B : IBaseReadOnlyBiz<PK, *>, S : Lis
      * @since 1.0.0
      */
     @GetMapping("/getDetail")
-    @Suppress(Consts.Suppress.UNCHECKED_CAST)
+    @Suppress("UNCHECKED_CAST")
     open fun getDetail(id: PK): D {
         if (detailClass == null) {
             detailClass = GenericKit.getSuperClassGenricClass(this::class, 4) as KClass<D>

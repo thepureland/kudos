@@ -2,8 +2,8 @@ package io.kudos.base.lang.reflect
 
 import io.kudos.base.bean.validation.constraint.annotations.AtLeast
 import io.kudos.base.bean.validation.constraint.annotations.NotNullOn
-import io.kudos.base.enums.impl.SexEnum
 import io.kudos.base.enums.ienums.IDictEnum
+import io.kudos.base.enums.impl.SexEnum
 import io.kudos.base.support.Consts
 import java.io.Serializable
 import kotlin.reflect.full.starProjectedType

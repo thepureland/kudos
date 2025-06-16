@@ -18,7 +18,6 @@ import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.junit.jupiter.EnabledIfDockerAvailable
 import java.net.URI
 import java.util.concurrent.TimeUnit
-import java.util.function.Supplier
 import kotlin.test.Test
 import kotlin.test.assertTrue
 

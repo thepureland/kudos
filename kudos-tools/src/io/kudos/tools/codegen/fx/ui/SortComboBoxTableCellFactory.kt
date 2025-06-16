@@ -1,6 +1,5 @@
 package io.kudos.tools.codegen.fx.ui
 
-import io.kudos.base.support.Consts
 import javafx.collections.FXCollections
 import javafx.scene.control.TableCell
 import javafx.scene.control.TableColumn
@@ -15,7 +14,7 @@ import javafx.util.Callback
  */
 class SortComboBoxTableCellFactory<S>: Callback<TableColumn<S, String>?, TableCell<S, String>?> {
 
-    @Suppress(Consts.Suppress.UNCHECKED_CAST)
+    @Suppress("UNCHECKED_CAST")
     override fun call(param: TableColumn<S, String>?): TableCell<S, String> {
         val strings = FXCollections.observableArrayList("", "升序", "降序")
         return ComboBoxTableCell<S?, Any?>(*strings.toTypedArray()) as TableCell<S, String>

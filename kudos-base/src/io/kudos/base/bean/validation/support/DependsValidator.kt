@@ -1,8 +1,8 @@
 package io.kudos.base.bean.validation.support
 
+import io.kudos.base.bean.BeanKit
 import io.kudos.base.support.logic.AndOrEnum
 import io.kudos.base.support.logic.LogicOperatorEnum
-import io.kudos.base.bean.BeanKit
 
 /**
  * Depends约束验证器，由其他一级约束Validator调用

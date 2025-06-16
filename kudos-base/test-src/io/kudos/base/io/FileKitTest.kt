@@ -6,7 +6,6 @@ import java.io.*
 import java.math.BigInteger
 import java.net.URI
 import java.nio.file.Files
-import java.util.jar.JarEntry
 import java.util.jar.JarOutputStream
 import java.util.zip.CRC32
 import java.util.zip.ZipEntry

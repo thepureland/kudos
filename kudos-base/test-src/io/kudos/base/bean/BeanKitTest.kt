@@ -2,11 +2,7 @@ package io.kudos.base.bean
 
 import io.kudos.base.time.toLocalDate
 import java.util.*
-import kotlin.test.BeforeTest
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 /**
  * BeanKit测试用例

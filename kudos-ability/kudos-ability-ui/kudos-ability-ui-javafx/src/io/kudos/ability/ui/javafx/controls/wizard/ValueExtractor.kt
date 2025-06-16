@@ -24,7 +24,6 @@
  */
 package io.kudos.ability.ui.javafx.controls.wizard
 
-import io.kudos.base.support.Consts
 import javafx.scene.Node
 import javafx.scene.control.*
 import javafx.util.Callback
@@ -34,7 +33,7 @@ object ValueExtractor {
 
     private val valueExtractors = mutableMapOf<Class<*>, Callback<Any, Any>>()
 
-    @Suppress(Consts.Suppress.UNCHECKED_CAST)
+    @Suppress("UNCHECKED_CAST")
     private fun <T : Any> addValueExtractor(clazz: Class<T>, extractor: Callback<T, Any>) {
         valueExtractors[clazz] = extractor as Callback<Any, Any>
     }

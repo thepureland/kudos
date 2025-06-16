@@ -1,10 +1,8 @@
 package io.kudos.test.container.kit
 
 import com.github.dockerjava.api.model.ExposedPort
-import com.github.dockerjava.api.model.HostConfig
 import com.github.dockerjava.api.model.PortBinding
 import com.github.dockerjava.api.model.Ports
-import io.kudos.test.container.containers.NacosTestContainer.PORT
 import org.testcontainers.containers.GenericContainer
 
 /**

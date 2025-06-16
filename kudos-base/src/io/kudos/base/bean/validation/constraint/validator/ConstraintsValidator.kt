@@ -6,7 +6,6 @@ import io.kudos.base.bean.validation.support.ValidationContext
 import io.kudos.base.bean.validation.support.ValidatorFactory
 import io.kudos.base.lang.reflect.getMemberProperty
 import io.kudos.base.lang.reflect.getMemberPropertyValue
-import io.kudos.base.support.Consts
 import io.kudos.base.support.logic.AndOrEnum
 import jakarta.validation.ConstraintValidator
 import jakarta.validation.ConstraintValidatorContext
