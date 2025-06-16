@@ -15,13 +15,15 @@ import org.testcontainers.containers.wait.strategy.Wait
  */
 object NacosTestContainer {
 
-    private const val IMAGE_NAME = "nacos/nacos-server:v2.2.3-slim"
+    private const val IMAGE_NAME = "nacos/nacos-server:v2.3.2-slim"
 
     const val PORT = 28848
 
     const val LABEL = "Nacos"
 
-    val container = GenericContainer(IMAGE_NAME).apply {
+    const val LABEL_NACOS_FOR_SEATA = "Nacos（for Seata）"
+
+    private val container = GenericContainer(IMAGE_NAME).apply {
         withEnv("MODE", "standalone")
 
         // 1. 声明容器要“暴露”的端口（必须和镜像 Dockerfile EXPOSE 一致）
@@ -36,13 +38,48 @@ object NacosTestContainer {
         withLabel(TestContainerKit.LABEL_KEY, LABEL)
     }
 
+    val containerForSeata = GenericContainer(IMAGE_NAME).apply {
+        withEnv("MODE", "standalone")
+        withNetwork(TestContainerKit.DEFAULT_DOCKER_NETWORK)
+        withNetworkAliases("nacos")
+        exposedPorts = listOf(8848, 9848, 9849)
+        bindingPort(Pair(38848, 8848), Pair(39848, 9848), Pair(39849, 9849))
+        waitingFor(Wait.forHttp("/nacos").forPort(8848))
+        withLabel(TestContainerKit.LABEL_KEY, LABEL_NACOS_FOR_SEATA)
+    }
 
+
+    /**
+     * 启动容器(若需要)
+     *
+     * 保证批量测试时共享一个容器，避免多次开/停容器，浪费大量时间。
+     * 另外，亦可手动运行该clazz类的main方法来启动容器，跑测试用例时共享它。
+     * 并注册 JVM 关闭钩子，当批量测试结束时自动停止容器，
+     * 而不是每个测试用例结束时就关闭，前提条件是不要加@Testcontainers注解。
+     * 当docker没启动时想忽略测试用例，可以用@EnabledIfDockerAvailable
+     * 来代替@Testcontainers(disabledWithoutDocker = true)
+     *
+     * @param registry spring的动态属性注册器，可用来注册或覆盖已注册的属性
+     * @return 运行中的容器对象
+     */
     fun startIfNeeded(registry: DynamicPropertyRegistry?): Container {
-        val runningContainer = TestContainerKit.startContainerIfNeeded(LABEL, container, this)
-        if (registry != null) {
-            registerProperties(registry, runningContainer)
+        synchronized(this) {
+            val runningContainer = TestContainerKit.startContainerIfNeeded(LABEL, container)
+            if (registry != null) {
+                registerProperties(registry, runningContainer)
+            }
+            return runningContainer
         }
-        return runningContainer
+    }
+
+    fun startNacosForSeataIfNeeded(registry: DynamicPropertyRegistry?): Container {
+        synchronized(this) {
+            val runningContainer = TestContainerKit.startContainerIfNeeded(LABEL_NACOS_FOR_SEATA, containerForSeata)
+            if (registry != null) {
+                registerProperties(registry, runningContainer)
+            }
+            return runningContainer
+        }
     }
 
     internal fun registerProperties(registry: DynamicPropertyRegistry, runningContainer : Container) {
@@ -54,8 +91,15 @@ object NacosTestContainer {
         registry.add("spring.cloud.nacos.discovery.server-addr") { serverAddr }
     }
 
+    /**
+     * 返回运行中的容器对象
+     *
+     * @return 容器对象，如果没有返回null
+     */
+    fun getRunningContainer() : Container? = TestContainerKit.getRunningContainer(LABEL)
+
     @JvmStatic
-    fun main(args: Array<String>) {
+    fun main(args: Array<String>?) {
         startIfNeeded(null)
         println("nacos localhost port: $PORT")
         Thread.sleep(Long.Companion.MAX_VALUE)
