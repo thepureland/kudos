@@ -10,11 +10,7 @@ import jakarta.validation.Constraint
 import jakarta.validation.Valid
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
-import kotlin.reflect.full.companionObject
-import kotlin.reflect.full.hasAnnotation
-import kotlin.reflect.full.isSubclassOf
-import kotlin.reflect.full.memberProperties
-import kotlin.reflect.full.starProjectedType
+import kotlin.reflect.full.*
 
 /**
  * 终端约束创建者

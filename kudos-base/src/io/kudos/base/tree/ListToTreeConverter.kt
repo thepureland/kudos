@@ -2,7 +2,6 @@ package io.kudos.base.tree
 
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.sort.DirectionEnum
-import io.kudos.base.support.Consts
 import io.kudos.base.support.ICallback
 
 /**

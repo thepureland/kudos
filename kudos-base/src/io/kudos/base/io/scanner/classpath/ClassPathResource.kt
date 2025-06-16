@@ -15,8 +15,8 @@
  */
 package io.kudos.base.io.scanner.classpath
 
-import io.kudos.base.io.scanner.support.Resource
 import io.kudos.base.io.IoKit
+import io.kudos.base.io.scanner.support.Resource
 import java.io.InputStreamReader
 import java.io.Reader
 import java.io.UnsupportedEncodingException

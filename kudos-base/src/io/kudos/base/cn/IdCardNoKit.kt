@@ -5,9 +5,7 @@ import io.kudos.base.enums.impl.SexEnum
 import io.kudos.base.lang.string.isNumeric
 import java.text.ParseException
 import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Date
-import java.util.Locale
+import java.util.*
 
 /**
  * 身份证工具类.

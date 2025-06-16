@@ -1,7 +1,6 @@
 package io.kudos.ability.ui.javafx.controls.table.cell.factory
 
 import io.kudos.ability.ui.javafx.controls.XTextFieldTableCell
-import io.kudos.base.support.Consts
 import javafx.scene.control.TableCell
 import javafx.scene.control.TableColumn
 import javafx.util.Callback
@@ -9,7 +8,7 @@ import javafx.util.StringConverter
 
 class XTextFieldTableCellFactory<S> : Callback<TableColumn<S, String>?, TableCell<S, String>?> {
 
-    @Suppress(Consts.Suppress.UNCHECKED_CAST)
+    @Suppress("UNCHECKED_CAST")
     override fun call(param: TableColumn<S, String>?): TableCell<S, String> {
         return XTextFieldTableCell<S, String>(object :
             StringConverter<String?>() {

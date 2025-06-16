@@ -2,12 +2,7 @@ package io.kudos.base.lang.math
 
 import java.math.BigDecimal
 import java.math.BigInteger
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
-import kotlin.test.assertFalse
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 /**
  * test for NumberKit

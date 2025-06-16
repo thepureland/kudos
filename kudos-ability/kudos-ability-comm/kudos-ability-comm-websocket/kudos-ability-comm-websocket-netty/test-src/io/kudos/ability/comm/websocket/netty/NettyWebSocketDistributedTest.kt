@@ -16,7 +16,6 @@ import org.springframework.context.annotation.Import
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.junit.jupiter.EnabledIfDockerAvailable
-import org.testcontainers.junit.jupiter.Testcontainers
 import java.net.URI
 import java.util.concurrent.TimeUnit
 import java.util.function.Supplier

@@ -8,7 +8,6 @@ import io.kudos.base.lang.string.RandomStringKit
 import io.kudos.base.lang.string.capitalizeString
 import io.kudos.base.lang.string.humpToUnderscore
 import io.kudos.base.lang.string.underscoreToHump
-import io.kudos.base.support.Consts
 import io.kudos.tools.codegen.model.vo.Config
 import org.soul.ability.data.rdb.jdbc.metadata.Column
 
@@ -20,7 +19,7 @@ import org.soul.ability.data.rdb.jdbc.metadata.Column
  */
 open class TemplateModelCreator {
 
-    @Suppress(Consts.Suppress.UNCHECKED_CAST)
+    @Suppress("UNCHECKED_CAST")
     fun create(): Map<String, Any?> {
         val tableName = CodeGeneratorContext.tableName
         val config = CodeGeneratorContext.config
@@ -112,16 +111,16 @@ open class TemplateModelCreator {
                 } else {
                     daoSuperClass = StringIdTable::class.simpleName!!
                     templateModel["columns"] =
-                        origColumns.filter { it.name != IDbEntity<*, *>::id.name } // 过滤掉父类中已有的id列
+                        origColumns.filter { it.name != "id" } // 过滤掉父类中已有的id列
                 }
             }
             Int::class -> {
                 daoSuperClass = IntIdTable::class.simpleName!!
-                templateModel["columns"] = origColumns.filter { it.name != IDbEntity<*, *>::id.name } // 过滤掉父类中已有的id列
+                templateModel["columns"] = origColumns.filter { it.name != "id" } // 过滤掉父类中已有的id列
             }
             Long::class -> {
                 daoSuperClass = LongIdTable::class.simpleName!!
-                templateModel["columns"] = origColumns.filter { it.name != IDbEntity<*, *>::id.name } // 过滤掉父类中已有的id列
+                templateModel["columns"] = origColumns.filter { it.name != "id" } // 过滤掉父类中已有的id列
             }
             else -> daoSuperClass = "Table"
         }
@@ -129,7 +128,7 @@ open class TemplateModelCreator {
         templateModel["daoSuperClass"] = daoSuperClass
     }
 
-    @Suppress(Consts.Suppress.UNCHECKED_CAST)
+    @Suppress("UNCHECKED_CAST")
     open fun initOtherParameters(templateModel: MutableMap<String, Any?>, origColumns: Collection<Column>) {
         // 为了模板中，非kotlin类型的import
         val kotlinTypeMap = mapOf(

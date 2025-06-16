@@ -2,7 +2,6 @@ package io.kudos.base.lang.string
 
 import io.kudos.base.security.CryptoKit
 import io.kudos.base.security.DigestKit
-import io.kudos.base.support.Consts
 import org.apache.commons.lang3.StringUtils
 import java.math.BigDecimal
 import java.math.BigInteger
