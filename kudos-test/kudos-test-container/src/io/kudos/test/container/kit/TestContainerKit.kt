@@ -3,6 +3,7 @@ package io.kudos.test.container.kit
 import com.github.dockerjava.api.model.Container
 import org.testcontainers.DockerClientFactory
 import org.testcontainers.containers.GenericContainer
+import org.testcontainers.containers.Network
 import kotlin.system.measureTimeMillis
 
 /**
@@ -15,8 +16,10 @@ object TestContainerKit {
 
     const val LABEL_KEY = "kudos-test-container"
 
+    val DEFAULT_DOCKER_NETWORK = Network.newNetwork()
+
     /**
-     * 启动窗口(若需要)
+     * 启动容器(若需要)
      *
      * 保证批量测试时共享一个容器，避免多次开/停容器，浪费大量时间。
      * 另外，亦可手动运行该clazz类的main方法来启动容器，跑测试用例时共享它。
@@ -27,17 +30,15 @@ object TestContainerKit {
      *
      * @param label 容器的label的值(key必须为label)
      * @param container 容器
-     * @param caller 调用者
      * @return 容器对象
      */
     fun startContainerIfNeeded(
         label: String,
         container: GenericContainer<*>,
-        caller: Any
-    ) : Container {
+    ): Container {
         var runningContainer = getRunningContainer(label)
         if (runningContainer == null) {
-            startContainer(container, label, caller)
+            startContainer(container, label)
             runningContainer = getRunningContainer(label)
         } else {
             println("############  $label container has already been started.")
@@ -61,7 +62,7 @@ object TestContainerKit {
      * @param label 容器的label的值(key必须为label)
      * @return 容器对象，不存在返回null
      */
-    fun getRunningContainer(label: String): Container?  {
+    fun getRunningContainer(label: String): Container? {
         val dockerClient = DockerClientFactory.lazyClient()
         val containers = dockerClient.listContainersCmd()
             .withShowAll(true)
@@ -75,16 +76,13 @@ object TestContainerKit {
      *
      * @param container 容器
      * @param label 容器助记名
-     * @param caller 调用者
      */
-    fun startContainer(container: GenericContainer<*>, label: String, caller: Any) {
-        synchronized(caller) {
-            println(">>>>>>>>>>>>>>>>>>>> Starting $label container...")
-            val time = measureTimeMillis { container.start() }
-            println("<<<<<<<<<<<<<<<<<<<< $label container started in $time ms.")
+    fun startContainer(container: GenericContainer<*>, label: String) {
+        println(">>>>>>>>>>>>>>>>>>>> Starting $label container...")
+        val time = measureTimeMillis { container.start() }
+        println("<<<<<<<<<<<<<<<<<<<< $label container started in $time ms.")
 
-            addShutdownHook(container, label)
-        }
+        addShutdownHook(container, label)
     }
 
     /**

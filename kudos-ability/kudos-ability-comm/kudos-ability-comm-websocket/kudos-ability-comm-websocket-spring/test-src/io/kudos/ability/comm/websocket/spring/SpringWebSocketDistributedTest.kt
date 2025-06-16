@@ -82,9 +82,9 @@ class SpringWebSocketDistributedTest {
         @JvmStatic
         @DynamicPropertySource
         fun property(registry: DynamicPropertyRegistry) {
-            registry.add("kudos.ability.comm.websocket.mode", Supplier { "distributed" })
+            registry.add("kudos.ability.comm.websocket.mode") { "distributed" }
             val container = RedisTestContainer.startIfNeeded(registry)
-            registry.add("soul.ability.data.redis.redis-map.data.port", Supplier { container.firstMappedPort })
+            registry.add("soul.ability.data.redis.redis-map.data.port") { container.ports.first().publicPort }
         }
     }
 

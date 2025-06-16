@@ -2,6 +2,7 @@ package io.kudos.test.container.containers
 
 import com.github.dockerjava.api.model.Container
 import io.kudos.base.net.IpKit
+import io.kudos.test.container.containers.H2TestContainer.LABEL
 import io.kudos.test.container.kit.TestContainerKit
 import io.kudos.test.container.kit.bindingPort
 import org.springframework.test.context.DynamicPropertyRegistry
@@ -42,7 +43,7 @@ object RocketMqTestContainer {
         withLabel(TestContainerKit.LABEL_KEY, LABEL_NANE_SERVER)
     }
 
-    val brokerServerContainer = GenericContainer(IMAGE).apply {
+    private val brokerServerContainer = GenericContainer(IMAGE).apply {
         withExposedPorts(10909, 10911, 10912)
         bindingPort(Pair(10909, 10909), Pair(10911, 10911), Pair(10912, 10912))
         withPrivilegedMode(true)
@@ -61,24 +62,44 @@ object RocketMqTestContainer {
 //        .withPrivilegedMode(true)
 //        .withEnv("JAVA_OPTS", "-Drocketmq.namesrv.addr=$host")
 
+    /**
+     * 启动容器(若需要)。同时启动RocketMQ的name server和broker。
+     *
+     * 保证批量测试时共享一个容器，避免多次开/停容器，浪费大量时间。
+     * 另外，亦可手动运行该clazz类的main方法来启动容器，跑测试用例时共享它。
+     * 并注册 JVM 关闭钩子，当批量测试结束时自动停止容器，
+     * 而不是每个测试用例结束时就关闭，前提条件是不要加@Testcontainers注解。
+     * 当docker没启动时想忽略测试用例，可以用@EnabledIfDockerAvailable
+     * 来代替@Testcontainers(disabledWithoutDocker = true)
+     *
+     * @param registry spring的动态属性注册器，可用来注册或覆盖已注册的属性
+     * @return 运行中的容器对象
+     */
     fun startIfNeeded(registry: DynamicPropertyRegistry?): Pair<Container, Container> {
-        val runningNameServerContainer =
-            TestContainerKit.startContainerIfNeeded(LABEL_NANE_SERVER, nameServerContainer, this)
-        val runningBrokerServerContainer =
-            TestContainerKit.startContainerIfNeeded(LABEL_BROKER_SERVER, brokerServerContainer, this)
-        // DASHBORD.start();
-        if (registry != null) {
-            registerProperties(registry, runningNameServerContainer)
+        synchronized(this) {
+            val runningNameServerContainer = TestContainerKit.startContainerIfNeeded(LABEL_NANE_SERVER, nameServerContainer)
+            val runningBrokerServerContainer = TestContainerKit.startContainerIfNeeded(LABEL_BROKER_SERVER, brokerServerContainer)
+            // DASHBORD.start();
+            if (registry != null) {
+                registerProperties(registry, runningNameServerContainer)
+            }
+            return Pair(runningNameServerContainer, runningBrokerServerContainer)
         }
-        return Pair(runningNameServerContainer, runningBrokerServerContainer)
     }
 
     private fun registerProperties(registry: DynamicPropertyRegistry, runningNameServerContainer: Container) {
         registry.add("spring.cloud.stream.rocketmq.binder.name-server") { NAMESRV_ADDR }
     }
 
+    /**
+     * 返回运行中的容器对象
+     *
+     * @return 容器对象，如果没有返回null
+     */
+    fun getRunningContainer() : Container? = TestContainerKit.getRunningContainer(LABEL)
+
     @JvmStatic
-    fun main(args: Array<String>) {
+    fun main(args: Array<String>?) {
         startIfNeeded(null)
         println("RocketMQ name-server localhost port: $PORT")
         println("RocketMQ broker localhost ports: 10909,10911,10912")
