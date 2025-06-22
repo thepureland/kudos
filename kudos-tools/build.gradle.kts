@@ -1,8 +1,10 @@
 dependencies {
     implementation(project(":kudos-ability:kudos-ability-data:kudos-ability-data-rdb:kudos-ability-data-rdb-ktorm"))
+    implementation(project(":kudos-ability:kudos-ability-data:kudos-ability-data-rdb:kudos-ability-data-rdb-flyway"))
     implementation(project(":kudos-ability:kudos-ability-ui:kudos-ability-ui-javafx"))
 
-    api("org.freemarker:freemarker:2.3.30")
+    implementation("org.freemarker:freemarker:2.3.30")
+    implementation("com.h2database:h2:2.3.232")
 }
 
 

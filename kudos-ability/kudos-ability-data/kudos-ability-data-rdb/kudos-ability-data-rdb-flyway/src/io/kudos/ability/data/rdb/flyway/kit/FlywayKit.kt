@@ -50,7 +50,7 @@ object FlywayKit {
             if (result.success) {
                 val migrationCount = result.migrationsExecuted
                 if (migrationCount == 0) {
-                    log.info("<<<<<<<<<<<<<  模块【$moduleName】数据库已为最新，无更新任何sql文件。")
+                    log.info("<<<<<<<<<<<<<  模块【$moduleName】数据库已为最新，此次无更新任何sql文件。")
                 } else {
                     log.info("<<<<<<<<<<<<<  模块【$moduleName】数据库升级完成，共执行了${migrationCount}个sql文件，最新版本为：${result.targetSchemaVersion}")
                 }

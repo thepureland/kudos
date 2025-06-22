@@ -1,5 +1,6 @@
 package io.kudos.tools.codegen.fx.controller
 
+import io.kudos.ability.data.rdb.flyway.kit.FlywayKit
 import io.kudos.ability.data.rdb.jdbc.kit.DataSourceKit
 import io.kudos.ability.data.rdb.jdbc.kit.RdbKit
 import io.kudos.base.io.FilenameKit
@@ -14,12 +15,14 @@ import javafx.fxml.Initializable
 import javafx.scene.control.*
 import javafx.stage.DirectoryChooser
 import org.soul.base.support.PropertiesLoader
+import org.springframework.boot.autoconfigure.flyway.FlywayProperties
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
 import java.net.URL
 import java.util.*
+import javax.sql.DataSource
 
 /**
  * 配置信息界面JavaFx控制器
@@ -148,6 +151,8 @@ class ConfigController : Initializable {
 
         _testDbConnection()
 
+        migrateDb(dataSource)
+
         // test template
         if (templateChoiceBox.selectionModel.isEmpty) {
             throw Exception("请选择模板！")
@@ -179,12 +184,27 @@ class ConfigController : Initializable {
         }
     }
 
+    /**
+     * 执行脚本升级
+     */
+    private fun migrateDb(dataSource: DataSource) {
+        val flywayProperties = FlywayProperties().apply {
+            isBaselineOnMigrate = true
+            baselineVersion = "0"
+            encoding = Charsets.UTF_8
+            isOutOfOrder = false
+            isValidateOnMigrate = false
+            isPlaceholderReplacement = false
+        }
+        FlywayKit.migrate("codegen", dataSource, flywayProperties)
+    }
+
     private fun _testDbConnection() {
         try {
             RdbKit.newConnection(config.getDbUrl(), config.getDbUser(), config.getDbPassword()).use {
                 RdbKit.testConnection(it)
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             Alert(Alert.AlertType.ERROR, "连接失败！").show()
             throw Exception("数据库连接不上！")
         }

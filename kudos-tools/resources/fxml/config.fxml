@@ -45,10 +45,10 @@
                         <TextField fx:id="packagePrefixTextField" layoutX="96.0" layoutY="52.0" prefHeight="23.0"
                                    prefWidth="192.0"/>
                         <Label alignment="CENTER_RIGHT" layoutX="296.0" layoutY="56.0" prefHeight="15.0"
-                               prefWidth="94.0" text="(不要包含模块名)"/>
+                               prefWidth="124.0" text="(不要包含模块名)"/>
 
                         <Label alignment="CENTER_RIGHT" layoutX="296.0" layoutY="91.0" prefHeight="15.0"
-                               prefWidth="119.0" text="(将作为包名的一部分)"/>
+                               prefWidth="149.0" text="(将作为包名的一部分)"/>
 
                         <Label alignment="CENTER_RIGHT" layoutX="13.0" layoutY="91.0" prefHeight="15.0" prefWidth="80.0"
                                text="模块名："/>

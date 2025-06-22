@@ -1,7 +1,7 @@
 package io.kudos.tools.codegen.core
 
 import io.kudos.ability.data.rdb.jdbc.kit.RdbMetadataKit
-import io.kudos.ability.data.rdb.ktorm.metadata.kotlinType
+import io.kudos.ability.data.rdb.jdbc.metadata.Column
 import io.kudos.ability.data.rdb.ktorm.support.*
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.lang.string.RandomStringKit
@@ -9,7 +9,6 @@ import io.kudos.base.lang.string.capitalizeString
 import io.kudos.base.lang.string.humpToUnderscore
 import io.kudos.base.lang.string.underscoreToHump
 import io.kudos.tools.codegen.model.vo.Config
-import org.soul.ability.data.rdb.jdbc.metadata.Column
 
 /**
  * 模板数据模型创建者，用户可继承此类自定义要填充模板的数据
@@ -34,6 +33,7 @@ open class TemplateModelCreator {
         templateModel["lowerShortEntityName"] = shortEntityName.lowercase()
         templateModel["table"] = RdbMetadataKit.getTableByName(tableName)
         val origColumns = RdbMetadataKit.getColumnsByTableName(tableName).values
+        origColumns.forEach { it.ktormSqlTypeFunName = KtormSqlType.getFunName(it.kotlinType) }
         templateModel["columns"] = origColumns
         templateModel["pkColumn"] = origColumns.first { it.primaryKey }
         templateModel[Config.PROP_KEY_AUTHOR] = config.getAuthor()
