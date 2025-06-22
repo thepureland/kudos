@@ -67,7 +67,7 @@ class CodeGenerator(
         conf.defaultEncoding = "UTF-8"
         conf.setClassForTemplateLoading(
             CodeGenerator::class.java,
-            "/template/${CodeGeneratorContext.config.getTemplateInfo()!!.name}"
+            "/templates/${CodeGeneratorContext.config.getTemplateInfo()!!.name}"
         )
         val autoIncludes = listOf("macro.include")
         val availableAutoInclude = FreemarkerKit.getAvailableAutoInclude(conf, autoIncludes)

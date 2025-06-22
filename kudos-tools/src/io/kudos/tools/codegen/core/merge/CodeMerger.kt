@@ -66,10 +66,12 @@ class CodeMerger(private val file: File) {
             for (importStmt in customImport) {
                 imports.append(importStmt).append("\n")
             }
-            val index = newFileContent!!.indexOf("import")
-            val sb = StringBuilder(newFileContent)
-            sb.insert(index, imports)
-            newFileContent = sb.toString()
+            if (imports.isNotEmpty()) {
+                val index = newFileContent!!.indexOf("import")
+                val sb = StringBuilder(newFileContent)
+                sb.insert(index, imports)
+                newFileContent = sb.toString()
+            }
         }
     }
 

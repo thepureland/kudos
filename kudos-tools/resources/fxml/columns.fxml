@@ -46,7 +46,7 @@
                         <CheckBoxTableCellFactory/>
                     </cellFactory>
                 </TableColumn>
-                <TableColumn minWidth="0.0" prefWidth="60.0" text="编辑项">
+                <TableColumn minWidth="0.0" prefWidth="70.0" text="编辑项">
                     <cellValueFactory>
                         <PropertyValueFactory property="editItem"/>
                     </cellValueFactory>
@@ -54,7 +54,7 @@
                         <CheckBoxTableCellFactory/>
                     </cellFactory>
                 </TableColumn>
-                <TableColumn minWidth="0.0" prefWidth="60.0" text="详情项">
+                <TableColumn minWidth="0.0" prefWidth="65.0" text="详情项">
                     <cellValueFactory>
                         <PropertyValueFactory property="detailItem"/>
                     </cellValueFactory>

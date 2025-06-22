@@ -55,6 +55,7 @@ open class CodeGenerateWizard : Application() {
                     val conf = configController.config
                     columnsController.setConfig(conf)
                 } catch (e: Exception) {
+                    e.printStackTrace()
                     Alert(Alert.AlertType.ERROR, e.message).show()
                 }
             }

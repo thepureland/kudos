@@ -1,14 +1,13 @@
 package io.kudos.ability.data.rdb.jdbc.kit
 
+import io.kudos.ability.data.rdb.jdbc.metadata.Column
 import io.kudos.ability.data.rdb.jdbc.metadata.JdbcTypeToKotlinType
-import org.soul.ability.data.rdb.jdbc.metadata.Column
 import org.soul.ability.data.rdb.jdbc.metadata.RdbTypeEnum
 import org.soul.ability.data.rdb.jdbc.metadata.Table
 import org.soul.ability.data.rdb.jdbc.metadata.TableTypeEnum
 import java.sql.Connection
 import java.sql.DatabaseMetaData
 import java.util.*
-import kotlin.reflect.KClass
 
 /**
  * 关系型数据库元数据工具类
@@ -82,12 +81,16 @@ object RdbMetadataKit {
         val tableRs = dbMetaData.getTables(conn.catalog, conn.schema, "%", types)
         tableRs.use {
             while (tableRs.next()) {
+                var tableTypeStr = tableRs.getString("TABLE_TYPE")
+                if (tableTypeStr == "BASE TABLE") {
+                    tableTypeStr = "TABLE"
+                }
                 talbes.add(Table().apply {
                     name = tableRs.getString("TABLE_NAME")
                     catalog = tableRs.getString("TABLE_CAT")
                     schema = tableRs.getString("TABLE_SCHEM")
                     comment = tableRs.getString("REMARKS")
-                    type = TableTypeEnum.valueOf(tableRs.getString("TABLE_TYPE"))
+                    type = TableTypeEnum.valueOf(tableTypeStr)
                 })
             }
         }
@@ -99,12 +102,16 @@ object RdbMetadataKit {
         val rs = dbMetaData.getTables(conn.catalog, conn.schema, tableName, null)
         rs.use {
             if (rs.next()) {
+                var tableTypeStr = rs.getString("TABLE_TYPE")
+                if (tableTypeStr == "BASE TABLE") {
+                    tableTypeStr = "TABLE"
+                }
                 return Table().apply {
                     name = tableName
                     catalog = rs.getString("TABLE_CAT")
                     schema = rs.getString("TABLE_SCHEM")
                     comment = rs.getString("REMARKS")
-                    type = TableTypeEnum.valueOf(rs.getString("TABLE_TYPE"))
+                    type = TableTypeEnum.valueOf(tableTypeStr)
                 }
             }
             return null
@@ -178,9 +185,3 @@ object RdbMetadataKit {
     }
 
 }
-
-var Column.kotlinType: KClass<*>
-    get() = kotlinType
-    set(value) {
-        kotlinType = value
-    }
