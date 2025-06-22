@@ -67,9 +67,4 @@ class Column {
      */
     fun getColumnHumpName(): String = name.underscoreToHump()
 
-    /**
-     * Ktorm框架对应的sql类型的函数名（因需要反射调用，无法用扩展函数）
-     */
-    lateinit var ktormSqlTypeFunName: String
-
 }
