@@ -1,10 +1,14 @@
 package io.kudos.ability.data.rdb.jdbc.kit
 
+import io.kudos.ability.data.rdb.jdbc.metadata.JdbcTypeToKotlinType
 import org.soul.ability.data.rdb.jdbc.metadata.Column
-import org.soul.ability.data.rdb.jdbc.metadata.RdbMetadataTool
+import org.soul.ability.data.rdb.jdbc.metadata.RdbTypeEnum
 import org.soul.ability.data.rdb.jdbc.metadata.Table
 import org.soul.ability.data.rdb.jdbc.metadata.TableTypeEnum
 import java.sql.Connection
+import java.sql.DatabaseMetaData
+import java.util.*
+import kotlin.reflect.KClass
 
 /**
  * 关系型数据库元数据工具类
@@ -23,8 +27,15 @@ object RdbMetadataKit {
      * @author K
      * @since 1.0.0
      */
-    fun getTablesByType(vararg tableTypes: TableTypeEnum?, conn: Connection? = null): List<Table> =
-        RdbMetadataTool.getTablesByType(tableTypes, conn)
+    fun getTablesByType(vararg tableTypes: TableTypeEnum?, conn: Connection? = null): List<Table> {
+        return if (conn != null) {
+            _getTablesByType(conn, *tableTypes)
+        } else {
+            RdbKit.getDataSource().connection.use {
+                _getTablesByType(it, *tableTypes)
+            }
+        }
+    }
 
     /**
      * 根据表名取得对应表信息
@@ -35,8 +46,15 @@ object RdbMetadataKit {
      * @author K
      * @since 1.0.0
      */
-    fun getTableByName(tableName: String, conn: Connection? = null): Table? =
-        RdbMetadataTool.getTableByName(tableName, conn)
+    fun getTableByName(tableName: String, conn: Connection? = null): Table? {
+        return if (conn != null) {
+            _getTableByName(conn, tableName)
+        } else {
+            RdbKit.getDataSource().connection.use {
+                _getTableByName(it, tableName)
+            }
+        }
+    }
 
     /**
      * 根据表名取得对应表的所有列信息
@@ -47,7 +65,122 @@ object RdbMetadataKit {
      * @author K
      * @since 1.0.0
      */
-    fun getColumnsByTableName(tableName: String, conn: Connection? = null): Map<String, Column> =
-        RdbMetadataTool.getColumnsByTableName(tableName, conn)
+    fun getColumnsByTableName(tableName: String, conn: Connection? = null): Map<String, Column> {
+        return if (conn != null) {
+            _getColumnsByTableName(conn, tableName)
+        } else {
+            RdbKit.getDataSource().connection.use {
+                _getColumnsByTableName(it, tableName)
+            }
+        }
+    }
+
+    private fun _getTablesByType(conn: Connection, vararg tableTypes: TableTypeEnum?): List<Table> {
+        val dbMetaData = conn.metaData
+        val types = tableTypes.mapTo(mutableListOf()) { it!!.name }.toTypedArray()
+        val talbes = mutableListOf<Table>()
+        val tableRs = dbMetaData.getTables(conn.catalog, conn.schema, "%", types)
+        tableRs.use {
+            while (tableRs.next()) {
+                talbes.add(Table().apply {
+                    name = tableRs.getString("TABLE_NAME")
+                    catalog = tableRs.getString("TABLE_CAT")
+                    schema = tableRs.getString("TABLE_SCHEM")
+                    comment = tableRs.getString("REMARKS")
+                    type = TableTypeEnum.valueOf(tableRs.getString("TABLE_TYPE"))
+                })
+            }
+        }
+        return talbes
+    }
+
+    private fun _getTableByName(conn: Connection, tableName: String): Table? {
+        val dbMetaData = conn.metaData
+        val rs = dbMetaData.getTables(conn.catalog, conn.schema, tableName, null)
+        rs.use {
+            if (rs.next()) {
+                return Table().apply {
+                    name = tableName
+                    catalog = rs.getString("TABLE_CAT")
+                    schema = rs.getString("TABLE_SCHEM")
+                    comment = rs.getString("REMARKS")
+                    type = TableTypeEnum.valueOf(rs.getString("TABLE_TYPE"))
+                }
+            }
+            return null
+        }
+    }
+
+    private fun _getColumnsByTableName(conn: Connection, tableName: String): Map<String, Column> {
+        val dbMetaData = conn.metaData
+        val rdbType = RdbTypeEnum.ofProductName(dbMetaData.databaseProductName)
+        val linkedMap = linkedMapOf<String, Column>()
+
+        // 获取所有列
+        val columnRs = dbMetaData.getColumns(conn.catalog, conn.schema, tableName, null)
+        columnRs.use {
+            while (columnRs.next()) {
+                val column = Column().apply {
+                    name = columnRs.getString("COLUMN_NAME")
+                    comment = columnRs.getString("REMARKS")
+                    jdbcType = columnRs.getInt("DATA_TYPE")
+                    jdbcTypeName = columnRs.getString("TYPE_NAME")
+                    kotlinType = JdbcTypeToKotlinType.getKotlinType(rdbType, this)
+                    length = columnRs.getInt("COLUMN_SIZE")
+                    decimalDigits = columnRs.getInt("DECIMAL_DIGITS")
+                    defaultValue = columnRs.getString("COLUMN_DEF")
+                    nullable = columnRs.getInt("NULLABLE") == DatabaseMetaData.columnNullable
+                    dictCode = name.uppercase(Locale.getDefault()).endsWith("__CODE")
+                    autoIncrement = columnRs.getString("IS_AUTOINCREMENT")
+                }
+                linkedMap[column.name] = column
+            }
+        }
+
+        // 主键
+        val primaryKeyRs = dbMetaData.getPrimaryKeys(conn.catalog, conn.schema, tableName)
+        primaryKeyRs.use {
+            while (primaryKeyRs.next()) {
+                val columnName = primaryKeyRs.getString("COLUMN_NAME")
+                linkedMap[columnName]!!.primaryKey = true
+            }
+        }
+
+        // 外键
+        val foreignKeyRs = dbMetaData.getImportedKeys(conn.catalog, conn.schema, tableName)
+        foreignKeyRs.use {
+            while (foreignKeyRs.next()) {
+                val columnName = foreignKeyRs.getString("FKCOLUMN_NAME")
+                linkedMap[columnName]!!.foreignKey = true
+            }
+        }
+
+        // 索引
+        val indexInfoRs = dbMetaData.getIndexInfo(conn.catalog, conn.schema, tableName, false, false)
+        indexInfoRs.use {
+            while (indexInfoRs.next()) {
+                val columnName = indexInfoRs.getString("COLUMN_NAME")
+                linkedMap[columnName]!!.indexed = true
+            }
+        }
+
+
+        // 惟一约束
+        val uniqueInfoRs = dbMetaData.getIndexInfo(conn.catalog, conn.schema, tableName, true, false)
+        uniqueInfoRs.use {
+            while (uniqueInfoRs.next()) {
+                val columnName = uniqueInfoRs.getString("COLUMN_NAME")
+                linkedMap[columnName]!!.unique = true
+            }
+        }
+
+        return linkedMap
+    }
 
 }
+
+var Column.kotlinType: KClass<*>
+    get() = kotlinType
+    set(value) {
+        kotlinType = value
+    }
