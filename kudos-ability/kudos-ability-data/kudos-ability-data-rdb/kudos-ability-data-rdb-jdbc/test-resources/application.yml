@@ -21,12 +21,12 @@ spring:
           hikari:
             is-auto-commit: false
           driver-class-name: org.h2.Driver
-          url: jdbc:h2:~/h2;auto_server=true;DATABASE_TO_LOWER=TRUE;
+          url: jdbc:h2:tcp://localhost:1521/mem:test;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;
           username: sa
           password: sa
         ds1:
           driver-class-name: org.h2.Driver
-          url: jdbc:h2:~/h2-ds1;auto_server=true;DATABASE_TO_LOWER=TRUE;
+          url: jdbc:h2:tcp://localhost:1521/mem:test;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;
           username: sa
           password: sa
           init:
@@ -34,7 +34,7 @@ spring:
 #            data: sql/data.sql
         ds2:
           driver-class-name: org.h2.Driver
-          url: jdbc:h2:~/h2-ds2;auto_server=true;DATABASE_TO_LOWER=TRUE;
+          url: jdbc:h2:tcp://localhost:1521/mem:test;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;
           username: sa
           password: sa
 #          init:
@@ -42,7 +42,7 @@ spring:
 #            data: sql/data.sql
         3:
           driver-class-name: org.h2.Driver
-          url: jdbc:h2:~/h2-ds2;auto_server=true;DATABASE_TO_LOWER=TRUE;
+          url: jdbc:h2:tcp://localhost:1521/mem:test;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;
           username: sa
           password: sa
 #          init:
