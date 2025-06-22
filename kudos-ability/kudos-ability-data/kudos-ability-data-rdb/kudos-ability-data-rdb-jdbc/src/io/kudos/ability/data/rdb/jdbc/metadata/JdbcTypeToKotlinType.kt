@@ -79,90 +79,95 @@ object JdbcTypeToKotlinType {
                     "REAL" -> Float::class
                     "DOUBLE", "PRECISION", "FLOAT", "FLOAT4", "FLOAT8" -> Double::class
                     "DECIMAL", "NUMBER", "DEC", "NUMERI" -> java.math.BigDecimal::class
-                    "VARCHAR", "LONGVARCHAR", "VARCHAR2", "NVARCHAR", "NVARCHAR2", "VARCHAR_CASESENSITIVE", "VARCHAR_IGNORECASE", "CHAR", "CHARACTER", "NCHAR" -> String::class
-                    "BLOB", "TINYBLOB", "MEDIUMBLOB", "LONGBLOB", "IMAGE", "OID" -> java.sql.Blob::class // java.io.InputStream也支持
-                    "CLOB", "TINYTEXT", "TEXT", "MEDIUMTEXT", "LONGTEXT", "NTEXT", "NCLOB" -> java.sql.Clob::class //java.io.Reader也支持
+                    "VARCHAR", "LONGVARCHAR", "VARCHAR2", "NVARCHAR", "NVARCHAR2", "VARCHAR_CASESENSITIVE", "VARCHAR_IGNORECASE", "CHAR", "CHARACTER", "NCHAR", "CHARACTER VARYING" -> String::class
+                    "BLOB", "TINYBLOB", "MEDIUMBLOB", "LONGBLOB", "IMAGE", "OID" -> java.sql.Blob::class
+                    "CLOB", "TINYTEXT", "TEXT", "MEDIUMTEXT", "LONGTEXT", "NTEXT", "NCLOB" -> java.sql.Clob::class
                     "DATE" -> java.time.LocalDate::class
                     "TIME" -> java.time.LocalTime::class
                     "TIMESTAMP", "DATETIME", "SMALLDATETIME" -> java.time.LocalDateTime::class
                     "BINARY", "VARBINARY", "LONGVARBINARY", "RAW", "BYTEA" -> Array<Byte>::class
                     "UUID" -> java.util.UUID::class
                     "ARRAY" -> Array<Any>::class
+                    "JSON", "JSONB" -> String::class
+                    "GEOMETRY" -> ByteArray::class
                     "OTHER" -> Any::class
                     else -> Any::class
                 }
             }
             RdbTypeEnum.MYSQL -> {
                 when (jdbcType) {
-                    "BIT" -> Boolean::class
+                    "BIT" -> when (column.length) {
+                        1    -> Boolean::class
+                        else -> ByteArray::class
+                    }
                     "TINYINT", "SMALLINT", "MEDIUMINT", "BOOLEAN" -> Int::class
                     "INTEGER", "ID" -> Long::class
                     "FLOAT" -> Float::class
                     "DOUBLE" -> Double::class
                     "BIGINT" -> java.math.BigInteger::class
                     "DECIMAL" -> java.math.BigDecimal::class
-                    "VARCHAR", "CHAR", "TEXT" -> String::class
-                    "BLOB" -> Array<Byte>::class
-                    "DATE", "YEAR" -> java.time.LocalDate::class
+                    "YEAR" -> Int::class
+                    "VARCHAR", "CHAR", "TEXT", "ENUM", "SET", "JSON" -> String::class
+                    "BLOB", "GEOMETRY", "POINT", "LINESTRING", "POLYGON" -> ByteArray::class
+                    "DATE" -> java.time.LocalDate::class
                     "TIME" -> java.time.LocalTime::class
                     "DATETIME", "TIMESTAMP" -> java.time.LocalDateTime::class
                     else -> Any::class
                 }
             }
             RdbTypeEnum.ORACLE -> {
-                when (jdbcType) {
-                    "BOOL", "BOOLEAN", "NUMBER(1)", "NUMBER(1,0)" -> Boolean::class
-                    "NUMBER(2)", "NUMBER(2,0)" -> Int::class // Byte::class
-                    "NUMBER(3)", "NUMBER(3,0)", "NUMBER(4)", "NUMBER(4,0)" -> Int::class // Short::class
-                    "INTEGER", "INT", "SMALLINT", "NUMBER_INTEGER", "NUMBER(5)", "NUMBER(6)", "NUMBER(7)", "NUMBER(8)", "NUMBER(9)", "NUMBER(10)",
-                    "NUMBER(5,0)", "NUMBER(6,0)", "NUMBER(7,0)", "NUMBER(8,0)", "NUMBER(9,0)", "NUMBER(10,0)" -> Int::class
-                    "NUMBER_LONG", "NUMBER(11)", "NUMBER(12)", "NUMBER(13)", "NUMBER(14)", "NUMBER(15)", "NUMBER(16)", "NUMBER(17)", "NUMBER(18)", "NUMBER(19)",
-                    "NUMBER(11,0)", "NUMBER(12,0)", "NUMBER(13,0)", "NUMBER(14,0)", "NUMBER(15,0)", "NUMBER(16,0)", "NUMBER(17,0)", "NUMBER(18,0)", "NUMBER(19,0)" -> Long::class
-                    "FLOAT", "BINARY_FLOAT" -> Float::class
-                    "DOUBLE", "BINARY_DOUBLE" -> Double::class
-                    "NUMBER", "NUMBER(20)", "NUMBER(21)", "NUMBER(22)", "NUMBER(23)", "NUMBER(24)", "NUMBER(25)", "NUMBER(26)", "NUMBER(27)", "NUMBER(28)", "NUMBER(29)", "NUMBER(30)",
-                    "NUMBER(31)", "NUMBER(32)", "NUMBER(33)", "NUMBER(34)", "NUMBER(35)", "NUMBER(36)", "NUMBER(37)", "NUMBER(38)" -> java.math.BigDecimal::class
-                    "DEC", "DECIMAL", "DOUBLE PRECISION" -> java.math.BigDecimal::class
-                    "VARCHAR2", "CHAR", "LONG", "NVARCHAR2", "CHARACTER", "VARCHAR" -> String::class
-                    "BFILE", "RAW", "LONGRAW", "LONG VARCHAR" -> Array<Byte>::class
-                    "BLOB" -> java.sql.Blob::class
-                    "CLOB", "NCLOB" -> java.sql.Clob::class
-                    "DATE" -> java.time.LocalDate::class
-                    "TIME" -> java.time.LocalTime::class
-                    "DATETIME", "TIMESTAMP", "TIMESTAMP WITH TIME ZONE", "TIMESTAMP WITH LOCAL TIME ZONE", "INTERVAL", "INTERVAL YEAR TO MONTH", "INTERVAL DAY TO SECOND", "YEAR" -> java.time.LocalDateTime::class
-                    "REF CURSOR" -> java.sql.ResultSet::class
-                    else -> {
-                        when {
-                            jdbcType.matches(Regex("""NUMBER\([1-8],\d+\)""")) -> Float::class
-                            jdbcType.matches(Regex("""NUMBER\(9|([1-9]\d),\d+\)""")) -> Double::class
-                            else -> Any::class
-                        }
-                    }
+                when {
+                    jdbcType in listOf("BOOL", "BOOLEAN", "NUMBER(1)", "NUMBER(1,0)") -> Boolean::class
+                    jdbcType in listOf("NUMBER(2)", "NUMBER(2,0)") -> Int::class
+                    jdbcType.matches(Regex("NUMBER\\([3-4],0?\\)")) -> Int::class
+                    jdbcType.matches(Regex("NUMBER\\((?:5|6|7|8|9|10),0?\\)")) -> Int::class
+                    jdbcType.matches(Regex("NUMBER\\((?:11|12|13|14|15|16|17|18|19),0?\\)")) -> Long::class
+                    jdbcType in listOf("FLOAT", "BINARY_FLOAT") -> Float::class
+                    jdbcType in listOf("DOUBLE", "BINARY_DOUBLE") -> Double::class
+                    jdbcType.startsWith("NUMBER") -> java.math.BigDecimal::class
+                    jdbcType in listOf("DEC", "DECIMAL", "DOUBLE PRECISION") -> java.math.BigDecimal::class
+                    jdbcType in listOf("VARCHAR2", "CHAR", "LONG", "NVARCHAR2", "CHARACTER", "VARCHAR") -> String::class
+                    jdbcType in listOf("BFILE", "RAW", "LONGRAW", "LONG VARCHAR") -> ByteArray::class
+                    jdbcType == "BLOB" -> java.sql.Blob::class
+                    jdbcType in listOf("CLOB", "NCLOB") -> java.sql.Clob::class
+                    jdbcType == "DATE" -> java.time.LocalDate::class
+                    jdbcType == "TIME" -> java.time.LocalTime::class
+                    jdbcType in listOf("DATETIME", "TIMESTAMP", "TIMESTAMP WITH TIME ZONE", "TIMESTAMP WITH LOCAL TIME ZONE") -> java.time.LocalDateTime::class
+                    jdbcType.startsWith("INTERVAL") -> java.time.Duration::class
+                    jdbcType in listOf("REF CURSOR") -> java.sql.ResultSet::class
+                    jdbcType in listOf("ROWID", "UROWID") -> String::class
+                    jdbcType == "XMLTYPE" -> String::class
+                    jdbcType in listOf("OBJECT", "REF") -> java.sql.Struct::class
+                    else -> Any::class
                 }
             }
             RdbTypeEnum.POSTGRESQL -> {
                 when (jdbcType) {
                     "BIT", "BOOL" -> Boolean::class
-                    "INT2", "INT4" -> Int::class
-                    "INT8" -> Long::class
+                    "INT2", "INT4", "SMALLSERIAL", "SERIAL" -> Int::class
+                    "INT8", "BIGSERIAL" -> Long::class
                     "FLOAT4" -> Float::class
                     "FLOAT8", "MONEY" -> Double::class
                     "NUMERIC" -> java.math.BigDecimal::class
+                    "UUID" -> java.util.UUID::class
                     "VARCHAR", "BPCHAR", "TEXT" -> String::class
+                    "JSON", "JSONB", "XML" -> String::class
                     "DATE" -> java.time.LocalDate::class
                     "TIME" -> java.time.LocalTime::class
-                    "TIMESTAMP", "TIMESTAMP  WITHOUT TIMEZONE" -> java.time.LocalDateTime::class
+                    "TIME WITH TIME ZONE" -> java.time.OffsetTime::class
+                    "TIMESTAMP", "TIMESTAMP WITHOUT TIMEZONE" -> java.time.LocalDateTime::class
                     "TIMESTAMP WITH TIMEZONE" -> java.time.OffsetDateTime::class
+                    "INTERVAL" -> java.time.Duration::class
                     "BYTEA" -> Array<Byte>::class
-                    "CIDR", "INET", "MACADDR", "BOX", "CIRCLE", "INTERVAL", "LINE", "LSEG", "PATH", "POINT", "POLYGON", "VARBIT" -> Any::class
+                    "CIDR", "INET", "MACADDR", "BOX", "CIRCLE", "LINE", "LSEG", "PATH", "POINT", "POLYGON", "VARBIT" -> Any::class
                     else -> Any::class
                 }
             }
             RdbTypeEnum.SQLITE -> {
                 when (jdbcType) {
                     "BOOLEAN" -> Boolean::class
-                    "INT", "INT2", "INTEGER", "TINYINT", "SMALLINT", "MEDIUMINT" -> Int::class
-                    "BIGINT", "UNSIGNED BIG INT", "INT8" -> Long::class
+                    "INT", "INT2", "INTEGER", "TINYINT", "SMALLINT", "MEDIUMINT", "SMALLSERIAL", "SERIAL" -> Int::class
+                    "BIGINT", "UNSIGNED BIG INT", "INT8", "BIGSERIAL" -> Long::class
                     "FLOAT" -> Float::class
                     "REAL", "DOUBLE", "DOUBLE PRECISION", "NUMERIC" -> Double::class
                     "DECIMAL" -> java.math.BigDecimal::class
@@ -170,14 +175,16 @@ object JdbcTypeToKotlinType {
                     "BLOB" -> java.sql.Blob::class
                     "CLOB" -> java.sql.Clob::class
                     "DATE" -> java.time.LocalDate::class
+                    "TIME" -> java.time.LocalTime::class
                     "DATETIME" -> java.time.LocalDateTime::class
                     else -> Any::class
                 }
             }
             else -> {
-                defaultMapping[column.jdbcType] ?: error("未支持JdbcType: ${column.jdbcType}")
+                defaultMapping[column.jdbcType] ?: error("未支持JdbcType: \${column.jdbcType}")
             }
         }
     }
+
 
 }

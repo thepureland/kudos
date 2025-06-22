@@ -33,8 +33,8 @@ open class TemplateModelCreator {
         templateModel["lowerShortEntityName"] = shortEntityName.lowercase()
         templateModel["table"] = RdbMetadataKit.getTableByName(tableName)
         val origColumns = RdbMetadataKit.getColumnsByTableName(tableName).values
-        origColumns.forEach { it.ktormSqlTypeFunName = KtormSqlType.getFunName(it.kotlinType) }
         templateModel["columns"] = origColumns
+        templateModel["ktormFunNameMap"] = origColumns.associate { it.name to KtormSqlType.getFunName(it.kotlinType) }
         templateModel["pkColumn"] = origColumns.first { it.primaryKey }
         templateModel[Config.PROP_KEY_AUTHOR] = config.getAuthor()
         templateModel[Config.PROP_KEY_VERSION] = config.getVersion()

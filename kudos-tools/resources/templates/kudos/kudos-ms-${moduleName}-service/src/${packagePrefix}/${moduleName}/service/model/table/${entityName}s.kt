@@ -20,7 +20,7 @@ object ${entityName}s : ${daoSuperClass}<${entityName}>("${table.name}") {
 
 	<#list columns as column>
     /** ${column.comment!""} */
-    var ${column.columnHumpName} = ${column.ktormSqlTypeFunName}("${column.name}").bindTo { it.${column.columnHumpName} }
+    var ${column.columnHumpName} = ${ktormFunNameMap[column.name]}("${column.name}").bindTo { it.${column.columnHumpName} }
 
 	</#list>
 
