@@ -23,7 +23,7 @@ object H2TestContainer {
 
     const val USERNAME = "sa"
 
-    const val PASSWORD = ""
+    const val PASSWORD = "sa"
 
     const val LABEL = "H2"
 
