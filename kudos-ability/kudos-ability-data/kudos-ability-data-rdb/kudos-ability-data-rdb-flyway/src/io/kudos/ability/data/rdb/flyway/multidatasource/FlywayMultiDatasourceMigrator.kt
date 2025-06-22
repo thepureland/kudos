@@ -1,15 +1,13 @@
 package io.kudos.ability.data.rdb.flyway.multidatasource
 
-import io.kudos.ability.data.rdb.jdbc.kit.RdbKit
+import io.kudos.ability.data.rdb.flyway.kit.FlywayKit
 import io.kudos.base.io.FileKit
 import io.kudos.base.io.scanner.classpath.ClassPathScanner
 import io.kudos.base.logger.LogFactory
-import org.flywaydb.core.Flyway
 import org.soul.ability.data.rdb.jdbc.datasource.DsContextProcessor
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.flyway.FlywayProperties
 import java.io.File
-import java.sql.Connection
 
 
 /**
@@ -38,9 +36,8 @@ open class FlywayMultiDatasourceMigrator {
 
     private val log = LogFactory.getLog(this)
 
-    private val sqlRootPath = "sql"
-
     fun migrate() {
+        val sqlRootPath = FlywayKit.SQL_ROOT_PATH
         val locationUrls = ClassPathScanner.getLocationUrlsForPath(sqlRootPath)
 
         // 检测所有合法的模块
@@ -90,40 +87,8 @@ open class FlywayMultiDatasourceMigrator {
             error(errMsg)
         }
 
-        val datasource = dsContextProcessor.getDataSource(datasourceKey)
-        var connection: Connection? = null
-        try {
-            connection = datasource.connection
-            val dbType = RdbKit.determinRdbTypeByUrl(connection.metaData.url).name.lowercase()
-            val flyway = Flyway.configure()
-                .dataSource(datasource)
-                .table("flyway_history_$moduleName")
-                .locations("classpath:$sqlRootPath/$moduleName/$dbType")
-                .baselineOnMigrate(flywayProperties.isBaselineOnMigrate)
-                .baselineVersion(flywayProperties.baselineVersion)
-                .encoding(flywayProperties.encoding)
-                .outOfOrder(flywayProperties.isOutOfOrder)
-                .validateOnMigrate(flywayProperties.isValidateOnMigrate)
-                .placeholderReplacement(flywayProperties.isPlaceholderReplacement)
-                .load()
-            log.info(">>>>>>>>>>>>>  开始升级模块【${moduleName}】的数据库...")
-            val result = flyway.migrate()
-            if (result.success) {
-                val migrationCount = result.migrationsExecuted
-                if (migrationCount == 0) {
-                    log.info("<<<<<<<<<<<<<  模块【$moduleName】数据库已为最新，无更新任何sql文件。")
-                } else {
-                    log.info("<<<<<<<<<<<<<  模块【$moduleName】数据库升级完成，共执行了${migrationCount}个sql文件，最新版本为：${result.targetSchemaVersion}")
-                }
-            } else {
-                log.error("flyway升级模块【${moduleName}】的数据库失败！")
-            }
-        } catch (e: Exception) {
-            log.error(e, "flyway升级模块【${moduleName}】数据库出错！")
-            throw e
-        } finally {
-            connection?.close()
-        }
+        val dataSource = dsContextProcessor.getDataSource(datasourceKey)
+        FlywayKit.migrate(moduleName, dataSource, flywayProperties)
     }
 
 }
