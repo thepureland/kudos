@@ -1,7 +1,6 @@
 
-object Version {
-    const val SOUL = "5.4.1-SNAPSHOT"
-}
+val SOUL_VERSION = "5.4.1-SNAPSHOT"
+val KTOR_VERSION: String = libs.versions.ktor.get()
 
 
 subprojects {
@@ -22,7 +21,8 @@ subprojects {
     layout.buildDirectory = File(rootProject.projectDir, "build/${project.name}")
 
     dependencies {
-        add("implementation", platform("org.soul:soul-dependencies:${Version.SOUL}"))
+        add("implementation", platform("org.soul:soul-dependencies:${SOUL_VERSION}"))
+        add("implementation", platform("io.ktor:ktor-bom:${KTOR_VERSION}"))
         add("testImplementation", kotlin("test-junit5")) // kotlin.test + JUnit5
     }
 
