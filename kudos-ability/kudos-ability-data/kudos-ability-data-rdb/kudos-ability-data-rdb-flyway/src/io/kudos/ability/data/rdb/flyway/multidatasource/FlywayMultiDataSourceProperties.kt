@@ -6,7 +6,7 @@ package io.kudos.ability.data.rdb.flyway.multidatasource
  * @author K
  * @since 1.0.0
  */
-open class FlywayMultiDatasourceProperties {
+open class FlywayMultiDataSourceProperties {
 
     /**
      * 数据源配置信息：key=模块名，value=数据源名

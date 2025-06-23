@@ -13,7 +13,7 @@ import javax.sql.DataSource
  *
  * @author soul
  */
-class SeataDatasourceProxy : IDataSourceProxy {
+class SeataDataSourceProxy : IDataSourceProxy {
 
     @Value("\${seata.data-source-proxy-mode}")
     private val proxyMode: String? = null
