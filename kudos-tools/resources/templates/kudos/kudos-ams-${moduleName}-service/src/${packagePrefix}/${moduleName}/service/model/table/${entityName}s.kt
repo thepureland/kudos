@@ -1,15 +1,15 @@
-package ${packagePrefix}.${moduleName}.provider.model.table
+package ${packagePrefix}.${moduleName}.service.model.table
 
-import ${packagePrefix}.${moduleName}.provider.model.po.${entityName}
+import ${packagePrefix}.${moduleName}.service.model.po.${entityName}
 import org.ktorm.schema.*
 <#if daoSuperClass == "MaintainableTable">
-import io.kudos.ability.data.rdb.support.MaintainableTable
+import io.kudos.ability.data.rdb.ktorm.support.MaintainableTable
 <#elseif daoSuperClass == "StringIdTable">
-import io.kudos.ability.data.rdb.support.StringIdTable
+import io.kudos.ability.data.rdb.ktorm.support.StringIdTable
 <#elseif daoSuperClass == "IntIdTable">
-import io.kudos.ability.data.rdb.support.IntIdTable
+import io.kudos.ability.data.rdb.ktorm.support.IntIdTable
 <#elseif daoSuperClass == "LongIdTable">
-import io.kudos.ability.data.rdb.support.LongIdTable
+import io.kudos.ability.data.rdb.ktorm.support.LongIdTable
 </#if>
 
 

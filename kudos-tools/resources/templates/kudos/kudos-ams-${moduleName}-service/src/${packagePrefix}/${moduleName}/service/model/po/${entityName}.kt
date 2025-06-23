@@ -1,10 +1,10 @@
-package ${packagePrefix}.${moduleName}.provider.model.po
+package ${packagePrefix}.${moduleName}.service.model.po
 
-import io.kudos.ability.data.rdb.support.DbEntityFactory
+import io.kudos.ability.data.rdb.ktorm.support.DbEntityFactory
 <#if poSuperClass == "IDbEntity">
-import io.kudos.ability.data.rdb.support.IDbEntity
+import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
 <#elseif poSuperClass == "IMaintainableDbEntity">
-import io.kudos.ability.data.rdb.support.IMaintainableDbEntity
+import io.kudos.ability.data.rdb.ktorm.support.IMaintainableDbEntity
 </#if>
 <#if containsLocalDateTimeColumn>
 import java.time.LocalDateTime

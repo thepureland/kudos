@@ -1,14 +1,14 @@
-package ${packagePrefix}.${moduleName}.provider.biz.impl
+package ${packagePrefix}.${moduleName}.service.biz.impl
 
-import ${packagePrefix}.${moduleName}.provider.biz.ibiz.I${entityName}Biz
-import ${packagePrefix}.${moduleName}.provider.model.po.${entityName}
-import ${packagePrefix}.${moduleName}.provider.dao.${entityName}Dao
+import ${packagePrefix}.${moduleName}.service.biz.ibiz.I${entityName}Biz
+import ${packagePrefix}.${moduleName}.service.model.po.${entityName}
+import ${packagePrefix}.${moduleName}.service.dao.${entityName}Dao
 <#if table.type.name() == "TABLE">
-import io.kudos.ability.data.rdb.biz.BaseCrudBiz
+import io.kudos.ability.data.rdb.ktorm.biz.BaseCrudBiz
 <#assign superBiz = "BaseCrudBiz">
 </#if>
 <#if table.type.name() == "VIEW">
-import io.kudos.ability.data.rdb.biz.BaseReadOnlyBiz
+import io.kudos.ability.data.rdb.ktorm.biz.BaseReadOnlyBiz
 <#assign superBiz = "BaseReadOnlyBiz">
 </#if>
 import org.springframework.stereotype.Service

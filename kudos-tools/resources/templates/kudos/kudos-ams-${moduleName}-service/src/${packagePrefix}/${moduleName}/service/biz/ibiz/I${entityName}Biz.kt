@@ -1,7 +1,7 @@
-package ${packagePrefix}.${moduleName}.provider.biz.ibiz
+package ${packagePrefix}.${moduleName}.service.biz.ibiz
 
 import io.kudos.base.support.biz.IBaseCrudBiz
-import ${packagePrefix}.${moduleName}.provider.model.po.${entityName}
+import ${packagePrefix}.${moduleName}.service.model.po.${entityName}
 
 
 <@generateClassComment table.comment+"业务接口"/>
