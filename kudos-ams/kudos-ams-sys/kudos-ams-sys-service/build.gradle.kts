@@ -1,4 +1,5 @@
 dependencies {
+    api(project(":kudos-ams:kudos-ams-sys:kudos-ams-sys-common"))
     api(project(":kudos-ability:kudos-ability-data:kudos-ability-data-rdb:kudos-ability-data-rdb-ktorm"))
     api(project(":kudos-ability:kudos-ability-data:kudos-ability-data-rdb:kudos-ability-data-rdb-flyway"))
 

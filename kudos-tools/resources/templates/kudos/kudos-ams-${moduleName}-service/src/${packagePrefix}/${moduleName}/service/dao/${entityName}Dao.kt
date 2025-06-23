@@ -1,14 +1,14 @@
-package ${packagePrefix}.${moduleName}.provider.dao
+package ${packagePrefix}.${moduleName}.service.dao
 
-import ${packagePrefix}.${moduleName}.provider.model.po.${entityName}
-import ${packagePrefix}.${moduleName}.provider.model.table.${entityName}s
+import ${packagePrefix}.${moduleName}.service.model.po.${entityName}
+import ${packagePrefix}.${moduleName}.service.model.table.${entityName}s
 import org.springframework.stereotype.Repository
 <#if table.type.name() == "TABLE">
-import io.kudos.ability.data.rdb.support.BaseCrudDao
+import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 <#assign superDao = "BaseCrudDao">
 </#if>
 <#if table.type.name() == "VIEW">
-import io.kudos.ability.data.rdb.support.BaseReadOnlyDao
+import io.kudos.ability.data.rdb.ktorm.support.BaseReadOnlyDao
 <#assign superDao = "BaseReadOnlyDao">
 </#if>
 

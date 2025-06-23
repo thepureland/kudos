@@ -59,7 +59,7 @@ open class KtorAutoConfiguration : IComponentInitializer {
 
             val started = CompletableFuture<Unit>()
             val port = ktorProperties.engine.port
-            val server = embeddedServer(factory, port!!) {
+            val server = embeddedServer(factory, port) {
                 KtorContext.application = this
                 installPlugins(ktorProperties)
                 monitor.subscribe(ApplicationStarted) {

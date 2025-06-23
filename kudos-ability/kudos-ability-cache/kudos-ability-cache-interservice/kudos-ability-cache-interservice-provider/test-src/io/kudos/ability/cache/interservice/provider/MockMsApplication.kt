@@ -2,8 +2,6 @@ package io.kudos.ability.cache.interservice.provider
 
 import io.kudos.context.init.EnableKudos
 import io.kudos.context.spring.YamlPropertySourceFactory
-
-import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.context.annotation.Import
 import org.springframework.context.annotation.PropertySource
 
@@ -15,7 +13,6 @@ import org.springframework.context.annotation.PropertySource
  * @since 1.0.0
  */
 @EnableKudos
-@SpringBootApplication
 @PropertySource(
     value = ["classpath:application-ms.yml"
     ], factory = YamlPropertySourceFactory::class
