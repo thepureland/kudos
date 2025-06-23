@@ -5,11 +5,9 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.kudos.ability.web.ktor.base.init.KtorContext
-import io.kudos.ability.web.ktor.base.init.KtorProperties
+import io.kudos.ability.web.ktor.core.KtorContext
 import io.kudos.test.common.init.EnableKudosTest
 import kotlinx.coroutines.runBlocking
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import kotlin.test.AfterTest
@@ -36,9 +34,6 @@ class CioEngineTest {
 
     }
 
-    @Autowired
-    private lateinit var ktorProperties: KtorProperties
-
     @BeforeTest
     fun setup() {
         KtorContext.application.routing {
@@ -56,7 +51,7 @@ class CioEngineTest {
     @Test
     fun testRoot() = runBlocking {
         val client = HttpClient()
-        val response = client.get("http://localhost:${ktorProperties.engine.port}/")
+        val response = client.get("http://localhost:${KtorContext.properties.engine.port}/")
         assertEquals("Hello CIO!", response.bodyAsText())
     }
 

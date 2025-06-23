@@ -1,4 +1,4 @@
-package io.kudos.ability.web.ktor.base.init
+package io.kudos.ability.web.ktor.init
 
 
 /**

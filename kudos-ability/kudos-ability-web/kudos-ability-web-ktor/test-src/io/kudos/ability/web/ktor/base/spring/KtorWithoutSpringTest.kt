@@ -5,8 +5,8 @@ import io.ktor.client.statement.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.testing.*
-import io.kudos.ability.web.ktor.base.init.KtorProperties
-import io.kudos.ability.web.ktor.base.init.installPlugins
+import io.kudos.ability.web.ktor.init.KtorProperties
+import io.kudos.ability.web.ktor.init.installPlugins
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

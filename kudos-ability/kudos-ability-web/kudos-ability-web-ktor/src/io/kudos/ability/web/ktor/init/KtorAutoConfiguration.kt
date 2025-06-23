@@ -1,16 +1,21 @@
-package io.kudos.ability.web.ktor.base.init
+package io.kudos.ability.web.ktor.init
 
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
+import io.ktor.server.routing.routing
+import io.kudos.ability.web.ktor.core.IKtorRouteRegistrar
+import io.kudos.ability.web.ktor.core.KtorContext
 import io.kudos.base.logger.LogFactory
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
 import jakarta.annotation.PreDestroy
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Lazy
 import java.util.concurrent.CompletableFuture
 
 
@@ -26,7 +31,8 @@ import java.util.concurrent.CompletableFuture
 @AutoConfigureAfter(ContextAutoConfiguration::class)
 open class KtorAutoConfiguration : IComponentInitializer {
 
-    private val logger = LogFactory.getLog(this)
+    @Autowired(required = false)
+    private var routeRegistrar: List<IKtorRouteRegistrar> = emptyList()
 
     @Bean
     @ConditionalOnMissingBean
@@ -36,6 +42,7 @@ open class KtorAutoConfiguration : IComponentInitializer {
     @Bean
     open fun ktorEngine(ktorProperties: KtorProperties) : EmbeddedServer<*, *>? {
         logger.info("初始化 ktorEngine ...")
+        KtorContext.properties = ktorProperties
         val engineName = ktorProperties.engine.name
         if (engineName.isBlank()) {
             error("kudos.ability.web.ktor.engine.name丢失！")
@@ -59,9 +66,13 @@ open class KtorAutoConfiguration : IComponentInitializer {
 
             val started = CompletableFuture<Unit>()
             val port = ktorProperties.engine.port
+
             val server = embeddedServer(factory, port) {
                 KtorContext.application = this
                 installPlugins(ktorProperties)
+                routing {
+                    routeRegistrar.forEach { it.register(this) }
+                }
                 monitor.subscribe(ApplicationStarted) {
                     logger.info("$engineName 引擎启动成功，port：$port")
                     started.complete(Unit)
@@ -89,6 +100,8 @@ open class KtorAutoConfiguration : IComponentInitializer {
     }
 
     override fun getComponentName() = "kudos-ability-web-ktor-base"
+
+    private val logger = LogFactory.getLog(this)
 
 }
 
