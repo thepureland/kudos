@@ -23,10 +23,10 @@ import java.io.File
  * @author K
  * @since 1.0.0
  */
-open class FlywayMultiDatasourceMigrator {
+open class FlywayMultiDataSourceMigrator {
 
     @Autowired
-    private lateinit var flywayMultiDatasourceProperties: FlywayMultiDatasourceProperties
+    private lateinit var flywayMultiDatasourceProperties: FlywayMultiDataSourceProperties
 
     @Autowired
     private lateinit var flywayProperties: FlywayProperties

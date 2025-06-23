@@ -35,7 +35,7 @@ open class SeataAutoConfiguration : IComponentInitializer {
     @Primary
     @Bean("dataSourceProxy")
     @ConditionalOnMissingBean
-    open fun dataSourceProxy(): IDataSourceProxy = SeataDatasourceProxy()
+    open fun dataSourceProxy(): IDataSourceProxy = SeataDataSourceProxy()
 
     override fun getComponentName() = "kudos-ability-distributed-tx-seata"
 

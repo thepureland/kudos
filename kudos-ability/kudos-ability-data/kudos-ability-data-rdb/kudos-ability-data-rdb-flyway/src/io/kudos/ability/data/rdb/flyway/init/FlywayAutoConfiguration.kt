@@ -1,7 +1,7 @@
 package io.kudos.ability.data.rdb.flyway.init
 
-import io.kudos.ability.data.rdb.flyway.multidatasource.FlywayMultiDatasourceMigrator
-import io.kudos.ability.data.rdb.flyway.multidatasource.FlywayMultiDatasourceProperties
+import io.kudos.ability.data.rdb.flyway.multidatasource.FlywayMultiDataSourceMigrator
+import io.kudos.ability.data.rdb.flyway.multidatasource.FlywayMultiDataSourceProperties
 import io.kudos.ability.data.rdb.jdbc.init.JdbcAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
 import io.kudos.context.spring.YamlPropertySourceFactory
@@ -31,11 +31,11 @@ open class FlywayAutoConfiguration : IComponentInitializer {
 
     @Bean(initMethod = "migrate")
     @ConditionalOnMissingBean
-    open fun flywayMultiDatasourceMigrator() = FlywayMultiDatasourceMigrator()
+    open fun flywayMultiDataSourceMigrator() = FlywayMultiDataSourceMigrator()
 
     @Bean
     @ConfigurationProperties(prefix = "kudos.ability.flyway")
-    open fun flywayMultiDatasourceProperties() = FlywayMultiDatasourceProperties()
+    open fun flywayMultiDataSourceProperties() = FlywayMultiDataSourceProperties()
 
 
     override fun getComponentName() = "kudos-ability-data-rdb-flyway"

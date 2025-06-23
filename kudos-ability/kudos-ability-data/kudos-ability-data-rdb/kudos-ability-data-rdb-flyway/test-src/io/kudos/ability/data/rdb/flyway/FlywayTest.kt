@@ -1,6 +1,6 @@
 package io.kudos.ability.data.rdb.flyway
 
-import io.kudos.ability.data.rdb.flyway.multidatasource.FlywayMultiDatasourceMigrator
+import io.kudos.ability.data.rdb.flyway.multidatasource.FlywayMultiDataSourceMigrator
 import io.kudos.test.common.init.EnableKudosTest
 import io.kudos.test.container.containers.H2TestContainer
 import junit.framework.TestCase.assertEquals
@@ -24,7 +24,7 @@ import kotlin.test.assertFailsWith
 class FlywayTest {
 
     @Autowired
-    private lateinit var migrator: FlywayMultiDatasourceMigrator
+    private lateinit var migrator: FlywayMultiDataSourceMigrator
 
     @Autowired
     private lateinit var dsContextProcessor: DsContextProcessor
