@@ -155,7 +155,7 @@ class ConfigController : Initializable {
 
         // test template
         if (templateChoiceBox.selectionModel.isEmpty) {
-            throw Exception("请选择模板！")
+            throw Exception("请选择模板方案！")
         }
 
         // package prefix
