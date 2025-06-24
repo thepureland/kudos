@@ -41,7 +41,7 @@ class Config {
 
     fun setDbPassword(dbPassword: String) = this.dbPassword.set(dbPassword)
 
-    fun getTemplateInfo(): TemplateNameAndRootDir? = templateInfo.get().selectedItem
+    fun getTemplateInfo(): TemplateNameAndRootDir = templateInfo.get().selectedItem
 
     fun templateInfoProperty(): SimpleObjectProperty<SingleSelectionModel<TemplateNameAndRootDir>> = templateInfo
 
@@ -84,7 +84,7 @@ class Config {
         const val PROP_KEY_TEMPLATE_NAME = "templateName"
         const val PROP_KEY_TEMPLATE_ROOT_DIR = "templateRootDir"
         const val PROP_KEY_PACKAGE_PREFIX = "packagePrefix"
-        const val PROP_KEY_MODULE_NAME = "moduleName"
+        const val PROP_KEY_MODULE_NAME = "module"
         const val PROP_KEY_MODULE_SUGGESTIONS = "moduleNameSuggestions"
         const val PROP_KEY_CODE_LOACTION = "codeLoaction"
         const val PROP_KEY_AUTHOR = "author"

@@ -65,7 +65,7 @@ class ColumnsController : Initializable {
                             object : Thread() {
                                 override fun run() {
                                     val columns = io.kudos.tools.codegen.biz.CodeGenColumnBiz.readColumns()
-                                    Platform.runLater { columnTable.setItems(FXCollections.observableArrayList(columns)) }
+                                    Platform.runLater { columnTable.items = FXCollections.observableArrayList(columns) }
                                     if(columnTable.items.all { it.getDetailItem() }) {
                                         detailCheckBox.selectedProperty().value = true
                                     }
