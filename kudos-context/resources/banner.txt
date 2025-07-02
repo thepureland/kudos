@@ -18,5 +18,5 @@ K:::::::K    K:::::K  uu::::::::uu:::u  d:::::::::ddd::::d oo:::::::::::oo  s:::
 KKKKKKKKK    KKKKKKK    uuuuuuuu  uuuu   ddddddddd   ddddd   ooooooooooo     sssssssssss
 ${AnsiBackground.WHITE}${AnsiColor.RED}${AnsiStyle.UNDERLINE}
 :: Kudos ::                   (v1.0.0.SNAPSHOOT)
-:: Kotlin ::                  (v2.1.21)
+:: Kotlin ::                  (v2.2.0)
 :: Spring Boot ::             (v${spring-boot.version})
