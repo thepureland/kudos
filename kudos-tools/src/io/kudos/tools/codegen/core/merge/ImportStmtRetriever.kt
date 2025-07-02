@@ -8,7 +8,7 @@ import java.util.regex.Pattern
  * @author K
  * @since 1.0.0
  */
-class ImportStmtRetriever(private val fileContent: String?) {
+class ImportStmtRetriever(private val fileContent: CharSequence) {
     fun retrieveImports(): List<String> {
         val imports: MutableList<String> = ArrayList()
         val p = Pattern.compile("import .+")

@@ -8,7 +8,7 @@ import java.util.regex.Pattern
  * @author K
  * @since 1.0.0
  */
-class AppendCodesRetriever(private val fileContent: String?) {
+class AppendCodesRetriever(private val fileContent: CharSequence) {
 
     fun retrieve(): Map<Int, Pair<AppendCodeType, String>> {
         val map = hashMapOf<Int, Pair<AppendCodeType, String>>()
