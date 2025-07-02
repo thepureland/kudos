@@ -12,9 +12,9 @@ import java.util.regex.Matcher
  */
 class CodeMerger(private val file: File) {
 
-    private val oldFileContent: String
-    private var newFileContent: String? = null
-    private val retriever: CustomCodesRetriever
+    private val oldFileContent: String = FileKit.readFileToString(file)
+    private var newFileContent: CharSequence? = null
+    private val retriever: UserCodesRetriever = UserCodesRetriever(oldFileContent)
 
     /**
      * 代码生成后进行合并
@@ -28,7 +28,7 @@ class CodeMerger(private val file: File) {
     private fun handleRegion() {
         val customCodes = retriever.retrieve()
         newFileContent = FileKit.readFileToString(file)
-        val appendCodesRetriever = AppendCodesRetriever(newFileContent)
+        val appendCodesRetriever = AppendCodesRetriever(newFileContent!!)
         val appendCodesMap = appendCodesRetriever.retrieve()
         for ((index, value) in customCodes) {
             val codes = StringBuilder(value)
@@ -59,7 +59,7 @@ class CodeMerger(private val file: File) {
     private fun handleImport() {
         if (file.name.endsWith(".kt")) {
             val oldImports = ImportStmtRetriever(oldFileContent).retrieveImports()
-            val newImports = ImportStmtRetriever(newFileContent).retrieveImports()
+            val newImports = ImportStmtRetriever(newFileContent!!).retrieveImports()
             val commonImports = oldImports.intersect(newImports) // 交集
             val customImport = oldImports.subtract(commonImports) // 差集，用户自己导入的import
             val imports = StringBuilder()
@@ -73,15 +73,5 @@ class CodeMerger(private val file: File) {
                 newFileContent = sb.toString()
             }
         }
-    }
-
-    /**
-     * 在代码生成前创建
-     *
-     * @param file
-     */
-    init {
-        oldFileContent = FileKit.readFileToString(file)
-        retriever = CustomCodesRetriever(oldFileContent)
     }
 }

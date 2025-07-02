@@ -8,7 +8,7 @@ import java.util.regex.Pattern
  * @author K
  * @since 1.0.0
  */
-class CustomCodesRetriever(private val fileContent: String) {
+class UserCodesRetriever(private val fileContent: String) {
     fun retrieve(): Map<Int, String> {
         val map: MutableMap<Int, String> = HashMap()
         val p =

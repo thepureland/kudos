@@ -7,7 +7,9 @@ import io.kudos.tools.codegen.biz.CodeGenFileBiz
 import io.kudos.tools.codegen.core.CodeGenerator
 import io.kudos.tools.codegen.core.CodeGeneratorContext
 import io.kudos.tools.codegen.core.FreemarkerKit
+import io.kudos.tools.codegen.core.TemplateReader
 import io.kudos.tools.codegen.model.vo.GenFile
+import javafx.beans.property.SimpleBooleanProperty
 import javafx.collections.FXCollections
 import javafx.event.Event
 import javafx.fxml.FXML
@@ -34,11 +36,18 @@ class FilesController : Initializable {
 
     private lateinit var templateModel: Map<String, Any?>
 
+    @FXML
+    private lateinit var selectEntityRelativeFilesCheckBox: CheckBox
+
+    private val selectEntityRelativeFilesProperty = SimpleBooleanProperty()
+
     override fun initialize(location: URL?, resources: ResourceBundle?) {
+        // 双向绑定
+        selectEntityRelativeFilesCheckBox.selectedProperty().bindBidirectional(selectEntityRelativeFilesProperty)
     }
 
     fun readFiles() {
-        val templateRootDir = CodeGeneratorContext.config.getTemplateInfo()!!.rootDir
+        val templateRootDir = CodeGeneratorContext.config.getTemplateInfo().rootDir
         val fileFilter: IOFileFilter = object : IOFileFilter {
             override fun accept(file: File): Boolean {
                 return "macro.include" != file.name
@@ -81,7 +90,7 @@ class FilesController : Initializable {
     private val jarFiles: Collection<File>
         get() {
             val resources =
-                ClassPathScanner.scanForResources(CodeGeneratorContext.config.getTemplateInfo()!!.rootDir, "", "")
+                ClassPathScanner.scanForResources(CodeGeneratorContext.config.getTemplateInfo().rootDir, "", "")
             val files = mutableListOf<File>()
             for (resource in resources) {
                 if (resource.filename.isNotBlank() && !resource.filename.contains("macro.include")) {
@@ -110,6 +119,7 @@ class FilesController : Initializable {
 
     @FXML
     fun generateAll() {
+        selectEntityRelativeFilesProperty.value = false
         fileTable.items.forEach { it.setGenerate(true) }
         generate()
     }
@@ -127,4 +137,22 @@ class FilesController : Initializable {
         val selected = (e.target as CheckBox).isSelected
         fileTable.items.forEach { it.setGenerate(selected) }
     }
+
+    @FXML
+    fun selectEntityRelativeFiles(e: Event) {
+        if (selectEntityRelativeFilesProperty.value) {
+            fileTable.items.forEach {
+                val notEntityRelative = !isEntityRelative(it.templateFileRelativePath)
+                        && !isEntityRelative(TemplateReader().read(it.templateFileRelativePath).toString())
+                it.setGenerate(!notEntityRelative)
+            }
+        } else {
+            fileTable.items.forEach { it.setGenerate(false) }
+        }
+    }
+
+    private fun isEntityRelative(content : String) : Boolean {
+        return content.contains("\${entityName}")
+    }
+
 }

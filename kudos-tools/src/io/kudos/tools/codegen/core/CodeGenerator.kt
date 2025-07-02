@@ -1,8 +1,5 @@
 package io.kudos.tools.codegen.core
 
-import freemarker.cache.MultiTemplateLoader
-import freemarker.cache.URLTemplateLoader
-import freemarker.template.Configuration
 import io.kudos.base.io.FileKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.tools.codegen.biz.CodeGenFileBiz
@@ -12,8 +9,6 @@ import io.kudos.tools.codegen.core.merge.PrivateContentEraser
 import io.kudos.tools.codegen.model.vo.GenFile
 import javafx.scene.control.Alert
 import java.io.File
-import java.net.URI
-import java.net.URL
 
 /**
  * 代码生成器，代码生成核心逻辑处理
@@ -52,33 +47,8 @@ class CodeGenerator(
         return success
     }
 
-    private fun newFreeMarkerConfiguration(): Configuration {
-        val templateRootDir = CodeGeneratorContext.config.getTemplateInfo()!!.rootDir
-        val root = URI("file:$templateRootDir").toURL()
-        val multiTemplateLoader = MultiTemplateLoader(arrayOf(
-            object : URLTemplateLoader() {
-                override fun getURL(template: String): URL = root.toURI().resolve(template).toURL()
-            }
-        ))
-        val conf = Configuration(Configuration.VERSION_2_3_30)
-        conf.templateLoader = multiTemplateLoader
-        conf.numberFormat = "###############"
-        conf.booleanFormat = "true,false"
-        conf.defaultEncoding = "UTF-8"
-        conf.setClassForTemplateLoading(
-            CodeGenerator::class.java,
-            "/templates/${CodeGeneratorContext.config.getTemplateInfo()!!.name}"
-        )
-        val autoIncludes = listOf("macro.include")
-        val availableAutoInclude = FreemarkerKit.getAvailableAutoInclude(conf, autoIncludes)
-        conf.setAutoIncludes(availableAutoInclude)
-        log.debug("set Freemarker.autoIncludes:$availableAutoInclude for templateName:$templateRootDir autoIncludes:$autoIncludes")
-        return conf
-    }
-
     private fun executeGenerate(genFile: GenFile) {
-        val template = newFreeMarkerConfiguration().getTemplate(genFile.templateFileRelativePath)
-        template.outputEncoding = "UTF-8"
+        val template = TemplateReader().read(genFile.templateFileRelativePath)
         val absoluteOutputFilePath =
             File("${CodeGeneratorContext.config.getCodeLoaction()}/${genFile.finalFileRelativePath}")
         val exists = absoluteOutputFilePath.exists()
