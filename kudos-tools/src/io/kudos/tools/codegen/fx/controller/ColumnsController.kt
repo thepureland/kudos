@@ -1,6 +1,7 @@
 package io.kudos.tools.codegen.fx.controller
 
 import io.kudos.ability.ui.javafx.controls.AutoCompleteComboBoxListener
+import io.kudos.tools.codegen.biz.CodeGenColumnBiz
 import io.kudos.tools.codegen.biz.CodeGenObjectBiz
 import io.kudos.tools.codegen.core.CodeGeneratorContext
 import io.kudos.tools.codegen.model.vo.ColumnInfo
@@ -48,7 +49,6 @@ class ColumnsController : Initializable {
     private fun initTableComboBox() {
         //解决wizard的bug: 从page3回到page2会执行page1的onExitingPage方法
         val columnList = columns
-        val table = table
         val tableComment = tableComment
         val items = tableComboBox.items
         tableMap = CodeGenObjectBiz.readTables()
@@ -64,7 +64,7 @@ class ColumnsController : Initializable {
                             CodeGeneratorContext.tableName = newValue
                             object : Thread() {
                                 override fun run() {
-                                    val columns = io.kudos.tools.codegen.biz.CodeGenColumnBiz.readColumns()
+                                    val columns = CodeGenColumnBiz.readColumns(CodeGeneratorContext.tableName)
                                     Platform.runLater { columnTable.items = FXCollections.observableArrayList(columns) }
                                     if(columnTable.items.all { it.getDetailItem() }) {
                                         detailCheckBox.selectedProperty().value = true

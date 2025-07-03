@@ -16,12 +16,12 @@ import javafx.scene.control.ButtonType
 import javafx.stage.Stage
 
 /**
- * 代码生成器向导，用户可继承此类来提供自定义的TemplateModelCreator
+ * 单表代码生成器向导，用户可继承此类来提供自定义的TemplateModelCreator
  *
  * @author K
  * @since 1.0.0
  */
-open class CodeGenerateWizard : Application() {
+open class SingleTableCodeGenerateWizard : Application() {
 
     /**
      * 得到模板数据模型创建者
@@ -33,7 +33,7 @@ open class CodeGenerateWizard : Application() {
     }
 
     override fun start(stage: Stage) {
-        val wizard = Wizard("代码生成器")
+        val wizard = Wizard("单表代码生成器")
         CodeGeneratorContext.templateModelCreator = getTemplateModelCreator()
 
         // config page
@@ -63,19 +63,7 @@ open class CodeGenerateWizard : Application() {
         page1.headerText = "请配置以下信息："
         page1.content = databasePanel
 
-        // --- page 3
-        fxmlLoader = FXMLLoader()
-        val filesPanel = fxmlLoader.load<Parent>(javaClass.getResourceAsStream("/fxml/files.fxml"))
-        val filesController = fxmlLoader.getController<FilesController>()
-        val page3 = object : Wizard.WizardPane() {
-            override fun onEnteringPage(wizard: Wizard?) {
-                filesController.readFiles()
-                val button = lookupButton(ButtonType.FINISH) as Button
-                button.isDisable = true
-            }
-        }
-        page3.headerText = "请选择要生成的文件："
-        page3.content = filesPanel
+        // --- page 2
         val page2 = object : Wizard.WizardPane() {
             override fun onExitingPage(wizard: Wizard?) {
                 val table = columnsController.table
@@ -95,6 +83,20 @@ open class CodeGenerateWizard : Application() {
         }
         page2.headerText = "请定制列信息："
         page2.content = columnsPanel
+
+        // --- page 3
+        fxmlLoader = FXMLLoader()
+        val filesPanel = fxmlLoader.load<Parent>(javaClass.getResourceAsStream("/fxml/files.fxml"))
+        val filesController = fxmlLoader.getController<FilesController>()
+        val page3 = object : Wizard.WizardPane() {
+            override fun onEnteringPage(wizard: Wizard?) {
+                filesController.readFiles()
+                val button = lookupButton(ButtonType.FINISH) as Button
+                button.isDisable = true
+            }
+        }
+        page3.headerText = "请选择要生成的文件："
+        page3.content = filesPanel
 
 
         // create wizard

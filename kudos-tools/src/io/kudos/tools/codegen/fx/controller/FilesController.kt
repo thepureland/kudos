@@ -1,12 +1,9 @@
 package io.kudos.tools.codegen.fx.controller
 
-import freemarker.template.Configuration
-import io.kudos.base.io.FileKit
-import io.kudos.base.io.FilenameKit
 import io.kudos.tools.codegen.biz.CodeGenFileBiz
 import io.kudos.tools.codegen.core.CodeGenerator
 import io.kudos.tools.codegen.core.CodeGeneratorContext
-import io.kudos.tools.codegen.core.FreemarkerKit
+import io.kudos.tools.codegen.core.TemplatePathProcessor
 import io.kudos.tools.codegen.core.TemplateReader
 import io.kudos.tools.codegen.model.vo.GenFile
 import javafx.beans.property.SimpleBooleanProperty
@@ -17,9 +14,6 @@ import javafx.fxml.Initializable
 import javafx.scene.control.Alert
 import javafx.scene.control.CheckBox
 import javafx.scene.control.TableView
-import org.apache.commons.io.filefilter.IOFileFilter
-import org.soul.base.scanner.classpath.ClassPathScanner
-import java.io.File
 import java.net.URL
 import java.util.*
 
@@ -47,58 +41,13 @@ class FilesController : Initializable {
     }
 
     fun readFiles() {
-        val templateRootDir = CodeGeneratorContext.config.getTemplateInfo().rootDir
-        val fileFilter: IOFileFilter = object : IOFileFilter {
-            override fun accept(file: File): Boolean {
-                return "macro.include" != file.name
-            }
-
-            override fun accept(file: File, s: String): Boolean {
-                return "macro.include" != s
-            }
-        }
-        val templateFiles =
-            if (templateRootDir.contains(".jar")) jarFiles
-            else FileKit.listFiles(File(templateRootDir), fileFilter, fileFilter)
-        templateModel = CodeGeneratorContext.templateModelCreator.create()
-        val cfg = Configuration(Configuration.VERSION_2_3_30)
-        val genFiles = mutableListOf<GenFile>()
+        val genFiles = TemplatePathProcessor.readPaths(true)
         val codeGenFiles = CodeGenFileBiz.read()
-        for (file in templateFiles) {
-            val filename = FreemarkerKit.processTemplateString(file.name, templateModel, cfg)
-            var directory = FreemarkerKit.processTemplateString(file.parent, templateModel, cfg)
-            directory = FilenameKit.normalize(directory, true)
-            val destRelativeDirectory = directory.substring(templateRootDir.length + 1).replace('.', '/')
-            val finalFileRelativePath = "$destRelativeDirectory/$filename"
-            val templateFileRelativePath =
-                FilenameKit.normalize(file.absolutePath, true).substring(templateRootDir.lastIndex + 2)
-            genFiles.add(
-                GenFile(
-                    codeGenFiles.contains(filename), filename,
-                    "${CodeGeneratorContext.config.getCodeLoaction()}/${destRelativeDirectory}",
-                    finalFileRelativePath, templateFileRelativePath
-                )
-            )
+        genFiles.forEach {
+            it.setGenerate(codeGenFiles.contains(it.getFilename()))
         }
-        genFiles.sort()
         fileTable.items = FXCollections.observableArrayList(genFiles)
     }
-
-    /**
-     * 获取jar内文件
-     */
-    private val jarFiles: Collection<File>
-        get() {
-            val resources =
-                ClassPathScanner.scanForResources(CodeGeneratorContext.config.getTemplateInfo().rootDir, "", "")
-            val files = mutableListOf<File>()
-            for (resource in resources) {
-                if (resource.filename.isNotBlank() && !resource.filename.contains("macro.include")) {
-                    files.add(File(resource.locationOnDisk!!))
-                }
-            }
-            return files
-        }
 
     @FXML
     @Suppress
@@ -110,7 +59,11 @@ class FilesController : Initializable {
         }
 
         try {
+            templateModel = CodeGeneratorContext.templateModelCreator.create()
             CodeGenerator(templateModel, filePathModel).generate()
+            Alert(
+                Alert.AlertType.INFORMATION, "生成成功，请查看目录：${CodeGeneratorContext.config.getCodeLoaction()}".trimIndent()
+            ).show()
         } catch (e: Exception) {
             e.printStackTrace()
             Alert(Alert.AlertType.ERROR, "生成失败！").show()
@@ -151,8 +104,6 @@ class FilesController : Initializable {
         }
     }
 
-    private fun isEntityRelative(content : String) : Boolean {
-        return content.contains("\${entityName}")
-    }
+    private fun isEntityRelative(content : String) : Boolean = content.contains($$"${entityName}")
 
 }

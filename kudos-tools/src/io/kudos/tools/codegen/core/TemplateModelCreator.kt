@@ -9,6 +9,7 @@ import io.kudos.base.lang.string.capitalizeString
 import io.kudos.base.lang.string.humpToUnderscore
 import io.kudos.base.lang.string.underscoreToHump
 import io.kudos.tools.codegen.model.vo.Config
+import kotlin.collections.mutableMapOf
 
 /**
  * 模板数据模型创建者，用户可继承此类自定义要填充模板的数据
@@ -18,15 +19,30 @@ import io.kudos.tools.codegen.model.vo.Config
  */
 open class TemplateModelCreator {
 
-    @Suppress("UNCHECKED_CAST")
-    fun create(): Map<String, Any?> {
-        val tableName = CodeGeneratorContext.tableName
-        val config = CodeGeneratorContext.config
-        val columns = CodeGeneratorContext.columns
+    fun createBaseModel(): MutableMap<String, Any?> {
         val templateModel = mutableMapOf<String, Any?>()
+        val config = CodeGeneratorContext.config
         templateModel["project"] = config.getTemplateInfo().name
         templateModel[Config.PROP_KEY_PACKAGE_PREFIX] = config.getPackagePrefix()
         templateModel[Config.PROP_KEY_MODULE_NAME] = config.getModuleName()
+        templateModel[Config.PROP_KEY_AUTHOR] = config.getAuthor()
+        templateModel[Config.PROP_KEY_VERSION] = config.getVersion()
+        return templateModel
+    }
+
+    fun create(): Map<String, Any?> {
+        val templateBaseModel = createBaseModel()
+        val entityRelativeModel = createEntityRelativeModel()
+        return templateBaseModel + entityRelativeModel
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    fun createEntityRelativeModel(): MutableMap<String, Any?> {
+        val templateModel = mutableMapOf<String, Any?>()
+        val tableName = CodeGeneratorContext.tableName
+        val config = CodeGeneratorContext.config
+        val columns = CodeGeneratorContext.columns
+
         val entityName = tableName.underscoreToHump().capitalizeString()
         templateModel["entityName"] = entityName
         val shortEntityName = entityName.replaceFirst(config.getModuleName(), "", true)
@@ -37,8 +53,6 @@ open class TemplateModelCreator {
         templateModel["columns"] = origColumns
         templateModel["ktormFunNameMap"] = origColumns.associate { it.name to KtormSqlType.getFunName(it.kotlinType) }
         templateModel["pkColumn"] = origColumns.first { it.primaryKey }
-        templateModel[Config.PROP_KEY_AUTHOR] = config.getAuthor()
-        templateModel[Config.PROP_KEY_VERSION] = config.getVersion()
         val columnConfMap = columns.associateBy { it.getColumn() }
 
         // 查询项
@@ -115,14 +129,17 @@ open class TemplateModelCreator {
                         origColumns.filter { it.name != "id" } // 过滤掉父类中已有的id列
                 }
             }
+
             Int::class -> {
                 daoSuperClass = IntIdTable::class.simpleName!!
                 templateModel["columns"] = origColumns.filter { it.name != "id" } // 过滤掉父类中已有的id列
             }
+
             Long::class -> {
                 daoSuperClass = LongIdTable::class.simpleName!!
                 templateModel["columns"] = origColumns.filter { it.name != "id" } // 过滤掉父类中已有的id列
             }
+
             else -> daoSuperClass = "Table"
         }
         templateModel["poSuperClass"] = poSuperClass
