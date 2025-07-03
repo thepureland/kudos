@@ -2,7 +2,6 @@ package io.kudos.tools.codegen.biz
 
 import io.kudos.ability.data.rdb.jdbc.kit.RdbMetadataKit
 import io.kudos.base.bean.BeanKit
-import io.kudos.tools.codegen.core.CodeGeneratorContext
 import io.kudos.tools.codegen.dao.CodeGenColumnDao
 import io.kudos.tools.codegen.model.po.CodeGenColumn
 import io.kudos.tools.codegen.model.vo.ColumnInfo
@@ -16,13 +15,12 @@ import io.kudos.tools.codegen.model.vo.ColumnInfo
  */
 object CodeGenColumnBiz {
 
-    fun readColumns(): List<ColumnInfo> {
-        val table = CodeGeneratorContext.tableName
+    fun readColumns(tableName : String): List<ColumnInfo> {
         // from meta data
-        val columns = RdbMetadataKit.getColumnsByTableName(table)
+        val columns = RdbMetadataKit.getColumnsByTableName(tableName)
 
         // from code_gen_column table
-        val columnMap = CodeGenColumnDao.searchCodeGenColumnMap(table)
+        val columnMap = CodeGenColumnDao.searchCodeGenColumnMap(tableName)
 
         // merge
         val results = mutableListOf<ColumnInfo>()
@@ -47,12 +45,9 @@ object CodeGenColumnBiz {
         return results
     }
 
-    fun saveColumns(): Boolean {
-        val table = CodeGeneratorContext.tableName
-        val columnInfos = CodeGeneratorContext.columns
-
+    fun saveColumns(tableName : String, columnInfos: List<ColumnInfo>): Boolean {
         // delete old columns first
-        CodeGenColumnDao.deleteCodeGenColumn(table)
+        CodeGenColumnDao.deleteCodeGenColumn(tableName)
 
         // insert new columns
         val codeGenColumns = mutableListOf<CodeGenColumn>()
@@ -60,7 +55,7 @@ object CodeGenColumnBiz {
             codeGenColumns.add(
                 CodeGenColumn {
                     name = column.getName()!!
-                    objectName = table
+                    objectName = tableName
                     comment = column.getCustomComment()
                     searchItem = column.getSearchItem()
                     listItem = column.getListItem()

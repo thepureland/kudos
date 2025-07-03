@@ -7,7 +7,6 @@ import io.kudos.tools.codegen.biz.CodeGenObjectBiz
 import io.kudos.tools.codegen.core.merge.CodeMerger
 import io.kudos.tools.codegen.core.merge.PrivateContentEraser
 import io.kudos.tools.codegen.model.vo.GenFile
-import javafx.scene.control.Alert
 import java.io.File
 
 /**
@@ -23,22 +22,18 @@ class CodeGenerator(
 
     private val log = LogFactory.getLog(this)
 
-    fun generate() {
+    fun generate(needPersist : Boolean = true) {
         genFiles.forEach { executeGenerate(it) }
-        val persistence = persistence()
-        if (persistence) {
-            Alert(
-                Alert.AlertType.INFORMATION, "生成成功，请查看目录：${CodeGeneratorContext.config.getCodeLoaction()}".trimIndent()
-            ).show()
-        } else {
-            Alert(Alert.AlertType.INFORMATION, "生成成功，但配置信息持久化失败! ").show()
+        if (needPersist) {
+            persistence()
         }
     }
 
     private fun persistence(): Boolean {
         var success = CodeGenObjectBiz.saveOrUpdate()
         if (success) {
-            success = io.kudos.tools.codegen.biz.CodeGenColumnBiz.saveColumns()
+            success = io.kudos.tools.codegen.biz.CodeGenColumnBiz.saveColumns(
+                CodeGeneratorContext.tableName, CodeGeneratorContext.columns)
             if (success) {
                 val filenames = genFiles.filter { it.getGenerate() }.map { it.getFilename() }
                 success = CodeGenFileBiz.save(filenames)

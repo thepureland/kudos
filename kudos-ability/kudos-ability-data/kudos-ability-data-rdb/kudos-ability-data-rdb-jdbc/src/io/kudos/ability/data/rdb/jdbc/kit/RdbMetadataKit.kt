@@ -89,7 +89,7 @@ object RdbMetadataKit {
                     name = tableRs.getString("TABLE_NAME")
                     catalog = tableRs.getString("TABLE_CAT")
                     schema = tableRs.getString("TABLE_SCHEM")
-                    comment = tableRs.getString("REMARKS")
+                    comment = tableRs.getString("REMARKS") ?: ""
                     type = TableTypeEnum.valueOf(tableTypeStr)
                 })
             }
@@ -110,7 +110,7 @@ object RdbMetadataKit {
                     name = tableName
                     catalog = rs.getString("TABLE_CAT")
                     schema = rs.getString("TABLE_SCHEM")
-                    comment = rs.getString("REMARKS")
+                    comment = rs.getString("REMARKS") ?: ""
                     type = TableTypeEnum.valueOf(tableTypeStr)
                 }
             }
@@ -129,7 +129,7 @@ object RdbMetadataKit {
             while (columnRs.next()) {
                 val column = Column().apply {
                     name = columnRs.getString("COLUMN_NAME")
-                    comment = columnRs.getString("REMARKS")
+                    comment = columnRs.getString("REMARKS") ?: ""
                     jdbcType = columnRs.getInt("DATA_TYPE")
                     jdbcTypeName = columnRs.getString("TYPE_NAME")
                     kotlinType = JdbcTypeToKotlinType.getKotlinType(rdbType, this)
