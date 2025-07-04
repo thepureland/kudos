@@ -1,6 +1,10 @@
 dependencies {
     api(project(":kudos-ams:kudos-ams-sys:kudos-ams-sys-service"))
     api(project(":kudos-ability:kudos-ability-web:kudos-ability-web-ktor"))
+    
+    //region your codes 1
+
+    //endregion your codes 1
 
     testImplementation(project(":kudos-test:kudos-test-container"))
 }

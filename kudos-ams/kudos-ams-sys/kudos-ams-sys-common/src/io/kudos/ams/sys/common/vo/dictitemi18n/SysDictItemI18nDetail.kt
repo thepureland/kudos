@@ -1,0 +1,46 @@
+package io.kudos.ams.sys.common.vo.dictitemi18n
+
+import io.kudos.base.support.result.IdJsonResult
+import java.time.LocalDateTime
+
+
+/**
+ * 字典项国际化查询记录
+ *
+ * @author K
+ * @since 1.0.0
+ */
+//region your codes 1
+open class SysDictItemI18nDetail : IdJsonResult<String>() {
+//endregion your codes 1
+
+    //region your codes 2
+
+    //endregion your codes 2
+
+
+    /** 语言_地区 */
+    var locale: String? = null
+
+    /** 国际化值 */
+    var i18nValue: String? = null
+
+    /** 字典项id */
+    var itemId: String? = null
+
+    /** 是否启用 */
+    var active: Boolean? = null
+
+    /** 创建用户 */
+    var createUser: String? = null
+
+    /** 创建时间 */
+    var createTime: LocalDateTime? = null
+
+    /** 更新用户 */
+    var updateUser: String? = null
+
+    /** 更新时间 */
+    var updateTime: LocalDateTime? = null
+
+}

@@ -1,9 +1,9 @@
 package io.kudos.ams.sys.service.biz.impl
 
-import io.kudos.ability.data.rdb.ktorm.biz.BaseCrudBiz
 import io.kudos.ams.sys.service.biz.ibiz.ISysAccessRuleBiz
 import io.kudos.ams.sys.service.model.po.SysAccessRule
 import io.kudos.ams.sys.service.dao.SysAccessRuleDao
+import io.kudos.ability.data.rdb.ktorm.biz.BaseCrudBiz
 import org.springframework.stereotype.Service
 
 
