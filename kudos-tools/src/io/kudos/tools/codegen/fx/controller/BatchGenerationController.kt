@@ -7,6 +7,7 @@ import io.kudos.tools.codegen.core.CodeGeneratorContext
 import io.kudos.tools.codegen.core.TemplatePathProcessor
 import io.kudos.tools.codegen.model.vo.Config
 import io.kudos.tools.codegen.model.vo.DbTable
+import javafx.beans.property.SimpleBooleanProperty
 import javafx.collections.FXCollections
 import javafx.event.Event
 import javafx.fxml.FXML
@@ -26,8 +27,14 @@ class BatchGenerationController : Initializable {
 
     private lateinit var tableMap: Map<String, String?>
 
-    override fun initialize(p0: URL?, p1: ResourceBundle?) {
+    @FXML
+    private lateinit var onlyEntityRelativeFilesCheckBox: CheckBox
 
+    private val onlyEntityRelativeFilesProperty = SimpleBooleanProperty()
+
+    override fun initialize(p0: URL?, p1: ResourceBundle?) {
+        // 双向绑定
+        onlyEntityRelativeFilesCheckBox.selectedProperty().bindBidirectional(onlyEntityRelativeFilesProperty)
     }
 
     fun initTable() {
@@ -54,8 +61,10 @@ class BatchGenerationController : Initializable {
 
             // 先生成表无关的文件
             val nonEntityRelativeFilePaths = TemplatePathProcessor.readPaths(false)
-            val templateBaseModel = CodeGeneratorContext.templateModelCreator.createBaseModel()
-            CodeGenerator(templateBaseModel, nonEntityRelativeFilePaths).generate(false)
+            if (!onlyEntityRelativeFilesProperty.get()) {
+                val templateBaseModel = CodeGeneratorContext.templateModelCreator.createBaseModel()
+                CodeGenerator(templateBaseModel, nonEntityRelativeFilePaths).generate(false)
+            }
 
             // 再生成表相关的文件
             selectTables.forEach {

@@ -35,6 +35,8 @@
         </columns>
     </TableView>
 
+    <CheckBox text="仅实体相关的文件" fx:id="onlyEntityRelativeFilesCheckBox"
+              layoutX="27.0" layoutY="673.0" AnchorPane.bottomAnchor="4.0"/>
     <Button layoutX="959.0" layoutY="739.0" mnemonicParsing="false" onAction="#generate" text="生成"
             AnchorPane.bottomAnchor="4.0" AnchorPane.rightAnchor="21.0"/>
 </AnchorPane>
