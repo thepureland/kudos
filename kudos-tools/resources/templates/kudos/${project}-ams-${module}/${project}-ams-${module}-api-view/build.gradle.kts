@@ -1,9 +1,7 @@
 dependencies {
-    <#if project == "kudos">
-    api(project(":kudos-ams:kudos-ams-${module}:kudos-ams-${module}-service"))
+    <#if project == "kudos">api(project(":kudos-ams:kudos-ams-${module}:kudos-ams-${module}-service"))
     api(project(":kudos-ability:kudos-ability-web:kudos-ability-web-ktor"))
-    <#else>
-    api(project(":${project}-ams-${module}:${project}-ams-${module}-service"))
+    <#else>api(project(":${project}-ams-${module}:${project}-ams-${module}-service"))
     api("io.kudos:kudos-ability-web-ktor")
     </#if>
 

@@ -1,4 +1,4 @@
-package ${packagePrefix}.${module}.service.api.local
+package ${packagePrefix}.${module}.service.api
 
 import ${packagePrefix}.${module}.common.api.I${entityName}Api
 import org.springframework.stereotype.Service

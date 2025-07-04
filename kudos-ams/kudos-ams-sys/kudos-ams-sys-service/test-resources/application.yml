@@ -1,7 +1,5 @@
+#//region your codes 1
 spring:
-#  flyway:
-#    enabled: true
-#    locations: sql/h2
   datasource:
     dynamic:
       primary: ds1
@@ -20,45 +18,11 @@ spring:
         is-register-mbeans: false
         is-allow-pool-suspension: false
       datasource:
-        master:
-          hikari:
-            is-auto-commit: false
-          driver-class-name: org.h2.Driver
-          url: jdbc:h2:tcp://localhost:1521/mem:test;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;
-          username: sa
-          password: sa
         ds1:
           driver-class-name: org.h2.Driver
           url: jdbc:h2:tcp://localhost:1521/mem:test;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;
           username: sa
           password: sa
-#          init:
-#            schema: sql/schema.sql
-#            data: sql/data.sql
-        ds2:
-          driver-class-name: org.h2.Driver
-          url: jdbc:h2:tcp://localhost:1521/mem:test;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;
-          username: sa
-          password: sa
-#          init:
-#            schema: sql/schema.sql
-#            data: sql/data.sql
-        3:
-          driver-class-name: org.h2.Driver
-          url: jdbc:h2:tcp://localhost:1521/mem:test;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;
-          username: sa
-          password: sa
-#          init:
-#            schema: sql/schema.sql
-#            data: sql/data.sql
-#        ch:
-#          driver-class-name: com.clickhouse.jdbc.ClickHouseDriver
-#          url: jdbc:clickhouse://localhost:8123/test
-#          username: default
-#          password: 123456
-#          init:
-#            schema: sql/schema.sql
-#            data: sql/data.sql
 
 
 kudos:
@@ -68,3 +32,4 @@ kudos:
       datasource-config:
         #demo：代表resource下db/{demo}/模块,对应的jdbc多数据源的数据源名
         sys: ds1
+#//endregion your codes 1
