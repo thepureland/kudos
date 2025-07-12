@@ -19,6 +19,18 @@ open class SysDictItemCacheItem : Serializable {
         private const val serialVersionUID = 1931201536817154812L
     }
 
+    /** 字典项编号 */
+    var itemCode: String? = null
+
+    /** 字典项名称，或其国际化key */
+    var itemName: String? = null
+
+    /** 父项ID */
+    var parentId: String? = null
+
+    /** 该字典编号在同父节点下的排序号 */
+    var seqNo: Int? = null
+
     //endregion your codes 2
 
 

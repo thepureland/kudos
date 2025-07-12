@@ -16,6 +16,12 @@ open class SysCacheSearchPayload : ListSearchPayload() {
 
     //region your codes 2
 
+    /** 名称 */
+    var name: String? = null
+
+    /** 是否启用 */
+    var active: Boolean? = null
+
     //endregion your codes 2
 
     override var returnEntityClass: KClass<*>? = SysCacheRecord::class

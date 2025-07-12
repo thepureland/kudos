@@ -1,14 +1,14 @@
 --region DDL
 create table if not exists "sys_access_rule_ip"
 (
-    "id"              character varying(36) default RANDOM_UUID() not null primary key,
-    "ip_start"        bigint                                      not null,
-    "ip_end"          bigint                                      not null,
-    "ip_type"         smallint                                    not null,
+    "id"              character(36) default RANDOM_UUID() not null primary key,
+    "ip_start"        bigint                              not null,
+    "ip_end"          bigint                              not null,
+    "ip_type"         smallint                            not null,
     "expiration_date" timestamp(6),
-    "parent_rule_id"  character varying(36)                       not null,
+    "parent_rule_id"  character(36)                       not null,
     "remark"          character varying(128),
-    "active"          boolean               default TRUE          not null,
+    "active"          boolean       default TRUE          not null,
     "create_user"     character varying(36),
     "create_time"     timestamp(6),
     "update_user"     character varying(36),

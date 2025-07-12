@@ -16,11 +16,17 @@ open class SysDataSourceDetail : IdJsonResult<String>() {
 
     //region your codes 2
 
+    /** 租户名称 */
+    var tenantName: String? = null
+
     //endregion your codes 2
 
 
     /** 名称 */
     var name: String? = null
+
+    /** 子系统编码 */
+    var subSystemCode: String? = null
 
     /** 微服务编码 */
     var microServiceCode: String? = null
@@ -37,7 +43,7 @@ open class SysDataSourceDetail : IdJsonResult<String>() {
     /** 用户名 */
     var username: String? = null
 
-    /** 密码，强烈建议加密 */
+    /** 密码 */
     var password: String? = null
 
     /** 初始连接数。初始化发生在显示调用init方法，或者第一次getConnection时 */

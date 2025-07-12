@@ -16,6 +16,18 @@ open class SysParamSearchPayload : ListSearchPayload() {
 
     //region your codes 2
 
+    /** 模块 */
+    var module: String? = null
+
+    /** 参数名称 */
+    var paramName: String? = null
+
+    /** 参数值，或其国际化key */
+    var paramValue: String? = null
+
+    /** 是否启用 */
+    var active: Boolean? = null
+
     //endregion your codes 2
 
     override var returnEntityClass: KClass<*>? = SysParamRecord::class

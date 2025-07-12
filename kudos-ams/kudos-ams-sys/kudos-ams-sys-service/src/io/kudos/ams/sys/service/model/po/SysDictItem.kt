@@ -27,6 +27,9 @@ interface SysDictItem : IMaintainableDbEntity<String, SysDictItem> {
     /** 字典项排序 */
     var orderNum: Int?
 
+    /** 父id */
+    var parentId: String?
+
 
     //region your codes 2
 

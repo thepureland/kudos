@@ -16,6 +16,15 @@ open class SysDomainSearchPayload : ListSearchPayload() {
 
     //region your codes 2
 
+    /** 域名 */
+    var domain: String? = null
+
+    /** 子系统代码 */
+    var subSysDictCode: String? = null
+
+    /** 租户id */
+    var tenantId: String? = null
+
     //endregion your codes 2
 
     override var returnEntityClass: KClass<*>? = SysDomainRecord::class

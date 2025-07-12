@@ -1,11 +1,11 @@
 --region DDL
 create table if not exists "sys_access_rule"
 (
-    "id"              character varying(36) default RANDOM_UUID() not null primary key,
-    "tenant_id"       character varying(36)                       not null,
+    "id"              character(36) default RANDOM_UUID() not null primary key,
+    "tenant_id"       character varying(36)               not null,
     "sub_system_code" character varying(32),
-    "portal_code"     character varying(32)                       not null,
-    "rule_type"       smallint              default 1             not null,
+    "portal_code"     character varying(32)               not null,
+    "rule_type"       smallint      default 1             not null,
     "create_user"     character varying(36),
     "create_time"     timestamp(6),
     "update_user"     character varying(36),

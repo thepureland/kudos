@@ -18,6 +18,9 @@ object SysDataSources : MaintainableTable<SysDataSource>("sys_data_source") {
     /** 名称 */
     var name = varchar("name").bindTo { it.name }
 
+    /** 子系统编码 */
+    var subSystemCode = varchar("sub_system_code").bindTo { it.subSystemCode }
+
     /** 微服务编码 */
     var microServiceCode = varchar("micro_service_code").bindTo { it.microServiceCode }
 
@@ -33,7 +36,7 @@ object SysDataSources : MaintainableTable<SysDataSource>("sys_data_source") {
     /** 用户名 */
     var username = varchar("username").bindTo { it.username }
 
-    /** 密码，强烈建议加密 */
+    /** 密码 */
     var password = varchar("password").bindTo { it.password }
 
     /** 初始连接数。初始化发生在显示调用init方法，或者第一次getConnection时 */

@@ -1,16 +1,16 @@
 --region DDL
 create table if not exists "sys_domain"
 (
-    "id"              character varying(36) default RANDOM_UUID() not null primary key,
-    "domain"          character varying(64)                       not null,
+    "id"              character(36) default RANDOM_UUID() not null primary key,
+    "domain"          character varying(64)               not null,
     "sub_system_code" character varying(32),
-    "portal_code"     character varying(32)                       not null,
-    "tenant_id"       character varying(36)                       not null,
+    "portal_code"     character varying(32)               not null,
+    "tenant_id"       character varying(36)               not null,
     "remark"          character varying(128),
-    "active"          boolean               default TRUE          not null,
-    "built_in"        boolean               default FALSE         not null,
+    "active"          boolean       default TRUE          not null,
+    "built_in"        boolean       default FALSE         not null,
     "create_user"     character varying(36),
-    "create_time"     timestamp             default now()         not null,
+    "create_time"     timestamp     default now()         not null,
     "update_user"     character varying(36),
     "update_time"     timestamp
 );
