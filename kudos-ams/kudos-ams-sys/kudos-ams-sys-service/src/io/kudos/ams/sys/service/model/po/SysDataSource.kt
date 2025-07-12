@@ -18,11 +18,14 @@ interface SysDataSource : IMaintainableDbEntity<String, SysDataSource> {
     /** 名称 */
     var name: String
 
+    /** 子系统编码 */
+    var subSystemCode: String
+
     /** 微服务编码 */
-    var microServiceCode: String
+    var microServiceCode: String?
 
     /** 原子服务编码 */
-    var atomicServiceCode: String
+    var atomicServiceCode: String?
 
     /** 租户id */
     var tenantId: String?
@@ -33,7 +36,7 @@ interface SysDataSource : IMaintainableDbEntity<String, SysDataSource> {
     /** 用户名 */
     var username: String
 
-    /** 密码，强烈建议加密 */
+    /** 密码 */
     var password: String?
 
     /** 初始连接数。初始化发生在显示调用init方法，或者第一次getConnection时 */

@@ -1,16 +1,17 @@
 --region DDL
 create table if not exists "sys_dict_item"
 (
-    "id"          character varying(36) DEFAULT RANDOM_UUID() NOT NULL PRIMARY KEY,
-    "item_code"   character varying(64)                       NOT NULL,
-    "item_name"   character varying(64)                       NOT NULL,
-    "dict_id"     character varying(36)                       NOT NULL,
+    "id"          character(36) DEFAULT RANDOM_UUID() NOT NULL PRIMARY KEY,
+    "item_code"   character varying(64)               NOT NULL,
+    "item_name"   character varying(64)               NOT NULL,
+    "dict_id"     character varying(36)               NOT NULL,
     "order_num"   integer,
+    "parent_id"   character(36),
     "remark"      character varying(300),
-    "active"      boolean               DEFAULT TRUE          NOT NULL,
-    "built_in"    boolean               DEFAULT FALSE         NOT NULL,
+    "active"      boolean       DEFAULT TRUE          NOT NULL,
+    "built_in"    boolean       DEFAULT FALSE         NOT NULL,
     "create_user" character varying(36),
-    "create_time" timestamp             default now(),
+    "create_time" timestamp     default now(),
     "update_user" character varying(36),
     "update_time" timestamp,
     constraint "fk_sys_dict_item"
@@ -25,6 +26,7 @@ comment on column "sys_dict_item"."item_code" is '字典项代码';
 comment on column "sys_dict_item"."item_name" is '字典项名称';
 comment on column "sys_dict_item"."dict_id" is '字典id';
 comment on column "sys_dict_item"."order_num" is '字典项排序';
+comment on column "sys_dict_item"."parent_id" is '父id';
 comment on column "sys_dict_item"."remark" is '备注';
 comment on column "sys_dict_item"."active" is '是否启用';
 comment on column "sys_dict_item"."built_in" is '是否内置';

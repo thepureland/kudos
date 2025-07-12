@@ -1,15 +1,15 @@
 --region DDL
 create table if not exists "sys_dict"
 (
-    "id"          character varying(36) default RANDOM_UUID() not null primary key,
-    "dict_type"   character varying(64)                       not null,
-    "dict_name"   character varying(64)                       not null,
-    "module_code" character varying(32)                       not null,
+    "id"          character(36) default RANDOM_UUID() not null primary key,
+    "dict_type"   character varying(64)               not null,
+    "dict_name"   character varying(64)               not null,
+    "module_code" character varying(32)               not null,
     "remark"      character varying(300),
-    "active"      boolean               default TRUE          not null,
-    "built_in"    boolean               default FALSE         not null,
+    "active"      boolean       default TRUE          not null,
+    "built_in"    boolean       default FALSE         not null,
     "create_user" character varying(36),
-    "create_time" timestamp             default now(),
+    "create_time" timestamp     default now(),
     "update_user" character varying(36),
     "update_time" timestamp
 );

@@ -15,6 +15,30 @@ open class SysDataSourceRecord : IdJsonResult<String>() {
 
     //region your codes 2
 
+    /** 租户id */
+    @Transient
+    var tenantId: String? = null
+
+    /** 租户名称 */
+    var tenantName: String? = null
+
+    //endregion your codes 2
+
+    /** 名称，或其国际化key */
+    var name: String? = null
+
+    /** 子系统代码 */
+    var subSysDictCode: String? = null
+
+    /** url */
+    var url: String? = null
+
+    /** 用户名 */
+    var username: String? = null
+
+    /** 是否启用 */
+    var active: Boolean? = null
+
     //endregion your codes 2
 
 }

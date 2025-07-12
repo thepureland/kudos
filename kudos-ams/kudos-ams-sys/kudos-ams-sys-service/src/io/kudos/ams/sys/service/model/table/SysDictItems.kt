@@ -27,6 +27,9 @@ object SysDictItems : MaintainableTable<SysDictItem>("sys_dict_item") {
     /** 字典项排序 */
     var orderNum = int("order_num").bindTo { it.orderNum }
 
+    /** 父id */
+    var parentId = varchar("parent_id").bindTo { it.parentId }
+
 
     //region your codes 2
 

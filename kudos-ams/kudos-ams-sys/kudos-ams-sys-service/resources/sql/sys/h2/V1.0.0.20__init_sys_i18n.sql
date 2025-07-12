@@ -1,16 +1,16 @@
 --region DDL
 create table if not exists "sys_i18n"
 (
-    "id"                  character varying(36) default RANDOM_UUID() not null primary key,
-    "locale"              character varying(8)                        not null,
-    "module_code"         character varying(32)                       not null,
-    "i18n_type_dict_code" character varying(32)                       not null,
-    "key"                 character varying(128)                      not null,
-    "value"               character varying(1000)                     not null,
-    "active"              boolean               default TRUE          not null,
-    "built_in"            boolean               default FALSE         not null,
+    "id"                  character(36) default RANDOM_UUID() not null primary key,
+    "locale"              character varying(8)                not null,
+    "module_code"         character varying(32)               not null,
+    "i18n_type_dict_code" character varying(32)               not null,
+    "key"                 character varying(128)              not null,
+    "value"               character varying(1000)             not null,
+    "active"              boolean       default TRUE          not null,
+    "built_in"            boolean       default FALSE         not null,
     "create_user"         character varying(36),
-    "create_time"         timestamp             default now()         not null,
+    "create_time"         timestamp     default now()         not null,
     "update_user"         character varying(36),
     "update_time"         timestamp
 );

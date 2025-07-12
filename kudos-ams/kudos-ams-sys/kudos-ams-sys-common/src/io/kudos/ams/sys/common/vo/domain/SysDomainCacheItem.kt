@@ -19,6 +19,21 @@ open class SysDomainCacheItem : Serializable {
         private const val serialVersionUID = 4077591078739245970L
     }
 
+    /** 域名 */
+    var domain: String? = null
+
+    /** 子系统代码 */
+    var subSysDictCode: String? = null
+
+    /** 租户id */
+    var tenantId: String? = null
+
+    /** 备注，或其国际化key */
+    var remark: String? = null
+
+    /** 是否启用 */
+    var active: Boolean? = null
+
     //endregion your codes 2
 
 

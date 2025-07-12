@@ -31,6 +31,9 @@ open class SysDictItemDetail : IdJsonResult<String>() {
     /** 字典项排序 */
     var orderNum: Int? = null
 
+    /** 父id */
+    var parentId: String? = null
+
     /** 备注 */
     var remark: String? = null
 
