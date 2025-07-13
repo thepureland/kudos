@@ -5,13 +5,17 @@ import io.kudos.ams.sys.common.vo.tenant.SysTenantCacheItem
 import io.kudos.ams.sys.common.vo.tenant.SysTenantRecord
 import io.kudos.ams.sys.common.vo.tenant.SysTenantSearchPayload
 import io.kudos.ams.sys.service.biz.ibiz.ISysTenantBiz
+import io.kudos.ams.sys.service.biz.ibiz.ISysTenantSubSystemBiz
 import io.kudos.ams.sys.service.cache.TenantByIdCacheHandler
 import io.kudos.ams.sys.service.cache.TenantsBySubSysCacheHandler
 import io.kudos.ams.sys.service.dao.SysTenantDao
 import io.kudos.ams.sys.service.model.po.SysDataSource
 import io.kudos.ams.sys.service.model.po.SysTenant
+import io.kudos.ams.sys.service.model.po.SysTenantSubSystem
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
+import io.kudos.base.query.Criteria
+import io.kudos.base.query.enums.OperatorEnum
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -37,6 +41,9 @@ open class SysTenantBiz : BaseCrudBiz<String, SysTenant, SysTenantDao>(), ISysTe
 
     @Autowired
     private lateinit var tenantBySubSysCacheHandler: TenantsBySubSysCacheHandler
+
+    @Autowired
+    private lateinit var sysTenantSubSystemBiz: ISysTenantSubSystemBiz
 
     override fun getTenant(id: String): SysTenantCacheItem? {
         return tenantByIdCacheHandler.getTenantById(id)
@@ -84,7 +91,7 @@ open class SysTenantBiz : BaseCrudBiz<String, SysTenant, SysTenantDao>(), ISysTe
         if (success) {
             // 同步缓存
             tenantByIdCacheHandler.syncOnUpdate(id)
-//            tenantBySubSysCacheHandler.syncOnUpdate(null, id) //TODO
+            tenantBySubSysCacheHandler.syncOnUpdate(null, id)
         } else {
             log.error("更新id为${id}的租户的启用状态为${active}失败！")
         }
@@ -107,16 +114,24 @@ open class SysTenantBiz : BaseCrudBiz<String, SysTenant, SysTenantDao>(), ISysTe
 
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {
-//        @Suppress("UNCHECKED_CAST")
-//        val subSysDictCodes = dao.inSearchPropertyById(ids, SysTenant::subSysDictCode.name).toSet() as Set<String>
-//        val count = super.batchDelete(ids)
-//        log.debug("批量删除租户，期望删除${ids.size}条，实际删除${count}条。")
-//        // 同步缓存
-//        tenantByIdCacheHandler.syncOnBatchDelete(ids)
-//        tenantBySubSysCacheHandler.syncOnBatchDelete(ids, subSysDictCodes)
-//        return count
-        //TODO
-        return 0
+        // 1.查出对应的子系统编码
+        val tenantIdAndSubSysCodesMap = sysTenantSubSystemBiz.groupingSubSystemCodesByTenantIds(ids)
+        val subSystemCodes = tenantIdAndSubSysCodesMap.values.flatten().toSet()
+
+        // 1.删除租户-子系统关系
+        val criteria = Criteria.add(SysTenantSubSystem::tenantId.name, OperatorEnum.IN, ids)
+        val count = sysTenantSubSystemBiz.batchDeleteCriteria(criteria)
+
+        // 2.删除租户
+        if (count >= 0) {
+            val count = super.batchDelete(ids)
+            log.debug("批量删除租户，期望删除${ids.size}条，实际删除${count}条。")
+        }
+
+        // 3.同步缓存
+        tenantByIdCacheHandler.syncOnBatchDelete(ids)
+        tenantBySubSysCacheHandler.syncOnBatchDelete(ids, subSystemCodes)
+        return count
     }
 
 

@@ -23,9 +23,6 @@ open class SysTenantCacheItem : IIdEntity<String>,Serializable {
     /** 主键 */
     override var id: String? = null
 
-    /** 子系统编码 */
-    var subSystemCode: String? = null
-
     /** 名称 */
     var name: String? = null
 
