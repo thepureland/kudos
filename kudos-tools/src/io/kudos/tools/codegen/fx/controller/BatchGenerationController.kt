@@ -35,6 +35,7 @@ class BatchGenerationController : Initializable {
     override fun initialize(p0: URL?, p1: ResourceBundle?) {
         // 双向绑定
         onlyEntityRelativeFilesCheckBox.selectedProperty().bindBidirectional(onlyEntityRelativeFilesProperty)
+        onlyEntityRelativeFilesProperty.set(true)
     }
 
     fun initTable() {

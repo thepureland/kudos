@@ -93,6 +93,8 @@ open class SingleTableCodeGenerateWizard : Application() {
                 filesController.readFiles()
                 val button = lookupButton(ButtonType.FINISH) as Button
                 button.isDisable = true
+                filesController.selectEntityRelativeFilesProperty.set(true)
+                filesController.selectEntityRelativeFiles(null)
             }
         }
         page3.headerText = "请选择要生成的文件："
