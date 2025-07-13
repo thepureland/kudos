@@ -3,13 +3,11 @@ package io.kudos.ams.sys.service.cache
 import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.ams.sys.common.vo.cache.SysCacheCacheItem
 import io.kudos.ams.sys.service.biz.ibiz.ISysCacheBiz
-import io.kudos.ams.sys.service.init.SysAutoConfiguration
 import io.kudos.ams.sys.service.model.po.SysCache
 import io.kudos.test.common.init.EnableKudosTest
 import io.kudos.test.container.containers.H2TestContainer
 import org.soul.ability.cache.common.enums.CacheStrategy
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.autoconfigure.ImportAutoConfiguration
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.junit.jupiter.EnabledIfDockerAvailable
@@ -26,7 +24,6 @@ import kotlin.test.assertNull
  */
 @EnableKudosTest
 @EnabledIfDockerAvailable
-@ImportAutoConfiguration(SysAutoConfiguration::class)
 class CacheByNameCacheHandlerTest {
 
     companion object {
@@ -68,7 +65,7 @@ class CacheByNameCacheHandlerTest {
         val newCacheName = "a_new_test_cache"
         val sysCache = SysCache().apply {
             name = newCacheName
-            atomicServiceCode = "ms-sys"
+            atomicServiceCode = "ams-sys"
             strategyDictCode = CacheStrategy.SINGLE_LOCAL.name
             writeOnBoot = true
             writeInTime = true
