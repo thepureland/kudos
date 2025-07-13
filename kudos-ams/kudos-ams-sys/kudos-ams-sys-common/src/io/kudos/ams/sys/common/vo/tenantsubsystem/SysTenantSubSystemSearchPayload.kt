@@ -16,6 +16,12 @@ open class SysTenantSubSystemSearchPayload : ListSearchPayload() {
 
     //region your codes 2
 
+    /** 租户id */
+    var tenantId: String? = null
+
+    /** 子系统编码 */
+    var subSystemCode: String? = null
+
     //endregion your codes 2
 
     override var returnEntityClass: KClass<*>? = SysTenantSubSystemRecord::class

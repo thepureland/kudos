@@ -20,6 +20,18 @@ open class SysTenantSubSystemBiz : BaseCrudBiz<String, SysTenantSubSystem, SysTe
 
     //region your codes 2
 
+    override fun searchSubSystemCodesByTenantId(tenantId: String): Set<String> =
+        dao.searchSubSystemCodesByTenantId(tenantId)
+
+    override fun searchTenantIdsBySubSystemCode(subSystemCode: String): Set<String> =
+        dao.searchTenantIdsBySubSystemCode(subSystemCode)
+
+    override fun groupingSubSystemCodesByTenantIds(tenantIds: Collection<String>?): Map<String, List<String>> =
+        dao.groupingSubSystemCodesByTenantIds(tenantIds)
+
+    override fun groupingTenantIdsBySubSystemCodes(subSystemCodes: Collection<String>?): Map<String, List<String>> =
+        dao.groupingTenantIdsBySubSystemCodes(subSystemCodes)
+
     //endregion your codes 2
 
 }
