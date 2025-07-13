@@ -33,7 +33,7 @@ class FilesController : Initializable {
     @FXML
     private lateinit var selectEntityRelativeFilesCheckBox: CheckBox
 
-    private val selectEntityRelativeFilesProperty = SimpleBooleanProperty()
+    val selectEntityRelativeFilesProperty = SimpleBooleanProperty()
 
     override fun initialize(location: URL?, resources: ResourceBundle?) {
         // 双向绑定
@@ -92,7 +92,7 @@ class FilesController : Initializable {
     }
 
     @FXML
-    fun selectEntityRelativeFiles(e: Event) {
+    fun selectEntityRelativeFiles(e: Event?) {
         if (selectEntityRelativeFilesProperty.value) {
             fileTable.items.forEach {
                 val notEntityRelative = !isEntityRelative(it.templateFileRelativePath)
