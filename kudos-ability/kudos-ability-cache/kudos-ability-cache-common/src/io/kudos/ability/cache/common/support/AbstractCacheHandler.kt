@@ -105,7 +105,7 @@ abstract class AbstractCacheHandler<T> {
      * @author K
      * @since 1.0.0
      */
-    abstract fun reloadAll(clear: Boolean)
+    abstract fun reloadAll(clear: Boolean = true)
 
     private val log = LogFactory.getLog(this)
 

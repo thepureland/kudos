@@ -8,6 +8,7 @@ import io.kudos.ams.sys.service.dao.SysDomainDao
 import io.kudos.ams.sys.service.model.po.SysDomain
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
+import io.kudos.context.kit.SpringKit
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
@@ -29,17 +30,16 @@ open class DomainByNameCacheHandler : AbstractCacheHandler<SysDomainCacheItem>()
     @Autowired
     private lateinit var dao: SysDomainDao
 
-    @Autowired
-    private lateinit var self: DomainByNameCacheHandler
+    private var self: DomainByNameCacheHandler? = null
 
     companion object {
-        private const val CACHE_NAME = "sys_domain_by_name"
+        const val CACHE_NAME = "SYS_DOMAIN_BY_NAME"
     }
 
     override fun cacheName() = CACHE_NAME
 
     override fun doReload(key: String): SysDomainCacheItem? {
-        return self.getDomain(key)
+        return getSelf().getDomain(key)
     }
 
     override fun reloadAll(clear: Boolean) {
@@ -100,7 +100,7 @@ open class DomainByNameCacheHandler : AbstractCacheHandler<SysDomainCacheItem>()
             log.debug("新增id为${id}的域名后，同步${CACHE_NAME}缓存...")
             val domain = BeanKit.getProperty(any, SysDomain::domain.name) as String
             CacheKit.evict(CACHE_NAME, domain) // 踢除缓存
-            self.getDomain(domain) // 重新缓存
+            getSelf().getDomain(domain) // 重新缓存
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
     }
@@ -115,7 +115,7 @@ open class DomainByNameCacheHandler : AbstractCacheHandler<SysDomainCacheItem>()
             }
             CacheKit.evict(CACHE_NAME, domain) // 踢除缓存
             if (CacheKit.isWriteInTime(CACHE_NAME)) {
-                self.getDomain(domain) // 重新缓存
+                getSelf().getDomain(domain) // 重新缓存
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
@@ -137,6 +137,13 @@ open class DomainByNameCacheHandler : AbstractCacheHandler<SysDomainCacheItem>()
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
+    }
+
+    private fun getSelf() : DomainByNameCacheHandler {
+        if (self == null) {
+            self = SpringKit.getBean(this::class)
+        }
+        return self!!
     }
 
     private val log = LogFactory.getLog(this)

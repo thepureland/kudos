@@ -33,3 +33,8 @@ kudos:
         #demo：代表resource下db/{demo}/模块,对应的jdbc多数据源的数据源名
         sys: ds1
 #//endregion your codes 1
+
+
+logging:
+  level:
+    org.springframework.core.io.support.SpringFactoriesLoader: DEBUG

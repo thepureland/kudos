@@ -10,6 +10,7 @@ import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.support.Consts
+import io.kudos.context.kit.SpringKit
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
@@ -31,12 +32,11 @@ open class DataSourceBySubSysAndTenantIdCacheHandler : AbstractCacheHandler<SysD
     @Autowired
     private lateinit var sysDataSourceDao: SysDataSourceDao
 
-    @Autowired
-    private lateinit var self: DataSourceBySubSysAndTenantIdCacheHandler
+    private var self: DataSourceBySubSysAndTenantIdCacheHandler? = null
 
 
     companion object {
-        private const val CACHE_NAME = "sys_data_source_by_sub_sys_and_tenant_id"
+        const val CACHE_NAME = "SYS_DATA_SOURCE_BY_SUB_SYS_AND_TENANT_ID"
     }
 
     override fun cacheName() = CACHE_NAME
@@ -46,7 +46,7 @@ open class DataSourceBySubSysAndTenantIdCacheHandler : AbstractCacheHandler<SysD
             "缓存${CACHE_NAME}的key格式必须是 子系统代码${Consts.CACHE_KEY_DEFAULT_DELIMITER}租户id"
         }
         val subSysAndTenantId = key.split(Consts.CACHE_KEY_DEFAULT_DELIMITER)
-        return self.getDataSource(subSysAndTenantId[0], subSysAndTenantId[1])
+        return getSelf().getDataSource(subSysAndTenantId[0], subSysAndTenantId[1])
     }
 
     override fun reloadAll(clear: Boolean) {
@@ -115,7 +115,7 @@ open class DataSourceBySubSysAndTenantIdCacheHandler : AbstractCacheHandler<SysD
             log.debug("新增id为${id}的数据源后，同步${CACHE_NAME}缓存...")
             val subSysDictCode = BeanKit.getProperty(any, SysDataSource::subSystemCode.name) as String
             val tenantId = BeanKit.getProperty(any, SysDataSource::tenantId.name) as String?
-            self.getDataSource(subSysDictCode, tenantId) // 缓存
+            getSelf().getDataSource(subSysDictCode, tenantId) // 缓存
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
     }
@@ -127,7 +127,7 @@ open class DataSourceBySubSysAndTenantIdCacheHandler : AbstractCacheHandler<SysD
             val tenantId = BeanKit.getProperty(any, SysDataSource::tenantId.name) as String
             CacheKit.evict(CACHE_NAME, getKey(subSysDictCode, tenantId)) // 踢除数据源缓存
             if (CacheKit.isWriteInTime(CACHE_NAME)) {
-                self.getDataSource(subSysDictCode, tenantId) // 重新缓存
+                getSelf().getDataSource(subSysDictCode, tenantId) // 重新缓存
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
@@ -139,7 +139,7 @@ open class DataSourceBySubSysAndTenantIdCacheHandler : AbstractCacheHandler<SysD
             val dataSource = sysDataSourceDao.get(id)!!
             if (active) {
                 if (CacheKit.isWriteInTime(CACHE_NAME)) {
-                    self.getDataSource(dataSource.subSystemCode, dataSource.tenantId) // 重新缓存
+                    getSelf().getDataSource(dataSource.subSystemCode, dataSource.tenantId) // 重新缓存
                 }
             } else {
                 CacheKit.evict(CACHE_NAME, getKey(dataSource.subSystemCode, dataSource.tenantId!!)) // 踢除数据源缓存
@@ -159,6 +159,13 @@ open class DataSourceBySubSysAndTenantIdCacheHandler : AbstractCacheHandler<SysD
 
     private fun getKey(subSysDictCode: String, tenantId: String): String {
         return "${subSysDictCode}${Consts.CACHE_KEY_DEFAULT_DELIMITER}${tenantId}"
+    }
+
+    private fun getSelf() : DataSourceBySubSysAndTenantIdCacheHandler {
+        if (self == null) {
+            self = SpringKit.getBean(this::class)
+        }
+        return self!!
     }
 
     private val log = LogFactory.getLog(this)
