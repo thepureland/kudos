@@ -9,6 +9,7 @@ import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.support.Consts
+import io.kudos.context.kit.SpringKit
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
@@ -30,12 +31,11 @@ open class ResourceIdsBySubSysAndTypeCacheHandler : AbstractCacheHandler<List<St
     @Autowired
     private lateinit var sysResourceDao: SysResourceDao
 
-    @Autowired
-    private lateinit var self: ResourceIdsBySubSysAndTypeCacheHandler
+    private var self: ResourceIdsBySubSysAndTypeCacheHandler? = null
 
 
     companion object {
-        private const val CACHE_NAME = "sys_resource_ids_by_sub_sys_and_type"
+        const val CACHE_NAME = "SYS_RESOURCE_IDS_BY_SUB_SYS_AND_TYPE"
     }
 
     override fun cacheName(): String = CACHE_NAME
@@ -45,7 +45,7 @@ open class ResourceIdsBySubSysAndTypeCacheHandler : AbstractCacheHandler<List<St
             "缓存${CACHE_NAME}的key格式必须是 子系统代码${Consts.CACHE_KEY_DEFAULT_DELIMITER}资源类型代码"
         }
         val subSysAndResType = key.split(Consts.CACHE_KEY_DEFAULT_DELIMITER)
-        return self.getResourceIds(subSysAndResType[0], subSysAndResType[1])
+        return getSelf().getResourceIds(subSysAndResType[0], subSysAndResType[1])
     }
 
     override fun reloadAll(clear: Boolean) {
@@ -108,7 +108,7 @@ open class ResourceIdsBySubSysAndTypeCacheHandler : AbstractCacheHandler<List<St
             val resourceTypeDictCode = BeanKit.getProperty(any, SysResource::resourceTypeDictCode.name) as String
             CacheKit.evict(CACHE_NAME, getKey(subSystemCode, resourceTypeDictCode))
             if (CacheKit.isWriteInTime(CACHE_NAME)) {
-                self.getResourceIds(subSystemCode, resourceTypeDictCode) // 缓存
+                getSelf().getResourceIds(subSystemCode, resourceTypeDictCode) // 缓存
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
@@ -121,7 +121,7 @@ open class ResourceIdsBySubSysAndTypeCacheHandler : AbstractCacheHandler<List<St
             val resourceTypeDictCode = BeanKit.getProperty(any, SysResource::resourceTypeDictCode.name) as String
             CacheKit.evict(CACHE_NAME, getKey(oldsubSystemCode, oldResourceTypeDictCode)) // 踢除资源缓存
             if (CacheKit.isWriteInTime(CACHE_NAME)) {
-                self.getResourceIds(subSystemCode, resourceTypeDictCode) // 重新缓存
+                getSelf().getResourceIds(subSystemCode, resourceTypeDictCode) // 重新缓存
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
@@ -133,7 +133,7 @@ open class ResourceIdsBySubSysAndTypeCacheHandler : AbstractCacheHandler<List<St
             val sysRes = sysResourceDao.get(id)!!
             if (active) {
                 if (CacheKit.isWriteInTime(CACHE_NAME)) {
-                    self.getResourceIds(sysRes.subSystemCode, sysRes.resourceTypeDictCode) // 重新缓存
+                    getSelf().getResourceIds(sysRes.subSystemCode, sysRes.resourceTypeDictCode) // 重新缓存
                 }
             } else {
                 CacheKit.evict(CACHE_NAME, getKey(sysRes.subSystemCode, sysRes.resourceTypeDictCode)) // 踢除资源缓存
@@ -147,7 +147,7 @@ open class ResourceIdsBySubSysAndTypeCacheHandler : AbstractCacheHandler<List<St
             log.debug("删除id为${id}的资源后，同步从${CACHE_NAME}缓存中踢除...")
             CacheKit.evict(CACHE_NAME, getKey(subSystemCode, resourceTypeDictCode)) // 踢除缓存, 资源缓存的粒度到资源类型
             if (CacheKit.isWriteInTime(CACHE_NAME)) {
-                self.getResourceIds(subSystemCode, resourceTypeDictCode) // 重新缓存
+                getSelf().getResourceIds(subSystemCode, resourceTypeDictCode) // 重新缓存
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
@@ -155,6 +155,13 @@ open class ResourceIdsBySubSysAndTypeCacheHandler : AbstractCacheHandler<List<St
 
     private fun getKey(subSystemCode: String, resourceTypeDictCode: String): String {
         return "${subSystemCode}${Consts.CACHE_KEY_DEFAULT_DELIMITER}${resourceTypeDictCode}"
+    }
+
+    private fun getSelf() : ResourceIdsBySubSysAndTypeCacheHandler {
+        if (self == null) {
+            self = SpringKit.getBean(this::class)
+        }
+        return self!!
     }
 
     private val log = LogFactory.getLog(this)

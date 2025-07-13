@@ -10,6 +10,7 @@ import io.kudos.base.query.Criteria
 import io.kudos.base.query.Criterion
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.support.Consts
+import io.kudos.context.kit.SpringKit
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
@@ -31,11 +32,10 @@ open class ResourceIdBySubSysAndUrlCacheHandler : AbstractCacheHandler<String>()
     @Autowired
     private lateinit var sysResourceDao: SysResourceDao
 
-    @Autowired
-    private lateinit var self: ResourceIdBySubSysAndUrlCacheHandler
+    private var self: ResourceIdBySubSysAndUrlCacheHandler? = null
 
     companion object {
-        private const val CACHE_NAME = "sys_resource_id_by_sub_sys_and_url"
+        const val CACHE_NAME = "SYS_RESOURCE_ID_BY_SUB_SYS_AND_URL"
     }
 
     override fun cacheName(): String = CACHE_NAME
@@ -45,7 +45,7 @@ open class ResourceIdBySubSysAndUrlCacheHandler : AbstractCacheHandler<String>()
             "缓存${CACHE_NAME}的key格式必须是 子系统代码${Consts.CACHE_KEY_DEFAULT_DELIMITER}URL"
         }
         val subSysAndUrl = key.split(Consts.CACHE_KEY_DEFAULT_DELIMITER)
-        return self.getResourceId(subSysAndUrl[0], subSysAndUrl[1])
+        return getSelf().getResourceId(subSysAndUrl[0], subSysAndUrl[1])
     }
 
     override fun reloadAll(clear: Boolean) {
@@ -105,7 +105,7 @@ open class ResourceIdBySubSysAndUrlCacheHandler : AbstractCacheHandler<String>()
             if (!url.isNullOrBlank()) {
                 log.debug("新增id为${id}的资源后，同步${CACHE_NAME}缓存...")
                 val subSystemCode = BeanKit.getProperty(any, SysResource::subSystemCode.name) as String
-                self.getResourceId(subSystemCode, url) // 缓存
+                getSelf().getResourceId(subSystemCode, url) // 缓存
                 log.debug("${CACHE_NAME}缓存同步完成。")
             }
         }
@@ -121,7 +121,7 @@ open class ResourceIdBySubSysAndUrlCacheHandler : AbstractCacheHandler<String>()
             if (CacheKit.isWriteInTime(CACHE_NAME)) {
                 val url = BeanKit.getProperty(any, SysResource::url.name) as String?
                 if (!url.isNullOrBlank()) {
-                    self.getResourceId(subSystemCode, url) // 重新缓存
+                    getSelf().getResourceId(subSystemCode, url) // 重新缓存
                 }
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
@@ -138,6 +138,13 @@ open class ResourceIdBySubSysAndUrlCacheHandler : AbstractCacheHandler<String>()
 
     private fun getKey(subSystemCode: String, url: String): String {
         return "${subSystemCode}${Consts.CACHE_KEY_DEFAULT_DELIMITER}${url}"
+    }
+
+    private fun getSelf() : ResourceIdBySubSysAndUrlCacheHandler {
+        if (self == null) {
+            self = SpringKit.getBean(this::class)
+        }
+        return self!!
     }
 
     private val log = LogFactory.getLog(this)

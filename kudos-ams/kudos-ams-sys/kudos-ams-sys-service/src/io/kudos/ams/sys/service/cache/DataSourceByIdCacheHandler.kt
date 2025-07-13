@@ -3,8 +3,8 @@ package io.kudos.ams.sys.service.cache
 import io.kudos.ability.cache.common.support.AbstractByIdCacheHandler
 import io.kudos.ams.sys.common.vo.datasource.SysDataSourceCacheItem
 import io.kudos.ams.sys.service.dao.SysDataSourceDao
+import io.kudos.context.kit.SpringKit
 import org.soul.ability.cache.common.batch.BatchCacheable
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
 
@@ -22,11 +22,10 @@ import org.springframework.stereotype.Component
 @Component
 open class DataSourceByIdCacheHandler: AbstractByIdCacheHandler<String, SysDataSourceCacheItem, SysDataSourceDao>() {
 
-    @Autowired
-    private lateinit var self: DataSourceByIdCacheHandler
+    private var self: DataSourceByIdCacheHandler? = null
 
     companion object {
-        private const val CACHE_NAME = "sys_data_source_by_id"
+        const val CACHE_NAME = "SYS_DATA_SOURCE_BY_ID"
     }
 
     override fun itemDesc() = "数据源"
@@ -34,7 +33,7 @@ open class DataSourceByIdCacheHandler: AbstractByIdCacheHandler<String, SysDataS
     override fun cacheName() = CACHE_NAME
 
     override fun doReload(key: String): SysDataSourceCacheItem? {
-        return self.getTenantById(key)
+        return getSelf().getTenantById(key)
     }
 
     @Cacheable(
@@ -52,6 +51,13 @@ open class DataSourceByIdCacheHandler: AbstractByIdCacheHandler<String, SysDataS
     )
     open fun getTenantsByIds(ids: Collection<String>): Map<String, SysDataSourceCacheItem> {
         return getByIds(ids)
+    }
+
+    private fun getSelf() : DataSourceByIdCacheHandler {
+        if (self == null) {
+            self = SpringKit.getBean(this::class)
+        }
+        return self!!
     }
 
 }

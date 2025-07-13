@@ -18,7 +18,7 @@ class TestFlyway {
 //        println("Applied migrations: " + flyway.info().appliedMigrations.map { it.version.toString() })
     }
 
-    companion object Companion {
+    companion object {
         @JvmStatic
         @DynamicPropertySource
         private fun changeProperties(registry: DynamicPropertyRegistry) {

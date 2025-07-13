@@ -3,6 +3,7 @@ package io.kudos.ams.sys.service.cache
 import io.kudos.ability.cache.common.support.AbstractByIdCacheHandler
 import io.kudos.ams.sys.common.vo.dict.SysDictCacheItem
 import io.kudos.ams.sys.service.dao.SysDictDao
+import io.kudos.context.kit.SpringKit
 import org.soul.ability.cache.common.batch.BatchCacheable
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable
@@ -22,17 +23,16 @@ import org.springframework.stereotype.Component
 @Component
 open class DictByIdCacheHandler : AbstractByIdCacheHandler<String, SysDictCacheItem, SysDictDao>() {
 
-    @Autowired
-    private lateinit var self: DictByIdCacheHandler
+    private var self: DictByIdCacheHandler? = null
 
     companion object {
-        private const val CACHE_NAME = "sys_dict_by_id"
+        const val CACHE_NAME = "SYS_DICT_BY_ID"
     }
 
     override fun cacheName(): String = CACHE_NAME
 
     override fun doReload(key: String): SysDictCacheItem? {
-        return self.getDictById(key)
+        return getSelf().getDictById(key)
     }
 
     @Cacheable(
@@ -50,6 +50,13 @@ open class DictByIdCacheHandler : AbstractByIdCacheHandler<String, SysDictCacheI
     )
     open fun getDictsByIds(ids: Collection<String>): Map<String, SysDictCacheItem> {
         return getByIds(ids)
+    }
+
+    private fun getSelf() : DictByIdCacheHandler {
+        if (self == null) {
+            self = SpringKit.getBean(this::class)
+        }
+        return self!!
     }
 
     override fun itemDesc() = "字典"

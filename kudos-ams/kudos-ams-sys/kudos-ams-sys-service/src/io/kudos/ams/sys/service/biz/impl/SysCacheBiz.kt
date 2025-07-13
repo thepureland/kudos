@@ -1,17 +1,16 @@
 package io.kudos.ams.sys.service.biz.impl
 
-import io.kudos.ams.sys.service.biz.ibiz.ISysCacheBiz
-import io.kudos.ams.sys.service.model.po.SysCache
-import io.kudos.ams.sys.service.dao.SysCacheDao
 import io.kudos.ability.data.rdb.ktorm.biz.BaseCrudBiz
 import io.kudos.ams.sys.common.vo.cache.SysCacheCacheItem
+import io.kudos.ams.sys.service.biz.ibiz.ISysCacheBiz
 import io.kudos.ams.sys.service.cache.CacheByNameCacheHandler
+import io.kudos.ams.sys.service.dao.SysCacheDao
+import io.kudos.ams.sys.service.model.po.SysCache
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import kotlin.text.get
 
 
 /**
@@ -75,7 +74,11 @@ open class SysCacheBiz : BaseCrudBiz<String, SysCache, SysCacheDao>(), ISysCache
 
     @Transactional
     override fun deleteById(id: String): Boolean {
-        val sysCache = dao.get(id)!!
+        val sysCache = dao.get(id)
+        if (sysCache == null) {
+            log.warn("删除id为${id}的缓存配置时，发现其已不存在！")
+            return false
+        }
         val success = super.deleteById(id)
         if (success) {
             log.debug("删除id为${id}的缓存配置成功！")
@@ -88,10 +91,11 @@ open class SysCacheBiz : BaseCrudBiz<String, SysCache, SysCacheDao>(), ISysCache
 
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {
-        val sysCaches = dao.inSearchById(ids)
+        @Suppress("UNCHECKED_CAST")
+        val names = dao.inSearchPropertyById(ids, SysCache::name.name) as List<String>
         val count = super.batchDelete(ids)
         log.debug("批量删除缓存配置，期望删除${ids.size}条，实际删除${count}条。")
-        cacheConfigCacheHandler.synchOnBatchDelete(ids, sysCaches)
+        cacheConfigCacheHandler.synchOnBatchDelete(ids, names)
         return count
     }
 

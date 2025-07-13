@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-@DependsOn(value = ["dataSource", "springKit"])
+@DependsOn(value = ["dataSource"])
 open class CacheConfigProvider : ICacheConfigProvider {
 
     @Autowired
