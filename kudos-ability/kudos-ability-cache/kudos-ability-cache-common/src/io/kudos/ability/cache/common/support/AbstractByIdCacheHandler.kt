@@ -68,8 +68,8 @@ abstract class AbstractByIdCacheHandler<PK: Any, T: IIdEntity<*>, DAO: IBaseRead
         }
 
         @Suppress("UNCHECKED_CAST")
-        val dicts = dao.search(searchPayload) as List<T>
-        log.debug("从数据库加载了${dicts.size}条${itemDesc()}信息。")
+        val results = dao.search(searchPayload) as List<T>
+        log.debug("从数据库加载了${results.size}条${itemDesc()}信息。")
 
         // 清除缓存
         if (clear) {
@@ -77,10 +77,10 @@ abstract class AbstractByIdCacheHandler<PK: Any, T: IIdEntity<*>, DAO: IBaseRead
         }
 
         // 缓存
-        dicts.forEach {
+        results.forEach {
             CacheKit.putIfAbsent(cacheName(), it.id!!, it)
         }
-        log.debug("缓存了${dicts.size}条${itemDesc()}信息。")
+        log.debug("缓存了${results.size}条${itemDesc()}信息。")
     }
 
     open fun syncOnInsert(id: PK) {

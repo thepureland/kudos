@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component
  *
  * 1. 缓存所有数据源，包括active=false的
  * 2. 缓存key为：id
- * 3. 缓存value为：SysDataSourceCacheItem
+ * 3. 缓存value为：SysDataSourceCacheItem对象
  *
  * @author K
  * @since 1.0.0
@@ -33,7 +33,7 @@ open class DataSourceByIdCacheHandler: AbstractByIdCacheHandler<String, SysDataS
     override fun cacheName() = CACHE_NAME
 
     override fun doReload(key: String): SysDataSourceCacheItem? {
-        return getSelf().getTenantById(key)
+        return getSelf().getDataSourceById(key)
     }
 
     @Cacheable(
@@ -41,7 +41,7 @@ open class DataSourceByIdCacheHandler: AbstractByIdCacheHandler<String, SysDataS
         key = "#id",
         unless = "#result == null"
     )
-    open fun getTenantById(id: String): SysDataSourceCacheItem? {
+    open fun getDataSourceById(id: String): SysDataSourceCacheItem? {
         return getById(id)
     }
 
@@ -49,7 +49,7 @@ open class DataSourceByIdCacheHandler: AbstractByIdCacheHandler<String, SysDataS
         cacheNames = [CACHE_NAME],
         valueClass = SysDataSourceCacheItem::class
     )
-    open fun getTenantsByIds(ids: Collection<String>): Map<String, SysDataSourceCacheItem> {
+    open fun getDataSourcesByIds(ids: Collection<String>): Map<String, SysDataSourceCacheItem> {
         return getByIds(ids)
     }
 
