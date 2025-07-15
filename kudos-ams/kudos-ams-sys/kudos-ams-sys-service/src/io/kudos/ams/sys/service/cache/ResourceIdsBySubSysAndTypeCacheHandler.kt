@@ -35,7 +35,7 @@ open class ResourceIdsBySubSysAndTypeCacheHandler : AbstractCacheHandler<List<St
 
 
     companion object {
-        const val CACHE_NAME = "SYS_RESOURCE_IDS_BY_SUB_SYS_AND_TYPE"
+        private const val CACHE_NAME = "SYS_RESOURCE_IDS_BY_SUB_SYS_AND_TYPE"
     }
 
     override fun cacheName(): String = CACHE_NAME

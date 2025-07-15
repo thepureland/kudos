@@ -15,6 +15,7 @@ import org.soul.ability.cache.common.starter.properties.CacheItemsProperties
 import org.soul.ability.cache.common.starter.properties.CacheVersionConfig
 import org.soul.ability.cache.common.support.DefaultCacheConfigProvider
 import org.soul.ability.cache.common.support.ICacheConfigProvider
+import org.soul.ability.distributed.notify.common.support.NotifyTool
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -47,7 +48,7 @@ open class LinkableCacheAutoConfiguration : IComponentInitializer {
     private val logger = LogFactory.getLog(this)
 
     @Primary
-    @Bean(name = ["cacheManager"])
+    @Bean(name = ["mixCacheManager"])
     open fun cacheManager(): MixCacheManager = MixCacheManager()
 
     @Bean
@@ -79,6 +80,10 @@ open class LinkableCacheAutoConfiguration : IComponentInitializer {
     @Bean
     @ConditionalOnMissingBean
     open fun cacheNotifyListener(): CacheNotifyListener = CacheNotifyListener()
+
+    @Bean
+    @ConditionalOnMissingBean
+    open fun notityTool() = NotifyTool()
 
     @Bean
     @ConditionalOnMissingBean

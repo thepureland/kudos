@@ -33,7 +33,7 @@ open class DomainByNameCacheHandler : AbstractCacheHandler<SysDomainCacheItem>()
     private var self: DomainByNameCacheHandler? = null
 
     companion object {
-        const val CACHE_NAME = "SYS_DOMAIN_BY_NAME"
+        private const val CACHE_NAME = "SYS_DOMAIN_BY_NAME"
     }
 
     override fun cacheName() = CACHE_NAME

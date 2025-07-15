@@ -6,6 +6,9 @@ import io.kudos.ams.sys.service.biz.ibiz.ISysCacheBiz
 import io.kudos.ams.sys.service.model.po.SysCache
 import io.kudos.test.common.init.EnableKudosTest
 import io.kudos.test.container.containers.H2TestContainer
+import io.kudos.test.container.containers.RedisTestContainer
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.TestInstance
 import org.soul.ability.cache.common.enums.CacheStrategy
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.DynamicPropertyRegistry
@@ -24,6 +27,7 @@ import kotlin.test.assertNull
  */
 @EnableKudosTest
 @EnabledIfDockerAvailable
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class CacheByNameCacheHandlerTest {
 
     companion object {
@@ -33,7 +37,15 @@ class CacheByNameCacheHandlerTest {
         private fun registerProperties(registry: DynamicPropertyRegistry) {
             registry.add("kudos.ability.cache.enabled") { "true" }
             registry.add("cache.config.strategy") { CacheStrategy.SINGLE_LOCAL.name }
-            H2TestContainer.startIfNeeded(registry)
+
+            val h2Thread = Thread { H2TestContainer.startIfNeeded(registry) }
+            val redisThread = Thread { RedisTestContainer.startIfNeeded(registry) }
+
+            h2Thread.start()
+            redisThread.start()
+
+            h2Thread.join()
+            redisThread.join()
         }
 
     }
@@ -44,19 +56,32 @@ class CacheByNameCacheHandlerTest {
     @Autowired
     private lateinit var sysCacheBiz: ISysCacheBiz
 
-    @Test
+    @AfterAll
     fun reloadAll() {
+        val cacheId = "e5340806-97b4-43a4-84c6-22222"
+        val newTtl = 999999999
+        val success = sysCacheBiz.updateProperties(cacheId, mapOf(SysCache::ttl.name to newTtl))
+        assert(success)
+
         cacheByNameCacheHandler.reloadAll()
         val cacheItem = CacheKit.getValue(cacheByNameCacheHandler.cacheName(), cacheByNameCacheHandler.cacheName())
         assert(cacheItem is SysCacheCacheItem)
         assertEquals(cacheByNameCacheHandler.cacheName(), (cacheItem as SysCacheCacheItem).name)
+
+        val cacheName = "TEST_CACHE_2"
+        val cacheItem1 = CacheKit.getValue(cacheByNameCacheHandler.cacheName(), cacheName)
+        assertEquals(999999999, (cacheItem1 as SysCacheCacheItem).ttl)
+        val cacheItem2 = cacheByNameCacheHandler.getCacheFromCache(cacheName)
+        assertEquals(999999999, (cacheItem2 as SysCacheCacheItem).ttl)
     }
 
     @Test
     fun getCacheFromCache() {
-        val cacheItem1 = cacheByNameCacheHandler.getCacheFromCache(cacheByNameCacheHandler.cacheName())
-        val cacheItem2 = cacheByNameCacheHandler.getCacheFromCache(cacheByNameCacheHandler.cacheName())
-        assert(cacheItem1 === cacheItem2)
+        val cacheName = "TEST_CACHE_1"
+        cacheByNameCacheHandler.getCacheFromCache(cacheName)
+        val cacheItem2 = cacheByNameCacheHandler.getCacheFromCache(cacheName)
+        val cacheItem3 = cacheByNameCacheHandler.getCacheFromCache(cacheName)
+        assert(cacheItem2 === cacheItem3)
     }
 
     @Test
@@ -86,17 +111,18 @@ class CacheByNameCacheHandlerTest {
     @Test
     fun syncOnUpdate() {
         // 更新数据库中已存在的缓存配置的ttl
-        val cacheId = "14a9adc4-6bb5-45bd-96bb-d8afe3060bea"
-        val cacheName = cacheByNameCacheHandler.cacheName()
+        val cacheId = "e5340806-97b4-43a4-84c6-22222"
+        val cacheName = "TEST_CACHE_2"
         val newTtl = 666666
-        sysCacheBiz.updateProperties(cacheId, mapOf(SysCache::ttl.name to newTtl))
+        val success = sysCacheBiz.updateProperties(cacheId, mapOf(SysCache::ttl.name to newTtl))
+        assert(success)
 
         // 同步缓存
         val sysCache = SysCache().apply { name = cacheName }
         cacheByNameCacheHandler.syncOnUpdate(sysCache, cacheId)
 
         // 验证缓存中的ttl
-        val cacheItem1 = CacheKit.getValue(cacheName, cacheName)
+        val cacheItem1 = CacheKit.getValue(cacheByNameCacheHandler.cacheName(), cacheName)
         assertEquals(newTtl, (cacheItem1 as SysCacheCacheItem).ttl)
         val cacheItem2 = cacheByNameCacheHandler.getCacheFromCache(cacheName)
         assertEquals(newTtl, (cacheItem2 as SysCacheCacheItem).ttl)
@@ -105,8 +131,8 @@ class CacheByNameCacheHandlerTest {
     @Test
     fun syncOnDelete() {
         // 删除数据库中的缓存配置
-        val id = "e5340806-97b4-43a4-84c6-97e5e2966371"
-        val name = TenantByIdCacheHandler.CACHE_NAME
+        val id = "e5340806-97b4-43a4-84c6-33333"
+        val name = "TEST_CACHE_3"
         val deleteSuccess = sysCacheBiz.deleteById(id)
         assert(deleteSuccess)
 
@@ -123,19 +149,28 @@ class CacheByNameCacheHandlerTest {
     @Test
     fun synchOnBatchDelete() {
         // 删除数据库中的缓存配置
-        val id = "2da8e352-6e6f-4cd4-93e0-259ad3c7ea83"
-        val name = TenantsBySubSysCacheHandler.CACHE_NAME
-        val deleteSuccess = sysCacheBiz.deleteById(id)
+        val id1 = "2da8e352-6e6f-4cd4-93e0-44444"
+        val name1 = "TEST_CACHE_4"
+        var deleteSuccess = sysCacheBiz.deleteById(id1)
+        assert(deleteSuccess)
+        val id2 = "2da8e352-6e6f-4cd4-93e0-55555"
+        val name2 = "TEST_CACHE_5"
+        deleteSuccess = sysCacheBiz.deleteById(id2)
         assert(deleteSuccess)
 
+
         // 同步缓存
-        cacheByNameCacheHandler.synchOnBatchDelete(listOf(id), listOf(name))
+        cacheByNameCacheHandler.synchOnBatchDelete(listOf(id1, id2), listOf(name1, name2))
 
         // 验证缓存中有没有
-        val cacheItem1 = CacheKit.getValue(cacheByNameCacheHandler.cacheName(), name)
+        val cacheItem1 = CacheKit.getValue(cacheByNameCacheHandler.cacheName(), name1)
         assertNull(cacheItem1)
-        val cacheItem2 = cacheByNameCacheHandler.getCacheFromCache(name)
+        val cacheItem2 = cacheByNameCacheHandler.getCacheFromCache(name1)
         assertNull(cacheItem2)
+        val cacheItem3 = CacheKit.getValue(cacheByNameCacheHandler.cacheName(), name2)
+        assertNull(cacheItem3)
+        val cacheItem4 = cacheByNameCacheHandler.getCacheFromCache(name2)
+        assertNull(cacheItem4)
     }
 
 }
