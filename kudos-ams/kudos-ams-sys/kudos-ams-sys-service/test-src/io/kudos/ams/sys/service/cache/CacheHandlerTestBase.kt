@@ -7,6 +7,7 @@ import org.junit.jupiter.api.TestInstance
 import org.soul.ability.cache.common.enums.CacheStrategy
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
+import org.springframework.transaction.annotation.Transactional
 import org.testcontainers.junit.jupiter.EnabledIfDockerAvailable
 
 
@@ -18,6 +19,7 @@ import org.testcontainers.junit.jupiter.EnabledIfDockerAvailable
  */
 @EnableKudosTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@Transactional
 open class CacheHandlerTestBase {
 
     companion object {
