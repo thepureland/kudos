@@ -26,7 +26,7 @@ open class TenantByIdCacheHandler : AbstractByIdCacheHandler<String, SysTenantCa
     private var self: TenantByIdCacheHandler? = null
     
     companion object {
-        const val CACHE_NAME = "SYS_TENANT_BY_ID"
+        private const val CACHE_NAME = "SYS_TENANT_BY_ID"
     }
 
     override fun cacheName(): String = CACHE_NAME

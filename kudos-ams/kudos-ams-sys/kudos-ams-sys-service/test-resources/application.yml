@@ -32,6 +32,7 @@ kudos:
       datasource-config:
         #demo：代表resource下db/{demo}/模块,对应的jdbc多数据源的数据源名
         sys: ds1
+        sys-test: ds1
 #//endregion your codes 1
 
 

@@ -36,7 +36,7 @@ open class DataSourceBySubSysAndTenantIdCacheHandler : AbstractCacheHandler<SysD
 
 
     companion object {
-        const val CACHE_NAME = "SYS_DATA_SOURCE_BY_SUB_SYS_AND_TENANT_ID"
+        private const val CACHE_NAME = "SYS_DATA_SOURCE_BY_SUB_SYS_AND_TENANT_ID"
     }
 
     override fun cacheName() = CACHE_NAME

@@ -34,7 +34,7 @@ open class CacheByNameCacheHandler : AbstractCacheHandler<SysCacheCacheItem>() {
     private var self: CacheByNameCacheHandler? = null
 
     companion object {
-        const val CACHE_NAME = "SYS_CACHE_BY_NAME"
+        private const val CACHE_NAME = "SYS_CACHE_BY_NAME"
     }
 
     override fun cacheName(): String = CACHE_NAME

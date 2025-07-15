@@ -25,7 +25,7 @@ open class DataSourceByIdCacheHandler: AbstractByIdCacheHandler<String, SysDataS
     private var self: DataSourceByIdCacheHandler? = null
 
     companion object {
-        const val CACHE_NAME = "SYS_DATA_SOURCE_BY_ID"
+        private const val CACHE_NAME = "SYS_DATA_SOURCE_BY_ID"
     }
 
     override fun itemDesc() = "数据源"

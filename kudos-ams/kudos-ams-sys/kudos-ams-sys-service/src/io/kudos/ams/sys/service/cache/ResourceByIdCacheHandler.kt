@@ -26,7 +26,7 @@ open class ResourceByIdCacheHandler : AbstractByIdCacheHandler<String, SysResour
     private var self: ResourceByIdCacheHandler? = null
     
     companion object {
-        const val CACHE_NAME = "SYS_RESOURCE_BY_ID"
+        private const val CACHE_NAME = "SYS_RESOURCE_BY_ID"
     }
 
     override fun cacheName(): String = CACHE_NAME

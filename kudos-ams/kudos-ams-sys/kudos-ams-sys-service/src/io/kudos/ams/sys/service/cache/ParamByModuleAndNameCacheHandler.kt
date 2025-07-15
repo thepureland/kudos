@@ -38,7 +38,7 @@ open class ParamByModuleAndNameCacheHandler : AbstractCacheHandler<SysParamCache
     private var self: ParamByModuleAndNameCacheHandler? = null
 
     companion object {
-        const val CACHE_NAME = "SYS_PARAM_BY_MODULE_AND_NAME"
+        private const val CACHE_NAME = "SYS_PARAM_BY_MODULE_AND_NAME"
     }
 
     override fun cacheName(): String = CACHE_NAME

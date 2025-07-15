@@ -40,7 +40,7 @@ open class DictItemsByModuleAndTypeCacheHandler : AbstractCacheHandler<List<SysD
     private var self: DictItemsByModuleAndTypeCacheHandler? = null
 
     companion object {
-        const val CACHE_NAME = "SYS_DICT_ITEMS_BY_MODULE_AND_TYPE"
+        private const val CACHE_NAME = "SYS_DICT_ITEMS_BY_MODULE_AND_TYPE"
     }
 
     override fun cacheName(): String = CACHE_NAME

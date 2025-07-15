@@ -35,7 +35,7 @@ open class ResourceIdBySubSysAndUrlCacheHandler : AbstractCacheHandler<String>()
     private var self: ResourceIdBySubSysAndUrlCacheHandler? = null
 
     companion object {
-        const val CACHE_NAME = "SYS_RESOURCE_ID_BY_SUB_SYS_AND_URL"
+        private const val CACHE_NAME = "SYS_RESOURCE_ID_BY_SUB_SYS_AND_URL"
     }
 
     override fun cacheName(): String = CACHE_NAME

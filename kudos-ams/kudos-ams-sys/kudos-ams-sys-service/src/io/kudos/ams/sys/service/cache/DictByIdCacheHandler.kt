@@ -26,7 +26,7 @@ open class DictByIdCacheHandler : AbstractByIdCacheHandler<String, SysDictCacheI
     private var self: DictByIdCacheHandler? = null
 
     companion object {
-        const val CACHE_NAME = "SYS_DICT_BY_ID"
+        private const val CACHE_NAME = "SYS_DICT_BY_ID"
     }
 
     override fun cacheName(): String = CACHE_NAME

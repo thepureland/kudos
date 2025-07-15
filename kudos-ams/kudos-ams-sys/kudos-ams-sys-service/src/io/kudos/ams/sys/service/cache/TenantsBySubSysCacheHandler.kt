@@ -38,7 +38,7 @@ open class TenantsBySubSysCacheHandler : AbstractCacheHandler<List<SysTenantCach
     private lateinit var sysTenantSubSystemDao: SysTenantSubSystemDao
 
     companion object {
-        const val CACHE_NAME = "SYS_TENANTS_BY_SUB_SYS"
+        private const val CACHE_NAME = "SYS_TENANTS_BY_SUB_SYS"
     }
 
 
