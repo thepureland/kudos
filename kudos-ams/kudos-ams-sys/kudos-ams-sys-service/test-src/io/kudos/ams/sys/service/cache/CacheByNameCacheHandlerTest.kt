@@ -4,15 +4,9 @@ import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.ams.sys.common.vo.cache.SysCacheCacheItem
 import io.kudos.ams.sys.service.biz.ibiz.ISysCacheBiz
 import io.kudos.ams.sys.service.model.po.SysCache
-import io.kudos.test.common.init.EnableKudosTest
-import io.kudos.test.container.containers.H2TestContainer
-import io.kudos.test.container.containers.RedisTestContainer
 import org.junit.jupiter.api.AfterAll
-import org.junit.jupiter.api.TestInstance
 import org.soul.ability.cache.common.enums.CacheStrategy
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.test.context.DynamicPropertyRegistry
-import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.junit.jupiter.EnabledIfDockerAvailable
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -25,30 +19,8 @@ import kotlin.test.assertNull
  * @author K
  * @since 1.0.0
  */
-@EnableKudosTest
 @EnabledIfDockerAvailable
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class CacheByNameCacheHandlerTest {
-
-    companion object {
-
-        @DynamicPropertySource
-        @JvmStatic
-        private fun registerProperties(registry: DynamicPropertyRegistry) {
-            registry.add("kudos.ability.cache.enabled") { "true" }
-            registry.add("cache.config.strategy") { CacheStrategy.SINGLE_LOCAL.name }
-
-            val h2Thread = Thread { H2TestContainer.startIfNeeded(registry) }
-            val redisThread = Thread { RedisTestContainer.startIfNeeded(registry) }
-
-            h2Thread.start()
-            redisThread.start()
-
-            h2Thread.join()
-            redisThread.join()
-        }
-
-    }
+class CacheByNameCacheHandlerTest : CacheHandlerTestBase() {
 
     @Autowired
     private lateinit var cacheByNameCacheHandler: CacheByNameCacheHandler
