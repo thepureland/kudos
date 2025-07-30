@@ -50,7 +50,7 @@ class CacheByNameCacheHandlerTest : CacheHandlerTestBase() {
     @Test
     fun getCacheFromCache() {
         val cacheName = "TEST_CACHE_1"
-        cacheByNameCacheHandler.getCacheFromCache(cacheName)
+        cacheByNameCacheHandler.getCacheFromCache(cacheName) // 第一次当放入远程缓存后，会发送清除本地缓存，所以最终取到的是远程缓存反序列化后的对象
         val cacheItem2 = cacheByNameCacheHandler.getCacheFromCache(cacheName)
         val cacheItem3 = cacheByNameCacheHandler.getCacheFromCache(cacheName)
         assert(cacheItem2 === cacheItem3)
@@ -58,7 +58,7 @@ class CacheByNameCacheHandlerTest : CacheHandlerTestBase() {
 
     @Test
     fun syncOnInsert() {
-        // 插入新的缓存配置到数据库
+        // 插入新的记录到数据库
         val newCacheName = "a_new_test_cache"
         val sysCache = SysCache().apply {
             name = newCacheName
@@ -73,7 +73,7 @@ class CacheByNameCacheHandlerTest : CacheHandlerTestBase() {
         // 同步缓存
         cacheByNameCacheHandler.syncOnInsert(sysCache, id)
 
-        // 验证新对象是否在缓存中
+        // 验证新记录是否在缓存中
         val cacheItem1 = CacheKit.getValue(cacheByNameCacheHandler.cacheName(), newCacheName)
         assertNotNull(cacheItem1)
         val cacheItem2 = cacheByNameCacheHandler.getCacheFromCache(newCacheName)
@@ -82,7 +82,7 @@ class CacheByNameCacheHandlerTest : CacheHandlerTestBase() {
 
     @Test
     fun syncOnUpdate() {
-        // 更新数据库中已存在的缓存配置的ttl
+        // 更新数据库中已存在的记录
         val cacheId = "e5340806-97b4-43a4-84c6-22222"
         val cacheName = "TEST_CACHE_2"
         val newTtl = 666666
@@ -93,7 +93,7 @@ class CacheByNameCacheHandlerTest : CacheHandlerTestBase() {
         val sysCache = SysCache().apply { name = cacheName }
         cacheByNameCacheHandler.syncOnUpdate(sysCache, cacheId)
 
-        // 验证缓存中的ttl
+        // 验证缓存中的记录
         val cacheItem1 = CacheKit.getValue(cacheByNameCacheHandler.cacheName(), cacheName)
         assertEquals(newTtl, (cacheItem1 as SysCacheCacheItem).ttl)
         val cacheItem2 = cacheByNameCacheHandler.getCacheFromCache(cacheName)
@@ -102,7 +102,7 @@ class CacheByNameCacheHandlerTest : CacheHandlerTestBase() {
 
     @Test
     fun syncOnDelete() {
-        // 删除数据库中的缓存配置
+        // 删除数据库中的记录
         val id = "e5340806-97b4-43a4-84c6-33333"
         val name = "TEST_CACHE_3"
         val deleteSuccess = sysCacheBiz.deleteById(id)
@@ -119,20 +119,18 @@ class CacheByNameCacheHandlerTest : CacheHandlerTestBase() {
     }
 
     @Test
-    fun synchOnBatchDelete() {
-        // 删除数据库中的缓存配置
+    fun syncOnBatchDelete() {
+        // 批量删除数据库中的记录
         val id1 = "2da8e352-6e6f-4cd4-93e0-44444"
         val name1 = "TEST_CACHE_4"
-        var deleteSuccess = sysCacheBiz.deleteById(id1)
-        assert(deleteSuccess)
         val id2 = "2da8e352-6e6f-4cd4-93e0-55555"
         val name2 = "TEST_CACHE_5"
-        deleteSuccess = sysCacheBiz.deleteById(id2)
-        assert(deleteSuccess)
-
+        val ids = listOf(id1, id2)
+        val count = sysCacheBiz.batchDelete(ids)
+        assert(count == 2)
 
         // 同步缓存
-        cacheByNameCacheHandler.synchOnBatchDelete(listOf(id1, id2), listOf(name1, name2))
+        cacheByNameCacheHandler.syncOnBatchDelete(ids, listOf(name1, name2))
 
         // 验证缓存中有没有
         val cacheItem1 = CacheKit.getValue(cacheByNameCacheHandler.cacheName(), name1)

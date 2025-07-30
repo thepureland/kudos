@@ -123,7 +123,7 @@ open class CacheByNameCacheHandler : AbstractCacheHandler<SysCacheCacheItem>() {
         }
     }
 
-    open fun synchOnBatchDelete(ids: Collection<String>, names: List<String>) {
+    open fun syncOnBatchDelete(ids: Collection<String>, names: List<String>) {
         if (CacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("批量删除id为${ids}的缓存配置后，同步从${CACHE_NAME}缓存中踢除...")
             names.forEach {

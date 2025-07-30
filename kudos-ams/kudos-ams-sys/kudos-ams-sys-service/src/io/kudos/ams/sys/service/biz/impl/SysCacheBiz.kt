@@ -95,7 +95,7 @@ open class SysCacheBiz : BaseCrudBiz<String, SysCache, SysCacheDao>(), ISysCache
         val names = dao.inSearchPropertyById(ids, SysCache::name.name) as List<String>
         val count = super.batchDelete(ids)
         log.debug("批量删除缓存配置，期望删除${ids.size}条，实际删除${count}条。")
-        cacheConfigCacheHandler.synchOnBatchDelete(ids, names)
+        cacheConfigCacheHandler.syncOnBatchDelete(ids, names)
         return count
     }
 
