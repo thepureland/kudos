@@ -1,5 +1,6 @@
 package io.kudos.ams.sys.service.cache
 
+import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.ability.cache.common.support.AbstractByIdCacheHandler
 import io.kudos.ams.sys.common.vo.datasource.SysDataSourceCacheItem
 import io.kudos.ams.sys.service.dao.SysDataSourceDao
@@ -54,10 +55,13 @@ open class DataSourceByIdCacheHandler: AbstractByIdCacheHandler<String, SysDataS
     }
 
     private fun getSelf() : DataSourceByIdCacheHandler {
-        if (self == null) {
-            self = SpringKit.getBean(this::class)
+        return self ?: (SpringKit.getBean(this::class).also { self = it })
+    }
+
+    override fun syncOnInsert(id: String) {
+        if (CacheKit.isCacheActive(cacheName()) && CacheKit.isWriteInTime(cacheName())) {
+            getSelf().getDataSourceById(id) // 缓存
         }
-        return self!!
     }
 
 }
