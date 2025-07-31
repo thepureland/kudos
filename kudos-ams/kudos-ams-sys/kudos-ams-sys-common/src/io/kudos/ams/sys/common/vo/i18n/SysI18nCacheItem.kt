@@ -1,6 +1,8 @@
 package io.kudos.ams.sys.common.vo.i18n
 
 import java.io.Serializable
+import io.kudos.base.support.IIdEntity
+import java.time.LocalDateTime
 
 
 /**
@@ -9,17 +11,59 @@ import java.io.Serializable
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
-open class SysI18nCacheItem : Serializable {
-//endregion your codes 1
+data class SysI18nCacheItem (
 
-    //region your codes 2
+    /** 主键 */
+    override var id: String? = null,
+
+    //region your codes 1
+
+    /** 语言_地区 */
+    var locale: String? = null,
+
+    /** 语言_地区 */
+    var moduleCode: String? = null,
+
+    /** 国际化类型字典代码 */
+    var i18nTypeDictCode: String? = null,
+
+    /** 国际化key */
+    var key: String? = null,
+
+    /** 国际化值 */
+    var value: String? = null,
+
+    /** 是否启用 */
+    var active: Boolean? = null,
+
+    /** 是否内置 */
+    var builtIn: Boolean? = null,
+
+    /** 创建用户 */
+    var createUser: String? = null,
+
+    /** 创建时间 */
+    var createTime: LocalDateTime? = null,
+
+    /** 更新用户 */
+    var updateUser: String? = null,
+
+    /** 更新时间 */
+    var updateTime: LocalDateTime? = null,
+
+    //endregion your codes 1
+//region your codes 2
+) : IIdEntity<String>, Serializable {
+//endregion your codes 2
+
+    //region your codes 3
+
+    constructor() : this(null)
+
+    // endregion your codes 3
 
     companion object {
-        private const val serialVersionUID = 7390250969540875362L
+        private const val serialVersionUID = 7185011778780590831L
     }
-
-    //endregion your codes 2
-
 
 }

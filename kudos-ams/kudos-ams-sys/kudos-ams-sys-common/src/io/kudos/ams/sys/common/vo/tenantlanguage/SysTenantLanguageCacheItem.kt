@@ -1,6 +1,8 @@
 package io.kudos.ams.sys.common.vo.tenantlanguage
 
 import java.io.Serializable
+import io.kudos.base.support.IIdEntity
+import java.time.LocalDateTime
 
 
 /**
@@ -9,17 +11,44 @@ import java.io.Serializable
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
-open class SysTenantLanguageCacheItem : Serializable {
-//endregion your codes 1
+data class SysTenantLanguageCacheItem (
 
-    //region your codes 2
+    /** 主键 */
+    override var id: String? = null,
+
+    //region your codes 1
+
+    /** 租户id */
+    var tenantId: String? = null,
+
+    /** 语言代码 */
+    var languageCode: String? = null,
+
+    /** 创建用户 */
+    var createUser: String? = null,
+
+    /** 创建时间 */
+    var createTime: LocalDateTime? = null,
+
+    /** 更新用户 */
+    var updateUser: String? = null,
+
+    /** 更新时间 */
+    var updateTime: LocalDateTime? = null,
+
+    //endregion your codes 1
+//region your codes 2
+) : IIdEntity<String>, Serializable {
+//endregion your codes 2
+
+    //region your codes 3
+
+    constructor() : this(null)
+
+    // endregion your codes 3
 
     companion object {
-        private const val serialVersionUID = 9183021072069645148L
+        private const val serialVersionUID = 8583424316200364431L
     }
-
-    //endregion your codes 2
-
 
 }

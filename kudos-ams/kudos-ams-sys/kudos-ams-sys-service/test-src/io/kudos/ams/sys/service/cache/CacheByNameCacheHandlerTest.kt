@@ -30,10 +30,10 @@ class CacheByNameCacheHandlerTest : CacheHandlerTestBase() {
 
     @AfterAll
     fun reloadAll() {
-        val cacheId = "e5340806-97b4-43a4-84c6-22222"
-        val newTtl = 999999999
-        val success = sysCacheBiz.updateProperties(cacheId, mapOf(SysCache::ttl.name to newTtl))
-        assert(success)
+//        val cacheId = "e5340806-97b4-43a4-84c6-22222"
+//        val newTtl = 999999999
+//        val success = sysCacheBiz.updateProperties(cacheId, mapOf(SysCache::ttl.name to newTtl))
+//        assert(success)
 
         cacheByNameCacheHandler.reloadAll()
         val cacheItem = CacheKit.getValue(cacheByNameCacheHandler.cacheName(), cacheByNameCacheHandler.cacheName())

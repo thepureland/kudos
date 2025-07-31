@@ -1,7 +1,8 @@
 package io.kudos.ams.sys.common.vo.dict
 
-import io.kudos.base.support.IIdEntity
 import java.io.Serializable
+import io.kudos.base.support.IIdEntity
+import java.time.LocalDateTime
 
 
 /**
@@ -10,35 +11,56 @@ import java.io.Serializable
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
-open class SysDictCacheItem : IIdEntity<String>, Serializable {
-//endregion your codes 1
-
-    //region your codes 2
-
-    companion object {
-        private const val serialVersionUID = 3917312932640748888L
-    }
+data class SysDictCacheItem (
 
     /** 主键 */
-    override var id: String? = null
+    override var id: String? = null,
 
-    /** 模块 */
-    var module: String? = null
+    //region your codes 1
 
     /** 字典类型 */
-    var dictType: String? = null
+    var dictType: String? = null,
 
-    /** 字典名称，或其国际化key */
-    var dictName: String? = null
+    /** 字典名称 */
+    var dictName: String? = null,
 
-    /** 是否内置 */
-    var builtIn: Boolean? = null
+    /** 模块编码 */
+    var moduleCode: String? = null,
 
     /** 备注 */
-    var remark: String? = null
+    var remark: String? = null,
 
-    //endregion your codes 2
+    /** 是否启用 */
+    var active: Boolean? = null,
 
+    /** 是否内置 */
+    var builtIn: Boolean? = null,
+
+    /** 创建用户 */
+    var createUser: String? = null,
+
+    /** 创建时间 */
+    var createTime: LocalDateTime? = null,
+
+    /** 更新用户 */
+    var updateUser: String? = null,
+
+    /** 更新时间 */
+    var updateTime: LocalDateTime? = null,
+
+    //endregion your codes 1
+//region your codes 2
+) : IIdEntity<String>, Serializable {
+//endregion your codes 2
+
+    //region your codes 3
+
+    constructor() : this(null)
+
+    // endregion your codes 3
+
+    companion object {
+        private const val serialVersionUID = 7553349815212490728L
+    }
 
 }

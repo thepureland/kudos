@@ -9,12 +9,28 @@ import io.kudos.base.support.payload.FormPayload
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
-open class SysTenantResourcePayload : FormPayload<String>() {
-//endregion your codes 1
+data class SysTenantResourcePayload (
 
-    //region your codes 2
+    /** 主键 */
+    override var id: String? = null,
 
-    //endregion your codes 2
+    //region your codes 1
+
+    /** 租户id */
+    var tenantId: String? = null,
+
+    /** 资源id */
+    var resourceId: String? = null,
+
+    //endregion your codes 1
+//region your codes 2
+) : FormPayload<String>() {
+//endregion your codes 2
+
+    //region your codes 3
+
+    constructor() : this(null)
+
+    // endregion your codes 3
 
 }

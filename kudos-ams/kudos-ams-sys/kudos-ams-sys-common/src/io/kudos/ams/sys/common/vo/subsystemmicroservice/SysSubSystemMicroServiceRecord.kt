@@ -9,12 +9,28 @@ import io.kudos.base.support.result.IdJsonResult
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
-open class SysSubSystemMicroServiceRecord : IdJsonResult<String>() {
-//endregion your codes 1
+data class SysSubSystemMicroServiceRecord (
 
-    //region your codes 2
+    /**  */
+    override var id: String? = null,
 
-    //endregion your codes 2
+    //region your codes 1
+
+    /** 子系统编码 */
+    var subSystemCode: String? = null,
+
+    /** 微服务编码 */
+    var microServiceCode: String? = null,
+
+    //endregion your codes 1
+//region your codes 2
+) : IdJsonResult<String>() {
+//endregion your codes 2
+
+    //region your codes 3
+
+    constructor() : this(null)
+
+    // endregion your codes 3
 
 }

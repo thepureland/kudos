@@ -10,14 +10,27 @@ import kotlin.reflect.KClass
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
-open class SysTenantResourceSearchPayload : ListSearchPayload() {
-//endregion your codes 1
+data class SysTenantResourceSearchPayload (
 
-    //region your codes 2
+    //region your codes 1
 
-    //endregion your codes 2
+    override var returnEntityClass: KClass<*>? = SysTenantResourceRecord::class,
 
-    override var returnEntityClass: KClass<*>? = SysTenantResourceRecord::class
+    /** 租户id */
+    var tenantId: String? = null,
+
+    /** 资源id */
+    var resourceId: String? = null,
+
+    //endregion your codes 1
+//region your codes 2
+) : ListSearchPayload() {
+//endregion your codes 2
+
+    //region your codes 3
+
+    constructor() : this(SysTenantResourceRecord::class)
+
+    //endregion your codes 3
 
 }

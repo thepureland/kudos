@@ -10,31 +10,40 @@ import java.time.LocalDateTime
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
-open class SysMicroServiceAtomicServiceDetail : IdJsonResult<String>() {
-//endregion your codes 1
+data class SysMicroServiceAtomicServiceDetail (
 
-    //region your codes 2
+    /**  */
+    override var id: String? = null,
 
-    //endregion your codes 2
-
+    //region your codes 1
 
     /** 微服务编码 */
-    var microServiceCode: String? = null
+    var microServiceCode: String? = null,
 
     /** 原子服务编码 */
-    var atomicServiceCode: String? = null
+    var atomicServiceCode: String? = null,
 
     /** 创建用户 */
-    var createUser: String? = null
+    var createUser: String? = null,
 
     /** 创建时间 */
-    var createTime: LocalDateTime? = null
+    var createTime: LocalDateTime? = null,
 
     /** 更新用户 */
-    var updateUser: String? = null
+    var updateUser: String? = null,
 
     /** 更新时间 */
-    var updateTime: LocalDateTime? = null
+    var updateTime: LocalDateTime? = null,
+
+    //endregion your codes 1
+//region your codes 2
+) : IdJsonResult<String>() {
+//endregion your codes 2
+
+    //region your codes 3
+
+    constructor() : this(null)
+
+    //endregion your codes 3
 
 }

@@ -10,14 +10,33 @@ import kotlin.reflect.KClass
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
-open class SysAccessRuleSearchPayload : ListSearchPayload() {
-//endregion your codes 1
+data class SysAccessRuleSearchPayload (
 
-    //region your codes 2
+    //region your codes 1
 
-    //endregion your codes 2
+    override var returnEntityClass: KClass<*>? = SysAccessRuleRecord::class,
 
-    override var returnEntityClass: KClass<*>? = SysAccessRuleRecord::class
+    /** 租户id */
+    var tenantId: String? = null,
+
+    /** 子系统编码 */
+    var subSystemCode: String? = null,
+
+    /** 门户编码 */
+    var portalCode: String? = null,
+
+    /** 规则类型 */
+    var ruleType: Int? = null,
+
+    //endregion your codes 1
+//region your codes 2
+) : ListSearchPayload() {
+//endregion your codes 2
+
+    //region your codes 3
+
+    constructor() : this(SysAccessRuleRecord::class)
+
+    //endregion your codes 3
 
 }

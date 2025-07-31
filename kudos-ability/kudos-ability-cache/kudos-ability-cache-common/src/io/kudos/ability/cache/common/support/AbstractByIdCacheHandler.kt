@@ -71,15 +71,18 @@ abstract class AbstractByIdCacheHandler<PK: Any, T: IIdEntity<*>, DAO: IBaseRead
         val results = dao.search(searchPayload) as List<T>
         log.debug("从数据库加载了${results.size}条${itemDesc()}信息。")
 
-        // 清除缓存
+        // 缓存
         if (clear) {
-            clear()
+            clear() // 先清除缓存
+            results.forEach {
+                CacheKit.put(cacheName(), it.id!!, it)
+            }
+        } else {
+            results.forEach {
+                CacheKit.putIfAbsent(cacheName(), it.id!!, it)
+            }
         }
 
-        // 缓存
-        results.forEach {
-            CacheKit.putIfAbsent(cacheName(), it.id!!, it)
-        }
         log.debug("缓存了${results.size}条${itemDesc()}信息。")
     }
 

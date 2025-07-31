@@ -1,7 +1,8 @@
 package io.kudos.ams.sys.common.vo.resource
 
-import io.kudos.base.support.IIdEntity
 import java.io.Serializable
+import io.kudos.base.support.IIdEntity
+import java.time.LocalDateTime
 
 
 /**
@@ -10,47 +11,68 @@ import java.io.Serializable
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
-open class SysResourceCacheItem : IIdEntity<String>,Serializable {
-//endregion your codes 1
-
-    //region your codes 2
-
-    companion object {
-        private const val serialVersionUID = 2796721208849511348L
-    }
+data class SysResourceCacheItem (
 
     /** 主键 */
-    override var id: String? = null
+    override var id: String? = null,
 
-    /** 名称，或其国际化key */
-    var name: String? = null
+    //region your codes 1
+
+    /** 名称 */
+    var name: String? = null,
 
     /** url */
-    var url: String? = null
+    var url: String? = null,
 
     /** 资源类型字典代码 */
-    var resourceTypeDictCode: String? = null
+    var resourceTypeDictCode: String? = null,
 
     /** 父id */
-    var parentId: String? = null
+    var parentId: String? = null,
 
     /** 在同父节点下的排序号 */
-    var seqNo: Int? = null
-
-    /** 子系统代码 */
-    var subSysDictCode: String? = null
+    var orderNum: Int? = null,
 
     /** 图标 */
-    var icon: String? = null
+    var icon: String? = null,
 
-    /** 是否内置 */
-    var builtIn: Boolean? = null
+    /** 子系统编码 */
+    var subSystemCode: String? = null,
 
     /** 备注 */
-    var remark: String? = null
+    var remark: String? = null,
 
-    //endregion your codes 2
+    /** 是否启用 */
+    var active: Boolean? = null,
 
+    /** 是否内置 */
+    var builtIn: Boolean? = null,
+
+    /** 创建用户 */
+    var createUser: String? = null,
+
+    /** 创建时间 */
+    var createTime: LocalDateTime? = null,
+
+    /** 更新用户 */
+    var updateUser: String? = null,
+
+    /** 更新时间 */
+    var updateTime: LocalDateTime? = null,
+
+    //endregion your codes 1
+//region your codes 2
+) : IIdEntity<String>, Serializable {
+//endregion your codes 2
+
+    //region your codes 3
+
+    constructor() : this(null)
+
+    // endregion your codes 3
+
+    companion object {
+        private const val serialVersionUID = 8029707342616140104L
+    }
 
 }

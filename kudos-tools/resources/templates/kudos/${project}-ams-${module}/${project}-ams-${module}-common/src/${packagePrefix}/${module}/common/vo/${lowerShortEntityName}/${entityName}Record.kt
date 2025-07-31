@@ -31,19 +31,29 @@ import java.sql.SQLXML
 
 
 <@generateClassComment table.comment+"查询记录"/>
-//region your codes 1
-open class ${entityName}Record : IdJsonResult<${pkColumn.kotlinTypeName}>() {
-//endregion your codes 1
+data class ${entityName}Record (
 
-    //region your codes 2
+    /** ${pkColumn.comment!""} */
+    override var id: ${pkColumn.kotlinTypeName}? = null,
 
-    //endregion your codes 2
+    //region your codes 1
 
     <#list listItemColumns as column>
     <#if column.name != pkColumn.name>
     /** ${column.comment!""} */
-    var ${column.columnHumpName}: ${column.kotlinTypeName}? = null
+    var ${column.columnHumpName}: ${column.kotlinTypeName}? = null,
 
     </#if>
     </#list>
+    //endregion your codes 1
+//region your codes 2
+) : IdJsonResult<${pkColumn.kotlinTypeName}>() {
+//endregion your codes 2
+
+    //region your codes 3
+
+    constructor() : this(null)
+
+    // endregion your codes 3
+
 }

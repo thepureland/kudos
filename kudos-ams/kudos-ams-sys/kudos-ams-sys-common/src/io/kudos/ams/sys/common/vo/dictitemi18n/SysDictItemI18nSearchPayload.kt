@@ -10,14 +10,33 @@ import kotlin.reflect.KClass
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
-open class SysDictItemI18nSearchPayload : ListSearchPayload() {
-//endregion your codes 1
+data class SysDictItemI18nSearchPayload (
 
-    //region your codes 2
+    //region your codes 1
 
-    //endregion your codes 2
+    override var returnEntityClass: KClass<*>? = SysDictItemI18nRecord::class,
 
-    override var returnEntityClass: KClass<*>? = SysDictItemI18nRecord::class
+    /** 语言_地区 */
+    var locale: String? = null,
+
+    /** 国际化值 */
+    var i18nValue: String? = null,
+
+    /** 字典项id */
+    var itemId: String? = null,
+
+    /** 是否启用 */
+    var active: Boolean? = null,
+
+    //endregion your codes 1
+//region your codes 2
+) : ListSearchPayload() {
+//endregion your codes 2
+
+    //region your codes 3
+
+    constructor() : this(SysDictItemI18nRecord::class)
+
+    //endregion your codes 3
 
 }

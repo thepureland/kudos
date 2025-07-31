@@ -34,33 +34,40 @@ import java.sql.SQLXML
 
 
 <@generateClassComment table.comment+"缓存项"/>
-//region your codes 1
+data class ${entityName}CacheItem (
+
+    <#if containsIdColumnInCacheItems>
+    /** ${pkColumn.comment!""} */
+    override var id: ${pkColumn.kotlinTypeName}? = null,
+    </#if>
+
+    //region your codes 1
+
+    <#list cacheItemColumns as column>
+    <#if column.name != pkColumn.name>
+    /** ${column.comment!""} */
+    var ${column.columnHumpName}: ${column.kotlinTypeName}? = null,
+
+    </#if>
+    </#list>
+    //endregion your codes 1
+//region your codes 2
 <#if containsIdColumnInCacheItems>
-open class ${entityName}CacheItem : IIdEntity<${pkColumn.kotlinTypeName}>, Serializable {
+) : IIdEntity<${pkColumn.kotlinTypeName}>, Serializable {
 </#if>
 <#if containsIdColumnInCacheItems == false>
-open class ${entityName}CacheItem : Serializable {
+) : Serializable {
 </#if>
-//endregion your codes 1
+//endregion your codes 2
 
-    //region your codes 2
+    //region your codes 3
+
+    constructor() : this(null)
+
+    // endregion your codes 3
 
     companion object {
         private const val serialVersionUID = ${serialVersionUID}
     }
 
-    //endregion your codes 2
-
-    <#if containsIdColumnInCacheItems>
-    /** ${pkColumn.comment!""} */
-    override var id: ${pkColumn.kotlinTypeName}? = null
-    </#if>
-
-    <#list cacheItemColumns as column>
-    <#if column.name != pkColumn.name>
-    /** ${column.comment!""} */
-    var ${column.columnHumpName}: ${column.kotlinTypeName}? = null
-
-    </#if>
-    </#list>
 }

@@ -78,7 +78,7 @@ open class DictItemsByModuleAndTypeCacheHandler : AbstractCacheHandler<List<SysD
                     itemCode = it.itemCode
                     itemName = it.itemName
                     parentId = it.parentId
-                    seqNo = it.seqNo
+                    orderNum = it.seqNo
                 }
             }
             CacheKit.putIfAbsent(CACHE_NAME, key, valueItems)
@@ -110,7 +110,7 @@ open class DictItemsByModuleAndTypeCacheHandler : AbstractCacheHandler<List<SysD
                     itemCode = it.itemCode
                     itemName = it.itemName
                     parentId = it.parentId
-                    seqNo = it.orderNum
+                    orderNum = it.orderNum
                 }
             }
         }
@@ -120,9 +120,9 @@ open class DictItemsByModuleAndTypeCacheHandler : AbstractCacheHandler<List<SysD
         if (CacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("新增id为${sysDictItem.id}的字典项后，同步${CACHE_NAME}缓存...")
             val dict = dictCacheHandler.getDictById(sysDictItem.dictId)!!
-            CacheKit.evict(CACHE_NAME, "${dict.module}${Consts.CACHE_KEY_DEFAULT_DELIMITER}${dict.dictType}") // 踢除缓存
+            CacheKit.evict(CACHE_NAME, "${dict.moduleCode}${Consts.CACHE_KEY_DEFAULT_DELIMITER}${dict.dictType}") // 踢除缓存
             if (CacheKit.isWriteInTime(CACHE_NAME)) {
-                getSelf().getItemsFromCache(dict.module!!, dict.dictType!!)
+                getSelf().getItemsFromCache(dict.moduleCode!!, dict.dictType!!)
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
@@ -132,9 +132,9 @@ open class DictItemsByModuleAndTypeCacheHandler : AbstractCacheHandler<List<SysD
         if (CacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("更新id为${sysDictItem.id}的字典项后，同步${CACHE_NAME}缓存...")
             val dict = dictCacheHandler.getDictById(sysDictItem.dictId)!!
-            CacheKit.evict(CACHE_NAME, "${dict.module}${Consts.CACHE_KEY_DEFAULT_DELIMITER}${dict.dictType}") // 踢除缓存
+            CacheKit.evict(CACHE_NAME, "${dict.moduleCode}${Consts.CACHE_KEY_DEFAULT_DELIMITER}${dict.dictType}") // 踢除缓存
             if (CacheKit.isWriteInTime(CACHE_NAME)) {
-                getSelf().getItemsFromCache(dict.module!!, dict.dictType!!)
+                getSelf().getItemsFromCache(dict.moduleCode!!, dict.dictType!!)
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
