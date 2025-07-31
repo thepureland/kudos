@@ -10,46 +10,55 @@ import java.time.LocalDateTime
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
-open class SysAccessRuleIpDetail : IdJsonResult<String>() {
-//endregion your codes 1
+data class SysAccessRuleIpDetail (
 
-    //region your codes 2
+    /** 主键 */
+    override var id: String? = null,
 
-    //endregion your codes 2
-
+    //region your codes 1
 
     /** ip起 */
-    var ipStart: Long? = null
+    var ipStart: Long? = null,
 
     /** ip止 */
-    var ipEnd: Long? = null
+    var ipEnd: Long? = null,
 
     /** ip类型 */
-    var ipType: Int? = null
+    var ipType: Int? = null,
 
     /** 过期时间 */
-    var expirationDate: LocalDateTime? = null
+    var expirationDate: LocalDateTime? = null,
 
     /** 父规则id */
-    var parentRuleId: String? = null
+    var parentRuleId: String? = null,
 
     /** 备注 */
-    var remark: String? = null
+    var remark: String? = null,
 
     /** 是否启用 */
-    var active: Boolean? = null
+    var active: Boolean? = null,
 
     /** 创建用户 */
-    var createUser: String? = null
+    var createUser: String? = null,
 
     /** 创建时间 */
-    var createTime: LocalDateTime? = null
+    var createTime: LocalDateTime? = null,
 
     /** 更新用户 */
-    var updateUser: String? = null
+    var updateUser: String? = null,
 
     /** 更新时间 */
-    var updateTime: LocalDateTime? = null
+    var updateTime: LocalDateTime? = null,
+
+    //endregion your codes 1
+//region your codes 2
+) : IdJsonResult<String>() {
+//endregion your codes 2
+
+    //region your codes 3
+
+    constructor() : this(null)
+
+    //endregion your codes 3
 
 }

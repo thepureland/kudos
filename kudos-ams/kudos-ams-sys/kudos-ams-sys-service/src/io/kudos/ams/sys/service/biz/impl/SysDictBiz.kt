@@ -1,9 +1,5 @@
 package io.kudos.ams.sys.service.biz.impl
 
-import io.kudos.ams.sys.service.biz.ibiz.ISysDictBiz
-import io.kudos.ams.sys.service.model.po.SysDict
-import io.kudos.ams.sys.service.dao.SysDictDao
-import io.kudos.ability.data.rdb.ktorm.biz.BaseCrudBiz
 import io.kudos.ams.sys.common.vo.dict.SysDictCacheItem
 import io.kudos.ams.sys.common.vo.dict.SysDictPayload
 import io.kudos.ams.sys.common.vo.dict.SysDictRecord
@@ -22,10 +18,14 @@ import org.ktorm.dsl.eq
 import org.ktorm.dsl.map
 import org.ktorm.dsl.orderBy
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import kotlin.text.get
 import kotlin.text.insert
+import io.kudos.ams.sys.service.biz.ibiz.ISysDictBiz
+import io.kudos.ams.sys.service.model.po.SysDict
+import io.kudos.ams.sys.service.dao.SysDictDao
+import io.kudos.ability.data.rdb.ktorm.biz.BaseCrudBiz
+import org.springframework.stereotype.Service
 
 
 /**
@@ -124,7 +124,7 @@ open class SysDictBiz : BaseCrudBiz<String, SysDict, SysDictDao>(), ISysDictBiz 
         searchPayload.active = if (activeOnly) true else null
         val isModule = searchPayload.firstLevel ?: false // 是否parent代表模块名
         if (isModule) {
-            searchPayload.module = searchPayload.parentId
+            searchPayload.moduleCode = searchPayload.parentId
             searchPayload.parentId = null
         }
         val records = dao.pagingSearch(searchPayload)
@@ -163,8 +163,8 @@ open class SysDictBiz : BaseCrudBiz<String, SysDict, SysDictDao>(), ISysDictBiz 
             if (!payload.parentId.isNullOrBlank()) { // 添加RegDict
                 val sysDict = SysDict().apply {
                     moduleCode = payload.moduleCode!!
-                    dictType = payload.code!!
-                    dictName = payload.name!!
+                    dictType = payload.dictType!!
+                    dictName = payload.dictName!!
                     remark = payload.remark
                 }
                 val id = dao.insert(sysDict)
@@ -178,8 +178,8 @@ open class SysDictBiz : BaseCrudBiz<String, SysDict, SysDictDao>(), ISysDictBiz 
                 val sysDict = SysDict {
                     id = payload.id
                     moduleCode = payload.moduleCode!!
-                    dictType = payload.code!!
-                    dictName = payload.name!!
+                    dictType = payload.dictType!!
+                    dictName = payload.dictName!!
                     remark = payload.remark
                 }
                 val success = dao.update(sysDict)

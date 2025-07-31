@@ -58,15 +58,18 @@ open class CacheByNameCacheHandler : AbstractCacheHandler<SysCacheCacheItem>() {
         val cacheConfigs = sysCacheDao.search(searchPayload) as List<SysCacheCacheItem>
         log.debug("从数据库加载了${cacheConfigs.size}条缓存配置信息。")
 
-        // 清除缓存
+        // 缓存缓存配置
         if (clear) {
-            clear()
+            clear() // 先清除缓存
+            cacheConfigs.forEach {
+                CacheKit.put(CACHE_NAME, it.name!!, it)
+            }
+        } else {
+            cacheConfigs.forEach {
+                CacheKit.putIfAbsent(CACHE_NAME, it.name!!, it)
+            }
         }
 
-        // 缓存缓存配置
-        cacheConfigs.forEach {
-            CacheKit.putIfAbsent(CACHE_NAME, it.name!!, it)
-        }
         log.debug("缓存了${cacheConfigs.size}条缓存配置。")
     }
 

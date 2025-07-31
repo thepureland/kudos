@@ -1,17 +1,17 @@
 package io.kudos.ams.sys.service.biz.impl
 
-import io.kudos.ams.sys.service.biz.ibiz.ISysDictItemBiz
-import io.kudos.ams.sys.service.model.po.SysDictItem
-import io.kudos.ams.sys.service.dao.SysDictItemDao
-import io.kudos.ability.data.rdb.ktorm.biz.BaseCrudBiz
 import io.kudos.ams.sys.common.vo.dict.SysDictPayload
 import io.kudos.ams.sys.common.vo.dictitem.SysDictItemCacheItem
 import io.kudos.ams.sys.service.cache.DictItemsByModuleAndTypeCacheHandler
 import io.kudos.base.logger.LogFactory
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import kotlin.text.insert
+import io.kudos.ams.sys.service.biz.ibiz.ISysDictItemBiz
+import io.kudos.ams.sys.service.model.po.SysDictItem
+import io.kudos.ams.sys.service.dao.SysDictItemDao
+import io.kudos.ability.data.rdb.ktorm.biz.BaseCrudBiz
+import org.springframework.stereotype.Service
 
 
 /**
@@ -46,7 +46,7 @@ open class SysDictItemBiz : BaseCrudBiz<String, SysDictItem, SysDictItemDao>(), 
     override fun saveOrUpdate(payload: SysDictPayload): String {
         return if (payload.id.isNullOrBlank()) { // 新增
             val sysDictItem = SysDictItem().apply {
-                dictId = payload.dictId!!
+                dictId = payload.id!!
                 parentId = payload.parentId
                 itemCode = payload.code!!
                 itemName = payload.name!!
@@ -59,7 +59,7 @@ open class SysDictItemBiz : BaseCrudBiz<String, SysDictItem, SysDictItemDao>(), 
         } else { // 更新
             val sysDictItem = SysDictItem {
                 id = payload.id
-                dictId = payload.dictId!!
+                dictId = payload.id!!
                 parentId = payload.parentId
                 itemCode = payload.code!!
                 itemName = payload.name!!

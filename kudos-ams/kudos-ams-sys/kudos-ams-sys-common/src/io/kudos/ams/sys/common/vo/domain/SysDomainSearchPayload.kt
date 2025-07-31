@@ -10,23 +10,42 @@ import kotlin.reflect.KClass
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
-open class SysDomainSearchPayload : ListSearchPayload() {
-//endregion your codes 1
+data class SysDomainSearchPayload (
 
-    //region your codes 2
+    //region your codes 1
+
+    override var returnEntityClass: KClass<*>? = SysDomainRecord::class,
 
     /** 域名 */
-    var domain: String? = null
+    var domain: String? = null,
 
-    /** 子系统代码 */
-    var subSysDictCode: String? = null
+    /** 子系统编码 */
+    var subSystemCode: String? = null,
+
+    /** 门户编码 */
+    var portalCode: String? = null,
 
     /** 租户id */
-    var tenantId: String? = null
+    var tenantId: String? = null,
 
-    //endregion your codes 2
+    /** 备注 */
+    var remark: String? = null,
 
-    override var returnEntityClass: KClass<*>? = SysDomainRecord::class
+    /** 是否启用 */
+    var active: Boolean? = null,
+
+    /** 是否内置 */
+    var builtIn: Boolean? = null,
+
+    //endregion your codes 1
+//region your codes 2
+) : ListSearchPayload() {
+//endregion your codes 2
+
+    //region your codes 3
+
+    constructor() : this(SysDomainRecord::class)
+
+    //endregion your codes 3
 
 }

@@ -1,6 +1,8 @@
 package io.kudos.ams.sys.common.vo.cache
 
 import java.io.Serializable
+import io.kudos.base.support.IIdEntity
+import java.time.LocalDateTime
 
 
 /**
@@ -9,44 +11,65 @@ import java.io.Serializable
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
-open class SysCacheCacheItem : Serializable {
-//endregion your codes 1
+data class SysCacheCacheItem (
 
-    //region your codes 2
+    /** 主键 */
+    override var id: String? = null,
 
-    companion object {
-        private const val serialVersionUID = 1877120481369335391L
-    }
+    //region your codes 1
 
     /** 名称 */
-    var name: String? = null
+    var name: String? = null,
 
-    /** 子系统代码 */
-    var subSysDictCode: String? = null
+    /** 原子服务编码 */
+    var atomicServiceCode: String? = null,
 
     /** 缓存策略代码 */
-    var strategyDictCode: String? = null
+    var strategyDictCode: String? = null,
 
     /** 是否启动时写缓存 */
-    var writeOnBoot: Boolean? = null
+    var writeOnBoot: Boolean? = null,
 
     /** 是否及时回写缓存 */
-    var writeInTime: Boolean? = null
+    var writeInTime: Boolean? = null,
 
     /** 缓存生存时间(秒) */
-    var ttl: Int? = null
+    var ttl: Int? = null,
 
-    /** 备注，或其国际化key */
-    var remark: String? = null
+    /** 备注 */
+    var remark: String? = null,
 
     /** 是否启用 */
-    var active: Boolean? = null
+    var active: Boolean? = null,
 
     /** 是否内置 */
-    var builtIn: Boolean? = null
+    var builtIn: Boolean? = null,
 
-    //endregion your codes 2
+    /** 创建用户 */
+    var createUser: String? = null,
 
+    /** 创建时间 */
+    var createTime: LocalDateTime? = null,
+
+    /** 更新用户 */
+    var updateUser: String? = null,
+
+    /** 更新时间 */
+    var updateTime: LocalDateTime? = null,
+
+    //endregion your codes 1
+//region your codes 2
+) : IIdEntity<String>, Serializable {
+//endregion your codes 2
+
+    //region your codes 3
+
+    constructor() : this(null)
+
+    // endregion your codes 3
+
+    companion object {
+        private const val serialVersionUID = 7167286658481070161L
+    }
 
 }

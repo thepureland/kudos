@@ -1,9 +1,9 @@
 package io.kudos.ams.sys.service.api
 
-import io.kudos.ams.sys.common.api.ISysTenantApi
 import io.kudos.ams.sys.common.vo.tenant.SysTenantCacheItem
 import io.kudos.ams.sys.service.biz.ibiz.ISysTenantBiz
 import org.springframework.beans.factory.annotation.Autowired
+import io.kudos.ams.sys.common.api.ISysTenantApi
 import org.springframework.stereotype.Service
 
 

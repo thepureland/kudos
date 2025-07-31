@@ -10,14 +10,27 @@ import kotlin.reflect.KClass
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
-open class SysSubSystemMicroServiceSearchPayload : ListSearchPayload() {
-//endregion your codes 1
+data class SysSubSystemMicroServiceSearchPayload (
 
-    //region your codes 2
+    //region your codes 1
 
-    //endregion your codes 2
+    override var returnEntityClass: KClass<*>? = SysSubSystemMicroServiceRecord::class,
 
-    override var returnEntityClass: KClass<*>? = SysSubSystemMicroServiceRecord::class
+    /** 子系统编码 */
+    var subSystemCode: String? = null,
+
+    /** 微服务编码 */
+    var microServiceCode: String? = null,
+
+    //endregion your codes 1
+//region your codes 2
+) : ListSearchPayload() {
+//endregion your codes 2
+
+    //region your codes 3
+
+    constructor() : this(SysSubSystemMicroServiceRecord::class)
+
+    //endregion your codes 3
 
 }

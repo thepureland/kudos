@@ -9,51 +9,54 @@ import io.kudos.base.support.result.IdJsonResult
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
-open class SysDictRecord : IdJsonResult<String>() {
-//endregion your codes 1
+data class SysDictRecord (
 
-    //region your codes 2
+    /** 主键 */
+    override var id: String? = null,
 
-    /** 模块编码 */
-    var moduleCode: String? = null
-
-    /** 字典id */
-    var dictId: String? = null
+    //region your codes 1
 
     /** 字典类型 */
-    var dictType: String? = null
+    var dictType: String? = null,
 
-    /** 字典名称，或其国际化key */
-    var dictName: String? = null
+    /** 字典名称 */
+    var dictName: String? = null,
 
-    /** 字典项ID */
-    var itemId: String? = null
+    /** 模块编码 */
+    var moduleCode: String? = null,
 
-    /** 字典项编号 */
-    var itemCode: String? = null
+    var parentId: String? = null,
 
-    /** 父项ID */
-    var parentId: String? = null
+    var parentCode: String? = null,
 
-    /** 字典项名称，或其国际化key */
-    var itemName: String? = null
-
-    /** 该字典编号在同父节点下的排序号 */
-    var seqNo: Int? = null
-
-    /** 是否启用 */
-    var active: Boolean? = null
+    var parentIds: List<String>? = null,
 
     /** 备注 */
-    var remark: String? = null
+    var remark: String? = null,
 
-    /** 父项编号 */
-    var parentCode: String? = null
+    /** 是否启用 */
+    var active: Boolean? = null,
 
-    /** 所有父项ID */
-    var parentIds: List<String>? = null
+    /** 是否内置 */
+    var builtIn: Boolean? = null,
 
-    //endregion your codes 2
+    var itemId: String? = null, //TODO
+
+    var itemCode: String? = null, //TODO
+
+    var itemName: String? = null, //TODO
+
+    var seqNo: Int? = null, //TODO
+
+    //endregion your codes 1
+//region your codes 2
+) : IdJsonResult<String>() {
+//endregion your codes 2
+
+    //region your codes 3
+
+    constructor() : this(null)
+
+    // endregion your codes 3
 
 }

@@ -9,12 +9,43 @@ import io.kudos.base.support.payload.FormPayload
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
-open class SysParamPayload : FormPayload<String>() {
-//endregion your codes 1
+data class SysParamPayload (
 
-    //region your codes 2
+    /** 主键 */
+    override var id: String? = null,
 
-    //endregion your codes 2
+    //region your codes 1
+
+    /** 参数名称 */
+    var paramName: String? = null,
+
+    /** 参数值 */
+    var paramValue: String? = null,
+
+    /** 默认参数值 */
+    var defaultValue: String? = null,
+
+    /** 模块 */
+    var moduleCode: String? = null,
+
+    /** 序号 */
+    var orderNum: Int? = null,
+
+    /** 备注 */
+    var remark: String? = null,
+
+    /** 是否启用 */
+    var active: Boolean? = null,
+
+    //endregion your codes 1
+//region your codes 2
+) : FormPayload<String>() {
+//endregion your codes 2
+
+    //region your codes 3
+
+    constructor() : this(null)
+
+    // endregion your codes 3
 
 }

@@ -31,19 +31,29 @@ import java.sql.SQLXML
 
 
 <@generateClassComment table.comment+"表单载体"/>
-//region your codes 1
-open class ${entityName}Payload : FormPayload<${pkColumn.kotlinTypeName}>() {
-//endregion your codes 1
+data class ${entityName}Payload (
 
-    //region your codes 2
+    /** ${pkColumn.comment!""} */
+    override var id: ${pkColumn.kotlinTypeName}? = null,
+
+    //region your codes 1
 
     <#list editItemColumns as column>
     <#if column.name != pkColumn.name>
     /** ${column.comment!""} */
-    var ${column.columnHumpName}: ${column.kotlinTypeName}? = null
+    var ${column.columnHumpName}: ${column.kotlinTypeName}? = null,
 
     </#if>
     </#list>
-    //endregion your codes 2
+    //endregion your codes 1
+//region your codes 2
+) : FormPayload<${pkColumn.kotlinTypeName}>() {
+//endregion your codes 2
+
+    //region your codes 3
+
+    constructor() : this(null)
+
+    // endregion your codes 3
 
 }

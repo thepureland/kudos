@@ -1,11 +1,11 @@
 package io.kudos.ams.sys.service.dao
 
+import io.kudos.base.query.Criteria
+import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.ams.sys.service.model.po.SysTenantSubSystem
 import io.kudos.ams.sys.service.model.table.SysTenantSubSystems
 import org.springframework.stereotype.Repository
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
-import io.kudos.base.query.Criteria
-import io.kudos.base.query.enums.OperatorEnum
 
 
 /**

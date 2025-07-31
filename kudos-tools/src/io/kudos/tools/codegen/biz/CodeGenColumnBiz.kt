@@ -39,8 +39,31 @@ object CodeGenColumnBiz {
                 }
             }
         }
-        if (columnMap.isEmpty()) { // 默认都为详情项
-            results.map { it.setDetailItem(true) }
+        if (columnMap.isEmpty()) {
+            results.map {
+                // 默认都为详情项
+                it.setDetailItem(true)
+
+                // 默认都为缓存项
+                it.setCacheItem(true)
+
+                val columnName = it.getName()!!.lowercase()
+
+                // 设置默认的检索条件字段
+                if (columnName !in setOf("id", "built_in", "create_user", "create_time", "update_user", "update_time")) {
+                    it.setSearchItem(true)
+                }
+
+                // 设置默认的列表项字段
+                if (columnName !in setOf("id", "create_user", "create_time", "update_user", "update_time")) {
+                    it.setListItem(true)
+                }
+
+                // 设置默认的编辑项字段
+                if (columnName !in setOf("id", "built_in", "create_user", "create_time", "update_user", "update_time")) {
+                    it.setEditItem(true)
+                }
+            }
         }
         return results
     }

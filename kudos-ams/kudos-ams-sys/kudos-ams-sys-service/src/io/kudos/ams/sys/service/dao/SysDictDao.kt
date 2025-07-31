@@ -1,17 +1,17 @@
 package io.kudos.ams.sys.service.dao
 
-import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.ability.data.rdb.ktorm.support.ColumnHelper
 import io.kudos.ams.sys.common.vo.dict.SysDictRecord
 import io.kudos.ams.sys.common.vo.dict.SysDictSearchPayload
-import io.kudos.ams.sys.service.model.po.SysDict
 import io.kudos.ams.sys.service.model.table.SysDictItems
-import io.kudos.ams.sys.service.model.table.SysDicts
 import io.kudos.base.error.ObjectNotFoundException
 import io.kudos.base.query.enums.OperatorEnum
 import org.ktorm.dsl.*
 import org.ktorm.expression.OrderByExpression
+import io.kudos.ams.sys.service.model.po.SysDict
+import io.kudos.ams.sys.service.model.table.SysDicts
 import org.springframework.stereotype.Repository
+import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 
 
 /**
@@ -89,7 +89,7 @@ open class SysDictDao : BaseCrudDao<String, SysDict, SysDicts>() {
         return query.map { row ->
             SysDictRecord().apply {
                 moduleCode = row[SysDicts.moduleCode]
-                dictId = row[SysDicts.id]
+                id = row[SysDicts.id]
                 dictType = row[SysDicts.dictType]
                 dictName = row[SysDicts.dictName]
                 itemId = row[SysDictItems.id]
@@ -146,8 +146,8 @@ open class SysDictDao : BaseCrudDao<String, SysDict, SysDicts>() {
                 if (searchPayload.active != null) {
                     it += SysDictItems.active.eq(searchPayload.active!!)
                 }
-                if (!searchPayload.module.isNullOrBlank()) {
-                    it += whereExpr(SysDicts.moduleCode, OperatorEnum.ILIKE, searchPayload.module!!.trim())!!
+                if (!searchPayload.moduleCode.isNullOrBlank()) {
+                    it += whereExpr(SysDicts.moduleCode, OperatorEnum.ILIKE, searchPayload.moduleCode!!.trim())!!
                 }
                 if (!searchPayload.dictType.isNullOrBlank()) {
                     it += whereExpr(SysDicts.dictType, OperatorEnum.ILIKE, searchPayload.dictType!!.trim())!!
