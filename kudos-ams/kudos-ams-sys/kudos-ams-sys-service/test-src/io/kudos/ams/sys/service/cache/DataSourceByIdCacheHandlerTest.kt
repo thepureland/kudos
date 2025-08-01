@@ -4,7 +4,6 @@ import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.ams.sys.common.vo.datasource.SysDataSourceCacheItem
 import io.kudos.ams.sys.service.dao.SysDataSourceDao
 import io.kudos.ams.sys.service.model.po.SysDataSource
-import org.junit.jupiter.api.AfterAll
 import org.springframework.beans.factory.annotation.Autowired
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -17,7 +16,7 @@ import kotlin.test.assertNull
  * @author K
  * @since 1.0.0
  */
-class DataSourceByIdCacheHandlerTest : CacheHandlerTestBase() {
+open class DataSourceByIdCacheHandlerTest : CacheHandlerTestBase() {
 
     @Autowired
     private lateinit var dataSourceByIdCacheHandler: DataSourceByIdCacheHandler
@@ -27,45 +26,52 @@ class DataSourceByIdCacheHandlerTest : CacheHandlerTestBase() {
 
     private val newUrl = "new_url"
 
-    @AfterAll
+    @Test
     fun reloadAll() {
-//        // 获取当前缓存中的记录
-//        val idCache = "3d2acef6-e828-43c5-a512-111111111111"
-//        val cacheItem = dataSourceByIdCacheHandler.getDataSourceById(idCache)
-//
-//        // 插入新的记录到数据库
-//        val idNew = insertNewRecordToDb()
-//
-//        // 更新数据库的记录
-//        val idUpdate = "3d2acef6-e828-43c5-a512-222222222222"
-//        sysDataSourceDao.updateProperties(idUpdate, mapOf(SysDataSource::url.name to newUrl))
-//
-//        // 从数据库中删除记录
-//        val idDele = "3d2acef6-e828-43c5-a512-333333333333"
-//        sysDataSourceDao.deleteById(idDele)
-//
-//        // 重载缓存，但不清除旧缓存
-//        dataSourceByIdCacheHandler.reloadAll(false)
-//
-//        // 原来缓存中的记录内存地址不会变
-//        val cacheItem1 = dataSourceByIdCacheHandler.getDataSourceById(idCache)
-//        assert(cacheItem === cacheItem1)
-//
-//        // 数据库中新增的记录在缓存应该要存在
-//        val cacheItemNew = dataSourceByIdCacheHandler.getDataSourceById(idNew)
-//        assertNotNull(cacheItemNew)
-//
-//        //
-//
-//
-//
-//
-//        // 清除并重载缓存
-//        dataSourceByIdCacheHandler.reloadAll()
-//
-//        // 内存地址应该不一样
-//        val cacheItem1 = dataSourceByIdCacheHandler.getDataSourceById(id1)
-//        assert(cacheItem !== cacheItem1)
+        // 清除并重载缓存，保证与数据库中的数据一致
+        dataSourceByIdCacheHandler.reloadAll(true)
+
+        // 获取当前缓存中的记录
+        val idCache = "3d2acef6-e828-43c5-a512-111111111111"
+        val cacheItem = dataSourceByIdCacheHandler.getDataSourceById(idCache)
+
+        // 插入新的记录到数据库
+        val idNew = insertNewRecordToDb()
+
+        // 更新数据库的记录
+        val idUpdate = "3d2acef6-e828-43c5-a512-222222222222"
+        sysDataSourceDao.updateProperties(idUpdate, mapOf(SysDataSource::url.name to newUrl))
+
+        // 从数据库中删除记录
+        val idDelete = "3d2acef6-e828-43c5-a512-333333333333"
+        sysDataSourceDao.deleteById(idDelete)
+
+        // 重载缓存，但不清除旧缓存
+        dataSourceByIdCacheHandler.reloadAll(false)
+
+        // 原来缓存中的记录内存地址会变
+        val cacheItem1 = dataSourceByIdCacheHandler.getDataSourceById(idCache)
+        assert(cacheItem !== cacheItem1)
+
+        // 数据库中新增的记录在缓存应该要存在
+        val cacheItemNew = dataSourceByIdCacheHandler.getDataSourceById(idNew)
+        assertNotNull(cacheItemNew)
+
+        // 数据库中更新的记录在缓存中应该也更新了
+        val cacheItemUpdate = dataSourceByIdCacheHandler.getDataSourceById(idUpdate)
+        assertEquals(newUrl, cacheItemUpdate!!.url)
+
+        // 数据库中删除的记录在缓存中应该还在
+        var cacheItemDelete = dataSourceByIdCacheHandler.getDataSourceById(idDelete)
+        assertNotNull(cacheItemDelete)
+
+
+        // 清除并重载缓存
+        dataSourceByIdCacheHandler.reloadAll(true)
+
+        // 数据库中删除的记录在缓存中应该不存在了
+        cacheItemDelete = dataSourceByIdCacheHandler.getDataSourceById(idDelete)
+        assertNull(cacheItemDelete)
     }
 
     @Test

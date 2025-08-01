@@ -19,7 +19,8 @@ import kotlin.reflect.KClass
  * @author K
  * @since 1.0.0
  */
-abstract class AbstractByIdCacheHandler<PK: Any, T: IIdEntity<*>, DAO: IBaseReadOnlyDao<PK, *>>: AbstractCacheHandler<T>() {
+abstract class AbstractByIdCacheHandler<PK : Any, T : IIdEntity<*>, DAO : IBaseReadOnlyDao<PK, *>> :
+    AbstractCacheHandler<T>() {
 
     @Autowired
     protected lateinit var dao: DAO
@@ -71,16 +72,14 @@ abstract class AbstractByIdCacheHandler<PK: Any, T: IIdEntity<*>, DAO: IBaseRead
         val results = dao.search(searchPayload) as List<T>
         log.debug("从数据库加载了${results.size}条${itemDesc()}信息。")
 
-        // 缓存
+        // 先清除缓存
         if (clear) {
-            clear() // 先清除缓存
-            results.forEach {
-                CacheKit.put(cacheName(), it.id!!, it)
-            }
-        } else {
-            results.forEach {
-                CacheKit.putIfAbsent(cacheName(), it.id!!, it)
-            }
+            clear()
+        }
+
+        // 放入缓存
+        results.forEach {
+            CacheKit.put(cacheName(), it.id!!, it)
         }
 
         log.debug("缓存了${results.size}条${itemDesc()}信息。")
@@ -131,5 +130,5 @@ abstract class AbstractByIdCacheHandler<PK: Any, T: IIdEntity<*>, DAO: IBaseRead
     protected abstract fun itemDesc(): String
 
     private val log = LogFactory.getLog(this)
-    
+
 }
