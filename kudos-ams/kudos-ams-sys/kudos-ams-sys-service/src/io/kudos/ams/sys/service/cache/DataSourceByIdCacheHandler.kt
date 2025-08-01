@@ -1,10 +1,8 @@
 package io.kudos.ams.sys.service.cache
 
-import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.ability.cache.common.support.AbstractByIdCacheHandler
 import io.kudos.ams.sys.common.vo.datasource.SysDataSourceCacheItem
 import io.kudos.ams.sys.service.dao.SysDataSourceDao
-import io.kudos.context.kit.SpringKit
 import org.soul.ability.cache.common.batch.BatchCacheable
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
@@ -23,8 +21,6 @@ import org.springframework.stereotype.Component
 @Component
 open class DataSourceByIdCacheHandler: AbstractByIdCacheHandler<String, SysDataSourceCacheItem, SysDataSourceDao>() {
 
-    private var self: DataSourceByIdCacheHandler? = null
-
     companion object {
         private const val CACHE_NAME = "SYS_DATA_SOURCE_BY_ID"
     }
@@ -34,9 +30,15 @@ open class DataSourceByIdCacheHandler: AbstractByIdCacheHandler<String, SysDataS
     override fun cacheName() = CACHE_NAME
 
     override fun doReload(key: String): SysDataSourceCacheItem? {
-        return getSelf().getDataSourceById(key)
+        return getSelf<DataSourceByIdCacheHandler>().getDataSourceById(key)
     }
 
+    /**
+     * 根据id从缓存获取数据源，如果缓存中不存在，则从数据库中加载，并存入缓存
+     *
+     * @param id 数据源id
+     * @return SysDataSourceCacheItem，找不到则返回null
+     */
     @Cacheable(
         cacheNames = [CACHE_NAME],
         key = "#id",
@@ -46,22 +48,18 @@ open class DataSourceByIdCacheHandler: AbstractByIdCacheHandler<String, SysDataS
         return getById(id)
     }
 
+    /**
+     * 根据多个id批量从缓存获取数据源，缓存中不存在的，则从数据库中加载，并存入缓存
+     *
+     * @param ids 数据源id集合
+     * @return Map<数据源id, SysDataSourceCacheItem>，不存在的id不会放入map。
+     */
     @BatchCacheable(
         cacheNames = [CACHE_NAME],
         valueClass = SysDataSourceCacheItem::class
     )
     open fun getDataSourcesByIds(ids: Collection<String>): Map<String, SysDataSourceCacheItem> {
         return getByIds(ids)
-    }
-
-    private fun getSelf() : DataSourceByIdCacheHandler {
-        return self ?: (SpringKit.getBean(this::class).also { self = it })
-    }
-
-    override fun syncOnInsert(id: String) {
-        if (CacheKit.isCacheActive(cacheName()) && CacheKit.isWriteInTime(cacheName())) {
-            getSelf().getDataSourceById(id) // 缓存
-        }
     }
 
 }

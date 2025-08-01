@@ -7,7 +7,6 @@ import io.kudos.ams.sys.common.vo.tenant.SysTenantSearchPayload
 import io.kudos.ams.sys.service.dao.SysTenantDao
 import io.kudos.ams.sys.service.dao.SysTenantSubSystemDao
 import io.kudos.base.logger.LogFactory
-import io.kudos.context.kit.SpringKit
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
@@ -26,8 +25,6 @@ import org.springframework.stereotype.Component
 @Component
 open class TenantsBySubSysCacheHandler : AbstractCacheHandler<List<SysTenantCacheItem>>() {
 
-    private var self: TenantsBySubSysCacheHandler? = null
-
     @Autowired
     private lateinit var tenantByIdCacheHandler: TenantByIdCacheHandler
 
@@ -44,7 +41,8 @@ open class TenantsBySubSysCacheHandler : AbstractCacheHandler<List<SysTenantCach
 
     override fun cacheName(): String = CACHE_NAME
 
-    override fun doReload(key: String): List<SysTenantCacheItem> = getSelf().getTenantsFromCache(key)
+    override fun doReload(key: String): List<SysTenantCacheItem>
+        = getSelf<TenantsBySubSysCacheHandler>().getTenantsFromCache(key)
 
 
     override fun reloadAll(clear: Boolean) {
@@ -97,7 +95,7 @@ open class TenantsBySubSysCacheHandler : AbstractCacheHandler<List<SysTenantCach
             val subSystemCodes = sysTenantSubSystemDao.searchSubSystemCodesByTenantId(tenantId)
             subSystemCodes.forEach { subSystemCode ->
                 CacheKit.evict(CACHE_NAME, subSystemCode) // 踢除缓存，因为缓存的粒度为子系统
-                getSelf().getTenantsFromCache(subSystemCode) // 重新缓存
+                getSelf<TenantsBySubSysCacheHandler>().getTenantsFromCache(subSystemCode) // 重新缓存
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
@@ -110,7 +108,7 @@ open class TenantsBySubSysCacheHandler : AbstractCacheHandler<List<SysTenantCach
             subSystemCodes.forEach { subSystemCode ->
                 CacheKit.evict(CACHE_NAME, subSystemCode) // 踢除缓存，因为缓存的粒度为子系统
                 if (CacheKit.isWriteInTime(CACHE_NAME)) {
-                    getSelf().getTenantsFromCache(subSystemCode) // 重新缓存
+                    getSelf<TenantsBySubSysCacheHandler>().getTenantsFromCache(subSystemCode) // 重新缓存
                 }
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
@@ -125,7 +123,7 @@ open class TenantsBySubSysCacheHandler : AbstractCacheHandler<List<SysTenantCach
             subSystemCodes.forEach { subSystemCode ->
                 CacheKit.evict(CACHE_NAME, subSystemCode) // 踢除缓存，缓存的粒度为子系统
                 if (CacheKit.isWriteInTime(CACHE_NAME)) {
-                    getSelf().getTenantsFromCache(subSystemCode) // 重新缓存
+                    getSelf<TenantsBySubSysCacheHandler>().getTenantsFromCache(subSystemCode) // 重新缓存
                 }
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
@@ -138,18 +136,11 @@ open class TenantsBySubSysCacheHandler : AbstractCacheHandler<List<SysTenantCach
             subSystemCodes.forEach {
                 CacheKit.evict(CACHE_NAME, it) // 踢除缓存，缓存的粒度为子系统
                 if (CacheKit.isWriteInTime(CACHE_NAME)) {
-                    getSelf().getTenantsFromCache(it) // 重新缓存
+                    getSelf<TenantsBySubSysCacheHandler>().getTenantsFromCache(it) // 重新缓存
                 }
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
-    }
-
-    private fun getSelf() : TenantsBySubSysCacheHandler {
-        if (self == null) {
-            self = SpringKit.getBean(this::class)
-        }
-        return self!!
     }
 
     private val log = LogFactory.getLog(this)

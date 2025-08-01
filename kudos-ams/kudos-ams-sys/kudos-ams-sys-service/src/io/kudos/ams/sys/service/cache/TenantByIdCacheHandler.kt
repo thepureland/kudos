@@ -3,9 +3,7 @@ package io.kudos.ams.sys.service.cache
 import io.kudos.ability.cache.common.support.AbstractByIdCacheHandler
 import io.kudos.ams.sys.common.vo.tenant.SysTenantCacheItem
 import io.kudos.ams.sys.service.dao.SysTenantDao
-import io.kudos.context.kit.SpringKit
 import org.soul.ability.cache.common.batch.BatchCacheable
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
 
@@ -23,8 +21,6 @@ import org.springframework.stereotype.Component
 @Component
 open class TenantByIdCacheHandler : AbstractByIdCacheHandler<String, SysTenantCacheItem, SysTenantDao>() {
 
-    private var self: TenantByIdCacheHandler? = null
-    
     companion object {
         private const val CACHE_NAME = "SYS_TENANT_BY_ID"
     }
@@ -32,7 +28,7 @@ open class TenantByIdCacheHandler : AbstractByIdCacheHandler<String, SysTenantCa
     override fun cacheName(): String = CACHE_NAME
 
     override fun doReload(key: String): SysTenantCacheItem? {
-        return getSelf().getTenantById(key)
+        return getSelf<TenantByIdCacheHandler>().getTenantById(key)
     }
 
     @Cacheable(
@@ -50,13 +46,6 @@ open class TenantByIdCacheHandler : AbstractByIdCacheHandler<String, SysTenantCa
     )
     open fun getTenantsByIds(ids: Collection<String>): Map<String, SysTenantCacheItem> {
         return getByIds(ids)
-    }
-
-    private fun getSelf() : TenantByIdCacheHandler {
-        if (self == null) {
-            self = SpringKit.getBean(this::class)
-        }
-        return self!!
     }
 
     override fun itemDesc() = "租户"

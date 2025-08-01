@@ -12,7 +12,6 @@ import io.kudos.ams.sys.service.model.table.SysParams
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.support.Consts
-import io.kudos.context.kit.SpringKit
 import org.ktorm.dsl.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable
@@ -35,8 +34,6 @@ open class ParamByModuleAndNameCacheHandler : AbstractCacheHandler<SysParamCache
     @Autowired
     private lateinit var sysParamDao: SysParamDao
 
-    private var self: ParamByModuleAndNameCacheHandler? = null
-
     companion object {
         private const val CACHE_NAME = "SYS_PARAM_BY_MODULE_AND_NAME"
     }
@@ -48,7 +45,9 @@ open class ParamByModuleAndNameCacheHandler : AbstractCacheHandler<SysParamCache
             "缓存${CACHE_NAME}的key格式必须是 模块代码${Consts.CACHE_KEY_DEFAULT_DELIMITER}参数名称"
         }
         val moduleAndParamName = key.split(Consts.CACHE_KEY_DEFAULT_DELIMITER)
-        return getSelf().getParamFromCache(moduleAndParamName[0], moduleAndParamName[1])
+        return getSelf<ParamByModuleAndNameCacheHandler>().getParamFromCache(
+            moduleAndParamName[0], moduleAndParamName[1]
+        )
     }
 
     override fun reloadAll(clear: Boolean) {
@@ -115,7 +114,7 @@ open class ParamByModuleAndNameCacheHandler : AbstractCacheHandler<SysParamCache
             log.debug("新增id为${id}的参数后，同步${CACHE_NAME}缓存...")
             val module = BeanKit.getProperty(any, SysParam::moduleCode.name) as String
             val paramName = BeanKit.getProperty(any, SysParam::paramName.name) as String
-            getSelf().getParamFromCache(module, paramName) // 缓存
+            getSelf<ParamByModuleAndNameCacheHandler>().getParamFromCache(module, paramName) // 缓存
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
     }
@@ -127,7 +126,7 @@ open class ParamByModuleAndNameCacheHandler : AbstractCacheHandler<SysParamCache
             val paramName = BeanKit.getProperty(any, SysParam::paramName.name) as String
             CacheKit.evict(CACHE_NAME, getKey(module, paramName)) // 踢除参数缓存
             if (CacheKit.isWriteInTime(CACHE_NAME)) {
-                getSelf().getParamFromCache(module, paramName) // 重新缓存
+                getSelf<ParamByModuleAndNameCacheHandler>().getParamFromCache(module, paramName) // 重新缓存
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
@@ -139,7 +138,9 @@ open class ParamByModuleAndNameCacheHandler : AbstractCacheHandler<SysParamCache
             val sysParam = sysParamDao.get(id)!!
             if (active) {
                 if (CacheKit.isWriteInTime(CACHE_NAME)) {
-                    getSelf().getParamFromCache(sysParam.moduleCode, sysParam.paramName)
+                    getSelf<ParamByModuleAndNameCacheHandler>().getParamFromCache(
+                        sysParam.moduleCode, sysParam.paramName
+                    )
                 }
             } else {
                 CacheKit.evict(CACHE_NAME, getKey(sysParam.moduleCode, sysParam.paramName)) // 踢除参数缓存
@@ -168,13 +169,6 @@ open class ParamByModuleAndNameCacheHandler : AbstractCacheHandler<SysParamCache
 
     private fun getKey(module: String, paramName: String): String {
         return "${module}${Consts.CACHE_KEY_DEFAULT_DELIMITER}${paramName}"
-    }
-
-    private fun getSelf() : ParamByModuleAndNameCacheHandler {
-        if (self == null) {
-            self = SpringKit.getBean(this::class)
-        }
-        return self!!
     }
 
     private val log = LogFactory.getLog(this)

@@ -25,6 +25,12 @@ abstract class AbstractByIdCacheHandler<PK : Any, T : IIdEntity<*>, DAO : IBaseR
     @Autowired
     protected lateinit var dao: DAO
 
+    /**
+     * 根据主键从数据库中加载对应的记录
+     *
+     * @param id 主键
+     * @return 缓存对象
+     */
     protected fun getById(id: PK): T? {
         if (id is CharSequence) {
             require(id.isNotEmpty()) { log.error("从${cacheName()}缓存中获取${itemDesc()}时，id不能为空！") }
@@ -41,6 +47,12 @@ abstract class AbstractByIdCacheHandler<PK : Any, T : IIdEntity<*>, DAO : IBaseR
         return result
     }
 
+    /**
+     * 根据主键集合批量从数据库加载对应记录
+     *
+     * @param ids 主键集合
+     * @return Map<主键，缓存对象>
+     */
     protected fun getByIds(ids: Collection<PK>): Map<String, T> {
         require(ids.isNotEmpty()) { log.error("批量从${cacheName()}缓存中获取${itemDesc()}时，id集合不能为空！") }
         if (CacheKit.isCacheActive(cacheName())) {
@@ -85,6 +97,11 @@ abstract class AbstractByIdCacheHandler<PK : Any, T : IIdEntity<*>, DAO : IBaseR
         log.debug("缓存了${results.size}条${itemDesc()}信息。")
     }
 
+    /**
+     * 数据库插入新记录后，同步缓存
+     *
+     * @param id 主键
+     */
     open fun syncOnInsert(id: PK) {
         if (CacheKit.isCacheActive(cacheName()) && CacheKit.isWriteInTime(cacheName())) {
             log.debug("新增id为${id}的${itemDesc()}后，同步${cacheName()}缓存...")
@@ -93,6 +110,11 @@ abstract class AbstractByIdCacheHandler<PK : Any, T : IIdEntity<*>, DAO : IBaseR
         }
     }
 
+    /**
+     * 更新数据库记录后，同步缓存
+     *
+     * @param id 主键
+     */
     open fun syncOnUpdate(id: PK) {
         if (CacheKit.isCacheActive(cacheName())) {
             log.debug("更新id为${id}的${itemDesc()}后，同步${cacheName()}缓存...")
@@ -104,6 +126,11 @@ abstract class AbstractByIdCacheHandler<PK : Any, T : IIdEntity<*>, DAO : IBaseR
         }
     }
 
+    /**
+     * 删除数据库记录后，同步缓存
+     *
+     * @param id 主键
+     */
     open fun syncOnDelete(id: PK) {
         if (CacheKit.isCacheActive(cacheName())) {
             log.debug("删除id为${id}的${itemDesc()}后，同步${cacheName()}缓存...")
@@ -112,6 +139,11 @@ abstract class AbstractByIdCacheHandler<PK : Any, T : IIdEntity<*>, DAO : IBaseR
         }
     }
 
+    /**
+     * 批量删除数据库对象后，同步缓存
+     *
+     * @param ids 主键集合
+     */
     open fun syncOnBatchDelete(ids: Collection<String>) {
         if (CacheKit.isCacheActive(cacheName())) {
             log.debug("批量删除id为${ids}的${itemDesc()}后，同步从${cacheName()}缓存中踢除...")
@@ -122,11 +154,21 @@ abstract class AbstractByIdCacheHandler<PK : Any, T : IIdEntity<*>, DAO : IBaseR
         }
     }
 
+    /**
+     * 返回缓存项类型
+     *
+     * @return 缓存项类型
+     */
     protected fun getCacheItemClass(): KClass<T> {
         @Suppress("UNCHECKED_CAST")
         return GenericKit.getSuperClassGenricClass(this::class, 1) as KClass<T>
     }
 
+    /**
+     * 返回缓存项描述
+     *
+     * @return 缓存项描述
+     */
     protected abstract fun itemDesc(): String
 
     private val log = LogFactory.getLog(this)

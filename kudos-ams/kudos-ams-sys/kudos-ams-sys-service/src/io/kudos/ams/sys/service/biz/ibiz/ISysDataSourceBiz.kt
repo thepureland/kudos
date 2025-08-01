@@ -18,16 +18,22 @@ interface ISysDataSourceBiz : IBaseCrudBiz<String, SysDataSource> {
     //region your codes 2
 
     /**
-     * 返回指定子系统和租户的数据源，先从缓存找，找不到从数据库加载，并缓存
-     * 注：如果存在多条满足条件的结果，将任意返回一条！
+     * 返回指定租户、子系统、微服务、原子服务的数据源，先从缓存找，找不到从数据库加载，并缓存
      *
-     * @param subSysDictCode 子系统代码
      * @param tenantId 租户id
+     * @param subSystemCode 子系统编码
+     * @param microServiceCode 微服务编码
+     * @param atomicServiceCode 原子服务编码
      * @return SysDataSourceCacheItem
      * @author K
      * @since 1.0.0
      */
-    fun getDataSource(subSysDictCode: String, tenantId: String?): SysDataSourceCacheItem?
+    fun getDataSource(
+        tenantId: String,
+        subSystemCode: String,
+        microServiceCode: String?,
+        atomicServiceCode: String?
+    ): SysDataSourceCacheItem?
 
     /**
      * 更新启用状态，并同步缓存
