@@ -55,22 +55,20 @@ open class CacheByNameCacheHandler : AbstractCacheHandler<SysCacheCacheItem>() {
         }
 
         @Suppress("UNCHECKED_CAST")
-        val cacheConfigs = sysCacheDao.search(searchPayload) as List<SysCacheCacheItem>
-        log.debug("从数据库加载了${cacheConfigs.size}条缓存配置信息。")
+        val results = sysCacheDao.search(searchPayload) as List<SysCacheCacheItem>
+        log.debug("从数据库加载了${results.size}条缓存配置信息。")
 
-        // 缓存缓存配置
+        // 先清除缓存
         if (clear) {
-            clear() // 先清除缓存
-            cacheConfigs.forEach {
-                CacheKit.put(CACHE_NAME, it.name!!, it)
-            }
-        } else {
-            cacheConfigs.forEach {
-                CacheKit.putIfAbsent(CACHE_NAME, it.name!!, it)
-            }
+            clear()
         }
 
-        log.debug("缓存了${cacheConfigs.size}条缓存配置。")
+        // 放入缓存
+        results.forEach {
+            CacheKit.put(cacheName(), it.name!!, it)
+        }
+
+        log.debug("缓存了${results.size}条缓存配置。")
     }
 
     @Cacheable(

@@ -2,9 +2,8 @@ package io.kudos.ams.sys.service.cache
 
 import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.ams.sys.common.vo.cache.SysCacheCacheItem
-import io.kudos.ams.sys.service.biz.ibiz.ISysCacheBiz
+import io.kudos.ams.sys.service.dao.SysCacheDao
 import io.kudos.ams.sys.service.model.po.SysCache
-import org.junit.jupiter.api.AfterAll
 import org.soul.ability.cache.common.enums.CacheStrategy
 import org.springframework.beans.factory.annotation.Autowired
 import org.testcontainers.junit.jupiter.EnabledIfDockerAvailable
@@ -26,25 +25,59 @@ class CacheByNameCacheHandlerTest : CacheHandlerTestBase() {
     private lateinit var cacheByNameCacheHandler: CacheByNameCacheHandler
 
     @Autowired
-    private lateinit var sysCacheBiz: ISysCacheBiz
+    private lateinit var sysCacheDao: SysCacheDao
 
-    @AfterAll
+    private val newCacheName = "a_new_test_cache"
+
+    @Test
     fun reloadAll() {
-//        val cacheId = "e5340806-97b4-43a4-84c6-22222"
-//        val newTtl = 999999999
-//        val success = sysCacheBiz.updateProperties(cacheId, mapOf(SysCache::ttl.name to newTtl))
-//        assert(success)
+        // 清除并重载缓存，保证与数据库中的数据一致
+        cacheByNameCacheHandler.reloadAll(true)
 
-        cacheByNameCacheHandler.reloadAll()
-        val cacheItem = CacheKit.getValue(cacheByNameCacheHandler.cacheName(), cacheByNameCacheHandler.cacheName())
-        assert(cacheItem is SysCacheCacheItem)
-        assertEquals(cacheByNameCacheHandler.cacheName(), (cacheItem as SysCacheCacheItem).name)
+        // 获取当前缓存中的记录
+        val cacheName = "TEST_CACHE_1"
+        val cacheItem = cacheByNameCacheHandler.getCacheFromCache(cacheName)
 
-        val cacheName = "TEST_CACHE_2"
-        val cacheItem1 = CacheKit.getValue(cacheByNameCacheHandler.cacheName(), cacheName)
-        assertEquals(999999999, (cacheItem1 as SysCacheCacheItem).ttl)
-        val cacheItem2 = cacheByNameCacheHandler.getCacheFromCache(cacheName)
-        assertEquals(999999999, (cacheItem2 as SysCacheCacheItem).ttl)
+        // 插入新的记录到数据库
+        val sysCache = insertNewRecordToDb()
+
+        // 更新数据库的记录
+        val cacheIdUpdate = "e5340806-97b4-43a4-84c6-222222222222"
+        val cacheNameUpdate = "TEST_CACHE_2"
+        val newTtl = 666666
+        sysCacheDao.updateProperties(cacheIdUpdate, mapOf(SysCache::ttl.name to newTtl))
+
+        // 从数据库中删除记录
+        val idDelete = "e5340806-97b4-43a4-84c6-333333333333"
+        val cacheNameDelete = "TEST_CACHE_3"
+        sysCacheDao.deleteById(idDelete)
+
+        // 重载缓存，但不清除旧缓存
+        cacheByNameCacheHandler.reloadAll(false)
+
+        // 原来缓存中的记录内存地址会变
+        val cacheItem1 = cacheByNameCacheHandler.getCacheFromCache(cacheName)
+        assert(cacheItem !== cacheItem1)
+
+        // 数据库中新增的记录在缓存应该要存在
+        val cacheItemNew = cacheByNameCacheHandler.getCacheFromCache(sysCache.name)
+        assertNotNull(cacheItemNew)
+
+        // 数据库中更新的记录在缓存中应该也更新了
+        val cacheItemUpdate = cacheByNameCacheHandler.getCacheFromCache(cacheNameUpdate)
+        assertEquals(newTtl, cacheItemUpdate!!.ttl)
+
+        // 数据库中删除的记录在缓存中应该还在
+        var cacheItemDelete = cacheByNameCacheHandler.getCacheFromCache(cacheNameDelete)
+        assertNotNull(cacheItemDelete)
+
+
+        // 清除并重载缓存
+        cacheByNameCacheHandler.reloadAll(true)
+
+        // 数据库中删除的记录在缓存中应该不存在了
+        cacheItemDelete = cacheByNameCacheHandler.getCacheFromCache(cacheNameDelete)
+        assertNull(cacheItemDelete)
     }
 
     @Test
@@ -59,19 +92,10 @@ class CacheByNameCacheHandlerTest : CacheHandlerTestBase() {
     @Test
     fun syncOnInsert() {
         // 插入新的记录到数据库
-        val newCacheName = "a_new_test_cache"
-        val sysCache = SysCache().apply {
-            name = newCacheName
-            atomicServiceCode = "ams-sys"
-            strategyDictCode = CacheStrategy.SINGLE_LOCAL.name
-            writeOnBoot = true
-            writeInTime = true
-            ttl = 666666
-        }
-        val id = sysCacheBiz.insert(sysCache)
+        val sysCache = insertNewRecordToDb()
 
         // 同步缓存
-        cacheByNameCacheHandler.syncOnInsert(sysCache, id)
+        cacheByNameCacheHandler.syncOnInsert(sysCache, sysCache.id!!)
 
         // 验证新记录是否在缓存中
         val cacheItem1 = CacheKit.getValue(cacheByNameCacheHandler.cacheName(), newCacheName)
@@ -83,10 +107,10 @@ class CacheByNameCacheHandlerTest : CacheHandlerTestBase() {
     @Test
     fun syncOnUpdate() {
         // 更新数据库中已存在的记录
-        val cacheId = "e5340806-97b4-43a4-84c6-22222"
+        val cacheId = "e5340806-97b4-43a4-84c6-222222222222"
         val cacheName = "TEST_CACHE_2"
         val newTtl = 666666
-        val success = sysCacheBiz.updateProperties(cacheId, mapOf(SysCache::ttl.name to newTtl))
+        val success = sysCacheDao.updateProperties(cacheId, mapOf(SysCache::ttl.name to newTtl))
         assert(success)
 
         // 同步缓存
@@ -103,9 +127,9 @@ class CacheByNameCacheHandlerTest : CacheHandlerTestBase() {
     @Test
     fun syncOnDelete() {
         // 删除数据库中的记录
-        val id = "e5340806-97b4-43a4-84c6-33333"
+        val id = "e5340806-97b4-43a4-84c6-333333333333"
         val name = "TEST_CACHE_3"
-        val deleteSuccess = sysCacheBiz.deleteById(id)
+        val deleteSuccess = sysCacheDao.deleteById(id)
         assert(deleteSuccess)
 
         // 同步缓存
@@ -121,12 +145,12 @@ class CacheByNameCacheHandlerTest : CacheHandlerTestBase() {
     @Test
     fun syncOnBatchDelete() {
         // 批量删除数据库中的记录
-        val id1 = "2da8e352-6e6f-4cd4-93e0-44444"
+        val id1 = "2da8e352-6e6f-4cd4-93e0-444444444444"
         val name1 = "TEST_CACHE_4"
-        val id2 = "2da8e352-6e6f-4cd4-93e0-55555"
+        val id2 = "2da8e352-6e6f-4cd4-93e0-555555555555"
         val name2 = "TEST_CACHE_5"
         val ids = listOf(id1, id2)
-        val count = sysCacheBiz.batchDelete(ids)
+        val count = sysCacheDao.batchDelete(ids)
         assert(count == 2)
 
         // 同步缓存
@@ -141,6 +165,19 @@ class CacheByNameCacheHandlerTest : CacheHandlerTestBase() {
         assertNull(cacheItem3)
         val cacheItem4 = cacheByNameCacheHandler.getCacheFromCache(name2)
         assertNull(cacheItem4)
+    }
+
+    private fun insertNewRecordToDb() : SysCache {
+        val sysCache = SysCache().apply {
+            name = newCacheName
+            atomicServiceCode = "ams-sys"
+            strategyDictCode = CacheStrategy.SINGLE_LOCAL.name
+            writeOnBoot = true
+            writeInTime = true
+            ttl = 666666
+        }
+        sysCacheDao.insert(sysCache)
+        return sysCache
     }
 
 }
