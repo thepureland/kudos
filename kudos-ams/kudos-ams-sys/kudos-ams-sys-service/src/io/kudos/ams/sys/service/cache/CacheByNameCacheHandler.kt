@@ -9,7 +9,6 @@ import io.kudos.ams.sys.service.model.po.SysCache
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.support.payload.ListSearchPayload
-import io.kudos.context.kit.SpringKit
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
@@ -31,8 +30,6 @@ open class CacheByNameCacheHandler : AbstractCacheHandler<SysCacheCacheItem>() {
     @Autowired
     private lateinit var sysCacheDao: SysCacheDao
 
-    private var self: CacheByNameCacheHandler? = null
-
     companion object {
         private const val CACHE_NAME = "SYS_CACHE_BY_NAME"
     }
@@ -40,7 +37,7 @@ open class CacheByNameCacheHandler : AbstractCacheHandler<SysCacheCacheItem>() {
     override fun cacheName(): String = CACHE_NAME
 
     override fun doReload(key: String): SysCacheCacheItem? {
-        return getSelf().getCacheFromCache(key)
+        return getSelf<CacheByNameCacheHandler>().getCacheFromCache(key)
     }
 
     override fun reloadAll(clear: Boolean) {
@@ -71,6 +68,12 @@ open class CacheByNameCacheHandler : AbstractCacheHandler<SysCacheCacheItem>() {
         log.debug("缓存了${results.size}条缓存配置。")
     }
 
+    /**
+     * 根据名称从缓存中加载缓存配置信息，如果缓存中不存在，则从数据库加载，并写入缓存。
+     *
+     * @param name 缓存配置名称
+     * @return SysCacheCacheItem，如果找不到返回null
+     */
     @Cacheable(
         cacheNames = [CACHE_NAME],
         key = "#name",
@@ -94,15 +97,27 @@ open class CacheByNameCacheHandler : AbstractCacheHandler<SysCacheCacheItem>() {
         return result
     }
 
+    /**
+     * 数据库插入记录后同步缓存
+     *
+     * @param any 包含必要属性的对象
+     * @param id 缓存配置id
+     */
     open fun syncOnInsert(any: Any, id: String) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (CacheKit.isCacheActive(CACHE_NAME) && CacheKit.isWriteInTime(CACHE_NAME)) {
             log.debug("新增id为${id}的缓存配置后，同步${CACHE_NAME}缓存...")
             val name = BeanKit.getProperty(any, SysCache::name.name) as String
-            getSelf().getCacheFromCache(name) // 缓存
+            getSelf<CacheByNameCacheHandler>().getCacheFromCache(name) // 缓存
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
     }
 
+    /**
+     * 更新数据库记录后同步缓存
+     *
+     * @param any 包含必要属性的对象
+     * @param id 缓存配置id
+     */
     open fun syncOnUpdate(any: Any, id: String) {
         if (CacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("更新id为${id}的缓存配置后，同步${CACHE_NAME}缓存...")
@@ -111,11 +126,19 @@ open class CacheByNameCacheHandler : AbstractCacheHandler<SysCacheCacheItem>() {
                 name = sysCacheDao.get(id)!!.name
             }
             CacheKit.evict(CACHE_NAME, name) // 踢除缓存配置缓存
-            getSelf().getCacheFromCache(name) // 重新缓存
-            log.debug("${CACHE_NAME}缓存同步完成。")
+            if (CacheKit.isWriteInTime(CACHE_NAME)) {
+                getSelf<CacheByNameCacheHandler>().getCacheFromCache(name) // 重新缓存
+                log.debug("${CACHE_NAME}缓存同步完成。")
+            }
         }
     }
 
+    /**
+     * 删除数据库记录后同步缓存
+     *
+     * @param id 缓存配置id
+     * @param name 缓存配置名称
+     */
     open fun syncOnDelete(id: String, name: String) {
         if (CacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("删除id为${id}的缓存配置后，同步从${CACHE_NAME}缓存中踢除...")
@@ -124,6 +147,12 @@ open class CacheByNameCacheHandler : AbstractCacheHandler<SysCacheCacheItem>() {
         }
     }
 
+    /**
+     * 批量删除数据库记录后同步缓存
+     *
+     * @param id 缓存配置id集合
+     * @param name 缓存配置名称列表
+     */
     open fun syncOnBatchDelete(ids: Collection<String>, names: List<String>) {
         if (CacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("批量删除id为${ids}的缓存配置后，同步从${CACHE_NAME}缓存中踢除...")
@@ -132,13 +161,6 @@ open class CacheByNameCacheHandler : AbstractCacheHandler<SysCacheCacheItem>() {
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
-    }
-
-    private fun getSelf() : CacheByNameCacheHandler {
-        if (self == null) {
-            self = SpringKit.getBean(this::class)
-        }
-        return self!!
     }
 
     private val log = LogFactory.getLog(this)

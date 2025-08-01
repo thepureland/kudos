@@ -3,9 +3,7 @@ package io.kudos.ams.sys.service.cache
 import io.kudos.ability.cache.common.support.AbstractByIdCacheHandler
 import io.kudos.ams.sys.common.vo.resource.SysResourceCacheItem
 import io.kudos.ams.sys.service.dao.SysResourceDao
-import io.kudos.context.kit.SpringKit
 import org.soul.ability.cache.common.batch.BatchCacheable
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
 
@@ -23,8 +21,6 @@ import org.springframework.stereotype.Component
 @Component
 open class ResourceByIdCacheHandler : AbstractByIdCacheHandler<String, SysResourceCacheItem, SysResourceDao>() {
 
-    private var self: ResourceByIdCacheHandler? = null
-    
     companion object {
         private const val CACHE_NAME = "SYS_RESOURCE_BY_ID"
     }
@@ -32,7 +28,7 @@ open class ResourceByIdCacheHandler : AbstractByIdCacheHandler<String, SysResour
     override fun cacheName(): String = CACHE_NAME
 
     override fun doReload(key: String): SysResourceCacheItem? {
-        return getSelf().getResourceById(key)
+        return getSelf<ResourceByIdCacheHandler>().getResourceById(key)
     }
 
     @Cacheable(
@@ -50,13 +46,6 @@ open class ResourceByIdCacheHandler : AbstractByIdCacheHandler<String, SysResour
     )
     open fun getResourcesByIds(ids: Collection<String>): Map<String, SysResourceCacheItem> {
         return getByIds(ids)
-    }
-
-    private fun getSelf() : ResourceByIdCacheHandler {
-        if (self == null) {
-            self = SpringKit.getBean(this::class)
-        }
-        return self!!
     }
 
     override fun itemDesc() = "资源"

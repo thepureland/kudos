@@ -37,8 +37,6 @@ open class DictItemsByModuleAndTypeCacheHandler : AbstractCacheHandler<List<SysD
     @Autowired
     private lateinit var dictCacheHandler: DictByIdCacheHandler
 
-    private var self: DictItemsByModuleAndTypeCacheHandler? = null
-
     companion object {
         private const val CACHE_NAME = "SYS_DICT_ITEMS_BY_MODULE_AND_TYPE"
     }
@@ -50,7 +48,9 @@ open class DictItemsByModuleAndTypeCacheHandler : AbstractCacheHandler<List<SysD
             "缓存${CACHE_NAME}的key格式必须是 模块代码${Consts.CACHE_KEY_DEFAULT_DELIMITER}字典类型代码"
         }
         val moduleAndDictType = key.split(Consts.CACHE_KEY_DEFAULT_DELIMITER)
-        return getSelf().getItemsFromCache(moduleAndDictType[0], moduleAndDictType[1])
+        return getSelf<DictItemsByModuleAndTypeCacheHandler>().getItemsFromCache(
+            moduleAndDictType[0], moduleAndDictType[1]
+        )
     }
 
     override fun reloadAll(clear: Boolean) {
@@ -122,7 +122,9 @@ open class DictItemsByModuleAndTypeCacheHandler : AbstractCacheHandler<List<SysD
             val dict = dictCacheHandler.getDictById(sysDictItem.dictId)!!
             CacheKit.evict(CACHE_NAME, "${dict.moduleCode}${Consts.CACHE_KEY_DEFAULT_DELIMITER}${dict.dictType}") // 踢除缓存
             if (CacheKit.isWriteInTime(CACHE_NAME)) {
-                getSelf().getItemsFromCache(dict.moduleCode!!, dict.dictType!!)
+                getSelf<DictItemsByModuleAndTypeCacheHandler>().getItemsFromCache(
+                    dict.moduleCode!!, dict.dictType!!
+                )
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
@@ -134,7 +136,7 @@ open class DictItemsByModuleAndTypeCacheHandler : AbstractCacheHandler<List<SysD
             val dict = dictCacheHandler.getDictById(sysDictItem.dictId)!!
             CacheKit.evict(CACHE_NAME, "${dict.moduleCode}${Consts.CACHE_KEY_DEFAULT_DELIMITER}${dict.dictType}") // 踢除缓存
             if (CacheKit.isWriteInTime(CACHE_NAME)) {
-                getSelf().getItemsFromCache(dict.moduleCode!!, dict.dictType!!)
+                getSelf<DictItemsByModuleAndTypeCacheHandler>().getItemsFromCache(dict.moduleCode!!, dict.dictType!!)
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
@@ -149,7 +151,8 @@ open class DictItemsByModuleAndTypeCacheHandler : AbstractCacheHandler<List<SysD
                 CACHE_NAME, getKey(dict.moduleCode, dict.dictType)
             ) // 字典的缓存粒度为字典类型
             if (CacheKit.isWriteInTime(CACHE_NAME)) {
-                getSelf().getItemsFromCache(dict.moduleCode, dict.dictType) // 重新缓存
+                // 重新缓存
+                getSelf<DictItemsByModuleAndTypeCacheHandler>().getItemsFromCache(dict.moduleCode, dict.dictType)
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
@@ -161,7 +164,8 @@ open class DictItemsByModuleAndTypeCacheHandler : AbstractCacheHandler<List<SysD
             val dict = sysDictDao.get(dictId)!!
             CacheKit.evict(CACHE_NAME, getKey(dict.moduleCode, dict.dictType)) // 字典的缓存粒度为字典类型
             if (CacheKit.isWriteInTime(CACHE_NAME)) {
-                getSelf().getItemsFromCache(dict.moduleCode, dict.dictType) // 重新缓存
+                // 重新缓存
+                getSelf<DictItemsByModuleAndTypeCacheHandler>().getItemsFromCache(dict.moduleCode, dict.dictType)
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
@@ -169,13 +173,6 @@ open class DictItemsByModuleAndTypeCacheHandler : AbstractCacheHandler<List<SysD
 
     private fun getKey(module: String, dictType: String): String {
         return "${module}${Consts.CACHE_KEY_DEFAULT_DELIMITER}${dictType}"
-    }
-
-    private fun getSelf() : DictItemsByModuleAndTypeCacheHandler {
-        if (self == null) {
-            self = SpringKit.getBean(this::class)
-        }
-        return self!!
     }
 
     private val log = LogFactory.getLog(this)

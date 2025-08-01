@@ -25,6 +25,9 @@ create table if not exists "sys_data_source"
     "update_time"         timestamp
 );
 
+create unique index if not exists uq_sys_data_source
+    on "sys_data_source" ("sub_system_code", "micro_service_code", "atomic_service_code", "tenant_id");
+
 comment on table "sys_data_source" is '数据源';
 comment on column "sys_data_source"."id" is '主键';
 comment on column "sys_data_source"."name" is '名称';

@@ -30,8 +30,6 @@ open class DomainByNameCacheHandler : AbstractCacheHandler<SysDomainCacheItem>()
     @Autowired
     private lateinit var dao: SysDomainDao
 
-    private var self: DomainByNameCacheHandler? = null
-
     companion object {
         private const val CACHE_NAME = "SYS_DOMAIN_BY_NAME"
     }
@@ -39,7 +37,7 @@ open class DomainByNameCacheHandler : AbstractCacheHandler<SysDomainCacheItem>()
     override fun cacheName() = CACHE_NAME
 
     override fun doReload(key: String): SysDomainCacheItem? {
-        return getSelf().getDomain(key)
+        return getSelf<DomainByNameCacheHandler>().getDomain(key)
     }
 
     override fun reloadAll(clear: Boolean) {
@@ -100,7 +98,7 @@ open class DomainByNameCacheHandler : AbstractCacheHandler<SysDomainCacheItem>()
             log.debug("新增id为${id}的域名后，同步${CACHE_NAME}缓存...")
             val domain = BeanKit.getProperty(any, SysDomain::domain.name) as String
             CacheKit.evict(CACHE_NAME, domain) // 踢除缓存
-            getSelf().getDomain(domain) // 重新缓存
+            getSelf<DomainByNameCacheHandler>().getDomain(domain) // 重新缓存
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
     }
@@ -115,7 +113,7 @@ open class DomainByNameCacheHandler : AbstractCacheHandler<SysDomainCacheItem>()
             }
             CacheKit.evict(CACHE_NAME, domain) // 踢除缓存
             if (CacheKit.isWriteInTime(CACHE_NAME)) {
-                getSelf().getDomain(domain) // 重新缓存
+                getSelf<DomainByNameCacheHandler>().getDomain(domain) // 重新缓存
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
@@ -137,13 +135,6 @@ open class DomainByNameCacheHandler : AbstractCacheHandler<SysDomainCacheItem>()
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
-    }
-
-    private fun getSelf() : DomainByNameCacheHandler {
-        if (self == null) {
-            self = SpringKit.getBean(this::class)
-        }
-        return self!!
     }
 
     private val log = LogFactory.getLog(this)

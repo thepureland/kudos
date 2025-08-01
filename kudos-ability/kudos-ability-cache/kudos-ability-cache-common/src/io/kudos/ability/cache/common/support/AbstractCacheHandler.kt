@@ -2,6 +2,7 @@ package io.kudos.ability.cache.common.support
 
 import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.base.logger.LogFactory
+import io.kudos.context.kit.SpringKit
 
 
 /**
@@ -17,8 +18,6 @@ abstract class AbstractCacheHandler<T> {
      * 返回缓存名称
      *
      * @return 缓存名称
-     * @author K
-     * @since 1.0.0
      */
     abstract fun cacheName(): String
 
@@ -27,8 +26,6 @@ abstract class AbstractCacheHandler<T> {
      *
      * @param key 缓存的key
      * @return true: 存在于缓存中，false: 不存在
-     * @author K
-     * @since 1.0.0
      */
     fun isExists(key: String): Boolean {
         return value(key) != null
@@ -39,8 +36,6 @@ abstract class AbstractCacheHandler<T> {
      *
      * @param key 缓存的key
      * @return 缓存key对应的值
-     * @author K
-     * @since 1.0.0
      */
     fun value(key: String): T? {
         @Suppress("UNCHECKED_CAST")
@@ -51,8 +46,6 @@ abstract class AbstractCacheHandler<T> {
      * 踢除指定key的缓存
      *
      * @param key 缓存的key
-     * @author K
-     * @since 1.0.0
      */
     fun evict(key: String) {
         CacheKit.evict(cacheName(), key)
@@ -61,9 +54,6 @@ abstract class AbstractCacheHandler<T> {
 
     /**
      * 清除所有缓存
-     *
-     * @author K
-     * @since 1.0.0
      */
     fun clear() {
         CacheKit.clear(cacheName())
@@ -74,8 +64,6 @@ abstract class AbstractCacheHandler<T> {
      * 重载指定key的缓存
      *
      * @param key 缓存的key
-     * @author K
-     * @since 1.0.0
      */
     fun reload(key: String) {
         evict(key)
@@ -93,8 +81,6 @@ abstract class AbstractCacheHandler<T> {
      *
      * @param key 缓存的key
      * @return 缓存key对应的值。如果找不到，集合类型返回空集合，其它的返回null。
-     * @author K
-     * @since 1.0.0
      */
     protected abstract fun doReload(key: String): T?
 
@@ -102,10 +88,16 @@ abstract class AbstractCacheHandler<T> {
      * 重载所有缓存
      *
      * @param clear 重载前是否先清除
-     * @author K
-     * @since 1.0.0
      */
     abstract fun reloadAll(clear: Boolean = true)
+
+    private var self: AbstractCacheHandler<*>? = null
+
+    /**
+     * 返回自身实例，为了解决基于spring aop特性（这里为@Cacheable和@BatchCacheable）的方法在当前类直接调用造成aop失效的问题
+     */
+    @Suppress("UNCHECKED_CAST")
+    protected fun <S : AbstractCacheHandler<*>?> getSelf() : S = self as S ?: SpringKit.getBean(this::class) as S
 
     private val log = LogFactory.getLog(this)
 
