@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component
 /**
  * 字典基本信息缓存（by id）处理器
  *
- * 1. 缓存所有字典基本信息，包括active=true的
+ * 1. 缓存所有字典基本信息，包括active=false的
  * 2. 缓存key为：id
  * 3. 缓存value为：SysDictCacheItem对象
  *
@@ -31,6 +31,12 @@ open class DictByIdCacheHandler : AbstractByIdCacheHandler<String, SysDictCacheI
         return getSelf<DictByIdCacheHandler>().getDictById(key)
     }
 
+    /**
+     * 根据id从缓存中获取字典基本信息，如果缓存中不存在，则从数据库中加载，并写入缓存
+     *
+     * @param dictId 字典id
+     * @return SysDictCacheItem，找不到返回null
+     */
     @Cacheable(
         cacheNames = [CACHE_NAME],
         key = "#dictId",
@@ -40,6 +46,12 @@ open class DictByIdCacheHandler : AbstractByIdCacheHandler<String, SysDictCacheI
         return getById(dictId)
     }
 
+    /**
+     * 根据id集合批量从缓存中获取字典基本信息，缓存中不存在的，则从数据库中加载，并写入缓存
+     *
+     * @param ids 字典id集合
+     * @return Map<字典id，SysDictCacheItem>，找不到返回空map
+     */
     @BatchCacheable(
         cacheNames = [CACHE_NAME],
         valueClass = SysDictCacheItem::class

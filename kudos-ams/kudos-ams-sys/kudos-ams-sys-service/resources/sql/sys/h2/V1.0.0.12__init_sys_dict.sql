@@ -76,7 +76,7 @@ merge into "sys_dict" ("id", "module_code", "dict_type", "dict_name", "remark", 
            ('d33fac57-cb42-4aa6-84c2-101ada37498f', 'sys_captcha', 'CaptchaTypeEnum', '图形验证码类型', null, true,
             true),
            ('d275942e-262b-460a-917e-ec96aab565cc', 'kudos-notice', 'receive_status', '消息接收状态', null, true, true),
-           ('1b87ef01c03306a60525b317b623899f', 'kudos-sys', 'timezone', '时区', null, true, false),
+           ('1b87ef01-c033-06a6-0525-b317b623899f', 'kudos-sys', 'timezone', '时区', null, true, false),
            ('e960b247-16e0-4f4e-a767-2b17eb5b6982', 'kudos-sys', 'domain_type', '域名类型', null, true, true),
            ('ad52c551-01c1-4c7f-9a96-720eecb32885', 'kudos-sys', 'terminal_type', '终端类型', null, true, true);
 --endregion DML
