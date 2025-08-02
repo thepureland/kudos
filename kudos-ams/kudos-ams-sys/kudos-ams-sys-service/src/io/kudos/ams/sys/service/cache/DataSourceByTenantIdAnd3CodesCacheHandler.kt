@@ -216,7 +216,7 @@ open class DataSourceByTenantIdAnd3CodesCacheHandler : AbstractCacheHandler<SysD
             log.debug("更新id为${id}的数据源的启用状态后，同步${CACHE_NAME}缓存...")
             val ds = dataSourceByIdCacheHandler.getDataSourceById(id)
             if (ds == null) {
-                log.error("缓存${dataSourceByIdCacheHandler.cacheName()}中找不到id为${id}的对象！")
+                log.error("缓存${dataSourceByIdCacheHandler.cacheName()}中找不到id为${id}的数据源！")
                 return
             }
 

@@ -11,10 +11,10 @@ import io.kudos.base.support.result.IdJsonResult
  */
 data class SysI18nRecord (
 
+    //region your codes 1
+
     /** 主键 */
     override var id: String? = null,
-
-    //region your codes 1
 
     /** 语言_地区 */
     var locale: String? = null,

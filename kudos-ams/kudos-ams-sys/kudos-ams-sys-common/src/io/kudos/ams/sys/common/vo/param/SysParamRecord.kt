@@ -11,10 +11,10 @@ import io.kudos.base.support.result.IdJsonResult
  */
 data class SysParamRecord (
 
+    //region your codes 1
+
     /** 主键 */
     override var id: String? = null,
-
-    //region your codes 1
 
     /** 参数名称 */
     var paramName: String? = null,

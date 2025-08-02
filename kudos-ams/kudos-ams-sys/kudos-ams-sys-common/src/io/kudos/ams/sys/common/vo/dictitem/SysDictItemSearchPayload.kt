@@ -16,6 +16,9 @@ data class SysDictItemSearchPayload (
 
     override var returnEntityClass: KClass<*>? = SysDictItemRecord::class,
 
+    /** 主键 */
+    var id: String? = null,
+
     /** 字典项代码 */
     var itemCode: String? = null,
 
@@ -39,6 +42,22 @@ data class SysDictItemSearchPayload (
 
     /** 是否内置 */
     var builtIn: Boolean? = null,
+
+    /** 是否为第一层树节点 */
+    var firstLevel: Boolean? = null,
+
+
+    /** 字典类型 */
+    var dictType: String? = null,
+
+    /** 字典名称 */
+    var dictName: String? = null,
+
+    /** 模块编码 */
+    var moduleCode: String? = null,
+
+    /** 字典是否启用 */
+    var dictActive: Boolean? = null,
 
     //endregion your codes 1
 //region your codes 2

@@ -25,6 +25,7 @@ import io.kudos.ams.sys.service.biz.ibiz.ISysDictBiz
 import io.kudos.ams.sys.service.model.po.SysDict
 import io.kudos.ams.sys.service.dao.SysDictDao
 import io.kudos.ability.data.rdb.ktorm.biz.BaseCrudBiz
+import io.kudos.ams.sys.common.vo.dictitem.SysDictItemSearchPayload
 import org.springframework.stereotype.Service
 
 
@@ -53,114 +54,18 @@ open class SysDictBiz : BaseCrudBiz<String, SysDict, SysDictDao>(), ISysDictBiz 
         return dictCacheHandler.getDictById(dictId)
     }
 
-    override fun getDictIdByModuleAndType(module: String, type: String): String? {
-        return dao.getDictIdByModuleAndType(module, type)
-    }
 
-    override fun pagingSearch(listSearchPayload: ListSearchPayload): Pair<List<SysDictRecord>, Int> {
-        val dictItems = dao.pagingSearch(listSearchPayload as SysDictSearchPayload)
-        val totalCount = if (dictItems.isNotEmpty()) {
-            // 查询parentCode
-            val parentIds = dictItems.filter { !it.parentId.isNullOrBlank() }.map { it.parentId }.toSet()
-            val returnProperties = listOf(SysDictItems.id.name, SysDictItems.itemCode.name)
-            val idAndCodeMaps = sysDictItemBiz.inSearchProperties(SysDictItems.id.name, parentIds, returnProperties)
-            dictItems.forEach { dictItem ->
-                val idAndCodeMap = idAndCodeMaps.singleOrNull { it[SysDictItems.id.name] == dictItem.parentId }
-                if (idAndCodeMap != null) {
-                    dictItem.parentCode = idAndCodeMap[SysDictItems.itemCode.name] as String?
-                }
-            }
-            dao.count(listSearchPayload)
-        } else 0
-        return Pair(dictItems, totalCount)
-    }
-
-    override fun loadDirectChildrenForTree(
-        parent: String?,
-        isModule: Boolean,
-        activeOnly: Boolean
-    ): List<SysDictTreeNode> {
-        return when {
-            parent.isNullOrBlank() -> { // 加载模块列表
-                val items = sysDictItemBiz.getItemsFromCache("kuark:sys", "module")
-                items.map {
-                    SysDictTreeNode().apply {
-                        code = it.itemCode
-                        id = code
-                    }
-                }
-            }
-            isModule -> { // 加载RegDict数据
-                val results = dao.oneSearch(SysDicts.moduleCode.name, parent, Order.asc(SysDicts.dictType.name))
-                results.map {
-                    val treeNode = BeanKit.copyProperties(
-                        SysDictTreeNode::class, it, mapOf(
-                            SysDict::id.name to SysDictTreeNode::id.name,
-                            SysDict::dictType.name to SysDictTreeNode::code.name,
-                        )
-                    )
-                    treeNode
-                }
-            }
-            else -> { // 加载SysDictItem数据
-                val searchPayload = SysDictSearchPayload().apply {
-                    this.parentId = parent
-                    this.active = if (activeOnly) true else null
-                }
-                dao.leftJoinSearch(searchPayload)
-                    .orderBy(SysDictItems.orderNum.asc())
-                    .map { row ->
-                        SysDictTreeNode().apply {
-                            id = row[SysDictItems.id]
-                            code = row[SysDictItems.itemCode]
-                        }
-                    }
-            }
-        }
-    }
-
-    override fun loadDirectChildrenForList(searchPayload: SysDictSearchPayload): Pair<List<SysDictRecord>, Int> {
-        val activeOnly = searchPayload.active ?: false // 是否只加载启用状态的数据, 默认为是
-        searchPayload.active = if (activeOnly) true else null
-        val isModule = searchPayload.firstLevel ?: false // 是否parent代表模块名
-        if (isModule) {
-            searchPayload.moduleCode = searchPayload.parentId
-            searchPayload.parentId = null
-        }
-        val records = dao.pagingSearch(searchPayload)
-        val totalCount = dao.count(searchPayload)
-        return Pair(records, totalCount)
-    }
-
-    override fun get(id: String, isDict: Boolean?, fetchAllParentIds: Boolean): SysDictRecord? {
-        return if (isDict == true) {
-            val dict = dao.get(id) ?: return null
-            val sysDictRecord = SysDictRecord()
-            BeanKit.copyProperties(dict, sysDictRecord)
-            sysDictRecord
-        } else {
-            val searchPayload = SysDictSearchPayload().apply {
-                this.id = id
-                pageSize = 1
-            }
-            val result = dao.pagingSearch(searchPayload).firstOrNull()
-            if (result != null && fetchAllParentIds) {
-                val parentId = result.parentId
-                if (!parentId.isNullOrBlank()) {
-                    var parentIds = sysDictItemBiz.fetchAllParentIds(parentId!!)
-                    parentIds = parentIds.toMutableList()
-                    parentIds.add(parentId)
-                    result.parentIds = parentIds
-                }
-            }
-            result
-        }
+    override fun getRecord(id: String): SysDictRecord? {
+        val dict = dao.get(id) ?: return null
+        val sysDictRecord = SysDictRecord()
+        BeanKit.copyProperties(dict, sysDictRecord)
+        return sysDictRecord
     }
 
     @Transactional
     override fun saveOrUpdate(payload: SysDictPayload): String {
         return if (payload.id.isNullOrBlank()) { // 新增
-            if (!payload.parentId.isNullOrBlank()) { // 添加RegDict
+            if (!payload.parentId.isNullOrBlank()) { // 添加SysDict
                 val sysDict = SysDict().apply {
                     moduleCode = payload.moduleCode!!
                     dictType = payload.dictType!!
@@ -170,11 +75,11 @@ open class SysDictBiz : BaseCrudBiz<String, SysDict, SysDictDao>(), ISysDictBiz 
                 val id = dao.insert(sysDict)
                 dictCacheHandler.syncOnInsert(id) // 同步缓存
                 id
-            } else { // 添加RegDictItem
+            } else { // 添加SysDictItem
                 sysDictItemBiz.saveOrUpdate(payload)
             }
         } else { // 更新
-            if (payload.parentId.isNullOrBlank()) { // RegDict
+            if (payload.parentId.isNullOrBlank()) { // SysDict
                 val sysDict = SysDict {
                     id = payload.id
                     moduleCode = payload.moduleCode!!
