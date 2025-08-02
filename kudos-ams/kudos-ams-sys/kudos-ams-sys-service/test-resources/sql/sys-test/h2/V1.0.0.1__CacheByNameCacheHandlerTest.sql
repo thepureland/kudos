@@ -1,6 +1,6 @@
 -- update "sys_cache" set "strategy_dict_code" = 'LOCAL_REMOTE' where "name" = 'SYS_CACHE_BY_NAME';
 
-insert into "sys_cache" ("id", "name", "atomic_service_code", "strategy_dict_code", "write_on_boot", "write_in_time",
+merge into "sys_cache" ("id", "name", "atomic_service_code", "strategy_dict_code", "write_on_boot", "write_in_time",
                          "ttl", "remark", "active", "built_in")
 values ('14a9adc4-6bb5-45bd-96bb-111111111111', 'TEST_CACHE_1', 'ams-sys', 'LOCAL_REMOTE', true, true, 999999999,
         '测试缓存1', true, true),
