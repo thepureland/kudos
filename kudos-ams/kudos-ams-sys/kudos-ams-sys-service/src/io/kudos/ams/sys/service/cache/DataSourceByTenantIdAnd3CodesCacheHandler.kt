@@ -150,9 +150,9 @@ open class DataSourceByTenantIdAnd3CodesCacheHandler : AbstractCacheHandler<SysD
             if (!tenantId.isNullOrBlank()) {
                 val active = props[SysDataSource::active.name] as Boolean?
                 if (active == null || active) {
-                    val subSystemCode = BeanKit.getProperty(any, SysDataSource::subSystemCode.name) as String
-                    val microServiceCode = BeanKit.getProperty(any, SysDataSource::microServiceCode.name) as String?
-                    val atomicServiceCode = BeanKit.getProperty(any, SysDataSource::atomicServiceCode.name) as String?
+                    val subSystemCode = props[SysDataSource::subSystemCode.name] as String
+                    val microServiceCode = props[SysDataSource::microServiceCode.name] as String?
+                    val atomicServiceCode = props[SysDataSource::atomicServiceCode.name] as String?
                     // 缓存
                     getSelf<DataSourceByTenantIdAnd3CodesCacheHandler>().getDataSource(
                         tenantId, subSystemCode, microServiceCode, atomicServiceCode
@@ -179,9 +179,9 @@ open class DataSourceByTenantIdAnd3CodesCacheHandler : AbstractCacheHandler<SysD
             val props = BeanKit.extract(any)
             val tenantId = props[SysDataSource::tenantId.name] as String?
             if (!tenantId.isNullOrBlank()) {
-                val subSystemCode = BeanKit.getProperty(any, SysDataSource::subSystemCode.name) as String
-                val microServiceCode = BeanKit.getProperty(any, SysDataSource::microServiceCode.name) as String?
-                val atomicServiceCode = BeanKit.getProperty(any, SysDataSource::atomicServiceCode.name) as String?
+                val subSystemCode = props[SysDataSource::subSystemCode.name] as String
+                val microServiceCode = props[SysDataSource::microServiceCode.name] as String?
+                val atomicServiceCode = props[SysDataSource::atomicServiceCode.name] as String?
 
                 // 踢除数据源缓存
                 CacheKit.evict(
@@ -269,14 +269,23 @@ open class DataSourceByTenantIdAnd3CodesCacheHandler : AbstractCacheHandler<SysD
         }
     }
 
-    private fun getKey(
-        tenantId: String,
-        subSysDictCode: String,
+    /**
+     * 返回参数拼接后的key
+     *
+     * @param tenantId 租户id
+     * @param subSystemCode 子系统编码
+     * @param microServiceCode 微服务编码
+     * @param atomicServiceCode 原子服务编码
+     * @return 缓存key
+     */
+    open fun getKey(
+        tenantId: String?,
+        subSystemCode: String?,
         microServiceCode: String?,
         atomicServiceCode: String?
     ): String {
         return "${tenantId}${Consts.CACHE_KEY_DEFAULT_DELIMITER}" +
-                "${subSysDictCode}${Consts.CACHE_KEY_DEFAULT_DELIMITER}" +
+                "${subSystemCode}${Consts.CACHE_KEY_DEFAULT_DELIMITER}" +
                 "${microServiceCode}${Consts.CACHE_KEY_DEFAULT_DELIMITER}" +
                 "$atomicServiceCode"
     }

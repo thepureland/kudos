@@ -150,8 +150,8 @@ open class CacheByNameCacheHandler : AbstractCacheHandler<SysCacheCacheItem>() {
     /**
      * 批量删除数据库记录后同步缓存
      *
-     * @param id 缓存配置id集合
-     * @param name 缓存配置名称列表
+     * @param ids 缓存配置id集合
+     * @param names 缓存配置名称列表
      */
     open fun syncOnBatchDelete(ids: Collection<String>, names: List<String>) {
         if (CacheKit.isCacheActive(CACHE_NAME)) {
