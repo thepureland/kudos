@@ -11,10 +11,10 @@ import io.kudos.base.support.result.IdJsonResult
  */
 data class SysModuleRecord (
 
-    /** 编码 */
-    override var id: String? = null,
-
     //region your codes 1
+
+    /** 主键 */
+    override var id: String? = null,
 
     /** 名称 */
     var name: String? = null,

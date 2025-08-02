@@ -11,10 +11,10 @@ import io.kudos.base.support.result.IdJsonResult
  */
 data class SysTenantSubSystemRecord (
 
+    //region your codes 1
+
     /** 主键 */
     override var id: String? = null,
-
-    //region your codes 1
 
     /** 租户id */
     var tenantId: String? = null,

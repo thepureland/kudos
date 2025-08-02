@@ -11,10 +11,10 @@ import io.kudos.base.support.result.IdJsonResult
  */
 data class SysSubSystemMicroServiceRecord (
 
-    /**  */
-    override var id: String? = null,
-
     //region your codes 1
+
+    /** 主键 */
+    override var id: String? = null,
 
     /** 子系统编码 */
     var subSystemCode: String? = null,

@@ -1,9 +1,12 @@
 package io.kudos.ams.sys.service.biz.ibiz
 
 import io.kudos.ams.sys.common.vo.dict.SysDictPayload
+import io.kudos.ams.sys.common.vo.dict.SysDictTreeNode
 import io.kudos.ams.sys.common.vo.dictitem.SysDictItemCacheItem
-import io.kudos.base.support.biz.IBaseCrudBiz
+import io.kudos.ams.sys.common.vo.dictitem.SysDictItemRecord
+import io.kudos.ams.sys.common.vo.dictitem.SysDictItemSearchPayload
 import io.kudos.ams.sys.service.model.po.SysDictItem
+import io.kudos.base.support.biz.IBaseCrudBiz
 
 
 /**
@@ -17,6 +20,17 @@ interface ISysDictItemBiz : IBaseCrudBiz<String, SysDictItem> {
 //endregion your codes 1
 
     //region your codes 2
+
+    /**
+     * 返回指定id的字典项信息
+     *
+     * @param id 字典项id
+     * @param fetchAllParentIds 是否要获取所有父项id，默认为false
+     * @return SysDictItemRecord，找不到返回null
+     * @author K
+     * @since 1.0.0
+     */
+    fun get(id: String, fetchAllParentIds: Boolean = false): SysDictItemRecord?
 
     /**
      * 根据模块和字典类型，取得对应字典项(仅包括处于启用状态的)，并将结果缓存，查不到不缓存
@@ -70,6 +84,28 @@ interface ISysDictItemBiz : IBaseCrudBiz<String, SysDictItem> {
      * @since 1.0.0
      */
     fun cascadeDeleteChildren(id: String): Boolean
+
+    /**
+     * 加载直接孩子结点(用于树)
+     *
+     * @param parent 父项标识，为null时加载模块列表
+     * @param isModule 是否parent代表模块名
+     * @param activeOnly 是否只加载启用状态的数据, 默认为是
+     * @return List(SysDictTreeNode)
+     * @author K
+     * @since 1.0.0
+     */
+    fun loadDirectChildrenForTree(parent: String?, isModule: Boolean, activeOnly: Boolean = true): List<SysDictTreeNode>
+
+    /**
+     * 加载直接孩子结点(用于列表)
+     *
+     * @param searchPayload 查询参数
+     * @return Pair(List(SysDictItemRecord), 总记录数)
+     * @author K
+     * @since 1.0.0
+     */
+    fun loadDirectChildrenForList(searchPayload: SysDictItemSearchPayload): Pair<List<SysDictItemRecord>, Int>
 
     /**
      * 更新启用状态，并同步缓存

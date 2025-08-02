@@ -33,10 +33,10 @@ import java.sql.SQLXML
 <@generateClassComment table.comment+"查询记录"/>
 data class ${entityName}Record (
 
+    //region your codes 1
+
     /** ${pkColumn.comment!""} */
     override var id: ${pkColumn.kotlinTypeName}? = null,
-
-    //region your codes 1
 
     <#list listItemColumns as column>
     <#if column.name != pkColumn.name>
