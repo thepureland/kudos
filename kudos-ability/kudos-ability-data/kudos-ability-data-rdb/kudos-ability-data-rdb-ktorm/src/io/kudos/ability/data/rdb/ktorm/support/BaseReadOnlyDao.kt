@@ -844,8 +844,10 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         }
         val nullProperties = searchPayload.nullProperties
         if (!nullProperties.isNullOrEmpty()) {
-            nullProperties.forEach {
-                resultMap[it] = Pair(OperatorEnum.IS_NULL, null)
+            nullProperties.forEach { propName ->
+                if (propAndValueMap[propName] == null) {
+                    resultMap[propName] = Pair(OperatorEnum.IS_NULL, null)
+                }
             }
         }
         val criterions = searchPayload.criterions

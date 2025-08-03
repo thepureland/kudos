@@ -83,12 +83,38 @@ class DataSourceByTenantIdAnd3CodesCacheHandlerTest : CacheHandlerTestBase() {
         // 数据库中删除的记录在缓存中应该不存在了
         cacheItemDelete = cacheHandler.getDataSource(tenantId, subSystemCode, microServiceCode, atomicServiceCode)
         assertNull(cacheItemDelete)
+    }
+
+    @Test
+    fun getDataSource() {
+        var tenantId = "10a45fe6-4c8d-40c7-8f23-bba-tenant-1"
+        var subSystemCode = "subSys-a"
+        var microServiceCode = "ms-a"
+        var atomicServiceCode = "ams-a"
+        // 第一次当放入远程缓存后，会发送清除本地缓存，所以最终取到的是远程缓存反序列化后的对象
+        cacheHandler.getDataSource(tenantId, subSystemCode, microServiceCode, atomicServiceCode)
+        val cacheItem2 = cacheHandler.getDataSource(tenantId, subSystemCode, microServiceCode, atomicServiceCode)
+        val cacheItem3 = cacheHandler.getDataSource(tenantId, subSystemCode, microServiceCode, atomicServiceCode)
+        assert(cacheItem3 === cacheItem2)
 
         // tenantId为null的应该没被加载
         subSystemCode = "subSys-c"
         val key = cacheHandler.getKey(null, subSystemCode, null, null)
         val cacheItemNull = CacheKit.getValue(cacheHandler.cacheName(), key)
         assertNull(cacheItemNull)
+
+        // atomicServiceCode为null的情况
+        tenantId = "10a45fe6-4c8d-40c7-8f23-bba-tenant-1"
+        subSystemCode = "subSys-c"
+        microServiceCode = "ms-c"
+        var cacheItem = cacheHandler.getDataSource(tenantId, subSystemCode, microServiceCode, null)
+        assertEquals("33333333-e828-43c5-a512-777777777777", cacheItem!!.id)
+
+        // microServiceCode和atomicServiceCode均为null的情况
+        tenantId = "10a45fe6-4c8d-40c7-8f23-bba-tenant-1"
+        subSystemCode = "subSys-c"
+        cacheItem = cacheHandler.getDataSource(tenantId, subSystemCode, null, null)
+        assertEquals("33333333-e828-43c5-a512-888888888888", cacheItem!!.id)
 
         // active为false的应该没被加载
         tenantId = "10a45fe6-4c8d-40c7-8f23-bba-tenant-2"
@@ -97,19 +123,6 @@ class DataSourceByTenantIdAnd3CodesCacheHandlerTest : CacheHandlerTestBase() {
         atomicServiceCode = "ams-b"
         val cacheItemFalse = cacheHandler.getDataSource(tenantId, subSystemCode, microServiceCode, atomicServiceCode)
         assertNull(cacheItemFalse)
-    }
-
-    @Test
-    fun getDataSource() {
-        val tenantId = "10a45fe6-4c8d-40c7-8f23-bba-tenant-1"
-        val subSystemCode = "subSys-a"
-        val microServiceCode = "ms-a"
-        val atomicServiceCode = "ams-a"
-        // 第一次当放入远程缓存后，会发送清除本地缓存，所以最终取到的是远程缓存反序列化后的对象
-        cacheHandler.getDataSource(tenantId, subSystemCode, microServiceCode, atomicServiceCode)
-        val cacheItem2 = cacheHandler.getDataSource(tenantId, subSystemCode, microServiceCode, atomicServiceCode)
-        val cacheItem3 = cacheHandler.getDataSource(tenantId, subSystemCode, microServiceCode, atomicServiceCode)
-        assert(cacheItem3 === cacheItem2)
     }
 
     @Test
@@ -158,7 +171,7 @@ class DataSourceByTenantIdAnd3CodesCacheHandlerTest : CacheHandlerTestBase() {
     @Test
     fun syncOnUpdateActive() {
         // 由true更新为false
-        val id2 = "33333333-e828-43c5-a512-222222222222"
+        val id2 = "33333333-e828-43c5-a512-888888888888"
         var success = sysDataSourceDao.updateProperties(id2, mapOf(SysDataSource::active.name to false))
         assert(success)
         val ds2 = dataSourceByIdCacheHandler.getDataSourceById(id2)!!

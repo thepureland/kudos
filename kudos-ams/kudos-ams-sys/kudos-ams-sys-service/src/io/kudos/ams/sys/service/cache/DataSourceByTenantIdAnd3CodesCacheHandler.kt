@@ -97,8 +97,8 @@ open class DataSourceByTenantIdAnd3CodesCacheHandler : AbstractCacheHandler<SysD
         cacheNames = [CACHE_NAME],
         key = "#tenantId.concat('${Consts.CACHE_KEY_DEFAULT_DELIMITER}')" +
                 ".concat(#subSystemCode).concat('${Consts.CACHE_KEY_DEFAULT_DELIMITER}')" +
-                ".concat(#microServiceCode).concat('${Consts.CACHE_KEY_DEFAULT_DELIMITER}')" +
-                ".concat(#atomicServiceCode)",
+                ".concat(#microServiceCode ?: 'null').concat('${Consts.CACHE_KEY_DEFAULT_DELIMITER}')" +
+                ".concat(#atomicServiceCode ?: 'null')",
         unless = "#result == null"
     )
     open fun getDataSource(
@@ -121,6 +121,7 @@ open class DataSourceByTenantIdAnd3CodesCacheHandler : AbstractCacheHandler<SysD
             this.microServiceCode = microServiceCode
             this.atomicServiceCode = atomicServiceCode
             this.tenantId = tenantId
+            nullProperties = listOf(this::microServiceCode.name, this::atomicServiceCode.name)
         }
 
         @Suppress("UNCHECKED_CAST")

@@ -8,7 +8,6 @@ import io.kudos.ams.sys.service.dao.SysDomainDao
 import io.kudos.ams.sys.service.model.po.SysDomain
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
-import io.kudos.context.kit.SpringKit
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
@@ -17,7 +16,7 @@ import org.springframework.stereotype.Component
 /**
  * 域名缓存处理器
  *
- * 1.缓存域名，包含active=false的
+ * 1.缓存域名，不包含active=false的
  * 2.缓存的key为：domain name
  * 3.缓存的value为：SysDomainCacheItem对象
  *
@@ -46,9 +45,10 @@ open class DomainByNameCacheHandler : AbstractCacheHandler<SysDomainCacheItem>()
             return
         }
 
-        // 加载所有域名
+        // 加载所有active为true的域名
         val searchPayload = SysDomainSearchPayload().apply {
             returnEntityClass = SysDomainCacheItem::class
+            active = true
         }
 
         @Suppress("UNCHECKED_CAST")
@@ -62,11 +62,17 @@ open class DomainByNameCacheHandler : AbstractCacheHandler<SysDomainCacheItem>()
 
         // 缓存域名
         domains.forEach {
-            CacheKit.putIfAbsent(CACHE_NAME, it.domain!!, it)
+            CacheKit.put(CACHE_NAME, it.domain!!, it)
         }
         log.debug("缓存了${domains.size}条域名信息。")
     }
 
+    /**
+     * 根据名称从缓存中获取域名信息，如果缓存中不存在，则从数据库中加载，并写入缓存
+     *
+     * @param domain 域名名称
+     * @return SysDomainCacheItem对象，如果找不到返回null
+     */
     @Cacheable(
         cacheNames = [CACHE_NAME],
         key = "#domain",
@@ -80,12 +86,13 @@ open class DomainByNameCacheHandler : AbstractCacheHandler<SysDomainCacheItem>()
         val searchPayload = SysDomainSearchPayload().apply {
             returnEntityClass = SysDomainCacheItem::class
             this.domain = domain
+            active = true
         }
 
         @Suppress("UNCHECKED_CAST")
         val domains = dao.search(searchPayload) as List<SysDomainCacheItem>
         return if (domains.isEmpty()) {
-            log.debug("从数据库找不到名为${domain}的域名信息。")
+            log.debug("从数据库找不到active=true且名为${domain}的域名信息。")
             null
         } else {
             log.debug("从数据库加载了名为${domain}的域名信息。")
@@ -93,6 +100,12 @@ open class DomainByNameCacheHandler : AbstractCacheHandler<SysDomainCacheItem>()
         }
     }
 
+    /**
+     * 数据库插入记录后同步缓存
+     *
+     * @param any 包含必要属性的对象
+     * @param id 域名id
+     */
     open fun syncOnInsert(any: Any, id: String) {
         if (CacheKit.isCacheActive(CACHE_NAME) && CacheKit.isWriteInTime(CACHE_NAME)) {
             log.debug("新增id为${id}的域名后，同步${CACHE_NAME}缓存...")
@@ -103,6 +116,12 @@ open class DomainByNameCacheHandler : AbstractCacheHandler<SysDomainCacheItem>()
         }
     }
 
+    /**
+     * 更新数据库记录后同步缓存
+     *
+     * @param any 包含必要属性的对象
+     * @param id 域名id
+     */
     open fun syncOnUpdate(any: Any?, id: String) {
         if (CacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("更新id为${id}的域名后，同步${CACHE_NAME}缓存...")
@@ -119,18 +138,31 @@ open class DomainByNameCacheHandler : AbstractCacheHandler<SysDomainCacheItem>()
         }
     }
 
-    open fun syncOnDelete(sysDomain: SysDomain, id: String) {
+    /**
+     * 删除数据库记录后同步缓存
+     *
+     * @param any 包含必要属性的对象
+     * @param id 域名id
+     */
+    open fun syncOnDelete(any: Any, id: String) {
         if (CacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("删除id为${id}的域名后，同步从${CACHE_NAME}缓存中踢除...")
-            CacheKit.evict(CACHE_NAME, sysDomain.domain) // 踢除缓存
+            val domain = BeanKit.getProperty(any, SysDomain::domain.name) as String
+            CacheKit.evict(CACHE_NAME, domain) // 踢除缓存
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
     }
 
-    open fun syncOnBatchDelete(ids: Collection<String>, domainNames: Set<String>) {
+    /**
+     * 批量删除数据库记录后同步缓存
+     *
+     * @param ids 域名id集合
+     * @param domains 域名名称集合
+     */
+    open fun syncOnBatchDelete(ids: Collection<String>, domains: Set<String>) {
         if (CacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("批量删除id为${ids}的域名后，同步从${CACHE_NAME}缓存中踢除...")
-            domainNames.forEach {
+            domains.forEach {
                 CacheKit.evict(CACHE_NAME, it) // 踢除缓存
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
@@ -138,6 +170,5 @@ open class DomainByNameCacheHandler : AbstractCacheHandler<SysDomainCacheItem>()
     }
 
     private val log = LogFactory.getLog(this)
-
 
 }
