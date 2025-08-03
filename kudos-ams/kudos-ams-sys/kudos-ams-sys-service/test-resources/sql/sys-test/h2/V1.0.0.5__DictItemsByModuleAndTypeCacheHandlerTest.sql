@@ -3,7 +3,8 @@ merge into "sys_dict" ("id", "module_code", "dict_type", "dict_name", "remark", 
            ('78139ed2-dbce-47fa-ac0d-222222222222', 'kudos-sys', 'dict_type-22', '数据源类型', null, true, false),
            ('78139ed2-dbce-47fa-ac0d-333333333333', 'kudos-sys', 'dict_type-33', '资源类型', null, true, false),
            ('78139ed2-dbce-47fa-ac0d-444444444444', 'kudos-user', 'dict_type-44', '组织类型', '部门类型', true, true),
-           ('78139ed2-dbce-47fa-ac0d-555555555555', 'kudos-user', 'dict_type-55', '性别', null, false, true);
+           ('78139ed2-dbce-47fa-ac0d-555555555555', 'kudos-user', 'dict_type-55', '性别', null, false, true),
+           ('78139ed2-dbce-47fa-ac0d-666666666666', 'kudos-user', 'dict_type-66', '民族', null, true, true);
 
 
 merge into "sys_dict_item" ("id", "dict_id", "item_code", "item_name", "order_num", "remark", "active", "built_in")
@@ -24,5 +25,7 @@ merge into "sys_dict_item" ("id", "dict_id", "item_code", "item_name", "order_nu
            ('049132a6-daac-4434-af36-909477396ddd', '78139ed2-dbce-47fa-ac0d-555555555555', 'M', '男', 1, null, true,
             true),
            ('04626227-0ac0-49a2-8036-241cd017a888', '78139ed2-dbce-47fa-ac0d-555555555555', 'W', '女', 2, null, true,
+            true),
+           ('04626227-0ac0-49a2-8036-241cd017a666', '78139ed2-dbce-47fa-ac0d-666666666666', '01', '汉', 1, null, true,
             true);
 

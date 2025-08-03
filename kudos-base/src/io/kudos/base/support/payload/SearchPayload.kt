@@ -22,7 +22,7 @@ open class SearchPayload {
     /** 各属性间的查询逻辑关系，默认为AND */
     open var andOr: AndOrEnum = AndOrEnum.AND
 
-    /** 值为null的属性的列表 */
+    /** 值为null时须作为查询条件的属性的列表 */
     open var nullProperties: List<String>? = null
 
     /**

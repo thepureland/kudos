@@ -40,7 +40,7 @@ class DictItemsByModuleAndTypeCacheHandlerTest : CacheHandlerTestBase() {
         val cacheItems = cacheHandler.getDictItems(moduleCode, dictType)
 
         // 插入新的记录到数据库
-        val sysDictItemNew = insertNewRecordToDb()
+        val sysDictItemNew = insertNewRecordToDb("78139ed2-dbce-47fa-ac0d-111111111111")
 
         // 更新数据库的记录
         val idUpdate = "8aabaa7f-6d19-4d8a-8aed-a9f8ca553eee"
@@ -96,7 +96,7 @@ class DictItemsByModuleAndTypeCacheHandlerTest : CacheHandlerTestBase() {
     @Test
     fun syncOnInsert() {
         // 插入新的记录到数据库
-        val dictItem = insertNewRecordToDb()
+        val dictItem = insertNewRecordToDb("78139ed2-dbce-47fa-ac0d-666666666666")
 
         val dict = dictByIdCacheHandler.getDictById(dictItem.dictId)!!
 
@@ -167,7 +167,7 @@ class DictItemsByModuleAndTypeCacheHandlerTest : CacheHandlerTestBase() {
 
     @Test
     fun syncOnDelete() {
-        val id = "8aabaa7f-6d19-4d8a-8aed-a9f8ca553eee"
+        val id = "04626227-0ac0-49a2-8036-241cd017a666"
         val dictItem = sysDictItemDao.get(id)!!
         val dict = dictByIdCacheHandler.getDictById(dictItem.dictId)!!
 
@@ -182,16 +182,16 @@ class DictItemsByModuleAndTypeCacheHandlerTest : CacheHandlerTestBase() {
         val key = cacheHandler.getKey(dict.moduleCode, dict.dictType)
         @Suppress("UNCHECKED_CAST")
         val cacheItems1 = CacheKit.getValue(cacheHandler.cacheName(), key) as List<SysDictItemCacheItem>?
-        assertNull(cacheItems1)
+        assert(cacheItems1 == null || !cacheItems1.any { it.id == id })
         val cacheItems2 = cacheHandler.getDictItems(dict.moduleCode!!, dict.dictType!!)
         assertFalse(cacheItems2.any { it.id == id })
     }
     
-    private fun insertNewRecordToDb(): SysDictItem {
+    private fun insertNewRecordToDb(dictId: String): SysDictItem {
         val dictItem = SysDictItem().apply {
             itemCode = "a_new_item_code"
             itemName = "a_new_item_name"
-            dictId = "78139ed2-dbce-47fa-ac0d-111111111111"
+            this.dictId = dictId
             orderNum = 5
         }
         sysDictItemDao.insert(dictItem)

@@ -5,7 +5,7 @@ create table if not exists "sys_domain"
     "domain"          character varying(64)               not null,
     "sub_system_code" character varying(32),
     "portal_code"     character varying(32)               not null,
-    "tenant_id"       character varying(36)               not null,
+    "tenant_id"       character varying(36),
     "remark"          character varying(128),
     "active"          boolean       default TRUE          not null,
     "built_in"        boolean       default FALSE         not null,
