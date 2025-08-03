@@ -1,8 +1,10 @@
 package io.kudos.ams.sys.service.cache
 
-import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.testcontainers.junit.jupiter.EnabledIfDockerAvailable
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 
 /**
@@ -11,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired
  * @author K
  * @since 1.0.0
  */
+@EnabledIfDockerAvailable
 class DictByIdCacheHandlerTest : CacheHandlerTestBase() {
 
     @Autowired

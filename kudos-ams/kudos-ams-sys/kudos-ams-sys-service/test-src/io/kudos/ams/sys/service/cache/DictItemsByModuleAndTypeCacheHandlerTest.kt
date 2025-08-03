@@ -4,10 +4,11 @@ import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.ams.sys.common.vo.dictitem.SysDictItemCacheItem
 import io.kudos.ams.sys.service.dao.SysDictItemDao
 import io.kudos.ams.sys.service.model.po.SysDictItem
-import org.junit.jupiter.api.Assertions.assertFalse
 import org.springframework.beans.factory.annotation.Autowired
+import org.testcontainers.junit.jupiter.EnabledIfDockerAvailable
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 
 /**
@@ -16,6 +17,7 @@ import kotlin.test.assertNull
  * @author K
  * @since 1.0.0
  */
+@EnabledIfDockerAvailable
 class DictItemsByModuleAndTypeCacheHandlerTest : CacheHandlerTestBase() {
     
     @Autowired

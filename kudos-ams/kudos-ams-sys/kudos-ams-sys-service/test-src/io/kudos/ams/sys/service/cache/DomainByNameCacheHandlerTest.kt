@@ -4,11 +4,12 @@ import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.ams.sys.common.vo.domain.SysDomainCacheItem
 import io.kudos.ams.sys.service.dao.SysDomainDao
 import io.kudos.ams.sys.service.model.po.SysDomain
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.testcontainers.junit.jupiter.EnabledIfDockerAvailable
+import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 
 /**
  * junit test for DomainByNameCacheHandler
@@ -16,6 +17,7 @@ import kotlin.test.assertEquals
  * @author K
  * @since 1.0.0
  */
+@EnabledIfDockerAvailable
 class DomainByNameCacheHandlerTest : CacheHandlerTestBase() {
     
     @Autowired
