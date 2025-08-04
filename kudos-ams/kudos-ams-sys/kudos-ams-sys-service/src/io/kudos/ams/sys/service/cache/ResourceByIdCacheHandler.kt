@@ -31,6 +31,12 @@ open class ResourceByIdCacheHandler : AbstractByIdCacheHandler<String, SysResour
         return getSelf<ResourceByIdCacheHandler>().getResourceById(key)
     }
 
+    /**
+     * 根据id从缓存中获取资源信息，如果缓存中不存在，则从数据库中加载，并回写缓存
+     *
+     * @param id 资源id
+     * @return SysResourceCacheItem, 找不到返回null
+     */
     @Cacheable(
         cacheNames = [CACHE_NAME],
         key = "#id",
@@ -40,6 +46,12 @@ open class ResourceByIdCacheHandler : AbstractByIdCacheHandler<String, SysResour
         return getById(id)
     }
 
+    /**
+     * 根据多个id从缓存中批量获取资源信息，缓存中不存在的，从数据库中加载，并回写缓存
+     *
+     * @param ids 资源id集合
+     * @return Map<资源id，SysResourceCacheItem>
+     */
     @BatchCacheable(
         cacheNames = [CACHE_NAME],
         valueClass = SysResourceCacheItem::class
