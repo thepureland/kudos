@@ -39,7 +39,7 @@ class ParamByModuleAndNameCacheHandlerTest : CacheHandlerTestBase() {
         val cacheItem = cacheHandler.getParam(moduleCode, paramName)
 
         // 插入新的记录到数据库
-        val sysDictItemNew = insertNewRecordToDb()
+        val sysParamNew = insertNewRecordToDb()
 
         // 更新数据库的记录
         val idUpdate = "9edc0327-99f1-4767-b42b-222222222222"
@@ -56,13 +56,13 @@ class ParamByModuleAndNameCacheHandlerTest : CacheHandlerTestBase() {
         assert(cacheItem !== cacheHandler.getParam(moduleCode, paramName))
 
         // 数据库中新增的记录在缓存应该要存在
-        assertNotNull(cacheHandler.getParam(sysDictItemNew.moduleCode, sysDictItemNew.paramName))
+        assertNotNull(cacheHandler.getParam(sysParamNew.moduleCode, sysParamNew.paramName))
 
         // 数据库中更新的记录在缓存中应该也更新了
         moduleCode = "moduleCode-a"
         paramName = "paramName-2"
-        val cacheItemsUpdate = cacheHandler.getParam(moduleCode, paramName)!!
-        assertEquals(newValue, cacheItemsUpdate.paramValue)
+        val cacheItemUpdate = cacheHandler.getParam(moduleCode, paramName)!!
+        assertEquals(newValue, cacheItemUpdate.paramValue)
 
         // 数据库中删除的记录在缓存中应该还存在
         moduleCode = "moduleCode-a"
