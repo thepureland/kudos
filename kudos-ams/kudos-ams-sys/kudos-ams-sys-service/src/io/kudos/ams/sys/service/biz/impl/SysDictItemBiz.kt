@@ -213,7 +213,7 @@ open class SysDictItemBiz : BaseCrudBiz<String, SysDictItem, SysDictItemDao>(), 
         val success = dao.update(dictItem)
         if (success) {
             log.debug("更新id为${dictItemId}的字典项的启用状态为${active}。")
-            dictItemCacheHandler.syncOnUpdateActive(dictItemId, active)
+            dictItemCacheHandler.syncOnUpdateActive(dictItemId)
         } else {
             log.error("更新id为${dictItemId}的字典项的启用状态为${active}失败！")
         }

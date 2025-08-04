@@ -144,7 +144,7 @@ class DictItemsByModuleAndTypeCacheHandlerTest : CacheHandlerTestBase() {
         assert(success)
         var dictItem = sysDictItemDao.get(id)!!
         var dict = dictByIdCacheHandler.getDictById(dictItem.dictId)!!
-        cacheHandler.syncOnUpdateActive(id, false)
+        cacheHandler.syncOnUpdateActive(id)
         var key = cacheHandler.getKey(dict.moduleCode, dict.dictType)
         @Suppress("UNCHECKED_CAST")
         var cacheItems1 = CacheKit.getValue(cacheHandler.cacheName(), key)
@@ -158,7 +158,7 @@ class DictItemsByModuleAndTypeCacheHandlerTest : CacheHandlerTestBase() {
         assert(success)
         dictItem = sysDictItemDao.get(id)!!
         dict = dictByIdCacheHandler.getDictById(dictItem.dictId)!!
-        cacheHandler.syncOnUpdateActive(id, true)
+        cacheHandler.syncOnUpdateActive(id)
         key = cacheHandler.getKey(dict.moduleCode, dict.dictType)
         @Suppress("UNCHECKED_CAST")
         cacheItems1 = CacheKit.getValue(cacheHandler.cacheName(), key) as List<SysDictItemCacheItem>

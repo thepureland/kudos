@@ -126,6 +126,28 @@ class ResourceIdBySubSysAndUrlCacheHandlerTest : CacheHandlerTestBase() {
     }
 
     @Test
+    fun syncOnUpdateActive() {
+        // 由true更新为false
+        var id = "bb76084a-ceaa-44f1-9c9d-555555555555"
+        var success = dao.updateProperties(id, mapOf(SysResource::active.name to false))
+        assert(success)
+        var sysResource = resourceByIdCacheHandler.getResourceById(id)!!
+        cacheHandler.syncOnUpdateActive(id, false)
+        var key = cacheHandler.getKey(sysResource.subSystemCode!!, sysResource.url)
+        assertNull(CacheKit.getValue(cacheHandler.cacheName(), key))
+        assertNull(cacheHandler.getResourceId(sysResource.subSystemCode!!, sysResource.url!!))
+
+        // 由false更新为true
+        id = "bb76084a-ceaa-44f1-9c9d-000000000000"
+        success = dao.updateProperties(id, mapOf(SysResource::active.name to true))
+        assert(success)
+        sysResource = resourceByIdCacheHandler.getResourceById(id)!!
+        cacheHandler.syncOnUpdateActive(id, true)
+        key = cacheHandler.getKey(sysResource.subSystemCode!!, sysResource.url)
+        assertNull(CacheKit.getValue(cacheHandler.cacheName(), key))
+    }
+
+    @Test
     fun syncOnDelete() {
         val id = "bb76084a-ceaa-44f1-9c9d-666666666666"
         val sysResource = dao.get(id)!!

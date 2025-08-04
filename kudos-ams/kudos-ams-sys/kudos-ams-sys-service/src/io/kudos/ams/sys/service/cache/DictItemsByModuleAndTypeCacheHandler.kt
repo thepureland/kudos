@@ -201,9 +201,8 @@ open class DictItemsByModuleAndTypeCacheHandler : AbstractCacheHandler<List<SysD
      * 更新启用状态后同步缓存
      *
      * @param id 字典项id
-     * @param active 是否启用
      */
-    open fun syncOnUpdateActive(id: String, active: Boolean) {
+    open fun syncOnUpdateActive(id: String) {
         if (CacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("更新id为${id}的字典项的启用状态后，同步${CACHE_NAME}缓存...")
             val dictIds = sysDictItemDao.oneSearchProperty(SysDictItem::id.name, id, SysDictItem::dictId.name)
@@ -214,7 +213,7 @@ open class DictItemsByModuleAndTypeCacheHandler : AbstractCacheHandler<List<SysD
             }
 
             CacheKit.evict(CACHE_NAME, getKey(dict.moduleCode, dict.dictType)) // 踢除缓存（缓存粒度为字典类型）
-            if (active && CacheKit.isWriteInTime(CACHE_NAME)) {
+            if (CacheKit.isWriteInTime(CACHE_NAME)) {
                 // 重新缓存
                 getSelf<DictItemsByModuleAndTypeCacheHandler>().getDictItems(dict.moduleCode!!, dict.dictType!!)
             }
