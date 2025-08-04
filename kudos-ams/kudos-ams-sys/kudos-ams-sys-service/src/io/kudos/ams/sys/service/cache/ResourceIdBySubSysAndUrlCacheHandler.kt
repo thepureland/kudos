@@ -31,6 +31,9 @@ open class ResourceIdBySubSysAndUrlCacheHandler : AbstractCacheHandler<String>()
     @Autowired
     private lateinit var sysResourceDao: SysResourceDao
 
+    @Autowired
+    private lateinit var resourceByIdCacheHandler: ResourceByIdCacheHandler
+
     companion object {
         private const val CACHE_NAME = "SYS_RESOURCE_ID_BY_SUB_SYS_AND_URL"
     }
@@ -143,6 +146,37 @@ open class ResourceIdBySubSysAndUrlCacheHandler : AbstractCacheHandler<String>()
                 }
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
+        }
+    }
+
+    /**
+     * 更改数据库记录的启用状态后同步缓存
+     *
+     * @param id 资源id
+     * @param active 启用状态
+     */
+    open fun syncOnUpdateActive(id: String, active: Boolean) {
+        if (CacheKit.isCacheActive(CACHE_NAME)) {
+            log.debug("更新id为${id}的资源的启用状态后，同步${CACHE_NAME}缓存...")
+            val sysRes = resourceByIdCacheHandler.getResourceById(id)
+            if (sysRes == null) {
+                log.error("不存在id为${id}的资源！")
+                return
+            }
+
+            if (!sysRes.url.isNullOrBlank()) {
+                if (active) {
+                    if (CacheKit.isWriteInTime(CACHE_NAME)) {
+                        // 重新缓存
+                        getSelf<ResourceIdBySubSysAndUrlCacheHandler>().getResourceId(
+                            sysRes.subSystemCode!!, sysRes.url!!
+                        )
+                    }
+                } else {
+                    CacheKit.evict(CACHE_NAME, getKey(sysRes.subSystemCode!!, sysRes.url)) // 踢除资源缓存
+                }
+                log.debug("${CACHE_NAME}缓存同步完成。")
+            }
         }
     }
 

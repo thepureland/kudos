@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component
  *
  * 1.缓存所有active=true的资源id
  * 2.缓存的key为：subSystemCode::resourceType
- * 3.缓存的value为：资源id
+ * 3.缓存的value为：资源id列表
  *
  * @author K
  * @since 1.0.0
@@ -29,6 +29,9 @@ open class ResourceIdsBySubSysAndTypeCacheHandler : AbstractCacheHandler<List<St
 
     @Autowired
     private lateinit var sysResourceDao: SysResourceDao
+
+    @Autowired
+    private lateinit var resourceByIdCacheHandler: ResourceByIdCacheHandler
 
     companion object {
         private const val CACHE_NAME = "SYS_RESOURCE_IDS_BY_SUB_SYS_AND_TYPE"
@@ -54,9 +57,9 @@ open class ResourceIdsBySubSysAndTypeCacheHandler : AbstractCacheHandler<List<St
 
         // 加载所有可用的资源
         val criteria = Criteria.add(SysResource::active.name, OperatorEnum.EQ, true)
-        val returnProperties =
-            listOf(SysResource::id.name, SysResource::subSystemCode.name, SysResource::resourceTypeDictCode.name)
-
+        val returnProperties = listOf(
+            SysResource::id.name, SysResource::subSystemCode.name, SysResource::resourceTypeDictCode.name
+        )
         val results = sysResourceDao.searchProperties(criteria, returnProperties)
         log.debug("从数据库加载了${results.size}条资源信息。")
 
@@ -78,6 +81,13 @@ open class ResourceIdsBySubSysAndTypeCacheHandler : AbstractCacheHandler<List<St
         }
     }
 
+    /**
+     * 根据子系统编码和资源类型代码从缓存中加载资源id，如果缓存中不存在，从数据库中加载，并回写缓存
+     *
+     * @param subSystemCode 子系统编码
+     * @param resourceTypeDictCode 资源类型代码
+     * @return 资源id列表
+     */
     @Cacheable(
         cacheNames = [CACHE_NAME],
         key = "#subSystemCode.concat('${Consts.CACHE_KEY_DEFAULT_DELIMITER}').concat(#resourceTypeDictCode)",
@@ -99,6 +109,12 @@ open class ResourceIdsBySubSysAndTypeCacheHandler : AbstractCacheHandler<List<St
         return ids
     }
 
+    /**
+     * 数据库插入记录后同步缓存
+     *
+     * @param any 包含必要属性的对象
+     * @param id 资源id
+     */
     open fun syncOnInsert(any: Any, id: String) {
         if (CacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("新增id为${id}的资源后，同步${CACHE_NAME}缓存...")
@@ -113,12 +129,20 @@ open class ResourceIdsBySubSysAndTypeCacheHandler : AbstractCacheHandler<List<St
         }
     }
 
-    open fun syncOnUpdate(any: Any, id: String, oldsubSystemCode: String, oldResourceTypeDictCode: String) {
+    /**
+     * 更新数据库记录后同步缓存
+     *
+     * @param any 包含必要属性的对象
+     * @param id 资源id
+     * @param oldSubSystemCode 旧子系统编码
+     * @param oldResourceTypeDictCode 旧资源类型代码
+     */
+    open fun syncOnUpdate(any: Any, id: String, oldSubSystemCode: String, oldResourceTypeDictCode: String) {
         if (CacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("更新id为${id}的资源后，同步${CACHE_NAME}缓存...")
             val subSystemCode = BeanKit.getProperty(any, SysResource::subSystemCode.name) as String
             val resourceTypeDictCode = BeanKit.getProperty(any, SysResource::resourceTypeDictCode.name) as String
-            CacheKit.evict(CACHE_NAME, getKey(oldsubSystemCode, oldResourceTypeDictCode)) // 踢除资源缓存
+            CacheKit.evict(CACHE_NAME, getKey(oldSubSystemCode, oldResourceTypeDictCode)) // 踢除资源缓存
             if (CacheKit.isWriteInTime(CACHE_NAME)) {
                 // 重新缓存
                 getSelf<ResourceIdsBySubSysAndTypeCacheHandler>().getResourceIds(subSystemCode, resourceTypeDictCode)
@@ -127,24 +151,39 @@ open class ResourceIdsBySubSysAndTypeCacheHandler : AbstractCacheHandler<List<St
         }
     }
 
-    open fun syncOnUpdateActive(id: String, active: Boolean) {
+    /**
+     * 更改数据库记录的启用状态后同步缓存
+     *
+     * @param id 资源id
+     */
+    open fun syncOnUpdateActive(id: String) {
         if (CacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("更新id为${id}的资源的启用状态后，同步${CACHE_NAME}缓存...")
-            val sysRes = sysResourceDao.get(id)!!
-            if (active) {
-                if (CacheKit.isWriteInTime(CACHE_NAME)) {
-                    // 重新缓存
-                    getSelf<ResourceIdsBySubSysAndTypeCacheHandler>().getResourceIds(
-                        sysRes.subSystemCode, sysRes.resourceTypeDictCode
-                    )
-                }
-            } else {
-                CacheKit.evict(CACHE_NAME, getKey(sysRes.subSystemCode, sysRes.resourceTypeDictCode)) // 踢除资源缓存
+            val sysRes = resourceByIdCacheHandler.getResourceById(id)
+            if (sysRes == null) {
+                log.error("资源id为${id}的记录不存在！")
+                return
+            }
+
+            CacheKit.evict(CACHE_NAME, getKey(sysRes.subSystemCode!!, sysRes.resourceTypeDictCode!!)) // 踢除资源缓存
+
+            if (CacheKit.isWriteInTime(CACHE_NAME)) {
+                // 重新缓存
+                getSelf<ResourceIdsBySubSysAndTypeCacheHandler>().getResourceIds(
+                    sysRes.subSystemCode!!, sysRes.resourceTypeDictCode!!
+                )
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
     }
 
+    /**
+     * 删除数据库记录后同步缓存
+     *
+     * @param id 资源id
+     * @param subSystemCode 子系统编码
+     * @param resourceTypeDictCode 资源类型代码
+     */
     open fun syncOnDelete(id: String, subSystemCode: String, resourceTypeDictCode: String) {
         if (CacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("删除id为${id}的资源后，同步从${CACHE_NAME}缓存中踢除...")
@@ -157,11 +196,17 @@ open class ResourceIdsBySubSysAndTypeCacheHandler : AbstractCacheHandler<List<St
         }
     }
 
-    private fun getKey(subSystemCode: String, resourceTypeDictCode: String): String {
+    /**
+     * 返回参数拼接后的缓存key
+     *
+     * @param subSystemCode 子系统编码
+     * @param resourceTypeDictCode 资源类型代码
+     * @return 缓存key
+     */
+    fun getKey(subSystemCode: String, resourceTypeDictCode: String): String {
         return "${subSystemCode}${Consts.CACHE_KEY_DEFAULT_DELIMITER}${resourceTypeDictCode}"
     }
 
     private val log = LogFactory.getLog(this)
-
 
 }
