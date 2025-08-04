@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component
 /**
  * 资源id（by sub system code & url）缓存处理器
  *
- * 1.缓存所有包含url的资源id
+ * 1.缓存所有url不为空且active=true的资源id
  * 2.缓存的key为：subSystemCode::url
  * 3.缓存的value为：资源id
  *
@@ -52,9 +52,11 @@ open class ResourceIdBySubSysAndUrlCacheHandler : AbstractCacheHandler<String>()
         }
 
         // 加载所有包含url的资源id
-        val criteria = Criteria(Criterion(SysResource::url.name, OperatorEnum.IS_NOT_NULL))
-
-        @Suppress(Consts.Suppress.UNCHECKED_CAST)
+        val criteria = Criteria.and(
+            Criterion(SysResource::url.name, OperatorEnum.IS_NOT_NULL),
+            Criterion(SysResource::url.name, OperatorEnum.IS_NOT_EMPTY),
+            Criterion(SysResource::active.name, OperatorEnum.EQ, true)
+        )
         val returnProperties = listOf(SysResource::id.name, SysResource::url.name, SysResource::subSystemCode.name)
         val ids = sysResourceDao.searchProperties(criteria, returnProperties)
         log.debug("从数据库加载了${ids.size}条包含url的资源id。")
@@ -72,6 +74,13 @@ open class ResourceIdBySubSysAndUrlCacheHandler : AbstractCacheHandler<String>()
         log.debug("缓存了${ids.size}条包含url的资源id。")
     }
 
+    /**
+     * 根据子系统编码和url获取缓存中的资源id，如果缓存中不存在，则从数据库中加载，并回写缓存
+     *
+     * @param subSystemCode 子系统编码
+     * @param url 资源地址
+     * @return 资源id，找不到返回null
+     */
     @Cacheable(
         cacheNames = [CACHE_NAME],
         key = "#subSystemCode.concat('${Consts.CACHE_KEY_DEFAULT_DELIMITER}').concat(#url)",
@@ -85,17 +94,22 @@ open class ResourceIdBySubSysAndUrlCacheHandler : AbstractCacheHandler<String>()
         require(url.isNotBlank()) { "获取资源id时，url必须指定！" }
         val criteria = Criteria.add(SysResource::subSystemCode.name, OperatorEnum.EQ, subSystemCode)
             .addAnd(SysResource::url.name, OperatorEnum.EQ, url)
+            .addAnd(SysResource::active.name, OperatorEnum.EQ, true)
         val ids = sysResourceDao.searchProperty(criteria, SysResource::id.name)
         return if (ids.isEmpty()) {
             log.debug("数据库中不存在子系统为${subSystemCode}且URL为${url}的资源id！")
             null
         } else {
-            val id = ids.first() as String
-            log.debug("数据库中找到子系统为${subSystemCode}且URL为${url}的资源id：$id！")
-            id
+            ids.first() as String
         }
     }
 
+    /**
+     * 数据库插入记录后同步缓存
+     *
+     * @param any 包含必要属性的对象
+     * @param id 资源id
+     */
     open fun syncOnInsert(any: Any, id: String) {
         if (CacheKit.isCacheActive(CACHE_NAME) && CacheKit.isWriteInTime(CACHE_NAME)) {
             val url = BeanKit.getProperty(any, SysResource::url.name) as String?
@@ -108,6 +122,13 @@ open class ResourceIdBySubSysAndUrlCacheHandler : AbstractCacheHandler<String>()
         }
     }
 
+    /**
+     * 更新数据库记录后同步缓存
+     *
+     * @param any 包含必要属性的对象
+     * @param id 资源id
+     * @param oldUrl 旧的资源地址
+     */
     open fun syncOnUpdate(any: Any, id: String, oldUrl: String?) {
         if (CacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("更新id为${id}的资源后，同步${CACHE_NAME}缓存...")
@@ -125,6 +146,13 @@ open class ResourceIdBySubSysAndUrlCacheHandler : AbstractCacheHandler<String>()
         }
     }
 
+    /**
+     * 删除数据库记录后同步缓存
+     *
+     * @param id 资源id
+     * @param subSystemCode 子系统编码
+     * @param url 资源地址
+     */
     open fun syncOnDelete(id: String, subSystemCode: String, url: String?) {
         if (!url.isNullOrBlank() && CacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("删除id为${id}的资源后，同步从${CACHE_NAME}缓存中踢除...")
@@ -133,7 +161,14 @@ open class ResourceIdBySubSysAndUrlCacheHandler : AbstractCacheHandler<String>()
         }
     }
 
-    private fun getKey(subSystemCode: String, url: String): String {
+    /**
+     * 返回参数拼接后的缓存key
+     *
+     * @param subSystemCode 子系统编码
+     * @param url 资源地址
+     * @return 缓存key
+      */
+    fun getKey(subSystemCode: String, url: String?): String {
         return "${subSystemCode}${Consts.CACHE_KEY_DEFAULT_DELIMITER}${url}"
     }
 
