@@ -17,9 +17,10 @@ import org.springframework.stereotype.Component
 /**
  * 资源id（by sub system code & resource type）缓存处理器
  *
- * 1.缓存所有active=true的资源id
- * 2.缓存的key为：subSystemCode::resourceType
- * 3.缓存的value为：资源id列表
+ * 1.数据来源表：sys_resource
+ * 2.缓存所有active=true的资源id
+ * 3.缓存的key为：subSystemCode::resourceType
+ * 4.缓存的value为：资源id列表
  *
  * @author K
  * @since 1.0.0
@@ -56,7 +57,7 @@ open class ResourceIdsBySubSysAndTypeCacheHandler : AbstractCacheHandler<List<St
         }
 
         // 加载所有可用的资源
-        val criteria = Criteria.add(SysResource::active.name, OperatorEnum.EQ, true)
+        val criteria = Criteria.of(SysResource::active.name, OperatorEnum.EQ, true)
         val returnProperties = listOf(
             SysResource::id.name, SysResource::subSystemCode.name, SysResource::resourceTypeDictCode.name
         )
@@ -99,7 +100,7 @@ open class ResourceIdsBySubSysAndTypeCacheHandler : AbstractCacheHandler<List<St
         }
         require(subSystemCode.isNotBlank()) { "获取资源时，子系统代码必须指定！" }
         require(resourceTypeDictCode.isNotBlank()) { "获取资源时，资源类型代码必须指定！" }
-        val criteria = Criteria.add(SysResource::active.name, OperatorEnum.EQ, true)
+        val criteria = Criteria.of(SysResource::active.name, OperatorEnum.EQ, true)
             .addAnd(SysResource::subSystemCode.name, OperatorEnum.EQ, subSystemCode)
             .addAnd(SysResource::resourceTypeDictCode.name, OperatorEnum.EQ, resourceTypeDictCode)
 

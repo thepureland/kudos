@@ -28,7 +28,7 @@ open class SysTenantSubSystemDao : BaseCrudDao<String, SysTenantSubSystem, SysTe
      * @return Set<子系统编码>
      */
     fun searchSubSystemCodesByTenantId(tenantId: String): Set<String> {
-        val criteria = Criteria.add(SysTenantSubSystem::tenantId.name, OperatorEnum.EQ, tenantId)
+        val criteria = Criteria.of(SysTenantSubSystem::tenantId.name, OperatorEnum.EQ, tenantId)
         @Suppress("UNCHECKED_CAST")
         return searchProperty(criteria, SysTenantSubSystem::subSystemCode.name).toSet() as Set<String>
     }
@@ -40,7 +40,7 @@ open class SysTenantSubSystemDao : BaseCrudDao<String, SysTenantSubSystem, SysTe
      * @return Set<租户id>
      */
     fun searchTenantIdsBySubSystemCode(subSystemCode: String): Set<String> {
-        val criteria = Criteria.add(SysTenantSubSystem::subSystemCode.name, OperatorEnum.EQ, subSystemCode)
+        val criteria = Criteria.of(SysTenantSubSystem::subSystemCode.name, OperatorEnum.EQ, subSystemCode)
         @Suppress("UNCHECKED_CAST")
         return searchProperty(criteria, SysTenantSubSystem::tenantId.name).toSet() as Set<String>
     }
@@ -57,7 +57,7 @@ open class SysTenantSubSystemDao : BaseCrudDao<String, SysTenantSubSystem, SysTe
         val results = if (tenantIds == null) {
             allSearchProperties(returnProperties)
         } else {
-            val criteria = Criteria.add(SysTenantSubSystem::tenantId.name, OperatorEnum.IN, tenantIds)
+            val criteria = Criteria.of(SysTenantSubSystem::tenantId.name, OperatorEnum.IN, tenantIds)
             searchProperties(criteria, returnProperties)
         } as List<Map<String, String>>
         return results.groupBy(
@@ -78,7 +78,7 @@ open class SysTenantSubSystemDao : BaseCrudDao<String, SysTenantSubSystem, SysTe
         val results = if (subSystemCodes == null) {
             allSearchProperties(returnProperties)
         } else {
-            val criteria = Criteria.add(SysTenantSubSystem::subSystemCode.name, OperatorEnum.IN, subSystemCodes)
+            val criteria = Criteria.of(SysTenantSubSystem::subSystemCode.name, OperatorEnum.IN, subSystemCodes)
             searchProperties(criteria, returnProperties)
         } as List<Map<String, String>>
         return results.groupBy(

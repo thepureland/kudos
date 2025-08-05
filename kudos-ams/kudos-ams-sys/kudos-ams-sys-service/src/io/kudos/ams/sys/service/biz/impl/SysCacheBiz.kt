@@ -32,7 +32,7 @@ open class SysCacheBiz : BaseCrudBiz<String, SysCache, SysCacheDao>(), ISysCache
     private lateinit var cacheConfigCacheHandler: CacheByNameCacheHandler
 
     override fun getCacheFromCache(name: String): SysCacheCacheItem? {
-        return cacheConfigCacheHandler.getCacheFromCache(name)
+        return cacheConfigCacheHandler.getCache(name)
     }
 
     @Transactional

@@ -62,6 +62,6 @@ values ('14a9adc4-6bb5-45bd-96bb-d8afe3060bea', 'SYS_CACHE_BY_NAME', 'ams-sys', 
         '资源缓存(by subSystemCode & type)', true, true),
        ('e5340806-97b4-43a4-84c6-97e5e2966371', 'SYS_TENANT_BY_ID', 'ams-sys', 'LOCAL_REMOTE', true, true, 999999999,
         '租户缓存(by id)', true, true),
-       ('2da8e352-6e6f-4cd4-93e0-259ad3c7ea83', 'SYS_TENANTS_BY_SUB_SYS', 'ams-sys', 'LOCAL_REMOTE', true, true, 999999999,
+       ('2da8e352-6e6f-4cd4-93e0-259ad3c7ea83', 'SYS_TENANT_IDS_BY_SUB_SYS', 'ams-sys', 'LOCAL_REMOTE', true, true, 999999999,
         '租户缓存(by subSystemCode)', true, true);
 --endregion DML

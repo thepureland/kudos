@@ -17,9 +17,10 @@ import org.springframework.stereotype.Component
 /**
  * 参数（by module & name）缓存处理器
  *
- * 1.缓存所有active=true的参数
- * 2.缓存的key为：moduleCode::paramName
- * 3.缓存的value为：SysParamCacheItem对象
+ * 1.数据来源表：sys_param
+ * 2.缓存所有active=true的参数
+ * 3.缓存的key为：moduleCode::paramName
+ * 4.缓存的value为：SysParamCacheItem对象
  *
  * @author K
  * @since 1.0.0

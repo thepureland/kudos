@@ -221,14 +221,14 @@ internal open class BaseCrudDaoTest {
         assertFailsWith<IllegalArgumentException> { testTableDao.updateWhen(entity, Criteria()) }
 
         // 满足Criteria条件
-        var criteria = Criteria.add(TestTable::name.name, OperatorEnum.EQ, "name1")
+        var criteria = Criteria.of(TestTable::name.name, OperatorEnum.EQ, "name1")
         assert(testTableDao.updateWhen(entity, criteria))
         entity = testTableDao.get(-1)!!
         assertEquals("name", entity.name)
 
         // 不满足Criteria条件
         entity.name = "name1"
-        criteria = Criteria.add(TestTable::name.name, OperatorEnum.EQ, "non-exists")
+        criteria = Criteria.of(TestTable::name.name, OperatorEnum.EQ, "non-exists")
         assert(!testTableDao.updateWhen(entity, criteria))
         entity = testTableDao.get(-1)!!
         assertEquals("name", entity.name)
@@ -251,13 +251,13 @@ internal open class BaseCrudDaoTest {
         assertFailsWith<IllegalArgumentException> { testTableDao.updatePropertiesWhen(-1, properties, Criteria()) }
 
         // 满足Criteria条件
-        var criteria = Criteria.add(TestTable::name.name, OperatorEnum.EQ, "name1")
+        var criteria = Criteria.of(TestTable::name.name, OperatorEnum.EQ, "name1")
         assert(testTableDao.updatePropertiesWhen(-1, properties, criteria))
         var entity = testTableDao.get(-1)!!
         assertEquals("name", entity.name)
 
         // 不满足Criteria条件
-        criteria = Criteria.add(TestTable::name.name, OperatorEnum.EQ, "non-exists")
+        criteria = Criteria.of(TestTable::name.name, OperatorEnum.EQ, "non-exists")
         assert(!testTableDao.updatePropertiesWhen(-1, mapOf(TestTable::name.name to "name1"), criteria))
         entity = testTableDao.get(-1)!!
         assertEquals("name", entity.name)
@@ -281,7 +281,7 @@ internal open class BaseCrudDaoTest {
         entity.weight = null
 
         // 满足Criteria条件
-        var criteria = Criteria.add(TestTable::name.name, OperatorEnum.EQ, "name1")
+        var criteria = Criteria.of(TestTable::name.name, OperatorEnum.EQ, "name1")
         assert(testTableDao.updateOnlyWhen(entity, criteria, TestTable::name.name))
         entity = testTableDao.get(-1)!!
         assertEquals("name", entity.name)
@@ -289,7 +289,7 @@ internal open class BaseCrudDaoTest {
 
         // 不满足Criteria条件
         entity.name = "name1"
-        criteria = Criteria.add(TestTable::name.name, OperatorEnum.EQ, "non-exists")
+        criteria = Criteria.of(TestTable::name.name, OperatorEnum.EQ, "non-exists")
         assert(!testTableDao.updateOnlyWhen(entity, criteria, TestTable::name.name))
         entity = testTableDao.get(-1)!!
         assertEquals("name", entity.name)
@@ -315,7 +315,7 @@ internal open class BaseCrudDaoTest {
         entity.weight = null
 
         // 满足Criteria条件
-        var criteria = Criteria.add(TestTable::name.name, OperatorEnum.EQ, "name1")
+        var criteria = Criteria.of(TestTable::name.name, OperatorEnum.EQ, "name1")
         assert(testTableDao.updateExcludePropertiesWhen(entity, criteria, TestTable::weight.name))
         entity = testTableDao.get(-1)!!
         assertEquals("name", entity.name)
@@ -323,7 +323,7 @@ internal open class BaseCrudDaoTest {
 
         // 不满足Criteria条件
         entity.name = "name1"
-        criteria = Criteria.add(TestTable::name.name, OperatorEnum.EQ, "non-exists")
+        criteria = Criteria.of(TestTable::name.name, OperatorEnum.EQ, "non-exists")
         assert(!testTableDao.updateExcludePropertiesWhen(entity, criteria))
         entity = testTableDao.get(-1)!!
         assertEquals("name", entity.name)
@@ -362,11 +362,11 @@ internal open class BaseCrudDaoTest {
         )
 
         // 满足Criteria条件
-        var criteria = Criteria.add(TestTable::name.name, OperatorEnum.EQ, "unexists")
+        var criteria = Criteria.of(TestTable::name.name, OperatorEnum.EQ, "unexists")
         assertEquals(0, testTableDao.batchUpdateWhen(entities, criteria))
 
         // 不满足Criteria条件
-        criteria = Criteria.add("name", OperatorEnum.EQ, "name2")
+        criteria = Criteria.of("name", OperatorEnum.EQ, "name2")
         assertEquals(1, testTableDao.batchUpdateWhen(entities, criteria))
     }
 
@@ -428,7 +428,7 @@ internal open class BaseCrudDaoTest {
     @Test
     @Transactional
     open fun batchUpdateProperties() {
-        val criteria = Criteria.add(TestTable::name.name, OperatorEnum.LIKE, "name1")
+        val criteria = Criteria.of(TestTable::name.name, OperatorEnum.LIKE, "name1")
         val properties = mapOf(TestTable::active.name to false, TestTable::height.name to null)
         assertEquals(3, testTableDao.batchUpdateProperties(criteria, properties))
         criteria.addAnd(TestTable::active.name, OperatorEnum.EQ, false)
@@ -477,7 +477,7 @@ internal open class BaseCrudDaoTest {
                 weight = 0.0
             }
         )
-        var criteria = Criteria.add(TestTable::name.name, OperatorEnum.LIKE_S, "name1")
+        var criteria = Criteria.of(TestTable::name.name, OperatorEnum.LIKE_S, "name1")
         val properties = arrayOf(TestTable::id.name, TestTable::name.name, TestTable::weight.name)
         assertEquals(1, testTableDao.batchUpdateOnlyWhen(entities, criteria, 1, *properties))
         assertEquals(1, testTableDao.oneSearch(TestTable::name.name, "11").size)
@@ -520,7 +520,7 @@ internal open class BaseCrudDaoTest {
                 weight = 0.0
             }
         )
-        var criteria = Criteria.add(TestTable::name.name, OperatorEnum.LIKE_S, "name1")
+        var criteria = Criteria.of(TestTable::name.name, OperatorEnum.LIKE_S, "name1")
         assertEquals(1, testTableDao.batchUpdateExcludePropertiesWhen(entities, criteria, 1, TestTable::weight.name))
         assertEquals(1, testTableDao.oneSearch(TestTable::name.name, "11").size)
         assertEquals(0, testTableDao.oneSearch(TestTable::weight.name, 0.0).size)
@@ -560,7 +560,7 @@ internal open class BaseCrudDaoTest {
     @Test
     @Transactional
     open fun batchDeleteCriteria() {
-        val criteria = Criteria.add(TestTable::name.name, OperatorEnum.LIKE_E, "1")
+        val criteria = Criteria.of(TestTable::name.name, OperatorEnum.LIKE_E, "1")
         assertEquals(2, testTableDao.batchDeleteCriteria(criteria))
         assertEquals(0, testTableDao.count(criteria))
     }

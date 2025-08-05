@@ -248,7 +248,7 @@ class Criteria : Serializable {
          * @param value    属性值
          * @return 新的查询对象
          */
-        fun add(property: String, operatorEnum: OperatorEnum, value: Any?): Criteria =
+        fun of(property: String, operatorEnum: OperatorEnum, value: Any?): Criteria =
             Criteria(Criterion(property, operatorEnum, value))
 
         //region static and

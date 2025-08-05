@@ -291,17 +291,17 @@ internal open class BaseReadOnlyDaoTest {
         assertEquals(-10, results.first())
 
         // IEQ
-        criteria = Criteria.add(TestTable::name.name, OperatorEnum.IEQ, "Name1")
+        criteria = Criteria.of(TestTable::name.name, OperatorEnum.IEQ, "Name1")
         results = testTableDao.searchProperty(criteria, TestTable::id.name)
         assertEquals(1, results.size)
 
         // GT_P
-        criteria = Criteria.add(TestTable::height.name, OperatorEnum.GT_P, TestTable::weight.name)
+        criteria = Criteria.of(TestTable::height.name, OperatorEnum.GT_P, TestTable::weight.name)
         results = testTableDao.searchProperty(criteria, TestTable::id.name)
         assertEquals(9, results.size)
 
         // NE_P
-        criteria = Criteria.add(TestTable::height.name, OperatorEnum.NE_P, TestTable::weight.name)
+        criteria = Criteria.of(TestTable::height.name, OperatorEnum.NE_P, TestTable::weight.name)
         results = testTableDao.searchProperty(criteria, TestTable::id.name)
         assertEquals(9, results.size)
     }
@@ -328,7 +328,7 @@ internal open class BaseReadOnlyDaoTest {
     @Test
     fun pagingSearch() {
         if (isSupportPaging()) {
-            val criteria = Criteria.add(TestTable::active.name, OperatorEnum.EQ, true)
+            val criteria = Criteria.of(TestTable::active.name, OperatorEnum.EQ, true)
             val entities = testTableDao.pagingSearch(criteria, 1, 4, Order.asc(TestTable::id.name))
             assertEquals(4, entities.size)
             assertEquals(-11, entities.first().id)
@@ -338,7 +338,7 @@ internal open class BaseReadOnlyDaoTest {
     @Test
     fun pagingReturnProperty() {
         if (isSupportPaging()) {
-            val criteria = Criteria.add(TestTable::active.name, OperatorEnum.EQ, true)
+            val criteria = Criteria.of(TestTable::active.name, OperatorEnum.EQ, true)
             val results =
                 testTableDao.pagingReturnProperty(criteria, TestTable::id.name, 1, 4, Order.asc(TestTable::id.name))
             assertEquals(4, results.size)
@@ -349,7 +349,7 @@ internal open class BaseReadOnlyDaoTest {
     @Test
     fun pagingReturnProperties() {
         if (isSupportPaging()) {
-            val criteria = Criteria.add(TestTable::active.name, OperatorEnum.EQ, true)
+            val criteria = Criteria.of(TestTable::active.name, OperatorEnum.EQ, true)
             val returnProperties = listOf(TestTable::id.name, TestTable::name.name)
             val results =
                 testTableDao.pagingReturnProperties(criteria, returnProperties, 1, 4, Order.asc(TestTable::id.name))
@@ -486,7 +486,7 @@ internal open class BaseReadOnlyDaoTest {
     @Test
     fun count() {
         assertEquals(11, testTableDao.count(null as Criteria?))
-        val criteria = Criteria.add(TestTable::name.name, OperatorEnum.LIKE_S, "name1")
+        val criteria = Criteria.of(TestTable::name.name, OperatorEnum.LIKE_S, "name1")
         assertEquals(3, testTableDao.count(criteria))
     }
 
@@ -514,26 +514,26 @@ internal open class BaseReadOnlyDaoTest {
     @Test
     fun sum() {
         assertEquals(1382, testTableDao.sum(TestTable::height.name))
-        val criteria = Criteria.add(TestTable::name.name, OperatorEnum.LIKE_S, "name1")
+        val criteria = Criteria.of(TestTable::name.name, OperatorEnum.LIKE_S, "name1")
         assertEquals(122.5, testTableDao.sum(TestTable::weight.name, criteria))
         assertEquals(445.74, testTableDao.sum(TestTable::weight.name))
     }
 
     @Test
     fun avg() {
-        val criteria = Criteria.add(TestTable::name.name, OperatorEnum.LIKE_S, "name1")
+        val criteria = Criteria.of(TestTable::name.name, OperatorEnum.LIKE_S, "name1")
         assertEquals(61.25, testTableDao.avg(TestTable::weight.name, criteria))
     }
 
     @Test
     fun max() {
-        val criteria = Criteria.add(TestTable::name.name, OperatorEnum.LIKE_S, "name1")
+        val criteria = Criteria.of(TestTable::name.name, OperatorEnum.LIKE_S, "name1")
         assertEquals(66.0, testTableDao.max(TestTable::weight.name, criteria))
     }
 
     @Test
     fun min() {
-        val criteria = Criteria.add(TestTable::name.name, OperatorEnum.LIKE_S, "name1")
+        val criteria = Criteria.of(TestTable::name.name, OperatorEnum.LIKE_S, "name1")
         assertEquals(56.5, testTableDao.min(TestTable::weight.name, criteria))
     }
     //endregion aggregate

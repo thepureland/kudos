@@ -18,9 +18,10 @@ import org.springframework.stereotype.Component
 /**
  * 子系统租户数据源缓存处理器
  *
- * 1. 仅缓存tenantId不为null且active=true的数据源
- * 2. 缓存key为：租户id::子系统编码::微服务编码::原子服务编码，其中微服务编码和原子服务编码都有可能为null
- * 3. 缓存value为：SysDataSourceCacheItem对象
+ * 1.数据来源表：sys_data_source
+ * 2.仅缓存tenantId不为null且active=true的数据源
+ * 3.缓存key为：租户id::子系统编码::微服务编码::原子服务编码，其中微服务编码和原子服务编码都有可能为null
+ * 4.缓存value为：SysDataSourceCacheItem对象
  *
  * @author K
  * @since 1.0.0
