@@ -16,9 +16,10 @@ import org.springframework.stereotype.Component
 /**
  * 域名缓存处理器
  *
- * 1.缓存域名，不包含active=false的
- * 2.缓存的key为：domain name
- * 3.缓存的value为：SysDomainCacheItem对象
+ * 1.数据来源表：sys_domain
+ * 2.缓存域名，不包含active=false的
+ * 3.缓存的key为：domain name
+ * 4.缓存的value为：SysDomainCacheItem对象
  *
  * @author K
  * @since 1.0.0

@@ -8,7 +8,6 @@ import io.kudos.ams.sys.service.dao.SysCacheDao
 import io.kudos.ams.sys.service.model.po.SysCache
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.support.payload.ListSearchPayload
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
@@ -17,9 +16,10 @@ import org.springframework.stereotype.Component
 /**
  * 缓存配置信息的缓存处理器
  *
- * 1. 缓存所有缓存配置，包括active=false的
- * 2. 缓存key为：缓存name
- * 3. 缓存value为：SysCacheCacheItem对象
+ * 1.数据来源表：sys_cache
+ * 2.缓存所有缓存配置，不包括active=false的
+ * 3.缓存key为：缓存name
+ * 4.缓存value为：SysCacheCacheItem对象
  *
  * @author K
  * @since 1.0.0
@@ -37,7 +37,7 @@ open class CacheByNameCacheHandler : AbstractCacheHandler<SysCacheCacheItem>() {
     override fun cacheName(): String = CACHE_NAME
 
     override fun doReload(key: String): SysCacheCacheItem? {
-        return getSelf<CacheByNameCacheHandler>().getCacheFromCache(key)
+        return getSelf<CacheByNameCacheHandler>().getCache(key)
     }
 
     override fun reloadAll(clear: Boolean) {
@@ -47,8 +47,9 @@ open class CacheByNameCacheHandler : AbstractCacheHandler<SysCacheCacheItem>() {
         }
 
         // 加载所有可用的缓存配置
-        val searchPayload = ListSearchPayload().apply {
+        val searchPayload = SysCacheSearchPayload().apply {
             returnEntityClass = SysCacheCacheItem::class
+            active = true
         }
 
         @Suppress("UNCHECKED_CAST")
@@ -79,13 +80,14 @@ open class CacheByNameCacheHandler : AbstractCacheHandler<SysCacheCacheItem>() {
         key = "#name",
         unless = "#result == null"
     )
-    open fun getCacheFromCache(name: String): SysCacheCacheItem? {
+    open fun getCache(name: String): SysCacheCacheItem? {
         if (CacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("缓存中不存在名称为${name}的缓存配置信息，从数据库中加载...")
         }
         val searchPayload = SysCacheSearchPayload().apply {
             returnEntityClass = SysCacheCacheItem::class
             this.name = name
+            active = true
         }
 
         val result = sysCacheDao.search(searchPayload).firstOrNull() as SysCacheCacheItem?
@@ -107,7 +109,7 @@ open class CacheByNameCacheHandler : AbstractCacheHandler<SysCacheCacheItem>() {
         if (CacheKit.isCacheActive(CACHE_NAME) && CacheKit.isWriteInTime(CACHE_NAME)) {
             log.debug("新增id为${id}的缓存配置后，同步${CACHE_NAME}缓存...")
             val name = BeanKit.getProperty(any, SysCache::name.name) as String
-            getSelf<CacheByNameCacheHandler>().getCacheFromCache(name) // 缓存
+            getSelf<CacheByNameCacheHandler>().getCache(name) // 缓存
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
     }
@@ -127,7 +129,7 @@ open class CacheByNameCacheHandler : AbstractCacheHandler<SysCacheCacheItem>() {
             }
             CacheKit.evict(CACHE_NAME, name) // 踢除缓存配置缓存
             if (CacheKit.isWriteInTime(CACHE_NAME)) {
-                getSelf<CacheByNameCacheHandler>().getCacheFromCache(name) // 重新缓存
+                getSelf<CacheByNameCacheHandler>().getCache(name) // 重新缓存
                 log.debug("${CACHE_NAME}缓存同步完成。")
             }
         }

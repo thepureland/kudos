@@ -20,9 +20,10 @@ import org.springframework.stereotype.Component
 /**
  * 字典项（by module & dict type）缓存处理器
  *
- * 1. 缓存active=true的字典的所有active=true的字典项
- * 2. 缓存key为：moduleCode::dictType
- * 3. 缓存value为：SysDictItemCacheItem列表，按orderNum排序
+ * 1.数据来源表：sys_dict & sys_dict_item
+ * 2.缓存active=true的字典的所有active=true的字典项
+ * 3.缓存key为：moduleCode::dictType
+ * 4.缓存value为：SysDictItemCacheItem列表，按orderNum排序
  *
  * @author K
  * @since 1.0.0

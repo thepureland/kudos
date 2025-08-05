@@ -11,9 +11,10 @@ import org.springframework.stereotype.Component
 /**
  * 字典基本信息缓存（by id）处理器
  *
- * 1. 缓存所有字典基本信息，包括active=false的
- * 2. 缓存key为：id
- * 3. 缓存value为：SysDictCacheItem对象
+ * 1.数据来源表：sys_dict
+ * 2.缓存所有字典基本信息，包括active=false的
+ * 3.缓存key为：id
+ * 4.缓存value为：SysDictCacheItem对象
  *
  * @author K
  * @since 1.0.0

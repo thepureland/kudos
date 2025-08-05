@@ -11,9 +11,10 @@ import org.springframework.stereotype.Component
 /**
  * 数据源缓存（by id）处理器
  *
- * 1. 缓存所有数据源，包括active=false的
- * 2. 缓存key为：id
- * 3. 缓存value为：SysDataSourceCacheItem对象
+ * 1.数据来源表：sys_data_source
+ * 2.缓存所有数据源，包括active=false的
+ * 3.缓存key为：id
+ * 4.缓存value为：SysDataSourceCacheItem对象
  *
  * @author K
  * @since 1.0.0

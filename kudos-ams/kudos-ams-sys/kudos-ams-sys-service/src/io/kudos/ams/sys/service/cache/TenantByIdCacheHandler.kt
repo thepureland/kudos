@@ -11,9 +11,10 @@ import org.springframework.stereotype.Component
 /**
  * 租户（by id）缓存处理器
  *
- * 1.缓存所有租户，包括active=false的
- * 2.缓存的key为：id
- * 3.缓存的value为：SysTenantCacheItem对象
+ * 1.数据来源表：sys_tenant
+ * 2.缓存所有租户，包括active=false的
+ * 3.缓存的key为：id
+ * 4.缓存的value为：SysTenantCacheItem对象
  *
  * @author K
  * @since 1.0.0

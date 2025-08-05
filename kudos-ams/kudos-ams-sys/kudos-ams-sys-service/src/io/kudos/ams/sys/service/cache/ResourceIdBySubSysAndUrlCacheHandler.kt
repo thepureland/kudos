@@ -18,9 +18,10 @@ import org.springframework.stereotype.Component
 /**
  * 资源id（by sub system code & url）缓存处理器
  *
- * 1.缓存所有url不为空且active=true的资源id
- * 2.缓存的key为：subSystemCode::url
- * 3.缓存的value为：资源id
+ * 1.数据来源表：sys_resource
+ * 2.缓存所有url不为空且active=true的资源id
+ * 3.缓存的key为：subSystemCode::url
+ * 4.缓存的value为：资源id
  *
  * @author K
  * @since 1.0.0
@@ -95,7 +96,7 @@ open class ResourceIdBySubSysAndUrlCacheHandler : AbstractCacheHandler<String>()
         }
         require(subSystemCode.isNotBlank()) { "获取资源id时，子系统代码必须指定！" }
         require(url.isNotBlank()) { "获取资源id时，url必须指定！" }
-        val criteria = Criteria.add(SysResource::subSystemCode.name, OperatorEnum.EQ, subSystemCode)
+        val criteria = Criteria.of(SysResource::subSystemCode.name, OperatorEnum.EQ, subSystemCode)
             .addAnd(SysResource::url.name, OperatorEnum.EQ, url)
             .addAnd(SysResource::active.name, OperatorEnum.EQ, true)
         val ids = sysResourceDao.searchProperty(criteria, SysResource::id.name)

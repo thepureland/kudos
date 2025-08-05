@@ -5,7 +5,7 @@ import io.kudos.ams.sys.common.vo.tenant.SysTenantRecord
 import io.kudos.ams.sys.common.vo.tenant.SysTenantSearchPayload
 import io.kudos.ams.sys.service.biz.ibiz.ISysTenantSubSystemBiz
 import io.kudos.ams.sys.service.cache.TenantByIdCacheHandler
-import io.kudos.ams.sys.service.cache.TenantsBySubSysCacheHandler
+import io.kudos.ams.sys.service.cache.TenantIdsBySubSysCacheHandler
 import io.kudos.ams.sys.service.model.po.SysDataSource
 import io.kudos.ams.sys.service.model.po.SysTenantSubSystem
 import io.kudos.base.bean.BeanKit
@@ -40,7 +40,7 @@ open class SysTenantBiz : BaseCrudBiz<String, SysTenant, SysTenantDao>(), ISysTe
     private lateinit var tenantByIdCacheHandler: TenantByIdCacheHandler
 
     @Autowired
-    private lateinit var tenantBySubSysCacheHandler: TenantsBySubSysCacheHandler
+    private lateinit var tenantIdsBySubSysCacheHandler: TenantIdsBySubSysCacheHandler
 
     @Autowired
     private lateinit var sysTenantSubSystemBiz: ISysTenantSubSystemBiz
@@ -54,7 +54,8 @@ open class SysTenantBiz : BaseCrudBiz<String, SysTenant, SysTenantDao>(), ISysTe
     }
 
     override fun getTenants(subSysDictCode: String): List<SysTenantCacheItem> {
-        return tenantBySubSysCacheHandler.getTenantsFromCache(subSysDictCode)
+        val tenantIds = tenantIdsBySubSysCacheHandler.getTenantIds(subSysDictCode)
+        return tenantByIdCacheHandler.getTenantsByIds(tenantIds).values.toList()
     }
 
     @Transactional
@@ -63,7 +64,7 @@ open class SysTenantBiz : BaseCrudBiz<String, SysTenant, SysTenantDao>(), ISysTe
         log.debug("新增id为${id}的租户。")
         // 同步缓存
         tenantByIdCacheHandler.syncOnInsert(id)
-        tenantBySubSysCacheHandler.syncOnInsert(any, id)
+        tenantIdsBySubSysCacheHandler.syncOnInsert(any, id)
         return id
     }
 
@@ -74,7 +75,6 @@ open class SysTenantBiz : BaseCrudBiz<String, SysTenant, SysTenantDao>(), ISysTe
         if (success) {
             // 同步缓存
             tenantByIdCacheHandler.syncOnUpdate(id)
-            tenantBySubSysCacheHandler.syncOnUpdate(any, id)
         } else {
             log.error("更新id为${id}的租户失败！")
         }
@@ -91,7 +91,6 @@ open class SysTenantBiz : BaseCrudBiz<String, SysTenant, SysTenantDao>(), ISysTe
         if (success) {
             // 同步缓存
             tenantByIdCacheHandler.syncOnUpdate(id)
-            tenantBySubSysCacheHandler.syncOnUpdate(null, id)
         } else {
             log.error("更新id为${id}的租户的启用状态为${active}失败！")
         }
@@ -99,38 +98,46 @@ open class SysTenantBiz : BaseCrudBiz<String, SysTenant, SysTenantDao>(), ISysTe
     }
 
     @Transactional
-    override fun deleteById(id: String): Boolean {
-        val sysTenant = tenantByIdCacheHandler.getTenantById(id)!!
-        val success = super.deleteById(id)
+    override fun deleteById(tenantId: String): Boolean {
+        // 1. 先删除租户-子系统关系
+        val subSystemCodes = sysTenantSubSystemBiz.searchSubSystemCodesByTenantId(tenantId)
+        val criteria = Criteria.of(SysTenantSubSystem::tenantId.name, OperatorEnum.EQ, tenantId)
+        val count = sysTenantSubSystemBiz.batchDeleteCriteria(criteria)
+        if (count > 0) {
+            // 同步缓存
+            tenantIdsBySubSysCacheHandler.syncOnDelete(tenantId, subSystemCodes)
+        }
+
+        // 2. 再删除租户
+        val success = super.deleteById(tenantId)
         if (success) {
             // 同步缓存
-            tenantByIdCacheHandler.syncOnDelete(id)
-            tenantBySubSysCacheHandler.syncOnDelete(sysTenant)
+            tenantByIdCacheHandler.syncOnDelete(tenantId)
         } else {
-            log.error("删除id为${id}的租户失败！")
+            log.error("删除id为${tenantId}的租户失败！")
         }
         return success
     }
 
     @Transactional
-    override fun batchDelete(ids: Collection<String>): Int {
+    override fun batchDelete(tenantIds: Collection<String>): Int {
         // 1.查出对应的子系统编码
-        val tenantIdAndSubSysCodesMap = sysTenantSubSystemBiz.groupingSubSystemCodesByTenantIds(ids)
+        val tenantIdAndSubSysCodesMap = sysTenantSubSystemBiz.groupingSubSystemCodesByTenantIds(tenantIds)
         val subSystemCodes = tenantIdAndSubSysCodesMap.values.flatten().toSet()
 
-        // 1.删除租户-子系统关系
-        val criteria = Criteria.add(SysTenantSubSystem::tenantId.name, OperatorEnum.IN, ids)
+        // 2.删除租户-子系统关系
+        val criteria = Criteria.of(SysTenantSubSystem::tenantId.name, OperatorEnum.IN, tenantIds)
         val count = sysTenantSubSystemBiz.batchDeleteCriteria(criteria)
 
-        // 2.删除租户
+        // 3.删除租户
         if (count >= 0) {
-            val count = super.batchDelete(ids)
-            log.debug("批量删除租户，期望删除${ids.size}条，实际删除${count}条。")
+            val count = super.batchDelete(tenantIds)
+            log.debug("批量删除租户，期望删除${tenantIds.size}条，实际删除${count}条。")
         }
 
         // 3.同步缓存
-        tenantByIdCacheHandler.syncOnBatchDelete(ids)
-        tenantBySubSysCacheHandler.syncOnBatchDelete(ids, subSystemCodes)
+        tenantByIdCacheHandler.syncOnBatchDelete(tenantIds)
+        tenantIdsBySubSysCacheHandler.syncOnBatchDelete(tenantIds, subSystemCodes)
         return count
     }
 

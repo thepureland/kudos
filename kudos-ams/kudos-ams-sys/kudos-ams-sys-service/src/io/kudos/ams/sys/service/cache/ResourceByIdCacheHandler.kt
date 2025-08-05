@@ -11,9 +11,10 @@ import org.springframework.stereotype.Component
 /**
  * 资源（by id）缓存处理器
  *
- * 1.缓存所有资源，包括active=false的
- * 2.缓存的key为：id
- * 3.缓存的value为：SysResourceCacheItem
+ * 1.数据来源表：sys_resource
+ * 2.缓存所有资源，包括active=false的
+ * 3.缓存的key为：id
+ * 4.缓存的value为：SysResourceCacheItem
  *
  * @author K
  * @since 1.0.0

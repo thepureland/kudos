@@ -27,7 +27,7 @@ abstract class AbstractCacheHandler<T> {
      * @param key 缓存的key
      * @return true: 存在于缓存中，false: 不存在
      */
-    fun isExists(key: String): Boolean {
+    open fun isExists(key: String): Boolean {
         return value(key) != null
     }
 
@@ -37,7 +37,7 @@ abstract class AbstractCacheHandler<T> {
      * @param key 缓存的key
      * @return 缓存key对应的值
      */
-    fun value(key: String): T? {
+    open fun value(key: String): T? {
         @Suppress("UNCHECKED_CAST")
         return CacheKit.getValue(cacheName(), key) as T?
     }
@@ -47,7 +47,7 @@ abstract class AbstractCacheHandler<T> {
      *
      * @param key 缓存的key
      */
-    fun evict(key: String) {
+    open fun evict(key: String) {
         CacheKit.evict(cacheName(), key)
         log.info("手动踢除名称为${cacheName()}，key为${key}的缓存。")
     }
@@ -55,7 +55,7 @@ abstract class AbstractCacheHandler<T> {
     /**
      * 清除所有缓存
      */
-    fun clear() {
+    open fun clear() {
         CacheKit.clear(cacheName())
         log.info("手动清除名称为${cacheName()}的所有缓存。")
     }
@@ -65,7 +65,7 @@ abstract class AbstractCacheHandler<T> {
      *
      * @param key 缓存的key
      */
-    fun reload(key: String) {
+    open fun reload(key: String) {
         evict(key)
         log.info("手动重载名称为${cacheName()}，key为${key}的缓存...")
         val role = doReload(key)
