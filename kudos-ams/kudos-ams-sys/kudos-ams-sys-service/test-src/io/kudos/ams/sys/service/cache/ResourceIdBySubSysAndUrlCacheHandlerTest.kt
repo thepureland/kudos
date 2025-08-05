@@ -150,19 +150,19 @@ class ResourceIdBySubSysAndUrlCacheHandlerTest : CacheHandlerTestBase() {
     @Test
     fun syncOnDelete() {
         val id = "bb76084a-ceaa-44f1-9c9d-666666666666"
-        val sysResource = dao.get(id)!!
+        val sysResource = resourceByIdCacheHandler.getResourceById(id)!!
 
         // 删除数据库中的记录
         val deleteSuccess = dao.deleteById(id)
         assert(deleteSuccess)
 
         // 同步缓存
-        cacheHandler.syncOnDelete(id, sysResource.subSystemCode, sysResource.url)
+        cacheHandler.syncOnDelete(id, sysResource.subSystemCode!!, sysResource.url)
 
         // 验证缓存中有没有
-        val key = cacheHandler.getKey(sysResource.subSystemCode, sysResource.url)
+        val key = cacheHandler.getKey(sysResource.subSystemCode!!, sysResource.url)
         assertNull(CacheKit.getValue(cacheHandler.cacheName(), key))
-        assertNull(cacheHandler.getResourceId(sysResource.subSystemCode, sysResource.url!!))
+        assertNull(cacheHandler.getResourceId(sysResource.subSystemCode!!, sysResource.url!!))
     }
 
     private fun insertNewRecordToDb(): SysResource {

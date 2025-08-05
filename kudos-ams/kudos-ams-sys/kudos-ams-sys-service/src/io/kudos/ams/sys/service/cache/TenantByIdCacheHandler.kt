@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component
 /**
  * 租户（by id）缓存处理器
  *
- * 1.缓存所有租户
+ * 1.缓存所有租户，包括active=false的
  * 2.缓存的key为：id
  * 3.缓存的value为：SysTenantCacheItem对象
  *
@@ -31,6 +31,12 @@ open class TenantByIdCacheHandler : AbstractByIdCacheHandler<String, SysTenantCa
         return getSelf<TenantByIdCacheHandler>().getTenantById(key)
     }
 
+    /**
+     * 根据id从缓存中获取租户信息，如果缓存中不存在，则从数据库中加载，并回写缓存
+     *
+     * @param id 租户id
+     * @return SysTenantCacheItem, 打不到返回null
+     */
     @Cacheable(
         cacheNames = [CACHE_NAME],
         key = "#id",
@@ -40,6 +46,12 @@ open class TenantByIdCacheHandler : AbstractByIdCacheHandler<String, SysTenantCa
         return getById(id)
     }
 
+    /**
+     * 根据多个id从缓存中批量获取租户信息，缓存中不存在的，从数据库中加载，并回写缓存
+     *
+     * @param ids 租户id集合
+     * @return Map<租户id，SysTenantCacheItem>
+     */
     @BatchCacheable(
         cacheNames = [CACHE_NAME],
         valueClass = SysTenantCacheItem::class
