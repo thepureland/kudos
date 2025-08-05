@@ -147,8 +147,8 @@ class DictItemsByModuleAndTypeCacheHandlerTest : CacheHandlerTestBase() {
         cacheHandler.syncOnUpdateActive(id)
         var key = cacheHandler.getKey(dict.moduleCode, dict.dictType)
         @Suppress("UNCHECKED_CAST")
-        var cacheItems1 = CacheKit.getValue(cacheHandler.cacheName(), key)
-        assertNull(cacheItems1)
+        var cacheItems1 = CacheKit.getValue(cacheHandler.cacheName(), key) as List<SysDictItemCacheItem>
+        assertFalse(cacheItems1.any { it.id == id })
         var cacheItems2 = cacheHandler.getDictItems(dict.moduleCode!!, dict.dictType!!)
         assertFalse(cacheItems2.any { it.id == id })
 
