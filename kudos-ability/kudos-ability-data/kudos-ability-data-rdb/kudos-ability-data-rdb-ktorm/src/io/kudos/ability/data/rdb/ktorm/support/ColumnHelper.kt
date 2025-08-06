@@ -39,24 +39,31 @@ object ColumnHelper {
                 var column: Column<*>?
                 try {
                     column = table[columnName] // 1.先尝试以小写字段名获取
-                } catch (e: NoSuchElementException) {
+                } catch (_: NoSuchElementException) {
                     columnName = columnName.uppercase(Locale.getDefault())
                     column = try {
                         table[columnName] // 2.再尝试以大写字段名获取
-                    } catch (e: NoSuchElementException) {
+                    } catch (_: NoSuchElementException) {
                         // 3.最后忽略大小写的分别比较下划线分割的列名、属性名
                         table.columns.firstOrNull {
-                            it.name.equals(columnName, true) || it.name.equals(
-                                propertyName,
-                                true
-                            )
+                            it.name.equals(columnName, true) || it.name.equals(propertyName, true)
                         }
                     }
                 }
+
+                if (column == null) { //!!! 编译器提示条件总是成立的话，是错误的
+                    if (propertyName == "id") {
+                        val pk = table.primaryKeys.firstOrNull()
+                        if (pk != null) {
+                            column = pk
+                        }
+                    }
+                }
+
                 if (column == null) {
                     error("无法推测属性【${propertyName}】在表【${tableName}】中的字段名！")
                 } else {
-                    @Suppress(Consts.Suppress.UNCHECKED_CAST)
+                    @Suppress("UNCHECKED_CAST")
                     resultMap[propertyName] = column as Column<Any>
                     columnMap[propertyName] = resultMap[propertyName]!!
                 }

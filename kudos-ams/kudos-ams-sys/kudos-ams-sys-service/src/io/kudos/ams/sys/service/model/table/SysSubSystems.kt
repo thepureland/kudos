@@ -12,7 +12,7 @@ import io.kudos.ability.data.rdb.ktorm.support.StringIdTable
  * @since 1.0.0
  */
 //region your codes 1
-object SysSubSystems : StringIdTable<SysSubSystem>("sys_sub_system") {
+object SysSubSystems : Table<SysSubSystem>("sys_sub_system") {
 //endregion your codes 1
 
     /** 编码 */
@@ -47,6 +47,9 @@ object SysSubSystems : StringIdTable<SysSubSystem>("sys_sub_system") {
 
 
     //region your codes 2
+
+    /** 主键别名 */
+    var id = SysPortals.code.primaryKey()
 
     //endregion your codes 2
 

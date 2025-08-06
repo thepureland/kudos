@@ -80,7 +80,6 @@ open class DataSourceByIdCacheHandlerTest : CacheHandlerTestBase() {
     fun getDataSourceById() {
         // 存在的
         var id = "3d2acef6-e828-43c5-a512-111111111111"
-        cacheHandler.getDataSourceById(id) // 第一次当放入远程缓存后，会发送清除本地缓存，所以最终取到的是远程缓存反序列化后的对象
         val cacheItem2 = cacheHandler.getDataSourceById(id)
         val cacheItem3 = cacheHandler.getDataSourceById(id)
         assertNotNull(cacheItem2)
@@ -96,7 +95,6 @@ open class DataSourceByIdCacheHandlerTest : CacheHandlerTestBase() {
     fun getDataSourcesByIds() {
         val id1 = "3d2acef6-e828-43c5-a512-111111111111"
         val id2 = "3d2acef6-e828-43c5-a512-222222222222"
-        cacheHandler.getDataSourcesByIds(listOf(id1, id2)) // 第一次当放入远程缓存后，会发送清除本地缓存，所以最终取到的是远程缓存反序列化后的对象
         val result2 = cacheHandler.getDataSourcesByIds(listOf(id1, id2))
         val result3 = cacheHandler.getDataSourcesByIds(listOf(id1, id2))
         assert(result2.isNotEmpty())

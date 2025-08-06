@@ -46,6 +46,10 @@ interface SysAtomicService : IDbEntity<String, SysAtomicService> {
 
     //region your codes 2
 
+    override var id: String?
+        get() = this.code
+        set(value) { this.code = value!! }
+
     //endregion your codes 2
 
 }

@@ -24,7 +24,6 @@ class DictByIdCacheHandlerTest : CacheHandlerTestBase() {
     fun getDictById() {
         // 存在的
         var id = "68139ed2-dbce-47fa-ac0d-111111111111"
-        cacheHandler.getDictById(id) // 第一次当放入远程缓存后，会发送清除本地缓存，所以最终取到的是远程缓存反序列化后的对象
         val cacheItem2 = cacheHandler.getDictById(id)
         val cacheItem3 = cacheHandler.getDictById(id)
         assertNotNull(cacheItem2)
@@ -41,7 +40,6 @@ class DictByIdCacheHandlerTest : CacheHandlerTestBase() {
         // 都存在的
         var id1 = "68139ed2-dbce-47fa-ac0d-111111111111"
         var id2 = "68139ed2-dbce-47fa-ac0d-222222222222"
-        cacheHandler.getDictsByIds(listOf(id1, id2)) // 第一次当放入远程缓存后，会发送清除本地缓存，所以最终取到的是远程缓存反序列化后的对象
         val result2 = cacheHandler.getDictsByIds(listOf(id1, id2))
         val result3 = cacheHandler.getDictsByIds(listOf(id1, id2))
         assert(result2.isNotEmpty())

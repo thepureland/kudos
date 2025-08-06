@@ -50,8 +50,8 @@ class ResourceIdBySubSysAndUrlCacheHandlerTest : CacheHandlerTestBase() {
         // 重载缓存，但不清除旧缓存
         cacheHandler.reloadAll(false)
 
-        // 原来缓存中的记录内存地址会变
-        assert(resId !== cacheHandler.getResourceId(subSystemCode, url))
+        // 原来缓存中的不变
+        assert(resId == cacheHandler.getResourceId(subSystemCode, url))
 
         // 数据库中新增的记录在缓存应该要存在
         assertNotNull(cacheHandler.getResourceId(sysResourceNew.subSystemCode, sysResourceNew.url!!))

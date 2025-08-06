@@ -1,8 +1,10 @@
 package io.kudos.ams.sys.service.model.table
 
 import io.kudos.ams.sys.service.model.po.SysMicroService
-import org.ktorm.schema.*
-import io.kudos.ability.data.rdb.ktorm.support.StringIdTable
+import org.ktorm.schema.Table
+import org.ktorm.schema.boolean
+import org.ktorm.schema.datetime
+import org.ktorm.schema.varchar
 
 
 /**
@@ -12,7 +14,7 @@ import io.kudos.ability.data.rdb.ktorm.support.StringIdTable
  * @since 1.0.0
  */
 //region your codes 1
-object SysMicroServices : StringIdTable<SysMicroService>("sys_micro_service") {
+object SysMicroServices : Table<SysMicroService>("sys_micro_service") {
 //endregion your codes 1
 
     /** 编码 */
@@ -47,6 +49,9 @@ object SysMicroServices : StringIdTable<SysMicroService>("sys_micro_service") {
 
 
     //region your codes 2
+
+    /** 主键别名 */
+    var id = SysPortals.code.primaryKey()
 
     //endregion your codes 2
 
