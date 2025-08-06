@@ -36,7 +36,7 @@ open class PortalByCodeCacheHandler : AbstractByIdCacheHandler<String, SysPortal
      * 根据code从缓存中获取门户信息，如果缓存中不存在，则从数据库中加载，并回写缓存
      *
      * @param code 门户code
-     * @return SysPortalCacheItem, 打不到返回null
+     * @return SysPortalCacheItem, 找不到返回null
      */
     @Cacheable(
         cacheNames = [CACHE_NAME],

@@ -36,7 +36,7 @@ open class TenantByIdCacheHandler : AbstractByIdCacheHandler<String, SysTenantCa
      * 根据id从缓存中获取租户信息，如果缓存中不存在，则从数据库中加载，并回写缓存
      *
      * @param id 租户id
-     * @return SysTenantCacheItem, 打不到返回null
+     * @return SysTenantCacheItem, 找不到返回null
      */
     @Cacheable(
         cacheNames = [CACHE_NAME],
