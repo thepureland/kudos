@@ -71,6 +71,8 @@ values ('14a9adc4-6bb5-45bd-96bb-d8afe3060bea', 'SYS_CACHE_BY_NAME', 'ams-sys', 
        ('5da83351-3e6f-3cd4-33e0-359ad3c7ea84', 'SYS_MICRO_SERVICE_BY_CODE', 'ams-sys', 'LOCAL_REMOTE', true, true, 999999999,
         '微服务缓存(by code)', true, true),
        ('6da93351-336f-32d4-33e0-359ad3c7ea85', 'SYS_ATOMIC_SERVICE_BY_CODE', 'ams-sys', 'LOCAL_REMOTE', true, true, 999999999,
-        '原子服务缓存(by code)', true, true);
+        '原子服务缓存(by code)', true, true),
+       ('7da93321-236f-12d4-13e0-359ad3c7ea86', 'SYS_MODULE_BY_CODE', 'ams-sys', 'LOCAL_REMOTE', true, true, 999999999,
+        '模块缓存(by code)', true, true);
 
 --endregion DML
