@@ -16,6 +16,9 @@ data class SysPortalSearchPayload (
 
     override var returnEntityClass: KClass<*>? = SysPortalRecord::class,
 
+    /** 编码 */
+    var code: String? = null,
+
     /** 名称 */
     var name: String? = null,
 

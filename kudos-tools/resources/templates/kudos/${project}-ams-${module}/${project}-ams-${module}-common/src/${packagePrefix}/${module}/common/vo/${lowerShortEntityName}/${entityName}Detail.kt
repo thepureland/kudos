@@ -33,13 +33,15 @@ import java.sql.SQLXML
 <@generateClassComment table.comment+"查询记录"/>
 data class ${entityName}Detail (
 
-    /** ${pkColumn.comment!""} */
-    override var id: ${pkColumn.kotlinTypeName}? = null,
-
     //region your codes 1
 
+    <#if containsIdColumnInCacheItems>
+    /** ${pkColumn.comment!""} */
+    override var id: ${pkColumn.kotlinTypeName}? = null,
+    </#if>
+
     <#list detailItemColumns as column>
-    <#if column.name != pkColumn.name>
+    <#if column.name?lower_case != "id">
     /** ${column.comment!""} */
     var ${column.columnHumpName}: ${column.kotlinTypeName}? = null,
 

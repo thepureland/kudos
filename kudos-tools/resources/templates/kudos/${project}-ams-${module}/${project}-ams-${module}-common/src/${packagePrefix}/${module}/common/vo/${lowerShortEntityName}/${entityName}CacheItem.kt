@@ -44,7 +44,7 @@ data class ${entityName}CacheItem (
     //region your codes 1
 
     <#list cacheItemColumns as column>
-    <#if column.name != pkColumn.name>
+    <#if column.name?lower_case != "id">
     /** ${column.comment!""} */
     var ${column.columnHumpName}: ${column.kotlinTypeName}? = null,
 

@@ -13,8 +13,8 @@ data class SysPortalRecord (
 
     //region your codes 1
 
-    /** 主键 */
-    override var id: String? = null,
+    /** 编码 */
+    var code: String? = null,
 
     /** 名称 */
     var name: String? = null,
@@ -36,6 +36,10 @@ data class SysPortalRecord (
     //region your codes 3
 
     constructor() : this(null)
+
+    override var id: String?
+        get() = this.code
+        set(value) { this.code = value }
 
     // endregion your codes 3
 

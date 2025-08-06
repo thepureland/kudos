@@ -16,6 +16,9 @@ data class SysModuleSearchPayload (
 
     override var returnEntityClass: KClass<*>? = SysModuleRecord::class,
 
+    /** 编码 */
+    var code: String? = null,
+
     /** 名称 */
     var name: String? = null,
 
