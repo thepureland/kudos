@@ -35,11 +35,13 @@ data class ${entityName}Record (
 
     //region your codes 1
 
+    <#if containsIdColumnInCacheItems>
     /** ${pkColumn.comment!""} */
     override var id: ${pkColumn.kotlinTypeName}? = null,
+    </#if>
 
     <#list listItemColumns as column>
-    <#if column.name != pkColumn.name>
+    <#if column.name?lower_case != "id">
     /** ${column.comment!""} */
     var ${column.columnHumpName}: ${column.kotlinTypeName}? = null,
 

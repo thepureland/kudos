@@ -39,7 +39,7 @@ data class ${entityName}SearchPayload (
     override var returnEntityClass: KClass<*>? = ${entityName}Record::class,
 
     <#list listItemColumns as column>
-    <#if column.name != pkColumn.name>
+    <#if column.name?lower_case != "id">
     /** ${column.comment!""} */
     var ${column.columnHumpName}: ${column.kotlinTypeName}? = null,
 

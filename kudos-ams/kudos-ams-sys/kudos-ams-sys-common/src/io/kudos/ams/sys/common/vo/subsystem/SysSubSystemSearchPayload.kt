@@ -16,6 +16,9 @@ data class SysSubSystemSearchPayload (
 
     override var returnEntityClass: KClass<*>? = SysSubSystemRecord::class,
 
+    /** 编码 */
+    var code: String? = null,
+
     /** 名称 */
     var name: String? = null,
 

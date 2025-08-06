@@ -33,13 +33,15 @@ import java.sql.SQLXML
 <@generateClassComment table.comment+"表单载体"/>
 data class ${entityName}Payload (
 
-    /** ${pkColumn.comment!""} */
-    override var id: ${pkColumn.kotlinTypeName}? = null,
-
     //region your codes 1
 
+    <#if containsIdColumnInCacheItems>
+    /** ${pkColumn.comment!""} */
+    override var id: ${pkColumn.kotlinTypeName}? = null,
+    </#if>
+
     <#list editItemColumns as column>
-    <#if column.name != pkColumn.name>
+    <#if column.name?lower_case != "id">
     /** ${column.comment!""} */
     var ${column.columnHumpName}: ${column.kotlinTypeName}? = null,
 

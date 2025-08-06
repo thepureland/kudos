@@ -16,6 +16,9 @@ data class SysMicroServiceSearchPayload (
 
     override var returnEntityClass: KClass<*>? = SysMicroServiceRecord::class,
 
+    /** 编码 */
+    var code: String? = null,
+
     /** 名称 */
     var name: String? = null,
 
