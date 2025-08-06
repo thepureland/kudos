@@ -25,7 +25,6 @@ class ResourceByIdCacheHandlerTest : CacheHandlerTestBase() {
     fun getResourceById() {
         // 存在的
         var id = "9b76084a-ceaa-44f1-9c9d-111111111111"
-        cacheHandler.getResourceById(id) // 第一次当放入远程缓存后，会发送清除本地缓存，所以最终取到的是远程缓存反序列化后的对象
         val cacheItem2 = cacheHandler.getResourceById(id)
         val cacheItem3 = cacheHandler.getResourceById(id)
         assertNotNull(cacheItem2)
@@ -41,7 +40,6 @@ class ResourceByIdCacheHandlerTest : CacheHandlerTestBase() {
         // 都存在的
         var id1 = "9b76084a-ceaa-44f1-9c9d-111111111111"
         var id2 = "9b76084a-ceaa-44f1-9c9d-222222222222"
-        cacheHandler.getResourcesByIds(listOf(id1, id2)) // 第一次当放入远程缓存后，会发送清除本地缓存，所以最终取到的是远程缓存反序列化后的对象
         val result2 = cacheHandler.getResourcesByIds(listOf(id1, id2))
         val result3 = cacheHandler.getResourcesByIds(listOf(id1, id2))
         assert(result2.isNotEmpty())

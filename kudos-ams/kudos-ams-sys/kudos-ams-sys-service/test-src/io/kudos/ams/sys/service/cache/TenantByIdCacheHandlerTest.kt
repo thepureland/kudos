@@ -25,7 +25,6 @@ class TenantByIdCacheHandlerTest : CacheHandlerTestBase() {
     fun getTenantById() {
         // 存在的
         var id = "118772a0-c053-4634-a5e5-111111111111"
-        cacheHandler.getTenantById(id) // 第一次当放入远程缓存后，会发送清除本地缓存，所以最终取到的是远程缓存反序列化后的对象
         val cacheItem2 = cacheHandler.getTenantById(id)
         val cacheItem3 = cacheHandler.getTenantById(id)
         assertNotNull(cacheItem2)
@@ -41,7 +40,6 @@ class TenantByIdCacheHandlerTest : CacheHandlerTestBase() {
         // 都存在的
         var id1 = "118772a0-c053-4634-a5e5-111111111111"
         var id2 = "118772a0-c053-4634-a5e5-222222222222"
-        cacheHandler.getTenantsByIds(listOf(id1, id2)) // 第一次当放入远程缓存后，会发送清除本地缓存，所以最终取到的是远程缓存反序列化后的对象
         val result2 = cacheHandler.getTenantsByIds(listOf(id1, id2))
         val result3 = cacheHandler.getTenantsByIds(listOf(id1, id2))
         assert(result2.isNotEmpty())

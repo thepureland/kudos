@@ -38,9 +38,9 @@ class DataSourceByTenantIdAnd3CodesCacheHandlerTest : CacheHandlerTestBase() {
 
         // 获取当前缓存中的记录
         var tenantId = "10a45fe6-4c8d-40c7-8f23-bba-tenant-1"
-        var subSystemCode = "subSys-a"
-        var microServiceCode = "ms-a"
-        var atomicServiceCode = "ams-a"
+        val subSystemCode = "subSys-a"
+        val microServiceCode = "ms-a"
+        val atomicServiceCode = "ams-a"
         val cacheItem = cacheHandler.getDataSource(tenantId, subSystemCode, microServiceCode, atomicServiceCode)
 
         // 插入新的记录到数据库
@@ -93,8 +93,6 @@ class DataSourceByTenantIdAnd3CodesCacheHandlerTest : CacheHandlerTestBase() {
         var subSystemCode = "subSys-a"
         var microServiceCode = "ms-a"
         var atomicServiceCode = "ams-a"
-        // 第一次当放入远程缓存后，会发送清除本地缓存，所以最终取到的是远程缓存反序列化后的对象
-        cacheHandler.getDataSource(tenantId, subSystemCode, microServiceCode, atomicServiceCode)
         val cacheItem2 = cacheHandler.getDataSource(tenantId, subSystemCode, microServiceCode, atomicServiceCode)
         val cacheItem3 = cacheHandler.getDataSource(tenantId, subSystemCode, microServiceCode, atomicServiceCode)
         assert(cacheItem3 === cacheItem2)

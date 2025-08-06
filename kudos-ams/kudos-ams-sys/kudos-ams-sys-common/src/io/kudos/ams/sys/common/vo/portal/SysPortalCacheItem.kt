@@ -1,5 +1,6 @@
 package io.kudos.ams.sys.common.vo.portal
 
+import io.kudos.base.support.IIdEntity
 import java.io.Serializable
 import java.time.LocalDateTime
 
@@ -14,6 +15,9 @@ data class SysPortalCacheItem (
 
 
     //region your codes 1
+
+    /** 编码 */
+    var code: String? = null,
 
     /** 名称 */
     var name: String? = null,
@@ -41,12 +45,16 @@ data class SysPortalCacheItem (
 
     //endregion your codes 1
 //region your codes 2
-) : Serializable {
+) : IIdEntity<String>, Serializable {
 //endregion your codes 2
 
     //region your codes 3
 
     constructor() : this(null)
+
+    override var id: String?
+        get() = this.code
+        set(value) { this.code = value }
 
     // endregion your codes 3
 

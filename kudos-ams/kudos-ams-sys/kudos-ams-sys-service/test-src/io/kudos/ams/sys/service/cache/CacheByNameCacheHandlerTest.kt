@@ -83,7 +83,6 @@ class CacheByNameCacheHandlerTest : CacheHandlerTestBase() {
     @Test
     fun getCache() {
         var cacheName = "TEST_CACHE_1"
-        cacheByNameCacheHandler.getCache(cacheName) // 第一次当放入远程缓存后，会发送清除本地缓存，所以最终取到的是远程缓存反序列化后的对象
         val cacheItem2 = cacheByNameCacheHandler.getCache(cacheName)
         val cacheItem3 = cacheByNameCacheHandler.getCache(cacheName)
         assert(cacheItem2 === cacheItem3)
