@@ -12,9 +12,6 @@ import java.time.LocalDateTime
  */
 data class SysAccessRuleDetail (
 
-    /** 主键 */
-    override var id: String? = null,
-
     //region your codes 1
 
     /** 租户id */

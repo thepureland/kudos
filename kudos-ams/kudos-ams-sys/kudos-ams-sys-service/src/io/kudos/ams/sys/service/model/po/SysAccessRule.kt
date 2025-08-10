@@ -1,8 +1,9 @@
 package io.kudos.ams.sys.service.model.po
 
-import io.kudos.ability.data.rdb.ktorm.support.DbEntityFactory
 import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
 import java.time.LocalDateTime
+import io.kudos.ability.data.rdb.ktorm.support.DbEntityFactory
+import io.kudos.ability.data.rdb.ktorm.support.IMaintainableDbEntity
 
 /**
  * 访问规则数据库实体
@@ -11,7 +12,7 @@ import java.time.LocalDateTime
  * @since 1.0.0
  */
 //region your codes 1
-interface SysAccessRule : IDbEntity<String, SysAccessRule> {
+interface SysAccessRule : IMaintainableDbEntity<String, SysAccessRule> {
 //endregion your codes 1
 
     companion object : DbEntityFactory<SysAccessRule>()
@@ -25,20 +26,8 @@ interface SysAccessRule : IDbEntity<String, SysAccessRule> {
     /** 门户编码 */
     var portalCode: String
 
-    /** 规则类型 */
-    var ruleType: Int
-
-    /** 创建用户 */
-    var createUser: String?
-
-    /** 创建时间 */
-    var createTime: LocalDateTime?
-
-    /** 更新用户 */
-    var updateUser: String?
-
-    /** 更新时间 */
-    var updateTime: LocalDateTime?
+    /** 规则类型字典代码 */
+    var ruleTypeDictCode: String
 
 
     //region your codes 2

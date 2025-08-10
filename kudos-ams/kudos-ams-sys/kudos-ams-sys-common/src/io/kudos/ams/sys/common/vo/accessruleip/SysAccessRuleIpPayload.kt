@@ -12,9 +12,6 @@ import java.time.LocalDateTime
  */
 data class SysAccessRuleIpPayload (
 
-    /** 主键 */
-    override var id: String? = null,
-
     //region your codes 1
 
     /** ip起 */

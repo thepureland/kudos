@@ -13,10 +13,11 @@ import java.time.LocalDateTime
  */
 data class SysAccessRuleIpCacheItem (
 
-    /** 主键 */
-    override var id: String? = null,
 
     //region your codes 1
+
+    /** 主键 */
+    override var id: String? = null,
 
     /** ip起 */
     var ipStart: Long? = null,
@@ -24,32 +25,11 @@ data class SysAccessRuleIpCacheItem (
     /** ip止 */
     var ipEnd: Long? = null,
 
-    /** ip类型 */
-    var ipType: Int? = null,
+    /** ip类型字典代码 */
+    var ipTypeDictCode: String? = null,
 
     /** 过期时间 */
-    var expirationDate: LocalDateTime? = null,
-
-    /** 父规则id */
-    var parentRuleId: String? = null,
-
-    /** 备注 */
-    var remark: String? = null,
-
-    /** 是否启用 */
-    var active: Boolean? = null,
-
-    /** 创建用户 */
-    var createUser: String? = null,
-
-    /** 创建时间 */
-    var createTime: LocalDateTime? = null,
-
-    /** 更新用户 */
-    var updateUser: String? = null,
-
-    /** 更新时间 */
-    var updateTime: LocalDateTime? = null,
+    var expirationTime: LocalDateTime? = null,
 
     //endregion your codes 1
 //region your codes 2
@@ -63,7 +43,7 @@ data class SysAccessRuleIpCacheItem (
     // endregion your codes 3
 
     companion object {
-        private const val serialVersionUID = 2717453720591948690L
+        private const val serialVersionUID = 6895365638061974342L
     }
 
 }

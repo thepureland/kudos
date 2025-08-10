@@ -57,7 +57,7 @@ open class SysDictItemDao : BaseCrudDao<String, SysDictItem, SysDictItems>() {
      * 分页连接查询符合条件的字典项及字典
      *
      * @param searchPayload 查询项载体
-     * @return List<SysDictRecord>
+     * @return List<SysDictItemRecord>
      * @author K
      * @since 1.0.0
      */
@@ -71,6 +71,7 @@ open class SysDictItemDao : BaseCrudDao<String, SysDictItem, SysDictItems>() {
         } else {
             val orderExps = mutableListOf<OrderByExpression>()
             orders.forEach {
+                //TODO
                 var columns = try {
                     ColumnHelper.columnOf(SysDicts, it.property)
                 } catch (_: IllegalStateException) {

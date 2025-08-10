@@ -23,11 +23,11 @@ data class SysAccessRuleIpRecord (
     /** ip止 */
     var ipEnd: Long? = null,
 
-    /** ip类型 */
-    var ipType: Int? = null,
+    /** ip类型字典代码 */
+    var ipTypeDictCode: String? = null,
 
     /** 过期时间 */
-    var expirationDate: LocalDateTime? = null,
+    var expirationTime: LocalDateTime? = null,
 
     /** 父规则id */
     var parentRuleId: String? = null,
@@ -37,6 +37,18 @@ data class SysAccessRuleIpRecord (
 
     /** 是否启用 */
     var active: Boolean? = null,
+
+    /** 父规则是否启用 */
+    var parentRuleActive: Boolean? = null,
+
+    /** 租户id */
+    var tenantId: String? = null,
+
+    /** 子系统编码 */
+    var subSystemCode: String? = null,
+
+    /** 规则类型字典代码 */
+    var ruleTypeDictCode: String? = null,
 
     //endregion your codes 1
 //region your codes 2

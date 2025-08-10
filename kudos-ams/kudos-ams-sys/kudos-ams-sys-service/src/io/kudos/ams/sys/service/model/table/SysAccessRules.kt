@@ -1,8 +1,9 @@
 package io.kudos.ams.sys.service.model.table
 
+import io.kudos.ability.data.rdb.ktorm.support.StringIdTable
 import io.kudos.ams.sys.service.model.po.SysAccessRule
 import org.ktorm.schema.*
-import io.kudos.ability.data.rdb.ktorm.support.StringIdTable
+import io.kudos.ability.data.rdb.ktorm.support.MaintainableTable
 
 
 /**
@@ -12,7 +13,7 @@ import io.kudos.ability.data.rdb.ktorm.support.StringIdTable
  * @since 1.0.0
  */
 //region your codes 1
-object SysAccessRules : StringIdTable<SysAccessRule>("sys_access_rule") {
+object SysAccessRules : MaintainableTable<SysAccessRule>("sys_access_rule") {
 //endregion your codes 1
 
     /** 租户id */
@@ -24,20 +25,8 @@ object SysAccessRules : StringIdTable<SysAccessRule>("sys_access_rule") {
     /** 门户编码 */
     var portalCode = varchar("portal_code").bindTo { it.portalCode }
 
-    /** 规则类型 */
-    var ruleType = int("rule_type").bindTo { it.ruleType }
-
-    /** 创建用户 */
-    var createUser = varchar("create_user").bindTo { it.createUser }
-
-    /** 创建时间 */
-    var createTime = datetime("create_time").bindTo { it.createTime }
-
-    /** 更新用户 */
-    var updateUser = varchar("update_user").bindTo { it.updateUser }
-
-    /** 更新时间 */
-    var updateTime = datetime("update_time").bindTo { it.updateTime }
+    /** 规则类型字典代码 */
+    var ruleTypeDictCode = varchar("rule_type_dict_code").bindTo { it.ruleTypeDictCode }
 
 
     //region your codes 2
