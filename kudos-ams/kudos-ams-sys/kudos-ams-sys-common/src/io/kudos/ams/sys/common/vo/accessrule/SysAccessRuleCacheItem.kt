@@ -54,7 +54,7 @@ data class SysAccessRuleCacheItem (
     // endregion your codes 3
 
     companion object {
-        private const val serialVersionUID = 4423586292422798213L
+        private const val serialVersionUID = 8253788046293050901L
     }
 
 }

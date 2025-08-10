@@ -1,7 +1,8 @@
 package io.kudos.ams.sys.service.model.po
 
-import io.kudos.ability.data.rdb.ktorm.support.DbEntityFactory
 import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
+import io.kudos.ability.data.rdb.ktorm.support.DbEntityFactory
+import io.kudos.ability.data.rdb.ktorm.support.IMaintainableDbEntity
 import java.time.LocalDateTime
 
 /**
@@ -11,7 +12,7 @@ import java.time.LocalDateTime
  * @since 1.0.0
  */
 //region your codes 1
-interface SysAccessRuleIp : IDbEntity<String, SysAccessRuleIp> {
+interface SysAccessRuleIp : IMaintainableDbEntity<String, SysAccessRuleIp> {
 //endregion your codes 1
 
     companion object : DbEntityFactory<SysAccessRuleIp>()
@@ -22,32 +23,14 @@ interface SysAccessRuleIp : IDbEntity<String, SysAccessRuleIp> {
     /** ip止 */
     var ipEnd: Long
 
-    /** ip类型 */
-    var ipType: Int
+    /** ip类型字典代码 */
+    var ipTypeDictCode: String
 
     /** 过期时间 */
-    var expirationDate: LocalDateTime?
+    var expirationTime: LocalDateTime?
 
     /** 父规则id */
     var parentRuleId: String
-
-    /** 备注 */
-    var remark: String?
-
-    /** 是否启用 */
-    var active: Boolean
-
-    /** 创建用户 */
-    var createUser: String?
-
-    /** 创建时间 */
-    var createTime: LocalDateTime?
-
-    /** 更新用户 */
-    var updateUser: String?
-
-    /** 更新时间 */
-    var updateTime: LocalDateTime?
 
 
     //region your codes 2

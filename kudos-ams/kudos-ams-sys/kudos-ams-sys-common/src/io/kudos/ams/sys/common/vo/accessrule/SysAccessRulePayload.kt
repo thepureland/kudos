@@ -11,9 +11,6 @@ import io.kudos.base.support.payload.FormPayload
  */
 data class SysAccessRulePayload (
 
-    /** 主键 */
-    override var id: String? = null,
-
     //region your codes 1
 
     /** 租户id */

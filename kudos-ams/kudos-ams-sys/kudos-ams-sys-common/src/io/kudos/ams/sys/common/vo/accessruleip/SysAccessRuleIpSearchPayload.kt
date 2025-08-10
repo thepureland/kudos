@@ -17,14 +17,17 @@ data class SysAccessRuleIpSearchPayload (
 
     override var returnEntityClass: KClass<*>? = SysAccessRuleIpRecord::class,
 
+    /** 主键 */
+    var id: String? = null,
+
     /** ip起 */
     var ipStart: Long? = null,
 
     /** ip止 */
     var ipEnd: Long? = null,
 
-    /** ip类型 */
-    var ipType: Int? = null,
+    /** ip类型字典代码 */
+    var ipTypeDictCode: String? = null,
 
     /** 过期时间 */
     var expirationDate: LocalDateTime? = null,
@@ -37,6 +40,18 @@ data class SysAccessRuleIpSearchPayload (
 
     /** 是否启用 */
     var active: Boolean? = null,
+
+    /** 父规则是否启用 */
+    var parentRuleActive: Boolean? = null,
+
+    /** 租户id */
+    var tenantId: String? = null,
+
+    /** 子系统编码 */
+    var subSystemCode: String? = null,
+
+    /** 规则类型字典代码 */
+    var ruleTypeDictCode: String? = null,
 
     //endregion your codes 1
 //region your codes 2
