@@ -4,6 +4,7 @@ import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.ability.data.rdb.ktorm.support.ColumnHelper
 import io.kudos.ams.sys.common.vo.accessruleip.SysAccessRuleIpRecord
 import io.kudos.ams.sys.common.vo.accessruleip.SysAccessRuleIpSearchPayload
+import io.kudos.ams.sys.service.model.po.SysAccessRule
 import io.kudos.ams.sys.service.model.po.SysAccessRuleIp
 import io.kudos.ams.sys.service.model.table.SysAccessRuleIps
 import io.kudos.ams.sys.service.model.table.SysAccessRules
@@ -42,7 +43,8 @@ open class SysAccessRuleIpDao : BaseCrudDao<String, SysAccessRuleIp, SysAccessRu
             val orderList = listOf(
                 SysAccessRules.subSystemCode.asc(),
                 SysAccessRules.tenantId.asc(),
-                SysAccessRuleIps.ipStart.asc())
+                SysAccessRuleIps.ipStart.asc()
+            )
             query = query.orderBy(*orderList.toTypedArray())
         } else {
             val orderExps = mutableListOf<OrderByExpression>()
@@ -76,11 +78,12 @@ open class SysAccessRuleIpDao : BaseCrudDao<String, SysAccessRuleIp, SysAccessRu
 
         return query.map { row ->
             SysAccessRuleIpRecord().apply {
+                id = row[SysAccessRuleIps.id]
                 ipStart = row[SysAccessRuleIps.ipStart]
                 ipEnd = row[SysAccessRuleIps.ipEnd]
                 ipTypeDictCode = row[SysAccessRuleIps.ipTypeDictCode]
                 expirationTime = row[SysAccessRuleIps.expirationTime]
-                parentRuleId = row[SysAccessRuleIps.parentRuleId]
+                parentRuleId = row[SysAccessRuleIps.parentRuleId] ?: row[SysAccessRules.id]
                 remark = row[SysAccessRuleIps.remark]
                 active = row[SysAccessRuleIps.active]
                 remark = row[SysAccessRuleIps.remark]
@@ -113,37 +116,51 @@ open class SysAccessRuleIpDao : BaseCrudDao<String, SysAccessRuleIp, SysAccessRu
      * @since 1.0.0
      */
     fun leftJoinSearch(searchPayload: SysAccessRuleIpSearchPayload): Query {
+        var onExpr = SysAccessRuleIps.parentRuleId.eq(SysAccessRules.id)
+        if (!searchPayload.id.isNullOrBlank()) {
+            onExpr = onExpr and SysAccessRuleIps.id.eq(searchPayload.id!!)
+        }
+        if (!searchPayload.parentRuleId.isNullOrBlank()) {
+            onExpr = onExpr and SysAccessRuleIps.parentRuleId.eq(searchPayload.parentRuleId!!)
+        }
+        if (searchPayload.active != null) {
+            onExpr = onExpr and SysAccessRuleIps.active.eq(searchPayload.active!!)
+        }
+        if (searchPayload.parentRuleActive != null) {
+            onExpr = onExpr and SysAccessRules.active.eq(searchPayload.parentRuleActive!!)
+        }
+        if (searchPayload.tenantId == null && searchPayload.nullProperties?.contains(SysAccessRule::tenantId.name) == true) {
+           onExpr = onExpr and SysAccessRules.tenantId.isNull()
+        } else if (!searchPayload.tenantId.isNullOrBlank()) {
+            onExpr = onExpr and whereExpr(SysAccessRules.tenantId, OperatorEnum.EQ, searchPayload.tenantId!!.trim())!!
+        }
+        if (!searchPayload.subSystemCode.isNullOrBlank()) {
+            onExpr = onExpr and whereExpr(
+                SysAccessRules.subSystemCode,
+                OperatorEnum.EQ,
+                searchPayload.subSystemCode!!.trim()
+            )!!
+        }
+        if (!searchPayload.ruleTypeDictCode.isNullOrBlank()) {
+            onExpr = onExpr and whereExpr(
+                SysAccessRules.ruleTypeDictCode,
+                OperatorEnum.EQ,
+                searchPayload.ruleTypeDictCode!!.trim()
+            )!!
+        }
+        if (!searchPayload.ipTypeDictCode.isNullOrBlank()) {
+            onExpr = onExpr and whereExpr(
+                SysAccessRuleIps.ipTypeDictCode,
+                OperatorEnum.EQ,
+                searchPayload.ipTypeDictCode!!.trim()
+            )!!
+        }
+
         val querySource = database()
-            .from(SysAccessRuleIps)
-            .leftJoin(SysAccessRules, on = SysAccessRuleIps.parentRuleId.eq(SysAccessRules.id))
+            .from(SysAccessRules)
+            .leftJoin(SysAccessRuleIps, on = onExpr)
 
         return querySource.select()
-            .whereWithConditions {
-                if (!searchPayload.id.isNullOrBlank()) {
-                    it += SysAccessRuleIps.id.eq(searchPayload.id!!)
-                }
-                if (!searchPayload.parentRuleId.isNullOrBlank()) {
-                    it += SysAccessRuleIps.parentRuleId.eq(searchPayload.parentRuleId!!)
-                }
-                if (searchPayload.active != null) {
-                    it += SysAccessRuleIps.active.eq(searchPayload.active!!)
-                }
-                if (searchPayload.parentRuleActive != null) {
-                    it += SysAccessRules.active.eq(searchPayload.parentRuleActive!!)
-                }
-                if (!searchPayload.tenantId.isNullOrBlank()) {
-                    it += whereExpr(SysAccessRules.tenantId, OperatorEnum.EQ, searchPayload.tenantId!!.trim())!!
-                }
-                if (!searchPayload.subSystemCode.isNullOrBlank()) {
-                    it += whereExpr(SysAccessRules.subSystemCode, OperatorEnum.EQ, searchPayload.subSystemCode!!.trim())!!
-                }
-                if (!searchPayload.ruleTypeDictCode.isNullOrBlank()) {
-                    it += whereExpr(SysAccessRules.ruleTypeDictCode, OperatorEnum.EQ, searchPayload.ruleTypeDictCode!!.trim())!!
-                }
-                if (!searchPayload.ipTypeDictCode.isNullOrBlank()) {
-                    it += whereExpr(SysAccessRuleIps.ipTypeDictCode, OperatorEnum.EQ, searchPayload.ipTypeDictCode!!.trim())!!
-                }
-            }
     }
 
     //endregion your codes 2

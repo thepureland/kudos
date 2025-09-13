@@ -78,7 +78,8 @@ merge into "sys_dict" ("id", "module_code", "dict_type", "dict_name", "remark", 
            ('d275942e-262b-460a-917e-ec96aab565cc', 'kudos-notice', 'receive_status', '消息接收状态', null, true, true),
            ('1b87ef01-c033-06a6-0525-b317b623899f', 'kudos-sys', 'timezone', '时区', null, true, false),
            ('e960b247-16e0-4f4e-a767-2b17eb5b6982', 'kudos-sys', 'domain_type', '域名类型', null, true, true),
-           ('ad52c551-01c1-4c7f-9a96-720eecb32885', 'kudos-sys', 'terminal_type', '终端类型', null, true, true);
+           ('ad52c551-01c1-4c7f-9a96-720eecb32885', 'kudos-sys', 'terminal_type', '终端类型', null, true, true),
+           ('ad52c541-02c1-3c7f-1a96-a20eecb32881', 'kudos-sys', 'access_rule_type', '访问规则类型', null, true, true);
 --endregion DML
 
 

@@ -1,10 +1,10 @@
 package io.kudos.ability.data.rdb.flyway.multidatasource
 
 import io.kudos.ability.data.rdb.flyway.kit.FlywayKit
+import io.kudos.ability.data.rdb.jdbc.datasource.DsContextProcessor
 import io.kudos.base.io.FileKit
 import io.kudos.base.io.scanner.classpath.ClassPathScanner
 import io.kudos.base.logger.LogFactory
-import org.soul.ability.data.rdb.jdbc.datasource.DsContextProcessor
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.flyway.FlywayProperties
 import java.io.File
@@ -88,7 +88,7 @@ open class FlywayMultiDataSourceMigrator {
         }
 
         val dataSource = dsContextProcessor.getDataSource(datasourceKey)
-        FlywayKit.migrate(moduleName, dataSource, flywayProperties)
+        FlywayKit.migrate(moduleName, dataSource!!, flywayProperties)
     }
 
 }

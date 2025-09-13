@@ -398,7 +398,8 @@ merge into "sys_dict_item" ("id", "dict_id", "item_code", "item_name", "order_nu
             1, null, true, true),
            ('3e4ea08a-9e69-4d09-aa20-6057944dd03e', '1b87ef01-c033-06a6-0525-b317b623899f', 'GMT-12:00',
             'GMT-12:00 萨摩亚群岛、中途岛', 2, null, true, true),
-           ('76845783-5a88-4552-8886-a58253053c06', '1b87ef01-c033-06a6-0525-b317b623899f', 'GMT-11:00', 'GMT-11:00 夏威夷',
+           ('76845783-5a88-4552-8886-a58253053c06', '1b87ef01-c033-06a6-0525-b317b623899f', 'GMT-11:00',
+            'GMT-11:00 夏威夷',
             3,
             null, true, true),
            ('54eba7f8-528b-446a-93f2-9e855ff94efb', '1b87ef01-c033-06a6-0525-b317b623899f', 'GMT-10:00',
@@ -480,5 +481,13 @@ merge into "sys_dict_item" ("id", "dict_id", "item_code", "item_name", "order_nu
             null,
             true, true),
            ('d264c01e-072e-46fc-b607-88061810c9b6', 'ad52c551-01c1-4c7f-9a96-720eecb32885', '16', '手机端iOS', 9, null,
-            true, true);
+            true, true),
+           ('1264c011-172e-16fc-b607-28061810c9b1', 'ad52c541-02c1-3c7f-1a96-a20eecb32881', '0', '不限制', 1,
+            '任何ip均可访问', true, true),
+           ('1264c011-172e-16fc-b607-28061810c9b2', 'ad52c541-02c1-3c7f-1a96-a20eecb32881', '1', '白名单', 2,
+            '只允许白名单中的ip访问',true, true),
+           ('1264c011-172e-16fc-b607-28061810c9b3', 'ad52c541-02c1-3c7f-1a96-a20eecb32881', '2', '黑名单', 2,
+            '只限制黑名单中的ip访问',true, true),
+           ('1264c011-172e-16fc-b607-28061810c9b4', 'ad52c541-02c1-3c7f-1a96-a20eecb32881', '3', '白名单+黑名单', 2,
+            '在白名单中且不在黑名单中',true, true);
 --endregion DML

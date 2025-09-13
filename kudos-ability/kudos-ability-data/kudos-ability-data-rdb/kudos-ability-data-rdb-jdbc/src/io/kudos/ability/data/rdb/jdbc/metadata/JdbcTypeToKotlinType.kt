@@ -1,6 +1,5 @@
 package io.kudos.ability.data.rdb.jdbc.metadata
 
-import org.soul.ability.data.rdb.jdbc.metadata.RdbTypeEnum
 import java.sql.Types
 import java.util.*
 import kotlin.reflect.KClass
