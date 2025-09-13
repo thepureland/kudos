@@ -14,7 +14,7 @@ data class SysAccessRuleIpRecord (
 
     //region your codes 1
 
-    /** 主键 */
+    /** ipRule的id */
     override var id: String? = null,
 
     /** ip起 */

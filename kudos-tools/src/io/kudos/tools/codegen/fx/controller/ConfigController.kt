@@ -6,6 +6,7 @@ import io.kudos.ability.data.rdb.jdbc.kit.RdbKit
 import io.kudos.base.io.FilenameKit
 import io.kudos.base.io.PathKit
 import io.kudos.base.lang.SystemKit
+import io.kudos.base.support.PropertiesLoader
 import io.kudos.context.core.KudosContext
 import io.kudos.context.core.KudosContextHolder
 import io.kudos.tools.codegen.model.vo.Config
@@ -14,7 +15,6 @@ import javafx.fxml.FXML
 import javafx.fxml.Initializable
 import javafx.scene.control.*
 import javafx.stage.DirectoryChooser
-import org.soul.base.support.PropertiesLoader
 import org.springframework.boot.autoconfigure.flyway.FlywayProperties
 import java.io.File
 import java.io.FileInputStream

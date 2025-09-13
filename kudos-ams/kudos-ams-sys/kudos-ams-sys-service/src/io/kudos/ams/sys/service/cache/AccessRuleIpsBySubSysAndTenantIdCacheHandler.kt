@@ -69,7 +69,7 @@ open class AccessRuleIpsBySubSysAndTenantIdCacheHandler : AbstractCacheHandler<L
         }
 
         // 缓存数据
-        val ipRulesMap = results.groupBy { getKey(it.subSystemCode!!, it.tenantId!!) }
+        val ipRulesMap = results.groupBy { getKey(it.subSystemCode!!, it.tenantId) }
         ipRulesMap.forEach { (key, ipRules) ->
             val cacheItems = mapToCacheItems(ipRules)
             CacheKit.put(CACHE_NAME, key, cacheItems)
@@ -119,11 +119,11 @@ open class AccessRuleIpsBySubSysAndTenantIdCacheHandler : AbstractCacheHandler<L
      * 数据库插入记录后同步缓存
      *
      * @param any 包含必要属性的对象
-     * @param id ip访问规则id
+     * @param ipRuleId ip访问规则id
      */
-    open fun syncOnInsert(any: Any, id: String) {
+    open fun syncOnInsert(any: Any, ipRuleId: String) {
         if (CacheKit.isCacheActive(CACHE_NAME) && CacheKit.isWriteInTime(CACHE_NAME)) {
-            log.debug("新增id为${id}的ip访问规则后，同步${CACHE_NAME}缓存...")
+            log.debug("新增id为${ipRuleId}的ip访问规则后，同步${CACHE_NAME}缓存...")
             val props = BeanKit.extract(any)
             val active = props[SysAccessRule::active.name] as Boolean?
             if (active == null || active) {
@@ -168,15 +168,15 @@ open class AccessRuleIpsBySubSysAndTenantIdCacheHandler : AbstractCacheHandler<L
     /**
      * 更新启用状态后同步缓存
      *
-     * @param id ip访问规则id
+     * @param ipRuleId ip访问规则id
      * @param active 是否启用
      */
-    open fun syncOnUpdateActive(id: String, active: Boolean) {
+    open fun syncOnUpdateActive(ipRuleId: String, active: Boolean) {
         if (CacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("更新id为${id}的ip访问规则的启用状态后，同步${CACHE_NAME}缓存...")
-            val sysAccessRuleIp = sysAccessRuleIpDao.get(id)
+            log.debug("更新id为${ipRuleId}的ip访问规则的启用状态后，同步${CACHE_NAME}缓存...")
+            val sysAccessRuleIp = sysAccessRuleIpDao.get(ipRuleId)
             if (sysAccessRuleIp == null) {
-                log.error("数据库中找不到id为${id}的ip访问规则！")
+                log.error("数据库中找不到id为${ipRuleId}的ip访问规则！")
                 return
             }
 
@@ -198,14 +198,14 @@ open class AccessRuleIpsBySubSysAndTenantIdCacheHandler : AbstractCacheHandler<L
     /**
      * 删除数据库记录后同步缓存
      *
-     * @param id ip访问规则id
+     * @param ipRuleId ip访问规则id
      */
-    open fun syncOnDelete(id: String) {
+    open fun syncOnDelete(ipRuleId: String) {
         if (CacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("删除id为${id}的ip访问规则后，同步从${CACHE_NAME}缓存中踢除...")
-            val sysAccessRuleIp = sysAccessRuleIpDao.get(id)
+            log.debug("删除id为${ipRuleId}的ip访问规则后，同步从${CACHE_NAME}缓存中踢除...")
+            val sysAccessRuleIp = sysAccessRuleIpDao.get(ipRuleId)
             if (sysAccessRuleIp == null) {
-                log.error("数据库中找不到id为${id}的ip访问规则！")
+                log.error("数据库中找不到id为${ipRuleId}的ip访问规则！")
                 return
             }
 

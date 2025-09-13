@@ -1,12 +1,12 @@
 package io.kudos.ability.data.rdb.jdbc.kit
 
+import io.kudos.ability.data.rdb.jdbc.metadata.RdbTypeEnum
 import io.kudos.base.lang.string.deleteWhitespace
 import io.kudos.base.lang.string.substringBetween
+import io.kudos.base.query.sort.Order
 import io.kudos.context.core.KudosContext
 import io.kudos.context.core.KudosContextHolder
-import org.soul.ability.data.rdb.jdbc.metadata.RdbTypeEnum
-import org.soul.ability.data.rdb.jdbc.tool.RdbTool
-import org.soul.base.query.sort.Order
+import io.kudos.context.kit.SpringKit
 import java.sql.Connection
 import java.sql.DriverManager
 import javax.sql.DataSource
@@ -28,7 +28,7 @@ object RdbKit {
      */
     fun getDataSource(): DataSource {
         val dataSource = KudosContextHolder.get().otherInfos?.get(KudosContext.OTHER_INFO_KEY_DATA_SOURCE) as DataSource?
-        return dataSource ?: RdbTool.getDataSource()
+        return dataSource ?: SpringKit.getBean("dataSource") as DataSource
     }
 
     /**

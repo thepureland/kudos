@@ -4,12 +4,14 @@ import com.baomidou.dynamic.datasource.creator.DataSourceCreator
 import com.baomidou.dynamic.datasource.creator.DefaultDataSourceCreator
 import com.baomidou.dynamic.datasource.event.DataSourceInitEvent
 import com.baomidou.dynamic.datasource.spring.boot.autoconfigure.DynamicDataSourceProperties
+import io.kudos.ability.data.rdb.jdbc.aop.DynamicDataSourceAspect
+import io.kudos.ability.data.rdb.jdbc.datasource.DefaultDynamicDataSourceLoad
+import io.kudos.ability.data.rdb.jdbc.datasource.DsContextProcessor
+import io.kudos.ability.data.rdb.jdbc.datasource.DsDataSourceCreator
+import io.kudos.ability.data.rdb.jdbc.datasource.IDynamicDataSourceLoad
 import io.kudos.base.logger.LogFactory
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
-import org.soul.ability.data.rdb.jdbc.aop.DynamicDataSourceAspect
-import org.soul.ability.data.rdb.jdbc.datasource.*
-import org.soul.ability.data.rdb.jdbc.starter.properties.MultipleDataSourceProperties
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.ConfigurationProperties
@@ -66,12 +68,12 @@ open class JdbcAutoConfiguration : IComponentInitializer {
     @ConditionalOnMissingBean
     open fun dataSourceCreator(
         properties: DynamicDataSourceProperties,
-        dataSourceCreators: MutableList<DataSourceCreator?>?,
-        dataSourceInitEvent: DataSourceInitEvent?
+        dataSourceCreators: List<DataSourceCreator>,
+//        dataSourceInitEvent: DataSourceInitEvent?
     ): DefaultDataSourceCreator {
         val creator = DsDataSourceCreator()
         creator.setCreators(dataSourceCreators)
-        creator.setDataSourceInitEvent(dataSourceInitEvent)
+//        creator.setDataSourceInitEvent(dataSourceInitEvent)
         creator.setPublicKey(properties.publicKey)
         creator.setLazy(properties.lazy)
         creator.setP6spy(properties.p6spy)
@@ -88,13 +90,13 @@ open class JdbcAutoConfiguration : IComponentInitializer {
     @ConditionalOnMissingBean
     open fun dynamicDataSourceLoad(): IDynamicDataSourceLoad = DefaultDynamicDataSourceLoad()
 
-    @Bean
-    @ConditionalOnMissingBean
-    open fun dataSourceInitEvent(): DataSourceInitEvent = HikariDataSourceMeterInitEvent()
+//    @Bean
+//    @ConditionalOnMissingBean
+//    open fun dataSourceInitEvent(): DataSourceInitEvent = HikariDataSourceMeterInitEvent()
 
-    @Bean
-    @ConditionalOnMissingBean
-    open fun dataSourceClearListener() = DataSourceClearListener()
+//    @Bean
+//    @ConditionalOnMissingBean
+//    open fun dataSourceClearListener() = DataSourceClearListener()
 
     override fun getComponentName() = "kudos-ability-data-rdb-jdbc"
 

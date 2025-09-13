@@ -3,10 +3,9 @@ package io.kudos.tools.codegen.core
 import freemarker.template.Configuration
 import io.kudos.base.io.FileKit
 import io.kudos.base.io.FilenameKit
-import io.kudos.tools.codegen.biz.CodeGenFileBiz
+import io.kudos.base.io.scanner.classpath.ClassPathScanner
 import io.kudos.tools.codegen.model.vo.GenFile
 import org.apache.commons.io.filefilter.IOFileFilter
-import org.soul.base.scanner.classpath.ClassPathScanner
 import java.io.File
 
 object TemplatePathProcessor {

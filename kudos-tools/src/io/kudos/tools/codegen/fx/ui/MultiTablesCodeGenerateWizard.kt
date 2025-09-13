@@ -5,14 +5,11 @@ import io.kudos.ability.ui.javafx.controls.wizard.Wizard
 import io.kudos.tools.codegen.core.CodeGeneratorContext
 import io.kudos.tools.codegen.core.TemplateModelCreator
 import io.kudos.tools.codegen.fx.controller.BatchGenerationController
-import io.kudos.tools.codegen.fx.controller.ColumnsController
 import io.kudos.tools.codegen.fx.controller.ConfigController
-import io.kudos.tools.codegen.fx.controller.FilesController
 import javafx.application.Application
 import javafx.fxml.FXMLLoader
 import javafx.scene.Parent
 import javafx.scene.control.Alert
-import javafx.scene.control.Button
 import javafx.scene.control.ButtonType
 import javafx.stage.Stage
 

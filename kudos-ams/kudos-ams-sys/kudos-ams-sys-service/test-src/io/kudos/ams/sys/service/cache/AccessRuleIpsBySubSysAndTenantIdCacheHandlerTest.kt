@@ -1,10 +1,10 @@
 package io.kudos.ams.sys.service.cache
 
 import io.kudos.ability.cache.common.kit.CacheKit
-import io.kudos.ams.sys.common.vo.dictitem.SysDictItemCacheItem
+import io.kudos.ams.sys.common.vo.accessruleip.SysAccessRuleIpCacheItem
+import io.kudos.ams.sys.service.dao.SysAccessRuleDao
 import io.kudos.ams.sys.service.dao.SysAccessRuleIpDao
 import io.kudos.ams.sys.service.model.po.SysAccessRuleIp
-import io.kudos.ams.sys.service.model.po.SysDictItem
 import org.springframework.beans.factory.annotation.Autowired
 import org.testcontainers.junit.jupiter.EnabledIfDockerAvailable
 import java.time.LocalDateTime
@@ -28,6 +28,9 @@ class AccessRuleIpsBySubSysAndTenantIdCacheHandlerTest : CacheHandlerTestBase() 
     @Autowired
     private lateinit var dao: SysAccessRuleIpDao
 
+    @Autowired
+    private lateinit var sysAccessRuleDao: SysAccessRuleDao
+
     private val newExpirationTime = LocalDateTime.now().plus(1L, ChronoUnit.YEARS)
 
     @Test
@@ -36,167 +39,170 @@ class AccessRuleIpsBySubSysAndTenantIdCacheHandlerTest : CacheHandlerTestBase() 
         cacheHandler.reloadAll(true)
 
         // 获取当前缓存中的记录
-        var subSystemCode = "subSys-a"
-        var tenantId = ""
+        val subSystemCode = "subSys-a"
+        val tenantId: String? = "tenantId-2"
         val cacheItems = cacheHandler.getAccessRuleIps(subSystemCode, tenantId)
 
         // 插入新的记录到数据库
-        val sysAccessRuleIpNew = insertNewRecordToDb("78139ed2-dbce-47fa-ac0d-111111111111")
+        val sysAccessRuleIpNew = insertNewRecordToDb("8026f3ac-563b-4545-88dc-b8f70ea48082")
 
         // 更新数据库的记录
-        val idUpdate = "8aabaa7f-6d19-4d8a-8aed-a9f8ca553eee"
+        val idUpdate = "3a443825-4896-49e4-a304-e4e2ddadd705"
         dao.updateProperties(idUpdate, mapOf(SysAccessRuleIp::expirationTime.name to newExpirationTime))
 
         // 从数据库中删除记录
-        val idDelete = "d2e7c962-d0ca-43a5-b722-e1878dfa1555"
+        val idDelete = "3a443825-4896-49e4-a304-e4e2ddadd706"
         dao.deleteById(idDelete)
 
         // 重载缓存，但不清除旧缓存
         cacheHandler.reloadAll(false)
 
         // 原来缓存中的记录内存地址会变
-        val cacheItemsNew = cacheHandler.getAccessRuleIps(moduleCode, dictType)
+        val cacheItemsNew = cacheHandler.getAccessRuleIps(subSystemCode, tenantId)
         assert(cacheItems.first() !== cacheItemsNew.first())
 
-        // 数据库中新增的记录在缓存应该要存在
-        assertEquals(cacheItems.size + 1, cacheItemsNew.size)
+        // 数据库中新增的记录在缓存应该要存在(新增条，删除1条)
+        assertEquals(cacheItems.size, cacheItemsNew.size)
         assert(cacheItemsNew.any { it.id == sysAccessRuleIpNew.id })
 
         // 数据库中更新的记录在缓存中应该也更新了
-        dictType = "dict_type-22"
-        val cacheItemsUpdate = cacheHandler.getAccessRuleIps(moduleCode, dictType)
-        val name = cacheItemsUpdate.first { it.id == idUpdate }.itemName
-        assertEquals(newName, name)
+        val cacheItemsUpdate = cacheHandler.getAccessRuleIps(subSystemCode, tenantId)
+        val exceptionTime = cacheItemsUpdate.first { it.id == idUpdate }.expirationTime
+        assertEquals(newExpirationTime, exceptionTime)
 
         // 数据库中删除的记录在缓存中应该不存在
-        dictType = "dict_type-33"
-        val cacheItemsDelete = cacheHandler.getAccessRuleIps(moduleCode, dictType)
+        val cacheItemsDelete = cacheHandler.getAccessRuleIps(subSystemCode, tenantId)
         assertFalse(cacheItemsDelete.any { it.id == idDelete })
     }
 
     @Test
     fun getAccessRuleIps() {
-        var moduleCode = "kudos-sys"
-        var dictType = "dict_type-11"
-        val cacheItems = cacheHandler.getAccessRuleIps(moduleCode, dictType)
-        assert(cacheItems.size >= 3)
+        var subSystemCode = "subSys-a"
+        var tenantId: String? = "tenantId-2"
+        val cacheItems = cacheHandler.getAccessRuleIps(subSystemCode, tenantId)
+        assert(cacheItems.size >= 2)
 
-        // active为false的dictItem应该没有在缓存中
-        assertFalse(cacheItems.any { it.id == "c46091d2-945c-4440-b103-ac58a7aec999" })
-        
-        // 只有dict，没有dictItem的，应该不会在缓存中
-        moduleCode = "kudos-user"
-        dictType = "dict_type-44"
-        assert(cacheHandler.getAccessRuleIps(moduleCode, dictType).isEmpty())
+        // active为false的ruleIp应该没有在缓存中
+        assertFalse(cacheItems.any { it.id == "3a443825-4896-49e4-a304-e4e2ddadd707" })
 
-        // active为false的dict，应该不会在缓存中
-        dictType = "dict_type-55"
-        assert(cacheHandler.getAccessRuleIps(moduleCode, dictType).isEmpty())
+        // 只有rule，没有ruleIp的，也要在缓存中
+        tenantId = "tenantId-1"
+        assert(cacheHandler.getAccessRuleIps(subSystemCode, tenantId).isNotEmpty())
+
+        // tenantId为null
+        subSystemCode = "subSys-c"
+        tenantId = null
+        assert(cacheHandler.getAccessRuleIps(subSystemCode, tenantId).isNotEmpty())
+
+        // active为false的rule, 应该不会在缓存中
+        subSystemCode = "subSys-f"
+        tenantId = null
+        assert(cacheHandler.getAccessRuleIps(subSystemCode, tenantId).isEmpty())
     }
 
     @Test
     fun syncOnInsert() {
         // 插入新的记录到数据库
-        val dictItem = insertNewRecordToDb("78139ed2-dbce-47fa-ac0d-666666666666")
+        val ipRule = insertNewRecordToDb("8026f3ac-563b-4545-88dc-b8f70ea48082")
 
-        val dict = dictByIdCacheHandler.getDictById(dictItem.dictId)!!
+        val accessRule = sysAccessRuleDao.get(ipRule.parentRuleId)
 
         // 同步缓存
-        cacheHandler.syncOnInsert(dictItem, dictItem.id!!)
+        cacheHandler.syncOnInsert(accessRule!!, ipRule.id!!)
 
         // 验证新记录是否在缓存中
-        val key = cacheHandler.getKey(dict.moduleCode, dict.dictType)
-        @Suppress("UNCHECKED_CAST") 
-        val cacheItems = CacheKit.getValue(cacheHandler.cacheName(), key) as List<SysDictItemCacheItem>
-        assert(cacheItems.any { it.id == dictItem.id })
-        val cacheItems2 = cacheHandler.getAccessRuleIps(dict.moduleCode!!, dict.dictType!!)
+        val key = cacheHandler.getKey(accessRule.subSystemCode!!, accessRule.tenantId)
+        @Suppress("UNCHECKED_CAST")
+        val cacheItems = CacheKit.getValue(cacheHandler.cacheName(), key) as List<SysAccessRuleIpCacheItem>
+        assert(cacheItems.any { it.id == ipRule.id })
+        val cacheItems2 = cacheHandler.getAccessRuleIps(accessRule.subSystemCode!!, accessRule.tenantId)
         assert(cacheItems.size == cacheItems2.size)
     }
 
     @Test
     fun syncOnUpdate() {
         // 更新数据库中已存在的记录
-        val id = "8aabaa7f-6d19-4d8a-8aed-a9f8ca553eee"
-        val success = dao.updateProperties(id, mapOf(SysDictItem::itemName.name to newName))
+        val ipRuleId = "3a443825-4896-49e4-a304-e4e2ddadd705"
+        val success = dao.updateProperties(ipRuleId, mapOf(SysAccessRuleIp::expirationTime.name to newExpirationTime))
         assert(success)
 
-        val dictItem = dao.get(id)!!
-        val dict = dictByIdCacheHandler.getDictById(dictItem.dictId)!!
+        val ipRule = dao.get(ipRuleId)!!
+        val accessRule = sysAccessRuleDao.get(ipRule.parentRuleId)
 
         // 同步缓存
-        cacheHandler.syncOnUpdate(dictItem, id)
+        cacheHandler.syncOnUpdate(accessRule!!, ipRuleId)
 
         // 验证缓存中的记录
-        val key = cacheHandler.getKey(dict.moduleCode, dict.dictType)
+        val key = cacheHandler.getKey(accessRule.subSystemCode!!, ipRuleId)
         @Suppress("UNCHECKED_CAST")
-        val cacheItems = CacheKit.getValue(cacheHandler.cacheName(), key) as List<SysDictItemCacheItem>
-        assertEquals(newName, cacheItems.first { it.id == id }.itemName)
-        val cacheItems2 = cacheHandler.getAccessRuleIps(dict.moduleCode!!, dict.dictType!!)
-        assertEquals(newName, cacheItems2.first { it.id == id }.itemName)
+        val cacheItems = CacheKit.getValue(cacheHandler.cacheName(), key) as List<SysAccessRuleIpCacheItem>
+        assertEquals(newExpirationTime, cacheItems.first { it.id == ipRuleId }.expirationTime)
+        val cacheItems2 = cacheHandler.getAccessRuleIps(accessRule.subSystemCode!!, ipRuleId)
+        assertEquals(newExpirationTime, cacheItems2.first { it.id == ipRuleId }.expirationTime)
     }
 
     @Test
     fun syncOnUpdateActive() {
         // 由true更新为false
-        var id = "e8ff3f9a-a57a-4183-953d-fe80c12fc777"
-        var success = dao.updateProperties(id, mapOf(SysDictItem::active.name to false))
+        var ipRuleId = "3a443825-4896-49e4-a304-e4e2ddadd710"
+        var success = dao.updateProperties(ipRuleId, mapOf(SysAccessRuleIp::active.name to false))
         assert(success)
-        var dictItem = dao.get(id)!!
-        var dict = dictByIdCacheHandler.getDictById(dictItem.dictId)!!
-        cacheHandler.syncOnUpdateActive(id)
-        var key = cacheHandler.getKey(dict.moduleCode, dict.dictType)
+        var ipRule = dao.get(ipRuleId)!!
+        var accessRule = sysAccessRuleDao.get(ipRule.parentRuleId)!!
+        cacheHandler.syncOnUpdateActive(ipRuleId, false)
+        var key = cacheHandler.getKey(accessRule.subSystemCode!!, accessRule.tenantId)
         @Suppress("UNCHECKED_CAST")
-        var cacheItems1 = CacheKit.getValue(cacheHandler.cacheName(), key) as List<SysDictItemCacheItem>
-        assertFalse(cacheItems1.any { it.id == id })
-        var cacheItems2 = cacheHandler.getAccessRuleIps(dict.moduleCode!!, dict.dictType!!)
-        assertFalse(cacheItems2.any { it.id == id })
+        var cacheItems1 = CacheKit.getValue(cacheHandler.cacheName(), key) as List<SysAccessRuleIpCacheItem>
+        assertFalse(cacheItems1.any { it.id == ipRuleId })
+        var cacheItems2 = cacheHandler.getAccessRuleIps(accessRule.subSystemCode!!, accessRule.tenantId)
+        assertFalse(cacheItems2.any { it.id == ipRuleId })
 
         // 由false更新为true
-        id = "c46091d2-945c-4440-b103-ac58a7aec999"
-        success = dao.updateProperties(id, mapOf(SysDictItem::active.name to true))
+        ipRuleId = "3a443825-4896-49e4-a304-e4e2ddadd707"
+        success = dao.updateProperties(ipRuleId, mapOf(SysAccessRuleIp::active.name to true))
         assert(success)
-        dictItem = dao.get(id)!!
-        dict = dictByIdCacheHandler.getDictById(dictItem.dictId)!!
-        cacheHandler.syncOnUpdateActive(id)
-        key = cacheHandler.getKey(dict.moduleCode, dict.dictType)
+        ipRule = dao.get(ipRuleId)!!
+        accessRule = sysAccessRuleDao.get(ipRule.parentRuleId)!!
+        cacheHandler.syncOnUpdateActive(ipRuleId, true)
+        key = cacheHandler.getKey(accessRule.subSystemCode!!, accessRule.tenantId)
         @Suppress("UNCHECKED_CAST")
-        cacheItems1 = CacheKit.getValue(cacheHandler.cacheName(), key) as List<SysDictItemCacheItem>
-        assert(cacheItems1.any { it.id == id })
-        cacheItems2 = cacheHandler.getAccessRuleIps(dict.moduleCode!!, dict.dictType!!)
-        assert(cacheItems2.any { it.id == id })
+        cacheItems1 = CacheKit.getValue(cacheHandler.cacheName(), key) as List<SysAccessRuleIpCacheItem>
+        assert(cacheItems1.any { it.id == ipRuleId })
+        cacheItems2 = cacheHandler.getAccessRuleIps(accessRule.subSystemCode!!, accessRule.tenantId)
+        assert(cacheItems2.any { it.id == ipRuleId })
     }
 
     @Test
     fun syncOnDelete() {
-        val id = "04626227-0ac0-49a2-8036-241cd017a666"
-        val dictItem = dao.get(id)!!
-        val dict = dictByIdCacheHandler.getDictById(dictItem.dictId)!!
+        val ipRuleId = "3a443825-4896-49e4-a304-e4e2ddadd706"
+        val ipRule = dao.get(ipRuleId)!!
+        val accessRule = sysAccessRuleDao.get(ipRule.parentRuleId)!!
 
         // 删除数据库中的记录
-        val deleteSuccess = dao.deleteById(id)
+        val deleteSuccess = dao.deleteById(ipRuleId)
         assert(deleteSuccess)
 
         // 同步缓存
-        cacheHandler.syncOnDelete(id, dictItem.dictId)
+        cacheHandler.syncOnDelete(ipRuleId)
 
         // 验证缓存中有没有
-        val key = cacheHandler.getKey(dict.moduleCode, dict.dictType)
+        val key = cacheHandler.getKey(accessRule.subSystemCode!!, accessRule.tenantId)
         @Suppress("UNCHECKED_CAST")
-        val cacheItems1 = CacheKit.getValue(cacheHandler.cacheName(), key) as List<SysDictItemCacheItem>?
-        assert(cacheItems1 == null || !cacheItems1.any { it.id == id })
-        val cacheItems2 = cacheHandler.getAccessRuleIps(dict.moduleCode!!, dict.dictType!!)
-        assertFalse(cacheItems2.any { it.id == id })
+        val cacheItems1 = CacheKit.getValue(cacheHandler.cacheName(), key) as List<SysAccessRuleIpCacheItem>?
+        assert(cacheItems1 == null || !cacheItems1.any { it.id == ipRuleId })
+        val cacheItems2 = cacheHandler.getAccessRuleIps(accessRule.subSystemCode!!, accessRule.tenantId)
+        assertFalse(cacheItems2.any { it.id == ipRuleId })
     }
     
-    private fun insertNewRecordToDb(dictId: String): SysDictItem {
-        val dictItem = SysDictItem().apply {
-            itemCode = "a_new_item_code"
-            itemName = "a_new_item_name"
-            this.dictId = dictId
-            orderNum = 5
+    private fun insertNewRecordToDb(parentRuleIp: String): SysAccessRuleIp {
+        val ipRule = SysAccessRuleIp().apply {
+            this.parentRuleId = parentRuleIp
+            ipStart = 3232235650
+            ipEnd = 3232235650
+            ipTypeDictCode = "1"
         }
-        dao.insert(dictItem)
-        return dictItem
+        dao.insert(ipRule)
+        return ipRule
     }
 
 }
