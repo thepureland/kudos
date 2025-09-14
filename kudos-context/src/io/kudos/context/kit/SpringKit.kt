@@ -1,6 +1,5 @@
 package io.kudos.context.kit
 
-import org.soul.context.tool.SpringTool
 import org.springframework.context.ApplicationContext
 import kotlin.reflect.KClass
 
@@ -14,14 +13,9 @@ import kotlin.reflect.KClass
  */
 object SpringKit {
 
-    /**
-     * 返回spring应用上下文
-     *
-     * @return spring应用上下文
-     * @author K
-     * @since 1.0.0
-     */
-    fun getApplicationContext(): ApplicationContext = SpringTool.getApplicationContext()
+    var applicationContext: ApplicationContext? = null
+        get() = field ?: error("Spring applicationContext is not initialized yet!")
+
 
     /**
      * 返回指定名称的Spring Bean对象
@@ -31,7 +25,7 @@ object SpringKit {
      * @author K
      * @since 1.0.0
      */
-    fun getBean(beanName: String): Any = SpringTool.getBean(beanName)
+    fun getBean(beanName: String): Any = applicationContext!!.getBean(beanName)
 
     /**
      * 返回指定类的Spring Bean对象
@@ -42,7 +36,7 @@ object SpringKit {
      * @author K
      * @since 1.0.0
      */
-    fun <T : Any> getBean(beanClass: KClass<T>): T = SpringTool.getBean(beanClass.java)
+    fun <T : Any> getBean(beanClass: KClass<T>): T = applicationContext!!.getBean(beanClass.java)
 
     /**
      * 返回指定名称的属性值
@@ -52,7 +46,7 @@ object SpringKit {
      * @author K
      * @since 1.0.0
      */
-    fun getProperty(propertyName: String): String? = getApplicationContext().environment.getProperty(propertyName)
+    fun getProperty(propertyName: String): String? = applicationContext!!.environment.getProperty(propertyName)
 
     /**
      * 返回指定类型的所有实现bean实例（包括子类）
@@ -62,6 +56,6 @@ object SpringKit {
      * @author K
      * @since 1.0.0
      */
-    fun <T : Any> getBeansOfType(clazz: KClass<T>): Map<String, T> = SpringTool.getBeansOfType(clazz.java)
+    fun <T : Any> getBeansOfType(clazz: KClass<T>): Map<String, T> = applicationContext!!.getBeansOfType(clazz.java)
 
 }

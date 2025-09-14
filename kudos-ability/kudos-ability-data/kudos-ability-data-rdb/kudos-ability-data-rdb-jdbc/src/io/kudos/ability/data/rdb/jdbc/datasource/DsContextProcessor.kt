@@ -7,9 +7,8 @@ import io.kudos.ability.data.rdb.jdbc.aop.DynamicDataSourceAspect
 import io.kudos.ability.data.rdb.jdbc.consts.DatasourceConst
 import io.kudos.ability.data.rdb.jdbc.kit.DatasourceKeyTool
 import io.kudos.base.logger.LogFactory
+import io.kudos.base.support.KeyLockRegistry
 import io.kudos.context.core.KudosContextHolder
-import org.soul.base.support.KeyedReentrantLockManager
-import org.soul.context.core.CommonContext
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import java.util.*
@@ -40,42 +39,42 @@ class DsContextProcessor {
     @Value("\${spring.datasource.dynamic.primary:master}")
     private val primary: String? = null
 
-    private val reentrantLockManager = KeyedReentrantLockManager<String?>()
+    private val keyLockRegistry = KeyLockRegistry<String>()
 
     fun doDetermineDatasource(dsKey: String, dsKeyConfig: String?): String? {
         if (Objects.isNull(KudosContextHolder.get())) {
             return null
         }
-        if (CommonContext.get()._datasourceTenantId() == DatasourceConst.CONSOLE_TENANT_ID) {
+        val context = KudosContextHolder.get()
+        if (context._datasourceTenantId == DatasourceConst.CONSOLE_TENANT_ID) {
             return null
         }
         //获取域名指定的默认数据源id
-        var defaultDsId: Int? = CommonContext.get().getDataSourceId()
-        var mode: String? = DatasourceConst.MODE_MASTER
+        var defaultDsId = context.dataSourceId
+        var mode = DatasourceConst.MODE_MASTER
         //如果是备库
-        if (DatasourceKeyTool.isReadOnly(dsKey) && CommonContext.get().readOnlyDataSourceId != null) {
-            defaultDsId = CommonContext.get().readOnlyDataSourceId
+        if (DatasourceKeyTool.isReadOnly(dsKey) && context.readOnlyDataSourceId != null) {
+            defaultDsId = context.readOnlyDataSourceId
             mode = DatasourceConst.MODE_READONLY
         }
-        this.reentrantLockManager.lock(dsKey)
+        keyLockRegistry.tryLock(dsKey)
         try {
-            var realDsId: Int? = null
+            var realDsId: String? = null
             if (dataSourceFinder != null) {
                 val serverCode: String? = DatasourceKeyTool.getServerCode(dsKey)
-                realDsId =
-                    dataSourceFinder.findDataSourceId(CommonContext.get()._datasourceTenantId(), serverCode, mode)
+                realDsId = dataSourceFinder.findDataSourceId(context._datasourceTenantId, serverCode, mode)
             }
             if (realDsId == null) {
                 realDsId = defaultDsId
             }
             return getDatasourceKey(realDsId)
         } finally {
-            this.reentrantLockManager.unlock(dsKey)
+            keyLockRegistry.unlock(dsKey)
         }
     }
 
-    protected fun getDatasourceKey(dsId: Int?): String? {
-        val dataSourceKey: String? = dsId.toString()
+    protected fun getDatasourceKey(dsId: String?): String? { //TODO
+        val dataSourceKey: String? = dsId
         val ds: DynamicRoutingDataSource = dataSource as DynamicRoutingDataSource
         if (!ds.dataSources.containsKey(dataSourceKey)) {
             // 该dsKey数据源未初始化，加载配置并初始化

@@ -1,8 +1,7 @@
 package io.kudos.ability.data.rdb.jdbc.datasource
 
 import com.baomidou.dynamic.datasource.creator.DataSourceProperty
-import org.soul.base.log.Log
-import org.soul.base.log.LogFactory
+import io.kudos.base.logger.LogFactory
 
 /**
  * 默认动态数据源加载
@@ -10,12 +9,12 @@ import org.soul.base.log.LogFactory
  * @author damon
  */
 class DefaultDynamicDataSourceLoad : IDynamicDataSourceLoad {
-    override fun getPropertyById(dsId: Int?): DataSourceProperty? {
+
+    override fun getPropertyById(dsId: String?): DataSourceProperty? {
         log.warn("默认的动态数据源加载为空,{0}", dsId)
         return null
     }
 
-    companion object {
-        private val log: Log = LogFactory.getLog(DefaultDynamicDataSourceLoad::class.java)
-    }
+    private val log = LogFactory.getLog(this)
+
 }

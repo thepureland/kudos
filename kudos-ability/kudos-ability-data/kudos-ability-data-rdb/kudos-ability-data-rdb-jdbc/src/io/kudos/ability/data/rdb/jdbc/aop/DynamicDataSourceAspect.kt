@@ -7,11 +7,11 @@ import io.kudos.ability.data.rdb.jdbc.datasource.DsContextProcessor
 import io.kudos.ability.data.rdb.jdbc.init.MultipleDataSourceProperties
 import io.kudos.ability.data.rdb.jdbc.kit.DatasourceKeyTool
 import io.kudos.base.logger.LogFactory
+import io.kudos.context.core.KudosContextHolder
 import org.aspectj.lang.ProceedingJoinPoint
 import org.aspectj.lang.annotation.Around
 import org.aspectj.lang.annotation.Aspect
 import org.aspectj.lang.annotation.Pointcut
-import org.soul.context.core.CommonContext
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.annotation.Order
 import java.util.concurrent.ConcurrentHashMap
@@ -28,6 +28,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 @Aspect
 @Order(-99)
 class DynamicDataSourceAspect {
+
     @Autowired
     private lateinit var dataSourceProperties: MultipleDataSourceProperties
 
@@ -73,10 +74,10 @@ class DynamicDataSourceAspect {
             //兼容多租户，不同上下文的数据源不同
             val mapKey: String? = DatasourceKeyTool.convertCacheMapKey(
                 datasourcePair.first!!,
-                CommonContext.get()._datasourceTenantId(), datasourcePair.second
+                KudosContextHolder.get().dataSourceId, datasourcePair.second
             )
             //如果已经切换过了数据源，则缓存起来
-            var dsKey: String? = dsCacheMap.get(mapKey)
+            var dsKey: String? = dsCacheMap[mapKey]
             if (dsKey.isNullOrBlank()) {
                 READ_WRITE_LOCK.readLock().lock()
                 try {
@@ -126,7 +127,7 @@ class DynamicDataSourceAspect {
         val forceDs = DbContext.get().forcedDs
         //动态数据源才需要去判断强制切换
         if (!DbContext.get().forcedDs.isNullOrBlank()) {
-            return if (DbContext.get().readonly == true) {
+            return if (DbContext.get().readonly) {
                 //只读库设置
                 Pair(dsKeyConfig, DatasourceConst.MODE_READONLY)
             } else {

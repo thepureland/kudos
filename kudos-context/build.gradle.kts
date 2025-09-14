@@ -1,6 +1,6 @@
 dependencies {
     api(project(":kudos-base"))
-    api("org.soul:soul-context")
+    api("org.springframework.boot:spring-boot-starter")
 
     testImplementation(project(":kudos-test:kudos-test-common"))
 }

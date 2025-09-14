@@ -11,5 +11,5 @@ interface IDynamicDataSourceLoad {
     /**
      * 根据dsId获取数据源配置
      */
-    fun getPropertyById(dsId: Int?): DataSourceProperty?
+    fun getPropertyById(dsId: String?): DataSourceProperty?
 }
