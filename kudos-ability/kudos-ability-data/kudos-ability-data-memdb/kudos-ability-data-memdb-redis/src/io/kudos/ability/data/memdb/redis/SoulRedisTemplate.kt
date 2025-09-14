@@ -1,0 +1,36 @@
+package io.kudos.ability.data.memdb.redis
+
+import org.springframework.data.redis.core.RedisTemplate
+import org.springframework.data.redis.serializer.StringRedisSerializer
+
+class SoulRedisTemplate {
+
+    /**
+     * 多个redisTemplate
+     */
+    private lateinit var redisTemplateMap: MutableMap<String, RedisTemplate<Any, Any?>>
+
+    /**
+     * default 的 redisTemplate
+     */
+    private lateinit var defaultRedisTemplate: RedisTemplate<Any, Any?>
+
+    constructor(
+        redisTemplateMap: MutableMap<String, RedisTemplate<Any, Any?>>,
+        defaultRedisTemplate: RedisTemplate<Any, Any?>
+    ) {
+        this.redisTemplateMap = redisTemplateMap
+        this.defaultRedisTemplate = defaultRedisTemplate
+    }
+
+    fun getRedisTemplate(redisKey: String) = redisTemplateMap[redisKey]
+
+    fun getRedisTemplateMap() = redisTemplateMap
+
+    fun getDefaultRedisTemplate() = defaultRedisTemplate
+
+    companion object {
+        val REDIS_KEY_SERIALIZER: StringRedisSerializer? = StringRedisSerializer.UTF_8
+    }
+
+}
