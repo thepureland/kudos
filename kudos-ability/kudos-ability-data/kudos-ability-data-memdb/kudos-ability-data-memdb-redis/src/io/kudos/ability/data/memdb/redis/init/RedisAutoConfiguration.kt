@@ -1,12 +1,12 @@
 package io.kudos.ability.data.memdb.redis.init
 
+import io.kudos.ability.data.memdb.redis.SoulRedisConnectFactory
+import io.kudos.ability.data.memdb.redis.SoulRedisTemplate
+import io.kudos.ability.data.memdb.redis.init.properties.RedisExtProperties
+import io.kudos.ability.data.memdb.redis.init.properties.SoulRedisProperties
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
-import org.soul.ability.data.memdb.redis.SoulRedisConnectFactory
-import org.soul.ability.data.memdb.redis.SoulRedisTemplate
-import org.soul.ability.data.memdb.redis.starter.properties.RedisExtProperties
-import org.soul.ability.data.memdb.redis.starter.properties.SoulRedisProperties
-import org.soul.context.core.SoulPropertySourceFactory
+import io.kudos.context.spring.YamlPropertySourceFactory
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.ConfigurationProperties
@@ -26,7 +26,7 @@ import org.springframework.data.redis.core.RedisTemplate
 @ComponentScan(basePackages = ["io.kudos.ability.data.memdb.redis"])
 @PropertySource(
     value = ["classpath:kudos-ability-data-memdb-redis.yml"],
-    factory = SoulPropertySourceFactory::class
+    factory = YamlPropertySourceFactory::class
 )
 @AutoConfigureAfter(ContextAutoConfiguration::class)
 open class RedisAutoConfiguration : IComponentInitializer {
@@ -51,16 +51,14 @@ open class RedisAutoConfiguration : IComponentInitializer {
         }
 
         //拼装soulRedisTemplate
-        val soulRedisTemplate = SoulRedisTemplate()
-        soulRedisTemplate.redisTemplateMap = redisTemplateMap
-        soulRedisTemplate.defaultRedisTemplate = redisTemplateMap[soulRedisProperties.defaultRedis]
+        val soulRedisTemplate = SoulRedisTemplate(redisTemplateMap, redisTemplateMap[soulRedisProperties.defaultRedis]!!)
         return soulRedisTemplate
     }
 
     @Bean("redisTemplate")
     @ConditionalOnMissingBean
     open fun redisTemplate(redisTemplateMap: SoulRedisTemplate): RedisTemplate<Any, Any?> {
-        return redisTemplateMap.defaultRedisTemplate
+        return redisTemplateMap.getDefaultRedisTemplate()
     }
 
     /**
