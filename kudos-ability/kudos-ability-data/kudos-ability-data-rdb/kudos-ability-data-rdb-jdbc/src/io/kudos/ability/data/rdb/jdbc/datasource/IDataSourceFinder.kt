@@ -9,5 +9,6 @@ interface IDataSourceFinder {
      * @param mode       数据库模式
      * @return
      */
-    fun findDataSourceId(tenantId: String?, serverCode: String?, mode: String?): Int?
+    fun findDataSourceId(tenantId: String?, serverCode: String?, mode: String?): String?
+
 }

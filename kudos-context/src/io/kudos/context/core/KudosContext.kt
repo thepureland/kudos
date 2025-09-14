@@ -1,7 +1,6 @@
 package io.kudos.context.core
 
 import io.kudos.base.support.IIdEntity
-import org.soul.context.core.ClientInfo
 
 
 /**
@@ -21,6 +20,11 @@ class KudosContext {
 
     /** 数据源id，为null将根据路由策略决定 */
     var dataSourceId: String? = null
+
+    /** 备库数据源id */
+    var readOnlyDataSourceId: String? = null
+
+    var _datasourceTenantId: String? = null
 
     /** 子系统编码 */
     var subSysCode: String? = null
