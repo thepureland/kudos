@@ -30,24 +30,27 @@ class KeyLockRegistryTest {
 
         data class Interval(val start: Long, val end: Long)
 
-        // 用 AtomicReference 代替 @Volatile 局部变量
         val i1 = AtomicReference<Interval?>()
         val i2 = AtomicReference<Interval?>()
 
         val t1 = pool.submit {
             barrier.await()
-            val start = System.nanoTime()
-            registry.withLock(key) { Thread.sleep(150) }
-            val end = System.nanoTime()
-            i1.set(Interval(start, end))
+            registry.withLock(key) {
+                val start = System.nanoTime()   // ← 进入临界区后再记时
+                Thread.sleep(150)
+                val end = System.nanoTime()
+                i1.set(Interval(start, end))
+            }
         }
 
         val t2 = pool.submit {
             barrier.await()
-            val start = System.nanoTime()
-            registry.withLock(key) { Thread.sleep(150) }
-            val end = System.nanoTime()
-            i2.set(Interval(start, end))
+            registry.withLock(key) {
+                val start = System.nanoTime()   // ← 进入临界区后再记时
+                Thread.sleep(150)
+                val end = System.nanoTime()
+                i2.set(Interval(start, end))
+            }
         }
 
         t1.get(2, TimeUnit.SECONDS)
@@ -56,8 +59,14 @@ class KeyLockRegistryTest {
 
         val a = requireNotNull(i1.get())
         val b = requireNotNull(i2.get())
+
         fun overlap(x: Interval, y: Interval) = !(x.end <= y.start || y.end <= x.start)
+
+        // 现在应该不重叠：同一个 key 的访问被串行化
         assertFalse(overlap(a, b))
+
+        // 可选：再断言顺序
+        assertTrue(a.end <= b.start || b.end <= a.start)
 
         assertEquals(0, registry.getActiveLockCount())
     }
