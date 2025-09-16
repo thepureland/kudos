@@ -28,8 +28,8 @@ class DefaultCacheConfigProvider(itemsProperties: CacheItemsProperties) : ICache
         for (cacheItemStr in cacheItems) {
             if (cacheItemStr.isNotBlank()) {
                 val cacheConfig = cacheItemToConfig(cacheItemStr)
-                if (!cacheConfigs.containsKey(cacheConfig.strategyDictCode)) {
-                    cacheConfigs.put(cacheConfig.strategyDictCode!!, HashMap())
+                if (!cacheConfigs.containsKey(cacheConfig.strategy)) {
+                    cacheConfigs.put(cacheConfig.strategy!!, HashMap())
                 }
                 cacheConfigs[cacheConfig.strategy]!!.put(cacheConfig.name!!, cacheConfig)
             }
@@ -50,7 +50,7 @@ class DefaultCacheConfigProvider(itemsProperties: CacheItemsProperties) : ICache
     }
 
     override fun getCacheConfig(name: String): CacheConfig? {
-        return getAllCacheConfigs()[name]
+        return getAllCacheConfigs().get(name)
     }
 
     override fun getAllCacheConfigs(): Map<String, CacheConfig> {
@@ -64,15 +64,15 @@ class DefaultCacheConfigProvider(itemsProperties: CacheItemsProperties) : ICache
     }
 
     override fun getLocalCacheConfigs(): Map<String, CacheConfig> {
-        return cacheConfigs[CacheStrategy.SINGLE_LOCAL.name]!!
+        return cacheConfigs[CacheStrategy.SINGLE_LOCAL.name] ?: emptyMap()
     }
 
     override fun getRemoteCacheConfigs(): Map<String, CacheConfig> {
-       return cacheConfigs[CacheStrategy.REMOTE.name]!!
+       return cacheConfigs[CacheStrategy.REMOTE.name] ?: emptyMap()
     }
 
     override fun getLocalRemoteCacheConfigs(): Map<String, CacheConfig> {
-       return cacheConfigs[CacheStrategy.LOCAL_REMOTE.name]!!
+       return cacheConfigs[CacheStrategy.LOCAL_REMOTE.name] ?: emptyMap()
     }
 
     companion object {

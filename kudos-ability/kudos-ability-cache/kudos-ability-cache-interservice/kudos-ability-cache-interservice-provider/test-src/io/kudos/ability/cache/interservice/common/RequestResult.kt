@@ -6,7 +6,7 @@ package io.kudos.ability.cache.interservice.common
  * @author K
  * @since 1.0.0
  */
-class RequestResult(
+data class RequestResult(
     var code: Int?,
     var msg: String?
 ) {

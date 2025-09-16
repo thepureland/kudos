@@ -6,7 +6,6 @@ import io.kudos.test.common.init.EnableKudosTest
 import io.kudos.test.container.containers.NacosTestContainer
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
-import org.soul.base.bean.Pair
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.SpringApplication
 import org.springframework.cloud.openfeign.EnableFeignClients
@@ -47,7 +46,7 @@ open class OpenFeignTest {
 
         // 测试post方式的请求
         val result = feignClient.post(Pair<Int?, String?>(1, "name"))
-        assertTrue(result!!.value!!)
+        assertTrue(result!!.second!!)
 
         // 测试异常抛回
         assertFailsWith<RuntimeException> { feignClient.exception() }

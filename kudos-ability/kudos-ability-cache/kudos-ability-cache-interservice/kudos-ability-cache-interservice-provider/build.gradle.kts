@@ -1,6 +1,6 @@
 dependencies {
-    api(project(":kudos-ability:kudos-ability-cache:kudos-ability-cache-common"))
-    api("org.soul:soul-ability-cache-interservice-provider")
+    api(project(":kudos-ability:kudos-ability-cache:kudos-ability-cache-interservice:kudos-ability-cache-interservice-common"))
+    compileOnly("org.springframework.boot:spring-boot-starter-web")
 
     testImplementation(project(":kudos-ability:kudos-ability-cache:kudos-ability-cache-interservice:kudos-ability-cache-interservice-client"))
     testImplementation(project(":kudos-ability:kudos-ability-distributed:kudos-ability-distributed-client:kudos-ability-distributed-client-feign"))
