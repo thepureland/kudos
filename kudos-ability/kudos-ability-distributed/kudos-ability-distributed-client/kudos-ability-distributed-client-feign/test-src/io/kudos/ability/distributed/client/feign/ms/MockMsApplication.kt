@@ -1,6 +1,6 @@
 package io.kudos.ability.distributed.client.feign.ms
 
-import org.soul.context.core.SoulPropertySourceFactory
+import io.kudos.context.spring.YamlPropertySourceFactory
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient
 import org.springframework.context.annotation.PropertySource
@@ -16,6 +16,6 @@ import org.springframework.context.annotation.PropertySource
 @SpringBootApplication
 @PropertySource(
     value = ["classpath:application-ms.yml"
-    ], factory = SoulPropertySourceFactory::class
+    ], factory = YamlPropertySourceFactory::class
 )
 open class MockMsApplication

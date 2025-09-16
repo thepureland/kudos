@@ -1,11 +1,11 @@
 package io.kudos.ability.cache.interservice.client.init
 
 import io.kudos.ability.cache.common.init.LinkableCacheAutoConfiguration
+import io.kudos.ability.cache.interservice.client.core.ClientCacheHelper
+import io.kudos.ability.cache.interservice.client.feign.FeignCacheRequestInterceptor
+import io.kudos.ability.cache.interservice.client.feign.FeignCacheResponseInterceptor
 import io.kudos.base.logger.LogFactory
 import io.kudos.context.init.IComponentInitializer
-import org.soul.ability.cache.interservice.client.core.ClientCacheHelper
-import org.soul.ability.cache.interservice.client.feign.FeignCacheRequestInterceptor
-import org.soul.ability.cache.interservice.client.feign.FeignCacheResponseInterceptor
 import org.springframework.beans.factory.ObjectFactory
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
@@ -26,7 +26,7 @@ open class InterServiceCacheClientAutoConfiguration : IComponentInitializer {
 
     private val logger = LogFactory.getLog(this)
 
-    @Bean("soulFeignCacheHelper")
+    @Bean("feignCacheHelper")
     @ConditionalOnMissingBean
     open fun clientCacheHelper() = ClientCacheHelper()
 

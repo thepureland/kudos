@@ -25,6 +25,7 @@
             <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-cache/kudos-ability-cache-common" />
             <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-cache/kudos-ability-cache-interservice" />
             <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-cache/kudos-ability-cache-interservice/kudos-ability-cache-interservice-client" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-cache/kudos-ability-cache-interservice/kudos-ability-cache-interservice-common" />
             <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-cache/kudos-ability-cache-interservice/kudos-ability-cache-interservice-provider" />
             <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-cache/kudos-ability-cache-local" />
             <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-cache/kudos-ability-cache-local/kudos-ability-cache-local-caffeine" />

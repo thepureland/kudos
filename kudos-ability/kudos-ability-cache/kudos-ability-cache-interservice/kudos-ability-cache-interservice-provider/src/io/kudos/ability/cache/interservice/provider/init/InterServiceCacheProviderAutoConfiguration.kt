@@ -1,10 +1,10 @@
 package io.kudos.ability.cache.interservice.provider.init
 
 import io.kudos.ability.cache.common.init.LinkableCacheAutoConfiguration
+import io.kudos.ability.cache.interservice.aop.ClientCacheableAspect
+import io.kudos.ability.cache.interservice.provider.web.ClientCacheWebFilter
 import io.kudos.base.logger.LogFactory
 import io.kudos.context.init.IComponentInitializer
-import org.soul.ability.cache.interservice.provider.ClientCacheableAspect
-import org.soul.ability.cache.interservice.provider.web.ClientCacheWebFilter
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.web.servlet.FilterRegistrationBean

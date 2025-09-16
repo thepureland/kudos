@@ -1,6 +1,7 @@
 dependencies {
     api(project(":kudos-context"))
-    api("org.soul:soul-ability-distributed-client-openfeign")
+    api("org.springframework.cloud:spring-cloud-loadbalancer")
+    api("org.springframework.cloud:spring-cloud-starter-openfeign")
 
     testImplementation(project(":kudos-test:kudos-test-container"))
     testImplementation(project(":kudos-ability:kudos-ability-distributed:kudos-ability-distributed-discovery:kudos-ability-distributed-discovery-nacos"))

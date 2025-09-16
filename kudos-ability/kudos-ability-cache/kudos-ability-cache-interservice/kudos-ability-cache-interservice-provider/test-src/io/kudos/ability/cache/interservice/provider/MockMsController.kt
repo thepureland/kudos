@@ -1,8 +1,8 @@
 package io.kudos.ability.cache.interservice.provider
 
+import io.kudos.ability.cache.interservice.aop.ClientCacheable
 import io.kudos.ability.cache.interservice.common.RequestResult
 import io.kudos.base.lang.string.RandomStringKit
-import org.soul.ability.cache.interservice.provider.ClientCacheable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
@@ -22,6 +22,8 @@ open class MockMsController {
         return RequestResult(1, "one")
     }
 
+
+    //没加@ClientCacheable
     @RequestMapping("/different1")
     open fun different1(): RequestResult {
         return RequestResult(1, "one")
@@ -31,7 +33,7 @@ open class MockMsController {
     @RequestMapping("/different2")
     open fun different2(): RequestResult {
         return RequestResult(
-            RandomStringKit.random(2, false, true).toInt(),
+            RandomStringKit.random(2, letters = false, numbers = true).toInt(),
             RandomStringKit.uuid(),
         )
     }
