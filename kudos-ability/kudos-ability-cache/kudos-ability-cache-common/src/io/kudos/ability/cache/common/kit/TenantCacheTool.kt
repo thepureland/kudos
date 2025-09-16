@@ -185,7 +185,7 @@ object TenantCacheTool {
      *
      * @param cacheName 缓存名
      */
-    fun reloadAll(cacheName: String?) {
+    fun reloadAll(cacheName: String) {
         CacheKit.reloadAll(cacheName)
     }
 
