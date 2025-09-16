@@ -2,11 +2,11 @@ package io.kudos.ability.cache.local.caffeine.init
 
 import io.kudos.ability.cache.common.init.BaseCacheConfiguration
 import io.kudos.ability.cache.common.init.LinkableCacheAutoConfiguration
+import io.kudos.ability.cache.common.support.ICacheManager
+import io.kudos.ability.cache.local.caffeine.CaffeineCacheManager
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
 import io.kudos.context.spring.YamlPropertySourceFactory
-import org.soul.ability.cache.common.support.ICacheManager
-import org.soul.ability.cache.local.caffeine.CaffeineCacheManager
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.AutoConfigureBefore
 import org.springframework.boot.autoconfigure.cache.CacheProperties
@@ -40,7 +40,7 @@ import org.springframework.context.annotation.PropertySource
 @EnableConfigurationProperties(CacheProperties::class)
 open class CaffeineCacheAutoConfiguration : BaseCacheConfiguration(), IComponentInitializer {
 
-    @Bean(name = ["soulLocalCacheManager"])
+    @Bean(name = ["localCacheManager"])
     @ConditionalOnMissingBean
     open fun caffeineCacheManager(): ICacheManager<*> = CaffeineCacheManager()
 

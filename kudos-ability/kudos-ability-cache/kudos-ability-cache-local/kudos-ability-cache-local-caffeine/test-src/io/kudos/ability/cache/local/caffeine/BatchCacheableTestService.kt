@@ -1,7 +1,7 @@
 package io.kudos.ability.cache.local.caffeine
 
+import io.kudos.ability.cache.common.batch.BatchCacheable
 import io.kudos.base.logger.LogFactory
-import org.soul.ability.cache.common.batch.BatchCacheable
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.Cacheable
 import java.io.Serializable

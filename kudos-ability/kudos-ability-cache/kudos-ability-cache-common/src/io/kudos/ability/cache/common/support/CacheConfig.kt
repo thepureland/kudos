@@ -35,7 +35,7 @@ class CacheConfig : Serializable {
     var active: Boolean? = true
 
     @Transient
-    val strategy: String? = null
+    var strategy: String? = null
 
     @Transient
     var ignoreVersion: Boolean? = null
@@ -56,14 +56,6 @@ class CacheConfig : Serializable {
         this.writeInTime = writeInTime
         this.ttl = ttl
         this.active = active
-    }
-
-    fun getStrategy(): String? {
-        return strategyDictCode
-    }
-
-    fun setStrategy(strategy: String?) {
-        this.strategyDictCode = strategy
     }
 
     companion object {

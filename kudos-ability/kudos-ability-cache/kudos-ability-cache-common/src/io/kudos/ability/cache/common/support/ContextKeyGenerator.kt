@@ -30,7 +30,7 @@ class ContextKeyGenerator : KeyGenerator {
         val context: StandardEvaluationContext =
             MethodBasedEvaluationContext(TypedValue.NULL, method, params, parameterNameDiscoverer)
         val kudosContext = KudosContextHolder.get()
-        kudosContext.subSysCode = ApplicationInfo.getInstance().getSubSysCode()
+//        kudosContext.subSysCode = ApplicationInfo.getInstance().getSubSysCode()
         context.setVariable("_context", kudosContext)
         val parser: ExpressionParser = SpelExpressionParser()
         val expression = parser.parseExpression(cacheKey)

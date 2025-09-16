@@ -31,7 +31,7 @@ class DefaultCacheConfigProvider(itemsProperties: CacheItemsProperties) : ICache
                 if (!cacheConfigs.containsKey(cacheConfig.strategyDictCode)) {
                     cacheConfigs.put(cacheConfig.strategyDictCode!!, HashMap())
                 }
-                cacheConfigs[cacheConfig.getStrategy()]!!.put(cacheConfig.name!!, cacheConfig)
+                cacheConfigs[cacheConfig.strategy]!!.put(cacheConfig.name!!, cacheConfig)
             }
         }
     }
@@ -43,37 +43,37 @@ class DefaultCacheConfigProvider(itemsProperties: CacheItemsProperties) : ICache
         val params = cacheItem.split("&".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
         for (param in params) {
             val item = param.split("=".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-            BeanKit.copyProperty<CacheConfig?>(config, item[0], item[1])
+
+            BeanKit.setProperty<CacheConfig?>(config, item[0], item[1])
         }
         return config
     }
 
     override fun getCacheConfig(name: String): CacheConfig? {
-        return allCacheConfigs[name]
+        return getAllCacheConfigs()[name]
     }
 
-
-
-    override val allCacheConfigs: MutableMap<String, CacheConfig>
-        get() {
-            val result: MutableMap<String, CacheConfig> = HashMap()
-            for (entry in cacheConfigs.entries) {
-                for (entry1 in entry.value.entries) {
-                    result.put(entry1.key, entry1.value)
-                }
+    override fun getAllCacheConfigs(): Map<String, CacheConfig> {
+        val result = mutableMapOf<String, CacheConfig>()
+        for (entry in cacheConfigs.entries) {
+            for (entry1 in entry.value.entries) {
+                result.put(entry1.key, entry1.value)
             }
-            return result
         }
+        return result
+    }
 
-    override val localCacheConfigs: MutableMap<String, CacheConfig>
-        get() = cacheConfigs[CacheStrategy.SINGLE_LOCAL.name]!!
+    override fun getLocalCacheConfigs(): Map<String, CacheConfig> {
+        return cacheConfigs[CacheStrategy.SINGLE_LOCAL.name]!!
+    }
 
-    override val remoteCacheConfigs: MutableMap<String, CacheConfig>
-        get() = cacheConfigs[CacheStrategy.REMOTE.name]!!
+    override fun getRemoteCacheConfigs(): Map<String, CacheConfig> {
+       return cacheConfigs[CacheStrategy.REMOTE.name]!!
+    }
 
-    override val localRemoteCacheConfigs: MutableMap<String, CacheConfig>
-        get() = cacheConfigs[CacheStrategy.LOCAL_REMOTE.name]!!
-
+    override fun getLocalRemoteCacheConfigs(): Map<String, CacheConfig> {
+       return cacheConfigs[CacheStrategy.LOCAL_REMOTE.name]!!
+    }
 
     companion object {
         private val log = LogFactory.getLog(this)

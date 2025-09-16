@@ -1,8 +1,8 @@
 package io.kudos.ability.cache.local.caffeine
 
+import io.kudos.ability.cache.common.core.MixCacheManager
+import io.kudos.ability.cache.common.enums.CacheStrategy
 import io.kudos.test.common.init.EnableKudosTest
-import org.soul.ability.cache.common.MixCacheManager
-import org.soul.ability.cache.common.enums.CacheStrategy
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.cache.CacheManager
@@ -27,11 +27,11 @@ internal class LocalCacheTest {
     private lateinit var cacheTestService: CacheTestService
 
     @Autowired
-    @Qualifier("soulLocalCacheManager")
+    @Qualifier("localCacheManager")
     private lateinit var localCacheManager: CacheManager
 
     @Autowired
-    @Qualifier("cacheManager")
+    @Qualifier("mixCacheManager")
     private lateinit var mixCacheManager: MixCacheManager
 
     private val CACHE_NAME = "test"

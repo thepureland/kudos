@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component
 open class NotifyListenerBeanPostProcessor : BeanPostProcessor {
 
     override fun postProcessAfterInitialization(bean: Any, beanName: String): Any {
-        if (bean is INotifyListener) {
+        if (bean is INotifyListener<*>) {
             val listener = bean
             NotifyListenerItem.put(listener.notifyType(), listener)
         }
