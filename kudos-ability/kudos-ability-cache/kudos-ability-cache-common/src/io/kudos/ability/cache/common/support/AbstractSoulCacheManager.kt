@@ -1,8 +1,6 @@
 package io.kudos.ability.cache.common.support
 
-import org.soul.ability.cache.common.starter.properties.CacheVersionConfig
-import org.soul.ability.cache.common.support.CacheConfig
-import org.soul.ability.cache.common.support.ICacheManager
+import io.kudos.ability.cache.common.init.properties.CacheVersionConfig
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.cache.CacheProperties
 import org.springframework.cache.Cache
@@ -13,7 +11,7 @@ import java.util.*
  * 抽象的soul缓存管理器
  *
  * @author K
- * @since 5.0.0.0
+ * @since 1.0.0
  */
 abstract class AbstractSoulCacheManager<T : Cache?> : AbstractCacheManager(), ICacheManager<T?> {
     var caches: MutableList<T?> = LinkedList<T?>()

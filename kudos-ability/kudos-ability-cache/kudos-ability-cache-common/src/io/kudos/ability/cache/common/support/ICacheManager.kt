@@ -1,7 +1,5 @@
 package io.kudos.ability.cache.common.support
 
-import org.soul.ability.cache.common.support.CacheConfig
-import org.soul.ability.cache.common.support.CacheItemInitializing
 import org.springframework.cache.Cache
 import org.springframework.cache.CacheManager
 
@@ -9,7 +7,7 @@ import org.springframework.cache.CacheManager
  * 缓存管理器接口
  *
  * @author K
- * @since 5.0.0.0
+ * @since 1.0.0
  */
 interface ICacheManager<T : Cache?> : CacheManager, CacheItemInitializing {
     /**
@@ -18,7 +16,7 @@ interface ICacheManager<T : Cache?> : CacheManager, CacheItemInitializing {
      * @param cacheConfig 缓存配置
      * @return 缓存实例
      * @author K
-     * @since 5.0.0.0
+     * @since 1.0.0
      */
     fun createCache(cacheConfig: CacheConfig?): T?
 
