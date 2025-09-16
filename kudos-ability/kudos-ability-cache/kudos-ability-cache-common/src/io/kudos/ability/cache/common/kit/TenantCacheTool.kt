@@ -1,23 +1,12 @@
 package io.kudos.ability.cache.common.kit
 
-import io.kudos.ability.cache.common.core.MixCacheManager
 import io.kudos.ability.cache.common.support.CacheConfig
-import io.kudos.ability.cache.common.support.ICacheConfigProvider
 import io.kudos.base.logger.LogFactory
-import io.kudos.context.kit.SpringKit
+import io.kudos.context.core.KudosContextHolder
 import org.springframework.cache.Cache
-import org.springframework.stereotype.Component
 import kotlin.reflect.KClass
 
-
-/**
- * 缓存工具类
- *
- * @author K
- * @since 1.0.0
- */
-@Component
-object CacheKit {
+object TenantCacheTool {
 
     private val log = LogFactory.getLog(this)
 
@@ -30,13 +19,7 @@ object CacheKit {
      * @since 1.0.0
      */
     fun isCacheActive(cacheName: String): Boolean {
-        val cacheManager = SpringKit.getBean("cacheManager") as MixCacheManager
-        val globalCacheEnabled = cacheManager.isCacheEnabled
-        return if (globalCacheEnabled == true) {
-            val cacheConfigProvider = SpringKit.getBean("cacheConfigProvider") as ICacheConfigProvider
-            val cacheConfig = cacheConfigProvider.getCacheConfig(cacheName)
-            cacheConfig?.active == true
-        } else false
+        return CacheKit.isCacheActive(cacheName)
     }
 
     /**
@@ -48,78 +31,95 @@ object CacheKit {
      * @since 1.0.0
      */
     fun getCache(name: String): Cache? {
-//        val cacheManager = SpringKit.getBean(MixCacheManager::class) //??? 在suspend方法中，会阻塞，原因不明
-        val cacheManager = SpringKit.getBean("cacheManager") as MixCacheManager
-        val cache = cacheManager.getCache(name)
-        if (cache == null) {
-            log.error("缓存【$name】不存在！")
-        }
-        return cache
+        return CacheKit.getCache(name)
     }
 
     /**
      * 获取缓存中指定key的值
      *
-     * @param cacheName 缓存名称
-     * @param key 缓存key
+     * @param cacheName  缓存名称
+     * @param key        缓存key
      * @param valueClass 缓存key对应的值的类型
      * @return 缓存key对应的值
      * @author K
      * @since 1.0.0
      */
-    fun <T : Any> getValue(cacheName: String, key: Any, valueClass: KClass<T>): T? {
-        return getCache(cacheName)!!.get(key, valueClass.java)
+    fun <T: Any> getValue(cacheName: String, key: Any, valueClass: KClass<T>): T? {
+        return CacheKit.getValue(cacheName, getTenantKey(key), valueClass)
     }
 
     /**
      * 获取缓存中指定key的值
      *
      * @param cacheName 缓存名称
-     * @param key 缓存key
+     * @param key       缓存key
      * @return 缓存key对应的值
      * @author K
      * @since 1.0.0
      */
     fun getValue(cacheName: String, key: Any): Any? {
-        return getCache(cacheName)!!.get(key)?.get()
+        return CacheKit.getValue(cacheName, getTenantKey(key))
     }
 
     /**
      * 写入缓存
      *
      * @param cacheName 缓存名称
-     * @param key 缓存key
-     * @param value 要缓存的值
+     * @param key       缓存key
+     * @param value     要缓存的值
      * @author K
      * @since 1.0.0
      */
     fun put(cacheName: String, key: Any, value: Any?) {
-        getCache(cacheName)!!.put(key, value)
+        CacheKit.put(cacheName, getTenantKey(key), value)
     }
 
     /**
      * 如果不存在，就写入缓存
      *
      * @param cacheName 缓存名称
-     * @param key 缓存key
-     * @param value 要缓存的值
+     * @param key       缓存key
+     * @param value     要缓存的值
      * @author K
      * @since 1.0.0
      */
     fun putIfAbsent(cacheName: String, key: Any, value: Any?) {
-        getCache(cacheName)!!.putIfAbsent(key, value)
+        CacheKit.putIfAbsent(cacheName, getTenantKey(key), value)
+    }
+
+    /**
+     * 踢除缓存依赖消息通知
+     *
+     * @param cacheName 缓存名称
+     * @param key       缓存key
+     * @author K
+     * @since 1.0.0
+     */
+    fun evict(cacheName: String, key: Any) {
+        doEvict(cacheName, key)
     }
 
     /**
      * 踢除缓存
      *
      * @param cacheName 缓存名称
-     * @param key 缓存key
+     * @param key       缓存key
      * @author K
      * @since 1.0.0
      */
-    fun evict(cacheName: String, key: Any) {
-        getCache(cacheName)!!.evict(key)
+    fun doEvict(cacheName: String, key: Any) {
+        CacheKit.doEvict(cacheName, getTenantKey(key))
+    }
+
+    /**
+     * 清空缓存通知发送消息通知
+     *
+     * @param cacheName 缓存名称
+     * @author K
+     * @since 1.0.0
+     */
+    fun clear(cacheName: String) {
+        CacheKit.clear(cacheName)
     }
 
     /**
@@ -129,8 +129,8 @@ object CacheKit {
      * @author K
      * @since 1.0.0
      */
-    fun clear(cacheName: String) {
-        getCache(cacheName)!!.clear()
+    fun doClear(cacheName: String) {
+        CacheKit.doClear(cacheName)
     }
 
     /**
@@ -142,12 +142,7 @@ object CacheKit {
      * @since 1.0.0
      */
     fun isWriteInTime(cacheName: String): Boolean {
-        val cacheConfig = getCacheConfig(cacheName)
-        return if (cacheConfig == null) {
-            false
-        } else {
-            cacheConfig.writeInTime == true
-        }
+        return CacheKit.isWriteInTime(cacheName)
     }
 
     /**
@@ -159,12 +154,43 @@ object CacheKit {
      * @since 1.0.0
      */
     fun getCacheConfig(cacheName: String): CacheConfig? {
-        val cacheConfigProvider = SpringKit.getBean("cacheConfigProvider") as ICacheConfigProvider
-        val cacheConfig = cacheConfigProvider.getCacheConfig(cacheName)
-        if (cacheConfig == null) {
-            log.warn("缓存【$cacheName】不存在！")
-        }
-        return cacheConfig
+        return CacheKit.getCacheConfig(cacheName)
     }
 
+    /**
+     * 重新加载缓存
+     *
+     * @param cacheName 缓存名
+     * @param key       key
+     */
+    fun reload(cacheName: String, key: String) {
+        CacheKit.reload(cacheName, getTenantKey(key))
+    }
+
+    /**
+     * 清理缓存开头的key
+     * @param cacheName 缓存name
+     * @param keyPattern key开头
+     */
+    fun evictByPattern(cacheName: String, keyPattern: String) {
+        if (!isCacheActive(cacheName)) {
+            return
+        }
+        val realKeyPattern = getTenantKey(keyPattern)
+        CacheKit.evictByPattern(cacheName, realKeyPattern)
+    }
+
+    /**
+     * 重新加载所有缓存
+     *
+     * @param cacheName 缓存名
+     */
+    fun reloadAll(cacheName: String?) {
+        CacheKit.reloadAll(cacheName)
+    }
+
+    private fun getTenantKey(key: Any): String {
+        val tenantId = KudosContextHolder.get().tenantId
+        return "$tenantId::$key"
+    }
 }

@@ -10,6 +10,8 @@ import kotlin.system.measureTimeMillis
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -104,12 +106,12 @@ class KeyLockRegistryTest {
         }
 
         assertTrue(latchHolding.await(1, TimeUnit.SECONDS))
-        val acquiredWhileHeld = registry.tryLock(key)
-        assertFalse(acquiredWhileHeld)
+        var lock = registry.tryLock(key)
+        assertNull(lock)
 
         holder.get(2, TimeUnit.SECONDS)
-        val acquiredAfterRelease = registry.tryLock(key)
-        assertTrue(acquiredAfterRelease)
+        lock = registry.tryLock(key)
+        assertNotNull(lock)
         registry.unlock(key)
 
         pool.shutdown()
@@ -130,12 +132,12 @@ class KeyLockRegistryTest {
         }
 
         assertTrue(latchHolding.await(1, TimeUnit.SECONDS))
-        val failed = registry.tryLock(key, 50, TimeUnit.MILLISECONDS)
-        assertFalse(failed)
+        var lock = registry.tryLock(key, 50, TimeUnit.MILLISECONDS)
+        assertNull(lock)
 
         holder.get(2, TimeUnit.SECONDS)
-        val success = registry.tryLock(key, 200, TimeUnit.MILLISECONDS)
-        assertTrue(success)
+        lock = registry.tryLock(key, 200, TimeUnit.MILLISECONDS)
+        assertNotNull(lock)
         registry.unlock(key)
 
         pool.shutdown()
@@ -145,8 +147,8 @@ class KeyLockRegistryTest {
     @Test
     fun unlockShouldReleaseLockAndCleanup() {
         val key = "U1"
-        val ok = registry.tryLock(key)
-        assertTrue(ok)
+        val lock = registry.tryLock(key)
+        assertNotNull(lock)
         assertEquals(1, registry.getActiveLockCount())
 
         registry.unlock(key)
