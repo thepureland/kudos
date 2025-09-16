@@ -19,7 +19,7 @@ import java.time.Duration
 /**
  * redis的链接工厂
  */
-object SoulRedisConnectFactory {
+object RedisConnectFactory {
     /**
      * Lettuce链接工厂
      *

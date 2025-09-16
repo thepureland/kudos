@@ -1,9 +1,9 @@
 package io.kudos.ability.data.memdb.redis.init
 
-import io.kudos.ability.data.memdb.redis.SoulRedisConnectFactory
-import io.kudos.ability.data.memdb.redis.SoulRedisTemplate
+import io.kudos.ability.data.memdb.redis.RedisConnectFactory
+import io.kudos.ability.data.memdb.redis.KudosRedisTemplate
 import io.kudos.ability.data.memdb.redis.init.properties.RedisExtProperties
-import io.kudos.ability.data.memdb.redis.init.properties.SoulRedisProperties
+import io.kudos.ability.data.memdb.redis.init.properties.RedisProperties
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
 import io.kudos.context.spring.YamlPropertySourceFactory
@@ -34,31 +34,31 @@ open class RedisAutoConfiguration : IComponentInitializer {
     @Bean
     @ConditionalOnMissingBean
     @ConfigurationProperties(prefix = "kudos.ability.data.redis")
-    open fun redisProperties(): SoulRedisProperties = SoulRedisProperties()
+    open fun redisProperties(): RedisProperties = RedisProperties()
 
-    @Bean(name = ["soulRedisTemplate"])
+    @Bean(name = ["kudosRedisTemplate"])
     @ConditionalOnMissingBean
     open fun redisTemplateMap(
-        soulRedisProperties: SoulRedisProperties
-    ): SoulRedisTemplate {
-        val redisMap = soulRedisProperties.redisMap
+        redisProperties: RedisProperties
+    ): KudosRedisTemplate {
+        val redisMap = redisProperties.redisMap
         val redisTemplateMap = mutableMapOf<String, RedisTemplate<Any, Any?>>()
         redisMap.forEach { (key, properties) ->
-            val lettuceConnectionFactory = SoulRedisConnectFactory.newLettuceConnectionFactory(properties)
+            val lettuceConnectionFactory = RedisConnectFactory.newLettuceConnectionFactory(properties)
             val redisTemplate = createRedisTemplate(lettuceConnectionFactory, properties)
             redisTemplate.afterPropertiesSet()
             redisTemplateMap[key] = redisTemplate
         }
 
-        //拼装soulRedisTemplate
-        val soulRedisTemplate = SoulRedisTemplate(redisTemplateMap, redisTemplateMap[soulRedisProperties.defaultRedis]!!)
-        return soulRedisTemplate
+        //拼装KudosRedisTemplate
+        val kudosRedisTemplate = KudosRedisTemplate(redisTemplateMap, redisTemplateMap[redisProperties.defaultRedis]!!)
+        return kudosRedisTemplate
     }
 
     @Bean("redisTemplate")
     @ConditionalOnMissingBean
-    open fun redisTemplate(redisTemplateMap: SoulRedisTemplate): RedisTemplate<Any, Any?> {
-        return redisTemplateMap.getDefaultRedisTemplate()
+    open fun redisTemplate(redisTemplateMap: KudosRedisTemplate): RedisTemplate<Any, Any?> {
+        return redisTemplateMap.defaultRedisTemplate
     }
 
     /**

@@ -2,16 +2,16 @@ package io.kudos.ability.cache.remote.redis.init
 
 import io.kudos.ability.cache.common.init.BaseCacheConfiguration
 import io.kudos.ability.cache.common.init.LinkableCacheAutoConfiguration
+import io.kudos.ability.cache.common.init.properties.CacheVersionConfig
+import io.kudos.ability.cache.common.notice.ICacheMessageHandler
+import io.kudos.ability.cache.remote.redis.RedisCacheManager
+import io.kudos.ability.cache.remote.redis.notice.RedisCacheMessageHandler
+import io.kudos.ability.cache.remote.redis.support.RedisRemoteCacheProcessor
+import io.kudos.ability.data.memdb.redis.KudosRedisTemplate
 import io.kudos.ability.data.memdb.redis.init.RedisAutoConfiguration
+import io.kudos.ability.data.memdb.redis.init.properties.RedisProperties
 import io.kudos.base.logger.LogFactory
 import io.kudos.context.init.IComponentInitializer
-import org.soul.ability.cache.common.notice.ICacheMessageHandler
-import org.soul.ability.cache.common.starter.properties.CacheVersionConfig
-import org.soul.ability.cache.remote.redis.notice.RedisCacheMessageHandler
-import org.soul.ability.cache.remote.redis.support.RedisRemoteCacheProcessor
-import org.soul.ability.cache.remote.redis.support.SoulRedisCacheManager
-import org.soul.ability.data.memdb.redis.SoulRedisTemplate
-import org.soul.ability.data.memdb.redis.starter.properties.SoulRedisProperties
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
@@ -57,20 +57,20 @@ open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentIni
     private lateinit var environment: Environment
 
 
-    @Bean(name = ["soulRemoteCacheManager"])
+    @Bean(name = ["remoteCacheManager"])
     open fun remoteCacheManager(
-        soulRedisTemplate: SoulRedisTemplate,
-        soulRedisProperties: SoulRedisProperties
+        kudosRedisTemplate: KudosRedisTemplate,
+        redisProperties: RedisProperties
     ): CacheManager {
-        var redisTemplate = soulRedisTemplate.getRedisTemplate(remoteStore)
+        var redisTemplate = kudosRedisTemplate.getRedisTemplate(remoteStore!!)
         if (redisTemplate == null) {
             log.warn("找不到${remoteStore}对应的redis配置，使用默认的redis配置")
-            redisTemplate = soulRedisTemplate.defaultRedisTemplate
+            redisTemplate = kudosRedisTemplate.defaultRedisTemplate
         }
         val keySerializationPair =
-            RedisSerializationContext.SerializationPair.fromSerializer(SoulRedisTemplate.REDIS_KEY_SERIALIZER)
+            RedisSerializationContext.SerializationPair.fromSerializer(KudosRedisTemplate.REDIS_KEY_SERIALIZER)
         val valueSerializationPair =
-            RedisSerializationContext.SerializationPair.fromSerializer(soulRedisProperties.redisMap[remoteStore]!!.valueSerializer())
+            RedisSerializationContext.SerializationPair.fromSerializer(redisProperties.redisMap[remoteStore]!!.valueSerializer())
         val defaultRedisCacheConfiguration = RedisCacheConfiguration
             .defaultCacheConfig()
             .disableCachingNullValues()
@@ -79,7 +79,7 @@ open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentIni
             .serializeValuesWith(valueSerializationPair)
         val connectionFactory = redisTemplate!!.connectionFactory
         val redisCacheWriter = RedisCacheWriter.nonLockingRedisCacheWriter(connectionFactory)
-        return SoulRedisCacheManager(redisCacheWriter, defaultRedisCacheConfiguration, redisTemplate.connectionFactory)
+        return RedisCacheManager(redisCacheWriter, defaultRedisCacheConfiguration, redisTemplate.connectionFactory)
     }
 
     @Bean
@@ -102,10 +102,10 @@ open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentIni
     }
 
     @Bean(name = ["remoteCacheProcessor"])
-    @DependsOn("soulRedisTemplate")
+    @DependsOn("kudosRedisTemplate")
     @ConditionalOnMissingBean
-    open fun remoteCacheProcessor(soulRedisTemplate: SoulRedisTemplate): RedisRemoteCacheProcessor {
-        return RedisRemoteCacheProcessor(soulRedisTemplate)
+    open fun remoteCacheProcessor(kudosRedisTemplate: KudosRedisTemplate): RedisRemoteCacheProcessor {
+        return RedisRemoteCacheProcessor(kudosRedisTemplate)
     }
 
     @Bean

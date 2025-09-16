@@ -35,7 +35,7 @@ class TenantAdvancedCacheableAspect {
         val cacheable = signature.method.getAnnotation(TenantAdvancedCacheable::class.java)
         var tenantId = KudosContextHolder.get().tenantId
         val cacheKey = "${cacheable.cacheKey}::$tenantId"
-        val dataKey: String? = cacheable.dataKey
+        val dataKey = cacheable.dataKey
         val timeOut = cacheable.timeOut
         var o = remoteCacheProcess.getCacheData(cacheKey, dataKey)
         if (o == null) {
