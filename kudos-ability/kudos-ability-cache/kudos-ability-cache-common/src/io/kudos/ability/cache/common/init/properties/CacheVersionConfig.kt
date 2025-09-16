@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Value
 
 class CacheVersionConfig {
 
-    @Value("\${soul.ability.cache.version:default}")
+    @Value("\${kudos.ability.cache.version:default}")
     var cacheVersion: String = "default"
 
     fun getFinalCacheName(cacheName: String): String {

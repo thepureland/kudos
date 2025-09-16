@@ -1,28 +1,31 @@
 package io.kudos.ability.cache.common.init
 
+import io.kudos.ability.cache.common.batch.BatchCacheableAspect
+import io.kudos.ability.cache.common.batch.DefaultKeysGenerator
+import io.kudos.ability.cache.common.batch.IKeysGenerator
+import io.kudos.ability.cache.common.core.CacheHandlerBeanPostProcessor
+import io.kudos.ability.cache.common.core.MixCacheInitializing
+import io.kudos.ability.cache.common.core.MixCacheManager
+import io.kudos.ability.cache.common.init.properties.CacheItemsProperties
+import io.kudos.ability.cache.common.init.properties.CacheVersionConfig
+import io.kudos.ability.cache.common.notify.CacheNotifyListener
+import io.kudos.ability.cache.common.support.DefaultCacheConfigProvider
+import io.kudos.ability.cache.common.support.ICacheConfigProvider
+import io.kudos.ability.distributed.notify.common.support.NotifyTool
 import io.kudos.base.logger.LogFactory
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
 import io.kudos.context.spring.YamlPropertySourceFactory
-import org.soul.ability.cache.common.CacheHandlerBeanPostProcessor
-import org.soul.ability.cache.common.MixCacheInitializing
-import org.soul.ability.cache.common.MixCacheManager
-import org.soul.ability.cache.common.batch.BatchCacheableAspect
-import org.soul.ability.cache.common.batch.DefaultKeysGenerator
-import org.soul.ability.cache.common.batch.IKeysGenerator
-import org.soul.ability.cache.common.notify.CacheNotifyListener
-import org.soul.ability.cache.common.starter.properties.CacheItemsProperties
-import org.soul.ability.cache.common.starter.properties.CacheVersionConfig
-import org.soul.ability.cache.common.support.DefaultCacheConfigProvider
-import org.soul.ability.cache.common.support.ICacheConfigProvider
-import org.soul.ability.distributed.notify.common.support.NotifyTool
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.ConfigurationProperties
+import org.springframework.cache.CacheManager
 import org.springframework.cache.annotation.EnableCaching
 import org.springframework.cache.interceptor.KeyGenerator
 import org.springframework.cache.interceptor.SimpleKeyGenerator
+import org.springframework.cache.transaction.TransactionAwareCacheManagerProxy
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Primary
@@ -48,8 +51,13 @@ open class LinkableCacheAutoConfiguration : IComponentInitializer {
     private val logger = LogFactory.getLog(this)
 
     @Primary
-    @Bean(name = ["mixCacheManager"])
-    open fun cacheManager(): MixCacheManager = MixCacheManager()
+    @Bean("cacheManager")
+    open fun cacheManager(@Qualifier("mixCacheManager") mixCacheManager: MixCacheManager): CacheManager {
+        return TransactionAwareCacheManagerProxy(mixCacheManager)
+    }
+
+    @Bean("mixCacheManager")
+    open fun mixCacheManager(): MixCacheManager = MixCacheManager()
 
     @Bean
     @ConditionalOnMissingBean

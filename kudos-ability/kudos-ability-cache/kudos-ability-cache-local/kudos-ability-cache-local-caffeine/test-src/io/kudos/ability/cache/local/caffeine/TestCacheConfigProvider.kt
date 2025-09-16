@@ -1,8 +1,8 @@
 package io.kudos.ability.cache.local.caffeine
 
-import org.soul.ability.cache.common.enums.CacheStrategy
-import org.soul.ability.cache.common.support.CacheConfig
-import org.soul.ability.cache.common.support.ICacheConfigProvider
+import io.kudos.ability.cache.common.enums.CacheStrategy
+import io.kudos.ability.cache.common.support.CacheConfig
+import io.kudos.ability.cache.common.support.ICacheConfigProvider
 
 
 /**

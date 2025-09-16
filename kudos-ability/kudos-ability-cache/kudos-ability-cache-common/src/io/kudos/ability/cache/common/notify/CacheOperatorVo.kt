@@ -12,7 +12,7 @@ import java.io.Serializable
 class CacheOperatorVo(
     var type: String, //操作类型
     var cacheName: String, //缓存名
-    var key: Any //缓存key
+    var key: Any? //缓存key
 ) : Serializable {
 
     fun doNotify() {
@@ -29,7 +29,7 @@ class CacheOperatorVo(
                 CacheKit.doClear(this.cacheName)
             }
             if (TYPE_EVICT == this.type) {
-                CacheKit.doEvict(this.cacheName, this.key)
+                CacheKit.doEvict(this.cacheName, this.key!!)
             }
         }
     }

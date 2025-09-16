@@ -1,12 +1,12 @@
 package io.kudos.ability.cache.common.init
 
-import org.soul.ability.cache.common.batch.DefaultKeysGenerator
-import org.soul.ability.cache.common.batch.IKeysGenerator
-import org.soul.ability.cache.common.starter.properties.CacheItemsProperties
-import org.soul.ability.cache.common.starter.properties.CacheVersionConfig
-import org.soul.ability.cache.common.support.ContextKeyGenerator
-import org.soul.ability.cache.common.support.DefaultCacheConfigProvider
-import org.soul.ability.cache.common.support.ICacheConfigProvider
+import io.kudos.ability.cache.common.batch.DefaultKeysGenerator
+import io.kudos.ability.cache.common.batch.IKeysGenerator
+import io.kudos.ability.cache.common.init.properties.CacheItemsProperties
+import io.kudos.ability.cache.common.init.properties.CacheVersionConfig
+import io.kudos.ability.cache.common.support.ContextKeyGenerator
+import io.kudos.ability.cache.common.support.DefaultCacheConfigProvider
+import io.kudos.ability.cache.common.support.ICacheConfigProvider
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.cache.interceptor.KeyGenerator
 import org.springframework.cache.interceptor.SimpleKeyGenerator

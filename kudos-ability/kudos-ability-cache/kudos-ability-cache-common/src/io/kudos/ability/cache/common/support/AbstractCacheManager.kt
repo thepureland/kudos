@@ -8,22 +8,22 @@ import org.springframework.cache.support.AbstractCacheManager
 import java.util.*
 
 /**
- * 抽象的soul缓存管理器
+ * 抽象缓存管理器
  *
  * @author K
  * @since 1.0.0
  */
-abstract class AbstractSoulCacheManager<T : Cache?> : AbstractCacheManager(), ICacheManager<T?> {
+abstract class AbstractCacheManager<T : Cache?> : AbstractCacheManager(), ICacheManager<T?> {
     var caches: MutableList<T?> = LinkedList<T?>()
 
     @Autowired
-    protected var properties: CacheProperties? = null
+    protected lateinit var properties: CacheProperties
 
     @Autowired
-    protected var versionConfig: CacheVersionConfig? = null
+    protected lateinit var versionConfig: CacheVersionConfig
 
-    override fun initCacheAfterSystemInit(cacheConfigMap: MutableMap<String?, CacheConfig?>) {
-        cacheConfigMap.forEach { (key: String?, cacheConfig: CacheConfig?) ->
+    override fun initCacheAfterSystemInit(cacheConfigMap: Map<String, CacheConfig>) {
+        cacheConfigMap.forEach { (key: String?, cacheConfig: CacheConfig) ->
             val cache = createCache(cacheConfig)
             add(cache)
         }

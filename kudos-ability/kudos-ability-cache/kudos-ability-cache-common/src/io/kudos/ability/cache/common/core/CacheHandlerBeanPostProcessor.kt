@@ -1,7 +1,5 @@
 package io.kudos.ability.cache.common.core
 
-import io.kuark.ability.cache.kit.CacheKit
-import io.kuark.ability.cache.support.AbstractCacheHandler
 import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.ability.cache.common.support.AbstractCacheHandler
 import org.springframework.beans.factory.config.BeanPostProcessor

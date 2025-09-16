@@ -37,7 +37,7 @@ class CacheNotifyListener : INotifyListener<CacheOperatorVo> {
             CacheKit.doClear(messageBody.cacheName)
         }
         if (CacheOperatorVo.TYPE_EVICT == messageBody.type) {
-            CacheKit.doEvict(messageBody.cacheName, messageBody.key)
+            CacheKit.doEvict(messageBody.cacheName, messageBody.key!!)
         }
     }
 

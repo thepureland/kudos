@@ -30,11 +30,11 @@ class MixCacheManager : AbstractCacheManager() {
     private val versionConfig: CacheVersionConfig? = null
 
     @Autowired(required = false)
-    @Qualifier("soulLocalCacheManager")
+    @Qualifier("localCacheManager")
     private val localCacheManager: CacheManager? = null
 
     @Autowired(required = false)
-    @Qualifier("soulRemoteCacheManager")
+    @Qualifier("remoteCacheManager")
     private val remoteCacheManager: CacheManager? = null
 
     @Autowired
@@ -56,9 +56,9 @@ class MixCacheManager : AbstractCacheManager() {
             return
         }
         //查询一次数据，各个缓存组件加载
-        val localCacheConfigs = cacheConfigProvider!!.localCacheConfigs
-        val remoteCacheConfigs = cacheConfigProvider.remoteCacheConfigs
-        val localRemoteCacheConfigs = cacheConfigProvider.localRemoteCacheConfigs
+        val localCacheConfigs = cacheConfigProvider!!.getLocalCacheConfigs()
+        val remoteCacheConfigs = cacheConfigProvider.getRemoteCacheConfigs()
+        val localRemoteCacheConfigs = cacheConfigProvider.getLocalRemoteCacheConfigs()
         if (localCacheManager != null && localCacheManager is CacheItemInitializing) {
             (localCacheManager as CacheItemInitializing).initCacheAfterSystemInit(
                 localCacheConfigs + localRemoteCacheConfigs
@@ -85,12 +85,12 @@ class MixCacheManager : AbstractCacheManager() {
      *
      * @return List<Cache>
     </Cache> */
-    private fun loadLocalCacheConfig(localCacheConfigs: MutableMap<String, CacheConfig>): MutableList<Cache?> {
+    private fun loadLocalCacheConfig(localCacheConfigs: Map<String, CacheConfig>): MutableList<Cache?> {
         val localCaches: MutableList<Cache?> = ArrayList<Cache?>()
         //本地缓存
         if (localCacheManager != null) {
             if (localCacheConfigs.isNotEmpty()) {
-                localCacheConfigs.forEach { (key: String?, value: CacheConfig?) ->
+                localCacheConfigs.forEach { (key: String, _: CacheConfig?) ->
                     val realKey = versionConfig!!.getFinalCacheName(key)
                     val localCache = localCacheManager.getCache(realKey)
                     localCaches.add(MixCache(CacheStrategy.SINGLE_LOCAL, localCache, null))
@@ -107,12 +107,12 @@ class MixCacheManager : AbstractCacheManager() {
      *
      * @return remoteCaches
      */
-    private fun loadRemoteCacheConfig(remoteCacheConfigs: MutableMap<String, CacheConfig>): MutableList<Cache?> {
+    private fun loadRemoteCacheConfig(remoteCacheConfigs: Map<String, CacheConfig>): MutableList<Cache?> {
         val remoteCaches: MutableList<Cache?> = ArrayList<Cache?>()
         //远程二级缓存
         if (remoteCacheManager != null) {
             if (remoteCacheConfigs.isNotEmpty()) {
-                remoteCacheConfigs.forEach { (key: String?, value: CacheConfig?) ->
+                remoteCacheConfigs.forEach { (key: String, _: CacheConfig?) ->
                     val realKey = versionConfig!!.getFinalCacheName(key)
                     val remoteCache = remoteCacheManager.getCache(realKey)
                     remoteCaches.add(MixCache(CacheStrategy.REMOTE, null, remoteCache))
@@ -124,11 +124,11 @@ class MixCacheManager : AbstractCacheManager() {
         return remoteCaches
     }
 
-    private fun loadMixCacheConfig(localRemoteCacheConfigs: MutableMap<String, CacheConfig>): MutableList<Cache?> {
+    private fun loadMixCacheConfig(localRemoteCacheConfigs: Map<String, CacheConfig>): MutableList<Cache?> {
         val mixCacheConfig: MutableList<Cache?> = ArrayList<Cache?>()
         // 本地-远程两级联动缓存
         if (localRemoteCacheConfigs.isNotEmpty()) {
-            localRemoteCacheConfigs.forEach { (key: String?, value: CacheConfig?) ->
+            localRemoteCacheConfigs.forEach { (key: String, _: CacheConfig?) ->
                 val realKey = versionConfig!!.getFinalCacheName(key)
                 val localCache = localCacheManager?.getCache(realKey)
                 val remoteCache = remoteCacheManager?.getCache(realKey)

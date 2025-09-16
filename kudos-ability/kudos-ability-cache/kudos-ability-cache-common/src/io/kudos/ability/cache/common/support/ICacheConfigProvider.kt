@@ -24,7 +24,7 @@ interface ICacheConfigProvider {
      * @author K
      * @since 1.0.0
      */
-    val allCacheConfigs: MutableMap<String, CacheConfig>
+    fun getAllCacheConfigs(): Map<String, CacheConfig>
 
     /**
      * 返回本地(第一级)缓存配置信息
@@ -33,7 +33,7 @@ interface ICacheConfigProvider {
      * @author K
      * @since 1.0.0
      */
-    val localCacheConfigs: MutableMap<String, CacheConfig>
+    fun getLocalCacheConfigs(): Map<String, CacheConfig>
 
     /**
      * 返回远程(第二级)缓存配置信息
@@ -42,7 +42,7 @@ interface ICacheConfigProvider {
      * @author K
      * @since 1.0.0
      */
-    val remoteCacheConfigs: MutableMap<String, CacheConfig>
+    fun getRemoteCacheConfigs(): Map<String, CacheConfig>
 
     /**
      * 返回本地-远程(一级和二级)缓存配置信息
@@ -51,5 +51,5 @@ interface ICacheConfigProvider {
      * @author K
      * @since 1.0.0
      */
-    val localRemoteCacheConfigs: MutableMap<String, CacheConfig>
+    fun getLocalRemoteCacheConfigs(): Map<String, CacheConfig>
 }
