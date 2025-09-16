@@ -1,6 +1,10 @@
 package io.kudos.ability.cache.common.kit
 
+import io.kudos.ability.cache.common.core.MixCache
 import io.kudos.ability.cache.common.core.MixCacheManager
+import io.kudos.ability.cache.common.enums.CacheStrategy
+import io.kudos.ability.cache.common.notify.CacheOperatorVo
+import io.kudos.ability.cache.common.support.AbstractCacheHandler
 import io.kudos.ability.cache.common.support.CacheConfig
 import io.kudos.ability.cache.common.support.ICacheConfigProvider
 import io.kudos.base.logger.LogFactory
@@ -30,13 +34,12 @@ object CacheKit {
      * @since 1.0.0
      */
     fun isCacheActive(cacheName: String): Boolean {
-        val cacheManager = SpringKit.getBean("cacheManager") as MixCacheManager
-        val globalCacheEnabled = cacheManager.isCacheEnabled
-        return if (globalCacheEnabled == true) {
-            val cacheConfigProvider = SpringKit.getBean("cacheConfigProvider") as ICacheConfigProvider
-            val cacheConfig = cacheConfigProvider.getCacheConfig(cacheName)
-            cacheConfig?.active == true
-        } else false
+        val cacheConfigProvider = getCacheConfigProvider()
+        val cacheConfig = cacheConfigProvider.getCacheConfig(cacheName)
+        if (cacheConfig != null) {
+            return cacheConfig.active == true
+        }
+        return false
     }
 
     /**
@@ -48,9 +51,8 @@ object CacheKit {
      * @since 1.0.0
      */
     fun getCache(name: String): Cache? {
-//        val cacheManager = SpringKit.getBean(MixCacheManager::class) //??? 在suspend方法中，会阻塞，原因不明
-        val cacheManager = SpringKit.getBean("cacheManager") as MixCacheManager
-        val cache = cacheManager.getCache(name)
+        val cacheManager = getCacheManager()
+        val cache: Cache? = cacheManager.getCache(name)
         if (cache == null) {
             log.error("缓存【$name】不存在！")
         }
@@ -60,66 +62,136 @@ object CacheKit {
     /**
      * 获取缓存中指定key的值
      *
-     * @param cacheName 缓存名称
-     * @param key 缓存key
+     * @param cacheName  缓存名称
+     * @param key        缓存key
      * @param valueClass 缓存key对应的值的类型
      * @return 缓存key对应的值
      * @author K
      * @since 1.0.0
      */
     fun <T : Any> getValue(cacheName: String, key: Any, valueClass: KClass<T>): T? {
-        return getCache(cacheName)!!.get(key, valueClass.java)
+        val cache = getCache(cacheName)
+        if (cache == null) {
+            return null
+        }
+        return cache.get<T>(key, valueClass.java)
     }
 
     /**
      * 获取缓存中指定key的值
      *
      * @param cacheName 缓存名称
-     * @param key 缓存key
+     * @param key       缓存key
      * @return 缓存key对应的值
      * @author K
      * @since 1.0.0
      */
     fun getValue(cacheName: String, key: Any): Any? {
-        return getCache(cacheName)!!.get(key)?.get()
+        val cache = getCache(cacheName)
+        if (cache == null) {
+            return null
+        }
+        val value = cache.get(key)
+        return value?.get()
     }
 
     /**
      * 写入缓存
      *
      * @param cacheName 缓存名称
-     * @param key 缓存key
-     * @param value 要缓存的值
+     * @param key       缓存key
+     * @param value     要缓存的值
      * @author K
      * @since 1.0.0
      */
     fun put(cacheName: String, key: Any, value: Any?) {
-        getCache(cacheName)!!.put(key, value)
+        if (!isCacheActive(cacheName)) {
+            return
+        }
+        val cache = getCache(cacheName)
+        cache?.put(key, value)
     }
 
     /**
      * 如果不存在，就写入缓存
      *
      * @param cacheName 缓存名称
-     * @param key 缓存key
-     * @param value 要缓存的值
+     * @param key       缓存key
+     * @param value     要缓存的值
      * @author K
      * @since 1.0.0
      */
     fun putIfAbsent(cacheName: String, key: Any, value: Any?) {
-        getCache(cacheName)!!.putIfAbsent(key, value)
+        if (!isCacheActive(cacheName)) {
+            return
+        }
+        val cache = getCache(cacheName)
+        cache?.putIfAbsent(key, value)
+    }
+
+    /**
+     * 踢除缓存依赖消息通知
+     *
+     * @param cacheName 缓存名称
+     * @param key       缓存key
+     * @author K
+     * @since 1.0.0
+     */
+    fun evict(cacheName: String, key: Any) {
+        if (!isCacheActive(cacheName)) {
+            return
+        }
+        val cache = getCache(cacheName) as MixCache?
+        if (cache == null) {
+            return
+        }
+        //如果是本地缓存，则需要依赖通知发布删除
+        if (CacheStrategy.SINGLE_LOCAL == cache.strategy) {
+            val coVo = CacheOperatorVo(CacheOperatorVo.TYPE_EVICT, cacheName, key)
+            coVo.doNotify()
+        } else {
+            doEvict(cacheName, key)
+        }
     }
 
     /**
      * 踢除缓存
      *
      * @param cacheName 缓存名称
-     * @param key 缓存key
+     * @param key       缓存key
      * @author K
      * @since 1.0.0
      */
-    fun evict(cacheName: String, key: Any) {
-        getCache(cacheName)!!.evict(key)
+    fun doEvict(cacheName: String, key: Any) {
+        if (!isCacheActive(cacheName)) {
+            return
+        }
+        val cache = getCache(cacheName)
+        cache?.evict(key)
+    }
+
+    /**
+     * 清空缓存通知发送消息通知
+     *
+     * @param cacheName 缓存名称
+     * @author K
+     * @since 1.0.0
+     */
+    fun clear(cacheName: String) {
+        if (!isCacheActive(cacheName)) {
+            return
+        }
+        val cache = getCache(cacheName) as MixCache?
+        if (cache == null) {
+            return
+        }
+        //如果是本地缓存，则需要依赖通知发布删除
+        if (CacheStrategy.SINGLE_LOCAL == cache.strategy) {
+            val coVo = CacheOperatorVo(CacheOperatorVo.TYPE_CLEAR, cacheName, null)
+            coVo.doNotify()
+        } else {
+            doClear(cacheName)
+        }
     }
 
     /**
@@ -129,8 +201,12 @@ object CacheKit {
      * @author K
      * @since 1.0.0
      */
-    fun clear(cacheName: String) {
-        getCache(cacheName)!!.clear()
+    fun doClear(cacheName: String) {
+        if (!isCacheActive(cacheName)) {
+            return
+        }
+        val cache = getCache(cacheName)
+        cache?.clear()
     }
 
     /**
@@ -142,12 +218,14 @@ object CacheKit {
      * @since 1.0.0
      */
     fun isWriteInTime(cacheName: String): Boolean {
-        val cacheConfig = getCacheConfig(cacheName)
-        return if (cacheConfig == null) {
-            false
-        } else {
-            cacheConfig.writeInTime == true
+        if (!isCacheActive(cacheName)) {
+            return false
         }
+        val cacheConfig = getCacheConfig(cacheName)
+        if (cacheConfig == null) {
+            return false
+        }
+        return cacheConfig.writeInTime == true
     }
 
     /**
@@ -159,12 +237,97 @@ object CacheKit {
      * @since 1.0.0
      */
     fun getCacheConfig(cacheName: String): CacheConfig? {
-        val cacheConfigProvider = SpringKit.getBean("cacheConfigProvider") as ICacheConfigProvider
+        if (!isCacheActive(cacheName)) {
+            return null
+        }
+        val cacheConfigProvider = getCacheConfigProvider()
         val cacheConfig = cacheConfigProvider.getCacheConfig(cacheName)
         if (cacheConfig == null) {
             log.warn("缓存【$cacheName】不存在！")
         }
         return cacheConfig
+    }
+
+    /**
+     * 重新加载缓存
+     *
+     * @param cacheName 缓存名
+     * @param key       key
+     */
+    fun reload(cacheName: String, key: String) {
+        if (!isCacheActive(cacheName)) {
+            return
+        }
+        val cacheConfig = getCacheConfig(cacheName)
+        if (cacheConfig == null) {
+            return
+        }
+        if (cacheConfig.writeOnBoot == true) {
+            val beansOfType = SpringKit.getBeansOfType(AbstractCacheHandler::class)
+            beansOfType.values.forEach {
+                if (it.cacheName() == cacheName) {
+                    it.reload(key)
+                }
+            }
+        } else {
+            evict(cacheName, key)
+        }
+    }
+
+    /**
+     * 重新加载所有缓存
+     *
+     * @param cacheName 缓存名
+     */
+    fun reloadAll(cacheName: String) {
+        if (!isCacheActive(cacheName)) {
+            return
+        }
+        val cacheConfig = getCacheConfig(cacheName)
+        if (cacheConfig == null) {
+            return
+        }
+        if (cacheConfig.writeOnBoot == true) {
+            val beansOfType = SpringKit.getBeansOfType(AbstractCacheHandler::class)
+            beansOfType.values.forEach {
+                if (it.cacheName() == cacheName) {
+                    it.reloadAll(true)
+                }
+            }
+        } else {
+            clear(cacheName)
+        }
+    }
+
+    /**
+     * 清理缓存开头的key
+     * @param cacheName 缓存name
+     * @param keyPattern key开头
+     */
+    fun evictByPattern(cacheName: String, keyPattern: String) {
+        if (!isCacheActive(cacheName)) {
+            return
+        }
+        val cacheManager = getCacheManager()
+        cacheManager.evictByPattern(cacheName, keyPattern)
+    }
+
+    /**
+     * 获取缓存管理器
+     *
+     * @return MixCacheManager
+     */
+    private fun getCacheManager(): MixCacheManager {
+        return SpringKit.getBean("mixCacheManager") as MixCacheManager
+    }
+
+    /**
+     * 获取缓存配置服务
+     *
+     * @return ICacheConfigProvider
+     */
+    private fun getCacheConfigProvider(): ICacheConfigProvider {
+        return SpringKit.getBean(ICacheConfigProvider::class)
     }
 
 }
