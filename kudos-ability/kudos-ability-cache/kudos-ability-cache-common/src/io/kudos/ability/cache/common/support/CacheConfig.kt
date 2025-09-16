@@ -35,7 +35,7 @@ class CacheConfig : Serializable {
     var active: Boolean? = true
 
     @Transient
-    private val strategy: String? = null
+    val strategy: String? = null
 
     @Transient
     var ignoreVersion: Boolean? = null
