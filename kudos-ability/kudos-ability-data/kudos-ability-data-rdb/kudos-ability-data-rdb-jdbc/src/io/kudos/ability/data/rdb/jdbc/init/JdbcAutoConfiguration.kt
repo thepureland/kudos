@@ -27,15 +27,6 @@ import org.springframework.context.annotation.Primary
  * @since 1.0.0
  */
 @Configuration
-//@ComponentScan(
-//    basePackages = [
-//        "org.soul.ability.data.rdb.jdbc",
-//    ],
-//    excludeFilters = [ComponentScan.Filter(
-//        type = FilterType.ASSIGNABLE_TYPE,
-//        classes = [RdbJdbcConfiguration::class]
-//    )]
-//)
 @AutoConfigureAfter(ContextAutoConfiguration::class)
 //@EnableAutoConfiguration // 不然dynamic data source会找不到
 //@ImportAutoConfiguration(DynamicDataSourceCreatorAutoConfiguration::class, DynamicDataSourceAutoConfiguration::class)
