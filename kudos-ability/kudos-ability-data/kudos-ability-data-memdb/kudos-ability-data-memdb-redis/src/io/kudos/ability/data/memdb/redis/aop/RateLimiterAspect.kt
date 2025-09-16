@@ -1,6 +1,6 @@
 package io.kudos.ability.data.memdb.redis.aop
 
-import io.kudos.ability.data.memdb.redis.SoulRedisTemplate
+import io.kudos.ability.data.memdb.redis.KudosRedisTemplate
 import io.kudos.base.enums.impl.ErrorStatusEnum
 import io.kudos.base.error.ServiceException
 import io.kudos.base.logger.LogFactory
@@ -24,7 +24,7 @@ class RateLimiterAspect {
 
     @Autowired
     @org.springframework.context.annotation.Lazy
-    private lateinit var soulRedisTemplate: SoulRedisTemplate
+    private lateinit var kudosRedisTemplate: KudosRedisTemplate
 
     @Before("@annotation(rateLimiter)")
     fun doBefore(point: JoinPoint, rateLimiter: RateLimiter) {
@@ -34,7 +34,7 @@ class RateLimiterAspect {
         val combineKey = getCombineKey(rateLimiter, point)
         val keys = mutableListOf<Any?>(combineKey)
         try {
-            val number = soulRedisTemplate.getDefaultRedisTemplate().execute(
+            val number = kudosRedisTemplate.defaultRedisTemplate.execute(
                 luaScriptStr,
                 argSerializer,
                 resultSerializer,

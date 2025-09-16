@@ -1,7 +1,7 @@
 package io.kudos.ability.cache.remote.redis
 
+import io.kudos.ability.cache.common.core.MixCacheManager
 import io.kudos.test.common.init.EnableKudosTest
-import org.soul.ability.cache.common.MixCacheManager
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.cache.CacheManager
@@ -26,11 +26,11 @@ internal class NoCacheTest {
     private lateinit var cacheTestService: CacheTestService
 
     @Autowired(required = false)
-    @Qualifier("soulLocalCacheManager")
+    @Qualifier("localCacheManager")
     private lateinit var localCacheManager: CacheManager
 
     @Autowired(required = false)
-    @Qualifier("soulRemoteCacheManager")
+    @Qualifier("remoteCacheManager")
     private lateinit var remoteCacheManager: CacheManager
 
     @Autowired(required = false)

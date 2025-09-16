@@ -3,7 +3,7 @@ package io.kudos.ability.data.memdb.redis
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.data.redis.serializer.StringRedisSerializer
 
-class SoulRedisTemplate {
+class KudosRedisTemplate {
 
     /**
      * 多个redisTemplate
@@ -13,7 +13,7 @@ class SoulRedisTemplate {
     /**
      * default 的 redisTemplate
      */
-    private lateinit var defaultRedisTemplate: RedisTemplate<Any, Any?>
+    lateinit var defaultRedisTemplate: RedisTemplate<Any, Any?>
 
     constructor(
         redisTemplateMap: MutableMap<String, RedisTemplate<Any, Any?>>,
@@ -27,9 +27,8 @@ class SoulRedisTemplate {
 
     fun getRedisTemplateMap() = redisTemplateMap
 
-    fun getDefaultRedisTemplate() = defaultRedisTemplate
 
-    companion object {
+    companion object Companion {
         val REDIS_KEY_SERIALIZER: StringRedisSerializer? = StringRedisSerializer.UTF_8
     }
 

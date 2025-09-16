@@ -3,7 +3,7 @@ package io.kudos.ability.data.memdb.redis.serializer
 import org.springframework.data.redis.serializer.RedisSerializer
 import org.springframework.data.redis.serializer.StringRedisSerializer
 
-class SoulStringRedisSerializer(prefix: String?) : RedisSerializer<String?> {
+class StringRedisSerializer(prefix: String?) : RedisSerializer<String?> {
     private val prefix: String = "$prefix:"
 
     private val delegate: StringRedisSerializer = StringRedisSerializer(java.nio.charset.StandardCharsets.UTF_8)

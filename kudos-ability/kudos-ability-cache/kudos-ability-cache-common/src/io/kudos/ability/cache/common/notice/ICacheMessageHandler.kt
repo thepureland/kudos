@@ -9,12 +9,12 @@ interface ICacheMessageHandler {
      *
      * @param message
      */
-    fun sendMessage(message: CacheMessage?)
+    fun sendMessage(message: CacheMessage)
 
     /**
      * 接受消息
      *
      * @param message
      */
-    fun receiveMessage(message: CacheMessage?)
+    fun receiveMessage(message: CacheMessage)
 }

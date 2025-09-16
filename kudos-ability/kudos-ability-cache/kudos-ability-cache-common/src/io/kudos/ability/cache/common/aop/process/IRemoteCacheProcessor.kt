@@ -7,7 +7,7 @@ interface IRemoteCacheProcessor {
      * @param dataKey
      * @return
      */
-    fun getCacheData(cacheKey: String?, dataKey: String?): Any?
+    fun getCacheData(cacheKey: String, dataKey: String): Any?
 
     /**
      * 写入缓存数据
@@ -16,7 +16,7 @@ interface IRemoteCacheProcessor {
      * @param o
      * @param timeOut
      */
-    fun writeCacheData(cacheKey: String?, dataKey: String?, o: Any?, timeOut: Long)
+    fun writeCacheData(cacheKey: String, dataKey: String, o: Any?, timeOut: Long)
 
     /**
      * 清理缓存
@@ -24,5 +24,5 @@ interface IRemoteCacheProcessor {
      * @param s
      * @param b
      */
-    fun clearCache(cacheKey: String?, s: String?, b: Boolean)
+    fun clearCache(cacheKey: String, s: String, b: Boolean)
 }

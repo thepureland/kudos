@@ -1,9 +1,9 @@
 package io.kudos.ability.cache.remote.redis
 
+import io.kudos.ability.cache.common.core.MixCacheManager
+import io.kudos.ability.cache.common.enums.CacheStrategy
 import io.kudos.test.common.init.EnableKudosTest
 import io.kudos.test.container.containers.RedisTestContainer
-import org.soul.ability.cache.common.MixCacheManager
-import org.soul.ability.cache.common.enums.CacheStrategy
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.cache.CacheManager
@@ -42,7 +42,7 @@ internal class RemoteCacheTest {
     private lateinit var cacheTestService: CacheTestService
 
     @Autowired
-    @Qualifier("soulRemoteCacheManager")
+    @Qualifier("remoteCacheManager")
     private lateinit var remoteCacheManager: CacheManager
 
     @Autowired
