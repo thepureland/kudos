@@ -61,16 +61,17 @@ class KeyLockRegistry<K : Any> {
      * 尝试非阻塞地获取 key 对应的锁。
      *
      * @param key 锁的标识
-     * @return true 表示成功获取锁，false 表示锁已被其他线程持有
+     * @return null表示锁已被其他线程持有
      */
-    fun tryLock(key: K): Boolean {
+    fun tryLock(key: K): ReentrantLock? {
         val wrapper = lockMap.computeIfAbsent(key) { LockWrapper() }
         wrapper.usageCount.incrementAndGet()
         val acquired = wrapper.lock.tryLock()
         if (!acquired) {
             releaseWrapper(key, wrapper)
+            return null
         }
-        return acquired
+        return wrapper.lock
     }
 
     /**
@@ -79,18 +80,19 @@ class KeyLockRegistry<K : Any> {
      * @param key 锁的标识
      * @param timeout 等待时长
      * @param unit 时间单位
-     * @return true 表示成功获取锁，false 表示超时
+     * @return null表示超时
      * @throws InterruptedException 如果等待过程中被中断
      */
     @Throws(InterruptedException::class)
-    fun tryLock(key: K, timeout: Long, unit: TimeUnit): Boolean {
+    fun tryLock(key: K, timeout: Long, unit: TimeUnit): ReentrantLock? {
         val wrapper = lockMap.computeIfAbsent(key) { LockWrapper() }
         wrapper.usageCount.incrementAndGet()
         val acquired = wrapper.lock.tryLock(timeout, unit)
         if (!acquired) {
             releaseWrapper(key, wrapper)
+            return null
         }
-        return acquired
+        return wrapper.lock
     }
 
     /**
