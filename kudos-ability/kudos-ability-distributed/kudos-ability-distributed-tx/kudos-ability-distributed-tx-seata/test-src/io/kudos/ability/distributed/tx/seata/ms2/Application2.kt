@@ -1,7 +1,7 @@
 package io.kudos.ability.distributed.tx.seata.ms2
 
 import io.kudos.context.init.EnableKudos
-import io.kudos.context.spring.YamlPropertySourceFactory
+import io.kudos.context.config.YamlPropertySourceFactory
 import org.mybatis.spring.annotation.MapperScan
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient
 import org.springframework.context.annotation.Import

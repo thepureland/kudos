@@ -2,7 +2,7 @@ package io.kudos.ability.comm.websocket.spring.init
 
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
-import io.kudos.context.spring.YamlPropertySourceFactory
+import io.kudos.context.config.YamlPropertySourceFactory
 import org.soul.ability.comm.websocket.common.handler.WebSocketConnector
 import org.soul.ability.comm.websocket.common.session.IWebSocketManager
 import org.soul.ability.comm.websocket.common.session.distributed.DistributedWebSocketManager

@@ -3,7 +3,7 @@ package io.kudos.ability.distributed.notify.mq.main
 import io.kudos.ability.distributed.notify.mq.main.ms.NotifyMqMainController
 import io.kudos.ability.distributed.notify.mq.main.ms.NotifyMqMsService
 import io.kudos.context.init.EnableKudos
-import io.kudos.context.spring.YamlPropertySourceFactory
+import io.kudos.context.config.YamlPropertySourceFactory
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient
 import org.springframework.context.annotation.Import
 import org.springframework.context.annotation.PropertySource

@@ -1,6 +1,6 @@
 dependencies {
     api(project(":kudos-context"))
-    api("org.soul:soul-ability-distributed-config-nacos")
+    api("com.alibaba.cloud:spring-cloud-starter-alibaba-nacos-config")
 
     testImplementation(project(":kudos-test:kudos-test-container"))
 }

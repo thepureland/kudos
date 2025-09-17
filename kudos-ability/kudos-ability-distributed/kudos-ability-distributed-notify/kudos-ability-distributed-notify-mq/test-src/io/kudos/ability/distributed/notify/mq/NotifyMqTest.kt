@@ -5,7 +5,7 @@ import io.kudos.ability.distributed.notify.mq.main.MainApplication
 import io.kudos.ability.distributed.notify.mq.ms.MsApplication
 import io.kudos.base.lang.string.RandomStringKit
 import io.kudos.base.net.IpKit
-import io.kudos.context.spring.YamlPropertySourceFactory
+import io.kudos.context.config.YamlPropertySourceFactory
 import io.kudos.test.common.init.EnableKudosTest
 import io.kudos.test.container.containers.NacosTestContainer
 import io.kudos.test.container.containers.PostgresTestContainer
