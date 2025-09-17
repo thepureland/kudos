@@ -6,7 +6,7 @@ import io.kudos.ability.cache.common.support.ICacheManager
 import io.kudos.ability.cache.local.caffeine.CaffeineCacheManager
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
-import io.kudos.context.spring.YamlPropertySourceFactory
+import io.kudos.context.config.YamlPropertySourceFactory
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.AutoConfigureBefore
 import org.springframework.boot.autoconfigure.cache.CacheProperties

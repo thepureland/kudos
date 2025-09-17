@@ -9,7 +9,7 @@ import io.kudos.ability.distributed.notify.mq.producer.NotifyMqProducer
 import io.kudos.base.logger.LogFactory
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
-import io.kudos.context.spring.YamlPropertySourceFactory
+import io.kudos.context.config.YamlPropertySourceFactory
 import org.soul.ability.distributed.stream.common.annotations.MqConsumer
 import org.soul.ability.distributed.stream.common.model.model.StreamMessageVo
 import org.springframework.boot.autoconfigure.AutoConfigureAfter

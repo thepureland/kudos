@@ -2,7 +2,7 @@ package io.kudos.ability.distributed.lock.redisson.init
 
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
-import io.kudos.context.spring.YamlPropertySourceFactory
+import io.kudos.context.config.YamlPropertySourceFactory
 import org.redisson.Redisson
 import org.redisson.api.RedissonClient
 import org.redisson.config.BaseConfig
