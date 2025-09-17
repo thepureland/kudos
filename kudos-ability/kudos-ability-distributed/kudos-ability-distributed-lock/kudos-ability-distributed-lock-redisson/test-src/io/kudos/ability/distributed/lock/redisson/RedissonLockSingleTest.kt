@@ -1,10 +1,10 @@
 package io.kudos.ability.distributed.lock.redisson
 
+import io.kudos.ability.distributed.lock.common.annotations.DistributedLock
 import io.kudos.ability.distributed.lock.redisson.kit.RedissonLockKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.test.common.init.EnableKudosTest
 import io.kudos.test.container.containers.RedisTestContainer
-import org.soul.ability.distributed.lock.common.annotations.DistributedLock
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.DynamicPropertyRegistry

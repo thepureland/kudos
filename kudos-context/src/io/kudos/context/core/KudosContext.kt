@@ -18,6 +18,9 @@ class KudosContext {
         const val SESSION_KEY_USER = "_USER_"
     }
 
+    /** 原子服务标识，用于隔离不同原子服务的数据 */
+    var atomicServiceId: String? = null
+
     /** 数据源id，为null将根据路由策略决定 */
     var dataSourceId: String? = null
 
