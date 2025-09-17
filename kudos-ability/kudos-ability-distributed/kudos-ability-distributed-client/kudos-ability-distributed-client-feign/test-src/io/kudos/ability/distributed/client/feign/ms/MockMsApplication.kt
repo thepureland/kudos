@@ -1,6 +1,6 @@
 package io.kudos.ability.distributed.client.feign.ms
 
-import io.kudos.context.spring.YamlPropertySourceFactory
+import io.kudos.context.config.YamlPropertySourceFactory
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient
 import org.springframework.context.annotation.PropertySource

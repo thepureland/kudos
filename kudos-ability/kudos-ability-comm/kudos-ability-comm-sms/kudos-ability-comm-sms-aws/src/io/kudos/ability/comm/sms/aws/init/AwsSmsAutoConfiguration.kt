@@ -2,7 +2,7 @@ package io.kudos.ability.comm.sms.aws.init
 
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
-import io.kudos.context.spring.YamlPropertySourceFactory
+import io.kudos.context.config.YamlPropertySourceFactory
 import org.soul.ability.comm.sms.aws.handler.AwsSmsHandler
 import org.soul.ability.comm.sms.aws.starter.properties.SmsAwsProxyProperties
 import org.springframework.beans.factory.annotation.Configurable

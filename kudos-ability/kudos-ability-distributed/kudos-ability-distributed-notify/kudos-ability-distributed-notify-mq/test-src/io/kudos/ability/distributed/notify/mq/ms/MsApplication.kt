@@ -7,7 +7,7 @@ import io.kudos.ability.distributed.notify.mq.ms.common.DataSourceNotifyListener
 import io.kudos.ability.distributed.notify.mq.ms.common.MsApplicationListener
 import io.kudos.ability.distributed.notify.mq.ms.common.MsConfig
 import io.kudos.context.init.EnableKudos
-import io.kudos.context.spring.YamlPropertySourceFactory
+import io.kudos.context.config.YamlPropertySourceFactory
 import org.springframework.cloud.openfeign.EnableFeignClients
 import org.springframework.context.annotation.Import
 import org.springframework.context.annotation.PropertySource

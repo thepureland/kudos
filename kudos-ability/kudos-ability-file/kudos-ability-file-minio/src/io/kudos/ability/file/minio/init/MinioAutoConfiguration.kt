@@ -2,7 +2,7 @@ package io.kudos.ability.file.minio.init
 
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
-import io.kudos.context.spring.YamlPropertySourceFactory
+import io.kudos.context.config.YamlPropertySourceFactory
 import io.minio.MinioClient
 import org.soul.ability.file.minio.MinioDeleteService
 import org.soul.ability.file.minio.MinioDownLoadService

@@ -2,7 +2,7 @@ package io.kudos.ability.log.audit.mq.init
 
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
-import io.kudos.context.spring.YamlPropertySourceFactory
+import io.kudos.context.config.YamlPropertySourceFactory
 import org.soul.ability.log.audit.common.api.IAuditService
 import org.soul.ability.log.audit.mq.beans.MqAuditService
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
