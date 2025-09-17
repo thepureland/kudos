@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
-import org.mybatis.spring.annotation.MapperScan
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.SpringApplication
 import org.springframework.cloud.openfeign.EnableFeignClients
@@ -32,7 +31,6 @@ import org.springframework.test.context.jdbc.Sql
     scripts = ["/sql/postgres/reset.sql"],
     executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD
 )
-@MapperScan("io.kudos.ability.distributed.tx.seata.data")
 abstract class SeataTestBase {
     
     @Autowired

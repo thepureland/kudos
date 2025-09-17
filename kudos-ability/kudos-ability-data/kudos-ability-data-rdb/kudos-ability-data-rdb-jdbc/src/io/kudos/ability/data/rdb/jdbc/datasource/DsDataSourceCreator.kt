@@ -54,27 +54,19 @@ class DsDataSourceCreator : DefaultDataSourceCreator() {
             }
         }
         checkNotNull(dataSourceCreator) { "creator must not be null,please check the DataSourceCreator" }
-        if (dataSourceProxy != null && dataSourceProxy.isSeata) {
-            if (dataSourceProperty.getDruid() != null) {
-                dataSourceProperty.getDruid().setDefaultAutoCommit(true)
-            }
-            if (dataSourceProperty.getHikari() != null) {
-                dataSourceProperty.getHikari().setIsAutoCommit(true)
-            }
-            if (dataSourceProperty.getBeecp() != null) {
-                dataSourceProperty.getBeecp().setDefaultAutoCommit(true)
-            }
-            if (dataSourceProperty.getDbcp2() != null) {
-                dataSourceProperty.getDbcp2().setDefaultAutoCommit(true)
-            }
+        if (dataSourceProxy != null && dataSourceProxy.isSeata()) {
+            dataSourceProperty.druid?.defaultAutoCommit = true
+            dataSourceProperty.hikari?.isAutoCommit = true
+            dataSourceProperty.beecp?.defaultAutoCommit = true
+            dataSourceProperty.dbcp2?.defaultAutoCommit = true
         }
-        val propertyPublicKey = dataSourceProperty.getPublicKey()
+        val propertyPublicKey = dataSourceProperty.publicKey
         if (StringUtils.isEmpty(propertyPublicKey)) {
-            dataSourceProperty.setPublicKey(publicKey)
+            dataSourceProperty.publicKey = publicKey
         }
         val propertyLazy = dataSourceProperty.getLazy()
         if (propertyLazy == null) {
-            dataSourceProperty.setLazy(lazy)
+            dataSourceProperty.lazy = lazy
         }
         if (dataSourceInitEvent != null) {
             dataSourceInitEvent!!.beforeCreate(dataSourceProperty)
@@ -94,11 +86,11 @@ class DsDataSourceCreator : DefaultDataSourceCreator() {
      * @param dataSourceProperty 数据源参数
      */
     private fun runScrip(dataSource: DataSource?, dataSourceProperty: DataSourceProperty) {
-        val initProperty = dataSourceProperty.getInit()
-        val schema = initProperty.getSchema()
-        val data = initProperty.getData()
+        val initProperty = dataSourceProperty.init
+        val schema = initProperty.schema
+        val data = initProperty.data
         if (StringUtils.hasText(schema) || StringUtils.hasText(data)) {
-            val scriptRunner = ScriptRunner(initProperty.isContinueOnError(), initProperty.getSeparator())
+            val scriptRunner = ScriptRunner(initProperty.isContinueOnError, initProperty.separator)
             if (StringUtils.hasText(schema)) {
                 scriptRunner.runScript(dataSource, schema)
             }
@@ -114,17 +106,17 @@ class DsDataSourceCreator : DefaultDataSourceCreator() {
      * @param dataSource         数据源
      * @param dataSourceProperty 数据源参数
      */
-    private fun wrapDataSource(dataSource: DataSource?, dataSourceProperty: DataSourceProperty): DataSource {
-        val name = dataSourceProperty.getPoolName()
+    private fun wrapDataSource(dataSource: DataSource, dataSourceProperty: DataSourceProperty): DataSource {
+        val name = dataSourceProperty.poolName
         var targetDataSource = dataSource
         var isSeata = false
         var seataMode: SeataMode? = null
         if (dataSourceProxy != null) {
             targetDataSource = dataSourceProxy.proxyDatasource(dataSource)
-            isSeata = dataSourceProxy.isSeata
+            isSeata = dataSourceProxy.isSeata()
             seataMode = dataSourceProxy.seataMode()
         }
-        val enabledP6spy = p6spy && dataSourceProperty.getP6spy()
+        val enabledP6spy = p6spy && dataSourceProperty.p6spy
         return ItemDataSource(name, dataSource, targetDataSource, enabledP6spy, isSeata, seataMode)
     }
 

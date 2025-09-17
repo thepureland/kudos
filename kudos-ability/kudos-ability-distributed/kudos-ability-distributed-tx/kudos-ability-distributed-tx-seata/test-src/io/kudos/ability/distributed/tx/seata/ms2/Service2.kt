@@ -1,7 +1,7 @@
 package io.kudos.ability.distributed.tx.seata.ms2
 
 import io.kudos.ability.distributed.tx.seata.TxException
-import io.kudos.ability.distributed.tx.seata.data.TestTableMapper
+import io.kudos.ability.distributed.tx.seata.data.TestTableDao
 import io.kudos.base.logger.LogFactory
 import io.seata.core.context.RootContext
 import org.springframework.beans.factory.annotation.Autowired
@@ -17,19 +17,19 @@ import org.springframework.stereotype.Service
 open class Service2 : IService2 {
 
     @Autowired
-    private lateinit var testTableMapper: TestTableMapper
+    private lateinit var testTableDao: TestTableDao
 
     private val log = LogFactory.getLog(this)
 
     //    @Transactional // 可加可不加
     override fun increase(id: Int, money: Double) {
         log.info("seata全局事务id【${RootContext.getXID()}】")
-        val entity = testTableMapper.get(id)
+        val entity = testTableDao.get(id)!!
         log.info("用户【$id】当前余额【${entity.balance}】")
         log.info("为用户【$id】增加余额【${money}】")
-        entity.balance = entity.balance?.plus(money)
-        testTableMapper.updateById(entity)
-        log.info("用户【$id】当前余额【${testTableMapper.get(id).balance}】")
+        entity.balance = entity.balance?.plus(money)!!
+        testTableDao.update(entity)
+        log.info("用户【$id】当前余额【${testTableDao.get(id)!!.balance}】")
     }
 
     //    @Transactional // 可加可不加
