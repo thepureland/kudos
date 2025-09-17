@@ -1,21 +1,22 @@
 package io.kudos.ability.distributed.lock.redisson.init
 
+import io.kudos.ability.distributed.lock.redisson.annotations.DistributedLockAspect
+import io.kudos.ability.distributed.lock.redisson.bean.RedissonLockProvider
+import io.kudos.ability.distributed.lock.redisson.init.properties.RedissonBaseConfigProperties
+import io.kudos.ability.distributed.lock.redisson.init.properties.RedissonProperties
+import io.kudos.ability.distributed.lock.redisson.kit.RedissonLockKit
+import io.kudos.ability.distributed.lock.redisson.locker.RedissonLocker
+import io.kudos.context.config.YamlPropertySourceFactory
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
-import io.kudos.context.config.YamlPropertySourceFactory
 import org.redisson.Redisson
 import org.redisson.api.RedissonClient
 import org.redisson.config.BaseConfig
 import org.redisson.config.Config
 import org.redisson.config.ReadMode
 import org.redisson.config.TransportMode
-import org.soul.ability.distributed.lock.redisson.RedissonLockTool
-import org.soul.ability.distributed.lock.redisson.annotations.DistributedLockAspect
-import org.soul.ability.distributed.lock.redisson.locker.RedissonLocker
-import org.soul.ability.distributed.lock.redisson.starter.properties.RedissonBaseConfigProperties
-import org.soul.ability.distributed.lock.redisson.starter.properties.RedissonProperties
-import org.soul.base.lang.string.StringTool
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -35,15 +36,25 @@ import org.springframework.context.annotation.PropertySource
 )
 open class RedissonLockAutoConfiguration : IComponentInitializer {
 
-    @Bean(name = [RedissonLockTool.REDISSON_CLIENT_BEAN_NAME], destroyMethod = "shutdown")
-    open fun redisson(properties: RedissonProperties): RedissonClient? {
+
+    @Bean
+    @ConditionalOnMissingBean
+    open fun redissonLockProvider() = RedissonLockProvider()
+
+    @Bean(name = [RedissonLockKit.REDISSON_CLIENT_BEAN_NAME], destroyMethod = "shutdown")
+    @ConditionalOnMissingBean
+    open fun redissonClient(properties: RedissonProperties): RedissonClient? {
         if (!properties.enabled) {
             return null
         }
         val config = Config()
-        config.setNettyThreads(properties.getConfig().getNettyThreads())
-        config.setThreads(properties.getConfig().getThreads())
-        config.setTransportMode(TransportMode.valueOf(properties.getConfig().getTransportMode()))
+        properties.config?.let {
+            config.apply {
+                nettyThreads = it.nettyThreads
+                threads = it.threads
+                transportMode = TransportMode.valueOf(it.transportMode)
+            }
+        }
 
         initRedissonConfig(config, properties)
         return Redisson.create(config)
@@ -58,31 +69,41 @@ open class RedissonLockAutoConfiguration : IComponentInitializer {
     private fun initRedissonConfig(config: Config, properties: RedissonProperties) {
         when (properties.mode) {
             "single" -> {
-                val singleServerConfig = config.useSingleServer()
-                singleServerConfig.subscriptionConnectionMinimumIdleSize = properties.baseConfig.subscriptionConnectionMinimumIdleSize
-                singleServerConfig.subscriptionConnectionPoolSize = properties.baseConfig.subscriptionConnectionPoolSize
-                singleServerConfig.dnsMonitoringInterval = properties.baseConfig.dnsMonitoringInterval
-                this.initBaseConfig(singleServerConfig, properties.baseConfig)
-                singleServerConfig.address = properties.singleServerConfig.address
-                singleServerConfig.connectionMinimumIdleSize = properties.singleServerConfig.connectionMinimumIdleSize
-                singleServerConfig.connectionPoolSize = properties.singleServerConfig.connectionPoolSize
-                singleServerConfig.database = properties.singleServerConfig.database
+                config.useSingleServer().apply {
+                    properties.baseConfig?.let {
+                        subscriptionConnectionMinimumIdleSize = it.subscriptionConnectionMinimumIdleSize
+                        subscriptionConnectionPoolSize = it.subscriptionConnectionPoolSize
+                        dnsMonitoringInterval = it.dnsMonitoringInterval
+                        initBaseConfig(this, it)
+                    }
+                    properties.singleServerConfig?.let {
+                        address = it.address
+                        connectionMinimumIdleSize = it.connectionMinimumIdleSize
+                        connectionPoolSize = it.connectionPoolSize
+                        database = it.database
+                    }
+                }
             }
 
             "cluster" -> {
-                val clusterServersConfig = config.useClusterServers()
-                clusterServersConfig.subscriptionConnectionMinimumIdleSize = properties.baseConfig.subscriptionConnectionMinimumIdleSize
-                clusterServersConfig.subscriptionConnectionPoolSize = properties.baseConfig.subscriptionConnectionPoolSize
-                clusterServersConfig.dnsMonitoringInterval = properties.baseConfig.dnsMonitoringInterval
-                this.initBaseConfig(clusterServersConfig, properties.baseConfig)
-                clusterServersConfig.slaveConnectionMinimumIdleSize = properties.clusterServersConfig.slaveConnectionMinimumIdleSize
-                clusterServersConfig.slaveConnectionPoolSize = properties.clusterServersConfig.slaveConnectionPoolSize
-                clusterServersConfig.masterConnectionMinimumIdleSize = properties.clusterServersConfig.masterConnectionMinimumIdleSize
-                clusterServersConfig.masterConnectionPoolSize = properties.clusterServersConfig.masterConnectionPoolSize
-                clusterServersConfig.readMode = ReadMode.valueOf(properties.clusterServersConfig.readMode)
-                clusterServersConfig.scanInterval = properties.clusterServersConfig.scanInterval
-                val nodeAddresses = properties.clusterServersConfig.nodeAddresses
-                clusterServersConfig.addNodeAddress(*nodeAddresses)
+                config.useClusterServers().apply {
+                    properties.baseConfig?.let {
+                        subscriptionConnectionMinimumIdleSize = it.subscriptionConnectionMinimumIdleSize
+                        subscriptionConnectionPoolSize = it.subscriptionConnectionPoolSize
+                        dnsMonitoringInterval = it.dnsMonitoringInterval
+                        initBaseConfig(this, it)
+                    }
+                    properties.clusterServersConfig?.let {
+                        slaveConnectionMinimumIdleSize = it.slaveConnectionMinimumIdleSize
+                        slaveConnectionPoolSize = it.slaveConnectionPoolSize
+                        masterConnectionMinimumIdleSize = it.masterConnectionMinimumIdleSize
+                        masterConnectionPoolSize = it.masterConnectionPoolSize
+                        readMode = ReadMode.valueOf(it.readMode)
+                        scanInterval = it.scanInterval
+                        val nodeAddresses = it.nodeAddresses
+                        addNodeAddress(*nodeAddresses)
+                    }
+                }
             }
 
             else -> {}
@@ -90,17 +111,19 @@ open class RedissonLockAutoConfiguration : IComponentInitializer {
     }
 
     private fun initBaseConfig(baseConfig: BaseConfig<*>, baseConfigProperties: RedissonBaseConfigProperties) {
-        baseConfig.pingConnectionInterval = baseConfigProperties.pingConnectionInterval
-        baseConfig.idleConnectionTimeout = baseConfigProperties.idleConnectionTimeout
-        baseConfig.connectTimeout = baseConfigProperties.connectTimeout
-        baseConfig.timeout = baseConfigProperties.timeout
-        baseConfig.retryAttempts = baseConfigProperties.retryAttempts
-        baseConfig.retryInterval = baseConfigProperties.retryInterval
-        if (StringTool.isNotBlank(baseConfigProperties.password)) {
-            baseConfig.password = baseConfigProperties.password
+        baseConfig.apply {
+            pingConnectionInterval = baseConfigProperties.pingConnectionInterval
+            idleConnectionTimeout = baseConfigProperties.idleConnectionTimeout
+            connectTimeout = baseConfigProperties.connectTimeout
+            timeout = baseConfigProperties.timeout
+            retryAttempts = baseConfigProperties.retryAttempts
+            retryInterval = baseConfigProperties.retryInterval
+            if (!baseConfigProperties.password.isNullOrBlank()) {
+                password = baseConfigProperties.password
+            }
+            subscriptionsPerConnection = baseConfigProperties.subscriptionsPerConnection
+            clientName = baseConfigProperties.clientName
         }
-        baseConfig.subscriptionsPerConnection = baseConfigProperties.subscriptionsPerConnection
-        baseConfig.clientName = baseConfigProperties.clientName
     }
 
     @Bean

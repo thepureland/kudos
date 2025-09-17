@@ -54,6 +54,7 @@
             <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-distributed/kudos-ability-distributed-discovery" />
             <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-distributed/kudos-ability-distributed-discovery/kudos-ability-distributed-discovery-nacos" />
             <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-distributed/kudos-ability-distributed-lock" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-distributed/kudos-ability-distributed-lock/kudos-ability-distributed-lock-common" />
             <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-distributed/kudos-ability-distributed-lock/kudos-ability-distributed-lock-redisson" />
             <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-distributed/kudos-ability-distributed-notify" />
             <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-distributed/kudos-ability-distributed-notify/kudos-ability-distributed-notify-common" />

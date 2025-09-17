@@ -4,19 +4,8 @@ import io.kudos.base.lang.ThreadKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.support.KeyLockRegistry
 import java.lang.Long
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentMap
-import java.util.concurrent.DelayQueue
-import java.util.concurrent.Delayed
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.locks.Lock
+import java.util.concurrent.*
 import java.util.concurrent.locks.ReentrantLock
-import kotlin.Any
-import kotlin.Array
-import kotlin.Boolean
-import kotlin.Int
-import kotlin.String
-import kotlin.hashCode
 
 class NormalLockService : ILockProvider<ReentrantLock> {
     private val cacheKeyMap: ConcurrentMap<String?, Long?> = ConcurrentHashMap<String?, Long?>()
@@ -52,7 +41,7 @@ class NormalLockService : ILockProvider<ReentrantLock> {
         return reentrantLockManager.tryLock(key)
     }
 
-    override fun unLock(lock: Lock, key: String) {
+    override fun unLock(lock: ReentrantLock, key: String) {
         unLock(key)
     }
 
