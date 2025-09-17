@@ -4,7 +4,7 @@ import io.kudos.ability.data.rdb.flyway.multidatasource.FlywayMultiDataSourceMig
 import io.kudos.ability.data.rdb.flyway.multidatasource.FlywayMultiDataSourceProperties
 import io.kudos.ability.data.rdb.jdbc.init.JdbcAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
-import io.kudos.context.spring.YamlPropertySourceFactory
+import io.kudos.context.config.YamlPropertySourceFactory
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.flyway.FlywayProperties

@@ -6,7 +6,7 @@ import io.kudos.ability.data.memdb.redis.init.properties.RedisExtProperties
 import io.kudos.ability.data.memdb.redis.init.properties.RedisProperties
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
-import io.kudos.context.spring.YamlPropertySourceFactory
+import io.kudos.context.config.YamlPropertySourceFactory
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.ConfigurationProperties

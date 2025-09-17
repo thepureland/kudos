@@ -3,7 +3,7 @@ package io.kudos.ability.distributed.tx.seata.init
 import io.kudos.ability.data.rdb.jdbc.init.JdbcAutoConfiguration
 import io.kudos.base.logger.LogFactory
 import io.kudos.context.init.IComponentInitializer
-import io.kudos.context.spring.YamlPropertySourceFactory
+import io.kudos.context.config.YamlPropertySourceFactory
 import org.soul.ability.data.rdb.jdbc.datasource.IDataSourceProxy
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
