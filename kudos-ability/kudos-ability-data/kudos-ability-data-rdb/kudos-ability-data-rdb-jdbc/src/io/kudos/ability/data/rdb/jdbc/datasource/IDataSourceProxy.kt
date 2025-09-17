@@ -14,12 +14,11 @@ interface IDataSourceProxy {
      *
      * @param dataSource
      */
-    fun proxyDatasource(dataSource: DataSource?): DataSource? {
+    fun proxyDatasource(dataSource: DataSource): DataSource {
         return dataSource
     }
 
-    val isSeata: Boolean
-        get() = false
+    fun isSeata(): Boolean = false
 
     fun seataMode(): SeataMode? {
         return null

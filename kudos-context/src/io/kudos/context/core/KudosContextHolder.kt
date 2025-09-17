@@ -22,10 +22,9 @@ object KudosContextHolder {
      * @since 1.0.0
      */
     fun get(): KudosContext {
-//        val kudosContext = contextThreadLocal.get() ?: KudosContext.Builder().build()
-//        contextThreadLocal.set(kudosContext)
-//        return kudosContext
-        return contextThreadLocal.get()
+        val kudosContext = contextThreadLocal.get() ?: KudosContext()
+        contextThreadLocal.set(kudosContext)
+        return kudosContext
     }
 
     fun set(context: KudosContext) {

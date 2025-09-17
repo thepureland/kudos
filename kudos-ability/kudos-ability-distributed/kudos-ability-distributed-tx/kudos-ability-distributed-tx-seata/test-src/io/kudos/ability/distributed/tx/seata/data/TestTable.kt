@@ -1,6 +1,8 @@
 package io.kudos.ability.distributed.tx.seata.data
 
-import org.soul.base.bean.IEntity
+import io.kudos.ability.data.rdb.ktorm.support.DbEntityFactory
+import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
+
 
 /**
  * 测试表数据库实体
@@ -8,18 +10,10 @@ import org.soul.base.bean.IEntity
  * @author K
  * @since 1.0.0
  */
-class TestTable : IEntity<Int?> {
-    
-    private var id: Int? = null
+interface TestTable : IDbEntity<Int, TestTable> {
 
-    var balance: Double? = null
+    companion object : DbEntityFactory<TestTable>()
 
-    override fun getId(): Int? {
-        return id
-    }
+    var balance: Double
 
-    override fun setId(id: Int?) {
-        this.id = id
-    }
-    
 }

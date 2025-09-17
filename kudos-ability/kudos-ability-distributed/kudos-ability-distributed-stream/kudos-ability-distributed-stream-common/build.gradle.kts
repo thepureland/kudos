@@ -1,4 +1,5 @@
 dependencies {
     api(project(":kudos-context"))
-    api("org.soul:soul-ability-distributed-stream-common")
+    api("org.springframework.cloud:spring-cloud-stream")
+
 }

@@ -1,8 +1,8 @@
 package io.kudos.ability.distributed.tx.seata.ms2
 
+import io.kudos.ability.distributed.tx.seata.data.TestTableDao
 import io.kudos.context.init.EnableKudos
 import io.kudos.context.config.YamlPropertySourceFactory
-import org.mybatis.spring.annotation.MapperScan
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient
 import org.springframework.context.annotation.Import
 import org.springframework.context.annotation.PropertySource
@@ -20,6 +20,5 @@ import org.springframework.context.annotation.PropertySource
     factory = YamlPropertySourceFactory::class
 )
 @EnableKudos
-@MapperScan("io.kudos.ability.distributed.tx.seata.data")
-@Import(Controller2::class, Service2::class)
+@Import(Controller2::class, Service2::class, TestTableDao::class)
 open class Application2

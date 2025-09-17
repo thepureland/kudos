@@ -1,17 +1,19 @@
 package io.kudos.ability.distributed.tx.seata.init
 
 import com.baomidou.dynamic.datasource.enums.SeataMode
+import io.kudos.ability.data.rdb.jdbc.datasource.IDataSourceProxy
 import io.seata.core.model.BranchType
 import io.seata.rm.datasource.DataSourceProxy
 import io.seata.rm.datasource.xa.DataSourceProxyXA
-import org.soul.ability.data.rdb.jdbc.datasource.IDataSourceProxy
 import org.springframework.beans.factory.annotation.Value
 import javax.sql.DataSource
 
 /**
  * Seata数据源代理,支持AT/XA
  *
- * @author soul
+ * @author hanson
+ * @author K
+ * @since 1.0.0
  */
 class SeataDataSourceProxy : IDataSourceProxy {
 
@@ -21,7 +23,7 @@ class SeataDataSourceProxy : IDataSourceProxy {
     @Value("\${seata.enable-auto-data-source-proxy}")
     private var enableProxy: Boolean = true
 
-    override fun proxyDatasource(dataSource: DataSource): DataSource? {
+    override fun proxyDatasource(dataSource: DataSource): DataSource {
         if (enableProxy) {
             return dataSource
         }

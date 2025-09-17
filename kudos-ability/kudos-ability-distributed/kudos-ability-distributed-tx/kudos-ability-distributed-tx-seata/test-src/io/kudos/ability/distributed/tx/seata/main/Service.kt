@@ -2,7 +2,7 @@ package io.kudos.ability.distributed.tx.seata.main
 
 import io.kudos.ability.distributed.tx.seata.TxException
 import io.kudos.ability.distributed.tx.seata.data.TestTable
-import io.kudos.ability.distributed.tx.seata.data.TestTableMapper
+import io.kudos.ability.distributed.tx.seata.data.TestTableDao
 import io.kudos.ability.distributed.tx.seata.ms1.IService1
 import io.kudos.ability.distributed.tx.seata.ms1.Service1
 import io.kudos.ability.distributed.tx.seata.ms2.IService2
@@ -21,7 +21,7 @@ import org.springframework.stereotype.Service
  * @since 1.0.0
  */
 @Service
-@Import(Service1::class, Service2::class)
+@Import(Service1::class, Service2::class, TestTableDao::class)
 open class Service : IService {
 
     @Value("\${seata.data-source-proxy-mode}")
@@ -46,9 +46,9 @@ open class Service : IService {
     private lateinit var feignClient22: IFeignClient22
 
     @Autowired
-    private lateinit var testTableMapper: TestTableMapper
+    private lateinit var testTableDao: TestTableDao
 
-    override fun getById(id: Int): TestTable = testTableMapper.get(id)
+    override fun getById(id: Int): TestTable = testTableDao.get(id)!!
 
     @GlobalTransactional
     override fun getGlobalTxId(): String? = RootContext.getXID()
