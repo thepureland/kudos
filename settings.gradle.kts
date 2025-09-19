@@ -47,6 +47,7 @@ include("kudos-ability:kudos-ability-cache:kudos-ability-cache-interservice:kudo
 include("kudos-ability:kudos-ability-cache:kudos-ability-cache-interservice:kudos-ability-cache-interservice-provider")
 
 // comm
+include("kudos-ability:kudos-ability-comm:kudos-ability-comm-common")
 include("kudos-ability:kudos-ability-comm:kudos-ability-comm-email")
 include("kudos-ability:kudos-ability-comm:kudos-ability-comm-sms:kudos-ability-comm-sms-aliyun")
 include("kudos-ability:kudos-ability-comm:kudos-ability-comm-sms:kudos-ability-comm-sms-aws")
@@ -71,7 +72,6 @@ include("kudos-ability:kudos-ability-distributed:kudos-ability-distributed-strea
 include("kudos-ability:kudos-ability-distributed:kudos-ability-distributed-stream:kudos-ability-distributed-stream-rocketmq")
 include("kudos-ability:kudos-ability-distributed:kudos-ability-distributed-notify:kudos-ability-distributed-notify-common")
 include("kudos-ability:kudos-ability-distributed:kudos-ability-distributed-notify:kudos-ability-distributed-notify-mq")
-include("kudos-ability:kudos-ability-distributed:kudos-ability-distributed-notify:kudos-ability-distributed-notify-rdb")
 include("kudos-ability:kudos-ability-distributed:kudos-ability-distributed-tx:kudos-ability-distributed-tx-seata")
 
 // file
@@ -98,7 +98,3 @@ include("kudos-ams:kudos-ams-sys:kudos-ams-sys-common")
 include("kudos-ams:kudos-ams-sys:kudos-ams-sys-client")
 include("kudos-ams:kudos-ams-sys:kudos-ams-sys-api-view")
 include("kudos-ams:kudos-ams-sys:kudos-ams-sys-api-service")
-
-
-
-

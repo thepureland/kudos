@@ -1,23 +1,13 @@
 package io.kudos.ability.distributed.notify.mq.common
 
-import org.soul.base.ienums.ICodeEnum
+import io.kudos.base.enums.ienums.IDictEnum
 
-enum class NotifyTypeEnum(code: String, trans: String) : ICodeEnum {
+
+enum class NotifyTypeEnum(
+    override val code: String,
+    override val trans: String
+) : IDictEnum {
+
     DS("DS", "数据源");
 
-    private val code: String
-    private val trans: String
-
-    init {
-        this.code = code
-        this.trans = trans
-    }
-
-    override fun getCode(): String {
-        return code
-    }
-
-    override fun getTrans(): String {
-        return trans
-    }
 }
