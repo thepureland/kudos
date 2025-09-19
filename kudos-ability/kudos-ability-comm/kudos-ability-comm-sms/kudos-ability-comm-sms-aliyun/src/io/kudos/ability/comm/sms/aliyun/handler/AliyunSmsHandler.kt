@@ -5,31 +5,28 @@ import com.aliyun.auth.credentials.provider.StaticCredentialProvider
 import com.aliyun.sdk.service.dysmsapi20170525.AsyncClient
 import com.aliyun.sdk.service.dysmsapi20170525.models.SendSmsRequest
 import com.aliyun.sdk.service.dysmsapi20170525.models.SendSmsResponseBody
+import darabonba.core.client.ClientOverrideConfiguration
 import io.kudos.ability.comm.sms.aliyun.model.AliyunSmsRequest
 import io.kudos.base.data.json.JsonKit
 import io.kudos.base.logger.LogFactory
-import org.springframework.stereotype.Component
+import org.springframework.beans.factory.annotation.Value
+import java.net.URI
 
 /**
- * @Description 阿里云短信发送处理器
- * @Author paul
- * @Date 2023/2/10 17:14
+ * 阿里云短信发送处理器（支持可配置 endpoint，便于测试注入 WireMock）
  *
- *
- * 官方文档：https://help.aliyun.com/document_detail/419273.html
+ * 配置项：
+ * - kudos.sms.aliyun.endpoint（可选）：覆盖默认终端，示例：
+ *   - 生产默认留空（SDK 按 region 使用官方域名）
+ *   - 测试填 "http://<wiremock-host>:<port>"
  */
-@Component
 class AliyunSmsHandler {
+
+    @Value("\${kudos.sms.aliyun.endpoint:}") // 留空=使用官方端点；测试时注入 WireMock
+    private lateinit var endpointOverrideStr: String
+
     /**
-     * 阿里云发送短信，并处理回调
-     *
-     * @param smsRequest
-     * @param callback
-     */
-    /**
-     * 阿里云发送短信
-     *
-     * @param smsRequest
+     * 异步发送（虚拟线程），完成后以回调返回结果
      */
     @JvmOverloads
     fun send(smsRequest: AliyunSmsRequest, callback: (SendSmsResponseBody) -> Unit) {
@@ -38,40 +35,84 @@ class AliyunSmsHandler {
 
     private fun doSend(smsRequest: AliyunSmsRequest, callback: (SendSmsResponseBody) -> Unit) {
         var client: AsyncClient? = null
-        lateinit var smsResponse: SendSmsResponseBody
+        var result: SendSmsResponseBody? = null
+        var lastError: Exception? = null
+
         try {
-            val provider = StaticCredentialProvider.create(
-                Credential.builder()
-                    .accessKeyId(smsRequest.accessKeyId)
-                    .accessKeySecret(smsRequest.accessKeySecret)
-                    .build()
+            client = buildClient(
+                region = smsRequest.region,
+                accessKeyId = smsRequest.accessKeyId,
+                accessKeySecret = smsRequest.accessKeySecret
             )
 
-            client = AsyncClient.builder()
-                .region(smsRequest.region)
-                .credentialsProvider(provider)
-                .build()
-
-            val sendSmsRequest = SendSmsRequest.builder()
+            val request = SendSmsRequest.builder()
                 .phoneNumbers(smsRequest.phoneNumbers)
                 .signName(smsRequest.signName)
                 .templateCode(smsRequest.templateCode)
                 .templateParam(smsRequest.templateParam)
                 .build()
 
-            LOG.info("[aliyun]开始发送短信...")
-            val response = client.sendSms(sendSmsRequest)
-            smsResponse = response.get()!!.body
-            LOG.info("[aliyun]发送短信成功, 结果:{0}", JsonKit.toJson(smsResponse))
+            LOG.info("[aliyun] 开始发送短信...")
+            val response = client.sendSms(request)
+            result = response.get()?.body
+            LOG.info("[aliyun] 发送短信成功, 结果:{0}", JsonKit.toJson(result ?: "null"))
         } catch (e: Exception) {
-            LOG.error(e, "[aliyun]发送短信失败")
+            lastError = e
+            LOG.error(e, "[aliyun] 发送短信失败")
         } finally {
-            client?.close()
-            //执行回调
-            callback.invoke(smsResponse)
+            try { client?.close() } catch (_: Exception) { /* ignore */ }
+
+            // 始终回调：异常分支返回一个安全的响应体，避免 lateinit 未初始化
+            val safe = result ?: SendSmsResponseBody.builder()
+                .code("EXCEPTION")
+                .message(lastError?.message ?: "unknown error")
+                .requestId("local-test")
+                .build()
+
+            callback.invoke(safe)
         }
     }
 
-    private val LOG = LogFactory.getLog(this)
+    /**
+     * 适配 dysmsapi20170525 v4.0.5 的构建方式：
+     * 通过 overrideConfiguration(ClientOverrideConfiguration) 覆盖 endpoint/协议
+     */
+    private fun buildClient(
+        region: String?,
+        accessKeyId: String?,
+        accessKeySecret: String?
+    ): AsyncClient {
+        val provider = StaticCredentialProvider.create(
+            Credential.builder()
+                .accessKeyId(accessKeyId)
+                .accessKeySecret(accessKeySecret)
+                .build()
+        )
 
+        val builder = AsyncClient.builder()
+            .region(region)
+            .credentialsProvider(provider)
+
+        // 如果配置了自定义 endpoint（例如 WireMock），则覆盖
+        if (endpointOverrideStr.isNotBlank()) {
+            // 既兼容 "http://host:port" 也支持 "host:port"/纯域名
+            val uri = runCatching { URI(endpointOverrideStr) }.getOrNull()
+            val protocol = (uri?.scheme ?: "http").uppercase() // WireMock 用 http；生产默认 https
+            val hostPort = when {
+                uri == null -> endpointOverrideStr.trim()
+                uri.port == -1 -> uri.host
+                else -> "${uri.host}:${uri.port}"
+            }
+
+            val override = ClientOverrideConfiguration.create()
+                .setEndpointOverride(hostPort) // 例："localhost:8080" 或 "dysmsapi.aliyuncs.com"
+                .setProtocol(protocol)         // "HTTP" 或 "HTTPS"
+
+            builder.overrideConfiguration(override)
+        }
+
+        return builder.build()
+    }
+
+    private val LOG = LogFactory.getLog(this)
 }

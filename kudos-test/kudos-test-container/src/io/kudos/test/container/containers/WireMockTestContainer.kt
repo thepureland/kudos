@@ -4,29 +4,26 @@ import com.github.dockerjava.api.model.Container
 import io.kudos.test.container.kit.TestContainerKit
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.testcontainers.containers.GenericContainer
+import org.testcontainers.containers.wait.strategy.Wait
 import org.testcontainers.utility.DockerImageName
 
+
 /**
- * smtp测试容器
+ * WireMock测试容器
  *
  * @author K
  * @since 1.0.0
  */
-object SmtpTestContainer {
+object WireMockTestContainer {
 
-    const val IMAGE_NAME = "namshi/smtp:latest"
+    const val LABEL = "WireMock"
 
-    const val LABEL = "Smtp"
+    private val container = GenericContainer(DockerImageName.parse("wiremock/wiremock:3x"))
+        .withExposedPorts(8080)
+        .withCommand("--global-response-templating")
+        .waitingFor(Wait.forHttp("/__admin").forStatusCode(200))
+        .withLabel(TestContainerKit.LABEL_KEY, LABEL)
 
-    private val container = GenericContainer(DockerImageName.parse(IMAGE_NAME)).apply {
-        withExposedPorts(25)
-        // Exim（namshi/smtp 里用的 MTA）默认不允许中继。这里开放中继给测试网络。
-        // 也可以改用专为测试设计的“收信黑洞/抓信”容器，如：axllent/mailpit容器。
-        withEnv("RELAY_NETWORKS", ":172.16.0.0/12:10.0.0.0/8:192.168.0.0/16") // 或 ":0.0.0.0/0"
-        withEnv("DISABLE_IPV6", "1")
-        withEnv("OTHER_HOSTNAMES", "test.local") // 可选：把本机当作 test.local 的最终收件域
-        withLabel(TestContainerKit.LABEL_KEY, LABEL)
-    }
 
     /**
      * 启动容器(若需要)
@@ -64,7 +61,7 @@ object SmtpTestContainer {
     @JvmStatic
     fun main(args: Array<String>?) {
         startIfNeeded(null)
-        println("smtp localhost port: ${container.firstMappedPort}")
+        println("WireMock localhost port: ${container.firstMappedPort}")
         Thread.sleep(Long.Companion.MAX_VALUE)
     }
 

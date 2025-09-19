@@ -2,14 +2,14 @@ package io.kudos.ability.comm.sms.aliyun
 
 import io.kudos.ability.comm.sms.aliyun.handler.AliyunSmsHandler
 import io.kudos.ability.comm.sms.aliyun.model.AliyunSmsRequest
-import io.kudos.base.io.FileKit
-import io.kudos.base.io.IoKit
-import io.kudos.base.lang.SystemKit
-import io.kudos.base.logger.LogFactory
 import io.kudos.test.common.init.EnableKudosTest
-import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.TestInstance
+import io.kudos.test.container.containers.WireMockTestContainer
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.test.context.DynamicPropertyRegistry
+import org.springframework.test.context.DynamicPropertySource
+import org.testcontainers.junit.jupiter.EnabledIfDockerAvailable
+import java.net.HttpURLConnection
+import java.net.URL
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlin.test.Test
@@ -18,102 +18,181 @@ import kotlin.test.assertEquals
 /**
  * 阿里云发送短信测试用例
  *
- * 注意：
- * 本测试用例需要准备收发送邮件的相关账号
- * 配置文件路径：${user.home}\.soul-test\test-aliyun-sms.properties
- * 配置文件内容示例：
- * region=your_region
- * accessKeyId=your_accessKeyId
- * accessKeySecret=your_accessKeySecret
- * phoneNumbers=your_phone_number
- * signName=阿里云短信测试
- * templateCode=SMS_154950909
- * templateParam={"code":"6666"}
  *
- * @author paul
  * @author K
+ * @author ChatGPT
  * @since 1.0.0
  */
-//TODO 因aliyun账号获取问题，该测试用例未能真正跑通
 @EnableKudosTest
-@TestInstance(value = TestInstance.Lifecycle.PER_CLASS)
+@EnabledIfDockerAvailable
 class AliyunSmsTest {
 
     @Autowired
     private lateinit var smsHandler: AliyunSmsHandler
 
-    private var smsRequest: AliyunSmsRequest? = null
+    @Test
+    fun send_sms_ok() {
+        stubSendSmsOK()
 
-    /**
-     * 读取配置文件内容
-     */
-    private fun readProperties(): MutableMap<String?, String?>? {
-        val path = SystemKit.getUserHome().toString() + TEST_SMS_FILE
-        val file = FileKit.getFile(path)
-        if (!file.exists()) {
-            LOG.warn("测试的配置文件:{0}不存在", path)
-            return null
+        val req = AliyunSmsRequest().apply {
+            region = "cn-hangzhou"
+            accessKeyId = "fake-ak"
+            accessKeySecret = "fake-sk"
+            phoneNumbers = "13800000000"
+            signName = "SIGN"
+            templateCode = "SMS_123456"
+            templateParam = """{"code":"1234"}"""
         }
-        val data: MutableMap<String?, String?> = HashMap<String?, String?>()
-        val inputStream = FileKit.openInputStream(file)
-        val body = IoKit.readLines(inputStream)
-        if (body.isNotEmpty()) {
-            for (line in body) {
-                if (line.isNotBlank() && !line.startsWith("#") && !line.startsWith("//") && line.indexOf(
-                        "="
-                    ) != -1
-                ) {
-                    val lineArray: Array<String?> =
-                        line.split("=".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-                    data.put(lineArray[0], if (lineArray.size > 1) lineArray[1] else "")
-                }
-            }
-        }
-        inputStream.close()
-        return data
-    }
 
-    @BeforeAll
-    fun init() {
-        val data = readProperties()
-        if (!data.isNullOrEmpty()) {
-            smsRequest = AliyunSmsRequest().apply {
-                region = data["region"]
-                accessKeyId = data["accessKeyId"]
-                accessKeySecret = data["accessKeySecret"]
-                phoneNumbers = data["phoneNumbers"]
-                signName = data["signName"]
-                templateCode = data["templateCode"]
-                templateParam = data["templateParam"]
-            }
+        val codeBox = arrayOfNulls<String>(1)
+        val latch = CountDownLatch(1)
+
+        smsHandler.send(req) { body ->
+            try { codeBox[0] = body.code } finally { latch.countDown() }
         }
+
+        latch.await(10, TimeUnit.SECONDS)
+        assertEquals("OK", codeBox[0])
     }
 
     @Test
-    fun send() {
-        if (smsRequest == null) {
-            LOG.warn("参数未初始化, 不参与本次测试")
-            return
+    fun send_sms_rate_limited() {
+        stubSendSmsRateLimitedFor("13000000000")
+
+        val req = AliyunSmsRequest().apply {
+            region = "cn-hangzhou"
+            accessKeyId = "fake-ak"
+            accessKeySecret = "fake-sk"
+            phoneNumbers = "13000000000" // 命中限流桩
+            signName = "SIGN"
+            templateCode = "SMS_123456"
+            templateParam = """{"code":"9999"}"""
         }
-        val code = arrayOfNulls<String>(1)
+
+        val codeBox = arrayOfNulls<String>(1)
         val latch = CountDownLatch(1)
-        smsHandler.send(smsRequest!!) { sendSmsResponseBody ->
-            try {
-                code[0] = sendSmsResponseBody.code
-            } finally {
-                latch.countDown()
-            }
+
+        smsHandler.send(req) { body ->
+            try { codeBox[0] = body.code } finally { latch.countDown() }
         }
-        latch.await(30, TimeUnit.SECONDS)
-        assertEquals("OK", code[0])
+
+        latch.await(10, TimeUnit.SECONDS)
+        assertEquals("isv.BUSINESS_LIMIT_CONTROL", codeBox[0])
     }
+
+    // ---------------- WireMock Admin API：注册桩 ----------------
+
+    private fun stubSendSmsOK() {
+        // GET/POST + QueryString 形式
+        postJson("$baseUrl/__admin/mappings", """
+          {
+            "request": {
+              "method": "ANY",
+              "urlPath": "/",
+              "queryParameters": { "Action": { "equalTo": "SendSms" } }
+            },
+            "response": {
+              "status": 200,
+              "headers": { "Content-Type": "application/json" },
+              "jsonBody": { "Code": "OK", "Message": "OK", "RequestId": "test", "BizId": "biz" }
+            },
+            "priority": 10
+          }
+        """.trimIndent())
+
+        // x-www-form-urlencoded（SDK 可能用表单）：匹配 body contains
+        postJson("$baseUrl/__admin/mappings", """
+          {
+            "request": {
+              "method": "ANY",
+              "urlPath": "/",
+              "bodyPatterns": [ { "contains": "Action=SendSms" } ]
+            },
+            "response": {
+              "status": 200,
+              "headers": { "Content-Type": "application/json" },
+              "jsonBody": { "Code": "OK", "Message": "OK", "RequestId": "test", "BizId": "biz" }
+            },
+            "priority": 9
+          }
+        """.trimIndent())
+    }
+
+    private fun stubSendSmsRateLimitedFor(phone: String) {
+        // QueryString 形式：特定手机号命中限流
+        postJson("$baseUrl/__admin/mappings", """
+          {
+            "request": {
+              "method": "ANY",
+              "urlPath": "/",
+              "queryParameters": {
+                "Action": { "equalTo": "SendSms" },
+                "PhoneNumbers": { "equalTo": "$phone" }
+              }
+            },
+            "response": {
+              "status": 200,
+              "headers": { "Content-Type": "application/json" },
+              "jsonBody": {
+                "Code": "isv.BUSINESS_LIMIT_CONTROL",
+                "Message": "Rate limited for testing",
+                "RequestId": "test-429"
+              }
+            },
+            "priority": 8
+          }
+        """.trimIndent())
+
+        // x-www-form-urlencoded 形式
+        postJson("$baseUrl/__admin/mappings", """
+          {
+            "request": {
+              "method": "ANY",
+              "urlPath": "/",
+              "bodyPatterns": [
+                { "contains": "Action=SendSms" },
+                { "contains": "PhoneNumbers=$phone" }
+              ]
+            },
+            "response": {
+              "status": 200,
+              "headers": { "Content-Type": "application/json" },
+              "jsonBody": {
+                "Code": "isv.BUSINESS_LIMIT_CONTROL",
+                "Message": "Rate limited for testing",
+                "RequestId": "test-429-body"
+              }
+            },
+            "priority": 7
+          }
+        """.trimIndent())
+    }
+
+    private fun postJson(url: String, body: String) {
+        val conn = java.net.URL(url).openConnection() as java.net.HttpURLConnection
+        conn.requestMethod = "POST"
+        conn.setRequestProperty("Content-Type", "application/json")
+        conn.doOutput = true
+        conn.outputStream.use { it.write(body.toByteArray()) }
+        val code = conn.responseCode
+        val text = (if (code in 200..299) conn.inputStream else conn.errorStream)
+            ?.bufferedReader()?.readText()
+        if (code !in 200..299) {
+            error("WireMock admin returned HTTP $code: $text\nurl=$url")
+        }
+    }
+
 
     companion object {
-        private val LOG = LogFactory.getLog(this)
+        private lateinit var baseUrl: String
 
-        /**
-         * 存放测试账号的文件
-         */
-        private const val TEST_SMS_FILE = "\\.kudos-test\\test-aliyun-sms.properties"
+        @JvmStatic
+        @DynamicPropertySource
+        private fun registerProperties(registry: DynamicPropertyRegistry) {
+            val container = WireMockTestContainer.startIfNeeded(registry)
+            baseUrl = "http://${container.ports.first().ip}:${container.ports.first().publicPort}"
+            registry.add("kudos.sms.aliyun.endpoint") { baseUrl }
+        }
     }
+
 }
