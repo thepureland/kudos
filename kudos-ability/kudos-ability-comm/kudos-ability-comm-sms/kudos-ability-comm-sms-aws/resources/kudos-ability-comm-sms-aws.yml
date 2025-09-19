@@ -3,6 +3,8 @@ kudos:
     comm:
       sms:
         aws:
+          # ↓↓↓ 生产留空，测试注入，例如 http://localhost:8080
+          endpoint: ""
           proxy: #正向代理配置信息
             enable: false
             url: http://localhost:1234

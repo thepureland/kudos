@@ -2,117 +2,193 @@ package io.kudos.ability.comm.sms.aws
 
 import io.kudos.ability.comm.sms.aws.handler.AwsSmsHandler
 import io.kudos.ability.comm.sms.aws.model.AwsSmsRequest
-import io.kudos.base.io.FileKit
-import io.kudos.base.io.IoKit
-import io.kudos.base.lang.SystemKit
-import io.kudos.base.logger.LogFactory
 import io.kudos.test.common.init.EnableKudosTest
-import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.TestInstance
+import io.kudos.test.container.containers.WireMockTestContainer
 import org.springframework.beans.factory.annotation.Autowired
-import software.amazon.awssdk.http.HttpStatusFamily
-import java.io.File
+import org.springframework.test.context.DynamicPropertyRegistry
+import org.springframework.test.context.DynamicPropertySource
+import org.testcontainers.junit.jupiter.EnabledIfDockerAvailable
+import java.net.HttpURLConnection
+import java.net.URL
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * 亚马逊发送短信测试用例
+ * aws短信发送测试用例，用WireMock模拟aws短信服务
  *
- * 注意：
- * 本测试用例需要准备收发送邮件的相关账号
- * 配置文件路径：${user.home}\.soul-test\test-aws-sms.properties
- * 配置文件内容示例：
- * region=your_region
- * accessKeyId=your_accessKeyId
- * accessKeySecret=your_accessKeySecret
- * phoneNumber=your_phone_number
- * message=亚马逊短信测试
- *
- * @author pual
+ * @author ChatGPT
  * @author K
- * @since 1.0.0
+ * @since 1.0.-0
  */
-//TODO 因aws账号获取问题，该测试用例未能真正跑通
 @EnableKudosTest
-@TestInstance(value = TestInstance.Lifecycle.PER_CLASS)
+@EnabledIfDockerAvailable
 class AwsSmsTest {
 
     @Autowired
-    private lateinit var smsHandler: AwsSmsHandler
+    private lateinit var handler: AwsSmsHandler
 
-    private var smsRequest: AwsSmsRequest? = null
+    @Test
+    fun send_sms_ok() {
+        stubPublishOK()
 
-    /**
-     * 读取配置文件内容
-     */
-    private fun readProperties(): MutableMap<String?, String?>? {
-        val path = SystemKit.getUserHome().toString() + TEST_SMS_FILE
-        val file: File? = FileKit.getFile(path)
-        if (file == null || !file.exists()) {
-            LOG.warn("测试的配置文件:{0}不存在", path)
-            return null
+        val req = AwsSmsRequest().apply {
+            region = "us-east-1"
+            accessKeyId = "fake-ak"       // WireMock 不校验签名
+            accessKeySecret = "fake-sk"
+            phoneNumber = "+15550100"
+            message = "hello wiremock"
+            messageAttributes = null
         }
-        val data: MutableMap<String?, String?> = HashMap<String?, String?>()
-        val inputStream = FileKit.openInputStream(file)
-        val body = IoKit.readLines(inputStream)
-        if (body.isNotEmpty()) {
-            for (line in body) {
-                if (line.isNotBlank() && !line.startsWith("#") && !line.startsWith("//") && line.indexOf(
-                        "="
-                    ) != -1
-                ) {
-                    val lineArray: Array<String?> =
-                        line.split("=".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-                    data.put(lineArray[0], if (lineArray.size > 1) lineArray[1] else "")
-                }
-            }
-        }
-        inputStream.close()
-        return data
-    }
 
-    @BeforeAll
-    fun init() {
-        val data = readProperties()
-        if (!data.isNullOrEmpty()) {
-            smsRequest = AwsSmsRequest().apply {
-                region = data["region"]
-                accessKeyId = data["accessKeyId"]
-                accessKeySecret = data["accessKeySecret"]
-                phoneNumber = data["phoneNumber"]
-                message = data["message"]
-            }
+        val latch = CountDownLatch(1)
+        var statusCode = -1
+        var statusText: String? = null
+
+        handler.send(req) { cb ->
+            statusCode = cb.statusCode
+            statusText = cb.statusText
+            latch.countDown()
         }
+
+        latch.await(10, TimeUnit.SECONDS)
+        assertEquals(200, statusCode)
+        assertEquals("OK", statusText)
     }
 
     @Test
-    fun send() {
-        if (smsRequest == null) {
-            LOG.warn("参数未初始化, 不参与本次测试")
-            return
+    fun send_sms_rate_limited() {
+        stubPublishRateLimitedFor("+19990000")
+
+        val req = AwsSmsRequest().apply {
+            region = "us-east-1"
+            accessKeyId = "fake-ak"
+            accessKeySecret = "fake-sk"
+            phoneNumber = "+19990000"     // 命中限流桩
+            message = "trigger 429"
         }
-        val code = arrayOfNulls<HttpStatusFamily>(1)
+
         val latch = CountDownLatch(1)
-        smsHandler.send(smsRequest!!) { callBackParam ->
-            try {
-                code[0] = HttpStatusFamily.of(callBackParam.statusCode)
-            } finally {
-                latch.countDown()
-            }
+        var statusCode = -1
+        var statusText: String? = null
+
+        handler.send(req) { cb ->
+            statusCode = cb.statusCode
+            statusText = cb.statusText
+            latch.countDown()
         }
-        latch.await(5, TimeUnit.SECONDS)
-        assertEquals(HttpStatusFamily.SUCCESSFUL, code[0])
+
+        latch.await(10, TimeUnit.SECONDS)
+        // 这里我们用 429 模拟业务限流
+        assertEquals(429, statusCode)
+        assertEquals("Too Many Requests", statusText)
+    }
+
+    // ---------------- WireMock 注册桩 ----------------
+
+    /** 成功桩：匹配 Action=Publish，返回 200 + OK */
+    private fun stubPublishOK() {
+        // 匹配 QueryString
+        postJson("$baseUrl/__admin/mappings", """
+            {
+              "request": {
+                "method": "ANY",
+                "urlPath": "/",
+                "queryParameters": { "Action": { "equalTo": "Publish" } }
+              },
+              "response": {
+                "status": 200,
+                "headers": { "Content-Type": "text/xml" },
+                "body": "<PublishResponse><MessageId>mid-123</MessageId></PublishResponse>",
+                "transformers": []
+              },
+              "priority": 10
+            }
+        """.trimIndent())
+
+        // 匹配 x-www-form-urlencoded（SDK 常用）：body 包含 Action=Publish
+        postJson("$baseUrl/__admin/mappings", """
+            {
+              "request": {
+                "method": "POST",
+                "urlPath": "/",
+                "bodyPatterns": [ { "contains": "Action=Publish" } ]
+              },
+              "response": {
+                "status": 200,
+                "headers": { "Content-Type": "text/xml" },
+                "body": "<PublishResponse><MessageId>mid-123</MessageId></PublishResponse>"
+              },
+              "priority": 9
+            }
+        """.trimIndent())
+    }
+
+    /** 限流桩：指定手机号触发 429 */
+    private fun stubPublishRateLimitedFor(phone: String) {
+        val encodedPhone = java.net.URLEncoder.encode(phone, java.nio.charset.StandardCharsets.UTF_8)
+
+        // 429 + AWS Query 错误 XML
+        val errorXml = """
+      <?xml version="1.0"?>
+      <ErrorResponse xmlns="http://sns.amazonaws.com/doc/2010-03-31/">
+        <Error>
+          <Type>Sender</Type>
+          <Code>Throttled</Code>
+          <Message>Too Many Requests</Message>
+        </Error>
+        <RequestId>test-req-429</RequestId>
+      </ErrorResponse>
+    """.trimIndent()
+
+        // 优先级设低数字（高优先）
+        postJson("$baseUrl/__admin/mappings", """
+      {
+        "request": {
+          "method": "POST",
+          "urlPath": "/",
+          "bodyPatterns": [
+            { "contains": "Action=Publish" },
+            { "matches": ".*(?:^|&)PhoneNumber=$encodedPhone(?:&|$).*" }
+          ]
+        },
+        "response": {
+          "status": 429,
+          "headers": {
+            "Content-Type": "text/xml",
+            "x-amzn-RequestId": "test-req-429"
+          },
+          "body": ${errorXml.trimIndent().replace("\n","\\n").replace("\"","\\\"").let { "\"$it\"" }}
+        },
+        "priority": 1
+      }
+    """.trimIndent())
+    }
+
+    private fun postJson(url: String, body: String) {
+        val conn = URL(url).openConnection() as HttpURLConnection
+        conn.requestMethod = "POST"
+        conn.setRequestProperty("Content-Type", "application/json")
+        conn.doOutput = true
+        conn.outputStream.use { it.write(body.toByteArray()) }
+        val code = conn.responseCode
+        val text = (if (code in 200..299) conn.inputStream else conn.errorStream)
+            ?.bufferedReader()?.readText()
+        if (code !in 200..299) error("WireMock admin returned $code: $text, url=$url")
     }
 
     companion object {
-        private val LOG = LogFactory.getLog(AwsSmsTest::class)
+        private lateinit var baseUrl: String
 
-        /**
-         * 存放测试账号的文件
-         */
-        private const val TEST_SMS_FILE = "\\.kudos-test\\test-aws-sms.properties"
+        /** 在 Spring 上下文启动前，注入 Handler 的 endpoint → WireMock */
+        @JvmStatic
+        @DynamicPropertySource
+        fun props(registry: DynamicPropertyRegistry) {
+            val container = WireMockTestContainer.startIfNeeded(registry)
+            baseUrl = "http://${container.ports.first().ip}:${container.ports.first().publicPort}"
+            registry.add("kudos.ability.comm.sms.aws.endpoint") { baseUrl }
+        }
     }
 
 }

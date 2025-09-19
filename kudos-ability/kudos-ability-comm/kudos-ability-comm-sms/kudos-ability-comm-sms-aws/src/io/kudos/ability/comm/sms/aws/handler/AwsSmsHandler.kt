@@ -6,10 +6,11 @@ import io.kudos.ability.comm.sms.aws.model.AwsSmsRequest
 import io.kudos.base.logger.LogFactory
 import jakarta.annotation.PostConstruct
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.stereotype.Component
+import org.springframework.beans.factory.annotation.Value
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
-import software.amazon.awssdk.auth.credentials.AwsCredentials
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
+import software.amazon.awssdk.awscore.exception.AwsServiceException
+import software.amazon.awssdk.core.exception.SdkServiceException
 import software.amazon.awssdk.http.SdkHttpClient
 import software.amazon.awssdk.http.apache.ApacheHttpClient
 import software.amazon.awssdk.http.apache.ProxyConfiguration
@@ -19,83 +20,125 @@ import software.amazon.awssdk.services.sns.model.PublishRequest
 import java.net.URI
 
 /**
- * @Description AWS短信发送处理器
- * @Author paul
- * @Date 2023/2/10 16:23
+ * AWS短信发送处理器（支持可配置 endpoint，便于用 WireMock/Testcontainers 做离线测试）
  *
- *
- * 官方文档：https://docs.aws.amazon.com/sns/latest/dg/sns-mobile-phone-number-as-subscriber.html
+ * @author paul
+ * @author K
+ * @author ChatGPT
+ * @since 1.0.0
  */
-@Component
 class AwsSmsHandler {
 
     @Autowired
     private lateinit var proxyProperties: SmsAwsProxyProperties
 
+    /** 可选：覆盖 SNS 终端。生产留空；测试注入 http://host:port */
+    @Value("\${kudos.ability.comm.sms.aws.endpoint}")
+    private lateinit var endpointOverride: String
+
     /**
-     * AWS发送短信
-     *
-     * @param smsRequest
+     * AWS 发送短信（无回调）
      */
     fun send(smsRequest: AwsSmsRequest) {
         send(smsRequest, null)
     }
 
     /**
-     * AWS发送短信，并处理回调
-     *
-     * @param smsRequest
-     * @param callback
+     * AWS 发送短信（异步，虚拟线程），完成后回调
      */
     fun send(smsRequest: AwsSmsRequest, callback: ((AwsSmsCallBackParam) -> Unit)? = null) {
         Thread.ofVirtual().start { doSend(smsRequest, callback) }
     }
 
-    private fun doSend(smsRequest: AwsSmsRequest, callback: ((AwsSmsCallBackParam) -> Unit)? = null) {
+    private fun doSend(
+        smsRequest: AwsSmsRequest,
+        callback: ((AwsSmsCallBackParam) -> Unit)? = null
+    ) {
         var snsClient: SnsClient? = null
-        lateinit var smsCallBackParam: AwsSmsCallBackParam
+        var cb: AwsSmsCallBackParam? = null
+
         try {
-            val credentials: AwsCredentials =
+            // 1) 构建 SnsClient（支持代理 + endpoint 覆盖）
+            val credentialsProvider = StaticCredentialsProvider.create(
                 AwsBasicCredentials.create(smsRequest.accessKeyId, smsRequest.accessKeySecret)
-            val credentialsProvider = StaticCredentialsProvider.create(credentials)
+            )
 
             val builder = SnsClient.builder()
-            if (HTTP_CLIENT != null) {
-                builder.httpClient(HTTP_CLIENT)
-            }
-            snsClient = builder.region(Region.of(smsRequest.region))
+                .region(Region.of(smsRequest.region))
                 .credentialsProvider(credentialsProvider)
-                .build()
 
-            val request = PublishRequest.builder()
+            if (HTTP_CLIENT != null) builder.httpClient(HTTP_CLIENT)
+            if (endpointOverride.isNotBlank()) {
+                // 测试时注入，例如 "http://localhost:1080"
+                builder.endpointOverride(URI.create(endpointOverride.trim()))
+            }
+
+            snsClient = builder.build()
+
+            // 2) 构建 PublishRequest
+            val reqBuilder = PublishRequest.builder()
                 .phoneNumber(smsRequest.phoneNumber)
                 .message(smsRequest.message)
-                .messageAttributes(smsRequest.messageAttributes)
-                .build()
 
-            LOG.info("[aws]开始发送短信...")
+            // messageAttributes: MutableMap<String?, MessageAttributeValue?>?
+            smsRequest.messageAttributes
+                ?.filterKeys { it != null }
+                ?.filterValues { it != null }
+                ?.mapKeys { it.key!! }
+                ?.mapValues { it.value!! }
+                ?.takeIf { it.isNotEmpty() }
+                ?.let { reqBuilder.messageAttributes(it) }
+
+            val request = reqBuilder.build()
+
+            // 3) 发送并解析响应
+            LOG.info("[aws] 开始发送短信...")
             val result = snsClient.publish(request)
-            val sdkHttpResponse = result.sdkHttpResponse()
+            val http = result.sdkHttpResponse()
 
-            smsCallBackParam = AwsSmsCallBackParam()
-            smsCallBackParam.messageId = result.messageId()
-            smsCallBackParam.sequenceNumber = result.sequenceNumber()
-            smsCallBackParam.statusCode = sdkHttpResponse.statusCode()
-            smsCallBackParam.statusText = sdkHttpResponse.statusText().get()
-            LOG.info("[aws]发送短信成功,结果:{0}", smsCallBackParam)
+            cb = AwsSmsCallBackParam().apply {
+                messageId = result.messageId()
+                sequenceNumber = result.sequenceNumber()
+                statusCode = http.statusCode()
+                statusText = http.statusText().orElse("OK")
+            }
+            LOG.info("[aws] 发送短信成功, 结果:{0}", cb)
+        } catch (e: AwsServiceException) {
+            cb = AwsSmsCallBackParam().apply {
+                statusCode = e.statusCode()
+                statusText = e.awsErrorDetails()?.errorMessage()
+                    ?: e.awsErrorDetails()?.errorCode()
+                            ?: "AwsServiceException"
+            }
+            LOG.error(e, "[aws] 发送短信失败（AWS 服务异常）")
+        } catch (e: SdkServiceException) {
+            cb = AwsSmsCallBackParam().apply {
+                statusCode = e.statusCode()
+                statusText = e.message ?: "ServiceException"
+            }
+            LOG.error(e, "[aws] 发送短信失败（非 2xx 响应）")
         } catch (e: Exception) {
-            LOG.error(e, "[aws]发送短信失败")
+            // 其它本地错误（连接失败、序列化错误等）
+            LOG.error(e, "[aws] 发送短信失败（本地异常）")
         } finally {
-            snsClient?.close()
-            //执行回调
-            callback?.invoke(smsCallBackParam)
+            try {
+                snsClient?.close()
+            } catch (_: Exception) {
+            }
+
+            // 安全回调：无论上面哪条分支，保证一定回调一个对象
+            val safe = cb ?: AwsSmsCallBackParam().apply {
+                statusCode = 599
+                statusText = "client error"
+            }
+            callback?.invoke(safe)
         }
     }
 
     @PostConstruct
     private fun initApacheHttpClient() {
-        if (proxyProperties.isEnable) {
-            LOG.info("asw短信發送，開啓proxy代理.")
+        if (proxyProperties.enable) {
+            LOG.info("aws短信发送，启用 HTTP 代理")
             HTTP_CLIENT = ApacheHttpClient.builder()
                 .proxyConfiguration(
                     ProxyConfiguration.builder()

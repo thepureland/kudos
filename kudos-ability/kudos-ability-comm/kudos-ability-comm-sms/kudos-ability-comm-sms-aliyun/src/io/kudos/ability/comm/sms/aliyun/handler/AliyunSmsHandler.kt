@@ -22,7 +22,7 @@ import java.net.URI
  */
 class AliyunSmsHandler {
 
-    @Value("\${kudos.sms.aliyun.endpoint:}") // 留空=使用官方端点；测试时注入 WireMock
+    @Value("\${kudos.ability.comm.sms.aliyun}")
     private lateinit var endpointOverrideStr: String
 
     /**

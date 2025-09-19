@@ -8,16 +8,13 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.junit.jupiter.EnabledIfDockerAvailable
-import java.net.HttpURLConnection
-import java.net.URL
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * 阿里云发送短信测试用例
- *
+ * 阿里云发送短信测试用例，用WireMock模拟aliyun短信服务
  *
  * @author K
  * @author ChatGPT
@@ -191,7 +188,7 @@ class AliyunSmsTest {
         private fun registerProperties(registry: DynamicPropertyRegistry) {
             val container = WireMockTestContainer.startIfNeeded(registry)
             baseUrl = "http://${container.ports.first().ip}:${container.ports.first().publicPort}"
-            registry.add("kudos.sms.aliyun.endpoint") { baseUrl }
+            registry.add("kudos.ability.comm.sms.aliyun") { baseUrl }
         }
     }
 
