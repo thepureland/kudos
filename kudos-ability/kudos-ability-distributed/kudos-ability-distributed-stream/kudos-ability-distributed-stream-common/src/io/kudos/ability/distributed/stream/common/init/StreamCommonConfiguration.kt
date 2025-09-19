@@ -1,12 +1,14 @@
 package io.kudos.ability.distributed.stream.common.init
 
 import io.kudos.ability.distributed.stream.common.annotations.MqProducerAspect
-import org.mybatis.spring.annotation.MapperScan
-import org.soul.ability.distributed.stream.common.handler.StreamGlobalExceptionHandler
-import org.soul.ability.distributed.stream.common.iservice.IStreamExceptionService
-import org.soul.ability.distributed.stream.common.service.StreamExceptionService
-import org.soul.ability.distributed.stream.common.support.SoulStreamMessageConverter
-import org.soul.ability.distributed.stream.common.support.StreamProducerHelper
+import io.kudos.ability.distributed.stream.common.biz.IStreamExceptionBiz
+import io.kudos.ability.distributed.stream.common.biz.StreamExceptionBiz
+import io.kudos.ability.distributed.stream.common.dao.StreamExceptionMsgDao
+import io.kudos.ability.distributed.stream.common.handler.StreamGlobalExceptionHandler
+import io.kudos.ability.distributed.stream.common.handler.StreamProducerExceptionHandler
+import io.kudos.ability.distributed.stream.common.support.StreamMessageConverter
+import io.kudos.ability.distributed.stream.common.support.StreamProducerFailHandlerProcessor
+import io.kudos.ability.distributed.stream.common.support.StreamProducerHelper
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
@@ -17,7 +19,6 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
  * @author K
  * @since 1.0.0
  */
-@MapperScan("org.soul.ability.distributed.stream.common.data")
 open class StreamCommonConfiguration {
 
     @Bean("streamAsyncSendExecutor")
@@ -42,14 +43,26 @@ open class StreamCommonConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
+    open fun streamProducerExceptionHandler() = StreamProducerExceptionHandler()
+
+    @Bean
+    @ConditionalOnMissingBean
+    open fun streamProducerFailHandlerProcessor() = StreamProducerFailHandlerProcessor()
+
+    @Bean
+    @ConditionalOnMissingBean
     open fun streamProducerHelper() = StreamProducerHelper()
 
     @Bean
     @ConditionalOnMissingBean
-    open fun customMessageConverter() = SoulStreamMessageConverter()
+    open fun customMessageConverter() = StreamMessageConverter()
 
     @Bean
     @ConditionalOnMissingBean
-    open fun streamExceptionService(): IStreamExceptionService = StreamExceptionService()
+    open fun streamExceptionBiz(): IStreamExceptionBiz = StreamExceptionBiz()
+
+    @Bean
+    @ConditionalOnMissingBean
+    open fun streamExceptionMsgDao(): StreamExceptionMsgDao = StreamExceptionMsgDao()
 
 }

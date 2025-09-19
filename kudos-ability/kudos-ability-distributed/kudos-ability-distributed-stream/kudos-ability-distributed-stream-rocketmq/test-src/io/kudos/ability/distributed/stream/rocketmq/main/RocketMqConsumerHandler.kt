@@ -2,9 +2,9 @@ package io.kudos.ability.distributed.stream.rocketmq.main
 
 import com.alibaba.fastjson.JSONObject
 import io.kudos.ability.distributed.stream.common.annotations.MqConsumer
+import io.kudos.ability.distributed.stream.common.model.vo.StreamMessageVo
 import io.kudos.ability.distributed.stream.rocketmq.data.RocketMqSimpleMsg
 import io.kudos.base.logger.LogFactory
-import org.soul.ability.distributed.stream.common.model.model.StreamMessageVo
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
 import java.util.function.Consumer
@@ -29,7 +29,7 @@ open class RocketMqConsumerHandler {
         return Consumer { msg: Message<StreamMessageVo<JSONObject>>? ->
             //获取消息体
             val streamMsgVo : StreamMessageVo<JSONObject> = msg!!.getPayload()
-            val simpleMsgJson = streamMsgVo.getData()
+            val simpleMsgJson = streamMsgVo.data!!
             val simpleMsg = simpleMsgJson.toJavaObject(RocketMqSimpleMsg::class.java)
             log.info("receive message: ${simpleMsg.msg}")
             //记录日志

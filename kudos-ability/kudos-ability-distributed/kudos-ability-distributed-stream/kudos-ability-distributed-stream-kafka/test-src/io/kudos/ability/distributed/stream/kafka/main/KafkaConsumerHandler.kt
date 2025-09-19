@@ -1,9 +1,9 @@
 package io.kudos.ability.distributed.stream.kafka.main
 
 import io.kudos.ability.distributed.stream.common.annotations.MqConsumer
+import io.kudos.ability.distributed.stream.common.model.vo.StreamMessageVo
 import io.kudos.ability.distributed.stream.kafka.data.KafkaSimpleMsg
 import io.kudos.base.logger.LogFactory
-import org.soul.ability.distributed.stream.common.model.model.StreamMessageVo
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
 import java.util.function.Consumer
@@ -28,7 +28,7 @@ open class KafkaConsumerHandler {
         return Consumer { msg: Message<StreamMessageVo<KafkaSimpleMsg>>? ->
             //获取消息体
             val streamMsgVo: StreamMessageVo<KafkaSimpleMsg> = msg!!.getPayload()
-            val simpleMsg = streamMsgVo.getData()
+            val simpleMsg = streamMsgVo.data!!
             log.info("receive message: ${simpleMsg.msg}")
             //记录日志
             if (this.defaultMsg == simpleMsg.msg) {
