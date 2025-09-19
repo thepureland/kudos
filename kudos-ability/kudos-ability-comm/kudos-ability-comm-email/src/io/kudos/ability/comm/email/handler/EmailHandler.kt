@@ -37,7 +37,7 @@ class EmailHandler {
         try {
             //验证参数
             if (!checkParams(emailRequest)) {
-                emailCallBackParam.setStatus(EmailStatusEnum.FAIL)
+                emailCallBackParam.status = EmailStatusEnum.FAIL
                 emailCallBackParam.failEmails = emailRequest.receivers
                 return
             }
@@ -91,7 +91,7 @@ class EmailHandler {
             sender.send(mailMessage)
 
             //设置回调状态
-            emailCallBackParam.setStatus(EmailStatusEnum.SUCCESS)
+            emailCallBackParam.status = EmailStatusEnum.SUCCESS
             emailCallBackParam.successEmails = emailRequest.receivers
 
             LOG.info("发送邮件成功")
@@ -115,22 +115,22 @@ class EmailHandler {
                     emailCallBackParam.successEmails = receiveSet
                     emailCallBackParam.failEmails = unreceivedSet
                     if (emailCallBackParam.successEmails!!.isNotEmpty() && emailCallBackParam.failEmails!!.isNotEmpty()) {
-                        emailCallBackParam.setStatus(EmailStatusEnum.SUCCESS_PART)
+                        emailCallBackParam.status = EmailStatusEnum.SUCCESS_PART
                     } else {
-                        emailCallBackParam.setStatus(EmailStatusEnum.FAIL)
+                        emailCallBackParam.status = EmailStatusEnum.FAIL
                     }
                     break
                 }
             }
-            if (emailCallBackParam.getStatus() == null) {
-                emailCallBackParam.setStatus(EmailStatusEnum.FAIL)
+            if (emailCallBackParam.status == null) {
+                emailCallBackParam.status = EmailStatusEnum.FAIL
                 emailCallBackParam.failEmails = emailRequest.receivers
             }
         } catch (e: Exception) {
             LOG.error(e, "邮件发送出错")
 
             //设置回调状态
-            emailCallBackParam.setStatus(EmailStatusEnum.FAIL)
+            emailCallBackParam.status = EmailStatusEnum.FAIL
             emailCallBackParam.failEmails = emailRequest.receivers
         } finally {
             //执行回调

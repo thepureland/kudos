@@ -25,14 +25,6 @@ class EmailCallBackParam : Serializable {
      */
     var failEmails: MutableSet<String>? = null
 
-    fun getStatus(): EmailStatusEnum? {
-        return status
-    }
-
-    fun setStatus(status: EmailStatusEnum?) {
-        this.status = status
-    }
-
     override fun toString(): String {
         return "SoulEmailCallBackParam{" +
                 "status=" + status +
