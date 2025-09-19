@@ -6,12 +6,12 @@ import io.kudos.ability.distributed.notify.common.model.NotifyMessageVo
 import io.kudos.ability.distributed.notify.common.support.NotifyListenerBeanPostProcessor
 import io.kudos.ability.distributed.notify.common.support.NotifyListenerItem
 import io.kudos.ability.distributed.notify.mq.producer.NotifyMqProducer
+import io.kudos.ability.distributed.stream.common.annotations.MqConsumer
+import io.kudos.ability.distributed.stream.common.model.vo.StreamMessageVo
 import io.kudos.base.logger.LogFactory
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
 import io.kudos.context.config.YamlPropertySourceFactory
-import org.soul.ability.distributed.stream.common.annotations.MqConsumer
-import org.soul.ability.distributed.stream.common.model.model.StreamMessageVo
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean
@@ -50,7 +50,7 @@ open class NotifyMqAutoConfiguration : IComponentInitializer {
     open fun mqNotify(): Consumer<Message<StreamMessageVo<JSONObject>>?> {
         return Consumer { msg: Message<StreamMessageVo<JSONObject>>? ->
             val streamMsgVo = msg!!.getPayload()
-            val socketMsgJson = streamMsgVo.getData()
+            val socketMsgJson = streamMsgVo.data!!
             val simpleMsgVo = socketMsgJson.toJavaObject(NotifyMessageVo::class.java)
             log.info("[mqNotify]消费通知, 类型:${simpleMsgVo.notifyType}")
             val listener = NotifyListenerItem.get(simpleMsgVo.notifyType)

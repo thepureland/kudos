@@ -1,12 +1,12 @@
 package io.kudos.ability.comm.email
 
+import io.kudos.ability.comm.email.enums.EmailStatusEnum
+import io.kudos.ability.comm.email.handler.EmailHandler
+import io.kudos.ability.comm.email.model.EmailRequest
 import io.kudos.test.common.init.EnableKudosTest
 import io.kudos.test.container.containers.SmtpTestContainer
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
-import org.soul.ability.comm.email.enums.EmailStatusEnum
-import org.soul.ability.comm.email.handler.EmailHandler
-import org.soul.ability.comm.email.model.EmailRequest
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
@@ -43,7 +43,7 @@ class EmailTest {
             senderAccount = "sender-email@example.com"
             senderPassword = "secret"
             fromMailAddress = "from-email@example.com"
-            receivers = mutableSetOf<String?>("recipient-email@example.com")
+            receivers = mutableSetOf("recipient-email@example.com")
             ssl = false
         }
     }
@@ -55,9 +55,7 @@ class EmailTest {
         emailRequest.htmlFormat = false
         emailHandler.send(emailRequest) { emailCallBackParam ->
             try {
-                if (emailCallBackParam != null) {
-                    emailStatusEnum.add(emailCallBackParam.status)
-                }
+                emailStatusEnum.add(emailCallBackParam.status!!)
             } finally {
                 latch.countDown()
             }
@@ -74,9 +72,7 @@ class EmailTest {
         emailRequest.body = "<h1>${emailRequest.body}</h1>"
         emailHandler.send(emailRequest) { emailCallBackParam ->
             try {
-                if (emailCallBackParam != null) {
-                    emailStatusEnum.add(emailCallBackParam.status)
-                }
+                emailStatusEnum.add(emailCallBackParam.status!!)
             } finally {
                 latch.countDown()
             }

@@ -32,6 +32,7 @@
             <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-cache/kudos-ability-cache-remote" />
             <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-cache/kudos-ability-cache-remote/kudos-ability-cache-remote-redis" />
             <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-comm" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-comm/kudos-ability-comm-common" />
             <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-comm/kudos-ability-comm-email" />
             <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-comm/kudos-ability-comm-sms" />
             <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-comm/kudos-ability-comm-sms/kudos-ability-comm-sms-aliyun" />
@@ -59,7 +60,6 @@
             <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-distributed/kudos-ability-distributed-notify" />
             <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-distributed/kudos-ability-distributed-notify/kudos-ability-distributed-notify-common" />
             <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-distributed/kudos-ability-distributed-notify/kudos-ability-distributed-notify-mq" />
-            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-distributed/kudos-ability-distributed-notify/kudos-ability-distributed-notify-rdb" />
             <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-distributed/kudos-ability-distributed-stream" />
             <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-distributed/kudos-ability-distributed-stream/kudos-ability-distributed-stream-common" />
             <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-distributed/kudos-ability-distributed-stream/kudos-ability-distributed-stream-kafka" />
