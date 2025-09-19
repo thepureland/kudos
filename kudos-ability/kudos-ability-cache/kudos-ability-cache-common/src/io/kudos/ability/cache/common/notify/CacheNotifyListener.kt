@@ -14,7 +14,7 @@ class CacheNotifyListener : INotifyListener<CacheOperatorVo> {
         return CACHE_OPERATOR
     }
 
-    override fun notifyProcess(notifyMessageVo: NotifyMessageVo<CacheOperatorVo>) {
+    override fun notifyProcess(notifyMessageVo: NotifyMessageVo<*>?) {
         val messageBody = notifyMessageVo.messageBody!!
         if (!CacheKit.isCacheActive(messageBody.cacheName)) {
             return
