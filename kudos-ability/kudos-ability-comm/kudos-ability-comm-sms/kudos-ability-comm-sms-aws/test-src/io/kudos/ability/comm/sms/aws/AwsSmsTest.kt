@@ -1,5 +1,7 @@
 package io.kudos.ability.comm.sms.aws
 
+import io.kudos.ability.comm.sms.aws.handler.AwsSmsHandler
+import io.kudos.ability.comm.sms.aws.model.AwsSmsRequest
 import io.kudos.base.io.FileKit
 import io.kudos.base.io.IoKit
 import io.kudos.base.lang.SystemKit
@@ -7,8 +9,6 @@ import io.kudos.base.logger.LogFactory
 import io.kudos.test.common.init.EnableKudosTest
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
-import org.soul.ability.comm.sms.aws.handler.AwsSmsHandler
-import org.soul.ability.comm.sms.aws.model.AwsSmsRequest
 import org.springframework.beans.factory.annotation.Autowired
 import software.amazon.awssdk.http.HttpStatusFamily
 import java.io.File
@@ -95,11 +95,9 @@ class AwsSmsTest {
         }
         val code = arrayOfNulls<HttpStatusFamily>(1)
         val latch = CountDownLatch(1)
-        smsHandler.send(smsRequest) { callBackParam ->
+        smsHandler.send(smsRequest!!) { callBackParam ->
             try {
-                if (callBackParam != null) {
-                    code[0] = HttpStatusFamily.of(callBackParam.statusCode)
-                }
+                code[0] = HttpStatusFamily.of(callBackParam.statusCode)
             } finally {
                 latch.countDown()
             }

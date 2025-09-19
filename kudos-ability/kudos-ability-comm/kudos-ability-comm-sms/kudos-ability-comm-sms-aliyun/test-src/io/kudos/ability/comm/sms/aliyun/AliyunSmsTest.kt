@@ -1,5 +1,7 @@
 package io.kudos.ability.comm.sms.aliyun
 
+import io.kudos.ability.comm.sms.aliyun.handler.AliyunSmsHandler
+import io.kudos.ability.comm.sms.aliyun.model.AliyunSmsRequest
 import io.kudos.base.io.FileKit
 import io.kudos.base.io.IoKit
 import io.kudos.base.lang.SystemKit
@@ -7,8 +9,6 @@ import io.kudos.base.logger.LogFactory
 import io.kudos.test.common.init.EnableKudosTest
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
-import org.soul.ability.comm.sms.aliyun.handler.AliyunSmsHandler
-import org.soul.ability.comm.sms.aliyun.model.AliyunSmsRequest
 import org.springframework.beans.factory.annotation.Autowired
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -97,11 +97,9 @@ class AliyunSmsTest {
         }
         val code = arrayOfNulls<String>(1)
         val latch = CountDownLatch(1)
-        smsHandler.send(smsRequest) { sendSmsResponseBody ->
+        smsHandler.send(smsRequest!!) { sendSmsResponseBody ->
             try {
-                if (sendSmsResponseBody != null) {
-                    code[0] = sendSmsResponseBody.getCode()
-                }
+                code[0] = sendSmsResponseBody.code
             } finally {
                 latch.countDown()
             }

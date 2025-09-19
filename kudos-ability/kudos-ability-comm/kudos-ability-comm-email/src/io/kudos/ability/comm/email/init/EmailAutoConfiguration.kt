@@ -1,8 +1,8 @@
 package io.kudos.ability.comm.email.init
 
+import io.kudos.ability.comm.email.handler.EmailHandler
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
-import org.soul.ability.comm.email.handler.EmailHandler
 import org.springframework.beans.factory.annotation.Configurable
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
