@@ -1,7 +1,7 @@
 package io.kudos.ability.distributed.stream.kafka.main
 
+import io.kudos.ability.distributed.stream.common.biz.IStreamExceptionBiz
 import io.kudos.base.logger.LogFactory
-import org.soul.ability.distributed.stream.common.iservice.IStreamExceptionService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.util.*
@@ -24,7 +24,7 @@ open class KafkaMainService : IKafkaMainService {
     private lateinit var producerClient: IKafkaProducerClient
 
     @Autowired
-    private lateinit var streamExceptionService: IStreamExceptionService
+    private lateinit var streamExceptionBiz: IStreamExceptionBiz
 
     @Autowired
     private lateinit var consumerHandler: KafkaConsumerHandler
@@ -58,7 +58,7 @@ open class KafkaMainService : IKafkaMainService {
             } catch (e: Exception) {
                 Thread.currentThread().interrupt()
             }
-            val list = streamExceptionService.query(topicName, now)
+            val list = streamExceptionBiz.query(topicName, now)
             if (list.isNotEmpty()) {
                 stop = false
                 consumerHandler.errorFlag = false

@@ -30,8 +30,6 @@ class YamlPropertySourceFactory : PropertySourceFactory {
 //        return PropertiesPropertySource(propertyName, ymlProperties!!)
 //    }
 
-    private val SOURCE_MAP: MutableMap<String?, String?> = HashMap<String?, String?>()
-
     private val log = LogFactory.getLog(this)
 
     override fun createPropertySource(s: String?, encodedResource: EncodedResource): PropertySource<*> {
@@ -129,12 +127,17 @@ class YamlPropertySourceFactory : PropertySourceFactory {
         SOURCE_MAP.put(sourceName, url)
     }
 
-    fun getSourceMap(): MutableMap<String?, String?> {
-        return SOURCE_MAP
-    }
 
-    fun allSourcePath(): MutableList<String?> {
-        return SOURCE_MAP.keys.stream().toList()
+    companion object {
+        private val SOURCE_MAP: MutableMap<String?, String?> = HashMap<String?, String?>()
+
+        fun getSourceMap(): MutableMap<String?, String?> {
+            return SOURCE_MAP
+        }
+
+        fun allSourcePath(): MutableList<String?> {
+            return SOURCE_MAP.keys.stream().toList()
+        }
     }
 
 }

@@ -9,9 +9,4 @@ spring:
     locations:
       - classpath:db/stream/postgresql
 
-soul:
-  ability:
-    distributed:
-      stream:
-        save-exception: ${kudos.ability.distributed.stream.save-exception}
 

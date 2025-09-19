@@ -1,6 +1,6 @@
 dependencies {
     api(project(":kudos-ability:kudos-ability-distributed:kudos-ability-distributed-stream:kudos-ability-distributed-stream-common"))
-    api("org.soul:soul-ability-distributed-stream-rabbit")
+    api("org.springframework.cloud:spring-cloud-starter-stream-rabbit")
 
     testImplementation(project(":kudos-test:kudos-test-container"))
     testImplementation(project(":kudos-ability:kudos-ability-distributed:kudos-ability-distributed-client:kudos-ability-distributed-client-feign"))
