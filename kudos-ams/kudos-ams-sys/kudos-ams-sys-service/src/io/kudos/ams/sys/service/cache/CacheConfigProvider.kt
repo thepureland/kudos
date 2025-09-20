@@ -1,10 +1,10 @@
 package io.kudos.ams.sys.service.cache
 
+import io.kudos.ability.cache.common.enums.CacheStrategy
+import io.kudos.ability.cache.common.support.CacheConfig
+import io.kudos.ability.cache.common.support.ICacheConfigProvider
 import io.kudos.ams.sys.common.vo.cache.SysCacheSearchPayload
 import io.kudos.ams.sys.service.dao.SysCacheDao
-import org.soul.ability.cache.common.enums.CacheStrategy
-import org.soul.ability.cache.common.support.CacheConfig
-import org.soul.ability.cache.common.support.ICacheConfigProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.DependsOn
 import org.springframework.stereotype.Component
@@ -39,29 +39,29 @@ open class CacheConfigProvider : ICacheConfigProvider {
     }
 
     override fun getCacheConfig(name: String): CacheConfig? {
-        return allCacheConfigs[name]
+        return getAllCacheConfigs()[name]
     }
 
     override fun getAllCacheConfigs(): Map<String, CacheConfig> {
-        return getCacheConfigs().associateBy { it.name }
+        return getCacheConfigs().associateBy { it.name!! }
     }
 
     override fun getLocalCacheConfigs(): Map<String, CacheConfig> {
         return getCacheConfigs()
             .filter { it.strategyDictCode == CacheStrategy.SINGLE_LOCAL.name }
-            .associateBy { it.name }
+            .associateBy { it.name!! }
     }
 
     override fun getRemoteCacheConfigs(): Map<String, CacheConfig> {
         return getCacheConfigs()
             .filter { it.strategyDictCode == CacheStrategy.REMOTE.name }
-            .associateBy { it.name }
+            .associateBy { it.name!! }
     }
 
     override fun getLocalRemoteCacheConfigs(): Map<String, CacheConfig> {
         return getCacheConfigs()
             .filter { it.strategyDictCode == CacheStrategy.LOCAL_REMOTE.name }
-            .associateBy { it.name }
+            .associateBy { it.name!! }
     }
 
 }

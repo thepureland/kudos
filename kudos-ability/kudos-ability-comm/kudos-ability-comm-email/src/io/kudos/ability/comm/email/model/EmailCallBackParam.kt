@@ -26,7 +26,7 @@ class EmailCallBackParam : Serializable {
     var failEmails: MutableSet<String>? = null
 
     override fun toString(): String {
-        return "SoulEmailCallBackParam{" +
+        return "EmailCallBackParam{" +
                 "status=" + status +
                 ", successEmails=" + successEmails +
                 ", failEmails=" + failEmails +

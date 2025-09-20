@@ -6,4 +6,5 @@ dependencies {
     }
     api("org.testcontainers:kafka:1.21.0")
     api("org.testcontainers:junit-jupiter:1.21.0")
+    api("org.wiremock:wiremock:3.13.1")
 }

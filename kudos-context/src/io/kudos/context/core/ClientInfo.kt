@@ -25,8 +25,8 @@ class ClientInfo(builder: Builder) {
 //    /** 请求内容字节数据表示 */
 //    var requestContent: ByteArray? = null
 //
-//    /** 请求内容字符串表示 */
-//    var requestContentString: String? = requestContent?.toString()
+    /** 请求内容字符串表示 */
+    var requestContentString: String? = null
 
     /** 请求referer */
     var requestReferer: String? = null
@@ -53,7 +53,7 @@ class ClientInfo(builder: Builder) {
         url = builder.url
         params = builder.params
 //        requestContent = builder.requestContent
-//        requestContentString = builder.requestContentString
+        requestContentString = builder.requestContentString
         requestReferer = builder.requestReferer
         requestType = builder.requestType
         os = builder.os
@@ -84,9 +84,9 @@ class ClientInfo(builder: Builder) {
 
 //        /** 请求内容字节数据表示 */
 //        internal var requestContent: ByteArray? = null
-//
-//        /** 请求内容字符串表示 */
-//        internal var requestContentString: String? = requestContent?.toString()
+
+        /** 请求内容字符串表示 */
+        internal var requestContentString: String? = null
 
         /** 请求referer */
         internal var requestReferer: String? = null
@@ -134,11 +134,11 @@ class ClientInfo(builder: Builder) {
 //            this.requestContent = requestContent
 //            return this
 //        }
-//
-//        fun requestContentString(requestContentString: String?): Builder {
-//            this.requestContentString = requestContentString
-//            return this
-//        }
+
+        fun requestContentString(requestContentString: String?): Builder {
+            this.requestContentString = requestContentString
+            return this
+        }
 
         fun requestReferer(requestReferer: String?): Builder {
             this.requestReferer = requestReferer

@@ -4,6 +4,7 @@ import io.kudos.ability.distributed.lock.redisson.kit.RedissonLockKit
 import io.kudos.context.lock.ILockProvider
 import org.redisson.api.RLock
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.Lock
 
 class RedissonLockProvider : ILockProvider<RLock> {
     
@@ -11,7 +12,7 @@ class RedissonLockProvider : ILockProvider<RLock> {
         return RedissonLockKit.lock(key)
     }
 
-    override fun unLock(lock: RLock, key: String) {
+    override fun unLock(lock: Lock, key: String) {
         lock.unlock()
     }
 

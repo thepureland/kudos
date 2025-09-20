@@ -1,12 +1,12 @@
 package io.kudos.ability.file.local
 
+import io.kudos.ability.file.common.IDeleteService
+import io.kudos.ability.file.common.entity.DeleteFileModel
+import io.kudos.ability.file.local.init.properties.LocalProperties
+import io.kudos.base.error.ServiceException
 import io.kudos.base.io.FileKit
 import io.kudos.test.common.init.EnableKudosTest
 import jakarta.annotation.Resource
-import org.soul.ability.file.common.IDeleteService
-import org.soul.ability.file.common.entity.DeleteFileModel
-import org.soul.ability.file.local.starter.properties.LocalProperties
-import org.soul.base.exception.ServiceException
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertFailsWith

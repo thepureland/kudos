@@ -18,7 +18,7 @@ interface ILockProvider<L : Lock> {
      * @param lock
      * @param key
      */
-    fun unLock(lock: L, key: String)
+    fun unLock(lock: Lock, key: String)
 
     /**
      * 解除锁

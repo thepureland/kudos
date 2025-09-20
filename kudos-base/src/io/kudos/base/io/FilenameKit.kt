@@ -351,7 +351,7 @@ object FilenameKit {
      * @author K
      * @since 1.0.0
      */
-    fun getExtension(filename: String): String? = FilenameUtils.getExtension(filename)
+    fun getExtension(filename: String): String = FilenameUtils.getExtension(filename)
 
     //region getPath
     /**

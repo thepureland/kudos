@@ -119,7 +119,7 @@ class YamlPropertySourceFactory : PropertySourceFactory {
         var url: String? = ""
         try {
             val res = encodedRes.resource
-            val uri = res.uri // 例如 "jar:file:/…/libs/soul-foo.jar!/application.yml"
+            val uri = res.uri // 例如 "jar:file:/…/libs/kudos-foo.jar!/application.yml"
             url = uri.toString()
         } catch (e: Exception) {
             log.warn("设置config和jar关系失败！")

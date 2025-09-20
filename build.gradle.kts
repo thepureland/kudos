@@ -1,5 +1,4 @@
 
-val SOUL_VERSION = "5.4.1-SNAPSHOT"
 val KTOR_VERSION: String = libs.versions.ktor.get()
 
 
@@ -21,7 +20,10 @@ subprojects {
     layout.buildDirectory = File(rootProject.projectDir, "build/${project.name}")
 
     dependencies {
-        add("implementation", platform("org.soul:soul-dependencies:${SOUL_VERSION}"))
+        add("implementation", platform("org.springframework:spring-framework-bom:6.1.16"))
+        add("implementation", platform("org.springframework.boot:spring-boot-dependencies:3.4.3"))
+        add("implementation", platform("org.springframework.cloud:spring-cloud-dependencies:2024.0.0"))
+        add("implementation", platform("com.alibaba.cloud:spring-cloud-alibaba-dependencies:2023.0.1.2"))
         add("implementation", platform("io.ktor:ktor-bom:${KTOR_VERSION}"))
         add("testImplementation", kotlin("test-junit5")) // kotlin.test + JUnit5
     }

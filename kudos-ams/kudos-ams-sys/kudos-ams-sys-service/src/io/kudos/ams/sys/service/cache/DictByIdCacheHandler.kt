@@ -1,9 +1,9 @@
 package io.kudos.ams.sys.service.cache
 
+import io.kudos.ability.cache.common.batch.BatchCacheable
 import io.kudos.ability.cache.common.support.AbstractByIdCacheHandler
 import io.kudos.ams.sys.common.vo.dict.SysDictCacheItem
 import io.kudos.ams.sys.service.dao.SysDictDao
-import org.soul.ability.cache.common.batch.BatchCacheable
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
 

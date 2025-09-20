@@ -14,9 +14,6 @@ dependencyResolutionManagement {
         maven {
             url = uri("https://maven.aliyun.com/repository/public")
         }
-        maven {
-            url = uri("https://nexus.soulworld.net/repository/maven-public/")
-        }
     }
 }
 
@@ -51,8 +48,7 @@ include("kudos-ability:kudos-ability-comm:kudos-ability-comm-common")
 include("kudos-ability:kudos-ability-comm:kudos-ability-comm-email")
 include("kudos-ability:kudos-ability-comm:kudos-ability-comm-sms:kudos-ability-comm-sms-aliyun")
 include("kudos-ability:kudos-ability-comm:kudos-ability-comm-sms:kudos-ability-comm-sms-aws")
-include("kudos-ability:kudos-ability-comm:kudos-ability-comm-websocket:kudos-ability-comm-websocket-netty")
-include("kudos-ability:kudos-ability-comm:kudos-ability-comm-websocket:kudos-ability-comm-websocket-spring")
+include("kudos-ability:kudos-ability-comm:kudos-ability-comm-websocket:kudos-ability-comm-websocket-ktor")
 
 // data
 include("kudos-ability:kudos-ability-data:kudos-ability-data-rdb:kudos-ability-data-rdb-jdbc")
@@ -75,12 +71,16 @@ include("kudos-ability:kudos-ability-distributed:kudos-ability-distributed-notif
 include("kudos-ability:kudos-ability-distributed:kudos-ability-distributed-tx:kudos-ability-distributed-tx-seata")
 
 // file
+include("kudos-ability:kudos-ability-file:kudos-ability-file-common")
 include("kudos-ability:kudos-ability-file:kudos-ability-file-local")
 include("kudos-ability:kudos-ability-file:kudos-ability-file-minio")
 
 // log
+include("kudos-ability:kudos-ability-log:kudos-ability-log-audit:kudos-ability-log-audit-common")
 include("kudos-ability:kudos-ability-log:kudos-ability-log-audit:kudos-ability-log-audit-mq")
 include("kudos-ability:kudos-ability-log:kudos-ability-log-audit:kudos-ability-log-audit-rdb")
+include("kudos-ability:kudos-ability-log:kudos-ability-log-audit:kudos-ability-log-audit-rdb:kudos-ability-log-audit-rdb-common")
+include("kudos-ability:kudos-ability-log:kudos-ability-log-audit:kudos-ability-log-audit-rdb:kudos-ability-log-audit-rdb-ktorm")
 
 
 // ui
@@ -88,7 +88,6 @@ include("kudos-ability:kudos-ability-ui:kudos-ability-ui-javafx")
 
 // web
 include("kudos-ability:kudos-ability-web:kudos-ability-web-ktor")
-include("kudos-ability:kudos-ability-web:kudos-ability-web-springmvc")
 
 
 // ams

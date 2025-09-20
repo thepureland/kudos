@@ -1,8 +1,8 @@
 package io.kudos.ability.file.local
 
+import io.kudos.ability.file.common.entity.UploadFileModel
+import io.kudos.ability.file.local.init.LocalUploadService
 import io.kudos.test.common.init.EnableKudosTest
-import org.soul.ability.file.common.entity.UploadFileModel
-import org.soul.ability.file.local.LocalUploadService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.io.InputStreamResource
 import java.lang.String
@@ -41,7 +41,7 @@ internal class LocalUploadServiceTest {
         val filename = uploadFileResult.filePath
 
         val arr = arrayOf("0", "doc")
-        assertTrue(filename.contains(String.join("/", *arr)))
+        assertTrue(filename!!.contains(String.join("/", *arr)))
     }
 
     @Test
@@ -61,7 +61,7 @@ internal class LocalUploadServiceTest {
         val month = calendar.get(Calendar.MONTH) + 1
         val day = calendar.get(Calendar.DAY_OF_MONTH)
         val arr = arrayOf("0", year.toString(), month.toString(), day.toString())
-        assertTrue(filename.contains(String.join("/", *arr)))
+        assertTrue(filename!!.contains(String.join("/", *arr)))
     }
 
 }

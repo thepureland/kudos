@@ -5,6 +5,7 @@ import io.kudos.base.logger.LogFactory
 import io.kudos.base.support.KeyLockRegistry
 import java.lang.Long
 import java.util.concurrent.*
+import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
 
 class NormalLockService : ILockProvider<ReentrantLock> {
@@ -41,7 +42,7 @@ class NormalLockService : ILockProvider<ReentrantLock> {
         return reentrantLockManager.tryLock(key)
     }
 
-    override fun unLock(lock: ReentrantLock, key: String) {
+    override fun unLock(lock: Lock, key: String) {
         unLock(key)
     }
 
