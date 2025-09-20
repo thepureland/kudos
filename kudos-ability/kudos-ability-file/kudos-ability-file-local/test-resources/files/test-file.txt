@@ -1,2 +1,2 @@
--- use for: soul-ability-file module /test/java
+-- use for: kudos-ability-file module /test/java
 -- test files for junit test!

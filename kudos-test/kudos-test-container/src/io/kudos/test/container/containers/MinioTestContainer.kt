@@ -36,8 +36,9 @@ object MinioTestContainer {
         waitingFor(
             Wait.forHttp("/minio/health/ready")
                 .forPort(PORT)
-                .withStartupTimeout(Duration.ofMinutes(1))
+                .forStatusCode(200)
         )
+        withStartupTimeout(Duration.ofMinutes(1))
         withLabel(TestContainerKit.LABEL_KEY, LABEL)
     }
 

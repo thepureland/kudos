@@ -1,5 +1,0 @@
-kudos:
-  ability:
-    comm:
-      websocket:
-        path: ws.do #ws的请求拦截地址

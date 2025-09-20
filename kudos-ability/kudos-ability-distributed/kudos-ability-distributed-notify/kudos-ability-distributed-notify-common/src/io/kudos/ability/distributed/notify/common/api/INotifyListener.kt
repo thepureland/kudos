@@ -13,6 +13,6 @@ interface  INotifyListener<T: Serializable> {
 
     fun notifyType(): String
 
-    fun notifyProcess(notifyMessageVo: NotifyMessageVo<*>)
+    fun notifyProcess(notifyMessageVo: NotifyMessageVo<T>)
 
 }

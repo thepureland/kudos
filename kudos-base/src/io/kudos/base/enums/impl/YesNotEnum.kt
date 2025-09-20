@@ -8,7 +8,11 @@ import io.kudos.base.enums.ienums.IDictEnum
  * @author K
  * @since 1.0.0
  */
-enum class YesNotEnum(val bool: Boolean, override val code: String, override var trans: String) : IDictEnum {
+enum class YesNotEnum(
+    val bool: Boolean,
+    override val code: String,
+    override var trans: String
+) : IDictEnum {
 
     YES(true, "1", "是"),
     NOT(false, "0", "否");
@@ -28,7 +32,4 @@ enum class YesNotEnum(val bool: Boolean, override val code: String, override var
         fun enumOfBool(bool: Boolean): YesNotEnum = if (bool) YES else NOT
     }
 
-    init {
-        this.trans = trans
-    }
 }

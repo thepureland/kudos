@@ -1,9 +1,9 @@
 package io.kudos.ams.sys.service.cache
 
+import io.kudos.ability.cache.common.enums.CacheStrategy
 import io.kudos.test.common.init.EnableKudosTest
 import io.kudos.test.container.containers.H2TestContainer
 import io.kudos.test.container.containers.RedisTestContainer
-import org.soul.ability.cache.common.enums.CacheStrategy
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.springframework.transaction.annotation.Transactional

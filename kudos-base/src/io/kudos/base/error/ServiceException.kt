@@ -12,7 +12,7 @@ import java.util.*
  */
 class ServiceException : CustomRuntimeException {
 
-    private var errorCode: IErrorCodeEnum? = null
+    var errorCode: IErrorCodeEnum? = null
 
     var params: Array<Any?>? = null
         private set
@@ -42,10 +42,6 @@ class ServiceException : CustomRuntimeException {
     constructor(errorCode: IErrorCodeEnum, ex: Throwable) {
         this.errorCode = errorCode
         resolveCauseException(ex, errorCode.trans)
-    }
-
-    fun getErrorCode(): IErrorCodeEnum? {
-        return errorCode
     }
 
     companion object {

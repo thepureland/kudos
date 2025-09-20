@@ -1,10 +1,10 @@
 package io.kudos.ams.sys.service.cache
 
+import io.kudos.ability.cache.common.enums.CacheStrategy
 import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.ams.sys.common.vo.cache.SysCacheCacheItem
 import io.kudos.ams.sys.service.dao.SysCacheDao
 import io.kudos.ams.sys.service.model.po.SysCache
-import org.soul.ability.cache.common.enums.CacheStrategy
 import org.springframework.beans.factory.annotation.Autowired
 import org.testcontainers.junit.jupiter.EnabledIfDockerAvailable
 import kotlin.test.Test

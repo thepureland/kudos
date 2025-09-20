@@ -1,15 +1,15 @@
 package io.kudos.ability.file.minio.init
 
+import io.kudos.ability.file.minio.MinioDeleteService
+import io.kudos.ability.file.minio.MinioDownLoadService
+import io.kudos.ability.file.minio.MinioUploadService
+import io.kudos.ability.file.minio.client.MinioClientBuilderFactory
+import io.kudos.ability.file.minio.init.properties.AccessTokenServerProperties
+import io.kudos.ability.file.minio.init.properties.MinioProperties
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
 import io.kudos.context.config.YamlPropertySourceFactory
 import io.minio.MinioClient
-import org.soul.ability.file.minio.MinioDeleteService
-import org.soul.ability.file.minio.MinioDownLoadService
-import org.soul.ability.file.minio.MinioUploadService
-import org.soul.ability.file.minio.client.MinioClientBuilderFactory
-import org.soul.ability.file.minio.starter.properties.AccessTokenServerProperties
-import org.soul.ability.file.minio.starter.properties.MinioProperties
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.ConfigurationProperties
@@ -66,6 +66,6 @@ open class MinioAutoConfiguration : IComponentInitializer {
     @ConditionalOnMissingBean
     open fun minioClientBuilderFactory() = MinioClientBuilderFactory()
 
-    override fun getComponentName() = "soul-ability-file-minio"
+    override fun getComponentName() = "kudos-ability-file-minio"
 
 }
