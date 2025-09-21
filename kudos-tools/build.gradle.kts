@@ -4,7 +4,7 @@ dependencies {
     implementation(project(":kudos-ability:kudos-ability-ui:kudos-ability-ui-javafx"))
 
     implementation("org.freemarker:freemarker:2.3.30")
-    implementation("com.h2database:h2:2.3.232")
+    implementation("com.h2database:h2:${libs.versions.h2.get()}")
 }
 
 

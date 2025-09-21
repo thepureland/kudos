@@ -10,6 +10,6 @@ dependencies {
 //    testImplementation("org.springframework.boot:spring-boot-starter-web")
     testImplementation(project(":kudos-ability:kudos-ability-distributed:kudos-ability-distributed-client:kudos-ability-distributed-client-feign"))
     testImplementation(project(":kudos-ability:kudos-ability-distributed:kudos-ability-distributed-discovery:kudos-ability-distributed-discovery-nacos"))
-    testImplementation("org.postgresql:postgresql")
-    testImplementation("com.mysql:mysql-connector-j:9.3.0")
+    testImplementation("org.postgresql:postgresql:${libs.versions.postgres.get()}")
+//    testImplementation("com.mysql:mysql-connector-j:9.3.0")
 }

@@ -1,6 +1,7 @@
-
 val KTOR_VERSION: String = libs.versions.ktor.get()
-
+val SPRING_BOOT_VERSION: String = libs.versions.springBoot.get()
+val SPRING_CLOUD_VERSION: String = libs.versions.springCloud.get()
+val ALIBABA_CLOUD__VERSION: String = libs.versions.alibabaCloud.get()
 
 subprojects {
     apply(plugin = "org.jetbrains.kotlin.jvm")
@@ -20,10 +21,9 @@ subprojects {
     layout.buildDirectory = File(rootProject.projectDir, "build/${project.name}")
 
     dependencies {
-//        add("implementation", platform("org.springframework:spring-framework-bom:6.1.16"))
-        add("implementation", platform("org.springframework.boot:spring-boot-dependencies:3.4.3"))
-        add("implementation", platform("org.springframework.cloud:spring-cloud-dependencies:2024.0.0"))
-        add("implementation", platform("com.alibaba.cloud:spring-cloud-alibaba-dependencies:2023.0.1.2"))
+        add("implementation", platform("org.springframework.boot:spring-boot-dependencies:${SPRING_BOOT_VERSION}"))
+        add("implementation", platform("org.springframework.cloud:spring-cloud-dependencies:${SPRING_CLOUD_VERSION}"))
+        add("implementation", platform("com.alibaba.cloud:spring-cloud-alibaba-dependencies:${ALIBABA_CLOUD__VERSION}"))
         add("implementation", platform("io.ktor:ktor-bom:${KTOR_VERSION}"))
         add("testImplementation", kotlin("test-junit5")) // kotlin.test + JUnit5
     }
@@ -31,7 +31,6 @@ subprojects {
     tasks.withType<Test> {
         useJUnitPlatform()
     }
-
 
 }
 
