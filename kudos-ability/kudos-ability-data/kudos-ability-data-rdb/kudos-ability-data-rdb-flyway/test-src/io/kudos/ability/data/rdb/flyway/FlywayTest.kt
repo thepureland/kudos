@@ -20,7 +20,6 @@ import kotlin.test.assertFailsWith
  * @since 1.0.0
  */
 @EnableKudosTest
-@EnabledIfDockerAvailable
 class FlywayTest {
 
     @Autowired
@@ -40,7 +39,7 @@ class FlywayTest {
         var connection: Connection? = null
         try {
             connection = datasource.connection
-            val sql = "select count(*) from test_table"
+            val sql = "select count(*) from test_table_flyway"
             val statement = connection.createStatement()
             val rs = statement.executeQuery(sql)
             assert(rs.next())
@@ -61,12 +60,12 @@ class FlywayTest {
         assertFailsWith<RuntimeException> { migrator.migrateByModule("module3", "no_exists") }
     }
 
-    companion object Companion {
-        @JvmStatic
-        @DynamicPropertySource
-        private fun changeProperties(registry: DynamicPropertyRegistry) {
-            H2TestContainer.startIfNeeded(registry)
-        }
-    }
+//    companion object Companion {
+//        @JvmStatic
+//        @DynamicPropertySource
+//        private fun changeProperties(registry: DynamicPropertyRegistry) {
+//            H2TestContainer.startIfNeeded(registry)
+//        }
+//    }
 
 }

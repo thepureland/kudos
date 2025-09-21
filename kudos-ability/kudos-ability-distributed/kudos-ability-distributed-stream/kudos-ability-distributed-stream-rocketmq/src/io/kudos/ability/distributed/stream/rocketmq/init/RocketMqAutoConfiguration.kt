@@ -18,7 +18,10 @@ import org.springframework.context.annotation.PropertySource
 @Configuration
 @AutoConfigureAfter(ContextAutoConfiguration::class)
 @PropertySource(
-    value = ["classpath:kudos-ability-distributed-stream-common.yml", "classpath:kudos-ability-distributed-stream-rocketmq.yml"],
+    value = [
+        "classpath:kudos-ability-distributed-stream-common.yml",
+        "classpath:kudos-ability-distributed-stream-rocketmq.yml"
+    ],
     factory = YamlPropertySourceFactory::class
 )
 //@Import(StreamConsumerEnvironRegistrar::class)

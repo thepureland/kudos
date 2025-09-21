@@ -11,7 +11,7 @@ import org.springframework.stereotype.Repository
  */
 @Repository
 //region your codes 1
-internal open class TestTableDao: BaseCrudDao<Int, TestTable, TestTables>() {
+internal open class TestTableKtormDao: BaseCrudDao<Int, TestTableKtorm, TestTableKtorms>() {
 //endregion your codes 1
 
     //region your codes 2

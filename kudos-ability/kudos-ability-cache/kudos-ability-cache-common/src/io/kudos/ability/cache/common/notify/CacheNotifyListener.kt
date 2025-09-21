@@ -5,8 +5,9 @@ import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.ability.distributed.notify.common.api.INotifyListener
 import io.kudos.ability.distributed.notify.common.model.NotifyMessageVo
 import io.kudos.base.logger.LogFactory
+import java.io.Serializable
 
-class CacheNotifyListener : INotifyListener<CacheOperatorVo> {
+class CacheNotifyListener : INotifyListener {
 
     private val log = LogFactory.getLog(this)
 
@@ -14,8 +15,8 @@ class CacheNotifyListener : INotifyListener<CacheOperatorVo> {
         return CACHE_OPERATOR
     }
 
-    override fun notifyProcess(notifyMessageVo: NotifyMessageVo<CacheOperatorVo>) {
-        val messageBody = notifyMessageVo.messageBody!!
+    override fun notifyProcess(notifyMessageVo: NotifyMessageVo<out Serializable>) {
+        val messageBody = notifyMessageVo.messageBody as CacheOperatorVo
         if (!CacheKit.isCacheActive(messageBody.cacheName)) {
             return
         }
