@@ -3,10 +3,14 @@ kudos:
     distributed:
       stream:
         save-exception: true
-
+    flyway:
+      datasource-config:
+        mq: postgres
 spring:
   flyway:
     locations:
       - classpath:db/stream/postgresql
+
+
 
 

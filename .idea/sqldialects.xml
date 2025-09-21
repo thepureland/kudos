@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="SqlDialectMappings">
+    <file url="file://$PROJECT_DIR$/kudos-ability/kudos-ability-distributed/kudos-ability-distributed-stream/kudos-ability-distributed-stream-common/resources/sql/mq/postgresql/V1.0.0.0__init_sys_mq_exception.sql" dialect="H2" />
     <file url="file://$PROJECT_DIR$/kudos-ams/kudos-ams-sys/kudos-ams-sys-service/resources/sql/sys/h2/V1.0.0.11__init_sys_data_source.sql" dialect="H2" />
     <file url="file://$PROJECT_DIR$/kudos-ams/kudos-ams-sys/kudos-ams-sys-service/resources/sql/sys/h2/V1.0.0.12__init_sys_dict.sql" dialect="H2" />
     <file url="file://$PROJECT_DIR$/kudos-ams/kudos-ams-sys/kudos-ams-sys-service/resources/sql/sys/h2/V1.0.0.22__init_sys_access_rule.sql" dialect="H2" />

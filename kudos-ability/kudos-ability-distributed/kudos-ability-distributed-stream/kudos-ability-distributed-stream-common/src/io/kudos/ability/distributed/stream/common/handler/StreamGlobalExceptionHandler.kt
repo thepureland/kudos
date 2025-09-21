@@ -1,7 +1,7 @@
 package io.kudos.ability.distributed.stream.common.handler
 
-import io.kudos.ability.distributed.stream.common.biz.IStreamExceptionBiz
-import io.kudos.ability.distributed.stream.common.model.po.StreamExceptionMsg
+import io.kudos.ability.distributed.stream.common.biz.ISysMqFailMsgBiz
+import io.kudos.ability.distributed.stream.common.model.po.SysMqFailMsg
 import io.kudos.ability.distributed.stream.common.model.vo.StreamHeader
 import io.kudos.ability.distributed.stream.common.model.vo.StreamMessageVo
 import io.kudos.ability.distributed.stream.common.model.vo.StreamProducerMsgVo
@@ -30,7 +30,7 @@ class StreamGlobalExceptionHandler {
     private val saveException = true
 
     @Autowired
-    private lateinit var streamExceptionService: IStreamExceptionBiz
+    private lateinit var streamExceptionService: ISysMqFailMsgBiz
 
     /**
      * 监听全局异常消息
@@ -61,7 +61,7 @@ class StreamGlobalExceptionHandler {
                 val msgBodyJson = JsonKit.toJson(body)
 
                 //保存异常消息
-                val exceptionMsg = StreamExceptionMsg()
+                val exceptionMsg = SysMqFailMsg()
                 exceptionMsg.topic = topic
                 exceptionMsg.msgHeaderJson = msgHeaderJson
                 exceptionMsg.msgBodyJson = msgBodyJson

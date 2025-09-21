@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam
  * @author K
  * @since 1.0.0
  */
-@FeignClient(value = "rocket-ms-p")
+@FeignClient(name = "rocket-ms-p", url = "localhost:13542")
 interface IRocketMqProducerClient {
 
     @RequestMapping("/producer/send")
