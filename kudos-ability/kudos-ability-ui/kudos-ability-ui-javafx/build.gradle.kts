@@ -4,7 +4,7 @@ dependencies {
 }
 
 plugins {
-    id("org.openjfx.javafxplugin") version "0.0.13"
+    id("org.openjfx.javafxplugin") version "0.1.0"
 }
 
 val javafxVersion = "21"
