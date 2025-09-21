@@ -1,6 +1,6 @@
 package io.kudos.ability.distributed.stream.rabbit.main
 
-import io.kudos.ability.distributed.stream.common.biz.IStreamExceptionBiz
+import io.kudos.ability.distributed.stream.common.biz.ISysMqFailMsgBiz
 import io.kudos.base.logger.LogFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -24,7 +24,7 @@ class RabbitMqMainService : IRabbitMqMainService {
     private lateinit var producerClient: IRabbitMqProducerClient
 
     @Autowired
-    private lateinit var streamExceptionBiz: IStreamExceptionBiz
+    private lateinit var streamExceptionBiz: ISysMqFailMsgBiz
 
     @Autowired
     private lateinit var consumerHandler: RabbitMqConsumerHandler

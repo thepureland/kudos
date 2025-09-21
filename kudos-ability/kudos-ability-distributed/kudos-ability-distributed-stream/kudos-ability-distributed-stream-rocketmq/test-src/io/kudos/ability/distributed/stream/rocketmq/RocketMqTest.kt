@@ -6,7 +6,6 @@ import io.kudos.ability.distributed.stream.rocketmq.main.RocketMqMainService
 import io.kudos.ability.distributed.stream.rocketmq.producer.RocketMqProducerApplication
 import io.kudos.base.net.IpKit
 import io.kudos.test.common.init.EnableKudosTest
-import io.kudos.test.container.containers.NacosTestContainer
 import io.kudos.test.container.containers.PostgresTestContainer
 import io.kudos.test.container.containers.RocketMqTestContainer
 import org.junit.jupiter.api.BeforeAll
@@ -96,15 +95,12 @@ open class RocketMqTest {
         @DynamicPropertySource
         private fun registerProperties(registry: DynamicPropertyRegistry?) {
             val postgresThread = Thread { PostgresTestContainer.startIfNeeded(registry) }
-            val nacosThread = Thread { NacosTestContainer.startIfNeeded(registry) }
             val rocketMqThread = Thread { RocketMqTestContainer.startIfNeeded(registry) }
 
             postgresThread.start()
-            nacosThread.start()
             rocketMqThread.start()
 
             postgresThread.join()
-            nacosThread.join()
             rocketMqThread.join()
         }
     }

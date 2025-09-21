@@ -1,21 +1,21 @@
 package io.kudos.ability.distributed.stream.common.biz
 
-import io.kudos.ability.distributed.stream.common.model.po.StreamExceptionMsg
+import io.kudos.ability.distributed.stream.common.model.po.SysMqFailMsg
 import io.kudos.base.support.biz.IBaseCrudBiz
-import java.util.Date
+import java.time.LocalDateTime
 
 /**
  * @Description stream异常消息处理接口
  * @Author paul
  * @Date 2022/10/19 16:05
  */
-interface IStreamExceptionBiz : IBaseCrudBiz<String, StreamExceptionMsg> {
+interface ISysMqFailMsgBiz : IBaseCrudBiz<String, SysMqFailMsg> {
     /**
      * 保存异常消息
      *
      * @param exceptionMsg
      */
-    fun save(exceptionMsg: StreamExceptionMsg): Boolean
+    fun save(exceptionMsg: SysMqFailMsg): Boolean
 
     /**
      * 查询指定topic下的异常消息
@@ -23,7 +23,7 @@ interface IStreamExceptionBiz : IBaseCrudBiz<String, StreamExceptionMsg> {
      * @param topic     主题
      * @param startTime 查询开始时间
      */
-    fun query(topic: String, startTime: Date): List<StreamExceptionMsg>
+    fun query(topic: String, startTime: LocalDateTime): List<SysMqFailMsg>
 
     /**
      * 删除异常消息

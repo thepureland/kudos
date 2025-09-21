@@ -1,8 +1,8 @@
 package io.kudos.ability.distributed.stream.rocketmq.support
 
 import com.alibaba.fastjson2.JSONObject
-import io.kudos.ability.distributed.stream.common.biz.IStreamExceptionBiz
-import io.kudos.ability.distributed.stream.common.model.po.StreamExceptionMsg
+import io.kudos.ability.distributed.stream.common.biz.ISysMqFailMsgBiz
+import io.kudos.ability.distributed.stream.common.model.po.SysMqFailMsg
 import io.kudos.ability.distributed.stream.rocketmq.init.properties.RocketMqProperties
 import io.kudos.base.logger.LogFactory
 import io.kudos.context.kit.SpringKit
@@ -131,11 +131,11 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
             return
         }
         log.warn("保存异常消费日志，避免mq堵塞")
-        val exceptionMsg = StreamExceptionMsg()
+        val exceptionMsg = SysMqFailMsg()
         exceptionMsg.topic = topic!!
         exceptionMsg.msgBodyJson = JSONObject.toJSONString(data)
         exceptionMsg.createTime = LocalDateTime.now()
-        SpringKit.getBean(IStreamExceptionBiz::class).save(exceptionMsg)
+        SpringKit.getBean(ISysMqFailMsgBiz::class).save(exceptionMsg)
     }
 
     fun destroy() {

@@ -3,14 +3,13 @@ package io.kudos.ability.distributed.stream.common.model.po
 import io.kudos.ability.data.rdb.ktorm.support.DbEntityFactory
 import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
 import java.time.LocalDateTime
-import java.util.Date
 
 /**
  * stream异常消息实体
  */
-interface StreamExceptionMsg : IDbEntity<String, StreamExceptionMsg> {
+interface SysMqFailMsg : IDbEntity<String, SysMqFailMsg> {
 
-    companion object : DbEntityFactory<StreamExceptionMsg>()
+    companion object Companion : DbEntityFactory<SysMqFailMsg>()
 
     /**
      * 消息主题

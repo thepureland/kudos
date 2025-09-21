@@ -2,24 +2,24 @@ package io.kudos.ability.distributed.stream.common.biz
 
 import io.kudos.ability.data.rdb.ktorm.biz.BaseCrudBiz
 import io.kudos.ability.distributed.stream.common.dao.StreamExceptionMsgDao
-import io.kudos.ability.distributed.stream.common.model.po.StreamExceptionMsg
-import io.kudos.ability.distributed.stream.common.model.table.StreamExceptionMsgs
+import io.kudos.ability.distributed.stream.common.model.po.SysMqFailMsg
+import io.kudos.ability.distributed.stream.common.model.table.SysMqFailMsgs
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
-import java.util.*
+import java.time.LocalDateTime
 
 /**
  * @Description stream异常消息处理
  * @Author paul
  * @Date 2022/10/19 16:06
  */
-open class StreamExceptionBiz :
-    BaseCrudBiz<String, StreamExceptionMsg, StreamExceptionMsgDao>(),
-    IStreamExceptionBiz {
+open class SysMqFailMsgBiz :
+    BaseCrudBiz<String, SysMqFailMsg, StreamExceptionMsgDao>(),
+    ISysMqFailMsgBiz {
 
     @Autowired
     private lateinit var streamExceptionMsgDao: StreamExceptionMsgDao
@@ -30,7 +30,7 @@ open class StreamExceptionBiz :
      * @param exceptionMsg
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    override fun save(exceptionMsg: StreamExceptionMsg): Boolean {
+    override fun save(exceptionMsg: SysMqFailMsg): Boolean {
         streamExceptionMsgDao.insert(exceptionMsg)
         return true
     }
@@ -41,9 +41,9 @@ open class StreamExceptionBiz :
      * @param topic     主题
      * @param startTime 查询开始时间
      */
-    override fun query(topic: String, startTime: Date): List<StreamExceptionMsg> {
-        val criteria = Criteria(StreamExceptionMsgs.topic.name, OperatorEnum.EQ, topic)
-            .addAnd(StreamExceptionMsgs.createTime.name, OperatorEnum.GE, startTime)
+    override fun query(topic: String, startTime: LocalDateTime): List<SysMqFailMsg> {
+        val criteria = Criteria(SysMqFailMsgs.topic.name, OperatorEnum.EQ, topic)
+            .addAnd(SysMqFailMsgs.createTime.name, OperatorEnum.GE, startTime)
         return streamExceptionMsgDao.search(criteria)
     }
 
