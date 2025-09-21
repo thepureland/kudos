@@ -3,4 +3,4 @@ spring:
     name: notifyMain
 
 server:
-  port: 0
+  port: 53221
