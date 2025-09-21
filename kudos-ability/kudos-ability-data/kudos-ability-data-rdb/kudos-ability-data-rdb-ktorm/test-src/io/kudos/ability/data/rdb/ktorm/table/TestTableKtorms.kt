@@ -10,7 +10,7 @@ import org.ktorm.schema.*
  * @since 1.0.0
  */
 //region your codes 1
-internal object TestTables : IntIdTable<TestTable>("test_table") {
+internal object TestTableKtorms : IntIdTable<TestTableKtorm>("test_table_ktorm") {
 //endregion your codes 1
 
     /** 名字 */

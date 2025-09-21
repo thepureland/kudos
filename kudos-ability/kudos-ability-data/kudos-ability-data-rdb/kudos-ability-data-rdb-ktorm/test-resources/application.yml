@@ -19,33 +19,9 @@ spring:
       datasource:
         ds1:
           driver-class-name: org.h2.Driver
-          url: jdbc:h2:tcp://localhost:1521/mem:test;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;
+          url: jdbc:h2:~/h2/ds1;DATABASE_TO_LOWER=TRUE;
           username: sa
           password: sa
           init:
             schema: sql/schema.sql
             data: sql/data.sql
-        ds2:
-          driver-class-name: org.h2.Driver
-          url: jdbc:h2:tcp://localhost:1521/mem:test;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;
-          username: sa
-          password: sa
-        #          init:
-        #            schema: sql/schema.sql
-        #            data: sql/data.sql
-        3:
-          driver-class-name: org.h2.Driver
-          url: jdbc:h2:tcp://localhost:1521/mem:test;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;
-          username: sa
-          password: sa
-#          init:
-#            schema: sql/schema.sql
-#            data: sql/data.sql
-#        ch:
-#          driver-class-name: com.clickhouse.jdbc.ClickHouseDriver
-#          url: jdbc:clickhouse://localhost:8123/test
-#          username: default
-#          password: 123456
-#          init:
-#            schema: sql/schema.sql
-#            data: sql/data.sql

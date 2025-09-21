@@ -14,7 +14,8 @@ import java.util.regex.Pattern
 class CaffeineCacheManager : AbstractCacheManager<CaffeineCache>() {
 
     override fun createCache(cacheConfig: CacheConfig): CaffeineCache {
-        val cacheBuilder = Caffeine.from(properties.caffeine.spec)
+        val spec = properties.caffeine.spec
+        val cacheBuilder = Caffeine.from(spec!!)
         cacheBuilder.expireAfterWrite(cacheConfig.ttl!!.toLong(), TimeUnit.SECONDS)
         var name: String? = cacheConfig.name
         val ignoreVersion: Boolean? = cacheConfig.ignoreVersion

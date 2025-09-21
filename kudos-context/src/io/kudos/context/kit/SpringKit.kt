@@ -6,8 +6,6 @@ import kotlin.reflect.KClass
 /**
  * spring工具类
  *
- * 注意：使用该工具必须自行确保spring应用上下文已经初始化完成！
- *
  * @author K
  * @since 1.0.0
  */

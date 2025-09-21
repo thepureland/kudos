@@ -1,7 +1,0 @@
-kudos:
-  ability:
-    cache:
-      cache-items:
-        - name=CONTROLLER_CACHE&strategy=LOCAL_REMOTE&ttl=900  #CONTROLLER_CACHE缓存，本地远程二级缓存，缓存900S
-        - name=DEMO&strategy=REMOTE&ttl=1800                   #DEMO缓存，远程缓存，缓存900S
-        - name=DEMO11&strategy=REMOTE&ttl=900&writeOnBoot=true #DEMO11缓存，本地缓存，缓存时间900S，启动后马上加载缓存

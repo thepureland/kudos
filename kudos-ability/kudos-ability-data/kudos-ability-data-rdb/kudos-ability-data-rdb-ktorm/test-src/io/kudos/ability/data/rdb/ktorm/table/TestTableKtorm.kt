@@ -11,10 +11,10 @@ import java.time.LocalDateTime
  * @since 1.0.0
  */
 //region your codes 1
-internal interface TestTable : IDbEntity<Int, TestTable> {
+internal interface TestTableKtorm : IDbEntity<Int, TestTableKtorm> {
 //endregion your codes 1
 
-    companion object : DbEntityFactory<TestTable>()
+    companion object Companion : DbEntityFactory<TestTableKtorm>()
 
     /** 名字 */
     var name: String

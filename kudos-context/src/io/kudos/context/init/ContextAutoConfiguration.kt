@@ -1,7 +1,6 @@
 package io.kudos.context.init
 
-import io.kudos.context.kit.SpringKit
-import io.kudos.context.spring.SpringContextHolder
+import io.kudos.context.spring.SpringContextInitializer
 import org.springframework.boot.autoconfigure.AutoConfigureOrder
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean
@@ -21,9 +20,9 @@ import org.springframework.core.Ordered
 @Import(ComponentInitializationDispatcher::class)
 open class ContextAutoConfiguration : IComponentInitializer {
 
-    @Bean
-    @ConditionalOnMissingBean
-    open fun springContextHolder() = SpringContextHolder()
+//    @Bean
+//    @ConditionalOnMissingBean
+//    open fun springContextHolder() = SpringContextInitializer()
 
     override fun getComponentName() = "kudos-context"
 

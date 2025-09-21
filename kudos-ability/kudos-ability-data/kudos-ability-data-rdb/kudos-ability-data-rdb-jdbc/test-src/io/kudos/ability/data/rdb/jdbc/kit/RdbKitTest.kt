@@ -14,7 +14,7 @@ import kotlin.test.assertEquals
 @EnableKudosTest
 internal class RdbKitTest {
 
-    private var url = "jdbc:h2:~/h2/ds1;AUTO_SERVER=TRUE;AUTO_SERVER_PORT=9092;DATABASE_TO_LOWER=TRUE;"
+    private var url = "jdbc:h2:~/h2/ds1;DATABASE_TO_LOWER=TRUE;"
 
     @Test
     fun getDataSource() {

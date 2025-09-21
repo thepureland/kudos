@@ -4,6 +4,7 @@ import io.kudos.ability.distributed.stream.common.annotations.MqProducerAspect
 import io.kudos.ability.distributed.stream.common.biz.IStreamExceptionBiz
 import io.kudos.ability.distributed.stream.common.biz.StreamExceptionBiz
 import io.kudos.ability.distributed.stream.common.dao.StreamExceptionMsgDao
+import io.kudos.ability.distributed.stream.common.handler.IStreamFailHandler
 import io.kudos.ability.distributed.stream.common.handler.StreamGlobalExceptionHandler
 import io.kudos.ability.distributed.stream.common.handler.StreamProducerExceptionHandler
 import io.kudos.ability.distributed.stream.common.support.StreamMessageConverter
@@ -11,6 +12,8 @@ import io.kudos.ability.distributed.stream.common.support.StreamProducerFailHand
 import io.kudos.ability.distributed.stream.common.support.StreamProducerHelper
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean
+import org.springframework.integration.channel.DirectChannel
+import org.springframework.messaging.MessageChannel
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
 
 /**
@@ -64,5 +67,9 @@ open class StreamCommonConfiguration {
     @Bean
     @ConditionalOnMissingBean
     open fun streamExceptionMsgDao(): StreamExceptionMsgDao = StreamExceptionMsgDao()
+
+    @Bean(IStreamFailHandler.CHANNEL_BEN_NAME)
+    @ConditionalOnMissingBean
+    open fun mqProducerChannel(): MessageChannel = DirectChannel()
 
 }

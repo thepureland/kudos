@@ -9,10 +9,10 @@ import java.io.Serializable
  * 日期： 2022/11/14 14:14
  * 描述：
  */
-interface  INotifyListener<T: Serializable> {
+interface  INotifyListener {
 
     fun notifyType(): String
 
-    fun notifyProcess(notifyMessageVo: NotifyMessageVo<T>)
+    fun notifyProcess(notifyMessageVo: NotifyMessageVo<out Serializable>)
 
 }

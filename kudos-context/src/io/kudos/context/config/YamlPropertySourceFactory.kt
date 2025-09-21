@@ -1,14 +1,12 @@
 package io.kudos.context.config
 
 import io.kudos.base.logger.LogFactory
-import org.springframework.beans.factory.config.YamlMapFactoryBean
+import org.springframework.beans.factory.config.YamlPropertiesFactoryBean
 import org.springframework.core.env.PropertiesPropertySource
 import org.springframework.core.env.PropertySource
 import org.springframework.core.io.support.EncodedResource
 import org.springframework.core.io.support.PropertySourceFactory
-import java.io.FileNotFoundException
 import java.util.*
-import java.util.function.Consumer
 
 
 /**
@@ -21,22 +19,13 @@ import java.util.function.Consumer
  */
 class YamlPropertySourceFactory : PropertySourceFactory {
 
-//    override fun createPropertySource(name: String?, resource: EncodedResource): PropertySource<*> {
-//        val factory = YamlPropertiesFactoryBean()
-//        factory.setResources(resource.resource)
-//        factory.afterPropertiesSet()
-//        val ymlProperties = factory.getObject()
-//        val propertyName = name ?: resource.resource.filename!!
-//        return PropertiesPropertySource(propertyName, ymlProperties!!)
-//    }
-
     private val log = LogFactory.getLog(this)
 
-    override fun createPropertySource(s: String?, encodedResource: EncodedResource): PropertySource<*> {
-        val sourceName = s ?: encodedResource.resource.filename
+    override fun createPropertySource(name: String?, encodedResource: EncodedResource): PropertySource<*> {
+        val sourceName = name ?: encodedResource.resource.filename
         initConfigJarMap(sourceName, encodedResource)
-        val propertySource = loadFromConfigData(sourceName)
-        var map: MutableMap<Any?, Any?> = LinkedHashMap<Any?, Any?>()
+        val propertySource = loadFromConfigCenter(sourceName)
+        var map = mutableMapOf<Any?, Any?>()
         if (propertySource != null) {
             val source = propertySource.getSource()
             if (source is MutableMap<*, *>) {
@@ -48,7 +37,7 @@ class YamlPropertySourceFactory : PropertySourceFactory {
                 return propertySource
             }
         }
-        val properties = loadYamlIntoProperties(encodedResource)
+        val properties = loadYamlProperties(encodedResource)
         for (e in map.entries) {
             properties.put(e.key, e.value)
         }
@@ -60,7 +49,7 @@ class YamlPropertySourceFactory : PropertySourceFactory {
      *
      * @param sourceName
      */
-    private fun loadFromConfigData(sourceName: String?): PropertySource<*>? {
+    private fun loadFromConfigCenter(sourceName: String?): PropertySource<*>? {
         val configDataFinders = ServiceLoader.load(IConfigDataFinder::class.java)
         if (configDataFinders != null) {
             for (configDataFinder in configDataFinders) {
@@ -73,53 +62,19 @@ class YamlPropertySourceFactory : PropertySourceFactory {
         return null
     }
 
-    @Throws(FileNotFoundException::class)
-    private fun loadYamlIntoProperties(resource: EncodedResource): Properties {
-        val res = resource.resource
-        try {
-            val bean = YamlMapFactoryBean()
-            bean.setResources(res)
-            bean.afterPropertiesSet()
-            val yamlRoot = bean.getObject()
-            //将yaml文件的map，扁平化为properties的map，然后转换为有序的properties
-            val propertiesMap = LinkedHashMap<String?, Any?>()
-            flatten("", yamlRoot!!, propertiesMap)
-            val properties = OrderProperties()
-            //转换为有序的properties
-            propertiesMap.entries.forEach(Consumer { entry: MutableMap.MutableEntry<String?, Any?>? ->
-                properties.put(entry!!.key, if (entry.value == null) "" else entry.value)
-            })
-            return properties
-        } catch (e: Exception) {
-            log.warn("加载配置文件失败！file={0},如果配置了nacos可以忽略此信息。", resource.getResource().getFilename())
-            return Properties()
-        }
-    }
-
-    /**
-     * 将map扁平化得到有顺序的Map
-     *
-     * @param prefix
-     * @param curr
-     * @param collector
-     */
-    private fun flatten(prefix: String, curr: MutableMap<String?, Any?>, collector: LinkedHashMap<String?, Any?>) {
-        for (entry in curr.entries) {
-            val key: String = (if (prefix.isEmpty()) entry.key else prefix + "." + entry.key)!!
-            val `val` = entry.value
-            if (`val` is MutableMap<*, *>) {
-                flatten(key, `val` as MutableMap<String?, Any?>, collector)
-            } else {
-                collector.put(key, `val`)
-            }
-        }
+    private fun loadYamlProperties(resource: EncodedResource): Properties {
+        val factory = YamlPropertiesFactoryBean()
+        factory.setResources(resource.resource)
+        factory.afterPropertiesSet()
+        val ymlProperties = factory.getObject()
+        return ymlProperties
     }
 
     private fun initConfigJarMap(sourceName: String?, encodedRes: EncodedResource) {
         var url: String? = ""
         try {
             val res = encodedRes.resource
-            val uri = res.uri // 例如 "jar:file:/…/libs/kudos-foo.jar!/application.yml"
+            val uri = res.uri // 例如 "jar:file:/…/libs/soul-foo.jar!/application.yml"
             url = uri.toString()
         } catch (e: Exception) {
             log.warn("设置config和jar关系失败！")

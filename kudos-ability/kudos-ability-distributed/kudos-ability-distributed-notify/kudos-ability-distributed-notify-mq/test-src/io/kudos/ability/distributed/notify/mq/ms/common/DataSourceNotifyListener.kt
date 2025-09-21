@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component
 import java.io.Serializable
 
 @Component
-open class DataSourceNotifyListener<T: Serializable> : INotifyListener<T> {
+open class DataSourceNotifyListener<T: Serializable> : INotifyListener {
 
     private val log = LogFactory.getLog(this)
 
@@ -23,7 +23,7 @@ open class DataSourceNotifyListener<T: Serializable> : INotifyListener<T> {
 
     override fun notifyType() = NotifyTypeEnum.DS.code
 
-    override fun notifyProcess(notifyMessageVo: NotifyMessageVo<T>) {
+    override fun notifyProcess(notifyMessageVo: NotifyMessageVo<out Serializable>) {
         // 模擬收到通知，後修改數據源。
         log.info("@@@@ notifyProcess, port: ${msConfig.port}, appKey: ${msConfig.appKey}, key: ${notifyMessageVo.messageBody}")
         mainClinet.collection(msConfig.port, msConfig.appKey, notifyMessageVo.messageBody as String?)

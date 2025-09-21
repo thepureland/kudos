@@ -1,17 +1,18 @@
 package io.kudos.ability.data.memdb.redis.init
 
-import io.kudos.ability.data.memdb.redis.RedisConnectFactory
 import io.kudos.ability.data.memdb.redis.KudosRedisTemplate
+import io.kudos.ability.data.memdb.redis.RedisConnectFactory
 import io.kudos.ability.data.memdb.redis.init.properties.RedisExtProperties
 import io.kudos.ability.data.memdb.redis.init.properties.RedisProperties
+import io.kudos.context.config.YamlPropertySourceFactory
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
-import io.kudos.context.config.YamlPropertySourceFactory
+import io.kudos.context.kit.SpringKit
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.ComponentScan
+import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.PropertySource
 import org.springframework.data.redis.connection.RedisConnectionFactory
 import org.springframework.data.redis.core.RedisTemplate
@@ -23,7 +24,7 @@ import org.springframework.data.redis.core.RedisTemplate
  * @author K
  * @since 1.0.0
  */
-@ComponentScan(basePackages = ["io.kudos.ability.data.memdb.redis"])
+@Configuration
 @PropertySource(
     value = ["classpath:kudos-ability-data-memdb-redis.yml"],
     factory = YamlPropertySourceFactory::class

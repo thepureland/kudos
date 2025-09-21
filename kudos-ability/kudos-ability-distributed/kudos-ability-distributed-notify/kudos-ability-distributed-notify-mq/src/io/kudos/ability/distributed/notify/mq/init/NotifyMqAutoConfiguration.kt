@@ -2,6 +2,7 @@ package io.kudos.ability.distributed.notify.mq.init
 
 import com.alibaba.fastjson.JSONObject
 import io.kudos.ability.distributed.notify.common.api.INotifyProducer
+import io.kudos.ability.distributed.notify.common.init.NotifyCommonAutoConfiguration
 import io.kudos.ability.distributed.notify.common.model.NotifyMessageVo
 import io.kudos.ability.distributed.notify.common.support.NotifyListenerBeanPostProcessor
 import io.kudos.ability.distributed.notify.common.support.NotifyListenerItem
@@ -9,9 +10,9 @@ import io.kudos.ability.distributed.notify.mq.producer.NotifyMqProducer
 import io.kudos.ability.distributed.stream.common.annotations.MqConsumer
 import io.kudos.ability.distributed.stream.common.model.vo.StreamMessageVo
 import io.kudos.base.logger.LogFactory
+import io.kudos.context.config.YamlPropertySourceFactory
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
-import io.kudos.context.config.YamlPropertySourceFactory
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean
@@ -38,7 +39,7 @@ import java.util.function.Consumer
     factory = YamlPropertySourceFactory::class
 )
 @Import(NotifyListenerBeanPostProcessor::class)
-open class NotifyMqAutoConfiguration : IComponentInitializer {
+open class NotifyMqAutoConfiguration : NotifyCommonAutoConfiguration(), IComponentInitializer {
 
     private val log = LogFactory.getLog(this)
 
