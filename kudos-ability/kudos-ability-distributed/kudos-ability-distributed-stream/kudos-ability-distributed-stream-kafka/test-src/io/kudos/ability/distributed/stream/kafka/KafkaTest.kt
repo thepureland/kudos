@@ -5,11 +5,8 @@ import io.kudos.ability.distributed.stream.kafka.main.IKafkaMainService
 import io.kudos.ability.distributed.stream.kafka.main.KafkaConsumerHandler
 import io.kudos.ability.distributed.stream.kafka.main.KafkaMainService
 import io.kudos.ability.distributed.stream.kafka.producer.KafkaProducerApplication
-import io.kudos.base.net.IpKit
 import io.kudos.test.common.init.EnableKudosTest
 import io.kudos.test.container.containers.KafkaTestContainer
-import io.kudos.test.container.containers.NacosTestContainer
-import io.kudos.test.container.containers.PostgresTestContainer
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
 import org.springframework.beans.factory.annotation.Autowired
@@ -49,9 +46,7 @@ open class KafkaTest {
 
     @BeforeAll
     fun setUp() {
-        val url = "jdbc:postgresql://${IpKit.getLocalIp()}:${PostgresTestContainer.PORT}/${PostgresTestContainer.DATABASE}"
         val args = arrayOf(
-            "--spring.datasource.dynamic.datasource.postgres.url=$url",
             "--spring.cloud.stream.kafka.binder.brokers=${kafkaContainer.ports.first().ip}:${kafkaContainer.ports.first().publicPort}",
         )
         SpringApplication.run(KafkaProducerApplication::class.java, *args)
@@ -93,23 +88,12 @@ open class KafkaTest {
     }
 
     companion object {
-
         private lateinit var kafkaContainer : Container
 
         @JvmStatic
         @DynamicPropertySource
         private fun registerProperties(registry: DynamicPropertyRegistry?) {
-            val postgresThread = Thread { kafkaContainer = PostgresTestContainer.startIfNeeded(registry) }
-            val nacosThread = Thread { NacosTestContainer.startIfNeeded(registry) }
-            val kafkaThread = Thread { KafkaTestContainer.startIfNeeded(registry) }
-
-            postgresThread.start()
-            nacosThread.start()
-            kafkaThread.start()
-
-            postgresThread.join()
-            nacosThread.join()
-            kafkaThread.join()
+            KafkaTestContainer.startIfNeeded(registry)
         }
     }
 

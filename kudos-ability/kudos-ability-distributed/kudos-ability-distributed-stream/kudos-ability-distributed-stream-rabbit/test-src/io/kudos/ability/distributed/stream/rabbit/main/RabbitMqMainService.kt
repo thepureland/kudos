@@ -4,7 +4,7 @@ import io.kudos.ability.distributed.stream.common.biz.ISysMqFailMsgBiz
 import io.kudos.base.logger.LogFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import java.util.*
+import java.time.LocalDateTime
 
 /**
  * RabbitMq测试服务
@@ -49,13 +49,13 @@ class RabbitMqMainService : IRabbitMqMainService {
 
     override fun errorMessage(): String {
         consumerHandler.errorFlag = true
-        val now = Date()
+        val now = LocalDateTime.now()
         producerClient.send("error test")
         var stop = true
         while (stop) {
             try {
                 Thread.sleep(1000)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 Thread.currentThread().interrupt()
             }
             val list = streamExceptionBiz.query(topicName, now)

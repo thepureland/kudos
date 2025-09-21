@@ -4,11 +4,8 @@ import io.kudos.ability.distributed.notify.mq.common.IMainClinet
 import io.kudos.ability.distributed.notify.mq.main.MainApplication
 import io.kudos.ability.distributed.notify.mq.ms.MsApplication
 import io.kudos.base.lang.string.RandomStringKit
-import io.kudos.base.net.IpKit
 import io.kudos.context.config.YamlPropertySourceFactory
 import io.kudos.test.common.init.EnableKudosTest
-import io.kudos.test.container.containers.NacosTestContainer
-import io.kudos.test.container.containers.PostgresTestContainer
 import io.kudos.test.container.containers.RocketMqTestContainer
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
@@ -41,9 +38,7 @@ open class NotifyMqTest {
 
     @BeforeAll
     fun setUp() {
-        val url = "jdbc:postgresql://${IpKit.getLocalIp()}:${PostgresTestContainer.PORT}/${PostgresTestContainer.DATABASE}"
         val args = arrayOf(
-            "--spring.datasource.dynamic.datasource.postgres.url=$url",
             "--spring.cloud.stream.rocketmq.binder.name-server=${RocketMqTestContainer.NAMESRV_ADDR}"
         )
         SpringApplication.run(MainApplication::class.java, *args)
@@ -74,17 +69,7 @@ open class NotifyMqTest {
         @JvmStatic
         @DynamicPropertySource
         private fun registerProperties(registry: DynamicPropertyRegistry?) {
-            val postgresThread = Thread { PostgresTestContainer.startIfNeeded(registry) }
-            val nacosThread = Thread { NacosTestContainer.startIfNeeded(registry) }
-            val rocketMqThread = Thread { RocketMqTestContainer.startIfNeeded(registry) }
-
-            postgresThread.start()
-            nacosThread.start()
-            rocketMqThread.start()
-
-            postgresThread.join()
-            nacosThread.join()
-            rocketMqThread.join()
+            RocketMqTestContainer.startIfNeeded(registry)
         }
     }
 }

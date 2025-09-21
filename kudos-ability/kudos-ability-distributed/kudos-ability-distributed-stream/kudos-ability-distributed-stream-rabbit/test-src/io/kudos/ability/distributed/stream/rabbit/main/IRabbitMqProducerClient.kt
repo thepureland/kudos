@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam
  * @author K
  * @since 1.0.0
  */
-@FeignClient(value = "rabbit-ms-p")
+@FeignClient(name = "rabbit-ms-p", url = "localhost:53122")
 interface IRabbitMqProducerClient {
 
     @RequestMapping("/producer/send")

@@ -6,8 +6,6 @@ import io.kudos.ability.distributed.stream.rabbit.main.RabbitMqMainService
 import io.kudos.ability.distributed.stream.rabbit.producer.RabbitMqProducerApplication
 import io.kudos.base.net.IpKit
 import io.kudos.test.common.init.EnableKudosTest
-import io.kudos.test.container.containers.NacosTestContainer
-import io.kudos.test.container.containers.PostgresTestContainer
 import io.kudos.test.container.containers.RabbitMqTestContainer
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
@@ -48,9 +46,7 @@ open class RabbitMqTest {
 
     @BeforeAll
     fun setUp() {
-        val url = "jdbc:postgresql://${IpKit.getLocalIp()}:${PostgresTestContainer.PORT}/${PostgresTestContainer.DATABASE}"
         val args = arrayOf(
-            "--spring.datasource.dynamic.datasource.postgres.url=$url",
             "--spring.rabbitmq.host=${IpKit.getLocalIp()}",
             "--spring.rabbitmq.username=guest",
             "--spring.rabbitmq.password=guest",
@@ -100,17 +96,7 @@ open class RabbitMqTest {
         @JvmStatic
         @DynamicPropertySource
         private fun registerProperties(registry: DynamicPropertyRegistry?) {
-            val postgresThread = Thread { PostgresTestContainer.startIfNeeded(registry) }
-            val nacosThread = Thread { NacosTestContainer.startIfNeeded(registry) }
-            val rabbitThread = Thread { RabbitMqTestContainer.startIfNeeded(registry) }
-
-            postgresThread.start()
-            nacosThread.start()
-            rabbitThread.start()
-
-            postgresThread.join()
-            nacosThread.join()
-            rabbitThread.join()
+            RabbitMqTestContainer.startIfNeeded(registry)
         }
     }
 

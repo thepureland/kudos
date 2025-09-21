@@ -1,12 +1,5 @@
 spring:
   cloud:
-    nacos:
-      config:
-        server-addr: 127.0.0.1:28848
-        namespace: public
-        file-extension: yml
-      discovery:
-        server-addr: 127.0.0.1:28848
     stream:
       function:
         #配置消费者消费的方法名称，按bindings顺序，多个以英文分号隔开
@@ -16,7 +9,7 @@ spring:
           destination: RABBIT_TEST_TOPIC
   datasource:
     dynamic:
-      primary: postgres
+      primary: ds-master
       hikari:
         connection-timeout: 30000
         validation-timeout: 5000
@@ -32,14 +25,22 @@ spring:
         is-register-mbeans: false
         is-allow-pool-suspension: false
       datasource:
-        postgres:
+        ds-master:
           hikari:
             is-auto-commit: false
-          driver-class-name: org.postgresql.Driver
-          url: jdbc:postgresql://localhost:5432/test
-          username: pg
-          password: postgres
+          driver-class-name: org.h2.Driver
+          url: jdbc:h2:~/h2/ds-master;DATABASE_TO_LOWER=TRUE;
+          username: sa
+          password: sa
 
+kudos:
+  ability:
+    distributed:
+      stream:
+        save-exception: true
+    flyway:
+      datasource-config:
+        mq: ds-master
 
 #logging:
 #  level:

@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam
  * @author K
  * @since 1.0.0
  */
-@FeignClient(value = "kafkamsp")
+@FeignClient(name = "kafkamsp", url = "localhost:53322")
 interface IKafkaProducerClient {
 
     @RequestMapping("/producer/send")
