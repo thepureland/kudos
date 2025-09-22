@@ -93,7 +93,7 @@ open class KafkaTest {
         @JvmStatic
         @DynamicPropertySource
         private fun registerProperties(registry: DynamicPropertyRegistry?) {
-            KafkaTestContainer.startIfNeeded(registry)
+            kafkaContainer = KafkaTestContainer.startIfNeeded(registry)
         }
     }
 

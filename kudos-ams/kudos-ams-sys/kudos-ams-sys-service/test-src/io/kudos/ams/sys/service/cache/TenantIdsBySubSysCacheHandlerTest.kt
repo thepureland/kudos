@@ -3,6 +3,7 @@ package io.kudos.ams.sys.service.cache
 import io.kudos.ams.sys.service.dao.SysTenantSubSystemDao
 import io.kudos.ams.sys.service.model.po.SysTenantSubSystem
 import org.springframework.beans.factory.annotation.Autowired
+import org.testcontainers.junit.jupiter.EnabledIfDockerAvailable
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -14,6 +15,7 @@ import kotlin.test.assertFalse
  * @author K
  * @since 1.0.0
  */
+@EnabledIfDockerAvailable
 class TenantIdsBySubSysCacheHandlerTest : CacheHandlerTestBase() {
 
     @Autowired

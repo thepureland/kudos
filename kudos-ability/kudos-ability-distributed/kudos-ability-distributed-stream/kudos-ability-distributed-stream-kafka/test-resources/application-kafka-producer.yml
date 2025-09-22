@@ -27,13 +27,6 @@ spring:
           username: sa
           password: sa
   cloud:
-    nacos:
-      config:
-        server-addr: 127.0.0.1:28848
-        namespace: public
-        file-extension: yml
-      discovery:
-        server-addr: 127.0.0.1:28848
     stream:
       function:
         #配置消费者消费的方法名称，按bindings顺序，多个以英文分号隔开
