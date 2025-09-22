@@ -3,7 +3,7 @@ package io.kudos.ability.cache.common.init
 import io.kudos.ability.cache.common.batch.BatchCacheableAspect
 import io.kudos.ability.cache.common.batch.DefaultKeysGenerator
 import io.kudos.ability.cache.common.batch.IKeysGenerator
-import io.kudos.ability.cache.common.core.CacheHandlerBeanPostProcessor
+import io.kudos.ability.cache.common.core.CacheDataInitializer
 import io.kudos.ability.cache.common.core.MixCacheInitializing
 import io.kudos.ability.cache.common.core.MixCacheManager
 import io.kudos.ability.cache.common.init.properties.CacheItemsProperties
@@ -79,7 +79,7 @@ open class LinkableCacheAutoConfiguration : IComponentInitializer {
 
     @Bean
     @ConditionalOnMissingBean
-    open fun cacheHandlerBeanPostProcessor(): CacheHandlerBeanPostProcessor = CacheHandlerBeanPostProcessor()
+    open fun cacheDataInitialize() = CacheDataInitializer()
 
     @Bean
     @ConditionalOnMissingBean

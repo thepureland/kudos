@@ -55,7 +55,7 @@ class RocketMqMainService : IRocketMqMainService {
         while (stop) {
             try {
                 Thread.sleep(1000)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 Thread.currentThread().interrupt()
             }
             val list = streamExceptionBiz.query(topicName, now)

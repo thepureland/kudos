@@ -3,12 +3,8 @@ package io.kudos.ability.data.rdb.flyway
 import io.kudos.ability.data.rdb.flyway.multidatasource.FlywayMultiDataSourceMigrator
 import io.kudos.ability.data.rdb.jdbc.datasource.DsContextProcessor
 import io.kudos.test.common.init.EnableKudosTest
-import io.kudos.test.container.containers.H2TestContainer
 import junit.framework.TestCase.assertEquals
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.test.context.DynamicPropertyRegistry
-import org.springframework.test.context.DynamicPropertySource
-import org.testcontainers.junit.jupiter.EnabledIfDockerAvailable
 import java.sql.Connection
 import kotlin.test.Test
 import kotlin.test.assertFailsWith

@@ -33,10 +33,3 @@ spring:
           url: jdbc:h2:~/h2/ds-master;DATABASE_TO_LOWER=TRUE;
           username: sa
           password: sa
-  flyway:
-    locations:
-      - classpath:db/stream/postgresql
-
-
-
-

@@ -4,7 +4,7 @@ import io.kudos.ability.distributed.stream.common.biz.ISysMqFailMsgBiz
 import io.kudos.base.logger.LogFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import java.util.*
+import java.time.LocalDateTime
 
 /**
  * kafka测试服务
@@ -49,7 +49,7 @@ open class KafkaMainService : IKafkaMainService {
 
     override fun errorMessage(): String {
         consumerHandler.errorFlag = true
-        val now = Date()
+        val now = LocalDateTime.now()
         producerClient.send("error test")
         var stop = true
         while (stop) {
