@@ -14,12 +14,12 @@ class Criterion : Serializable {
     /**
      * 查询条件逻辑操作符枚举
      */
-    lateinit var operator: OperatorEnum
+    var operator: OperatorEnum
 
     /**
      * 要查询的属性名
      */
-    lateinit var property: String
+    var property: String
 
     /**
      * 要查询的属性名对应的值

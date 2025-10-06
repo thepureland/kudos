@@ -145,10 +145,6 @@ object IdCardNoKit {
             return false
         }
         if (str.isNumeric()) {
-            val proCode = str.substring(0, 2)
-            if (ProvinceEnum.enumOf(proCode) == null) {
-                return false
-            }
             val birthCode = str.substring(6, 12)
             var birthDate: Date? = null
             try {
@@ -220,7 +216,7 @@ object IdCardNoKit {
         if (!str.matches("^[A-Z]{1,2}[0-9]{6}\\(?[0-9A]\\)?$".toRegex())) {
             return false
         }
-        var card = str.replace("[\\(|\\)]".toRegex(), "")
+        var card = str.replace("[(|)]".toRegex(), "")
         var sum: Int
         if (card.length == 9) {
             sum = ((card.substring(0, 1).uppercase(Locale.getDefault()).toCharArray()[0].code - 55) * 9
@@ -254,7 +250,7 @@ object IdCardNoKit {
      * @since 1.0.0
      */
     fun isMacauIdCardNo(str: CharSequence): Boolean {
-        return !str.isBlank() && str.matches("^[1|5|7][0-9]{6}\\(?[0-9A-Z]\\)?$".toRegex())
+        return !str.isBlank() && str.matches("^[1|57][0-9]{6}\\(?[0-9A-Z]\\)?$".toRegex())
     }
 
     private fun convertCharToInt(ca: CharArray): IntArray {

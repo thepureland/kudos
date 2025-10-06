@@ -81,7 +81,7 @@ object RedisConnectFactory {
         //if (redisProperties.isSsl()) {
         //    lettucePoolingClientConfigurationBuilder.useSsl();
         //}
-        val poolClientConfig: LettucePoolingClientConfiguration? = lettucePoolingClientConfigurationBuilder.build()
+        val poolClientConfig = lettucePoolingClientConfigurationBuilder.build()
         val lettuceConnectionFactory = LettuceConnectionFactory(redisConfiguration, poolClientConfig)
         lettuceConnectionFactory.afterPropertiesSet()
         return lettuceConnectionFactory

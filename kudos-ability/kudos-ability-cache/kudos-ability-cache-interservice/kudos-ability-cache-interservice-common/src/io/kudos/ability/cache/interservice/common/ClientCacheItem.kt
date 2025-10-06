@@ -12,7 +12,7 @@ class ClientCacheItem : Serializable {
 
     constructor()
 
-    constructor(uid: String?, cacheData: Any?) {
+    constructor(uid: String, cacheData: Any) {
         this.uuid = uid
         this.cacheData = cacheData
     }

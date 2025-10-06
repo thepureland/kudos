@@ -46,6 +46,7 @@ abstract class AbstractFailedDataHandler<T> : IFailedDataHandler<T> {
         try {
             val bytes = Files.readAllBytes(file.toPath())
             val dataType = GenericKit.getSuperClassGenricClass(this::class)
+            @Suppress("UNCHECKED_CAST")
             return JsonKit.readValue(bytes, dataType) as T
         } catch (e: IOException) {
             throw RuntimeException("Read failed data error", e)

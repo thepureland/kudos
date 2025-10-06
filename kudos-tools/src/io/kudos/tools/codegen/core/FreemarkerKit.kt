@@ -23,21 +23,22 @@ object FreemarkerKit {
         return results
     }
 
-    fun processTemplate(template: Template, model: Map<String, *>?, outputFile: File?, encoding: String?) {
+    fun processTemplate(template: Template, model: Map<String, *>, outputFile: File, encoding: String) {
         BufferedWriter(OutputStreamWriter(FileOutputStream(outputFile), encoding)).use {
             template.process(model, it)
         }
     }
 
-    fun processTemplateString(templateString: String?, model: Map<String, *>?, conf: Configuration?): String {
+    fun processTemplateString(templateString: String, model: Map<String, *>, conf: Configuration): String {
         StringWriter().use {
             try {
                 val template = Template("templateString...", StringReader(templateString), conf)
                 template.process(model, it)
                 return it.toString()
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 error("解析模板串失败：$templateString")
             }
         }
     }
+
 }

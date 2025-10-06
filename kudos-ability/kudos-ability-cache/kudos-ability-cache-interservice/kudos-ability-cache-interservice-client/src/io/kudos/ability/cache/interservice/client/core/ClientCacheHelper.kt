@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Qualifier
  * Feign缓存辅助器
  */
 class ClientCacheHelper : InitializingBean {
+
     @Autowired(required = false)
     @Qualifier("localCacheManager")
     private val cacheManager: ICacheManager<*>? = null
@@ -49,7 +50,7 @@ class ClientCacheHelper : InitializingBean {
      */
     fun loadFromLocalCache(cacheKey: String): ClientCacheItem? {
         //可以考虑换成CacheKit
-        return cacheManager!!.getCache(ClientCacheKey.FEIGN_CACHE_PREFIX)
+        return cacheManager!!.getCache(ClientCacheKey.FEIGN_CACHE_PREFIX)!!
             .get<ClientCacheItem?>(cacheKey, ClientCacheItem::class.java)
     }
 
@@ -61,7 +62,7 @@ class ClientCacheHelper : InitializingBean {
      */
     fun writeToLocalCache(cacheKey: String, data: ClientCacheItem?) {
         //可以考虑换成CacheKit
-        cacheManager!!.getCache(ClientCacheKey.FEIGN_CACHE_PREFIX).put(cacheKey, data)
+        cacheManager!!.getCache(ClientCacheKey.FEIGN_CACHE_PREFIX)!!.put(cacheKey, data)
     }
 
     private val log = LogFactory.getLog(this)

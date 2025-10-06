@@ -28,7 +28,6 @@ class AliyunSmsHandler {
     /**
      * 异步发送（虚拟线程），完成后以回调返回结果
      */
-    @JvmOverloads
     fun send(smsRequest: AliyunSmsRequest, callback: (SendSmsResponseBody) -> Unit) {
         Thread.ofVirtual().start { doSend(smsRequest, callback) }
     }

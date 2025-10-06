@@ -23,7 +23,7 @@ object CodeGenObjectDao: BaseCrudDao<String, CodeGenObject, CodeGenObjects>() {
     fun searchByName(name: String): CodeGenObject? {
         return try {
             entitySequence().first { it.name eq name }
-        } catch (e: NoSuchElementException) {
+        } catch (_: NoSuchElementException) {
             null
         }
     }

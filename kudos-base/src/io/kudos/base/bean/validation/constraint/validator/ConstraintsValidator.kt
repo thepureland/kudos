@@ -127,7 +127,7 @@ class ConstraintsValidator : ConstraintValidator<Constraints, Any?> {
         } else {
             var pass = true
             validators.forEach {
-                pass = pass && doValidate(it, annotation, v, context)
+                pass = pass && doValidate(it, v, context)
             }
             return pass
         }
@@ -136,7 +136,7 @@ class ConstraintsValidator : ConstraintValidator<Constraints, Any?> {
 
     @Suppress("UNCHECKED_CAST")
     private fun doValidate(
-        validator: Any, annotation: Annotation, value: Any?, context: ConstraintValidatorContext
+        validator: Any, value: Any?, context: ConstraintValidatorContext
     ): Boolean =
         //!!! 强制转换不能去掉，否则会StackOverflow
         with(validator as ConstraintValidator<Annotation, Any?>) { isValid(value, context) }
