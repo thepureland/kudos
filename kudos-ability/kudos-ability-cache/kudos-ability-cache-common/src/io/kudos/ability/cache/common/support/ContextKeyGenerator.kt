@@ -4,7 +4,6 @@ import io.kudos.context.core.KudosContextHolder
 import org.springframework.cache.interceptor.KeyGenerator
 import org.springframework.context.expression.MethodBasedEvaluationContext
 import org.springframework.core.DefaultParameterNameDiscoverer
-import org.springframework.core.ParameterNameDiscoverer
 import org.springframework.expression.ExpressionParser
 import org.springframework.expression.TypedValue
 import org.springframework.expression.spel.standard.SpelExpressionParser
@@ -15,7 +14,8 @@ import java.lang.reflect.Method
  * Cacheable的key生成规则，增加上下文
  */
 class ContextKeyGenerator : KeyGenerator {
-    private val parameterNameDiscoverer: ParameterNameDiscoverer = DefaultParameterNameDiscoverer()
+
+    private val parameterNameDiscoverer = DefaultParameterNameDiscoverer()
 
     override fun generate(target: Any, method: Method, vararg params: Any?): Any {
         val annotation = method.getAnnotation<CacheKey>(CacheKey::class.java)

@@ -38,7 +38,7 @@ class DynamicDataSourceAspect {
     /**
      * 拦截所有service包路径下的service
      */
-    @Pointcut("within(*..service..*)")
+    @Pointcut("within(*..biz..*)")
     fun aspService() {
     }
 
@@ -69,7 +69,7 @@ class DynamicDataSourceAspect {
             return false
         }
         //约定 指定_context则为数据源表，_context无需配置数据源，自动会从datasource里获取
-        if (dsKeyConfig!!.startsWith(CONTEXT_DATASOURCE)) {
+        if (dsKeyConfig.startsWith(CONTEXT_DATASOURCE)) {
             val datasourcePair = convertDatasourceConfig(dsKeyConfig)
             //兼容多租户，不同上下文的数据源不同
             val mapKey: String? = DatasourceKeyTool.convertCacheMapKey(
@@ -103,11 +103,11 @@ class DynamicDataSourceAspect {
      * @return
      */
     private fun forceChangeMain(): Boolean {
-        val forcedDs: String? = DbContext.get().forcedDs
+        val forcedDs = DbContext.get().forcedDs
         if (forcedDs.isNullOrBlank()) {
             return false
         }
-        if (DbContext.get().readonly || forcedDs!!.startsWith(CONTEXT_DATASOURCE)) {
+        if (DbContext.get().readonly || forcedDs.startsWith(CONTEXT_DATASOURCE)) {
             return false
         }
         if (!dsContextProcessor.haveDataSource(forcedDs)) {
@@ -142,7 +142,7 @@ class DynamicDataSourceAspect {
 
     companion object {
         private const val CONTEXT_DATASOURCE = "_context"
-        private val log= LogFactory.getLog(this)
+        private val log = LogFactory.getLog(this)
         private val dsCacheMap: MutableMap<String?, String?> = ConcurrentHashMap<String?, String?>()
 
         private val READ_WRITE_LOCK: ReadWriteLock = ReentrantReadWriteLock()

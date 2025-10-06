@@ -35,7 +35,7 @@ object PathKit {
             val className = """${c.simpleName}.class"""
             val thisClass = c.getResource(className)!!.path
             thisClass.replace(className, "")
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             c.protectionDomain.codeSource.location.path
         }
         return URLDecoder.decode(path, "UTF-8")
@@ -118,7 +118,7 @@ object PathKit {
      * @author K
      * @since 1.0.0
      */
-    fun getRuntimePath(): String = PathKit::class.java.classLoader.getResource(".").path
+    fun getRuntimePath(): String = PathKit::class.java.classLoader.getResource(".")!!.path
 
     /**
      * 获取系统临时目录

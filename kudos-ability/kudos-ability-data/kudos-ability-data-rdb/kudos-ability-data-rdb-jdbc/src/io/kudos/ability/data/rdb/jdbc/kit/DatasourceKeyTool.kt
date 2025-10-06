@@ -20,7 +20,7 @@ object DatasourceKeyTool {
             return ""
         }
         val parts: Array<String?> =
-            contextMapKey!!.split(SEPERATOR.toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+            contextMapKey.split(SEPERATOR.toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
         return if (parts.size == 1) {
             //没配置，获取默认的服务
             null
@@ -34,7 +34,7 @@ object DatasourceKeyTool {
             return ""
         }
         val parts: Array<String?> =
-            cacheMapKey!!.split(SEPERATOR.toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+            cacheMapKey.split(SEPERATOR.toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
         // 取最后一个元素
         return if (parts.isNotEmpty()) parts[parts.size - 1] else ""
     }

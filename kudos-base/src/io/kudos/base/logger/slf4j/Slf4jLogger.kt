@@ -49,7 +49,7 @@ open class Slf4jLogger : ILog {
         logger.log(null, FQCN, LocationAwareLogger.ERROR_INT, getMsg(e.message), null, e)
 
     private fun getMsg(msg: String?, vararg args: Any?): String? {
-        return if (args.isNotEmpty()) {
+        return if (msg != null && args.isNotEmpty()) {
             MessageFormat.format(msg, *args)
         } else msg
     }

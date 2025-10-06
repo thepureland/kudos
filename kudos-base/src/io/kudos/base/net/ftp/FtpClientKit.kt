@@ -70,7 +70,7 @@ class FtpClientKit {
             if (ftpClient.isConnected) {
                 try {
                     ftpClient.logout()
-                } catch (e: IOException) {
+                } catch (_: IOException) {
                 }
             }
         }

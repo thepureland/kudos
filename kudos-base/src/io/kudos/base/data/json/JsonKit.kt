@@ -2,6 +2,7 @@ package io.kudos.base.data.json
 
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerializationException
@@ -175,7 +176,7 @@ object JsonKit {
         val jsonString = try {
             // 1) 优先走标准路径（@Serializable / sealed 多态）
             engine.encodeToString(serializer<T>(), data)
-        } catch (e: SerializationException) {
+        } catch (_: SerializationException) {
             // 2) 兜底：将对象递归转为 JsonElement，再编码（纯 kotlinx，不引入 Jackson）
             val elem = _encodeAnyToJsonElement(engine, data as Any?)
             engine.encodeToString(JsonElement.serializer(), elem)
@@ -267,7 +268,7 @@ object JsonKit {
             )
 
         @Suppress("UNCHECKED_CAST")
-        return engine.decodeFromString(ser as KSerializer<T>, text)
+        return engine.decodeFromString(ser, text)
     }
 
     /**
@@ -372,7 +373,7 @@ object JsonKit {
 
 
     /** 优先从上下文/多态/直连三处查找 KSerializer（都找不到返回 null） */
-    @OptIn(InternalSerializationApi::class)
+    @OptIn(InternalSerializationApi::class, ExperimentalSerializationApi::class)
     @Suppress("UNCHECKED_CAST")
     private fun findKSerializer(json: Json, value: Any): KSerializer<Any>? {
         val k = value::class

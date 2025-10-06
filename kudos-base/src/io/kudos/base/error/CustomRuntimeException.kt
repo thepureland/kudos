@@ -22,22 +22,32 @@ open class CustomRuntimeException : RuntimeException {
         resolveException(message, *args)
     }
 
+    constructor(cause: Throwable) : this(cause, cause.message!!)
+
+    constructor(cause: Throwable, message: String, vararg args: Any?) {
+        resolveCauseException(cause, message, *args)
+    }
+
+    constructor(cause: Throwable, message: String, log: Boolean, vararg args: Any?) {
+        resolveCauseException(cause, log, message, *args)
+    }
+
     protected fun resolveException(errorCode: IErrorCodeEnum) {
         fillCustomStackTrace(errorCode)
         handleMessageWithoutLog(errorCode.trans)
-        LOG.error(this)
+        log.error(this)
     }
 
     protected fun resolveException(errorCode: IErrorCodeEnum, vararg args: Any?) {
         fillCustomStackTrace(errorCode)
         handleMessageWithoutLog(errorCode.trans, args)
-        LOG.error(this)
+        log.error(this)
     }
 
     protected fun resolveException(message: String, vararg args: Any?) {
         fillInStackTrace()
         handleMessageWithoutLog(message, *args)
-        LOG.error(this)
+        log.error(this)
     }
 
     @Synchronized
@@ -57,28 +67,17 @@ open class CustomRuntimeException : RuntimeException {
         }
     }
 
-
-    constructor(ex: Throwable) : this(ex, ex.message!!)
-
-    constructor(cause: Throwable, message: String, vararg args: Any?) {
-        resolveCauseException(cause, message, *args)
-    }
-
     protected fun resolveCauseException(cause: Throwable, message: String, vararg args: Any?) {
         fillInStackTrace()
         handleMessageWithoutLog(message, *args)
-        LOG.error(cause, this.message)
+        log.error(cause, this.message)
     }
 
-    constructor(cause: Throwable, log: Boolean, message: String, vararg args: Any?) {
-        resolveCauseException(cause, log, message, *args)
-    }
-
-    protected fun resolveCauseException(cause: Throwable, log: Boolean, message: String, vararg args: Any?) {
+    protected fun resolveCauseException(cause: Throwable, shouldLog: Boolean, message: String, vararg args: Any?) {
         fillInStackTrace()
         handleMessageWithoutLog(message, *args)
-        if (log) {
-            LOG.error(cause, this.message)
+        if (shouldLog) {
+            log.error(cause, this.message)
         }
     }
 
@@ -90,6 +89,6 @@ open class CustomRuntimeException : RuntimeException {
         }
     }
 
-    private val LOG = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this)
 
 }

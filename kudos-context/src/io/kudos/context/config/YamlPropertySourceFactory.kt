@@ -30,6 +30,7 @@ class YamlPropertySourceFactory : PropertySourceFactory {
             val source = propertySource.getSource()
             if (source is MutableMap<*, *>) {
                 //nacos与本地文件合并，如果nacos不包含所有配置的场景
+                @Suppress("UNCHECKED_CAST")
                 map = source as MutableMap<Any?, Any?>
                 log.info("加载配置文件:{0},size={1}", propertySource, map.size)
             } else {
@@ -76,7 +77,7 @@ class YamlPropertySourceFactory : PropertySourceFactory {
             val res = encodedRes.resource
             val uri = res.uri // 例如 "jar:file:/…/libs/soul-foo.jar!/application.yml"
             url = uri.toString()
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             log.warn("设置config和jar关系失败！")
         }
         SOURCE_MAP.put(sourceName, url)

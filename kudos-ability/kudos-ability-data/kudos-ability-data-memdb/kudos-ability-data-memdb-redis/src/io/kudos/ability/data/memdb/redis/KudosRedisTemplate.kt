@@ -29,7 +29,7 @@ class KudosRedisTemplate {
 
 
     companion object Companion {
-        val REDIS_KEY_SERIALIZER: StringRedisSerializer? = StringRedisSerializer.UTF_8
+        val REDIS_KEY_SERIALIZER: StringRedisSerializer = StringRedisSerializer.UTF_8
     }
 
 }

@@ -162,7 +162,7 @@ object DigestKit {
             digest.update(salt)
         }
         var result = digest.digest(input)
-        for (i in 1 until iterations) {
+        (1 until iterations).forEach { i ->
             digest.reset()
             result = digest.digest(result)
         }

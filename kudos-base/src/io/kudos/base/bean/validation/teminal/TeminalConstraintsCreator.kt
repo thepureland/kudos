@@ -186,7 +186,7 @@ object TeminalConstraintsCreator {
                         annotationList.add(annotation)
                     }
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 return getAnnotationsOnGetter(clazz.getSuperClass()!!, property)
             }
         }

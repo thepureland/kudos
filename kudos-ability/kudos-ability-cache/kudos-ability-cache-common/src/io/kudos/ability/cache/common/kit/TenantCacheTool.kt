@@ -1,14 +1,11 @@
 package io.kudos.ability.cache.common.kit
 
 import io.kudos.ability.cache.common.support.CacheConfig
-import io.kudos.base.logger.LogFactory
 import io.kudos.context.core.KudosContextHolder
 import org.springframework.cache.Cache
 import kotlin.reflect.KClass
 
 object TenantCacheTool {
-
-    private val log = LogFactory.getLog(this)
 
     /**
      * 是否开启缓存。必须是全局开关和指定的缓存开关都开启，才算开启
