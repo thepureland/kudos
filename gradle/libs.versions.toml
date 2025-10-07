@@ -56,7 +56,7 @@ redisson = "3.50.0"
 sejda-webp-imageio = "0.1.6"
 coobird-thumbnailator = "0.4.20"
 xqlee-pngquant-png = "1.0.0"
-minio = "8.5.17"
+minio = "8.6.0"
 controlsfx = "8.40.10"
 
 
