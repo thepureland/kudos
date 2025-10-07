@@ -2,6 +2,7 @@ package io.kudos.base.lang
 
 import io.kudos.base.logger.LogFactory
 import org.apache.commons.lang3.SystemUtils
+import java.awt.GraphicsEnvironment
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStream
@@ -121,6 +122,40 @@ object SystemKit {
                 return buffer.toString()
             }
         }
+    }
+
+    /**
+     * 判断当前运行环境是否具备 GUI（能否使用窗口/托盘等图形能力）
+     * 说明：
+     * 1) 首选 AWT 的 headless 判断；若为 headless，则基本视为无 GUI。
+     * 2) 对 Linux 再结合 X11/Wayland 环境变量做兜底判断（有 DISPLAY/WAYLAND_DISPLAY 通常有图形会话）。
+     * 3) Desktop.isDesktopSupported() 可作为“是否能做桌面集成（打开浏览器/文件管理器）”的补充能力判断。
+     */
+    fun hasGUI(): Boolean {
+        // 显式系统属性优先：-Djava.awt.headless=true 会强制“无头”
+        System.getProperty("java.awt.headless")?.lowercase()?.let {
+            if (it == "true") return false
+        }
+
+        // AWT 权威判断：若返回 true = 无头（通常没有图形栈或当前会话不可用）
+        if (GraphicsEnvironment.isHeadless()) {
+            // 尝试对 Linux 做环境变量兜底（有时容器/远程会误判）
+            val os = System.getProperty("os.name").lowercase()
+            if (os.contains("linux") || os.contains("bsd")) {
+                val hasX11 = System.getenv("DISPLAY")?.isNotBlank() == true
+                val hasWayland = System.getenv("WAYLAND_DISPLAY")?.isNotBlank() == true
+                val sess = System.getenv("XDG_SESSION_TYPE")?.lowercase()
+                if ((hasX11 || hasWayland) && sess != "tty") {
+                    // 存在图形会话变量，但 AWT 仍认为 headless —— 多半是缺字体/缺本地窗口系统绑定
+                    // 从谨慎角度，仍按“无 GUI”处理，避免后续抛 AWTError
+                    return false
+                }
+            }
+            return false
+        }
+
+        // 能走到这里，一般已具备 GUI 能力
+        return true
     }
 
     /**

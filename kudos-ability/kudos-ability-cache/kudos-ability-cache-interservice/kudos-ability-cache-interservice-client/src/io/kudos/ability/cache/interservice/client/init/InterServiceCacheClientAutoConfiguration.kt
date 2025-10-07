@@ -38,7 +38,7 @@ open class InterServiceCacheClientAutoConfiguration : IComponentInitializer {
     @ConditionalOnMissingBean
     open fun feignCacheResponseInterceptor(
         messageConverters: ObjectFactory<HttpMessageConverters>,
-                                           customizers: ObjectProvider<HttpMessageConverterCustomizer>
+        customizers: ObjectProvider<HttpMessageConverterCustomizer>
     ) = FeignCacheResponseInterceptor(messageConverters, customizers)
 
     override fun getComponentName() = "kudos-ability-cache-interservice-client"

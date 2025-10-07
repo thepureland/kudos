@@ -1,15 +1,15 @@
 dependencies {
     api(project(":kudos-ability:kudos-ability-data:kudos-ability-data-rdb:kudos-ability-data-rdb-jdbc"))
-    api("org.ktorm:ktorm-core:${libs.versions.ktorm.get()}")
-    api("org.ktorm:ktorm-jackson:${libs.versions.ktorm.get()}")
+    api(libs.ktorm.core)
+    api(libs.ktorm.jackson)
 
     // h2
     // h2可以用PostgreSqlDialect来实现分页
-    testImplementation("com.h2database:h2:${libs.versions.h2.get()}")
+    testImplementation(libs.h2database.h2)
 
     // postgres
-    testImplementation("org.postgresql:postgresql:${libs.versions.postgres.get()}")
-    testImplementation("org.ktorm:ktorm-support-postgresql:${libs.versions.ktorm.get()}")
+    testImplementation(libs.postgresql)
+    testImplementation(libs.ktorm.support.postgresql)
 
     testImplementation(project(":kudos-test:kudos-test-common"))
 }

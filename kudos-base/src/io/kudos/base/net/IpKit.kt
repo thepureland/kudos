@@ -38,7 +38,7 @@ object IpKit {
         while (st.hasMoreTokens()) {
             val n = try {
                 Integer.valueOf(st.nextToken())
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 return false
             }
             if (n > 255 || n < 0) {
@@ -90,7 +90,7 @@ object IpKit {
         val mask = 255L
         var result = ipLong and mask
         var temp = result.toString()
-        for (i in 0..2) {
+        (0..2).forEach {
             ipLong = ipLong shr 8
             result = ipLong and mask
             temp = "$result.$temp"

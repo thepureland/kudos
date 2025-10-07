@@ -17,10 +17,10 @@ class CaffeineCacheManager : AbstractCacheManager<CaffeineCache>() {
         val spec = properties.caffeine.spec
         val cacheBuilder = Caffeine.from(spec!!)
         cacheBuilder.expireAfterWrite(cacheConfig.ttl!!.toLong(), TimeUnit.SECONDS)
-        var name: String? = cacheConfig.name
+        var name = cacheConfig.name!!
         val ignoreVersion: Boolean? = cacheConfig.ignoreVersion
         if (ignoreVersion == null || !ignoreVersion) {
-            name = versionConfig.getFinalCacheName(name!!)
+            name = versionConfig.getFinalCacheName(name)
         }
         val caffeineCache = CaffeineCache(name, cacheBuilder.build())
         log.debug("初始化本地缓存【{0}】成功！", name)
@@ -39,8 +39,8 @@ class CaffeineCacheManager : AbstractCacheManager<CaffeineCache>() {
         val p = Pattern.compile(regex)
         // 遍历 keySet，匹配后再 evict
         nativeCache.keys.stream()
-            .filter { key: Any? -> p.matcher(key.toString()).matches() }
-            .forEach { key: Any? -> cache.evict(key) }
+            .filter { key: Any -> p.matcher(key.toString()).matches() }
+            .forEach { key: Any -> cache.evict(key) }
     }
 
     private val log = LogFactory.getLog(this)

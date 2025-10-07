@@ -70,7 +70,7 @@ object RandomStringKit {
      * @author K
      * @since 1.0.0
      */
-    fun random(count: Int): String = RandomStringUtils.random(count)
+    fun random(count: Int): String = RandomStringUtils.insecure().next(count)
 
     /**
      * 创建一个指定长度的随机串
@@ -81,7 +81,7 @@ object RandomStringKit {
      * @author K
      * @since 1.0.0
      */
-    fun randomAscii(count: Int): String = RandomStringUtils.randomAscii(count)
+    fun randomAscii(count: Int): String = RandomStringUtils.insecure().nextAscii(count)
 
     /**
      * 创建一个指定长度的随机串
@@ -92,7 +92,7 @@ object RandomStringKit {
      * @author K
      * @since 1.0.0
      */
-    fun randomAlphabetic(count: Int): String = RandomStringUtils.randomAlphabetic(count)
+    fun randomAlphabetic(count: Int): String = RandomStringUtils.insecure().nextAlphabetic(count)
 
     /**
      * 创建一个指定长度的随机串
@@ -103,7 +103,7 @@ object RandomStringKit {
      * @author K
      * @since 1.0.0
      */
-    fun randomAlphanumeric(count: Int): String = RandomStringUtils.randomAlphanumeric(count)
+    fun randomAlphanumeric(count: Int): String = RandomStringUtils.insecure().nextAlphanumeric(count)
 
     /**
      * 创建一个指定长度的随机串
@@ -114,7 +114,7 @@ object RandomStringKit {
      * @author K
      * @since 1.0.0
      */
-    fun randomNumeric(count: Int): String = RandomStringUtils.randomNumeric(count)
+    fun randomNumeric(count: Int): String = RandomStringUtils.insecure().nextNumeric(count)
 
     /**
      * 创建一个指定长度的随机串
@@ -128,7 +128,7 @@ object RandomStringKit {
      * @since 1.0.0
      */
     fun random(count: Int, letters: Boolean, numbers: Boolean): String =
-        RandomStringUtils.random(count, letters, numbers)
+        RandomStringUtils.insecure().next(count, letters, numbers)
 
     /**
      * 创建一个指定长度的随机串
@@ -144,7 +144,7 @@ object RandomStringKit {
      * @since 1.0.0
      */
     fun random(count: Int, start: Int, end: Int, letters: Boolean, numbers: Boolean): String =
-        RandomStringUtils.random(count, start, end, letters, numbers)
+        RandomStringUtils.insecure().next(count, start, end, letters, numbers)
 
     /**
      * 创建一个随机串, 使用默认的随机源
@@ -164,7 +164,7 @@ object RandomStringKit {
      */
     fun random(
         count: Int, start: Int, end: Int, letters: Boolean, numbers: Boolean, vararg chars: Char
-    ): String = RandomStringUtils.random(count, start, end, letters, numbers, *chars)
+    ): String = RandomStringUtils.insecure().next(count, start, end, letters, numbers, *chars)
 
     /**
      * 创建一个随机串, 使用提供的随机源
@@ -203,7 +203,7 @@ object RandomStringKit {
      * @author K
      * @since 1.0.0
      */
-    fun random(count: Int, chars: String? = null): String = RandomStringUtils.random(count, chars)
+    fun random(count: Int, chars: String? = null): String = RandomStringUtils.insecure().next(count, chars)
 
     /**
      * 创建一个指定长度的随机串
@@ -216,7 +216,7 @@ object RandomStringKit {
      * @author K
      * @since 1.0.0
      */
-    fun random(count: Int, vararg chars: Char): String = RandomStringUtils.random(count, *chars)
+    fun random(count: Int, vararg chars: Char): String = RandomStringUtils.insecure().next(count, *chars)
 
     // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     // 封装org.apache.commons.lang3.RandomStringUtils

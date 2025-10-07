@@ -1,16 +1,17 @@
 dependencies {
     api(project(":kudos-base"))
-    api("org.controlsfx:controlsfx:8.40.10")
+    api(libs.controlsfx)
 }
 
 plugins {
-    id("org.openjfx.javafxplugin") version "0.1.0"
+    alias(libs.plugins.javafx)
 }
 
-val javafxVersion = "21"
+val libsCatalog = extensions.getByType<VersionCatalogsExtension>().named("libs")
+val javafx_version = libsCatalog.findVersion("javafx").get().requiredVersion
 
 javafx {
-    version = javafxVersion
+    version = javafx_version
     modules = listOf("javafx.controls", "javafx.fxml")
 }
 

@@ -29,13 +29,13 @@ open class InterServiceCacheProviderAutoConfiguration : IComponentInitializer {
     open fun clientCacheWebFilter(): FilterRegistrationBean<ClientCacheWebFilter> {
         val registration = FilterRegistrationBean<ClientCacheWebFilter>()
         //注入过滤器
-        registration.setFilter(ClientCacheWebFilter())
+        registration.filter = ClientCacheWebFilter()
         //拦截规则
         registration.addUrlPatterns("/*")
         //过滤器名称
         registration.setName("clientCacheWebFilter")
         //过滤器顺序
-        registration.setOrder(FilterRegistrationBean.HIGHEST_PRECEDENCE)
+        registration.order = FilterRegistrationBean.HIGHEST_PRECEDENCE
         return registration
     }
 

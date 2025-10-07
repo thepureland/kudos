@@ -77,7 +77,7 @@ open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentIni
             .entryTtl(Duration.ofSeconds(900)) //默认15分钟
             .serializeKeysWith(keySerializationPair)
             .serializeValuesWith(valueSerializationPair)
-        val connectionFactory = redisTemplate!!.connectionFactory
+        val connectionFactory = redisTemplate.connectionFactory!!
         val redisCacheWriter = RedisCacheWriter.nonLockingRedisCacheWriter(connectionFactory)
         return RedisCacheManager(redisCacheWriter, defaultRedisCacheConfiguration, redisTemplate.connectionFactory)
     }

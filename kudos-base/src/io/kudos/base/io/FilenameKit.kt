@@ -206,7 +206,6 @@ object FilenameKit {
      * @param canonicalParent 父目录
      * @param canonicalChild 文件或子目录
      * @return true: 父目录包含指定的子目录或文件，否则返回false
-     * @throws IOException 如果请求的方法不能通过反射访问
      * @author K
      * @since 1.0.0
      */

@@ -7,25 +7,166 @@ kotlin = "2.2.20"
 kotlinxDatetime = "0.6.1"
 kotlinxSerializationJSON = "1.7.3"
 kotlinxCoroutines = "1.10.2"
-ktor = "3.1.3"
+ktor = "3.3.0"
 ktorm = "4.1.1"
-springBoot = "3.4.3"
-springCloud = "2024.0.0"
-alibabaCloud = "2023.0.1.2"
-h2 = "2.3.232"
-postgres = "42.7.5"
+spring-boot = "3.5.6"
+spring-cloud = "2025.0.0"
+alibaba-cloud = "2023.0.3.3"
+h2 = "2.4.240"
+postgres = "42.7.8"
+github-ben-manes-plugin = "0.53.0"
+
+# kudos-base
+apache-commons-beanutils = "1.11.0"
+apache-commons-codec = "1.19.0"
+apache-commons-lang3 = "3.19.0"
+apache-commons-text = "1.14.0"
+apache-commons-net = "3.12.0"
+jakarta-validation-api = "3.1.1"
+hibernate-validator = "9.0.1.Final"
+jakarta-el-api = "6.0.1"
+glassfish-jakarta-el = "5.0.0-M1"
+slf4j = "2.0.17"
+logback = "1.5.19"
+sourceforge-jxl = "2.6.12"
+jakarta-xml-bind = "4.0.4"
+google-zxing = "3.5.3"
+lingala-zip4j = "2.11.5"
+apache-xmlgraphics-batik = "1.19"
+github-classgraph = "4.8.181"
+
+# kudos-test
+testcontainers = "1.21.3"
+
+# kudos-tools
+freemarker = "2.3.34"
+javafx-plugin = "0.1.0"
+javafx = "21"
+
+# kudos-ability
+github-caffeine = "3.2.2"
+alibabacloud-dysmsapi = "4.0.5"
+alibaba-fastjson2 = "2.0.59"
+alibaba-seata = "2.0.0"
+amazon-awssdk = "2.35.0"
+apache-common-pool2 = "2.12.1"
+flyway = "11.13.2"
+baomidou-dynamic-datasource = "4.3.1"
+redisson = "3.52.0"
+sejda-webp-imageio = "0.1.6"
+coobird-thumbnailator = "0.4.21"
+xqlee-pngquant-png = "1.0.0"
+minio = "8.6.0"
+controlsfx = "11.2.2"
 
 
 [libraries]
 kotlinGradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 kotlinxDatetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
 kotlinxSerialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJSON" }
+kotlin-test-junit5 = { module = "org.jetbrains.kotlin:kotlin-test-junit5", version.ref = "kotlin" }
+
+# bom
+spring-boot-bom = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "spring-boot" }
+spring-cloud-bom = { module = "org.springframework.cloud:spring-cloud-dependencies", version.ref = "spring-cloud" }
+alibaba-cloud-bom = { module = "com.alibaba.cloud:spring-cloud-alibaba-dependencies", version.ref = "alibaba-cloud" }
+ktor-bom = { module = "io.ktor:ktor-bom", version.ref = "ktor" }
+
+# kudos-base
+kotlinReflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
 kotlinxCoroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
+apache-commons-beanutils = { module = "commons-beanutils:commons-beanutils", version.ref = "apache-commons-beanutils" }
+apache-commons-codec = { module = "commons-codec:commons-codec", version.ref = "apache-commons-codec" }
+apache-commons-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "apache-commons-lang3" }
+apache-commons-text = { module = "org.apache.commons:commons-text", version.ref = "apache-commons-text" }
+apache-commons-net = { module = "commons-net:commons-net", version.ref = "apache-commons-net" }
+jakarta-validation-api = { module = "jakarta.validation:jakarta.validation-api", version.ref = "jakarta-validation-api" }
+hibernate-validator = { module = "org.hibernate.validator:hibernate-validator", version.ref = "hibernate-validator" }
+ktor-serialization-json = { module = "io.ktor:ktor-serialization-kotlinx-json-jvm", version.ref = "ktor" }
+jakarta-el-api = { module = "jakarta.el:jakarta.el-api", version.ref = "jakarta-el-api" }
+glassfish-jakarta-el = { module = "org.glassfish:jakarta.el", version.ref = "glassfish-jakarta-el" }
+jcl-over-slf4j = { module = "org.slf4j:jcl-over-slf4j", version.ref = "slf4j" }
+log4j-over-slf4j = { module = "org.slf4j:log4j-over-slf4j", version.ref = "slf4j" }
+logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+sourceforge-jxl = { module = "net.sourceforge.jexcelapi:jxl", version.ref = "sourceforge-jxl" }
+jakarta-xml-bind-api = { module = "jakarta.xml.bind:jakarta.xml.bind-api", version.ref = "jakarta-xml-bind" }
+glassfish-jaxb-runtime = { module = "org.glassfish.jaxb:jaxb-runtime", version.ref = "jakarta-xml-bind" }
+google-zxing-core = { module = "com.google.zxing:core", version.ref = "google-zxing" }
+lingala-zip4j = { module = "net.lingala.zip4j:zip4j", version.ref = "lingala-zip4j" }
+apache-xmlgraphics-batik-dom = { module = "org.apache.xmlgraphics:batik-dom", version.ref = "apache-xmlgraphics-batik" }
+apache-xmlgraphics-batik-bridge = { module = "org.apache.xmlgraphics:batik-bridge", version.ref = "apache-xmlgraphics-batik" }
+github-classgraph = { module = "io.github.classgraph:classgraph", version.ref = "github-classgraph" }
+
+# kudos-context
+spring-boot-starter-aop = { module = "org.springframework.boot:spring-boot-starter-aop" }
+spring-tx = { module = "org.springframework:spring-tx" }
+
+# kudos-test
+spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
+testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
+testcontainers-kafka = { module = "org.testcontainers:kafka", version.ref = "testcontainers" }
+testcontainers-junit-jupiter = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
+
+# kudos-tools
+freemarker = { module = "org.freemarker:freemarker", version.ref = "freemarker" }
+
+# kudos-ability
+spring-context-support = { module = "org.springframework:spring-context-support"}
+spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web"}
+spring-boot-starter-mail = { module = "org.springframework.boot:spring-boot-starter-mail"}
+spring-boot-starter-data-redis = { module = "org.springframework.boot:spring-boot-starter-data-redis"}
+spring-boot-starter-jdbc = { module = "org.springframework.boot:spring-boot-starter-jdbc"}
+spring-cloud-loadbalancer = { module = "org.springframework.cloud:spring-cloud-loadbalancer"}
+spring-cloud-starter-openfeign = { module = "org.springframework.cloud:spring-cloud-starter-openfeign"}
+spring-cloud-stream = { module = "org.springframework.cloud:spring-cloud-stream"}
+spring-cloud-starter-stream-kafka = { module = "org.springframework.cloud:spring-cloud-starter-stream-kafka"}
+spring-cloud-starter-stream-rabbit = { module = "org.springframework.cloud:spring-cloud-starter-stream-rabbit"}
+alibaba-cloud-nacos-config = { module = "com.alibaba.cloud:spring-cloud-starter-alibaba-nacos-config"}
+alibaba-cloud-nacos-discovery = { module = "com.alibaba.cloud:spring-cloud-starter-alibaba-nacos-discovery"}
+alibaba-cloud-starter-stream-rocketmq = { module = "com.alibaba.cloud:spring-cloud-starter-stream-rocketmq"}
+alibaba-cloud-starter-seata = { module = "com.alibaba.cloud:spring-cloud-starter-alibaba-seata"}
+alibaba-cloud-dysmsapi = { module = "com.aliyun:alibabacloud-dysmsapi20170525", version.ref = "alibabacloud-dysmsapi"}
+alibaba-fastjson2 = { module = "com.alibaba.fastjson2:fastjson2", version.ref = "alibaba-fastjson2"}
+alibaba-fastjson2-spring = { module = "com.alibaba.fastjson2:fastjson2-extension-spring5", version.ref = "alibaba-fastjson2"}
+alibaba-seata = { module = "io.seata:seata-spring-boot-starter", version.ref = "alibaba-seata"}
+apache-commons-pool2 = { module = "org.apache.commons:commons-pool2", version.ref = "apache-common-pool2"}
+github-caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "github-caffeine"}
+amazon-awssdk-sns = { module = "software.amazon.awssdk:sns", version.ref = "amazon-awssdk"}
+amazon-awssdk-apache-client = { module = "software.amazon.awssdk:apache-client", version.ref = "amazon-awssdk"}
+flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway"}
+h2database-h2 = { module = "com.h2database:h2", version.ref = "h2" }
+postgresql = { module = "org.postgresql:postgresql", version.ref = "postgres"}
+ktorm-support-postgresql = { module = "org.ktorm:ktorm-support-postgresql", version.ref = "ktorm"}
+ktorm-core = { module = "org.ktorm:ktorm-core", version.ref = "ktorm"}
+ktorm-jackson = { module = "org.ktorm:ktorm-jackson", version.ref = "ktorm"}
+baomidou-dynamic-datasource-starter = { module = "com.baomidou:dynamic-datasource-spring-boot3-starter", version.ref = "baomidou-dynamic-datasource"}
+redisson = { module = "org.redisson:redisson", version.ref = "redisson"}
+sejda-webp-imageio = { module = "org.sejda.imageio:webp-imageio", version.ref = "sejda-webp-imageio"}
+coobird-thumbnailator = { module = "net.coobird:thumbnailator", version.ref = "coobird-thumbnailator"}
+xqlee-pngquant-png = { module = "com.xqlee.image:pngquant-png", version.ref = "xqlee-pngquant-png"}
+minio = { module = "io.minio:minio", version.ref = "minio"}
+minio-admin = { module = "io.minio:minio-admin", version.ref = "minio"}
+controlsfx = { module = "org.controlsfx:controlsfx", version.ref = "controlsfx"}
+ktor-server-core = { module = "io.ktor:ktor-server-core-jvm" }
+ktor-server-config-yaml = { module = "io.ktor:ktor-server-config-yaml-jvm" }
+ktor-server-content-negotiation = { module = "io.ktor:ktor-server-content-negotiation-jvm" }
+ktor-server-status-pages = { module = "io.ktor:ktor-server-status-pages-jvm" }
+ktor-server-websockets = { module = "io.ktor:ktor-server-websockets-jvm" }
+ktor-server-test-host = { module = "io.ktor:ktor-server-test-host-jvm" }
+ktor-server-netty = { module = "io.ktor:ktor-server-netty-jvm" }
+ktor-server-jetty-jakarta = { module = "io.ktor:ktor-server-jetty-jakarta-jvm" }
+ktor-server-tomcat-jakarta = { module = "io.ktor:ktor-server-tomcat-jakarta-jvm" }
+ktor-server-cio = { module = "io.ktor:ktor-server-cio-jvm" }
+ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation-jvm" }
 
 
 # Libraries can be bundled together for easier import
 [bundles]
 kotlinxEcosystem = ["kotlinxDatetime", "kotlinxSerialization", "kotlinxCoroutines"]
 
+
 [plugins]
 kotlinPluginSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+javafx = { id = "org.openjfx.javafxplugin", version.ref = "javafx-plugin" }
+github-ben-manes = { id = "com.github.ben-manes.versions", version.ref = "github-ben-manes-plugin" }
+ktor = { id = "io.ktor.plugin", version.ref = "ktor" }

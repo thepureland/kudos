@@ -50,8 +50,8 @@ class RedisCacheManager(
         var redisCacheConfiguration = RedisCacheConfiguration
             .defaultCacheConfig()
             .disableCachingNullValues()
-            .serializeKeysWith(defaultCacheConfiguration.getKeySerializationPair())
-            .serializeValuesWith(defaultCacheConfiguration.getValueSerializationPair())
+            .serializeKeysWith(defaultCacheConfiguration.keySerializationPair)
+            .serializeValuesWith(defaultCacheConfiguration.valueSerializationPair)
         if (cacheConfig.ttl != null) {
             redisCacheConfiguration = redisCacheConfiguration.entryTtl(Duration.ofSeconds(cacheConfig.ttl!!.toLong()))
         }

@@ -1,62 +1,63 @@
 plugins {
     // 启用 Kotlin Serialization 插件，使编译期能生成序列化器
-    kotlin("plugin.serialization") version libs.versions.kotlin
+    alias(libs.plugins.kotlinPluginSerialization)
 }
 
 dependencies {
-    api("org.jetbrains.kotlin:kotlin-reflect:${libs.versions.kotlin}")
-    api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${libs.versions.kotlinxCoroutines}}")
+    api(libs.kotlinReflect)
+    api(libs.kotlinxCoroutines)
 
     // bean
-    api("commons-beanutils:commons-beanutils:1.11.0")
+    api(libs.apache.commons.beanutils)
 
     // codec
-    api("commons-codec:commons-codec:1.18.0")
+    api(libs.apache.commons.codec)
 
     // lang3
-    api("org.apache.commons:commons-lang3:3.17.0")
+    api(libs.apache.commons.lang3)
 
     // text
-    api("org.apache.commons:commons-text:1.13.1")
+    api(libs.apache.commons.text)
 
     // net
-    api("commons-net:commons-net:3.11.1")
+    api(libs.apache.commons.net)
 
     // validation
-    api("jakarta.validation:jakarta.validation-api:3.1.1")
-    api("org.hibernate.validator:hibernate-validator:9.0.0.Final")
-    api("jakarta.el:jakarta.el-api:6.0.1")
-    api("org.glassfish:jakarta.el:5.0.0-M1")
+    api(libs.jakarta.validation.api)
+    api(libs.hibernate.validator)
+    api(libs.jakarta.el.api)
+    api(libs.glassfish.jakarta.el)
 //    api("javax.money:money-api:1.1")
 
     // json
-    api("io.ktor:ktor-serialization-kotlinx-json-jvm:${libs.versions.ktor.get()}")
+    api(libs.ktor.serialization.json)
 
     // log
-    api("org.slf4j:jcl-over-slf4j:2.0.17")
-    api("org.slf4j:log4j-over-slf4j:2.0.17")
-    api("org.slf4j:log4j-over-slf4j:2.0.17")
-    api("ch.qos.logback:logback-classic:1.5.18")
+    api(libs.jcl.over.slf4j)
+    api(libs.log4j.over.slf4j)
+    api(libs.logback.classic)
 
     // excel
-    api("net.sourceforge.jexcelapi:jxl:2.6.12")
+    api(libs.sourceforge.jxl)
 
     // xml
-    api("jakarta.xml.bind:jakarta.xml.bind-api:4.0.2")
-    api("org.glassfish.jaxb:jaxb-runtime:4.0.2")
+    api(libs.jakarta.xml.bind.api)
+    api(libs.glassfish.jaxb.runtime)
 
     // barcode
-    api("com.google.zxing:core:3.5.3")
+    api(libs.google.zxing.core)
 
     // zip
-    api("net.lingala.zip4j:zip4j:2.11.5")
+    api(libs.lingala.zip4j)
 
     // svg
-    api("org.apache.xmlgraphics:batik-dom:1.19")
-    api("org.apache.xmlgraphics:batik-bridge:1.19")
+    api(libs.apache.xmlgraphics.batik.dom)
+    api(libs.apache.xmlgraphics.batik.bridge)
 
     // class scan
-    api("io.github.classgraph:classgraph:4.8.179")
+    api(libs.github.classgraph)
+
+    testImplementation(libs.kotlin.test.junit5)
 }
 
 
