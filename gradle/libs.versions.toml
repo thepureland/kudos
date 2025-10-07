@@ -12,7 +12,7 @@ ktorm = "4.1.1"
 spring-boot = "3.4.3"
 spring-cloud = "2024.0.0"
 alibaba-cloud = "2023.0.1.2"
-h2 = "2.3.232"
+h2 = "2.4.240"
 postgres = "42.7.5"
 github-ben-manes-plugin = "0.52.0"
 
