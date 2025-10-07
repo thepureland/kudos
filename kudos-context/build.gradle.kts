@@ -1,7 +1,7 @@
 dependencies {
     api(project(":kudos-base"))
-    api("org.springframework.boot:spring-boot-starter-aop")
-    api("org.springframework:spring-tx")
+    api(libs.spring.boot.starter.aop)
+    api(libs.spring.tx)
 
     testImplementation(project(":kudos-test:kudos-test-common"))
 }

@@ -1,9 +1,9 @@
 dependencies {
     api(project(":kudos-context"))
-    api("org.springframework.boot:spring-boot-starter-jdbc")
-    api("com.baomidou:dynamic-datasource-spring-boot3-starter:4.2.0")
+    api(libs.spring.boot.starter.jdbc)
+    api(libs.baomidou.dynamic.datasource.starter)
 //    api("io.micrometer:micrometer-core")
 
-    testImplementation("com.h2database:h2:${libs.versions.h2.get()}")
+    testImplementation(libs.h2database.h2)
     testImplementation(project(":kudos-test:kudos-test-common"))
 }

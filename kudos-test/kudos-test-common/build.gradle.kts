@@ -1,4 +1,4 @@
 dependencies {
     implementation(project(":kudos-context"))
-    api("org.springframework.boot:spring-boot-starter-test")
+    api(libs.spring.boot.starter.test)
 }
