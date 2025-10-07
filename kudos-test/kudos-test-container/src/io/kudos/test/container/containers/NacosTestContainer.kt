@@ -83,8 +83,10 @@ object NacosTestContainer {
     }
 
     internal fun registerProperties(registry: DynamicPropertyRegistry, runningContainer : Container) {
-        val host = runningContainer.ports.first().ip
-        val port = runningContainer.ports.first().publicPort
+//        val host = runningContainer.ports.first().ip
+        val host = "localhost"
+//        val port = runningContainer.ports.first().publicPort
+        val port = "38848"
         val serverAddr = "$host:$port"
 
         registry.add("spring.cloud.nacos.config.server-addr") { serverAddr }

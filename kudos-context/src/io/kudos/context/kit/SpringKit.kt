@@ -16,7 +16,7 @@ object SpringKit {
 
 
     /**
-     * 返回指定名称的Spring Bean对象
+     * 返回指定名称的Spring Bean对象，不存在会抛BeansException异常
      *
      * @param beanName bean名称
      * @return Spring Bean对象
@@ -26,7 +26,20 @@ object SpringKit {
     fun getBean(beanName: String): Any = applicationContext!!.getBean(beanName)
 
     /**
-     * 返回指定类的Spring Bean对象
+     * 返回指定名称的Spring Bean对象，不存在返回null
+     *
+     * @param beanName bean名称
+     * @return Spring Bean对象
+     * @author K
+     * @since 1.0.0
+     */
+    fun getBeanOrNull(beanName: String): Any? {
+        val exists = applicationContext!!.containsBean(beanName)
+        return if (exists) applicationContext!!.getBean(beanName) else null
+    }
+
+    /**
+     * 返回指定类的Spring Bean对象，不存在会抛BeansException异常
      *
      * @param T bean类型
      * @param beanClass bean类
@@ -36,6 +49,19 @@ object SpringKit {
      */
     fun <T : Any> getBean(beanClass: KClass<T>): T = applicationContext!!.getBean(beanClass.java)
 
+    /**
+     * 返回指定类的Spring Bean对象，不存在返回null
+     *
+     * @param T bean类型
+     * @param beanClass bean类
+     * @return Spring Bean对象
+     * @author K
+     * @since 1.0.0
+     */
+    fun <T : Any> getBeanOrNull(beanClass: KClass<T>): T? {
+        val exists = applicationContext!!.getBeanNamesForType(beanClass.java).isNotEmpty()
+        return if (exists) applicationContext!!.getBean(beanClass.java) else null
+    }
     /**
      * 返回指定名称的属性值
      *

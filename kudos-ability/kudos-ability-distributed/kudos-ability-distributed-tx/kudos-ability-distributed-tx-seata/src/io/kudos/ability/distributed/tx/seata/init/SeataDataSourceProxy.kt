@@ -24,7 +24,7 @@ class SeataDataSourceProxy : IDataSourceProxy {
     private var enableProxy: Boolean = true
 
     override fun proxyDatasource(dataSource: DataSource): DataSource {
-        if (enableProxy) {
+        if (!enableProxy) {
             return dataSource
         }
         try {
