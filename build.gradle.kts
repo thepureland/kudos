@@ -27,7 +27,7 @@ subprojects {
         add("implementation", platform(spring_cloud_bom))
         add("implementation", platform(alibaba_cloud_bom))
         add("implementation", platform(ktor_bom))
-        add("testImplementation", kotlin("test-junit5")) // kotlin.test + JUnit5
+//        add("testImplementation", libs.kotlin.test.junit5) // kotlin.test + JUnit5
     }
 
     tasks.withType<Test> {
