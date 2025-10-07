@@ -4,6 +4,7 @@ import io.kudos.ability.data.memdb.redis.init.properties.RedisExtProperties
 import io.lettuce.core.ClientOptions
 import io.lettuce.core.ReadFrom
 import io.lettuce.core.SocketOptions
+import io.lettuce.core.api.StatefulConnection
 import io.lettuce.core.cluster.ClusterClientOptions
 import io.lettuce.core.cluster.ClusterTopologyRefreshOptions
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig
@@ -62,7 +63,7 @@ object RedisConnectFactory {
             redisConfiguration = getRedisConfiguration(redisProperties)
         }
         //连接池配置
-        val poolConfig = GenericObjectPoolConfig<Any>()
+        val poolConfig = GenericObjectPoolConfig<StatefulConnection<*, *>>()
         poolConfig.maxIdle = redisProperties.maxIdle
         poolConfig.minIdle = redisProperties.minIdle
         poolConfig.setMaxWait(redisProperties.maxWait)
