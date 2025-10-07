@@ -46,7 +46,7 @@ javafx = "21"
 # kudos-ability
 github-caffeine = "3.2.2"
 alibabacloud-dysmsapi = "4.0.5"
-alibaba-fastjson2 = "2.0.58"
+alibaba-fastjson2 = "2.0.59"
 alibaba-seata = "2.0.0"
 amazon-awssdk = "2.33.13"
 apache-common-pool2 = "2.11.0"
