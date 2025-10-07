@@ -1,7 +1,7 @@
 dependencies {
     api(project(":kudos-ability:kudos-ability-comm:kudos-ability-comm-common"))
-    api("software.amazon.awssdk:sns:2.33.13")
-    api("software.amazon.awssdk:apache-client:2.33.13")
+    api(libs.amazon.awssdk.sns)
+    api(libs.amazon.awssdk.apache.client)
 
     testImplementation(project(":kudos-test:kudos-test-container"))
 }

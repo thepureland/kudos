@@ -41,13 +41,11 @@ class MixCache(
             CacheStrategy.REMOTE -> result = remoteCache?.get(key)
             CacheStrategy.LOCAL_REMOTE -> {
                 result = localCache!!.get(key)
-                if (result == null || result.get() == null) {
+                if (result?.get() == null) {
                     result = remoteCache?.get(key)
                     localCache.put(key, result?.get())
                 }
             }
-
-            else -> result = null
         }
         return result
     }
@@ -65,8 +63,6 @@ class MixCache(
                     localCache.put(key, result)
                 }
             }
-
-            else -> result = null
         }
         return result
     }
@@ -84,8 +80,6 @@ class MixCache(
                     localCache.put(key, result)
                 }
             }
-
-            else -> result = null
         }
         return result
     }
@@ -130,8 +124,6 @@ class MixCache(
                 log.debug("put远程缓存{0}。key为{1}", name, key)
                 pushMsgRedis(name, key) //TODO 异步?
             }
-
-            else -> {}
         }
         //super putIfAbsent
         val existingValue = this.get(key)
@@ -171,9 +163,9 @@ class MixCache(
     fun pushMsgRedis(name: String, key: Any?) {
         val cacheMessageHandlers = SpringKit.getBeansOfType(ICacheMessageHandler::class)
         if (cacheMessageHandlers.isNotEmpty()) {
-            cacheMessageHandlers.forEach { (key1: String?, handler: ICacheMessageHandler?) ->
+            cacheMessageHandlers.forEach { (_: String?, handler: ICacheMessageHandler) ->
                 val msg = CacheMessage(name, key)
-                handler!!.sendMessage(msg)
+                handler.sendMessage(msg)
             }
         }
     }

@@ -15,15 +15,16 @@ import org.springframework.beans.factory.annotation.Value
  * 解析请求的客户端参数，获取本地缓存的hash值，设置到header中
  */
 class FeignCacheRequestInterceptor : RequestInterceptor {
+
     @Autowired
     @Qualifier("feignCacheHelper")
-    private val cacheHelper: ClientCacheHelper? = null
+    private lateinit var cacheHelper: ClientCacheHelper
 
     @Value("\${spring.application.name}")
     private val applicationName: String? = null
 
     override fun apply(requestTemplate: RequestTemplate) {
-        if (!cacheHelper!!.havaLocalCache()) {
+        if (!cacheHelper.havaLocalCache()) {
             return
         }
         val localCacheKey = genCacheKey(requestTemplate)
@@ -59,4 +60,5 @@ class FeignCacheRequestInterceptor : RequestInterceptor {
         ).joinToString()
         return Md5Crypt.apr1Crypt(result, "fCache")
     }
+
 }

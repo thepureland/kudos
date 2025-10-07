@@ -1,7 +1,6 @@
 package io.kudos.tools.codegen.core
 
 import io.kudos.base.io.FileKit
-import io.kudos.base.logger.LogFactory
 import io.kudos.tools.codegen.biz.CodeGenFileBiz
 import io.kudos.tools.codegen.biz.CodeGenObjectBiz
 import io.kudos.tools.codegen.core.merge.CodeMerger
@@ -19,8 +18,6 @@ class CodeGenerator(
     private val templateModel: Map<String, Any?>,
     private val genFiles: List<GenFile>
 ) {
-
-    private val log = LogFactory.getLog(this)
 
     fun generate(needPersist : Boolean = true) {
         genFiles.forEach { executeGenerate(it) }

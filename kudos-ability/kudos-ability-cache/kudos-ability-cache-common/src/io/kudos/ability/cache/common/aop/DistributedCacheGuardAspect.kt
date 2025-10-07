@@ -2,7 +2,6 @@ package io.kudos.ability.cache.common.aop
 
 import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.ability.cache.common.support.TenantCacheKeyGenerator
-import io.kudos.base.logger.LogFactory
 import io.kudos.context.kit.SpringKit
 import io.kudos.context.lock.LockTool
 import org.aspectj.lang.ProceedingJoinPoint
@@ -27,7 +26,6 @@ import java.util.concurrent.locks.Lock
 @Order(-999)
 class DistributedCacheGuardAspect {
 
-    private val log = LogFactory.getLog(this)
     private val parser: ExpressionParser = SpelExpressionParser()
     private val nameDiscoverer = DefaultParameterNameDiscoverer()
 
@@ -84,7 +82,7 @@ class DistributedCacheGuardAspect {
                 null, method, pjp.args, nameDiscoverer
             )
             val cacheKey = parser.parseExpression(keySpel).getValue<String?>(context, String::class.java)
-            return Pair<String, Any>(cacheName, cacheKey)
+            return Pair<String, Any>(cacheName, cacheKey!!)
         } else {
             // 3. 解析 cacheName 和 key
             val cacheName =

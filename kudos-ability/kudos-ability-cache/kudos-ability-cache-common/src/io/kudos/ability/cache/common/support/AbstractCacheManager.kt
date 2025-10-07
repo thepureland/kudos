@@ -5,7 +5,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.cache.CacheProperties
 import org.springframework.cache.Cache
 import org.springframework.cache.support.AbstractCacheManager
-import java.util.*
 
 /**
  * 抽象缓存管理器
@@ -13,8 +12,9 @@ import java.util.*
  * @author K
  * @since 1.0.0
  */
-abstract class AbstractCacheManager<T : Cache?> : AbstractCacheManager(), ICacheManager<T?> {
-    var caches: MutableList<T?> = LinkedList<T?>()
+abstract class AbstractCacheManager<T : Cache> : AbstractCacheManager(), ICacheManager<T> {
+
+    var caches = mutableListOf<T>()
 
     @Autowired
     protected lateinit var properties: CacheProperties
@@ -23,7 +23,7 @@ abstract class AbstractCacheManager<T : Cache?> : AbstractCacheManager(), ICache
     protected lateinit var versionConfig: CacheVersionConfig
 
     override fun initCacheAfterSystemInit(cacheConfigMap: Map<String, CacheConfig>) {
-        cacheConfigMap.forEach { (key: String?, cacheConfig: CacheConfig) ->
+        cacheConfigMap.forEach { (_: String, cacheConfig: CacheConfig) ->
             val cache = createCache(cacheConfig)
             add(cache)
         }
@@ -31,11 +31,11 @@ abstract class AbstractCacheManager<T : Cache?> : AbstractCacheManager(), ICache
     }
 
     @Synchronized
-    fun add(cache: T?) {
+    fun add(cache: T) {
         this.caches.add(cache)
     }
 
-    override fun loadCaches(): MutableCollection<out Cache?> {
+    override fun loadCaches(): MutableCollection<out Cache> {
         return this.caches
     }
 }

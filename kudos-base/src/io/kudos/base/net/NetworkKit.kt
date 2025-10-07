@@ -3,6 +3,7 @@ package io.kudos.base.net
 import io.kudos.base.lang.SystemKit
 import java.io.BufferedReader
 import java.io.InputStreamReader
+import java.net.NetworkInterface
 import java.net.Socket
 import java.util.regex.Matcher
 import java.util.regex.Pattern
@@ -30,7 +31,7 @@ object NetworkKit {
         try {
             Socket(ip, port).close()
             return true
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             return false
         }
     }
@@ -43,45 +44,35 @@ object NetworkKit {
      * @since 1.0.0
      */
     fun getMacAddress(): List<String> {
-        val macs: MutableList<String> = ArrayList()
-        val myProc: Process
-        var currentLine: String?
-        val osName = SystemKit.getOSName()
-        var macRegExp: String
-
-        if (osName.startsWith("windows")) {
-            macRegExp = "([0-9A-Fa-f]{2}-){5}[0-9A-Fa-f]{2}"  // Update to match Windows MAC format
-            myProc = Runtime.getRuntime().exec("ipconfig /all")
-        } else if (osName.startsWith("linux")) {
-            macRegExp = "([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}"  // Update to match Linux MAC format
-            myProc = Runtime.getRuntime().exec("/sbin/ifconfig -a")
-        } else {
-            throw UnsupportedOperationException("不支持的操作系统")
+        return when (detectOs()) {
+            Os.WINDOWS -> collectMacs("-")
+            Os.LINUX, Os.MAC -> collectMacs(":")
+            Os.OTHER -> throw UnsupportedOperationException("Unsupported OS: ${System.getProperty("os.name")}")
         }
-
-        val reader = BufferedReader(InputStreamReader(myProc.inputStream))
-        val macPattern = Pattern.compile(".*($macRegExp).*")
-        var macMatcher: Matcher?
-
-        while (reader.readLine().also { currentLine = it } != null) {
-            if (currentLine != null) {
-                println("Current line: $currentLine") // Debugging line content
-                macMatcher = macPattern.matcher(currentLine)
-                if (macMatcher.matches()) {
-                    // Capture the matching MAC address
-                    val macAddress = macMatcher.group(1)
-                    if (!macAddress.isNullOrEmpty()) {
-                        macs.add(macAddress)
-                        println("MAC address found: $macAddress") // Debugging found MAC address
-                    }
-                    macMatcher.reset()
-                }
-            }
-        }
-
-        myProc.destroy()
-        return macs
     }
 
+    private fun detectOs(osName: String = System.getProperty("os.name") ?: ""): Os {
+        val n = osName.lowercase()
+        return when {
+            n.startsWith("windows") -> Os.WINDOWS
+            n.startsWith("linux") -> Os.LINUX
+            n.startsWith("mac") || n.startsWith("darwin") -> Os.MAC
+            else -> Os.OTHER
+        }
+    }
+
+    private fun collectMacs(delimiter: String): List<String> {
+        val ifaces = NetworkInterface.getNetworkInterfaces() ?: return emptyList()
+        val macs = mutableListOf<String>()
+        for (nif in ifaces.toList()) {
+            if (!nif.isUp || nif.isLoopback || nif.isVirtual) continue
+            val hw = nif.hardwareAddress ?: continue
+            if (hw.isEmpty()) continue
+            macs += hw.joinToString(delimiter) { "%02X".format(it) }
+        }
+        return macs.distinct()
+    }
+
+    private enum class Os { WINDOWS, LINUX, MAC, OTHER }
 
 }

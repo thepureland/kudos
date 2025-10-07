@@ -3,18 +3,19 @@ dependencies {
     implementation(project(":kudos-ability:kudos-ability-data:kudos-ability-data-rdb:kudos-ability-data-rdb-flyway"))
     implementation(project(":kudos-ability:kudos-ability-ui:kudos-ability-ui-javafx"))
 
-    implementation("org.freemarker:freemarker:2.3.30")
-    implementation("com.h2database:h2:${libs.versions.h2.get()}")
+    implementation(libs.freemarker)
+    implementation(libs.h2database.h2)
 }
 
 
 plugins {
-    id("org.openjfx.javafxplugin") version "0.1.0"
+    alias(libs.plugins.javafx)
 }
 
-val javafxVersion = "21"
+val libsCatalog = extensions.getByType<VersionCatalogsExtension>().named("libs")
+val javafx_version = libsCatalog.findVersion("javafx").get().requiredVersion
 
 javafx {
-    version = javafxVersion
+    version = javafx_version
     modules = listOf("javafx.controls", "javafx.fxml")
 }

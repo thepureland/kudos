@@ -83,7 +83,7 @@ class GoogleAuthenticator {
                 val codec = Base32()
                 val bEncodedKey = codec.encode(buffer)
                 return String(bEncodedKey)
-            } catch (e: NoSuchAlgorithmException) {
+            } catch (_: NoSuchAlgorithmException) {
                 // should never occur... configuration error
             }
             return null

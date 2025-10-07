@@ -39,9 +39,8 @@ class ClientCacheableAspect {
             return null
         }
         //获取RequestAttributes
-        val requestAttributes: RequestAttributes = RequestContextHolder.getRequestAttributes()
-        val request: HttpServletRequest =
-            requestAttributes.resolveReference(RequestAttributes.REFERENCE_REQUEST) as HttpServletRequest
+        val requestAttributes = RequestContextHolder.getRequestAttributes()!!
+        val request = requestAttributes.resolveReference(RequestAttributes.REFERENCE_REQUEST) as HttpServletRequest
         if (request is CacheClientRequest) {
             //客户端数据的uid
             val reqUid: String? = request.getHeader(ClientCacheKey.HEADER_KEY_CACHE_UID)

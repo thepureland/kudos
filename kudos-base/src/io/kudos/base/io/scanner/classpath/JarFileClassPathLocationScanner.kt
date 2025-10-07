@@ -17,6 +17,7 @@ package io.kudos.base.io.scanner.classpath
 
 import java.io.IOException
 import java.net.JarURLConnection
+import java.net.URI
 import java.net.URISyntaxException
 import java.net.URL
 import java.util.*
@@ -63,8 +64,8 @@ class JarFileClassPathLocationScanner : IClassPathLocationScanner {
             val jarFileUrl = urlFile.substring(0, separatorIndex)
             return if (jarFileUrl.startsWith("file:")) {
                 try {
-                    JarFile(URL(jarFileUrl).toURI().schemeSpecificPart)
-                } catch (ex: URISyntaxException) {
+                    JarFile(URI(jarFileUrl).schemeSpecificPart)
+                } catch (_: URISyntaxException) {
                     // Fallback for URLs that are not valid URIs (should hardly ever happen).
                     JarFile(jarFileUrl.substring("file:".length))
                 }

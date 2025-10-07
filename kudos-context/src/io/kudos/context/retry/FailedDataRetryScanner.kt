@@ -30,7 +30,7 @@ class FailedDataRetryScanner {
         handlers.values.forEach(Consumer { handler: IFailedDataHandler<*>? ->
             taskScheduler.schedule({
                 lockRetry(
-                    handler!!, KudosContextHolder.get().atomicServiceId
+                    handler, KudosContextHolder.get().atomicServiceId
                 )
             }, CronTrigger(handler!!.cronExpression))
             logger.info("Scheduled retry for ${handler.businessType} [${handler.cronExpression}]")
@@ -65,8 +65,8 @@ class FailedDataRetryScanner {
                             && name.matches("\\d+-[0-9a-fA-F\\-]+\\.json".toRegex())
                 }
                 .sorted()
-                .forEach { path: Path? ->
-                    val file = path!!.toFile()
+                .forEach { path: Path ->
+                    val file = path.toFile()
                     var success = false
                     try {
                         success = handler.handleFailedData(file)
@@ -83,7 +83,7 @@ class FailedDataRetryScanner {
                     }
                 }
             if (Files.list(dir)
-                    .noneMatch { path: Path? -> Files.isRegularFile(path) }
+                    .noneMatch { path: Path -> Files.isRegularFile(path) }
             ) {
                 Files.delete(dir)
                 logger.info("Deleted empty directory $dir")

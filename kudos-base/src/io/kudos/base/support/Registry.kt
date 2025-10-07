@@ -1,5 +1,7 @@
 package io.kudos.base.support
 
+import java.util.concurrent.ConcurrentHashMap
+
 /**
  * 注册器
  *
@@ -11,7 +13,7 @@ object Registry {
     /**
      * 所有注册的对象Map
      */
-    private val map = mutableMapOf<String, MutableList<Any>>() //TODO 线程安全
+    private val map = ConcurrentHashMap<String, MutableList<Any>>()
 
     /**
      * 根据key查询所注册的对象

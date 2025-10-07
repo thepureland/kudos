@@ -1,7 +1,7 @@
 package io.kudos.base.net.http
 
 import io.kudos.base.image.ImageKit
-import org.junit.jupiter.api.Disabled
+import io.kudos.base.lang.SystemKit
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -19,7 +19,6 @@ import kotlin.test.Test
 internal class HttpClientKitTest {
 
     @Test
-    @Disabled("无GUI的环境下跑不了")
     fun request() {
         val url = "https://www.baidu.com/img/PCtm_d9c8750bed0b3c7d089fa7d55720d6cf.png"
         val httpClientBuilder = HttpClient.newBuilder()
@@ -33,8 +32,10 @@ internal class HttpClientKitTest {
             HttpClientKit.asyncRequest(httpClientBuilder, httpRequestBuilder, HttpResponse.BodyHandlers.ofInputStream())
         val body = response.body()
         val image = ImageIO.read(body)
-        ImageKit.showImage(image)
-        Thread.sleep(3000)
+        if (SystemKit.hasGUI()) {
+            ImageKit.showImage(image)
+            Thread.sleep(3000)
+        }
     }
 
 }

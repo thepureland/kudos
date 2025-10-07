@@ -1,6 +1,6 @@
 package io.kudos.ability.distributed.notify.mq.init
 
-import com.alibaba.fastjson.JSONObject
+import com.alibaba.fastjson2.JSONObject
 import io.kudos.ability.distributed.notify.common.api.INotifyProducer
 import io.kudos.ability.distributed.notify.common.init.NotifyCommonAutoConfiguration
 import io.kudos.ability.distributed.notify.common.model.NotifyMessageVo

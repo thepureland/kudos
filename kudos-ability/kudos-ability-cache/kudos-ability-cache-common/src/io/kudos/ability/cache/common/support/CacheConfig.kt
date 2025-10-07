@@ -4,6 +4,7 @@ import java.io.Serial
 import java.io.Serializable
 
 class CacheConfig : Serializable {
+
     /**
      * 名称
      */
@@ -62,4 +63,5 @@ class CacheConfig : Serializable {
         @Serial
         private val serialVersionUID = -3447772148273247925L
     }
+
 }

@@ -87,7 +87,7 @@ object ThreadKit {
      * @author K
      * @since 1.0.0
      */
-    fun normalShutdown(pool: ExecutorService, timeout: Int, timeUnit: TimeUnit?) {
+    fun normalShutdown(pool: ExecutorService, timeout: Int, timeUnit: TimeUnit) {
         try {
             pool.shutdownNow()
             if (!pool.awaitTermination(timeout.toLong(), timeUnit)) {

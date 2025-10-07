@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component
 @Lazy
 @Order(-100)
 class TenantDsChangeAspect {
+
     private val log = LogFactory.getLog(this)
 
     /**
@@ -34,7 +35,7 @@ class TenantDsChangeAspect {
     fun around(joinPoint: ProceedingJoinPoint): Any? {
         val signature = joinPoint.signature as MethodSignature
         val dsChange = signature.method.getAnnotation(TenantDsChange::class.java)
-        if (!dsChange.value.isNullOrBlank()) {
+        if (dsChange.value.isNotBlank()) {
             if (dsChange.value.startsWith("_context")) {
                 DbContext.get().forcedDs = dsChange.value
             } else {
@@ -51,4 +52,5 @@ class TenantDsChangeAspect {
         }
         return result
     }
+
 }
