@@ -1,6 +1,7 @@
 spring:
   datasource:
     dynamic:
+#      seata: true
       primary: postgres
       hikari:
         connection-timeout: 30000

@@ -1,7 +1,6 @@
 package io.kudos.ability.data.rdb.ktorm.support
 
-import io.kudos.ability.data.rdb.jdbc.kit.RdbKit
-import io.kudos.ability.data.rdb.ktorm.kit.getDatabase
+import io.kudos.ability.data.rdb.ktorm.datasource.currentDatabase
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.lang.GenericKit
 import io.kudos.base.lang.reflect.newInstance
@@ -14,6 +13,7 @@ import io.kudos.base.support.dao.IBaseReadOnlyDao
 import io.kudos.base.support.logic.AndOrEnum
 import io.kudos.base.support.payload.ListSearchPayload
 import io.kudos.base.support.payload.SearchPayload
+import io.kudos.context.core.KudosContextHolder
 import org.ktorm.database.Database
 import org.ktorm.dsl.*
 import org.ktorm.entity.*
@@ -72,7 +72,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
      * @author K
      * @since 1.0.0
      */
-    protected fun database(): Database = RdbKit.getDatabase()
+    protected fun database(): Database = KudosContextHolder.currentDatabase()
 
     /**
      * 返回T指定的表的查询源，基于该对象可以进行类似对数据库表的sql一样操作

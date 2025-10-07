@@ -1,5 +1,6 @@
 package io.kudos.ability.data.rdb.ktorm.datasource
 
+import io.kudos.ability.data.rdb.jdbc.datasource.IDataSourceProxy
 import io.kudos.context.core.KudosContext
 import io.kudos.context.core.KudosContextHolder
 import io.kudos.context.kit.SpringKit
@@ -19,6 +20,9 @@ fun KudosContextHolder.currentDataSource(): DataSource {
     if (dataSource == null) {
         dataSource = SpringKit.getBean("dataSource")
 //        setCurrentDataSource(dataSource as DataSource)
+        val dataSourceProxy = SpringKit.getBeanOrNull(IDataSourceProxy::class)
+        dataSource = dataSourceProxy?.proxyDatasource(dataSource as DataSource) ?: dataSource as DataSource
+        this.get().addOtherInfos(KudosContext.OTHER_INFO_KEY_DATA_SOURCE to dataSource)
     }
     return dataSource as DataSource
 }
@@ -35,6 +39,7 @@ fun KudosContextHolder.currentDatabase(): Database {
     if (database == null) {
         database = Database.connectWithSpringSupport(currentDataSource(), alwaysQuoteIdentifiers = true)
 //        setCurrentDatabase(database)
+        this.get().addOtherInfos(KudosContext.OTHER_INFO_KEY_DATABASE to database)
     }
     return database as Database
 }

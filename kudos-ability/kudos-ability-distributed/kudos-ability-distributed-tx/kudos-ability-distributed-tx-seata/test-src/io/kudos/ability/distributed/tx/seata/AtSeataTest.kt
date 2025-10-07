@@ -1,11 +1,17 @@
 package io.kudos.ability.distributed.tx.seata
 
+import io.kudos.ability.data.rdb.ktorm.datasource.currentDataSource
+import io.kudos.ability.data.rdb.ktorm.datasource.currentDatabase
 import io.kudos.ability.distributed.tx.seata.main.Service
+import io.kudos.context.core.KudosContextHolder
+import io.kudos.context.kit.SpringKit
 import io.kudos.test.common.init.EnableKudosTest
+import io.seata.rm.datasource.DataSourceProxy
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.junit.jupiter.EnabledIfDockerAvailable
+import javax.sql.DataSource
 import kotlin.test.Test
 
 /**
@@ -30,6 +36,15 @@ open class AtSeataTest : SeataTestBase() {
     override fun app1Name() = "ms12"
 
     override fun app2Name() = "ms22"
+
+    @Test
+    fun datasource() {
+        val ds = SpringKit.getBean(DataSource::class)
+        ds.connection.use { conn ->
+            println("conn = $conn , class = ${conn.javaClass.name}")
+        }
+//        assert(KudosContextHolder.currentDataSource() is DataSourceProxy)
+    }
 
     @Test
     override fun localTx() = super.localTx()

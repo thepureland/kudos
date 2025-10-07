@@ -6,6 +6,7 @@ spring:
     name: main-at
   datasource:
     dynamic:
+#      seata: true
       primary: postgres
       hikari:
         connection-timeout: 30000
@@ -53,6 +54,7 @@ spring:
         file-extension: yml
       discovery:
         server-addr: localhost:38848
+
 
 
 
