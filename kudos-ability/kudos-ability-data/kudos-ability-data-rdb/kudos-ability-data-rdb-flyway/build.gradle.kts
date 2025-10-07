@@ -1,14 +1,14 @@
 dependencies {
     api(project(":kudos-ability:kudos-ability-data:kudos-ability-data-rdb:kudos-ability-data-rdb-jdbc"))
-    api("org.flywaydb:flyway-core:11.9.1")
+    api(libs.flyway.core)
 
     // h2
     // h2可以用PostgreSqlDialect来实现分页
-    testImplementation("com.h2database:h2:${libs.versions.h2.get()}")
+    testImplementation(libs.h2database.h2)
 
     // postgres
-    testImplementation("org.postgresql:postgresql:${libs.versions.postgres.get()}")
-    testImplementation("org.ktorm:ktorm-support-postgresql:${libs.versions.ktorm.get()}")
+    testImplementation(libs.postgresql)
+    testImplementation(libs.ktorm.support.postgresql)
 
     testImplementation(project(":kudos-test:kudos-test-container"))
 }

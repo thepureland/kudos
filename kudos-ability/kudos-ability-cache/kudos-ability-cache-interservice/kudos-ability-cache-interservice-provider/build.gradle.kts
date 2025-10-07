@@ -1,10 +1,10 @@
 dependencies {
     api(project(":kudos-ability:kudos-ability-cache:kudos-ability-cache-interservice:kudos-ability-cache-interservice-common"))
-    compileOnly("org.springframework.boot:spring-boot-starter-web")
+    compileOnly(libs.spring.boot.starter.web)
 
     testImplementation(project(":kudos-ability:kudos-ability-cache:kudos-ability-cache-interservice:kudos-ability-cache-interservice-client"))
     testImplementation(project(":kudos-ability:kudos-ability-distributed:kudos-ability-distributed-client:kudos-ability-distributed-client-feign"))
     testImplementation(project(":kudos-ability:kudos-ability-cache:kudos-ability-cache-local:kudos-ability-cache-local-caffeine"))
     testImplementation(project(":kudos-test:kudos-test-container"))
-    testImplementation("org.springframework.boot:spring-boot-starter-web")
+    testImplementation(libs.spring.boot.starter.web)
 }

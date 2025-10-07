@@ -1,17 +1,17 @@
 plugins {
-    id("io.ktor.plugin") version libs.versions.ktor // 自动带入 BOM
+    alias(libs.plugins.ktor) // 自动带入 BOM
 }
 
 dependencies {
     api(project(":kudos-context"))
 
     // 配置文件支持yaml
-    api("io.ktor:ktor-server-core-jvm")
+    api(libs.ktor.server.core)
 //    api("io.ktor:ktor-server-test-host-jvm")
-    api("io.ktor:ktor-server-config-yaml-jvm")
-    api("io.ktor:ktor-server-content-negotiation-jvm")
-    api("io.ktor:ktor-server-status-pages-jvm")
-    api("io.ktor:ktor-server-websockets-jvm")
+    api(libs.ktor.server.config.yaml)
+    api(libs.ktor.server.content.negotiation)
+    api(libs.ktor.server.status.pages)
+    api(libs.ktor.server.websockets)
 
     // 日志
 //    api("io.ktor:ktor-server-call-logging-jvm")
@@ -28,12 +28,12 @@ dependencies {
 
     // 测试相关
 //    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:${libs.versions.kotlin.get()}")
-    testImplementation("io.ktor:ktor-server-test-host-jvm")
-    testImplementation("io.ktor:ktor-client-content-negotiation-jvm")
-    testImplementation("io.ktor:ktor-server-netty-jvm")
-    testImplementation("io.ktor:ktor-server-jetty-jakarta-jvm")
-    testImplementation("io.ktor:ktor-server-tomcat-jakarta-jvm")
-    testImplementation("io.ktor:ktor-server-cio-jvm")
+    testImplementation(libs.ktor.server.test.host)
+    testImplementation(libs.ktor.client.content.negotiation)
+    testImplementation(libs.ktor.server.netty)
+    testImplementation(libs.ktor.server.jetty.jakarta)
+    testImplementation(libs.ktor.server.tomcat.jakarta)
+    testImplementation(libs.ktor.server.cio)
     testImplementation(project(":kudos-ability:kudos-ability-data:kudos-ability-data-rdb:kudos-ability-data-rdb-ktorm"))
 
     testImplementation(project(":kudos-test:kudos-test-common"))

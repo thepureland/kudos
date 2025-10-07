@@ -44,25 +44,35 @@ object NetworkKit {
      * @since 1.0.0
      */
     fun getMacAddress(): List<String> {
-        val isWindows = System.getProperty("os.name").lowercase().startsWith("windows")
-        val delimiter = if (isWindows) "-" else ":"
+        return when (detectOs()) {
+            Os.WINDOWS -> collectMacs("-")
+            Os.LINUX, Os.MAC -> collectMacs(":")
+            Os.OTHER -> throw UnsupportedOperationException("Unsupported OS: ${System.getProperty("os.name")}")
+        }
+    }
 
-        val macs = mutableListOf<String>()
+    private fun detectOs(osName: String = System.getProperty("os.name") ?: ""): Os {
+        val n = osName.lowercase()
+        return when {
+            n.startsWith("windows") -> Os.WINDOWS
+            n.startsWith("linux") -> Os.LINUX
+            n.startsWith("mac") || n.startsWith("darwin") -> Os.MAC
+            else -> Os.OTHER
+        }
+    }
+
+    private fun collectMacs(delimiter: String): List<String> {
         val ifaces = NetworkInterface.getNetworkInterfaces() ?: return emptyList()
-
+        val macs = mutableListOf<String>()
         for (nif in ifaces.toList()) {
-            // 过滤掉回环、虚拟、未启用网卡
             if (!nif.isUp || nif.isLoopback || nif.isVirtual) continue
-
             val hw = nif.hardwareAddress ?: continue
             if (hw.isEmpty()) continue
-
-            val mac = hw.joinToString(delimiter) { "%02X".format(it) }
-            macs.add(mac)
+            macs += hw.joinToString(delimiter) { "%02X".format(it) }
         }
-        // 去重并返回
         return macs.distinct()
     }
 
+    private enum class Os { WINDOWS, LINUX, MAC, OTHER }
 
 }
