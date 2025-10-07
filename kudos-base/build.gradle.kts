@@ -56,6 +56,8 @@ dependencies {
 
     // class scan
     api(libs.github.classgraph)
+
+    testImplementation(libs.kotlin.test.junit5)
 }
 
 
