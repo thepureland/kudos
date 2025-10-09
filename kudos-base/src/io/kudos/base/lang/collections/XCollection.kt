@@ -40,7 +40,6 @@ package io.kudos.base.lang.collections
 // * @since 1.0.0
 // */
 //@Deprecated("直接用kotlin的groupingBy { it }.eachCount()")
-//@Suppress(Consts.Suppress.UNCHECKED_CAST)
 //fun <T> Collection<T>.getCardinalityMap(): Map<T, Int> = CollectionUtils.getCardinalityMap(this) as Map<T, Int>
 
 /**

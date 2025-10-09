@@ -1,6 +1,5 @@
 package io.kudos.base.lang.collections
 
-import io.kudos.base.support.Consts
 import java.io.PrintStream
 import java.util.*
 
@@ -117,7 +116,6 @@ fun Map<*, *>.debugPrint(out: PrintStream, label: Any?)
  * @author K
  * @since 1.0.0
  */
-@Suppress(Consts.Suppress.UNCHECKED_CAST)
 fun <K, V> Map<K, V>.invertMap(): Map<V, K> {
     val result = mutableMapOf<V, K>()
     for ((k, v) in this) {

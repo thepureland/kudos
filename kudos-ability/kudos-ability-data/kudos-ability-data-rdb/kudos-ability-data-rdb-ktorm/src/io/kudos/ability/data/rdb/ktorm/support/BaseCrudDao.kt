@@ -3,7 +3,6 @@ package io.kudos.ability.data.rdb.ktorm.support
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
-import io.kudos.base.support.Consts
 import io.kudos.base.support.GroupExecutor
 import io.kudos.base.support.dao.IBaseCrudDao
 import io.kudos.base.support.logic.AndOrEnum
@@ -36,7 +35,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
 
     //region Insert
 
-    @Suppress(Consts.Suppress.UNCHECKED_CAST)
+    @Suppress("UNCHECKED_CAST")
     override fun insert(any: Any): PK {
         val entity = if (any is IDbEntity<*, *>) {
             any
@@ -49,7 +48,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
         return entity.id!!
     }
 
-    @Suppress(Consts.Suppress.UNCHECKED_CAST)
+    @Suppress("UNCHECKED_CAST")
     override fun insertOnly(entity: E, vararg propertyNames: String): PK {
         val properties = entity.properties
         val columns = ColumnHelper.columnOf(table(), *propertyNames)
@@ -65,7 +64,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
         return insertOnly(entity, *onlyProperties.toTypedArray())
     }
 
-    @Suppress(Consts.Suppress.UNCHECKED_CAST)
+    @Suppress("UNCHECKED_CAST")
     override fun batchInsert(objects: Collection<Any>, countOfEachBatch: Int): Int {
         if (objects.isEmpty()) return 0
         return if (objects.first() is IDbEntity<*, *>) {
@@ -125,7 +124,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
 
     //region Update
 
-    @Suppress(Consts.Suppress.UNCHECKED_CAST)
+    @Suppress("UNCHECKED_CAST")
     override fun update(any: Any): Boolean {
         return if (any is IDbEntity<*, *>) {
             setDefault(any as E)
@@ -215,7 +214,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
      * @author K
      * @since 1.0.0
      */
-    @Suppress(Consts.Suppress.UNCHECKED_CAST)
+    @Suppress("UNCHECKED_CAST")
     open fun <S : SearchPayload> batchUpdateWhen(
         updatePayload: UpdatePayload<S>,
         whereConditionFactory: ((Column<Any>, Any?) -> ColumnDeclaring<Boolean>?)? = null

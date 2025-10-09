@@ -3,7 +3,7 @@ package io.kudos.ability.distributed.client.feign.interceptor
 import feign.RequestInterceptor
 import feign.RequestTemplate
 import io.kudos.ability.distributed.client.feign.support.IFeignRequestContextProcess
-import io.kudos.base.support.Consts
+import io.kudos.context.support.Consts
 import io.kudos.context.core.KudosContextHolder
 import io.kudos.context.kit.SpringKit
 import java.util.*
@@ -14,7 +14,7 @@ class GlobalHeaderRequestInterceptor : RequestInterceptor {
         //从当前上下文中获取tenantId和subSysCode
         val context = KudosContextHolder.get()
         val tenantId = context.tenantId
-        val subSysCode = context.subSysCode
+        val subSysCode = context.subSystemCode
         var traceKey = context.traceKey
         if (traceKey.isNullOrBlank()) {
             traceKey = UUID.randomUUID().toString()

@@ -30,7 +30,7 @@ class FailedDataRetryScanner {
         handlers.values.forEach(Consumer { handler: IFailedDataHandler<*>? ->
             taskScheduler.schedule({
                 lockRetry(
-                    handler, KudosContextHolder.get().atomicServiceId
+                    handler, KudosContextHolder.get().atomicServiceCode
                 )
             }, CronTrigger(handler!!.cronExpression))
             logger.info("Scheduled retry for ${handler.businessType} [${handler.cronExpression}]")

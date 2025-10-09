@@ -1,7 +1,6 @@
 package io.kudos.base.support.dao
 
 import io.kudos.base.query.Criteria
-import io.kudos.base.support.Consts
 import io.kudos.base.support.IIdEntity
 import io.kudos.base.support.payload.SearchPayload
 import io.kudos.base.support.payload.UpdatePayload
@@ -102,7 +101,6 @@ interface IBaseCrudDao<PK : Any, E : IIdEntity<PK>> {
      * @author K
      * @since 1.0.0
      */
-    @Suppress(Consts.Suppress.UNCHECKED_CAST)
     fun update(any: Any): Boolean
 
     /**

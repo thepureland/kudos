@@ -75,7 +75,7 @@ class BaseLog : Serializable {
         val beansOfType = SpringKit.getBeansOfType(ISysAuditModule::class)
         if (beansOfType.isNotEmpty()) {
             val auditModule = beansOfType.values.first()
-            val sysCode = subsysCode.ifBlank { KudosContextHolder.get().subSysCode }
+            val sysCode = subsysCode.ifBlank { KudosContextHolder.get().subSystemCode }
             val module = auditModule.module(sysCode, moduleCode)
             if (module != null) {
                 this.moduleId = module.first

@@ -4,7 +4,7 @@ import io.kudos.ability.data.memdb.redis.KudosRedisTemplate
 import io.kudos.base.enums.impl.ErrorStatusEnum
 import io.kudos.base.error.ServiceException
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.support.Consts
+import io.kudos.context.support.Consts
 import io.kudos.context.core.KudosContextHolder
 import org.aspectj.lang.JoinPoint
 import org.aspectj.lang.annotation.Aspect
