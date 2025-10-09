@@ -259,7 +259,7 @@ object AuditLogTool {
 
     private val subSysCode: String?
         get() {
-            val subSysCode = KudosContextHolder.get().subSysCode
+            val subSysCode = KudosContextHolder.get().subSystemCode
             if (!subSysCode.isNullOrBlank()) {
                 return subSysCode
             }

@@ -1,6 +1,6 @@
 package io.kudos.ability.cache.common.init.properties
 
-import io.kudos.base.support.Consts
+import io.kudos.context.support.Consts
 import org.springframework.beans.factory.annotation.Value
 
 class CacheVersionConfig {

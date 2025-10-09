@@ -40,7 +40,7 @@ class StreamProducerExceptionHandler : AbstractFailedDataHandler<StreamProducerM
         get() = "0 0/1 * * * *"
 
     override fun filePath(): String {
-        return filePath + "/" + KudosContextHolder.get().atomicServiceId
+        return filePath + "/" + KudosContextHolder.get().atomicServiceCode
     }
 
     override fun bindName(): String {

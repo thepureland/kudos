@@ -32,7 +32,7 @@ object MonitorMsgTool {
         val sysMonitorMsgVo = SysMonitorMsgVo()
         sysMonitorMsgVo.callSource = callSource?.toString() ?: ""
         sysMonitorMsgVo.tenantId = KudosContextHolder.get().tenantId
-        sysMonitorMsgVo.applicationName = KudosContextHolder.get().atomicServiceId
+        sysMonitorMsgVo.applicationName = KudosContextHolder.get().atomicServiceCode
         sysMonitorMsgVo.exceptionType=exceptionType
         sysMonitorMsgVo.createTime = Date()
         var errorMsg = msg

@@ -4,7 +4,6 @@ import io.kudos.base.bean.validation.constraint.annotations.AtLeast
 import io.kudos.base.bean.validation.constraint.annotations.NotNullOn
 import io.kudos.base.enums.ienums.IDictEnum
 import io.kudos.base.enums.impl.SexEnum
-import io.kudos.base.support.Consts
 import java.io.Serializable
 import kotlin.reflect.full.starProjectedType
 import kotlin.test.Test
@@ -213,7 +212,7 @@ class XKClassTest {
     internal annotation class TestAnno
 
     private open class Person { // 没有空构造器，也没有主构造器
-        @Suppress(Consts.Suppress.UNUSED_PARAMETER)
+        @Suppress("UNUSED_PARAMETER")
         constructor(name:String, age: Int)
     }
 

@@ -14,7 +14,6 @@ import io.kudos.ams.sys.service.model.po.SysDomain
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.security.CryptoKit
-import io.kudos.base.support.Consts
 import io.kudos.base.support.payload.ListSearchPayload
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -57,7 +56,7 @@ open class SysDataSourceBiz : BaseCrudBiz<String, SysDataSource, SysDataSourceDa
         )
     }
 
-    @Suppress(Consts.Suppress.UNCHECKED_CAST)
+    @Suppress("UNCHECKED_CAST")
     override fun pagingSearch(listSearchPayload: ListSearchPayload): Pair<List<*>, Int> {
         val pair = super.pagingSearch(listSearchPayload)
 

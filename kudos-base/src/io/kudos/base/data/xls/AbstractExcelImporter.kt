@@ -7,7 +7,6 @@ import io.kudos.base.lang.reflect.getMemberProperty
 import io.kudos.base.lang.reflect.newInstance
 import io.kudos.base.lang.string.toType
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.support.Consts
 import jxl.Cell
 import jxl.CellType
 import jxl.Sheet
@@ -135,7 +134,6 @@ abstract class AbstractExcelImporter<T : Any> : IExcelImporter<T> {
      * @author K
      * @since 1.0.0
      */
-    @Suppress(Consts.Suppress.UNCHECKED_CAST)
     protected open fun wrapRowObjects(): List<T> {
         val rowObjectList = mutableListOf<T>()
         propertyNames = getPropertyNames()

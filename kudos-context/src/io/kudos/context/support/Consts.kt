@@ -1,5 +1,4 @@
-package io.kudos.base.support
-
+package io.kudos.context.support
 
 /**
  * 常量類
@@ -14,14 +13,16 @@ object Consts {
      */
     const val CACHE_KEY_DEFAULT_DELIMITER = "::"
 
-    object Suppress { // org.jetbrains.kotlin.diagnostics.Errors
+    object Sys {
+        /** 默认门户编码 */
+        const val DEFAULT_PORTAL_CODE = "default"
 
-        const val UNCHECKED_CAST = "UNCHECKED_CAST"
+        /** 默认子系统编码 */
+        const val DEFAULT_SUBSYSTEM_CODE = "default"
 
-        const val UNUSED_PARAMETER = "UNUSED_PARAMETER"
-
+        /** 默认微服务编码 */
+        const val DEFAULT_MICRO_SERVICE_CODE = "default"
     }
-
 
     object RequestHeader {
         const val FEIGN_REQUEST: String = "_feign_request"

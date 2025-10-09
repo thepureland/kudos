@@ -1,7 +1,7 @@
 package io.kudos.ability.data.rdb.ktorm.support
 
 import io.kudos.base.lang.string.humpToUnderscore
-import io.kudos.base.support.Consts
+import io.kudos.context.support.Consts
 import org.ktorm.schema.BaseTable
 import org.ktorm.schema.Column
 import java.util.*

@@ -2,7 +2,6 @@ package io.kudos.base.lang
 
 import io.kudos.base.lang.reflect.getMemberFunction
 import io.kudos.base.lang.reflect.getMemberProperty
-import io.kudos.base.support.Consts
 import io.kudos.base.support.ICallback
 import java.io.Serializable
 import kotlin.test.Test
@@ -114,7 +113,7 @@ internal class GenericKitTest {
 
         fun fun2(): Map<Any, *>? = null
 
-        @Suppress(Consts.Suppress.UNUSED_PARAMETER)
+        @Suppress("UNUSED_PARAMETER")
         fun f(str: String, map: Map<String, Boolean>, map1: Map<Any, *>) {}
 
     }

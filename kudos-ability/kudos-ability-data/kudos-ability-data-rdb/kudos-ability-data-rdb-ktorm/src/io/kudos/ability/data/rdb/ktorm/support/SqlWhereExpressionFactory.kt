@@ -1,7 +1,6 @@
 package io.kudos.ability.data.rdb.ktorm.support
 
 import io.kudos.base.query.enums.OperatorEnum
-import io.kudos.base.support.Consts
 import org.ktorm.dsl.*
 import org.ktorm.schema.Column
 import org.ktorm.schema.ColumnDeclaring
@@ -24,7 +23,7 @@ object SqlWhereExpressionFactory {
      * @author K
      * @since 1.0.0
      */
-    @Suppress(Consts.Suppress.UNCHECKED_CAST)
+    @Suppress("UNCHECKED_CAST")
     fun create(column: Column<Any>, operator: OperatorEnum, value: Any?): ColumnDeclaring<Boolean>? {
         if (value == null && operator !in arrayOf(OperatorEnum.IS_NULL, OperatorEnum.IS_NOT_NULL)) {
             return null
@@ -74,30 +73,30 @@ object SqlWhereExpressionFactory {
     }
 
     // 为了解决 <T : Any> ColumnDeclaring<T>.eq(expr: ColumnDeclaring<T>) 的泛型问题
-    @Suppress(Consts.Suppress.UNCHECKED_CAST)
+    @Suppress("UNCHECKED_CAST")
     private fun <T : Any> columnEq(
         column: ColumnDeclaring<T>, anotherColumn: Column<Any>
     ): ColumnDeclaring<Boolean> =
         column.eq(anotherColumn as Column<T>)
 
     // 为了解决 <T : Any> ColumnDeclaring<T>.notEq(expr: ColumnDeclaring<T>) 的泛型问题
-    @Suppress(Consts.Suppress.UNCHECKED_CAST)
+    @Suppress("UNCHECKED_CAST")
     private fun <T : Any> columnNotEq(
         column: ColumnDeclaring<T>, anotherColumn: Column<*>
     ): ColumnDeclaring<Boolean> =
         column.notEq(anotherColumn as Column<T>)
 
     // 为了解决 <T : Any> ColumnDeclaring<T>.inList(list: Collection<T>) 的泛型问题
-    @Suppress(Consts.Suppress.UNCHECKED_CAST)
+    @Suppress("UNCHECKED_CAST")
     private fun <T : Any> columnIn(column: ColumnDeclaring<T>, values: Collection<T>): ColumnDeclaring<Boolean> =
         column.inList(values)
 
     // 为了解决 <T : Any> ColumnDeclaring<T>.notInList(list: Collection<T>) 的泛型问题
-    @Suppress(Consts.Suppress.UNCHECKED_CAST)
+    @Suppress("UNCHECKED_CAST")
     private fun <T : Any> columnNotIn(column: ColumnDeclaring<T>, values: Collection<T>): ColumnDeclaring<Boolean> =
         column.notInList(values)
 
-    @Suppress(Consts.Suppress.UNCHECKED_CAST)
+    @Suppress("UNCHECKED_CAST")
     private fun handleIn(isIn: Boolean, value: Any, column: ColumnDeclaring<Any>): ColumnDeclaring<Boolean> {
         var values = value
         if (values !is Collection<*> && values !is Array<*>) {

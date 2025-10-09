@@ -1,7 +1,7 @@
 package io.kudos.ability.distributed.discovery.nacos.filter
 
 import io.kudos.ability.distributed.discovery.nacos.support.IFeignProviderContextProcess
-import io.kudos.base.support.Consts
+import io.kudos.context.support.Consts
 import io.kudos.context.core.ClientInfo
 import io.kudos.context.core.KudosContextHolder
 import io.kudos.context.kit.SpringKit
@@ -39,7 +39,7 @@ class FeignContextWebFilter : Filter {
                 clientInfo.locale = Locale(arr[0], arr[1])
             }
             context.tenantId = tenantId
-            context.subSysCode = subSysCode
+            context.subSystemCode = subSysCode
             context.traceKey = opKey
             if (dataSourceId.isNotBlank()) {
                 context.dataSourceId = dataSourceId

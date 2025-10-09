@@ -11,7 +11,7 @@ import io.kudos.ams.sys.service.dao.SysDictItemDao
 import io.kudos.ams.sys.service.model.po.SysDictItem
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.support.Consts
+import io.kudos.context.support.Consts
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
