@@ -7,4 +7,6 @@ dependencies {
     api(libs.spring.session.data.redis)
 
     testImplementation(project(":kudos-test:kudos-test-common"))
+    testImplementation(libs.spring.boot.starter.jetty)
+    testImplementation(libs.spring.boot.starter.undertow)
 }

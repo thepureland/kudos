@@ -120,6 +120,8 @@ spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-start
 spring-boot-starter-mail = { module = "org.springframework.boot:spring-boot-starter-mail"}
 spring-boot-starter-data-redis = { module = "org.springframework.boot:spring-boot-starter-data-redis"}
 spring-boot-starter-jdbc = { module = "org.springframework.boot:spring-boot-starter-jdbc"}
+spring-boot-starter-jetty = { module = "org.springframework.boot:spring-boot-starter-jetty"}
+spring-boot-starter-undertow = { module = "org.springframework.boot:spring-boot-starter-undertow"}
 spring-cloud-loadbalancer = { module = "org.springframework.cloud:spring-cloud-loadbalancer"}
 spring-cloud-starter-openfeign = { module = "org.springframework.cloud:spring-cloud-starter-openfeign"}
 spring-cloud-stream = { module = "org.springframework.cloud:spring-cloud-stream"}

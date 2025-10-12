@@ -52,7 +52,7 @@ class CioEngineTest {
     fun testRoot() = runBlocking {
         val client = HttpClient()
         val response = client.get("http://localhost:${KtorContext.properties.engine.port}/")
-        assertEquals("Hello CIO!", response.bodyAsText())
+        assertEquals("Hello World!", response.bodyAsText())
     }
 
 }
