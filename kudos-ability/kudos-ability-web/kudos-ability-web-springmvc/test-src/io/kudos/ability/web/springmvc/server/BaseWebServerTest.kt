@@ -5,13 +5,7 @@ import io.kudos.context.kit.SpringKit
 import org.junit.jupiter.api.Test
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.boot.autoconfigure.web.servlet.ServletWebServerFactoryAutoConfiguration
-import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.context.annotation.Import
-import java.net.URI
-import java.net.http.HttpClient
-import java.net.http.HttpRequest
-import java.net.http.HttpResponse
-import java.time.Duration
 import kotlin.test.assertEquals
 
 /**
@@ -34,15 +28,7 @@ abstract class BaseWebServerTest {
     fun testGetHelloWorld() {
         val port = SpringKit.getProperty("local.server.port")
         val url = "http://localhost:$port/test/hello"
-        val httpClientBuilder = HttpClient.newBuilder()
-            .version(HttpClient.Version.HTTP_1_1)
-            .connectTimeout(Duration.ofSeconds(5))
-            .followRedirects(HttpClient.Redirect.NEVER)
-        val httpRequestBuilder = HttpRequest.newBuilder()
-            .timeout(Duration.ofSeconds(5))
-            .uri(URI.create(url))
-        val response =
-            HttpClientKit.request(httpClientBuilder, httpRequestBuilder, HttpResponse.BodyHandlers.ofString())
+        val response = HttpClientKit.get<String>(url)
         assertEquals("Hello World!", response.body())
     }
 
