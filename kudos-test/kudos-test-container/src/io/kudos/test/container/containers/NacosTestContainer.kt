@@ -15,7 +15,7 @@ import org.testcontainers.containers.wait.strategy.Wait
  */
 object NacosTestContainer {
 
-    private const val IMAGE_NAME = "nacos/nacos-server:v2.3.2-slim"
+    private const val IMAGE_NAME = "nacos/nacos-server:v3.1.0"
 
     const val PORT = 28848
 
@@ -23,8 +23,17 @@ object NacosTestContainer {
 
     const val LABEL_NACOS_FOR_SEATA = "Nacos（for Seata）"
 
+    val tokenBytes = ByteArray(32).also { java.security.SecureRandom().nextBytes(it) }
+
+    val tokenBase64 = java.util.Base64.getEncoder().encodeToString(tokenBytes)
+
     private val container = GenericContainer(IMAGE_NAME).apply {
         withEnv("MODE", "standalone")
+        withEnv("PREFER_HOST_MODE", "ip")
+        withEnv("NACOS_AUTH_ENABLE", "false")             // 不开启鉴权（3.x 默认基本就是要）
+        withEnv("NACOS_AUTH_TOKEN", tokenBase64)  // ★ 必填：Base64 字符串
+        withEnv("NACOS_AUTH_IDENTITY_KEY", "nacos")
+        withEnv("NACOS_AUTH_IDENTITY_VALUE", "nacos")
 
         // 1. 声明容器要“暴露”的端口（必须和镜像 Dockerfile EXPOSE 一致）
         exposedPorts = listOf(8848, 9848, 9849)
@@ -40,6 +49,10 @@ object NacosTestContainer {
 
     val containerForSeata = GenericContainer(IMAGE_NAME).apply {
         withEnv("MODE", "standalone")
+        withEnv("NACOS_AUTH_ENABLE", "false")             // 开启鉴权（3.x 默认基本就是要）
+        withEnv("NACOS_AUTH_TOKEN", tokenBase64)  // ★ 必填：Base64 字符串
+        withEnv("NACOS_AUTH_IDENTITY_KEY", "nacos")
+        withEnv("NACOS_AUTH_IDENTITY_VALUE", "nacos")
         withNetwork(TestContainerKit.DEFAULT_DOCKER_NETWORK)
         withNetworkAliases("nacos")
         exposedPorts = listOf(8848, 9848, 9849)

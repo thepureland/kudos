@@ -14,7 +14,7 @@ import org.testcontainers.containers.GenericContainer
  */
 object RabbitMqTestContainer {
     
-    const val IMAGE_NAME = "rabbitmq:3.7.25-management-alpine"
+    const val IMAGE_NAME = "rabbitmq:4.1.4-alpine"
     
     const val PORT = 25672
 
