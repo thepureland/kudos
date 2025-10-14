@@ -45,6 +45,37 @@ object TreeKit {
         depth(rootNode, callback)
     }
 
+    /**
+     * 广度优先遍历树，并执行回调（不收集返回值）
+     *
+     * @param T 树结点惟一标识的类型
+     * @param R 回调返回值类型（此方法不返回；仅执行回调）
+     * @param rootNode 根结点
+     * @param callback 每访问到一个结点就调用一次
+     * @author ChatGPT
+     * @author K
+     * @since 1.0.0
+     */
+    fun <T, R> breadthTraverse(rootNode: ITreeNode<T>, callback: ICallback<ITreeNode<T>, R>) {
+        val queue: ArrayDeque<ITreeNode<T>> = ArrayDeque()
+        val visited = HashSet<T>() // 防御“伪树”里可能出现的环
+        queue.addLast(rootNode)
+
+        while (queue.isNotEmpty()) {
+            val node = queue.removeFirst()
+            if (!visited.add(node._getId())) continue
+
+            // 执行回调；忽略其返回值
+            callback.execute(node)
+
+            // 按当前顺序把孩子入队，保证同层从左到右
+            val children = node._getChildren()
+            if (children.isNotEmpty()) {
+                for (child in children) queue.addLast(child)
+            }
+        }
+    }
+
     private fun <T, R> depth(node: ITreeNode<T>, callback: ICallback<ITreeNode<T>, R>) {
         callback.execute(node)
         val children = node._getChildren()
