@@ -14,7 +14,7 @@ import org.testcontainers.utility.DockerImageName
  */
 object KafkaTestContainer {
 
-    private const val IMAGE_NAME = "confluentinc/cp-kafka:7.9.1"
+    private const val IMAGE_NAME = "confluentinc/cp-kafka:8.0.2"
 
     private var imageName = DockerImageName
         .parse(IMAGE_NAME)

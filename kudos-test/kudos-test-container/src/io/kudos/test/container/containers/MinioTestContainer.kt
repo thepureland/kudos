@@ -17,7 +17,7 @@ import java.time.Duration
  */
 object MinioTestContainer {
 
-    const val IMAGE_NAME = "minio/minio:RELEASE.2025-04-22T22-12-26Z"
+    const val IMAGE_NAME = "minio/minio:RELEASE.2025-09-07T16-13-09Z"
 
     const val PORT = 9000
 
