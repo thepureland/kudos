@@ -1,6 +1,6 @@
 dependencies {
     api(project(":kudos-ams:kudos-ams-sys:kudos-ams-sys-service"))
-    api(project(":kudos-ability:kudos-ability-web:kudos-ability-web-ktor"))
+    api(project(":kudos-ability:kudos-ability-web:kudos-ability-web-springmvc"))
     
     //region your codes 1
 

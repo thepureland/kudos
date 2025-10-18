@@ -41,6 +41,7 @@ import kotlin.reflect.typeOf
  * - `ByteBuffer` 的分支当前使用 `ofByteArrayConsumer {}`，此种写法会消费字节但**不返回** ByteBuffer 实例（更像丢弃/侧写语义），见方法内注释。
  *
  * @author K
+ * @author ChatGPT
  * @since 1.0.0
  */
 object HttpClientKit {

@@ -14,7 +14,7 @@ import org.testcontainers.containers.GenericContainer
  */
 object PostgresTestContainer {
 
-    private const val IMAGE_NAME = "postgres:14.10"
+    private const val IMAGE_NAME = "postgres:18.0-alpine3.22"
 
     const val DATABASE = "test"
 
