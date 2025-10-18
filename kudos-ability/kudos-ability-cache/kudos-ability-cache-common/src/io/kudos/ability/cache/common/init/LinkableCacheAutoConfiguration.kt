@@ -12,20 +12,16 @@ import io.kudos.ability.cache.common.notify.CacheNotifyListener
 import io.kudos.ability.cache.common.support.DefaultCacheConfigProvider
 import io.kudos.ability.cache.common.support.ICacheConfigProvider
 import io.kudos.ability.distributed.notify.common.support.NotifyTool
-import io.kudos.base.logger.LogFactory
+import io.kudos.context.config.YamlPropertySourceFactory
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
-import io.kudos.context.config.YamlPropertySourceFactory
-import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.ConfigurationProperties
-import org.springframework.cache.CacheManager
 import org.springframework.cache.annotation.EnableCaching
 import org.springframework.cache.interceptor.KeyGenerator
 import org.springframework.cache.interceptor.SimpleKeyGenerator
-import org.springframework.cache.transaction.TransactionAwareCacheManagerProxy
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Primary
@@ -48,15 +44,14 @@ import org.springframework.context.annotation.PropertySource
 @EnableCaching(proxyTargetClass = true)
 open class LinkableCacheAutoConfiguration : IComponentInitializer {
 
-    private val logger = LogFactory.getLog(this)
+//    @Primary
+//    @Bean("cacheManager")
+//    open fun cacheManager(@Qualifier("mixCacheManager") mixCacheManager: MixCacheManager): CacheManager {
+//        return TransactionAwareCacheManagerProxy(mixCacheManager)
+//    }
 
     @Primary
-    @Bean("cacheManager")
-    open fun cacheManager(@Qualifier("mixCacheManager") mixCacheManager: MixCacheManager): CacheManager {
-        return TransactionAwareCacheManagerProxy(mixCacheManager)
-    }
-
-    @Bean("mixCacheManager")
+    @Bean("cacheManager", "mixCacheManager")
     open fun mixCacheManager(): MixCacheManager = MixCacheManager()
 
     @Bean
