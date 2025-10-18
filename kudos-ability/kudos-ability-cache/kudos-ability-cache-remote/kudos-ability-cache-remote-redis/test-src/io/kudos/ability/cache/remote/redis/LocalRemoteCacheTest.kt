@@ -3,13 +3,11 @@ package io.kudos.ability.cache.remote.redis
 import io.kudos.ability.cache.common.core.MixCacheManager
 import io.kudos.ability.cache.common.enums.CacheStrategy
 import io.kudos.test.common.init.EnableKudosTest
-import io.kudos.test.common.init.TestSpringBootContextLoader
 import io.kudos.test.container.containers.RedisTestContainer
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.cache.CacheManager
 import org.springframework.context.annotation.Import
-import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.junit.jupiter.EnabledIfDockerAvailable
@@ -25,7 +23,6 @@ import kotlin.test.Test
  */
 @EnableKudosTest
 @Import(CacheTestService::class, TestCacheConfigProvider::class)
-@ContextConfiguration(loader = LocalRemoteCacheTest.LocalRemoteCacheContextLoader::class)
 @EnabledIfDockerAvailable
 internal class LocalRemoteCacheTest {
 
@@ -84,17 +81,6 @@ internal class LocalRemoteCacheTest {
             latch.countDown()
         }.start()
         latch.await()
-    }
-
-    class LocalRemoteCacheContextLoader : TestSpringBootContextLoader() {
-
-        override fun getDynamicProperties(): Map<String, String> {
-            return mapOf(
-                "kudos.ability.cache.enabled" to "true",
-                "kudos.cache.config.strategy" to CacheStrategy.LOCAL_REMOTE.name
-            )
-        }
-
     }
 
 }
