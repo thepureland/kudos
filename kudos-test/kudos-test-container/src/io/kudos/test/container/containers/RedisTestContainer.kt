@@ -14,7 +14,7 @@ import org.testcontainers.utility.DockerImageName
  */
 object RedisTestContainer {
 
-    const val IMAGE_NAME_REDIS = "redis:8.0"
+    const val IMAGE_NAME_REDIS = "redis:8.2.2-alpine3.22"
 
     const val LABEL = "Redis"
 

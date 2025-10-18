@@ -53,4 +53,25 @@ internal class TreeKitTest {
         }
         assertEquals("00,11,21,12,", sb.toString())
     }
+
+    @Test
+    fun breadthTraverse() {
+        val rootNode00 = TestTreeNode("00", null, "根结点10")
+        val node11 = TestTreeNode("11", "00", "00的子结点11")
+        rootNode00.children.add(node11)
+        val node21 = TestTreeNode("21", "11", "11的子结点21")
+        node11.children.add(node21)
+        val node12 = TestTreeNode("12", "00", "00的子结点12")
+        rootNode00.children.add(node12)
+        val node13 = TestTreeNode("13", "00", "00的子结点13")
+        rootNode00.children.add(node13)
+        val node22 = TestTreeNode("22", "13", "13的子结点22")
+        node13.children.add(node22)
+        val sb = StringBuilder()
+        TreeKit.breadthTraverse(rootNode00) {
+            sb.append(it._getId()).append(",")
+        }
+        assertEquals("00,11,12,13,21,22,", sb.toString())
+    }
+
 }

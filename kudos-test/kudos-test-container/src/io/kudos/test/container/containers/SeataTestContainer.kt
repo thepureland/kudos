@@ -17,7 +17,7 @@ import org.testcontainers.containers.wait.strategy.Wait
  */
 object SeataTestContainer {
 
-    private const val IMAGE_NAME = "seataio/seata-server:2.0.0-slim"
+    private const val IMAGE_NAME = "apache/seata-server:2.5.0"
 
     const val WEB_PORT = 27091
 
@@ -56,7 +56,7 @@ object SeataTestContainer {
      * @return 运行中的容器对象
      */
     fun startIfNeeded(registry: DynamicPropertyRegistry?): Container {
-        NacosTestContainer.startNacosForSeataIfNeeded(registry)
+        runningNacosContainer = NacosTestContainer.startNacosForSeataIfNeeded(registry)
 
         synchronized(this) {
             val runningContainer = TestContainerKit.startContainerIfNeeded(LABEL, CONTAINER)
