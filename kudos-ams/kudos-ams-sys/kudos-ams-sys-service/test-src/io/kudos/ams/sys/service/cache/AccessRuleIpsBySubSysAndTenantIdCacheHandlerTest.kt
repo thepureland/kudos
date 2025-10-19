@@ -79,11 +79,13 @@ class AccessRuleIpsBySubSysAndTenantIdCacheHandlerTest : CacheHandlerTestBase() 
     fun getAccessRuleIps() {
         var subSystemCode = "subSys-a"
         var tenantId: String? = "tenantId-2"
-        val cacheItems = cacheHandler.getAccessRuleIps(subSystemCode, tenantId)
+        var cacheItems = cacheHandler.getAccessRuleIps(subSystemCode, tenantId)
         assert(cacheItems.size >= 2)
 
         // active为false的ruleIp应该没有在缓存中
-        assertFalse(cacheItems.any { it.id == "3a443825-4896-49e4-a304-e4e2ddadd707" })
+        tenantId = "tenantId-4"
+        cacheItems = cacheHandler.getAccessRuleIps(subSystemCode, tenantId)
+        assertFalse(cacheItems.any { it.id == "3a443825-4896-49e4-a304-e4e2ddadd711" })
 
         // 只有rule，没有ruleIp的，也要在缓存中
         tenantId = "tenantId-1"
@@ -97,7 +99,8 @@ class AccessRuleIpsBySubSysAndTenantIdCacheHandlerTest : CacheHandlerTestBase() 
         // active为false的rule, 应该不会在缓存中
         subSystemCode = "subSys-f"
         tenantId = null
-        assert(cacheHandler.getAccessRuleIps(subSystemCode, tenantId).isEmpty())
+        val ruleIps = cacheHandler.getAccessRuleIps(subSystemCode, tenantId)
+        assert(ruleIps.isEmpty())
     }
 
     @Test
@@ -123,6 +126,7 @@ class AccessRuleIpsBySubSysAndTenantIdCacheHandlerTest : CacheHandlerTestBase() 
     fun syncOnUpdate() {
         // 更新数据库中已存在的记录
         val ipRuleId = "3a443825-4896-49e4-a304-e4e2ddadd705"
+        val tenantId = "tenantId-2"
         val success = dao.updateProperties(ipRuleId, mapOf(SysAccessRuleIp::expirationTime.name to newExpirationTime))
         assert(success)
 
@@ -133,11 +137,11 @@ class AccessRuleIpsBySubSysAndTenantIdCacheHandlerTest : CacheHandlerTestBase() 
         cacheHandler.syncOnUpdate(accessRule!!, ipRuleId)
 
         // 验证缓存中的记录
-        val key = cacheHandler.getKey(accessRule.subSystemCode!!, ipRuleId)
+        val key = cacheHandler.getKey(accessRule.subSystemCode!!, tenantId)
         @Suppress("UNCHECKED_CAST")
         val cacheItems = CacheKit.getValue(cacheHandler.cacheName(), key) as List<SysAccessRuleIpCacheItem>
         assertEquals(newExpirationTime, cacheItems.first { it.id == ipRuleId }.expirationTime)
-        val cacheItems2 = cacheHandler.getAccessRuleIps(accessRule.subSystemCode!!, ipRuleId)
+        val cacheItems2 = cacheHandler.getAccessRuleIps(accessRule.subSystemCode!!, tenantId)
         assertEquals(newExpirationTime, cacheItems2.first { it.id == ipRuleId }.expirationTime)
     }
 

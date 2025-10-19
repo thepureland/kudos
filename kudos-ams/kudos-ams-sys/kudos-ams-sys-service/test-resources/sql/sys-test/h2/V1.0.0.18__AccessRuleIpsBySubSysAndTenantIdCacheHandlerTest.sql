@@ -35,5 +35,5 @@ merge into "sys_access_rule_ip" ("id", "ip_start", "ip_end", "ip_type_dict_code"
         ('3a443825-4896-49e4-a304-e4e2ddadd710', 3232235725, 3232235730, '1', null, '8026f3ac-563b-4545-88dc-b8f70ea48084', null, true,
             false),
         -- 192.168.0.210
-        ('3a443825-4896-49e4-a304-e4e2ddadd711', 3232235730, 3232235730, '2', null, '8026f3ac-563b-4545-88dc-b8f70ea48084', null, true,
+        ('3a443825-4896-49e4-a304-e4e2ddadd711', 3232235730, 3232235730, '2', null, '8026f3ac-563b-4545-88dc-b8f70ea48084', null, false,
             false);

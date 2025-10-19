@@ -89,7 +89,7 @@ open class AccessRuleIpsBySubSysAndTenantIdCacheHandler : AbstractCacheHandler<L
     @Cacheable(
         cacheNames = [CACHE_NAME],
         key = "#subSystemCode.concat('${Consts.CACHE_KEY_DEFAULT_DELIMITER}').concat(#tenantId ?: 'null')",
-        unless = "#result == null || #result.isEmpty()"
+        unless = "#result == null"
     )
     open fun getAccessRuleIps(subSystemCode: String, tenantId: String? = null): List<SysAccessRuleIpCacheItem> {
         if (CacheKit.isCacheActive(CACHE_NAME)) {
@@ -124,11 +124,16 @@ open class AccessRuleIpsBySubSysAndTenantIdCacheHandler : AbstractCacheHandler<L
     open fun syncOnInsert(any: Any, ipRuleId: String) {
         if (CacheKit.isCacheActive(CACHE_NAME) && CacheKit.isWriteInTime(CACHE_NAME)) {
             log.debug("新增id为${ipRuleId}的ip访问规则后，同步${CACHE_NAME}缓存...")
+
             val props = BeanKit.extract(any)
+            val subSystemCode = props[SysAccessRule::subSystemCode.name] as String
+            val tenantId = props[SysAccessRule::tenantId.name] as String?
+
+            // 踢除ip访问规则缓存
+            CacheKit.evict(CACHE_NAME, getKey(subSystemCode, tenantId))
+
             val active = props[SysAccessRule::active.name] as Boolean?
-            if (active == null || active) {
-                val subSystemCode = props[SysAccessRule::subSystemCode.name] as String
-                val tenantId = props[SysAccessRule::tenantId.name] as String?
+            if (CacheKit.isWriteInTime(CACHE_NAME) && (active == null || active)) {
                 // 缓存
                 getSelf<AccessRuleIpsBySubSysAndTenantIdCacheHandler>().getAccessRuleIps(subSystemCode, tenantId)
                 log.debug("${CACHE_NAME}缓存同步完成。")
@@ -186,7 +191,7 @@ open class AccessRuleIpsBySubSysAndTenantIdCacheHandler : AbstractCacheHandler<L
             CacheKit.evict(CACHE_NAME, getKey(sysAccessRule.subSystemCode!!, sysAccessRule.tenantId))
 
             // 重新缓存
-            if (active && CacheKit.isWriteInTime(CACHE_NAME)) {
+            if (CacheKit.isWriteInTime(CACHE_NAME)) {
                 getSelf<AccessRuleIpsBySubSysAndTenantIdCacheHandler>().getAccessRuleIps(
                     sysAccessRule.subSystemCode!!, sysAccessRule.tenantId
                 )
