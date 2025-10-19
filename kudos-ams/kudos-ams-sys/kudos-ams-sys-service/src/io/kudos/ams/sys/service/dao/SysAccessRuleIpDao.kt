@@ -117,50 +117,51 @@ open class SysAccessRuleIpDao : BaseCrudDao<String, SysAccessRuleIp, SysAccessRu
      */
     fun leftJoinSearch(searchPayload: SysAccessRuleIpSearchPayload): Query {
         var onExpr = SysAccessRuleIps.parentRuleId.eq(SysAccessRules.id)
-        if (!searchPayload.id.isNullOrBlank()) {
-            onExpr = onExpr and SysAccessRuleIps.id.eq(searchPayload.id!!)
-        }
-        if (!searchPayload.parentRuleId.isNullOrBlank()) {
-            onExpr = onExpr and SysAccessRuleIps.parentRuleId.eq(searchPayload.parentRuleId!!)
-        }
         if (searchPayload.active != null) {
-            onExpr = onExpr and SysAccessRuleIps.active.eq(searchPayload.active!!)
-        }
-        if (searchPayload.parentRuleActive != null) {
-            onExpr = onExpr and SysAccessRules.active.eq(searchPayload.parentRuleActive!!)
-        }
-        if (searchPayload.tenantId == null && searchPayload.nullProperties?.contains(SysAccessRule::tenantId.name) == true) {
-           onExpr = onExpr and SysAccessRules.tenantId.isNull()
-        } else if (!searchPayload.tenantId.isNullOrBlank()) {
-            onExpr = onExpr and whereExpr(SysAccessRules.tenantId, OperatorEnum.EQ, searchPayload.tenantId!!.trim())!!
-        }
-        if (!searchPayload.subSystemCode.isNullOrBlank()) {
-            onExpr = onExpr and whereExpr(
-                SysAccessRules.subSystemCode,
-                OperatorEnum.EQ,
-                searchPayload.subSystemCode!!.trim()
-            )!!
-        }
-        if (!searchPayload.ruleTypeDictCode.isNullOrBlank()) {
-            onExpr = onExpr and whereExpr(
-                SysAccessRules.ruleTypeDictCode,
-                OperatorEnum.EQ,
-                searchPayload.ruleTypeDictCode!!.trim()
-            )!!
-        }
-        if (!searchPayload.ipTypeDictCode.isNullOrBlank()) {
-            onExpr = onExpr and whereExpr(
-                SysAccessRuleIps.ipTypeDictCode,
-                OperatorEnum.EQ,
-                searchPayload.ipTypeDictCode!!.trim()
-            )!!
+            onExpr =onExpr and  SysAccessRuleIps.active.eq(searchPayload.active!!)
         }
 
         val querySource = database()
             .from(SysAccessRules)
             .leftJoin(SysAccessRuleIps, on = onExpr)
 
-        return querySource.select()
+        return querySource.select().whereWithConditions {
+            if (!searchPayload.id.isNullOrBlank()) {
+                it += SysAccessRuleIps.id.eq(searchPayload.id!!)
+            }
+            if (!searchPayload.parentRuleId.isNullOrBlank()) {
+                it += SysAccessRuleIps.parentRuleId.eq(searchPayload.parentRuleId!!)
+            }
+            if (searchPayload.parentRuleActive != null) {
+                it += SysAccessRules.active.eq(searchPayload.parentRuleActive!!)
+            }
+            if (searchPayload.tenantId == null && searchPayload.nullProperties?.contains(SysAccessRule::tenantId.name) == true) {
+                it += SysAccessRules.tenantId.isNull()
+            } else if (!searchPayload.tenantId.isNullOrBlank()) {
+                it += whereExpr(SysAccessRules.tenantId, OperatorEnum.EQ, searchPayload.tenantId!!.trim())!!
+            }
+            if (!searchPayload.subSystemCode.isNullOrBlank()) {
+                it += whereExpr(
+                    SysAccessRules.subSystemCode,
+                    OperatorEnum.EQ,
+                    searchPayload.subSystemCode!!.trim()
+                )!!
+            }
+            if (!searchPayload.ruleTypeDictCode.isNullOrBlank()) {
+                it += whereExpr(
+                    SysAccessRules.ruleTypeDictCode,
+                    OperatorEnum.EQ,
+                    searchPayload.ruleTypeDictCode!!.trim()
+                )!!
+            }
+            if (!searchPayload.ipTypeDictCode.isNullOrBlank()) {
+                it += whereExpr(
+                    SysAccessRuleIps.ipTypeDictCode,
+                    OperatorEnum.EQ,
+                    searchPayload.ipTypeDictCode!!.trim()
+                )!!
+            }
+        }
     }
 
     //endregion your codes 2
