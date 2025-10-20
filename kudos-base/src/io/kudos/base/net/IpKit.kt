@@ -1,12 +1,10 @@
 package io.kudos.base.net
 
-import io.kudos.base.lang.string.countMatches
-import io.kudos.base.lang.string.repeatAndSeparate
 import io.kudos.base.logger.LogFactory
+import java.net.Inet6Address
 import java.net.InetAddress
 import java.net.UnknownHostException
 import java.util.*
-import java.util.regex.Pattern
 
 /**
  * IP工具类，支持ipv4和ipv6
@@ -267,117 +265,60 @@ object IpKit {
      */
     fun isValidIpv6(ipStr: String): Boolean {
         if (ipStr.isBlank()) return false
-        val colonCount = ipStr.countMatches(":")
-        if (ipStr.length > 45 || colonCount > 7) {
-            return false
-        } else if (colonCount == 7 && !ipStr.contains("::") && ipStr.length <= 39 &&
-            Regex("^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$").matches(ipStr)
-        ) {
-            return true
-        } else if (ipStr.length < 39 && Regex("^(([0-9A-Fa-f]{1,4}(:[0-9A-Fa-f]{1,4})*)?)::((([0-9A-Fa-f]{1,4}:)*[0-9A-Fa-f]{1,4})?)$").matches(
-                ipStr
-            )
-        ) {
-            return true
-        } else if (Regex("""^([0-9a-fA-F]{1,4}:){6}(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}$""").matches(
-                ipStr
-            )
-        ) {
-            return colonCount < 7
-        } else if (Regex("""^(([0-9A-Fa-f]{1,4}(:[0-9A-Fa-f]{1,4})*)?)::((([0-9A-Fa-f]{1,4}:)*[0-9A-Fa-f]{1,4}:)?)(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}$""").matches(
-                ipStr
-            )
-        ) {
-            return colonCount < 7
+        if (isValidIpv4(ipStr)) return false
+        return try {
+            val pure = ipStr.substringBefore('%')
+            val a = InetAddress.getByName(pure)
+            a is Inet6Address || a.address.size == 16 || // 纯 IPv6
+                    a.address.size == 4  // 让嵌 IPv4 的形式也通过，再交给 toFullIpv6 统一
+        } catch (_: Exception) {
+            false
         }
-        return false
     }
 
     /**
-     * 将ipv4转为标准全格式的ipv6(每组定长4位的16进制，共8组，每组间用半角冒号分隔)
+     * 将任意 IPv4/IPv6 统一标准化为“全格式 IPv6”：
+     * 8 组、每组 4 位十六进制（大写），组间冒号分隔。
      *
-     * @param ipv4 ipv4地址
-     * @return 如果传入参数不是ipv4，将返回原始传入串
+     * @param ip 原始 IP（可为 IPv4、IPv6 缩写、含内嵌 IPv4、可带 zone-id）
+     * @return 形如 "0000:0000:0000:0000:0000:FFFF:C0A8:0001" 的全格式 IPv6
+     * @throws IllegalArgumentException ip非法时
+     * @author ChatGPT
      * @author K
      * @since 1.0.0
      */
-    fun ipv4ToIpv6(ipv4: String): String {
-        if (isValidIpv4(ipv4)) {
-            val parts = ipv4.split(".").toTypedArray()
-            val part1 = Integer.toHexString(Integer.valueOf(parts[0])).uppercase(Locale.getDefault())
-            val part2 = Integer.toHexString(Integer.valueOf(parts[1])).uppercase(Locale.getDefault())
-            val part3 = Integer.toHexString(Integer.valueOf(parts[2])).uppercase(Locale.getDefault())
-            val part4 = Integer.toHexString(Integer.valueOf(parts[3])).uppercase(Locale.getDefault())
-            val ipv6Str = part1.padStart(2, '0') + part2.padStart(2, '0') +
-                    ":" + part3.padStart(2, '0') + part4.padStart(2, '0')
-            return "0000:0000:0000:0000:0000:0000:$ipv6Str"
-        }
-        return ipv4
-    }
+    fun toFullIpv6(ip: String): String {
+        if (ip.isBlank()) throw IllegalArgumentException("ip is blank")
 
-    /**
-     * 标准化ip地址为全格式的ipv6地址(每组定长4位的16进制，共8组，每组间用半角冒号分隔)
-     * 对以下情况的参数进行标准化，其他情况将直接返回原始参数：
-     * 1. ipv4，如192.168.0.1 => 0000:0000:0000:0000:0000:0000:C0A8:0001
-     * 2. 0位压缩表示法的ipv6，如FF01::1101 => FF01:0000:0000:0000:0000:0000:0000:1101、
-     * ::1 => 0000:0000:0000:0000:0000:0000:0000:0001、
-     * :: => 0000:0000:0000:0000:0000:0000:0000:0000、
-     * FF01:0:0:0:0:0:0:1101 => FF01:0000:0000:0000:0000:0000:0000:1101
-     * 3. 内嵌IPv4地址表示法的ipv6，如::192.168.0.1  => 0000:0000:0000:0000:0000:0000:C0A8:0001 、
-     * ::FFFF:192.168.0.1 => 0000:0000:0000:0000:0000:FFFF:C0A8:0001
-     *
-     * @param ipStr ip地址，可以是ipv4或ipv6的三种表示法(冒分十六进制表示法、0位压缩表示法、内嵌IPv4地址表示法)
-     * @return 标准全格式的ipv6
-     * @author K
-     * @since 1.0.0
-     */
-    fun standardizeIpv6(ipStr: String): String? {
-        // 处理ipv6
-        if (ipStr == "::") {
-            return "0000:0000:0000:0000:0000:0000:0000:0000"
-        }
-        if (isValidIpv6(ipStr)) {
-            if (ipStr.length == 39) {
-                return ipStr
-            }
-            var ipv6 = ipStr
-            if (ipStr.contains(".")) { // 处理内嵌IPv4地址表示法的ipv6
-                val regExp = "((25[0-5]|2[0-4]\\d|[0-1]?\\d?\\d)(\\.(25[0-5]|2[0-4]\\d|[0-1]?\\d?\\d)){3})"
-                val pattern = Pattern.compile(regExp)
-                val matcher = pattern.matcher(ipStr)
-                matcher.find()
-                val ipv4 = matcher.group(0)
-                val ipv4Part = ipv4ToIpv6(ipv4).substring(30)
-                ipv6 = if (ipStr.contains("::")) {
-                    val colonCount = ipStr.countMatches(":")
-                    var leakGroupCount = 6 - colonCount
-                    if (ipStr.startsWith("::")) {
-                        leakGroupCount++
-                    }
-                    val leakStr = "0000".repeatAndSeparate(":", leakGroupCount)
-                    ipStr.replace("::", ":$leakStr:").replace(ipv4, ipv4Part)
-                } else {
-                    ipStr.replace(ipv4, ipv4Part)
-                }
-            } else if (ipStr.contains("::")) { // 处理0位压缩表示法的ipv6
-                val colonCount = ipStr.countMatches(":")
-                val leakGroupCount = 8 - colonCount
-                val leakStr = "0000".repeatAndSeparate(":", leakGroupCount)
-                ipv6 = ipStr.replace("::", ":$leakStr:")
-            }
+        // 去掉可能存在的 zone-id（如 fe80::1%eth0）
+        val pure = ip.substringBefore('%')
 
-            // 补全
-            if (ipv6.length != 39) {
-                val parts = ipv6.split(":").toTypedArray()
-                val sb = StringBuilder()
-                parts.forEach { sb.append(it.padStart(4, '0')).append(":") }
-                ipv6 = sb.toString().substring(0, sb.length - 1)
-            }
-            return ipv6
+        val addr = try {
+            InetAddress.getByName(pure)
+        } catch (e: Exception) {
+            throw IllegalArgumentException("invalid IP: $ip", e)
         }
 
-        // 处理ipv4
-        return ipv4ToIpv6(ipStr)
+        var bytes = addr.address
+        if (bytes.size == 4) {
+            // IPv4 -> 统一映射为 IPv6 的 16 字节
+            val v6 = ByteArray(16)
+            v6[10] = 0xFF.toByte()
+            v6[11] = 0xFF.toByte()
+            System.arraycopy(bytes, 0, v6, 12, 4)
+            bytes = v6
+        } else if (bytes.size != 16) {
+            throw IllegalArgumentException("unexpected address length")
+        }
+
+        // 16 字节 -> 8 组，每组 16 位；统一大写、每组补满 4 位
+        val sb = StringBuilder(39)
+        for (i in 0 until 16 step 2) {
+            val value = ((bytes[i].toInt() and 0xFF) shl 8) or (bytes[i + 1].toInt() and 0xFF)
+            if (i > 0) sb.append(':')
+            sb.append(String.format(Locale.ROOT, "%04X", value))
+        }
+        return sb.toString()
     }
 
 }
