@@ -2,7 +2,7 @@ package io.kudos.ability.cache.common.support
 
 import io.kudos.ability.cache.common.init.properties.CacheVersionConfig
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.autoconfigure.cache.CacheProperties
+import org.springframework.boot.cache.autoconfigure.CacheProperties
 import org.springframework.cache.Cache
 import org.springframework.cache.support.AbstractCacheManager
 

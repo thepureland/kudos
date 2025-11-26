@@ -7,15 +7,15 @@ import io.kudos.context.config.YamlPropertySourceFactory
 import io.kudos.context.init.IComponentInitializer
 import jakarta.servlet.Filter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
-import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory
+import org.springframework.boot.web.server.servlet.ServletWebServerFactory
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.boot.web.servlet.ServletListenerRegistrationBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.PropertySource
+import org.springframework.core.env.Environment
 import org.springframework.session.web.http.SessionRepositoryFilter
 import org.springframework.web.context.request.RequestContextListener
-import org.springframework.web.filter.FormContentFilter
 import org.springframework.web.servlet.HandlerInterceptor
 import org.springframework.web.servlet.config.annotation.CorsRegistry
 import org.springframework.web.servlet.config.annotation.EnableWebMvc
@@ -44,14 +44,8 @@ open class SpringMvcAutoConfiguration : WebMvcConfigurer, IComponentInitializer 
 //    }
 
     @Bean
-    open fun webServerFactory(): TomcatServletWebServerFactory {
-        val factory = TomcatServletWebServerFactory()
-        factory.addConnectorCustomizers({ connector -> // 解决用tomcat时，get请求传入特殊符号报400错误（RFC7230andRFC3986）的问题
-            connector.setProperty("relaxedPathChars", "\"<>[\\]^`{|}");
-            connector.setProperty("relaxedQueryChars", "\"<>[\\]^`{|}");
-        })
-        return factory
-    }
+    @ConditionalOnMissingBean
+    open fun webServerFactory(env: Environment): ServletWebServerFactory = SwitchingServletWebServerFactory(env)
 
     @Bean
     open fun requestContextListener(): RequestContextListener = RequestContextListener()
@@ -59,7 +53,7 @@ open class SpringMvcAutoConfiguration : WebMvcConfigurer, IComponentInitializer 
     @Bean
     open fun servletListenerRegistration(requestContextListener: RequestContextListener): ServletListenerRegistrationBean<EventListener> {
         val registrationBean = ServletListenerRegistrationBean<EventListener>()
-        registrationBean.listener = requestContextListener()
+        registrationBean.setListener(requestContextListener())
         registrationBean.order = 1
         return registrationBean
     }
@@ -72,7 +66,7 @@ open class SpringMvcAutoConfiguration : WebMvcConfigurer, IComponentInitializer 
     @ConditionalOnMissingBean
     open fun registerAuthFilter(contextInitFilter: IWebContextInitFilter): FilterRegistrationBean<*> {
         val registration = FilterRegistrationBean<Filter>()
-        registration.filter = contextInitFilter
+        registration.setFilter(contextInitFilter)
         registration.addUrlPatterns("/*")
         registration.setName("contextInitFilter")
         registration.order = SessionRepositoryFilter.DEFAULT_ORDER + 1

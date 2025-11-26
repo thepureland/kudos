@@ -1,10 +1,9 @@
 package io.kudos.ability.web.springmvc.server
 
+import io.kudos.ability.web.springmvc.init.SwitchingServletWebServerFactory
 import io.kudos.base.net.http.HttpClientKit
 import io.kudos.context.kit.SpringKit
 import org.junit.jupiter.api.Test
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration
-import org.springframework.boot.autoconfigure.web.servlet.ServletWebServerFactoryAutoConfiguration
 import org.springframework.context.annotation.Import
 import kotlin.test.assertEquals
 
@@ -18,7 +17,7 @@ import kotlin.test.assertEquals
     HelloWorldController::class,
     SwitchingServletWebServerFactory::class
 )
-@EnableAutoConfiguration(exclude = [ServletWebServerFactoryAutoConfiguration::class])
+//@EnableAutoConfiguration(exclude = [ServletWebServerFactoryAutoConfiguration::class])
 abstract class BaseWebServerTest {
 
 //    @LocalServerPort

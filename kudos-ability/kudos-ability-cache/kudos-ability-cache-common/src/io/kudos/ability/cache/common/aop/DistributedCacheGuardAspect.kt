@@ -81,7 +81,7 @@ class DistributedCacheGuardAspect {
             val context = MethodBasedEvaluationContext(
                 null, method, pjp.args, nameDiscoverer
             )
-            val cacheKey = parser.parseExpression(keySpel).getValue<String?>(context, String::class.java)
+            val cacheKey = parser.parseExpression(keySpel).getValue<String>(context, String::class.java)
             return Pair<String, Any>(cacheName, cacheKey!!)
         } else {
             // 3. 解析 cacheName 和 key

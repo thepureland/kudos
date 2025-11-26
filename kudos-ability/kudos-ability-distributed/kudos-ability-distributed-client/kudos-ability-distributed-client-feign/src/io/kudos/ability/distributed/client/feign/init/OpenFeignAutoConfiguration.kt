@@ -10,7 +10,6 @@ import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder
 
 
 /**
@@ -23,8 +22,8 @@ import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder
 @AutoConfigureAfter(ContextAutoConfiguration::class)
 open class OpenFeignAutoConfiguration: IComponentInitializer {
 
-    @Autowired
-    private lateinit var jackson2ObjectMapperBuilder: Jackson2ObjectMapperBuilder
+//    @Autowired
+//    lateinit var objectMapper: ObjectMapper
 
     @Bean("globalHeaderRequestInterceptor")
     open fun feignCacheRequestInterceptor(): RequestInterceptor = GlobalHeaderRequestInterceptor()

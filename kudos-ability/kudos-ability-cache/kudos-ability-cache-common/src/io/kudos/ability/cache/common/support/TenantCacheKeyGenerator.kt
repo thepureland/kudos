@@ -63,7 +63,7 @@ class TenantCacheKeyGenerator : KeyGenerator {
         context.setVariable("method", method)
         context.setVariable("tenantId", KudosContextHolder.get().tenantId)
         val expression = parser.parseExpression(cacheKey)
-        return expression.getValue(context, String::class.java)
+        return expression.getValue(context, String::class.java)!!
     }
 
     companion object {

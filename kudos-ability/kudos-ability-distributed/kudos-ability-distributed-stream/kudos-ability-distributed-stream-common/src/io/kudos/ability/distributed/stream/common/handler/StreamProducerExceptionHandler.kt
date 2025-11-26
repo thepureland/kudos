@@ -25,8 +25,8 @@ class StreamProducerExceptionHandler : AbstractFailedDataHandler<StreamProducerM
         val msgHeaderJson = data.msgHeaderJson
         val obj = JsonKit.fromJson<Any>(msgBodyJson!!)
         val streamMessageVo: StreamMessageVo<Any?> = StreamMessageVo(obj)
-        val headMap = JsonKit.fromJson<MutableMap<String, Any?>>(msgHeaderJson!!)
-        val messageHeaders = MessageHeaders(headMap)
+        val headMap = JsonKit.fromJson<MutableMap<String, Any>>(msgHeaderJson!!)
+        val messageHeaders = MessageHeaders(headMap!!)
         val message = GenericMessage(streamMessageVo, messageHeaders)
         //如果本次发送为异步flush报错，则它会继续被异常拦截
         //如果本次直接返回false，它则没提交到mq的等待flush队列中，本地文件不做删除

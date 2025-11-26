@@ -8,8 +8,6 @@ import io.ktor.server.routing.*
 import io.kudos.ability.web.ktor.core.KtorContext
 import io.kudos.test.common.init.EnableKudosTest
 import kotlinx.coroutines.runBlocking
-import org.springframework.test.context.DynamicPropertyRegistry
-import org.springframework.test.context.DynamicPropertySource
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -21,18 +19,10 @@ import kotlin.test.assertEquals
  * @author K
  * @since 1.0.0
  */
-@EnableKudosTest
+@EnableKudosTest(
+    properties = ["kudos.ability.web.ktor.engine.name=cio"]
+)
 class CioEngineTest {
-
-    companion object {
-
-        @JvmStatic
-        @DynamicPropertySource
-        private fun registerProperties(registry: DynamicPropertyRegistry) {
-            registry.add("kudos.ability.web.ktor.engine.name") { "cio" }
-        }
-
-    }
 
     @BeforeTest
     fun setup() {
@@ -52,7 +42,7 @@ class CioEngineTest {
     fun testRoot() = runBlocking {
         val client = HttpClient()
         val response = client.get("http://localhost:${KtorContext.properties.engine.port}/")
-        assertEquals("Hello World!", response.bodyAsText())
+        assertEquals("Hello CIO!", response.bodyAsText())
     }
 
 }

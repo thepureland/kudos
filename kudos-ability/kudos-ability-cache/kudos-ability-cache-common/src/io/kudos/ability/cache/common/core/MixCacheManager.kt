@@ -40,9 +40,9 @@ class MixCacheManager : AbstractCacheManager() {
     @Autowired
     private val cacheConfigProvider: ICacheConfigProvider? = null
 
-    private val caches: MutableList<Cache?> = ArrayList<Cache?>()
+    private val caches: MutableList<Cache> = ArrayList<Cache>()
 
-    override fun loadCaches(): MutableCollection<out Cache?> {
+    override fun loadCaches(): Collection<out Cache> {
         return caches
     }
 
@@ -85,8 +85,8 @@ class MixCacheManager : AbstractCacheManager() {
      *
      * @return List<Cache>
     </Cache> */
-    private fun loadLocalCacheConfig(localCacheConfigs: Map<String, CacheConfig>): MutableList<Cache?> {
-        val localCaches: MutableList<Cache?> = ArrayList<Cache?>()
+    private fun loadLocalCacheConfig(localCacheConfigs: Map<String, CacheConfig>): MutableList<Cache> {
+        val localCaches: MutableList<Cache> = ArrayList<Cache>()
         //本地缓存
         if (localCacheManager != null) {
             if (localCacheConfigs.isNotEmpty()) {
@@ -107,8 +107,8 @@ class MixCacheManager : AbstractCacheManager() {
      *
      * @return remoteCaches
      */
-    private fun loadRemoteCacheConfig(remoteCacheConfigs: Map<String, CacheConfig>): MutableList<Cache?> {
-        val remoteCaches: MutableList<Cache?> = ArrayList<Cache?>()
+    private fun loadRemoteCacheConfig(remoteCacheConfigs: Map<String, CacheConfig>): MutableList<Cache> {
+        val remoteCaches: MutableList<Cache> = ArrayList<Cache>()
         //远程二级缓存
         if (remoteCacheManager != null) {
             if (remoteCacheConfigs.isNotEmpty()) {
@@ -124,8 +124,8 @@ class MixCacheManager : AbstractCacheManager() {
         return remoteCaches
     }
 
-    private fun loadMixCacheConfig(localRemoteCacheConfigs: Map<String, CacheConfig>): MutableList<Cache?> {
-        val mixCacheConfig: MutableList<Cache?> = ArrayList<Cache?>()
+    private fun loadMixCacheConfig(localRemoteCacheConfigs: Map<String, CacheConfig>): MutableList<Cache> {
+        val mixCacheConfig: MutableList<Cache> = ArrayList<Cache>()
         // 本地-远程两级联动缓存
         if (localRemoteCacheConfigs.isNotEmpty()) {
             localRemoteCacheConfigs.forEach { (key: String, _: CacheConfig?) ->

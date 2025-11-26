@@ -18,7 +18,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice
  * @since 1.0.0
  */
 @ControllerAdvice
-class GlobalResponseBodyHandler : ResponseBodyAdvice<Any?> {
+class GlobalResponseBodyHandler : ResponseBodyAdvice<Any> {
 
     override fun supports(returnType: MethodParameter, converterType: Class<out HttpMessageConverter<*>>): Boolean {
         return returnType.containingClass.packageName.contains("frontend")

@@ -22,7 +22,9 @@ import kotlin.test.assertEquals
  * @author K
  * @since 1.0.0
  */
-@EnableKudosTest
+@EnableKudosTest(
+    properties = ["kudos.ability.web.ktor.engine.name=netty"]
+)
 class NettyEngineTest {
 
     companion object {

@@ -3,10 +3,10 @@ package io.kudos.ability.data.rdb.flyway
 import io.kudos.ability.data.rdb.flyway.multidatasource.FlywayMultiDataSourceMigrator
 import io.kudos.ability.data.rdb.jdbc.datasource.DsContextProcessor
 import io.kudos.test.common.init.EnableKudosTest
-import junit.framework.TestCase.assertEquals
 import org.springframework.beans.factory.annotation.Autowired
 import java.sql.Connection
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 /**

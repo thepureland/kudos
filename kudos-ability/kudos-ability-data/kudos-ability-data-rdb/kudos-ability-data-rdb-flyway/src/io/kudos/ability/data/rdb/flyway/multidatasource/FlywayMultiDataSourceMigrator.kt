@@ -6,7 +6,7 @@ import io.kudos.base.io.FileKit
 import io.kudos.base.io.scanner.classpath.ClassPathScanner
 import io.kudos.base.logger.LogFactory
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.autoconfigure.flyway.FlywayProperties
+import org.springframework.boot.flyway.autoconfigure.FlywayProperties
 import java.io.File
 
 

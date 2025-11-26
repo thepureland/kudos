@@ -31,7 +31,7 @@ open class StreamCommonConfiguration {
         executor.corePoolSize = 32 // 设置核心线程数
         executor.maxPoolSize = 128 // 设置最大线程数
         executor.queueCapacity = 1024 // 设置队列大小
-        executor.threadNamePrefix = "stream-async-" // 设置线程名前缀
+        executor.setThreadNamePrefix("stream-async-") // 设置线程名前缀
         executor.initialize()
         return executor
     }

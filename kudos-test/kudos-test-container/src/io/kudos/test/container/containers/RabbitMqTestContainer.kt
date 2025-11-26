@@ -53,8 +53,8 @@ object RabbitMqTestContainer {
     }
 
     private fun registerProperties(registry: DynamicPropertyRegistry, runningContainer : Container) {
-        val host = runningContainer.ports.first().ip
-        val port = runningContainer.ports.first().publicPort
+        val host = runningContainer.ports.first().ip!!
+        val port = runningContainer.ports.first().publicPort!!
 
         registry.add("spring.rabbitmq.host") { host }
         registry.add("spring.rabbitmq.username") { "guest" }

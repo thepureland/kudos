@@ -4,7 +4,7 @@ import org.springframework.data.redis.serializer.RedisSerializer
 import org.springframework.data.redis.serializer.StringRedisSerializer
 import java.nio.charset.StandardCharsets
 
-class StringRedisSerializer(prefix: String?) : RedisSerializer<String?> {
+class StringRedisSerializer(prefix: String?) : RedisSerializer<String> {
 
     private val prefix: String = "$prefix:"
 

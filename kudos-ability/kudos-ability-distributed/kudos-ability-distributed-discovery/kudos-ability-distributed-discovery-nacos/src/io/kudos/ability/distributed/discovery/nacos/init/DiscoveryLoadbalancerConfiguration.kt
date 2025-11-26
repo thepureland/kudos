@@ -32,7 +32,7 @@ open class DiscoveryLoadbalancerConfiguration {
         private const val REACTIVE_SERVICE_INSTANCE_SUPPLIER_ORDER = 183827465
 
         private fun hintZone(): ServiceInstanceListSupplierBuilder.DelegateCreator {
-            return ServiceInstanceListSupplierBuilder.DelegateCreator { context: ConfigurableApplicationContext, delegate: ServiceInstanceListSupplier? ->
+            return ServiceInstanceListSupplierBuilder.DelegateCreator { context: ConfigurableApplicationContext, delegate: ServiceInstanceListSupplier ->
                 val loadBalancerClientFactory: LoadBalancerClientFactory = context.getBean(LoadBalancerClientFactory::class.java)
                 val zoneConfig: LoadBalancerZoneConfig = context.getBean(LoadBalancerZoneConfig::class.java)
                 HintZoneServiceInstanceListSupplier(delegate, zoneConfig, loadBalancerClientFactory)
@@ -48,7 +48,7 @@ open class DiscoveryLoadbalancerConfiguration {
         @ConditionalOnBean(DiscoveryClient::class) //@ConditionalOnMissingBean
         @ConditionalOnProperty(value = ["spring.cloud.loadbalancer.configurations"], havingValue = "zone-preference")
         open fun zonePreferenceDiscoveryClientServiceInstanceListSupplier(
-            context: ConfigurableApplicationContext?
+            context: ConfigurableApplicationContext
         ): ServiceInstanceListSupplier? {
             return ServiceInstanceListSupplier.builder().withBlockingDiscoveryClient()
                 .with(hintZone()) //应用: 服务实例 Header提示策略
@@ -71,7 +71,7 @@ open class DiscoveryLoadbalancerConfiguration {
         @ConditionalOnBean(ReactiveDiscoveryClient::class) //@ConditionalOnMissingBean
         @ConditionalOnProperty(value = ["spring.cloud.loadbalancer.configurations"], havingValue = "zone-preference")
         open fun zonePreferenceDiscoveryClientServiceInstanceListSupplier(
-            context: ConfigurableApplicationContext?
+            context: ConfigurableApplicationContext
         ): ServiceInstanceListSupplier? {
             return ServiceInstanceListSupplier.builder().withDiscoveryClient()
                 .with(hintZone()) //应用: 服务实例 Header提示策略

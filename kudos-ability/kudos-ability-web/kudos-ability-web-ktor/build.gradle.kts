@@ -34,7 +34,6 @@ dependencies {
     testImplementation(libs.ktor.server.jetty.jakarta)
     testImplementation(libs.ktor.server.tomcat.jakarta)
     testImplementation(libs.ktor.server.cio)
-    testImplementation(project(":kudos-ability:kudos-ability-data:kudos-ability-data-rdb:kudos-ability-data-rdb-ktorm"))
 
     testImplementation(project(":kudos-test:kudos-test-common"))
 }

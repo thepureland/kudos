@@ -8,7 +8,7 @@ import io.lettuce.core.api.StatefulConnection
 import io.lettuce.core.cluster.ClusterClientOptions
 import io.lettuce.core.cluster.ClusterTopologyRefreshOptions
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig
-import org.springframework.boot.autoconfigure.data.redis.RedisProperties
+import org.springframework.boot.data.redis.autoconfigure.DataRedisProperties
 import org.springframework.data.redis.connection.RedisClusterConfiguration
 import org.springframework.data.redis.connection.RedisConfiguration
 import org.springframework.data.redis.connection.RedisPassword
@@ -31,9 +31,7 @@ object RedisConnectFactory {
         var clientOptions: ClientOptions? = null
         var redisConfiguration: RedisConfiguration? = null
         //集群模式下的lettuce配置
-        if (redisProperties.cluster != null &&
-                !redisProperties.cluster.nodes.isNullOrEmpty()
-        ) {
+        if (redisProperties.cluster != null && !redisProperties.cluster!!.nodes.isNullOrEmpty()) {
             val clusterTopologyRefreshOptions: ClusterTopologyRefreshOptions? = ClusterTopologyRefreshOptions.builder()
                 .enablePeriodicRefresh(Duration.ofSeconds(60L))
                 .enableAdaptiveRefreshTrigger(
@@ -94,7 +92,7 @@ object RedisConnectFactory {
      * @param redisProperties redisProperties
      * @return redisConfiguration
      */
-    private fun getRedisConfiguration(redisProperties: RedisProperties): RedisStandaloneConfiguration {
+    private fun getRedisConfiguration(redisProperties: DataRedisProperties): RedisStandaloneConfiguration {
         val config = RedisStandaloneConfiguration()
         config.hostName = redisProperties.host
         config.port = redisProperties.port
@@ -114,12 +112,12 @@ object RedisConnectFactory {
      * @param redisProperties redisProperties
      * @return redisClusterConfiguration
      */
-    private fun getClusterRedisConfiguration(redisProperties: RedisProperties): RedisClusterConfiguration {
+    private fun getClusterRedisConfiguration(redisProperties: DataRedisProperties): RedisClusterConfiguration {
         //集群模式下链接
-        val clusterProperties = redisProperties.cluster
-        val config = RedisClusterConfiguration(clusterProperties.nodes)
+        val clusterProperties = redisProperties.cluster!!
+        val config = RedisClusterConfiguration(clusterProperties.nodes!!)
         if (clusterProperties.maxRedirects != null) {
-            config.maxRedirects = clusterProperties.maxRedirects
+            config.setMaxRedirects(clusterProperties.maxRedirects!!)
         }
         if (redisProperties.password != null) {
             config.password = RedisPassword.of(redisProperties.password)

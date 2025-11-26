@@ -16,31 +16,28 @@ import java.util.function.Function
  * 服务实例列表提示者,通过Request Header Hint 选择分区
  */
 class HintZoneServiceInstanceListSupplier(
-    delegate: ServiceInstanceListSupplier?,
-    zoneConfig: LoadBalancerZoneConfig,
-    factory: ReactiveLoadBalancer.Factory<ServiceInstance?>
+    delegate: ServiceInstanceListSupplier,
+    private val zoneConfig: LoadBalancerZoneConfig,
+    factory: ReactiveLoadBalancer.Factory<ServiceInstance>
 ) : DelegatingServiceInstanceListSupplier(delegate) {
     private val ZONE = "zone"
 
     private val properties: LoadBalancerProperties
 
-    private val zoneConfig: LoadBalancerZoneConfig
-
 
     init {
-        this.zoneConfig = zoneConfig
-        this.properties = factory.getProperties(getServiceId())
+        this.properties = factory.getProperties(serviceId)!!
     }
 
-    override fun get(): Flux<MutableList<ServiceInstance?>?>? {
+    override fun get(): Flux<MutableList<ServiceInstance>> {
         return delegate.get()
     }
 
-    override fun get(request: Request<*>): Flux<MutableList<ServiceInstance?>?> {
+    override fun get(request: Request<*>): Flux<MutableList<ServiceInstance>> {
         return delegate.get(request)
-            .map<MutableList<ServiceInstance?>?>(Function { instances: MutableList<ServiceInstance> ->
+            .map(Function { instances: MutableList<ServiceInstance> ->
                 filteredByHint(instances, getHint(request.getContext()))
-            } as Function<in MutableList<ServiceInstance>, out MutableList<ServiceInstance?>?>)
+            } as Function<in MutableList<ServiceInstance>, out MutableList<ServiceInstance>>)
     }
 
     private fun getHint(requestContext: Any?): String? {
@@ -49,19 +46,14 @@ class HintZoneServiceInstanceListSupplier(
         }
         var hint: String? = null
         if (requestContext is RequestDataContext) {
-            hint = getHintFromHeader(requestContext as RequestDataContext)
+            hint = getHintFromHeader(requestContext)
         }
         return hint
     }
 
     private fun getHintFromHeader(context: RequestDataContext): String? {
-        if (context.clientRequest != null) {
-            val headers = context.clientRequest.headers
-            if (headers != null) {
-                return headers.getFirst(properties.hintHeaderName)
-            }
-        }
-        return null
+        val headers = context.clientRequest.headers
+        return headers.getFirst(properties.hintHeaderName)
     }
 
     private fun filteredByHint(instances: MutableList<ServiceInstance>, hint: String?): MutableList<ServiceInstance> {

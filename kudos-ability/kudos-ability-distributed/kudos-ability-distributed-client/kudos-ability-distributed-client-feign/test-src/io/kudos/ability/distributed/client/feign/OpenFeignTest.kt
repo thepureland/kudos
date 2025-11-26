@@ -1,5 +1,6 @@
 package io.kudos.ability.distributed.client.feign
 
+import io.kudos.ability.distributed.client.feign.PostParam
 import io.kudos.ability.distributed.client.feign.client.IFeignClient
 import io.kudos.ability.distributed.client.feign.ms.MockMsApplication
 import io.kudos.test.common.init.EnableKudosTest
@@ -45,8 +46,8 @@ open class OpenFeignTest {
         assertTrue(feignClient.get())
 
         // 测试post方式的请求
-        val result = feignClient.post(Pair<Int?, String?>(1, "name"))
-        assertTrue(result!!.second!!)
+        val result = feignClient.post(PostParam(1, "name"))
+        assertTrue(result.success!!)
 
         // 测试异常抛回
         assertFailsWith<RuntimeException> { feignClient.exception() }
