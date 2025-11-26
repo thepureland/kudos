@@ -9,5 +9,5 @@ package io.kudos.ability.web.springmvc.support.enums
 enum class ServletServerEnum {
     TOMCAT,
     JETTY,
-    UNDERTOW
+//    UNDERTOW  // 不支持servlet6.1,被springboot4排除支持
 }

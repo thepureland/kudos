@@ -9,8 +9,8 @@ kotlinxSerializationJSON = "1.7.3"
 kotlinxCoroutines = "1.10.2"
 ktor = "3.3.0"
 ktorm = "4.1.1"
-spring-boot = "3.5.6"
-spring-cloud = "2025.0.0"
+spring-boot = "4.0.0"
+spring-cloud = "2025.1.0-RC1"
 alibaba-cloud = "2023.0.3.3"
 h2 = "2.4.240"
 postgres = "42.7.8"
@@ -50,7 +50,6 @@ alibaba-fastjson2 = "2.0.59"
 alibaba-seata = "2.0.0"
 amazon-awssdk = "2.35.0"
 apache-common-pool2 = "2.12.1"
-flyway = "11.13.2"
 baomidou-dynamic-datasource = "4.3.1"
 redisson = "3.52.0"
 sejda-webp-imageio = "0.1.6"
@@ -99,7 +98,7 @@ apache-xmlgraphics-batik-bridge = { module = "org.apache.xmlgraphics:batik-bridg
 github-classgraph = { module = "io.github.classgraph:classgraph", version.ref = "github-classgraph" }
 
 # kudos-context
-spring-boot-starter-aop = { module = "org.springframework.boot:spring-boot-starter-aop" }
+spring-boot-starter-aop = { module = "org.springframework.boot:spring-boot-starter-aspectj" }
 spring-tx = { module = "org.springframework:spring-tx" }
 
 # kudos-test
@@ -119,9 +118,11 @@ spring-session-data-redis = { module = "org.springframework.session:spring-sessi
 spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web"}
 spring-boot-starter-mail = { module = "org.springframework.boot:spring-boot-starter-mail"}
 spring-boot-starter-data-redis = { module = "org.springframework.boot:spring-boot-starter-data-redis"}
+spring-boot-starter-cache = { module = "org.springframework.boot:spring-boot-starter-cache"}
 spring-boot-starter-jdbc = { module = "org.springframework.boot:spring-boot-starter-jdbc"}
 spring-boot-starter-jetty = { module = "org.springframework.boot:spring-boot-starter-jetty"}
-spring-boot-starter-undertow = { module = "org.springframework.boot:spring-boot-starter-undertow"}
+#spring-boot-starter-undertow = { module = "org.springframework.boot:spring-boot-starter-undertow"}
+spring-boot-starter-flyway = { module = "org.springframework.boot:spring-boot-starter-flyway"}
 spring-cloud-loadbalancer = { module = "org.springframework.cloud:spring-cloud-loadbalancer"}
 spring-cloud-starter-openfeign = { module = "org.springframework.cloud:spring-cloud-starter-openfeign"}
 spring-cloud-stream = { module = "org.springframework.cloud:spring-cloud-stream"}
@@ -139,7 +140,6 @@ apache-commons-pool2 = { module = "org.apache.commons:commons-pool2", version.re
 github-caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "github-caffeine"}
 amazon-awssdk-sns = { module = "software.amazon.awssdk:sns", version.ref = "amazon-awssdk"}
 amazon-awssdk-apache-client = { module = "software.amazon.awssdk:apache-client", version.ref = "amazon-awssdk"}
-flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway"}
 h2database-h2 = { module = "com.h2database:h2", version.ref = "h2" }
 postgresql = { module = "org.postgresql:postgresql", version.ref = "postgres"}
 ktorm-support-postgresql = { module = "org.ktorm:ktorm-support-postgresql", version.ref = "ktorm"}

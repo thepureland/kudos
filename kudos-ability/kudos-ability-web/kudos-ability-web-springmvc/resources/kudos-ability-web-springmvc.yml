@@ -4,7 +4,7 @@ kudos:
       url:
         suffix: .html
       springmvc:
-        server: TOMCAT # TOMCAT、JETTY、UNDERTOW三选一
+        server: TOMCAT # TOMCAT、JETTY
 server:
   max-request-hold: 0 #最大连接保持数0或者没配置为位开启
   max-request-exclude:

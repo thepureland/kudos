@@ -1,5 +1,7 @@
 package io.kudos.ability.distributed.client.feign.ms
 
+import io.kudos.ability.distributed.client.feign.PostResult
+import io.kudos.ability.distributed.client.feign.PostParam
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
@@ -21,8 +23,8 @@ class MockMsController {
     }
 
     @PostMapping("/post")
-    fun post(data: Pair<Int?, String?>?): Pair<Int?, Boolean?> {
-        return Pair<Int?, Boolean?>(1, true)
+    fun post(data: PostParam?): PostResult {
+        return PostResult(1, true)
     }
 
     @GetMapping("/exception")

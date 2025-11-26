@@ -15,7 +15,7 @@ import javafx.fxml.FXML
 import javafx.fxml.Initializable
 import javafx.scene.control.*
 import javafx.stage.DirectoryChooser
-import org.springframework.boot.autoconfigure.flyway.FlywayProperties
+import org.springframework.boot.flyway.autoconfigure.FlywayProperties
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream

@@ -50,8 +50,7 @@ class ClientCacheHelper : InitializingBean {
      */
     fun loadFromLocalCache(cacheKey: String): ClientCacheItem? {
         //可以考虑换成CacheKit
-        return cacheManager!!.getCache(ClientCacheKey.FEIGN_CACHE_PREFIX)!!
-            .get<ClientCacheItem?>(cacheKey, ClientCacheItem::class.java)
+        return cacheManager!!.getCache(ClientCacheKey.FEIGN_CACHE_PREFIX)!!.get(cacheKey, ClientCacheItem::class.java)
     }
 
     /**

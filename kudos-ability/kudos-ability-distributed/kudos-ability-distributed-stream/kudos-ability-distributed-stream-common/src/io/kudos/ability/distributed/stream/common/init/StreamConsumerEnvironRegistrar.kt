@@ -38,7 +38,7 @@ class StreamConsumerEnvironRegistrar : ImportBeanDefinitionRegistrar, Environmen
         }
         // 收集定义
         for (loc in locations) {
-            val res = DefaultResourceLoader().getResource(loc)
+            val res = DefaultResourceLoader().getResource(loc!!)
             if (!res.exists()) continue
             try {
                 val sources = loader.load(loc, res)

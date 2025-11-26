@@ -2,12 +2,12 @@ package io.kudos.ability.data.memdb.redis.init.properties
 
 import io.kudos.ability.data.memdb.redis.RedisSerializerEnum
 import org.springframework.beans.BeanUtils
-import org.springframework.boot.autoconfigure.data.redis.RedisProperties
+import org.springframework.boot.data.redis.autoconfigure.DataRedisProperties
 import org.springframework.data.redis.serializer.RedisSerializer
 import org.springframework.data.redis.serializer.StringRedisSerializer
 import java.time.Duration
 
-class RedisExtProperties : RedisProperties() {
+class RedisExtProperties : DataRedisProperties() {
     var keySerializer: String? = RedisSerializerEnum.STRING.type
     var hashkeySerializer: String? = RedisSerializerEnum.JDK.type
     var valueSerializer: String? = RedisSerializerEnum.JDK.type

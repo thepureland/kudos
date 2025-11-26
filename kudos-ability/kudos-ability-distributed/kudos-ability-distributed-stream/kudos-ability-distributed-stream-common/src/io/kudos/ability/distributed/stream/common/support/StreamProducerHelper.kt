@@ -102,8 +102,8 @@ class StreamProducerHelper {
         val destination = properties.bindings[bindingName]!!.destination
         val header = StreamHeader.initHeader(destination)
         val headerMap = BeanKit.extract(header)
-        val map = mutableMapOf<String, Any?>()
-        map.putAll(headerMap)
+        val map = mutableMapOf<String, Any>()
+        map.putAll(headerMap as Map<out String, Any>)
         map.put(StreamHeader.SCST_BIND_NAME, bindingName)
         val headers = org.springframework.messaging.MessageHeaders(map)
         val streamMessageVo = StreamMessageVo(data)

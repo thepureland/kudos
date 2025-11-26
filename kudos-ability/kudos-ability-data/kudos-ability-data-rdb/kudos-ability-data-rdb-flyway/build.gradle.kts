@@ -1,6 +1,6 @@
 dependencies {
     api(project(":kudos-ability:kudos-ability-data:kudos-ability-data-rdb:kudos-ability-data-rdb-jdbc"))
-    api(libs.flyway.core)
+    api(libs.spring.boot.starter.flyway)
 
     // h2
     // h2可以用PostgreSqlDialect来实现分页

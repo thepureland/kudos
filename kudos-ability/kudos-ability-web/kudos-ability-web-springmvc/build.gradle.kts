@@ -8,5 +8,5 @@ dependencies {
 
     testImplementation(project(":kudos-test:kudos-test-common"))
     testImplementation(libs.spring.boot.starter.jetty)
-    testImplementation(libs.spring.boot.starter.undertow)
+//    testImplementation(libs.spring.boot.starter.undertow)
 }

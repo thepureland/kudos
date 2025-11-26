@@ -16,11 +16,11 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.AutoConfigureBefore
-import org.springframework.boot.autoconfigure.cache.CacheProperties
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
-import org.springframework.boot.autoconfigure.thread.Threading
+import org.springframework.boot.cache.autoconfigure.CacheProperties
 import org.springframework.boot.context.properties.EnableConfigurationProperties
+import org.springframework.boot.thread.Threading
 import org.springframework.cache.CacheManager
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -89,7 +89,7 @@ open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentIni
         redisCacheMessageHandler: RedisCacheMessageHandler
     ): RedisMessageListenerContainer {
         val container = RedisMessageListenerContainer()
-        container.connectionFactory = redisCacheMessageHandler.redisTemplate.connectionFactory
+        container.setConnectionFactory(redisCacheMessageHandler.redisTemplate.connectionFactory!!)
         container.addMessageListener(redisCacheMessageHandler, ChannelTopic(versionConfig.realMsgChannel))
 
         if (Threading.VIRTUAL.isActive(environment)) {

@@ -35,7 +35,7 @@ class RateLimiterAspect {
         val count: Int = rateLimiter.count
 
         val combineKey = getCombineKey(rateLimiter, point)
-        val keys = mutableListOf<Any?>(combineKey)
+        val keys = mutableListOf<Any>(combineKey)
         try {
             val number = kudosRedisTemplate.defaultRedisTemplate.execute(
                 luaScriptStr,
@@ -78,14 +78,14 @@ class RateLimiterAspect {
         private val log = LogFactory.getLog(RateLimiterAspect::class.java)
         private val luaScriptStr = buildLuaScript()
         private val argSerializer = argSerializer()
-        private val resultSerializer: RedisSerializer<Long?> = resultSerializer()
+        private val resultSerializer: RedisSerializer<Long> = resultSerializer()
 
-        fun buildLuaScript(): RedisScript<Long?> {
+        fun buildLuaScript(): RedisScript<Long> {
             val classPathResource = org.springframework.core.io.ClassPathResource("limit.lua")
             try {
-                val redisScript: DefaultRedisScript<Long?> = DefaultRedisScript()
+                val redisScript: DefaultRedisScript<Long> = DefaultRedisScript()
                 @Suppress("UNCHECKED_CAST")
-                redisScript.resultType = Long::class.java as Class<Long?>?
+                redisScript.resultType = Long::class.java as Class<Long>
                 classPathResource.inputStream //探测资源是否存在
                 redisScript.setScriptSource(ResourceScriptSource(classPathResource))
                 return redisScript
@@ -103,9 +103,9 @@ class RateLimiterAspect {
          * 結果序列化
          */
         @Suppress("UNCHECKED_CAST")
-        private fun resultSerializer(): RedisSerializer<Long?> {
+        private fun resultSerializer(): RedisSerializer<Long> {
             return object : RedisSerializer<Long> {
-                override fun serialize(aLong: Long?): ByteArray? {
+                override fun serialize(aLong: Long?): ByteArray {
                     return aLong.toString().toByteArray()
                 }
 
@@ -113,7 +113,7 @@ class RateLimiterAspect {
                     if (bytes == null) return null
                     return String(bytes).toLong()
                 }
-            } as RedisSerializer<Long?>
+            } as RedisSerializer<Long>
         }
     }
 

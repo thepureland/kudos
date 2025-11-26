@@ -9,8 +9,6 @@ import io.kudos.ability.web.ktor.core.KtorContext
 import io.kudos.test.common.init.EnableKudosTest
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Disabled
-import org.springframework.test.context.DynamicPropertyRegistry
-import org.springframework.test.context.DynamicPropertySource
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -22,19 +20,11 @@ import kotlin.test.assertEquals
  * @author K
  * @since 1.0.0
  */
-@EnableKudosTest
+@EnableKudosTest(
+    properties = ["kudos.ability.web.ktor.engine.name=jetty"]
+)
 @Disabled("jetty依赖有版本冲突")
 class JettyEngineTest {
-
-    companion object {
-
-        @JvmStatic
-        @DynamicPropertySource
-        private fun registerProperties(registry: DynamicPropertyRegistry) {
-            registry.add("kudos.ability.web.ktor.engine.name") { "jetty" }
-        }
-
-    }
 
     @BeforeTest
     fun setup() {

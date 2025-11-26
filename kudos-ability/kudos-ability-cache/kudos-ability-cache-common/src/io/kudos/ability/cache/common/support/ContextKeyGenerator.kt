@@ -34,6 +34,6 @@ class ContextKeyGenerator : KeyGenerator {
         context.setVariable("_context", kudosContext)
         val parser: ExpressionParser = SpelExpressionParser()
         val expression = parser.parseExpression(cacheKey)
-        return expression.getValue<String>(context, String::class.java)
+        return expression.getValue(context, String::class.java)!!
     }
 }
