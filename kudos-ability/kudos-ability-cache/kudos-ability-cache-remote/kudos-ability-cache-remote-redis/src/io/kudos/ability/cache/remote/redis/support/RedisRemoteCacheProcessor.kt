@@ -18,14 +18,14 @@ class RedisRemoteCacheProcessor(private val kudosRedisTemplate: KudosRedisTempla
         }
     }
 
-    override fun clearCache(cacheKey: String, dataKey: String, allEntries: Boolean) {
+    override fun clearCache(cacheKey: String, s: String, b: Boolean) {
         if (cacheKey.isBlank()) {
             return
         }
-        if (allEntries) {
+        if (b) {
             kudosRedisTemplate.defaultRedisTemplate.delete(cacheKey)
-        } else if (dataKey.isNotBlank()) {
-            kudosRedisTemplate.defaultRedisTemplate.opsForHash<Any?, Any?>().delete(cacheKey, dataKey)
+        } else if (s.isNotBlank()) {
+            kudosRedisTemplate.defaultRedisTemplate.opsForHash<Any?, Any?>().delete(cacheKey, s)
         }
     }
 

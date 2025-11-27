@@ -266,7 +266,7 @@ object SystemKit {
      * @author K
      * @since 1.0.0
      */
-    fun isJavaAwtHeadless(): Boolean = SystemUtils.isJavaAwtHeadless()
+    fun isJavaAwtHeadless(): Boolean = GraphicsEnvironment.isHeadless()
 
     // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     // 封装org.apache.commons.lang3.SystemUtils
