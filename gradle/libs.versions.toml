@@ -58,6 +58,7 @@ xqlee-pngquant-png = "1.0.0"
 minio = "8.6.0"
 controlsfx = "11.2.2"
 commons-fileupload = "1.6.0"
+embabel-agent = "0.3.0"
 
 
 [libraries]
@@ -165,7 +166,8 @@ ktor-server-tomcat-jakarta = { module = "io.ktor:ktor-server-tomcat-jakarta-jvm"
 ktor-server-cio = { module = "io.ktor:ktor-server-cio-jvm" }
 ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation-jvm" }
 commons-fileupload = { module = "commons-fileupload:commons-fileupload", version.ref = "commons-fileupload"}
-
+ai-agent-starter-embabel = { module = "com.embabel.agent:embabel-agent-starter", version.ref = "embabel-agent"}
+ai-agent-test-embabel = { module = "com.embabel.agent:embabel-agent-test", version.ref = "embabel-agent"}
 
 # Libraries can be bundled together for easier import
 [bundles]
