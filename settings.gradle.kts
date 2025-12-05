@@ -34,6 +34,8 @@ include("kudos-tools")
 // test
 include("kudos-test:kudos-test-common")
 include("kudos-test:kudos-test-container")
+include("kudos-test:kudos-test-api:kudos-test-api-contract:kudos-test-api-contract-provider")
+include("kudos-test:kudos-test-api:kudos-test-api-contract:kudos-test-api-contract-consumer")
 
 // cache
 include("kudos-ability:kudos-ability-cache:kudos-ability-cache-common")
@@ -82,6 +84,9 @@ include("kudos-ability:kudos-ability-log:kudos-ability-log-audit:kudos-ability-l
 include("kudos-ability:kudos-ability-log:kudos-ability-log-audit:kudos-ability-log-audit-rdb:kudos-ability-log-audit-rdb-common")
 include("kudos-ability:kudos-ability-log:kudos-ability-log-audit:kudos-ability-log-audit-rdb:kudos-ability-log-audit-rdb-ktorm")
 
+// ai
+include("kudos-ability:kudos-ability-ai:kudos-ability-ai-agent:kudos-ability-ai-agent-embabel")
+
 
 // ui
 include("kudos-ability:kudos-ability-ui:kudos-ability-ui-javafx")
@@ -94,8 +99,8 @@ include("kudos-ability:kudos-ability-web:kudos-ability-web-ktor")
 
 // ams
 //// ams-sys
-include("kudos-ams:kudos-ams-sys:kudos-ams-sys-service")
+include("kudos-ams:kudos-ams-sys:kudos-ams-sys-provider")
 include("kudos-ams:kudos-ams-sys:kudos-ams-sys-common")
-include("kudos-ams:kudos-ams-sys:kudos-ams-sys-client")
-include("kudos-ams:kudos-ams-sys:kudos-ams-sys-api-view")
-include("kudos-ams:kudos-ams-sys:kudos-ams-sys-api-service")
+include("kudos-ams:kudos-ams-sys:kudos-ams-sys-consumer")
+include("kudos-ams:kudos-ams-sys:kudos-ams-sys-api-web")
+include("kudos-ams:kudos-ams-sys:kudos-ams-sys-api-provider")

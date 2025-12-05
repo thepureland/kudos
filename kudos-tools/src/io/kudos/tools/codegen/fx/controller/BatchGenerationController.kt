@@ -1,7 +1,7 @@
 package io.kudos.tools.codegen.fx.controller
 
-import io.kudos.tools.codegen.biz.CodeGenColumnBiz
-import io.kudos.tools.codegen.biz.CodeGenObjectBiz
+import io.kudos.tools.codegen.service.CodeGenColumnService
+import io.kudos.tools.codegen.service.CodeGenObjectService
 import io.kudos.tools.codegen.core.CodeGenerator
 import io.kudos.tools.codegen.core.CodeGeneratorContext
 import io.kudos.tools.codegen.core.TemplatePathProcessor
@@ -39,7 +39,7 @@ class BatchGenerationController : Initializable {
     }
 
     fun initTable() {
-        tableMap = CodeGenObjectBiz.readTables()
+        tableMap = CodeGenObjectService.readTables()
         entityTable.items = FXCollections.observableArrayList(tableMap.map { DbTable(false, it.key, it.value) })
     }
 
@@ -71,7 +71,7 @@ class BatchGenerationController : Initializable {
             selectTables.forEach {
                 CodeGeneratorContext.tableName = it.getTableName()
                 CodeGeneratorContext.tableComment = it.getTableComment() ?: ""
-                CodeGeneratorContext.columns = CodeGenColumnBiz.readColumns(it.getTableName())
+                CodeGeneratorContext.columns = CodeGenColumnService.readColumns(it.getTableName())
                 val templateModel = CodeGeneratorContext.templateModelCreator.create()
                 val allFilePaths = TemplatePathProcessor.readPaths(true)
                 val nonEntityRelativeFilePathnames = nonEntityRelativeFilePaths.map { f -> f.templateFileRelativePath }

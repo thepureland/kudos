@@ -52,8 +52,8 @@ class HintZoneServiceInstanceListSupplier(
     }
 
     private fun getHintFromHeader(context: RequestDataContext): String? {
-        val headers = context.clientRequest.headers
-        return headers.getFirst(properties.hintHeaderName)
+        val headers = context.clientRequest?.headers
+        return headers?.getFirst(properties.hintHeaderName)
     }
 
     private fun filteredByHint(instances: MutableList<ServiceInstance>, hint: String?): MutableList<ServiceInstance> {
@@ -65,7 +65,7 @@ class HintZoneServiceInstanceListSupplier(
 
             val filteredInstances = mutableListOf<ServiceInstance>()
             for (serviceInstance in instances) {
-                val serviceZone = serviceInstance.metadata.getOrDefault(ZONE, "")
+                val serviceZone = serviceInstance.metadata?.getOrDefault(ZONE, "")
                 if (serviceZone.isNullOrBlank() || serviceZone == zoneConfig.zone) {
                     //只取服务实际发布时,未配置zone || 与默认配置一致
                     filteredInstances.add(serviceInstance)
@@ -77,7 +77,7 @@ class HintZoneServiceInstanceListSupplier(
 
         val filteredInstances: MutableList<ServiceInstance> = ArrayList(instances.size)
         for (serviceInstance in instances) {
-            if (serviceInstance.metadata.getOrDefault(ZONE, "") == hint) {
+            if (serviceInstance.metadata?.getOrDefault(ZONE, "") == hint) {
                 filteredInstances.add(serviceInstance)
             }
         }

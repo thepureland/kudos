@@ -1,6 +1,6 @@
 package io.kudos.tools.codegen.fx.controller
 
-import io.kudos.tools.codegen.biz.CodeGenFileBiz
+import io.kudos.tools.codegen.service.CodeGenFileService
 import io.kudos.tools.codegen.core.CodeGenerator
 import io.kudos.tools.codegen.core.CodeGeneratorContext
 import io.kudos.tools.codegen.core.TemplatePathProcessor
@@ -42,7 +42,7 @@ class FilesController : Initializable {
 
     fun readFiles() {
         val genFiles = TemplatePathProcessor.readPaths(true)
-        val codeGenFiles = CodeGenFileBiz.read()
+        val codeGenFiles = CodeGenFileService.read()
         genFiles.forEach {
             it.setGenerate(codeGenFiles.contains(it.getFilename()))
         }

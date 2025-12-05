@@ -1,6 +1,6 @@
 package io.kudos.ability.distributed.stream.rocketmq.main
 
-import io.kudos.ability.distributed.stream.common.biz.ISysMqFailMsgBiz
+import io.kudos.ability.distributed.stream.common.biz.ISysMqFailMsgService
 import io.kudos.base.logger.LogFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -24,7 +24,7 @@ class RocketMqMainService : IRocketMqMainService {
     private lateinit var producerClient: IRocketMqProducerClient
 
     @Autowired
-    private lateinit var streamExceptionBiz: ISysMqFailMsgBiz
+    private lateinit var streamExceptionBiz: ISysMqFailMsgService
 
     @Autowired
     private lateinit var consumerHandler: RocketMqConsumerHandler
