@@ -1,8 +1,8 @@
 package io.kudos.tools.codegen.fx.controller
 
 import io.kudos.ability.ui.javafx.controls.AutoCompleteComboBoxListener
-import io.kudos.tools.codegen.biz.CodeGenColumnBiz
-import io.kudos.tools.codegen.biz.CodeGenObjectBiz
+import io.kudos.tools.codegen.service.CodeGenColumnService
+import io.kudos.tools.codegen.service.CodeGenObjectService
 import io.kudos.tools.codegen.core.CodeGeneratorContext
 import io.kudos.tools.codegen.model.vo.ColumnInfo
 import io.kudos.tools.codegen.model.vo.Config
@@ -51,7 +51,7 @@ class ColumnsController : Initializable {
         val columnList = columns
         val tableComment = tableComment
         val items = tableComboBox.items
-        tableMap = CodeGenObjectBiz.readTables()
+        tableMap = CodeGenObjectService.readTables()
         tableComboBox.items = FXCollections.observableArrayList(tableMap!!.keys.toSortedSet())
         AutoCompleteComboBoxListener<Any>(tableComboBox)
         if (items.isEmpty()) {
@@ -64,7 +64,7 @@ class ColumnsController : Initializable {
                             CodeGeneratorContext.tableName = newValue
                             object : Thread() {
                                 override fun run() {
-                                    val columns = CodeGenColumnBiz.readColumns(CodeGeneratorContext.tableName)
+                                    val columns = CodeGenColumnService.readColumns(CodeGeneratorContext.tableName)
                                     Platform.runLater { columnTable.items = FXCollections.observableArrayList(columns) }
                                     if(columnTable.items.all { it.getDetailItem() }) {
                                         detailCheckBox.selectedProperty().value = true

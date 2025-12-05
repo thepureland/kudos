@@ -1,8 +1,8 @@
 package io.kudos.ability.distributed.stream.common.init
 
 import io.kudos.ability.distributed.stream.common.annotations.MqProducerAspect
-import io.kudos.ability.distributed.stream.common.biz.ISysMqFailMsgBiz
-import io.kudos.ability.distributed.stream.common.biz.SysMqFailMsgBiz
+import io.kudos.ability.distributed.stream.common.biz.ISysMqFailMsgService
+import io.kudos.ability.distributed.stream.common.biz.SysMqFailMsgService
 import io.kudos.ability.distributed.stream.common.dao.StreamExceptionMsgDao
 import io.kudos.ability.distributed.stream.common.handler.IStreamFailHandler
 import io.kudos.ability.distributed.stream.common.handler.StreamGlobalExceptionHandler
@@ -62,7 +62,7 @@ open class StreamCommonConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    open fun streamExceptionBiz(): ISysMqFailMsgBiz = SysMqFailMsgBiz()
+    open fun streamExceptionBiz(): ISysMqFailMsgService = SysMqFailMsgService()
 
     @Bean
     @ConditionalOnMissingBean

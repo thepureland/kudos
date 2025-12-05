@@ -1,7 +1,7 @@
 package io.kudos.ability.distributed.stream.rocketmq.support
 
 import com.alibaba.fastjson2.JSONObject
-import io.kudos.ability.distributed.stream.common.biz.ISysMqFailMsgBiz
+import io.kudos.ability.distributed.stream.common.biz.ISysMqFailMsgService
 import io.kudos.ability.distributed.stream.common.model.po.SysMqFailMsg
 import io.kudos.ability.distributed.stream.rocketmq.init.properties.RocketMqProperties
 import io.kudos.base.logger.LogFactory
@@ -135,7 +135,7 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
         exceptionMsg.topic = topic!!
         exceptionMsg.msgBodyJson = JSONObject.toJSONString(data)
         exceptionMsg.createTime = LocalDateTime.now()
-        SpringKit.getBean(ISysMqFailMsgBiz::class).save(exceptionMsg)
+        SpringKit.getBean(ISysMqFailMsgService::class).save(exceptionMsg)
     }
 
     fun destroy() {

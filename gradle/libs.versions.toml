@@ -3,15 +3,15 @@
 # https://docs.gradle.org/current/userguide/platforms.html#sub::toml-dependencies-format
 
 [versions]
-kotlin = "2.2.21"
+kotlin = "2.3.0-RC2"
 kotlinxDatetime = "0.6.1"
 kotlinxSerializationJSON = "1.7.3"
 kotlinxCoroutines = "1.10.2"
 ktor = "3.3.0"
 ktorm = "4.1.1"
 spring-boot = "4.0.0"
-spring-cloud = "2025.1.0-RC1"
-alibaba-cloud = "2023.0.3.3"
+spring-cloud = "2025.1.0"
+alibaba-cloud = "2025.0.0.0"
 h2 = "2.4.240"
 postgres = "42.7.8"
 github-ben-manes-plugin = "0.53.0"
@@ -58,6 +58,7 @@ xqlee-pngquant-png = "1.0.0"
 minio = "8.6.0"
 controlsfx = "11.2.2"
 commons-fileupload = "1.6.0"
+embabel-agent = "0.3.0"
 
 
 [libraries]
@@ -103,6 +104,7 @@ spring-tx = { module = "org.springframework:spring-tx" }
 
 # kudos-test
 spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
+spring-boot-starter-webmvc-test = { module = "org.springframework.boot:spring-boot-starter-webmvc-test" }
 testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
 testcontainers-kafka = { module = "org.testcontainers:kafka", version.ref = "testcontainers" }
 testcontainers-junit-jupiter = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
@@ -167,7 +169,8 @@ ktor-server-tomcat-jakarta = { module = "io.ktor:ktor-server-tomcat-jakarta-jvm"
 ktor-server-cio = { module = "io.ktor:ktor-server-cio-jvm" }
 ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation-jvm" }
 commons-fileupload = { module = "commons-fileupload:commons-fileupload", version.ref = "commons-fileupload"}
-
+ai-agent-starter-embabel = { module = "com.embabel.agent:embabel-agent-starter", version.ref = "embabel-agent"}
+ai-agent-test-embabel = { module = "com.embabel.agent:embabel-agent-test", version.ref = "embabel-agent"}
 
 # Libraries can be bundled together for easier import
 [bundles]
