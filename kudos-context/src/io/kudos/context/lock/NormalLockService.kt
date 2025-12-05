@@ -50,11 +50,11 @@ class NormalLockService : ILockProvider<ReentrantLock> {
         this.reentrantLockManager.unlock(key)
     }
 
-    override fun tryLock(lockKey: String, second: Int): Boolean {
+    override fun tryLock(lockKey: String, sec: Int): Boolean {
         if (cacheKeyMap.containsKey(lockKey)) {
             return false
         }
-        val expireTime = System.currentTimeMillis() + (second * 1000)
+        val expireTime = System.currentTimeMillis() + (sec * 1000)
         //如果key不存在，则返回旧的值空，如果key存在，则不处理
         val old = cacheKeyMap.putIfAbsent(lockKey, expireTime as Long)
         if (old == null) {
@@ -83,10 +83,10 @@ class NormalLockService : ILockProvider<ReentrantLock> {
             return diff.compareTo(0L)
         }
 
-        override fun equals(obj: Any?): Boolean {
-            if (this === obj) return true
-            if (obj !is ExpiringKey<*>) return false
-            val that = obj
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is ExpiringKey<*>) return false
+            val that = other
             // 仅按 key 比较，以便 remove 时匹配
             return key == that.key
         }

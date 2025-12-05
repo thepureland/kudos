@@ -42,7 +42,7 @@ class MixCacheManager : AbstractCacheManager() {
 
     private val caches: MutableList<Cache> = ArrayList<Cache>()
 
-    override fun loadCaches(): Collection<out Cache> {
+    override fun loadCaches(): Collection<Cache> {
         return caches
     }
 

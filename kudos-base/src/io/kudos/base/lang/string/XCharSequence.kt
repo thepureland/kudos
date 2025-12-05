@@ -3,6 +3,7 @@ package io.kudos.base.lang.string
 import io.kudos.base.security.CryptoKit
 import io.kudos.base.security.DigestKit
 import org.apache.commons.lang3.StringUtils
+import org.apache.commons.lang3.Strings
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.util.regex.Matcher
@@ -590,7 +591,7 @@ fun CharSequence.deleteWhitespace(): String = StringUtils.deleteWhitespace(this.
  * @since 1.0.0
  */
 fun CharSequence.removePrefixIgnoreCase(remove: CharSequence?): String? =
-    StringUtils.removeStart(this.toString(), remove?.toString() ?: "")
+    Strings.CS.removeStart(this.toString(), remove?.toString() ?: "")
 
 /**
  * 如果子串在主串的末尾（大小写不敏感），则删除该子串，否则返回源主串
@@ -612,7 +613,7 @@ fun CharSequence.removePrefixIgnoreCase(remove: CharSequence?): String? =
  * @since 1.0.0
  */
 fun CharSequence.removeSuffixIgnoreCase(remove: CharSequence?): String? =
-    StringUtils.removeEndIgnoreCase(this.toString(), remove?.toString() ?: "")
+    Strings.CI.removeEnd(this.toString(), remove?.toString() ?: "")
 
 //endregion Remove
 
@@ -643,7 +644,7 @@ fun CharSequence.removeSuffixIgnoreCase(remove: CharSequence?): String? =
  * @since 1.0.0
  */
 fun CharSequence.replace(searchString: CharSequence?, replacement: CharSequence?, max: Int): String =
-    StringUtils.replace(this.toString(), searchString?.toString() ?: "", replacement?.toString() ?: "", max)
+    Strings.CS.replace(this.toString(), searchString?.toString() ?: "", replacement?.toString() ?: "", max)
 
 /**
  * 查找子串，并用指定字符串替换之（替换所有出现的地方），支持多对替换规则
@@ -1326,7 +1327,7 @@ fun Array<out CharSequence?>.getCommonPrefix(): String {
  * @since 1.0.0
  */
 fun CharSequence.startsWithAny(vararg searchStrings: CharSequence?): Boolean =
-    StringUtils.startsWithAny(this, *searchStrings)
+    Strings.CS.startsWithAny(this, *searchStrings)
 
 /**
  * 检查字符串的后缀是否为给定的任何一个值（大小写不敏感）
@@ -1344,7 +1345,7 @@ fun CharSequence.startsWithAny(vararg searchStrings: CharSequence?): Boolean =
  * @since 1.0.0
  */
 fun CharSequence.endsWithAny(vararg searchStrings: CharSequence?): Boolean =
-    StringUtils.endsWithAny(this, *searchStrings)
+    Strings.CS.endsWithAny(this, *searchStrings)
 
 /**
  * 通过去掉前导和尾随空白并使用单个空格替换一系列空白字符，使空白标准化。

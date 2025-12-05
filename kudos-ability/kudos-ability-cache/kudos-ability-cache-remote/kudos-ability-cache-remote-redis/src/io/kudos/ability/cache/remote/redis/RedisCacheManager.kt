@@ -28,8 +28,8 @@ class RedisCacheManager(
     @Autowired
     private lateinit var versionConfig: CacheVersionConfig
 
-    override fun initCacheAfterSystemInit(cacheConfigs: Map<String, CacheConfig>) {
-        cacheConfigs.forEach { (key: String, cacheConfig: CacheConfig) ->
+    override fun initCacheAfterSystemInit(cacheConfigMap: Map<String, CacheConfig>) {
+        cacheConfigMap.forEach { (key: String, cacheConfig: CacheConfig) ->
             val cache: RedisCache = createCache(cacheConfig)
             log.debug("初始化远程缓存【{0}】成功！", key)
             addCache(cache)
@@ -71,7 +71,7 @@ class RedisCacheManager(
         val realKey: String = versionConfig.getFinalCacheName(keyPrefix)
         val fullPattern = realKey + pattern
         val patternBytes = fullPattern.toByteArray(StandardCharsets.UTF_8)
-        cacheWriter.clean(realKey, patternBytes)
+        cacheWriter.clear(realKey, patternBytes)
     }
 
     private val log = LogFactory.getLog(this)
