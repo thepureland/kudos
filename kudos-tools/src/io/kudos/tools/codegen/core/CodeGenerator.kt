@@ -1,8 +1,8 @@
 package io.kudos.tools.codegen.core
 
 import io.kudos.base.io.FileKit
-import io.kudos.tools.codegen.biz.CodeGenFileBiz
-import io.kudos.tools.codegen.biz.CodeGenObjectBiz
+import io.kudos.tools.codegen.service.CodeGenFileService
+import io.kudos.tools.codegen.service.CodeGenObjectService
 import io.kudos.tools.codegen.core.merge.CodeMerger
 import io.kudos.tools.codegen.core.merge.PrivateContentEraser
 import io.kudos.tools.codegen.model.vo.GenFile
@@ -27,13 +27,13 @@ class CodeGenerator(
     }
 
     private fun persistence(): Boolean {
-        var success = CodeGenObjectBiz.saveOrUpdate()
+        var success = CodeGenObjectService.saveOrUpdate()
         if (success) {
-            success = io.kudos.tools.codegen.biz.CodeGenColumnBiz.saveColumns(
+            success = io.kudos.tools.codegen.service.CodeGenColumnService.saveColumns(
                 CodeGeneratorContext.tableName, CodeGeneratorContext.columns)
             if (success) {
                 val filenames = genFiles.filter { it.getGenerate() }.map { it.getFilename() }
-                success = CodeGenFileBiz.save(filenames)
+                success = CodeGenFileService.save(filenames)
             }
         }
         return success

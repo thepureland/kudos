@@ -2,7 +2,7 @@ package io.kudos.ability.web.springmvc.controller
 
 import io.kudos.base.error.ObjectNotFoundException
 import io.kudos.base.lang.GenericKit
-import io.kudos.base.support.biz.IBaseReadOnlyBiz
+import io.kudos.base.support.iservice.IBaseReadOnlyService
 import io.kudos.base.support.payload.FormPayload
 import io.kudos.base.support.payload.ListSearchPayload
 import io.kudos.base.support.result.IJsonResult
@@ -24,7 +24,7 @@ import kotlin.reflect.KClass
  * @author K
  * @since 1.0.0
  */
-open class BaseReadOnlyController<PK : Any, B : IBaseReadOnlyBiz<PK, *>, S : ListSearchPayload, R : IJsonResult, D : IJsonResult, F : FormPayload<PK>>
+open class BaseReadOnlyController<PK : Any, B : IBaseReadOnlyService<PK, *>, S : ListSearchPayload, R : IJsonResult, D : IJsonResult, F : FormPayload<PK>>
     : BaseController<F>() {
 
     @Autowired

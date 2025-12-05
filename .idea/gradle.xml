@@ -88,11 +88,11 @@
             <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-web/kudos-ability-web-springmvc" />
             <option value="$PROJECT_DIR$/kudos-ams" />
             <option value="$PROJECT_DIR$/kudos-ams/kudos-ams-sys" />
-            <option value="$PROJECT_DIR$/kudos-ams/kudos-ams-sys/kudos-ams-sys-api-service" />
-            <option value="$PROJECT_DIR$/kudos-ams/kudos-ams-sys/kudos-ams-sys-api-view" />
-            <option value="$PROJECT_DIR$/kudos-ams/kudos-ams-sys/kudos-ams-sys-client" />
+            <option value="$PROJECT_DIR$/kudos-ams/kudos-ams-sys/kudos-ams-sys-api-provider" />
+            <option value="$PROJECT_DIR$/kudos-ams/kudos-ams-sys/kudos-ams-sys-api-web" />
             <option value="$PROJECT_DIR$/kudos-ams/kudos-ams-sys/kudos-ams-sys-common" />
-            <option value="$PROJECT_DIR$/kudos-ams/kudos-ams-sys/kudos-ams-sys-service" />
+            <option value="$PROJECT_DIR$/kudos-ams/kudos-ams-sys/kudos-ams-sys-consumer" />
+            <option value="$PROJECT_DIR$/kudos-ams/kudos-ams-sys/kudos-ams-sys-provider" />
             <option value="$PROJECT_DIR$/kudos-base" />
             <option value="$PROJECT_DIR$/kudos-context" />
             <option value="$PROJECT_DIR$/kudos-test" />

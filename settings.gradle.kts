@@ -99,8 +99,8 @@ include("kudos-ability:kudos-ability-web:kudos-ability-web-ktor")
 
 // ams
 //// ams-sys
-include("kudos-ams:kudos-ams-sys:kudos-ams-sys-service")
+include("kudos-ams:kudos-ams-sys:kudos-ams-sys-provider")
 include("kudos-ams:kudos-ams-sys:kudos-ams-sys-common")
-include("kudos-ams:kudos-ams-sys:kudos-ams-sys-client")
-include("kudos-ams:kudos-ams-sys:kudos-ams-sys-api-view")
-include("kudos-ams:kudos-ams-sys:kudos-ams-sys-api-service")
+include("kudos-ams:kudos-ams-sys:kudos-ams-sys-consumer")
+include("kudos-ams:kudos-ams-sys:kudos-ams-sys-api-web")
+include("kudos-ams:kudos-ams-sys:kudos-ams-sys-api-provider")
