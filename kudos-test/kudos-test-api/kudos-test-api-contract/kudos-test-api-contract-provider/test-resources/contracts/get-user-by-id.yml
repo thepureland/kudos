@@ -1,0 +1,25 @@
+description: 根據 ID 查詢用戶
+name: get_user_by_id
+
+request:
+  method: GET
+  urlPath: /users/[0-9]+
+  matchers:
+    url:
+      - path: /users/[0-9]+
+        type: by_regex
+
+response:
+  status: 200
+  headers:
+    Content-Type: application/json
+  body:
+    id: 1
+    name: Tom
+  matchers:
+    body:
+      - path: $.id
+        type: by_regex
+        value: "[0-9]+"
+      - path: $.name
+        type: by_type
