@@ -1,6 +1,6 @@
 package io.kudos.ability.web.springmvc.controller
 
-import io.kudos.base.support.biz.IBaseCrudBiz
+import io.kudos.base.support.iservice.IBaseCrudService
 import io.kudos.base.support.payload.FormPayload
 import io.kudos.base.support.payload.ListSearchPayload
 import io.kudos.base.support.result.IJsonResult
@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RequestBody
  * @author K
  * @since 1.0.0
  */
-open class BaseCrudController<PK : Any, B : IBaseCrudBiz<PK, *>, S : ListSearchPayload, R : IJsonResult, D : IJsonResult, F : FormPayload<PK>> :
+open class BaseCrudController<PK : Any, B : IBaseCrudService<PK, *>, S : ListSearchPayload, R : IJsonResult, D : IJsonResult, F : FormPayload<PK>> :
     BaseReadOnlyController<PK, B, S, R, D, F>() {
 
     /**
