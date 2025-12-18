@@ -491,11 +491,11 @@ object JsonKit {
 
     /**
      * 将普通 Java Bean（有 getXxx() 访问器）转换为 JsonElement。
-     * - 使用 JavaBeans Introspector，截止到 Object.class，因此不会包含 "class" 属性
+     * - 使用 JavaBeans Introspector，截止到 Any.class，因此不会包含 "class" 属性
      * - 递归地调用 encodeAnyToJsonElement 处理嵌套
      */
     private fun javaBeanToJsonElement(json: Json, bean: Any): JsonElement {
-        val info = Introspector.getBeanInfo(bean.javaClass, Object::class.java)
+        val info = Introspector.getBeanInfo(bean.javaClass, Any::class.java)
         val props = info.propertyDescriptors
         val ordered = LinkedHashMap<String, JsonElement>(props.size)
         for (pd in props) {

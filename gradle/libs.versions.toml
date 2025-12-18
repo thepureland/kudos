@@ -3,7 +3,7 @@
 # https://docs.gradle.org/current/userguide/platforms.html#sub::toml-dependencies-format
 
 [versions]
-kotlin = "2.3.0-RC2"
+kotlin = "2.3.0"
 kotlinxDatetime = "0.6.1"
 kotlinxSerializationJSON = "1.7.3"
 kotlinxCoroutines = "1.10.2"
@@ -123,7 +123,6 @@ spring-boot-starter-data-redis = { module = "org.springframework.boot:spring-boo
 spring-boot-starter-cache = { module = "org.springframework.boot:spring-boot-starter-cache"}
 spring-boot-starter-jdbc = { module = "org.springframework.boot:spring-boot-starter-jdbc"}
 spring-boot-starter-jetty = { module = "org.springframework.boot:spring-boot-starter-jetty"}
-spring-boot-starter-webmvc-test = { module = "org.springframework.boot:spring-boot-starter-webmvc-test"}
 spring-boot-properties-migrator = { module = "org.springframework.boot:spring-boot-properties-migrator" }
 #spring-boot-starter-undertow = { module = "org.springframework.boot:spring-boot-starter-undertow"}
 spring-boot-starter-flyway = { module = "org.springframework.boot:spring-boot-starter-flyway"}
