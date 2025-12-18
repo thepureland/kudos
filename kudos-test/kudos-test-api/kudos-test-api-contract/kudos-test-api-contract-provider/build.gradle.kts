@@ -1,4 +1,5 @@
 plugins {
+    java
     id("org.springframework.cloud.contract") version "5.0.0"
 }
 
@@ -13,12 +14,21 @@ dependencies {
 
 // Spring Cloud Contract 插件配置
 contracts {
-    // 契约文件目录（默认就是这个，可不写）
-    contractsDslDir.set(file("test-resources/contracts"))
+    // 契约文件目录
+//    contractsDslDir.set(file("test-resources/contracts"))
+    contractsDslDir.set(file("$projectDir/src/contractTest/resources/contracts"))
+
 
     // 生成的测试使用哪个基类
-    baseClassForTests.set("com.example.contract.BaseContractTest")
+    baseClassForTests.set("io.kudos.test.api.contract.provider.BaseContractTest")
+
+    testFramework.set(org.springframework.cloud.contract.verifier.config.TestFramework.JUNIT5)
+    testMode.set(org.springframework.cloud.contract.verifier.config.TestMode.MOCKMVC)
 
     // 是否生成 stubs
-    failOnNoContracts.set(false)
+    failOnNoContracts.set(true)
+}
+
+tasks.withType<Test>().configureEach {
+    useJUnitPlatform()
 }

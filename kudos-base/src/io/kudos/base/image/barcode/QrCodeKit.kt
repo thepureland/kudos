@@ -64,7 +64,7 @@ object QrCodeKit {
         sideLength: Int = 300, logoSideLength: Int = sideLength / 5, margin: Int = 0
     ): BufferedImage {
         val logoImage = ImageKit.scale(logoImagePath, logoSideLength, logoSideLength, true)
-        return genQrCode(content, logoImage!!, sideLength, margin)
+        return genQrCode(content, logoImage, sideLength, margin)
     }
 
     /**

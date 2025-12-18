@@ -25,6 +25,7 @@ open class TemplateModelCreator {
         templateModel["project"] = config.getTemplateInfo().name
         templateModel[Config.PROP_KEY_PACKAGE_PREFIX] = config.getPackagePrefix()
         templateModel[Config.PROP_KEY_MODULE_NAME] = config.getModuleName()
+        templateModel["moduleCapitalize"] = config.getModuleName().capitalize()
         templateModel[Config.PROP_KEY_AUTHOR] = config.getAuthor()
         templateModel[Config.PROP_KEY_VERSION] = config.getVersion()
         return templateModel
