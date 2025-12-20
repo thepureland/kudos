@@ -1,4 +1,7 @@
 spring:
+#  sql:
+#    init:
+#      schema-locations: sql/schema.sql
   datasource:
     dynamic:
       primary: ds2

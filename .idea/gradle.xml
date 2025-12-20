@@ -49,6 +49,7 @@
             <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-data/kudos-ability-data-rdb/kudos-ability-data-rdb-flyway" />
             <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-data/kudos-ability-data-rdb/kudos-ability-data-rdb-jdbc" />
             <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-data/kudos-ability-data-rdb/kudos-ability-data-rdb-ktorm" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-data/kudos-ability-data-vectordb" />
             <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-distributed" />
             <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-distributed/kudos-ability-distributed-client" />
             <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-distributed/kudos-ability-distributed-client/kudos-ability-distributed-client-feign" />

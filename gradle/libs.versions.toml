@@ -50,7 +50,7 @@ alibaba-fastjson2 = "2.0.59"
 alibaba-seata = "2.0.0"
 amazon-awssdk = "2.35.0"
 apache-common-pool2 = "2.12.1"
-baomidou-dynamic-datasource = "4.3.1"
+baomidou-dynamic-datasource = "4.5.0"
 redisson = "3.52.0"
 sejda-webp-imageio = "0.1.6"
 coobird-thumbnailator = "0.4.21"
@@ -148,7 +148,7 @@ postgresql = { module = "org.postgresql:postgresql", version.ref = "postgres"}
 ktorm-support-postgresql = { module = "org.ktorm:ktorm-support-postgresql", version.ref = "ktorm"}
 ktorm-core = { module = "org.ktorm:ktorm-core", version.ref = "ktorm"}
 ktorm-jackson = { module = "org.ktorm:ktorm-jackson", version.ref = "ktorm"}
-baomidou-dynamic-datasource-starter = { module = "com.baomidou:dynamic-datasource-spring-boot3-starter", version.ref = "baomidou-dynamic-datasource"}
+baomidou-dynamic-datasource-starter = { module = "com.baomidou:dynamic-datasource-spring-boot4-starter", version.ref = "baomidou-dynamic-datasource"}
 redisson = { module = "org.redisson:redisson", version.ref = "redisson"}
 sejda-webp-imageio = { module = "org.sejda.imageio:webp-imageio", version.ref = "sejda-webp-imageio"}
 coobird-thumbnailator = { module = "net.coobird:thumbnailator", version.ref = "coobird-thumbnailator"}
