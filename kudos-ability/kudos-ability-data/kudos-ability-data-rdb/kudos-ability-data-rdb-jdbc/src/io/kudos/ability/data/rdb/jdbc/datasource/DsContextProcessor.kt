@@ -74,7 +74,7 @@ class DsContextProcessor {
     }
 
     protected fun getDatasourceKey(dsId: String?): String? { //TODO
-        val dataSourceKey: String? = dsId
+        val dataSourceKey = dsId
         val ds: DynamicRoutingDataSource = dataSource as DynamicRoutingDataSource
         if (!ds.dataSources.containsKey(dataSourceKey)) {
             // 该dsKey数据源未初始化，加载配置并初始化
@@ -100,13 +100,17 @@ class DsContextProcessor {
      * @param dsKey
      */
     fun getDataSource(dsKey: String?): DataSource? {
-        val ds: DynamicRoutingDataSource = dataSource as DynamicRoutingDataSource
-        return ds.getDataSource(dsKey)
+        return when (dataSource) {
+            is DynamicRoutingDataSource -> (dataSource as DynamicRoutingDataSource).getDataSource(dsKey)
+            else -> dataSource // 单数据源：走单库逻辑
+        }
     }
 
     fun haveDataSource(dsKey: String?): Boolean {
-        val ds: DynamicRoutingDataSource = dataSource as DynamicRoutingDataSource
-        return ds.dataSources.containsKey(dsKey)
+        return when (dataSource) {
+            is DynamicRoutingDataSource -> (dataSource as DynamicRoutingDataSource).dataSources.containsKey(dsKey)
+            else -> true // 单数据源：直接认为存在即可，或走单库逻辑
+        }
     }
 
     fun refreshDatasource(dsId: Int?) {
@@ -130,8 +134,10 @@ class DsContextProcessor {
     }
 
     fun currentDataSource(): DataSource? {
-        val ds: DynamicRoutingDataSource = dataSource as DynamicRoutingDataSource
-        return ds.determineDataSource()
+        return when (dataSource) {
+            is DynamicRoutingDataSource -> (dataSource as DynamicRoutingDataSource).determineDataSource()
+            else -> dataSource // 单数据源：走单库逻辑
+        }
     }
 
     private val log = LogFactory.getLog(this)
