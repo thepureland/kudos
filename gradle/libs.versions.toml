@@ -11,6 +11,7 @@ ktor = "3.3.0"
 ktorm = "4.1.1"
 spring-boot = "4.0.1"
 spring-cloud = "2025.1.0"
+spring-ai = "2.0.0-M1"
 alibaba-cloud = "2025.0.0.0"
 h2 = "2.4.240"
 postgres = "42.7.8"
@@ -70,6 +71,7 @@ kotlin-test-junit5 = { module = "org.jetbrains.kotlin:kotlin-test-junit5", versi
 # bom
 spring-boot-bom = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "spring-boot" }
 spring-cloud-bom = { module = "org.springframework.cloud:spring-cloud-dependencies", version.ref = "spring-cloud" }
+spring-ai-bom = { module = "org.springframework.ai:spring-ai-bom", version.ref = "spring-ai" }
 alibaba-cloud-bom = { module = "com.alibaba.cloud:spring-cloud-alibaba-dependencies", version.ref = "alibaba-cloud" }
 ktor-bom = { module = "io.ktor:ktor-bom", version.ref = "ktor" }
 
@@ -131,6 +133,9 @@ spring-cloud-starter-openfeign = { module = "org.springframework.cloud:spring-cl
 spring-cloud-stream = { module = "org.springframework.cloud:spring-cloud-stream"}
 spring-cloud-starter-stream-kafka = { module = "org.springframework.cloud:spring-cloud-starter-stream-kafka"}
 spring-cloud-starter-stream-rabbit = { module = "org.springframework.cloud:spring-cloud-starter-stream-rabbit"}
+spring-ai-vector-store = { module = "org.springframework.ai:spring-ai-vector-store"}
+spring-ai-pgvector-store = { module = "org.springframework.ai:spring-ai-pgvector-store"}
+spring-ai-milvus-store = { module = "org.springframework.ai:spring-ai-milvus-store"}
 alibaba-cloud-nacos-config = { module = "com.alibaba.cloud:spring-cloud-starter-alibaba-nacos-config"}
 alibaba-cloud-nacos-discovery = { module = "com.alibaba.cloud:spring-cloud-starter-alibaba-nacos-discovery"}
 alibaba-cloud-starter-stream-rocketmq = { module = "com.alibaba.cloud:spring-cloud-starter-stream-rocketmq"}
