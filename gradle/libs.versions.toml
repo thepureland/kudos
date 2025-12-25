@@ -134,6 +134,7 @@ spring-cloud-stream = { module = "org.springframework.cloud:spring-cloud-stream"
 spring-cloud-starter-stream-kafka = { module = "org.springframework.cloud:spring-cloud-starter-stream-kafka"}
 spring-cloud-starter-stream-rabbit = { module = "org.springframework.cloud:spring-cloud-starter-stream-rabbit"}
 spring-ai-vector-store = { module = "org.springframework.ai:spring-ai-vector-store"}
+spring-ai-starter-vector-store-pgvector = { module = "org.springframework.ai:spring-ai-starter-vector-store-pgvector" }
 spring-ai-pgvector-store = { module = "org.springframework.ai:spring-ai-pgvector-store"}
 spring-ai-milvus-store = { module = "org.springframework.ai:spring-ai-milvus-store"}
 alibaba-cloud-nacos-config = { module = "com.alibaba.cloud:spring-cloud-starter-alibaba-nacos-config"}

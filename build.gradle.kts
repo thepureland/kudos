@@ -5,6 +5,7 @@ import org.gradle.api.plugins.JavaPluginExtension
 
 val spring_boot_bom = libs.spring.boot.bom
 val spring_cloud_bom = libs.spring.cloud.bom
+val spring_ai_bom = libs.spring.ai.bom
 val alibaba_cloud_bom = libs.alibaba.cloud.bom
 val ktor_bom = libs.ktor.bom
 
@@ -47,6 +48,7 @@ subprojects {
     dependencies {
         add("implementation", platform(spring_boot_bom))
         add("implementation", platform(spring_cloud_bom))
+        add("implementation", platform(spring_ai_bom))
         add("implementation", platform(alibaba_cloud_bom))
         add("implementation", platform(ktor_bom))
 //      add("testImplementation", libs.kotlin.test.junit5)

@@ -6,6 +6,7 @@ import io.kudos.test.container.kit.bindingPort
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.wait.strategy.Wait
+import java.sql.DriverManager
 
 
 /**
@@ -14,13 +15,13 @@ import org.testcontainers.containers.wait.strategy.Wait
  * @author K
  * @since 1.0.0
  */
-class PgVectorTestContainer {
+object PgVectorTestContainer {
 
     private const val IMAGE_NAME = "pgvector/pgvector:0.8.1-pg18-trixie"
 
     const val DATABASE = "test"
 
-    const val PORT = 25432
+    const val PORT = 25433
 
     const val CONTAINER_PORT = 5432
 
@@ -60,13 +61,30 @@ class PgVectorTestContainer {
             val running = TestContainerKit.isContainerRunning(LABEL)
             val runningContainer = TestContainerKit.startContainerIfNeeded(LABEL, container)
             if (!running) { // first time start, init after start.
-                container.execInContainer(
+                // 启用扩展
+                val result = container.execInContainer(
                     "bash", "-lc",
-                    """psql -U test -d test -c 'CREATE EXTENSION IF NOT EXISTS vector;'
-                       psql -U test -d test -c 'CREATE EXTENSION IF NOT EXISTS hstore;'
-                       psql -U test -d test -c 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
+                    """
+                    set -euo pipefail
+                
+                    USER="${'$'}{POSTGRES_USER:-postgres}"
+                    DB="${'$'}{POSTGRES_DB:-${'$'}USER}"
+                    PASS="${'$'}{POSTGRES_PASSWORD:-}"
+                
+                    export PGPASSWORD="${'$'}PASS"
+                
+                    psql -h 127.0.0.1 -p 5432 -U "${'$'}USER" -d "${'$'}DB" -v ON_ERROR_STOP=1 -c "
+                      CREATE EXTENSION IF NOT EXISTS vector;
+                      CREATE EXTENSION IF NOT EXISTS hstore;
+                      CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";
+                    "
                     """.trimIndent()
                 )
+
+                require(result.exitCode == 0) {
+                    "Init extensions failed.\nSTDOUT:\n${result.stdout}\nSTDERR:\n${result.stderr}"
+                }
+
             }
             if (registry != null) {
                 registerProperties(registry, runningContainer)
@@ -90,7 +108,7 @@ class PgVectorTestContainer {
      *
      * @return 容器对象，如果没有返回null
      */
-    fun getRunningContainer() : Container? = TestContainerKit.getRunningContainer(LABEL)
+    fun getRunningContainer(): Container? = TestContainerKit.getRunningContainer(LABEL)
 
     @JvmStatic
     fun main(args: Array<String>?) {
