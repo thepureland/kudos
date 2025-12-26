@@ -1,0 +1,33 @@
+spring:
+  ai:
+    vectorstore:
+      milvus:
+        # 让 Spring AI 自动建 collection/index（测试建议开）
+        initialize-schema: true
+
+        # collection 名称（建议测试用独立名字）
+        collection-name: kudos_milvus_vector_store_test
+
+        # 必须与你的 EmbeddingModel.dimensions() 一致
+        embedding-dimension: 8
+
+        # Milvus 连接（本地手跑时用；Testcontainers 注入会覆盖）
+        host: localhost
+        port: 19530
+
+        # 距离度量：COSINE / L2 / IP（与索引/搜索参数配套）
+        metric-type: COSINE
+
+        # 索引类型：常见 IVF_FLAT / HNSW 等
+        index-type: IVF_FLAT
+
+        # 索引参数（IVF 常用 nlist；HNSW 常用 M/efConstruction）
+        index-parameters: '{"nlist":64}'
+
+        # 是否 Milvus auto-id（测试建议 false，自己指定 Document.id 更可控）
+        auto-id: false
+
+logging:
+  level:
+    org.springframework.ai: DEBUG
+    org.springframework.jdbc: INFO

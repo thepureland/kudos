@@ -37,7 +37,7 @@ apache-xmlgraphics-batik = "1.19"
 github-classgraph = "4.8.181"
 
 # kudos-test
-testcontainers = "1.21.3"
+testcontainers = "2.0.3"
 
 # kudos-tools
 freemarker = "2.3.34"
@@ -108,8 +108,8 @@ spring-tx = { module = "org.springframework:spring-tx" }
 spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
 spring-boot-starter-webmvc-test = { module = "org.springframework.boot:spring-boot-starter-webmvc-test" }
 testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
-testcontainers-kafka = { module = "org.testcontainers:kafka", version.ref = "testcontainers" }
-testcontainers-junit-jupiter = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
+testcontainers-kafka = { module = "org.testcontainers:testcontainers-kafka", version.ref = "testcontainers" }
+testcontainers-junit-jupiter = { module = "org.testcontainers:testcontainers-junit-jupiter", version.ref = "testcontainers" }
 
 # kudos-tools
 freemarker = { module = "org.freemarker:freemarker", version.ref = "freemarker" }
@@ -135,8 +135,7 @@ spring-cloud-starter-stream-kafka = { module = "org.springframework.cloud:spring
 spring-cloud-starter-stream-rabbit = { module = "org.springframework.cloud:spring-cloud-starter-stream-rabbit"}
 spring-ai-vector-store = { module = "org.springframework.ai:spring-ai-vector-store"}
 spring-ai-starter-vector-store-pgvector = { module = "org.springframework.ai:spring-ai-starter-vector-store-pgvector" }
-spring-ai-pgvector-store = { module = "org.springframework.ai:spring-ai-pgvector-store"}
-spring-ai-milvus-store = { module = "org.springframework.ai:spring-ai-milvus-store"}
+spring-ai-starter-vector-store-milvus = { module = "org.springframework.ai:spring-ai-starter-vector-store-milvus" }
 alibaba-cloud-nacos-config = { module = "com.alibaba.cloud:spring-cloud-starter-alibaba-nacos-config"}
 alibaba-cloud-nacos-discovery = { module = "com.alibaba.cloud:spring-cloud-starter-alibaba-nacos-discovery"}
 alibaba-cloud-starter-stream-rocketmq = { module = "com.alibaba.cloud:spring-cloud-starter-stream-rocketmq"}
