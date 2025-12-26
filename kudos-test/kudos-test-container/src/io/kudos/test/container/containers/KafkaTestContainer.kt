@@ -66,7 +66,7 @@ object KafkaTestContainer {
     fun main(args: Array<String>?) {
         startIfNeeded(null)
         println("kafka started.")
-        Thread.sleep(Long.Companion.MAX_VALUE)
+        Thread.sleep(Long.MAX_VALUE)
     }
 
 }
