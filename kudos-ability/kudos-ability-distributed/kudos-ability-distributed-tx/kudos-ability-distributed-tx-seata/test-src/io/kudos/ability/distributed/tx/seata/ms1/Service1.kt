@@ -1,19 +1,14 @@
 package io.kudos.ability.distributed.tx.seata.ms1
 
-import io.kudos.ability.data.rdb.jdbc.kit.RdbKit
 import io.kudos.ability.data.rdb.ktorm.datasource.currentDataSource
-import io.kudos.ability.data.rdb.ktorm.kit.getDatabase
 import io.kudos.ability.distributed.tx.seata.data.TestTable
 import io.kudos.ability.distributed.tx.seata.data.TestTableDao
 import io.kudos.base.logger.LogFactory
 import io.kudos.context.core.KudosContextHolder
-import io.kudos.context.kit.SpringKit
-import io.seata.core.context.RootContext
+import org.apache.seata.core.context.RootContext
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import javax.sql.DataSource
-import kotlin.test.assertFalse
 
 /**
  * 微服务应用1的service

@@ -5,19 +5,14 @@ import io.kudos.ability.data.rdb.jdbc.init.JdbcAutoConfiguration
 import io.kudos.base.logger.LogFactory
 import io.kudos.context.config.YamlPropertySourceFactory
 import io.kudos.context.init.IComponentInitializer
-import io.seata.rm.datasource.DataSourceProxy
-import org.ktorm.database.Database
-import org.ktorm.logging.Slf4jLoggerAdapter
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
-import org.springframework.boot.jdbc.DataSourceBuilder
+import org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Primary
 import org.springframework.context.annotation.PropertySource
-import javax.sql.DataSource
 
 
 /**

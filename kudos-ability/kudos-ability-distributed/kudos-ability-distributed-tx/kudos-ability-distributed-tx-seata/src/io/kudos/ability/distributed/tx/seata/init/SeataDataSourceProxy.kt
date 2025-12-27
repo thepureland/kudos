@@ -2,9 +2,9 @@ package io.kudos.ability.distributed.tx.seata.init
 
 import com.baomidou.dynamic.datasource.enums.SeataMode
 import io.kudos.ability.data.rdb.jdbc.datasource.IDataSourceProxy
-import io.seata.core.model.BranchType
-import io.seata.rm.datasource.DataSourceProxy
-import io.seata.rm.datasource.xa.DataSourceProxyXA
+import org.apache.seata.core.model.BranchType
+import org.apache.seata.rm.datasource.DataSourceProxy
+import org.apache.seata.rm.datasource.xa.DataSourceProxyXA
 import org.springframework.beans.factory.annotation.Value
 import javax.sql.DataSource
 
