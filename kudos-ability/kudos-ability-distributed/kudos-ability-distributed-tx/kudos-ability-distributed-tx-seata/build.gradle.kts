@@ -1,9 +1,6 @@
 dependencies {
     api(project(":kudos-ability:kudos-ability-data:kudos-ability-data-rdb:kudos-ability-data-rdb-jdbc"))
-    api(libs.alibaba.seata)
-    api(libs.alibaba.cloud.starter.seata) {
-        exclude("io.seata", "seata-spring-boot-starter")
-    }
+    api(libs.seata.spring.boot.starter)
 
     testImplementation(project(":kudos-test:kudos-test-container"))
     api(project(":kudos-ability:kudos-ability-data:kudos-ability-data-rdb:kudos-ability-data-rdb-ktorm"))

@@ -7,8 +7,8 @@ import io.kudos.ability.distributed.tx.seata.ms1.IService1
 import io.kudos.ability.distributed.tx.seata.ms1.Service1
 import io.kudos.ability.distributed.tx.seata.ms2.IService2
 import io.kudos.ability.distributed.tx.seata.ms2.Service2
-import io.seata.core.context.RootContext
-import io.seata.spring.annotation.GlobalTransactional
+import org.apache.seata.core.context.RootContext
+import org.apache.seata.spring.annotation.GlobalTransactional
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Import

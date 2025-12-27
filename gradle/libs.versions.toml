@@ -48,7 +48,7 @@ javafx = "25"
 github-caffeine = "3.2.3"
 alibabacloud-dysmsapi = "4.0.7"
 alibaba-fastjson2 = "2.0.60"
-alibaba-seata = "2.0.0"
+apache-seata = "2.5.0"
 amazon-awssdk = "2.40.15"
 apache-common-pool2 = "2.13.0"
 baomidou-dynamic-datasource = "4.5.0"
@@ -139,11 +139,10 @@ spring-ai-starter-vector-store-milvus = { module = "org.springframework.ai:sprin
 alibaba-cloud-nacos-config = { module = "com.alibaba.cloud:spring-cloud-starter-alibaba-nacos-config"}
 alibaba-cloud-nacos-discovery = { module = "com.alibaba.cloud:spring-cloud-starter-alibaba-nacos-discovery"}
 alibaba-cloud-starter-stream-rocketmq = { module = "com.alibaba.cloud:spring-cloud-starter-stream-rocketmq"}
-alibaba-cloud-starter-seata = { module = "com.alibaba.cloud:spring-cloud-starter-alibaba-seata"}
 alibaba-cloud-dysmsapi = { module = "com.aliyun:alibabacloud-dysmsapi20170525", version.ref = "alibabacloud-dysmsapi"}
 alibaba-fastjson2 = { module = "com.alibaba.fastjson2:fastjson2", version.ref = "alibaba-fastjson2"}
 alibaba-fastjson2-spring = { module = "com.alibaba.fastjson2:fastjson2-extension-spring5", version.ref = "alibaba-fastjson2"}
-alibaba-seata = { module = "io.seata:seata-spring-boot-starter", version.ref = "alibaba-seata"}
+seata-spring-boot-starter = { module = "org.apache.seata:seata-spring-boot-starter", version.ref = "apache-seata"}
 apache-commons-pool2 = { module = "org.apache.commons:commons-pool2", version.ref = "apache-common-pool2"}
 github-caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "github-caffeine"}
 amazon-awssdk-sns = { module = "software.amazon.awssdk:sns", version.ref = "amazon-awssdk"}
