@@ -12,7 +12,7 @@ import java.io.Serializable
 import java.time.LocalDateTime
 import java.util.*
 import kotlin.test.Test
-import kotlin.test.assertTrue
+import kotlin.test.assertEquals
 
 /**
  * redis测试用例
@@ -31,11 +31,11 @@ internal class RedisTemplateTest {
     fun test() {
         val pair = Pair("1st", "2nd")
         redisTemplate.opsForValue().set("test", pair)
-        assertTrue(redisTemplate.opsForValue().get("test") == pair)
+        assertEquals(redisTemplate.opsForValue().get("test"), pair)
 
         val obj = TestObject("module", 18, "name", Date().toLocalDateTime())
         redisTemplate.opsForValue().set("obj", obj)
-        assertTrue(redisTemplate.opsForValue().get("obj") == obj)
+        assertEquals(redisTemplate.opsForValue().get("obj"), obj)
 
         // 只有jdk序列化方式才可以
 //        val map = mapOf(obj to "value")

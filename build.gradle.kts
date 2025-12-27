@@ -1,7 +1,4 @@
 import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import org.gradle.api.plugins.JavaPluginExtension
 
 val spring_boot_bom = libs.spring.boot.bom
 val spring_cloud_bom = libs.spring.cloud.bom
@@ -12,21 +9,6 @@ val ktor_bom = libs.ktor.bom
 subprojects {
     // 所有子模块都应用 Kotlin JVM 插件
     apply(plugin = "org.jetbrains.kotlin.jvm")
-
-    //TODO delete when kotlin support jdk25
-    // ✅ 这里不要再用 java { }，而是用 JavaPluginExtension 来配
-    the<JavaPluginExtension>().apply {
-        sourceCompatibility = JavaVersion.VERSION_24
-        targetCompatibility = JavaVersion.VERSION_24
-    }
-
-    //TODO delete when kotlin support jdk25
-    // Kotlin 使用新的 compilerOptions 写法，统一 jvmTarget = 24
-    tasks.withType<KotlinCompile>().configureEach {
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_24)
-        }
-    }
 
     // Kotlin 源码目录
     extensions.configure<org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension> {
