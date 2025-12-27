@@ -70,6 +70,7 @@ fun String.isNonStable(): Boolean {
     return !stableKeyword && !matches(regex)
 }
 
+// 執行命令：./gradlew dependencyUpdates
 tasks.withType<DependencyUpdatesTask> {
     rejectVersionIf {
         candidate.version.isNonStable() && !currentVersion.isNonStable()
