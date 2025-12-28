@@ -38,7 +38,7 @@ internal class BeanKitTest {
     fun shallowClone() {
         val dest = BeanKit.shallowClone(person)
         assertEquals(person, dest)
-        assertTrue(person.address === dest.address) // 证明是浅克隆
+        assertSame(person.address, dest.address) // 证明是浅克隆
         assertEquals(true, dest.active)
     }
 
@@ -55,7 +55,7 @@ internal class BeanKitTest {
         val dest = Person()
         BeanKit.copyProperties(person, dest)
         assertEquals(person, dest)
-        assertTrue(person.address === dest.address) // 证明是浅克隆
+        assertSame(person.address, dest.address) // 证明是浅克隆
         assertEquals(true, dest.active)
     }
 
@@ -65,10 +65,10 @@ internal class BeanKitTest {
         assertEquals(person.age, map["age"])
         assertEquals(person.name, map["name"])
         assertEquals(person.sex, map["sex"])
-        assertTrue(person.address === map["address"])
-        assertTrue(person.birthday === map["birthday"])
-        assertTrue(person.contact === map["contact"])
-        assertTrue(person.goods === map["goods"])
+        assertSame(person.address, map["address"])
+        assertSame(person.birthday, map["birthday"])
+        assertSame(person.contact, map["contact"])
+        assertSame(person.goods, map["goods"])
         assertEquals(true, person.active)
     }
 
@@ -104,7 +104,7 @@ internal class BeanKitTest {
     fun copyPropertiesToClassInstance() {
         val dest: Person = BeanKit.copyProperties(Person::class, person)
         assertEquals(person, dest)
-        assertTrue(person.address === dest.address) // 证明是浅克隆
+        assertSame(person.address, dest.address) // 证明是浅克隆
         assertEquals(true, dest.active)
     }
 
@@ -113,7 +113,7 @@ internal class BeanKitTest {
         val dest = Person()
         BeanKit.copyPropertiesExcludeId(person, dest)
         assertEquals(person.age, dest.age)
-        assertTrue(person.address === dest.address)
+        assertSame(person.address, dest.address)
         assertNull(dest._getId())
         assertEquals(true, dest.active)
     }
@@ -125,7 +125,7 @@ internal class BeanKitTest {
         assertEquals(person._getId(), dest._getId())
         assertEquals(0, dest.age)
         assertNull(dest.address)
-        assertTrue(person.goods === dest.goods) // 浅克隆
+        assertSame(person.goods, dest.goods) // 浅克隆
         assertEquals(true, dest.active)
     }
 

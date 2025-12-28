@@ -70,3 +70,8 @@ kudos:
         module1: ds1
         module2: ds1
         moduleX: no_exists
+
+logging:
+  level:
+    com.baomidou.dynamic.datasource: DEBUG
+    org.springframework.boot.autoconfigure: INFO
