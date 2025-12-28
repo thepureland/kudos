@@ -24,5 +24,6 @@
     <logger name="org.springframework.security.access.prepost.PrePostAnnotationSecurityMetadataSource" level="DEBUG"/>
     <logger name="org.springframework.security.access.method.DelegatingMethodSecurityMetadataSource" level="DEBUG"/>
     <logger name="org.springframework.core.env.PropertySourcesPropertyResolver" level="DEBUG"/>
+    <logger name="org.springframework.jdbc.datasource.init" level="DEBUG"/>
 
 </configuration>

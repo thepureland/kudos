@@ -1,11 +1,13 @@
 package io.kudos.ability.ai.agent.embabel
 
 import com.embabel.agent.domain.io.UserInput
-import com.embabel.agent.testing.unit.FakeOperationContext
-import com.embabel.agent.testing.unit.FakePromptRunner
-import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Test
+import com.embabel.agent.test.unit.FakeOperationContext
+import com.embabel.agent.test.unit.FakePromptRunner
 import java.time.Instant
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
+import kotlin.test.assertTrue
 
 /**
  * 用 FakeOperationContext + FakePromptRunner 單元測 Embabel Agent 的示例。
@@ -41,7 +43,7 @@ internal class WriteAndReviewAgentTest {
         val story = agent.craftStory(input, context)
 
         // Assert - 業務邏輯
-        Assertions.assertTrue(
+        assertTrue(
             story.text.isNotBlank(),
             "返回的 Story 不應該為空字串"
         )
@@ -50,18 +52,18 @@ internal class WriteAndReviewAgentTest {
         val firstInvocation = promptRunner.llmInvocations.first()
         val prompt = firstInvocation.messages.first().content
 
-        Assertions.assertTrue(
+        assertTrue(
             prompt.contains("勇敢騎士"),
             "期望 prompt 中包含用戶輸入的主題關鍵詞"
         )
-        Assertions.assertTrue(
+        assertTrue(
             prompt.contains("開頭、發展、結尾"),
             "期望 prompt 中包含結構要求"
         )
 
         // Assert - 驗證溫度（和 agent 裡 .withTemperature(0.2) 保持一致）
         val temp = firstInvocation.interaction.llm.temperature!!
-        Assertions.assertEquals(
+        assertEquals(
             0.2,
             temp,
             0.01,
@@ -95,14 +97,14 @@ internal class WriteAndReviewAgentTest {
         val reviewed = agent.reviewStory(input, story, context)
 
         // Assert - 業務結果
-        Assertions.assertEquals(story, reviewed.story)
-        Assertions.assertTrue(
+        assertEquals(story, reviewed.story)
+        assertTrue(
             reviewed.review.contains("畫面感"),
             "期望評論中包含我們預設的關鍵字，證明假數據被用到了"
         )
 
         // Assert - LLM 調用情況
-        Assertions.assertEquals(
+        assertEquals(
             1,
             promptRunner.llmInvocations.size,
             "審稿流程預期只調用一次 LLM"
@@ -113,15 +115,15 @@ internal class WriteAndReviewAgentTest {
 
         println(prompt)
 
-        Assertions.assertTrue(
+        assertTrue(
             prompt.contains("太空探險"),
             "review 的 prompt 應該包含原始需求主題"
         )
-        Assertions.assertTrue(
+        assertTrue(
             prompt.contains("宇航員站在月球表面"),
             "review 的 prompt 應該包含故事正文"
         )
-        Assertions.assertTrue(
+        assertTrue(
             prompt.contains("簡短評論"),
             "review 的 prompt 應該明確告訴 LLM 只寫一段短評"
         )
@@ -159,8 +161,8 @@ internal class WriteAndReviewAgentTest {
         val reviewedStory = agent.reviewStory(input, writtenStory, context)
 
         // Assert - 業務層面
-        Assertions.assertEquals(story, writtenStory, "第一步應該得到預期的故事")
-        Assertions.assertEquals(
+        assertEquals(story, writtenStory, "第一步應該得到預期的故事")
+        assertEquals(
             reviewText,
             reviewedStory.review,
             "第二步應該得到預期的評論"
@@ -168,7 +170,7 @@ internal class WriteAndReviewAgentTest {
 
         // Assert - LLM 調用次數與順序
         val invocations = promptRunner.llmInvocations
-        Assertions.assertEquals(
+        assertEquals(
             2,
             invocations.size,
             "整個流程應該剛好兩次 LLM 調用（寫 + 審）"
@@ -178,13 +180,13 @@ internal class WriteAndReviewAgentTest {
         val reviewerCall = invocations[1]
 
         // 驗證「寫故事」的 prompt
-        Assertions.assertTrue(
+        assertTrue(
             writerCall.messages.first().content.contains("未來城市"),
             "第一個 prompt 應該是寫故事的，包含 '未來城市'"
         )
 
         // 驗證「審稿」的 prompt
-        Assertions.assertTrue(
+        assertTrue(
             reviewerCall.messages.first().content.contains("請以專業編輯的身份"),
             "第二個 prompt 應該是審稿的，包含編輯身份說明"
         )
@@ -193,7 +195,7 @@ internal class WriteAndReviewAgentTest {
         val writerTemp = writerCall.interaction.llm.temperature
         val reviewerTemp = reviewerCall.interaction.llm.temperature
 
-        Assertions.assertNotEquals(
+        assertNotEquals(
             writerTemp,
             reviewerTemp,
             "示例中我們期望寫作和審稿使用不同的溫度配置"

@@ -24,6 +24,7 @@ import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.junit.jupiter.EnabledIfDockerAvailable
 import java.io.ByteArrayInputStream
 import kotlin.test.Test
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 /**
@@ -102,7 +103,7 @@ internal class MinioDownLoadServiceTest {
             downLoadService.download(downloadFileModel)
             kotlin.test.fail("expected ServiceException(FileErrorCode.FILE_ACCESS_DENY)")
         } catch (e: ServiceException) {
-            assertTrue(e.errorCode === FileErrorCode.FILE_ACCESS_DENY)
+            assertSame(e.errorCode, FileErrorCode.FILE_ACCESS_DENY)
         }
     }
 
