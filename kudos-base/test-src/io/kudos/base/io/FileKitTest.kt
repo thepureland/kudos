@@ -1,5 +1,6 @@
 package io.kudos.base.io
 
+import io.kudos.base.enums.impl.OsEnum
 import io.kudos.base.lang.SystemKit
 import org.apache.commons.io.filefilter.TrueFileFilter
 import java.io.*
@@ -714,7 +715,7 @@ internal class FileKitTest {
         assertFalse(dir.exists())
 
         // 删除不存在时抛 FileNotFound
-        if (SystemKit.isWindowsOS()) {
+        if (SystemKit.currentOs() == OsEnum.WINDOWS) {
             assertFailsWith<IOException> {
                 FileKit.forceDelete(File(tempDir, "nofd"))
             }
@@ -905,7 +906,7 @@ internal class FileKitTest {
 
     @Test
     fun isSymlinkWhenSupportedReturnsTrue() {
-        if (!SystemKit.isWindowsOS()) {
+        if (SystemKit.currentOs() != OsEnum.WINDOWS) {
             val target = File(tempDir, "target.txt")
             target.writeText("t")
             val link = File(tempDir, "link.ln")

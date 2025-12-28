@@ -1,5 +1,6 @@
 package io.kudos.base.io
 
+import io.kudos.base.enums.impl.OsEnum
 import io.kudos.base.lang.SystemKit
 import org.apache.commons.io.FileUtils
 import java.io.File
@@ -90,7 +91,7 @@ internal class PathKitTest {
         val windowsBase = File("C:\\proj")
         val windowsFile = File("C:\\proj\\sub\\f.txt")
         val relWin = PathKit.getRelativePath(windowsBase, windowsFile)
-        if (SystemKit.isWindowsOS()) {
+        if (SystemKit.currentOs() == OsEnum.WINDOWS) {
             assertEquals("sub/f.txt", relWin)
         } else {
             assertEquals("/sub/f.txt", relWin)

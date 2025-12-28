@@ -1,5 +1,6 @@
 package io.kudos.base.io
 
+import io.kudos.base.enums.impl.OsEnum
 import io.kudos.base.lang.SystemKit
 import java.io.File
 import kotlin.test.*
@@ -22,7 +23,7 @@ internal class FilenameKitTest {
 
     @Test
     fun normalizeSimplePaths() {
-        if (SystemKit.isWindowsOS()) {
+        if (SystemKit.currentOs() == OsEnum.WINDOWS) {
             // “/foo//” → “\foo/”
             assertEquals("\\foo\\", FilenameKit.normalize("/foo//"))
 
@@ -68,7 +69,7 @@ internal class FilenameKitTest {
 
     @Test
     fun normalizeNoEndSeparatorSimplePaths() {
-        if (SystemKit.isWindowsOS()) {
+        if (SystemKit.currentOs() == OsEnum.WINDOWS) {
             // “/foo//” → “\foo”
             assertEquals("\\foo", FilenameKit.normalizeNoEndSeparator("/foo//"))
             // “/foo/./” → “\foo”
@@ -102,7 +103,7 @@ internal class FilenameKitTest {
 
     @Test
     fun concatSimplePaths() {
-        if (SystemKit.isWindowsOS()) {
+        if (SystemKit.currentOs() == OsEnum.WINDOWS) {
             assertEquals("\\foo\\bar", FilenameKit.concat("/foo", "bar"))
             assertEquals("\\bar", FilenameKit.concat("/foo", "/bar"))
             assertEquals("C:\\bar", FilenameKit.concat("C:/foo", "C:/bar"))
