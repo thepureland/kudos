@@ -63,6 +63,7 @@ object TestContainerKit {
      * @return 容器对象，不存在返回null
      */
     fun getRunningContainer(label: String): Container? {
+        DockerKit.ensureDockerRunning()
         val dockerClient = DockerClientFactory.lazyClient()
         val containers = dockerClient.listContainersCmd()
             .withShowAll(true)

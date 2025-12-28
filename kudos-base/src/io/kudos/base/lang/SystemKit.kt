@@ -1,5 +1,6 @@
 package io.kudos.base.lang
 
+import io.kudos.base.enums.impl.OsEnum
 import io.kudos.base.logger.LogFactory
 import org.apache.commons.lang3.SystemUtils
 import java.awt.GraphicsEnvironment
@@ -15,6 +16,7 @@ import java.util.regex.Pattern
  * 系统工具类
  *
  * @author K
+ * @author ChatGpt
  * @since 1.0.0
  */
 object SystemKit {
@@ -169,13 +171,71 @@ object SystemKit {
     private val debugPattern = Pattern.compile("-Xdebug|jdwp")
 
     /**
-     * 获取当前操作系统名称.
+     * 获取当前操作系统
      *
-     * @return 操作系统名称 例如:windows xp,linux 等.
+     * @return 操作系统枚举
+     * @author ChatGpt
      * @author K
      * @since 1.0.0
      */
-    fun getOSName(): String = System.getProperty("os.name").lowercase()
+    fun currentOs(): OsEnum {
+        val osName = (System.getProperty("os.name") ?: "").lowercase()
+        val osVersion = (System.getProperty("os.version") ?: "").lowercase()
+        val osArch = (System.getProperty("os.arch") ?: "").lowercase()
+
+        fun hasKeyword(vararg keys: String): Boolean =
+            keys.any { osName.contains(it) || osVersion.contains(it) }
+
+        // ---- 移动/嵌入式优先判定（避免被 Linux 兜底吞掉） ----
+        // Android: 常见 os.name = "Linux"，但 java.vm.name / java.runtime.name 里可能带 Android/ART/Dalvik
+        val vmName = (System.getProperty("java.vm.name") ?: "").lowercase()
+        val runtimeName = (System.getProperty("java.runtime.name") ?: "").lowercase()
+        val isAndroid = (vmName.contains("dalvik") || vmName.contains("art") ||
+                runtimeName.contains("android"))
+
+        if (isAndroid) return OsEnum.ANDROID // 如果没有该枚举，可映射到 LINUX 或 OTHER
+
+        // HarmonyOS / OpenHarmony（NEXT/开源分支等）
+        if (hasKeyword("openharmony", "harmonyos", "harmony")) {
+            return OsEnum.HARMONY // 没有该枚举可映射到 LINUX 或 OTHER
+        }
+
+        // ---- 桌面/服务器主流 ----
+        if (hasKeyword("mac", "darwin", "os x", "mac os")) return OsEnum.MAC
+
+        if (hasKeyword("windows")) return OsEnum.WINDOWS
+        // 某些 JVM/环境可能会出现这些写法
+        if (hasKeyword("mingw", "msys", "cygwin")) return OsEnum.WINDOWS
+
+        // Linux：包含很多发行版关键字（一般 os.name 就是 Linux，但加点兜底）
+        if (hasKeyword("linux", "gnu/linux", "nux", "ubuntu", "debian", "fedora", "centos", "rhel", "red hat", "alpine")) {
+            return OsEnum.LINUX
+        }
+
+        // ---- BSD 家族 ----
+        if (hasKeyword("freebsd")) return OsEnum.FREEBSD
+        if (hasKeyword("openbsd")) return OsEnum.OPENBSD
+        if (hasKeyword("netbsd")) return OsEnum.NETBSD
+        if (hasKeyword("dragonfly")) return OsEnum.DRAGONFLYBSD
+
+        // ---- Solaris / Illumos ----
+        if (hasKeyword("sunos", "solaris")) return OsEnum.SOLARIS
+        if (hasKeyword("illumos")) return OsEnum.ILLUMOS
+
+        // ---- IBM / UNIX 系 ----
+        if (hasKeyword("aix")) return OsEnum.AIX
+        if (hasKeyword("hp-ux", "hpux")) return OsEnum.HPUX
+
+        // ---- Apple 其他平台（理论上 JVM 很少直接跑）----
+        if (hasKeyword("ios")) return OsEnum.IOS
+        if (hasKeyword("tvos")) return OsEnum.TVOS
+        if (hasKeyword("watchos")) return OsEnum.WATCHOS
+
+        // ---- 兜底：一些极少见/自定义 ----
+        // 对于容器工具来说，这类通常当作 OTHER 处理即可
+        return OsEnum.OTHER
+    }
+
 
     /**
      * 是否调试模式
@@ -193,14 +253,6 @@ object SystemKit {
         return false
     }
 
-    /**
-     * 是否为windows操作系统
-     *
-     * @return true: 为windows操作系统，反之为false
-     * @author K
-     * @since 1.0.0
-     */
-    fun isWindowsOS(): Boolean = getOSName().lowercase().contains("windows")
 
     /**
      * 得到系统当前用户

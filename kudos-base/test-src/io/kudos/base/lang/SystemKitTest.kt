@@ -1,5 +1,6 @@
 package io.kudos.base.lang
 
+import io.kudos.base.enums.impl.OsEnum
 import org.apache.commons.lang3.SystemUtils
 import org.junit.jupiter.api.TestInstance
 import kotlin.test.*
@@ -49,7 +50,7 @@ internal class SystemKitTest {
     @Test
     fun testExecuteCommandSuccess() {
         // 根据操作系统选择不同的 echo 命令
-        val result = if (SystemKit.isWindowsOS()) {
+        val result = if (SystemKit.currentOs() == OsEnum.WINDOWS) {
             SystemKit.executeCommand("cmd", "/c", "echo", "HELLO")
         } else {
             SystemKit.executeCommand("echo", "HELLO")
@@ -76,16 +77,8 @@ internal class SystemKitTest {
     }
 
     @Test
-    fun testGetOSNameReturnsLowercase() {
-        val actual = SystemKit.getOSName()
-        val expected = System.getProperty("os.name").lowercase()
-        assertEquals(expected, actual)
-    }
-
-    @Test
-    fun testIsWindowsOSReflectsProperty() {
-        val expectWindows = System.getProperty("os.name").lowercase().contains("windows")
-        assertEquals(expectWindows, SystemKit.isWindowsOS())
+    fun testCurrentOs() {
+        assert(SystemKit.currentOs() != OsEnum.OTHER)
     }
 
     @Test
