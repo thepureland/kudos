@@ -62,7 +62,7 @@ internal class PathKitTest {
     @Test
     fun getResourcePathInvalidNameThrowsNpe() {
         // A non-existent resource name should result in a NullPointerException
-        assertFailsWith<NullPointerException> {
+        assertFailsWith<IllegalStateException> {
             PathKit.getResourcePath("nonexistent_resource_abc.xyz")
         }
     }

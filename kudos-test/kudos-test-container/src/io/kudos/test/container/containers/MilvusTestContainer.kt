@@ -20,7 +20,7 @@ object MilvusTestContainer {
 
     private val log = LoggerFactory.getLogger(MilvusTestContainer::class.java)
 
-    private val composeFile = File("${PathKit.getRuntimePath()}/docker-compose-milvus.yml")
+    private val composeFile = File("${PathKit.getResourcePath("milvus/docker-compose-milvus.yml")}")
 
     // 二選一：
     // ① 用容器化 compose（更穩，不吃你本機 docker compose 版本）
