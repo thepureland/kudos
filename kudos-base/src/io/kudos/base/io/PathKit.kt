@@ -2,7 +2,11 @@ package io.kudos.base.io
 
 import org.apache.commons.io.FileUtils
 import java.io.File
+import java.net.URL
 import java.net.URLDecoder
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 import kotlin.reflect.KClass
 
 /**
@@ -64,21 +68,22 @@ object PathKit {
     }
 
     /**
-     * 获取资源的路径
+     * 获取资源的路径(支持jar中的资源)
      *
      * @param name 资源名称
      * @return 资源绝对路径
      */
     fun getResourcePath(name: String): String {
-        // Try the current Thread context classloader
-        var classLoader = Thread.currentThread().contextClassLoader
-        var url = classLoader.getResource(name)
-        if (url == null) {
-            // Finally, try the classloader for this class
-            classLoader = this::class.java.classLoader
-            url = classLoader.getResource(name)
+        val cl = Thread.currentThread().contextClassLoader ?: this::class.java.classLoader
+        val url = cl.getResource(name) ?: error("找不到资源：$name")
+
+        // 能直接映射到文件系统就直接用（最理想）
+        if (url.protocol == "file") {
+            return File(url.toURI()).path
         }
-        return url.path
+
+        // 其它协议（jar/jrt/vfs/bundle 等）一律抽取到临时文件，保证可用
+        return extractToTempDir(url, name).toAbsolutePath().toString()
     }
 
     /**
@@ -155,5 +160,18 @@ object PathKit {
      * @since 1.0.0
      */
     fun getUserDirectory(): File = FileUtils.getUserDirectory()
+
+    private fun extractToTempDir(url: URL, name: String): Path {
+        // 关键：用“专用临时目录”，避免把系统 temp 根目录整个复制/扫描时踩权限坑
+        val dir = Files.createTempDirectory("resource-").toFile().apply { deleteOnExit() }
+
+        val fileName = name.substringAfterLast('/').ifBlank { "resource.bin" }
+        val target = File(dir, fileName).apply { deleteOnExit() }.toPath()
+
+        url.openStream().use { input ->
+            Files.copy(input, target, StandardCopyOption.REPLACE_EXISTING)
+        }
+        return target
+    }
 
 }
