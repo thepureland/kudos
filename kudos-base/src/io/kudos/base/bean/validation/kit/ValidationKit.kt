@@ -95,15 +95,17 @@ object ValidationKit {
      */
     fun getValidator(failFast: Boolean = true): Validator {
         ValidationContext.setFailFast(failFast)
+
         if (ValidationContext.validator == null) {
             val validatorFactory = Validation.byProvider(HibernateValidator::class.java)
                 .configure()
                 .failFast(failFast)
-//            .addProperty( "hibernate.validator.fail_fast", "true" )
                 .buildValidatorFactory()
+            ValidationContext.setFactory(validatorFactory)
             ValidationContext.validator = validatorFactory.validator
         }
         return ValidationContext.validator!!
     }
+
 
 }
