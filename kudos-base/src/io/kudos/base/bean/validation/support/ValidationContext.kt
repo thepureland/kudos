@@ -5,6 +5,7 @@ import jakarta.validation.ConstraintValidatorContext
 import jakarta.validation.Validator
 import jakarta.validation.metadata.ConstraintDescriptor
 import jakarta.validation.metadata.PropertyDescriptor
+import org.hibernate.validator.constraintvalidation.HibernateConstraintValidatorInitializationContext
 import org.hibernate.validator.internal.engine.constraintvalidation.ConstraintValidatorContextImpl
 import org.hibernate.validator.internal.metadata.descriptor.ConstraintDescriptorImpl
 import java.util.function.Consumer
@@ -16,6 +17,60 @@ import java.util.function.Consumer
  * @since 1.0.0
  */
 object ValidationContext {
+
+
+    /** 缓存 HV 的 initializationContext */
+    private var hvInitCtx: HibernateConstraintValidatorInitializationContext? = null
+
+    fun setFactory(factory: jakarta.validation.ValidatorFactory) {
+        hvInitCtx = extractHvInitCtx(factory)
+    }
+
+    fun getHvInitCtx(): HibernateConstraintValidatorInitializationContext {
+        return hvInitCtx ?: error("HibernateConstraintValidatorInitializationContext 尚未初始化：请确保先调用 ValidationKit.getValidator() 构建 ValidatorFactory")
+    }
+
+    /**
+     * 从 Hibernate Validator 的 ValidatorFactory 中提取 HibernateConstraintValidatorInitializationContext。
+     *
+     * 为什么要做这件事？
+     * - 你在自定义组合约束（@Constraints）里会“手动”创建并调用内置 ConstraintValidator（如 @Pattern 对应的 PatternValidator）。
+     * - HV 9.1 起，部分内置校验器实现了 HibernateConstraintValidator，
+     *   它们期望通过 HibernateConstraintValidator#initialize(ConstraintDescriptor, HibernateConstraintValidatorInitializationContext)
+     *   进行初始化（例如编译正则 Pattern、构建内部状态等）。
+     * - 但你手动调用时绕开了 Hibernate Validator 引擎的初始化流程，所以必须自己拿到该 initCtx 再初始化一次，
+     *   否则可能出现内部字段未初始化导致 NPE（你遇到的就是 PatternValidator.pattern 为 null）。
+     *
+     * ⚠️ 注意：
+     * - 这段实现依赖 HV internal API（org.hibernate.validator.internal.*），版本升级可能改方法名/字段名。
+     * - 因此这里写成“多策略尝试 + 兜底”，尽可能在小版本变动下仍可工作。
+     *
+     * @author ChatGpt
+     * @since 1.0.0
+     */
+    private fun extractHvInitCtx(factory: jakarta.validation.ValidatorFactory): HibernateConstraintValidatorInitializationContext {
+        // 1) 先走方法：factory.getValidatorFactoryScopedContext()
+        val scopedContext = runCatching {
+            factory.javaClass.getDeclaredMethod("getValidatorFactoryScopedContext").apply { isAccessible = true }
+                .invoke(factory)
+        }.getOrNull()
+            ?: runCatching {
+                // 2) 再走字段：factory.validatorFactoryScopedContext
+                factory.javaClass.getDeclaredField("validatorFactoryScopedContext").apply { isAccessible = true }
+                    .get(factory)
+            }.getOrNull()
+            ?: error("无法从 ${factory.javaClass.name} 获取 ValidatorFactoryScopedContext（HV 版本/实现可能变化）")
+
+        // 3) scopedContext.getConstraintValidatorInitializationContext()
+        val initCtx = runCatching {
+            scopedContext.javaClass.getDeclaredMethod("getConstraintValidatorInitializationContext")
+                .apply { isAccessible = true }
+                .invoke(scopedContext)
+        }.getOrNull()
+            ?: error("无法从 ${scopedContext.javaClass.name} 获取 ConstraintValidatorInitializationContext（HV 版本/实现可能变化）")
+
+        return initCtx as HibernateConstraintValidatorInitializationContext
+    }
 
     /** 用于传递Bean给ConstraintValidator，因为hibernate validation的ConstraintValidatorContext取不到Bean */
     private val beanMap = mutableMapOf<Int, Any>() // Map<ConstraintDescriptor对象的hashcode，Bean对象>
