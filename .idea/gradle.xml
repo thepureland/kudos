@@ -49,10 +49,10 @@
             <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-data/kudos-ability-data-rdb/kudos-ability-data-rdb-flyway" />
             <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-data/kudos-ability-data-rdb/kudos-ability-data-rdb-jdbc" />
             <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-data/kudos-ability-data-rdb/kudos-ability-data-rdb-ktorm" />
-            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-data/kudos-ability-data-vectordb" />
-            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-data/kudos-ability-data-vectordb/kudos-ability-data-vectordb-common" />
-            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-data/kudos-ability-data-vectordb/kudos-ability-data-vectordb-milvus" />
-            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-data/kudos-ability-data-vectordb/kudos-ability-data-vectordb-pgvector" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-data/kudos-ability-data-vdb" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-data/kudos-ability-data-vdb/kudos-ability-data-vdb-common" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-data/kudos-ability-data-vdb/kudos-ability-data-vdb-milvus" />
+            <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-data/kudos-ability-data-vdb/kudos-ability-data-vdb-pgvector" />
             <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-distributed" />
             <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-distributed/kudos-ability-distributed-client" />
             <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-distributed/kudos-ability-distributed-client/kudos-ability-distributed-client-feign" />
