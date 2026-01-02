@@ -11,8 +11,16 @@ spring:
         remove-existing-vector-store-table: true   # 测试建议 true，生产别开
         schema-name: public
         table-name: vector_store
-        index-type: HNSW                           # 默认往往就是 HNSW；写上更明确
-        dimensions: 8
+        index-type: HNSW                           # 默认往往就是 HNSW
+        dimensions: 768
+    model:
+      embedding: ollama
+    ollama:
+      base-url: http://localhost:11434
+      embedding:
+        options:
+          model: nomic-embed-text
+
 
 
 logging:

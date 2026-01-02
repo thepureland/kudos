@@ -9,7 +9,7 @@ spring:
         collection-name: kudos_milvus_vector_store_test
 
         # 必须与你的 EmbeddingModel.dimensions() 一致
-        embedding-dimension: 8
+        embedding-dimension: 768
 
         # Milvus 连接（本地手跑时用；Testcontainers 注入会覆盖）
         host: localhost
@@ -26,6 +26,14 @@ spring:
 
         # 是否 Milvus auto-id（测试建议 false，自己指定 Document.id 更可控）
         auto-id: false
+
+    model:
+      embedding: ollama
+    ollama:
+      base-url: http://localhost:11434
+      embedding:
+        options:
+          model: nomic-embed-text
 
 logging:
   level:
