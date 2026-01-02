@@ -4,5 +4,6 @@ dependencies {
     api(libs.spring.ai.starter.vector.store.pgvector)
     api(libs.postgresql)
 
+    testImplementation(libs.spring.ai.starter.model.ollama)
     testImplementation(project(":kudos-test:kudos-test-container"))
 }

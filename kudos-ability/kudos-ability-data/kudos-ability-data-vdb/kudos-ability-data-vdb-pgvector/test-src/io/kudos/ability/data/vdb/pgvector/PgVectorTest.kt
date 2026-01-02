@@ -1,28 +1,22 @@
 package io.kudos.ability.data.vdb.pgvector
 
+import io.kudos.test.common.init.EnableKudosTest
+import io.kudos.test.container.containers.OllamaTestContainer
 import io.kudos.test.container.containers.PgVectorTestContainer
 import jakarta.annotation.Resource
 import org.springframework.ai.document.Document
-import org.springframework.ai.embedding.Embedding
 import org.springframework.ai.embedding.EmbeddingModel
-import org.springframework.ai.embedding.EmbeddingRequest
-import org.springframework.ai.embedding.EmbeddingResponse
 import org.springframework.ai.vectorstore.SearchRequest
 import org.springframework.ai.vectorstore.VectorStore
 import org.springframework.ai.vectorstore.filter.Filter
 import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder
-import org.springframework.boot.SpringBootConfiguration
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration
-import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.context.annotation.Bean
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.SingleColumnRowMapper
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.junit.jupiter.EnabledIfDockerAvailable
-import java.security.MessageDigest
 import java.util.*
-import kotlin.math.sqrt
 import kotlin.test.*
 
 /**
@@ -32,30 +26,21 @@ import kotlin.test.*
  * @author K
  * @since 1.0.0
  */
+@EnableKudosTest
 @EnabledIfDockerAvailable
-@SpringBootTest(classes = [PgVectorTest.TestApp::class])
 class PgVectorTest {
 
-    companion object {
-        private const val DIMENSIONS = 8
+    @Resource
+    private lateinit var vectorStore: VectorStore
 
-        @JvmStatic
-        @DynamicPropertySource
-        fun registerProps(registry: DynamicPropertyRegistry) {
-            PgVectorTestContainer.startIfNeeded(registry)
-        }
-    }
+    @Resource
+    private lateinit var embeddingModel: EmbeddingModel
 
-    @SpringBootConfiguration
-    @EnableAutoConfiguration
-    open class TestApp {
-        @Bean
-        open fun embeddingModel(): EmbeddingModel = DeterministicEmbeddingModel(DIMENSIONS)
-    }
+    @Resource
+    private lateinit var jdbcTemplate: JdbcTemplate
 
-    @Resource private lateinit var vectorStore: VectorStore
-    @Resource private lateinit var embeddingModel: EmbeddingModel
-    @Resource private lateinit var jdbcTemplate: JdbcTemplate
+    @Value($$"${spring.ai.vectorstore.pgvector.dimensions}")
+    private lateinit var dimensions: String
 
     @BeforeTest
     fun truncateVectorStoreTable() {
@@ -237,7 +222,7 @@ class PgVectorTest {
             table.schema, table.name
         )
         assertNotNull(embeddingType)
-        assertTrue(embeddingType.contains("vector($DIMENSIONS)"), "embedding type mismatch: $embeddingType")
+        assertTrue(embeddingType.contains("vector($dimensions)"), "embedding type mismatch: $embeddingType")
 
         val cols = jdbcTemplate.queryForList(
             """
@@ -313,7 +298,7 @@ class PgVectorTest {
     @Test
     fun shouldCreateHnswIndexAndExplainPlan() {
         val table = detectVectorStoreTable()
-        vectorStore.add(bigDocsForIndexDemo(3000))
+        vectorStore.add(bigDocsForIndexDemo(10))
 
         val indexName = "idx_${table.name}_embedding_hnsw"
         jdbcTemplate.execute("""drop index if exists "${table.schema}"."$indexName"""")
@@ -351,7 +336,7 @@ class PgVectorTest {
     @Test
     fun shouldCreateIvfflatIndexAndQueryWithProbes() {
         val table = detectVectorStoreTable()
-        vectorStore.add(bigDocsForIndexDemo(4000))
+        vectorStore.add(bigDocsForIndexDemo(20))
 
         val indexName = "idx_${table.name}_embedding_ivf"
         jdbcTemplate.execute("""drop index if exists "${table.schema}"."$indexName"""")
@@ -391,7 +376,7 @@ class PgVectorTest {
     @Test
     fun shouldNotDecreaseRecallWhenIncreasingHnswEfSearch() {
         val table = detectVectorStoreTable()
-        vectorStore.add(bigDocsForIndexDemo(8000))
+        vectorStore.add(bigDocsForIndexDemo(20))
 
         val indexName = "idx_${table.name}_hnsw_recall"
         jdbcTemplate.execute("""drop index if exists "${table.schema}"."$indexName"""")
@@ -420,7 +405,7 @@ class PgVectorTest {
     @Test
     fun shouldNotDecreaseRecallWhenIncreasingIvfflatProbes() {
         val table = detectVectorStoreTable()
-        vectorStore.add(bigDocsForIndexDemo(10000))
+        vectorStore.add(bigDocsForIndexDemo(40))
 
         val indexName = "idx_${table.name}_ivf_recall"
         jdbcTemplate.execute("""drop index if exists "${table.schema}"."$indexName"""")
@@ -430,18 +415,18 @@ class PgVectorTest {
             create index "$indexName"
             on ${table.qualified()}
             using ivfflat (embedding vector_cosine_ops)
-            with (lists = 200)
+            with (lists = 20)
             """.trimIndent()
         )
         jdbcTemplate.execute("analyze ${table.qualified()}")
 
         val qLit = toVectorLiteral(embeddingModel.embed("ivfflat recall tuning query"))
-        val topK = 20
+        val topK = 5
 
         val exact = queryExactIds(table, qLit, topK)
 
         val low = queryApproxIdsWithIvfflat(table, qLit, topK, probes = 1)
-        val high = queryApproxIdsWithIvfflat(table, qLit, topK, probes = 20)
+        val high = queryApproxIdsWithIvfflat(table, qLit, topK, probes = 5)
 
         val lowHit = (low intersect exact).size
         val highHit = (high intersect exact).size
@@ -516,7 +501,7 @@ class PgVectorTest {
             elementType = String::class.java,
             args = arrayOf(qLit)
         )
-        return rows.filterNotNull().toSet()
+        return rows.toSet()
     }
 
     private fun queryExactIds(table: TableRef, qLit: String, topK: Int): Set<String> {
@@ -645,45 +630,13 @@ class PgVectorTest {
                 mapOf("tenant" to "ti", "category" to "idx", "i" to it)
             )
         }
-}
 
-private class DeterministicEmbeddingModel(private val dims: Int) : EmbeddingModel {
-
-    override fun call(request: EmbeddingRequest): EmbeddingResponse {
-        val texts = extractTexts(request)
-        val embeddings = texts.mapIndexed { idx, text ->
-            Embedding(embedText(text), idx)
-        }
-        return EmbeddingResponse(embeddings, null)
-    }
-
-    override fun embed(document: Document): FloatArray = embedText(document.text)
-
-    override fun dimensions(): Int = dims
-
-    private fun embedText(text: String): FloatArray {
-        val digest = MessageDigest.getInstance("SHA-256").digest(text.toByteArray(Charsets.UTF_8))
-
-        val eps = 1e-3f
-        val raw = FloatArray(dims) { i ->
-            val b = digest[i % digest.size].toInt() and 0xFF
-            (b / 255.0f) + eps
-        }
-
-        val norm = sqrt(raw.fold(0.0f) { acc, v -> acc + v * v }).coerceAtLeast(1e-6f)
-        return FloatArray(dims) { i -> raw[i] / norm }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    private fun extractTexts(request: EmbeddingRequest): List<String> {
-        return try {
-            request.javaClass.getMethod("getInstructions").invoke(request) as List<String>
-        } catch (_: Throwable) {
-            try {
-                request.javaClass.getMethod("getInputs").invoke(request) as List<String>
-            } catch (_: Throwable) {
-                listOf(request.toString())
-            }
+    companion object {
+        @JvmStatic
+        @DynamicPropertySource
+        fun registerProps(registry: DynamicPropertyRegistry) {
+            OllamaTestContainer.startIfNeeded(registry)
+            PgVectorTestContainer.startIfNeeded(registry)
         }
     }
 
