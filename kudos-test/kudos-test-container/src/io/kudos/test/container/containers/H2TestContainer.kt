@@ -15,7 +15,7 @@ import org.testcontainers.containers.wait.strategy.Wait
  */
 object H2TestContainer {
 
-    private const val IMAGE_NAME = "oscarfonts/h2:2.3.232"
+    private const val IMAGE_NAME = "oscarfonts/h2:alpine"
 
     const val DATABASE = "test"
 
