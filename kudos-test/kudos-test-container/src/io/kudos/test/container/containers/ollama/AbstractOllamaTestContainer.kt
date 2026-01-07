@@ -1,4 +1,4 @@
-package io.kudos.test.container.containers
+package io.kudos.test.container.containers.ollama
 
 import com.github.dockerjava.api.model.Container
 import io.kudos.test.container.kit.TestContainerKit
@@ -10,26 +10,21 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Duration
 
-
 /**
- * ollama测试容器
- *
- * 注：使用nomic-embed-text模型
+ * ollama测试容器抽象類
  *
  * @author K
  * @since 1.0.0
  */
-object OllamaTestContainer {
+abstract class AbstractOllamaTestContainer(
+    val imageName: String,
+    val port: Int,
+    val label: String
+) {
 
-    private const val IMAGE_NAME = "ollama/ollama:0.13.5"
+    private val containerPort = 11434
 
-    const val PORT = 11434
-
-    const val CONTAINER_PORT = 11434
-
-    const val LABEL = "Ollama"
-
-    private val container = GenericContainer(IMAGE_NAME).apply {
+    protected val container = GenericContainer(imageName).apply {
         // 絕對路徑，並確保目錄存在
         val hostDir: Path = Path.of(System.getProperty("user.home"), ".cache", "ollama-tc")
         Files.createDirectories(hostDir)
@@ -39,28 +34,49 @@ object OllamaTestContainer {
             "/root/.ollama"
         )
 
-        withExposedPorts(CONTAINER_PORT)
-        bindingPort(Pair(PORT, CONTAINER_PORT))
+        withExposedPorts(containerPort)
+        bindingPort(Pair(port, containerPort))
         // 让 Ollama 监听 0.0.0.0（容器内可被映射端口访问）
-        withEnv("OLLAMA_HOST", "0.0.0.0:$CONTAINER_PORT")
+        withEnv("OLLAMA_HOST", "0.0.0.0:$containerPort")
 
         waitingFor(
             Wait.forHttp("/api/tags")
-                .forPort(PORT)
+                .forPort(port)
                 .forStatusCode(200)
         )
         withStartupTimeout(Duration.ofMinutes(3))
 
-        withLabel(TestContainerKit.LABEL_KEY, LABEL)
+        withLabel(TestContainerKit.LABEL_KEY, label)
     }
 
     /**
      * 拉取模型
      */
-    private fun pullModel(model: String) {
+    private fun pullModelIfAbsent(model: OllamaModel) {
+        // 1) 先检查是否已存在
+        val list = container.execInContainer("ollama", "list")
+        check(list.exitCode == 0) { "ollama list failed: ${list.stderr}\n${list.stdout}" }
+
+        val existingModels: Set<String> = list.stdout
+            .lineSequence()
+            .drop(1) // 跳过表头：NAME ID SIZE MODIFIED
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
+            .map { line ->
+                // NAME 通常是第一列，可能是 all-minilm:l6-v2 这种
+                line.split(Regex("\\s+"), limit = 2).first()
+            }
+            .toSet()
+
+        if (model.modelName in existingModels) {
+            println("Model already exists: $model, skip pulling.")
+            return
+        }
+
+        // 2) 不存在才 pull
         println("Start pulling model: $model ...")
         val time = System.currentTimeMillis()
-        val r = container.execInContainer("ollama", "pull", model)
+        val r = container.execInContainer("ollama", "pull", model.modelName)
         check(r.exitCode == 0) { "ollama pull $model failed: ${r.stderr}\n${r.stdout}" }
         println("Finish pulling model: $model in ${System.currentTimeMillis() - time}ms")
     }
@@ -76,24 +92,31 @@ object OllamaTestContainer {
      * 来代替@Testcontainers(disabledWithoutDocker = true)
      *
      * @param registry spring的动态属性注册器，可用来注册或覆盖已注册的属性
+     * @param model ollama支持的模型
      * @return 运行中的容器对象
      */
-    fun startIfNeeded(registry: DynamicPropertyRegistry?): Container {
+    fun startIfNeeded(registry: DynamicPropertyRegistry?, model: OllamaModel): Container {
         synchronized(this) {
-            val running = TestContainerKit.isContainerRunning(LABEL)
-            val runningContainer = TestContainerKit.startContainerIfNeeded(LABEL, container)
+            val running = TestContainerKit.isContainerRunning(label)
+            val runningContainer = TestContainerKit.startContainerIfNeeded(label, container)
             if (!running) {
-                pullModel("nomic-embed-text")
+                pullModelIfAbsent(model)
             }
             if (registry != null) {
-                registerProperties(registry, runningContainer)
+                registerProperties(registry, runningContainer, model)
             }
             return runningContainer
         }
     }
 
-    private fun registerProperties(registry: DynamicPropertyRegistry, runningContainer : Container) {
-
+    protected fun registerProperties(
+        registry: DynamicPropertyRegistry,
+        runningContainer: Container,
+        model: OllamaModel
+    ) {
+        registry.add("spring.ai.model.embedding") { "ollama" }
+        registry.add("spring.ai.ollama.embedding.options.model") { model.modelName }
+        registry.add("spring.ai.ollama.base-url") { "http://127.0.0.1:$port" }
     }
 
     /**
@@ -101,13 +124,6 @@ object OllamaTestContainer {
      *
      * @return 容器对象，如果没有返回null
      */
-    fun getRunningContainer() : Container? = TestContainerKit.getRunningContainer(LABEL)
-
-    @JvmStatic
-    fun main(args: Array<String>?) {
-        startIfNeeded(null)
-        println("Ollama ${container.host} port: $PORT")
-        Thread.sleep(Long.Companion.MAX_VALUE)
-    }
+    fun getRunningContainer(): Container? = TestContainerKit.getRunningContainer(label)
 
 }
