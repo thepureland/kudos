@@ -15,7 +15,7 @@ import org.testcontainers.containers.wait.strategy.Wait
  */
 object NacosTestContainer {
 
-    private const val IMAGE_NAME = "nacos/nacos-server:v3.1.0"
+    private const val IMAGE_NAME = "nacos/nacos-server:v3.1.1"
 
     const val PORT = 28848
 
