@@ -2,6 +2,7 @@ package io.kudos.test.container.kit
 
 import com.github.dockerjava.api.model.Container
 import org.testcontainers.DockerClientFactory
+import org.testcontainers.containers.ComposeContainer
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.Network
 import kotlin.system.measureTimeMillis
@@ -55,6 +56,18 @@ object TestContainerKit {
      * @return true: 运行中，false：未运行
      */
     fun isContainerRunning(label: String): Boolean = getRunningContainer(label) != null
+
+    /**
+     * 服务是否在运行中
+     *
+     * @param compose 由compose.yml跑的容器实例
+     * @param serviceInstanceName 服务实例名
+     * @return true: 运行中，false：未运行
+     */
+    fun isServiceRunning(compose: ComposeContainer, serviceInstanceName: String): Boolean {
+        val opt = compose.getContainerByServiceName(serviceInstanceName)
+        return opt.isPresent && opt.get().isRunning
+    }
 
     /**
      * 根据label获取对应的容器

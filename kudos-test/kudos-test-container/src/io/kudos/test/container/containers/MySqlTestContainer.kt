@@ -14,7 +14,7 @@ import org.testcontainers.containers.GenericContainer
  */
 object MySqlTestContainer {
 
-    private const val IMAGE_NAME = "mysql:9.4.0"
+    private const val IMAGE_NAME = "mysql:9.5.0"
 
     const val PORT = 23306
 
