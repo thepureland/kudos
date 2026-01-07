@@ -3,7 +3,7 @@ package io.kudos.test.container.containers
 import com.github.dockerjava.api.model.Container
 import io.kudos.test.container.kit.TestContainerKit
 import org.springframework.test.context.DynamicPropertyRegistry
-import org.testcontainers.kafka.ConfluentKafkaContainer
+import org.testcontainers.kafka.KafkaContainer
 import org.testcontainers.utility.DockerImageName
 
 /**
@@ -14,15 +14,15 @@ import org.testcontainers.utility.DockerImageName
  */
 object KafkaTestContainer {
 
-    private const val IMAGE_NAME = "confluentinc/cp-kafka:8.0.2"
+    private const val IMAGE_NAME = "apache/kafka-native:4.1.1"
 
     private var imageName = DockerImageName
         .parse(IMAGE_NAME)
-        .asCompatibleSubstituteFor("apache/kafka")
+//        .asCompatibleSubstituteFor("apache/kafka")
 
     const val LABEL = "Kafka"
 
-    private val container = ConfluentKafkaContainer(imageName).withLabel(TestContainerKit.LABEL_KEY, LABEL)
+    private val container = KafkaContainer(imageName).withLabel(TestContainerKit.LABEL_KEY, LABEL)
 
 
     /**
