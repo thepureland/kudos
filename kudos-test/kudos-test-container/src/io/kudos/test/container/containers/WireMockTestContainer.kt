@@ -18,7 +18,7 @@ object WireMockTestContainer {
 
     const val LABEL = "WireMock"
 
-    private val container = GenericContainer(DockerImageName.parse("wiremock/wiremock:3.13.1"))
+    private val container = GenericContainer(DockerImageName.parse("wiremock/wiremock:3.13.2-1-alpine"))
         .withExposedPorts(8080)
         .withCommand("--global-response-templating")
         .waitingFor(Wait.forHttp("/__admin").forStatusCode(200))
