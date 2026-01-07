@@ -2,7 +2,9 @@ package io.kudos.ability.data.vdb.milvus
 
 import io.kudos.test.common.init.EnableKudosTest
 import io.kudos.test.container.containers.MilvusTestContainer
-import io.kudos.test.container.containers.OllamaTestContainer
+import io.kudos.test.container.containers.ollama.OllamaEmbeddingModelEnum
+import io.kudos.test.container.containers.ollama.OllamaMiniTestContainer
+import io.kudos.test.container.containers.ollama.OllamaOfficialTestContainer
 import jakarta.annotation.Resource
 import org.springframework.ai.document.Document
 import org.springframework.ai.vectorstore.SearchRequest
@@ -283,7 +285,9 @@ class MilvusVectorStoreTest {
         @JvmStatic
         @DynamicPropertySource
         fun registerProps(registry: DynamicPropertyRegistry) {
-            OllamaTestContainer.startIfNeeded(registry)
+            val model = OllamaEmbeddingModelEnum.ALL_MINILM
+            registry.add("spring.ai.milvus.embedding-dimension") { model.dimension }
+            OllamaMiniTestContainer.startIfNeeded(registry, model)
             MilvusTestContainer.startIfNeeded(registry)
         }
     }

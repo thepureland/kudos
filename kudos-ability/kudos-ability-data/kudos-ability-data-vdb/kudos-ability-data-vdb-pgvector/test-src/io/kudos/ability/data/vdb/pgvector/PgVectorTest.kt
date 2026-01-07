@@ -1,8 +1,9 @@
 package io.kudos.ability.data.vdb.pgvector
 
 import io.kudos.test.common.init.EnableKudosTest
-import io.kudos.test.container.containers.OllamaTestContainer
 import io.kudos.test.container.containers.PgVectorTestContainer
+import io.kudos.test.container.containers.ollama.OllamaEmbeddingModelEnum
+import io.kudos.test.container.containers.ollama.OllamaMiniTestContainer
 import jakarta.annotation.Resource
 import org.springframework.ai.document.Document
 import org.springframework.ai.embedding.EmbeddingModel
@@ -39,7 +40,7 @@ class PgVectorTest {
     @Resource
     private lateinit var jdbcTemplate: JdbcTemplate
 
-    @Value($$"${spring.ai.vectorstore.pgvector.dimensions}")
+    @Value("\${spring.ai.vectorstore.pgvector.dimensions}")
     private lateinit var dimensions: String
 
     @BeforeTest
@@ -635,7 +636,9 @@ class PgVectorTest {
         @JvmStatic
         @DynamicPropertySource
         fun registerProps(registry: DynamicPropertyRegistry) {
-            OllamaTestContainer.startIfNeeded(registry)
+            val model = OllamaEmbeddingModelEnum.ALL_MINILM
+            registry.add("spring.ai.vectorstore.pgvector.dimensions") { model.dimension }
+            OllamaMiniTestContainer.startIfNeeded(registry, model)
             PgVectorTestContainer.startIfNeeded(registry)
         }
     }
