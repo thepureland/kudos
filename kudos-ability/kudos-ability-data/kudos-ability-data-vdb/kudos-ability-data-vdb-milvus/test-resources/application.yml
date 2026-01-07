@@ -9,7 +9,7 @@ spring:
         collection-name: kudos_milvus_vector_store_test
 
         # 必须与你的 EmbeddingModel.dimensions() 一致
-        embedding-dimension: 768
+        embedding-dimension: 384
 
         # Milvus 连接（本地手跑时用；Testcontainers 注入会覆盖）
         host: localhost
@@ -33,9 +33,8 @@ spring:
       base-url: http://localhost:11434
       embedding:
         options:
-          model: nomic-embed-text
+          model: all-minilm:l6-v2
 
 logging:
   level:
     org.springframework.ai: DEBUG
-    org.springframework.jdbc: INFO
