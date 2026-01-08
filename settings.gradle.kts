@@ -57,9 +57,6 @@ include("kudos-ability:kudos-ability-data:kudos-ability-data-rdb:kudos-ability-d
 include("kudos-ability:kudos-ability-data:kudos-ability-data-rdb:kudos-ability-data-rdb-ktorm")
 include("kudos-ability:kudos-ability-data:kudos-ability-data-rdb:kudos-ability-data-rdb-flyway")
 include("kudos-ability:kudos-ability-data:kudos-ability-data-memdb:kudos-ability-data-memdb-redis")
-include("kudos-ability:kudos-ability-data:kudos-ability-data-vdb:kudos-ability-data-vdb-common")
-include("kudos-ability:kudos-ability-data:kudos-ability-data-vdb:kudos-ability-data-vdb-pgvector")
-include("kudos-ability:kudos-ability-data:kudos-ability-data-vdb:kudos-ability-data-vdb-milvus")
 
 // distributed
 include("kudos-ability:kudos-ability-distributed:kudos-ability-distributed-client:kudos-ability-distributed-client-feign")
@@ -86,9 +83,6 @@ include("kudos-ability:kudos-ability-log:kudos-ability-log-audit:kudos-ability-l
 include("kudos-ability:kudos-ability-log:kudos-ability-log-audit:kudos-ability-log-audit-rdb")
 include("kudos-ability:kudos-ability-log:kudos-ability-log-audit:kudos-ability-log-audit-rdb:kudos-ability-log-audit-rdb-common")
 include("kudos-ability:kudos-ability-log:kudos-ability-log-audit:kudos-ability-log-audit-rdb:kudos-ability-log-audit-rdb-ktorm")
-
-// ai
-include("kudos-ability:kudos-ability-ai:kudos-ability-ai-agent:kudos-ability-ai-agent-embabel")
 
 
 // ui
