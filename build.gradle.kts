@@ -2,9 +2,13 @@ import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
 
 val spring_boot_bom = libs.spring.boot.bom
 val spring_cloud_bom = libs.spring.cloud.bom
-val spring_ai_bom = libs.spring.ai.bom
 val alibaba_cloud_bom = libs.alibaba.cloud.bom
 val ktor_bom = libs.ktor.bom
+
+allprojects {
+    group = "io.kudos"
+    version = "1.0.0-SNAPSHOT"
+}
 
 subprojects {
     // 所有子模块都应用 Kotlin JVM 插件
@@ -30,7 +34,6 @@ subprojects {
     dependencies {
         add("implementation", platform(spring_boot_bom))
         add("implementation", platform(spring_cloud_bom))
-        add("implementation", platform(spring_ai_bom))
         add("implementation", platform(alibaba_cloud_bom))
         add("implementation", platform(ktor_bom))
 //      add("testImplementation", libs.kotlin.test.junit5)
@@ -39,6 +42,24 @@ subprojects {
     tasks.withType<Test> {
         useJUnitPlatform()
     }
+
+    // 用法：./gradlew publishToMavenLocal 或 ./gradlew :模块名:publishToMavenLocal
+    plugins.withId("java") {
+        pluginManager.apply("maven-publish")
+
+        extensions.configure<PublishingExtension>("publishing") {
+            publications {
+                // 避免重复创建
+                if (findByName("mavenJava") == null) {
+                    create<MavenPublication>("mavenJava") {
+                        from(components["java"])
+                        artifactId = project.name
+                    }
+                }
+            }
+        }
+    }
+
 }
 
 plugins {

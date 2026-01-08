@@ -11,7 +11,6 @@ ktor = "3.3.0"
 ktorm = "4.1.1"
 spring-boot = "4.0.1"
 spring-cloud = "2025.1.0"
-spring-ai = "2.0.0-M1"
 alibaba-cloud = "2025.0.0.0"
 h2 = "2.4.240"
 postgres = "42.7.8"
@@ -59,7 +58,6 @@ xqlee-pngquant-png = "1.0.0"
 minio = "8.6.0"
 controlsfx = "11.2.3"
 commons-fileupload = "1.6.0"
-embabel-agent = "0.3.1"
 
 
 [libraries]
@@ -71,7 +69,6 @@ kotlin-test-junit5 = { module = "org.jetbrains.kotlin:kotlin-test-junit5", versi
 # bom
 spring-boot-bom = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "spring-boot" }
 spring-cloud-bom = { module = "org.springframework.cloud:spring-cloud-dependencies", version.ref = "spring-cloud" }
-spring-ai-bom = { module = "org.springframework.ai:spring-ai-bom", version.ref = "spring-ai" }
 alibaba-cloud-bom = { module = "com.alibaba.cloud:spring-cloud-alibaba-dependencies", version.ref = "alibaba-cloud" }
 ktor-bom = { module = "io.ktor:ktor-bom", version.ref = "ktor" }
 
@@ -133,10 +130,6 @@ spring-cloud-starter-openfeign = { module = "org.springframework.cloud:spring-cl
 spring-cloud-stream = { module = "org.springframework.cloud:spring-cloud-stream"}
 spring-cloud-starter-stream-kafka = { module = "org.springframework.cloud:spring-cloud-starter-stream-kafka"}
 spring-cloud-starter-stream-rabbit = { module = "org.springframework.cloud:spring-cloud-starter-stream-rabbit"}
-spring-ai-vector-store = { module = "org.springframework.ai:spring-ai-vector-store"}
-spring-ai-starter-vector-store-pgvector = { module = "org.springframework.ai:spring-ai-starter-vector-store-pgvector" }
-spring-ai-starter-vector-store-milvus = { module = "org.springframework.ai:spring-ai-starter-vector-store-milvus" }
-spring-ai-starter-model-ollama = { module = "org.springframework.ai:spring-ai-starter-model-ollama" }
 alibaba-cloud-nacos-config = { module = "com.alibaba.cloud:spring-cloud-starter-alibaba-nacos-config"}
 alibaba-cloud-nacos-discovery = { module = "com.alibaba.cloud:spring-cloud-starter-alibaba-nacos-discovery"}
 alibaba-cloud-starter-stream-rocketmq = { module = "com.alibaba.cloud:spring-cloud-starter-stream-rocketmq"}
@@ -173,8 +166,6 @@ ktor-server-tomcat-jakarta = { module = "io.ktor:ktor-server-tomcat-jakarta-jvm"
 ktor-server-cio = { module = "io.ktor:ktor-server-cio-jvm" }
 ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation-jvm" }
 commons-fileupload = { module = "commons-fileupload:commons-fileupload", version.ref = "commons-fileupload"}
-ai-agent-starter-embabel = { module = "com.embabel.agent:embabel-agent-starter", version.ref = "embabel-agent"}
-ai-agent-test-embabel = { module = "com.embabel.agent:embabel-agent-test", version.ref = "embabel-agent"}
 
 # Libraries can be bundled together for easier import
 [bundles]
