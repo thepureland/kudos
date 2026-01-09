@@ -102,9 +102,11 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
         val list = batchData.stream().map { s: MessageExt? ->
             try {
                 val properties = s!!.properties
-                val ois = ObjectInputStream(ByteArrayInputStream(s.getBody()))
-                val data = ois.readObject() as T?
-                return@map BatchConsumerItem<T?>(data, properties)
+                val ois = ObjectInputStream(ByteArrayInputStream(s.body))
+                ois.use {
+                    val data = ois.readObject() as T?
+                    return@map BatchConsumerItem<T?>(data, properties)
+                }
             } catch (e: Exception) {
                 //一般编码过程才会出现此问题，直接报错
                 throw RuntimeException(e)
