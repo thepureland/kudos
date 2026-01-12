@@ -3,14 +3,13 @@ package io.kudos.context.lock
 import io.kudos.base.lang.ThreadKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.support.KeyLockRegistry
-import java.lang.Long
 import java.util.concurrent.*
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
 
 class NormalLockService : ILockProvider<ReentrantLock> {
-    private val cacheKeyMap: ConcurrentMap<String?, Long?> = ConcurrentHashMap<String?, Long?>()
-    private val delayQueue: DelayQueue<ExpiringKey<String?>> = DelayQueue<ExpiringKey<String?>>()
+    private val cacheKeyMap: ConcurrentMap<String?, Long?> = ConcurrentHashMap()
+    private val delayQueue: DelayQueue<ExpiringKey<String?>> = DelayQueue()
 
     private val reentrantLockManager = KeyLockRegistry<String>()
     private val log = LogFactory.getLog(NormalLockService::class.java)
@@ -56,7 +55,7 @@ class NormalLockService : ILockProvider<ReentrantLock> {
         }
         val expireTime = System.currentTimeMillis() + (sec * 1000)
         //如果key不存在，则返回旧的值空，如果key存在，则不处理
-        val old = cacheKeyMap.putIfAbsent(lockKey, expireTime as Long)
+        val old = cacheKeyMap.putIfAbsent(lockKey, expireTime)
         if (old == null) {
             // 第一个线程进来，key 还不存在，真正放入，并加入延迟队列
             delayQueue.put(ExpiringKey<String?>(lockKey, expireTime))
