@@ -48,6 +48,11 @@ subprojects {
 
     tasks.withType<Test> {
         useJUnitPlatform()
+        testLogging {
+            showStandardStreams = true
+            // 可选：更明确地把标准输出/错误也当作事件打印
+            // events("passed", "failed", "skipped", "standardOut", "standardError")
+        }
     }
 
     // 用法：./gradlew publishToMavenLocal 或 ./gradlew :模块名:publishToMavenLocal
