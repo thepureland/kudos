@@ -4,12 +4,12 @@ import io.kudos.ability.distributed.lock.common.annotations.DistributedLock
 import io.kudos.ability.distributed.lock.redisson.kit.RedissonLockKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.test.common.init.EnableKudosTest
+import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.container.containers.RedisTestContainer
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
-import org.testcontainers.junit.jupiter.EnabledIfDockerAvailable
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlin.test.Test
@@ -23,7 +23,7 @@ import kotlin.test.Test
  */
 @EnableKudosTest
 @Import(TestLockByAnnotation::class)
-@EnabledIfDockerAvailable
+@EnabledIfDockerInstalled
 open class RedissonLockSingleTest {
 
     @Autowired
