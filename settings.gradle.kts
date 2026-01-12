@@ -101,3 +101,6 @@ include("kudos-ams:kudos-ams-sys:kudos-ams-sys-common")
 include("kudos-ams:kudos-ams-sys:kudos-ams-sys-consumer")
 include("kudos-ams:kudos-ams-sys:kudos-ams-sys-api-web")
 include("kudos-ams:kudos-ams-sys:kudos-ams-sys-api-provider")
+
+// dependencies
+include("kudos-dependencies")
