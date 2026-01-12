@@ -92,6 +92,7 @@
             <option value="$PROJECT_DIR$/kudos-ams/kudos-ams-sys/kudos-ams-sys-provider" />
             <option value="$PROJECT_DIR$/kudos-base" />
             <option value="$PROJECT_DIR$/kudos-context" />
+            <option value="$PROJECT_DIR$/kudos-dependencies" />
             <option value="$PROJECT_DIR$/kudos-test" />
             <option value="$PROJECT_DIR$/kudos-test/kudos-test-api" />
             <option value="$PROJECT_DIR$/kudos-test/kudos-test-api/kudos-test-api-contract" />

@@ -11,6 +11,14 @@ allprojects {
 }
 
 subprojects {
+    // 每个子模块的 build 目录挪到根项目下统一管理
+    layout.buildDirectory = File(rootProject.projectDir, "build/${project.name}")
+
+    // BOM/platform 模块要排除掉：不能套 kotlin-jvm / java / implementation 等配置
+    if (path == ":kudos-dependencies") {
+        return@subprojects
+    }
+
     // 所有子模块都应用 Kotlin JVM 插件
     apply(plugin = "org.jetbrains.kotlin.jvm")
 
@@ -28,15 +36,14 @@ subprojects {
         getByName("test").resources.srcDir("test-resources")
     }
 
-    // 每个子模块的 build 目录挪到根项目下统一管理
-    layout.buildDirectory = File(rootProject.projectDir, "build/${project.name}")
-
-    dependencies {
-        add("implementation", platform(spring_boot_bom))
-        add("implementation", platform(spring_cloud_bom))
-        add("implementation", platform(alibaba_cloud_bom))
-        add("implementation", platform(ktor_bom))
+    plugins.withId("org.jetbrains.kotlin.jvm") {
+        dependencies {
+            add("implementation", platform(spring_boot_bom))
+            add("implementation", platform(spring_cloud_bom))
+            add("implementation", platform(alibaba_cloud_bom))
+            add("implementation", platform(ktor_bom))
 //      add("testImplementation", libs.kotlin.test.junit5)
+        }
     }
 
     tasks.withType<Test> {
