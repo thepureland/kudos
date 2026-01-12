@@ -89,7 +89,7 @@ object TestContainerKit {
             .withShowAll(true)
             .withLabelFilter(mapOf(LABEL_KEY to label))
             .exec()
-        return containers.firstOrNull() as Container?
+        return containers.firstOrNull()
     }
 
     /**
