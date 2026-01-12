@@ -3,6 +3,7 @@ package io.kudos.ability.cache.remote.redis
 import io.kudos.ability.cache.common.core.MixCacheManager
 import io.kudos.ability.cache.common.enums.CacheStrategy
 import io.kudos.test.common.init.EnableKudosTest
+import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.container.containers.RedisTestContainer
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
@@ -10,7 +11,6 @@ import org.springframework.cache.CacheManager
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
-import org.testcontainers.junit.jupiter.EnabledIfDockerAvailable
 import java.util.concurrent.CountDownLatch
 import kotlin.test.Test
 
@@ -23,7 +23,7 @@ import kotlin.test.Test
  */
 @EnableKudosTest
 @Import(CacheTestService::class, TestCacheConfigProvider::class)
-@EnabledIfDockerAvailable
+@EnabledIfDockerInstalled
 internal class RemoteCacheTest {
 
     companion object {

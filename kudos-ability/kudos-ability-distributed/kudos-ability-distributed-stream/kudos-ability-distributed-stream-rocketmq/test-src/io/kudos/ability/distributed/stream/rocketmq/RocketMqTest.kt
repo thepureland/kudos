@@ -5,6 +5,7 @@ import io.kudos.ability.distributed.stream.rocketmq.main.RocketMqConsumerHandler
 import io.kudos.ability.distributed.stream.rocketmq.main.RocketMqMainService
 import io.kudos.ability.distributed.stream.rocketmq.producer.RocketMqProducerApplication
 import io.kudos.test.common.init.EnableKudosTest
+import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.container.containers.RocketMqTestContainer
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
@@ -15,7 +16,6 @@ import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
-import org.testcontainers.junit.jupiter.EnabledIfDockerAvailable
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -33,7 +33,7 @@ import kotlin.test.Test
 @EnableKudosTest
 @EnableFeignClients
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@EnabledIfDockerAvailable
+@EnabledIfDockerInstalled
 @Import(RocketMqConsumerHandler::class, RocketMqMainService::class)
 @ActiveProfiles("rocketmq-main")
 open class RocketMqTest {

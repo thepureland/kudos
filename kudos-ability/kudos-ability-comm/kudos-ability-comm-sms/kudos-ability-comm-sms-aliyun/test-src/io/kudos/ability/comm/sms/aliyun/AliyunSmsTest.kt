@@ -3,11 +3,11 @@ package io.kudos.ability.comm.sms.aliyun
 import io.kudos.ability.comm.sms.aliyun.handler.AliyunSmsHandler
 import io.kudos.ability.comm.sms.aliyun.model.AliyunSmsRequest
 import io.kudos.test.common.init.EnableKudosTest
+import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.container.containers.WireMockTestContainer
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
-import org.testcontainers.junit.jupiter.EnabledIfDockerAvailable
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlin.test.Test
@@ -21,7 +21,7 @@ import kotlin.test.assertEquals
  * @since 1.0.0
  */
 @EnableKudosTest
-@EnabledIfDockerAvailable
+@EnabledIfDockerInstalled
 class AliyunSmsTest {
 
     @Autowired

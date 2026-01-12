@@ -1,9 +1,9 @@
 package io.kudos.ability.distributed.client.feign
 
-import io.kudos.ability.distributed.client.feign.PostParam
 import io.kudos.ability.distributed.client.feign.client.IFeignClient
 import io.kudos.ability.distributed.client.feign.ms.MockMsApplication
 import io.kudos.test.common.init.EnableKudosTest
+import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.container.containers.NacosTestContainer
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.SpringApplication
 import org.springframework.cloud.openfeign.EnableFeignClients
 import org.springframework.test.context.ActiveProfiles
-import org.testcontainers.junit.jupiter.EnabledIfDockerAvailable
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
@@ -24,7 +23,7 @@ import kotlin.test.assertTrue
  */
 @EnableKudosTest
 @EnableFeignClients
-@EnabledIfDockerAvailable
+@EnabledIfDockerInstalled
 @ActiveProfiles("client")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 open class OpenFeignTest {

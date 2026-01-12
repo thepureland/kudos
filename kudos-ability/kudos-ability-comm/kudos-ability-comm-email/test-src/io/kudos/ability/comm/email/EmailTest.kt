@@ -4,13 +4,13 @@ import io.kudos.ability.comm.email.enums.EmailStatusEnum
 import io.kudos.ability.comm.email.handler.EmailHandler
 import io.kudos.ability.comm.email.model.EmailRequest
 import io.kudos.test.common.init.EnableKudosTest
+import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.container.containers.SmtpTestContainer
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
-import org.testcontainers.junit.jupiter.EnabledIfDockerAvailable
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlin.test.Test
@@ -25,7 +25,7 @@ import kotlin.test.assertEquals
  */
 @EnableKudosTest
 @TestInstance(value = TestInstance.Lifecycle.PER_CLASS)
-@EnabledIfDockerAvailable
+@EnabledIfDockerInstalled
 class EmailTest {
 
     @Autowired

@@ -1,6 +1,7 @@
 package io.kudos.ability.distributed.discovery.nacos
 
 import io.kudos.test.common.init.EnableKudosTest
+import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.container.containers.NacosTestContainer
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
@@ -8,7 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.SpringApplication
 import org.springframework.cloud.client.discovery.DiscoveryClient
 import org.springframework.test.context.ActiveProfiles
-import org.testcontainers.junit.jupiter.EnabledIfDockerAvailable
 import kotlin.test.Test
 import kotlin.test.assertFalse
 
@@ -19,7 +19,7 @@ import kotlin.test.assertFalse
  * @since 1.0.0
  */
 @EnableKudosTest
-@EnabledIfDockerAvailable
+@EnabledIfDockerInstalled
 @ActiveProfiles("client")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 open class NacosServiceDiscoveryTest {

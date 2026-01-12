@@ -3,10 +3,10 @@ package io.kudos.ability.distributed.tx.seata
 import io.kudos.ability.distributed.tx.seata.main.Service
 import io.kudos.context.kit.SpringKit
 import io.kudos.test.common.init.EnableKudosTest
+import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
-import org.testcontainers.junit.jupiter.EnabledIfDockerAvailable
 import javax.sql.DataSource
 import kotlin.test.Test
 
@@ -17,7 +17,7 @@ import kotlin.test.Test
  * @since 1.0.0
  */
 @EnableKudosTest
-@EnabledIfDockerAvailable
+@EnabledIfDockerInstalled
 @Import(Service::class)
 open class AtSeataTest : SeataTestBase() {
 
