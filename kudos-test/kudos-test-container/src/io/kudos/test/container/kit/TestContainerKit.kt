@@ -1,10 +1,17 @@
 package io.kudos.test.container.kit
 
+import com.github.dockerjava.api.DockerClient
+import com.github.dockerjava.api.async.ResultCallback
+import com.github.dockerjava.api.command.ExecCreateCmdResponse
 import com.github.dockerjava.api.model.Container
+import com.github.dockerjava.api.model.Frame
+import com.github.dockerjava.api.model.StreamType
 import org.testcontainers.DockerClientFactory
 import org.testcontainers.containers.ComposeContainer
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.Network
+import java.io.ByteArrayOutputStream
+import java.io.IOException
 import kotlin.system.measureTimeMillis
 
 /**
@@ -114,5 +121,91 @@ object TestContainerKit {
             println("<<<<<<<<<<<<<<<<<<<< $label container stopped in $time ms.")
         })
     }
+
+    /**
+     * 直接在容器内执行命令
+     *
+     * @param container 容器对象
+     * @param command 要执行的命令及其参数
+     * @return 执行结果，包含退出码、stdout 和 stderr
+     */
+    private fun execInContainer(container: GenericContainer<*>, vararg command: String): ExecResult {
+        val result = container.execInContainer(*command)
+        return ExecResult(
+            exitCode = result.exitCode,
+            stdout = result.stdout,
+            stderr = result.stderr
+        )
+    }
+
+    /**
+     * 通过 Docker Java API 在容器内执行命令
+     *
+     * @param container Docker Java API 的 Container 对象
+     * @param command 要执行的命令及其参数
+     * @return 执行结果，包含退出码、stdout 和 stderr
+     */
+    fun execInContainer(container: Container, vararg command: String): ExecResult {
+        val dockerClient = getDockerClient()
+        val containerId = container.id
+
+        // 创建 exec 命令
+        val execCreateCmd = dockerClient.execCreateCmd(containerId)
+            .withCmd(*command)
+            .withAttachStdout(true)
+            .withAttachStderr(true)
+
+        val execCreateResponse: ExecCreateCmdResponse = execCreateCmd.exec()
+        val execId = execCreateResponse.id
+
+        // 执行命令并获取输出
+        val stdout = ByteArrayOutputStream()
+        val stderr = ByteArrayOutputStream()
+
+        val callback = object : ResultCallback.Adapter<Frame>() {
+            override fun onNext(frame: Frame) {
+                try {
+                    when (frame.streamType) {
+                        StreamType.STDOUT -> stdout.write(frame.payload)
+                        StreamType.STDERR -> stderr.write(frame.payload)
+                        else -> {
+                            // 其他类型（如 RAW）忽略或根据实际情况处理
+                        }
+                    }
+                } catch (e: IOException) {
+                    throw RuntimeException("Failed to write frame output", e)
+                }
+            }
+        }
+
+        dockerClient.execStartCmd(execId).exec(callback).awaitCompletion()
+
+        // 获取退出码
+        val inspectExecResponse = dockerClient.inspectExecCmd(execId).exec()
+        val exitCode = inspectExecResponse.exitCodeLong ?: -1
+
+        return ExecResult(
+            exitCode = exitCode.toInt(),
+            stdout = stdout.toString(),
+            stderr = stderr.toString()
+        )
+    }
+
+    /**
+     * 执行结果数据类
+     */
+    data class ExecResult(
+        val exitCode: Int,
+        val stdout: String,
+        val stderr: String
+    )
+
+    /**
+     * 获取 DockerClient 实例（使用 Testcontainers 的 DockerClientFactory）
+     */
+    fun getDockerClient(): DockerClient {
+        return DockerClientFactory.instance().client()
+    }
+
 
 }

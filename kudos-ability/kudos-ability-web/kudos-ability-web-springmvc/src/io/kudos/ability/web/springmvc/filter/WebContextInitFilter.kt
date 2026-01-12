@@ -18,7 +18,7 @@ import jakarta.servlet.http.HttpServletRequest
  * @author K
  * @since 1.0.0
  */
-open class WebContextInitFilter: IWebContextInitFilter {
+open class WebContextInitFilter : IWebContextInitFilter {
 
     override fun doFilter(request: ServletRequest, response: ServletResponse, chain: FilterChain) {
         val context = KudosContext()
@@ -58,7 +58,12 @@ open class WebContextInitFilter: IWebContextInitFilter {
         // 初始化上下文
         KudosContextHolder.set(context)
 
-        chain.doFilter(request, response)
+        try {
+            chain.doFilter(request, response)
+        } finally {
+            // 请求结束后清理所有上下文，避免线程池复用线程时造成上下文污染和内存泄漏
+            KudosContextHolder.clear()
+        }
     }
 
 
