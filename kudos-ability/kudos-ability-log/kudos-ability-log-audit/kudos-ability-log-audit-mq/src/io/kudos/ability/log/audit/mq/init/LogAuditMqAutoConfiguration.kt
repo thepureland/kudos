@@ -1,6 +1,7 @@
 package io.kudos.ability.log.audit.mq.init
 
-import io.kudos.ability.log.audit.commobn.api.IAuditService
+import io.kudos.ability.log.audit.common.api.IAuditService
+import io.kudos.ability.log.audit.mq.beans.MqAuditService
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
 import io.kudos.context.config.YamlPropertySourceFactory
