@@ -13,7 +13,30 @@ import org.springframework.messaging.support.GenericMessage
 
 /**
  * 流式消息生产者异常处理器
- * 处理消息发送失败的情况，支持将失败消息持久化到本地文件，并定时重试发送
+ * 
+ * 处理消息发送失败的情况，支持将失败消息持久化到本地文件，并定时重试发送。
+ * 
+ * 核心功能：
+ * 1. 失败消息持久化：将发送失败的消息保存到本地文件系统，避免消息丢失
+ * 2. 定时重试：通过定时任务（默认每分钟执行一次）扫描失败消息文件，重新发送
+ * 3. 消息恢复：从持久化的JSON数据中恢复消息对象，包括消息体和消息头
+ * 4. 重试标识：重试发送时标记isResend=true，避免重复触发失败处理
+ * 
+ * 工作流程：
+ * - 消息发送失败时，失败消息会被序列化为JSON格式保存到本地文件
+ * - 定时任务扫描失败消息文件，反序列化消息对象
+ * - 重新构建Message对象（包括消息体和消息头）
+ * - 调用StreamProducerHelper.doRealSend进行重试发送
+ * - 发送成功后删除本地文件，失败则保留文件等待下次重试
+ * 
+ * 文件存储：
+ * - 文件路径：{配置路径}/{服务代码}/，支持按服务隔离
+ * - 文件格式：JSON格式，包含bindName、msgHeaderJson、msgBodyJson
+ * 
+ * 注意事项：
+ * - 如果重试发送仍然失败，消息会继续保留在本地文件中
+ * - 需要提供异常数据修复机制，避免失败消息堆积导致磁盘空间问题
+ * - 定时任务执行频率可通过cronExpression配置调整
  */
 class StreamProducerExceptionHandler : AbstractFailedDataHandler<StreamProducerMsgVo>(), IStreamFailHandler {
 

@@ -16,7 +16,27 @@ import java.util.stream.Collectors
 
 /**
  * 流式消息消费者环境注册器
- * 用于自动收集和合并Spring Cloud Function定义，支持从多个配置源加载函数定义
+ * 
+ * 用于自动收集和合并Spring Cloud Function定义，支持从多个配置源加载函数定义。
+ * 
+ * 核心功能：
+ * 1. 多源收集：从Environment默认配置和所有YAML配置文件中收集函数定义
+ * 2. 定义合并：将收集到的所有函数定义合并为单个字符串，使用分号分隔
+ * 3. 优先级设置：将合并后的定义注册到Environment的最前面，确保优先级最高
+ * 
+ * 工作流程：
+ * - 从Environment中读取spring.cloud.function.definition默认值
+ * - 扫描所有YAML配置文件，提取函数定义配置
+ * - 将所有定义去重后合并为单个字符串
+ * - 创建MapPropertySource并添加到Environment的最前面
+ * 
+ * 配置格式：
+ * - 支持使用分号、逗号或空格分隔多个函数定义
+ * - 例如："function1;function2" 或 "function1,function2"
+ * 
+ * 注意事项：
+ * - 如果配置文件中不存在，会跳过该文件继续处理其他文件
+ * - 合并后的定义会覆盖Environment中的原始配置
  */
 class StreamConsumerEnvironRegistrar : ImportBeanDefinitionRegistrar, EnvironmentAware {
 

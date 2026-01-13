@@ -7,7 +7,21 @@ import org.springframework.beans.factory.annotation.Qualifier
 
 /**
  * 混合缓存初始化器
- * 在Spring容器初始化完成后，初始化所有配置的缓存项
+ * 
+ * 在Spring容器初始化完成后，初始化所有配置的缓存项。
+ * 
+ * 核心功能：
+ * 1. 延迟初始化：实现SmartInitializingSingleton接口，在所有单例Bean初始化完成后执行
+ * 2. 缓存初始化：调用MixCacheManager的initCacheAfterSystemInit方法，初始化所有配置的缓存
+ * 
+ * 工作时机：
+ * - 在所有Spring Bean初始化完成后执行
+ * - 确保依赖的Bean（如CacheManager）已经准备就绪
+ * - 避免在Bean初始化过程中过早创建缓存实例
+ * 
+ * 注意事项：
+ * - 必须依赖MixCacheManager Bean，如果不存在会抛出异常
+ * - 初始化过程会读取所有配置的缓存项，并创建对应的缓存实例
  */
 class MixCacheInitializing : SmartInitializingSingleton {
     @Autowired
