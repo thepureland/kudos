@@ -18,7 +18,19 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
 
 /**
  * 流式消息生产者辅助类
- * 提供消息发送的统一接口，支持同步和异步发送，以及失败处理和重试机制
+ * 
+ * 提供消息发送的统一接口，支持同步和异步发送，以及失败处理和重试机制。
+ * 
+ * 核心功能：
+ * 1. 同步发送：调用sendMessage方法，立即返回发送结果
+ * 2. 异步发送：调用asyncSendMessage方法，使用线程池异步执行，不阻塞调用线程
+ * 3. 失败处理：当消息发送失败时，如果配置了失败处理器，会将失败消息发送到错误通道进行后续处理
+ * 4. 消息封装：自动创建StreamMessageVo消息对象，并添加必要的消息头信息（包括绑定名称、目标地址等）
+ * 
+ * 注意事项：
+ * - MQ发送都是异步的，send方法返回true不代表消息已成功发送到MQ服务器
+ * - 真实的发送错误会在flush时感知，此时会触发失败处理机制
+ * - 支持通过StreamFailHandlerItem注册自定义的失败处理器
  */
 class StreamProducerHelper {
 

@@ -16,7 +16,28 @@ import java.util.*
 
 /**
  * Redis缓存管理器
- * 扩展Spring的RedisCacheManager，支持缓存版本管理和多租户缓存隔离
+ * 
+ * 扩展Spring的RedisCacheManager，支持缓存版本管理和多租户缓存隔离。
+ * 
+ * 核心功能：
+ * 1. 缓存版本管理：通过CacheVersionConfig为缓存名称添加版本前缀，支持缓存版本隔离和升级
+ * 2. 动态缓存创建：根据CacheConfig配置动态创建RedisCache实例，支持自定义TTL
+ * 3. 模式删除：支持按模式删除缓存key，使用SCAN替代KEYS命令，避免阻塞Redis
+ * 4. 缓存初始化：在系统初始化后批量创建配置的缓存实例
+ * 
+ * 缓存命名规则：
+ * - 实际缓存名称 = 版本前缀 + 原始缓存名称
+ * - 例如：版本为"v1"，缓存名为"user"，实际名称为"v1::user"
+ * 
+ * 模式删除：
+ * - 支持按模式删除缓存key，例如"user:*"会删除所有以"user:"开头的key
+ * - 使用SCAN命令替代KEYS，避免在生产环境阻塞Redis
+ * - 会自动添加缓存名称前缀和版本前缀
+ * 
+ * 注意事项：
+ * - 缓存创建时会应用版本前缀，确保不同版本的缓存相互隔离
+ * - 支持自定义TTL，如果配置中未指定TTL，使用默认配置
+ * - 缓存实例创建后会被添加到caches列表中，供后续使用
  */
 class RedisCacheManager(
     private val cacheWriter: RedisCacheWriter,
