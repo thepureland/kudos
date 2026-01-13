@@ -52,7 +52,7 @@ open class SysDictItemService : BaseCrudService<String, SysDictItem, SysDictItem
         if (result != null && fetchAllParentIds) {
             val parentId = result.parentId
             if (!parentId.isNullOrBlank()) {
-                var parentIds = fetchAllParentIds(parentId!!)
+                var parentIds = fetchAllParentIds(parentId)
                 parentIds = parentIds.toMutableList()
                 parentIds.add(parentId)
                 result.parentIds = parentIds

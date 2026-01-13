@@ -85,7 +85,7 @@ class RateLimiterAspect {
             try {
                 val redisScript: DefaultRedisScript<Long> = DefaultRedisScript()
                 @Suppress("UNCHECKED_CAST")
-                redisScript.resultType = Long::class.java as Class<Long>
+                redisScript.resultType = Long::class.java
                 classPathResource.inputStream //探测资源是否存在
                 redisScript.setScriptSource(ResourceScriptSource(classPathResource))
                 return redisScript

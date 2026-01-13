@@ -14,7 +14,7 @@ import java.util.Locale
 
 class FeignContextWebFilter : Filter {
 
-    public override fun doFilter(
+    override fun doFilter(
         servletRequest: ServletRequest?,
         servletResponse: ServletResponse?,
         filterChain: FilterChain
@@ -35,8 +35,8 @@ class FeignContextWebFilter : Filter {
                 context.clientInfo = clientInfo
             }
             if (local.isNotBlank()) {
-                val arr: Array<String?> = local.split("_".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-                clientInfo.locale = Locale(arr[0], arr[1])
+                val arr = local.split("_".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+                clientInfo.locale = Locale.of(arr[0], arr[1])
             }
             context.tenantId = tenantId
             context.subSystemCode = subSysCode

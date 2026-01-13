@@ -40,14 +40,14 @@ open class MinioDownLoadService : AbstractDownLoadService() {
         return minioClientDefault
     }
 
-    override fun readFileToByte(model: DownloadFileModel<*>): ByteArray? {
+    override fun readFileToByte(downloadFileModel: DownloadFileModel<*>): ByteArray? {
         val getArgs: GetObjectArgs? = GetObjectArgs
             .builder()
-            .bucket(model.bucketName)
-            .`object`(model.filePath)
+            .bucket(downloadFileModel.bucketName)
+            .`object`(downloadFileModel.filePath)
             .build()
         try {
-            val minioClient: MinioClient = getMinioClient(model)
+            val minioClient: MinioClient = getMinioClient(downloadFileModel)
             val `object`: GetObjectResponse? = minioClient.getObject(getArgs)
             if (`object` != null) {
                 return `object`.readAllBytes()
@@ -61,14 +61,14 @@ open class MinioDownLoadService : AbstractDownLoadService() {
         }
     }
 
-    override fun readFileToStream(model: DownloadFileModel<*>): java.io.InputStream {
+    override fun readFileToStream(downloadFileModel: DownloadFileModel<*>): java.io.InputStream {
         val getArgs = GetObjectArgs
             .builder()
-            .bucket(model.bucketName)
-            .`object`(model.filePath)
+            .bucket(downloadFileModel.bucketName)
+            .`object`(downloadFileModel.filePath)
             .build()
         try {
-            val minioClient: MinioClient = getMinioClient(model)
+            val minioClient: MinioClient = getMinioClient(downloadFileModel)
             val obj = minioClient.getObject(getArgs)
             if (obj != null) {
                 return obj

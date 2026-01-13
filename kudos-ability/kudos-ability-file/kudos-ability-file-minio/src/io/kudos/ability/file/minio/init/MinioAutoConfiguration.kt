@@ -16,6 +16,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.PropertySource
+import java.net.URI
 import java.net.URL
 
 /**
@@ -36,7 +37,7 @@ open class MinioAutoConfiguration : IComponentInitializer {
     @Bean
     @ConditionalOnMissingBean
     open fun minioClient(minioProperties: MinioProperties): MinioClient {
-        return MinioClient.builder().endpoint(URL(minioProperties.endpoint))
+        return MinioClient.builder().endpoint(URI(minioProperties.endpoint).toURL())
             .credentials(minioProperties.accessKey, minioProperties.secretKey).build()
     }
 

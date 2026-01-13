@@ -24,7 +24,7 @@ class RedissonLockProvider : ILockProvider<RLock> {
         return 90
     }
 
-    override fun tryLock(lockKey: String, second: Int): Boolean {
-        return RedissonLockKit.tryLock(lockKey, TimeUnit.SECONDS, 0, second.toLong())
+    override fun tryLock(lockKey: String, sec: Int): Boolean {
+        return RedissonLockKit.tryLock(lockKey, TimeUnit.SECONDS, 0, sec.toLong())
     }
 }

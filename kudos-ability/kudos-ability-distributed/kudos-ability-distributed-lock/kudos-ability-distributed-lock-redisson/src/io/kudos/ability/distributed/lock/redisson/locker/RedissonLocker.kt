@@ -68,19 +68,19 @@ class RedissonLocker : ILocker<RLock> {
      *
      * @param lockKey   lockKey
      * @param unit      unit
-     * @param waitTime  获取锁等待时间
+     * @param timeOut  获取锁等待时间
      * @param leaseTime 获取锁成功后，锁失效时间
      */
     override fun tryLock(
         lockKey: String,
         unit: TimeUnit,
-        waitTime: Long,
+        timeOut: Long,
         leaseTime: Long
     ): Boolean {
         val lock: RLock = this.redissonClient.getLock(lockKey)
         var result: Boolean
         try {
-            result = lock.tryLock(waitTime, leaseTime, unit)
+            result = lock.tryLock(timeOut, leaseTime, unit)
         } catch (var8: java.lang.InterruptedException) {
             result = false
         }

@@ -44,6 +44,7 @@ class StreamProducerHelper {
             return false
         }
         val msg = createMessage(bindingName, data)
+        @Suppress("UNCHECKED_CAST")
         val success = doRealSend(bindingName, msg as Message<StreamMessageVo<Any?>>, false)
         if (!success) {
             LOG.warn("stream发送消息结果:false, bindingName:${bindingName}, msgId:${msg.headers.id}")
@@ -65,6 +66,7 @@ class StreamProducerHelper {
         }
         val msg = createMessage(bindingName, data)
         streamAsyncSendExecutor.execute {
+            @Suppress("UNCHECKED_CAST")
             val success = doRealSend(bindingName, msg as Message<StreamMessageVo<Any?>>, false)
             if (!success) {
                 LOG.warn("stream发送消息结果:false, bindingName:${bindingName}, msgId:${msg.headers.id}")
@@ -83,7 +85,7 @@ class StreamProducerHelper {
     fun <T> doRealSend(bindingName: String, msg: Message<StreamMessageVo<T>>, isResend: Boolean): Boolean {
         try {
             //这里MQ都是异步发送，所以永远都会返回true，只有真实flush的是后才会感知错误信息
-            return streamBridge!!.send(bindingName, msg, StreamMessageConverter.MESSAGE_TYPE)
+            return streamBridge.send(bindingName, msg, StreamMessageConverter.MESSAGE_TYPE)
         } catch (e: Throwable) {
             //避免乱七八糟错误补救而已
             LOG.error(e, "发送mq失败！")
@@ -103,6 +105,7 @@ class StreamProducerHelper {
         val header = StreamHeader.initHeader(destination)
         val headerMap = BeanKit.extract(header)
         val map = mutableMapOf<String, Any>()
+        @Suppress("UNCHECKED_CAST")
         map.putAll(headerMap as Map<out String, Any>)
         map.put(StreamHeader.SCST_BIND_NAME, bindingName)
         val headers = org.springframework.messaging.MessageHeaders(map)

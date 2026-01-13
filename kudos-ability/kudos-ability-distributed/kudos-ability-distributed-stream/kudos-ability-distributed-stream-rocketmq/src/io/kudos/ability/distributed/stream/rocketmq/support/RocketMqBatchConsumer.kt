@@ -104,6 +104,7 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
                 val properties = s!!.properties
                 val ois = ObjectInputStream(ByteArrayInputStream(s.body))
                 ois.use {
+                    @Suppress("UNCHECKED_CAST")
                     val data = ois.readObject() as T?
                     return@map BatchConsumerItem<T?>(data, properties)
                 }
@@ -114,13 +115,13 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
         }.toList()
         try {
             bizBachProcess!!.accept(list)
-            consumer.commitSync()
+            consumer.commit()
         } catch (e: Exception) {
             if (saveException) {
                 log.error(e, "业务数据消费失败！" + e.message)
                 saveErrorData(batchData)
                 //出现异常，但是保存了日志，所以确认消费
-                consumer.commitSync()
+                consumer.commit()
             } else {
                 log.error(e, "业务消费失败，重新拉数据...")
             }

@@ -11,7 +11,7 @@ class StreamProducerFailHandlerProcessor : BeanPostProcessor {
     @Throws(BeansException::class)
     override fun postProcessAfterInitialization(bean: Any, beanName: String): Any {
         if (bean is IStreamFailHandler) {
-            val handler: IStreamFailHandler = bean as IStreamFailHandler
+            val handler: IStreamFailHandler = bean
             StreamFailHandlerItem.put(handler.bindName()!!, handler)
         }
         return bean

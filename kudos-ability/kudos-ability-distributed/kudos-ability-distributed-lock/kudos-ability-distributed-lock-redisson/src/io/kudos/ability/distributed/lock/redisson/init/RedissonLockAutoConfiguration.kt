@@ -13,6 +13,8 @@ import org.redisson.Redisson
 import org.redisson.api.RedissonClient
 import org.redisson.config.BaseConfig
 import org.redisson.config.Config
+import org.redisson.config.ConstantDelay
+import org.redisson.config.DelayStrategy
 import org.redisson.config.ReadMode
 import org.redisson.config.TransportMode
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
@@ -21,6 +23,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.PropertySource
+import java.time.Duration
+import java.time.temporal.ChronoUnit
 
 /**
  * redisson分布式锁自动配置类
@@ -67,6 +71,13 @@ open class RedissonLockAutoConfiguration : IComponentInitializer {
      * @param config     Config
      */
     private fun initRedissonConfig(config: Config, properties: RedissonProperties) {
+        // Redisson 4.0+ 中，密码应该在 Config 对象上设置，而不是在 BaseConfig 上
+        properties.baseConfig?.let {
+            if (!it.password.isNullOrBlank()) {
+                config.setPassword(it.password)
+            }
+        }
+
         when (properties.mode) {
             "single" -> {
                 config.useSingleServer().apply {
@@ -117,10 +128,10 @@ open class RedissonLockAutoConfiguration : IComponentInitializer {
             connectTimeout = baseConfigProperties.connectTimeout
             timeout = baseConfigProperties.timeout
             retryAttempts = baseConfigProperties.retryAttempts
-            retryInterval = baseConfigProperties.retryInterval
-            if (!baseConfigProperties.password.isNullOrBlank()) {
-                password = baseConfigProperties.password
-            }
+            retryDelay = ConstantDelay(Duration.of(baseConfigProperties.retryInterval.toLong(), ChronoUnit.MILLIS))
+//            if (!baseConfigProperties.password.isNullOrBlank()) {
+//                setPassword(baseConfigProperties.password)
+//            }
             subscriptionsPerConnection = baseConfigProperties.subscriptionsPerConnection
             clientName = baseConfigProperties.clientName
         }
