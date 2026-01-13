@@ -1,7 +1,7 @@
 package io.kudos.ability.log.audit.mq
 
-import io.kudos.ability.log.audit.commobn.annotation.Audit
-import io.kudos.ability.log.audit.commobn.enums.OperationTypeEnum
+import io.kudos.ability.log.audit.common.annotation.Audit
+import io.kudos.ability.log.audit.common.enums.OperationTypeEnum
 import io.kudos.base.support.IIdEntity
 import org.springframework.stereotype.Component
 
@@ -17,7 +17,7 @@ class TestMqAuditService {
         return "code-load-success"
     }
 
-    class SaveModel  {
+    class SaveModel(override var id: String?) : IIdEntity<String> {
         @JvmField
         var code: String? = null
     }
