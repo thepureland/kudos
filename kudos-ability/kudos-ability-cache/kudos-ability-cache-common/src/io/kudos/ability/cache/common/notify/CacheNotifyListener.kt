@@ -7,6 +7,10 @@ import io.kudos.ability.distributed.notify.common.model.NotifyMessageVo
 import io.kudos.base.logger.LogFactory
 import java.io.Serializable
 
+/**
+ * 缓存通知监听器
+ * 监听缓存操作通知消息，实现分布式缓存的同步失效和清除
+ */
 class CacheNotifyListener : INotifyListener {
 
     private val log = LogFactory.getLog(this)

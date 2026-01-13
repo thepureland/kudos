@@ -14,6 +14,10 @@ import java.util.Arrays
 import java.util.Collections
 import java.util.stream.Collectors
 
+/**
+ * 流式消息消费者环境注册器
+ * 用于自动收集和合并Spring Cloud Function定义，支持从多个配置源加载函数定义
+ */
 class StreamConsumerEnvironRegistrar : ImportBeanDefinitionRegistrar, EnvironmentAware {
 
     private lateinit var env: ConfigurableEnvironment

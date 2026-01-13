@@ -4,6 +4,10 @@ import io.kudos.context.kit.SpringKit
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 
+/**
+ * RocketMQ配置属性类
+ * 封装RocketMQ相关的配置信息，包括NameServer地址和异常保存开关
+ */
 @Component
 class RocketMqProperties {
 

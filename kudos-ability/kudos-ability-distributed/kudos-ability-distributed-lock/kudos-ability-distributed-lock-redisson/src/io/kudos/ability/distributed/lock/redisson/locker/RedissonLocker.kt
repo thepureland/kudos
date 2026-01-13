@@ -6,6 +6,10 @@ import org.redisson.api.RedissonClient
 import org.springframework.beans.factory.annotation.Autowired
 import java.util.concurrent.TimeUnit
 
+/**
+ * Redisson分布式锁实现
+ * 基于Redisson实现分布式锁功能，提供获取锁、加锁、解锁等操作
+ */
 class RedissonLocker : ILocker<RLock> {
 
     @Autowired(required = false)

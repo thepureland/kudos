@@ -15,6 +15,10 @@ import org.springframework.data.redis.connection.MessageListener
 import org.springframework.data.redis.core.RedisTemplate
 import java.util.*
 
+/**
+ * Redis缓存消息处理器
+ * 监听Redis发布订阅消息，实现分布式缓存同步和失效通知
+ */
 class RedisCacheMessageHandler : ICacheMessageHandler, MessageListener {
     @Value("\${kudos.ability.cache.remoteStore}")
     private lateinit var remoteStore: String

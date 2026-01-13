@@ -16,6 +16,10 @@ import org.springframework.web.context.request.RequestAttributes
 import org.springframework.web.context.request.RequestContextHolder
 import java.io.Serializable
 
+/**
+ * 客户端缓存切面
+ * 通过AOP方式实现服务间缓存功能，支持基于请求的缓存命中判断和数据返回
+ */
 @Aspect
 @Lazy(false)
 @Order(0)

@@ -6,6 +6,10 @@ import org.redisson.api.RLock
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.Lock
 
+/**
+ * Redisson锁提供者
+ * 实现ILockProvider接口，提供基于Redisson的分布式锁功能
+ */
 class RedissonLockProvider : ILockProvider<RLock> {
     
     override fun lock(key: String): RLock? {

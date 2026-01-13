@@ -3,6 +3,10 @@ package io.kudos.ability.cache.interservice.common
 import java.io.Serial
 import java.io.Serializable
 
+/**
+ * 客户端缓存键
+ * 用于生成服务间缓存的唯一键，基于URL、HTTP方法和请求参数
+ */
 class ClientCacheKey : Serializable {
     private var url: String? = null
     private var method: String? = null

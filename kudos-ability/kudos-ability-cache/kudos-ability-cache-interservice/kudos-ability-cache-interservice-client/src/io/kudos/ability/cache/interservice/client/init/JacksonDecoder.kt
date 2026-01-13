@@ -6,6 +6,10 @@ import tools.jackson.databind.ObjectMapper
 import java.lang.reflect.Type
 import java.nio.charset.StandardCharsets
 
+/**
+ * Jackson解码器
+ * 用于Feign响应解码，支持将HTTP响应体反序列化为Java对象
+ */
 class JacksonDecoder(
     private val objectMapper: ObjectMapper
 ) : Decoder {
