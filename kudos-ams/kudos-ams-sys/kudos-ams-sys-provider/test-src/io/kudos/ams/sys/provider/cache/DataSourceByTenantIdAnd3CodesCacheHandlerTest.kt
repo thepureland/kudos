@@ -4,8 +4,8 @@ import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.ams.sys.common.vo.datasource.SysDataSourceCacheItem
 import io.kudos.ams.sys.provider.dao.SysDataSourceDao
 import io.kudos.ams.sys.provider.model.po.SysDataSource
+import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import org.springframework.beans.factory.annotation.Autowired
-import org.testcontainers.junit.jupiter.EnabledIfDockerAvailable
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -17,7 +17,7 @@ import kotlin.test.assertNull
  * @author K
  * @since 1.0.0
  */
-@EnabledIfDockerAvailable
+@EnabledIfDockerInstalled
 class DataSourceByTenantIdAnd3CodesCacheHandlerTest : CacheHandlerTestBase() {
 
     @Autowired

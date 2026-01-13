@@ -3,11 +3,11 @@ package io.kudos.ability.comm.sms.aws
 import io.kudos.ability.comm.sms.aws.handler.AwsSmsHandler
 import io.kudos.ability.comm.sms.aws.model.AwsSmsRequest
 import io.kudos.test.common.init.EnableKudosTest
+import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.container.containers.WireMockTestContainer
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
-import org.testcontainers.junit.jupiter.EnabledIfDockerAvailable
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.concurrent.CountDownLatch
@@ -23,7 +23,7 @@ import kotlin.test.assertEquals
  * @since 1.0.-0
  */
 @EnableKudosTest
-@EnabledIfDockerAvailable
+@EnabledIfDockerInstalled
 class AwsSmsTest {
 
     @Autowired

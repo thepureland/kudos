@@ -2,12 +2,12 @@ package io.kudos.ability.data.memdb.redis
 
 import io.kudos.base.time.toLocalDateTime
 import io.kudos.test.common.init.EnableKudosTest
+import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.container.containers.RedisTestContainer
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
-import org.testcontainers.junit.jupiter.EnabledIfDockerAvailable
 import java.io.Serializable
 import java.time.LocalDateTime
 import java.util.*
@@ -21,7 +21,7 @@ import kotlin.test.assertEquals
  * @since 1.0.0
  */
 @EnableKudosTest
-@EnabledIfDockerAvailable
+@EnabledIfDockerInstalled
 internal class RedisTemplateTest {
 
     @Autowired

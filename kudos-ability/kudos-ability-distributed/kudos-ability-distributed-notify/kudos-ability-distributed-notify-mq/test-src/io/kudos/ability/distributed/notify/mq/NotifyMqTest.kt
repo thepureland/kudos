@@ -6,6 +6,7 @@ import io.kudos.ability.distributed.notify.mq.ms.MsApplication
 import io.kudos.base.lang.string.RandomStringKit
 import io.kudos.context.config.YamlPropertySourceFactory
 import io.kudos.test.common.init.EnableKudosTest
+import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.container.containers.RocketMqTestContainer
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
@@ -15,7 +16,6 @@ import org.springframework.cloud.openfeign.EnableFeignClients
 import org.springframework.context.annotation.PropertySource
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
-import org.testcontainers.junit.jupiter.EnabledIfDockerAvailable
 import kotlin.test.Test
 
 @EnableKudosTest
@@ -25,7 +25,7 @@ import kotlin.test.Test
     ], factory = YamlPropertySourceFactory::class
 )
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@EnabledIfDockerAvailable
+@EnabledIfDockerInstalled
 //@Import(
 //    DataSourceNotifyListener::class,
 //    MsApplicationListener::class,

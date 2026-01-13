@@ -8,6 +8,7 @@ import io.kudos.ability.file.common.entity.UploadFileModel
 import io.kudos.base.error.ServiceException
 import io.kudos.base.io.FileKit
 import io.kudos.test.common.init.EnableKudosTest
+import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.container.containers.MinioTestContainer
 import io.minio.BucketExistsArgs
 import io.minio.MakeBucketArgs
@@ -21,7 +22,6 @@ import org.springframework.core.io.FileSystemResource
 import org.springframework.core.io.InputStreamSource
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
-import org.testcontainers.junit.jupiter.EnabledIfDockerAvailable
 import java.io.ByteArrayInputStream
 import java.io.File
 import kotlin.test.Test
@@ -57,7 +57,7 @@ import kotlin.test.assertTrue
  */
 @EnableKudosTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@EnabledIfDockerAvailable
+@EnabledIfDockerInstalled
 internal class MinioDeleteServiceTest {
 
     /** 业务侧上传服务，用于先上传一个对象以便后续删除 */
