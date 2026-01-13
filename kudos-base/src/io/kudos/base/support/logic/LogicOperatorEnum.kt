@@ -7,8 +7,39 @@ import java.util.*
 
 /**
  * 逻辑操作符枚举
- *
- * @author K
+ * 
+ * 定义了各种逻辑比较操作符，用于属性值的逻辑判断。
+ * 与OperatorEnum功能类似，但主要用于DependsValidator等验证场景。
+ * 
+ * 支持的操作符类型：
+ * 1. 相等比较：EQ（等于）、IEQ（忽略大小写等于）、NE/LG（不等于）
+ * 2. 大小比较：GE（大于等于）、LE（小于等于）、GT（大于）、LT（小于）
+ * 3. 字符串匹配：LIKE（任意位置）、LIKE_S（匹配前面）、LIKE_E（匹配后面）
+ * 4. 忽略大小写匹配：ILIKE、ILIKE_S、ILIKE_E
+ * 5. 集合操作：IN（包含）、NOT_IN（不包含）
+ * 6. 空值判断：IS_NULL（为null）、IS_NOT_NULL（不为null）
+ * 7. 空串判断：IS_EMPTY（为空串）、IS_NOT_EMPTY（不为空串）
+ * 
+ * 属性说明：
+ * - code：操作符代码，用于序列化和传输
+ * - trans：操作符的中文描述
+ * - acceptNull：是否接受null值，true表示null值也是有效的比较值
+ * - stringOnly：是否只接受字符串类型，true表示只能用于字符串比较
+ * 
+ * 实现方式：
+ * - compare方法内部委托给OperatorEnum的对应方法执行实际比较
+ * - 保持与OperatorEnum的一致性，便于统一维护
+ * 
+ * 使用场景：
+ * - DependsValidator中的依赖条件验证
+ * - 动态查询条件的构建
+ * - 属性值的逻辑判断
+ * 
+ * 注意事项：
+ * - 某些操作符（如IS_NULL、IS_EMPTY）的v2参数无意义
+ * - stringOnly为true的操作符只能用于字符串类型
+ * - acceptNull为true的操作符可以接受null值作为有效比较值
+ * 
  * @since 1.0.0
  */
 enum class LogicOperatorEnum(

@@ -160,13 +160,60 @@ enum class OperatorEnum constructor(
     NOT_BETWEEN("NOT BETWEEN", "不在两者间", false, false);
 
     /**
-     * 根据当前操作符作断言
-     *
-     * @param v1 左值
-     * @param v2 右值 (对于IS_NULL、IS_NOT_NULL、IS_EMPTY、IS_NOT_EMPTY来说无意义)
-     * @return 是否满足逻辑关系
-     * @author K
-     * @since 1.0.0
+     * 根据当前操作符比较两个值
+     * 
+     * 根据操作符类型执行相应的比较逻辑，支持多种数据类型和比较方式。
+     * 
+     * 支持的操作符：
+     * 1. 相等比较：
+     *    - EQ：严格相等（==）
+     *    - IEQ：忽略大小写相等（仅字符串）
+     *    - NE/LG：不相等（!=）
+     * 2. 大小比较：
+     *    - GE：大于等于（>=）
+     *    - LE：小于等于（<=）
+     *    - GT：大于（>）
+     *    - LT：小于（<）
+     * 3. 字符串匹配：
+     *    - LIKE：包含（contains）
+     *    - LIKE_S：以...开始（startsWith）
+     *    - LIKE_E：以...结束（endsWith）
+     *    - ILIKE：忽略大小写包含
+     *    - ILIKE_S：忽略大小写开始
+     *    - ILIKE_E：忽略大小写结束
+     * 4. 集合操作：
+     *    - IN：包含在集合中
+     *    - NOT_IN：不包含在集合中
+     * 5. 空值判断：
+     *    - IS_NULL：为null
+     *    - IS_NOT_NULL：不为null
+     *    - IS_EMPTY：为空（字符串、集合、数组、Map）
+     *    - IS_NOT_EMPTY：不为空
+     * 6. 范围判断：
+     *    - BETWEEN：在范围内
+     *    - NOT_BETWEEN：不在范围内
+     * 
+     * 类型处理：
+     * - 比较操作符要求值实现Comparable接口
+     * - 字符串匹配操作符只支持String类型
+     * - 空值判断操作符支持多种类型（String、Array、Collection、Map）
+     * - IN操作符支持多种类型转换
+     * 
+     * 空值处理：
+     * - 对于EQ/IEQ：null == null 返回true
+     * - 对于NE：null != null 返回false
+     * - 对于大小比较：null值通常返回false
+     * - 对于IS_EMPTY：null返回false（IS_NOT_EMPTY返回true）
+     * 
+     * 注意事项：
+     * - 类型不匹配时通常返回false
+     * - 使用类型转换（as）可能抛出ClassCastException
+     * - 字符串匹配会去除首尾空白字符
+     * - ILIKE系列操作符会转换为小写进行比较
+     * 
+     * @param v1 左值，待比较的值
+     * @param v2 右值，比较的目标值（对于IS_NULL等操作符无意义）
+     * @return true表示满足逻辑关系，false表示不满足
      */
     @Suppress("UNCHECKED_CAST")
     fun compare(v1: Any?, v2: Any?): Boolean {
@@ -311,6 +358,49 @@ enum class OperatorEnum constructor(
         }
     }
 
+    /**
+     * 执行IN操作符的比较逻辑
+     * 
+     * 判断左值是否包含在右值集合中，支持多种数据类型的转换和比较。
+     * 
+     * 工作流程：
+     * 1. 字符串处理：如果两个值都是String，将右值按逗号分割后判断
+     * 2. 数组转换：将Array转换为List，统一处理
+     * 3. 集合判断：
+     *    - 如果右值是Collection：
+     *      * 如果左值也是Collection：判断右值是否包含左值的所有元素（containsAll）
+     *      * 如果左值不是Collection：判断右值是否包含左值（contains）
+     * 4. Map判断：如果两个值都是Map，判断右值是否包含左值的所有键值对
+     * 5. 其他情况：返回false
+     * 
+     * 字符串分割：
+     * - 如果两个值都是String，将右值按逗号分割
+     * - 例如："a,b,c"会被分割为["a", "b", "c"]
+     * - 判断左值是否在这个数组中
+     * 
+     * 集合包含判断：
+     * - 单值判断：使用contains方法
+     * - 集合判断：使用containsAll方法（子集判断）
+     * - 支持任意Collection类型
+     * 
+     * Map包含判断：
+     * - 使用containsAll方法判断键值对
+     * - 要求右值Map包含左值Map的所有键值对
+     * 
+     * 类型转换：
+     * - Array会自动转换为List，便于统一处理
+     * - 转换后的值用于后续判断
+     * 
+     * 注意事项：
+     * - 字符串分割使用逗号作为分隔符
+     * - 集合判断使用contains/containsAll方法
+     * - 如果类型不匹配，返回false
+     * - Map的containsAll判断键值对，不是键
+     * 
+     * @param v1 左值，待判断的值
+     * @param v2 右值，集合或Map
+     * @return true表示左值在右值中，false表示不在
+     */
     private fun inOperation(v1: Any?, v2: Any?): Boolean {
         var value1 = v1
         var value2 = v2

@@ -30,6 +30,55 @@ object NumberKit {
      * @author K
      * @since 1.0.0
      */
+    /**
+     * 将字符串转换为Number对象
+     * 
+     * 支持多种数字格式：十六进制、十进制整数、浮点数、科学计数法。
+     * 
+     * 工作流程：
+     * 1. 空值处理：如果输入为null，直接返回null
+     * 2. 去除空白：去除字符串首尾空白字符
+     * 3. 空字符串检查：如果去除空白后为空，抛出异常
+     * 4. 转换为小写：便于统一处理十六进制标识
+     * 5. 格式判断：
+     *    - 十六进制：以"0x"或"-0x"开头
+     *    - 浮点数：包含小数点或科学计数法（e/E）
+     *    - 整数：其他情况
+     * 
+     * 支持的格式：
+     * 1. 十六进制：
+     *    - 正数："0xFF" → 255
+     *    - 负数："-0x1A" → -26
+     *    - 使用BigInteger解析，支持任意精度
+     * 2. 浮点数：
+     *    - 普通小数："3.14" → BigDecimal
+     *    - 科学计数法："1.23e10" → BigDecimal
+     *    - 使用BigDecimal解析，保证精度
+     * 3. 整数：
+     *    - 普通整数："123" → BigInteger
+     *    - 支持以0开头（不再识别为八进制，统一按十进制处理）
+     *    - 使用BigInteger解析，支持任意精度
+     * 
+     * 精度保证：
+     * - 整数使用BigInteger，支持任意长度的整数
+     * - 浮点数使用BigDecimal，保证精度不丢失
+     * - 避免使用基本类型导致的精度问题
+     * 
+     * 异常处理：
+     * - 空字符串：抛出NumberFormatException
+     * - 格式错误：抛出NumberFormatException，包含详细错误信息
+     * - 所有异常都包含原始字符串，便于调试
+     * 
+     * 注意事项：
+     * - 十六进制标识不区分大小写（0x、0X都可以）
+     * - 科学计数法不区分大小写（e、E都可以）
+     * - 以0开头的数字不再识别为八进制，统一按十进制处理
+     * - 返回BigInteger或BigDecimal，需要根据实际需求转换
+     * 
+     * @param str 待转换的字符串，可以为null
+     * @return Number对象（BigInteger或BigDecimal），如果输入为null则返回null
+     * @throws NumberFormatException 如果字符串格式不正确或为空
+     */
     fun createNumber(str: String?): Number? {
         if (str == null) return null
         // 先检查是否为十六进制（可带正负号）

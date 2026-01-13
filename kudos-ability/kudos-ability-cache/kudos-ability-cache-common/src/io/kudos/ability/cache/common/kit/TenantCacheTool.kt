@@ -212,6 +212,33 @@ object TenantCacheTool {
         CacheKit.reloadAll(cacheName)
     }
 
+    /**
+     * 生成租户隔离的缓存key
+     * 
+     * 在原始key前添加租户ID前缀，实现多租户环境下的缓存隔离。
+     * 
+     * 工作流程：
+     * 1. 获取租户ID：从KudosContext中获取当前线程的租户ID
+     * 2. 拼接key：使用"租户ID::原始key"格式拼接
+     * 3. 返回结果：返回租户隔离后的key
+     * 
+     * Key格式：
+     * - 格式："{tenantId}::{originalKey}"
+     * - 例如：租户ID为"1001"，原始key为"user:123"，结果为"1001::user:123"
+     * 
+     * 租户隔离：
+     * - 不同租户的相同key会生成不同的缓存key
+     * - 确保不同租户的缓存数据相互隔离
+     * - 避免租户间的缓存数据相互干扰
+     * 
+     * 注意事项：
+     * - 如果tenantId为null，会使用"null"作为前缀
+     * - 分隔符"::"用于区分租户ID和原始key
+     * - 所有缓存操作都会自动应用此方法
+     * 
+     * @param key 原始的缓存key
+     * @return 添加租户ID前缀后的缓存key
+     */
     private fun getTenantKey(key: Any): String {
         val tenantId = KudosContextHolder.get().tenantId
         return "$tenantId::$key"

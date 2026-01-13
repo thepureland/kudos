@@ -15,8 +15,40 @@ import java.io.Serializable
 import kotlin.reflect.KClass
 
 /**
- * Create by (admin) on 7/7/15.
- * 基础日志信息vo
+ * 审计日志基础信息值对象
+ * 
+ * 用于封装系统审计日志的基本信息，包括实体信息、操作类型、模块信息和参数信息。
+ * 
+ * 核心属性：
+ * - entityId：被审计实体的唯一标识
+ * - entityUserId：被审计实体的用户ID
+ * - description：操作描述信息，支持国际化参数
+ * - moduleCode/moduleName/moduleId：审计模块的编码、名称和ID
+ * - opType：操作类型枚举（增删改查等）
+ * - ignoreForm：是否忽略表单数据
+ * 
+ * 参数支持：
+ * - stringParams：字符串类型国际化参数列表，对应{0}、{1}等占位符
+ * - objectParams：对象类型国际化参数Map，对应${user.name}等表达式
+ * - paramArgs：方法参数信息数组
+ * - oldBizData：旧业务数据，用于记录变更前的数据
+ * 
+ * 描述格式化：
+ * - 支持自定义描述格式化器（descriptionFormatterClass）
+ * - 描述信息支持国际化参数替换
+ * - 可以从WebAudit或Audit注解中初始化
+ * 
+ * 使用场景：
+ * - 记录系统操作审计日志
+ * - 支持操作记录的查询和追溯
+ * - 支持国际化描述信息
+ * 
+ * 注意事项：
+ * - 需要配合Audit或WebAudit注解使用
+ * - 模块信息会自动从ISysAuditModule中获取
+ * - 参数分隔符使用"┼"符号
+ * 
+ * @since 1.0.0
  */
 class BaseLog : Serializable {
     /**

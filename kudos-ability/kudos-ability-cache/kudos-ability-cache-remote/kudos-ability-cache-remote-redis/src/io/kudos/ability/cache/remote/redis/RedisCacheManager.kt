@@ -71,6 +71,31 @@ class RedisCacheManager(
         return caches
     }
 
+    /**
+     * 创建Redis缓存实例
+     * 
+     * 根据CacheConfig配置创建RedisCache实例，支持自定义TTL和版本管理。
+     * 
+     * 工作流程：
+     * 1. 创建默认的RedisCacheConfiguration
+     * 2. 禁用null值缓存（disableCachingNullValues）
+     * 3. 使用默认配置的序列化器（key和value）
+     * 4. 如果配置了TTL，设置缓存过期时间
+     * 5. 应用版本前缀到缓存名称
+     * 6. 创建并返回RedisCache实例
+     * 
+     * 配置说明：
+     * - TTL：如果cacheConfig中指定了ttl，会设置为缓存过期时间（秒）
+     * - 序列化：使用默认配置的序列化器，确保key和value的序列化方式一致
+     * - 版本管理：缓存名称会添加版本前缀，例如"v1::user"
+     * 
+     * 注意事项：
+     * - 如果未指定TTL，使用默认的缓存配置（可能不过期）
+     * - 缓存名称会自动应用版本前缀，确保不同版本的缓存相互隔离
+     * 
+     * @param cacheConfig 缓存配置对象，包含缓存名称、TTL等信息
+     * @return 创建的RedisCache实例
+     */
     override fun createCache(cacheConfig: CacheConfig): RedisCache {
         var redisCacheConfiguration = RedisCacheConfiguration
             .defaultCacheConfig()
@@ -85,10 +110,34 @@ class RedisCacheManager(
     }
 
     /**
-     * 按模式删除某个 cacheName 下的所有 key（用 SCAN 替代 KEYS）
-     *
-     * @param cacheName Spring Cache 名称
-     * @param pattern   业务 key 模式，比如 "user:*"
+     * 按模式删除某个缓存下的所有key
+     * 
+     * 使用SCAN命令替代KEYS命令，避免在生产环境阻塞Redis。
+     * 
+     * 工作流程：
+     * 1. 获取缓存名称的key前缀（通过keyPrefixProvider计算）
+     * 2. 应用版本前缀，得到实际的缓存key前缀
+     * 3. 拼接完整的匹配模式：实际key前缀 + 业务模式
+     * 4. 将模式转换为字节数组
+     * 5. 调用cacheWriter.clear执行模式删除
+     * 
+     * 模式匹配：
+     * - 支持通配符模式，例如"user:*"会匹配所有以"user:"开头的key
+     * - 最终匹配模式 = 版本前缀 + 缓存名称前缀 + 业务模式
+     * - 例如：版本"v1"，缓存"user"，模式"*"，最终为"v1::user:*"
+     * 
+     * SCAN vs KEYS：
+     * - 使用SCAN命令替代KEYS，避免阻塞Redis服务器
+     * - SCAN是增量式遍历，不会一次性返回所有匹配的key
+     * - 适合生产环境使用，不会影响Redis性能
+     * 
+     * 注意事项：
+     * - 模式删除会删除所有匹配的key，需谨慎使用
+     * - 删除操作是异步的，不会立即生效
+     * - 会自动应用版本前缀和缓存名称前缀
+     * 
+     * @param cacheName Spring Cache名称
+     * @param pattern 业务key模式，支持通配符，例如"user:*"
      */
     override fun evictByPattern(cacheName: String, pattern: String) {
         val prefixProvider = defaultCacheConfiguration.keyPrefix

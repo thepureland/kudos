@@ -40,6 +40,38 @@ import java.util.*
  */
 class GlobalHeaderRequestInterceptor : RequestInterceptor {
 
+    /**
+     * 应用请求拦截：添加上下文信息到Feign请求头
+     * 
+     * 从KudosContext中提取上下文信息，添加到Feign请求头中，实现跨服务上下文传递。
+     * 
+     * 工作流程：
+     * 1. 获取当前线程的KudosContext
+     * 2. 提取上下文信息：租户ID、子系统代码、追踪键、数据源ID、语言环境
+     * 3. 追踪键处理：如果追踪键为空，自动生成UUID作为追踪键
+     * 4. 添加请求头：将所有上下文信息添加到请求头
+     * 5. 扩展处理：调用所有IFeignRequestContextProcess实现类进行额外的请求头处理
+     * 
+     * 添加的请求头：
+     * - TENANT_ID：租户ID（转换为字符串）
+     * - SUB_SYS_CODE：子系统代码
+     * - TRACE_KEY：追踪键，用于分布式链路追踪（如果为空则生成UUID）
+     * - DATASOURCE_ID：数据源ID（如果存在）
+     * - LOCAL：语言环境，格式为"语言代码_国家代码"（如果不存在则默认zh_CN）
+     * - FEIGN_REQUEST：标识为Feign请求，值为"true"
+     * 
+     * 扩展机制：
+     * - 支持通过IFeignRequestContextProcess接口扩展请求头处理逻辑
+     * - 所有实现类都会被调用，可以添加额外的请求头信息
+     * 
+     * 注意事项：
+     * - 该拦截器会应用到所有Feign请求
+     * - 追踪键如果为空会自动生成，确保每次请求都有追踪标识
+     * - 语言环境如果不存在，默认使用zh_CN
+     * - 数据源ID是可选的，只有存在时才会添加到请求头
+     * 
+     * @param requestTemplate Feign请求模板，用于添加请求头
+     */
     override fun apply(requestTemplate: RequestTemplate) {
         //从当前上下文中获取tenantId和subSysCode
         val context = KudosContextHolder.get()

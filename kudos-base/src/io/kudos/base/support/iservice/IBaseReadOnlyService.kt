@@ -8,11 +8,57 @@ import io.kudos.base.support.payload.SearchPayload
 import kotlin.reflect.KClass
 
 /**
- * 基于关系型数据库表的基础只读业务操作接口
- *
+ * 基础只读业务操作接口
+ * 
+ * 定义了业务层的只读操作，包括查询、分页、聚合计算等功能。
+ * 基于关系型数据库表，提供统一的查询接口，简化业务层代码。
+ * 
+ * 核心功能：
+ * 1. 主键查询：根据主键查询单个或批量实体
+ * 2. 单属性查询：根据单个属性值查询（oneSearch）
+ * 3. 全量查询：查询所有记录（allSearch）
+ * 4. 多属性查询：支持AND和OR两种逻辑关系的多属性查询
+ * 5. IN查询：支持IN条件查询，包括主键IN查询
+ * 6. 复杂条件查询：使用Criteria对象构建复杂查询条件
+ * 7. 分页查询：支持分页查询，可控制返回的属性
+ * 8. 载体查询：使用ListSearchPayload载体对象进行查询
+ * 9. 聚合计算：支持count、sum、avg、max、min等聚合函数
+ * 
+ * 查询方法分类：
+ * - 基础查询：get、oneSearch、allSearch、andSearch、orSearch、inSearch
+ * - 属性查询：每个基础查询都有对应的Property版本，返回单个属性值列表
+ * - 多属性查询：每个基础查询都有对应的Properties版本，返回Map列表
+ * - 复杂查询：search、pagingSearch、search(payload)
+ * 
+ * 结果类型：
+ * - 实体列表：返回完整的实体对象列表（List<E>）
+ * - 属性值列表：返回单个属性的值列表（List<*>）
+ * - Map列表：返回多个属性的Map列表（List<Map<String, *>>）
+ * - 聚合结果：返回Number或Any?类型的聚合计算结果
+ * - 分页结果：返回Pair<List<*>, Int>，包含结果列表和总记录数
+ * 
+ * 排序支持：
+ * - 所有查询方法都支持可变参数的Order排序
+ * - 可以指定多个排序规则，按优先级执行
+ * 
+ * 与DAO层的关系：
+ * - 业务层接口，通常委托给DAO层实现
+ * - 可以在业务层添加业务逻辑处理
+ * - 提供统一的业务接口，隐藏DAO层细节
+ * 
+ * 使用场景：
+ * - 业务层的查询操作
+ * - RESTful API的服务层
+ * - 报表和统计功能
+ * 
+ * 注意事项：
+ * - 所有查询方法都是只读操作，不会修改数据
+ * - 主键类型支持String、Int、Long
+ * - 批量查询支持分批处理，避免内存溢出
+ * - 分页查询的页码从1开始
+ * 
  * @param PK 实体主键类型
- * @param E 实体类型
- * @author K
+ * @param E 实体类型，必须实现IIdEntity接口
  * @since 1.0.0
  */
 interface IBaseReadOnlyService<PK : Any, E : IIdEntity<PK>> {

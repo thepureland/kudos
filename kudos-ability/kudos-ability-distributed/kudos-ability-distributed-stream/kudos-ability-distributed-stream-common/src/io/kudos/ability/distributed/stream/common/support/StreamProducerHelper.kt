@@ -91,12 +91,34 @@ class StreamProducerHelper {
     }
 
     /**
-     * 真实发送mq信息
-     * @param bindingName
-     * @param msg
-     * @param isResend
-     * @return
-     * @param T
+     * 真实发送MQ消息
+     * 
+     * 执行实际的消息发送操作，处理发送失败的情况。
+     * 
+     * 工作流程：
+     * 1. 调用StreamBridge发送消息到指定的binding
+     * 2. 如果发送成功，返回true（注意：MQ发送是异步的，true不代表消息已到达服务器）
+     * 3. 如果发送失败（抛出异常）：
+     *    - 记录错误日志
+     *    - 如果配置了失败处理器且不是重试发送，将失败消息发送到错误通道
+     *    - 返回false
+     * 
+     * 失败处理机制：
+     * - 当发送失败时，如果该binding配置了失败处理器（通过StreamFailHandlerItem注册）
+     *   且不是重试发送（isResend=false），会将失败消息包装为ErrorMessage发送到错误通道
+     * - 错误通道会触发失败处理器的处理逻辑，通常会将消息持久化到本地文件
+     * - 如果是重试发送（isResend=true），不会再次触发失败处理，避免重复持久化
+     * 
+     * 注意事项：
+     * - MQ发送都是异步的，send方法返回true不代表消息已成功发送到MQ服务器
+     * - 真实的发送错误会在flush时感知，此时会触发失败处理机制
+     * - 重试发送时isResend应设置为true，避免重复触发失败处理
+     * 
+     * @param bindingName Stream绑定名称
+     * @param msg 要发送的消息对象
+     * @param isResend 是否为重试发送，true表示重试，false表示首次发送
+     * @return true表示发送操作成功（异步），false表示发送失败
+     * @param T 消息体类型
      */
     fun <T> doRealSend(bindingName: String, msg: Message<StreamMessageVo<T>>, isResend: Boolean): Boolean {
         try {

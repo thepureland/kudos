@@ -31,14 +31,51 @@ fun CharSequence.capitalizeString(): String =
 
 
 /**
- * 将字符序列类型的值转为指定类型的值，仅支持以下类型：
- * Double、Int、Long、Float、Short、BigDecimal、BigInteger、Boolean、Byte、Char、String
- *
+ * 将字符序列转换为指定类型
+ * 
+ * 支持将字符串转换为常见的基本类型和数值类型。
+ * 
+ * 支持的类型：
+ * - 数值类型：Double、Int、Long、Float、Short、BigDecimal、BigInteger、Byte
+ * - 布尔类型：Boolean
+ * - 字符类型：Char（取第一个字符）
+ * - 字符串类型：String（直接返回）
+ * 
+ * 转换规则：
+ * 1. 数值类型：使用Kotlin标准库的转换方法（toDouble、toInt等）
+ * 2. BigDecimal：使用toBigDecimal()方法，支持高精度
+ * 3. BigInteger：使用toBigInteger()方法，支持任意长度整数
+ * 4. Boolean：使用toBoolean()方法，支持"true"/"false"字符串
+ * 5. Char：取字符串的第一个字符
+ * 6. String：直接返回原字符串
+ * 
+ * 类型转换：
+ * - 使用Kotlin标准库的转换方法，遵循标准转换规则
+ * - 数值类型转换失败会抛出NumberFormatException
+ * - Boolean转换遵循Kotlin标准（"true"为true，其他为false）
+ * 
+ * 异常处理：
+ * - 不支持的类型：抛出IllegalArgumentException
+ * - 数值转换失败：抛出NumberFormatException（由标准库方法抛出）
+ * - 空字符串转Char：抛出NoSuchElementException（由first()抛出）
+ * 
+ * 使用场景：
+ * - Excel导入时的类型转换
+ * - 配置文件解析
+ * - 动态类型转换
+ * 
+ * 注意事项：
+ * - 只支持基本类型和数值类型，不支持自定义类型
+ * - 数值转换遵循Kotlin标准，可能抛出异常
+ * - Char类型只取第一个字符，如果字符串为空会抛出异常
+ * - 使用@Suppress抑制类型转换警告
+ * 
  * @param T 目标类型
- * @param returnType 目标类型对象
- * @return 指定类型的值
- * @author K
- * @since 1.0.0
+ * @param returnType 目标类型的KClass对象
+ * @return 转换后的目标类型值
+ * @throws IllegalArgumentException 如果目标类型不支持
+ * @throws NumberFormatException 如果数值转换失败
+ * @throws NoSuchElementException 如果字符串为空且目标类型为Char
  */
 @Suppress("UNCHECKED_CAST")
 fun <T : Any> CharSequence.toType(returnType: KClass<out T>): T { //TODO junit
@@ -62,12 +99,27 @@ fun <T : Any> CharSequence.toType(returnType: KClass<out T>): T { //TODO junit
 
 
 /**
- * 查找子串，并用指定字符串替换之（替换所有出现的地方），支持多对替换规则
- *
- * @param map Map(要查找的字符串, 用来替换的字符串)
+ * 查找子串并用指定字符串替换（支持多对替换规则）
+ * 
+ * 根据Map中的键值对，将字符串中所有出现的键替换为对应的值。
+ * 
+ * 工作流程：
+ * 1. 检查Map：如果Map为空，直接返回原字符串
+ * 2. 转换为数组：将Map的keys和values转换为数组
+ * 3. 调用重载方法：使用数组版本进行实际替换
+ * 
+ * 替换规则：
+ * - 替换所有出现的地方（不是只替换第一个）
+ * - 支持同时替换多个不同的子串
+ * - 替换顺序按照Map的迭代顺序
+ * 
+ * 注意事项：
+ * - 如果Map为空，直接返回原字符串
+ * - 替换是顺序执行的，后面的替换可能影响前面的结果
+ * - 键和值都可以为null，但null键不会被替换
+ * 
+ * @param map 替换规则Map，key为要查找的字符串，value为用来替换的字符串
  * @return 替换后的字符串
- * @author K
- * @since 1.0.0
  */
 fun CharSequence.replaceEach(map: Map<String?, String?>): String {
     return if (map.isNotEmpty()) {
@@ -104,20 +156,41 @@ fun CharSequence.decodeHexStr(): String = String(CryptoKit.decodeHex(this.toStri
 fun CharSequence.toMd5HexStr(saltStr: CharSequence): String = DigestKit.getMD5(this.toString(), saltStr.toString())
 
 /**
- * 将字符串按给定的长度均分(最后一组可能不是等分的)
- *
- * <pre>
- * "".divideAverage(*) = []
- * *.divideAverage(0) = []
- * *.divideAverage(-3) = []
- * "123456".divideAverage(3) = ["12", "34", "56"]
- * "1234567".divideAverage(3) = ["123", "456", "7"]
- * </pre>
- *
- * @param groupLen 每份长度
- * @return 等分后每个分组组成的数组
- * @author K
- * @since 1.0.0
+ * 将字符串按给定的组数均分
+ * 
+ * 将字符串尽可能均匀地分成指定数量的组，最后一组可能长度不同。
+ * 
+ * 工作流程：
+ * 1. 参数检查：如果groupLen<=0或字符串为空，返回空数组
+ * 2. 计算每组长度：使用ceil(总长度/组数)向上取整
+ * 3. 分割字符串：
+ *    - 遍历每个组索引
+ *    - 计算每组的起始和结束索引
+ *    - 最后一组包含剩余所有字符
+ * 4. 返回结果：将分割后的字符串组成数组返回
+ * 
+ * 分割算法：
+ * - 每组长度 = ceil(总长度 / 组数)
+ * - 第i组的起始索引 = i * 每组长度
+ * - 第i组的结束索引 = 起始索引 + 每组长度（最后一组为总长度）
+ * 
+ * 示例：
+ * - "123456".divideAverage(3) = ["12", "34", "56"]（每组2个字符）
+ * - "1234567".divideAverage(3) = ["123", "456", "7"]（前两组3个字符，最后一组1个字符）
+ * - "".divideAverage(3) = []（空字符串）
+ * 
+ * 边界情况：
+ * - groupLen <= 0：返回空数组
+ * - 字符串为空：返回空数组
+ * - groupLen > 字符串长度：每组1个字符，最后一组可能为空
+ * 
+ * 注意事项：
+ * - 最后一组的长度可能与其他组不同
+ * - 使用向上取整确保所有字符都被分配
+ * - 如果组数大于字符串长度，会有空组
+ * 
+ * @param groupLen 要分成的组数
+ * @return 分割后的字符串数组，如果参数无效或字符串为空则返回空数组
  */
 fun CharSequence.divideAverage(groupLen: Int): Array<String?> {
     if (groupLen <= 0 || this.isEmpty()) {
@@ -647,26 +720,39 @@ fun CharSequence.replace(searchString: CharSequence?, replacement: CharSequence?
     Strings.CS.replace(this.toString(), searchString?.toString() ?: "", replacement?.toString() ?: "", max)
 
 /**
- * 查找子串，并用指定字符串替换之（替换所有出现的地方），支持多对替换规则
- *
- * <pre>
- * "".replaceEach(*, *)          = ""
- * "aba".replaceEach(null, null) = "aba"
- * "aba".replaceEach(String[0], null) = "aba"
- * "aba".replaceEach(null, String[0]) = "aba"
- * "aba".replaceEach(String[]{"a"}, null)  = "aba"
- * "aba".replaceEach(String[]{"a"}, String[]{""})  = "b"
- * "aba".replaceEach(String[]{null}, String[]{"a"})  = "aba"
- * "abcde".replaceEach(String[]{"ab", "d"}, String[]{"w", "t"})  = "wcte"
- * "abcde".replaceEach(String[]{"ab", "d"}, String[]{"d", "t"})  = "dcte"
- * </pre>
- *
- * @param searchList      要查找的字符串数组
- * @param replacementList 用来替换的字符串数组，与查找的数组元素一一对应。为null时返回源字符串
+ * 查找子串并用指定字符串替换（支持多对替换规则）
+ * 
+ * 根据两个数组的对应关系，将字符串中所有出现的查找字符串替换为对应的替换字符串。
+ * 
+ * 工作流程：
+ * 1. 参数处理：将CharSequence数组转换为String数组，null值转换为空字符串
+ * 2. 调用工具方法：使用Apache Commons Lang的replaceEach方法执行替换
+ * 3. 返回结果：返回替换后的字符串
+ * 
+ * 替换规则：
+ * - searchList[i]会被替换为replacementList[i]
+ * - 替换所有出现的地方（不是只替换第一个）
+ * - 替换顺序按照数组顺序执行
+ * 
+ * 数组对应关系：
+ * - 两个数组的长度必须一致（null或空数组除外）
+ * - 如果数组为null，会被视为空数组
+ * - 如果数组元素为null，会被转换为空字符串
+ * 
+ * 边界情况：
+ * - 如果两个数组都为null或空，返回原字符串
+ * - 如果searchList为空，返回原字符串
+ * - 如果replacementList为null，返回原字符串
+ * 
+ * 注意事项：
+ * - 两个数组的长度必须一致，否则抛出IllegalArgumentException
+ * - 替换是顺序执行的，后面的替换可能影响前面的结果
+ * - 使用Apache Commons Lang的实现，保证替换的正确性
+ * 
+ * @param searchList 要查找的字符串数组，可以为null
+ * @param replacementList 用来替换的字符串数组，与查找数组一一对应，可以为null
  * @return 替换后的字符串
- * @throws IllegalArgumentException 如果两个数组的长度不一致时(null或空数组是允许的)
- * @author K
- * @since 1.0.0
+ * @throws IllegalArgumentException 如果两个数组的长度不一致
  */
 fun CharSequence.replaceEach(
     searchList: Array<out CharSequence?>?,
