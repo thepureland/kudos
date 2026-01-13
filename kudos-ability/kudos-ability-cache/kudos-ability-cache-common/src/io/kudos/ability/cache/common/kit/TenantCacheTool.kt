@@ -5,6 +5,10 @@ import io.kudos.context.core.KudosContextHolder
 import org.springframework.cache.Cache
 import kotlin.reflect.KClass
 
+/**
+ * 租户缓存工具类
+ * 提供多租户环境下的缓存操作工具方法，支持租户级别的缓存隔离
+ */
 object TenantCacheTool {
 
     /**

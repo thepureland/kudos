@@ -11,6 +11,10 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.messaging.MessageHeaders
 import org.springframework.messaging.support.GenericMessage
 
+/**
+ * 流式消息生产者异常处理器
+ * 处理消息发送失败的情况，支持将失败消息持久化到本地文件，并定时重试发送
+ */
 class StreamProducerExceptionHandler : AbstractFailedDataHandler<StreamProducerMsgVo>(), IStreamFailHandler {
 
     @Value("\${kudos.ability.distributed.stream.produce-fail-path:/var/data/failed}")

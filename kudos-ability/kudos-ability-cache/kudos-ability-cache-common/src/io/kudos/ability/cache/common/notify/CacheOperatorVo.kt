@@ -9,6 +9,10 @@ import org.springframework.beans.factory.NoSuchBeanDefinitionException
 import java.io.Serial
 import java.io.Serializable
 
+/**
+ * 缓存操作值对象
+ * 封装缓存操作信息（清除或失效），支持通过通知机制进行分布式缓存同步
+ */
 class CacheOperatorVo(
     var type: String, //操作类型
     var cacheName: String, //缓存名

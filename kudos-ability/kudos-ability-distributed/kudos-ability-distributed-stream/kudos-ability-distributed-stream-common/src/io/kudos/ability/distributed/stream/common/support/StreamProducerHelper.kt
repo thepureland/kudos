@@ -16,6 +16,10 @@ import org.springframework.messaging.support.ErrorMessage
 import org.springframework.messaging.support.GenericMessage
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
 
+/**
+ * 流式消息生产者辅助类
+ * 提供消息发送的统一接口，支持同步和异步发送，以及失败处理和重试机制
+ */
 class StreamProducerHelper {
 
     @Autowired

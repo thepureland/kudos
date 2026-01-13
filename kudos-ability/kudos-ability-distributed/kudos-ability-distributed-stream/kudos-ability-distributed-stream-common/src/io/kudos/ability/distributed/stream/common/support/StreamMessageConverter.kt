@@ -7,7 +7,10 @@ import org.springframework.messaging.converter.AbstractMessageConverter
 import org.springframework.util.MimeType
 import java.io.Serializable
 
-
+/**
+ * 流式消息转换器
+ * 使用JDK序列化方式实现消息的序列化和反序列化，支持任意可序列化对象
+ */
 class StreamMessageConverter : AbstractMessageConverter(MESSAGE_TYPE) {
 
     override fun supports(clazz: Class<*>): Boolean {

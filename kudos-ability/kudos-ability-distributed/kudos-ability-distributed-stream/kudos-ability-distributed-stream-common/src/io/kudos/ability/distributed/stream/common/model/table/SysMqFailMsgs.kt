@@ -5,6 +5,10 @@ import io.kudos.ability.distributed.stream.common.model.po.SysMqFailMsg
 import org.ktorm.schema.datetime
 import org.ktorm.schema.varchar
 
+/**
+ * 消息队列失败消息表
+ * 用于持久化发送失败的消息，支持后续重试处理
+ */
 object SysMqFailMsgs : StringIdTable<SysMqFailMsg>("sys_mq_fail_msg") {
 
     var topic = varchar("topic").bindTo { it.topic }

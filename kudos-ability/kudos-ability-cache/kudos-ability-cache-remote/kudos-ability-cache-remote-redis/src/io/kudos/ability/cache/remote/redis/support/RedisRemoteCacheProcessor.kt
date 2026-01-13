@@ -4,6 +4,10 @@ import io.kudos.ability.cache.common.aop.process.IRemoteCacheProcessor
 import io.kudos.ability.data.memdb.redis.KudosRedisTemplate
 import java.time.Duration
 
+/**
+ * Redis远程缓存处理器
+ * 实现IRemoteCacheProcessor接口，提供基于Redis Hash结构的远程缓存读写功能
+ */
 class RedisRemoteCacheProcessor(private val kudosRedisTemplate: KudosRedisTemplate) : IRemoteCacheProcessor {
 
     override fun getCacheData(cacheKey: String, dataKey: String): Any? {

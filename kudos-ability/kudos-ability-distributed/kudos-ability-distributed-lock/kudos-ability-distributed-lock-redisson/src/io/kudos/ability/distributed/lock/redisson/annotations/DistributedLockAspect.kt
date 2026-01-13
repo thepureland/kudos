@@ -18,6 +18,10 @@ import org.springframework.expression.TypedValue
 import org.springframework.expression.spel.standard.SpelExpressionParser
 import java.util.concurrent.TimeUnit
 
+/**
+ * 分布式锁切面
+ * 通过AOP方式为方法添加分布式锁功能，支持SpEL表达式动态生成锁键
+ */
 @Aspect
 @Lazy(false)
 class DistributedLockAspect {

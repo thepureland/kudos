@@ -5,6 +5,10 @@ import org.springframework.beans.factory.SmartInitializingSingleton
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 
+/**
+ * 混合缓存初始化器
+ * 在Spring容器初始化完成后，初始化所有配置的缓存项
+ */
 class MixCacheInitializing : SmartInitializingSingleton {
     @Autowired
     @Qualifier("mixCacheManager")

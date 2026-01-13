@@ -1,5 +1,9 @@
 package io.kudos.ability.distributed.stream.common.handler
 
+/**
+ * 流式消息失败处理器注册表
+ * 用于管理和查找不同绑定名称对应的失败处理器
+ */
 object StreamFailHandlerItem {
     private val STREAM_HANDLER = mutableMapOf<String, IStreamFailHandler>()
 

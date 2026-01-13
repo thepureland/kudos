@@ -6,6 +6,10 @@ import jakarta.validation.ConstraintValidator
 import jakarta.validation.ConstraintValidatorContext
 import java.util.*
 
+/**
+ * 字典码校验器
+ * 用于校验字段值是否为指定模块和类型的有效字典码
+ */
 class DictCodeValidator : ConstraintValidator<DictCode, CharSequence?> {
     private lateinit var dictCode: DictCode
 

@@ -12,6 +12,10 @@ import jakarta.servlet.ServletResponse
 import jakarta.servlet.http.HttpServletRequest
 import java.util.Locale
 
+/**
+ * Feign上下文Web过滤器
+ * 从HTTP请求头中提取Feign调用传递的上下文信息，并设置到KudosContext中
+ */
 class FeignContextWebFilter : Filter {
 
     override fun doFilter(

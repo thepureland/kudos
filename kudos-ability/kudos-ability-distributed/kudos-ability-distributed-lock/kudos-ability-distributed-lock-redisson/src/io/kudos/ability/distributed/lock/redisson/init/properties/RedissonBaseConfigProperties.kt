@@ -1,5 +1,9 @@
 package io.kudos.ability.distributed.lock.redisson.init.properties
 
+/**
+ * Redisson基础配置属性类
+ * 封装Redisson客户端的基础连接配置，包括连接超时、命令超时、重试次数等
+ */
 class RedissonBaseConfigProperties {
     /**
      * ping命令发送间隔，设置0为禁用，默认为0

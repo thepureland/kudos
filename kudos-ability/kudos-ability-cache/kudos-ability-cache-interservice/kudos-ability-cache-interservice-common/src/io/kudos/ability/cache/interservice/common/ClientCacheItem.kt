@@ -5,6 +5,10 @@ import io.kudos.base.security.DigestKit
 import java.io.Serial
 import java.io.Serializable
 
+/**
+ * 客户端缓存项
+ * 封装服务间缓存的缓存项，包括唯一标识和缓存数据
+ */
 class ClientCacheItem : Serializable {
 
     var uuid: String? = null

@@ -15,6 +15,12 @@ import java.time.LocalDateTime
 import java.util.*
 import java.util.function.Consumer
 
+/**
+ * RocketMQ批量消息消费者
+ * 支持批量拉取和消费RocketMQ消息，提供失败消息持久化和重试机制
+ *
+ * @param T 消息体类型
+ */
 class RocketMqBatchConsumer<T> @JvmOverloads constructor(
     groupName: String?,
     topic: String?,

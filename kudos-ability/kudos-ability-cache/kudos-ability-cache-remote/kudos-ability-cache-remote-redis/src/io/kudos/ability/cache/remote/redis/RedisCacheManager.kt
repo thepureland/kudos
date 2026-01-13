@@ -14,6 +14,10 @@ import java.nio.charset.StandardCharsets
 import java.time.Duration
 import java.util.*
 
+/**
+ * Redis缓存管理器
+ * 扩展Spring的RedisCacheManager，支持缓存版本管理和多租户缓存隔离
+ */
 class RedisCacheManager(
     private val cacheWriter: RedisCacheWriter,
     private val defaultCacheConfiguration: RedisCacheConfiguration,

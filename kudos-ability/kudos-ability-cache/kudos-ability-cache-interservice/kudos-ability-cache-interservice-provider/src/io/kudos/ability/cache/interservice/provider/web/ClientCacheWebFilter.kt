@@ -7,6 +7,10 @@ import jakarta.servlet.ServletResponse
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 
+/**
+ * 客户端缓存Web过滤器
+ * 包装HTTP请求为CacheClientRequest，支持服务间缓存的请求处理
+ */
 class ClientCacheWebFilter : Filter {
 
     public override fun doFilter(

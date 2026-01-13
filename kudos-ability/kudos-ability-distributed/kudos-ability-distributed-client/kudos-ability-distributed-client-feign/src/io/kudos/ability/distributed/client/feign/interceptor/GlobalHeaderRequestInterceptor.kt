@@ -8,6 +8,10 @@ import io.kudos.context.core.KudosContextHolder
 import io.kudos.context.kit.SpringKit
 import java.util.*
 
+/**
+ * 全局Feign请求拦截器
+ * 自动将KudosContext中的上下文信息（租户ID、子系统代码、追踪键等）添加到Feign请求头中
+ */
 class GlobalHeaderRequestInterceptor : RequestInterceptor {
 
     override fun apply(requestTemplate: RequestTemplate) {
