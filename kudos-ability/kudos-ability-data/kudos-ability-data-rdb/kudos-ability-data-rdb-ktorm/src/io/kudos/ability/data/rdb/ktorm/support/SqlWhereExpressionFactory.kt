@@ -68,7 +68,6 @@ object SqlWhereExpressionFactory {
             OperatorEnum.IS_NOT_EMPTY -> column.notEq("")
             OperatorEnum.BETWEEN -> (column as Column<Comparable<Any>>).between(value as ClosedRange<Comparable<Any>>)
             OperatorEnum.NOT_BETWEEN -> (column as Column<Comparable<Any>>).notBetween(value as ClosedRange<Comparable<Any>>)
-            else -> error("未支持")
         }
     }
 

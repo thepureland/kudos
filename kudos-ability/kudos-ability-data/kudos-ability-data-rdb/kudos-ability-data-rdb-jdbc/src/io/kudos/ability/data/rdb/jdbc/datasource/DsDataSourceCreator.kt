@@ -61,10 +61,10 @@ class DsDataSourceCreator : DefaultDataSourceCreator() {
             dataSourceProperty.dbcp2?.defaultAutoCommit = true
         }
         val propertyPublicKey = dataSourceProperty.publicKey
-        if (StringUtils.isEmpty(propertyPublicKey)) {
+        if (propertyPublicKey.isEmpty()) {
             dataSourceProperty.publicKey = publicKey
         }
-        val propertyLazy = dataSourceProperty.getLazy()
+        val propertyLazy = dataSourceProperty.lazy
         if (propertyLazy == null) {
             dataSourceProperty.lazy = lazy
         }

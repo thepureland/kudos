@@ -86,7 +86,7 @@ open class AccessTokenMinioClientBuilder : MinioClientBuilder<AccessTokenServerP
                 mapper.setVisibility(
                     VisibilityChecker.Std.defaultInstance().withFieldVisibility(JsonAutoDetect.Visibility.ANY)
                 )
-                val rs = String(response.body!!.bytes())
+                val rs = String(response.body.bytes())
                 val jwt = mapper.readValue(rs, Jwt::class.java)
                 if (jwt != null) {
                     log.info("Minio oauth2 server OIDC token:${jwt.token()}")

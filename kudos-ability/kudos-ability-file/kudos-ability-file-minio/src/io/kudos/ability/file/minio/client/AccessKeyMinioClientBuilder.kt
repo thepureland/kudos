@@ -4,6 +4,7 @@ import io.kudos.ability.file.common.auth.AccessKeyServerParam
 import io.kudos.ability.file.minio.init.properties.MinioProperties
 import io.kudos.base.logger.LogFactory
 import io.minio.MinioClient
+import java.net.URI
 import java.net.URL
 
 /**
@@ -20,7 +21,7 @@ class AccessKeyMinioClientBuilder : MinioClientBuilder<AccessKeyServerParam> {
 
     override fun build(): MinioClient {
         return MinioClient.builder()
-            .endpoint(URL(minioProperties!!.endpoint))
+            .endpoint(URI(minioProperties!!.endpoint).toURL())
             .credentials(authServerParam!!.accessKey, authServerParam!!.secretKey)
             .build()
     }

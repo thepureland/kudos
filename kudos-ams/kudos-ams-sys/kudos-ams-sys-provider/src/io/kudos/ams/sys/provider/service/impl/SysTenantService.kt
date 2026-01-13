@@ -98,46 +98,46 @@ open class SysTenantService : BaseCrudService<String, SysTenant, SysTenantDao>()
     }
 
     @Transactional
-    override fun deleteById(tenantId: String): Boolean {
+    override fun deleteById(id: String): Boolean {
         // 1. 先删除租户-子系统关系
-        val subSystemCodes = sysTenantSubSystemBiz.searchSubSystemCodesByTenantId(tenantId)
-        val criteria = Criteria.of(SysTenantSubSystem::tenantId.name, OperatorEnum.EQ, tenantId)
+        val subSystemCodes = sysTenantSubSystemBiz.searchSubSystemCodesByTenantId(id)
+        val criteria = Criteria.of(SysTenantSubSystem::tenantId.name, OperatorEnum.EQ, id)
         val count = sysTenantSubSystemBiz.batchDeleteCriteria(criteria)
         if (count > 0) {
             // 同步缓存
-            tenantIdsBySubSysCacheHandler.syncOnDelete(tenantId, subSystemCodes)
+            tenantIdsBySubSysCacheHandler.syncOnDelete(id, subSystemCodes)
         }
 
         // 2. 再删除租户
-        val success = super.deleteById(tenantId)
+        val success = super.deleteById(id)
         if (success) {
             // 同步缓存
-            tenantByIdCacheHandler.syncOnDelete(tenantId)
+            tenantByIdCacheHandler.syncOnDelete(id)
         } else {
-            log.error("删除id为${tenantId}的租户失败！")
+            log.error("删除id为${id}的租户失败！")
         }
         return success
     }
 
     @Transactional
-    override fun batchDelete(tenantIds: Collection<String>): Int {
+    override fun batchDelete(ids: Collection<String>): Int {
         // 1.查出对应的子系统编码
-        val tenantIdAndSubSysCodesMap = sysTenantSubSystemBiz.groupingSubSystemCodesByTenantIds(tenantIds)
+        val tenantIdAndSubSysCodesMap = sysTenantSubSystemBiz.groupingSubSystemCodesByTenantIds(ids)
         val subSystemCodes = tenantIdAndSubSysCodesMap.values.flatten().toSet()
 
         // 2.删除租户-子系统关系
-        val criteria = Criteria.of(SysTenantSubSystem::tenantId.name, OperatorEnum.IN, tenantIds)
+        val criteria = Criteria.of(SysTenantSubSystem::tenantId.name, OperatorEnum.IN, ids)
         val count = sysTenantSubSystemBiz.batchDeleteCriteria(criteria)
 
         // 3.删除租户
         if (count >= 0) {
-            val count = super.batchDelete(tenantIds)
-            log.debug("批量删除租户，期望删除${tenantIds.size}条，实际删除${count}条。")
+            val count = super.batchDelete(ids)
+            log.debug("批量删除租户，期望删除${ids.size}条，实际删除${count}条。")
         }
 
         // 3.同步缓存
-        tenantByIdCacheHandler.syncOnBatchDelete(tenantIds)
-        tenantIdsBySubSysCacheHandler.syncOnBatchDelete(tenantIds, subSystemCodes)
+        tenantByIdCacheHandler.syncOnBatchDelete(ids)
+        tenantIdsBySubSysCacheHandler.syncOnBatchDelete(ids, subSystemCodes)
         return count
     }
 

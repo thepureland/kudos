@@ -552,7 +552,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         whereConditionFactory: ((Column<Any>, Any?) -> ColumnDeclaring<Boolean>?)? = null
     ): Int {
         val query = searchByPayload(searchPayload, whereConditionFactory)[0] as Query
-        return query.totalRecords
+        return query.totalRecordsInAllPages
     }
 
     @Suppress("UNCHECKED_CAST")

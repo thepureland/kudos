@@ -8,12 +8,12 @@ class KudosRedisTemplate {
     /**
      * 多个redisTemplate
      */
-    private lateinit var redisTemplateMap: MutableMap<String, RedisTemplate<Any, Any?>>
+    private var redisTemplateMap: MutableMap<String, RedisTemplate<Any, Any?>>
 
     /**
      * default 的 redisTemplate
      */
-    lateinit var defaultRedisTemplate: RedisTemplate<Any, Any?>
+    var defaultRedisTemplate: RedisTemplate<Any, Any?>
 
     constructor(
         redisTemplateMap: MutableMap<String, RedisTemplate<Any, Any?>>,
