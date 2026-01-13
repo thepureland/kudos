@@ -90,9 +90,36 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
     }
 
     /**
-     * 启动消费，提交业务处理回调，报错本批消费失败。处理失败后还会继续重新处理
-     *
-     * @param bizBachProcess 业务处理方法
+     * 启动消费，提交业务处理回调
+     * 
+     * 创建守护线程持续拉取和批量处理消息。
+     * 
+     * 批量处理触发条件：
+     * 1. 消息数量达到batchProcessSize（默认1000条）
+     * 2. 距离上次提交超过pullTime（默认5000毫秒）
+     * 
+     * 工作流程：
+     * 1. 保存业务处理方法回调
+     * 2. 设置运行标志为true
+     * 3. 创建守护线程，执行以下循环：
+     *    - 从MQ拉取消息（poll方法，非阻塞）
+     *    - 将拉取到的消息添加到批量数据列表
+     *    - 检查是否达到批量处理条件（数量或时间）
+     *    - 如果达到条件，调用toProcessBizData处理批量数据
+     *    - 重置批量数据列表和上次提交时间
+     * 4. 线程退出时（isRunning=false），处理剩余的批量数据
+     * 
+     * 批量处理策略：
+     * - 达到数量阈值：立即处理，提高吞吐量
+     * - 达到时间阈值：即使数量不足也处理，确保消息及时处理
+     * - 两者任一满足即触发处理，平衡吞吐量和延迟
+     * 
+     * 注意事项：
+     * - 使用守护线程，不会阻止JVM关闭
+     * - 线程退出时会处理剩余的批量数据，避免消息丢失
+     * - 批量处理失败时，根据saveException配置决定是否保存异常数据
+     * 
+     * @param bizBachProcess 业务处理方法，接收批量消息列表进行处理
      */
     fun start(bizBachProcess: Consumer<MutableList<BatchConsumerItem<T?>?>?>) {
         this.bizBachProcess = bizBachProcess
@@ -123,6 +150,49 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
         daemonThread!!.start()
     }
 
+    /**
+     * 处理批量业务数据
+     * 
+     * 将RocketMQ消息反序列化为业务对象，调用业务处理方法，并根据处理结果提交消费位点。
+     * 
+     * 工作流程：
+     * 1. 消息反序列化：
+     *    - 遍历批量消息列表
+     *    - 从消息体中读取字节数组
+     *    - 使用ObjectInputStream反序列化为业务对象
+     *    - 提取消息属性（properties）
+     *    - 封装为BatchConsumerItem对象
+     * 
+     * 2. 业务处理：
+     *    - 调用业务处理方法处理批量数据
+     *    - 如果处理成功，提交消费位点（commit）
+     * 
+     * 3. 异常处理：
+     *    - 如果处理失败且saveException=true：
+     *      * 记录错误日志
+     *      * 保存异常数据到数据库（避免MQ堵塞）
+     *      * 提交消费位点（避免重复消费）
+     *    - 如果处理失败且saveException=false：
+     *      * 记录错误日志
+     *      * 不提交消费位点（下次会重新拉取）
+     * 
+     * 序列化说明：
+     * - 消息体使用JDK序列化（ObjectInputStream）
+     * - 需要确保消息体类实现Serializable接口
+     * - 反序列化失败会抛出RuntimeException，中断处理
+     * 
+     * 消费位点提交：
+     * - 处理成功：立即提交，确认消息已处理
+     * - 处理失败且保存异常：也提交，避免重复消费导致堵塞
+     * - 处理失败且不保存异常：不提交，下次重新拉取重试
+     * 
+     * 注意事项：
+     * - 反序列化失败会直接抛出异常，不会触发异常保存逻辑
+     * - 业务处理异常会根据saveException配置决定是否保存
+     * - 保存异常数据后仍会提交位点，需要提供异常数据修复机制
+     * 
+     * @param batchData 批量消息列表，包含从MQ拉取的消息
+     */
     private fun toProcessBizData(batchData: MutableList<MessageExt?>) {
         val list = batchData.stream().map { s: MessageExt? ->
             try {

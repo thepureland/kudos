@@ -6,11 +6,70 @@ import io.kudos.base.support.payload.SearchPayload
 import io.kudos.base.support.payload.UpdatePayload
 
 /**
- * 基于关系型数据库表的基础业务操作接口
- *
+ * 基础业务操作接口
+ * 
+ * 定义了业务层的完整操作，包括查询、插入、更新、删除等功能。
+ * 继承自IBaseReadOnlyService，在只读操作基础上增加了数据修改能力。
+ * 基于关系型数据库表，提供统一的业务接口，简化业务层代码。
+ * 
+ * 核心功能：
+ * 1. 查询操作：继承自IBaseReadOnlyService的所有查询方法
+ * 2. 插入操作：支持单个和批量插入，支持指定属性插入和排除属性插入
+ * 3. 更新操作：支持单个和批量更新，支持条件更新、指定属性更新
+ * 4. 删除操作：支持根据主键删除、条件删除、批量删除
+ * 
+ * 插入操作：
+ * - insert：插入实体或插入载体对象，返回主键值
+ * - insertOnly：只插入指定的属性
+ * - insertExclude：插入除指定属性外的所有属性
+ * - batchInsert：批量插入，支持分批处理
+ * 
+ * 更新操作：
+ * - update：更新实体或更新载体对象，只更新有变更的属性
+ * - updateWhen：条件更新，仅当满足附加查询条件时更新
+ * - updateProperties：更新指定的属性（Map形式）
+ * - updateOnly：只更新指定的属性
+ * - updateExcludeProperties：更新除指定属性外的所有属性
+ * - batchUpdate：批量更新，支持分批处理
+ * 
+ * 删除操作：
+ * - deleteById：根据主键删除
+ * - delete：删除实体对象
+ * - batchDelete：批量删除，支持根据主键列表或条件删除
+ * 
+ * 属性控制：
+ * - 支持只操作指定属性（Only系列方法）
+ * - 支持排除指定属性（Exclude系列方法）
+ * - 主键属性永远不会被更新
+ * 
+ * 条件更新：
+ * - updateWhen系列方法支持附加查询条件
+ * - 仅当满足条件时才执行更新操作
+ * - 返回是否更新成功或更新的记录数
+ * 
+ * 批量处理：
+ * - 所有批量操作都支持countOfEachBatch参数
+ * - 默认每批1000条记录，避免内存溢出
+ * - 基于JDBC的executeBatch实现，性能优化
+ * 
+ * 与DAO层的关系：
+ * - 业务层接口，通常委托给DAO层实现
+ * - 可以在业务层添加业务逻辑处理（如数据校验、事务控制等）
+ * - 提供统一的业务接口，隐藏DAO层细节
+ * 
+ * 使用场景：
+ * - 业务层的数据操作
+ * - RESTful API的服务层
+ * - 批量数据导入和更新
+ * 
+ * 注意事项：
+ * - 插入操作返回主键值，更新和删除操作返回是否成功或记录数
+ * - 批量操作支持分批处理，避免一次性处理大量数据
+ * - 条件更新需要提供查询条件，否则会抛出异常
+ * - 主键属性在更新操作中会被自动排除
+ * 
  * @param PK 实体主键类型
- * @param E 实体类型
- * @author K
+ * @param E 实体类型，必须实现IIdEntity接口
  * @since 1.0.0
  */
 interface IBaseCrudService<PK : Any, E : IIdEntity<PK>> : IBaseReadOnlyService<PK, E> {

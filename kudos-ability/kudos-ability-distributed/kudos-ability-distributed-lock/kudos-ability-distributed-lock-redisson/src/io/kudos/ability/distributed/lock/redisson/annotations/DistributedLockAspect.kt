@@ -53,6 +53,30 @@ class DistributedLockAspect {
     fun cut() {
     }
 
+    /**
+     * 环绕通知：实现分布式锁的核心逻辑
+     * 
+     * 工作流程：
+     * 1. 解析@DistributedLock注解，获取锁配置（等待时间、租约时间等）
+     * 2. 生成锁键（通过genLockKey方法）
+     * 3. 尝试获取分布式锁：
+     *    - 成功：执行目标方法，执行完成后释放锁
+     *    - 失败：不执行目标方法，直接返回null，触发失败回调
+     * 4. 无论成功或失败，都会触发相应的回调处理
+     * 5. 锁的释放在finally块中执行，确保即使方法抛出异常也能正确释放
+     * 
+     * 异常处理：
+     * - 获取锁时如果抛出异常，会记录警告日志，但不中断流程，会触发失败回调
+     * - 方法执行时如果抛出异常，会包装为RuntimeException重新抛出
+     * - 释放锁时如果抛出异常，会记录警告日志，但不影响方法返回值
+     * 
+     * 返回值：
+     * - 如果获取锁失败，返回null
+     * - 如果获取锁成功，返回目标方法的执行结果
+     * 
+     * @param joinPoint 连接点，包含目标方法的信息和参数
+     * @return 目标方法的返回值，如果获取锁失败返回null
+     */
     @Around("cut()")
     fun around(joinPoint: ProceedingJoinPoint): Any? {
         val signature = joinPoint.signature as MethodSignature
@@ -103,6 +127,33 @@ class DistributedLockAspect {
         }
     }
 
+    /**
+     * 生成分布式锁的键
+     * 
+     * 支持两种方式生成锁键：
+     * 1. 自动生成（注解中未指定key）：
+     *    - 格式：服务代码::租户ID::类名::方法名::参数类型
+     *    - 例如："service::1001::com.example.UserService::getUser-java.lang.String"
+     *    - 参数类型使用"-"分隔，多个参数类型会拼接在一起
+     * 
+     * 2. SpEL表达式（注解中指定了key）：
+     *    - 解析SpEL表达式，支持引用方法参数和上下文信息
+     *    - 创建MethodBasedEvaluationContext，包含方法参数和参数名
+     *    - 解析表达式获取结果，格式为"租户ID::表达式结果"
+     *    - 例如：key="#userId"，结果为"1001::123"
+     * 
+     * 租户隔离：
+     * - 所有锁键都会包含租户ID，确保不同租户的锁相互隔离
+     * - 从KudosContext中获取当前租户ID
+     * 
+     * 注意事项：
+     * - 自动生成的锁键包含完整的类名和方法签名，确保不同方法的锁不会冲突
+     * - SpEL表达式必须返回String类型，否则会抛出异常
+     * - 参数类型使用getTypeName()获取，包含完整的包路径
+     * 
+     * @param joinPoint 连接点，包含目标方法的信息和参数
+     * @return 生成的锁键字符串
+     */
     private fun genLockKey(joinPoint: ProceedingJoinPoint): String {
         val signature = joinPoint.signature as MethodSignature
         val annotation = signature.method.getAnnotation(DistributedLock::class.java)

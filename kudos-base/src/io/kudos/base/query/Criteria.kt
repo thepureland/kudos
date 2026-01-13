@@ -4,9 +4,43 @@ import io.kudos.base.query.enums.OperatorEnum
 import java.io.Serializable
 
 /**
- * 多个查询条件(where部分)封装类，支持与、或逻辑的任意组合、嵌套
- *
- * @author K
+ * 查询条件封装类
+ * 
+ * 用于封装多个查询条件（WHERE子句），支持AND、OR逻辑的任意组合和嵌套。
+ * 
+ * 核心功能：
+ * 1. 条件组合：支持多个查询条件的AND和OR组合
+ * 2. 嵌套查询：支持Criteria的嵌套，实现复杂的查询逻辑
+ * 3. 条件过滤：自动过滤空值和无效条件
+ * 4. 链式调用：提供流畅的API，支持链式调用
+ * 
+ * 数据结构：
+ * - criterionGroups：存储所有查询条件组
+ *   - Criterion：单个查询条件（属性、操作符、值）
+ *   - Criteria：嵌套查询对象（AND关系）
+ *   - Array<*>：OR组（数组内元素是OR关系，数组与其他元素是AND关系）
+ * 
+ * 逻辑关系：
+ * - criterionGroups中的元素之间是AND关系
+ * - Array<*>中的元素之间是OR关系
+ * - 支持任意层级的嵌套
+ * 
+ * 条件过滤：
+ * - null值：只有操作符acceptNull为true时才添加
+ * - 空字符串：不添加（除非操作符acceptNull）
+ * - 空集合/数组：不添加
+ * - 空的嵌套Criteria：不添加
+ * 
+ * 使用场景：
+ * - 动态构建查询条件
+ * - 复杂查询逻辑的封装
+ * - ORM框架的查询构建
+ * 
+ * 注意事项：
+ * - 条件值会被自动过滤，避免生成无效的查询
+ * - toString方法仅用于调试，不能直接作为SQL执行
+ * - 支持静态工厂方法创建Criteria对象
+ * 
  * @since 1.0.0
  */
 class Criteria : Serializable {
@@ -165,6 +199,35 @@ class Criteria : Serializable {
         return criterionGroups.isEmpty()
     }
 
+    /**
+     * 添加查询条件到列表
+     * 
+     * 将查询条件添加到指定列表，并根据条件值进行过滤。
+     * 
+     * 工作流程：
+     * 1. 创建或使用列表：如果list为null，创建新列表；否则使用现有列表
+     * 2. 过滤条件：遍历所有条件，根据值是否有效决定是否添加
+     * 3. 值有效性判断：
+     *    - 非空且非空字符串：有效
+     *    - 集合非空：有效
+     *    - 数组非空：有效
+     *    - 操作符接受null：有效（即使值为null）
+     * 4. 添加到列表：将有效条件添加到列表
+     * 
+     * 值过滤规则：
+     * - null值：只有操作符acceptNull为true时才添加
+     * - 空字符串：不添加（除非操作符acceptNull）
+     * - 空集合/数组：不添加
+     * - 非空值：添加
+     * 
+     * 使用场景：
+     * - 添加AND条件：list为criterionGroups
+     * - 添加OR条件：list为null，创建临时列表
+     * 
+     * @param list 目标列表，如果为null则创建新列表
+     * @param criterions 待添加的查询条件
+     * @return 添加条件后的列表
+     */
     private fun addCriterion(list: MutableList<Any>?, vararg criterions: Criterion): MutableList<Any> {
         var resultList = list
         if (resultList == null) {
@@ -182,6 +245,29 @@ class Criteria : Serializable {
         return resultList
     }
 
+    /**
+     * 添加查询对象到列表
+     * 
+     * 将查询对象（嵌套Criteria）添加到指定列表，只添加非空的查询对象。
+     * 
+     * 工作流程：
+     * 1. 创建或使用列表：如果list为null，创建新列表；否则使用现有列表
+     * 2. 过滤查询对象：遍历所有查询对象，只添加非空的（有条件的）
+     * 3. 非空判断：检查查询对象的criterionGroups是否为空
+     * 4. 添加到列表：将非空查询对象添加到列表
+     * 
+     * 非空判断：
+     * - 如果查询对象的criterionGroups为空，不添加
+     * - 避免添加空的嵌套查询，保持查询条件的简洁
+     * 
+     * 使用场景：
+     * - 添加AND嵌套查询：list为criterionGroups
+     * - 添加OR嵌套查询：list为null，创建临时列表
+     * 
+     * @param list 目标列表，如果为null则创建新列表
+     * @param criterias 待添加的查询对象
+     * @return 添加查询对象后的列表
+     */
     private fun addCriteria(list: MutableList<Any>?, vararg criterias: Criteria): MutableList<Any> {
         var resultList = list
         if (resultList == null) {
@@ -195,6 +281,29 @@ class Criteria : Serializable {
         return resultList
     }
 
+    /**
+     * 添加OR组到查询条件组
+     * 
+     * 将OR关系的条件列表转换为数组并添加到criterionGroups。
+     * 
+     * 工作流程：
+     * 1. 检查列表：如果列表为空，不添加
+     * 2. 转换为数组：将列表转换为数组（Array类型表示OR关系）
+     * 3. 添加到组：将数组添加到criterionGroups
+     * 
+     * OR组标识：
+     * - criterionGroups中的Array类型元素表示OR关系
+     * - 数组中的元素之间是OR关系
+     * - 数组与其他元素之间是AND关系
+     * 
+     * 数据结构：
+     * - criterionGroups: List<Any>
+     *   - Criterion: 单个条件
+     *   - Criteria: 嵌套查询（AND关系）
+     *   - Array<*>: OR组（数组内元素是OR关系）
+     * 
+     * @param list OR关系的条件列表
+     */
     private fun addOrGroup(list: List<*>) {
         if (list.isNotEmpty()) {
             criterionGroups.add(list.toTypedArray())

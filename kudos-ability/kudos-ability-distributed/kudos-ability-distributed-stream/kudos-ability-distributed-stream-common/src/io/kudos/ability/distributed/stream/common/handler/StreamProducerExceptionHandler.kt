@@ -46,6 +46,35 @@ class StreamProducerExceptionHandler : AbstractFailedDataHandler<StreamProducerM
     @Autowired
     private lateinit var streamProducerHelper: StreamProducerHelper
 
+    /**
+     * 处理失败的消息数据
+     * 
+     * 从持久化的JSON数据中恢复消息对象，重新发送到MQ。
+     * 
+     * 工作流程：
+     * 1. 提取消息信息：从StreamProducerMsgVo中提取绑定名称、消息体JSON、消息头JSON
+     * 2. 反序列化消息体：将msgBodyJson反序列化为业务对象
+     * 3. 创建StreamMessageVo：包装业务对象为StreamMessageVo
+     * 4. 反序列化消息头：将msgHeaderJson反序列化为Map，创建MessageHeaders
+     * 5. 构建Message对象：使用GenericMessage封装消息体和消息头
+     * 6. 重试发送：调用StreamProducerHelper.doRealSend进行重试，标记isResend=true
+     * 
+     * 重试标识：
+     * - isResend=true表示这是重试发送，避免重复触发失败处理机制
+     * - 如果重试发送失败，消息会继续保留在本地文件中，等待下次重试
+     * 
+     * 返回值说明：
+     * - true：发送操作成功（注意：MQ发送是异步的，true不代表消息已到达服务器）
+     * - false：发送失败，消息会继续保留在本地文件中
+     * 
+     * 注意事项：
+     * - 如果本次发送为异步flush报错，会继续被异常拦截机制处理
+     * - 如果本次直接返回false，消息没提交到MQ的等待flush队列中，本地文件不会删除
+     * - 需要确保JSON数据格式正确，否则反序列化会失败
+     * 
+     * @param data 失败消息数据对象，包含绑定名称、消息体JSON、消息头JSON
+     * @return true表示发送操作成功（异步），false表示发送失败
+     */
     protected override fun processFailedData(data: StreamProducerMsgVo): Boolean {
         val bindName = data.bindName
         val msgBodyJson = data.msgBodyJson

@@ -303,7 +303,29 @@ object JsonKit {
 
 
     /**
-     * 递归将 JsonElement 转为 Kotlin 类型
+     * 递归将JsonElement转为Kotlin类型
+     * 
+     * 将JsonElement递归转换为对应的Kotlin类型，支持基本类型、集合和对象。
+     * 
+     * 工作流程：
+     * 1. JsonPrimitive：按优先级尝试转换为Boolean、Long、Int、Double，否则返回字符串内容
+     * 2. JsonArray：递归转换每个元素，返回List
+     * 3. JsonObject：递归转换每个值，返回Map
+     * 4. JsonNull：返回null
+     * 
+     * 类型转换优先级：
+     * - Boolean：优先尝试解析为布尔值
+     * - Long：其次尝试解析为长整型
+     * - Int：再次尝试解析为整型
+     * - Double：然后尝试解析为浮点数
+     * - String：最后返回字符串内容
+     * 
+     * 递归处理：
+     * - 数组和对象会递归处理其内部元素
+     * - 确保嵌套结构被正确转换
+     * 
+     * @param elem JsonElement对象
+     * @return 转换后的Kotlin对象，可能是基本类型、List、Map或null
      */
     private fun unwrap(elem: JsonElement): Any? = when (elem) {
         is JsonPrimitive -> elem.booleanOrNull
@@ -372,7 +394,41 @@ object JsonKit {
     }
 
 
-    /** 优先从上下文/多态/直连三处查找 KSerializer（都找不到返回 null） */
+    /**
+     * 查找KSerializer序列化器
+     * 
+     * 按优先级从三个位置查找序列化器：上下文序列化器、直连序列化器、多态序列化器。
+     * 
+     * 查找顺序：
+     * 1. 上下文序列化器：从SerializersModule的contextual序列化器中查找
+     *    - 适用于已注册的上下文类型（如LocalDate、LocalTime、LocalDateTime）
+     *    - 通过getContextual方法获取
+     * 2. 直连序列化器：从类本身查找序列化器
+     *    - 适用于标注@Serializable的类
+     *    - 适用于sealed层级子类（自动生成序列化器）
+     *    - 通过serializerOrNull方法获取
+     * 3. 多态序列化器：从多态序列化器中查找（当前未实现）
+     *    - 适用于开放多态场景
+     *    - 需要配置polymorphic序列化器
+     * 
+     * 返回值：
+     * - 找到序列化器：返回KSerializer<Any>
+     * - 未找到：返回null
+     * 
+     * 使用场景：
+     * - 运行时序列化未知类型
+     * - 兜底序列化机制
+     * - 支持常见类型的自动序列化
+     * 
+     * 注意事项：
+     * - 使用@OptIn注解启用内部API
+     * - 类型转换使用@Suppress抑制警告
+     * - 多态序列化器需要额外配置
+     * 
+     * @param json Json配置对象，包含SerializersModule
+     * @param value 待序列化的对象
+     * @return KSerializer序列化器，如果未找到返回null
+     */
     @OptIn(InternalSerializationApi::class, ExperimentalSerializationApi::class)
     @Suppress("UNCHECKED_CAST")
     private fun findKSerializer(json: Json, value: Any): KSerializer<Any>? {
@@ -392,10 +448,44 @@ object JsonKit {
 
 
     /**
-     * 纯 kotlinx 的“Any 兜底”：把任意常见结构递归转为 JsonElement。
-     * - data class：按主构造参数顺序取属性（尽量稳定输出）
-     * - Map/List/数组/基本类型/Enum/java.time：分别处理
-     * - 其他无法处理的类型会抛出 SerializationException，提示显式建模
+     * 将任意对象递归转换为JsonElement（兜底序列化）
+     * 
+     * 当标准序列化失败时，使用此方法作为兜底方案，支持常见类型的递归序列化。
+     * 
+     * 支持的类型：
+     * 1. 基本类型：String、Boolean、Number、Char → JsonPrimitive
+     * 2. 枚举：使用枚举的name → JsonPrimitive
+     * 3. java.time：LocalDate、LocalTime、LocalDateTime → 使用已注册的序列化器
+     * 4. Map：递归转换key和value → JsonObject
+     * 5. 集合和数组：
+     *    - Iterable、Array → JsonArray（递归转换元素）
+     *    - 基本类型数组（IntArray、LongArray等）→ JsonArray（直接转换）
+     * 6. data class：按主构造参数顺序提取属性 → JsonObject
+     * 7. Java Bean：使用JavaBeans Introspector提取属性 → JsonObject
+     * 
+     * data class处理：
+     * - 优先按主构造参数顺序提取属性，保持输出稳定
+     * - 然后补充不在主构造中的属性
+     * - 使用反射获取属性值，递归转换
+     * 
+     * Java Bean处理：
+     * - 使用Introspector.getBeanInfo获取属性描述符
+     * - 调用getter方法获取属性值
+     * - 递归转换属性值
+     * 
+     * 异常处理：
+     * - 如果所有方式都无法序列化，抛出SerializationException
+     * - 异常信息会提示添加@Serializable或改为data class
+     * 
+     * 注意事项：
+     * - 这是兜底方案，性能不如标准序列化
+     * - 使用反射，可能有性能开销
+     * - 建议优先使用@Serializable标注
+     * 
+     * @param json Json配置对象
+     * @param v 待序列化的对象，可以为null
+     * @return 转换后的JsonElement
+     * @throws SerializationException 如果无法序列化该类型
      */
     fun _encodeAnyToJsonElement(json: Json, v: Any?): JsonElement {
         return when (v) {
@@ -490,9 +580,43 @@ object JsonKit {
     }
 
     /**
-     * 将普通 Java Bean（有 getXxx() 访问器）转换为 JsonElement。
-     * - 使用 JavaBeans Introspector，截止到 Any.class，因此不会包含 "class" 属性
-     * - 递归地调用 encodeAnyToJsonElement 处理嵌套
+     * 将Java Bean转换为JsonElement
+     * 
+     * 使用JavaBeans Introspector提取Bean的属性，并递归转换为JsonElement。
+     * 
+     * 工作流程：
+     * 1. 获取Bean信息：使用Introspector.getBeanInfo获取属性描述符
+     * 2. 设置停止类：截止到Any.class，避免包含"class"属性
+     * 3. 遍历属性：遍历所有属性描述符
+     * 4. 提取属性值：
+     *    - 获取readMethod（getter方法）
+     *    - 设置方法可访问（isAccessible = true）
+     *    - 调用getter方法获取属性值
+     * 5. 递归转换：调用_encodeAnyToJsonElement递归转换属性值
+     * 6. 构建JsonObject：将属性名和转换后的值组成JsonObject
+     * 
+     * JavaBeans规范：
+     * - 属性必须有对应的getter方法（getXxx或isXxx）
+     * - 属性名从getter方法名推导（去掉get/is前缀，首字母小写）
+     * - 使用Introspector自动发现属性
+     * 
+     * 属性过滤：
+     * - 只包含有getter方法的属性
+     * - 不包含"class"属性（通过设置停止类实现）
+     * - 跳过无法访问的属性
+     * 
+     * 异常处理：
+     * - 如果getter方法调用失败，属性值设为null
+     * - 使用runCatching捕获异常，不影响其他属性的处理
+     * 
+     * 注意事项：
+     * - 使用反射，可能有性能开销
+     * - 需要确保getter方法可访问
+     * - 嵌套对象会递归转换
+     * 
+     * @param json Json配置对象
+     * @param bean Java Bean对象
+     * @return 转换后的JsonObject
      */
     private fun javaBeanToJsonElement(json: Json, bean: Any): JsonElement {
         val info = Introspector.getBeanInfo(bean.javaClass, Any::class.java)

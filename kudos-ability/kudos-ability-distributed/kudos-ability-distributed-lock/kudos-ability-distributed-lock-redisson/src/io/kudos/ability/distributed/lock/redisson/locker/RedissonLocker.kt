@@ -68,12 +68,37 @@ class RedissonLocker : ILocker<RLock> {
     }
 
     /**
-     * 尝试获取锁，如果获取成功返回true，否则返回false
-     *
-     * @param lockKey   lockKey
-     * @param unit      unit
-     * @param timeOut  获取锁等待时间
-     * @param leaseTime 获取锁成功后，锁失效时间
+     * 尝试获取分布式锁
+     * 
+     * 在指定时间内尝试获取锁，如果获取成功则设置锁的租约时间。
+     * 
+     * 工作流程：
+     * 1. 获取RLock对象
+     * 2. 调用tryLock方法尝试获取锁：
+     *    - 在timeOut时间内等待获取锁
+     *    - 如果获取成功，设置锁的租约时间为leaseTime
+     *    - 如果获取失败或超时，返回false
+     * 3. 处理中断异常：如果线程被中断，返回false
+     * 
+     * 参数说明：
+     * - timeOut：获取锁的等待时间，在此时长内会持续尝试获取锁
+     * - leaseTime：获取锁成功后的租约时间，超过此时长锁会自动释放
+     * - unit：时间单位，同时应用于timeOut和leaseTime
+     * 
+     * 返回值：
+     * - true：成功获取锁
+     * - false：获取锁失败（超时、被中断或其他原因）
+     * 
+     * 注意事项：
+     * - 如果线程在等待过程中被中断，会捕获InterruptedException并返回false
+     * - 获取锁成功后，需要在leaseTime内完成业务逻辑并释放锁
+     * - 如果业务逻辑执行时间超过leaseTime，锁会自动释放，可能导致并发问题
+     * 
+     * @param lockKey 锁的key
+     * @param unit 时间单位
+     * @param timeOut 获取锁等待时间
+     * @param leaseTime 获取锁成功后的租约时间（锁失效时间）
+     * @return true表示成功获取锁，false表示获取锁失败
      */
     override fun tryLock(
         lockKey: String,

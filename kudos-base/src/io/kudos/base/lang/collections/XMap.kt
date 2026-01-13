@@ -126,13 +126,59 @@ fun <K, V> Map<K, V>.invertMap(): Map<V, K> {
 
 
 /**
- * 递归打印。lineage 用来追踪上层已经打印过的 Map，以避免循环引用导致无限递归。
- *
- * @param out      输出流
- * @param label    本次打印所用的标签，可以为 null
- * @param map      要打印的 Map，可以为 null
- * @param lineage  已经进入递归打印的上层 Map 链表，用于检测循环引用
- * @param debug    如果为 true，则在打印每个非 Map 值时输出其类型名；否则仅输出值本身
+ * 递归打印Map结构
+ * 
+ * 以树形结构递归打印Map的内容，支持嵌套Map和循环引用检测。
+ * 
+ * 工作流程：
+ * 1. 空值处理：如果map为null，直接打印"null"并返回
+ * 2. 打印标签：如果提供了label，打印标签和等号
+ * 3. 开始打印：打印左大括号，开始当前Map的内容
+ * 4. 加入lineage：将当前Map加入lineage，用于循环引用检测
+ * 5. 遍历条目：
+ *    - 如果value是Map且不在lineage中：递归打印
+ *    - 如果value是Map但在lineage中：打印循环引用标识
+ *    - 如果value不是Map：打印值（debug模式下包含类型信息）
+ * 6. 移除lineage：打印完成后从lineage中移除当前Map
+ * 7. 结束打印：打印右大括号，结束当前Map
+ * 
+ * 循环引用检测：
+ * - 使用lineage列表追踪已访问的Map
+ * - 如果value是Map且已在lineage中，说明发生循环引用
+ * - 打印"(this Map)"表示指向自身
+ * - 打印"(ancestor[idx] Map)"表示指向祖先Map
+ * 
+ * 缩进机制：
+ * - 根据lineage.size决定缩进级别
+ * - 每层缩进2个空格
+ * - 形成树形结构的视觉效果
+ * 
+ * Debug模式：
+ * - 如果debug=true，会输出每个值的类型信息
+ * - 格式：value (类型名)
+ * - 有助于调试和类型检查
+ * 
+ * 输出格式：
+ * ```
+ * label = {
+ *   key1 => value1
+ *   key2 => {
+ *     nestedKey => nestedValue
+ *   }
+ *   key3 => (this Map)  // 循环引用
+ * }
+ * ```
+ * 
+ * 注意事项：
+ * - 使用lineage避免无限递归
+ * - 递归深度没有限制，但实际受JVM栈深度限制
+ * - 循环引用会被检测并标记，不会导致栈溢出
+ * 
+ * @param out 输出流，用于打印内容
+ * @param label 本次打印的标签，用于标识当前Map，可以为null
+ * @param map 要打印的Map，可以为null
+ * @param lineage 已进入递归打印的上层Map列表，用于检测循环引用
+ * @param debug 如果为true，在打印每个非Map值时输出其类型名；否则仅输出值本身
  */
 private fun verbosePrintInternal(
     out: PrintStream,

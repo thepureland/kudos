@@ -91,18 +91,47 @@ class DefaultKeysGenerator : IKeysGenerator {
     }
 
     /**
-     * 生成key
-     * 算法：
-     * 1.将每个参数都转换为totalCount大小的List
-     * 2.以原来参数的元素为分组，重复分组以补足List的大小到totalCount
-     * 3.迭代各参数对应的List，将相同下标的元素组装成一个完整的key
-     *
-     * @param function 方法
-     * @param totalCount 要生成的key总数
-     * @param params 方法参数
-     * @return key列表
-     * @author K
-     * @since 1.0.0
+     * 生成批量缓存的key列表
+     * 
+     * 根据方法参数生成所有可能的缓存key组合，支持集合、数组和普通参数。
+     * 
+     * 工作流程：
+     * 1. 过滤参数：根据ignoreParamIndexes过滤掉需要忽略的参数
+     * 2. 扩展参数：将每个参数扩展为totalCount大小的列表
+     *    - 集合/数组：重复添加元素，直到列表大小为totalCount
+     *    - 普通参数：重复添加相同值，直到列表大小为totalCount
+     * 3. 组合key：遍历每个索引位置，将各参数列表的对应元素组合成一个key
+     * 4. 返回结果：返回所有组合后的key列表
+     * 
+     * 扩展算法：
+     * - 集合/数组：计算需要重复的次数（groupCount = totalCount / 元素个数）
+     *   然后重复添加整个集合/数组，直到列表大小为totalCount
+     * - 普通参数：直接重复添加totalCount次
+     * 
+     * 组合规则：
+     * - 每个key由各参数在相同索引位置的元素组成
+     * - 元素之间使用分隔符（delimiter）连接
+     * - 例如：参数1的第i个元素 + 分隔符 + 参数2的第i个元素 + ...
+     * 
+     * 示例：
+     * - 参数："1", listOf(2,3), arrayOf("a","b")
+     * - totalCount = 1 * 2 * 2 = 4
+     * - 扩展后：
+     *   * 参数1: ["1", "1", "1", "1"]
+     *   * 参数2: [2, 3, 2, 3]（重复2次）
+     *   * 参数3: ["a", "a", "b", "b"]（重复2次）
+     * - 生成的key: ["1:2:a", "1:3:a", "1:2:b", "1:3:b"]
+     * 
+     * 注意事项：
+     * - 参数必须支持toString()方法
+     * - 集合/数组为空时，不会添加任何元素
+     * - 生成的key数量等于totalCount（各参数元素个数的乘积）
+     * - 使用分隔符连接，最后会去除末尾的分隔符
+     * 
+     * @param function 目标方法，用于获取ignoreParamIndexes配置
+     * @param totalCount 要生成的key总数（各参数元素个数的乘积）
+     * @param params 方法参数，可能包含集合、数组或普通值
+     * @return 生成的key列表，数量等于totalCount
      */
     @Suppress("UNCHECKED_CAST")
     private fun generateKeys(function: KFunction<*>?, totalCount: Int, vararg params: Any): List<String> {

@@ -4,9 +4,30 @@ import io.kudos.base.query.enums.OperatorEnum
 import java.io.Serializable
 
 /**
- * 单个查询条件的封装类, 由查询属性名，属性值、逻辑操作符三部分组成
- *
- * @author K
+ * 单个查询条件封装类
+ * 
+ * 用于封装一个查询条件，由属性名、操作符和属性值三部分组成。
+ * 
+ * 核心组成：
+ * - property：要查询的属性名（字段名）
+ * - operator：逻辑操作符枚举（如等于、大于、LIKE等）
+ * - value：属性值（查询条件的目标值）
+ * 
+ * 扩展属性：
+ * - alias：别名，用于同一属性名多个条件时的区分
+ * - encrypt：标识条件值是否已加密
+ * 
+ * 使用场景：
+ * - 动态构建查询条件
+ * - ORM框架的查询构建
+ * - 复杂查询条件的封装
+ * 
+ * 注意事项：
+ * - 属性值可以为null（取决于操作符是否acceptNull）
+ * - 别名用于区分同一属性的多个条件
+ * - 加密标识用于标记敏感数据的查询条件
+ * - toString方法仅用于调试，不能直接作为SQL执行
+ * 
  * @since 1.0.0
  */
 class Criterion : Serializable {

@@ -43,6 +43,36 @@ import java.util.Locale
  */
 class FeignContextWebFilter : Filter {
 
+    /**
+     * 执行过滤：提取Feign请求的上下文信息
+     * 
+     * 从HTTP请求头中提取Feign调用传递的上下文信息，并设置到KudosContext中。
+     * 
+     * 请求判断逻辑：
+     * - 如果FEIGN_REQUEST请求头不为空，或者NOTIFY_REQUEST请求头为空，则处理上下文
+     * - 注意：这里的逻辑是"FEIGN_REQUEST不为空 OR NOTIFY_REQUEST为空"
+     * - 这意味着：Feign请求会处理，非通知请求也会处理
+     * 
+     * 上下文提取和设置：
+     * 1. 从请求头提取：租户ID、子系统代码、追踪键、数据源ID、语言环境
+     * 2. 获取或创建ClientInfo对象
+     * 3. 解析语言环境字符串（格式：语言代码_国家代码，如zh_CN）
+     * 4. 设置到KudosContext中
+     * 
+     * 扩展处理：
+     * - 调用所有IFeignProviderContextProcess实现类进行额外的上下文处理
+     * - 支持自定义扩展，例如添加额外的上下文信息
+     * 
+     * 注意事项：
+     * - 仅处理Feign请求或非通知请求，普通HTTP请求也会处理
+     * - 如果ClientInfo不存在，会自动创建
+     * - 语言环境字符串会被解析为Locale对象
+     * - 数据源ID如果为空，不会设置到上下文中
+     * 
+     * @param servletRequest HTTP请求对象
+     * @param servletResponse HTTP响应对象
+     * @param filterChain 过滤器链
+     */
     override fun doFilter(
         servletRequest: ServletRequest?,
         servletResponse: ServletResponse?,

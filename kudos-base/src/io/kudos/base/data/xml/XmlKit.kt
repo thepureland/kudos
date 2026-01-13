@@ -15,13 +15,40 @@ import javax.xml.transform.sax.SAXSource
 import kotlin.reflect.KClass
 
 /**
- * xml工具类(基于JAXB)
- * JAXB = Java Architecture for XML Binding
- * 使用Jaxb2.0实现XML和Java的相互转化, OXM(Object XML Mapping), JAXB2在底层是用StAX(JSR 173)来处理XML文档的。
+ * XML工具类
+ * 
+ * 基于JAXB（Java Architecture for XML Binding）实现XML和Java对象的相互转换。
+ * JAXB使用OXM（Object XML Mapping）技术，底层使用StAX（JSR 173）处理XML文档。
+ * 
+ * 核心功能：
+ * 1. 对象序列化：将Java对象转换为XML字符串（编组）
+ * 2. 对象反序列化：将XML字符串转换为Java对象（解组）
+ * 3. 集合支持：支持根元素为Collection的XML序列化
+ * 4. 编码控制：支持指定XML编码格式（默认UTF-8）
+ * 5. 命名空间：支持忽略命名空间的解析
+ * 
+ * 类要求：
+ * - 支持数据类和普通类
+ * - 必须有空构造函数
+ * - 要映射的属性必须是可读可写的（var）
+ * - 可以使用JAXB注解控制序列化行为
+ * 
+ * 性能优化：
+ * - 使用ConcurrentHashMap缓存JAXBContext，避免重复创建
+ * - Marshaller和Unmarshaller每次创建（线程不安全）
+ * 
+ * 使用场景：
+ * - Web服务的数据交换（SOAP、REST）
+ * - 配置文件解析
+ * - 数据持久化
+ * - 系统间数据传递
+ * 
  * 注意事项：
- * 1.支持数据类和普通类,必须有空构造函数，要映射的属性必须是可读可写的(var)
- *
- * @author K
+ * - XML编码必须为UTF-8（默认）
+ * - 集合作为根元素时需要使用CollectionWrapper包装
+ * - 命名空间处理需要根据实际情况配置
+ * - 线程安全：JAXBContext缓存是线程安全的，但Marshaller/Unmarshaller不是
+ * 
  * @since 1.0.0
  */
 object XmlKit {

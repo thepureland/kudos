@@ -10,10 +10,49 @@ import kotlin.reflect.KClass
 
 /**
  * 只读数据访问接口
- *
+ * 
+ * 定义了数据访问层的只读操作，包括查询、聚合计算等功能。
+ * 提供多种查询方式，支持灵活的条件查询和结果类型控制。
+ * 
+ * 核心功能：
+ * 1. 主键查询：根据主键查询单个或批量实体
+ * 2. 单属性查询：根据单个属性值查询
+ * 3. 多属性查询：支持AND和OR两种逻辑关系的多属性查询
+ * 4. IN查询：支持IN条件查询，包括主键IN查询
+ * 5. 复杂条件查询：使用Criteria对象构建复杂查询条件
+ * 6. 分页查询：支持分页查询，可控制返回的属性
+ * 7. 载体查询：使用SearchPayload载体对象进行查询
+ * 8. 聚合计算：支持count、sum、avg、max、min等聚合函数
+ * 
+ * 查询方法分类：
+ * - 基础查询：get、oneSearch、allSearch、andSearch、orSearch、inSearch
+ * - 属性查询：每个基础查询都有对应的Property版本，返回单个属性值列表
+ * - 多属性查询：每个基础查询都有对应的Properties版本，返回Map列表
+ * - 复杂查询：search、pagingSearch、search(payload)
+ * 
+ * 结果类型：
+ * - 实体列表：返回完整的实体对象列表（List<E>）
+ * - 属性值列表：返回单个属性的值列表（List<*>）
+ * - Map列表：返回多个属性的Map列表（List<Map<String, *>>）
+ * - 聚合结果：返回Number或Any?类型的聚合计算结果
+ * 
+ * 排序支持：
+ * - 所有查询方法都支持可变参数的Order排序
+ * - 可以指定多个排序规则，按优先级执行
+ * 
+ * 使用场景：
+ * - ORM框架的数据访问层
+ * - 业务层的查询操作
+ * - 报表和统计功能
+ * 
+ * 注意事项：
+ * - 所有查询方法都是只读操作，不会修改数据
+ * - 主键类型支持String、Int、Long
+ * - 批量查询支持分批处理，避免内存溢出
+ * - 分页查询的页码从1开始
+ * 
  * @param PK 实体主键类型
- * @param E 实体类型
- * @author K
+ * @param E 实体类型，必须实现IIdEntity接口
  * @since 1.0.0
  */
 interface IBaseReadOnlyDao<PK : Any, E : IIdEntity<PK>> {
