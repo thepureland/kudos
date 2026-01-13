@@ -15,9 +15,8 @@ class AuditMqTest {
 
     @Test
     fun testLog() {
-        val model = SaveModel()
+        val model = SaveModel("asda")
         model.code = "!121"
-        model.setId("asda")
         service.saveLog()
     }
 

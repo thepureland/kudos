@@ -58,6 +58,7 @@ xqlee-pngquant-png = "1.0.0"
 minio = "8.6.0"
 controlsfx = "11.2.3"
 commons-fileupload = "1.6.0"
+servlet-api = "6.1.0"
 
 
 [libraries]
@@ -96,6 +97,7 @@ lingala-zip4j = { module = "net.lingala.zip4j:zip4j", version.ref = "lingala-zip
 apache-xmlgraphics-batik-dom = { module = "org.apache.xmlgraphics:batik-dom", version.ref = "apache-xmlgraphics-batik" }
 apache-xmlgraphics-batik-bridge = { module = "org.apache.xmlgraphics:batik-bridge", version.ref = "apache-xmlgraphics-batik" }
 github-classgraph = { module = "io.github.classgraph:classgraph", version.ref = "github-classgraph" }
+servlet-api = { module = "jakarta.servlet:jakarta.servlet-api", version.ref = "servlet-api" }
 
 # kudos-context
 spring-boot-starter-aop = { module = "org.springframework.boot:spring-boot-starter-aspectj" }
