@@ -5,8 +5,8 @@ import io.kudos.ams.sys.common.vo.accessruleip.SysAccessRuleIpCacheItem
 import io.kudos.ams.sys.provider.dao.SysAccessRuleDao
 import io.kudos.ams.sys.provider.dao.SysAccessRuleIpDao
 import io.kudos.ams.sys.provider.model.po.SysAccessRuleIp
+import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import org.springframework.beans.factory.annotation.Autowired
-import org.testcontainers.junit.jupiter.EnabledIfDockerAvailable
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 import kotlin.test.Test
@@ -19,7 +19,7 @@ import kotlin.test.assertFalse
  * @author K
  * @since 1.0.0
  */
-@EnabledIfDockerAvailable
+@EnabledIfDockerInstalled
 class AccessRuleIpsBySubSysAndTenantIdCacheHandlerTest : CacheHandlerTestBase() {
     
     @Autowired

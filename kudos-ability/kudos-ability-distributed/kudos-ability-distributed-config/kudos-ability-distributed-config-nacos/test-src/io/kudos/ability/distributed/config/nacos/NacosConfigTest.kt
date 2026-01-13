@@ -5,11 +5,11 @@ import com.alibaba.nacos.api.config.ConfigService
 import io.kudos.ability.distributed.config.nacos.listener.AbstractConfigChangeListener
 import io.kudos.ability.distributed.config.nacos.listener.NacosConfigServiceListener
 import io.kudos.test.common.init.EnableKudosTest
+import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.container.containers.NacosTestContainer
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
 import org.springframework.beans.factory.annotation.Value
-import org.testcontainers.junit.jupiter.EnabledIfDockerAvailable
 import java.util.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -22,7 +22,7 @@ import kotlin.test.assertNull
  * @since 1.0.0
  */
 @EnableKudosTest
-@EnabledIfDockerAvailable
+@EnabledIfDockerInstalled
 @TestInstance(value = TestInstance.Lifecycle.PER_CLASS)
 open class NacosConfigTest {
     

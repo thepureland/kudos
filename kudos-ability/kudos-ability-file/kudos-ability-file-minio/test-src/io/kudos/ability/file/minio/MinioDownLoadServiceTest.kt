@@ -10,8 +10,12 @@ import io.kudos.ability.file.common.entity.UploadFileResult
 import io.kudos.base.error.ServiceException
 import io.kudos.base.lang.string.RandomStringKit
 import io.kudos.test.common.init.EnableKudosTest
+import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.container.containers.MinioTestContainer
-import io.minio.*
+import io.minio.BucketExistsArgs
+import io.minio.MakeBucketArgs
+import io.minio.MinioClient
+import io.minio.PutObjectArgs
 import io.minio.admin.MinioAdminClient
 import io.minio.admin.UserInfo
 import jakarta.annotation.Resource
@@ -21,7 +25,6 @@ import org.springframework.core.io.InputStreamResource
 import org.springframework.core.io.InputStreamSource
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
-import org.testcontainers.junit.jupiter.EnabledIfDockerAvailable
 import java.io.ByteArrayInputStream
 import kotlin.test.Test
 import kotlin.test.assertSame
@@ -47,7 +50,7 @@ import kotlin.test.assertTrue
  */
 @EnableKudosTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@EnabledIfDockerAvailable
+@EnabledIfDockerInstalled
 internal class MinioDownLoadServiceTest {
 
     @Resource
