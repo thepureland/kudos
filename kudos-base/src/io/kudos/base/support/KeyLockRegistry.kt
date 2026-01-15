@@ -19,7 +19,7 @@ import kotlin.concurrent.withLock
  * - 替代 synchronized(key) 的写法；
  * - 控制对某一类资源（如订单号、用户ID）的并发访问。
  *
- * @author ChatGPT
+ * @author AI: ChatGPT
  * @author K
  * @since 1.0.0
  */

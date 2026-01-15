@@ -7,7 +7,7 @@ import kotlin.test.*
 /**
  * test for Base36Kit
  *
- * @author ChatGPT
+ * @author AI: ChatGPT
  * @author K
  * @since 1.0.0
  */

@@ -43,7 +43,7 @@ import kotlin.test.assertTrue
  *    - download_with_specify_access_key_without_auth：指定错误凭证，期望抛出 FILE_ACCESS_DENY
  *    - download_with_specify_access_key_with_auth：指定 ro_user 凭证，期望下载成功
  *
- * @author ChatGPT
+ * @author AI: ChatGPT
  * @author water
  * @author K
  * @since 1.0.0
