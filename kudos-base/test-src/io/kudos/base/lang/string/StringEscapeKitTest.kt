@@ -8,7 +8,7 @@ import kotlin.test.assertNull
 /**
  * test for StringEscapeKit
  *
- * @author ChatGPT
+ * @author AI: ChatGPT
  * @author K
  * @since 1.0.0
  */

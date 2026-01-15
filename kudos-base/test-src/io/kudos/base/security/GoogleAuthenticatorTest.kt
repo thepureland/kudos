@@ -7,7 +7,7 @@ import kotlin.test.DefaultAsserter.assertNotNull
 /**
  * test for GoogleAuthenticator
  *
- * @author ChatGPT
+ * @author AI: ChatGPT
  * @author K
  * @since 1.0.0
  */

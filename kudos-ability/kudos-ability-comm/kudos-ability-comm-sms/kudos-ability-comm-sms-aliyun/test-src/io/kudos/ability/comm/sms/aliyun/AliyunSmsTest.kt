@@ -17,7 +17,7 @@ import kotlin.test.assertEquals
  * 阿里云发送短信测试用例，用WireMock模拟aliyun短信服务
  *
  * @author K
- * @author ChatGPT
+ * @author AI: ChatGPT
  * @since 1.0.0
  */
 @EnableKudosTest

@@ -12,7 +12,7 @@ import java.util.concurrent.ConcurrentMap
  *  - 调用 [take] 时从 channel 接收元素，将在没有元素时挂起；
  *  - 调用 [poll] 时带超时地从 channel 接收元素，超时返回 null。
  *
- * @author ChatGPT
+ * @author AI: ChatGPT
  *  @author K
  *  @since 1.0.0
  */

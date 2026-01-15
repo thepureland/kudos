@@ -16,7 +16,7 @@ import java.util.regex.Pattern
  * 系统工具类
  *
  * @author K
- * @author ChatGpt
+ * @author AI: ChatGPT
  * @since 1.0.0
  */
 object SystemKit {
@@ -30,7 +30,7 @@ object SystemKit {
      * 再回退到修改 Collections\$UnmodifiableMap 的方式。
      *
      * @param vars Map(变量名，变量值)
-     * @author ChatGPT
+     * @author AI: ChatGPT
      * @author K
      * @since 1.0.0
      */
@@ -174,7 +174,7 @@ object SystemKit {
      * 获取当前操作系统
      *
      * @return 操作系统枚举
-     * @author ChatGpt
+     * @author AI: ChatGPT
      * @author K
      * @since 1.0.0
      */

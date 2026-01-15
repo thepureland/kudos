@@ -54,7 +54,12 @@ class Sort : Iterable<Order>, Serializable {
         this.orders = orders
     }
 
-    constructor(vararg properties: String, direction: DirectionEnum = DirectionEnum.ASC) : this(direction, listOf<String>(*properties))
+    /**
+     * 默認升序的構造器
+     */
+    constructor(vararg properties: String) : this(DirectionEnum.ASC, listOf<String>(*properties))
+
+    constructor(direction: DirectionEnum, vararg properties: String) : this(direction, listOf<String>(*properties))
 
     constructor(direction: DirectionEnum, properties: List<String>) {
         require(properties.isNotEmpty()) { "至少提供一个排序属性！" }
@@ -126,7 +131,7 @@ class Sort : Iterable<Order>, Serializable {
             return Sort(Order(property, direction))
         }
 
-        fun toSql(orders: Array<Order>, columnMap: Map<String?, String?>?): String {
+        fun toSql(orders: Array<Order>, columnMap: Map<String, String>?): String {
             val orderSb = StringBuilder("ORDER BY ")
             for (order in orders) {
                 val property = order.property

@@ -11,7 +11,7 @@ import kotlin.test.*
 /**
  * test for SerializationKit
  *
- * @author ChatGPT
+ * @author AI: ChatGPT
  * @author K
  * @since 1.0.0
  */

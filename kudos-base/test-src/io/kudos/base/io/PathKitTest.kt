@@ -13,7 +13,7 @@ import kotlin.test.assertTrue
 /**
  * test for PathKit
  *
- * @author ChatGPT
+ * @author AI: ChatGPT
  * @author K
  * @since 1.0.0
  */

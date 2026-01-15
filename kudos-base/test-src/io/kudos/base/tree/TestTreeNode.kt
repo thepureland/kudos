@@ -6,7 +6,7 @@ package io.kudos.base.tree
  * @author K
  * @since 1.0.0
  */
-internal class TestTreeNode : ITreeNode<String> {
+internal open class TestTreeNode : ITreeNode<String> {
     var id: String
         private set
     var parentId: String? = null

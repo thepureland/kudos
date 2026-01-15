@@ -18,7 +18,7 @@ import kotlin.test.assertEquals
 /**
  * aws短信发送测试用例，用WireMock模拟aws短信服务
  *
- * @author ChatGPT
+ * @author AI: ChatGPT
  * @author K
  * @since 1.0.-0
  */
