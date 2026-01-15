@@ -9,7 +9,7 @@ import kotlin.test.*
 /**
  * test for SystemKit
  *
- * @author ChatGPT
+ * @author AI: ChatGPT
  * @author K
  * @since 1.0.0
  */
@@ -124,7 +124,7 @@ internal class SystemKitTest {
 
     @Test
     fun testIsJavaAwtHeadlessMatchesSystemUtils() {
-        val expected = SystemUtils.isJavaAwtHeadless()
+        val expected = System.getProperty("java.awt.headless")?.equals("true", ignoreCase = true) == true
         val actual = SystemKit.isJavaAwtHeadless()
         assertEquals(expected, actual)
     }

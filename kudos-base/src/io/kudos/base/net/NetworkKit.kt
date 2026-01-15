@@ -1,12 +1,7 @@
 package io.kudos.base.net
 
-import io.kudos.base.lang.SystemKit
-import java.io.BufferedReader
-import java.io.InputStreamReader
 import java.net.NetworkInterface
 import java.net.Socket
-import java.util.regex.Matcher
-import java.util.regex.Pattern
 
 /**
  * 网络工具

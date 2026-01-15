@@ -283,7 +283,7 @@ object IpKit {
      * @param ip 原始 IP（可为 IPv4、IPv6 缩写、含内嵌 IPv4、可带 zone-id）
      * @return 形如 "0000:0000:0000:0000:0000:FFFF:C0A8:0001" 的全格式 IPv6
      * @throws IllegalArgumentException ip非法时
-     * @author ChatGPT
+     * @author AI: ChatGPT
      * @author K
      * @since 1.0.0
      */

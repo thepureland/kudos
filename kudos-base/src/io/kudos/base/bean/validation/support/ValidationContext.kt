@@ -45,7 +45,7 @@ object ValidationContext {
      * - 这段实现依赖 HV internal API（org.hibernate.validator.internal.*），版本升级可能改方法名/字段名。
      * - 因此这里写成“多策略尝试 + 兜底”，尽可能在小版本变动下仍可工作。
      *
-     * @author ChatGpt
+     * @author AI: ChatGPT
      * @since 1.0.0
      */
     private fun extractHvInitCtx(factory: jakarta.validation.ValidatorFactory): HibernateConstraintValidatorInitializationContext {

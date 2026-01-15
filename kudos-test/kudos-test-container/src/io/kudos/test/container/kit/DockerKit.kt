@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit
 /**
  * docker操作工具类
  *
- * @author ChatGpt
+ * @author AI: ChatGPT
  * @author K
  * @since 1.0.0
  */

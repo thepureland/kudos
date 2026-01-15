@@ -2,10 +2,7 @@ package io.kudos.base.data.json
 
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.InternalSerializationApi
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.SerializationException
+import kotlinx.serialization.*
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -13,8 +10,6 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.*
 import kotlinx.serialization.modules.SerializersModule
-import kotlinx.serialization.serializer
-import kotlinx.serialization.serializerOrNull
 import java.beans.Introspector
 import java.nio.charset.StandardCharsets
 import java.time.*
@@ -31,7 +26,7 @@ import kotlin.reflect.jvm.isAccessible
  * 2. 反序列化时忽略多余字段，默认不输出 null
  * 3. 如需保留 null，请设置 preserveNull = true
  *
- * @author ChatGPT
+ * @author AI: ChatGPT
  * @author K
  * @since 1.0.0
  */

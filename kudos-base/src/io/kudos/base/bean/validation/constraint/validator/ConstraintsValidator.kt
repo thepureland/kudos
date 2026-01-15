@@ -16,8 +16,6 @@ import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Null
 import jakarta.validation.metadata.ConstraintDescriptor
 import org.hibernate.validator.constraintvalidation.HibernateConstraintValidator
-import org.hibernate.validator.constraintvalidation.HibernateConstraintValidatorInitializationContext
-import org.hibernate.validator.internal.engine.constraintvalidation.ConstraintValidatorContextImpl
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Proxy
 import kotlin.reflect.full.declaredMemberProperties
@@ -192,7 +190,7 @@ class ConstraintsValidator : ConstraintValidator<Constraints, Any?> {
      * - 如果未来某个校验器初始化依赖更多信息（如 composing constraints、validator classes、clock provider 等），
      *   你可能需要扩展这里的实现。
      *
-     * @author ChatGpt
+     * @author AI: ChatGPT
      * @since 1.0.0
      */
     private fun <A : Annotation> proxyConstraintDescriptor(annotation: A): ConstraintDescriptor<A> {

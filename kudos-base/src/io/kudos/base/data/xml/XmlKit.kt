@@ -48,7 +48,8 @@ import kotlin.reflect.KClass
  * - 集合作为根元素时需要使用CollectionWrapper包装
  * - 命名空间处理需要根据实际情况配置
  * - 线程安全：JAXBContext缓存是线程安全的，但Marshaller/Unmarshaller不是
- * 
+ *
+ * @author K
  * @since 1.0.0
  */
 object XmlKit {

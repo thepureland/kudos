@@ -11,7 +11,7 @@ import io.kudos.base.bean.validation.constraint.annotations.NotNullOn
  */
 class NotNullOnConstraintConvertor(annotation: Annotation) : DefaultConstraintConvertor(annotation) {
 
-    override fun getRule(constraintAnnotation: Annotation): LinkedHashMap<String, Any> {
+    public override fun getRule(constraintAnnotation: Annotation): LinkedHashMap<String, Any> {
         val map = super.getRule(constraintAnnotation)
         constraintAnnotation as NotNullOn
         val depends = constraintAnnotation.depends
