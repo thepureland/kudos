@@ -111,7 +111,7 @@ object FileSystemScanner {
         for (resourceName in resourceNames) {
             val fileName = resourceName.substring(resourceName.lastIndexOf(File.separator) + 1)
             if (fileName.startsWith(prefix) && fileName.endsWith(suffix)
-                    && fileName.length > (prefix + suffix).length) {
+                    && fileName.length >= (prefix + suffix).length) {
                 filteredResourceNames.add(resourceName)
             } else {
                 log.debug("Filtering out resource: $resourceName (filename: $fileName)")
