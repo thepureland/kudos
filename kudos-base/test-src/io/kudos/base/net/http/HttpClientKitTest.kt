@@ -21,7 +21,7 @@ import kotlin.test.assertTrue
 /**
  * junit test for HttpClientKit
  *
- * @author ChatGPT
+ * @author AI: ChatGPT
  * @author K
  * @since 1.0.0
  */

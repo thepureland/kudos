@@ -52,7 +52,7 @@ object TreeKit {
      * @param R 回调返回值类型（此方法不返回；仅执行回调）
      * @param rootNode 根结点
      * @param callback 每访问到一个结点就调用一次
-     * @author ChatGPT
+     * @author AI: ChatGPT
      * @author K
      * @since 1.0.0
      */

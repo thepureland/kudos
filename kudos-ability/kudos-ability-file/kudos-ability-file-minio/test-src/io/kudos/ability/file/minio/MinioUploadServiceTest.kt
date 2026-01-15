@@ -41,7 +41,7 @@ import kotlin.test.assertTrue
  * - fileUpload_with_specify_access_key_without_auth：指定错误凭证被拒绝（FILE_ACCESS_DENY）
  * - fileUpload_with_specify_access_key_with_auth   ：指定写入账号上传成功（bucket=docs）
  *
- * @author ChatGPT
+ * @author AI: ChatGPT
  * @author water
  * @author K
  * @since 1.0.0

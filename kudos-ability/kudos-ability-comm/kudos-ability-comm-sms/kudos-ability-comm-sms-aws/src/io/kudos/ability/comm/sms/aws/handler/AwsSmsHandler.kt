@@ -24,7 +24,7 @@ import java.net.URI
  *
  * @author paul
  * @author K
- * @author ChatGPT
+ * @author AI: ChatGPT
  * @since 1.0.0
  */
 class AwsSmsHandler {

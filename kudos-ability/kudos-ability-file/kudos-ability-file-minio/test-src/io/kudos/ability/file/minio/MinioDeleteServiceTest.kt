@@ -50,7 +50,7 @@ import kotlin.test.assertTrue
  * - 为避免 OIDC/STS 初始化时序与 503 问题，本测试仅使用 AccessKey/Secret，不涉及令牌换取流程
  * - “GetBucketLocation” 这类桶级元操作不要设置前缀条件，否则列桶/定位会失败（策略内已单独说明）
  *
- * @author ChatGPT
+ * @author AI: ChatGPT
  * @author water
  * @author K
  * @since 1.0.0

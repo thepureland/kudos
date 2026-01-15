@@ -81,6 +81,9 @@ alwaysApply: true
 14) **@since**
 - 必填，取當前最新的版本，如：`@since 1.0.0`
 
+15) **@author**
+- 必填
+
 ---
 
 ## 3. Cursor 生成/重寫註釋的具體規則（for cursor用來改舊代碼）
@@ -150,7 +153,7 @@ alwaysApply: true
  * // ...
  * ```
  *
- * @since yyyy-MM-dd
+ * @since 1.0.0
  */
 
 ---
@@ -186,7 +189,7 @@ alwaysApply: true
 - [ ] 有 Contracts（至少輸入/錯誤）
 - [ ] 若涉及事務/重試/冪等/並發，對應段落不為空
 - [ ] 有 Usage Example
-- [ ] 有 @since
+- [ ] 有 @author 和 @since
 
 ---
 
@@ -201,6 +204,6 @@ alwaysApply: true
 - 禁止臆測外部系統名稱、MQ topic、表名、快取 key、SLA 等；不確定就用可觀察描述
 - 需要時補充：事務/一致性、冪等/重試、並發/重入、性能風險（N+1/批量/分頁）、安全（敏感字段/脫敏/審計）
 - 必須包含至少一段 `Usage Example`（Kotlin code block）
-- 必須包含 @since
+- 必須包含 @author 和 @since
 - 保留原有仍正確的註釋意圖，但重排到對應段落
 輸出：只輸出最終 KDoc 註釋 +（如有需要）最小幅度調整的類級別註解說明文字；不要輸出其它解釋。

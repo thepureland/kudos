@@ -4,7 +4,6 @@ import io.kudos.base.bean.validation.constraint.annotations.*
 import io.kudos.base.bean.validation.constraint.validator.*
 import jakarta.validation.ConstraintValidator
 import jakarta.validation.constraints.*
-import jakarta.validation.constraints.Digits
 import org.hibernate.validator.constraints.*
 import org.hibernate.validator.internal.constraintvalidators.bv.*
 import org.hibernate.validator.internal.constraintvalidators.bv.notempty.*

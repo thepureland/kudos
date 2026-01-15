@@ -17,7 +17,7 @@ import kotlin.test.assertFalse
  * JsonKit测试用例
  *
  * @author K
- * @author ChatGPT
+ * @author AI: ChatGPT
  * @since 1.0.0
  */
 internal class JsonKitTest {
@@ -186,7 +186,7 @@ internal class JsonKitTest {
         // List<Person>
         val listBytes = JsonKit.writeValueAsBytes(listOf(person, p2), preserveNull = true)
         val listType = typeOf<List<Person>>()
-        val listDecoded = JsonKit.readValue(listBytes, listType) as List<Person>
+        val listDecoded = JsonKit.readValue(listBytes, listType) as List<*>
         assertEquals(listOf(person, p2), listDecoded)
 
         // Map<String, Person>

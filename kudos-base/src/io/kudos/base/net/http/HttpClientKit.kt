@@ -2,7 +2,6 @@ package io.kudos.base.net.http
 
 import io.kudos.base.data.json.JsonKit
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.async
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.runBlocking
@@ -23,7 +22,7 @@ import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.nio.file.StandardOpenOption
 import java.time.Duration
-import java.util.Optional
+import java.util.*
 import javax.net.ssl.SSLSession
 import kotlin.reflect.typeOf
 
@@ -41,7 +40,7 @@ import kotlin.reflect.typeOf
  * - `ByteBuffer` 的分支当前使用 `ofByteArrayConsumer {}`，此种写法会消费字节但**不返回** ByteBuffer 实例（更像丢弃/侧写语义），见方法内注释。
  *
  * @author K
- * @author ChatGPT
+ * @author AI: ChatGPT
  * @since 1.0.0
  */
 object HttpClientKit {
