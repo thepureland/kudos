@@ -79,6 +79,27 @@ values ('14a9adc4-6bb5-45bd-96bb-d8afe3060bea', 'SYS_CACHE_BY_NAME', 'ams-sys', 
        ('7da93321-236f-12d4-13e0-359ad3c7ea86', 'SYS_MODULE_BY_CODE', 'ams-sys', 'LOCAL_REMOTE', true, true, 999999999,
         '模块缓存(by code)', true, true),
        ('8da92321-206f-12d4-23e0-359ad3c7ea87', 'SYS_ACCESS_RULE_IPS_BY_SUB_SYS_AND_TENANT_ID', 'ams-sys', 'LOCAL_REMOTE', true, true, 999999999,
-        'ip访问规则缓存(by subSystemCode & tenantId)', true, true);
+        'ip访问规则缓存(by subSystemCode & tenantId)', true, true),
+       -- Auth module caches
+       ('a1a1a1a1-1111-1111-1111-111111111101', 'AUTH_DEPT_BY_ID', 'ams-auth', 'LOCAL_REMOTE', true, true, 999999999,
+        '部门缓存(by id)', true, true),
+       ('a1a1a1a1-1111-1111-1111-111111111102', 'AUTH_USER_BY_ID', 'ams-auth', 'LOCAL_REMOTE', true, true, 999999999,
+        '用户缓存(by id)', true, true),
+       ('a1a1a1a1-1111-1111-1111-111111111103', 'AUTH_ROLE_BY_ID', 'ams-auth', 'LOCAL_REMOTE', true, true, 999999999,
+        '角色缓存(by id)', true, true),
+       ('a1a1a1a1-1111-1111-1111-111111111104', 'AUTH_USER_ID_BY_TENANT_ID_AND_USERNAME', 'ams-auth', 'LOCAL_REMOTE', true, true, 999999999,
+        '用户ID缓存(by tenantId & username)', true, true),
+       ('a1a1a1a1-1111-1111-1111-111111111105', 'AUTH_ROLE_ID_BY_TENANT_ID_AND_ROLE_CODE', 'ams-auth', 'LOCAL_REMOTE', true, true, 999999999,
+        '角色ID缓存(by tenantId & roleCode)', true, true),
+       ('a1a1a1a1-1111-1111-1111-111111111106', 'AUTH_DEPT_IDS_BY_TENANT_ID', 'ams-auth', 'LOCAL_REMOTE', true, true, 999999999,
+        '部门ID列表缓存(by tenantId)', true, true),
+       ('a1a1a1a1-1111-1111-1111-111111111107', 'AUTH_USER_IDS_BY_DEPT_ID', 'ams-auth', 'LOCAL_REMOTE', true, true, 999999999,
+        '用户ID列表缓存(by deptId)', true, true),
+       ('a1a1a1a1-1111-1111-1111-111111111108', 'AUTH_USER_IDS_BY_TENANT_ID_AND_ROLE_CODE', 'ams-auth', 'LOCAL_REMOTE', true, true, 999999999,
+        '用户ID列表缓存(by tenantId & roleCode)', true, true),
+       ('a1a1a1a1-1111-1111-1111-111111111109', 'AUTH_RESOURCE_IDS_BY_ROLE_CODE', 'ams-auth', 'LOCAL_REMOTE', true, true, 999999999,
+        '资源ID列表缓存(by tenantId & roleCode)', true, true),
+       ('a1a1a1a1-1111-1111-1111-111111111110', 'AUTH_RESOURCE_IDS_BY_TENANT_ID_AND_USERNAME', 'ams-auth', 'LOCAL_REMOTE', true, true, 999999999,
+        '资源ID列表缓存(by tenantId & username)', true, true);
 
 --endregion DML
