@@ -84,6 +84,12 @@
             <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-web/kudos-ability-web-ktor" />
             <option value="$PROJECT_DIR$/kudos-ability/kudos-ability-web/kudos-ability-web-springmvc" />
             <option value="$PROJECT_DIR$/kudos-ams" />
+            <option value="$PROJECT_DIR$/kudos-ams/kudos-ams-auth" />
+            <option value="$PROJECT_DIR$/kudos-ams/kudos-ams-auth/kudos-ams-auth-api-provider" />
+            <option value="$PROJECT_DIR$/kudos-ams/kudos-ams-auth/kudos-ams-auth-api-web" />
+            <option value="$PROJECT_DIR$/kudos-ams/kudos-ams-auth/kudos-ams-auth-common" />
+            <option value="$PROJECT_DIR$/kudos-ams/kudos-ams-auth/kudos-ams-auth-consumer" />
+            <option value="$PROJECT_DIR$/kudos-ams/kudos-ams-auth/kudos-ams-auth-provider" />
             <option value="$PROJECT_DIR$/kudos-ams/kudos-ams-sys" />
             <option value="$PROJECT_DIR$/kudos-ams/kudos-ams-sys/kudos-ams-sys-api-provider" />
             <option value="$PROJECT_DIR$/kudos-ams/kudos-ams-sys/kudos-ams-sys-api-web" />

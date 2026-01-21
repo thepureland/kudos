@@ -101,6 +101,12 @@ include("kudos-ams:kudos-ams-sys:kudos-ams-sys-common")
 include("kudos-ams:kudos-ams-sys:kudos-ams-sys-consumer")
 include("kudos-ams:kudos-ams-sys:kudos-ams-sys-api-web")
 include("kudos-ams:kudos-ams-sys:kudos-ams-sys-api-provider")
+//// ams-auth
+include("kudos-ams:kudos-ams-auth:kudos-ams-auth-provider")
+include("kudos-ams:kudos-ams-auth:kudos-ams-auth-common")
+include("kudos-ams:kudos-ams-auth:kudos-ams-auth-consumer")
+include("kudos-ams:kudos-ams-auth:kudos-ams-auth-api-web")
+include("kudos-ams:kudos-ams-auth:kudos-ams-auth-api-provider")
 
 // dependencies
 include("kudos-dependencies")
