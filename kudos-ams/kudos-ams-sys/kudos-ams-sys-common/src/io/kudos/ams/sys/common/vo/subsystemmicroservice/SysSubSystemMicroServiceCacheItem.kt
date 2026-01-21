@@ -24,14 +24,20 @@ data class SysSubSystemMicroServiceCacheItem (
     /** 微服务编码 */
     var microServiceCode: String? = null,
 
-    /** 创建用户 */
-    var createUser: String? = null,
+    /** 创建者id */
+    var createUserId: String? = null,
+
+    /** 创建者名称 */
+    var createUserName: String? = null,
 
     /** 创建时间 */
     var createTime: LocalDateTime? = null,
 
-    /** 更新用户 */
-    var updateUser: String? = null,
+    /** 更新者id */
+    var updateUserId: String? = null,
+
+    /** 更新者名称 */
+    var updateUserName: String? = null,
 
     /** 更新时间 */
     var updateTime: LocalDateTime? = null,

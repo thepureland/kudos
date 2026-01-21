@@ -28,14 +28,20 @@ interface SysDictItemI18n : IDbEntity<String, SysDictItemI18n> {
     /** 是否启用 */
     var active: Boolean
 
-    /** 创建用户 */
-    var createUser: String?
+    /** 创建者id */
+    var createUserId: String?
+
+    /** 创建者名称 */
+    var createUserName: String?
 
     /** 创建时间 */
     var createTime: LocalDateTime?
 
-    /** 更新用户 */
-    var updateUser: String?
+    /** 更新者id */
+    var updateUserId: String?
+
+    /** 更新者名称 */
+    var updateUserName: String?
 
     /** 更新时间 */
     var updateTime: LocalDateTime?

@@ -6,9 +6,11 @@ create table if not exists "sys_dict_item_i18n"
     "i18n_value"  character varying(1000)         not null,
     "item_id"     char(36)                        not null,
     "active"      boolean   default TRUE          not null,
-    "create_user" character varying(36),
+    "create_user_id" character varying(36),
+    "create_user_name" character varying(32),
     "create_time" timestamp default now(),
-    "update_user" character varying(36),
+    "update_user_id" character varying(36),
+    "update_user_name" character varying(32),
     "update_time" timestamp,
     constraint "fk_sys_dict_item_i18n"
         foreign key ("item_id") references "sys_dict_item" ("id")
@@ -22,8 +24,10 @@ comment on column "sys_dict_item_i18n"."locale" is '语言_地区';
 comment on column "sys_dict_item_i18n"."i18n_value" is '国际化值';
 comment on column "sys_dict_item_i18n"."item_id" is '字典项id';
 comment on column "sys_dict_item_i18n"."active" is '是否启用';
-comment on column "sys_dict_item_i18n"."create_user" is '创建用户';
+comment on column "sys_dict_item_i18n"."create_user_id" is '创建者id';
+comment on column "sys_dict_item_i18n"."create_user_name" is '创建者名称';
 comment on column "sys_dict_item_i18n"."create_time" is '创建时间';
-comment on column "sys_dict_item_i18n"."update_user" is '更新用户';
+comment on column "sys_dict_item_i18n"."update_user_id" is '更新者id';
+comment on column "sys_dict_item_i18n"."update_user_name" is '更新者名称';
 comment on column "sys_dict_item_i18n"."update_time" is '更新时间';
 --endregion DDL

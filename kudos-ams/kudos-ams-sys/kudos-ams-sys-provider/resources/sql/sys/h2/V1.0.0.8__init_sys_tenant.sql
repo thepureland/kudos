@@ -8,9 +8,11 @@ create table if not exists "sys_tenant"
     "remark"                character varying(256),
     "active"                boolean   default TRUE          not null,
     "built_in"              boolean   default FALSE         not null,
-    "create_user"           character varying(36),
+    "create_user_id"        character varying(36),
+    "create_user_name"      character varying(32),
     "create_time"           timestamp default now(),
-    "update_user"           character varying(36),
+    "update_user_id"        character varying(36),
+    "update_user_name"      character varying(32),
     "update_time"           timestamp
 );
 
@@ -23,9 +25,11 @@ comment on column "sys_tenant"."default_language_code" is '默认语言编码';
 comment on column "sys_tenant"."remark" is '备注';
 comment on column "sys_tenant"."active" is '是否启用';
 comment on column "sys_tenant"."built_in" is '是否内置';
-comment on column "sys_tenant"."create_user" is '创建用户';
+comment on column "sys_tenant"."create_user_id" is '创建者id';
+comment on column "sys_tenant"."create_user_name" is '创建者名称';
 comment on column "sys_tenant"."create_time" is '创建时间';
-comment on column "sys_tenant"."update_user" is '更新用户';
+comment on column "sys_tenant"."update_user_id" is '更新者id';
+comment on column "sys_tenant"."update_user_name" is '更新者名称';
 comment on column "sys_tenant"."update_time" is '更新时间';
 --endregion DDL
 
