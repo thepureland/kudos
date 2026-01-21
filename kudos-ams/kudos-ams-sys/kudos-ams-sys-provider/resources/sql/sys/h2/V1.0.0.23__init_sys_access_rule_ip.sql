@@ -10,9 +10,11 @@ create table if not exists "sys_access_rule_ip"
     "remark"            character varying(128),
     "active"            boolean       default TRUE          not null,
     "built_in"          boolean       default FALSE         not null,
-    "create_user"       character varying(36),
+    "create_user_id"    character varying(36),
+    "create_user_name"  character varying(32),
     "create_time"       timestamp(6),
-    "update_user"       character varying(36),
+    "update_user_id"    character varying(36),
+    "update_user_name"  character varying(32),
     "update_time"       timestamp(6),
     constraint "fk_sys_access_rule_ip"
         foreign key ("parent_rule_id") references "sys_access_rule" ("id")
@@ -29,8 +31,10 @@ comment on column "sys_access_rule_ip"."parent_rule_id" is '父规则id';
 comment on column "sys_access_rule_ip"."remark" is '备注';
 comment on column "sys_access_rule_ip"."active" is '是否启用';
 comment on column "sys_access_rule_ip"."built_in" is '是否内置';
-comment on column "sys_access_rule_ip"."create_user" is '创建用户';
+comment on column "sys_access_rule_ip"."create_user_id" is '创建者id';
+comment on column "sys_access_rule_ip"."create_user_name" is '创建者名称';
 comment on column "sys_access_rule_ip"."create_time" is '创建时间';
-comment on column "sys_access_rule_ip"."update_user" is '更新用户';
+comment on column "sys_access_rule_ip"."update_user_id" is '更新者id';
+comment on column "sys_access_rule_ip"."update_user_name" is '更新者名称';
 comment on column "sys_access_rule_ip"."update_time" is '更新时间';
 --endregion DDL

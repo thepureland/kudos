@@ -10,9 +10,11 @@ create table if not exists "sys_dict_item"
     "remark"      character varying(300),
     "active"      boolean       DEFAULT TRUE          NOT NULL,
     "built_in"    boolean       DEFAULT FALSE         NOT NULL,
-    "create_user" character varying(36),
+    "create_user_id" character varying(36),
+    "create_user_name" character varying(32),
     "create_time" timestamp     default now(),
-    "update_user" character varying(36),
+    "update_user_id" character varying(36),
+    "update_user_name" character varying(32),
     "update_time" timestamp,
     constraint "fk_sys_dict_item"
         foreign key ("dict_id") references "sys_dict" ("id")
@@ -30,9 +32,11 @@ comment on column "sys_dict_item"."parent_id" is '父id';
 comment on column "sys_dict_item"."remark" is '备注';
 comment on column "sys_dict_item"."active" is '是否启用';
 comment on column "sys_dict_item"."built_in" is '是否内置';
-comment on column "sys_dict_item"."create_user" is '创建用户';
+comment on column "sys_dict_item"."create_user_id" is '创建者id';
+comment on column "sys_dict_item"."create_user_name" is '创建者名称';
 comment on column "sys_dict_item"."create_time" is '创建时间';
-comment on column "sys_dict_item"."update_user" is '更新用户';
+comment on column "sys_dict_item"."update_user_id" is '更新者id';
+comment on column "sys_dict_item"."update_user_name" is '更新者名称';
 comment on column "sys_dict_item"."update_time" is '更新时间';
 --endregion DDL
 

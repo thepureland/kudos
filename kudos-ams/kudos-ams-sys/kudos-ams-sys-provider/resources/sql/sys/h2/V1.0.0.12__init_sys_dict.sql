@@ -8,9 +8,11 @@ create table if not exists "sys_dict"
     "remark"      character varying(300),
     "active"      boolean       default TRUE          not null,
     "built_in"    boolean       default FALSE         not null,
-    "create_user" character varying(36),
+    "create_user_id" character varying(36),
+    "create_user_name" character varying(32),
     "create_time" timestamp     default now(),
-    "update_user" character varying(36),
+    "update_user_id" character varying(36),
+    "update_user_name" character varying(32),
     "update_time" timestamp
 );
 
@@ -24,9 +26,11 @@ comment on column "sys_dict"."module_code" is '模块编码';
 comment on column "sys_dict"."remark" is '备注';
 comment on column "sys_dict"."active" is '是否启用';
 comment on column "sys_dict"."built_in" is '是否内置';
-comment on column "sys_dict"."create_user" is '创建用户';
+comment on column "sys_dict"."create_user_id" is '创建者id';
+comment on column "sys_dict"."create_user_name" is '创建者名称';
 comment on column "sys_dict"."create_time" is '创建时间';
-comment on column "sys_dict"."update_user" is '更新用户';
+comment on column "sys_dict"."update_user_id" is '更新者id';
+comment on column "sys_dict"."update_user_name" is '更新者名称';
 comment on column "sys_dict"."update_time" is '更新时间';
 --endregion DDL
 

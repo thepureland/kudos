@@ -24,14 +24,20 @@ object SysTenantSubSystems : StringIdTable<SysTenantSubSystem>("sys_tenant_sub_s
     /** 门户编码 */
     var portalCode = varchar("portal_code").bindTo { it.portalCode }
 
-    /** 创建用户 */
-    var createUser = varchar("create_user").bindTo { it.createUser }
+    /** 创建者id */
+    var createUserId = varchar("create_user_id").bindTo { it.createUserId }
+
+    /** 创建者名称 */
+    var createUserName = varchar("create_user_name").bindTo { it.createUserName }
 
     /** 创建时间 */
     var createTime = datetime("create_time").bindTo { it.createTime }
 
-    /** 更新用户 */
-    var updateUser = varchar("update_user").bindTo { it.updateUser }
+    /** 更新者id */
+    var updateUserId = varchar("update_user_id").bindTo { it.updateUserId }
+
+    /** 更新者名称 */
+    var updateUserName = varchar("update_user_name").bindTo { it.updateUserName }
 
     /** 更新时间 */
     var updateTime = datetime("update_time").bindTo { it.updateTime }
