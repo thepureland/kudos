@@ -7,6 +7,7 @@ import org.springframework.boot.SpringApplication
  * auth-api-provider启动入口
  *
  * @author K
+ * @author AI: Cursor
  * @since 1.0.0
  */
 @EnableKudos

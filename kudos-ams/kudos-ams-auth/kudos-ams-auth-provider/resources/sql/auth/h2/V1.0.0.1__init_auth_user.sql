@@ -3,6 +3,7 @@ create table if not exists "auth_user"
 (
     "id"          character(36) default RANDOM_UUID() not null primary key,
     "username"        character varying(32)  not null,
+    "display_name"     character varying(64),
     "tenant_id"        character varying(32)  not null,
     "login_password"        character varying(128) not null,
     "security_password" character varying(128),
@@ -19,7 +20,7 @@ create table if not exists "auth_user"
     "session_key" varchar(40),
     "authentication_key" varchar(64),
     "dept_id" character varying(128),
-    "supervisor_id" character varying(32)  not null,
+    "supervisor_id" character varying(36)  not null,
     "remark"      character varying(256),
     "active"      boolean default TRUE   not null,
     "built_in"    boolean default FALSE,
@@ -35,6 +36,7 @@ create table if not exists "auth_user"
 comment on table "auth_user" is '用户基本信息';
 comment on column "auth_user"."id" is '主键';
 comment on column "auth_user"."username" is '用户名';
+comment on column "auth_user"."display_name" is '展示名称';
 comment on column "auth_user"."tenant_id" is '租户ID';
 comment on column "auth_user"."login_password" is '登录密码';
 comment on column "auth_user"."security_password" is '安全密码 - 二次验证密码，可选，用于敏感操作验证';

@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Configuration
  * auth-api-web自动配置类
  *
  * @author K
+ * @author AI: Cursor
  * @since 1.0.0
  */
 @Configuration
