@@ -51,10 +51,17 @@ class JarFileClassPathLocationScanner : IClassPathLocationScanner {
             // Should usually be the case for traditional JAR files.
             val jarCon = con
             jarCon.useCaches = false
-            return jarCon.jarFile
+            try {
+                // Try to connect first - this will fail if the entry doesn't exist
+                jarCon.connect()
+                return jarCon.jarFile
+            } catch (e: IOException) {
+                // If the JAR entry doesn't exist (e.g., directory entry), fall back to manual parsing
+                // This can happen when the URL points to a directory entry that doesn't exist in the JAR
+            }
         }
 
-        // No JarURLConnection -> need to resort to URL file parsing.
+        // No JarURLConnection or connection failed -> need to resort to URL file parsing.
         // We'll assume URLs of the format "jar:path!/entry", with the protocol
         // being arbitrary as long as following the entry format.
         // We'll also handle paths with and without leading "file:" prefix.
