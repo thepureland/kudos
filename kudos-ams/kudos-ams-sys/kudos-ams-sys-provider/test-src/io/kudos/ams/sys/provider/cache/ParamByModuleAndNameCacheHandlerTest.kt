@@ -5,7 +5,7 @@ import io.kudos.ams.sys.common.vo.param.SysParamCacheItem
 import io.kudos.ams.sys.provider.dao.SysParamDao
 import io.kudos.ams.sys.provider.model.po.SysParam
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
-import org.springframework.beans.factory.annotation.Autowired
+import jakarta.annotation.Resource
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -20,10 +20,10 @@ import kotlin.test.assertNull
 @EnabledIfDockerInstalled
 class ParamByModuleAndNameCacheHandlerTest : CacheHandlerTestBase() {
     
-    @Autowired
+    @Resource
     private lateinit var cacheHandler: ParamByModuleAndNameCacheHandler
     
-    @Autowired
+    @Resource
     private lateinit var dao: SysParamDao
 
     private val newValue = "new-value"

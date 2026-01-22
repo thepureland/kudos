@@ -6,7 +6,7 @@ import io.kudos.ams.sys.common.vo.cache.SysCacheCacheItem
 import io.kudos.ams.sys.provider.dao.SysCacheDao
 import io.kudos.ams.sys.provider.model.po.SysCache
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
-import org.springframework.beans.factory.annotation.Autowired
+import jakarta.annotation.Resource
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -21,10 +21,10 @@ import kotlin.test.assertNull
 @EnabledIfDockerInstalled
 class CacheByNameCacheHandlerTest : CacheHandlerTestBase() {
 
-    @Autowired
+    @Resource
     private lateinit var cacheByNameCacheHandler: CacheByNameCacheHandler
 
-    @Autowired
+    @Resource
     private lateinit var sysCacheDao: SysCacheDao
 
     private val newCacheName = "a_new_test_cache"

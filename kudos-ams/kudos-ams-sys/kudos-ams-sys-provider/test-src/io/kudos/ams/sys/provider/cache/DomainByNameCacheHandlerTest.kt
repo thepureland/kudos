@@ -5,7 +5,7 @@ import io.kudos.ams.sys.common.vo.domain.SysDomainCacheItem
 import io.kudos.ams.sys.provider.dao.SysDomainDao
 import io.kudos.ams.sys.provider.model.po.SysDomain
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
-import org.springframework.beans.factory.annotation.Autowired
+import jakarta.annotation.Resource
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -20,10 +20,10 @@ import kotlin.test.assertNull
 @EnabledIfDockerInstalled
 class DomainByNameCacheHandlerTest : CacheHandlerTestBase() {
     
-    @Autowired
+    @Resource
     private lateinit var cacheHandler: DomainByNameCacheHandler
     
-    @Autowired
+    @Resource
     private lateinit var dao: SysDomainDao
 
     private val newName = "newName.com"

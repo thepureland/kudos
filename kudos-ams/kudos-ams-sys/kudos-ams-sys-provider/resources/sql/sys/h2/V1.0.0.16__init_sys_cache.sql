@@ -100,6 +100,8 @@ values ('14a9adc4-6bb5-45bd-96bb-d8afe3060bea', 'SYS_CACHE_BY_NAME', 'ams-sys', 
        ('a1a1a1a1-1111-1111-1111-111111111109', 'AUTH_RESOURCE_IDS_BY_ROLE_CODE', 'ams-auth', 'LOCAL_REMOTE', true, true, 999999999,
         '资源ID列表缓存(by tenantId & roleCode)', true, true),
        ('a1a1a1a1-1111-1111-1111-111111111110', 'AUTH_RESOURCE_IDS_BY_TENANT_ID_AND_USERNAME', 'ams-auth', 'LOCAL_REMOTE', true, true, 999999999,
-        '资源ID列表缓存(by tenantId & username)', true, true);
+        '资源ID列表缓存(by tenantId & username)', true, true),
+       ('a1a1a1a1-1111-1111-1111-111111111111', 'AUTH_RESOURCE_IDS_BY_USER_ID', 'ams-auth', 'LOCAL_REMOTE', true, true, 999999999,
+        '资源ID列表缓存(by userId)', true, true);
 
 --endregion DML
