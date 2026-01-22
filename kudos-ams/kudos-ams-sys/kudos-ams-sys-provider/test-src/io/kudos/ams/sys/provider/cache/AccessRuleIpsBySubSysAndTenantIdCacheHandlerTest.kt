@@ -6,6 +6,7 @@ import io.kudos.ams.sys.provider.dao.SysAccessRuleDao
 import io.kudos.ams.sys.provider.dao.SysAccessRuleIpDao
 import io.kudos.ams.sys.provider.model.po.SysAccessRuleIp
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
+import io.kudos.test.container.cache.CacheHandlerTestBase
 import jakarta.annotation.Resource
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit

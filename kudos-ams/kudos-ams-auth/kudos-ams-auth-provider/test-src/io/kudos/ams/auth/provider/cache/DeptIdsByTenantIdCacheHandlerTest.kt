@@ -1,6 +1,7 @@
 package io.kudos.ams.auth.provider.cache
 
 import io.kudos.ability.cache.common.enums.CacheStrategy
+import io.kudos.test.container.cache.CacheHandlerTestBase
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import jakarta.annotation.Resource
 import kotlin.test.Test
