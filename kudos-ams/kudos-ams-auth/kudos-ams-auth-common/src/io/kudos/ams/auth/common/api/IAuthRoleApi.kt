@@ -1,6 +1,8 @@
 package io.kudos.ams.auth.common.api
 
 import io.kudos.ams.auth.common.vo.role.AuthRoleCacheItem
+import io.kudos.ams.auth.common.vo.user.AuthUserCacheItem
+import io.kudos.ams.sys.common.vo.resource.SysResourceCacheItem
 
 
 /**
@@ -47,6 +49,59 @@ interface IAuthRoleApi {
      * @since 1.0.0
      */
     fun getRoleId(tenantId: String, code: String): String?
+
+    /**
+     * 根据角色ID获取拥有该角色的所有用户列表
+     *
+     * @param roleId 角色ID
+     * @return List<AuthUserCacheItem> 用户列表，如果角色不存在或没有用户则返回空列表
+     * @author K
+     * @since 1.0.0
+     */
+    fun getRoleUsers(roleId: String): List<AuthUserCacheItem>
+
+    /**
+     * 根据租户ID和角色编码获取拥有该角色的所有用户ID列表
+     *
+     * @param tenantId 租户ID
+     * @param roleCode 角色编码
+     * @return List<String> 用户ID列表，如果角色不存在或没有用户则返回空列表
+     * @author K
+     * @since 1.0.0
+     */
+    fun getUserIdsByRoleCode(tenantId: String, roleCode: String): List<String>
+
+    /**
+     * 根据角色ID获取该角色拥有的所有资源列表
+     *
+     * @param roleId 角色ID
+     * @return List<SysResourceCacheItem> 资源列表，如果角色不存在或没有资源则返回空列表
+     * @author K
+     * @since 1.0.0
+     */
+    fun getRoleResources(roleId: String): List<SysResourceCacheItem>
+
+    /**
+     * 检查角色是否拥有指定资源
+     *
+     * @param roleId 角色ID
+     * @param resourceId 资源ID
+     * @return true表示角色拥有该资源，false表示不拥有
+     * @author K
+     * @since 1.0.0
+     */
+    fun hasResource(roleId: String, resourceId: String): Boolean
+
+    /**
+     * 根据租户ID获取该租户下所有激活角色的ID列表
+     * 只返回active=true的角色ID
+     *
+     * @param tenantId 租户ID
+     * @return List<String> 角色ID列表
+     * @author K
+     * @since 1.0.0
+     */
+    fun getRoleIds(tenantId: String): List<String>
 
     //endregion your codes 2
 

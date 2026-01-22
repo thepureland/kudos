@@ -71,7 +71,7 @@ open class ResourceIdsByRoleCodeCacheHandler : AbstractCacheHandler<List<String>
         val allRoleResources = authRoleResourceDao.allSearch()
         val roleIdToResourceIdsMap = allRoleResources
             .groupBy { it.roleId }
-            .mapValues { entry -> entry.value.map { it.resourceId } }
+            .mapValues { entry -> entry.value.map { it.resourceId.trim() } }
 
         log.debug("从数据库加载了${roles.size}条角色和${allRoleResources.size}条角色-资源关系。")
 
@@ -119,7 +119,7 @@ open class ResourceIdsByRoleCodeCacheHandler : AbstractCacheHandler<List<String>
         
         log.debug("从数据库加载了租户${tenantId}角色${roleCode}的${resourceIds.size}条资源ID。")
         @Suppress("UNCHECKED_CAST")
-        return resourceIds as List<String>
+        return (resourceIds as List<String>).map { it.trim() }
     }
 
     /**

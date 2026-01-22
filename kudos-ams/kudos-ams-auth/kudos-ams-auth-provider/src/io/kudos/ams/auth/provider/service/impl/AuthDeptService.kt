@@ -1,7 +1,10 @@
 package io.kudos.ams.auth.provider.service.impl
 
+import io.kudos.ams.auth.common.vo.dept.AuthDeptCacheItem
 import io.kudos.ams.auth.common.vo.user.AuthUserCacheItem
+import io.kudos.ams.auth.provider.cache.DeptByIdCacheHandler
 import io.kudos.ams.auth.provider.cache.UserByIdCacheHandler
+import io.kudos.ams.auth.provider.cache.UserIdsByDeptIdCacheHandler
 import io.kudos.ams.auth.provider.dao.AuthDeptDao
 import io.kudos.ams.auth.provider.dao.AuthDeptUserDao
 import io.kudos.ams.auth.provider.model.po.AuthDept
@@ -34,6 +37,12 @@ open class AuthDeptService : BaseCrudService<String, AuthDept, AuthDeptDao>(), I
     @Autowired
     private lateinit var userByIdCacheHandler: UserByIdCacheHandler
 
+    @Autowired
+    private lateinit var userIdsByDeptIdCacheHandler: UserIdsByDeptIdCacheHandler
+
+    @Autowired
+    private lateinit var deptByIdCacheHandler: DeptByIdCacheHandler
+
     override fun getDeptAdmins(deptId: String): List<AuthUserCacheItem> {
         // 查询部门管理员用户ID列表
         val criteria = Criteria(AuthDeptUser::deptId.name, OperatorEnum.EQ, deptId)
@@ -51,6 +60,47 @@ open class AuthDeptService : BaseCrudService<String, AuthDept, AuthDeptDao>(), I
         
         // 返回用户列表（按原始ID顺序）
         return adminUserIds.mapNotNull { usersMap[it] }
+    }
+
+    override fun getDeptUserIds(deptId: String): List<String> {
+        return userIdsByDeptIdCacheHandler.getUserIds(deptId)
+    }
+
+    override fun getChildDeptIds(deptId: String): List<String> {
+        val criteria = Criteria(AuthDept::parentId.name, OperatorEnum.EQ, deptId)
+            .addAnd(AuthDept::active.name, OperatorEnum.EQ, true)
+        @Suppress("UNCHECKED_CAST")
+        val childDepts = search(criteria) as List<AuthDept>
+        return childDepts.mapNotNull { it.id }
+    }
+
+    override fun getDeptUsers(deptId: String): List<AuthUserCacheItem> {
+        val userIds = getDeptUserIds(deptId)
+        if (userIds.isEmpty()) {
+            return emptyList()
+        }
+        val usersMap = userByIdCacheHandler.getUsersByIds(userIds)
+        return userIds.mapNotNull { usersMap[it] }
+    }
+
+    override fun isUserInDept(userId: String, deptId: String): Boolean {
+        val userIds = getDeptUserIds(deptId)
+        return userIds.contains(userId)
+    }
+
+    override fun getChildDepts(deptId: String): List<AuthDeptCacheItem> {
+        val childDeptIds = getChildDeptIds(deptId)
+        if (childDeptIds.isEmpty()) {
+            return emptyList()
+        }
+        val deptsMap = deptByIdCacheHandler.getDeptsByIds(childDeptIds)
+        return childDeptIds.mapNotNull { deptsMap[it] }
+    }
+
+    override fun getParentDept(deptId: String): AuthDeptCacheItem? {
+        val dept = deptByIdCacheHandler.getDeptById(deptId) ?: return null
+        val parentId = dept.parentId ?: return null
+        return deptByIdCacheHandler.getDeptById(parentId)
     }
 
     //endregion your codes 2
