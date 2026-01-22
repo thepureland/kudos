@@ -49,6 +49,22 @@ open class AuthDeptApi : IAuthDeptApi {
         return authDeptService.getDeptAdmins(deptId)
     }
 
+    override fun getDeptUsers(deptId: String): List<AuthUserCacheItem> {
+        return authDeptService.getDeptUsers(deptId)
+    }
+
+    override fun isUserInDept(userId: String, deptId: String): Boolean {
+        return authDeptService.isUserInDept(userId, deptId)
+    }
+
+    override fun getChildDepts(deptId: String): List<AuthDeptCacheItem> {
+        return authDeptService.getChildDepts(deptId)
+    }
+
+    override fun getParentDept(deptId: String): AuthDeptCacheItem? {
+        return authDeptService.getParentDept(deptId)
+    }
+
     //endregion your codes 2
 
 }

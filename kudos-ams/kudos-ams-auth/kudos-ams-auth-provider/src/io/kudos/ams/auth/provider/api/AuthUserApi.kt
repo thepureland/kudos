@@ -1,6 +1,8 @@
 package io.kudos.ams.auth.provider.api
 
 import io.kudos.ams.auth.common.api.IAuthUserApi
+import io.kudos.ams.auth.common.vo.role.AuthRoleCacheItem
+import io.kudos.ams.auth.common.vo.dept.AuthDeptCacheItem
 import io.kudos.ams.auth.common.vo.user.AuthUserCacheItem
 import io.kudos.ams.auth.provider.cache.UserByIdCacheHandler
 import io.kudos.ams.auth.provider.cache.UserIdByTenantIdAndUsernameCacheHandler
@@ -47,6 +49,34 @@ open class AuthUserApi : IAuthUserApi {
 
     override fun getResources(userId: String): List<SysResourceCacheItem> {
         return authUserService.getResources(userId)
+    }
+
+    override fun getUserRoles(userId: String): List<AuthRoleCacheItem> {
+        return authUserService.getUserRoles(userId)
+    }
+
+    override fun getUserDepts(userId: String): List<AuthDeptCacheItem> {
+        return authUserService.getUserDepts(userId)
+    }
+
+    override fun hasRole(userId: String, roleId: String): Boolean {
+        return authUserService.hasRole(userId, roleId)
+    }
+
+    override fun hasRoleByCode(userId: String, tenantId: String, roleCode: String): Boolean {
+        return authUserService.hasRoleByCode(userId, tenantId, roleCode)
+    }
+
+    override fun isUserInDept(userId: String, deptId: String): Boolean {
+        return authUserService.isUserInDept(userId, deptId)
+    }
+
+    override fun hasResource(userId: String, resourceId: String): Boolean {
+        return authUserService.hasResource(userId, resourceId)
+    }
+
+    override fun getUserIds(tenantId: String): List<String> {
+        return authUserService.getUserIds(tenantId)
     }
 
     //endregion your codes 2
