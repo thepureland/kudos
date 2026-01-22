@@ -4,7 +4,7 @@ import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.ams.sys.provider.dao.SysResourceDao
 import io.kudos.ams.sys.provider.model.po.SysResource
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
-import org.springframework.beans.factory.annotation.Autowired
+import jakarta.annotation.Resource
 import kotlin.test.Test
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -19,13 +19,13 @@ import kotlin.test.assertNull
 @EnabledIfDockerInstalled
 class ResourceIdBySubSysAndUrlCacheHandlerTest : CacheHandlerTestBase() {
 
-    @Autowired
+    @Resource
     private lateinit var cacheHandler: ResourceIdBySubSysAndUrlCacheHandler
 
-    @Autowired
+    @Resource
     private lateinit var resourceByIdCacheHandler: ResourceByIdCacheHandler
 
-    @Autowired
+    @Resource
     private lateinit var dao: SysResourceDao
 
     @Test

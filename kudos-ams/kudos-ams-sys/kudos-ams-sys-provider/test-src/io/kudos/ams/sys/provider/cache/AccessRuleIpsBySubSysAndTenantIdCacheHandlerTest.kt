@@ -6,7 +6,7 @@ import io.kudos.ams.sys.provider.dao.SysAccessRuleDao
 import io.kudos.ams.sys.provider.dao.SysAccessRuleIpDao
 import io.kudos.ams.sys.provider.model.po.SysAccessRuleIp
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
-import org.springframework.beans.factory.annotation.Autowired
+import jakarta.annotation.Resource
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 import kotlin.test.Test
@@ -22,13 +22,13 @@ import kotlin.test.assertFalse
 @EnabledIfDockerInstalled
 class AccessRuleIpsBySubSysAndTenantIdCacheHandlerTest : CacheHandlerTestBase() {
     
-    @Autowired
+    @Resource
     private lateinit var cacheHandler: AccessRuleIpsBySubSysAndTenantIdCacheHandler
     
-    @Autowired
+    @Resource
     private lateinit var dao: SysAccessRuleIpDao
 
-    @Autowired
+    @Resource
     private lateinit var sysAccessRuleDao: SysAccessRuleDao
 
     private val newExpirationTime = LocalDateTime.now().plus(1L, ChronoUnit.YEARS)

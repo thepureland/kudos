@@ -1,7 +1,8 @@
 package io.kudos.ams.auth.provider.cache
 
+import io.kudos.ability.cache.common.enums.CacheStrategy
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
-import org.springframework.beans.factory.annotation.Autowired
+import jakarta.annotation.Resource
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -17,8 +18,12 @@ import kotlin.test.assertTrue
 @EnabledIfDockerInstalled
 class DeptIdsByTenantIdCacheHandlerTest : CacheHandlerTestBase() {
 
-    @Autowired
+    @Resource
     private lateinit var cacheHandler: DeptIdsByTenantIdCacheHandler
+
+    override fun getCacheStrategy(): String {
+        return CacheStrategy.LOCAL_REMOTE.name
+    }
 
     @Test
     fun getDeptIds() {
