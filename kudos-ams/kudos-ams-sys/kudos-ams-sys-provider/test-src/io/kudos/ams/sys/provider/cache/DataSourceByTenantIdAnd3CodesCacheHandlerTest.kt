@@ -5,7 +5,7 @@ import io.kudos.ams.sys.common.vo.datasource.SysDataSourceCacheItem
 import io.kudos.ams.sys.provider.dao.SysDataSourceDao
 import io.kudos.ams.sys.provider.model.po.SysDataSource
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
-import org.springframework.beans.factory.annotation.Autowired
+import jakarta.annotation.Resource
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -20,13 +20,13 @@ import kotlin.test.assertNull
 @EnabledIfDockerInstalled
 class DataSourceByTenantIdAnd3CodesCacheHandlerTest : CacheHandlerTestBase() {
 
-    @Autowired
+    @Resource
     private lateinit var cacheHandler: DataSourceByTenantIdAnd3CodesCacheHandler
 
-    @Autowired
+    @Resource
     private lateinit var dataSourceByIdCacheHandler: DataSourceByIdCacheHandler
 
-    @Autowired
+    @Resource
     private lateinit var sysDataSourceDao: SysDataSourceDao
 
     private val newName = "test_ds_2222"

@@ -2,7 +2,6 @@ package io.kudos.ams.auth.provider.cache
 
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import jakarta.annotation.Resource
-import org.springframework.beans.factory.annotation.Autowired
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
