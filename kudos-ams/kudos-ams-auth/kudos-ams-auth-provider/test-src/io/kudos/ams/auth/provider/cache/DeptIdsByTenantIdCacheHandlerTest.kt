@@ -18,12 +18,12 @@ import kotlin.test.assertTrue
 @EnabledIfDockerInstalled
 class DeptIdsByTenantIdCacheHandlerTest : CacheHandlerTestBase() {
 
+    init {
+        cacheStrategyHolder.value = CacheStrategy.LOCAL_REMOTE.name
+    }
+
     @Resource
     private lateinit var cacheHandler: DeptIdsByTenantIdCacheHandler
-
-    override fun getCacheStrategy(): String {
-        return CacheStrategy.LOCAL_REMOTE.name
-    }
 
     @Test
     fun getDeptIds() {
