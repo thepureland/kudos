@@ -5,6 +5,7 @@ import io.kudos.ams.sys.common.vo.param.SysParamCacheItem
 import io.kudos.ams.sys.provider.dao.SysParamDao
 import io.kudos.ams.sys.provider.model.po.SysParam
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
+import io.kudos.test.container.cache.CacheHandlerTestBase
 import jakarta.annotation.Resource
 import kotlin.test.Test
 import kotlin.test.assertEquals

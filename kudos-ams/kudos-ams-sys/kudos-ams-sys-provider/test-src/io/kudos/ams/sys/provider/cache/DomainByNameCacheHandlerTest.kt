@@ -5,6 +5,7 @@ import io.kudos.ams.sys.common.vo.domain.SysDomainCacheItem
 import io.kudos.ams.sys.provider.dao.SysDomainDao
 import io.kudos.ams.sys.provider.model.po.SysDomain
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
+import io.kudos.test.container.cache.CacheHandlerTestBase
 import jakarta.annotation.Resource
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -122,10 +123,10 @@ class DomainByNameCacheHandlerTest : CacheHandlerTestBase() {
         // 验证缓存中的记录
         var cacheItem = CacheKit.getValue(cacheHandler.cacheName(), newName) as SysDomainCacheItem?
         assertNotNull(cacheItem)
-        assertEquals(newName, cacheItem!!.domain)
+        assertEquals(newName, cacheItem.domain)
         cacheItem = cacheHandler.getDomain(newName)
         assertNotNull(cacheItem)
-        assertEquals(newName, cacheItem!!.domain)
+        assertEquals(newName, cacheItem.domain)
     }
 
     @Test

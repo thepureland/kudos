@@ -5,6 +5,7 @@ import io.kudos.ams.sys.common.vo.dictitem.SysDictItemCacheItem
 import io.kudos.ams.sys.provider.dao.SysDictItemDao
 import io.kudos.ams.sys.provider.model.po.SysDictItem
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
+import io.kudos.test.container.cache.CacheHandlerTestBase
 import jakarta.annotation.Resource
 import kotlin.test.Test
 import kotlin.test.assertEquals

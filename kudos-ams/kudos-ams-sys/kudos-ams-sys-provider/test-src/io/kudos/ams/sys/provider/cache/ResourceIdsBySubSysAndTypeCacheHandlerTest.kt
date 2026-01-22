@@ -4,6 +4,7 @@ import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.ams.sys.provider.dao.SysResourceDao
 import io.kudos.ams.sys.provider.model.po.SysResource
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
+import io.kudos.test.container.cache.CacheHandlerTestBase
 import jakarta.annotation.Resource
 import kotlin.test.Test
 import kotlin.test.assertEquals
