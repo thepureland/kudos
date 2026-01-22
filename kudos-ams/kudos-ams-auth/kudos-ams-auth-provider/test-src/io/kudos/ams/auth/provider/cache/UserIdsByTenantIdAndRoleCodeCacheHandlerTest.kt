@@ -1,7 +1,7 @@
 package io.kudos.ams.auth.provider.cache
 
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
-import org.springframework.beans.factory.annotation.Autowired
+import jakarta.annotation.Resource
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -17,7 +17,7 @@ import kotlin.test.assertTrue
 @EnabledIfDockerInstalled
 class UserIdsByTenantIdAndRoleCodeCacheHandlerTest : CacheHandlerTestBase() {
 
-    @Autowired
+    @Resource
     private lateinit var cacheHandler: UserIdsByTenantIdAndRoleCodeCacheHandler
 
     @Test

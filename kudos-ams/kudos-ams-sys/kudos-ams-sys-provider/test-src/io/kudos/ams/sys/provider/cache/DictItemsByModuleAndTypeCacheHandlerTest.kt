@@ -5,7 +5,7 @@ import io.kudos.ams.sys.common.vo.dictitem.SysDictItemCacheItem
 import io.kudos.ams.sys.provider.dao.SysDictItemDao
 import io.kudos.ams.sys.provider.model.po.SysDictItem
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
-import org.springframework.beans.factory.annotation.Autowired
+import jakarta.annotation.Resource
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -19,13 +19,13 @@ import kotlin.test.assertFalse
 @EnabledIfDockerInstalled
 class DictItemsByModuleAndTypeCacheHandlerTest : CacheHandlerTestBase() {
     
-    @Autowired
+    @Resource
     private lateinit var cacheHandler: DictItemsByModuleAndTypeCacheHandler
     
-    @Autowired
+    @Resource
     private lateinit var dictByIdCacheHandler: DictByIdCacheHandler
     
-    @Autowired
+    @Resource
     private lateinit var sysDictItemDao: SysDictItemDao
     
     private val newName = "newName"
