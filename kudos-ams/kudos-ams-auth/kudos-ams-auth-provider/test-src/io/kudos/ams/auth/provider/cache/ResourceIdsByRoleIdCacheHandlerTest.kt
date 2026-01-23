@@ -56,4 +56,55 @@ class ResourceIdsByRoleIdCacheHandlerTest : CacheHandlerTestBase() {
         assertTrue(resourceIds6.isEmpty(), "不存在的角色ID应该返回空列表")
     }
 
+    @Test
+    fun syncOnRoleResourceChange() {
+        val roleId = "11111111-1111-1111-1111-111111111111"
+        
+        // 先获取一次，确保缓存中有数据
+        val resourceIdsBefore = cacheHandler.getResourceIds(roleId)
+        assertTrue(resourceIdsBefore.isNotEmpty(), "角色${roleId}应该有资源ID列表")
+        
+        // 同步缓存（模拟角色-资源关系变更）
+        cacheHandler.syncOnRoleResourceChange(roleId)
+        
+        // 验证缓存已被清除并重新加载
+        val resourceIdsAfter = cacheHandler.getResourceIds(roleId)
+        assertTrue(resourceIdsAfter.isNotEmpty(), "同步后应该能重新获取到资源ID列表")
+    }
+
+    @Test
+    fun syncOnBatchRoleResourceChange() {
+        val roleId1 = "11111111-1111-1111-1111-111111111111"
+        val roleId2 = "22222222-2222-2222-2222-222222222222"
+        val roleIds = listOf(roleId1, roleId2)
+        
+        // 先获取一次，确保缓存中有数据
+        val resourceIds1Before = cacheHandler.getResourceIds(roleId1)
+        val resourceIds2Before = cacheHandler.getResourceIds(roleId2)
+        assertTrue(resourceIds1Before.isNotEmpty() || resourceIds2Before.isNotEmpty(), "至少一个角色应该有资源ID列表")
+        
+        // 批量同步缓存（模拟批量角色-资源关系变更）
+        cacheHandler.syncOnBatchRoleResourceChange(roleIds)
+        
+        // 验证缓存已被清除并重新加载
+        val resourceIds1After = cacheHandler.getResourceIds(roleId1)
+        val resourceIds2After = cacheHandler.getResourceIds(roleId2)
+        assertTrue(resourceIds1After.isNotEmpty() || resourceIds2After.isNotEmpty(), "同步后应该能重新获取到资源ID列表")
+    }
+
+    @Test
+    fun syncOnRoleDelete() {
+        val roleId = "33333333-3333-3333-3333-333333333333"
+        
+        // 先获取一次，确保缓存中有数据（即使为空列表）
+        val resourceIdsBefore = cacheHandler.getResourceIds(roleId)
+        
+        // 同步缓存（模拟角色删除）
+        cacheHandler.syncOnRoleDelete(roleId)
+        
+        // 验证缓存已被清除
+        val resourceIdsAfter = cacheHandler.getResourceIds(roleId)
+        assertTrue(resourceIdsAfter.isEmpty(), "删除角色后，缓存应该被清除，重新获取应该返回空列表")
+    }
+
 }

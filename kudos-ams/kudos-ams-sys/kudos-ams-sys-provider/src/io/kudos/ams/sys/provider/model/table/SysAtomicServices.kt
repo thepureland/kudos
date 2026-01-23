@@ -54,7 +54,7 @@ object SysAtomicServices : Table<SysAtomicService>("sys_atomic_service") {
     //region your codes 2
 
     /** 主键别名 */
-    var id = SysPortals.code.primaryKey()
+    var id = code.primaryKey()
 
     //endregion your codes 2
 

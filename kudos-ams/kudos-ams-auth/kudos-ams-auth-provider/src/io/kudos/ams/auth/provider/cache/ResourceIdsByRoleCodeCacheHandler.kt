@@ -192,6 +192,8 @@ open class ResourceIdsByRoleCodeCacheHandler : AbstractCacheHandler<List<String>
             CacheKit.evict(CACHE_NAME, getKey(tenantId, roleCode))
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
+        // 同时清除角色ID缓存，确保后续查询时不会从缓存中获取到已删除的角色ID
+        roleIdByTenantIdAndRoleCodeCacheHandler.evict(roleIdByTenantIdAndRoleCodeCacheHandler.getKey(tenantId, roleCode))
     }
 
     /**

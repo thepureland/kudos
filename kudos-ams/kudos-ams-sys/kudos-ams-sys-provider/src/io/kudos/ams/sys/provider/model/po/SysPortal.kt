@@ -53,8 +53,8 @@ interface SysPortal : IDbEntity<String, SysPortal> {
     //region your codes 2
 
     override var id: String?
-        get() = this.id
-        set(value) { this.id = value!! }
+        get() = this.code
+        set(value) { this.code = value!! }
 
     //endregion your codes 2
 

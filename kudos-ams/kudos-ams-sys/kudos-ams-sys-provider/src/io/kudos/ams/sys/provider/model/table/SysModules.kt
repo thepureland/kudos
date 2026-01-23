@@ -57,7 +57,7 @@ object SysModules : Table<SysModule>("sys_module") {
     //region your codes 2
 
     /** 主键别名 */
-    var id = SysPortals.code.primaryKey()
+    var id = code.primaryKey()
 
     //endregion your codes 2
 

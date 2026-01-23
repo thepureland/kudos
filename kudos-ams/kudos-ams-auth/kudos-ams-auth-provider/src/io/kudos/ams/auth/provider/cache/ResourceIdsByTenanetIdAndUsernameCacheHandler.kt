@@ -246,6 +246,8 @@ open class ResourceIdsByTenanetIdAndUsernameCacheHandler : AbstractCacheHandler<
             CacheKit.evict(CACHE_NAME, getKey(tenantId, username))
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
+        // 同时清除用户ID缓存，确保后续查询时不会从缓存中获取到已删除的用户ID
+        userIdByTenantIdAndUsernameCacheHandler.evict(userIdByTenantIdAndUsernameCacheHandler.getKey(tenantId, username))
     }
 
     /**
