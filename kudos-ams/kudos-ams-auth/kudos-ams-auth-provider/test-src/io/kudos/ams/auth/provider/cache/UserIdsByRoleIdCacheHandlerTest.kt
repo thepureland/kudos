@@ -11,6 +11,8 @@ import kotlin.test.assertTrue
 /**
  * junit test for UserIdsByRoleIdCacheHandler
  *
+ * 测试数据来源：`V1.0.0.15__UserIdsByRoleIdCacheHandlerTest.sql`
+ *
  * @author K
  * @author AI: Cursor
  * @since 1.0.0

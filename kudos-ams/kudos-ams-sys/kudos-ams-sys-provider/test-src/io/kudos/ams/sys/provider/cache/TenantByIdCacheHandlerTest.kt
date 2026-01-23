@@ -15,6 +15,8 @@ import kotlin.test.assertNull
 /**
  * junit test for TenantByIdCacheHandler
  *
+ * 测试数据来源：`V1.0.0.11__TenantByIdCacheHandlerTest.sql`
+ *
  * @author K
  * @since 1.0.0
  */

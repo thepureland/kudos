@@ -15,6 +15,8 @@ import kotlin.test.assertNull
 /**
  * junit test for DomainByNameCacheHandler
  *
+ * 测试数据来源：`V1.0.0.6__DomainByNameCacheHandlerTest.sql`
+ *
  * @author K
  * @since 1.0.0
  */

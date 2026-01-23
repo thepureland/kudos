@@ -14,6 +14,8 @@ import kotlin.test.assertNull
 /**
  * junit test for ResourceIdBySubSysAndUrlCacheHandler
  *
+ * 测试数据来源：`V1.0.0.9__ResourceIdBySubSysAndUrlCacheHandlerTest.sql`
+ *
  * @author K
  * @since 1.0.0
  */

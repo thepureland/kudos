@@ -13,6 +13,8 @@ import kotlin.test.assertFalse
 /**
  * junit test for TenantIdsBySubSysCacheHandler
  *
+ * 测试数据来源：`V1.0.0.12__TenantIdsBySubSysCacheHandlerTest.sql`
+ *
  * @author K
  * @since 1.0.0
  */

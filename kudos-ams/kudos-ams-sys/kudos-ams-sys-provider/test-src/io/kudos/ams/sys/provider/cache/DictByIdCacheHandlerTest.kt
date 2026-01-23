@@ -16,6 +16,8 @@ import kotlin.test.assertNull
 /**
  * junit test for DictByIdCacheHandler
  *
+ * 测试数据来源：`V1.0.0.4__DictByIdCacheHandlerTest.sql`
+ *
  * @author K
  * @since 1.0.0
  */

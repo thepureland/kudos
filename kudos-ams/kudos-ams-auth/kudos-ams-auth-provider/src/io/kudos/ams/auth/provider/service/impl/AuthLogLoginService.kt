@@ -4,7 +4,11 @@ import io.kudos.ams.auth.provider.service.iservice.IAuthLogLoginService
 import io.kudos.ams.auth.provider.model.po.AuthLogLogin
 import io.kudos.ams.auth.provider.dao.AuthLogLoginDao
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
+import io.kudos.base.logger.LogFactory
+import io.kudos.base.query.Criteria
+import io.kudos.base.query.enums.OperatorEnum
 import org.springframework.stereotype.Service
+import java.time.LocalDateTime
 
 
 /**
@@ -20,6 +24,96 @@ open class AuthLogLoginService : BaseCrudService<String, AuthLogLogin, AuthLogLo
 //endregion your codes 1
 
     //region your codes 2
+
+    private val log = LogFactory.getLog(this)
+
+    override fun getLoginsByUserId(userId: String, limit: Int): List<AuthLogLogin> {
+        val criteria = Criteria.of(AuthLogLogin::userId.name, OperatorEnum.EQ, userId)
+        val logins = dao.search(criteria)
+        return logins.sortedByDescending { it.loginTime }.take(limit)
+    }
+
+    override fun getLoginsByTenantId(tenantId: String, limit: Int): List<AuthLogLogin> {
+        val criteria = Criteria.of(AuthLogLogin::tenantId.name, OperatorEnum.EQ, tenantId)
+        val logins = dao.search(criteria)
+        return logins.sortedByDescending { it.loginTime }.take(limit)
+    }
+
+    override fun getLoginsByTimeRange(tenantId: String?, userId: String?, startTime: LocalDateTime, endTime: LocalDateTime): List<AuthLogLogin> {
+        val criteria = Criteria.of(AuthLogLogin::loginTime.name, OperatorEnum.GE, startTime)
+            .addAnd(AuthLogLogin::loginTime.name, OperatorEnum.LE, endTime)
+        if (tenantId != null) {
+            criteria.addAnd(AuthLogLogin::tenantId.name, OperatorEnum.EQ, tenantId)
+        }
+        if (userId != null) {
+            criteria.addAnd(AuthLogLogin::userId.name, OperatorEnum.EQ, userId)
+        }
+        val logins = dao.search(criteria)
+        return logins.sortedByDescending { it.loginTime }
+    }
+
+    override fun getRecentLogins(tenantId: String?, userId: String?, limit: Int): List<AuthLogLogin> {
+        val criteria = Criteria()
+        if (tenantId != null) {
+            criteria.addAnd(AuthLogLogin::tenantId.name, OperatorEnum.EQ, tenantId)
+        }
+        if (userId != null) {
+            criteria.addAnd(AuthLogLogin::userId.name, OperatorEnum.EQ, userId)
+        }
+        val logins = dao.search(criteria)
+        return logins.sortedByDescending { it.loginTime }.take(limit)
+    }
+
+    override fun countLogins(tenantId: String?, userId: String?, startTime: LocalDateTime?, endTime: LocalDateTime?): Long {
+        val criteria = Criteria()
+        if (tenantId != null) {
+            criteria.addAnd(AuthLogLogin::tenantId.name, OperatorEnum.EQ, tenantId)
+        }
+        if (userId != null) {
+            criteria.addAnd(AuthLogLogin::userId.name, OperatorEnum.EQ, userId)
+        }
+        if (startTime != null) {
+            criteria.addAnd(AuthLogLogin::loginTime.name, OperatorEnum.GE, startTime)
+        }
+        if (endTime != null) {
+            criteria.addAnd(AuthLogLogin::loginTime.name, OperatorEnum.LE, endTime)
+        }
+        return dao.count(criteria).toLong()
+    }
+
+    override fun countSuccessLogins(tenantId: String?, userId: String?, startTime: LocalDateTime?, endTime: LocalDateTime?): Long {
+        val criteria = Criteria.of(AuthLogLogin::loginSuccess.name, OperatorEnum.EQ, true)
+        if (tenantId != null) {
+            criteria.addAnd(AuthLogLogin::tenantId.name, OperatorEnum.EQ, tenantId)
+        }
+        if (userId != null) {
+            criteria.addAnd(AuthLogLogin::userId.name, OperatorEnum.EQ, userId)
+        }
+        if (startTime != null) {
+            criteria.addAnd(AuthLogLogin::loginTime.name, OperatorEnum.GE, startTime)
+        }
+        if (endTime != null) {
+            criteria.addAnd(AuthLogLogin::loginTime.name, OperatorEnum.LE, endTime)
+        }
+        return dao.count(criteria).toLong()
+    }
+
+    override fun countFailureLogins(tenantId: String?, userId: String?, startTime: LocalDateTime?, endTime: LocalDateTime?): Long {
+        val criteria = Criteria.of(AuthLogLogin::loginSuccess.name, OperatorEnum.EQ, false)
+        if (tenantId != null) {
+            criteria.addAnd(AuthLogLogin::tenantId.name, OperatorEnum.EQ, tenantId)
+        }
+        if (userId != null) {
+            criteria.addAnd(AuthLogLogin::userId.name, OperatorEnum.EQ, userId)
+        }
+        if (startTime != null) {
+            criteria.addAnd(AuthLogLogin::loginTime.name, OperatorEnum.GE, startTime)
+        }
+        if (endTime != null) {
+            criteria.addAnd(AuthLogLogin::loginTime.name, OperatorEnum.LE, endTime)
+        }
+        return dao.count(criteria).toLong()
+    }
 
     //endregion your codes 2
 

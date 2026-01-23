@@ -1,5 +1,7 @@
 package io.kudos.ams.auth.provider.service.iservice
 
+import io.kudos.ams.auth.common.vo.role.AuthRoleCacheItem
+import io.kudos.ams.auth.common.vo.role.AuthRoleRecord
 import io.kudos.ams.auth.common.vo.user.AuthUserCacheItem
 import io.kudos.ams.sys.common.vo.resource.SysResourceCacheItem
 import io.kudos.base.support.iservice.IBaseCrudService
@@ -68,6 +70,59 @@ interface IAuthRoleService : IBaseCrudService<String, AuthRole> {
      * @return true表示角色拥有该资源，false表示不拥有
      */
     fun hasResource(roleId: String, resourceId: String): Boolean
+
+    /**
+     * 根据租户ID和角色编码获取角色信息
+     *
+     * @param tenantId 租户ID
+     * @param roleCode 角色编码
+     * @return 角色缓存项，找不到返回null
+     * @author AI: Cursor
+     * @since 1.0.0
+     */
+    fun getRoleByTenantIdAndCode(tenantId: String, roleCode: String): AuthRoleCacheItem?
+
+    /**
+     * 根据ID获取角色记录（非缓存）
+     *
+     * @param id 角色ID
+     * @return 角色记录，找不到返回null
+     * @author AI: Cursor
+     * @since 1.0.0
+     */
+    fun getRoleRecord(id: String): AuthRoleRecord?
+
+    /**
+     * 根据租户ID获取角色列表
+     *
+     * @param tenantId 租户ID
+     * @return 角色记录列表
+     * @author AI: Cursor
+     * @since 1.0.0
+     */
+    fun getRolesByTenantId(tenantId: String): List<AuthRoleRecord>
+
+    /**
+     * 根据子系统编码获取角色列表
+     *
+     * @param tenantId 租户ID
+     * @param subsysCode 子系统编码
+     * @return 角色记录列表
+     * @author AI: Cursor
+     * @since 1.0.0
+     */
+    fun getRolesBySubsysCode(tenantId: String, subsysCode: String): List<AuthRoleRecord>
+
+    /**
+     * 更新角色启用状态
+     *
+     * @param id 角色ID
+     * @param active 是否启用
+     * @return 是否更新成功
+     * @author AI: Cursor
+     * @since 1.0.0
+     */
+    fun updateActive(id: String, active: Boolean): Boolean
 
     //endregion your codes 2
 

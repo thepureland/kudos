@@ -1,6 +1,7 @@
 package io.kudos.ams.auth.provider.service.iservice
 
 import io.kudos.ams.auth.common.vo.dept.AuthDeptCacheItem
+import io.kudos.ams.auth.common.vo.dept.AuthDeptTreeRecord
 import io.kudos.ams.auth.common.vo.user.AuthUserCacheItem
 import io.kudos.base.support.iservice.IBaseCrudService
 import io.kudos.ams.auth.provider.model.po.AuthDept
@@ -75,6 +76,80 @@ interface IAuthDeptService : IBaseCrudService<String, AuthDept> {
      * @return AuthDeptCacheItem 父部门，如果没有父部门则返回null
      */
     fun getParentDept(deptId: String): AuthDeptCacheItem?
+
+    /**
+     * 根据ID获取部门记录（从缓存）
+     *
+     * @param id 部门ID
+     * @return 部门缓存项，找不到返回null
+     * @author AI: Cursor
+     * @since 1.0.0
+     */
+    fun getDeptRecord(id: String): AuthDeptCacheItem?
+
+    /**
+     * 根据租户ID获取部门列表
+     *
+     * @param tenantId 租户ID
+     * @return 部门缓存项列表
+     * @author AI: Cursor
+     * @since 1.0.0
+     */
+    fun getDeptsByTenantId(tenantId: String): List<AuthDeptCacheItem>
+
+    /**
+     * 获取部门树形结构
+     *
+     * @param tenantId 租户ID
+     * @param parentId 父部门ID，为null时返回顶级部门
+     * @return 部门树节点列表（树形结构，包含children字段）
+     * @author AI: Cursor
+     * @since 1.0.0
+     */
+    fun getDeptTree(tenantId: String, parentId: String? = null): List<AuthDeptTreeRecord>
+
+    /**
+     * 获取所有祖先部门ID列表（向上递归）
+     *
+     * @param deptId 部门ID
+     * @return 祖先部门ID列表（从直接父部门到根部门）
+     * @author AI: Cursor
+     * @since 1.0.0
+     */
+    fun getAllAncestorDeptIds(deptId: String): List<String>
+
+    /**
+     * 获取所有后代部门ID列表（向下递归）
+     *
+     * @param deptId 部门ID
+     * @return 后代部门ID列表（包括所有子部门、孙部门等）
+     * @author AI: Cursor
+     * @since 1.0.0
+     */
+    fun getAllDescendantDeptIds(deptId: String): List<String>
+
+    /**
+     * 更新部门启用状态
+     *
+     * @param id 部门ID
+     * @param active 是否启用
+     * @return 是否更新成功
+     * @author AI: Cursor
+     * @since 1.0.0
+     */
+    fun updateActive(id: String, active: Boolean): Boolean
+
+    /**
+     * 移动部门（调整父部门和排序号）
+     *
+     * @param id 部门ID
+     * @param newParentId 新的父部门ID，为null表示移动到顶级
+     * @param newSortNum 新的排序号
+     * @return 是否更新成功
+     * @author AI: Cursor
+     * @since 1.0.0
+     */
+    fun moveDept(id: String, newParentId: String?, newSortNum: Int?): Boolean
 
     //endregion your codes 2
 
