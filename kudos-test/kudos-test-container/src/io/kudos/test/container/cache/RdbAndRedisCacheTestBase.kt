@@ -9,19 +9,19 @@ import org.springframework.test.context.DynamicPropertySource
 import org.springframework.transaction.annotation.Transactional
 
 /**
- * 所有CacheHandlerTest的父类
+ * 所有需要关系型数据库和Redis缓存环境的测试用例的父类
  *
  * @author K
  * @since 1.0.0
  */
 @EnableKudosTest
 @Transactional
-open class CacheHandlerTestBase {
+open class RdbAndRedisCacheTestBase {
 
-    companion object {
+    companion object Companion {
 
         @JvmStatic
-        protected val cacheStrategyHolder = Single<String>("SINGLE_LOCAL")
+        protected val cacheStrategyHolder = Single("SINGLE_LOCAL")
 
         @DynamicPropertySource
         @JvmStatic

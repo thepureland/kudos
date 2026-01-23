@@ -5,7 +5,7 @@ import io.kudos.ams.sys.common.vo.datasource.SysDataSourceCacheItem
 import io.kudos.ams.sys.provider.dao.SysDataSourceDao
 import io.kudos.ams.sys.provider.model.po.SysDataSource
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
-import io.kudos.test.container.cache.CacheHandlerTestBase
+import io.kudos.test.container.cache.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -19,7 +19,7 @@ import kotlin.test.assertNull
  * @since 1.0.0
  */
 @EnabledIfDockerInstalled
-class DataSourceByTenantIdAnd3CodesCacheHandlerTest : CacheHandlerTestBase() {
+class DataSourceByTenantIdAnd3CodesCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Resource
     private lateinit var cacheHandler: DataSourceByTenantIdAnd3CodesCacheHandler

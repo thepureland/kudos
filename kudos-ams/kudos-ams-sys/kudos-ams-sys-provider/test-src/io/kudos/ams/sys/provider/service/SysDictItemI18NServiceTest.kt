@@ -2,7 +2,7 @@ package io.kudos.ams.sys.provider.service
 
 import io.kudos.ams.sys.provider.service.iservice.ISysDictItemI18nService
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
-import io.kudos.test.container.cache.CacheHandlerTestBase
+import io.kudos.test.container.cache.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -19,7 +19,7 @@ import kotlin.test.assertTrue
  * @since 1.0.0
  */
 @EnabledIfDockerInstalled
-class SysDictItemI18NServiceTest : CacheHandlerTestBase() {
+class SysDictItemI18NServiceTest : RdbAndRedisCacheTestBase() {
 
     @Resource
     private lateinit var sysDictItemI18nService: ISysDictItemI18nService

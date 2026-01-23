@@ -5,7 +5,7 @@ import io.kudos.ams.sys.common.vo.dict.SysDictCacheItem
 import io.kudos.ams.sys.provider.dao.SysDictDao
 import io.kudos.ams.sys.provider.model.po.SysDict
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
-import io.kudos.test.container.cache.CacheHandlerTestBase
+import io.kudos.test.container.cache.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -20,7 +20,7 @@ import kotlin.test.assertNull
  * @since 1.0.0
  */
 @EnabledIfDockerInstalled
-class DictByIdCacheHandlerTest : CacheHandlerTestBase() {
+class DictByIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Resource
     private lateinit var cacheHandler: DictByIdCacheHandler
