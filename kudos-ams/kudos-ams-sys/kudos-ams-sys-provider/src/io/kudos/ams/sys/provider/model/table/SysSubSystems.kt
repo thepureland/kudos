@@ -55,7 +55,7 @@ object SysSubSystems : Table<SysSubSystem>("sys_sub_system") {
     //region your codes 2
 
     /** 主键别名 */
-    var id = SysPortals.code.primaryKey()
+    var id = code.primaryKey()
 
     //endregion your codes 2
 

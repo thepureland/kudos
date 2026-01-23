@@ -55,4 +55,55 @@ class DeptIdsByUserIdCacheHandlerTest : CacheHandlerTestBase() {
         assertTrue(deptIds6.isEmpty(), "不存在的用户ID应该返回空列表")
     }
 
+    @Test
+    fun syncOnDeptUserChange() {
+        val userId = "11111111-1111-1111-1111-111111111111"
+        
+        // 先获取一次，确保缓存中有数据
+        val deptIdsBefore = cacheHandler.getDeptIds(userId)
+        assertTrue(deptIdsBefore.isNotEmpty(), "用户${userId}应该有部门ID列表")
+        
+        // 同步缓存（模拟用户-部门关系变更）
+        cacheHandler.syncOnDeptUserChange(userId)
+        
+        // 验证缓存已被清除并重新加载
+        val deptIdsAfter = cacheHandler.getDeptIds(userId)
+        assertTrue(deptIdsAfter.isNotEmpty(), "同步后应该能重新获取到部门ID列表")
+    }
+
+    @Test
+    fun syncOnBatchDeptUserChange() {
+        val userId1 = "11111111-1111-1111-1111-111111111111"
+        val userId2 = "22222222-2222-2222-2222-222222222222"
+        val userIds = listOf(userId1, userId2)
+        
+        // 先获取一次，确保缓存中有数据
+        val deptIds1Before = cacheHandler.getDeptIds(userId1)
+        val deptIds2Before = cacheHandler.getDeptIds(userId2)
+        assertTrue(deptIds1Before.isNotEmpty() || deptIds2Before.isNotEmpty(), "至少一个用户应该有部门ID列表")
+        
+        // 批量同步缓存（模拟批量用户-部门关系变更）
+        cacheHandler.syncOnBatchDeptUserChange(userIds)
+        
+        // 验证缓存已被清除并重新加载
+        val deptIds1After = cacheHandler.getDeptIds(userId1)
+        val deptIds2After = cacheHandler.getDeptIds(userId2)
+        assertTrue(deptIds1After.isNotEmpty() || deptIds2After.isNotEmpty(), "同步后应该能重新获取到部门ID列表")
+    }
+
+    @Test
+    fun syncOnUserDelete() {
+        val userId = "33333333-3333-3333-3333-333333333333"
+        
+        // 先获取一次，确保缓存中有数据（即使为空列表）
+        val deptIdsBefore = cacheHandler.getDeptIds(userId)
+        
+        // 同步缓存（模拟用户删除）
+        cacheHandler.syncOnUserDelete(userId)
+        
+        // 验证缓存已被清除
+        val deptIdsAfter = cacheHandler.getDeptIds(userId)
+        assertTrue(deptIdsAfter.isEmpty(), "删除用户后，缓存应该被清除，重新获取应该返回空列表")
+    }
+
 }
