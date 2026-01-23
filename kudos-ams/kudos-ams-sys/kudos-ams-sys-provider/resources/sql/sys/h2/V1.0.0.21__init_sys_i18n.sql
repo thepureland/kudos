@@ -11,14 +11,18 @@ create table if not exists "sys_i18n"
     "built_in"            boolean       default FALSE         not null,
     "create_user_id"      character varying(36),
     "create_user_name"    character varying(32),
-    "create_time"         timestamp     default now()         not null,
+    "create_time"         timestamp(6)     default now()         not null,
     "update_user_id"      character varying(36),
     "update_user_name"    character varying(32),
-    "update_time"         timestamp
+    "update_time"         timestamp(6)
 );
 
 create unique index if not exists "uq_sys_i18n__locale_module_type_key"
     on "sys_i18n" ("locale", "module_code", "i18n_type_dict_code", "key");
+
+alter table "sys_i18n"
+    add constraint "fk_sys_i18n_module"
+        foreign key ("module_code") references "sys_module" ("code");
 
 comment on table "sys_i18n" is '国际化';
 comment on column "sys_i18n"."id" is '主键';

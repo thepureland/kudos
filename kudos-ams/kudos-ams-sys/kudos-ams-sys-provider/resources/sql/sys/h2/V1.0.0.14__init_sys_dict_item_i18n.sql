@@ -8,10 +8,10 @@ create table if not exists "sys_dict_item_i18n"
     "active"      boolean   default TRUE          not null,
     "create_user_id" character varying(36),
     "create_user_name" character varying(32),
-    "create_time" timestamp default now(),
+    "create_time" timestamp(6) default now(),
     "update_user_id" character varying(36),
     "update_user_name" character varying(32),
-    "update_time" timestamp,
+    "update_time" timestamp(6),
     constraint "fk_sys_dict_item_i18n"
         foreign key ("item_id") references "sys_dict_item" ("id")
 );

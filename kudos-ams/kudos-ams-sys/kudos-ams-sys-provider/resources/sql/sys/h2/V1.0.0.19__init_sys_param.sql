@@ -12,13 +12,17 @@ create table if not exists "sys_param"
     "built_in"      boolean       default FALSE         not null,
     "create_user_id" character varying(36),
     "create_user_name" character varying(32),
-    "create_time"   timestamp     default now()         not null,
+    "create_time"   timestamp(6)     default now()         not null,
     "update_user_id" character varying(36),
     "update_user_name" character varying(32),
-    "update_time"   timestamp
+    "update_time"   timestamp(6)
 );
 
 create unique index if not exists "uq_sys_param" on "sys_param" ("param_name", "module_code");
+
+alter table "sys_param"
+    add constraint "fk_sys_param_module"
+        foreign key ("module_code") references "sys_module" ("code");
 
 comment on table "sys_param" is '参数';
 comment on column "sys_param"."id" is '主键';

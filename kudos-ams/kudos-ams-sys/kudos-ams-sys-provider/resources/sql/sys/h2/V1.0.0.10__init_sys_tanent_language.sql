@@ -15,6 +15,12 @@ create table if not exists "sys_tenant_language"
 create unique index if not exists "uq_sys_tenant_language"
     on "sys_tenant_language" ("tenant_id", "language_code");
 
+create index if not exists "idx_sys_tenant_language_tenant_id" on "sys_tenant_language" ("tenant_id");
+
+alter table "sys_tenant_language"
+    add constraint "fk_sys_tenant_language_tenant"
+        foreign key ("tenant_id") references "sys_tenant" ("id");
+
 comment on table "sys_tenant_language" is '租户-语言关系';
 comment on column "sys_tenant_language"."id" is '主键';
 comment on column "sys_tenant_language"."tenant_id" is '租户id';

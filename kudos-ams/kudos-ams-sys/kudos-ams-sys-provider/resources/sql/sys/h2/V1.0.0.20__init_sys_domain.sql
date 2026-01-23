@@ -11,13 +11,25 @@ create table if not exists "sys_domain"
     "built_in"        boolean       default FALSE         not null,
     "create_user_id"  character varying(36),
     "create_user_name" character varying(32),
-    "create_time"     timestamp     default now()         not null,
+    "create_time"     timestamp(6)     default now()         not null,
     "update_user_id"  character varying(36),
     "update_user_name" character varying(32),
-    "update_time"     timestamp
+    "update_time"     timestamp(6)
 );
 
 create unique index if not exists "uq_sys_domain" on "sys_domain" ("domain");
+
+alter table "sys_domain"
+    add constraint "fk_sys_domain_sub_system"
+        foreign key ("sub_system_code") references "sys_sub_system" ("code");
+
+alter table "sys_domain"
+    add constraint "fk_sys_domain_portal"
+        foreign key ("portal_code") references "sys_portal" ("code");
+
+alter table "sys_domain"
+    add constraint "fk_sys_domain_tenant"
+        foreign key ("tenant_id") references "sys_tenant" ("id");
 
 comment on table "sys_domain" is '域名';
 comment on column "sys_domain"."id" is '主键';

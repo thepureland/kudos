@@ -15,6 +15,14 @@ create table if not exists "sys_sub_system_micro_service"
 create unique index if not exists "uq_sys_sub_system_micro_service"
     on "sys_sub_system_micro_service" ("sub_system_code", "micro_service_code");
 
+alter table "sys_sub_system_micro_service"
+    add constraint "fk_sys_sub_system_micro_service_sub_system"
+        foreign key ("sub_system_code") references "sys_sub_system" ("code");
+
+alter table "sys_sub_system_micro_service"
+    add constraint "fk_sys_sub_system_micro_service_micro_service"
+        foreign key ("micro_service_code") references "sys_micro_service" ("code");
+
 comment on table "sys_sub_system_micro_service" is '子系统-微服务关系';
 comment on column "sys_sub_system_micro_service"."sub_system_code" is '子系统编码';
 comment on column "sys_sub_system_micro_service"."micro_service_code" is '微服务编码';

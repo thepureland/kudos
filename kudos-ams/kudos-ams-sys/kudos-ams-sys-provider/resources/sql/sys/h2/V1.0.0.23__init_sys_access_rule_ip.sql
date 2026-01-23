@@ -6,7 +6,7 @@ create table if not exists "sys_access_rule_ip"
     "ip_end"            bigint                              not null,
     "ip_type_dict_code" character varying(36)               not null,
     "expiration_time"   timestamp(6),
-    "parent_rule_id"    character varying(36)               not null,
+    "parent_rule_id"    character(36)                        not null,
     "remark"            character varying(128),
     "active"            boolean       default TRUE          not null,
     "built_in"          boolean       default FALSE         not null,
@@ -19,6 +19,10 @@ create table if not exists "sys_access_rule_ip"
     constraint "fk_sys_access_rule_ip"
         foreign key ("parent_rule_id") references "sys_access_rule" ("id")
 );
+
+alter table "sys_access_rule_ip"
+    add constraint "chk_sys_access_rule_ip_range"
+        check ("ip_start" <= "ip_end");
 
 
 comment on table "sys_access_rule_ip" is 'ip访问规则';

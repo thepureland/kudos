@@ -10,10 +10,10 @@ create table if not exists "sys_tenant"
     "built_in"              boolean   default FALSE         not null,
     "create_user_id"        character varying(36),
     "create_user_name"      character varying(32),
-    "create_time"           timestamp default now(),
+    "create_time"           timestamp(6) default now(),
     "update_user_id"        character varying(36),
     "update_user_name"      character varying(32),
-    "update_time"           timestamp
+    "update_time"           timestamp(6)
 );
 
 
