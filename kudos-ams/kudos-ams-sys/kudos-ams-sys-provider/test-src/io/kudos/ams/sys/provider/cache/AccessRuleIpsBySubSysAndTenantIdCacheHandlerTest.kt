@@ -17,6 +17,8 @@ import kotlin.test.assertFalse
 /**
  * junit test for AccessRuleIpsBySubSysAndTenantIdCacheHandler
  *
+ * 测试数据来源：`V1.0.0.18__AccessRuleIpsBySubSysAndTenantIdCacheHandlerTest.sql`
+ *
  * @author K
  * @since 1.0.0
  */

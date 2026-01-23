@@ -13,6 +13,8 @@ import kotlin.test.assertTrue
 /**
  * junit test for UserIdsByDeptIdCacheHandler
  *
+ * 测试数据来源：`V1.0.0.4__UserIdsByDeptIdCacheHandlerTest.sql`
+ *
  * @author K
  * @author AI: Cursor
  * @since 1.0.0

@@ -166,6 +166,22 @@ open class UserIdsByDeptIdCacheHandler : AbstractCacheHandler<List<String>>() {
         }
     }
 
+    /**
+     * 部门-用户关系变更后同步缓存
+     *
+     * @param deptId 部门ID
+     */
+    open fun syncOnDeptUserChange(deptId: String) {
+        if (CacheKit.isCacheActive(CACHE_NAME)) {
+            log.debug("部门${deptId}的用户关系变更后，同步${CACHE_NAME}缓存...")
+            evict(deptId)
+            if (CacheKit.isWriteInTime(CACHE_NAME)) {
+                getSelf<UserIdsByDeptIdCacheHandler>().getUserIds(deptId)
+            }
+            log.debug("${CACHE_NAME}缓存同步完成。")
+        }
+    }
+
     private val log = LogFactory.getLog(this)
 
 }

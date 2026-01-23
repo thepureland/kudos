@@ -12,6 +12,8 @@ import kotlin.test.assertTrue
 /**
  * junit test for ResourceIdsByTenanetIdAndUsernameCacheHandler
  *
+ * 测试数据来源：`V1.0.0.9__ResourceIdsByTenanetIdAndUsernameCacheHandlerTest.sql`
+ *
  * @author K
  * @author AI: Cursor
  * @since 1.0.0

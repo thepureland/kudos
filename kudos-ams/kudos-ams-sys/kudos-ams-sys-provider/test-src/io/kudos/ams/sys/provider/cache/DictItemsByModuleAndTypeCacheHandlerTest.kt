@@ -14,6 +14,8 @@ import kotlin.test.assertFalse
 /**
  * junit test for DictItemsByModuleAndTypeCacheHandler
  *
+ * 测试数据来源：`V1.0.0.5__DictItemsByModuleAndTypeCacheHandlerTest.sql`
+ *
  * @author K
  * @since 1.0.0
  */

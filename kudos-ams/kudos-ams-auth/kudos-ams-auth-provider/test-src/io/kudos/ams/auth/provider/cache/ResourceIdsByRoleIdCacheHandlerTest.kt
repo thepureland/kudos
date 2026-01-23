@@ -11,6 +11,8 @@ import kotlin.test.assertTrue
 /**
  * junit test for ResourceIdsByRoleIdCacheHandler
  *
+ * 测试数据来源：`V1.0.0.14__ResourceIdsByRoleIdCacheHandlerTest.sql`
+ *
  * @author K
  * @author AI: Cursor
  * @since 1.0.0

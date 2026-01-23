@@ -16,6 +16,8 @@ import kotlin.test.assertNull
 /**
  * junit test for RoleByIdCacheHandler
  *
+ * 测试数据来源：`V1.0.0.3__RoleByIdCacheHandlerTest.sql`
+ *
  * @author K
  * @author AI: Cursor
  * @since 1.0.0
