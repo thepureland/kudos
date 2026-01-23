@@ -16,6 +16,20 @@ create table if not exists "sys_tenant_sub_system"
 create unique index if not exists "uq_sys_tenant_sub_system"
     on "sys_tenant_sub_system" ("tenant_id", "sub_system_code", "portal_code");
 
+create index if not exists "idx_sys_tenant_sub_system_tenant_id" on "sys_tenant_sub_system" ("tenant_id");
+
+alter table "sys_tenant_sub_system"
+    add constraint "fk_sys_tenant_sub_system_tenant"
+        foreign key ("tenant_id") references "sys_tenant" ("id");
+
+alter table "sys_tenant_sub_system"
+    add constraint "fk_sys_tenant_sub_system_sub_system"
+        foreign key ("sub_system_code") references "sys_sub_system" ("code");
+
+alter table "sys_tenant_sub_system"
+    add constraint "fk_sys_tenant_sub_system_portal"
+        foreign key ("portal_code") references "sys_portal" ("code");
+
 comment on table "sys_tenant_sub_system" is '租户-子系统关系';
 comment on column "sys_tenant_sub_system"."id" is '主键';
 comment on column "sys_tenant_sub_system"."tenant_id" is '租户id';

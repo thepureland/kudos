@@ -14,13 +14,29 @@ create table if not exists "sys_resource"
     "built_in"                boolean   default FALSE         not null,
     "create_user_id"          character varying(36),
     "create_user_name"        character varying(32),
-    "create_time"             timestamp default now()         not null,
+    "create_time"             timestamp(6) default now()         not null,
     "update_user_id"          character varying(36),
     "update_user_name"        character varying(32),
-    "update_time"             timestamp
+    "update_time"             timestamp(6)
 );
 
 create unique index if not exists "uq_sys_resource" on "sys_resource" ("name", "sub_system_code");
+
+create index if not exists "idx_sys_resource_parent_id" on "sys_resource" ("parent_id");
+
+create index if not exists "idx_sys_resource_sub_system_code" on "sys_resource" ("sub_system_code");
+
+alter table "sys_resource"
+    add constraint "fk_sys_resource_sub_system"
+        foreign key ("sub_system_code") references "sys_sub_system" ("code");
+
+alter table "sys_resource"
+    add constraint "fk_sys_resource_parent"
+        foreign key ("parent_id") references "sys_resource" ("id");
+
+alter table "sys_resource"
+    add constraint "chk_sys_resource_no_self_reference"
+        check ("parent_id" is null or "parent_id" != "id");
 
 comment on table "sys_resource" is '资源';
 comment on column "sys_resource"."id" is '主键';

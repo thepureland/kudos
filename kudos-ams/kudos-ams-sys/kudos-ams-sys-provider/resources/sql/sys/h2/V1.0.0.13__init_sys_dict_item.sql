@@ -12,10 +12,10 @@ create table if not exists "sys_dict_item"
     "built_in"    boolean       DEFAULT FALSE         NOT NULL,
     "create_user_id" character varying(36),
     "create_user_name" character varying(32),
-    "create_time" timestamp     default now(),
+    "create_time" timestamp(6)     default now(),
     "update_user_id" character varying(36),
     "update_user_name" character varying(32),
-    "update_time" timestamp,
+    "update_time" timestamp(6),
     constraint "fk_sys_dict_item"
         foreign key ("dict_id") references "sys_dict" ("id")
 );

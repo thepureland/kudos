@@ -21,14 +21,32 @@ create table if not exists "sys_data_source"
     "built_in"            boolean   default FALSE         not null,
     "create_user_id"      character varying(36),
     "create_user_name"    character varying(32),
-    "create_time"         timestamp default now()         not null,
+    "create_time"         timestamp(6) default now()         not null,
     "update_user_id"      character varying(36),
     "update_user_name"    character varying(32),
-    "update_time"         timestamp
+    "update_time"         timestamp(6)
 );
 
 create unique index if not exists uq_sys_data_source
     on "sys_data_source" ("sub_system_code", "micro_service_code", "atomic_service_code", "tenant_id");
+
+create index if not exists "idx_sys_data_source_tenant_id" on "sys_data_source" ("tenant_id");
+
+alter table "sys_data_source"
+    add constraint "fk_sys_data_source_sub_system"
+        foreign key ("sub_system_code") references "sys_sub_system" ("code");
+
+alter table "sys_data_source"
+    add constraint "fk_sys_data_source_micro_service"
+        foreign key ("micro_service_code") references "sys_micro_service" ("code");
+
+alter table "sys_data_source"
+    add constraint "fk_sys_data_source_atomic_service"
+        foreign key ("atomic_service_code") references "sys_atomic_service" ("code");
+
+alter table "sys_data_source"
+    add constraint "fk_sys_data_source_tenant"
+        foreign key ("tenant_id") references "sys_tenant" ("id");
 
 comment on table "sys_data_source" is '数据源';
 comment on column "sys_data_source"."id" is '主键';

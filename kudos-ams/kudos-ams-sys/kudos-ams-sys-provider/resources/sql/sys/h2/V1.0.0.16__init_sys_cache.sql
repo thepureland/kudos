@@ -13,13 +13,17 @@ create table if not exists "sys_cache"
     "built_in"            boolean   default FALSE         not null,
     "create_user_id"      character varying(36),
     "create_user_name"    character varying(32),
-    "create_time"         timestamp default now(),
+    "create_time"         timestamp(6) default now(),
     "update_user_id"      character varying(36),
     "update_user_name"    character varying(32),
-    "update_time"         timestamp
+    "update_time"         timestamp(6)
 );
 
 create unique index if not exists "uq_sys_cache" on "sys_cache" ("name", "atomic_service_code");
+
+alter table "sys_cache"
+    add constraint "fk_sys_cache_atomic_service"
+        foreign key ("atomic_service_code") references "sys_atomic_service" ("code");
 
 comment on table "sys_cache" is '缓存';
 comment on column "sys_cache"."id" is '主键';

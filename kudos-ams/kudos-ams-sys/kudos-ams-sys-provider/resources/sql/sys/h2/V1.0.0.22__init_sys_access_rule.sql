@@ -19,6 +19,20 @@ create table if not exists "sys_access_rule"
         unique ("tenant_id", "sub_system_code", "portal_code")
 );
 
+create index if not exists "idx_sys_access_rule_tenant_id" on "sys_access_rule" ("tenant_id");
+
+alter table "sys_access_rule"
+    add constraint "fk_sys_access_rule_tenant"
+        foreign key ("tenant_id") references "sys_tenant" ("id");
+
+alter table "sys_access_rule"
+    add constraint "fk_sys_access_rule_sub_system"
+        foreign key ("sub_system_code") references "sys_sub_system" ("code");
+
+alter table "sys_access_rule"
+    add constraint "fk_sys_access_rule_portal"
+        foreign key ("portal_code") references "sys_portal" ("code");
+
 comment on table "sys_access_rule" is '访问规则';
 comment on column "sys_access_rule"."id" is '主键';
 comment on column "sys_access_rule"."tenant_id" is '租户id';

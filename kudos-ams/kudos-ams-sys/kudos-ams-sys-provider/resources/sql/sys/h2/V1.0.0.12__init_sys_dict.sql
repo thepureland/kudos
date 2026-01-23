@@ -10,13 +10,17 @@ create table if not exists "sys_dict"
     "built_in"    boolean       default FALSE         not null,
     "create_user_id" character varying(36),
     "create_user_name" character varying(32),
-    "create_time" timestamp     default now(),
+    "create_time" timestamp(6)     default now(),
     "update_user_id" character varying(36),
     "update_user_name" character varying(32),
-    "update_time" timestamp
+    "update_time" timestamp(6)
 );
 
 create unique index if not exists "uq_sys_dict" on "sys_dict" ("dict_type", "module_code");
+
+alter table "sys_dict"
+    add constraint "fk_sys_dict_module"
+        foreign key ("module_code") references "sys_module" ("code");
 
 comment on table "sys_dict" is '字典';
 comment on column "sys_dict"."id" is '主键';
