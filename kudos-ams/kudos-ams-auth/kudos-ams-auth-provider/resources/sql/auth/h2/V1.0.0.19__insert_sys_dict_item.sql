@@ -1,0 +1,4 @@
+--region DML
+--  merge into "sys_dict_item" ("id", "dict_id", "item_code", "item_name", "order_num", "remark", "active", "built_in")
+--    values ('e8ff3f9a-a57a-4183-953d-fe80c12fcd67', '68139ed2-dbce-47fa-ac0d-2932fb0ee5ad', 'local', '本地数据源', 1, null, true, true);
+--endregion DML
