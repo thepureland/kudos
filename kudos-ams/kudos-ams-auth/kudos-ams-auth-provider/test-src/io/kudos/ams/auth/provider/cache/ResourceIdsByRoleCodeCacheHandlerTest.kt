@@ -1,7 +1,7 @@
 package io.kudos.ams.auth.provider.cache
 
 import io.kudos.ams.auth.provider.dao.AuthRoleDao
-import io.kudos.test.container.cache.CacheHandlerTestBase
+import io.kudos.test.container.cache.RdbAndRedisCacheTestBase
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import jakarta.annotation.Resource
 import kotlin.test.Test
@@ -17,7 +17,7 @@ import kotlin.test.assertTrue
  * @since 1.0.0
  */
 @EnabledIfDockerInstalled
-class ResourceIdsByRoleCodeCacheHandlerTest : CacheHandlerTestBase() {
+class ResourceIdsByRoleCodeCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Resource
     private lateinit var cacheHandler: ResourceIdsByRoleCodeCacheHandler

@@ -5,7 +5,7 @@ import io.kudos.ams.sys.common.vo.module.SysModuleCacheItem
 import io.kudos.ams.sys.provider.dao.SysModuleDao
 import io.kudos.ams.sys.provider.model.po.SysModule
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
-import io.kudos.test.container.cache.CacheHandlerTestBase
+import io.kudos.test.container.cache.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -19,7 +19,7 @@ import kotlin.test.assertNull
  * @since 1.0.0
  */
 @EnabledIfDockerInstalled
-class ModuleByCodeCacheHandlerTest : CacheHandlerTestBase() {
+class ModuleByCodeCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Resource
     private lateinit var cacheHandler: ModuleByCodeCacheHandler

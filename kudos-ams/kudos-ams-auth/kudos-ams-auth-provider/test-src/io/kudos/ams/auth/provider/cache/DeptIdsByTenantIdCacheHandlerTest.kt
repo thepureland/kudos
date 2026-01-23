@@ -3,7 +3,7 @@ package io.kudos.ams.auth.provider.cache
 import io.kudos.ability.cache.common.enums.CacheStrategy
 import io.kudos.ams.auth.provider.dao.AuthDeptDao
 import io.kudos.ams.auth.provider.model.po.AuthDept
-import io.kudos.test.container.cache.CacheHandlerTestBase
+import io.kudos.test.container.cache.RdbAndRedisCacheTestBase
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import jakarta.annotation.Resource
 import kotlin.test.Test
@@ -19,7 +19,7 @@ import kotlin.test.assertTrue
  * @since 1.0.0
  */
 @EnabledIfDockerInstalled
-class DeptIdsByTenantIdCacheHandlerTest : CacheHandlerTestBase() {
+class DeptIdsByTenantIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     init {
         cacheStrategyHolder.value = CacheStrategy.LOCAL_REMOTE.name

@@ -6,7 +6,7 @@ import io.kudos.ams.sys.provider.dao.SysAccessRuleDao
 import io.kudos.ams.sys.provider.dao.SysAccessRuleIpDao
 import io.kudos.ams.sys.provider.model.po.SysAccessRuleIp
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
-import io.kudos.test.container.cache.CacheHandlerTestBase
+import io.kudos.test.container.cache.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
@@ -21,7 +21,7 @@ import kotlin.test.assertFalse
  * @since 1.0.0
  */
 @EnabledIfDockerInstalled
-class AccessRuleIpsBySubSysAndTenantIdCacheHandlerTest : CacheHandlerTestBase() {
+class AccessRuleIpsBySubSysAndTenantIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
     
     @Resource
     private lateinit var cacheHandler: AccessRuleIpsBySubSysAndTenantIdCacheHandler
