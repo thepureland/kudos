@@ -1,6 +1,8 @@
 package io.kudos.ams.sys.provider.service.impl
 
 import io.kudos.ams.sys.common.vo.cache.SysCacheCacheItem
+import io.kudos.ams.sys.common.vo.cache.SysCacheRecord
+import io.kudos.ams.sys.common.vo.cache.SysCacheSearchPayload
 import io.kudos.ams.sys.provider.cache.CacheByNameCacheHandler
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Service
  * 缓存业务
  *
  * @author K
+ * @author AI: Cursor
  * @since 1.0.0
  */
 @Service
@@ -97,6 +100,37 @@ open class SysCacheService : BaseCrudService<String, SysCache, SysCacheDao>(), I
         log.debug("批量删除缓存配置，期望删除${ids.size}条，实际删除${count}条。")
         cacheConfigCacheHandler.syncOnBatchDelete(ids, names)
         return count
+    }
+
+    /**
+     * 获取原子服务的缓存配置列表
+     *
+     * @param atomicServiceCode 原子服务编码
+     * @return 缓存记录列表
+     * @author AI: Cursor
+     * @since 1.0.0
+     */
+    override fun getCachesByAtomicServiceCode(atomicServiceCode: String): List<SysCacheRecord> {
+        val searchPayload = SysCacheSearchPayload().apply {
+            this.atomicServiceCode = atomicServiceCode
+        }
+        @Suppress("UNCHECKED_CAST")
+        return dao.search(searchPayload) as List<SysCacheRecord>
+    }
+
+    /**
+     * 获取所有启用的缓存配置
+     *
+     * @return 缓存记录列表
+     * @author AI: Cursor
+     * @since 1.0.0
+     */
+    override fun getAllActiveCaches(): List<SysCacheRecord> {
+        val searchPayload = SysCacheSearchPayload().apply {
+            this.active = true
+        }
+        @Suppress("UNCHECKED_CAST")
+        return dao.search(searchPayload) as List<SysCacheRecord>
     }
 
     //endregion your codes 2

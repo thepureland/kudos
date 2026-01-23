@@ -11,13 +11,13 @@ create unique index if not exists "uq_sys_tenant_resource"
 
 create index if not exists "idx_sys_tenant_resource_tenant_id" on "sys_tenant_resource" ("tenant_id");
 
-alter table "sys_tenant_resource"
-    add constraint "fk_sys_tenant_resource_tenant"
-        foreign key ("tenant_id") references "sys_tenant" ("id");
-
-alter table "sys_tenant_resource"
-    add constraint "fk_sys_tenant_resource_resource"
-        foreign key ("resource_id") references "sys_resource" ("id");
+-- alter table "sys_tenant_resource"
+--     add constraint "fk_sys_tenant_resource_tenant"
+--         foreign key ("tenant_id") references "sys_tenant" ("id");
+--
+-- alter table "sys_tenant_resource"
+--     add constraint "fk_sys_tenant_resource_resource"
+--         foreign key ("resource_id") references "sys_resource" ("id");
 
 comment on table "sys_tenant_resource" is '租户-资源关系';
 comment on column "sys_tenant_resource"."id" is '主键';

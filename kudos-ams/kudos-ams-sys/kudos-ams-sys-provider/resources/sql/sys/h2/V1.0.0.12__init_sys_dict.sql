@@ -18,9 +18,9 @@ create table if not exists "sys_dict"
 
 create unique index if not exists "uq_sys_dict" on "sys_dict" ("dict_type", "module_code");
 
-alter table "sys_dict"
-    add constraint "fk_sys_dict_module"
-        foreign key ("module_code") references "sys_module" ("code");
+-- alter table "sys_dict"
+--     add constraint "fk_sys_dict_module"
+--         foreign key ("module_code") references "sys_module" ("code");
 
 comment on table "sys_dict" is '字典';
 comment on column "sys_dict"."id" is '主键';

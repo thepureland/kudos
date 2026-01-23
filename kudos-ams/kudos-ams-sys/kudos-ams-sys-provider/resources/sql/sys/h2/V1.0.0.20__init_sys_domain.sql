@@ -19,17 +19,17 @@ create table if not exists "sys_domain"
 
 create unique index if not exists "uq_sys_domain" on "sys_domain" ("domain");
 
-alter table "sys_domain"
-    add constraint "fk_sys_domain_sub_system"
-        foreign key ("sub_system_code") references "sys_sub_system" ("code");
-
-alter table "sys_domain"
-    add constraint "fk_sys_domain_portal"
-        foreign key ("portal_code") references "sys_portal" ("code");
-
-alter table "sys_domain"
-    add constraint "fk_sys_domain_tenant"
-        foreign key ("tenant_id") references "sys_tenant" ("id");
+-- alter table "sys_domain"
+--     add constraint "fk_sys_domain_sub_system"
+--         foreign key ("sub_system_code") references "sys_sub_system" ("code");
+--
+-- alter table "sys_domain"
+--     add constraint "fk_sys_domain_portal"
+--         foreign key ("portal_code") references "sys_portal" ("code");
+--
+-- alter table "sys_domain"
+--     add constraint "fk_sys_domain_tenant"
+--         foreign key ("tenant_id") references "sys_tenant" ("id");
 
 comment on table "sys_domain" is '域名';
 comment on column "sys_domain"."id" is '主键';

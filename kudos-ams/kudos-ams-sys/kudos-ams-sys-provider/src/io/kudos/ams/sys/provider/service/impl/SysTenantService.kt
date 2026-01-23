@@ -6,7 +6,6 @@ import io.kudos.ams.sys.common.vo.tenant.SysTenantSearchPayload
 import io.kudos.ams.sys.provider.service.iservice.ISysTenantSubSystemService
 import io.kudos.ams.sys.provider.cache.TenantByIdCacheHandler
 import io.kudos.ams.sys.provider.cache.TenantIdsBySubSysCacheHandler
-import io.kudos.ams.sys.provider.model.po.SysDataSource
 import io.kudos.ams.sys.provider.model.po.SysTenantSubSystem
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
@@ -25,6 +24,7 @@ import org.springframework.stereotype.Service
  * 租户业务
  *
  * @author K
+ * @author AI: Cursor
  * @since 1.0.0
  */
 @Service
@@ -83,12 +83,13 @@ open class SysTenantService : BaseCrudService<String, SysTenant, SysTenantDao>()
 
     @Transactional
     override fun updateActive(id: String, active: Boolean): Boolean {
-        val param = SysDataSource {
+        val tenant = SysTenant {
             this.id = id
             this.active = active
         }
-        val success = dao.update(param)
+        val success = dao.update(tenant)
         if (success) {
+            log.debug("更新id为${id}的租户的启用状态为${active}。")
             // 同步缓存
             tenantByIdCacheHandler.syncOnUpdate(id)
         } else {
@@ -146,9 +147,66 @@ open class SysTenantService : BaseCrudService<String, SysTenant, SysTenantDao>()
         val searchPayload = SysTenantSearchPayload().apply { active = true }
         @Suppress("UNCHECKED_CAST")
         val records = dao.search(searchPayload) as List<SysTenantRecord>
-//        return records.groupBy { it.subSysDictCode!! }
-        //TODO
-        return mapOf()
+        // 根据租户的子系统关系分组
+        val tenantIds = records.mapNotNull { it.id }
+        val tenantSubSystemMap = sysTenantSubSystemBiz.groupingSubSystemCodesByTenantIds(tenantIds)
+        val result = mutableMapOf<String, MutableList<SysTenantRecord>>()
+        records.forEach { tenant ->
+            val subSystemCodes = tenantSubSystemMap[tenant.id] ?: emptyList()
+            if (subSystemCodes.isEmpty()) {
+                // 没有子系统的租户，使用空字符串作为key
+                result.getOrPut("") { mutableListOf() }.add(tenant)
+            } else {
+                subSystemCodes.forEach { subSystemCode ->
+                    result.getOrPut(subSystemCode) { mutableListOf() }.add(tenant)
+                }
+            }
+        }
+        return result
+    }
+
+    /**
+     * 根据id获取租户记录（非缓存）
+     *
+     * @param id 主键
+     * @return 租户记录，找不到返回null
+     * @author AI: Cursor
+     * @since 1.0.0
+     */
+    override fun getTenantRecord(id: String): SysTenantRecord? {
+        val tenant = dao.get(id) ?: return null
+        val record = SysTenantRecord()
+        BeanKit.copyProperties(tenant, record)
+        return record
+    }
+
+    /**
+     * 根据名称获取租户记录
+     *
+     * @param name 租户名称
+     * @return 租户记录，找不到返回null
+     * @author AI: Cursor
+     * @since 1.0.0
+     */
+    override fun getTenantByName(name: String): SysTenantRecord? {
+        val searchPayload = SysTenantSearchPayload().apply {
+            this.name = name
+        }
+        @Suppress("UNCHECKED_CAST")
+        val records = dao.search(searchPayload) as List<SysTenantRecord>
+        return records.firstOrNull()
+    }
+
+    /**
+     * 获取租户的子系统编码列表
+     *
+     * @param tenantId 租户id
+     * @return 子系统编码集合
+     * @author AI: Cursor
+     * @since 1.0.0
+     */
+    override fun getSubSystemCodesByTenantId(tenantId: String): Set<String> {
+        return sysTenantSubSystemBiz.searchSubSystemCodesByTenantId(tenantId)
     }
 
     //endregion your codes 2

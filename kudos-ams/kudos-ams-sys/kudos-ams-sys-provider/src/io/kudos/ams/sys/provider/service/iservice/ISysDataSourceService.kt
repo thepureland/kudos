@@ -1,6 +1,7 @@
 package io.kudos.ams.sys.provider.service.iservice
 
 import io.kudos.ams.sys.common.vo.datasource.SysDataSourceCacheItem
+import io.kudos.ams.sys.common.vo.datasource.SysDataSourceRecord
 import io.kudos.base.support.iservice.IBaseCrudService
 import io.kudos.ams.sys.provider.model.po.SysDataSource
 
@@ -9,6 +10,7 @@ import io.kudos.ams.sys.provider.model.po.SysDataSource
  * 数据源业务接口
  *
  * @author K
+ * @author AI: Cursor
  * @since 1.0.0
  */
 //region your codes 1
@@ -55,6 +57,26 @@ interface ISysDataSourceService : IBaseCrudService<String, SysDataSource> {
      * @since 1.0.0
      */
     fun resetPassword(id: String, newPassword: String)
+
+    /**
+     * 获取租户的数据源列表
+     *
+     * @param tenantId 租户id
+     * @return 数据源记录列表
+     * @author AI: Cursor
+     * @since 1.0.0
+     */
+    fun getDataSourcesByTenantId(tenantId: String): List<SysDataSourceRecord>
+
+    /**
+     * 获取子系统的数据源列表
+     *
+     * @param subSystemCode 子系统编码
+     * @return 数据源记录列表
+     * @author AI: Cursor
+     * @since 1.0.0
+     */
+    fun getDataSourcesBySubSystemCode(subSystemCode: String): List<SysDataSourceRecord>
 
     //endregion your codes 2
 

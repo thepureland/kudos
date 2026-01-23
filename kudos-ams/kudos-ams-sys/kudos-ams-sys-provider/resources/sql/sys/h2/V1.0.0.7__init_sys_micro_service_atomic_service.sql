@@ -15,13 +15,13 @@ create table if not exists "sys_micro_service_atomic_service"
 create unique index if not exists "uq_sys_micro_service_atomic_service"
     on "sys_micro_service_atomic_service" ("micro_service_code", "atomic_service_code");
 
-alter table "sys_micro_service_atomic_service"
-    add constraint "fk_sys_micro_service_atomic_service_micro_service"
-        foreign key ("micro_service_code") references "sys_micro_service" ("code");
-
-alter table "sys_micro_service_atomic_service"
-    add constraint "fk_sys_micro_service_atomic_service_atomic_service"
-        foreign key ("atomic_service_code") references "sys_atomic_service" ("code");
+-- alter table "sys_micro_service_atomic_service"
+--     add constraint "fk_sys_micro_service_atomic_service_micro_service"
+--         foreign key ("micro_service_code") references "sys_micro_service" ("code");
+--
+-- alter table "sys_micro_service_atomic_service"
+--     add constraint "fk_sys_micro_service_atomic_service_atomic_service"
+--         foreign key ("atomic_service_code") references "sys_atomic_service" ("code");
 
 comment on table "sys_micro_service_atomic_service" is '微服务-原子服务关系';
 comment on column "sys_micro_service_atomic_service"."micro_service_code" is '微服务编码';

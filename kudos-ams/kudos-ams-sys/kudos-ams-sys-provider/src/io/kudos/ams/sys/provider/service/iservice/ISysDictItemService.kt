@@ -5,6 +5,7 @@ import io.kudos.ams.sys.common.vo.dict.SysDictTreeNode
 import io.kudos.ams.sys.common.vo.dictitem.SysDictItemCacheItem
 import io.kudos.ams.sys.common.vo.dictitem.SysDictItemRecord
 import io.kudos.ams.sys.common.vo.dictitem.SysDictItemSearchPayload
+import io.kudos.ams.sys.common.vo.dictitem.SysDictItemTreeRecord
 import io.kudos.ams.sys.provider.model.po.SysDictItem
 import io.kudos.base.support.iservice.IBaseCrudService
 
@@ -117,6 +118,60 @@ interface ISysDictItemService : IBaseCrudService<String, SysDictItem> {
      * @since 1.0.0
      */
     fun updateActive(dictItemId: String, active: Boolean): Boolean
+
+    /**
+     * 获取字典的所有字典项
+     *
+     * @param dictId 字典id
+     * @return 字典项记录列表
+     * @author K
+     * @since 1.0.0
+     */
+    fun getDictItemsByDictId(dictId: String): List<SysDictItemRecord>
+
+    /**
+     * 根据模块编码和字典类型从缓存获取字典项列表
+     *
+     * @param moduleCode 模块编码
+     * @param dictType 字典类型
+     * @return 字典项缓存项列表
+     * @author K
+     * @since 1.0.0
+     */
+    fun getDictItemsByModuleAndType(moduleCode: String, dictType: String): List<SysDictItemCacheItem>
+
+    /**
+     * 获取字典项树（递归结构）
+     *
+     * @param dictId 字典id
+     * @param parentId 父字典项id，为null时返回顶级字典项
+     * @return 字典项树节点列表（树形结构，包含children字段）
+     * @author AI: Cursor
+     * @since 1.0.0
+     */
+    fun getDictItemTree(dictId: String, parentId: String? = null): List<SysDictItemTreeRecord>
+
+    /**
+     * 获取子字典项列表
+     *
+     * @param parentId 父字典项id
+     * @return 子字典项记录列表
+     * @author K
+     * @since 1.0.0
+     */
+    fun getChildItems(parentId: String): List<SysDictItemRecord>
+
+    /**
+     * 移动字典项（调整父节点和排序）
+     *
+     * @param id 字典项id
+     * @param newParentId 新的父字典项id，为null表示移动到顶级
+     * @param newOrderNum 新的排序号
+     * @return 是否更新成功
+     * @author K
+     * @since 1.0.0
+     */
+    fun moveItem(id: String, newParentId: String?, newOrderNum: Int?): Boolean
 
     //endregion your codes 2
 

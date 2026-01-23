@@ -5,6 +5,7 @@ import io.kudos.ams.sys.common.api.ISysTenantApi
 import io.kudos.ams.sys.common.vo.datasource.SysDataSourceCacheItem
 import io.kudos.ams.sys.common.vo.datasource.SysDataSourceDetail
 import io.kudos.ams.sys.common.vo.datasource.SysDataSourceRecord
+import io.kudos.ams.sys.common.vo.datasource.SysDataSourceSearchPayload
 import io.kudos.ams.sys.provider.service.iservice.ISysDataSourceService
 import io.kudos.ams.sys.provider.cache.DataSourceByIdCacheHandler
 import io.kudos.ams.sys.provider.cache.DataSourceByTenantIdAnd3CodesCacheHandler
@@ -25,6 +26,7 @@ import kotlin.reflect.KClass
  * 数据源业务
  *
  * @author K
+ * @author AI: Cursor
  * @since 1.0.0
  */
 @Service
@@ -95,8 +97,9 @@ open class SysDataSourceService : BaseCrudService<String, SysDataSource, SysData
     @Transactional
     override fun update(any: Any): Boolean {
         val success = super.update(any)
-        val id = BeanKit.getProperty(any, SysDomain::id.name) as String
+        val id = BeanKit.getProperty(any, SysDataSource::id.name) as String
         if (success) {
+            log.debug("更新id为${id}的数据源。")
             // 同步缓存
             dataSourceByIdCacheHandler.syncOnUpdate(id)
             dataSourceByTenantIdAnd3CodesCacheHandler.syncOnUpdate(any, id)
@@ -164,6 +167,38 @@ open class SysDataSourceService : BaseCrudService<String, SysDataSource, SysData
             dataSourceByTenantIdAnd3CodesCacheHandler.syncOnDelete(it)
         }
         return count
+    }
+
+    /**
+     * 获取租户的数据源列表
+     *
+     * @param tenantId 租户id
+     * @return 数据源记录列表
+     * @author AI: Cursor
+     * @since 1.0.0
+     */
+    override fun getDataSourcesByTenantId(tenantId: String): List<SysDataSourceRecord> {
+        val searchPayload = SysDataSourceSearchPayload().apply {
+            this.tenantId = tenantId
+        }
+        @Suppress("UNCHECKED_CAST")
+        return dao.search(searchPayload) as List<SysDataSourceRecord>
+    }
+
+    /**
+     * 获取子系统的数据源列表
+     *
+     * @param subSystemCode 子系统编码
+     * @return 数据源记录列表
+     * @author AI: Cursor
+     * @since 1.0.0
+     */
+    override fun getDataSourcesBySubSystemCode(subSystemCode: String): List<SysDataSourceRecord> {
+        val searchPayload = SysDataSourceSearchPayload().apply {
+            this.subSystemCode = subSystemCode
+        }
+        @Suppress("UNCHECKED_CAST")
+        return dao.search(searchPayload) as List<SysDataSourceRecord>
     }
 
     //endregion your codes 2

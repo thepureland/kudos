@@ -6,6 +6,7 @@ import io.kudos.ams.sys.common.vo.dict.SysDictTreeNode
 import io.kudos.ams.sys.common.vo.dictitem.SysDictItemCacheItem
 import io.kudos.ams.sys.common.vo.dictitem.SysDictItemRecord
 import io.kudos.ams.sys.common.vo.dictitem.SysDictItemSearchPayload
+import io.kudos.ams.sys.common.vo.dictitem.SysDictItemTreeRecord
 import io.kudos.ams.sys.provider.service.iservice.ISysDictItemService
 import io.kudos.ams.sys.provider.cache.DictItemsByModuleAndTypeCacheHandler
 import io.kudos.ams.sys.provider.dao.SysDictItemDao
@@ -235,6 +236,95 @@ open class SysDictItemService : BaseCrudService<String, SysDictItem, SysDictItem
             results.add(id as String)
             recursionFindAllChildId(id, results)
         }
+    }
+
+    override fun getDictItemsByDictId(dictId: String): List<SysDictItemRecord> {
+        val searchPayload = SysDictItemSearchPayload().apply {
+            this.dictId = dictId
+        }
+        return dao.pagingSearch(searchPayload)
+    }
+
+    override fun getDictItemsByModuleAndType(moduleCode: String, dictType: String): List<SysDictItemCacheItem> {
+        return getItemsFromCache(moduleCode, dictType)
+    }
+
+    /**
+     * 获取字典项树（递归结构）
+     *
+     * @param dictId 字典id
+     * @param parentId 父字典项id，为null时返回顶级字典项
+     * @return 字典项树节点列表（树形结构，包含children字段）
+     * @author AI: Cursor
+     * @since 1.0.0
+     */
+    override fun getDictItemTree(dictId: String, parentId: String?): List<SysDictItemTreeRecord> {
+        val searchPayload = SysDictItemSearchPayload().apply {
+            this.dictId = dictId
+            this.parentId = parentId
+        }
+        val records = dao.pagingSearch(searchPayload)
+        
+        // 转换为树节点
+        val treeNodes = records.map { record ->
+            SysDictItemTreeRecord().apply {
+                id = record.itemId
+                itemCode = record.itemCode
+                itemName = record.itemName
+                this.parentId = record.parentId
+                orderNum = record.orderNum
+                active = record.active
+                remark = record.remark
+                children = mutableListOf()
+            }
+        }
+        
+        // 构建树形结构
+        val nodeMap = treeNodes.associateBy { it.id }
+        val rootNodes = mutableListOf<SysDictItemTreeRecord>()
+        
+        treeNodes.forEach { node ->
+            if (node.parentId == null) {
+                rootNodes.add(node)
+            } else {
+                val parent = nodeMap[node.parentId]
+                parent?.children?.add(node)
+            }
+        }
+        
+        // 按 orderNum 排序
+        fun sortTree(nodes: List<SysDictItemTreeRecord>) {
+            nodes.sortedBy { it.orderNum ?: Int.MAX_VALUE }.forEach { node ->
+                node.children?.let { sortTree(it) }
+            }
+        }
+        sortTree(rootNodes)
+        
+        return rootNodes.sortedBy { it.orderNum ?: Int.MAX_VALUE }
+    }
+
+    override fun getChildItems(parentId: String): List<SysDictItemRecord> {
+        val searchPayload = SysDictItemSearchPayload().apply {
+            this.parentId = parentId
+        }
+        return dao.pagingSearch(searchPayload)
+    }
+
+    @Transactional
+    override fun moveItem(id: String, newParentId: String?, newOrderNum: Int?): Boolean {
+        val dictItem = SysDictItem {
+            this.id = id
+            this.parentId = newParentId
+            this.orderNum = newOrderNum
+        }
+        val success = dao.update(dictItem)
+        if (success) {
+            log.debug("移动字典项${id}到父节点${newParentId}，排序号${newOrderNum}。")
+            dictItemCacheHandler.syncOnUpdate(dictItem, id)
+        } else {
+            log.error("移动字典项${id}失败！")
+        }
+        return success
     }
 
     //endregion your codes 2

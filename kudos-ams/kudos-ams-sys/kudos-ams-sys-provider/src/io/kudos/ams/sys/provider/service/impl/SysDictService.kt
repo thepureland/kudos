@@ -3,6 +3,7 @@ package io.kudos.ams.sys.provider.service.impl
 import io.kudos.ams.sys.common.vo.dict.SysDictCacheItem
 import io.kudos.ams.sys.common.vo.dict.SysDictPayload
 import io.kudos.ams.sys.common.vo.dict.SysDictRecord
+import io.kudos.ams.sys.common.vo.dict.SysDictSearchPayload
 import io.kudos.ams.sys.provider.service.iservice.ISysDictItemService
 import io.kudos.ams.sys.provider.cache.DictByIdCacheHandler
 import io.kudos.ams.sys.provider.model.table.SysDictItems
@@ -22,6 +23,7 @@ import org.springframework.stereotype.Service
  * 字典业务
  *
  * @author K
+ * @author AI: Cursor
  * @since 1.0.0
  */
 @Service
@@ -108,6 +110,139 @@ open class SysDictService : BaseCrudService<String, SysDict, SysDictDao>(), ISys
         } else {
             sysDictItemBiz.cascadeDeleteChildren(id)
         }
+    }
+
+    /**
+     * 获取模块的所有字典
+     *
+     * @param moduleCode 模块编码
+     * @return 字典记录列表
+     * @author AI: Cursor
+     * @since 1.0.0
+     */
+    override fun getDictsByModuleCode(moduleCode: String): List<SysDictRecord> {
+        val searchPayload = SysDictSearchPayload().apply {
+            this.moduleCode = moduleCode
+        }
+        @Suppress("UNCHECKED_CAST")
+        return dao.search(searchPayload) as List<SysDictRecord>
+    }
+
+    /**
+     * 根据模块编码和字典类型获取字典
+     *
+     * @param moduleCode 模块编码
+     * @param dictType 字典类型
+     * @return 字典记录，找不到返回null
+     * @author AI: Cursor
+     * @since 1.0.0
+     */
+    override fun getDictByModuleAndType(moduleCode: String, dictType: String): SysDictRecord? {
+        val searchPayload = SysDictSearchPayload().apply {
+            this.moduleCode = moduleCode
+            this.dictType = dictType
+        }
+        @Suppress("UNCHECKED_CAST")
+        val records = dao.search(searchPayload) as List<SysDictRecord>
+        return records.firstOrNull()
+    }
+
+    /**
+     * 更新启用状态，并同步缓存
+     *
+     * @param id 字典id
+     * @param active 是否启用
+     * @return 是否更新成功
+     * @author AI: Cursor
+     * @since 1.0.0
+     */
+    @Transactional
+    override fun updateActive(id: String, active: Boolean): Boolean {
+        val dict = SysDict {
+            this.id = id
+            this.active = active
+        }
+        val success = dao.update(dict)
+        if (success) {
+            log.debug("更新id为${id}的字典的启用状态为${active}。")
+            dictCacheHandler.syncOnUpdate(id)
+        } else {
+            log.error("更新id为${id}的字典的启用状态为${active}失败！")
+        }
+        return success
+    }
+
+    /**
+     * 新增字典
+     *
+     * @param any 字典对象
+     * @return 主键
+     * @author AI: Cursor
+     * @since 1.0.0
+     */
+    @Transactional
+    override fun insert(any: Any): String {
+        val id = super.insert(any)
+        log.debug("新增id为${id}的字典。")
+        dictCacheHandler.syncOnInsert(id)
+        return id
+    }
+
+    /**
+     * 更新字典
+     *
+     * @param any 字典对象
+     * @return 是否更新成功
+     * @author AI: Cursor
+     * @since 1.0.0
+     */
+    @Transactional
+    override fun update(any: Any): Boolean {
+        val success = super.update(any)
+        val id = BeanKit.getProperty(any, SysDict::id.name) as String
+        if (success) {
+            log.debug("更新id为${id}的字典。")
+            dictCacheHandler.syncOnUpdate(id)
+        } else {
+            log.error("更新id为${id}的字典失败！")
+        }
+        return success
+    }
+
+    /**
+     * 删除字典
+     *
+     * @param id 主键
+     * @return 是否删除成功
+     * @author AI: Cursor
+     * @since 1.0.0
+     */
+    @Transactional
+    override fun deleteById(id: String): Boolean {
+        val success = super.deleteById(id)
+        if (success) {
+            log.debug("删除id为${id}的字典。")
+            dictCacheHandler.syncOnDelete(id)
+        } else {
+            log.error("删除id为${id}的字典失败！")
+        }
+        return success
+    }
+
+    /**
+     * 批量删除字典
+     *
+     * @param ids 主键集合
+     * @return 删除的数量
+     * @author AI: Cursor
+     * @since 1.0.0
+     */
+    @Transactional
+    override fun batchDelete(ids: Collection<String>): Int {
+        val count = super.batchDelete(ids)
+        log.debug("批量删除字典，期望删除${ids.size}条，实际删除${count}条。")
+        dictCacheHandler.syncOnBatchDelete(ids)
+        return count
     }
 
     //endregion your codes 2

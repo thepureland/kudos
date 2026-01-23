@@ -10,6 +10,7 @@ import io.kudos.ams.sys.provider.model.po.SysTenant
  * 租户业务接口
  *
  * @author K
+ * @author AI: Cursor
  * @since 1.0.0
  */
 //region your codes 1
@@ -68,6 +69,36 @@ interface ISysTenantService : IBaseCrudService<String, SysTenant> {
      * @since 1.0.0
      */
     fun updateActive(id: String, active: Boolean): Boolean
+
+    /**
+     * 根据id获取租户记录（非缓存）
+     *
+     * @param id 主键
+     * @return 租户记录，找不到返回null
+     * @author AI: Cursor
+     * @since 1.0.0
+     */
+    fun getTenantRecord(id: String): SysTenantRecord?
+
+    /**
+     * 根据名称获取租户记录
+     *
+     * @param name 租户名称
+     * @return 租户记录，找不到返回null
+     * @author AI: Cursor
+     * @since 1.0.0
+     */
+    fun getTenantByName(name: String): SysTenantRecord?
+
+    /**
+     * 获取租户的子系统编码列表
+     *
+     * @param tenantId 租户id
+     * @return 子系统编码集合
+     * @author AI: Cursor
+     * @since 1.0.0
+     */
+    fun getSubSystemCodesByTenantId(tenantId: String): Set<String>
 
     //endregion your codes 2
 
