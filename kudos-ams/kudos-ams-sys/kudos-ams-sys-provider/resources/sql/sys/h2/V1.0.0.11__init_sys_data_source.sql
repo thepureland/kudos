@@ -32,21 +32,21 @@ create unique index if not exists uq_sys_data_source
 
 create index if not exists "idx_sys_data_source_tenant_id" on "sys_data_source" ("tenant_id");
 
-alter table "sys_data_source"
-    add constraint "fk_sys_data_source_sub_system"
-        foreign key ("sub_system_code") references "sys_sub_system" ("code");
-
-alter table "sys_data_source"
-    add constraint "fk_sys_data_source_micro_service"
-        foreign key ("micro_service_code") references "sys_micro_service" ("code");
-
-alter table "sys_data_source"
-    add constraint "fk_sys_data_source_atomic_service"
-        foreign key ("atomic_service_code") references "sys_atomic_service" ("code");
-
-alter table "sys_data_source"
-    add constraint "fk_sys_data_source_tenant"
-        foreign key ("tenant_id") references "sys_tenant" ("id");
+-- alter table "sys_data_source"
+--     add constraint "fk_sys_data_source_sub_system"
+--         foreign key ("sub_system_code") references "sys_sub_system" ("code");
+--
+-- alter table "sys_data_source"
+--     add constraint "fk_sys_data_source_micro_service"
+--         foreign key ("micro_service_code") references "sys_micro_service" ("code");
+--
+-- alter table "sys_data_source"
+--     add constraint "fk_sys_data_source_atomic_service"
+--         foreign key ("atomic_service_code") references "sys_atomic_service" ("code");
+--
+-- alter table "sys_data_source"
+--     add constraint "fk_sys_data_source_tenant"
+--         foreign key ("tenant_id") references "sys_tenant" ("id");
 
 comment on table "sys_data_source" is '数据源';
 comment on column "sys_data_source"."id" is '主键';

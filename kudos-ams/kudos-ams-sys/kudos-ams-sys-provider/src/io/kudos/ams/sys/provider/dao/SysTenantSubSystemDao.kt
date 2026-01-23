@@ -12,6 +12,7 @@ import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
  * 租户-子系统关系数据访问对象
  *
  * @author K
+ * @author AI: Cursor
  * @since 1.0.0
  */
 @Repository
@@ -85,6 +86,20 @@ open class SysTenantSubSystemDao : BaseCrudDao<String, SysTenantSubSystem, SysTe
             keySelector = { it[SysTenantSubSystem::subSystemCode.name]!! },
             valueTransform = { it[SysTenantSubSystem::tenantId.name]!! }
         )
+    }
+
+    /**
+     * 检查关系是否存在
+     *
+     * @param tenantId 租户id
+     * @param subSystemCode 子系统编码
+     * @return 是否存在
+     * @author AI: Cursor
+     */
+    fun exists(tenantId: String, subSystemCode: String): Boolean {
+        val criteria = Criteria.of(SysTenantSubSystem::tenantId.name, OperatorEnum.EQ, tenantId)
+            .addAnd(SysTenantSubSystem::subSystemCode.name, OperatorEnum.EQ, subSystemCode)
+        return count(criteria) > 0
     }
 
     //endregion your codes 2

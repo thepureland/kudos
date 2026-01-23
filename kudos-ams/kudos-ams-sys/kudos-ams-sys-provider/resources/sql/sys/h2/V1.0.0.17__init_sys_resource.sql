@@ -26,17 +26,17 @@ create index if not exists "idx_sys_resource_parent_id" on "sys_resource" ("pare
 
 create index if not exists "idx_sys_resource_sub_system_code" on "sys_resource" ("sub_system_code");
 
-alter table "sys_resource"
-    add constraint "fk_sys_resource_sub_system"
-        foreign key ("sub_system_code") references "sys_sub_system" ("code");
-
-alter table "sys_resource"
-    add constraint "fk_sys_resource_parent"
-        foreign key ("parent_id") references "sys_resource" ("id");
-
-alter table "sys_resource"
-    add constraint "chk_sys_resource_no_self_reference"
-        check ("parent_id" is null or "parent_id" != "id");
+-- alter table "sys_resource"
+--     add constraint "fk_sys_resource_sub_system"
+--         foreign key ("sub_system_code") references "sys_sub_system" ("code");
+--
+-- alter table "sys_resource"
+--     add constraint "fk_sys_resource_parent"
+--         foreign key ("parent_id") references "sys_resource" ("id");
+--
+-- alter table "sys_resource"
+--     add constraint "chk_sys_resource_no_self_reference"
+--         check ("parent_id" is null or "parent_id" != "id");
 
 comment on table "sys_resource" is '资源';
 comment on column "sys_resource"."id" is '主键';

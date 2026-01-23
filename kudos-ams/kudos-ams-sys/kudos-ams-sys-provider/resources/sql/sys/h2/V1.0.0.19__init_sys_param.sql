@@ -20,9 +20,9 @@ create table if not exists "sys_param"
 
 create unique index if not exists "uq_sys_param" on "sys_param" ("param_name", "module_code");
 
-alter table "sys_param"
-    add constraint "fk_sys_param_module"
-        foreign key ("module_code") references "sys_module" ("code");
+-- alter table "sys_param"
+--     add constraint "fk_sys_param_module"
+--         foreign key ("module_code") references "sys_module" ("code");
 
 comment on table "sys_param" is '参数';
 comment on column "sys_param"."id" is '主键';

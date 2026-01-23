@@ -11,6 +11,7 @@ import io.kudos.base.support.iservice.IBaseCrudService
  * 字典业务接口
  *
  * @author K
+ * @author AI: Cursor
  * @since 1.0.0
  */
 //region your codes 1
@@ -62,6 +63,38 @@ interface ISysDictService : IBaseCrudService<String, SysDict> {
      * @since 1.0.0
      */
     fun delete(id: String, isDict: Boolean): Boolean
+
+    /**
+     * 获取模块的所有字典
+     *
+     * @param moduleCode 模块编码
+     * @return 字典记录列表
+     * @author AI: Cursor
+     * @since 1.0.0
+     */
+    fun getDictsByModuleCode(moduleCode: String): List<SysDictRecord>
+
+    /**
+     * 根据模块编码和字典类型获取字典
+     *
+     * @param moduleCode 模块编码
+     * @param dictType 字典类型
+     * @return 字典记录，找不到返回null
+     * @author AI: Cursor
+     * @since 1.0.0
+     */
+    fun getDictByModuleAndType(moduleCode: String, dictType: String): SysDictRecord?
+
+    /**
+     * 更新启用状态，并同步缓存
+     *
+     * @param id 字典id
+     * @param active 是否启用
+     * @return 是否更新成功
+     * @author AI: Cursor
+     * @since 1.0.0
+     */
+    fun updateActive(id: String, active: Boolean): Boolean
 
     //endregion your codes 2
 

@@ -1,6 +1,7 @@
 package io.kudos.ams.sys.provider.service.iservice
 
 import io.kudos.ams.sys.common.vo.cache.SysCacheCacheItem
+import io.kudos.ams.sys.common.vo.cache.SysCacheRecord
 import io.kudos.base.support.iservice.IBaseCrudService
 import io.kudos.ams.sys.provider.model.po.SysCache
 
@@ -9,6 +10,7 @@ import io.kudos.ams.sys.provider.model.po.SysCache
  * 缓存业务接口
  *
  * @author K
+ * @author AI: Cursor
  * @since 1.0.0
  */
 //region your codes 1
@@ -37,6 +39,25 @@ interface ISysCacheService : IBaseCrudService<String, SysCache> {
      * @since 1.0.0
      */
     fun updateActive(id: String, active: Boolean): Boolean
+
+    /**
+     * 获取原子服务的缓存配置列表
+     *
+     * @param atomicServiceCode 原子服务编码
+     * @return 缓存记录列表
+     * @author AI: Cursor
+     * @since 1.0.0
+     */
+    fun getCachesByAtomicServiceCode(atomicServiceCode: String): List<SysCacheRecord>
+
+    /**
+     * 获取所有启用的缓存配置
+     *
+     * @return 缓存记录列表
+     * @author AI: Cursor
+     * @since 1.0.0
+     */
+    fun getAllActiveCaches(): List<SysCacheRecord>
 
     //endregion your codes 2
 

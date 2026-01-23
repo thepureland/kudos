@@ -8,6 +8,7 @@ import io.kudos.ams.sys.provider.model.po.SysTenantSubSystem
  * 租户-子系统关系业务接口
  *
  * @author K
+ * @author AI: Cursor
  * @since 1.0.0
  */
 //region your codes 1
@@ -47,6 +48,40 @@ interface ISysTenantSubSystemService : IBaseCrudService<String, SysTenantSubSyst
      * @return Map<子系统编码， List<租户id>>
      */
     fun groupingTenantIdsBySubSystemCodes(subSystemCodes: Collection<String>? = null): Map<String, List<String>>
+
+    /**
+     * 批量绑定租户与子系统的关系
+     *
+     * @param tenantId 租户id
+     * @param subSystemCodes 子系统编码集合
+     * @param portalCode 门户编码
+     * @return 成功绑定的数量
+     * @author AI: Cursor
+     * @since 1.0.0
+     */
+    fun batchBind(tenantId: String, subSystemCodes: Collection<String>, portalCode: String): Int
+
+    /**
+     * 解绑租户与子系统的关系
+     *
+     * @param tenantId 租户id
+     * @param subSystemCode 子系统编码
+     * @return 是否解绑成功
+     * @author AI: Cursor
+     * @since 1.0.0
+     */
+    fun unbind(tenantId: String, subSystemCode: String): Boolean
+
+    /**
+     * 检查关系是否存在
+     *
+     * @param tenantId 租户id
+     * @param subSystemCode 子系统编码
+     * @return 是否存在
+     * @author AI: Cursor
+     * @since 1.0.0
+     */
+    fun exists(tenantId: String, subSystemCode: String): Boolean
 
     //endregion your codes 2
 
