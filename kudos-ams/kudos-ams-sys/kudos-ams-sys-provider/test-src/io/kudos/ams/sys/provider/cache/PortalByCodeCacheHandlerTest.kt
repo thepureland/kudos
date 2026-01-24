@@ -5,7 +5,7 @@ import io.kudos.ams.sys.common.vo.portal.SysPortalCacheItem
 import io.kudos.ams.sys.provider.dao.SysPortalDao
 import io.kudos.ams.sys.provider.model.po.SysPortal
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
-import io.kudos.test.container.cache.RdbAndRedisCacheTestBase
+import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -15,7 +15,7 @@ import kotlin.test.assertNull
 /**
  * junit test for PortalByCodeCacheHandler
  *
- * 测试数据来源：`V1.0.0.13__PortalByCodeCacheHandlerTest.sql`
+ * 测试数据来源：`PortalByCodeCacheHandlerTest.sql`
  *
  * @author K
  * @since 1.0.0

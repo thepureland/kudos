@@ -17,7 +17,7 @@ enum class RdbTypeEnum(productName: String, jdbcDriverName: String) {
     SQLITE("SQLite", "org.sqlite.JDBC"),
     DB2("DB2", "com.ibm.db2.jcc.DB2Driver"),
     CLICKHOUSE("ClickHouse", "com.clickhouse.jdbc.ClickHouseDriver"),
-    SQLSERVER("Sql Server", "com.microsoft.sqlserver.jdbc.SQLServerDriver");
+    SQLSERVER("SqlServer", "com.microsoft.sqlserver.jdbc.SQLServerDriver");
 
     val productName: String?
     val jdbcDriverName: String?

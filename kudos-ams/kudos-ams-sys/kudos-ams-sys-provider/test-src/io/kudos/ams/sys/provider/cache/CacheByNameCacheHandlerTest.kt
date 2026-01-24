@@ -6,7 +6,7 @@ import io.kudos.ams.sys.common.vo.cache.SysCacheCacheItem
 import io.kudos.ams.sys.provider.dao.SysCacheDao
 import io.kudos.ams.sys.provider.model.po.SysCache
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
-import io.kudos.test.container.cache.RdbAndRedisCacheTestBase
+import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -16,7 +16,7 @@ import kotlin.test.assertNull
 /**
  * junit test for CacheByNameCacheHandler
  *
- * 测试数据来源：`V1.0.0.1__CacheByNameCacheHandlerTest.sql`
+ * 测试数据来源：`CacheByNameCacheHandlerTest.sql`
  *
  * @author K
  * @since 1.0.0

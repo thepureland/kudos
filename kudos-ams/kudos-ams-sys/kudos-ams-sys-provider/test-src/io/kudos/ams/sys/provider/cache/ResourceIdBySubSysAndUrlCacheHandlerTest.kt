@@ -4,7 +4,7 @@ import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.ams.sys.provider.dao.SysResourceDao
 import io.kudos.ams.sys.provider.model.po.SysResource
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
-import io.kudos.test.container.cache.RdbAndRedisCacheTestBase
+import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
 import kotlin.test.Test
 import kotlin.test.assertNotNull
@@ -14,7 +14,7 @@ import kotlin.test.assertNull
 /**
  * junit test for ResourceIdBySubSysAndUrlCacheHandler
  *
- * 测试数据来源：`V1.0.0.9__ResourceIdBySubSysAndUrlCacheHandlerTest.sql`
+ * 测试数据来源：`ResourceIdBySubSysAndUrlCacheHandlerTest.sql`
  *
  * @author K
  * @since 1.0.0

@@ -5,5 +5,6 @@ dependencies {
 //    api("io.micrometer:micrometer-core")
 
     testImplementation(libs.h2database.h2)
-    testImplementation(project(":kudos-test:kudos-test-common"))
+    testImplementation(libs.postgresql)
+    testImplementation(project(":kudos-test:kudos-test-container"))
 }

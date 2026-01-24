@@ -2,7 +2,7 @@ package io.kudos.ams.sys.provider.service
 
 import io.kudos.ams.sys.provider.service.iservice.ISysMicroServiceAtomicServiceService
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
-import io.kudos.test.container.cache.RdbAndRedisCacheTestBase
+import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
 import kotlin.test.Test
 import kotlin.test.assertFalse
@@ -11,7 +11,7 @@ import kotlin.test.assertTrue
 /**
  * junit test for SysMicroServiceAtomicServiceService
  *
- * 测试数据来源：`V1.0.0.37__SysMicroServiceAtomicServiceServiceTest.sql`
+ * 测试数据来源：`SysMicroServiceAtomicServiceServiceTest.sql`
  *
  * @author K
  * @author AI: Cursor

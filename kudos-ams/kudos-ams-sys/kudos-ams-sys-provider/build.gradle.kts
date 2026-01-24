@@ -18,5 +18,5 @@ dependencies {
 
     //endregion your codes 1
 
-    testImplementation(project(":kudos-test:kudos-test-container"))
+    testImplementation(project(":kudos-test:kudos-test-rdb"))
 }

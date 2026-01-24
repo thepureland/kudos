@@ -5,7 +5,7 @@ import io.kudos.ams.sys.common.vo.module.SysModuleCacheItem
 import io.kudos.ams.sys.provider.dao.SysModuleDao
 import io.kudos.ams.sys.provider.model.po.SysModule
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
-import io.kudos.test.container.cache.RdbAndRedisCacheTestBase
+import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -15,7 +15,7 @@ import kotlin.test.assertNull
 /**
  * junit test for ModuleByCodeCacheHandler
  *
- * 测试数据来源：`V1.0.0.17__ModuleByCodeCacheHandlerTest.sql`
+ * 测试数据来源：`ModuleByCodeCacheHandlerTest.sql`
  *
  * @author K
  * @since 1.0.0

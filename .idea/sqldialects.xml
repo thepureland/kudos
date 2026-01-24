@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="SqlDialectMappings">
+    <file url="file://$PROJECT_DIR$/kudos-ams/kudos-ams-auth/kudos-ams-auth-provider/resources/sql/auth/h2/V1.0.0.19__insert_sys_dict_item.sql" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/kudos-ams/kudos-ams-auth/kudos-ams-auth-provider/resources/sql/auth/h2/V1.0.0.1__init_auth_user.sql" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/kudos-ams/kudos-ams-auth/kudos-ams-auth-provider/resources/sql/auth/h2/V1.0.0.2__init_auth_log_login.sql" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/kudos-ams/kudos-ams-auth/kudos-ams-auth-provider/resources/sql/auth/h2/V1.0.0.3__init_auth_role.sql" dialect="GenericSQL" />
@@ -8,5 +9,7 @@
     <file url="file://$PROJECT_DIR$/kudos-ams/kudos-ams-auth/kudos-ams-auth-provider/resources/sql/auth/h2/V1.0.0.5__init_auth_role_resource.sql" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/kudos-ams/kudos-ams-auth/kudos-ams-auth-provider/resources/sql/auth/h2/V1.0.0.6__init_auth_dept.sql" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/kudos-ams/kudos-ams-auth/kudos-ams-auth-provider/resources/sql/auth/h2/V1.0.0.7__init_auth_dept_user.sql" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/kudos-ams/kudos-ams-auth/kudos-ams-auth-provider/resources/sql/auth/h2/V1.0.0.8__insert_sys_cache.sql" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/kudos-ams/kudos-ams-auth/kudos-ams-auth-provider/resources/sql/auth/h2/V1.0.0.9__insert_sys_dict.sql" dialect="GenericSQL" />
   </component>
 </project>

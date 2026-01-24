@@ -5,7 +5,7 @@ import io.kudos.ams.sys.common.vo.tenant.SysTenantCacheItem
 import io.kudos.ams.sys.provider.dao.SysTenantDao
 import io.kudos.ams.sys.provider.model.po.SysTenant
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
-import io.kudos.test.container.cache.RdbAndRedisCacheTestBase
+import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -15,7 +15,7 @@ import kotlin.test.assertNull
 /**
  * junit test for TenantByIdCacheHandler
  *
- * 测试数据来源：`V1.0.0.11__TenantByIdCacheHandlerTest.sql`
+ * 测试数据来源：`TenantByIdCacheHandlerTest.sql`
  *
  * @author K
  * @since 1.0.0

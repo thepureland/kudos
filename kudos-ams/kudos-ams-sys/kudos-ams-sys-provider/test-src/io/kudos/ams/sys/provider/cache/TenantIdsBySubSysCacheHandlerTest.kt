@@ -3,7 +3,7 @@ package io.kudos.ams.sys.provider.cache
 import io.kudos.ams.sys.provider.dao.SysTenantSubSystemDao
 import io.kudos.ams.sys.provider.model.po.SysTenantSubSystem
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
-import io.kudos.test.container.cache.RdbAndRedisCacheTestBase
+import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -13,7 +13,7 @@ import kotlin.test.assertFalse
 /**
  * junit test for TenantIdsBySubSysCacheHandler
  *
- * 测试数据来源：`V1.0.0.12__TenantIdsBySubSysCacheHandlerTest.sql`
+ * 测试数据来源：`TenantIdsBySubSysCacheHandlerTest.sql`
  *
  * @author K
  * @since 1.0.0
