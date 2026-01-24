@@ -51,11 +51,9 @@ open class UserIdsByRoleIdCacheHandler : AbstractCacheHandler<List<String>>() {
 
         // 加载所有active=true的角色
         val roleCriteria = Criteria(AuthRole::active.name, OperatorEnum.EQ, true)
-        @Suppress("UNCHECKED_CAST")
-        val roles = authRoleDao.search(roleCriteria) as List<AuthRole>
+        val roles = authRoleDao.search(roleCriteria)
         
         // 加载所有角色-用户关系
-        @Suppress("UNCHECKED_CAST")
         val allRoleUsers = authRoleUserDao.allSearch()
         val roleIdToUserIdsMap = allRoleUsers
             .groupBy { it.roleId }

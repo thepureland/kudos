@@ -3,7 +3,7 @@ package io.kudos.ams.auth.provider.cache
 import io.kudos.ability.cache.common.enums.CacheStrategy
 import io.kudos.ams.auth.provider.dao.AuthDeptDao
 import io.kudos.ams.auth.provider.model.po.AuthDept
-import io.kudos.test.container.unittest.RdbAndRedisCacheTestBase
+import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import jakarta.annotation.Resource
 import kotlin.test.Test
@@ -14,7 +14,7 @@ import kotlin.test.assertTrue
 /**
  * junit test for DeptIdsByTenantIdCacheHandler
  *
- * 测试数据来源：`V1.0.0.11__DeptIdsByTenantIdCacheHandlerTest.sql`
+ * 测试数据来源：`DeptIdsByTenantIdCacheHandlerTest.sql`
  *
  * @author K
  * @author AI: Cursor
@@ -35,7 +35,7 @@ class DeptIdsByTenantIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun getDeptIds() {
-        // 存在的租户（有多个部门）- 使用 V1.0.0.11__DeptIdsByTenantIdCacheHandlerTest.sql 的测试数据
+        // 存在的租户（有多个部门）- 使用 DeptIdsByTenantIdCacheHandlerTest.sql 的测试数据
         var tenantId = "tenant-001"
         val deptIds1 = cacheHandler.getDeptIds(tenantId)
         val deptIds2 = cacheHandler.getDeptIds(tenantId)

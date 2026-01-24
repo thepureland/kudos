@@ -1,7 +1,7 @@
 package io.kudos.ams.auth.provider.cache
 
 import io.kudos.ams.auth.provider.dao.AuthRoleDao
-import io.kudos.test.container.unittest.RdbAndRedisCacheTestBase
+import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import jakarta.annotation.Resource
 import kotlin.test.Test
@@ -12,7 +12,7 @@ import kotlin.test.assertTrue
 /**
  * junit test for UserIdsByTenantIdAndRoleCodeCacheHandler
  *
- * 测试数据来源：`V1.0.0.5__UserIdsByTenantIdAndRoleCodeCacheHandlerTest.sql`
+ * 测试数据来源：`UserIdsByTenantIdAndRoleCodeCacheHandlerTest.sql`
  *
  * @author K
  * @author AI: Cursor

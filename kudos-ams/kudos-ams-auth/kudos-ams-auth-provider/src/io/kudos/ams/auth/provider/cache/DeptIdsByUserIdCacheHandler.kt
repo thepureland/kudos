@@ -51,8 +51,7 @@ open class DeptIdsByUserIdCacheHandler : AbstractCacheHandler<List<String>>() {
 
         // 加载所有active=true的用户
         val userCriteria = Criteria(AuthUser::active.name, OperatorEnum.EQ, true)
-        @Suppress("UNCHECKED_CAST")
-        val users = authUserDao.search(userCriteria) as List<AuthUser>
+        val users = authUserDao.search(userCriteria)
         
         // 加载所有部门-用户关系
         @Suppress("UNCHECKED_CAST")
