@@ -4,7 +4,7 @@ import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.ams.auth.common.vo.user.AuthUserCacheItem
 import io.kudos.ams.auth.provider.dao.AuthUserDao
 import io.kudos.ams.auth.provider.model.po.AuthUser
-import io.kudos.test.container.unittest.RdbAndRedisCacheTestBase
+import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import jakarta.annotation.Resource
 import kotlin.test.Test
@@ -16,7 +16,7 @@ import kotlin.test.assertNull
 /**
  * junit test for UserByIdCacheHandler
  *
- * 测试数据来源：`V1.0.0.2__UserByIdCacheHandlerTest.sql`
+ * 测试数据来源：`UserByIdCacheHandlerTest.sql`
  *
  * @author K
  * @author AI: Cursor

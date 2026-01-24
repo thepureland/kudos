@@ -2,7 +2,7 @@ package io.kudos.ams.auth.provider.service
 
 import io.kudos.ams.auth.provider.service.iservice.IAuthDeptService
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
-import io.kudos.test.container.unittest.RdbAndRedisCacheTestBase
+import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
 import kotlin.test.Test
 import kotlin.test.assertNotNull
@@ -13,7 +13,7 @@ import kotlin.test.assertFalse
 /**
  * junit test for AuthDeptService
  *
- * 测试数据来源：`V1.0.0.18__AuthDeptServiceTest.sql`
+ * 测试数据来源：`AuthDeptServiceTest.sql`
  *
  * @author K
  * @author AI: Cursor
@@ -56,8 +56,8 @@ class AuthDeptServiceTest : RdbAndRedisCacheTestBase() {
         assertNotNull(rootNode)
         
         // 验证树结构：子部门应该在父部门的children中
-        assertNotNull(rootNode?.children)
-        assertTrue(rootNode!!.children!!.isNotEmpty())
+        assertNotNull(rootNode.children)
+        assertTrue(rootNode.children!!.isNotEmpty())
         assertTrue(rootNode.children!!.any { it.name == "svc-dept-test-child-1" })
         assertTrue(rootNode.children!!.any { it.name == "svc-dept-test-child-2" })
         

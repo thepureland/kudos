@@ -2,7 +2,7 @@ package io.kudos.ams.auth.provider.service
 
 import io.kudos.ams.auth.provider.service.iservice.IAuthRoleUserService
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
-import io.kudos.test.container.unittest.RdbAndRedisCacheTestBase
+import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
 import kotlin.test.Test
 import kotlin.test.assertTrue
@@ -11,7 +11,7 @@ import kotlin.test.assertFalse
 /**
  * junit test for AuthRoleUserService
  *
- * 测试数据来源：`V1.0.0.19__AuthRoleUserServiceTest.sql`
+ * 测试数据来源：`AuthRoleUserServiceTest.sql`
  *
  * @author K
  * @author AI: Cursor

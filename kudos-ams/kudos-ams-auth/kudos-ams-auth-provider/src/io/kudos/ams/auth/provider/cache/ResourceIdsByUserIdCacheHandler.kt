@@ -57,18 +57,15 @@ open class ResourceIdsByUserIdCacheHandler : AbstractCacheHandler<List<String>>(
 
         // 加载所有active=true的用户
         val userCriteria = Criteria(AuthUser::active.name, OperatorEnum.EQ, true)
-        @Suppress("UNCHECKED_CAST")
-        val users = authUserDao.search(userCriteria) as List<AuthUser>
+        val users = authUserDao.search(userCriteria)
         
         // 加载所有角色-用户关系
-        @Suppress("UNCHECKED_CAST")
         val allRoleUsers = authRoleUserDao.allSearch()
         val userIdToRoleIdsMap = allRoleUsers
             .groupBy { it.userId }
             .mapValues { entry -> entry.value.map { it.roleId } }
         
         // 加载所有角色-资源关系
-        @Suppress("UNCHECKED_CAST")
         val allRoleResources = authRoleResourceDao.allSearch()
         val roleIdToResourceIdsMap = allRoleResources
             .groupBy { it.roleId }

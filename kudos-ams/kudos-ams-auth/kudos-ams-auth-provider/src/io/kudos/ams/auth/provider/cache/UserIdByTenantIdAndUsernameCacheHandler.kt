@@ -56,8 +56,7 @@ open class UserIdByTenantIdAndUsernameCacheHandler : AbstractCacheHandler<String
 
         // 加载所有可用的用户（注：reloadAll批量加载时直接查DB效率更高）
         val userCriteria = Criteria(AuthUser::active.name, OperatorEnum.EQ, true)
-        @Suppress("UNCHECKED_CAST")
-        val users = authUserDao.search(userCriteria) as List<AuthUser>
+        val users = authUserDao.search(userCriteria)
         log.debug("从数据库加载了${users.size}条用户信息。")
 
         // 清除缓存
@@ -95,8 +94,7 @@ open class UserIdByTenantIdAndUsernameCacheHandler : AbstractCacheHandler<String
             addAnd(AuthUser::active.name, OperatorEnum.EQ, true)
         }
 
-        @Suppress("UNCHECKED_CAST")
-        val users = authUserDao.search(userCriteria) as List<AuthUser>
+        val users = authUserDao.search(userCriteria)
         return if (users.isEmpty()) {
             log.debug("从数据库找不到租户${tenantId}且用户名为${username}的active=true的用户。")
             null

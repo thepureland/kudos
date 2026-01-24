@@ -1,6 +1,6 @@
 package io.kudos.ams.auth.provider.cache
 
-import io.kudos.test.container.unittest.RdbAndRedisCacheTestBase
+import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import jakarta.annotation.Resource
 import kotlin.test.Test
@@ -11,7 +11,7 @@ import kotlin.test.assertTrue
 /**
  * junit test for DeptIdsByUserIdCacheHandler
  *
- * 测试数据来源：`V1.0.0.13__DeptIdsByUserIdCacheHandlerTest.sql`
+ * 测试数据来源：`DeptIdsByUserIdCacheHandlerTest.sql`
  *
  * @author K
  * @author AI: Cursor
