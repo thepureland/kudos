@@ -106,8 +106,7 @@ open class SysParamService : BaseCrudService<String, SysParam, SysParamDao>(), I
 
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {
-        @Suppress("UNCHECKED_CAST")
-        val params = dao.inSearchById(ids) as List<SysParam>
+        val params = dao.inSearchById(ids)
         val moduleAndNames = params.map { Pair(it.moduleCode, it.paramName) }
         val count = super.batchDelete(ids)
         log.debug("批量删除参数，期望删除${ids.size}条，实际删除${count}条。")

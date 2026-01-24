@@ -32,7 +32,7 @@ class SysDictItemServiceTest : RdbAndRedisCacheTestBase() {
         assertNotNull(rootNode)
         
         // 测试树形结构：子节点应该在父节点的children中
-        assertTrue(rootNode?.children?.any { it.itemCode == "svc-item-code-2" } == true)
+        assertTrue(rootNode.children?.any { it.itemCode == "svc-item-code-2" } == true)
     }
 
     @Test

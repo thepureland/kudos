@@ -53,6 +53,7 @@ open class RdbTestBase : SqlTestBase() {
         @DynamicPropertySource
         @JvmStatic
         private fun registerProperties(registry: DynamicPropertyRegistry) {
+            registry.add("kudos.ability.cache.enabled") { "false" }
             H2TestContainer.startIfNeeded(registry) //TODO 由子类指定具体的TestContainer
         }
     }

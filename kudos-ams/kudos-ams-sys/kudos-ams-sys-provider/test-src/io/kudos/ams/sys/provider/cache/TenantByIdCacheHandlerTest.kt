@@ -96,10 +96,10 @@ class TenantByIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
         // 验证缓存中的记录
         val cacheItem1 = CacheKit.getValue(cacheHandler.cacheName(), id) as SysTenantCacheItem?
         assertNotNull(cacheItem1)
-        assertEquals(newTenantName, cacheItem1!!.name)
+        assertEquals(newTenantName, cacheItem1.name)
         val cacheItem2 = cacheHandler.getTenantById(id)
         assertNotNull(cacheItem2)
-        assertEquals(newTenantName, cacheItem2!!.name)
+        assertEquals(newTenantName, cacheItem2.name)
     }
 
     @Test
