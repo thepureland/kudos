@@ -5,7 +5,7 @@ import io.kudos.ams.sys.common.vo.dictitem.SysDictItemCacheItem
 import io.kudos.ams.sys.provider.dao.SysDictItemDao
 import io.kudos.ams.sys.provider.model.po.SysDictItem
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
-import io.kudos.test.container.cache.RdbAndRedisCacheTestBase
+import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -14,7 +14,7 @@ import kotlin.test.assertFalse
 /**
  * junit test for DictItemsByModuleAndTypeCacheHandler
  *
- * 测试数据来源：`V1.0.0.5__DictItemsByModuleAndTypeCacheHandlerTest.sql`
+ * 测试数据来源：`DictItemsByModuleAndTypeCacheHandlerTest.sql`
  *
  * @author K
  * @since 1.0.0

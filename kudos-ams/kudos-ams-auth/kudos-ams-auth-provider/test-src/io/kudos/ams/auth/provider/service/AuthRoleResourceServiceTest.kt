@@ -2,10 +2,9 @@ package io.kudos.ams.auth.provider.service
 
 import io.kudos.ams.auth.provider.service.iservice.IAuthRoleResourceService
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
-import io.kudos.test.container.cache.RdbAndRedisCacheTestBase
+import io.kudos.test.container.unittest.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
 import kotlin.test.Test
-import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.test.assertFalse
 

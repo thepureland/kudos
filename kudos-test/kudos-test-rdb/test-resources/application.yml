@@ -1,0 +1,32 @@
+#//region your codes 1
+spring:
+  datasource:
+    dynamic:
+      primary: tcp-ds1
+      hikari:
+        connection-timeout: 30000
+        validation-timeout: 5000
+        idle-timeout: 600000
+        leak-detection-threshold: 0
+        max-lifetime: 1800000
+        max-pool-size: 10
+        min-idle: 10
+        initialization-fail-timeout: 1
+        is-auto-commit: false
+        is-read-only: false
+        is-isolate-internal-queries: false
+        is-register-mbeans: false
+        is-allow-pool-suspension: false
+      datasource:
+        master:
+          hikari:
+            is-auto-commit: false
+          driver-class-name: org.h2.Driver
+          url: jdbc:h2:~/h2/ds-master;DATABASE_TO_LOWER=TRUE;
+          username: sa
+          password: sa
+        tcp-ds1:
+          driver-class-name: org.h2.Driver
+          url: jdbc:h2:tcp://localhost:1521/mem:test;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;
+          username: sa
+          password: sa

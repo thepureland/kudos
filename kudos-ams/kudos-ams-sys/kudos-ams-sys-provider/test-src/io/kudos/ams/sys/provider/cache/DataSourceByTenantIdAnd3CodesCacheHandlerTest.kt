@@ -5,7 +5,7 @@ import io.kudos.ams.sys.common.vo.datasource.SysDataSourceCacheItem
 import io.kudos.ams.sys.provider.dao.SysDataSourceDao
 import io.kudos.ams.sys.provider.model.po.SysDataSource
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
-import io.kudos.test.container.cache.RdbAndRedisCacheTestBase
+import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -15,7 +15,7 @@ import kotlin.test.assertNull
 /**
  * junit test for DataSourceByTenantIdAnd3CodesCacheHandler
  *
- * 测试数据来源：`V1.0.0.3__DataSourceByTenantIdAnd3CodesCacheHandlerTest.sql`
+ * 测试数据来源：`DataSourceByTenantIdAnd3CodesCacheHandlerTest.sql`
  *
  * @author K
  * @since 1.0.0

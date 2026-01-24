@@ -6,7 +6,7 @@ import io.kudos.ams.sys.provider.dao.SysAccessRuleDao
 import io.kudos.ams.sys.provider.dao.SysAccessRuleIpDao
 import io.kudos.ams.sys.provider.model.po.SysAccessRuleIp
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
-import io.kudos.test.container.cache.RdbAndRedisCacheTestBase
+import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
@@ -17,7 +17,7 @@ import kotlin.test.assertFalse
 /**
  * junit test for AccessRuleIpsBySubSysAndTenantIdCacheHandler
  *
- * 测试数据来源：`V1.0.0.18__AccessRuleIpsBySubSysAndTenantIdCacheHandlerTest.sql`
+ * 测试数据来源：`AccessRuleIpsBySubSysAndTenantIdCacheHandlerTest.sql`
  *
  * @author K
  * @since 1.0.0

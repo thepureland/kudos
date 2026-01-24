@@ -101,6 +101,44 @@ object RdbKit {
     }
 
     /**
+     * 根据数据源确定关系型数据库的类型
+     *
+     * 通过获取数据源连接的元数据中的URL，解析出数据库类型。
+     * 如果传入的dataSource为null，则使用当前上下文的数据源（通过getDataSource()获取）。
+     *
+     * ## 核心流程
+     * 1. 如果dataSource为null，使用getDataSource()获取当前上下文的数据源
+     * 2. 从数据源的连接中获取DatabaseMetaData
+     * 3. 从DatabaseMetaData中获取连接URL
+     * 4. 调用determinRdbTypeByUrl()解析URL，返回对应的RdbTypeEnum
+     *
+     * ## 依赖与外部交互
+     * - 依赖：DataSource（通过参数传入或从上下文获取）
+     * - IO：获取数据库连接（会打开一个连接以获取元数据）
+     *
+     * ## 资料/契约
+     * - 输入：dataSource可为null，为null时使用当前上下文的数据源
+     * - 输出：返回RdbTypeEnum枚举值，表示数据库类型（如H2、MYSQL、POSTGRESQL等）
+     * - 错误：如果数据源连接失败或URL格式不正确，可能抛出异常
+     *
+     * ## 性能特性
+     * - 需要打开一个数据库连接以获取元数据，有一定性能开销
+     * - 连接会在方法执行完毕后自动关闭（通过connection.use）
+     *
+     * @param dataSource 数据源，为null时使用当前上下文的数据源
+     * @return 关系型数据库的类型枚举
+     * @author K
+     * @since 1.0.0
+     */
+    fun determineRdbTypeByDataSource(dataSource: DataSource?): RdbTypeEnum {
+        val ds = dataSource ?: getDataSource()
+        return ds.connection.use { conn ->
+            val url = conn.metaData.url
+            determinRdbTypeByUrl(url)
+        }
+    }
+
+    /**
      * 根据关系型数据库类型得到连接测试sql语句
      *
      * @param rdbType 关系型数据库类型

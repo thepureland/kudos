@@ -2,7 +2,7 @@ package io.kudos.ams.sys.provider.service
 
 import io.kudos.ams.sys.provider.service.iservice.ISysDictItemI18nService
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
-import io.kudos.test.container.cache.RdbAndRedisCacheTestBase
+import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -12,7 +12,7 @@ import kotlin.test.assertTrue
 /**
  * junit test for SysDictItemI18NService
  *
- * 测试数据来源：`V1.0.0.30__SysDictItemI18NServiceTest.sql`
+ * 测试数据来源：`SysDictItemI18NServiceTest.sql`
  *
  * @author K
  * @author AI: Cursor

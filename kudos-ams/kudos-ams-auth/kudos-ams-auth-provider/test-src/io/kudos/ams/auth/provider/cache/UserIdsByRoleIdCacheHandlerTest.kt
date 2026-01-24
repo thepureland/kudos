@@ -1,6 +1,6 @@
 package io.kudos.ams.auth.provider.cache
 
-import io.kudos.test.container.cache.RdbAndRedisCacheTestBase
+import io.kudos.test.container.unittest.RdbAndRedisCacheTestBase
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import jakarta.annotation.Resource
 import kotlin.test.Test

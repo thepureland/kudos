@@ -34,6 +34,7 @@ include("kudos-tools")
 // test
 include("kudos-test:kudos-test-common")
 include("kudos-test:kudos-test-container")
+include("kudos-test:kudos-test-rdb")
 include("kudos-test:kudos-test-api:kudos-test-api-contract:kudos-test-api-contract-provider")
 include("kudos-test:kudos-test-api:kudos-test-api-contract:kudos-test-api-contract-consumer")
 

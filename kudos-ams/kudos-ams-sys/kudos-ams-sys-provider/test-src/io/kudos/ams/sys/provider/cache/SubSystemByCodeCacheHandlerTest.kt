@@ -5,7 +5,7 @@ import io.kudos.ams.sys.common.vo.subsystem.SysSubSystemCacheItem
 import io.kudos.ams.sys.provider.dao.SysSubSystemDao
 import io.kudos.ams.sys.provider.model.po.SysSubSystem
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
-import io.kudos.test.container.cache.RdbAndRedisCacheTestBase
+import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -15,7 +15,7 @@ import kotlin.test.assertNull
 /**
  * junit test for SubSysByCodeCacheHandler
  *
- * 测试数据来源：`V1.0.0.14__SubSystemByCodeCacheHandlerTest.sql`
+ * 测试数据来源：`SubSystemByCodeCacheHandlerTest.sql`
  *
  * @author K
  * @since 1.0.0
