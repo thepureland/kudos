@@ -3,7 +3,9 @@ package io.kudos.test.rdb
 import io.kudos.ability.data.rdb.jdbc.kit.RdbKit
 import io.kudos.test.common.init.EnableKudosTest
 import jakarta.annotation.Resource
-import org.junit.jupiter.api.BeforeEach
+import org.springframework.test.context.transaction.BeforeTransaction
+import org.junit.jupiter.api.parallel.Execution
+import org.junit.jupiter.api.parallel.ExecutionMode
 import org.springframework.core.io.ClassPathResource
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator
 import org.springframework.transaction.annotation.Transactional
@@ -60,7 +62,7 @@ import javax.sql.DataSource
  */
 @EnableKudosTest
 @Transactional
-//@Execution(ExecutionMode.SAME_THREAD)
+@Execution(ExecutionMode.SAME_THREAD)
 open class SqlTestBase {
 
     /**
@@ -133,10 +135,29 @@ open class SqlTestBase {
     protected lateinit var dataSource: DataSource
 
     /**
-     * 在每个测试方法执行前，加载并执行测试数据SQL文件
+     * 在每个测试方法的事务启动前，加载并执行测试数据SQL文件
+     * 
+     * 关键修复：问题的根本原因是：
+     * 1. @BeforeEach 在测试方法的事务中执行，但 ResourceDatabasePopulator 可能没有正确在事务中执行
+     * 2. 多个测试类一起运行时，虽然测试方法是串行的，但每个测试类的 @BeforeEach 都会执行，
+     *    可能导致数据相互干扰
+     * 
+     * 解决方案：使用 @BeforeTransaction 代替 @BeforeEach
+     * - @BeforeTransaction 会在测试事务启动**之前**执行，数据会提交到数据库
+     * - 这样测试方法在事务中可以看到这些数据
+     * - 虽然测试结束后数据不会回滚（因为数据在事务外），但每个测试方法执行前都会重新执行 SQL，
+     *   所以数据是干净的
+     * 
+     * 注意：使用 @BeforeTransaction 意味着数据会在事务外提交，测试结束后不会自动回滚。
+     * 但由于每个测试方法执行前都会重新执行 SQL 文件，所以数据是干净的，不会相互干扰。
      */
-    @BeforeEach
+    @BeforeTransaction
     open fun setUpTestData() {
+        val timestamp = System.currentTimeMillis()
+        val threadName = Thread.currentThread().name
+        val className = this::class.qualifiedName
+        println("[$timestamp] PID=${ProcessHandle.current().pid()} Thread=$threadName Class=$className - 开始执行测试数据SQL")
+
         val sqlPath = getTestDataSqlPath()
         val resource = ClassPathResource(sqlPath)
 
@@ -151,7 +172,16 @@ open class SqlTestBase {
         populator.setIgnoreFailedDrops(true)
         populator.setContinueOnError(false)
 
-        populator.execute(dataSource)
+        try {
+            // 使用 execute(dataSource) 在事务外执行 SQL，数据会立即提交
+            // 这样测试方法在事务中可以看到这些数据
+            // 虽然测试结束后数据不会回滚，但每个测试方法执行前都会重新执行 SQL，所以数据是干净的
+            populator.execute(dataSource)
+            println("[$timestamp] PID=${ProcessHandle.current().pid()} Thread=$threadName Class=$className - 测试数据SQL执行成功: $sqlPath")
+        } catch (e: Exception) {
+            println("[$timestamp] PID=${ProcessHandle.current().pid()} Thread=$threadName Class=$className - 测试数据SQL执行失败: $sqlPath, 错误: ${e.message}")
+            throw e
+        }
     }
 
 }

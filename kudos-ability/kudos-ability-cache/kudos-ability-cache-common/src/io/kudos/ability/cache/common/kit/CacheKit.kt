@@ -51,7 +51,7 @@ object CacheKit {
      * @since 1.0.0
      */
     fun getCache(name: String): Cache? {
-        val cacheManager = getCacheManager()
+        val cacheManager = getCacheManager() ?: return null
         val cache: Cache? = cacheManager.getCache(name)
         if (cache == null) {
             log.error("缓存【$name】不存在！")
@@ -308,17 +308,20 @@ object CacheKit {
         if (!isCacheActive(cacheName)) {
             return
         }
-        val cacheManager = getCacheManager()
+        val cacheManager = getCacheManager() ?: return
         cacheManager.evictByPattern(cacheName, keyPattern)
     }
 
     /**
      * 获取缓存管理器
+     * 
+     * 如果缓存未启用（kudos.ability.cache.enabled=false），mixCacheManager Bean 不会被创建，
+     * 此时返回 null，调用方需要处理 null 的情况。
      *
-     * @return MixCacheManager
+     * @return MixCacheManager，如果缓存未启用则返回 null
      */
-    private fun getCacheManager(): MixCacheManager {
-        return SpringKit.getBean("mixCacheManager") as MixCacheManager
+    private fun getCacheManager(): MixCacheManager? {
+        return SpringKit.getBeanOrNull("mixCacheManager") as? MixCacheManager
     }
 
     /**
