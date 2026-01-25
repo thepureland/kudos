@@ -1,5 +1,7 @@
 package io.kudos.ams.auth.provider.cache
 
+import io.kudos.ams.auth.provider.dao.AuthRoleResourceDao
+import io.kudos.ams.auth.provider.model.po.AuthRoleResource
 import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import jakarta.annotation.Resource
@@ -22,6 +24,9 @@ class ResourceIdsByRoleIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Resource
     private lateinit var cacheHandler: ResourceIdsByRoleIdCacheHandler
+
+    @Resource
+    private lateinit var authRoleResourceDao: AuthRoleResourceDao
 
     @Test
     fun getResourceIds() {
@@ -47,10 +52,11 @@ class ResourceIdsByRoleIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
         assertTrue(resourceIds3.contains("resource-ccc"), "应该包含resource-ccc")
         assertTrue(resourceIds3.contains("resource-ddd"), "应该包含resource-ddd")
 
-        // 存在的角色ID，但没有资源
+        // 存在的角色ID，但没有资源（先清除可能存在的缓存）
         roleId = "33333333-3333-3333-3333-333333333333"
+        cacheHandler.evict(roleId) // 清除可能存在的缓存
         val resourceIds5 = cacheHandler.getResourceIds(roleId)
-        assertTrue(resourceIds5.isEmpty(), "角色${roleId}没有资源，应该返回空列表")
+        assertTrue(resourceIds5.isEmpty(), "角色${roleId}没有资源，应该返回空列表，实际返回：${resourceIds5}")
 
         // 不存在的角色ID
         roleId = "no_exist_role_id"
@@ -60,53 +66,103 @@ class ResourceIdsByRoleIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnRoleResourceChange() {
-        val roleId = "11111111-1111-1111-1111-111111111111"
+        val roleId = "33333333-3333-3333-3333-333333333333"
+        val resourceId = "resource-fff"
         
-        // 先获取一次，确保缓存中有数据
+        // 先清除可能存在的缓存，确保测试环境干净
+        cacheHandler.evict(roleId)
+        
+        // 先获取一次，记录初始资源数量
         val resourceIdsBefore = cacheHandler.getResourceIds(roleId)
-        assertTrue(resourceIdsBefore.isNotEmpty(), "角色${roleId}应该有资源ID列表")
+        val beforeSize = resourceIdsBefore.size
+        
+        // 插入一条新的角色-资源关系记录
+        val authRoleResource = AuthRoleResource().apply {
+            this.roleId = roleId
+            this.resourceId = resourceId
+        }
+        val id = authRoleResourceDao.insert(authRoleResource)
         
         // 同步缓存（模拟角色-资源关系变更）
         cacheHandler.syncOnRoleResourceChange(roleId)
         
-        // 验证缓存已被清除并重新加载
+        // 验证缓存已被清除并重新加载，应该包含新插入的资源
         val resourceIdsAfter = cacheHandler.getResourceIds(roleId)
-        assertTrue(resourceIdsAfter.isNotEmpty(), "同步后应该能重新获取到资源ID列表")
+        assertTrue(resourceIdsAfter.size > beforeSize, "同步后应该包含新插入的资源ID，之前：${beforeSize}，之后：${resourceIdsAfter.size}")
+        assertTrue(resourceIdsAfter.contains(resourceId), "应该包含新插入的资源ID")
+        
+        // 清理测试数据
+        authRoleResourceDao.deleteById(id)
+        // 清理缓存，避免影响其他测试
+        cacheHandler.syncOnRoleResourceChange(roleId)
     }
 
     @Test
     fun syncOnBatchRoleResourceChange() {
-        val roleId1 = "11111111-1111-1111-1111-111111111111"
-        val roleId2 = "22222222-2222-2222-2222-222222222222"
+        val roleId1 = "33333333-3333-3333-3333-333333333333"
+        val roleId2 = "33333333-3333-3333-3333-333333333333"
+        val resourceId1 = "resource-ggg"
+        val resourceId2 = "resource-hhh"
         val roleIds = listOf(roleId1, roleId2)
         
-        // 先获取一次，确保缓存中有数据
+        // 先获取一次，记录初始资源数量
         val resourceIds1Before = cacheHandler.getResourceIds(roleId1)
-        val resourceIds2Before = cacheHandler.getResourceIds(roleId2)
-        assertTrue(resourceIds1Before.isNotEmpty() || resourceIds2Before.isNotEmpty(), "至少一个角色应该有资源ID列表")
+        val beforeSize = resourceIds1Before.size
+        
+        // 批量插入角色-资源关系记录
+        val authRoleResource1 = AuthRoleResource().apply {
+            this.roleId = roleId1
+            this.resourceId = resourceId1
+        }
+        val id1 = authRoleResourceDao.insert(authRoleResource1)
+        
+        val authRoleResource2 = AuthRoleResource().apply {
+            this.roleId = roleId2
+            this.resourceId = resourceId2
+        }
+        val id2 = authRoleResourceDao.insert(authRoleResource2)
         
         // 批量同步缓存（模拟批量角色-资源关系变更）
         cacheHandler.syncOnBatchRoleResourceChange(roleIds)
         
-        // 验证缓存已被清除并重新加载
+        // 验证缓存已被清除并重新加载，应该包含新插入的资源
         val resourceIds1After = cacheHandler.getResourceIds(roleId1)
-        val resourceIds2After = cacheHandler.getResourceIds(roleId2)
-        assertTrue(resourceIds1After.isNotEmpty() || resourceIds2After.isNotEmpty(), "同步后应该能重新获取到资源ID列表")
+        assertTrue(resourceIds1After.size > beforeSize, "同步后应该包含新插入的资源ID")
+        
+        // 清理测试数据
+        authRoleResourceDao.deleteById(id1)
+        authRoleResourceDao.deleteById(id2)
     }
 
     @Test
     fun syncOnRoleDelete() {
         val roleId = "33333333-3333-3333-3333-333333333333"
+        val resourceId = "resource-iii"
         
-        // 先获取一次，确保缓存中有数据（即使为空列表）
+        // 先插入一条角色-资源关系记录
+        val authRoleResource = AuthRoleResource().apply {
+            this.roleId = roleId
+            this.resourceId = resourceId
+        }
+        val id = authRoleResourceDao.insert(authRoleResource)
+        
+        // 先同步缓存，确保缓存中有新插入的数据
+        cacheHandler.syncOnRoleResourceChange(roleId)
+        
+        // 获取一次，确保缓存中有数据
         val resourceIdsBefore = cacheHandler.getResourceIds(roleId)
+        assertTrue(resourceIdsBefore.contains(resourceId), "新插入的资源关系应该在缓存中")
+        
+        // 删除数据库记录（模拟角色删除或角色-资源关系删除）
+        val deleteSuccess = authRoleResourceDao.deleteById(id)
+        assertTrue(deleteSuccess, "删除应该成功")
         
         // 同步缓存（模拟角色删除）
         cacheHandler.syncOnRoleDelete(roleId)
         
-        // 验证缓存已被清除
+        // 验证缓存已被清除，重新获取应该不包含已删除的资源
         val resourceIdsAfter = cacheHandler.getResourceIds(roleId)
-        assertTrue(resourceIdsAfter.isEmpty(), "删除角色后，缓存应该被清除，重新获取应该返回空列表")
+        assertTrue(!resourceIdsAfter.contains(resourceId), "删除后，缓存应该被清除，不应该包含已删除的资源ID")
     }
 
 }

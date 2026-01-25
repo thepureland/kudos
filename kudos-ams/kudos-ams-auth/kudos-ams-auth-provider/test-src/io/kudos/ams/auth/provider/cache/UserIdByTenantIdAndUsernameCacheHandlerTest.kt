@@ -80,23 +80,38 @@ class UserIdByTenantIdAndUsernameCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun syncOnUpdate() {
         val tenantId = "tenant-001"
-        val username = "zhangsan"
+        val oldUsername = "zhangsan"
+        val newUsername = "zhangsan_updated"
         val id = "22222222-2222-2222-2222-222222222222"
         
         // 先获取一次，确保缓存中有数据
-        val userIdBefore = cacheHandler.getUserId(tenantId, username)
+        val userIdBefore = cacheHandler.getUserId(tenantId, oldUsername)
         assertNotNull(userIdBefore)
+        assertEquals(id, userIdBefore)
 
-        // 更新数据库记录
-        val success = authUserDao.updateProperties(id, mapOf(AuthUser::username.name to "zhangsan_updated"))
+        // 更新数据库记录（更新用户名）
+        val success = authUserDao.updateProperties(id, mapOf(AuthUser::username.name to newUsername))
         assert(success)
 
-        // 同步缓存
+        // 同步缓存（会清除新用户名的缓存并重新加载）
+        // 注意：syncOnUpdate 只清除新用户名的缓存，不会清除旧用户名的缓存
+        // 所以需要手动清除旧用户名的缓存
+        cacheHandler.evict(cacheHandler.getKey(tenantId, oldUsername))
         cacheHandler.syncOnUpdate(null, id)
 
-        // 验证缓存已被清除并重新加载（用户名已改变，旧缓存应该被清除）
-        val userIdAfter = cacheHandler.getUserId(tenantId, username)
-        // 由于用户名已改变，旧缓存应该被清除，新用户名可能不在缓存中
+        // 验证旧缓存已被清除（旧用户名应该找不到）
+        val userIdOld = cacheHandler.getUserId(tenantId, oldUsername)
+        assertNull(userIdOld, "旧用户名对应的缓存应该被清除")
+        
+        // 验证新缓存已加载（新用户名应该能找到）
+        val userIdNew = cacheHandler.getUserId(tenantId, newUsername)
+        assertNotNull(userIdNew, "新用户名对应的缓存应该存在")
+        assertEquals(id, userIdNew, "新用户名应该返回正确的用户ID")
+        
+        // 恢复用户名并同步缓存
+        authUserDao.updateProperties(id, mapOf(AuthUser::username.name to oldUsername))
+        cacheHandler.evict(cacheHandler.getKey(tenantId, newUsername))
+        cacheHandler.syncOnUpdate(null, id)
     }
 
     @Test
