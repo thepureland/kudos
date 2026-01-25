@@ -32,12 +32,12 @@ class RoleIdByTenantIdAndRoleCodeCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun getRoleId() {
         // 存在的
-        var tenantId = "tenant-001"
+        var tenantId = "tenant-001-yoCqktm5"
         var code = "ROLE_ADMIN"
         val roleId2 = cacheHandler.getRoleId(tenantId, code)
         val roleId3 = cacheHandler.getRoleId(tenantId, code)
         assertNotNull(roleId2)
-        assertEquals("11111111-1111-1111-1111-111111111111", roleId2)
+        assertEquals("6e2b8b93-1111-1111-1111-111111111111", roleId2)
         assertEquals(roleId2, roleId3)
 
         // 不存在的角色编码
@@ -50,14 +50,14 @@ class RoleIdByTenantIdAndRoleCodeCacheHandlerTest : RdbAndRedisCacheTestBase() {
         assertNull(cacheHandler.getRoleId(tenantId, code))
 
         // inactive 角色（只缓存 active=true 的）
-        tenantId = "tenant-001"
+        tenantId = "tenant-001-yoCqktm5"
         code = "ROLE_TEST"
         assertNull(cacheHandler.getRoleId(tenantId, code))
     }
 
     @Test
     fun syncOnInsert() {
-        val tenantId = "tenant-001"
+        val tenantId = "tenant-001-yoCqktm5"
         val timestamp = System.currentTimeMillis()
         val roleCode = "ROLE_TEST_INSERT_${timestamp}"
         val authRole = AuthRole().apply {
@@ -80,9 +80,9 @@ class RoleIdByTenantIdAndRoleCodeCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnUpdate() {
-        val tenantId = "tenant-001"
+        val tenantId = "tenant-001-yoCqktm5"
         val roleCode = "ROLE_USER"
-        val id = "22222222-2222-2222-2222-222222222222"
+        val id = "6e2b8b93-2222-2222-2222-222222222222"
         
         // 先获取一次，确保缓存中有数据
         val roleIdBefore = cacheHandler.getRoleId(tenantId, roleCode)
@@ -103,7 +103,7 @@ class RoleIdByTenantIdAndRoleCodeCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnUpdateActive() {
-        val tenantId = "tenant-001"
+        val tenantId = "tenant-001-yoCqktm5"
         val timestamp = System.currentTimeMillis()
         val roleCode = "ROLE_TEST_ACTIVE_${timestamp}"
         val authRole = AuthRole().apply {
@@ -132,7 +132,7 @@ class RoleIdByTenantIdAndRoleCodeCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnDelete() {
-        val tenantId = "tenant-001"
+        val tenantId = "tenant-001-yoCqktm5"
         val timestamp = System.currentTimeMillis()
         val roleCode = "ROLE_TEST_DELETE_${timestamp}"
         val authRole = AuthRole().apply {
@@ -162,7 +162,7 @@ class RoleIdByTenantIdAndRoleCodeCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnBatchDelete() {
-        val tenantId = "tenant-001"
+        val tenantId = "tenant-001-yoCqktm5"
         val timestamp = System.currentTimeMillis() % 1000000000
         val roleCode1 = "R${timestamp}1" // 确保不超过32字符
         val roleCode2 = "R${timestamp}2" // 确保不超过32字符

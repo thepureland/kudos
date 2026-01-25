@@ -32,12 +32,12 @@ class UserIdByTenantIdAndUsernameCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun getUserId() {
         // 存在的
-        var tenantId = "tenant-001"
+        var tenantId = "tenant-001-d4JfsZwG"
         var username = "admin"
         val userId2 = cacheHandler.getUserId(tenantId, username)
         val userId3 = cacheHandler.getUserId(tenantId, username)
         assertNotNull(userId2)
-        assertEquals("11111111-1111-1111-1111-111111111111", userId2)
+        assertEquals("29e1c4c0-1111-1111-1111-111111111111", userId2)
         assertEquals(userId2, userId3)
 
         // 不存在的用户名
@@ -50,20 +50,20 @@ class UserIdByTenantIdAndUsernameCacheHandlerTest : RdbAndRedisCacheTestBase() {
         assertNull(cacheHandler.getUserId(tenantId, username))
 
         // inactive 用户（只缓存 active=true 的）
-        tenantId = "tenant-001"
+        tenantId = "tenant-001-d4JfsZwG"
         username = "wangwu"
         assertNull(cacheHandler.getUserId(tenantId, username))
     }
 
     @Test
     fun syncOnInsert() {
-        val tenantId = "tenant-001"
+        val tenantId = "tenant-001-d4JfsZwG"
         val username = "test_user_insert_${System.currentTimeMillis()}"
         val authUser = AuthUser().apply {
             this.tenantId = tenantId
             this.username = username
             this.loginPassword = "password"
-            this.supervisorId = "11111111-1111-1111-1111-111111111111"
+            this.supervisorId = "29e1c4c0-1111-1111-1111-111111111111"
             this.active = true
         }
         val id = authUserDao.insert(authUser)
@@ -79,10 +79,10 @@ class UserIdByTenantIdAndUsernameCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnUpdate() {
-        val tenantId = "tenant-001"
+        val tenantId = "tenant-001-d4JfsZwG"
         val oldUsername = "zhangsan"
         val newUsername = "zhangsan_updated"
-        val id = "22222222-2222-2222-2222-222222222222"
+        val id = "29e1c4c0-2222-2222-2222-222222222222"
         
         // 先获取一次，确保缓存中有数据
         val userIdBefore = cacheHandler.getUserId(tenantId, oldUsername)
@@ -116,13 +116,13 @@ class UserIdByTenantIdAndUsernameCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnUpdateActive() {
-        val tenantId = "tenant-001"
+        val tenantId = "tenant-001-d4JfsZwG"
         val username = "test_user_active_${System.currentTimeMillis()}"
         val authUser = AuthUser().apply {
             this.tenantId = tenantId
             this.username = username
             this.loginPassword = "password"
-            this.supervisorId = "11111111-1111-1111-1111-111111111111"
+            this.supervisorId = "29e1c4c0-1111-1111-1111-111111111111"
             this.active = false
         }
         val id = authUserDao.insert(authUser)
@@ -144,13 +144,13 @@ class UserIdByTenantIdAndUsernameCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnDelete() {
-        val tenantId = "tenant-001"
+        val tenantId = "tenant-001-d4JfsZwG"
         val username = "test_user_delete_${System.currentTimeMillis()}"
         val authUser = AuthUser().apply {
             this.tenantId = tenantId
             this.username = username
             this.loginPassword = "password"
-            this.supervisorId = "11111111-1111-1111-1111-111111111111"
+            this.supervisorId = "29e1c4c0-1111-1111-1111-111111111111"
             this.active = true
         }
         val id = authUserDao.insert(authUser)
@@ -173,7 +173,7 @@ class UserIdByTenantIdAndUsernameCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnBatchDelete() {
-        val tenantId = "tenant-001"
+        val tenantId = "tenant-001-d4JfsZwG"
         val timestamp = System.currentTimeMillis() % 1000000000
         val username1 = "u${timestamp}1" // 确保不超过32字符
         val username2 = "u${timestamp}2" // 确保不超过32字符
@@ -182,7 +182,7 @@ class UserIdByTenantIdAndUsernameCacheHandlerTest : RdbAndRedisCacheTestBase() {
             this.tenantId = tenantId
             this.username = username1
             this.loginPassword = "password"
-            this.supervisorId = "11111111-1111-1111-1111-111111111111"
+            this.supervisorId = "29e1c4c0-1111-1111-1111-111111111111"
             this.active = true
         }
         val id1 = authUserDao.insert(authUser1)
@@ -191,7 +191,7 @@ class UserIdByTenantIdAndUsernameCacheHandlerTest : RdbAndRedisCacheTestBase() {
             this.tenantId = tenantId
             this.username = username2
             this.loginPassword = "password"
-            this.supervisorId = "11111111-1111-1111-1111-111111111111"
+            this.supervisorId = "29e1c4c0-1111-1111-1111-111111111111"
             this.active = true
         }
         val id2 = authUserDao.insert(authUser2)

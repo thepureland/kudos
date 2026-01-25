@@ -36,7 +36,7 @@ class DeptByIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun getDeptById() {
         // 存在的
-        var id = "11111111-1111-1111-1111-111111111111"
+        var id = "38a5e0b2-1111-1111-1111-111111111111"
         val cacheItem2 = cacheHandler.getDeptById(id)
         val cacheItem3 = cacheHandler.getDeptById(id)
         assertNotNull(cacheItem2)
@@ -50,8 +50,8 @@ class DeptByIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun getDeptsByIds() {
         // 都存在的
-        var id1 = "11111111-1111-1111-1111-111111111111"
-        var id2 = "22222222-2222-2222-2222-222222222222"
+        var id1 = "38a5e0b2-1111-1111-1111-111111111111"
+        var id2 = "38a5e0b2-2222-2222-2222-222222222222"
         val result2 = cacheHandler.getDeptsByIds(listOf(id1, id2))
         val result3 = cacheHandler.getDeptsByIds(listOf(id1, id2))
         assert(result2.isNotEmpty())
@@ -88,7 +88,7 @@ class DeptByIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun syncOnUpdate() {
         // 更新数据库中已存在的记录
-        val id = "22222222-2222-2222-2222-222222222222"
+        val id = "38a5e0b2-2222-2222-2222-222222222222"
         val success = authDeptDao.updateProperties(id, mapOf(AuthDept::name.name to newDeptName))
         assert(success)
 
@@ -147,7 +147,7 @@ class DeptByIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
     private fun insertNewRecordToDb(): String {
         val authDept = AuthDept().apply {
             name = "测试部门_${System.currentTimeMillis()}"
-            tenantId = "11111111-1111-1111-1111-111111111111"
+            tenantId = "38a5e0b2-1111-1111-1111-111111111111"
             deptTypeDictCode = "DEPT_TYPE_DEFAULT"
             active = true
         }

@@ -38,7 +38,7 @@ class ResourceIdsByRoleCodeCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun getResourceIds() {
         // 存在的租户和角色
-        var tenantId = "tenant-001"
+        var tenantId = "tenant-001-7h2QGcPi"
         var roleCode = "ROLE_ADMIN"
         val resourceIds2 = cacheHandler.getResourceIds(tenantId, roleCode)
         val resourceIds3 = cacheHandler.getResourceIds(tenantId, roleCode)
@@ -59,9 +59,9 @@ class ResourceIdsByRoleCodeCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnRoleResourceInsert() {
-        val tenantId = "tenant-001"
+        val tenantId = "tenant-001-7h2QGcPi"
         val roleCode = "ROLE_USER"
-        val roleId = "22222222-2222-2222-2222-222222222222" // ROLE_USER 的 ID
+        val roleId = "174d0234-2222-2222-2222-222222222222" // ROLE_USER 的 ID
         val resourceId = "resource-xxx" // 新的资源ID（使用不存在的资源ID，避免唯一约束冲突）
         
         // 先清除可能存在的缓存，确保测试环境干净
@@ -101,9 +101,9 @@ class ResourceIdsByRoleCodeCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnRoleResourceDelete() {
-        val tenantId = "tenant-001"
+        val tenantId = "tenant-001-7h2QGcPi"
         val roleCode = "ROLE_USER"
-        val roleId = "22222222-2222-2222-2222-222222222222" // ROLE_USER 的 ID
+        val roleId = "174d0234-2222-2222-2222-222222222222" // ROLE_USER 的 ID
         val resourceId = "resource-eee" // 新的资源ID
         
         // 先插入一条角色-资源关系记录
@@ -134,11 +134,11 @@ class ResourceIdsByRoleCodeCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnRoleUpdate() {
-        val oldTenantId = "tenant-001"
+        val oldTenantId = "tenant-001-7h2QGcPi"
         val oldRoleCode = "ROLE_USER"
-        val newTenantId = "tenant-001"
+        val newTenantId = "tenant-001-7h2QGcPi"
         val newRoleCode = "ROLE_USER_UPDATED"
-        val roleId = "22222222-2222-2222-2222-222222222222" // ROLE_USER 的 ID
+        val roleId = "174d0234-2222-2222-2222-222222222222" // ROLE_USER 的 ID
         
         // 先获取一次，确保缓存中有数据
         val resourceIdsBefore = cacheHandler.getResourceIds(oldTenantId, oldRoleCode)
@@ -164,14 +164,14 @@ class ResourceIdsByRoleCodeCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnRoleDelete() {
-        val tenantId = "tenant-001"
+        val tenantId = "tenant-001-7h2QGcPi"
         val roleCode = "ROLE_USER"
         
         // 先获取一次，确保缓存中有数据（即使为空列表）
         cacheHandler.getResourceIds(tenantId, roleCode)
         
         // 删除数据库中的角色记录
-        val roleId = "22222222-2222-2222-2222-222222222222" // ROLE_USER 的 ID
+        val roleId = "174d0234-2222-2222-2222-222222222222" // ROLE_USER 的 ID
         authRoleDao.deleteById(roleId)
         
         // 同步缓存（模拟角色删除）

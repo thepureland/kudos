@@ -25,19 +25,19 @@ class AuthRoleResourceDaoTest : RdbTestBase() {
     @Test
     fun exists() {
         // 测试存在的关系
-        assertTrue(authRoleResourceDao.exists("50000000-0000-0000-0000-000000000060", "50000000-0000-0000-0000-000000000062"))
+        assertTrue(authRoleResourceDao.exists("49748162-0000-0000-0000-000000000060", "49748162-0000-0000-0000-000000000062"))
         
         // 测试不存在的关系
-        assertFalse(authRoleResourceDao.exists("50000000-0000-0000-0000-000000000060", "non-existent-resource"))
-        assertFalse(authRoleResourceDao.exists("non-existent-role", "50000000-0000-0000-0000-000000000062"))
+        assertFalse(authRoleResourceDao.exists("49748162-0000-0000-0000-000000000060", "non-existent-resource"))
+        assertFalse(authRoleResourceDao.exists("non-existent-role", "49748162-0000-0000-0000-000000000062"))
     }
 
     @Test
     fun searchRoleIdsByResourceId() {
-        val resourceId = "50000000-0000-0000-0000-000000000062"
+        val resourceId = "49748162-0000-0000-0000-000000000062"
         val roleIds = authRoleResourceDao.searchRoleIdsByResourceId(resourceId)
         assertTrue(roleIds.size >= 1)
-        assertTrue(roleIds.contains("50000000-0000-0000-0000-000000000060"))
+        assertTrue(roleIds.contains("49748162-0000-0000-0000-000000000060"))
         
         // 测试不存在的资源ID
         val emptyRoleIds = authRoleResourceDao.searchRoleIdsByResourceId("non-existent-resource")

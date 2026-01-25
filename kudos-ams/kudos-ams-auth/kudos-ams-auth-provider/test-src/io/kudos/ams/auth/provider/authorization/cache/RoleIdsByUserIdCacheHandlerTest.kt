@@ -31,28 +31,28 @@ class RoleIdsByUserIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun getRoleIds() {
         // 存在的用户ID，有一个角色
-        var userId = "11111111-1111-1111-1111-111111111111"
+        var userId = "88207878-1111-1111-1111-111111111111"
         val roleIds1 = cacheHandler.getRoleIds(userId)
         val roleIds2 = cacheHandler.getRoleIds(userId)
         assertTrue(roleIds1.isNotEmpty(), "用户${userId}应该有角色ID列表")
         assertEquals(roleIds1, roleIds2, "两次调用应该返回相同的结果（缓存验证）")
         // 验证角色ID：用户11111111有角色ROLE_ADMIN
         assertEquals(1, roleIds1.size, "用户${userId}应该有1个角色ID")
-        assertTrue(roleIds1.contains("11111111-1111-1111-1111-111111111111"), "应该包含ROLE_ADMIN的角色ID，实际返回：${roleIds1}")
+        assertTrue(roleIds1.contains("88207878-1111-1111-1111-111111111111"), "应该包含ROLE_ADMIN的角色ID，实际返回：${roleIds1}")
 
         // 存在的用户ID，有多个角色
-        userId = "22222222-2222-2222-2222-222222222222"
+        userId = "88207878-2222-2222-2222-222222222222"
         val roleIds3 = cacheHandler.getRoleIds(userId)
         val roleIds4 = cacheHandler.getRoleIds(userId)
         assertTrue(roleIds3.isNotEmpty(), "用户${userId}应该有角色ID列表")
         assertEquals(roleIds3, roleIds4, "两次调用应该返回相同的结果（缓存验证）")
         // 用户22222222有两个角色（ROLE_USER和ROLE_ADMIN）
         assertEquals(2, roleIds3.size, "用户${userId}应该有2个角色ID，实际返回：${roleIds3}")
-        assertTrue(roleIds3.contains("11111111-1111-1111-1111-111111111111"), "应该包含ROLE_ADMIN的角色ID")
-        assertTrue(roleIds3.contains("22222222-2222-2222-2222-222222222222"), "应该包含ROLE_USER的角色ID")
+        assertTrue(roleIds3.contains("88207878-1111-1111-1111-111111111111"), "应该包含ROLE_ADMIN的角色ID")
+        assertTrue(roleIds3.contains("88207878-2222-2222-2222-222222222222"), "应该包含ROLE_USER的角色ID")
 
         // 存在的用户ID，但没有角色
-        userId = "33333333-3333-3333-3333-333333333333"
+        userId = "88207878-3333-3333-3333-333333333333"
         val roleIds5 = cacheHandler.getRoleIds(userId)
         assertTrue(roleIds5.isEmpty(), "用户${userId}没有角色，应该返回空列表")
 
@@ -64,8 +64,8 @@ class RoleIdsByUserIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnRoleUserChange() {
-        val userId = "33333333-3333-3333-3333-333333333333"
-        val roleId = "22222222-2222-2222-2222-222222222222" // ROLE_USER 的 ID
+        val userId = "88207878-3333-3333-3333-333333333333"
+        val roleId = "88207878-2222-2222-2222-222222222222" // ROLE_USER 的 ID
         
         // 先获取一次，记录初始角色数量
         val roleIdsBefore = cacheHandler.getRoleIds(userId)
@@ -92,10 +92,10 @@ class RoleIdsByUserIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnBatchRoleUserChange() {
-        val userId1 = "33333333-3333-3333-3333-333333333333"
-        val userId2 = "33333333-3333-3333-3333-333333333333"
-        val roleId1 = "11111111-1111-1111-1111-111111111111" // ROLE_ADMIN 的 ID
-        val roleId2 = "22222222-2222-2222-2222-222222222222" // ROLE_USER 的 ID
+        val userId1 = "88207878-3333-3333-3333-333333333333"
+        val userId2 = "88207878-3333-3333-3333-333333333333"
+        val roleId1 = "88207878-1111-1111-1111-111111111111" // ROLE_ADMIN 的 ID
+        val roleId2 = "88207878-2222-2222-2222-222222222222" // ROLE_USER 的 ID
         val userIds = listOf(userId1, userId2)
         
         // 先获取一次，记录初始角色数量
@@ -129,8 +129,8 @@ class RoleIdsByUserIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnUserDelete() {
-        val userId = "33333333-3333-3333-3333-333333333333"
-        val roleId = "11111111-1111-1111-1111-111111111111" // ROLE_ADMIN 的 ID
+        val userId = "88207878-3333-3333-3333-333333333333"
+        val roleId = "88207878-1111-1111-1111-111111111111" // ROLE_ADMIN 的 ID
         
         // 先插入一条用户-角色关系记录
         val authRoleUser = AuthRoleUser().apply {
