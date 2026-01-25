@@ -25,25 +25,25 @@ class AuthRoleUserServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun getUserIdsByRoleId() {
-        val roleId = "30000000-0000-0000-0000-000000000043"
+        val roleId = "7817d37f-0000-0000-0000-000000000043"
         val userIds = authRoleUserService.getUserIdsByRoleId(roleId)
         assertTrue(userIds.size >= 2)
-        assertTrue(userIds.contains("30000000-0000-0000-0000-000000000040"))
-        assertTrue(userIds.contains("30000000-0000-0000-0000-000000000041"))
+        assertTrue(userIds.contains("7817d37f-0000-0000-0000-000000000040"))
+        assertTrue(userIds.contains("7817d37f-0000-0000-0000-000000000041"))
     }
 
     @Test
     fun getRoleIdsByUserId() {
-        val userId = "30000000-0000-0000-0000-000000000040"
+        val userId = "7817d37f-0000-0000-0000-000000000040"
         val roleIds = authRoleUserService.getRoleIdsByUserId(userId)
         assertTrue(roleIds.size >= 1)
-        assertTrue(roleIds.contains("30000000-0000-0000-0000-000000000043"))
+        assertTrue(roleIds.contains("7817d37f-0000-0000-0000-000000000043"))
     }
 
     @Test
     fun exists() {
-        val roleId = "30000000-0000-0000-0000-000000000043"
-        val userId = "30000000-0000-0000-0000-000000000040"
+        val roleId = "7817d37f-0000-0000-0000-000000000043"
+        val userId = "7817d37f-0000-0000-0000-000000000040"
         
         // 测试存在的关系
         assertTrue(authRoleUserService.exists(roleId, userId))
@@ -54,11 +54,11 @@ class AuthRoleUserServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun batchBind() {
-        val roleId = "30000000-0000-0000-0000-000000000044"
+        val roleId = "7817d37f-0000-0000-0000-000000000044"
         val userIds = listOf(
-            "30000000-0000-0000-0000-000000000040",
-            "30000000-0000-0000-0000-000000000041",
-            "30000000-0000-0000-0000-000000000042"
+            "7817d37f-0000-0000-0000-000000000040",
+            "7817d37f-0000-0000-0000-000000000041",
+            "7817d37f-0000-0000-0000-000000000042"
         )
         
         // 批量绑定
@@ -76,8 +76,8 @@ class AuthRoleUserServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun unbind() {
-        val roleId = "30000000-0000-0000-0000-000000000043"
-        val userId = "30000000-0000-0000-0000-000000000041"
+        val roleId = "7817d37f-0000-0000-0000-000000000043"
+        val userId = "7817d37f-0000-0000-0000-000000000041"
         
         // 验证关系存在
         assertTrue(authRoleUserService.exists(roleId, userId))

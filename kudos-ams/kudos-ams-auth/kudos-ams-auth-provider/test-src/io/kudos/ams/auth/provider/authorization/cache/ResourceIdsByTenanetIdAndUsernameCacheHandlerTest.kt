@@ -41,7 +41,7 @@ class ResourceIdsByTenanetIdAndUsernameCacheHandlerTest : RdbAndRedisCacheTestBa
     @Test
     fun getResourceIds() {
         // 存在的租户和用户
-        var tenantId = "tenant-001"
+        var tenantId = "tenant-001-InqhPsBT"
         var username = "admin"
         val resourceIds2 = cacheHandler.getResourceIds(tenantId, username)
         val resourceIds3 = cacheHandler.getResourceIds(tenantId, username)
@@ -62,11 +62,11 @@ class ResourceIdsByTenanetIdAndUsernameCacheHandlerTest : RdbAndRedisCacheTestBa
 
     @Test
     fun syncOnUserUpdate() {
-        val oldTenantId = "tenant-001"
+        val oldTenantId = "tenant-001-InqhPsBT"
         val oldUsername = "zhangsan"
-        val newTenantId = "tenant-001"
+        val newTenantId = "tenant-001-InqhPsBT"
         val newUsername = "zhangsan_updated"
-        val userId = "22222222-2222-2222-2222-222222222222" // zhangsan 的 ID
+        val userId = "8e232124-2222-2222-2222-222222222222" // zhangsan 的 ID
         
         // 先获取一次，确保缓存中有数据
         val resourceIdsBefore = cacheHandler.getResourceIds(oldTenantId, oldUsername)
@@ -90,10 +90,10 @@ class ResourceIdsByTenanetIdAndUsernameCacheHandlerTest : RdbAndRedisCacheTestBa
 
     @Test
     fun syncOnRoleUserChange() {
-        val tenantId = "tenant-001"
+        val tenantId = "tenant-001-InqhPsBT"
         val username = "zhangsan"
-        val userId = "22222222-2222-2222-2222-222222222222" // zhangsan 的 ID
-        val roleId = "11111111-1111-1111-1111-111111111111" // ROLE_ADMIN 的 ID
+        val userId = "8e232124-2222-2222-2222-222222222222" // zhangsan 的 ID
+        val roleId = "8e232124-1111-1111-1111-111111111111" // ROLE_ADMIN 的 ID
         
         // 先获取一次，记录初始资源数量
         val resourceIdsBefore = cacheHandler.getResourceIds(tenantId, username)
@@ -119,8 +119,8 @@ class ResourceIdsByTenanetIdAndUsernameCacheHandlerTest : RdbAndRedisCacheTestBa
 
     @Test
     fun syncOnRoleResourceChange() {
-        val roleId = "11111111-1111-1111-1111-111111111111" // ROLE_ADMIN 的 ID
-        val tenantId = "tenant-001"
+        val roleId = "8e232124-1111-1111-1111-111111111111" // ROLE_ADMIN 的 ID
+        val tenantId = "tenant-001-InqhPsBT"
         val username = "admin"
         val resourceId = "resource-kkk"
         
@@ -159,14 +159,14 @@ class ResourceIdsByTenanetIdAndUsernameCacheHandlerTest : RdbAndRedisCacheTestBa
 
     @Test
     fun syncOnUserDelete() {
-        val tenantId = "tenant-001"
+        val tenantId = "tenant-001-InqhPsBT"
         val username = "zhangsan"
         
         // 先获取一次，确保缓存中有数据（即使为空列表）
         cacheHandler.getResourceIds(tenantId, username)
 
         // 删除数据库中的用户记录
-        val userId = "22222222-2222-2222-2222-222222222222" // zhangsan 的 ID
+        val userId = "8e232124-2222-2222-2222-222222222222" // zhangsan 的 ID
         authUserDao.deleteById(userId)
         
         // 同步缓存（模拟用户删除）

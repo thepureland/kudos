@@ -24,8 +24,8 @@ class AuthUserServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun getUserByTenantIdAndUsername() {
-        val tenantId = "svc-tenant-user-test-1"
-        val username = "svc-user-test-1"
+        val tenantId = "svc-tenant-user-test-1-3iZR7Pv6"
+        val username = "svc-user-test-1-3iZR7Pv6"
         val cacheItem = authUserService.getUserByTenantIdAndUsername(tenantId, username)
         assertNotNull(cacheItem)
         assertTrue(cacheItem.username == username)
@@ -37,10 +37,10 @@ class AuthUserServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun getUserRecord() {
-        val id = "30000000-0000-0000-0000-000000000016"
+        val id = "a970f8c0-0000-0000-0000-000000000016"
         val record = authUserService.getUserRecord(id)
         assertNotNull(record)
-        assertTrue(record.username == "svc-user-test-1")
+        assertTrue(record.username == "svc-user-test-1-3iZR7Pv6")
         
         // 测试不存在的用户
         val notExist = authUserService.getUserRecord("non-existent-id")
@@ -49,34 +49,34 @@ class AuthUserServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun getUsersByTenantId() {
-        val tenantId = "svc-tenant-user-test-1"
+        val tenantId = "svc-tenant-user-test-1-3iZR7Pv6"
         val users = authUserService.getUsersByTenantId(tenantId)
         assertTrue(users.size >= 3)
-        assertTrue(users.any { it.username == "svc-user-test-1" })
+        assertTrue(users.any { it.username == "svc-user-test-1-3iZR7Pv6" })
     }
 
     @Test
     fun getUsersByDeptId() {
-        val deptId = "30000000-0000-0000-0000-000000000020"
+        val deptId = "a970f8c0-0000-0000-0000-000000000020"
         val users = authUserService.getUsersByDeptId(deptId)
         assertTrue(users.size >= 2)
-        assertTrue(users.any { it.username == "svc-user-test-1" })
-        assertTrue(users.any { it.username == "svc-user-test-2" })
+        assertTrue(users.any { it.username == "svc-user-test-1-3iZR7Pv6" })
+        assertTrue(users.any { it.username == "svc-user-test-2-3iZR7Pv6" })
     }
 
     @Test
     fun getUsersByRoleCode() {
-        val tenantId = "svc-tenant-user-test-1"
-        val roleCode = "svc-role-user-test-1"
+        val tenantId = "svc-tenant-user-test-1-3iZR7Pv6"
+        val roleCode = "svc-role-user-test-1-3iZR7Pv6"
         val users = authUserService.getUsersByRoleCode(tenantId, roleCode)
         assertTrue(users.size >= 2)
-        assertTrue(users.any { it.username == "svc-user-test-1" })
-        assertTrue(users.any { it.username == "svc-user-test-2" })
+        assertTrue(users.any { it.username == "svc-user-test-1-3iZR7Pv6" })
+        assertTrue(users.any { it.username == "svc-user-test-2-3iZR7Pv6" })
     }
 
     @Test
     fun updateActive() {
-        val id = "30000000-0000-0000-0000-000000000016"
+        val id = "a970f8c0-0000-0000-0000-000000000016"
         // 先设置为false
         assertTrue(authUserService.updateActive(id, false))
         var user = authUserService.getUserRecord(id)
@@ -92,7 +92,7 @@ class AuthUserServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun resetPassword() {
-        val id = "30000000-0000-0000-0000-000000000016"
+        val id = "a970f8c0-0000-0000-0000-000000000016"
         val newPassword = "new-password-123"
         assertTrue(authUserService.resetPassword(id, newPassword))
         val user = authUserService.getUserRecord(id)
@@ -103,7 +103,7 @@ class AuthUserServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun resetSecurityPassword() {
-        val id = "30000000-0000-0000-0000-000000000016"
+        val id = "a970f8c0-0000-0000-0000-000000000016"
         val newPassword = "new-security-pwd-123"
         assertTrue(authUserService.resetSecurityPassword(id, newPassword))
         val user = authUserService.getUserRecord(id)
@@ -114,7 +114,7 @@ class AuthUserServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun updateLastLoginInfo() {
-        val id = "30000000-0000-0000-0000-000000000016"
+        val id = "a970f8c0-0000-0000-0000-000000000016"
         val loginIp = 192168001001L
         val loginTime = LocalDateTime.now()
         assertTrue(authUserService.updateLastLoginInfo(id, loginIp, loginTime))
@@ -127,7 +127,7 @@ class AuthUserServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun updateLastLogoutInfo() {
-        val id = "30000000-0000-0000-0000-000000000016"
+        val id = "a970f8c0-0000-0000-0000-000000000016"
         val logoutTime = LocalDateTime.now()
         assertTrue(authUserService.updateLastLogoutInfo(id, logoutTime))
         val user = authUserService.getUserRecord(id)
@@ -137,7 +137,7 @@ class AuthUserServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun incrementLoginErrorTimes() {
-        val id = "30000000-0000-0000-0000-000000000017"
+        val id = "a970f8c0-0000-0000-0000-000000000017"
         val userBefore = authUserService.getUserRecord(id)
         val errorTimesBefore = userBefore?.loginErrorTimes ?: 0
         
@@ -149,7 +149,7 @@ class AuthUserServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun resetLoginErrorTimes() {
-        val id = "30000000-0000-0000-0000-000000000017"
+        val id = "a970f8c0-0000-0000-0000-000000000017"
         // 先增加错误次数
         authUserService.incrementLoginErrorTimes(id)
         
@@ -162,7 +162,7 @@ class AuthUserServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun incrementSecurityPasswordErrorTimes() {
-        val id = "30000000-0000-0000-0000-000000000017"
+        val id = "a970f8c0-0000-0000-0000-000000000017"
         val userBefore = authUserService.getUserRecord(id)
         val errorTimesBefore = userBefore?.securityPasswordErrorTimes ?: 0
         
@@ -174,7 +174,7 @@ class AuthUserServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun resetSecurityPasswordErrorTimes() {
-        val id = "30000000-0000-0000-0000-000000000017"
+        val id = "a970f8c0-0000-0000-0000-000000000017"
         // 先增加错误次数
         authUserService.incrementSecurityPasswordErrorTimes(id)
         

@@ -36,7 +36,7 @@ class UserIdsByTenantIdAndRoleCodeCacheHandlerTest : RdbAndRedisCacheTestBase() 
     @Test
     fun getUserIds() {
         // 存在的租户和角色
-        var tenantId = "tenant-001"
+        var tenantId = "tenant-001-58TWQx6c"
         var roleCode = "ROLE_ADMIN"
         val userIds2 = cacheHandler.getUserIds(tenantId, roleCode)
         val userIds3 = cacheHandler.getUserIds(tenantId, roleCode)
@@ -57,10 +57,10 @@ class UserIdsByTenantIdAndRoleCodeCacheHandlerTest : RdbAndRedisCacheTestBase() 
 
     @Test
     fun syncOnRoleUserInsert() {
-        val tenantId = "tenant-001"
+        val tenantId = "tenant-001-58TWQx6c"
         val roleCode = "ROLE_USER"
-        val roleId = "22222222-2222-2222-2222-222222222222" // ROLE_USER 的 ID
-        val userId = "33333333-3333-3333-3333-333333333333"
+        val roleId = "10796e8c-2222-2222-2222-222222222222" // ROLE_USER 的 ID
+        val userId = "10796e8c-3333-3333-3333-333333333333"
         
         // 先获取一次，记录初始用户数量
         val userIdsBefore = cacheHandler.getUserIds(tenantId, roleCode)
@@ -87,10 +87,10 @@ class UserIdsByTenantIdAndRoleCodeCacheHandlerTest : RdbAndRedisCacheTestBase() 
 
     @Test
     fun syncOnRoleUserDelete() {
-        val tenantId = "tenant-001"
+        val tenantId = "tenant-001-58TWQx6c"
         val roleCode = "ROLE_USER"
-        val roleId = "22222222-2222-2222-2222-222222222222" // ROLE_USER 的 ID
-        val userId = "33333333-3333-3333-3333-333333333333"
+        val roleId = "10796e8c-2222-2222-2222-222222222222" // ROLE_USER 的 ID
+        val userId = "10796e8c-3333-3333-3333-333333333333"
         
         // 先插入一条角色-用户关系记录
         val authRoleUser = AuthRoleUser().apply {
@@ -120,11 +120,11 @@ class UserIdsByTenantIdAndRoleCodeCacheHandlerTest : RdbAndRedisCacheTestBase() 
 
     @Test
     fun syncOnRoleUpdate() {
-        val oldTenantId = "tenant-001"
+        val oldTenantId = "tenant-001-58TWQx6c"
         val oldRoleCode = "ROLE_USER"
-        val newTenantId = "tenant-001"
+        val newTenantId = "tenant-001-58TWQx6c"
         val newRoleCode = "ROLE_USER_UPDATED"
-        val roleId = "22222222-2222-2222-2222-222222222222" // ROLE_USER 的 ID
+        val roleId = "10796e8c-2222-2222-2222-222222222222" // ROLE_USER 的 ID
         
         // 先获取一次，确保缓存中有数据
         val userIdsBefore = cacheHandler.getUserIds(oldTenantId, oldRoleCode)
@@ -149,14 +149,14 @@ class UserIdsByTenantIdAndRoleCodeCacheHandlerTest : RdbAndRedisCacheTestBase() 
 
     @Test
     fun syncOnRoleDelete() {
-        val tenantId = "tenant-001"
+        val tenantId = "tenant-001-58TWQx6c"
         val roleCode = "ROLE_USER"
         
         // 先获取一次，确保缓存中有数据（即使为空列表）
         cacheHandler.getUserIds(tenantId, roleCode)
         
         // 删除数据库中的角色记录
-        val roleId = "22222222-2222-2222-2222-222222222222" // ROLE_USER 的 ID
+        val roleId = "10796e8c-2222-2222-2222-222222222222" // ROLE_USER 的 ID
         authRoleDao.deleteById(roleId)
         
         // 同步缓存（模拟角色删除）

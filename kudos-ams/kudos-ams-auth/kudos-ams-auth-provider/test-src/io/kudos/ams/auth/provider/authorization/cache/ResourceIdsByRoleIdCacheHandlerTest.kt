@@ -31,29 +31,29 @@ class ResourceIdsByRoleIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun getResourceIds() {
         // 存在的角色ID，有多个资源
-        var roleId = "11111111-1111-1111-1111-111111111111"
+        var roleId = "699180cb-1111-1111-1111-111111111111"
         val resourceIds1 = cacheHandler.getResourceIds(roleId)
         val resourceIds2 = cacheHandler.getResourceIds(roleId)
         assertTrue(resourceIds1.isNotEmpty(), "角色${roleId}应该有资源ID列表")
         assertEquals(resourceIds1, resourceIds2, "两次调用应该返回相同的结果（缓存验证）")
         // 验证资源ID：角色ROLE_ADMIN有resource-aaa和resource-bbb
         assertEquals(2, resourceIds1.size, "角色${roleId}应该有2个资源ID")
-        assertTrue(resourceIds1.contains("resource-aaa"), "应该包含resource-aaa，实际返回：${resourceIds1}")
-        assertTrue(resourceIds1.contains("resource-bbb"), "应该包含resource-bbb，实际返回：${resourceIds1}")
+        assertTrue(resourceIds1.contains("resource-aaa-wXxAqLrp"), "应该包含resource-aaa，实际返回：${resourceIds1}")
+        assertTrue(resourceIds1.contains("resource-bbb-wXxAqLrp"), "应该包含resource-bbb，实际返回：${resourceIds1}")
 
         // 存在的角色ID，有多个资源
-        roleId = "22222222-2222-2222-2222-222222222222"
+        roleId = "699180cb-2222-2222-2222-222222222222"
         val resourceIds3 = cacheHandler.getResourceIds(roleId)
         val resourceIds4 = cacheHandler.getResourceIds(roleId)
         assertTrue(resourceIds3.isNotEmpty(), "角色${roleId}应该有资源ID列表")
         assertEquals(resourceIds3, resourceIds4, "两次调用应该返回相同的结果（缓存验证）")
         // 角色ROLE_USER有resource-ccc和resource-ddd
         assertEquals(2, resourceIds3.size, "角色${roleId}应该有2个资源ID，实际返回：${resourceIds3}")
-        assertTrue(resourceIds3.contains("resource-ccc"), "应该包含resource-ccc")
-        assertTrue(resourceIds3.contains("resource-ddd"), "应该包含resource-ddd")
+        assertTrue(resourceIds3.contains("resource-ccc-wXxAqLrp"), "应该包含resource-ccc")
+        assertTrue(resourceIds3.contains("resource-ddd-wXxAqLrp"), "应该包含resource-ddd")
 
         // 存在的角色ID，但没有资源（先清除可能存在的缓存）
-        roleId = "33333333-3333-3333-3333-333333333333"
+        roleId = "699180cb-3333-3333-3333-333333333333"
         cacheHandler.evict(roleId) // 清除可能存在的缓存
         val resourceIds5 = cacheHandler.getResourceIds(roleId)
         assertTrue(resourceIds5.isEmpty(), "角色${roleId}没有资源，应该返回空列表，实际返回：${resourceIds5}")
@@ -66,7 +66,7 @@ class ResourceIdsByRoleIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnRoleResourceChange() {
-        val roleId = "33333333-3333-3333-3333-333333333333"
+        val roleId = "699180cb-3333-3333-3333-333333333333"
         val resourceId = "resource-fff"
         
         // 先清除可能存在的缓存，确保测试环境干净
@@ -99,8 +99,8 @@ class ResourceIdsByRoleIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnBatchRoleResourceChange() {
-        val roleId1 = "33333333-3333-3333-3333-333333333333"
-        val roleId2 = "33333333-3333-3333-3333-333333333333"
+        val roleId1 = "699180cb-3333-3333-3333-333333333333"
+        val roleId2 = "699180cb-3333-3333-3333-333333333333"
         val resourceId1 = "resource-ggg"
         val resourceId2 = "resource-hhh"
         val roleIds = listOf(roleId1, roleId2)
@@ -136,7 +136,7 @@ class ResourceIdsByRoleIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnRoleDelete() {
-        val roleId = "33333333-3333-3333-3333-333333333333"
+        val roleId = "699180cb-3333-3333-3333-333333333333"
         val resourceId = "resource-iii"
         
         // 先插入一条角色-资源关系记录

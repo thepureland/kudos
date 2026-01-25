@@ -25,10 +25,10 @@ class AuthDeptUserDaoTest : RdbTestBase() {
     @Test
     fun exists() {
         // 测试存在的关系
-        assertTrue(authDeptUserDao.exists("50000000-0000-0000-0000-000000000042", "50000000-0000-0000-0000-000000000040"))
+        assertTrue(authDeptUserDao.exists("952bb1b3-0000-0000-0000-000000000042", "952bb1b3-0000-0000-0000-000000000040"))
         
         // 测试不存在的关系
-        assertFalse(authDeptUserDao.exists("50000000-0000-0000-0000-000000000042", "non-existent-user"))
-        assertFalse(authDeptUserDao.exists("non-existent-dept", "50000000-0000-0000-0000-000000000040"))
+        assertFalse(authDeptUserDao.exists("952bb1b3-0000-0000-0000-000000000042", "non-existent-user"))
+        assertFalse(authDeptUserDao.exists("non-existent-dept", "952bb1b3-0000-0000-0000-000000000040"))
     }
 }

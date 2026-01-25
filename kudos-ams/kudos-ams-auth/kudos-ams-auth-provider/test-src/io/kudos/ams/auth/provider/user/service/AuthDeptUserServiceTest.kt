@@ -25,25 +25,25 @@ class AuthDeptUserServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun getUserIdsByDeptId() {
-        val deptId = "30000000-0000-0000-0000-000000000063"
+        val deptId = "6cd22b48-0000-0000-0000-000000000063"
         val userIds = authDeptUserService.getUserIdsByDeptId(deptId)
         assertTrue(userIds.size >= 2)
-        assertTrue(userIds.contains("30000000-0000-0000-0000-000000000060"))
-        assertTrue(userIds.contains("30000000-0000-0000-0000-000000000061"))
+        assertTrue(userIds.contains("6cd22b48-0000-0000-0000-000000000060"))
+        assertTrue(userIds.contains("6cd22b48-0000-0000-0000-000000000061"))
     }
 
     @Test
     fun getDeptIdsByUserId() {
-        val userId = "30000000-0000-0000-0000-000000000060"
+        val userId = "6cd22b48-0000-0000-0000-000000000060"
         val deptIds = authDeptUserService.getDeptIdsByUserId(userId)
         assertTrue(deptIds.size >= 1)
-        assertTrue(deptIds.contains("30000000-0000-0000-0000-000000000063"))
+        assertTrue(deptIds.contains("6cd22b48-0000-0000-0000-000000000063"))
     }
 
     @Test
     fun exists() {
-        val deptId = "30000000-0000-0000-0000-000000000063"
-        val userId = "30000000-0000-0000-0000-000000000060"
+        val deptId = "6cd22b48-0000-0000-0000-000000000063"
+        val userId = "6cd22b48-0000-0000-0000-000000000060"
         
         // 测试存在的关系
         assertTrue(authDeptUserService.exists(deptId, userId))
@@ -54,11 +54,11 @@ class AuthDeptUserServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun batchBind() {
-        val deptId = "30000000-0000-0000-0000-000000000064"
+        val deptId = "6cd22b48-0000-0000-0000-000000000064"
         val userIds = listOf(
-            "30000000-0000-0000-0000-000000000060",
-            "30000000-0000-0000-0000-000000000061",
-            "30000000-0000-0000-0000-000000000062"
+            "6cd22b48-0000-0000-0000-000000000060",
+            "6cd22b48-0000-0000-0000-000000000061",
+            "6cd22b48-0000-0000-0000-000000000062"
         )
         
         // 批量绑定（非管理员）
@@ -76,8 +76,8 @@ class AuthDeptUserServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun unbind() {
-        val deptId = "30000000-0000-0000-0000-000000000063"
-        val userId = "30000000-0000-0000-0000-000000000061"
+        val deptId = "6cd22b48-0000-0000-0000-000000000063"
+        val userId = "6cd22b48-0000-0000-0000-000000000061"
         
         // 验证关系存在
         assertTrue(authDeptUserService.exists(deptId, userId))
@@ -94,8 +94,8 @@ class AuthDeptUserServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun setDeptAdmin() {
-        val deptId = "30000000-0000-0000-0000-000000000063"
-        val userId = "30000000-0000-0000-0000-000000000061"
+        val deptId = "6cd22b48-0000-0000-0000-000000000063"
+        val userId = "6cd22b48-0000-0000-0000-000000000061"
         
         // 先设置为管理员
         assertTrue(authDeptUserService.setDeptAdmin(deptId, userId, true))

@@ -36,7 +36,7 @@ class RoleByIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun getRoleById() {
         // 存在的
-        var id = "11111111-1111-1111-1111-111111111111"
+        var id = "bd9f1e96-1111-1111-1111-111111111111"
         val cacheItem2 = cacheHandler.getRoleById(id)
         val cacheItem3 = cacheHandler.getRoleById(id)
         assertNotNull(cacheItem2)
@@ -50,8 +50,8 @@ class RoleByIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun getRolesByIds() {
         // 都存在的
-        var id1 = "11111111-1111-1111-1111-111111111111"
-        var id2 = "22222222-2222-2222-2222-222222222222"
+        var id1 = "bd9f1e96-1111-1111-1111-111111111111"
+        var id2 = "bd9f1e96-2222-2222-2222-222222222222"
         val result2 = cacheHandler.getRolesByIds(listOf(id1, id2))
         val result3 = cacheHandler.getRolesByIds(listOf(id1, id2))
         assert(result2.isNotEmpty())
@@ -88,7 +88,7 @@ class RoleByIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun syncOnUpdate() {
         // 更新数据库中已存在的记录
-        val id = "22222222-2222-2222-2222-222222222222"
+        val id = "bd9f1e96-2222-2222-2222-222222222222"
         val success = authRoleDao.updateProperties(id, mapOf(AuthRole::name.name to newRoleName))
         assert(success)
 
@@ -149,7 +149,7 @@ class RoleByIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
         val authRole = AuthRole().apply {
             code = "TEST_ROLE_${timestamp}"
             name = "测试角色_${timestamp}"
-            tenantId = "11111111-1111-1111-1111-111111111111"
+            tenantId = "bd9f1e96-1111-1111-1111-111111111111"
             subsysCode = "default"
             active = true
         }

@@ -36,7 +36,7 @@ class DeptIdsByTenantIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun getDeptIds() {
         // 存在的租户（有多个部门）- 使用 DeptIdsByTenantIdCacheHandlerTest.sql 的测试数据
-        var tenantId = "tenant-001"
+        var tenantId = "tenant-001-lVeGsiPZ"
         val deptIds1 = cacheHandler.getDeptIds(tenantId)
         val deptIds2 = cacheHandler.getDeptIds(tenantId)
         assertEquals(
@@ -44,16 +44,16 @@ class DeptIdsByTenantIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
             deptIds1.size,
             "tenant-001 应该有 7 个 active=true 的部门（技术部、产品部、运营部、前端组、后端组、测试组、人事部）"
         )
-        assertTrue(deptIds1.contains("11111111-1111-1111-1111-111111111111"), "应该包含技术部ID") // 技术部
-        assertTrue(deptIds1.contains("22222222-2222-2222-2222-222222222222"), "应该包含产品部ID") // 产品部
-        assertTrue(deptIds1.contains("88888888-8888-8888-8888-888888888888"), "应该包含人事部ID") // 人事部
+        assertTrue(deptIds1.contains("4637af03-1111-1111-1111-111111111111"), "应该包含技术部ID") // 技术部
+        assertTrue(deptIds1.contains("4637af03-2222-2222-2222-222222222222"), "应该包含产品部ID") // 产品部
+        assertTrue(deptIds1.contains("4637af03-8888-8888-8888-888888888888"), "应该包含人事部ID") // 人事部
         assertEquals(deptIds1, deptIds2, "两次调用应该返回相同的结果（缓存验证）")
 
         // 存在的租户（只有 1 个部门）
-        tenantId = "tenant-002"
+        tenantId = "tenant-002-lVeGsiPZ"
         val deptIds3 = cacheHandler.getDeptIds(tenantId)
         assertEquals(1, deptIds3.size, "tenant-002 应该有 1 个 active=true 的部门（总部）")
-        assertTrue(deptIds3.contains("99999999-9999-9999-9999-999999999999"), "应该包含总部ID") // 总部
+        assertTrue(deptIds3.contains("4637af03-9999-9999-9999-999999999999"), "应该包含总部ID") // 总部
 
         // 不存在的租户
         tenantId = "no_exist_tenant"
@@ -63,7 +63,7 @@ class DeptIdsByTenantIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnInsert() {
-        val tenantId = "tenant-001"
+        val tenantId = "tenant-001-lVeGsiPZ"
         val authDept = AuthDept().apply {
             this.tenantId = tenantId
             this.name = "测试部门_${System.currentTimeMillis()}"
@@ -93,7 +93,7 @@ class DeptIdsByTenantIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnUpdate() {
-        val tenantId = "tenant-001"
+        val tenantId = "tenant-001-lVeGsiPZ"
         val authDept = AuthDept().apply {
             this.tenantId = tenantId
             this.name = "测试部门_${System.currentTimeMillis()}"
@@ -129,7 +129,7 @@ class DeptIdsByTenantIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnUpdateActive() {
-        val tenantId = "tenant-001"
+        val tenantId = "tenant-001-lVeGsiPZ"
         val authDept = AuthDept().apply {
             this.tenantId = tenantId
             this.name = "测试部门_${System.currentTimeMillis()}"
@@ -160,7 +160,7 @@ class DeptIdsByTenantIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnDelete() {
-        val tenantId = "tenant-001"
+        val tenantId = "tenant-001-lVeGsiPZ"
         val authDept = AuthDept().apply {
             this.tenantId = tenantId
             this.name = "测试部门_${System.currentTimeMillis()}"
@@ -190,7 +190,7 @@ class DeptIdsByTenantIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnBatchDelete() {
-        val tenantId = "tenant-001"
+        val tenantId = "tenant-001-lVeGsiPZ"
         
         val authDept1 = AuthDept().apply {
             this.tenantId = tenantId

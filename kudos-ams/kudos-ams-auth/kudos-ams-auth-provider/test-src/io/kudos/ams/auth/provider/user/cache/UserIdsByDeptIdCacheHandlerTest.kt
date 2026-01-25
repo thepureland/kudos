@@ -31,7 +31,7 @@ class UserIdsByDeptIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun getUserIds() {
         // 存在的部门（有多个用户）
-        var deptId = "11111111-1111-1111-1111-111111111111"
+        var deptId = "84c558fe-1111-1111-1111-111111111111"
         val userIds2 = cacheHandler.getUserIds(deptId)
         val userIds3 = cacheHandler.getUserIds(deptId)
         assertTrue(userIds2.isNotEmpty())
@@ -45,10 +45,10 @@ class UserIdsByDeptIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnInsert() {
-        val deptId = "11111111-1111-1111-1111-111111111111"
+        val deptId = "84c558fe-1111-1111-1111-111111111111"
         val authDeptUser = AuthDeptUser().apply {
             this.deptId = deptId
-            this.userId = "33333333-3333-3333-3333-333333333333"
+            this.userId = "84c558fe-3333-3333-3333-333333333333"
             this.deptAdmin = false
         }
         val id = authDeptUserDao.insert(authDeptUser)
@@ -67,10 +67,10 @@ class UserIdsByDeptIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnUpdate() {
-        val deptId = "11111111-1111-1111-1111-111111111111"
+        val deptId = "84c558fe-1111-1111-1111-111111111111"
         val authDeptUser = AuthDeptUser().apply {
             this.deptId = deptId
-            this.userId = "33333333-3333-3333-3333-333333333333"
+            this.userId = "84c558fe-3333-3333-3333-333333333333"
             this.deptAdmin = false
         }
         val id = authDeptUserDao.insert(authDeptUser)
@@ -96,10 +96,10 @@ class UserIdsByDeptIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnDelete() {
-        val deptId = "11111111-1111-1111-1111-111111111111"
+        val deptId = "84c558fe-1111-1111-1111-111111111111"
         val authDeptUser = AuthDeptUser().apply {
             this.deptId = deptId
-            this.userId = "33333333-3333-3333-3333-333333333333"
+            this.userId = "84c558fe-3333-3333-3333-333333333333"
             this.deptAdmin = false
         }
         val id = authDeptUserDao.insert(authDeptUser)
@@ -125,18 +125,18 @@ class UserIdsByDeptIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnBatchDelete() {
-        val deptId = "11111111-1111-1111-1111-111111111111"
+        val deptId = "84c558fe-1111-1111-1111-111111111111"
         
         val authDeptUser1 = AuthDeptUser().apply {
             this.deptId = deptId
-            this.userId = "33333333-3333-3333-3333-333333333333"
+            this.userId = "84c558fe-3333-3333-3333-333333333333"
             this.deptAdmin = false
         }
         val id1 = authDeptUserDao.insert(authDeptUser1)
         
         val authDeptUser2 = AuthDeptUser().apply {
             this.deptId = deptId
-            this.userId = "44444444-4444-4444-4444-444444444444"
+            this.userId = "84c558fe-4444-4444-4444-444444444444"
             this.deptAdmin = false
         }
         val id2 = authDeptUserDao.insert(authDeptUser2)

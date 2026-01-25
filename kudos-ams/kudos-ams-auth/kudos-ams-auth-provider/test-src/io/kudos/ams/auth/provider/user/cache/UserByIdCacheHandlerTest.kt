@@ -36,7 +36,7 @@ class UserByIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun getUserById() {
         // 存在的
-        var id = "11111111-1111-1111-1111-111111111111"
+        var id = "61146119-1111-1111-1111-111111111111"
         val cacheItem2 = cacheHandler.getUserById(id)
         val cacheItem3 = cacheHandler.getUserById(id)
         assertNotNull(cacheItem2)
@@ -50,8 +50,8 @@ class UserByIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun getUsersByIds() {
         // 都存在的
-        var id1 = "11111111-1111-1111-1111-111111111111"
-        var id2 = "22222222-2222-2222-2222-222222222222"
+        var id1 = "61146119-1111-1111-1111-111111111111"
+        var id2 = "61146119-2222-2222-2222-222222222222"
         val result2 = cacheHandler.getUsersByIds(listOf(id1, id2))
         val result3 = cacheHandler.getUsersByIds(listOf(id1, id2))
         assert(result2.isNotEmpty())
@@ -88,7 +88,7 @@ class UserByIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun syncOnUpdate() {
         // 更新数据库中已存在的记录
-        val id = "22222222-2222-2222-2222-222222222222"
+        val id = "61146119-2222-2222-2222-222222222222"
         val success = authUserDao.updateProperties(id, mapOf(AuthUser::username.name to newUsername))
         assert(success)
 
@@ -148,9 +148,9 @@ class UserByIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
         val timestamp = System.currentTimeMillis()
         val authUser = AuthUser().apply {
             username = "u${timestamp % 1000000000}" // 确保不超过32字符
-            tenantId = "tenant-001"
+            tenantId = "tenant-001-ujdERXYn"
             loginPassword = "password"
-            supervisorId = "11111111-1111-1111-1111-111111111111"
+            supervisorId = "61146119-1111-1111-1111-111111111111"
             active = true
         }
         return authUserDao.insert(authUser)

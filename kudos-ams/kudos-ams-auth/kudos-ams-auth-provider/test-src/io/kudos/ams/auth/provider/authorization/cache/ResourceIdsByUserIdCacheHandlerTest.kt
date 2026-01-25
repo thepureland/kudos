@@ -38,18 +38,18 @@ class ResourceIdsByUserIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun getResourceIds() {
         // 存在的用户ID，有一个角色，该角色有多个资源
-        var userId = "11111111-1111-1111-1111-111111111111"
+        var userId = "165f7094-1111-1111-1111-111111111111"
         val resourceIds1 = cacheHandler.getResourceIds(userId)
         val resourceIds2 = cacheHandler.getResourceIds(userId)
         assertTrue(resourceIds1.isNotEmpty(), "用户${userId}应该有资源ID列表")
         assertEquals(resourceIds1, resourceIds2, "两次调用应该返回相同的结果（缓存验证）")
         // 验证资源ID：用户11111111有角色ROLE_ADMIN，应该包含resource-aaa和resource-bbb
         assertEquals(2, resourceIds1.size, "用户${userId}应该有2个资源ID")
-        assertTrue(resourceIds1.contains("resource-aaa"), "应该包含resource-aaa，实际返回：${resourceIds1}")
-        assertTrue(resourceIds1.contains("resource-bbb"), "应该包含resource-bbb，实际返回：${resourceIds1}")
+        assertTrue(resourceIds1.contains("resource-aaa-6Z55FylV"), "应该包含resource-aaa，实际返回：${resourceIds1}")
+        assertTrue(resourceIds1.contains("resource-bbb-6Z55FylV"), "应该包含resource-bbb，实际返回：${resourceIds1}")
 
         // 存在的用户ID，有多个角色，每个角色有多个资源
-        userId = "22222222-2222-2222-2222-222222222222"
+        userId = "165f7094-2222-2222-2222-222222222222"
         // 先清除可能存在的缓存，确保测试环境干净
         cacheHandler.evict(userId)
         val resourceIds3 = cacheHandler.getResourceIds(userId)
@@ -61,13 +61,13 @@ class ResourceIdsByUserIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
         // ROLE_USER的资源：resource-ccc, resource-ddd
         // 总共应该是4个资源
         assertEquals(4, resourceIds3.size, "用户${userId}应该有4个资源ID，实际返回：${resourceIds3}")
-        assertTrue(resourceIds3.contains("resource-aaa"), "应该包含resource-aaa")
-        assertTrue(resourceIds3.contains("resource-bbb"), "应该包含resource-bbb")
-        assertTrue(resourceIds3.contains("resource-ccc"), "应该包含resource-ccc")
-        assertTrue(resourceIds3.contains("resource-ddd"), "应该包含resource-ddd")
+        assertTrue(resourceIds3.contains("resource-aaa-6Z55FylV"), "应该包含resource-aaa")
+        assertTrue(resourceIds3.contains("resource-bbb-6Z55FylV"), "应该包含resource-bbb")
+        assertTrue(resourceIds3.contains("resource-ccc-6Z55FylV"), "应该包含resource-ccc")
+        assertTrue(resourceIds3.contains("resource-ddd-6Z55FylV"), "应该包含resource-ddd")
 
         // 存在的用户ID，但没有角色
-        userId = "33333333-3333-3333-3333-333333333333"
+        userId = "165f7094-3333-3333-3333-333333333333"
         // 先清除可能存在的缓存，确保测试环境干净
         cacheHandler.evict(userId)
         // 清理可能存在的用户-角色关系记录（以防之前的测试没有清理干净）
@@ -87,8 +87,8 @@ class ResourceIdsByUserIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnRoleUserChange() {
-        val userId = "33333333-3333-3333-3333-333333333333"
-        val roleId = "22222222-2222-2222-2222-222222222222" // ROLE_USER 的 ID
+        val userId = "165f7094-3333-3333-3333-333333333333"
+        val roleId = "165f7094-2222-2222-2222-222222222222" // ROLE_USER 的 ID
         
         // 先获取一次，记录初始资源数量
         val resourceIdsBefore = cacheHandler.getResourceIds(userId)
@@ -114,8 +114,8 @@ class ResourceIdsByUserIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnRoleResourceChange() {
-        val roleId = "22222222-2222-2222-2222-222222222222" // ROLE_USER 的 ID
-        val userId = "22222222-2222-2222-2222-222222222222" // 拥有该角色的用户
+        val roleId = "165f7094-2222-2222-2222-222222222222" // ROLE_USER 的 ID
+        val userId = "165f7094-2222-2222-2222-222222222222" // 拥有该角色的用户
         val resourceId = "resource-jjj"
         
         // 先清除可能存在的缓存，确保测试环境干净
@@ -148,8 +148,8 @@ class ResourceIdsByUserIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnUserDelete() {
-        val userId = "33333333-3333-3333-3333-333333333333"
-        val roleId = "11111111-1111-1111-1111-111111111111" // ROLE_ADMIN 的 ID
+        val userId = "165f7094-3333-3333-3333-333333333333"
+        val roleId = "165f7094-1111-1111-1111-111111111111" // ROLE_ADMIN 的 ID
         
         // 先插入一条用户-角色关系记录
         val authRoleUser = AuthRoleUser().apply {
@@ -179,10 +179,10 @@ class ResourceIdsByUserIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnBatchRoleUserChange() {
-        val userId1 = "33333333-3333-3333-3333-333333333333"
-        val userId2 = "33333333-3333-3333-3333-333333333333"
-        val roleId1 = "11111111-1111-1111-1111-111111111111" // ROLE_ADMIN 的 ID
-        val roleId2 = "22222222-2222-2222-2222-222222222222" // ROLE_USER 的 ID
+        val userId1 = "165f7094-3333-3333-3333-333333333333"
+        val userId2 = "165f7094-3333-3333-3333-333333333333"
+        val roleId1 = "165f7094-1111-1111-1111-111111111111" // ROLE_ADMIN 的 ID
+        val roleId2 = "165f7094-2222-2222-2222-222222222222" // ROLE_USER 的 ID
         val userIds = listOf(userId1, userId2)
         
         // 先获取一次，记录初始资源数量
