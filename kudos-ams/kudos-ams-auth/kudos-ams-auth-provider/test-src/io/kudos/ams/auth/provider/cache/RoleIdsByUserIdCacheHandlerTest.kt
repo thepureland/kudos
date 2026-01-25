@@ -1,5 +1,7 @@
 package io.kudos.ams.auth.provider.cache
 
+import io.kudos.ams.auth.provider.dao.AuthRoleUserDao
+import io.kudos.ams.auth.provider.model.po.AuthRoleUser
 import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import jakarta.annotation.Resource
@@ -22,6 +24,9 @@ class RoleIdsByUserIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Resource
     private lateinit var cacheHandler: RoleIdsByUserIdCacheHandler
+
+    @Resource
+    private lateinit var authRoleUserDao: AuthRoleUserDao
 
     @Test
     fun getRoleIds() {
@@ -59,53 +64,98 @@ class RoleIdsByUserIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnRoleUserChange() {
-        val userId = "11111111-1111-1111-1111-111111111111"
+        val userId = "33333333-3333-3333-3333-333333333333"
+        val roleId = "22222222-2222-2222-2222-222222222222" // ROLE_USER 的 ID
         
-        // 先获取一次，确保缓存中有数据
+        // 先获取一次，记录初始角色数量
         val roleIdsBefore = cacheHandler.getRoleIds(userId)
-        assertTrue(roleIdsBefore.isNotEmpty(), "用户${userId}应该有角色ID列表")
+        val beforeSize = roleIdsBefore.size
+        
+        // 插入一条新的用户-角色关系记录
+        val authRoleUser = AuthRoleUser().apply {
+            this.roleId = roleId
+            this.userId = userId
+        }
+        val id = authRoleUserDao.insert(authRoleUser)
         
         // 同步缓存（模拟用户-角色关系变更）
         cacheHandler.syncOnRoleUserChange(userId)
         
-        // 验证缓存已被清除并重新加载
+        // 验证缓存已被清除并重新加载，应该包含新插入的角色
         val roleIdsAfter = cacheHandler.getRoleIds(userId)
-        assertTrue(roleIdsAfter.isNotEmpty(), "同步后应该能重新获取到角色ID列表")
+        assertTrue(roleIdsAfter.size > beforeSize, "同步后应该包含新插入的角色ID")
+        assertTrue(roleIdsAfter.contains(roleId), "应该包含新插入的角色ID")
+        
+        // 清理测试数据
+        authRoleUserDao.deleteById(id)
     }
 
     @Test
     fun syncOnBatchRoleUserChange() {
-        val userId1 = "11111111-1111-1111-1111-111111111111"
-        val userId2 = "22222222-2222-2222-2222-222222222222"
+        val userId1 = "33333333-3333-3333-3333-333333333333"
+        val userId2 = "33333333-3333-3333-3333-333333333333"
+        val roleId1 = "11111111-1111-1111-1111-111111111111" // ROLE_ADMIN 的 ID
+        val roleId2 = "22222222-2222-2222-2222-222222222222" // ROLE_USER 的 ID
         val userIds = listOf(userId1, userId2)
         
-        // 先获取一次，确保缓存中有数据
+        // 先获取一次，记录初始角色数量
         val roleIds1Before = cacheHandler.getRoleIds(userId1)
-        val roleIds2Before = cacheHandler.getRoleIds(userId2)
-        assertTrue(roleIds1Before.isNotEmpty() || roleIds2Before.isNotEmpty(), "至少一个用户应该有角色ID列表")
+        val beforeSize = roleIds1Before.size
+        
+        // 批量插入用户-角色关系记录
+        val authRoleUser1 = AuthRoleUser().apply {
+            this.roleId = roleId1
+            this.userId = userId1
+        }
+        val id1 = authRoleUserDao.insert(authRoleUser1)
+        
+        val authRoleUser2 = AuthRoleUser().apply {
+            this.roleId = roleId2
+            this.userId = userId2
+        }
+        val id2 = authRoleUserDao.insert(authRoleUser2)
         
         // 批量同步缓存（模拟批量用户-角色关系变更）
         cacheHandler.syncOnBatchRoleUserChange(userIds)
         
-        // 验证缓存已被清除并重新加载
+        // 验证缓存已被清除并重新加载，应该包含新插入的角色
         val roleIds1After = cacheHandler.getRoleIds(userId1)
-        val roleIds2After = cacheHandler.getRoleIds(userId2)
-        assertTrue(roleIds1After.isNotEmpty() || roleIds2After.isNotEmpty(), "同步后应该能重新获取到角色ID列表")
+        assertTrue(roleIds1After.size > beforeSize, "同步后应该包含新插入的角色ID")
+        
+        // 清理测试数据
+        authRoleUserDao.deleteById(id1)
+        authRoleUserDao.deleteById(id2)
     }
 
     @Test
     fun syncOnUserDelete() {
         val userId = "33333333-3333-3333-3333-333333333333"
+        val roleId = "11111111-1111-1111-1111-111111111111" // ROLE_ADMIN 的 ID
         
-        // 先获取一次，确保缓存中有数据（即使为空列表）
+        // 先插入一条用户-角色关系记录
+        val authRoleUser = AuthRoleUser().apply {
+            this.roleId = roleId
+            this.userId = userId
+        }
+        val id = authRoleUserDao.insert(authRoleUser)
+        
+        // 先同步缓存，确保缓存中有新插入的数据
+        cacheHandler.syncOnRoleUserChange(userId)
+        
+        // 获取一次，确保缓存中有数据
         val roleIdsBefore = cacheHandler.getRoleIds(userId)
+        assertTrue(roleIdsBefore.contains(roleId), "新插入的角色关系应该在缓存中")
+        
+        // 删除数据库记录（模拟用户删除或用户-角色关系删除）
+        val deleteSuccess = authRoleUserDao.deleteById(id)
+        assertTrue(deleteSuccess, "删除应该成功")
         
         // 同步缓存（模拟用户删除）
         cacheHandler.syncOnUserDelete(userId)
         
-        // 验证缓存已被清除
+        // 验证缓存已被清除，重新获取应该不包含已删除的角色
         val roleIdsAfter = cacheHandler.getRoleIds(userId)
-        assertTrue(roleIdsAfter.isEmpty(), "删除用户后，缓存应该被清除，重新获取应该返回空列表")
+        assertTrue(!roleIdsAfter.contains(roleId), "删除后，缓存应该被清除，不应该包含已删除的角色ID")
     }
 
 }

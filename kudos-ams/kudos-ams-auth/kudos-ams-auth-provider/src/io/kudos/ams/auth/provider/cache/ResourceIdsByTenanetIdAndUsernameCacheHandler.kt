@@ -153,7 +153,7 @@ open class ResourceIdsByTenanetIdAndUsernameCacheHandler : AbstractCacheHandler<
             val roleResourceCriteria = Criteria(AuthRoleResource::roleId.name, OperatorEnum.EQ, roleId)
             val resourceIds = authRoleResourceDao.searchProperty(roleResourceCriteria, AuthRoleResource::resourceId.name)
             @Suppress("UNCHECKED_CAST")
-            resourceIdSet.addAll(resourceIds as List<String>)
+            resourceIdSet.addAll((resourceIds as List<String>).map { it.trim() })
         }
         
         val resultList = resourceIdSet.toList()
