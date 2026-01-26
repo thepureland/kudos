@@ -1,6 +1,5 @@
 package io.kudos.test.rdb
 
-import io.kudos.base.support.Single
 import io.kudos.test.container.containers.H2TestContainer
 import io.kudos.test.container.containers.RedisTestContainer
 import org.springframework.test.context.DynamicPropertyRegistry
@@ -55,14 +54,11 @@ open class RdbAndRedisCacheTestBase : SqlTestBase() {
 
     companion object Companion {
 
-        @JvmStatic
-        protected val cacheStrategyHolder = Single("SINGLE_LOCAL")
-
         @DynamicPropertySource
         @JvmStatic
         private fun registerProperties(registry: DynamicPropertyRegistry) {
             registry.add("kudos.ability.cache.enabled") { "true" }
-            registry.add("cache.config.strategy") { cacheStrategyHolder.value }
+            registry.add("cache.config.strategy") { "SINGLE_LOCAL" } //TODO 由子类指定
 
             val h2Thread = Thread { H2TestContainer.startIfNeeded(registry) } //TODO 由子类指定具体的TestContainer
             val redisThread = Thread { RedisTestContainer.startIfNeeded(registry) }
