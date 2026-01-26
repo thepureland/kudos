@@ -116,8 +116,16 @@ class BatchCacheableAspect {
         return cacheName
     }
 
-    private fun getKeysGenerator(batchCacheable: BatchCacheable) =
-        SpringKit.getBean(batchCacheable.keysGenerator) as IKeysGenerator
+    private fun getKeysGenerator(batchCacheable: BatchCacheable): IKeysGenerator {
+        // 先尝试从 Spring 容器中获取 bean
+        val bean = SpringKit.getBeanOrNull(batchCacheable.keysGenerator)
+        if (bean != null) {
+            return bean as IKeysGenerator
+        }
+        // 如果 bean 不存在（可能因为缓存被禁用或配置类未加载），使用默认实现
+        // 这在批量测试时可能会发生，因为某些测试类可能禁用了缓存
+        return DefaultKeysGenerator()
+    }
 
     /**
      * 得到所有缓存key
