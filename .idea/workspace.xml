@@ -1,0 +1,772 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="f67677bf-6491-4493-9f55-fea3699fbfa7" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ExternalProjectsData">
+    <projectState path="$PROJECT_DIR$">
+      <ProjectState />
+    </projectState>
+  </component>
+  <component name="ExternalProjectsManager">
+    <system id="GRADLE">
+      <state>
+        <task path="$PROJECT_DIR$">
+          <activation />
+        </task>
+        <task path="$PROJECT_DIR$/kudos-ability/kudos-ability-web/kudos-ability-web-springmvc">
+          <activation />
+        </task>
+        <task path="$PROJECT_DIR$/kudos-ams/kudos-ams-auth/kudos-ams-auth-provider">
+          <activation />
+        </task>
+        <task path="$PROJECT_DIR$/kudos-ams/kudos-ams-sys">
+          <activation />
+        </task>
+        <task path="$PROJECT_DIR$/kudos-ams/kudos-ams-sys/kudos-ams-sys-provider">
+          <activation />
+        </task>
+        <projects_view>
+          <tree_state>
+            <expand>
+              <path>
+                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
+                <item name="kudos" type="f1a62948:ProjectNode" />
+              </path>
+              <path>
+                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
+                <item name="kudos" type="f1a62948:ProjectNode" />
+                <item name="Tasks" type="e4a08cd1:TasksNode" />
+              </path>
+              <path>
+                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
+                <item name="kudos" type="f1a62948:ProjectNode" />
+                <item name="Tasks" type="e4a08cd1:TasksNode" />
+                <item name="build" type="c8890929:TasksNode$1" />
+              </path>
+              <path>
+                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
+                <item name="kudos" type="f1a62948:ProjectNode" />
+                <item name="kudos-ams" type="2d1252cf:ModuleNode" />
+              </path>
+              <path>
+                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
+                <item name="kudos" type="f1a62948:ProjectNode" />
+                <item name="kudos-ams" type="2d1252cf:ModuleNode" />
+                <item name="kudos-ams-sys" type="2d1252cf:ModuleNode" />
+              </path>
+              <path>
+                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
+                <item name="kudos" type="f1a62948:ProjectNode" />
+                <item name="kudos-ams" type="2d1252cf:ModuleNode" />
+                <item name="kudos-ams-sys" type="2d1252cf:ModuleNode" />
+                <item name="Tasks" type="e4a08cd1:TasksNode" />
+              </path>
+              <path>
+                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
+                <item name="kudos" type="f1a62948:ProjectNode" />
+                <item name="kudos-ams" type="2d1252cf:ModuleNode" />
+                <item name="kudos-ams-sys" type="2d1252cf:ModuleNode" />
+                <item name="Tasks" type="e4a08cd1:TasksNode" />
+                <item name="build" type="c8890929:TasksNode$1" />
+              </path>
+              <path>
+                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
+                <item name="kudos" type="f1a62948:ProjectNode" />
+                <item name="kudos-ams" type="2d1252cf:ModuleNode" />
+                <item name="kudos-ams-sys" type="2d1252cf:ModuleNode" />
+                <item name="kudos-ams-sys-provider" type="2d1252cf:ModuleNode" />
+              </path>
+              <path>
+                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
+                <item name="kudos" type="f1a62948:ProjectNode" />
+                <item name="kudos-ams" type="2d1252cf:ModuleNode" />
+                <item name="kudos-ams-sys" type="2d1252cf:ModuleNode" />
+                <item name="kudos-ams-sys-provider" type="2d1252cf:ModuleNode" />
+                <item name="Tasks" type="e4a08cd1:TasksNode" />
+              </path>
+              <path>
+                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
+                <item name="kudos" type="f1a62948:ProjectNode" />
+                <item name="kudos-ams" type="2d1252cf:ModuleNode" />
+                <item name="kudos-ams-sys" type="2d1252cf:ModuleNode" />
+                <item name="kudos-ams-sys-provider" type="2d1252cf:ModuleNode" />
+                <item name="Tasks" type="e4a08cd1:TasksNode" />
+                <item name="verification" type="c8890929:TasksNode$1" />
+              </path>
+            </expand>
+            <select />
+          </tree_state>
+        </projects_view>
+      </state>
+    </system>
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Kotlin JUnit5 Test Class" />
+        <option value="Class" />
+        <option value="Kotlin Class" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GradleScriptDefinitionsStorage" workingDir="$PROJECT_DIR$" gradleHome="$USER_HOME$/.gradle/wrapper/dists/gradle-9.2.1-bin/2t0n5ozlw9xmuyvbp7dnzaxug/gradle-9.2.1" javaHome="$USER_HOME$/Library/Java/JavaVirtualMachines/openjdk-25.0.2/Contents/Home" gradleVersion="9.2.1">
+    <option name="jvmArguments">
+      <list>
+        <option value="-Dandroid.home=/Users/will/Library/Android/sdk" />
+        <option value="-Dhttp.nonProxyHosts=*.github.com" />
+        <option value="-Dhttps.nonProxyHosts=*.github.com" />
+        <option value="-Didea.compose.hot-reload=true" />
+        <option value="-Didea.compose.hot-reload.version=2" />
+      </list>
+    </option>
+  </component>
+  <component name="KubernetesApiPersistence">{}</component>
+  <component name="KubernetesApiProvider">{
+  &quot;isMigrated&quot;: true
+}</component>
+  <component name="McpProjectServerCommands">
+    <commands />
+    <urls />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 2
+}</component>
+  <component name="ProjectId" id="33jvs8Yy2954BAxyYePKeI4WTOw" />
+  <component name="ProjectReloadState">
+    <option name="STATE" value="1" />
+  </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Gradle.AbstractRdbAndRedisCacheTestBaseTest.executor": "Run",
+    "Gradle.AbstractRdbTestBaseTest.executor": "Run",
+    "Gradle.AccessRuleIpsBySubSysAndTenantIdCacheHandlerTest.executor": "Run",
+    "Gradle.AccessRuleIpsBySubSysAndTenantIdCacheHandlerTest.getAccessRuleIps.executor": "Debug",
+    "Gradle.AccessRuleIpsBySubSysAndTenantIdCacheHandlerTest.syncOnInsert.executor": "Run",
+    "Gradle.AccessRuleIpsBySubSysAndTenantIdCacheHandlerTest.syncOnUpdate.executor": "Run",
+    "Gradle.AccessRuleIpsBySubSysAndTenantIdCacheHandlerTest.syncOnUpdateActive.executor": "Run",
+    "Gradle.AuthDeptServiceTest.executor": "Run",
+    "Gradle.AuthUserServiceTest.executor": "Run",
+    "Gradle.Build kudos.executor": "Run",
+    "Gradle.CacheByNameCacheHandlerTest.executor": "Run",
+    "Gradle.CacheByNameCacheHandlerTest.reloadAll.executor": "Debug",
+    "Gradle.CacheByNameCacheHandlerTest.syncOnUpdate.executor": "Run",
+    "Gradle.ConstraintsValidatorTest.executor": "Run",
+    "Gradle.DataSourceByIdCacheHandlerTest.executor": "Run",
+    "Gradle.DeptByIdCacheHandlerTest.executor": "Run",
+    "Gradle.DeptByIdCacheHandlerTest.getDeptsByIds.executor": "Run",
+    "Gradle.DeptIdsByTenantIdCacheHandlerTest.executor": "Debug",
+    "Gradle.DeptIdsByUserIdCacheHandlerTest.executor": "Run",
+    "Gradle.Download Sources.executor": "Run",
+    "Gradle.ExistValidatorTest.executor": "Run",
+    "Gradle.FileSystemScannerTest.testScanForResourcesWithPrefixAndSuffix.executor": "Run",
+    "Gradle.HttpClientKitTest.download_full_file_to_target.executor": "Debug",
+    "Gradle.HttpClientKitTest.executor": "Run",
+    "Gradle.HttpClientKitTest.request.executor": "Run",
+    "Gradle.IpKitTest.executor": "Run",
+    "Gradle.IpKitTest.isValidIpv6.executor": "Run",
+    "Gradle.IpKitTest.toFullIpv6.executor": "Run",
+    "Gradle.JarFileClassPathLocationScannerTest.executor": "Run",
+    "Gradle.JettyServerTest.executor": "Run",
+    "Gradle.JettySpringMvcTest.executor": "Run",
+    "Gradle.JettySpringMvcTest.testGetHelloWorld.executor": "Run",
+    "Gradle.JsonKitTest.executor": "Run",
+    "Gradle.KudosContextPluginTest.test.executor": "Run",
+    "Gradle.LocalCacheTest.executor": "Debug",
+    "Gradle.LocalRemoteCacheTest.executor": "Run",
+    "Gradle.LocalRemoteCacheTest.testRemoteCache.executor": "Debug",
+    "Gradle.MilvusVectorStoreTest (1).executor": "Run",
+    "Gradle.MilvusVectorStoreTest.executor": "Run",
+    "Gradle.PathKitTest.executor": "Run",
+    "Gradle.PgVectorTest (1).executor": "Run",
+    "Gradle.PgVectorTest.executor": "Run",
+    "Gradle.PropertyResolverTest.executor": "Run",
+    "Gradle.PropertyResolverTest.testToPotQuoteWithPrefixAndSpecialChars.executor": "Run",
+    "Gradle.RdbKitTest.executor": "Run",
+    "Gradle.RemoteCacheTest.testRemoteCache.executor": "Debug",
+    "Gradle.ResourceIdsByRoleCodeCacheHandlerTest.executor": "Run",
+    "Gradle.ResourceIdsByTenanetIdAndUsernameCacheHandlerTest.executor": "Run",
+    "Gradle.Tests in 'io.kudos.ams.auth.provider.cache'.executor": "Run",
+    "Gradle.Tests in 'io.kudos.ams.auth.provider.dao'.executor": "Run",
+    "Gradle.Tests in 'io.kudos.ams.auth.provider.service'.executor": "Run",
+    "Gradle.Tests in 'io.kudos.ams.sys.provider.cache'.executor": "Run",
+    "Gradle.Tests in 'io.kudos.ams.sys.provider.dao'.executor": "Run",
+    "Gradle.Tests in 'io.kudos.ams.sys.provider.service'.executor": "Run",
+    "Gradle.Tests in 'io.kudos.test.rdb'.executor": "Run",
+    "Gradle.Tests in 'kudos.kudos-ability.kudos-ability-cache.kudos-ability-cache-interservice.kudos-ability-cache-interservice-provider'.executor": "Run",
+    "Gradle.Tests in 'kudos.kudos-ability.kudos-ability-cache.kudos-ability-cache-local.kudos-ability-cache-local-caffeine'.executor": "Run",
+    "Gradle.Tests in 'kudos.kudos-ability.kudos-ability-cache.kudos-ability-cache-remote.kudos-ability-cache-remote-redis'.executor": "Run",
+    "Gradle.Tests in 'kudos.kudos-ability.kudos-ability-cache.kudos-ability-cache-remote.kudos-ability-cache-remote-redis.test'.executor": "Run",
+    "Gradle.Tests in 'kudos.kudos-ability.kudos-ability-comm.kudos-ability-comm-email'.executor": "Run",
+    "Gradle.Tests in 'kudos.kudos-ability.kudos-ability-data.kudos-ability-data-memdb.kudos-ability-data-memdb-redis'.executor": "Run",
+    "Gradle.Tests in 'kudos.kudos-ability.kudos-ability-data.kudos-ability-data-rdb.kudos-ability-data-rdb-flyway'.executor": "Run",
+    "Gradle.Tests in 'kudos.kudos-ability.kudos-ability-data.kudos-ability-data-rdb.kudos-ability-data-rdb-jdbc'.executor": "Run",
+    "Gradle.Tests in 'kudos.kudos-ability.kudos-ability-data.kudos-ability-data-rdb.kudos-ability-data-rdb-ktorm'.executor": "Run",
+    "Gradle.Tests in 'kudos.kudos-ability.kudos-ability-distributed.kudos-ability-distributed-client.kudos-ability-distributed-client-feign'.executor": "Run",
+    "Gradle.Tests in 'kudos.kudos-ability.kudos-ability-distributed.kudos-ability-distributed-config.kudos-ability-distributed-config-nacos'.executor": "Run",
+    "Gradle.Tests in 'kudos.kudos-ability.kudos-ability-distributed.kudos-ability-distributed-discovery.kudos-ability-distributed-discovery-nacos'.executor": "Run",
+    "Gradle.Tests in 'kudos.kudos-ability.kudos-ability-distributed.kudos-ability-distributed-discovery.kudos-ability-distributed-discovery-nacos.test'.executor": "Run",
+    "Gradle.Tests in 'kudos.kudos-ability.kudos-ability-distributed.kudos-ability-distributed-lock.kudos-ability-distributed-lock-redisson'.executor": "Run",
+    "Gradle.Tests in 'kudos.kudos-ability.kudos-ability-distributed.kudos-ability-distributed-lock.kudos-ability-distributed-lock-redisson.test'.executor": "Run",
+    "Gradle.Tests in 'kudos.kudos-ability.kudos-ability-distributed.kudos-ability-distributed-notify.kudos-ability-distributed-notify-mq'.executor": "Run",
+    "Gradle.Tests in 'kudos.kudos-ability.kudos-ability-distributed.kudos-ability-distributed-stream.kudos-ability-distributed-stream-kafka'.executor": "Run",
+    "Gradle.Tests in 'kudos.kudos-ability.kudos-ability-distributed.kudos-ability-distributed-stream.kudos-ability-distributed-stream-rocketmq'.executor": "Run",
+    "Gradle.Tests in 'kudos.kudos-ability.kudos-ability-file.kudos-ability-file-local'.executor": "Run",
+    "Gradle.Tests in 'kudos.kudos-ability.kudos-ability-file.kudos-ability-file-minio'.executor": "Run",
+    "Gradle.Tests in 'kudos.kudos-ability.kudos-ability-web.kudos-ability-web-ktor'.executor": "Run",
+    "Gradle.Tests in 'kudos.kudos-ability.kudos-ability-web.kudos-ability-web-springmvc'.executor": "Run",
+    "Gradle.Tests in 'kudos.kudos-ams.kudos-ams-auth.kudos-ams-auth-provider.test'.executor": "Run",
+    "Gradle.Tests in 'kudos.kudos-ams.kudos-ams-sys.kudos-ams-sys-provider.test'.executor": "Run",
+    "Gradle.Tests in 'kudos.kudos-ams.kudos-ams-sys.kudos-ams-sys-service'.executor": "Run",
+    "Gradle.Tests in 'kudos.kudos-ams.kudos-ams-sys.kudos-ams-sys-service.test'.executor": "Run",
+    "Gradle.Tests in 'kudos.kudos-base'.executor": "Run",
+    "Gradle.Tests in 'kudos.kudos-base.test'.executor": "Run",
+    "Gradle.Tests in 'kudos.kudos-context'.executor": "Run",
+    "Gradle.Tests in 'kudos.kudos-test.kudos-test-api.kudos-test-api-contract.kudos-test-api-contract-provider'.executor": "Run",
+    "Gradle.TomcatServerTest.executor": "Run",
+    "Gradle.UndertowServerTest.executor": "Run",
+    "Gradle.UserIdsByRoleIdCacheHandlerTest.executor": "Run",
+    "Gradle.WriteAndReviewAgentTest.executor": "Run",
+    "Gradle.WriteAndReviewAgentTest.reviewStory should build review prompt and call LLM once.executor": "Run",
+    "Gradle.kudos [classes].executor": "Run",
+    "Gradle.kudos [clean].executor": "Run",
+    "Gradle.kudos:kudos-ams:kudos-ams-auth:kudos-ams-auth-provider [classes].executor": "Run",
+    "Gradle.kudos:kudos-ams:kudos-ams-sys [testClasses].executor": "Run",
+    "Gradle.kudos:kudos-ams:kudos-ams-sys:kudos-ams-sys-provider [test].executor": "Run",
+    "Kotlin.CodeGeneraterMainKt.executor": "Run",
+    "Kotlin.H2TestContainer.executor": "Run",
+    "Kotlin.IpKitKt.executor": "Run",
+    "Kotlin.KafkaTestContainer.executor": "Run",
+    "Kotlin.MilvusTestContainer.executor": "Run",
+    "Kotlin.MySqlTestContainer.executor": "Run",
+    "Kotlin.NacosTestContainer.executor": "Run",
+    "Kotlin.OllamaMiniTestContainer.executor": "Run",
+    "Kotlin.OllamaTestContainer.executor": "Run",
+    "Kotlin.PgVectorTestContainer.executor": "Run",
+    "Kotlin.PostgresTestContainer.executor": "Run",
+    "Kotlin.RedisTestContainer.executor": "Run",
+    "Kotlin.SeataTestContainer.executor": "Run",
+    "Kotlin.TKt.executor": "Run",
+    "Kotlin.WireMockTestContainer.executor": "Run",
+    "Ktor.EngineMain.executor": "Run",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RequestMappingsPanelOrder0": "0",
+    "RequestMappingsPanelOrder1": "1",
+    "RequestMappingsPanelWidth0": "75",
+    "RequestMappingsPanelWidth1": "75",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "Spring Boot.DemoApp (1).executor": "Run",
+    "Spring Boot.DemoApp.executor": "Run",
+    "cidr.known.project.marker": "true",
+    "com.intellij.testIntegration.createTest.CreateTestDialog.defaultLibrary": "JUnit5",
+    "com.intellij.testIntegration.createTest.CreateTestDialog.defaultLibrarySuperClass.JUnit5": "",
+    "git-widget-placeholder": "main",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "/Users/will/dev/code/kudos/kudos-ams/kudos-ams-auth/kudos-ams-auth-provider/test-resources/sql/h2/user",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "project.structure.last.edited": "Modules",
+    "project.structure.proportion": "0.15",
+    "project.structure.side.proportion": "0.33678162",
+    "run.configurations.included.in.services": "true",
+    "settings.editor.selected.configurable": "ml.llm.LLMConfigurable",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/kudos-ams/kudos-ams-auth/kudos-ams-auth-provider/test-resources/sql/h2/user" />
+      <recent name="$PROJECT_DIR$/kudos-ams/kudos-ams-auth/kudos-ams-auth-provider/test-resources" />
+      <recent name="$PROJECT_DIR$/kudos-ams/kudos-ams-auth/kudos-ams-auth-provider/src/io/kudos/ams/auth/provider/user" />
+      <recent name="$PROJECT_DIR$/kudos-test/kudos-test-rdb/test-resources" />
+      <recent name="$PROJECT_DIR$/kudos-ams/kudos-ams-auth/kudos-ams-auth-provider/resources/sql/auth/h2" />
+    </key>
+    <key name="CreateTestDialog.Recents.Supers">
+      <recent name="" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/kudos-ams/kudos-ams-auth/kudos-ams-auth-provider/test-resources/sql/h2/user/dao" />
+      <recent name="$PROJECT_DIR$/kudos-ams/kudos-ams-auth/kudos-ams-auth-provider/test-resources/sql/h2/user/service" />
+      <recent name="$PROJECT_DIR$/kudos-ams/kudos-ams-auth/kudos-ams-auth-provider/test-resources/sql/h2/authentication/service" />
+      <recent name="$PROJECT_DIR$/kudos-ams/kudos-ams-auth/kudos-ams-auth-provider/test-resources/sql/h2/authentication/dao" />
+      <recent name="$PROJECT_DIR$/kudos-ams/kudos-ams-auth/kudos-ams-auth-provider/test-resources/sql/h2/user/cache" />
+    </key>
+    <key name="CreateTestDialog.RecentsKey">
+      <recent name="io.kudos.ability.web.ktor.plugins" />
+    </key>
+    <key name="CopyKotlinDeclarationDialog.RECENTS_KEY">
+      <recent name="io.kudos.test.rdb" />
+      <recent name="io.kudos.base.enums.impl" />
+      <recent name="io.kudos.ability.data.jdbc.exposed.support" />
+      <recent name="io.kudos.ability.web.springmvc.server" />
+      <recent name="io.kudos.ability.web.springmvc.interceptor" />
+    </key>
+    <key name="K2MoveDeclarationsDialog.RECENT_PACKAGE_KEY">
+      <recent name="io.kudos.ams.auth.provider.authorization.service" />
+      <recent name="io.kudos.ams.auth.provider.authorization.cache" />
+      <recent name="io.kudos.ams.auth.provider.user.cache" />
+      <recent name="io.kudos.ams.auth.provider.authentication.service" />
+      <recent name="io.kudos.ams.auth.provider.authentication.dao" />
+    </key>
+    <key name="CopyClassDialog.RECENTS_KEY">
+      <recent name="io.kudos.ability.web.springmvc.server" />
+      <recent name="io.kudos.ability.web.springmvc.support.enums" />
+      <recent name="io.kudos.ability.web.springmvc.init" />
+    </key>
+  </component>
+  <component name="RunDashboard">
+    <option name="configurationTypes">
+      <set>
+        <option value="KtorApplicationConfigurationType" />
+        <option value="MicronautRunConfigurationType" />
+        <option value="QuarkusRunConfigurationType" />
+        <option value="SpringBootApplicationConfigurationType" />
+      </set>
+    </option>
+  </component>
+  <component name="RunManager" selected="Gradle.Tests in 'kudos.kudos-ams.kudos-ams-auth.kudos-ams-auth-provider.test'">
+    <configuration name="AccessRuleIpsBySubSysAndTenantIdCacheHandlerTest" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+      <ExternalSystemSettings>
+        <option name="env">
+          <map>
+            <entry key="DEVELOPER_DIR" value="/Applications/Xcode.app/Contents/Developer" />
+          </map>
+        </option>
+        <option name="executionName" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="externalSystemIdString" value="GRADLE" />
+        <option name="scriptParameters" value="" />
+        <option name="taskDescriptions">
+          <list />
+        </option>
+        <option name="taskNames">
+          <list>
+            <option value=":kudos-ams:kudos-ams-sys:kudos-ams-sys-provider:test" />
+            <option value="--tests" />
+            <option value="&quot;io.kudos.ams.sys.provider.cache.AccessRuleIpsBySubSysAndTenantIdCacheHandlerTest&quot;" />
+          </list>
+        </option>
+        <option name="vmOptions" />
+      </ExternalSystemSettings>
+      <ExternalSystemDebugServerProcess>false</ExternalSystemDebugServerProcess>
+      <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+      <ExternalSystemDebugDisabled>false</ExternalSystemDebugDisabled>
+      <DebugAllEnabled>false</DebugAllEnabled>
+      <RunAsTest>true</RunAsTest>
+      <GradleProfilingDisabled>false</GradleProfilingDisabled>
+      <GradleCoverageDisabled>false</GradleCoverageDisabled>
+      <method v="2" />
+    </configuration>
+    <configuration name="DeptByIdCacheHandlerTest" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+      <ExternalSystemSettings>
+        <option name="env">
+          <map>
+            <entry key="DEVELOPER_DIR" value="/Applications/Xcode.app/Contents/Developer" />
+          </map>
+        </option>
+        <option name="executionName" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="externalSystemIdString" value="GRADLE" />
+        <option name="scriptParameters" value="" />
+        <option name="taskDescriptions">
+          <list />
+        </option>
+        <option name="taskNames">
+          <list>
+            <option value=":kudos-ams:kudos-ams-auth:kudos-ams-auth-provider:test" />
+            <option value="--tests" />
+            <option value="&quot;io.kudos.ams.auth.provider.user.cache.DeptByIdCacheHandlerTest&quot;" />
+          </list>
+        </option>
+        <option name="vmOptions" />
+      </ExternalSystemSettings>
+      <ExternalSystemDebugServerProcess>false</ExternalSystemDebugServerProcess>
+      <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+      <ExternalSystemDebugDisabled>false</ExternalSystemDebugDisabled>
+      <DebugAllEnabled>false</DebugAllEnabled>
+      <RunAsTest>true</RunAsTest>
+      <GradleProfilingDisabled>false</GradleProfilingDisabled>
+      <GradleCoverageDisabled>false</GradleCoverageDisabled>
+      <method v="2" />
+    </configuration>
+    <configuration name="ResourceIdsByRoleCodeCacheHandlerTest" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+      <ExternalSystemSettings>
+        <option name="env">
+          <map>
+            <entry key="DEVELOPER_DIR" value="/Applications/Xcode.app/Contents/Developer" />
+          </map>
+        </option>
+        <option name="executionName" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="externalSystemIdString" value="GRADLE" />
+        <option name="scriptParameters" value="" />
+        <option name="taskDescriptions">
+          <list />
+        </option>
+        <option name="taskNames">
+          <list>
+            <option value=":kudos-ams:kudos-ams-auth:kudos-ams-auth-provider:test" />
+            <option value="--tests" />
+            <option value="&quot;io.kudos.ams.auth.provider.authorization.cache.ResourceIdsByRoleCodeCacheHandlerTest&quot;" />
+          </list>
+        </option>
+        <option name="vmOptions" />
+      </ExternalSystemSettings>
+      <ExternalSystemDebugServerProcess>false</ExternalSystemDebugServerProcess>
+      <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+      <ExternalSystemDebugDisabled>false</ExternalSystemDebugDisabled>
+      <DebugAllEnabled>false</DebugAllEnabled>
+      <RunAsTest>true</RunAsTest>
+      <GradleProfilingDisabled>false</GradleProfilingDisabled>
+      <GradleCoverageDisabled>false</GradleCoverageDisabled>
+      <method v="2" />
+    </configuration>
+    <configuration name="Tests in 'kudos.kudos-ams.kudos-ams-auth.kudos-ams-auth-provider.test'" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+      <ExternalSystemSettings>
+        <option name="env">
+          <map>
+            <entry key="DEVELOPER_DIR" value="/Applications/Xcode.app/Contents/Developer" />
+          </map>
+        </option>
+        <option name="executionName" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="externalSystemIdString" value="GRADLE" />
+        <option name="scriptParameters" value="" />
+        <option name="taskDescriptions">
+          <list />
+        </option>
+        <option name="taskNames">
+          <list>
+            <option value=":kudos-ams:kudos-ams-auth:kudos-ams-auth-provider:test" />
+          </list>
+        </option>
+        <option name="vmOptions" />
+      </ExternalSystemSettings>
+      <ExternalSystemDebugServerProcess>false</ExternalSystemDebugServerProcess>
+      <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+      <ExternalSystemDebugDisabled>false</ExternalSystemDebugDisabled>
+      <DebugAllEnabled>false</DebugAllEnabled>
+      <RunAsTest>true</RunAsTest>
+      <GradleProfilingDisabled>false</GradleProfilingDisabled>
+      <GradleCoverageDisabled>false</GradleCoverageDisabled>
+      <method v="2" />
+    </configuration>
+    <configuration name="Tests in 'kudos.kudos-ams.kudos-ams-sys.kudos-ams-sys-provider.test'" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+      <ExternalSystemSettings>
+        <option name="env">
+          <map>
+            <entry key="DEVELOPER_DIR" value="/Applications/Xcode.app/Contents/Developer" />
+          </map>
+        </option>
+        <option name="executionName" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="externalSystemIdString" value="GRADLE" />
+        <option name="scriptParameters" value="" />
+        <option name="taskDescriptions">
+          <list />
+        </option>
+        <option name="taskNames">
+          <list>
+            <option value=":kudos-ams:kudos-ams-sys:kudos-ams-sys-provider:test" />
+          </list>
+        </option>
+        <option name="vmOptions" />
+      </ExternalSystemSettings>
+      <ExternalSystemDebugServerProcess>false</ExternalSystemDebugServerProcess>
+      <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+      <ExternalSystemDebugDisabled>false</ExternalSystemDebugDisabled>
+      <DebugAllEnabled>false</DebugAllEnabled>
+      <RunAsTest>true</RunAsTest>
+      <GradleProfilingDisabled>false</GradleProfilingDisabled>
+      <GradleCoverageDisabled>false</GradleCoverageDisabled>
+      <method v="2" />
+    </configuration>
+    <configuration name="EngineMain" type="KtorApplicationConfigurationType" factoryName="Ktor" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="io.ktor.server.netty.EngineMain" />
+      <module name="kudos.kudos-ability.kudos-ability-web.kudos-ability-web-ktor.main" />
+      <option name="alternativeJrePath" />
+      <option name="alternativeJrePathEnabled" value="false" />
+      <option name="includeProvidedScope" value="false" />
+      <option name="mainClass" value="io.ktor.server.netty.EngineMain" />
+      <option name="passParentEnvs" value="true" />
+      <option name="programParameters" />
+      <option name="shortenCommandLine" />
+      <option name="vmParameters" />
+      <option name="workingDirectory" value="$PROJECT_DIR$" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="AuthApiProviderApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <module name="kudos.kudos-ams.kudos-ams-auth.kudos-ams-auth-api-provider.main" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="io.kudos.ams.auth.api.provider.init.AuthApiProviderApplication" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="AuthApiWebApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <module name="kudos.kudos-ams.kudos-ams-auth.kudos-ams-auth-api-web.main" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="io.kudos.ams.auth.api.web.init.AuthApiWebApplication" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="SysApiProviderApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <module name="kudos.kudos-ams.kudos-ams-sys.kudos-ams-sys-api-provider.main" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="io.kudos.ams.sys.api.provider.init.SysApiProviderApplication" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="SysApiWebApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <module name="kudos.kudos-ams.kudos-ams-sys.kudos-ams-sys-api-web.main" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="io.kudos.ams.sys.api.web.init.SysApiWebApplication" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="sysApiServiceApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <module name="kudos.kudos-ams.kudos-ams-sys.kudos-ams-sys-api-provider.main" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="io.kudos.ams.sys.api.provider.init.sysApiServiceApplication" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="sysApiServiceApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <module name="kudos.kudos-ams.kudos-ams-sys.kudos-ams-sys-api-service.main" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="io.kudos.ams.sys.api.service.init.sysApiServiceApplication" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="sysApiViewApplication (1)" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <module name="kudos.kudos-ams.kudos-ams-sys.kudos-ams-sys-api-web.main" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="io.kudos.ams.sys.api.web.init.sysApiViewApplication" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="sysApiViewApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <module name="kudos.kudos-ams.kudos-ams-sys.kudos-ams-sys-api-view.main" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="io.kudos.ams.sys.api.view.init.sysApiViewApplication" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Gradle.Tests in 'kudos.kudos-ams.kudos-ams-auth.kudos-ams-auth-provider.test'" />
+        <item itemvalue="Gradle.Tests in 'kudos.kudos-ams.kudos-ams-sys.kudos-ams-sys-provider.test'" />
+        <item itemvalue="Gradle.AccessRuleIpsBySubSysAndTenantIdCacheHandlerTest" />
+        <item itemvalue="Gradle.ResourceIdsByRoleCodeCacheHandlerTest" />
+        <item itemvalue="Gradle.DeptByIdCacheHandlerTest" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-30f59d01ecdd-2fc7cc6b9a17-intellij.indexing.shared.core-IU-253.30387.90" />
+        <option value="bundled-js-predefined-d6986cc7102b-9b0f141eb926-JavaScript-IU-253.30387.90" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="f67677bf-6491-4493-9f55-fea3699fbfa7" name="Changes" comment="" />
+      <created>1759843500272</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1759843500272</updated>
+      <workItem from="1759843501845" duration="3063000" />
+      <workItem from="1760018306378" duration="9583000" />
+      <workItem from="1760190028854" duration="5675000" />
+      <workItem from="1760251664470" duration="22120000" />
+      <workItem from="1760357022694" duration="30592000" />
+      <workItem from="1760843336011" duration="7298000" />
+      <workItem from="1760883714089" duration="17667000" />
+      <workItem from="1763987195840" duration="29214000" />
+      <workItem from="1764177193663" duration="104000" />
+      <workItem from="1764593233203" duration="6397000" />
+      <workItem from="1764599954361" duration="5923000" />
+      <workItem from="1764678175723" duration="1337000" />
+      <workItem from="1764681003776" duration="13331000" />
+      <workItem from="1764940674332" duration="605000" />
+      <workItem from="1764941295944" duration="3997000" />
+      <workItem from="1765034276907" duration="9709000" />
+      <workItem from="1766056642872" duration="1785000" />
+      <workItem from="1766926588428" duration="6118000" />
+      <workItem from="1766933351941" duration="10324000" />
+      <workItem from="1767107530322" duration="4007000" />
+      <workItem from="1767278438192" duration="535000" />
+      <workItem from="1767353816078" duration="14390000" />
+      <workItem from="1767445064198" duration="1770000" />
+      <workItem from="1767787805231" duration="452000" />
+      <workItem from="1767788822390" duration="13678000" />
+      <workItem from="1767886018161" duration="27000" />
+      <workItem from="1767886778958" duration="4232000" />
+      <workItem from="1767977597815" duration="3173000" />
+      <workItem from="1768053395149" duration="638000" />
+      <workItem from="1768138031229" duration="1930000" />
+      <workItem from="1768144576518" duration="32000" />
+      <workItem from="1768144666645" duration="2493000" />
+      <workItem from="1768181632644" duration="518000" />
+      <workItem from="1768218098813" duration="4713000" />
+      <workItem from="1768306664144" duration="4843000" />
+      <workItem from="1768320935155" duration="2891000" />
+      <workItem from="1768485620977" duration="2391000" />
+      <workItem from="1768571429856" duration="3529000" />
+      <workItem from="1768996972242" duration="794000" />
+      <workItem from="1768998121306" duration="22000" />
+      <workItem from="1768998169667" duration="19215000" />
+      <workItem from="1769088017604" duration="7558000" />
+      <workItem from="1769159457460" duration="20080000" />
+      <workItem from="1769227601815" duration="28223000" />
+      <workItem from="1769307570090" duration="21537000" />
+      <workItem from="1769393550314" duration="36589000" />
+      <workItem from="1769567787195" duration="122000" />
+      <workItem from="1769567937891" duration="390000" />
+      <workItem from="1769568540672" duration="2965000" />
+      <workItem from="1769571537586" duration="1557000" />
+      <workItem from="1769585934366" duration="367000" />
+      <workItem from="1769586327932" duration="72000" />
+      <workItem from="1769586415609" duration="510000" />
+      <workItem from="1769587052559" duration="5005000" />
+      <workItem from="1769592347061" duration="2009000" />
+      <workItem from="1769608973858" duration="30000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="OPEN_GENERIC_TABS">
+      <map>
+        <entry key="77b7c6ba-9444-47de-991c-7e83fe92e5b5" value="TOOL_WINDOW" />
+      </map>
+    </option>
+    <option name="TAB_STATES">
+      <map>
+        <entry key="77b7c6ba-9444-47de-991c-7e83fe92e5b5">
+          <value>
+            <State>
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="HEAD" />
+                      </list>
+                    </value>
+                  </entry>
+                  <entry key="roots">
+                    <value>
+                      <list>
+                        <option value="$PROJECT_DIR$" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+              <option name="SHOW_ONLY_AFFECTED_CHANGES" value="true" />
+            </State>
+          </value>
+        </entry>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="kotlin-line">
+          <url>file://$PROJECT_DIR$/kudos-base/test-src/io/kudos/base/net/http/HttpClientKitTest.kt</url>
+          <line>417</line>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="kotlin-line">
+          <url>file://$PROJECT_DIR$/kudos-ams/kudos-ams-sys/kudos-ams-sys-provider/test-src/io/kudos/ams/sys/provider/cache/CacheByNameCacheHandlerTest.kt</url>
+          <line>126</line>
+          <option name="timeStamp" value="22" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="kotlin-line">
+          <url>file://$PROJECT_DIR$/kudos-ams/kudos-ams-sys/kudos-ams-sys-provider/test-src/io/kudos/ams/sys/provider/cache/CacheByNameCacheHandlerTest.kt</url>
+          <line>123</line>
+          <option name="timeStamp" value="24" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="kotlin-line">
+          <url>file://$PROJECT_DIR$/kudos-ams/kudos-ams-sys/kudos-ams-sys-provider/src/io/kudos/ams/sys/provider/cache/AccessRuleIpsBySubSysAndTenantIdCacheHandler.kt</url>
+          <line>108</line>
+          <option name="timeStamp" value="27" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="kotlin-line">
+          <url>file://$PROJECT_DIR$/kudos-ams/kudos-ams-sys/kudos-ams-sys-provider/src/io/kudos/ams/sys/provider/cache/AccessRuleIpsBySubSysAndTenantIdCacheHandler.kt</url>
+          <line>94</line>
+          <option name="timeStamp" value="29" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="kotlin-line">
+          <url>file://$PROJECT_DIR$/kudos-ams/kudos-ams-sys/kudos-ams-sys-provider/src/io/kudos/ams/sys/provider/cache/AccessRuleIpsBySubSysAndTenantIdCacheHandler.kt</url>
+          <line>162</line>
+          <option name="timeStamp" value="33" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="kotlin-line">
+          <url>file://$PROJECT_DIR$/kudos-ams/kudos-ams-sys/kudos-ams-sys-provider/src/io/kudos/ams/sys/provider/cache/AccessRuleIpsBySubSysAndTenantIdCacheHandler.kt</url>
+          <line>193</line>
+          <option name="timeStamp" value="36" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="kotlin-line">
+          <url>file://$PROJECT_DIR$/kudos-ams/kudos-ams-sys/kudos-ams-sys-provider/test-src/io/kudos/ams/sys/provider/cache/AccessRuleIpsBySubSysAndTenantIdCacheHandlerTest.kt</url>
+          <line>122</line>
+          <properties>
+            <option name="lambda-ordinal" value="-1" />
+          </properties>
+          <option name="timeStamp" value="40" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="kotlin-line">
+          <url>file://$PROJECT_DIR$/kudos-base/src/io/kudos/base/bean/validation/constraint/validator/ExistValidator.kt</url>
+          <line>32</line>
+          <option name="timeStamp" value="43" />
+        </line-breakpoint>
+        <breakpoint enabled="true" type="java-exception">
+          <properties class="org.opentest4j.AssertionFailedError" package="org.opentest4j" />
+          <option name="timeStamp" value="41" />
+        </breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
+  </component>
+</project>
