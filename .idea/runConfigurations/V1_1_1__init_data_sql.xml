@@ -1,8 +1,0 @@
-<component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="V1.1.1__init_data.sql" type="DatabaseScript" editBeforeRun="true" nameIsGenerated="true">
-    <script-file value="$PROJECT_DIR$/kudos-ms/kudos-ms-sys/kudos-ms-sys-service/resources/sql/sys/h2/V1.1.1__init_data.sql" />
-    <script-mode>FILE</script-mode>
-    <data-source id="a9af5c28-fdb7-4470-ba31-6a08965e2cf2" namespace="database/&quot;test&quot;" />
-    <method v="2" />
-  </configuration>
-</component>
