@@ -55,3 +55,4 @@ pom.xml
 
 .cursor/
 __pycache__
+.ai/
