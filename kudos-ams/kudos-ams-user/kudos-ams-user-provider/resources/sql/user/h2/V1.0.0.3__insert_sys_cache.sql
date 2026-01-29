@@ -1,0 +1,17 @@
+--region DML
+insert into "sys_cache" ("id", "name", "atomic_service_code", "strategy_dict_code", "write_on_boot", "write_in_time",
+                         "ttl", "remark", "active", "built_in")
+values ('a1a1a1a1-1111-1111-1111-111111111101', 'AUTH_DEPT_BY_ID', 'ams-auth', 'LOCAL_REMOTE', true, true, 999999999,
+        '部门缓存(by id)', true, true),
+       ('a1a1a1a1-1111-1111-1111-111111111102', 'AUTH_USER_BY_ID', 'ams-auth', 'LOCAL_REMOTE', true, true, 999999999,
+        '用户缓存(by id)', true, true),
+       ('a1a1a1a1-1111-1111-1111-111111111104', 'AUTH_USER_ID_BY_TENANT_ID_AND_USERNAME', 'ams-auth', 'LOCAL_REMOTE', true, true, 999999999,
+        '用户ID缓存(by tenantId & username)', true, true),
+       ('a1a1a1a1-1111-1111-1111-111111111106', 'AUTH_DEPT_IDS_BY_TENANT_ID', 'ams-auth', 'LOCAL_REMOTE', true, true, 999999999,
+        '部门ID列表缓存(by tenantId)', true, true),
+       ('a1a1a1a1-1111-1111-1111-111111111107', 'AUTH_USER_IDS_BY_DEPT_ID', 'ams-auth', 'LOCAL_REMOTE', true, true, 999999999,
+        '用户ID列表缓存(by deptId)', true, true),
+       ('a1a1a1a1-1111-1111-1111-111111111113', 'AUTH_DEPT_IDS_BY_USER_ID', 'ams-auth', 'LOCAL_REMOTE', true, true, 999999999,
+        '部门ID列表缓存(by userId)', true, true);
+
+--endregion DML

@@ -49,7 +49,7 @@ include("kudos-ability:kudos-ability-cache:kudos-ability-cache-interservice:kudo
 // comm
 include("kudos-ability:kudos-ability-comm:kudos-ability-comm-common")
 include("kudos-ability:kudos-ability-comm:kudos-ability-comm-email")
-include("kudos-ability:kudos-ability-comm:kudos-ability-comm-sms:kudos-ability-comm-sms-aliyun")
+//include("kudos-ability:kudos-ability-comm:kudos-ability-comm-sms:kudos-ability-comm-sms-aliyun")
 include("kudos-ability:kudos-ability-comm:kudos-ability-comm-sms:kudos-ability-comm-sms-aws")
 include("kudos-ability:kudos-ability-comm:kudos-ability-comm-websocket:kudos-ability-comm-websocket-ktor")
 
@@ -108,6 +108,12 @@ include("kudos-ams:kudos-ams-auth:kudos-ams-auth-common")
 include("kudos-ams:kudos-ams-auth:kudos-ams-auth-consumer")
 include("kudos-ams:kudos-ams-auth:kudos-ams-auth-api-web")
 include("kudos-ams:kudos-ams-auth:kudos-ams-auth-api-provider")
+//// ams-user
+include("kudos-ams:kudos-ams-user:kudos-ams-user-provider")
+include("kudos-ams:kudos-ams-user:kudos-ams-user-common")
+include("kudos-ams:kudos-ams-user:kudos-ams-user-consumer")
+include("kudos-ams:kudos-ams-user:kudos-ams-user-api-web")
+include("kudos-ams:kudos-ams-user:kudos-ams-user-api-provider")
 
 // dependencies
 include("kudos-dependencies")
