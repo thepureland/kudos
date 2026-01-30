@@ -1,6 +1,5 @@
 package io.kudos.ams.auth.provider.service
 
-import io.kudos.ams.auth.provider.service.iservice.IAuthRoleService
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
@@ -77,23 +76,23 @@ class AuthRoleServiceTest : RdbAndRedisCacheTestBase() {
         assertTrue(authRoleService.updateActive(id, false))
         var role = authRoleService.getRoleRecord(id)
         assertNotNull(role)
-        assertFalse(role.active == true)
+        assertNotEquals(role.active, true)
         
         // 再设置为true
         assertTrue(authRoleService.updateActive(id, true))
         role = authRoleService.getRoleRecord(id)
         assertNotNull(role)
-        assertTrue(role.active == true)
+        assertEquals(role.active, true)
     }
 
     @Test
     fun getUsersByRoleCode() {
-        val tenantId = "svc-tenant-user-test-1-3iZR7Pv6"
-        val roleCode = "svc-role-user-test-1-3iZR7Pv6"
+        val tenantId = "svc-tenant-user-test-1-249363d1"
+        val roleCode = "svc-role-user-test-1-249363d1"
         val users = authRoleService.getUsersByRoleCode(tenantId, roleCode)
         assertTrue(users.size >= 2)
-        assertTrue(users.any { it.username == "svc-user-test-1-3iZR7Pv6" })
-        assertTrue(users.any { it.username == "svc-user-test-2-3iZR7Pv6" })
+        assertTrue(users.any { it.username == "svc-user-test-1-249363d1" })
+        assertTrue(users.any { it.username == "svc-user-test-2-249363d1" })
     }
 
 }
