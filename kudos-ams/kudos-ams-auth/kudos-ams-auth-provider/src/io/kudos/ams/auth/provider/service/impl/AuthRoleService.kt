@@ -10,7 +10,7 @@ import io.kudos.ams.auth.provider.model.po.AuthRole
 import io.kudos.ams.auth.provider.service.iservice.IAuthRoleService
 import io.kudos.ams.sys.common.vo.resource.SysResourceCacheItem
 import io.kudos.ams.sys.provider.cache.ResourceByIdCacheHandler
-import io.kudos.ams.user.common.vo.user.AuthUserCacheItem
+import io.kudos.ams.user.common.vo.user.UserAccountCacheItem
 import io.kudos.ams.user.provider.cache.UserByIdCacheHandler
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
@@ -81,7 +81,7 @@ open class AuthRoleService : BaseCrudService<String, AuthRole, AuthRoleDao>(),
         return roles.mapNotNull { it.id }
     }
 
-    override fun getRoleUsers(roleId: String): List<AuthUserCacheItem> {
+    override fun getRoleUsers(roleId: String): List<UserAccountCacheItem> {
         val userIds = getRoleUserIds(roleId)
         if (userIds.isEmpty()) {
             return emptyList()
@@ -230,7 +230,7 @@ open class AuthRoleService : BaseCrudService<String, AuthRole, AuthRoleDao>(),
         return roleIdsByUserIdCacheHandler.getRoleIds(userId)
     }
 
-    override fun getUsersByRoleCode(tenantId: String, roleCode: String): List<AuthUserCacheItem> {
+    override fun getUsersByRoleCode(tenantId: String, roleCode: String): List<UserAccountCacheItem> {
         val roleId = roleIdByTenantIdAndRoleCodeCacheHandler.getRoleId(tenantId, roleCode) ?: return emptyList()
         val userIds = userIdsByRoleIdCacheHandler.getUserIds(roleId)
         if (userIds.isEmpty()) {

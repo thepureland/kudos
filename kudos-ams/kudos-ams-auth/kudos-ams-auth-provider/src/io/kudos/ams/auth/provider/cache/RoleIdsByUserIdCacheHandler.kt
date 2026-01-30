@@ -4,8 +4,8 @@ import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.ability.cache.common.support.AbstractCacheHandler
 import io.kudos.ams.auth.provider.dao.AuthRoleUserDao
 import io.kudos.ams.auth.provider.model.po.AuthRoleUser
-import io.kudos.ams.user.provider.dao.AuthUserDao
-import io.kudos.ams.user.provider.model.po.AuthUser
+import io.kudos.ams.user.provider.dao.UserAccountDao
+import io.kudos.ams.user.provider.model.po.UserAccount
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
@@ -33,7 +33,7 @@ open class RoleIdsByUserIdCacheHandler : AbstractCacheHandler<List<String>>() {
     private lateinit var authRoleUserDao: AuthRoleUserDao
 
     @Autowired
-    private lateinit var authUserDao: AuthUserDao
+    private lateinit var userAccountDao: UserAccountDao
 
     companion object {
         private const val CACHE_NAME = "AUTH_ROLE_IDS_BY_USER_ID"
@@ -50,8 +50,8 @@ open class RoleIdsByUserIdCacheHandler : AbstractCacheHandler<List<String>>() {
         }
 
         // 加载所有active=true的用户
-        val userCriteria = Criteria(AuthUser::active.name, OperatorEnum.EQ, true)
-        val users = authUserDao.search(userCriteria)
+        val userCriteria = Criteria(UserAccount::active.name, OperatorEnum.EQ, true)
+        val users = userAccountDao.search(userCriteria)
         
         // 加载所有角色-用户关系
         val allRoleUsers = authRoleUserDao.allSearch()

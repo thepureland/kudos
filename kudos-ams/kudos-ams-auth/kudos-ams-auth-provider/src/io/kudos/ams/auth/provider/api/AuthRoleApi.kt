@@ -3,7 +3,7 @@ package io.kudos.ams.auth.provider.api
 import io.kudos.ams.auth.common.api.IAuthRoleApi
 import io.kudos.ams.auth.common.vo.role.AuthRoleCacheItem
 import io.kudos.ams.sys.common.vo.resource.SysResourceCacheItem
-import io.kudos.ams.user.common.vo.user.AuthUserCacheItem
+import io.kudos.ams.user.common.vo.user.UserAccountCacheItem
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
@@ -46,7 +46,7 @@ open class AuthRoleApi : IAuthRoleApi {
         return roleIdByTenantIdAndRoleCodeCacheHandler.getRoleId(tenantId, code)
     }
 
-    override fun getRoleUsers(roleId: String): List<AuthUserCacheItem> {
+    override fun getRoleUsers(roleId: String): List<UserAccountCacheItem> {
         return authRoleService.getRoleUsers(roleId)
     }
 

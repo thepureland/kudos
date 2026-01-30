@@ -4,8 +4,8 @@ import io.kudos.ams.auth.common.vo.role.AuthRoleCacheItem
 import io.kudos.ams.auth.common.vo.role.AuthRoleRecord
 import io.kudos.ams.auth.provider.model.po.AuthRole
 import io.kudos.ams.sys.common.vo.resource.SysResourceCacheItem
-import io.kudos.ams.user.common.vo.user.AuthUserCacheItem
-import io.kudos.ams.user.common.vo.user.AuthUserRecord
+import io.kudos.ams.user.common.vo.user.UserAccountCacheItem
+import io.kudos.ams.user.common.vo.user.UserAccountRecord
 import io.kudos.base.support.iservice.IBaseCrudService
 
 
@@ -51,9 +51,9 @@ interface IAuthRoleService : IBaseCrudService<String, AuthRole> {
      * 根据角色ID获取拥有该角色的所有用户列表
      *
      * @param roleId 角色ID
-     * @return List<AuthUserCacheItem> 用户列表，如果角色不存在或没有用户则返回空列表
+     * @return List<UserAccountCacheItem> 用户列表，如果角色不存在或没有用户则返回空列表
      */
-    fun getRoleUsers(roleId: String): List<AuthUserCacheItem>
+    fun getRoleUsers(roleId: String): List<UserAccountCacheItem>
 
     /**
      * 根据角色ID获取该角色拥有的所有资源列表
@@ -169,7 +169,7 @@ interface IAuthRoleService : IBaseCrudService<String, AuthRole> {
      * @author AI: Cursor
      * @since 1.0.0
      */
-    fun getUsersByRoleCode(tenantId: String, roleCode: String): List<AuthUserCacheItem>
+    fun getUsersByRoleCode(tenantId: String, roleCode: String): List<UserAccountCacheItem>
 
     /**
      * 检查用户是否有指定资源的访问权限

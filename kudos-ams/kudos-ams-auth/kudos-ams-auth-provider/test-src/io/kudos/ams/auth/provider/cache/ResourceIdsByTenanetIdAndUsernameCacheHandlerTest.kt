@@ -4,8 +4,8 @@ import io.kudos.ams.auth.provider.dao.AuthRoleResourceDao
 import io.kudos.ams.auth.provider.dao.AuthRoleUserDao
 import io.kudos.ams.auth.provider.model.po.AuthRoleResource
 import io.kudos.ams.auth.provider.model.po.AuthRoleUser
-import io.kudos.ams.user.provider.dao.AuthUserDao
-import io.kudos.ams.user.provider.model.po.AuthUser
+import io.kudos.ams.user.provider.dao.UserAccountDao
+import io.kudos.ams.user.provider.model.po.UserAccount
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
@@ -30,7 +30,7 @@ class ResourceIdsByTenanetIdAndUsernameCacheHandlerTest : RdbAndRedisCacheTestBa
     private lateinit var cacheHandler: ResourceIdsByTenanetIdAndUsernameCacheHandler
 
     @Resource
-    private lateinit var authUserDao: AuthUserDao
+    private lateinit var userAccountDao: UserAccountDao
 
     @Resource
     private lateinit var authRoleUserDao: AuthRoleUserDao
@@ -72,7 +72,7 @@ class ResourceIdsByTenanetIdAndUsernameCacheHandlerTest : RdbAndRedisCacheTestBa
         val resourceIdsBefore = cacheHandler.getResourceIds(oldTenantId, oldUsername)
         
         // 更新用户名
-        val success = authUserDao.updateProperties(userId, mapOf(AuthUser::username.name to newUsername))
+        val success = userAccountDao.updateProperties(userId, mapOf(UserAccount::username.name to newUsername))
         assertTrue(success, "更新应该成功")
         
         // 同步缓存（模拟用户信息更新）
@@ -89,7 +89,7 @@ class ResourceIdsByTenanetIdAndUsernameCacheHandlerTest : RdbAndRedisCacheTestBa
         )
         
         // 恢复用户名
-        authUserDao.updateProperties(userId, mapOf(AuthUser::username.name to oldUsername))
+        userAccountDao.updateProperties(userId, mapOf(UserAccount::username.name to oldUsername))
     }
 
     @Test
@@ -171,7 +171,7 @@ class ResourceIdsByTenanetIdAndUsernameCacheHandlerTest : RdbAndRedisCacheTestBa
 
         // 删除数据库中的用户记录
         val userId = "8e232124-2222-2222-2222-222222222222" // zhangsan 的 ID
-        authUserDao.deleteById(userId)
+        userAccountDao.deleteById(userId)
         
         // 同步缓存（模拟用户删除）
         cacheHandler.syncOnUserDelete(tenantId, username)

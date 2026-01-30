@@ -2,7 +2,7 @@
 -- 使用唯一前缀 svc-roleuser-test-* 和唯一UUID确保测试数据隔离
 
 -- 创建测试用的用户
-merge into "auth_user" ("id", "username", "tenant_id", "login_password", "supervisor_id", "remark", "active", "built_in", "create_user_id", "create_user_name")
+merge into "user_account" ("id", "username", "tenant_id", "login_password", "supervisor_id", "remark", "active", "built_in", "create_user_id", "create_user_name")
     values ('7817d37f-0000-0000-0000-000000000040', 'svc-user-roleus-test-1-BuHDHRZc', 'svc-tenan-roleu-test-1-BuHDHRZc', 'encrypted-pwd-1-BuHDHRZc', '00000000-0000-0000-0000-000000000000', 'from AuthRoleUserServiceTest', true, false, 'system', '系统'),
            ('7817d37f-0000-0000-0000-000000000041', 'svc-user-roleus-test-2-BuHDHRZc', 'svc-tenan-roleu-test-1-BuHDHRZc', 'encrypted-pwd-2-BuHDHRZc', '00000000-0000-0000-0000-000000000000', 'from AuthRoleUserServiceTest', true, false, 'system', '系统'),
            ('7817d37f-0000-0000-0000-000000000042', 'svc-user-roleus-test-3-BuHDHRZc', 'svc-tenan-roleu-test-1-BuHDHRZc', 'encrypted-pwd-3-BuHDHRZc', '00000000-0000-0000-0000-000000000000', 'from AuthRoleUserServiceTest', true, false, 'system', '系统');
