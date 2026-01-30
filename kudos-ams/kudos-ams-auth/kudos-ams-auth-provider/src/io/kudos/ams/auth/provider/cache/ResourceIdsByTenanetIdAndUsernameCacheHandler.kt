@@ -7,8 +7,8 @@ import io.kudos.ams.auth.provider.dao.AuthRoleUserDao
 import io.kudos.ams.auth.provider.model.po.AuthRoleResource
 import io.kudos.ams.auth.provider.model.po.AuthRoleUser
 import io.kudos.ams.user.provider.cache.UserIdByTenantIdAndUsernameCacheHandler
-import io.kudos.ams.user.provider.dao.AuthUserDao
-import io.kudos.ams.user.provider.model.po.AuthUser
+import io.kudos.ams.user.provider.dao.UserAccountDao
+import io.kudos.ams.user.provider.model.po.UserAccount
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component
 /**
  * 用户资源ID列表（by tenant id & username）缓存处理器
  *
- * 1.数据来源表：auth_user + auth_role_user + auth_role_resource
+ * 1.数据来源表：user_account + auth_role_user + auth_role_resource
  * 2.缓存各租户下指定用户拥有的所有资源ID列表
  * 3.缓存的key为：tenantId::username
  * 4.缓存的value为：资源ID列表（List<String>）
@@ -44,7 +44,7 @@ open class ResourceIdsByTenanetIdAndUsernameCacheHandler : AbstractCacheHandler<
     private lateinit var authRoleResourceDao: AuthRoleResourceDao
 
     @Autowired
-    private lateinit var authUserDao: AuthUserDao
+    private lateinit var userAccountDao: UserAccountDao
 
     companion object Companion {
         private const val CACHE_NAME = "AUTH_RESOURCE_IDS_BY_TENANT_ID_AND_USERNAME"
@@ -72,9 +72,9 @@ open class ResourceIdsByTenanetIdAndUsernameCacheHandler : AbstractCacheHandler<
 
 
 
-        val userCriteria = Criteria(AuthUser::active.name, OperatorEnum.EQ, true)
+        val userCriteria = Criteria(UserAccount::active.name, OperatorEnum.EQ, true)
         @Suppress("UNCHECKED_CAST")
-        val users = authUserDao.search(userCriteria)
+        val users = userAccountDao.search(userCriteria)
         
         // 加载所有角色-用户关系
         @Suppress("UNCHECKED_CAST")
@@ -221,9 +221,9 @@ open class ResourceIdsByTenanetIdAndUsernameCacheHandler : AbstractCacheHandler<
             val userIds = roleUsers.map { it.userId }
             if (userIds.isNotEmpty()) {
                 userIds.forEach { userId ->
-                    val userCriteria = Criteria(AuthUser::id.name, OperatorEnum.EQ, userId)
+                    val userCriteria = Criteria(UserAccount::id.name, OperatorEnum.EQ, userId)
                     @Suppress("UNCHECKED_CAST")
-                    val users = authUserDao.search(userCriteria)
+                    val users = userAccountDao.search(userCriteria)
                     users.forEach { user ->
                         CacheKit.evict(CACHE_NAME, getKey(user.tenantId, user.username))
                         log.debug("踢除了用户${user.username}的资源缓存。")

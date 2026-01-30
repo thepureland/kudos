@@ -2,7 +2,7 @@
 -- 使用唯一前缀 svc-roleres-test-* 和唯一UUID确保测试数据隔离
 
 -- 创建测试用的用户（用于测试资源缓存同步）
-merge into "auth_user" ("id", "username", "tenant_id", "login_password", "supervisor_id", "remark", "active", "built_in", "create_user_id", "create_user_name")
+merge into "user_account" ("id", "username", "tenant_id", "login_password", "supervisor_id", "remark", "active", "built_in", "create_user_id", "create_user_name")
     values ('3248fb0d-0000-0000-0000-000000000055', 'svc-user-roleres-test-1-fHos3r3I', 'svc-tenan-roler-test-1-fHos3r3I', 'encrypted-pwd-1-fHos3r3I', '00000000-0000-0000-0000-000000000000', 'from AuthRoleResourceServiceTest', true, false, 'system', '系统');
 
 -- 创建测试用的角色

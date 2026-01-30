@@ -2,8 +2,8 @@ package io.kudos.ams.user.provider.cache
 
 import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.ability.cache.common.support.AbstractCacheHandler
-import io.kudos.ams.user.provider.dao.AuthUserDao
-import io.kudos.ams.user.provider.model.po.AuthUser
+import io.kudos.ams.user.provider.dao.UserAccountDao
+import io.kudos.ams.user.provider.model.po.UserAccount
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component
 /**
  * 用户ID（by tenant id & username）缓存处理器
  *
- * 1.数据来源表：auth_user
+ * 1.数据来源表：user_account
  * 2.缓存所有active=true的用户ID
  * 3.缓存的key为：tenantId::username
  * 4.缓存的value为：用户ID（String）
@@ -30,10 +30,10 @@ import org.springframework.stereotype.Component
 open class UserIdByTenantIdAndUsernameCacheHandler : AbstractCacheHandler<String>() {
 
     @Autowired
-    private lateinit var authUserDao: AuthUserDao
+    private lateinit var userAccountDao: UserAccountDao
 
     companion object Companion {
-        private const val CACHE_NAME = "AUTH_USER_ID_BY_TENANT_ID_AND_USERNAME"
+        private const val CACHE_NAME = "USER_ID_BY_TENANT_ID_AND_USERNAME"
     }
 
     override fun cacheName(): String = CACHE_NAME
@@ -55,8 +55,8 @@ open class UserIdByTenantIdAndUsernameCacheHandler : AbstractCacheHandler<String
         }
 
         // 加载所有可用的用户（注：reloadAll批量加载时直接查DB效率更高）
-        val userCriteria = Criteria(AuthUser::active.name, OperatorEnum.EQ, true)
-        val users = authUserDao.search(userCriteria)
+        val userCriteria = Criteria(UserAccount::active.name, OperatorEnum.EQ, true)
+        val users = userAccountDao.search(userCriteria)
         log.debug("从数据库加载了${users.size}条用户信息。")
 
         // 清除缓存
@@ -89,12 +89,12 @@ open class UserIdByTenantIdAndUsernameCacheHandler : AbstractCacheHandler<String
         }
 
         val userCriteria = Criteria().apply {
-            addAnd(AuthUser::tenantId.name, OperatorEnum.EQ, tenantId)
-            addAnd(AuthUser::username.name, OperatorEnum.EQ, username)
-            addAnd(AuthUser::active.name, OperatorEnum.EQ, true)
+            addAnd(UserAccount::tenantId.name, OperatorEnum.EQ, tenantId)
+            addAnd(UserAccount::username.name, OperatorEnum.EQ, username)
+            addAnd(UserAccount::active.name, OperatorEnum.EQ, true)
         }
 
-        val users = authUserDao.search(userCriteria)
+        val users = userAccountDao.search(userCriteria)
         return if (users.isEmpty()) {
             log.debug("从数据库找不到租户${tenantId}且用户名为${username}的active=true的用户。")
             null
@@ -113,8 +113,8 @@ open class UserIdByTenantIdAndUsernameCacheHandler : AbstractCacheHandler<String
     open fun syncOnInsert(any: Any, id: String) {
         if (CacheKit.isCacheActive(CACHE_NAME) && CacheKit.isWriteInTime(CACHE_NAME)) {
             log.debug("新增id为${id}的用户后，同步${CACHE_NAME}缓存...")
-            val tenantId = BeanKit.getProperty(any, AuthUser::tenantId.name) as String
-            val username = BeanKit.getProperty(any, AuthUser::username.name) as String
+            val tenantId = BeanKit.getProperty(any, UserAccount::tenantId.name) as String
+            val username = BeanKit.getProperty(any, UserAccount::username.name) as String
             CacheKit.put(CACHE_NAME, getKey(tenantId, username), id) // 直接缓存ID
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
@@ -130,11 +130,11 @@ open class UserIdByTenantIdAndUsernameCacheHandler : AbstractCacheHandler<String
         if (CacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("更新id为${id}的用户后，同步${CACHE_NAME}缓存...")
             val user = if (any == null) {
-                authUserDao.get(id)!!
+                userAccountDao.get(id)!!
             } else {
-                val tenantId = BeanKit.getProperty(any, AuthUser::tenantId.name) as String
-                val username = BeanKit.getProperty(any, AuthUser::username.name) as String
-                AuthUser().apply {
+                val tenantId = BeanKit.getProperty(any, UserAccount::tenantId.name) as String
+                val username = BeanKit.getProperty(any, UserAccount::username.name) as String
+                UserAccount().apply {
                     this.id = id
                     this.tenantId = tenantId
                     this.username = username
@@ -157,13 +157,13 @@ open class UserIdByTenantIdAndUsernameCacheHandler : AbstractCacheHandler<String
     open fun syncOnUpdateActive(id: String, active: Boolean) {
         if (CacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("更新id为${id}的用户的启用状态后，同步缓存...")
-            val authUser = authUserDao.get(id)!!
+            val userAccount = userAccountDao.get(id)!!
             if (active) {
                 if (CacheKit.isWriteInTime(CACHE_NAME)) {
-                    CacheKit.put(CACHE_NAME, getKey(authUser.tenantId, authUser.username), id)
+                    CacheKit.put(CACHE_NAME, getKey(userAccount.tenantId, userAccount.username), id)
                 }
             } else {
-                CacheKit.evict(CACHE_NAME, getKey(authUser.tenantId, authUser.username)) // 踢除缓存
+                CacheKit.evict(CACHE_NAME, getKey(userAccount.tenantId, userAccount.username)) // 踢除缓存
             }
             log.debug("缓存同步完成。")
         }
@@ -177,8 +177,8 @@ open class UserIdByTenantIdAndUsernameCacheHandler : AbstractCacheHandler<String
      */
     open fun syncOnDelete(any: Any, id: String) {
         if (CacheKit.isCacheActive(CACHE_NAME)) {
-            val tenantId = BeanKit.getProperty(any, AuthUser::tenantId.name) as String
-            val username = BeanKit.getProperty(any, AuthUser::username.name) as String
+            val tenantId = BeanKit.getProperty(any, UserAccount::tenantId.name) as String
+            val username = BeanKit.getProperty(any, UserAccount::username.name) as String
             log.debug("删除id为${id}的用户后，同步从${CACHE_NAME}缓存中踢除...")
             CacheKit.evict(CACHE_NAME, getKey(tenantId, username)) // 踢除缓存
             log.debug("${CACHE_NAME}缓存同步完成。")

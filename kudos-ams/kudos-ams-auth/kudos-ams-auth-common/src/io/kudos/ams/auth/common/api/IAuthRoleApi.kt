@@ -2,7 +2,7 @@ package io.kudos.ams.auth.common.api
 
 import io.kudos.ams.auth.common.vo.role.AuthRoleCacheItem
 import io.kudos.ams.sys.common.vo.resource.SysResourceCacheItem
-import io.kudos.ams.user.common.vo.user.AuthUserCacheItem
+import io.kudos.ams.user.common.vo.user.UserAccountCacheItem
 
 
 /**
@@ -54,11 +54,11 @@ interface IAuthRoleApi {
      * 根据角色ID获取拥有该角色的所有用户列表
      *
      * @param roleId 角色ID
-     * @return List<AuthUserCacheItem> 用户列表，如果角色不存在或没有用户则返回空列表
+     * @return List<UserAccountCacheItem> 用户列表，如果角色不存在或没有用户则返回空列表
      * @author K
      * @since 1.0.0
      */
-    fun getRoleUsers(roleId: String): List<AuthUserCacheItem>
+    fun getRoleUsers(roleId: String): List<UserAccountCacheItem>
 
     /**
      * 根据租户ID和角色编码获取拥有该角色的所有用户ID列表
