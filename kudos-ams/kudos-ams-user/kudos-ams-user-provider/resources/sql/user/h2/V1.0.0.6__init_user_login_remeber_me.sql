@@ -6,10 +6,10 @@ create table if not exists "user_login_remember_me"
     "username"  VARCHAR(32) not null,
     "tenant_id" CHAR(36) not null,
     "token"     VARCHAR(64) not null,
-    "last_used" TIMESTAMP(6) not null
+    "last_used" TIMESTAMP(6) not null,
+    constraint "user_login_remember_me"
+    foreign key ("user_id") references "user_account" ("id")
     );
-
-create unique index "uq_user_login_remember_me_user_id" on "user_login_remember_me" ("user_id");
 
 create unique index "uq_user_login_remember_me_username_tenant_id"
     on "user_login_remember_me" ("username", "tenant_id");
