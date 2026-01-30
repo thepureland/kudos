@@ -19,13 +19,13 @@ object UserAccountThirds : StringIdTable<UserAccountThird>("user_account_third")
 //endregion your codes 1
 
     /** 关联用户账号ID */
-    var userAccountId = varchar("user_account_id").bindTo { it.userAccountId }
+    var userId = varchar("user_id").bindTo { it.userId }
 
     /** 第三方平台字典码 */
     var accountProviderDictCode = varchar("account_provider_dict_code").bindTo { it.accountProviderDictCode }
 
     /** 发行方/平台租户 */
-    var providerIssuer = varchar("provider_issuer").bindTo { it.providerIssuer }
+    var accountProviderIssuer = varchar("account_provider_issuer").bindTo { it.accountProviderIssuer }
 
     /** 第三方用户唯一标识 */
     var subject = varchar("subject").bindTo { it.subject }
@@ -45,9 +45,6 @@ object UserAccountThirds : StringIdTable<UserAccountThird>("user_account_third")
     /** 最后登录时间 */
     var lastLoginTime = datetime("last_login_time").bindTo { it.lastLoginTime }
 
-    /** 子系统代码 */
-    var subSysDictCode = varchar("sub_sys_dict_code").bindTo { it.subSysDictCode }
-
     /** 租户ID */
     var tenantId = varchar("tenant_id").bindTo { it.tenantId }
 
@@ -60,14 +57,20 @@ object UserAccountThirds : StringIdTable<UserAccountThird>("user_account_third")
     /** 是否内置 */
     var builtIn = boolean("built_in").bindTo { it.builtIn }
 
-    /** 创建用户 */
-    var createUser = varchar("create_user").bindTo { it.createUser }
+    /** 创建用户ID */
+    var createUserId = varchar("create_user_id").bindTo { it.createUserId }
+
+    /** 创建用户名称 */
+    var createUserName = varchar("create_user_name").bindTo { it.createUserName }
 
     /** 创建时间 */
     var createTime = datetime("create_time").bindTo { it.createTime }
 
-    /** 更新用户 */
-    var updateUser = varchar("update_user").bindTo { it.updateUser }
+    /** 更新用户ID */
+    var updateUserId = varchar("update_user_id").bindTo { it.updateUserId }
+
+    /** 更新用户名称 */
+    var updateUserName = varchar("update_user_name").bindTo { it.updateUserName }
 
     /** 更新时间 */
     var updateTime = datetime("update_time").bindTo { it.updateTime }

@@ -7,8 +7,8 @@ create table if not exists "user_account"
     "tenant_id"        character varying(32)  not null,
     "login_password"        character varying(128) not null,
     "security_password" character varying(128),
-    "user_type_dict_code" varchar(5),
-    "user_status_dict_code" varchar(5),
+    "account_type_dict_code" varchar(5),
+    "account_status_dict_code" varchar(5),
     "default_locale" varchar(5),
     "default_timezone" varchar(16),
     "default_currency" varchar(3),
@@ -40,8 +40,8 @@ comment on column "user_account"."display_name" is '展示名称';
 comment on column "user_account"."tenant_id" is '租户ID';
 comment on column "user_account"."login_password" is '登录密码';
 comment on column "user_account"."security_password" is '安全密码 - 二次验证密码，可选，用于敏感操作验证';
-comment on column "user_account"."user_type_dict_code" is '用户类型字典码';
-comment on column "user_account"."user_status_dict_code" is '用户状态字典码';
+comment on column "user_account"."account_type_dict_code" is '用户类型字典码';
+comment on column "user_account"."account_status_dict_code" is '用户状态字典码';
 comment on column "user_account"."default_locale" is '默认语言环境 - ISO 639-1格式，如：zh_CN、en_US';
 comment on column "user_account"."default_timezone" is '默认时区 - 如：Asia/Shanghai、UTC';
 comment on column "user_account"."default_currency" is '默认货币 - ISO 4217格式，如：CNY、USD';

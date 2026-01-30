@@ -26,29 +26,27 @@ class UserAccountThirdServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun getByUserAccountId() {
-        val userAccountId = "11111111-0000-0000-0000-000000000001"
-        val bindings = userAccountThirdService.getByUserAccountId(userAccountId)
+        val userId = "11111111-0000-0000-0000-000000000001"
+        val bindings = userAccountThirdService.getByUserAccountId(userId)
         assertTrue(bindings.size >= 2)
-        assertTrue(bindings.all { it.userAccountId == userAccountId })
+        assertTrue(bindings.all { it.userId == userId })
     }
 
     @Test
     fun getByProviderSubject() {
         val tenantId = "tenant-third-test-1"
-        val subSysDictCode = "subsys-a"
         val accountProviderDictCode = "github"
-        val providerIssuer = "https://github.com"
+        val accountProviderIssuer = "https://github.com"
         val subject = "github-user-001"
 
         val binding = userAccountThirdService.getByProviderSubject(
             tenantId = tenantId,
-            subSysDictCode = subSysDictCode,
             accountProviderDictCode = accountProviderDictCode,
-            providerIssuer = providerIssuer,
+            accountProviderIssuer = accountProviderIssuer,
             subject = subject
         )
         assertNotNull(binding)
         assertEquals(subject, binding.subject)
-        assertEquals("11111111-0000-0000-0000-000000000001", binding.userAccountId)
+        assertEquals("11111111-0000-0000-0000-000000000001", binding.userId)
     }
 }

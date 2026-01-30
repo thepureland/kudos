@@ -18,13 +18,13 @@ data class UserAccountThirdSearchPayload (
     override var returnEntityClass: KClass<*>? = UserAccountThirdRecord::class,
 
     /** 关联用户账号ID */
-    var userAccountId: String? = null,
+    var userId: String? = null,
 
     /** 第三方平台字典码 */
     var accountProviderDictCode: String? = null,
 
     /** 发行方/平台租户 */
-    var providerIssuer: String? = null,
+    var accountProviderIssuer: String? = null,
 
     /** 第三方用户唯一标识 */
     var subject: String? = null,
@@ -40,9 +40,6 @@ data class UserAccountThirdSearchPayload (
 
     /** 头像URL */
     var avatarUrl: String? = null,
-
-    /** 子系统代码 */
-    var subSysDictCode: String? = null,
 
     /** 租户ID */
     var tenantId: String? = null,

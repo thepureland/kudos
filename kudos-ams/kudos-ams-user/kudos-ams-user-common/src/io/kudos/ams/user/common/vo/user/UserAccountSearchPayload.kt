@@ -24,10 +24,10 @@ data class UserAccountSearchPayload (
     var tenantId: String? = null,
 
     /** 用户类型字典码 */
-    var userTypeDictCode: String? = null,
+    var accountTypeDictCode: String? = null,
 
     /** 用户状态字典码 */
-    var userStatusDictCode: String? = null,
+    var accountStatusDictCode: String? = null,
 
     /** 机构id */
     var orgId: String? = null,

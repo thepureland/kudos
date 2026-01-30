@@ -32,10 +32,10 @@ data class UserAccountCacheItem (
     var securityPassword: String? = null,
 
     /** 用户类型字典码 */
-    var userTypeDictCode: String? = null,
+    var accountTypeDictCode: String? = null,
 
     /** 用户状态字典码 */
-    var userStatusDictCode: String? = null,
+    var accountStatusDictCode: String? = null,
 
     /** 默认语言环境 */
     var defaultLocale: String? = null,

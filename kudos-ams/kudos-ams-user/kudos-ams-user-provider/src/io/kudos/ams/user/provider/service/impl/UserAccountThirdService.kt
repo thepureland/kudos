@@ -23,27 +23,25 @@ open class UserAccountThirdService : BaseCrudService<String, UserAccountThird, U
 
     //region your codes 2
 
-    override fun getByUserAccountId(userAccountId: String): List<UserAccountThird> {
-        val criteria = Criteria(UserAccountThird::userAccountId.name, OperatorEnum.EQ, userAccountId)
+    override fun getByUserAccountId(userId: String): List<UserAccountThird> {
+        val criteria = Criteria(UserAccountThird::userId.name, OperatorEnum.EQ, userId)
         return dao.search(criteria)
     }
 
     override fun getByProviderSubject(
         tenantId: String,
-        subSysDictCode: String,
         accountProviderDictCode: String,
-        providerIssuer: String?,
+        accountProviderIssuer: String?,
         subject: String
     ): UserAccountThird? {
         val criteria = Criteria(UserAccountThird::tenantId.name, OperatorEnum.EQ, tenantId)
-            .addAnd(UserAccountThird::subSysDictCode.name, OperatorEnum.EQ, subSysDictCode)
             .addAnd(UserAccountThird::accountProviderDictCode.name, OperatorEnum.EQ, accountProviderDictCode)
             .addAnd(UserAccountThird::subject.name, OperatorEnum.EQ, subject)
 
-        if (providerIssuer == null) {
-            criteria.addAnd(UserAccountThird::providerIssuer.name, OperatorEnum.IS_NULL, null)
+        if (accountProviderIssuer == null) {
+            criteria.addAnd(UserAccountThird::accountProviderIssuer.name, OperatorEnum.IS_NULL, null)
         } else {
-            criteria.addAnd(UserAccountThird::providerIssuer.name, OperatorEnum.EQ, providerIssuer)
+            criteria.addAnd(UserAccountThird::accountProviderIssuer.name, OperatorEnum.EQ, accountProviderIssuer)
         }
 
         return dao.search(criteria).firstOrNull()
