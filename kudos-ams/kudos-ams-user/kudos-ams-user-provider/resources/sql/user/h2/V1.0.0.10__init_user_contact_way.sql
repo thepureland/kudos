@@ -3,7 +3,7 @@
 create table if not exists "user_contact_way"
 (
     "id"                           CHAR(36)  default RANDOM_UUID() not null primary key,
-    "user_id"                      CHAR(36),
+    "user_id"                      CHAR(36)     not null,
     "contact_way_dict_code"        CHAR(3)                         not null,
     "contact_way_value"            VARCHAR(128)                    not null,
     "contact_way_status_dict_code" CHAR(2)   default '00'          not null,
