@@ -15,7 +15,7 @@ create table if not exists "auth_role"
     "update_user_id" character varying(36),
     "update_user_name" character varying(32),
     "update_time" timestamp(6),
-    constraint "uk_auth_role_tenant_code" unique ("tenant_id", "code")
+    constraint "uk_auth_role" unique ("code", "tenant_id")
     );
 
 comment on table "auth_role" is '角色';

@@ -12,7 +12,7 @@ merge into "auth_role" ("id", "code", "name", "tenant_id", "subsys_code", "remar
 merge into "auth_role" ("id", "code", "name", "tenant_id", "subsys_code", "remark", "active", "built_in", "create_user_id", "create_user_name")
     values ('249363d1-0000-0000-0000-000000000022', 'svc-role-user-test-1-249363d1', 'svc-rol-use-tes-1-name-249363d1', 'svc-tenant-user-test-1-249363d1', 'ams', 'from UserAccountServiceTest', true, false, 'system', '系统');
 
-merge into "user_account" ("id", "username", "tenant_id", "login_password", "supervisor_id", "dept_id", "remark", "active", "built_in", "create_user_id", "create_user_name")
+merge into "user_account" ("id", "username", "tenant_id", "login_password", "supervisor_id", "org_id", "remark", "active", "built_in", "create_user_id", "create_user_name")
     values ('249363d1-0000-0000-0000-000000000016', 'svc-user-test-1-249363d1', 'svc-tenant-user-test-1-249363d1', 'encrypted-pwd-1-249363d1', '00000000-0000-0000-0000-000000000000', '249363d1-0000-0000-0000-000000000020', 'from UserAccountServiceTest', true, false, 'system', '系统'),
     ('249363d1-0000-0000-0000-000000000017', 'svc-user-test-2-249363d1', 'svc-tenant-user-test-1-249363d1', 'encrypted-pwd-2-249363d1', '249363d1-0000-0000-0000-000000000016', '249363d1-0000-0000-0000-000000000020', 'from UserAccountServiceTest', true, false, 'system', '系统'),
     ('249363d1-0000-0000-0000-000000000018', 'svc-user-test-3-249363d1', 'svc-tenant-user-test-1-249363d1', 'encrypted-pwd-3-249363d1', '249363d1-0000-0000-0000-000000000016', '249363d1-0000-0000-0000-000000000021', 'from UserAccountServiceTest', true, false, 'system', '系统'),
