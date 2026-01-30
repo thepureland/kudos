@@ -30,10 +30,10 @@ interface UserAccount : IDbEntity<String, UserAccount> {
     var securityPassword: String?
 
     /** 用户类型字典码 */
-    var userTypeDictCode: String?
+    var accountTypeDictCode: String?
 
     /** 用户状态字典码 */
-    var userStatusDictCode: String?
+    var accountStatusDictCode: String?
 
     /** 默认语言环境 */
     var defaultLocale: String?

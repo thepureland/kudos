@@ -29,10 +29,10 @@ object UserAccounts : StringIdTable<UserAccount>("user_account") {
     var securityPassword = varchar("security_password").bindTo { it.securityPassword }
 
     /** 用户类型字典码 */
-    var userTypeDictCode = varchar("user_type_dict_code").bindTo { it.userTypeDictCode }
+    var accountTypeDictCode = varchar("account_type_dict_code").bindTo { it.accountTypeDictCode }
 
     /** 用户状态字典码 */
-    var userStatusDictCode = varchar("user_status_dict_code").bindTo { it.userStatusDictCode }
+    var accountStatusDictCode = varchar("account_status_dict_code").bindTo { it.accountStatusDictCode }
 
     /** 默认语言环境 */
     var defaultLocale = varchar("default_locale").bindTo { it.defaultLocale }

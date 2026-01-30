@@ -16,13 +16,13 @@ data class UserAccountThirdDetail (
     //region your codes 1
 
     /** 关联用户账号ID */
-    var userAccountId: String? = null,
+    var userId: String? = null,
 
     /** 第三方平台字典码 */
     var accountProviderDictCode: String? = null,
 
     /** 发行方/平台租户 */
-    var providerIssuer: String? = null,
+    var accountProviderIssuer: String? = null,
 
     /** 第三方用户唯一标识 */
     var subject: String? = null,
@@ -42,9 +42,6 @@ data class UserAccountThirdDetail (
     /** 最后登录时间 */
     var lastLoginTime: LocalDateTime? = null,
 
-    /** 子系统代码 */
-    var subSysDictCode: String? = null,
-
     /** 租户ID */
     var tenantId: String? = null,
 
@@ -57,14 +54,20 @@ data class UserAccountThirdDetail (
     /** 是否内置 */
     var builtIn: Boolean? = null,
 
-    /** 创建用户 */
-    var createUser: String? = null,
+    /** 创建用户ID */
+    var createUserId: String? = null,
+
+    /** 创建用户名称 */
+    var createUserName: String? = null,
 
     /** 创建时间 */
     var createTime: LocalDateTime? = null,
 
-    /** 更新用户 */
-    var updateUser: String? = null,
+    /** 更新用户ID */
+    var updateUserId: String? = null,
+
+    /** 更新用户名称 */
+    var updateUserName: String? = null,
 
     /** 更新时间 */
     var updateTime: LocalDateTime? = null,

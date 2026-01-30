@@ -18,13 +18,13 @@ interface UserAccountThird : IDbEntity<String, UserAccountThird> {
     companion object : DbEntityFactory<UserAccountThird>()
 
     /** 关联用户账号ID */
-    var userAccountId: String
+    var userId: String
 
     /** 第三方平台字典码 */
     var accountProviderDictCode: String
 
     /** 发行方/平台租户 */
-    var providerIssuer: String?
+    var accountProviderIssuer: String?
 
     /** 第三方用户唯一标识 */
     var subject: String
@@ -44,9 +44,6 @@ interface UserAccountThird : IDbEntity<String, UserAccountThird> {
     /** 最后登录时间 */
     var lastLoginTime: LocalDateTime?
 
-    /** 子系统代码 */
-    var subSysDictCode: String
-
     /** 租户ID */
     var tenantId: String
 
@@ -59,14 +56,20 @@ interface UserAccountThird : IDbEntity<String, UserAccountThird> {
     /** 是否内置 */
     var builtIn: Boolean
 
-    /** 创建用户 */
-    var createUser: String?
+    /** 创建用户ID */
+    var createUserId: String?
+
+    /** 创建用户名称 */
+    var createUserName: String?
 
     /** 创建时间 */
-    var createTime: LocalDateTime
+    var createTime: LocalDateTime?
 
-    /** 更新用户 */
-    var updateUser: String?
+    /** 更新用户ID */
+    var updateUserId: String?
+
+    /** 更新用户名称 */
+    var updateUserName: String?
 
     /** 更新时间 */
     var updateTime: LocalDateTime?
