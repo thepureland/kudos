@@ -169,7 +169,7 @@ interface IAuthRoleService : IBaseCrudService<String, AuthRole> {
      * @author AI: Cursor
      * @since 1.0.0
      */
-    fun getUsersByRoleCode(tenantId: String, roleCode: String): List<AuthUserRecord>
+    fun getUsersByRoleCode(tenantId: String, roleCode: String): List<AuthUserCacheItem>
 
     /**
      * 检查用户是否有指定资源的访问权限
