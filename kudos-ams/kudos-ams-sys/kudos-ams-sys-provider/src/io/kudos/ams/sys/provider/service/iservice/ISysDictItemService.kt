@@ -130,9 +130,9 @@ interface ISysDictItemService : IBaseCrudService<String, SysDictItem> {
     fun getDictItemsByDictId(dictId: String): List<SysDictItemRecord>
 
     /**
-     * 根据模块编码和字典类型从缓存获取字典项列表
+     * 根据原子服务编码和字典类型从缓存获取字典项列表
      *
-     * @param atomicServiceCode 模块编码
+     * @param atomicServiceCode 原子服务编码
      * @param dictType 字典类型
      * @return 字典项缓存项列表
      * @author K

@@ -176,7 +176,7 @@ open class ParamByModuleAndNameCacheHandler : AbstractCacheHandler<SysParamCache
      * 批量删除数据库记录后同步缓存
      *
      * @param ids 参数id集合
-     * @param moduleAndNames List<Pair<模块编码，参数名称>>
+     * @param moduleAndNames List<Pair<原子服务编码，参数名称>>
      */
     open fun syncOnBatchDelete(ids: Collection<String>, moduleAndNames: List<Pair<String, String>>) {
         if (CacheKit.isCacheActive(CACHE_NAME)) {
@@ -191,7 +191,7 @@ open class ParamByModuleAndNameCacheHandler : AbstractCacheHandler<SysParamCache
     /**
      * 返回参数拼接后的key
      *
-     * @param atomicServiceCode 模块编码
+     * @param atomicServiceCode 原子服务编码
      * @param paramName 参数名称
      * @return 缓存key
      */

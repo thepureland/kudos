@@ -92,9 +92,9 @@ open class DictItemsByModuleAndTypeCacheHandler : AbstractCacheHandler<List<SysD
     }
 
     /**
-     * 根据模块编码和字典类型获取缓存中对应的字典项，如果缓存中不存在，则从数据库加载，并写入缓存
+     * 根据原子服务编码和字典类型获取缓存中对应的字典项，如果缓存中不存在，则从数据库加载，并写入缓存
      *
-     * @param atomicServiceCode 模块编码
+     * @param atomicServiceCode 原子服务编码
      * @param dictType 字典类型
      * @return List<SysDictItemCacheItem>，找不到返回空列表
      */
@@ -249,7 +249,7 @@ open class DictItemsByModuleAndTypeCacheHandler : AbstractCacheHandler<List<SysD
     /**
      * 返回参数拼接后的缓存的key
      *
-     * @param atomicServiceCode 模块编码
+     * @param atomicServiceCode 原子服务编码
      * @param dictType 字典类型
      * @return 缓存的key
      */
