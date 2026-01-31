@@ -25,7 +25,7 @@ create unique index if not exists "uq_sys_dict" on "sys_dict" ("dict_type", "mod
 comment on table "sys_dict" is '字典';
 comment on column "sys_dict"."id" is '主键';
 comment on column "sys_dict"."dict_type" is '字典类型';
-comment on column "sys_dict"."dict_name" is '字典名称';
+comment on column "sys_dict"."dict_name" is '字典名称或其国际化key';
 comment on column "sys_dict"."module_code" is '模块编码';
 comment on column "sys_dict"."remark" is '备注';
 comment on column "sys_dict"."active" is '是否启用';

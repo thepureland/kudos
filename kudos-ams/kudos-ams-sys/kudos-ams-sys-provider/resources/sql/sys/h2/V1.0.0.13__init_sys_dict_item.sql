@@ -1,106 +1,45 @@
 --region DDL
-create table if not exists "sys_dict_item"
-(
-    "id"
-    character
-(
-    36
-) DEFAULT RANDOM_UUID
-(
-) NOT NULL PRIMARY KEY,
-    "item_code" character varying
-(
-    64
-) NOT NULL,
-    "item_name" character varying
-(
-    64
-) NOT NULL,
-    "dict_id" character varying
-(
-    36
-) NOT NULL,
+
+create table if not exists "sys_dict_item" (
+    "id" character(36) default random_uuid() not null primary key,
+    "item_code" character varying(64) not null,
+    "item_name" character varying(64) not null,
+    "dict_id" character varying(36) not null,
     "order_num" integer,
-    "parent_id" character
-(
-    36
-),
-    "remark" character varying
-(
-    300
-),
-    "active" boolean DEFAULT TRUE NOT NULL,
-    "built_in" boolean DEFAULT FALSE NOT NULL,
-    "create_user_id" character varying
-(
-    36
-),
-    "create_user_name" character varying
-(
-    32
-),
-    "create_time" timestamp
-(
-    6
-) default now
-(
-),
-    "update_user_id" character varying
-(
-    36
-),
-    "update_user_name" character varying
-(
-    32
-),
-    "update_time" timestamp
-(
-    6
-),
+    "parent_id" character(36),
+    "remark" character varying(300),
+    "active" boolean default true not null,
+    "built_in" boolean default false not null,
+    "create_user_id" character varying(36),
+    "create_user_name" character varying(32),
+    "create_time" timestamp(6) default now(),
+    "update_user_id" character varying(36),
+    "update_user_name" character varying(32),
+    "update_time" timestamp(6),
     constraint "fk_sys_dict_item"
-    foreign key
-(
-    "dict_id"
-) references "sys_dict"
-(
-    "id"
-)
-    );
+        foreign key ("dict_id") references "sys_dict" ("id")
+);
 
-create unique index if not exists "uq_sys_dict_item" on "sys_dict_item" ("item_code", "dict_id");
+create unique index if not exists "uq_sys_dict_item"
+    on "sys_dict_item" ("item_code", "dict_id");
 
-comment
-on table "sys_dict_item" is '字典项';
-comment
-on column "sys_dict_item"."id" is '主键';
-comment
-on column "sys_dict_item"."item_code" is '字典项代码';
-comment
-on column "sys_dict_item"."item_name" is '字典项名称';
-comment
-on column "sys_dict_item"."dict_id" is '字典id';
-comment
-on column "sys_dict_item"."order_num" is '字典项排序';
-comment
-on column "sys_dict_item"."parent_id" is '父id';
-comment
-on column "sys_dict_item"."remark" is '备注';
-comment
-on column "sys_dict_item"."active" is '是否启用';
-comment
-on column "sys_dict_item"."built_in" is '是否内置';
-comment
-on column "sys_dict_item"."create_user_id" is '创建者id';
-comment
-on column "sys_dict_item"."create_user_name" is '创建者名称';
-comment
-on column "sys_dict_item"."create_time" is '创建时间';
-comment
-on column "sys_dict_item"."update_user_id" is '更新者id';
-comment
-on column "sys_dict_item"."update_user_name" is '更新者名称';
-comment
-on column "sys_dict_item"."update_time" is '更新时间';
+comment on table "sys_dict_item" is '字典项';
+comment on column "sys_dict_item"."id" is '主键';
+comment on column "sys_dict_item"."item_code" is '字典项代码';
+comment on column "sys_dict_item"."item_name" is '字典项名称或其国际化key';
+comment on column "sys_dict_item"."dict_id" is '字典ID';
+comment on column "sys_dict_item"."order_num" is '字典项排序';
+comment on column "sys_dict_item"."parent_id" is '父ID';
+comment on column "sys_dict_item"."remark" is '备注';
+comment on column "sys_dict_item"."active" is '是否启用';
+comment on column "sys_dict_item"."built_in" is '是否内置';
+comment on column "sys_dict_item"."create_user_id" is '创建者ID';
+comment on column "sys_dict_item"."create_user_name" is '创建者名称';
+comment on column "sys_dict_item"."create_time" is '创建时间';
+comment on column "sys_dict_item"."update_user_id" is '更新者ID';
+comment on column "sys_dict_item"."update_user_name" is '更新者名称';
+comment on column "sys_dict_item"."update_time" is '更新时间';
+
 --endregion DDL
 
 
