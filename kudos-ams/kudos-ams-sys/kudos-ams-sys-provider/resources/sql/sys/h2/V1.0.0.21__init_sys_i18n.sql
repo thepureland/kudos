@@ -45,9 +45,9 @@ comment on column "sys_i18n"."update_time" is '更新时间';
 
 -- dict
 merge into "sys_i18n" ("id", "locale", "atomic_service_code", "i18n_type_dict_code", "key", "value", "built_in") values
-    ('26c199d9-b64e-i18n-dict-000000000001', 'zh_CN', 'sys', 'dict', 'dict.i18n_type', '国际化类型', true),
-    ('26c199d9-b64e-i18n-dict-000000000002', 'zh_TW', 'sys', 'dict', 'dict.i18n_type', '國際化類型', true),
-    ('26c199d9-b64e-i18n-dict-000000000003', 'en_US', 'sys', 'dict', 'dict.i18n_type', 'I18N Type', true);
+    ('26c199d9-b64e-i18n-dict-000000000001', 'zh_CN', 'sys', 'dict', 'i18n_type', '国际化类型', true),
+    ('26c199d9-b64e-i18n-dict-000000000002', 'zh_TW', 'sys', 'dict', 'i18n_type', '國際化類型', true),
+    ('26c199d9-b64e-i18n-dict-000000000003', 'en_US', 'sys', 'dict', 'i18n_type', 'I18N Type', true);
 
 
 -- dict-item ds_use
