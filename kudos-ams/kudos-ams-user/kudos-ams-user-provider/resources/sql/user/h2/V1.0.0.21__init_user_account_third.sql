@@ -48,6 +48,8 @@ comment on column "user_account"."update_user_id" is '更新者ID';
 comment on column "user_account"."update_user_name" is '更新者名称';
 comment on column "user_account"."update_time" is '更新时间';
 
+create unique index "uq_user_account_third__user_id_provider_dict_code"
+    on "user_account_third" ("user_id", "account_provider_dict_code");
 
 -- 同租户下：同一第三方身份只能绑定一次
 create unique index "uq_user_account_third__tenant_provider_issuer_subject"
