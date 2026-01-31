@@ -15,7 +15,7 @@ data class SysDictItemRecord (
     //region your codes 1
 
     /** 模块编码 */
-    var moduleCode: String? = null,
+    var atomicServiceCode: String? = null,
 
     /** 字典id */
     var dictId: String? = null,

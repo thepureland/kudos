@@ -39,9 +39,9 @@ class DictItemsByModuleAndTypeCacheHandlerTest : RdbAndRedisCacheTestBase() {
         cacheHandler.reloadAll(true)
 
         // 获取当前缓存中的记录
-        val moduleCode = "kudos-sys"
+        val atomicServiceCode = "kudos-sys"
         var dictType = "dict_type-11"
-        val cacheItems = cacheHandler.getDictItems(moduleCode, dictType)
+        val cacheItems = cacheHandler.getDictItems(atomicServiceCode, dictType)
 
         // 插入新的记录到数据库
         val sysDictItemNew = insertNewRecordToDb("78139ed2-dbce-47fa-ac0d-111111111111")
@@ -58,7 +58,7 @@ class DictItemsByModuleAndTypeCacheHandlerTest : RdbAndRedisCacheTestBase() {
         cacheHandler.reloadAll(false)
 
         // 原来缓存中的记录内存地址会变
-        val cacheItemsNew = cacheHandler.getDictItems(moduleCode, dictType)
+        val cacheItemsNew = cacheHandler.getDictItems(atomicServiceCode, dictType)
         assert(cacheItems.first() !== cacheItemsNew.first())
 
         // 数据库中新增的记录在缓存应该要存在
@@ -67,34 +67,34 @@ class DictItemsByModuleAndTypeCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
         // 数据库中更新的记录在缓存中应该也更新了
         dictType = "dict_type-22"
-        val cacheItemsUpdate = cacheHandler.getDictItems(moduleCode, dictType)
+        val cacheItemsUpdate = cacheHandler.getDictItems(atomicServiceCode, dictType)
         val name = cacheItemsUpdate.first { it.id == idUpdate }.itemName
         assertEquals(newName, name)
 
         // 数据库中删除的记录在缓存中应该不存在
         dictType = "dict_type-33"
-        val cacheItemsDelete = cacheHandler.getDictItems(moduleCode, dictType)
+        val cacheItemsDelete = cacheHandler.getDictItems(atomicServiceCode, dictType)
         assertFalse(cacheItemsDelete.any { it.id == idDelete })
     }
 
     @Test
     fun getDictItems() {
-        var moduleCode = "kudos-sys"
+        var atomicServiceCode = "kudos-sys"
         var dictType = "dict_type-11"
-        val cacheItems = cacheHandler.getDictItems(moduleCode, dictType)
+        val cacheItems = cacheHandler.getDictItems(atomicServiceCode, dictType)
         assert(cacheItems.size >= 3)
 
         // active为false的dictItem应该没有在缓存中
         assertFalse(cacheItems.any { it.id == "c46091d2-945c-4440-b103-ac58a7aec999" })
         
         // 只有dict，没有dictItem的，应该不会在缓存中
-        moduleCode = "kudos-user"
+        atomicServiceCode = "kudos-user"
         dictType = "dict_type-44"
-        assert(cacheHandler.getDictItems(moduleCode, dictType).isEmpty())
+        assert(cacheHandler.getDictItems(atomicServiceCode, dictType).isEmpty())
 
         // active为false的dict，应该不会在缓存中
         dictType = "dict_type-55"
-        assert(cacheHandler.getDictItems(moduleCode, dictType).isEmpty())
+        assert(cacheHandler.getDictItems(atomicServiceCode, dictType).isEmpty())
     }
 
     @Test
@@ -108,11 +108,11 @@ class DictItemsByModuleAndTypeCacheHandlerTest : RdbAndRedisCacheTestBase() {
         cacheHandler.syncOnInsert(dictItem, dictItem.id!!)
 
         // 验证新记录是否在缓存中
-        val key = cacheHandler.getKey(dict.moduleCode, dict.dictType)
+        val key = cacheHandler.getKey(dict.atomicServiceCode, dict.dictType)
         @Suppress("UNCHECKED_CAST") 
         val cacheItems = CacheKit.getValue(cacheHandler.cacheName(), key) as List<SysDictItemCacheItem>
         assert(cacheItems.any { it.id == dictItem.id })
-        val cacheItems2 = cacheHandler.getDictItems(dict.moduleCode!!, dict.dictType!!)
+        val cacheItems2 = cacheHandler.getDictItems(dict.atomicServiceCode!!, dict.dictType!!)
         assert(cacheItems.size == cacheItems2.size)
     }
 
@@ -130,11 +130,11 @@ class DictItemsByModuleAndTypeCacheHandlerTest : RdbAndRedisCacheTestBase() {
         cacheHandler.syncOnUpdate(dictItem, id)
 
         // 验证缓存中的记录
-        val key = cacheHandler.getKey(dict.moduleCode, dict.dictType)
+        val key = cacheHandler.getKey(dict.atomicServiceCode, dict.dictType)
         @Suppress("UNCHECKED_CAST")
         val cacheItems = CacheKit.getValue(cacheHandler.cacheName(), key) as List<SysDictItemCacheItem>
         assertEquals(newName, cacheItems.first { it.id == id }.itemName)
-        val cacheItems2 = cacheHandler.getDictItems(dict.moduleCode!!, dict.dictType!!)
+        val cacheItems2 = cacheHandler.getDictItems(dict.atomicServiceCode!!, dict.dictType!!)
         assertEquals(newName, cacheItems2.first { it.id == id }.itemName)
     }
 
@@ -147,11 +147,11 @@ class DictItemsByModuleAndTypeCacheHandlerTest : RdbAndRedisCacheTestBase() {
         var dictItem = sysDictItemDao.get(id)!!
         var dict = dictByIdCacheHandler.getDictById(dictItem.dictId)!!
         cacheHandler.syncOnUpdateActive(id)
-        var key = cacheHandler.getKey(dict.moduleCode, dict.dictType)
+        var key = cacheHandler.getKey(dict.atomicServiceCode, dict.dictType)
         @Suppress("UNCHECKED_CAST")
         var cacheItems1 = CacheKit.getValue(cacheHandler.cacheName(), key) as List<SysDictItemCacheItem>
         assertFalse(cacheItems1.any { it.id == id })
-        var cacheItems2 = cacheHandler.getDictItems(dict.moduleCode!!, dict.dictType!!)
+        var cacheItems2 = cacheHandler.getDictItems(dict.atomicServiceCode!!, dict.dictType!!)
         assertFalse(cacheItems2.any { it.id == id })
 
         // 由false更新为true
@@ -161,11 +161,11 @@ class DictItemsByModuleAndTypeCacheHandlerTest : RdbAndRedisCacheTestBase() {
         dictItem = sysDictItemDao.get(id)!!
         dict = dictByIdCacheHandler.getDictById(dictItem.dictId)!!
         cacheHandler.syncOnUpdateActive(id)
-        key = cacheHandler.getKey(dict.moduleCode, dict.dictType)
+        key = cacheHandler.getKey(dict.atomicServiceCode, dict.dictType)
         @Suppress("UNCHECKED_CAST")
         cacheItems1 = CacheKit.getValue(cacheHandler.cacheName(), key) as List<SysDictItemCacheItem>
         assert(cacheItems1.any { it.id == id })
-        cacheItems2 = cacheHandler.getDictItems(dict.moduleCode!!, dict.dictType!!)
+        cacheItems2 = cacheHandler.getDictItems(dict.atomicServiceCode!!, dict.dictType!!)
         assert(cacheItems2.any { it.id == id })
     }
 
@@ -183,11 +183,11 @@ class DictItemsByModuleAndTypeCacheHandlerTest : RdbAndRedisCacheTestBase() {
         cacheHandler.syncOnDelete(id, dictItem.dictId)
 
         // 验证缓存中有没有
-        val key = cacheHandler.getKey(dict.moduleCode, dict.dictType)
+        val key = cacheHandler.getKey(dict.atomicServiceCode, dict.dictType)
         @Suppress("UNCHECKED_CAST")
         val cacheItems1 = CacheKit.getValue(cacheHandler.cacheName(), key) as List<SysDictItemCacheItem>?
         assert(cacheItems1 == null || !cacheItems1.any { it.id == id })
-        val cacheItems2 = cacheHandler.getDictItems(dict.moduleCode!!, dict.dictType!!)
+        val cacheItems2 = cacheHandler.getDictItems(dict.atomicServiceCode!!, dict.dictType!!)
         assertFalse(cacheItems2.any { it.id == id })
     }
     

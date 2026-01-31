@@ -148,7 +148,7 @@ class DictByIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
         val sysDict = SysDict().apply {
             dictType = "TEST_DICT_TYPE_${System.currentTimeMillis()}"
             dictName = "测试字典"
-            moduleCode = "default"
+            atomicServiceCode = "default"
         }
         return sysDictDao.insert(sysDict)
     }

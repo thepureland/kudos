@@ -23,7 +23,7 @@ data class SysDictPayload (
     var dictName: String? = null,
 
     /** 模块编码 */
-    var moduleCode: String? = null,
+    var atomicServiceCode: String? = null,
 
     var parentId: String? = null,
 

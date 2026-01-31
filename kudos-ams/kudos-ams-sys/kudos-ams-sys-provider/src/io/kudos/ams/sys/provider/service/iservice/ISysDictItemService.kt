@@ -132,13 +132,13 @@ interface ISysDictItemService : IBaseCrudService<String, SysDictItem> {
     /**
      * 根据模块编码和字典类型从缓存获取字典项列表
      *
-     * @param moduleCode 模块编码
+     * @param atomicServiceCode 模块编码
      * @param dictType 字典类型
      * @return 字典项缓存项列表
      * @author K
      * @since 1.0.0
      */
-    fun getDictItemsByModuleAndType(moduleCode: String, dictType: String): List<SysDictItemCacheItem>
+    fun getDictItemsByAtomicServiceAndType(atomicServiceCode: String, dictType: String): List<SysDictItemCacheItem>
 
     /**
      * 获取字典项树（递归结构）

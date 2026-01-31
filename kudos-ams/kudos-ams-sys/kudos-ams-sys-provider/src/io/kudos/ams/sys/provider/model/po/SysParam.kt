@@ -25,7 +25,7 @@ interface SysParam : IMaintainableDbEntity<String, SysParam> {
     var defaultValue: String?
 
     /** 模块 */
-    var moduleCode: String
+    var atomicServiceCode: String
 
     /** 序号 */
     var orderNum: Int?

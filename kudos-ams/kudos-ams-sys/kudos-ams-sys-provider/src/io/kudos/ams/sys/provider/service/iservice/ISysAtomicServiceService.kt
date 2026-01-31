@@ -3,7 +3,6 @@ package io.kudos.ams.sys.provider.service.iservice
 import io.kudos.base.support.iservice.IBaseCrudService
 import io.kudos.ams.sys.provider.model.po.SysAtomicService
 import io.kudos.ams.sys.common.vo.atomicservice.SysAtomicServiceCacheItem
-import io.kudos.ams.sys.common.vo.module.SysModuleRecord
 
 
 /**
@@ -38,16 +37,6 @@ interface ISysAtomicServiceService : IBaseCrudService<String, SysAtomicService> 
      * @since 1.0.0
      */
     fun updateActive(code: String, active: Boolean): Boolean
-
-    /**
-     * 获取原子服务下的模块列表
-     *
-     * @param atomicServiceCode 原子服务编码
-     * @return 模块记录列表
-     * @author K
-     * @since 1.0.0
-     */
-    fun getModulesByAtomicServiceCode(atomicServiceCode: String): List<SysModuleRecord>
 
     //endregion your codes 2
 

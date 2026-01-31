@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component
  *
  * 1.数据来源表：sys_param
  * 2.缓存所有active=true的参数
- * 3.缓存的key为：moduleCode::paramName
+ * 3.缓存的key为：atomicServiceCode::paramName
  * 4.缓存的value为：SysParamCacheItem对象
  *
  * @author K
@@ -70,7 +70,7 @@ open class ParamByModuleAndNameCacheHandler : AbstractCacheHandler<SysParamCache
 
         // 缓存参数
         params.forEach {
-            CacheKit.put(CACHE_NAME, getKey(it.moduleCode!!, it.paramName!!), it)
+            CacheKit.put(CACHE_NAME, getKey(it.atomicServiceCode!!, it.paramName!!), it)
         }
         log.debug("缓存了${params.size}条参数信息。")
     }
@@ -78,22 +78,22 @@ open class ParamByModuleAndNameCacheHandler : AbstractCacheHandler<SysParamCache
     /**
      * 根据模块编号和参数名称从缓存获取对应的参数信息，如果缓存中不存在，则从数据库中加载，并写回缓存
      *
-     * @param moduleCode 模块编号
+     * @param atomicServiceCode 模块编号
      * @param paramName 参数名称
      * @return SysParamCacheItem，找不到返回null
      */
     @Cacheable(
         value = [CACHE_NAME],
-        key = "#moduleCode.concat('${Consts.CACHE_KEY_DEFAULT_DELIMITER}').concat(#paramName)",
+        key = "#atomicServiceCode.concat('${Consts.CACHE_KEY_DEFAULT_DELIMITER}').concat(#paramName)",
         unless = "#result == null"
     )
-    open fun getParam(moduleCode: String, paramName: String): SysParamCacheItem? {
+    open fun getParam(atomicServiceCode: String, paramName: String): SysParamCacheItem? {
         if (CacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("缓存中不存在模块为${moduleCode}且名称为${paramName}的参数，从数据库中加载...")
+            log.debug("缓存中不存在模块为${atomicServiceCode}且名称为${paramName}的参数，从数据库中加载...")
         }
-        val param = sysParamDao.getActiveParamsForCache(moduleCode, paramName)
+        val param = sysParamDao.getActiveParamsForCache(atomicServiceCode, paramName)
         if (param == null) {
-            log.warn("数据库中不存在模块为${moduleCode}且名称为${paramName}的active=true的参数！")
+            log.warn("数据库中不存在模块为${atomicServiceCode}且名称为${paramName}的active=true的参数！")
         }
         return param
     }
@@ -107,9 +107,9 @@ open class ParamByModuleAndNameCacheHandler : AbstractCacheHandler<SysParamCache
     open fun syncOnInsert(any: Any, id: String) {
         if (CacheKit.isCacheActive(CACHE_NAME) && CacheKit.isWriteInTime(CACHE_NAME)) {
             log.debug("新增id为${id}的参数后，同步${CACHE_NAME}缓存...")
-            val moduleCode = BeanKit.getProperty(any, SysParam::moduleCode.name) as String
+            val atomicServiceCode = BeanKit.getProperty(any, SysParam::atomicServiceCode.name) as String
             val paramName = BeanKit.getProperty(any, SysParam::paramName.name) as String
-            getSelf<ParamByModuleAndNameCacheHandler>().getParam(moduleCode, paramName) // 缓存
+            getSelf<ParamByModuleAndNameCacheHandler>().getParam(atomicServiceCode, paramName) // 缓存
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
     }
@@ -123,11 +123,11 @@ open class ParamByModuleAndNameCacheHandler : AbstractCacheHandler<SysParamCache
     open fun syncOnUpdate(any: Any, id: String) {
         if (CacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("更新id为${id}的参数后，同步${CACHE_NAME}缓存...")
-            val moduleCode = BeanKit.getProperty(any, SysParam::moduleCode.name) as String
+            val atomicServiceCode = BeanKit.getProperty(any, SysParam::atomicServiceCode.name) as String
             val paramName = BeanKit.getProperty(any, SysParam::paramName.name) as String
-            CacheKit.evict(CACHE_NAME, getKey(moduleCode, paramName)) // 踢除参数缓存
+            CacheKit.evict(CACHE_NAME, getKey(atomicServiceCode, paramName)) // 踢除参数缓存
             if (CacheKit.isWriteInTime(CACHE_NAME)) {
-                getSelf<ParamByModuleAndNameCacheHandler>().getParam(moduleCode, paramName) // 重新缓存
+                getSelf<ParamByModuleAndNameCacheHandler>().getParam(atomicServiceCode, paramName) // 重新缓存
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
@@ -146,11 +146,11 @@ open class ParamByModuleAndNameCacheHandler : AbstractCacheHandler<SysParamCache
             if (active) {
                 if (CacheKit.isWriteInTime(CACHE_NAME)) {
                     getSelf<ParamByModuleAndNameCacheHandler>().getParam(
-                        sysParam.moduleCode, sysParam.paramName
+                        sysParam.atomicServiceCode, sysParam.paramName
                     )
                 }
             } else {
-                CacheKit.evict(CACHE_NAME, getKey(sysParam.moduleCode, sysParam.paramName)) // 踢除参数缓存
+                CacheKit.evict(CACHE_NAME, getKey(sysParam.atomicServiceCode, sysParam.paramName)) // 踢除参数缓存
             }
             log.debug("缓存同步完成。")
         }
@@ -164,10 +164,10 @@ open class ParamByModuleAndNameCacheHandler : AbstractCacheHandler<SysParamCache
      */
     open fun syncOnDelete(any: Any, id: String) {
         if (CacheKit.isCacheActive(CACHE_NAME)) {
-            val moduleCode = BeanKit.getProperty(any, SysParam::moduleCode.name) as String
+            val atomicServiceCode = BeanKit.getProperty(any, SysParam::atomicServiceCode.name) as String
             val paramName = BeanKit.getProperty(any, SysParam::paramName.name) as String
             log.debug("删除id为${id}的参数后，同步从${CACHE_NAME}缓存中踢除...")
-            CacheKit.evict(CACHE_NAME, getKey(moduleCode, paramName)) // 踢除缓存
+            CacheKit.evict(CACHE_NAME, getKey(atomicServiceCode, paramName)) // 踢除缓存
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
     }
@@ -191,12 +191,12 @@ open class ParamByModuleAndNameCacheHandler : AbstractCacheHandler<SysParamCache
     /**
      * 返回参数拼接后的key
      *
-     * @param moduleCode 模块编码
+     * @param atomicServiceCode 模块编码
      * @param paramName 参数名称
      * @return 缓存key
      */
-    fun getKey(moduleCode: String, paramName: String): String {
-        return "${moduleCode}${Consts.CACHE_KEY_DEFAULT_DELIMITER}${paramName}"
+    fun getKey(atomicServiceCode: String, paramName: String): String {
+        return "${atomicServiceCode}${Consts.CACHE_KEY_DEFAULT_DELIMITER}${paramName}"
     }
 
     private val log = LogFactory.getLog(this)

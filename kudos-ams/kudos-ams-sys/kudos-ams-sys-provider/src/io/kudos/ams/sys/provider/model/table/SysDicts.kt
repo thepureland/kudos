@@ -22,7 +22,7 @@ object SysDicts : MaintainableTable<SysDict>("sys_dict") {
     var dictName = varchar("dict_name").bindTo { it.dictName }
 
     /** 模块编码 */
-    var moduleCode = varchar("module_code").bindTo { it.moduleCode }
+    var atomicServiceCode = varchar("atomic_service_code").bindTo { it.atomicServiceCode }
 
 
     //region your codes 2

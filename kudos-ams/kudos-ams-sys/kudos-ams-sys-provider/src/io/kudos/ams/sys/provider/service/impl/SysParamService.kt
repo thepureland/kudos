@@ -33,13 +33,13 @@ open class SysParamService : BaseCrudService<String, SysParam, SysParamDao>(), I
     @Autowired
     private lateinit var paramByModuleAndNameCacheHandler: ParamByModuleAndNameCacheHandler
 
-    override fun getParamByModuleAndName(moduleCode: String, paramName: String): SysParamCacheItem? {
-        return paramByModuleAndNameCacheHandler.getParam(moduleCode, paramName)
+    override fun getParamByAtomicServiceAndName(atomicServiceCode: String, paramName: String): SysParamCacheItem? {
+        return paramByModuleAndNameCacheHandler.getParam(atomicServiceCode, paramName)
     }
 
-    override fun getParamsByModuleCode(moduleCode: String): List<SysParamRecord> {
+    override fun getParamsByAtomicServiceCode(atomicServiceCode: String): List<SysParamRecord> {
         val searchPayload = SysParamSearchPayload().apply {
-            this.moduleCode = moduleCode
+            this.atomicServiceCode = atomicServiceCode
         }
         @Suppress("UNCHECKED_CAST")
         return dao.search(searchPayload) as List<SysParamRecord>
@@ -61,8 +61,8 @@ open class SysParamService : BaseCrudService<String, SysParam, SysParamDao>(), I
         return success
     }
 
-    override fun getParamValue(moduleCode: String, paramName: String, defaultValue: String?): String? {
-        val param = getParamByModuleAndName(moduleCode, paramName)
+    override fun getParamValue(atomicServiceCode: String, paramName: String, defaultValue: String?): String? {
+        val param = getParamByAtomicServiceAndName(atomicServiceCode, paramName)
         return param?.paramValue ?: param?.defaultValue ?: defaultValue
     }
 
@@ -107,7 +107,7 @@ open class SysParamService : BaseCrudService<String, SysParam, SysParamDao>(), I
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {
         val params = dao.inSearchById(ids)
-        val moduleAndNames = params.map { Pair(it.moduleCode, it.paramName) }
+        val moduleAndNames = params.map { Pair(it.atomicServiceCode, it.paramName) }
         val count = super.batchDelete(ids)
         log.debug("批量删除参数，期望删除${ids.size}条，实际删除${count}条。")
         paramByModuleAndNameCacheHandler.syncOnBatchDelete(ids, moduleAndNames)

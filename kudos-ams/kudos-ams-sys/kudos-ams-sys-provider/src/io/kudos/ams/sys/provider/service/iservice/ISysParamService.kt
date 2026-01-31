@@ -21,23 +21,23 @@ interface ISysParamService : IBaseCrudService<String, SysParam> {
     /**
      * 根据模块编码和参数名称从缓存获取参数信息
      *
-     * @param moduleCode 模块编码
+     * @param atomicServiceCode 模块编码
      * @param paramName 参数名称
      * @return SysParamCacheItem，找不到返回null
      * @author K
      * @since 1.0.0
      */
-    fun getParamByModuleAndName(moduleCode: String, paramName: String): SysParamCacheItem?
+    fun getParamByAtomicServiceAndName(atomicServiceCode: String, paramName: String): SysParamCacheItem?
 
     /**
      * 获取模块的所有参数
      *
-     * @param moduleCode 模块编码
+     * @param atomicServiceCode 模块编码
      * @return 参数记录列表
      * @author K
      * @since 1.0.0
      */
-    fun getParamsByModuleCode(moduleCode: String): List<SysParamRecord>
+    fun getParamsByAtomicServiceCode(atomicServiceCode: String): List<SysParamRecord>
 
     /**
      * 更新启用状态，并同步缓存
@@ -53,14 +53,14 @@ interface ISysParamService : IBaseCrudService<String, SysParam> {
     /**
      * 获取参数值，如果找不到则返回默认值
      *
-     * @param moduleCode 模块编码
+     * @param atomicServiceCode 模块编码
      * @param paramName 参数名称
      * @param defaultValue 默认值，如果为null且参数不存在则返回null
      * @return 参数值
      * @author K
      * @since 1.0.0
      */
-    fun getParamValue(moduleCode: String, paramName: String, defaultValue: String? = null): String?
+    fun getParamValue(atomicServiceCode: String, paramName: String, defaultValue: String? = null): String?
 
     //endregion your codes 2
 

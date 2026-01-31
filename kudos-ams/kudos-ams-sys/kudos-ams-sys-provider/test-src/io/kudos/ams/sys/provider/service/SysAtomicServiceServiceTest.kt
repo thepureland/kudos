@@ -32,11 +32,5 @@ class SysAtomicServiceServiceTest : RdbAndRedisCacheTestBase() {
         assertTrue(sysAtomicServiceService.updateActive(code, true))
     }
 
-    @Test
-    fun getModulesByAtomicServiceCode() {
-        val atomicServiceCode = "svc-atomicservice-test-1"
-        val modules = sysAtomicServiceService.getModulesByAtomicServiceCode(atomicServiceCode)
-        assertTrue(modules.any { it.code == "svc-module-as-test-1" })
-    }
 }
 

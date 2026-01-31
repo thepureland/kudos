@@ -19,8 +19,8 @@ interface SysI18n : IDbEntity<String, SysI18n> {
     /** 语言_地区 */
     var locale: String
 
-    /** 语言_地区 */
-    var moduleCode: String
+    /** 原子服务编码 */
+    var atomicServiceCode: String
 
     /** 国际化类型字典代码 */
     var i18nTypeDictCode: String

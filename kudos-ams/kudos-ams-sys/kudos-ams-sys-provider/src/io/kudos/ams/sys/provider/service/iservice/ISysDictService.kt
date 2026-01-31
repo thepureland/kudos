@@ -67,23 +67,23 @@ interface ISysDictService : IBaseCrudService<String, SysDict> {
     /**
      * 获取模块的所有字典
      *
-     * @param moduleCode 模块编码
+     * @param atomicServiceCode 模块编码
      * @return 字典记录列表
      * @author AI: Cursor
      * @since 1.0.0
      */
-    fun getDictsByModuleCode(moduleCode: String): List<SysDictRecord>
+    fun getDictsByAtomicServiceCode(atomicServiceCode: String): List<SysDictRecord>
 
     /**
      * 根据模块编码和字典类型获取字典
      *
-     * @param moduleCode 模块编码
+     * @param atomicServiceCode 模块编码
      * @param dictType 字典类型
      * @return 字典记录，找不到返回null
      * @author AI: Cursor
      * @since 1.0.0
      */
-    fun getDictByModuleAndType(moduleCode: String, dictType: String): SysDictRecord?
+    fun getDictByAtomicServiceAndType(atomicServiceCode: String, dictType: String): SysDictRecord?
 
     /**
      * 更新启用状态，并同步缓存

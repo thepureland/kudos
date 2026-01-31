@@ -25,28 +25,28 @@ class SysParamServiceTest : RdbAndRedisCacheTestBase() {
     private lateinit var sysParamService: ISysParamService
 
     @Test
-    fun getParamByModuleAndName() {
-        val moduleCode = "svc-module-param-test-1"
+    fun getParamByAtomicServiceAndName() {
+        val atomicServiceCode = "svc-module-param-test-1"
         val paramName = "svc-param-name-1"
-        val cacheItem = sysParamService.getParamByModuleAndName(moduleCode, paramName)
+        val cacheItem = sysParamService.getParamByAtomicServiceAndName(atomicServiceCode, paramName)
         assertNotNull(cacheItem)
     }
 
     @Test
-    fun getParamsByModuleCode() {
-        val moduleCode = "svc-module-param-test-1"
-        val params = sysParamService.getParamsByModuleCode(moduleCode)
+    fun getParamsByAtomicServiceCode() {
+        val atomicServiceCode = "svc-module-param-test-1"
+        val params = sysParamService.getParamsByAtomicServiceCode(atomicServiceCode)
         assertTrue(params.any { it.paramName == "svc-param-name-1" })
     }
 
     @Test
     fun getParamValue() {
-        val moduleCode = "svc-module-param-test-1"
+        val atomicServiceCode = "svc-module-param-test-1"
         val paramName = "svc-param-name-1"
-        val value = sysParamService.getParamValue(moduleCode, paramName)
+        val value = sysParamService.getParamValue(atomicServiceCode, paramName)
         assertEquals("svc-param-value-1", value)
         
-        val defaultValue = sysParamService.getParamValue(moduleCode, "non-existent", "default")
+        val defaultValue = sysParamService.getParamValue(atomicServiceCode, "non-existent", "default")
         assertEquals("default", defaultValue)
     }
 

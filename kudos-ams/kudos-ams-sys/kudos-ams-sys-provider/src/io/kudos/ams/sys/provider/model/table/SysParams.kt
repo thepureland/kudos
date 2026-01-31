@@ -25,7 +25,7 @@ object SysParams : MaintainableTable<SysParam>("sys_param") {
     var defaultValue = varchar("default_value").bindTo { it.defaultValue }
 
     /** 模块 */
-    var moduleCode = varchar("module_code").bindTo { it.moduleCode }
+    var atomicServiceCode = varchar("atomic_service_code").bindTo { it.atomicServiceCode }
 
     /** 序号 */
     var orderNum = int("order_num").bindTo { it.orderNum }

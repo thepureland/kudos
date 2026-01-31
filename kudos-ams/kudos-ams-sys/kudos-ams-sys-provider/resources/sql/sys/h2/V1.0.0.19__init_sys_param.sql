@@ -5,7 +5,7 @@ create table if not exists "sys_param"
     "param_name"    character varying(32)               not null,
     "param_value"   character varying(128)              not null,
     "default_value" character varying(128),
-    "module_code"   character varying(32)               not null,
+    "atomic_service_code"   character varying(32)               not null,
     "order_num"     int2,
     "remark"        character varying(128),
     "active"        boolean       default TRUE          not null,
@@ -18,18 +18,18 @@ create table if not exists "sys_param"
     "update_time"   timestamp(6)
 );
 
-create unique index if not exists "uq_sys_param" on "sys_param" ("param_name", "module_code");
+create unique index if not exists "uq_sys_param" on "sys_param" ("param_name", "atomic_service_code");
 
 -- alter table "sys_param"
 --     add constraint "fk_sys_param_module"
---         foreign key ("module_code") references "sys_module" ("code");
+--         foreign key ("atomic_service_code") references "sys_module" ("code");
 
 comment on table "sys_param" is '参数';
 comment on column "sys_param"."id" is '主键';
 comment on column "sys_param"."param_name" is '参数名称';
 comment on column "sys_param"."param_value" is '参数值';
 comment on column "sys_param"."default_value" is '默认参数值';
-comment on column "sys_param"."module_code" is '模块';
+comment on column "sys_param"."atomic_service_code" is '模块';
 comment on column "sys_param"."order_num" is '序号';
 comment on column "sys_param"."remark" is '备注';
 comment on column "sys_param"."active" is '是否启用';

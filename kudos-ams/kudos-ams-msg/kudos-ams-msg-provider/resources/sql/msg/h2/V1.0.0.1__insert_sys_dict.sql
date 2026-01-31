@@ -1,6 +1,6 @@
 --region DML
 
-merge into "sys_dict" ("id", "module_code", "dict_type", "dict_name", "remark", "built_in") values
+merge into "sys_dict" ("id", "atomic_service_code", "dict_type", "dict_name", "remark", "built_in") values
     ('181c57ec-df00-4844-a79b-5b1019ec25ec', 'kudos-msg', 'publish_method', 'publish_method', null, true),
     ('0739cfe7-1c78-45c1-a50a-91f415c66c7c', 'kudos-msg', 'receiver_group_type', 'receiver_group_type', null, true),
     ('1c147a5b-0543-497d-bcae-221aec84256c', 'kudos-msg', 'send_status', 'send_status', null, true),

@@ -1,7 +1,7 @@
 --region DML
 
 -- dict
-merge into "sys_i18n" ("id", "locale", "module_code", "i18n_type_dict_code", "key", "value", "built_in") values
+merge into "sys_i18n" ("id", "locale", "atomic_service_code", "i18n_type_dict_code", "key", "value", "built_in") values
     ('bba0ce4a-35c0-4497-8a24-27d976adf6f2', 'zh_CN', 'kudos-msg', 'dict', 'publish_method', '发布方式', true),
     ('2f8c652e-b9e4-4ff2-8845-c66463f44979', 'zh_TW', 'kudos-msg', 'dict', 'publish_method', '發布方式', true),
     ('064dc55c-00f2-445a-bd2d-3488a9115613', 'en_US', 'kudos-msg', 'dict', 'publish_method', 'Publish Method', true),
@@ -35,7 +35,7 @@ merge into "sys_i18n" ("id", "locale", "module_code", "i18n_type_dict_code", "ke
     ('a131b33f-7d6a-4613-8789-ecc93c1e8f12', 'en_US', 'kudos-msg', 'dict', 'receive_status', 'Receive Status', true);
 
 -- dict-item publish_method
-merge into "sys_i18n" ("id", "locale", "module_code", "i18n_type_dict_code", "key", "value", "built_in") values
+merge into "sys_i18n" ("id", "locale", "atomic_service_code", "i18n_type_dict_code", "key", "value", "built_in") values
     ('b008a406-2d7d-4887-972a-4f7968507476', 'zh_CN', 'kudos-msg', 'dict-item', 'publish_method.email', '电子邮件', true),
     ('e87cef81-2e67-40a7-9cef-afca5df20b48', 'zh_TW', 'kudos-msg', 'dict-item', 'publish_method.email', '電子郵件', true),
     ('22822f50-b611-423e-97e1-8469e21f7699', 'en_US', 'kudos-msg', 'dict-item', 'publish_method.email', 'Email', true),
@@ -53,7 +53,7 @@ merge into "sys_i18n" ("id", "locale", "module_code", "i18n_type_dict_code", "ke
     ('67e2b7ad-2afa-42e1-8c17-b284fd79983b', 'en_US', 'kudos-msg', 'dict-item', 'publish_method.all_user', 'All Users', true);
 
 -- dict-item receiver_group_type
-merge into "sys_i18n" ("id", "locale", "module_code", "i18n_type_dict_code", "key", "value", "built_in") values
+merge into "sys_i18n" ("id", "locale", "atomic_service_code", "i18n_type_dict_code", "key", "value", "built_in") values
     ('535f3775-87e5-44f0-bcd0-5fe2c48a08f1', 'zh_CN', 'kudos-msg', 'dict-item', 'receiver_group_type.all_front', '所有前台用户', true),
     ('d394ed76-ad99-4cc6-86fe-9350558233d5', 'zh_TW', 'kudos-msg', 'dict-item', 'receiver_group_type.all_front', '所有前台使用者', true),
     ('61a0e039-5824-4390-9802-535e847e71d7', 'en_US', 'kudos-msg', 'dict-item', 'receiver_group_type.all_front', 'All Front-end Users', true),
@@ -99,7 +99,7 @@ merge into "sys_i18n" ("id", "locale", "module_code", "i18n_type_dict_code", "ke
     ('1e59344b-44c7-45de-9a2c-903a31f4d1e3', 'en_US', 'kudos-msg', 'dict-item', 'receiver_group_type.user', 'Specific User', true);
 
 -- dict-item send_status
-merge into "sys_i18n" ("id", "locale", "module_code", "i18n_type_dict_code", "key", "value", "built_in") values
+merge into "sys_i18n" ("id", "locale", "atomic_service_code", "i18n_type_dict_code", "key", "value", "built_in") values
     ('6fafc84b-e05d-4c5a-922e-a680a5db86ca', 'zh_CN', 'kudos-msg', 'dict-item', 'send_status.00', '等待发送', true),
     ('f8784014-ca7f-4720-a99f-162bcee34dd0', 'zh_TW', 'kudos-msg', 'dict-item', 'send_status.00', '等待發送', true),
     ('9df65850-478d-47c1-8c77-967bf95ed499', 'en_US', 'kudos-msg', 'dict-item', 'send_status.00', 'Pending Send', true),
@@ -133,7 +133,7 @@ merge into "sys_i18n" ("id", "locale", "module_code", "i18n_type_dict_code", "ke
     ('3f87a7d5-b0e3-4771-a51d-07963ebb9f4b', 'en_US', 'kudos-msg', 'dict-item', 'send_status.33', 'Sent Successfully', true);
 
 -- dict-item tmpl_type
-merge into "sys_i18n" ("id", "locale", "module_code", "i18n_type_dict_code", "key", "value", "built_in") values
+merge into "sys_i18n" ("id", "locale", "atomic_service_code", "i18n_type_dict_code", "key", "value", "built_in") values
     ('9ae2f8ab-70f0-4e1a-975a-f28fb85681bf', 'zh_CN', 'kudos-msg', 'dict-item', 'tmpl_type.auto', '自动通知模板', true),
     ('4b534332-33a3-4a43-8cbb-9cd5934e36d3', 'zh_TW', 'kudos-msg', 'dict-item', 'tmpl_type.auto', '自動通知範本', true),
     ('d0ab9226-7244-49b4-b595-cf4c78b712cb', 'en_US', 'kudos-msg', 'dict-item', 'tmpl_type.auto', 'Automatic Notification Template', true),
@@ -143,7 +143,7 @@ merge into "sys_i18n" ("id", "locale", "module_code", "i18n_type_dict_code", "ke
     ('bf7cb992-212e-4846-8e96-db27470e378e', 'en_US', 'kudos-msg', 'dict-item', 'tmpl_type.manual', 'Manual Message Template', true);
 
 -- dict-item receive_status
-merge into "sys_i18n" ("id", "locale", "module_code", "i18n_type_dict_code", "key", "value", "built_in") values
+merge into "sys_i18n" ("id", "locale", "atomic_service_code", "i18n_type_dict_code", "key", "value", "built_in") values
     ('bf1f1dd3-ed05-4b84-919b-42dad4e69f03', 'zh_CN', 'kudos-msg', 'dict-item', 'receive_status.11', '已接收', true),
     ('e3e48411-a5d8-4e99-8060-be86dee6a39d', 'zh_TW', 'kudos-msg', 'dict-item', 'receive_status.11', '已接收', true),
     ('deef0f66-814f-4c6b-83d9-853b4c535450', 'en_US', 'kudos-msg', 'dict-item', 'receive_status.11', 'Received', true),

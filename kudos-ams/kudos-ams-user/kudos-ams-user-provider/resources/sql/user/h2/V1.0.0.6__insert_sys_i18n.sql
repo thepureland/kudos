@@ -1,7 +1,7 @@
 --region DML
 
 -- dict
-merge into "sys_i18n" ("id", "locale", "module_code", "i18n_type_dict_code", "key", "value", "built_in") values
+merge into "sys_i18n" ("id", "locale", "atomic_service_code", "i18n_type_dict_code", "key", "value", "built_in") values
     ('a1a673fe-91e1-4990-b0bb-c8ad44e4254a', 'zh_CN', 'kudos-user', 'dict', 'account_type', '账号类型', true),
     ('20c8b9ce-6051-456e-a880-8807526244f9', 'zh_TW', 'kudos-user', 'dict', 'account_type', '帳號類型', true),
     ('2f81a042-23d6-47ac-9b76-fa29a24ce652', 'en_US', 'kudos-user', 'dict', 'account_type', 'Account Type', true),
@@ -28,7 +28,7 @@ merge into "sys_i18n" ("id", "locale", "module_code", "i18n_type_dict_code", "ke
 
 
 -- dict-item account_type
-merge into "sys_i18n" ("id", "locale", "module_code", "i18n_type_dict_code", "key", "value", "built_in") values
+merge into "sys_i18n" ("id", "locale", "atomic_service_code", "i18n_type_dict_code", "key", "value", "built_in") values
     ('c3cd2ca1-80d4-4fb6-8fc0-bd930c3f692b', 'zh_CN', 'kudos-user', 'dict-item', 'account_type.00', '终端用户', true),
     ('f3f0052c-a3bc-4e5b-ad26-c1acd95841ad', 'zh_TW', 'kudos-user', 'dict-item', 'account_type.00', '終端使用者', true),
     ('4818f158-5bf6-49e4-8922-fa61338f7b0f', 'en_US', 'kudos-user', 'dict-item', 'account_type.00', 'End User', true),
@@ -50,7 +50,7 @@ merge into "sys_i18n" ("id", "locale", "module_code", "i18n_type_dict_code", "ke
     ('699eeb6b-de19-423f-ae9c-1c62e4801e5b', 'en_US', 'kudos-user', 'dict-item', 'account_type.22', 'Portal Member', true);
 
 -- dict-item account_status
-merge into "sys_i18n" ("id", "locale", "module_code", "i18n_type_dict_code", "key", "value", "built_in") values
+merge into "sys_i18n" ("id", "locale", "atomic_service_code", "i18n_type_dict_code", "key", "value", "built_in") values
     ('665fb756-ca21-478b-8764-c6d6368fb6a2', 'zh_CN', 'kudos-user', 'dict-item', 'account_status.00', '已注销', true),
     ('07c6d0e5-eb7e-4579-8232-345432b74ea4', 'zh_TW', 'kudos-user', 'dict-item', 'account_status.00', '已註銷', true),
     ('93c21c47-bccc-41d1-8c75-9cca3f9081c1', 'en_US', 'kudos-user', 'dict-item', 'account_status.00', 'Deactivated', true),
@@ -72,7 +72,7 @@ merge into "sys_i18n" ("id", "locale", "module_code", "i18n_type_dict_code", "ke
     ('04adcbf3-860a-4ffe-9600-bf01e94e2141', 'en_US', 'kudos-user', 'dict-item', 'account_status.40', 'Credential Expired', true);
 
 -- dict-item account_provider
-merge into "sys_i18n" ("id", "locale", "module_code", "i18n_type_dict_code", "key", "value", "built_in") values
+merge into "sys_i18n" ("id", "locale", "atomic_service_code", "i18n_type_dict_code", "key", "value", "built_in") values
     ('eb2a0d59-8774-45a4-952f-88cee7363b7a', 'zh_CN', 'kudos-user', 'dict-item', 'account_provider.google', '谷歌', true),
     ('6437cb8c-c87a-4ce3-9798-386002f0a656', 'zh_TW', 'kudos-user', 'dict-item', 'account_provider.google', 'Google', true),
     ('f44ea019-adbc-4a5b-b6d5-490c9d9d0d17', 'en_US', 'kudos-user', 'dict-item', 'account_provider.google', 'Google', true),
@@ -90,7 +90,7 @@ merge into "sys_i18n" ("id", "locale", "module_code", "i18n_type_dict_code", "ke
     ('e0f0239f-5f0a-43c1-a75b-0d28846ce5c2', 'en_US', 'kudos-user', 'dict-item', 'account_provider.github', 'GitHub', true);
 
 -- dict-item org_type
-merge into "sys_i18n" ("id", "locale", "module_code", "i18n_type_dict_code", "key", "value", "built_in") values
+merge into "sys_i18n" ("id", "locale", "atomic_service_code", "i18n_type_dict_code", "key", "value", "built_in") values
     ('efc27798-b9d1-40cb-96ba-5b7f9307064a', 'zh_CN', 'kudos-user', 'dict-item', 'org_type.00', '总部', true),
     ('ea72cc4c-7ddc-4577-b9a8-c381315493fd', 'zh_TW', 'kudos-user', 'dict-item', 'org_type.00', '總部', true),
     ('63f208ec-3dca-441e-a3cc-dbbec8ef1a37', 'en_US', 'kudos-user', 'dict-item', 'org_type.00', 'Headquarters', true),
@@ -112,7 +112,7 @@ merge into "sys_i18n" ("id", "locale", "module_code", "i18n_type_dict_code", "ke
     ('6d9d315f-1105-4809-af3d-f91bc820ff87', 'en_US', 'kudos-user', 'dict-item', 'org_type.40', 'Team', true);
 
 -- dict-item contact_way
-merge into "sys_i18n" ("id", "locale", "module_code", "i18n_type_dict_code", "key", "value", "built_in") values
+merge into "sys_i18n" ("id", "locale", "atomic_service_code", "i18n_type_dict_code", "key", "value", "built_in") values
     ('8050e30f-65f5-4ff4-8c4f-a584b304202f', 'zh_CN', 'kudos-user', 'dict-item', 'contact_way.101', '手机', true),
     ('6f48dfc9-807e-4157-9d24-3e81b3019f0f', 'zh_TW', 'kudos-user', 'dict-item', 'contact_way.101', '手機', true),
     ('1fe9aa13-99fe-40a4-b93f-19ff3ef3c0cb', 'en_US', 'kudos-user', 'dict-item', 'contact_way.101', 'Mobile Phone', true),
@@ -146,7 +146,7 @@ merge into "sys_i18n" ("id", "locale", "module_code", "i18n_type_dict_code", "ke
     ('fd83b9f2-8225-4125-959f-62d0a16b00b8', 'en_US', 'kudos-user', 'dict-item', 'contact_way.403', 'Facebook', true);
 
 -- dict-item contact_way_status
-merge into "sys_i18n" ("id", "locale", "module_code", "i18n_type_dict_code", "key", "value", "built_in") values
+merge into "sys_i18n" ("id", "locale", "atomic_service_code", "i18n_type_dict_code", "key", "value", "built_in") values
     ('5ce8795e-c0e6-414b-9906-0d9c5706b471', 'zh_CN', 'kudos-user', 'dict-item', 'contact_way_status.00', '未验证', true),
     ('7b6d552f-a9cd-4b0a-a899-aae7307a6d39', 'zh_TW', 'kudos-user', 'dict-item', 'contact_way_status.00', '未驗證', true),
     ('95451300-2cc4-4313-ab36-33b1294dd78d', 'en_US', 'kudos-user', 'dict-item', 'contact_way_status.00', 'Unverified', true),

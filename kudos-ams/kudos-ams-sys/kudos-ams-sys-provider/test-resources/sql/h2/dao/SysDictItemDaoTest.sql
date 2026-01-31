@@ -4,10 +4,8 @@
 merge into "sys_atomic_service" ("code", "name", "remark", "active", "built_in")
     values ('svc-as-dictitem-dao-test-1', 'svc-as-dictitem-dao-test-1-name', 'from SysDictItemDaoTest', true, false);
 
-merge into "sys_module" ("code", "name", "atomic_service_code", "remark", "active", "built_in")
-    values ('svc-module-ditem-dao-test-1', 'svc-module-dictitem-dao-test-1-name', 'svc-as-dictitem-dao-test-1', 'from SysDictItemDaoTest', true, false);
 
-merge into "sys_dict" ("id", "dict_type", "dict_name", "module_code", "remark", "active", "built_in")
+merge into "sys_dict" ("id", "dict_type", "dict_name", "atomic_service_code", "remark", "active", "built_in")
     values ('40000000-0000-0000-0000-000000000050', 'svc-dict-ditem-dao-test-1', 'svc-dict-dictitem-dao-test-1-name', 'svc-module-ditem-dao-test-1', 'from SysDictItemDaoTest', true, false),
            ('40000000-0000-0000-0000-000000000051', 'svc-dict-ditem-dao-test-2', 'svc-dict-dictitem-dao-test-2-name', 'svc-module-ditem-dao-test-1', 'from SysDictItemDaoTest', false, false);
 

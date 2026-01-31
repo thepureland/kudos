@@ -24,7 +24,7 @@ data class SysDictDetail (
     var dictName: String? = null,
 
     /** 模块编码 */
-    var moduleCode: String? = null,
+    var atomicServiceCode: String? = null,
 
     /** 备注 */
     var remark: String? = null,

@@ -24,11 +24,11 @@ class SysParamDaoTest : RdbTestBase() {
 
     @Test
     fun getActiveParamsForCache() {
-        // 测试有moduleCode的情况
+        // 测试有atomicServiceCode的情况
         val cacheItem1 = sysParamDao.getActiveParamsForCache("svc-module-param-dao-test-1", "svc-param-dao-test-1")
         assertNotNull(cacheItem1)
         
-        // 测试moduleCode为空字符串的情况
+        // 测试atomicServiceCode为空字符串的情况
         val cacheItem2 = sysParamDao.getActiveParamsForCache("", "svc-param-dao-test-3")
         assertNotNull(cacheItem2)
         
