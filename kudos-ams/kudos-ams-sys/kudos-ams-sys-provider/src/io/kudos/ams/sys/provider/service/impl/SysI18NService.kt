@@ -6,11 +6,11 @@ import io.kudos.ams.sys.provider.dao.SysI18nDao
 import io.kudos.ams.sys.common.vo.i18n.SysI18nRecord
 import io.kudos.ams.sys.common.vo.i18n.SysI18nPayload
 import io.kudos.ams.sys.common.vo.i18n.SysI18nSearchPayload
+import io.kudos.ams.sys.provider.cache.I18NByLocaleAndTypeAndAmsCodeCacheHandler
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.query.Criteria
-import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -29,6 +29,9 @@ open class SysI18NService : BaseCrudService<String, SysI18n, SysI18nDao>(), ISys
     //region your codes 2
 
     private val log = LogFactory.getLog(this)
+
+    @Autowired
+    private lateinit var i18nCacheHandler: I18NByLocaleAndTypeAndAmsCodeCacheHandler
 
     override fun getI18nValue(locale: String, atomicServiceCode: String, i18nTypeDictCode: String, key: String): String? {
         val searchPayload = SysI18nSearchPayload().apply {
@@ -66,7 +69,8 @@ open class SysI18NService : BaseCrudService<String, SysI18n, SysI18nDao>(), ISys
                     this.value = payload.value!!
                     this.active = payload.active ?: true
                 }
-                dao.insert(i18n)
+                val id = dao.insert(i18n)
+                i18nCacheHandler.syncOnInsert(i18n, id)
                 count++
             } else {
                 val i18n = SysI18n {
@@ -79,6 +83,7 @@ open class SysI18NService : BaseCrudService<String, SysI18n, SysI18nDao>(), ISys
                     this.active = payload.active ?: true
                 }
                 if (dao.update(i18n)) {
+                    i18nCacheHandler.syncOnUpdate(i18n, i18n.id!!)
                     count++
                 }
             }
@@ -96,10 +101,60 @@ open class SysI18NService : BaseCrudService<String, SysI18n, SysI18nDao>(), ISys
         val success = dao.update(i18n)
         if (success) {
             log.debug("更新id为${id}的国际化内容的启用状态为${active}。")
+            i18nCacheHandler.syncOnUpdateActive(id, active)
         } else {
             log.error("更新id为${id}的国际化内容的启用状态为${active}失败！")
         }
         return success
+    }
+
+    @Transactional
+    override fun insert(any: Any): String {
+        val id = super.insert(any)
+        log.debug("新增id为${id}的国际化内容。")
+        i18nCacheHandler.syncOnInsert(any, id)
+        return id
+    }
+
+    @Transactional
+    override fun update(any: Any): Boolean {
+        val success = super.update(any)
+        val id = BeanKit.getProperty(any, SysI18n::id.name) as String
+        if (success) {
+            log.debug("更新id为${id}的国际化内容。")
+            i18nCacheHandler.syncOnUpdate(any, id)
+        } else {
+            log.error("更新id为${id}的国际化内容失败！")
+        }
+        return success
+    }
+
+    @Transactional
+    override fun deleteById(id: String): Boolean {
+        val i18n = dao.get(id)
+        if (i18n == null) {
+            log.warn("删除id为${id}的国际化内容时，发现其已不存在！")
+            return false
+        }
+        val success = super.deleteById(id)
+        if (success) {
+            log.debug("删除id为${id}的国际化内容。")
+            i18nCacheHandler.syncOnDelete(i18n, id)
+        } else {
+            log.error("删除id为${id}的国际化内容失败！")
+        }
+        return success
+    }
+
+    @Transactional
+    override fun batchDelete(ids: Collection<String>): Int {
+        val i18ns = dao.inSearchById(ids)
+        val keys = i18ns.map { i18nCacheHandler.getKey(it.locale, it.i18nTypeDictCode, it.atomicServiceCode) }
+            .distinct()
+        val count = super.batchDelete(ids)
+        log.debug("批量删除国际化内容，期望删除${ids.size}条，实际删除${count}条。")
+        i18nCacheHandler.syncOnBatchDelete(ids, keys)
+        return count
     }
 
     //endregion your codes 2
