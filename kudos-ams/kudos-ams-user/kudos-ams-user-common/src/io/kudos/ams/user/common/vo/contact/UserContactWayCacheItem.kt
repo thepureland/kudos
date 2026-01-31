@@ -37,30 +37,6 @@ data class UserContactWayCacheItem (
     /** 备注 */
     var remark: String? = null,
 
-    /** 是否启用 */
-    var active: Boolean? = null,
-
-    /** 是否内置 */
-    var builtIn: Boolean? = null,
-
-    /** 创建者ID */
-    var createUserId: String? = null,
-
-    /** 创建者名称 */
-    var createUserName: String? = null,
-
-    /** 创建时间 */
-    var createTime: LocalDateTime? = null,
-
-    /** 更新者ID */
-    var updateUserId: String? = null,
-
-    /** 更新者名称 */
-    var updateUserName: String? = null,
-
-    /** 更新时间 */
-    var updateTime: LocalDateTime? = null,
-
     //endregion your codes 1
 //region your codes 2
 ) : IIdEntity<String>, Serializable {
