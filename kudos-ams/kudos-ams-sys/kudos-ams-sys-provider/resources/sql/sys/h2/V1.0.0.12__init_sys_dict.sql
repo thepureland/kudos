@@ -42,16 +42,16 @@ comment on column "sys_dict"."update_time" is '更新时间';
 --region DML
 
 merge into "sys_dict" ("id", "module_code", "dict_type", "dict_name", "remark", "built_in") values
-    ('68139ed2-dbce-47fa-ac0d-2932fb0ee5ad', 'kudos-sys', 'ds_use', 'dict.ds_use', null, false),
-    ('d9f17338-8751-4d3b-bdd1-91a1b6f42432', 'kudos-sys', 'ds_type', 'dict.ds_type', '暂时只支持一种数据源类型hikariCP', false),
-    ('339b4cf1-6af4-49db-be1c-ee606959a689', 'kudos-sys', 'resource_type', 'dict.resource_type', null, false),
-    ('2601c57f-3900-4be8-9ebf-e79781db9d3d', 'kudos-sys', 'cache_strategy', 'dict.cache_strategy', null, false),
-    ('54094f46-dddb-41a2-b747-0eaa7d0e59b6', 'kudos-sys', 'locale', 'locale', 'dict.locale', true),
-    ('54094f46-dddb-41a2-b747-0eaa7d0ekil6', 'kudos-sys', 'i18n_type', 'dict.i18n_type', null, true),
-    ('1b87ef01-c033-06a6-0525-b317b623899f', 'kudos-sys', 'timezone', 'dict.timezone', null, false),
-    ('e960b247-16e0-4f4e-a767-2b17eb5b6982', 'kudos-sys', 'domain_type', 'dict.domain_type', null, true),
-    ('ad52c551-01c1-4c7f-9a96-720eecb32885', 'kudos-sys', 'terminal_type', 'dict.terminal_type', null, true),
-    ('ad52c541-02c1-3c7f-1a96-a20eecb32881', 'kudos-sys', 'access_rule_type', 'dict.access_rule_type', null, true);
+    ('68139ed2-dbce-47fa-ac0d-2932fb0ee5ad', 'kudos-sys', 'ds_use', 'ds_use', null, false),
+    ('d9f17338-8751-4d3b-bdd1-91a1b6f42432', 'kudos-sys', 'ds_type', 'ds_type', '暂时只支持一种数据源类型hikariCP', false),
+    ('339b4cf1-6af4-49db-be1c-ee606959a689', 'kudos-sys', 'resource_type', 'resource_type', null, false),
+    ('2601c57f-3900-4be8-9ebf-e79781db9d3d', 'kudos-sys', 'cache_strategy', 'cache_strategy', null, false),
+    ('54094f46-dddb-41a2-b747-0eaa7d0e59b6', 'kudos-sys', 'locale', 'locale', 'locale', true),
+    ('54094f46-dddb-41a2-b747-0eaa7d0ekil6', 'kudos-sys', 'i18n_type', 'i18n_type', null, true),
+    ('1b87ef01-c033-06a6-0525-b317b623899f', 'kudos-sys', 'timezone', 'timezone', null, false),
+    ('e960b247-16e0-4f4e-a767-2b17eb5b6982', 'kudos-sys', 'domain_type', 'domain_type', null, true),
+    ('ad52c551-01c1-4c7f-9a96-720eecb32885', 'kudos-sys', 'terminal_type', 'terminal_type', null, true),
+    ('ad52c541-02c1-3c7f-1a96-a20eecb32881', 'kudos-sys', 'access_rule_type', 'access_rule_type', null, true);
 
 --endregion DML
 
