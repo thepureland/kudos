@@ -58,7 +58,7 @@ open class SysDictService : BaseCrudService<String, SysDict, SysDictDao>(), ISys
         return if (payload.id.isNullOrBlank()) { // 新增
             if (!payload.parentId.isNullOrBlank()) { // 添加SysDict
                 val sysDict = SysDict().apply {
-                    moduleCode = payload.moduleCode!!
+                    atomicServiceCode = payload.atomicServiceCode!!
                     dictType = payload.dictType!!
                     dictName = payload.dictName!!
                     remark = payload.remark
@@ -73,7 +73,7 @@ open class SysDictService : BaseCrudService<String, SysDict, SysDictDao>(), ISys
             if (payload.parentId.isNullOrBlank()) { // SysDict
                 val sysDict = SysDict {
                     id = payload.id
-                    moduleCode = payload.moduleCode!!
+                    atomicServiceCode = payload.atomicServiceCode!!
                     dictType = payload.dictType!!
                     dictName = payload.dictName!!
                     remark = payload.remark
@@ -115,14 +115,14 @@ open class SysDictService : BaseCrudService<String, SysDict, SysDictDao>(), ISys
     /**
      * 获取模块的所有字典
      *
-     * @param moduleCode 模块编码
+     * @param atomicServiceCode 模块编码
      * @return 字典记录列表
      * @author AI: Cursor
      * @since 1.0.0
      */
-    override fun getDictsByModuleCode(moduleCode: String): List<SysDictRecord> {
+    override fun getDictsByAtomicServiceCode(atomicServiceCode: String): List<SysDictRecord> {
         val searchPayload = SysDictSearchPayload().apply {
-            this.moduleCode = moduleCode
+            this.atomicServiceCode = atomicServiceCode
         }
         @Suppress("UNCHECKED_CAST")
         return dao.search(searchPayload) as List<SysDictRecord>
@@ -131,15 +131,15 @@ open class SysDictService : BaseCrudService<String, SysDict, SysDictDao>(), ISys
     /**
      * 根据模块编码和字典类型获取字典
      *
-     * @param moduleCode 模块编码
+     * @param atomicServiceCode 模块编码
      * @param dictType 字典类型
      * @return 字典记录，找不到返回null
      * @author AI: Cursor
      * @since 1.0.0
      */
-    override fun getDictByModuleAndType(moduleCode: String, dictType: String): SysDictRecord? {
+    override fun getDictByAtomicServiceAndType(atomicServiceCode: String, dictType: String): SysDictRecord? {
         val searchPayload = SysDictSearchPayload().apply {
-            this.moduleCode = moduleCode
+            this.atomicServiceCode = atomicServiceCode
             this.dictType = dictType
         }
         @Suppress("UNCHECKED_CAST")

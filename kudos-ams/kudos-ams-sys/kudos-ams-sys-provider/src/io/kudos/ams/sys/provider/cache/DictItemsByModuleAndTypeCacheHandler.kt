@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component
  *
  * 1.数据来源表：sys_dict & sys_dict_item
  * 2.缓存active=true的字典的所有active=true的字典项
- * 3.缓存key为：moduleCode::dictType
+ * 3.缓存key为：atomicServiceCode::dictType
  * 4.缓存value为：SysDictItemCacheItem列表，按orderNum排序
  *
  * @author K
@@ -75,7 +75,7 @@ open class DictItemsByModuleAndTypeCacheHandler : AbstractCacheHandler<List<SysD
         }
 
         // 缓存数据
-        val dictMap = results.groupBy { getKey(it.moduleCode!!, it.dictType!!) }
+        val dictMap = results.groupBy { getKey(it.atomicServiceCode!!, it.dictType!!) }
         dictMap.forEach { (key, value) ->
             val valueItems = value.map { it ->
                 SysDictItemCacheItem().apply {
@@ -94,22 +94,22 @@ open class DictItemsByModuleAndTypeCacheHandler : AbstractCacheHandler<List<SysD
     /**
      * 根据模块编码和字典类型获取缓存中对应的字典项，如果缓存中不存在，则从数据库加载，并写入缓存
      *
-     * @param moduleCode 模块编码
+     * @param atomicServiceCode 模块编码
      * @param dictType 字典类型
      * @return List<SysDictItemCacheItem>，找不到返回空列表
      */
     @Cacheable(
         cacheNames = [CACHE_NAME],
-        key = "#moduleCode.concat('${Consts.CACHE_KEY_DEFAULT_DELIMITER}').concat(#dictType)",
+        key = "#atomicServiceCode.concat('${Consts.CACHE_KEY_DEFAULT_DELIMITER}').concat(#dictType)",
         unless = "#result == null || #result.isEmpty()"
     )
-    open fun getDictItems(moduleCode: String, dictType: String): List<SysDictItemCacheItem> {
+    open fun getDictItems(atomicServiceCode: String, dictType: String): List<SysDictItemCacheItem> {
         if (CacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("缓存中不存在模块为${moduleCode}且字典类型为${dictType}的字典项，从数据库中加载...")
+            log.debug("缓存中不存在模块为${atomicServiceCode}且字典类型为${dictType}的字典项，从数据库中加载...")
         }
         // 查出对应的dict
         val searchPayload = SysDictSearchPayload().apply {
-            this.moduleCode = moduleCode
+            this.atomicServiceCode = atomicServiceCode
             this.dictType = dictType
             this.active = true
         }
@@ -117,12 +117,12 @@ open class DictItemsByModuleAndTypeCacheHandler : AbstractCacheHandler<List<SysD
         val result = sysDictDao.search(searchPayload) as List<SysDictRecord>
 
         return if (result.isEmpty()) {
-            log.warn("数据库中不存在模块为${moduleCode}且字典类型为${dictType}的active为true字典项！")
+            log.warn("数据库中不存在模块为${atomicServiceCode}且字典类型为${dictType}的active为true字典项！")
             listOf()
         } else {
             // 查出dict id的所有字典项(按orderNum排序)
             val items = sysDictItemDao.searchActiveItemByDictId(result.first().id!!)
-            log.debug("数据库中加载到模块为${moduleCode}且字典类型为${dictType}的字典项共${items.size}条.")
+            log.debug("数据库中加载到模块为${atomicServiceCode}且字典类型为${dictType}的字典项共${items.size}条.")
             items.map {
                 SysDictItemCacheItem().apply {
                     id = it.id
@@ -151,12 +151,12 @@ open class DictItemsByModuleAndTypeCacheHandler : AbstractCacheHandler<List<SysD
                 return
             }
 
-            val key = getKey(dict.moduleCode, dict.dictType)
+            val key = getKey(dict.atomicServiceCode, dict.dictType)
             CacheKit.evict(CACHE_NAME, key) // 踢除缓存（缓存粒度为字典类型）
             if (CacheKit.isWriteInTime(CACHE_NAME)) {
                 if (dict.active == null || dict.active == true) {
                     getSelf<DictItemsByModuleAndTypeCacheHandler>().getDictItems(
-                        dict.moduleCode!!, dict.dictType!!
+                        dict.atomicServiceCode!!, dict.dictType!!
                     )
                     log.debug("${CACHE_NAME}缓存同步完成。")
                 } else {
@@ -183,12 +183,12 @@ open class DictItemsByModuleAndTypeCacheHandler : AbstractCacheHandler<List<SysD
                 return
             }
 
-            val key = getKey(dict.moduleCode, dict.dictType)
+            val key = getKey(dict.atomicServiceCode, dict.dictType)
             CacheKit.evict(CACHE_NAME, key) // 踢除缓存（缓存粒度为字典类型）
             if (CacheKit.isWriteInTime(CACHE_NAME)) {
                 if (dict.active == null || dict.active == true) {
                     getSelf<DictItemsByModuleAndTypeCacheHandler>().getDictItems(
-                        dict.moduleCode!!, dict.dictType!!
+                        dict.atomicServiceCode!!, dict.dictType!!
                     )
                     log.debug("${CACHE_NAME}缓存同步完成。")
                 } else {
@@ -213,10 +213,10 @@ open class DictItemsByModuleAndTypeCacheHandler : AbstractCacheHandler<List<SysD
                 return
             }
 
-            CacheKit.evict(CACHE_NAME, getKey(dict.moduleCode, dict.dictType)) // 踢除缓存（缓存粒度为字典类型）
+            CacheKit.evict(CACHE_NAME, getKey(dict.atomicServiceCode, dict.dictType)) // 踢除缓存（缓存粒度为字典类型）
             if (CacheKit.isWriteInTime(CACHE_NAME)) {
                 // 重新缓存
-                getSelf<DictItemsByModuleAndTypeCacheHandler>().getDictItems(dict.moduleCode!!, dict.dictType!!)
+                getSelf<DictItemsByModuleAndTypeCacheHandler>().getDictItems(dict.atomicServiceCode!!, dict.dictType!!)
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
@@ -237,10 +237,10 @@ open class DictItemsByModuleAndTypeCacheHandler : AbstractCacheHandler<List<SysD
                 return
             }
 
-            CacheKit.evict(CACHE_NAME, getKey(dict.moduleCode, dict.dictType)) // 踢除缓存（缓存粒度为字典类型）
+            CacheKit.evict(CACHE_NAME, getKey(dict.atomicServiceCode, dict.dictType)) // 踢除缓存（缓存粒度为字典类型）
             if (CacheKit.isWriteInTime(CACHE_NAME)) {
                 // 重新缓存
-                getSelf<DictItemsByModuleAndTypeCacheHandler>().getDictItems(dict.moduleCode!!, dict.dictType!!)
+                getSelf<DictItemsByModuleAndTypeCacheHandler>().getDictItems(dict.atomicServiceCode!!, dict.dictType!!)
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
@@ -249,12 +249,12 @@ open class DictItemsByModuleAndTypeCacheHandler : AbstractCacheHandler<List<SysD
     /**
      * 返回参数拼接后的缓存的key
      *
-     * @param moduleCode 模块编码
+     * @param atomicServiceCode 模块编码
      * @param dictType 字典类型
      * @return 缓存的key
      */
-    fun getKey(moduleCode: String?, dictType: String?): String {
-        return "${moduleCode}${Consts.CACHE_KEY_DEFAULT_DELIMITER}${dictType}"
+    fun getKey(atomicServiceCode: String?, dictType: String?): String {
+        return "${atomicServiceCode}${Consts.CACHE_KEY_DEFAULT_DELIMITER}${dictType}"
     }
 
     private val log = LogFactory.getLog(this)

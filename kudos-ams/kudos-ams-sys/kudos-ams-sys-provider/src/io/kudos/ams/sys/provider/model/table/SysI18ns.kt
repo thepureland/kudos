@@ -18,8 +18,8 @@ object SysI18ns : StringIdTable<SysI18n>("sys_i18n") {
     /** 语言_地区 */
     var locale = varchar("locale").bindTo { it.locale }
 
-    /** 语言_地区 */
-    var moduleCode = varchar("module_code").bindTo { it.moduleCode }
+    /** 原子服务编码 */
+    var atomicServiceCode = varchar("atomic_service_code").bindTo { it.atomicServiceCode }
 
     /** 国际化类型字典代码 */
     var i18nTypeDictCode = varchar("i18n_type_dict_code").bindTo { it.i18nTypeDictCode }

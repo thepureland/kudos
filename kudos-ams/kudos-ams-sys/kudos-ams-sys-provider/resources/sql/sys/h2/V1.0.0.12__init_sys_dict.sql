@@ -4,7 +4,7 @@ create table if not exists "sys_dict"
     "id"          character(36) default RANDOM_UUID() not null primary key,
     "dict_type"   character varying(64)               not null,
     "dict_name"   character varying(64)               not null,
-    "module_code" character varying(32)               not null,
+    "atomic_service_code" character varying(32)               not null,
     "remark"      character varying(300),
     "active"      boolean       default TRUE          not null,
     "built_in"    boolean       default FALSE         not null,
@@ -16,17 +16,17 @@ create table if not exists "sys_dict"
     "update_time" timestamp(6)
 );
 
-create unique index if not exists "uq_sys_dict" on "sys_dict" ("dict_type", "module_code");
+create unique index if not exists "uq_sys_dict" on "sys_dict" ("dict_type", "atomic_service_code");
 
 -- alter table "sys_dict"
 --     add constraint "fk_sys_dict_module"
---         foreign key ("module_code") references "sys_module" ("code");
+--         foreign key ("atomic_service_code") references "sys_module" ("code");
 
 comment on table "sys_dict" is '字典';
 comment on column "sys_dict"."id" is '主键';
 comment on column "sys_dict"."dict_type" is '字典类型';
 comment on column "sys_dict"."dict_name" is '字典名称或其国际化key';
-comment on column "sys_dict"."module_code" is '模块编码';
+comment on column "sys_dict"."atomic_service_code" is '模块编码';
 comment on column "sys_dict"."remark" is '备注';
 comment on column "sys_dict"."active" is '是否启用';
 comment on column "sys_dict"."built_in" is '是否内置';
@@ -41,7 +41,7 @@ comment on column "sys_dict"."update_time" is '更新时间';
 
 --region DML
 
-merge into "sys_dict" ("id", "module_code", "dict_type", "dict_name", "remark", "built_in") values
+merge into "sys_dict" ("id", "atomic_service_code", "dict_type", "dict_name", "remark", "built_in") values
     ('68139ed2-dbce-47fa-ac0d-2932fb0ee5ad', 'kudos-sys', 'ds_use', 'ds_use', null, false),
     ('d9f17338-8751-4d3b-bdd1-91a1b6f42432', 'kudos-sys', 'ds_type', 'ds_type', '暂时只支持一种数据源类型hikariCP', false),
     ('339b4cf1-6af4-49db-be1c-ee606959a689', 'kudos-sys', 'resource_type', 'resource_type', null, false),

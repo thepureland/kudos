@@ -37,9 +37,9 @@ class ParamByModuleAndNameCacheHandlerTest : RdbAndRedisCacheTestBase() {
         cacheHandler.reloadAll(true)
 
         // 获取当前缓存中的记录
-        var moduleCode = "moduleCode-a"
+        var atomicServiceCode = "atomicServiceCode-a"
         var paramName = "paramName-1"
-        val cacheItem = cacheHandler.getParam(moduleCode, paramName)
+        val cacheItem = cacheHandler.getParam(atomicServiceCode, paramName)
 
         // 插入新的记录到数据库
         val sysParamNew = insertNewRecordToDb()
@@ -56,41 +56,41 @@ class ParamByModuleAndNameCacheHandlerTest : RdbAndRedisCacheTestBase() {
         cacheHandler.reloadAll(false)
 
         // 原来缓存中的记录内存地址会变
-        assert(cacheItem !== cacheHandler.getParam(moduleCode, paramName))
+        assert(cacheItem !== cacheHandler.getParam(atomicServiceCode, paramName))
 
         // 数据库中新增的记录在缓存应该要存在
-        assertNotNull(cacheHandler.getParam(sysParamNew.moduleCode, sysParamNew.paramName))
+        assertNotNull(cacheHandler.getParam(sysParamNew.atomicServiceCode, sysParamNew.paramName))
 
         // 数据库中更新的记录在缓存中应该也更新了
-        moduleCode = "moduleCode-a"
+        atomicServiceCode = "atomicServiceCode-a"
         paramName = "paramName-2"
-        val cacheItemUpdate = cacheHandler.getParam(moduleCode, paramName)!!
+        val cacheItemUpdate = cacheHandler.getParam(atomicServiceCode, paramName)!!
         assertEquals(newValue, cacheItemUpdate.paramValue)
 
         // 数据库中删除的记录在缓存中应该还存在
-        moduleCode = "moduleCode-a"
+        atomicServiceCode = "atomicServiceCode-a"
         paramName = "paramName-3"
-        assertNotNull(cacheHandler.getParam(moduleCode, paramName))
+        assertNotNull(cacheHandler.getParam(atomicServiceCode, paramName))
 
         // 清除旧缓存，并重载缓存
         cacheHandler.reloadAll(true)
 
         // 数据库中删除的记录在缓存中应该不存在
-        moduleCode = "moduleCode-a"
+        atomicServiceCode = "atomicServiceCode-a"
         paramName = "paramName-3"
-        assertNull(cacheHandler.getParam(moduleCode, paramName))
+        assertNull(cacheHandler.getParam(atomicServiceCode, paramName))
     }
 
     @Test
     fun getParam() {
-        var moduleCode = "moduleCode-a"
+        var atomicServiceCode = "atomicServiceCode-a"
         var paramName = "paramName-1"
-        assertNotNull(cacheHandler.getParam(moduleCode, paramName))
+        assertNotNull(cacheHandler.getParam(atomicServiceCode, paramName))
 
         // active为false的应该没有在缓存中
-        moduleCode = "moduleCode-d"
+        atomicServiceCode = "atomicServiceCode-d"
         paramName = "paramName-0"
-        assertNull(cacheHandler.getParam(moduleCode, paramName))
+        assertNull(cacheHandler.getParam(atomicServiceCode, paramName))
     }
 
     @Test
@@ -102,9 +102,9 @@ class ParamByModuleAndNameCacheHandlerTest : RdbAndRedisCacheTestBase() {
         cacheHandler.syncOnInsert(sysParam, sysParam.id!!)
 
         // 验证新记录是否在缓存中
-        val key = cacheHandler.getKey(sysParam.moduleCode, sysParam.paramName)
+        val key = cacheHandler.getKey(sysParam.atomicServiceCode, sysParam.paramName)
         assertNotNull(CacheKit.getValue(cacheHandler.cacheName(), key))
-        assertNotNull(cacheHandler.getParam(sysParam.moduleCode, sysParam.paramName))
+        assertNotNull(cacheHandler.getParam(sysParam.atomicServiceCode, sysParam.paramName))
     }
 
     @Test
@@ -120,11 +120,11 @@ class ParamByModuleAndNameCacheHandlerTest : RdbAndRedisCacheTestBase() {
         cacheHandler.syncOnUpdate(sysParam, id)
 
         // 验证缓存中的记录
-        val key = cacheHandler.getKey(sysParam.moduleCode, sysParam.paramName)
+        val key = cacheHandler.getKey(sysParam.atomicServiceCode, sysParam.paramName)
         var cacheItem = CacheKit.getValue(cacheHandler.cacheName(), key) as SysParamCacheItem?
         assertNotNull(cacheItem)
         assertEquals(newValue, cacheItem.paramValue)
-        cacheItem = cacheHandler.getParam(sysParam.moduleCode, sysParam.paramName)
+        cacheItem = cacheHandler.getParam(sysParam.atomicServiceCode, sysParam.paramName)
         assertNotNull(cacheItem)
         assertEquals(newValue, cacheItem.paramValue)
     }
@@ -137,9 +137,9 @@ class ParamByModuleAndNameCacheHandlerTest : RdbAndRedisCacheTestBase() {
         assert(success)
         var sysParam = dao.get(id)!!
         cacheHandler.syncOnUpdateActive(id, false)
-        var key = cacheHandler.getKey(sysParam.moduleCode, sysParam.paramName)
+        var key = cacheHandler.getKey(sysParam.atomicServiceCode, sysParam.paramName)
         assertNull(CacheKit.getValue(cacheHandler.cacheName(), key))
-        assertNull(cacheHandler.getParam(sysParam.moduleCode, sysParam.paramName))
+        assertNull(cacheHandler.getParam(sysParam.atomicServiceCode, sysParam.paramName))
 
         // 由false更新为true
         id = "9edc0327-99f1-4767-b42b-000000000000"
@@ -147,9 +147,9 @@ class ParamByModuleAndNameCacheHandlerTest : RdbAndRedisCacheTestBase() {
         assert(success)
         sysParam = dao.get(id)!!
         cacheHandler.syncOnUpdateActive(id, true)
-        key = cacheHandler.getKey(sysParam.moduleCode, sysParam.paramName)
+        key = cacheHandler.getKey(sysParam.atomicServiceCode, sysParam.paramName)
         assertNotNull(CacheKit.getValue(cacheHandler.cacheName(), key))
-        assertNotNull(cacheHandler.getParam(sysParam.moduleCode, sysParam.paramName))
+        assertNotNull(cacheHandler.getParam(sysParam.atomicServiceCode, sysParam.paramName))
     }
 
     @Test
@@ -165,9 +165,9 @@ class ParamByModuleAndNameCacheHandlerTest : RdbAndRedisCacheTestBase() {
         cacheHandler.syncOnDelete(sysParam, id)
 
         // 验证缓存中有没有
-        val key = cacheHandler.getKey(sysParam.moduleCode, sysParam.paramName)
+        val key = cacheHandler.getKey(sysParam.atomicServiceCode, sysParam.paramName)
         assertNull(CacheKit.getValue(cacheHandler.cacheName(), key))
-        assertNull(cacheHandler.getParam(sysParam.moduleCode, sysParam.paramName))
+        assertNull(cacheHandler.getParam(sysParam.atomicServiceCode, sysParam.paramName))
     }
 
     @Test
@@ -175,13 +175,13 @@ class ParamByModuleAndNameCacheHandlerTest : RdbAndRedisCacheTestBase() {
         val id1 = "9edc0327-99f1-4767-b42b-777777777777"
         val id2 = "9edc0327-99f1-4767-b42b-888888888888"
         val ids = listOf(id1, id2)
-        val moduleCode1 = "moduleCode-b"
-        val moduleCode2 = "moduleCode-c"
+        val atomicServiceCode1 = "atomicServiceCode-b"
+        val atomicServiceCode2 = "atomicServiceCode-c"
         val paramName1 = "paramName-7"
         val paramName2 = "paramName-8"
         val moduleAndNames = listOf(
-            Pair(moduleCode1, paramName1),
-            Pair(moduleCode2, paramName2)
+            Pair(atomicServiceCode1, paramName1),
+            Pair(atomicServiceCode2, paramName2)
         )
 
         // 批量删除数据库中的记录
@@ -192,19 +192,19 @@ class ParamByModuleAndNameCacheHandlerTest : RdbAndRedisCacheTestBase() {
         cacheHandler.syncOnBatchDelete(ids, moduleAndNames)
 
         // 验证缓存中有没有
-        var key = cacheHandler.getKey(moduleCode1, paramName1)
+        var key = cacheHandler.getKey(atomicServiceCode1, paramName1)
         assertNull(CacheKit.getValue(cacheHandler.cacheName(), key))
-        assertNull(cacheHandler.getParam(moduleCode1, paramName1))
-        key = cacheHandler.getKey(moduleCode2, paramName2)
+        assertNull(cacheHandler.getParam(atomicServiceCode1, paramName1))
+        key = cacheHandler.getKey(atomicServiceCode2, paramName2)
         assertNull(CacheKit.getValue(cacheHandler.cacheName(), key))
-        assertNull(cacheHandler.getParam(moduleCode2, paramName2))
+        assertNull(cacheHandler.getParam(atomicServiceCode2, paramName2))
     }
 
     private fun insertNewRecordToDb() : SysParam {
         val sysParam = SysParam().apply {
             paramName = "a_new_paramName"
             paramValue = "a_new_paramValue"
-            moduleCode = "moduleCode-a"
+            atomicServiceCode = "atomicServiceCode-a"
         }
         dao.insert(sysParam)
         return sysParam

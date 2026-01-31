@@ -1,4 +1,4 @@
-merge into "sys_dict" ("id", "module_code", "dict_type", "dict_name", "remark", "active", "built_in")
+merge into "sys_dict" ("id", "atomic_service_code", "dict_type", "dict_name", "remark", "active", "built_in")
     values ('78139ed2-dbce-47fa-ac0d-111111111111', 'kudos-sys', 'dict_type-11', '数据源用途', null, true, false),
            ('78139ed2-dbce-47fa-ac0d-222222222222', 'kudos-sys', 'dict_type-22', '数据源类型', null, true, false),
            ('78139ed2-dbce-47fa-ac0d-333333333333', 'kudos-sys', 'dict_type-33', '资源类型', null, true, false),

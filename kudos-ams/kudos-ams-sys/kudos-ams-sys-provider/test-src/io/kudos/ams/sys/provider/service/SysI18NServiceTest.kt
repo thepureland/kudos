@@ -27,22 +27,22 @@ class SysI18NServiceTest : RdbAndRedisCacheTestBase() {
     @Test
     fun getI18nValue() {
         val locale = "zh_CN"
-        val moduleCode = "svc-module-i18n-test-1"
+        val atomicServiceCode = "svc-as-i18n-test-1"
         val i18nTypeDictCode = "label"
         val key = "svc-i18n-key-1"
-        val value = sysI18nService.getI18nValue(locale, moduleCode, i18nTypeDictCode, key)
+        val value = sysI18nService.getI18nValue(locale, atomicServiceCode, i18nTypeDictCode, key)
         assertNotNull(value)
         assertEquals("svc-i18n-value-1", value)
     }
 
     @Test
-    fun getI18nsByModuleAndType() {
-        val moduleCode = "svc-module-i18n-test-1"
+    fun getI18nsByAtomicServiceAndType() {
+        val atomicServiceCode = "svc-as-i18n-test-1"
         val i18nTypeDictCode = "label"
-        val i18ns = sysI18nService.getI18nsByModuleAndType(moduleCode, i18nTypeDictCode, null)
+        val i18ns = sysI18nService.getI18nsByAtomicServiceAndType(atomicServiceCode, i18nTypeDictCode, null)
         assertTrue(i18ns.isNotEmpty())
         
-        val zhI18ns = sysI18nService.getI18nsByModuleAndType(moduleCode, i18nTypeDictCode, "zh_CN")
+        val zhI18ns = sysI18nService.getI18nsByAtomicServiceAndType(atomicServiceCode, i18nTypeDictCode, "zh_CN")
         assertTrue(zhI18ns.any { it.locale == "zh_CN" })
     }
 

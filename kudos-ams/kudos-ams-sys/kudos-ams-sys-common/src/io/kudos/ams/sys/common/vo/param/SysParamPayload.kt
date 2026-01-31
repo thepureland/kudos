@@ -26,7 +26,7 @@ data class SysParamPayload (
     var defaultValue: String? = null,
 
     /** 模块 */
-    var moduleCode: String? = null,
+    var atomicServiceCode: String? = null,
 
     /** 序号 */
     var orderNum: Int? = null,

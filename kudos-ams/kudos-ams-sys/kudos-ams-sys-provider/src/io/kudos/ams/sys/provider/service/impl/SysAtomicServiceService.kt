@@ -1,12 +1,10 @@
 package io.kudos.ams.sys.provider.service.impl
 
 import io.kudos.ams.sys.provider.service.iservice.ISysAtomicServiceService
-import io.kudos.ams.sys.provider.service.iservice.ISysModuleService
 import io.kudos.ams.sys.provider.model.po.SysAtomicService
 import io.kudos.ams.sys.provider.dao.SysAtomicServiceDao
 import io.kudos.ams.sys.provider.cache.AtomicServiceByCodeCacheHandler
 import io.kudos.ams.sys.common.vo.atomicservice.SysAtomicServiceCacheItem
-import io.kudos.ams.sys.common.vo.module.SysModuleRecord
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
@@ -33,9 +31,6 @@ open class SysAtomicServiceService : BaseCrudService<String, SysAtomicService, S
     @Autowired
     private lateinit var atomicServiceByCodeCacheHandler: AtomicServiceByCodeCacheHandler
 
-    @Autowired
-    private lateinit var sysModuleService: ISysModuleService
-
     override fun getAtomicServiceByCode(code: String): SysAtomicServiceCacheItem? {
         return atomicServiceByCodeCacheHandler.getAtomicServiceByCode(code)
     }
@@ -54,10 +49,6 @@ open class SysAtomicServiceService : BaseCrudService<String, SysAtomicService, S
             log.error("更新编码为${code}的原子服务的启用状态为${active}失败！")
         }
         return success
-    }
-
-    override fun getModulesByAtomicServiceCode(atomicServiceCode: String): List<SysModuleRecord> {
-        return sysModuleService.getModulesByAtomicServiceCode(atomicServiceCode)
     }
 
     @Transactional

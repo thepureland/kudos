@@ -22,7 +22,7 @@ interface SysDict : IMaintainableDbEntity<String, SysDict> {
     var dictName: String
 
     /** 模块编码 */
-    var moduleCode: String
+    var atomicServiceCode: String
 
 
     //region your codes 2

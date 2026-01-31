@@ -22,26 +22,26 @@ interface ISysI18nService : IBaseCrudService<String, SysI18n> {
      * 获取国际化值
      *
      * @param locale 语言地区
-     * @param moduleCode 模块编码
+     * @param atomicServiceCode 原子服务编码
      * @param i18nTypeDictCode 国际化类型字典代码
      * @param key 国际化key
      * @return 国际化值，找不到返回null
      * @author K
      * @since 1.0.0
      */
-    fun getI18nValue(locale: String, moduleCode: String, i18nTypeDictCode: String, key: String): String?
+    fun getI18nValue(locale: String, atomicServiceCode: String, i18nTypeDictCode: String, key: String): String?
 
     /**
      * 获取国际化列表
      *
-     * @param moduleCode 模块编码
+     * @param atomicServiceCode 原子服务编码
      * @param i18nTypeDictCode 国际化类型字典代码
      * @param locale 语言地区，为null时返回所有语言
      * @return 国际化记录列表
      * @author K
      * @since 1.0.0
      */
-    fun getI18nsByModuleAndType(moduleCode: String, i18nTypeDictCode: String, locale: String? = null): List<SysI18nRecord>
+    fun getI18nsByAtomicServiceAndType(atomicServiceCode: String, i18nTypeDictCode: String, locale: String? = null): List<SysI18nRecord>
 
     /**
      * 批量保存或更新国际化内容

@@ -32,17 +32,17 @@ open class SysParamDao : BaseCrudDao<String, SysParam, SysParams>() {
     /**
      * 根据模块和参数名获取对应的启用的参数（for cache）
      *
-     * @param moduleCode 模块编码
+     * @param atomicServiceCode 模块编码
      * @param paramName 参数名称
      * @return SysParamCacheItem，找不到返回null
      */
-    open fun getActiveParamsForCache(moduleCode: String, paramName: String): SysParamCacheItem? {
+    open fun getActiveParamsForCache(atomicServiceCode: String, paramName: String): SysParamCacheItem? {
         return querySource()
             .select(SysParams.columns)
             .whereWithConditions {
                 it += (SysParams.paramName eq paramName) and (SysParams.active eq true)
-                if (moduleCode.isNotEmpty()) {
-                    it += SysParams.moduleCode eq moduleCode
+                if (atomicServiceCode.isNotEmpty()) {
+                    it += SysParams.atomicServiceCode eq atomicServiceCode
                 }
             }
             .map { row ->

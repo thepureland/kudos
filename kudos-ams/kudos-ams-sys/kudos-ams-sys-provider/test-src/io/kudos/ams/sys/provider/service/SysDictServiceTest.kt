@@ -31,17 +31,17 @@ class SysDictServiceTest : RdbAndRedisCacheTestBase() {
     }
 
     @Test
-    fun getDictsByModuleCode() {
-        val moduleCode = "svc-module-dict-test-1"
-        val dicts = sysDictService.getDictsByModuleCode(moduleCode)
+    fun getDictsByAtomicServiceCode() {
+        val atomicServiceCode = "svc-module-dict-test-1"
+        val dicts = sysDictService.getDictsByAtomicServiceCode(atomicServiceCode)
         assertTrue(dicts.any { it.id == "20000000-0000-0000-0000-000000000028" })
     }
 
     @Test
-    fun getDictByModuleAndType() {
-        val moduleCode = "svc-module-dict-test-1"
+    fun getDictByAtomicServiceAndType() {
+        val atomicServiceCode = "svc-module-dict-test-1"
         val dictType = "svc-dict-type-1"
-        val dict = sysDictService.getDictByModuleAndType(moduleCode, dictType)
+        val dict = sysDictService.getDictByAtomicServiceAndType(atomicServiceCode, dictType)
         assertNotNull(dict)
     }
 

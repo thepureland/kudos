@@ -164,7 +164,7 @@ open class SysDictItemService : BaseCrudService<String, SysDictItem, SysDictItem
                 }
             }
             isModule -> { // 加载SysDict数据
-                val results = dao.oneSearch(SysDicts.moduleCode.name, parent, Order.asc(SysDicts.dictType.name))
+                val results = dao.oneSearch(SysDicts.atomicServiceCode.name, parent, Order.asc(SysDicts.dictType.name))
                 results.map {
                     val treeNode = BeanKit.copyProperties(
                         SysDictTreeNode::class, it, mapOf(
@@ -197,7 +197,7 @@ open class SysDictItemService : BaseCrudService<String, SysDictItem, SysDictItem
         searchPayload.active = if (activeOnly) true else null
         val isModule = searchPayload.firstLevel ?: false // 是否parent代表模块名
         if (isModule) {
-            searchPayload.moduleCode = searchPayload.parentId
+            searchPayload.atomicServiceCode = searchPayload.parentId
             searchPayload.parentId = null
         }
         val records = dao.pagingSearch(searchPayload)
@@ -245,8 +245,8 @@ open class SysDictItemService : BaseCrudService<String, SysDictItem, SysDictItem
         return dao.pagingSearch(searchPayload)
     }
 
-    override fun getDictItemsByModuleAndType(moduleCode: String, dictType: String): List<SysDictItemCacheItem> {
-        return getItemsFromCache(moduleCode, dictType)
+    override fun getDictItemsByAtomicServiceAndType(atomicServiceCode: String, dictType: String): List<SysDictItemCacheItem> {
+        return getItemsFromCache(atomicServiceCode, dictType)
     }
 
     /**

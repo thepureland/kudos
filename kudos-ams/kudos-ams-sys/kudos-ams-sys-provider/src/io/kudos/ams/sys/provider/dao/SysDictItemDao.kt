@@ -65,7 +65,7 @@ open class SysDictItemDao : BaseCrudDao<String, SysDictItem, SysDictItems>() {
         var query = leftJoinSearch(searchPayload)
         val orders = searchPayload.orders
         if (orders.isNullOrEmpty()) {
-            val orderList = mutableListOf(SysDicts.moduleCode.asc(), SysDicts.dictType.asc())
+            val orderList = mutableListOf(SysDicts.atomicServiceCode.asc(), SysDicts.dictType.asc())
             orderList.add(SysDictItems.orderNum.asc())
             query = query.orderBy(*orderList.toTypedArray())
         } else {
@@ -100,7 +100,7 @@ open class SysDictItemDao : BaseCrudDao<String, SysDictItem, SysDictItems>() {
 
         return query.map { row ->
             SysDictItemRecord().apply {
-                moduleCode = row[SysDicts.moduleCode]
+                atomicServiceCode = row[SysDicts.atomicServiceCode]
                 dictId = row[SysDicts.id]
                 dictType = row[SysDicts.dictType]
                 dictName = row[SysDicts.dictName]
@@ -154,8 +154,8 @@ open class SysDictItemDao : BaseCrudDao<String, SysDictItem, SysDictItems>() {
                 if (searchPayload.dictActive != null) {
                     it += SysDicts.active.eq(searchPayload.dictActive!!)
                 }
-                if (!searchPayload.moduleCode.isNullOrBlank()) {
-                    it += whereExpr(SysDicts.moduleCode, OperatorEnum.ILIKE, searchPayload.moduleCode!!.trim())!!
+                if (!searchPayload.atomicServiceCode.isNullOrBlank()) {
+                    it += whereExpr(SysDicts.atomicServiceCode, OperatorEnum.ILIKE, searchPayload.atomicServiceCode!!.trim())!!
                 }
                 if (!searchPayload.dictType.isNullOrBlank()) {
                     it += whereExpr(SysDicts.dictType, OperatorEnum.ILIKE, searchPayload.dictType!!.trim())!!

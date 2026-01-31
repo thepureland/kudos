@@ -20,8 +20,8 @@ data class SysI18nDetail (
     /** 语言_地区 */
     var locale: String? = null,
 
-    /** 语言_地区 */
-    var moduleCode: String? = null,
+    /** 原子服务编码 */
+    var atomicServiceCode: String? = null,
 
     /** 国际化类型字典代码 */
     var i18nTypeDictCode: String? = null,

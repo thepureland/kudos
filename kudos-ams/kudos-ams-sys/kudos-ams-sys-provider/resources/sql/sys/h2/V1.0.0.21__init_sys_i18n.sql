@@ -2,8 +2,8 @@
 create table if not exists "sys_i18n"
 (
     "id"                  character(36) default RANDOM_UUID() not null primary key,
-    "locale"              character varying(8)                not null,
-    "module_code"         character varying(32)               not null,
+    "locale"              character varying(5)                not null,
+    "atomic_service_code" character varying(32)               not null,
     "i18n_type_dict_code" character varying(32)               not null,
     "key"                 character varying(128)              not null,
     "value"               character varying(1000)             not null,
@@ -17,17 +17,17 @@ create table if not exists "sys_i18n"
     "update_time"         timestamp(6)
 );
 
-create unique index if not exists "uq_sys_i18n__locale_module_type_key"
-    on "sys_i18n" ("locale", "module_code", "i18n_type_dict_code", "key");
+create unique index if not exists "uq_sys_i18n"
+    on "sys_i18n" ("locale", "atomic_service_code", "i18n_type_dict_code", "key");
 
 -- alter table "sys_i18n"
---     add constraint "fk_sys_i18n_module"
---         foreign key ("module_code") references "sys_module" ("code");
+--     add constraint "fk_sys_i18n_atomic_service"
+--         foreign key ("atomic_service_code") references "sys_atomic_service" ("code");
 
 comment on table "sys_i18n" is '国际化';
 comment on column "sys_i18n"."id" is '主键';
 comment on column "sys_i18n"."locale" is '语言_地区';
-comment on column "sys_i18n"."module_code" is '语言_地区';
+comment on column "sys_i18n"."atomic_service_code" is '原子服务编码';
 comment on column "sys_i18n"."i18n_type_dict_code" is '国际化类型字典代码';
 comment on column "sys_i18n"."key" is '国际化key';
 comment on column "sys_i18n"."value" is '国际化值';
@@ -44,14 +44,14 @@ comment on column "sys_i18n"."update_time" is '更新时间';
 --region DML
 
 -- dict
-merge into "sys_i18n" ("id", "locale", "module_code", "i18n_type_dict_code", "key", "value", "built_in") values
+merge into "sys_i18n" ("id", "locale", "atomic_service_code", "i18n_type_dict_code", "key", "value", "built_in") values
     ('26c199d9-b64e-i18n-dict-000000000001', 'zh_CN', 'sys', 'dict', 'dict.i18n_type', '国际化类型', true),
     ('26c199d9-b64e-i18n-dict-000000000002', 'zh_TW', 'sys', 'dict', 'dict.i18n_type', '國際化類型', true),
     ('26c199d9-b64e-i18n-dict-000000000003', 'en_US', 'sys', 'dict', 'dict.i18n_type', 'I18N Type', true);
 
 
 -- dict-item ds_use
-merge into "sys_i18n" ("id", "locale", "module_code", "i18n_type_dict_code", "key", "value", "built_in") values
+merge into "sys_i18n" ("id", "locale", "atomic_service_code", "i18n_type_dict_code", "key", "value", "built_in") values
     ('26c199d9-i18n-dict-item-000000000001', 'zh_CN', 'sys', 'dict-item', 'ds_use.local', '本地数据源', true),
     ('26c199d9-i18n-dict-item-000000000002', 'zh_TW', 'sys', 'dict-item', 'ds_use.local', '本地資料來源', true),
     ('26c199d9-i18n-dict-item-000000000003', 'en_US', 'sys', 'dict-item', 'ds_use.local', 'Local Data Source', true),
@@ -66,13 +66,13 @@ merge into "sys_i18n" ("id", "locale", "module_code", "i18n_type_dict_code", "ke
     ('26c199d9-i18n-dict-item-000000000012', 'en_US', 'sys', 'dict-item', 'ds_use.readonly', 'Read-only Data Source', true);
 
 -- dict-item ds_type
-merge into "sys_i18n" ("id", "locale", "module_code", "i18n_type_dict_code", "key", "value", "built_in") values
+merge into "sys_i18n" ("id", "locale", "atomic_service_code", "i18n_type_dict_code", "key", "value", "built_in") values
     ('26c199d9-i18n-dict-item-000000000013', 'zh_CN', 'sys', 'dict-item', 'ds_type.hikariCP', 'hikariCP', true),
     ('26c199d9-i18n-dict-item-000000000014', 'zh_TW', 'sys', 'dict-item', 'ds_type.hikariCP', 'hikariCP', true),
     ('26c199d9-i18n-dict-item-000000000015', 'en_US', 'sys', 'dict-item', 'ds_type.hikariCP', 'hikariCP', true);
 
 -- dict-item resource_type
-merge into "sys_i18n" ("id", "locale", "module_code", "i18n_type_dict_code", "key", "value", "built_in") values
+merge into "sys_i18n" ("id", "locale", "atomic_service_code", "i18n_type_dict_code", "key", "value", "built_in") values
     ('26c199d9-i18n-dict-item-000000000016', 'zh_CN', 'sys', 'dict-item', 'resource_type.2', '功能', true),
     ('26c199d9-i18n-dict-item-000000000017', 'zh_TW', 'sys', 'dict-item', 'resource_type.2', '功能', true),
     ('26c199d9-i18n-dict-item-000000000018', 'en_US', 'sys', 'dict-item', 'resource_type.2', 'Function', true),
@@ -81,7 +81,7 @@ merge into "sys_i18n" ("id", "locale", "module_code", "i18n_type_dict_code", "ke
     ('26c199d9-i18n-dict-item-000000000021', 'en_US', 'sys', 'dict-item', 'resource_type.1', 'Menu', true);
 
 -- dict-item cache_strategy
-merge into "sys_i18n" ("id", "locale", "module_code", "i18n_type_dict_code", "key", "value", "built_in") values
+merge into "sys_i18n" ("id", "locale", "atomic_service_code", "i18n_type_dict_code", "key", "value", "built_in") values
     ('26c199d9-i18n-dict-item-000000000022', 'zh_CN', 'sys', 'dict-item', 'cache_strategy.SINGLE_LOCAL', '单节点本地缓存', true),
     ('26c199d9-i18n-dict-item-000000000023', 'zh_TW', 'sys', 'dict-item', 'cache_strategy.SINGLE_LOCAL', '單節點本地快取', true),
     ('26c199d9-i18n-dict-item-000000000024', 'en_US', 'sys', 'dict-item', 'cache_strategy.SINGLE_LOCAL', 'Single-node Local Cache', true),
@@ -93,7 +93,7 @@ merge into "sys_i18n" ("id", "locale", "module_code", "i18n_type_dict_code", "ke
     ('26c199d9-i18n-dict-item-000000000030', 'en_US', 'sys', 'dict-item', 'cache_strategy.LOCAL_REMOTE', 'Local-Remote Two-level Cache', true);
 
 -- dict-item i18n_type
-merge into "sys_i18n" ("id", "locale", "module_code", "i18n_type_dict_code", "key", "value", "built_in") values
+merge into "sys_i18n" ("id", "locale", "atomic_service_code", "i18n_type_dict_code", "key", "value", "built_in") values
     ('26c199d9-i18n-dict-item-000000000031', 'zh_CN', 'sys', 'dict-item', 'i18n_type.dict', '字典', true),
     ('26c199d9-i18n-dict-item-000000000032', 'zh_TW', 'sys', 'dict-item', 'i18n_type.dict', '字典', true),
     ('26c199d9-i18n-dict-item-000000000033', 'en_US', 'sys', 'dict-item', 'i18n_type.dict', 'Dictionary', true),
@@ -105,7 +105,7 @@ merge into "sys_i18n" ("id", "locale", "module_code", "i18n_type_dict_code", "ke
     ('26c199d9-i18n-dict-item-000000000039', 'en_US', 'sys', 'dict-item', 'i18n_type.view', 'Page', true);
 
 -- dict-item terminal_type
-merge into "sys_i18n" ("id", "locale", "module_code", "i18n_type_dict_code", "key", "value", "built_in") values
+merge into "sys_i18n" ("id", "locale", "atomic_service_code", "i18n_type_dict_code", "key", "value", "built_in") values
     ('26c199d9-i18n-dict-item-000000000040', 'zh_CN', 'sys', 'dict-item', 'terminal_type.1', 'PC端', true),
     ('26c199d9-i18n-dict-item-000000000041', 'zh_TW', 'sys', 'dict-item', 'terminal_type.1', 'PC端', true),
     ('26c199d9-i18n-dict-item-000000000042', 'en_US', 'sys', 'dict-item', 'terminal_type.1', 'PC', true),
@@ -139,7 +139,7 @@ merge into "sys_i18n" ("id", "locale", "module_code", "i18n_type_dict_code", "ke
     ('26c199d9-i18n-dict-item-000000000063', 'en_US', 'sys', 'dict-item', 'terminal_type.16', 'Mobile iOS', true);
 
 -- dict-item access_rule_type
-merge into "sys_i18n" ("id", "locale", "module_code", "i18n_type_dict_code", "key", "value", "built_in") values
+merge into "sys_i18n" ("id", "locale", "atomic_service_code", "i18n_type_dict_code", "key", "value", "built_in") values
     ('26c199d9-i18n-dict-item-000000000064', 'zh_CN', 'sys', 'dict-item', 'access_rule_type.0', '不限制', true),
     ('26c199d9-i18n-dict-item-000000000065', 'zh_TW', 'sys', 'dict-item', 'access_rule_type.0', '不限制', true),
     ('26c199d9-i18n-dict-item-000000000066', 'en_US', 'sys', 'dict-item', 'access_rule_type.0', 'No Restriction', true),
@@ -157,7 +157,7 @@ merge into "sys_i18n" ("id", "locale", "module_code", "i18n_type_dict_code", "ke
     ('26c199d9-i18n-dict-item-000000000075', 'en_US', 'sys', 'dict-item', 'access_rule_type.3', 'Allowlist + Blocklist', true);
 
 -- dict-item locale
-merge into "sys_i18n" ("id", "locale", "module_code", "i18n_type_dict_code", "key", "value", "built_in") values
+merge into "sys_i18n" ("id", "locale", "atomic_service_code", "i18n_type_dict_code", "key", "value", "built_in") values
     ('26c199d9-i18n-dict-item-100000000001', 'zh_CN', 'sys', 'dict-item', 'dict.item.zh_CN', '简体中文', true),
     ('26c199d9-i18n-dict-item-100000000002', 'zh_TW', 'sys', 'dict-item', 'dict.item.zh_CN', '簡體中文', true),
     ('26c199d9-i18n-dict-item-100000000003', 'en_US', 'sys', 'dict-item', 'dict.item.zh_CN', 'Simplified Chinese', true),

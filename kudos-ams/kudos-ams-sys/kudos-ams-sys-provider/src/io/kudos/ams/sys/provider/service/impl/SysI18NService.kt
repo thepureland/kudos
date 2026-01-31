@@ -30,10 +30,10 @@ open class SysI18NService : BaseCrudService<String, SysI18n, SysI18nDao>(), ISys
 
     private val log = LogFactory.getLog(this)
 
-    override fun getI18nValue(locale: String, moduleCode: String, i18nTypeDictCode: String, key: String): String? {
+    override fun getI18nValue(locale: String, atomicServiceCode: String, i18nTypeDictCode: String, key: String): String? {
         val searchPayload = SysI18nSearchPayload().apply {
             this.locale = locale
-            this.moduleCode = moduleCode
+            this.atomicServiceCode = atomicServiceCode
             this.i18nTypeDictCode = i18nTypeDictCode
             this.key = key
             this.active = true
@@ -43,9 +43,9 @@ open class SysI18NService : BaseCrudService<String, SysI18n, SysI18nDao>(), ISys
         return records.firstOrNull()?.value
     }
 
-    override fun getI18nsByModuleAndType(moduleCode: String, i18nTypeDictCode: String, locale: String?): List<SysI18nRecord> {
+    override fun getI18nsByAtomicServiceAndType(atomicServiceCode: String, i18nTypeDictCode: String, locale: String?): List<SysI18nRecord> {
         val searchPayload = SysI18nSearchPayload().apply {
-            this.moduleCode = moduleCode
+            this.atomicServiceCode = atomicServiceCode
             this.i18nTypeDictCode = i18nTypeDictCode
             this.locale = locale
         }
@@ -60,7 +60,7 @@ open class SysI18NService : BaseCrudService<String, SysI18n, SysI18nDao>(), ISys
             if (payload.id.isNullOrBlank()) {
                 val i18n = SysI18n {
                     this.locale = payload.locale!!
-                    this.moduleCode = payload.moduleCode!!
+                    this.atomicServiceCode = payload.atomicServiceCode!!
                     this.i18nTypeDictCode = payload.i18nTypeDictCode!!
                     this.key = payload.key!!
                     this.value = payload.value!!
@@ -72,7 +72,7 @@ open class SysI18NService : BaseCrudService<String, SysI18n, SysI18nDao>(), ISys
                 val i18n = SysI18n {
                     this.id = payload.id
                     this.locale = payload.locale!!
-                    this.moduleCode = payload.moduleCode!!
+                    this.atomicServiceCode = payload.atomicServiceCode!!
                     this.i18nTypeDictCode = payload.i18nTypeDictCode!!
                     this.key = payload.key!!
                     this.value = payload.value!!
