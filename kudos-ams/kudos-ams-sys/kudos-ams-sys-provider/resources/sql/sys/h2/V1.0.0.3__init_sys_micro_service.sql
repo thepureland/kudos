@@ -34,5 +34,5 @@ comment on column "sys_micro_service"."update_time" is '更新时间';
 
 --region DML
 merge into "sys_micro_service" ("code", "name", "context", "remark", "active", "built_in")
-    values ('default', 'default-micro_service', '/', null, true, true);
+    values ('kudos-sys', 'kudos-sys', '/sys', null, true, true);
 --endregion DML
