@@ -21,7 +21,7 @@ object SysDicts : MaintainableTable<SysDict>("sys_dict") {
     /** 字典名称 */
     var dictName = varchar("dict_name").bindTo { it.dictName }
 
-    /** 模块编码 */
+    /** 原子服务编码 */
     var atomicServiceCode = varchar("atomic_service_code").bindTo { it.atomicServiceCode }
 
 

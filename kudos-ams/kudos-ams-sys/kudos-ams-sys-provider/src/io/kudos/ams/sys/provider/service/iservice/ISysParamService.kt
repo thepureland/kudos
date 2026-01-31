@@ -19,9 +19,9 @@ interface ISysParamService : IBaseCrudService<String, SysParam> {
     //region your codes 2
 
     /**
-     * 根据模块编码和参数名称从缓存获取参数信息
+     * 根据原子服务编码和参数名称从缓存获取参数信息
      *
-     * @param atomicServiceCode 模块编码
+     * @param atomicServiceCode 原子服务编码
      * @param paramName 参数名称
      * @return SysParamCacheItem，找不到返回null
      * @author K
@@ -32,7 +32,7 @@ interface ISysParamService : IBaseCrudService<String, SysParam> {
     /**
      * 获取模块的所有参数
      *
-     * @param atomicServiceCode 模块编码
+     * @param atomicServiceCode 原子服务编码
      * @return 参数记录列表
      * @author K
      * @since 1.0.0
@@ -53,7 +53,7 @@ interface ISysParamService : IBaseCrudService<String, SysParam> {
     /**
      * 获取参数值，如果找不到则返回默认值
      *
-     * @param atomicServiceCode 模块编码
+     * @param atomicServiceCode 原子服务编码
      * @param paramName 参数名称
      * @param defaultValue 默认值，如果为null且参数不存在则返回null
      * @return 参数值

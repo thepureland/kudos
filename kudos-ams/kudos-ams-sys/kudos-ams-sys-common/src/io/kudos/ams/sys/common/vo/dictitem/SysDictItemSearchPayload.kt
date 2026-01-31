@@ -53,7 +53,7 @@ data class SysDictItemSearchPayload (
     /** 字典名称 */
     var dictName: String? = null,
 
-    /** 模块编码 */
+    /** 原子服务编码 */
     var atomicServiceCode: String? = null,
 
     /** 字典是否启用 */

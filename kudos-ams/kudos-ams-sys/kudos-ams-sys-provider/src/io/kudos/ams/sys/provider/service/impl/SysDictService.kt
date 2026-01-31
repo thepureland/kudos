@@ -115,7 +115,7 @@ open class SysDictService : BaseCrudService<String, SysDict, SysDictDao>(), ISys
     /**
      * 获取模块的所有字典
      *
-     * @param atomicServiceCode 模块编码
+     * @param atomicServiceCode 原子服务编码
      * @return 字典记录列表
      * @author AI: Cursor
      * @since 1.0.0
@@ -129,9 +129,9 @@ open class SysDictService : BaseCrudService<String, SysDict, SysDictDao>(), ISys
     }
 
     /**
-     * 根据模块编码和字典类型获取字典
+     * 根据原子服务编码和字典类型获取字典
      *
-     * @param atomicServiceCode 模块编码
+     * @param atomicServiceCode 原子服务编码
      * @param dictType 字典类型
      * @return 字典记录，找不到返回null
      * @author AI: Cursor

@@ -21,7 +21,7 @@ interface SysDict : IMaintainableDbEntity<String, SysDict> {
     /** 字典名称 */
     var dictName: String
 
-    /** 模块编码 */
+    /** 原子服务编码 */
     var atomicServiceCode: String
 
 

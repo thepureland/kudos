@@ -32,7 +32,7 @@ open class SysParamDao : BaseCrudDao<String, SysParam, SysParams>() {
     /**
      * 根据模块和参数名获取对应的启用的参数（for cache）
      *
-     * @param atomicServiceCode 模块编码
+     * @param atomicServiceCode 原子服务编码
      * @param paramName 参数名称
      * @return SysParamCacheItem，找不到返回null
      */
