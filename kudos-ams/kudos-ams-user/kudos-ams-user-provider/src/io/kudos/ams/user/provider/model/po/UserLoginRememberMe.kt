@@ -17,6 +17,12 @@ interface UserLoginRememberMe : IDbEntity<String, UserLoginRememberMe> {
 
     companion object : DbEntityFactory<UserLoginRememberMe>()
 
+    /** 用户ID */
+    var userId: String
+
+    /** 租户ID */
+    var tenantId: String
+
     /** 用户名 */
     var username: String
 
