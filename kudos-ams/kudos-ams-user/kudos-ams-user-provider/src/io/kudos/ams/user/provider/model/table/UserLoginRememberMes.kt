@@ -17,6 +17,12 @@ import org.ktorm.schema.varchar
 object UserLoginRememberMes : StringIdTable<UserLoginRememberMe>("user_login_remember_me") {
 //endregion your codes 1
 
+    /** 用户ID */
+    var userId = varchar("user_id").bindTo { it.userId }
+
+    /** 租户ID */
+    var tenantId = varchar("tenant_id").bindTo { it.tenantId }
+
     /** 用户名 */
     var username = varchar("username").bindTo { it.username }
 
