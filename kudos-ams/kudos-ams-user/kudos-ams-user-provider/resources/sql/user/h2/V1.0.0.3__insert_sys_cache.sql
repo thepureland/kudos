@@ -11,6 +11,8 @@ values ('a1a1a1a1-1111-1111-1111-111111111101', 'USER_ORG_BY_ID', 'ams-auth', 'L
         '机构ID列表缓存(by tenantId)', true, true),
        ('a1a1a1a1-1111-1111-1111-111111111107', 'USER_IDS_BY_ORG_ID', 'ams-auth', 'LOCAL_REMOTE', true, true, 999999999,
         '用户ID列表缓存(by orgId)', true, true),
+       ('a1a1a1a1-1111-1111-1111-111111111108', 'USER_CONTACT_WAY_BY_USER_ID', 'ams-auth', 'LOCAL_REMOTE', true, true, 999999999,
+        '用户联系方式缓存(by userId)', true, true),
        ('a1a1a1a1-1111-1111-1111-111111111113', 'USER_ORG_IDS_BY_USER_ID', 'ams-auth', 'LOCAL_REMOTE', true, true, 999999999,
         '机构ID列表缓存(by userId)', true, true);
 
