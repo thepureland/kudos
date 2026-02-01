@@ -114,6 +114,7 @@ include("kudos-ams:kudos-ams-user:kudos-ams-user-core")
 include("kudos-ams:kudos-ams-user:kudos-ams-user-common")
 include("kudos-ams:kudos-ams-user:kudos-ams-user-client")
 include("kudos-ams:kudos-ams-user:kudos-ams-user-api-public")
+include("kudos-ams:kudos-ams-user:kudos-ams-user-api-admin")
 include("kudos-ams:kudos-ams-user:kudos-ams-user-api-internal")
 //// ams-msg
 include("kudos-ams:kudos-ams-msg:kudos-ams-msg-core")
