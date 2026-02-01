@@ -20,8 +20,8 @@ data class SysSubSystemDetail (
     /** 名称 */
     var name: String? = null,
 
-    /** 门户编码 */
-    var portalCode: String? = null,
+    /** 系统编码 */
+    var systemCode: String? = null,
 
     /** 备注 */
     var remark: String? = null,

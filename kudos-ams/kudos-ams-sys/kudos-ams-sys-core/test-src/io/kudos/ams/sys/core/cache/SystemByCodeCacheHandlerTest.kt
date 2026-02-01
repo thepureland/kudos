@@ -1,9 +1,9 @@
 package io.kudos.ams.sys.core.cache
 
 import io.kudos.ability.cache.common.kit.CacheKit
-import io.kudos.ams.sys.common.vo.portal.SysPortalCacheItem
-import io.kudos.ams.sys.core.dao.SysPortalDao
-import io.kudos.ams.sys.core.model.po.SysPortal
+import io.kudos.ams.sys.common.vo.system.SysSystemCacheItem
+import io.kudos.ams.sys.core.dao.SysSystemDao
+import io.kudos.ams.sys.core.model.po.SysSystem
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
@@ -13,54 +13,54 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
 /**
- * junit test for PortalByCodeCacheHandler
+ * junit test for SystemByCodeCacheHandler
  *
- * 测试数据来源：`PortalByCodeCacheHandlerTest.sql`
+ * 测试数据来源：`SystemByCodeCacheHandlerTest.sql`
  *
  * @author K
  * @since 1.0.0
  */
 @EnabledIfDockerInstalled
-class PortalByCodeCacheHandlerTest : RdbAndRedisCacheTestBase() {
+class SystemByCodeCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Resource
-    private lateinit var cacheHandler: PortalByCodeCacheHandler
+    private lateinit var cacheHandler: SystemByCodeCacheHandler
 
     @Resource
-    private lateinit var sysPortalDao: SysPortalDao
+    private lateinit var sysSystemDao: SysSystemDao
 
-    private val newPortalName = "新门户名称"
+    private val newSystemName = "新系统名称"
 
     @Test
-    fun getPortalByCode() {
+    fun getSystemByCode() {
         // 存在的
         var code = "code-1"
-        val cacheItem = cacheHandler.getPortalByCode(code)
+        val cacheItem = cacheHandler.getSystemByCode(code)
         assertNotNull(cacheItem)
-        assert(cacheItem === cacheHandler.getPortalByCode(code))
+        assert(cacheItem === cacheHandler.getSystemByCode(code))
 
         // 不存在的
         code = "no_exist_code"
-        assertNull(cacheHandler.getPortalByCode(code))
+        assertNull(cacheHandler.getSystemByCode(code))
     }
 
     @Test
-    fun getPortalsByCodes() {
+    fun getSystemsByCodes() {
         // 都存在的
         var code1 = "code-1"
         var code2 = "code-2"
-        val result = cacheHandler.getPortalsByCodes(listOf(code1, code2))
+        val result = cacheHandler.getSystemsByCodes(listOf(code1, code2))
         assert(result.isNotEmpty())
-        assert(result == cacheHandler.getPortalsByCodes(listOf(code1, code2)))
+        assert(result == cacheHandler.getSystemsByCodes(listOf(code1, code2)))
 
         // 部分存在的
         code1 = "no_exist_code-1"
-        var cacheItems = cacheHandler.getPortalsByCodes(listOf(code1, code2))
+        var cacheItems = cacheHandler.getSystemsByCodes(listOf(code1, code2))
         assertEquals(1, cacheItems.size)
 
         // 都不存在的
         code2 = "no_exist_code-2"
-        cacheItems = cacheHandler.getPortalsByCodes(listOf(code1, code2))
+        cacheItems = cacheHandler.getSystemsByCodes(listOf(code1, code2))
         assert(cacheItems.isEmpty())
     }
 
@@ -75,9 +75,9 @@ class PortalByCodeCacheHandlerTest : RdbAndRedisCacheTestBase() {
         // 验证新记录是否在缓存中
         val cacheItem1 = CacheKit.getValue(cacheHandler.cacheName(), code)
         assertNotNull(cacheItem1)
-        val cacheItem2 = cacheHandler.getPortalByCode(code)
+        val cacheItem2 = cacheHandler.getSystemByCode(code)
         assertNotNull(cacheItem2)
-        val cacheItem3 = cacheHandler.getPortalByCode(code)
+        val cacheItem3 = cacheHandler.getSystemByCode(code)
         assert(cacheItem2 === cacheItem3)
     }
 
@@ -85,26 +85,26 @@ class PortalByCodeCacheHandlerTest : RdbAndRedisCacheTestBase() {
     fun syncOnUpdate() {
         // 更新数据库中已存在的记录
         val code = "code-2"
-        val success = sysPortalDao.updateProperties(code, mapOf(SysPortal::name.name to newPortalName))
+        val success = sysSystemDao.updateProperties(code, mapOf(SysSystem::name.name to newSystemName))
         assert(success)
 
         // 同步缓存
         cacheHandler.syncOnUpdate(code)
 
         // 验证缓存中的记录
-        val cacheItem1 = CacheKit.getValue(cacheHandler.cacheName(), code) as SysPortalCacheItem?
+        val cacheItem1 = CacheKit.getValue(cacheHandler.cacheName(), code) as SysSystemCacheItem?
         assertNotNull(cacheItem1)
-        assertEquals(newPortalName, cacheItem1.name)
-        val cacheItem2 = cacheHandler.getPortalByCode(code)
+        assertEquals(newSystemName, cacheItem1.name)
+        val cacheItem2 = cacheHandler.getSystemByCode(code)
         assertNotNull(cacheItem2)
-        assertEquals(newPortalName, cacheItem2.name)
+        assertEquals(newSystemName, cacheItem2.name)
     }
 
     @Test
     fun syncOnDelete() {
         // 删除数据库中的记录
         val code = insertNewRecordToDb()
-        val count = sysPortalDao.batchDelete(listOf(code))
+        val count = sysSystemDao.batchDelete(listOf(code))
         assert(count == 1)
 
         // 同步缓存
@@ -113,7 +113,7 @@ class PortalByCodeCacheHandlerTest : RdbAndRedisCacheTestBase() {
         // 验证缓存中有没有
         val cacheItem1 = CacheKit.getValue(cacheHandler.cacheName(), code)
         assertNull(cacheItem1)
-        val cacheItem2 = cacheHandler.getPortalByCode(code)
+        val cacheItem2 = cacheHandler.getSystemByCode(code)
         assertNull(cacheItem2)
     }
 
@@ -123,7 +123,7 @@ class PortalByCodeCacheHandlerTest : RdbAndRedisCacheTestBase() {
         val code1 = insertNewRecordToDb()
         val code2 = insertNewRecordToDb()
         val codes = listOf(code1, code2)
-        val count = sysPortalDao.batchDelete(codes)
+        val count = sysSystemDao.batchDelete(codes)
         assert(count == 2)
 
         // 同步缓存
@@ -132,22 +132,22 @@ class PortalByCodeCacheHandlerTest : RdbAndRedisCacheTestBase() {
         // 验证缓存中有没有
         var cacheItem = CacheKit.getValue(cacheHandler.cacheName(), code1)
         assertNull(cacheItem)
-        cacheItem = cacheHandler.getPortalByCode(code1)
+        cacheItem = cacheHandler.getSystemByCode(code1)
         assertNull(cacheItem)
         cacheItem = CacheKit.getValue(cacheHandler.cacheName(), code2)
         assertNull(cacheItem)
-        cacheItem = cacheHandler.getPortalByCode(code2)
+        cacheItem = cacheHandler.getSystemByCode(code2)
         assertNull(cacheItem)
     }
 
     private fun insertNewRecordToDb(): String {
         val timestamp = System.currentTimeMillis()
-        val sysPortal = SysPortal().apply {
+        val sysSystem = SysSystem().apply {
             code = "test_code_${timestamp}"
-            name = "测试门户_${timestamp}"
+            name = "测试系统_${timestamp}"
             active = true
         }
-        return sysPortalDao.insert(sysPortal)
+        return sysSystemDao.insert(sysSystem)
     }
 
 }

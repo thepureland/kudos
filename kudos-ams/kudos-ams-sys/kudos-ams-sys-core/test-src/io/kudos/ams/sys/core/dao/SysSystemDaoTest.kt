@@ -5,18 +5,18 @@ import io.kudos.test.rdb.RdbTestBase
 import jakarta.annotation.Resource
 
 /**
- * junit test for SysPortalDao
+ * junit test for SysSystemDao
  *
- * 测试数据来源：`SysPortalDaoTest.sql`
+ * 测试数据来源：`SysSystemDaoTest.sql`
  *
  * @author K
  * @author AI: Cursor
  * @since 1.0.0
  */
 @EnabledIfDockerInstalled
-class SysPortalDaoTest : RdbTestBase() {
+class SysSystemDaoTest : RdbTestBase() {
 
     @Resource
-    private lateinit var sysPortalDao: SysPortalDao
+    private lateinit var sysSystemDao: SysSystemDao
 
 }

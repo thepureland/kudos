@@ -1,4 +1,4 @@
-merge into "sys_domain" ("id", "domain", "sub_system_code", "portal_code", "tenant_id", "remark", "active", "built_in")
+merge into "sys_domain" ("id", "domain", "sub_system_code", "system_code", "tenant_id", "remark", "active", "built_in")
     values ('8309fe9a-8810-4a79-9cff-111111111111', 'domain1.com', 'default', 'default', null, null, true, false),
            ('8309fe9a-8810-4a79-9cff-222222222222', 'domain2.com', 'default', 'default', null, null, true, false),
            ('8309fe9a-8810-4a79-9cff-333333333333', 'domain3.com', 'default', 'default', null, null, true, false),

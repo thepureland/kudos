@@ -145,7 +145,7 @@ class SubSystemByCodeCacheHandlerTest : RdbAndRedisCacheTestBase() {
         val sysSubSystem = SysSubSystem().apply {
             code = "test_code_${timestamp}"
             name = "测试子系统_${timestamp}"
-            portalCode = "default"
+            systemCode = "default"
             active = true
         }
         return sysSubSystemDao.insert(sysSubSystem)

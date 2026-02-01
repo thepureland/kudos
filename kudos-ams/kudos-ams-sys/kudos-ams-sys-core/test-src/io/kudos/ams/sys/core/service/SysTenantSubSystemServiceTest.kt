@@ -48,7 +48,7 @@ class SysTenantSubSystemServiceTest : RdbAndRedisCacheTestBase() {
     @Test
     fun batchBind_and_unbind() {
         val tenantId = "20000000-0000-0000-0000-000000000025"
-        val portalCode = "svc-portal-ts-test-1"
+        val systemCode = "svc-system-ts-test-1"
         val newSubSystemCodes = listOf("svc-subsys-ts-test-2")
         
         // 先创建新的子系统
@@ -59,7 +59,7 @@ class SysTenantSubSystemServiceTest : RdbAndRedisCacheTestBase() {
         assertTrue(unbindResult)
         
         // 重新绑定
-        val bindCount = sysTenantSubSystemService.batchBind(tenantId, listOf(subSystemCode), portalCode)
+        val bindCount = sysTenantSubSystemService.batchBind(tenantId, listOf(subSystemCode), systemCode)
         assertTrue(bindCount > 0)
     }
 }

@@ -33,9 +33,9 @@ class SysSubSystemServiceTest : RdbAndRedisCacheTestBase() {
     }
 
     @Test
-    fun getSubSystemsByPortalCode() {
-        val portalCode = "svc-portal-subsystem-test-1"
-        val subs = sysSubSystemService.getSubSystemsByPortalCode(portalCode)
+    fun getSubSystemsBySystemCode() {
+        val systemCode = "svc-system-subsystem-test-1"
+        val subs = sysSubSystemService.getSubSystemsBySystemCode(systemCode)
         assertTrue(subs.any { it.code == "svc-subsystem-test-1" })
     }
 

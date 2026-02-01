@@ -22,8 +22,8 @@ data class SysAccessRuleSearchPayload (
     /** 子系统编码 */
     var subSystemCode: String? = null,
 
-    /** 门户编码 */
-    var portalCode: String? = null,
+    /** 系统编码 */
+    var systemCode: String? = null,
 
     /** 规则类型 */
     var ruleType: Int? = null,

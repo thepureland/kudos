@@ -21,8 +21,8 @@ object SysDomains : MaintainableTable<SysDomain>("sys_domain") {
     /** 子系统编码 */
     var subSystemCode = varchar("sub_system_code").bindTo { it.subSystemCode }
 
-    /** 门户编码 */
-    var portalCode = varchar("portal_code").bindTo { it.portalCode }
+    /** 系统编码 */
+    var systemCode = varchar("system_code").bindTo { it.systemCode }
 
     /** 租户id */
     var tenantId = varchar("tenant_id").bindTo { it.tenantId }

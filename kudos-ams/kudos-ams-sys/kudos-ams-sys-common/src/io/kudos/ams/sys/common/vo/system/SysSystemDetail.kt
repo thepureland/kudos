@@ -1,17 +1,16 @@
-package io.kudos.ams.sys.common.vo.portal
+package io.kudos.ams.sys.common.vo.system
 
-import io.kudos.base.support.IIdEntity
-import java.io.Serializable
+import io.kudos.base.support.result.IdJsonResult
 import java.time.LocalDateTime
 
 
 /**
- * 门户缓存项
+ * 系统查询记录
  *
  * @author K
  * @since 1.0.0
  */
-data class SysPortalCacheItem (
+data class SysSystemDetail (
 
     //region your codes 1
 
@@ -50,7 +49,7 @@ data class SysPortalCacheItem (
 
     //endregion your codes 1
 //region your codes 2
-) : IIdEntity<String>, Serializable {
+) : IdJsonResult<String>() {
 //endregion your codes 2
 
     //region your codes 3
@@ -61,10 +60,6 @@ data class SysPortalCacheItem (
         get() = this.code
         set(value) { this.code = value }
 
-    // endregion your codes 3
-
-    companion object {
-        private const val serialVersionUID = 8383289873002046675L
-    }
+    //endregion your codes 3
 
 }

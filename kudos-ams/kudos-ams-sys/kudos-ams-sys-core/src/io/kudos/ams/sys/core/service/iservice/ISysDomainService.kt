@@ -49,14 +49,14 @@ interface ISysDomainService : IBaseCrudService<String, SysDomain> {
     fun getDomainsBySubSystemCode(subSystemCode: String): List<SysDomainRecord>
 
     /**
-     * 获取门户的域名列表
+     * 获取系统的域名列表
      *
-     * @param portalCode 门户编码
+     * @param systemCode 系统编码
      * @return 域名记录列表
      * @author K
      * @since 1.0.0
      */
-    fun getDomainsByPortalCode(portalCode: String): List<SysDomainRecord>
+    fun getDomainsBySystemCode(systemCode: String): List<SysDomainRecord>
 
     /**
      * 更新启用状态，并同步缓存

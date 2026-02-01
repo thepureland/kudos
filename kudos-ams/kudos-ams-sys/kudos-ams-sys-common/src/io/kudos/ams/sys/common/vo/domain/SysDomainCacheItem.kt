@@ -24,8 +24,8 @@ data class SysDomainCacheItem (
     /** 子系统编码 */
     var subSystemCode: String? = null,
 
-    /** 门户编码 */
-    var portalCode: String? = null,
+    /** 系统编码 */
+    var systemCode: String? = null,
 
     /** 租户id */
     var tenantId: String? = null,

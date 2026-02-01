@@ -122,7 +122,7 @@ class TenantIdsBySubSysCacheHandlerTest : RdbAndRedisCacheTestBase() {
         val sysTenantSubSystem = SysTenantSubSystem().apply {
             subSystemCode = "subSys-a"
             tenantId = "tenantId-n"
-            portalCode = "default"
+            systemCode = "default"
         }
         dao.insert(sysTenantSubSystem)
         return sysTenantSubSystem

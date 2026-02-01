@@ -26,11 +26,11 @@ open class SysAccessRuleService : BaseCrudService<String, SysAccessRule, SysAcce
 
     private val log = LogFactory.getLog(this)
 
-    override fun getAccessRuleByTenantAndSubSystem(tenantId: String?, subSystemCode: String?, portalCode: String): SysAccessRuleRecord? {
+    override fun getAccessRuleByTenantAndSubSystem(tenantId: String?, subSystemCode: String?, systemCode: String): SysAccessRuleRecord? {
         val searchPayload = SysAccessRuleSearchPayload().apply {
             this.tenantId = tenantId
             this.subSystemCode = subSystemCode
-            this.portalCode = portalCode
+            this.systemCode = systemCode
         }
         @Suppress("UNCHECKED_CAST")
         val records = dao.search(searchPayload) as List<SysAccessRuleRecord>

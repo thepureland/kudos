@@ -22,8 +22,8 @@ interface SysSubSystem : IDbEntity<String, SysSubSystem> {
     /** 名称 */
     var name: String
 
-    /** 门户编码 */
-    var portalCode: String
+    /** 系统编码 */
+    var systemCode: String
 
     /** 备注 */
     var remark: String?

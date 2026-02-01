@@ -180,7 +180,7 @@ class DomainByNameCacheHandlerTest : RdbAndRedisCacheTestBase() {
     private fun insertNewRecordToDb(): SysDomain {
         val sysDomain = SysDomain().apply { 
             domain = "a_new_domain.com"
-            portalCode = "default"
+            systemCode = "default"
         }
         dao.insert(sysDomain)
         return sysDomain
