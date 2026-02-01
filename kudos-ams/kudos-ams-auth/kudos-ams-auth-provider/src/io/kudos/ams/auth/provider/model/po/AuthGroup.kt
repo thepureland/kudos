@@ -18,10 +18,10 @@ interface AuthGroup : IDbEntity<String, AuthGroup> {
     companion object : DbEntityFactory<AuthGroup>()
 
     /** 用户组编码 */
-    var groupCode: String
+    var code: String
 
     /** 用户组名称 */
-    var groupName: String
+    var name: String
 
     /** 租户id */
     var tenantId: String

@@ -7,7 +7,7 @@ merge into "user_account" ("id", "username", "tenant_id", "login_password", "sup
            ('a1b2c3d4-0000-0000-0000-000000000071', 'authgroup-user-dao-u2', 'tenant-g-dao-test-1', 'encrypted-pwd-2-0xQpE1Zf', '00000000-0000-0000-0000-000000000000', 'from AuthGroupUserDaoTest', true, false, 'system', '系统');
 
 -- 创建测试用的组
-merge into "auth_group" ("id", "group_code", "group_name", "tenant_id", "subsys_code", "remark", "active", "built_in", "create_user_id", "create_user_name")
+merge into "auth_group" ("id", "code", "name", "tenant_id", "subsys_code", "remark", "active", "built_in", "create_user_id", "create_user_name")
     values ('a1b2c3d4-0000-0000-0000-000000000072', 'group-user-dao-u1', 'g-u-dao-test-tenant-1', 'tenant-g-dao-test-1', 'ams', 'from AuthGroupUserDaoTest', true, false, 'system', '系统'),
            ('a1b2c3d4-0000-0000-0000-000000000073', 'authgroup-user-dao-u2', 'g-u-dao-test-tenant-2', 'tenant-g-dao-test-1', 'ams', 'from AuthGroupUserDaoTest', true, false, 'system', '系统');
 
