@@ -115,11 +115,11 @@ include("kudos-ams:kudos-ams-user:kudos-ams-user-client")
 include("kudos-ams:kudos-ams-user:kudos-ams-user-api-public")
 include("kudos-ams:kudos-ams-user:kudos-ams-user-api-internal")
 //// ams-msg
-include("kudos-ams:kudos-ams-msg:kudos-ams-msg-provider")
+include("kudos-ams:kudos-ams-msg:kudos-ams-msg-core")
 include("kudos-ams:kudos-ams-msg:kudos-ams-msg-common")
-include("kudos-ams:kudos-ams-msg:kudos-ams-msg-consumer")
-include("kudos-ams:kudos-ams-msg:kudos-ams-msg-api-web")
-include("kudos-ams:kudos-ams-msg:kudos-ams-msg-api-provider")
+include("kudos-ams:kudos-ams-msg:kudos-ams-msg-client")
+include("kudos-ams:kudos-ams-msg:kudos-ams-msg-api-public")
+include("kudos-ams:kudos-ams-msg:kudos-ams-msg-api-internal")
 
 // dependencies
 include("kudos-dependencies")
