@@ -1,4 +1,4 @@
-package io.kudos.ams.auth.common.vo.user
+package io.kudos.ams.user.common.vo.user
 
 import io.kudos.base.support.result.IdJsonResult
 import java.time.LocalDateTime
