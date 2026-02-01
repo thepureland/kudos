@@ -101,6 +101,7 @@ include("kudos-ams:kudos-ams-sys:kudos-ams-sys-core")
 include("kudos-ams:kudos-ams-sys:kudos-ams-sys-common")
 include("kudos-ams:kudos-ams-sys:kudos-ams-sys-client")
 include("kudos-ams:kudos-ams-sys:kudos-ams-sys-api-public")
+include("kudos-ams:kudos-ams-sys:kudos-ams-sys-api-admin")
 include("kudos-ams:kudos-ams-sys:kudos-ams-sys-api-internal")
 //// ams-auth
 include("kudos-ams:kudos-ams-auth:kudos-ams-auth-core")
