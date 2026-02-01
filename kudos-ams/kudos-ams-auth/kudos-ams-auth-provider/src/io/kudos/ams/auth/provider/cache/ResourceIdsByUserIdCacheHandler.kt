@@ -6,8 +6,8 @@ import io.kudos.ams.auth.provider.dao.AuthRoleResourceDao
 import io.kudos.ams.auth.provider.dao.AuthRoleUserDao
 import io.kudos.ams.auth.provider.model.po.AuthRoleResource
 import io.kudos.ams.auth.provider.model.po.AuthRoleUser
-import io.kudos.ams.user.provider.dao.UserAccountDao
-import io.kudos.ams.user.provider.model.po.UserAccount
+import io.kudos.ams.user.core.dao.UserAccountDao
+import io.kudos.ams.user.core.model.po.UserAccount
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum

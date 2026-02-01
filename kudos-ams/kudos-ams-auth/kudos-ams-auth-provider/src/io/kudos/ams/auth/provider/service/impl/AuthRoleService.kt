@@ -11,7 +11,7 @@ import io.kudos.ams.auth.provider.service.iservice.IAuthRoleService
 import io.kudos.ams.sys.common.vo.resource.SysResourceCacheItem
 import io.kudos.ams.sys.core.cache.ResourceByIdCacheHandler
 import io.kudos.ams.user.common.vo.user.UserAccountCacheItem
-import io.kudos.ams.user.provider.cache.UserByIdCacheHandler
+import io.kudos.ams.user.core.cache.UserByIdCacheHandler
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
