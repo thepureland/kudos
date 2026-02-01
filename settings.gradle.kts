@@ -122,6 +122,7 @@ include("kudos-ams:kudos-ams-msg:kudos-ams-msg-core")
 include("kudos-ams:kudos-ams-msg:kudos-ams-msg-common")
 include("kudos-ams:kudos-ams-msg:kudos-ams-msg-client")
 include("kudos-ams:kudos-ams-msg:kudos-ams-msg-api-public")
+include("kudos-ams:kudos-ams-msg:kudos-ams-msg-api-admin")
 include("kudos-ams:kudos-ams-msg:kudos-ams-msg-api-internal")
 
 // dependencies
