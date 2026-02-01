@@ -5,7 +5,7 @@ dependencies {
     api(project(":kudos-ability:kudos-ability-data:kudos-ability-data-rdb:kudos-ability-data-rdb-flyway"))
 
     //region your codes 1
-    api(project(":kudos-ams:kudos-ams-sys:kudos-ams-sys-provider"))
+    api(project(":kudos-ams:kudos-ams-sys:kudos-ams-sys-core"))
     api(project(":kudos-ability:kudos-ability-cache:kudos-ability-cache-local:kudos-ability-cache-local-caffeine"))
     api(project(":kudos-ability:kudos-ability-cache:kudos-ability-cache-remote:kudos-ability-cache-remote-redis"))
 

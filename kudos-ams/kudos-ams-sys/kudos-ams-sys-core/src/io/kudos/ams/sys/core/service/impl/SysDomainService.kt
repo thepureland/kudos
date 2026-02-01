@@ -1,0 +1,131 @@
+package io.kudos.ams.sys.core.service.impl
+
+import io.kudos.ams.sys.core.service.iservice.ISysDomainService
+import io.kudos.ams.sys.core.model.po.SysDomain
+import io.kudos.ams.sys.core.dao.SysDomainDao
+import io.kudos.ams.sys.core.cache.DomainByNameCacheHandler
+import io.kudos.ams.sys.common.vo.domain.SysDomainCacheItem
+import io.kudos.ams.sys.common.vo.domain.SysDomainRecord
+import io.kudos.ams.sys.common.vo.domain.SysDomainSearchPayload
+import io.kudos.base.bean.BeanKit
+import io.kudos.base.logger.LogFactory
+import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+
+
+/**
+ * 域名业务
+ *
+ * @author K
+ * @since 1.0.0
+ */
+@Service
+//region your codes 1
+open class SysDomainService : BaseCrudService<String, SysDomain, SysDomainDao>(), ISysDomainService {
+//endregion your codes 1
+
+    //region your codes 2
+
+    private val log = LogFactory.getLog(this)
+
+    @Autowired
+    private lateinit var domainByNameCacheHandler: DomainByNameCacheHandler
+
+    override fun getDomainByName(domain: String): SysDomainCacheItem? {
+        return domainByNameCacheHandler.getDomain(domain)
+    }
+
+    override fun getDomainsByTenantId(tenantId: String): List<SysDomainRecord> {
+        val searchPayload = SysDomainSearchPayload().apply {
+            this.tenantId = tenantId
+        }
+        @Suppress("UNCHECKED_CAST")
+        return dao.search(searchPayload) as List<SysDomainRecord>
+    }
+
+    override fun getDomainsBySubSystemCode(subSystemCode: String): List<SysDomainRecord> {
+        val searchPayload = SysDomainSearchPayload().apply {
+            this.subSystemCode = subSystemCode
+        }
+        @Suppress("UNCHECKED_CAST")
+        return dao.search(searchPayload) as List<SysDomainRecord>
+    }
+
+    override fun getDomainsByPortalCode(portalCode: String): List<SysDomainRecord> {
+        val searchPayload = SysDomainSearchPayload().apply {
+            this.portalCode = portalCode
+        }
+        @Suppress("UNCHECKED_CAST")
+        return dao.search(searchPayload) as List<SysDomainRecord>
+    }
+
+    @Transactional
+    override fun updateActive(id: String, active: Boolean): Boolean {
+        val domain = SysDomain {
+            this.id = id
+            this.active = active
+        }
+        val success = dao.update(domain)
+        if (success) {
+            log.debug("更新id为${id}的域名的启用状态为${active}。")
+            domainByNameCacheHandler.syncOnUpdate(null, id)
+        } else {
+            log.error("更新id为${id}的域名的启用状态为${active}失败！")
+        }
+        return success
+    }
+
+    @Transactional
+    override fun insert(any: Any): String {
+        val id = super.insert(any)
+        log.debug("新增id为${id}的域名。")
+        domainByNameCacheHandler.syncOnInsert(any, id)
+        return id
+    }
+
+    @Transactional
+    override fun update(any: Any): Boolean {
+        val success = super.update(any)
+        val id = BeanKit.getProperty(any, SysDomain::id.name) as String
+        if (success) {
+            log.debug("更新id为${id}的域名。")
+            domainByNameCacheHandler.syncOnUpdate(any, id)
+        } else {
+            log.error("更新id为${id}的域名失败！")
+        }
+        return success
+    }
+
+    @Transactional
+    override fun deleteById(id: String): Boolean {
+        val domain = dao.get(id)
+        if (domain == null) {
+            log.warn("删除id为${id}的域名时，发现其已不存在！")
+            return false
+        }
+        val success = super.deleteById(id)
+        if (success) {
+            log.debug("删除id为${id}的域名。")
+            domainByNameCacheHandler.syncOnDelete(domain, id)
+        } else {
+            log.error("删除id为${id}的域名失败！")
+        }
+        return success
+    }
+
+    @Transactional
+    override fun batchDelete(ids: Collection<String>): Int {
+        @Suppress("UNCHECKED_CAST")
+        val domains = dao.inSearchById(ids)
+        val domainNames = domains.map { it.domain }.toSet()
+        val count = super.batchDelete(ids)
+        log.debug("批量删除域名，期望删除${ids.size}条，实际删除${count}条。")
+        domainByNameCacheHandler.syncOnBatchDelete(ids, domainNames)
+        return count
+    }
+
+    //endregion your codes 2
+
+}
