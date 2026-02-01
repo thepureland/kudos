@@ -9,7 +9,7 @@ import io.kudos.ams.auth.provider.dao.AuthRoleDao
 import io.kudos.ams.auth.provider.model.po.AuthRole
 import io.kudos.ams.auth.provider.service.iservice.IAuthRoleService
 import io.kudos.ams.sys.common.vo.resource.SysResourceCacheItem
-import io.kudos.ams.sys.provider.cache.ResourceByIdCacheHandler
+import io.kudos.ams.sys.core.cache.ResourceByIdCacheHandler
 import io.kudos.ams.user.common.vo.user.UserAccountCacheItem
 import io.kudos.ams.user.provider.cache.UserByIdCacheHandler
 import io.kudos.base.bean.BeanKit

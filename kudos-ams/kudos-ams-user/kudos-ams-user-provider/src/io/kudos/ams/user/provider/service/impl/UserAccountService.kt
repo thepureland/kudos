@@ -1,7 +1,7 @@
 package io.kudos.ams.user.provider.service.impl
 
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
-import io.kudos.ams.sys.provider.cache.ResourceByIdCacheHandler
+import io.kudos.ams.sys.core.cache.ResourceByIdCacheHandler
 import io.kudos.ams.user.common.vo.org.UserOrgCacheItem
 import io.kudos.ams.user.common.vo.user.UserAccountCacheItem
 import io.kudos.ams.user.common.vo.user.UserAccountRecord
