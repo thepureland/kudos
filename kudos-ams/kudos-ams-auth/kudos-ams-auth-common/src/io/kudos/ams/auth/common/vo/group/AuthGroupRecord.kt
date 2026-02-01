@@ -16,10 +16,10 @@ data class AuthGroupRecord (
     //region your codes 1
 
     /** 用户组编码 */
-    var groupCode: String? = null,
+    var code: String? = null,
 
     /** 用户组名称 */
-    var groupName: String? = null,
+    var name: String? = null,
 
     /** 租户id */
     var tenantId: String? = null,

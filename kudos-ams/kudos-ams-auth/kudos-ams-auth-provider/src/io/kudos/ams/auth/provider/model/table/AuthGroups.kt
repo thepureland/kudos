@@ -19,10 +19,10 @@ object AuthGroups : StringIdTable<AuthGroup>("auth_group") {
 //endregion your codes 1
 
     /** 用户组编码 */
-    var groupCode = varchar("group_code").bindTo { it.groupCode }
+    var code = varchar("code").bindTo { it.code }
 
     /** 用户组名称 */
-    var groupName = varchar("group_name").bindTo { it.groupName }
+    var name = varchar("name").bindTo { it.name }
 
     /** 租户id */
     var tenantId = varchar("tenant_id").bindTo { it.tenantId }
