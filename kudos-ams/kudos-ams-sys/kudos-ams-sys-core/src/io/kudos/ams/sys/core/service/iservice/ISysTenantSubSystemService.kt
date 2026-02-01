@@ -54,12 +54,12 @@ interface ISysTenantSubSystemService : IBaseCrudService<String, SysTenantSubSyst
      *
      * @param tenantId 租户id
      * @param subSystemCodes 子系统编码集合
-     * @param portalCode 门户编码
+     * @param systemCode 系统编码
      * @return 成功绑定的数量
      * @author AI: Cursor
      * @since 1.0.0
      */
-    fun batchBind(tenantId: String, subSystemCodes: Collection<String>, portalCode: String): Int
+    fun batchBind(tenantId: String, subSystemCodes: Collection<String>, systemCode: String): Int
 
     /**
      * 解绑租户与子系统的关系

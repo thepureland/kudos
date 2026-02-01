@@ -1,4 +1,4 @@
-merge into "sys_sub_system" ("code", "name", "portal_code", "remark", "active", "built_in")
+merge into "sys_sub_system" ("code", "name", "system_code", "remark", "active", "built_in")
     values ('code-1', 'name-1', 'default', null, true, true),
            ('code-2', 'name-2', 'default', null, true, true),
            ('code-3', 'name-3', 'default', null, true, true),

@@ -4,7 +4,7 @@ create table if not exists "sys_domain"
     "id"              character(36) default RANDOM_UUID() not null primary key,
     "domain"          character varying(64)               not null,
     "sub_system_code" character varying(32),
-    "portal_code"     character varying(32)               not null,
+    "system_code"     character varying(32)               not null,
     "tenant_id"       character varying(36),
     "remark"          character varying(128),
     "active"          boolean       default TRUE          not null,
@@ -24,8 +24,8 @@ create unique index if not exists "uq_sys_domain" on "sys_domain" ("domain");
 --         foreign key ("sub_system_code") references "sys_sub_system" ("code");
 --
 -- alter table "sys_domain"
---     add constraint "fk_sys_domain_portal"
---         foreign key ("portal_code") references "sys_portal" ("code");
+--     add constraint "fk_sys_domain_system"
+--         foreign key ("system_code") references "sys_system" ("code");
 --
 -- alter table "sys_domain"
 --     add constraint "fk_sys_domain_tenant"
@@ -35,7 +35,7 @@ comment on table "sys_domain" is '域名';
 comment on column "sys_domain"."id" is '主键';
 comment on column "sys_domain"."domain" is '域名';
 comment on column "sys_domain"."sub_system_code" is '子系统编码';
-comment on column "sys_domain"."portal_code" is '门户编码';
+comment on column "sys_domain"."system_code" is '系统编码';
 comment on column "sys_domain"."tenant_id" is '租户id';
 comment on column "sys_domain"."remark" is '备注';
 comment on column "sys_domain"."active" is '是否启用';

@@ -22,12 +22,12 @@ interface ISysAccessRuleService : IBaseCrudService<String, SysAccessRule> {
      *
      * @param tenantId 租户id，可以为null
      * @param subSystemCode 子系统编码，可以为null
-     * @param portalCode 门户编码
+     * @param systemCode 系统编码
      * @return 访问规则记录，找不到返回null
      * @author K
      * @since 1.0.0
      */
-    fun getAccessRuleByTenantAndSubSystem(tenantId: String?, subSystemCode: String?, portalCode: String): SysAccessRuleRecord?
+    fun getAccessRuleByTenantAndSubSystem(tenantId: String?, subSystemCode: String?, systemCode: String): SysAccessRuleRecord?
 
     /**
      * 获取租户的访问规则列表

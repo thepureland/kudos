@@ -23,8 +23,8 @@ interface SysAccessRule : IMaintainableDbEntity<String, SysAccessRule> {
     /** 子系统编码 */
     var subSystemCode: String?
 
-    /** 门户编码 */
-    var portalCode: String
+    /** 系统编码 */
+    var systemCode: String
 
     /** 规则类型字典代码 */
     var ruleTypeDictCode: String

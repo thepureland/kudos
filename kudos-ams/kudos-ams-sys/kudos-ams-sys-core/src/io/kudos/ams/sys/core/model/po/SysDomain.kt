@@ -21,8 +21,8 @@ interface SysDomain : IMaintainableDbEntity<String, SysDomain> {
     /** 子系统编码 */
     var subSystemCode: String?
 
-    /** 门户编码 */
-    var portalCode: String
+    /** 系统编码 */
+    var systemCode: String
 
     /** 租户id */
     var tenantId: String

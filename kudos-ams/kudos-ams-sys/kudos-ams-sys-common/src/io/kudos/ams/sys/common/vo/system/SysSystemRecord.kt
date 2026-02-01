@@ -1,15 +1,15 @@
-package io.kudos.ams.sys.common.vo.portal
+package io.kudos.ams.sys.common.vo.system
 
-import io.kudos.base.support.payload.FormPayload
+import io.kudos.base.support.result.IdJsonResult
 
 
 /**
- * 门户表单载体
+ * 系统查询记录
  *
  * @author K
  * @since 1.0.0
  */
-data class SysPortalPayload (
+data class SysSystemRecord (
 
     //region your codes 1
 
@@ -25,9 +25,12 @@ data class SysPortalPayload (
     /** 是否启用 */
     var active: Boolean? = null,
 
+    /** 是否内置 */
+    var builtIn: Boolean? = null,
+
     //endregion your codes 1
 //region your codes 2
-) : FormPayload<String>() {
+) : IdJsonResult<String>() {
 //endregion your codes 2
 
     //region your codes 3

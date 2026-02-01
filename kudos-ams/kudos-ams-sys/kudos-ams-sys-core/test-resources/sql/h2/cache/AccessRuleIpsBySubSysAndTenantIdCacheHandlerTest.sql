@@ -1,4 +1,4 @@
-merge into "sys_access_rule" ("id", "tenant_id", "sub_system_code", "portal_code", "rule_type_dict_code", "remark",
+merge into "sys_access_rule" ("id", "tenant_id", "sub_system_code", "system_code", "rule_type_dict_code", "remark",
                               "active", "built_in")
     values ('8026f3ac-563b-4545-88dc-b8f70ea48081', 'tenantId-1', 'subSys-a', 'default', '0', null, true, false),
            ('8026f3ac-563b-4545-88dc-b8f70ea48082', 'tenantId-2', 'subSys-a', 'default', '1', null, true, false),

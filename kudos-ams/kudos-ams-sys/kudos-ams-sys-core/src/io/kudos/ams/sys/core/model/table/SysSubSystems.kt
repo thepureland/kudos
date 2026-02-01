@@ -21,8 +21,8 @@ object SysSubSystems : Table<SysSubSystem>("sys_sub_system") {
     /** 名称 */
     var name = varchar("name").bindTo { it.name }
 
-    /** 门户编码 */
-    var portalCode = varchar("portal_code").bindTo { it.portalCode }
+    /** 系统编码 */
+    var systemCode = varchar("system_code").bindTo { it.systemCode }
 
     /** 备注 */
     var remark = varchar("remark").bindTo { it.remark }

@@ -1,4 +1,4 @@
-merge into "sys_portal" ("code", "name", "remark", "active", "built_in")
+merge into "sys_system" ("code", "name", "remark", "active", "built_in")
     values ('code-1', 'name-1', null, true, true),
            ('code-2', 'name-2', null, true, true),
            ('code-3', 'name-3', null, true, true),

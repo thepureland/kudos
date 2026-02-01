@@ -1,6 +1,6 @@
 package io.kudos.ams.sys.core.model.table
 
-import io.kudos.ams.sys.core.model.po.SysPortal
+import io.kudos.ams.sys.core.model.po.SysSystem
 import org.ktorm.schema.Table
 import org.ktorm.schema.boolean
 import org.ktorm.schema.datetime
@@ -8,13 +8,13 @@ import org.ktorm.schema.varchar
 
 
 /**
- * 门户数据库表-实体关联对象
+ * 系统数据库表-实体关联对象
  *
  * @author K
  * @since 1.0.0
  */
 //region your codes 1
-object SysPortals : Table<SysPortal>("sys_portal") {
+object SysSystems : Table<SysSystem>("sys_system") {
 //endregion your codes 1
 
     /** 编码 */

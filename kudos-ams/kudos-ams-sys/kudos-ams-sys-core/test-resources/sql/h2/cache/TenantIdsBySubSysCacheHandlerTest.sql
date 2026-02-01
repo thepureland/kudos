@@ -11,7 +11,7 @@ merge into "sys_tenant" ("id", "name", "timezone", "default_language_code", "rem
            ('118772a0-c053-4634-a5e5-000000000000', 'tenant-00', null, null, null, false, true);
 
 
-merge into "sys_tenant_sub_system" ("id", "tenant_id", "sub_system_code", "portal_code")
+merge into "sys_tenant_sub_system" ("id", "tenant_id", "sub_system_code", "system_code")
     values ('b3846388-5e61-4b58-8fd8-aaaaaaaaaaaa', '118772a0-c053-4634-a5e5-111111111111', 'subSys-a', 'default'),
            ('b3846388-5e61-4b58-8fd8-bbbbbbbbbbbb', '118772a0-c053-4634-a5e5-111111111111', 'subSys-b', 'default'),
            ('b3846388-5e61-4b58-8fd8-cccccccccccc', '118772a0-c053-4634-a5e5-111111111111', 'subSys-c', 'default'),

@@ -45,10 +45,10 @@ class SysDomainServiceTest : RdbAndRedisCacheTestBase() {
     }
 
     @Test
-    fun getDomainsByPortalCode() {
-        val portalCode = "svc-portal-domain-test-1"
-        val domains = sysDomainService.getDomainsByPortalCode(portalCode)
-        assertTrue(domains.any { it.portalCode == portalCode })
+    fun getDomainsBySystemCode() {
+        val systemCode = "svc-system-domain-test-1"
+        val domains = sysDomainService.getDomainsBySystemCode(systemCode)
+        assertTrue(domains.any { it.systemCode == systemCode })
     }
 
     @Test

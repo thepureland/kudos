@@ -5,16 +5,16 @@ import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
 import java.time.LocalDateTime
 
 /**
- * 门户数据库实体
+ * 系统数据库实体
  *
  * @author K
  * @since 1.0.0
  */
 //region your codes 1
-interface SysPortal : IDbEntity<String, SysPortal> {
+interface SysSystem : IDbEntity<String, SysSystem> {
 //endregion your codes 1
 
-    companion object : DbEntityFactory<SysPortal>()
+    companion object : DbEntityFactory<SysSystem>()
 
     /** 编码 */
     var code: String

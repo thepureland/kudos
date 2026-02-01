@@ -21,8 +21,8 @@ object SysTenantSubSystems : StringIdTable<SysTenantSubSystem>("sys_tenant_sub_s
     /** 子系统编码 */
     var subSystemCode = varchar("sub_system_code").bindTo { it.subSystemCode }
 
-    /** 门户编码 */
-    var portalCode = varchar("portal_code").bindTo { it.portalCode }
+    /** 系统编码 */
+    var systemCode = varchar("system_code").bindTo { it.systemCode }
 
     /** 创建者id */
     var createUserId = varchar("create_user_id").bindTo { it.createUserId }

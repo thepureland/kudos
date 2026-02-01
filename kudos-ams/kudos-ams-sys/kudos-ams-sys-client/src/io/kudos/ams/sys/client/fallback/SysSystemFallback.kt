@@ -1,18 +1,18 @@
 package io.kudos.ams.sys.client.fallback
 
-import io.kudos.ams.sys.client.proxy.ISysPortalProxy
+import io.kudos.ams.sys.client.proxy.ISysSystemProxy
 import org.springframework.stereotype.Component
 
 
 /**
- * 门户容错处理
+ * 系统容错处理
  *
  * @author K
  * @since 1.0.0
  */
 @Component
 //region your codes 1
-interface SysPortalFallback : ISysPortalProxy {
+interface SysSystemFallback : ISysSystemProxy {
 //endregion your codes 1
 
     //region your codes 2

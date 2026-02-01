@@ -22,8 +22,8 @@ data class SysTenantSubSystemSearchPayload (
     /** 子系统编码 */
     var subSystemCode: String? = null,
 
-    /** 门户编码 */
-    var portalCode: String? = null,
+    /** 系统编码 */
+    var systemCode: String? = null,
 
     //endregion your codes 1
 //region your codes 2

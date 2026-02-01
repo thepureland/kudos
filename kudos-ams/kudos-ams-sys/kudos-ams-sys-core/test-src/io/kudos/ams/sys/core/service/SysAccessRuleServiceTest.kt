@@ -27,8 +27,8 @@ class SysAccessRuleServiceTest : RdbAndRedisCacheTestBase() {
     fun getAccessRuleByTenantAndSubSystem() {
         val tenantId = "20000000-0000-0000-0000-000000000033"
         val subSystemCode = "svc-subsys-ar-test-1"
-        val portalCode = "svc-portal-ar-test-1"
-        val rule = sysAccessRuleService.getAccessRuleByTenantAndSubSystem(tenantId, subSystemCode, portalCode)
+        val systemCode = "svc-system-ar-test-1"
+        val rule = sysAccessRuleService.getAccessRuleByTenantAndSubSystem(tenantId, subSystemCode, systemCode)
         assertNotNull(rule)
     }
 

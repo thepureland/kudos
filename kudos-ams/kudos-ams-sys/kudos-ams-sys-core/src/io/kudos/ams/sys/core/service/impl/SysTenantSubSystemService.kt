@@ -50,13 +50,13 @@ open class SysTenantSubSystemService : BaseCrudService<String, SysTenantSubSyste
      *
      * @param tenantId 租户id
      * @param subSystemCodes 子系统编码集合
-     * @param portalCode 门户编码
+     * @param systemCode 系统编码
      * @return 成功绑定的数量
      * @author AI: Cursor
      * @since 1.0.0
      */
     @Transactional
-    override fun batchBind(tenantId: String, subSystemCodes: Collection<String>, portalCode: String): Int {
+    override fun batchBind(tenantId: String, subSystemCodes: Collection<String>, systemCode: String): Int {
         if (subSystemCodes.isEmpty()) {
             return 0
         }
@@ -67,7 +67,7 @@ open class SysTenantSubSystemService : BaseCrudService<String, SysTenantSubSyste
                 val relation = SysTenantSubSystem {
                     this.tenantId = tenantId
                     this.subSystemCode = subSystemCode
-                    this.portalCode = portalCode
+                    this.systemCode = systemCode
                 }
                 dao.insert(relation)
                 insertedSubSystemCodes.add(subSystemCode)

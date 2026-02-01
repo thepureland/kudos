@@ -30,14 +30,14 @@ interface ISysSubSystemService : IBaseCrudService<String, SysSubSystem> {
     fun getSubSystemByCode(code: String): SysSubSystemCacheItem?
 
     /**
-     * 按门户编码查询子系统列表
+     * 按系统编码查询子系统列表
      *
-     * @param portalCode 门户编码
+     * @param systemCode 系统编码
      * @return 子系统记录列表
      * @author K
      * @since 1.0.0
      */
-    fun getSubSystemsByPortalCode(portalCode: String): List<SysSubSystemRecord>
+    fun getSubSystemsBySystemCode(systemCode: String): List<SysSubSystemRecord>
 
     /**
      * 更新启用状态，并同步缓存

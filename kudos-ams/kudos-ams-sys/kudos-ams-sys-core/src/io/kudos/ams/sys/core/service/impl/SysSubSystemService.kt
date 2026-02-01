@@ -53,9 +53,9 @@ open class SysSubSystemService : BaseCrudService<String, SysSubSystem, SysSubSys
         return subSystemByCodeCacheHandler.getSubSystemByCode(code)
     }
 
-    override fun getSubSystemsByPortalCode(portalCode: String): List<SysSubSystemRecord> {
+    override fun getSubSystemsBySystemCode(systemCode: String): List<SysSubSystemRecord> {
         val searchPayload = SysSubSystemSearchPayload().apply {
-            this.portalCode = portalCode
+            this.systemCode = systemCode
         }
         @Suppress("UNCHECKED_CAST")
         return dao.search(searchPayload) as List<SysSubSystemRecord>

@@ -1,4 +1,4 @@
-merge into "sys_sub_system" ("code", "name", "portal_code", "remark", "active", "built_in")
+merge into "sys_sub_system" ("code", "name", "system_code", "remark", "active", "built_in")
     values ('svc-subsys-res-test-1', 'svc-subsys-res-test-1-name', 'default', 'from SysResourceServiceTest', true, false);
 
 merge into "sys_resource" ("id", "name", "url", "resource_type_dict_code", "parent_id", "order_num", "sub_system_code", "remark", "active", "built_in")
