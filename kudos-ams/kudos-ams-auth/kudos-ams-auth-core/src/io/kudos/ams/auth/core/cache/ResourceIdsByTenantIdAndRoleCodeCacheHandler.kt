@@ -27,7 +27,7 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-open class ResourceIdsByRoleCodeCacheHandler : AbstractCacheHandler<List<String>>() {
+open class ResourceIdsByTenantIdAndRoleCodeCacheHandler : AbstractCacheHandler<List<String>>() {
 
     @Autowired
     private lateinit var roleIdByTenantIdAndRoleCodeCacheHandler: RoleIdByTenantIdAndRoleCodeCacheHandler
@@ -39,7 +39,7 @@ open class ResourceIdsByRoleCodeCacheHandler : AbstractCacheHandler<List<String>
     private lateinit var authRoleResourceDao: AuthRoleResourceDao
 
     companion object {
-        private const val CACHE_NAME = "AUTH_RESOURCE_IDS_BY_ROLE_CODE"
+        private const val CACHE_NAME = "AUTH_RESOURCE_IDS_BY_TENANT_ID_AND_ROLE_CODE"
     }
 
     override fun cacheName(): String = CACHE_NAME
@@ -49,7 +49,7 @@ open class ResourceIdsByRoleCodeCacheHandler : AbstractCacheHandler<List<String>
             "缓存${CACHE_NAME}的key格式必须是 租户ID${Consts.CACHE_KEY_DEFAULT_DELIMITER}角色编码"
         }
         val tenantAndRoleCode = key.split(Consts.CACHE_KEY_DEFAULT_DELIMITER)
-        return getSelf<ResourceIdsByRoleCodeCacheHandler>().getResourceIds(
+        return getSelf<ResourceIdsByTenantIdAndRoleCodeCacheHandler>().getResourceIds(
             tenantAndRoleCode[0], tenantAndRoleCode[1]
         )
     }
@@ -132,7 +132,7 @@ open class ResourceIdsByRoleCodeCacheHandler : AbstractCacheHandler<List<String>
             log.debug("新增租户${tenantId}角色${roleCode}的资源关系后，同步${CACHE_NAME}缓存...")
             evict(getKey(tenantId, roleCode))
             if (CacheKit.isWriteInTime(CACHE_NAME)) {
-                getSelf<ResourceIdsByRoleCodeCacheHandler>().getResourceIds(tenantId, roleCode)
+                getSelf<ResourceIdsByTenantIdAndRoleCodeCacheHandler>().getResourceIds(tenantId, roleCode)
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
@@ -149,7 +149,7 @@ open class ResourceIdsByRoleCodeCacheHandler : AbstractCacheHandler<List<String>
             log.debug("删除租户${tenantId}角色${roleCode}的资源关系后，同步${CACHE_NAME}缓存...")
             evict(getKey(tenantId, roleCode))
             if (CacheKit.isWriteInTime(CACHE_NAME)) {
-                getSelf<ResourceIdsByRoleCodeCacheHandler>().getResourceIds(tenantId, roleCode)
+                getSelf<ResourceIdsByTenantIdAndRoleCodeCacheHandler>().getResourceIds(tenantId, roleCode)
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
         }

@@ -37,7 +37,7 @@ class RoleIdsByUserIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
         assertTrue(roleIds1.isNotEmpty(), "用户${userId}应该有角色ID列表")
         assertEquals(roleIds1, roleIds2, "两次调用应该返回相同的结果（缓存验证）")
         // 验证角色ID：用户11111111有角色ROLE_ADMIN
-        _root_ide_package_.kotlin.test.assertEquals(1, roleIds1.size, "用户${userId}应该有1个角色ID")
+        assertEquals(1, roleIds1.size, "用户${userId}应该有1个角色ID")
         assertTrue(roleIds1.contains("88207878-1111-1111-1111-111111111111"), "应该包含ROLE_ADMIN的角色ID，实际返回：${roleIds1}")
 
         // 存在的用户ID，有多个角色

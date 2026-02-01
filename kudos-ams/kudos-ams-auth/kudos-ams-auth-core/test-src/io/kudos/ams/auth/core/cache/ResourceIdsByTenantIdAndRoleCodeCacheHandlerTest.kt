@@ -24,10 +24,10 @@ import kotlin.test.assertTrue
  * @since 1.0.0
  */
 @EnabledIfDockerInstalled
-class ResourceIdsByRoleCodeCacheHandlerTest : RdbAndRedisCacheTestBase() {
+class ResourceIdsByTenantIdAndRoleCodeCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Resource
-    private lateinit var cacheHandler: ResourceIdsByRoleCodeCacheHandler
+    private lateinit var cacheHandler: ResourceIdsByTenantIdAndRoleCodeCacheHandler
 
     @Resource
     private lateinit var authRoleDao: AuthRoleDao
