@@ -12,7 +12,8 @@ merge into "user_org" ("id", "name", "short_name", "tenant_id", "parent_id", "or
     values ('81cea00f-1111-1111-1111-111111111111', '技术部', '技术', 'tenant-001-EwK7LrFx', null, 'ORG_TYPE_TECH', 1, '技术研发机构', true, false, 'admin', '管理员', null, null),
            ('81cea00f-2222-2222-2222-222222222222', '产品部', '产品', 'tenant-001-EwK7LrFx', null, 'ORG_TYPE_PRODUCT', 2, '产品策划机构', true, false, 'admin', '管理员', null, null);
 
--- 用户-机构关系
+-- 用户-机构关系（user 3333 故意无任何机构，供 getOrgIds 空列表断言；先删其残留关系再 merge）
+delete from "user_org_user" where "user_id" = '81cea00f-3333-3333-3333-333333333333';
 merge into "user_org_user" ("id", "org_id", "user_id", "org_admin", "create_user_id", "create_user_name")
     values ('81cea00f-1111-1111-1111-111111111111', '81cea00f-1111-1111-1111-111111111111', '81cea00f-1111-1111-1111-111111111111', true, 'system', '系统'),
            ('81cea00f-2222-2222-2222-222222222222', '81cea00f-1111-1111-1111-111111111111', '81cea00f-2222-2222-2222-222222222222', false, 'admin', '管理员'),

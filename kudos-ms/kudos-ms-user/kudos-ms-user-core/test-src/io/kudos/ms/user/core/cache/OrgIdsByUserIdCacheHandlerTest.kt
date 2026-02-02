@@ -30,6 +30,9 @@ class OrgIdsByUserIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun getOrgIds() {
+        // 先重载缓存，确保与当前测试数据一致（避免其它测试残留导致 user 3333 有机构）
+        cacheHandler.reloadAll(true)
+
         // 存在的用户ID，有一个机构
         var userId = "81cea00f-1111-1111-1111-111111111111"
         val orgIds1 = cacheHandler.getOrgIds(userId)
