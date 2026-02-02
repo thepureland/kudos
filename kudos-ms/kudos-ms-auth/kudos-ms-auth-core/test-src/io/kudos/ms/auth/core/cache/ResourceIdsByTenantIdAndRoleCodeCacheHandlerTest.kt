@@ -17,7 +17,7 @@ import kotlin.test.assertTrue
 /**
  * junit test for ResourceIdsByRoleCodeCacheHandler
  *
- * 测试数据来源：`ResourceIdsByRoleCodeCacheHandlerTest.sql`
+ * 测试数据来源：`ResourceIdsByTenantIdAndRoleCodeCacheHandlerTest.sql`
  *
  * @author K
  * @author AI: Cursor
@@ -38,7 +38,7 @@ class ResourceIdsByTenantIdAndRoleCodeCacheHandlerTest : RdbAndRedisCacheTestBas
     @Test
     fun getResourceIds() {
         // 存在的租户和角色
-        var tenantId = "tenant-001-7h2QGcPi"
+        var tenantId = "tenant-001-174d0234"
         var roleCode = "ROLE_ADMIN"
         val resourceIds2 = cacheHandler.getResourceIds(tenantId, roleCode)
         val resourceIds3 = cacheHandler.getResourceIds(tenantId, roleCode)
@@ -59,7 +59,7 @@ class ResourceIdsByTenantIdAndRoleCodeCacheHandlerTest : RdbAndRedisCacheTestBas
 
     @Test
     fun syncOnRoleResourceInsert() {
-        val tenantId = "tenant-001-7h2QGcPi"
+        val tenantId = "tenant-001-174d0234"
         val roleCode = "ROLE_USER"
         val roleId = "174d0234-2222-2222-2222-222222222222" // ROLE_USER 的 ID
         val resourceId = "resource-xxx" // 新的资源ID（使用不存在的资源ID，避免唯一约束冲突）
@@ -101,7 +101,7 @@ class ResourceIdsByTenantIdAndRoleCodeCacheHandlerTest : RdbAndRedisCacheTestBas
 
     @Test
     fun syncOnRoleResourceDelete() {
-        val tenantId = "tenant-001-7h2QGcPi"
+        val tenantId = "tenant-001-174d0234"
         val roleCode = "ROLE_USER"
         val roleId = "174d0234-2222-2222-2222-222222222222" // ROLE_USER 的 ID
         val resourceId = "resource-eee" // 新的资源ID
@@ -134,9 +134,9 @@ class ResourceIdsByTenantIdAndRoleCodeCacheHandlerTest : RdbAndRedisCacheTestBas
 
     @Test
     fun syncOnRoleUpdate() {
-        val oldTenantId = "tenant-001-7h2QGcPi"
+        val oldTenantId = "tenant-001-174d0234"
         val oldRoleCode = "ROLE_USER"
-        val newTenantId = "tenant-001-7h2QGcPi"
+        val newTenantId = "tenant-001-174d0234"
         val newRoleCode = "ROLE_USER_UPDATED"
         val roleId = "174d0234-2222-2222-2222-222222222222" // ROLE_USER 的 ID
         
@@ -168,7 +168,7 @@ class ResourceIdsByTenantIdAndRoleCodeCacheHandlerTest : RdbAndRedisCacheTestBas
 
     @Test
     fun syncOnRoleDelete() {
-        val tenantId = "tenant-001-7h2QGcPi"
+        val tenantId = "tenant-001-174d0234"
         val roleCode = "ROLE_USER"
         
         // 先获取一次，确保缓存中有数据（即使为空列表）

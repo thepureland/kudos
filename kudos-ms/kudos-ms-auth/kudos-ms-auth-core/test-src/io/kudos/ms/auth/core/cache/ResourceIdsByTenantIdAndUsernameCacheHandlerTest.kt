@@ -17,14 +17,14 @@ import kotlin.test.assertTrue
 /**
  * junit test for ResourceIdsByTenanetIdAndUsernameCacheHandler
  *
- * 测试数据来源：`ResourceIdsByTenanetIdAndUsernameCacheHandlerTest.sql`
+ * 测试数据来源：`ResourceIdsByTenantIdAndUsernameCacheHandlerTest.sql`
  *
  * @author K
  * @author AI: Cursor
  * @since 1.0.0
  */
 @EnabledIfDockerInstalled
-class ResourceIdsByTenanetIdAndUsernameCacheHandlerTest : RdbAndRedisCacheTestBase() {
+class ResourceIdsByTenantIdAndUsernameCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Resource
     private lateinit var cacheHandler: ResourceIdsByTenanetIdAndUsernameCacheHandler
