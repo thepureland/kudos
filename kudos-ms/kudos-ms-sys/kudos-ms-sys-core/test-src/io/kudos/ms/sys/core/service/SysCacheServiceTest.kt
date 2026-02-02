@@ -32,7 +32,7 @@ class SysCacheServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun getCachesByAtomicServiceCode() {
-        val atomicServiceCode = "svc-as-cache-test-1"
+        val atomicServiceCode = "svc-as-cache-test-1_7838"
         val caches = sysCacheService.getCachesByAtomicServiceCode(atomicServiceCode)
         assertTrue(caches.any { it.name == "svc-cache-test-1" })
     }
@@ -45,7 +45,7 @@ class SysCacheServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun updateActive() {
-        val id = "20000000-0000-0000-0000-000000000027"
+        val id = "20000000-0000-0000-0000-000000007838"
         assertTrue(sysCacheService.updateActive(id, false))
         assertTrue(sysCacheService.updateActive(id, true))
     }

@@ -65,7 +65,7 @@ open class SysSystemService : BaseCrudService<String, SysSystem, SysSystemDao>()
         val searchPayload = SysSystemSearchPayload().apply {
             returnEntityClass = SysSystemRecord::class
             active = true
-            this.code = systemCode
+            parentCode = systemCode
         }
         @Suppress("UNCHECKED_CAST")
         return dao.search(searchPayload) as List<SysSystemRecord>

@@ -24,28 +24,28 @@ class SysTenantSystemDaoTest : RdbTestBase() {
 
     @Test
     fun searchSystemCodesByTenantId() {
-        val tenantId = "40000000-0000-0000-0000-000000000070"
+        val tenantId = "40000000-0000-0000-0000-000000001699"
         val codes = sysTenantSystemDao.searchSystemCodesByTenantId(tenantId)
         assertTrue(codes.size >= 2)
-        assertTrue(codes.contains("svc-subsys-ts-dao-test-1"))
-        assertTrue(codes.contains("svc-subsys-ts-dao-test-2"))
+        assertTrue(codes.contains("svc-subsys-ts-dao-test-1_2315"))
+        assertTrue(codes.contains("svc-subsys-ts-dao-test-2_2315"))
     }
 
     @Test
     fun searchTenantIdsBySystemCode() {
-        val systemCode = "svc-subsys-ts-dao-test-1"
+        val systemCode = "svc-subsys-ts-dao-test-1_2315"
         val tenantIds = sysTenantSystemDao.searchTenantIdsBySystemCode(systemCode)
         assertTrue(tenantIds.size >= 2)
-        assertTrue(tenantIds.contains("40000000-0000-0000-0000-000000000070"))
-        assertTrue(tenantIds.contains("40000000-0000-0000-0000-000000000071"))
+        assertTrue(tenantIds.contains("40000000-0000-0000-0000-000000001699"))
+        assertTrue(tenantIds.contains("40000000-0000-0000-0000-000000001699"))
     }
 
     @Test
     fun groupingSystemCodesByTenantIds() {
-        val tenantIds = listOf("40000000-0000-0000-0000-000000000070", "40000000-0000-0000-0000-000000000071")
+        val tenantIds = listOf("40000000-0000-0000-0000-000000001699", "40000000-0000-0000-0000-000000001699")
         val grouping = sysTenantSystemDao.groupingSystemCodesByTenantIds(tenantIds)
-        assertTrue(grouping.containsKey("40000000-0000-0000-0000-000000000070"))
-        assertTrue(grouping["40000000-0000-0000-0000-000000000070"]!!.size >= 2)
+        assertTrue(grouping.containsKey("40000000-0000-0000-0000-000000001699"))
+        assertTrue(grouping["40000000-0000-0000-0000-000000001699"]!!.size >= 2)
 
         // 测试null参数（查询所有）
         val allGrouping = sysTenantSystemDao.groupingSystemCodesByTenantIds(null)
@@ -54,10 +54,10 @@ class SysTenantSystemDaoTest : RdbTestBase() {
 
     @Test
     fun groupingTenantIdsBySystemCodes() {
-        val systemCodes = listOf("svc-subsys-ts-dao-test-1", "svc-subsys-ts-dao-test-2")
+        val systemCodes = listOf("svc-subsys-ts-dao-test-1_2315", "svc-subsys-ts-dao-test-2_2315")
         val grouping = sysTenantSystemDao.groupingTenantIdsBySystemCodes(systemCodes)
-        assertTrue(grouping.containsKey("svc-subsys-ts-dao-test-1"))
-        assertTrue(grouping["svc-subsys-ts-dao-test-1"]!!.size >= 2)
+        assertTrue(grouping.containsKey("svc-subsys-ts-dao-test-1_2315"))
+        assertTrue(grouping["svc-subsys-ts-dao-test-1_2315"]!!.size >= 2)
 
         // 测试null参数（查询所有）
         val allGrouping = sysTenantSystemDao.groupingTenantIdsBySystemCodes(null)
@@ -67,9 +67,9 @@ class SysTenantSystemDaoTest : RdbTestBase() {
     @Test
     fun exists() {
         // 测试存在的关系
-        assertTrue(sysTenantSystemDao.exists("40000000-0000-0000-0000-000000000070", "svc-subsys-ts-dao-test-1"))
+        assertTrue(sysTenantSystemDao.exists("40000000-0000-0000-0000-000000001699", "svc-subsys-ts-dao-test-1_2315"))
 
         // 测试不存在的关系
-        assertFalse(sysTenantSystemDao.exists("40000000-0000-0000-0000-000000000070", "non-existent-subsys"))
+        assertFalse(sysTenantSystemDao.exists("40000000-0000-0000-0000-000000001699", "non-existent-subsys"))
     }
 }

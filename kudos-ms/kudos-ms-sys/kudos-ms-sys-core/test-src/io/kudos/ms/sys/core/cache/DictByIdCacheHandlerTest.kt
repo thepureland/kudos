@@ -35,7 +35,7 @@ class DictByIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun getDictById() {
         // 存在的
-        var id = "68139ed2-dbce-47fa-ac0d-111111111111"
+        var id = "68139ed2-dbce-47fa-ac0d-111111117947"
         val cacheItem2 = cacheHandler.getDictById(id)
         val cacheItem3 = cacheHandler.getDictById(id)
         assertNotNull(cacheItem2)
@@ -50,8 +50,8 @@ class DictByIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun getDictsByIds() {
         // 都存在的
-        var id1 = "68139ed2-dbce-47fa-ac0d-111111111111"
-        var id2 = "68139ed2-dbce-47fa-ac0d-222222222222"
+        var id1 = "68139ed2-dbce-47fa-ac0d-111111117947"
+        var id2 = "68139ed2-dbce-47fa-ac0d-222222227947"
         val result2 = cacheHandler.getDictsByIds(listOf(id1, id2))
         val result3 = cacheHandler.getDictsByIds(listOf(id1, id2))
         assert(result2.isNotEmpty())
@@ -88,7 +88,7 @@ class DictByIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun syncOnUpdate() {
         // 更新数据库中已存在的记录
-        val id = "68139ed2-dbce-47fa-ac0d-222222222222"
+        val id = "68139ed2-dbce-47fa-ac0d-222222227947"
         val success = sysDictDao.updateProperties(id, mapOf(SysDict::dictName.name to newDictName))
         assert(success)
 

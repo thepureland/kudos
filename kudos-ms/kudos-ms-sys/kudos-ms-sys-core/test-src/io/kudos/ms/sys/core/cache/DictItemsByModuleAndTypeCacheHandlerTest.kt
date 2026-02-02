@@ -44,14 +44,14 @@ class DictItemsByModuleAndTypeCacheHandlerTest : RdbAndRedisCacheTestBase() {
         val cacheItems = cacheHandler.getDictItems(atomicServiceCode, dictType)
 
         // 插入新的记录到数据库
-        val sysDictItemNew = insertNewRecordToDb("78139ed2-dbce-47fa-ac0d-111111111111")
+        val sysDictItemNew = insertNewRecordToDb("78139ed2-dbce-47fa-ac0d-111111118149")
 
         // 更新数据库的记录
-        val idUpdate = "8aabaa7f-6d19-4d8a-8aed-a9f8ca553eee"
+        val idUpdate = "8aabaa7f-6d19-4d8a-8aed-a9f8ca558149"
         sysDictItemDao.updateProperties(idUpdate, mapOf(SysDictItem::itemName.name to newName))
 
         // 从数据库中删除记录
-        val idDelete = "d2e7c962-d0ca-43a5-b722-e1878dfa1555"
+        val idDelete = "d2e7c962-d0ca-43a5-b722-e1878dfa8149"
         sysDictItemDao.deleteById(idDelete)
 
         // 重载缓存，但不清除旧缓存
@@ -85,7 +85,7 @@ class DictItemsByModuleAndTypeCacheHandlerTest : RdbAndRedisCacheTestBase() {
         assert(cacheItems.size >= 3)
 
         // active为false的dictItem应该没有在缓存中
-        assertFalse(cacheItems.any { it.id == "c46091d2-945c-4440-b103-ac58a7aec999" })
+        assertFalse(cacheItems.any { it.id == "c46091d2-945c-4440-b103-ac58a7ae8149" })
         
         // 只有dict，没有dictItem的，应该不会在缓存中
         atomicServiceCode = "kudos-user"
@@ -100,7 +100,7 @@ class DictItemsByModuleAndTypeCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun syncOnInsert() {
         // 插入新的记录到数据库
-        val dictItem = insertNewRecordToDb("78139ed2-dbce-47fa-ac0d-666666666666")
+        val dictItem = insertNewRecordToDb("78139ed2-dbce-47fa-ac0d-666666668149")
 
         val dict = dictByIdCacheHandler.getDictById(dictItem.dictId)!!
 
@@ -119,7 +119,7 @@ class DictItemsByModuleAndTypeCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun syncOnUpdate() {
         // 更新数据库中已存在的记录
-        val id = "8aabaa7f-6d19-4d8a-8aed-a9f8ca553eee"
+        val id = "8aabaa7f-6d19-4d8a-8aed-a9f8ca558149"
         val success = sysDictItemDao.updateProperties(id, mapOf(SysDictItem::itemName.name to newName))
         assert(success)
 
@@ -141,7 +141,7 @@ class DictItemsByModuleAndTypeCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun syncOnUpdateActive() {
         // 由true更新为false
-        var id = "e8ff3f9a-a57a-4183-953d-fe80c12fc777"
+        var id = "e8ff3f9a-a57a-4183-953d-fe80c12f8149"
         var success = sysDictItemDao.updateProperties(id, mapOf(SysDictItem::active.name to false))
         assert(success)
         var dictItem = sysDictItemDao.get(id)!!
@@ -155,7 +155,7 @@ class DictItemsByModuleAndTypeCacheHandlerTest : RdbAndRedisCacheTestBase() {
         assertFalse(cacheItems2.any { it.id == id })
 
         // 由false更新为true
-        id = "c46091d2-945c-4440-b103-ac58a7aec999"
+        id = "c46091d2-945c-4440-b103-ac58a7ae8149"
         success = sysDictItemDao.updateProperties(id, mapOf(SysDictItem::active.name to true))
         assert(success)
         dictItem = sysDictItemDao.get(id)!!
@@ -171,7 +171,7 @@ class DictItemsByModuleAndTypeCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnDelete() {
-        val id = "04626227-0ac0-49a2-8036-241cd017a666"
+        val id = "04626227-0ac0-49a2-8036-241cd0178149"
         val dictItem = sysDictItemDao.get(id)!!
         val dict = dictByIdCacheHandler.getDictById(dictItem.dictId)!!
 

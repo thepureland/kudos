@@ -45,11 +45,11 @@ class ResourceIdBySubSysAndUrlCacheHandlerTest : RdbAndRedisCacheTestBase() {
         val sysResourceNew = insertNewRecordToDb()
 
         // 更新数据库的记录
-        val idUpdate = "bb76084a-ceaa-44f1-9c9d-222222222222"
+        val idUpdate = "bb76084a-ceaa-44f1-9c9d-222222228903"
         dao.updateProperties(idUpdate, mapOf(SysResource::url.name to "/a/b/new_url"))
 
         // 从数据库中删除记录
-        val idDelete = "bb76084a-ceaa-44f1-9c9d-333333333333"
+        val idDelete = "bb76084a-ceaa-44f1-9c9d-333333338903"
         dao.deleteById(idDelete)
 
         // 重载缓存，但不清除旧缓存
@@ -113,7 +113,7 @@ class ResourceIdBySubSysAndUrlCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun syncOnUpdate() {
         // 更新数据库中已存在的记录
-        val id = "bb76084a-ceaa-44f1-9c9d-444444444444"
+        val id = "bb76084a-ceaa-44f1-9c9d-444444448903"
         val sysResource = resourceByIdCacheHandler.getResourceById(id)!!
         val oldUrl = sysResource.url
         val newUrl = "/a/b/ee"
@@ -133,7 +133,7 @@ class ResourceIdBySubSysAndUrlCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun syncOnUpdateActive() {
         // 由true更新为false
-        var id = "bb76084a-ceaa-44f1-9c9d-555555555555"
+        var id = "bb76084a-ceaa-44f1-9c9d-555555558903"
         var success = dao.updateProperties(id, mapOf(SysResource::active.name to false))
         assert(success)
         var sysResource = resourceByIdCacheHandler.getResourceById(id)!!
@@ -143,7 +143,7 @@ class ResourceIdBySubSysAndUrlCacheHandlerTest : RdbAndRedisCacheTestBase() {
         assertNull(cacheHandler.getResourceId(sysResource.subSystemCode!!, sysResource.url!!))
 
         // 由false更新为true
-        id = "bb76084a-ceaa-44f1-9c9d-000000000000"
+        id = "bb76084a-ceaa-44f1-9c9d-000000008903"
         success = dao.updateProperties(id, mapOf(SysResource::active.name to true))
         assert(success)
         sysResource = resourceByIdCacheHandler.getResourceById(id)!!
@@ -154,7 +154,7 @@ class ResourceIdBySubSysAndUrlCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnDelete() {
-        val id = "bb76084a-ceaa-44f1-9c9d-666666666666"
+        val id = "bb76084a-ceaa-44f1-9c9d-666666668903"
         val sysResource = resourceByIdCacheHandler.getResourceById(id)!!
 
         // 删除数据库中的记录

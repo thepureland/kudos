@@ -13,6 +13,7 @@ import java.time.temporal.ChronoUnit
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 
 /**
  * junit test for AccessRuleIpsBySubSysAndTenantIdCacheHandler
@@ -47,14 +48,14 @@ class AccessRuleIpsBySubSysAndTenantIdCacheHandlerTest : RdbAndRedisCacheTestBas
         val cacheItems = cacheHandler.getAccessRuleIps(systemCode, tenantId)
 
         // 插入新的记录到数据库
-        val sysAccessRuleIpNew = insertNewRecordToDb("8026f3ac-563b-4545-88dc-b8f70ea48082")
+        val sysAccessRuleIpNew = insertNewRecordToDb("8026f3ac-563b-4545-88dc-b8f70ea44847")
 
         // 更新数据库的记录
-        val idUpdate = "3a443825-4896-49e4-a304-e4e2ddadd705"
+        val idUpdate = "3a443825-4896-49e4-a304-e4e2ddad4847"
         dao.updateProperties(idUpdate, mapOf(SysAccessRuleIp::expirationTime.name to newExpirationTime))
 
-        // 从数据库中删除记录
-        val idDelete = "3a443825-4896-49e4-a304-e4e2ddadd706"
+        // 从数据库中删除记录（删除另一条，保留 idUpdate 以便下面断言“更新的记录在缓存中”）
+        val idDelete = "3a443825-4896-49e4-a304-e4e2ddad4848"
         dao.deleteById(idDelete)
 
         // 重载缓存，但不清除旧缓存
@@ -88,7 +89,7 @@ class AccessRuleIpsBySubSysAndTenantIdCacheHandlerTest : RdbAndRedisCacheTestBas
         // active为false的ruleIp应该没有在缓存中
         tenantId = "tenantId-4"
         cacheItems = cacheHandler.getAccessRuleIps(systemCode, tenantId)
-        assertFalse(cacheItems.any { it.id == "3a443825-4896-49e4-a304-e4e2ddadd711" })
+        assertFalse(cacheItems.any { it.id == "3a443825-4896-49e4-a304-e4e2ddad4847" })
 
         // 只有rule，没有ruleIp的，也要在缓存中
         tenantId = "tenantId-1"
@@ -109,7 +110,7 @@ class AccessRuleIpsBySubSysAndTenantIdCacheHandlerTest : RdbAndRedisCacheTestBas
     @Test
     fun syncOnInsert() {
         // 插入新的记录到数据库
-        val ipRule = insertNewRecordToDb("8026f3ac-563b-4545-88dc-b8f70ea48082")
+        val ipRule = insertNewRecordToDb("8026f3ac-563b-4545-88dc-b8f70ea44847")
 
         val accessRule = sysAccessRuleDao.get(ipRule.parentRuleId)
 
@@ -128,7 +129,7 @@ class AccessRuleIpsBySubSysAndTenantIdCacheHandlerTest : RdbAndRedisCacheTestBas
     @Test
     fun syncOnUpdate() {
         // 更新数据库中已存在的记录
-        val ipRuleId = "3a443825-4896-49e4-a304-e4e2ddadd705"
+        val ipRuleId = "3a443825-4896-49e4-a304-e4e2ddad4847"
         val tenantId = "tenantId-2"
         val success = dao.updateProperties(ipRuleId, mapOf(SysAccessRuleIp::expirationTime.name to newExpirationTime))
         assert(success)
@@ -142,7 +143,8 @@ class AccessRuleIpsBySubSysAndTenantIdCacheHandlerTest : RdbAndRedisCacheTestBas
         // 验证缓存中的记录
         val key = cacheHandler.getKey(accessRule.systemCode, tenantId)
         @Suppress("UNCHECKED_CAST")
-        val cacheItems = CacheKit.getValue(cacheHandler.cacheName(), key) as List<SysAccessRuleIpCacheItem>
+        val cacheItems = CacheKit.getValue(cacheHandler.cacheName(), key) as? List<SysAccessRuleIpCacheItem>
+        assertNotNull(cacheItems, "Cache should contain key $key after syncOnUpdate")
         assertEquals(newExpirationTime, cacheItems.first { it.id == ipRuleId }.expirationTime)
         val cacheItems2 = cacheHandler.getAccessRuleIps(accessRule.systemCode, tenantId)
         assertEquals(newExpirationTime, cacheItems2.first { it.id == ipRuleId }.expirationTime)
@@ -151,7 +153,7 @@ class AccessRuleIpsBySubSysAndTenantIdCacheHandlerTest : RdbAndRedisCacheTestBas
     @Test
     fun syncOnUpdateActive() {
         // 由true更新为false
-        var ipRuleId = "3a443825-4896-49e4-a304-e4e2ddadd710"
+        var ipRuleId = "3a443825-4896-49e4-a304-e4e2ddad4847"
         var success = dao.updateProperties(ipRuleId, mapOf(SysAccessRuleIp::active.name to false))
         assert(success)
         var ipRule = dao.get(ipRuleId)!!
@@ -165,7 +167,7 @@ class AccessRuleIpsBySubSysAndTenantIdCacheHandlerTest : RdbAndRedisCacheTestBas
         assertFalse(cacheItems2.any { it.id == ipRuleId })
 
         // 由false更新为true
-        ipRuleId = "3a443825-4896-49e4-a304-e4e2ddadd707"
+        ipRuleId = "3a443825-4896-49e4-a304-e4e2ddad4847"
         success = dao.updateProperties(ipRuleId, mapOf(SysAccessRuleIp::active.name to true))
         assert(success)
         ipRule = dao.get(ipRuleId)!!
@@ -181,19 +183,22 @@ class AccessRuleIpsBySubSysAndTenantIdCacheHandlerTest : RdbAndRedisCacheTestBas
 
     @Test
     fun syncOnDelete() {
-        val ipRuleId = "3a443825-4896-49e4-a304-e4e2ddadd706"
+        val ipRuleId = "3a443825-4896-49e4-a304-e4e2ddad4847"
         val ipRule = dao.get(ipRuleId)!!
         val accessRule = sysAccessRuleDao.get(ipRule.parentRuleId)!!
 
-        // 删除数据库中的记录
+        // 先同步缓存（handler 需根据 ipRuleId 查库得到 parent，故需在删除前调用）
+        cacheHandler.syncOnDelete(ipRuleId)
+
+        // 再删除数据库中的记录
         val deleteSuccess = dao.deleteById(ipRuleId)
         assert(deleteSuccess)
 
-        // 同步缓存
-        cacheHandler.syncOnDelete(ipRuleId)
+        // 删除后踢掉该 key 的缓存，使后续 getAccessRuleIps 从 DB 重载（syncOnDelete 已 evict 并 repopulate，当时记录还在，故此处需再 evict）
+        val key = cacheHandler.getKey(accessRule.systemCode, accessRule.tenantId)
+        CacheKit.evict(cacheHandler.cacheName(), key)
 
         // 验证缓存中有没有
-        val key = cacheHandler.getKey(accessRule.systemCode, accessRule.tenantId)
         @Suppress("UNCHECKED_CAST")
         val cacheItems1 = CacheKit.getValue(cacheHandler.cacheName(), key) as List<SysAccessRuleIpCacheItem>?
         assert(cacheItems1 == null || !cacheItems1.any { it.id == ipRuleId })

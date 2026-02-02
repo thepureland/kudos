@@ -25,7 +25,7 @@ class SysTenantServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun getTenant_and_getTenantRecord() {
-        val id = "20000000-0000-0000-0000-000000000024"
+        val id = "20000000-0000-0000-0000-000000006144"
         val cacheItem = sysTenantService.getTenant(id)
         assertNotNull(cacheItem)
         
@@ -42,14 +42,14 @@ class SysTenantServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun getSubSystemCodesByTenantId() {
-        val tenantId = "20000000-0000-0000-0000-000000000024"
+        val tenantId = "20000000-0000-0000-0000-000000006144"
         val codes = sysTenantService.getSubSystemCodesByTenantId(tenantId)
-        assertTrue(codes.contains("svc-subsys-tenant-test-1"))
+        assertTrue(codes.contains("svc-subsys-tenant-test-1_2492"))
     }
 
     @Test
     fun updateActive() {
-        val id = "20000000-0000-0000-0000-000000000024"
+        val id = "20000000-0000-0000-0000-000000006144"
         assertTrue(sysTenantService.updateActive(id, false))
         assertTrue(sysTenantService.updateActive(id, true))
     }

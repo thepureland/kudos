@@ -26,7 +26,7 @@ class SysSystemServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun getSystemByCode_and_getAllActiveSystems() {
-        val code = "svc-system-test-1"
+        val code = "svc-system-test-1_6368"
         val cacheItem = sysSystemService.getSystemByCode(code)
         assertNotNull(cacheItem)
         assertEquals(code, cacheItem.code)
@@ -37,14 +37,14 @@ class SysSystemServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun getSubSystemsBySystemCode() {
-        val systemCode = "svc-system-test-1"
+        val systemCode = "svc-system-test-1_6368"
         val subSystems = sysSystemService.getSubSystemsBySystemCode(systemCode)
-        assertTrue(subSystems.any { it.code == "svc-subsystem-test-system-1" })
+        assertTrue(subSystems.any { it.code == "svc-subsystem-test-system-1_6368" })
     }
 
     @Test
     fun updateActive() {
-        val code = "svc-system-test-1"
+        val code = "svc-system-test-1_6368"
         val success = sysSystemService.updateActive(code, false)
         assertTrue(success)
 

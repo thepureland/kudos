@@ -32,7 +32,7 @@ class SysDomainServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun getDomainsByTenantId() {
-        val tenantId = "20000000-0000-0000-0000-000000000032"
+        val tenantId = "20000000-0000-0000-0000-000000001461"
         val domains = sysDomainService.getDomainsByTenantId(tenantId)
         assertTrue(domains.any { it.domain == "svc-domain-test-1.com" })
     }
@@ -46,7 +46,7 @@ class SysDomainServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun updateActive() {
-        val id = "20000000-0000-0000-0000-000000000032"
+        val id = "20000000-0000-0000-0000-000000001461"
         assertTrue(sysDomainService.updateActive(id, false))
         assertTrue(sysDomainService.updateActive(id, true))
     }

@@ -35,7 +35,7 @@ class SubSystemByCodeCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun getSubSystemByCode() {
         // 存在的
-        var code = "code-1"
+        var code = "sub-code-1_7161"
         val cacheItem = cacheHandler.getSubSystemByCode(code)
         assertNotNull(cacheItem)
         assert(cacheItem === cacheHandler.getSubSystemByCode(code))
@@ -48,19 +48,19 @@ class SubSystemByCodeCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun getSubSystemsByCodes() {
         // 都存在的
-        var code1 = "code-1"
-        var code2 = "code-2"
+        var code1 = "sub-code-1_7161"
+        var code2 = "sub-code-2_7161"
         val result = cacheHandler.getSubSystemsByCodes(listOf(code1, code2))
         assert(result.isNotEmpty())
         assert(result == cacheHandler.getSubSystemsByCodes(listOf(code1, code2)))
 
         // 部分存在的
-        code1 = "no_exist_code-1"
+        code1 = "no_exist_code-1_8400"
         var cacheItems = cacheHandler.getSubSystemsByCodes(listOf(code1, code2))
         assertEquals(1, cacheItems.size)
 
         // 都不存在的
-        code2 = "no_exist_code-2"
+        code2 = "no_exist_code-2_8400"
         cacheItems = cacheHandler.getSubSystemsByCodes(listOf(code1, code2))
         assert(cacheItems.isEmpty())
     }
@@ -85,7 +85,7 @@ class SubSystemByCodeCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun syncOnUpdate() {
         // 更新数据库中已存在的记录
-        val code = "code-2"
+        val code = "sub-code-2_7161"
         val success = sysSubSystemDao.updateProperties(code, mapOf(SysSystem::name.name to newSubSystemName))
         assert(success)
 

@@ -24,15 +24,15 @@ class SysAccessRuleIpServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun getIpsByRuleId() {
-        val ruleId = "20000000-0000-0000-0000-000000000034"
+        val ruleId = "20000000-0000-0000-0000-000000007988"
         val ips = sysAccessRuleIpService.getIpsByRuleId(ruleId)
         assertTrue(ips.isNotEmpty())
     }
 
     @Test
     fun getIpsBySystemAndTenant() {
-        val systemCode = "svc-system-arip-test-1"
-        val tenantId = "20000000-0000-0000-0000-000000000034"
+        val systemCode = "svc-system-arip-test-1_7655"
+        val tenantId = "20000000-0000-0000-0000-000000007988"
         val ips = sysAccessRuleIpService.getIpsBySystemAndTenant(systemCode, tenantId)
         assertTrue(ips.isNotEmpty())
     }
@@ -40,8 +40,8 @@ class SysAccessRuleIpServiceTest : RdbAndRedisCacheTestBase() {
     @Test
     fun checkIpAccess() {
         val ip = 2130706433L // 127.0.0.1
-        val systemCode = "svc-system-arip-test-1"
-        val tenantId = "20000000-0000-0000-0000-000000000034"
+        val systemCode = "svc-system-arip-test-1_7655"
+        val tenantId = "20000000-0000-0000-0000-000000007988"
         val allowed = sysAccessRuleIpService.checkIpAccess(ip, systemCode, tenantId)
         assertTrue(allowed)
     }

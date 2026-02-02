@@ -25,9 +25,9 @@ class SysDataSourceServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun getDataSource() {
-        val tenantId = "20000000-0000-0000-0000-000000000026"
-        val subSystemCode = "svc-subsys-ds-test-1"
-        val microServiceCode = "svc-ms-ds-test-1"
+        val tenantId = "20000000-0000-0000-0000-000000007716"
+        val subSystemCode = "svc-subsys-ds-test-1_7618"
+        val microServiceCode = "svc-ms-ds-test-1_7618"
 
         val cacheItem = sysDataSourceService.getDataSource(tenantId, subSystemCode, microServiceCode)
         assertNotNull(cacheItem)
@@ -35,21 +35,21 @@ class SysDataSourceServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun getDataSourcesByTenantId() {
-        val tenantId = "20000000-0000-0000-0000-000000000026"
+        val tenantId = "20000000-0000-0000-0000-000000007716"
         val dataSources = sysDataSourceService.getDataSourcesByTenantId(tenantId)
-        assertTrue(dataSources.any { it.id == "20000000-0000-0000-0000-000000000026" })
+        assertTrue(dataSources.any { it.id == "20000000-0000-0000-0000-000000007716" })
     }
 
     @Test
     fun getDataSourcesBySubSystemCode() {
-        val subSystemCode = "svc-subsys-ds-test-1"
+        val subSystemCode = "svc-subsys-ds-test-1_7618"
         val dataSources = sysDataSourceService.getDataSourcesBySubSystemCode(subSystemCode)
         assertTrue(dataSources.any { it.subSystemCode == subSystemCode })
     }
 
     @Test
     fun updateActive() {
-        val id = "20000000-0000-0000-0000-000000000026"
+        val id = "20000000-0000-0000-0000-000000007716"
         assertTrue(sysDataSourceService.updateActive(id, false))
         assertTrue(sysDataSourceService.updateActive(id, true))
     }

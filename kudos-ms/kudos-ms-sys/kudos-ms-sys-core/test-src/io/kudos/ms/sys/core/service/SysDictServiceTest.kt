@@ -25,7 +25,7 @@ class SysDictServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun getDictFromCache() {
-        val dictId = "20000000-0000-0000-0000-000000000028"
+        val dictId = "20000000-0000-0000-0000-000000007514"
         val cacheItem = sysDictService.getDictFromCache(dictId)
         assertNotNull(cacheItem)
     }
@@ -34,7 +34,7 @@ class SysDictServiceTest : RdbAndRedisCacheTestBase() {
     fun getDictsByAtomicServiceCode() {
         val atomicServiceCode = "svc-module-dict-test-1"
         val dicts = sysDictService.getDictsByAtomicServiceCode(atomicServiceCode)
-        assertTrue(dicts.any { it.id == "20000000-0000-0000-0000-000000000028" })
+        assertTrue(dicts.any { it.id == "20000000-0000-0000-0000-000000007514" })
     }
 
     @Test
@@ -47,7 +47,7 @@ class SysDictServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun updateActive() {
-        val id = "20000000-0000-0000-0000-000000000028"
+        val id = "20000000-0000-0000-0000-000000007514"
         assertTrue(sysDictService.updateActive(id, false))
         assertTrue(sysDictService.updateActive(id, true))
     }

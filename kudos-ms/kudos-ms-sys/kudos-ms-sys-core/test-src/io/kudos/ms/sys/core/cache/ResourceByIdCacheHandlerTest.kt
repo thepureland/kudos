@@ -34,7 +34,7 @@ class ResourceByIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun getResourceById() {
         // 存在的
-        var id = "9b76084a-ceaa-44f1-9c9d-111111111111"
+        var id = "9b76084a-ceaa-44f1-9c9d-111111116088"
         val cacheItem2 = cacheHandler.getResourceById(id)
         val cacheItem3 = cacheHandler.getResourceById(id)
         assertNotNull(cacheItem2)
@@ -48,8 +48,8 @@ class ResourceByIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun getResourcesByIds() {
         // 都存在的
-        var id1 = "9b76084a-ceaa-44f1-9c9d-111111111111"
-        var id2 = "9b76084a-ceaa-44f1-9c9d-222222222222"
+        var id1 = "9b76084a-ceaa-44f1-9c9d-111111116088"
+        var id2 = "9b76084a-ceaa-44f1-9c9d-222222226088"
         val result2 = cacheHandler.getResourcesByIds(listOf(id1, id2))
         val result3 = cacheHandler.getResourcesByIds(listOf(id1, id2))
         assert(result2.isNotEmpty())
@@ -86,7 +86,7 @@ class ResourceByIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun syncOnUpdate() {
         // 更新数据库中已存在的记录
-        val id = "9b76084a-ceaa-44f1-9c9d-222222222222"
+        val id = "9b76084a-ceaa-44f1-9c9d-222222226088"
         val success = dao.updateProperties(id, mapOf(SysResource::name.name to newResourceName))
         assert(success)
 

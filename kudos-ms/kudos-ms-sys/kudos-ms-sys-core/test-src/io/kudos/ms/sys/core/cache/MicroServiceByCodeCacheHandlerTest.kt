@@ -35,7 +35,7 @@ class MicroServiceByCodeCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun getMicroServiceByCode() {
         // 存在的
-        var code = "code-1"
+        var code = "code-1_8400"
         val cacheItem = cacheHandler.getMicroServiceByCode(code)
         assertNotNull(cacheItem)
         assert(cacheItem === cacheHandler.getMicroServiceByCode(code))
@@ -48,19 +48,19 @@ class MicroServiceByCodeCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun getMicroServicesByCodes() {
         // 都存在的
-        var code1 = "code-1"
-        var code2 = "code-2"
+        var code1 = "code-1_8400"
+        var code2 = "code-2_8400"
         val result = cacheHandler.getMicroServicesByCodes(listOf(code1, code2))
         assert(result.isNotEmpty())
         assert(result == cacheHandler.getMicroServicesByCodes(listOf(code1, code2)))
 
         // 部分存在的
-        code1 = "no_exist_code-1"
+        code1 = "no_exist_code-1_8400"
         var cacheItems = cacheHandler.getMicroServicesByCodes(listOf(code1, code2))
         assertEquals(1, cacheItems.size)
 
         // 都不存在的
-        code2 = "no_exist_code-2"
+        code2 = "no_exist_code-2_8400"
         cacheItems = cacheHandler.getMicroServicesByCodes(listOf(code1, code2))
         assert(cacheItems.isEmpty())
     }
@@ -85,7 +85,7 @@ class MicroServiceByCodeCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun syncOnUpdate() {
         // 更新数据库中已存在的记录
-        val code = "code-2"
+        val code = "code-2_8400"
         val success = sysMicroServiceDao.updateProperties(code, mapOf(SysMicroService::name.name to newMicroServiceName))
         assert(success)
 

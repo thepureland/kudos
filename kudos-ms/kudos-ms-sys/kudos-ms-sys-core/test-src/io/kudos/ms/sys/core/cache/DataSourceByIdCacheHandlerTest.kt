@@ -37,7 +37,7 @@ open class DataSourceByIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
         cacheHandler.reloadAll(true)
 
         // 获取当前缓存中的记录
-        val idCache = "3d2acef6-e828-43c5-a512-111111111111"
+        val idCache = "3d2acef6-e828-43c5-a512-111111112633"
         val cacheItem = cacheHandler.getDataSourceById(idCache)
 
         // 插入新的记录到数据库
@@ -82,7 +82,7 @@ open class DataSourceByIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun getDataSourceById() {
         // 存在的
-        var id = "3d2acef6-e828-43c5-a512-111111111111"
+        var id = "3d2acef6-e828-43c5-a512-111111112633"
         val cacheItem2 = cacheHandler.getDataSourceById(id)
         val cacheItem3 = cacheHandler.getDataSourceById(id)
         assertNotNull(cacheItem2)
@@ -96,7 +96,7 @@ open class DataSourceByIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun getDataSourcesByIds() {
-        val id1 = "3d2acef6-e828-43c5-a512-111111111111"
+        val id1 = "3d2acef6-e828-43c5-a512-111111112633"
         val id2 = "3d2acef6-e828-43c5-a512-222222222222"
         val result2 = cacheHandler.getDataSourcesByIds(listOf(id1, id2))
         val result3 = cacheHandler.getDataSourcesByIds(listOf(id1, id2))

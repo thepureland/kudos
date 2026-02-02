@@ -25,30 +25,30 @@ class SysTenantResourceServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun getResourceIdsByTenantId() {
-        val tenantId = "20000000-0000-0000-0000-000000000035"
+        val tenantId = "20000000-0000-0000-0000-000000005370"
         val resourceIds = sysTenantResourceService.getResourceIdsByTenantId(tenantId)
-        assertTrue(resourceIds.contains("20000000-0000-0000-0000-000000000035"))
+        assertTrue(resourceIds.contains("20000000-0000-0000-0000-000000005370"))
     }
 
     @Test
     fun getTenantIdsByResourceId() {
-        val resourceId = "20000000-0000-0000-0000-000000000035"
+        val resourceId = "20000000-0000-0000-0000-000000005370"
         val tenantIds = sysTenantResourceService.getTenantIdsByResourceId(resourceId)
-        assertTrue(tenantIds.contains("20000000-0000-0000-0000-000000000035"))
+        assertTrue(tenantIds.contains("20000000-0000-0000-0000-000000005370"))
     }
 
     @Test
     fun exists() {
-        val tenantId = "20000000-0000-0000-0000-000000000035"
-        val resourceId = "20000000-0000-0000-0000-000000000035"
+        val tenantId = "20000000-0000-0000-0000-000000005370"
+        val resourceId = "20000000-0000-0000-0000-000000005370"
         assertTrue(sysTenantResourceService.exists(tenantId, resourceId))
         assertFalse(sysTenantResourceService.exists(tenantId, "non-existent"))
     }
 
     @Test
     fun unbind() {
-        val tenantId = "20000000-0000-0000-0000-000000000035"
-        val resourceId = "20000000-0000-0000-0000-000000000035"
+        val tenantId = "20000000-0000-0000-0000-000000005370"
+        val resourceId = "20000000-0000-0000-0000-000000005370"
         val result = sysTenantResourceService.unbind(tenantId, resourceId)
         assertTrue(result)
         

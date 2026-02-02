@@ -24,28 +24,28 @@ class SysTenantResourceDaoTest : RdbTestBase() {
 
     @Test
     fun searchResourceIdsByTenantId() {
-        val tenantId = "40000000-0000-0000-0000-000000000080"
+        val tenantId = "40000000-0000-0000-0000-000000004229"
         val resourceIds = sysTenantResourceDao.searchResourceIdsByTenantId(tenantId)
         assertTrue(resourceIds.size >= 2)
-        assertTrue(resourceIds.contains("40000000-0000-0000-0000-000000000082"))
-        assertTrue(resourceIds.contains("40000000-0000-0000-0000-000000000083"))
+        assertTrue(resourceIds.contains("40000000-0000-0000-0000-000000004229"))
+        assertTrue(resourceIds.contains("40000000-0000-0000-0000-000000004229"))
     }
 
     @Test
     fun searchTenantIdsByResourceId() {
-        val resourceId = "40000000-0000-0000-0000-000000000082"
+        val resourceId = "40000000-0000-0000-0000-000000004229"
         val tenantIds = sysTenantResourceDao.searchTenantIdsByResourceId(resourceId)
         assertTrue(tenantIds.size >= 2)
-        assertTrue(tenantIds.contains("40000000-0000-0000-0000-000000000080"))
-        assertTrue(tenantIds.contains("40000000-0000-0000-0000-000000000081"))
+        assertTrue(tenantIds.contains("40000000-0000-0000-0000-000000004229"))
+        assertTrue(tenantIds.contains("40000000-0000-0000-0000-000000004229"))
     }
 
     @Test
     fun exists() {
         // 测试存在的关系
-        assertTrue(sysTenantResourceDao.exists("40000000-0000-0000-0000-000000000080", "40000000-0000-0000-0000-000000000082"))
+        assertTrue(sysTenantResourceDao.exists("40000000-0000-0000-0000-000000004229", "40000000-0000-0000-0000-000000004229"))
         
         // 测试不存在的关系
-        assertFalse(sysTenantResourceDao.exists("40000000-0000-0000-0000-000000000080", "non-existent-resource-id"))
+        assertFalse(sysTenantResourceDao.exists("40000000-0000-0000-0000-000000004229", "non-existent-resource-id"))
     }
 }
