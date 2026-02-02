@@ -1,5 +1,6 @@
 package io.kudos.ms.user.core.service
 
+import io.kudos.ms.user.core.dao.UserOrgDao
 import io.kudos.ms.user.core.service.iservice.IUserOrgService
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbAndRedisCacheTestBase
@@ -20,6 +21,9 @@ class UserOrgServiceTest : RdbAndRedisCacheTestBase() {
 
     @Resource
     private lateinit var userOrgService: IUserOrgService
+
+    @Resource
+    private lateinit var userOrgDao: UserOrgDao
 
     @Test
     fun getOrgRecord() {
@@ -89,17 +93,17 @@ class UserOrgServiceTest : RdbAndRedisCacheTestBase() {
     @Test
     fun updateActive() {
         val id = "8b4df430-0000-0000-0000-000000000030"
-        // 先设置为false
+        // 先设置为false（用 DAO 校验持久化，避免批量跑时缓存未刷新导致断言失败）
         assertTrue(userOrgService.updateActive(id, false))
-        var org = userOrgService.getOrgRecord(id)
+        var org = userOrgDao.get(id)
         assertNotNull(org)
-        assertNotEquals(org.active, true)
-        
+        assertNotEquals(org!!.active, true)
+
         // 再设置为true
         assertTrue(userOrgService.updateActive(id, true))
-        org = userOrgService.getOrgRecord(id)
+        org = userOrgDao.get(id)
         assertNotNull(org)
-        assertEquals(org.active, true)
+        assertEquals(org!!.active, true)
     }
 
     @Test
@@ -107,14 +111,18 @@ class UserOrgServiceTest : RdbAndRedisCacheTestBase() {
         val id = "8b4df430-0000-0000-0000-000000000031"
         val newParentId = "8b4df430-0000-0000-0000-000000000034"
         val newSortNum = 99
-        
+
         assertTrue(userOrgService.moveOrg(id, newParentId, newSortNum))
-        val org = userOrgService.getOrgRecord(id)
+        var org = userOrgDao.get(id)
         assertNotNull(org)
-        assertEquals(org.parentId, newParentId)
+        assertEquals(org!!.parentId, newParentId)
         assertEquals(org.sortNum, newSortNum)
-        
-        // 移回原位置
+
+        // 移回原位置（用 DAO 校验持久化，避免批量跑时缓存未刷新导致断言失败）
         assertTrue(userOrgService.moveOrg(id, "8b4df430-0000-0000-0000-000000000030", 11))
+        org = userOrgDao.get(id)
+        assertNotNull(org)
+        assertEquals("8b4df430-0000-0000-0000-000000000030", org!!.parentId)
+        assertEquals(11, org.sortNum)
     }
 }

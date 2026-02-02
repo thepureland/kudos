@@ -205,11 +205,7 @@ open class UserOrgService : BaseCrudService<String, UserOrg, UserOrgDao>(), IUse
 
     @Transactional
     override fun updateActive(id: String, active: Boolean): Boolean {
-        val org = UserOrg {
-            this.id = id
-            this.active = active
-        }
-        val success = dao.update(org)
+        val success = dao.updateProperties(id, mapOf(UserOrg::active.name to active))
         if (success) {
             log.debug("更新id为${id}的机构的启用状态为${active}。")
             orgByIdCacheHandler.syncOnUpdate(id)
@@ -225,18 +221,19 @@ open class UserOrgService : BaseCrudService<String, UserOrg, UserOrgDao>(), IUse
 
     @Transactional
     override fun moveOrg(id: String, newParentId: String?, newSortNum: Int?): Boolean {
-        val org = UserOrg {
-            this.id = id
-            this.parentId = newParentId
-            this.sortNum = newSortNum
+        val props = mutableMapOf<String, Any?>(
+            UserOrg::parentId.name to newParentId
+        )
+        if (newSortNum != null) {
+            props[UserOrg::sortNum.name] = newSortNum
         }
-        val success = dao.update(org)
+        val success = dao.updateProperties(id, props)
         if (success) {
             log.debug("移动id为${id}的机构到父机构${newParentId}，排序号${newSortNum}。")
             orgByIdCacheHandler.syncOnUpdate(id)
             val existingOrg = dao.get(id)
             if (existingOrg != null) {
-                orgIdsByTenantIdCacheHandler.syncOnUpdate(org, id)
+                orgIdsByTenantIdCacheHandler.syncOnUpdate(existingOrg, id)
             }
         } else {
             log.error("移动id为${id}的机构失败！")
