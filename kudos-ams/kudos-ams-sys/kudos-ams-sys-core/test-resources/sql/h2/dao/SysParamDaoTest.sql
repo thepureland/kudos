@@ -1,7 +1,8 @@
 -- 测试数据：SysParamDaoTest
 -- 使用唯一前缀 svc-param-dao-test-* 和唯一UUID确保测试数据隔离
 
-merge into "sys_atomic_service" ("code", "name", "remark", "active", "built_in")
+merge into "sys_micro_service"
+ ("code", "name", "remark", "active", "built_in")
     values ('svc-as-param-dao-test-1', 'svc-as-param-dao-test-1-name', 'from SysParamDaoTest', true, false);
 
 

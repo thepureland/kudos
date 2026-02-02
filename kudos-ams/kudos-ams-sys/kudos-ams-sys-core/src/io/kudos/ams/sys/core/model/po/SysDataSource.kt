@@ -24,9 +24,6 @@ interface SysDataSource : IMaintainableDbEntity<String, SysDataSource> {
     /** 微服务编码 */
     var microServiceCode: String?
 
-    /** 原子服务编码 */
-    var atomicServiceCode: String?
-
     /** 租户id */
     var tenantId: String?
 

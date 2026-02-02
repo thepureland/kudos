@@ -1,9 +1,9 @@
 package io.kudos.ams.sys.core.service.iservice
 
-import io.kudos.base.support.iservice.IBaseCrudService
-import io.kudos.ams.sys.core.model.po.SysMicroService
 import io.kudos.ams.sys.common.vo.microservice.SysMicroServiceCacheItem
-import io.kudos.ams.sys.common.vo.atomicservice.SysAtomicServiceRecord
+import io.kudos.ams.sys.common.vo.microservice.SysMicroServiceRecord
+import io.kudos.ams.sys.core.model.po.SysMicroService
+import io.kudos.base.support.iservice.IBaseCrudService
 
 
 /**
@@ -47,7 +47,7 @@ interface ISysMicroServiceService : IBaseCrudService<String, SysMicroService> {
      * @author K
      * @since 1.0.0
      */
-    fun getAtomicServicesByMicroServiceCode(microServiceCode: String): List<SysAtomicServiceRecord>
+    fun getAtomicServicesByMicroServiceCode(microServiceCode: String): List<SysMicroServiceRecord>
 
     //endregion your codes 2
 

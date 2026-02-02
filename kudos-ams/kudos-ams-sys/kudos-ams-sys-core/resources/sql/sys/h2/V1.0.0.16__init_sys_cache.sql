@@ -21,10 +21,6 @@ create table if not exists "sys_cache"
 
 create unique index if not exists "uq_sys_cache" on "sys_cache" ("name", "atomic_service_code");
 
--- alter table "sys_cache"
---     add constraint "fk_sys_cache_atomic_service"
---         foreign key ("atomic_service_code") references "sys_atomic_service" ("code");
-
 comment on table "sys_cache" is '缓存';
 comment on column "sys_cache"."id" is '主键';
 comment on column "sys_cache"."name" is '名称';

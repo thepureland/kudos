@@ -184,7 +184,6 @@ open class DataSourceByIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
             url = "url"
             username = "sa"
             password = "sa"
-            atomicServiceCode = "default"
             subSystemCode = "default"
         }
         return sysDataSourceDao.insert(sysDataSource)

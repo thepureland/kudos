@@ -1,7 +1,8 @@
 -- 测试数据：SysDictDaoTest
 -- 使用唯一前缀 svc-dict-dao-test-* 和唯一UUID确保测试数据隔离
 
-merge into "sys_atomic_service" ("code", "name", "remark", "active", "built_in")
+merge into "sys_micro_service"
+ ("code", "name", "remark", "active", "built_in")
     values ('svc-as-dict-dao-test-1', 'svc-as-dict-dao-test-1-name', 'from SysDictDaoTest', true, false);
 
 

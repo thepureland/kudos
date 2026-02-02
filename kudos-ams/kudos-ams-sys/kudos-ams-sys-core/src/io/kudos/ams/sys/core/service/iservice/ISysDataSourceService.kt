@@ -20,12 +20,11 @@ interface ISysDataSourceService : IBaseCrudService<String, SysDataSource> {
     //region your codes 2
 
     /**
-     * 返回指定租户、子系统、微服务、原子服务的数据源，先从缓存找，找不到从数据库加载，并缓存
+     * 返回指定租户、子系统、微服务的数据源，先从缓存找，找不到从数据库加载，并缓存
      *
      * @param tenantId 租户id
      * @param subSystemCode 子系统编码
      * @param microServiceCode 微服务编码
-     * @param atomicServiceCode 原子服务编码
      * @return SysDataSourceCacheItem
      * @author K
      * @since 1.0.0
@@ -33,8 +32,7 @@ interface ISysDataSourceService : IBaseCrudService<String, SysDataSource> {
     fun getDataSource(
         tenantId: String,
         subSystemCode: String,
-        microServiceCode: String?,
-        atomicServiceCode: String?
+        microServiceCode: String?
     ): SysDataSourceCacheItem?
 
     /**

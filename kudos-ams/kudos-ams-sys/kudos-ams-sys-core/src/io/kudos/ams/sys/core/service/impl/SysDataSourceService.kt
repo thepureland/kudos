@@ -50,11 +50,10 @@ open class SysDataSourceService : BaseCrudService<String, SysDataSource, SysData
     override fun getDataSource(
         tenantId: String,
         subSystemCode: String,
-        microServiceCode: String?,
-        atomicServiceCode: String?
+        microServiceCode: String?
     ): SysDataSourceCacheItem? {
         return dataSourceByTenantIdAnd3CodesCacheHandler.getDataSource(
-            tenantId, subSystemCode, microServiceCode, atomicServiceCode
+            tenantId, subSystemCode, microServiceCode
         )
     }
 

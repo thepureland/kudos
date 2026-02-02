@@ -1,7 +1,8 @@
 -- 测试数据：SysI18nDaoTest
 -- 使用唯一前缀 svc-i18n-dao-test-* 和唯一UUID确保测试数据隔离
 
-merge into "sys_atomic_service" ("code", "name", "remark", "active", "built_in")
+merge into "sys_micro_service"
+ ("code", "name", "remark", "active", "built_in")
     values ('svc-as-i18n-dao-test-1', 'svc-as-i18n-dao-test-1-name', 'from SysI18nDaoTest', true, false);
 
 

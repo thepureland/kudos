@@ -24,9 +24,6 @@ object SysDataSources : MaintainableTable<SysDataSource>("sys_data_source") {
     /** 微服务编码 */
     var microServiceCode = varchar("micro_service_code").bindTo { it.microServiceCode }
 
-    /** 原子服务编码 */
-    var atomicServiceCode = varchar("atomic_service_code").bindTo { it.atomicServiceCode }
-
     /** 租户id */
     var tenantId = varchar("tenant_id").bindTo { it.tenantId }
 

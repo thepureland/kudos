@@ -26,6 +26,12 @@ object SysMicroServices : Table<SysMicroService>("sys_micro_service") {
     /** 上下文 */
     var context = varchar("context").bindTo { it.context }
 
+    /** 是否为原子服务 */
+    var atomicService = boolean("atomic_service").bindTo { it.atomicService }
+
+    /** 父服务编码 */
+    var parentCode = varchar("parent_code").bindTo { it.parentCode }
+
     /** 备注 */
     var remark = varchar("remark").bindTo { it.remark }
 
