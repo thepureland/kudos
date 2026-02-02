@@ -3,10 +3,10 @@ package io.kudos.ams.sys.core.service.impl
 import io.kudos.ams.sys.common.vo.tenant.SysTenantCacheItem
 import io.kudos.ams.sys.common.vo.tenant.SysTenantRecord
 import io.kudos.ams.sys.common.vo.tenant.SysTenantSearchPayload
-import io.kudos.ams.sys.core.service.iservice.ISysTenantSubSystemService
+import io.kudos.ams.sys.core.service.iservice.ISysTenantSystemService
 import io.kudos.ams.sys.core.cache.TenantByIdCacheHandler
-import io.kudos.ams.sys.core.cache.TenantIdsBySubSysCacheHandler
-import io.kudos.ams.sys.core.model.po.SysTenantSubSystem
+import io.kudos.ams.sys.core.cache.TenantIdsBySystemCodeCacheHandler
+import io.kudos.ams.sys.core.model.po.SysTenantSystem
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
@@ -40,10 +40,10 @@ open class SysTenantService : BaseCrudService<String, SysTenant, SysTenantDao>()
     private lateinit var tenantByIdCacheHandler: TenantByIdCacheHandler
 
     @Autowired
-    private lateinit var tenantIdsBySubSysCacheHandler: TenantIdsBySubSysCacheHandler
+    private lateinit var tenantIdsBySystemCodeCacheHandler: TenantIdsBySystemCodeCacheHandler
 
     @Autowired
-    private lateinit var sysTenantSubSystemBiz: ISysTenantSubSystemService
+    private lateinit var sysTenantSystemBiz: ISysTenantSystemService
 
     override fun getTenant(id: String): SysTenantCacheItem? {
         return tenantByIdCacheHandler.getTenantById(id)
@@ -54,7 +54,7 @@ open class SysTenantService : BaseCrudService<String, SysTenant, SysTenantDao>()
     }
 
     override fun getTenants(subSysDictCode: String): List<SysTenantCacheItem> {
-        val tenantIds = tenantIdsBySubSysCacheHandler.getTenantIds(subSysDictCode)
+        val tenantIds = tenantIdsBySystemCodeCacheHandler.getTenantIds(subSysDictCode)
         return tenantByIdCacheHandler.getTenantsByIds(tenantIds).values.toList()
     }
 
@@ -64,7 +64,7 @@ open class SysTenantService : BaseCrudService<String, SysTenant, SysTenantDao>()
         log.debug("新增id为${id}的租户。")
         // 同步缓存
         tenantByIdCacheHandler.syncOnInsert(id)
-        tenantIdsBySubSysCacheHandler.syncOnInsert(any, id)
+        tenantIdsBySystemCodeCacheHandler.syncOnInsert(any, id)
         return id
     }
 
@@ -101,12 +101,12 @@ open class SysTenantService : BaseCrudService<String, SysTenant, SysTenantDao>()
     @Transactional
     override fun deleteById(id: String): Boolean {
         // 1. 先删除租户-子系统关系
-        val subSystemCodes = sysTenantSubSystemBiz.searchSubSystemCodesByTenantId(id)
-        val criteria = Criteria.of(SysTenantSubSystem::tenantId.name, OperatorEnum.EQ, id)
-        val count = sysTenantSubSystemBiz.batchDeleteCriteria(criteria)
+        val subSystemCodes = sysTenantSystemBiz.searchSystemCodesByTenantId(id)
+        val criteria = Criteria.of(SysTenantSystem::tenantId.name, OperatorEnum.EQ, id)
+        val count = sysTenantSystemBiz.batchDeleteCriteria(criteria)
         if (count > 0) {
             // 同步缓存
-            tenantIdsBySubSysCacheHandler.syncOnDelete(id, subSystemCodes)
+            tenantIdsBySystemCodeCacheHandler.syncOnDelete(id, subSystemCodes)
         }
 
         // 2. 再删除租户
@@ -123,12 +123,12 @@ open class SysTenantService : BaseCrudService<String, SysTenant, SysTenantDao>()
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {
         // 1.查出对应的子系统编码
-        val tenantIdAndSubSysCodesMap = sysTenantSubSystemBiz.groupingSubSystemCodesByTenantIds(ids)
+        val tenantIdAndSubSysCodesMap = sysTenantSystemBiz.groupingSystemCodesByTenantIds(ids)
         val subSystemCodes = tenantIdAndSubSysCodesMap.values.flatten().toSet()
 
         // 2.删除租户-子系统关系
-        val criteria = Criteria.of(SysTenantSubSystem::tenantId.name, OperatorEnum.IN, ids)
-        val count = sysTenantSubSystemBiz.batchDeleteCriteria(criteria)
+        val criteria = Criteria.of(SysTenantSystem::tenantId.name, OperatorEnum.IN, ids)
+        val count = sysTenantSystemBiz.batchDeleteCriteria(criteria)
 
         // 3.删除租户
         if (count >= 0) {
@@ -138,7 +138,7 @@ open class SysTenantService : BaseCrudService<String, SysTenant, SysTenantDao>()
 
         // 3.同步缓存
         tenantByIdCacheHandler.syncOnBatchDelete(ids)
-        tenantIdsBySubSysCacheHandler.syncOnBatchDelete(ids, subSystemCodes)
+        tenantIdsBySystemCodeCacheHandler.syncOnBatchDelete(ids, subSystemCodes)
         return count
     }
 
@@ -149,7 +149,7 @@ open class SysTenantService : BaseCrudService<String, SysTenant, SysTenantDao>()
         val records = dao.search(searchPayload) as List<SysTenantRecord>
         // 根据租户的子系统关系分组
         val tenantIds = records.mapNotNull { it.id }
-        val tenantSubSystemMap = sysTenantSubSystemBiz.groupingSubSystemCodesByTenantIds(tenantIds)
+        val tenantSubSystemMap = sysTenantSystemBiz.groupingSystemCodesByTenantIds(tenantIds)
         val result = mutableMapOf<String, MutableList<SysTenantRecord>>()
         records.forEach { tenant ->
             val subSystemCodes = tenantSubSystemMap[tenant.id] ?: emptyList()
@@ -206,7 +206,7 @@ open class SysTenantService : BaseCrudService<String, SysTenant, SysTenantDao>()
      * @since 1.0.0
      */
     override fun getSubSystemCodesByTenantId(tenantId: String): Set<String> {
-        return sysTenantSubSystemBiz.searchSubSystemCodesByTenantId(tenantId)
+        return sysTenantSystemBiz.searchSystemCodesByTenantId(tenantId)
     }
 
     //endregion your codes 2

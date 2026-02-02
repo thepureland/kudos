@@ -45,14 +45,6 @@ open class SysDomainService : BaseCrudService<String, SysDomain, SysDomainDao>()
         return dao.search(searchPayload) as List<SysDomainRecord>
     }
 
-    override fun getDomainsBySubSystemCode(subSystemCode: String): List<SysDomainRecord> {
-        val searchPayload = SysDomainSearchPayload().apply {
-            this.subSystemCode = subSystemCode
-        }
-        @Suppress("UNCHECKED_CAST")
-        return dao.search(searchPayload) as List<SysDomainRecord>
-    }
-
     override fun getDomainsBySystemCode(systemCode: String): List<SysDomainRecord> {
         val searchPayload = SysDomainSearchPayload().apply {
             this.systemCode = systemCode

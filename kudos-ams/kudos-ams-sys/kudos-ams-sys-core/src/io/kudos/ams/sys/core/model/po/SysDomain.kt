@@ -18,9 +18,6 @@ interface SysDomain : IMaintainableDbEntity<String, SysDomain> {
     /** 域名 */
     var domain: String
 
-    /** 子系统编码 */
-    var subSystemCode: String?
-
     /** 系统编码 */
     var systemCode: String
 

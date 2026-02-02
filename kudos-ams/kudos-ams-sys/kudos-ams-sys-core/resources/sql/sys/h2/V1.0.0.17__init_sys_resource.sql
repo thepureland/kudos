@@ -28,7 +28,7 @@ create index if not exists "idx_sys_resource_sub_system_code" on "sys_resource" 
 
 -- alter table "sys_resource"
 --     add constraint "fk_sys_resource_sub_system"
---         foreign key ("sub_system_code") references "sys_sub_system" ("code");
+--         foreign key ("sub_system_code") references "sys_system" ("code");
 --
 -- alter table "sys_resource"
 --     add constraint "fk_sys_resource_parent"

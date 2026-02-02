@@ -24,11 +24,10 @@ class SysAccessRuleServiceTest : RdbAndRedisCacheTestBase() {
     private lateinit var sysAccessRuleService: ISysAccessRuleService
 
     @Test
-    fun getAccessRuleByTenantAndSubSystem() {
+    fun getAccessRuleByTenantAndSystem() {
         val tenantId = "20000000-0000-0000-0000-000000000033"
-        val subSystemCode = "svc-subsys-ar-test-1"
         val systemCode = "svc-system-ar-test-1"
-        val rule = sysAccessRuleService.getAccessRuleByTenantAndSubSystem(tenantId, subSystemCode, systemCode)
+        val rule = sysAccessRuleService.getAccessRuleByTenantAndSystem(tenantId, systemCode)
         assertNotNull(rule)
     }
 
@@ -40,9 +39,9 @@ class SysAccessRuleServiceTest : RdbAndRedisCacheTestBase() {
     }
 
     @Test
-    fun getAccessRulesBySubSystemCode() {
-        val subSystemCode = "svc-subsys-ar-test-1"
-        val rules = sysAccessRuleService.getAccessRulesBySubSystemCode(subSystemCode)
+    fun getAccessRulesBySystemCode() {
+        val systemCode = "svc-system-ar-test-1"
+        val rules = sysAccessRuleService.getAccessRulesBySystemCode(systemCode)
         assertTrue(rules.isNotEmpty())
     }
 

@@ -1,14 +1,12 @@
 package io.kudos.ams.sys.core.service.impl
 
 import io.kudos.ams.sys.core.service.iservice.ISysSystemService
-import io.kudos.ams.sys.core.service.iservice.ISysSubSystemService
 import io.kudos.ams.sys.core.model.po.SysSystem
 import io.kudos.ams.sys.core.dao.SysSystemDao
 import io.kudos.ams.sys.core.cache.SystemByCodeCacheHandler
 import io.kudos.ams.sys.common.vo.system.SysSystemCacheItem
 import io.kudos.ams.sys.common.vo.system.SysSystemRecord
 import io.kudos.ams.sys.common.vo.system.SysSystemSearchPayload
-import io.kudos.ams.sys.common.vo.subsystem.SysSubSystemRecord
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
@@ -34,9 +32,6 @@ open class SysSystemService : BaseCrudService<String, SysSystem, SysSystemDao>()
 
     @Autowired
     private lateinit var systemByCodeCacheHandler: SystemByCodeCacheHandler
-
-    @Autowired
-    private lateinit var sysSubSystemService: ISysSubSystemService
 
     override fun getSystemByCode(code: String): SysSystemCacheItem? {
         return systemByCodeCacheHandler.getSystemByCode(code)
@@ -66,8 +61,14 @@ open class SysSystemService : BaseCrudService<String, SysSystem, SysSystemDao>()
         return success
     }
 
-    override fun getSubSystemsBySystemCode(systemCode: String): List<SysSubSystemRecord> {
-        return sysSubSystemService.getSubSystemsBySystemCode(systemCode)
+    override fun getSubSystemsBySystemCode(systemCode: String): List<SysSystemRecord> {
+        val searchPayload = SysSystemSearchPayload().apply {
+            returnEntityClass = SysSystemRecord::class
+            active = true
+            this.code = systemCode
+        }
+        @Suppress("UNCHECKED_CAST")
+        return dao.search(searchPayload) as List<SysSystemRecord>
     }
 
     @Transactional

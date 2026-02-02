@@ -4,6 +4,8 @@ create table if not exists "sys_system"
     "code"        character varying(32)  not null primary key,
     "name"        character varying(128) not null
         constraint "uq_sys_system" unique,
+    "sub_system"   boolean default TRUE   not null,
+    "parent_code" character varying(32),
     "remark"      character varying(256),
     "active"      boolean default TRUE   not null,
     "built_in"    boolean default FALSE,
@@ -18,6 +20,8 @@ create table if not exists "sys_system"
 comment on table "sys_system" is '系统';
 comment on column "sys_system"."code" is '编码';
 comment on column "sys_system"."name" is '名称';
+comment on column "sys_system"."sub_system" is '是否子系统';
+comment on column "sys_system"."parent_code" is '父系统编号';
 comment on column "sys_system"."remark" is '备注';
 comment on column "sys_system"."active" is '是否启用';
 comment on column "sys_system"."built_in" is '是否内置';

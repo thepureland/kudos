@@ -20,9 +20,6 @@ interface SysAccessRule : IMaintainableDbEntity<String, SysAccessRule> {
     /** 租户id */
     var tenantId: String
 
-    /** 子系统编码 */
-    var subSystemCode: String?
-
     /** 系统编码 */
     var systemCode: String
 

@@ -4,8 +4,8 @@
 merge into "sys_system" ("code", "name", "remark", "active", "built_in")
     values ('svc-system-msas-dao-test-1', 'svc-system-msas-dao-test-1-name', 'from SysMicroServiceAtomicServiceDaoTest', true, false);
 
-merge into "sys_sub_system" ("code", "name", "system_code", "remark", "active", "built_in")
-    values ('svc-subsys-msas-dao-test-1', 'svc-subsys-msas-dao-test-1-name', 'svc-system-msas-dao-test-1', 'from SysMicroServiceAtomicServiceDaoTest', true, false);
+merge into "sys_system" ("code", "name", "parent_code", "sub_system", "remark", "active", "built_in")
+    values ('svc-subsys-msas-dao-test-1', 'svc-subsys-msas-dao-test-1-name', 'svc-system-msas-dao-test-1', true, 'from SysMicroServiceAtomicServiceDaoTest', true, false);
 
 merge into "sys_atomic_service" ("code", "name", "remark", "active", "built_in")
     values ('svc-as-msas-dao-test-1', 'svc-as-msas-dao-test-1-name', 'from SysMicroServiceAtomicServiceDaoTest', true, false),

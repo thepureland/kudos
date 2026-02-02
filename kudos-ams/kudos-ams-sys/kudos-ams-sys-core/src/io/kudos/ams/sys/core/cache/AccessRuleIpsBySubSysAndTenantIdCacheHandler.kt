@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component
  *
  * 1.数据来源表：sys_access_rule & sys_access_rule_ip
  * 2.仅缓存active=true的
- * 3.缓存key为：子系统编码::租户id，租户id有可能为null
+ * 3.缓存key为：系统编码::租户id，租户id有可能为null
  * 4.缓存value为：SysAccessRuleIpCacheItem对象
  *
  * @author K
@@ -37,7 +37,7 @@ open class AccessRuleIpsBySubSysAndTenantIdCacheHandler : AbstractCacheHandler<L
     private lateinit var sysAccessRuleDao: SysAccessRuleDao
 
     companion object Companion {
-        private const val CACHE_NAME = "SYS_ACCESS_RULE_IPS_BY_SUB_SYS_AND_TENANT_ID"
+        private const val CACHE_NAME = "SYS_ACCESS_RULE_IPS_BY_SYSTEM_CODE_AND_TENANT_ID"
     }
 
     override fun cacheName() = CACHE_NAME
@@ -69,7 +69,7 @@ open class AccessRuleIpsBySubSysAndTenantIdCacheHandler : AbstractCacheHandler<L
         }
 
         // 缓存数据
-        val ipRulesMap = results.groupBy { getKey(it.subSystemCode!!, it.tenantId) }
+        val ipRulesMap = results.groupBy { getKey(it.systemCode!!, it.tenantId) }
         ipRulesMap.forEach { (key, ipRules) ->
             val cacheItems = mapToCacheItems(ipRules)
             CacheKit.put(CACHE_NAME, key, cacheItems)
@@ -80,35 +80,35 @@ open class AccessRuleIpsBySubSysAndTenantIdCacheHandler : AbstractCacheHandler<L
     /**
      * 从缓存中获取ip访问规则，如果缓存中没有，从数据库中加载，并写入缓存.
      *
-     * 缓存的key形式为：子系统编码::租户id，租户id有可能为null
+     * 缓存的key形式为：系统编码::租户id，租户id有可能为null
      *
-     * @param subSystemCode 子系统编码
+     * @param systemCode 系统编码
      * @param tenantId 租户id，可以为null
      * @return SysAccessRuleIpCacheItem，不存在时返回null
      */
     @Cacheable(
         cacheNames = [CACHE_NAME],
-        key = "#subSystemCode.concat('${Consts.CACHE_KEY_DEFAULT_DELIMITER}').concat(#tenantId ?: 'null')",
+        key = "#systemCode.concat('${Consts.CACHE_KEY_DEFAULT_DELIMITER}').concat(#tenantId ?: 'null')",
         unless = "#result == null"
     )
-    open fun getAccessRuleIps(subSystemCode: String, tenantId: String? = null): List<SysAccessRuleIpCacheItem> {
+    open fun getAccessRuleIps(systemCode: String, tenantId: String? = null): List<SysAccessRuleIpCacheItem> {
         if (CacheKit.isCacheActive(CACHE_NAME)) {
             log.debug(
-                "${CACHE_NAME}缓存中不存在子系统编码为${subSystemCode}且租户id为${tenantId}的ip访问规则，从数据库中加载..."
+                "${CACHE_NAME}缓存中不存在系统编码为${systemCode}且租户id为${tenantId}的ip访问规则，从数据库中加载..."
             )
         }
-        require(subSystemCode.isNotBlank()) { "获取ip访问规则时，子系统代码必须指定！" }
+        require(systemCode.isNotBlank()) { "获取ip访问规则时，系统代码必须指定！" }
         val searchPayload = SysAccessRuleIpSearchPayload().apply {
             active = true
             parentRuleActive = true
-            this.subSystemCode = subSystemCode
+            this.systemCode = systemCode
             this.tenantId = tenantId
             nullProperties = listOf(this::tenantId.name)
         }
 
         val results = sysAccessRuleIpDao.pagingSearch(searchPayload)
         return if (results.isEmpty()) {
-            log.warn("数据库中找不到租户id为${tenantId}且子系统编码为${subSystemCode}的ip访问规则！")
+            log.warn("数据库中找不到租户id为${tenantId}且系统编码为${systemCode}的ip访问规则！")
             listOf()
         } else {
             mapToCacheItems(results)
@@ -126,16 +126,16 @@ open class AccessRuleIpsBySubSysAndTenantIdCacheHandler : AbstractCacheHandler<L
             log.debug("新增id为${ipRuleId}的ip访问规则后，同步${CACHE_NAME}缓存...")
 
             val props = BeanKit.extract(any)
-            val subSystemCode = props[SysAccessRule::subSystemCode.name] as String
+            val systemCode = props[SysAccessRule::systemCode.name] as String
             val tenantId = props[SysAccessRule::tenantId.name] as String?
 
             // 踢除ip访问规则缓存
-            CacheKit.evict(CACHE_NAME, getKey(subSystemCode, tenantId))
+            CacheKit.evict(CACHE_NAME, getKey(systemCode, tenantId))
 
             val active = props[SysAccessRule::active.name] as Boolean?
             if (CacheKit.isWriteInTime(CACHE_NAME) && (active == null || active)) {
                 // 缓存
-                getSelf<AccessRuleIpsBySubSysAndTenantIdCacheHandler>().getAccessRuleIps(subSystemCode, tenantId)
+                getSelf<AccessRuleIpsBySubSysAndTenantIdCacheHandler>().getAccessRuleIps(systemCode, tenantId)
                 log.debug("${CACHE_NAME}缓存同步完成。")
             } else {
                 log.debug("新增的ip访问规则的active为false，不需要同步${CACHE_NAME}缓存。")
@@ -153,17 +153,17 @@ open class AccessRuleIpsBySubSysAndTenantIdCacheHandler : AbstractCacheHandler<L
         if (CacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("更新id为${id}的ip访问规则后，同步${CACHE_NAME}缓存...")
             val props = BeanKit.extract(any)
-            val subSystemCode = props[SysAccessRule::subSystemCode.name] as String
+            val systemCode = props[SysAccessRule::systemCode.name] as String
             val tenantId = props[SysAccessRule::tenantId.name] as String?
 
             // 踢除ip访问规则缓存
-            CacheKit.evict(CACHE_NAME, getKey(subSystemCode, tenantId))
+            CacheKit.evict(CACHE_NAME, getKey(systemCode, tenantId))
 
             // 重新缓存
             if (CacheKit.isWriteInTime(CACHE_NAME)) {
                 val active = props[SysAccessRule::active.name] as Boolean?
                 if (active == null || active) {
-                    getSelf<AccessRuleIpsBySubSysAndTenantIdCacheHandler>().getAccessRuleIps(subSystemCode, tenantId)
+                    getSelf<AccessRuleIpsBySubSysAndTenantIdCacheHandler>().getAccessRuleIps(systemCode, tenantId)
                 }
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
@@ -188,12 +188,12 @@ open class AccessRuleIpsBySubSysAndTenantIdCacheHandler : AbstractCacheHandler<L
             val sysAccessRule = sysAccessRuleDao.get(sysAccessRuleIp.parentRuleId)!!
 
             // 踢除ip访问规则缓存
-            CacheKit.evict(CACHE_NAME, getKey(sysAccessRule.subSystemCode!!, sysAccessRule.tenantId))
+            CacheKit.evict(CACHE_NAME, getKey(sysAccessRule.systemCode, sysAccessRule.tenantId))
 
             // 重新缓存
             if (CacheKit.isWriteInTime(CACHE_NAME)) {
                 getSelf<AccessRuleIpsBySubSysAndTenantIdCacheHandler>().getAccessRuleIps(
-                    sysAccessRule.subSystemCode!!, sysAccessRule.tenantId
+                    sysAccessRule.systemCode, sysAccessRule.tenantId
                 )
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
@@ -217,11 +217,11 @@ open class AccessRuleIpsBySubSysAndTenantIdCacheHandler : AbstractCacheHandler<L
             val sysAccessRule = sysAccessRuleDao.get(sysAccessRuleIp.parentRuleId)!!
 
             // 踢除缓存
-            CacheKit.evict(CACHE_NAME,getKey(sysAccessRule.subSystemCode!!, sysAccessRule.tenantId))
+            CacheKit.evict(CACHE_NAME, getKey(sysAccessRule.systemCode, sysAccessRule.tenantId))
             if (CacheKit.isWriteInTime(CACHE_NAME)) {
                 // 重新缓存
                 getSelf<AccessRuleIpsBySubSysAndTenantIdCacheHandler>().getAccessRuleIps(
-                    sysAccessRule.subSystemCode!!, sysAccessRule.tenantId
+                    sysAccessRule.systemCode, sysAccessRule.tenantId
                 )
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
@@ -243,12 +243,12 @@ open class AccessRuleIpsBySubSysAndTenantIdCacheHandler : AbstractCacheHandler<L
     /**
      * 返回参数拼接后的key
      *
-     * @param subSystemCode 子系统编码
+     * @param systemCode 系统编码
      * @param tenantId 租户id
      * @return 缓存key
      */
-    open fun getKey(subSystemCode: String, tenantId: String? = null): String {
-        return "${subSystemCode}${Consts.CACHE_KEY_DEFAULT_DELIMITER}${tenantId}"
+    open fun getKey(systemCode: String, tenantId: String? = null): String {
+        return "${systemCode}${Consts.CACHE_KEY_DEFAULT_DELIMITER}${tenantId}"
     }
 
     private val log = LogFactory.getLog(this)

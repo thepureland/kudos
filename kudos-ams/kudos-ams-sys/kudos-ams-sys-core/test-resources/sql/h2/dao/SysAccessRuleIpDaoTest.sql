@@ -7,12 +7,9 @@ merge into "sys_tenant" ("id", "name", "timezone", "default_language_code", "rem
 merge into "sys_system" ("code", "name", "remark", "active", "built_in")
     values ('svc-system-arip-dao-test-1', 'svc-system-accessruleip-dao-test-1-name', 'from SysAccessRuleIpDaoTest', true, false);
 
-merge into "sys_sub_system" ("code", "name", "system_code", "remark", "active", "built_in")
-    values ('svc-subsys-arip-dao-test-1', 'svc-subsys-accessruleip-dao-test-1-name', 'svc-system-arip-dao-test-1', 'from SysAccessRuleIpDaoTest', true, false);
-
-merge into "sys_access_rule" ("id", "tenant_id", "sub_system_code", "system_code", "rule_type_dict_code", "remark", "active", "built_in")
-    values ('40000000-0000-0000-0000-000000000111', '40000000-0000-0000-0000-000000000110', 'svc-subsys-arip-dao-test-1', 'svc-system-arip-dao-test-1', 'RULE_TYPE_WHITELIST', 'from SysAccessRuleIpDaoTest', true, false),
-           ('40000000-0000-0000-0000-000000000112', '40000000-0000-0000-0000-000000000110', null, 'svc-system-arip-dao-test-1', 'RULE_TYPE_BLACKLIST', 'from SysAccessRuleIpDaoTest', false, false);
+merge into "sys_access_rule" ("id", "tenant_id", "system_code", "rule_type_dict_code", "remark", "active", "built_in")
+    values ('40000000-0000-0000-0000-000000000111', '40000000-0000-0000-0000-000000000110', 'svc-system-arip-dao-test-1', 'RULE_TYPE_WHITELIST', 'from SysAccessRuleIpDaoTest', true, false),
+           ('40000000-0000-0000-0000-000000000112', '40000000-0000-0000-0000-000000000110', 'svc-system-arip-dao-test-2', 'RULE_TYPE_BLACKLIST', 'from SysAccessRuleIpDaoTest', false, false);
 
 merge into "sys_access_rule_ip" ("id", "ip_start", "ip_end", "ip_type_dict_code", "expiration_time", "parent_rule_id", "remark", "active", "built_in")
     values ('40000000-0000-0000-0000-000000000113', 192168001001, 192168001001, 'IP_TYPE_IPV4', null, '40000000-0000-0000-0000-000000000111', 'from SysAccessRuleIpDaoTest', true, false),

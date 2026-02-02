@@ -1,7 +1,6 @@
 CREATE OR REPLACE VIEW v_sys_access_rule_with_ip AS
 SELECT ar."id"          AS parent_id,
        ar."tenant_id",
-       ar."sub_system_code",
        ar."system_code",
        ar."rule_type_dict_code",
        ar."remark"           AS parent_remark,

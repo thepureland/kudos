@@ -19,9 +19,6 @@ object SysAccessRules : MaintainableTable<SysAccessRule>("sys_access_rule") {
     /** 租户id */
     var tenantId = varchar("tenant_id").bindTo { it.tenantId }
 
-    /** 子系统编码 */
-    var subSystemCode = varchar("sub_system_code").bindTo { it.subSystemCode }
-
     /** 系统编码 */
     var systemCode = varchar("system_code").bindTo { it.systemCode }
 

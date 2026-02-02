@@ -20,9 +20,6 @@ data class SysDomainDetail (
     /** 域名 */
     var domain: String? = null,
 
-    /** 子系统编码 */
-    var subSystemCode: String? = null,
-
     /** 系统编码 */
     var systemCode: String? = null,
 

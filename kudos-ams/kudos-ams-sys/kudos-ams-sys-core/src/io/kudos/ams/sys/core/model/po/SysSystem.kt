@@ -22,6 +22,12 @@ interface SysSystem : IDbEntity<String, SysSystem> {
     /** 名称 */
     var name: String
 
+    /** 是否子系统 */
+    var subSystem: Boolean
+
+    /** 父系统编号 */
+    var parentCode: String?
+
     /** 备注 */
     var remark: String?
 

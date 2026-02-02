@@ -41,7 +41,7 @@ open class SysAccessRuleIpDao : BaseCrudDao<String, SysAccessRuleIp, SysAccessRu
         val orders = searchPayload.orders
         if (orders.isNullOrEmpty()) {
             val orderList = listOf(
-                SysAccessRules.subSystemCode.asc(),
+                SysAccessRules.systemCode.asc(),
                 SysAccessRules.tenantId.asc(),
                 SysAccessRuleIps.ipStart.asc()
             )
@@ -89,8 +89,8 @@ open class SysAccessRuleIpDao : BaseCrudDao<String, SysAccessRuleIp, SysAccessRu
                 remark = row[SysAccessRuleIps.remark]
                 parentRuleActive = row[SysAccessRules.active]
                 tenantId = row[SysAccessRules.tenantId]
-                subSystemCode = row[SysAccessRules.subSystemCode]
-                ruleTypeDictCode = row[SysAccessRules.tenantId]
+                systemCode = row[SysAccessRules.systemCode]
+                ruleTypeDictCode = row[SysAccessRules.ruleTypeDictCode]
             }
         }
     }
@@ -140,11 +140,11 @@ open class SysAccessRuleIpDao : BaseCrudDao<String, SysAccessRuleIp, SysAccessRu
             } else if (!searchPayload.tenantId.isNullOrBlank()) {
                 it += whereExpr(SysAccessRules.tenantId, OperatorEnum.EQ, searchPayload.tenantId!!.trim())!!
             }
-            if (!searchPayload.subSystemCode.isNullOrBlank()) {
+            if (!searchPayload.systemCode.isNullOrBlank()) {
                 it += whereExpr(
-                    SysAccessRules.subSystemCode,
+                    SysAccessRules.systemCode,
                     OperatorEnum.EQ,
-                    searchPayload.subSystemCode!!.trim()
+                    searchPayload.systemCode!!.trim()
                 )!!
             }
             if (!searchPayload.ruleTypeDictCode.isNullOrBlank()) {

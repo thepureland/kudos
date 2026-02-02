@@ -7,8 +7,8 @@ merge into "sys_tenant" ("id", "name", "timezone", "default_language_code", "rem
 merge into "sys_system" ("code", "name", "remark", "active", "built_in")
     values ('svc-system-ds-dao-test-1', 'svc-system-datasource-dao-test-1-name', 'from SysDataSourceDaoTest', true, false);
 
-merge into "sys_sub_system" ("code", "name", "system_code", "remark", "active", "built_in")
-    values ('svc-subsys-ds-dao-test-1', 'svc-subsys-datasource-dao-test-1-name', 'svc-system-ds-dao-test-1', 'from SysDataSourceDaoTest', true, false);
+merge into "sys_system" ("code", "name", "parent_code", "sub_system", "remark", "active", "built_in")
+    values ('svc-subsys-ds-dao-test-1', 'svc-subsys-datasource-dao-test-1-name', 'svc-system-ds-dao-test-1', true, 'from SysDataSourceDaoTest', true, false);
 
 merge into "sys_micro_service" ("code", "name", "context", "remark", "active", "built_in")
     values ('svc-ms-ds-dao-test-1', 'svc-ms-datasource-dao-test-1-name', '/svc-ms-ds-dao-test-1', 'from SysDataSourceDaoTest', true, false);

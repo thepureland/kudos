@@ -34,7 +34,7 @@ create index if not exists "idx_sys_data_source_tenant_id" on "sys_data_source" 
 
 -- alter table "sys_data_source"
 --     add constraint "fk_sys_data_source_sub_system"
---         foreign key ("sub_system_code") references "sys_sub_system" ("code");
+--         foreign key ("sub_system_code") references "sys_system" ("code");
 --
 -- alter table "sys_data_source"
 --     add constraint "fk_sys_data_source_micro_service"

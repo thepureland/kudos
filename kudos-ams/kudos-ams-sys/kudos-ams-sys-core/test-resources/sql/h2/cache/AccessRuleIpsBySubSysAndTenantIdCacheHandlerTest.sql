@@ -1,15 +1,14 @@
-merge into "sys_access_rule" ("id", "tenant_id", "sub_system_code", "system_code", "rule_type_dict_code", "remark",
-                              "active", "built_in")
-    values ('8026f3ac-563b-4545-88dc-b8f70ea48081', 'tenantId-1', 'subSys-a', 'default', '0', null, true, false),
-           ('8026f3ac-563b-4545-88dc-b8f70ea48082', 'tenantId-2', 'subSys-a', 'default', '1', null, true, false),
-           ('8026f3ac-563b-4545-88dc-b8f70ea48083', 'tenantId-3', 'subSys-a', 'default', '2', null, true, false),
-           ('8026f3ac-563b-4545-88dc-b8f70ea48084', 'tenantId-4', 'subSys-a', 'default', '3', null, true, false),
-           ('8026f3ac-563b-4545-88dc-b8f70ea48085', 'tenantId-5', 'subSys-b', 'default', '0', null, true, false),
-           ('8026f3ac-563b-4545-88dc-b8f70ea48086', 'tenantId-6', 'subSys-b', 'default', '0', null, true, false),
-           ('8026f3ac-563b-4545-88dc-b8f70ea48087', null, 'subSys-c', 'default', '0', null, true, false),
-           ('8026f3ac-563b-4545-88dc-b8f70ea48088', null, 'subSys-d', 'default', '0', null, true, false),
-           ('8026f3ac-563b-4545-88dc-b8f70ea48089', null, 'subSys-e', 'default', '0', null, true, false),
-           ('8026f3ac-563b-4545-88dc-b8f70ea48080', null, 'subSys-f', 'default', '0', null, false, false);
+merge into "sys_access_rule" ("id", "tenant_id", "system_code", "rule_type_dict_code", "remark", "active", "built_in")
+    values ('8026f3ac-563b-4545-88dc-b8f70ea48081', 'tenantId-1', 'subSys-a', '0', null, true, false),
+           ('8026f3ac-563b-4545-88dc-b8f70ea48082', 'tenantId-2', 'subSys-a', '1', null, true, false),
+           ('8026f3ac-563b-4545-88dc-b8f70ea48083', 'tenantId-3', 'subSys-a', '2', null, true, false),
+           ('8026f3ac-563b-4545-88dc-b8f70ea48084', 'tenantId-4', 'subSys-a', '3', null, true, false),
+           ('8026f3ac-563b-4545-88dc-b8f70ea48085', 'tenantId-5', 'subSys-b', '0', null, true, false),
+           ('8026f3ac-563b-4545-88dc-b8f70ea48086', 'tenantId-6', 'subSys-b', '0', null, true, false),
+           ('8026f3ac-563b-4545-88dc-b8f70ea48087', null, 'subSys-c', '0', null, true, false),
+           ('8026f3ac-563b-4545-88dc-b8f70ea48088', null, 'subSys-d', '0', null, true, false),
+           ('8026f3ac-563b-4545-88dc-b8f70ea48089', null, 'subSys-e', '0', null, true, false),
+           ('8026f3ac-563b-4545-88dc-b8f70ea48080', null, 'subSys-f', '0', null, false, false);
 
 
 
