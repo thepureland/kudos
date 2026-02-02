@@ -1,4 +1,3 @@
--- 测试数据：UserLoginRememberMeServiceTest
-
-merge into "user_login_remember_me" ("id", "username", "token", "last_used")
-    values ('33333333-0000-0000-0000-000000000001', 'remember-user-1', 'token-1', CURRENT_TIMESTAMP);
+-- user_login_remember_me: 每条 id 唯一，供 UserLoginRememberMeService 用例使用
+merge into "user_login_remember_me" ("id", "username", "token", "last_used") values
+    ('33333333-0000-0000-0000-000000000001', 'remember-user-1', 'token-1', CURRENT_TIMESTAMP);
