@@ -16,6 +16,6 @@ open class ${module?cap_first}ApiProviderAutoConfiguration : IComponentInitializ
 
     //endregion your codes 2
 
-    override fun getComponentName() = "kudos-ams-sys-api-internal"
+    override fun getComponentName() = "kudos-ms-sys-api-internal"
 
 }

@@ -96,34 +96,34 @@ include("kudos-ability:kudos-ability-web:kudos-ability-web-ktor")
 
 
 // ams
-//// ams-sys
-include("kudos-ams:kudos-ams-sys:kudos-ams-sys-core")
-include("kudos-ams:kudos-ams-sys:kudos-ams-sys-common")
-include("kudos-ams:kudos-ams-sys:kudos-ams-sys-client")
-include("kudos-ams:kudos-ams-sys:kudos-ams-sys-api-public")
-include("kudos-ams:kudos-ams-sys:kudos-ams-sys-api-admin")
-include("kudos-ams:kudos-ams-sys:kudos-ams-sys-api-internal")
-//// ams-auth
-include("kudos-ams:kudos-ams-auth:kudos-ams-auth-core")
-include("kudos-ams:kudos-ams-auth:kudos-ams-auth-common")
-include("kudos-ams:kudos-ams-auth:kudos-ams-auth-client")
-include("kudos-ams:kudos-ams-auth:kudos-ams-auth-api-public")
-include("kudos-ams:kudos-ams-auth:kudos-ams-auth-api-admin")
-include("kudos-ams:kudos-ams-auth:kudos-ams-auth-api-internal")
-//// ams-user
-include("kudos-ams:kudos-ams-user:kudos-ams-user-core")
-include("kudos-ams:kudos-ams-user:kudos-ams-user-common")
-include("kudos-ams:kudos-ams-user:kudos-ams-user-client")
-include("kudos-ams:kudos-ams-user:kudos-ams-user-api-public")
-include("kudos-ams:kudos-ams-user:kudos-ams-user-api-admin")
-include("kudos-ams:kudos-ams-user:kudos-ams-user-api-internal")
-//// ams-msg
-include("kudos-ams:kudos-ams-msg:kudos-ams-msg-core")
-include("kudos-ams:kudos-ams-msg:kudos-ams-msg-common")
-include("kudos-ams:kudos-ams-msg:kudos-ams-msg-client")
-include("kudos-ams:kudos-ams-msg:kudos-ams-msg-api-public")
-include("kudos-ams:kudos-ams-msg:kudos-ams-msg-api-admin")
-include("kudos-ams:kudos-ams-msg:kudos-ams-msg-api-internal")
+//// ms-sys
+include("kudos-ms:kudos-ms-sys:kudos-ms-sys-core")
+include("kudos-ms:kudos-ms-sys:kudos-ms-sys-common")
+include("kudos-ms:kudos-ms-sys:kudos-ms-sys-client")
+include("kudos-ms:kudos-ms-sys:kudos-ms-sys-api-public")
+include("kudos-ms:kudos-ms-sys:kudos-ms-sys-api-admin")
+include("kudos-ms:kudos-ms-sys:kudos-ms-sys-api-internal")
+//// ms-auth
+include("kudos-ms:kudos-ms-auth:kudos-ms-auth-core")
+include("kudos-ms:kudos-ms-auth:kudos-ms-auth-common")
+include("kudos-ms:kudos-ms-auth:kudos-ms-auth-client")
+include("kudos-ms:kudos-ms-auth:kudos-ms-auth-api-public")
+include("kudos-ms:kudos-ms-auth:kudos-ms-auth-api-admin")
+include("kudos-ms:kudos-ms-auth:kudos-ms-auth-api-internal")
+//// ms-user
+include("kudos-ms:kudos-ms-user:kudos-ms-user-core")
+include("kudos-ms:kudos-ms-user:kudos-ms-user-common")
+include("kudos-ms:kudos-ms-user:kudos-ms-user-client")
+include("kudos-ms:kudos-ms-user:kudos-ms-user-api-public")
+include("kudos-ms:kudos-ms-user:kudos-ms-user-api-admin")
+include("kudos-ms:kudos-ms-user:kudos-ms-user-api-internal")
+//// ms-msg
+include("kudos-ms:kudos-ms-msg:kudos-ms-msg-core")
+include("kudos-ms:kudos-ms-msg:kudos-ms-msg-common")
+include("kudos-ms:kudos-ms-msg:kudos-ms-msg-client")
+include("kudos-ms:kudos-ms-msg:kudos-ms-msg-api-public")
+include("kudos-ms:kudos-ms-msg:kudos-ms-msg-api-admin")
+include("kudos-ms:kudos-ms-msg:kudos-ms-msg-api-internal")
 
 // dependencies
 include("kudos-dependencies")

@@ -1,5 +1,5 @@
 dependencies {
-    <#if project == "kudos">api(project(":kudos-ams:kudos-ams-${module}:kudos-ams-${module}-provider"))
+    <#if project == "kudos">api(project(":kudos-ms:kudos-ms-${module}:kudos-ms-${module}-provider"))
     api(project(":kudos-ability:kudos-ability-web:kudos-ability-web-ktor"))
     <#else>api(project(":${project}-ams-${module}:${project}-ams-${module}-provider"))
     api("io.kudos:kudos-ability-web-springmvc")

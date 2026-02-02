@@ -16,6 +16,6 @@ open class ${module?cap_first}ApiWebAutoConfiguration : IComponentInitializer {
 
     //endregion your codes 2
 
-    override fun getComponentName() = "kudos-ams-sys-api-public"
+    override fun getComponentName() = "kudos-ms-sys-api-public"
 
 }
