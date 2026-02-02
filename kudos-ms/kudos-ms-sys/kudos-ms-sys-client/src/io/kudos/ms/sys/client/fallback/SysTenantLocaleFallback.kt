@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.client.fallback
 
-import io.kudos.ms.sys.client.proxy.ISysTenantLanguageProxy
+import io.kudos.ms.sys.client.proxy.ISysTenantLocaleProxy
 import org.springframework.stereotype.Component
 
 
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component
  */
 @Component
 //region your codes 1
-interface SysTenantLanguageFallback : ISysTenantLanguageProxy {
+interface SysTenantLocaleFallback : ISysTenantLocaleProxy {
 //endregion your codes 1
 
     //region your codes 2

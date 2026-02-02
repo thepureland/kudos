@@ -1,16 +1,17 @@
-package io.kudos.ms.sys.common.vo.tenantlanguage
+package io.kudos.ms.sys.common.vo.tenantlocale
 
-import io.kudos.base.support.result.IdJsonResult
+import java.io.Serializable
+import io.kudos.base.support.IIdEntity
 import java.time.LocalDateTime
 
 
 /**
- * 租户-语言关系查询记录
+ * 租户-语言关系缓存项
  *
  * @author K
  * @since 1.0.0
  */
-data class SysTenantLanguageDetail (
+data class SysTenantLocaleCacheItem (
 
     /** 主键 */
     override var id: String? = null,
@@ -21,7 +22,7 @@ data class SysTenantLanguageDetail (
     var tenantId: String? = null,
 
     /** 语言代码 */
-    var languageCode: String? = null,
+    var localeCode: String? = null,
 
     /** 创建者id */
     var createUserId: String? = null,
@@ -43,13 +44,17 @@ data class SysTenantLanguageDetail (
 
     //endregion your codes 1
 //region your codes 2
-) : IdJsonResult<String>() {
+) : IIdEntity<String>, Serializable {
 //endregion your codes 2
 
     //region your codes 3
 
     constructor() : this(null)
 
-    //endregion your codes 3
+    // endregion your codes 3
+
+    companion object {
+        private const val serialVersionUID = 8583424316200364431L
+    }
 
 }

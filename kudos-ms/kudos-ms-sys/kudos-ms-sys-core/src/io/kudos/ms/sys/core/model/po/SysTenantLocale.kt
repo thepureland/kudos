@@ -11,16 +11,16 @@ import java.time.LocalDateTime
  * @since 1.0.0
  */
 //region your codes 1
-interface SysTenantLanguage : IDbEntity<String, SysTenantLanguage> {
+interface SysTenantLocale : IDbEntity<String, SysTenantLocale> {
 //endregion your codes 1
 
-    companion object : DbEntityFactory<SysTenantLanguage>()
+    companion object : DbEntityFactory<SysTenantLocale>()
 
     /** 租户id */
     var tenantId: String
 
     /** 语言代码 */
-    var languageCode: String
+    var localeCode: String
 
     /** 创建者id */
     var createUserId: String?

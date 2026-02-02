@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.core.api
 
-import io.kudos.ms.sys.common.api.ISysTenantLanguageApi
+import io.kudos.ms.sys.common.api.ISysTenantLocaleApi
 import org.springframework.stereotype.Service
 
 
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service
  */
 //region your codes 1
 @Service
-open class SysTenantLanguageApi : ISysTenantLanguageApi {
+open class SysTenantLocaleApi : ISysTenantLocaleApi {
 //endregion your codes 1
 
     //region your codes 2
