@@ -30,19 +30,19 @@ class SysAccessRuleIpServiceTest : RdbAndRedisCacheTestBase() {
     }
 
     @Test
-    fun getIpsBySubSystemAndTenant() {
-        val subSystemCode = "svc-subsys-arip-test-1"
+    fun getIpsBySystemAndTenant() {
+        val systemCode = "svc-system-arip-test-1"
         val tenantId = "20000000-0000-0000-0000-000000000034"
-        val ips = sysAccessRuleIpService.getIpsBySubSystemAndTenant(subSystemCode, tenantId)
+        val ips = sysAccessRuleIpService.getIpsBySystemAndTenant(systemCode, tenantId)
         assertTrue(ips.isNotEmpty())
     }
 
     @Test
     fun checkIpAccess() {
         val ip = 2130706433L // 127.0.0.1
-        val subSystemCode = "svc-subsys-arip-test-1"
+        val systemCode = "svc-system-arip-test-1"
         val tenantId = "20000000-0000-0000-0000-000000000034"
-        val allowed = sysAccessRuleIpService.checkIpAccess(ip, subSystemCode, tenantId)
+        val allowed = sysAccessRuleIpService.checkIpAccess(ip, systemCode, tenantId)
         assertTrue(allowed)
     }
 }

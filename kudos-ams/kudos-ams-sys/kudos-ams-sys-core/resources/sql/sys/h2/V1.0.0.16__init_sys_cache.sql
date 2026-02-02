@@ -70,7 +70,7 @@ values ('14a9adc4-6bb5-45bd-96bb-d8afe3060bea', 'SYS_CACHE_BY_NAME', 'ams-sys', 
         '资源缓存(by subSystemCode & type)', true, true),
        ('e5340806-97b4-43a4-84c6-97e5e2966371', 'SYS_TENANT_BY_ID', 'ams-sys', 'LOCAL_REMOTE', true, true, 999999999,
         '租户缓存(by id)', true, true),
-       ('2da8e352-6e6f-4cd4-93e0-259ad3c7ea83', 'SYS_TENANT_IDS_BY_SUB_SYS', 'ams-sys', 'LOCAL_REMOTE', true, true, 999999999,
+       ('2da8e352-6e6f-4cd4-93e0-259ad3c7ea83', 'SYS_TENANT_IDS_BY_SYSTEM_CODE', 'ams-sys', 'LOCAL_REMOTE', true, true, 999999999,
         '租户缓存(by subSystemCode)', true, true),
        ('3da8e352-1e6f-4cd4-13e0-259ad3c7ea81', 'SYS_SYSTEM_BY_CODE', 'ams-sys', 'LOCAL_REMOTE', true, true, 999999999,
         '系统缓存(by code)', true, true),
@@ -84,7 +84,7 @@ values ('14a9adc4-6bb5-45bd-96bb-d8afe3060bea', 'SYS_CACHE_BY_NAME', 'ams-sys', 
         '国际化信息缓存(by locale & type & atomicServiceCode)', true, true),
        ('7da93321-236f-12d4-13e0-359ad3c7ea86', 'SYS_MODULE_BY_CODE', 'ams-sys', 'LOCAL_REMOTE', true, true, 999999999,
         '模块缓存(by code)', true, true),
-       ('8da92321-206f-12d4-23e0-359ad3c7ea87', 'SYS_ACCESS_RULE_IPS_BY_SUB_SYS_AND_TENANT_ID', 'ams-sys', 'LOCAL_REMOTE', true, true, 999999999,
+       ('8da92321-206f-12d4-23e0-359ad3c7ea87', 'SYS_ACCESS_RULE_IPS_BY_SYSTEM_CODE_AND_TENANT_ID', 'ams-sys', 'LOCAL_REMOTE', true, true, 999999999,
         'ip访问规则缓存(by subSystemCode & tenantId)', true, true);
 
 --endregion DML

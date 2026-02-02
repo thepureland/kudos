@@ -30,27 +30,27 @@ interface ISysAccessRuleIpService : IBaseCrudService<String, SysAccessRuleIp> {
     fun getIpsByRuleId(ruleId: String): List<SysAccessRuleIpRecord>
 
     /**
-     * 根据子系统编码和租户id从缓存获取IP规则列表
+     * 根据系统编码和租户id从缓存获取IP规则列表
      *
-     * @param subSystemCode 子系统编码
+     * @param systemCode 系统编码
      * @param tenantId 租户id，可以为null
      * @return IP规则缓存项列表
      * @author K
      * @since 1.0.0
      */
-    fun getIpsBySubSystemAndTenant(subSystemCode: String, tenantId: String?): List<SysAccessRuleIpCacheItem>
+    fun getIpsBySystemAndTenant(systemCode: String, tenantId: String?): List<SysAccessRuleIpCacheItem>
 
     /**
      * 检查IP是否允许访问
      *
      * @param ip IP地址（long类型）
-     * @param subSystemCode 子系统编码
+     * @param systemCode 系统编码
      * @param tenantId 租户id，可以为null
      * @return 是否允许访问
      * @author K
      * @since 1.0.0
      */
-    fun checkIpAccess(ip: Long, subSystemCode: String, tenantId: String?): Boolean
+    fun checkIpAccess(ip: Long, systemCode: String, tenantId: String?): Boolean
 
     /**
      * 批量保存或更新IP规则

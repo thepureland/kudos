@@ -39,16 +39,6 @@ interface ISysDomainService : IBaseCrudService<String, SysDomain> {
     fun getDomainsByTenantId(tenantId: String): List<SysDomainRecord>
 
     /**
-     * 获取子系统的域名列表
-     *
-     * @param subSystemCode 子系统编码
-     * @return 域名记录列表
-     * @author K
-     * @since 1.0.0
-     */
-    fun getDomainsBySubSystemCode(subSystemCode: String): List<SysDomainRecord>
-
-    /**
      * 获取系统的域名列表
      *
      * @param systemCode 系统编码

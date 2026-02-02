@@ -16,9 +16,6 @@ data class SysAccessRulePayload (
     /** 租户id */
     var tenantId: String? = null,
 
-    /** 子系统编码 */
-    var subSystemCode: String? = null,
-
     /** 系统编码 */
     var systemCode: String? = null,
 

@@ -23,6 +23,12 @@ object SysSystems : Table<SysSystem>("sys_system") {
     /** 名称 */
     var name = varchar("name").bindTo { it.name }
 
+    /** 是否子系统 */
+    var subSystem = boolean("sub_system").bindTo { it.subSystem }
+
+    /** 父系统编号 */
+    var parentCode = varchar("parent_code").bindTo { it.parentCode }
+
     /** 备注 */
     var remark = varchar("remark").bindTo { it.remark }
 

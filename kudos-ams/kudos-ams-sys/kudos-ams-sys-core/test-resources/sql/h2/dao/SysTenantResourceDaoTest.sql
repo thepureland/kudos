@@ -8,8 +8,8 @@ merge into "sys_tenant" ("id", "name", "timezone", "default_language_code", "rem
 merge into "sys_system" ("code", "name", "remark", "active", "built_in")
     values ('svc-system-tenantres-dao-test-1', 'svc-system-tenantres-dao-test-1-name', 'from SysTenantResourceDaoTest', true, false);
 
-merge into "sys_sub_system" ("code", "name", "system_code", "remark", "active", "built_in")
-    values ('svc-subsys-tenantres-dao-test-1', 'svc-subsys-tenantres-dao-test-1-name', 'svc-system-tenantres-dao-test-1', 'from SysTenantResourceDaoTest', true, false);
+merge into "sys_system" ("code", "name", "parent_code", "sub_system", "remark", "active", "built_in")
+    values ('svc-subsys-tenantres-dao-test-1', 'svc-subsys-tenantres-dao-test-1-name', 'svc-system-tenantres-dao-test-1', true, 'from SysTenantResourceDaoTest', true, false);
 
 merge into "sys_resource" ("id", "name", "url", "resource_type_dict_code", "parent_id", "order_num", "icon", "sub_system_code", "remark", "active", "built_in")
     values ('40000000-0000-0000-0000-000000000082', 'svc-res-tenantres-dao-test-1', '/svc-res-tenantres-dao-test-1', 'M', null, 1, null, 'svc-subsys-tenantres-dao-test-1', 'from SysTenantResourceDaoTest', true, false),

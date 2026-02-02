@@ -1,9 +1,9 @@
 package io.kudos.ams.sys.core.cache
 
 import io.kudos.ability.cache.common.kit.CacheKit
-import io.kudos.ams.sys.common.vo.subsystem.SysSubSystemCacheItem
-import io.kudos.ams.sys.core.dao.SysSubSystemDao
-import io.kudos.ams.sys.core.model.po.SysSubSystem
+import io.kudos.ams.sys.common.vo.system.SysSystemCacheItem
+import io.kudos.ams.sys.core.dao.SysSystemDao
+import io.kudos.ams.sys.core.model.po.SysSystem
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
@@ -27,7 +27,7 @@ class SubSystemByCodeCacheHandlerTest : RdbAndRedisCacheTestBase() {
     private lateinit var cacheHandler: SubSystemByCodeCacheHandler
 
     @Resource
-    private lateinit var sysSubSystemDao: SysSubSystemDao
+    private lateinit var sysSubSystemDao: SysSystemDao
 
     private val newSubSystemName = "新子系统名称"
 
@@ -85,14 +85,14 @@ class SubSystemByCodeCacheHandlerTest : RdbAndRedisCacheTestBase() {
     fun syncOnUpdate() {
         // 更新数据库中已存在的记录
         val code = "code-2"
-        val success = sysSubSystemDao.updateProperties(code, mapOf(SysSubSystem::name.name to newSubSystemName))
+        val success = sysSubSystemDao.updateProperties(code, mapOf(SysSystem::name.name to newSubSystemName))
         assert(success)
 
         // 同步缓存
         cacheHandler.syncOnUpdate(code)
 
         // 验证缓存中的记录
-        val cacheItem1 = CacheKit.getValue(cacheHandler.cacheName(), code) as SysSubSystemCacheItem?
+        val cacheItem1 = CacheKit.getValue(cacheHandler.cacheName(), code) as SysSystemCacheItem?
         assertNotNull(cacheItem1)
         assertEquals(newSubSystemName, cacheItem1.name)
         val cacheItem2 = cacheHandler.getSubSystemByCode(code)
@@ -142,10 +142,10 @@ class SubSystemByCodeCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     private fun insertNewRecordToDb(): String {
         val timestamp = System.currentTimeMillis()
-        val sysSubSystem = SysSubSystem().apply {
+        val sysSubSystem = SysSystem().apply {
             code = "test_code_${timestamp}"
             name = "测试子系统_${timestamp}"
-            systemCode = "default"
+            subSystem = true
             active = true
         }
         return sysSubSystemDao.insert(sysSubSystem)

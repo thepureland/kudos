@@ -1,10 +1,9 @@
 package io.kudos.ams.sys.core.service.iservice
 
-import io.kudos.base.support.iservice.IBaseCrudService
-import io.kudos.ams.sys.core.model.po.SysSystem
 import io.kudos.ams.sys.common.vo.system.SysSystemCacheItem
 import io.kudos.ams.sys.common.vo.system.SysSystemRecord
-import io.kudos.ams.sys.common.vo.subsystem.SysSubSystemRecord
+import io.kudos.ams.sys.core.model.po.SysSystem
+import io.kudos.base.support.iservice.IBaseCrudService
 
 
 /**
@@ -57,7 +56,7 @@ interface ISysSystemService : IBaseCrudService<String, SysSystem> {
      * @author K
      * @since 1.0.0
      */
-    fun getSubSystemsBySystemCode(systemCode: String): List<SysSubSystemRecord>
+    fun getSubSystemsBySystemCode(systemCode: String): List<SysSystemRecord>
 
     //endregion your codes 2
 

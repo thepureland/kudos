@@ -2,8 +2,8 @@ package io.kudos.ams.sys.core.cache
 
 import io.kudos.ability.cache.common.batch.BatchCacheable
 import io.kudos.ability.cache.common.support.AbstractByIdCacheHandler
-import io.kudos.ams.sys.common.vo.subsystem.SysSubSystemCacheItem
-import io.kudos.ams.sys.core.dao.SysSubSystemDao
+import io.kudos.ams.sys.common.vo.system.SysSystemCacheItem
+import io.kudos.ams.sys.core.dao.SysSystemDao
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
 
@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-open class SubSystemByCodeCacheHandler : AbstractByIdCacheHandler<String, SysSubSystemCacheItem, SysSubSystemDao>() {
+open class SubSystemByCodeCacheHandler : AbstractByIdCacheHandler<String, SysSystemCacheItem, SysSystemDao>() {
 
     companion object {
         private const val CACHE_NAME = "SYS_SUB_SYSTEM_BY_CODE"
@@ -28,7 +28,7 @@ open class SubSystemByCodeCacheHandler : AbstractByIdCacheHandler<String, SysSub
 
     override fun cacheName(): String = CACHE_NAME
 
-    override fun doReload(key: String): SysSubSystemCacheItem? {
+    override fun doReload(key: String): SysSystemCacheItem? {
         return getSelf<SubSystemByCodeCacheHandler>().getSubSystemByCode(key)
     }
 
@@ -43,7 +43,7 @@ open class SubSystemByCodeCacheHandler : AbstractByIdCacheHandler<String, SysSub
         key = "#code",
         unless = "#result == null"
     )
-    open fun getSubSystemByCode(code: String): SysSubSystemCacheItem? {
+    open fun getSubSystemByCode(code: String): SysSystemCacheItem? {
         return getById(code)
     }
 
@@ -55,9 +55,9 @@ open class SubSystemByCodeCacheHandler : AbstractByIdCacheHandler<String, SysSub
      */
     @BatchCacheable(
         cacheNames = [CACHE_NAME],
-        valueClass = SysSubSystemCacheItem::class
+        valueClass = SysSystemCacheItem::class
     )
-    open fun getSubSystemsByCodes(codes: Collection<String>): Map<String, SysSubSystemCacheItem> {
+    open fun getSubSystemsByCodes(codes: Collection<String>): Map<String, SysSystemCacheItem> {
         return getByIds(codes)
     }
 

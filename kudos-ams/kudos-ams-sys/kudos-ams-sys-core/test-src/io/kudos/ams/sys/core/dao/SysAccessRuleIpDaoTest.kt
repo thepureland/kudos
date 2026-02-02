@@ -27,7 +27,7 @@ class SysAccessRuleIpDaoTest : RdbTestBase() {
     fun pagingSearch() {
         val searchPayload = SysAccessRuleIpSearchPayload().apply {
             this.tenantId = "40000000-0000-0000-0000-000000000110"
-            this.subSystemCode = "svc-subsys-arip-dao-test-1"
+            this.systemCode = "svc-system-arip-dao-test-1"
             this.pageNo = 1
             this.pageSize = 10
         }

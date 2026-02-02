@@ -47,12 +47,12 @@ open class SysAccessRuleIpService : BaseCrudService<String, SysAccessRuleIp, Sys
         return dao.pagingSearch(searchPayload)
     }
 
-    override fun getIpsBySubSystemAndTenant(subSystemCode: String, tenantId: String?): List<SysAccessRuleIpCacheItem> {
-        return accessRuleIpsBySubSysAndTenantIdCacheHandler.getAccessRuleIps(subSystemCode, tenantId)
+    override fun getIpsBySystemAndTenant(systemCode: String, tenantId: String?): List<SysAccessRuleIpCacheItem> {
+        return accessRuleIpsBySubSysAndTenantIdCacheHandler.getAccessRuleIps(systemCode, tenantId)
     }
 
-    override fun checkIpAccess(ip: Long, subSystemCode: String, tenantId: String?): Boolean {
-        val ipRules = getIpsBySubSystemAndTenant(subSystemCode, tenantId)
+    override fun checkIpAccess(ip: Long, systemCode: String, tenantId: String?): Boolean {
+        val ipRules = getIpsBySystemAndTenant(systemCode, tenantId)
         val now = java.time.LocalDateTime.now()
         
         return ipRules.any { rule ->

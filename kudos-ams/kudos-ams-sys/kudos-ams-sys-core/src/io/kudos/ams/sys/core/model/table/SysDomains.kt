@@ -18,9 +18,6 @@ object SysDomains : MaintainableTable<SysDomain>("sys_domain") {
     /** 域名 */
     var domain = varchar("domain").bindTo { it.domain }
 
-    /** 子系统编码 */
-    var subSystemCode = varchar("sub_system_code").bindTo { it.subSystemCode }
-
     /** 系统编码 */
     var systemCode = varchar("system_code").bindTo { it.systemCode }
 

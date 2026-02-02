@@ -20,6 +20,12 @@ data class SysSystemDetail (
     /** 名称 */
     var name: String? = null,
 
+    /** 是否子系统 */
+    var subSystem: Boolean? = null,
+
+    /** 父系统编号 */
+    var parentCode: String? = null,
+
     /** 备注 */
     var remark: String? = null,
 

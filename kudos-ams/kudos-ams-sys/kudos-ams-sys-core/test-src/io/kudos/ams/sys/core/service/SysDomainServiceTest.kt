@@ -38,13 +38,6 @@ class SysDomainServiceTest : RdbAndRedisCacheTestBase() {
     }
 
     @Test
-    fun getDomainsBySubSystemCode() {
-        val subSystemCode = "svc-subsys-domain-test-1"
-        val domains = sysDomainService.getDomainsBySubSystemCode(subSystemCode)
-        assertTrue(domains.any { it.subSystemCode == subSystemCode })
-    }
-
-    @Test
     fun getDomainsBySystemCode() {
         val systemCode = "svc-system-domain-test-1"
         val domains = sysDomainService.getDomainsBySystemCode(systemCode)

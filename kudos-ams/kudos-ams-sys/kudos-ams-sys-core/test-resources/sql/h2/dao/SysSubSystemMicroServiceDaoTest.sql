@@ -2,11 +2,8 @@
 -- 使用唯一前缀 svc-subsysms-dao-test-* 和唯一UUID确保测试数据隔离
 
 merge into "sys_system" ("code", "name", "remark", "active", "built_in")
-    values ('svc-system-subsysms-dao-test-1', 'svc-system-subsysms-dao-test-1-name', 'from SysSubSystemMicroServiceDaoTest', true, false);
-
-merge into "sys_sub_system" ("code", "name", "system_code", "remark", "active", "built_in")
-    values ('svc-subsys-subsysms-dao-test-1', 'svc-subsys-subsysms-dao-test-1-name', 'svc-system-subsysms-dao-test-1', 'from SysSubSystemMicroServiceDaoTest', true, false),
-           ('svc-subsys-subsysms-dao-test-2', 'svc-subsys-subsysms-dao-test-2-name', 'svc-system-subsysms-dao-test-1', 'from SysSubSystemMicroServiceDaoTest', true, false);
+    values ('svc-system-subsysms-dao-test-1', 'svc-system-subsysms-dao-test-1-name', 'from SysSubSystemMicroServiceDaoTest', true, false),
+           ('svc-subsys-subsysms-dao-test-2', 'svc-subsys-subsysms-dao-test-2-name', 'from SysSubSystemMicroServiceDaoTest', true, false);
 
 merge into "sys_micro_service" ("code", "name", "context", "remark", "active", "built_in")
     values ('svc-ms-subsysms-dao-test-1', 'svc-ms-subsysms-dao-test-1-name', '/svc-ms-ssms-dao-test-1', 'from SysSubSystemMicroServiceDaoTest', true, false),
