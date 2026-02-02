@@ -1,30 +1,30 @@
-package io.kudos.ms.sys.common.vo.tenantlanguage
+package io.kudos.ms.sys.common.vo.tenantlocale
 
-import io.kudos.base.support.payload.FormPayload
+import io.kudos.base.support.result.IdJsonResult
 
 
 /**
- * 租户-语言关系表单载体
+ * 租户-语言关系查询记录
  *
  * @author K
  * @since 1.0.0
  */
-data class SysTenantLanguagePayload (
+data class SysTenantLocaleRecord (
+
+    //region your codes 1
 
     /** 主键 */
     override var id: String? = null,
-
-    //region your codes 1
 
     /** 租户id */
     var tenantId: String? = null,
 
     /** 语言代码 */
-    var languageCode: String? = null,
+    var localeCode: String? = null,
 
     //endregion your codes 1
 //region your codes 2
-) : FormPayload<String>() {
+) : IdJsonResult<String>() {
 //endregion your codes 2
 
     //region your codes 3

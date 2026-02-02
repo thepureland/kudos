@@ -7,6 +7,7 @@ import io.kudos.ms.sys.core.model.po.SysMicroService
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
+import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -141,10 +142,10 @@ class MicroServiceByCodeCacheHandlerTest : RdbAndRedisCacheTestBase() {
     }
 
     private fun insertNewRecordToDb(): String {
-        val timestamp = System.currentTimeMillis()
+        val unique = UUID.randomUUID().toString().replace("-", "").take(12)
         val sysMicroService = SysMicroService().apply {
-            code = "test_code_${timestamp}"
-            name = "测试微服务_${timestamp}"
+            code = "tc_${unique}"
+            name = "测试微服务_${unique}"
             context = "/test"
             active = true
         }

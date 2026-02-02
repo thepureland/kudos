@@ -7,6 +7,7 @@ import io.kudos.ms.sys.core.model.po.SysSystem
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
+import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -141,10 +142,10 @@ class SystemByCodeCacheHandlerTest : RdbAndRedisCacheTestBase() {
     }
 
     private fun insertNewRecordToDb(): String {
-        val timestamp = System.currentTimeMillis()
+        val unique = UUID.randomUUID().toString().replace("-", "").take(12)
         val sysSystem = SysSystem().apply {
-            code = "test_code_${timestamp}"
-            name = "测试系统_${timestamp}"
+            code = "tc_${unique}"
+            name = "测试系统_${unique}"
             active = true
         }
         return sysSystemDao.insert(sysSystem)

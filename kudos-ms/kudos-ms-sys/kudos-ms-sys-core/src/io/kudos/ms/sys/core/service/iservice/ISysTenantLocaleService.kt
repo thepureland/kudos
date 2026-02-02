@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.core.service.iservice
 
 import io.kudos.base.support.iservice.IBaseCrudService
-import io.kudos.ms.sys.core.model.po.SysTenantLanguage
+import io.kudos.ms.sys.core.model.po.SysTenantLocale
 
 
 /**
@@ -11,7 +11,7 @@ import io.kudos.ms.sys.core.model.po.SysTenantLanguage
  * @since 1.0.0
  */
 //region your codes 1
-interface ISysTenantLanguageService : IBaseCrudService<String, SysTenantLanguage> {
+interface ISysTenantLocaleService : IBaseCrudService<String, SysTenantLocale> {
 //endregion your codes 1
 
     //region your codes 2
@@ -24,50 +24,50 @@ interface ISysTenantLanguageService : IBaseCrudService<String, SysTenantLanguage
      * @author K
      * @since 1.0.0
      */
-    fun getLanguageCodesByTenantId(tenantId: String): Set<String>
+    fun getLocaleCodesByTenantId(tenantId: String): Set<String>
 
     /**
      * 根据语言代码获取租户id列表
      *
-     * @param languageCode 语言代码
+     * @param localeCode 语言代码
      * @return 租户id集合
      * @author K
      * @since 1.0.0
      */
-    fun getTenantIdsByLanguageCode(languageCode: String): Set<String>
+    fun getTenantIdsByLocaleCode(localeCode: String): Set<String>
 
     /**
      * 批量绑定租户与语言的关系
      *
      * @param tenantId 租户id
-     * @param languageCodes 语言代码集合
+     * @param localeCodes 语言代码集合
      * @return 成功绑定的数量
      * @author K
      * @since 1.0.0
      */
-    fun batchBind(tenantId: String, languageCodes: Collection<String>): Int
+    fun batchBind(tenantId: String, localeCodes: Collection<String>): Int
 
     /**
      * 解绑租户与语言的关系
      *
      * @param tenantId 租户id
-     * @param languageCode 语言代码
+     * @param localeCode 语言代码
      * @return 是否解绑成功
      * @author K
      * @since 1.0.0
      */
-    fun unbind(tenantId: String, languageCode: String): Boolean
+    fun unbind(tenantId: String, localeCode: String): Boolean
 
     /**
      * 检查关系是否存在
      *
      * @param tenantId 租户id
-     * @param languageCode 语言代码
+     * @param localeCode 语言代码
      * @return 是否存在
      * @author K
      * @since 1.0.0
      */
-    fun exists(tenantId: String, languageCode: String): Boolean
+    fun exists(tenantId: String, localeCode: String): Boolean
 
     //endregion your codes 2
 

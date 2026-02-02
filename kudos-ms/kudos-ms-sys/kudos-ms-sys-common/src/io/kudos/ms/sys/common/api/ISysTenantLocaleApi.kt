@@ -8,7 +8,7 @@ package io.kudos.ms.sys.common.api
  * @since 1.0.0
  */
 //region your codes 1
-interface ISysTenantLanguageApi {
+interface ISysTenantLocaleApi {
 //endregion your codes 1
 
     //region your codes 2

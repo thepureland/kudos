@@ -8,33 +8,33 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * junit test for SysTenantLanguageDao
+ * junit test for SysTenantLocaleDao
  *
- * 测试数据来源：`SysTenantLanguageDaoTest.sql`
+ * 测试数据来源：`SysTenantLocaleDaoTest.sql`
  *
  * @author K
  * @author AI: Cursor
  * @since 1.0.0
  */
 @EnabledIfDockerInstalled
-class SysTenantLanguageDaoTest : RdbTestBase() {
+class SysTenantLocaleDaoTest : RdbTestBase() {
 
     @Resource
-    private lateinit var sysTenantLanguageDao: SysTenantLanguageDao
+    private lateinit var sysTenantLocaleDao: SysTenantLocaleDao
 
     @Test
-    fun searchLanguageCodesByTenantId() {
+    fun searchLocaleCodesByTenantId() {
         val tenantId = "40000000-0000-0000-0000-000000000090"
-        val codes = sysTenantLanguageDao.searchLanguageCodesByTenantId(tenantId)
+        val codes = sysTenantLocaleDao.searchLocaleCodesByTenantId(tenantId)
         assertTrue(codes.size >= 2)
         assertTrue(codes.contains("zh-CN"))
         assertTrue(codes.contains("en-US"))
     }
 
     @Test
-    fun searchTenantIdsByLanguageCode() {
-        val languageCode = "zh-CN"
-        val tenantIds = sysTenantLanguageDao.searchTenantIdsByLanguageCode(languageCode)
+    fun searchTenantIdsByLocaleCode() {
+        val localeCode = "zh-CN"
+        val tenantIds = sysTenantLocaleDao.searchTenantIdsByLocaleCode(localeCode)
         assertTrue(tenantIds.size >= 2)
         assertTrue(tenantIds.contains("40000000-0000-0000-0000-000000000090"))
         assertTrue(tenantIds.contains("40000000-0000-0000-0000-000000000091"))
@@ -43,9 +43,9 @@ class SysTenantLanguageDaoTest : RdbTestBase() {
     @Test
     fun exists() {
         // 测试存在的关系
-        assertTrue(sysTenantLanguageDao.exists("40000000-0000-0000-0000-000000000090", "zh-CN"))
+        assertTrue(sysTenantLocaleDao.exists("40000000-0000-0000-0000-000000000090", "zh-CN"))
         
         // 测试不存在的关系
-        assertFalse(sysTenantLanguageDao.exists("40000000-0000-0000-0000-000000000090", "non-existent-lang"))
+        assertFalse(sysTenantLocaleDao.exists("40000000-0000-0000-0000-000000000090", "non-existent-lang"))
     }
 }

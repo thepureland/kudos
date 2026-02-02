@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.core.model.table
 
-import io.kudos.ms.sys.core.model.po.SysTenantLanguage
+import io.kudos.ms.sys.core.model.po.SysTenantLocale
 import org.ktorm.schema.*
 import io.kudos.ability.data.rdb.ktorm.support.StringIdTable
 
@@ -12,14 +12,14 @@ import io.kudos.ability.data.rdb.ktorm.support.StringIdTable
  * @since 1.0.0
  */
 //region your codes 1
-object SysTenantLanguages : StringIdTable<SysTenantLanguage>("sys_tenant_language") {
+object SysTenantLocales : StringIdTable<SysTenantLocale>("sys_tenant_locale") {
 //endregion your codes 1
 
     /** 租户id */
     var tenantId = varchar("tenant_id").bindTo { it.tenantId }
 
     /** 语言代码 */
-    var languageCode = varchar("language_code").bindTo { it.languageCode }
+    var localeCode = varchar("locale_code").bindTo { it.localeCode }
 
     /** 创建者id */
     var createUserId = varchar("create_user_id").bindTo { it.createUserId }
