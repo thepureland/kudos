@@ -21,7 +21,7 @@ open class ComponentInitializerSelector : ImportSelector {
     override fun selectImports(importingClassMetadata: AnnotationMetadata): Array<String> {
         val exclusionComponentInitializer = getExclusionComponentInitializer(importingClassMetadata)
         val classNames = mutableListOf<String>()
-        val locations = listOf("io.kudos.context", "io.kudos.ability", "io.kudos.ams")
+        val locations = listOf("io.kudos.context", "io.kudos.ability", "io.kudos.ms")
         locations.forEach { location ->
             val classes = ScanKit.findImplementations(location, IComponentInitializer::class)
             classes.filter { it !in exclusionComponentInitializer }

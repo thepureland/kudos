@@ -1,0 +1,25 @@
+package io.kudos.ms.auth.core.dao
+
+import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
+import io.kudos.ms.auth.core.model.po.AuthRole
+import io.kudos.ms.auth.core.model.table.AuthRoles
+import org.springframework.stereotype.Repository
+
+
+/**
+ * 角色数据访问对象
+ *
+ * @author K
+ * @author AI: Cursor
+ * @since 1.0.0
+ */
+@Repository
+//region your codes 1
+open class AuthRoleDao : BaseCrudDao<String, AuthRole, AuthRoles>() {
+//endregion your codes 1
+
+    //region your codes 2
+
+    //endregion your codes 2
+
+}
