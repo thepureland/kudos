@@ -27,12 +27,12 @@ class SysSubSystemMicroServiceServiceTest : RdbAndRedisCacheTestBase() {
     fun getMicroServiceCodesBySubSystemCode() {
         val subSystemCode = "svc-subsys-ssms-test-1"
         val codes = sysSubSystemMicroServiceService.getMicroServiceCodesBySubSystemCode(subSystemCode)
-        assertTrue(codes.contains("svc-ms-ssms-test-1"))
+        assertTrue(codes.contains("svc-ms-ssms-test-1_5473"))
     }
 
     @Test
     fun getSubSystemCodesByMicroServiceCode() {
-        val microServiceCode = "svc-ms-ssms-test-1"
+        val microServiceCode = "svc-ms-ssms-test-1_5473"
         val codes = sysSubSystemMicroServiceService.getSubSystemCodesByMicroServiceCode(microServiceCode)
         assertTrue(codes.contains("svc-subsys-ssms-test-1"))
     }
@@ -40,7 +40,7 @@ class SysSubSystemMicroServiceServiceTest : RdbAndRedisCacheTestBase() {
     @Test
     fun exists() {
         val subSystemCode = "svc-subsys-ssms-test-1"
-        val microServiceCode = "svc-ms-ssms-test-1"
+        val microServiceCode = "svc-ms-ssms-test-1_5473"
         assertTrue(sysSubSystemMicroServiceService.exists(subSystemCode, microServiceCode))
         assertFalse(sysSubSystemMicroServiceService.exists(subSystemCode, "non-existent"))
     }
@@ -48,7 +48,7 @@ class SysSubSystemMicroServiceServiceTest : RdbAndRedisCacheTestBase() {
     @Test
     fun unbind() {
         val subSystemCode = "svc-subsys-ssms-test-1"
-        val microServiceCode = "svc-ms-ssms-test-1"
+        val microServiceCode = "svc-ms-ssms-test-1_5473"
         val result = sysSubSystemMicroServiceService.unbind(subSystemCode, microServiceCode)
         assertTrue(result)
         

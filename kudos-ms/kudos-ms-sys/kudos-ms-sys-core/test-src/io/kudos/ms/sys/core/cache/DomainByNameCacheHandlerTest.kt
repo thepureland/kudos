@@ -43,11 +43,11 @@ class DomainByNameCacheHandlerTest : RdbAndRedisCacheTestBase() {
         val sysDomainNew = insertNewRecordToDb()
 
         // 更新数据库的记录
-        val idUpdate = "8309fe9a-8810-4a79-9cff-222222222222"
+        val idUpdate = "8309fe9a-8810-4a79-9cff-222222225724"
         dao.updateProperties(idUpdate, mapOf(SysDomain::domain.name to newName))
 
         // 从数据库中删除记录
-        val idDelete = "8309fe9a-8810-4a79-9cff-333333333333"
+        val idDelete = "8309fe9a-8810-4a79-9cff-333333335724"
         dao.deleteById(idDelete)
 
         // 重载缓存，但不清除旧缓存
@@ -114,7 +114,7 @@ class DomainByNameCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun syncOnUpdate() {
         // 更新数据库中已存在的记录
-        val id = "8309fe9a-8810-4a79-9cff-444444444444"
+        val id = "8309fe9a-8810-4a79-9cff-444444445724"
         val success = dao.updateProperties(id, mapOf(SysDomain::domain.name to newName))
         assert(success)
 
@@ -133,7 +133,7 @@ class DomainByNameCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnDelete() {
-        val id = "8309fe9a-8810-4a79-9cff-555555555555"
+        val id = "8309fe9a-8810-4a79-9cff-555555555724"
         val sysDomain = dao.get(id)!!
 
         // 删除数据库中的记录
@@ -152,8 +152,8 @@ class DomainByNameCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnBatchDelete() {
-        val id1 = "8309fe9a-8810-4a79-9cff-666666666666"
-        val id2 = "8309fe9a-8810-4a79-9cff-777777777777"
+        val id1 = "8309fe9a-8810-4a79-9cff-666666665724"
+        val id2 = "8309fe9a-8810-4a79-9cff-777777775724"
         val ids = listOf(id1, id2)
         val domain1 = "domain6.com"
         val domain2 = "domain7.com"

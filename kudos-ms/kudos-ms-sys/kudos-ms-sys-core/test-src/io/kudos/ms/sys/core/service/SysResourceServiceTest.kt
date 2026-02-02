@@ -25,14 +25,14 @@ class SysResourceServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun getResourceById() {
-        val id = "20000000-0000-0000-0000-000000000031"
+        val id = "20000000-0000-0000-0000-000000001461"
         val cacheItem = sysResourceService.getResourceById(id)
         assertNotNull(cacheItem)
     }
 
     @Test
     fun getResourceBySubSystemAndUrl() {
-        val subSystemCode = "svc-subsys-res-test-1"
+        val subSystemCode = "svc-subsys-res-test-1_1461"
         val url = "/svc-res-test-1"
         val resourceId = sysResourceService.getResourceBySubSystemAndUrl(subSystemCode, url)
         assertNotNull(resourceId)
@@ -40,28 +40,28 @@ class SysResourceServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun getResourcesBySubSystemCode() {
-        val subSystemCode = "svc-subsys-res-test-1"
+        val subSystemCode = "svc-subsys-res-test-1_1461"
         val resources = sysResourceService.getResourcesBySubSystemCode(subSystemCode)
         assertTrue(resources.isNotEmpty())
     }
 
     @Test
     fun getChildResources() {
-        val parentId = "20000000-0000-0000-0000-000000000031"
+        val parentId = "20000000-0000-0000-0000-000000001461"
         val children = sysResourceService.getChildResources(parentId)
-        assertTrue(children.any { it.id == "20000000-0000-0000-0000-000000000032" })
+        assertTrue(children.any { it.id == "20000000-0000-0000-0000-000000001462" })
     }
 
     @Test
     fun getResourceTree() {
-        val subSystemCode = "svc-subsys-res-test-1"
+        val subSystemCode = "svc-subsys-res-test-1_1461"
         val tree = sysResourceService.getResourceTree(subSystemCode, null)
         assertTrue(tree.isNotEmpty())
     }
 
     @Test
     fun updateActive() {
-        val id = "20000000-0000-0000-0000-000000000031"
+        val id = "20000000-0000-0000-0000-000000001461"
         assertTrue(sysResourceService.updateActive(id, false))
         assertTrue(sysResourceService.updateActive(id, true))
     }

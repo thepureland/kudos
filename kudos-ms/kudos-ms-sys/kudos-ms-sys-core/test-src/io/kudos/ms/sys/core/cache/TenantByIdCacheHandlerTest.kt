@@ -34,7 +34,7 @@ class TenantByIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun getTenantById() {
         // 存在的
-        var id = "118772a0-c053-4634-a5e5-111111111111"
+        var id = "118772a0-c053-4634-a5e5-111111115282"
         val cacheItem2 = cacheHandler.getTenantById(id)
         val cacheItem3 = cacheHandler.getTenantById(id)
         assertNotNull(cacheItem2)
@@ -48,8 +48,8 @@ class TenantByIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun getTenantsByIds() {
         // 都存在的
-        var id1 = "118772a0-c053-4634-a5e5-111111111111"
-        var id2 = "118772a0-c053-4634-a5e5-222222222222"
+        var id1 = "118772a0-c053-4634-a5e5-111111115282"
+        var id2 = "118772a0-c053-4634-a5e5-222222225282"
         val result2 = cacheHandler.getTenantsByIds(listOf(id1, id2))
         val result3 = cacheHandler.getTenantsByIds(listOf(id1, id2))
         assert(result2.isNotEmpty())
@@ -86,7 +86,7 @@ class TenantByIdCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun syncOnUpdate() {
         // 更新数据库中已存在的记录
-        val id = "118772a0-c053-4634-a5e5-222222222222"
+        val id = "118772a0-c053-4634-a5e5-222222225282"
         val success = sysTenantDao.updateProperties(id, mapOf(SysTenant::name.name to newTenantName))
         assert(success)
 

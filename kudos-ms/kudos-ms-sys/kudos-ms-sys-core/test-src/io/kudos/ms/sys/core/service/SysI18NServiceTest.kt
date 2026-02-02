@@ -27,7 +27,7 @@ class SysI18NServiceTest : RdbAndRedisCacheTestBase() {
     @Test
     fun getI18nValue() {
         val locale = "zh_CN"
-        val atomicServiceCode = "svc-as-i18n-test-1"
+        val atomicServiceCode = "svc-as-i18n-test-1_8449"
         val i18nTypeDictCode = "label"
         val key = "svc-i18n-key-1"
         val value = sysI18nService.getI18nValue(locale, atomicServiceCode, i18nTypeDictCode, key)
@@ -37,7 +37,7 @@ class SysI18NServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun getI18nsByAtomicServiceAndType() {
-        val atomicServiceCode = "svc-as-i18n-test-1"
+        val atomicServiceCode = "svc-as-i18n-test-1_8449"
         val i18nTypeDictCode = "label"
         val i18ns = sysI18nService.getI18nsByAtomicServiceAndType(atomicServiceCode, i18nTypeDictCode, null)
         assertTrue(i18ns.isNotEmpty())
@@ -48,7 +48,7 @@ class SysI18NServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun updateActive() {
-        val id = "20000000-0000-0000-0000-000000000040"
+        val id = "20000000-0000-0000-0000-000000008449"
         assertTrue(sysI18nService.updateActive(id, false))
         assertTrue(sysI18nService.updateActive(id, true))
     }

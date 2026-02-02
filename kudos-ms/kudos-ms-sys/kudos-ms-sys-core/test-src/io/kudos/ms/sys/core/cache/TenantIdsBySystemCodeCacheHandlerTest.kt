@@ -36,7 +36,7 @@ class TenantIdsBySystemCodeCacheHandlerTest : RdbAndRedisCacheTestBase() {
         val sysResourceNew = insertNewRecordToDb()
 
         // 从数据库中删除记录
-        val idDelete = "b3846388-5e61-4b58-8fd8-bbbbbbbbbbbb"
+        val idDelete = "b3846388-5e61-4b58-8fd8-bbbbbbbb8781"
         dao.deleteById(idDelete)
 
         // 重载缓存，但不清除旧缓存
@@ -78,7 +78,7 @@ class TenantIdsBySystemCodeCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnDelete() {
-        val id = "b3846388-5e61-4b58-8fd8-eeeeeeeeeeee"
+        val id = "b3846388-5e61-4b58-8fd8-eeeeeeee8781"
         val sysTenantSystem = dao.get(id)!!
         val tenantId = sysTenantSystem.tenantId
         val systemCodes = dao.searchSystemCodesByTenantId(tenantId)
@@ -97,14 +97,14 @@ class TenantIdsBySystemCodeCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnBatchDelete() {
-        val id1 = "b3846388-5e61-4b58-8fd8-ffffffffffff"
-        val id2 = "b3846388-5e61-4b58-8fd8-gggggggggggg"
+        val id1 = "b3846388-5e61-4b58-8fd8-ffffffff8781"
+        val id2 = "b3846388-5e61-4b58-8fd8-ggggggg_5246"
         val ids = listOf(id1, id2)
         val systemCode1 = "subSys-a"
         val systemCode2 = "subSys-d"
         val systemCodes = listOf(systemCode1, systemCode2)
-        val tenantId1 = "118772a0-c053-4634-a5e5-444444444444"
-        val tenantId2 = "118772a0-c053-4634-a5e5-555555555555"
+        val tenantId1 = "218772a0-c053-4634-a5e5-444444448781"
+        val tenantId2 = "218772a0-c053-4634-a5e5-555555558781"
 
         // 批量删除数据库中的记录
         val count = dao.batchDelete(ids)

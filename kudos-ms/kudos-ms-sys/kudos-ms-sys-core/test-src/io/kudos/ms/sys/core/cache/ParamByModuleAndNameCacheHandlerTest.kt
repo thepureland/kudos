@@ -45,11 +45,11 @@ class ParamByModuleAndNameCacheHandlerTest : RdbAndRedisCacheTestBase() {
         val sysParamNew = insertNewRecordToDb()
 
         // 更新数据库的记录
-        val idUpdate = "9edc0327-99f1-4767-b42b-222222222222"
+        val idUpdate = "9edc0327-99f1-4767-b42b-222222229755"
         dao.updateProperties(idUpdate, mapOf(SysParam::paramValue.name to newValue))
 
         // 从数据库中删除记录
-        val idDelete = "9edc0327-99f1-4767-b42b-333333333333"
+        val idDelete = "9edc0327-99f1-4767-b42b-333333339755"
         dao.deleteById(idDelete)
 
         // 重载缓存，但不清除旧缓存
@@ -110,7 +110,7 @@ class ParamByModuleAndNameCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun syncOnUpdate() {
         // 更新数据库中已存在的记录
-        val id = "9edc0327-99f1-4767-b42b-444444444444"
+        val id = "9edc0327-99f1-4767-b42b-444444449755"
         val success = dao.updateProperties(id, mapOf(SysParam::paramValue.name to newValue))
         assert(success)
 
@@ -132,7 +132,7 @@ class ParamByModuleAndNameCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun syncOnUpdateActive() {
         // 由true更新为false
-        var id = "9edc0327-99f1-4767-b42b-555555555555"
+        var id = "9edc0327-99f1-4767-b42b-555555559755"
         var success = dao.updateProperties(id, mapOf(SysParam::active.name to false))
         assert(success)
         var sysParam = dao.get(id)!!
@@ -142,7 +142,7 @@ class ParamByModuleAndNameCacheHandlerTest : RdbAndRedisCacheTestBase() {
         assertNull(cacheHandler.getParam(sysParam.atomicServiceCode, sysParam.paramName))
 
         // 由false更新为true
-        id = "9edc0327-99f1-4767-b42b-000000000000"
+        id = "9edc0327-99f1-4767-b42b-000000009755"
         success = dao.updateProperties(id, mapOf(SysParam::active.name to true))
         assert(success)
         sysParam = dao.get(id)!!
@@ -154,7 +154,7 @@ class ParamByModuleAndNameCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnDelete() {
-        val id = "9edc0327-99f1-4767-b42b-666666666666"
+        val id = "9edc0327-99f1-4767-b42b-666666669755"
         val sysParam = dao.get(id)!!
 
         // 删除数据库中的记录
@@ -172,8 +172,8 @@ class ParamByModuleAndNameCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnBatchDelete() {
-        val id1 = "9edc0327-99f1-4767-b42b-777777777777"
-        val id2 = "9edc0327-99f1-4767-b42b-888888888888"
+        val id1 = "9edc0327-99f1-4767-b42b-777777779755"
+        val id2 = "9edc0327-99f1-4767-b42b-888888889755"
         val ids = listOf(id1, id2)
         val atomicServiceCode1 = "atomicServiceCode-b"
         val atomicServiceCode2 = "atomicServiceCode-c"

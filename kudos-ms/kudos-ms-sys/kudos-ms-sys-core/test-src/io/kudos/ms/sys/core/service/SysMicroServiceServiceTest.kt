@@ -25,7 +25,7 @@ class SysMicroServiceServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun getMicroServiceByCode_and_updateActive() {
-        val code = "svc-microservice-test-1"
+        val code = "svc-microservice-test-1_2407"
         val cacheItem = sysMicroServiceService.getMicroServiceByCode(code)
         assertNotNull(cacheItem)
         assertTrue(sysMicroServiceService.updateActive(code, false))
@@ -34,9 +34,9 @@ class SysMicroServiceServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun getAtomicServicesByMicroServiceCode() {
-        val microServiceCode = "svc-microservice-test-1"
+        val microServiceCode = "svc-microservice-test-1_2407"
         val atomicServices = sysMicroServiceService.getAtomicServicesByMicroServiceCode(microServiceCode)
-        assertTrue(atomicServices.any { it.code == "svc-as-ms-test-1" })
+        assertTrue(atomicServices.any { it.code == "svc-as-ms-test-1_2407" })
     }
 }
 

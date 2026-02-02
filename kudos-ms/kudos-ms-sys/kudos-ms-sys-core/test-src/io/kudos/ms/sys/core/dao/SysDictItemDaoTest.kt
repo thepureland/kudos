@@ -25,7 +25,7 @@ class SysDictItemDaoTest : RdbTestBase() {
 
     @Test
     fun searchActiveItemByDictId() {
-        val dictId = "40000000-0000-0000-0000-000000000050"
+        val dictId = "40000000-0000-0000-0000-000000002921"
         val items = sysDictItemDao.searchActiveItemByDictId(dictId)
         assertTrue(items.size >= 2)
         assertTrue(items.any { it.itemCode == "svc-item-ditem-dao-test-1" })

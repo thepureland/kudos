@@ -52,7 +52,7 @@ class SysParamServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun updateActive() {
-        val id = "20000000-0000-0000-0000-000000000038"
+        val id = "20000000-0000-0000-0000-000000008393"
         assertTrue(sysParamService.updateActive(id, false))
         assertTrue(sysParamService.updateActive(id, true))
     }

@@ -45,13 +45,13 @@ class CacheByNameCacheHandlerTest : RdbAndRedisCacheTestBase() {
         val sysCache = insertNewRecordToDb()
 
         // 更新数据库的记录
-        val cacheIdUpdate = "e5340806-97b4-43a4-84c6-222222222222"
+        val cacheIdUpdate = "e5340806-97b4-43a4-84c6-222222225162"
         val cacheNameUpdate = "TEST_CACHE_2"
         val newTtl = 666666
         sysCacheDao.updateProperties(cacheIdUpdate, mapOf(SysCache::ttl.name to newTtl))
 
         // 从数据库中删除记录
-        val idDelete = "e5340806-97b4-43a4-84c6-333333333333"
+        val idDelete = "e5340806-97b4-43a4-84c6-333333335162"
         val cacheNameDelete = "TEST_CACHE_3"
         sysCacheDao.deleteById(idDelete)
 
@@ -113,7 +113,7 @@ class CacheByNameCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun syncOnUpdate() {
         // 更新数据库中已存在的记录
-        val cacheId = "e5340806-97b4-43a4-84c6-222222222222"
+        val cacheId = "e5340806-97b4-43a4-84c6-222222225162"
         val cacheName = "TEST_CACHE_2"
         val newTtl = 666666
         val success = sysCacheDao.updateProperties(cacheId, mapOf(SysCache::ttl.name to newTtl))
@@ -133,7 +133,7 @@ class CacheByNameCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun syncOnDelete() {
         // 删除数据库中的记录
-        val id = "e5340806-97b4-43a4-84c6-333333333333"
+        val id = "e5340806-97b4-43a4-84c6-333333335162"
         val name = "TEST_CACHE_3"
         val deleteSuccess = sysCacheDao.deleteById(id)
         assert(deleteSuccess)
@@ -151,9 +151,9 @@ class CacheByNameCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun syncOnBatchDelete() {
         // 批量删除数据库中的记录
-        val id1 = "2da8e352-6e6f-4cd4-93e0-444444444444"
+        val id1 = "2da8e352-6e6f-4cd4-93e0-444444445162"
         val name1 = "TEST_CACHE_4"
-        val id2 = "2da8e352-6e6f-4cd4-93e0-555555555555"
+        val id2 = "2da8e352-6e6f-4cd4-93e0-555555555162"
         val name2 = "TEST_CACHE_5"
         val ids = listOf(id1, id2)
         val count = sysCacheDao.batchDelete(ids)

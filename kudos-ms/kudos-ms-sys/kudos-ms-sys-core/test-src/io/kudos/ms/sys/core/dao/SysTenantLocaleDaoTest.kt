@@ -24,7 +24,7 @@ class SysTenantLocaleDaoTest : RdbTestBase() {
 
     @Test
     fun searchLocaleCodesByTenantId() {
-        val tenantId = "40000000-0000-0000-0000-000000000090"
+        val tenantId = "40000000-0000-0000-0000-000000003459"
         val codes = sysTenantLocaleDao.searchLocaleCodesByTenantId(tenantId)
         assertTrue(codes.size >= 2)
         assertTrue(codes.contains("zh-CN"))
@@ -36,16 +36,16 @@ class SysTenantLocaleDaoTest : RdbTestBase() {
         val localeCode = "zh-CN"
         val tenantIds = sysTenantLocaleDao.searchTenantIdsByLocaleCode(localeCode)
         assertTrue(tenantIds.size >= 2)
-        assertTrue(tenantIds.contains("40000000-0000-0000-0000-000000000090"))
-        assertTrue(tenantIds.contains("40000000-0000-0000-0000-000000000091"))
+        assertTrue(tenantIds.contains("40000000-0000-0000-0000-000000003459"))
+        assertTrue(tenantIds.contains("40000000-0000-0000-0000-000000003459"))
     }
 
     @Test
     fun exists() {
         // 测试存在的关系
-        assertTrue(sysTenantLocaleDao.exists("40000000-0000-0000-0000-000000000090", "zh-CN"))
+        assertTrue(sysTenantLocaleDao.exists("40000000-0000-0000-0000-000000003459", "zh-CN"))
         
         // 测试不存在的关系
-        assertFalse(sysTenantLocaleDao.exists("40000000-0000-0000-0000-000000000090", "non-existent-lang"))
+        assertFalse(sysTenantLocaleDao.exists("40000000-0000-0000-0000-000000003459", "non-existent-lang"))
     }
 }

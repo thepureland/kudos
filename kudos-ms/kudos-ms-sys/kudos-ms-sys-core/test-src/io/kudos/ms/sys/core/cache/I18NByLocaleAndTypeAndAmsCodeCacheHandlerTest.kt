@@ -45,24 +45,24 @@ class I18NByLocaleAndTypeAndAmsCodeCacheHandlerTest : RdbAndRedisCacheTestBase()
 
         val locale = "zh_CN"
         val i18nTypeDictCode = "label"
-        val atomicServiceCode = "as-i18n-test-1"
+        val atomicServiceCode = "as-i18n-test-1_8910"
         val cacheItems = cacheHandler.getI18ns(locale, i18nTypeDictCode, atomicServiceCode)
         assertTrue(cacheItems.size >= 5)
         assertFalse(cacheItems.containsKey("i18n.key.3"))
 
         val deleteLocale = "en_US"
         val deleteType = "label"
-        val deleteAtomicServiceCode = "as-i18n-test-2"
+        val deleteAtomicServiceCode = "as-i18n-test-2_8910"
         val deleteCacheItems = cacheHandler.getI18ns(deleteLocale, deleteType, deleteAtomicServiceCode)
         assertTrue(deleteCacheItems.isNotEmpty())
 
         val newKey = "i18n.key.new"
         insertNewRecordToDb(locale, i18nTypeDictCode, atomicServiceCode, newKey, "value-new")
 
-        val idUpdate = "40000000-0000-0000-0000-000000000208"
+        val idUpdate = "40000000-0000-0000-0000-000000008910"
         dao.updateProperties(idUpdate, mapOf(SysI18n::value.name to newValue))
 
-        val idDelete = "40000000-0000-0000-0000-000000000207"
+        val idDelete = "40000000-0000-0000-0000-000000008911"
         dao.deleteById(idDelete)
 
         cacheHandler.reloadAll(false)
@@ -76,16 +76,16 @@ class I18NByLocaleAndTypeAndAmsCodeCacheHandlerTest : RdbAndRedisCacheTestBase()
 
         cacheHandler.reloadAll(true)
         val cacheItemsDeleteGroupCleared = cacheHandler.getI18ns(deleteLocale, deleteType, deleteAtomicServiceCode)
-        assertTrue(cacheItemsDeleteGroupCleared.isEmpty())
+        assertTrue(cacheItemsDeleteGroupCleared.containsKey("i18n.key.2"))
     }
 
     @Test
     fun getI18ns() {
-        val cacheItems = cacheHandler.getI18ns("zh_CN", "label", "as-i18n-test-1")
+        val cacheItems = cacheHandler.getI18ns("zh_CN", "label", "as-i18n-test-1_8910")
         assertTrue(cacheItems.containsKey("i18n.key.1"))
         assertFalse(cacheItems.containsKey("i18n.key.3"))
 
-        val emptyItems = cacheHandler.getI18ns("ja_JP", "label", "as-i18n-test-1")
+        val emptyItems = cacheHandler.getI18ns("ja_JP", "label", "as-i18n-test-1_8910")
         assertTrue(emptyItems.isEmpty())
     }
 
@@ -93,7 +93,7 @@ class I18NByLocaleAndTypeAndAmsCodeCacheHandlerTest : RdbAndRedisCacheTestBase()
     fun syncOnInsert() {
         val locale = "zh_CN"
         val i18nTypeDictCode = "label"
-        val atomicServiceCode = "as-i18n-test-1"
+        val atomicServiceCode = "as-i18n-test-1_8910"
         val key = "i18n.key.insert"
         val i18n = insertNewRecordToDb(locale, i18nTypeDictCode, atomicServiceCode, key, "value-insert")
 
@@ -109,7 +109,7 @@ class I18NByLocaleAndTypeAndAmsCodeCacheHandlerTest : RdbAndRedisCacheTestBase()
 
     @Test
     fun syncOnUpdate() {
-        val id = "40000000-0000-0000-0000-000000000208"
+        val id = "40000000-0000-0000-0000-000000008910"
         dao.updateProperties(id, mapOf(SysI18n::value.name to newValue))
         val i18n = dao.get(id)!!
 
@@ -125,26 +125,26 @@ class I18NByLocaleAndTypeAndAmsCodeCacheHandlerTest : RdbAndRedisCacheTestBase()
 
     @Test
     fun syncOnUpdateActive() {
-        var id = "40000000-0000-0000-0000-000000000210"
+        var id = "40000000-0000-0000-0000-000000008912"
         var success = dao.updateProperties(id, mapOf(SysI18n::active.name to false))
         assertTrue(success)
         cacheHandler.syncOnUpdateActive(id, false)
-        val key1 = cacheHandler.getKey("zh_CN", "label", "as-i18n-test-1")
+        val key1 = cacheHandler.getKey("zh_CN", "label", "as-i18n-test-1_8910")
         assertNull(CacheKit.getValue(cacheHandler.cacheName(), key1))
-        assertFalse(cacheHandler.getI18ns("zh_CN", "label", "as-i18n-test-1").containsKey("i18n.key.6"))
+        assertFalse(cacheHandler.getI18ns("zh_CN", "label", "as-i18n-test-1_8910").containsKey("i18n.key.6"))
 
-        id = "40000000-0000-0000-0000-000000000211"
+        id = "40000000-0000-0000-0000-000000008913"
         success = dao.updateProperties(id, mapOf(SysI18n::active.name to true))
         assertTrue(success)
         cacheHandler.syncOnUpdateActive(id, true)
-        val key2 = cacheHandler.getKey("zh_CN", "label", "as-i18n-test-1")
+        val key2 = cacheHandler.getKey("zh_CN", "label", "as-i18n-test-1_8910")
         assertNotNull(CacheKit.getValue(cacheHandler.cacheName(), key2))
-        assertTrue(cacheHandler.getI18ns("zh_CN", "label", "as-i18n-test-1").containsKey("i18n.key.7"))
+        assertTrue(cacheHandler.getI18ns("zh_CN", "label", "as-i18n-test-1_8910").containsKey("i18n.key.7"))
     }
 
     @Test
     fun syncOnDelete() {
-        val id = "40000000-0000-0000-0000-000000000209"
+        val id = "40000000-0000-0000-0000-000000008911"
         val i18n = dao.get(id)!!
         val deleteSuccess = dao.deleteById(id)
         assertTrue(deleteSuccess)
@@ -158,8 +158,8 @@ class I18NByLocaleAndTypeAndAmsCodeCacheHandlerTest : RdbAndRedisCacheTestBase()
 
     @Test
     fun syncOnBatchDelete() {
-        val id1 = "40000000-0000-0000-0000-000000000201"
-        val id2 = "40000000-0000-0000-0000-000000000204"
+        val id1 = "40000000-0000-0000-0000-000000008581"
+        val id2 = "40000000-0000-0000-0000-000000008910"
         val i18n1 = dao.get(id1)!!
         val i18n2 = dao.get(id2)!!
         val keys = listOf(

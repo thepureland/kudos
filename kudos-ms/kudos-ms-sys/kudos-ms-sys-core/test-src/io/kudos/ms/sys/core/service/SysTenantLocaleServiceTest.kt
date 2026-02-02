@@ -25,7 +25,7 @@ class SysTenantLocaleServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun getLocaleCodesByTenantId() {
-        val tenantId = "20000000-0000-0000-0000-000000000039"
+        val tenantId = "20000000-0000-0000-0000-000000009132"
         val codes = sysTenantLocaleService.getLocaleCodesByTenantId(tenantId)
         assertTrue(codes.contains("zh_CN"))
     }
@@ -34,12 +34,12 @@ class SysTenantLocaleServiceTest : RdbAndRedisCacheTestBase() {
     fun getTenantIdsByLocaleCode() {
         val localeCode = "zh_CN"
         val tenantIds = sysTenantLocaleService.getTenantIdsByLocaleCode(localeCode)
-        assertTrue(tenantIds.contains("20000000-0000-0000-0000-000000000039"))
+        assertTrue(tenantIds.contains("20000000-0000-0000-0000-000000009132"))
     }
 
     @Test
     fun exists() {
-        val tenantId = "20000000-0000-0000-0000-000000000039"
+        val tenantId = "20000000-0000-0000-0000-000000009132"
         val localeCode = "zh_CN"
         assertTrue(sysTenantLocaleService.exists(tenantId, localeCode))
         assertFalse(sysTenantLocaleService.exists(tenantId, "en_US"))
@@ -47,7 +47,7 @@ class SysTenantLocaleServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun unbind() {
-        val tenantId = "20000000-0000-0000-0000-000000000039"
+        val tenantId = "20000000-0000-0000-0000-000000009132"
         val localeCode = "zh_CN"
         val result = sysTenantLocaleService.unbind(tenantId, localeCode)
         assertTrue(result)

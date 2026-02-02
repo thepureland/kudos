@@ -35,7 +35,7 @@ class SystemByCodeCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun getSystemByCode() {
         // 存在的
-        var code = "code-1"
+        var code = "SbcCH_7a3f9b2c4e5f6_1"
         val cacheItem = cacheHandler.getSystemByCode(code)
         assertNotNull(cacheItem)
         assert(cacheItem === cacheHandler.getSystemByCode(code))
@@ -48,19 +48,19 @@ class SystemByCodeCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun getSystemsByCodes() {
         // 都存在的
-        var code1 = "code-1"
-        var code2 = "code-2"
+        var code1 = "SbcCH_7a3f9b2c4e5f6_1"
+        var code2 = "SbcCH_7a3f9b2c4e5f6_2"
         val result = cacheHandler.getSystemsByCodes(listOf(code1, code2))
         assert(result.isNotEmpty())
         assert(result == cacheHandler.getSystemsByCodes(listOf(code1, code2)))
 
         // 部分存在的
-        code1 = "no_exist_code-1"
+        code1 = "no_exist_code-1_8400"
         var cacheItems = cacheHandler.getSystemsByCodes(listOf(code1, code2))
         assertEquals(1, cacheItems.size)
 
         // 都不存在的
-        code2 = "no_exist_code-2"
+        code2 = "no_exist_code-2_8400"
         cacheItems = cacheHandler.getSystemsByCodes(listOf(code1, code2))
         assert(cacheItems.isEmpty())
     }
@@ -85,7 +85,7 @@ class SystemByCodeCacheHandlerTest : RdbAndRedisCacheTestBase() {
     @Test
     fun syncOnUpdate() {
         // 更新数据库中已存在的记录
-        val code = "code-2"
+        val code = "SbcCH_7a3f9b2c4e5f6_2"
         val success = sysSystemDao.updateProperties(code, mapOf(SysSystem::name.name to newSystemName))
         assert(success)
 
