@@ -5,7 +5,6 @@ create table if not exists "sys_data_source"
     "name"                character varying(64)           not null,
     "sub_system_code"     character varying(32)           not null,
     "micro_service_code"  character varying(32),
-    "atomic_service_code" character varying(32),
     "tenant_id"           char(36),
     "url"                 character varying(256)          not null,
     "username"            character varying(32)           not null,
@@ -28,32 +27,16 @@ create table if not exists "sys_data_source"
 );
 
 create unique index if not exists uq_sys_data_source
-    on "sys_data_source" ("sub_system_code", "micro_service_code", "atomic_service_code", "tenant_id");
+    on "sys_data_source" ("sub_system_code", "micro_service_code", "tenant_id");
 
 create index if not exists "idx_sys_data_source_tenant_id" on "sys_data_source" ("tenant_id");
 
--- alter table "sys_data_source"
---     add constraint "fk_sys_data_source_sub_system"
---         foreign key ("sub_system_code") references "sys_system" ("code");
---
--- alter table "sys_data_source"
---     add constraint "fk_sys_data_source_micro_service"
---         foreign key ("micro_service_code") references "sys_micro_service" ("code");
---
--- alter table "sys_data_source"
---     add constraint "fk_sys_data_source_atomic_service"
---         foreign key ("atomic_service_code") references "sys_atomic_service" ("code");
---
--- alter table "sys_data_source"
---     add constraint "fk_sys_data_source_tenant"
---         foreign key ("tenant_id") references "sys_tenant" ("id");
 
 comment on table "sys_data_source" is '数据源';
 comment on column "sys_data_source"."id" is '主键';
 comment on column "sys_data_source"."name" is '名称';
 comment on column "sys_data_source"."sub_system_code" is '子系统编码';
 comment on column "sys_data_source"."micro_service_code" is '微服务编码';
-comment on column "sys_data_source"."atomic_service_code" is '原子服务编码';
 comment on column "sys_data_source"."tenant_id" is '租户id';
 comment on column "sys_data_source"."url" is 'url';
 comment on column "sys_data_source"."username" is '用户名';
@@ -74,5 +57,4 @@ comment on column "sys_data_source"."update_user_id" is '更新者id';
 comment on column "sys_data_source"."update_user_name" is '更新者名称';
 comment on column "sys_data_source"."update_time" is '更新时间';
 --endregion DDL
-
 

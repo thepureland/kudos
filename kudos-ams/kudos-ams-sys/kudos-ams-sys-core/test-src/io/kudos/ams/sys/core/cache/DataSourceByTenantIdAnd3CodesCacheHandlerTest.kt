@@ -43,8 +43,7 @@ class DataSourceByTenantIdAnd3CodesCacheHandlerTest : RdbAndRedisCacheTestBase()
         var tenantId = "10a45fe6-4c8d-40c7-8f23-bba-tenant-1"
         val subSystemCode = "subSys-a"
         val microServiceCode = "ms-a"
-        val atomicServiceCode = "ams-a"
-        val cacheItem = cacheHandler.getDataSource(tenantId, subSystemCode, microServiceCode, atomicServiceCode)
+        val cacheItem = cacheHandler.getDataSource(tenantId, subSystemCode, microServiceCode)
 
         // 插入新的记录到数据库
         val sysDataSourceNew = insertNewRecordToDb()
@@ -61,24 +60,24 @@ class DataSourceByTenantIdAnd3CodesCacheHandlerTest : RdbAndRedisCacheTestBase()
         cacheHandler.reloadAll(false)
 
         // 原来缓存中的记录内存地址会变
-        val cacheItem1 = cacheHandler.getDataSource(tenantId, subSystemCode, microServiceCode, atomicServiceCode)
+        val cacheItem1 = cacheHandler.getDataSource(tenantId, subSystemCode, microServiceCode)
         assert(cacheItem !== cacheItem1)
 
         // 数据库中新增的记录在缓存应该要存在
         val cacheItemNew = cacheHandler.getDataSource(
             sysDataSourceNew.tenantId!!, sysDataSourceNew.subSystemCode,
-            sysDataSourceNew.microServiceCode, sysDataSourceNew.atomicServiceCode
+            sysDataSourceNew.microServiceCode
         )
         assertNotNull(cacheItemNew)
 
         // 数据库中更新的记录在缓存中应该也更新了
         tenantId = "10a45fe6-4c8d-40c7-8f23-bba-tenant-2"
-        val cacheItemUpdate = cacheHandler.getDataSource(tenantId, subSystemCode, microServiceCode, atomicServiceCode)
+        val cacheItemUpdate = cacheHandler.getDataSource(tenantId, subSystemCode, microServiceCode)
         assertEquals(newName, cacheItemUpdate!!.name)
 
         // 数据库中删除的记录在缓存中应该还在
         tenantId = "10a45fe6-4c8d-40c7-8f23-bba-tenant-3"
-        var cacheItemDelete = cacheHandler.getDataSource(tenantId, subSystemCode, microServiceCode, atomicServiceCode)
+        var cacheItemDelete = cacheHandler.getDataSource(tenantId, subSystemCode, microServiceCode)
         assertNotNull(cacheItemDelete)
 
 
@@ -86,7 +85,7 @@ class DataSourceByTenantIdAnd3CodesCacheHandlerTest : RdbAndRedisCacheTestBase()
         cacheHandler.reloadAll(true)
 
         // 数据库中删除的记录在缓存中应该不存在了
-        cacheItemDelete = cacheHandler.getDataSource(tenantId, subSystemCode, microServiceCode, atomicServiceCode)
+        cacheItemDelete = cacheHandler.getDataSource(tenantId, subSystemCode, microServiceCode)
         assertNull(cacheItemDelete)
     }
 
@@ -95,36 +94,34 @@ class DataSourceByTenantIdAnd3CodesCacheHandlerTest : RdbAndRedisCacheTestBase()
         var tenantId = "10a45fe6-4c8d-40c7-8f23-bba-tenant-1"
         var subSystemCode = "subSys-a"
         var microServiceCode = "ms-a"
-        var atomicServiceCode = "ams-a"
-        val cacheItem2 = cacheHandler.getDataSource(tenantId, subSystemCode, microServiceCode, atomicServiceCode)
-        val cacheItem3 = cacheHandler.getDataSource(tenantId, subSystemCode, microServiceCode, atomicServiceCode)
+        val cacheItem2 = cacheHandler.getDataSource(tenantId, subSystemCode, microServiceCode)
+        val cacheItem3 = cacheHandler.getDataSource(tenantId, subSystemCode, microServiceCode)
         assert(cacheItem3 === cacheItem2)
 
         // tenantId为null的应该没被加载
         subSystemCode = "subSys-c"
-        val key = cacheHandler.getKey(null, subSystemCode, null, null)
+        val key = cacheHandler.getKey(null, subSystemCode, null)
         val cacheItemNull = CacheKit.getValue(cacheHandler.cacheName(), key)
         assertNull(cacheItemNull)
 
-        // atomicServiceCode为null的情况
+        // microServiceCode为null的情况
         tenantId = "10a45fe6-4c8d-40c7-8f23-bba-tenant-1"
         subSystemCode = "subSys-c"
         microServiceCode = "ms-c"
-        var cacheItem = cacheHandler.getDataSource(tenantId, subSystemCode, microServiceCode, null)
+        var cacheItem = cacheHandler.getDataSource(tenantId, subSystemCode, microServiceCode)
         assertEquals("33333333-e828-43c5-a512-777777777777", cacheItem!!.id)
 
-        // microServiceCode和atomicServiceCode均为null的情况
+        // microServiceCode为null的情况
         tenantId = "10a45fe6-4c8d-40c7-8f23-bba-tenant-1"
         subSystemCode = "subSys-c"
-        cacheItem = cacheHandler.getDataSource(tenantId, subSystemCode, null, null)
+        cacheItem = cacheHandler.getDataSource(tenantId, subSystemCode, null)
         assertEquals("33333333-e828-43c5-a512-888888888888", cacheItem!!.id)
 
         // active为false的应该没被加载
         tenantId = "10a45fe6-4c8d-40c7-8f23-bba-tenant-2"
         subSystemCode = "subSys-d"
         microServiceCode = "ms-c"
-        atomicServiceCode = "ams-b"
-        val cacheItemFalse = cacheHandler.getDataSource(tenantId, subSystemCode, microServiceCode, atomicServiceCode)
+        val cacheItemFalse = cacheHandler.getDataSource(tenantId, subSystemCode, microServiceCode)
         assertNull(cacheItemFalse)
     }
 
@@ -137,14 +134,14 @@ class DataSourceByTenantIdAnd3CodesCacheHandlerTest : RdbAndRedisCacheTestBase()
         cacheHandler.syncOnInsert(ds, ds.id!!)
 
         // 验证新记录是否在缓存中
-        val key = cacheHandler.getKey(ds.tenantId, ds.subSystemCode, ds.microServiceCode, ds.atomicServiceCode)
+        val key = cacheHandler.getKey(ds.tenantId, ds.subSystemCode, ds.microServiceCode)
         val cacheItem1 = CacheKit.getValue(cacheHandler.cacheName(), key)
         assertNotNull(cacheItem1)
         val cacheItem2 = cacheHandler.getDataSource(
-            ds.tenantId!!, ds.subSystemCode, ds.microServiceCode, ds.atomicServiceCode
+            ds.tenantId!!, ds.subSystemCode, ds.microServiceCode
         )
         val cacheItem3 = cacheHandler.getDataSource(
-            ds.tenantId!!, ds.subSystemCode, ds.microServiceCode, ds.atomicServiceCode
+            ds.tenantId!!, ds.subSystemCode, ds.microServiceCode
         )
         assert(cacheItem2 === cacheItem3)
     }
@@ -162,11 +159,11 @@ class DataSourceByTenantIdAnd3CodesCacheHandlerTest : RdbAndRedisCacheTestBase()
         cacheHandler.syncOnUpdate(ds, id)
 
         // 验证缓存中的记录
-        val key = cacheHandler.getKey(ds.tenantId, ds.subSystemCode, ds.microServiceCode, ds.atomicServiceCode)
+        val key = cacheHandler.getKey(ds.tenantId, ds.subSystemCode, ds.microServiceCode)
         val cacheItem1 = CacheKit.getValue(cacheHandler.cacheName(), key)
         assertEquals(newName, (cacheItem1 as SysDataSourceCacheItem).name)
         val cacheItem2 = cacheHandler.getDataSource(
-            ds.tenantId!!, ds.subSystemCode!!, ds.microServiceCode, ds.atomicServiceCode
+            ds.tenantId!!, ds.subSystemCode!!, ds.microServiceCode
         )
         assertEquals(newName, (cacheItem2 as SysDataSourceCacheItem).name)
     }
@@ -179,11 +176,11 @@ class DataSourceByTenantIdAnd3CodesCacheHandlerTest : RdbAndRedisCacheTestBase()
         assert(success)
         val ds2 = dataSourceByIdCacheHandler.getDataSourceById(id2)!!
         cacheHandler.syncOnUpdateActive(id2, false)
-        var key = cacheHandler.getKey(ds2.tenantId, ds2.subSystemCode, ds2.microServiceCode, ds2.atomicServiceCode)
+        var key = cacheHandler.getKey(ds2.tenantId, ds2.subSystemCode, ds2.microServiceCode)
         var cacheItem1 = CacheKit.getValue(cacheHandler.cacheName(), key)
         assertNull(cacheItem1)
         var cacheItem2 = cacheHandler.getDataSource(
-            ds2.tenantId!!, ds2.subSystemCode!!, ds2.microServiceCode, ds2.atomicServiceCode
+            ds2.tenantId!!, ds2.subSystemCode!!, ds2.microServiceCode
         )
         assertNull(cacheItem2)
 
@@ -193,11 +190,11 @@ class DataSourceByTenantIdAnd3CodesCacheHandlerTest : RdbAndRedisCacheTestBase()
         assert(success)
         val ds0 = dataSourceByIdCacheHandler.getDataSourceById(id0)!!
         cacheHandler.syncOnUpdateActive(id0, true)
-        key = cacheHandler.getKey(ds0.tenantId, ds0.subSystemCode, ds0.microServiceCode, ds0.atomicServiceCode)
+        key = cacheHandler.getKey(ds0.tenantId, ds0.subSystemCode, ds0.microServiceCode)
         cacheItem1 = CacheKit.getValue(cacheHandler.cacheName(), key)
         assertNotNull(cacheItem1)
         cacheItem2 = cacheHandler.getDataSource(
-            ds0.tenantId!!, ds0.subSystemCode!!, ds0.microServiceCode, ds0.atomicServiceCode
+            ds0.tenantId!!, ds0.subSystemCode!!, ds0.microServiceCode
         )
         assert(cacheItem1 === cacheItem2)
     }
@@ -215,11 +212,11 @@ class DataSourceByTenantIdAnd3CodesCacheHandlerTest : RdbAndRedisCacheTestBase()
         cacheHandler.syncOnDelete(id)
 
         // 验证缓存中有没有
-        var key = cacheHandler.getKey(ds.tenantId, ds.subSystemCode, ds.microServiceCode, ds.atomicServiceCode)
+        var key = cacheHandler.getKey(ds.tenantId, ds.subSystemCode, ds.microServiceCode)
         val cacheItem1 = CacheKit.getValue(cacheHandler.cacheName(), key)
         assertNull(cacheItem1)
         val cacheItem2 = cacheHandler.getDataSource(
-            ds.tenantId!!, ds.subSystemCode!!, ds.microServiceCode, ds.atomicServiceCode
+            ds.tenantId!!, ds.subSystemCode!!, ds.microServiceCode
         )
         assertNull(cacheItem2)
     }
@@ -232,7 +229,6 @@ class DataSourceByTenantIdAnd3CodesCacheHandlerTest : RdbAndRedisCacheTestBase()
             password = "sa"
             subSystemCode = "default"
             microServiceCode = "default"
-            atomicServiceCode = "default"
             tenantId = "10a45fe6-4c8d-40c7-8f23-bba-tenant-n"
             active = true
         }

@@ -20,9 +20,6 @@ create table if not exists "sys_i18n"
 create unique index if not exists "uq_sys_i18n"
     on "sys_i18n" ("locale", "atomic_service_code", "i18n_type_dict_code", "key");
 
--- alter table "sys_i18n"
---     add constraint "fk_sys_i18n_atomic_service"
---         foreign key ("atomic_service_code") references "sys_atomic_service" ("code");
 
 comment on table "sys_i18n" is '国际化';
 comment on column "sys_i18n"."id" is '主键';

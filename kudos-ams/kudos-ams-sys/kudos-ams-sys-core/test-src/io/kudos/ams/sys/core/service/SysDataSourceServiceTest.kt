@@ -28,9 +28,8 @@ class SysDataSourceServiceTest : RdbAndRedisCacheTestBase() {
         val tenantId = "20000000-0000-0000-0000-000000000026"
         val subSystemCode = "svc-subsys-ds-test-1"
         val microServiceCode = "svc-ms-ds-test-1"
-        val atomicServiceCode = "svc-as-ds-test-1"
-        
-        val cacheItem = sysDataSourceService.getDataSource(tenantId, subSystemCode, microServiceCode, atomicServiceCode)
+
+        val cacheItem = sysDataSourceService.getDataSource(tenantId, subSystemCode, microServiceCode)
         assertNotNull(cacheItem)
     }
 

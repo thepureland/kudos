@@ -1,4 +1,5 @@
-merge into "sys_atomic_service" ("code", "name", "remark", "active", "built_in")
+merge into "sys_micro_service"
+ ("code", "name", "remark", "active", "built_in")
     values ('svc-as-dict-test-1', 'svc-as-dict-test-1-name', 'from SysDictServiceTest', true, false);
 
 

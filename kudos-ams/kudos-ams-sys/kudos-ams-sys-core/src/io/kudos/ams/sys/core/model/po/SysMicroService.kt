@@ -25,6 +25,12 @@ interface SysMicroService : IDbEntity<String, SysMicroService> {
     /** 上下文 */
     var context: String
 
+    /** 是否为原子服务 */
+    var atomicService: Boolean
+
+    /** 父服务编码 */
+    var parentCode: String?
+
     /** 备注 */
     var remark: String?
 

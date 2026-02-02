@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component
  *
  * 1.数据来源表：sys_data_source
  * 2.仅缓存tenantId不为null且active=true的数据源
- * 3.缓存key为：租户id::子系统编码::微服务编码::原子服务编码，其中微服务编码和原子服务编码都有可能为null
+ * 3.缓存key为：租户id::子系统编码::微服务编码，其中微服务编码可能为null
  * 4.缓存value为：SysDataSourceCacheItem对象
  *
  * @author K
@@ -47,7 +47,7 @@ open class DataSourceByTenantIdAnd3CodesCacheHandler : AbstractCacheHandler<SysD
         }
         val parts = key.split(Consts.CACHE_KEY_DEFAULT_DELIMITER)
         return getSelf<DataSourceByTenantIdAnd3CodesCacheHandler>().getDataSource(
-            parts[0], parts[1], parts[2], parts[3]
+            parts[0], parts[1], parts[2]
         )
     }
 
@@ -76,7 +76,7 @@ open class DataSourceByTenantIdAnd3CodesCacheHandler : AbstractCacheHandler<SysD
         results.forEach {
             CacheKit.put(
                 CACHE_NAME,
-                getKey(it.tenantId!!, it.subSystemCode!!, it.microServiceCode, it.atomicServiceCode),
+                getKey(it.tenantId!!, it.subSystemCode!!, it.microServiceCode),
                 it
             )
         }
@@ -86,32 +86,29 @@ open class DataSourceByTenantIdAnd3CodesCacheHandler : AbstractCacheHandler<SysD
     /**
      * 从缓存中获取数据源，如果缓存中没有，从数据库中加载，并写入缓存.
      *
-     * 缓存的key形式为：租户id::子系统编码::微服务编码::原子服务编码，其中微服务编码和原子服务编码都有可能为null
+     * 缓存的key形式为：租户id::子系统编码::微服务编码，其中微服务编码可能为null
      *
      * @param tenantId 租户id
      * @param subSystemCode 子系统编码
      * @param microServiceCode 微服务编码
-     * @param atomicServiceCode 原子服务编码
      * @return SysDataSourceCacheItem，不存在时返回null
      */
     @Cacheable(
         cacheNames = [CACHE_NAME],
         key = "#tenantId.concat('${Consts.CACHE_KEY_DEFAULT_DELIMITER}')" +
                 ".concat(#subSystemCode).concat('${Consts.CACHE_KEY_DEFAULT_DELIMITER}')" +
-                ".concat(#microServiceCode ?: 'null').concat('${Consts.CACHE_KEY_DEFAULT_DELIMITER}')" +
-                ".concat(#atomicServiceCode ?: 'null')",
+                ".concat(#microServiceCode ?: 'null')",
         unless = "#result == null"
     )
     open fun getDataSource(
         tenantId: String,
         subSystemCode: String,
-        microServiceCode: String? = null,
-        atomicServiceCode: String? = null,
+        microServiceCode: String? = null
     ): SysDataSourceCacheItem? {
         if (CacheKit.isCacheActive(CACHE_NAME)) {
             log.debug(
                 "${CACHE_NAME}缓存中不存在租户id为${tenantId}且子系统编码为${subSystemCode}" +
-                        "且微服务编码为${microServiceCode}且原子服务编码为${atomicServiceCode}的数据源，从数据库中加载..."
+                        "且微服务编码为${microServiceCode}的数据源，从数据库中加载..."
             )
         }
         require(subSystemCode.isNotBlank()) { "获取数据源时，子系统代码必须指定！" }
@@ -120,9 +117,8 @@ open class DataSourceByTenantIdAnd3CodesCacheHandler : AbstractCacheHandler<SysD
             active = true
             this.subSystemCode = subSystemCode
             this.microServiceCode = microServiceCode
-            this.atomicServiceCode = atomicServiceCode
             this.tenantId = tenantId
-            nullProperties = listOf(this::microServiceCode.name, this::atomicServiceCode.name)
+            nullProperties = listOf(this::microServiceCode.name)
         }
 
         @Suppress("UNCHECKED_CAST")
@@ -130,7 +126,7 @@ open class DataSourceByTenantIdAnd3CodesCacheHandler : AbstractCacheHandler<SysD
         return if (results.isEmpty()) {
             log.warn(
                 "数据库中找不到租户id为${tenantId}且子系统编码为${subSystemCode}" +
-                        "且微服务编码为${microServiceCode}且原子服务编码为${atomicServiceCode}的数据源！"
+                        "且微服务编码为${microServiceCode}的数据源！"
             )
             null
         } else {
@@ -154,10 +150,9 @@ open class DataSourceByTenantIdAnd3CodesCacheHandler : AbstractCacheHandler<SysD
                 if (active == null || active) {
                     val subSystemCode = props[SysDataSource::subSystemCode.name] as String
                     val microServiceCode = props[SysDataSource::microServiceCode.name] as String?
-                    val atomicServiceCode = props[SysDataSource::atomicServiceCode.name] as String?
                     // 缓存
                     getSelf<DataSourceByTenantIdAnd3CodesCacheHandler>().getDataSource(
-                        tenantId, subSystemCode, microServiceCode, atomicServiceCode
+                        tenantId, subSystemCode, microServiceCode
                     )
                     log.debug("${CACHE_NAME}缓存同步完成。")
                 } else {
@@ -183,12 +178,11 @@ open class DataSourceByTenantIdAnd3CodesCacheHandler : AbstractCacheHandler<SysD
             if (!tenantId.isNullOrBlank()) {
                 val subSystemCode = props[SysDataSource::subSystemCode.name] as String
                 val microServiceCode = props[SysDataSource::microServiceCode.name] as String?
-                val atomicServiceCode = props[SysDataSource::atomicServiceCode.name] as String?
 
                 // 踢除数据源缓存
                 CacheKit.evict(
                     CACHE_NAME,
-                    getKey(tenantId, subSystemCode, microServiceCode, atomicServiceCode)
+                    getKey(tenantId, subSystemCode, microServiceCode)
                 )
 
                 // 重新缓存
@@ -196,7 +190,7 @@ open class DataSourceByTenantIdAnd3CodesCacheHandler : AbstractCacheHandler<SysD
                     val active = props[SysDataSource::active.name] as Boolean?
                     if (active == null || active) {
                         getSelf<DataSourceByTenantIdAnd3CodesCacheHandler>().getDataSource(
-                            tenantId, subSystemCode, microServiceCode, atomicServiceCode
+                            tenantId, subSystemCode, microServiceCode
                         )
                     }
                 }
@@ -227,13 +221,13 @@ open class DataSourceByTenantIdAnd3CodesCacheHandler : AbstractCacheHandler<SysD
                 // 踢除数据源缓存
                 CacheKit.evict(
                     CACHE_NAME,
-                    getKey(tenantId, ds.subSystemCode!!, ds.microServiceCode, ds.atomicServiceCode)
+                    getKey(tenantId, ds.subSystemCode!!, ds.microServiceCode)
                 )
 
                 // 重新缓存
                 if (active && CacheKit.isWriteInTime(CACHE_NAME)) {
                     getSelf<DataSourceByTenantIdAnd3CodesCacheHandler>().getDataSource(
-                        tenantId, ds.subSystemCode!!, ds.microServiceCode, ds.atomicServiceCode
+                        tenantId, ds.subSystemCode!!, ds.microServiceCode
                     )
                 }
                 log.debug("${CACHE_NAME}缓存同步完成。")
@@ -262,7 +256,7 @@ open class DataSourceByTenantIdAnd3CodesCacheHandler : AbstractCacheHandler<SysD
                 // 踢除缓存
                 CacheKit.evict(
                     CACHE_NAME,
-                    getKey(tenantId, ds.subSystemCode!!, ds.microServiceCode, ds.atomicServiceCode)
+                    getKey(tenantId, ds.subSystemCode!!, ds.microServiceCode)
                 )
                 log.debug("${CACHE_NAME}缓存同步完成。")
             } else {
@@ -277,19 +271,16 @@ open class DataSourceByTenantIdAnd3CodesCacheHandler : AbstractCacheHandler<SysD
      * @param tenantId 租户id
      * @param subSystemCode 子系统编码
      * @param microServiceCode 微服务编码
-     * @param atomicServiceCode 原子服务编码
      * @return 缓存key
      */
     open fun getKey(
         tenantId: String?,
         subSystemCode: String?,
-        microServiceCode: String?,
-        atomicServiceCode: String?
+        microServiceCode: String?
     ): String {
         return "${tenantId}${Consts.CACHE_KEY_DEFAULT_DELIMITER}" +
                 "${subSystemCode}${Consts.CACHE_KEY_DEFAULT_DELIMITER}" +
-                "${microServiceCode}${Consts.CACHE_KEY_DEFAULT_DELIMITER}" +
-                "$atomicServiceCode"
+                "$microServiceCode"
     }
 
     private val log = LogFactory.getLog(this)

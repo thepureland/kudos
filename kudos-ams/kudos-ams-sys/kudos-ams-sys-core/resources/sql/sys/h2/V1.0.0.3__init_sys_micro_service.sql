@@ -4,7 +4,9 @@ create table if not exists "sys_micro_service"
     "code"        character varying(32)  not null primary key,
     "name"        character varying(128) not null
         constraint "uq_sys_micro_service" unique,
-    "context"     character varying(32)  not null,
+    "context"     character varying(32) default '/'  not null,
+    "atomic_service" boolean default FALSE   not null,
+    "parent_code" character varying(32),
     "remark"      character varying(256),
     "active"      boolean default TRUE   not null,
     "built_in"    boolean default FALSE,
@@ -20,6 +22,8 @@ comment on table "sys_micro_service" is '微服务';
 comment on column "sys_micro_service"."code" is '编码';
 comment on column "sys_micro_service"."name" is '名称';
 comment on column "sys_micro_service"."context" is '上下文';
+comment on column "sys_micro_service"."atomic_service" is '是否为原子服务';
+comment on column "sys_micro_service"."parent_code" is '父服务编码';
 comment on column "sys_micro_service"."remark" is '备注';
 comment on column "sys_micro_service"."active" is '是否启用';
 comment on column "sys_micro_service"."built_in" is '是否内置';

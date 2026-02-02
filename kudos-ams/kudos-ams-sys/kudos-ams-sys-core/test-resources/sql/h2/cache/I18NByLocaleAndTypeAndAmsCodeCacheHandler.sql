@@ -1,6 +1,6 @@
 -- 测试数据：I18NByLocaleAndTypeAndAmsCodeCacheHandler
 
-merge into "sys_atomic_service" ("code", "name", "remark", "active", "built_in") values
+merge into "sys_micro_service" ("code", "name", "remark", "active", "built_in") values
     ('as-i18n-test-1', 'as-i18n-test-1', null, true, false),
     ('as-i18n-test-2', 'as-i18n-test-2', null, true, false);
 

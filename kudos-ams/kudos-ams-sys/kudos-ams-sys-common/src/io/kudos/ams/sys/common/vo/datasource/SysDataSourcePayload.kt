@@ -25,9 +25,6 @@ data class SysDataSourcePayload (
     /** 微服务编码 */
     var microServiceCode: String? = null,
 
-    /** 原子服务编码 */
-    var atomicServiceCode: String? = null,
-
     /** 租户id */
     var tenantId: String? = null,
 

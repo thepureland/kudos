@@ -1,20 +1,15 @@
 package io.kudos.ams.sys.core.service.impl
 
-import io.kudos.ams.sys.core.service.iservice.ISysMicroServiceService
-import io.kudos.ams.sys.core.service.iservice.ISysMicroServiceAtomicServiceService
-import io.kudos.ams.sys.core.service.iservice.ISysAtomicServiceService
-import io.kudos.ams.sys.core.model.po.SysMicroService
-import io.kudos.ams.sys.core.model.po.SysAtomicService
-import io.kudos.ams.sys.core.dao.SysMicroServiceDao
-import io.kudos.ams.sys.core.dao.SysAtomicServiceDao
-import io.kudos.ams.sys.core.cache.MicroServiceByCodeCacheHandler
+import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.ams.sys.common.vo.microservice.SysMicroServiceCacheItem
-import io.kudos.ams.sys.common.vo.atomicservice.SysAtomicServiceRecord
+import io.kudos.ams.sys.common.vo.microservice.SysMicroServiceRecord
+import io.kudos.ams.sys.common.vo.microservice.SysMicroServiceSearchPayload
+import io.kudos.ams.sys.core.cache.MicroServiceByCodeCacheHandler
+import io.kudos.ams.sys.core.dao.SysMicroServiceDao
+import io.kudos.ams.sys.core.model.po.SysMicroService
+import io.kudos.ams.sys.core.service.iservice.ISysMicroServiceService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.query.Criteria
-import io.kudos.base.query.enums.OperatorEnum
-import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -38,15 +33,6 @@ open class SysMicroServiceService : BaseCrudService<String, SysMicroService, Sys
     @Autowired
     private lateinit var microServiceByCodeCacheHandler: MicroServiceByCodeCacheHandler
 
-    @Autowired
-    private lateinit var sysMicroServiceAtomicServiceService: ISysMicroServiceAtomicServiceService
-
-    @Autowired
-    private lateinit var sysAtomicServiceService: ISysAtomicServiceService
-
-    @Autowired
-    private lateinit var sysAtomicServiceDao: SysAtomicServiceDao
-
     override fun getMicroServiceByCode(code: String): SysMicroServiceCacheItem? {
         return microServiceByCodeCacheHandler.getMicroServiceByCode(code)
     }
@@ -67,18 +53,14 @@ open class SysMicroServiceService : BaseCrudService<String, SysMicroService, Sys
         return success
     }
 
-    override fun getAtomicServicesByMicroServiceCode(microServiceCode: String): List<SysAtomicServiceRecord> {
-        val atomicServiceCodes = sysMicroServiceAtomicServiceService.getAtomicServiceCodesByMicroServiceCode(microServiceCode)
-        if (atomicServiceCodes.isEmpty()) {
-            return emptyList()
+    override fun getAtomicServicesByMicroServiceCode(microServiceCode: String): List<SysMicroServiceRecord> {
+        val searchPayload = SysMicroServiceSearchPayload().apply {
+            returnEntityClass = SysMicroServiceRecord::class
+            active = true
+            parentCode = microServiceCode
         }
-        val criteria = Criteria.of(SysAtomicService::code.name, OperatorEnum.IN, atomicServiceCodes)
-        val pos = sysAtomicServiceDao.search(criteria)
-        return pos.map { po ->
-            SysAtomicServiceRecord().apply {
-                BeanKit.copyProperties(po, this)
-            }
-        }
+        @Suppress("UNCHECKED_CAST")
+        return dao.search(searchPayload) as List<SysMicroServiceRecord>
     }
 
     @Transactional
