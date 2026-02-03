@@ -33,8 +33,30 @@ open class SysMicroServiceService : BaseCrudService<String, SysMicroService, Sys
     @Autowired
     private lateinit var microServiceByCodeCacheHandler: MicroServiceByCodeCacheHandler
 
+    override fun getAllActiveMicroService(): List<SysMicroServiceCacheItem> {
+        TODO("Not yet implemented")
+    }
+
+    override fun getAllActiveMicroServiceExcludeAtomicService(): List<SysMicroServiceCacheItem> {
+        TODO("Not yet implemented")
+    }
+
+    override fun getAllActiveAtomicService(): List<SysMicroServiceCacheItem> {
+        TODO("Not yet implemented")
+    }
+
     override fun getMicroServiceByCode(code: String): SysMicroServiceCacheItem? {
         return microServiceByCodeCacheHandler.getMicroServiceByCode(code)
+    }
+
+    override fun getAllActiveAtomicServiceByParentCode(parentCode: String): List<SysMicroServiceRecord> {
+        val searchPayload = SysMicroServiceSearchPayload().apply {
+            returnEntityClass = SysMicroServiceRecord::class
+            active = true
+            this.parentCode = parentCode
+        }
+        @Suppress("UNCHECKED_CAST")
+        return dao.search(searchPayload) as List<SysMicroServiceRecord>
     }
 
     @Transactional
@@ -51,16 +73,6 @@ open class SysMicroServiceService : BaseCrudService<String, SysMicroService, Sys
             log.error("更新编码为${code}的微服务的启用状态为${active}失败！")
         }
         return success
-    }
-
-    override fun getAtomicServicesByMicroServiceCode(microServiceCode: String): List<SysMicroServiceRecord> {
-        val searchPayload = SysMicroServiceSearchPayload().apply {
-            returnEntityClass = SysMicroServiceRecord::class
-            active = true
-            parentCode = microServiceCode
-        }
-        @Suppress("UNCHECKED_CAST")
-        return dao.search(searchPayload) as List<SysMicroServiceRecord>
     }
 
     @Transactional

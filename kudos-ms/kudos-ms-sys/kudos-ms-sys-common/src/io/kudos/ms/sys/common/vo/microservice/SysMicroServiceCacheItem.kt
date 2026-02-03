@@ -40,23 +40,6 @@ data class SysMicroServiceCacheItem (
     /** 是否内置 */
     var builtIn: Boolean? = null,
 
-    /** 创建者id */
-    var createUserId: String? = null,
-
-    /** 创建者名称 */
-    var createUserName: String? = null,
-
-    /** 创建时间 */
-    var createTime: LocalDateTime? = null,
-
-    /** 更新者id */
-    var updateUserId: String? = null,
-
-    /** 更新者名称 */
-    var updateUserName: String? = null,
-
-    /** 更新时间 */
-    var updateTime: LocalDateTime? = null,
 
     //endregion your codes 1
 //region your codes 2
