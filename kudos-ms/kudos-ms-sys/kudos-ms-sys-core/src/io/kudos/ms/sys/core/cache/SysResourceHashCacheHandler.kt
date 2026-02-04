@@ -8,8 +8,8 @@ import io.kudos.ability.cache.common.kit.HashCacheKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.context.support.Consts
 import io.kudos.ms.sys.common.vo.resource.SysResourceCacheItem
-import io.kudos.ms.sys.core.cache.SysResourceCacheHandler.Companion.CACHE_NAME
-import io.kudos.ms.sys.core.cache.SysResourceCacheHandler.Companion.FILTERABLE_PROPERTIES
+import io.kudos.ms.sys.core.cache.SysResourceHashCacheHandler.Companion.CACHE_NAME
+import io.kudos.ms.sys.core.cache.SysResourceHashCacheHandler.Companion.FILTERABLE_PROPERTIES
 import io.kudos.ms.sys.core.dao.SysResourceDao
 import jakarta.annotation.Resource
 import org.springframework.stereotype.Component
@@ -30,7 +30,7 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-open class SysResourceCacheHandler {
+open class SysResourceHashCacheHandler {
 
     @Resource
     private lateinit var sysResourceDao: SysResourceDao

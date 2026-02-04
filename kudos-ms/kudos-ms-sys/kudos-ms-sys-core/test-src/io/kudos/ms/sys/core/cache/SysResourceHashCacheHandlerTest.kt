@@ -16,21 +16,21 @@ import kotlin.test.assertTrue
 /**
  * SysResourceCacheHandler 测试。
  *
- * 测试数据来源：`sql/h2/cache/SysResourceCacheHandlerTest.sql`
+ * 测试数据来源：`sql/h2/cache/SysResourceHashCacheHandlerTest.sql`
  *
  * @author K
  * @since 1.0.0
  */
 @EnabledIfDockerInstalled
-class SysResourceCacheHandlerTest : RdbAndRedisCacheTestBase() {
+class SysResourceHashCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Resource
-    private lateinit var handler: SysResourceCacheHandler
+    private lateinit var handler: SysResourceHashCacheHandler
 
     @Resource
     private lateinit var sysResourceDao: SysResourceDao
 
-    private fun isLocalCacheEnabled(): Boolean = HashCacheKit.isLocalCacheEnabled(SysResourceCacheHandler.CACHE_NAME)
+    private fun isLocalCacheEnabled(): Boolean = HashCacheKit.isLocalCacheEnabled(SysResourceHashCacheHandler.CACHE_NAME)
 
     // ---------- 按主键 id ----------
 
@@ -76,7 +76,7 @@ class SysResourceCacheHandlerTest : RdbAndRedisCacheTestBase() {
         val url = "/srch/suburl/a1b2/p01"
         // 先确认测试数据已从 SQL 写入 DB（getResourceIdBySubSysAndUrl 仅查 active=true）
         val idFromDao = sysResourceDao.getResourceIdBySubSysAndUrl(subSystemCode, url)
-        assertNotNull(idFromDao, "测试数据未加载：sql/h2/cache/SysResourceCacheHandlerTest.sql 中应有 sub_system_code=$subSystemCode, url=$url, active=true 的记录")
+        assertNotNull(idFromDao, "测试数据未加载：sql/h2/cache/SysResourceHashCacheHandlerTest.sql 中应有 sub_system_code=$subSystemCode, url=$url, active=true 的记录")
         assertEquals("srch2001-4d5e-7f8a-1b2c-000000000011", idFromDao)
         val list = handler.listResourcesBySubSysAndUrl(subSystemCode, url)
         assertEquals(1, list.size, "listResourcesBySubSysAndUrl 应返回 1 条")
