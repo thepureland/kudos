@@ -33,6 +33,8 @@ object SysCaches : MaintainableTable<SysCache>("sys_cache") {
     /** 缓存生存时间(秒) */
     var ttl = int("ttl").bindTo { it.ttl }
 
+    /** 是否为 Hash 缓存 */
+    var hash = boolean("hash").bindTo { it.hash }
 
     //region your codes 2
 

@@ -43,6 +43,9 @@ data class SysCacheRecord (
     /** 是否内置 */
     var builtIn: Boolean? = null,
 
+    /** 是否为 Hash 缓存 */
+    var hash: Boolean? = null,
+
     //endregion your codes 1
 //region your codes 2
 ) : IdJsonResult<String>() {

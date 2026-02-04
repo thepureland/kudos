@@ -1,6 +1,6 @@
 package io.kudos.ms.user.core.cache
 
-import io.kudos.ability.cache.common.batch.BatchCacheable
+import io.kudos.ability.cache.common.batch.keyvalue.BatchCacheable
 import io.kudos.ability.cache.common.support.AbstractByIdCacheHandler
 import io.kudos.ms.user.common.vo.org.UserOrgCacheItem
 import io.kudos.ms.user.core.dao.UserOrgDao

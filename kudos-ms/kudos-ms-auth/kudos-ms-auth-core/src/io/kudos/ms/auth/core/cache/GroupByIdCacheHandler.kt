@@ -1,6 +1,6 @@
 package io.kudos.ms.auth.core.cache
 
-import io.kudos.ability.cache.common.batch.BatchCacheable
+import io.kudos.ability.cache.common.batch.keyvalue.BatchCacheable
 import io.kudos.ability.cache.common.support.AbstractByIdCacheHandler
 import io.kudos.ms.auth.common.vo.group.AuthGroupCacheItem
 import io.kudos.ms.auth.core.dao.AuthGroupDao

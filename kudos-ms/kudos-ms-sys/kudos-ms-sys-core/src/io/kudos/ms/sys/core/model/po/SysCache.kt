@@ -33,6 +33,8 @@ interface SysCache : IMaintainableDbEntity<String, SysCache> {
     /** 缓存生存时间(秒) */
     var ttl: Int?
 
+    /** 是否为 Hash 缓存（true 时参与 MixHashCacheManager 初始化） */
+    var hash: Boolean
 
     //region your codes 2
 

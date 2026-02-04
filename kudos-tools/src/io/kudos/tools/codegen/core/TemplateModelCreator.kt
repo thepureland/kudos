@@ -111,9 +111,9 @@ open class TemplateModelCreator {
                 val maintainColumns = listOf(
                     MaintainableTable<*>::id.name,
                     MaintainableTable<*>::createTime.name.humpToUnderscore(false),
-                    MaintainableTable<*>::createUser.name.humpToUnderscore(false),
+                    MaintainableTable<*>::createUserId.name,
                     MaintainableTable<*>::updateTime.name.humpToUnderscore(false),
-                    MaintainableTable<*>::updateUser.name.humpToUnderscore(false),
+                    MaintainableTable<*>::updateUserId.name,
                     MaintainableTable<*>::active.name,
                     MaintainableTable<*>::builtIn.name.humpToUnderscore(false),
                     MaintainableTable<*>::remark.name,

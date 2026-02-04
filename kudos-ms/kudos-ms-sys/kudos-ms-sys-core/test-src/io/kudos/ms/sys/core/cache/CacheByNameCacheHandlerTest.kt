@@ -181,6 +181,7 @@ class CacheByNameCacheHandlerTest : RdbAndRedisCacheTestBase() {
             writeOnBoot = true
             writeInTime = true
             ttl = 666666
+            hash = false
         }
         sysCacheDao.insert(sysCache)
         return sysCache

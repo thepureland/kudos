@@ -64,4 +64,9 @@ open class CacheConfigProvider : ICacheConfigProvider {
             .associateBy { it.name!! }
     }
 
+    override fun getHashCacheConfigs(): Map<String, CacheConfig> {
+        return getCacheConfigs()
+            .filter { it.hash == true }
+            .associateBy { it.name!! }
+    }
 }

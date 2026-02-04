@@ -40,6 +40,9 @@ data class SysCachePayload (
     /** 是否启用 */
     var active: Boolean? = null,
 
+    /** 是否为 Hash 缓存 */
+    var hash: Boolean? = null,
+
     //endregion your codes 1
 //region your codes 2
 ) : FormPayload<String>() {
