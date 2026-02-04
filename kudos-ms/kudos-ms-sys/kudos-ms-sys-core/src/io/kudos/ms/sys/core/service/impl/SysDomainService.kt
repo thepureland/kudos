@@ -3,7 +3,7 @@ package io.kudos.ms.sys.core.service.impl
 import io.kudos.ms.sys.core.service.iservice.ISysDomainService
 import io.kudos.ms.sys.core.model.po.SysDomain
 import io.kudos.ms.sys.core.dao.SysDomainDao
-import io.kudos.ms.sys.core.cache.DomainByNameCacheHandler
+import io.kudos.ms.sys.core.cache.DomainByNameCache
 import io.kudos.ms.sys.common.vo.domain.SysDomainCacheItem
 import io.kudos.ms.sys.common.vo.domain.SysDomainRecord
 import io.kudos.ms.sys.common.vo.domain.SysDomainSearchPayload
@@ -31,10 +31,10 @@ open class SysDomainService : BaseCrudService<String, SysDomain, SysDomainDao>()
     private val log = LogFactory.getLog(this)
 
     @Autowired
-    private lateinit var domainByNameCacheHandler: DomainByNameCacheHandler
+    private lateinit var domainByNameCache: DomainByNameCache
 
     override fun getDomainByName(domain: String): SysDomainCacheItem? {
-        return domainByNameCacheHandler.getDomain(domain)
+        return domainByNameCache.getDomain(domain)
     }
 
     override fun getDomainsByTenantId(tenantId: String): List<SysDomainRecord> {
@@ -62,7 +62,7 @@ open class SysDomainService : BaseCrudService<String, SysDomain, SysDomainDao>()
         val success = dao.update(domain)
         if (success) {
             log.debug("更新id为${id}的域名的启用状态为${active}。")
-            domainByNameCacheHandler.syncOnUpdate(null, id)
+            domainByNameCache.syncOnUpdate(null, id)
         } else {
             log.error("更新id为${id}的域名的启用状态为${active}失败！")
         }
@@ -73,7 +73,7 @@ open class SysDomainService : BaseCrudService<String, SysDomain, SysDomainDao>()
     override fun insert(any: Any): String {
         val id = super.insert(any)
         log.debug("新增id为${id}的域名。")
-        domainByNameCacheHandler.syncOnInsert(any, id)
+        domainByNameCache.syncOnInsert(any, id)
         return id
     }
 
@@ -83,7 +83,7 @@ open class SysDomainService : BaseCrudService<String, SysDomain, SysDomainDao>()
         val id = BeanKit.getProperty(any, SysDomain::id.name) as String
         if (success) {
             log.debug("更新id为${id}的域名。")
-            domainByNameCacheHandler.syncOnUpdate(any, id)
+            domainByNameCache.syncOnUpdate(any, id)
         } else {
             log.error("更新id为${id}的域名失败！")
         }
@@ -100,7 +100,7 @@ open class SysDomainService : BaseCrudService<String, SysDomain, SysDomainDao>()
         val success = super.deleteById(id)
         if (success) {
             log.debug("删除id为${id}的域名。")
-            domainByNameCacheHandler.syncOnDelete(domain, id)
+            domainByNameCache.syncOnDelete(domain, id)
         } else {
             log.error("删除id为${id}的域名失败！")
         }
@@ -114,7 +114,7 @@ open class SysDomainService : BaseCrudService<String, SysDomain, SysDomainDao>()
         val domainNames = domains.map { it.domain }.toSet()
         val count = super.batchDelete(ids)
         log.debug("批量删除域名，期望删除${ids.size}条，实际删除${count}条。")
-        domainByNameCacheHandler.syncOnBatchDelete(ids, domainNames)
+        domainByNameCache.syncOnBatchDelete(ids, domainNames)
         return count
     }
 

@@ -7,7 +7,7 @@ import io.kudos.ms.sys.common.vo.resource.SysResourceCacheItem
 import io.kudos.ms.sys.common.vo.resource.SysResourceRecord
 import io.kudos.ms.sys.common.vo.resource.SysResourceSearchPayload
 import io.kudos.ms.sys.common.vo.resource.SysResourceTreeRecord
-import io.kudos.ms.sys.core.cache.SysResourceHashCacheHandler
+import io.kudos.ms.sys.core.cache.SysResourceHashCache
 import io.kudos.ms.sys.core.dao.SysResourceDao
 import io.kudos.ms.sys.core.model.po.SysResource
 import io.kudos.ms.sys.core.service.iservice.ISysResourceService
@@ -32,18 +32,18 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
     private val log = LogFactory.getLog(this)
 
     @Resource
-    private lateinit var sysResourceHashCacheHandler: SysResourceHashCacheHandler
+    private lateinit var sysResourceHashCache: SysResourceHashCache
 
     override fun getResourceById(id: String): SysResourceCacheItem? {
-        return sysResourceHashCacheHandler.getResourceById(id)
+        return sysResourceHashCache.getResourceById(id)
     }
 
     override fun getResourceBySubSystemAndUrl(subSystemCode: String, url: String): String? {
-        return sysResourceHashCacheHandler.getResourceId(subSystemCode, url)
+        return sysResourceHashCache.getResourceId(subSystemCode, url)
     }
 
     override fun getResourceIdsBySubSystemAndType(subSystemCode: String, resourceTypeDictCode: String): List<String> {
-        return sysResourceHashCacheHandler.getResourceIds(subSystemCode, resourceTypeDictCode)
+        return sysResourceHashCache.getResourceIds(subSystemCode, resourceTypeDictCode)
     }
 
     override fun getResourcesBySubSystemCode(subSystemCode: String): List<SysResourceRecord> {
@@ -111,9 +111,9 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
         val success = dao.update(resource)
         if (success) {
             log.debug("更新id为${id}的资源的启用状态为${active}。")
-            sysResourceHashCacheHandler.syncOnUpdate(id)
-            sysResourceHashCacheHandler.syncOnUpdateActive(id, active)
-            sysResourceHashCacheHandler.syncOnUpdateActive(id)
+            sysResourceHashCache.syncOnUpdate(id)
+            sysResourceHashCache.syncOnUpdateActive(id, active)
+            sysResourceHashCache.syncOnUpdateActive(id)
         } else {
             log.error("更新id为${id}的资源的启用状态为${active}失败！")
         }
@@ -130,7 +130,7 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
         val success = dao.update(resource)
         if (success) {
             log.debug("移动资源${id}到父节点${newParentId}，排序号${newOrderNum}。")
-            sysResourceHashCacheHandler.syncOnUpdate(id)
+            sysResourceHashCache.syncOnUpdate(id)
         } else {
             log.error("移动资源${id}失败！")
         }
@@ -141,9 +141,9 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
     override fun insert(any: Any): String {
         val id = super.insert(any)
         log.debug("新增id为${id}的资源。")
-        sysResourceHashCacheHandler.syncOnInsert(id)
-        sysResourceHashCacheHandler.syncOnInsert(any, id)
-        sysResourceHashCacheHandler.syncOnInsert(any, id)
+        sysResourceHashCache.syncOnInsert(id)
+        sysResourceHashCache.syncOnInsert(any, id)
+        sysResourceHashCache.syncOnInsert(any, id)
         return id
     }
 
@@ -154,13 +154,13 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
         val success = super.update(any)
         if (success) {
             log.debug("更新id为${id}的资源。")
-            sysResourceHashCacheHandler.syncOnUpdate(id)
+            sysResourceHashCache.syncOnUpdate(id)
             val oldUrl = oldResource?.url
-            sysResourceHashCacheHandler.syncOnUpdate(any, id, oldUrl)
+            sysResourceHashCache.syncOnUpdate(any, id, oldUrl)
             val oldSubSystemCode = oldResource?.subSystemCode
             val oldResourceTypeDictCode = oldResource?.resourceTypeDictCode
             if (oldSubSystemCode != null && oldResourceTypeDictCode != null) {
-                sysResourceHashCacheHandler.syncOnUpdate(any, id, oldSubSystemCode, oldResourceTypeDictCode)
+                sysResourceHashCache.syncOnUpdate(any, id, oldSubSystemCode, oldResourceTypeDictCode)
             }
         } else {
             log.error("更新id为${id}的资源失败！")
@@ -178,8 +178,8 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
         val success = super.deleteById(id)
         if (success) {
             log.debug("删除id为${id}的资源。")
-            sysResourceHashCacheHandler.syncOnDelete(id, resource.subSystemCode, resource.url)
-            sysResourceHashCacheHandler.syncOnDelete(id, resource.subSystemCode, resource.resourceTypeDictCode)
+            sysResourceHashCache.syncOnDelete(id, resource.subSystemCode, resource.url)
+            sysResourceHashCache.syncOnDelete(id, resource.subSystemCode, resource.resourceTypeDictCode)
         } else {
             log.error("删除id为${id}的资源失败！")
         }
@@ -192,10 +192,10 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
         val resources = dao.inSearchById(ids)
         val count = super.batchDelete(ids)
         log.debug("批量删除资源，期望删除${ids.size}条，实际删除${count}条。")
-        sysResourceHashCacheHandler.syncOnBatchDelete(ids)
+        sysResourceHashCache.syncOnBatchDelete(ids)
         resources.forEach { resource ->
-            sysResourceHashCacheHandler.syncOnDelete(resource.id!!, resource.subSystemCode, resource.url)
-            sysResourceHashCacheHandler.syncOnDelete(resource.id!!, resource.subSystemCode, resource.resourceTypeDictCode)
+            sysResourceHashCache.syncOnDelete(resource.id!!, resource.subSystemCode, resource.url)
+            sysResourceHashCache.syncOnDelete(resource.id!!, resource.subSystemCode, resource.resourceTypeDictCode)
         }
         return count
     }

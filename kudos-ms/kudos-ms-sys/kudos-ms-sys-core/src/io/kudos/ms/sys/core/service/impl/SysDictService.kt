@@ -5,7 +5,7 @@ import io.kudos.ms.sys.common.vo.dict.SysDictPayload
 import io.kudos.ms.sys.common.vo.dict.SysDictRecord
 import io.kudos.ms.sys.common.vo.dict.SysDictSearchPayload
 import io.kudos.ms.sys.core.service.iservice.ISysDictItemService
-import io.kudos.ms.sys.core.cache.DictByIdCacheHandler
+import io.kudos.ms.sys.core.cache.DictByIdCache
 import io.kudos.ms.sys.core.model.table.SysDictItems
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
@@ -37,7 +37,7 @@ open class SysDictService : BaseCrudService<String, SysDict, SysDictDao>(), ISys
     private lateinit var sysDictItemBiz: ISysDictItemService
 
     @Autowired
-    private lateinit var dictCacheHandler: DictByIdCacheHandler
+    private lateinit var dictCacheHandler: DictByIdCache
 
     private val log = LogFactory.getLog(this)
 

@@ -1,8 +1,8 @@
 package io.kudos.ms.user.core.service.impl
 
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
-import io.kudos.ms.user.core.cache.OrgIdsByUserIdCacheHandler
-import io.kudos.ms.user.core.cache.UserIdsByOrgIdCacheHandler
+import io.kudos.ms.user.core.cache.OrgIdsByUserIdCache
+import io.kudos.ms.user.core.cache.UserIdsByOrgIdCache
 import io.kudos.ms.user.core.dao.UserOrgUserDao
 import io.kudos.ms.user.core.model.po.UserOrgUser
 import io.kudos.ms.user.core.service.iservice.IUserOrgUserService
@@ -30,19 +30,19 @@ open class UserOrgUserService : BaseCrudService<String, UserOrgUser, UserOrgUser
     //region your codes 2
 
     @Autowired
-    private lateinit var userIdsByOrgIdCacheHandler: UserIdsByOrgIdCacheHandler
+    private lateinit var userIdsByOrgIdCache: UserIdsByOrgIdCache
 
     @Autowired
-    private lateinit var orgIdsByUserIdCacheHandler: OrgIdsByUserIdCacheHandler
+    private lateinit var orgIdsByUserIdCache: OrgIdsByUserIdCache
 
     private val log = LogFactory.getLog(this)
 
     override fun getUserIdsByOrgId(orgId: String): Set<String> {
-        return userIdsByOrgIdCacheHandler.getUserIds(orgId).toSet()
+        return userIdsByOrgIdCache.getUserIds(orgId).toSet()
     }
 
     override fun getOrgIdsByUserId(userId: String): Set<String> {
-        return orgIdsByUserIdCacheHandler.getOrgIds(userId).toSet()
+        return orgIdsByUserIdCache.getOrgIds(userId).toSet()
     }
 
     @Transactional
@@ -64,9 +64,9 @@ open class UserOrgUserService : BaseCrudService<String, UserOrgUser, UserOrgUser
         }
         log.debug("批量绑定机构${orgId}与${userIds.size}个用户的关系，成功绑定${count}条。")
         // 同步缓存
-        userIdsByOrgIdCacheHandler.syncOnOrgUserChange(orgId)
+        userIdsByOrgIdCache.syncOnOrgUserChange(orgId)
         userIds.forEach { userId ->
-            orgIdsByUserIdCacheHandler.syncOnOrgUserChange(userId)
+            orgIdsByUserIdCache.syncOnOrgUserChange(userId)
         }
         return count
     }
@@ -80,8 +80,8 @@ open class UserOrgUserService : BaseCrudService<String, UserOrgUser, UserOrgUser
         if (success) {
             log.debug("解绑机构${orgId}与用户${userId}的关系。")
             // 同步缓存
-            userIdsByOrgIdCacheHandler.syncOnOrgUserChange(orgId)
-            orgIdsByUserIdCacheHandler.syncOnOrgUserChange(userId)
+            userIdsByOrgIdCache.syncOnOrgUserChange(orgId)
+            orgIdsByUserIdCache.syncOnOrgUserChange(userId)
         } else {
             log.warn("解绑机构${orgId}与用户${userId}的关系失败，关系不存在。")
         }
@@ -112,7 +112,7 @@ open class UserOrgUserService : BaseCrudService<String, UserOrgUser, UserOrgUser
         if (success) {
             log.debug("设置机构${orgId}的用户${userId}为管理员：${isAdmin}。")
             // 同步缓存（虽然缓存不包含orgAdmin字段，但为了保持一致性，仍然同步）
-            userIdsByOrgIdCacheHandler.syncOnUpdate(updated, relation.id!!)
+            userIdsByOrgIdCache.syncOnUpdate(updated, relation.id!!)
         } else {
             log.error("设置机构${orgId}的用户${userId}为管理员失败！")
         }

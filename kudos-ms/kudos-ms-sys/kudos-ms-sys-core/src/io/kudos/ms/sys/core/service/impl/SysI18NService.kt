@@ -6,7 +6,7 @@ import io.kudos.ms.sys.core.dao.SysI18nDao
 import io.kudos.ms.sys.common.vo.i18n.SysI18nRecord
 import io.kudos.ms.sys.common.vo.i18n.SysI18nPayload
 import io.kudos.ms.sys.common.vo.i18n.SysI18nSearchPayload
-import io.kudos.ms.sys.core.cache.I18NByLocaleAndTypeAndAmsCodeCacheHandler
+import io.kudos.ms.sys.core.cache.I18NByLocaleAndTypeAndAmsCodeCache
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
@@ -31,7 +31,7 @@ open class SysI18NService : BaseCrudService<String, SysI18n, SysI18nDao>(), ISys
     private val log = LogFactory.getLog(this)
 
     @Autowired
-    private lateinit var i18nCacheHandler: I18NByLocaleAndTypeAndAmsCodeCacheHandler
+    private lateinit var i18nCacheHandler: I18NByLocaleAndTypeAndAmsCodeCache
 
     override fun getI18nValue(locale: String, atomicServiceCode: String, i18nTypeDictCode: String, key: String): String? {
         val searchPayload = SysI18nSearchPayload().apply {

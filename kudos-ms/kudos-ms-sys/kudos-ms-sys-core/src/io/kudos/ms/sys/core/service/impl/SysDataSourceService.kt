@@ -7,11 +7,10 @@ import io.kudos.ms.sys.common.vo.datasource.SysDataSourceDetail
 import io.kudos.ms.sys.common.vo.datasource.SysDataSourceRecord
 import io.kudos.ms.sys.common.vo.datasource.SysDataSourceSearchPayload
 import io.kudos.ms.sys.core.service.iservice.ISysDataSourceService
-import io.kudos.ms.sys.core.cache.DataSourceByIdCacheHandler
-import io.kudos.ms.sys.core.cache.DataSourceByTenantIdAnd3CodesCacheHandler
+import io.kudos.ms.sys.core.cache.DataSourceByIdCache
+import io.kudos.ms.sys.core.cache.DataSourceByTenantIdAnd3CodesCache
 import io.kudos.ms.sys.core.dao.SysDataSourceDao
 import io.kudos.ms.sys.core.model.po.SysDataSource
-import io.kudos.ms.sys.core.model.po.SysDomain
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.security.CryptoKit
@@ -40,10 +39,10 @@ open class SysDataSourceService : BaseCrudService<String, SysDataSource, SysData
     private lateinit var sysTenantApi: ISysTenantApi
 
     @Autowired
-    private lateinit var dataSourceByIdCacheHandler: DataSourceByIdCacheHandler
+    private lateinit var dataSourceByIdCache: DataSourceByIdCache
 
     @Autowired
-    private lateinit var dataSourceByTenantIdAnd3CodesCacheHandler: DataSourceByTenantIdAnd3CodesCacheHandler
+    private lateinit var dataSourceByTenantIdAnd3CodesCache: DataSourceByTenantIdAnd3CodesCache
 
     private val log = LogFactory.getLog(this)
 
@@ -52,7 +51,7 @@ open class SysDataSourceService : BaseCrudService<String, SysDataSource, SysData
         subSystemCode: String,
         microServiceCode: String?
     ): SysDataSourceCacheItem? {
-        return dataSourceByTenantIdAnd3CodesCacheHandler.getDataSource(
+        return dataSourceByTenantIdAnd3CodesCache.getDataSource(
             tenantId, subSystemCode, microServiceCode
         )
     }
@@ -88,8 +87,8 @@ open class SysDataSourceService : BaseCrudService<String, SysDataSource, SysData
         val id = super.insert(any)
         log.debug("新增id为${id}的数据源。")
         // 同步缓存
-        dataSourceByIdCacheHandler.syncOnInsert(id)
-        dataSourceByTenantIdAnd3CodesCacheHandler.syncOnInsert(any, id)
+        dataSourceByIdCache.syncOnInsert(id)
+        dataSourceByTenantIdAnd3CodesCache.syncOnInsert(any, id)
         return id
     }
 
@@ -100,8 +99,8 @@ open class SysDataSourceService : BaseCrudService<String, SysDataSource, SysData
         if (success) {
             log.debug("更新id为${id}的数据源。")
             // 同步缓存
-            dataSourceByIdCacheHandler.syncOnUpdate(id)
-            dataSourceByTenantIdAnd3CodesCacheHandler.syncOnUpdate(any, id)
+            dataSourceByIdCache.syncOnUpdate(id)
+            dataSourceByTenantIdAnd3CodesCache.syncOnUpdate(any, id)
         } else {
             log.error("更新id为${id}的数据源失败！")
         }
@@ -117,8 +116,8 @@ open class SysDataSourceService : BaseCrudService<String, SysDataSource, SysData
         val success = dao.update(dataSource)
         if (success) {
             // 同步缓存
-            dataSourceByIdCacheHandler.syncOnUpdate(id)
-            dataSourceByTenantIdAnd3CodesCacheHandler.syncOnUpdateActive(id, active)
+            dataSourceByIdCache.syncOnUpdate(id)
+            dataSourceByTenantIdAnd3CodesCache.syncOnUpdateActive(id, active)
         } else {
             log.error("更新id为${id}的数据源的启用状态为${active}失败！")
         }
@@ -136,8 +135,8 @@ open class SysDataSourceService : BaseCrudService<String, SysDataSource, SysData
         if (success) {
             // 同步缓存
             val ds = get(id)!!
-            dataSourceByIdCacheHandler.syncOnUpdate(id)
-            dataSourceByTenantIdAnd3CodesCacheHandler.syncOnUpdate(ds, id)
+            dataSourceByIdCache.syncOnUpdate(id)
+            dataSourceByTenantIdAnd3CodesCache.syncOnUpdate(ds, id)
         } else {
             log.error("重置id为${id}的数据源密码失败！")
         }
@@ -148,8 +147,8 @@ open class SysDataSourceService : BaseCrudService<String, SysDataSource, SysData
         val success = super.deleteById(id)
         if (success) {
             // 同步缓存
-            dataSourceByIdCacheHandler.syncOnDelete(id)
-            dataSourceByTenantIdAnd3CodesCacheHandler.syncOnDelete(id)
+            dataSourceByIdCache.syncOnDelete(id)
+            dataSourceByTenantIdAnd3CodesCache.syncOnDelete(id)
         } else {
             log.error("删除id为${id}的数据源失败！")
         }
@@ -161,9 +160,9 @@ open class SysDataSourceService : BaseCrudService<String, SysDataSource, SysData
         val count = super.batchDelete(ids)
         log.debug("批量删除数据源，期望删除${ids.size}条，实际删除${count}条。")
         // 同步缓存
-        dataSourceByIdCacheHandler.syncOnBatchDelete(ids)
+        dataSourceByIdCache.syncOnBatchDelete(ids)
         ids.forEach {
-            dataSourceByTenantIdAnd3CodesCacheHandler.syncOnDelete(it)
+            dataSourceByTenantIdAnd3CodesCache.syncOnDelete(it)
         }
         return count
     }

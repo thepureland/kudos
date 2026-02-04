@@ -6,10 +6,10 @@ import io.kudos.ms.user.common.vo.org.UserOrgCacheItem
 import io.kudos.ms.user.common.vo.user.UserAccountCacheItem
 import io.kudos.ms.user.common.vo.user.UserAccountRecord
 import io.kudos.ms.user.common.vo.user.UserAccountSearchPayload
-import io.kudos.ms.user.core.cache.OrgByIdCacheHandler
-import io.kudos.ms.user.core.cache.OrgIdsByUserIdCacheHandler
-import io.kudos.ms.user.core.cache.UserByIdCacheHandler
-import io.kudos.ms.user.core.cache.UserIdByTenantIdAndUsernameCacheHandler
+import io.kudos.ms.user.core.cache.OrgByIdCache
+import io.kudos.ms.user.core.cache.OrgIdsByUserIdCache
+import io.kudos.ms.user.core.cache.UserByIdCache
+import io.kudos.ms.user.core.cache.UserIdByTenantIdAndUsernameCache
 import io.kudos.ms.user.core.dao.UserAccountDao
 import io.kudos.ms.user.core.model.po.UserAccount
 import io.kudos.ms.user.core.service.iservice.IUserAccountService
@@ -44,22 +44,22 @@ open class UserAccountService : BaseCrudService<String, UserAccount, UserAccount
     private lateinit var resourceByIdCacheHandler: ResourceByIdCacheHandler
 
     @Autowired
-    private lateinit var orgIdsByUserIdCacheHandler: OrgIdsByUserIdCacheHandler
+    private lateinit var orgIdsByUserIdCache: OrgIdsByUserIdCache
 
     @Autowired
-    private lateinit var orgByIdCacheHandler: OrgByIdCacheHandler
+    private lateinit var orgByIdCache: OrgByIdCache
 
     @Autowired
-    private lateinit var userByIdCacheHandler: UserByIdCacheHandler
+    private lateinit var userByIdCache: UserByIdCache
 
     @Autowired
-    private lateinit var userIdByTenantIdAndUsernameCacheHandler: UserIdByTenantIdAndUsernameCacheHandler
+    private lateinit var userIdByTenantIdAndUsernameCache: UserIdByTenantIdAndUsernameCache
 
 
     private val log = LogFactory.getLog(this)
 
     override fun getUserOrgIds(userId: String): List<String> {
-        return orgIdsByUserIdCacheHandler.getOrgIds(userId)
+        return orgIdsByUserIdCache.getOrgIds(userId)
     }
 
 
@@ -76,7 +76,7 @@ open class UserAccountService : BaseCrudService<String, UserAccount, UserAccount
         if (orgIds.isEmpty()) {
             return emptyList()
         }
-        val orgsMap = orgByIdCacheHandler.getOrgsByIds(orgIds)
+        val orgsMap = orgByIdCache.getOrgsByIds(orgIds)
         return orgIds.mapNotNull { orgsMap[it] }
     }
 
@@ -86,8 +86,8 @@ open class UserAccountService : BaseCrudService<String, UserAccount, UserAccount
     }
 
     override fun getUserByTenantIdAndUsername(tenantId: String, username: String): UserAccountCacheItem? {
-        val userId = userIdByTenantIdAndUsernameCacheHandler.getUserId(tenantId, username)
-        return userId?.let { userByIdCacheHandler.getUserById(it) }
+        val userId = userIdByTenantIdAndUsernameCache.getUserId(tenantId, username)
+        return userId?.let { userByIdCache.getUserById(it) }
     }
 
     override fun getUserRecord(id: String): UserAccountRecord? {
@@ -122,10 +122,10 @@ open class UserAccountService : BaseCrudService<String, UserAccount, UserAccount
         val success = dao.update(user)
         if (success) {
             log.debug("更新id为${id}的用户的启用状态为${active}。")
-            userByIdCacheHandler.syncOnUpdate(id)
+            userByIdCache.syncOnUpdate(id)
             val existingUser = dao.get(id)
             if (existingUser != null) {
-                userIdByTenantIdAndUsernameCacheHandler.syncOnUpdateActive(id, active)
+                userIdByTenantIdAndUsernameCache.syncOnUpdateActive(id, active)
             }
         } else {
             log.error("更新id为${id}的用户的启用状态为${active}失败！")
@@ -144,7 +144,7 @@ open class UserAccountService : BaseCrudService<String, UserAccount, UserAccount
         val success = dao.update(user)
         if (success) {
             log.debug("重置id为${id}的用户的登录密码。")
-            userByIdCacheHandler.syncOnUpdate(id)
+            userByIdCache.syncOnUpdate(id)
         } else {
             log.error("重置id为${id}的用户的登录密码失败！")
         }
@@ -162,7 +162,7 @@ open class UserAccountService : BaseCrudService<String, UserAccount, UserAccount
         val success = dao.update(user)
         if (success) {
             log.debug("重置id为${id}的用户的安全密码。")
-            userByIdCacheHandler.syncOnUpdate(id)
+            userByIdCache.syncOnUpdate(id)
         } else {
             log.error("重置id为${id}的用户的安全密码失败！")
         }
@@ -180,7 +180,7 @@ open class UserAccountService : BaseCrudService<String, UserAccount, UserAccount
         val success = dao.update(user)
         if (success) {
             log.debug("更新id为${id}的用户的最后登录信息。")
-            userByIdCacheHandler.syncOnUpdate(id)
+            userByIdCache.syncOnUpdate(id)
         } else {
             log.error("更新id为${id}的用户的最后登录信息失败！")
         }
@@ -196,7 +196,7 @@ open class UserAccountService : BaseCrudService<String, UserAccount, UserAccount
         val success = dao.update(user)
         if (success) {
             log.debug("更新id为${id}的用户的最后登出信息。")
-            userByIdCacheHandler.syncOnUpdate(id)
+            userByIdCache.syncOnUpdate(id)
         } else {
             log.error("更新id为${id}的用户的最后登出信息失败！")
         }
@@ -214,7 +214,7 @@ open class UserAccountService : BaseCrudService<String, UserAccount, UserAccount
         val success = dao.update(user)
         if (success) {
             log.debug("增加id为${id}的用户的登录错误次数。")
-            userByIdCacheHandler.syncOnUpdate(id)
+            userByIdCache.syncOnUpdate(id)
         } else {
             log.error("增加id为${id}的用户的登录错误次数失败！")
         }
@@ -230,7 +230,7 @@ open class UserAccountService : BaseCrudService<String, UserAccount, UserAccount
         val success = dao.update(user)
         if (success) {
             log.debug("重置id为${id}的用户的登录错误次数。")
-            userByIdCacheHandler.syncOnUpdate(id)
+            userByIdCache.syncOnUpdate(id)
         } else {
             log.error("重置id为${id}的用户的登录错误次数失败！")
         }
@@ -248,7 +248,7 @@ open class UserAccountService : BaseCrudService<String, UserAccount, UserAccount
         val success = dao.update(user)
         if (success) {
             log.debug("增加id为${id}的用户的安全密码错误次数。")
-            userByIdCacheHandler.syncOnUpdate(id)
+            userByIdCache.syncOnUpdate(id)
         } else {
             log.error("增加id为${id}的用户的安全密码错误次数失败！")
         }
@@ -264,7 +264,7 @@ open class UserAccountService : BaseCrudService<String, UserAccount, UserAccount
         val success = dao.update(user)
         if (success) {
             log.debug("重置id为${id}的用户的安全密码错误次数。")
-            userByIdCacheHandler.syncOnUpdate(id)
+            userByIdCache.syncOnUpdate(id)
         } else {
             log.error("重置id为${id}的用户的安全密码错误次数失败！")
         }
@@ -275,8 +275,8 @@ open class UserAccountService : BaseCrudService<String, UserAccount, UserAccount
     override fun insert(any: Any): String {
         val id = super.insert(any)
         log.debug("新增id为${id}的用户。")
-        userByIdCacheHandler.syncOnInsert(id)
-        userIdByTenantIdAndUsernameCacheHandler.syncOnInsert(any, id)
+        userByIdCache.syncOnInsert(id)
+        userIdByTenantIdAndUsernameCache.syncOnInsert(any, id)
         return id
     }
 
@@ -286,8 +286,8 @@ open class UserAccountService : BaseCrudService<String, UserAccount, UserAccount
         val id = BeanKit.getProperty(any, UserAccount::id.name) as String
         if (success) {
             log.debug("更新id为${id}的用户。")
-            userByIdCacheHandler.syncOnUpdate(id)
-            userIdByTenantIdAndUsernameCacheHandler.syncOnUpdate(any, id)
+            userByIdCache.syncOnUpdate(id)
+            userIdByTenantIdAndUsernameCache.syncOnUpdate(any, id)
         } else {
             log.error("更新id为${id}的用户失败！")
         }
@@ -304,8 +304,8 @@ open class UserAccountService : BaseCrudService<String, UserAccount, UserAccount
         val success = super.deleteById(id)
         if (success) {
             log.debug("删除id为${id}的用户。")
-            userByIdCacheHandler.syncOnDelete(id)
-            userIdByTenantIdAndUsernameCacheHandler.syncOnDelete(user, id)
+            userByIdCache.syncOnDelete(id)
+            userIdByTenantIdAndUsernameCache.syncOnDelete(user, id)
         } else {
             log.error("删除id为${id}的用户失败！")
         }
@@ -320,8 +320,8 @@ open class UserAccountService : BaseCrudService<String, UserAccount, UserAccount
         }
         val count = super.batchDelete(ids)
         log.debug("批量删除用户，期望删除${ids.size}条，实际删除${count}条。")
-        userByIdCacheHandler.syncOnBatchDelete(ids)
-        userIdByTenantIdAndUsernameCacheHandler.syncOnBatchDelete(ids, tenantAndUsernames)
+        userByIdCache.syncOnBatchDelete(ids)
+        userIdByTenantIdAndUsernameCache.syncOnBatchDelete(ids, tenantAndUsernames)
         return count
     }
 

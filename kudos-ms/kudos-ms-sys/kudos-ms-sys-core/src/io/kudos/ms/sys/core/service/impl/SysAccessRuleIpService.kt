@@ -3,7 +3,7 @@ package io.kudos.ms.sys.core.service.impl
 import io.kudos.ms.sys.core.service.iservice.ISysAccessRuleIpService
 import io.kudos.ms.sys.core.model.po.SysAccessRuleIp
 import io.kudos.ms.sys.core.dao.SysAccessRuleIpDao
-import io.kudos.ms.sys.core.cache.AccessRuleIpsBySubSysAndTenantIdCacheHandler
+import io.kudos.ms.sys.core.cache.AccessRuleIpsBySubSysAndTenantIdCache
 import io.kudos.ms.sys.core.dao.SysAccessRuleDao
 import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpRecord
 import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpCacheItem
@@ -35,7 +35,7 @@ open class SysAccessRuleIpService : BaseCrudService<String, SysAccessRuleIp, Sys
     private val log = LogFactory.getLog(this)
 
     @Autowired
-    private lateinit var accessRuleIpsBySubSysAndTenantIdCacheHandler: AccessRuleIpsBySubSysAndTenantIdCacheHandler
+    private lateinit var accessRuleIpsBySubSysAndTenantIdCache: AccessRuleIpsBySubSysAndTenantIdCache
 
     @Autowired
     private lateinit var sysAccessRuleDao: SysAccessRuleDao
@@ -48,7 +48,7 @@ open class SysAccessRuleIpService : BaseCrudService<String, SysAccessRuleIp, Sys
     }
 
     override fun getIpsBySystemAndTenant(systemCode: String, tenantId: String?): List<SysAccessRuleIpCacheItem> {
-        return accessRuleIpsBySubSysAndTenantIdCacheHandler.getAccessRuleIps(systemCode, tenantId)
+        return accessRuleIpsBySubSysAndTenantIdCache.getAccessRuleIps(systemCode, tenantId)
     }
 
     override fun checkIpAccess(ip: Long, systemCode: String, tenantId: String?): Boolean {
@@ -79,7 +79,7 @@ open class SysAccessRuleIpService : BaseCrudService<String, SysAccessRuleIp, Sys
                     this.active = payload.active ?: true
                 }
                 val id = dao.insert(ipRule)
-                accessRuleIpsBySubSysAndTenantIdCacheHandler.syncOnInsert(ipRule, id)
+                accessRuleIpsBySubSysAndTenantIdCache.syncOnInsert(ipRule, id)
                 count++
             } else {
                 val ipRule = SysAccessRuleIp {
@@ -92,7 +92,7 @@ open class SysAccessRuleIpService : BaseCrudService<String, SysAccessRuleIp, Sys
                     this.active = payload.active ?: true
                 }
                 if (dao.update(ipRule)) {
-                    accessRuleIpsBySubSysAndTenantIdCacheHandler.syncOnUpdate(ipRule, payload.id!!)
+                    accessRuleIpsBySubSysAndTenantIdCache.syncOnUpdate(ipRule, payload.id!!)
                     count++
                 }
             }
@@ -101,7 +101,7 @@ open class SysAccessRuleIpService : BaseCrudService<String, SysAccessRuleIp, Sys
         // 同步父规则缓存
         val accessRule = sysAccessRuleDao.get(ruleId)
         if (accessRule != null) {
-            accessRuleIpsBySubSysAndTenantIdCacheHandler.syncOnUpdate(accessRule, ruleId)
+            accessRuleIpsBySubSysAndTenantIdCache.syncOnUpdate(accessRule, ruleId)
         }
         return count
     }
@@ -114,7 +114,7 @@ open class SysAccessRuleIpService : BaseCrudService<String, SysAccessRuleIp, Sys
         // 同步缓存
         val accessRule = sysAccessRuleDao.get(ruleId)
         if (accessRule != null) {
-            accessRuleIpsBySubSysAndTenantIdCacheHandler.syncOnUpdate(accessRule, ruleId)
+            accessRuleIpsBySubSysAndTenantIdCache.syncOnUpdate(accessRule, ruleId)
         }
         return count
     }
@@ -127,7 +127,7 @@ open class SysAccessRuleIpService : BaseCrudService<String, SysAccessRuleIp, Sys
         if (ipRule != null) {
             val accessRule = sysAccessRuleDao.get(ipRule.parentRuleId)
             if (accessRule != null) {
-                accessRuleIpsBySubSysAndTenantIdCacheHandler.syncOnInsert(accessRule, id)
+                accessRuleIpsBySubSysAndTenantIdCache.syncOnInsert(accessRule, id)
             }
         }
         return id
@@ -143,7 +143,7 @@ open class SysAccessRuleIpService : BaseCrudService<String, SysAccessRuleIp, Sys
             if (ipRule != null) {
                 val accessRule = sysAccessRuleDao.get(ipRule.parentRuleId)
                 if (accessRule != null) {
-                    accessRuleIpsBySubSysAndTenantIdCacheHandler.syncOnUpdate(accessRule, id)
+                    accessRuleIpsBySubSysAndTenantIdCache.syncOnUpdate(accessRule, id)
                 }
             }
         } else {
@@ -157,7 +157,7 @@ open class SysAccessRuleIpService : BaseCrudService<String, SysAccessRuleIp, Sys
         val success = super.deleteById(id)
         if (success) {
             log.debug("删除id为${id}的IP访问规则。")
-            accessRuleIpsBySubSysAndTenantIdCacheHandler.syncOnDelete(id)
+            accessRuleIpsBySubSysAndTenantIdCache.syncOnDelete(id)
         } else {
             log.error("删除id为${id}的IP访问规则失败！")
         }

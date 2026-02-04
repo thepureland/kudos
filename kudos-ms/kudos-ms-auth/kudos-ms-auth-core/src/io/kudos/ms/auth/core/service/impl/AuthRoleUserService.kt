@@ -1,9 +1,9 @@
 package io.kudos.ms.auth.core.service.impl
 
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
-import io.kudos.ms.auth.core.cache.ResourceIdsByUserIdCacheHandler
-import io.kudos.ms.auth.core.cache.RoleIdsByUserIdCacheHandler
-import io.kudos.ms.auth.core.cache.UserIdsByRoleIdCacheHandler
+import io.kudos.ms.auth.core.cache.ResourceIdsByUserIdCache
+import io.kudos.ms.auth.core.cache.RoleIdsByUserIdCache
+import io.kudos.ms.auth.core.cache.UserIdsByRoleIdCache
 import io.kudos.ms.auth.core.dao.AuthRoleUserDao
 import io.kudos.ms.auth.core.model.po.AuthRoleUser
 import io.kudos.ms.auth.core.service.iservice.IAuthRoleUserService
@@ -31,22 +31,22 @@ open class AuthRoleUserService : BaseCrudService<String, AuthRoleUser, AuthRoleU
     //region your codes 2
 
     @Autowired
-    private lateinit var userIdsByRoleIdCacheHandler: UserIdsByRoleIdCacheHandler
+    private lateinit var userIdsByRoleIdCache: UserIdsByRoleIdCache
 
     @Autowired
-    private lateinit var roleIdsByUserIdCacheHandler: RoleIdsByUserIdCacheHandler
+    private lateinit var roleIdsByUserIdCache: RoleIdsByUserIdCache
 
     @Autowired
-    private lateinit var resourceIdsByUserIdCacheHandler: ResourceIdsByUserIdCacheHandler
+    private lateinit var resourceIdsByUserIdCache: ResourceIdsByUserIdCache
 
     private val log = LogFactory.getLog(this)
 
     override fun getUserIdsByRoleId(roleId: String): Set<String> {
-        return userIdsByRoleIdCacheHandler.getUserIds(roleId).toSet()
+        return userIdsByRoleIdCache.getUserIds(roleId).toSet()
     }
 
     override fun getRoleIdsByUserId(userId: String): Set<String> {
-        return roleIdsByUserIdCacheHandler.getRoleIds(userId).toSet()
+        return roleIdsByUserIdCache.getRoleIds(userId).toSet()
     }
 
     @Transactional
@@ -67,10 +67,10 @@ open class AuthRoleUserService : BaseCrudService<String, AuthRoleUser, AuthRoleU
         }
         log.debug("批量绑定角色${roleId}与${userIds.size}个用户的关系，成功绑定${count}条。")
         // 同步缓存
-        userIdsByRoleIdCacheHandler.syncOnRoleUserChange(roleId)
+        userIdsByRoleIdCache.syncOnRoleUserChange(roleId)
         userIds.forEach { userId ->
-            roleIdsByUserIdCacheHandler.syncOnRoleUserChange(userId)
-            resourceIdsByUserIdCacheHandler.syncOnRoleUserChange(userId)
+            roleIdsByUserIdCache.syncOnRoleUserChange(userId)
+            resourceIdsByUserIdCache.syncOnRoleUserChange(userId)
         }
         return count
     }
@@ -84,9 +84,9 @@ open class AuthRoleUserService : BaseCrudService<String, AuthRoleUser, AuthRoleU
         if (success) {
             log.debug("解绑角色${roleId}与用户${userId}的关系。")
             // 同步缓存
-            userIdsByRoleIdCacheHandler.syncOnRoleUserChange(roleId)
-            roleIdsByUserIdCacheHandler.syncOnRoleUserChange(userId)
-            resourceIdsByUserIdCacheHandler.syncOnRoleUserChange(userId)
+            userIdsByRoleIdCache.syncOnRoleUserChange(roleId)
+            roleIdsByUserIdCache.syncOnRoleUserChange(userId)
+            resourceIdsByUserIdCache.syncOnRoleUserChange(userId)
         } else {
             log.warn("解绑角色${roleId}与用户${userId}的关系失败，关系不存在。")
         }
