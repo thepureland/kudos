@@ -23,27 +23,27 @@ open class AuthRoleApi : IAuthRoleApi {
     //region your codes 2
 
     @Autowired
-    private lateinit var roleByIdCacheHandler: io.kudos.ms.auth.core.cache.RoleByIdCacheHandler
+    private lateinit var roleByIdCache: io.kudos.ms.auth.core.cache.RoleByIdCache
 
     @Autowired
-    private lateinit var roleIdByTenantIdAndRoleCodeCacheHandler: io.kudos.ms.auth.core.cache.RoleIdByTenantIdAndRoleCodeCacheHandler
+    private lateinit var roleIdByTenantIdAndRoleCodeCache: io.kudos.ms.auth.core.cache.RoleIdByTenantIdAndRoleCodeCache
 
     @Autowired
     private lateinit var authRoleService: io.kudos.ms.auth.core.service.iservice.IAuthRoleService
 
     @Autowired
-    private lateinit var userIdsByTenantIdAndRoleCodeCacheHandler: io.kudos.ms.auth.core.cache.UserIdsByTenantIdAndRoleCodeCacheHandler
+    private lateinit var userIdsByTenantIdAndRoleCodeCache: io.kudos.ms.auth.core.cache.UserIdsByTenantIdAndRoleCodeCache
 
     override fun getRoleById(id: String): AuthRoleCacheItem? {
-        return roleByIdCacheHandler.getRoleById(id)
+        return roleByIdCache.getRoleById(id)
     }
 
     override fun getRolesByIds(ids: Collection<String>): Map<String, AuthRoleCacheItem> {
-        return roleByIdCacheHandler.getRolesByIds(ids)
+        return roleByIdCache.getRolesByIds(ids)
     }
 
     override fun getRoleId(tenantId: String, code: String): String? {
-        return roleIdByTenantIdAndRoleCodeCacheHandler.getRoleId(tenantId, code)
+        return roleIdByTenantIdAndRoleCodeCache.getRoleId(tenantId, code)
     }
 
     override fun getRoleUsers(roleId: String): List<UserAccountCacheItem> {
@@ -51,7 +51,7 @@ open class AuthRoleApi : IAuthRoleApi {
     }
 
     override fun getUserIdsByRoleCode(tenantId: String, roleCode: String): List<String> {
-        return userIdsByTenantIdAndRoleCodeCacheHandler.getUserIds(tenantId, roleCode)
+        return userIdsByTenantIdAndRoleCodeCache.getUserIds(tenantId, roleCode)
     }
 
     override fun getRoleResources(roleId: String): List<SysResourceCacheItem> {

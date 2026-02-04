@@ -3,8 +3,8 @@ package io.kudos.ms.user.core.api
 import io.kudos.ms.user.common.api.IUserAccountApi
 import io.kudos.ms.user.common.vo.org.UserOrgCacheItem
 import io.kudos.ms.user.common.vo.user.UserAccountCacheItem
-import io.kudos.ms.user.core.cache.UserByIdCacheHandler
-import io.kudos.ms.user.core.cache.UserIdByTenantIdAndUsernameCacheHandler
+import io.kudos.ms.user.core.cache.UserByIdCache
+import io.kudos.ms.user.core.cache.UserIdByTenantIdAndUsernameCache
 import io.kudos.ms.user.core.service.iservice.IUserAccountService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -25,24 +25,24 @@ open class UserAccountApi : IUserAccountApi {
     //region your codes 2
 
     @Autowired
-    private lateinit var userByIdCacheHandler: UserByIdCacheHandler
+    private lateinit var userByIdCache: UserByIdCache
 
     @Autowired
-    private lateinit var userIdByTenantIdAndUsernameCacheHandler: UserIdByTenantIdAndUsernameCacheHandler
+    private lateinit var userIdByTenantIdAndUsernameCache: UserIdByTenantIdAndUsernameCache
 
     @Autowired
     private lateinit var userAccountService: IUserAccountService
 
     override fun getUserById(id: String): UserAccountCacheItem? {
-        return userByIdCacheHandler.getUserById(id)
+        return userByIdCache.getUserById(id)
     }
 
     override fun getUsersByIds(ids: Collection<String>): Map<String, UserAccountCacheItem> {
-        return userByIdCacheHandler.getUsersByIds(ids)
+        return userByIdCache.getUsersByIds(ids)
     }
 
     override fun getUserId(tenantId: String, username: String): String? {
-        return userIdByTenantIdAndUsernameCacheHandler.getUserId(tenantId, username)
+        return userIdByTenantIdAndUsernameCache.getUserId(tenantId, username)
     }
 
     override fun isUserInOrg(userId: String, orgId: String): Boolean {

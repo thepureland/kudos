@@ -8,7 +8,7 @@ import io.kudos.ms.sys.common.vo.dictitem.SysDictItemRecord
 import io.kudos.ms.sys.common.vo.dictitem.SysDictItemSearchPayload
 import io.kudos.ms.sys.common.vo.dictitem.SysDictItemTreeRecord
 import io.kudos.ms.sys.core.service.iservice.ISysDictItemService
-import io.kudos.ms.sys.core.cache.DictItemsByModuleAndTypeCacheHandler
+import io.kudos.ms.sys.core.cache.DictItemsByModuleAndTypeCache
 import io.kudos.ms.sys.core.dao.SysDictItemDao
 import io.kudos.ms.sys.core.model.po.SysDict
 import io.kudos.ms.sys.core.model.po.SysDictItem
@@ -40,7 +40,7 @@ open class SysDictItemService : BaseCrudService<String, SysDictItem, SysDictItem
     //region your codes 2
 
     @Autowired
-    private lateinit var dictItemCacheHandler: DictItemsByModuleAndTypeCacheHandler
+    private lateinit var dictItemCacheHandler: DictItemsByModuleAndTypeCache
 
     private val log = LogFactory.getLog(this)
 

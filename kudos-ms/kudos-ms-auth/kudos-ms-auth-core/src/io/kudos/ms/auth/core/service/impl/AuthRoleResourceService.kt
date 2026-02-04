@@ -1,8 +1,8 @@
 package io.kudos.ms.auth.core.service.impl
 
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
-import io.kudos.ms.auth.core.cache.ResourceIdsByRoleIdCacheHandler
-import io.kudos.ms.auth.core.cache.ResourceIdsByUserIdCacheHandler
+import io.kudos.ms.auth.core.cache.ResourceIdsByRoleIdCache
+import io.kudos.ms.auth.core.cache.ResourceIdsByUserIdCache
 import io.kudos.ms.auth.core.dao.AuthRoleResourceDao
 import io.kudos.ms.auth.core.dao.AuthRoleUserDao
 import io.kudos.ms.auth.core.model.po.AuthRoleResource
@@ -32,10 +32,10 @@ open class AuthRoleResourceService : BaseCrudService<String, AuthRoleResource, A
     //region your codes 2
 
     @Autowired
-    private lateinit var resourceIdsByRoleIdCacheHandler: ResourceIdsByRoleIdCacheHandler
+    private lateinit var resourceIdsByRoleIdCache: ResourceIdsByRoleIdCache
 
     @Autowired
-    private lateinit var resourceIdsByUserIdCacheHandler: ResourceIdsByUserIdCacheHandler
+    private lateinit var resourceIdsByUserIdCache: ResourceIdsByUserIdCache
 
     @Autowired
     private lateinit var authRoleUserDao: AuthRoleUserDao
@@ -43,7 +43,7 @@ open class AuthRoleResourceService : BaseCrudService<String, AuthRoleResource, A
     private val log = LogFactory.getLog(this)
 
     override fun getResourceIdsByRoleId(roleId: String): Set<String> {
-        return resourceIdsByRoleIdCacheHandler.getResourceIds(roleId).toSet()
+        return resourceIdsByRoleIdCache.getResourceIds(roleId).toSet()
     }
 
     override fun getRoleIdsByResourceId(resourceId: String): Set<String> {
@@ -68,12 +68,12 @@ open class AuthRoleResourceService : BaseCrudService<String, AuthRoleResource, A
         }
         log.debug("批量绑定角色${roleId}与${resourceIds.size}个资源的关系，成功绑定${count}条。")
         // 同步缓存
-        resourceIdsByRoleIdCacheHandler.syncOnRoleResourceChange(roleId)
+        resourceIdsByRoleIdCache.syncOnRoleResourceChange(roleId)
         // 同步该角色下所有用户的资源缓存
         val roleUserCriteria = Criteria.of(AuthRoleUser::roleId.name, OperatorEnum.EQ, roleId)
         val roleUsers = authRoleUserDao.search(roleUserCriteria)
         roleUsers.map { it.userId }.distinct().forEach { _ ->
-            resourceIdsByUserIdCacheHandler.syncOnRoleResourceChange(roleId)
+            resourceIdsByUserIdCache.syncOnRoleResourceChange(roleId)
         }
         return count
     }
@@ -87,12 +87,12 @@ open class AuthRoleResourceService : BaseCrudService<String, AuthRoleResource, A
         if (success) {
             log.debug("解绑角色${roleId}与资源${resourceId}的关系。")
             // 同步缓存
-            resourceIdsByRoleIdCacheHandler.syncOnRoleResourceChange(roleId)
+            resourceIdsByRoleIdCache.syncOnRoleResourceChange(roleId)
             // 同步该角色下所有用户的资源缓存
             val roleUserCriteria = Criteria.of(AuthRoleUser::roleId.name, OperatorEnum.EQ, roleId)
             val roleUsers = authRoleUserDao.search(roleUserCriteria)
             roleUsers.map { it.userId }.distinct().forEach { _ ->
-                resourceIdsByUserIdCacheHandler.syncOnRoleResourceChange(roleId)
+                resourceIdsByUserIdCache.syncOnRoleResourceChange(roleId)
             }
         } else {
             log.warn("解绑角色${roleId}与资源${resourceId}的关系失败，关系不存在。")

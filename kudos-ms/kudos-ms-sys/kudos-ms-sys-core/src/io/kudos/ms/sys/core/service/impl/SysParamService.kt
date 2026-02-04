@@ -3,7 +3,7 @@ package io.kudos.ms.sys.core.service.impl
 import io.kudos.ms.sys.core.service.iservice.ISysParamService
 import io.kudos.ms.sys.core.model.po.SysParam
 import io.kudos.ms.sys.core.dao.SysParamDao
-import io.kudos.ms.sys.core.cache.ParamByModuleAndNameCacheHandler
+import io.kudos.ms.sys.core.cache.ParamByModuleAndNameCache
 import io.kudos.ms.sys.common.vo.param.SysParamCacheItem
 import io.kudos.ms.sys.common.vo.param.SysParamRecord
 import io.kudos.ms.sys.common.vo.param.SysParamSearchPayload
@@ -31,10 +31,10 @@ open class SysParamService : BaseCrudService<String, SysParam, SysParamDao>(), I
     private val log = LogFactory.getLog(this)
 
     @Autowired
-    private lateinit var paramByModuleAndNameCacheHandler: ParamByModuleAndNameCacheHandler
+    private lateinit var paramByModuleAndNameCache: ParamByModuleAndNameCache
 
     override fun getParamByAtomicServiceAndName(atomicServiceCode: String, paramName: String): SysParamCacheItem? {
-        return paramByModuleAndNameCacheHandler.getParam(atomicServiceCode, paramName)
+        return paramByModuleAndNameCache.getParam(atomicServiceCode, paramName)
     }
 
     override fun getParamsByAtomicServiceCode(atomicServiceCode: String): List<SysParamRecord> {
@@ -54,7 +54,7 @@ open class SysParamService : BaseCrudService<String, SysParam, SysParamDao>(), I
         val success = dao.update(param)
         if (success) {
             log.debug("更新id为${id}的参数的启用状态为${active}。")
-            paramByModuleAndNameCacheHandler.syncOnUpdateActive(id, active)
+            paramByModuleAndNameCache.syncOnUpdateActive(id, active)
         } else {
             log.error("更新id为${id}的参数的启用状态为${active}失败！")
         }
@@ -70,7 +70,7 @@ open class SysParamService : BaseCrudService<String, SysParam, SysParamDao>(), I
     override fun insert(any: Any): String {
         val id = super.insert(any)
         log.debug("新增id为${id}的参数。")
-        paramByModuleAndNameCacheHandler.syncOnInsert(any, id)
+        paramByModuleAndNameCache.syncOnInsert(any, id)
         return id
     }
 
@@ -80,7 +80,7 @@ open class SysParamService : BaseCrudService<String, SysParam, SysParamDao>(), I
         val id = BeanKit.getProperty(any, SysParam::id.name) as String
         if (success) {
             log.debug("更新id为${id}的参数。")
-            paramByModuleAndNameCacheHandler.syncOnUpdate(any, id)
+            paramByModuleAndNameCache.syncOnUpdate(any, id)
         } else {
             log.error("更新id为${id}的参数失败！")
         }
@@ -97,7 +97,7 @@ open class SysParamService : BaseCrudService<String, SysParam, SysParamDao>(), I
         val success = super.deleteById(id)
         if (success) {
             log.debug("删除id为${id}的参数。")
-            paramByModuleAndNameCacheHandler.syncOnDelete(param, id)
+            paramByModuleAndNameCache.syncOnDelete(param, id)
         } else {
             log.error("删除id为${id}的参数失败！")
         }
@@ -110,7 +110,7 @@ open class SysParamService : BaseCrudService<String, SysParam, SysParamDao>(), I
         val moduleAndNames = params.map { Pair(it.atomicServiceCode, it.paramName) }
         val count = super.batchDelete(ids)
         log.debug("批量删除参数，期望删除${ids.size}条，实际删除${count}条。")
-        paramByModuleAndNameCacheHandler.syncOnBatchDelete(ids, moduleAndNames)
+        paramByModuleAndNameCache.syncOnBatchDelete(ids, moduleAndNames)
         return count
     }
 

@@ -3,7 +3,7 @@ package io.kudos.ms.sys.core.service.impl
 import io.kudos.ms.sys.common.vo.cache.SysCacheCacheItem
 import io.kudos.ms.sys.common.vo.cache.SysCacheRecord
 import io.kudos.ms.sys.common.vo.cache.SysCacheSearchPayload
-import io.kudos.ms.sys.core.cache.CacheByNameCacheHandler
+import io.kudos.ms.sys.core.cache.CacheByNameCache
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -32,7 +32,7 @@ open class SysCacheService : BaseCrudService<String, SysCache, SysCacheDao>(), I
     private val log = LogFactory.getLog(this)
 
     @Autowired
-    private lateinit var cacheConfigCacheHandler: CacheByNameCacheHandler
+    private lateinit var cacheConfigCacheHandler: CacheByNameCache
 
     override fun getCacheFromCache(name: String): SysCacheCacheItem? {
         return cacheConfigCacheHandler.getCache(name)
