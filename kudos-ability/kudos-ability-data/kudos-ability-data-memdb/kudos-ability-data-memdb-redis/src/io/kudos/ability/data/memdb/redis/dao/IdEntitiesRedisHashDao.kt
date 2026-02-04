@@ -4,7 +4,6 @@ import com.alibaba.fastjson2.JSON
 import io.kudos.ability.data.memdb.redis.RedisTemplates
 import io.kudos.ability.data.memdb.redis.consts.CacheKey
 import io.kudos.ability.data.memdb.redis.dao.support.CriteriaRedisResolver
-import io.kudos.base.lang.math.NumberKit
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.sort.DirectionEnum
 import io.kudos.base.query.sort.Order
@@ -48,32 +47,32 @@ open class IdEntitiesRedisHashDao(
     /**
      * 保存或更新一行，并维护二级索引（根据传入的属性集合从实体取值建索引）。
      *
-     * @param setIndexPropertyNames 使用 Set 索引的属性名（等值查询），如 type、status；空则不建 Set 索引
-     * @param zsetIndexPropertyNames 使用 ZSet 索引的属性名（排序/范围），如 time、score；空则不建 ZSet 索引
+     * @param filterableProperties 可筛选属性名（等值查询用 Set 索引），如 type、status；空则不建。例外：数值型范围查询条件放 sortableProperties
+     * @param sortableProperties 可排序/范围属性名（ZSet 索引），如 time、score；空则不建。数值型范围查询条件放本项
      */
     open fun <PK, E : IIdEntity<PK>> save(
         dataKeyPrefix: String,
         entity: E,
-        setIndexPropertyNames: Set<String> = emptySet(),
-        zsetIndexPropertyNames: Set<String> = emptySet()
+        filterableProperties: Set<String> = emptySet(),
+        sortableProperties: Set<String> = emptySet()
     ) {
         val id = entity.id ?: throw IllegalArgumentException("entity.id must not be null")
         getRedisTemplate().opsForHash<String, Any>().put(dataKeyPrefix, id.toString(), entity)
-        updateIndexForEntity(dataKeyPrefix, id, entity, setIndexPropertyNames, zsetIndexPropertyNames, add = true)
+        updateIndexForEntity(dataKeyPrefix, id, entity, filterableProperties, sortableProperties, add = true)
     }
 
     /**
      * 批量保存或更新多行，并维护二级索引（根据传入的属性集合从实体取值建索引）。
      * 主数据使用 pipeline 批量写入，减少网络往返。
      *
-     * @param setIndexPropertyNames 使用 Set 索引的属性名；空则不建 Set 索引
-     * @param zsetIndexPropertyNames 使用 ZSet 索引的属性名；空则不建 ZSet 索引
+     * @param filterableProperties 可筛选属性名（等值查询用 Set 索引）；空则不建。数值型范围查询条件放 sortableProperties
+     * @param sortableProperties 可排序/范围属性名（ZSet 索引）；空则不建。数值型范围查询条件放本项
      */
     open fun <PK, E : IIdEntity<PK>> saveBatch(
         dataKeyPrefix: String,
         entities: List<E>,
-        setIndexPropertyNames: Set<String> = emptySet(),
-        zsetIndexPropertyNames: Set<String> = emptySet()
+        filterableProperties: Set<String> = emptySet(),
+        sortableProperties: Set<String> = emptySet()
     ) {
         if (entities.isEmpty()) return
         val template = getRedisTemplate()
@@ -93,7 +92,7 @@ open class IdEntitiesRedisHashDao(
         })
         entities.forEach { entity ->
             val id = entity.id ?: return@forEach
-            updateIndexForEntity(dataKeyPrefix, id, entity, setIndexPropertyNames, zsetIndexPropertyNames, add = true)
+            updateIndexForEntity(dataKeyPrefix, id, entity, filterableProperties, sortableProperties, add = true)
         }
     }
 
@@ -108,22 +107,22 @@ open class IdEntitiesRedisHashDao(
     /**
      * 按 id 删除一行，并从二级索引中移除。
      *
-     * @param setIndexPropertyNames 建 Set 索引时用的属性名集合，需与保存时一致才能正确从索引移除
-     * @param zsetIndexPropertyNames 建 ZSet 索引时用的属性名集合，需与保存时一致才能正确从索引移除
+     * @param filterableProperties 建 Set 索引时用的属性名集合，需与保存时一致才能正确从索引移除
+     * @param sortableProperties 建 ZSet 索引时用的属性名集合，需与保存时一致才能正确从索引移除
      */
     open fun <PK, E : IIdEntity<PK>> deleteById(
         dataKeyPrefix: String,
         id: PK,
         entityClass: KClass<E>,
-        setIndexPropertyNames: Set<String> = emptySet(),
-        zsetIndexPropertyNames: Set<String> = emptySet()
+        filterableProperties: Set<String> = emptySet(),
+        sortableProperties: Set<String> = emptySet()
     ) {
         val entity = getById(dataKeyPrefix, id, entityClass) ?: run {
             getRedisTemplate().opsForHash<String, Any>().delete(dataKeyPrefix, id.toString())
             return
         }
         getRedisTemplate().opsForHash<String, Any>().delete(dataKeyPrefix, id.toString())
-        updateIndexForEntity(dataKeyPrefix, id, entity, setIndexPropertyNames, zsetIndexPropertyNames, add = false)
+        updateIndexForEntity(dataKeyPrefix, id, entity, filterableProperties, sortableProperties, add = false)
     }
 
     /**
@@ -177,10 +176,11 @@ open class IdEntitiesRedisHashDao(
 
     /**
      * 按某个属性的等值条件查询：该属性下的所有 id，再查行（不分页）。
-     * 根据 [value] 是否数值型自动选择索引：数值型用 ZSet（zset:property），非数值型用 Set（set:property:value）。
+     * 统一使用 Set 二级索引（set:property:value），与 save/saveBatch 时 filterableProperties 的写入一致；
+     * ZSet 仅用于 listPageByZSetIndex / 排序，不在此处使用。
      *
      * @param property 属性名，对应二级索引 key 中的属性部分（如 "type"、"status"）
-     * @param value 属性值；为数值型时走 ZSet 索引，否则走 Set 索引
+     * @param value 属性值，转为字符串后作为 Set key 的一部分
      */
     open fun <PK, E : IIdEntity<PK>> listBySetIndex(
         dataKeyPrefix: String,
@@ -189,15 +189,8 @@ open class IdEntitiesRedisHashDao(
         value: Any
     ): List<E> {
         val idxPrefix = getIndexKeyPrefix(dataKeyPrefix)
-        val ids = if (NumberKit.isNumber(value.toString())) {
-            val v = toDouble(value)
-            val zsetKey = CacheKey.getCacheKey(idxPrefix, "zset", property)
-            getRedisTemplate().opsForZSet().rangeByScore(zsetKey, v, v)?.mapNotNull { it?.toString() }?.toList()
-                ?: emptyList()
-        } else {
-            val setKey = CacheKey.getCacheKey(idxPrefix, "set", property, value.toString())
-            getRedisTemplate().opsForSet().members(setKey)?.mapNotNull { it.toString() }?.toList() ?: emptyList()
-        }
+        val setKey = CacheKey.getCacheKey(idxPrefix, "set", property, value.toString())
+        val ids = getRedisTemplate().opsForSet().members(setKey)?.mapNotNull { it.toString() }?.toList() ?: emptyList()
         return findByIds(dataKeyPrefix, ids, entityClass)
     }
 
@@ -263,14 +256,14 @@ open class IdEntitiesRedisHashDao(
     /**
      * 全表刷新：先原子替换主数据（tmp + rename），再按传入的属性集合重建二级索引。
      *
-     * @param setIndexPropertyNames 使用 Set 索引的属性名；空则不建 Set 索引
-     * @param zsetIndexPropertyNames 使用 ZSet 索引的属性名；空则不建 ZSet 索引
+     * @param filterableProperties 可筛选属性名（等值查询用 Set 索引）；空则不建。数值型范围查询条件放 sortableProperties
+     * @param sortableProperties 可排序/范围属性名（ZSet 索引）；空则不建。数值型范围查询条件放本项
      */
     open fun <PK, E : IIdEntity<PK>> refreshAll(
         dataKeyPrefix: String,
         entities: List<E>,
-        setIndexPropertyNames: Set<String> = emptySet(),
-        zsetIndexPropertyNames: Set<String> = emptySet()
+        filterableProperties: Set<String> = emptySet(),
+        sortableProperties: Set<String> = emptySet()
     ) {
         val dataKeyBytes = dataKeyPrefix.toByteArray(StandardCharsets.UTF_8)
         if (entities.isEmpty()) {
@@ -302,7 +295,7 @@ open class IdEntitiesRedisHashDao(
             null
         }
         deleteAllIndexKeys(dataKeyPrefix)
-        entities.forEach { save(dataKeyPrefix, it, setIndexPropertyNames, zsetIndexPropertyNames) }
+        entities.forEach { save(dataKeyPrefix, it, filterableProperties, sortableProperties) }
     }
 
     /**
@@ -323,20 +316,20 @@ open class IdEntitiesRedisHashDao(
         dataKeyPrefix: String,
         id: PK,
         entity: E,
-        setIndexPropertyNames: Set<String>,
-        zsetIndexPropertyNames: Set<String>,
+        filterableProperties: Set<String>,
+        sortableProperties: Set<String>,
         add: Boolean
     ) {
         val idxPrefix = getIndexKeyPrefix(dataKeyPrefix)
         val idStr = id.toString()
-        for (prop in setIndexPropertyNames) {
+        for (prop in filterableProperties) {
             getPropertyValue(entity, prop)?.let { value ->
                 val key = CacheKey.getCacheKey(idxPrefix, "set", prop, value.toString())
                 if (add) getRedisTemplate().opsForSet().add(key, idStr)
                 else getRedisTemplate().opsForSet().remove(key, idStr)
             }
         }
-        for (prop in zsetIndexPropertyNames) {
+        for (prop in sortableProperties) {
             getPropertyValue(entity, prop)?.let { value ->
                 val score = toDouble(value)
                 val key = CacheKey.getCacheKey(idxPrefix, "zset", prop)

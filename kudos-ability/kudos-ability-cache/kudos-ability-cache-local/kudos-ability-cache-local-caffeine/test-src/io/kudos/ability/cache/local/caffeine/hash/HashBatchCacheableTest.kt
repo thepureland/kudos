@@ -13,7 +13,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * [io.kudos.ability.cache.common.batch.hash.HashBatchCacheable] 注解测试用例（本地 Caffeine）。
+ * [io.kudos.ability.cache.common.batch.hash.HashBatchCacheableByPrimary] 注解测试用例（本地 Caffeine）。
  *
  * @author K
  * @author AI: Cursor
@@ -82,5 +82,21 @@ internal class HashBatchCacheableTest {
     fun hashBatchCacheableEmptyIds() {
         val result = hashCacheableTestService.getTestRowsByIds(emptyList())
         assertTrue(result.isEmpty())
+    }
+
+    @Test
+    fun hashBatchCacheableWritesSetIndex() {
+        hashCacheableTestService.putTestData("s1", TestRow(id = "s1", name = "S1", type = 1))
+        hashCacheableTestService.putTestData("s2", TestRow(id = "s2", name = "S2", type = 1))
+        hashCacheableTestService.putTestData("s3", TestRow(id = "s3", name = "S3", type = 2))
+        hashCacheableTestService.getTestRowsByIds(listOf("s1", "s2", "s3"))
+        val cache = HashCacheKit.getHashCache(cacheName)!!
+        val byType1 = cache.listBySetIndex(cacheName, TestRow::class, "type", 1)
+        assertEquals(2, byType1.size)
+        assertTrue(byType1.any { it.id == "s1" && it.name == "S1" })
+        assertTrue(byType1.any { it.id == "s2" && it.name == "S2" })
+        val byType2 = cache.listBySetIndex(cacheName, TestRow::class, "type", 2)
+        assertEquals(1, byType2.size)
+        assertEquals("s3", byType2.first().id)
     }
 }

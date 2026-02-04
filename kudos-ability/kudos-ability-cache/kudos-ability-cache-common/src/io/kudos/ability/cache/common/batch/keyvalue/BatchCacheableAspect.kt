@@ -41,7 +41,7 @@ class BatchCacheableAspect {
      * @since 1.0.0
      */
     @Pointcut("@annotation(io.kudos.ability.cache.common.batch.keyvalue.BatchCacheable)")
-    private fun cut() {
+    fun cut() {
         // do nothing
     }
 

@@ -6,7 +6,7 @@ import kotlin.reflect.KFunction
 import kotlin.reflect.full.findAnnotation
 
 /**
- * 默认的 Hash 批量缓存 key 生成器：从方法参数中按 [HashBatchCacheable.ignoreParamIndexes] 排除后，
+ * 默认的 Hash 批量缓存 key 生成器：从方法参数中按 [HashBatchCacheableByPrimary.ignoreParamIndexes] 排除后，
  * 用与 [io.kudos.ability.cache.common.batch.keyvalue.DefaultKeysGenerator] 相同的规则生成 id 列表（即 key 列表）。
  *
  * 典型用法：方法形如 `getByIds(ids: List<String>): Map<String, E?>`，则 keys = ids。
@@ -38,7 +38,7 @@ class DefaultHashBatchKeysGenerator : IKeysGenerator {
     override fun getParamIndexes(function: KFunction<*>?, vararg params: Any): List<Int> {
         val ignoreParamIndexes =
             if (function == null) intArrayOf()
-            else function.findAnnotation<HashBatchCacheable>()?.ignoreParamIndexes ?: intArrayOf()
+            else function.findAnnotation<HashBatchCacheableByPrimary>()?.ignoreParamIndexes ?: intArrayOf()
         return params.indices.filter { it !in ignoreParamIndexes }
     }
 

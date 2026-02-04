@@ -25,7 +25,7 @@ import java.math.BigInteger
 import kotlin.reflect.KFunction
 
 /**
- * [HashBatchCacheable] 切面：先按一批 id 查 Hash 缓存（findByIds），未命中的再调方法，结果 saveBatch 回写并合并返回。
+ * [HashBatchCacheableByPrimary] 切面：先按一批主属性（id）查 Hash 缓存（findByIds），未命中的再调方法，结果 saveBatch 回写（可带副属性索引）并合并返回。
  *
  * @author K
  * @author AI: Cursor
@@ -35,17 +35,17 @@ import kotlin.reflect.KFunction
 @Component
 @Lazy(false)
 @ConditionalOnBean(MixHashCacheManager::class)
-class HashBatchCacheableAspect {
+class HashBatchCacheableByPrimaryAspect {
 
-    @Pointcut("@annotation(io.kudos.ability.cache.common.batch.hash.HashBatchCacheable)")
-    private fun cut() {}
+    @Pointcut("@annotation(io.kudos.ability.cache.common.batch.hash.HashBatchCacheableByPrimary)")
+    fun cut() {}
 
     @Around("cut()")
     fun around(joinPoint: ProceedingJoinPoint): Map<String, Any?> {
         val signature = joinPoint.signature as MethodSignature
         val method = signature.method
         val function = method.kotlinFunction ?: return joinPoint.proceed() as Map<String, Any?>
-        val ann = function.findAnnotation<HashBatchCacheable>() ?: return joinPoint.proceed() as Map<String, Any?>
+        val ann = function.findAnnotation<HashBatchCacheableByPrimary>() ?: return joinPoint.proceed() as Map<String, Any?>
 
         val cacheName = resolveCacheName(joinPoint, ann) ?: return joinPoint.proceed() as Map<String, Any?>
         validateReturnType(function, ann)
@@ -74,8 +74,10 @@ class HashBatchCacheableAspect {
         if (hashCache != null && CacheKit.isCacheActive(cacheName) && CacheKit.isWriteInTime(cacheName)) {
             val toSave = uncachedMap.values.filterIsInstance<IIdEntity<*>>().filter { it.id != null }
             if (toSave.isNotEmpty()) {
+                val filterable = ann.filterableProperties.toSet()
+                val sortable = ann.sortableProperties.toSet()
                 @Suppress("UNCHECKED_CAST")
-                hashCache.saveBatch(cacheName, toSave as List<IIdEntity<Any?>>, emptySet(), emptySet())
+                hashCache.saveBatch(cacheName, toSave as List<IIdEntity<Any?>>, filterable, sortable)
             }
         }
 
@@ -83,20 +85,20 @@ class HashBatchCacheableAspect {
         return cachedData.filterValues { it != null }
     }
 
-    private fun resolveCacheName(joinPoint: ProceedingJoinPoint, ann: HashBatchCacheable): String? {
+    private fun resolveCacheName(joinPoint: ProceedingJoinPoint, ann: HashBatchCacheableByPrimary): String? {
         if (ann.cacheNames.isNotEmpty()) return ann.cacheNames.first()
         val cacheConfig = joinPoint.target::class.findAnnotation<CacheConfig>()
         if (cacheConfig != null && cacheConfig.cacheNames.isNotEmpty()) return cacheConfig.cacheNames.first()
         return null
     }
 
-    private fun validateReturnType(function: KFunction<*>, ann: HashBatchCacheable) {
+    private fun validateReturnType(function: KFunction<*>, ann: HashBatchCacheableByPrimary) {
         if (!Map::class.isSuperclassOf(function.returnType.classifier as KClass<*>)) {
-            error("@HashBatchCacheable 标注的方法【${function}】返回值类型必须是 Map！")
+            error("@HashBatchCacheableByPrimary 标注的方法【${function}】返回值类型必须是 Map！")
         }
     }
 
-    private fun getKeysGenerator(ann: HashBatchCacheable): IKeysGenerator {
+    private fun getKeysGenerator(ann: HashBatchCacheableByPrimary): IKeysGenerator {
         val bean = SpringKit.getBeanOrNull(ann.keysGenerator)
         if (bean != null) return bean as IKeysGenerator
         return DefaultHashBatchKeysGenerator()

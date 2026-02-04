@@ -65,14 +65,14 @@ internal class MixIdEntitiesHashCache(
     override fun <PK, E : IIdEntity<PK>> save(
         cacheName: String,
         entity: E,
-        setIndexPropertyNames: Set<String>,
-        zsetIndexPropertyNames: Set<String>
+        filterableProperties: Set<String>,
+        sortableProperties: Set<String>
     ) {
         when (strategy) {
-            CacheStrategy.SINGLE_LOCAL -> local!!.save(name, entity, setIndexPropertyNames, zsetIndexPropertyNames)
-            CacheStrategy.REMOTE -> remote!!.save(name, entity, setIndexPropertyNames, zsetIndexPropertyNames)
+            CacheStrategy.SINGLE_LOCAL -> local!!.save(name, entity, filterableProperties, sortableProperties)
+            CacheStrategy.REMOTE -> remote!!.save(name, entity, filterableProperties, sortableProperties)
             CacheStrategy.LOCAL_REMOTE -> {
-                remote!!.save(name, entity, setIndexPropertyNames, zsetIndexPropertyNames)
+                remote!!.save(name, entity, filterableProperties, sortableProperties)
                 pushHashNotify(entity.id)
             }
         }
@@ -81,14 +81,14 @@ internal class MixIdEntitiesHashCache(
     override fun <PK, E : IIdEntity<PK>> saveBatch(
         cacheName: String,
         entities: List<E>,
-        setIndexPropertyNames: Set<String>,
-        zsetIndexPropertyNames: Set<String>
+        filterableProperties: Set<String>,
+        sortableProperties: Set<String>
     ) {
         when (strategy) {
-            CacheStrategy.SINGLE_LOCAL -> local!!.saveBatch(name, entities, setIndexPropertyNames, zsetIndexPropertyNames)
-            CacheStrategy.REMOTE -> remote!!.saveBatch(name, entities, setIndexPropertyNames, zsetIndexPropertyNames)
+            CacheStrategy.SINGLE_LOCAL -> local!!.saveBatch(name, entities, filterableProperties, sortableProperties)
+            CacheStrategy.REMOTE -> remote!!.saveBatch(name, entities, filterableProperties, sortableProperties)
             CacheStrategy.LOCAL_REMOTE -> {
-                remote!!.saveBatch(name, entities, setIndexPropertyNames, zsetIndexPropertyNames)
+                remote!!.saveBatch(name, entities, filterableProperties, sortableProperties)
                 entities.forEach { pushHashNotify(it.id) }
             }
         }
@@ -98,14 +98,14 @@ internal class MixIdEntitiesHashCache(
         cacheName: String,
         id: PK,
         entityClass: KClass<E>,
-        setIndexPropertyNames: Set<String>,
-        zsetIndexPropertyNames: Set<String>
+        filterableProperties: Set<String>,
+        sortableProperties: Set<String>
     ) {
         when (strategy) {
-            CacheStrategy.SINGLE_LOCAL -> local!!.deleteById(name, id, entityClass, setIndexPropertyNames, zsetIndexPropertyNames)
-            CacheStrategy.REMOTE -> remote!!.deleteById(name, id, entityClass, setIndexPropertyNames, zsetIndexPropertyNames)
+            CacheStrategy.SINGLE_LOCAL -> local!!.deleteById(name, id, entityClass, filterableProperties, sortableProperties)
+            CacheStrategy.REMOTE -> remote!!.deleteById(name, id, entityClass, filterableProperties, sortableProperties)
             CacheStrategy.LOCAL_REMOTE -> {
-                remote!!.deleteById(name, id, entityClass, setIndexPropertyNames, zsetIndexPropertyNames)
+                remote!!.deleteById(name, id, entityClass, filterableProperties, sortableProperties)
                 pushHashNotify(id)
             }
         }
@@ -147,7 +147,8 @@ internal class MixIdEntitiesHashCache(
         value: Any
     ): List<E> {
         if (strategy == CacheStrategy.LOCAL_REMOTE) {
-            readFromLocalFirst { it.listBySetIndex(name, entityClass, property, value) }?.let { return it }
+            val fromLocal = readFromLocalFirst { it.listBySetIndex(name, entityClass, property, value) }
+            if (!fromLocal.isNullOrEmpty()) return fromLocal
             val fromRemote = remote?.listBySetIndex(name, entityClass, property, value) ?: return emptyList()
             fromRemote.forEach { e -> local?.save<PK, E>(name, e, emptySet(), emptySet()) }
             return fromRemote
@@ -164,7 +165,8 @@ internal class MixIdEntitiesHashCache(
         desc: Boolean
     ): List<E> {
         if (strategy == CacheStrategy.LOCAL_REMOTE) {
-            readFromLocalFirst { it.listPageByZSetIndex(name, entityClass, zsetIndexName, offset, limit, desc) }?.let { return it }
+            val fromLocal = readFromLocalFirst { it.listPageByZSetIndex(name, entityClass, zsetIndexName, offset, limit, desc) }
+            if (!fromLocal.isNullOrEmpty()) return fromLocal
             val fromRemote = remote?.listPageByZSetIndex(name, entityClass, zsetIndexName, offset, limit, desc) ?: return emptyList()
             fromRemote.forEach { e -> local?.save(name, e, emptySet(), emptySet()) }
             return fromRemote
@@ -181,7 +183,8 @@ internal class MixIdEntitiesHashCache(
         vararg orders: Order
     ): List<E> {
         if (strategy == CacheStrategy.LOCAL_REMOTE) {
-            readFromLocalFirst { it.list(name, entityClass, criteria, pageNo, pageSize, *orders) }?.let { return it }
+            val fromLocal = readFromLocalFirst { it.list(name, entityClass, criteria, pageNo, pageSize, *orders) }
+            if (!fromLocal.isNullOrEmpty()) return fromLocal
             val fromRemote = remote?.list(name, entityClass, criteria, pageNo, pageSize, *orders) ?: return emptyList()
             fromRemote.forEach { e -> local?.save(name, e, emptySet(), emptySet()) }
             return fromRemote
@@ -192,14 +195,14 @@ internal class MixIdEntitiesHashCache(
     override fun <PK, E : IIdEntity<PK>> refreshAll(
         cacheName: String,
         entities: List<E>,
-        setIndexPropertyNames: Set<String>,
-        zsetIndexPropertyNames: Set<String>
+        filterableProperties: Set<String>,
+        sortableProperties: Set<String>
     ) {
         when (strategy) {
-            CacheStrategy.SINGLE_LOCAL -> local!!.refreshAll(name, entities, setIndexPropertyNames, zsetIndexPropertyNames)
-            CacheStrategy.REMOTE -> remote!!.refreshAll(name, entities, setIndexPropertyNames, zsetIndexPropertyNames)
+            CacheStrategy.SINGLE_LOCAL -> local!!.refreshAll(name, entities, filterableProperties, sortableProperties)
+            CacheStrategy.REMOTE -> remote!!.refreshAll(name, entities, filterableProperties, sortableProperties)
             CacheStrategy.LOCAL_REMOTE -> {
-                remote!!.refreshAll(name, entities, setIndexPropertyNames, zsetIndexPropertyNames)
+                remote!!.refreshAll(name, entities, filterableProperties, sortableProperties)
                 pushHashNotify(null)
             }
         }
