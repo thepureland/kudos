@@ -1,9 +1,8 @@
-package io.kudos.ability.cache.remote.redis
+package io.kudos.ability.cache.remote.redis.keyvalue
 
 import io.kudos.ability.cache.common.enums.CacheStrategy
 import io.kudos.ability.cache.common.support.CacheConfig
 import io.kudos.ability.cache.common.support.ICacheConfigProvider
-
 
 class TestCacheConfigProvider: ICacheConfigProvider {
 

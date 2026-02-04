@@ -14,6 +14,11 @@ class CacheMessage : Serializable {
     var key: Any? = null
     var nodeId: String? = null
 
+    /**
+     * 缓存类型：不设或 "kv" 表示 key-value；"hash" 表示 Hash 缓存（带 id 对象集合）。
+     */
+    var cacheType: String? = null
+
     constructor()
 
     constructor(cacheName: String?, key: Any?) {

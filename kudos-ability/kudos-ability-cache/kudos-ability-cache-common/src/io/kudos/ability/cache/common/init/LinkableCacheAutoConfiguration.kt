@@ -6,6 +6,7 @@ import io.kudos.ability.cache.common.batch.IKeysGenerator
 import io.kudos.ability.cache.common.core.CacheDataInitializer
 import io.kudos.ability.cache.common.core.MixCacheInitializing
 import io.kudos.ability.cache.common.core.MixCacheManager
+import io.kudos.ability.cache.common.core.MixHashCacheManager
 import io.kudos.ability.cache.common.init.properties.CacheItemsProperties
 import io.kudos.ability.cache.common.init.properties.CacheVersionConfig
 import io.kudos.ability.cache.common.notify.CacheNotifyListener
@@ -67,6 +68,10 @@ open class LinkableCacheAutoConfiguration : IComponentInitializer {
     @ConditionalOnMissingBean
     @ConfigurationProperties(prefix = "kudos.ability.cache")
     open fun cacheItemsProperties() = CacheItemsProperties()
+
+    @Bean("mixHashCacheManager")
+    @ConditionalOnMissingBean
+    open fun mixHashCacheManager(): MixHashCacheManager = MixHashCacheManager()
 
     @Bean
     @ConditionalOnMissingBean

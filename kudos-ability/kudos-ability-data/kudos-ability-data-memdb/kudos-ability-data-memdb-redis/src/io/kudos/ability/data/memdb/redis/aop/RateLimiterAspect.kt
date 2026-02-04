@@ -1,10 +1,9 @@
 package io.kudos.ability.data.memdb.redis.aop
 
-import io.kudos.ability.data.memdb.redis.KudosRedisTemplate
+import io.kudos.ability.data.memdb.redis.RedisTemplates
 import io.kudos.base.enums.impl.ErrorStatusEnum
 import io.kudos.base.error.ServiceException
 import io.kudos.base.logger.LogFactory
-import io.kudos.context.support.Consts
 import io.kudos.context.core.KudosContextHolder
 import org.aspectj.lang.JoinPoint
 import org.aspectj.lang.annotation.Aspect
@@ -27,7 +26,7 @@ class RateLimiterAspect {
 
     @Autowired
     @Lazy
-    private lateinit var kudosRedisTemplate: KudosRedisTemplate
+    private lateinit var redisTemplates: RedisTemplates
 
     @Before("@annotation(rateLimiter)")
     fun doBefore(point: JoinPoint, rateLimiter: RateLimiter) {
@@ -37,7 +36,7 @@ class RateLimiterAspect {
         val combineKey = getCombineKey(rateLimiter, point)
         val keys = mutableListOf<Any>(combineKey)
         try {
-            val number = kudosRedisTemplate.defaultRedisTemplate.execute(
+            val number = redisTemplates.defaultRedisTemplate.execute(
                 luaScriptStr,
                 argSerializer,
                 resultSerializer,

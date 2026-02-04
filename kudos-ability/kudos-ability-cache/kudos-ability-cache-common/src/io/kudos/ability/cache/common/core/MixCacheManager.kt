@@ -255,10 +255,7 @@ class MixCacheManager : AbstractCacheManager() {
      * @param key
      */
     fun clearLocal(cacheName: String, key: Any?) {
-        val cache = super.getCache(cacheName)
-        if (cache == null) {
-            return
-        }
+        val cache = super.getCache(cacheName) ?: return
         val mixCache = cache as MixCache
         if (key is String
             && key.endsWith("*")
@@ -303,10 +300,7 @@ class MixCacheManager : AbstractCacheManager() {
      * @param pattern 匹配模式，支持通配符"*"
      */
     fun evictByPattern(cacheName: String, pattern: String) {
-        val cache = getCache(cacheName)
-        if (cache == null) {
-            return
-        }
+        val cache = getCache(cacheName) ?: return
         var patternKey = pattern
         if (!patternKey.endsWith("*")) {
             patternKey = "$patternKey*"

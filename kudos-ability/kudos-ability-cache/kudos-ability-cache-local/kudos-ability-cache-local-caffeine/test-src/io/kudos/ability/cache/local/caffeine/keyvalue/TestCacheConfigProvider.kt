@@ -1,9 +1,8 @@
-package io.kudos.ability.cache.local.caffeine
+package io.kudos.ability.cache.local.caffeine.keyvalue
 
 import io.kudos.ability.cache.common.enums.CacheStrategy
 import io.kudos.ability.cache.common.support.CacheConfig
 import io.kudos.ability.cache.common.support.ICacheConfigProvider
-
 
 /**
  * 模拟缓存配置信息提供者

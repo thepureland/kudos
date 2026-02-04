@@ -1,7 +1,9 @@
-package io.kudos.ability.cache.local.caffeine
+package io.kudos.ability.cache.remote.redis.keyvalue
 
-import io.kudos.ability.cache.common.enums.CacheStrategy
+import io.kudos.ability.cache.remote.redis.keyvalue.TestCacheConfigProvider
 import io.kudos.test.common.init.EnableKudosTest
+import io.kudos.test.container.annotations.EnabledIfDockerInstalled
+import io.kudos.test.container.containers.RedisTestContainer
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.DynamicPropertyRegistry
@@ -17,21 +19,11 @@ import kotlin.test.Test
  */
 @EnableKudosTest
 @Import(BatchCacheableTestService::class, TestCacheConfigProvider::class)
+@EnabledIfDockerInstalled
 class BatchCacheableTest {
 
     @Autowired
     private lateinit var testCacheService: BatchCacheableTestService
-
-    companion object {
-
-        @DynamicPropertySource
-        @JvmStatic
-        private fun registerProperties(registry: DynamicPropertyRegistry) {
-            registry.add("kudos.ability.cache.enabled") { "true" }
-            registry.add("cache.config.strategy") { CacheStrategy.SINGLE_LOCAL.name }
-        }
-
-    }
 
     @Test
     fun test() {
@@ -63,6 +55,14 @@ class BatchCacheableTest {
         assert(map["1::3::6::7"]!!.first().time == map["1::4::5::7"]!!.first().time)
         assert(map["1::4::5::7"]!!.first().time == map["1::3::5::7"]!!.first().time)
         assert(map["1::3::5::7"]!!.first().time == map["1::4::6::7"]!!.first().time)
+    }
+
+    companion object {
+        @JvmStatic
+        @DynamicPropertySource
+        fun registerProperties(registry: DynamicPropertyRegistry?) {
+            RedisTestContainer.startIfNeeded(registry)
+        }
     }
 
 }

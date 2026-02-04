@@ -52,4 +52,13 @@ interface ICacheConfigProvider {
      * @since 1.0.0
      */
     fun getLocalRemoteCacheConfigs(): Map<String, CacheConfig>
+
+    /**
+     * 返回 Hash 缓存配置（hash==true 的配置），用于 MixHashCacheManager 初始化。
+     * key 为 cacheName，value 含 strategy 等，与 key-value 共用同一配置源。
+     *
+     * @return Map(cacheName, CacheConfig)
+     * @since 1.0.0
+     */
+    fun getHashCacheConfigs(): Map<String, CacheConfig> = getAllCacheConfigs().filter { (_, config) -> config.hash == true }
 }

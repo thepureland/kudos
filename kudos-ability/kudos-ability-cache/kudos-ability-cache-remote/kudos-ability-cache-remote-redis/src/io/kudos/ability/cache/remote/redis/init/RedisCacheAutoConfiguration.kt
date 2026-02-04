@@ -5,14 +5,16 @@ import io.kudos.ability.cache.common.init.LinkableCacheAutoConfiguration
 import io.kudos.ability.cache.common.init.properties.CacheVersionConfig
 import io.kudos.ability.cache.common.notice.ICacheMessageHandler
 import io.kudos.ability.cache.remote.redis.RedisCacheManager
+import io.kudos.ability.cache.remote.redis.RedisIdEntitiesHashCache
 import io.kudos.ability.cache.remote.redis.notice.RedisCacheMessageHandler
 import io.kudos.ability.cache.remote.redis.support.RedisRemoteCacheProcessor
-import io.kudos.ability.data.memdb.redis.KudosRedisTemplate
+import io.kudos.ability.data.memdb.redis.RedisTemplates
 import io.kudos.ability.data.memdb.redis.init.RedisAutoConfiguration
 import io.kudos.ability.data.memdb.redis.init.properties.RedisProperties
 import io.kudos.base.logger.LogFactory
 import io.kudos.context.init.IComponentInitializer
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.AutoConfigureBefore
@@ -33,6 +35,7 @@ import org.springframework.data.redis.listener.ChannelTopic
 import org.springframework.data.redis.listener.RedisMessageListenerContainer
 import org.springframework.data.redis.serializer.RedisSerializationContext
 import java.time.Duration
+import java.util.UUID
 
 
 /**
@@ -59,16 +62,16 @@ open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentIni
 
     @Bean(name = ["remoteCacheManager"])
     open fun remoteCacheManager(
-        kudosRedisTemplate: KudosRedisTemplate,
+        redisTemplates: RedisTemplates,
         redisProperties: RedisProperties
     ): CacheManager {
-        var redisTemplate = kudosRedisTemplate.getRedisTemplate(remoteStore!!)
+        var redisTemplate = redisTemplates.getRedisTemplate(remoteStore!!)
         if (redisTemplate == null) {
             log.warn("找不到${remoteStore}对应的redis配置，使用默认的redis配置")
-            redisTemplate = kudosRedisTemplate.defaultRedisTemplate
+            redisTemplate = redisTemplates.defaultRedisTemplate
         }
         val keySerializationPair =
-            RedisSerializationContext.SerializationPair.fromSerializer(KudosRedisTemplate.REDIS_KEY_SERIALIZER)
+            RedisSerializationContext.SerializationPair.fromSerializer(RedisTemplates.REDIS_KEY_SERIALIZER)
         val valueSerializationPair =
             RedisSerializationContext.SerializationPair.fromSerializer(redisProperties.redisMap[remoteStore]!!.valueSerializer())
         val defaultRedisCacheConfiguration = RedisCacheConfiguration
@@ -104,13 +107,31 @@ open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentIni
     @Bean(name = ["remoteCacheProcessor"])
     @DependsOn("kudosRedisTemplate")
     @ConditionalOnMissingBean
-    open fun remoteCacheProcessor(kudosRedisTemplate: KudosRedisTemplate): RedisRemoteCacheProcessor {
-        return RedisRemoteCacheProcessor(kudosRedisTemplate)
+    open fun remoteCacheProcessor(redisTemplates: RedisTemplates): RedisRemoteCacheProcessor {
+        return RedisRemoteCacheProcessor(redisTemplates)
     }
+
+    @Bean("cacheNodeId")
+    @ConditionalOnMissingBean(name = ["cacheNodeId"])
+    open fun cacheNodeId(): String = UUID.randomUUID().toString()
 
     @Bean
     @ConditionalOnMissingBean
-    open fun redisCacheMessageHandler() : ICacheMessageHandler = RedisCacheMessageHandler()
+    open fun redisCacheMessageHandler(
+        @Qualifier("cacheNodeId") cacheNodeId: String
+    ): ICacheMessageHandler = RedisCacheMessageHandler(cacheNodeId)
+
+    @Bean("redisIdEntitiesHashCache")
+    @ConditionalOnMissingBean(name = ["redisIdEntitiesHashCache"])
+    @DependsOn("redisCacheMessageHandler")
+    open fun redisIdEntitiesHashCache(
+        redisTemplates: RedisTemplates,
+        versionConfig: CacheVersionConfig,
+        redisCacheMessageHandler: ICacheMessageHandler,
+        @Qualifier("cacheNodeId") cacheNodeId: String
+    ): RedisIdEntitiesHashCache {
+        return RedisIdEntitiesHashCache(redisTemplates, versionConfig, redisCacheMessageHandler, cacheNodeId)
+    }
 
     override fun getComponentName() = "kudos-ability-cache-remote-redis"
 

@@ -41,6 +41,11 @@ class CacheConfig : Serializable {
     @Transient
     var ignoreVersion: Boolean? = null
 
+    /**
+     * 是否为 Hash 缓存（带 id 对象集合）。true 时参与 MixHashCacheManager 初始化，策略仍用 strategyDictCode。
+     */
+    var hash: Boolean? = null
+
     constructor()
 
     constructor(

@@ -5,7 +5,9 @@ import io.kudos.ability.cache.common.init.properties.CacheVersionConfig
 import io.kudos.ability.cache.common.notice.CacheMessage
 import io.kudos.ability.cache.common.notice.ICacheMessageHandler
 import io.kudos.ability.cache.common.support.CacheCleanRegister
-import io.kudos.ability.data.memdb.redis.KudosRedisTemplate
+import io.kudos.ability.cache.common.support.IIdEntitiesHashCacheSync
+import io.kudos.ability.data.memdb.redis.RedisTemplates
+import io.kudos.context.kit.SpringKit
 import io.kudos.base.logger.LogFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
@@ -13,7 +15,6 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.redis.connection.Message
 import org.springframework.data.redis.connection.MessageListener
 import org.springframework.data.redis.core.RedisTemplate
-import java.util.*
 
 /**
  * Redis缓存消息处理器
@@ -44,12 +45,14 @@ import java.util.*
  * - 支持缓存版本隔离，消息中的缓存名称会经过版本转换
  * - 需要确保Redis连接正常，否则消息无法正常发送和接收
  */
-class RedisCacheMessageHandler : ICacheMessageHandler, MessageListener {
+class RedisCacheMessageHandler(
+    private val nodeId: String
+) : ICacheMessageHandler, MessageListener {
     @Value("\${kudos.ability.cache.remoteStore}")
     private lateinit var remoteStore: String
 
     @Autowired
-    private lateinit var kudosRedisTemplate: KudosRedisTemplate
+    private lateinit var redisTemplates: RedisTemplates
 
     @Autowired(required = false)
     @Qualifier("mixCacheManager")
@@ -76,7 +79,7 @@ class RedisCacheMessageHandler : ICacheMessageHandler, MessageListener {
      override fun sendMessage(message: CacheMessage) {
         //设置消息发送的节点id
         message.nodeId = nodeId
-        kudosRedisTemplate.getRedisTemplate(remoteStore)!!.convertAndSend(versionConfig.realMsgChannel, message)
+        redisTemplates.getRedisTemplate(remoteStore)!!.convertAndSend(versionConfig.realMsgChannel, message)
     }
 
     /**
@@ -102,8 +105,8 @@ class RedisCacheMessageHandler : ICacheMessageHandler, MessageListener {
         logger.debug("收到redis消息通知：清除本地缓存")
         var cacheMessage: CacheMessage? = null
         try {
-            cacheMessage = kudosRedisTemplate.getRedisTemplate(remoteStore)!!.getValueSerializer()
-                .deserialize(message.getBody()) as CacheMessage?
+            cacheMessage = redisTemplates.getRedisTemplate(remoteStore)!!.valueSerializer
+                .deserialize(message.body) as CacheMessage?
         } catch (e: Exception) {
             logger.warn(
                 "清理缓存序列化失败！缓存key没指定，用了方法参数的类型而找不到。请调整为key，如：key='ALL'！ERROR = {0}",
@@ -139,10 +142,18 @@ class RedisCacheMessageHandler : ICacheMessageHandler, MessageListener {
      * 
      * @param message 缓存操作消息对象，包含缓存名称、key、节点ID等信息
      */
-    public override fun receiveMessage(message: CacheMessage) {
-        //只有非当前节点的清理才需要删除本地缓存，本节点自己已经删除过了
+    override fun receiveMessage(message: CacheMessage) {
+        // 只有非当前节点的清理才需要删除本地缓存，本节点自己已经删除过了
         if (message.nodeId != nodeId) {
-            mixCacheManager.clearLocal(message.cacheName!!, message.key)
+            if (message.cacheType == "hash") {
+                val sync = SpringKit.getBeansOfType(IIdEntitiesHashCacheSync::class).values.firstOrNull()
+                sync?.let {
+                    if (message.key == null) it.clearLocal(message.cacheName!!)
+                    else it.evictLocal(message.cacheName!!, message.key!!)
+                }
+            } else {
+                mixCacheManager.clearLocal(message.cacheName!!, message.key)
+            }
         }
         val realCacheKey = versionConfig.getRealCacheName(message.cacheName!!)
         val cleanListeners = CacheCleanRegister.getCleanListener(realCacheKey)
@@ -154,14 +165,9 @@ class RedisCacheMessageHandler : ICacheMessageHandler, MessageListener {
     }
 
     val redisTemplate: RedisTemplate<*, *>
-        get() = kudosRedisTemplate.getRedisTemplate(remoteStore) as RedisTemplate<*, *>
+        get() = redisTemplates.getRedisTemplate(remoteStore) as RedisTemplate<*, *>
 
     companion object {
         private val logger = LogFactory.getLog(this)
-        private val nodeId: String?
-
-        init {
-            nodeId = UUID.randomUUID().toString()
-        }
     }
 }
