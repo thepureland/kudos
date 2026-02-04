@@ -48,20 +48,20 @@ class RedisIdEntitiesHashCache  constructor(
     override fun <PK, E : IIdEntity<PK>> save(
         cacheName: String,
         entity: E,
-        setIndexPropertyNames: Set<String>,
-        zsetIndexPropertyNames: Set<String>
+        filterableProperties: Set<String>,
+        sortableProperties: Set<String>
     ) {
-        dao.save(dataKeyPrefix(cacheName), entity, setIndexPropertyNames, zsetIndexPropertyNames)
+        dao.save(dataKeyPrefix(cacheName), entity, filterableProperties, sortableProperties)
         pushHashNotify(cacheName, entity.id)
     }
 
     override fun <PK, E : IIdEntity<PK>> saveBatch(
         cacheName: String,
         entities: List<E>,
-        setIndexPropertyNames: Set<String>,
-        zsetIndexPropertyNames: Set<String>
+        filterableProperties: Set<String>,
+        sortableProperties: Set<String>
     ) {
-        dao.saveBatch(dataKeyPrefix(cacheName), entities, setIndexPropertyNames, zsetIndexPropertyNames)
+        dao.saveBatch(dataKeyPrefix(cacheName), entities, filterableProperties, sortableProperties)
         entities.forEach { pushHashNotify(cacheName, it.id) }
     }
 
@@ -69,10 +69,10 @@ class RedisIdEntitiesHashCache  constructor(
         cacheName: String,
         id: PK,
         entityClass: KClass<E>,
-        setIndexPropertyNames: Set<String>,
-        zsetIndexPropertyNames: Set<String>
+        filterableProperties: Set<String>,
+        sortableProperties: Set<String>
     ) {
-        dao.deleteById(dataKeyPrefix(cacheName), id, entityClass, setIndexPropertyNames, zsetIndexPropertyNames)
+        dao.deleteById(dataKeyPrefix(cacheName), id, entityClass, filterableProperties, sortableProperties)
         pushHashNotify(cacheName, id)
     }
 
@@ -110,10 +110,10 @@ class RedisIdEntitiesHashCache  constructor(
     override fun <PK, E : IIdEntity<PK>> refreshAll(
         cacheName: String,
         entities: List<E>,
-        setIndexPropertyNames: Set<String>,
-        zsetIndexPropertyNames: Set<String>
+        filterableProperties: Set<String>,
+        sortableProperties: Set<String>
     ) {
-        dao.refreshAll(dataKeyPrefix(cacheName), entities, setIndexPropertyNames, zsetIndexPropertyNames)
+        dao.refreshAll(dataKeyPrefix(cacheName), entities, filterableProperties, sortableProperties)
         pushHashNotify(cacheName, null)
     }
 }

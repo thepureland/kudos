@@ -84,6 +84,17 @@ internal class LocalHashCacheTest {
     }
 
     @Test
+    fun hashCacheableWritesSetIndex() {
+        hashCacheableTestService.putTestData("s1", TestRow(id = "s1", name = "SetOne", type = 1))
+        hashCacheableTestService.getTestRowById("s1")
+        val cache = HashCacheKit.getHashCache(cacheName)!!
+        val byType1 = cache.listBySetIndex(cacheName, TestRow::class, "type", 1)
+        assertEquals(1, byType1.size)
+        assertEquals("s1", byType1.first().id)
+        assertEquals("SetOne", byType1.first().name)
+    }
+
+    @Test
     fun hashCacheableReturnsNullWhenMissing() {
         val found = hashCacheableTestService.getTestRowById("nonexistent")
         assertNull(found)
@@ -265,13 +276,67 @@ internal class LocalHashCacheTest {
         assertEquals(1, page2.size)
         assertEquals("c", page2[0].id)
     }
+
+    // ---------- 通过 Service 模拟二级索引/排序/分页，与缓存结果对比 ----------
+
+    @Test
+    fun serviceListByTypeMatchesCacheSetIndex() {
+        hashCacheableTestService.putTestData("v1", TestRow(id = "v1", name = "V1", type = 1))
+        hashCacheableTestService.putTestData("v2", TestRow(id = "v2", name = "V2", type = 1))
+        hashCacheableTestService.putTestData("v3", TestRow(id = "v3", name = "V3", type = 2))
+        hashCacheableTestService.getTestRowById("v1")
+        hashCacheableTestService.getTestRowById("v2")
+        hashCacheableTestService.getTestRowById("v3")
+        val cache = HashCacheKit.getHashCache(cacheName)!!
+        val expectedByType1 = hashCacheableTestService.listTestRowsByType(1).map { it.id }.toSet()
+        val actualByType1 = cache.listBySetIndex(cacheName, TestRow::class, "type", 1).map { it.id }.toSet()
+        assertEquals(expectedByType1, actualByType1)
+        assertEquals(2, actualByType1.size)
+        val expectedByType2 = hashCacheableTestService.listTestRowsByType(2).map { it.id }.toSet()
+        val actualByType2 = cache.listBySetIndex(cacheName, TestRow::class, "type", 2).map { it.id }.toSet()
+        assertEquals(expectedByType2, actualByType2)
+        assertEquals(1, actualByType2.size)
+    }
+
+    @Test
+    fun serviceSortScorePageMatchesCacheZSetPage() {
+        hashCacheableTestService.putTestDataWithTime("t1", TestRowWithTime(id = "t1", type = 0, sortScore = 10.0))
+        hashCacheableTestService.putTestDataWithTime("t2", TestRowWithTime(id = "t2", type = 0, sortScore = 20.0))
+        hashCacheableTestService.putTestDataWithTime("t3", TestRowWithTime(id = "t3", type = 0, sortScore = 30.0))
+        val cache = HashCacheKit.getHashCache(cacheName)!!
+        cache.save(cacheName, TestRowWithTime(id = "t1", type = 0, sortScore = 10.0), setIdx, zsetIdx)
+        cache.save(cacheName, TestRowWithTime(id = "t2", type = 0, sortScore = 20.0), setIdx, zsetIdx)
+        cache.save(cacheName, TestRowWithTime(id = "t3", type = 0, sortScore = 30.0), setIdx, zsetIdx)
+        val expected = hashCacheableTestService.listTestRowsWithTimeBySortScorePage(0, 2, desc = true).map { it.id }
+        val actual = cache.listPageByZSetIndex(cacheName, TestRowWithTime::class, "sortScore", 0, 2, desc = true).map { it.id }
+        assertEquals(expected, actual)
+        assertEquals(listOf("t3", "t2"), actual)
+    }
+
+    @Test
+    fun serviceListPageMatchesCacheList() {
+        hashCacheableTestService.putTestDataWithTime("p1", TestRowWithTime(id = "p1", type = 1, sortScore = 100.0))
+        hashCacheableTestService.putTestDataWithTime("p2", TestRowWithTime(id = "p2", type = 1, sortScore = 200.0))
+        hashCacheableTestService.putTestDataWithTime("p3", TestRowWithTime(id = "p3", type = 2, sortScore = 150.0))
+        val cache = HashCacheKit.getHashCache(cacheName)!!
+        cache.save(cacheName, TestRowWithTime(id = "p1", type = 1, sortScore = 100.0), setIdx, zsetIdx)
+        cache.save(cacheName, TestRowWithTime(id = "p2", type = 1, sortScore = 200.0), setIdx, zsetIdx)
+        cache.save(cacheName, TestRowWithTime(id = "p3", type = 2, sortScore = 150.0), setIdx, zsetIdx)
+        val criteria = Criteria.of("type", OperatorEnum.EQ, 1)
+        val order = Order.desc("sortScore")
+        val expected = hashCacheableTestService.listTestRowsWithTimePage(criteria, 1, 10, order).map { it.id }
+        val actual = cache.list(cacheName, TestRowWithTime::class, criteria, 1, 10, order).map { it.id }
+        assertEquals(expected, actual)
+        assertEquals(listOf("p2", "p1"), actual)
+    }
 }
 
 /** 简单测试实体 */
 data class TestRow(
     override var id: String? = null,
     var name: String? = null,
-    var type: Int? = null
+    var type: Int? = null,
+    var status: Int? = null
 ) : IIdEntity<String>
 
 /** 带 type 与 sortScore 的实体，用于二级索引测试 */

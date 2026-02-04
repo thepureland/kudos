@@ -82,18 +82,18 @@ class CaffeineIdEntitiesHashCache : IIdEntitiesHashCache, IIdEntitiesHashCacheSy
     override fun <PK, E : IIdEntity<PK>> save(
         cacheName: String,
         entity: E,
-        setIndexPropertyNames: Set<String>,
-        zsetIndexPropertyNames: Set<String>
+        filterableProperties: Set<String>,
+        sortableProperties: Set<String>
     ) {
         val id = entity.id ?: throw IllegalArgumentException("entity.id must not be null")
         val idStr = id.toString()
         main(cacheName)[idStr] = entity
-        setIndexPropertyNames.forEach { prop ->
+        filterableProperties.forEach { prop ->
             getPropertyValue(entity, prop)?.let { value ->
                 setIdx(cacheName).getOrPut(setKey(prop, value.toString())) { ConcurrentHashMap.newKeySet() }.add(idStr)
             }
         }
-        zsetIndexPropertyNames.forEach { prop ->
+        sortableProperties.forEach { prop ->
             getPropertyValue(entity, prop)?.let { value ->
                 zsetIdx(cacheName).getOrPut(zsetKey(prop)) { ConcurrentHashMap() }[idStr] = toDouble(value)
             }
@@ -103,27 +103,27 @@ class CaffeineIdEntitiesHashCache : IIdEntitiesHashCache, IIdEntitiesHashCacheSy
     override fun <PK, E : IIdEntity<PK>> saveBatch(
         cacheName: String,
         entities: List<E>,
-        setIndexPropertyNames: Set<String>,
-        zsetIndexPropertyNames: Set<String>
+        filterableProperties: Set<String>,
+        sortableProperties: Set<String>
     ) {
-        entities.forEach { save(cacheName, it, setIndexPropertyNames, zsetIndexPropertyNames) }
+        entities.forEach { save(cacheName, it, filterableProperties, sortableProperties) }
     }
 
     override fun <PK, E : IIdEntity<PK>> deleteById(
         cacheName: String,
         id: PK,
         entityClass: KClass<E>,
-        setIndexPropertyNames: Set<String>,
-        zsetIndexPropertyNames: Set<String>
+        filterableProperties: Set<String>,
+        sortableProperties: Set<String>
     ) {
         val idStr = id.toString()
         val entity = main(cacheName).remove(idStr) ?: return
-        setIndexPropertyNames.forEach { prop ->
+        filterableProperties.forEach { prop ->
             getPropertyValue(entity, prop)?.let { value ->
                 setIdx(cacheName)[setKey(prop, value.toString())]?.remove(idStr)
             }
         }
-        zsetIndexPropertyNames.forEach { prop ->
+        sortableProperties.forEach { prop ->
             zsetIdx(cacheName)[zsetKey(prop)]?.remove(idStr)
         }
     }
@@ -145,12 +145,7 @@ class CaffeineIdEntitiesHashCache : IIdEntitiesHashCache, IIdEntitiesHashCacheSy
         property: String,
         value: Any
     ): List<E> {
-        val ids = if (NumberKit.isNumber(value.toString())) {
-            val v = toDouble(value)
-            zsetIdx(cacheName)[zsetKey(property)]?.entries?.filter { it.value == v }?.map { it.key } ?: emptyList()
-        } else {
-            setIdx(cacheName)[setKey(property, value.toString())]?.toList() ?: emptyList()
-        }
+        val ids = setIdx(cacheName)[setKey(property, value.toString())]?.toList() ?: emptyList()
         return findByIds(cacheName, ids, entityClass)
     }
 
@@ -221,10 +216,10 @@ class CaffeineIdEntitiesHashCache : IIdEntitiesHashCache, IIdEntitiesHashCacheSy
     override fun <PK, E : IIdEntity<PK>> refreshAll(
         cacheName: String,
         entities: List<E>,
-        setIndexPropertyNames: Set<String>,
-        zsetIndexPropertyNames: Set<String>
+        filterableProperties: Set<String>,
+        sortableProperties: Set<String>
     ) {
         clearLocal(cacheName)
-        entities.forEach { save(cacheName, it, setIndexPropertyNames, zsetIndexPropertyNames) }
+        entities.forEach { save(cacheName, it, filterableProperties, sortableProperties) }
     }
 }

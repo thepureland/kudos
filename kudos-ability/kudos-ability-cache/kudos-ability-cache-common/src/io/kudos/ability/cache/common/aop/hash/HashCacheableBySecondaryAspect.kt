@@ -22,7 +22,8 @@ import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.jvm.kotlinFunction
 
 /**
- * [HashCacheable] 切面：先按 key(id) 查 Hash 缓存，未命中则执行方法并回写缓存。
+ * [HashCacheableBySecondary] 切面：先按副属性等值（listBySetIndex）查缓存，未命中则执行方法并将结果 saveBatch 回写。
+ * 适用于 Caffeine、Redis 等任意 Hash 缓存实现。
  *
  * @author K
  * @author AI: Cursor
@@ -32,12 +33,12 @@ import kotlin.reflect.jvm.kotlinFunction
 @Component
 @Lazy(false)
 @ConditionalOnBean(MixHashCacheManager::class)
-class HashCacheableAspect {
+class HashCacheableBySecondaryAspect {
 
     private val parser: ExpressionParser = SpelExpressionParser()
     private val nameDiscoverer = DefaultParameterNameDiscoverer()
 
-    @Pointcut("@annotation(io.kudos.ability.cache.common.aop.hash.HashCacheable)")
+    @Pointcut("@annotation(io.kudos.ability.cache.common.aop.hash.HashCacheableBySecondary)")
     fun cut() {}
 
     @Around("cut()")
@@ -45,47 +46,50 @@ class HashCacheableAspect {
         val signature = joinPoint.signature as MethodSignature
         val method = signature.method
         val function = method.kotlinFunction ?: return joinPoint.proceed()
-        val hashCacheable = function.findAnnotation<HashCacheable>() ?: return joinPoint.proceed()
+        val ann = function.findAnnotation<HashCacheableBySecondary>() ?: return joinPoint.proceed()
 
-        val cacheName = resolveCacheName(joinPoint, hashCacheable)
-            ?: return joinPoint.proceed()
+        val cacheName = resolveCacheName(joinPoint, ann) ?: return joinPoint.proceed()
         val context = MethodBasedEvaluationContext(null, method, joinPoint.args, nameDiscoverer)
 
-        if (hashCacheable.condition.isNotBlank()) {
-            val conditionResult = parser.parseExpression(hashCacheable.condition).getValue(context, Boolean::class.java)
+        if (ann.condition.isNotBlank()) {
+            val conditionResult = parser.parseExpression(ann.condition).getValue(context, Boolean::class.java)
             if (conditionResult != true) return joinPoint.proceed()
         }
 
-        val keyValue = parser.parseExpression(hashCacheable.key).getValue(context) ?: return joinPoint.proceed()
-        val entityClass = hashCacheable.entityClass as KClass<out IIdEntity<Any?>>
+        val indexValue = parser.parseExpression(ann.key).getValue(context) ?: return joinPoint.proceed()
+        val entityClass = ann.entityClass as KClass<out IIdEntity<Any?>>
+        val property = ann.property
 
         val hashCache = HashCacheKit.getHashCache(cacheName)
         if (hashCache != null && CacheKit.isCacheActive(cacheName)) {
             @Suppress("UNCHECKED_CAST")
-            val cached = hashCache.getById(cacheName, keyValue, entityClass)
-            if (cached != null) return cached
+            val cached = hashCache.listBySetIndex(cacheName, entityClass, property, indexValue)
+            if (cached.isNotEmpty()) return cached
         }
 
         val result = joinPoint.proceed()
 
         if (result == null) return result
-        if (hashCacheable.unless.isNotBlank()) {
+        if (ann.unless.isNotBlank()) {
             val unlessContext = MethodBasedEvaluationContext(result, method, joinPoint.args, nameDiscoverer)
             unlessContext.setVariable("result", result)
-            val unlessResult = parser.parseExpression(hashCacheable.unless).getValue(unlessContext, Boolean::class.java)
+            val unlessResult = parser.parseExpression(ann.unless).getValue(unlessContext, Boolean::class.java)
             if (unlessResult == true) return result
         }
 
-        if (result is IIdEntity<*> && hashCache != null && CacheKit.isCacheActive(cacheName) && CacheKit.isWriteInTime(cacheName)) {
+        val list = (result as? List<*>)?.filterIsInstance<IIdEntity<*>>() ?: return result
+        if (list.isNotEmpty() && hashCache != null && CacheKit.isCacheActive(cacheName) && CacheKit.isWriteInTime(cacheName)) {
+            val filterable = ann.filterableProperties.toSet()
+            val sortable = ann.sortableProperties.toSet()
             @Suppress("UNCHECKED_CAST")
-            hashCache.save(cacheName, result as IIdEntity<Any?>, emptySet(), emptySet())
+            hashCache.saveBatch(cacheName, list as List<IIdEntity<Any?>>, filterable, sortable)
         }
 
         return result
     }
 
-    private fun resolveCacheName(joinPoint: ProceedingJoinPoint, hashCacheable: HashCacheable): String? {
-        if (hashCacheable.cacheNames.isNotEmpty()) return hashCacheable.cacheNames.first()
+    private fun resolveCacheName(joinPoint: ProceedingJoinPoint, ann: HashCacheableBySecondary): String? {
+        if (ann.cacheNames.isNotEmpty()) return ann.cacheNames.first()
         val cacheConfig = joinPoint.target::class.findAnnotation<CacheConfig>()
         if (cacheConfig != null && cacheConfig.cacheNames.isNotEmpty()) return cacheConfig.cacheNames.first()
         return null
