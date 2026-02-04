@@ -45,6 +45,9 @@ data class SysCacheCacheItem (
     /** 是否内置 */
     var builtIn: Boolean? = null,
 
+    /** 是否为 Hash 缓存 */
+    var hash: Boolean? = null,
+
     /** 创建者id */
     var createUserId: String? = null,
 
