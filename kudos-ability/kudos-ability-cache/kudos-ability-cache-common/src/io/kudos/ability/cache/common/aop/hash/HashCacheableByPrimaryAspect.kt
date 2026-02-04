@@ -59,7 +59,7 @@ class HashCacheableByPrimaryAspect {
         val entityClass = ann.entityClass as KClass<out IIdEntity<Any?>>
 
         val hashCache = HashCacheKit.getHashCache(cacheName)
-        if (hashCache != null && CacheKit.isCacheActive(cacheName)) {
+        if (CacheKit.isCacheActive(cacheName)) {
             @Suppress("UNCHECKED_CAST")
             val cached = hashCache.getById(cacheName, keyValue, entityClass)
             if (cached != null) return cached
@@ -75,7 +75,7 @@ class HashCacheableByPrimaryAspect {
             if (unlessResult == true) return result
         }
 
-        if (result is IIdEntity<*> && hashCache != null && CacheKit.isCacheActive(cacheName) && CacheKit.isWriteInTime(cacheName)) {
+        if (result is IIdEntity<*> && CacheKit.isCacheActive(cacheName) && CacheKit.isWriteInTime(cacheName)) {
             val filterable = ann.filterableProperties.toSet()
             val sortable = ann.sortableProperties.toSet()
             @Suppress("UNCHECKED_CAST")

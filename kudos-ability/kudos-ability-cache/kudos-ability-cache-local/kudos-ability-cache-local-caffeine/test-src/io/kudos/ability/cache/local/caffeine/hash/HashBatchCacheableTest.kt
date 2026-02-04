@@ -10,6 +10,7 @@ import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 /**
@@ -39,7 +40,7 @@ internal class HashBatchCacheableTest {
 
     @BeforeEach
     fun clearCache() {
-        HashCacheKit.getHashCache(cacheName)?.refreshAll(cacheName, emptyList<TestRow>(), emptySet(), emptySet())
+        HashCacheKit.getHashCache(cacheName).refreshAll(cacheName, emptyList<TestRow>(), emptySet(), emptySet())
     }
 
     @Test
@@ -60,6 +61,10 @@ internal class HashBatchCacheableTest {
         assertEquals("Alice", fromCache["a"]?.name)
         assertEquals("Bob", fromCache["b"]?.name)
         assertEquals("Carol", fromCache["c"]?.name)
+        val fromCacheAgain = hashCacheableTestService.getTestRowsByIds(listOf("a", "b", "c"))
+        assertSame(fromCache["a"], fromCacheAgain["a"], "SINGLE_LOCAL 下同一 id 再次从缓存获取应返回同一对象引用")
+        assertSame(fromCache["b"], fromCacheAgain["b"], "SINGLE_LOCAL 下同一 id 再次从缓存获取应返回同一对象引用")
+        assertSame(fromCache["c"], fromCacheAgain["c"], "SINGLE_LOCAL 下同一 id 再次从缓存获取应返回同一对象引用")
     }
 
     @Test
@@ -76,6 +81,9 @@ internal class HashBatchCacheableTest {
         assertEquals(2, fromCache.size)
         assertEquals("P1", fromCache["p1"]?.name)
         assertEquals("P2", fromCache["p2"]?.name)
+        val fromCacheAgain = hashCacheableTestService.getTestRowsByIds(listOf("p1", "p2", "p3"))
+        assertSame(fromCache["p1"], fromCacheAgain["p1"], "SINGLE_LOCAL 下同一 id 再次从缓存获取应返回同一对象引用")
+        assertSame(fromCache["p2"], fromCacheAgain["p2"], "SINGLE_LOCAL 下同一 id 再次从缓存获取应返回同一对象引用")
     }
 
     @Test
@@ -95,8 +103,12 @@ internal class HashBatchCacheableTest {
         assertEquals(2, byType1.size)
         assertTrue(byType1.any { it.id == "s1" && it.name == "S1" })
         assertTrue(byType1.any { it.id == "s2" && it.name == "S2" })
+        val byType1Again = cache.listBySetIndex(cacheName, TestRow::class, "type", 1)
+        assertSame(byType1.first(), byType1Again.first(), "SINGLE_LOCAL 下同一维度再次从缓存获取应返回同一对象引用")
         val byType2 = cache.listBySetIndex(cacheName, TestRow::class, "type", 2)
         assertEquals(1, byType2.size)
         assertEquals("s3", byType2.first().id)
+        val byType2Again = cache.listBySetIndex(cacheName, TestRow::class, "type", 2)
+        assertSame(byType2.first(), byType2Again.first(), "SINGLE_LOCAL 下同一维度再次从缓存获取应返回同一对象引用")
     }
 }

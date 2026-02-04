@@ -3,6 +3,7 @@ package io.kudos.ability.cache.remote.redis.hash
 import io.kudos.ability.cache.common.batch.hash.HashBatchCacheableByPrimary
 import io.kudos.ability.cache.common.aop.hash.HashCacheableByPrimary
 import io.kudos.ability.cache.common.aop.hash.HashCacheableBySecondary
+import io.kudos.base.lang.string.RandomStringKit
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.Criterion
 import io.kudos.base.query.enums.OperatorEnum
@@ -46,6 +47,18 @@ open class HashCacheableTestService {
         testDataWithTime.clear()
     }
 
+    /** 仿照 key-value 的 getFromDB：未启用缓存时每次调用返回新实例（name 不同），用于 NoHashCacheTest 断言无缓存。 */
+    @HashCacheableByPrimary(
+        cacheNames = ["testHash"],
+        key = "#id",
+        entityClass = TestRow::class,
+        unless = "#result == null",
+        filterableProperties = ["type"]
+    )
+    open fun getFromDB(id: String): TestRow {
+        return TestRow(id = id, name = RandomStringKit.uuidWithoutDelimiter(), type = 1)
+    }
+
     @HashCacheableByPrimary(
         cacheNames = ["testHash"],
         key = "#id",
@@ -69,8 +82,7 @@ open class HashCacheableTestService {
     /** 按副属性（type，可选 status）等值查询：先查缓存，未命中则从内存取并回写；支持多一个属性 status 在内存中再筛。 */
     @HashCacheableBySecondary(
         cacheNames = ["testHash"],
-        property = "type",
-        key = "#type",
+        filterExpressions = ["#type"],
         entityClass = TestRow::class,
         filterableProperties = ["type", "status"]
     )

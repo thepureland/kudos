@@ -1,23 +1,32 @@
 package io.kudos.ability.cache.remote.redis.hash
 
+import io.kudos.ability.cache.common.core.MixHashCacheManager
 import io.kudos.ability.cache.common.kit.HashCacheKit
 import io.kudos.test.common.init.EnableKudosTest
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import kotlin.test.Test
-import kotlin.test.assertNull
+import kotlin.test.assertFailsWith
+import kotlin.test.assertNotEquals
 
 /**
- * 缓存未启用时，[HashCacheKit.getHashCache] 应返回 null。
+ * 不启用 Hash 缓存测试用例（仿照 [io.kudos.ability.cache.remote.redis.keyvalue.NoCacheTest]）。
+ * 缓存关闭时：MixHashCacheManager 未注入、getHashCache 抛异常、走 Hash 注解的方法每次执行且返回不同结果。
  *
  * @author K
- * @author AI: Cursor
  * @since 1.0.0
  */
 @EnableKudosTest
-@Import(EmptyConfig::class)
+@Import(HashCacheableTestService::class)
 internal class NoHashCacheTest {
+
+    @Autowired
+    private lateinit var hashCacheableTestService: HashCacheableTestService
+
+    @Autowired(required = false)
+    private lateinit var mixHashCacheManager: MixHashCacheManager
 
     companion object {
         @DynamicPropertySource
@@ -28,11 +37,13 @@ internal class NoHashCacheTest {
     }
 
     @Test
-    fun getHashCacheReturnsNullWhenCacheDisabled() {
-        val cache = HashCacheKit.getHashCache("testHash")
-        assertNull(cache)
+    fun testNoHashCache() {
+        assertFailsWith<UninitializedPropertyAccessException> { mixHashCacheManager }
+        assertFailsWith<IllegalStateException> { HashCacheKit.getHashCache("testHash") }
+
+        val key = "key"
+        val value1 = hashCacheableTestService.getFromDB(key)
+        val value2 = hashCacheableTestService.getFromDB(key)
+        assertNotEquals(value1.name, value2.name)
     }
 }
-
-/** 空配置占位，避免测试上下文需要其他 Bean */
-internal class EmptyConfig

@@ -124,7 +124,7 @@ internal class MixIdEntitiesHashCache(
                 @Suppress("UNCHECKED_CAST")
                 writeOne(e as IIdEntity<Any?>)
             }
-            return fromRemote
+            return if (local != null) local!!.findByIds(name, ids, entityClass) else fromRemote
         }
         return remoteOrLocal().findByIds(name, ids, entityClass)
     }
@@ -135,7 +135,7 @@ internal class MixIdEntitiesHashCache(
             if (!fromLocal.isNullOrEmpty()) return fromLocal
             val fromRemote = remote?.listAll(name, entityClass) ?: return emptyList()
             fromRemote.forEach { e -> local?.save(name, e, emptySet(), emptySet()) }
-            return fromRemote
+            return if (local != null) local!!.listAll(name, entityClass) else fromRemote
         }
         return remoteOrLocal().listAll(name, entityClass)
     }
@@ -150,8 +150,8 @@ internal class MixIdEntitiesHashCache(
             val fromLocal = readFromLocalFirst { it.listBySetIndex(name, entityClass, property, value) }
             if (!fromLocal.isNullOrEmpty()) return fromLocal
             val fromRemote = remote?.listBySetIndex(name, entityClass, property, value) ?: return emptyList()
-            fromRemote.forEach { e -> local?.save<PK, E>(name, e, emptySet(), emptySet()) }
-            return fromRemote
+            fromRemote.forEach { e -> local?.save(name, e, setOf(property), emptySet()) }
+            return if (local != null) local!!.listBySetIndex(name, entityClass, property, value) else fromRemote
         }
         return remoteOrLocal().listBySetIndex(name, entityClass, property, value)
     }
@@ -168,8 +168,8 @@ internal class MixIdEntitiesHashCache(
             val fromLocal = readFromLocalFirst { it.listPageByZSetIndex(name, entityClass, zsetIndexName, offset, limit, desc) }
             if (!fromLocal.isNullOrEmpty()) return fromLocal
             val fromRemote = remote?.listPageByZSetIndex(name, entityClass, zsetIndexName, offset, limit, desc) ?: return emptyList()
-            fromRemote.forEach { e -> local?.save(name, e, emptySet(), emptySet()) }
-            return fromRemote
+            fromRemote.forEach { e -> local?.save(name, e, emptySet(), setOf(zsetIndexName)) }
+            return if (local != null) local!!.listPageByZSetIndex(name, entityClass, zsetIndexName, offset, limit, desc) else fromRemote
         }
         return remoteOrLocal().listPageByZSetIndex(name, entityClass, zsetIndexName, offset, limit, desc)
     }
@@ -187,7 +187,7 @@ internal class MixIdEntitiesHashCache(
             if (!fromLocal.isNullOrEmpty()) return fromLocal
             val fromRemote = remote?.list(name, entityClass, criteria, pageNo, pageSize, *orders) ?: return emptyList()
             fromRemote.forEach { e -> local?.save(name, e, emptySet(), emptySet()) }
-            return fromRemote
+            return if (local != null) local!!.list(name, entityClass, criteria, pageNo, pageSize, *orders) else fromRemote
         }
         return remoteOrLocal().list(name, entityClass, criteria, pageNo, pageSize, *orders)
     }
