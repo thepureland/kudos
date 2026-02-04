@@ -1,6 +1,6 @@
 package io.kudos.ability.cache.remote.redis.support
 
-import io.kudos.ability.cache.common.aop.process.IRemoteCacheProcessor
+import io.kudos.ability.cache.common.aop.keyvalue.process.IRemoteCacheProcessor
 import io.kudos.ability.data.memdb.redis.RedisTemplates
 import java.time.Duration
 

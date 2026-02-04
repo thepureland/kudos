@@ -1,4 +1,4 @@
-package io.kudos.ability.cache.common.batch
+package io.kudos.ability.cache.common.batch.keyvalue
 
 import io.kudos.ability.cache.common.core.MixCacheManager
 import io.kudos.ability.cache.common.kit.CacheKit
@@ -40,7 +40,7 @@ class BatchCacheableAspect {
      * @author K
      * @since 1.0.0
      */
-    @Pointcut("@annotation(io.kudos.ability.cache.common.batch.BatchCacheable)")
+    @Pointcut("@annotation(io.kudos.ability.cache.common.batch.keyvalue.BatchCacheable)")
     private fun cut() {
         // do nothing
     }

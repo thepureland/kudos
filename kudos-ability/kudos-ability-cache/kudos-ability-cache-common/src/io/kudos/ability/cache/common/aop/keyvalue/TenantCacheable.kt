@@ -1,6 +1,6 @@
-package io.kudos.ability.cache.common.aop
+package io.kudos.ability.cache.common.aop.keyvalue
 
-import org.springframework.cache.annotation.CacheEvict
+import org.springframework.cache.annotation.Cacheable
 import org.springframework.core.annotation.AliasFor
 
 @Target(
@@ -11,39 +11,39 @@ import org.springframework.core.annotation.AliasFor
 )
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
-@CacheEvict(cacheNames = [])
-annotation class TenantCacheEvict(
+@Cacheable
+annotation class TenantCacheable(
     @get:AliasFor(
-        annotation = CacheEvict::class,
+        annotation = Cacheable::class,
         attribute = "cacheNames"
     ) vararg val value: String = [],
     @get:AliasFor(
-        annotation = CacheEvict::class,
+        annotation = Cacheable::class,
         attribute = "value"
     ) val cacheNames: Array<String> = [],
     val suffix: String = "",
     @get:AliasFor(
-        annotation = CacheEvict::class,
+        annotation = Cacheable::class,
         attribute = "keyGenerator"
     ) val keyGenerator: String = "tenantCacheKeyGenerator",
     @get:AliasFor(
-        annotation = CacheEvict::class,
+        annotation = Cacheable::class,
         attribute = "cacheManager"
     ) val cacheManager: String = "",
     @get:AliasFor(
-        annotation = CacheEvict::class,
+        annotation = Cacheable::class,
         attribute = "cacheResolver"
     ) val cacheResolver: String = "",
     @get:AliasFor(
-        annotation = CacheEvict::class,
+        annotation = Cacheable::class,
         attribute = "condition"
     ) val condition: String = "",
     @get:AliasFor(
-        annotation = CacheEvict::class,
-        attribute = "allEntries"
-    ) val allEntries: Boolean = false,
+        annotation = Cacheable::class,
+        attribute = "unless"
+    ) val unless: String = "",
     @get:AliasFor(
-        annotation = CacheEvict::class,
-        attribute = "beforeInvocation"
-    ) val beforeInvocation: Boolean = false
+        annotation = Cacheable::class,
+        attribute = "sync"
+    ) val sync: Boolean = false
 )

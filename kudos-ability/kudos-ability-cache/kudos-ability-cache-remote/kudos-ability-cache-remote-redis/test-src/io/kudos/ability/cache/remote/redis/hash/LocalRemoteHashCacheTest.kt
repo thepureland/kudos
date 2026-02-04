@@ -6,6 +6,7 @@ import io.kudos.test.common.init.EnableKudosTest
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.container.containers.RedisTestContainer
 import org.junit.jupiter.api.BeforeEach
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
@@ -23,9 +24,12 @@ import kotlin.test.assertTrue
  * @since 1.0.0
  */
 @EnableKudosTest
-@Import(LocalRemoteHashTestCacheConfigProvider::class)
+@Import(LocalRemoteHashTestCacheConfigProvider::class, HashCacheableTestService::class)
 @EnabledIfDockerInstalled
 internal class LocalRemoteHashCacheTest {
+
+    @Autowired
+    private lateinit var hashCacheableTestService: HashCacheableTestService
 
     private val cacheName = "testHash"
 
@@ -68,4 +72,16 @@ internal class LocalRemoteHashCacheTest {
         }.start()
         latch.await()
     }
+
+    @Test
+    fun hashCacheableInLocalRemoteMode() {
+        hashCacheableTestService.putTestData("lr1", TestRow(id = "lr1", name = "LocalRemote", type = 1))
+        val first = hashCacheableTestService.getTestRowById("lr1")
+        assertEquals("lr1", first?.id)
+        assertEquals("LocalRemote", first?.name)
+        hashCacheableTestService.removeTestData("lr1")
+        val fromCache = hashCacheableTestService.getTestRowById("lr1")
+        assertEquals("LocalRemote", fromCache?.name)
+    }
+
 }

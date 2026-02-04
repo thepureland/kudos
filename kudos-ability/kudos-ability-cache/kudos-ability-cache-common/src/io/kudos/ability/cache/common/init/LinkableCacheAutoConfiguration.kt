@@ -1,8 +1,11 @@
 package io.kudos.ability.cache.common.init
 
-import io.kudos.ability.cache.common.batch.BatchCacheableAspect
-import io.kudos.ability.cache.common.batch.DefaultKeysGenerator
-import io.kudos.ability.cache.common.batch.IKeysGenerator
+import io.kudos.ability.cache.common.batch.keyvalue.BatchCacheableAspect
+import io.kudos.ability.cache.common.batch.keyvalue.DefaultKeysGenerator
+import io.kudos.ability.cache.common.batch.hash.DefaultHashBatchKeysGenerator
+import io.kudos.ability.cache.common.batch.hash.HashBatchCacheableAspect
+import io.kudos.ability.cache.common.aop.hash.HashCacheableAspect
+import io.kudos.ability.cache.common.batch.keyvalue.IKeysGenerator
 import io.kudos.ability.cache.common.core.CacheDataInitializer
 import io.kudos.ability.cache.common.core.MixCacheInitializing
 import io.kudos.ability.cache.common.core.MixCacheManager
@@ -84,6 +87,18 @@ open class LinkableCacheAutoConfiguration : IComponentInitializer {
     @Bean
     @ConditionalOnMissingBean
     open fun batchCacheableAspect(): BatchCacheableAspect = BatchCacheableAspect()
+
+    @Bean
+    @ConditionalOnMissingBean
+    open fun hashCacheableAspect(): HashCacheableAspect = HashCacheableAspect()
+
+    @Bean
+    @ConditionalOnMissingBean
+    open fun hashBatchCacheableAspect(): HashBatchCacheableAspect = HashBatchCacheableAspect()
+
+    @Bean("defaultHashBatchKeysGenerator")
+    @ConditionalOnMissingBean(name = ["defaultHashBatchKeysGenerator"])
+    open fun defaultHashBatchKeysGenerator(): DefaultHashBatchKeysGenerator = DefaultHashBatchKeysGenerator()
 
     @Bean
     @ConditionalOnMissingBean

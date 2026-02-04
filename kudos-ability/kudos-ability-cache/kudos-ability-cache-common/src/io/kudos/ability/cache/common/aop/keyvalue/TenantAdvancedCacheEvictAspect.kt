@@ -1,6 +1,6 @@
-package io.kudos.ability.cache.common.aop
+package io.kudos.ability.cache.common.aop.keyvalue
 
-import io.kudos.ability.cache.common.aop.process.IRemoteCacheProcessor
+import io.kudos.ability.cache.common.aop.keyvalue.process.IRemoteCacheProcessor
 import io.kudos.context.core.KudosContextHolder
 import org.aspectj.lang.JoinPoint
 import org.aspectj.lang.annotation.After
@@ -23,7 +23,7 @@ class TenantAdvancedCacheEvictAspect {
      * @author K
      * @since 1.0.0
      */
-    @Pointcut("@annotation(io.kudos.ability.cache.common.aop.TenantAdvancedCacheEvict)")
+    @Pointcut("@annotation(io.kudos.ability.cache.common.aop.keyvalue.TenantAdvancedCacheEvict)")
     private fun cut() {
     }
 

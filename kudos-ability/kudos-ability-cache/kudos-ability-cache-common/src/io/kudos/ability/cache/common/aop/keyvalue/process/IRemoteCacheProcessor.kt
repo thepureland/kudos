@@ -1,4 +1,4 @@
-package io.kudos.ability.cache.common.aop.process
+package io.kudos.ability.cache.common.aop.keyvalue.process
 
 interface IRemoteCacheProcessor {
     /**

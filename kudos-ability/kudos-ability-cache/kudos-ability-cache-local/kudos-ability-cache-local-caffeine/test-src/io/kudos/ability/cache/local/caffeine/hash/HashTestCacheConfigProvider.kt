@@ -22,6 +22,8 @@ class HashTestCacheConfigProvider : ICacheConfigProvider {
         strategy = CacheStrategy.SINGLE_LOCAL.name
         ttl = Int.MAX_VALUE
         hash = true
+        active = true
+        writeInTime = true
     }
 
     override fun getCacheConfig(name: String): CacheConfig? {
