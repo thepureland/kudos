@@ -1,14 +1,14 @@
 package io.kudos.ability.cache.remote.redis.support
 
 import io.kudos.ability.cache.common.aop.process.IRemoteCacheProcessor
-import io.kudos.ability.data.memdb.redis.KudosRedisTemplate
+import io.kudos.ability.data.memdb.redis.RedisTemplates
 import java.time.Duration
 
 /**
  * Redis远程缓存处理器
  * 实现IRemoteCacheProcessor接口，提供基于Redis Hash结构的远程缓存读写功能
  */
-class RedisRemoteCacheProcessor(private val kudosRedisTemplate: KudosRedisTemplate) : IRemoteCacheProcessor {
+class RedisRemoteCacheProcessor(private val redisTemplates: RedisTemplates) : IRemoteCacheProcessor {
 
     /**
      * 获取缓存数据
@@ -25,7 +25,7 @@ class RedisRemoteCacheProcessor(private val kudosRedisTemplate: KudosRedisTempla
      * @return 缓存数据，如果不存在返回null
      */
     override fun getCacheData(cacheKey: String, dataKey: String): Any? {
-        return kudosRedisTemplate.defaultRedisTemplate.opsForHash<Any?, Any?>().get(cacheKey, dataKey)
+        return redisTemplates.defaultRedisTemplate.opsForHash<Any?, Any?>().get(cacheKey, dataKey)
     }
 
     /**
@@ -59,9 +59,9 @@ class RedisRemoteCacheProcessor(private val kudosRedisTemplate: KudosRedisTempla
      * @param timeOut 缓存过期时间（毫秒）
      */
     override fun writeCacheData(cacheKey: String, dataKey: String, o: Any?, timeOut: Long) {
-        val defaultRedisTemplate = kudosRedisTemplate.defaultRedisTemplate
+        val defaultRedisTemplate = redisTemplates.defaultRedisTemplate
         if (o != null) {
-            kudosRedisTemplate.defaultRedisTemplate.opsForHash<Any?, Any?>().put(cacheKey, dataKey, o)
+            redisTemplates.defaultRedisTemplate.opsForHash<Any?, Any?>().put(cacheKey, dataKey, o)
             defaultRedisTemplate.expire(cacheKey, Duration.ofMillis(timeOut))
         }
     }
@@ -101,9 +101,9 @@ class RedisRemoteCacheProcessor(private val kudosRedisTemplate: KudosRedisTempla
             return
         }
         if (b) {
-            kudosRedisTemplate.defaultRedisTemplate.delete(cacheKey)
+            redisTemplates.defaultRedisTemplate.delete(cacheKey)
         } else if (s.isNotBlank()) {
-            kudosRedisTemplate.defaultRedisTemplate.opsForHash<Any?, Any?>().delete(cacheKey, s)
+            redisTemplates.defaultRedisTemplate.opsForHash<Any?, Any?>().delete(cacheKey, s)
         }
     }
 

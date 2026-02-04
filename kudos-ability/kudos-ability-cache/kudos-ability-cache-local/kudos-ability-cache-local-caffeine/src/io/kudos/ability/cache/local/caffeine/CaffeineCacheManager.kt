@@ -28,10 +28,7 @@ class CaffeineCacheManager : AbstractCacheManager<CaffeineCache>() {
     }
 
     override fun evictByPattern(cacheName: String, pattern: String) {
-        val cache = getCache(cacheName)
-        if (cache == null) {
-            return
-        }
+        val cache = getCache(cacheName) ?: return
         val realPattern: String = versionConfig.getFinalCacheName(pattern)
         // 拿到底层 ConcurrentMap
         val nativeCache = (cache as CaffeineCache).nativeCache.asMap()

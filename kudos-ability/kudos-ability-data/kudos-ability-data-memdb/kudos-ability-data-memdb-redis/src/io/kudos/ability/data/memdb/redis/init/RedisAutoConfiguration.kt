@@ -1,13 +1,12 @@
 package io.kudos.ability.data.memdb.redis.init
 
-import io.kudos.ability.data.memdb.redis.KudosRedisTemplate
+import io.kudos.ability.data.memdb.redis.RedisTemplates
 import io.kudos.ability.data.memdb.redis.RedisConnectFactory
 import io.kudos.ability.data.memdb.redis.init.properties.RedisExtProperties
 import io.kudos.ability.data.memdb.redis.init.properties.RedisProperties
 import io.kudos.context.config.YamlPropertySourceFactory
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
-import io.kudos.context.kit.SpringKit
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.ConfigurationProperties
@@ -41,7 +40,7 @@ open class RedisAutoConfiguration : IComponentInitializer {
     @ConditionalOnMissingBean
     open fun redisTemplateMap(
         redisProperties: RedisProperties
-    ): KudosRedisTemplate {
+    ): RedisTemplates {
         val redisMap = redisProperties.redisMap
         val redisTemplateMap = mutableMapOf<String, RedisTemplate<Any, Any?>>()
         redisMap.forEach { (key, properties) ->
@@ -52,13 +51,14 @@ open class RedisAutoConfiguration : IComponentInitializer {
         }
 
         //拼装KudosRedisTemplate
-        val kudosRedisTemplate = KudosRedisTemplate(redisTemplateMap, redisTemplateMap[redisProperties.defaultRedis]!!)
-        return kudosRedisTemplate
+        val defaultRedisTemplate = redisTemplateMap[redisProperties.defaultRedis]!!
+        val redisTemplates = RedisTemplates(redisTemplateMap, defaultRedisTemplate)
+        return redisTemplates
     }
 
     @Bean("redisTemplate")
     @ConditionalOnMissingBean
-    open fun redisTemplate(redisTemplateMap: KudosRedisTemplate): RedisTemplate<Any, Any?> {
+    open fun redisTemplate(redisTemplateMap: RedisTemplates): RedisTemplate<Any, Any?> {
         return redisTemplateMap.defaultRedisTemplate
     }
 

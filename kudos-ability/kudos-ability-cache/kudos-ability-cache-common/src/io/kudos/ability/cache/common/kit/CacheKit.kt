@@ -70,10 +70,7 @@ object CacheKit {
      * @since 1.0.0
      */
     fun <T : Any> getValue(cacheName: String, key: Any, valueClass: KClass<T>): T? {
-        val cache = getCache(cacheName)
-        if (cache == null) {
-            return null
-        }
+        val cache = getCache(cacheName) ?: return null
         return cache.get<T>(key, valueClass.java)
     }
 
@@ -87,10 +84,7 @@ object CacheKit {
      * @since 1.0.0
      */
     fun getValue(cacheName: String, key: Any): Any? {
-        val cache = getCache(cacheName)
-        if (cache == null) {
-            return null
-        }
+        val cache = getCache(cacheName) ?: return null
         val value = cache.get(key)
         return value?.get()
     }
@@ -141,10 +135,7 @@ object CacheKit {
         if (!isCacheActive(cacheName)) {
             return
         }
-        val cache = getCache(cacheName) as MixCache?
-        if (cache == null) {
-            return
-        }
+        val cache = getCache(cacheName) as? MixCache? ?: return
         //如果是本地缓存，则需要依赖通知发布删除
         if (CacheStrategy.SINGLE_LOCAL == cache.strategy) {
             val coVo = CacheOperatorVo(CacheOperatorVo.TYPE_EVICT, cacheName, key)
@@ -181,10 +172,7 @@ object CacheKit {
         if (!isCacheActive(cacheName)) {
             return
         }
-        val cache = getCache(cacheName) as MixCache?
-        if (cache == null) {
-            return
-        }
+        val cache = getCache(cacheName) as? MixCache? ?: return
         //如果是本地缓存，则需要依赖通知发布删除
         if (CacheStrategy.SINGLE_LOCAL == cache.strategy) {
             val coVo = CacheOperatorVo(CacheOperatorVo.TYPE_CLEAR, cacheName, null)
@@ -221,10 +209,7 @@ object CacheKit {
         if (!isCacheActive(cacheName)) {
             return false
         }
-        val cacheConfig = getCacheConfig(cacheName)
-        if (cacheConfig == null) {
-            return false
-        }
+        val cacheConfig = getCacheConfig(cacheName) ?: return false
         return cacheConfig.writeInTime == true
     }
 
@@ -258,10 +243,7 @@ object CacheKit {
         if (!isCacheActive(cacheName)) {
             return
         }
-        val cacheConfig = getCacheConfig(cacheName)
-        if (cacheConfig == null) {
-            return
-        }
+        val cacheConfig = getCacheConfig(cacheName) ?: return
         if (cacheConfig.writeOnBoot == true) {
             val beansOfType = SpringKit.getBeansOfType(AbstractCacheHandler::class)
             beansOfType.values.forEach {
@@ -283,10 +265,7 @@ object CacheKit {
         if (!isCacheActive(cacheName)) {
             return
         }
-        val cacheConfig = getCacheConfig(cacheName)
-        if (cacheConfig == null) {
-            return
-        }
+        val cacheConfig = getCacheConfig(cacheName) ?: return
         if (cacheConfig.writeOnBoot == true) {
             val beansOfType = SpringKit.getBeansOfType(AbstractCacheHandler::class)
             beansOfType.values.forEach {

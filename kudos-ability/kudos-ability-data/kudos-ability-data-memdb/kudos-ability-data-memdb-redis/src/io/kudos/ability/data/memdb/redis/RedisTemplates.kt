@@ -3,7 +3,7 @@ package io.kudos.ability.data.memdb.redis
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.data.redis.serializer.StringRedisSerializer
 
-class KudosRedisTemplate {
+class RedisTemplates {
 
     /**
      * 多个redisTemplate

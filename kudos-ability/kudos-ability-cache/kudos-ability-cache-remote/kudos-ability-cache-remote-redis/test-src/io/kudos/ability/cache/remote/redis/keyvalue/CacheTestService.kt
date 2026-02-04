@@ -1,4 +1,4 @@
-package io.kudos.ability.cache.local.caffeine
+package io.kudos.ability.cache.remote.redis.keyvalue
 
 import io.kudos.base.lang.string.RandomStringKit
 import io.kudos.base.logger.LogFactory
@@ -6,14 +6,10 @@ import io.kudos.context.kit.SpringKit
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.cache.annotation.Cacheable
 
-
-/**
- * 缓存测试模拟服务
- *
- * @author K
- * @since 1.0.0
- */
 open class CacheTestService {
+
+//    @Autowired
+//    private lateinit var self: CacheTestService
 
     fun getData(id: String): String {
         return SpringKit.getBean(CacheTestService::class).getFromDB(id)
@@ -33,5 +29,29 @@ open class CacheTestService {
 
     @Value("\${configNoExists:DEFAULT_VALUE}")
     private val configNoExists: String? = null
+
+//    /**
+//     * 从配置中心获取属性，需要启动注册中心和配置中心
+//     */
+//    @Test
+//    fun getConfigRemote() {
+//        println("configRemote:  $configRemote")
+//    }
+//
+//    /**
+//     * 从本地配置文件获取属性，不用启动注册中心和配置中心
+//     */
+//    @Test
+//    fun getConfigLocal() {
+//        println("configLocal:  $configLocal")
+//    }
+//
+//    /**
+//     * 不存在的配置，取默认值
+//     */
+//    @Test
+//    fun getConfigNoExists() {
+//        println("configNoExists:  $configNoExists")
+//    }
 
 }

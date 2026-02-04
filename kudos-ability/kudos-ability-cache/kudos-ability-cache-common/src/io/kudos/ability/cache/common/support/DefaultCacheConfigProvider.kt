@@ -75,6 +75,10 @@ class DefaultCacheConfigProvider(itemsProperties: CacheItemsProperties) : ICache
        return cacheConfigs[CacheStrategy.LOCAL_REMOTE.name] ?: emptyMap()
     }
 
+    override fun getHashCacheConfigs(): Map<String, CacheConfig> {
+        return getAllCacheConfigs().filter { (_, config) -> config.hash == true }
+    }
+
     companion object {
         private val log = LogFactory.getLog(this)
 

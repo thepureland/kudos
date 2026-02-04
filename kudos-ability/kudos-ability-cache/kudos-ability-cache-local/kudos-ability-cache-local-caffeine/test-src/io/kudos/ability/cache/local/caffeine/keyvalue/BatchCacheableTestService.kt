@@ -1,4 +1,4 @@
-package io.kudos.ability.cache.local.caffeine
+package io.kudos.ability.cache.local.caffeine.keyvalue
 
 import io.kudos.ability.cache.common.batch.BatchCacheable
 import io.kudos.base.logger.LogFactory

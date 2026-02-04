@@ -4,6 +4,7 @@ import io.kudos.ability.cache.common.init.BaseCacheConfiguration
 import io.kudos.ability.cache.common.init.LinkableCacheAutoConfiguration
 import io.kudos.ability.cache.common.support.ICacheManager
 import io.kudos.ability.cache.local.caffeine.CaffeineCacheManager
+import io.kudos.ability.cache.local.caffeine.CaffeineIdEntitiesHashCache
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
 import io.kudos.context.config.YamlPropertySourceFactory
@@ -44,6 +45,10 @@ open class CaffeineCacheAutoConfiguration : BaseCacheConfiguration(), IComponent
     @Bean(name = ["localCacheManager"])
     @ConditionalOnMissingBean
     open fun caffeineCacheManager(): ICacheManager<*> = CaffeineCacheManager()
+
+    @Bean("caffeineIdEntitiesHashCache")
+    @ConditionalOnMissingBean(name = ["caffeineIdEntitiesHashCache"])
+    open fun caffeineIdEntitiesHashCache(): CaffeineIdEntitiesHashCache = CaffeineIdEntitiesHashCache()
 
     override fun getComponentName() = "kudos-ability-cache-local-caffeine"
 
