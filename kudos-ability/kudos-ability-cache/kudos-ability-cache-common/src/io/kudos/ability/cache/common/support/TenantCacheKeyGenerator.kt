@@ -1,8 +1,8 @@
 package io.kudos.ability.cache.common.support
 
-import io.kudos.ability.cache.common.aop.TenantCacheEvict
-import io.kudos.ability.cache.common.aop.TenantCachePut
-import io.kudos.ability.cache.common.aop.TenantCacheable
+import io.kudos.ability.cache.common.aop.keyvalue.TenantCacheEvict
+import io.kudos.ability.cache.common.aop.keyvalue.TenantCachePut
+import io.kudos.ability.cache.common.aop.keyvalue.TenantCacheable
 import io.kudos.context.core.KudosContextHolder
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.CachePut

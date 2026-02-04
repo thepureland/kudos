@@ -1,0 +1,86 @@
+package io.kudos.ability.cache.local.caffeine.hash
+
+import io.kudos.ability.cache.common.enums.CacheStrategy
+import io.kudos.ability.cache.common.kit.HashCacheKit
+import io.kudos.test.common.init.EnableKudosTest
+import org.junit.jupiter.api.BeforeEach
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.annotation.Import
+import org.springframework.test.context.DynamicPropertyRegistry
+import org.springframework.test.context.DynamicPropertySource
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
+
+/**
+ * [io.kudos.ability.cache.common.batch.hash.HashBatchCacheable] 注解测试用例（本地 Caffeine）。
+ *
+ * @author K
+ * @author AI: Cursor
+ * @since 1.0.0
+ */
+@EnableKudosTest
+@Import(HashTestCacheConfigProvider::class, HashCacheableTestService::class)
+internal class HashBatchCacheableTest {
+
+    @Autowired
+    private lateinit var hashCacheableTestService: HashCacheableTestService
+
+    private val cacheName = "testHash"
+
+    companion object {
+        @DynamicPropertySource
+        @JvmStatic
+        private fun registerProperties(registry: DynamicPropertyRegistry) {
+            registry.add("kudos.ability.cache.enabled") { "true" }
+            registry.add("cache.config.strategy") { CacheStrategy.SINGLE_LOCAL.name }
+        }
+    }
+
+    @BeforeEach
+    fun clearCache() {
+        HashCacheKit.getHashCache(cacheName)?.refreshAll(cacheName, emptyList<TestRow>(), emptySet(), emptySet())
+    }
+
+    @Test
+    fun hashBatchCacheableMissThenHit() {
+        hashCacheableTestService.putTestData("a", TestRow(id = "a", name = "Alice", type = 1))
+        hashCacheableTestService.putTestData("b", TestRow(id = "b", name = "Bob", type = 2))
+        hashCacheableTestService.putTestData("c", TestRow(id = "c", name = "Carol", type = 3))
+        val first = hashCacheableTestService.getTestRowsByIds(listOf("a", "b", "c"))
+        assertEquals(3, first.size)
+        assertEquals("Alice", first["a"]?.name)
+        assertEquals("Bob", first["b"]?.name)
+        assertEquals("Carol", first["c"]?.name)
+        hashCacheableTestService.removeTestData("a")
+        hashCacheableTestService.removeTestData("b")
+        hashCacheableTestService.removeTestData("c")
+        val fromCache = hashCacheableTestService.getTestRowsByIds(listOf("a", "b", "c"))
+        assertEquals(3, fromCache.size)
+        assertEquals("Alice", fromCache["a"]?.name)
+        assertEquals("Bob", fromCache["b"]?.name)
+        assertEquals("Carol", fromCache["c"]?.name)
+    }
+
+    @Test
+    fun hashBatchCacheablePartialHit() {
+        hashCacheableTestService.putTestData("p1", TestRow(id = "p1", name = "P1", type = 1))
+        hashCacheableTestService.putTestData("p2", TestRow(id = "p2", name = "P2", type = 2))
+        val first = hashCacheableTestService.getTestRowsByIds(listOf("p1", "p2", "p3"))
+        assertEquals(2, first.size)
+        assertEquals("P1", first["p1"]?.name)
+        assertEquals("P2", first["p2"]?.name)
+        hashCacheableTestService.removeTestData("p1")
+        hashCacheableTestService.removeTestData("p2")
+        val fromCache = hashCacheableTestService.getTestRowsByIds(listOf("p1", "p2", "p3"))
+        assertEquals(2, fromCache.size)
+        assertEquals("P1", fromCache["p1"]?.name)
+        assertEquals("P2", fromCache["p2"]?.name)
+    }
+
+    @Test
+    fun hashBatchCacheableEmptyIds() {
+        val result = hashCacheableTestService.getTestRowsByIds(emptyList())
+        assertTrue(result.isEmpty())
+    }
+}

@@ -1,4 +1,4 @@
-package io.kudos.ability.cache.common.aop
+package io.kudos.ability.cache.common.aop.keyvalue
 
 import io.kudos.ability.cache.common.core.MixCacheManager
 import io.kudos.ability.cache.common.support.TenantCacheKeyGenerator
@@ -52,7 +52,7 @@ class TenantCachingAspect {
     @Autowired
     private val tenantCacheKeyGenerator: TenantCacheKeyGenerator? = null
 
-    @Pointcut("@annotation(io.kudos.ability.cache.common.aop.TenantCaching)")
+    @Pointcut("@annotation(io.kudos.ability.cache.common.aop.keyvalue.TenantCaching)")
     private fun cut() {
     }
 

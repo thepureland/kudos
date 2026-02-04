@@ -1,6 +1,6 @@
 package io.kudos.ability.cache.remote.redis.keyvalue
 
-import io.kudos.ability.cache.common.batch.BatchCacheable
+import io.kudos.ability.cache.common.batch.keyvalue.BatchCacheable
 import io.kudos.base.logger.LogFactory
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.Cacheable

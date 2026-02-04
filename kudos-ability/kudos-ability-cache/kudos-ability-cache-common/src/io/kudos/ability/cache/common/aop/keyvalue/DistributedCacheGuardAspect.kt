@@ -1,4 +1,4 @@
-package io.kudos.ability.cache.common.aop
+package io.kudos.ability.cache.common.aop.keyvalue
 
 import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.ability.cache.common.support.TenantCacheKeyGenerator
@@ -29,7 +29,7 @@ class DistributedCacheGuardAspect {
     private val parser: ExpressionParser = SpelExpressionParser()
     private val nameDiscoverer = DefaultParameterNameDiscoverer()
 
-    @Pointcut("@annotation(io.kudos.ability.cache.common.aop.DistributedCacheGuard)")
+    @Pointcut("@annotation(io.kudos.ability.cache.common.aop.keyvalue.DistributedCacheGuard)")
     private fun cut() {
     }
 

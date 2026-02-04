@@ -1,7 +1,7 @@
 package io.kudos.ability.cache.common.init
 
-import io.kudos.ability.cache.common.batch.DefaultKeysGenerator
-import io.kudos.ability.cache.common.batch.IKeysGenerator
+import io.kudos.ability.cache.common.batch.keyvalue.DefaultKeysGenerator
+import io.kudos.ability.cache.common.batch.keyvalue.IKeysGenerator
 import io.kudos.ability.cache.common.init.properties.CacheItemsProperties
 import io.kudos.ability.cache.common.init.properties.CacheVersionConfig
 import io.kudos.ability.cache.common.support.ContextKeyGenerator

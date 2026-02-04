@@ -1,4 +1,4 @@
-package io.kudos.ability.cache.common.aop
+package io.kudos.ability.cache.common.aop.keyvalue
 
 
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY_GETTER, AnnotationTarget.PROPERTY_SETTER)

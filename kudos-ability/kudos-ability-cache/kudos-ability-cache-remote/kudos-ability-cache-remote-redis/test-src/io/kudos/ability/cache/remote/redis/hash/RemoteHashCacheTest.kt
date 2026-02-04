@@ -3,6 +3,7 @@ package io.kudos.ability.cache.remote.redis.hash
 import io.kudos.ability.cache.common.enums.CacheStrategy
 import io.kudos.ability.cache.common.kit.HashCacheKit
 import io.kudos.base.query.Criteria
+import org.springframework.beans.factory.annotation.Autowired
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.query.sort.Order
 import io.kudos.base.support.IIdEntity
@@ -28,9 +29,12 @@ import kotlin.test.assertTrue
  * @since 1.0.0
  */
 @EnableKudosTest
-@Import(HashTestCacheConfigProvider::class)
+@Import(HashTestCacheConfigProvider::class, HashCacheableTestService::class)
 @EnabledIfDockerInstalled
 internal class RemoteHashCacheTest {
+
+    @Autowired
+    private lateinit var hashCacheableTestService: HashCacheableTestService
 
     private val cacheName = "testHash"
 
@@ -66,6 +70,27 @@ internal class RemoteHashCacheTest {
         assertEquals("u1", found?.id)
         assertEquals("Alice", found?.name)
         assertEquals(1, found?.type)
+    }
+
+    @Test
+    fun hashCacheableMissThenHit() {
+        hashCacheableTestService.putTestData("u1", TestRow(id = "u1", name = "Alice", type = 1))
+        val first = hashCacheableTestService.getTestRowById("u1")
+        assertEquals("u1", first?.id)
+        assertEquals("Alice", first?.name)
+        assertEquals(1, first?.type)
+        val second = hashCacheableTestService.getTestRowById("u1")
+        assertEquals(first?.id, second?.id)
+        assertEquals(first?.name, second?.name)
+        hashCacheableTestService.removeTestData("u1")
+        val fromCache = hashCacheableTestService.getTestRowById("u1")
+        assertEquals("Alice", fromCache?.name)
+    }
+
+    @Test
+    fun hashCacheableReturnsNullWhenMissing() {
+        val found = hashCacheableTestService.getTestRowById("nonexistent")
+        assertNull(found)
     }
 
     @Test

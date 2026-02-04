@@ -1,4 +1,4 @@
-package io.kudos.ability.cache.common.batch
+package io.kudos.ability.cache.common.batch.keyvalue
 
 import io.kudos.context.support.Consts
 import kotlin.reflect.KFunction

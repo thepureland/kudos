@@ -1,4 +1,4 @@
-package io.kudos.ability.cache.common.aop
+package io.kudos.ability.cache.common.aop.keyvalue
 
 import java.lang.annotation.Inherited
 
