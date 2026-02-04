@@ -58,7 +58,7 @@ class HashBatchCacheableByPrimaryAspect {
         keys.forEach { cachedData[it] = null }
 
         val hashCache = HashCacheKit.getHashCache(cacheName)
-        if (hashCache != null && CacheKit.isCacheActive(cacheName)) {
+        if (CacheKit.isCacheActive(cacheName)) {
             @Suppress("UNCHECKED_CAST")
             val entityClass = ann.entityClass as KClass<out IIdEntity<Any?>>
             val list = hashCache.findByIds(cacheName, keys, entityClass)
@@ -71,7 +71,7 @@ class HashBatchCacheableByPrimaryAspect {
         val uncachedMap = readUncachedData(uncachedKeys, joinPoint, function, keysGenerator)
             ?: return cachedData.filterValues { it != null }
 
-        if (hashCache != null && CacheKit.isCacheActive(cacheName) && CacheKit.isWriteInTime(cacheName)) {
+        if (CacheKit.isCacheActive(cacheName) && CacheKit.isWriteInTime(cacheName)) {
             val toSave = uncachedMap.values.filterIsInstance<IIdEntity<*>>().filter { it.id != null }
             if (toSave.isNotEmpty()) {
                 val filterable = ann.filterableProperties.toSet()

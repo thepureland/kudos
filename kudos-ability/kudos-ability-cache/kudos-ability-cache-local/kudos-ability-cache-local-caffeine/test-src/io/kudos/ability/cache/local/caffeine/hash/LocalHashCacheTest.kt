@@ -16,6 +16,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 /**
@@ -49,7 +50,7 @@ internal class LocalHashCacheTest {
 
     @BeforeEach
     fun clearCache() {
-        HashCacheKit.getHashCache(cacheName)?.refreshAll(cacheName, emptyList<TestRow>(), emptySet(), emptySet())
+        HashCacheKit.getHashCache(cacheName).refreshAll(cacheName, emptyList<TestRow>(), emptySet(), emptySet())
     }
 
     @Test
@@ -66,6 +67,8 @@ internal class LocalHashCacheTest {
         assertEquals("u1", found?.id)
         assertEquals("Alice", found?.name)
         assertEquals(1, found?.type)
+        val foundAgain = cache.getById(cacheName, "u1", TestRow::class)
+        assertSame(found, foundAgain, "SINGLE_LOCAL 下同一 id 再次从缓存获取应返回同一对象引用")
     }
 
     @Test
@@ -81,6 +84,8 @@ internal class LocalHashCacheTest {
         hashCacheableTestService.removeTestData("u1")
         val fromCache = hashCacheableTestService.getTestRowById("u1")
         assertEquals("Alice", fromCache?.name)
+        val fromCacheAgain = hashCacheableTestService.getTestRowById("u1")
+        assertSame(fromCache, fromCacheAgain, "SINGLE_LOCAL 下同一 id 再次从缓存获取应返回同一对象引用")
     }
 
     @Test
@@ -92,6 +97,8 @@ internal class LocalHashCacheTest {
         assertEquals(1, byType1.size)
         assertEquals("s1", byType1.first().id)
         assertEquals("SetOne", byType1.first().name)
+        val byType1Again = cache.listBySetIndex(cacheName, TestRow::class, "type", 1)
+        assertSame(byType1.first(), byType1Again.first(), "SINGLE_LOCAL 下同一维度再次从缓存获取应返回同一对象引用")
     }
 
     @Test
@@ -117,6 +124,13 @@ internal class LocalHashCacheTest {
         assertEquals(2, list.size)
         assertTrue(list.any { it.id == "u1" && it.name == "A" })
         assertTrue(list.any { it.id == "u3" && it.name == "C" })
+        val listAgain = cache.findByIds(cacheName, listOf("u1", "u3", "u99"), TestRow::class)
+        val e1 = list.find { it.id == "u1" }!!
+        val e3 = list.find { it.id == "u3" }!!
+        val e1Again = listAgain.find { it.id == "u1" }!!
+        val e3Again = listAgain.find { it.id == "u3" }!!
+        assertSame(e1, e1Again, "SINGLE_LOCAL 下同一 id 再次从缓存获取应返回同一对象引用")
+        assertSame(e3, e3Again, "SINGLE_LOCAL 下同一 id 再次从缓存获取应返回同一对象引用")
     }
 
     @Test
@@ -135,6 +149,8 @@ internal class LocalHashCacheTest {
         assertEquals(2, all.size)
         assertTrue(all.any { it.id == "u1" })
         assertTrue(all.any { it.id == "u2" })
+        val allAgain = cache.listAll(cacheName, TestRow::class)
+        assertSame(all.find { it.id == "u1" }, allAgain.find { it.id == "u1" }, "SINGLE_LOCAL 下再次 listAll 应返回同一对象引用")
     }
 
     @Test
@@ -216,9 +232,13 @@ internal class LocalHashCacheTest {
         val type1 = cache.listBySetIndex(cacheName, TestRowWithTime::class, "type", 1)
         assertEquals(2, type1.size)
         assertTrue(type1.all { it.type == 1 })
+        val type1Again = cache.listBySetIndex(cacheName, TestRowWithTime::class, "type", 1)
+        assertSame(type1.first(), type1Again.first(), "SINGLE_LOCAL 下同一维度再次从缓存获取应返回同一对象引用")
         val type2 = cache.listBySetIndex(cacheName, TestRowWithTime::class, "type", 2)
         assertEquals(1, type2.size)
         assertEquals("3", type2.first().id)
+        val type2Again = cache.listBySetIndex(cacheName, TestRowWithTime::class, "type", 2)
+        assertSame(type2.first(), type2Again.first(), "SINGLE_LOCAL 下同一维度再次从缓存获取应返回同一对象引用")
     }
 
     @Test

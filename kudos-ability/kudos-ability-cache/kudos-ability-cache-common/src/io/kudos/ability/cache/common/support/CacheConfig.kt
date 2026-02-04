@@ -44,7 +44,7 @@ class CacheConfig : Serializable {
     /**
      * 是否为 Hash 缓存（带 id 对象集合）。true 时参与 MixHashCacheManager 初始化，策略仍用 strategyDictCode。
      */
-    var hash: Boolean? = null
+    var hash: Boolean = false
 
     constructor()
 
