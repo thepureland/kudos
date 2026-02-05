@@ -1,7 +1,6 @@
 package io.kudos.ms.user.core.service.impl
 
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
-import io.kudos.ms.sys.core.cache.ResourceByIdCacheHandler
 import io.kudos.ms.user.common.vo.org.UserOrgCacheItem
 import io.kudos.ms.user.common.vo.user.UserAccountCacheItem
 import io.kudos.ms.user.common.vo.user.UserAccountRecord
@@ -18,6 +17,7 @@ import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.security.CryptoKit
+import io.kudos.ms.user.core.cache.UserOrgHashCache
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -41,7 +41,7 @@ open class UserAccountService : BaseCrudService<String, UserAccount, UserAccount
 
 
     @Autowired
-    private lateinit var resourceByIdCacheHandler: ResourceByIdCacheHandler
+    private lateinit var userOrgHashCache: UserOrgHashCache
 
     @Autowired
     private lateinit var orgIdsByUserIdCache: OrgIdsByUserIdCache

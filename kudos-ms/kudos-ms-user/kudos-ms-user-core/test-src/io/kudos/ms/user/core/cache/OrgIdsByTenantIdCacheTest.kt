@@ -13,7 +13,7 @@ import kotlin.test.assertTrue
 /**
  * junit test for OrgIdsByTenantIdCacheHandler
  *
- * 测试数据来源：`OrgIdsByTenantIdCacheTest.sql`
+ * 测试数据来源：`UserOrgHashCacheTest.sql`
  *
  * @author K
  * @author AI: Cursor
@@ -30,7 +30,7 @@ class OrgIdsByTenantIdCacheTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun getOrgIds() {
-        // 存在的租户（有多个机构）- 使用 OrgIdsByTenantIdCacheTest.sql 的测试数据
+        // 存在的租户（有多个机构）- 使用 UserOrgHashCacheTest.sql 的测试数据
         var tenantId = "tenant-001-lVeGsiPZ"
         val orgIds1 = cacheHandler.getOrgIds(tenantId)
         val orgIds2 = cacheHandler.getOrgIds(tenantId)
