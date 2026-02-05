@@ -6,13 +6,14 @@ import io.kudos.ms.auth.core.dao.AuthRoleResourceDao
 import io.kudos.ms.auth.core.dao.AuthRoleUserDao
 import io.kudos.ms.auth.core.model.po.AuthRoleResource
 import io.kudos.ms.auth.core.model.po.AuthRoleUser
-import io.kudos.ms.user.core.cache.UserIdByTenantIdAndUsernameCache
 import io.kudos.ms.user.core.dao.UserAccountDao
 import io.kudos.ms.user.core.model.po.UserAccount
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.context.support.Consts
+import io.kudos.ms.user.core.cache.UserAccountHashCache
+import jakarta.annotation.Resource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
@@ -34,16 +35,16 @@ import org.springframework.stereotype.Component
 @Component
 open class ResourceIdsByTenanetIdAndUsernameCache : AbstractKeyValueCacheHandler<List<String>>() {
 
-    @Autowired
-    private lateinit var userIdByTenantIdAndUsernameCache: UserIdByTenantIdAndUsernameCache
+    @Resource
+    private lateinit var userAccountHashCache: UserAccountHashCache
 
-    @Autowired
+    @Resource
     private lateinit var authRoleUserDao: AuthRoleUserDao
 
-    @Autowired
+    @Resource
     private lateinit var authRoleResourceDao: AuthRoleResourceDao
 
-    @Autowired
+    @Resource
     private lateinit var userAccountDao: UserAccountDao
 
     companion object Companion {
@@ -129,8 +130,8 @@ open class ResourceIdsByTenanetIdAndUsernameCache : AbstractKeyValueCacheHandler
         }
 
         // 1. 从缓存中获取用户ID（避免查询数据库）
-        val userId = userIdByTenantIdAndUsernameCache.getUserId(tenantId, username)
-        
+        val userId = userAccountHashCache.getUsersByTenantIdAndUsername(tenantId, username)
+
         if (userId == null) {
             log.debug("找不到租户${tenantId}的用户${username}。")
             return emptyList()
@@ -248,7 +249,8 @@ open class ResourceIdsByTenanetIdAndUsernameCache : AbstractKeyValueCacheHandler
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
         // 同时清除用户ID缓存，确保后续查询时不会从缓存中获取到已删除的用户ID
-        userIdByTenantIdAndUsernameCache.evict(userIdByTenantIdAndUsernameCache.getKey(tenantId, username))
+        val userId = userAccountHashCache.getUsersByTenantIdAndUsername(tenantId, username)?.id
+        userId?.let { userAccountHashCache.syncOnUpdate(userId) }
     }
 
     /**

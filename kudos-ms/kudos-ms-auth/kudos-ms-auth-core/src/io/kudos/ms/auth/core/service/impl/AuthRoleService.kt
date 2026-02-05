@@ -1,6 +1,11 @@
 package io.kudos.ms.auth.core.service.impl
 
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
+import io.kudos.base.bean.BeanKit
+import io.kudos.base.logger.LogFactory
+import io.kudos.base.query.Criteria
+import io.kudos.base.query.enums.OperatorEnum
+import io.kudos.base.support.IIdEntity
 import io.kudos.ms.auth.common.vo.role.AuthRoleCacheItem
 import io.kudos.ms.auth.common.vo.role.AuthRoleRecord
 import io.kudos.ms.auth.common.vo.role.AuthRoleSearchPayload
@@ -9,15 +14,10 @@ import io.kudos.ms.auth.core.dao.AuthRoleDao
 import io.kudos.ms.auth.core.model.po.AuthRole
 import io.kudos.ms.auth.core.service.iservice.IAuthRoleService
 import io.kudos.ms.sys.common.vo.resource.SysResourceCacheItem
-import io.kudos.ms.sys.core.cache.ResourceByIdCacheHandler
+import io.kudos.ms.sys.core.cache.SysResourceHashCache
 import io.kudos.ms.user.common.vo.user.UserAccountCacheItem
-import io.kudos.ms.user.core.cache.UserByIdCache
-import io.kudos.base.bean.BeanKit
-import io.kudos.base.logger.LogFactory
-import io.kudos.base.query.Criteria
-import io.kudos.base.query.enums.OperatorEnum
-import io.kudos.base.support.IIdEntity
-import org.springframework.beans.factory.annotation.Autowired
+import io.kudos.ms.user.core.cache.UserAccountHashCache
+import jakarta.annotation.Resource
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -37,31 +37,31 @@ open class AuthRoleService : BaseCrudService<String, AuthRole, AuthRoleDao>(),
 
     //region your codes 2
 
-    @Autowired
+    @Resource
     private lateinit var userIdsByRoleIdCache: UserIdsByRoleIdCache
 
-    @Autowired
+    @Resource
     private lateinit var resourceIdsByRoleIdCache: ResourceIdsByRoleIdCache
 
-    @Autowired
-    private lateinit var userByIdCache: UserByIdCache
+    @Resource
+    private lateinit var userAccountHashCache: UserAccountHashCache
 
-    @Autowired
-    private lateinit var resourceByIdCacheHandler: ResourceByIdCacheHandler
+    @Resource
+    private lateinit var sysResourceHashCache: SysResourceHashCache
 
-    @Autowired
+    @Resource
     private lateinit var roleByIdCache: RoleByIdCache
 
-    @Autowired
+    @Resource
     private lateinit var roleIdByTenantIdAndRoleCodeCache: RoleIdByTenantIdAndRoleCodeCache
 
-    @Autowired
+    @Resource
     private lateinit var userIdsByTenantIdAndRoleCodeCache: UserIdsByTenantIdAndRoleCodeCache
 
-    @Autowired
+    @Resource
     private lateinit var roleIdsByUserIdCache: RoleIdsByUserIdCache
 
-    @Autowired
+    @Resource
     private lateinit var resourceIdsByUserIdCache: ResourceIdsByUserIdCache
 
     private val log = LogFactory.getLog(this)
@@ -86,7 +86,7 @@ open class AuthRoleService : BaseCrudService<String, AuthRole, AuthRoleDao>(),
         if (userIds.isEmpty()) {
             return emptyList()
         }
-        val usersMap = userByIdCache.getUsersByIds(userIds)
+        val usersMap = userAccountHashCache.getUsersByIds(userIds)
         return userIds.mapNotNull { usersMap[it] }
     }
 
@@ -95,7 +95,7 @@ open class AuthRoleService : BaseCrudService<String, AuthRole, AuthRoleDao>(),
         if (resourceIds.isEmpty()) {
             return emptyList()
         }
-        val resourcesMap = resourceByIdCacheHandler.getResourcesByIds(resourceIds)
+        val resourcesMap = sysResourceHashCache.getResourcesByIds(resourceIds)
         return resourceIds.mapNotNull { resourcesMap[it] }
     }
 
@@ -236,7 +236,7 @@ open class AuthRoleService : BaseCrudService<String, AuthRole, AuthRoleDao>(),
         if (userIds.isEmpty()) {
             return emptyList()
         }
-        return userByIdCache.getUsersByIds(userIds).values.toList()
+        return userAccountHashCache.getUsersByIds(userIds).values.toList()
     }
 
     override fun isUserHasResource(userId: String, resourceId: String): Boolean {
@@ -258,7 +258,7 @@ open class AuthRoleService : BaseCrudService<String, AuthRole, AuthRoleDao>(),
         }
 
         // 批量获取资源缓存对象
-        val resourcesMap = resourceByIdCacheHandler.getResourcesByIds(resourceIds)
+        val resourcesMap = sysResourceHashCache.getResourcesByIds(resourceIds)
 
         // 返回资源列表（按原始ID顺序）
         return resourceIds.mapNotNull { resourcesMap[it] }
