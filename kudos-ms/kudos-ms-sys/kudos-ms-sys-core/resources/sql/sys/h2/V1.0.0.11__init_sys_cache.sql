@@ -48,10 +48,6 @@ insert into "sys_cache" ("id", "name", "atomic_service_code", "strategy_dict_cod
                          "ttl", "remark", "active", "built_in", "hash")
 values ('14a9adc4-6bb5-45bd-96bb-d8afe3060bea', 'SYS_CACHE_BY_NAME', 'ams-sys', 'LOCAL_REMOTE', true, true, 999999999,
         '缓存配置信息的缓存(by name)', true, true, false),
-       ('654f5484-13b0-46f1-a2d7-4734e8effdf7', 'SYS_DATA_SOURCE_BY_ID', 'ams-sys', 'LOCAL_REMOTE', true, true, 999999999,
-        '数据源缓存(by id)', true, true, false),
-       ('0e62a3ff-ccbd-42b8-86cc-ed5b4337ce5a', 'SYS_DATA_SOURCE_BY_TENANT_ID_AND_3_CODES', 'ams-sys', 'LOCAL_REMOTE', true, true, 999999999,
-        '数据源缓存(by subSystemCode & tenantId)', true, true, false),
        ('2942ecce-2849-4edb-8f9b-68d5979e466d', 'SYS_DICT_BY_ID', 'ams-sys', 'LOCAL_REMOTE', true, true, 999999999,
         '字典缓存(by id)', true, true, false),
        ('b690d885-7ca0-40f6-81ca-36b33db2e157', 'SYS_DICT_ITEMS_BY_MODULE_AND_TYPE', 'ams-sys', 'LOCAL_REMOTE', true, true, 999999999,
@@ -77,6 +73,8 @@ values ('14a9adc4-6bb5-45bd-96bb-d8afe3060bea', 'SYS_CACHE_BY_NAME', 'ams-sys', 
        ('a1b2c3d4-e5f6-4789-a012-000000000001', 'SYS_RESOURCE__HASH', 'ams-sys', 'LOCAL_REMOTE', true, true, 999999999,
         '资源Hash缓存', true, true, true),
        ('d4e5f6a7-b8c9-4012-d345-000000000004', 'SYS_SYSTEM__HASH', 'ams-sys', 'LOCAL_REMOTE', true, true, 999999999,
-        '系统Hash缓存', true, true, true);
+        '系统Hash缓存', true, true, true),
+       ('b5f6a7b8-c9d0-4123-e456-000000000005', 'SYS_DATA_SOURCE__HASH', 'ams-sys', 'LOCAL_REMOTE', true, true, 999999999,
+        '数据源Hash缓存', true, true, true);
 
 --endregion DML
