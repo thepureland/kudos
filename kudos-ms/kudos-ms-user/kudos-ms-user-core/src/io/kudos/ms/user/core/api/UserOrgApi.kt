@@ -3,10 +3,9 @@ package io.kudos.ms.user.core.api
 import io.kudos.ms.user.common.api.IUserOrgApi
 import io.kudos.ms.user.common.vo.org.UserOrgCacheItem
 import io.kudos.ms.user.common.vo.user.UserAccountCacheItem
-import io.kudos.ms.user.core.cache.OrgByIdCache
-import io.kudos.ms.user.core.cache.OrgIdsByTenantIdCache
+import io.kudos.ms.user.core.cache.UserOrgHashCache
 import io.kudos.ms.user.core.service.iservice.IUserOrgService
-import org.springframework.beans.factory.annotation.Autowired
+import jakarta.annotation.Resource
 import org.springframework.stereotype.Service
 
 
@@ -24,25 +23,22 @@ open class UserOrgApi : IUserOrgApi {
 
     //region your codes 2
 
-    @Autowired
-    private lateinit var orgByIdCache: OrgByIdCache
+    @Resource
+    private lateinit var userOrgHashCache: UserOrgHashCache 
 
-    @Autowired
-    private lateinit var orgIdsByTenantIdCache: OrgIdsByTenantIdCache
-
-    @Autowired
+    @Resource
     private lateinit var userOrgService: IUserOrgService
 
     override fun getOrgById(id: String): UserOrgCacheItem? {
-        return orgByIdCache.getOrgById(id)
+        return userOrgHashCache.getOrgById(id)
     }
 
     override fun getOrgsByIds(ids: Collection<String>): Map<String, UserOrgCacheItem> {
-        return orgByIdCache.getOrgsByIds(ids)
+        return userOrgHashCache.getOrgsByIds(ids)
     }
 
     override fun getOrgIds(tenantId: String): List<String> {
-        return orgIdsByTenantIdCache.getOrgIds(tenantId)
+        return userOrgHashCache.getOrgsByTenantId(tenantId).map { it.id!! }
     }
 
     override fun getOrgAdmins(orgId: String): List<UserAccountCacheItem> {

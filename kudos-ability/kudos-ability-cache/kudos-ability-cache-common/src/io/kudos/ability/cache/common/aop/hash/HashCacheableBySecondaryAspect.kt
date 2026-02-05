@@ -25,10 +25,11 @@ import kotlin.reflect.jvm.kotlinFunction
 
 /**
  * [HashCacheableBySecondary] 切面：先按副属性等值（listBySetIndex）查缓存，未命中则执行方法并将结果 saveBatch 回写。
- * 支持三种方法返回类型：
+ * 支持四种方法返回类型：
  * - [List]&lt;[IIdEntity]&gt;：命中返回列表，未命中将方法返回的列表 saveBatch 回写。
  * - [String]（可空）：命中返回首个实体的 id，未命中仅执行方法（回写由方法体内完成）。
  * - [List]&lt;[String]&gt;：命中返回 id 列表，未命中仅执行方法（回写由方法体内完成）。
+ * - 单个对象（可空）：命中返回缓存列表的首个元素，未命中将方法返回的单个实体（若为 [IIdEntity]）saveBatch 回写后返回。
  * 适用于 Caffeine、Redis 等任意 Hash 缓存实现。
  *
  * @author K
@@ -82,6 +83,7 @@ class HashCacheableBySecondaryAspect {
                     ReturnMode.SINGLE_ID -> cached.firstOrNull()?.id
                     ReturnMode.LIST_IDS -> cached.mapNotNull { it.id }
                     ReturnMode.LIST_ENTITIES -> cached
+                    ReturnMode.SINGLE_ENTITY -> cached.firstOrNull()
                 }
             }
         }
@@ -108,10 +110,20 @@ class HashCacheableBySecondaryAspect {
                 }
                 return result
             }
+            ReturnMode.SINGLE_ENTITY -> {
+                val entity = (result as? IIdEntity<*>)?.let { listOf(it) }
+                if (entity != null && entity.isNotEmpty() && CacheKit.isCacheActive(cacheName) && CacheKit.isWriteInTime(cacheName)) {
+                    val filterable = ann.filterableProperties.toSet()
+                    val sortable = ann.sortableProperties.toSet()
+                    @Suppress("UNCHECKED_CAST")
+                    hashCache.saveBatch(cacheName, entity as List<IIdEntity<Any?>>, filterable, sortable)
+                }
+                return result
+            }
         }
     }
 
-    private enum class ReturnMode { SINGLE_ID, LIST_IDS, LIST_ENTITIES }
+    private enum class ReturnMode { SINGLE_ID, LIST_IDS, LIST_ENTITIES, SINGLE_ENTITY }
 
     private fun resolveReturnMode(method: java.lang.reflect.Method): ReturnMode {
         val returnType = method.returnType
@@ -122,8 +134,9 @@ class HashCacheableBySecondaryAspect {
                 val actual = generic.actualTypeArguments.getOrNull(0)
                 if (actual == String::class.java) return ReturnMode.LIST_IDS
             }
+            return ReturnMode.LIST_ENTITIES
         }
-        return ReturnMode.LIST_ENTITIES
+        return ReturnMode.SINGLE_ENTITY
     }
 
     private fun resolveCacheName(joinPoint: ProceedingJoinPoint, ann: HashCacheableBySecondary): String? {
