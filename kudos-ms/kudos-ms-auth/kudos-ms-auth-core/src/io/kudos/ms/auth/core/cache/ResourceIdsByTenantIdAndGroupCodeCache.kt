@@ -32,7 +32,7 @@ import org.springframework.stereotype.Component
 open class ResourceIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler<List<String>>() {
 
     @Autowired
-    private lateinit var groupIdByTenantIdAndGroupCodeCache: GroupIdByTenantIdAndGroupCodeCache
+    private lateinit var authGroupHashCache: AuthGroupHashCache
 
     @Autowired
     private lateinit var authGroupDao: io.kudos.ms.auth.core.dao.AuthGroupDao
@@ -116,7 +116,7 @@ open class ResourceIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler
         }
 
         // 1. 从缓存中获取用户组ID
-        val groupId = groupIdByTenantIdAndGroupCodeCache.getGroupId(tenantId, groupCode)
+        val groupId = authGroupHashCache.getGroupByTenantIdAndGroupCode(tenantId, groupCode)?.id
         if (groupId == null) {
             log.debug("找不到租户${tenantId}的用户组${groupCode}。")
             return emptyList()
@@ -207,7 +207,8 @@ open class ResourceIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler
             CacheKit.evict(CACHE_NAME, getKey(tenantId, groupCode))
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
-        groupIdByTenantIdAndGroupCodeCache.evict(groupIdByTenantIdAndGroupCodeCache.getKey(tenantId, groupCode))
+        val groupId = authGroupHashCache.getGroupByTenantIdAndGroupCode(tenantId, groupCode)?.id
+        groupId?.let { authGroupHashCache.syncOnDelete(it) }
     }
 
     fun getKey(tenantId: String, groupCode: String): String {

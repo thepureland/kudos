@@ -27,7 +27,7 @@ import kotlin.test.assertTrue
 class ResourceIdsByTenantIdAndUsernameCacheHandlerTest : RdbAndRedisCacheTestBase() {
 
     @Resource
-    private lateinit var cacheHandler: ResourceIdsByTenanetIdAndUsernameCache
+    private lateinit var cacheHandler: ResourceIdsByTenantIdAndUsernameCache
 
     @Resource
     private lateinit var userAccountDao: UserAccountDao

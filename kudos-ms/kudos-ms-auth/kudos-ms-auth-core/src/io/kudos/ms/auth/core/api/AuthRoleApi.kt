@@ -2,9 +2,12 @@ package io.kudos.ms.auth.core.api
 
 import io.kudos.ms.auth.common.api.IAuthRoleApi
 import io.kudos.ms.auth.common.vo.role.AuthRoleCacheItem
+import io.kudos.ms.auth.core.cache.AuthRoleHashCache
+import io.kudos.ms.auth.core.cache.UserIdsByTenantIdAndRoleCodeCache
+import io.kudos.ms.auth.core.service.iservice.IAuthRoleService
 import io.kudos.ms.sys.common.vo.resource.SysResourceCacheItem
 import io.kudos.ms.user.common.vo.user.UserAccountCacheItem
-import org.springframework.beans.factory.annotation.Autowired
+import jakarta.annotation.Resource
 import org.springframework.stereotype.Service
 
 
@@ -22,28 +25,25 @@ open class AuthRoleApi : IAuthRoleApi {
 
     //region your codes 2
 
-    @Autowired
-    private lateinit var roleByIdCache: io.kudos.ms.auth.core.cache.RoleByIdCache
+    @Resource
+    private lateinit var authRoleHashCache: AuthRoleHashCache
 
-    @Autowired
-    private lateinit var roleIdByTenantIdAndRoleCodeCache: io.kudos.ms.auth.core.cache.RoleIdByTenantIdAndRoleCodeCache
+    @Resource
+    private lateinit var authRoleService: IAuthRoleService
 
-    @Autowired
-    private lateinit var authRoleService: io.kudos.ms.auth.core.service.iservice.IAuthRoleService
-
-    @Autowired
-    private lateinit var userIdsByTenantIdAndRoleCodeCache: io.kudos.ms.auth.core.cache.UserIdsByTenantIdAndRoleCodeCache
+    @Resource
+    private lateinit var userIdsByTenantIdAndRoleCodeCache: UserIdsByTenantIdAndRoleCodeCache
 
     override fun getRoleById(id: String): AuthRoleCacheItem? {
-        return roleByIdCache.getRoleById(id)
+        return authRoleHashCache.getRoleById(id)
     }
 
     override fun getRolesByIds(ids: Collection<String>): Map<String, AuthRoleCacheItem> {
-        return roleByIdCache.getRolesByIds(ids)
+        return authRoleHashCache.getRolesByIds(ids)
     }
 
     override fun getRoleId(tenantId: String, code: String): String? {
-        return roleIdByTenantIdAndRoleCodeCache.getRoleId(tenantId, code)
+        return authRoleHashCache.getRoleByTenantIdAndRoleCode(tenantId, code)?.id
     }
 
     override fun getRoleUsers(roleId: String): List<UserAccountCacheItem> {

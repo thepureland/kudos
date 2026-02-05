@@ -5,7 +5,6 @@ import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
-import io.kudos.base.support.IIdEntity
 import io.kudos.ms.auth.common.vo.role.AuthRoleCacheItem
 import io.kudos.ms.auth.common.vo.role.AuthRoleRecord
 import io.kudos.ms.auth.common.vo.role.AuthRoleSearchPayload
@@ -50,13 +49,7 @@ open class AuthRoleService : BaseCrudService<String, AuthRole, AuthRoleDao>(),
     private lateinit var sysResourceHashCache: SysResourceHashCache
 
     @Resource
-    private lateinit var roleByIdCache: RoleByIdCache
-
-    @Resource
-    private lateinit var roleIdByTenantIdAndRoleCodeCache: RoleIdByTenantIdAndRoleCodeCache
-
-    @Resource
-    private lateinit var userIdsByTenantIdAndRoleCodeCache: UserIdsByTenantIdAndRoleCodeCache
+    private lateinit var authRoleHashCache: AuthRoleHashCache
 
     @Resource
     private lateinit var roleIdsByUserIdCache: RoleIdsByUserIdCache
@@ -105,8 +98,8 @@ open class AuthRoleService : BaseCrudService<String, AuthRole, AuthRoleDao>(),
     }
 
     override fun getRoleByTenantIdAndCode(tenantId: String, roleCode: String): AuthRoleCacheItem? {
-        val roleId = roleIdByTenantIdAndRoleCodeCache.getRoleId(tenantId, roleCode)
-        return roleId?.let { roleByIdCache.getRoleById(it) }
+        val roleId = authRoleHashCache.getRoleByTenantIdAndRoleCode(tenantId, roleCode)?.id
+        return roleId?.let { authRoleHashCache.getRoleById(it) }
     }
 
     override fun getRoleRecord(id: String): AuthRoleRecord? {
@@ -142,11 +135,11 @@ open class AuthRoleService : BaseCrudService<String, AuthRole, AuthRoleDao>(),
         val success = dao.update(role)
         if (success) {
             log.debug("更新id为${id}的角色的启用状态为${active}。")
-            roleByIdCache.syncOnUpdate(id)
-            val existingRole = dao.get(id)
-            if (existingRole != null) {
-                roleIdByTenantIdAndRoleCodeCache.syncOnUpdateActive(id, active)
-            }
+            authRoleHashCache.syncOnUpdate(id)
+//            val existingRole = dao.get(id)
+//            if (existingRole != null) {
+//                roleIdByTenantIdAndRoleCodeCache.syncOnUpdateActive(id, active)
+//            }
         } else {
             log.error("更新id为${id}的角色的启用状态为${active}失败！")
         }
@@ -157,19 +150,17 @@ open class AuthRoleService : BaseCrudService<String, AuthRole, AuthRoleDao>(),
     override fun insert(any: Any): String {
         val id = super.insert(any)
         log.debug("新增id为${id}的角色。")
-        roleByIdCache.syncOnInsert(id)
-        roleIdByTenantIdAndRoleCodeCache.syncOnInsert(any, id)
+        authRoleHashCache.syncOnInsert(id)
         return id
     }
 
     @Transactional
     override fun update(any: Any): Boolean {
         val success = super.update(any)
-        val id = BeanKit.getProperty(any, IIdEntity<*>::id.name) as String
+        val id = BeanKit.getProperty(any, AuthRole::id.name) as String
         if (success) {
             log.debug("更新id为${id}的角色。")
-            roleByIdCache.syncOnUpdate(id)
-            roleIdByTenantIdAndRoleCodeCache.syncOnUpdate(any, id)
+            authRoleHashCache.syncOnUpdate(id)
         } else {
             log.error("更新id为${id}的角色失败！")
         }
@@ -186,8 +177,7 @@ open class AuthRoleService : BaseCrudService<String, AuthRole, AuthRoleDao>(),
         val success = super.deleteById(id)
         if (success) {
             log.debug("删除id为${id}的角色。")
-            roleByIdCache.syncOnDelete(id)
-            roleIdByTenantIdAndRoleCodeCache.syncOnDelete(role, id)
+            authRoleHashCache.syncOnDelete(id)
         } else {
             log.error("删除id为${id}的角色失败！")
         }
@@ -196,14 +186,9 @@ open class AuthRoleService : BaseCrudService<String, AuthRole, AuthRoleDao>(),
 
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {
-        val roles = dao.inSearchById(ids)
-        val tenantAndCodes = roles.mapNotNull { role ->
-            role.id?.let { Pair(role.tenantId, role.code) }
-        }
         val count = super.batchDelete(ids)
         log.debug("批量删除角色，期望删除${ids.size}条，实际删除${count}条。")
-        roleByIdCache.syncOnBatchDelete(ids)
-        roleIdByTenantIdAndRoleCodeCache.syncOnBatchDelete(ids, tenantAndCodes)
+        authRoleHashCache.syncOnBatchDelete(ids)
         return count
     }
 
@@ -213,7 +198,7 @@ open class AuthRoleService : BaseCrudService<String, AuthRole, AuthRoleDao>(),
     }
 
     override fun hasRoleByCode(userId: String, tenantId: String, roleCode: String): Boolean {
-        val roleId = roleIdByTenantIdAndRoleCodeCache.getRoleId(tenantId, roleCode)
+        val roleId = authRoleHashCache.getRoleByTenantIdAndRoleCode(tenantId, roleCode)?.id
         return roleId != null && hasRole(userId, roleId)
     }
 
@@ -222,7 +207,7 @@ open class AuthRoleService : BaseCrudService<String, AuthRole, AuthRoleDao>(),
         if (roleIds.isEmpty()) {
             return emptyList()
         }
-        val rolesMap = roleByIdCache.getRolesByIds(roleIds)
+        val rolesMap = authRoleHashCache.getRolesByIds(roleIds)
         return roleIds.mapNotNull { rolesMap[it] }
     }
 
@@ -231,7 +216,7 @@ open class AuthRoleService : BaseCrudService<String, AuthRole, AuthRoleDao>(),
     }
 
     override fun getUsersByRoleCode(tenantId: String, roleCode: String): List<UserAccountCacheItem> {
-        val roleId = roleIdByTenantIdAndRoleCodeCache.getRoleId(tenantId, roleCode) ?: return emptyList()
+        val roleId = authRoleHashCache.getRoleByTenantIdAndRoleCode(tenantId, roleCode)?.id ?: return emptyList()
         val userIds = userIdsByRoleIdCache.getUserIds(roleId)
         if (userIds.isEmpty()) {
             return emptyList()

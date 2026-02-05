@@ -10,6 +10,7 @@ import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.context.support.Consts
+import jakarta.annotation.Resource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
@@ -30,13 +31,13 @@ import org.springframework.stereotype.Component
 @Component
 open class UserIdsByTenantIdAndRoleCodeCache : AbstractKeyValueCacheHandler<List<String>>() {
 
-    @Autowired
-    private lateinit var roleIdByTenantIdAndRoleCodeCache: RoleIdByTenantIdAndRoleCodeCache
+    @Resource
+    private lateinit var authRoleHashCache: AuthRoleHashCache
 
-    @Autowired
+    @Resource
     private lateinit var authRoleDao: AuthRoleDao
 
-    @Autowired
+    @Resource
     private lateinit var authRoleUserDao: AuthRoleUserDao
 
     companion object {
@@ -106,7 +107,7 @@ open class UserIdsByTenantIdAndRoleCodeCache : AbstractKeyValueCacheHandler<List
         }
 
         // 1. 从缓存中获取角色ID（避免查询数据库）
-        val roleId = roleIdByTenantIdAndRoleCodeCache.getRoleId(tenantId, roleCode)
+        val roleId = authRoleHashCache.getRoleByTenantIdAndRoleCode(tenantId, roleCode)?.id
         
         if (roleId == null) {
             log.debug("找不到租户${tenantId}的角色${roleCode}。")
@@ -193,7 +194,8 @@ open class UserIdsByTenantIdAndRoleCodeCache : AbstractKeyValueCacheHandler<List
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
         // 同时清除角色ID缓存，确保后续查询时不会从缓存中获取到已删除的角色ID
-        roleIdByTenantIdAndRoleCodeCache.evict(roleIdByTenantIdAndRoleCodeCache.getKey(tenantId, roleCode))
+        val roleId = authRoleHashCache.getRoleByTenantIdAndRoleCode(tenantId, roleCode)?.id
+        roleId?.let { authRoleHashCache.syncOnDelete(it) }
     }
 
     /**
