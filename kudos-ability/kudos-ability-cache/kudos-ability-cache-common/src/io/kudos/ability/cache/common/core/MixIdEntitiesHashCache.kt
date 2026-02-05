@@ -12,7 +12,7 @@ import kotlin.reflect.KClass
 
 /**
  * 按策略封装本地/远程 Hash 缓存的统一视图，实现 [IIdEntitiesHashCache]。
- * 读按策略委托 local/remote，写写 remote（LOCAL_REMOTE 时并发通知清理本地）。
+ * 读按策略委托 local/remote；写时 REMOTE 只写远程，LOCAL_REMOTE 先写远程、再同步写本地（保证本节点下次读命中最新）、最后发通知让其他节点失效本地。
  *
  * @param cacheName 逻辑缓存名（未加版本前缀）
  * @param strategy 策略
@@ -73,6 +73,7 @@ internal class MixIdEntitiesHashCache(
             CacheStrategy.REMOTE -> remote!!.save(name, entity, filterableProperties, sortableProperties)
             CacheStrategy.LOCAL_REMOTE -> {
                 remote!!.save(name, entity, filterableProperties, sortableProperties)
+                local?.save(name, entity, filterableProperties, sortableProperties)
                 pushHashNotify(entity.id)
             }
         }
@@ -89,6 +90,7 @@ internal class MixIdEntitiesHashCache(
             CacheStrategy.REMOTE -> remote!!.saveBatch(name, entities, filterableProperties, sortableProperties)
             CacheStrategy.LOCAL_REMOTE -> {
                 remote!!.saveBatch(name, entities, filterableProperties, sortableProperties)
+                local?.saveBatch(name, entities, filterableProperties, sortableProperties)
                 entities.forEach { pushHashNotify(it.id) }
             }
         }
@@ -106,6 +108,7 @@ internal class MixIdEntitiesHashCache(
             CacheStrategy.REMOTE -> remote!!.deleteById(name, id, entityClass, filterableProperties, sortableProperties)
             CacheStrategy.LOCAL_REMOTE -> {
                 remote!!.deleteById(name, id, entityClass, filterableProperties, sortableProperties)
+                local?.deleteById(name, id, entityClass, filterableProperties, sortableProperties)
                 pushHashNotify(id)
             }
         }
@@ -203,6 +206,7 @@ internal class MixIdEntitiesHashCache(
             CacheStrategy.REMOTE -> remote!!.refreshAll(name, entities, filterableProperties, sortableProperties)
             CacheStrategy.LOCAL_REMOTE -> {
                 remote!!.refreshAll(name, entities, filterableProperties, sortableProperties)
+                local?.refreshAll(name, entities, filterableProperties, sortableProperties)
                 pushHashNotify(null)
             }
         }

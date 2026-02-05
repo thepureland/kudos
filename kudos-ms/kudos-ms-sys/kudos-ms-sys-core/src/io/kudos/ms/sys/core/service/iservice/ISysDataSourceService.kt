@@ -25,7 +25,7 @@ interface ISysDataSourceService : IBaseCrudService<String, SysDataSource> {
      * @param tenantId 租户id
      * @param subSystemCode 子系统编码
      * @param microServiceCode 微服务编码
-     * @return SysDataSourceCacheItem
+     * @return List<SysDataSourceCacheItem>
      * @author K
      * @since 1.0.0
      */
@@ -33,7 +33,7 @@ interface ISysDataSourceService : IBaseCrudService<String, SysDataSource> {
         tenantId: String,
         subSystemCode: String,
         microServiceCode: String?
-    ): SysDataSourceCacheItem?
+    ): List<SysDataSourceCacheItem>
 
     /**
      * 更新启用状态，并同步缓存
