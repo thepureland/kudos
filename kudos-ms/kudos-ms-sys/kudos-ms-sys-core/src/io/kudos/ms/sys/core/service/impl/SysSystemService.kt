@@ -3,7 +3,7 @@ package io.kudos.ms.sys.core.service.impl
 import io.kudos.ms.sys.core.service.iservice.ISysSystemService
 import io.kudos.ms.sys.core.model.po.SysSystem
 import io.kudos.ms.sys.core.dao.SysSystemDao
-import io.kudos.ms.sys.core.cache.SystemByCodeCache
+import io.kudos.ms.sys.core.cache.SysSystemHashCache
 import io.kudos.ms.sys.common.vo.system.SysSystemCacheItem
 import io.kudos.ms.sys.common.vo.system.SysSystemRecord
 import io.kudos.ms.sys.common.vo.system.SysSystemSearchPayload
@@ -31,10 +31,10 @@ open class SysSystemService : BaseCrudService<String, SysSystem, SysSystemDao>()
     private val log = LogFactory.getLog(this)
 
     @Autowired
-    private lateinit var systemByCodeCache: SystemByCodeCache
+    private lateinit var sysSystemHashCache: SysSystemHashCache
 
     override fun getSystemByCode(code: String): SysSystemCacheItem? {
-        return systemByCodeCache.getSystemByCode(code)
+        return sysSystemHashCache.getSystemByCode(code)
     }
 
     override fun getAllActiveSystems(): List<SysSystemRecord> {
@@ -54,7 +54,7 @@ open class SysSystemService : BaseCrudService<String, SysSystem, SysSystemDao>()
         val success = dao.update(system)
         if (success) {
             log.debug("更新编码为${code}的系统的启用状态为${active}。")
-            systemByCodeCache.syncOnUpdate(code)
+            sysSystemHashCache.syncOnUpdate(code)
         } else {
             log.error("更新编码为${code}的系统的启用状态为${active}失败！")
         }
@@ -75,7 +75,7 @@ open class SysSystemService : BaseCrudService<String, SysSystem, SysSystemDao>()
     override fun insert(any: Any): String {
         val code = super.insert(any)
         log.debug("新增编码为${code}的系统。")
-        systemByCodeCache.syncOnInsert(code)
+        sysSystemHashCache.syncOnInsert(code)
         return code
     }
 
@@ -85,7 +85,7 @@ open class SysSystemService : BaseCrudService<String, SysSystem, SysSystemDao>()
         val code = BeanKit.getProperty(any, SysSystem::code.name) as String
         if (success) {
             log.debug("更新编码为${code}的系统。")
-            systemByCodeCache.syncOnUpdate(code)
+            sysSystemHashCache.syncOnUpdate(code)
         } else {
             log.error("更新编码为${code}的系统失败！")
         }
@@ -97,7 +97,7 @@ open class SysSystemService : BaseCrudService<String, SysSystem, SysSystemDao>()
         val success = super.deleteById(id)
         if (success) {
             log.debug("删除编码为${id}的系统。")
-            systemByCodeCache.syncOnDelete(id)
+            sysSystemHashCache.syncOnDelete(id)
         } else {
             log.error("删除编码为${id}的系统失败！")
         }
@@ -108,7 +108,7 @@ open class SysSystemService : BaseCrudService<String, SysSystem, SysSystemDao>()
     override fun batchDelete(ids: Collection<String>): Int {
         val count = super.batchDelete(ids)
         log.debug("批量删除系统，期望删除${ids.size}条，实际删除${count}条。")
-        systemByCodeCache.syncOnBatchDelete(ids)
+        sysSystemHashCache.syncOnBatchDelete(ids)
         return count
     }
 
