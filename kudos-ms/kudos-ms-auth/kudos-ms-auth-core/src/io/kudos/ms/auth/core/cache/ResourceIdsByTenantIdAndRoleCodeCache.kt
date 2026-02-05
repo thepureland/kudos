@@ -1,16 +1,16 @@
 package io.kudos.ms.auth.core.cache
 
-import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
-import io.kudos.ms.auth.core.dao.AuthRoleDao
-import io.kudos.ms.auth.core.dao.AuthRoleResourceDao
-import io.kudos.ms.auth.core.model.po.AuthRole
-import io.kudos.ms.auth.core.model.po.AuthRoleResource
+import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.context.support.Consts
-import org.springframework.beans.factory.annotation.Autowired
+import io.kudos.ms.auth.core.dao.AuthRoleDao
+import io.kudos.ms.auth.core.dao.AuthRoleResourceDao
+import io.kudos.ms.auth.core.model.po.AuthRole
+import io.kudos.ms.auth.core.model.po.AuthRoleResource
+import jakarta.annotation.Resource
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
 
@@ -29,13 +29,13 @@ import org.springframework.stereotype.Component
 @Component
 open class ResourceIdsByTenantIdAndRoleCodeCache : AbstractKeyValueCacheHandler<List<String>>() {
 
-    @Autowired
-    private lateinit var roleIdByTenantIdAndRoleCodeCache: RoleIdByTenantIdAndRoleCodeCache
+    @Resource
+    private lateinit var authRoleHashCache: AuthRoleHashCache
 
-    @Autowired
+    @Resource
     private lateinit var authRoleDao: AuthRoleDao
 
-    @Autowired
+    @Resource
     private lateinit var authRoleResourceDao: AuthRoleResourceDao
 
     companion object {
@@ -62,6 +62,7 @@ open class ResourceIdsByTenantIdAndRoleCodeCache : AbstractKeyValueCacheHandler<
 
         // 加载所有active=true的角色
         val roleCriteria = Criteria(AuthRole::active.name, OperatorEnum.EQ, true)
+
         @Suppress("UNCHECKED_CAST")
         val roles = authRoleDao.search(roleCriteria)
 
@@ -105,7 +106,7 @@ open class ResourceIdsByTenantIdAndRoleCodeCache : AbstractKeyValueCacheHandler<
         }
 
         // 1. 从缓存中获取角色ID（避免查询数据库）
-        val roleId = roleIdByTenantIdAndRoleCodeCache.getRoleId(tenantId, roleCode)
+        val roleId = authRoleHashCache.getRoleByTenantIdAndRoleCode(tenantId, roleCode)?.id
 
         if (roleId == null) {
             log.debug("找不到租户${tenantId}的角色${roleCode}。")
@@ -192,7 +193,8 @@ open class ResourceIdsByTenantIdAndRoleCodeCache : AbstractKeyValueCacheHandler<
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
         // 同时清除角色ID缓存，确保后续查询时不会从缓存中获取到已删除的角色ID
-        roleIdByTenantIdAndRoleCodeCache.evict(roleIdByTenantIdAndRoleCodeCache.getKey(tenantId, roleCode))
+        val roleId = authRoleHashCache.getRoleByTenantIdAndRoleCode(tenantId, roleCode)?.id
+        roleId?.let { authRoleHashCache.syncOnDelete(it) }
     }
 
     /**

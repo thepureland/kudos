@@ -14,7 +14,6 @@ import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.context.support.Consts
 import io.kudos.ms.user.core.cache.UserAccountHashCache
 import jakarta.annotation.Resource
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
 
@@ -33,7 +32,7 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-open class ResourceIdsByTenanetIdAndUsernameCache : AbstractKeyValueCacheHandler<List<String>>() {
+open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<List<String>>() {
 
     @Resource
     private lateinit var userAccountHashCache: UserAccountHashCache
@@ -58,7 +57,7 @@ open class ResourceIdsByTenanetIdAndUsernameCache : AbstractKeyValueCacheHandler
             "缓存${CACHE_NAME}的key格式必须是 租户ID${Consts.CACHE_KEY_DEFAULT_DELIMITER}用户名"
         }
         val tenantAndUsername = key.split(Consts.CACHE_KEY_DEFAULT_DELIMITER)
-        return getSelf<ResourceIdsByTenanetIdAndUsernameCache>().getResourceIds(
+        return getSelf<ResourceIdsByTenantIdAndUsernameCache>().getResourceIds(
             tenantAndUsername[0], tenantAndUsername[1]
         )
     }
@@ -198,7 +197,7 @@ open class ResourceIdsByTenanetIdAndUsernameCache : AbstractKeyValueCacheHandler
             log.debug("用户${username}的角色关系变更后，同步${CACHE_NAME}缓存...")
             evict(getKey(tenantId, username))
             if (CacheKit.isWriteInTime(CACHE_NAME)) {
-                getSelf<ResourceIdsByTenanetIdAndUsernameCache>().getResourceIds(tenantId, username)
+                getSelf<ResourceIdsByTenantIdAndUsernameCache>().getResourceIds(tenantId, username)
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
         }

@@ -31,7 +31,7 @@ import org.springframework.stereotype.Component
 open class UserIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler<List<String>>() {
 
     @Autowired
-    private lateinit var groupIdByTenantIdAndGroupCodeCache: GroupIdByTenantIdAndGroupCodeCache
+    private lateinit var authGroupHashCache: AuthGroupHashCache
 
     @Autowired
     private lateinit var authGroupDao: AuthGroupDao
@@ -63,6 +63,7 @@ open class UserIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler<Lis
 
         // 加载所有active=true的用户组
         val groupCriteria = Criteria(AuthGroup::active.name, OperatorEnum.EQ, true)
+
         @Suppress("UNCHECKED_CAST")
         val groups = authGroupDao.search(groupCriteria)
 
@@ -106,7 +107,7 @@ open class UserIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler<Lis
         }
 
         // 1. 从缓存中获取用户组ID（避免查询数据库）
-        val groupId = groupIdByTenantIdAndGroupCodeCache.getGroupId(tenantId, groupCode)
+        val groupId = authGroupHashCache.getGroupByTenantIdAndGroupCode(tenantId, groupCode)?.id
 
         if (groupId == null) {
             log.debug("找不到租户${tenantId}的用户组${groupCode}。")
@@ -193,7 +194,8 @@ open class UserIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler<Lis
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
         // 同时清除用户组ID缓存，确保后续查询时不会从缓存中获取到已删除的用户组ID
-        groupIdByTenantIdAndGroupCodeCache.evict(groupIdByTenantIdAndGroupCodeCache.getKey(tenantId, groupCode))
+        val groupId = authGroupHashCache.getGroupByTenantIdAndGroupCode(tenantId, groupCode)?.id
+        groupId?.let { authGroupHashCache.syncOnDelete(groupId) }
     }
 
     /**
