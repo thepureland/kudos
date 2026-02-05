@@ -12,13 +12,13 @@ import jakarta.annotation.Resource
 import org.springframework.stereotype.Component
 
 /**
- * 机构 Hash 缓存处理器（整合原 OrgByIdCache、OrgIdsByTenantIdCache 逻辑）
+ * 机构 Hash 缓存处理器
  *
  * 数据来源表：user_org；主键为 id，缓存的 key 即 id，value 为 [UserOrgCacheItem]。
  * 使用 Hash 结构存储，支持按 id 存取、按 tenantId 二级索引查询。
  *
  * - 按 id：getOrgById、getOrgsByIds（等价原 OrgByIdCache，含 active=false）
- * - 按租户：getOrgsByTenantId、getOrgIdsByTenantId（等价原 OrgIdsByTenantIdCache）
+ * - 按租户：getOrgsByTenantId、getOrgIdsByTenantId
  *
  * 使用前需在缓存配置表 sys_cache 中增加名为 [CACHE_NAME] 的配置项且 hash=true。
  *
