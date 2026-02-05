@@ -1,13 +1,13 @@
 package io.kudos.ability.cache.common.kit
 
-import io.kudos.ability.cache.common.core.MixHashCacheManager
+import io.kudos.ability.cache.common.core.hash.MixHashCacheManager
 import io.kudos.ability.cache.common.enums.CacheStrategy
 import io.kudos.ability.cache.common.support.ICacheConfigProvider
-import io.kudos.ability.cache.common.support.IIdEntitiesHashCache
+import io.kudos.ability.cache.common.core.hash.IHashCache
 import io.kudos.context.kit.SpringKit
 
 /**
- * Hash 缓存工具：按 cacheName 获取 [IIdEntitiesHashCache]（策略封装后的统一抽象）。
+ * Hash 缓存工具：按 cacheName 获取 [IHashCache]（策略封装后的统一抽象）。
  *
  * 与 [CacheKit] 类似，使用时通过配置自由选择三种策略（SINGLE_LOCAL / REMOTE / LOCAL_REMOTE）。
  * 若 [cacheName] 未在配置中注册，将抛出 [IllegalStateException]。
@@ -25,7 +25,7 @@ object HashCacheKit {
      * @return 该名称对应的 IIdEntitiesHashCache
      * @throws IllegalStateException 当 MixHashCacheManager 不可用或该 cacheName 未配置（需在配置中增加名为 cacheName 的项）时
      */
-    fun getHashCache(cacheName: String): IIdEntitiesHashCache {
+    fun getHashCache(cacheName: String): IHashCache {
         val manager = SpringKit.getBeanOrNull("mixHashCacheManager") as? MixHashCacheManager
             ?: throw IllegalStateException("Hash 缓存管理器不可用，无法获取 Hash 缓存: $cacheName")
         return manager.getHashCache(cacheName)

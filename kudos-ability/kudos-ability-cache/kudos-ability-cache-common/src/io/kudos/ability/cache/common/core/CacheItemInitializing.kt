@@ -1,8 +1,12 @@
-package io.kudos.ability.cache.common.support
+package io.kudos.ability.cache.common.core
 
+import io.kudos.ability.cache.common.support.CacheConfig
 
 /**
  * 缓存项初始化
+ *
+ * @author K
+ * @since 1.0.0
  */
 interface CacheItemInitializing {
     /**

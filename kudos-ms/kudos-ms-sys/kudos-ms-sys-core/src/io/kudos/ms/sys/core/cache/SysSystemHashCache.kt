@@ -3,10 +3,11 @@ package io.kudos.ms.sys.core.cache
 import io.kudos.ability.cache.common.aop.hash.HashCacheableByPrimary
 import io.kudos.ability.cache.common.aop.hash.HashCacheableBySecondary
 import io.kudos.ability.cache.common.batch.hash.HashBatchCacheableByPrimary
+import io.kudos.ability.cache.common.core.hash.AbstractHashCacheHandler
 import io.kudos.ability.cache.common.kit.CacheKit
-import io.kudos.ability.cache.common.kit.HashCacheKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.sys.common.vo.system.SysSystemCacheItem
+import io.kudos.ms.sys.core.cache.SysSystemHashCache.Companion.CACHE_NAME
 import io.kudos.ms.sys.core.dao.SysSystemDao
 import jakarta.annotation.Resource
 import org.springframework.stereotype.Component
@@ -23,7 +24,7 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-open class SysSystemHashCache {
+open class SysSystemHashCache : AbstractHashCacheHandler<SysSystemCacheItem>() {
 
     @Resource
     private lateinit var sysSystemDao: SysSystemDao
@@ -37,9 +38,7 @@ open class SysSystemHashCache {
         val FILTERABLE_PROPERTIES = setOf(SysSystemCacheItem::subSystem.name)
     }
 
-    private fun hashCache() = HashCacheKit.getHashCache(CACHE_NAME)
-
-    fun cacheName(): String = CACHE_NAME
+    override fun cacheName(): String = CACHE_NAME
 
     /**
      * 根据 code 从缓存获取系统信息，未命中则查库并回写。
@@ -100,7 +99,7 @@ open class SysSystemHashCache {
      *
      * @param clear 为 true 时先清空再写入；为 false 时覆盖写入
      */
-    open fun reloadAll(clear: Boolean) {
+    override fun reloadAll(clear: Boolean) {
         if (!CacheKit.isCacheActive(CACHE_NAME)) {
             log.info("缓存未开启，不加载系统 Hash 缓存")
             return

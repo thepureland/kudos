@@ -14,7 +14,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Component
-import io.kudos.ability.cache.common.core.MixHashCacheManager
+import io.kudos.ability.cache.common.core.hash.MixHashCacheManager
 import kotlin.reflect.KClass
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.isSuperclassOf

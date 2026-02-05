@@ -1,6 +1,6 @@
 package io.kudos.ability.cache.remote.redis.keyvalue
 
-import io.kudos.ability.cache.common.core.MixCacheManager
+import io.kudos.ability.cache.common.core.keyvalue.MixCacheManager
 import io.kudos.ability.cache.common.enums.CacheStrategy
 import io.kudos.ability.cache.remote.redis.keyvalue.TestCacheConfigProvider
 import io.kudos.test.common.init.EnableKudosTest

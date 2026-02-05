@@ -1,25 +1,18 @@
-package io.kudos.ability.cache.common.support
+package io.kudos.ability.cache.common.core.keyvalue
 
+import io.kudos.ability.cache.common.core.AbstractCacheHandler
 import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.context.kit.SpringKit
 
-
 /**
- * 缓存处理器抽象类
+ * key-value型缓存处理器抽象类
  *
- * @param T 值类型
+ * @param T 缓存项类型
  * @author K
  * @since 1.0.0
  */
-abstract class AbstractCacheHandler<T> {
-
-    /**
-     * 返回缓存名称
-     *
-     * @return 缓存名称
-     */
-    abstract fun cacheName(): String
+abstract class AbstractKeyValueCacheHandler<T> : AbstractCacheHandler<T>() {
 
     /**
      * 检测缓存key是否存在
@@ -83,21 +76,6 @@ abstract class AbstractCacheHandler<T> {
      * @return 缓存key对应的值。如果找不到，集合类型返回空集合，其它的返回null。
      */
     protected abstract fun doReload(key: String): T?
-
-    /**
-     * 重载所有缓存
-     *
-     * @param clear 重载前是否先清除
-     */
-    abstract fun reloadAll(clear: Boolean = true)
-
-    private var self: AbstractCacheHandler<*>? = null
-
-    /**
-     * 返回自身实例，为了解决基于spring aop特性（这里为@Cacheable和@BatchCacheable）的方法在当前类直接调用造成aop失效的问题
-     */
-    @Suppress("UNCHECKED_CAST")
-    protected fun <S : AbstractCacheHandler<*>?> getSelf() : S = self as S ?: SpringKit.getBean(this::class) as S
 
     private val log = LogFactory.getLog(this)
 

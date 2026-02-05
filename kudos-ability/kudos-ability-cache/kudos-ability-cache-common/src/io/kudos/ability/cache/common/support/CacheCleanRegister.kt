@@ -7,7 +7,7 @@ object CacheCleanRegister {
     @Synchronized
     fun register(cacheKey: String, cleanListener: ICacheCleanListener) {
         if (!registerMap.containsKey(cacheKey)) {
-            registerMap.put(cacheKey, ArrayList())
+            registerMap[cacheKey] = ArrayList()
         }
         registerMap[cacheKey]!!.add(cleanListener)
     }

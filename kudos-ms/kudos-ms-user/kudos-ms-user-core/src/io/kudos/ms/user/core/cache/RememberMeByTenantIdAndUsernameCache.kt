@@ -1,7 +1,7 @@
 package io.kudos.ms.user.core.cache
 
 import io.kudos.ability.cache.common.kit.CacheKit
-import io.kudos.ability.cache.common.support.AbstractCacheHandler
+import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
 import io.kudos.ms.user.common.vo.loginremember.UserLoginRememberMeCacheItem
 import io.kudos.ms.user.core.dao.UserLoginRememberMeDao
 import io.kudos.ms.user.core.model.po.UserLoginRememberMe
@@ -27,7 +27,7 @@ import java.time.LocalDateTime
  */
 @Component
 //region your codes 1
-open class RememberMeByTenantIdAndUsernameCache : AbstractCacheHandler<UserLoginRememberMeCacheItem>() {
+open class RememberMeByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<UserLoginRememberMeCacheItem>() {
 //endregion your codes 1
 
     //region your codes 2

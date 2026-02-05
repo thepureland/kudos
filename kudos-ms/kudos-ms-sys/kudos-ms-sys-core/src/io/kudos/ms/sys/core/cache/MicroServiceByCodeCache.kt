@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.core.cache
 
 import io.kudos.ability.cache.common.batch.keyvalue.BatchCacheable
-import io.kudos.ability.cache.common.support.AbstractByIdCacheHandler
+import io.kudos.ability.cache.common.core.keyvalue.AbstractByIdCacheHandler
 import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceCacheItem
 import io.kudos.ms.sys.core.dao.SysMicroServiceDao
 import org.springframework.cache.annotation.Cacheable

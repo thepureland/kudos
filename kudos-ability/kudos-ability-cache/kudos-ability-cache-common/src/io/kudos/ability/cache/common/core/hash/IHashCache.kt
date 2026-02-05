@@ -1,4 +1,4 @@
-package io.kudos.ability.cache.common.support
+package io.kudos.ability.cache.common.core.hash
 
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.sort.Order
@@ -10,13 +10,13 @@ import kotlin.reflect.KClass
  *
  * 术语：**主属性**即实体唯一标识（id），用于 getById/save/deleteById；**副属性**为除 id 外参与二级索引、列表查询与排序的属性（如 type、status、sortScore）。
  * [filterableProperties] 为等值筛选用 Set 索引；[sortableProperties] 为排序/范围用 ZSet 索引。例外：数值型的范围查询条件要放 sortableProperties。
- * 数据不必来自数据库表，只要是 [IIdEntity] 即可；支持按主属性存取、按副属性建索引并查询、条件分页排序、全量刷新。
+ * 数据不必来自数据库表，只要是 [io.kudos.base.support.IIdEntity] 即可；支持按主属性存取、按副属性建索引并查询、条件分页排序、全量刷新。
  *
  * @author K
  * @author AI: Cursor
  * @since 1.0.0
  */
-interface IIdEntitiesHashCache {
+interface IHashCache {
 
     fun <PK, E : IIdEntity<PK>> getById(cacheName: String, id: PK, entityClass: KClass<E>): E?
 

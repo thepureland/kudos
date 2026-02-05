@@ -1,6 +1,6 @@
 package io.kudos.ability.cache.common.aop.keyvalue
 
-import io.kudos.ability.cache.common.core.MixCacheManager
+import io.kudos.ability.cache.common.core.keyvalue.MixCacheManager
 import io.kudos.ability.cache.common.support.TenantCacheKeyGenerator
 import io.kudos.context.kit.TransactionTool
 import org.aspectj.lang.ProceedingJoinPoint

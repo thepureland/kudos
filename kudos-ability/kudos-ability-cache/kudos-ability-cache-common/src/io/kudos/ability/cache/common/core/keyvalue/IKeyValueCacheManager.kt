@@ -1,5 +1,7 @@
-package io.kudos.ability.cache.common.support
+package io.kudos.ability.cache.common.core.keyvalue
 
+import io.kudos.ability.cache.common.support.CacheConfig
+import io.kudos.ability.cache.common.core.CacheItemInitializing
 import org.springframework.cache.Cache
 import org.springframework.cache.CacheManager
 
@@ -9,7 +11,7 @@ import org.springframework.cache.CacheManager
  * @author K
  * @since 1.0.0
  */
-interface ICacheManager<T : Cache> : CacheManager, CacheItemInitializing {
+interface IKeyValueCacheManager<T : Cache> : CacheManager, CacheItemInitializing {
 
     /**
      * 根据缓存配置创建缓存实例

@@ -3,9 +3,9 @@ package io.kudos.ability.cache.remote.redis.init
 import io.kudos.ability.cache.common.init.BaseCacheConfiguration
 import io.kudos.ability.cache.common.init.LinkableCacheAutoConfiguration
 import io.kudos.ability.cache.common.init.properties.CacheVersionConfig
-import io.kudos.ability.cache.common.notice.ICacheMessageHandler
-import io.kudos.ability.cache.remote.redis.RedisCacheManager
-import io.kudos.ability.cache.remote.redis.RedisIdEntitiesHashCache
+import io.kudos.ability.cache.common.notify.ICacheMessageHandler
+import io.kudos.ability.cache.remote.redis.RedisKeyValueCacheManager
+import io.kudos.ability.cache.remote.redis.RedisHashCache
 import io.kudos.ability.cache.remote.redis.notice.RedisCacheMessageHandler
 import io.kudos.ability.cache.remote.redis.support.RedisRemoteCacheProcessor
 import io.kudos.ability.data.memdb.redis.RedisTemplates
@@ -82,7 +82,7 @@ open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentIni
             .serializeValuesWith(valueSerializationPair)
         val connectionFactory = redisTemplate.connectionFactory!!
         val redisCacheWriter = RedisCacheWriter.nonLockingRedisCacheWriter(connectionFactory)
-        return RedisCacheManager(redisCacheWriter, defaultRedisCacheConfiguration, redisTemplate.connectionFactory)
+        return RedisKeyValueCacheManager(redisCacheWriter, defaultRedisCacheConfiguration, redisTemplate.connectionFactory)
     }
 
     @Bean
@@ -129,8 +129,8 @@ open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentIni
         versionConfig: CacheVersionConfig,
         redisCacheMessageHandler: ICacheMessageHandler,
         @Qualifier("cacheNodeId") cacheNodeId: String
-    ): RedisIdEntitiesHashCache {
-        return RedisIdEntitiesHashCache(redisTemplates, versionConfig, redisCacheMessageHandler, cacheNodeId)
+    ): RedisHashCache {
+        return RedisHashCache(redisTemplates, versionConfig, redisCacheMessageHandler, cacheNodeId)
     }
 
     override fun getComponentName() = "kudos-ability-cache-remote-redis"

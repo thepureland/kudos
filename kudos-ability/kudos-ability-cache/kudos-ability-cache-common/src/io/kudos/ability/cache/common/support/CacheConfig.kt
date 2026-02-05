@@ -3,6 +3,12 @@ package io.kudos.ability.cache.common.support
 import java.io.Serial
 import java.io.Serializable
 
+/**
+ * 缓存配置信息
+ *
+ * @author K
+ * @since 1.0.0
+ */
 class CacheConfig : Serializable {
 
     /**

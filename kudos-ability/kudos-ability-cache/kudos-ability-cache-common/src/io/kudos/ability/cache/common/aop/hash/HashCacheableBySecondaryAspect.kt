@@ -2,14 +2,14 @@ package io.kudos.ability.cache.common.aop.hash
 
 import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.ability.cache.common.kit.HashCacheKit
-import io.kudos.ability.cache.common.support.IIdEntitiesHashCache
+import io.kudos.ability.cache.common.core.hash.IHashCache
 import io.kudos.base.support.IIdEntity
 import org.aspectj.lang.ProceedingJoinPoint
 import org.aspectj.lang.annotation.Around
 import org.aspectj.lang.annotation.Aspect
 import org.aspectj.lang.annotation.Pointcut
 import org.aspectj.lang.reflect.MethodSignature
-import io.kudos.ability.cache.common.core.MixHashCacheManager
+import io.kudos.ability.cache.common.core.hash.MixHashCacheManager
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.context.annotation.Lazy
@@ -143,7 +143,7 @@ class HashCacheableBySecondaryAspect {
      */
     @Suppress("UNCHECKED_CAST")
     private fun queryByKeys(
-        hashCache: IIdEntitiesHashCache,
+        hashCache: IHashCache,
         cacheName: String,
         entityClass: KClass<out IIdEntity<Any?>>,
         propertyValues: List<Pair<String, Any>>

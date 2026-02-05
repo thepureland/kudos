@@ -1,6 +1,8 @@
-package io.kudos.ability.cache.common.support
+package io.kudos.ability.cache.common.core.keyvalue
 
 import io.kudos.ability.cache.common.init.properties.CacheVersionConfig
+import io.kudos.ability.cache.common.support.CacheConfig
+import io.kudos.ability.cache.common.core.keyvalue.IKeyValueCacheManager
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.cache.autoconfigure.CacheProperties
 import org.springframework.cache.Cache
@@ -12,7 +14,7 @@ import org.springframework.cache.support.AbstractCacheManager
  * @author K
  * @since 1.0.0
  */
-abstract class AbstractCacheManager<T : Cache> : AbstractCacheManager(), ICacheManager<T> {
+abstract class AbstractKeyValueCacheManager<T : Cache> : AbstractCacheManager(), IKeyValueCacheManager<T> {
 
     var caches = mutableListOf<T>()
 

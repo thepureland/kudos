@@ -1,4 +1,4 @@
-package io.kudos.ability.cache.common.support
+package io.kudos.ability.cache.common.core.keyvalue
 
 import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.base.lang.GenericKit
@@ -11,7 +11,6 @@ import io.kudos.base.support.payload.ListSearchPayload
 import org.springframework.beans.factory.annotation.Autowired
 import kotlin.reflect.KClass
 
-
 /**
  * key为id的缓存处理器抽象类
  *
@@ -20,7 +19,7 @@ import kotlin.reflect.KClass
  * @since 1.0.0
  */
 abstract class AbstractByIdCacheHandler<PK : Any, T : IIdEntity<*>, DAO : IBaseReadOnlyDao<PK, *>> :
-    AbstractCacheHandler<T>() {
+    AbstractKeyValueCacheHandler<T>() {
 
     @Autowired
     protected lateinit var dao: DAO

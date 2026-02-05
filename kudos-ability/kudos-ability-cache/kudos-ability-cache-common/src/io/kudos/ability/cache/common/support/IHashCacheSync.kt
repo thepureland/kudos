@@ -8,7 +8,7 @@ package io.kudos.ability.cache.common.support
  * @author K
  * @since 1.0.0
  */
-interface IIdEntitiesHashCacheSync {
+interface IHashCacheSync {
 
     /**
      * 清空该 cacheName 下本地主数据与索引（对应远程 refreshAll）。

@@ -2,7 +2,7 @@ package io.kudos.ability.cache.remote.redis
 
 import io.kudos.ability.cache.common.init.properties.CacheVersionConfig
 import io.kudos.ability.cache.common.support.CacheConfig
-import io.kudos.ability.cache.common.support.ICacheManager
+import io.kudos.ability.cache.common.core.keyvalue.IKeyValueCacheManager
 import io.kudos.base.logger.LogFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.redis.cache.RedisCache
@@ -39,14 +39,14 @@ import java.util.*
  * - 支持自定义TTL，如果配置中未指定TTL，使用默认配置
  * - 缓存实例创建后会被添加到caches列表中，供后续使用
  */
-class RedisCacheManager(
+class RedisKeyValueCacheManager(
     private val cacheWriter: RedisCacheWriter,
     private val defaultCacheConfiguration: RedisCacheConfiguration,
     private val connectionFactory: RedisConnectionFactory?
 ) : RedisCacheManager(
     cacheWriter,
     defaultCacheConfiguration
-), ICacheManager<RedisCache> {
+), IKeyValueCacheManager<RedisCache> {
 
     var caches: MutableList<RedisCache> = LinkedList<RedisCache>()
 

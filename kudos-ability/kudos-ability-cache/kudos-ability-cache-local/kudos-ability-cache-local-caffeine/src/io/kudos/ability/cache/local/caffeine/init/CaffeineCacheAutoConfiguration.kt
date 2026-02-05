@@ -2,9 +2,9 @@ package io.kudos.ability.cache.local.caffeine.init
 
 import io.kudos.ability.cache.common.init.BaseCacheConfiguration
 import io.kudos.ability.cache.common.init.LinkableCacheAutoConfiguration
-import io.kudos.ability.cache.common.support.ICacheManager
-import io.kudos.ability.cache.local.caffeine.CaffeineCacheManager
-import io.kudos.ability.cache.local.caffeine.CaffeineIdEntitiesHashCache
+import io.kudos.ability.cache.common.core.keyvalue.IKeyValueCacheManager
+import io.kudos.ability.cache.local.caffeine.CaffeineKeyValueCacheManager
+import io.kudos.ability.cache.local.caffeine.CaffeineHashCache
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
 import io.kudos.context.config.YamlPropertySourceFactory
@@ -16,7 +16,6 @@ import org.springframework.boot.cache.autoconfigure.CacheProperties
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.Import
 import org.springframework.context.annotation.PropertySource
 
 
@@ -44,11 +43,11 @@ open class CaffeineCacheAutoConfiguration : BaseCacheConfiguration(), IComponent
 
     @Bean(name = ["localCacheManager"])
     @ConditionalOnMissingBean
-    open fun caffeineCacheManager(): ICacheManager<*> = CaffeineCacheManager()
+    open fun caffeineCacheManager(): IKeyValueCacheManager<*> = CaffeineKeyValueCacheManager()
 
     @Bean("caffeineIdEntitiesHashCache")
     @ConditionalOnMissingBean(name = ["caffeineIdEntitiesHashCache"])
-    open fun caffeineIdEntitiesHashCache(): CaffeineIdEntitiesHashCache = CaffeineIdEntitiesHashCache()
+    open fun caffeineIdEntitiesHashCache(): CaffeineHashCache = CaffeineHashCache()
 
     override fun getComponentName() = "kudos-ability-cache-local-caffeine"
 

@@ -1,7 +1,7 @@
 package io.kudos.ms.user.core.cache
 
 import io.kudos.ability.cache.common.kit.CacheKit
-import io.kudos.ability.cache.common.support.AbstractCacheHandler
+import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
 import io.kudos.ms.user.core.dao.UserOrgUserDao
 import io.kudos.ms.user.core.dao.UserAccountDao
 import io.kudos.ms.user.core.model.po.UserOrgUser
@@ -27,7 +27,7 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-open class OrgIdsByUserIdCache : AbstractCacheHandler<List<String>>() {
+open class OrgIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() {
 
     @Autowired
     private lateinit var userOrgUserDao: UserOrgUserDao
