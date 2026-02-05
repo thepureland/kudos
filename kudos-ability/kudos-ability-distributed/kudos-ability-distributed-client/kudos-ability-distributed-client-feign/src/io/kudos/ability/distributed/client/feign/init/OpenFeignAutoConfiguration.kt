@@ -5,7 +5,6 @@ import io.kudos.ability.distributed.client.feign.fallback.GlobalFeignFallBackFac
 import io.kudos.ability.distributed.client.feign.interceptor.GlobalHeaderRequestInterceptor
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean

@@ -1,7 +1,7 @@
 package io.kudos.ability.cache.common.core.keyvalue
 
-import io.kudos.ability.cache.common.support.CacheConfig
 import io.kudos.ability.cache.common.core.CacheItemInitializing
+import io.kudos.ability.cache.common.support.CacheConfig
 import org.springframework.cache.Cache
 import org.springframework.cache.CacheManager
 

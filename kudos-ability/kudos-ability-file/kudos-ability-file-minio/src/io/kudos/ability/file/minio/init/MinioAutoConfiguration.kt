@@ -6,9 +6,9 @@ import io.kudos.ability.file.minio.MinioUploadService
 import io.kudos.ability.file.minio.client.MinioClientBuilderFactory
 import io.kudos.ability.file.minio.init.properties.AccessTokenServerProperties
 import io.kudos.ability.file.minio.init.properties.MinioProperties
+import io.kudos.context.config.YamlPropertySourceFactory
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
-import io.kudos.context.config.YamlPropertySourceFactory
 import io.minio.MinioClient
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
@@ -17,7 +17,6 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.PropertySource
 import java.net.URI
-import java.net.URL
 
 /**
  * minio自动配置类

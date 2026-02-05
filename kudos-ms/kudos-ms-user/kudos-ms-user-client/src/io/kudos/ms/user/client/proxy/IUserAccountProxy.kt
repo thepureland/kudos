@@ -1,7 +1,7 @@
 package io.kudos.ms.user.client.proxy
 
-import io.kudos.ms.user.common.api.IUserAccountApi
 import io.kudos.ms.user.client.fallback.UserAccountFallback
+import io.kudos.ms.user.common.api.IUserAccountApi
 import org.springframework.cloud.openfeign.FeignClient
 
 

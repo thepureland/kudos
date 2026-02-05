@@ -2,9 +2,9 @@ package io.kudos.ability.log.audit.mq.init
 
 import io.kudos.ability.log.audit.common.api.IAuditService
 import io.kudos.ability.log.audit.mq.beans.MqAuditService
+import io.kudos.context.config.YamlPropertySourceFactory
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
-import io.kudos.context.config.YamlPropertySourceFactory
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration

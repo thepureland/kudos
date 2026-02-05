@@ -1,7 +1,7 @@
 package io.kudos.ms.auth.core.service.iservice
 
-import io.kudos.ms.auth.core.model.po.AuthGroup
 import io.kudos.base.support.iservice.IBaseCrudService
+import io.kudos.ms.auth.core.model.po.AuthGroup
 
 
 /**

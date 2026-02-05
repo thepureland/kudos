@@ -1,8 +1,8 @@
 package io.kudos.ability.distributed.tx.seata.ms2
 
 import io.kudos.ability.distributed.tx.seata.data.TestTableDao
-import io.kudos.context.init.EnableKudos
 import io.kudos.context.config.YamlPropertySourceFactory
+import io.kudos.context.init.EnableKudos
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient
 import org.springframework.context.annotation.Import
 import org.springframework.context.annotation.PropertySource

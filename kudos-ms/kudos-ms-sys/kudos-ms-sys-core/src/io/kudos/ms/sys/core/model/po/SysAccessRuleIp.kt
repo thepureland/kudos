@@ -1,6 +1,5 @@
 package io.kudos.ms.sys.core.model.po
 
-import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
 import io.kudos.ability.data.rdb.ktorm.support.DbEntityFactory
 import io.kudos.ability.data.rdb.ktorm.support.IMaintainableDbEntity
 import java.time.LocalDateTime

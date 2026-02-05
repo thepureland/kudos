@@ -2,7 +2,8 @@ package io.kudos.ms.msg.core.model.table
 
 import io.kudos.ability.data.rdb.ktorm.support.StringIdTable
 import io.kudos.ms.msg.core.model.po.MsgInstance
-import org.ktorm.schema.*
+import org.ktorm.schema.datetime
+import org.ktorm.schema.varchar
 
 
 /**

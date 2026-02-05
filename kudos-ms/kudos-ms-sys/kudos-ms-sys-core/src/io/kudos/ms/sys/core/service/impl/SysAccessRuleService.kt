@@ -1,12 +1,12 @@
 package io.kudos.ms.sys.core.service.impl
 
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
+import io.kudos.base.logger.LogFactory
 import io.kudos.ms.sys.common.vo.accessrule.SysAccessRuleRecord
 import io.kudos.ms.sys.common.vo.accessrule.SysAccessRuleSearchPayload
 import io.kudos.ms.sys.core.dao.SysAccessRuleDao
 import io.kudos.ms.sys.core.model.po.SysAccessRule
 import io.kudos.ms.sys.core.service.iservice.ISysAccessRuleService
-import io.kudos.base.logger.LogFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 

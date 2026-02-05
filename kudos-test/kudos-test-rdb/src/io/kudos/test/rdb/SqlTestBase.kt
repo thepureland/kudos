@@ -4,11 +4,11 @@ import io.kudos.ability.data.rdb.jdbc.kit.RdbKit
 import io.kudos.base.io.scanner.classpath.ClassPathScanner
 import io.kudos.test.common.init.EnableKudosTest
 import jakarta.annotation.Resource
-import org.springframework.test.context.transaction.BeforeTransaction
 import org.junit.jupiter.api.parallel.Execution
 import org.junit.jupiter.api.parallel.ExecutionMode
 import org.springframework.core.io.ClassPathResource
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator
+import org.springframework.test.context.transaction.BeforeTransaction
 import org.springframework.transaction.annotation.Transactional
 import javax.sql.DataSource
 

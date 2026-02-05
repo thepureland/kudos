@@ -1,10 +1,10 @@
 package io.kudos.ms.sys.core.service.iservice
 
 import io.kudos.base.support.iservice.IBaseCrudService
-import io.kudos.ms.sys.core.model.po.SysResource
 import io.kudos.ms.sys.common.vo.resource.SysResourceCacheItem
 import io.kudos.ms.sys.common.vo.resource.SysResourceRecord
 import io.kudos.ms.sys.common.vo.resource.SysResourceTreeRecord
+import io.kudos.ms.sys.core.model.po.SysResource
 
 
 /**

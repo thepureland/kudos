@@ -1,9 +1,9 @@
 package io.kudos.ability.cache.remote.redis
 
+import io.kudos.ability.cache.common.core.hash.IHashCache
 import io.kudos.ability.cache.common.init.properties.CacheVersionConfig
 import io.kudos.ability.cache.common.notify.CacheMessage
 import io.kudos.ability.cache.common.notify.ICacheMessageHandler
-import io.kudos.ability.cache.common.core.hash.IHashCache
 import io.kudos.ability.data.memdb.redis.RedisTemplates
 import io.kudos.ability.data.memdb.redis.dao.IdEntitiesRedisHashDao
 import io.kudos.base.query.Criteria

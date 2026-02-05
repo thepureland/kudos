@@ -1,7 +1,7 @@
 package io.kudos.ms.auth.client.proxy
 
-import io.kudos.ms.auth.common.api.IAuthRoleApi
 import io.kudos.ms.auth.client.fallback.AuthRoleFallback
+import io.kudos.ms.auth.common.api.IAuthRoleApi
 import org.springframework.cloud.openfeign.FeignClient
 
 

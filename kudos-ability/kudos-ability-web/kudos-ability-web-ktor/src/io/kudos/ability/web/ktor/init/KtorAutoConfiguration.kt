@@ -2,7 +2,7 @@ package io.kudos.ability.web.ktor.init
 
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
-import io.ktor.server.routing.routing
+import io.ktor.server.routing.*
 import io.kudos.ability.web.ktor.core.IKtorRouteRegistrar
 import io.kudos.ability.web.ktor.core.KtorContext
 import io.kudos.base.logger.LogFactory
@@ -15,7 +15,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.Lazy
 import java.util.concurrent.CompletableFuture
 
 

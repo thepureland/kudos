@@ -1,5 +1,6 @@
 package io.kudos.ms.sys.core.service.iservice
 
+import io.kudos.base.support.iservice.IBaseCrudService
 import io.kudos.ms.sys.common.vo.dict.SysDictPayload
 import io.kudos.ms.sys.common.vo.dict.SysDictTreeNode
 import io.kudos.ms.sys.common.vo.dictitem.SysDictItemCacheItem
@@ -7,7 +8,6 @@ import io.kudos.ms.sys.common.vo.dictitem.SysDictItemRecord
 import io.kudos.ms.sys.common.vo.dictitem.SysDictItemSearchPayload
 import io.kudos.ms.sys.common.vo.dictitem.SysDictItemTreeRecord
 import io.kudos.ms.sys.core.model.po.SysDictItem
-import io.kudos.base.support.iservice.IBaseCrudService
 
 
 /**

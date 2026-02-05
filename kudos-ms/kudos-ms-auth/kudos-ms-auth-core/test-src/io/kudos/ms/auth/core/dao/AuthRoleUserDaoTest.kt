@@ -20,7 +20,7 @@ import kotlin.test.assertTrue
 class AuthRoleUserDaoTest : RdbTestBase() {
 
     @Resource
-    private lateinit var authRoleUserDao: io.kudos.ms.auth.core.dao.AuthRoleUserDao
+    private lateinit var authRoleUserDao: AuthRoleUserDao
 
     @Test
     fun exists() {

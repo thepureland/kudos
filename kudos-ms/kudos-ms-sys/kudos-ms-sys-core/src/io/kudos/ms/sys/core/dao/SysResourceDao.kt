@@ -1,13 +1,14 @@
 package io.kudos.ms.sys.core.dao
 
+import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.base.query.Criteria
+import io.kudos.base.query.Criterion
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.support.payload.ListSearchPayload
 import io.kudos.ms.sys.common.vo.resource.SysResourceCacheItem
 import io.kudos.ms.sys.core.model.po.SysResource
 import io.kudos.ms.sys.core.model.table.SysResources
 import org.springframework.stereotype.Repository
-import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 
 /**
  * 资源数据访问对象
@@ -36,30 +37,32 @@ open class SysResourceDao : BaseCrudDao<String, SysResource, SysResources>() {
         if (ids.isEmpty()) return emptyList()
         val payload = ListSearchPayload().apply {
             returnEntityClass = SysResourceCacheItem::class
-            criterions = listOf(io.kudos.base.query.Criterion("id", OperatorEnum.IN, ids))
+            criterions = listOf(Criterion("id", OperatorEnum.IN, ids))
         }
         @Suppress("UNCHECKED_CAST")
         return search(payload) as List<SysResourceCacheItem>
     }
 
-    /** 按子系统编码+URL 查询资源 id（仅 url 非空且 active=true），兼容旧调用 */
-    open fun getResourceIdBySubSysAndUrl(subSystemCode: String, url: String): String? =
-        getResourceIdBySubSysAndUrl(subSystemCode, url, true)
-
-    /** 按子系统编码+URL+启用状态查询资源 id（url 非空） */
-    open fun getResourceIdBySubSysAndUrl(subSystemCode: String, url: String, active: Boolean): String? {
-        val criteria = Criteria.of(SysResource::subSystemCode.name, OperatorEnum.EQ, subSystemCode)
-            .addAnd(SysResource::url.name, OperatorEnum.EQ, url)
-            .addAnd(SysResource::active.name, OperatorEnum.EQ, active)
-        val ids = searchProperty(criteria, SysResource::id.name)
-        return ids.firstOrNull() as? String
+    /** 按子系统编码+URL+启用状态查询资源（url 非空） */
+    open fun getResourceBySubSysAndUrl(subSystemCode: String, url: String, active: Boolean? = null): SysResourceCacheItem? {
+        val criterions = mutableListOf(
+            Criterion(SysResource::subSystemCode.name, OperatorEnum.EQ, subSystemCode),
+            Criterion(SysResource::url.name, OperatorEnum.EQ, url),
+        )
+        if (active != null) {
+            criterions.add(Criterion(SysResource::active.name, OperatorEnum.EQ, active))
+        }
+        val payload = ListSearchPayload().apply {
+            returnEntityClass = SysResourceCacheItem::class
+            this.criterions = criterions
+        }
+        return search(payload).firstOrNull() as SysResourceCacheItem?
     }
 
-    /** 按子系统编码+资源类型代码查询资源 id 列表（仅 active=true） */
+    /** 按子系统编码+资源类型代码查询资源 id 列表 */
     @Suppress("UNCHECKED_CAST")
     open fun getResourceIdsBySubSysAndType(subSystemCode: String, resourceTypeDictCode: String): List<String> {
-        val criteria = Criteria.of(SysResource::active.name, OperatorEnum.EQ, true)
-            .addAnd(SysResource::subSystemCode.name, OperatorEnum.EQ, subSystemCode)
+        val criteria = Criteria.of(SysResource::subSystemCode.name, OperatorEnum.EQ, subSystemCode)
             .addAnd(SysResource::resourceTypeDictCode.name, OperatorEnum.EQ, resourceTypeDictCode)
         return searchProperty(criteria, SysResource::id.name) as List<String>
     }

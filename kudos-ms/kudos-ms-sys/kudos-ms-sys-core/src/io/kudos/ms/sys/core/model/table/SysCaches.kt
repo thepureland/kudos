@@ -1,8 +1,10 @@
 package io.kudos.ms.sys.core.model.table
 
-import io.kudos.ms.sys.core.model.po.SysCache
-import org.ktorm.schema.*
 import io.kudos.ability.data.rdb.ktorm.support.MaintainableTable
+import io.kudos.ms.sys.core.model.po.SysCache
+import org.ktorm.schema.boolean
+import org.ktorm.schema.int
+import org.ktorm.schema.varchar
 
 
 /**

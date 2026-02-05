@@ -4,8 +4,8 @@ import io.kudos.ms.auth.core.dao.AuthGroupDao
 import io.kudos.ms.auth.core.dao.AuthGroupUserDao
 import io.kudos.ms.auth.core.model.po.AuthGroup
 import io.kudos.ms.auth.core.model.po.AuthGroupUser
-import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
+import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
 import kotlin.test.Test
 import kotlin.test.assertEquals

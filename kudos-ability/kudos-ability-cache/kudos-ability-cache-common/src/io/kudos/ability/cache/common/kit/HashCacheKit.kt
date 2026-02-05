@@ -5,6 +5,7 @@ import io.kudos.ability.cache.common.enums.CacheStrategy
 import io.kudos.ability.cache.common.support.ICacheConfigProvider
 import io.kudos.ability.cache.common.core.hash.IHashCache
 import io.kudos.context.kit.SpringKit
+import org.springframework.stereotype.Component
 
 /**
  * Hash 缓存工具：按 cacheName 获取 [IHashCache]（策略封装后的统一抽象）。
@@ -16,6 +17,7 @@ import io.kudos.context.kit.SpringKit
  * @author AI: Cursor
  * @since 1.0.0
  */
+@Component
 object HashCacheKit {
 
     /**

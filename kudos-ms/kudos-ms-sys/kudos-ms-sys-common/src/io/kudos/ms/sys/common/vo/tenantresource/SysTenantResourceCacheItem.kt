@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.common.vo.tenantresource
 
-import java.io.Serializable
 import io.kudos.base.support.IIdEntity
+import java.io.Serializable
 
 
 /**

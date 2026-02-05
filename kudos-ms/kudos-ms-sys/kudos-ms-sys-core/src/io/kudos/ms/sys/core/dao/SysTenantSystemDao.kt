@@ -1,11 +1,11 @@
 package io.kudos.ms.sys.core.dao
 
+import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.ms.sys.core.model.po.SysTenantSystem
 import io.kudos.ms.sys.core.model.table.SysTenantSystems
 import org.springframework.stereotype.Repository
-import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 
 
 /**

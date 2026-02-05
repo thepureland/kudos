@@ -2,7 +2,9 @@ package io.kudos.ms.user.core.model.table
 
 import io.kudos.ability.data.rdb.ktorm.support.StringIdTable
 import io.kudos.ms.user.core.model.po.UserOrgUser
-import org.ktorm.schema.*
+import org.ktorm.schema.boolean
+import org.ktorm.schema.datetime
+import org.ktorm.schema.varchar
 
 
 /**

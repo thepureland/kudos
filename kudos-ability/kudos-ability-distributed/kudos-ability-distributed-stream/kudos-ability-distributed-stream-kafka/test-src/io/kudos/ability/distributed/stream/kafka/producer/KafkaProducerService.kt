@@ -3,8 +3,6 @@ package io.kudos.ability.distributed.stream.kafka.producer
 import io.kudos.ability.distributed.stream.common.annotations.MqProducer
 import io.kudos.ability.distributed.stream.kafka.data.KafkaSimpleMsg
 import io.kudos.base.logger.LogFactory
-import io.kudos.context.core.KudosContext
-import org.springframework.context.annotation.Bean
 import org.springframework.stereotype.Service
 
 /**

@@ -40,16 +40,15 @@ open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheItem>
     companion object {
         const val CACHE_NAME = "SYS_RESOURCE__HASH"
 
-        /** 用于等值筛选与 Set 索引的副属性名集合，写入/删除/全量刷新时须与此一致 */
+        /** 用于等值筛选与 Set 索引的副属性名集合，写入/删除/全量刷新时须与此一致（不含 active，不建 active 二级索引） */
         val FILTERABLE_PROPERTIES = setOf(
             SysResourceCacheItem::subSystemCode.name,
             SysResourceCacheItem::url.name,
-            SysResourceCacheItem::active.name,
             SysResourceCacheItem::resourceTypeDictCode.name
         )
     }
 
-    override fun cacheName(): String = SysSystemHashCache.Companion.CACHE_NAME
+    override fun cacheName(): String = CACHE_NAME
 
     // ---------- 1. 按主键 id ----------
 
@@ -65,7 +64,7 @@ open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheItem>
         key = "#id",
         entityClass = SysResourceCacheItem::class,
         unless = "#result == null",
-        filterableProperties = ["subSystemCode", "url", "active", "resourceTypeDictCode"]
+        filterableProperties = ["subSystemCode", "url", "resourceTypeDictCode"]
     )
     open fun getResourceById(id: String): SysResourceCacheItem? {
         require(id.isNotBlank()) { "获取资源时 id 不能为空" }
@@ -82,7 +81,7 @@ open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheItem>
     @HashBatchCacheableByPrimary(
         cacheNames = [CACHE_NAME],
         entityClass = SysResourceCacheItem::class,
-        filterableProperties = ["subSystemCode", "url", "active", "resourceTypeDictCode"]
+        filterableProperties = ["subSystemCode", "url", "resourceTypeDictCode"]
     )
     open fun getResourcesByIds(ids: List<String>): Map<String, SysResourceCacheItem> {
         if (ids.isEmpty()) return emptyMap()
@@ -98,45 +97,16 @@ open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheItem>
      *
      * @param subSystemCode 子系统编码，非空
      * @param url 资源 URL，非空
-     * @param active 是否仅启用，默认 true
      * @return 匹配的实体列表
      */
     @HashCacheableBySecondary(
         cacheNames = [CACHE_NAME],
-        filterExpressions = ["#subSystemCode", "#url", "#active"],
+        filterExpressions = ["#subSystemCode", "#url"],
         entityClass = SysResourceCacheItem::class,
-        filterableProperties = ["subSystemCode", "url", "active", "resourceTypeDictCode"]
+        filterableProperties = ["subSystemCode", "url", "resourceTypeDictCode"]
     )
-    open fun listResourcesBySubSysAndUrl(subSystemCode: String, url: String, active: Boolean = true): List<SysResourceCacheItem> {
-        val id = sysResourceDao.getResourceIdBySubSysAndUrl(subSystemCode, url, active) ?: return emptyList()
-        val item = sysResourceDao.getCacheItem(id) ?: return emptyList()
-        return if (item.active == active) listOf(item) else emptyList()
-    }
-
-    /**
-     * 按子系统编码、URL、启用状态查询，返回唯一匹配的资源 id。
-     * 先按副属性索引查缓存，未命中则查库并回写单条。
-     *
-     * @param subSystemCode 子系统编码，非空
-     * @param url 资源 URL，非空
-     * @param active 是否仅启用，默认 true
-     * @return 资源 id，无匹配时 null
-     */
-    @HashCacheableBySecondary(
-        cacheNames = [CACHE_NAME],
-        filterExpressions = ["#subSystemCode", "#url", "#active"],
-        entityClass = SysResourceCacheItem::class,
-        filterableProperties = ["subSystemCode", "url", "active", "resourceTypeDictCode"]
-    )
-    open fun getResourceId(subSystemCode: String, url: String, active: Boolean = true): String? {
-        require(subSystemCode.isNotBlank()) { "获取资源 id 时子系统代码不能为空" }
-        require(url.isNotBlank()) { "获取资源 id 时 url 不能为空" }
-        val id = sysResourceDao.getResourceIdBySubSysAndUrl(subSystemCode, url, active) ?: return null
-        val item = sysResourceDao.getCacheItem(id)
-        if (item != null && CacheKit.isCacheActive(CACHE_NAME) && CacheKit.isWriteInTime(CACHE_NAME)) {
-            hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
-        }
-        return id
+    open fun getResourceBySubSystemCodeAndUrl(subSystemCode: String, url: String): SysResourceCacheItem? {
+        return sysResourceDao.getResourceBySubSysAndUrl(subSystemCode, url)
     }
 
     // ---------- 3. 按子系统+资源类型 ----------
@@ -147,47 +117,18 @@ open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheItem>
      *
      * @param subSystemCode 子系统编码，非空
      * @param resourceTypeDictCode 资源类型字典码，非空
-     * @param active 是否仅启用，默认 true
      * @return 匹配的实体列表
      */
     @HashCacheableBySecondary(
         cacheNames = [CACHE_NAME],
-        filterExpressions = ["#subSystemCode", "#resourceTypeDictCode", "#active"],
+        filterExpressions = ["#subSystemCode", "#resourceTypeDictCode"],
         entityClass = SysResourceCacheItem::class,
-        filterableProperties = ["subSystemCode", "url", "active", "resourceTypeDictCode"]
+        filterableProperties = ["subSystemCode", "url", "resourceTypeDictCode"]
     )
-    open fun listResourcesBySubSysAndType(subSystemCode: String, resourceTypeDictCode: String, active: Boolean = true): List<SysResourceCacheItem> {
+    open fun getResourcesBySubSystemCodeAndType(subSystemCode: String, resourceTypeDictCode: String): List<SysResourceCacheItem> {
         val ids = sysResourceDao.getResourceIdsBySubSysAndType(subSystemCode, resourceTypeDictCode)
         if (ids.isEmpty()) return emptyList()
-        return sysResourceDao.listCacheItemsByIds(ids).filter { it.active == active }
-    }
-
-    /**
-     * 按子系统编码、资源类型、启用状态查询，返回匹配的资源 id 列表。
-     * 先按副属性索引查缓存，未命中则查库并回写。
-     *
-     * @param subSystemCode 子系统编码，非空
-     * @param resourceTypeDictCode 资源类型字典码，非空
-     * @param active 是否仅启用，默认 true
-     * @return 匹配的资源 id 列表
-     */
-    @HashCacheableBySecondary(
-        cacheNames = [CACHE_NAME],
-        filterExpressions = ["#subSystemCode", "#resourceTypeDictCode", "#active"],
-        entityClass = SysResourceCacheItem::class,
-        filterableProperties = ["subSystemCode", "url", "active", "resourceTypeDictCode"]
-    )
-    open fun getResourceIds(subSystemCode: String, resourceTypeDictCode: String, active: Boolean = true): List<String> {
-        require(subSystemCode.isNotBlank()) { "获取资源时子系统代码不能为空" }
-        require(resourceTypeDictCode.isNotBlank()) { "获取资源时资源类型代码不能为空" }
-        val ids = sysResourceDao.getResourceIdsBySubSysAndType(subSystemCode, resourceTypeDictCode)
-        if (ids.isEmpty()) return emptyList()
-        val items = sysResourceDao.listCacheItemsByIds(ids).filter { it.active == active }
-        if (CacheKit.isCacheActive(CACHE_NAME) && CacheKit.isWriteInTime(CACHE_NAME)) {
-            val cache = hashCache()
-            items.forEach { cache.save(CACHE_NAME, it, FILTERABLE_PROPERTIES, emptySet()) }
-        }
-        return items.mapNotNull { it.id }
+        return sysResourceDao.listCacheItemsByIds(ids)
     }
 
     // ---------- 全量刷新 ----------

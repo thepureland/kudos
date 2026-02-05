@@ -21,7 +21,7 @@ import kotlin.test.assertTrue
 class AuthRoleUserServiceTest : RdbAndRedisCacheTestBase() {
 
     @Resource
-    private lateinit var authRoleUserService: io.kudos.ms.auth.core.service.iservice.IAuthRoleUserService
+    private lateinit var authRoleUserService: IAuthRoleUserService
 
     @Test
     fun getUserIdsByRoleId() {

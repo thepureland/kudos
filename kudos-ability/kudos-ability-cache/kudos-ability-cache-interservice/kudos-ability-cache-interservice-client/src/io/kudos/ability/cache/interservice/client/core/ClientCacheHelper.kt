@@ -1,7 +1,7 @@
 package io.kudos.ability.cache.interservice.client.core
 
-import io.kudos.ability.cache.common.support.CacheConfig
 import io.kudos.ability.cache.common.core.keyvalue.IKeyValueCacheManager
+import io.kudos.ability.cache.common.support.CacheConfig
 import io.kudos.ability.cache.interservice.common.ClientCacheItem
 import io.kudos.ability.cache.interservice.common.ClientCacheKey
 import io.kudos.base.logger.LogFactory

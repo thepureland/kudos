@@ -6,13 +6,8 @@ import io.kudos.ms.sys.core.model.po.SysMicroService
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
-import kotlin.test.assertSame
-import kotlin.test.assertTrue
-import java.util.UUID
+import java.util.*
+import kotlin.test.*
 
 /**
  * [SysMicroServiceHashCache] 单元测试（Hash 缓存，按 code 存取）。
@@ -20,7 +15,7 @@ import java.util.UUID
  * 覆盖：按 code 单条/批量获取、按 atomicService 查询、全量刷新、新增/更新/删除/批量删除后同步；
  * 本地缓存开启时二次取为同一对象引用。
  *
- * 测试数据：`sql/h2/cache/MicroServiceByCodeCacheTest.sql`。
+ * 测试数据：`sql/h2/cache/SysMicroServiceHashCacheTest.sql`。
  * 需 Docker 运行 Redis，且 sys_cache 中已配置 SYS_MICRO_SERVICE__HASH（hash=true）。
  *
  * @author K
@@ -35,8 +30,6 @@ class SysMicroServiceHashCacheTest : RdbAndRedisCacheTestBase() {
 
     @Resource
     private lateinit var sysMicroServiceDao: SysMicroServiceDao
-
-    override fun getTestDataSqlPath(): String = "sql/h2/cache/MicroServiceByCodeCacheTest.sql"
 
     private fun isLocalCacheEnabled(): Boolean = HashCacheKit.isLocalCacheEnabled(SysMicroServiceHashCache.CACHE_NAME)
 

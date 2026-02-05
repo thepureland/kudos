@@ -1,5 +1,6 @@
 package io.kudos.ms.sys.core.dao
 
+import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.base.query.Criterion
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.support.payload.ListSearchPayload
@@ -7,7 +8,6 @@ import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceCacheItem
 import io.kudos.ms.sys.core.model.po.SysMicroService
 import io.kudos.ms.sys.core.model.table.SysMicroServices
 import org.springframework.stereotype.Repository
-import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 
 
 /**

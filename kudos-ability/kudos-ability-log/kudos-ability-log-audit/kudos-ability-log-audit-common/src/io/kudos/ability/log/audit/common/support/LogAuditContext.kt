@@ -1,6 +1,5 @@
 package io.kudos.ability.log.audit.common.support
 
-import io.kudos.ability.log.audit.common.entity.BaseLog
 import io.kudos.ability.log.audit.common.entity.LogVo
 
 /**

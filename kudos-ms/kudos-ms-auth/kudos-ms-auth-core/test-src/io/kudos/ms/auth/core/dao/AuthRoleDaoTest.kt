@@ -17,6 +17,6 @@ import jakarta.annotation.Resource
 class AuthRoleDaoTest : RdbTestBase() {
 
     @Resource
-    private lateinit var authRoleDao: io.kudos.ms.auth.core.dao.AuthRoleDao
+    private lateinit var authRoleDao: AuthRoleDao
 
 }

@@ -5,7 +5,6 @@ import io.kudos.ability.data.rdb.ktorm.kit.getDatabase
 import io.kudos.ability.distributed.tx.seata.main.IService
 import io.kudos.ability.distributed.tx.seata.ms1.Application1
 import io.kudos.ability.distributed.tx.seata.ms2.Application2
-import io.kudos.base.net.IpKit
 import io.kudos.test.container.containers.PostgresTestContainer
 import io.kudos.test.container.containers.SeataTestContainer
 import org.junit.jupiter.api.Assertions

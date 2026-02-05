@@ -6,7 +6,6 @@ import io.kudos.tools.codegen.core.CodeGeneratorContext
 import io.kudos.tools.codegen.dao.CodeGenObjectDao
 import io.kudos.tools.codegen.model.po.CodeGenObject
 import java.time.LocalDateTime
-import kotlin.collections.filter
 
 /**
  * 生成的表对象历史信息服务

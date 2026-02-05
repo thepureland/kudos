@@ -1,10 +1,10 @@
 package io.kudos.ms.user.core.dao
 
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
-import io.kudos.ms.user.core.model.po.UserOrgUser
-import io.kudos.ms.user.core.model.table.UserOrgUsers
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
+import io.kudos.ms.user.core.model.po.UserOrgUser
+import io.kudos.ms.user.core.model.table.UserOrgUsers
 import org.springframework.stereotype.Repository
 
 

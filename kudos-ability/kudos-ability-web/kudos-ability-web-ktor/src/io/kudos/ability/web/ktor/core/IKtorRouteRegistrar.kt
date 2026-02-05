@@ -1,6 +1,6 @@
 package io.kudos.ability.web.ktor.core
 
-import io.ktor.server.routing.Routing
+import io.ktor.server.routing.*
 
 
 /**

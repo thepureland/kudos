@@ -1,9 +1,9 @@
 package io.kudos.ms.sys.core.dao
 
+import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.ms.sys.core.model.po.SysTenant
 import io.kudos.ms.sys.core.model.table.SysTenants
 import org.springframework.stereotype.Repository
-import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 
 
 /**

@@ -1,6 +1,6 @@
 package io.kudos.ability.web.ktor.core
 
-import io.ktor.server.application.Application
+import io.ktor.server.application.*
 import io.kudos.ability.web.ktor.init.KtorProperties
 
 /**

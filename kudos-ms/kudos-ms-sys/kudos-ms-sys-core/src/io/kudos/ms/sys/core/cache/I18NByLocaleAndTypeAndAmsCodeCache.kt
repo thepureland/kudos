@@ -1,12 +1,12 @@
 package io.kudos.ms.sys.core.cache
 
-import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
-import io.kudos.ms.sys.core.dao.SysI18nDao
-import io.kudos.ms.sys.core.model.po.SysI18n
+import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.context.support.Consts
+import io.kudos.ms.sys.core.dao.SysI18nDao
+import io.kudos.ms.sys.core.model.po.SysI18n
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component

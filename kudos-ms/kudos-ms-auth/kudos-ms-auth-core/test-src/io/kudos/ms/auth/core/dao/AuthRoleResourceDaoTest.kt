@@ -20,7 +20,7 @@ import kotlin.test.assertTrue
 class AuthRoleResourceDaoTest : RdbTestBase() {
 
     @Resource
-    private lateinit var authRoleResourceDao: io.kudos.ms.auth.core.dao.AuthRoleResourceDao
+    private lateinit var authRoleResourceDao: AuthRoleResourceDao
 
     @Test
     fun exists() {
@@ -36,7 +36,7 @@ class AuthRoleResourceDaoTest : RdbTestBase() {
     fun searchRoleIdsByResourceId() {
         val resourceId = "49748162-0000-0000-0000-000000000062"
         val roleIds = authRoleResourceDao.searchRoleIdsByResourceId(resourceId)
-        assertTrue(roleIds.size >= 1)
+        assertTrue(roleIds.isNotEmpty())
         assertTrue(roleIds.contains("49748162-0000-0000-0000-000000000060"))
         
         // 测试不存在的资源ID

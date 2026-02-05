@@ -1,11 +1,11 @@
 package io.kudos.tools.codegen.core
 
 import io.kudos.base.io.FileKit
-import io.kudos.tools.codegen.service.CodeGenFileService
-import io.kudos.tools.codegen.service.CodeGenObjectService
 import io.kudos.tools.codegen.core.merge.CodeMerger
 import io.kudos.tools.codegen.core.merge.PrivateContentEraser
 import io.kudos.tools.codegen.model.vo.GenFile
+import io.kudos.tools.codegen.service.CodeGenFileService
+import io.kudos.tools.codegen.service.CodeGenObjectService
 import java.io.File
 
 /**

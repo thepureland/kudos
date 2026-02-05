@@ -20,7 +20,6 @@ import okhttp3.RequestBody
 import java.io.IOException
 import java.io.UnsupportedEncodingException
 import java.security.ProviderException
-import java.util.function.Supplier
 
 /**
  * Minio 请求认证

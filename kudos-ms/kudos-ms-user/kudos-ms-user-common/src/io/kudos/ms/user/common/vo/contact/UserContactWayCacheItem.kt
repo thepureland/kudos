@@ -2,7 +2,6 @@ package io.kudos.ms.user.common.vo.contact
 
 import io.kudos.base.support.IIdEntity
 import java.io.Serializable
-import java.time.LocalDateTime
 
 
 /**

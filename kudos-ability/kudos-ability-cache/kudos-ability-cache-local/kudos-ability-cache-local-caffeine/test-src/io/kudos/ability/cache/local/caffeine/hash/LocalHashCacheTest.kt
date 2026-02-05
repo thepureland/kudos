@@ -3,21 +3,16 @@ package io.kudos.ability.cache.local.caffeine.hash
 import io.kudos.ability.cache.common.enums.CacheStrategy
 import io.kudos.ability.cache.common.kit.HashCacheKit
 import io.kudos.base.query.Criteria
-import org.springframework.beans.factory.annotation.Autowired
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.query.sort.Order
 import io.kudos.base.support.IIdEntity
 import io.kudos.test.common.init.EnableKudosTest
 import org.junit.jupiter.api.BeforeEach
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
-import kotlin.test.assertSame
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 /**
  * 基于 Hash 存储结构的本地（Caffeine）缓存测试用例。

@@ -1,8 +1,8 @@
 package io.kudos.ability.cache.remote.redis.hash
 
-import io.kudos.ability.cache.common.batch.hash.HashBatchCacheableByPrimary
 import io.kudos.ability.cache.common.aop.hash.HashCacheableByPrimary
 import io.kudos.ability.cache.common.aop.hash.HashCacheableBySecondary
+import io.kudos.ability.cache.common.batch.hash.HashBatchCacheableByPrimary
 import io.kudos.base.lang.string.RandomStringKit
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.Criterion

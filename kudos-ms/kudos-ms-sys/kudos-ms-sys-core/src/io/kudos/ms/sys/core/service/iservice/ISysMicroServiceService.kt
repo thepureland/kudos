@@ -1,10 +1,9 @@
 package io.kudos.ms.sys.core.service.iservice
 
+import io.kudos.base.support.iservice.IBaseCrudService
 import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceCacheItem
 import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceRecord
 import io.kudos.ms.sys.core.model.po.SysMicroService
-import io.kudos.base.support.iservice.IBaseCrudService
-import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceDetail
 
 
 /**

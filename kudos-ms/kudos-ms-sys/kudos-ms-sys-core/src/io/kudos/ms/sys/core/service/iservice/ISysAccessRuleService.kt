@@ -1,8 +1,8 @@
 package io.kudos.ms.sys.core.service.iservice
 
 import io.kudos.base.support.iservice.IBaseCrudService
-import io.kudos.ms.sys.core.model.po.SysAccessRule
 import io.kudos.ms.sys.common.vo.accessrule.SysAccessRuleRecord
+import io.kudos.ms.sys.core.model.po.SysAccessRule
 
 
 /**

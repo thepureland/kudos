@@ -3,7 +3,6 @@ package io.kudos.ability.distributed.stream.rabbit.producer
 import io.kudos.ability.distributed.stream.common.annotations.MqProducer
 import io.kudos.ability.distributed.stream.rabbit.data.RabbitMqSimpleMsg
 import io.kudos.base.logger.LogFactory
-import org.springframework.context.annotation.Bean
 import org.springframework.stereotype.Service
 
 /**
