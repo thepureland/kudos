@@ -1,7 +1,7 @@
 package io.kudos.ms.user.core.service.iservice
 
-import io.kudos.ms.user.core.model.po.UserContactWay
 import io.kudos.base.support.iservice.IBaseCrudService
+import io.kudos.ms.user.core.model.po.UserContactWay
 
 
 /**

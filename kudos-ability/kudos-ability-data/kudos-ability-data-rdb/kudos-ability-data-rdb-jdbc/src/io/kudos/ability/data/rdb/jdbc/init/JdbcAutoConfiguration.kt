@@ -2,7 +2,6 @@ package io.kudos.ability.data.rdb.jdbc.init
 
 import com.baomidou.dynamic.datasource.creator.DataSourceCreator
 import com.baomidou.dynamic.datasource.creator.DefaultDataSourceCreator
-import com.baomidou.dynamic.datasource.event.DataSourceInitEvent
 import com.baomidou.dynamic.datasource.spring.boot.autoconfigure.DynamicDataSourceProperties
 import io.kudos.ability.data.rdb.jdbc.aop.DynamicDataSourceAspect
 import io.kudos.ability.data.rdb.jdbc.datasource.DefaultDynamicDataSourceLoad

@@ -1,10 +1,10 @@
 package io.kudos.ms.auth.core.dao
 
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
-import io.kudos.ms.auth.core.model.po.AuthGroupRole
-import io.kudos.ms.auth.core.model.table.AuthGroupRoles
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
+import io.kudos.ms.auth.core.model.po.AuthGroupRole
+import io.kudos.ms.auth.core.model.table.AuthGroupRoles
 import org.springframework.stereotype.Repository
 
 

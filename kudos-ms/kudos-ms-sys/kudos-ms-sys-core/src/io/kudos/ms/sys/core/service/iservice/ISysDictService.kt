@@ -1,10 +1,10 @@
 package io.kudos.ms.sys.core.service.iservice
 
+import io.kudos.base.support.iservice.IBaseCrudService
 import io.kudos.ms.sys.common.vo.dict.SysDictCacheItem
 import io.kudos.ms.sys.common.vo.dict.SysDictPayload
 import io.kudos.ms.sys.common.vo.dict.SysDictRecord
 import io.kudos.ms.sys.core.model.po.SysDict
-import io.kudos.base.support.iservice.IBaseCrudService
 
 
 /**

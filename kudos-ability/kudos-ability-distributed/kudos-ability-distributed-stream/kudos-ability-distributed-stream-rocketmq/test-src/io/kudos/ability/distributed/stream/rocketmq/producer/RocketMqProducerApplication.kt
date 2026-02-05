@@ -1,7 +1,7 @@
 package io.kudos.ability.distributed.stream.rocketmq.producer
 
-import io.kudos.context.init.EnableKudos
 import io.kudos.context.config.YamlPropertySourceFactory
+import io.kudos.context.init.EnableKudos
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient
 import org.springframework.context.annotation.Import
 import org.springframework.context.annotation.PropertySource

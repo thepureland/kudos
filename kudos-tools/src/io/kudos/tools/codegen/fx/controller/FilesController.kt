@@ -1,11 +1,11 @@
 package io.kudos.tools.codegen.fx.controller
 
-import io.kudos.tools.codegen.service.CodeGenFileService
 import io.kudos.tools.codegen.core.CodeGenerator
 import io.kudos.tools.codegen.core.CodeGeneratorContext
 import io.kudos.tools.codegen.core.TemplatePathProcessor
 import io.kudos.tools.codegen.core.TemplateReader
 import io.kudos.tools.codegen.model.vo.GenFile
+import io.kudos.tools.codegen.service.CodeGenFileService
 import javafx.beans.property.SimpleBooleanProperty
 import javafx.collections.FXCollections
 import javafx.event.Event

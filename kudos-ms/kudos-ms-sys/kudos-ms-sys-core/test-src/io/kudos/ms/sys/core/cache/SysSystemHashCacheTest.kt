@@ -6,13 +6,8 @@ import io.kudos.ms.sys.core.model.po.SysSystem
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
-import java.util.UUID
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
-import kotlin.test.assertSame
-import kotlin.test.assertTrue
+import java.util.*
+import kotlin.test.*
 
 /**
  * [SysSystemHashCache] 单元测试（Hash 缓存实现）。

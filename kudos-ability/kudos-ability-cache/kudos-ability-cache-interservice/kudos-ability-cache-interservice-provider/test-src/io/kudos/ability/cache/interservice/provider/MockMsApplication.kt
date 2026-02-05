@@ -1,7 +1,7 @@
 package io.kudos.ability.cache.interservice.provider
 
-import io.kudos.context.init.EnableKudos
 import io.kudos.context.config.YamlPropertySourceFactory
+import io.kudos.context.init.EnableKudos
 import org.springframework.context.annotation.Import
 import org.springframework.context.annotation.PropertySource
 

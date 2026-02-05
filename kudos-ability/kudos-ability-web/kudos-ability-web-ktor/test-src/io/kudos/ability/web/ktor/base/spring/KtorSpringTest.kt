@@ -6,7 +6,6 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.testing.*
 import io.kudos.ability.web.ktor.init.KtorAutoConfiguration
-import io.kudos.ability.web.ktor.core.KtorContext
 import io.kudos.ability.web.ktor.init.installPlugins
 import io.kudos.context.kit.SpringKit
 import io.kudos.test.common.init.EnableKudosTest

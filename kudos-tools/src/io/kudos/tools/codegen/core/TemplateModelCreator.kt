@@ -9,7 +9,6 @@ import io.kudos.base.lang.string.capitalizeString
 import io.kudos.base.lang.string.humpToUnderscore
 import io.kudos.base.lang.string.underscoreToHump
 import io.kudos.tools.codegen.model.vo.Config
-import kotlin.collections.mutableMapOf
 
 /**
  * 模板数据模型创建者，用户可继承此类自定义要填充模板的数据

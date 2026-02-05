@@ -1,11 +1,11 @@
 package io.kudos.tools.codegen.fx.controller
 
 import io.kudos.ability.ui.javafx.controls.AutoCompleteComboBoxListener
-import io.kudos.tools.codegen.service.CodeGenColumnService
-import io.kudos.tools.codegen.service.CodeGenObjectService
 import io.kudos.tools.codegen.core.CodeGeneratorContext
 import io.kudos.tools.codegen.model.vo.ColumnInfo
 import io.kudos.tools.codegen.model.vo.Config
+import io.kudos.tools.codegen.service.CodeGenColumnService
+import io.kudos.tools.codegen.service.CodeGenObjectService
 import javafx.application.Platform
 import javafx.beans.value.ObservableValue
 import javafx.collections.FXCollections

@@ -6,12 +6,7 @@ import io.kudos.ms.auth.core.model.po.AuthRole
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
-import kotlin.test.assertSame
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 /**
  * [AuthRoleHashCache] 单元测试（Hash 缓存，按 id 存取、按 tenantId+code 查询，不区分 active）。

@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.client.proxy
 
-import io.kudos.ms.sys.common.api.ISysCacheApi
 import io.kudos.ms.sys.client.fallback.SysCacheFallback
+import io.kudos.ms.sys.common.api.ISysCacheApi
 import org.springframework.cloud.openfeign.FeignClient
 
 

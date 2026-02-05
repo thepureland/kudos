@@ -1,7 +1,6 @@
 package io.kudos.ability.log.audit.common.annotation
 
 import io.kudos.ability.log.audit.common.api.IAuditService
-import io.kudos.ability.log.audit.common.entity.LogVo
 import io.kudos.ability.log.audit.common.support.AuditLogTool
 import io.kudos.ability.log.audit.common.support.LogAuditContext
 import io.kudos.base.data.json.JsonKit

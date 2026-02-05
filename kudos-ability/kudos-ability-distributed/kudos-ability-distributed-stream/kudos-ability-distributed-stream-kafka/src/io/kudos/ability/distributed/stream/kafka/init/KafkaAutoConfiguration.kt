@@ -1,9 +1,9 @@
 package io.kudos.ability.distributed.stream.kafka.init
 
 import io.kudos.ability.distributed.stream.common.init.StreamCommonConfiguration
+import io.kudos.context.config.YamlPropertySourceFactory
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
-import io.kudos.context.config.YamlPropertySourceFactory
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.PropertySource

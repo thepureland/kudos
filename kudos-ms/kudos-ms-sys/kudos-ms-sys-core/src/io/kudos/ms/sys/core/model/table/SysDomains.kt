@@ -1,8 +1,8 @@
 package io.kudos.ms.sys.core.model.table
 
-import io.kudos.ms.sys.core.model.po.SysDomain
-import org.ktorm.schema.*
 import io.kudos.ability.data.rdb.ktorm.support.MaintainableTable
+import io.kudos.ms.sys.core.model.po.SysDomain
+import org.ktorm.schema.varchar
 
 
 /**

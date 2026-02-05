@@ -1,11 +1,10 @@
 package io.kudos.ms.user.core.service.iservice
 
-import io.kudos.ms.sys.common.vo.resource.SysResourceCacheItem
+import io.kudos.base.support.iservice.IBaseCrudService
 import io.kudos.ms.user.common.vo.org.UserOrgCacheItem
 import io.kudos.ms.user.common.vo.user.UserAccountCacheItem
 import io.kudos.ms.user.common.vo.user.UserAccountRecord
 import io.kudos.ms.user.core.model.po.UserAccount
-import io.kudos.base.support.iservice.IBaseCrudService
 import java.time.LocalDateTime
 
 

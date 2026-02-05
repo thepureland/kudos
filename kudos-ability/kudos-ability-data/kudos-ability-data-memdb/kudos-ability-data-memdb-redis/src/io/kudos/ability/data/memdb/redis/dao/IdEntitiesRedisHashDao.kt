@@ -14,8 +14,6 @@ import org.springframework.data.redis.serializer.RedisSerializer
 import java.lang.reflect.Method
 import java.nio.charset.StandardCharsets
 import kotlin.reflect.KClass
-import kotlin.reflect.full.declaredMemberProperties
-import kotlin.reflect.full.memberProperties
 
 /**
  * 以Hash结构存储的带有id的实体的redis访问对象

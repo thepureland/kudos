@@ -1,9 +1,10 @@
 package io.kudos.ms.sys.core.model.table
 
-import io.kudos.ability.data.rdb.ktorm.support.StringIdTable
-import io.kudos.ms.sys.core.model.po.SysAccessRuleIp
-import org.ktorm.schema.*
 import io.kudos.ability.data.rdb.ktorm.support.MaintainableTable
+import io.kudos.ms.sys.core.model.po.SysAccessRuleIp
+import org.ktorm.schema.datetime
+import org.ktorm.schema.long
+import org.ktorm.schema.varchar
 
 
 /**

@@ -3,7 +3,6 @@ package io.kudos.ability.cache.common.core.keyvalue
 import io.kudos.ability.cache.common.core.AbstractCacheHandler
 import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.base.logger.LogFactory
-import io.kudos.context.kit.SpringKit
 
 /**
  * key-value型缓存处理器抽象类

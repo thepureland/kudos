@@ -1,19 +1,12 @@
 package io.kudos.ms.sys.core.dao
 
-import io.kudos.ability.data.rdb.jdbc.kit.RdbKit
-import io.kudos.ability.data.rdb.ktorm.kit.getDatabase
+import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
+import io.kudos.base.bean.BeanKit
+import io.kudos.ms.sys.common.vo.param.SysParamCacheItem
 import io.kudos.ms.sys.core.model.po.SysParam
 import io.kudos.ms.sys.core.model.table.SysParams
+import org.ktorm.dsl.*
 import org.springframework.stereotype.Repository
-import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
-import io.kudos.ms.sys.common.vo.param.SysParamCacheItem
-import io.kudos.base.bean.BeanKit
-import org.ktorm.dsl.and
-import org.ktorm.dsl.eq
-import org.ktorm.dsl.from
-import org.ktorm.dsl.map
-import org.ktorm.dsl.select
-import org.ktorm.dsl.whereWithConditions
 
 
 /**

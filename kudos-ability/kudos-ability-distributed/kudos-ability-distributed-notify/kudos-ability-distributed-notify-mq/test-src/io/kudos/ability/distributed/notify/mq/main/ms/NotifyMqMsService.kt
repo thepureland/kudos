@@ -5,7 +5,6 @@ import io.kudos.ability.distributed.notify.common.model.NotifyMessageVo
 import io.kudos.ability.distributed.notify.mq.common.NotifyTypeEnum
 import io.kudos.base.logger.LogFactory
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.context.annotation.Bean
 import org.springframework.stereotype.Service
 
 @Service

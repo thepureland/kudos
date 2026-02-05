@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.client.proxy
 
-import io.kudos.ms.sys.common.api.ISysTenantResourceApi
 import io.kudos.ms.sys.client.fallback.SysTenantResourceFallback
+import io.kudos.ms.sys.common.api.ISysTenantResourceApi
 import org.springframework.cloud.openfeign.FeignClient
 
 

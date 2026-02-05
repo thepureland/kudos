@@ -2,7 +2,6 @@ package io.kudos.ms.sys.core.api
 
 import io.kudos.ms.sys.common.api.ISysMicroServiceApi
 import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceCacheItem
-import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceDetail
 import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceRecord
 import io.kudos.ms.sys.core.service.iservice.ISysMicroServiceService
 import jakarta.annotation.Resource

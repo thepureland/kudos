@@ -4,8 +4,8 @@ import io.kudos.ability.distributed.lock.common.annotations.DistributedLock
 import io.kudos.ability.distributed.lock.common.locker.DistributedLockContext
 import io.kudos.ability.distributed.lock.redisson.kit.RedissonLockKit
 import io.kudos.base.logger.LogFactory
-import io.kudos.context.support.Consts
 import io.kudos.context.core.KudosContextHolder
+import io.kudos.context.support.Consts
 import org.aspectj.lang.ProceedingJoinPoint
 import org.aspectj.lang.annotation.Around
 import org.aspectj.lang.annotation.Aspect

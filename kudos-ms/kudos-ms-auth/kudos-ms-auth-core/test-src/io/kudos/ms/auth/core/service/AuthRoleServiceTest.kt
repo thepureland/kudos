@@ -1,5 +1,6 @@
 package io.kudos.ms.auth.core.service
 
+import io.kudos.ms.auth.core.service.iservice.IAuthRoleService
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
@@ -18,7 +19,7 @@ import kotlin.test.*
 class AuthRoleServiceTest : RdbAndRedisCacheTestBase() {
 
     @Resource
-    private lateinit var authRoleService: io.kudos.ms.auth.core.service.iservice.IAuthRoleService
+    private lateinit var authRoleService: IAuthRoleService
 
     @Test
     fun getRoleByTenantIdAndCode() {
@@ -26,7 +27,7 @@ class AuthRoleServiceTest : RdbAndRedisCacheTestBase() {
         val roleCode = "svc-role-test-1-bq0Y0mrl"
         val cacheItem = authRoleService.getRoleByTenantIdAndCode(tenantId, roleCode)
         assertNotNull(cacheItem)
-        assertTrue(cacheItem.code == roleCode)
+        assertEquals(cacheItem.code, roleCode)
         
         // 测试不存在的角色
         val notExist = authRoleService.getRoleByTenantIdAndCode(tenantId, "non-existent")
@@ -38,7 +39,7 @@ class AuthRoleServiceTest : RdbAndRedisCacheTestBase() {
         val id = "249363d1-0000-0000-0000-000000000025"
         val record = authRoleService.getRoleRecord(id)
         assertNotNull(record)
-        assertTrue(record.code == "svc-role-test-1-bq0Y0mrl")
+        assertEquals(record.code, "svc-role-test-1-bq0Y0mrl")
         
         // 测试不存在的角色
         val notExist = authRoleService.getRoleRecord("non-existent-id")

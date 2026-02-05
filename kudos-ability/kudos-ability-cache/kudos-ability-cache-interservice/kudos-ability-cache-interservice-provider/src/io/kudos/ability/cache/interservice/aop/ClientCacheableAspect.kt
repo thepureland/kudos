@@ -14,7 +14,6 @@ import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.context.request.RequestAttributes
 import org.springframework.web.context.request.RequestContextHolder
-import java.io.Serializable
 
 /**
  * 客户端缓存切面

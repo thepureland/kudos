@@ -1,16 +1,16 @@
 package io.kudos.ms.sys.core.service.impl
 
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
+import io.kudos.base.bean.BeanKit
+import io.kudos.base.logger.LogFactory
 import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceCacheItem
 import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceRecord
 import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceSearchPayload
-import io.kudos.ms.sys.core.cache.MicroServiceByCodeCache
+import io.kudos.ms.sys.core.cache.SysMicroServiceHashCache
 import io.kudos.ms.sys.core.dao.SysMicroServiceDao
 import io.kudos.ms.sys.core.model.po.SysMicroService
 import io.kudos.ms.sys.core.service.iservice.ISysMicroServiceService
-import io.kudos.base.bean.BeanKit
-import io.kudos.base.logger.LogFactory
-import org.springframework.beans.factory.annotation.Autowired
+import jakarta.annotation.Resource
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -30,8 +30,8 @@ open class SysMicroServiceService : BaseCrudService<String, SysMicroService, Sys
 
     private val log = LogFactory.getLog(this)
 
-    @Autowired
-    private lateinit var microServiceByCodeCache: MicroServiceByCodeCache
+    @Resource
+    private lateinit var sysMicroServiceHashCache: SysMicroServiceHashCache
 
     override fun getAllActiveMicroService(): List<SysMicroServiceCacheItem> {
         TODO("Not yet implemented")
@@ -46,7 +46,7 @@ open class SysMicroServiceService : BaseCrudService<String, SysMicroService, Sys
     }
 
     override fun getMicroServiceByCode(code: String): SysMicroServiceCacheItem? {
-        return microServiceByCodeCache.getMicroServiceByCode(code)
+        return sysMicroServiceHashCache.getMicroServiceByCode(code)
     }
 
     override fun getAllActiveAtomicServiceByParentCode(parentCode: String): List<SysMicroServiceRecord> {
@@ -68,7 +68,7 @@ open class SysMicroServiceService : BaseCrudService<String, SysMicroService, Sys
         val success = dao.update(microService)
         if (success) {
             log.debug("更新编码为${code}的微服务的启用状态为${active}。")
-            microServiceByCodeCache.syncOnUpdate(code)
+            sysMicroServiceHashCache.syncOnUpdate(code)
         } else {
             log.error("更新编码为${code}的微服务的启用状态为${active}失败！")
         }
@@ -79,7 +79,7 @@ open class SysMicroServiceService : BaseCrudService<String, SysMicroService, Sys
     override fun insert(any: Any): String {
         val code = super.insert(any)
         log.debug("新增编码为${code}的微服务。")
-        microServiceByCodeCache.syncOnInsert(code)
+        sysMicroServiceHashCache.syncOnInsert(code)
         return code
     }
 
@@ -89,7 +89,7 @@ open class SysMicroServiceService : BaseCrudService<String, SysMicroService, Sys
         val code = BeanKit.getProperty(any, SysMicroService::code.name) as String
         if (success) {
             log.debug("更新编码为${code}的微服务。")
-            microServiceByCodeCache.syncOnUpdate(code)
+            sysMicroServiceHashCache.syncOnUpdate(code)
         } else {
             log.error("更新编码为${code}的微服务失败！")
         }
@@ -101,7 +101,7 @@ open class SysMicroServiceService : BaseCrudService<String, SysMicroService, Sys
         val success = super.deleteById(id)
         if (success) {
             log.debug("删除编码为${id}的微服务。")
-            microServiceByCodeCache.syncOnDelete(id)
+            sysMicroServiceHashCache.syncOnDelete(id)
         } else {
             log.error("删除编码为${id}的微服务失败！")
         }
@@ -112,7 +112,7 @@ open class SysMicroServiceService : BaseCrudService<String, SysMicroService, Sys
     override fun batchDelete(ids: Collection<String>): Int {
         val count = super.batchDelete(ids)
         log.debug("批量删除微服务，期望删除${ids.size}条，实际删除${count}条。")
-        microServiceByCodeCache.syncOnBatchDelete(ids)
+        sysMicroServiceHashCache.syncOnBatchDelete(ids)
         return count
     }
 

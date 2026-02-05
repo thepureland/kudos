@@ -7,8 +7,8 @@ import io.kudos.ability.cache.common.notify.ICacheMessageHandler
 import io.kudos.ability.cache.common.support.CacheCleanRegister
 import io.kudos.ability.cache.common.support.IHashCacheSync
 import io.kudos.ability.data.memdb.redis.RedisTemplates
-import io.kudos.context.kit.SpringKit
 import io.kudos.base.logger.LogFactory
+import io.kudos.context.kit.SpringKit
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value

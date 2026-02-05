@@ -2,7 +2,6 @@ package io.kudos.ability.cache.common.core.keyvalue
 
 import io.kudos.ability.cache.common.init.properties.CacheVersionConfig
 import io.kudos.ability.cache.common.support.CacheConfig
-import io.kudos.ability.cache.common.core.keyvalue.IKeyValueCacheManager
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.cache.autoconfigure.CacheProperties
 import org.springframework.cache.Cache

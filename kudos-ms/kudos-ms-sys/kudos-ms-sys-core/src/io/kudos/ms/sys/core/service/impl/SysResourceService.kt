@@ -39,11 +39,11 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
     }
 
     override fun getResourceBySubSystemAndUrl(subSystemCode: String, url: String): String? {
-        return sysResourceHashCache.getResourceId(subSystemCode, url)
+        return sysResourceHashCache.getResourceBySubSystemCodeAndUrl(subSystemCode, url)?.id
     }
 
     override fun getResourceIdsBySubSystemAndType(subSystemCode: String, resourceTypeDictCode: String): List<String> {
-        return sysResourceHashCache.getResourceIds(subSystemCode, resourceTypeDictCode)
+        return sysResourceHashCache.getResourcesBySubSystemCodeAndType(subSystemCode, resourceTypeDictCode).map { it.id!! }
     }
 
     override fun getResourcesBySubSystemCode(subSystemCode: String): List<SysResourceRecord> {

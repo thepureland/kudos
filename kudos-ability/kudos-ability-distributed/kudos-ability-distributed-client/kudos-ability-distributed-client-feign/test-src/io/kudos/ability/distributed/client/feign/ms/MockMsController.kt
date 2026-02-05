@@ -1,7 +1,7 @@
 package io.kudos.ability.distributed.client.feign.ms
 
-import io.kudos.ability.distributed.client.feign.PostResult
 import io.kudos.ability.distributed.client.feign.PostParam
+import io.kudos.ability.distributed.client.feign.PostResult
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping

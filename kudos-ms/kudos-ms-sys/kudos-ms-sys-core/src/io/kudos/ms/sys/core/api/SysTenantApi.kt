@@ -1,9 +1,9 @@
 package io.kudos.ms.sys.core.api
 
+import io.kudos.ms.sys.common.api.ISysTenantApi
 import io.kudos.ms.sys.common.vo.tenant.SysTenantCacheItem
 import io.kudos.ms.sys.core.service.iservice.ISysTenantService
 import org.springframework.beans.factory.annotation.Autowired
-import io.kudos.ms.sys.common.api.ISysTenantApi
 import org.springframework.stereotype.Service
 
 

@@ -1,7 +1,7 @@
 package io.kudos.ability.data.memdb.redis.init
 
-import io.kudos.ability.data.memdb.redis.RedisTemplates
 import io.kudos.ability.data.memdb.redis.RedisConnectFactory
+import io.kudos.ability.data.memdb.redis.RedisTemplates
 import io.kudos.ability.data.memdb.redis.init.properties.RedisExtProperties
 import io.kudos.ability.data.memdb.redis.init.properties.RedisProperties
 import io.kudos.context.config.YamlPropertySourceFactory

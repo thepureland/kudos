@@ -3,13 +3,13 @@ package io.kudos.ability.data.rdb.flyway.init
 import io.kudos.ability.data.rdb.flyway.multidatasource.FlywayMultiDataSourceMigrator
 import io.kudos.ability.data.rdb.flyway.multidatasource.FlywayMultiDataSourceProperties
 import io.kudos.ability.data.rdb.jdbc.init.JdbcAutoConfiguration
-import io.kudos.context.init.IComponentInitializer
 import io.kudos.context.config.YamlPropertySourceFactory
+import io.kudos.context.init.IComponentInitializer
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
-import org.springframework.boot.flyway.autoconfigure.FlywayProperties
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.EnableConfigurationProperties
+import org.springframework.boot.flyway.autoconfigure.FlywayProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.PropertySource

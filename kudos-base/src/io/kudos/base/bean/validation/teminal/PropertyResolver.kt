@@ -1,7 +1,5 @@
 package io.kudos.base.bean.validation.teminal
 
-import java.util.regex.Matcher
-
 /**
  * 属性名处理工具
  *

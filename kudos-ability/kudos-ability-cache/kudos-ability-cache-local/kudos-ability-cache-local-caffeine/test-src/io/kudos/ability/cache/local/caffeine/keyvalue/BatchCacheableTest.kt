@@ -1,7 +1,6 @@
 package io.kudos.ability.cache.local.caffeine.keyvalue
 
 import io.kudos.ability.cache.common.enums.CacheStrategy
-import io.kudos.ability.cache.local.caffeine.keyvalue.TestCacheConfigProvider
 import io.kudos.test.common.init.EnableKudosTest
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Import

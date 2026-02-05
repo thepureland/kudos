@@ -5,6 +5,7 @@ import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -21,7 +22,7 @@ import kotlin.test.assertTrue
 class AuthRoleResourceServiceTest : RdbAndRedisCacheTestBase() {
 
     @Resource
-    private lateinit var authRoleResourceService: io.kudos.ms.auth.core.service.iservice.IAuthRoleResourceService
+    private lateinit var authRoleResourceService: IAuthRoleResourceService
 
     @Test
     fun getResourceIdsByRoleId() {
@@ -36,7 +37,7 @@ class AuthRoleResourceServiceTest : RdbAndRedisCacheTestBase() {
     fun getRoleIdsByResourceId() {
         val resourceId = "3248fb0d-0000-0000-0000-000000000056"
         val roleIds = authRoleResourceService.getRoleIdsByResourceId(resourceId)
-        assertTrue(roleIds.size >= 1)
+        assertTrue(roleIds.isNotEmpty())
         assertTrue(roleIds.contains("3248fb0d-0000-0000-0000-000000000050"))
     }
 
@@ -71,7 +72,7 @@ class AuthRoleResourceServiceTest : RdbAndRedisCacheTestBase() {
         
         // 测试重复绑定（应该跳过已存在的）
         val count2 = authRoleResourceService.batchBind(roleId, resourceIds)
-        assertTrue(count2 == 0) // 应该返回0，因为都已存在
+        assertEquals(count2, 0) // 应该返回0，因为都已存在
     }
 
     @Test

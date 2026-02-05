@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.client.proxy
 
-import io.kudos.ms.sys.common.api.ISysTenantLocaleApi
 import io.kudos.ms.sys.client.fallback.SysTenantLocaleFallback
+import io.kudos.ms.sys.common.api.ISysTenantLocaleApi
 import org.springframework.cloud.openfeign.FeignClient
 
 

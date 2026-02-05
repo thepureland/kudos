@@ -1,6 +1,5 @@
 package io.kudos.ms.user.common.api
 
-import io.kudos.ms.sys.common.vo.resource.SysResourceCacheItem
 import io.kudos.ms.user.common.vo.org.UserOrgCacheItem
 import io.kudos.ms.user.common.vo.user.UserAccountCacheItem
 

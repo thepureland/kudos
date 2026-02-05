@@ -1,6 +1,5 @@
 package io.kudos.base.io.scanner.filesystem
 
-import io.kudos.base.io.scanner.support.Resource
 import java.io.File
 import java.nio.file.Files
 import kotlin.test.*

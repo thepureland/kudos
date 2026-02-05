@@ -3,9 +3,9 @@ package io.kudos.ability.distributed.client.feign.interceptor
 import feign.RequestInterceptor
 import feign.RequestTemplate
 import io.kudos.ability.distributed.client.feign.support.IFeignRequestContextProcess
-import io.kudos.context.support.Consts
 import io.kudos.context.core.KudosContextHolder
 import io.kudos.context.kit.SpringKit
+import io.kudos.context.support.Consts
 import java.util.*
 
 /**

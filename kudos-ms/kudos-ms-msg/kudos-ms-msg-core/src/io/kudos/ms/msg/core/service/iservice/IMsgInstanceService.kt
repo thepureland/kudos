@@ -1,7 +1,7 @@
 package io.kudos.ms.msg.core.service.iservice
 
-import io.kudos.ms.msg.core.model.po.MsgInstance
 import io.kudos.base.support.iservice.IBaseCrudService
+import io.kudos.ms.msg.core.model.po.MsgInstance
 
 
 /**

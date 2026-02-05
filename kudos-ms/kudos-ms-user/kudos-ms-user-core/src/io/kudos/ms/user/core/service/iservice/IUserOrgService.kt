@@ -1,10 +1,10 @@
 package io.kudos.ms.user.core.service.iservice
 
+import io.kudos.base.support.iservice.IBaseCrudService
 import io.kudos.ms.user.common.vo.org.UserOrgCacheItem
 import io.kudos.ms.user.common.vo.org.UserOrgTreeRecord
 import io.kudos.ms.user.common.vo.user.UserAccountCacheItem
 import io.kudos.ms.user.core.model.po.UserOrg
-import io.kudos.base.support.iservice.IBaseCrudService
 
 
 /**

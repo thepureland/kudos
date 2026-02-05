@@ -1,11 +1,10 @@
 package io.kudos.ability.cache.common.core.keyvalue
 
+import io.kudos.ability.cache.common.core.CacheItemInitializing
 import io.kudos.ability.cache.common.enums.CacheStrategy
 import io.kudos.ability.cache.common.init.properties.CacheVersionConfig
 import io.kudos.ability.cache.common.support.CacheConfig
-import io.kudos.ability.cache.common.core.CacheItemInitializing
 import io.kudos.ability.cache.common.support.ICacheConfigProvider
-import io.kudos.ability.cache.common.core.keyvalue.IKeyValueCacheManager
 import io.kudos.base.logger.LogFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
@@ -13,8 +12,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.cache.Cache
 import org.springframework.cache.CacheManager
 import org.springframework.cache.support.AbstractCacheManager
-import java.util.ArrayList
-import java.util.Objects
+import java.util.*
 
 /**
  * 混合缓存管理器

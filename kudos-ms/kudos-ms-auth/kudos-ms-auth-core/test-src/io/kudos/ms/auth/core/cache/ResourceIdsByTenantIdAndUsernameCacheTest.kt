@@ -24,7 +24,7 @@ import kotlin.test.assertTrue
  * @since 1.0.0
  */
 @EnabledIfDockerInstalled
-class ResourceIdsByTenantIdAndUsernameCacheHandlerTest : RdbAndRedisCacheTestBase() {
+class ResourceIdsByTenantIdAndUsernameCacheTest : RdbAndRedisCacheTestBase() {
 
     @Resource
     private lateinit var cacheHandler: ResourceIdsByTenantIdAndUsernameCache

@@ -5,7 +5,6 @@ import io.kudos.ability.file.minio.init.properties.MinioProperties
 import io.kudos.base.logger.LogFactory
 import io.minio.MinioClient
 import java.net.URI
-import java.net.URL
 
 /**
  * Minio 请求认证,

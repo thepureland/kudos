@@ -1,12 +1,12 @@
 package io.kudos.tools.codegen.fx.controller
 
-import io.kudos.tools.codegen.service.CodeGenColumnService
-import io.kudos.tools.codegen.service.CodeGenObjectService
 import io.kudos.tools.codegen.core.CodeGenerator
 import io.kudos.tools.codegen.core.CodeGeneratorContext
 import io.kudos.tools.codegen.core.TemplatePathProcessor
 import io.kudos.tools.codegen.model.vo.Config
 import io.kudos.tools.codegen.model.vo.DbTable
+import io.kudos.tools.codegen.service.CodeGenColumnService
+import io.kudos.tools.codegen.service.CodeGenObjectService
 import javafx.beans.property.SimpleBooleanProperty
 import javafx.collections.FXCollections
 import javafx.event.Event

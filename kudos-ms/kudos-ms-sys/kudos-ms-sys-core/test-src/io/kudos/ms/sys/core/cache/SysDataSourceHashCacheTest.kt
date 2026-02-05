@@ -1,18 +1,12 @@
 package io.kudos.ms.sys.core.cache
 
 import io.kudos.ability.cache.common.kit.HashCacheKit
-import io.kudos.ms.sys.common.vo.datasource.SysDataSourceCacheItem
 import io.kudos.ms.sys.core.dao.SysDataSourceDao
 import io.kudos.ms.sys.core.model.po.SysDataSource
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
-import kotlin.test.assertSame
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 /**
  * [SysDataSourceHashCache] 单元测试（Hash 缓存，整合按 id 与按 tenantId+subSystemCode+microServiceCode）。

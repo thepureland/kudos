@@ -1,18 +1,18 @@
 package io.kudos.ms.auth.core.cache
 
-import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
-import io.kudos.ms.auth.core.dao.AuthRoleResourceDao
-import io.kudos.ms.auth.core.dao.AuthRoleUserDao
-import io.kudos.ms.auth.core.model.po.AuthRoleResource
-import io.kudos.ms.auth.core.model.po.AuthRoleUser
-import io.kudos.ms.user.core.dao.UserAccountDao
-import io.kudos.ms.user.core.model.po.UserAccount
+import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.context.support.Consts
+import io.kudos.ms.auth.core.dao.AuthRoleResourceDao
+import io.kudos.ms.auth.core.dao.AuthRoleUserDao
+import io.kudos.ms.auth.core.model.po.AuthRoleResource
+import io.kudos.ms.auth.core.model.po.AuthRoleUser
 import io.kudos.ms.user.core.cache.UserAccountHashCache
+import io.kudos.ms.user.core.dao.UserAccountDao
+import io.kudos.ms.user.core.model.po.UserAccount
 import jakarta.annotation.Resource
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
@@ -129,7 +129,7 @@ open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<
         }
 
         // 1. 从缓存中获取用户ID（避免查询数据库）
-        val userId = userAccountHashCache.getUsersByTenantIdAndUsername(tenantId, username)
+        val userId = userAccountHashCache.getUsersByTenantIdAndUsername(tenantId, username)?.id
 
         if (userId == null) {
             log.debug("找不到租户${tenantId}的用户${username}。")
@@ -247,9 +247,9 @@ open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<
             CacheKit.evict(CACHE_NAME, getKey(tenantId, username))
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
-        // 同时清除用户ID缓存，确保后续查询时不会从缓存中获取到已删除的用户ID
+        // 同时从用户 Hash 缓存中移除该用户，确保后续 getResourceIds 时按 tenantId+username 查不到已删除用户，返回空列表
         val userId = userAccountHashCache.getUsersByTenantIdAndUsername(tenantId, username)?.id
-        userId?.let { userAccountHashCache.syncOnUpdate(userId) }
+        userId?.let { userAccountHashCache.syncOnDelete(it) }
     }
 
     /**

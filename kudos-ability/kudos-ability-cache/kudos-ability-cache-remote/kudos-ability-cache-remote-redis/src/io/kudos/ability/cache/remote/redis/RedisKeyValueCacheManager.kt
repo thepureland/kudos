@@ -1,8 +1,8 @@
 package io.kudos.ability.cache.remote.redis
 
+import io.kudos.ability.cache.common.core.keyvalue.IKeyValueCacheManager
 import io.kudos.ability.cache.common.init.properties.CacheVersionConfig
 import io.kudos.ability.cache.common.support.CacheConfig
-import io.kudos.ability.cache.common.core.keyvalue.IKeyValueCacheManager
 import io.kudos.base.logger.LogFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.redis.cache.RedisCache

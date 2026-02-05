@@ -11,12 +11,7 @@ import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
 import org.redisson.Redisson
 import org.redisson.api.RedissonClient
-import org.redisson.config.BaseConfig
-import org.redisson.config.Config
-import org.redisson.config.ConstantDelay
-import org.redisson.config.DelayStrategy
-import org.redisson.config.ReadMode
-import org.redisson.config.TransportMode
+import org.redisson.config.*
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.ConfigurationProperties

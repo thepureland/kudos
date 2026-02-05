@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.common.vo.cache
 
-import java.io.Serializable
 import io.kudos.base.support.IIdEntity
+import java.io.Serializable
 import java.time.LocalDateTime
 
 

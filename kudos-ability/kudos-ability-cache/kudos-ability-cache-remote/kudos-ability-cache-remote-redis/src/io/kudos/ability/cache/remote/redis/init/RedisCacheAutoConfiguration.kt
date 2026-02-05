@@ -4,8 +4,8 @@ import io.kudos.ability.cache.common.init.BaseCacheConfiguration
 import io.kudos.ability.cache.common.init.LinkableCacheAutoConfiguration
 import io.kudos.ability.cache.common.init.properties.CacheVersionConfig
 import io.kudos.ability.cache.common.notify.ICacheMessageHandler
-import io.kudos.ability.cache.remote.redis.RedisKeyValueCacheManager
 import io.kudos.ability.cache.remote.redis.RedisHashCache
+import io.kudos.ability.cache.remote.redis.RedisKeyValueCacheManager
 import io.kudos.ability.cache.remote.redis.notice.RedisCacheMessageHandler
 import io.kudos.ability.cache.remote.redis.support.RedisRemoteCacheProcessor
 import io.kudos.ability.data.memdb.redis.RedisTemplates
@@ -35,7 +35,7 @@ import org.springframework.data.redis.listener.ChannelTopic
 import org.springframework.data.redis.listener.RedisMessageListenerContainer
 import org.springframework.data.redis.serializer.RedisSerializationContext
 import java.time.Duration
-import java.util.UUID
+import java.util.*
 
 
 /**
