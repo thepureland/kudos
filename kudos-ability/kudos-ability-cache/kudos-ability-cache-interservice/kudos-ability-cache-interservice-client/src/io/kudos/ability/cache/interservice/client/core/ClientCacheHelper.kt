@@ -1,7 +1,7 @@
 package io.kudos.ability.cache.interservice.client.core
 
 import io.kudos.ability.cache.common.support.CacheConfig
-import io.kudos.ability.cache.common.support.ICacheManager
+import io.kudos.ability.cache.common.core.keyvalue.IKeyValueCacheManager
 import io.kudos.ability.cache.interservice.common.ClientCacheItem
 import io.kudos.ability.cache.interservice.common.ClientCacheKey
 import io.kudos.base.logger.LogFactory
@@ -16,7 +16,7 @@ class ClientCacheHelper : InitializingBean {
 
     @Autowired(required = false)
     @Qualifier("localCacheManager")
-    private val cacheManager: ICacheManager<*>? = null
+    private val cacheManager: IKeyValueCacheManager<*>? = null
 
     fun havaLocalCache(): Boolean {
         return cacheManager != null

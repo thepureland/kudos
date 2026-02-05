@@ -3,8 +3,8 @@ package io.kudos.ms.sys.core.cache
 import io.kudos.ability.cache.common.aop.hash.HashCacheableByPrimary
 import io.kudos.ability.cache.common.aop.hash.HashCacheableBySecondary
 import io.kudos.ability.cache.common.batch.hash.HashBatchCacheableByPrimary
+import io.kudos.ability.cache.common.core.hash.AbstractHashCacheHandler
 import io.kudos.ability.cache.common.kit.CacheKit
-import io.kudos.ability.cache.common.kit.HashCacheKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.context.support.Consts
 import io.kudos.ms.sys.common.vo.resource.SysResourceCacheItem
@@ -30,7 +30,7 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-open class SysResourceHashCache {
+open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheItem>() {
 
     @Resource
     private lateinit var sysResourceDao: SysResourceDao
@@ -49,7 +49,7 @@ open class SysResourceHashCache {
         )
     }
 
-    private fun hashCache() = HashCacheKit.getHashCache(CACHE_NAME)
+    override fun cacheName(): String = SysSystemHashCache.Companion.CACHE_NAME
 
     // ---------- 1. 按主键 id ----------
 
@@ -197,7 +197,7 @@ open class SysResourceHashCache {
      *
      * @param clear 为 true 时先清空当前缓存再写入；为 false 时覆盖写入
      */
-    open fun reloadAll(clear: Boolean) {
+    override fun reloadAll(clear: Boolean) {
         if (!CacheKit.isCacheActive(CACHE_NAME)) {
             log.info("缓存未开启，不加载资源 Hash 缓存")
             return

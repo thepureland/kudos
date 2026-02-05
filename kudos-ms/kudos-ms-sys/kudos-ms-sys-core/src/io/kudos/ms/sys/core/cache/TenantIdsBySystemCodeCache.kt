@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.core.cache
 
 import io.kudos.ability.cache.common.kit.CacheKit
-import io.kudos.ability.cache.common.support.AbstractCacheHandler
+import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
 import io.kudos.ms.sys.core.dao.SysTenantSystemDao
 import io.kudos.ms.sys.core.model.po.SysTenantSystem
 import io.kudos.base.bean.BeanKit
@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-open class TenantIdsBySystemCodeCache : AbstractCacheHandler<List<String>>() {
+open class TenantIdsBySystemCodeCache : AbstractKeyValueCacheHandler<List<String>>() {
 
     @Autowired
     private lateinit var sysTenantSystemDao: SysTenantSystemDao

@@ -1,19 +1,18 @@
-package io.kudos.ability.cache.common.core
+package io.kudos.ability.cache.common.core.hash
 
 import io.kudos.ability.cache.common.enums.CacheStrategy
 import io.kudos.ability.cache.common.init.properties.CacheVersionConfig
 import io.kudos.ability.cache.common.support.CacheConfig
 import io.kudos.ability.cache.common.support.ICacheConfigProvider
-import io.kudos.ability.cache.common.support.IIdEntitiesHashCache
 import io.kudos.base.logger.LogFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
-import java.util.*
+import java.util.UUID
 
 /**
- * Hash 缓存策略封装管理器：按配置为每个 hash 缓存名创建 [IIdEntitiesHashCache] 视图（本地/远程/两级），
- * 与 key-value 的 [MixCacheManager] 一致，支持三种策略。
+ * Hash 缓存策略封装管理器：按配置为每个 hash 缓存名创建 [IHashCache] 视图（本地/远程/两级），
+ * 与 key-value 的 [io.kudos.ability.cache.common.core.keyvalue.MixCacheManager] 一致，支持三种策略。
  *
  * @author K
  * @author AI: Cursor
@@ -29,11 +28,11 @@ class MixHashCacheManager {
 
     @Autowired(required = false)
     @Qualifier("caffeineIdEntitiesHashCache")
-    private var localHashCache: IIdEntitiesHashCache? = null
+    private var localHashCache: IHashCache? = null
 
     @Autowired(required = false)
     @Qualifier("redisIdEntitiesHashCache")
-    private var remoteHashCache: IIdEntitiesHashCache? = null
+    private var remoteHashCache: IHashCache? = null
 
     @Autowired
     private var cacheConfigProvider: ICacheConfigProvider? = null
@@ -45,7 +44,7 @@ class MixHashCacheManager {
     @Qualifier("cacheNodeId")
     private var nodeId: String? = null
 
-    private val hashCaches: MutableMap<String, IIdEntitiesHashCache> = mutableMapOf()
+    private val hashCaches: MutableMap<String, IHashCache> = mutableMapOf()
     private val effectiveNodeId: String by lazy { nodeId ?: UUID.randomUUID().toString() }
 
     /**
@@ -65,7 +64,7 @@ class MixHashCacheManager {
         val version = versionConfig ?: return
         configs.forEach { (name, config) ->
             val strategy = parseStrategy(config)
-            val wrapper = MixIdEntitiesHashCache(name, strategy, local, remote, effectiveNodeId)
+            val wrapper = MixHashCache(name, strategy, local, remote, effectiveNodeId)
             val realKey = version.getFinalCacheName(name)
             hashCaches[realKey] = wrapper
             log.debug("初始化 Hash 缓存【{0}】策略={1}", name, strategy)
@@ -81,7 +80,7 @@ class MixHashCacheManager {
         }
     }
 
-    fun getHashCache(cacheName: String): IIdEntitiesHashCache? {
+    fun getHashCache(cacheName: String): IHashCache? {
         val realName = versionConfig?.getFinalCacheName(cacheName) ?: cacheName
         return hashCaches[realName]
     }

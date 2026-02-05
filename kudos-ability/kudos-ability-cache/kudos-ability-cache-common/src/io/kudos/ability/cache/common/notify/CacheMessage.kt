@@ -1,4 +1,4 @@
-package io.kudos.ability.cache.common.notice
+package io.kudos.ability.cache.common.notify
 
 import java.io.Serial
 import java.io.Serializable

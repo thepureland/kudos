@@ -1,4 +1,4 @@
-package io.kudos.ability.cache.common.notice
+package io.kudos.ability.cache.common.notify
 
 /**
  * 缓存消息处理器

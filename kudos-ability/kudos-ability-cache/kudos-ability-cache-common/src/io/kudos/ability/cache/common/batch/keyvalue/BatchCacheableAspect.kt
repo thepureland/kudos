@@ -1,6 +1,6 @@
 package io.kudos.ability.cache.common.batch.keyvalue
 
-import io.kudos.ability.cache.common.core.MixCacheManager
+import io.kudos.ability.cache.common.core.keyvalue.MixCacheManager
 import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.base.lang.string.toType
 import io.kudos.context.kit.SpringKit

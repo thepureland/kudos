@@ -1,7 +1,7 @@
 package io.kudos.ms.auth.core.cache
 
 import io.kudos.ability.cache.common.kit.CacheKit
-import io.kudos.ability.cache.common.support.AbstractCacheHandler
+import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
 import io.kudos.ms.auth.core.dao.AuthRoleDao
 import io.kudos.ms.auth.core.model.po.AuthRole
 import io.kudos.base.bean.BeanKit
@@ -27,7 +27,7 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-open class RoleIdByTenantIdAndRoleCodeCache : AbstractCacheHandler<String>() {
+open class RoleIdByTenantIdAndRoleCodeCache : AbstractKeyValueCacheHandler<String>() {
 
     @Autowired
     private lateinit var authRoleDao: AuthRoleDao

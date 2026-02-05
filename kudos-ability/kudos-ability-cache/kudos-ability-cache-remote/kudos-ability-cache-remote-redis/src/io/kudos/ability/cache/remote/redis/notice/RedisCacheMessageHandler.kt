@@ -1,11 +1,11 @@
 package io.kudos.ability.cache.remote.redis.notice
 
-import io.kudos.ability.cache.common.core.MixCacheManager
+import io.kudos.ability.cache.common.core.keyvalue.MixCacheManager
 import io.kudos.ability.cache.common.init.properties.CacheVersionConfig
-import io.kudos.ability.cache.common.notice.CacheMessage
-import io.kudos.ability.cache.common.notice.ICacheMessageHandler
+import io.kudos.ability.cache.common.notify.CacheMessage
+import io.kudos.ability.cache.common.notify.ICacheMessageHandler
 import io.kudos.ability.cache.common.support.CacheCleanRegister
-import io.kudos.ability.cache.common.support.IIdEntitiesHashCacheSync
+import io.kudos.ability.cache.common.support.IHashCacheSync
 import io.kudos.ability.data.memdb.redis.RedisTemplates
 import io.kudos.context.kit.SpringKit
 import io.kudos.base.logger.LogFactory
@@ -146,7 +146,7 @@ class RedisCacheMessageHandler(
         // 只有非当前节点的清理才需要删除本地缓存，本节点自己已经删除过了
         if (message.nodeId != nodeId) {
             if (message.cacheType == "hash") {
-                val sync = SpringKit.getBeansOfType(IIdEntitiesHashCacheSync::class).values.firstOrNull()
+                val sync = SpringKit.getBeansOfType(IHashCacheSync::class).values.firstOrNull()
                 sync?.let {
                     if (message.key == null) it.clearLocal(message.cacheName!!)
                     else it.evictLocal(message.cacheName!!, message.key!!)

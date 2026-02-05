@@ -1,7 +1,7 @@
 package io.kudos.ms.user.core.cache
 
 import io.kudos.ability.cache.common.kit.CacheKit
-import io.kudos.ability.cache.common.support.AbstractCacheHandler
+import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
 import io.kudos.ms.user.common.vo.contact.UserContactWayCacheItem
 import io.kudos.ms.user.common.vo.contact.UserContactWaySearchPayload
 import io.kudos.ms.user.core.dao.UserContactWayDao
@@ -27,7 +27,7 @@ import org.springframework.stereotype.Component
  */
 @Component
 //region your codes 1
-open class UserContactWayByUserIdCache : AbstractCacheHandler<List<UserContactWayCacheItem>>() {
+open class UserContactWayByUserIdCache : AbstractKeyValueCacheHandler<List<UserContactWayCacheItem>>() {
 //endregion your codes 1
 
     //region your codes 2

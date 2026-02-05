@@ -1,7 +1,6 @@
 package io.kudos.ability.cache.common.core
 
 import io.kudos.ability.cache.common.kit.CacheKit
-import io.kudos.ability.cache.common.support.AbstractCacheHandler
 import org.springframework.beans.factory.SmartInitializingSingleton
 import org.springframework.beans.factory.config.BeanPostProcessor
 
@@ -34,6 +33,9 @@ import org.springframework.beans.factory.config.BeanPostProcessor
  * - 只加载配置了writeOnBoot=true的缓存
  * - reloadAll(false)表示不清除现有缓存，直接加载
  * - 如果缓存配置不存在，会跳过该缓存处理器
+ *
+ * @author K
+ * @since 1.0.0
  */
 class CacheDataInitializer : BeanPostProcessor, SmartInitializingSingleton {
 

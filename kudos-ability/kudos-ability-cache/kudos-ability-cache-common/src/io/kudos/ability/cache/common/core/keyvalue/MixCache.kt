@@ -1,8 +1,8 @@
-package io.kudos.ability.cache.common.core
+package io.kudos.ability.cache.common.core.keyvalue
 
 import io.kudos.ability.cache.common.enums.CacheStrategy
-import io.kudos.ability.cache.common.notice.CacheMessage
-import io.kudos.ability.cache.common.notice.ICacheMessageHandler
+import io.kudos.ability.cache.common.notify.CacheMessage
+import io.kudos.ability.cache.common.notify.ICacheMessageHandler
 import io.kudos.base.logger.LogFactory
 import io.kudos.context.kit.SpringKit
 import jakarta.annotation.Nullable

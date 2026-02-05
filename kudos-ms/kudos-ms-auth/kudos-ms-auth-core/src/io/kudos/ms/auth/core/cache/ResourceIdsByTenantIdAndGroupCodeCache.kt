@@ -1,7 +1,7 @@
 package io.kudos.ms.auth.core.cache
 
 import io.kudos.ability.cache.common.kit.CacheKit
-import io.kudos.ability.cache.common.support.AbstractCacheHandler
+import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
 import io.kudos.ms.auth.core.dao.AuthGroupRoleDao
 import io.kudos.ms.auth.core.dao.AuthRoleResourceDao
 import io.kudos.ms.auth.core.model.po.AuthGroup
@@ -29,7 +29,7 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-open class ResourceIdsByTenantIdAndGroupCodeCache : AbstractCacheHandler<List<String>>() {
+open class ResourceIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler<List<String>>() {
 
     @Autowired
     private lateinit var groupIdByTenantIdAndGroupCodeCache: GroupIdByTenantIdAndGroupCodeCache

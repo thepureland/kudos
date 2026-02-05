@@ -1,6 +1,6 @@
 package io.kudos.ability.cache.remote.redis.hash
 
-import io.kudos.ability.cache.common.core.MixHashCacheManager
+import io.kudos.ability.cache.common.core.hash.MixHashCacheManager
 import io.kudos.ability.cache.common.kit.HashCacheKit
 import io.kudos.test.common.init.EnableKudosTest
 import org.springframework.beans.factory.annotation.Autowired

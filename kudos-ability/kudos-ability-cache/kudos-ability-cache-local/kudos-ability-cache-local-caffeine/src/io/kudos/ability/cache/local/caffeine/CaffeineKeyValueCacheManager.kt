@@ -1,7 +1,7 @@
 package io.kudos.ability.cache.local.caffeine
 
 import com.github.benmanes.caffeine.cache.Caffeine
-import io.kudos.ability.cache.common.support.AbstractCacheManager
+import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheManager
 import io.kudos.ability.cache.common.support.CacheConfig
 import io.kudos.base.logger.LogFactory
 import org.springframework.cache.caffeine.CaffeineCache
@@ -11,7 +11,7 @@ import java.util.regex.Pattern
 /**
  * 本地缓存管理器的Caffeine实现
  */
-class CaffeineCacheManager : AbstractCacheManager<CaffeineCache>() {
+class CaffeineKeyValueCacheManager : AbstractKeyValueCacheManager<CaffeineCache>() {
 
     override fun createCache(cacheConfig: CacheConfig): CaffeineCache {
         val spec = properties.caffeine.spec

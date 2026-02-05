@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.core.cache
 
 import io.kudos.ability.cache.common.kit.CacheKit
-import io.kudos.ability.cache.common.support.AbstractCacheHandler
+import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
 import io.kudos.ms.sys.common.vo.cache.SysCacheCacheItem
 import io.kudos.ms.sys.common.vo.cache.SysCacheSearchPayload
 import io.kudos.ms.sys.core.dao.SysCacheDao
@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-open class CacheByNameCache : AbstractCacheHandler<SysCacheCacheItem>() {
+open class CacheByNameCache : AbstractKeyValueCacheHandler<SysCacheCacheItem>() {
 
     @Autowired
     private lateinit var sysCacheDao: SysCacheDao

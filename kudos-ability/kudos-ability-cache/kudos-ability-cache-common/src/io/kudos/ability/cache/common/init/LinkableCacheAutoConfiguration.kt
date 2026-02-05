@@ -9,8 +9,8 @@ import io.kudos.ability.cache.common.aop.hash.HashCacheableBySecondaryAspect
 import io.kudos.ability.cache.common.batch.keyvalue.IKeysGenerator
 import io.kudos.ability.cache.common.core.CacheDataInitializer
 import io.kudos.ability.cache.common.core.MixCacheInitializing
-import io.kudos.ability.cache.common.core.MixCacheManager
-import io.kudos.ability.cache.common.core.MixHashCacheManager
+import io.kudos.ability.cache.common.core.keyvalue.MixCacheManager
+import io.kudos.ability.cache.common.core.hash.MixHashCacheManager
 import io.kudos.ability.cache.common.init.properties.CacheItemsProperties
 import io.kudos.ability.cache.common.init.properties.CacheVersionConfig
 import io.kudos.ability.cache.common.notify.CacheNotifyListener

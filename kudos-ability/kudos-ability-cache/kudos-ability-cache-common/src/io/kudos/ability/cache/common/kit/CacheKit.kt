@@ -1,10 +1,10 @@
 package io.kudos.ability.cache.common.kit
 
-import io.kudos.ability.cache.common.core.MixCache
-import io.kudos.ability.cache.common.core.MixCacheManager
+import io.kudos.ability.cache.common.core.keyvalue.MixCache
+import io.kudos.ability.cache.common.core.keyvalue.MixCacheManager
 import io.kudos.ability.cache.common.enums.CacheStrategy
 import io.kudos.ability.cache.common.notify.CacheOperatorVo
-import io.kudos.ability.cache.common.support.AbstractCacheHandler
+import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
 import io.kudos.ability.cache.common.support.CacheConfig
 import io.kudos.ability.cache.common.support.ICacheConfigProvider
 import io.kudos.base.logger.LogFactory
@@ -245,7 +245,7 @@ object CacheKit {
         }
         val cacheConfig = getCacheConfig(cacheName) ?: return
         if (cacheConfig.writeOnBoot == true) {
-            val beansOfType = SpringKit.getBeansOfType(AbstractCacheHandler::class)
+            val beansOfType = SpringKit.getBeansOfType(AbstractKeyValueCacheHandler::class)
             beansOfType.values.forEach {
                 if (it.cacheName() == cacheName) {
                     it.reload(key)
@@ -267,7 +267,7 @@ object CacheKit {
         }
         val cacheConfig = getCacheConfig(cacheName) ?: return
         if (cacheConfig.writeOnBoot == true) {
-            val beansOfType = SpringKit.getBeansOfType(AbstractCacheHandler::class)
+            val beansOfType = SpringKit.getBeansOfType(AbstractKeyValueCacheHandler::class)
             beansOfType.values.forEach {
                 if (it.cacheName() == cacheName) {
                     it.reloadAll(true)

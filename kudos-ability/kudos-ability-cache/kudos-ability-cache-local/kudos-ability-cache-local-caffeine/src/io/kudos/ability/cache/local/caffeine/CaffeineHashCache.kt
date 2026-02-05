@@ -1,8 +1,7 @@
 package io.kudos.ability.cache.local.caffeine
 
-import io.kudos.ability.cache.common.support.IIdEntitiesHashCache
-import io.kudos.ability.cache.common.support.IIdEntitiesHashCacheSync
-import io.kudos.base.lang.math.NumberKit
+import io.kudos.ability.cache.common.core.hash.IHashCache
+import io.kudos.ability.cache.common.support.IHashCacheSync
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.Criterion
 import io.kudos.base.query.enums.OperatorEnum
@@ -15,13 +14,13 @@ import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Hash 缓存的 Caffeine 本地实现，内存结构模拟 Redis Hash + Set + ZSet；
- * 同时实现 [IIdEntitiesHashCacheSync] 供收到 Redis 通知后清理本地。
+ * 同时实现 [IHashCacheSync] 供收到 Redis 通知后清理本地。
  *
  * @author K
  * @author AI: Cursor
  * @since 1.0.0
  */
-class CaffeineIdEntitiesHashCache : IIdEntitiesHashCache, IIdEntitiesHashCacheSync {
+class CaffeineHashCache : IHashCache, IHashCacheSync {
 
     private val mainData = ConcurrentHashMap<String, ConcurrentHashMap<String, Any>>()
     private val setIndex = ConcurrentHashMap<String, ConcurrentHashMap<String, MutableSet<String>>>()
@@ -70,7 +69,7 @@ class CaffeineIdEntitiesHashCache : IIdEntitiesHashCache, IIdEntitiesHashCacheSy
         val idStr = id.toString()
         val map = mainData[cacheName] ?: return
         val entity = map.remove(idStr) ?: return
-        setIdx(cacheName).entries.forEach { (key, ids) -> ids.remove(idStr) }
+        setIdx(cacheName).entries.forEach { (_, ids) -> ids.remove(idStr) }
         zsetIdx(cacheName).entries.forEach { (_, idToScore) -> idToScore.remove(idStr) }
     }
 
@@ -131,7 +130,10 @@ class CaffeineIdEntitiesHashCache : IIdEntitiesHashCache, IIdEntitiesHashCacheSy
     override fun <E : IIdEntity<*>> findByIds(cacheName: String, ids: Collection<*>, entityClass: KClass<E>): List<E> {
         if (ids.isEmpty()) return emptyList()
         val map = main(cacheName)
-        return ids.mapNotNull { map[it.toString()] as? E }
+        return ids.mapNotNull {
+            @Suppress("UNCHECKED_CAST")
+            map[it.toString()] as? E
+        }
     }
 
     override fun <PK, E : IIdEntity<PK>> listAll(cacheName: String, entityClass: KClass<E>): List<E> {

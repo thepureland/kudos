@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.core.cache
 
 import io.kudos.ability.cache.common.kit.CacheKit
-import io.kudos.ability.cache.common.support.AbstractCacheHandler
+import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
 import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpCacheItem
 import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpRecord
 import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpSearchPayload
@@ -28,7 +28,7 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractCacheHandler<List<SysAccessRuleIpCacheItem>>() {
+open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<List<SysAccessRuleIpCacheItem>>() {
 
     @Autowired
     private lateinit var sysAccessRuleIpDao: SysAccessRuleIpDao

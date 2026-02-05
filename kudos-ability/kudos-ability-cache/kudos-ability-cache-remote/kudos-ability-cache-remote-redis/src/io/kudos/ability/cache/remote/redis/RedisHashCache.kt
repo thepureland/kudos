@@ -1,9 +1,9 @@
 package io.kudos.ability.cache.remote.redis
 
 import io.kudos.ability.cache.common.init.properties.CacheVersionConfig
-import io.kudos.ability.cache.common.notice.CacheMessage
-import io.kudos.ability.cache.common.notice.ICacheMessageHandler
-import io.kudos.ability.cache.common.support.IIdEntitiesHashCache
+import io.kudos.ability.cache.common.notify.CacheMessage
+import io.kudos.ability.cache.common.notify.ICacheMessageHandler
+import io.kudos.ability.cache.common.core.hash.IHashCache
 import io.kudos.ability.data.memdb.redis.RedisTemplates
 import io.kudos.ability.data.memdb.redis.dao.IdEntitiesRedisHashDao
 import io.kudos.base.query.Criteria
@@ -21,13 +21,13 @@ import kotlin.reflect.KClass
  * @author K
  * @since 1.0.0
  */
-class RedisIdEntitiesHashCache  constructor(
+class RedisHashCache  constructor(
     @Autowired
     private val redisTemplates: RedisTemplates,
     private val versionConfig: CacheVersionConfig,
     @Autowired(required = false) @Qualifier("redisCacheMessageHandler") private val messageHandler: ICacheMessageHandler? = null,
     @Autowired(required = false) @Qualifier("cacheNodeId") private val nodeId: String? = null
-) : IIdEntitiesHashCache {
+) : IHashCache {
 
     private val dao = IdEntitiesRedisHashDao(redisTemplates)
 
@@ -37,7 +37,7 @@ class RedisIdEntitiesHashCache  constructor(
         val handler = messageHandler ?: SpringKit.getBeansOfType(ICacheMessageHandler::class).values.firstOrNull() ?: return
         val msg = CacheMessage(versionConfig.getFinalCacheName(cacheName), key).apply {
             cacheType = "hash"
-            this.nodeId = this@RedisIdEntitiesHashCache.nodeId
+            this.nodeId = this@RedisHashCache.nodeId
         }
         handler.sendMessage(msg)
     }
