@@ -18,6 +18,8 @@ values ('a1a1a1a1-1111-1111-1111-111111111101', 'USER_ORG_BY_ID', 'ams-auth', 'L
        ('a1a1a1a1-1111-1111-1111-111111111109', 'REMEMBER_ME_BY_TENANT_ID_AND_USERNAME', 'ams-auth', 'LOCAL_REMOTE', true, true, 999999999,
         '记住我登录缓存(by tenantId & username)', true, true),
        ('a1a1a1a1-1111-1111-1111-111111111113', 'USER_ORG_IDS_BY_USER_ID', 'ams-auth', 'LOCAL_REMOTE', true, true, 999999999,
-        '机构ID列表缓存(by userId)', true, true);
+        '机构ID列表缓存(by userId)', true, true),
+       ('a1a1a1a1-1111-1111-1111-111111111120', 'USER_ORG__HASH', 'ams-auth', 'LOCAL_REMOTE', true, true, 999999999,
+        '机构Hash缓存(by id & tenantId)', true, true);
 
 --endregion DML
