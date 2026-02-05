@@ -1,22 +1,22 @@
 package io.kudos.ms.user.core.service.impl
 
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
+import io.kudos.base.bean.BeanKit
+import io.kudos.base.logger.LogFactory
+import io.kudos.base.query.Criteria
+import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.ms.user.common.vo.org.UserOrgCacheItem
 import io.kudos.ms.user.common.vo.org.UserOrgTreeRecord
 import io.kudos.ms.user.common.vo.user.UserAccountCacheItem
-import io.kudos.ms.user.core.cache.OrgByIdCache
-import io.kudos.ms.user.core.cache.OrgIdsByTenantIdCache
-import io.kudos.ms.user.core.cache.UserByIdCache
+import io.kudos.ms.user.core.cache.UserAccountHashCache
 import io.kudos.ms.user.core.cache.UserIdsByOrgIdCache
+import io.kudos.ms.user.core.cache.UserOrgHashCache
 import io.kudos.ms.user.core.dao.UserOrgDao
 import io.kudos.ms.user.core.dao.UserOrgUserDao
 import io.kudos.ms.user.core.model.po.UserOrg
 import io.kudos.ms.user.core.model.po.UserOrgUser
 import io.kudos.ms.user.core.service.iservice.IUserOrgService
-import io.kudos.base.bean.BeanKit
-import io.kudos.base.logger.LogFactory
-import io.kudos.base.query.Criteria
-import io.kudos.base.query.enums.OperatorEnum
+import jakarta.annotation.Resource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -40,16 +40,13 @@ open class UserOrgService : BaseCrudService<String, UserOrg, UserOrgDao>(), IUse
     private lateinit var userOrgUserDao: UserOrgUserDao
 
     @Autowired
-    private lateinit var userByIdCache: UserByIdCache
+    private lateinit var userOrgHashCache: UserOrgHashCache
+
+    @Resource
+    private lateinit var userAccountHashCache: UserAccountHashCache
 
     @Autowired
     private lateinit var userIdsByOrgIdCache: UserIdsByOrgIdCache
-
-    @Autowired
-    private lateinit var orgByIdCache: OrgByIdCache
-
-    @Autowired
-    private lateinit var orgIdsByTenantIdCache: OrgIdsByTenantIdCache
 
     private val log = LogFactory.getLog(this)
 
@@ -66,7 +63,7 @@ open class UserOrgService : BaseCrudService<String, UserOrg, UserOrgDao>(), IUse
         }
         
         // 批量获取用户信息
-        val usersMap = userByIdCache.getUsersByIds(adminUserIds)
+        val usersMap = userAccountHashCache.getUsersByIds(adminUserIds)
         
         // 返回用户列表（按原始ID顺序）
         return adminUserIds.mapNotNull { usersMap[it] }
@@ -88,7 +85,7 @@ open class UserOrgService : BaseCrudService<String, UserOrg, UserOrgDao>(), IUse
         if (userIds.isEmpty()) {
             return emptyList()
         }
-        val usersMap = userByIdCache.getUsersByIds(userIds)
+        val usersMap = userAccountHashCache.getUsersByIds(userIds)
         return userIds.mapNotNull { usersMap[it] }
     }
 
@@ -102,26 +99,26 @@ open class UserOrgService : BaseCrudService<String, UserOrg, UserOrgDao>(), IUse
         if (childOrgIds.isEmpty()) {
             return emptyList()
         }
-        val orgsMap = orgByIdCache.getOrgsByIds(childOrgIds)
+        val orgsMap = userOrgHashCache.getOrgsByIds(childOrgIds)
         return childOrgIds.mapNotNull { orgsMap[it] }
     }
 
     override fun getParentOrg(orgId: String): UserOrgCacheItem? {
-        val org = orgByIdCache.getOrgById(orgId) ?: return null
+        val org = userOrgHashCache.getOrgById(orgId) ?: return null
         val parentId = org.parentId ?: return null
-        return orgByIdCache.getOrgById(parentId)
+        return userOrgHashCache.getOrgById(parentId)
     }
 
     override fun getOrgRecord(id: String): UserOrgCacheItem? {
-        return orgByIdCache.getOrgById(id)
+        return userOrgHashCache.getOrgById(id)
     }
 
     override fun getOrgsByTenantId(tenantId: String): List<UserOrgCacheItem> {
-        val orgIds = orgIdsByTenantIdCache.getOrgIds(tenantId)
+        val orgIds = userOrgHashCache.getOrgsByTenantId(tenantId).map { it.id!! }
         if (orgIds.isEmpty()) {
             return emptyList()
         }
-        val orgsMap = orgByIdCache.getOrgsByIds(orgIds)
+        val orgsMap = userOrgHashCache.getOrgsByIds(orgIds)
         return orgIds.mapNotNull { orgsMap[it] }
     }
 
@@ -140,7 +137,7 @@ open class UserOrgService : BaseCrudService<String, UserOrg, UserOrgDao>(), IUse
         
         // 转换为树节点
         val treeNodes = orgs.map { org ->
-            val cacheItem = orgByIdCache.getOrgById(org.id!!) ?: return@map null
+            val cacheItem = userOrgHashCache.getOrgById(org.id!!) ?: return@map null
             UserOrgTreeRecord().apply {
                 BeanKit.copyProperties(cacheItem, this)
                 this.children = mutableListOf()
@@ -179,11 +176,11 @@ open class UserOrgService : BaseCrudService<String, UserOrg, UserOrgDao>(), IUse
 
     override fun getAllAncestorOrgIds(orgId: String): List<String> {
         val ancestors = mutableListOf<String>()
-        var currentOrg = orgByIdCache.getOrgById(orgId) ?: return emptyList()
+        var currentOrg = userOrgHashCache.getOrgById(orgId) ?: return emptyList()
         
         while (currentOrg.parentId != null) {
             ancestors.add(currentOrg.parentId!!)
-            currentOrg = orgByIdCache.getOrgById(currentOrg.parentId!!) ?: break
+            currentOrg = userOrgHashCache.getOrgById(currentOrg.parentId!!) ?: break
         }
         
         return ancestors
@@ -208,11 +205,11 @@ open class UserOrgService : BaseCrudService<String, UserOrg, UserOrgDao>(), IUse
         val success = dao.updateProperties(id, mapOf(UserOrg::active.name to active))
         if (success) {
             log.debug("更新id为${id}的机构的启用状态为${active}。")
-            orgByIdCache.syncOnUpdate(id)
-            val existingOrg = dao.get(id)
-            if (existingOrg != null) {
-                orgIdsByTenantIdCache.syncOnUpdateActive(id, active)
-            }
+            userOrgHashCache.syncOnUpdate(id)
+//            val existingOrg = dao.get(id)
+//            if (existingOrg != null) {
+//                orgIdsByTenantIdCache.syncOnUpdateActive(id, active)
+//            }
         } else {
             log.error("更新id为${id}的机构的启用状态为${active}失败！")
         }
@@ -230,11 +227,11 @@ open class UserOrgService : BaseCrudService<String, UserOrg, UserOrgDao>(), IUse
         val success = dao.updateProperties(id, props)
         if (success) {
             log.debug("移动id为${id}的机构到父机构${newParentId}，排序号${newSortNum}。")
-            orgByIdCache.syncOnUpdate(id)
-            val existingOrg = dao.get(id)
-            if (existingOrg != null) {
-                orgIdsByTenantIdCache.syncOnUpdate(existingOrg, id)
-            }
+            userOrgHashCache.syncOnUpdate(id)
+//            val existingOrg = dao.get(id)
+//            if (existingOrg != null) {
+//                orgIdsByTenantIdCache.syncOnUpdate(existingOrg, id)
+//            }
         } else {
             log.error("移动id为${id}的机构失败！")
         }
@@ -245,8 +242,7 @@ open class UserOrgService : BaseCrudService<String, UserOrg, UserOrgDao>(), IUse
     override fun insert(any: Any): String {
         val id = super.insert(any)
         log.debug("新增id为${id}的机构。")
-        orgByIdCache.syncOnInsert(id)
-        orgIdsByTenantIdCache.syncOnInsert(any, id)
+        userOrgHashCache.syncOnInsert(id)
         return id
     }
 
@@ -256,8 +252,7 @@ open class UserOrgService : BaseCrudService<String, UserOrg, UserOrgDao>(), IUse
         val id = BeanKit.getProperty(any, UserOrg::id.name) as String
         if (success) {
             log.debug("更新id为${id}的机构。")
-            orgByIdCache.syncOnUpdate(id)
-            orgIdsByTenantIdCache.syncOnUpdate(any, id)
+            userOrgHashCache.syncOnUpdate(id)
         } else {
             log.error("更新id为${id}的机构失败！")
         }
@@ -274,8 +269,7 @@ open class UserOrgService : BaseCrudService<String, UserOrg, UserOrgDao>(), IUse
         val success = super.deleteById(id)
         if (success) {
             log.debug("删除id为${id}的机构。")
-            orgByIdCache.syncOnDelete(id)
-            orgIdsByTenantIdCache.syncOnDelete(org, id)
+            userOrgHashCache.syncOnDelete(id)
         } else {
             log.error("删除id为${id}的机构失败！")
         }
@@ -288,8 +282,7 @@ open class UserOrgService : BaseCrudService<String, UserOrg, UserOrgDao>(), IUse
         val tenantIds = orgs.map { it.tenantId }.toSet()
         val count = super.batchDelete(ids)
         log.debug("批量删除机构，期望删除${ids.size}条，实际删除${count}条。")
-        orgByIdCache.syncOnBatchDelete(ids)
-        orgIdsByTenantIdCache.syncOnBatchDelete(ids, tenantIds)
+        userOrgHashCache.syncOnBatchDelete(ids)
         return count
     }
 
