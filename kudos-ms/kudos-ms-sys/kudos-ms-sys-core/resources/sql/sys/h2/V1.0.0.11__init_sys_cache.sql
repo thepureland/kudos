@@ -60,8 +60,6 @@ values ('14a9adc4-6bb5-45bd-96bb-d8afe3060bea', 'SYS_CACHE_BY_NAME', 'ams-sys', 
         '租户缓存(by id)', true, true, false),
        ('2da8e352-6e6f-4cd4-93e0-259ad3c7ea83', 'SYS_TENANT_IDS_BY_SYSTEM_CODE', 'ams-sys', 'LOCAL_REMOTE', true, true, 999999999,
         '租户缓存(by subSystemCode)', true, true, false),
-       ('5da83351-3e6f-3cd4-33e0-359ad3c7ea84', 'SYS_MICRO_SERVICE_BY_CODE', 'ams-sys', 'LOCAL_REMOTE', true, true, 999999999,
-        '微服务缓存(by code)', true, true, false),
        ('6da93351-336f-32d4-33e0-359ad3c7ea85', 'SYS_ATOMIC_SERVICE_BY_CODE', 'ams-sys', 'LOCAL_REMOTE', true, true, 999999999,
         '原子服务缓存(by code)', true, true, false),
        ('9da92321-206f-12d4-33e0-359ad3c7ea88', 'I18N_BY_LOCALE_AND_TYPE_AND_AMS_CODE', 'ams-sys', 'LOCAL_REMOTE', true, true, 999999999,
@@ -75,6 +73,8 @@ values ('14a9adc4-6bb5-45bd-96bb-d8afe3060bea', 'SYS_CACHE_BY_NAME', 'ams-sys', 
        ('d4e5f6a7-b8c9-4012-d345-000000000004', 'SYS_SYSTEM__HASH', 'ams-sys', 'LOCAL_REMOTE', true, true, 999999999,
         '系统Hash缓存', true, true, true),
        ('b5f6a7b8-c9d0-4123-e456-000000000005', 'SYS_DATA_SOURCE__HASH', 'ams-sys', 'LOCAL_REMOTE', true, true, 999999999,
-        '数据源Hash缓存', true, true, true);
+        '数据源Hash缓存', true, true, true),
+       ('c6a7b8c9-d0e1-4234-f567-000000000006', 'SYS_MICRO_SERVICE__HASH', 'ams-sys', 'LOCAL_REMOTE', true, true, 999999999,
+        '微服务Hash缓存', true, true, true);
 
 --endregion DML
