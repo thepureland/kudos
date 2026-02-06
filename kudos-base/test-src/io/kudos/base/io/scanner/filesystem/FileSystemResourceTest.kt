@@ -41,7 +41,7 @@ internal class FileSystemResourceTest {
         val resource = FileSystemResource(testFile.absolutePath)
         val location = resource.location
         assertNotNull(location)
-        assertTrue(location!!.contains("test.txt"))
+        assertTrue(location.contains("test.txt"))
     }
 
     @Test
@@ -81,7 +81,7 @@ internal class FileSystemResourceTest {
         val resource = FileSystemResource(testFile.absolutePath)
         val bytes = resource.loadAsBytes()
         assertNotNull(bytes)
-        assertEquals("test content".toByteArray().size, bytes!!.size)
+        assertEquals("test content".toByteArray().size, bytes.size)
     }
 
     @Test
