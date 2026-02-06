@@ -1,8 +1,10 @@
 package io.kudos.ability.cache.common.batch.hash
 
 import io.kudos.ability.cache.common.batch.keyvalue.IKeysGenerator
+import io.kudos.ability.cache.common.core.hash.MixHashCacheManager
 import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.ability.cache.common.kit.HashCacheKit
+import io.kudos.base.lang.string.toType
 import io.kudos.base.support.IIdEntity
 import io.kudos.context.kit.SpringKit
 import org.aspectj.lang.ProceedingJoinPoint
@@ -14,15 +16,13 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Component
-import io.kudos.ability.cache.common.core.hash.MixHashCacheManager
+import java.math.BigDecimal
+import java.math.BigInteger
 import kotlin.reflect.KClass
+import kotlin.reflect.KFunction
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.isSuperclassOf
 import kotlin.reflect.jvm.kotlinFunction
-import io.kudos.base.lang.string.toType
-import java.math.BigDecimal
-import java.math.BigInteger
-import kotlin.reflect.KFunction
 
 /**
  * [HashBatchCacheableByPrimary] 切面：先按一批主属性（id）查 Hash 缓存（findByIds），未命中的再调方法，结果 saveBatch 回写（可带副属性索引）并合并返回。

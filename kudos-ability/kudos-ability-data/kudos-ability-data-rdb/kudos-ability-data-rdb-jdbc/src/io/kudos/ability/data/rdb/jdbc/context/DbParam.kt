@@ -11,6 +11,6 @@ class DbParam : Serializable {
     var readonly: Boolean = false
 
     companion object {
-        private val serialVersionUID = -3788770245369263297L
+        private const val serialVersionUID = -3788770245369263297L
     }
 }

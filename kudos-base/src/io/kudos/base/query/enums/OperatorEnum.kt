@@ -11,7 +11,7 @@ import io.kudos.base.lang.collections.containsAll
  * @author K
  * @since 1.0.0
  */
-enum class OperatorEnum constructor(
+enum class OperatorEnum(
     override val code: String,
     override val trans: String,
     val acceptNull: Boolean = false, // 值是否可接受null
@@ -234,7 +234,7 @@ enum class OperatorEnum constructor(
                     return false
                 }
                 if (v1 is String && v2 is String) {
-                    v1.lowercase() == v2.lowercase()
+                    v1.equals(v2, ignoreCase = true)
                 } else v1 == v2
             }
             NE, LG -> {
@@ -322,7 +322,7 @@ enum class OperatorEnum constructor(
                     return !v1.isEmpty()
                 }
                 if (v1 is Map<*, *>) {
-                    return (v1 as Map<*, *>?)!!.isNotEmpty()
+                    (v1 as Map<*, *>?)!!.isNotEmpty()
                 } else v1.toString().isEmpty()
             }
             IS_EMPTY -> {
@@ -344,11 +344,11 @@ enum class OperatorEnum constructor(
             }
             BETWEEN -> {
                 if (v1 is Comparable<*> && v2 is ClosedFloatingPointRange<*>) {
-                    return (v1 as Comparable<Any>) >= v2.start && v1 <= v2.endInclusive
+                    (v1 as Comparable<Any>) >= v2.start && v1 <= v2.endInclusive
                 } else false
             }
             NOT_BETWEEN -> {
-                return if (v1 !is Comparable<*> || v2 !is ClosedFloatingPointRange<*>) {
+                if (v1 !is Comparable<*> || v2 !is ClosedFloatingPointRange<*>) {
                     true
                 } else {
                     (v1 as Comparable<Any>) < v2.start && v1 > v2.endInclusive

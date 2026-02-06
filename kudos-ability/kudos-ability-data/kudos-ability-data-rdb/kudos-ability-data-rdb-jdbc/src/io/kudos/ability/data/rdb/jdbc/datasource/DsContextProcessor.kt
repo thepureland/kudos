@@ -9,8 +9,10 @@ import io.kudos.ability.data.rdb.jdbc.kit.DatasourceKeyTool
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.support.KeyLockRegistry
 import io.kudos.context.core.KudosContextHolder
+import jakarta.annotation.Resource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.stereotype.Component
 import java.util.*
 import javax.sql.DataSource
 
@@ -19,15 +21,16 @@ import javax.sql.DataSource
  *
  * @author damon
  */
-class DsContextProcessor {
+@Component
+open class DsContextProcessor {
 
-    @Autowired
+    @Resource
     private lateinit var dataSource: DataSource
 
-    @Autowired
+    @Resource
     private lateinit var dataSourceCreator: DefaultDataSourceCreator
 
-    @Autowired
+    @Resource
     private lateinit var dynamicDataSourceLoad: IDynamicDataSourceLoad
 
     @Autowired(required = false)
@@ -36,7 +39,7 @@ class DsContextProcessor {
     @Autowired(required = false)
     private val dataSourceFinder: IDataSourceFinder? = null
 
-    @Value("\${spring.datasource.dynamic.primary:master}")
+    @Value($$"${spring.datasource.dynamic.primary:master}")
     private val primary: String? = null
 
     private val keyLockRegistry = KeyLockRegistry<String>()
@@ -117,7 +120,7 @@ class DsContextProcessor {
         log.warn("收到刷新數據源id為：{0} 的請求", dsId)
         if (dsId == null) {
             val ds = dataSource as DynamicRoutingDataSource
-            val strings: MutableSet<String?> = (dataSource as DynamicRoutingDataSource).dataSources.keys
+            val strings  = (dataSource as DynamicRoutingDataSource).dataSources.keys
             for (dsKey in strings) {
                 if (primary != dsKey) {
                     ds.removeDataSource(dsKey)
@@ -125,7 +128,7 @@ class DsContextProcessor {
             }
             ds.afterPropertiesSet()
         } else {
-            val dataSourceKey: String? = dsId.toString()
+            val dataSourceKey: String = dsId.toString()
             val ds: DynamicRoutingDataSource = dataSource as DynamicRoutingDataSource
             ds.removeDataSource(dataSourceKey)
         }

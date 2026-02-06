@@ -8,14 +8,14 @@ import com.baomidou.dynamic.datasource.enums.SeataMode
 import com.baomidou.dynamic.datasource.event.DataSourceInitEvent
 import com.baomidou.dynamic.datasource.support.ScriptRunner
 import com.baomidou.dynamic.datasource.toolkit.CryptoUtils
-import io.kudos.base.logger.LogFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.stereotype.Component
 import org.springframework.util.StringUtils
 import javax.sql.DataSource
 
+@Component
 class DsDataSourceCreator : DefaultDataSourceCreator() {
 
-    private val log = LogFactory.getLog(this)
     private var creators: List<DataSourceCreator>? = null
 
     @Autowired(required = false)

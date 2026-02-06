@@ -1,6 +1,5 @@
 package io.kudos.test.container.kit
 
-import DockerKit
 import com.github.dockerjava.api.DockerClient
 import com.github.dockerjava.api.async.ResultCallback
 import com.github.dockerjava.api.command.ExecCreateCmdResponse
@@ -25,7 +24,7 @@ object TestContainerKit {
 
     const val LABEL_KEY = "kudos-test-container"
 
-    val DEFAULT_DOCKER_NETWORK = Network.newNetwork()
+    val DEFAULT_DOCKER_NETWORK: Network = Network.newNetwork()
 
     /**
      * 启动容器(若需要)

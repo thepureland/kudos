@@ -1,9 +1,9 @@
 import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
 
-val spring_boot_bom = libs.spring.boot.bom
-val spring_cloud_bom = libs.spring.cloud.bom
-val alibaba_cloud_bom = libs.alibaba.cloud.bom
-val ktor_bom = libs.ktor.bom
+val springBootBom = libs.spring.boot.bom
+val springCloudBom = libs.spring.cloud.bom
+val alibabaCloudBom = libs.alibaba.cloud.bom
+val ktorBom = libs.ktor.bom
 
 allprojects {
     group = "io.kudos"
@@ -38,10 +38,10 @@ subprojects {
 
     plugins.withId("org.jetbrains.kotlin.jvm") {
         dependencies {
-            add("implementation", platform(spring_boot_bom))
-            add("implementation", platform(spring_cloud_bom))
-            add("implementation", platform(alibaba_cloud_bom))
-            add("implementation", platform(ktor_bom))
+            add("implementation", platform(springBootBom))
+            add("implementation", platform(springCloudBom))
+            add("implementation", platform(alibabaCloudBom))
+            add("implementation", platform(ktorBom))
 //      add("testImplementation", libs.kotlin.test.junit5)
         }
     }

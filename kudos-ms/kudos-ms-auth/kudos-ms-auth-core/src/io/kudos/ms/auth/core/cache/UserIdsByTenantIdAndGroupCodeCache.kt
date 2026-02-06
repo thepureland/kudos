@@ -3,13 +3,9 @@ package io.kudos.ms.auth.core.cache
 import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
 import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.query.Criteria
-import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.context.support.Consts
 import io.kudos.ms.auth.core.dao.AuthGroupDao
 import io.kudos.ms.auth.core.dao.AuthGroupUserDao
-import io.kudos.ms.auth.core.model.po.AuthGroup
-import io.kudos.ms.auth.core.model.po.AuthGroupUser
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
@@ -61,20 +57,10 @@ open class UserIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler<Lis
             return
         }
 
-        // 加载所有active=true的用户组
-        val groupCriteria = Criteria(AuthGroup::active.name, OperatorEnum.EQ, true)
+        val groups = authGroupDao.getActiveGroupsForCache()
+        val groupIdToUserIdsMap = authGroupUserDao.getAllGroupIdToUserIdsForCache()
 
-        @Suppress("UNCHECKED_CAST")
-        val groups = authGroupDao.search(groupCriteria)
-
-        // 加载所有用户组-用户关系
-        @Suppress("UNCHECKED_CAST")
-        val allGroupUsers = authGroupUserDao.allSearch()
-        val groupIdToUserIdsMap = allGroupUsers
-            .groupBy { it.groupId }
-            .mapValues { entry -> entry.value.map { it.userId } }
-
-        log.debug("从数据库加载了${groups.size}条用户组和${allGroupUsers.size}条用户组-用户关系。")
+        log.debug("从数据库加载了${groups.size}条用户组、用户组-用户关系分组${groupIdToUserIdsMap.size}。")
 
         // 清除缓存
         if (clear) {
@@ -84,7 +70,7 @@ open class UserIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler<Lis
         // 缓存用户ID列表
         groups.forEach { group ->
             val userIds = groupIdToUserIdsMap[group.id!!] ?: emptyList()
-            CacheKit.put(CACHE_NAME, getKey(group.tenantId, group.code), userIds)
+            CacheKit.put(CACHE_NAME, getKey(group.tenantId!!, group.code!!), userIds)
             log.debug("缓存了租户${group.tenantId}用户组${group.code}的${userIds.size}条用户ID。")
         }
     }
@@ -114,13 +100,9 @@ open class UserIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler<Lis
             return emptyList()
         }
 
-        // 2. 根据用户组ID查询用户ID列表
-        val userCriteria = Criteria(AuthGroupUser::groupId.name, OperatorEnum.EQ, groupId)
-        val userIds = authGroupUserDao.searchProperty(userCriteria, AuthGroupUser::userId.name)
-
+        val userIds = authGroupUserDao.getUserIdsByGroupId(groupId)
         log.debug("从数据库加载了租户${tenantId}用户组${groupCode}的${userIds.size}条用户ID。")
-        @Suppress("UNCHECKED_CAST")
-        return userIds as List<String>
+        return userIds
     }
 
     /**

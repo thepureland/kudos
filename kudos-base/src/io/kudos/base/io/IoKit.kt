@@ -866,7 +866,7 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun read(input: Reader, buffer: CharArray): Int? = IOUtils.read(input, buffer)
+    fun read(input: Reader, buffer: CharArray): Int = IOUtils.read(input, buffer)
 
     /**
      * 从字节流中读取字节。该实现保证在放弃前尽可能多的读取字节。

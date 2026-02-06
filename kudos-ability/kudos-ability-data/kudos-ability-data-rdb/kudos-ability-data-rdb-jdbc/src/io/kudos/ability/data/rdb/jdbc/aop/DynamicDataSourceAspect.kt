@@ -8,11 +8,11 @@ import io.kudos.ability.data.rdb.jdbc.init.MultipleDataSourceProperties
 import io.kudos.ability.data.rdb.jdbc.kit.DatasourceKeyTool
 import io.kudos.base.logger.LogFactory
 import io.kudos.context.core.KudosContextHolder
+import jakarta.annotation.Resource
 import org.aspectj.lang.ProceedingJoinPoint
 import org.aspectj.lang.annotation.Around
 import org.aspectj.lang.annotation.Aspect
 import org.aspectj.lang.annotation.Pointcut
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.annotation.Order
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.locks.ReadWriteLock
@@ -29,10 +29,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 @Order(-99)
 class DynamicDataSourceAspect {
 
-    @Autowired
+    @Resource
     private lateinit var dataSourceProperties: MultipleDataSourceProperties
 
-    @Autowired
+    @Resource
     private lateinit var dsContextProcessor: DsContextProcessor
 
     /**
@@ -64,15 +64,15 @@ class DynamicDataSourceAspect {
             return true
         }
         //找不到包所对应的数据源配置，则适用默认
-        val dsKeyConfig: String? = dataSourceProperties.lookDataSourceKey(serviceClazz)
-        if (dsKeyConfig.isNullOrBlank()) {
+        val dsKeyConfig: String = dataSourceProperties.lookDataSourceKey(serviceClazz)
+        if (dsKeyConfig.isBlank()) {
             return false
         }
         //约定 指定_context则为数据源表，_context无需配置数据源，自动会从datasource里获取
         if (dsKeyConfig.startsWith(CONTEXT_DATASOURCE)) {
             val datasourcePair = convertDatasourceConfig(dsKeyConfig)
             //兼容多租户，不同上下文的数据源不同
-            val mapKey: String? = DatasourceKeyTool.convertCacheMapKey(
+            val mapKey: String = DatasourceKeyTool.convertCacheMapKey(
                 datasourcePair.first!!,
                 KudosContextHolder.get().dataSourceId, datasourcePair.second
             )
@@ -82,7 +82,7 @@ class DynamicDataSourceAspect {
                 READ_WRITE_LOCK.readLock().lock()
                 try {
                     dsKey = dsCacheMap.computeIfAbsent(mapKey) { k: String? ->
-                        dsContextProcessor.doDetermineDatasource(k!!, dsKeyConfig)
+                        dsContextProcessor.doDetermineDatasource(k!!, dsKeyConfig)!!
                     }
                 } finally {
                     READ_WRITE_LOCK.readLock().unlock()
@@ -143,7 +143,7 @@ class DynamicDataSourceAspect {
     companion object {
         private const val CONTEXT_DATASOURCE = "_context"
         private val log = LogFactory.getLog(this)
-        private val dsCacheMap: MutableMap<String?, String?> = ConcurrentHashMap<String?, String?>()
+        private val dsCacheMap = ConcurrentHashMap<String, String>()
 
         private val READ_WRITE_LOCK: ReadWriteLock = ReentrantReadWriteLock()
 

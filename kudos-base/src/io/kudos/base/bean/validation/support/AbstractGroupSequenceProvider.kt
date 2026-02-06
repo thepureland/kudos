@@ -13,7 +13,7 @@ import kotlin.reflect.KClass
  * @author K
  * @since 1.0.0
  */
-abstract class AbstractGroupSequenceProvider<T : Any?> : DefaultGroupSequenceProvider<T> {
+abstract class AbstractGroupSequenceProvider<T> : DefaultGroupSequenceProvider<T> {
 
     override fun getValidationGroups(klass: Class<*>?, bean: T?): List<Class<*>?>? {
         val defaultGroupSequence = mutableListOf<Class<*>>()

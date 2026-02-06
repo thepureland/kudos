@@ -51,14 +51,14 @@ class ClassPathResource(override val location: String?) : Comparable<ClassPathRe
     private val classLoader: ClassLoader
         get() = Thread.currentThread().contextClassLoader
 
-    override fun loadAsString(encoding: String): String? {
+    override fun loadAsString(encoding: String): String {
         val inputStream = classLoader.getResourceAsStream(location)
             ?: throw Exception("Unable to obtain inputStream for resource: $location")
         val reader: Reader = InputStreamReader(inputStream, Charset.forName(encoding))
         return IoKit.toString(reader)
     }
 
-    override fun loadAsBytes(): ByteArray? {
+    override fun loadAsBytes(): ByteArray {
         val inputStream = classLoader.getResourceAsStream(location)
             ?: throw Exception("Unable to obtain inputStream for resource: $location")
         return IoKit.toByteArray(inputStream)

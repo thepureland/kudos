@@ -13,7 +13,7 @@ object NotifyListenerItem {
     private val notifyListenerMap = mutableMapOf<String, INotifyListener>()
 
     fun put(key: String, listener: INotifyListener) {
-        notifyListenerMap.put(key, listener)
+        notifyListenerMap[key] = listener
     }
 
     fun get(key: String): INotifyListener? {

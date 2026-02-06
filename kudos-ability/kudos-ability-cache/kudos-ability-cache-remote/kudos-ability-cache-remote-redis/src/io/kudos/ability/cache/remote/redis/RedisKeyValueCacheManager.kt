@@ -4,7 +4,7 @@ import io.kudos.ability.cache.common.core.keyvalue.IKeyValueCacheManager
 import io.kudos.ability.cache.common.init.properties.CacheVersionConfig
 import io.kudos.ability.cache.common.support.CacheConfig
 import io.kudos.base.logger.LogFactory
-import org.springframework.beans.factory.annotation.Autowired
+import jakarta.annotation.Resource
 import org.springframework.data.redis.cache.RedisCache
 import org.springframework.data.redis.cache.RedisCacheConfiguration
 import org.springframework.data.redis.cache.RedisCacheManager
@@ -50,7 +50,7 @@ class RedisKeyValueCacheManager(
 
     var caches: MutableList<RedisCache> = LinkedList<RedisCache>()
 
-    @Autowired
+    @Resource
     private lateinit var versionConfig: CacheVersionConfig
 
     override fun initCacheAfterSystemInit(cacheConfigMap: Map<String, CacheConfig>) {

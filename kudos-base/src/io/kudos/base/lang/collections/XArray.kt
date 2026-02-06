@@ -114,7 +114,7 @@ inline fun <reified T : Number> Array<String>.toNumberArray(clazz: KClass<T>): A
  * @since 1.0.0
  */
 fun <T> Array<T?>.add(index: Int, element: T?) : Array<T?> {
-    if (index < 0 || index > size) {
+    if (index !in 0..size) {
         throw IndexOutOfBoundsException("Index $index out of bounds for length $size")
     }
     return copyOfRange(0, index) + element + copyOfRange(index, size)
@@ -138,7 +138,7 @@ fun <T> Array<T?>.add(index: Int, element: T?) : Array<T?> {
  * @since 1.0.0
  */
 fun <T> Array<T?>.remove(index: Int): Array<T?> {
-    if (index < 0 || index > size) {
+    if (index !in 0..size) {
         throw IndexOutOfBoundsException("Index $index out of bounds for length $size")
     }
     return copyOfRange(0, index) + copyOfRange(index + 1, size)

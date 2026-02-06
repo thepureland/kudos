@@ -27,19 +27,19 @@ open class UserLogLoginService : BaseCrudService<String, UserLogLogin, UserLogLo
     private val log = LogFactory.getLog(this)
 
     override fun getLoginsByUserId(userId: String, limit: Int): List<UserLogLogin> {
-        val criteria = Criteria.Companion.of(UserLogLogin::userId.name, OperatorEnum.EQ, userId)
+        val criteria = Criteria.of(UserLogLogin::userId.name, OperatorEnum.EQ, userId)
         val logins = dao.search(criteria)
         return logins.sortedByDescending { it.loginTime }.take(limit)
     }
 
     override fun getLoginsByTenantId(tenantId: String, limit: Int): List<UserLogLogin> {
-        val criteria = Criteria.Companion.of(UserLogLogin::tenantId.name, OperatorEnum.EQ, tenantId)
+        val criteria = Criteria.of(UserLogLogin::tenantId.name, OperatorEnum.EQ, tenantId)
         val logins = dao.search(criteria)
         return logins.sortedByDescending { it.loginTime }.take(limit)
     }
 
     override fun getLoginsByTimeRange(tenantId: String?, userId: String?, startTime: LocalDateTime, endTime: LocalDateTime): List<UserLogLogin> {
-        val criteria = Criteria.Companion.of(UserLogLogin::loginTime.name, OperatorEnum.GE, startTime)
+        val criteria = Criteria.of(UserLogLogin::loginTime.name, OperatorEnum.GE, startTime)
             .addAnd(UserLogLogin::loginTime.name, OperatorEnum.LE, endTime)
         if (tenantId != null) {
             criteria.addAnd(UserLogLogin::tenantId.name, OperatorEnum.EQ, tenantId)
@@ -81,7 +81,7 @@ open class UserLogLoginService : BaseCrudService<String, UserLogLogin, UserLogLo
     }
 
     override fun countSuccessLogins(tenantId: String?, userId: String?, startTime: LocalDateTime?, endTime: LocalDateTime?): Long {
-        val criteria = Criteria.Companion.of(UserLogLogin::loginSuccess.name, OperatorEnum.EQ, true)
+        val criteria = Criteria.of(UserLogLogin::loginSuccess.name, OperatorEnum.EQ, true)
         if (tenantId != null) {
             criteria.addAnd(UserLogLogin::tenantId.name, OperatorEnum.EQ, tenantId)
         }
@@ -98,7 +98,7 @@ open class UserLogLoginService : BaseCrudService<String, UserLogLogin, UserLogLo
     }
 
     override fun countFailureLogins(tenantId: String?, userId: String?, startTime: LocalDateTime?, endTime: LocalDateTime?): Long {
-        val criteria = Criteria.Companion.of(UserLogLogin::loginSuccess.name, OperatorEnum.EQ, false)
+        val criteria = Criteria.of(UserLogLogin::loginSuccess.name, OperatorEnum.EQ, false)
         if (tenantId != null) {
             criteria.addAnd(UserLogLogin::tenantId.name, OperatorEnum.EQ, tenantId)
         }

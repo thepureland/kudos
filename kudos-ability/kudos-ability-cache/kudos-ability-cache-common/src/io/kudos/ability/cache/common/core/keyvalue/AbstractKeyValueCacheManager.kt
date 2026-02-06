@@ -2,7 +2,7 @@ package io.kudos.ability.cache.common.core.keyvalue
 
 import io.kudos.ability.cache.common.init.properties.CacheVersionConfig
 import io.kudos.ability.cache.common.support.CacheConfig
-import org.springframework.beans.factory.annotation.Autowired
+import jakarta.annotation.Resource
 import org.springframework.boot.cache.autoconfigure.CacheProperties
 import org.springframework.cache.Cache
 import org.springframework.cache.support.AbstractCacheManager
@@ -17,10 +17,10 @@ abstract class AbstractKeyValueCacheManager<T : Cache> : AbstractCacheManager(),
 
     var caches = mutableListOf<T>()
 
-    @Autowired
+    @Resource
     protected lateinit var properties: CacheProperties
 
-    @Autowired
+    @Resource
     protected lateinit var versionConfig: CacheVersionConfig
 
     override fun initCacheAfterSystemInit(cacheConfigMap: Map<String, CacheConfig>) {

@@ -25,13 +25,13 @@ open class CacheTestService {
         return RandomStringKit.uuidWithoutDelimiter()
     }
 
-    @Value("\${config.info:DEFAULT_VALUE}")
+    @Value($$"${config.info:DEFAULT_VALUE}")
     private val configRemote: String? = null
 
-    @Value("\${spring.cloud.config.uri:DEFAULT_VALUE}")
+    @Value($$"${spring.cloud.config.uri:DEFAULT_VALUE}")
     private val configLocal: String? = null
 
-    @Value("\${configNoExists:DEFAULT_VALUE}")
+    @Value($$"${configNoExists:DEFAULT_VALUE}")
     private val configNoExists: String? = null
 
 }

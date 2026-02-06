@@ -153,7 +153,7 @@ class ResourceIdsByTenantIdAndRoleCodeCacheTest : RdbAndRedisCacheTestBase() {
         cacheHandler.syncOnRoleUpdate(oldTenantId, oldRoleCode, newTenantId, newRoleCode)
         
         // 验证旧缓存已被清除，新缓存可以获取数据
-        val resourceIdsOld = cacheHandler.getResourceIds(oldTenantId, oldRoleCode)
+//        val resourceIdsOld = cacheHandler.getResourceIds(oldTenantId, oldRoleCode)
         val resourceIdsNew = cacheHandler.getResourceIds(newTenantId, newRoleCode)
         // 旧缓存应该被清除，新缓存应该能获取到数据（资源关系不变，只是角色编码变了）
         assertEquals(
@@ -163,7 +163,7 @@ class ResourceIdsByTenantIdAndRoleCodeCacheTest : RdbAndRedisCacheTestBase() {
         )
         
         // 恢复角色编码
-        authRoleDao.updateProperties(roleId, mapOf(io.kudos.ms.auth.core.model.po.AuthRole::code.name to oldRoleCode))
+        authRoleDao.updateProperties(roleId, mapOf(AuthRole::code.name to oldRoleCode))
     }
 
     @Test

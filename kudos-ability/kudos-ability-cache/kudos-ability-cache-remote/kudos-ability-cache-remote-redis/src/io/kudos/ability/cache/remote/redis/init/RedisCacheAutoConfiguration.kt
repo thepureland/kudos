@@ -41,6 +41,9 @@ import java.util.*
 /**
  * redis缓存自动配置类
  *
+ * RedisTemplates 由 [RedisAutoConfiguration]（kudos-ability-data-memdb-redis）提供，
+ * 本类通过 [AutoConfigureAfter] 保证在其之后加载，运行时注入正常；IDE 可能因跨模块未解析而误报。
+ *
  * @author K
  * @since 1.0.0
  */
@@ -53,7 +56,7 @@ open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentIni
 
     private val log = LogFactory.getLog(this)
 
-    @Value("\${kudos.ability.cache.remoteStore}")
+    @Value($$"${kudos.ability.cache.remoteStore}")
     private val remoteStore: String? = null
 
     @Autowired
@@ -61,6 +64,7 @@ open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentIni
 
 
     @Bean(name = ["remoteCacheManager"])
+    @Suppress("SpringJavaInjectionPointsAutowiringInspection")
     open fun remoteCacheManager(
         redisTemplates: RedisTemplates,
         redisProperties: RedisProperties
@@ -87,6 +91,7 @@ open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentIni
 
     @Bean
     @DependsOn("redisCacheMessageHandler")
+    @Suppress("SpringJavaInjectionPointsAutowiringInspection")
     open fun redisMessageListenerContainer(
         versionConfig: CacheVersionConfig,
         redisCacheMessageHandler: RedisCacheMessageHandler
@@ -107,6 +112,7 @@ open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentIni
     @Bean(name = ["remoteCacheProcessor"])
     @DependsOn("kudosRedisTemplate")
     @ConditionalOnMissingBean
+    @Suppress("SpringJavaInjectionPointsAutowiringInspection")
     open fun remoteCacheProcessor(redisTemplates: RedisTemplates): RedisRemoteCacheProcessor {
         return RedisRemoteCacheProcessor(redisTemplates)
     }
@@ -124,6 +130,7 @@ open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentIni
     @Bean("redisIdEntitiesHashCache")
     @ConditionalOnMissingBean(name = ["redisIdEntitiesHashCache"])
     @DependsOn("redisCacheMessageHandler")
+    @Suppress("SpringJavaInjectionPointsAutowiringInspection")
     open fun redisIdEntitiesHashCache(
         redisTemplates: RedisTemplates,
         versionConfig: CacheVersionConfig,

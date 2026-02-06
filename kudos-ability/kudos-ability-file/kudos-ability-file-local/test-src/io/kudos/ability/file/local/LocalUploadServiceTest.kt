@@ -3,7 +3,7 @@ package io.kudos.ability.file.local
 import io.kudos.ability.file.common.entity.UploadFileModel
 import io.kudos.ability.file.local.init.LocalUploadService
 import io.kudos.test.common.init.EnableKudosTest
-import org.springframework.beans.factory.annotation.Autowired
+import jakarta.annotation.Resource
 import org.springframework.core.io.InputStreamResource
 import java.lang.String
 import java.util.*
@@ -22,7 +22,7 @@ import kotlin.text.contains
 @EnableKudosTest
 internal class LocalUploadServiceTest {
 
-    @Autowired
+    @Resource
     private lateinit var localUploadService: LocalUploadService
 
 

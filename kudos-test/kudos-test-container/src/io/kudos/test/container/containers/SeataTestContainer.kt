@@ -81,7 +81,7 @@ object SeataTestContainer {
         startIfNeeded(null)
         println("nacos localhost web-port: ${runningNacosContainer.ports.first().publicPort}")
         println("seata localhost web-port: $WEB_PORT, service-port：$SERVICE_PORT")
-        Thread.sleep(Long.Companion.MAX_VALUE)
+        Thread.sleep(Long.MAX_VALUE)
     }
 
 }

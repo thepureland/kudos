@@ -8,9 +8,9 @@ import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.support.payload.SearchPayload
 import io.kudos.base.support.payload.UpdatePayload
 import io.kudos.test.common.init.EnableKudosTest
+import jakarta.annotation.Resource
 import org.ktorm.dsl.eq
 import org.ktorm.dsl.like
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 import kotlin.test.Test
@@ -27,7 +27,7 @@ import kotlin.test.assertNotNull
 @EnableKudosTest
 internal open class BaseCrudDaoTest {
 
-    @Autowired
+    @Resource
     private lateinit var testTableDao: TestTableKtormDao
 
 

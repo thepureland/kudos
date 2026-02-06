@@ -3,13 +3,9 @@ package io.kudos.ms.auth.core.cache
 import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
 import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.query.Criteria
-import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.context.support.Consts
 import io.kudos.ms.auth.core.dao.AuthRoleDao
 import io.kudos.ms.auth.core.dao.AuthRoleUserDao
-import io.kudos.ms.auth.core.model.po.AuthRole
-import io.kudos.ms.auth.core.model.po.AuthRoleUser
 import jakarta.annotation.Resource
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
@@ -61,19 +57,10 @@ open class UserIdsByTenantIdAndRoleCodeCache : AbstractKeyValueCacheHandler<List
             return
         }
 
-        // 加载所有active=true的角色
-        val roleCriteria = Criteria(AuthRole::active.name, OperatorEnum.EQ, true)
-        @Suppress("UNCHECKED_CAST")
-        val roles = authRoleDao.search(roleCriteria)
-        
-        // 加载所有角色-用户关系
-        @Suppress("UNCHECKED_CAST")
-        val allRoleUsers = authRoleUserDao.allSearch()
-        val roleIdToUserIdsMap = allRoleUsers
-            .groupBy { it.roleId }
-            .mapValues { entry -> entry.value.map { it.userId } }
+        val roles = authRoleDao.getActiveRolesForCache()
+        val roleIdToUserIdsMap = authRoleUserDao.getAllRoleIdToUserIdsForCache()
 
-        log.debug("从数据库加载了${roles.size}条角色和${allRoleUsers.size}条角色-用户关系。")
+        log.debug("从数据库加载了${roles.size}条角色、角色-用户关系分组${roleIdToUserIdsMap.size}。")
 
         // 清除缓存
         if (clear) {
@@ -83,7 +70,7 @@ open class UserIdsByTenantIdAndRoleCodeCache : AbstractKeyValueCacheHandler<List
         // 缓存用户ID列表
         roles.forEach { role ->
             val userIds = roleIdToUserIdsMap[role.id!!] ?: emptyList()
-            CacheKit.put(CACHE_NAME, getKey(role.tenantId, role.code), userIds)
+            CacheKit.put(CACHE_NAME, getKey(role.tenantId!!, role.code!!), userIds)
             log.debug("缓存了租户${role.tenantId}角色${role.code}的${userIds.size}条用户ID。")
         }
     }
@@ -113,13 +100,9 @@ open class UserIdsByTenantIdAndRoleCodeCache : AbstractKeyValueCacheHandler<List
             return emptyList()
         }
 
-        // 2. 根据角色ID查询用户ID列表
-        val userCriteria = Criteria(AuthRoleUser::roleId.name, OperatorEnum.EQ, roleId)
-        val userIds = authRoleUserDao.searchProperty(userCriteria, AuthRoleUser::userId.name)
-        
+        val userIds = authRoleUserDao.getUserIdsByRoleId(roleId)
         log.debug("从数据库加载了租户${tenantId}角色${roleCode}的${userIds.size}条用户ID。")
-        @Suppress("UNCHECKED_CAST")
-        return userIds as List<String>
+        return userIds
     }
 
     /**

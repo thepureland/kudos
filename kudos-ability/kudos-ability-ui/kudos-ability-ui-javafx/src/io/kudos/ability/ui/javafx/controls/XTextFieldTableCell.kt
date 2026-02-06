@@ -28,7 +28,7 @@ import java.util.stream.Collectors
  *
  * @author K
  */
-class XTextFieldTableCell<S, T> @JvmOverloads constructor(converter: StringConverter<T?>? = null) :
+open class XTextFieldTableCell<S, T> @JvmOverloads constructor(converter: StringConverter<T?>? = null) :
     TextFieldTableCell<S?, T?>(converter) {
     /** local copy of the textfield that's installed by super.  */
     private var myTextField: TextField? = null

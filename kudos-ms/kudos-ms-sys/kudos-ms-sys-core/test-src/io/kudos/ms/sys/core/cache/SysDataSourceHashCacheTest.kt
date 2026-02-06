@@ -14,7 +14,7 @@ import kotlin.test.*
  * 覆盖：按 id 单条/批量、按 3 码列表、全量刷新、新增/更新/更新启用状态/删除后同步；
  * 本地缓存开启时二次取为同一对象引用。
  *
- * 测试数据：`sql/h2/cache/SysDataSourceHashCacheTest.sql`。
+ * 测试数据：`SysDataSourceHashCacheTest.sql`。
  * 需 Docker 运行 Redis，且 sys_cache 中已配置 SYS_DATA_SOURCE__HASH（hash=true）。
  *
  * @author K
@@ -169,7 +169,7 @@ class SysDataSourceHashCacheTest : RdbAndRedisCacheTestBase() {
         cacheHandler.reloadAll(true)
         val id = "33333333-e828-43c5-a512-888888888888"
         sysDataSourceDao.updateProperties(id, mapOf(SysDataSource::active.name to false))
-        val ds = cacheHandler.getDataSourceById(id)!!
+//        val ds = cacheHandler.getDataSourceById(id)!!
         cacheHandler.syncOnUpdateActive(id, false)
         assertEquals(false, sysDataSourceDao.getCacheItem(id)?.active)
         val afterFalse = cacheHandler.getDataSourceById(id)

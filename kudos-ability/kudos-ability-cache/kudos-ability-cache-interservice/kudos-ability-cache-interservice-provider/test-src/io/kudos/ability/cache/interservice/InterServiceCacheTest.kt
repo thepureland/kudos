@@ -3,9 +3,9 @@ package io.kudos.ability.cache.interservice
 import io.kudos.ability.cache.interservice.client.IMockProxy
 import io.kudos.ability.cache.interservice.provider.MockMsApplication
 import io.kudos.test.common.init.EnableKudosTest
+import jakarta.annotation.Resource
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.SpringApplication
 import org.springframework.cloud.openfeign.EnableFeignClients
 import org.springframework.test.context.ActiveProfiles
@@ -23,7 +23,7 @@ import kotlin.test.Test
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 open class InterServiceCacheTest {
 
-    @Autowired
+    @Resource
     private lateinit var proxy: IMockProxy
 
     @BeforeAll

@@ -17,10 +17,10 @@ import javax.sql.DataSource
  */
 class SeataDataSourceProxy : IDataSourceProxy {
 
-    @Value("\${seata.data-source-proxy-mode}")
+    @Value($$"${seata.data-source-proxy-mode}")
     private val proxyMode: String? = null
 
-    @Value("\${seata.enable-auto-data-source-proxy}")
+    @Value($$"${seata.enable-auto-data-source-proxy}")
     private var enableProxy: Boolean = true
 
     override fun proxyDatasource(dataSource: DataSource): DataSource {

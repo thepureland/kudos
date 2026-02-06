@@ -97,7 +97,7 @@ object ArrayKit {
      * @author K
      * @since 1.0.0
      */
-    fun isNotEmpty(array: Array<*>?): Boolean = array != null && array.isNotEmpty()
+    fun isNotEmpty(array: Array<*>?): Boolean = !array.isNullOrEmpty()
 
     /**
      * 检测字节数组是否不为null且不为空

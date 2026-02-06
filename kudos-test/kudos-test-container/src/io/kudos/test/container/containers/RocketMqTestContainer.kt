@@ -21,12 +21,12 @@ object RocketMqTestContainer {
 
     // 注意rocketmq 5.0.0 以上版本，有时会发生topic不会自动建立问题，即使有配置 autoCreateTopicEnable=true，也会发生。
     private const val IMAGE_VERSION = "4.9.7"
-    private val IMAGE = IMAGE_NAME + IMAGE_VERSION
+    private const val IMAGE = IMAGE_NAME + IMAGE_VERSION
 
     const val PORT = 9876
     private val LOCAL_IP = IpKit.getLocalIp()
     val NAMESRV_ADDR = "$LOCAL_IP:$PORT"
-    private val BROKER_CONF_PATH = "/home/rocketmq/rocketmq-$IMAGE_VERSION/conf/broker.conf"
+    private const val BROKER_CONF_PATH = "/home/rocketmq/rocketmq-$IMAGE_VERSION/conf/broker.conf"
 
     const val LABEL_NANE_SERVER = "RocketMQ name server"
 
@@ -102,7 +102,7 @@ object RocketMqTestContainer {
         startIfNeeded(null)
         println("RocketMQ name-server localhost port: $PORT")
         println("RocketMQ broker localhost ports: 10909,10911,10912")
-        Thread.sleep(Long.Companion.MAX_VALUE)
+        Thread.sleep(Long.MAX_VALUE)
     }
 
 }

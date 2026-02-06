@@ -3,15 +3,10 @@ package io.kudos.ms.auth.core.cache
 import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
 import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.query.Criteria
-import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.context.support.Consts
 import io.kudos.ms.auth.core.dao.AuthGroupDao
 import io.kudos.ms.auth.core.dao.AuthGroupRoleDao
 import io.kudos.ms.auth.core.dao.AuthRoleResourceDao
-import io.kudos.ms.auth.core.model.po.AuthGroup
-import io.kudos.ms.auth.core.model.po.AuthGroupRole
-import io.kudos.ms.auth.core.model.po.AuthRoleResource
 import jakarta.annotation.Resource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable
@@ -67,26 +62,11 @@ open class ResourceIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler
             return
         }
 
-        // 加载所有active=true的用户组
-        val groupCriteria = Criteria(AuthGroup::active.name, OperatorEnum.EQ, true)
-        @Suppress("UNCHECKED_CAST")
-        val groups = authGroupDao.search(groupCriteria)
+        val groups = authGroupDao.getActiveGroupsForCache()
+        val groupIdToRoleIdsMap = authGroupRoleDao.getAllGroupIdToRoleIdsForCache()
+        val roleIdToResourceIdsMap = authRoleResourceDao.getAllRoleIdToResourceIdsForCache()
 
-        // 加载所有用户组-角色关系
-        @Suppress("UNCHECKED_CAST")
-        val allGroupRoles = authGroupRoleDao.allSearch()
-        val groupIdToRoleIdsMap = allGroupRoles
-            .groupBy { it.groupId }
-            .mapValues { entry -> entry.value.map { it.roleId } }
-
-        // 加载所有角色-资源关系
-        @Suppress("UNCHECKED_CAST")
-        val allRoleResources = authRoleResourceDao.allSearch()
-        val roleIdToResourceIdsMap = allRoleResources
-            .groupBy { it.roleId }
-            .mapValues { entry -> entry.value.map { it.resourceId } }
-
-        log.debug("从数据库加载了${groups.size}条用户组、${allGroupRoles.size}条组-角色关系、${allRoleResources.size}条角色-资源关系。")
+        log.debug("从数据库加载了${groups.size}条用户组、组-角色分组${groupIdToRoleIdsMap.size}、角色-资源分组${roleIdToResourceIdsMap.size}。")
 
         if (clear) {
             clear()
@@ -95,7 +75,7 @@ open class ResourceIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler
         groups.forEach { group ->
             val roleIds = groupIdToRoleIdsMap[group.id!!] ?: emptyList()
             val resourceIds = roleIds.flatMap { roleId -> roleIdToResourceIdsMap[roleId] ?: emptyList() }.distinct()
-            CacheKit.put(CACHE_NAME, getKey(group.tenantId, group.code), resourceIds)
+            CacheKit.put(CACHE_NAME, getKey(group.tenantId!!, group.code!!), resourceIds)
             log.debug("缓存了租户${group.tenantId}用户组${group.code}的${resourceIds.size}条资源ID。")
         }
     }
@@ -125,25 +105,14 @@ open class ResourceIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler
         }
 
         // 2. 获取用户组对应的角色ID列表
-        val groupRoleCriteria = Criteria(AuthGroupRole::groupId.name, OperatorEnum.EQ, groupId)
-        val roleIds = authGroupRoleDao.searchProperty(groupRoleCriteria, AuthGroupRole::roleId.name)
-        @Suppress("UNCHECKED_CAST")
-        val roleIdList = roleIds as List<String>
-        if (roleIdList.isEmpty()) {
+        val roleIds = authGroupRoleDao.getRoleIdsByGroupId(groupId)
+        if (roleIds.isEmpty()) {
             return emptyList()
         }
 
-        // 3. 根据角色ID查询资源ID列表
-        val resourceIds = mutableListOf<String>()
-        roleIdList.forEach { roleId ->
-            val resourceCriteria = Criteria(AuthRoleResource::roleId.name, OperatorEnum.EQ, roleId)
-            val ids = authRoleResourceDao.searchProperty(resourceCriteria, AuthRoleResource::resourceId.name)
-            @Suppress("UNCHECKED_CAST")
-            resourceIds.addAll(ids as List<String>)
-        }
-
+        val resourceIds = authRoleResourceDao.getResourceIdsByRoleIds(roleIds)
         log.debug("从数据库加载了租户${tenantId}用户组${groupCode}的${resourceIds.size}条资源ID。")
-        return resourceIds.distinct()
+        return resourceIds
     }
 
     /**

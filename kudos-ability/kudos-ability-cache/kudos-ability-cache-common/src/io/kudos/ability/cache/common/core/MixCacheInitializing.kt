@@ -6,6 +6,7 @@ import io.kudos.base.logger.LogFactory
 import org.springframework.beans.factory.SmartInitializingSingleton
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.stereotype.Component
 
 /**
  * 混合缓存初始化器
@@ -19,6 +20,7 @@ import org.springframework.beans.factory.annotation.Qualifier
  * @author K
  * @since 1.0.0
  */
+@Component
 class MixCacheInitializing : SmartInitializingSingleton {
 
     @Autowired

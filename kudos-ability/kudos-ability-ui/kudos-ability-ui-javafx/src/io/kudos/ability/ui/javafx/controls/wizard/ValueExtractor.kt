@@ -49,7 +49,7 @@ object ValueExtractor {
      */
     fun getValue(n: Node): Any? {
         var value: Any? = null
-        if (value == null && valueExtractors.containsKey(n.javaClass)) {
+        if (valueExtractors.containsKey(n.javaClass)) {
             val callback = valueExtractors[n.javaClass]!!
             value = callback.call(n)
         }
@@ -57,56 +57,30 @@ object ValueExtractor {
     }
 
     init {
-        addValueExtractor(
-            CheckBox::class.java,
-            Callback<CheckBox, Any> { cb: CheckBox -> cb.isSelected })
-        addValueExtractor(
-            ChoiceBox::class.java,
-            Callback<ChoiceBox<*>, Any> { cb: ChoiceBox<*> -> cb.value })
-        addValueExtractor(
-            ComboBox::class.java,
-            Callback<ComboBox<*>, Any> { cb: ComboBox<*> -> cb.value })
-        addValueExtractor(
-            DatePicker::class.java,
-            Callback<DatePicker, Any> { dp: DatePicker -> dp.value })
-        addValueExtractor(
-            PasswordField::class.java,
-            Callback<PasswordField, Any> { pf: PasswordField -> pf.text })
-        addValueExtractor(
-            RadioButton::class.java,
-            Callback<RadioButton, Any> { rb: RadioButton -> rb.isSelected })
-        addValueExtractor(
-            Slider::class.java,
-            Callback<Slider, Any> { sl: Slider -> sl.value })
-        addValueExtractor(
-            TextArea::class.java,
-            Callback<TextArea, Any> { ta: TextArea -> ta.text })
-        addValueExtractor(
-            TextField::class.java,
-            Callback<TextField, Any> { tf: TextField -> tf.text })
-        addValueExtractor(
-            ListView::class.java,
-            Callback<ListView<*>, Any> { lv: ListView<*> ->
-                val sm = lv.selectionModel
-                if (sm.selectionMode == SelectionMode.MULTIPLE) sm.selectedItems else sm.selectedItem
-            })
-        addValueExtractor(
-            TreeView::class.java,
-            Callback<TreeView<*>, Any> { tv: TreeView<*> ->
-                val sm: MultipleSelectionModel<*> = tv.selectionModel
-                if (sm.selectionMode == SelectionMode.MULTIPLE) sm.selectedItems else sm.selectedItem
-            })
-        addValueExtractor(
-            TableView::class.java,
-            Callback<TableView<*>, Any> { tv: TableView<*> ->
-                val sm: MultipleSelectionModel<*> = tv.selectionModel
-                if (sm.selectionMode == SelectionMode.MULTIPLE) sm.selectedItems else sm.selectedItem
-            })
-        addValueExtractor(
-            TreeTableView::class.java,
-            Callback<TreeTableView<*>, Any> { tv: TreeTableView<*> ->
-                val sm: MultipleSelectionModel<*> = tv.selectionModel
-                if (sm.selectionMode == SelectionMode.MULTIPLE) sm.selectedItems else sm.selectedItem
-            })
+        addValueExtractor(CheckBox::class.java) { cb: CheckBox -> cb.isSelected }
+        addValueExtractor(ChoiceBox::class.java) { cb: ChoiceBox<*> -> cb.value }
+        addValueExtractor(ComboBox::class.java) { cb: ComboBox<*> -> cb.value }
+        addValueExtractor(DatePicker::class.java) { dp: DatePicker -> dp.value }
+        addValueExtractor(PasswordField::class.java) { pf: PasswordField -> pf.text }
+        addValueExtractor(RadioButton::class.java) { rb: RadioButton -> rb.isSelected }
+        addValueExtractor(Slider::class.java) { sl: Slider -> sl.value }
+        addValueExtractor(TextArea::class.java) { ta: TextArea -> ta.text }
+        addValueExtractor(TextField::class.java) { tf: TextField -> tf.text }
+        addValueExtractor(ListView::class.java) { lv: ListView<*> ->
+            val sm = lv.selectionModel
+            if (sm.selectionMode == SelectionMode.MULTIPLE) sm.selectedItems else sm.selectedItem
+        }
+        addValueExtractor(TreeView::class.java) { tv: TreeView<*> ->
+            val sm: MultipleSelectionModel<*> = tv.selectionModel
+            if (sm.selectionMode == SelectionMode.MULTIPLE) sm.selectedItems else sm.selectedItem
+        }
+        addValueExtractor(TableView::class.java) { tv: TableView<*> ->
+            val sm: MultipleSelectionModel<*> = tv.selectionModel
+            if (sm.selectionMode == SelectionMode.MULTIPLE) sm.selectedItems else sm.selectedItem
+        }
+        addValueExtractor(TreeTableView::class.java) { tv: TreeTableView<*> ->
+            val sm: MultipleSelectionModel<*> = tv.selectionModel
+            if (sm.selectionMode == SelectionMode.MULTIPLE) sm.selectedItems else sm.selectedItem
+        }
     }
 }

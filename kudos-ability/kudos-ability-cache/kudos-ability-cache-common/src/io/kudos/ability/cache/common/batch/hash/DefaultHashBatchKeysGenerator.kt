@@ -22,8 +22,7 @@ class DefaultHashBatchKeysGenerator : IKeysGenerator {
         val paramIndexes = getParamIndexes(function, *params)
         // 典型用法：仅一个参数且为 id 集合，直接展开为 key 列表，避免笛卡尔积且避免 JVM 下非 Collection 类型问题
         if (paramIndexes.size == 1) {
-            val single = params[paramIndexes[0]]
-            return when (single) {
+            return when (val single = params[paramIndexes[0]]) {
                 is Collection<*> -> single.map { it.toString() }
                 is Array<*> -> single.map { it.toString() }
                 else -> listOf(single.toString())
@@ -74,17 +73,19 @@ class DefaultHashBatchKeysGenerator : IKeysGenerator {
         for (index in paramIndexes) {
             val it = params[index]
             val parts = mutableListOf<Any>()
-            when {
-                it is Collection<*> && it.isNotEmpty() -> {
+            when (it) {
+                is Collection<*> if it.isNotEmpty() -> {
                     val groupCount = totalCount / it.size
-                    repeat(groupCount) { parts.addAll(it as Collection<Any>) }
+                    repeat(groupCount) { parts.addAll(listOf(it)) }
                 }
-                it is Array<*> && it.isNotEmpty() -> {
+
+                is Array<*> if it.isNotEmpty() -> {
                     val groupCount = totalCount / it.size
-                    repeat(groupCount) { parts.addAll(it as Array<Any>) }
+                    repeat(groupCount) { parts.addAll(listOf(it)) }
                 }
-                it is Collection<*> && it.isEmpty() -> { /* parts 保持空 */ }
-                it is Array<*> && it.isEmpty() -> { /* parts 保持空 */ }
+
+                is Collection<*> -> { /* parts 保持空 */ }
+                is Array<*> -> { /* parts 保持空 */ }
                 else -> repeat(totalCount) { parts.add(it) }
             }
             keys.add(parts)

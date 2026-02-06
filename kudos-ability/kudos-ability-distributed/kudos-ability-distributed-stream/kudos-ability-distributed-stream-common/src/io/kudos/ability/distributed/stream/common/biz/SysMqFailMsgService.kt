@@ -7,7 +7,7 @@ import io.kudos.ability.distributed.stream.common.model.table.SysMqFailMsgs
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
-import org.springframework.beans.factory.annotation.Autowired
+import jakarta.annotation.Resource
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
@@ -21,7 +21,7 @@ open class SysMqFailMsgService :
     BaseCrudService<String, SysMqFailMsg, StreamExceptionMsgDao>(),
     ISysMqFailMsgService {
 
-    @Autowired
+    @Resource
     private lateinit var streamExceptionMsgDao: StreamExceptionMsgDao
 
     /**

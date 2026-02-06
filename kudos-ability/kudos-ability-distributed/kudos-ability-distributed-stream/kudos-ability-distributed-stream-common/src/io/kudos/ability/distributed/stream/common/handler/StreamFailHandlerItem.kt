@@ -8,7 +8,7 @@ object StreamFailHandlerItem {
     private val STREAM_HANDLER = mutableMapOf<String, IStreamFailHandler>()
 
     fun put(bindName: String, listener: IStreamFailHandler) {
-        STREAM_HANDLER.put(bindName, listener)
+        STREAM_HANDLER[bindName] = listener
     }
 
     fun hasFailedHandler(bindName: String?): Boolean {
@@ -18,7 +18,7 @@ object StreamFailHandlerItem {
     fun get(bindName: String): IStreamFailHandler? {
         //没有设置，则用默认的实现
         if (!STREAM_HANDLER.containsKey(bindName)) {
-            return STREAM_HANDLER.get(IStreamFailHandler.Companion.DEFAULT_BIND_NAME)
+            return STREAM_HANDLER.get(IStreamFailHandler.DEFAULT_BIND_NAME)
         }
         return STREAM_HANDLER.get(bindName)
     }

@@ -11,7 +11,7 @@ abstract class AbstractDownLoadService : IDownLoadService {
         try {
             return readFileToByte(downloadFileModel)
         } catch (e: Exception) {
-            LOG.error(e)
+            log.error(e)
             throw e
         }
     }
@@ -21,7 +21,7 @@ abstract class AbstractDownLoadService : IDownLoadService {
         try {
             return readFileToStream(downloadFileModel)
         } catch (e: Exception) {
-            LOG.error(e)
+            log.error(e)
             throw e
         }
     }
@@ -30,6 +30,6 @@ abstract class AbstractDownLoadService : IDownLoadService {
 
     protected abstract fun readFileToStream(downloadFileModel: DownloadFileModel<*>): InputStream?
 
-    private val LOG = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this)
 
 }

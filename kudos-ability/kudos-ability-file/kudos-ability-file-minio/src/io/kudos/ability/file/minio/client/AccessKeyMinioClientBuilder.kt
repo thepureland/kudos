@@ -2,7 +2,6 @@ package io.kudos.ability.file.minio.client
 
 import io.kudos.ability.file.common.auth.AccessKeyServerParam
 import io.kudos.ability.file.minio.init.properties.MinioProperties
-import io.kudos.base.logger.LogFactory
 import io.minio.MinioClient
 import java.net.URI
 
@@ -32,7 +31,5 @@ class AccessKeyMinioClientBuilder : MinioClientBuilder<AccessKeyServerParam> {
     override fun setAuthServerParam(authServerParam: AccessKeyServerParam) {
         this.authServerParam = authServerParam
     }
-
-    private val LOG = LogFactory.getLog(this)
 
 }

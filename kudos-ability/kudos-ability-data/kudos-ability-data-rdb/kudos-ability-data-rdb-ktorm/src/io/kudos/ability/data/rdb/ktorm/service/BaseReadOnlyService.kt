@@ -20,7 +20,7 @@ import kotlin.reflect.KClass
  */
 open class BaseReadOnlyService<PK : Any, E : IDbEntity<PK, E>, DAO : BaseReadOnlyDao<PK, E, *>> : IBaseReadOnlyService<PK, E> {
 
-    @Autowired
+    @Autowired //!!! 不能改为 @Resource
     protected lateinit var dao: DAO
 
     override fun get(id: PK): E? = dao.get(id)

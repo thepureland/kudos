@@ -4,8 +4,6 @@ import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
 import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.query.Criteria
-import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.ms.user.core.dao.UserOrgUserDao
 import io.kudos.ms.user.core.model.po.UserOrgUser
 import org.springframework.beans.factory.annotation.Autowired
@@ -45,14 +43,8 @@ open class UserIdsByOrgIdCache : AbstractKeyValueCacheHandler<List<String>>() {
             return
         }
 
-        // 加载所有机构-用户关系，按机构分组
-        @Suppress("UNCHECKED_CAST")
-        val allOrgUsers = userOrgUserDao.allSearch()
-        val orgIdAndUserIdsMap = allOrgUsers
-            .groupBy { it.orgId }
-            .mapValues { entry -> entry.value.map { it.userId } }
-
-        log.debug("从数据库加载了${allOrgUsers.size}条机构-用户关系信息。")
+        val orgIdAndUserIdsMap = userOrgUserDao.getAllOrgIdToUserIdsForCache()
+        log.debug("从数据库加载了机构-用户关系分组${orgIdAndUserIdsMap.size}。")
 
         // 清除缓存
         if (clear) {
@@ -82,11 +74,9 @@ open class UserIdsByOrgIdCache : AbstractKeyValueCacheHandler<List<String>>() {
             log.debug("缓存中不存在机构${orgId}的用户ID，从数据库中加载...")
         }
 
-        val criteria = Criteria(UserOrgUser::orgId.name, OperatorEnum.EQ, orgId)
-        val userIds = userOrgUserDao.searchProperty(criteria, UserOrgUser::userId.name)
+        val userIds = userOrgUserDao.getUserIdsByOrgId(orgId)
         log.debug("从数据库加载了机构${orgId}的${userIds.size}条用户ID。")
-        @Suppress("UNCHECKED_CAST")
-        return userIds as List<String>
+        return userIds
     }
 
     /**

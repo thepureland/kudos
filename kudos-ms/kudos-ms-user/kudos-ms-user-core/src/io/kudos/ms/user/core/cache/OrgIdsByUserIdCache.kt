@@ -3,12 +3,8 @@ package io.kudos.ms.user.core.cache
 import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
 import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.query.Criteria
-import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.ms.user.core.dao.UserAccountDao
 import io.kudos.ms.user.core.dao.UserOrgUserDao
-import io.kudos.ms.user.core.model.po.UserAccount
-import io.kudos.ms.user.core.model.po.UserOrgUser
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
@@ -49,18 +45,10 @@ open class OrgIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() {
             return
         }
 
-        // 加载所有active=true的用户
-        val userCriteria = Criteria(UserAccount::active.name, OperatorEnum.EQ, true)
-        val users = userAccountDao.search(userCriteria)
-        
-        // 加载所有机构-用户关系
-        @Suppress("UNCHECKED_CAST")
-        val allOrgUsers = userOrgUserDao.allSearch()
-        val userIdToOrgIdsMap = allOrgUsers
-            .groupBy { it.userId }
-            .mapValues { entry -> entry.value.map { it.orgId } }
+        val users = userAccountDao.getActiveUsersForCache()
+        val userIdToOrgIdsMap = userOrgUserDao.getAllUserIdToOrgIdsForCache()
 
-        log.debug("从数据库加载了${users.size}条用户、${allOrgUsers.size}条机构-用户关系。")
+        log.debug("从数据库加载了${users.size}条用户、机构-用户关系分组${userIdToOrgIdsMap.size}。")
 
         // 清除缓存
         if (clear) {
@@ -93,12 +81,9 @@ open class OrgIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() {
             log.debug("缓存中不存在用户${userId}的机构ID，从数据库中加载...")
         }
 
-        val orgUserCriteria = Criteria(UserOrgUser::userId.name, OperatorEnum.EQ, userId)
-        val orgIds = userOrgUserDao.searchProperty(orgUserCriteria, UserOrgUser::orgId.name)
-        
+        val orgIds = userOrgUserDao.getOrgIdsByUserId(userId)
         log.debug("从数据库加载了用户${userId}的${orgIds.size}条机构ID。")
-        @Suppress("UNCHECKED_CAST")
-        return orgIds as List<String>
+        return orgIds
     }
 
     /**

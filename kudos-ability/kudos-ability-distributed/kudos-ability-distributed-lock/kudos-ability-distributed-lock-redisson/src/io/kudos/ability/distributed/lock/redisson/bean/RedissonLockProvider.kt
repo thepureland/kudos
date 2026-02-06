@@ -12,7 +12,7 @@ import java.util.concurrent.locks.Lock
  */
 class RedissonLockProvider : ILockProvider<RLock> {
     
-    override fun lock(key: String): RLock? {
+    override fun lock(key: String): RLock {
         return RedissonLockKit.lock(key)
     }
 

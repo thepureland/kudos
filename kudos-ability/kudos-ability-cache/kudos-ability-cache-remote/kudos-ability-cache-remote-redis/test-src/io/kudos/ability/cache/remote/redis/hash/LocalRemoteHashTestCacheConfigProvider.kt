@@ -36,7 +36,7 @@ class LocalRemoteHashTestCacheConfigProvider : ICacheConfigProvider {
         writeInTime = true
     }
 
-    override fun getCacheConfig(name: String): CacheConfig? {
+    override fun getCacheConfig(name: String): CacheConfig {
         if (name == "testHash") return hashCacheConfig
         if (name == "testHashWithTime") return hashWithTimeCacheConfig
         return delegate.getCacheConfig(name)

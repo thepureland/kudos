@@ -74,11 +74,13 @@ open class SqlTestBase {
     protected open fun getTestDataSqlPath(): String {
         val rdbType = RdbKit.determineRdbTypeByDataSource(dataSource)
         val sqlFilename = getTestClassName()
-        val files = ClassPathScanner.scanForResources("sql/${rdbType.name.lowercase()}", sqlFilename, "sql")
+        val parentPath = "sql/${rdbType.name.lowercase()}"
+        val fullSqlFilename = "$parentPath/${sqlFilename}.sql"
+        val files = ClassPathScanner.scanForResources(parentPath, sqlFilename, "sql")
         return if (files.isNotEmpty()) {
             files.first().location!!
         } else {
-            throw IllegalStateException("测试数据SQL文件不存在: ${sqlFilename}.sql")
+            throw IllegalStateException("测试数据SQL文件不存在: $fullSqlFilename")
         }
     }
 

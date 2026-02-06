@@ -29,7 +29,11 @@ object HashCacheKit {
      * @throws IllegalStateException 当 MixHashCacheManager 不可用或该 cacheName 未配置（需在配置中增加名为 cacheName 的项）时
      */
     fun getHashCache(cacheName: String): IHashCache {
-        val manager = SpringKit.getBean("mixHashCacheManager") as MixHashCacheManager
+        val manager = SpringKit.getBeanOrNull("mixHashCacheManager") as MixHashCacheManager?
+            ?: throw IllegalStateException(
+                "MixHashCacheManager 不可用（缓存未启用或测试未继承 RdbAndRedisCacheTestBase 等启用缓存的基类）。" +
+                    " 请检查 kudos.ability.cache.enabled 或测试上下文。"
+            )
         return manager.getHashCache(cacheName)
             ?: throw IllegalStateException("Hash 缓存未配置: 请在缓存配置表sys_cache中增加名为 [$cacheName]的配置项")
     }

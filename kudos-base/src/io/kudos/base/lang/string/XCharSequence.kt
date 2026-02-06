@@ -542,7 +542,7 @@ fun CharSequence.mid(pos: Int, len: Int): String? = StringUtils.mid(this.toStrin
  * @author K
  * @since 1.0.0
  */
-fun CharSequence.substringBetween(tag: String): String? = StringUtils.substringBetween(this.toString(), tag) ?: ""
+fun CharSequence.substringBetween(tag: String): String = StringUtils.substringBetween(this.toString(), tag) ?: ""
 
 /**
  * 从字符串中获取嵌在字符串 open 和 close 中间的子串，返回第一次匹配的结果

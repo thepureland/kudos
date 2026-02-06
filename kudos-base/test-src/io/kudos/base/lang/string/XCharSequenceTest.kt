@@ -62,7 +62,7 @@ internal class XCharSequenceTest {
 
     @Test
     fun fillTemplate() {
-        val tmpl = "\${param1} \${param2}$\${param1}"
+        val tmpl = $$$"${param1} ${param2}$${param1}"
         val paramMap = mapOf("param1" to "1", "param2" to "2")
         assertEquals("1 2$1", tmpl.fillTemplateByObjectMap(paramMap))
     }

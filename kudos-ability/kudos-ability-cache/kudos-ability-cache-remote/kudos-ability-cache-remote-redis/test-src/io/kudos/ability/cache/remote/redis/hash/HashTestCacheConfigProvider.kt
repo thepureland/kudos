@@ -26,7 +26,7 @@ class HashTestCacheConfigProvider : ICacheConfigProvider {
         writeInTime = true
     }
 
-    override fun getCacheConfig(name: String): CacheConfig? {
+    override fun getCacheConfig(name: String): CacheConfig {
         if (name == "testHash") return hashCacheConfig
         return delegate.getCacheConfig(name)
     }

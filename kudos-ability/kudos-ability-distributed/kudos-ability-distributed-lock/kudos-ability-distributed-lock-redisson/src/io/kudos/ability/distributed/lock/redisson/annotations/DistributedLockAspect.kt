@@ -159,7 +159,7 @@ class DistributedLockAspect {
         val annotation = signature.method.getAnnotation(DistributedLock::class.java)
         val kudosContext = KudosContextHolder.get()
         val tenantId = kudosContext.tenantId
-        if (annotation.key.isNullOrBlank()) {
+        if (annotation.key.isBlank()) {
             val classNme = joinPoint.target.javaClass.getName()
             val methodName = signature.method.name
             var paramType = ""

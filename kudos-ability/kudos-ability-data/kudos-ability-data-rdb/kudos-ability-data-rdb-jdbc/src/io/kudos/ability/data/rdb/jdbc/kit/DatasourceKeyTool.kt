@@ -7,7 +7,7 @@ object DatasourceKeyTool {
     private const val SEPERATOR = "::"
     const val SERVER_CODE_DEFAULT: String = "default"
 
-    fun convertCacheMapKey(dsKeyConfig: String, tenantId: String?, suffix: String?): String? {
+    fun convertCacheMapKey(dsKeyConfig: String, tenantId: String?, suffix: String?): String {
         if (!dsKeyConfig.contains(SEPERATOR)) {
             return listOf(dsKeyConfig, SERVER_CODE_DEFAULT, tenantId, suffix).joinToString(SEPERATOR)
         }

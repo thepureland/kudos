@@ -3,7 +3,7 @@ package io.kudos.ability.data.rdb.flyway
 import io.kudos.ability.data.rdb.flyway.multidatasource.FlywayMultiDataSourceMigrator
 import io.kudos.ability.data.rdb.jdbc.datasource.DsContextProcessor
 import io.kudos.test.common.init.EnableKudosTest
-import org.springframework.beans.factory.annotation.Autowired
+import jakarta.annotation.Resource
 import java.sql.Connection
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -18,10 +18,10 @@ import kotlin.test.assertFailsWith
 @EnableKudosTest
 class FlywayTest {
 
-    @Autowired
+    @Resource
     private lateinit var migrator: FlywayMultiDataSourceMigrator
 
-    @Autowired
+    @Resource
     private lateinit var dsContextProcessor: DsContextProcessor
 
 

@@ -37,6 +37,42 @@ open class UserOrgUserDao : BaseCrudDao<String, UserOrgUser, UserOrgUsers>() {
         return count(criteria) > 0
     }
 
+    /**
+     * 按用户ID查询其所属机构ID列表（供 OrgIdsByUserIdCache 使用）
+     */
+    fun getOrgIdsByUserId(userId: String): List<String> {
+        val criteria = Criteria(UserOrgUser::userId.name, OperatorEnum.EQ, userId)
+        @Suppress("UNCHECKED_CAST")
+        return searchProperty(criteria, UserOrgUser::orgId.name) as List<String>
+    }
+
+    /**
+     * 按机构ID查询其下用户ID列表（供 UserIdsByOrgIdCache 使用）
+     */
+    fun getUserIdsByOrgId(orgId: String): List<String> {
+        val criteria = Criteria(UserOrgUser::orgId.name, OperatorEnum.EQ, orgId)
+        @Suppress("UNCHECKED_CAST")
+        return searchProperty(criteria, UserOrgUser::userId.name) as List<String>
+    }
+
+    /**
+     * 全量机构-用户关系，按用户ID分组为「用户ID -> 机构ID列表」（供 OrgIdsByUserIdCache.reloadAll）
+     */
+    fun getAllUserIdToOrgIdsForCache(): Map<String, List<String>> {
+        @Suppress("UNCHECKED_CAST")
+        val all = allSearch() as List<UserOrgUser>
+        return all.groupBy { it.userId }.mapValues { (_, list) -> list.map { it.orgId } }
+    }
+
+    /**
+     * 全量机构-用户关系，按机构ID分组为「机构ID -> 用户ID列表」（供 UserIdsByOrgIdCache.reloadAll）
+     */
+    fun getAllOrgIdToUserIdsForCache(): Map<String, List<String>> {
+        @Suppress("UNCHECKED_CAST")
+        val all = allSearch() as List<UserOrgUser>
+        return all.groupBy { it.orgId }.mapValues { (_, list) -> list.map { it.userId } }
+    }
+
     //endregion your codes 2
 
 }

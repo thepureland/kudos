@@ -85,7 +85,7 @@ class StreamConsumerEnvironRegistrar : ImportBeanDefinitionRegistrar, Environmen
         val locations = YamlPropertySourceFactory.allSourcePath()
         val loader = YamlPropertySourceLoader()
 
-        val allDefs = java.util.LinkedHashSet<String?>()
+        val allDefs = LinkedHashSet<String?>()
         // 默认配置
         val defaultProperty = env.getProperty(KEY)
         if (!defaultProperty.isNullOrBlank()) {

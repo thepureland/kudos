@@ -74,13 +74,12 @@ class TenantCacheKeyGenerator : KeyGenerator {
      * @return 生成的缓存key（包含租户ID）
      */
     fun generalNormalKey(target: Any, method: Method, key: String, vararg params: Any?): Any {
-        var key = key
-        if (key.isNotBlank()) {
-            key = "#tenantId.concat('::').concat($key)"
+        val keyStr = if (key.isNotBlank()) {
+            "#tenantId.concat('::').concat($key)"
         } else {
-            key = "#tenantId"
+            "#tenantId"
         }
-        return generateKey(target, method, key, *params)
+        return generateKey(target, method, keyStr, *params)
     }
 
     /**

@@ -34,7 +34,7 @@ internal class LocalCacheTest {
     @Qualifier("mixCacheManager")
     private lateinit var mixCacheManager: MixCacheManager
 
-    private val CACHE_NAME = "test"
+    private val cacheName = "test"
 
     companion object {
 
@@ -49,9 +49,9 @@ internal class LocalCacheTest {
 
     @Test
     fun testLocalCache() {
-        val localCache = localCacheManager.getCache(CACHE_NAME)
+        val localCache = localCacheManager.getCache(cacheName)
         assert(localCache != null)
-        val mixCache = mixCacheManager.getCache(CACHE_NAME)
+        val mixCache = mixCacheManager.getCache(cacheName)
         assert(mixCache != null)
 
         val latch = CountDownLatch(1)

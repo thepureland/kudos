@@ -19,13 +19,13 @@ internal class PropertyResolverTest {
         assertEquals("name", PropertyResolver.toPot("name"))
         assertEquals("user.name", PropertyResolver.toPot("user_name"))
         assertEquals("user.name", PropertyResolver.toPot("user.name"))
-        assertEquals("name", PropertyResolver.toPot("\$name"))
-        assertEquals("name[]", PropertyResolver.toPot("\$\$name"))
+        assertEquals("name", PropertyResolver.toPot($$"$name"))
+        assertEquals("name[]", PropertyResolver.toPot($$$"$$name"))
     }
 
     @Test
     fun testToPotWithArray() {
-        assertEquals("users[]", PropertyResolver.toPot("\$\$users"))
+        assertEquals("users[]", PropertyResolver.toPot($$$"$$users"))
         assertEquals("users[0]", PropertyResolver.toPot("users[0]"))
     }
 
@@ -62,15 +62,15 @@ internal class PropertyResolverTest {
 
     @Test
     fun testToUnderline() {
-        assertEquals("\$name", PropertyResolver.toUnderline("name"))
+        assertEquals($$"$name", PropertyResolver.toUnderline("name"))
         assertEquals("user_name", PropertyResolver.toUnderline("user.name"))
         assertEquals("user_name", PropertyResolver.toUnderline("user_name"))
     }
 
     @Test
     fun testToUnderlineWithArray() {
-        assertEquals("\$\$users", PropertyResolver.toUnderline("users[0]"))
-        assertEquals("\$\$users", PropertyResolver.toUnderline("users[1]"))
+        assertEquals($$$"$$users", PropertyResolver.toUnderline("users[0]"))
+        assertEquals($$$"$$users", PropertyResolver.toUnderline("users[1]"))
         assertEquals("users[0].name", PropertyResolver.toUnderline("users[0].name"))
     }
 

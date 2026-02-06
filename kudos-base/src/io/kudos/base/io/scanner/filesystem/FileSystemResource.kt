@@ -32,7 +32,7 @@ class FileSystemResource(location: String) : Resource, Comparable<FileSystemReso
     /**
      * @return The location of the resource on the classpath.
      */
-    override val location: String?
+    override val location: String
         get() {
             var path = loc.path.replace("\\", "/")
             if (!path.startsWith("/")) {

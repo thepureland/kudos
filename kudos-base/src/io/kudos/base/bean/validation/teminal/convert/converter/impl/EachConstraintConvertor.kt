@@ -11,7 +11,7 @@ import io.kudos.base.bean.validation.constraint.validator.ConstraintsValidator
  */
 class EachConstraintConvertor(annotation: Annotation) : DefaultConstraintConvertor(annotation) {
 
-    public override fun getRule(constraintAnnotation: Annotation): LinkedHashMap<String, Any> {
+    override fun getRule(constraintAnnotation: Annotation): LinkedHashMap<String, Any> {
         val map = linkedMapOf<String, Any>()
         constraintAnnotation as Each
         val annotations = ConstraintsValidator.getAnnotations(constraintAnnotation.value)

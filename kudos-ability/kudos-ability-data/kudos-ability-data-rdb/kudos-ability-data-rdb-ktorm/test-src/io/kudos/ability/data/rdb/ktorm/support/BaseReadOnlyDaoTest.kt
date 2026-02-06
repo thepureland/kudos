@@ -12,8 +12,8 @@ import io.kudos.base.query.sort.Order
 import io.kudos.base.support.payload.ListSearchPayload
 import io.kudos.base.support.payload.SearchPayload
 import io.kudos.test.common.init.EnableKudosTest
+import jakarta.annotation.Resource
 import org.ktorm.dsl.eq
-import org.springframework.beans.factory.annotation.Autowired
 import java.time.LocalDateTime
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -27,7 +27,7 @@ import kotlin.test.assertEquals
 @EnableKudosTest
 internal open class BaseReadOnlyDaoTest {
 
-    @Autowired
+    @Resource
     private lateinit var testTableDao: TestTableKtormDao
 
 
@@ -360,7 +360,7 @@ internal open class BaseReadOnlyDaoTest {
 
     private fun isSupportPaging(): Boolean { // h2可以用PostgreSqlDialect来实现分页
         val dialect = RdbKit.getDatabase().dialect
-        return !dialect::class.java.name.contains("SqlDialectKt\$detectDialectImplementation\$1")
+        return !dialect::class.java.name.contains($$"SqlDialectKt$detectDialectImplementation$1")
     }
     //endregion pagingSearch
 

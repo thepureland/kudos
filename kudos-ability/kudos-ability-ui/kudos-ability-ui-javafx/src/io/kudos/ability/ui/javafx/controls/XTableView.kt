@@ -21,7 +21,7 @@ import javafx.scene.control.TableView
  *
  * @author K
  */
-class XTableView<S> : TableView<S>() {
+open class XTableView<S> : TableView<S>() {
 
     fun terminateEdit() {
         if (!editing) {

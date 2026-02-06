@@ -4,7 +4,7 @@ import io.kudos.base.time.toLocalDateTime
 import io.kudos.test.common.init.EnableKudosTest
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.container.containers.RedisTestContainer
-import org.springframework.beans.factory.annotation.Autowired
+import jakarta.annotation.Resource
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
@@ -24,7 +24,7 @@ import kotlin.test.assertEquals
 @EnabledIfDockerInstalled
 internal class RedisTemplateTest {
 
-    @Autowired
+    @Resource
     private lateinit var redisTemplate: RedisTemplate<Any, Any?>
 
     @Test

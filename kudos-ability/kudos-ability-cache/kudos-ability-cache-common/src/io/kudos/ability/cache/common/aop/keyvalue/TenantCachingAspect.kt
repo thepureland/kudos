@@ -10,6 +10,7 @@ import org.aspectj.lang.annotation.Pointcut
 import org.aspectj.lang.reflect.MethodSignature
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Lazy
+import org.springframework.stereotype.Component
 import java.lang.reflect.Method
 
 /**
@@ -45,7 +46,9 @@ import java.lang.reflect.Method
  */
 @Aspect
 @Lazy(false)
+@Component
 class TenantCachingAspect {
+
     @Autowired
     private val cacheManager: MixCacheManager? = null
 
@@ -53,7 +56,7 @@ class TenantCachingAspect {
     private val tenantCacheKeyGenerator: TenantCacheKeyGenerator? = null
 
     @Pointcut("@annotation(io.kudos.ability.cache.common.aop.keyvalue.TenantCaching)")
-    private fun cut() {
+    fun cut() {
     }
 
     /**
@@ -90,13 +93,13 @@ class TenantCachingAspect {
             }
         }
         val result = pjp.proceed()
-        TransactionTool.doAfterTransactionCommit(Runnable {
+        TransactionTool.doAfterTransactionCommit {
             try {
                 doAfterEvict(pjp, multicast, target, method, args)
             } catch (e: Throwable) {
                 throw RuntimeException(e)
             }
-        })
+        }
         return result
     }
 

@@ -8,6 +8,7 @@ import org.springframework.boot.web.server.servlet.ServletWebServerFactory
 import org.springframework.boot.web.servlet.ServletContextInitializer
 import org.springframework.context.annotation.Primary
 import org.springframework.core.env.Environment
+import org.springframework.core.env.getProperty
 import org.springframework.stereotype.Component
 
 /**
@@ -37,7 +38,7 @@ class SwitchingServletWebServerFactory(
         } catch (ex: IllegalArgumentException) {
             ServletServerEnum.TOMCAT
         }
-        val port = env.getProperty("server.port", Int::class.java, 8080)
+        val port = env.getProperty<Int>("server.port", 8080)
         val contextPath = env.getProperty("server.servlet.context-path", "")
 
         // 2. 创建具体工厂

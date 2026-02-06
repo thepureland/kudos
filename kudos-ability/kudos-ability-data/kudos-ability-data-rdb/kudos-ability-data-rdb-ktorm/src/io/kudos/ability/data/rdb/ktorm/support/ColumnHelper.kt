@@ -50,6 +50,7 @@ object ColumnHelper {
                     }
                 }
 
+                @Suppress("KotlinConstantConditions")
                 if (column == null) { //!!! 编译器提示条件总是成立的话，是错误的
                     if (propertyName == "id") {
                         val pk = table.primaryKeys.firstOrNull()

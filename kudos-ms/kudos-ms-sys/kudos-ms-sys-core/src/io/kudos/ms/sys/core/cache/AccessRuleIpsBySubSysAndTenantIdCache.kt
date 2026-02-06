@@ -229,7 +229,7 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
     }
 
     private fun mapToCacheItems(ruleIpRecords: List<SysAccessRuleIpRecord>): List<SysAccessRuleIpCacheItem> {
-        return ruleIpRecords.map { it ->
+        return ruleIpRecords.map {
             SysAccessRuleIpCacheItem().apply {
                 id = it.id
                 ipStart = it.ipStart

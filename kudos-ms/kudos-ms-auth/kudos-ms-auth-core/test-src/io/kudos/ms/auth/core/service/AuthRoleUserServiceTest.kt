@@ -36,7 +36,7 @@ class AuthRoleUserServiceTest : RdbAndRedisCacheTestBase() {
     fun getRoleIdsByUserId() {
         val userId = "7817d37f-0000-0000-0000-000000000040"
         val roleIds = authRoleUserService.getRoleIdsByUserId(userId)
-        assertTrue(roleIds.size >= 1)
+        assertTrue(roleIds.isNotEmpty())
         assertTrue(roleIds.contains("7817d37f-0000-0000-0000-000000000043"))
     }
 

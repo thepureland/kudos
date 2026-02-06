@@ -61,7 +61,7 @@ object WireMockTestContainer {
     fun main(args: Array<String>?) {
         startIfNeeded(null)
         println("WireMock localhost port: ${container.firstMappedPort}")
-        Thread.sleep(Long.Companion.MAX_VALUE)
+        Thread.sleep(Long.MAX_VALUE)
     }
 
 }

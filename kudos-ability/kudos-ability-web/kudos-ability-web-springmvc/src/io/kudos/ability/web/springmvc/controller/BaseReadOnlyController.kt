@@ -6,7 +6,7 @@ import io.kudos.base.support.iservice.IBaseReadOnlyService
 import io.kudos.base.support.payload.FormPayload
 import io.kudos.base.support.payload.ListSearchPayload
 import io.kudos.base.support.result.IJsonResult
-import org.springframework.beans.factory.annotation.Autowired
+import jakarta.annotation.Resource
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -27,7 +27,7 @@ import kotlin.reflect.KClass
 open class BaseReadOnlyController<PK : Any, B : IBaseReadOnlyService<PK, *>, S : ListSearchPayload, R : IJsonResult, D : IJsonResult, F : FormPayload<PK>>
     : BaseController<F>() {
 
-    @Autowired
+    @Resource
     protected lateinit var biz: B
 
     private var resultClass: KClass<F>? = null

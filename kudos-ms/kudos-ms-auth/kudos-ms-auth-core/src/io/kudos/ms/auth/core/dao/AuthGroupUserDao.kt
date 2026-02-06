@@ -67,6 +67,30 @@ open class AuthGroupUserDao : BaseCrudDao<String, AuthGroupUser, AuthGroupUsers>
         return groupIds.toSet()
     }
 
+    /** 按用户ID查询用户组ID列表（供 GroupIdsByUserIdCache 使用） */
+    fun getGroupIdsByUserId(userId: String): List<String> = searchGroupIdsByUserId(userId).toList()
+
+    /** 全量用户组-用户关系，按用户ID分组为「用户ID -> 用户组ID列表」（供 GroupIdsByUserIdCache.reloadAll） */
+    fun getAllUserIdToGroupIdsForCache(): Map<String, List<String>> {
+        @Suppress("UNCHECKED_CAST")
+        val all = allSearch() as List<AuthGroupUser>
+        return all.groupBy { it.userId }.mapValues { (_, list) -> list.map { it.groupId } }
+    }
+
+    /** 按用户组ID查询用户ID列表（供 UserIdsByGroupIdCache 使用） */
+    fun getUserIdsByGroupId(groupId: String): List<String> {
+        val criteria = Criteria(AuthGroupUser::groupId.name, OperatorEnum.EQ, groupId)
+        @Suppress("UNCHECKED_CAST")
+        return searchProperty(criteria, AuthGroupUser::userId.name) as List<String>
+    }
+
+    /** 全量用户组-用户关系，按用户组ID分组为「用户组ID -> 用户ID列表」（供 UserIdsByGroupIdCache.reloadAll） */
+    fun getAllGroupIdToUserIdsForCache(): Map<String, List<String>> {
+        @Suppress("UNCHECKED_CAST")
+        val all = allSearch() as List<AuthGroupUser>
+        return all.groupBy { it.groupId }.mapValues { (_, list) -> list.map { it.userId } }
+    }
+
     //endregion your codes 2
 
 }

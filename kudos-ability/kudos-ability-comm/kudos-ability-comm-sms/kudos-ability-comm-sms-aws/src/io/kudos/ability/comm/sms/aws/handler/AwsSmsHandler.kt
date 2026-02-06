@@ -5,7 +5,7 @@ import io.kudos.ability.comm.sms.aws.model.AwsSmsCallBackParam
 import io.kudos.ability.comm.sms.aws.model.AwsSmsRequest
 import io.kudos.base.logger.LogFactory
 import jakarta.annotation.PostConstruct
-import org.springframework.beans.factory.annotation.Autowired
+import jakarta.annotation.Resource
 import org.springframework.beans.factory.annotation.Value
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
@@ -29,11 +29,11 @@ import java.net.URI
  */
 class AwsSmsHandler {
 
-    @Autowired
+    @Resource
     private lateinit var proxyProperties: SmsAwsProxyProperties
 
     /** 可选：覆盖 SNS 终端。生产留空；测试注入 http://host:port */
-    @Value("\${kudos.ability.comm.sms.aws.endpoint}")
+    @Value($$"${kudos.ability.comm.sms.aws.endpoint}")
     private lateinit var endpointOverride: String
 
     /**

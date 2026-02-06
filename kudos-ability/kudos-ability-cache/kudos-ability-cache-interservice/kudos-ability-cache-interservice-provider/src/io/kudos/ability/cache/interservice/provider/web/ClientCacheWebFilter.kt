@@ -13,7 +13,7 @@ import jakarta.servlet.http.HttpServletResponse
  */
 class ClientCacheWebFilter : Filter {
 
-    public override fun doFilter(
+    override fun doFilter(
         servletRequest: ServletRequest?,
         servletResponse: ServletResponse?,
         filterChain: FilterChain

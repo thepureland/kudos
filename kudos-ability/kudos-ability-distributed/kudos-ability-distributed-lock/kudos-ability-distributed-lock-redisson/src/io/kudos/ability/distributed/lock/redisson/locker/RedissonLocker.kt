@@ -107,13 +107,11 @@ class RedissonLocker : ILocker<RLock> {
         leaseTime: Long
     ): Boolean {
         val lock: RLock = this.redissonClient.getLock(lockKey)
-        var result: Boolean
-        try {
-            result = lock.tryLock(timeOut, leaseTime, unit)
-        } catch (var8: java.lang.InterruptedException) {
-            result = false
+        return try {
+            lock.tryLock(timeOut, leaseTime, unit)
+        } catch (_: InterruptedException) {
+            false
         }
-        return result
     }
 
     /**

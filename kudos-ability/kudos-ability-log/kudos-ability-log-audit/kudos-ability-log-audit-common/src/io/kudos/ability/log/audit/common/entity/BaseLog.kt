@@ -155,7 +155,7 @@ class BaseLog : Serializable {
      */
     fun addParam(param: String?): BaseLog {
         if (this.stringParams == null) {
-            this.stringParams = ArrayList<String?>()
+            this.stringParams = ArrayList()
         }
         this.stringParams!!.add(param)
         return this
@@ -169,9 +169,9 @@ class BaseLog : Serializable {
      */
     fun addParam(param: String?, value: Any?): BaseLog {
         if (this.objectParams == null) {
-            this.objectParams = HashMap<String?, LogParamVo?>()
+            this.objectParams = HashMap()
         }
-        this.objectParams!!.put(param, LogParamVo(param, value))
+        this.objectParams!![param] = LogParamVo(param, value)
         return this
     }
 
@@ -184,7 +184,7 @@ class BaseLog : Serializable {
         if (this.objectParams == null) {
             this.objectParams = HashMap()
         }
-        this.objectParams!!.put(param.name, param)
+        this.objectParams!![param.name] = param
         return this
     }
 

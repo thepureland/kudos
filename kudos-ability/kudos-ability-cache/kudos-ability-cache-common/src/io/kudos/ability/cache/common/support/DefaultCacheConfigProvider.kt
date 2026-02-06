@@ -29,9 +29,9 @@ class DefaultCacheConfigProvider(itemsProperties: CacheItemsProperties) : ICache
             if (cacheItemStr.isNotBlank()) {
                 val cacheConfig = cacheItemToConfig(cacheItemStr)
                 if (!cacheConfigs.containsKey(cacheConfig.strategy)) {
-                    cacheConfigs.put(cacheConfig.strategy!!, HashMap())
+                    cacheConfigs[cacheConfig.strategy!!] = HashMap()
                 }
-                cacheConfigs[cacheConfig.strategy]!!.put(cacheConfig.name!!, cacheConfig)
+                cacheConfigs[cacheConfig.strategy]!![cacheConfig.name!!] = cacheConfig
             }
         }
     }
@@ -57,7 +57,7 @@ class DefaultCacheConfigProvider(itemsProperties: CacheItemsProperties) : ICache
         val result = mutableMapOf<String, CacheConfig>()
         for (entry in cacheConfigs.entries) {
             for (entry1 in entry.value.entries) {
-                result.put(entry1.key, entry1.value)
+                result[entry1.key] = entry1.value
             }
         }
         return result

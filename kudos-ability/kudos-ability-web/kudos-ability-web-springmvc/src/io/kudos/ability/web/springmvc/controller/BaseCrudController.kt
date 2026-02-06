@@ -28,7 +28,6 @@ open class BaseCrudController<PK : Any, B : IBaseCrudService<PK, *>, S : ListSea
      * 保存或更新记录
      *
      * @param payload 表单实体
-     * @param bindingResult spring mvc 绑定结果对象 (表单校验用)
      * @return WebResult(主键)
      * @author K
      * @since 1.0.0

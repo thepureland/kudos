@@ -8,7 +8,7 @@ package io.kudos.base.bean.validation.teminal.convert.converter.impl
  */
 class RemoteConstraintConvertor(annotation: Annotation) : DefaultConstraintConvertor(annotation) {
 
-    public override fun getRule(constraintAnnotation: Annotation): LinkedHashMap<String, Any> {
+    override fun getRule(constraintAnnotation: Annotation): LinkedHashMap<String, Any> {
         val map = super.getRule(constraintAnnotation)
         map.remove("checkClass")
         return map

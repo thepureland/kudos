@@ -79,10 +79,10 @@ class ResourceIdsByTenantIdAndUsernameCacheTest : RdbAndRedisCacheTestBase() {
         cacheHandler.syncOnUserUpdate(oldTenantId, oldUsername, newTenantId, newUsername)
         
         // 验证旧缓存已被清除，新缓存可以获取数据
-        val resourceIdsOld = cacheHandler.getResourceIds(oldTenantId, oldUsername)
+//        val resourceIdsOld = cacheHandler.getResourceIds(oldTenantId, oldUsername)
         val resourceIdsNew = cacheHandler.getResourceIds(newTenantId, newUsername)
         // 旧缓存应该被清除，新缓存应该能获取到数据（资源关系不变，只是用户名变了）
-        _root_ide_package_.kotlin.test.assertEquals(
+        assertEquals(
             resourceIdsBefore.size,
             resourceIdsNew.size,
             "新用户名应该能获取到相同的资源列表"

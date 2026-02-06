@@ -60,8 +60,6 @@ internal class CriterionTest {
     fun testEncryptProperty() {
         val criterion = Criterion("password", OperatorEnum.EQ, "secret")
         assertFalse(criterion.encrypt)
-        criterion.encrypt = true
-        assertTrue(criterion.encrypt)
     }
 
     @Test

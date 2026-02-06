@@ -52,17 +52,17 @@ class EmailHandler {
             sender.protocol = emailRequest.protocol
             sender.defaultEncoding = emailRequest.encoding
             val extra = mutableMapOf<String, String?>()
-            extra.put("mail.transport.protocol", emailRequest.protocol)
-            extra.put("mail.smtp.auth", emailRequest.smtpAuth.toString())
+            extra["mail.transport.protocol"] = emailRequest.protocol
+            extra["mail.smtp.auth"] = emailRequest.smtpAuth.toString()
             if (emailRequest.ssl) {
-                extra.put("mail.smtp.ssl.enable", "true")
+                extra["mail.smtp.ssl.enable"] = "true"
             } else {
-                extra.put("mail.smtp.starttls.enable", "true")
+                extra["mail.smtp.starttls.enable"] = "true"
             }
-            extra.put("mail.user", emailRequest.senderAccount)
-            extra.put("mail.password", emailRequest.senderPassword)
-            extra.put("mail.smtp.host", emailRequest.serverHost)
-            extra.put("mail.smtp.sendpartial", emailRequest.sendpartial.toString())
+            extra["mail.user"] = emailRequest.senderAccount
+            extra["mail.password"] = emailRequest.senderPassword
+            extra["mail.smtp.host"] = emailRequest.serverHost
+            extra["mail.smtp.sendpartial"] = emailRequest.sendpartial.toString()
             if (!emailRequest.extra.isNullOrEmpty()) {
                 extra.putAll(emailRequest.extra!!)
             }
@@ -87,21 +87,21 @@ class EmailHandler {
             messageHelper.setText(emailRequest.body!!, emailRequest.htmlFormat)
 
             //发送邮件
-            LOG.info("开始发送邮件...")
+            log.info("开始发送邮件...")
             sender.send(mailMessage)
 
             //设置回调状态
             emailCallBackParam.status = EmailStatusEnum.SUCCESS
             emailCallBackParam.successEmails = emailRequest.receivers
 
-            LOG.info("发送邮件成功")
+            log.info("发送邮件成功")
         } catch (e: MailSendException) {
-            LOG.error(e, "邮件发送出错,可能只是部分邮箱帐号不可用导致的,这种情况下是部分发送失败,部分发送成功")
+            log.error(e, "邮件发送出错,可能只是部分邮箱帐号不可用导致的,这种情况下是部分发送失败,部分发送成功")
 
             //设置回调状态
             for (messageException in e.messageExceptions) {
                 if (messageException is SendFailedException) {
-                    LOG.error(
+                    log.error(
                         "邮件发送情况,成功:{0},失败:{1},非法:{2}",
                         messageException.validSentAddresses.contentToString(),
                         messageException.validUnsentAddresses.contentToString(),
@@ -127,7 +127,7 @@ class EmailHandler {
                 emailCallBackParam.failEmails = emailRequest.receivers
             }
         } catch (e: Exception) {
-            LOG.error(e, "邮件发送出错")
+            log.error(e, "邮件发送出错")
 
             //设置回调状态
             emailCallBackParam.status = EmailStatusEnum.FAIL
@@ -147,7 +147,7 @@ class EmailHandler {
         if (mail.senderAccount.isNullOrBlank() || mail.senderPassword.isNullOrBlank() ||
             mail.serverHost.isNullOrBlank() || mail.receivers.isEmpty()
         ) {
-            LOG.error("发送者邮箱账号、发送者邮箱密码、发件人邮箱服务器地址、接收者邮箱账号之一为空！")
+            log.error("发送者邮箱账号、发送者邮箱密码、发件人邮箱服务器地址、接收者邮箱账号之一为空！")
             return false
         }
         return true
@@ -162,6 +162,6 @@ class EmailHandler {
         }
     }
 
-    private val LOG = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this)
 
 }

@@ -8,10 +8,13 @@ import io.kudos.base.logger.LogFactory
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.cache.get
+import org.springframework.stereotype.Component
 
 /**
  * Feign缓存辅助器
  */
+@Component
 class ClientCacheHelper : InitializingBean {
 
     @Autowired(required = false)
@@ -37,7 +40,7 @@ class ClientCacheHelper : InitializingBean {
         cacheConfig.ignoreVersion = true
         cacheConfig.ttl = 600
         val cacheConfigMap = mutableMapOf<String, CacheConfig>()
-        cacheConfigMap.put(cacheConfig.name!!, cacheConfig)
+        cacheConfigMap[cacheConfig.name!!] = cacheConfig
         cacheManager!!.initCacheAfterSystemInit(cacheConfigMap)
         log.debug("初始化Feign缓存空间{0}完成", ClientCacheKey.FEIGN_CACHE_PREFIX)
     }
@@ -50,7 +53,7 @@ class ClientCacheHelper : InitializingBean {
      */
     fun loadFromLocalCache(cacheKey: String): ClientCacheItem? {
         //可以考虑换成CacheKit
-        return cacheManager!!.getCache(ClientCacheKey.FEIGN_CACHE_PREFIX)!!.get(cacheKey, ClientCacheItem::class.java)
+        return cacheManager!!.getCache(ClientCacheKey.FEIGN_CACHE_PREFIX)!!.get<ClientCacheItem>(cacheKey)
     }
 
     /**

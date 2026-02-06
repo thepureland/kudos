@@ -3,12 +3,8 @@ package io.kudos.ms.auth.core.cache
 import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
 import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.query.Criteria
-import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.ms.auth.core.dao.AuthRoleUserDao
-import io.kudos.ms.auth.core.model.po.AuthRoleUser
 import io.kudos.ms.user.core.dao.UserAccountDao
-import io.kudos.ms.user.core.model.po.UserAccount
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
@@ -49,17 +45,10 @@ open class RoleIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() {
             return
         }
 
-        // 加载所有active=true的用户
-        val userCriteria = Criteria(UserAccount::active.name, OperatorEnum.EQ, true)
-        val users = userAccountDao.search(userCriteria)
-        
-        // 加载所有角色-用户关系
-        val allRoleUsers = authRoleUserDao.allSearch()
-        val userIdToRoleIdsMap = allRoleUsers
-            .groupBy { it.userId }
-            .mapValues { entry -> entry.value.map { it.roleId } }
+        val users = userAccountDao.getActiveUsersForCache()
+        val userIdToRoleIdsMap = authRoleUserDao.getAllUserIdToRoleIdsForCache()
 
-        log.debug("从数据库加载了${users.size}条用户、${allRoleUsers.size}条角色-用户关系。")
+        log.debug("从数据库加载了${users.size}条用户、角色-用户关系分组${userIdToRoleIdsMap.size}。")
 
         // 清除缓存
         if (clear) {
@@ -92,12 +81,9 @@ open class RoleIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() {
             log.debug("缓存中不存在用户${userId}的角色ID，从数据库中加载...")
         }
 
-        val roleUserCriteria = Criteria(AuthRoleUser::userId.name, OperatorEnum.EQ, userId)
-        val roleIds = authRoleUserDao.searchProperty(roleUserCriteria, AuthRoleUser::roleId.name)
-        
+        val roleIds = authRoleUserDao.getRoleIdsByUserId(userId)
         log.debug("从数据库加载了用户${userId}的${roleIds.size}条角色ID。")
-        @Suppress("UNCHECKED_CAST")
-        return roleIds as List<String>
+        return roleIds
     }
 
     /**

@@ -178,7 +178,7 @@ object HttpClientKit {
     fun <T : Any> asyncRequest(
         httpClientBuilder: HttpClient.Builder,
         httpRequestBuilder: HttpRequest.Builder,
-        bodyHandler: HttpResponse.BodyHandler<T>
+        bodyHandler: BodyHandler<T>
     ): HttpResponse<T> {
         return runBlocking {
             val result = async(Dispatchers.IO) {
@@ -195,7 +195,7 @@ object HttpClientKit {
     fun <T : Any> request(
         httpClientBuilder: HttpClient.Builder,
         httpRequestBuilder: HttpRequest.Builder,
-        bodyHandler: HttpResponse.BodyHandler<T>
+        bodyHandler: BodyHandler<T>
     ): HttpResponse<T> {
         val client = createHttpClient(httpClientBuilder) // `.build()` 独立封装，便于后续注入/替换
         val request = httpRequestBuilder.build()
@@ -211,7 +211,7 @@ object HttpClientKit {
     private suspend fun <T : Any> sendAsyncThenWait(
         httpClientBuilder: HttpClient.Builder,
         httpRequestBuilder: HttpRequest.Builder,
-        bodyHandler: HttpResponse.BodyHandler<T>
+        bodyHandler: BodyHandler<T>
     ): HttpResponse<T> {
         val request = httpRequestBuilder.build()
         val client = createHttpClient(httpClientBuilder)

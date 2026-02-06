@@ -3,6 +3,7 @@ package io.kudos.ability.distributed.discovery.nacos.init
 import io.kudos.ability.distributed.discovery.nacos.loadbalancer.HintZoneServiceInstanceListSupplier
 import io.kudos.base.logger.LogFactory
 import jakarta.annotation.PostConstruct
+import org.springframework.beans.factory.getBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.cloud.client.ConditionalOnBlockingDiscoveryEnabled
@@ -33,7 +34,7 @@ open class DiscoveryLoadbalancerConfiguration {
 
         private fun hintZone(): ServiceInstanceListSupplierBuilder.DelegateCreator {
             return ServiceInstanceListSupplierBuilder.DelegateCreator { context: ConfigurableApplicationContext, delegate: ServiceInstanceListSupplier ->
-                val loadBalancerClientFactory: LoadBalancerClientFactory = context.getBean(LoadBalancerClientFactory::class.java)
+                val loadBalancerClientFactory: LoadBalancerClientFactory = context.getBean<LoadBalancerClientFactory>()
                 val zoneConfig: LoadBalancerZoneConfig = context.getBean(LoadBalancerZoneConfig::class.java)
                 HintZoneServiceInstanceListSupplier(delegate, zoneConfig, loadBalancerClientFactory)
             }

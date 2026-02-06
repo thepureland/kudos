@@ -79,7 +79,7 @@ object H2TestContainer {
     fun main(args: Array<String>?) {
         startIfNeeded(null)
         println("H2 ${container.host} port: $PORT")
-        Thread.sleep(Long.Companion.MAX_VALUE)
+        Thread.sleep(Long.MAX_VALUE)
     }
 
 }

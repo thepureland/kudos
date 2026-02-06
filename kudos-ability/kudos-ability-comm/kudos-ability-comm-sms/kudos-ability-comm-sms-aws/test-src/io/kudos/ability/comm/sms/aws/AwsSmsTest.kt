@@ -5,7 +5,7 @@ import io.kudos.ability.comm.sms.aws.model.AwsSmsRequest
 import io.kudos.test.common.init.EnableKudosTest
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.container.containers.WireMockTestContainer
-import org.springframework.beans.factory.annotation.Autowired
+import jakarta.annotation.Resource
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import java.net.HttpURLConnection
@@ -26,7 +26,7 @@ import kotlin.test.assertEquals
 @EnabledIfDockerInstalled
 class AwsSmsTest {
 
-    @Autowired
+    @Resource
     private lateinit var handler: AwsSmsHandler
 
     @Test

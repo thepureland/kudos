@@ -530,7 +530,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         } else {
             entitySequence()
                 .filter { CriteriaConverter.convert(criteria, table()) }
-                .aggregateColumns { org.ktorm.dsl.count(getPkColumn()) }!!
+                .aggregateColumns { count(getPkColumn()) }!!
         }
     }
 
@@ -803,7 +803,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
             val returnEntityClass = searchPayload?.returnEntityClass
             returnEntityClass?.memberProperties?.map { it.name } ?: entityProperties
         }
-        val returnProps = entityProperties.intersect(props) // 取交集,保证要查询的列一定存在
+        val returnProps = entityProperties.intersect(props.toSet()) // 取交集,保证要查询的列一定存在
         val returnColumnMap = ColumnHelper.columnOf(table(), *returnProps.toTypedArray())
         var query = querySource().select(returnColumnMap.values)
 

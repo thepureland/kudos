@@ -3,12 +3,8 @@ package io.kudos.ms.auth.core.cache
 import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
 import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.query.Criteria
-import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.ms.auth.core.dao.AuthGroupUserDao
-import io.kudos.ms.auth.core.model.po.AuthGroupUser
 import io.kudos.ms.user.core.dao.UserAccountDao
-import io.kudos.ms.user.core.model.po.UserAccount
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
@@ -49,17 +45,10 @@ open class GroupIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() 
             return
         }
 
-        // 加载所有active=true的用户
-        val userCriteria = Criteria(UserAccount::active.name, OperatorEnum.EQ, true)
-        val users = userAccountDao.search(userCriteria)
+        val users = userAccountDao.getActiveUsersForCache()
+        val userIdToGroupIdsMap = authGroupUserDao.getAllUserIdToGroupIdsForCache()
 
-        // 加载所有用户组-用户关系
-        val allGroupUsers = authGroupUserDao.allSearch()
-        val userIdToGroupIdsMap = allGroupUsers
-            .groupBy { it.userId }
-            .mapValues { entry -> entry.value.map { it.groupId } }
-
-        log.debug("从数据库加载了${users.size}条用户、${allGroupUsers.size}条用户组-用户关系。")
+        log.debug("从数据库加载了${users.size}条用户、用户组-用户关系分组${userIdToGroupIdsMap.size}。")
 
         // 清除缓存
         if (clear) {
@@ -92,12 +81,9 @@ open class GroupIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() 
             log.debug("缓存中不存在用户${userId}的用户组ID，从数据库中加载...")
         }
 
-        val groupUserCriteria = Criteria(AuthGroupUser::userId.name, OperatorEnum.EQ, userId)
-        val groupIds = authGroupUserDao.searchProperty(groupUserCriteria, AuthGroupUser::groupId.name)
-
+        val groupIds = authGroupUserDao.getGroupIdsByUserId(userId)
         log.debug("从数据库加载了用户${userId}的${groupIds.size}条用户组ID。")
-        @Suppress("UNCHECKED_CAST")
-        return groupIds as List<String>
+        return groupIds
     }
 
     /**

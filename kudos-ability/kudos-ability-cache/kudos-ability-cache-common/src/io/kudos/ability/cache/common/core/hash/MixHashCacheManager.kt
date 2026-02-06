@@ -5,9 +5,11 @@ import io.kudos.ability.cache.common.init.properties.CacheVersionConfig
 import io.kudos.ability.cache.common.support.CacheConfig
 import io.kudos.ability.cache.common.support.ICacheConfigProvider
 import io.kudos.base.logger.LogFactory
+import jakarta.annotation.Resource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.stereotype.Component
 import java.util.*
 
 /**
@@ -18,12 +20,13 @@ import java.util.*
  * @author AI: Cursor
  * @since 1.0.0
  */
+@Component
 class MixHashCacheManager {
 
-    @Value("\${kudos.ability.cache.enabled:true}")
+    @Value($$"${kudos.ability.cache.enabled:true}")
     val isCacheEnabled: Boolean = true
 
-    @Autowired
+    @Resource
     private var versionConfig: CacheVersionConfig? = null
 
     @Autowired(required = false)
@@ -34,7 +37,7 @@ class MixHashCacheManager {
     @Qualifier("redisIdEntitiesHashCache")
     private var remoteHashCache: IHashCache? = null
 
-    @Autowired
+    @Resource
     private var cacheConfigProvider: ICacheConfigProvider? = null
 
     /**

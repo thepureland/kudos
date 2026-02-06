@@ -63,7 +63,7 @@ object GenericKit {
      * @author K
      * @since 1.0.0
      */
-    fun getParameterTypeGenericClass(callable: KCallable<*>, index: Int = 1): List<KClass<*>>? {
+    fun getParameterTypeGenericClass(callable: KCallable<*>, index: Int = 1): List<KClass<*>> {
         if (index < 0 || index >= callable.parameters.size) {
             throw IllegalArgumentException("输入的索引" + if (index < 0) "不能小于0" else "超出了参数的总数")
         }
@@ -82,7 +82,7 @@ object GenericKit {
      * @author K
      * @since 1.0.0
      */
-    fun getReturnTypeGenericClass(callable: KCallable<*>, index: Int = 0): KClass<*>? {
+    fun getReturnTypeGenericClass(callable: KCallable<*>, index: Int = 0): KClass<*> {
         val args = callable.returnType.arguments
         if (args.isEmpty()) {
             return Nothing::class

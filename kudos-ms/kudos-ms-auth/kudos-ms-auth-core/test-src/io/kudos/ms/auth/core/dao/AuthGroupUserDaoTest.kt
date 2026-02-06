@@ -49,7 +49,7 @@ class AuthGroupUserDaoTest : RdbTestBase() {
     fun searchGroupIdsByUserId() {
         val userId = "a1b2c3d4-0000-0000-0000-000000000070"
         val groupIds = authGroupUserDao.searchGroupIdsByUserId(userId)
-        assertTrue(groupIds.size >= 1)
+        assertTrue(groupIds.isNotEmpty())
         assertTrue(groupIds.contains("a1b2c3d4-0000-0000-0000-000000000072"))
 
         // 测试不存在的用户ID
