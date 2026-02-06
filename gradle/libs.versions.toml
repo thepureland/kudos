@@ -11,7 +11,8 @@ ktor = "3.3.0"
 ktorm = "4.1.1"
 spring-boot = "4.0.1"
 spring-cloud = "2025.1.0"
-alibaba-cloud = "2025.0.0.0"
+jackson-module-kotlin = "3.0.4"
+alibaba-cloud = "2025.1.0.0"
 h2 = "2.4.240"
 postgres = "42.7.8"
 github-ben-manes-plugin = "0.53.0"
@@ -132,6 +133,8 @@ spring-cloud-starter-openfeign = { module = "org.springframework.cloud:spring-cl
 spring-cloud-stream = { module = "org.springframework.cloud:spring-cloud-stream"}
 spring-cloud-starter-stream-kafka = { module = "org.springframework.cloud:spring-cloud-starter-stream-kafka"}
 spring-cloud-starter-stream-rabbit = { module = "org.springframework.cloud:spring-cloud-starter-stream-rabbit"}
+# Jackson 3 Kotlin 模块，供 Spring Cloud Function 等使用（与 Spring Boot 4 的 tools.jackson 一致）
+jackson-module-kotlin = { module = "tools.jackson.module:jackson-module-kotlin", version.ref = "jackson-module-kotlin" }
 alibaba-cloud-nacos-config = { module = "com.alibaba.cloud:spring-cloud-starter-alibaba-nacos-config"}
 alibaba-cloud-nacos-discovery = { module = "com.alibaba.cloud:spring-cloud-starter-alibaba-nacos-discovery"}
 alibaba-cloud-starter-stream-rocketmq = { module = "com.alibaba.cloud:spring-cloud-starter-stream-rocketmq"}
