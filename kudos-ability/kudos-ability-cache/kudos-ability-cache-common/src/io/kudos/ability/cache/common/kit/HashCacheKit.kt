@@ -1,9 +1,10 @@
 package io.kudos.ability.cache.common.kit
 
+import io.kudos.ability.cache.common.core.hash.IHashCache
 import io.kudos.ability.cache.common.core.hash.MixHashCacheManager
 import io.kudos.ability.cache.common.enums.CacheStrategy
+import io.kudos.ability.cache.common.kit.HashCacheKit.getHashCache
 import io.kudos.ability.cache.common.support.ICacheConfigProvider
-import io.kudos.ability.cache.common.core.hash.IHashCache
 import io.kudos.context.kit.SpringKit
 import org.springframework.stereotype.Component
 
@@ -28,8 +29,7 @@ object HashCacheKit {
      * @throws IllegalStateException 当 MixHashCacheManager 不可用或该 cacheName 未配置（需在配置中增加名为 cacheName 的项）时
      */
     fun getHashCache(cacheName: String): IHashCache {
-        val manager = SpringKit.getBeanOrNull("mixHashCacheManager") as? MixHashCacheManager
-            ?: throw IllegalStateException("Hash 缓存管理器不可用，无法获取 Hash 缓存: $cacheName")
+        val manager = SpringKit.getBean("mixHashCacheManager") as MixHashCacheManager
         return manager.getHashCache(cacheName)
             ?: throw IllegalStateException("Hash 缓存未配置: 请在缓存配置表sys_cache中增加名为 [$cacheName]的配置项")
     }

@@ -1,0 +1,2 @@
+# Register SpringKitTestContextListener so SpringKit is synced with current test context
+org.springframework.test.context.TestExecutionListener=io.kudos.test.common.init.SpringKitTestContextListener

@@ -42,8 +42,8 @@ class SysSystemHashCacheTest : RdbAndRedisCacheTestBase() {
         val code = "SbcCH_7a3f9b2c4e5f6_1"
         val cacheItem = cacheHandler.getSystemByCode(code)
         assertNotNull(cacheItem)
-        assertEquals(code, cacheItem?.code)
-        assertEquals("SbcCH-name-1", cacheItem?.name)
+        assertEquals(code, cacheItem.code)
+        assertEquals("SbcCH-name-1", cacheItem.name)
         val cacheItemAgain = cacheHandler.getSystemByCode(code)
         if (isLocalCacheEnabled()) assertSame(cacheItem, cacheItemAgain, "同一 code 再次从缓存获取应返回同一对象引用")
         assertNull(cacheHandler.getSystemByCode("no_exist_code"))
@@ -118,7 +118,7 @@ class SysSystemHashCacheTest : RdbAndRedisCacheTestBase() {
         cacheHandler.syncOnUpdate(code)
         val cacheItem = cacheHandler.getSystemByCode(code)
         assertNotNull(cacheItem)
-        assertEquals(newSystemName, cacheItem?.name)
+        assertEquals(newSystemName, cacheItem.name)
         val cacheItemAgain = cacheHandler.getSystemByCode(code)
         if (isLocalCacheEnabled()) assertSame(cacheItem, cacheItemAgain, "同一 code 再次从缓存获取应返回同一对象引用")
     }
