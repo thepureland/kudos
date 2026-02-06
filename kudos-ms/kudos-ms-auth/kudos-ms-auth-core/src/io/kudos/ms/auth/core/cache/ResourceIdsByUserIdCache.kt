@@ -7,10 +7,8 @@ import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.ms.auth.core.dao.AuthRoleResourceDao
 import io.kudos.ms.auth.core.dao.AuthRoleUserDao
-import io.kudos.ms.auth.core.model.po.AuthRoleResource
 import io.kudos.ms.auth.core.model.po.AuthRoleUser
 import io.kudos.ms.user.core.dao.UserAccountDao
-import io.kudos.ms.user.core.model.po.UserAccount
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
@@ -55,23 +53,11 @@ open class ResourceIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>
             return
         }
 
-        // 加载所有active=true的用户
-        val userCriteria = Criteria(UserAccount::active.name, OperatorEnum.EQ, true)
-        val users = userAccountDao.search(userCriteria)
-        
-        // 加载所有角色-用户关系
-        val allRoleUsers = authRoleUserDao.allSearch()
-        val userIdToRoleIdsMap = allRoleUsers
-            .groupBy { it.userId }
-            .mapValues { entry -> entry.value.map { it.roleId } }
-        
-        // 加载所有角色-资源关系
-        val allRoleResources = authRoleResourceDao.allSearch()
-        val roleIdToResourceIdsMap = allRoleResources
-            .groupBy { it.roleId }
-            .mapValues { entry -> entry.value.map { it.resourceId } }
+        val users = userAccountDao.getActiveUsersForCache()
+        val userIdToRoleIdsMap = authRoleUserDao.getAllUserIdToRoleIdsForCache()
+        val roleIdToResourceIdsMap = authRoleResourceDao.getAllRoleIdToResourceIdsForCache()
 
-        log.debug("从数据库加载了${users.size}条用户、${allRoleUsers.size}条角色-用户关系、${allRoleResources.size}条角色-资源关系。")
+        log.debug("从数据库加载了${users.size}条用户、角色-用户分组${userIdToRoleIdsMap.size}、角色-资源分组${roleIdToResourceIdsMap.size}。")
 
         // 清除缓存
         if (clear) {
@@ -109,29 +95,14 @@ open class ResourceIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>
             log.debug("缓存中不存在用户${userId}的资源ID，从数据库中加载...")
         }
 
-        // 1. 根据用户ID查询角色ID列表
-        val roleUserCriteria = Criteria(AuthRoleUser::userId.name, OperatorEnum.EQ, userId)
-        val roleIds = authRoleUserDao.searchProperty(roleUserCriteria, AuthRoleUser::roleId.name)
-        
+        val roleIds = authRoleUserDao.getRoleIdsByUserId(userId)
         if (roleIds.isEmpty()) {
             log.debug("用户${userId}没有分配任何角色。")
             return emptyList()
         }
 
-        // 2. 根据角色ID列表查询资源ID列表（支持批量查询）
-        @Suppress("UNCHECKED_CAST")
-        val allRoleIds = roleIds as List<String>
-        val resourceIdSet = mutableSetOf<String>()
-        
-        allRoleIds.forEach { roleId ->
-            val roleResourceCriteria = Criteria(AuthRoleResource::roleId.name, OperatorEnum.EQ, roleId)
-            val resourceIds = authRoleResourceDao.searchProperty(roleResourceCriteria, AuthRoleResource::resourceId.name)
-            @Suppress("UNCHECKED_CAST")
-            resourceIdSet.addAll((resourceIds as List<String>).map { it.trim() })
-        }
-        
-        val resultList = resourceIdSet.toList()
-        log.debug("从数据库加载了用户${userId}的${allRoleIds.size}个角色，共${resultList.size}条资源ID（去重后）。")
+        val resultList = authRoleResourceDao.getResourceIdsByRoleIds(roleIds)
+        log.debug("从数据库加载了用户${userId}的${roleIds.size}个角色，共${resultList.size}条资源ID（去重后）。")
         return resultList
     }
 

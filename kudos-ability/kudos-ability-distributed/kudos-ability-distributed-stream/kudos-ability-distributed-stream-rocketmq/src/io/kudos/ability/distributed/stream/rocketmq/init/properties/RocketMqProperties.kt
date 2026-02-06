@@ -11,10 +11,10 @@ import org.springframework.stereotype.Component
 @Component
 class RocketMqProperties {
 
-    @Value("\${spring.cloud.stream.rocketmq.binder.name-server}")
+    @Value($$"${spring.cloud.stream.rocketmq.binder.name-server}")
     var nameSrvAddr: String? = null
 
-    @Value("\${kudos.ability.distributed.stream.save-exception}")
+    @Value($$"${kudos.ability.distributed.stream.save-exception}")
     var saveException: Boolean = true
 
     companion object {

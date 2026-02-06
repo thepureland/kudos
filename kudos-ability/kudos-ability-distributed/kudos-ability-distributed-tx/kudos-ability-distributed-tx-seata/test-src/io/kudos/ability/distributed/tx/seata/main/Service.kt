@@ -7,6 +7,7 @@ import io.kudos.ability.distributed.tx.seata.ms1.IService1
 import io.kudos.ability.distributed.tx.seata.ms1.Service1
 import io.kudos.ability.distributed.tx.seata.ms2.IService2
 import io.kudos.ability.distributed.tx.seata.ms2.Service2
+import jakarta.annotation.Resource
 import org.apache.seata.core.context.RootContext
 import org.apache.seata.spring.annotation.GlobalTransactional
 import org.springframework.beans.factory.annotation.Autowired
@@ -24,7 +25,7 @@ import org.springframework.stereotype.Service
 @Import(Service1::class, Service2::class, TestTableDao::class)
 open class Service : IService {
 
-    @Value("\${seata.data-source-proxy-mode}")
+    @Value($$"${seata.data-source-proxy-mode}")
     private val dataSourceProxyMode: String? = null
 
     @Autowired
@@ -33,19 +34,19 @@ open class Service : IService {
     @Autowired
     private lateinit var service2: IService2
 
-    @Autowired
+    @Resource
     private lateinit var feignClient11: IFeignClient11
 
-    @Autowired
+    @Resource
     private lateinit var feignClient12: IFeignClient12
 
-    @Autowired
+    @Resource
     private lateinit var feignClient21: IFeignClient21
 
-    @Autowired
+    @Resource
     private lateinit var feignClient22: IFeignClient22
 
-    @Autowired
+    @Resource
     private lateinit var testTableDao: TestTableDao
 
     override fun getById(id: Int): TestTable = testTableDao.get(id)!!

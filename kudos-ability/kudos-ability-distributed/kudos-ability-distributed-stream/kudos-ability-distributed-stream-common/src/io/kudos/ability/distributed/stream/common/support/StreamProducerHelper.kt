@@ -5,8 +5,7 @@ import io.kudos.ability.distributed.stream.common.model.vo.StreamHeader
 import io.kudos.ability.distributed.stream.common.model.vo.StreamMessageVo
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Qualifier
+import jakarta.annotation.Resource
 import org.springframework.cloud.stream.config.BindingServiceProperties
 import org.springframework.cloud.stream.function.StreamBridge
 import org.springframework.messaging.Message
@@ -34,17 +33,16 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
  */
 class StreamProducerHelper {
 
-    @Autowired
+    @Resource
     private lateinit var streamBridge: StreamBridge
 
-    @Autowired
+    @Resource
     private lateinit var properties: BindingServiceProperties
 
-    @Autowired
+    @Resource
     private lateinit var streamAsyncSendExecutor: ThreadPoolTaskExecutor
 
-    @Autowired
-    @Qualifier("mqProducerChannel")
+    @Resource(name = "mqProducerChannel")
     private lateinit var mqProducerChannel: MessageChannel
 
     /**
@@ -145,7 +143,7 @@ class StreamProducerHelper {
         val map = mutableMapOf<String, Any>()
         @Suppress("UNCHECKED_CAST")
         map.putAll(headerMap as Map<out String, Any>)
-        map.put(StreamHeader.SCST_BIND_NAME, bindingName)
+        map[StreamHeader.SCST_BIND_NAME] = bindingName
         val headers = org.springframework.messaging.MessageHeaders(map)
         val streamMessageVo = StreamMessageVo(data)
         return GenericMessage<StreamMessageVo<T>>(streamMessageVo, headers)

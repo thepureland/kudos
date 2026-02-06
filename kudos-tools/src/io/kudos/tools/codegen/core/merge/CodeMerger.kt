@@ -60,7 +60,7 @@ class CodeMerger(private val file: File) {
         if (file.name.endsWith(".kt")) {
             val oldImports = ImportStmtRetriever(oldFileContent).retrieveImports()
             val newImports = ImportStmtRetriever(newFileContent!!).retrieveImports()
-            val commonImports = oldImports.intersect(newImports) // 交集
+            val commonImports = oldImports.intersect(newImports.toSet()) // 交集
             val customImport = oldImports.subtract(commonImports) // 差集，用户自己导入的import
             val imports = StringBuilder()
             for (importStmt in customImport) {

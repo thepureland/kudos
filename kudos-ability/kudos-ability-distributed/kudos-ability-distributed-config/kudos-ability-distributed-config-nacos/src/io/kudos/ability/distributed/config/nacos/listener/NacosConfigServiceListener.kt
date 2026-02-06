@@ -46,7 +46,7 @@ class NacosConfigServiceListener {
         private val properties = Properties()
 
         fun put(key: Any?, value: Any?): PropertiesBuilder {
-            this.properties.put(key, value)
+            this.properties[key] = value
             return this
         }
 

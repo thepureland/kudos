@@ -408,7 +408,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
             }
         }
         val criteriaExpression = if (criteria != null) CriteriaConverter.convert(criteria, table()) else null
-        GroupExecutor(entities, countOfEachBatch) {
+        GroupExecutor(entities, countOfEachBatch) { it ->
             val counts = database().batchUpdate(table()) {
                 for (entity in it) {
                     item {

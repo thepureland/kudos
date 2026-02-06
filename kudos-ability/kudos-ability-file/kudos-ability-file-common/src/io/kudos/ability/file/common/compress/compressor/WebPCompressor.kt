@@ -12,12 +12,12 @@ import javax.imageio.ImageIO
 
 class WebPCompressor : ImageCompressor {
 
-    public override fun support(config: CompressionConfig): Boolean {
+    override fun support(config: CompressionConfig): Boolean {
         return config.enabled && config.webp
     }
 
     @Throws(IOException::class)
-    public override fun compress(
+    override fun compress(
         inputStream: InputStream,
         destination: String,
         config: CompressionConfig
@@ -26,7 +26,7 @@ class WebPCompressor : ImageCompressor {
         val byteArrayOutputStream = ByteArrayOutputStream()
 
         val writer = ImageIO.getImageWritersByMIMEType("image/webp").next()
-        val param: WebPWriteParam = WebPWriteParam(null)
+        val param = WebPWriteParam(null)
         param.setCompressionMode(WebPWriteParam.MODE_EXPLICIT)
         // default Lossy and quality 0.75
 //        param.setCompressionType(param.getCompressionTypes()[WebPWriteParam.LOSSLESS_COMPRESSION]);

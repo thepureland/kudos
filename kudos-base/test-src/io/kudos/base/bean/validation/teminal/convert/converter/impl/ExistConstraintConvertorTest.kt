@@ -39,7 +39,7 @@ internal class ExistConstraintConvertorTest {
             val rule = convertor.getRule(annotation)
             // 子约束的message应该被移除
             // 检查子约束规则中是否没有message
-            rule.forEach { (key, value) ->
+            rule.forEach { (_, value) ->
                 if (value is Map<*, *>) {
                     // 子约束的message应该被移除
                 }

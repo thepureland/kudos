@@ -1,7 +1,6 @@
 package io.kudos.ability.distributed.discovery.nacos.loadbalancer
 
 import org.springframework.cloud.client.ServiceInstance
-import org.springframework.cloud.client.loadbalancer.LoadBalancerProperties
 import org.springframework.cloud.client.loadbalancer.Request
 import org.springframework.cloud.client.loadbalancer.RequestDataContext
 import org.springframework.cloud.client.loadbalancer.reactive.ReactiveLoadBalancer
@@ -20,14 +19,9 @@ class HintZoneServiceInstanceListSupplier(
     private val zoneConfig: LoadBalancerZoneConfig,
     factory: ReactiveLoadBalancer.Factory<ServiceInstance>
 ) : DelegatingServiceInstanceListSupplier(delegate) {
-    private val ZONE = "zone"
+    private val text = "zone"
 
-    private val properties: LoadBalancerProperties
-
-
-    init {
-        this.properties = factory.getProperties(serviceId)!!
-    }
+    private val properties = factory.getProperties(serviceId)!!
 
     override fun get(): Flux<MutableList<ServiceInstance>> {
         return delegate.get()
@@ -65,7 +59,7 @@ class HintZoneServiceInstanceListSupplier(
 
             val filteredInstances = mutableListOf<ServiceInstance>()
             for (serviceInstance in instances) {
-                val serviceZone = serviceInstance.metadata?.getOrDefault(ZONE, "")
+                val serviceZone = serviceInstance.metadata?.getOrDefault(text, "")
                 if (serviceZone.isNullOrBlank() || serviceZone == zoneConfig.zone) {
                     //只取服务实际发布时,未配置zone || 与默认配置一致
                     filteredInstances.add(serviceInstance)
@@ -77,7 +71,7 @@ class HintZoneServiceInstanceListSupplier(
 
         val filteredInstances: MutableList<ServiceInstance> = ArrayList(instances.size)
         for (serviceInstance in instances) {
-            if (serviceInstance.metadata?.getOrDefault(ZONE, "") == hint) {
+            if (serviceInstance.metadata?.getOrDefault(text, "") == hint) {
                 filteredInstances.add(serviceInstance)
             }
         }

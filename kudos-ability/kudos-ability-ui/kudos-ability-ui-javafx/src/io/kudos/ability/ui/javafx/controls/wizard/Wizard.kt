@@ -38,7 +38,7 @@ import javafx.scene.control.Dialog
 import javafx.scene.control.DialogPane
 import java.util.*
 
-class Wizard constructor(title: String = "") {
+class Wizard(title: String = "") {
     /**************************************************************************
      *
      * Static fields
@@ -52,7 +52,7 @@ class Wizard constructor(title: String = "") {
     private var dialog: Dialog<ButtonType?>? = null
 
     // --- settings
-    val settings = FXCollections.observableHashMap<String, Any>()
+    val settings: ObservableMap<String, in Any> = FXCollections.observableHashMap()
     private val pageHistory = Stack<WizardPane>()
     private var currentPage: Optional<WizardPane> = Optional.empty()
 
@@ -250,7 +250,7 @@ class Wizard constructor(title: String = "") {
 
     private var settingCounter = 0
     private fun readSettings(page: WizardPane) {
-        // for now we cannot know the structure of the page, so we just drill down
+        // for now, we cannot know the structure of the page, so we just drill down
         // through the entire scenegraph (from page.content down) until we get
         // to the leaf nodes. We stop only if we find a node that is a
         // ValueContainer (either by implementing the interface), or being
@@ -262,7 +262,7 @@ class Wizard constructor(title: String = "") {
     private fun checkNode(n: Node?): Boolean {
         val success = readSetting(n)
         return if (success) {
-            // we've added the setting to the settings map and we should stop drilling deeper
+            // we've added the setting to the settings map, and we should stop drilling deeper
             true
         } else {
             // go into children of this node (if possible) and see if we can get

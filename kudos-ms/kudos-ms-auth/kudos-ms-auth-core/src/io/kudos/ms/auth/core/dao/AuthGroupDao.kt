@@ -48,6 +48,16 @@ open class AuthGroupDao : BaseCrudDao<String, AuthGroup, AuthGroups>() {
         return search(payload) as List<AuthGroupCacheItem>
     }
 
+    /** 查询所有 active=true 的用户组（供 UserIdsByGroupIdCache.reloadAll） */
+    open fun getActiveGroupsForCache(): List<AuthGroupCacheItem> {
+        val payload = ListSearchPayload().apply {
+            returnEntityClass = AuthGroupCacheItem::class
+            criterions = listOf(Criterion(AuthGroup::active.name, OperatorEnum.EQ, true))
+        }
+        @Suppress("UNCHECKED_CAST")
+        return search(payload) as List<AuthGroupCacheItem>
+    }
+
     /** 按租户、用户组编码查询（不区分 active），返回单条缓存用 VO */
     open fun getGroupByTenantIdAndGroupCode(tenantId: String, code: String): AuthGroupCacheItem? {
         val payload = ListSearchPayload().apply {

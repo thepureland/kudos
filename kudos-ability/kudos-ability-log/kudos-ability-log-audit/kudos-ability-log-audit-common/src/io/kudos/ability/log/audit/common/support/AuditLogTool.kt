@@ -34,10 +34,10 @@ object AuditLogTool {
     }
 
     private fun initSourceTenantProvider() {
-        try {
-            tenantProvider = SpringKit.getBean(ILogSourceTenantProvider::class)
-        } catch (e: Exception) {
-            tenantProvider = null
+        tenantProvider = try {
+            SpringKit.getBean(ILogSourceTenantProvider::class)
+        } catch (_: Exception) {
+            null
         }
     }
 

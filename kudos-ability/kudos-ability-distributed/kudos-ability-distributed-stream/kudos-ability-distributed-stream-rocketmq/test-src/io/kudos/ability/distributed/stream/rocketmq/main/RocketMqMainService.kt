@@ -2,9 +2,9 @@ package io.kudos.ability.distributed.stream.rocketmq.main
 
 import io.kudos.ability.distributed.stream.common.biz.ISysMqFailMsgService
 import io.kudos.base.logger.LogFactory
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
+import javax.annotation.Resource
 
 /**
  * RocketMQ测试服务
@@ -20,13 +20,13 @@ class RocketMqMainService : IRocketMqMainService {
     
     private val topicName = "ROCKETMQ_TEST_TOPIC"
 
-    @Autowired
+    @Resource
     private lateinit var producerClient: IRocketMqProducerClient
 
-    @Autowired
+    @Resource
     private lateinit var streamExceptionBiz: ISysMqFailMsgService
 
-    @Autowired
+    @Resource
     private lateinit var consumerHandler: RocketMqConsumerHandler
     
     private val result = "SUCCESS"

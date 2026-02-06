@@ -6,7 +6,7 @@ import io.kudos.ability.distributed.stream.common.support.StreamProducerHelper
 import io.kudos.base.data.json.JsonKit
 import io.kudos.context.core.KudosContextHolder
 import io.kudos.context.retry.AbstractFailedDataHandler
-import org.springframework.beans.factory.annotation.Autowired
+import jakarta.annotation.Resource
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.messaging.MessageHeaders
 import org.springframework.messaging.support.GenericMessage
@@ -40,10 +40,10 @@ import org.springframework.messaging.support.GenericMessage
  */
 class StreamProducerExceptionHandler : AbstractFailedDataHandler<StreamProducerMsgVo>(), IStreamFailHandler {
 
-    @Value("\${kudos.ability.distributed.stream.produce-fail-path:/var/data/failed}")
+    @Value($$"${kudos.ability.distributed.stream.produce-fail-path:/var/data/failed}")
     private val filePath = "/var/data/failed"
 
-    @Autowired
+    @Resource
     private lateinit var streamProducerHelper: StreamProducerHelper
 
     /**
@@ -75,7 +75,7 @@ class StreamProducerExceptionHandler : AbstractFailedDataHandler<StreamProducerM
      * @param data 失败消息数据对象，包含绑定名称、消息体JSON、消息头JSON
      * @return true表示发送操作成功（异步），false表示发送失败
      */
-    protected override fun processFailedData(data: StreamProducerMsgVo): Boolean {
+    override fun processFailedData(data: StreamProducerMsgVo): Boolean {
         val bindName = data.bindName
         val msgBodyJson = data.msgBodyJson
         val msgHeaderJson = data.msgHeaderJson
@@ -100,7 +100,7 @@ class StreamProducerExceptionHandler : AbstractFailedDataHandler<StreamProducerM
     }
 
     override fun bindName(): String {
-        return IStreamFailHandler.Companion.DEFAULT_BIND_NAME
+        return IStreamFailHandler.DEFAULT_BIND_NAME
     }
 
 }

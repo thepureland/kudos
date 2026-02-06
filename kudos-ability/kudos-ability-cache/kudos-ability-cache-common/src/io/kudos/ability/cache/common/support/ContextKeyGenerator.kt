@@ -70,10 +70,10 @@ class ContextKeyGenerator : KeyGenerator {
      * @throws IllegalArgumentException 如果方法没有@CacheKey注解或表达式为空
      */
     override fun generate(target: Any, method: Method, vararg params: Any?): Any {
-        val annotation = method.getAnnotation<CacheKey>(CacheKey::class.java)
+        val annotation = method.getAnnotation(CacheKey::class.java)
         requireNotNull(annotation) { "使用ContextKeyGenerator，需额外增加@CacheKey配置" }
-        val key: String? = annotation.value
-        require(!key.isNullOrBlank()) { "@CacheKey未指定规则" }
+        val key: String = annotation.value
+        require(key.isNotBlank()) { "@CacheKey未指定规则" }
 
         return generateKey(method, key, *params)
     }

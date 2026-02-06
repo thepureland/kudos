@@ -40,7 +40,7 @@ open class NotifyMqMsService {
         if (registryMap.containsKey(port)) {
             if (appKey == registryMap[port]) {
                 if (!data.containsKey(key)) {
-                    data.put(key, HashSet<Int?>())
+                    data[key] = HashSet()
                 }
                 if (!data[key]!!.contains(port)) {
                     data[key]!!.add(port)
@@ -70,7 +70,7 @@ open class NotifyMqMsService {
 
     fun registry(appKey: String?, port: Int?): Boolean {
         log.info("@@@ registry, port:{0}, appKey:{1}", port, appKey)
-        registryMap.put(port, appKey)
+        registryMap[port] = appKey
         return true
     }
 }

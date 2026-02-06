@@ -3,12 +3,8 @@ package io.kudos.ms.auth.core.cache
 import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
 import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.query.Criteria
-import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.ms.auth.core.dao.AuthRoleDao
 import io.kudos.ms.auth.core.dao.AuthRoleResourceDao
-import io.kudos.ms.auth.core.model.po.AuthRole
-import io.kudos.ms.auth.core.model.po.AuthRoleResource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
@@ -49,19 +45,10 @@ open class ResourceIdsByRoleIdCache : AbstractKeyValueCacheHandler<List<String>>
             return
         }
 
-        // 加载所有active=true的角色
-        val roleCriteria = Criteria(AuthRole::active.name, OperatorEnum.EQ, true)
-        @Suppress("UNCHECKED_CAST")
-        val roles = authRoleDao.search(roleCriteria)
-        
-        // 加载所有角色-资源关系
-        @Suppress("UNCHECKED_CAST")
-        val allRoleResources = authRoleResourceDao.allSearch()
-        val roleIdToResourceIdsMap = allRoleResources
-            .groupBy { it.roleId }
-            .mapValues { entry -> entry.value.map { it.resourceId.trim() } }
+        val roles = authRoleDao.getActiveRolesForCache()
+        val roleIdToResourceIdsMap = authRoleResourceDao.getAllRoleIdToResourceIdsForCache()
 
-        log.debug("从数据库加载了${roles.size}条角色、${allRoleResources.size}条角色-资源关系。")
+        log.debug("从数据库加载了${roles.size}条角色、角色-资源关系分组${roleIdToResourceIdsMap.size}。")
 
         // 清除缓存
         if (clear) {
@@ -94,12 +81,9 @@ open class ResourceIdsByRoleIdCache : AbstractKeyValueCacheHandler<List<String>>
             log.debug("缓存中不存在角色${roleId}的资源ID，从数据库中加载...")
         }
 
-        val roleResourceCriteria = Criteria(AuthRoleResource::roleId.name, OperatorEnum.EQ, roleId)
-        val resourceIds = authRoleResourceDao.searchProperty(roleResourceCriteria, AuthRoleResource::resourceId.name)
-        
+        val resourceIds = authRoleResourceDao.getResourceIdsByRoleId(roleId)
         log.debug("从数据库加载了角色${roleId}的${resourceIds.size}条资源ID。")
-        @Suppress("UNCHECKED_CAST")
-        return (resourceIds as List<String>).map { it.trim() }
+        return resourceIds
     }
 
     /**

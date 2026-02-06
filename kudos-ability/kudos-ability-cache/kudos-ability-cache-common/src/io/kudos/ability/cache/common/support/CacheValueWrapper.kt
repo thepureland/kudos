@@ -37,7 +37,7 @@ class CacheValueWrapper<T> private constructor(
     /**
      * 获取包装的值，如果值不存在则抛出指定的异常
      */
-    fun <X : Throwable?> orElseThrow(exceptionSupplier: Supplier<out X?>): T? {
+    fun <X : Throwable?> orElseThrow(exceptionSupplier: Supplier<out X?>): T {
         if (value != null) {
             return value
         } else {

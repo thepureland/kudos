@@ -26,7 +26,7 @@ import kotlin.test.assertNull
 @TestInstance(value = TestInstance.Lifecycle.PER_CLASS)
 open class NacosConfigTest {
     
-    @Value("\${spring.cloud.nacos.config.server-addr}")
+    @Value($$"${spring.cloud.nacos.config.server-addr}")
     private val serverAddr: String? = null
 
     private lateinit var configService: ConfigService
@@ -36,7 +36,7 @@ open class NacosConfigTest {
         NacosTestContainer.startIfNeeded(null)
 
         val properties = Properties()
-        properties.put("serverAddr", serverAddr)
+        properties["serverAddr"] = serverAddr
         configService = NacosFactory.createConfigService(properties)
     }
 

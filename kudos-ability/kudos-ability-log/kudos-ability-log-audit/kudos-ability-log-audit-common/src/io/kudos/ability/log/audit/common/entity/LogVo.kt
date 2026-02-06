@@ -47,11 +47,11 @@ class LogVo : ILogVo {
 
     private fun newLogs() {
         if (this.logs == null) {
-            logs = ArrayList<BaseLog?>(2)
+            logs = ArrayList(2)
         }
     }
 
     companion object {
-        private val serialVersionUID = -6940790149742441845L
+        private const val serialVersionUID = -6940790149742441845L
     }
 }

@@ -74,7 +74,7 @@ object RabbitMqTestContainer {
     fun main(args: Array<String>?) {
         startIfNeeded(null)
         println("rabbit mq localhost port: $PORT")
-        Thread.sleep(Long.Companion.MAX_VALUE)
+        Thread.sleep(Long.MAX_VALUE)
     }
 
 }

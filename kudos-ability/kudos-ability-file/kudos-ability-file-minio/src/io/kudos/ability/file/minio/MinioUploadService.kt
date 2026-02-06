@@ -89,10 +89,6 @@ open class MinioUploadService : AbstractUploadService() {
         )
     }
 
-    override fun dispatchFileDir(model: UploadFileModel<*>): String {
-        return super.dispatchFileDir(model)
-    }
-
     override fun saveFile(model: UploadFileModel<*>, fileDir: String): String {
         try {
             val minioClient: MinioClient = getMinioClient(model)

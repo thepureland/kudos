@@ -39,7 +39,7 @@ object IpKit {
             } catch (_: Exception) {
                 return false
             }
-            if (n > 255 || n < 0) {
+            if (n !in 0..255) {
                 return false
             }
             i++
@@ -82,13 +82,13 @@ object IpKit {
      */
     fun ipv4LongToString(ipv4Long: Long): String {
         var ipLong = ipv4Long
-        if (ipLong < 0 || ipLong > ALL32ONE) {
+        if (ipLong !in 0..ALL32ONE) {
             return ""
         }
         val mask = 255L
         var result = ipLong and mask
         var temp = result.toString()
-        (0..2).forEach {
+        (0..2).forEach { _ ->
             ipLong = ipLong shr 8
             result = ipLong and mask
             temp = "$result.$temp"
@@ -199,7 +199,7 @@ object IpKit {
         }
         // 求解范围之内的IP地址
         val size = (longEndIp - longBeginIp).toInt() + 1
-        if (size > 65536 || size < 0) {
+        if (size !in 0..65536) {
             return emptyList()
         } else if (size == 1) {
             return listOf(beginIpStr)

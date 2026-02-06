@@ -48,6 +48,16 @@ open class AuthRoleDao : BaseCrudDao<String, AuthRole, AuthRoles>() {
         return search(payload) as List<AuthRoleCacheItem>
     }
 
+    /** 查询所有 active=true 的角色（供 UserIdsByRoleIdCache / UserIdsByTenantIdAndRoleCodeCache.reloadAll） */
+    open fun getActiveRolesForCache(): List<AuthRoleCacheItem> {
+        val payload = ListSearchPayload().apply {
+            returnEntityClass = AuthRoleCacheItem::class
+            criterions = listOf(Criterion(AuthRole::active.name, OperatorEnum.EQ, true))
+        }
+        @Suppress("UNCHECKED_CAST")
+        return search(payload) as List<AuthRoleCacheItem>
+    }
+
     /** 按租户、角色编码查询（不区分 active），返回单条缓存用 VO */
     open fun getRoleByTenantIdAndRoleCode(tenantId: String, code: String): AuthRoleCacheItem? {
         val payload = ListSearchPayload().apply {

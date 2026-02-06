@@ -6,6 +6,8 @@ import io.kudos.test.container.kit.bindingPort
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.wait.strategy.Wait
+import java.security.SecureRandom
+import java.util.*
 
 /**
  * nacos-server测试容器
@@ -23,9 +25,9 @@ object NacosTestContainer {
 
     const val LABEL_NACOS_FOR_SEATA = "Nacos（for Seata）"
 
-    val tokenBytes = ByteArray(32).also { java.security.SecureRandom().nextBytes(it) }
+    val tokenBytes = ByteArray(32).also { SecureRandom().nextBytes(it) }
 
-    val tokenBase64 = java.util.Base64.getEncoder().encodeToString(tokenBytes)
+    val tokenBase64: String = Base64.getEncoder().encodeToString(tokenBytes)
 
     private val container = GenericContainer(IMAGE_NAME).apply {
         withEnv("MODE", "standalone")
@@ -116,7 +118,7 @@ object NacosTestContainer {
     fun main(args: Array<String>?) {
         startIfNeeded(null)
         println("nacos localhost port: $PORT")
-        Thread.sleep(Long.Companion.MAX_VALUE)
+        Thread.sleep(Long.MAX_VALUE)
     }
 
 }

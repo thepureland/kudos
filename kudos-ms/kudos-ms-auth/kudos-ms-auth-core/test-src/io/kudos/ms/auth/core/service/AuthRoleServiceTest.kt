@@ -56,17 +56,17 @@ class AuthRoleServiceTest : RdbAndRedisCacheTestBase() {
     }
 
     @Test
-    fun getRolesBySubsysCode() {
+    fun getRolesBySubSystemCode() {
         val tenantId = "svc-tenant-role-test-1-bq0Y0mrl"
-        val subsysCode = "ams"
-        val roles = authRoleService.getRolesBySubsysCode(tenantId, subsysCode)
+        val subSystemCode = "ams"
+        val roles = authRoleService.getRolesBySubsysCode(tenantId, subSystemCode)
         assertTrue(roles.size >= 3)
         assertTrue(roles.any { it.code == "svc-role-test-1-bq0Y0mrl" })
         assertTrue(roles.any { it.code == "svc-role-test-2-bq0Y0mrl" })
         
         // 测试另一个子系统
-        val subsysCode2 = "svc-subsys-role-test-1-bq0Y0mrl"
-        val roles2 = authRoleService.getRolesBySubsysCode(tenantId, subsysCode2)
+        val subSystemCode2 = "svc-subsys-role-test-1-bq0Y0mrl"
+        val roles2 = authRoleService.getRolesBySubsysCode(tenantId, subSystemCode2)
         assertTrue(roles2.any { it.code == "svc-role-test-3-bq0Y0mrl" })
     }
 

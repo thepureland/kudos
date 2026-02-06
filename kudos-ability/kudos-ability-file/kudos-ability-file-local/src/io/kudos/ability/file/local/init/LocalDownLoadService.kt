@@ -6,7 +6,6 @@ import io.kudos.ability.file.common.entity.DownloadFileModel
 import io.kudos.ability.file.local.init.properties.LocalProperties
 import io.kudos.base.error.ServiceException
 import io.kudos.base.io.FileKit
-import io.kudos.base.logger.LogFactory
 import org.springframework.beans.factory.annotation.Autowired
 import java.io.File
 import java.io.FileInputStream
@@ -18,7 +17,7 @@ class LocalDownLoadService : AbstractDownLoadService() {
     @Autowired
     private lateinit var properties: LocalProperties
 
-    protected override fun readFileToByte(downloadFileModel: DownloadFileModel<*>): ByteArray {
+    override fun readFileToByte(downloadFileModel: DownloadFileModel<*>): ByteArray {
         val bucketName = downloadFileModel.bucketName
         val filePath = downloadFileModel.filePath
         val realFilePath = properties.basePath + File.separator + bucketName + File.separator + filePath
@@ -39,7 +38,5 @@ class LocalDownLoadService : AbstractDownLoadService() {
             throw ServiceException(FileErrorCode.FILE_NO_EXISTS)
         }
     }
-
-    private val log = LogFactory.getLog(this)
 
 }

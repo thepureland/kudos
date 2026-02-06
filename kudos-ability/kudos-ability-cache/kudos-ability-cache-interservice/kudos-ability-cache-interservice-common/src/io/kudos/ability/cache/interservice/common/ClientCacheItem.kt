@@ -31,7 +31,6 @@ class ClientCacheItem : Serializable {
          * @param obj
          */
         fun genUid(obj: Any): String {
-            requireNotNull(obj) { "生成uid的对象不能为空！" }
             return DigestKit.getMD5((obj.javaClass.getName() + JsonKit.toJson(obj)).toByteArray(), "feignCache")!!
         }
     }

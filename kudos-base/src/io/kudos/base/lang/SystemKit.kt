@@ -58,7 +58,7 @@ object SystemKit {
             val env: MutableMap<String, String> = System.getenv() as MutableMap<String, String>
             val classes = Collections::class.java.declaredClasses
             for (cl in classes) {
-                if (cl.name == "java.util.Collections\$UnmodifiableMap") {
+                if (cl.name == $$"java.util.Collections$UnmodifiableMap") {
                     val mField = cl.getDeclaredField("m").apply { isAccessible = true }
                     @Suppress("UNCHECKED_CAST")
                     val internal: MutableMap<String, String> = mField.get(env) as MutableMap<String, String>
@@ -181,7 +181,7 @@ object SystemKit {
     fun currentOs(): OsEnum {
         val osName = (System.getProperty("os.name") ?: "").lowercase()
         val osVersion = (System.getProperty("os.version") ?: "").lowercase()
-        val osArch = (System.getProperty("os.arch") ?: "").lowercase()
+//        val osArch = (System.getProperty("os.arch") ?: "").lowercase()
 
         fun hasKeyword(vararg keys: String): Boolean =
             keys.any { osName.contains(it) || osVersion.contains(it) }

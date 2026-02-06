@@ -36,7 +36,7 @@ class AuthGroupUserServiceTest : RdbAndRedisCacheTestBase() {
     fun getGroupIdsByUserId() {
         val userId = "9c1b2a3d-0000-0000-0000-000000000080"
         val groupIds = authGroupUserService.getGroupIdsByUserId(userId)
-        assertTrue(groupIds.size >= 1)
+        assertTrue(groupIds.isNotEmpty())
         assertTrue(groupIds.contains("9c1b2a3d-0000-0000-0000-000000000083"))
     }
 

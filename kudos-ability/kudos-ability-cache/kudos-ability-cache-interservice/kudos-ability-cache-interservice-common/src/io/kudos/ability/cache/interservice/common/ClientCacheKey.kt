@@ -17,7 +17,7 @@ class ClientCacheKey : Serializable {
     constructor(url: String?, method: String?, body: ByteArray?) {
         this.url = url
         this.method = method
-        if (body != null && body.size > 0) {
+        if (body != null && body.isNotEmpty()) {
             this.param = String(body)
         }
     }

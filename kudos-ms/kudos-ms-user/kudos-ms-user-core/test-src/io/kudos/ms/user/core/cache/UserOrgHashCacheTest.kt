@@ -14,7 +14,7 @@ import kotlin.test.*
  * 覆盖：按 id 单条/批量获取、按租户获取机构列表、全量刷新、新增/更新/删除/批量删除后同步；
  * 本地缓存开启时二次取为同一对象引用。
  *
- * 测试数据：`sql/h2/cache/UserOrgHashCacheTest.sql`。
+ * 测试数据：`UserOrgHashCacheTest.sql`。
  * 需 Docker 运行 Redis，且 sys_cache 中已配置 USER_ORG__HASH（hash=true）。
  *
  * @author K
@@ -94,7 +94,7 @@ class UserOrgHashCacheTest : RdbAndRedisCacheTestBase() {
         cacheHandler.syncOnInsert(id)
         val item = cacheHandler.getOrgById(id)
         assertNotNull(item)
-        assertEquals(tenant001, item?.tenantId)
+        assertEquals(tenant001, item.tenantId)
         val itemAgain = cacheHandler.getOrgById(id)
         if (isLocalCacheEnabled()) assertSame(item, itemAgain)
     }

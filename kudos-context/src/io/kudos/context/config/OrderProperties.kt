@@ -45,7 +45,7 @@ class OrderProperties : Properties {
     @Synchronized
     override fun keys(): Enumeration<Any?> {
         // Return enumeration of keys in insertion order
-        return Collections.enumeration<Any?>(ArrayList<Any?>(keyList))
+        return Collections.enumeration<Any?>(ArrayList(keyList))
     }
 
     override val keys: MutableSet<Any> = LinkedHashSet<Any>(keyList)

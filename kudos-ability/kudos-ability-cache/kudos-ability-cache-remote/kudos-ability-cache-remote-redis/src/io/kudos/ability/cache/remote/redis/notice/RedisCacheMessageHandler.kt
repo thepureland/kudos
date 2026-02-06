@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.redis.connection.Message
 import org.springframework.data.redis.connection.MessageListener
 import org.springframework.data.redis.core.RedisTemplate
+import org.springframework.stereotype.Component
 
 /**
  * Redis缓存消息处理器
@@ -45,10 +46,11 @@ import org.springframework.data.redis.core.RedisTemplate
  * - 支持缓存版本隔离，消息中的缓存名称会经过版本转换
  * - 需要确保Redis连接正常，否则消息无法正常发送和接收
  */
-class RedisCacheMessageHandler(
+@Component
+open class RedisCacheMessageHandler(
     private val nodeId: String
 ) : ICacheMessageHandler, MessageListener {
-    @Value("\${kudos.ability.cache.remoteStore}")
+    @Value($$"${kudos.ability.cache.remoteStore}")
     private lateinit var remoteStore: String
 
     @Autowired

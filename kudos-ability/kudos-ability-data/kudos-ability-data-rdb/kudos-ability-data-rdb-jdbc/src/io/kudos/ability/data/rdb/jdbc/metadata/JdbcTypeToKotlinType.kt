@@ -1,6 +1,9 @@
 package io.kudos.ability.data.rdb.jdbc.metadata
 
-import java.sql.Types
+import java.math.BigDecimal
+import java.math.BigInteger
+import java.sql.*
+import java.time.*
 import java.util.*
 import kotlin.reflect.KClass
 
@@ -17,13 +20,13 @@ object JdbcTypeToKotlinType {
         Types.BIGINT to Long::class,
         Types.BINARY to Array<Byte>::class,
         Types.BIT to Boolean::class,
-        Types.BLOB to java.sql.Blob::class,
+        Types.BLOB to Blob::class,
         Types.BOOLEAN to Boolean::class,
         Types.CHAR to String::class,
-        Types.CLOB to java.sql.Clob::class,
+        Types.CLOB to Clob::class,
         Types.DATALINK to Any::class,
-        Types.DATE to java.time.LocalDate::class,
-        Types.DECIMAL to java.math.BigDecimal::class,
+        Types.DATE to LocalDate::class,
+        Types.DECIMAL to BigDecimal::class,
         Types.DISTINCT to Any::class,
         Types.DOUBLE to Double::class,
         Types.FLOAT to Double::class,
@@ -33,23 +36,23 @@ object JdbcTypeToKotlinType {
         Types.LONGVARBINARY to Array<Byte>::class,
         Types.LONGVARCHAR to String::class,
         Types.NCHAR to String::class,
-        Types.NCLOB to java.sql.Clob::class,
+        Types.NCLOB to Clob::class,
         Types.NULL to Nothing::class,
         Types.NUMERIC to Double::class,
         Types.NVARCHAR to String::class,
         Types.OTHER to Any::class,
         Types.REAL to Float::class,
-        Types.REF to java.sql.Ref::class,
+        Types.REF to Ref::class,
         Types.REF_CURSOR to Any::class,
-        Types.ROWID to java.sql.RowId::class,
+        Types.ROWID to RowId::class,
 //        Types.SMALLINT to Short::class,
         Types.SMALLINT to Int::class,
-        Types.SQLXML to java.sql.SQLXML::class,
+        Types.SQLXML to SQLXML::class,
         Types.STRUCT to Any::class,
-        Types.TIME to java.time.LocalTime::class,
-        Types.TIMESTAMP to java.time.LocalDateTime::class,
-        Types.TIMESTAMP_WITH_TIMEZONE to java.time.LocalDateTime::class,
-        Types.TIME_WITH_TIMEZONE to java.time.LocalDateTime::class,
+        Types.TIME to LocalTime::class,
+        Types.TIMESTAMP to LocalDateTime::class,
+        Types.TIMESTAMP_WITH_TIMEZONE to LocalDateTime::class,
+        Types.TIME_WITH_TIMEZONE to LocalDateTime::class,
 //        Types.TINYINT to Byte::class,
         Types.TINYINT to Int::class,
         Types.VARBINARY to Array<Byte>::class,
@@ -77,15 +80,15 @@ object JdbcTypeToKotlinType {
                     "BIGINT", "INT8", "IDENTITY" -> Long::class
                     "REAL" -> Float::class
                     "DOUBLE", "PRECISION", "FLOAT", "FLOAT4", "FLOAT8" -> Double::class
-                    "DECIMAL", "NUMBER", "DEC", "NUMERI" -> java.math.BigDecimal::class
+                    "DECIMAL", "NUMBER", "DEC", "NUMERI" -> BigDecimal::class
                     "VARCHAR", "LONGVARCHAR", "VARCHAR2", "NVARCHAR", "NVARCHAR2", "VARCHAR_CASESENSITIVE", "VARCHAR_IGNORECASE", "CHAR", "CHARACTER", "NCHAR", "CHARACTER VARYING" -> String::class
-                    "BLOB", "TINYBLOB", "MEDIUMBLOB", "LONGBLOB", "IMAGE", "OID" -> java.sql.Blob::class
-                    "CLOB", "TINYTEXT", "TEXT", "MEDIUMTEXT", "LONGTEXT", "NTEXT", "NCLOB" -> java.sql.Clob::class
-                    "DATE" -> java.time.LocalDate::class
-                    "TIME" -> java.time.LocalTime::class
-                    "TIMESTAMP", "DATETIME", "SMALLDATETIME" -> java.time.LocalDateTime::class
+                    "BLOB", "TINYBLOB", "MEDIUMBLOB", "LONGBLOB", "IMAGE", "OID" -> Blob::class
+                    "CLOB", "TINYTEXT", "TEXT", "MEDIUMTEXT", "LONGTEXT", "NTEXT", "NCLOB" -> Clob::class
+                    "DATE" -> LocalDate::class
+                    "TIME" -> LocalTime::class
+                    "TIMESTAMP", "DATETIME", "SMALLDATETIME" -> LocalDateTime::class
                     "BINARY", "VARBINARY", "LONGVARBINARY", "RAW", "BYTEA" -> Array<Byte>::class
-                    "UUID" -> java.util.UUID::class
+                    "UUID" -> UUID::class
                     "ARRAY" -> Array<Any>::class
                     "JSON", "JSONB" -> String::class
                     "GEOMETRY" -> ByteArray::class
@@ -103,14 +106,14 @@ object JdbcTypeToKotlinType {
                     "INTEGER", "ID" -> Long::class
                     "FLOAT" -> Float::class
                     "DOUBLE" -> Double::class
-                    "BIGINT" -> java.math.BigInteger::class
-                    "DECIMAL" -> java.math.BigDecimal::class
+                    "BIGINT" -> BigInteger::class
+                    "DECIMAL" -> BigDecimal::class
                     "YEAR" -> Int::class
                     "VARCHAR", "CHAR", "TEXT", "ENUM", "SET", "JSON" -> String::class
                     "BLOB", "GEOMETRY", "POINT", "LINESTRING", "POLYGON" -> ByteArray::class
-                    "DATE" -> java.time.LocalDate::class
-                    "TIME" -> java.time.LocalTime::class
-                    "DATETIME", "TIMESTAMP" -> java.time.LocalDateTime::class
+                    "DATE" -> LocalDate::class
+                    "TIME" -> LocalTime::class
+                    "DATETIME", "TIMESTAMP" -> LocalDateTime::class
                     else -> Any::class
                 }
             }
@@ -123,20 +126,20 @@ object JdbcTypeToKotlinType {
                     jdbcType.matches(Regex("NUMBER\\((?:11|12|13|14|15|16|17|18|19),0?\\)")) -> Long::class
                     jdbcType in listOf("FLOAT", "BINARY_FLOAT") -> Float::class
                     jdbcType in listOf("DOUBLE", "BINARY_DOUBLE") -> Double::class
-                    jdbcType.startsWith("NUMBER") -> java.math.BigDecimal::class
-                    jdbcType in listOf("DEC", "DECIMAL", "DOUBLE PRECISION") -> java.math.BigDecimal::class
+                    jdbcType.startsWith("NUMBER") -> BigDecimal::class
+                    jdbcType in listOf("DEC", "DECIMAL", "DOUBLE PRECISION") -> BigDecimal::class
                     jdbcType in listOf("VARCHAR2", "CHAR", "LONG", "NVARCHAR2", "CHARACTER", "VARCHAR") -> String::class
                     jdbcType in listOf("BFILE", "RAW", "LONGRAW", "LONG VARCHAR") -> ByteArray::class
-                    jdbcType == "BLOB" -> java.sql.Blob::class
-                    jdbcType in listOf("CLOB", "NCLOB") -> java.sql.Clob::class
-                    jdbcType == "DATE" -> java.time.LocalDate::class
-                    jdbcType == "TIME" -> java.time.LocalTime::class
-                    jdbcType in listOf("DATETIME", "TIMESTAMP", "TIMESTAMP WITH TIME ZONE", "TIMESTAMP WITH LOCAL TIME ZONE") -> java.time.LocalDateTime::class
-                    jdbcType.startsWith("INTERVAL") -> java.time.Duration::class
-                    jdbcType in listOf("REF CURSOR") -> java.sql.ResultSet::class
+                    jdbcType == "BLOB" -> Blob::class
+                    jdbcType in listOf("CLOB", "NCLOB") -> Clob::class
+                    jdbcType == "DATE" -> LocalDate::class
+                    jdbcType == "TIME" -> LocalTime::class
+                    jdbcType in listOf("DATETIME", "TIMESTAMP", "TIMESTAMP WITH TIME ZONE", "TIMESTAMP WITH LOCAL TIME ZONE") -> LocalDateTime::class
+                    jdbcType.startsWith("INTERVAL") -> Duration::class
+                    jdbcType in listOf("REF CURSOR") -> ResultSet::class
                     jdbcType in listOf("ROWID", "UROWID") -> String::class
                     jdbcType == "XMLTYPE" -> String::class
-                    jdbcType in listOf("OBJECT", "REF") -> java.sql.Struct::class
+                    jdbcType in listOf("OBJECT", "REF") -> Struct::class
                     else -> Any::class
                 }
             }
@@ -147,16 +150,16 @@ object JdbcTypeToKotlinType {
                     "INT8", "BIGSERIAL" -> Long::class
                     "FLOAT4" -> Float::class
                     "FLOAT8", "MONEY" -> Double::class
-                    "NUMERIC" -> java.math.BigDecimal::class
-                    "UUID" -> java.util.UUID::class
+                    "NUMERIC" -> BigDecimal::class
+                    "UUID" -> UUID::class
                     "VARCHAR", "BPCHAR", "TEXT" -> String::class
                     "JSON", "JSONB", "XML" -> String::class
-                    "DATE" -> java.time.LocalDate::class
-                    "TIME" -> java.time.LocalTime::class
-                    "TIME WITH TIME ZONE" -> java.time.OffsetTime::class
-                    "TIMESTAMP", "TIMESTAMP WITHOUT TIMEZONE" -> java.time.LocalDateTime::class
-                    "TIMESTAMP WITH TIMEZONE" -> java.time.OffsetDateTime::class
-                    "INTERVAL" -> java.time.Duration::class
+                    "DATE" -> LocalDate::class
+                    "TIME" -> LocalTime::class
+                    "TIME WITH TIME ZONE" -> OffsetTime::class
+                    "TIMESTAMP", "TIMESTAMP WITHOUT TIMEZONE" -> LocalDateTime::class
+                    "TIMESTAMP WITH TIMEZONE" -> OffsetDateTime::class
+                    "INTERVAL" -> Duration::class
                     "BYTEA" -> Array<Byte>::class
                     "CIDR", "INET", "MACADDR", "BOX", "CIRCLE", "LINE", "LSEG", "PATH", "POINT", "POLYGON", "VARBIT" -> Any::class
                     else -> Any::class
@@ -169,18 +172,18 @@ object JdbcTypeToKotlinType {
                     "BIGINT", "UNSIGNED BIG INT", "INT8", "BIGSERIAL" -> Long::class
                     "FLOAT" -> Float::class
                     "REAL", "DOUBLE", "DOUBLE PRECISION", "NUMERIC" -> Double::class
-                    "DECIMAL" -> java.math.BigDecimal::class
+                    "DECIMAL" -> BigDecimal::class
                     "CHARACTER", "VARCHAR", "VARYING CHARACTER", "NCHAR", "NATIVE CHARACTER", "NVARCHAR", "TEXT" -> String::class
-                    "BLOB" -> java.sql.Blob::class
-                    "CLOB" -> java.sql.Clob::class
-                    "DATE" -> java.time.LocalDate::class
-                    "TIME" -> java.time.LocalTime::class
-                    "DATETIME" -> java.time.LocalDateTime::class
+                    "BLOB" -> Blob::class
+                    "CLOB" -> Clob::class
+                    "DATE" -> LocalDate::class
+                    "TIME" -> LocalTime::class
+                    "DATETIME" -> LocalDateTime::class
                     else -> Any::class
                 }
             }
             else -> {
-                defaultMapping[column.jdbcType] ?: error("未支持JdbcType: \${column.jdbcType}")
+                defaultMapping[column.jdbcType] ?: error("未支持JdbcType: ${column.jdbcType}")
             }
         }
     }

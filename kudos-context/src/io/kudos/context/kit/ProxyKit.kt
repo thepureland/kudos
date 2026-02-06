@@ -46,7 +46,7 @@ object ProxyKit {
     }
 
     private fun getCglibProxyTargetObject(proxy: Any): Any {
-        val h = proxy.javaClass.getDeclaredField("CGLIB\$CALLBACK_0")
+        val h = proxy.javaClass.getDeclaredField($$"CGLIB$CALLBACK_0")
         h.isAccessible = true
         val dynamicAdvisedInterceptor = h[proxy]
         val advised = dynamicAdvisedInterceptor.javaClass.getDeclaredField("advised")

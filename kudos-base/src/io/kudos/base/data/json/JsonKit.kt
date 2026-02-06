@@ -288,11 +288,11 @@ object JsonKit {
      *   val listType: KType = typeOf<List<User>>()
      *   val users: List<User> = readValue(bytes, listType) as List<User>
      */
-    @OptIn(kotlinx.serialization.ExperimentalSerializationApi::class)
+    @OptIn(ExperimentalSerializationApi::class)
     fun readValue(bytes: ByteArray, kType: KType): Any? {
         val engine: Json = defaultJson
         val text = bytes.toString(Charsets.UTF_8)
-        val ser: KSerializer<Any?> = kotlinx.serialization.serializer(kType)
+        val ser: KSerializer<Any?> = serializer(kType)
         return engine.decodeFromString(ser, text)
     }
 
@@ -505,7 +505,7 @@ object JsonKit {
 
             // Map（建议 String 键；非 String 键用 toString 并给出风险提醒）
             is Map<*, *> -> {
-                val entries = buildMap<String, JsonElement> {
+                val entries = buildMap {
                     for ((k, value) in v) {
                         val key = when (k) {
                             null -> "null"

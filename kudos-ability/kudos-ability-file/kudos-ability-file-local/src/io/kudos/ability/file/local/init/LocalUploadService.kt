@@ -26,7 +26,7 @@ open class LocalUploadService : AbstractUploadService() {
         }
     }
 
-    protected override fun saveFile(model: UploadFileModel<*>, fileDir: String): String {
+    override fun saveFile(model: UploadFileModel<*>, fileDir: String): String {
         var fileDir = fileDir
         createBucket(model)
         if (!model.bucketName.isNullOrBlank()) {
@@ -68,7 +68,7 @@ open class LocalUploadService : AbstractUploadService() {
         }
     }
 
-    public override fun pathPrefix(): String {
+    override fun pathPrefix(): String {
         //本地目录不对外暴露
         return ""
     }

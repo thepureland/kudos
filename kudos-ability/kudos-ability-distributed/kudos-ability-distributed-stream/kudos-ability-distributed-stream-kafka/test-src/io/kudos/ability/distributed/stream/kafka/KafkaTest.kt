@@ -42,7 +42,7 @@ open class KafkaTest {
     @Autowired
     private lateinit var mainService: IKafkaMainService
 
-    private val EXECUTOR = Executors.newFixedThreadPool(3)
+    private val executor = Executors.newFixedThreadPool(3)
 
     @BeforeAll
     fun setUp() {
@@ -59,7 +59,7 @@ open class KafkaTest {
     @Test
     fun sendAndReceiveMessageTest() {
         val task = Callable<String?> { mainService.sendAndReceiveMessage() }
-        val future = EXECUTOR.submit<String?>(task)
+        val future = executor.submit<String?>(task)
         try {
             future.get(5, TimeUnit.SECONDS)
         } catch (e: Exception) {
@@ -77,7 +77,7 @@ open class KafkaTest {
     @Test
     fun streamExceptionTest() {
         val task = Callable<String?> { mainService.errorMessage() }
-        val future = EXECUTOR.submit<String?>(task)
+        val future = executor.submit<String?>(task)
         try {
             future.get(5, TimeUnit.SECONDS)
         } catch (_: TimeoutException) {

@@ -82,7 +82,7 @@ object PostgresTestContainer {
     fun main(args: Array<String>?) {
         startIfNeeded(null)
         println("postgres localhost port: $PORT")
-        Thread.sleep(Long.Companion.MAX_VALUE)
+        Thread.sleep(Long.MAX_VALUE)
     }
 
 }

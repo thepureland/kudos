@@ -2,12 +2,12 @@ package io.kudos.ability.distributed.stream.common.annotations
 
 import io.kudos.ability.distributed.stream.common.support.StreamProducerHelper
 import io.kudos.base.logger.LogFactory
+import jakarta.annotation.Resource
 import org.aspectj.lang.JoinPoint
 import org.aspectj.lang.annotation.AfterReturning
 import org.aspectj.lang.annotation.Aspect
 import org.aspectj.lang.annotation.Pointcut
 import org.aspectj.lang.reflect.MethodSignature
-import org.springframework.beans.factory.annotation.Autowired
 
 /**
  * MQ生产者注解切面
@@ -19,7 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired
 @Aspect
 open class MqProducerAspect {
 
-    @Autowired
+    @Resource
     private lateinit var producerHelper: StreamProducerHelper
 
     private val log = LogFactory.getLog(this)

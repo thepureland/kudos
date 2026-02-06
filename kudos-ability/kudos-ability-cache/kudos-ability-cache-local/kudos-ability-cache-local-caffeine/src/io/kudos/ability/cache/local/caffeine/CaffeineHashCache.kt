@@ -68,7 +68,7 @@ class CaffeineHashCache : IHashCache, IHashCacheSync {
     override fun evictLocal(cacheName: String, id: Any) {
         val idStr = id.toString()
         val map = mainData[cacheName] ?: return
-        val entity = map.remove(idStr) ?: return
+        map.remove(idStr) ?: return
         setIdx(cacheName).entries.forEach { (_, ids) -> ids.remove(idStr) }
         zsetIdx(cacheName).entries.forEach { (_, idToScore) -> idToScore.remove(idStr) }
     }

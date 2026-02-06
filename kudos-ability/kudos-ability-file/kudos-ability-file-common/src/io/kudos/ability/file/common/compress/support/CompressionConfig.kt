@@ -32,7 +32,7 @@ class CompressionConfig : Serializable {
      */
     var quality: Float = 1f
         set(quality) {
-            require(!(quality < 0.0f || quality > 1.0f)) { "Quality must be between 0.0 and 1.0" }
+            require(quality in 0.0f..1.0f) { "Quality must be between 0.0 and 1.0" }
             field = quality
         }
 }

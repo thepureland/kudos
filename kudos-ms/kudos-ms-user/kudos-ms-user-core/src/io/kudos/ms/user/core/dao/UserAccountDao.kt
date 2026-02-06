@@ -61,6 +61,16 @@ open class UserAccountDao : BaseCrudDao<String, UserAccount, UserAccounts>() {
         return search(payload).firstOrNull() as UserAccountCacheItem?
     }
 
+    /** 查询所有 active=true 的用户（供 OrgIdsByUserIdCache.reloadAll 等使用） */
+    open fun getActiveUsersForCache(): List<UserAccountCacheItem> {
+        val payload = ListSearchPayload().apply {
+            returnEntityClass = UserAccountCacheItem::class
+            criterions = listOf(Criterion(UserAccount::active.name, OperatorEnum.EQ, true))
+        }
+        @Suppress("UNCHECKED_CAST")
+        return search(payload) as List<UserAccountCacheItem>
+    }
+
     //endregion your codes 2
 
 }

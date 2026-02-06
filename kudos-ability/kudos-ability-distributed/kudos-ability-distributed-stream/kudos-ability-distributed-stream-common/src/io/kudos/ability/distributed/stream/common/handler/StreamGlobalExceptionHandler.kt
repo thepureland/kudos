@@ -8,7 +8,7 @@ import io.kudos.ability.distributed.stream.common.model.vo.StreamProducerMsgVo
 import io.kudos.base.data.json.JsonKit
 import io.kudos.base.lang.SerializationKit
 import io.kudos.base.logger.LogFactory
-import org.springframework.beans.factory.annotation.Autowired
+import jakarta.annotation.Resource
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.integration.annotation.ServiceActivator
 import org.springframework.integration.context.IntegrationContextUtils
@@ -26,10 +26,10 @@ import java.util.*
  */
 class StreamGlobalExceptionHandler {
 
-    @Value("\${kudos.ability.distributed.stream.save-exception:true}")
+    @Value($$"${kudos.ability.distributed.stream.save-exception:true}")
     private val saveException = true
 
-    @Autowired
+    @Resource
     private lateinit var streamExceptionService: ISysMqFailMsgService
 
     /**
@@ -79,7 +79,7 @@ class StreamGlobalExceptionHandler {
         doRealChannelErrorHandl(errorMessage)
     }
 
-    @ServiceActivator(inputChannel = IStreamFailHandler.Companion.CHANNEL_BEN_NAME)
+    @ServiceActivator(inputChannel = IStreamFailHandler.CHANNEL_BEN_NAME)
     fun handSyncChannelError(errorMessage: ErrorMessage) {
         doRealChannelErrorHandl(errorMessage)
     }

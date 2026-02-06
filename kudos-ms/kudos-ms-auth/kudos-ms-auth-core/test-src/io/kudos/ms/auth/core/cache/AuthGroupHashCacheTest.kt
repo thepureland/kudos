@@ -14,7 +14,7 @@ import kotlin.test.*
  * 覆盖：按 id 单条/批量获取、按租户+用户组编码获取用户组、全量刷新、新增/更新/删除/批量删除后同步；
  * 本地缓存开启时二次取为同一对象引用。
  *
- * 测试数据：`sql/h2/cache/AuthGroupHashCacheTest.sql`。
+ * 测试数据：`AuthGroupHashCacheTest.sql`。
  * 需 Docker 运行 Redis，且 sys_cache 中已配置 AUTH_GROUP__HASH（hash=true）。
  *
  * @author K

@@ -15,7 +15,7 @@ import kotlin.test.*
  * 覆盖按 code 单条/批量获取、全量刷新、新增/更新/删除/批量删除后同步；
  * LOCAL_REMOTE/SINGLE_LOCAL 策略下二次取为同一对象引用。
  *
- * 测试数据：`sql/h2/cache/SystemByCodeCacheTest.sql`。
+ * 测试数据：`SystemByCodeCacheTest.sql`。
  * 需 Docker 运行 Redis，且 sys_cache 中已配置 SYS_SYSTEM__HASH（hash=true）。
  *
  * @author K

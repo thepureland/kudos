@@ -1,3 +1,5 @@
+package io.kudos.test.container.kit
+
 import io.kudos.base.enums.impl.OsEnum
 import io.kudos.base.lang.SystemKit
 import java.io.File
@@ -83,14 +85,21 @@ object DockerKit {
                 "Windows：安装 Docker Desktop（或使用 WSL2 + Docker）。",
                 "若公司环境限制安装，可让管理员协助。"
             )
+
             OsEnum.LINUX -> listOf(
                 "Linux：安装 Docker Engine（docker CLI + dockerd）。",
                 "安装后通常需要启动服务：systemctl start docker，并把用户加入 docker 组。"
             )
+
             else -> listOf("请先安装 Docker。")
         }
 
-        return InstallInfo(installed = installed, cliAvailable = cliAvailable, desktopAppFound = desktopFound, hints = hints)
+        return InstallInfo(
+            installed = installed,
+            cliAvailable = cliAvailable,
+            desktopAppFound = desktopFound,
+            hints = hints
+        )
     }
 
     private fun buildNotInstalledMessage(info: InstallInfo): String {

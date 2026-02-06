@@ -92,7 +92,7 @@ object EnumKit {
         val enumConstants = enumClass.java.enumConstants as Array<IDictEnum>
         val codeMap = mutableMapOf<String, String>()
         for (e in enumConstants) {
-            codeMap.put(e.code, e.trans)
+            codeMap[e.code] = e.trans
         }
         return codeMap
     }

@@ -8,7 +8,7 @@ import java.util.*
  * @author K
  * @since 1.0.0
  */
-enum class RdbTypeEnum(productName: String, jdbcDriverName: String) {
+enum class RdbTypeEnum(val productName: String, val jdbcDriverName: String) {
     H2("H2", "org.h2.Driver"),
     MYSQL("MySQL", "com.mysql.cj.jdbc.Driver"),
     POSTGRESQL("PostgreSQL", "org.postgresql.Driver"),
@@ -18,14 +18,6 @@ enum class RdbTypeEnum(productName: String, jdbcDriverName: String) {
     DB2("DB2", "com.ibm.db2.jcc.DB2Driver"),
     CLICKHOUSE("ClickHouse", "com.clickhouse.jdbc.ClickHouseDriver"),
     SQLSERVER("SqlServer", "com.microsoft.sqlserver.jdbc.SQLServerDriver");
-
-    val productName: String?
-    val jdbcDriverName: String?
-
-    init {
-        this.productName = productName
-        this.jdbcDriverName = jdbcDriverName
-    }
 
     companion object {
         /**
@@ -37,7 +29,7 @@ enum class RdbTypeEnum(productName: String, jdbcDriverName: String) {
          * @since 1.0.0
          */
         fun ofProductName(productName: String?): RdbTypeEnum {
-            return Arrays.stream<RdbTypeEnum>(entries.toTypedArray())
+            return Arrays.stream(entries.toTypedArray())
                 .filter { type: RdbTypeEnum? -> type!!.productName == productName }.findFirst().get()
         }
 
@@ -50,7 +42,7 @@ enum class RdbTypeEnum(productName: String, jdbcDriverName: String) {
          * @since 1.0.0
          */
         fun ofJdbcDriverName(jdbcDriverName: String?): RdbTypeEnum {
-            return Arrays.stream<RdbTypeEnum>(entries.toTypedArray())
+            return Arrays.stream(entries.toTypedArray())
                 .filter { type: RdbTypeEnum? -> type!!.jdbcDriverName == jdbcDriverName }.findFirst().get()
         }
     }

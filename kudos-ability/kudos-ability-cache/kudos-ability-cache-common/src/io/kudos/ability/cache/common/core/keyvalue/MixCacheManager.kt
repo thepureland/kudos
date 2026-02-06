@@ -6,6 +6,7 @@ import io.kudos.ability.cache.common.init.properties.CacheVersionConfig
 import io.kudos.ability.cache.common.support.CacheConfig
 import io.kudos.ability.cache.common.support.ICacheConfigProvider
 import io.kudos.base.logger.LogFactory
+import jakarta.annotation.Resource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
@@ -49,21 +50,22 @@ import java.util.*
  */
 class MixCacheManager : AbstractCacheManager() {
 
-    @Value("\${kudos.ability.cache.enabled}")
+    @Value($$"${kudos.ability.cache.enabled}")
     val isCacheEnabled: Boolean? = null
 
-    @Autowired
+    @Resource
     private val versionConfig: CacheVersionConfig? = null
 
-    @Autowired(required = false)
-    @Qualifier("localCacheManager")
-    private val localCacheManager: CacheManager? = null
+//    @Autowired(required = false)
+//    @Qualifier("localCacheManager")
+    @Resource(name = "localCacheManager")
+    private lateinit var localCacheManager: CacheManager
 
     @Autowired(required = false)
     @Qualifier("remoteCacheManager")
     private val remoteCacheManager: CacheManager? = null
 
-    @Autowired
+    @Resource
     private val cacheConfigProvider: ICacheConfigProvider? = null
 
     private val caches: MutableList<Cache> = ArrayList<Cache>()

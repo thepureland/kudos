@@ -21,7 +21,7 @@ import kotlin.reflect.KClass
  * @author K
  * @since 1.0.0
  */
-class RedisHashCache  constructor(
+class RedisHashCache(
     @Autowired
     private val redisTemplates: RedisTemplates,
     private val versionConfig: CacheVersionConfig,

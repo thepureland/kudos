@@ -21,8 +21,8 @@ class MultipleDataSourceProperties : InitializingBean {
      * 获取所有动态数据源配置
      */
     @Volatile
-    var packageDataSource: MutableMap<String?, String?> = ConcurrentHashMap<String?, String?>()
-    private val serviceDataSource: MutableMap<String?, String?> = ConcurrentHashMap<String?, String?>()
+    var packageDataSource = ConcurrentHashMap<String, String>()
+    private val serviceDataSource = ConcurrentHashMap<String, String>()
     private val rw: ReadWriteLock = ReentrantReadWriteLock()
 
     /**
@@ -42,19 +42,19 @@ class MultipleDataSourceProperties : InitializingBean {
      *
      * @param serviceClazz
      */
-    fun lookDataSourceKey(serviceClazz: Class<*>): String? {
+    fun lookDataSourceKey(serviceClazz: Class<*>): String {
         val packageName = serviceClazz.getPackageName()
         rw.readLock().lock()
         try {
             var result = serviceDataSource.get(packageName)
             if (result.isNullOrBlank()) {
-                result = serviceDataSource.computeIfAbsent(packageName) { k: String? ->
+                result = serviceDataSource.computeIfAbsent(packageName) { _: String? ->
                     for (entry in packageDataSource.entries) {
-                        if (packageName.startsWith(entry.key!!)) {
+                        if (packageName.startsWith(entry.key)) {
                             return@computeIfAbsent entry.value
                         }
                     }
-                    null
+                    ""
                 }
             }
             return result
@@ -69,8 +69,8 @@ class MultipleDataSourceProperties : InitializingBean {
      * @param packageName
      * @param dataSource
      */
-    fun forceChangeDataSource(packageName: String?, dataSource: String?) {
-        packageDataSource.put(packageName, dataSource)
+    fun forceChangeDataSource(packageName: String, dataSource: String) {
+        packageDataSource[packageName] = dataSource
         rw.writeLock().lock()
         try {
             serviceDataSource.clear()

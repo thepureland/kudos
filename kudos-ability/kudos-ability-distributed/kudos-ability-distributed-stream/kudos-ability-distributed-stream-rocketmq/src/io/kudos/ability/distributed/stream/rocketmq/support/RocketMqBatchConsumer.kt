@@ -85,7 +85,7 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
             log.error(e, "MQ消费启动异常！topic=$topic")
         }
         //优雅关机
-        Runtime.getRuntime().addShutdownHook(Thread(Runnable { this.destroy() }))
+        Runtime.getRuntime().addShutdownHook(Thread { this.destroy() })
     }
 
     /**
@@ -125,10 +125,10 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
         this.isRunning = true
         daemonThread = Thread {
             var lastCommitTime = System.currentTimeMillis()
-            var batchData: MutableList<MessageExt?> = ArrayList<MessageExt?>()
+            var batchData: MutableList<MessageExt?> = ArrayList()
             while (isRunning) {
                 val poll = consumer.poll()
-                if (poll != null && poll.size > 0) {
+                if (poll != null && poll.isNotEmpty()) {
                     log.debug("本次拉到数据：" + poll.size)
                     batchData.addAll(poll)
                 }
@@ -139,7 +139,7 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
                     toProcessBizData(batchData)
                     lastCommitTime = System.currentTimeMillis()
                     //清理内存数据
-                    batchData = ArrayList<MessageExt?>()
+                    batchData = ArrayList()
                 }
             }
             toProcessBizData(batchData)

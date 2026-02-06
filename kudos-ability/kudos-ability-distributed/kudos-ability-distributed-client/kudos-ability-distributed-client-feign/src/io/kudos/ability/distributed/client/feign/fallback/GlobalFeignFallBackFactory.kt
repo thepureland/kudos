@@ -12,9 +12,9 @@ class GlobalFeignFallBackFactory : FallbackFactory<HttpResult> {
 
     override fun create(cause: Throwable): HttpResult {
         val result = HttpResult(404, cause.message!!)
-        LOG.debug("Hystrix FallBackFactory -----------------------------------------------------------")
+        log.debug("Hystrix FallBackFactory -----------------------------------------------------------")
         return result
     }
 
-    private val LOG = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this)
 }

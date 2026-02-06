@@ -67,7 +67,7 @@ object FileKit {
             if (!recursive && relative.contains("/")) {
                 // 只保留一级目录中的直接子目录或文件
                 val firstSegment = relative.substringBefore("/")
-                val fullPath = normalizedDir + firstSegment + "/"
+                val fullPath = "$normalizedDir$firstSegment/"
                 if (includeDirs) result.add(fullPath)
             } else {
                 // 递归或文件
@@ -631,7 +631,7 @@ object FileKit {
      * @author K
      * @since 1.0.0
      */
-    fun directoryContains(directory: File, child: File): Boolean? = FileUtils.directoryContains(directory, child)
+    fun directoryContains(directory: File, child: File): Boolean = FileUtils.directoryContains(directory, child)
 
     /**
      * 清空指定目录，而不是删除它

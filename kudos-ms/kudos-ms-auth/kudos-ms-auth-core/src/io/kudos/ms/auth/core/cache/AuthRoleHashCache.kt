@@ -7,6 +7,7 @@ import io.kudos.ability.cache.common.core.hash.AbstractHashCacheHandler
 import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.auth.common.vo.role.AuthRoleCacheItem
+import io.kudos.ms.auth.core.cache.AuthRoleHashCache.Companion.CACHE_NAME
 import io.kudos.ms.auth.core.dao.AuthRoleDao
 import jakarta.annotation.Resource
 import org.springframework.stereotype.Component

@@ -7,11 +7,11 @@ plugins {
     alias(libs.plugins.javafx)
 }
 
-val libsCatalog = extensions.getByType<VersionCatalogsExtension>().named("libs")
-val javafx_version = libsCatalog.findVersion("javafx").get().requiredVersion
+val libsCatalog: VersionCatalog = extensions.getByType<VersionCatalogsExtension>().named("libs")
+val javafxVersion: String = libsCatalog.findVersion("javafx").get().requiredVersion
 
 javafx {
-    version = javafx_version
+    version = javafxVersion
     modules = listOf("javafx.controls", "javafx.fxml")
 }
 

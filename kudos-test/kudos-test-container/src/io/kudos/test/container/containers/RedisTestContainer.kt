@@ -67,7 +67,7 @@ object RedisTestContainer {
     fun main(args: Array<String>?) {
         startIfNeeded(null)
         println("redis localhost port: ${CONTAINER.firstMappedPort}")
-        Thread.sleep(Long.Companion.MAX_VALUE)
+        Thread.sleep(Long.MAX_VALUE)
     }
 
 }

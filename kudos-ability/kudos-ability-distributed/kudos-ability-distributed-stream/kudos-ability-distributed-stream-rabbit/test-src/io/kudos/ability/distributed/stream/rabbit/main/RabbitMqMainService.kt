@@ -2,7 +2,7 @@ package io.kudos.ability.distributed.stream.rabbit.main
 
 import io.kudos.ability.distributed.stream.common.biz.ISysMqFailMsgService
 import io.kudos.base.logger.LogFactory
-import org.springframework.beans.factory.annotation.Autowired
+import jakarta.annotation.Resource
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 
@@ -20,13 +20,13 @@ class RabbitMqMainService : IRabbitMqMainService {
     
     private val topicName = "RABBIT_TEST_TOPIC"
 
-    @Autowired
+    @Resource
     private lateinit var producerClient: IRabbitMqProducerClient
 
-    @Autowired
+    @Resource
     private lateinit var streamExceptionBiz: ISysMqFailMsgService
 
-    @Autowired
+    @Resource
     private lateinit var consumerHandler: RabbitMqConsumerHandler
     
     private val result = "SUCCESS"

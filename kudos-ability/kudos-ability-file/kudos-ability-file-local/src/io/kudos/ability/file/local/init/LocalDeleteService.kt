@@ -15,7 +15,7 @@ class LocalDeleteService : IDeleteService {
     @Autowired
     private lateinit var properties: LocalProperties
 
-    public override fun delete(model: DeleteFileModel): Boolean {
+    override fun delete(model: DeleteFileModel): Boolean {
         if (!this.isValid(model)) {
             return false
         }
@@ -25,17 +25,17 @@ class LocalDeleteService : IDeleteService {
                 + File.separator + model.filePath)
         val file = File(fullPath)
         if (file.isDirectory()) {
-            LOG.warn("can't delete a folder: $fullPath")
+            log.warn("can't delete a folder: $fullPath")
             return false
         }
         if (!file.exists()) {
-            LOG.warn("file path is not exists: $fullPath")
+            log.warn("file path is not exists: $fullPath")
             throw ServiceException(FileErrorCode.FILE_NO_EXISTS)
         }
-        LOG.warn("file delete")
+        log.warn("file delete")
         return file.delete()
     }
 
-    private val LOG= LogFactory.getLog(this)
+    private val log= LogFactory.getLog(this)
 
 }

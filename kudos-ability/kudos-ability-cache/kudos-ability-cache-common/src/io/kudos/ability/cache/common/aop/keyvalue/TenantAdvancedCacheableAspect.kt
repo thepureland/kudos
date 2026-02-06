@@ -9,10 +9,13 @@ import org.aspectj.lang.annotation.Pointcut
 import org.aspectj.lang.reflect.MethodSignature
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Lazy
+import org.springframework.stereotype.Component
 
 @Aspect
 @Lazy(false)
+@Component
 class TenantAdvancedCacheableAspect {
+
     @Autowired(required = false)
     private val remoteCacheProcess: IRemoteCacheProcessor? = null
 
@@ -23,7 +26,7 @@ class TenantAdvancedCacheableAspect {
      * @since 1.0.0
      */
     @Pointcut("@annotation(io.kudos.ability.cache.common.aop.keyvalue.TenantAdvancedCacheable)")
-    private fun cut() {
+    fun cut() {
     }
 
     @Around("cut()")

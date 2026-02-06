@@ -14,7 +14,7 @@ class DictCodeConstraintConvertor(annotation: Annotation) : DefaultConstraintCon
         val map = super.getRule(constraintAnnotation)
         val dictCode = constraintAnnotation as DictCode
         val codeMap = dictCodeConvertor(dictCode.module, dictCode.dictType)
-        map.put("values", codeMap.keys)
+        map["values"] = codeMap.keys
         return map
     }
 

@@ -278,8 +278,8 @@ open class UserOrgService : BaseCrudService<String, UserOrg, UserOrgDao>(), IUse
 
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {
-        val orgs = dao.inSearchById(ids)
-        val tenantIds = orgs.map { it.tenantId }.toSet()
+//        val orgs = dao.inSearchById(ids)
+//        orgs.map { it.tenantId }.toSet()
         val count = super.batchDelete(ids)
         log.debug("批量删除机构，期望删除${ids.size}条，实际删除${count}条。")
         userOrgHashCache.syncOnBatchDelete(ids)

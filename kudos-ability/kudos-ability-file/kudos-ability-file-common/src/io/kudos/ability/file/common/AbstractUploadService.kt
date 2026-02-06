@@ -2,7 +2,6 @@ package io.kudos.ability.file.common
 
 import io.kudos.ability.file.common.entity.UploadFileModel
 import io.kudos.ability.file.common.entity.UploadFileResult
-import io.kudos.base.logger.LogFactory
 import java.util.*
 
 abstract class AbstractUploadService : IUploadService {
@@ -42,7 +41,7 @@ abstract class AbstractUploadService : IUploadService {
             fpLs.add(month.toString())
             fpLs.add(day.toString())
         }
-        //waring: 使用/作为分割符,适合windows cmd + unix like shell + web browers
+        //waring: 使用/作为分割符,适合windows cmd + unix like shell + web browsers
         return fpLs.toTypedArray().joinToString("/")
     }
 
@@ -56,7 +55,5 @@ abstract class AbstractUploadService : IUploadService {
     protected abstract fun saveFile(model: UploadFileModel<*>, fileDir: String): String?
 
     abstract override fun pathPrefix(): String
-
-    private val LOG = LogFactory.getLog(this)
 
 }

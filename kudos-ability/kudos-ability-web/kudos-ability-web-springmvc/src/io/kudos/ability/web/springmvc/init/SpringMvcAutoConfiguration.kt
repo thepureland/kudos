@@ -78,7 +78,7 @@ open class SpringMvcAutoConfiguration : WebMvcConfigurer, IComponentInitializer 
     open fun corsHandlerInterceptor(): HandlerInterceptor = CorsHandlerInterceptor()
 
     override fun addInterceptors(registry: InterceptorRegistry) {
-        registry.addInterceptor(corsHandlerInterceptor()).addPathPatterns("/**");
+        registry.addInterceptor(corsHandlerInterceptor()).addPathPatterns("/**")
     }
 
     override fun addCorsMappings(registry: CorsRegistry) {

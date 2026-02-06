@@ -37,7 +37,7 @@ class RedissonClusterServersProperties {
     /**
      * 主节点信息
      */
-    var nodeAddresses: Array<String> = arrayOf<String>("")
+    var nodeAddresses: Array<String> = arrayOf("")
 
     /**
      * 集群扫描间隔时间 单位毫秒

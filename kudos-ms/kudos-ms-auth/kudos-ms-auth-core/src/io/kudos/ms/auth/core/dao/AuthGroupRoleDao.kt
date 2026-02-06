@@ -67,6 +67,16 @@ open class AuthGroupRoleDao : BaseCrudDao<String, AuthGroupRole, AuthGroupRoles>
         return groupIds.toSet()
     }
 
+    /** 按用户组ID查询角色ID列表（供 ResourceIdsByTenantIdAndGroupCodeCache 使用） */
+    fun getRoleIdsByGroupId(groupId: String): List<String> = searchRoleIdsByGroupId(groupId).toList()
+
+    /** 全量用户组-角色关系，按用户组ID分组为「用户组ID -> 角色ID列表」（供 ResourceIdsByTenantIdAndGroupCodeCache.reloadAll） */
+    fun getAllGroupIdToRoleIdsForCache(): Map<String, List<String>> {
+        @Suppress("UNCHECKED_CAST")
+        val all = allSearch() as List<AuthGroupRole>
+        return all.groupBy { it.groupId }.mapValues { (_, list) -> list.map { it.roleId } }
+    }
+
     //endregion your codes 2
 
 }

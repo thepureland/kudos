@@ -36,7 +36,7 @@ class UserOrgUserServiceTest : RdbAndRedisCacheTestBase() {
     fun getOrgIdsByUserId() {
         val userId = "6cd22b48-0000-0000-0000-000000000060"
         val orgIds = userOrgUserService.getOrgIdsByUserId(userId)
-        assertTrue(orgIds.size >= 1)
+        assertTrue(orgIds.isNotEmpty())
         assertTrue(orgIds.contains("6cd22b48-0000-0000-0000-000000000063"))
     }
 

@@ -1,9 +1,11 @@
 package io.kudos.context.lock
 
 import io.kudos.base.lang.ThreadKit
-import io.kudos.base.logger.LogFactory
 import io.kudos.base.support.KeyLockRegistry
-import java.util.concurrent.*
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.DelayQueue
+import java.util.concurrent.Delayed
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
 
@@ -33,11 +35,12 @@ import java.util.concurrent.locks.ReentrantLock
  * - 支持并发访问，线程安全
  */
 class NormalLockService : ILockProvider<ReentrantLock> {
-    private val cacheKeyMap: ConcurrentMap<String?, Long?> = ConcurrentHashMap()
-    private val delayQueue: DelayQueue<ExpiringKey<String?>> = DelayQueue()
+
+    private val cacheKeyMap = ConcurrentHashMap<String, Long>()
+
+    private val delayQueue = DelayQueue<ExpiringKey<String?>>()
 
     private val reentrantLockManager = KeyLockRegistry<String>()
-    private val log = LogFactory.getLog(NormalLockService::class.java)
 
     init {
         /**
@@ -63,17 +66,17 @@ class NormalLockService : ILockProvider<ReentrantLock> {
          * - 确保线程能够正确响应中断信号
          */
         //守护线程删除过期key
-        Thread(Runnable {
+        Thread {
             try {
                 while (true) {
                     // 阻塞直到有过期 key
                     val expKey = delayQueue.take()
                     cacheKeyMap.remove(expKey.key) // 只有值匹配时才删除
                 }
-            } catch (ignored: InterruptedException) {
+            } catch (_: InterruptedException) {
                 Thread.currentThread().interrupt()
             }
-        }).start()
+        }.start()
     }
 
     /**
@@ -180,7 +183,7 @@ class NormalLockService : ILockProvider<ReentrantLock> {
         val old = cacheKeyMap.putIfAbsent(lockKey, expireTime)
         if (old == null) {
             // 第一个线程进来，key 还不存在，真正放入，并加入延迟队列
-            delayQueue.put(ExpiringKey<String?>(lockKey, expireTime))
+            delayQueue.put(ExpiringKey(lockKey, expireTime))
             return true
         }
         return false
@@ -219,7 +222,7 @@ class NormalLockService : ILockProvider<ReentrantLock> {
     private class ExpiringKey<K>(
         val key: K?,
         /** 到期的绝对时刻，单位毫秒（System.currentTimeMillis() + delayMillis）  */
-        private val expireAtMillis: kotlin.Long
+        private val expireAtMillis: Long
     ) : Delayed {
 
         /**
@@ -239,7 +242,7 @@ class NormalLockService : ILockProvider<ReentrantLock> {
          * @param unit 时间单位
          * @return 距离过期的剩余时间（指定单位），如果已过期则<=0
          */
-        override fun getDelay(unit: TimeUnit): kotlin.Long {
+        override fun getDelay(unit: TimeUnit): Long {
             val remainingMillis = expireAtMillis - System.currentTimeMillis()
             // 将毫秒差值转换成调用者需要的时间单位
             return unit.convert(remainingMillis, TimeUnit.MILLISECONDS)
@@ -290,9 +293,8 @@ class NormalLockService : ILockProvider<ReentrantLock> {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
             if (other !is ExpiringKey<*>) return false
-            val that = other
             // 仅按 key 比较，以便 remove 时匹配
-            return key == that.key
+            return key == other.key
         }
 
         /**

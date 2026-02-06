@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Value
  */
 class CacheVersionConfig {
 
-    @Value("\${kudos.ability.cache.version:default}")
+    @Value($$"${kudos.ability.cache.version:default}")
     var cacheVersion: String = "default"
 
     fun getFinalCacheName(cacheName: String): String {
@@ -20,10 +20,10 @@ class CacheVersionConfig {
     }
 
     fun getRealCacheName(cacheName: String): String {
-        if (cacheName.startsWith(cacheVersion)) {
-            return cacheName.replace(cacheVersion + Consts.CACHE_KEY_DEFAULT_DELIMITER, "")
+        return if (cacheName.startsWith(cacheVersion)) {
+            cacheName.replace(cacheVersion + Consts.CACHE_KEY_DEFAULT_DELIMITER, "")
         } else {
-            return cacheName
+            cacheName
         }
     }
 

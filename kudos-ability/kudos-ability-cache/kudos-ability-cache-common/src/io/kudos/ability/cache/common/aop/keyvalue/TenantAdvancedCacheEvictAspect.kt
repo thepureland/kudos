@@ -9,9 +9,11 @@ import org.aspectj.lang.annotation.Pointcut
 import org.aspectj.lang.reflect.MethodSignature
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Lazy
+import org.springframework.stereotype.Component
 
 @Aspect
 @Lazy(false)
+@Component
 class TenantAdvancedCacheEvictAspect {
 
     @Autowired(required = false)
@@ -24,7 +26,7 @@ class TenantAdvancedCacheEvictAspect {
      * @since 1.0.0
      */
     @Pointcut("@annotation(io.kudos.ability.cache.common.aop.keyvalue.TenantAdvancedCacheEvict)")
-    private fun cut() {
+    fun cut() {
     }
 
     @After("cut()")

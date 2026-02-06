@@ -117,11 +117,9 @@ internal class ListToTreeConverterTest {
             TestTreeNode("2", null, "Root2")
         )
         var callbackCount = 0
-        val callback = object : ICallback<TestTreeNode, Unit> {
-            override fun execute(p: TestTreeNode) {
-                callbackCount++
-                assertNotNull(p)
-            }
+        val callback = ICallback<TestTreeNode, Unit> { p ->
+            callbackCount++
+            assertNotNull(p)
         }
         val tree = ListToTreeConverter.convert(nodes, callback = callback)
         assertEquals(2, callbackCount)

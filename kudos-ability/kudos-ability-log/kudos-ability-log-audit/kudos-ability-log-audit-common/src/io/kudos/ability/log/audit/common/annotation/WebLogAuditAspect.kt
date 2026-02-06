@@ -11,11 +11,13 @@ import org.aspectj.lang.annotation.Aspect
 import org.aspectj.lang.annotation.Before
 import org.aspectj.lang.annotation.Pointcut
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.stereotype.Component
 import org.springframework.web.context.request.RequestAttributes
 import org.springframework.web.context.request.RequestContextHolder
 
 
 @Aspect
+@Component
 class WebLogAuditAspect {
 
     @Autowired(required = false)
@@ -39,7 +41,7 @@ class WebLogAuditAspect {
             return
         }
         val signature = joinPoint.signature as org.aspectj.lang.reflect.MethodSignature
-        val audit = signature.method.getAnnotation<WebAudit>(WebAudit::class.java)
+        val audit = signature.method.getAnnotation(WebAudit::class.java)
         val logVo = AuditLogTool.createLogVo(audit, request, joinPoint)
         LogAuditContext.set(logVo)
     }
@@ -70,8 +72,8 @@ class WebLogAuditAspect {
         }
     }
 
-    private fun isMultipartContent(request: jakarta.servlet.http.HttpServletRequest): kotlin.Boolean {
-        val contentType = request.getContentType()
+    private fun isMultipartContent(request: HttpServletRequest): Boolean {
+        val contentType = request.contentType
         if (contentType != null) {
             if (contentType.lowercase().startsWith("multipart/")) {
                 return true

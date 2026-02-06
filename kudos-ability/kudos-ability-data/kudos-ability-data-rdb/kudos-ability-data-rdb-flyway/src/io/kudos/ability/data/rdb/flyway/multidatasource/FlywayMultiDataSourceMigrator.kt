@@ -5,7 +5,7 @@ import io.kudos.ability.data.rdb.jdbc.datasource.DsContextProcessor
 import io.kudos.base.io.FileKit
 import io.kudos.base.io.scanner.classpath.ClassPathScanner
 import io.kudos.base.logger.LogFactory
-import org.springframework.beans.factory.annotation.Autowired
+import jakarta.annotation.Resource
 import org.springframework.boot.flyway.autoconfigure.FlywayProperties
 import java.io.File
 
@@ -25,13 +25,13 @@ import java.io.File
  */
 open class FlywayMultiDataSourceMigrator {
 
-    @Autowired
+    @Resource
     private lateinit var flywayMultiDatasourceProperties: FlywayMultiDataSourceProperties
 
-    @Autowired
+    @Resource
     private lateinit var flywayProperties: FlywayProperties
 
-    @Autowired
+    @Resource
     private lateinit var dsContextProcessor: DsContextProcessor
 
     private val log = LogFactory.getLog(this)
@@ -41,7 +41,7 @@ open class FlywayMultiDataSourceMigrator {
         val locationUrls = ClassPathScanner.getLocationUrlsForPath(sqlRootPath)
 
         // 检测所有合法的模块
-        val moduleNames = mutableListOf<String>()
+        val moduleNames = mutableSetOf<String>()
         locationUrls.forEach { url ->
             val path = url.path
             val childFolders = if (url.protocol == "jar") {

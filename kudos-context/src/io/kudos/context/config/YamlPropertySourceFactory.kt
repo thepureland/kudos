@@ -40,7 +40,7 @@ class YamlPropertySourceFactory : PropertySourceFactory {
         }
         val properties = loadYamlProperties(encodedResource)
         for (e in map.entries) {
-            properties.put(e.key, e.value)
+            properties[e.key] = e.value
         }
         return PropertiesPropertySource(sourceName, properties)
     }
@@ -80,7 +80,7 @@ class YamlPropertySourceFactory : PropertySourceFactory {
         } catch (_: Exception) {
             log.warn("设置config和jar关系失败！")
         }
-        SOURCE_MAP.put(sourceName, url)
+        SOURCE_MAP[sourceName] = url
     }
 
 

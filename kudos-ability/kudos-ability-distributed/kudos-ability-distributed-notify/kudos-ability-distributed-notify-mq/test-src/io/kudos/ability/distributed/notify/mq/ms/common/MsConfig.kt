@@ -7,9 +7,9 @@ import org.springframework.stereotype.Component
 @Component
 class MsConfig {
 
-    @Value("\${server.port}")
+    @Value($$"${server.port}")
     val port: Int? = null
 
-    val appKey: String? = RandomStringKit.random(8, true, true)
+    val appKey: String = RandomStringKit.random(8, true, true)
 
 }

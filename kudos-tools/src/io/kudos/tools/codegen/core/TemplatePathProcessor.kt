@@ -76,6 +76,6 @@ object TemplatePathProcessor {
             return files
         }
 
-    private fun isEntityRelative(content: String): Boolean = content.contains("${'$'}{entityName}")
+    private fun isEntityRelative(content: String): Boolean = content.contains($$"${entityName}")
 
 }

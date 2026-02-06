@@ -392,10 +392,10 @@ object IdCardNoKit {
     private fun valiDate(iYear: Int, iMonth: Int, iDate: Int): Boolean {
         val cal = Calendar.getInstance()
         val year = cal[Calendar.YEAR]
-        if (iYear < MIN || iYear >= year) {
+        if (iYear !in MIN..<year) {
             return false
         }
-        if (iMonth < 1 || iMonth > 12) {
+        if (iMonth !in 1..12) {
             return false
         }
         val datePerMonth: Int = when (iMonth) {

@@ -30,7 +30,7 @@ class DistributedCacheGuardAspect {
     private val nameDiscoverer = DefaultParameterNameDiscoverer()
 
     @Pointcut("@annotation(io.kudos.ability.cache.common.aop.keyvalue.DistributedCacheGuard)")
-    private fun cut() {
+    fun cut() {
     }
 
     @Around("cut()")
@@ -72,8 +72,15 @@ class DistributedCacheGuardAspect {
         if (cacheable != null) {
             // 3. 解析 cacheName 和 key
             val cacheName: String =
-                (if (cacheable.value.isNotEmpty()) cacheable.value[0] else (if (cacheable.cacheNames.isNotEmpty()) cacheable.cacheNames[0] else null))!!
-            requireNotNull(cacheName) { "@Cacheable.value 必须指定缓存名" }
+                (if (cacheable.value.isNotEmpty()) {
+                    cacheable.value[0]
+                } else (
+                        if (cacheable.cacheNames.isNotEmpty()) {
+                            cacheable.cacheNames[0]
+                        } else {
+                            null
+                        }
+                ))!!
 
             val keySpel = cacheable.key
             require(!(keySpel.isEmpty())) { "@Cacheable.key 必须指定" }
@@ -81,12 +88,16 @@ class DistributedCacheGuardAspect {
             val context = MethodBasedEvaluationContext(
                 null, method, pjp.args, nameDiscoverer
             )
-            val cacheKey = parser.parseExpression(keySpel).getValue<String>(context, String::class.java)
+            val cacheKey = parser.parseExpression(keySpel).getValue(context, String::class.java)
             return Pair<String, Any>(cacheName, cacheKey!!)
         } else {
             // 3. 解析 cacheName 和 key
             val cacheName =
-                if (tenantCacheable.value.isNotEmpty()) tenantCacheable.value[0] else (if (tenantCacheable.cacheNames.isNotEmpty()) tenantCacheable.cacheNames[0] else null)
+                if (tenantCacheable.value.isNotEmpty()) {
+                    tenantCacheable.value[0]
+                } else (if (tenantCacheable.cacheNames.isNotEmpty()) {
+                    tenantCacheable.cacheNames[0]
+                } else null)
             val cacheKey = SpringKit.getBean(TenantCacheKeyGenerator::class)
                 .generalNormalKey(pjp.target, method, tenantCacheable.suffix, *pjp.getArgs())
             return Pair(cacheName!!, cacheKey)

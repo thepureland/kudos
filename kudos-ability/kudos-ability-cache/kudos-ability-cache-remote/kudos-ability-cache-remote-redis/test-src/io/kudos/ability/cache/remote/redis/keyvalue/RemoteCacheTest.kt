@@ -5,6 +5,7 @@ import io.kudos.ability.cache.common.enums.CacheStrategy
 import io.kudos.test.common.init.EnableKudosTest
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.container.containers.RedisTestContainer
+import jakarta.annotation.Resource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.cache.CacheManager
@@ -38,14 +39,14 @@ internal class RemoteCacheTest {
 
     }
 
-    @Autowired
+    @Resource
     private lateinit var cacheTestService: CacheTestService
 
     @Autowired
     @Qualifier("remoteCacheManager")
     private lateinit var remoteCacheManager: CacheManager
 
-    @Autowired
+    @Resource
     private lateinit var mixCacheManager: MixCacheManager
 
     private val CACHE_NAME = "test"

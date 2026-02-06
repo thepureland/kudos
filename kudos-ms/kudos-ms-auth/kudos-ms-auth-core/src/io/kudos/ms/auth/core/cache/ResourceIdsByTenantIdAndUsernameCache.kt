@@ -3,16 +3,11 @@ package io.kudos.ms.auth.core.cache
 import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
 import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.query.Criteria
-import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.context.support.Consts
 import io.kudos.ms.auth.core.dao.AuthRoleResourceDao
 import io.kudos.ms.auth.core.dao.AuthRoleUserDao
-import io.kudos.ms.auth.core.model.po.AuthRoleResource
-import io.kudos.ms.auth.core.model.po.AuthRoleUser
 import io.kudos.ms.user.core.cache.UserAccountHashCache
 import io.kudos.ms.user.core.dao.UserAccountDao
-import io.kudos.ms.user.core.model.po.UserAccount
 import jakarta.annotation.Resource
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
@@ -68,29 +63,11 @@ open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<
             return
         }
 
-        // 加载所有active=true的用户（注：reloadAll批量加载时直接查DB效率更高）
+        val users = userAccountDao.getActiveUsersForCache()
+        val userIdToRoleIdsMap = authRoleUserDao.getAllUserIdToRoleIdsForCache()
+        val roleIdToResourceIdsMap = authRoleResourceDao.getAllRoleIdToResourceIdsForCache()
 
-
-
-        val userCriteria = Criteria(UserAccount::active.name, OperatorEnum.EQ, true)
-        @Suppress("UNCHECKED_CAST")
-        val users = userAccountDao.search(userCriteria)
-        
-        // 加载所有角色-用户关系
-        @Suppress("UNCHECKED_CAST")
-        val allRoleUsers = authRoleUserDao.allSearch()
-        val userIdToRoleIdsMap = allRoleUsers
-            .groupBy { it.userId }
-            .mapValues { entry -> entry.value.map { it.roleId } }
-        
-        // 加载所有角色-资源关系
-        @Suppress("UNCHECKED_CAST")
-        val allRoleResources = authRoleResourceDao.allSearch()
-        val roleIdToResourceIdsMap = allRoleResources
-            .groupBy { it.roleId }
-            .mapValues { entry -> entry.value.map { it.resourceId } }
-
-        log.debug("从数据库加载了${users.size}条用户、${allRoleUsers.size}条角色-用户关系、${allRoleResources.size}条角色-资源关系。")
+        log.debug("从数据库加载了${users.size}条用户、角色-用户分组${userIdToRoleIdsMap.size}、角色-资源分组${roleIdToResourceIdsMap.size}。")
 
         // 清除缓存
         if (clear) {
@@ -105,7 +82,7 @@ open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<
             }.distinct()
             
             if (resourceIds.isNotEmpty()) {
-                CacheKit.put(CACHE_NAME, getKey(user.tenantId, user.username), resourceIds)
+                CacheKit.put(CACHE_NAME, getKey(user.tenantId!!, user.username!!), resourceIds)
                 log.debug("缓存了租户${user.tenantId}用户${user.username}的${resourceIds.size}条资源ID。")
             }
         }
@@ -136,29 +113,14 @@ open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<
             return emptyList()
         }
 
-        // 2. 根据用户ID查询角色ID列表
-        val roleUserCriteria = Criteria(AuthRoleUser::userId.name, OperatorEnum.EQ, userId)
-        val roleIds = authRoleUserDao.searchProperty(roleUserCriteria, AuthRoleUser::roleId.name)
-        
+        val roleIds = authRoleUserDao.getRoleIdsByUserId(userId)
         if (roleIds.isEmpty()) {
             log.debug("用户${username}没有分配任何角色。")
             return emptyList()
         }
 
-        // 3. 根据角色ID列表查询资源ID列表（支持批量查询）
-        @Suppress("UNCHECKED_CAST")
-        val allRoleIds = roleIds as List<String>
-        val resourceIdSet = mutableSetOf<String>()
-        
-        allRoleIds.forEach { roleId ->
-            val roleResourceCriteria = Criteria(AuthRoleResource::roleId.name, OperatorEnum.EQ, roleId)
-            val resourceIds = authRoleResourceDao.searchProperty(roleResourceCriteria, AuthRoleResource::resourceId.name)
-            @Suppress("UNCHECKED_CAST")
-            resourceIdSet.addAll((resourceIds as List<String>).map { it.trim() })
-        }
-        
-        val resultList = resourceIdSet.toList()
-        log.debug("从数据库加载了租户${tenantId}用户${username}的${allRoleIds.size}个角色，共${resultList.size}条资源ID（去重后）。")
+        val resultList = authRoleResourceDao.getResourceIdsByRoleIds(roleIds)
+        log.debug("从数据库加载了租户${tenantId}用户${username}的${roleIds.size}个角色，共${resultList.size}条资源ID（去重后）。")
         return resultList
     }
 
@@ -212,25 +174,16 @@ open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<
         if (CacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("角色${roleId}的资源关系变更后，同步${CACHE_NAME}缓存...")
             
-            // 查询拥有该角色的所有用户
-            val roleUserCriteria = Criteria(AuthRoleUser::roleId.name, OperatorEnum.EQ, roleId)
-            @Suppress("UNCHECKED_CAST")
-            val roleUsers = authRoleUserDao.search(roleUserCriteria)
-            
-            // 查询这些用户的详细信息（优化：仍需从数据库查询，因为需要 tenantId 和 username）
-            val userIds = roleUsers.map { it.userId }
+            val userIds = authRoleUserDao.getUserIdsByRoleId(roleId)
             if (userIds.isNotEmpty()) {
-                userIds.forEach { userId ->
-                    val userCriteria = Criteria(UserAccount::id.name, OperatorEnum.EQ, userId)
-                    @Suppress("UNCHECKED_CAST")
-                    val users = userAccountDao.search(userCriteria)
-                    users.forEach { user ->
-                        CacheKit.evict(CACHE_NAME, getKey(user.tenantId, user.username))
-                        log.debug("踢除了用户${user.username}的资源缓存。")
-                    }
+                val users = userAccountDao.getUsersByIdsForCache(userIds)
+                users.forEach { user ->
+                    val t = user.tenantId ?: return@forEach
+                    val u = user.username ?: return@forEach
+                    CacheKit.evict(CACHE_NAME, getKey(t, u))
+                    log.debug("踢除了用户$u 的资源缓存。")
                 }
             }
-            
             log.debug("${CACHE_NAME}缓存同步完成，共影响${userIds.size}个用户。")
         }
     }

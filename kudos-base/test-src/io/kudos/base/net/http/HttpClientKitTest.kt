@@ -372,7 +372,7 @@ class HttpClientKitTest {
 
 
     // 200 全量
-    private fun com.sun.net.httpserver.HttpExchange.respond_ok_full(bytes: ByteArray, contentType: String) {
+    private fun HttpExchange.respond_ok_full(bytes: ByteArray, contentType: String) {
         responseHeaders.add("Content-Type", contentType)
         responseHeaders.add("Accept-Ranges", "bytes")
         sendResponseHeaders(200, bytes.size.toLong())
