@@ -2,6 +2,10 @@ server:
   port: 0
 
 spring:
+  # Spring Boot 4 将 TransactionAutoConfiguration 移至新包，Seata 2.5 的 SeataSpringFenceAutoConfiguration 仍引用旧类，导致 ClassNotFoundException，测试中排除该自动配置
+  autoconfigure:
+    exclude:
+      - org.apache.seata.spring.boot.autoconfigure.SeataSpringFenceAutoConfiguration
   application:
     name: main-at
   datasource:

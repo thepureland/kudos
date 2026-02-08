@@ -278,6 +278,41 @@ internal open class BaseReadOnlyDaoTest {
         assertEquals(-10, results.first().id)
     }
 
+    /**
+     * 测试 search(criteria, returnItemClass, orders)：按 Criteria 查询并指定返回类型。
+     * - returnItemClass 为 null 时等价于 search(criteria, orders)，返回实体列表
+     * - returnItemClass 为 TestTableKtorm 时返回实体列表
+     * - returnItemClass 为自定义 PO（如 TestTableCacheItem）时返回该类型的实例列表
+     */
+    @Test
+    fun searchWithReturnItemClass() {
+        val inIds = Criterion(TestTableKtorm::id.name, OperatorEnum.IN, listOf(-2, -4, -6, -7))
+        val eqActive = Criterion(TestTableKtorm::active.name, OperatorEnum.EQ, true)
+        val andCriteria = Criteria.and(inIds, eqActive)
+        val likeName = Criterion(TestTableKtorm::name.name, OperatorEnum.LIKE_S, "name1")
+        val orCriteria: Criteria = Criteria.or(likeName, andCriteria)
+        val noNull = Criterion(TestTableKtorm::weight.name, OperatorEnum.IS_NOT_NULL, null)
+        val criteria: Criteria = Criteria.and(orCriteria, noNull)
+        val order = Order.desc(TestTableKtorm::weight.name)
+
+        // returnItemClass 为 null：应与 search(criteria, order) 结果一致，返回实体列表
+        val resultsAsEntity: List<TestTableKtorm> = testTableDao.search(criteria, null, order)
+        val resultsPlain = testTableDao.search(criteria, order)
+        assertEquals(resultsPlain.size, resultsAsEntity.size)
+        assertEquals(resultsPlain.map { it.id }, resultsAsEntity.map { it.id })
+        assertEquals(-10, resultsAsEntity.first().id)
+
+        // returnItemClass 为 TestTableKtorm：应返回实体列表
+        val resultsWithClass: List<TestTableKtorm> = testTableDao.search(criteria, TestTableKtorm::class, order)
+        assertEquals(5, resultsWithClass.size)
+        assertEquals(-10, resultsWithClass.first().id)
+
+        // returnItemClass 为自定义 TestTableCacheItem：应返回 PO 实例列表，属性从查询结果映射
+        val resultsAsCacheItem = testTableDao.search(criteria, TestTableCacheItem::class, order)
+        assertEquals(5, resultsAsCacheItem.size)
+        assert(resultsAsCacheItem.any { it.id == -10 && it.name == "name10" })
+    }
+
     @Test
     fun searchProperty() {
         // ILIKE_S，IS_NOT_NULL，GT
@@ -538,4 +573,16 @@ internal open class BaseReadOnlyDaoTest {
     }
     //endregion aggregate
 
+}
+
+/**
+ * 自定义缓存项 PO，用于 search(criteria, returnItemClass, orders) 的 returnItemClass 测试。
+ * 属性与 test_table_ktorm 表列对应，便于结果映射。
+ */
+internal class TestTableCacheItem {
+    var id: Int? = null
+    var name: String? = null
+    var weight: Double? = null
+    var height: Int? = null
+    val extraProp: String? = null
 }
