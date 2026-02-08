@@ -52,7 +52,7 @@ open class I18NByLocaleAndTypeAndAmsCodeCache : AbstractKeyValueCacheHandler<Map
             return
         }
 
-        val results = sysI18nDao.getAllActiveI18nsForCache()
+        val results = sysI18nDao.fetchAllActiveI18nsForCache()
         log.debug("从数据库加载了${results.size}条国际化内容。")
 
         if (clear) {
@@ -87,7 +87,7 @@ open class I18NByLocaleAndTypeAndAmsCodeCache : AbstractKeyValueCacheHandler<Map
         if (CacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("缓存中不存在语言为${locale}、类型为${i18nTypeDictCode}且原子服务为${atomicServiceCode}的国际化内容，从数据库中加载...")
         }
-        val items = sysI18nDao.getActiveI18nsForCache(locale, i18nTypeDictCode, atomicServiceCode)
+        val items = sysI18nDao.fetchActiveI18nsForCache(locale, i18nTypeDictCode, atomicServiceCode)
         if (items.isEmpty()) {
             log.warn("数据库中不存在语言为${locale}、类型为${i18nTypeDictCode}且原子服务为${atomicServiceCode}的active=true的国际化内容！")
             return emptyMap()
@@ -148,7 +148,7 @@ open class I18NByLocaleAndTypeAndAmsCodeCache : AbstractKeyValueCacheHandler<Map
     open fun syncOnUpdateActive(id: String, active: Boolean) {
         if (CacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("更新id为${id}的国际化内容的启用状态后，同步${CACHE_NAME}缓存...")
-            val i18n = sysI18nDao.get(id)
+            val i18n = sysI18nDao.getAs(id)
             if (i18n == null) {
                 log.warn("同步国际化缓存时未找到id为${id}的记录。")
                 return
@@ -211,7 +211,7 @@ open class I18NByLocaleAndTypeAndAmsCodeCache : AbstractKeyValueCacheHandler<Map
         if (locale != null && i18nTypeDictCode != null && atomicServiceCode != null) {
             return Triple(locale, i18nTypeDictCode, atomicServiceCode)
         }
-        val i18n = sysI18nDao.get(id)
+        val i18n = sysI18nDao.getAs(id)
         if (i18n == null) {
             log.warn("同步国际化缓存时未找到id为${id}的记录。")
             return null

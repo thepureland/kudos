@@ -24,7 +24,7 @@ open class Service1 : IService1 {
 
     private val log = LogFactory.getLog(this)
 
-    override fun getById(id: Int): TestTable = testTableDao.get(id)!!
+    override fun getById(id: Int): TestTable = testTableDao.getAs(id)!!
 
             @Transactional // 可加可不加
     override fun decrease(id: Int, money: Double) {
@@ -40,12 +40,12 @@ open class Service1 : IService1 {
 //            println("seataConn? = ${seataConn != null}")
         }
         log.info("seata全局事务id【${RootContext.getXID()}】")
-        val entity = testTableDao.get(id)!!
+        val entity = testTableDao.getAs(id)!!
         log.info("用户【$id】当前余额【${entity.balance}】")
         log.info("为用户【$id】扣减余额【${money}】")
         entity.balance = entity.balance.minus(money)
         testTableDao.update(entity)
-        log.info("用户【$id】当前余额【${testTableDao.get(id)!!.balance}】")
+        log.info("用户【$id】当前余额【${testTableDao.getAs(id)!!.balance}】")
     }
 
 }

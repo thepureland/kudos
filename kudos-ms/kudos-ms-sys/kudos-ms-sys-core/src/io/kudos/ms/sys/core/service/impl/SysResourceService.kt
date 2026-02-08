@@ -150,7 +150,7 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
     @Transactional
     override fun update(any: Any): Boolean {
         val id = BeanKit.getProperty(any, SysResource::id.name) as String
-        val oldResource = dao.get(id)
+        val oldResource = dao.getAs(id)
         val success = super.update(any)
         if (success) {
             log.debug("更新id为${id}的资源。")
@@ -170,7 +170,7 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
 
     @Transactional
     override fun deleteById(id: String): Boolean {
-        val resource = dao.get(id)
+        val resource = dao.getAs(id)
         if (resource == null) {
             log.warn("删除id为${id}的资源时，发现其已不存在！")
             return false

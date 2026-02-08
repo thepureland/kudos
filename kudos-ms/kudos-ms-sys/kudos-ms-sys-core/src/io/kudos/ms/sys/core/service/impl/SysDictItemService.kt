@@ -133,7 +133,7 @@ open class SysDictItemService : BaseCrudService<String, SysDictItem, SysDictItem
 
     @Transactional
     override fun cascadeDeleteChildren(id: String): Boolean {
-        val dictItem = dao.get(id)!!
+        val dictItem = dao.getAs(id)!!
         val childItemIds = mutableListOf<String>()
         recursionFindAllChildId(id, childItemIds)
         if (childItemIds.isNotEmpty()) {

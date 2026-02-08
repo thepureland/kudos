@@ -112,7 +112,7 @@ class AccessRuleIpsBySubSysAndTenantIdCacheTest : RdbAndRedisCacheTestBase() {
         // 插入新的记录到数据库
         val ipRule = insertNewRecordToDb("8026f3ac-563b-4545-88dc-b8f70ea44847")
 
-        val accessRule = sysAccessRuleDao.get(ipRule.parentRuleId)
+        val accessRule = sysAccessRuleDao.getAs(ipRule.parentRuleId)
 
         // 同步缓存
         cacheHandler.syncOnInsert(accessRule!!, ipRule.id!!)
@@ -134,8 +134,8 @@ class AccessRuleIpsBySubSysAndTenantIdCacheTest : RdbAndRedisCacheTestBase() {
         val success = dao.updateProperties(ipRuleId, mapOf(SysAccessRuleIp::expirationTime.name to newExpirationTime))
         assert(success)
 
-        val ipRule = dao.get(ipRuleId)!!
-        val accessRule = sysAccessRuleDao.get(ipRule.parentRuleId)
+        val ipRule = dao.getAs(ipRuleId)!!
+        val accessRule = sysAccessRuleDao.getAs(ipRule.parentRuleId)
 
         // 同步缓存
         cacheHandler.syncOnUpdate(accessRule!!, ipRuleId)
@@ -156,8 +156,8 @@ class AccessRuleIpsBySubSysAndTenantIdCacheTest : RdbAndRedisCacheTestBase() {
         var ipRuleId = "3a443825-4896-49e4-a304-e4e2ddad4847"
         var success = dao.updateProperties(ipRuleId, mapOf(SysAccessRuleIp::active.name to false))
         assert(success)
-        var ipRule = dao.get(ipRuleId)!!
-        var accessRule = sysAccessRuleDao.get(ipRule.parentRuleId)!!
+        var ipRule = dao.getAs(ipRuleId)!!
+        var accessRule = sysAccessRuleDao.getAs(ipRule.parentRuleId)!!
         cacheHandler.syncOnUpdateActive(ipRuleId, false)
         var key = cacheHandler.getKey(accessRule.systemCode, accessRule.tenantId)
         @Suppress("UNCHECKED_CAST")
@@ -170,8 +170,8 @@ class AccessRuleIpsBySubSysAndTenantIdCacheTest : RdbAndRedisCacheTestBase() {
         ipRuleId = "3a443825-4896-49e4-a304-e4e2ddad4847"
         success = dao.updateProperties(ipRuleId, mapOf(SysAccessRuleIp::active.name to true))
         assert(success)
-        ipRule = dao.get(ipRuleId)!!
-        accessRule = sysAccessRuleDao.get(ipRule.parentRuleId)!!
+        ipRule = dao.getAs(ipRuleId)!!
+        accessRule = sysAccessRuleDao.getAs(ipRule.parentRuleId)!!
         cacheHandler.syncOnUpdateActive(ipRuleId, true)
         key = cacheHandler.getKey(accessRule.systemCode, accessRule.tenantId)
         @Suppress("UNCHECKED_CAST")
@@ -184,8 +184,8 @@ class AccessRuleIpsBySubSysAndTenantIdCacheTest : RdbAndRedisCacheTestBase() {
     @Test
     fun syncOnDelete() {
         val ipRuleId = "3a443825-4896-49e4-a304-e4e2ddad4847"
-        val ipRule = dao.get(ipRuleId)!!
-        val accessRule = sysAccessRuleDao.get(ipRule.parentRuleId)!!
+        val ipRule = dao.getAs(ipRuleId)!!
+        val accessRule = sysAccessRuleDao.getAs(ipRule.parentRuleId)!!
 
         // 先同步缓存（handler 需根据 ipRuleId 查库得到 parent，故需在删除前调用）
         cacheHandler.syncOnDelete(ipRuleId)

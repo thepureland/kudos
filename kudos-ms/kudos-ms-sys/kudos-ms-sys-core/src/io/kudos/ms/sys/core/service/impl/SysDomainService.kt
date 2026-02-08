@@ -92,7 +92,7 @@ open class SysDomainService : BaseCrudService<String, SysDomain, SysDomainDao>()
 
     @Transactional
     override fun deleteById(id: String): Boolean {
-        val domain = dao.get(id)
+        val domain = dao.getAs(id)
         if (domain == null) {
             log.warn("删除id为${id}的域名时，发现其已不存在！")
             return false

@@ -21,7 +21,7 @@ open class SysResourceDao : BaseCrudDao<String, SysResource, SysResources>() {
 
     /** 按 id 查询单条，返回缓存用 VO */
     open fun getCacheItem(id: String): SysResourceCacheItem? =
-        get(id, SysResourceCacheItem::class)
+        getAs(id, SysResourceCacheItem::class)
 
     /** 全量查询，返回缓存用 VO 列表（用于全量刷新） */
     open fun listAllCacheItems(): List<SysResourceCacheItem> {

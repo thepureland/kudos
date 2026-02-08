@@ -26,7 +26,7 @@ open class AuthGroupDao : BaseCrudDao<String, AuthGroup, AuthGroups>() {
 
     /** 按 id（主键）查询单条，返回缓存用 VO */
     open fun getCacheItem(id: String): AuthGroupCacheItem? =
-        get(id, AuthGroupCacheItem::class)
+        getAs(id, AuthGroupCacheItem::class)
 
     /** 全量查询，返回缓存用 VO 列表（用于全量刷新） */
     open fun getAllGroupsForCache(): List<AuthGroupCacheItem> {

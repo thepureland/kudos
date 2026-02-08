@@ -77,7 +77,7 @@ open class SysCacheService : BaseCrudService<String, SysCache, SysCacheDao>(), I
 
     @Transactional
     override fun deleteById(id: String): Boolean {
-        val sysCache = dao.get(id)
+        val sysCache = dao.getAs(id)
         if (sysCache == null) {
             log.warn("删除id为${id}的缓存配置时，发现其已不存在！")
             return false

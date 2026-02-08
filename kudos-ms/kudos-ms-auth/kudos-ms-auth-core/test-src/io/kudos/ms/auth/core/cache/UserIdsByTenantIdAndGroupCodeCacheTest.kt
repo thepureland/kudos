@@ -130,7 +130,7 @@ class UserIdsByTenantIdAndGroupCodeCacheTest : RdbAndRedisCacheTestBase() {
         val userIdsBefore = cacheHandler.getUserIds(oldTenantId, oldGroupCode)
 
         // 更新用户组编码
-        val group = authGroupDao.get(groupId)
+        val group = authGroupDao.getAs(groupId)
         assertTrue(group != null, "用户组应该存在")
         val success = authGroupDao.updateProperties(groupId, mapOf(AuthGroup::code.name to newGroupCode))
         assertTrue(success, "更新应该成功")

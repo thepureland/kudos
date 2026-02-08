@@ -124,7 +124,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         return entitySequence().firstOrNull { getPkColumn() eq id }
     }
 
-    override fun <R : Any> get(id: PK, returnType: KClass<R>): R? {
+    override fun <R : Any> getAs(id: PK, returnType: KClass<R>): R? {
         val query = querySource()
             .select()
             .where { getPkColumn().eq(id) }
@@ -243,7 +243,8 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         vararg orders: Order,
         whereConditionFactory: ((Column<Any>, Any?) -> ColumnDeclaring<Boolean>?)? = null
     ): List<*> {
-        val results = doSearchProperties(properties, AndOrEnum.AND, listOf(returnProperty), whereConditionFactory, *orders)
+        val results =
+            doSearchProperties(properties, AndOrEnum.AND, listOf(returnProperty), whereConditionFactory, *orders)
         return results.flatMap { it.values }
     }
 
@@ -328,7 +329,8 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         vararg orders: Order,
         whereConditionFactory: ((Column<Any>, Any?) -> ColumnDeclaring<Boolean>?)? = null
     ): List<*> {
-        val results = doSearchProperties(properties, AndOrEnum.OR, listOf(returnProperty), whereConditionFactory, *orders)
+        val results =
+            doSearchProperties(properties, AndOrEnum.OR, listOf(returnProperty), whereConditionFactory, *orders)
         return results.flatMap { it.values }
     }
 
@@ -405,19 +407,23 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
 
     //region search Criteria
 
-    override fun search(criteria: Criteria, vararg orders: Order): List<E> {
+    override fun search(criteria: Criteria?, vararg orders: Order): List<E> {
         return searchEntityCriteria(criteria, 0, 0, *orders)
     }
 
     override fun <T : Any> search(
-        criteria: Criteria,
+        criteria: Criteria?,
         returnItemClass: KClass<T>?,
         vararg orders: Order
     ): List<T> {
         return if (returnItemClass == null || returnItemClass == entityClass()) {
             // 走表实体的逻辑
             @Suppress("UNCHECKED_CAST")
-            search(criteria, *orders) as List<T>
+            if (criteria == null) {
+                allSearch(*orders) as List<T>
+            } else {
+                search(criteria, *orders) as List<T>
+            }
         } else {
             searchByCriteria(criteria, returnItemClass, orders = orders)
         }
@@ -439,8 +445,24 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
 
     //region pagingSearch
 
-    override fun pagingSearch(criteria: Criteria, pageNo: Int, pageSize: Int, vararg orders: Order): List<E> {
+    override fun pagingSearch(criteria: Criteria?, pageNo: Int, pageSize: Int, vararg orders: Order): List<E> {
         return searchEntityCriteria(criteria, pageNo, pageSize, *orders)
+    }
+
+    override fun <T : Any> pagingSearch(
+        criteria: Criteria?,
+        returnItemClass: KClass<T>?,
+        pageNo: Int,
+        pageSize: Int,
+        vararg orders: Order
+    ): List<T> {
+        return if (returnItemClass == null || returnItemClass == entityClass()) {
+            // 走表实体的逻辑
+            @Suppress("UNCHECKED_CAST")
+            pagingSearch(criteria, pageNo, pageSize, *orders) as List<T>
+        } else {
+            searchByCriteria(criteria, returnItemClass, pageNo, pageSize, *orders)
+        }
     }
 
     override fun pagingReturnProperty(
@@ -524,9 +546,11 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
                 }
                 beanList
             }
+
             returnProperties.size == 1 -> {
                 mapList.flatMap { it.values }
             }
+
             else -> {
                 mapList
             }
@@ -631,9 +655,9 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         }
     }
 
-    private fun sortBy(vararg orders: Order): Array<(T)->OrderByExpression> {
+    private fun sortBy(vararg orders: Order): Array<(T) -> OrderByExpression> {
         val orderByExps = sortOf(*orders)
-        val orderExpressions = mutableListOf<(T)->OrderByExpression>()
+        val orderExpressions = mutableListOf<(T) -> OrderByExpression>()
         orderByExps.forEach { orderByExp -> orderExpressions.add { orderByExp } }
         return orderExpressions.toTypedArray()
     }
@@ -743,7 +767,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         return processResult(query, returnColumnMap)
     }
 
-    private fun <T: Any> processResult(
+    private fun <T : Any> processResult(
         query: Query,
         returnItemClass: KClass<T>,
         returnColumnMap: Map<String, Column<Any>>
@@ -782,12 +806,14 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
     }
 
     private fun searchEntityCriteria(
-        criteria: Criteria, pageNo: Int = 0, pageSize: Int = 0, vararg orders: Order
+        criteria: Criteria?, pageNo: Int = 0, pageSize: Int = 0, vararg orders: Order
     ): List<E> {
         var entitySequence = entitySequence()
 
         // where
-        entitySequence = entitySequence.filter { CriteriaConverter.convert(criteria, table()) }
+        if (criteria != null) {
+            entitySequence = entitySequence.filter { CriteriaConverter.convert(criteria, table()) }
+        }
 
         // sort
         entitySequence = entitySequence.sortedBy(*sortBy(*orders))
@@ -807,42 +833,41 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         val returnColumnMap = ColumnHelper.columnOf(table(), *returnProperties.toTypedArray())
 
         // where、order、paging
-       val query = prepareQuery(criteria, returnColumnMap, pageNo, pageSize, *orders)
+        val query = prepareQuery(criteria, returnColumnMap, pageNo, pageSize, *orders)
 
         // result
         return processResult(query, returnColumnMap)
     }
 
-    private fun <T: Any> searchByCriteria(
-        criteria: Criteria,
+    private fun <T : Any> searchByCriteria(
+        criteria: Criteria?,
         returnItemClass: KClass<T>,
         pageNo: Int = 0,
         pageSize: Int = 0,
         vararg orders: Order
-    ) : List<T> {
-        val propNames = returnItemClass.memberProperties.map { it.name }
-        val entityPropNames = getEntityProperties()
-        val returnPropNames = propNames.intersect(entityPropNames.toSet())
-        val returnColumnMap = ColumnHelper.columnOf(table(), *returnPropNames.toTypedArray())
+    ): List<T> {
+        val returnColumnMap =getColumns(returnItemClass)
 
-       // select、where、order、paging
-       val query = prepareQuery(criteria, returnColumnMap, pageNo, pageSize, *orders)
+        // select、where、order、paging
+        val query = prepareQuery(criteria, returnColumnMap, pageNo, pageSize, *orders)
 
         // result
         return processResult(query, returnItemClass, returnColumnMap)
     }
 
     private fun prepareQuery(
-        criteria: Criteria,
+        criteria: Criteria?,
         returnColumnMap: Map<String, Column<Any>>,
         pageNo: Int = 0,
         pageSize: Int = 0,
         vararg orders: Order
-    ) : Query {
+    ): Query {
         var query = querySource().select(returnColumnMap.values)
 
         // where
-        query = query.where { CriteriaConverter.convert(criteria, table()) }
+        if (criteria != null) {
+            query = query.where { CriteriaConverter.convert(criteria, table()) }
+        }
 
         // order
         query = query.orderBy(sortOf(*orders))

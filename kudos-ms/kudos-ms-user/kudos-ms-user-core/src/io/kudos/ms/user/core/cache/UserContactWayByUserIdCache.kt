@@ -149,7 +149,7 @@ open class UserContactWayByUserIdCache : AbstractKeyValueCacheHandler<List<UserC
     open fun syncOnUpdateActive(id: String, active: Boolean) {
         if (CacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("更新id为${id}的联系方式的启用状态后，同步缓存...")
-            val contactWay = userContactWayDao.get(id)
+            val contactWay = userContactWayDao.getAs(id)
             if (contactWay == null) {
                 log.warn("同步联系方式缓存时未找到id为${id}的记录。")
                 return

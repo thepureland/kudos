@@ -56,7 +56,7 @@ open class SysMicroServiceHashCache : AbstractHashCacheHandler<SysMicroServiceCa
     )
     open fun getMicroServiceByCode(code: String): SysMicroServiceCacheItem? {
         require(code.isNotBlank()) { "获取微服务时 code 不能为空" }
-        return sysMicroServiceDao.getCacheItem(code)
+        return sysMicroServiceDao.fetchMicroService(code)
     }
 
     /**
@@ -115,14 +115,14 @@ open class SysMicroServiceHashCache : AbstractHashCacheHandler<SysMicroServiceCa
     /** 新增微服务后同步：将指定 code 的实体从库加载并写入缓存。 */
     open fun syncOnInsert(code: String) {
         if (!CacheKit.isCacheActive(CACHE_NAME) || !CacheKit.isWriteInTime(CACHE_NAME)) return
-        val item = sysMicroServiceDao.getCacheItem(code) ?: return
+        val item = sysMicroServiceDao.fetchMicroService(code) ?: return
         hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
     }
 
     /** 更新微服务后同步：从库重新加载并写入缓存。 */
     open fun syncOnUpdate(code: String) {
         if (!CacheKit.isCacheActive(CACHE_NAME)) return
-        val item = sysMicroServiceDao.getCacheItem(code) ?: return
+        val item = sysMicroServiceDao.fetchMicroService(code) ?: return
         if (CacheKit.isWriteInTime(CACHE_NAME)) {
             hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
         }

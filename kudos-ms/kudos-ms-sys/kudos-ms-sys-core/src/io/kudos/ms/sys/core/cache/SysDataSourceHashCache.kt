@@ -81,7 +81,7 @@ open class SysDataSourceHashCache : AbstractHashCacheHandler<SysDataSourceCacheI
     )
     open fun getDataSourcesByIds(ids: List<String>): Map<String, SysDataSourceCacheItem> {
         if (ids.isEmpty()) return emptyMap()
-        val list = sysDataSourceDao.listCacheItemsByIds(ids)
+        val list = sysDataSourceDao.fetchDataSourcesByIdsForCache(ids)
         return list.filter { it.id != null && it.id in ids }.associateBy { it.id!! }
     }
 
@@ -108,7 +108,7 @@ open class SysDataSourceHashCache : AbstractHashCacheHandler<SysDataSourceCacheI
         microServiceCode: String?
     ): List<SysDataSourceCacheItem> {
         require(tenantId.isNotBlank()) { "获取数据源时租户ID必须指定" }
-        return sysDataSourceDao.getDataSources(tenantId, subSystemCode, microServiceCode)
+        return sysDataSourceDao.fetchDataSourcesForCache(tenantId, subSystemCode, microServiceCode)
     }
 
 
@@ -126,7 +126,7 @@ open class SysDataSourceHashCache : AbstractHashCacheHandler<SysDataSourceCacheI
         }
         val cache = hashCache()
         if (clear) cache.refreshAll(CACHE_NAME, emptyList<SysSystemCacheItem>(), FILTERABLE_PROPERTIES, emptySet())
-        val list = sysDataSourceDao.listAllCacheItems()
+        val list = sysDataSourceDao.fetchAllDataSourcesForCache()
         log.debug("从数据库加载 ${list.size} 条数据源，刷新 Hash 缓存")
         cache.refreshAll(CACHE_NAME, list, FILTERABLE_PROPERTIES, emptySet())
     }

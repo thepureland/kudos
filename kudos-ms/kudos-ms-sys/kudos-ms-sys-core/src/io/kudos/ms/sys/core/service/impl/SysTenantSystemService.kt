@@ -148,7 +148,7 @@ open class SysTenantSystemService : BaseCrudService<String, SysTenantSystem, Sys
      */
     @Transactional
     override fun deleteById(id: String): Boolean {
-        val relation = dao.get(id)
+        val relation = dao.getAs(id)
         if (relation == null) {
             log.warn("删除id为${id}的租户-系统关系时，发现其已不存在！")
             return false

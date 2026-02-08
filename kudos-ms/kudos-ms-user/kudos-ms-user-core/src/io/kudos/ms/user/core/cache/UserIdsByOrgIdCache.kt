@@ -107,7 +107,7 @@ open class UserIdsByOrgIdCache : AbstractKeyValueCacheHandler<List<String>>() {
         if (CacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("更新id为${id}的机构-用户关系后，同步${CACHE_NAME}缓存...")
             val orgId = if (any == null) {
-                userOrgUserDao.get(id)!!.orgId
+                userOrgUserDao.getAs(id)!!.orgId
             } else {
                 BeanKit.getProperty(any, UserOrgUser::orgId.name) as String
             }
