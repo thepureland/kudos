@@ -8,6 +8,11 @@ import org.springframework.test.context.DynamicPropertyRegistry
 import org.testcontainers.containers.BindMode
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.wait.strategy.Wait
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
+import java.time.Duration
 
 /**
  * seata-server测试容器
@@ -24,6 +29,15 @@ object SeataTestContainer {
     const val SERVICE_PORT = 28091
 
     const val LABEL = "Seata"
+
+    /** 与 NacosTestContainer 中 Seata 用 Nacos 的宿主机端口一致 */
+    private const val NACOS_FOR_SEATA_PORT = 38848
+
+    private const val SEATA_SERVICE_NAME = "seata-server"
+
+    /** 轮询间隔与最大等待时间，等 Seata 在 Nacos 注册后再返回，避免客户端 "no available service found in cluster" */
+    private const val POLL_INTERVAL_MS = 800L
+    private const val MAX_WAIT_MS = 30_000L
 
     private lateinit var runningNacosContainer : Container
 
@@ -61,12 +75,44 @@ object SeataTestContainer {
             val runningContainer = TestContainerKit.startContainerIfNeeded(LABEL, CONTAINER)
             if (registry != null) {
                 registerProperties(registry, runningContainer)
+                waitForSeataRegisteredInNacos()
             }
             return runningContainer
         }
     }
 
+    /**
+     * 测试 JVM 在宿主机上，若用 Nacos 发现会拿到 Seata 注册的地址（可能是容器内网 IP），宿主机连不上。
+     * 这里覆盖为 file + 直连宿主机映射端口，仅测试侧直连 TC；Seata Server 仍用 Nacos+共用网络。
+     */
     private fun registerProperties(registry: DynamicPropertyRegistry?, runningContainer: Container) {
+        if (registry == null) return
+        registry.add("seata.registry.type") { "file" }
+        registry.add("seata.service.default.grouplist") { "127.0.0.1:$SERVICE_PORT" }
+    }
+
+    /**
+     * 轮询 Nacos，直到 seata-server 已注册（至少一个实例）再返回，避免客户端启动时 "no available service found in cluster"。
+     */
+    private fun waitForSeataRegisteredInNacos() {
+        val url = "http://127.0.0.1:$NACOS_FOR_SEATA_PORT/nacos/v1/ns/instance/list?serviceName=$SEATA_SERVICE_NAME"
+        val client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build()
+        val request = HttpRequest.newBuilder().uri(URI.create(url)).timeout(Duration.ofSeconds(5)).GET().build()
+        val deadline = System.currentTimeMillis() + MAX_WAIT_MS
+        while (System.currentTimeMillis() < deadline) {
+            try {
+                val response = client.send(request, HttpResponse.BodyHandlers.ofString())
+                if (response.statusCode() == 200 && response.body().contains("\"hosts\":[{")) {
+                    return
+                }
+            } catch (_: Exception) {
+                // Nacos 或 Seata 尚未就绪，继续轮询
+            }
+            Thread.sleep(POLL_INTERVAL_MS)
+        }
+        throw IllegalStateException(
+            "Seata server did not register to Nacos within ${MAX_WAIT_MS}ms. Check Nacos($NACOS_FOR_SEATA_PORT) and Seata container."
+        )
     }
 
     /**

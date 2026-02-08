@@ -353,6 +353,19 @@ interface IBaseReadOnlyDao<PK : Any, E : IIdEntity<PK>> {
     fun search(criteria: Criteria, vararg orders: Order): List<E>
 
     /**
+     * 复杂条件查询，可以指定返回的封装类。会忽略与表实体不匹配的属性
+     *
+     * @param T 返回列表项的类型
+     * @param criteria 查询条件
+     * @param returnItemClass 返回项的类型, 为null时按表的实体类处理
+     * @param orders   排序规则
+     * @return 实体对象列表
+     * @author K
+     * @since 1.0.0
+     */
+    fun <T: Any> search(criteria: Criteria, returnItemClass: KClass<T>? = null, vararg orders: Order): List<T>
+
+    /**
      * 复杂条件查询，只返回指定单个属性的值
      *
      * @param criteria       查询条件

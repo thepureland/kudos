@@ -409,6 +409,20 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         return searchEntityCriteria(criteria, 0, 0, *orders)
     }
 
+    override fun <T : Any> search(
+        criteria: Criteria,
+        returnItemClass: KClass<T>?,
+        vararg orders: Order
+    ): List<T> {
+        return if (returnItemClass == null || returnItemClass == entityClass()) {
+            // 走表实体的逻辑
+            @Suppress("UNCHECKED_CAST")
+            search(criteria, *orders) as List<T>
+        } else {
+            searchByCriteria(criteria, returnItemClass, orders = orders)
+        }
+    }
+
     override fun searchProperty(criteria: Criteria, returnProperty: String, vararg orders: Order): List<*> {
         val results = searchPropertiesCriteria(criteria, listOf(returnProperty), 0, 0, *orders)
         return results.flatMap { it.values }
@@ -729,6 +743,24 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         return processResult(query, returnColumnMap)
     }
 
+    private fun <T: Any> processResult(
+        query: Query,
+        returnItemClass: KClass<T>,
+        returnColumnMap: Map<String, Column<Any>>
+    ): List<T> {
+        val resultList = mutableListOf<T>()
+        val propNames = returnColumnMap.keys
+        query.forEach { row ->
+            val item = returnItemClass.newInstance()
+            propNames.forEach { propName ->
+                val column = returnColumnMap[propName]!!
+                BeanKit.setProperty(item, propName, row[column])
+            }
+            resultList.add(item)
+        }
+        return resultList
+    }
+
     private fun processResult(query: Query, returnColumnMap: Map<String, Column<Any>>): List<Map<String, *>> {
         val returnValues = mutableListOf<Map<String, Any?>>()
         query.forEach { row ->
@@ -772,8 +804,41 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         criteria: Criteria, returnProperties: Collection<String>,
         pageNo: Int = 0, pageSize: Int = 0, vararg orders: Order
     ): List<Map<String, *>> {
-        // select
         val returnColumnMap = ColumnHelper.columnOf(table(), *returnProperties.toTypedArray())
+
+        // where、order、paging
+       val query = prepareQuery(criteria, returnColumnMap, pageNo, pageSize, *orders)
+
+        // result
+        return processResult(query, returnColumnMap)
+    }
+
+    private fun <T: Any> searchByCriteria(
+        criteria: Criteria,
+        returnItemClass: KClass<T>,
+        pageNo: Int = 0,
+        pageSize: Int = 0,
+        vararg orders: Order
+    ) : List<T> {
+        val propNames = returnItemClass.memberProperties.map { it.name }
+        val entityPropNames = getEntityProperties()
+        val returnPropNames = propNames.intersect(entityPropNames.toSet())
+        val returnColumnMap = ColumnHelper.columnOf(table(), *returnPropNames.toTypedArray())
+
+       // select、where、order、paging
+       val query = prepareQuery(criteria, returnColumnMap, pageNo, pageSize, *orders)
+
+        // result
+        return processResult(query, returnItemClass, returnColumnMap)
+    }
+
+    private fun prepareQuery(
+        criteria: Criteria,
+        returnColumnMap: Map<String, Column<Any>>,
+        pageNo: Int = 0,
+        pageSize: Int = 0,
+        vararg orders: Order
+    ) : Query {
         var query = querySource().select(returnColumnMap.values)
 
         // where
@@ -787,8 +852,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
             query = query.limit((pageNo - 1) * pageSize, pageSize)
         }
 
-        // result
-        return processResult(query, returnColumnMap)
+        return query
     }
 
     private fun searchByPayload(
