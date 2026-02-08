@@ -22,8 +22,9 @@ open class SysMicroServiceDao : BaseCrudDao<String, SysMicroService, SysMicroSer
 //endregion your codes 1
 
     /** 按 code（主键）查询单条，返回缓存用 VO */
-    open fun getCacheItem(code: String): SysMicroServiceCacheItem? =
-        get(code, SysMicroServiceCacheItem::class)
+    open fun fetchMicroService(code: String): SysMicroServiceCacheItem? {
+        return getAs(code, SysMicroServiceCacheItem::class)
+    }
 
     /** 全量查询，返回缓存用 VO 列表（用于全量刷新） */
     open fun listAllCacheItems(): List<SysMicroServiceCacheItem> {

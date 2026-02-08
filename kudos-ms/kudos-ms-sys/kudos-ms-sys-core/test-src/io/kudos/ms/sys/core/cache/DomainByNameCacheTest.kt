@@ -134,7 +134,7 @@ class DomainByNameCacheTest : RdbAndRedisCacheTestBase() {
     @Test
     fun syncOnDelete() {
         val id = "8309fe9a-8810-4a79-9cff-555555555724"
-        val sysDomain = dao.get(id)!!
+        val sysDomain = dao.getAs(id)!!
 
         // 删除数据库中的记录
         val deleteSuccess = dao.deleteById(id)

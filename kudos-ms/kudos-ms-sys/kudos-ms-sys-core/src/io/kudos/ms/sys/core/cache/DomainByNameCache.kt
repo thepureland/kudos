@@ -127,7 +127,7 @@ open class DomainByNameCache : AbstractKeyValueCacheHandler<SysDomainCacheItem>(
         if (CacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("更新id为${id}的域名后，同步${CACHE_NAME}缓存...")
             val domain = if (any == null) {
-                dao.get(id)!!.domain
+                dao.getAs(id)!!.domain
             } else {
                 BeanKit.getProperty(any, SysDomain::domain.name) as String
             }

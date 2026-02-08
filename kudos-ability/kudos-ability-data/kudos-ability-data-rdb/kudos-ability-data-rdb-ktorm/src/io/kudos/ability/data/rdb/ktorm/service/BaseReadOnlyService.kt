@@ -25,7 +25,7 @@ open class BaseReadOnlyService<PK : Any, E : IDbEntity<PK, E>, DAO : BaseReadOnl
 
     override fun get(id: PK): E? = dao.get(id)
 
-    override fun <R : Any> get(id: PK, returnType: KClass<R>): R? = dao.get(id, returnType)
+    override fun <R : Any> getAs(id: PK, returnType: KClass<R>): R? = dao.getAs(id, returnType)
 
     override fun getByIds(vararg ids: PK, countOfEachBatch: Int): List<E> =
         dao.getByIds(*ids, countOfEachBatch = countOfEachBatch)
@@ -93,6 +93,12 @@ open class BaseReadOnlyService<PK : Any, E : IDbEntity<PK, E>, DAO : BaseReadOnl
     override fun search(criteria: Criteria, vararg orders: Order): List<E> =
         dao.search(criteria, *orders)
 
+    override fun <T : Any> search(
+        criteria: Criteria?,
+        returnItemClass: KClass<T>?,
+        vararg orders: Order
+    ): List<T> = dao.search(criteria, returnItemClass, *orders)
+
     override fun searchProperty(criteria: Criteria, returnProperty: String, vararg orders: Order): List<*> =
         dao.searchProperty(criteria, returnProperty, *orders)
 
@@ -100,8 +106,16 @@ open class BaseReadOnlyService<PK : Any, E : IDbEntity<PK, E>, DAO : BaseReadOnl
         criteria: Criteria, returnProperties: Collection<String>, vararg orders: Order
     ): List<Map<String, Any?>> = dao.searchProperties(criteria, returnProperties, *orders)
 
-    override fun pagingSearch(criteria: Criteria, pageNo: Int, pageSize: Int, vararg orders: Order): List<E> =
+    override fun pagingSearch(criteria: Criteria?, pageNo: Int, pageSize: Int, vararg orders: Order): List<E> =
         dao.pagingSearch(criteria, pageNo, pageSize, *orders)
+
+    override fun <T : Any> pagingSearch(
+        criteria: Criteria?,
+        returnItemClass: KClass<T>?,
+        pageNo: Int,
+        pageSize: Int,
+        vararg orders: Order
+    ): List<T> = dao.pagingSearch(criteria, returnItemClass, pageNo, pageSize, *orders)
 
     override fun pagingReturnProperty(
         criteria: Criteria, returnProperty: String, pageNo: Int, pageSize: Int, vararg orders: Order

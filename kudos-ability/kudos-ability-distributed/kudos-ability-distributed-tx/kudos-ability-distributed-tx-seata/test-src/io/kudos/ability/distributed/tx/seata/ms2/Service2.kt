@@ -25,12 +25,12 @@ open class Service2 : IService2 {
         @Transactional // 可加可不加
     override fun increase(id: Int, money: Double) {
         log.info("seata全局事务id【${RootContext.getXID()}】")
-        val entity = testTableDao.get(id)!!
+        val entity = testTableDao.getAs(id)!!
         log.info("用户【$id】当前余额【${entity.balance}】")
         log.info("为用户【$id】增加余额【${money}】")
         entity.balance = entity.balance.plus(money)
         testTableDao.update(entity)
-        log.info("用户【$id】当前余额【${testTableDao.get(id)!!.balance}】")
+        log.info("用户【$id】当前余额【${testTableDao.getAs(id)!!.balance}】")
     }
 
     //    @Transactional // 可加可不加

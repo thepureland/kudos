@@ -49,7 +49,7 @@ open class Service : IService {
     @Resource
     private lateinit var testTableDao: TestTableDao
 
-    override fun getById(id: Int): TestTable = testTableDao.get(id)!!
+    override fun getById(id: Int): TestTable = testTableDao.getAs(id)!!
 
     @GlobalTransactional
     override fun getGlobalTxId(): String? = RootContext.getXID()

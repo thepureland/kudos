@@ -261,7 +261,7 @@ open class UserOrgService : BaseCrudService<String, UserOrg, UserOrgDao>(), IUse
 
     @Transactional
     override fun deleteById(id: String): Boolean {
-        val org = dao.get(id)
+        val org = dao.getAs(id)
         if (org == null) {
             log.warn("删除id为${id}的机构时，发现其已不存在！")
             return false

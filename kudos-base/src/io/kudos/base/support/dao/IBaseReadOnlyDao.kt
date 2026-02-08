@@ -57,7 +57,7 @@ import kotlin.reflect.KClass
  */
 interface IBaseReadOnlyDao<PK : Any, E : IIdEntity<PK>> {
 
-    //region Search
+    //region by id
 
     /**
      * 查询指定主键值的实体
@@ -73,11 +73,12 @@ interface IBaseReadOnlyDao<PK : Any, E : IIdEntity<PK>> {
      * 查询指定主键值的实体，可以指定返回的对象类型
      *
      * @param id 主键值，类型必须为以下之一：String、Int、Long
+     * @param returnType 返回对象的类型
      * @return 结果对象，找不到返回null
      * @author K
      * @since 1.0.0
      */
-    fun <R : Any> get(id: PK, returnType: KClass<R>): R?
+    fun <R : Any> getAs(id: PK, returnType: KClass<R>): R?
 
     /**
      * 批量查询指定主键值的实体
@@ -90,7 +91,7 @@ interface IBaseReadOnlyDao<PK : Any, E : IIdEntity<PK>> {
      */
     fun getByIds(vararg ids: PK, countOfEachBatch: Int = 1000): List<E>
 
-    //endregion Search
+    //endregion by id
 
 
     //region oneSearch
@@ -344,26 +345,28 @@ interface IBaseReadOnlyDao<PK : Any, E : IIdEntity<PK>> {
     /**
      * 复杂条件查询
      *
-     * @param criteria 查询条件
+     * @param criteria 查询条件，为null表示无条件查询，缺省为null
      * @param orders   排序规则
      * @return 实体对象列表
      * @author K
      * @since 1.0.0
      */
-    fun search(criteria: Criteria, vararg orders: Order): List<E>
+    fun search(criteria: Criteria? = null, vararg orders: Order): List<E>
 
     /**
-     * 复杂条件查询，可以指定返回的封装类。会忽略与表实体不匹配的属性
+     * 复杂条件查询，可以指定返回的封装类。会忽略与表实体不匹配的属性。
+     *
+     * 该方法的目的主要是为了避免各应用场景下，需要将PO转为所需VO的麻烦与性能开销。
      *
      * @param T 返回列表项的类型
-     * @param criteria 查询条件
+     * @param criteria 查询条件，为null表示无条件查询，缺省为null
      * @param returnItemClass 返回项的类型, 为null时按表的实体类处理
      * @param orders   排序规则
-     * @return 实体对象列表
+     * @return 指定的返回类型的对象列表
      * @author K
      * @since 1.0.0
      */
-    fun <T: Any> search(criteria: Criteria, returnItemClass: KClass<T>? = null, vararg orders: Order): List<T>
+    fun <T: Any> search(criteria: Criteria? = null, returnItemClass: KClass<T>? = null, vararg orders: Order): List<T>
 
     /**
      * 复杂条件查询，只返回指定单个属性的值
@@ -398,7 +401,7 @@ interface IBaseReadOnlyDao<PK : Any, E : IIdEntity<PK>> {
     /**
      * 分页查询，返回对象列表
      *
-     * @param criteria 查询条件
+     * @param criteria 查询条件，为null无条件查询，缺省为null
      * @param pageNo   当前页码(从1开始)
      * @param pageSize 每页条数
      * @param orders   排序规则
@@ -406,7 +409,30 @@ interface IBaseReadOnlyDao<PK : Any, E : IIdEntity<PK>> {
      * @author K
      * @since 1.0.0
      */
-    fun pagingSearch(criteria: Criteria, pageNo: Int, pageSize: Int, vararg orders: Order): List<E>
+    fun pagingSearch(criteria: Criteria? = null, pageNo: Int, pageSize: Int, vararg orders: Order): List<E>
+
+    /**
+     * 分页查询，可以指定返回的封装类。会忽略与表实体不匹配的属性。
+     *
+     * 该方法的目的主要是为了避免各应用场景下，需要将PO转为所需VO的麻烦与性能开销。
+     *
+     * @param T 返回列表项的类型
+     * @param criteria 查询条件，为null表示无条件查询，缺省为null
+     * @param returnItemClass 返回项的类型, 为null时按表的实体类处理
+     * @param pageNo   当前页码(从1开始)
+     * @param pageSize 每页条数
+     * @param orders   排序规则
+     * @return 指定的返回类型对象列表
+     * @author K
+     * @since 1.0.0
+     */
+    fun <T: Any> pagingSearch(
+        criteria: Criteria? = null,
+        returnItemClass: KClass<T>? = null,
+        pageNo: Int,
+        pageSize: Int,
+        vararg orders: Order
+    ): List<T>
 
     /**
      * 分页查询，返回对象列表,返回只包含指定属性

@@ -89,7 +89,7 @@ open class SysParamService : BaseCrudService<String, SysParam, SysParamDao>(), I
 
     @Transactional
     override fun deleteById(id: String): Boolean {
-        val param = dao.get(id)
+        val param = dao.getAs(id)
         if (param == null) {
             log.warn("删除id为${id}的参数时，发现其已不存在！")
             return false

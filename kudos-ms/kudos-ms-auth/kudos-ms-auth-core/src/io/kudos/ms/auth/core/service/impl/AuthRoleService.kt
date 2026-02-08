@@ -103,7 +103,7 @@ open class AuthRoleService : BaseCrudService<String, AuthRole, AuthRoleDao>(),
     }
 
     override fun getRoleRecord(id: String): AuthRoleRecord? {
-        val role = dao.get(id) ?: return null
+        val role = dao.getAs(id) ?: return null
         val record = AuthRoleRecord()
         BeanKit.copyProperties(role, record)
         return record
@@ -169,7 +169,7 @@ open class AuthRoleService : BaseCrudService<String, AuthRole, AuthRoleDao>(),
 
     @Transactional
     override fun deleteById(id: String): Boolean {
-        val role = dao.get(id)
+        val role = dao.getAs(id)
         if (role == null) {
             log.warn("删除id为${id}的角色时，发现其已不存在！")
             return false

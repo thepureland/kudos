@@ -1,8 +1,9 @@
 package io.kudos.ms.sys.core.dao
 
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
+import io.kudos.base.query.Criteria
+import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.ms.sys.common.vo.i18n.SysI18nCacheItem
-import io.kudos.ms.sys.common.vo.i18n.SysI18nSearchPayload
 import io.kudos.ms.sys.core.model.po.SysI18n
 import io.kudos.ms.sys.core.model.table.SysI18ns
 import org.springframework.stereotype.Repository
@@ -30,20 +31,16 @@ open class SysI18nDao : BaseCrudDao<String, SysI18n, SysI18ns>() {
      * @param atomicServiceCode 原子服务编码
      * @return List<SysI18nCacheItem>，找不到返回空列表
      */
-    open fun getActiveI18nsForCache(
+    open fun fetchActiveI18nsForCache(
         locale: String,
         i18nTypeDictCode: String,
         atomicServiceCode: String
     ): List<SysI18nCacheItem> {
-        val payload = SysI18nSearchPayload().apply {
-            returnEntityClass = SysI18nCacheItem::class
-            this.locale = locale
-            this.i18nTypeDictCode = i18nTypeDictCode
-            this.atomicServiceCode = atomicServiceCode
-            this.active = true
-        }
-        @Suppress("UNCHECKED_CAST")
-        return search(payload) as List<SysI18nCacheItem>
+        val criteria = Criteria(SysI18n::locale.name, OperatorEnum.EQ, locale)
+            .addAnd(SysI18n::i18nTypeDictCode.name, OperatorEnum.EQ, i18nTypeDictCode)
+            .addAnd(SysI18n::atomicServiceCode.name, OperatorEnum.EQ, atomicServiceCode)
+            .addAnd(SysI18n::active.name, OperatorEnum.EQ, true)
+        return search<SysI18nCacheItem>(criteria)
     }
 
     /**
@@ -51,13 +48,9 @@ open class SysI18nDao : BaseCrudDao<String, SysI18n, SysI18ns>() {
      *
      * @return List<SysI18nCacheItem>
      */
-    open fun getAllActiveI18nsForCache(): List<SysI18nCacheItem> {
-        val payload = SysI18nSearchPayload().apply {
-            returnEntityClass = SysI18nCacheItem::class
-            this.active = true
-        }
-        @Suppress("UNCHECKED_CAST")
-        return search(payload) as List<SysI18nCacheItem>
+    open fun fetchAllActiveI18nsForCache(): List<SysI18nCacheItem> {
+        val criteria = Criteria(SysI18n::active.name, OperatorEnum.EQ, true)
+        return search<SysI18nCacheItem>(criteria)
     }
 
     //endregion your codes 2

@@ -50,13 +50,13 @@ internal open class BaseReadOnlyDaoTest {
             var noExistProp: String? = null
         }
 
-        val record = testTableDao.get(-1, Record::class)!!
+        val record = testTableDao.getAs(-1, Record::class)!!
         assertEquals("name1", record.name)
         assertEquals(true, record.active)
         assertEquals(null, record.noExistProp)
 
         // 不存在指定主键对应的实体时
-        assert(testTableDao.get(1, Record::class) == null)
+        assert(testTableDao.getAs(1, Record::class) == null)
     }
 
     @Test
@@ -308,7 +308,7 @@ internal open class BaseReadOnlyDaoTest {
         assertEquals(-10, resultsWithClass.first().id)
 
         // returnItemClass 为自定义 TestTableCacheItem：应返回 PO 实例列表，属性从查询结果映射
-        val resultsAsCacheItem = testTableDao.search(criteria, TestTableCacheItem::class, order)
+        val resultsAsCacheItem = testTableDao.search(criteria, TestTableCacheItem::class)
         assertEquals(5, resultsAsCacheItem.size)
         assert(resultsAsCacheItem.any { it.id == -10 && it.name == "name10" })
     }
@@ -390,6 +390,43 @@ internal open class BaseReadOnlyDaoTest {
                 testTableDao.pagingReturnProperties(criteria, returnProperties, 1, 4, Order.asc(TestTableKtorm::id.name))
             assertEquals(4, results.size)
             assertEquals(-11, results.first()[TestTableKtorm::id.name])
+        }
+    }
+
+    /**
+     * 测试 pagingSearch(criteria, returnItemClass, pageNo, pageSize, orders)：分页查询并指定返回类型。
+     * - returnItemClass 为 null 时等价于 pagingSearch(criteria, pageNo, pageSize, orders)，返回分页实体列表
+     * - returnItemClass 为 TestTableKtorm 时返回分页实体列表
+     * - returnItemClass 为自定义 PO（如 TestTableCacheItem）时返回分页的该类型实例列表
+     */
+    @Test
+    fun pagingSearchWithReturnItemClass() {
+        if (isSupportPaging()) {
+            val criteria = Criteria.of(TestTableKtorm::active.name, OperatorEnum.EQ, true)
+            val pageNo = 1
+            val pageSize = 4
+            val order = Order.asc(TestTableKtorm::id.name)
+
+            // returnItemClass 为 null：应与 pagingSearch(criteria, pageNo, pageSize, order) 结果一致
+            val resultsAsEntity: List<TestTableKtorm> =
+                testTableDao.pagingSearch(criteria, null, pageNo, pageSize, order)
+            val resultsPlain = testTableDao.pagingSearch(criteria, pageNo, pageSize, order)
+            assertEquals(resultsPlain.size, resultsAsEntity.size)
+            assertEquals(resultsPlain.map { it.id }, resultsAsEntity.map { it.id })
+            assertEquals(4, resultsAsEntity.size)
+            assertEquals(-11, resultsAsEntity.first().id)
+
+            // returnItemClass 为 TestTableKtorm：应返回分页实体列表
+            val resultsWithClass: List<TestTableKtorm> =
+                testTableDao.pagingSearch(criteria, TestTableKtorm::class, pageNo, pageSize, order)
+            assertEquals(4, resultsWithClass.size)
+            assertEquals(-11, resultsWithClass.first().id)
+
+            // returnItemClass 为自定义 TestTableCacheItem：应返回分页的 PO 列表
+            val resultsAsCacheItem =
+                testTableDao.pagingSearch(criteria, TestTableCacheItem::class, pageNo, pageSize, order)
+            assertEquals(4, resultsAsCacheItem.size)
+            assertEquals(-11, resultsAsCacheItem.first().id)
         }
     }
 

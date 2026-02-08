@@ -95,13 +95,13 @@ class UserOrgServiceTest : RdbAndRedisCacheTestBase() {
         val id = "8b4df430-0000-0000-0000-000000000030"
         // 先设置为false（用 DAO 校验持久化，避免批量跑时缓存未刷新导致断言失败）
         assertTrue(userOrgService.updateActive(id, false))
-        var org = userOrgDao.get(id)
+        var org = userOrgDao.getAs(id)
         assertNotNull(org)
         assertNotEquals(org.active, true)
 
         // 再设置为true
         assertTrue(userOrgService.updateActive(id, true))
-        org = userOrgDao.get(id)
+        org = userOrgDao.getAs(id)
         assertNotNull(org)
         assertEquals(org.active, true)
     }
@@ -113,14 +113,14 @@ class UserOrgServiceTest : RdbAndRedisCacheTestBase() {
         val newSortNum = 99
 
         assertTrue(userOrgService.moveOrg(id, newParentId, newSortNum))
-        var org = userOrgDao.get(id)
+        var org = userOrgDao.getAs(id)
         assertNotNull(org)
         assertEquals(org.parentId, newParentId)
         assertEquals(org.sortNum, newSortNum)
 
         // 移回原位置（用 DAO 校验持久化，避免批量跑时缓存未刷新导致断言失败）
         assertTrue(userOrgService.moveOrg(id, "8b4df430-0000-0000-0000-000000000030", 11))
-        org = userOrgDao.get(id)
+        org = userOrgDao.getAs(id)
         assertNotNull(org)
         assertEquals("8b4df430-0000-0000-0000-000000000030", org.parentId)
         assertEquals(11, org.sortNum)
