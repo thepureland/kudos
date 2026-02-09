@@ -68,7 +68,7 @@ open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheItem>
     )
     open fun getResourceById(id: String): SysResourceCacheItem? {
         require(id.isNotBlank()) { "获取资源时 id 不能为空" }
-        return sysResourceDao.getCacheItem(id)
+        return sysResourceDao.getAs<SysResourceCacheItem>(id)
     }
 
     /**
@@ -85,7 +85,7 @@ open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheItem>
     )
     open fun getResourcesByIds(ids: List<String>): Map<String, SysResourceCacheItem> {
         if (ids.isEmpty()) return emptyMap()
-        val list = sysResourceDao.listCacheItemsByIds(ids)
+        val list = sysResourceDao.getByIdsAs<SysResourceCacheItem>(ids)
         return ids.associateWith { id -> list.first { it.id == id } }
     }
 
@@ -106,7 +106,7 @@ open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheItem>
         filterableProperties = ["subSystemCode", "url", "resourceTypeDictCode"]
     )
     open fun getResourceBySubSystemCodeAndUrl(subSystemCode: String, url: String): SysResourceCacheItem? {
-        return sysResourceDao.getResourceBySubSysAndUrl(subSystemCode, url)
+        return sysResourceDao.fetchResourceBySubSysAndUrl(subSystemCode, url)
     }
 
     // ---------- 3. 按子系统+资源类型 ----------
@@ -126,9 +126,9 @@ open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheItem>
         filterableProperties = ["subSystemCode", "url", "resourceTypeDictCode"]
     )
     open fun getResourcesBySubSystemCodeAndType(subSystemCode: String, resourceTypeDictCode: String): List<SysResourceCacheItem> {
-        val ids = sysResourceDao.getResourceIdsBySubSysAndType(subSystemCode, resourceTypeDictCode)
+        val ids = sysResourceDao.fetchResourceIdsBySubSysAndType(subSystemCode, resourceTypeDictCode)
         if (ids.isEmpty()) return emptyList()
-        return sysResourceDao.listCacheItemsByIds(ids)
+        return sysResourceDao.getByIdsAs<SysResourceCacheItem>(ids)
     }
 
     // ---------- 全量刷新 ----------
@@ -144,7 +144,7 @@ open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheItem>
             return
         }
         val cache = hashCache()
-        val list = sysResourceDao.listAllCacheItems()
+        val list = sysResourceDao.searchAs<SysResourceCacheItem>()
         log.debug("从数据库加载 ${list.size} 条资源，刷新 Hash 缓存")
         cache.refreshAll(CACHE_NAME, list, FILTERABLE_PROPERTIES, emptySet())
         log.debug("资源 Hash 缓存刷新完成")
@@ -159,7 +159,7 @@ open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheItem>
      */
     open fun syncOnInsert(id: String) {
         if (!CacheKit.isCacheActive(CACHE_NAME) || !CacheKit.isWriteInTime(CACHE_NAME)) return
-        val item = sysResourceDao.getCacheItem(id) ?: return
+        val item = sysResourceDao.getAs<SysResourceCacheItem>(id) ?: return
         hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
     }
 
@@ -180,7 +180,7 @@ open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheItem>
      */
     open fun syncOnUpdate(id: String) {
         if (!CacheKit.isCacheActive(CACHE_NAME)) return
-        val item = sysResourceDao.getCacheItem(id) ?: return
+        val item = sysResourceDao.getAs<SysResourceCacheItem>(id) ?: return
         if (CacheKit.isWriteInTime(CACHE_NAME)) {
             hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
         }

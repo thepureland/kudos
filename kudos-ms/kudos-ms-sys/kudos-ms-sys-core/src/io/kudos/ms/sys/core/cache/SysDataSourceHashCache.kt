@@ -65,7 +65,7 @@ open class SysDataSourceHashCache : AbstractHashCacheHandler<SysDataSourceCacheI
     )
     open fun getDataSourceById(id: String): SysDataSourceCacheItem? {
         require(id.isNotBlank()) { "获取数据源时 id 不能为空" }
-        return sysDataSourceDao.getCacheItem(id)
+        return sysDataSourceDao.get(id, SysDataSourceCacheItem::class)
     }
 
     /**
@@ -126,7 +126,7 @@ open class SysDataSourceHashCache : AbstractHashCacheHandler<SysDataSourceCacheI
         }
         val cache = hashCache()
         if (clear) cache.refreshAll(CACHE_NAME, emptyList<SysSystemCacheItem>(), FILTERABLE_PROPERTIES, emptySet())
-        val list = sysDataSourceDao.fetchAllDataSourcesForCache()
+        val list = sysDataSourceDao.searchAs<SysDataSourceCacheItem>()
         log.debug("从数据库加载 ${list.size} 条数据源，刷新 Hash 缓存")
         cache.refreshAll(CACHE_NAME, list, FILTERABLE_PROPERTIES, emptySet())
     }
@@ -139,7 +139,7 @@ open class SysDataSourceHashCache : AbstractHashCacheHandler<SysDataSourceCacheI
      */
     open fun syncOnInsert(any: Any, id: String) {
         if (!CacheKit.isCacheActive(CACHE_NAME) || !CacheKit.isWriteInTime(CACHE_NAME)) return
-        val item = sysDataSourceDao.getCacheItem(id) ?: return
+        val item = sysDataSourceDao.get(id, SysDataSourceCacheItem::class) ?: return
         hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
     }
 
@@ -151,7 +151,7 @@ open class SysDataSourceHashCache : AbstractHashCacheHandler<SysDataSourceCacheI
      */
     open fun syncOnUpdate(any: Any, id: String) {
         if (!CacheKit.isCacheActive(CACHE_NAME)) return
-        val item = sysDataSourceDao.getCacheItem(id) ?: return
+        val item = sysDataSourceDao.get(id, SysDataSourceCacheItem::class) ?: return
         if (CacheKit.isWriteInTime(CACHE_NAME)) {
             hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
         }
@@ -165,7 +165,7 @@ open class SysDataSourceHashCache : AbstractHashCacheHandler<SysDataSourceCacheI
      */
     open fun syncOnUpdateActive(id: String, active: Boolean) {
         if (!CacheKit.isCacheActive(CACHE_NAME)) return
-        val item = sysDataSourceDao.getCacheItem(id) ?: return
+        val item = sysDataSourceDao.get<SysDataSourceCacheItem>(id) ?: return
         if (CacheKit.isWriteInTime(CACHE_NAME)) {
             hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
         }

@@ -157,7 +157,7 @@ open class AccountThirdByUserIdAndProviderCodeCache : AbstractKeyValueCacheHandl
     open fun syncOnUpdateActive(id: String, active: Boolean) {
         if (CacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("更新id为${id}的第三方账号的启用状态后，同步缓存...")
-            val accountThird = userAccountThirdDao.getAs(id)
+            val accountThird = userAccountThirdDao.get(id)
             if (accountThird == null) {
                 log.warn("同步第三方账号缓存时未找到id为${id}的记录。")
                 return

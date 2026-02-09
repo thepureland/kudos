@@ -56,7 +56,7 @@ open class SysMicroServiceHashCache : AbstractHashCacheHandler<SysMicroServiceCa
     )
     open fun getMicroServiceByCode(code: String): SysMicroServiceCacheItem? {
         require(code.isNotBlank()) { "获取微服务时 code 不能为空" }
-        return sysMicroServiceDao.fetchMicroService(code)
+        return sysMicroServiceDao.get(code, SysMicroServiceCacheItem::class)
     }
 
     /**
@@ -72,7 +72,7 @@ open class SysMicroServiceHashCache : AbstractHashCacheHandler<SysMicroServiceCa
     )
     open fun getMicroServicesByCodes(codes: List<String>): Map<String, SysMicroServiceCacheItem> {
         if (codes.isEmpty()) return emptyMap()
-        val list = sysMicroServiceDao.listCacheItemsByIds(codes)
+        val list = sysMicroServiceDao.getByIdsAs<SysMicroServiceCacheItem>(codes)
         return list.filter { it.id != null && it.id in codes }.associateBy { it.id!! }
     }
 
@@ -89,7 +89,7 @@ open class SysMicroServiceHashCache : AbstractHashCacheHandler<SysMicroServiceCa
         filterableProperties = ["atomicService"]
     )
     open fun getMicroServicesByType(atomicService: Boolean): List<SysMicroServiceCacheItem> {
-        return sysMicroServiceDao.listCacheItemsByAtomicService(atomicService)
+        return sysMicroServiceDao.fetchMicroServiceByTypeForCache(atomicService)
     }
 
     /** 获取所有原子服务列表（atomicService=true）。 */
@@ -107,7 +107,7 @@ open class SysMicroServiceHashCache : AbstractHashCacheHandler<SysMicroServiceCa
         }
         val cache = hashCache()
         if (clear) cache.refreshAll(CACHE_NAME, emptyList<SysMicroServiceCacheItem>(), FILTERABLE_PROPERTIES, emptySet())
-        val list = sysMicroServiceDao.listAllCacheItems()
+        val list = sysMicroServiceDao.search<SysMicroServiceCacheItem>()
         log.debug("从数据库加载 ${list.size} 条微服务，刷新 Hash 缓存")
         cache.refreshAll(CACHE_NAME, list, FILTERABLE_PROPERTIES, emptySet())
     }
@@ -115,14 +115,14 @@ open class SysMicroServiceHashCache : AbstractHashCacheHandler<SysMicroServiceCa
     /** 新增微服务后同步：将指定 code 的实体从库加载并写入缓存。 */
     open fun syncOnInsert(code: String) {
         if (!CacheKit.isCacheActive(CACHE_NAME) || !CacheKit.isWriteInTime(CACHE_NAME)) return
-        val item = sysMicroServiceDao.fetchMicroService(code) ?: return
+        val item = sysMicroServiceDao.get(code, SysMicroServiceCacheItem::class) ?: return
         hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
     }
 
     /** 更新微服务后同步：从库重新加载并写入缓存。 */
     open fun syncOnUpdate(code: String) {
         if (!CacheKit.isCacheActive(CACHE_NAME)) return
-        val item = sysMicroServiceDao.fetchMicroService(code) ?: return
+        val item = sysMicroServiceDao.get(code, SysMicroServiceCacheItem::class) ?: return
         if (CacheKit.isWriteInTime(CACHE_NAME)) {
             hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
         }

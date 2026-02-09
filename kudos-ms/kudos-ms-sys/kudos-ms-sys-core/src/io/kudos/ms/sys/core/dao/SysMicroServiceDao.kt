@@ -1,9 +1,8 @@
 package io.kudos.ms.sys.core.dao
 
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
-import io.kudos.base.query.Criterion
+import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
-import io.kudos.base.support.payload.ListSearchPayload
 import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceCacheItem
 import io.kudos.ms.sys.core.model.po.SysMicroService
 import io.kudos.ms.sys.core.model.table.SysMicroServices
@@ -21,38 +20,15 @@ import org.springframework.stereotype.Repository
 open class SysMicroServiceDao : BaseCrudDao<String, SysMicroService, SysMicroServices>() {
 //endregion your codes 1
 
-    /** 按 code（主键）查询单条，返回缓存用 VO */
-    open fun fetchMicroService(code: String): SysMicroServiceCacheItem? {
-        return getAs(code, SysMicroServiceCacheItem::class)
+    /**
+     * 按类型返回微服务，返回缓存用 VO 列表
+     *
+     * @param atomicService 是否原子服务
+     * @return List<SysMicroServiceCacheItem>
+     */
+    open fun fetchMicroServiceByTypeForCache(atomicService: Boolean): List<SysMicroServiceCacheItem> {
+        val criteria = Criteria(SysMicroService::atomicService.name, OperatorEnum.EQ, atomicService)
+        return searchAs<SysMicroServiceCacheItem>(criteria)
     }
 
-    /** 全量查询，返回缓存用 VO 列表（用于全量刷新） */
-    open fun listAllCacheItems(): List<SysMicroServiceCacheItem> {
-        val payload = ListSearchPayload().apply {
-            returnEntityClass = SysMicroServiceCacheItem::class
-        }
-        @Suppress("UNCHECKED_CAST")
-        return search(payload) as List<SysMicroServiceCacheItem>
-    }
-
-    /** 按 code 集合批量查询，返回缓存用 VO 列表 */
-    open fun listCacheItemsByIds(codes: Collection<String>): List<SysMicroServiceCacheItem> {
-        if (codes.isEmpty()) return emptyList()
-        val payload = ListSearchPayload().apply {
-            returnEntityClass = SysMicroServiceCacheItem::class
-            criterions = listOf(Criterion("id", OperatorEnum.IN, codes))
-        }
-        @Suppress("UNCHECKED_CAST")
-        return search(payload) as List<SysMicroServiceCacheItem>
-    }
-
-    /** 按是否为原子服务查询，返回缓存用 VO 列表 */
-    open fun listCacheItemsByAtomicService(atomicService: Boolean): List<SysMicroServiceCacheItem> {
-        val payload = ListSearchPayload().apply {
-            returnEntityClass = SysMicroServiceCacheItem::class
-            criterions = listOf(Criterion(SysMicroService::atomicService.name, OperatorEnum.EQ, atomicService))
-        }
-        @Suppress("UNCHECKED_CAST")
-        return search(payload) as List<SysMicroServiceCacheItem>
-    }
 }

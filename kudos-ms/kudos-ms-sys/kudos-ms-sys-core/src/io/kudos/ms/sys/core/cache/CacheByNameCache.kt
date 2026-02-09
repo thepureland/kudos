@@ -125,7 +125,7 @@ open class CacheByNameCache : AbstractKeyValueCacheHandler<SysCacheCacheItem>() 
             log.debug("更新id为${id}的缓存配置后，同步${CACHE_NAME}缓存...")
             var name = BeanKit.getProperty(any, SysCache::name.name) as String?
             if (name == null) {
-                name = sysCacheDao.getAs(id)!!.name
+                name = sysCacheDao.get(id)!!.name
             }
             CacheKit.evict(CACHE_NAME, name) // 踢除缓存配置缓存
             if (CacheKit.isWriteInTime(CACHE_NAME)) {

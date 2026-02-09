@@ -174,7 +174,7 @@ open class SysTenantService : BaseCrudService<String, SysTenant, SysTenantDao>()
      * @since 1.0.0
      */
     override fun getTenantRecord(id: String): SysTenantRecord? {
-        val tenant = dao.getAs(id) ?: return null
+        val tenant = dao.get(id) ?: return null
         val record = SysTenantRecord()
         BeanKit.copyProperties(tenant, record)
         return record

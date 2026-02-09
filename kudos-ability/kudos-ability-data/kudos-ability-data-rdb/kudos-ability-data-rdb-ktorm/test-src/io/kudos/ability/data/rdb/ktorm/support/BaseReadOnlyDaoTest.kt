@@ -31,7 +31,7 @@ internal open class BaseReadOnlyDaoTest {
     private lateinit var testTableDao: TestTableKtormDao
 
 
-    //region Search
+    //region by id
     @Test
     fun getById() {
         val entity = testTableDao.get(-1)
@@ -42,7 +42,7 @@ internal open class BaseReadOnlyDaoTest {
     }
 
     @Test
-    fun get() {
+    fun getAs() {
         class Record {
             var name: String? = null
             var birthday: LocalDateTime? = null
@@ -50,26 +50,55 @@ internal open class BaseReadOnlyDaoTest {
             var noExistProp: String? = null
         }
 
-        val record = testTableDao.getAs(-1, Record::class)!!
+        val record = testTableDao.getAs<Record>(-1)!!
         assertEquals("name1", record.name)
         assertEquals(true, record.active)
         assertEquals(null, record.noExistProp)
 
         // 不存在指定主键对应的实体时
-        assert(testTableDao.getAs(1, Record::class) == null)
+        assert(testTableDao.get<Record>(1) == null)
     }
 
     @Test
     fun getByIds() {
-        assert(testTableDao.getByIds().isEmpty())
-
-        var entities = testTableDao.getByIds(-1, -2, -3)
+        var entities = testTableDao.getByIds(setOf(-1, -2, -3))
         assertEquals(3, entities.size)
 
-        entities = testTableDao.getByIds(-1, -2, -3, countOfEachBatch = 2)
+        entities = testTableDao.getByIds(setOf(-1, -2, -3), 2)
         assertEquals(3, entities.size)
     }
-    //endregion Search
+
+    /**
+     * 测试 getByIds(ids, returnItemClass, countOfEachBatch)：按主键批量查询并指定返回类型。
+     * - returnItemClass 为 null 时等价于 getByIds(ids, countOfEachBatch)，返回实体列表
+     * - returnItemClass 为 TestTableKtorm 时返回实体列表
+     * - returnItemClass 为自定义 PO（如 TestTableCacheItem）时返回该类型的实例列表
+     */
+    @Test
+    fun getByIdsWithReturnItemClass() {
+        // returnItemClass 为 null：应与 getByIds(-1, -2, -3) 结果一致
+        val resultsAsEntity = testTableDao.getByIdsAs<TestTableKtorm>(setOf(-1, -2, -3))
+        val resultsPlain = testTableDao.getByIdsAs<TestTableCacheItem>(setOf(-1, -2, -3))
+        assertEquals(resultsPlain.size, resultsAsEntity.size)
+        assertEquals(resultsPlain.map { it.id }.toSet(), resultsAsEntity.map { it.id }.toSet())
+        assertEquals(3, resultsAsEntity.size)
+
+        // returnItemClass 为 TestTableKtorm：应返回实体列表
+        val resultsWithClass = testTableDao.getByIdsAs<TestTableCacheItem>(setOf(-1, -2, -3))
+        assertEquals(3, resultsWithClass.size)
+        assertEquals(setOf(-1, -2, -3), resultsWithClass.map { it.id }.toSet())
+
+        // returnItemClass 为自定义 TestTableCacheItem：应返回 PO 列表
+        val resultsAsCacheItem = testTableDao.getByIdsAs<TestTableCacheItem>(setOf(-1, -2, -3))
+        assertEquals(3, resultsAsCacheItem.size)
+        assertEquals(setOf(-1, -2, -3), resultsAsCacheItem.map { it.id }.toSet())
+        assertEquals("name1", resultsAsCacheItem.find { it.id == -1 }?.name)
+
+        // 指定 countOfEachBatch
+        val resultsBatched = testTableDao.getByIdsAs<TestTableCacheItem>(setOf(-1, -2, -3), 2)
+        assertEquals(3, resultsBatched.size)
+    }
+    //endregion by id
 
 
     //region oneSearch
@@ -192,7 +221,8 @@ internal open class BaseReadOnlyDaoTest {
     @Test
     fun orSearchProperty() {
         val propertyMap = mapOf(TestTableKtorm::name.name to "name5", TestTableKtorm::weight.name to null)
-        val results = testTableDao.orSearchProperty(propertyMap, TestTableKtorm::name.name, Order.desc(TestTableKtorm::id.name))
+        val results =
+            testTableDao.orSearchProperty(propertyMap, TestTableKtorm::name.name, Order.desc(TestTableKtorm::id.name))
         assertEquals(2, results.size)
         assertEquals("name5", results.first())
     }
@@ -201,7 +231,8 @@ internal open class BaseReadOnlyDaoTest {
     fun orSearchProperties() {
         val propertyMap = mapOf(TestTableKtorm::name.name to "name5", TestTableKtorm::weight.name to null)
         val returnProperties = listOf(TestTableKtorm::name.name, TestTableKtorm::id.name)
-        val results = testTableDao.orSearchProperties(propertyMap, returnProperties, Order.desc(TestTableKtorm::id.name))
+        val results =
+            testTableDao.orSearchProperties(propertyMap, returnProperties, Order.desc(TestTableKtorm::id.name))
         assertEquals(2, results.size)
         assertEquals("name5", results.first()[TestTableKtorm::name.name])
     }
@@ -221,7 +252,12 @@ internal open class BaseReadOnlyDaoTest {
     fun inSearchProperty() {
         val ids = listOf(-3, -2, -1)
         val results =
-            testTableDao.inSearchProperty(TestTableKtorm::id.name, ids, TestTableKtorm::name.name, Order.desc(TestTableKtorm::id.name))
+            testTableDao.inSearchProperty(
+                TestTableKtorm::id.name,
+                ids,
+                TestTableKtorm::name.name,
+                Order.desc(TestTableKtorm::id.name)
+            )
         assertEquals(3, results.size)
         assertEquals("name1", results.first())
     }
@@ -231,7 +267,12 @@ internal open class BaseReadOnlyDaoTest {
         val ids = listOf(-3, -2, -1)
         val returnProperties = listOf(TestTableKtorm::name.name, TestTableKtorm::id.name, TestTableKtorm::active.name)
         val results =
-            testTableDao.inSearchProperties(TestTableKtorm::id.name, ids, returnProperties, Order.desc(TestTableKtorm::id.name))
+            testTableDao.inSearchProperties(
+                TestTableKtorm::id.name,
+                ids,
+                returnProperties,
+                Order.desc(TestTableKtorm::id.name)
+            )
         assertEquals(3, results.size)
         assertEquals("name1", results.first()[TestTableKtorm::name.name])
     }
@@ -296,19 +337,19 @@ internal open class BaseReadOnlyDaoTest {
         val order = Order.desc(TestTableKtorm::weight.name)
 
         // returnItemClass 为 null：应与 search(criteria, order) 结果一致，返回实体列表
-        val resultsAsEntity: List<TestTableKtorm> = testTableDao.search(criteria, null, order)
+        val resultsAsEntity = testTableDao.searchAs<TestTableKtorm>(criteria, order)
         val resultsPlain = testTableDao.search(criteria, order)
         assertEquals(resultsPlain.size, resultsAsEntity.size)
         assertEquals(resultsPlain.map { it.id }, resultsAsEntity.map { it.id })
         assertEquals(-10, resultsAsEntity.first().id)
 
         // returnItemClass 为 TestTableKtorm：应返回实体列表
-        val resultsWithClass: List<TestTableKtorm> = testTableDao.search(criteria, TestTableKtorm::class, order)
+        val resultsWithClass = testTableDao.searchAs<TestTableKtorm>(criteria, order)
         assertEquals(5, resultsWithClass.size)
         assertEquals(-10, resultsWithClass.first().id)
 
         // returnItemClass 为自定义 TestTableCacheItem：应返回 PO 实例列表，属性从查询结果映射
-        val resultsAsCacheItem = testTableDao.search(criteria, TestTableCacheItem::class)
+        val resultsAsCacheItem = testTableDao.searchAs<TestTableCacheItem>(criteria)
         assertEquals(5, resultsAsCacheItem.size)
         assert(resultsAsCacheItem.any { it.id == -10 && it.name == "name10" })
     }
@@ -321,7 +362,8 @@ internal open class BaseReadOnlyDaoTest {
             Criterion(TestTableKtorm::weight.name, OperatorEnum.IS_NOT_NULL, null),
             Criterion(TestTableKtorm::height.name, OperatorEnum.GT, 160)
         )
-        var results = testTableDao.searchProperty(criteria, TestTableKtorm::id.name, Order.desc(TestTableKtorm::weight.name))
+        var results =
+            testTableDao.searchProperty(criteria, TestTableKtorm::id.name, Order.desc(TestTableKtorm::weight.name))
         assertEquals(2, results.size)
         assertEquals(-10, results.first())
 
@@ -375,7 +417,13 @@ internal open class BaseReadOnlyDaoTest {
         if (isSupportPaging()) {
             val criteria = Criteria.of(TestTableKtorm::active.name, OperatorEnum.EQ, true)
             val results =
-                testTableDao.pagingReturnProperty(criteria, TestTableKtorm::id.name, 1, 4, Order.asc(TestTableKtorm::id.name))
+                testTableDao.pagingReturnProperty(
+                    criteria,
+                    TestTableKtorm::id.name,
+                    1,
+                    4,
+                    Order.asc(TestTableKtorm::id.name)
+                )
             assertEquals(4, results.size)
             assertEquals(-11, results.first())
         }
@@ -387,7 +435,13 @@ internal open class BaseReadOnlyDaoTest {
             val criteria = Criteria.of(TestTableKtorm::active.name, OperatorEnum.EQ, true)
             val returnProperties = listOf(TestTableKtorm::id.name, TestTableKtorm::name.name)
             val results =
-                testTableDao.pagingReturnProperties(criteria, returnProperties, 1, 4, Order.asc(TestTableKtorm::id.name))
+                testTableDao.pagingReturnProperties(
+                    criteria,
+                    returnProperties,
+                    1,
+                    4,
+                    Order.asc(TestTableKtorm::id.name)
+                )
             assertEquals(4, results.size)
             assertEquals(-11, results.first()[TestTableKtorm::id.name])
         }
@@ -408,23 +462,21 @@ internal open class BaseReadOnlyDaoTest {
             val order = Order.asc(TestTableKtorm::id.name)
 
             // returnItemClass 为 null：应与 pagingSearch(criteria, pageNo, pageSize, order) 结果一致
-            val resultsAsEntity: List<TestTableKtorm> =
-                testTableDao.pagingSearch(criteria, null, pageNo, pageSize, order)
-            val resultsPlain = testTableDao.pagingSearch(criteria, pageNo, pageSize, order)
+            val resultsAsEntity = testTableDao.pagingSearchAs<TestTableCacheItem>(criteria, pageNo, pageSize, order)
+            val resultsPlain = testTableDao.pagingSearchAs<TestTableCacheItem>(criteria, pageNo, pageSize, order)
             assertEquals(resultsPlain.size, resultsAsEntity.size)
             assertEquals(resultsPlain.map { it.id }, resultsAsEntity.map { it.id })
             assertEquals(4, resultsAsEntity.size)
             assertEquals(-11, resultsAsEntity.first().id)
 
             // returnItemClass 为 TestTableKtorm：应返回分页实体列表
-            val resultsWithClass: List<TestTableKtorm> =
-                testTableDao.pagingSearch(criteria, TestTableKtorm::class, pageNo, pageSize, order)
+            val resultsWithClass = testTableDao.pagingSearchAs<TestTableCacheItem>(criteria, pageNo, pageSize, order)
             assertEquals(4, resultsWithClass.size)
             assertEquals(-11, resultsWithClass.first().id)
 
             // returnItemClass 为自定义 TestTableCacheItem：应返回分页的 PO 列表
             val resultsAsCacheItem =
-                testTableDao.pagingSearch(criteria, TestTableCacheItem::class, pageNo, pageSize, order)
+                testTableDao.pagingSearchAs<TestTableCacheItem>(criteria, pageNo, pageSize, order)
             assertEquals(4, resultsAsCacheItem.size)
             assertEquals(-11, resultsAsCacheItem.first().id)
         }
@@ -538,9 +590,11 @@ internal open class BaseReadOnlyDaoTest {
                 TestTableKtorms::name.name -> {
                     column.ilike("nAme1%")
                 }
+
                 TestTableKtorms::active.name -> {
                     column.eq(true)
                 }
+
                 else -> null
             }
         }

@@ -99,7 +99,7 @@ open class SysAccessRuleIpService : BaseCrudService<String, SysAccessRuleIp, Sys
         }
         log.debug("批量保存或更新IP规则，期望处理${ips.size}条，实际处理${count}条。")
         // 同步父规则缓存
-        val accessRule = sysAccessRuleDao.getAs(ruleId)
+        val accessRule = sysAccessRuleDao.get(ruleId)
         if (accessRule != null) {
             accessRuleIpsBySubSysAndTenantIdCache.syncOnUpdate(accessRule, ruleId)
         }
@@ -112,7 +112,7 @@ open class SysAccessRuleIpService : BaseCrudService<String, SysAccessRuleIp, Sys
         val count = dao.batchDeleteCriteria(criteria)
         log.debug("删除规则${ruleId}的所有IP，共删除${count}条。")
         // 同步缓存
-        val accessRule = sysAccessRuleDao.getAs(ruleId)
+        val accessRule = sysAccessRuleDao.get(ruleId)
         if (accessRule != null) {
             accessRuleIpsBySubSysAndTenantIdCache.syncOnUpdate(accessRule, ruleId)
         }
@@ -123,9 +123,9 @@ open class SysAccessRuleIpService : BaseCrudService<String, SysAccessRuleIp, Sys
     override fun insert(any: Any): String {
         val id = super.insert(any)
         log.debug("新增id为${id}的IP访问规则。")
-        val ipRule = dao.getAs(id)
+        val ipRule = dao.get(id)
         if (ipRule != null) {
-            val accessRule = sysAccessRuleDao.getAs(ipRule.parentRuleId)
+            val accessRule = sysAccessRuleDao.get(ipRule.parentRuleId)
             if (accessRule != null) {
                 accessRuleIpsBySubSysAndTenantIdCache.syncOnInsert(accessRule, id)
             }
@@ -139,9 +139,9 @@ open class SysAccessRuleIpService : BaseCrudService<String, SysAccessRuleIp, Sys
         val id = BeanKit.getProperty(any, SysAccessRuleIp::id.name) as String
         if (success) {
             log.debug("更新id为${id}的IP访问规则。")
-            val ipRule = dao.getAs(id)
+            val ipRule = dao.get(id)
             if (ipRule != null) {
-                val accessRule = sysAccessRuleDao.getAs(ipRule.parentRuleId)
+                val accessRule = sysAccessRuleDao.get(ipRule.parentRuleId)
                 if (accessRule != null) {
                     accessRuleIpsBySubSysAndTenantIdCache.syncOnUpdate(accessRule, id)
                 }

@@ -2,6 +2,7 @@ package io.kudos.ms.sys.core.dao
 
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.base.query.Criteria
+import io.kudos.base.query.Criterion
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.ms.sys.core.model.po.SysTenantLocale
 import io.kudos.ms.sys.core.model.table.SysTenantLocales
@@ -29,7 +30,7 @@ open class SysTenantLocaleDao : BaseCrudDao<String, SysTenantLocale, SysTenantLo
      * @return Set<语言代码>
      */
     fun searchLocaleCodesByTenantId(tenantId: String): Set<String> {
-        val criteria = Criteria.of(SysTenantLocale::tenantId.name, OperatorEnum.EQ, tenantId)
+        val criteria = Criteria(SysTenantLocale::tenantId.name, OperatorEnum.EQ, tenantId)
         @Suppress("UNCHECKED_CAST")
         return searchProperty(criteria, SysTenantLocale::localeCode.name).toSet() as Set<String>
     }
@@ -41,7 +42,7 @@ open class SysTenantLocaleDao : BaseCrudDao<String, SysTenantLocale, SysTenantLo
      * @return Set<租户id>
      */
     fun searchTenantIdsByLocaleCode(localeCode: String): Set<String> {
-        val criteria = Criteria.of(SysTenantLocale::localeCode.name, OperatorEnum.EQ, localeCode)
+        val criteria = Criteria(SysTenantLocale::localeCode.name, OperatorEnum.EQ, localeCode)
         @Suppress("UNCHECKED_CAST")
         return searchProperty(criteria, SysTenantLocale::tenantId.name).toSet() as Set<String>
     }
@@ -52,11 +53,12 @@ open class SysTenantLocaleDao : BaseCrudDao<String, SysTenantLocale, SysTenantLo
      * @param tenantId 租户id
      * @param localeCode 语言代码
      * @return 是否存在
-     * @author AI: Cursor
      */
     fun exists(tenantId: String, localeCode: String): Boolean {
-        val criteria = Criteria.of(SysTenantLocale::tenantId.name, OperatorEnum.EQ, tenantId)
-            .addAnd(SysTenantLocale::localeCode.name, OperatorEnum.EQ, localeCode)
+        val criteria = Criteria.and(
+            Criterion(SysTenantLocale::tenantId.name, OperatorEnum.EQ, tenantId),
+            Criterion(SysTenantLocale::localeCode.name, OperatorEnum.EQ, localeCode)
+        )
         return count(criteria) > 0
     }
 

@@ -131,7 +131,7 @@ open class SysI18NService : BaseCrudService<String, SysI18n, SysI18nDao>(), ISys
 
     @Transactional
     override fun deleteById(id: String): Boolean {
-        val i18n = dao.getAs(id)
+        val i18n = dao.get(id)
         if (i18n == null) {
             log.warn("删除id为${id}的国际化内容时，发现其已不存在！")
             return false

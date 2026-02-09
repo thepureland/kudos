@@ -31,7 +31,7 @@ open class SysSubSystemMicroServiceService : BaseCrudService<String, SysSubSyste
     }
 
     override fun getSubSystemCodesByMicroServiceCode(microServiceCode: String): Set<String> {
-        return dao.searchSubSystemCodesByMicroServiceCode(microServiceCode)
+        return dao.fetchSubSystemCodesByMicroServiceCode(microServiceCode)
     }
 
     @Transactional

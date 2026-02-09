@@ -4,6 +4,7 @@ import io.kudos.ability.data.rdb.ktorm.datasource.currentDatabase
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.lang.GenericKit
 import io.kudos.base.lang.reflect.newInstance
+import io.kudos.base.lang.string.underscoreToHump
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.query.sort.Order
@@ -124,30 +125,84 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         return entitySequence().firstOrNull { getPkColumn() eq id }
     }
 
-    override fun <R : Any> getAs(id: PK, returnType: KClass<R>): R? {
-        val query = querySource()
-            .select()
-            .where { getPkColumn().eq(id) }
-        val columnMap = getColumns(returnType)
-        query.forEach { row ->
-            val bean = returnType.newInstance()
-            columnMap.forEach { (property, column) ->
-                BeanKit.setProperty(bean, property, row[column])
+    override fun <R : Any> get(id: PK, returnType: KClass<R>?): R? {
+        return if (returnType == null || returnType == entityClass()) {
+            @Suppress("UNCHECKED_CAST")
+            get(id) as R?
+        } else {
+            val query = querySource()
+                .select()
+                .where { getPkColumn().eq(id) }
+            val columnMap = getColumns(returnType)
+            query.forEach { row ->
+                val bean = returnType.newInstance()
+                columnMap.forEach { (property, column) ->
+                    BeanKit.setProperty(bean, property, row[column])
+                }
+                return bean
             }
-            return bean
+            null
         }
-        return null
     }
 
-    override fun getByIds(vararg ids: PK, countOfEachBatch: Int): List<E> {
+    /**
+     * 查询指定主键值的实体，可以通过泛型指定返回的对象类型。
+     *
+     * get(id: PK, returnType: KClass<R>)的快捷方法。
+     *
+     * @param R 返回对象的类型
+     * @param id 主键值，类型必须为以下之一：String、Int、Long
+     * @return 指定类型的结果对象，找不到返回null
+     * @author K
+     * @since 1.0.0
+     */
+    inline fun <reified R : Any> getAs(id: PK): R? = get(id, R::class)
+
+    override fun getByIds(ids: Collection<PK>, countOfEachBatch: Int): List<E> {
         if (ids.isEmpty()) return listOf()
         val results = mutableListOf<E>()
-        GroupExecutor(listOf(ids), countOfEachBatch) {
-            val result = entitySequence().filter { getPkColumn().inList(*ids) }.toList()
+        GroupExecutor(ids, countOfEachBatch) { subList ->
+            val result = entitySequence().filter { getPkColumn().inList(subList) }.toList()
             results.addAll(result)
         }.execute()
         return results
     }
+
+    override fun <T : Any> getByIds(
+        ids: Collection<PK>,
+        returnItemClass: KClass<T>?,
+        countOfEachBatch: Int
+    ): List<T> {
+        if (ids.isEmpty()) return listOf()
+        return if (returnItemClass == null || returnItemClass == entityClass()) {
+            @Suppress("UNCHECKED_CAST")
+            getByIds(ids, countOfEachBatch = countOfEachBatch) as List<T>
+        } else {
+            val results = mutableListOf<T>()
+            val idProperty = getPkColumn().name.underscoreToHump()
+            GroupExecutor(ids, countOfEachBatch) { subList ->
+                val criteria = Criteria(idProperty, OperatorEnum.IN, subList)
+                val result = search(criteria, returnItemClass)
+                results.addAll(result)
+            }.execute()
+            results
+        }
+    }
+
+    /**
+     * 批量查询指定主键值的实体
+     *
+     * getByIds(vararg ids: PK, returnItemClass: KClass<T>?, countOfEachBatch: Int)的快捷方法
+     *
+     * @param T 结果列表的元素类型
+     * @param ids 主键集合，元素类型必须为以下之一：String、Int、Long，为空时返回空列表
+     * @param countOfEachBatch 每批大小，缺省为1000
+     * @return 指定返回元素类型的对象列表，ids为空时返回空列表
+     * @author K
+     * @since 1.0.0
+     */
+    inline fun <reified T : Any> getByIdsAs(ids: Collection<PK>, countOfEachBatch: Int = 1000): List<T> =
+        getByIds(ids, T::class, countOfEachBatch)
 
     //endregion Search
 
@@ -429,6 +484,25 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         }
     }
 
+    /**
+     * 复杂条件查询，可以指定返回的封装类。会忽略与表实体不匹配的属性。
+     *
+     * 该方法的目的主要是为了避免各应用场景下，需要将PO转为所需VO的麻烦与性能开销。
+     *
+     * 为search(criteria: Criteria?, returnItemClass: KClass<T>?, vararg orders: Order)的快捷方法。
+     *
+     * @param T 返回列表项的类型
+     * @param criteria 查询条件，为null表示无条件查询，缺省为null
+     * @param orders   排序规则
+     * @return 指定的返回类型的对象列表
+     * @author K
+     * @since 1.0.0
+     */
+    inline fun <reified T : Any> searchAs(
+        criteria: Criteria? = null,
+        vararg orders: Order
+    ): List<T> = search(criteria, T::class, *orders)
+
     override fun searchProperty(criteria: Criteria, returnProperty: String, vararg orders: Order): List<*> {
         val results = searchPropertiesCriteria(criteria, listOf(returnProperty), 0, 0, *orders)
         return results.flatMap { it.values }
@@ -464,6 +538,30 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
             searchByCriteria(criteria, returnItemClass, pageNo, pageSize, *orders)
         }
     }
+
+    /**
+     * 分页查询，可以指定返回的封装类。会忽略与表实体不匹配的属性。
+     *
+     * 该方法的目的主要是为了避免各应用场景下，需要将PO转为所需VO的麻烦与性能开销。
+     *
+     * 为pagingSearch(criteria: Criteria?,returnItemClass: KClass<T>?,pageNo: Int,pageSize: Int,vararg orders: Order)
+     * 的快捷方法。
+     *
+     * @param T 返回列表项的类型
+     * @param criteria 查询条件，为null表示无条件查询，缺省为null
+     * @param pageNo   当前页码(从1开始)
+     * @param pageSize 每页条数
+     * @param orders   排序规则
+     * @return 指定的返回类型对象列表
+     * @author K
+     * @since 1.0.0
+     */
+    inline fun <reified T : Any> pagingSearchAs(
+        criteria: Criteria?,
+        pageNo: Int,
+        pageSize: Int,
+        vararg orders: Order
+    ): List<T> = pagingSearch(criteria, T::class, pageNo, pageSize, *orders)
 
     override fun pagingReturnProperty(
         criteria: Criteria, returnProperty: String, pageNo: Int, pageSize: Int, vararg orders: Order
@@ -846,7 +944,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         pageSize: Int = 0,
         vararg orders: Order
     ): List<T> {
-        val returnColumnMap =getColumns(returnItemClass)
+        val returnColumnMap = getColumns(returnItemClass)
 
         // select、where、order、paging
         val query = prepareQuery(criteria, returnColumnMap, pageNo, pageSize, *orders)

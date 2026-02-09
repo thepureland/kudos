@@ -130,7 +130,7 @@ class UserIdsByTenantIdAndRoleCodeCacheTest : RdbAndRedisCacheTestBase() {
         val userIdsBefore = cacheHandler.getUserIds(oldTenantId, oldRoleCode)
         
         // 更新角色编码
-        val role = authRoleDao.getAs(roleId)
+        val role = authRoleDao.get(roleId)
         assertTrue(role != null, "角色应该存在")
         val success = authRoleDao.updateProperties(roleId, mapOf(AuthRole::code.name to newRoleCode))
         assertTrue(success, "更新应该成功")

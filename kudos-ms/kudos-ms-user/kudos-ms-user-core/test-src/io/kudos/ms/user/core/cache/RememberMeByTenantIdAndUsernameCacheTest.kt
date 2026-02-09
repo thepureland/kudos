@@ -118,7 +118,7 @@ class RememberMeByTenantIdAndUsernameCacheTest : RdbAndRedisCacheTestBase() {
     fun syncOnUpdate() {
         val id = "8c1a0000-0000-0000-0000-000000000001"
         dao.updateProperties(id, mapOf(UserLoginRememberMe::token.name to newToken))
-        val record = dao.getAs(id)!!
+        val record = dao.get(id)!!
 
         cacheHandler.syncOnUpdate(record, id)
 
@@ -132,7 +132,7 @@ class RememberMeByTenantIdAndUsernameCacheTest : RdbAndRedisCacheTestBase() {
     @Test
     fun syncOnDelete() {
         val id = "8c1a0000-0000-0000-0000-000000000004"
-        val record = dao.getAs(id)!!
+        val record = dao.get(id)!!
         dao.deleteById(id)
 
         cacheHandler.syncOnDelete(record, id)

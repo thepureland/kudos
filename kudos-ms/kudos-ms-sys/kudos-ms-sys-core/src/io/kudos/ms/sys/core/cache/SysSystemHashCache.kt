@@ -55,7 +55,7 @@ open class SysSystemHashCache : AbstractHashCacheHandler<SysSystemCacheItem>() {
     )
     open fun getSystemByCode(code: String): SysSystemCacheItem? {
         require(code.isNotBlank()) { "获取系统时 code 不能为空" }
-        return sysSystemDao.getCacheItem(code)
+        return sysSystemDao.getAs<SysSystemCacheItem>(code)
     }
 
     /**
@@ -71,7 +71,7 @@ open class SysSystemHashCache : AbstractHashCacheHandler<SysSystemCacheItem>() {
     )
     open fun getSystemsByCodes(codes: List<String>): Map<String, SysSystemCacheItem> {
         if (codes.isEmpty()) return emptyMap()
-        val list = sysSystemDao.listCacheItemsByIds(codes)
+        val list = sysSystemDao.getByIdsAs<SysSystemCacheItem>(codes)
         return list.filter { it.id != null && it.id in codes }.associateBy { it.id!! }
     }
 
@@ -88,7 +88,7 @@ open class SysSystemHashCache : AbstractHashCacheHandler<SysSystemCacheItem>() {
         filterableProperties = ["subSystem"]
     )
     open fun getSystemsByType(subSystem: Boolean): List<SysSystemCacheItem> {
-        return sysSystemDao.listCacheItemsBySubSystem(subSystem)
+        return sysSystemDao.fetchSystemsByType(subSystem)
     }
 
     /** 获取所有子系统列表（subSystem=true）。 */
@@ -106,7 +106,7 @@ open class SysSystemHashCache : AbstractHashCacheHandler<SysSystemCacheItem>() {
         }
         val cache = hashCache()
         if (clear) cache.refreshAll(CACHE_NAME, emptyList<SysSystemCacheItem>(), FILTERABLE_PROPERTIES, emptySet())
-        val list = sysSystemDao.listAllCacheItems()
+        val list = sysSystemDao.searchAs<SysSystemCacheItem>()
         log.debug("从数据库加载 ${list.size} 条系统，刷新 Hash 缓存")
         cache.refreshAll(CACHE_NAME, list, FILTERABLE_PROPERTIES, emptySet())
     }
@@ -114,14 +114,14 @@ open class SysSystemHashCache : AbstractHashCacheHandler<SysSystemCacheItem>() {
     /** 新增系统后同步：将指定 code 的实体从库加载并写入缓存。 */
     open fun syncOnInsert(code: String) {
         if (!CacheKit.isCacheActive(CACHE_NAME) || !CacheKit.isWriteInTime(CACHE_NAME)) return
-        val item = sysSystemDao.getCacheItem(code) ?: return
+        val item = sysSystemDao.getAs<SysSystemCacheItem>(code) ?: return
         hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
     }
 
     /** 更新系统后同步：从库重新加载并写入缓存。 */
     open fun syncOnUpdate(code: String) {
         if (!CacheKit.isCacheActive(CACHE_NAME)) return
-        val item = sysSystemDao.getCacheItem(code) ?: return
+        val item = sysSystemDao.getAs<SysSystemCacheItem>(code) ?: return
         if (CacheKit.isWriteInTime(CACHE_NAME)) {
             hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
         }

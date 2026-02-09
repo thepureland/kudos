@@ -106,7 +106,7 @@ class I18NByLocaleAndTypeAndAmsCodeCacheTest : RdbAndRedisCacheTestBase() {
     fun syncOnUpdate() {
         val id = "40000000-0000-0000-0000-000000008910"
         dao.updateProperties(id, mapOf(SysI18n::value.name to newValue))
-        val i18n = dao.getAs(id)!!
+        val i18n = dao.get(id)!!
 
         cacheHandler.syncOnUpdate(i18n, id)
 
@@ -140,7 +140,7 @@ class I18NByLocaleAndTypeAndAmsCodeCacheTest : RdbAndRedisCacheTestBase() {
     @Test
     fun syncOnDelete() {
         val id = "40000000-0000-0000-0000-000000008911"
-        val i18n = dao.getAs(id)!!
+        val i18n = dao.get(id)!!
         val deleteSuccess = dao.deleteById(id)
         assertTrue(deleteSuccess)
 
@@ -155,8 +155,8 @@ class I18NByLocaleAndTypeAndAmsCodeCacheTest : RdbAndRedisCacheTestBase() {
     fun syncOnBatchDelete() {
         val id1 = "40000000-0000-0000-0000-000000008581"
         val id2 = "40000000-0000-0000-0000-000000008910"
-        val i18n1 = dao.getAs(id1)!!
-        val i18n2 = dao.getAs(id2)!!
+        val i18n1 = dao.get(id1)!!
+        val i18n2 = dao.get(id2)!!
         val keys = listOf(
             cacheHandler.getKey(i18n1.locale, i18n1.i18nTypeDictCode, i18n1.atomicServiceCode),
             cacheHandler.getKey(i18n2.locale, i18n2.i18nTypeDictCode, i18n2.atomicServiceCode)

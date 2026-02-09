@@ -142,7 +142,7 @@ open class ParamByModuleAndNameCache : AbstractKeyValueCacheHandler<SysParamCach
     open fun syncOnUpdateActive(id: String, active: Boolean) {
         if (CacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("更新id为${id}的参数的启用状态后，同步缓存...")
-            val sysParam = sysParamDao.getAs(id)!!
+            val sysParam = sysParamDao.get(id)!!
             if (active) {
                 if (CacheKit.isWriteInTime(CACHE_NAME)) {
                     getSelf<ParamByModuleAndNameCache>().getParam(

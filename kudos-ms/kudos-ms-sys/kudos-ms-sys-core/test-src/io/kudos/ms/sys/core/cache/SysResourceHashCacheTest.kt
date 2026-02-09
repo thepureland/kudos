@@ -70,7 +70,7 @@ class SysResourceHashCacheTest : RdbAndRedisCacheTestBase() {
         val subSystemCode = "srch-sys-a1b2c3d4"
         val url = "/srch/suburl/a1b2/p01"
         // 先确认测试数据已从 SQL 写入 DB（getResourceIdBySubSysAndUrl 仅查 active=true）
-        val idFromDao = sysResourceDao.getResourceBySubSysAndUrl(subSystemCode, url)?.id
+        val idFromDao = sysResourceDao.fetchResourceBySubSysAndUrl(subSystemCode, url)?.id
         assertNotNull(idFromDao, "测试数据未加载：sql/h2/cache/SysResourceHashCacheTest.sql 中应有 sub_system_code=$subSystemCode, url=$url, active=true 的记录")
         assertEquals("srch2001-4d5e-7f8a-1b2c-000000000011", idFromDao)
         val res1 = cache.getResourceBySubSystemCodeAndUrl(subSystemCode, url)
@@ -146,7 +146,7 @@ class SysResourceHashCacheTest : RdbAndRedisCacheTestBase() {
         cache.reloadAll(true)
         val id = "srch4001-3a4b-6c7d-0e1f-000000000031"
         val newUrl = "/srch/sync/upd/001-new"
-        val res = sysResourceDao.getAs(id)!!
+        val res = sysResourceDao.get(id)!!
         res.url = newUrl
         sysResourceDao.update(res)
         cache.syncOnUpdate(id)
@@ -175,12 +175,12 @@ class SysResourceHashCacheTest : RdbAndRedisCacheTestBase() {
         val id = "srch5001-1a2b-4c5d-8e9f-000000000051"
         val subSystemCode = "srch-sys-sync-active"
         val url = "/srch/sync/active/001"
-        val res = sysResourceDao.getAs(id)!!
+        val res = sysResourceDao.get(id)!!
         res.active = false
         sysResourceDao.update(res)
         cache.syncOnUpdateActive(id, false)
-        assertNull(sysResourceDao.getResourceBySubSysAndUrl(subSystemCode, url, true), "DB 层按 active=true 应查不到该记录")
-        assertEquals(id, sysResourceDao.getResourceBySubSysAndUrl(subSystemCode, url, false)?.id, "DB 层按 active=false 应能查到该 id")
+        assertNull(sysResourceDao.fetchResourceBySubSysAndUrl(subSystemCode, url, true), "DB 层按 active=true 应查不到该记录")
+        assertEquals(id, sysResourceDao.fetchResourceBySubSysAndUrl(subSystemCode, url, false)?.id, "DB 层按 active=false 应能查到该 id")
     }
 
     @Test
@@ -190,7 +190,7 @@ class SysResourceHashCacheTest : RdbAndRedisCacheTestBase() {
         val item = cache.getResourceById(id)!!
         sysResourceDao.deleteById(id)
         cache.syncOnDelete(id, item.subSystemCode!!, item.url)
-        assertNull(sysResourceDao.getAs(id), "删除并 sync 后 DB 中该 id 应不存在")
+        assertNull(sysResourceDao.get(id), "删除并 sync 后 DB 中该 id 应不存在")
     }
 
     @Test
@@ -202,7 +202,7 @@ class SysResourceHashCacheTest : RdbAndRedisCacheTestBase() {
         )
         ids.forEach { sysResourceDao.deleteById(it) }
         cache.syncOnBatchDelete(ids)
-        ids.forEach { assertNull(sysResourceDao.getAs(it), "批量删除并 sync 后 DB 中该 id 应不存在") }
+        ids.forEach { assertNull(sysResourceDao.get(it), "批量删除并 sync 后 DB 中该 id 应不存在") }
     }
 
     // ---------- key 工具 ----------

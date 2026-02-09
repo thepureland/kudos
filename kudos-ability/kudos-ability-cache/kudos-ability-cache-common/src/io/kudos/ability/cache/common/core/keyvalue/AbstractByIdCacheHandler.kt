@@ -37,7 +37,7 @@ abstract class AbstractByIdCacheHandler<PK : Any, T : IIdEntity<*>, DAO : IBaseR
         if (CacheKit.isCacheActive(cacheName())) {
             log.debug("缓存中不存在id为${id}的${itemDesc()}，从数据库中加载...")
         }
-        val result = dao.getAs(id, getCacheItemClass())
+        val result = dao.get(id, getCacheItemClass())
         if (result == null) {
             log.warn("数据库中不存在id为${id}的${itemDesc()}！")
         } else {

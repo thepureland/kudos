@@ -70,7 +70,7 @@ internal open class BaseCrudDaoTest {
         }
         val id = testTableDao.insertOnly(entity, TestTableKtorm::id.name, TestTableKtorm::name.name)
         assertEquals(0, id)
-        val result = testTableDao.getAs(0)!!
+        val result = testTableDao.get(0)!!
         assert(result.weight == null)
         assert(result.height == null)
     }
@@ -86,7 +86,7 @@ internal open class BaseCrudDaoTest {
         }
         val id = testTableDao.insertExclude(entity, TestTableKtorm::weight.name, TestTableKtorm::height.name)
         assertEquals(0, id)
-        val result = testTableDao.getAs(0)!!
+        val result = testTableDao.get(0)!!
         assert(result.weight == null)
         assert(result.height == null)
     }
@@ -161,7 +161,7 @@ internal open class BaseCrudDaoTest {
         val count = testTableDao.batchInsertOnly(entities, 4, TestTableKtorm::id.name, TestTableKtorm::name.name)
         assertEquals(3, count)
         assertEquals(14, testTableDao.allSearch().size)
-        val result = testTableDao.getAs(21)!!
+        val result = testTableDao.get(21)!!
         assert(result.weight == null)
         assert(result.height == null)
     }
@@ -192,7 +192,7 @@ internal open class BaseCrudDaoTest {
         val count = testTableDao.batchInsertExclude(entities, 4, TestTableKtorm::weight.name, TestTableKtorm::height.name)
         assertEquals(3, count)
         assertEquals(14, testTableDao.allSearch().size)
-        val result = testTableDao.getAs(21)!!
+        val result = testTableDao.get(21)!!
         assert(result.weight == null)
         assert(result.height == null)
     }
@@ -203,18 +203,18 @@ internal open class BaseCrudDaoTest {
     @Test
     @Transactional
     open fun update() {
-        var entity = testTableDao.getAs(-1)!!
+        var entity = testTableDao.get(-1)!!
         entity.name = "name"
         val success = testTableDao.update(entity)
         assert(success)
-        entity = testTableDao.getAs(-1)!!
+        entity = testTableDao.get(-1)!!
         assertEquals("name", entity.name)
     }
 
     @Test
     @Transactional
     open fun updateWhen() {
-        var entity = testTableDao.getAs(-1)!!
+        var entity = testTableDao.get(-1)!!
         entity.name = "name"
 
         // Criteria为空
@@ -223,14 +223,14 @@ internal open class BaseCrudDaoTest {
         // 满足Criteria条件
         var criteria = Criteria.of(TestTableKtorm::name.name, OperatorEnum.EQ, "name1")
         assert(testTableDao.updateWhen(entity, criteria))
-        entity = testTableDao.getAs(-1)!!
+        entity = testTableDao.get(-1)!!
         assertEquals("name", entity.name)
 
         // 不满足Criteria条件
         entity.name = "name1"
         criteria = Criteria.of(TestTableKtorm::name.name, OperatorEnum.EQ, "non-exists")
         assert(!testTableDao.updateWhen(entity, criteria))
-        entity = testTableDao.getAs(-1)!!
+        entity = testTableDao.get(-1)!!
         assertEquals("name", entity.name)
     }
 
@@ -239,8 +239,8 @@ internal open class BaseCrudDaoTest {
     open fun updateProperties() {
         val properties = mapOf(TestTableKtorm::name.name to -2, TestTableKtorm::name.name to "new-name") // 主键应该要不会被更新
         assert(testTableDao.updateProperties(-1, properties))
-        assertEquals("new-name", testTableDao.getAs(-1)!!.name)
-        assertEquals("name2", testTableDao.getAs(-2)!!.name)
+        assertEquals("new-name", testTableDao.get(-1)!!.name)
+        assertEquals("name2", testTableDao.get(-2)!!.name)
     }
 
     @Test
@@ -253,37 +253,37 @@ internal open class BaseCrudDaoTest {
         // 满足Criteria条件
         var criteria = Criteria.of(TestTableKtorm::name.name, OperatorEnum.EQ, "name1")
         assert(testTableDao.updatePropertiesWhen(-1, properties, criteria))
-        var entity = testTableDao.getAs(-1)!!
+        var entity = testTableDao.get(-1)!!
         assertEquals("name", entity.name)
 
         // 不满足Criteria条件
         criteria = Criteria.of(TestTableKtorm::name.name, OperatorEnum.EQ, "non-exists")
         assert(!testTableDao.updatePropertiesWhen(-1, mapOf(TestTableKtorm::name.name to "name1"), criteria))
-        entity = testTableDao.getAs(-1)!!
+        entity = testTableDao.get(-1)!!
         assertEquals("name", entity.name)
     }
 
     @Test
     @Transactional
     open fun updateOnly() {
-        val entity = testTableDao.getAs(-1)!!
+        val entity = testTableDao.get(-1)!!
         entity.name = "new-name"
         assert(testTableDao.updateOnly(entity, TestTableKtorm::name.name))
-        assertEquals("new-name", testTableDao.getAs(-1)!!.name)
-        assertEquals("name2", testTableDao.getAs(-2)!!.name)
+        assertEquals("new-name", testTableDao.get(-1)!!.name)
+        assertEquals("name2", testTableDao.get(-2)!!.name)
     }
 
     @Test
     @Transactional
     open fun updateOnlyWhen() {
-        var entity = testTableDao.getAs(-1)!!
+        var entity = testTableDao.get(-1)!!
         entity.name = "name"
         entity.weight = null
 
         // 满足Criteria条件
         var criteria = Criteria.of(TestTableKtorm::name.name, OperatorEnum.EQ, "name1")
         assert(testTableDao.updateOnlyWhen(entity, criteria, TestTableKtorm::name.name))
-        entity = testTableDao.getAs(-1)!!
+        entity = testTableDao.get(-1)!!
         assertEquals("name", entity.name)
         assertEquals(56.5, entity.weight)
 
@@ -291,18 +291,18 @@ internal open class BaseCrudDaoTest {
         entity.name = "name1"
         criteria = Criteria.of(TestTableKtorm::name.name, OperatorEnum.EQ, "non-exists")
         assert(!testTableDao.updateOnlyWhen(entity, criteria, TestTableKtorm::name.name))
-        entity = testTableDao.getAs(-1)!!
+        entity = testTableDao.get(-1)!!
         assertEquals("name", entity.name)
     }
 
     @Test
     @Transactional
     open fun updateExcludeProperties() {
-        var entity = testTableDao.getAs(-1)!!
+        var entity = testTableDao.get(-1)!!
         entity.name = "name"
         entity.weight = null
         assert(testTableDao.updateExcludeProperties(entity, TestTableKtorm::weight.name))
-        entity = testTableDao.getAs(-1)!!
+        entity = testTableDao.get(-1)!!
         assertEquals("name", entity.name)
         assertEquals(56.5, entity.weight)
     }
@@ -310,14 +310,14 @@ internal open class BaseCrudDaoTest {
     @Test
     @Transactional
     open fun updateExcludePropertiesWhen() {
-        var entity = testTableDao.getAs(-1)!!
+        var entity = testTableDao.get(-1)!!
         entity.name = "name"
         entity.weight = null
 
         // 满足Criteria条件
         var criteria = Criteria.of(TestTableKtorm::name.name, OperatorEnum.EQ, "name1")
         assert(testTableDao.updateExcludePropertiesWhen(entity, criteria, TestTableKtorm::weight.name))
-        entity = testTableDao.getAs(-1)!!
+        entity = testTableDao.get(-1)!!
         assertEquals("name", entity.name)
         assertEquals(56.5, entity.weight)
 
@@ -325,20 +325,20 @@ internal open class BaseCrudDaoTest {
         entity.name = "name1"
         criteria = Criteria.of(TestTableKtorm::name.name, OperatorEnum.EQ, "non-exists")
         assert(!testTableDao.updateExcludePropertiesWhen(entity, criteria))
-        entity = testTableDao.getAs(-1)!!
+        entity = testTableDao.get(-1)!!
         assertEquals("name", entity.name)
     }
 
     @Test
     @Transactional
     open fun batchUpdate() {
-        var entities = testTableDao.getByIds(-1, -2, -3)
+        var entities = testTableDao.getByIds(setOf(-1, -2, -3))
         entities.forEach {
             it.name = "name"
         }
         val count = testTableDao.batchUpdate(entities)
         assertEquals(3, count)
-        entities = testTableDao.getByIds(-1, -2, -3)
+        entities = testTableDao.getByIds(setOf(-1, -2, -3))
         assertEquals("name", entities[0].name)
         assertEquals("name", entities[1].name)
         assertEquals("name", entities[2].name)
@@ -410,7 +410,7 @@ internal open class BaseCrudDaoTest {
             }
         }
         assertEquals(1, count)
-        var entity = testTableDao.getAs(-1)!!
+        var entity = testTableDao.get(-1)!!
         assertEquals("name", entity.name)
         assert(entity.birthday != null)
         assertEquals(null, entity.weight)
@@ -420,7 +420,7 @@ internal open class BaseCrudDaoTest {
         updatePayload1.nullProperties = null
         count = testTableDao.batchUpdateWhen(updatePayload1)
         assertEquals(1, count)
-        entity = testTableDao.getAs(-1)!!
+        entity = testTableDao.get(-1)!!
         assertEquals("name", entity.name)
         assert(entity.birthday != null)
     }
@@ -533,16 +533,16 @@ internal open class BaseCrudDaoTest {
     @Transactional
     open fun deleteById() {
         assert(testTableDao.deleteById(-1))
-        assert(testTableDao.getAs(-1) == null)
+        assert(testTableDao.get(-1) == null)
         assert(!testTableDao.deleteById(1))
     }
 
     @Test
     @Transactional
     open fun delete() {
-        val entity = testTableDao.getAs(-1)
+        val entity = testTableDao.get(-1)
         assert(testTableDao.delete(entity!!))
-        assert(testTableDao.getAs(-1) == null)
+        assert(testTableDao.get(-1) == null)
 
         // 主键为null
         assertFailsWith<IllegalStateException> { testTableDao.delete(TestTableKtorm {}) }
@@ -594,13 +594,13 @@ internal open class BaseCrudDaoTest {
             } else null
         }
         assertEquals(1, count)
-        assertEquals(null, testTableDao.getAs(-2))
+        assertEquals(null, testTableDao.get(-2))
 
         // 仅SearchPayload项
         searchPayload1.name = "name1"
         count = testTableDao.batchDeleteWhen(searchPayload1)
         assertEquals(1, count)
-        assertEquals(null, testTableDao.getAs(-1))
+        assertEquals(null, testTableDao.get(-1))
 
         // SearchPayload项 & whereConditionFactory
         searchPayload1.name = "me3"
@@ -610,7 +610,7 @@ internal open class BaseCrudDaoTest {
             } else null
         }
         assertEquals(1, count)
-        assertEquals(null, testTableDao.getAs(-3))
+        assertEquals(null, testTableDao.get(-3))
     }
 
     //endregion Delete
