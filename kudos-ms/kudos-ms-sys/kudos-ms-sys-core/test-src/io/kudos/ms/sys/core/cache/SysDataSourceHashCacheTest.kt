@@ -1,6 +1,7 @@
 package io.kudos.ms.sys.core.cache
 
 import io.kudos.ability.cache.common.kit.HashCacheKit
+import io.kudos.ms.sys.common.vo.datasource.SysDataSourceCacheItem
 import io.kudos.ms.sys.core.dao.SysDataSourceDao
 import io.kudos.ms.sys.core.model.po.SysDataSource
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
@@ -133,9 +134,9 @@ class SysDataSourceHashCacheTest : RdbAndRedisCacheTestBase() {
 
         // clear=true 后全量重载，已删 id 不在缓存，已更新 name 从 DB 加载（Mix 已同步写本地）
         cacheHandler.reloadAll(true)
-        assertNull(sysDataSourceDao.getCacheItem(idDelete))
+        assertNull(sysDataSourceDao.getAs<SysDataSourceCacheItem>(idDelete))
         assertNull(cacheHandler.getDataSourceById(idDelete))
-        assertEquals(newName, sysDataSourceDao.getCacheItem(idUpdate)?.name)
+        assertEquals(newName, sysDataSourceDao.getAs<SysDataSourceCacheItem>(idUpdate)?.name)
         assertEquals(newName, cacheHandler.getDataSourceById(idUpdate)?.name)
     }
 
@@ -160,7 +161,7 @@ class SysDataSourceHashCacheTest : RdbAndRedisCacheTestBase() {
         assertTrue(success)
         val ds = cacheHandler.getDataSourceById(id)!!
         cacheHandler.syncOnUpdate(ds, id)
-        assertEquals(newName, sysDataSourceDao.getCacheItem(id)?.name)
+        assertEquals(newName, sysDataSourceDao.getAs<SysDataSourceCacheItem>(id)?.name)
         assertEquals(newName, cacheHandler.getDataSourceById(id)?.name)
     }
 
@@ -171,14 +172,14 @@ class SysDataSourceHashCacheTest : RdbAndRedisCacheTestBase() {
         sysDataSourceDao.updateProperties(id, mapOf(SysDataSource::active.name to false))
 //        val ds = cacheHandler.getDataSourceById(id)!!
         cacheHandler.syncOnUpdateActive(id, false)
-        assertEquals(false, sysDataSourceDao.getCacheItem(id)?.active)
+        assertEquals(false, sysDataSourceDao.getAs<SysDataSourceCacheItem>(id)?.active)
         val afterFalse = cacheHandler.getDataSourceById(id)
         assertNotNull(afterFalse)
         assertEquals(false, afterFalse.active)
 
         sysDataSourceDao.updateProperties(id, mapOf(SysDataSource::active.name to true))
         cacheHandler.syncOnUpdateActive(id, true)
-        assertEquals(true, sysDataSourceDao.getCacheItem(id)?.active)
+        assertEquals(true, sysDataSourceDao.getAs<SysDataSourceCacheItem>(id)?.active)
         val afterTrue = cacheHandler.getDataSourceById(id)
         assertNotNull(afterTrue)
         assertEquals(true, afterTrue.active)
@@ -191,7 +192,7 @@ class SysDataSourceHashCacheTest : RdbAndRedisCacheTestBase() {
         cacheHandler.getDataSourceById(id)
         sysDataSourceDao.deleteById(id)
         cacheHandler.syncOnDelete(id)
-        assertNull(sysDataSourceDao.getCacheItem(id))
+        assertNull(sysDataSourceDao.getAs<SysDataSourceCacheItem>(id))
         assertNull(cacheHandler.getDataSourceById(id))
     }
 

@@ -20,20 +20,11 @@ import org.springframework.stereotype.Repository
 open class SysDataSourceDao : BaseCrudDao<String, SysDataSource, SysDataSources>() {
 //endregion your codes 1
 
-    /** 按 id 查询单条，返回缓存用 VO */
-    open fun getCacheItem(id: String): SysDataSourceCacheItem? =
-        getAs(id, SysDataSourceCacheItem::class)
-
-    /** 全量查询，返回缓存用 VO 列表（用于全量刷新） */
-    open fun fetchAllDataSourcesForCache(): List<SysDataSourceCacheItem> {
-        return search<SysDataSourceCacheItem>()
-    }
-
     /** 按 id 集合批量查询，返回缓存用 VO 列表 */
     open fun fetchDataSourcesByIdsForCache(ids: Collection<String>): List<SysDataSourceCacheItem> {
         if (ids.isEmpty()) return emptyList()
         val criteria = Criteria.of(SysDataSource::id.name, OperatorEnum.IN, ids)
-        return search(criteria, SysDataSourceCacheItem::class)
+        return searchAs<SysDataSourceCacheItem>(criteria)
     }
 
     /**
@@ -52,7 +43,7 @@ open class SysDataSourceDao : BaseCrudDao<String, SysDataSource, SysDataSources>
         if (microServiceCode.isNullOrBlank()) {
             criteria.addAnd(SysDataSource::microServiceCode.name, OperatorEnum.EQ, subSystemCode)
         }
-        return search<SysDataSourceCacheItem>(criteria)
+        return searchAs<SysDataSourceCacheItem>(criteria)
     }
 
 }

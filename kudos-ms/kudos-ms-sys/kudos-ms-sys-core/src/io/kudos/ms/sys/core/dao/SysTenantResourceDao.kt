@@ -2,6 +2,7 @@ package io.kudos.ms.sys.core.dao
 
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.base.query.Criteria
+import io.kudos.base.query.Criterion
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.ms.sys.core.model.po.SysTenantResource
 import io.kudos.ms.sys.core.model.table.SysTenantResources
@@ -29,7 +30,7 @@ open class SysTenantResourceDao : BaseCrudDao<String, SysTenantResource, SysTena
      * @return Set<资源id>
      */
     fun searchResourceIdsByTenantId(tenantId: String): Set<String> {
-        val criteria = Criteria.of(SysTenantResource::tenantId.name, OperatorEnum.EQ, tenantId)
+        val criteria = Criteria(SysTenantResource::tenantId.name, OperatorEnum.EQ, tenantId)
         @Suppress("UNCHECKED_CAST")
         return searchProperty(criteria, SysTenantResource::resourceId.name).toSet() as Set<String>
     }
@@ -41,7 +42,7 @@ open class SysTenantResourceDao : BaseCrudDao<String, SysTenantResource, SysTena
      * @return Set<租户id>
      */
     fun searchTenantIdsByResourceId(resourceId: String): Set<String> {
-        val criteria = Criteria.of(SysTenantResource::resourceId.name, OperatorEnum.EQ, resourceId)
+        val criteria = Criteria(SysTenantResource::resourceId.name, OperatorEnum.EQ, resourceId)
         @Suppress("UNCHECKED_CAST")
         return searchProperty(criteria, SysTenantResource::tenantId.name).toSet() as Set<String>
     }
@@ -52,11 +53,12 @@ open class SysTenantResourceDao : BaseCrudDao<String, SysTenantResource, SysTena
      * @param tenantId 租户id
      * @param resourceId 资源id
      * @return 是否存在
-     * @author AI: Cursor
      */
     fun exists(tenantId: String, resourceId: String): Boolean {
-        val criteria = Criteria.of(SysTenantResource::tenantId.name, OperatorEnum.EQ, tenantId)
-            .addAnd(SysTenantResource::resourceId.name, OperatorEnum.EQ, resourceId)
+        val criteria = Criteria.and(
+            Criterion(SysTenantResource::tenantId.name, OperatorEnum.EQ, tenantId),
+            Criterion(SysTenantResource::resourceId.name, OperatorEnum.EQ, resourceId)
+        )
         return count(criteria) > 0
     }
 

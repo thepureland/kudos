@@ -95,7 +95,7 @@ class UserContactWayByUserIdCacheTest : RdbAndRedisCacheTestBase() {
         val id = "8b1a0000-0000-0000-0000-000000000004"
         val success = dao.updateProperties(id, mapOf(UserContactWay::contactWayValue.name to newValue))
         assertTrue(success)
-        val contactWay = dao.getAs(id)!!
+        val contactWay = dao.get(id)!!
 
         cacheHandler.syncOnUpdate(contactWay, id)
 
@@ -129,7 +129,7 @@ class UserContactWayByUserIdCacheTest : RdbAndRedisCacheTestBase() {
     @Test
     fun syncOnDelete() {
         val id = "8b1a0000-0000-0000-0000-000000000001"
-        val contactWay = dao.getAs(id)!!
+        val contactWay = dao.get(id)!!
         val deleteSuccess = dao.deleteById(id)
         assertTrue(deleteSuccess)
 

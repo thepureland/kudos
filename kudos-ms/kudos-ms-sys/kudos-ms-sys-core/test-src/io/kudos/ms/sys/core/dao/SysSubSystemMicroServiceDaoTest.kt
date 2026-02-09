@@ -32,9 +32,9 @@ class SysSubSystemMicroServiceDaoTest : RdbTestBase() {
     }
 
     @Test
-    fun searchSubSystemCodesByMicroServiceCode() {
+    fun fetchSubSystemCodesByMicroServiceCode() {
         val microServiceCode = "svc-ms-subsysms-dao-test-1_1506"
-        val codes = sysSubSystemMicroServiceDao.searchSubSystemCodesByMicroServiceCode(microServiceCode)
+        val codes = sysSubSystemMicroServiceDao.fetchSubSystemCodesByMicroServiceCode(microServiceCode)
         assertTrue(codes.size >= 2)
         assertTrue(codes.contains("svc-subsys-subsysms-dao-test-1"))
         assertTrue(codes.contains("svc-subsys-subsysms-dao-tes_1506"))

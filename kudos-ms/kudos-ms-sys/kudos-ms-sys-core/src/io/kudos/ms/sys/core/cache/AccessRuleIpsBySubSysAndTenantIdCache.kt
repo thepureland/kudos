@@ -179,13 +179,13 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
     open fun syncOnUpdateActive(ipRuleId: String, active: Boolean) {
         if (CacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("更新id为${ipRuleId}的ip访问规则的启用状态后，同步${CACHE_NAME}缓存...")
-            val sysAccessRuleIp = sysAccessRuleIpDao.getAs(ipRuleId)
+            val sysAccessRuleIp = sysAccessRuleIpDao.get(ipRuleId)
             if (sysAccessRuleIp == null) {
                 log.error("数据库中找不到id为${ipRuleId}的ip访问规则！")
                 return
             }
 
-            val sysAccessRule = sysAccessRuleDao.getAs(sysAccessRuleIp.parentRuleId)!!
+            val sysAccessRule = sysAccessRuleDao.get(sysAccessRuleIp.parentRuleId)!!
 
             // 踢除ip访问规则缓存
             CacheKit.evict(CACHE_NAME, getKey(sysAccessRule.systemCode, sysAccessRule.tenantId))
@@ -208,13 +208,13 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
     open fun syncOnDelete(ipRuleId: String) {
         if (CacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("删除id为${ipRuleId}的ip访问规则后，同步从${CACHE_NAME}缓存中踢除...")
-            val sysAccessRuleIp = sysAccessRuleIpDao.getAs(ipRuleId)
+            val sysAccessRuleIp = sysAccessRuleIpDao.get(ipRuleId)
             if (sysAccessRuleIp == null) {
                 log.error("数据库中找不到id为${ipRuleId}的ip访问规则！")
                 return
             }
 
-            val sysAccessRule = sysAccessRuleDao.getAs(sysAccessRuleIp.parentRuleId)!!
+            val sysAccessRule = sysAccessRuleDao.get(sysAccessRuleIp.parentRuleId)!!
 
             // 踢除缓存
             CacheKit.evict(CACHE_NAME, getKey(sysAccessRule.systemCode, sysAccessRule.tenantId))

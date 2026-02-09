@@ -148,7 +148,7 @@ open class I18NByLocaleAndTypeAndAmsCodeCache : AbstractKeyValueCacheHandler<Map
     open fun syncOnUpdateActive(id: String, active: Boolean) {
         if (CacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("更新id为${id}的国际化内容的启用状态后，同步${CACHE_NAME}缓存...")
-            val i18n = sysI18nDao.getAs(id)
+            val i18n = sysI18nDao.get(id)
             if (i18n == null) {
                 log.warn("同步国际化缓存时未找到id为${id}的记录。")
                 return
@@ -211,7 +211,7 @@ open class I18NByLocaleAndTypeAndAmsCodeCache : AbstractKeyValueCacheHandler<Map
         if (locale != null && i18nTypeDictCode != null && atomicServiceCode != null) {
             return Triple(locale, i18nTypeDictCode, atomicServiceCode)
         }
-        val i18n = sysI18nDao.getAs(id)
+        val i18n = sysI18nDao.get(id)
         if (i18n == null) {
             log.warn("同步国际化缓存时未找到id为${id}的记录。")
             return null

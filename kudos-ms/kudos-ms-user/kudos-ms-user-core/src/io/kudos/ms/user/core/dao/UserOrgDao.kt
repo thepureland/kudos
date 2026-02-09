@@ -26,7 +26,7 @@ open class UserOrgDao : BaseCrudDao<String, UserOrg, UserOrgs>() {
 
     /** 按 id（主键）查询单条，返回缓存用 VO */
     open fun getCacheItem(id: String): UserOrgCacheItem? =
-        getAs(id, UserOrgCacheItem::class)
+        get(id, UserOrgCacheItem::class)
 
     /** 全量查询，返回缓存用 VO 列表（用于全量刷新） */
     open fun getAllOrgsForCache(): List<UserOrgCacheItem> {

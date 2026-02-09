@@ -79,23 +79,40 @@ interface IBaseReadOnlyService<PK : Any, E : IIdEntity<PK>> {
      * 查询指定主键值的实体，可以指定返回的对象类型
      *
      * @param id 主键值，类型必须为以下之一：String、Int、Long
-     * @param returnType 返回对象的类型
-     * @return 结果对象，找不到返回null
+     * @param returnType 返回对象的类型, 为null表示PO类型，缺省为null
+     * @return 指定类型的结果对象，找不到返回null
      * @author K
      * @since 1.0.0
      */
-    fun <R : Any> getAs(id: PK, returnType: KClass<R>): R?
+    fun <R : Any> get(id: PK, returnType: KClass<R>): R?
 
     /**
      * 批量查询指定主键值的实体
      *
-     * @param ids 主键值可变参数，元素类型必须为以下之一：String、Int、Long，为空时返回空列表
+     * @param ids 主键集合，元素类型必须为以下之一：String、Int、Long，为空时返回空列表
      * @param countOfEachBatch 每批大小，缺省为1000
      * @return 实体列表，ids为空时返回空列表
      * @author K
      * @since 1.0.0
      */
-    fun getByIds(vararg ids: PK, countOfEachBatch: Int = 1000): List<E>
+    fun getByIds(ids: Collection<PK>, countOfEachBatch: Int = 1000): List<E>
+
+    /**
+     * 批量查询指定主键值的实体
+     *
+     * @param T 结果列表的元素类型
+     * @param ids 主键集合，元素类型必须为以下之一：String、Int、Long，为空时返回空列表
+     * @param returnItemClass 结果列表的元素类型，为null表示PO类型，缺省为null
+     * @param countOfEachBatch 每批大小，缺省为1000
+     * @return 指定返回元素类型的对象列表，ids为空时返回空列表
+     * @author K
+     * @since 1.0.0
+     */
+    fun <T: Any> getByIds(
+        ids: Collection<PK>,
+        returnItemClass: KClass<T>? = null,
+        countOfEachBatch: Int = 1000
+    ): List<T>
 
     //endregion by id
 

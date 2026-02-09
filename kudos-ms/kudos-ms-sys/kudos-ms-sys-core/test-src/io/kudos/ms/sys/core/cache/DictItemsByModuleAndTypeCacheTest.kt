@@ -123,7 +123,7 @@ class DictItemsByModuleAndTypeCacheTest : RdbAndRedisCacheTestBase() {
         val success = sysDictItemDao.updateProperties(id, mapOf(SysDictItem::itemName.name to newName))
         assert(success)
 
-        val dictItem = sysDictItemDao.getAs(id)!!
+        val dictItem = sysDictItemDao.get(id)!!
         val dict = dictByIdCache.getDictById(dictItem.dictId)!!
 
         // 同步缓存
@@ -144,7 +144,7 @@ class DictItemsByModuleAndTypeCacheTest : RdbAndRedisCacheTestBase() {
         var id = "e8ff3f9a-a57a-4183-953d-fe80c12f8149"
         var success = sysDictItemDao.updateProperties(id, mapOf(SysDictItem::active.name to false))
         assert(success)
-        var dictItem = sysDictItemDao.getAs(id)!!
+        var dictItem = sysDictItemDao.get(id)!!
         var dict = dictByIdCache.getDictById(dictItem.dictId)!!
         cacheHandler.syncOnUpdateActive(id)
         var key = cacheHandler.getKey(dict.atomicServiceCode, dict.dictType)
@@ -158,7 +158,7 @@ class DictItemsByModuleAndTypeCacheTest : RdbAndRedisCacheTestBase() {
         id = "c46091d2-945c-4440-b103-ac58a7ae8149"
         success = sysDictItemDao.updateProperties(id, mapOf(SysDictItem::active.name to true))
         assert(success)
-        dictItem = sysDictItemDao.getAs(id)!!
+        dictItem = sysDictItemDao.get(id)!!
         dict = dictByIdCache.getDictById(dictItem.dictId)!!
         cacheHandler.syncOnUpdateActive(id)
         key = cacheHandler.getKey(dict.atomicServiceCode, dict.dictType)
@@ -172,7 +172,7 @@ class DictItemsByModuleAndTypeCacheTest : RdbAndRedisCacheTestBase() {
     @Test
     fun syncOnDelete() {
         val id = "04626227-0ac0-49a2-8036-241cd0178149"
-        val dictItem = sysDictItemDao.getAs(id)!!
+        val dictItem = sysDictItemDao.get(id)!!
         val dict = dictByIdCache.getDictById(dictItem.dictId)!!
 
         // 删除数据库中的记录

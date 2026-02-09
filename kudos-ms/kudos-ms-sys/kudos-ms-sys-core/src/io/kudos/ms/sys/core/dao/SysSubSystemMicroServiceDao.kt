@@ -2,6 +2,7 @@ package io.kudos.ms.sys.core.dao
 
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.base.query.Criteria
+import io.kudos.base.query.Criterion
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.ms.sys.core.model.po.SysSubSystemMicroService
 import io.kudos.ms.sys.core.model.table.SysSubSystemMicroServices
@@ -40,8 +41,8 @@ open class SysSubSystemMicroServiceDao : BaseCrudDao<String, SysSubSystemMicroSe
      * @param microServiceCode 微服务编码
      * @return Set<子系统编码>
      */
-    fun searchSubSystemCodesByMicroServiceCode(microServiceCode: String): Set<String> {
-        val criteria = Criteria.of(SysSubSystemMicroService::microServiceCode.name, OperatorEnum.EQ, microServiceCode)
+    fun fetchSubSystemCodesByMicroServiceCode(microServiceCode: String): Set<String> {
+        val criteria = Criteria(SysSubSystemMicroService::microServiceCode.name, OperatorEnum.EQ, microServiceCode)
         @Suppress("UNCHECKED_CAST")
         return searchProperty(criteria, SysSubSystemMicroService::subSystemCode.name).toSet() as Set<String>
     }
@@ -52,11 +53,12 @@ open class SysSubSystemMicroServiceDao : BaseCrudDao<String, SysSubSystemMicroSe
      * @param subSystemCode 子系统编码
      * @param microServiceCode 微服务编码
      * @return 是否存在
-     * @author AI: Cursor
      */
     fun exists(subSystemCode: String, microServiceCode: String): Boolean {
-        val criteria = Criteria.of(SysSubSystemMicroService::subSystemCode.name, OperatorEnum.EQ, subSystemCode)
-            .addAnd(SysSubSystemMicroService::microServiceCode.name, OperatorEnum.EQ, microServiceCode)
+        val criteria = Criteria.and(
+            Criterion(SysSubSystemMicroService::subSystemCode.name, OperatorEnum.EQ, subSystemCode),
+            Criterion(SysSubSystemMicroService::microServiceCode.name, OperatorEnum.EQ, microServiceCode)
+        )
         return count(criteria) > 0
     }
 

@@ -47,7 +47,7 @@ open class SysDictService : BaseCrudService<String, SysDict, SysDictDao>(), ISys
 
 
     override fun getRecord(id: String): SysDictRecord? {
-        val dict = dao.getAs(id) ?: return null
+        val dict = dao.get(id) ?: return null
         val sysDictRecord = SysDictRecord()
         BeanKit.copyProperties(dict, sysDictRecord)
         return sysDictRecord

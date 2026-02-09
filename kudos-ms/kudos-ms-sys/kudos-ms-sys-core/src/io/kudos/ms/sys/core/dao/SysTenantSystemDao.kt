@@ -2,6 +2,7 @@ package io.kudos.ms.sys.core.dao
 
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.base.query.Criteria
+import io.kudos.base.query.Criterion
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.ms.sys.core.model.po.SysTenantSystem
 import io.kudos.ms.sys.core.model.table.SysTenantSystems
@@ -29,7 +30,7 @@ open class SysTenantSystemDao : BaseCrudDao<String, SysTenantSystem, SysTenantSy
      * @return Set<系统编码>
      */
     fun searchSystemCodesByTenantId(tenantId: String): Set<String> {
-        val criteria = Criteria.of(SysTenantSystem::tenantId.name, OperatorEnum.EQ, tenantId)
+        val criteria = Criteria(SysTenantSystem::tenantId.name, OperatorEnum.EQ, tenantId)
         @Suppress("UNCHECKED_CAST")
         return searchProperty(criteria, SysTenantSystem::systemCode.name).toSet() as Set<String>
     }
@@ -41,7 +42,7 @@ open class SysTenantSystemDao : BaseCrudDao<String, SysTenantSystem, SysTenantSy
      * @return Set<租户id>
      */
     fun searchTenantIdsBySystemCode(systemCode: String): Set<String> {
-        val criteria = Criteria.of(SysTenantSystem::systemCode.name, OperatorEnum.EQ, systemCode)
+        val criteria = Criteria(SysTenantSystem::systemCode.name, OperatorEnum.EQ, systemCode)
         @Suppress("UNCHECKED_CAST")
         return searchProperty(criteria, SysTenantSystem::tenantId.name).toSet() as Set<String>
     }
@@ -58,7 +59,7 @@ open class SysTenantSystemDao : BaseCrudDao<String, SysTenantSystem, SysTenantSy
         val results = if (tenantIds == null) {
             allSearchProperties(returnProperties)
         } else {
-            val criteria = Criteria.of(SysTenantSystem::tenantId.name, OperatorEnum.IN, tenantIds)
+            val criteria = Criteria(SysTenantSystem::tenantId.name, OperatorEnum.IN, tenantIds)
             searchProperties(criteria, returnProperties)
         } as List<Map<String, String>>
         return results.groupBy(
@@ -97,8 +98,10 @@ open class SysTenantSystemDao : BaseCrudDao<String, SysTenantSystem, SysTenantSy
      * @author AI: Cursor
      */
     fun exists(tenantId: String, systemCode: String): Boolean {
-        val criteria = Criteria.of(SysTenantSystem::tenantId.name, OperatorEnum.EQ, tenantId)
-            .addAnd(SysTenantSystem::systemCode.name, OperatorEnum.EQ, systemCode)
+        val criteria = Criteria.and(
+            Criterion(SysTenantSystem::tenantId.name, OperatorEnum.EQ, tenantId),
+            Criterion(SysTenantSystem::systemCode.name, OperatorEnum.EQ, systemCode)
+        )
         return count(criteria) > 0
     }
 

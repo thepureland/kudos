@@ -82,7 +82,7 @@ open class UserAccountService : BaseCrudService<String, UserAccount, UserAccount
     }
 
     override fun getUserRecord(id: String): UserAccountRecord? {
-        val user = dao.getAs(id) ?: return null
+        val user = dao.get(id) ?: return null
         val record = UserAccountRecord()
         BeanKit.copyProperties(user, record)
         return record
@@ -196,7 +196,7 @@ open class UserAccountService : BaseCrudService<String, UserAccount, UserAccount
 
     @Transactional
     override fun incrementLoginErrorTimes(id: String): Boolean {
-        val existingUser = dao.getAs(id) ?: return false
+        val existingUser = dao.get(id) ?: return false
         val currentErrorTimes = existingUser.loginErrorTimes ?: 0
         val user = UserAccount {
             this.id = id
@@ -230,7 +230,7 @@ open class UserAccountService : BaseCrudService<String, UserAccount, UserAccount
 
     @Transactional
     override fun incrementSecurityPasswordErrorTimes(id: String): Boolean {
-        val existingUser = dao.getAs(id) ?: return false
+        val existingUser = dao.get(id) ?: return false
         val currentErrorTimes = existingUser.securityPasswordErrorTimes ?: 0
         val user = UserAccount {
             this.id = id
@@ -285,7 +285,7 @@ open class UserAccountService : BaseCrudService<String, UserAccount, UserAccount
 
     @Transactional
     override fun deleteById(id: String): Boolean {
-        val user = dao.getAs(id)
+        val user = dao.get(id)
         if (user == null) {
             log.warn("删除id为${id}的用户时，发现其已不存在！")
             return false

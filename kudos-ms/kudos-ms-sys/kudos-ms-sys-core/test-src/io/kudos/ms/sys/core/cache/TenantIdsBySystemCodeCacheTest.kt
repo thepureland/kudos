@@ -79,7 +79,7 @@ class TenantIdsBySystemCodeCacheTest : RdbAndRedisCacheTestBase() {
     @Test
     fun syncOnDelete() {
         val id = "b3846388-5e61-4b58-8fd8-eeeeeeee8781"
-        val sysTenantSystem = dao.getAs(id)!!
+        val sysTenantSystem = dao.get(id)!!
         val tenantId = sysTenantSystem.tenantId
         val systemCodes = dao.searchSystemCodesByTenantId(tenantId)
 

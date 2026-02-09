@@ -26,7 +26,7 @@ open class AuthRoleDao : BaseCrudDao<String, AuthRole, AuthRoles>() {
 
     /** 按 id（主键）查询单条，返回缓存用 VO */
     open fun getCacheItem(id: String): AuthRoleCacheItem? =
-        getAs(id, AuthRoleCacheItem::class)
+        get(id, AuthRoleCacheItem::class)
 
     /** 全量查询，返回缓存用 VO 列表（用于全量刷新） */
     open fun getAllRolesForCache(): List<AuthRoleCacheItem> {

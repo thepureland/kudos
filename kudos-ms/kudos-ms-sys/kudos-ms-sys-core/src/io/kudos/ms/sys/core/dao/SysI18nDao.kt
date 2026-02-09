@@ -40,7 +40,7 @@ open class SysI18nDao : BaseCrudDao<String, SysI18n, SysI18ns>() {
             .addAnd(SysI18n::i18nTypeDictCode.name, OperatorEnum.EQ, i18nTypeDictCode)
             .addAnd(SysI18n::atomicServiceCode.name, OperatorEnum.EQ, atomicServiceCode)
             .addAnd(SysI18n::active.name, OperatorEnum.EQ, true)
-        return search<SysI18nCacheItem>(criteria)
+        return searchAs<SysI18nCacheItem>(criteria)
     }
 
     /**
@@ -50,7 +50,7 @@ open class SysI18nDao : BaseCrudDao<String, SysI18n, SysI18ns>() {
      */
     open fun fetchAllActiveI18nsForCache(): List<SysI18nCacheItem> {
         val criteria = Criteria(SysI18n::active.name, OperatorEnum.EQ, true)
-        return search<SysI18nCacheItem>(criteria)
+        return searchAs<SysI18nCacheItem>(criteria)
     }
 
     //endregion your codes 2
