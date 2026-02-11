@@ -55,18 +55,15 @@ class Sort : Iterable<Order>, Serializable {
     }
 
     /**
-     * 默認升序的構造器
+     * 默认升序的构造器
      */
-    constructor(vararg properties: String) : this(DirectionEnum.ASC, listOf<String>(*properties))
+    constructor(vararg properties: String) : this(DirectionEnum.ASC, properties.toList())
 
-    constructor(direction: DirectionEnum, vararg properties: String) : this(direction, listOf<String>(*properties))
+    constructor(direction: DirectionEnum, vararg properties: String) : this(direction, properties.toList())
 
     constructor(direction: DirectionEnum, properties: List<String>) {
         require(properties.isNotEmpty()) { "至少提供一个排序属性！" }
-        orders = ArrayList(properties.size)
-        for (property in properties) {
-            orders.add(Order(property, direction))
-        }
+        orders = properties.mapTo(ArrayList(properties.size)) { Order(it, direction) }
     }
 
     fun addOrder(property: String, direction: DirectionEnum = DirectionEnum.ASC): Sort {
@@ -78,25 +75,12 @@ class Sort : Iterable<Order>, Serializable {
         if (sort == null) {
             return this
         }
-        val these = ArrayList(orders)
-        for (order in sort) {
-            these.add(order)
-        }
-        return Sort(these)
+        return Sort((orders + sort.getOrders()).toMutableList())
     }
 
-    fun getOrderFor(property: String): Order? {
-        for (order in this) {
-            if (order.property == property) {
-                return order
-            }
-        }
-        return null
-    }
+    fun getOrderFor(property: String): Order? = orders.firstOrNull { it.property == property }
 
-    override fun iterator(): Iterator<Order> {
-        return orders.iterator()
-    }
+    override fun iterator(): Iterator<Order> = orders.iterator()
 
     override fun equals(other: Any?): Boolean {
         if (this === other) {
@@ -109,9 +93,7 @@ class Sort : Iterable<Order>, Serializable {
     }
 
     override fun hashCode(): Int {
-        var result = 17
-        result = 31 * result + orders.hashCode()
-        return result
+        return 31 * 17 + orders.hashCode()
     }
 
     override fun toString(): String {
