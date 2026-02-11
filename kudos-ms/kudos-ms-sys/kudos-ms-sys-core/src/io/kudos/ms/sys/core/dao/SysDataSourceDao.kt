@@ -29,19 +29,23 @@ open class SysDataSourceDao : BaseCrudDao<String, SysDataSource, SysDataSources>
 
     /**
      * 按租户id+子系统编码+微服务编码查询单条（tenantId 非空）。
-     * 用于 Hash 缓存按二级索引查询。
+     *
+     * @param tenantId 租户ID
+     * @param subSystemCode 子系统编号，为空将不作为查询条件
+     * @param microServiceCode 微服务编号，为空将不作为查询条件
+     * @return List<SysDataSourceCacheItem>
      */
     open fun fetchDataSourcesForCache(
         tenantId: String,
         subSystemCode: String?,
         microServiceCode: String?
     ): List<SysDataSourceCacheItem> {
-        val criteria = Criteria.of(SysDataSource::tenantId.name, OperatorEnum.EQ, tenantId)
-        if (subSystemCode.isNullOrBlank()) {
+        val criteria = Criteria(SysDataSource::tenantId.name, OperatorEnum.EQ, tenantId)
+        if (!subSystemCode.isNullOrBlank()) {
             criteria.addAnd(SysDataSource::subSystemCode.name, OperatorEnum.EQ, subSystemCode)
         }
-        if (microServiceCode.isNullOrBlank()) {
-            criteria.addAnd(SysDataSource::microServiceCode.name, OperatorEnum.EQ, subSystemCode)
+        if (!microServiceCode.isNullOrBlank()) {
+            criteria.addAnd(SysDataSource::microServiceCode.name, OperatorEnum.EQ, microServiceCode)
         }
         return searchAs<SysDataSourceCacheItem>(criteria)
     }

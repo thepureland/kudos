@@ -60,7 +60,7 @@ open class UserOrgHashCache : AbstractHashCacheHandler<UserOrgCacheItem>() {
     )
     open fun getOrgById(id: String): UserOrgCacheItem? {
         require(id.isNotBlank()) { "获取机构时 id 不能为空" }
-        return userOrgDao.getCacheItem(id)
+        return userOrgDao.getAs<UserOrgCacheItem>(id)
     }
 
     /**
@@ -76,7 +76,7 @@ open class UserOrgHashCache : AbstractHashCacheHandler<UserOrgCacheItem>() {
     )
     open fun getOrgsByIds(ids: Collection<String>): Map<String, UserOrgCacheItem> {
         if (ids.isEmpty()) return emptyMap()
-        val list = userOrgDao.getOrgsByIdsForCache(ids)
+        val list = userOrgDao.getByIdsAs<UserOrgCacheItem>(ids)
         return list.filter { it.id != null && it.id in ids }.associateBy { it.id!! }
     }
 
@@ -93,7 +93,7 @@ open class UserOrgHashCache : AbstractHashCacheHandler<UserOrgCacheItem>() {
         filterableProperties = ["tenantId"]
     )
     open fun getOrgsByTenantId(tenantId: String): List<UserOrgCacheItem> {
-        return userOrgDao.getOrgsByTenantIdForCache(tenantId)
+        return userOrgDao.searchOrgsByTenantIdForCache(tenantId)
     }
 
     /**
@@ -108,7 +108,7 @@ open class UserOrgHashCache : AbstractHashCacheHandler<UserOrgCacheItem>() {
         }
         val cache = hashCache()
         if (clear) cache.refreshAll(CACHE_NAME, emptyList<UserOrgCacheItem>(), FILTERABLE_PROPERTIES, emptySet())
-        val list = userOrgDao.getAllOrgsForCache()
+        val list = userOrgDao.searchAs<UserOrgCacheItem>()
         log.debug("从数据库加载 ${list.size} 条机构，刷新 Hash 缓存")
         cache.refreshAll(CACHE_NAME, list, FILTERABLE_PROPERTIES, emptySet())
     }
@@ -116,14 +116,14 @@ open class UserOrgHashCache : AbstractHashCacheHandler<UserOrgCacheItem>() {
     /** 新增机构后同步：将指定 id 的实体从库加载并写入缓存。 */
     open fun syncOnInsert(id: String) {
         if (!CacheKit.isCacheActive(CACHE_NAME) || !CacheKit.isWriteInTime(CACHE_NAME)) return
-        val item = userOrgDao.getCacheItem(id) ?: return
+        val item = userOrgDao.getAs<UserOrgCacheItem>(id) ?: return
         hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
     }
 
     /** 更新机构后同步：从库重新加载并写入缓存。 */
     open fun syncOnUpdate(id: String) {
         if (!CacheKit.isCacheActive(CACHE_NAME)) return
-        val item = userOrgDao.getCacheItem(id) ?: return
+        val item = userOrgDao.getAs<UserOrgCacheItem>(id) ?: return
         if (CacheKit.isWriteInTime(CACHE_NAME)) {
             hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
         }

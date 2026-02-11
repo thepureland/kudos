@@ -6,6 +6,7 @@ import io.kudos.base.logger.LogFactory
 import io.kudos.context.support.Consts
 import io.kudos.ms.auth.core.dao.AuthRoleResourceDao
 import io.kudos.ms.auth.core.dao.AuthRoleUserDao
+import io.kudos.ms.user.common.vo.user.UserAccountCacheItem
 import io.kudos.ms.user.core.cache.UserAccountHashCache
 import io.kudos.ms.user.core.dao.UserAccountDao
 import jakarta.annotation.Resource
@@ -17,9 +18,9 @@ import org.springframework.stereotype.Component
  * 用户资源ID列表（by tenant id & username）缓存处理器
  *
  * 1.数据来源表：user_account + auth_role_user + auth_role_resource
- * 2.缓存各租户下指定用户拥有的所有资源ID列表
+ * 2.缓存各租户下指定用户拥有的所有资源ID集合
  * 3.缓存的key为：tenantId::username
- * 4.缓存的value为：资源ID列表（List<String>）
+ * 4.缓存的value为：资源ID集合（Set<String>）
  * 5.查询流程：用户 → 角色 → 资源（三级关联）
  *
  * @author K
@@ -27,7 +28,7 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<List<String>>() {
+open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<Set<String>>() {
 
     @Resource
     private lateinit var userAccountHashCache: UserAccountHashCache
@@ -47,7 +48,7 @@ open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<
 
     override fun cacheName(): String = CACHE_NAME
 
-    override fun doReload(key: String): List<String> {
+    override fun doReload(key: String): Set<String> {
         require(key.contains(Consts.CACHE_KEY_DEFAULT_DELIMITER)) {
             "缓存${CACHE_NAME}的key格式必须是 租户ID${Consts.CACHE_KEY_DEFAULT_DELIMITER}用户名"
         }
@@ -63,9 +64,9 @@ open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<
             return
         }
 
-        val users = userAccountDao.getActiveUsersForCache()
-        val userIdToRoleIdsMap = authRoleUserDao.getAllUserIdToRoleIdsForCache()
-        val roleIdToResourceIdsMap = authRoleResourceDao.getAllRoleIdToResourceIdsForCache()
+        val users = userAccountDao.searchActiveUsersForCache()
+        val userIdToRoleIdsMap = authRoleUserDao.searchAllUserIdToRoleIdsForCache()
+        val roleIdToResourceIdsMap = authRoleResourceDao.searchAllRoleIdToResourceIdsForCache()
 
         log.debug("从数据库加载了${users.size}条用户、角色-用户分组${userIdToRoleIdsMap.size}、角色-资源分组${roleIdToResourceIdsMap.size}。")
 
@@ -93,14 +94,14 @@ open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<
      *
      * @param tenantId 租户ID
      * @param username 用户名
-     * @return List<资源ID>
+     * @return Set<资源ID>
      */
     @Cacheable(
         cacheNames = [CACHE_NAME],
         key = "#tenantId.concat('${Consts.CACHE_KEY_DEFAULT_DELIMITER}').concat(#username)",
         unless = "#result == null || #result.isEmpty()"
     )
-    open fun getResourceIds(tenantId: String, username: String): List<String> {
+    open fun getResourceIds(tenantId: String, username: String): Set<String> {
         if (CacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("缓存中不存在租户${tenantId}用户${username}的资源ID，从数据库中加载...")
         }
@@ -110,16 +111,16 @@ open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<
 
         if (userId == null) {
             log.debug("找不到租户${tenantId}的用户${username}。")
-            return emptyList()
+            return emptySet()
         }
 
-        val roleIds = authRoleUserDao.getRoleIdsByUserId(userId)
+        val roleIds = authRoleUserDao.searchRoleIdsByUserId(userId)
         if (roleIds.isEmpty()) {
             log.debug("用户${username}没有分配任何角色。")
-            return emptyList()
+            return emptySet()
         }
 
-        val resultList = authRoleResourceDao.getResourceIdsByRoleIds(roleIds)
+        val resultList = authRoleResourceDao.searchResourceIdsByRoleIds(roleIds)
         log.debug("从数据库加载了租户${tenantId}用户${username}的${roleIds.size}个角色，共${resultList.size}条资源ID（去重后）。")
         return resultList
     }
@@ -174,9 +175,9 @@ open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<
         if (CacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("角色${roleId}的资源关系变更后，同步${CACHE_NAME}缓存...")
             
-            val userIds = authRoleUserDao.getUserIdsByRoleId(roleId)
+            val userIds = authRoleUserDao.searchUserIdsByRoleId(roleId)
             if (userIds.isNotEmpty()) {
-                val users = userAccountDao.getUsersByIdsForCache(userIds)
+                val users = userAccountDao.getByIdsAs<UserAccountCacheItem>(userIds)
                 users.forEach { user ->
                     val t = user.tenantId ?: return@forEach
                     val u = user.username ?: return@forEach

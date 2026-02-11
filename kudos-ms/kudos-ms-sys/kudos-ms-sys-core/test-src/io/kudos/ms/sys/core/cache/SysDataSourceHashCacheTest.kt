@@ -94,8 +94,8 @@ class SysDataSourceHashCacheTest : RdbAndRedisCacheTestBase() {
         val tenantId = "10a45fe6-4c8d-40c7-8f23-bba-tenant-1"
         val subSystemCode = "subSys-c"
         val list = cacheHandler.getDataSources(tenantId, subSystemCode, null)
-        assertEquals(1, list.size)
-        assertEquals("33333333-e828-43c5-a512-888888888888", list.first().id)
+        assertEquals(2, list.size)
+        assert(list.any { it.id == "33333333-e828-43c5-a512-888888888888" })
     }
 
     /** DAO 的 getDataSources 不过滤 active，故 (tenant-2, subSys-d, ms-c) 会返回 active=false 的那条 */

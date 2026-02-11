@@ -83,7 +83,7 @@ open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheItem>
         entityClass = SysResourceCacheItem::class,
         filterableProperties = ["subSystemCode", "url", "resourceTypeDictCode"]
     )
-    open fun getResourcesByIds(ids: List<String>): Map<String, SysResourceCacheItem> {
+    open fun getResourcesByIds(ids: Set<String>): Map<String, SysResourceCacheItem> {
         if (ids.isEmpty()) return emptyMap()
         val list = sysResourceDao.getByIdsAs<SysResourceCacheItem>(ids)
         return ids.associateWith { id -> list.first { it.id == id } }

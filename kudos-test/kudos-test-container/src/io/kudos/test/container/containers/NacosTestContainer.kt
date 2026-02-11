@@ -17,7 +17,7 @@ import java.util.*
  */
 object NacosTestContainer {
 
-    private const val IMAGE_NAME = "nacos/nacos-server:v3.1.1"
+    private const val IMAGE_NAME = "nacos/nacos-server:v3.1.1-slim"
 
     const val PORT = 28848
 

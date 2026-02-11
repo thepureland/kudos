@@ -2,6 +2,7 @@ package io.kudos.ms.auth.core.dao
 
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.base.query.Criteria
+import io.kudos.base.query.Criterion
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.ms.auth.core.model.po.AuthGroupUser
 import io.kudos.ms.auth.core.model.table.AuthGroupUsers
@@ -32,8 +33,10 @@ open class AuthGroupUserDao : BaseCrudDao<String, AuthGroupUser, AuthGroupUsers>
      * @since 1.0.0
      */
     fun exists(groupId: String, userId: String): Boolean {
-        val criteria = Criteria.of(AuthGroupUser::groupId.name, OperatorEnum.EQ, groupId)
-            .addAnd(AuthGroupUser::userId.name, OperatorEnum.EQ, userId)
+        val criteria = Criteria.and(
+            Criterion(AuthGroupUser::groupId.name, OperatorEnum.EQ, groupId),
+            Criterion(AuthGroupUser::userId.name, OperatorEnum.EQ, userId)
+        )
         return count(criteria) > 0
     }
 
@@ -46,7 +49,7 @@ open class AuthGroupUserDao : BaseCrudDao<String, AuthGroupUser, AuthGroupUsers>
      * @since 1.0.0
      */
     fun searchUserIdsByGroupId(groupId: String): Set<String> {
-        val criteria = Criteria.of(AuthGroupUser::groupId.name, OperatorEnum.EQ, groupId)
+        val criteria = Criteria(AuthGroupUser::groupId.name, OperatorEnum.EQ, groupId)
         @Suppress("UNCHECKED_CAST")
         val userIds = searchProperty(criteria, AuthGroupUser::userId.name) as List<String>
         return userIds.toSet()
@@ -61,33 +64,29 @@ open class AuthGroupUserDao : BaseCrudDao<String, AuthGroupUser, AuthGroupUsers>
      * @since 1.0.0
      */
     fun searchGroupIdsByUserId(userId: String): Set<String> {
-        val criteria = Criteria.of(AuthGroupUser::userId.name, OperatorEnum.EQ, userId)
+        val criteria = Criteria(AuthGroupUser::userId.name, OperatorEnum.EQ, userId)
         @Suppress("UNCHECKED_CAST")
         val groupIds = searchProperty(criteria, AuthGroupUser::groupId.name) as List<String>
         return groupIds.toSet()
     }
 
-    /** 按用户ID查询用户组ID列表（供 GroupIdsByUserIdCache 使用） */
-    fun getGroupIdsByUserId(userId: String): List<String> = searchGroupIdsByUserId(userId).toList()
-
-    /** 全量用户组-用户关系，按用户ID分组为「用户ID -> 用户组ID列表」（供 GroupIdsByUserIdCache.reloadAll） */
-    fun getAllUserIdToGroupIdsForCache(): Map<String, List<String>> {
-        @Suppress("UNCHECKED_CAST")
-        val all = allSearch() as List<AuthGroupUser>
+    /**
+     * 全量用户组-用户关系，按用户ID分组为「用户ID -> 用户组ID列表」
+     *
+     * @return Map<用户id，List<组id>>
+     */
+    fun searchAllUserIdToGroupIdsForCache(): Map<String, List<String>> {
+        val all = allSearch()
         return all.groupBy { it.userId }.mapValues { (_, list) -> list.map { it.groupId } }
     }
 
-    /** 按用户组ID查询用户ID列表（供 UserIdsByGroupIdCache 使用） */
-    fun getUserIdsByGroupId(groupId: String): List<String> {
-        val criteria = Criteria(AuthGroupUser::groupId.name, OperatorEnum.EQ, groupId)
-        @Suppress("UNCHECKED_CAST")
-        return searchProperty(criteria, AuthGroupUser::userId.name) as List<String>
-    }
-
-    /** 全量用户组-用户关系，按用户组ID分组为「用户组ID -> 用户ID列表」（供 UserIdsByGroupIdCache.reloadAll） */
-    fun getAllGroupIdToUserIdsForCache(): Map<String, List<String>> {
-        @Suppress("UNCHECKED_CAST")
-        val all = allSearch() as List<AuthGroupUser>
+    /**
+     * 全量用户组-用户关系，按用户组ID分组为「用户组ID -> 用户ID列表」
+     *
+     * @return Map<组ID, List<用户ID>>
+     */
+    fun searchAllGroupIdToUserIdsForCache(): Map<String, List<String>> {
+        val all = allSearch()
         return all.groupBy { it.groupId }.mapValues { (_, list) -> list.map { it.userId } }
     }
 

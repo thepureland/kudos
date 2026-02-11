@@ -33,9 +33,9 @@ interface IAuthRoleService : IBaseCrudService<String, AuthRole> {
      * 根据角色ID获取该角色拥有的所有资源ID列表
      *
      * @param roleId 角色ID
-     * @return List<String> 资源ID列表，如果角色不存在或没有资源则返回空列表
+     * @return Set<String> 资源ID列表，如果角色不存在或没有资源则返回空集合
      */
-    fun getRoleResourceIds(roleId: String): List<String>
+    fun getRoleResourceIds(roleId: String): Set<String>
 
     /**
      * 根据租户ID获取该租户下所有激活角色的ID列表
@@ -183,9 +183,9 @@ interface IAuthRoleService : IBaseCrudService<String, AuthRole> {
      * 根据用户ID获取该用户拥有的所有资源ID列表
      *
      * @param userId 用户ID
-     * @return List<String> 资源ID列表，如果用户不存在或没有资源则返回空列表
+     * @return Set<String> 资源ID列表，如果用户不存在或没有资源则返回空集合
      */
-    fun getUserResourceIds(userId: String): List<String>
+    fun getUserResourceIds(userId: String): Set<String>
 
     /**
      * 根据用户ID获取该用户有权限访问的资源缓存对象列表

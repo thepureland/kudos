@@ -61,7 +61,7 @@ open class AuthGroupHashCache : AbstractHashCacheHandler<AuthGroupCacheItem>() {
     )
     open fun getGroupById(id: String): AuthGroupCacheItem? {
         require(id.isNotBlank()) { "获取用户组时 id 不能为空" }
-        return authGroupDao.getCacheItem(id)
+        return authGroupDao.getAs<AuthGroupCacheItem>(id)
     }
 
     /**
@@ -77,7 +77,7 @@ open class AuthGroupHashCache : AbstractHashCacheHandler<AuthGroupCacheItem>() {
     )
     open fun getGroupsByIds(ids: Collection<String>): Map<String, AuthGroupCacheItem> {
         if (ids.isEmpty()) return emptyMap()
-        val list = authGroupDao.getGroupsByIdsForCache(ids)
+        val list = authGroupDao.getByIdsAs<AuthGroupCacheItem>(ids)
         return list.filter { it.id != null && it.id in ids }.associateBy { it.id!! }
     }
 
@@ -95,7 +95,7 @@ open class AuthGroupHashCache : AbstractHashCacheHandler<AuthGroupCacheItem>() {
         filterableProperties = ["tenantId", "code"]
     )
     open fun getGroupByTenantIdAndGroupCode(tenantId: String, code: String): AuthGroupCacheItem? {
-        return authGroupDao.getGroupByTenantIdAndGroupCode(tenantId, code)
+        return authGroupDao.searchGroupByTenantIdAndGroupCode(tenantId, code)
     }
 
     /**
@@ -110,7 +110,7 @@ open class AuthGroupHashCache : AbstractHashCacheHandler<AuthGroupCacheItem>() {
         }
         val cache = hashCache()
         if (clear) cache.refreshAll(CACHE_NAME, emptyList<AuthGroupCacheItem>(), FILTERABLE_PROPERTIES, emptySet())
-        val list = authGroupDao.getAllGroupsForCache()
+        val list = authGroupDao.searchAs<AuthGroupCacheItem>()
         log.debug("从数据库加载 ${list.size} 条用户组，刷新 Hash 缓存")
         cache.refreshAll(CACHE_NAME, list, FILTERABLE_PROPERTIES, emptySet())
     }
@@ -118,14 +118,14 @@ open class AuthGroupHashCache : AbstractHashCacheHandler<AuthGroupCacheItem>() {
     /** 新增用户组后同步：将指定 id 的实体从库加载并写入缓存。 */
     open fun syncOnInsert(id: String) {
         if (!CacheKit.isCacheActive(CACHE_NAME) || !CacheKit.isWriteInTime(CACHE_NAME)) return
-        val item = authGroupDao.getCacheItem(id) ?: return
+        val item = authGroupDao.getAs<AuthGroupCacheItem>(id) ?: return
         hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
     }
 
     /** 更新用户组后同步：从库重新加载并写入缓存。 */
     open fun syncOnUpdate(id: String) {
         if (!CacheKit.isCacheActive(CACHE_NAME)) return
-        val item = authGroupDao.getCacheItem(id) ?: return
+        val item = authGroupDao.getAs<AuthGroupCacheItem>(id) ?: return
         if (CacheKit.isWriteInTime(CACHE_NAME)) {
             hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
         }

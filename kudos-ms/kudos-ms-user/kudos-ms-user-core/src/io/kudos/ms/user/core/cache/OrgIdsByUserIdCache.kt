@@ -45,8 +45,8 @@ open class OrgIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() {
             return
         }
 
-        val users = userAccountDao.getActiveUsersForCache()
-        val userIdToOrgIdsMap = userOrgUserDao.getAllUserIdToOrgIdsForCache()
+        val users = userAccountDao.searchActiveUsersForCache()
+        val userIdToOrgIdsMap = userOrgUserDao.searchAllUserIdToOrgIds()
 
         log.debug("从数据库加载了${users.size}条用户、机构-用户关系分组${userIdToOrgIdsMap.size}。")
 
@@ -81,7 +81,7 @@ open class OrgIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() {
             log.debug("缓存中不存在用户${userId}的机构ID，从数据库中加载...")
         }
 
-        val orgIds = userOrgUserDao.getOrgIdsByUserId(userId)
+        val orgIds = userOrgUserDao.searchOrgIdsByUserId(userId)
         log.debug("从数据库加载了用户${userId}的${orgIds.size}条机构ID。")
         return orgIds
     }

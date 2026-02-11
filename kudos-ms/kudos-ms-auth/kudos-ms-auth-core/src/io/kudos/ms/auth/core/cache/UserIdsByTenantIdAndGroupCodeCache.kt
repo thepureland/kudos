@@ -15,16 +15,16 @@ import org.springframework.stereotype.Component
  * 用户ID列表（by tenant & group code）缓存处理器
  *
  * 1.数据来源表：auth_group + auth_group_user
- * 2.缓存各租户下指定用户组的用户ID列表
+ * 2.缓存各租户下指定用户组的用户ID集合
  * 3.缓存的key为：tenantId::groupCode
- * 4.缓存的value为：用户ID列表（List<String>）
+ * 4.缓存的value为：用户ID集合（Set<String>）
  *
  * @author K
  * @author AI: Codex
  * @since 1.0.0
  */
 @Component
-open class UserIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler<List<String>>() {
+open class UserIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler<Set<String>>() {
 
     @Autowired
     private lateinit var authGroupHashCache: AuthGroupHashCache
@@ -41,7 +41,7 @@ open class UserIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler<Lis
 
     override fun cacheName(): String = CACHE_NAME
 
-    override fun doReload(key: String): List<String> {
+    override fun doReload(key: String): Set<String> {
         require(key.contains(Consts.CACHE_KEY_DEFAULT_DELIMITER)) {
             "缓存${CACHE_NAME}的key格式必须是 租户ID${Consts.CACHE_KEY_DEFAULT_DELIMITER}用户组编码"
         }
@@ -57,8 +57,8 @@ open class UserIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler<Lis
             return
         }
 
-        val groups = authGroupDao.getActiveGroupsForCache()
-        val groupIdToUserIdsMap = authGroupUserDao.getAllGroupIdToUserIdsForCache()
+        val groups = authGroupDao.searchActiveGroupsForCache()
+        val groupIdToUserIdsMap = authGroupUserDao.searchAllGroupIdToUserIdsForCache()
 
         log.debug("从数据库加载了${groups.size}条用户组、用户组-用户关系分组${groupIdToUserIdsMap.size}。")
 
@@ -80,14 +80,14 @@ open class UserIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler<Lis
      *
      * @param tenantId 租户ID
      * @param groupCode 用户组编码
-     * @return List<用户ID>
+     * @return Set<用户ID>
      */
     @Cacheable(
         cacheNames = [CACHE_NAME],
         key = "#tenantId.concat('${Consts.CACHE_KEY_DEFAULT_DELIMITER}').concat(#groupCode)",
         unless = "#result == null || #result.isEmpty()"
     )
-    open fun getUserIds(tenantId: String, groupCode: String): List<String> {
+    open fun getUserIds(tenantId: String, groupCode: String): Set<String> {
         if (CacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("缓存中不存在租户${tenantId}用户组${groupCode}的用户ID，从数据库中加载...")
         }
@@ -97,10 +97,10 @@ open class UserIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler<Lis
 
         if (groupId == null) {
             log.debug("找不到租户${tenantId}的用户组${groupCode}。")
-            return emptyList()
+            return emptySet()
         }
 
-        val userIds = authGroupUserDao.getUserIdsByGroupId(groupId)
+        val userIds = authGroupUserDao.searchUserIdsByGroupId(groupId)
         log.debug("从数据库加载了租户${tenantId}用户组${groupCode}的${userIds.size}条用户ID。")
         return userIds
     }

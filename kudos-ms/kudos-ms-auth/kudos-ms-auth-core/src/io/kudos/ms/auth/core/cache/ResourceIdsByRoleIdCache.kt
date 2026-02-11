@@ -14,16 +14,16 @@ import org.springframework.stereotype.Component
  * 资源ID列表（by role id）缓存处理器
  *
  * 1.数据来源表：auth_role_resource
- * 2.缓存各角色拥有的所有资源ID列表
+ * 2.缓存各角色拥有的所有资源ID集合
  * 3.缓存的key为：roleId
- * 4.缓存的value为：资源ID列表（List<String>）
+ * 4.缓存的value为：资源ID集合（Set<String>）
  *
  * @author K
  * @author AI: Cursor
  * @since 1.0.0
  */
 @Component
-open class ResourceIdsByRoleIdCache : AbstractKeyValueCacheHandler<List<String>>() {
+open class ResourceIdsByRoleIdCache : AbstractKeyValueCacheHandler<Set<String>>() {
 
     @Autowired
     private lateinit var authRoleResourceDao: AuthRoleResourceDao
@@ -37,7 +37,7 @@ open class ResourceIdsByRoleIdCache : AbstractKeyValueCacheHandler<List<String>>
 
     override fun cacheName(): String = CACHE_NAME
 
-    override fun doReload(key: String): List<String> = getSelf<ResourceIdsByRoleIdCache>().getResourceIds(key)
+    override fun doReload(key: String): Set<String> = getSelf<ResourceIdsByRoleIdCache>().getResourceIds(key)
 
     override fun reloadAll(clear: Boolean) {
         if (!CacheKit.isCacheActive(CACHE_NAME)) {
@@ -45,8 +45,8 @@ open class ResourceIdsByRoleIdCache : AbstractKeyValueCacheHandler<List<String>>
             return
         }
 
-        val roles = authRoleDao.getActiveRolesForCache()
-        val roleIdToResourceIdsMap = authRoleResourceDao.getAllRoleIdToResourceIdsForCache()
+        val roles = authRoleDao.searchActiveRolesForCache()
+        val roleIdToResourceIdsMap = authRoleResourceDao.searchAllRoleIdToResourceIdsForCache()
 
         log.debug("从数据库加载了${roles.size}条角色、角色-资源关系分组${roleIdToResourceIdsMap.size}。")
 
@@ -69,19 +69,19 @@ open class ResourceIdsByRoleIdCache : AbstractKeyValueCacheHandler<List<String>>
      * 根据角色ID从缓存中获取该角色拥有的所有资源ID，如果缓存中不存在，则从数据库中加载，并回写缓存
      *
      * @param roleId 角色ID
-     * @return List<资源ID>
+     * @return Set<资源ID>
      */
     @Cacheable(
         cacheNames = [CACHE_NAME],
         key = "#roleId",
         unless = "#result == null || #result.isEmpty()"
     )
-    open fun getResourceIds(roleId: String): List<String> {
+    open fun getResourceIds(roleId: String): Set<String> {
         if (CacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("缓存中不存在角色${roleId}的资源ID，从数据库中加载...")
         }
 
-        val resourceIds = authRoleResourceDao.getResourceIdsByRoleId(roleId)
+        val resourceIds = authRoleResourceDao.searchResourceIdsByRoleIds(setOf(roleId))
         log.debug("从数据库加载了角色${roleId}的${resourceIds.size}条资源ID。")
         return resourceIds
     }

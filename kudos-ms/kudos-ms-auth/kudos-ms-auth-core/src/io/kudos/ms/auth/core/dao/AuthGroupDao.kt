@@ -1,9 +1,9 @@
 package io.kudos.ms.auth.core.dao
 
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
+import io.kudos.base.query.Criteria
 import io.kudos.base.query.Criterion
 import io.kudos.base.query.enums.OperatorEnum
-import io.kudos.base.support.payload.ListSearchPayload
 import io.kudos.ms.auth.common.vo.group.AuthGroupCacheItem
 import io.kudos.ms.auth.core.model.po.AuthGroup
 import io.kudos.ms.auth.core.model.table.AuthGroups
@@ -24,51 +24,25 @@ open class AuthGroupDao : BaseCrudDao<String, AuthGroup, AuthGroups>() {
 
     //region your codes 2
 
-    /** 按 id（主键）查询单条，返回缓存用 VO */
-    open fun getCacheItem(id: String): AuthGroupCacheItem? =
-        get(id, AuthGroupCacheItem::class)
-
-    /** 全量查询，返回缓存用 VO 列表（用于全量刷新） */
-    open fun getAllGroupsForCache(): List<AuthGroupCacheItem> {
-        val payload = ListSearchPayload().apply {
-            returnEntityClass = AuthGroupCacheItem::class
-        }
-        @Suppress("UNCHECKED_CAST")
-        return search(payload) as List<AuthGroupCacheItem>
+    /**
+     * 查询所有 active=true 的用户组
+     *
+     * @return List<AuthGroupCacheItem>
+     */
+    open fun searchActiveGroupsForCache(): List<AuthGroupCacheItem> {
+        val criteria = Criteria(AuthGroup::active.name, OperatorEnum.EQ, true)
+        return searchAs(criteria)
     }
 
-    /** 按 id 集合批量查询，返回缓存用 VO 列表 */
-    open fun getGroupsByIdsForCache(ids: Collection<String>): List<AuthGroupCacheItem> {
-        if (ids.isEmpty()) return emptyList()
-        val payload = ListSearchPayload().apply {
-            returnEntityClass = AuthGroupCacheItem::class
-            criterions = listOf(Criterion("id", OperatorEnum.IN, ids))
-        }
-        @Suppress("UNCHECKED_CAST")
-        return search(payload) as List<AuthGroupCacheItem>
-    }
-
-    /** 查询所有 active=true 的用户组（供 UserIdsByGroupIdCache.reloadAll） */
-    open fun getActiveGroupsForCache(): List<AuthGroupCacheItem> {
-        val payload = ListSearchPayload().apply {
-            returnEntityClass = AuthGroupCacheItem::class
-            criterions = listOf(Criterion(AuthGroup::active.name, OperatorEnum.EQ, true))
-        }
-        @Suppress("UNCHECKED_CAST")
-        return search(payload) as List<AuthGroupCacheItem>
-    }
-
-    /** 按租户、用户组编码查询（不区分 active），返回单条缓存用 VO */
-    open fun getGroupByTenantIdAndGroupCode(tenantId: String, code: String): AuthGroupCacheItem? {
-        val payload = ListSearchPayload().apply {
-            returnEntityClass = AuthGroupCacheItem::class
-            criterions = listOf(
-                Criterion(AuthGroup::tenantId.name, OperatorEnum.EQ, tenantId),
-                Criterion(AuthGroup::code.name, OperatorEnum.EQ, code)
-            )
-        }
-        @Suppress("UNCHECKED_CAST")
-        return (search(payload) as List<AuthGroupCacheItem>).firstOrNull()
+    /**
+     * 按租户、用户组编码查询（不区分 active），返回单条缓存用 VO
+     */
+    open fun searchGroupByTenantIdAndGroupCode(tenantId: String, code: String): AuthGroupCacheItem? {
+        val criteria = Criteria.and(
+            Criterion(AuthGroup::tenantId.name, OperatorEnum.EQ, tenantId),
+            Criterion(AuthGroup::code.name, OperatorEnum.EQ, code)
+        )
+        return searchAs<AuthGroupCacheItem>(criteria).firstOrNull()
     }
 
     //endregion your codes 2

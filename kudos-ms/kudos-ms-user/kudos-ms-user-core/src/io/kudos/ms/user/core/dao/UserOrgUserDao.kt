@@ -2,6 +2,7 @@ package io.kudos.ms.user.core.dao
 
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.base.query.Criteria
+import io.kudos.base.query.Criterion
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.ms.user.core.model.po.UserOrgUser
 import io.kudos.ms.user.core.model.table.UserOrgUsers
@@ -32,42 +33,44 @@ open class UserOrgUserDao : BaseCrudDao<String, UserOrgUser, UserOrgUsers>() {
      * @since 1.0.0
      */
     fun exists(orgId: String, userId: String): Boolean {
-        val criteria = Criteria.of(UserOrgUser::orgId.name, OperatorEnum.EQ, orgId)
-            .addAnd(UserOrgUser::userId.name, OperatorEnum.EQ, userId)
+        val criteria = Criteria.and(
+            Criterion(UserOrgUser::orgId.name, OperatorEnum.EQ, orgId),
+            Criterion(UserOrgUser::userId.name, OperatorEnum.EQ, userId)
+        )
         return count(criteria) > 0
     }
 
     /**
-     * 按用户ID查询其所属机构ID列表（供 OrgIdsByUserIdCache 使用）
+     * 按用户ID查询其所属机构ID列表
      */
-    fun getOrgIdsByUserId(userId: String): List<String> {
+    fun searchOrgIdsByUserId(userId: String): List<String> {
         val criteria = Criteria(UserOrgUser::userId.name, OperatorEnum.EQ, userId)
         @Suppress("UNCHECKED_CAST")
         return searchProperty(criteria, UserOrgUser::orgId.name) as List<String>
     }
 
     /**
-     * 按机构ID查询其下用户ID列表（供 UserIdsByOrgIdCache 使用）
+     * 按机构ID查询其下用户ID列表
      */
-    fun getUserIdsByOrgId(orgId: String): List<String> {
+    fun searchUserIdsByOrgId(orgId: String): List<String> {
         val criteria = Criteria(UserOrgUser::orgId.name, OperatorEnum.EQ, orgId)
         @Suppress("UNCHECKED_CAST")
         return searchProperty(criteria, UserOrgUser::userId.name) as List<String>
     }
 
     /**
-     * 全量机构-用户关系，按用户ID分组为「用户ID -> 机构ID列表」（供 OrgIdsByUserIdCache.reloadAll）
+     * 全量机构-用户关系，按用户ID分组为「用户ID -> 机构ID列表」
      */
-    fun getAllUserIdToOrgIdsForCache(): Map<String, List<String>> {
+    fun searchAllUserIdToOrgIds(): Map<String, List<String>> {
         @Suppress("UNCHECKED_CAST")
         val all = allSearch() as List<UserOrgUser>
         return all.groupBy { it.userId }.mapValues { (_, list) -> list.map { it.orgId } }
     }
 
     /**
-     * 全量机构-用户关系，按机构ID分组为「机构ID -> 用户ID列表」（供 UserIdsByOrgIdCache.reloadAll）
+     * 全量机构-用户关系，按机构ID分组为「机构ID -> 用户ID列表」
      */
-    fun getAllOrgIdToUserIdsForCache(): Map<String, List<String>> {
+    fun searchAllOrgIdToUserIds(): Map<String, List<String>> {
         @Suppress("UNCHECKED_CAST")
         val all = allSearch() as List<UserOrgUser>
         return all.groupBy { it.orgId }.mapValues { (_, list) -> list.map { it.userId } }

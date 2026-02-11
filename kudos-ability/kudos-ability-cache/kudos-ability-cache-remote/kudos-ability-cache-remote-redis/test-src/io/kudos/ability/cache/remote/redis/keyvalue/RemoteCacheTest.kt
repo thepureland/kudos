@@ -9,6 +9,7 @@ import jakarta.annotation.Resource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.cache.CacheManager
+import org.springframework.cache.get
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
@@ -66,8 +67,8 @@ internal class RemoteCacheTest {
             val value2 = cacheTestService.getFromDB(key)
             assert(value1 == value2)
 
-            val value3 = remoteCache!!.get(key, String::class.java)
-            val value4 = mixCache!!.get(key, String::class.java)
+            val value3 = remoteCache!!.get<String>(key)
+            val value4 = mixCache!!.get<String>(key)
             assert(value3 == value4)
             assert(value3 == value2)
 

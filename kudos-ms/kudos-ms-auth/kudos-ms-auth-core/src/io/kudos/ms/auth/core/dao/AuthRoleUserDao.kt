@@ -2,6 +2,7 @@ package io.kudos.ms.auth.core.dao
 
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.base.query.Criteria
+import io.kudos.base.query.Criterion
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.ms.auth.core.model.po.AuthRoleUser
 import io.kudos.ms.auth.core.model.table.AuthRoleUsers
@@ -32,36 +33,54 @@ open class AuthRoleUserDao : BaseCrudDao<String, AuthRoleUser, AuthRoleUsers>() 
      * @since 1.0.0
      */
     fun exists(roleId: String, userId: String): Boolean {
-        val criteria = Criteria.of(AuthRoleUser::roleId.name, OperatorEnum.EQ, roleId)
-            .addAnd(AuthRoleUser::userId.name, OperatorEnum.EQ, userId)
+        val criteria = Criteria.and(
+            Criterion(AuthRoleUser::roleId.name, OperatorEnum.EQ, roleId),
+            Criterion(AuthRoleUser::userId.name, OperatorEnum.EQ, userId)
+        )
         return count(criteria) > 0
     }
 
-    /** 按用户ID查询角色ID列表（供 RoleIdsByUserIdCache 使用） */
-    fun getRoleIdsByUserId(userId: String): List<String> {
+    /**
+     * 按用户ID查询角色ID列表
+     *
+     * @param userId 用户id
+     * @return List<角色ID>
+     */
+    fun searchRoleIdsByUserId(userId: String): List<String> {
         val criteria = Criteria(AuthRoleUser::userId.name, OperatorEnum.EQ, userId)
         @Suppress("UNCHECKED_CAST")
         return searchProperty(criteria, AuthRoleUser::roleId.name) as List<String>
     }
 
-    /** 全量角色-用户关系，按用户ID分组为「用户ID -> 角色ID列表」（供 RoleIdsByUserIdCache.reloadAll） */
-    fun getAllUserIdToRoleIdsForCache(): Map<String, List<String>> {
-        @Suppress("UNCHECKED_CAST")
-        val all = allSearch() as List<AuthRoleUser>
+    /**
+     * 全量角色-用户关系，按用户ID分组为「用户ID -> 角色ID列表」
+     *
+     * @return Map<用户ID,List<角色ID>>
+     */
+    fun searchAllUserIdToRoleIdsForCache(): Map<String, List<String>> {
+        val all = allSearch()
         return all.groupBy { it.userId }.mapValues { (_, list) -> list.map { it.roleId } }
     }
 
-    /** 按角色ID查询用户ID列表（供 ResourceIdsByTenantIdAndUsernameCache.syncOnRoleResourceChange、UserIdsByRoleIdCache 等使用） */
-    fun getUserIdsByRoleId(roleId: String): List<String> {
+    /**
+     * 按角色ID查询用户ID列表
+     *
+     * @param roleId 角色id
+     * @return List<用户ID>
+     */
+    fun searchUserIdsByRoleId(roleId: String): List<String> {
         val criteria = Criteria(AuthRoleUser::roleId.name, OperatorEnum.EQ, roleId)
         @Suppress("UNCHECKED_CAST")
         return searchProperty(criteria, AuthRoleUser::userId.name) as List<String>
     }
 
-    /** 全量角色-用户关系，按角色ID分组为「角色ID -> 用户ID列表」（供 UserIdsByRoleIdCache / UserIdsByTenantIdAndRoleCodeCache.reloadAll） */
+    /**
+     * 全量角色-用户关系，按角色ID分组为「角色ID -> 用户ID列表」
+     *
+     * @return Map<角色ID,List<用户ID>>
+     */
     fun getAllRoleIdToUserIdsForCache(): Map<String, List<String>> {
-        @Suppress("UNCHECKED_CAST")
-        val all = allSearch() as List<AuthRoleUser>
+        val all = allSearch()
         return all.groupBy { it.roleId }.mapValues { (_, list) -> list.map { it.userId } }
     }
 
