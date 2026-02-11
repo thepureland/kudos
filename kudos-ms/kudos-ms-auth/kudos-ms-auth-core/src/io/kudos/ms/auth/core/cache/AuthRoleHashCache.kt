@@ -61,7 +61,7 @@ open class AuthRoleHashCache : AbstractHashCacheHandler<AuthRoleCacheItem>() {
     )
     open fun getRoleById(id: String): AuthRoleCacheItem? {
         require(id.isNotBlank()) { "获取角色时 id 不能为空" }
-        return authRoleDao.getCacheItem(id)
+        return authRoleDao.getAs<AuthRoleCacheItem>(id)
     }
 
     /**
@@ -77,7 +77,7 @@ open class AuthRoleHashCache : AbstractHashCacheHandler<AuthRoleCacheItem>() {
     )
     open fun getRolesByIds(ids: Collection<String>): Map<String, AuthRoleCacheItem> {
         if (ids.isEmpty()) return emptyMap()
-        val list = authRoleDao.getRolesByIdsForCache(ids)
+        val list = authRoleDao.getByIdsAs<AuthRoleCacheItem>(ids)
         return list.filter { it.id != null && it.id in ids }.associateBy { it.id!! }
     }
 
@@ -95,7 +95,7 @@ open class AuthRoleHashCache : AbstractHashCacheHandler<AuthRoleCacheItem>() {
         filterableProperties = ["tenantId", "code"]
     )
     open fun getRoleByTenantIdAndRoleCode(tenantId: String, code: String): AuthRoleCacheItem? {
-        return authRoleDao.getRoleByTenantIdAndRoleCode(tenantId, code)
+        return authRoleDao.searchRoleByTenantIdAndRoleCode(tenantId, code)
     }
 
     /**
@@ -110,7 +110,7 @@ open class AuthRoleHashCache : AbstractHashCacheHandler<AuthRoleCacheItem>() {
         }
         val cache = hashCache()
         if (clear) cache.refreshAll(CACHE_NAME, emptyList<AuthRoleCacheItem>(), FILTERABLE_PROPERTIES, emptySet())
-        val list = authRoleDao.getAllRolesForCache()
+        val list = authRoleDao.searchAs<AuthRoleCacheItem>()
         log.debug("从数据库加载 ${list.size} 条角色，刷新 Hash 缓存")
         cache.refreshAll(CACHE_NAME, list, FILTERABLE_PROPERTIES, emptySet())
     }
@@ -118,14 +118,14 @@ open class AuthRoleHashCache : AbstractHashCacheHandler<AuthRoleCacheItem>() {
     /** 新增角色后同步：将指定 id 的实体从库加载并写入缓存。 */
     open fun syncOnInsert(id: String) {
         if (!CacheKit.isCacheActive(CACHE_NAME) || !CacheKit.isWriteInTime(CACHE_NAME)) return
-        val item = authRoleDao.getCacheItem(id) ?: return
+        val item = authRoleDao.getAs<AuthRoleCacheItem>(id) ?: return
         hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
     }
 
     /** 更新角色后同步：从库重新加载并写入缓存。 */
     open fun syncOnUpdate(id: String) {
         if (!CacheKit.isCacheActive(CACHE_NAME)) return
-        val item = authRoleDao.getCacheItem(id) ?: return
+        val item = authRoleDao.getAs<AuthRoleCacheItem>(id) ?: return
         if (CacheKit.isWriteInTime(CACHE_NAME)) {
             hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
         }

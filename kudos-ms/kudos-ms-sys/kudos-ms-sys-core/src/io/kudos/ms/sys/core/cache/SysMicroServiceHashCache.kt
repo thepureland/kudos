@@ -107,7 +107,7 @@ open class SysMicroServiceHashCache : AbstractHashCacheHandler<SysMicroServiceCa
         }
         val cache = hashCache()
         if (clear) cache.refreshAll(CACHE_NAME, emptyList<SysMicroServiceCacheItem>(), FILTERABLE_PROPERTIES, emptySet())
-        val list = sysMicroServiceDao.search<SysMicroServiceCacheItem>()
+        val list = sysMicroServiceDao.searchAs<SysMicroServiceCacheItem>()
         log.debug("从数据库加载 ${list.size} 条微服务，刷新 Hash 缓存")
         cache.refreshAll(CACHE_NAME, list, FILTERABLE_PROPERTIES, emptySet())
     }

@@ -179,8 +179,7 @@ class SysResourceHashCacheTest : RdbAndRedisCacheTestBase() {
         res.active = false
         sysResourceDao.update(res)
         cache.syncOnUpdateActive(id, false)
-        assertNull(sysResourceDao.fetchResourceBySubSysAndUrl(subSystemCode, url, true), "DB 层按 active=true 应查不到该记录")
-        assertEquals(id, sysResourceDao.fetchResourceBySubSysAndUrl(subSystemCode, url, false)?.id, "DB 层按 active=false 应能查到该 id")
+        assertFalse(sysResourceDao.fetchResourceBySubSysAndUrl(subSystemCode, url)!!.active!!)
     }
 
     @Test

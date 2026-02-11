@@ -45,7 +45,7 @@ open class UserIdsByRoleIdCache : AbstractKeyValueCacheHandler<List<String>>() {
             return
         }
 
-        val roles = authRoleDao.getActiveRolesForCache()
+        val roles = authRoleDao.searchActiveRolesForCache()
         val roleIdToUserIdsMap = authRoleUserDao.getAllRoleIdToUserIdsForCache()
 
         log.debug("从数据库加载了${roles.size}条角色、角色-用户关系分组${roleIdToUserIdsMap.size}。")
@@ -81,7 +81,7 @@ open class UserIdsByRoleIdCache : AbstractKeyValueCacheHandler<List<String>>() {
             log.debug("缓存中不存在角色${roleId}的用户ID，从数据库中加载...")
         }
 
-        val userIds = authRoleUserDao.getUserIdsByRoleId(roleId)
+        val userIds = authRoleUserDao.searchUserIdsByRoleId(roleId)
         log.debug("从数据库加载了角色${roleId}的${userIds.size}条用户ID。")
         return userIds
     }

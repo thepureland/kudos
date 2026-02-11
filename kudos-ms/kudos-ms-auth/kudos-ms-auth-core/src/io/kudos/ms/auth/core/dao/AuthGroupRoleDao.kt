@@ -2,6 +2,7 @@ package io.kudos.ms.auth.core.dao
 
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.base.query.Criteria
+import io.kudos.base.query.Criterion
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.ms.auth.core.model.po.AuthGroupRole
 import io.kudos.ms.auth.core.model.table.AuthGroupRoles
@@ -32,8 +33,10 @@ open class AuthGroupRoleDao : BaseCrudDao<String, AuthGroupRole, AuthGroupRoles>
      * @since 1.0.0
      */
     fun exists(groupId: String, roleId: String): Boolean {
-        val criteria = Criteria.of(AuthGroupRole::groupId.name, OperatorEnum.EQ, groupId)
-            .addAnd(AuthGroupRole::roleId.name, OperatorEnum.EQ, roleId)
+        val criteria = Criteria.and(
+            Criterion(AuthGroupRole::groupId.name, OperatorEnum.EQ, groupId),
+            Criterion(AuthGroupRole::roleId.name, OperatorEnum.EQ, roleId)
+        )
         return count(criteria) > 0
     }
 
@@ -46,7 +49,7 @@ open class AuthGroupRoleDao : BaseCrudDao<String, AuthGroupRole, AuthGroupRoles>
      * @since 1.0.0
      */
     fun searchRoleIdsByGroupId(groupId: String): Set<String> {
-        val criteria = Criteria.of(AuthGroupRole::groupId.name, OperatorEnum.EQ, groupId)
+        val criteria = Criteria(AuthGroupRole::groupId.name, OperatorEnum.EQ, groupId)
         @Suppress("UNCHECKED_CAST")
         val roleIds = searchProperty(criteria, AuthGroupRole::roleId.name) as List<String>
         return roleIds.toSet()
@@ -61,19 +64,19 @@ open class AuthGroupRoleDao : BaseCrudDao<String, AuthGroupRole, AuthGroupRoles>
      * @since 1.0.0
      */
     fun searchGroupIdsByRoleId(roleId: String): Set<String> {
-        val criteria = Criteria.of(AuthGroupRole::roleId.name, OperatorEnum.EQ, roleId)
+        val criteria = Criteria(AuthGroupRole::roleId.name, OperatorEnum.EQ, roleId)
         @Suppress("UNCHECKED_CAST")
         val groupIds = searchProperty(criteria, AuthGroupRole::groupId.name) as List<String>
         return groupIds.toSet()
     }
 
-    /** 按用户组ID查询角色ID列表（供 ResourceIdsByTenantIdAndGroupCodeCache 使用） */
-    fun getRoleIdsByGroupId(groupId: String): List<String> = searchRoleIdsByGroupId(groupId).toList()
-
-    /** 全量用户组-角色关系，按用户组ID分组为「用户组ID -> 角色ID列表」（供 ResourceIdsByTenantIdAndGroupCodeCache.reloadAll） */
-    fun getAllGroupIdToRoleIdsForCache(): Map<String, List<String>> {
-        @Suppress("UNCHECKED_CAST")
-        val all = allSearch() as List<AuthGroupRole>
+    /**
+     * 全量用户组-角色关系，按用户组ID分组为「用户组ID -> 角色ID列表」
+     *
+     * @return Map<组id，List<角色id>>
+     */
+    fun searchAllGroupIdToRoleIdsForCache(): Map<String, List<String>> {
+        val all = allSearch()
         return all.groupBy { it.groupId }.mapValues { (_, list) -> list.map { it.roleId } }
     }
 

@@ -63,7 +63,7 @@ open class AuthRoleService : BaseCrudService<String, AuthRole, AuthRoleDao>(),
         return userIdsByRoleIdCache.getUserIds(roleId)
     }
 
-    override fun getRoleResourceIds(roleId: String): List<String> {
+    override fun getRoleResourceIds(roleId: String): Set<String> {
         return resourceIdsByRoleIdCache.getResourceIds(roleId)
     }
 
@@ -229,7 +229,7 @@ open class AuthRoleService : BaseCrudService<String, AuthRole, AuthRoleDao>(),
         return resourceIds.contains(resourceId)
     }
 
-    override fun getUserResourceIds(userId: String): List<String> {
+    override fun getUserResourceIds(userId: String): Set<String> {
         return resourceIdsByUserIdCache.getResourceIds(userId)
     }
 

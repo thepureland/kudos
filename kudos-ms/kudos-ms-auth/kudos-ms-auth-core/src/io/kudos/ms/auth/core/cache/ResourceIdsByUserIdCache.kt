@@ -18,9 +18,9 @@ import org.springframework.stereotype.Component
  * 资源ID列表（by user id）缓存处理器
  *
  * 1.数据来源表：auth_role_user + auth_role_resource
- * 2.缓存各用户拥有的所有资源ID列表
+ * 2.缓存各用户拥有的所有资源ID集合
  * 3.缓存的key为：userId
- * 4.缓存的value为：资源ID列表（List<String>）
+ * 4.缓存的value为：资源ID集合（List<String>）
  * 5.查询流程：用户 → 角色 → 资源（三级关联）
  *
  * @author K
@@ -28,7 +28,7 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-open class ResourceIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() {
+open class ResourceIdsByUserIdCache : AbstractKeyValueCacheHandler<Set<String>>() {
 
     @Autowired
     private lateinit var authRoleUserDao: AuthRoleUserDao
@@ -45,7 +45,7 @@ open class ResourceIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>
 
     override fun cacheName(): String = CACHE_NAME
 
-    override fun doReload(key: String): List<String> = getSelf<ResourceIdsByUserIdCache>().getResourceIds(key)
+    override fun doReload(key: String): Set<String> = getSelf<ResourceIdsByUserIdCache>().getResourceIds(key)
 
     override fun reloadAll(clear: Boolean) {
         if (!CacheKit.isCacheActive(CACHE_NAME)) {
@@ -53,9 +53,9 @@ open class ResourceIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>
             return
         }
 
-        val users = userAccountDao.getActiveUsersForCache()
-        val userIdToRoleIdsMap = authRoleUserDao.getAllUserIdToRoleIdsForCache()
-        val roleIdToResourceIdsMap = authRoleResourceDao.getAllRoleIdToResourceIdsForCache()
+        val users = userAccountDao.searchActiveUsersForCache()
+        val userIdToRoleIdsMap = authRoleUserDao.searchAllUserIdToRoleIdsForCache()
+        val roleIdToResourceIdsMap = authRoleResourceDao.searchAllRoleIdToResourceIdsForCache()
 
         log.debug("从数据库加载了${users.size}条用户、角色-用户分组${userIdToRoleIdsMap.size}、角色-资源分组${roleIdToResourceIdsMap.size}。")
 
@@ -83,25 +83,25 @@ open class ResourceIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>
      * 根据用户ID从缓存中获取该用户拥有的所有资源ID，如果缓存中不存在，则从数据库中加载，并回写缓存
      *
      * @param userId 用户ID
-     * @return List<资源ID>
+     * @return Set<资源ID>
      */
     @Cacheable(
         cacheNames = [CACHE_NAME],
         key = "#userId",
         unless = "#result == null || #result.isEmpty()"
     )
-    open fun getResourceIds(userId: String): List<String> {
+    open fun getResourceIds(userId: String): Set<String> {
         if (CacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("缓存中不存在用户${userId}的资源ID，从数据库中加载...")
         }
 
-        val roleIds = authRoleUserDao.getRoleIdsByUserId(userId)
+        val roleIds = authRoleUserDao.searchRoleIdsByUserId(userId)
         if (roleIds.isEmpty()) {
             log.debug("用户${userId}没有分配任何角色。")
-            return emptyList()
+            return emptySet()
         }
 
-        val resultList = authRoleResourceDao.getResourceIdsByRoleIds(roleIds)
+        val resultList = authRoleResourceDao.searchResourceIdsByRoleIds(roleIds)
         log.debug("从数据库加载了用户${userId}的${roleIds.size}个角色，共${resultList.size}条资源ID（去重后）。")
         return resultList
     }

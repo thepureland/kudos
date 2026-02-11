@@ -16,14 +16,14 @@ import org.springframework.stereotype.Component
  * 1.数据来源表：auth_group_user
  * 2.缓存各用户组拥有的所有用户ID列表
  * 3.缓存的key为：groupId
- * 4.缓存的value为：用户ID列表（List<String>）
+ * 4.缓存的value为：用户ID集合（Set<String>）
  *
  * @author K
  * @author AI: Codex
  * @since 1.0.0
  */
 @Component
-open class UserIdsByGroupIdCache : AbstractKeyValueCacheHandler<List<String>>() {
+open class UserIdsByGroupIdCache : AbstractKeyValueCacheHandler<Set<String>>() {
 
     @Autowired
     private lateinit var authGroupUserDao: AuthGroupUserDao
@@ -37,7 +37,7 @@ open class UserIdsByGroupIdCache : AbstractKeyValueCacheHandler<List<String>>() 
 
     override fun cacheName(): String = CACHE_NAME
 
-    override fun doReload(key: String): List<String> = getSelf<UserIdsByGroupIdCache>().getUserIds(key)
+    override fun doReload(key: String): Set<String> = getSelf<UserIdsByGroupIdCache>().getUserIds(key)
 
     override fun reloadAll(clear: Boolean) {
         if (!CacheKit.isCacheActive(CACHE_NAME)) {
@@ -45,8 +45,8 @@ open class UserIdsByGroupIdCache : AbstractKeyValueCacheHandler<List<String>>() 
             return
         }
 
-        val groups = authGroupDao.getActiveGroupsForCache()
-        val groupIdToUserIdsMap = authGroupUserDao.getAllGroupIdToUserIdsForCache()
+        val groups = authGroupDao.searchActiveGroupsForCache()
+        val groupIdToUserIdsMap = authGroupUserDao.searchAllGroupIdToUserIdsForCache()
 
         log.debug("从数据库加载了${groups.size}条用户组、用户组-用户关系分组${groupIdToUserIdsMap.size}。")
 
@@ -69,19 +69,19 @@ open class UserIdsByGroupIdCache : AbstractKeyValueCacheHandler<List<String>>() 
      * 根据用户组ID从缓存中获取拥有该用户组的所有用户ID，如果缓存中不存在，则从数据库中加载，并回写缓存
      *
      * @param groupId 用户组ID
-     * @return List<用户ID>
+     * @return Set<用户ID>
      */
     @Cacheable(
         cacheNames = [CACHE_NAME],
         key = "#groupId",
         unless = "#result == null || #result.isEmpty()"
     )
-    open fun getUserIds(groupId: String): List<String> {
+    open fun getUserIds(groupId: String): Set<String> {
         if (CacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("缓存中不存在用户组${groupId}的用户ID，从数据库中加载...")
         }
 
-        val userIds = authGroupUserDao.getUserIdsByGroupId(groupId)
+        val userIds = authGroupUserDao.searchUserIdsByGroupId(groupId)
         log.debug("从数据库加载了用户组${groupId}的${userIds.size}条用户ID。")
         return userIds
     }

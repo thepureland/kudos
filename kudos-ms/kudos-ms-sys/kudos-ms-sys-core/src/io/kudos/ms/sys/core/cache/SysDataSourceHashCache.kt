@@ -165,7 +165,7 @@ open class SysDataSourceHashCache : AbstractHashCacheHandler<SysDataSourceCacheI
      */
     open fun syncOnUpdateActive(id: String, active: Boolean) {
         if (!CacheKit.isCacheActive(CACHE_NAME)) return
-        val item = sysDataSourceDao.get<SysDataSourceCacheItem>(id) ?: return
+        val item = sysDataSourceDao.getAs<SysDataSourceCacheItem>(id) ?: return
         if (CacheKit.isWriteInTime(CACHE_NAME)) {
             hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
         }

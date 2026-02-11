@@ -61,7 +61,7 @@ open class UserAccountHashCache : AbstractHashCacheHandler<UserAccountCacheItem>
     )
     open fun getUserById(id: String): UserAccountCacheItem? {
         require(id.isNotBlank()) { "获取用户时 id 不能为空" }
-        return userAccountDao.getCacheItem(id)
+        return userAccountDao.getAs<UserAccountCacheItem>(id)
     }
 
     /**
@@ -77,7 +77,7 @@ open class UserAccountHashCache : AbstractHashCacheHandler<UserAccountCacheItem>
     )
     open fun getUsersByIds(ids: Collection<String>): Map<String, UserAccountCacheItem> {
         if (ids.isEmpty()) return emptyMap()
-        val list = userAccountDao.getUsersByIdsForCache(ids)
+        val list = userAccountDao.getByIdsAs<UserAccountCacheItem>(ids)
         return list.filter { it.id != null && it.id in ids }.associateBy { it.id!! }
     }
 
@@ -110,7 +110,7 @@ open class UserAccountHashCache : AbstractHashCacheHandler<UserAccountCacheItem>
         }
         val cache = hashCache()
         if (clear) cache.refreshAll(CACHE_NAME, emptyList<UserAccountCacheItem>(), FILTERABLE_PROPERTIES, emptySet())
-        val list = userAccountDao.getAllUsersForCache()
+        val list = userAccountDao.searchAs<UserAccountCacheItem>()
         log.debug("从数据库加载 ${list.size} 条用户，刷新 Hash 缓存")
         cache.refreshAll(CACHE_NAME, list, FILTERABLE_PROPERTIES, emptySet())
     }
@@ -118,14 +118,14 @@ open class UserAccountHashCache : AbstractHashCacheHandler<UserAccountCacheItem>
     /** 新增用户后同步：将指定 id 的实体从库加载并写入缓存。 */
     open fun syncOnInsert(id: String) {
         if (!CacheKit.isCacheActive(CACHE_NAME) || !CacheKit.isWriteInTime(CACHE_NAME)) return
-        val item = userAccountDao.getCacheItem(id) ?: return
+        val item = userAccountDao.getAs<UserAccountCacheItem>(id) ?: return
         hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
     }
 
     /** 更新用户后同步：从库重新加载并写入缓存。 */
     open fun syncOnUpdate(id: String) {
         if (!CacheKit.isCacheActive(CACHE_NAME)) return
-        val item = userAccountDao.getCacheItem(id) ?: return
+        val item = userAccountDao.getAs<UserAccountCacheItem>(id) ?: return
         if (CacheKit.isWriteInTime(CACHE_NAME)) {
             hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
         }
