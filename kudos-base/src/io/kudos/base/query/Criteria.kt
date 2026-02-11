@@ -2,7 +2,6 @@ package io.kudos.base.query
 
 import io.kudos.base.query.enums.OperatorEnum
 import java.io.Serializable
-import kotlin.reflect.KProperty1
 
 /**
  * 查询条件封装类
@@ -235,15 +234,27 @@ class Criteria : Serializable {
             resultList = ArrayList(criterions.size)
         }
         for (criterion in criterions) {
-            val operator = criterion.operator
-            val value = criterion.value
-            if (value != null && value !is Collection<*> && value !is Array<*> && "" != value || value is Collection<*> && !value.isEmpty()
-                || value is Array<*> && value.isNotEmpty() || operator.acceptNull
-            ) {
+            if (shouldAddCriterion(criterion)) {
                 resultList.add(criterion)
             }
         }
         return resultList
+    }
+
+    /**
+     * 判断单个条件是否有效（是否应加入查询条件组）
+     */
+    private fun shouldAddCriterion(criterion: Criterion): Boolean {
+        if (criterion.operator.acceptNull) {
+            return true
+        }
+        val value = criterion.value ?: return false
+        return when (value) {
+            is String -> value.isNotEmpty()
+            is Collection<*> -> value.isNotEmpty()
+            is Array<*> -> value.isNotEmpty()
+            else -> true
+        }
     }
 
     /**
@@ -275,7 +286,7 @@ class Criteria : Serializable {
             resultList = ArrayList(criterias.size)
         }
         for (criteria in criterias) {
-            if (criteria.getCriterionGroups().isNotEmpty()) {
+            if (!criteria.isEmpty()) {
                 resultList.add(criteria)
             }
         }
@@ -322,29 +333,25 @@ class Criteria : Serializable {
      * @return 多个查询条件字符串
      */
     override fun toString(): String {
-        val sb = StringBuilder()
-        if (criterionGroups.isNotEmpty()) {
-            for (group in criterionGroups) {
-                if (group is Criterion) {
-                    sb.append(group.toString())
-                } else if (group is Array<*>) { // or
-                    if (group.isNotEmpty()) {
-                        sb.append("(")
-                        for (obj in group) {
-                            sb.append(obj.toString())
-                            sb.append(" OR ")
-                        }
-                        sb.delete(sb.length - 4, sb.length)
-                        sb.append(")")
-                    }
-                } else if (group is Criteria) {
-                    sb.append(group.toString())
+        return criterionGroups
+            .mapNotNull { renderGroup(it) }
+            .joinToString(" AND ")
+    }
+
+    private fun renderGroup(group: Any): String? {
+        return when (group) {
+            is Criterion -> group.toString()
+            is Criteria -> group.toString()
+            is Array<*> -> {
+                if (group.isEmpty()) {
+                    null
+                } else {
+                    val orClause = group.joinToString(" OR ") { it.toString() }
+                    "($orClause)"
                 }
-                sb.append(" AND ")
             }
-            sb.delete(sb.length - 5, sb.length)
+            else -> null
         }
-        return sb.toString()
     }
 
 
