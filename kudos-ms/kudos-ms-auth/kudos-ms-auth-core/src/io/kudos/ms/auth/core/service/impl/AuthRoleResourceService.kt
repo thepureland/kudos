@@ -2,8 +2,6 @@ package io.kudos.ms.auth.core.service.impl
 
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.query.Criteria
-import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.ms.auth.core.cache.ResourceIdsByRoleIdCache
 import io.kudos.ms.auth.core.cache.ResourceIdsByUserIdCache
 import io.kudos.ms.auth.core.dao.AuthRoleResourceDao
@@ -70,9 +68,7 @@ open class AuthRoleResourceService : BaseCrudService<String, AuthRoleResource, A
         // 同步缓存
         resourceIdsByRoleIdCache.syncOnRoleResourceChange(roleId)
         // 同步该角色下所有用户的资源缓存
-        val roleUserCriteria = Criteria.of(AuthRoleUser::roleId.name, OperatorEnum.EQ, roleId)
-        val roleUsers = authRoleUserDao.search(roleUserCriteria)
-        roleUsers.map { it.userId }.distinct().forEach { _ ->
+        authRoleUserDao.searchUserIdsByRoleId(roleId).distinct().forEach { _ ->
             resourceIdsByUserIdCache.syncOnRoleResourceChange(roleId)
         }
         return count
@@ -80,18 +76,14 @@ open class AuthRoleResourceService : BaseCrudService<String, AuthRoleResource, A
 
     @Transactional
     override fun unbind(roleId: String, resourceId: String): Boolean {
-        val criteria = Criteria.of(AuthRoleResource::roleId.name, OperatorEnum.EQ, roleId)
-            .addAnd(AuthRoleResource::resourceId.name, OperatorEnum.EQ, resourceId.trim())
-        val count = dao.batchDeleteCriteria(criteria)
+        val count = dao.deleteByRoleIdAndResourceId(roleId, resourceId.trim())
         val success = count > 0
         if (success) {
             log.debug("解绑角色${roleId}与资源${resourceId}的关系。")
             // 同步缓存
             resourceIdsByRoleIdCache.syncOnRoleResourceChange(roleId)
             // 同步该角色下所有用户的资源缓存
-            val roleUserCriteria = Criteria.of(AuthRoleUser::roleId.name, OperatorEnum.EQ, roleId)
-            val roleUsers = authRoleUserDao.search(roleUserCriteria)
-            roleUsers.map { it.userId }.distinct().forEach { _ ->
+            authRoleUserDao.searchUserIdsByRoleId(roleId).distinct().forEach { _ ->
                 resourceIdsByUserIdCache.syncOnRoleResourceChange(roleId)
             }
         } else {

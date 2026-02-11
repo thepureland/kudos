@@ -2,8 +2,6 @@ package io.kudos.ms.user.core.service.impl
 
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.query.Criteria
-import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.ms.user.core.cache.OrgIdsByUserIdCache
 import io.kudos.ms.user.core.cache.UserIdsByOrgIdCache
 import io.kudos.ms.user.core.dao.UserOrgUserDao
@@ -72,9 +70,7 @@ open class UserOrgUserService : BaseCrudService<String, UserOrgUser, UserOrgUser
 
     @Transactional
     override fun unbind(orgId: String, userId: String): Boolean {
-        val criteria = Criteria.of(UserOrgUser::orgId.name, OperatorEnum.EQ, orgId)
-            .addAnd(UserOrgUser::userId.name, OperatorEnum.EQ, userId)
-        val count = dao.batchDeleteCriteria(criteria)
+        val count = dao.deleteByOrgIdAndUserId(orgId, userId)
         val success = count > 0
         if (success) {
             log.debug("解绑机构${orgId}与用户${userId}的关系。")
@@ -93,9 +89,7 @@ open class UserOrgUserService : BaseCrudService<String, UserOrgUser, UserOrgUser
 
     @Transactional
     override fun setOrgAdmin(orgId: String, userId: String, isAdmin: Boolean): Boolean {
-        val criteria = Criteria.of(UserOrgUser::orgId.name, OperatorEnum.EQ, orgId)
-            .addAnd(UserOrgUser::userId.name, OperatorEnum.EQ, userId)
-        val relations = dao.search(criteria)
+        val relations = dao.searchByOrgIdAndUserId(orgId, userId)
         if (relations.isEmpty()) {
             log.warn("设置机构${orgId}的用户${userId}为管理员失败，关系不存在。")
             return false

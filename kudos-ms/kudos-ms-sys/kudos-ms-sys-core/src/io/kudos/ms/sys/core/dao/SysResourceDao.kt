@@ -2,8 +2,7 @@ package io.kudos.ms.sys.core.dao
 
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.base.query.Criteria
-import io.kudos.base.query.Criterion
-import io.kudos.base.query.enums.OperatorEnum
+import io.kudos.base.query.eq
 import io.kudos.ms.sys.common.vo.resource.SysResourceCacheItem
 import io.kudos.ms.sys.core.model.po.SysResource
 import io.kudos.ms.sys.core.model.table.SysResources
@@ -27,10 +26,10 @@ open class SysResourceDao : BaseCrudDao<String, SysResource, SysResources>() {
      */
     open fun fetchResourceBySubSysAndUrl(subSystemCode: String, url: String): SysResourceCacheItem? {
         val criteria = Criteria.and(
-            Criterion(SysResource::subSystemCode.name, OperatorEnum.EQ, subSystemCode),
-            Criterion(SysResource::url.name, OperatorEnum.EQ, url),
+            SysResource::subSystemCode eq subSystemCode,
+            SysResource::url eq url,
         )
-        criteria.addAnd(Criterion(SysResource::active.name, OperatorEnum.EQ))
+        criteria.addAnd(SysResource::active eq null)
         return searchAs<SysResourceCacheItem>(criteria).firstOrNull()
     }
 
@@ -43,8 +42,8 @@ open class SysResourceDao : BaseCrudDao<String, SysResource, SysResources>() {
      */
     open fun fetchResourceIdsBySubSysAndType(subSystemCode: String, resourceTypeDictCode: String): List<String> {
         val criteria = Criteria.and(
-            Criterion(SysResource::subSystemCode.name, OperatorEnum.EQ, subSystemCode),
-            Criterion(SysResource::resourceTypeDictCode.name, OperatorEnum.EQ, resourceTypeDictCode),
+            SysResource::subSystemCode eq subSystemCode,
+            SysResource::resourceTypeDictCode eq resourceTypeDictCode,
         )
         @Suppress("UNCHECKED_CAST")
         return searchProperty(criteria, SysResource::id.name) as List<String>

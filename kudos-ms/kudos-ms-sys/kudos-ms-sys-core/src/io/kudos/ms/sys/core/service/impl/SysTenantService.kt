@@ -3,8 +3,6 @@ package io.kudos.ms.sys.core.service.impl
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.query.Criteria
-import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.ms.sys.common.vo.tenant.SysTenantCacheItem
 import io.kudos.ms.sys.common.vo.tenant.SysTenantRecord
 import io.kudos.ms.sys.common.vo.tenant.SysTenantSearchPayload
@@ -12,7 +10,6 @@ import io.kudos.ms.sys.core.cache.TenantByIdCache
 import io.kudos.ms.sys.core.cache.TenantIdsBySystemCodeCache
 import io.kudos.ms.sys.core.dao.SysTenantDao
 import io.kudos.ms.sys.core.model.po.SysTenant
-import io.kudos.ms.sys.core.model.po.SysTenantSystem
 import io.kudos.ms.sys.core.service.iservice.ISysTenantService
 import io.kudos.ms.sys.core.service.iservice.ISysTenantSystemService
 import org.springframework.beans.factory.annotation.Autowired
@@ -102,8 +99,7 @@ open class SysTenantService : BaseCrudService<String, SysTenant, SysTenantDao>()
     override fun deleteById(id: String): Boolean {
         // 1. 先删除租户-子系统关系
         val subSystemCodes = sysTenantSystemBiz.searchSystemCodesByTenantId(id)
-        val criteria = Criteria.of(SysTenantSystem::tenantId.name, OperatorEnum.EQ, id)
-        val count = sysTenantSystemBiz.batchDeleteCriteria(criteria)
+        val count = sysTenantSystemBiz.deleteByTenantId(id)
         if (count > 0) {
             // 同步缓存
             tenantIdsBySystemCodeCache.syncOnDelete(id, subSystemCodes)
@@ -127,8 +123,7 @@ open class SysTenantService : BaseCrudService<String, SysTenant, SysTenantDao>()
         val subSystemCodes = tenantIdAndSubSysCodesMap.values.flatten().toSet()
 
         // 2.删除租户-子系统关系
-        val criteria = Criteria.of(SysTenantSystem::tenantId.name, OperatorEnum.IN, ids)
-        val count = sysTenantSystemBiz.batchDeleteCriteria(criteria)
+        val count = sysTenantSystemBiz.batchDeleteByTenantIds(ids)
 
         // 3.删除租户
         if (count >= 0) {

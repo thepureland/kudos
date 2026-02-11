@@ -2,8 +2,7 @@ package io.kudos.ms.sys.core.dao
 
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.base.query.Criteria
-import io.kudos.base.query.Criterion
-import io.kudos.base.query.enums.OperatorEnum
+import io.kudos.base.query.eq
 import io.kudos.ms.sys.core.model.po.SysTenantLocale
 import io.kudos.ms.sys.core.model.table.SysTenantLocales
 import org.springframework.stereotype.Repository
@@ -30,7 +29,7 @@ open class SysTenantLocaleDao : BaseCrudDao<String, SysTenantLocale, SysTenantLo
      * @return Set<语言代码>
      */
     fun searchLocaleCodesByTenantId(tenantId: String): Set<String> {
-        val criteria = Criteria(SysTenantLocale::tenantId.name, OperatorEnum.EQ, tenantId)
+        val criteria = Criteria(SysTenantLocale::tenantId eq tenantId)
         @Suppress("UNCHECKED_CAST")
         return searchProperty(criteria, SysTenantLocale::localeCode.name).toSet() as Set<String>
     }
@@ -42,7 +41,7 @@ open class SysTenantLocaleDao : BaseCrudDao<String, SysTenantLocale, SysTenantLo
      * @return Set<租户id>
      */
     fun searchTenantIdsByLocaleCode(localeCode: String): Set<String> {
-        val criteria = Criteria(SysTenantLocale::localeCode.name, OperatorEnum.EQ, localeCode)
+        val criteria = Criteria(SysTenantLocale::localeCode eq localeCode)
         @Suppress("UNCHECKED_CAST")
         return searchProperty(criteria, SysTenantLocale::tenantId.name).toSet() as Set<String>
     }
@@ -56,10 +55,25 @@ open class SysTenantLocaleDao : BaseCrudDao<String, SysTenantLocale, SysTenantLo
      */
     fun exists(tenantId: String, localeCode: String): Boolean {
         val criteria = Criteria.and(
-            Criterion(SysTenantLocale::tenantId.name, OperatorEnum.EQ, tenantId),
-            Criterion(SysTenantLocale::localeCode.name, OperatorEnum.EQ, localeCode)
+            SysTenantLocale::tenantId eq tenantId,
+            SysTenantLocale::localeCode eq localeCode
         )
         return count(criteria) > 0
+    }
+
+    /**
+     * 按租户ID和语言代码删除关系
+     *
+     * @param tenantId 租户ID
+     * @param localeCode 语言代码
+     * @return 删除条数
+     */
+    fun deleteByTenantIdAndLocaleCode(tenantId: String, localeCode: String): Int {
+        val criteria = Criteria.and(
+            SysTenantLocale::tenantId eq tenantId,
+            SysTenantLocale::localeCode eq localeCode
+        )
+        return batchDeleteCriteria(criteria)
     }
 
     //endregion your codes 2

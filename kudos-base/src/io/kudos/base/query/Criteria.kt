@@ -2,6 +2,7 @@ package io.kudos.base.query
 
 import io.kudos.base.query.enums.OperatorEnum
 import java.io.Serializable
+import kotlin.reflect.KProperty1
 
 /**
  * 查询条件封装类
@@ -434,4 +435,7 @@ class Criteria : Serializable {
         fun or(criteria: Criteria, criterion: Criterion): Criteria = Criteria().addOr(criteria, criterion)
         //endregion static or
     }
+
+
+
 }

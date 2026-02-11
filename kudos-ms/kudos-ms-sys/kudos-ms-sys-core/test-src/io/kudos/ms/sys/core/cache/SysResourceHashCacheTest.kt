@@ -46,7 +46,7 @@ class SysResourceHashCacheTest : RdbAndRedisCacheTestBase() {
     @Test
     fun getResourcesByIds() {
         cache.reloadAll(true)
-        val ids = listOf(
+        val ids = setOf(
             "srch1001-1a2b-4c5d-8e9f-000000000001",
             "srch1002-2b3c-5d6e-9f0a-000000000002",
             "srch1003-3c4d-6e7f-0a1b-000000000003"
@@ -60,7 +60,7 @@ class SysResourceHashCacheTest : RdbAndRedisCacheTestBase() {
             mapAgain[it],
             "同一 id 再次从缓存获取应返回同一对象引用"
         ) }
-        assertTrue(cache.getResourcesByIds(emptyList()).isEmpty())
+        assertTrue(cache.getResourcesByIds(emptySet()).isEmpty())
     }
 
     // ---------- 按子系统+URL ----------

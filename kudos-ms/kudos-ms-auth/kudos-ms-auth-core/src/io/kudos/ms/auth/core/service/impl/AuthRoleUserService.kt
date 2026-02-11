@@ -2,8 +2,6 @@ package io.kudos.ms.auth.core.service.impl
 
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.query.Criteria
-import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.ms.auth.core.cache.ResourceIdsByUserIdCache
 import io.kudos.ms.auth.core.cache.RoleIdsByUserIdCache
 import io.kudos.ms.auth.core.cache.UserIdsByRoleIdCache
@@ -77,9 +75,7 @@ open class AuthRoleUserService : BaseCrudService<String, AuthRoleUser, AuthRoleU
 
     @Transactional
     override fun unbind(roleId: String, userId: String): Boolean {
-        val criteria = Criteria.of(AuthRoleUser::roleId.name, OperatorEnum.EQ, roleId)
-            .addAnd(AuthRoleUser::userId.name, OperatorEnum.EQ, userId)
-        val count = dao.batchDeleteCriteria(criteria)
+        val count = dao.deleteByRoleIdAndUserId(roleId, userId)
         val success = count > 0
         if (success) {
             log.debug("解绑角色${roleId}与用户${userId}的关系。")

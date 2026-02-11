@@ -3,8 +3,6 @@ package io.kudos.ms.auth.core.service.impl
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.query.Criteria
-import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.ms.auth.common.vo.role.AuthRoleCacheItem
 import io.kudos.ms.auth.common.vo.role.AuthRoleRecord
 import io.kudos.ms.auth.common.vo.role.AuthRoleSearchPayload
@@ -68,10 +66,7 @@ open class AuthRoleService : BaseCrudService<String, AuthRole, AuthRoleDao>(),
     }
 
     override fun getRoleIds(tenantId: String): List<String> {
-        val criteria = Criteria(AuthRole::tenantId.name, OperatorEnum.EQ, tenantId)
-            .addAnd(AuthRole::active.name, OperatorEnum.EQ, true)
-        val roles = search(criteria)
-        return roles.mapNotNull { it.id }
+        return dao.searchActiveRoleIdsByTenantId(tenantId)
     }
 
     override fun getRoleUsers(roleId: String): List<UserAccountCacheItem> {

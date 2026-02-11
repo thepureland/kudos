@@ -3,8 +3,6 @@ package io.kudos.ms.user.core.service.impl
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.query.Criteria
-import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.ms.user.common.vo.org.UserOrgCacheItem
 import io.kudos.ms.user.common.vo.org.UserOrgTreeRecord
 import io.kudos.ms.user.common.vo.user.UserAccountCacheItem
@@ -51,11 +49,7 @@ open class UserOrgService : BaseCrudService<String, UserOrg, UserOrgDao>(), IUse
     private val log = LogFactory.getLog(this)
 
     override fun getOrgAdmins(orgId: String): List<UserAccountCacheItem> {
-        // 查询机构管理员用户ID列表
-        val criteria = Criteria(UserOrgUser::orgId.name, OperatorEnum.EQ, orgId)
-            .addAnd(UserOrgUser::orgAdmin.name, OperatorEnum.EQ, true)
-        @Suppress("UNCHECKED_CAST")
-        val adminUserIds = userOrgUserDao.searchProperty(criteria, UserOrgUser::userId.name) as List<String>
+        val adminUserIds = userOrgUserDao.searchAdminUserIdsByOrgId(orgId)
         
         // 如果没有管理员，直接返回空列表
         if (adminUserIds.isEmpty()) {
@@ -74,10 +68,7 @@ open class UserOrgService : BaseCrudService<String, UserOrg, UserOrgDao>(), IUse
     }
 
     override fun getChildOrgIds(orgId: String): List<String> {
-        val criteria = Criteria(UserOrg::parentId.name, OperatorEnum.EQ, orgId)
-            .addAnd(UserOrg::active.name, OperatorEnum.EQ, true)
-        val childOrgs = search(criteria)
-        return childOrgs.mapNotNull { it.id }
+        return dao.searchActiveChildOrgIds(orgId)
     }
 
     override fun getOrgUsers(orgId: String): List<UserAccountCacheItem> {
@@ -123,17 +114,8 @@ open class UserOrgService : BaseCrudService<String, UserOrg, UserOrgDao>(), IUse
     }
 
     override fun getOrgTree(tenantId: String, parentId: String?): List<UserOrgTreeRecord> {
-        val criteria = Criteria(UserOrg::tenantId.name, OperatorEnum.EQ, tenantId)
-            .addAnd(UserOrg::active.name, OperatorEnum.EQ, true)
-        
-        // 如果指定了parentId，只查询该父机构下的直接子机构
-        // 如果没有指定parentId，查询所有机构以构建完整树
-        if (parentId != null) {
-            criteria.addAnd(UserOrg::parentId.name, OperatorEnum.EQ, parentId)
-        }
-        // 注意：当parentId == null时，不添加parent_id条件，查询所有机构
-        
-        val orgs = dao.search(criteria)
+        // 如果指定了parentId，只查询该父机构下的直接子机构；否则查询租户下全部启用机构
+        val orgs = dao.searchActiveOrgsByTenantId(tenantId, parentId)
         
         // 转换为树节点
         val treeNodes = orgs.map { org ->

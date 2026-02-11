@@ -3,8 +3,6 @@ package io.kudos.ms.sys.core.service.impl
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.query.Criteria
-import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpCacheItem
 import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpPayload
 import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpRecord
@@ -108,8 +106,7 @@ open class SysAccessRuleIpService : BaseCrudService<String, SysAccessRuleIp, Sys
 
     @Transactional
     override fun deleteByRuleId(ruleId: String): Int {
-        val criteria = Criteria.of(SysAccessRuleIp::parentRuleId.name, OperatorEnum.EQ, ruleId)
-        val count = dao.batchDeleteCriteria(criteria)
+        val count = dao.deleteByParentRuleId(ruleId)
         log.debug("删除规则${ruleId}的所有IP，共删除${count}条。")
         // 同步缓存
         val accessRule = sysAccessRuleDao.get(ruleId)

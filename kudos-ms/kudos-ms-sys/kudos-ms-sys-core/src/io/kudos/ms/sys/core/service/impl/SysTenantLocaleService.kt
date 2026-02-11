@@ -2,8 +2,6 @@ package io.kudos.ms.sys.core.service.impl
 
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.query.Criteria
-import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.ms.sys.core.dao.SysTenantLocaleDao
 import io.kudos.ms.sys.core.model.po.SysTenantLocale
 import io.kudos.ms.sys.core.service.iservice.ISysTenantLocaleService
@@ -56,9 +54,7 @@ open class SysTenantLocaleService : BaseCrudService<String, SysTenantLocale, Sys
 
     @Transactional
     override fun unbind(tenantId: String, localeCode: String): Boolean {
-        val criteria = Criteria.of(SysTenantLocale::tenantId.name, OperatorEnum.EQ, tenantId)
-            .addAnd(SysTenantLocale::localeCode.name, OperatorEnum.EQ, localeCode)
-        val count = dao.batchDeleteCriteria(criteria)
+        val count = dao.deleteByTenantIdAndLocaleCode(tenantId, localeCode)
         val success = count > 0
         if (success) {
             log.debug("解绑租户${tenantId}与语言${localeCode}的关系。")

@@ -3,6 +3,8 @@ package io.kudos.ms.sys.core.dao
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.ability.data.rdb.ktorm.support.ColumnHelper
 import io.kudos.base.error.ObjectNotFoundException
+import io.kudos.base.query.Criteria
+import io.kudos.base.query.eq
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpRecord
 import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpSearchPayload
@@ -162,6 +164,17 @@ open class SysAccessRuleIpDao : BaseCrudDao<String, SysAccessRuleIp, SysAccessRu
                 )!!
             }
         }
+    }
+
+    /**
+     * 按父规则ID删除IP规则
+     *
+     * @param ruleId 父规则ID
+     * @return 删除条数
+     */
+    fun deleteByParentRuleId(ruleId: String): Int {
+        val criteria = Criteria(SysAccessRuleIp::parentRuleId eq ruleId)
+        return batchDeleteCriteria(criteria)
     }
 
     //endregion your codes 2

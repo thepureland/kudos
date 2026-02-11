@@ -2,8 +2,8 @@ package io.kudos.ms.sys.core.dao
 
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.base.query.Criteria
-import io.kudos.base.query.Criterion
-import io.kudos.base.query.enums.OperatorEnum
+import io.kudos.base.query.eq
+import io.kudos.base.query.inList
 import io.kudos.ms.sys.core.model.po.SysTenantSystem
 import io.kudos.ms.sys.core.model.table.SysTenantSystems
 import org.springframework.stereotype.Repository
@@ -30,7 +30,7 @@ open class SysTenantSystemDao : BaseCrudDao<String, SysTenantSystem, SysTenantSy
      * @return Set<系统编码>
      */
     fun searchSystemCodesByTenantId(tenantId: String): Set<String> {
-        val criteria = Criteria(SysTenantSystem::tenantId.name, OperatorEnum.EQ, tenantId)
+        val criteria = Criteria(SysTenantSystem::tenantId eq tenantId)
         @Suppress("UNCHECKED_CAST")
         return searchProperty(criteria, SysTenantSystem::systemCode.name).toSet() as Set<String>
     }
@@ -42,7 +42,7 @@ open class SysTenantSystemDao : BaseCrudDao<String, SysTenantSystem, SysTenantSy
      * @return Set<租户id>
      */
     fun searchTenantIdsBySystemCode(systemCode: String): Set<String> {
-        val criteria = Criteria(SysTenantSystem::systemCode.name, OperatorEnum.EQ, systemCode)
+        val criteria = Criteria(SysTenantSystem::systemCode eq systemCode)
         @Suppress("UNCHECKED_CAST")
         return searchProperty(criteria, SysTenantSystem::tenantId.name).toSet() as Set<String>
     }
@@ -59,7 +59,7 @@ open class SysTenantSystemDao : BaseCrudDao<String, SysTenantSystem, SysTenantSy
         val results = if (tenantIds == null) {
             allSearchProperties(returnProperties)
         } else {
-            val criteria = Criteria(SysTenantSystem::tenantId.name, OperatorEnum.IN, tenantIds)
+            val criteria = Criteria(SysTenantSystem::tenantId inList tenantIds)
             searchProperties(criteria, returnProperties)
         } as List<Map<String, String>>
         return results.groupBy(
@@ -80,7 +80,7 @@ open class SysTenantSystemDao : BaseCrudDao<String, SysTenantSystem, SysTenantSy
         val results = if (systemCodes == null) {
             allSearchProperties(returnProperties)
         } else {
-            val criteria = Criteria.of(SysTenantSystem::systemCode.name, OperatorEnum.IN, systemCodes)
+            val criteria = Criteria(SysTenantSystem::systemCode inList systemCodes)
             searchProperties(criteria, returnProperties)
         } as List<Map<String, String>>
         return results.groupBy(
@@ -99,10 +99,39 @@ open class SysTenantSystemDao : BaseCrudDao<String, SysTenantSystem, SysTenantSy
      */
     fun exists(tenantId: String, systemCode: String): Boolean {
         val criteria = Criteria.and(
-            Criterion(SysTenantSystem::tenantId.name, OperatorEnum.EQ, tenantId),
-            Criterion(SysTenantSystem::systemCode.name, OperatorEnum.EQ, systemCode)
+            SysTenantSystem::tenantId eq tenantId,
+            SysTenantSystem::systemCode eq systemCode
         )
         return count(criteria) > 0
+    }
+
+    /**
+     * 按租户ID和系统编码删除关系
+     *
+     * @param tenantId 租户ID
+     * @param systemCode 系统编码
+     * @return 删除条数
+     */
+    fun deleteByTenantIdAndSystemCode(tenantId: String, systemCode: String): Int {
+        val criteria = Criteria.and(
+            SysTenantSystem::tenantId eq tenantId,
+            SysTenantSystem::systemCode eq systemCode
+        )
+        return batchDeleteCriteria(criteria)
+    }
+
+    /**
+     * 按租户ID集合批量删除关系
+     *
+     * @param tenantIds 租户ID集合
+     * @return 删除条数
+     */
+    fun batchDeleteByTenantIds(tenantIds: Collection<String>): Int {
+        if (tenantIds.isEmpty()) {
+            return 0
+        }
+        val criteria = Criteria(SysTenantSystem::tenantId inList tenantIds)
+        return batchDeleteCriteria(criteria)
     }
 
     //endregion your codes 2

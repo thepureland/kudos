@@ -2,8 +2,6 @@ package io.kudos.ms.sys.core.service.impl
 
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.query.Criteria
-import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.ms.sys.core.dao.SysSubSystemMicroServiceDao
 import io.kudos.ms.sys.core.model.po.SysSubSystemMicroService
 import io.kudos.ms.sys.core.service.iservice.ISysSubSystemMicroServiceService
@@ -56,9 +54,7 @@ open class SysSubSystemMicroServiceService : BaseCrudService<String, SysSubSyste
 
     @Transactional
     override fun unbind(subSystemCode: String, microServiceCode: String): Boolean {
-        val criteria = Criteria.of(SysSubSystemMicroService::subSystemCode.name, OperatorEnum.EQ, subSystemCode)
-            .addAnd(SysSubSystemMicroService::microServiceCode.name, OperatorEnum.EQ, microServiceCode)
-        val count = dao.batchDeleteCriteria(criteria)
+        val count = dao.deleteBySubSystemCodeAndMicroServiceCode(subSystemCode, microServiceCode)
         val success = count > 0
         if (success) {
             log.debug("解绑子系统${subSystemCode}与微服务${microServiceCode}的关系。")
