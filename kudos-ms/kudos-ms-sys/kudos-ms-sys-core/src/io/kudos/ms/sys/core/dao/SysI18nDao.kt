@@ -2,7 +2,7 @@ package io.kudos.ms.sys.core.dao
 
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.base.query.Criteria
-import io.kudos.base.query.enums.OperatorEnum
+import io.kudos.base.query.eq
 import io.kudos.ms.sys.common.vo.i18n.SysI18nCacheItem
 import io.kudos.ms.sys.core.model.po.SysI18n
 import io.kudos.ms.sys.core.model.table.SysI18ns
@@ -36,10 +36,10 @@ open class SysI18nDao : BaseCrudDao<String, SysI18n, SysI18ns>() {
         i18nTypeDictCode: String,
         atomicServiceCode: String
     ): List<SysI18nCacheItem> {
-        val criteria = Criteria(SysI18n::locale.name, OperatorEnum.EQ, locale)
-            .addAnd(SysI18n::i18nTypeDictCode.name, OperatorEnum.EQ, i18nTypeDictCode)
-            .addAnd(SysI18n::atomicServiceCode.name, OperatorEnum.EQ, atomicServiceCode)
-            .addAnd(SysI18n::active.name, OperatorEnum.EQ, true)
+        val criteria = Criteria(SysI18n::locale eq locale)
+            .addAnd(SysI18n::i18nTypeDictCode eq i18nTypeDictCode)
+            .addAnd(SysI18n::atomicServiceCode eq atomicServiceCode)
+            .addAnd(SysI18n::active eq true)
         return searchAs<SysI18nCacheItem>(criteria)
     }
 
@@ -49,7 +49,7 @@ open class SysI18nDao : BaseCrudDao<String, SysI18n, SysI18ns>() {
      * @return List<SysI18nCacheItem>
      */
     open fun fetchAllActiveI18nsForCache(): List<SysI18nCacheItem> {
-        val criteria = Criteria(SysI18n::active.name, OperatorEnum.EQ, true)
+        val criteria = Criteria(SysI18n::active eq true)
         return searchAs<SysI18nCacheItem>(criteria)
     }
 

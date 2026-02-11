@@ -3,8 +3,6 @@ package io.kudos.ms.user.core.service.impl
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.query.Criteria
-import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.security.CryptoKit
 import io.kudos.ms.user.common.vo.org.UserOrgCacheItem
 import io.kudos.ms.user.common.vo.user.UserAccountCacheItem
@@ -55,10 +53,7 @@ open class UserAccountService : BaseCrudService<String, UserAccount, UserAccount
 
 
     override fun getUserIds(tenantId: String): List<String> {
-        val criteria = Criteria(UserAccount::tenantId.name, OperatorEnum.EQ, tenantId)
-            .addAnd(UserAccount::active.name, OperatorEnum.EQ, true)
-        val users = search(criteria)
-        return users.mapNotNull { it.id }
+        return dao.searchActiveUserIdsByTenantId(tenantId)
     }
 
 

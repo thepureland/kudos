@@ -2,8 +2,6 @@ package io.kudos.ms.sys.core.service.impl
 
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.query.Criteria
-import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.ms.sys.core.dao.SysTenantResourceDao
 import io.kudos.ms.sys.core.model.po.SysTenantResource
 import io.kudos.ms.sys.core.service.iservice.ISysTenantResourceService
@@ -56,9 +54,7 @@ open class SysTenantResourceService : BaseCrudService<String, SysTenantResource,
 
     @Transactional
     override fun unbind(tenantId: String, resourceId: String): Boolean {
-        val criteria = Criteria.of(SysTenantResource::tenantId.name, OperatorEnum.EQ, tenantId)
-            .addAnd(SysTenantResource::resourceId.name, OperatorEnum.EQ, resourceId)
-        val count = dao.batchDeleteCriteria(criteria)
+        val count = dao.deleteByTenantIdAndResourceId(tenantId, resourceId)
         val success = count > 0
         if (success) {
             log.debug("解绑租户${tenantId}与资源${resourceId}的关系。")

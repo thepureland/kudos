@@ -2,8 +2,7 @@ package io.kudos.ms.sys.core.dao
 
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.base.query.Criteria
-import io.kudos.base.query.Criterion
-import io.kudos.base.query.enums.OperatorEnum
+import io.kudos.base.query.eq
 import io.kudos.ms.sys.core.model.po.SysTenantResource
 import io.kudos.ms.sys.core.model.table.SysTenantResources
 import org.springframework.stereotype.Repository
@@ -30,7 +29,7 @@ open class SysTenantResourceDao : BaseCrudDao<String, SysTenantResource, SysTena
      * @return Set<资源id>
      */
     fun searchResourceIdsByTenantId(tenantId: String): Set<String> {
-        val criteria = Criteria(SysTenantResource::tenantId.name, OperatorEnum.EQ, tenantId)
+        val criteria = Criteria(SysTenantResource::tenantId eq tenantId)
         @Suppress("UNCHECKED_CAST")
         return searchProperty(criteria, SysTenantResource::resourceId.name).toSet() as Set<String>
     }
@@ -42,7 +41,7 @@ open class SysTenantResourceDao : BaseCrudDao<String, SysTenantResource, SysTena
      * @return Set<租户id>
      */
     fun searchTenantIdsByResourceId(resourceId: String): Set<String> {
-        val criteria = Criteria(SysTenantResource::resourceId.name, OperatorEnum.EQ, resourceId)
+        val criteria = Criteria(SysTenantResource::resourceId eq resourceId)
         @Suppress("UNCHECKED_CAST")
         return searchProperty(criteria, SysTenantResource::tenantId.name).toSet() as Set<String>
     }
@@ -56,10 +55,25 @@ open class SysTenantResourceDao : BaseCrudDao<String, SysTenantResource, SysTena
      */
     fun exists(tenantId: String, resourceId: String): Boolean {
         val criteria = Criteria.and(
-            Criterion(SysTenantResource::tenantId.name, OperatorEnum.EQ, tenantId),
-            Criterion(SysTenantResource::resourceId.name, OperatorEnum.EQ, resourceId)
+            SysTenantResource::tenantId eq tenantId,
+            SysTenantResource::resourceId eq resourceId
         )
         return count(criteria) > 0
+    }
+
+    /**
+     * 按租户ID和资源ID删除关系
+     *
+     * @param tenantId 租户ID
+     * @param resourceId 资源ID
+     * @return 删除条数
+     */
+    fun deleteByTenantIdAndResourceId(tenantId: String, resourceId: String): Int {
+        val criteria = Criteria.and(
+            SysTenantResource::tenantId eq tenantId,
+            SysTenantResource::resourceId eq resourceId
+        )
+        return batchDeleteCriteria(criteria)
     }
 
     //endregion your codes 2

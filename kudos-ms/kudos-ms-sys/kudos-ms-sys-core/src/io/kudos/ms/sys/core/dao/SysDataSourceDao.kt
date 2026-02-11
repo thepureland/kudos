@@ -2,7 +2,8 @@ package io.kudos.ms.sys.core.dao
 
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.base.query.Criteria
-import io.kudos.base.query.enums.OperatorEnum
+import io.kudos.base.query.eq
+import io.kudos.base.query.inList
 import io.kudos.ms.sys.common.vo.datasource.SysDataSourceCacheItem
 import io.kudos.ms.sys.core.model.po.SysDataSource
 import io.kudos.ms.sys.core.model.table.SysDataSources
@@ -23,7 +24,7 @@ open class SysDataSourceDao : BaseCrudDao<String, SysDataSource, SysDataSources>
     /** 按 id 集合批量查询，返回缓存用 VO 列表 */
     open fun fetchDataSourcesByIdsForCache(ids: Collection<String>): List<SysDataSourceCacheItem> {
         if (ids.isEmpty()) return emptyList()
-        val criteria = Criteria.of(SysDataSource::id.name, OperatorEnum.IN, ids)
+        val criteria = Criteria(SysDataSource::id inList ids)
         return searchAs<SysDataSourceCacheItem>(criteria)
     }
 
@@ -40,12 +41,12 @@ open class SysDataSourceDao : BaseCrudDao<String, SysDataSource, SysDataSources>
         subSystemCode: String?,
         microServiceCode: String?
     ): List<SysDataSourceCacheItem> {
-        val criteria = Criteria(SysDataSource::tenantId.name, OperatorEnum.EQ, tenantId)
+        val criteria = Criteria(SysDataSource::tenantId eq tenantId)
         if (!subSystemCode.isNullOrBlank()) {
-            criteria.addAnd(SysDataSource::subSystemCode.name, OperatorEnum.EQ, subSystemCode)
+            criteria.addAnd(SysDataSource::subSystemCode eq subSystemCode)
         }
         if (!microServiceCode.isNullOrBlank()) {
-            criteria.addAnd(SysDataSource::microServiceCode.name, OperatorEnum.EQ, microServiceCode)
+            criteria.addAnd(SysDataSource::microServiceCode eq microServiceCode)
         }
         return searchAs<SysDataSourceCacheItem>(criteria)
     }

@@ -82,6 +82,22 @@ interface ISysTenantSystemService : IBaseCrudService<String, SysTenantSystem> {
      */
     fun exists(tenantId: String, systemCode: String): Boolean
 
+    /**
+     * 按租户ID删除其全部租户-系统关系
+     *
+     * @param tenantId 租户ID
+     * @return 删除条数
+     */
+    fun deleteByTenantId(tenantId: String): Int
+
+    /**
+     * 按租户ID集合批量删除租户-系统关系
+     *
+     * @param tenantIds 租户ID集合
+     * @return 删除条数
+     */
+    fun batchDeleteByTenantIds(tenantIds: Collection<String>): Int
+
     //endregion your codes 2
 
 }

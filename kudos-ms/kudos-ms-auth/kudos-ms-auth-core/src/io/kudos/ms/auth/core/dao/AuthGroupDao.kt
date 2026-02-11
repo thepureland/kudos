@@ -2,8 +2,7 @@ package io.kudos.ms.auth.core.dao
 
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.base.query.Criteria
-import io.kudos.base.query.Criterion
-import io.kudos.base.query.enums.OperatorEnum
+import io.kudos.base.query.eq
 import io.kudos.ms.auth.common.vo.group.AuthGroupCacheItem
 import io.kudos.ms.auth.core.model.po.AuthGroup
 import io.kudos.ms.auth.core.model.table.AuthGroups
@@ -30,7 +29,7 @@ open class AuthGroupDao : BaseCrudDao<String, AuthGroup, AuthGroups>() {
      * @return List<AuthGroupCacheItem>
      */
     open fun searchActiveGroupsForCache(): List<AuthGroupCacheItem> {
-        val criteria = Criteria(AuthGroup::active.name, OperatorEnum.EQ, true)
+        val criteria = Criteria(AuthGroup::active eq true)
         return searchAs(criteria)
     }
 
@@ -39,8 +38,8 @@ open class AuthGroupDao : BaseCrudDao<String, AuthGroup, AuthGroups>() {
      */
     open fun searchGroupByTenantIdAndGroupCode(tenantId: String, code: String): AuthGroupCacheItem? {
         val criteria = Criteria.and(
-            Criterion(AuthGroup::tenantId.name, OperatorEnum.EQ, tenantId),
-            Criterion(AuthGroup::code.name, OperatorEnum.EQ, code)
+            AuthGroup::tenantId eq tenantId,
+            AuthGroup::code eq code
         )
         return searchAs<AuthGroupCacheItem>(criteria).firstOrNull()
     }

@@ -2,8 +2,7 @@ package io.kudos.ms.auth.core.dao
 
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.base.query.Criteria
-import io.kudos.base.query.Criterion
-import io.kudos.base.query.enums.OperatorEnum
+import io.kudos.base.query.eq
 import io.kudos.ms.auth.common.vo.role.AuthRoleCacheItem
 import io.kudos.ms.auth.core.model.po.AuthRole
 import io.kudos.ms.auth.core.model.table.AuthRoles
@@ -31,7 +30,7 @@ open class AuthRoleDao : BaseCrudDao<String, AuthRole, AuthRoles>() {
      * @return List<AuthRoleCacheItem>
      */
     open fun searchActiveRolesForCache(): List<AuthRoleCacheItem> {
-        val criteria = Criteria(AuthRole::active.name, OperatorEnum.EQ, true)
+        val criteria = Criteria(AuthRole::active eq true)
         return searchAs<AuthRoleCacheItem>(criteria)
     }
 
@@ -44,10 +43,23 @@ open class AuthRoleDao : BaseCrudDao<String, AuthRole, AuthRoles>() {
      */
     open fun searchRoleByTenantIdAndRoleCode(tenantId: String, code: String): AuthRoleCacheItem? {
         val criteria = Criteria.and(
-            Criterion(AuthRole::tenantId.name, OperatorEnum.EQ, tenantId),
-            Criterion(AuthRole::code.name, OperatorEnum.EQ, code)
+            AuthRole::tenantId eq tenantId,
+            AuthRole::code eq code
         )
         return searchAs<AuthRoleCacheItem>(criteria).firstOrNull()
+    }
+
+    /**
+     * 查询租户下所有启用角色ID
+     *
+     * @param tenantId 租户ID
+     * @return 角色ID列表
+     */
+    fun searchActiveRoleIdsByTenantId(tenantId: String): List<String> {
+        val criteria = Criteria(AuthRole::tenantId eq tenantId)
+            .addAnd(AuthRole::active eq true)
+        @Suppress("UNCHECKED_CAST")
+        return searchProperty(criteria, AuthRole::id.name) as List<String>
     }
 
     //endregion your codes 2

@@ -2,7 +2,7 @@ package io.kudos.ms.sys.core.dao
 
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.base.query.Criteria
-import io.kudos.base.query.enums.OperatorEnum
+import io.kudos.base.query.eq
 import io.kudos.ms.sys.common.vo.system.SysSystemCacheItem
 import io.kudos.ms.sys.core.model.po.SysSystem
 import io.kudos.ms.sys.core.model.table.SysSystems
@@ -25,7 +25,7 @@ open class SysSystemDao : BaseCrudDao<String, SysSystem, SysSystems>() {
      * @return List<SysSystemCacheItem>
      */
     open fun fetchSystemsByType(isSubSystem: Boolean): List<SysSystemCacheItem> {
-        val criteria = Criteria(SysSystem::subSystem.name, OperatorEnum.EQ, isSubSystem)
+        val criteria = Criteria(SysSystem::subSystem eq isSubSystem)
         return searchAs<SysSystemCacheItem>(criteria)
     }
 

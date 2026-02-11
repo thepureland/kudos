@@ -3,8 +3,6 @@ package io.kudos.ms.sys.core.service.impl
 import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.query.Criteria
-import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.ms.sys.core.cache.TenantIdsBySystemCodeCache
 import io.kudos.ms.sys.core.dao.SysTenantSystemDao
 import io.kudos.ms.sys.core.model.po.SysTenantSystem
@@ -94,9 +92,7 @@ open class SysTenantSystemService : BaseCrudService<String, SysTenantSystem, Sys
      */
     @Transactional
     override fun unbind(tenantId: String, systemCode: String): Boolean {
-        val criteria = Criteria.of(SysTenantSystem::tenantId.name, OperatorEnum.EQ, tenantId)
-            .addAnd(SysTenantSystem::systemCode.name, OperatorEnum.EQ, systemCode)
-        val count = dao.batchDeleteCriteria(criteria)
+        val count = dao.deleteByTenantIdAndSystemCode(tenantId, systemCode)
         val success = count > 0
         if (success) {
             log.debug("解绑租户${tenantId}与系统${systemCode}的关系。")
@@ -119,6 +115,14 @@ open class SysTenantSystemService : BaseCrudService<String, SysTenantSystem, Sys
      */
     override fun exists(tenantId: String, systemCode: String): Boolean {
         return dao.exists(tenantId, systemCode)
+    }
+
+    override fun deleteByTenantId(tenantId: String): Int {
+        return dao.batchDeleteByTenantIds(listOf(tenantId))
+    }
+
+    override fun batchDeleteByTenantIds(tenantIds: Collection<String>): Int {
+        return dao.batchDeleteByTenantIds(tenantIds)
     }
 
     /**

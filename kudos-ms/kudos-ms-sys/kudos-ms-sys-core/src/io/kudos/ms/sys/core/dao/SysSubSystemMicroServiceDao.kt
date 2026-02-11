@@ -2,8 +2,7 @@ package io.kudos.ms.sys.core.dao
 
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.base.query.Criteria
-import io.kudos.base.query.Criterion
-import io.kudos.base.query.enums.OperatorEnum
+import io.kudos.base.query.eq
 import io.kudos.ms.sys.core.model.po.SysSubSystemMicroService
 import io.kudos.ms.sys.core.model.table.SysSubSystemMicroServices
 import org.springframework.stereotype.Repository
@@ -30,7 +29,7 @@ open class SysSubSystemMicroServiceDao : BaseCrudDao<String, SysSubSystemMicroSe
      * @return Set<微服务编码>
      */
     fun searchMicroServiceCodesBySubSystemCode(subSystemCode: String): Set<String> {
-        val criteria = Criteria.of(SysSubSystemMicroService::subSystemCode.name, OperatorEnum.EQ, subSystemCode)
+        val criteria = Criteria(SysSubSystemMicroService::subSystemCode eq subSystemCode)
         @Suppress("UNCHECKED_CAST")
         return searchProperty(criteria, SysSubSystemMicroService::microServiceCode.name).toSet() as Set<String>
     }
@@ -42,7 +41,7 @@ open class SysSubSystemMicroServiceDao : BaseCrudDao<String, SysSubSystemMicroSe
      * @return Set<子系统编码>
      */
     fun fetchSubSystemCodesByMicroServiceCode(microServiceCode: String): Set<String> {
-        val criteria = Criteria(SysSubSystemMicroService::microServiceCode.name, OperatorEnum.EQ, microServiceCode)
+        val criteria = Criteria(SysSubSystemMicroService::microServiceCode eq microServiceCode)
         @Suppress("UNCHECKED_CAST")
         return searchProperty(criteria, SysSubSystemMicroService::subSystemCode.name).toSet() as Set<String>
     }
@@ -56,10 +55,25 @@ open class SysSubSystemMicroServiceDao : BaseCrudDao<String, SysSubSystemMicroSe
      */
     fun exists(subSystemCode: String, microServiceCode: String): Boolean {
         val criteria = Criteria.and(
-            Criterion(SysSubSystemMicroService::subSystemCode.name, OperatorEnum.EQ, subSystemCode),
-            Criterion(SysSubSystemMicroService::microServiceCode.name, OperatorEnum.EQ, microServiceCode)
+            SysSubSystemMicroService::subSystemCode eq subSystemCode,
+            SysSubSystemMicroService::microServiceCode eq microServiceCode
         )
         return count(criteria) > 0
+    }
+
+    /**
+     * 按子系统编码和微服务编码删除关系
+     *
+     * @param subSystemCode 子系统编码
+     * @param microServiceCode 微服务编码
+     * @return 删除条数
+     */
+    fun deleteBySubSystemCodeAndMicroServiceCode(subSystemCode: String, microServiceCode: String): Int {
+        val criteria = Criteria.and(
+            SysSubSystemMicroService::subSystemCode eq subSystemCode,
+            SysSubSystemMicroService::microServiceCode eq microServiceCode
+        )
+        return batchDeleteCriteria(criteria)
     }
 
     //endregion your codes 2

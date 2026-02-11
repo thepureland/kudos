@@ -2,8 +2,7 @@ package io.kudos.ms.user.core.dao
 
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.base.query.Criteria
-import io.kudos.base.query.Criterion
-import io.kudos.base.query.enums.OperatorEnum
+import io.kudos.base.query.eq
 import io.kudos.ms.user.common.vo.user.UserAccountCacheItem
 import io.kudos.ms.user.core.model.po.UserAccount
 import io.kudos.ms.user.core.model.table.UserAccounts
@@ -33,8 +32,8 @@ open class UserAccountDao : BaseCrudDao<String, UserAccount, UserAccounts>() {
      */
     open fun getUsersByTenantIdAndUsername(tenantId: String, username: String): UserAccountCacheItem? {
         val criteria = Criteria.and(
-            Criterion(UserAccount::tenantId.name, OperatorEnum.EQ, tenantId),
-            Criterion(UserAccount::username.name, OperatorEnum.EQ, username)
+            UserAccount::tenantId eq tenantId,
+            UserAccount::username eq username
         )
         return searchAs<UserAccountCacheItem>(criteria).firstOrNull()
     }
@@ -45,8 +44,21 @@ open class UserAccountDao : BaseCrudDao<String, UserAccount, UserAccounts>() {
      * @return List<UserAccountCacheItem>
      */
     open fun searchActiveUsersForCache(): List<UserAccountCacheItem> {
-        val criteria = Criteria(UserAccount::active.name, OperatorEnum.EQ, true)
+        val criteria = Criteria(UserAccount::active eq true)
         return searchAs<UserAccountCacheItem>(criteria)
+    }
+
+    /**
+     * 查询租户下所有启用用户ID
+     *
+     * @param tenantId 租户ID
+     * @return 用户ID列表
+     */
+    fun searchActiveUserIdsByTenantId(tenantId: String): List<String> {
+        val criteria = Criteria(UserAccount::tenantId eq tenantId)
+            .addAnd(UserAccount::active eq true)
+        @Suppress("UNCHECKED_CAST")
+        return searchProperty(criteria, UserAccount::id.name) as List<String>
     }
 
     //endregion your codes 2

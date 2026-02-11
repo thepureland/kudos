@@ -2,8 +2,7 @@ package io.kudos.ms.auth.core.dao
 
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.base.query.Criteria
-import io.kudos.base.query.Criterion
-import io.kudos.base.query.enums.OperatorEnum
+import io.kudos.base.query.eq
 import io.kudos.ms.auth.core.model.po.AuthGroupRole
 import io.kudos.ms.auth.core.model.table.AuthGroupRoles
 import org.springframework.stereotype.Repository
@@ -34,8 +33,8 @@ open class AuthGroupRoleDao : BaseCrudDao<String, AuthGroupRole, AuthGroupRoles>
      */
     fun exists(groupId: String, roleId: String): Boolean {
         val criteria = Criteria.and(
-            Criterion(AuthGroupRole::groupId.name, OperatorEnum.EQ, groupId),
-            Criterion(AuthGroupRole::roleId.name, OperatorEnum.EQ, roleId)
+            AuthGroupRole::groupId eq groupId,
+            AuthGroupRole::roleId eq roleId
         )
         return count(criteria) > 0
     }
@@ -49,7 +48,7 @@ open class AuthGroupRoleDao : BaseCrudDao<String, AuthGroupRole, AuthGroupRoles>
      * @since 1.0.0
      */
     fun searchRoleIdsByGroupId(groupId: String): Set<String> {
-        val criteria = Criteria(AuthGroupRole::groupId.name, OperatorEnum.EQ, groupId)
+        val criteria = Criteria(AuthGroupRole::groupId eq groupId)
         @Suppress("UNCHECKED_CAST")
         val roleIds = searchProperty(criteria, AuthGroupRole::roleId.name) as List<String>
         return roleIds.toSet()
@@ -64,7 +63,7 @@ open class AuthGroupRoleDao : BaseCrudDao<String, AuthGroupRole, AuthGroupRoles>
      * @since 1.0.0
      */
     fun searchGroupIdsByRoleId(roleId: String): Set<String> {
-        val criteria = Criteria(AuthGroupRole::roleId.name, OperatorEnum.EQ, roleId)
+        val criteria = Criteria(AuthGroupRole::roleId eq roleId)
         @Suppress("UNCHECKED_CAST")
         val groupIds = searchProperty(criteria, AuthGroupRole::groupId.name) as List<String>
         return groupIds.toSet()
@@ -78,6 +77,21 @@ open class AuthGroupRoleDao : BaseCrudDao<String, AuthGroupRole, AuthGroupRoles>
     fun searchAllGroupIdToRoleIdsForCache(): Map<String, List<String>> {
         val all = allSearch()
         return all.groupBy { it.groupId }.mapValues { (_, list) -> list.map { it.roleId } }
+    }
+
+    /**
+     * 按组ID和角色ID删除关系
+     *
+     * @param groupId 组ID
+     * @param roleId 角色ID
+     * @return 删除条数
+     */
+    fun deleteByGroupIdAndRoleId(groupId: String, roleId: String): Int {
+        val criteria = Criteria.and(
+            AuthGroupRole::groupId eq groupId,
+            AuthGroupRole::roleId eq roleId
+        )
+        return batchDeleteCriteria(criteria)
     }
 
     //endregion your codes 2

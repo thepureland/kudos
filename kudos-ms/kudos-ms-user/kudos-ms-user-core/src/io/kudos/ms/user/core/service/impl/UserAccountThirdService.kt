@@ -1,8 +1,6 @@
 package io.kudos.ms.user.core.service.impl
 
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
-import io.kudos.base.query.Criteria
-import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.ms.user.core.dao.UserAccountThirdDao
 import io.kudos.ms.user.core.model.po.UserAccountThird
 import io.kudos.ms.user.core.service.iservice.IUserAccountThirdService
@@ -24,8 +22,7 @@ open class UserAccountThirdService : BaseCrudService<String, UserAccountThird, U
     //region your codes 2
 
     override fun getByUserAccountId(userId: String): List<UserAccountThird> {
-        val criteria = Criteria(UserAccountThird::userId.name, OperatorEnum.EQ, userId)
-        return dao.search(criteria)
+        return dao.searchByUserId(userId)
     }
 
     override fun getByProviderSubject(
@@ -34,17 +31,7 @@ open class UserAccountThirdService : BaseCrudService<String, UserAccountThird, U
         accountProviderIssuer: String?,
         subject: String
     ): UserAccountThird? {
-        val criteria = Criteria(UserAccountThird::tenantId.name, OperatorEnum.EQ, tenantId)
-            .addAnd(UserAccountThird::accountProviderDictCode.name, OperatorEnum.EQ, accountProviderDictCode)
-            .addAnd(UserAccountThird::subject.name, OperatorEnum.EQ, subject)
-
-        if (accountProviderIssuer == null) {
-            criteria.addAnd(UserAccountThird::accountProviderIssuer.name, OperatorEnum.IS_NULL, null)
-        } else {
-            criteria.addAnd(UserAccountThird::accountProviderIssuer.name, OperatorEnum.EQ, accountProviderIssuer)
-        }
-
-        return dao.search(criteria).firstOrNull()
+        return dao.fetchByProviderSubject(tenantId, accountProviderDictCode, accountProviderIssuer, subject)
     }
 
     //endregion your codes 2

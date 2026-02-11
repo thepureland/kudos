@@ -2,7 +2,8 @@ package io.kudos.ms.auth.core.dao
 
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.base.query.Criteria
-import io.kudos.base.query.enums.OperatorEnum
+import io.kudos.base.query.eq
+import io.kudos.base.query.inList
 import io.kudos.ms.auth.core.model.po.AuthRoleResource
 import io.kudos.ms.auth.core.model.table.AuthRoleResources
 import org.springframework.stereotype.Repository
@@ -32,8 +33,8 @@ open class AuthRoleResourceDao : BaseCrudDao<String, AuthRoleResource, AuthRoleR
      * @since 1.0.0
      */
     fun exists(roleId: String, resourceId: String): Boolean {
-        val criteria = Criteria.of(AuthRoleResource::roleId.name, OperatorEnum.EQ, roleId)
-            .addAnd(AuthRoleResource::resourceId.name, OperatorEnum.EQ, resourceId)
+        val criteria = Criteria(AuthRoleResource::roleId eq roleId)
+            .addAnd(AuthRoleResource::resourceId eq resourceId)
         return count(criteria) > 0
     }
 
@@ -46,7 +47,7 @@ open class AuthRoleResourceDao : BaseCrudDao<String, AuthRoleResource, AuthRoleR
      * @since 1.0.0
      */
     fun searchRoleIdsByResourceId(resourceId: String): Set<String> {
-        val criteria = Criteria(AuthRoleResource::resourceId.name, OperatorEnum.EQ, resourceId)
+        val criteria = Criteria(AuthRoleResource::resourceId eq resourceId)
         @Suppress("UNCHECKED_CAST")
         val roleIds = searchProperty(criteria, AuthRoleResource::roleId.name) as List<String>
         return roleIds.toSet()
@@ -60,7 +61,7 @@ open class AuthRoleResourceDao : BaseCrudDao<String, AuthRoleResource, AuthRoleR
      */
     fun searchResourceIdsByRoleIds(roleIds: Collection<String>): Set<String> {
         if (roleIds.isEmpty()) return emptySet()
-        val criteria = Criteria(AuthRoleResource::roleId.name, OperatorEnum.IN, roleIds.toList())
+        val criteria = Criteria(AuthRoleResource::roleId inList roleIds.toList())
         @Suppress("UNCHECKED_CAST")
         val list = searchProperty(criteria, AuthRoleResource::resourceId.name) as List<String>
         return list.map { it.trim() }.distinct().toSet()
@@ -74,6 +75,19 @@ open class AuthRoleResourceDao : BaseCrudDao<String, AuthRoleResource, AuthRoleR
     fun searchAllRoleIdToResourceIdsForCache(): Map<String, List<String>> {
         val all = allSearch()
         return all.groupBy { it.roleId }.mapValues { (_, list) -> list.map { it.resourceId.trim() } }
+    }
+
+    /**
+     * 按角色ID和资源ID删除关系
+     *
+     * @param roleId 角色ID
+     * @param resourceId 资源ID
+     * @return 删除条数
+     */
+    fun deleteByRoleIdAndResourceId(roleId: String, resourceId: String): Int {
+        val criteria = Criteria(AuthRoleResource::roleId eq roleId)
+            .addAnd(AuthRoleResource::resourceId eq resourceId)
+        return batchDeleteCriteria(criteria)
     }
 
     //endregion your codes 2

@@ -2,8 +2,6 @@ package io.kudos.ms.user.core.service.impl
 
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.query.Criteria
-import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.ms.user.core.dao.UserLogLoginDao
 import io.kudos.ms.user.core.model.po.UserLogLogin
 import io.kudos.ms.user.core.service.iservice.IUserLogLoginService
@@ -27,91 +25,35 @@ open class UserLogLoginService : BaseCrudService<String, UserLogLogin, UserLogLo
     private val log = LogFactory.getLog(this)
 
     override fun getLoginsByUserId(userId: String, limit: Int): List<UserLogLogin> {
-        val criteria = Criteria.of(UserLogLogin::userId.name, OperatorEnum.EQ, userId)
-        val logins = dao.search(criteria)
+        val logins = dao.searchByUserId(userId)
         return logins.sortedByDescending { it.loginTime }.take(limit)
     }
 
     override fun getLoginsByTenantId(tenantId: String, limit: Int): List<UserLogLogin> {
-        val criteria = Criteria.of(UserLogLogin::tenantId.name, OperatorEnum.EQ, tenantId)
-        val logins = dao.search(criteria)
+        val logins = dao.searchByTenantId(tenantId)
         return logins.sortedByDescending { it.loginTime }.take(limit)
     }
 
     override fun getLoginsByTimeRange(tenantId: String?, userId: String?, startTime: LocalDateTime, endTime: LocalDateTime): List<UserLogLogin> {
-        val criteria = Criteria.of(UserLogLogin::loginTime.name, OperatorEnum.GE, startTime)
-            .addAnd(UserLogLogin::loginTime.name, OperatorEnum.LE, endTime)
-        if (tenantId != null) {
-            criteria.addAnd(UserLogLogin::tenantId.name, OperatorEnum.EQ, tenantId)
-        }
-        if (userId != null) {
-            criteria.addAnd(UserLogLogin::userId.name, OperatorEnum.EQ, userId)
-        }
-        val logins = dao.search(criteria)
+        val logins = dao.searchByFilters(tenantId, userId, startTime, endTime)
         return logins.sortedByDescending { it.loginTime }
     }
 
     override fun getRecentLogins(tenantId: String?, userId: String?, limit: Int): List<UserLogLogin> {
-        val criteria = Criteria()
-        if (tenantId != null) {
-            criteria.addAnd(UserLogLogin::tenantId.name, OperatorEnum.EQ, tenantId)
-        }
-        if (userId != null) {
-            criteria.addAnd(UserLogLogin::userId.name, OperatorEnum.EQ, userId)
-        }
-        val logins = dao.search(criteria)
+        val logins = dao.searchByFilters(tenantId, userId, null, null)
         return logins.sortedByDescending { it.loginTime }.take(limit)
     }
 
     override fun countLogins(tenantId: String?, userId: String?, startTime: LocalDateTime?, endTime: LocalDateTime?): Long {
-        val criteria = Criteria()
-        if (tenantId != null) {
-            criteria.addAnd(UserLogLogin::tenantId.name, OperatorEnum.EQ, tenantId)
-        }
-        if (userId != null) {
-            criteria.addAnd(UserLogLogin::userId.name, OperatorEnum.EQ, userId)
-        }
-        if (startTime != null) {
-            criteria.addAnd(UserLogLogin::loginTime.name, OperatorEnum.GE, startTime)
-        }
-        if (endTime != null) {
-            criteria.addAnd(UserLogLogin::loginTime.name, OperatorEnum.LE, endTime)
-        }
-        return dao.count(criteria).toLong()
+        return dao.countByFilters(tenantId, userId, startTime, endTime).toLong()
     }
 
     override fun countSuccessLogins(tenantId: String?, userId: String?, startTime: LocalDateTime?, endTime: LocalDateTime?): Long {
-        val criteria = Criteria.of(UserLogLogin::loginSuccess.name, OperatorEnum.EQ, true)
-        if (tenantId != null) {
-            criteria.addAnd(UserLogLogin::tenantId.name, OperatorEnum.EQ, tenantId)
-        }
-        if (userId != null) {
-            criteria.addAnd(UserLogLogin::userId.name, OperatorEnum.EQ, userId)
-        }
-        if (startTime != null) {
-            criteria.addAnd(UserLogLogin::loginTime.name, OperatorEnum.GE, startTime)
-        }
-        if (endTime != null) {
-            criteria.addAnd(UserLogLogin::loginTime.name, OperatorEnum.LE, endTime)
-        }
-        return dao.count(criteria).toLong()
+        return dao.countByLoginSuccess(true, tenantId, userId, startTime, endTime).toLong()
     }
 
     override fun countFailureLogins(tenantId: String?, userId: String?, startTime: LocalDateTime?, endTime: LocalDateTime?): Long {
-        val criteria = Criteria.of(UserLogLogin::loginSuccess.name, OperatorEnum.EQ, false)
-        if (tenantId != null) {
-            criteria.addAnd(UserLogLogin::tenantId.name, OperatorEnum.EQ, tenantId)
-        }
-        if (userId != null) {
-            criteria.addAnd(UserLogLogin::userId.name, OperatorEnum.EQ, userId)
-        }
-        if (startTime != null) {
-            criteria.addAnd(UserLogLogin::loginTime.name, OperatorEnum.GE, startTime)
-        }
-        if (endTime != null) {
-            criteria.addAnd(UserLogLogin::loginTime.name, OperatorEnum.LE, endTime)
-        }
-        return dao.count(criteria).toLong()
+        return dao.countByLoginSuccess(false, tenantId, userId, startTime, endTime).toLong()
     }
 
     //endregion your codes 2
