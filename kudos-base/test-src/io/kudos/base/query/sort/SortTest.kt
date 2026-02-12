@@ -204,11 +204,11 @@ internal class SortTest {
             Order("userName", DirectionEnum.ASC),
             Order("createTime", DirectionEnum.DESC)
         )
-        val columnMap = mapOf("userName" to "user_name", "createTime" to "create_time")
+        val columnMap = mapOf("userName" to "user_name")
         val sql = Sort.toSql(orders, columnMap)
         assertTrue(sql.contains("user_name"))
         // createTime没有映射，应该使用默认转换
-        assertTrue(sql.contains("create_time") || sql.contains("createTime"))
+        assertTrue(sql.contains("create_time"))
     }
 
     @Test

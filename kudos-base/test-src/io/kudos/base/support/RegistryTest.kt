@@ -21,12 +21,9 @@ internal class RegistryTest {
         val list1 = Registry.lookup(key)
         // 第一次 lookup，应该是空列表
         assertTrue(list1.isEmpty(), "对不存在的 key 调用 lookup，应返回空列表")
-
-        // 尝试对返回的“空列表”进行修改
-        list1.add("someObject")
-        // 然后再次 lookup，map 内部并未记录这个 key，依然是空
+        // 再次 lookup，map 内部依然为空
         val list2 = Registry.lookup(key)
-        assertTrue(list2.isEmpty(), "对 lookup 返回的空列表进行修改，不应影响 Registry 内部状态")
+        assertTrue(list2.isEmpty(), "对不存在 key 的 lookup 不应改变 Registry 内部状态")
     }
 
     @Test

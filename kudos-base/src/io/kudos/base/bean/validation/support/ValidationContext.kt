@@ -73,7 +73,7 @@ object ValidationContext {
     }
 
     /** 用于传递Bean给ConstraintValidator，因为hibernate validation的ConstraintValidatorContext取不到Bean */
-    private val beanMap = mutableMapOf<Int, Any>() // Map<ConstraintDescriptor对象的hashcode，Bean对象>
+    private val beanMapThreadLocal = ThreadLocal.withInitial { mutableMapOf<Int, Any>() } // Map<ConstraintDescriptor对象的hashcode，Bean对象>
 
     /** 是否快速失败模式 */
     private val failFastThreadLocal = InheritableThreadLocal<Boolean>()
@@ -98,23 +98,23 @@ object ValidationContext {
         val beanDescriptor = validator.getConstraintsForClass(bean.javaClass)
 
         // 遍历该 bean 中所有有约束的属性
-        beanDescriptor.constrainedProperties.forEach(Consumer { it: PropertyDescriptor? ->
-            val propertyName = it!!.propertyName
+        beanDescriptor.constrainedProperties.forEach(Consumer { descriptor: PropertyDescriptor ->
+            val propertyName = descriptor.propertyName
             // 拼接路径时确保 parentPath 为空时不会导致前面多一个 "."
             val fullPath =
                 if (parentPath.isNullOrEmpty()) propertyName else "$parentPath.$propertyName"
 
             // 对每个属性的约束进行检查
-            it.constraintDescriptors.forEach(Consumer { des: ConstraintDescriptor<*>? ->
+            descriptor.constraintDescriptors.forEach(Consumer { des: ConstraintDescriptor<*> ->
                 val annoClassName = (des as ConstraintDescriptorImpl<*>).getAnnotationDescriptor().getType().getName()
                 // 过滤掉 Jakarta 和 Hibernate 的注解
                 if (!annoClassName.startsWith("jakarta") && !annoClassName.startsWith("org.hibernate")) {
-                    beanMap[des.hashCode()] = bean
+                    beanMapThreadLocal.get()[des.hashCode()] = bean
                 }
             })
 
             // 判断是否为嵌套对象，即该属性是否有其他受约束的属性（嵌套校验）
-            if (it.isCascaded) {
+            if (descriptor.isCascaded) {
                 // 通过 bean 描述符获取嵌套对象的类型
                 val nestedBean = BeanKit.getProperty(bean, propertyName)
                 // 处理列表对象的情况
@@ -128,7 +128,9 @@ object ValidationContext {
                     }
                 } else {
                     // 处理普通嵌套对象
-                    set(validator, nestedBean!!, fullPath)
+                    if (nestedBean != null) {
+                        set(validator, nestedBean, fullPath)
+                    }
                 }
             }
         })
@@ -144,7 +146,14 @@ object ValidationContext {
      */
     fun get(constraintValidatorContext: ConstraintValidatorContext): Any? {
         val descriptor = (constraintValidatorContext as ConstraintValidatorContextImpl).constraintDescriptor
-        return beanMap.remove(descriptor.hashCode())
+        return beanMapThreadLocal.get().remove(descriptor.hashCode())
+    }
+
+    /**
+     * 清理当前缓存的Bean映射，避免跨次校验残留。
+     */
+    fun clearBeans() {
+        beanMapThreadLocal.remove()
     }
 
     /**
@@ -163,6 +172,6 @@ object ValidationContext {
      * @author K
      * @since 1.0.0
      */
-    fun isFailFast(): Boolean = failFastThreadLocal.get()
+    fun isFailFast(): Boolean = failFastThreadLocal.get() ?: true
 
 }

@@ -17,26 +17,21 @@ package io.kudos.base.io.scanner.classpath
 
 import io.kudos.base.io.IoKit
 import io.kudos.base.io.scanner.support.Resource
+import java.io.IOException
 import java.io.InputStreamReader
-import java.io.Reader
-import java.io.UnsupportedEncodingException
 import java.net.URL
 import java.net.URLDecoder
-import java.nio.charset.Charset
+import java.nio.charset.StandardCharsets
 
 /**
  * A resource on the classpath.
  */
-class ClassPathResource(override val location: String?) : Comparable<ClassPathResource>, Resource {
+class ClassPathResource(override val location: String) : Comparable<ClassPathResource>, Resource {
 
     override val locationOnDisk: String?
         get() {
-            val url = url ?: throw Exception("Unable to location resource on disk: $location")
-            return try {
-                URLDecoder.decode(url.path, "UTF-8")
-            } catch (e: UnsupportedEncodingException) {
-                throw Exception("Unknown encoding: UTF-8", e)
-            }
+            val url = url ?: throw IOException("Unable to locate resource on disk: $location")
+            return URLDecoder.decode(url.path, StandardCharsets.UTF_8)
         }
 
     /**
@@ -53,19 +48,24 @@ class ClassPathResource(override val location: String?) : Comparable<ClassPathRe
 
     override fun loadAsString(encoding: String): String {
         val inputStream = classLoader.getResourceAsStream(location)
-            ?: throw Exception("Unable to obtain inputStream for resource: $location")
-        val reader: Reader = InputStreamReader(inputStream, Charset.forName(encoding))
-        return IoKit.toString(reader)
+            ?: throw IOException("Unable to obtain inputStream for resource: $location")
+        inputStream.use { stream ->
+            InputStreamReader(stream, encoding).use { reader ->
+                return IoKit.toString(reader)
+            }
+        }
     }
 
     override fun loadAsBytes(): ByteArray {
         val inputStream = classLoader.getResourceAsStream(location)
-            ?: throw Exception("Unable to obtain inputStream for resource: $location")
-        return IoKit.toByteArray(inputStream)
+            ?: throw IOException("Unable to obtain inputStream for resource: $location")
+        inputStream.use { stream ->
+            return IoKit.toByteArray(stream)
+        }
     }
 
     override val filename: String
-        get() = location!!.substring(location.lastIndexOf("/") + 1)
+        get() = location.substring(location.lastIndexOf("/") + 1)
 
     override fun exists(): Boolean {
         return url != null
@@ -83,11 +83,11 @@ class ClassPathResource(override val location: String?) : Comparable<ClassPathRe
     }
 
     override fun hashCode(): Int {
-        return location!!.hashCode()
+        return location.hashCode()
     }
 
     override fun compareTo(other: ClassPathResource): Int {
-        return location!!.compareTo(other.location!!)
+        return location.compareTo(other.location)
     }
 
 }

@@ -56,7 +56,7 @@ open class CustomRuntimeException : RuntimeException {
         resolveException(message, *args)
     }
 
-    constructor(cause: Throwable) : this(cause, cause.message!!)
+    constructor(cause: Throwable) : this(cause, cause.message ?: cause.javaClass.name)
 
     constructor(cause: Throwable, message: String, vararg args: Any?) {
         resolveCauseException(cause, message, *args)

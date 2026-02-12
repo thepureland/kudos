@@ -57,7 +57,9 @@ enum class ProvinceEnum(
 
     companion object {
         fun enumOf(code: String): ProvinceEnum {
-            return EnumKit.enumOf(ProvinceEnum::class, code)!!
+            return requireNotNull(EnumKit.enumOf(ProvinceEnum::class, code)) {
+                "无效省份编码: $code"
+            }
         }
     }
 }

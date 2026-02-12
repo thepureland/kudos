@@ -1,7 +1,6 @@
 package io.kudos.base.support
 
 import io.kudos.base.logger.LogFactory
-import java.io.IOException
 import java.util.*
 
 
@@ -49,9 +48,8 @@ class PropertiesLoader {
         this.properties = properties
     }
 
-    @Suppress("UNCHECKED_CAST")
     constructor(vararg resourcesPaths: String?) {
-        properties = loadProperties(*resourcesPaths as Array<out String>)
+        properties = loadProperties(*resourcesPaths.filterNotNull().toTypedArray())
     }
 
     /**
@@ -156,13 +154,21 @@ class PropertiesLoader {
         for (location in resourcesPaths) {
             log.debug("Loading properties file from:$location")
             try {
-                javaClass.getResourceAsStream(location).use { props.load(it) }
-            } catch (ex: IOException) {
-                log.debug("Could not load properties from path:$location, ${ex.message}")
+                val normalizedPath = normalizeResourcePath(location)
+                val stream = Thread.currentThread().contextClassLoader?.getResourceAsStream(normalizedPath)
+                    ?: javaClass.getResourceAsStream(if (normalizedPath.startsWith("/")) normalizedPath else "/$normalizedPath")
+                stream?.use { input ->
+                    props.load(input)
+                } ?: log.warn("Could not load properties from path:$location (normalized:$normalizedPath), resource not found")
+            } catch (ex: Exception) {
+                log.warn("Could not load properties from path:$location, ${ex.message}")
             }
         }
         return props
     }
+
+    private fun normalizeResourcePath(path: String): String =
+        path.removePrefix("classpath:").removePrefix("/")
 
     private val log = LogFactory.getLog(this)
 

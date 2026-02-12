@@ -20,8 +20,8 @@ class NotNullOnValidator : ConstraintValidator<NotNullOn, Any?> {
     }
 
     override fun isValid(value: Any?, context: ConstraintValidatorContext): Boolean {
-        val bean = ValidationContext.get(context)
+        val bean = ValidationContext.get(context) ?: return value != null
         val depends = notNullOn.depends
-        return !DependsValidator.validate(depends, bean!!) || value != null
+        return !DependsValidator.validate(depends, bean) || value != null
     }
 }

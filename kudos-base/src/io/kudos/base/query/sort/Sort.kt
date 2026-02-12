@@ -118,12 +118,7 @@ class Sort : Iterable<Order>, Serializable {
             for (order in orders) {
                 val property = order.property
                 val direction = order.direction.name.lowercase()
-                var columnName = if (columnMap == null) {
-                    property.humpToUnderscore()
-                } else {
-                    columnMap[property]
-                }
-                columnName = columnName!!.lowercase()
+                val columnName = (columnMap?.get(property) ?: property.humpToUnderscore()).lowercase()
                 orderSb.append(columnName).append(" ").append(direction).append(",")
             }
             return if (orderSb.length == 9) { // 所有指定的属性都不支持排序

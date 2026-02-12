@@ -37,7 +37,9 @@ object PathKit {
         }
         val path = try {
             val className = """${c.simpleName}.class"""
-            val thisClass = c.getResource(className)!!.path
+            val thisClass = requireNotNull(c.getResource(className)) {
+                "无法定位类资源：${c.name}/$className"
+            }.path
             thisClass.replace(className, "")
         } catch (_: Exception) {
             c.protectionDomain.codeSource.location.path
@@ -123,7 +125,9 @@ object PathKit {
      * @author K
      * @since 1.0.0
      */
-    fun getRuntimePath(): String = PathKit::class.java.classLoader.getResource(".")!!.path
+    fun getRuntimePath(): String = requireNotNull(PathKit::class.java.classLoader.getResource(".")) {
+        "无法获取运行时路径资源: ."
+    }.path
 
     /**
      * 获取系统临时目录

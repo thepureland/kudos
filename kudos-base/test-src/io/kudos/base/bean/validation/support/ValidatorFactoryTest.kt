@@ -1,6 +1,7 @@
 package io.kudos.base.bean.validation.support
 
 import jakarta.validation.constraints.*
+import org.hibernate.validator.constraints.CreditCardNumber
 import org.hibernate.validator.constraints.Length
 import kotlin.test.Test
 import kotlin.test.assertFalse
@@ -97,6 +98,16 @@ internal class ValidatorFactoryTest {
     }
 
     @Test
+    fun testGetValidatorForCreditCardNumber() {
+        val annotation = TestBean::class.java.getDeclaredField("cardNo")
+            .getAnnotation(CreditCardNumber::class.java)
+        if (annotation != null) {
+            val validators = ValidatorFactory.getValidator(annotation, "4111111111111111")
+            assertFalse(validators.isEmpty())
+        }
+    }
+
+    @Test
     fun testGetValidatorForUnsupportedAnnotation() {
         val annotation = object : Annotation {
             fun annotationType() = javaClass
@@ -119,6 +130,9 @@ internal class ValidatorFactoryTest {
         
         @get:Email
         @get:Pattern(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")
-        val email: String?
+        val email: String?,
+
+        @get:CreditCardNumber(ignoreNonDigitCharacters = true)
+        val cardNo: String?
     )
 }

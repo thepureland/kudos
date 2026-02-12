@@ -1,8 +1,6 @@
 package io.kudos.base.security
 
-import io.kudos.base.lang.collections.ArrayKit
 import io.kudos.base.lang.string.EncodeKit
-import io.kudos.base.logger.LogFactory
 import org.apache.commons.lang3.Validate
 import java.io.InputStream
 import java.security.MessageDigest
@@ -17,7 +15,6 @@ import java.security.SecureRandom
  */
 object DigestKit {
 
-    private val logger = LogFactory.getLog(this::class)
     const val SHA1 = "SHA-1"
     const val MD5 = "MD5"
 
@@ -49,11 +46,12 @@ object DigestKit {
      * @since 1.0.0
      */
     fun getMD5(original: ByteArray?, salt: String?): String? {
-        if (ArrayKit.isByteArrayEmpty(original)) {
+        val input = original ?: return null
+        if (input.isEmpty()) {
             return null
         }
         val s = salt?.toByteArray()
-        val md5s = digest(original!!, MD5, s, 1)
+        val md5s = digest(input, MD5, s, 1)
         return EncodeKit.encodeHex(md5s)
     }
 
@@ -162,7 +160,7 @@ object DigestKit {
             digest.update(salt)
         }
         var result = digest.digest(input)
-        (1 until iterations).forEach { i ->
+        (1 until iterations).forEach { _ ->
             digest.reset()
             result = digest.digest(result)
         }

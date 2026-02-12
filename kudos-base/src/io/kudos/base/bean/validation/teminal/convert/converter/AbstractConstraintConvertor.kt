@@ -18,7 +18,9 @@ abstract class AbstractConstraintConvertor(protected var annotation: Annotation)
     override fun convert(context: ConstraintConvertContext): TeminalConstraint {
         this.context = context
         val rules = this.handleRules()
-        val constraint = this.constraintAnnotation.annotationClass.simpleName!!
+        val constraint = requireNotNull(this.constraintAnnotation.annotationClass.simpleName) {
+            "无法解析约束注解名称: ${this.constraintAnnotation.annotationClass}"
+        }
         return TeminalConstraint(context.property, constraint, rules)
     }
 
@@ -37,7 +39,9 @@ abstract class AbstractConstraintConvertor(protected var annotation: Annotation)
      */
     private fun handleRules(): Array<Map<String, Any>> {
         val rules = mutableListOf<Map<String, Any>>()
-        val annotationClass = this.annotation.annotationClass.qualifiedName!! // 可能是约束注解类，也可能是约束的List注解类
+        val annotationClass = requireNotNull(this.annotation.annotationClass.qualifiedName) {
+            "无法解析注解限定名: ${this.annotation.annotationClass}"
+        } // 可能是约束注解类，也可能是约束的List注解类
         if (annotationClass.endsWith(".List")) {
             // 为List注解包装具体约束注解的形式，遍历处理每一个具体约束注解
             val annotationsProp = annotation.annotationClass.declaredMemberProperties.first()

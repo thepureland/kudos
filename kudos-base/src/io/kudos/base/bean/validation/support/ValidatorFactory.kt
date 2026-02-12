@@ -24,6 +24,7 @@ import java.time.chrono.JapaneseDate
 import java.time.chrono.MinguoDate
 import java.time.chrono.ThaiBuddhistDate
 import java.util.*
+import kotlin.reflect.KClass
 
 
 /**
@@ -44,7 +45,7 @@ object ValidatorFactory {
      * @since 1.0.0
      */
     fun getValidator(annotation: Annotation, value: Any): List<ConstraintValidator<*, Any?>> {
-        var validators: Any  = when (annotation) {
+        val validators: Any  = when (annotation) {
             // jakarta.validation定义的约束
             is AssertFalse -> AssertFalseValidator()
             is AssertTrue -> AssertTrueValidator()
@@ -320,9 +321,10 @@ object ValidatorFactory {
             // hibernate定义的约束
             is CodePointLength -> CodePointLengthValidator().apply { initialize(annotation) }
             is CreditCardNumber -> {
-                val ignoreNonDigitCharacters = annotation.ignoreNonDigitCharacters
-                val constructor = LuhnCheck::class.constructors.first()
-                val luhnCheck = constructor.callBy(mapOf(constructor.parameters[3] to ignoreNonDigitCharacters))
+                val luhnCheck = createAnnotationByNamedArgs(
+                    LuhnCheck::class,
+                    mapOf("ignoreNonDigitCharacters" to annotation.ignoreNonDigitCharacters)
+                )
                 getValidator(luhnCheck, value)
             }
 //            is Currency -> CurrencyValidatorForMonetaryAmount().apply { initialize(annotation) }
@@ -334,10 +336,8 @@ object ValidatorFactory {
             is Mod11Check -> Mod11CheckValidator().apply { initialize(annotation) }
             is ParameterScriptAssert -> ParameterScriptAssertValidator().apply { initialize(annotation) }
             is Range -> {
-                val minConstructor = Min::class.constructors.first()
-                val minAnnotation = minConstructor.callBy(mapOf(minConstructor.parameters[3] to annotation.min))
-                val maxConstructor = Max::class.constructors.first()
-                val maxAnnotation = maxConstructor.callBy(mapOf(maxConstructor.parameters[3] to annotation.max))
+                val minAnnotation = createAnnotationByNamedArgs(Min::class, mapOf("value" to annotation.min))
+                val maxAnnotation = createAnnotationByNamedArgs(Max::class, mapOf("value" to annotation.max))
                 listOf<ConstraintValidator<*, *>>(
                     getValidator(minAnnotation, value).first(),
                     getValidator(maxAnnotation, value).first(),
@@ -360,12 +360,35 @@ object ValidatorFactory {
 
             else -> listOf<ConstraintValidator<*, *>>()
         }
-        if (validators !is List<*>) {
-            validators = listOf(validators)
+        val validatorList = if (validators is List<*>) validators else listOf(validators)
+        return validatorList.map { validator ->
+            val constraintValidator = validator as? ConstraintValidator<*, *>
+                ?: error("无法识别的验证器类型：${validator?.let { it::class }}")
+            toAnyConstraintValidator(constraintValidator)
         }
+    }
 
-        @Suppress("UNCHECKED_CAST")
-        return validators as List<ConstraintValidator<*, Any?>>
+    @Suppress("UNCHECKED_CAST")
+    private fun toAnyConstraintValidator(validator: ConstraintValidator<*, *>): ConstraintValidator<*, Any?> =
+        validator as ConstraintValidator<*, Any?>
+
+    private fun <A : Annotation> createAnnotationByNamedArgs(
+        annotationClass: KClass<A>,
+        namedArgs: Map<String, Any>
+    ): A {
+        val constructor = annotationClass.constructors.firstOrNull()
+            ?: error("无法找到注解【${annotationClass.qualifiedName}】的构造函数")
+        val callArgs = constructor.parameters
+            .mapNotNull { parameter ->
+                val name = parameter.name
+                if (name != null && namedArgs.containsKey(name)) {
+                    parameter to namedArgs.getValue(name)
+                } else {
+                    null
+                }
+            }
+            .toMap()
+        return constructor.callBy(callArgs)
     }
 
 }

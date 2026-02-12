@@ -73,6 +73,9 @@ object I18nKit {
     }
 
     fun initI18nByType(vararg args: String): Boolean {
+        if (!::supportLocales.isInitialized || !::types.isInitialized) {
+            error("请先调用 initI18n 初始化 I18nKit")
+        }
         val type = if (args.isNotEmpty()) args[0] else ""
         val prefix = if (args.size > 1) args[1] else ""
         if (type.isNotBlank()) {
@@ -94,10 +97,13 @@ object I18nKit {
      * @since 1.0.0
      */
     fun getI18nMap(locale: String = defaultLocale): Map<String, MutableMap<String, MutableMap<String, String>>> {
-        return if (!isSupport(locale)) {
+        val resolvedLocale = if (!isSupport(locale)) {
             log.warn("不支持的Locale【${locale}】，按默认Locale【${defaultLocale}】处理！")
-            i18nMap[defaultLocale]!!
-        } else i18nMap[locale]!!
+            defaultLocale
+        } else {
+            locale
+        }
+        return i18nMap[resolvedLocale] ?: emptyMap()
     }
 
     /**
@@ -116,9 +122,11 @@ object I18nKit {
             log.warn("不支持的Locale【${locale}】，按默认Locale【${defaultLocale}】处理！")
             defaultLocale
         } else locale
-        return if (i18nMap[localeStr] != null && i18nMap[localeStr]!![type] != null && i18nMap[localeStr]!![type]!![module] != null) {
-            i18nMap[localeStr]!![type]!![module]!![i18nKey] ?: i18nKey
-        } else i18nKey
+        return i18nMap[localeStr]
+            ?.get(type)
+            ?.get(module)
+            ?.get(i18nKey)
+            ?: i18nKey
     }
 
     /**
@@ -191,15 +199,15 @@ object I18nKit {
         return null
     }
 
-    private fun initI18nByType(type: String, defaultLocale: String?, otherLocales: List<String?>, prefix: String) {
+    private fun initI18nByType(type: String, defaultLocale: String, otherLocales: List<String>, prefix: String) {
         val resources = ClassPathScanner.scanForResources(DEFAULT_BASE_PATH + type, prefix, ".properties")
         val resourceGroup = resourceGroup(resources)
         //先初始化:默认语言
-        initOneLocale(defaultLocale, type, resourceGroup[defaultLocale]!!)
+        initOneLocale(defaultLocale, type, resourceGroup[defaultLocale].orEmpty())
 
         //后初始化:其它语言
         for (locale in otherLocales) {
-            initOneLocale(locale, type, resourceGroup[locale]!!)
+            initOneLocale(locale, type, resourceGroup[locale].orEmpty())
             //补足缺失的国际化
             compareToSetDefaultLocale(defaultLocale, type, locale)
         }
@@ -211,14 +219,14 @@ object I18nKit {
      * @param type
      * @param resourceGroup
      */
-    private fun initOneLocale(locale: String?, type: String, resourceGroup: List<Resource>) {
+    private fun initOneLocale(locale: String, type: String, resourceGroup: List<Resource>) {
         val moduleSet = HashSet<String>()
         for (resource in resourceGroup) {
             var typeMap = i18nMap[locale]
             if (typeMap == null) {
                 typeMap = HashMap()
                 typeMap[type] = mutableMapOf()
-                i18nMap[locale as String] = typeMap
+                i18nMap[locale] = typeMap
             }
             val moduleAndLocale = getModuleAndLocale(resource)
             val moduleName = moduleAndLocale.first
@@ -242,15 +250,13 @@ object I18nKit {
      * @param type
      * @param locale
      */
-    private fun compareToSetDefaultLocale(defaultLocale: String?, type: String, locale: String?) {
-        val moduleMapDef = i18nMap[defaultLocale]!![type]
-        var moduleMap = i18nMap[locale]!![type]
+    private fun compareToSetDefaultLocale(defaultLocale: String, type: String, locale: String) {
+        val moduleMapDef = i18nMap[defaultLocale]?.get(type) ?: return
+        val localeTypeMap = i18nMap.getOrPut(locale) { mutableMapOf() }
+        var moduleMap = localeTypeMap[type]
         if (moduleMap == null) {
             moduleMap = LinkedHashMap()
-            i18nMap[locale]!![type] = moduleMap
-        }
-        if (moduleMapDef == null) {
-            return
+            localeTypeMap[type] = moduleMap
         }
         for ((module, keyValueMapDef) in moduleMapDef) {
             if (!moduleMap.containsKey(module)) {
@@ -260,7 +266,11 @@ object I18nKit {
             }
             val keyValueMap = moduleMap[module]
             for ((key, value) in keyValueMapDef) {
-                if (!keyValueMap!!.containsKey(key) || keyValueMap[key].isNullOrBlank()) {
+                if (keyValueMap == null || !keyValueMap.containsKey(key) || keyValueMap[key].isNullOrBlank()) {
+                    if (keyValueMap == null) {
+                        moduleMap[module] = linkedMapOf(key to value)
+                        continue
+                    }
                     keyValueMap[key] = value
                     //                    LOG.debug("i18n:缺失语言:{0},类型:{1},模块:{2},键:{3}",locale,type,module,key);
                 }
@@ -295,23 +305,14 @@ object I18nKit {
 
     private fun getModuleAndLocale(resource: Resource): Pair<String, String> {
         val baseName = resource.filename.substringBefore(".")
-        val moduleName = baseName.substring(0, baseName.length - 5 + -1)
-        val locale = baseName.right(5)!!
+        val moduleName = baseName.substring(0, baseName.length - 6)
+        val locale = requireNotNull(baseName.right(5)) { "无法从资源名解析locale: ${resource.filename}" }
         return Pair(moduleName, locale)
     }
 
     private fun createMapByModule(
         moduleMap: MutableMap<String, MutableMap<String, String>>, module: String
-    ): MutableMap<String, String> {
-        lateinit var map: MutableMap<String, String>
-        if (moduleMap.containsKey(module)) {
-            map = moduleMap[module]!!
-        } else {
-            map = HashMap()
-            moduleMap[module] = map
-        }
-        return map
-    }
+    ): MutableMap<String, String> = moduleMap.getOrPut(module) { HashMap() }
 
     /**
      * 将i18nMap里的字典,组织成字典专用的i18nMapDict
@@ -319,28 +320,22 @@ object I18nKit {
      */
     private fun initDictByLocale(locale: String) {
         synchronized(i18nMapDict) {
-            val allDicts = getI18nMap(locale)[DICT_I18N_KEY]
-            if (!i18nMapDict.containsKey(locale)) {
-                i18nMapDict[locale] = LinkedHashMap()
-            }
-            for (module in allDicts!!.keys) {
-                if (!i18nMapDict[locale]!!.containsKey(module)) {
-                    i18nMapDict[locale]!![module] = LinkedHashMap()
-                }
-                val allDictType: Set<String> = allDicts[module]!!.keys
+            val allDicts = getI18nMap(locale)[DICT_I18N_KEY] ?: return
+            val localeDictMap = i18nMapDict.getOrPut(locale) { LinkedHashMap() }
+            for ((module, moduleDictMap) in allDicts) {
+                val moduleMap = localeDictMap.getOrPut(module) { LinkedHashMap() }
+                val allDictType: Set<String> = moduleDictMap.keys
                 for (oneType in allDictType) {
                     try {
                         val dictTypeAndKey = oneType.split("\\.").toTypedArray()
                         val dictType = dictTypeAndKey[0]
                         val realKey = dictTypeAndKey[1]
-                        if (!i18nMapDict[locale]!![module]!!.containsKey(dictType)) {
-                            i18nMapDict[locale]!![module]!![dictType] = LinkedHashMap()
-                        }
-                        if (allDicts[module] != null) {
-                            val realValue = allDicts[module]!![oneType]
-                            i18nMapDict[locale]!![module]!![dictType]!![realKey] = realValue
+                        val dictTypeMap = moduleMap.getOrPut(dictType) { LinkedHashMap() }
+                        if (moduleDictMap[oneType] != null) {
+                            val realValue = moduleDictMap[oneType]
+                            dictTypeMap[realKey] = realValue
                         } else {
-                            i18nMapDict[locale]!![module]!![dictType]!![dictType] = module + "_" + oneType
+                            dictTypeMap[dictType] = module + "_" + oneType
                             log.error("i18n:字典国际化模块:{0},类型:{1},缺少Code！", module, oneType)
                         }
                     } catch (_: Exception) {

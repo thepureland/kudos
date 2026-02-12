@@ -46,7 +46,10 @@ object BeanKit {
      * @since 1.0.0
      */
     fun <T : Any> copyProperties(destClass: KClass<T>, srcObj: Any, propertyMap: Map<String, String>? = null): T {
-        val destObj = destClass.getEmptyConstructor()!!.call()
+        val constructor = requireNotNull(destClass.getEmptyConstructor()) {
+            "类${destClass.qualifiedName}必须提供无参构造器，才能执行属性拷贝。"
+        }
+        val destObj = constructor.call()
         copyProperties(srcObj, destObj, propertyMap)
         return destObj
     }
@@ -148,7 +151,10 @@ object BeanKit {
      */
     fun <T> resetPropertiesExcludeId(entity: IIdEntity<T>) {
         val id = entity.id
-        val emptyEntity: IIdEntity<T> = entity::class.getEmptyConstructor()!!.call()
+        val constructor = requireNotNull(entity::class.getEmptyConstructor()) {
+            "类${entity::class.qualifiedName}必须提供无参构造器，才能重置属性。"
+        }
+        val emptyEntity: IIdEntity<T> = constructor.call()
         copyProperties(emptyEntity, entity, null)
         entity.id = id
     }

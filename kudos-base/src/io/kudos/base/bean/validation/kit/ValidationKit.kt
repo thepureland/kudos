@@ -34,7 +34,11 @@ object ValidationKit {
         val classes = groups.map { it.java }.toTypedArray()
         val validator = getValidator(failFast)
         ValidationContext.set(validator, bean)
-        return validator.validate(bean, *classes)
+        return try {
+            validator.validate(bean, *classes)
+        } finally {
+            ValidationContext.clearBeans()
+        }
     }
 
     /**
@@ -58,7 +62,11 @@ object ValidationKit {
         val classes = groups.map { it.java }.toTypedArray()
         val validator = getValidator(failFast)
         ValidationContext.set(validator, bean)
-        return validator.validateProperty(bean, property, *classes)
+        return try {
+            validator.validateProperty(bean, property, *classes)
+        } finally {
+            ValidationContext.clearBeans()
+        }
     }
 
     /**
@@ -82,7 +90,11 @@ object ValidationKit {
         failFast: Boolean = true
     ): Set<ConstraintViolation<T>> {
         val classes = groups.map { it.java }.toTypedArray()
-        return getValidator(failFast).validateValue(beanClass.java, property, value, *classes)
+        return try {
+            getValidator(failFast).validateValue(beanClass.java, property, value, *classes)
+        } finally {
+            ValidationContext.clearBeans()
+        }
     }
 
     /**
@@ -104,7 +116,7 @@ object ValidationKit {
             ValidationContext.setFactory(validatorFactory)
             ValidationContext.validator = validatorFactory.validator
         }
-        return ValidationContext.validator!!
+        return requireNotNull(ValidationContext.validator) { "Validator 尚未初始化" }
     }
 
 

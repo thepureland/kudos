@@ -276,17 +276,17 @@ enum class OperatorEnum(
             }
             LIKE -> {
                 if (v1 is String && v2 is String) {
-                    v1.contains((v2 as CharSequence?)!!)
+                    v1.contains(v2)
                 } else false
             }
             LIKE_S -> {
                 if (v1 is String && v2 is String) {
-                    v1.trim { it <= ' ' }.startsWith((v2 as String?)!!)
+                    v1.trim { it <= ' ' }.startsWith(v2)
                 } else false
             }
             LIKE_E -> {
                 if (v1 is String && v2 is String) {
-                    v1.trim { it <= ' ' }.endsWith((v2 as String?)!!)
+                    v1.trim { it <= ' ' }.endsWith(v2)
                 } else false
             }
             ILIKE -> {
@@ -316,13 +316,13 @@ enum class OperatorEnum(
                     return v1.isNotEmpty()
                 }
                 if (v1 is Array<*>) {
-                    return (v1 as Array<Any?>).isNotEmpty()
+                    return v1.isNotEmpty()
                 }
                 if (v1 is Collection<*>) {
                     return !v1.isEmpty()
                 }
                 if (v1 is Map<*, *>) {
-                    (v1 as Map<*, *>?)!!.isNotEmpty()
+                    v1.isNotEmpty()
                 } else v1.toString().isEmpty()
             }
             IS_EMPTY -> {
