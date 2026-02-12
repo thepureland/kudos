@@ -14,7 +14,7 @@ data class SysTenantSystemRecord (
     //region your codes 1
 
     /** 主键 */
-    override var id: String? = null,
+    override var id: String = "",
 
     /** 租户id */
     var tenantId: String? = null,
@@ -29,7 +29,7 @@ data class SysTenantSystemRecord (
 
     //region your codes 3
 
-    constructor() : this(null)
+    constructor() : this("")
 
     // endregion your codes 3
 

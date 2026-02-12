@@ -48,7 +48,7 @@ object MonitorMsgTool {
         get() {
             val caller =
                 WALKER.walk<StackWalker.StackFrame?>(Function { frames: Stream<StackWalker.StackFrame?>? ->
-                    frames!!.skip(2)
+                    requireNotNull(frames) { "frames is null" }.skip(2)
                         .findFirst()
                         .orElse(null)
                 }

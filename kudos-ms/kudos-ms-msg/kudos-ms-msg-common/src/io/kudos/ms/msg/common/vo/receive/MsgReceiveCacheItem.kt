@@ -15,7 +15,7 @@ import java.time.LocalDateTime
 data class MsgReceiveCacheItem (
 
     /** 主键 */
-    override var id: String? = null,
+    override var id: String = "",
 
     //region your codes 1
 
@@ -44,7 +44,7 @@ data class MsgReceiveCacheItem (
 
     //region your codes 3
 
-    constructor() : this(null)
+    constructor() : this("")
 
     //endregion your codes 3
 

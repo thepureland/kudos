@@ -77,7 +77,7 @@ class ResourceIdsByUserIdCacheTest : RdbAndRedisCacheTestBase() {
         // 清理可能存在的用户-角色关系记录（以防之前的测试没有清理干净）
         val roleUserCriteria = Criteria(AuthRoleUser::userId.name, OperatorEnum.EQ, userId)
         val existingRoleUsers = authRoleUserDao.search(roleUserCriteria)
-        existingRoleUsers.forEach { authRoleUserDao.deleteById(it.id!!) }
+        existingRoleUsers.forEach { authRoleUserDao.deleteById(it.id) }
         // 再次清除缓存，确保从数据库重新加载
         cacheHandler.evict(userId)
         val resourceIds5 = cacheHandler.getResourceIds(userId)

@@ -20,7 +20,7 @@ class OrderProperties : Properties {
     @Synchronized
     override fun put(key: Any?, value: Any?): Any? {
         if (!super.containsKey(key)) {
-            keyList.add(key!!)
+            key?.let { keyList.add(it) }
         }
         return super.put(key, value)
     }

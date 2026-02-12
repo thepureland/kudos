@@ -47,7 +47,7 @@ object CodeGenColumnService {
                 // 默认都为缓存项
                 it.setCacheItem(true)
 
-                val columnName = it.getName()!!.lowercase()
+                val columnName = requireNotNull(it.getName()) { "column name is null" }.lowercase()
 
                 // 设置默认的检索条件字段
                 if (columnName !in setOf("id", "built_in", "create_user", "create_time", "update_user", "update_time")) {
@@ -77,7 +77,7 @@ object CodeGenColumnService {
         for (column in columnInfos) {
             codeGenColumns.add(
                 CodeGenColumn {
-                    name = column.getName()!!
+                    name = requireNotNull(column.getName()) { "column name is null" }
                     objectName = tableName
                     comment = column.getCustomComment()
                     searchItem = column.getSearchItem()

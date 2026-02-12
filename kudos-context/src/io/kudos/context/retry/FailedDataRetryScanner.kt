@@ -54,7 +54,7 @@ class FailedDataRetryScanner {
                 lockRetry(
                     handler, KudosContextHolder.get().atomicServiceCode
                 )
-            }, CronTrigger(handler!!.cronExpression))
+            }, CronTrigger(requireNotNull(handler) { "handler is null" }.cronExpression))
             logger.info("Scheduled retry for ${handler.businessType} [${handler.cronExpression}]")
         })
     }
@@ -148,7 +148,7 @@ class FailedDataRetryScanner {
         try {
             Files.list(dir)
                 .filter { p: Path? ->
-                    val name = p!!.fileName.toString()
+                    val name = requireNotNull(p) { "path is null" }.fileName.toString()
                     Files.isRegularFile(p)
                             && name.matches("\\d+-[0-9a-fA-F\\-]+\\.json".toRegex())
                 }

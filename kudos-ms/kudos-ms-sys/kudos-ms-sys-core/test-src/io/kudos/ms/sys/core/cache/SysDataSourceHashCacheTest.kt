@@ -128,7 +128,7 @@ class SysDataSourceHashCacheTest : RdbAndRedisCacheTestBase() {
 
         // refreshAll 实现为先清空再写入 list，故 clear=false 时缓存仍为当前 DB 全量（已删 id 已不在 list 中）
         cacheHandler.reloadAll(false)
-        assertNotNull(cacheHandler.getDataSourceById(dsNew.id!!))
+        assertNotNull(cacheHandler.getDataSourceById(dsNew.id))
         assertEquals(newName, cacheHandler.getDataSourceById(idUpdate)?.name)
         assertNull(cacheHandler.getDataSourceById(idDelete))
 
@@ -146,10 +146,10 @@ class SysDataSourceHashCacheTest : RdbAndRedisCacheTestBase() {
     fun syncOnInsert() {
         cacheHandler.reloadAll(true)
         val ds = insertNewRecordToDb()
-        cacheHandler.syncOnInsert(ds, ds.id!!)
-        val item = cacheHandler.getDataSourceById(ds.id!!)
+        cacheHandler.syncOnInsert(ds, ds.id)
+        val item = cacheHandler.getDataSourceById(ds.id)
         assertNotNull(item)
-        val itemAgain = cacheHandler.getDataSourceById(ds.id!!)
+        val itemAgain = cacheHandler.getDataSourceById(ds.id)
         if (isLocalCacheEnabled()) assertSame(item, itemAgain)
     }
 
@@ -159,7 +159,7 @@ class SysDataSourceHashCacheTest : RdbAndRedisCacheTestBase() {
         val id = "33333333-e828-43c5-a512-222222222222"
         val success = sysDataSourceDao.updateProperties(id, mapOf(SysDataSource::name.name to newName))
         assertTrue(success)
-        val ds = cacheHandler.getDataSourceById(id)!!
+        val ds = assertNotNull(cacheHandler.getDataSourceById(id))
         cacheHandler.syncOnUpdate(ds, id)
         assertEquals(newName, sysDataSourceDao.getAs<SysDataSourceCacheItem>(id)?.name)
         assertEquals(newName, cacheHandler.getDataSourceById(id)?.name)
@@ -170,7 +170,7 @@ class SysDataSourceHashCacheTest : RdbAndRedisCacheTestBase() {
         cacheHandler.reloadAll(true)
         val id = "33333333-e828-43c5-a512-888888888888"
         sysDataSourceDao.updateProperties(id, mapOf(SysDataSource::active.name to false))
-//        val ds = cacheHandler.getDataSourceById(id)!!
+//        val ds = cacheHandler.getDataSourceById(id)
         cacheHandler.syncOnUpdateActive(id, false)
         assertEquals(false, sysDataSourceDao.getAs<SysDataSourceCacheItem>(id)?.active)
         val afterFalse = cacheHandler.getDataSourceById(id)

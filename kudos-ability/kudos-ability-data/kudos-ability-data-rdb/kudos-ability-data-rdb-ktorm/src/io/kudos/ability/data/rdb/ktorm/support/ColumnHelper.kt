@@ -32,7 +32,8 @@ object ColumnHelper {
         val resultMap = linkedMapOf<String, Column<Any>>()
         propertyNames.forEach { propertyName ->
             if (columnMap.containsKey(propertyName)) {
-                resultMap[propertyName] = columnMap[propertyName]!!
+                val cachedColumn = requireNotNull(columnMap[propertyName]) { "缓存中的属性[$propertyName]列信息为空。" }
+                resultMap[propertyName] = cachedColumn
             } else {
                 var columnName = propertyName.humpToUnderscore(false)
                 var column: Column<*>?
@@ -51,7 +52,7 @@ object ColumnHelper {
                 }
 
                 @Suppress("KotlinConstantConditions")
-                if (column == null) { //!!! 编译器提示条件总是成立的话，是错误的
+                if (column == null) { // 编译器提示条件总是成立时属于误判
                     if (propertyName == "id") {
                         val pk = table.primaryKeys.firstOrNull()
                         if (pk != null) {
@@ -65,7 +66,9 @@ object ColumnHelper {
                 } else {
                     @Suppress("UNCHECKED_CAST")
                     resultMap[propertyName] = column as Column<Any>
-                    columnMap[propertyName] = resultMap[propertyName]!!
+                    columnMap[propertyName] = requireNotNull(resultMap[propertyName]) {
+                        "无法缓存属性[$propertyName]对应的列信息。"
+                    }
                 }
             }
 

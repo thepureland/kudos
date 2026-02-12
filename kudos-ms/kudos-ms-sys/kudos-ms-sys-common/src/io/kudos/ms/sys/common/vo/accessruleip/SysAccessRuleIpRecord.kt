@@ -15,7 +15,7 @@ data class SysAccessRuleIpRecord (
     //region your codes 1
 
     /** ipRule的id */
-    override var id: String? = null,
+    override var id: String = "",
 
     /** ip起 */
     var ipStart: Long? = null,
@@ -57,7 +57,7 @@ data class SysAccessRuleIpRecord (
 
     //region your codes 3
 
-    constructor() : this(null)
+    constructor() : this("")
 
     // endregion your codes 3
 

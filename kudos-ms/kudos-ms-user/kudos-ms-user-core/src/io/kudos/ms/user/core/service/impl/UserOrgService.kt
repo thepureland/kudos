@@ -105,7 +105,7 @@ open class UserOrgService : BaseCrudService<String, UserOrg, UserOrgDao>(), IUse
     }
 
     override fun getOrgsByTenantId(tenantId: String): List<UserOrgCacheItem> {
-        val orgIds = userOrgHashCache.getOrgsByTenantId(tenantId).map { it.id!! }
+        val orgIds = userOrgHashCache.getOrgsByTenantId(tenantId).map { it.id }
         if (orgIds.isEmpty()) {
             return emptyList()
         }
@@ -119,7 +119,7 @@ open class UserOrgService : BaseCrudService<String, UserOrg, UserOrgDao>(), IUse
         
         // 转换为树节点
         val treeNodes = orgs.map { org ->
-            val cacheItem = userOrgHashCache.getOrgById(org.id!!) ?: return@map null
+            val cacheItem = userOrgHashCache.getOrgById(org.id) ?: return@map null
             UserOrgTreeRecord().apply {
                 BeanKit.copyProperties(cacheItem, this)
                 this.children = mutableListOf()
@@ -160,9 +160,10 @@ open class UserOrgService : BaseCrudService<String, UserOrg, UserOrgDao>(), IUse
         val ancestors = mutableListOf<String>()
         var currentOrg = userOrgHashCache.getOrgById(orgId) ?: return emptyList()
         
-        while (currentOrg.parentId != null) {
-            ancestors.add(currentOrg.parentId!!)
-            currentOrg = userOrgHashCache.getOrgById(currentOrg.parentId!!) ?: break
+        while (true) {
+            val parentId = currentOrg.parentId ?: break
+            ancestors.add(parentId)
+            currentOrg = userOrgHashCache.getOrgById(parentId) ?: break
         }
         
         return ancestors

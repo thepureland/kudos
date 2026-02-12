@@ -80,7 +80,9 @@ open class ResourceIdsByTenantIdAndRoleCodeCache : AbstractKeyValueCacheHandler<
 
         // 缓存资源ID列表
         roles.forEach { role ->
-            val resourceIds = roleIdToResourceIdsMap[role.id!!] ?: emptyList()
+            val roleId = role.id
+            if (roleId.isBlank()) return@forEach
+            val resourceIds = roleIdToResourceIdsMap[roleId] ?: emptyList()
             CacheKit.put(CACHE_NAME, getKey(role.tenantId, role.code), resourceIds)
             log.debug("缓存了租户${role.tenantId}角色${role.code}的${resourceIds.size}条资源ID。")
         }

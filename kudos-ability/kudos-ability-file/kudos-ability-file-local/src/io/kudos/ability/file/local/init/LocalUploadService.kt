@@ -41,7 +41,7 @@ open class LocalUploadService : AbstractUploadService() {
         }
         val fullFilePath = rDir + File.separator + fName
         try {
-            model.inputStreamSource!!.getInputStream().use { inputStream ->
+            requireNotNull(model.inputStreamSource) { "inputStreamSource is null" }.getInputStream().use { inputStream ->
                 CompressionPipeline.compressAndOutputFile(inputStream, fullFilePath, model.compressionConfig)
             }
         } catch (e: java.lang.Exception) {

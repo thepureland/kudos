@@ -57,10 +57,12 @@ open class OrgIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() {
 
         // 缓存用户机构ID列表
         users.forEach { user ->
-            val orgIds = userIdToOrgIdsMap[user.id!!] ?: emptyList()
+            val userId = user.id
+            if (userId.isBlank()) return@forEach
+            val orgIds = userIdToOrgIdsMap[userId] ?: emptyList()
             if (orgIds.isNotEmpty()) {
-                CacheKit.put(CACHE_NAME, user.id!!, orgIds)
-                log.debug("缓存了用户${user.id}的${orgIds.size}条机构ID。")
+                CacheKit.put(CACHE_NAME, userId, orgIds)
+                log.debug("缓存了用户${userId}的${orgIds.size}条机构ID。")
             }
         }
     }

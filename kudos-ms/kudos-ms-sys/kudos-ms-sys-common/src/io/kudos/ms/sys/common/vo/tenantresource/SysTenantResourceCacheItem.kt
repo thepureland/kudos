@@ -13,7 +13,7 @@ import java.io.Serializable
 data class SysTenantResourceCacheItem (
 
     /** 主键 */
-    override var id: String? = null,
+    override var id: String = "",
 
     //region your codes 1
 
@@ -30,7 +30,7 @@ data class SysTenantResourceCacheItem (
 
     //region your codes 3
 
-    constructor() : this(null)
+    constructor() : this("")
 
     // endregion your codes 3
 

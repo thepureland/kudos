@@ -53,9 +53,11 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
     protected fun table(): T {
         if (table == null) {
             val tableClass = GenericKit.getSuperClassGenricClass(this::class, 2) as KClass<T>
-            table = tableClass.objectInstance!!
+            table = requireNotNull(tableClass.objectInstance) {
+                "DAO泛型表类型[${tableClass.qualifiedName}]必须是 object 单例。"
+            }
         }
-        return table!!
+        return requireNotNull(table) { "未能初始化DAO对应的表对象。" }
     }
 
     /**
@@ -66,9 +68,9 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
     @Suppress("UNCHECKED_CAST")
     protected fun entityClass(): KClass<E> {
         if (entityClass == null) {
-            return GenericKit.getSuperClassGenricClass(this::class, 1) as KClass<E>
+            entityClass = GenericKit.getSuperClassGenricClass(this::class, 1) as KClass<E>
         }
-        return entityClass!!
+        return requireNotNull(entityClass) { "未能解析DAO对应的实体类型。" }
     }
 
     /**
@@ -389,7 +391,9 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
      * @return 满足 IN 条件的实体列表
      */
     private fun inSearch(property: String, values: Collection<*>, vararg orders: Order): List<E> {
-        val column = ColumnHelper.columnOf(table(), property)[property]!!
+        val column = requireNotNull(ColumnHelper.columnOf(table(), property)[property]) {
+            "未找到属性[$property]对应的数据库列。"
+        }
         var entitySequence = entitySequence().filter { column.inCollection(values) }
         entitySequence = entitySequence.sortedBy(*sortBy(*orders))
         return entitySequence.toList()
@@ -716,9 +720,10 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
                 val beanList = mutableListOf<Any>()
                 mapList.forEach { map ->
                     val bean = if (listSearchPayload?.returnEntityClass != null) {
-                        listSearchPayload.returnEntityClass!!.newInstance()
+                        requireNotNull(listSearchPayload.returnEntityClass).newInstance()
                     } else {
-                        Entity.create(table().entityClass!!)
+                        val tableEntityClass = requireNotNull(table().entityClass) { "表未绑定实体类型，无法创建返回对象。" }
+                        Entity.create(tableEntityClass)
                     }
                     returnProps.forEach { prop ->
                         BeanKit.setProperty(bean, prop, map[prop])
@@ -755,7 +760,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         } else {
             entitySequence()
                 .filter { CriteriaConverter.convert(criteria, table()) }
-                .aggregateColumns { count(getPkColumn()) }!!
+                .aggregateColumns { count(getPkColumn()) } ?: 0
         }
     }
 
@@ -865,7 +870,9 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         return if (orders.isNotEmpty()) {
             val orderExpressions = mutableListOf<OrderByExpression>()
             orders.forEach {
-                val column = ColumnHelper.columnOf(table(), it.property)[it.property]!!
+                val column = requireNotNull(ColumnHelper.columnOf(table(), it.property)[it.property]) {
+                    "未找到属性[${it.property}]对应的数据库列。"
+                }
                 val orderByExpression = if (it.isAscending()) {
                     column.asc()
                 } else column.desc()
@@ -895,8 +902,8 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         val columns = ColumnHelper.columnOf(table(), *properties)
         val expressions = mutableListOf<ColumnDeclaring<Boolean>>()
         columns.forEach { (property, column) ->
-            val operatorAndValue = propertyMap[property]
-            val operator = operatorAndValue!!.first
+            val operatorAndValue = requireNotNull(propertyMap[property]) { "属性[$property]缺少查询操作符和值。" }
+            val operator = operatorAndValue.first
             val value = operatorAndValue.second
             val expression = if (operator == OperatorEnum.IS_NULL) {
                 column.isNull()
@@ -958,7 +965,9 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         if (propertyMap != null) {
             val propMap = propertyMap.map { (prop, value) -> prop to Pair(OperatorEnum.EQ, value) }.toMap()
             val fullExpression = processWhere(propMap, logic, false, whereConditionFactory)
-            entitySequence = entitySequence.filter { fullExpression!! }
+            if (fullExpression != null) {
+                entitySequence = entitySequence.filter { fullExpression }
+            }
         }
         entitySequence = entitySequence.sortedBy(*sortBy(*orders))
         return entitySequence.toList()
@@ -979,7 +988,9 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         if (propertyMap != null) {
             val propMap = propertyMap.map { (prop, value) -> prop to Pair(OperatorEnum.EQ, value) }.toMap()
             val fullExpression = processWhere(propMap, logic, false, whereConditionFactory)
-            query = query.where { fullExpression!! }
+            if (fullExpression != null) {
+                query = query.where { fullExpression }
+            }
         }
 
         // order
@@ -999,7 +1010,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         query.forEach { row ->
             val item = returnItemClass.newInstance()
             propNames.forEach { propName ->
-                val column = returnColumnMap[propName]!!
+                val column = requireNotNull(returnColumnMap[propName]) { "未找到返回属性[$propName]对应的数据库列。" }
                 BeanKit.setProperty(item, propName, row[column])
             }
             resultList.add(item)
@@ -1019,7 +1030,9 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
     private fun doInSearchProperties(
         property: String, values: Collection<*>, returnProperties: Collection<String>, vararg orders: Order
     ): List<Map<String, *>> {
-        val column = ColumnHelper.columnOf(table(), property)[property]!!
+        val column = requireNotNull(ColumnHelper.columnOf(table(), property)[property]) {
+            "未找到属性[$property]对应的数据库列。"
+        }
         val returnColumnMap = ColumnHelper.columnOf(table(), *returnProperties.toTypedArray())
         var query = querySource().select(returnColumnMap.values)
         query = query.where { column.inCollection(values) }
@@ -1134,7 +1147,8 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
     }
 
     protected fun getEntityProperties(): List<String> {
-        return table().entityClass!!.memberProperties
+        val tableEntityClass = requireNotNull(table().entityClass) { "表未绑定实体类型，无法提取实体属性。" }
+        return tableEntityClass.memberProperties
             .filter { it.name !in setOf("entityClass", "properties", "changedProperties") }
             .map { it.name }
     }

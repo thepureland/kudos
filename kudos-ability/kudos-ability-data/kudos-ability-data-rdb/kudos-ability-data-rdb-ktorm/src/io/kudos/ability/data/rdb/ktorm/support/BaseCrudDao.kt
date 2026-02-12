@@ -40,12 +40,13 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
         val entity = if (any is IDbEntity<*, *>) {
             any
         } else {
-            val entity = Entity.create(table().entityClass!!)
+            val entityClass = requireNotNull(table().entityClass) { "表未绑定实体类型，无法创建实体实例。" }
+            val entity = Entity.create(entityClass)
             BeanKit.copyProperties(any, entity)
             entity
         }
         entitySequence().add(entity as E)
-        return entity.id!!
+        return entity.id
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -80,7 +81,8 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
                             val propMap = BeanKit.extract(insertPayload)
                             for ((name, value) in propMap) {
                                 if (name in propertyNames) {
-                                    set(columnMap[name]!!, value)
+                                    val column = requireNotNull(columnMap[name]) { "未找到属性[$name]对应的数据库列。" }
+                                    set(column, value)
                                 }
                             }
                         }
@@ -101,7 +103,8 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
                     item {
                         for ((name, value) in entity.properties) {
                             if (name in propertyNames) {
-                                set(columnMap[name]!!, value)
+                                val column = requireNotNull(columnMap[name]) { "未找到属性[$name]对应的数据库列。" }
+                                set(column, value)
                             }
                         }
                     }
@@ -130,7 +133,8 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
             setDefault(any as E)
             entitySequence().update(any) == 1
         } else {
-            val entity = Entity.create(table().entityClass!!)
+            val entityClass = requireNotNull(table().entityClass) { "表未绑定实体类型，无法创建实体实例。" }
+            val entity = Entity.create(entityClass)
             BeanKit.copyProperties(any, entity)
             setDefault(entity as E)
             this.update(entity)
@@ -150,7 +154,8 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
         val columnMap = ColumnHelper.columnOf(table(), *propertyNames)
         return database().update(table()) {
             props.forEach { (name, value) ->
-                set(columnMap[name]!!, value)
+                val column = requireNotNull(columnMap[name]) { "未找到属性[$name]对应的数据库列。" }
+                set(column, value)
             }
             where { getPkColumn() eq id }
         } == 1
@@ -250,7 +255,8 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
         return database().batchUpdate(table()) {
             item {
                 updatePropertyMap.forEach { (name, value) ->
-                    set(updateColumnMap[name]!!, value)
+                    val column = requireNotNull(updateColumnMap[name]) { "未找到属性[$name]对应的数据库列。" }
+                    set(column, value)
                 }
                 where {
                     whereExpression
@@ -270,7 +276,8 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
         return database().batchUpdate(table()) {
             item {
                 props.forEach { (name, value) ->
-                    set(columnMap[name]!!, value)
+                    val column = requireNotNull(columnMap[name]) { "未找到属性[$name]对应的数据库列。" }
+                    set(column, value)
                 }
                 where { whereExpression }
             }
@@ -317,8 +324,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
     }
 
     override fun delete(entity: E): Boolean {
-        val id = entity.id ?: error("删除实体时，属性id不能为null")
-        return deleteById(id)
+        return deleteById(entity.id)
     }
 
     override fun batchDelete(ids: Collection<PK>): Int {
@@ -375,7 +381,8 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
         val columnMap = ColumnHelper.columnOf(table(), *propertyNames)
         return database().update(table()) {
             props.filter { it.key != IDbEntity<PK, E>::id.name }.forEach { (name, value) ->
-                set(columnMap[name]!!, value)
+                val column = requireNotNull(columnMap[name]) { "未找到属性[$name]对应的数据库列。" }
+                set(column, value)
             }
             where {
                 var whereExpression = getPkColumn() eq id
@@ -395,8 +402,6 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
         vararg propertyNames: String = emptyArray()
     ): Int {
         require(entities.isNotEmpty()) { "实体集合参数不能为空集合！" }
-        require(!entities.any { it.id == null }) { "由于存在主键为null的实体，批量更新失败！" }
-
         var totalCount = 0
         entities.forEach { setDefault(it) }
         var columnMap = ColumnHelper.columnOf(table(), *entities.first().properties.keys.toTypedArray())
@@ -414,11 +419,12 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
                     item {
                         entity.properties.filter { it.key != IDbEntity<PK, E>::id.name }.forEach { (name, value) ->
                             if (columnMap.containsKey(name)) {
-                                set(columnMap[name]!!, value)
+                                val column = requireNotNull(columnMap[name]) { "未找到属性[$name]对应的数据库列。" }
+                                set(column, value)
                             }
                         }
                         where {
-                            var whereExpression = getPkColumn() eq entity.id!!
+                            var whereExpression = getPkColumn() eq entity.id
                             if (criteriaExpression != null) {
                                 whereExpression = whereExpression.and(criteriaExpression)
                             }

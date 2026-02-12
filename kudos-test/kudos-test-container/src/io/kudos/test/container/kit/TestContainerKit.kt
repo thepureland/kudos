@@ -50,7 +50,7 @@ object TestContainerKit {
         } else {
             println("############  $label container has already been started.")
         }
-        return runningContainer!!
+        return requireNotNull(runningContainer) { "runningContainer is null for label $label" }
     }
 
     /**

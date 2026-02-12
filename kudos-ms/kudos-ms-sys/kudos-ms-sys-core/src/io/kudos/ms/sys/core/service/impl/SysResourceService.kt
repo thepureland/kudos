@@ -43,7 +43,8 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
     }
 
     override fun getResourceIdsBySubSystemAndType(subSystemCode: String, resourceTypeDictCode: String): List<String> {
-        return sysResourceHashCache.getResourcesBySubSystemCodeAndType(subSystemCode, resourceTypeDictCode).map { it.id!! }
+        return sysResourceHashCache.getResourcesBySubSystemCodeAndType(subSystemCode, resourceTypeDictCode)
+            .map { it.id }
     }
 
     override fun getResourcesBySubSystemCode(subSystemCode: String): List<SysResourceRecord> {
@@ -194,8 +195,8 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
         log.debug("批量删除资源，期望删除${ids.size}条，实际删除${count}条。")
         sysResourceHashCache.syncOnBatchDelete(ids)
         resources.forEach { resource ->
-            sysResourceHashCache.syncOnDelete(resource.id!!, resource.subSystemCode, resource.url)
-            sysResourceHashCache.syncOnDelete(resource.id!!, resource.subSystemCode, resource.resourceTypeDictCode)
+            sysResourceHashCache.syncOnDelete(resource.id, resource.subSystemCode, resource.url)
+            sysResourceHashCache.syncOnDelete(resource.id, resource.subSystemCode, resource.resourceTypeDictCode)
         }
         return count
     }

@@ -19,8 +19,8 @@ class AccessKeyMinioClientBuilder : MinioClientBuilder<AccessKeyServerParam> {
 
     override fun build(): MinioClient {
         return MinioClient.builder()
-            .endpoint(URI(minioProperties!!.endpoint).toURL())
-            .credentials(authServerParam!!.accessKey, authServerParam!!.secretKey)
+            .endpoint(URI(requireNotNull(minioProperties) { "minioProperties is null" }.endpoint).toURL())
+            .credentials(requireNotNull(authServerParam) { "authServerParam is null" }.accessKey, requireNotNull(authServerParam) { "authServerParam is null" }.secretKey)
             .build()
     }
 

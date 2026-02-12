@@ -78,7 +78,7 @@ open class AuthRoleHashCache : AbstractHashCacheHandler<AuthRoleCacheItem>() {
     open fun getRolesByIds(ids: Collection<String>): Map<String, AuthRoleCacheItem> {
         if (ids.isEmpty()) return emptyMap()
         val list = authRoleDao.getByIdsAs<AuthRoleCacheItem>(ids)
-        return list.filter { it.id != null && it.id in ids }.associateBy { it.id!! }
+        return list.filter { it.id.isNotBlank() && it.id in ids }.associateBy { it.id }
     }
 
     /**

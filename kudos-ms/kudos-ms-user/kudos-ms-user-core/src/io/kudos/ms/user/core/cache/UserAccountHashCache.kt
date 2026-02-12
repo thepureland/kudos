@@ -78,7 +78,7 @@ open class UserAccountHashCache : AbstractHashCacheHandler<UserAccountCacheItem>
     open fun getUsersByIds(ids: Collection<String>): Map<String, UserAccountCacheItem> {
         if (ids.isEmpty()) return emptyMap()
         val list = userAccountDao.getByIdsAs<UserAccountCacheItem>(ids)
-        return list.filter { it.id != null && it.id in ids }.associateBy { it.id!! }
+        return list.filter { it.id.isNotBlank() && it.id in ids }.associateBy { it.id }
     }
 
     /**

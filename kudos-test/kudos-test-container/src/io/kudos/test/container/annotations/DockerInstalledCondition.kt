@@ -40,16 +40,16 @@ class DockerInstalledCondition : ExecutionCondition {
     private fun isDockerInstalled(): Boolean {
         // 使用双重检查锁定模式，避免多次执行命令
         if (dockerInstalled != null) {
-            return dockerInstalled!!
+            return requireNotNull(dockerInstalled)
         }
         
         synchronized(lock) {
             if (dockerInstalled != null) {
-                return dockerInstalled!!
+                return requireNotNull(dockerInstalled)
             }
             
             dockerInstalled = checkDockerInstalled()
-            return dockerInstalled!!
+            return requireNotNull(dockerInstalled)
         }
     }
     

@@ -56,10 +56,10 @@ class UserOrgServiceTest : RdbAndRedisCacheTestBase() {
         assertNotNull(rootNode)
         
         // 验证树结构：子机构应该在父机构的children中
-        assertNotNull(rootNode.children)
-        assertTrue(rootNode.children!!.isNotEmpty())
-        assertTrue(rootNode.children!!.any { it.name == "svc-org-test-child-1-HuAyup4R" })
-        assertTrue(rootNode.children!!.any { it.name == "svc-org-test-child-2-HuAyup4R" })
+        val children = assertNotNull(rootNode.children)
+        assertTrue(children.isNotEmpty())
+        assertTrue(children.any { it.name == "svc-org-test-child-1-HuAyup4R" })
+        assertTrue(children.any { it.name == "svc-org-test-child-2-HuAyup4R" })
         
         // 测试获取指定父机构的子树（直接返回子机构列表，不构建树）
         val parentId = "8b4df430-0000-0000-0000-000000000030"
@@ -68,7 +68,7 @@ class UserOrgServiceTest : RdbAndRedisCacheTestBase() {
         assertTrue(childTree.any { it.name == "svc-org-test-child-1-HuAyup4R" })
         assertTrue(childTree.any { it.name == "svc-org-test-child-2-HuAyup4R" })
         // 当指定parentId时，返回的是平铺列表，不是树结构（children为空列表）
-        assertTrue(childTree.all { it.children == null || it.children!!.isEmpty() })
+        assertTrue(childTree.all { it.children.isNullOrEmpty() })
     }
 
     @Test

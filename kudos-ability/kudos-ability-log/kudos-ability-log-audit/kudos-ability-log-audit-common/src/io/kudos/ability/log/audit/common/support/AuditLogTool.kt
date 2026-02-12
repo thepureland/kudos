@@ -165,7 +165,7 @@ object AuditLogTool {
                 LOG.debug("转换参数失败，不设置实体ID.")
             }
             for (vo in vos) {
-                val sysAuditLogVo = vo!!.toSysLogVo()
+                val sysAuditLogVo = requireNotNull(vo) { "vo is null" }.toSysLogVo()
                 val sysAuditDetailLog = getAuditDetail(sysAuditLogVo)
                 sysAuditDetailLog.objectParams = vo.getObjectParams()
                 sysAuditDetailLog.stringParams = vo.getStringParams()
@@ -177,8 +177,8 @@ object AuditLogTool {
                     sysAuditLogVo.entityId = entityId
                 }
                 sysAuditDetailLog.description = detailDescription(vo)
-                modelAudit.entities!!.add(sysAuditLogVo)
-                modelAudit.sysAuditDetailLogs!!.add(sysAuditDetailLog)
+                requireNotNull(modelAudit.entities) { "entities is null" }.add(sysAuditLogVo)
+                requireNotNull(modelAudit.sysAuditDetailLogs) { "sysAuditDetailLogs is null" }.add(sysAuditDetailLog)
             }
 
             setOperator(modelAudit)
@@ -210,7 +210,7 @@ object AuditLogTool {
             return detailDescription
         }
         var result: String? = ""
-        val descriptionFormatter = descriptionFormatter(vo, vo.descriptionFormatterClass!!)
+        val descriptionFormatter = descriptionFormatter(vo, requireNotNull(vo.descriptionFormatterClass) { "descriptionFormatterClass is null" })
         if (descriptionFormatter != null) {
             result = descriptionFormatter.descriptionFormat(vo)
         }
@@ -225,7 +225,7 @@ object AuditLogTool {
      */
     fun setOperator(modelAudit: SysAuditLogModel) {
         val context = KudosContextHolder.get()
-        for (entity in modelAudit.entities!!) {
+        for (entity in requireNotNull(modelAudit.entities) { "entities is null" }) {
             entity.operateTime=Date()
             val ip = context.clientInfo?.ip
             if (ip != null) {
@@ -244,7 +244,7 @@ object AuditLogTool {
             entity.subSysCode=subSysCode
             entity.tenantId=context.tenantId
             if (tenantProvider != null) {
-                entity.sourceTenantId=tenantProvider!!.getSourceTenant(entity.tenantId, entity.operatorId)
+                entity.sourceTenantId=requireNotNull(tenantProvider) { "tenantProvider is null" }.getSourceTenant(entity.tenantId, entity.operatorId)
             } else {
                 entity.sourceTenantId=entity.tenantId
             }

@@ -44,8 +44,8 @@ open class AccessTokenMinioClientBuilder : MinioClientBuilder<AccessTokenServerP
     @Throws(Exception::class)
     override fun build(): MinioClient {
         val provider: Provider = WebIdentityProvider(
-            { accessToken(authServerParam!!) },
-            minioProperties.endpoint!!,
+            { accessToken(requireNotNull(authServerParam) { "authServerParam is null" }) },
+            requireNotNull(minioProperties.endpoint) { "endpoint is null" },
             null,
             null,
             null,
@@ -61,7 +61,7 @@ open class AccessTokenMinioClientBuilder : MinioClientBuilder<AccessTokenServerP
 
     protected fun accessToken(authServerParam: AccessTokenServerParam): Jwt? {
         val requestBody: RequestBody = FormBody.Builder()
-            .add("grant_type", accessTokenServerProperties.authorizationGrantType!!)
+            .add("grant_type", requireNotNull(accessTokenServerProperties.authorizationGrantType) { "authorizationGrantType is null" })
             .build()
 
         var basic = "${accessTokenServerProperties.clientId}:${accessTokenServerProperties.clientSecret}"
@@ -72,8 +72,8 @@ open class AccessTokenMinioClientBuilder : MinioClientBuilder<AccessTokenServerP
         }
         log.info("Minio oauth2 server: ${accessTokenServerProperties.endpoint}")
         val request = Request.Builder()
-            .url(accessTokenServerProperties.endpoint!!)
-            .header(accessTokenServerProperties.headerName!!, authServerParam.headerValue!!)
+            .url(requireNotNull(accessTokenServerProperties.endpoint) { "endpoint is null" })
+            .header(requireNotNull(accessTokenServerProperties.headerName) { "headerName is null" }, requireNotNull(authServerParam.headerValue) { "headerValue is null" })
             .header("Authorization", "Basic $basic")
             .post(requestBody).build()
 

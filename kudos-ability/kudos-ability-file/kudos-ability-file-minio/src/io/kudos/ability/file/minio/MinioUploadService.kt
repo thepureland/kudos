@@ -38,9 +38,9 @@ open class MinioUploadService : AbstractUploadService() {
         if (model.authServerParam != null) {
             LOG.info(
                 "Minio use auth server type:{0}",
-                model.authServerParam!!.javaClass.getSimpleName()
+                requireNotNull(model.authServerParam) { "authServerParam is null" }.javaClass.getSimpleName()
             )
-            return minioClientBuilderFactory.getInstance(model.authServerParam!!)!!.build()
+            return requireNotNull(minioClientBuilderFactory.getInstance(requireNotNull(model.authServerParam) { "authServerParam is null" })) { "MinioClient builder not found" }.build()
         }
         return minioClientDefault
     }
@@ -99,7 +99,7 @@ open class MinioUploadService : AbstractUploadService() {
             }
             val fullFilePath = "$fileDir/$fName"
 
-            val inputStream = model.inputStreamSource!!.inputStream
+            val inputStream = requireNotNull(model.inputStreamSource) { "inputStreamSource is null" }.inputStream
             val result = CompressionPipeline.compress(inputStream, fullFilePath, model.compressionConfig)
 
             val putArgs = PutObjectArgs.builder()
@@ -107,7 +107,7 @@ open class MinioUploadService : AbstractUploadService() {
                 .`object`(result.getOutputFilePath())
                 .stream(
                     if (result.outputStream == null) inputStream else ByteArrayInputStream(
-                        result.outputStream!!.toByteArray()
+                        requireNotNull(result.outputStream) { "outputStream is null" }.toByteArray()
                     ), -1, 10485760
                 )
                 .contentType(result.mimeType).build()
@@ -123,7 +123,7 @@ open class MinioUploadService : AbstractUploadService() {
     }
 
     override fun pathPrefix(): String {
-        return properties.publicEndpoint!!
+        return requireNotNull(properties.publicEndpoint) { "publicEndpoint is null" }
     }
 
     private val LOG = LogFactory.getLog(this)

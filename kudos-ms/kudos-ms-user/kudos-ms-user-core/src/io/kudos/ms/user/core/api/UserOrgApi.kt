@@ -38,7 +38,7 @@ open class UserOrgApi : IUserOrgApi {
     }
 
     override fun getOrgIds(tenantId: String): List<String> {
-        return userOrgHashCache.getOrgsByTenantId(tenantId).map { it.id!! }
+        return userOrgHashCache.getOrgsByTenantId(tenantId).map { it.id }
     }
 
     override fun getOrgAdmins(orgId: String): List<UserAccountCacheItem> {

@@ -31,13 +31,13 @@ class WebLogAuditAspect {
     fun before(joinPoint: JoinPoint) {
         val requestAttributes = RequestContextHolder.getRequestAttributes()
         val request =
-            requestAttributes!!.resolveReference(RequestAttributes.REFERENCE_REQUEST) as HttpServletRequest?
+            requireNotNull(requestAttributes) { "requestAttributes is null" }.resolveReference(RequestAttributes.REFERENCE_REQUEST) as HttpServletRequest?
 
         //note-upgrade-to-spring-3.0-position
         //if (ServletFileUpload.isMultipartContent(request)) {
         //    return;
         //}
-        if (isMultipartContent(request!!)) {
+        if (request != null && isMultipartContent(request)) {
             return
         }
         val signature = joinPoint.signature as org.aspectj.lang.reflect.MethodSignature
@@ -50,12 +50,12 @@ class WebLogAuditAspect {
     fun after(point: JoinPoint?) {
         val requestAttributes = RequestContextHolder.getRequestAttributes()
         val request =
-            requestAttributes!!.resolveReference(RequestAttributes.REFERENCE_REQUEST) as HttpServletRequest?
+            requireNotNull(requestAttributes) { "requestAttributes is null" }.resolveReference(RequestAttributes.REFERENCE_REQUEST) as HttpServletRequest?
         //note-upgrade-to-spring-3.0-position
         //if (ServletFileUpload.isMultipartContent(request)) {
         //    return;
         //}
-        if (isMultipartContent(request!!)) {
+        if (request != null && isMultipartContent(request)) {
             return
         }
         val logVo = LogAuditContext.get()

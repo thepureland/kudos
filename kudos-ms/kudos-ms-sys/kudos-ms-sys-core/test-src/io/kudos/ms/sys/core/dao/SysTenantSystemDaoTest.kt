@@ -4,6 +4,7 @@ import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbTestBase
 import jakarta.annotation.Resource
 import kotlin.test.Test
+import kotlin.test.assertNotNull
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -45,7 +46,8 @@ class SysTenantSystemDaoTest : RdbTestBase() {
         val tenantIds = listOf("40000000-0000-0000-0000-000000001699", "40000000-0000-0000-0000-000000001699")
         val grouping = sysTenantSystemDao.groupingSystemCodesByTenantIds(tenantIds)
         assertTrue(grouping.containsKey("40000000-0000-0000-0000-000000001699"))
-        assertTrue(grouping["40000000-0000-0000-0000-000000001699"]!!.size >= 2)
+        val groupedCodes = assertNotNull(grouping["40000000-0000-0000-0000-000000001699"])
+        assertTrue(groupedCodes.size >= 2)
 
         // 测试null参数（查询所有）
         val allGrouping = sysTenantSystemDao.groupingSystemCodesByTenantIds(null)
@@ -57,7 +59,8 @@ class SysTenantSystemDaoTest : RdbTestBase() {
         val systemCodes = listOf("svc-subsys-ts-dao-test-1_2315", "svc-subsys-ts-dao-test-2_2315")
         val grouping = sysTenantSystemDao.groupingTenantIdsBySystemCodes(systemCodes)
         assertTrue(grouping.containsKey("svc-subsys-ts-dao-test-1_2315"))
-        assertTrue(grouping["svc-subsys-ts-dao-test-1_2315"]!!.size >= 2)
+        val groupedTenantIds = assertNotNull(grouping["svc-subsys-ts-dao-test-1_2315"])
+        assertTrue(groupedTenantIds.size >= 2)
 
         // 测试null参数（查询所有）
         val allGrouping = sysTenantSystemDao.groupingTenantIdsBySystemCodes(null)

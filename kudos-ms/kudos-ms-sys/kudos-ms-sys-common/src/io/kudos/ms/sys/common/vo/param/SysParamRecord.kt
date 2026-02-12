@@ -14,7 +14,7 @@ data class SysParamRecord (
     //region your codes 1
 
     /** 主键 */
-    override var id: String? = null,
+    override var id: String = "",
 
     /** 参数名称 */
     var paramName: String? = null,
@@ -47,7 +47,7 @@ data class SysParamRecord (
 
     //region your codes 3
 
-    constructor() : this(null)
+    constructor() : this("")
 
     // endregion your codes 3
 

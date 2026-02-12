@@ -44,7 +44,7 @@ class DbContext {
             if (self.contextParam.get() == null) {
                 self.contextParam.set(DbParam())
             }
-            return self.contextParam.get()!!
+            return requireNotNull(self.contextParam.get()) { "contextParam is null" }
         }
 
         /**

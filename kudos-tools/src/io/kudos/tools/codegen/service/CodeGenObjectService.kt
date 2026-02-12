@@ -20,9 +20,10 @@ object CodeGenObjectService {
         val tables = RdbMetadataKit.getTablesByType(TableTypeEnum.TABLE, TableTypeEnum.VIEW)
         val nameAndComments = mutableMapOf<String, String?>()
         tables.filter {
-            it.name !in setOf("code_gen_file", "code_gen_object", "code_gen_column")
-                    && !it.name!!.startsWith("flyway_")
-        }.forEach { nameAndComments[it.name!!] = it.comment }
+            val n = it.name
+            n != null && n !in setOf("code_gen_file", "code_gen_object", "code_gen_column")
+                    && !n.startsWith("flyway_")
+        }.forEach { t -> t.name?.let { nameAndComments[it] = t.comment } }
 
         // from code_gen_object
         val codeGenObjects = CodeGenObjectDao.allSearch()

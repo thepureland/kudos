@@ -15,7 +15,7 @@ import java.time.LocalDateTime
 data class AuthGroupCacheItem (
 
     /** 主键 */
-    override var id: String? = null,
+    override var id: String = EMPTY_ID,
 
     //region your codes 1
 
@@ -65,12 +65,26 @@ data class AuthGroupCacheItem (
 
     //region your codes 3
 
-    constructor() : this(null)
+    constructor() : this(EMPTY_ID)
+
+    /**
+     * 以非空语义访问 id。
+     *
+     * 默认值可能是空字符串（用于无参构造/反射创建），业务侧可通过该属性要求“非空白 id”。
+     */
+    var requiredId: String
+        get() = id.takeIf { it.isNotBlank() }
+            ?: error("AuthGroupCacheItem.id 为空白，当前对象可能尚未持久化。")
+        set(value) {
+            require(value.isNotBlank()) { "AuthGroupCacheItem.id 不能为空白字符串。" }
+            id = value
+        }
 
     //endregion your codes 3
 
     companion object {
         private const val serialVersionUID = 1L
+        private const val EMPTY_ID = ""
     }
 
 }

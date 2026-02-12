@@ -138,7 +138,8 @@ class HashBatchCacheableByPrimaryAspect {
                         is Collection<*> -> paramValue.first()
                         else -> (paramValue as Array<*>).first()
                     }
-                    segStr.toType(first!!::class)
+                    val sample = requireNotNull(first) { "批量缓存参数集合中存在 null 元素，无法推断类型。" }
+                    segStr.toType(sample::class)
                 }
                 val clazz = parameterTypes[paramIndex].kotlin
                 args[paramIndex] = when (clazz) {

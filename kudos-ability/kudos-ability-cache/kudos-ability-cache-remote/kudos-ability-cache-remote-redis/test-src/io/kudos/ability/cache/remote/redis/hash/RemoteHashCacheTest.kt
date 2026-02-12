@@ -333,7 +333,7 @@ internal class RemoteHashCacheTest {
 
 /** 简单测试实体 */
 data class TestRow(
-    override var id: String? = null,
+    override var id: String = "",
     var name: String? = null,
     var type: Int? = null,
     var status: Int? = null
@@ -341,7 +341,7 @@ data class TestRow(
 
 /** 带 type 与 sortScore 的实体，用于二级索引测试 */
 data class TestRowWithTime(
-    override var id: String? = null,
+    override var id: String = "",
     var type: Int? = null,
     var sortScore: Double? = null
 ) : IIdEntity<String>

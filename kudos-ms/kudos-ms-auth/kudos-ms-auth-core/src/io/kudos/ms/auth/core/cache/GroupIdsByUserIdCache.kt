@@ -57,10 +57,12 @@ open class GroupIdsByUserIdCache : AbstractKeyValueCacheHandler<Set<String>>() {
 
         // 缓存用户组ID列表
         users.forEach { user ->
-            val groupIds = userIdToGroupIdsMap[user.id!!] ?: emptyList()
+            val userId = user.id
+            if (userId.isBlank()) return@forEach
+            val groupIds = userIdToGroupIdsMap[userId] ?: emptyList()
             if (groupIds.isNotEmpty()) {
-                CacheKit.put(CACHE_NAME, user.id!!, groupIds)
-                log.debug("缓存了用户${user.id}的${groupIds.size}条用户组ID。")
+                CacheKit.put(CACHE_NAME, userId, groupIds)
+                log.debug("缓存了用户${userId}的${groupIds.size}条用户组ID。")
             }
         }
     }

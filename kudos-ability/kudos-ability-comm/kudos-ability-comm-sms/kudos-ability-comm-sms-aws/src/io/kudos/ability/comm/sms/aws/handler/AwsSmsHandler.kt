@@ -84,8 +84,8 @@ class AwsSmsHandler {
             smsRequest.messageAttributes
                 ?.filterKeys { it != null }
                 ?.filterValues { it != null }
-                ?.mapKeys { it.key!! }
-                ?.mapValues { it.value!! }
+                ?.mapKeys { requireNotNull(it.key) { "key is null" } }
+                ?.mapValues { requireNotNull(it.value) { "value is null" } }
                 ?.takeIf { it.isNotEmpty() }
                 ?.let { reqBuilder.messageAttributes(it) }
 
@@ -142,7 +142,7 @@ class AwsSmsHandler {
             HTTP_CLIENT = ApacheHttpClient.builder()
                 .proxyConfiguration(
                     ProxyConfiguration.builder()
-                        .endpoint(URI.create(proxyProperties.url!!))
+                        .endpoint(URI.create(requireNotNull(proxyProperties.url) { "proxy url is null" }))
                         .username(proxyProperties.username)
                         .password(proxyProperties.password)
                         .build()

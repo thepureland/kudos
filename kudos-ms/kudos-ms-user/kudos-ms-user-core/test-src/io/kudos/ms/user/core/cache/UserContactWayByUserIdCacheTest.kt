@@ -80,7 +80,7 @@ class UserContactWayByUserIdCacheTest : RdbAndRedisCacheTestBase() {
         val userId = "7a1a0000-0000-0000-0000-000000000001"
         val contactWay = insertNewRecordToDb(userId, "02", "sync_insert@example.com", true)
 
-        cacheHandler.syncOnInsert(contactWay, contactWay.id!!)
+        cacheHandler.syncOnInsert(contactWay, contactWay.id)
 
         val key = cacheHandler.getKey(userId)
         @Suppress("UNCHECKED_CAST")
@@ -95,16 +95,16 @@ class UserContactWayByUserIdCacheTest : RdbAndRedisCacheTestBase() {
         val id = "8b1a0000-0000-0000-0000-000000000004"
         val success = dao.updateProperties(id, mapOf(UserContactWay::contactWayValue.name to newValue))
         assertTrue(success)
-        val contactWay = dao.get(id)!!
+        val contactWay = assertNotNull(dao.get(id))
 
         cacheHandler.syncOnUpdate(contactWay, id)
 
-        val key = cacheHandler.getKey(contactWay.userId!!)
+        val key = cacheHandler.getKey(contactWay.userId)
         @Suppress("UNCHECKED_CAST")
         val cacheItems = CacheKit.getValue(cacheHandler.cacheName(), key) as List<UserContactWayCacheItem>?
         assertNotNull(cacheItems)
         assertEquals(newValue, cacheItems.first { it.id == id }.contactWayValue)
-        assertEquals(newValue, cacheHandler.getContactWays(contactWay.userId!!).first { it.id == id }.contactWayValue)
+        assertEquals(newValue, cacheHandler.getContactWays(contactWay.userId).first { it.id == id }.contactWayValue)
     }
 
     @Test
@@ -129,15 +129,15 @@ class UserContactWayByUserIdCacheTest : RdbAndRedisCacheTestBase() {
     @Test
     fun syncOnDelete() {
         val id = "8b1a0000-0000-0000-0000-000000000001"
-        val contactWay = dao.get(id)!!
+        val contactWay = assertNotNull(dao.get(id))
         val deleteSuccess = dao.deleteById(id)
         assertTrue(deleteSuccess)
 
         cacheHandler.syncOnDelete(contactWay, id)
 
-        val key = cacheHandler.getKey(contactWay.userId!!)
+        val key = cacheHandler.getKey(contactWay.userId)
         assertNull(CacheKit.getValue(cacheHandler.cacheName(), key))
-        assertFalse(cacheHandler.getContactWays(contactWay.userId!!).any { it.id == id })
+        assertFalse(cacheHandler.getContactWays(contactWay.userId).any { it.id == id })
     }
 
     @Test

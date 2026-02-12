@@ -70,7 +70,9 @@ open class ParamByModuleAndNameCache : AbstractKeyValueCacheHandler<SysParamCach
 
         // 缓存参数
         params.forEach {
-            CacheKit.put(CACHE_NAME, getKey(it.atomicServiceCode!!, it.paramName!!), it)
+            val atomicServiceCode = it.atomicServiceCode ?: return@forEach
+            val paramName = it.paramName ?: return@forEach
+            CacheKit.put(CACHE_NAME, getKey(atomicServiceCode, paramName), it)
         }
         log.debug("缓存了${params.size}条参数信息。")
     }
@@ -142,7 +144,7 @@ open class ParamByModuleAndNameCache : AbstractKeyValueCacheHandler<SysParamCach
     open fun syncOnUpdateActive(id: String, active: Boolean) {
         if (CacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("更新id为${id}的参数的启用状态后，同步缓存...")
-            val sysParam = sysParamDao.get(id)!!
+            val sysParam = requireNotNull(sysParamDao.get(id)) { "更新参数启用状态缓存时找不到id=$id 的参数记录。" }
             if (active) {
                 if (CacheKit.isWriteInTime(CACHE_NAME)) {
                     getSelf<ParamByModuleAndNameCache>().getParam(

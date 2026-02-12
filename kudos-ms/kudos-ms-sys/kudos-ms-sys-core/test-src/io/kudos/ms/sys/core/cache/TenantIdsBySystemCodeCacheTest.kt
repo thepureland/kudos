@@ -8,6 +8,7 @@ import jakarta.annotation.Resource
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 
 
 /**
@@ -69,7 +70,7 @@ class TenantIdsBySystemCodeCacheTest : RdbAndRedisCacheTestBase() {
         val sysTenantSystem = insertNewRecordToDb()
 
         // 同步缓存
-        cacheHandler.syncOnInsert(sysTenantSystem, sysTenantSystem.id!!)
+        cacheHandler.syncOnInsert(sysTenantSystem, sysTenantSystem.id)
 
         // 验证新记录是否在缓存中
         val tenantIds = cacheHandler.getTenantIds(sysTenantSystem.systemCode)
@@ -79,7 +80,7 @@ class TenantIdsBySystemCodeCacheTest : RdbAndRedisCacheTestBase() {
     @Test
     fun syncOnDelete() {
         val id = "b3846388-5e61-4b58-8fd8-eeeeeeee8781"
-        val sysTenantSystem = dao.get(id)!!
+        val sysTenantSystem = assertNotNull(dao.get(id))
         val tenantId = sysTenantSystem.tenantId
         val systemCodes = dao.searchSystemCodesByTenantId(tenantId)
 

@@ -61,29 +61,39 @@ open class SysI18NService : BaseCrudService<String, SysI18n, SysI18nDao>(), ISys
         var count = 0
         i18ns.forEach { payload ->
             if (payload.id.isNullOrBlank()) {
+                val locale = requireNotNull(payload.locale) { "新增国际化内容时，locale不能为空。" }
+                val atomicServiceCode = requireNotNull(payload.atomicServiceCode) { "新增国际化内容时，atomicServiceCode不能为空。" }
+                val i18nTypeDictCode = requireNotNull(payload.i18nTypeDictCode) { "新增国际化内容时，i18nTypeDictCode不能为空。" }
+                val key = requireNotNull(payload.key) { "新增国际化内容时，key不能为空。" }
+                val value = requireNotNull(payload.value) { "新增国际化内容时，value不能为空。" }
                 val i18n = SysI18n {
-                    this.locale = payload.locale!!
-                    this.atomicServiceCode = payload.atomicServiceCode!!
-                    this.i18nTypeDictCode = payload.i18nTypeDictCode!!
-                    this.key = payload.key!!
-                    this.value = payload.value!!
+                    this.locale = locale
+                    this.atomicServiceCode = atomicServiceCode
+                    this.i18nTypeDictCode = i18nTypeDictCode
+                    this.key = key
+                    this.value = value
                     this.active = payload.active ?: true
                 }
                 val id = dao.insert(i18n)
                 i18nCacheHandler.syncOnInsert(i18n, id)
                 count++
             } else {
+                val locale = requireNotNull(payload.locale) { "更新国际化内容时，locale不能为空。" }
+                val atomicServiceCode = requireNotNull(payload.atomicServiceCode) { "更新国际化内容时，atomicServiceCode不能为空。" }
+                val i18nTypeDictCode = requireNotNull(payload.i18nTypeDictCode) { "更新国际化内容时，i18nTypeDictCode不能为空。" }
+                val key = requireNotNull(payload.key) { "更新国际化内容时，key不能为空。" }
+                val value = requireNotNull(payload.value) { "更新国际化内容时，value不能为空。" }
                 val i18n = SysI18n {
                     this.id = payload.id
-                    this.locale = payload.locale!!
-                    this.atomicServiceCode = payload.atomicServiceCode!!
-                    this.i18nTypeDictCode = payload.i18nTypeDictCode!!
-                    this.key = payload.key!!
-                    this.value = payload.value!!
+                    this.locale = locale
+                    this.atomicServiceCode = atomicServiceCode
+                    this.i18nTypeDictCode = i18nTypeDictCode
+                    this.key = key
+                    this.value = value
                     this.active = payload.active ?: true
                 }
                 if (dao.update(i18n)) {
-                    i18nCacheHandler.syncOnUpdate(i18n, i18n.id!!)
+                    i18nCacheHandler.syncOnUpdate(i18n, i18n.id)
                     count++
                 }
             }

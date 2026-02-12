@@ -14,7 +14,7 @@ import java.time.LocalDateTime
 data class MsgSendPayload (
 
     /** 主键 */
-    override var id: String? = null,
+    override var id: String = "",
 
     //region your codes 1
 
@@ -61,7 +61,7 @@ data class MsgSendPayload (
 
     //region your codes 3
 
-    constructor() : this(null)
+    constructor() : this("")
 
     //endregion your codes 3
 

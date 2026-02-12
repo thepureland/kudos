@@ -72,7 +72,7 @@ open class SysSystemHashCache : AbstractHashCacheHandler<SysSystemCacheItem>() {
     open fun getSystemsByCodes(codes: List<String>): Map<String, SysSystemCacheItem> {
         if (codes.isEmpty()) return emptyMap()
         val list = sysSystemDao.getByIdsAs<SysSystemCacheItem>(codes)
-        return list.filter { it.id != null && it.id in codes }.associateBy { it.id!! }
+        return list.filter { it.id.isNotBlank() && it.id in codes }.associateBy { it.id }
     }
 
     /**

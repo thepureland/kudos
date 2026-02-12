@@ -15,7 +15,7 @@ import java.time.LocalDateTime
 data class UserAccountThirdCacheItem (
 
     /** 主键 */
-    override var id: String? = null,
+    override var id: String = "",
 
     //region your codes 1
 
@@ -83,7 +83,7 @@ data class UserAccountThirdCacheItem (
 
     //region your codes 3
 
-    constructor() : this(null)
+    constructor() : this("")
 
     //endregion your codes 3
 

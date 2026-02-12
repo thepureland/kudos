@@ -11,7 +11,7 @@ import org.springframework.cloud.openfeign.FallbackFactory
 class GlobalFeignFallBackFactory : FallbackFactory<HttpResult> {
 
     override fun create(cause: Throwable): HttpResult {
-        val result = HttpResult(404, cause.message!!)
+        val result = HttpResult(404, cause.message ?: cause.toString())
         log.debug("Hystrix FallBackFactory -----------------------------------------------------------")
         return result
     }

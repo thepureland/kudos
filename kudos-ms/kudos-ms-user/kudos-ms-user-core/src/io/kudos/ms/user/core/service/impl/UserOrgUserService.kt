@@ -105,7 +105,7 @@ open class UserOrgUserService : BaseCrudService<String, UserOrgUser, UserOrgUser
         if (success) {
             log.debug("设置机构${orgId}的用户${userId}为管理员：${isAdmin}。")
             // 同步缓存（虽然缓存不包含orgAdmin字段，但为了保持一致性，仍然同步）
-            userIdsByOrgIdCache.syncOnUpdate(updated, relation.id!!)
+            userIdsByOrgIdCache.syncOnUpdate(updated, relation.id)
         } else {
             log.error("设置机构${orgId}的用户${userId}为管理员失败！")
         }

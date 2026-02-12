@@ -69,8 +69,12 @@ open class UserIdsByTenantIdAndRoleCodeCache : AbstractKeyValueCacheHandler<List
 
         // 缓存用户ID列表
         roles.forEach { role ->
-            val userIds = roleIdToUserIdsMap[role.id!!] ?: emptyList()
-            CacheKit.put(CACHE_NAME, getKey(role.tenantId!!, role.code!!), userIds)
+            val roleId = role.id
+            if (roleId.isBlank()) return@forEach
+            val tenantId = role.tenantId ?: return@forEach
+            val roleCode = role.code ?: return@forEach
+            val userIds = roleIdToUserIdsMap[roleId] ?: emptyList()
+            CacheKit.put(CACHE_NAME, getKey(tenantId, roleCode), userIds)
             log.debug("缓存了租户${role.tenantId}角色${role.code}的${userIds.size}条用户ID。")
         }
     }

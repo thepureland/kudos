@@ -34,9 +34,9 @@ open class MinioDeleteService : IDeleteService {
         if (model.authServerParam != null) {
             LOG.info(
                 "Minio use auth server type:{0}",
-                model.authServerParam!!.javaClass.getSimpleName()
+                requireNotNull(model.authServerParam) { "authServerParam is null" }.javaClass.getSimpleName()
             )
-            return minioClientBuilderFactory.getInstance(model.authServerParam!!)!!.build()
+            return requireNotNull(minioClientBuilderFactory.getInstance(requireNotNull(model.authServerParam) { "authServerParam is null" })) { "MinioClient builder not found" }.build()
         }
         return minioClientDefault
     }
@@ -52,7 +52,7 @@ open class MinioDeleteService : IDeleteService {
 
         try {
             //判定文件在存在
-            getMinioClient(model)!!
+            requireNotNull(getMinioClient(model)) { "MinioClient is null" }
                 .statObject(
                     StatObjectArgs.builder()
                         .bucket(model.bucketName)
@@ -61,7 +61,7 @@ open class MinioDeleteService : IDeleteService {
                 )
 
             //具体删除
-            getMinioClient(model)!!.removeObject(
+            requireNotNull(getMinioClient(model)) { "MinioClient is null" }.removeObject(
                 RemoveObjectArgs.builder()
                     .bucket(model.bucketName)
                     .`object`(model.filePath)

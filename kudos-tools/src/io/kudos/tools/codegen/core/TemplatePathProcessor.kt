@@ -70,7 +70,7 @@ object TemplatePathProcessor {
             val files = mutableListOf<File>()
             for (resource in resources) {
                 if (resource.filename.isNotBlank() && !resource.filename.contains("macro.include")) {
-                    files.add(File(resource.locationOnDisk!!))
+                    resource.locationOnDisk?.let { files.add(File(it)) }
                 }
             }
             return files

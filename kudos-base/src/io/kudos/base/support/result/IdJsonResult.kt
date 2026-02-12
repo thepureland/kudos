@@ -13,6 +13,7 @@ import io.kudos.base.support.IIdEntity
 open class IdJsonResult<T>: IJsonResult, IIdEntity<T> {
 
     /** 惟一标识 */
-    override var id: T? = null
+    @Suppress("UNCHECKED_CAST")
+    override var id: T = null as T
 
 }

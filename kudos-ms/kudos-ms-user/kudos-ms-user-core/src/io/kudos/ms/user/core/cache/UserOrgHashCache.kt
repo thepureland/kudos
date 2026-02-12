@@ -77,7 +77,7 @@ open class UserOrgHashCache : AbstractHashCacheHandler<UserOrgCacheItem>() {
     open fun getOrgsByIds(ids: Collection<String>): Map<String, UserOrgCacheItem> {
         if (ids.isEmpty()) return emptyMap()
         val list = userOrgDao.getByIdsAs<UserOrgCacheItem>(ids)
-        return list.filter { it.id != null && it.id in ids }.associateBy { it.id!! }
+        return list.filter { it.id.isNotBlank() && it.id in ids }.associateBy { it.id }
     }
 
     /**

@@ -65,7 +65,7 @@ class SwitchingServletWebServerFactory(
         val serverFactory = TomcatServletWebServerFactory(port)
         serverFactory.addConnectorCustomizers({ connector: Connector? ->
             // 解决用tomcat时，get请求传入特殊字符报400错误的问题
-            connector!!.setProperty("relaxedPathChars", "\"<>[\\]^`{|}")
+            requireNotNull(connector) { "connector is null" }.setProperty("relaxedPathChars", "\"<>[\\]^`{|}")
             connector.setProperty("relaxedQueryChars", "\"<>[\\]^`{|}")
         })
         return serverFactory
