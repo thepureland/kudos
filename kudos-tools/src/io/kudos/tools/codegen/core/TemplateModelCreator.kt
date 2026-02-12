@@ -120,23 +120,23 @@ open class TemplateModelCreator {
                 if (origColumns.map { it.name }.containsAll(maintainColumns)) {
                     // 包括所有维护字段，po实现IMaintainableDbEntity，dao实现MaintainableTable
                     poSuperClass = IMaintainableDbEntity::class.simpleName
-                    daoSuperClass = MaintainableTable::class.simpleName!!
+                    daoSuperClass = requireNotNull(MaintainableTable::class.simpleName) { "MaintainableTable simpleName is null" }
                     // 过滤掉父类中已有的列
                     templateModel["columns"] = origColumns.filter { !maintainColumns.contains(it.name) }
                 } else {
-                    daoSuperClass = StringIdTable::class.simpleName!!
+                    daoSuperClass = requireNotNull(StringIdTable::class.simpleName) { "StringIdTable simpleName is null" }
                     templateModel["columns"] =
                         origColumns.filter { it.name != "id" } // 过滤掉父类中已有的id列
                 }
             }
 
             Int::class -> {
-                daoSuperClass = IntIdTable::class.simpleName!!
+                daoSuperClass = requireNotNull(IntIdTable::class.simpleName) { "IntIdTable simpleName is null" }
                 templateModel["columns"] = origColumns.filter { it.name != "id" } // 过滤掉父类中已有的id列
             }
 
             Long::class -> {
-                daoSuperClass = LongIdTable::class.simpleName!!
+                daoSuperClass = requireNotNull(LongIdTable::class.simpleName) { "LongIdTable simpleName is null" }
                 templateModel["columns"] = origColumns.filter { it.name != "id" } // 过滤掉父类中已有的id列
             }
 

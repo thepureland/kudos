@@ -64,7 +64,12 @@ abstract class AbstractByIdCacheHandler<PK : Any, T : IIdEntity<*>, DAO : IBaseR
 
         val results = dao.search(searchPayload, getCacheItemClass())
         log.debug("数据库中加载到${results.size}条${itemDesc()}.")
-        return results.associateBy { it.id!!.toString() }
+        return results
+            .mapNotNull { item ->
+                val usableId = toUsableId(item.id) ?: return@mapNotNull null
+                usableId.toString() to item
+            }
+            .toMap()
     }
 
     override fun reloadAll(clear: Boolean) {
@@ -88,7 +93,12 @@ abstract class AbstractByIdCacheHandler<PK : Any, T : IIdEntity<*>, DAO : IBaseR
 
         // 放入缓存
         results.forEach {
-            CacheKit.put(cacheName(), it.id!!, it)
+            val usableId = toUsableId(it.id)
+            if (usableId != null) {
+                CacheKit.put(cacheName(), usableId, it)
+            } else {
+                log.warn("跳过缓存空白id的${itemDesc()}记录: $it")
+            }
         }
 
         log.debug("缓存了${results.size}条${itemDesc()}信息。")
@@ -167,6 +177,12 @@ abstract class AbstractByIdCacheHandler<PK : Any, T : IIdEntity<*>, DAO : IBaseR
      * @return 缓存项描述
      */
     protected abstract fun itemDesc(): String
+
+    private fun toUsableId(id: Any?): Any? = when (id) {
+        null -> null
+        is CharSequence -> if (id.isNotBlank()) id else null
+        else -> id
+    }
 
     private val log = LogFactory.getLog(this)
 

@@ -86,7 +86,7 @@ class AccountThirdByUserIdAndProviderCodeCacheTest : RdbAndRedisCacheTestBase() 
         val userId = "9a1a0000-0000-0000-0000-000000000001"
         val accountThird = insertNewRecordToDb(userId, "DING", "sub-ding", true)
 
-        cacheHandler.syncOnInsert(accountThird, accountThird.id!!)
+        cacheHandler.syncOnInsert(accountThird, accountThird.id)
 
         val key = cacheHandler.getKey(userId, "DING")
         @Suppress("UNCHECKED_CAST")
@@ -100,7 +100,7 @@ class AccountThirdByUserIdAndProviderCodeCacheTest : RdbAndRedisCacheTestBase() 
         val id = "9b1a0000-0000-0000-0000-000000000002"
         val success = dao.updateProperties(id, mapOf(UserAccountThird::externalEmail.name to newEmail))
         assertTrue(success)
-        val accountThird = dao.get(id)!!
+        val accountThird = assertNotNull(dao.get(id))
 
         cacheHandler.syncOnUpdate(accountThird, id)
 
@@ -134,7 +134,7 @@ class AccountThirdByUserIdAndProviderCodeCacheTest : RdbAndRedisCacheTestBase() 
     @Test
     fun syncOnDelete() {
         val id = "9b1a0000-0000-0000-0000-000000000001"
-        val accountThird = dao.get(id)!!
+        val accountThird = assertNotNull(dao.get(id))
         val deleteSuccess = dao.deleteById(id)
         assertTrue(deleteSuccess)
 

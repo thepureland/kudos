@@ -69,7 +69,10 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
         }
 
         // 缓存数据
-        val ipRulesMap = results.groupBy { getKey(it.systemCode!!, it.tenantId) }
+        val ipRulesMap = results.mapNotNull { record ->
+            val systemCode = record.systemCode ?: return@mapNotNull null
+            getKey(systemCode, record.tenantId) to record
+        }.groupBy({ it.first }, { it.second })
         ipRulesMap.forEach { (key, ipRules) ->
             val cacheItems = mapToCacheItems(ipRules)
             CacheKit.put(CACHE_NAME, key, cacheItems)
@@ -185,7 +188,11 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
                 return
             }
 
-            val sysAccessRule = sysAccessRuleDao.get(sysAccessRuleIp.parentRuleId)!!
+            val sysAccessRule = sysAccessRuleDao.get(sysAccessRuleIp.parentRuleId)
+            if (sysAccessRule == null) {
+                log.error("数据库中找不到id为${sysAccessRuleIp.parentRuleId}的访问规则！")
+                return
+            }
 
             // 踢除ip访问规则缓存
             CacheKit.evict(CACHE_NAME, getKey(sysAccessRule.systemCode, sysAccessRule.tenantId))
@@ -214,7 +221,11 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
                 return
             }
 
-            val sysAccessRule = sysAccessRuleDao.get(sysAccessRuleIp.parentRuleId)!!
+            val sysAccessRule = sysAccessRuleDao.get(sysAccessRuleIp.parentRuleId)
+            if (sysAccessRule == null) {
+                log.error("数据库中找不到id为${sysAccessRuleIp.parentRuleId}的访问规则！")
+                return
+            }
 
             // 踢除缓存
             CacheKit.evict(CACHE_NAME, getKey(sysAccessRule.systemCode, sysAccessRule.tenantId))

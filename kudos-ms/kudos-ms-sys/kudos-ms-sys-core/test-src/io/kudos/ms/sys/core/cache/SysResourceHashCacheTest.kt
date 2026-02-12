@@ -106,9 +106,10 @@ class SysResourceHashCacheTest : RdbAndRedisCacheTestBase() {
         val id = cache.getResourceBySubSystemCodeAndUrl("srch-sys-a1b2c3d4", "/srch/suburl/a1b2/p01")?.id
         assertNotNull(id)
         val newRes = insertNewResource()
+        val newUrl = assertNotNull(newRes.url)
         cache.reloadAll(false)
         assertNotNull(cache.getResourceBySubSystemCodeAndUrl("srch-sys-a1b2c3d4", "/srch/suburl/a1b2/p01"))
-        assertNotNull(cache.getResourceBySubSystemCodeAndUrl(newRes.subSystemCode, newRes.url!!))
+        assertNotNull(cache.getResourceBySubSystemCodeAndUrl(newRes.subSystemCode, newUrl))
         cache.reloadAll(true)
         val item = cache.getResourceById("srch3001-8b9c-1d2e-5f6a-000000000021")
         assertNotNull(item)
@@ -122,22 +123,23 @@ class SysResourceHashCacheTest : RdbAndRedisCacheTestBase() {
     fun syncOnInsert() {
         cache.reloadAll(true)
         val newRes = insertNewResource()
-        cache.syncOnInsert(newRes.id!!)
-        val item = cache.getResourceById(newRes.id!!)
+        val newUrl = assertNotNull(newRes.url)
+        cache.syncOnInsert(newRes.id)
+        val item = cache.getResourceById(newRes.id)
         assertNotNull(item)
-        val itemAgain = cache.getResourceById(newRes.id!!)
+        val itemAgain = cache.getResourceById(newRes.id)
         if (isLocalCacheEnabled()) assertSame(item, itemAgain, "同一 id 再次从缓存获取应返回同一对象引用")
-        assertNotNull(cache.getResourceBySubSystemCodeAndUrl(newRes.subSystemCode, newRes.url!!))
+        assertNotNull(cache.getResourceBySubSystemCodeAndUrl(newRes.subSystemCode, newUrl))
     }
 
     @Test
     fun syncOnInsertWithAny() {
         cache.reloadAll(true)
         val newRes = insertNewResource()
-        cache.syncOnInsert(Any(), newRes.id!!)
-        val item = cache.getResourceById(newRes.id!!)
+        cache.syncOnInsert(Any(), newRes.id)
+        val item = cache.getResourceById(newRes.id)
         assertNotNull(item)
-        val itemAgain = cache.getResourceById(newRes.id!!)
+        val itemAgain = cache.getResourceById(newRes.id)
         if (isLocalCacheEnabled()) assertTrue(item === itemAgain, "同一 id 再次从缓存获取应返回同一对象引用")
     }
 
@@ -146,7 +148,7 @@ class SysResourceHashCacheTest : RdbAndRedisCacheTestBase() {
         cache.reloadAll(true)
         val id = "srch4001-3a4b-6c7d-0e1f-000000000031"
         val newUrl = "/srch/sync/upd/001-new"
-        val res = sysResourceDao.get(id)!!
+        val res = assertNotNull(sysResourceDao.get(id))
         res.url = newUrl
         sysResourceDao.update(res)
         cache.syncOnUpdate(id)
@@ -175,20 +177,22 @@ class SysResourceHashCacheTest : RdbAndRedisCacheTestBase() {
         val id = "srch5001-1a2b-4c5d-8e9f-000000000051"
         val subSystemCode = "srch-sys-sync-active"
         val url = "/srch/sync/active/001"
-        val res = sysResourceDao.get(id)!!
+        val res = assertNotNull(sysResourceDao.get(id))
         res.active = false
         sysResourceDao.update(res)
         cache.syncOnUpdateActive(id, false)
-        assertFalse(sysResourceDao.fetchResourceBySubSysAndUrl(subSystemCode, url)!!.active!!)
+        val resource = assertNotNull(sysResourceDao.fetchResourceBySubSysAndUrl(subSystemCode, url))
+        assertEquals(false, resource.active)
     }
 
     @Test
     fun syncOnDelete() {
         cache.reloadAll(true)
         val id = "srch4003-5c6d-8e9f-2a3b-000000000033"
-        val item = cache.getResourceById(id)!!
+        val item = assertNotNull(cache.getResourceById(id))
+        val subSystemCode = assertNotNull(item.subSystemCode)
         sysResourceDao.deleteById(id)
-        cache.syncOnDelete(id, item.subSystemCode!!, item.url)
+        cache.syncOnDelete(id, subSystemCode, item.url)
         assertNull(sysResourceDao.get(id), "删除并 sync 后 DB 中该 id 应不存在")
     }
 

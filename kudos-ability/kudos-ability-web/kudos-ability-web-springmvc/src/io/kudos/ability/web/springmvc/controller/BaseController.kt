@@ -29,7 +29,7 @@ open class BaseController<F: Any> {
         if (formModelClass == null) {
             formModelClass = getFormModelClass()
         }
-        return TeminalConstraintsCreator.create(formModelClass!!)
+        return TeminalConstraintsCreator.create(requireNotNull(formModelClass) { "formModelClass is null" })
     }
 
     /**

@@ -80,8 +80,8 @@ class SysMicroServiceHashCacheTest : RdbAndRedisCacheTestBase() {
         assertEquals(atomicList.size, atomicAgain.size)
         assertEquals(atomicList.map { it.id }.toSet(), atomicAgain.map { it.id }.toSet())
         if (isLocalCacheEnabled() && atomicList.isNotEmpty()) {
-            val firstCode = atomicList.first().code
-            assertSame(cacheHandler.getMicroServiceByCode(firstCode!!), atomicAgain.find { it.code == firstCode })
+            val firstCode = assertNotNull(atomicList.first().code)
+            assertSame(cacheHandler.getMicroServiceByCode(firstCode), atomicAgain.find { it.code == firstCode })
         }
     }
 

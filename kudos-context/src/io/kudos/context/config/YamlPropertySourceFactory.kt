@@ -22,7 +22,7 @@ class YamlPropertySourceFactory : PropertySourceFactory {
     private val log = LogFactory.getLog(this)
 
     override fun createPropertySource(name: String?, encodedResource: EncodedResource): PropertySource<*> {
-        val sourceName = name ?: encodedResource.resource.filename!!
+        val sourceName = name ?: encodedResource.resource.filename ?: "application"
         initConfigJarMap(sourceName, encodedResource)
         val propertySource = loadFromConfigCenter(sourceName)
         var map = mutableMapOf<Any?, Any?>()
@@ -67,8 +67,7 @@ class YamlPropertySourceFactory : PropertySourceFactory {
         val factory = YamlPropertiesFactoryBean()
         factory.setResources(resource.resource)
         factory.afterPropertiesSet()
-        val ymlProperties = factory.getObject()
-        return ymlProperties!!
+        return requireNotNull(factory.getObject()) { "YAML properties could not be loaded" }
     }
 
     private fun initConfigJarMap(sourceName: String?, encodedRes: EncodedResource) {

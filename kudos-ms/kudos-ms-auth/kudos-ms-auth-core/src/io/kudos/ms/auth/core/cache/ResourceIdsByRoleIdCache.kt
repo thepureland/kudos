@@ -57,10 +57,12 @@ open class ResourceIdsByRoleIdCache : AbstractKeyValueCacheHandler<Set<String>>(
 
         // 缓存角色资源ID列表
         roles.forEach { role ->
-            val resourceIds = roleIdToResourceIdsMap[role.id!!] ?: emptyList()
+            val roleId = role.id
+            if (roleId.isBlank()) return@forEach
+            val resourceIds = roleIdToResourceIdsMap[roleId] ?: emptyList()
             if (resourceIds.isNotEmpty()) {
-                CacheKit.put(CACHE_NAME, role.id!!, resourceIds)
-                log.debug("缓存了角色${role.id}的${resourceIds.size}条资源ID。")
+                CacheKit.put(CACHE_NAME, roleId, resourceIds)
+                log.debug("缓存了角色${roleId}的${resourceIds.size}条资源ID。")
             }
         }
     }

@@ -12,7 +12,7 @@ import io.kudos.base.support.payload.FormPayload
 data class SysDictPayload (
 
     /** 主键 */
-    override var id: String? = null,
+    override var id: String = "",
 
     //region your codes 1
 
@@ -47,7 +47,7 @@ data class SysDictPayload (
 
     //region your codes 3
 
-    constructor() : this(null)
+    constructor() : this("")
 
     // endregion your codes 3
 

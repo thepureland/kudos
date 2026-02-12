@@ -23,8 +23,8 @@ class MixCache(
 
     override fun getName(): String {
         return when (strategy) {
-            CacheStrategy.SINGLE_LOCAL, CacheStrategy.LOCAL_REMOTE -> localCache!!.name
-            CacheStrategy.REMOTE -> remoteCache!!.name
+            CacheStrategy.SINGLE_LOCAL, CacheStrategy.LOCAL_REMOTE -> requireNotNull(localCache) { "localCache is null for strategy $strategy" }.name
+            CacheStrategy.REMOTE -> requireNotNull(remoteCache) { "remoteCache is null for strategy $strategy" }.name
         }
     }
 
@@ -36,10 +36,10 @@ class MixCache(
     override fun get(key: Any): Cache.ValueWrapper? {
         var result: Cache.ValueWrapper?
         when (strategy) {
-            CacheStrategy.SINGLE_LOCAL -> result = localCache!!.get(key)
+            CacheStrategy.SINGLE_LOCAL -> result = requireNotNull(localCache) { "localCache is null for strategy $strategy" }.get(key)
             CacheStrategy.REMOTE -> result = remoteCache?.get(key)
             CacheStrategy.LOCAL_REMOTE -> {
-                result = localCache!!.get(key)
+                result = requireNotNull(localCache) { "localCache is null for strategy $strategy" }.get(key)
                 if (result?.get() == null) {
                     result = remoteCache?.get(key)
                     localCache.put(key, result?.get())
@@ -53,12 +53,12 @@ class MixCache(
     override fun <T: Any> get(key: Any, @Nullable type: Class<T>?): T? {
         var result: T?
         when (strategy) {
-            CacheStrategy.SINGLE_LOCAL -> result = localCache!!.get(key, type)
-            CacheStrategy.REMOTE -> result = remoteCache!!.get(key, type)
+            CacheStrategy.SINGLE_LOCAL -> result = requireNotNull(localCache) { "localCache is null for strategy $strategy" }.get(key, type)
+            CacheStrategy.REMOTE -> result = requireNotNull(remoteCache) { "remoteCache is null for strategy $strategy" }.get(key, type)
             CacheStrategy.LOCAL_REMOTE -> {
-                result = localCache!!.get(key, type)
+                result = requireNotNull(localCache) { "localCache is null for strategy $strategy" }.get(key, type)
                 if (result == null) {
-                    result = remoteCache!!.get(key, type)
+                    result = requireNotNull(remoteCache) { "remoteCache is null for strategy $strategy" }.get(key, type)
                     localCache.put(key, result)
                 }
             }
@@ -70,10 +70,10 @@ class MixCache(
     override fun <T: Any> get(key: Any, valueLoader: Callable<T>): T? {
         var result: T?
         when (strategy) {
-            CacheStrategy.SINGLE_LOCAL -> result = localCache!!.get(key, valueLoader)
+            CacheStrategy.SINGLE_LOCAL -> result = requireNotNull(localCache) { "localCache is null for strategy $strategy" }.get(key, valueLoader)
             CacheStrategy.REMOTE -> result = remoteCache?.get(key, valueLoader)
             CacheStrategy.LOCAL_REMOTE -> {
-                result = localCache!!.get(key, valueLoader)
+                result = requireNotNull(localCache) { "localCache is null for strategy $strategy" }.get(key, valueLoader)
                 if (result == null) {
                     result = remoteCache?.get(key, valueLoader)
                     localCache.put(key, result)
@@ -85,11 +85,11 @@ class MixCache(
 
     override fun evict(key: Any) {
         when (strategy) {
-            CacheStrategy.SINGLE_LOCAL -> localCache!!.evict(key)
-            CacheStrategy.REMOTE -> remoteCache!!.evict(key)
+            CacheStrategy.SINGLE_LOCAL -> requireNotNull(localCache) { "localCache is null for strategy $strategy" }.evict(key)
+            CacheStrategy.REMOTE -> requireNotNull(remoteCache) { "remoteCache is null for strategy $strategy" }.evict(key)
             CacheStrategy.LOCAL_REMOTE -> {
-                remoteCache!!.evict(key)
-                localCache!!.evict(key)
+                requireNotNull(remoteCache) { "remoteCache is null for strategy $strategy" }.evict(key)
+                requireNotNull(localCache) { "localCache is null for strategy $strategy" }.evict(key)
                 val name = getName()
                 log.debug("evict远程缓存{0}。key为{1}", name, key)
                 pushMsgRedis(name, key)
@@ -99,11 +99,11 @@ class MixCache(
 
     override fun put(key: Any, @Nullable value: Any?) {
         when (strategy) {
-            CacheStrategy.SINGLE_LOCAL -> localCache!!.put(key, value)
-            CacheStrategy.REMOTE -> remoteCache!!.put(key, value)
+            CacheStrategy.SINGLE_LOCAL -> requireNotNull(localCache) { "localCache is null for strategy $strategy" }.put(key, value)
+            CacheStrategy.REMOTE -> requireNotNull(remoteCache) { "remoteCache is null for strategy $strategy" }.put(key, value)
             CacheStrategy.LOCAL_REMOTE -> {
-                remoteCache!!.put(key, value)
-                localCache!!.put(key, value)
+                requireNotNull(remoteCache) { "remoteCache is null for strategy $strategy" }.put(key, value)
+                requireNotNull(localCache) { "localCache is null for strategy $strategy" }.put(key, value)
                 val name = getName()
                 log.debug("put远程缓存{0}。key为{1}", name, key)
                 pushMsgRedis(name, key) //TODO 异步?
@@ -114,11 +114,11 @@ class MixCache(
     @Nullable
     override fun putIfAbsent(key: Any, @Nullable value: Any?): Cache.ValueWrapper? {
         when (strategy) {
-            CacheStrategy.SINGLE_LOCAL -> localCache!!.putIfAbsent(key, value)
-            CacheStrategy.REMOTE -> remoteCache!!.putIfAbsent(key, value)
+            CacheStrategy.SINGLE_LOCAL -> requireNotNull(localCache) { "localCache is null for strategy $strategy" }.putIfAbsent(key, value)
+            CacheStrategy.REMOTE -> requireNotNull(remoteCache) { "remoteCache is null for strategy $strategy" }.putIfAbsent(key, value)
             CacheStrategy.LOCAL_REMOTE -> {
-                remoteCache!!.putIfAbsent(key, value)
-                localCache!!.putIfAbsent(key, value)
+                requireNotNull(remoteCache) { "remoteCache is null for strategy $strategy" }.putIfAbsent(key, value)
+                requireNotNull(localCache) { "localCache is null for strategy $strategy" }.putIfAbsent(key, value)
                 val name = getName()
                 log.debug("put远程缓存{0}。key为{1}", name, key)
                 pushMsgRedis(name, key) //TODO 异步?
@@ -134,11 +134,11 @@ class MixCache(
 
     override fun clear() {
         when (strategy) {
-            CacheStrategy.SINGLE_LOCAL -> localCache!!.clear()
-            CacheStrategy.REMOTE -> remoteCache!!.clear()
+            CacheStrategy.SINGLE_LOCAL -> requireNotNull(localCache) { "localCache is null for strategy $strategy" }.clear()
+            CacheStrategy.REMOTE -> requireNotNull(remoteCache) { "remoteCache is null for strategy $strategy" }.clear()
             CacheStrategy.LOCAL_REMOTE -> {
-                remoteCache!!.clear()
-                localCache!!.clear()
+                requireNotNull(remoteCache) { "remoteCache is null for strategy $strategy" }.clear()
+                requireNotNull(localCache) { "localCache is null for strategy $strategy" }.clear()
                 val name = getName()
                 log.debug("clear远程缓存", name)
                 pushMsgRedis(name, null)

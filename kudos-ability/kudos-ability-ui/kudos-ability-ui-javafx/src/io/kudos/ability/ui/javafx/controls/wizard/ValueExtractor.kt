@@ -50,7 +50,7 @@ object ValueExtractor {
     fun getValue(n: Node): Any? {
         var value: Any? = null
         if (valueExtractors.containsKey(n.javaClass)) {
-            val callback = valueExtractors[n.javaClass]!!
+            val callback = requireNotNull(valueExtractors[n.javaClass]) { "No extractor for ${n.javaClass}" }
             value = callback.call(n)
         }
         return value

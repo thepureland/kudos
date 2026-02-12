@@ -87,11 +87,11 @@ class Wizard(title: String = "") {
      *
      */
     fun show() {
-        dialog!!.show()
+        requireNotNull(dialog) { "dialog is null" }.show()
     }
 
     fun showAndWait(): Optional<ButtonType?> {
-        return dialog!!.showAndWait()
+        return requireNotNull(dialog) { "dialog is null" }.showAndWait()
     }
 
     /**************************************************************************
@@ -161,7 +161,7 @@ class Wizard(title: String = "") {
      * [hello.dialog.wizard.Wizard.getUserData].
      */
     fun setUserData(value: Any) {
-        getProperties()!![USER_DATA_KEY] = value
+        requireNotNull(getProperties())[USER_DATA_KEY] = value
     }
 
     /**
@@ -172,7 +172,7 @@ class Wizard(title: String = "") {
      * has been set or if null was set.
      */
     val userData: Any?
-        get() = getProperties()!![USER_DATA_KEY]
+        get() = getProperties()?.get(USER_DATA_KEY)
     //    public ValidationSupport getValidationSupport() {
     //      return validationSupport;
     //  }
@@ -198,7 +198,7 @@ class Wizard(title: String = "") {
         }
         currentPage.ifPresent { currentPage: WizardPane? ->
             // put in default actions
-            val buttons: MutableList<ButtonType> = currentPage!!.buttonTypes
+            val buttons: MutableList<ButtonType> = requireNotNull(currentPage) { "currentPage is null" }.buttonTypes
             if (!buttons.contains(BUTTON_PREVIOUS)) {
                 buttons.add(BUTTON_PREVIOUS)
                 val button = currentPage.lookupButton(BUTTON_PREVIOUS) as Button
@@ -216,13 +216,13 @@ class Wizard(title: String = "") {
             currentPage.onEnteringPage(this)
 
             // and then switch to the new pane
-            dialog!!.setDialogPane(currentPage)
+            requireNotNull(dialog) { "dialog is null" }.setDialogPane(currentPage)
         }
         validateActionState()
     }
 
     private fun validateActionState() {
-        val currentPaneButtons: MutableList<ButtonType> = dialog!!.dialogPane.buttonTypes
+        val currentPaneButtons: MutableList<ButtonType> = requireNotNull(dialog) { "dialog is null" }.dialogPane.buttonTypes
 
         // TODO can't set a DialogButton to be disabled at present
 //        BUTTON_PREVIOUS.setDisabled(pageHistory.isEmpty());
@@ -240,7 +240,7 @@ class Wizard(title: String = "") {
             if (currentPaneButtons.contains(BUTTON_NEXT)) {
                 currentPaneButtons.remove(BUTTON_NEXT)
                 currentPaneButtons.add(0, BUTTON_NEXT)
-                val button = dialog!!.dialogPane.lookupButton(BUTTON_NEXT) as Button
+                val button = requireNotNull(dialog) { "dialog is null" }.dialogPane.lookupButton(BUTTON_NEXT) as Button
                 button.addEventFilter(ActionEvent.ACTION, BUTTON_NEXT_ACTION_HANDLER)
             }
             currentPaneButtons.remove(ButtonType.FINISH)
@@ -339,7 +339,7 @@ class Wizard(title: String = "") {
 
 //        validationSupport.validationResultProperty().addListener( (o, ov, nv) -> validateActionState());
         dialog = Dialog()
-        dialog!!.title = title
+        requireNotNull(dialog) { "dialog is null" }.title = title
         //        hello.dialog.initOwner(owner); // TODO add initOwner API
     }
 }

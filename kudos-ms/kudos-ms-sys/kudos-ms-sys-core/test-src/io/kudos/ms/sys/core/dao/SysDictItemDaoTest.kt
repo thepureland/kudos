@@ -31,7 +31,9 @@ class SysDictItemDaoTest : RdbTestBase() {
         assertTrue(items.any { it.itemCode == "svc-item-ditem-dao-test-1" })
         assertTrue(items.any { it.itemCode == "svc-item-ditem-dao-test-2" })
         // 验证按orderNum排序
-        assertTrue(items[0].orderNum!! <= items[1].orderNum!!)
+        val firstOrder = assertNotNull(items[0].orderNum)
+        val secondOrder = assertNotNull(items[1].orderNum)
+        assertTrue(firstOrder <= secondOrder)
     }
 
     @Test

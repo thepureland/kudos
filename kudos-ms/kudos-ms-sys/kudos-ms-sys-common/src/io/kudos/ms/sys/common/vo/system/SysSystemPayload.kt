@@ -38,10 +38,10 @@ data class SysSystemPayload (
 
     //region your codes 3
 
-    constructor() : this(null)
+    constructor() : this("")
 
-    override var id: String?
-        get() = this.code
+    override var id: String
+        get() = this.code ?: ""
         set(value) { this.code = value }
 
     // endregion your codes 3

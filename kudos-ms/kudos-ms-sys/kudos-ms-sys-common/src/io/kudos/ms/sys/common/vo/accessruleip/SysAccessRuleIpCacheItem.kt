@@ -17,7 +17,7 @@ data class SysAccessRuleIpCacheItem (
     //region your codes 1
 
     /** 主键 */
-    override var id: String? = null,
+    override var id: String = "",
 
     /** ip起 */
     var ipStart: Long? = null,
@@ -38,7 +38,7 @@ data class SysAccessRuleIpCacheItem (
 
     //region your codes 3
 
-    constructor() : this(null)
+    constructor() : this("")
 
     // endregion your codes 3
 

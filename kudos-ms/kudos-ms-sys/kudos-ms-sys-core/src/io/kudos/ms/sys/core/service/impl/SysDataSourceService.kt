@@ -56,7 +56,7 @@ open class SysDataSourceService : BaseCrudService<String, SysDataSource, SysData
         // 根据租户id获取租户名称
         val records = pair.first.filterIsInstance<SysDataSourceRecord>()
         if (records.isNotEmpty()) {
-            val tenantIds = records.map { it.tenantId!! }
+            val tenantIds = records.mapNotNull { it.tenantId }
             val tenants = sysTenantApi.getTenants(tenantIds)
             records.forEach {
                 it.tenantName = tenants[it.tenantId]?.name
@@ -70,7 +70,7 @@ open class SysDataSourceService : BaseCrudService<String, SysDataSource, SysData
         val result = super.get(id, returnType)
         if (returnType == SysDataSourceDetail::class) {
             val tenantId = (result as SysDataSourceDetail).tenantId
-            result.tenantName = sysTenantApi.getTenant(tenantId!!)?.name
+            result.tenantName = if (tenantId.isNullOrBlank()) null else sysTenantApi.getTenant(tenantId)?.name
         }
         return result
     }
@@ -124,7 +124,7 @@ open class SysDataSourceService : BaseCrudService<String, SysDataSource, SysData
         val success = dao.update(dataSource)
         if (success) {
             // 同步缓存
-            val ds = get(id)!!
+            val ds = requireNotNull(get(id)) { "重置数据源密码后找不到id=${id}的数据源。" }
             sysDataSourceHashCache.syncOnUpdate(ds, id)
         } else {
             log.error("重置id为${id}的数据源密码失败！")

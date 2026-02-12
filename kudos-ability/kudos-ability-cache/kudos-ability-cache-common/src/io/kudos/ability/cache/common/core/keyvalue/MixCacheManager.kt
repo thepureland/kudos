@@ -113,7 +113,7 @@ class MixCacheManager : AbstractCacheManager() {
      * - 混合缓存可能因缺少管理器而降级
      */
     fun initCacheAfterSystemInit() {
-        if (!this.isCacheEnabled!!) {
+        if (this.isCacheEnabled != true) {
             log.warn("缓存未开启,不加载缓存配置.")
             return
         }
@@ -121,10 +121,11 @@ class MixCacheManager : AbstractCacheManager() {
             log.warn("无法找到缓存策略,不加载缓存配置.")
             return
         }
+        val provider = requireNotNull(cacheConfigProvider) { "缓存配置提供器未注入，无法加载缓存配置。" }
         //查询一次数据，各个缓存组件加载
-        val localCacheConfigs = cacheConfigProvider!!.getLocalCacheConfigs()
-        val remoteCacheConfigs = cacheConfigProvider.getRemoteCacheConfigs()
-        val localRemoteCacheConfigs = cacheConfigProvider.getLocalRemoteCacheConfigs()
+        val localCacheConfigs = provider.getLocalCacheConfigs()
+        val remoteCacheConfigs = provider.getRemoteCacheConfigs()
+        val localRemoteCacheConfigs = provider.getLocalRemoteCacheConfigs()
         if (hasLocalCacheManager() && localCacheManager is CacheItemInitializing) {
             (localCacheManager as CacheItemInitializing).initCacheAfterSystemInit(
                 localCacheConfigs + localRemoteCacheConfigs
@@ -142,7 +143,7 @@ class MixCacheManager : AbstractCacheManager() {
     }
 
     override fun getCache(name: String): Cache? {
-        val realName = versionConfig!!.getFinalCacheName(name)
+        val realName = requireVersionConfig().getFinalCacheName(name)
         return super.getCache(realName)
     }
 
@@ -157,7 +158,7 @@ class MixCacheManager : AbstractCacheManager() {
         if (hasLocalCacheManager()) {
             if (localCacheConfigs.isNotEmpty()) {
                 localCacheConfigs.forEach { (key: String, _: CacheConfig?) ->
-                    val realKey = versionConfig!!.getFinalCacheName(key)
+                    val realKey = requireVersionConfig().getFinalCacheName(key)
                     val localCache = localCacheManager.getCache(realKey)
                     localCaches.add(MixCache(CacheStrategy.SINGLE_LOCAL, localCache, null))
                 }
@@ -179,7 +180,7 @@ class MixCacheManager : AbstractCacheManager() {
         if (remoteCacheManager != null) {
             if (remoteCacheConfigs.isNotEmpty()) {
                 remoteCacheConfigs.forEach { (key: String, _: CacheConfig?) ->
-                    val realKey = versionConfig!!.getFinalCacheName(key)
+                    val realKey = requireVersionConfig().getFinalCacheName(key)
                     val remoteCache = remoteCacheManager.getCache(realKey)
                     remoteCaches.add(MixCache(CacheStrategy.REMOTE, null, remoteCache))
                 }
@@ -228,27 +229,26 @@ class MixCacheManager : AbstractCacheManager() {
         // 本地-远程两级联动缓存
         if (localRemoteCacheConfigs.isNotEmpty()) {
             localRemoteCacheConfigs.forEach { (key: String, _: CacheConfig?) ->
-                val realKey = versionConfig!!.getFinalCacheName(key)
+                val realKey = requireVersionConfig().getFinalCacheName(key)
                 val localCache = if (hasLocalCacheManager()) localCacheManager.getCache(realKey) else null
                 val remoteCache = remoteCacheManager?.getCache(realKey)
-                lateinit var strategy: CacheStrategy
-                if (!hasLocalCacheManager()) {
-                    if (remoteCacheManager != null) {
-                        strategy = CacheStrategy.REMOTE
-                        log.warn("mix缓存,key={0}升级为远程缓存", key)
-                    }
+                val strategy = if (!hasLocalCacheManager()) {
+                    log.warn("mix缓存,key={0}升级为远程缓存", key)
+                    CacheStrategy.REMOTE
+                } else if (remoteCacheManager != null) {
+                    CacheStrategy.LOCAL_REMOTE
                 } else {
-                    if (remoteCacheManager != null) {
-                        strategy = CacheStrategy.LOCAL_REMOTE
-                    } else {
-                        strategy = CacheStrategy.SINGLE_LOCAL
-                        log.warn("mix缓存,key={0}降级为远程本地缓存", key)
-                    }
+                    log.warn("mix缓存,key={0}降级为远程本地缓存", key)
+                    CacheStrategy.SINGLE_LOCAL
                 }
                 mixCacheConfig.add(MixCache(strategy, localCache, remoteCache))
             }
         }
         return mixCacheConfig
+    }
+
+    private fun requireVersionConfig(): CacheVersionConfig {
+        return requireNotNull(versionConfig) { "缓存版本配置未注入，无法生成缓存名。" }
     }
 
     /**

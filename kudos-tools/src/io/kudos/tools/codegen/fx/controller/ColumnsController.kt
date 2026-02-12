@@ -52,15 +52,17 @@ class ColumnsController : Initializable {
         val tableComment = tableComment
         val items = tableComboBox.items
         tableMap = CodeGenObjectService.readTables()
-        tableComboBox.items = FXCollections.observableArrayList(tableMap!!.keys.toSortedSet())
+        val map = tableMap
+        tableComboBox.items = FXCollections.observableArrayList(requireNotNull(map) { "tableMap is null" }.keys.toSortedSet())
         AutoCompleteComboBoxListener<Any>(tableComboBox)
         if (items.isEmpty()) {
             tableComboBox.editor.textProperty()
                 .addListener { _: ObservableValue<out String?>?, _: String?, newValue: String? ->
                     tableCommentTextField.clear()
                     if (newValue != null) {
-                        if (tableMap!!.containsKey(newValue)) {
-                            tableCommentTextField.text = tableMap!![newValue]
+                        val tblMap = tableMap
+                        if (tblMap != null && tblMap.containsKey(newValue)) {
+                            tableCommentTextField.text = tblMap[newValue]
                             CodeGeneratorContext.tableName = newValue
                             object : Thread() {
                                 override fun run() {

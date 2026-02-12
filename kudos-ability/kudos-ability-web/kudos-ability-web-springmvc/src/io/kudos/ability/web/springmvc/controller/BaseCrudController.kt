@@ -34,11 +34,11 @@ open class BaseCrudController<PK : Any, B : IBaseCrudService<PK, *>, S : ListSea
      */
     @PostMapping("/saveOrUpdate")
     open fun saveOrUpdate(@RequestBody @Valid payload: F): PK {
-        return if (payload.id == null || payload.id == "") {
+        return if (payload.id == "") {
             biz.insert(payload)
         } else {
             biz.update(payload)
-            payload.id!!
+            payload.id
         }
     }
 

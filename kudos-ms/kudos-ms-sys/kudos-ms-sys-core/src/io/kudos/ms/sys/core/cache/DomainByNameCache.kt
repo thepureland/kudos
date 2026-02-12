@@ -63,7 +63,8 @@ open class DomainByNameCache : AbstractKeyValueCacheHandler<SysDomainCacheItem>(
 
         // 缓存域名
         domains.forEach {
-            CacheKit.put(CACHE_NAME, it.domain!!, it)
+            val domain = it.domain ?: return@forEach
+            CacheKit.put(CACHE_NAME, domain, it)
         }
         log.debug("缓存了${domains.size}条域名信息。")
     }
@@ -127,10 +128,11 @@ open class DomainByNameCache : AbstractKeyValueCacheHandler<SysDomainCacheItem>(
         if (CacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("更新id为${id}的域名后，同步${CACHE_NAME}缓存...")
             val domain = if (any == null) {
-                dao.get(id)!!.domain
+                dao.get(id)?.domain
             } else {
                 BeanKit.getProperty(any, SysDomain::domain.name) as String
             }
+            if (domain.isNullOrBlank()) return
             CacheKit.evict(CACHE_NAME, domain) // 踢除缓存
             if (CacheKit.isWriteInTime(CACHE_NAME)) {
                 getSelf<DomainByNameCache>().getDomain(domain) // 重新缓存

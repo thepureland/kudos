@@ -201,7 +201,7 @@ open class RememberMeByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<U
 
     private fun buildCacheItem(row: Map<String, *>, username: String): UserLoginRememberMeCacheItem {
         return UserLoginRememberMeCacheItem(
-            id = row[UserLoginRememberMe::id.name] as String?,
+            id = (row[UserLoginRememberMe::id.name] as String?) ?: "",
             username = username,
             token = row[UserLoginRememberMe::token.name] as String?,
             lastUsed = row[UserLoginRememberMe::lastUsed.name] as LocalDateTime?

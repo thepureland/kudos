@@ -64,7 +64,7 @@ class ParamByModuleAndNameCacheTest : RdbAndRedisCacheTestBase() {
         // 数据库中更新的记录在缓存中应该也更新了
         atomicServiceCode = "atomicServiceCode-a"
         paramName = "paramName-2"
-        val cacheItemUpdate = cacheHandler.getParam(atomicServiceCode, paramName)!!
+        val cacheItemUpdate = assertNotNull(cacheHandler.getParam(atomicServiceCode, paramName))
         assertEquals(newValue, cacheItemUpdate.paramValue)
 
         // 数据库中删除的记录在缓存中应该还存在
@@ -99,7 +99,7 @@ class ParamByModuleAndNameCacheTest : RdbAndRedisCacheTestBase() {
         val sysParam = insertNewRecordToDb()
 
         // 同步缓存
-        cacheHandler.syncOnInsert(sysParam, sysParam.id!!)
+        cacheHandler.syncOnInsert(sysParam, sysParam.id)
 
         // 验证新记录是否在缓存中
         val key = cacheHandler.getKey(sysParam.atomicServiceCode, sysParam.paramName)
@@ -114,7 +114,7 @@ class ParamByModuleAndNameCacheTest : RdbAndRedisCacheTestBase() {
         val success = dao.updateProperties(id, mapOf(SysParam::paramValue.name to newValue))
         assert(success)
 
-        val sysParam = dao.get(id)!!
+        val sysParam = assertNotNull(dao.get(id))
 
         // 同步缓存
         cacheHandler.syncOnUpdate(sysParam, id)
@@ -135,7 +135,7 @@ class ParamByModuleAndNameCacheTest : RdbAndRedisCacheTestBase() {
         var id = "9edc0327-99f1-4767-b42b-555555559755"
         var success = dao.updateProperties(id, mapOf(SysParam::active.name to false))
         assert(success)
-        var sysParam = dao.get(id)!!
+        var sysParam = assertNotNull(dao.get(id))
         cacheHandler.syncOnUpdateActive(id, false)
         var key = cacheHandler.getKey(sysParam.atomicServiceCode, sysParam.paramName)
         assertNull(CacheKit.getValue(cacheHandler.cacheName(), key))
@@ -145,7 +145,7 @@ class ParamByModuleAndNameCacheTest : RdbAndRedisCacheTestBase() {
         id = "9edc0327-99f1-4767-b42b-000000009755"
         success = dao.updateProperties(id, mapOf(SysParam::active.name to true))
         assert(success)
-        sysParam = dao.get(id)!!
+        sysParam = assertNotNull(dao.get(id))
         cacheHandler.syncOnUpdateActive(id, true)
         key = cacheHandler.getKey(sysParam.atomicServiceCode, sysParam.paramName)
         assertNotNull(CacheKit.getValue(cacheHandler.cacheName(), key))
@@ -155,7 +155,7 @@ class ParamByModuleAndNameCacheTest : RdbAndRedisCacheTestBase() {
     @Test
     fun syncOnDelete() {
         val id = "9edc0327-99f1-4767-b42b-666666669755"
-        val sysParam = dao.get(id)!!
+        val sysParam = assertNotNull(dao.get(id))
 
         // 删除数据库中的记录
         val deleteSuccess = dao.deleteById(id)

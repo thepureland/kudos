@@ -78,7 +78,7 @@ open class SqlTestBase {
         val fullSqlFilename = "$parentPath/${sqlFilename}.sql"
         val files = ClassPathScanner.scanForResources(parentPath, sqlFilename, "sql")
         return if (files.isNotEmpty()) {
-            files.first().location!!
+            requireNotNull(files.first().location) { "resource location is null" }
         } else {
             throw IllegalStateException("测试数据SQL文件不存在: $fullSqlFilename")
         }

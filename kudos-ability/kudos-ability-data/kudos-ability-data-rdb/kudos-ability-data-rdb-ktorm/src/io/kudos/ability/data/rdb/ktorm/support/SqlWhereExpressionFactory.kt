@@ -29,8 +29,8 @@ object SqlWhereExpressionFactory {
             return null
         }
         return when (operator) {
-            OperatorEnum.EQ -> column.eq(value!!)
-            OperatorEnum.NE, OperatorEnum.LG -> column.notEq(value!!)
+            OperatorEnum.EQ -> column.eq(requireNotNull(value) { "操作符[$operator]对应的查询值不能为空。" })
+            OperatorEnum.NE, OperatorEnum.LG -> column.notEq(requireNotNull(value) { "操作符[$operator]对应的查询值不能为空。" })
             OperatorEnum.GT -> (column as Column<Comparable<Any>>).greater(value as Comparable<Any>)
             OperatorEnum.GE -> (column as Column<Comparable<Any>>).greaterEq(value as Comparable<Any>)
             OperatorEnum.LT -> (column as Column<Comparable<Any>>).less(value as Comparable<Any>)
@@ -54,14 +54,14 @@ object SqlWhereExpressionFactory {
             OperatorEnum.LT_P -> column.columnLt(
                 ColumnHelper.columnOf(column.table, value as String)[value] as Column<String>
             )
-            OperatorEnum.LIKE -> column.like("%${value!!}%")
-            OperatorEnum.LIKE_S -> column.like("${value!!}%")
-            OperatorEnum.LIKE_E -> column.like("%${value!!}")
-            OperatorEnum.ILIKE -> column.ilike("%${value!!}%")
-            OperatorEnum.ILIKE_S -> column.ilike("${value!!}%")
-            OperatorEnum.ILIKE_E -> column.ilike("%${value!!}")
-            OperatorEnum.IN -> handleIn(true, value!!, column)
-            OperatorEnum.NOT_IN -> handleIn(false, value!!, column)
+            OperatorEnum.LIKE -> column.like("%${requireNotNull(value) { "操作符[$operator]对应的查询值不能为空。" }}%")
+            OperatorEnum.LIKE_S -> column.like("${requireNotNull(value) { "操作符[$operator]对应的查询值不能为空。" }}%")
+            OperatorEnum.LIKE_E -> column.like("%${requireNotNull(value) { "操作符[$operator]对应的查询值不能为空。" }}")
+            OperatorEnum.ILIKE -> column.ilike("%${requireNotNull(value) { "操作符[$operator]对应的查询值不能为空。" }}%")
+            OperatorEnum.ILIKE_S -> column.ilike("${requireNotNull(value) { "操作符[$operator]对应的查询值不能为空。" }}%")
+            OperatorEnum.ILIKE_E -> column.ilike("%${requireNotNull(value) { "操作符[$operator]对应的查询值不能为空。" }}")
+            OperatorEnum.IN -> handleIn(true, requireNotNull(value) { "操作符[$operator]对应的查询值不能为空。" }, column)
+            OperatorEnum.NOT_IN -> handleIn(false, requireNotNull(value) { "操作符[$operator]对应的查询值不能为空。" }, column)
             OperatorEnum.IS_NULL -> column.isNull()
             OperatorEnum.IS_NOT_NULL -> column.isNotNull()
             OperatorEnum.IS_EMPTY -> column.eq("")

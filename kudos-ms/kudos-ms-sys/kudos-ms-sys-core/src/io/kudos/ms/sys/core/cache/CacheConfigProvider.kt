@@ -43,30 +43,36 @@ open class CacheConfigProvider : ICacheConfigProvider {
     }
 
     override fun getAllCacheConfigs(): Map<String, CacheConfig> {
-        return getCacheConfigs().associateBy { it.name!! }
+        return getCacheConfigs()
+            .mapNotNull { cfg -> cfg.name?.let { it to cfg } }
+            .toMap()
     }
 
     override fun getLocalCacheConfigs(): Map<String, CacheConfig> {
         return getCacheConfigs()
             .filter { it.strategyDictCode == CacheStrategy.SINGLE_LOCAL.name }
-            .associateBy { it.name!! }
+            .mapNotNull { cfg -> cfg.name?.let { it to cfg } }
+            .toMap()
     }
 
     override fun getRemoteCacheConfigs(): Map<String, CacheConfig> {
         return getCacheConfigs()
             .filter { it.strategyDictCode == CacheStrategy.REMOTE.name }
-            .associateBy { it.name!! }
+            .mapNotNull { cfg -> cfg.name?.let { it to cfg } }
+            .toMap()
     }
 
     override fun getLocalRemoteCacheConfigs(): Map<String, CacheConfig> {
         return getCacheConfigs()
             .filter { it.strategyDictCode == CacheStrategy.LOCAL_REMOTE.name }
-            .associateBy { it.name!! }
+            .mapNotNull { cfg -> cfg.name?.let { it to cfg } }
+            .toMap()
     }
 
     override fun getHashCacheConfigs(): Map<String, CacheConfig> {
         return getCacheConfigs()
             .filter { it.hash == true }
-            .associateBy { it.name!! }
+            .mapNotNull { cfg -> cfg.name?.let { it to cfg } }
+            .toMap()
     }
 }

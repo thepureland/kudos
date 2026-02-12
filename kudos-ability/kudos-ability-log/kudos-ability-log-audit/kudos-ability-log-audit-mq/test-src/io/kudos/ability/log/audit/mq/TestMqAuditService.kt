@@ -17,7 +17,7 @@ class TestMqAuditService {
         return "code-load-success"
     }
 
-    class SaveModel(override var id: String?) : IIdEntity<String> {
+    class SaveModel(override var id: String) : IIdEntity<String> {
         @JvmField
         var code: String? = null
     }

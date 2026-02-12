@@ -73,9 +73,13 @@ open class ResourceIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler
         }
 
         groups.forEach { group ->
-            val roleIds = groupIdToRoleIdsMap[group.id!!] ?: emptyList()
+            val groupId = group.id
+            if (groupId.isBlank()) return@forEach
+            val tenantId = group.tenantId ?: return@forEach
+            val groupCode = group.code ?: return@forEach
+            val roleIds = groupIdToRoleIdsMap[groupId] ?: emptyList()
             val resourceIds = roleIds.flatMap { roleId -> roleIdToResourceIdsMap[roleId] ?: emptyList() }.distinct()
-            CacheKit.put(CACHE_NAME, getKey(group.tenantId!!, group.code!!), resourceIds)
+            CacheKit.put(CACHE_NAME, getKey(tenantId, groupCode), resourceIds)
             log.debug("缓存了租户${group.tenantId}用户组${group.code}的${resourceIds.size}条资源ID。")
         }
     }

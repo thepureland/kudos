@@ -14,7 +14,7 @@ class CompressionResult(val outputStream: ByteArrayOutputStream?, var mimeType: 
     }
 
     fun getOutputFilePath(): String {
-        return outputFilePath!!
+        return requireNotNull(outputFilePath) { "outputFilePath is null" }
     }
 
     fun writeTo() {

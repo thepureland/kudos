@@ -51,7 +51,9 @@ object ProxyKit {
         val dynamicAdvisedInterceptor = h[proxy]
         val advised = dynamicAdvisedInterceptor.javaClass.getDeclaredField("advised")
         advised.isAccessible = true
-        return (advised[dynamicAdvisedInterceptor] as AdvisedSupport).targetSource.target!!
+        return requireNotNull((advised[dynamicAdvisedInterceptor] as AdvisedSupport).targetSource.target) {
+            "CGLIB proxy target is null"
+        }
     }
 
     private fun getJdkDynamicProxyTargetObject(proxy: Any): Any {
@@ -60,7 +62,9 @@ object ProxyKit {
         val aopProxy: AopProxy = h[proxy] as AopProxy
         val advised: Field = aopProxy.javaClass.getDeclaredField("advised")
         advised.isAccessible = true
-        return (advised[aopProxy] as AdvisedSupport).targetSource.target!!
+        return requireNotNull((advised[aopProxy] as AdvisedSupport).targetSource.target) {
+            "JDK dynamic proxy target is null"
+        }
     }
 
 }

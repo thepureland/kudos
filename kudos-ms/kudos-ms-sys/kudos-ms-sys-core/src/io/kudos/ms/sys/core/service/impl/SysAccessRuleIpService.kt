@@ -55,7 +55,8 @@ open class SysAccessRuleIpService : BaseCrudService<String, SysAccessRuleIp, Sys
         
         return ipRules.any { rule ->
             // 检查是否过期
-            if (rule.expirationTime != null && rule.expirationTime!!.isBefore(now)) {
+            val expirationTime = rule.expirationTime
+            if (expirationTime != null && expirationTime.isBefore(now)) {
                 return@any false
             }
             // 检查IP是否在范围内
@@ -68,10 +69,12 @@ open class SysAccessRuleIpService : BaseCrudService<String, SysAccessRuleIp, Sys
         var count = 0
         ips.forEach { payload ->
             if (payload.id.isNullOrBlank()) {
+                val ipStart = requireNotNull(payload.ipStart) { "新增IP规则时，ipStart不能为空。" }
+                val ipEnd = requireNotNull(payload.ipEnd) { "新增IP规则时，ipEnd不能为空。" }
                 val ipRule = SysAccessRuleIp {
                     this.parentRuleId = ruleId
-                    this.ipStart = payload.ipStart!!
-                    this.ipEnd = payload.ipEnd!!
+                    this.ipStart = ipStart
+                    this.ipEnd = ipEnd
                     this.ipTypeDictCode = payload.ipType?.toString() ?: "0"
                     this.expirationTime = payload.expirationDate
                     this.active = payload.active ?: true
@@ -80,17 +83,19 @@ open class SysAccessRuleIpService : BaseCrudService<String, SysAccessRuleIp, Sys
                 accessRuleIpsBySubSysAndTenantIdCache.syncOnInsert(ipRule, id)
                 count++
             } else {
+                val ipStart = requireNotNull(payload.ipStart) { "更新IP规则时，ipStart不能为空。" }
+                val ipEnd = requireNotNull(payload.ipEnd) { "更新IP规则时，ipEnd不能为空。" }
                 val ipRule = SysAccessRuleIp {
                     this.id = payload.id
                     this.parentRuleId = ruleId
-                    this.ipStart = payload.ipStart!!
-                    this.ipEnd = payload.ipEnd!!
+                    this.ipStart = ipStart
+                    this.ipEnd = ipEnd
                     this.ipTypeDictCode = payload.ipType?.toString() ?: "0"
                     this.expirationTime = payload.expirationDate
                     this.active = payload.active ?: true
                 }
                 if (dao.update(ipRule)) {
-                    accessRuleIpsBySubSysAndTenantIdCache.syncOnUpdate(ipRule, payload.id!!)
+                    accessRuleIpsBySubSysAndTenantIdCache.syncOnUpdate(ipRule, payload.id)
                     count++
                 }
             }

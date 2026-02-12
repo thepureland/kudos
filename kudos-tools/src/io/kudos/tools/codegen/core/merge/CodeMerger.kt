@@ -22,13 +22,13 @@ class CodeMerger(private val file: File) {
     fun merge() {
         handleRegion()
         handleImport()
-        FileKit.write(file, newFileContent!!)
+        FileKit.write(file, requireNotNull(newFileContent) { "newFileContent is null after merge" })
     }
 
     private fun handleRegion() {
         val customCodes = retriever.retrieve()
         newFileContent = FileKit.readFileToString(file)
-        val appendCodesRetriever = AppendCodesRetriever(newFileContent!!)
+        val appendCodesRetriever = AppendCodesRetriever(requireNotNull(newFileContent) { "newFileContent is null" })
         val appendCodesMap = appendCodesRetriever.retrieve()
         for ((index, value) in customCodes) {
             val codes = StringBuilder(value)
@@ -52,14 +52,14 @@ class CodeMerger(private val file: File) {
             }
             val regexp =
                 "(?<=(<!--)?#?//region your codes $index(-->)?\\r?\\n)[\\s\\S]*?(?=(<!--)?#?//endregion your codes $index(-->)?)"
-            newFileContent = newFileContent!!.replaceFirst(regexp.toRegex(), Matcher.quoteReplacement(codes.toString()))
+            newFileContent = requireNotNull(newFileContent) { "newFileContent is null" }.replaceFirst(regexp.toRegex(), Matcher.quoteReplacement(codes.toString()))
         }
     }
 
     private fun handleImport() {
         if (file.name.endsWith(".kt")) {
             val oldImports = ImportStmtRetriever(oldFileContent).retrieveImports()
-            val newImports = ImportStmtRetriever(newFileContent!!).retrieveImports()
+            val newImports = ImportStmtRetriever(requireNotNull(newFileContent) { "newFileContent is null" }).retrieveImports()
             val commonImports = oldImports.intersect(newImports.toSet()) // 交集
             val customImport = oldImports.subtract(commonImports) // 差集，用户自己导入的import
             val imports = StringBuilder()
@@ -67,7 +67,7 @@ class CodeMerger(private val file: File) {
                 imports.append(importStmt).append("\n")
             }
             if (imports.isNotEmpty()) {
-                val index = newFileContent!!.indexOf("import")
+                val index = requireNotNull(newFileContent) { "newFileContent is null" }.indexOf("import")
                 val sb = StringBuilder(newFileContent)
                 sb.insert(index, imports)
                 newFileContent = sb.toString()

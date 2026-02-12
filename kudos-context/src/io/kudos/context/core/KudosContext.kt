@@ -65,34 +65,26 @@ class KudosContext {
     var otherInfos: MutableMap<String, Any?>? = null
 
     fun addSessionAttributes(vararg sessionAttributes: Pair<String, Any?>): KudosContext {
-        if (this.sessionAttributes == null) {
-            this.sessionAttributes = mutableMapOf()
-        }
-        this.sessionAttributes!!.putAll(sessionAttributes)
+        val attrs = this.sessionAttributes ?: mutableMapOf<String, Any?>().also { this.sessionAttributes = it }
+        attrs.putAll(mapOf(*sessionAttributes))
         return this
     }
 
     fun addCookieAttributes(vararg cookieAttributes: Pair<String, String?>): KudosContext {
-        if (this.cookieAttributes == null) {
-            this.cookieAttributes = mutableMapOf()
-        }
-        this.cookieAttributes!!.putAll(cookieAttributes)
+        val attrs = this.cookieAttributes ?: mutableMapOf<String, String?>().also { this.cookieAttributes = it }
+        attrs.putAll(mapOf(*cookieAttributes))
         return this
     }
 
     fun addHeaderAttributes(vararg headerAttributes: Pair<String, String?>): KudosContext {
-        if (this.headerAttributes == null) {
-            this.headerAttributes = mutableMapOf()
-        }
-        this.headerAttributes!!.putAll(headerAttributes)
+        val attrs = this.headerAttributes ?: mutableMapOf<String, String?>().also { this.headerAttributes = it }
+        attrs.putAll(mapOf(*headerAttributes))
         return this
     }
 
     fun addOtherInfos(vararg otherInfos: Pair<String, Any?>): KudosContext {
-        if (this.otherInfos == null) {
-            this.otherInfos = mutableMapOf()
-        }
-        this.otherInfos!!.putAll(otherInfos)
+        val infos = this.otherInfos ?: mutableMapOf<String, Any?>().also { this.otherInfos = it }
+        infos.putAll(mapOf(*otherInfos))
         return this
     }
 

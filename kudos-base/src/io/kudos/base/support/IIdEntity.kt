@@ -10,6 +10,6 @@ package io.kudos.base.support
 interface IIdEntity<T> {
 
     /** 惟一标识 */
-    var id: T?
+    var id: T
 
 }

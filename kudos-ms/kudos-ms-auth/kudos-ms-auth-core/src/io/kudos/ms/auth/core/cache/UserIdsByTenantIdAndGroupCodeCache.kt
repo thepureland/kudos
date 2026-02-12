@@ -69,8 +69,12 @@ open class UserIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler<Set
 
         // 缓存用户ID列表
         groups.forEach { group ->
-            val userIds = groupIdToUserIdsMap[group.id!!] ?: emptyList()
-            CacheKit.put(CACHE_NAME, getKey(group.tenantId!!, group.code!!), userIds)
+            val groupId = group.id
+            if (groupId.isBlank()) return@forEach
+            val tenantId = group.tenantId ?: return@forEach
+            val groupCode = group.code ?: return@forEach
+            val userIds = groupIdToUserIdsMap[groupId] ?: emptyList()
+            CacheKit.put(CACHE_NAME, getKey(tenantId, groupCode), userIds)
             log.debug("缓存了租户${group.tenantId}用户组${group.code}的${userIds.size}条用户ID。")
         }
     }

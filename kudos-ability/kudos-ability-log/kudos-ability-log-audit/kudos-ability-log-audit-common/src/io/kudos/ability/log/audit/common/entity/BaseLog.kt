@@ -127,9 +127,10 @@ class BaseLog : Serializable {
             return null
         }
         val sb = StringBuffer()
-        val size: Int = stringParams!!.size
+        val params = requireNotNull(stringParams) { "stringParams is null" }
+        val size: Int = params.size
         for (i in 0..<size) {
-            val s: String? = stringParams!!.get(i)
+            val s: String? = params.get(i)
             sb.append(s)
             if (i + 1 < size) {
                 sb.append(SEPERATOR)
@@ -157,7 +158,7 @@ class BaseLog : Serializable {
         if (this.stringParams == null) {
             this.stringParams = ArrayList()
         }
-        this.stringParams!!.add(param)
+        (this.stringParams ?: ArrayList<String?>().also { this.stringParams = it }).add(param)
         return this
     }
 
@@ -171,7 +172,7 @@ class BaseLog : Serializable {
         if (this.objectParams == null) {
             this.objectParams = HashMap()
         }
-        this.objectParams!![param] = LogParamVo(param, value)
+        (this.objectParams ?: HashMap<String, LogParamVo>().also { this.objectParams = it })[param] = LogParamVo(param, value)
         return this
     }
 
@@ -184,7 +185,7 @@ class BaseLog : Serializable {
         if (this.objectParams == null) {
             this.objectParams = HashMap()
         }
-        this.objectParams!![param.name] = param
+        (this.objectParams ?: HashMap<String, LogParamVo>().also { this.objectParams = it })[param.name] = param
         return this
     }
 
@@ -197,8 +198,9 @@ class BaseLog : Serializable {
             sysLogVo.entityId = entityId
             sysLogVo.moduleName = this.moduleName
             sysLogVo.moduleCode = this.moduleCode
-            sysLogVo.operateTypeId = Integer.valueOf(opType!!.code)
-            sysLogVo.operateType = opType!!.trans
+            val op = requireNotNull(opType) { "opType is null" }
+            sysLogVo.operateTypeId = Integer.valueOf(op.code)
+            sysLogVo.operateType = op.trans
             sysLogVo.description = description
             sysLogVo.moduleId = this.moduleId
             sysLogVo.id = RandomStringKit.uuid()

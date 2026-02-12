@@ -73,7 +73,7 @@ open class SysMicroServiceHashCache : AbstractHashCacheHandler<SysMicroServiceCa
     open fun getMicroServicesByCodes(codes: List<String>): Map<String, SysMicroServiceCacheItem> {
         if (codes.isEmpty()) return emptyMap()
         val list = sysMicroServiceDao.getByIdsAs<SysMicroServiceCacheItem>(codes)
-        return list.filter { it.id != null && it.id in codes }.associateBy { it.id!! }
+        return list.filter { it.id.isNotBlank() && it.id in codes }.associateBy { it.id }
     }
 
     /**

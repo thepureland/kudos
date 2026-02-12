@@ -61,10 +61,11 @@ open class XTextFieldTableCell<S, T> @JvmOverloads constructor(converter: String
                 // either throw an exception or return silently
                 return
             }
-            myTextField!!.focusedProperty().addListener { _, _, nvalue ->
+            val tf = requireNotNull(myTextField) { "myTextField is null" }
+            tf.focusedProperty().addListener { _, _, nvalue ->
                 if (!nvalue) {
-                    commitEdit(converter.fromString(myTextField!!.text))
-                    System.out.println(myTextField!!.text)
+                    commitEdit(converter.fromString(tf.text))
+                    System.out.println(tf.text)
                     println("commit")
                 }
             }
@@ -81,7 +82,7 @@ open class XTextFieldTableCell<S, T> @JvmOverloads constructor(converter: String
     }
 
     protected fun commitEdit() {
-        val edited: T? = converter.fromString(myTextField!!.text)
+        val edited: T? = myTextField?.let { converter.fromString(it.text) }
         commitEdit(edited)
     }
 

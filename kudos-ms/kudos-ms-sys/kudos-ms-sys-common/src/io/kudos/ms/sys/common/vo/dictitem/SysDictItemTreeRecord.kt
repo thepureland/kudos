@@ -14,7 +14,7 @@ data class SysDictItemTreeRecord (
     //region your codes 1
 
     /** 字典项ID */
-    override var id: String? = null,
+    override var id: String = "",
 
     /** 字典项编号 */
     var itemCode: String? = null,
@@ -44,7 +44,7 @@ data class SysDictItemTreeRecord (
 
     //region your codes 3
 
-    constructor() : this(null)
+    constructor() : this("")
 
     // endregion your codes 3
 

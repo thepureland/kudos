@@ -14,7 +14,7 @@ data class SysI18nRecord (
     //region your codes 1
 
     /** 主键 */
-    override var id: String? = null,
+    override var id: String = "",
 
     /** 语言_地区 */
     var locale: String? = null,
@@ -44,7 +44,7 @@ data class SysI18nRecord (
 
     //region your codes 3
 
-    constructor() : this(null)
+    constructor() : this("")
 
     // endregion your codes 3
 

@@ -76,12 +76,14 @@ open class SysDictItemService : BaseCrudService<String, SysDictItem, SysDictItem
 
     @Transactional
     override fun saveOrUpdate(payload: SysDictPayload): String {
-        return if (payload.id.isNullOrBlank()) { // 新增
+        return if (payload.id.isBlank()) { // 新增
+            val payloadCode = requireNotNull(payload.code) { "新增字典项时，code不能为空。" }
+            val payloadName = requireNotNull(payload.name) { "新增字典项时，name不能为空。" }
             val sysDictItem = SysDictItem().apply {
-                dictId = payload.id!!
+                dictId = payload.id
                 parentId = payload.parentId
-                itemCode = payload.code!!
-                itemName = payload.name!!
+                itemCode = payloadCode
+                itemName = payloadName
                 orderNum = payload.seqNo
                 remark = payload.remark
             }
@@ -89,22 +91,24 @@ open class SysDictItemService : BaseCrudService<String, SysDictItem, SysDictItem
             dictItemCacheHandler.syncOnInsert(sysDictItem, id) // 同步缓存
             id
         } else { // 更新
+            val payloadCode = requireNotNull(payload.code) { "更新字典项时，code不能为空。" }
+            val payloadName = requireNotNull(payload.name) { "更新字典项时，name不能为空。" }
             val sysDictItem = SysDictItem {
                 id = payload.id
-                dictId = payload.id!!
+                dictId = payload.id
                 parentId = payload.parentId
-                itemCode = payload.code!!
-                itemName = payload.name!!
+                itemCode = payloadCode
+                itemName = payloadName
                 orderNum = payload.seqNo
                 remark = payload.remark
             }
             val success = dao.update(sysDictItem)
             if (success) {
-                dictItemCacheHandler.syncOnUpdate(sysDictItem, sysDictItem.id!!) // 同步缓存
+                dictItemCacheHandler.syncOnUpdate(sysDictItem, sysDictItem.id) // 同步缓存
             } else {
                 log.error("新增id为${sysDictItem.id}的字典项失败！")
             }
-            sysDictItem.id!!
+            sysDictItem.id
         }
     }
 
@@ -135,7 +139,7 @@ open class SysDictItemService : BaseCrudService<String, SysDictItem, SysDictItem
 
     @Transactional
     override fun cascadeDeleteChildren(id: String): Boolean {
-        val dictItem = dao.get(id)!!
+        val dictItem = requireNotNull(dao.get(id)) { "删除字典项失败：id=${id}不存在。" }
         val childItemIds = mutableListOf<String>()
         recursionFindAllChildId(id, childItemIds)
         if (childItemIds.isNotEmpty()) {
@@ -161,7 +165,7 @@ open class SysDictItemService : BaseCrudService<String, SysDictItem, SysDictItem
                 items.map {
                     SysDictTreeNode().apply {
                         code = it.itemCode
-                        id = code
+                        id = code ?: ""
                     }
                 }
             }
@@ -187,7 +191,7 @@ open class SysDictItemService : BaseCrudService<String, SysDictItem, SysDictItem
                     .orderBy(SysDictItems.orderNum.asc())
                     .map { row ->
                         SysDictTreeNode().apply {
-                            id = row[SysDictItems.id]
+                            id = row[SysDictItems.id] ?: ""
                             code = row[SysDictItems.itemCode]
                         }
                     }
@@ -236,7 +240,7 @@ open class SysDictItemService : BaseCrudService<String, SysDictItem, SysDictItem
     private fun recursionFindAllChildId(itemId: String, results: MutableList<String>) {
         val itemIds = dao.oneSearchProperty(SysDictItem::parentId, itemId, SysDictItem::id)
         itemIds.forEach { id ->
-            results.add(id as String)
+            results.add(id)
             recursionFindAllChildId(id, results)
         }
     }
@@ -271,7 +275,7 @@ open class SysDictItemService : BaseCrudService<String, SysDictItem, SysDictItem
         // 转换为树节点
         val treeNodes = records.map { record ->
             SysDictItemTreeRecord().apply {
-                id = record.itemId
+                id = record.itemId ?: ""
                 itemCode = record.itemCode
                 itemName = record.itemName
                 this.parentId = record.parentId

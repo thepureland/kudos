@@ -25,7 +25,7 @@ open class ComponentInitializerSelector : ImportSelector {
         locations.forEach { location ->
             val classes = ScanKit.findImplementations(location, IComponentInitializer::class)
             classes.filter { it !in exclusionComponentInitializer }
-                .forEach { clazz -> classNames.add(clazz.qualifiedName!!) }
+                .forEach { clazz -> classNames.add(clazz.qualifiedName ?: clazz.simpleName ?: "Unknown") }
         }
         return classNames.toTypedArray()
     }

@@ -60,7 +60,7 @@ open class BaseReadOnlyController<PK : Any, B : IBaseReadOnlyService<PK, *>, S :
         if (resultClass == null) {
             resultClass = GenericKit.getSuperClassGenricClass(this::class, 5) as KClass<F>
         }
-        return biz.get(id, resultClass!!) ?: throw ObjectNotFoundException("找不到记录！")
+        return biz.get(id, requireNotNull(resultClass) { "resultClass is null" }) ?: throw ObjectNotFoundException("找不到记录！")
     }
 
     /**
@@ -76,7 +76,7 @@ open class BaseReadOnlyController<PK : Any, B : IBaseReadOnlyService<PK, *>, S :
         if (detailClass == null) {
             detailClass = GenericKit.getSuperClassGenricClass(this::class, 4) as KClass<D>
         }
-        return biz.get(id, detailClass!!) ?: throw ObjectNotFoundException("找不到记录！")
+        return biz.get(id, requireNotNull(detailClass) { "detailClass is null" }) ?: throw ObjectNotFoundException("找不到记录！")
     }
 
 }

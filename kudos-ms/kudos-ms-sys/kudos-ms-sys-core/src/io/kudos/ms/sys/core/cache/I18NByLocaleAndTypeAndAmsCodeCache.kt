@@ -63,7 +63,11 @@ open class I18NByLocaleAndTypeAndAmsCodeCache : AbstractKeyValueCacheHandler<Map
             getKey(it.locale, it.i18nTypeDictCode, it.atomicServiceCode)
         }
         grouped.forEach { (key, items) ->
-            val valueMap = items.associate { it.key!! to it.value!! }
+            val valueMap = items.mapNotNull { item ->
+                val i18nKey = item.key ?: return@mapNotNull null
+                val i18nValue = item.value ?: return@mapNotNull null
+                i18nKey to i18nValue
+            }.toMap()
             CacheKit.put(CACHE_NAME, key, valueMap)
         }
         log.debug("缓存了${results.size}条国际化内容。")
@@ -92,7 +96,11 @@ open class I18NByLocaleAndTypeAndAmsCodeCache : AbstractKeyValueCacheHandler<Map
             log.warn("数据库中不存在语言为${locale}、类型为${i18nTypeDictCode}且原子服务为${atomicServiceCode}的active=true的国际化内容！")
             return emptyMap()
         }
-        val map = items.associate { it.key!! to it.value!! }
+        val map = items.mapNotNull { item ->
+            val i18nKey = item.key ?: return@mapNotNull null
+            val i18nValue = item.value ?: return@mapNotNull null
+            i18nKey to i18nValue
+        }.toMap()
         log.debug("数据库中加载到语言为${locale}、类型为${i18nTypeDictCode}且原子服务为${atomicServiceCode}的国际化内容共${map.size}条。")
         return map
     }

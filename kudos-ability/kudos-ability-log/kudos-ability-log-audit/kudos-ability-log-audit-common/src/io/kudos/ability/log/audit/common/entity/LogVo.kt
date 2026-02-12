@@ -30,7 +30,7 @@ class LogVo : ILogVo {
      */
     fun addAuditLog(audit: WebAudit): BaseLog {
         val sysLog = BaseLog(audit)
-        this.logs!!.add(sysLog)
+        (this.logs ?: mutableListOf<BaseLog>().also { this.logs = it }).add(sysLog)
         return sysLog
     }
 
@@ -41,7 +41,7 @@ class LogVo : ILogVo {
      */
     fun addAuditLog(audit: Audit): BaseLog {
         val sysLog = BaseLog(audit)
-        this.logs!!.add(sysLog)
+        (this.logs ?: mutableListOf<BaseLog>().also { this.logs = it }).add(sysLog)
         return sysLog
     }
 

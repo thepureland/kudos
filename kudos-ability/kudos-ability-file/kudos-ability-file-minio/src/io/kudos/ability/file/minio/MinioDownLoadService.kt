@@ -33,9 +33,9 @@ open class MinioDownLoadService : AbstractDownLoadService() {
         if (model.authServerParam != null) {
             LOG.info(
                 "Minio use auth server type:{0}",
-                model.authServerParam!!.javaClass.getSimpleName()
+                requireNotNull(model.authServerParam) { "authServerParam is null" }.javaClass.getSimpleName()
             )
-            return minioClientBuilderFactory.getInstance(model.authServerParam!!)!!.build()
+            return requireNotNull(minioClientBuilderFactory.getInstance(requireNotNull(model.authServerParam) { "authServerParam is null" })) { "MinioClient builder not found" }.build()
         }
         return minioClientDefault
     }

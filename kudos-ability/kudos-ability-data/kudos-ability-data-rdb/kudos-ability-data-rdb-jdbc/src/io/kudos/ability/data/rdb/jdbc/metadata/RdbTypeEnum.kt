@@ -30,7 +30,7 @@ enum class RdbTypeEnum(val productName: String, val jdbcDriverName: String) {
          */
         fun ofProductName(productName: String?): RdbTypeEnum {
             return Arrays.stream(entries.toTypedArray())
-                .filter { type: RdbTypeEnum? -> type!!.productName == productName }.findFirst().get()
+                .filter { type: RdbTypeEnum? -> type != null && type.productName == productName }.findFirst().get()
         }
 
         /**
@@ -43,7 +43,7 @@ enum class RdbTypeEnum(val productName: String, val jdbcDriverName: String) {
          */
         fun ofJdbcDriverName(jdbcDriverName: String?): RdbTypeEnum {
             return Arrays.stream(entries.toTypedArray())
-                .filter { type: RdbTypeEnum? -> type!!.jdbcDriverName == jdbcDriverName }.findFirst().get()
+                .filter { type: RdbTypeEnum? -> type != null && type.jdbcDriverName == jdbcDriverName }.findFirst().get()
         }
     }
 }

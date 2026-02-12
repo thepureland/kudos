@@ -60,7 +60,7 @@ class Column {
     /**
      * 返回kotlin类型的简短名称
      */
-    fun getKotlinTypeName(): String = kotlinType.simpleName!!
+    fun getKotlinTypeName(): String = requireNotNull(kotlinType.simpleName) { "kotlinType.simpleName is null" }
 
     /**
      * 返回列名的驼峰写法表示

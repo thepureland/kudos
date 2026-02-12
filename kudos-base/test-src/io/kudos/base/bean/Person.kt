@@ -18,7 +18,7 @@ import java.time.LocalDate
 @Serializable
 class Person : IIdEntity<String>, ITreeNode<String?> {
 
-    override var id: String? = null
+    override var id: String = ""
     var parentId: String? = null
     var children: MutableList<ITreeNode<String?>> = mutableListOf()
     var name: String? = null

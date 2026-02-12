@@ -63,7 +63,8 @@ open class CacheByNameCache : AbstractKeyValueCacheHandler<SysCacheCacheItem>() 
 
         // 放入缓存
         results.forEach {
-            CacheKit.put(cacheName(), it.name!!, it)
+            val name = it.name ?: return@forEach
+            CacheKit.put(cacheName(), name, it)
         }
 
         log.debug("缓存了${results.size}条缓存配置。")
@@ -125,11 +126,12 @@ open class CacheByNameCache : AbstractKeyValueCacheHandler<SysCacheCacheItem>() 
             log.debug("更新id为${id}的缓存配置后，同步${CACHE_NAME}缓存...")
             var name = BeanKit.getProperty(any, SysCache::name.name) as String?
             if (name == null) {
-                name = sysCacheDao.get(id)!!.name
+                name = sysCacheDao.get(id)?.name
             }
-            CacheKit.evict(CACHE_NAME, name) // 踢除缓存配置缓存
+            val cacheName = name?.takeIf { it.isNotBlank() } ?: return
+            CacheKit.evict(CACHE_NAME, cacheName) // 踢除缓存配置缓存
             if (CacheKit.isWriteInTime(CACHE_NAME)) {
-                getSelf<CacheByNameCache>().getCache(name) // 重新缓存
+                getSelf<CacheByNameCache>().getCache(cacheName) // 重新缓存
                 log.debug("${CACHE_NAME}缓存同步完成。")
             }
         }

@@ -72,7 +72,9 @@ open class SysDictItemDao : BaseCrudDao<String, SysDictItem, SysDictItems>() {
                 if (columns.isEmpty()) {
                     throw ObjectNotFoundException("根据属性【${it.property}】找不到对应的列!")
                 }
-                val column = columns[it.property]!!
+                val column = requireNotNull(columns[it.property]) {
+                    "根据属性【${it.property}】找不到对应的列!"
+                }
                 if (it.isAscending()) {
                     orderExps.add(column.asc())
                 } else {
@@ -131,32 +133,51 @@ open class SysDictItemDao : BaseCrudDao<String, SysDictItem, SysDictItems>() {
 
         return querySource.select()
             .whereWithConditions {
-                if (!searchPayload.id.isNullOrBlank()) {
-                    it += SysDictItems.id.eq(searchPayload.id!!)
+                val id = searchPayload.id
+                if (!id.isNullOrBlank()) {
+                    it += SysDictItems.id.eq(id)
                 }
-                if (!searchPayload.parentId.isNullOrBlank()) {
-                    it += SysDictItems.parentId.eq(searchPayload.parentId!!)
+                val parentId = searchPayload.parentId
+                if (!parentId.isNullOrBlank()) {
+                    it += SysDictItems.parentId.eq(parentId)
                 }
-                if (searchPayload.active != null) {
-                    it += SysDictItems.active.eq(searchPayload.active!!)
+                val active = searchPayload.active
+                if (active != null) {
+                    it += SysDictItems.active.eq(active)
                 }
-                if (searchPayload.dictActive != null) {
-                    it += SysDicts.active.eq(searchPayload.dictActive!!)
+                val dictActive = searchPayload.dictActive
+                if (dictActive != null) {
+                    it += SysDicts.active.eq(dictActive)
                 }
-                if (!searchPayload.atomicServiceCode.isNullOrBlank()) {
-                    it += whereExpr(SysDicts.atomicServiceCode, OperatorEnum.ILIKE, searchPayload.atomicServiceCode!!.trim())!!
+                val atomicServiceCode = searchPayload.atomicServiceCode
+                if (!atomicServiceCode.isNullOrBlank()) {
+                    whereExpr(SysDicts.atomicServiceCode, OperatorEnum.ILIKE, atomicServiceCode.trim())?.let { expr ->
+                        it += expr
+                    }
                 }
-                if (!searchPayload.dictType.isNullOrBlank()) {
-                    it += whereExpr(SysDicts.dictType, OperatorEnum.ILIKE, searchPayload.dictType!!.trim())!!
+                val dictType = searchPayload.dictType
+                if (!dictType.isNullOrBlank()) {
+                    whereExpr(SysDicts.dictType, OperatorEnum.ILIKE, dictType.trim())?.let { expr ->
+                        it += expr
+                    }
                 }
-                if (!searchPayload.dictName.isNullOrBlank()) {
-                    it += whereExpr(SysDicts.dictName, OperatorEnum.ILIKE, searchPayload.dictName!!.trim())!!
+                val dictName = searchPayload.dictName
+                if (!dictName.isNullOrBlank()) {
+                    whereExpr(SysDicts.dictName, OperatorEnum.ILIKE, dictName.trim())?.let { expr ->
+                        it += expr
+                    }
                 }
-                if (!searchPayload.itemCode.isNullOrBlank()) {
-                    it += whereExpr(SysDictItems.itemCode, OperatorEnum.ILIKE, searchPayload.itemCode!!.trim())!!
+                val itemCode = searchPayload.itemCode
+                if (!itemCode.isNullOrBlank()) {
+                    whereExpr(SysDictItems.itemCode, OperatorEnum.ILIKE, itemCode.trim())?.let { expr ->
+                        it += expr
+                    }
                 }
-                if (!searchPayload.itemName.isNullOrBlank()) {
-                    it += whereExpr(SysDictItems.itemName, OperatorEnum.ILIKE, searchPayload.itemName!!.trim())!!
+                val itemName = searchPayload.itemName
+                if (!itemName.isNullOrBlank()) {
+                    whereExpr(SysDictItems.itemName, OperatorEnum.ILIKE, itemName.trim())?.let { expr ->
+                        it += expr
+                    }
                 }
             }
     }

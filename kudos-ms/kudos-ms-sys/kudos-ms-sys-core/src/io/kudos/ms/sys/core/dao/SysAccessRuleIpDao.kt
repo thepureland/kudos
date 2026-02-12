@@ -63,7 +63,9 @@ open class SysAccessRuleIpDao : BaseCrudDao<String, SysAccessRuleIp, SysAccessRu
                 if (columns.isEmpty()) {
                     throw ObjectNotFoundException("根据属性【${it.property}】找不到对应的列!")
                 }
-                val column = columns[it.property]!!
+                val column = requireNotNull(columns[it.property]) {
+                    "根据属性【${it.property}】找不到对应的列!"
+                }
                 if (it.isAscending()) {
                     orderExps.add(column.asc())
                 } else {
@@ -80,7 +82,7 @@ open class SysAccessRuleIpDao : BaseCrudDao<String, SysAccessRuleIp, SysAccessRu
 
         return query.map { row ->
             SysAccessRuleIpRecord().apply {
-                id = row[SysAccessRuleIps.id]
+                id = row[SysAccessRuleIps.id] ?: ""
                 ipStart = row[SysAccessRuleIps.ipStart]
                 ipEnd = row[SysAccessRuleIps.ipEnd]
                 ipTypeDictCode = row[SysAccessRuleIps.ipTypeDictCode]
@@ -119,8 +121,9 @@ open class SysAccessRuleIpDao : BaseCrudDao<String, SysAccessRuleIp, SysAccessRu
      */
     fun leftJoinSearch(searchPayload: SysAccessRuleIpSearchPayload): Query {
         var onExpr = SysAccessRuleIps.parentRuleId.eq(SysAccessRules.id)
-        if (searchPayload.active != null) {
-            onExpr =onExpr and  SysAccessRuleIps.active.eq(searchPayload.active!!)
+        val active = searchPayload.active
+        if (active != null) {
+            onExpr = onExpr and SysAccessRuleIps.active.eq(active)
         }
 
         val querySource = database()
@@ -128,40 +131,49 @@ open class SysAccessRuleIpDao : BaseCrudDao<String, SysAccessRuleIp, SysAccessRu
             .leftJoin(SysAccessRuleIps, on = onExpr)
 
         return querySource.select().whereWithConditions {
-            if (!searchPayload.id.isNullOrBlank()) {
-                it += SysAccessRuleIps.id.eq(searchPayload.id!!)
+            val id = searchPayload.id
+            if (!id.isNullOrBlank()) {
+                it += SysAccessRuleIps.id.eq(id)
             }
-            if (!searchPayload.parentRuleId.isNullOrBlank()) {
-                it += SysAccessRuleIps.parentRuleId.eq(searchPayload.parentRuleId!!)
+            val parentRuleId = searchPayload.parentRuleId
+            if (!parentRuleId.isNullOrBlank()) {
+                it += SysAccessRuleIps.parentRuleId.eq(parentRuleId)
             }
-            if (searchPayload.parentRuleActive != null) {
-                it += SysAccessRules.active.eq(searchPayload.parentRuleActive!!)
+            val parentRuleActive = searchPayload.parentRuleActive
+            if (parentRuleActive != null) {
+                it += SysAccessRules.active.eq(parentRuleActive)
             }
-            if (searchPayload.tenantId == null && searchPayload.nullProperties?.contains(SysAccessRule::tenantId.name) == true) {
+            val tenantId = searchPayload.tenantId
+            if (tenantId == null && searchPayload.nullProperties?.contains(SysAccessRule::tenantId.name) == true) {
                 it += SysAccessRules.tenantId.isNull()
-            } else if (!searchPayload.tenantId.isNullOrBlank()) {
-                it += whereExpr(SysAccessRules.tenantId, OperatorEnum.EQ, searchPayload.tenantId!!.trim())!!
+            } else if (!tenantId.isNullOrBlank()) {
+                whereExpr(SysAccessRules.tenantId, OperatorEnum.EQ, tenantId.trim())?.let { expr ->
+                    it += expr
+                }
             }
-            if (!searchPayload.systemCode.isNullOrBlank()) {
-                it += whereExpr(
+            val systemCode = searchPayload.systemCode
+            if (!systemCode.isNullOrBlank()) {
+                whereExpr(
                     SysAccessRules.systemCode,
                     OperatorEnum.EQ,
-                    searchPayload.systemCode!!.trim()
-                )!!
+                    systemCode.trim()
+                )?.let { expr -> it += expr }
             }
-            if (!searchPayload.ruleTypeDictCode.isNullOrBlank()) {
-                it += whereExpr(
+            val ruleTypeDictCode = searchPayload.ruleTypeDictCode
+            if (!ruleTypeDictCode.isNullOrBlank()) {
+                whereExpr(
                     SysAccessRules.ruleTypeDictCode,
                     OperatorEnum.EQ,
-                    searchPayload.ruleTypeDictCode!!.trim()
-                )!!
+                    ruleTypeDictCode.trim()
+                )?.let { expr -> it += expr }
             }
-            if (!searchPayload.ipTypeDictCode.isNullOrBlank()) {
-                it += whereExpr(
+            val ipTypeDictCode = searchPayload.ipTypeDictCode
+            if (!ipTypeDictCode.isNullOrBlank()) {
+                whereExpr(
                     SysAccessRuleIps.ipTypeDictCode,
                     OperatorEnum.EQ,
-                    searchPayload.ipTypeDictCode!!.trim()
-                )!!
+                    ipTypeDictCode.trim()
+                )?.let { expr -> it += expr }
             }
         }
     }

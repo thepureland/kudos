@@ -68,7 +68,8 @@ class CacheByNameCacheTest : RdbAndRedisCacheTestBase() {
 
         // 数据库中更新的记录在缓存中应该也更新了
         val cacheItemUpdate = cacheByNameCache.getCache(cacheNameUpdate)
-        assertEquals(newTtl, cacheItemUpdate!!.ttl)
+        assertNotNull(cacheItemUpdate)
+        assertEquals(newTtl, cacheItemUpdate.ttl)
 
         // 数据库中删除的记录在缓存中应该还在
         var cacheItemDelete = cacheByNameCache.getCache(cacheNameDelete)
@@ -101,7 +102,7 @@ class CacheByNameCacheTest : RdbAndRedisCacheTestBase() {
         val sysCache = insertNewRecordToDb()
 
         // 同步缓存
-        cacheByNameCache.syncOnInsert(sysCache, sysCache.id!!)
+        cacheByNameCache.syncOnInsert(sysCache, sysCache.id)
 
         // 验证新记录是否在缓存中
         val cacheItem1 = CacheKit.getValue(cacheByNameCache.cacheName(), newCacheName)

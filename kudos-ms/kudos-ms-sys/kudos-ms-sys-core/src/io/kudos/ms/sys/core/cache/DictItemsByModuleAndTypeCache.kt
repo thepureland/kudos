@@ -75,11 +75,15 @@ open class DictItemsByModuleAndTypeCache : AbstractKeyValueCacheHandler<List<Sys
         }
 
         // 缓存数据
-        val dictMap = results.groupBy { getKey(it.atomicServiceCode!!, it.dictType!!) }
+        val dictMap = results.mapNotNull { record ->
+            val atomicServiceCode = record.atomicServiceCode ?: return@mapNotNull null
+            val dictType = record.dictType ?: return@mapNotNull null
+            getKey(atomicServiceCode, dictType) to record
+        }.groupBy({ it.first }, { it.second })
         dictMap.forEach { (key, value) ->
             val valueItems = value.map { it ->
                 SysDictItemCacheItem().apply {
-                    id = it.itemId
+                    id = it.itemId ?: ""
                     itemCode = it.itemCode
                     itemName = it.itemName
                     parentId = it.parentId
@@ -120,7 +124,7 @@ open class DictItemsByModuleAndTypeCache : AbstractKeyValueCacheHandler<List<Sys
             listOf()
         } else {
             // 查出dict id的所有字典项(按orderNum排序)
-            val items = sysDictItemDao.searchActiveItemByDictId(result.first().id!!)
+            val items = sysDictItemDao.searchActiveItemByDictId(result.first().id)
             log.debug("数据库中加载到模块为${atomicServiceCode}且字典类型为${dictType}的字典项共${items.size}条.")
             items.map {
                 SysDictItemCacheItem().apply {
@@ -154,9 +158,9 @@ open class DictItemsByModuleAndTypeCache : AbstractKeyValueCacheHandler<List<Sys
             CacheKit.evict(CACHE_NAME, key) // 踢除缓存（缓存粒度为字典类型）
             if (CacheKit.isWriteInTime(CACHE_NAME)) {
                 if (dict.active == null || dict.active == true) {
-                    getSelf<DictItemsByModuleAndTypeCache>().getDictItems(
-                        dict.atomicServiceCode!!, dict.dictType!!
-                    )
+                    val atomicServiceCode = dict.atomicServiceCode ?: return
+                    val dictType = dict.dictType ?: return
+                    getSelf<DictItemsByModuleAndTypeCache>().getDictItems(atomicServiceCode, dictType)
                     log.debug("${CACHE_NAME}缓存同步完成。")
                 } else {
                     log.debug("新增的字典项的字典active为false，不需要同步回写${CACHE_NAME}缓存。")
@@ -186,9 +190,9 @@ open class DictItemsByModuleAndTypeCache : AbstractKeyValueCacheHandler<List<Sys
             CacheKit.evict(CACHE_NAME, key) // 踢除缓存（缓存粒度为字典类型）
             if (CacheKit.isWriteInTime(CACHE_NAME)) {
                 if (dict.active == null || dict.active == true) {
-                    getSelf<DictItemsByModuleAndTypeCache>().getDictItems(
-                        dict.atomicServiceCode!!, dict.dictType!!
-                    )
+                    val atomicServiceCode = dict.atomicServiceCode ?: return
+                    val dictType = dict.dictType ?: return
+                    getSelf<DictItemsByModuleAndTypeCache>().getDictItems(atomicServiceCode, dictType)
                     log.debug("${CACHE_NAME}缓存同步完成。")
                 } else {
                     log.debug("更新的字典项的字典active为false，不需要同步回写${CACHE_NAME}缓存。")
@@ -215,7 +219,9 @@ open class DictItemsByModuleAndTypeCache : AbstractKeyValueCacheHandler<List<Sys
             CacheKit.evict(CACHE_NAME, getKey(dict.atomicServiceCode, dict.dictType)) // 踢除缓存（缓存粒度为字典类型）
             if (CacheKit.isWriteInTime(CACHE_NAME)) {
                 // 重新缓存
-                getSelf<DictItemsByModuleAndTypeCache>().getDictItems(dict.atomicServiceCode!!, dict.dictType!!)
+                val atomicServiceCode = dict.atomicServiceCode ?: return
+                val dictType = dict.dictType ?: return
+                getSelf<DictItemsByModuleAndTypeCache>().getDictItems(atomicServiceCode, dictType)
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
@@ -239,7 +245,9 @@ open class DictItemsByModuleAndTypeCache : AbstractKeyValueCacheHandler<List<Sys
             CacheKit.evict(CACHE_NAME, getKey(dict.atomicServiceCode, dict.dictType)) // 踢除缓存（缓存粒度为字典类型）
             if (CacheKit.isWriteInTime(CACHE_NAME)) {
                 // 重新缓存
-                getSelf<DictItemsByModuleAndTypeCache>().getDictItems(dict.atomicServiceCode!!, dict.dictType!!)
+                val atomicServiceCode = dict.atomicServiceCode ?: return
+                val dictType = dict.dictType ?: return
+                getSelf<DictItemsByModuleAndTypeCache>().getDictItems(atomicServiceCode, dictType)
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
         }

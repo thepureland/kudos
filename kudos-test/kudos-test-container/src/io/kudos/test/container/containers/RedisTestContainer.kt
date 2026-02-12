@@ -45,8 +45,9 @@ object RedisTestContainer {
     }
 
     private fun registerProperties(registry: DynamicPropertyRegistry, runningContainer : Container) {
-        val host = runningContainer.ports.first().ip!!
-        val port = runningContainer.ports.first().publicPort!!
+        val firstPort = runningContainer.ports.first()
+        val host = requireNotNull(firstPort.ip) { "container port ip is null" }
+        val port = requireNotNull(firstPort.publicPort) { "container publicPort is null" }
 
         registry.add("kudos.ability.data.redis.redis-map.data.host") { host }
         registry.add("kudos.ability.data.redis.redis-map.data.port") { port }

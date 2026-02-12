@@ -27,7 +27,7 @@ object CodeGenFileDao : BaseCrudDao<String, CodeGenFile, CodeGenFiles>() {
         querySource()
             .select(CodeGenFiles.filename)
             .where { CodeGenFiles.objectName eq objectName }
-            .forEach { results.add(it[CodeGenFiles.filename]!!) }
+            .forEach { it[CodeGenFiles.filename]?.let { results.add(it) } }
         return results
     }
 

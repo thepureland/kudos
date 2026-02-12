@@ -102,7 +102,7 @@ class DomainByNameCacheTest : RdbAndRedisCacheTestBase() {
         val sysDomain = insertNewRecordToDb()
 
         // 同步缓存
-        cacheHandler.syncOnInsert(sysDomain, sysDomain.id!!)
+        cacheHandler.syncOnInsert(sysDomain, sysDomain.id)
 
         // 验证新记录是否在缓存中
         val cacheItem = CacheKit.getValue(cacheHandler.cacheName(), sysDomain.domain)
@@ -134,7 +134,7 @@ class DomainByNameCacheTest : RdbAndRedisCacheTestBase() {
     @Test
     fun syncOnDelete() {
         val id = "8309fe9a-8810-4a79-9cff-555555555724"
-        val sysDomain = dao.get(id)!!
+        val sysDomain = assertNotNull(dao.get(id))
 
         // 删除数据库中的记录
         val deleteSuccess = dao.deleteById(id)

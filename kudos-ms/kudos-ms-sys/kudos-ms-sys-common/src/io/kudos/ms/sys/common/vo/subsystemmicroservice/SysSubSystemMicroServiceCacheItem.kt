@@ -14,7 +14,7 @@ import java.time.LocalDateTime
 data class SysSubSystemMicroServiceCacheItem (
 
     /**  */
-    override var id: String? = null,
+    override var id: String = "",
 
     //region your codes 1
 
@@ -49,7 +49,7 @@ data class SysSubSystemMicroServiceCacheItem (
 
     //region your codes 3
 
-    constructor() : this(null)
+    constructor() : this("")
 
     // endregion your codes 3
 

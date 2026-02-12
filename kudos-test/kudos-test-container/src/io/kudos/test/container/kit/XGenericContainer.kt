@@ -21,7 +21,7 @@ import org.testcontainers.containers.GenericContainer
  */
 fun GenericContainer<*>.bindingPort(vararg ports: Pair<Int, Int>): GenericContainer<*> {
     this.withCreateContainerCmdModifier { cmd ->
-        cmd.hostConfig!!.withPortBindings(
+        requireNotNull(cmd.hostConfig) { "hostConfig is null" }.withPortBindings(
             ports.map { PortBinding(Ports.Binding.bindPort(it.first), ExposedPort(it.second)) }
         )
     }

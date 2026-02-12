@@ -55,12 +55,15 @@ open class SysDictService : BaseCrudService<String, SysDict, SysDictDao>(), ISys
 
     @Transactional
     override fun saveOrUpdate(payload: SysDictPayload): String {
-        return if (payload.id.isNullOrBlank()) { // 新增
+        return if (payload.id.isBlank()) { // 新增
             if (!payload.parentId.isNullOrBlank()) { // 添加SysDict
+                val atomicServiceCode = requireNotNull(payload.atomicServiceCode) { "新增字典时，atomicServiceCode不能为空。" }
+                val dictType = requireNotNull(payload.dictType) { "新增字典时，dictType不能为空。" }
+                val dictName = requireNotNull(payload.dictName) { "新增字典时，dictName不能为空。" }
                 val sysDict = SysDict().apply {
-                    atomicServiceCode = payload.atomicServiceCode!!
-                    dictType = payload.dictType!!
-                    dictName = payload.dictName!!
+                    this.atomicServiceCode = atomicServiceCode
+                    this.dictType = dictType
+                    this.dictName = dictName
                     remark = payload.remark
                 }
                 val id = dao.insert(sysDict)
@@ -71,16 +74,19 @@ open class SysDictService : BaseCrudService<String, SysDict, SysDictDao>(), ISys
             }
         } else { // 更新
             if (payload.parentId.isNullOrBlank()) { // SysDict
+                val atomicServiceCode = requireNotNull(payload.atomicServiceCode) { "更新字典时，atomicServiceCode不能为空。" }
+                val dictType = requireNotNull(payload.dictType) { "更新字典时，dictType不能为空。" }
+                val dictName = requireNotNull(payload.dictName) { "更新字典时，dictName不能为空。" }
                 val sysDict = SysDict {
                     id = payload.id
-                    atomicServiceCode = payload.atomicServiceCode!!
-                    dictType = payload.dictType!!
-                    dictName = payload.dictName!!
+                    this.atomicServiceCode = atomicServiceCode
+                    this.dictType = dictType
+                    this.dictName = dictName
                     remark = payload.remark
                 }
                 val success = dao.update(sysDict)
                 if (success) {
-                    dictCacheHandler.syncOnUpdate(sysDict.id!!) // 同步缓存
+                    dictCacheHandler.syncOnUpdate(sysDict.id) // 同步缓存
                 } else {
                     log.error("删除id为${sysDict.id}的字典失败！")
                 }
@@ -88,7 +94,7 @@ open class SysDictService : BaseCrudService<String, SysDict, SysDictDao>(), ISys
             } else { // SysDictItem
                 sysDictItemBiz.saveOrUpdate(payload)
             }
-            payload.id!!
+            payload.id
         }
     }
 

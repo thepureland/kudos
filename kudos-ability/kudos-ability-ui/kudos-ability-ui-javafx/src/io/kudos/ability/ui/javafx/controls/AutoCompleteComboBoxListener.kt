@@ -15,10 +15,10 @@ class AutoCompleteComboBoxListener<T>(private val comboBox: ComboBox<Any>?) : Ev
     override fun handle(event: KeyEvent) {
         if (event.code == KeyCode.UP) {
             caretPos = -1
-            moveCaret(comboBox!!.editor.text.length)
+            moveCaret(requireNotNull(comboBox) { "comboBox is null" }.editor.text.length)
             return
         } else if (event.code == KeyCode.DOWN) {
-            if (!comboBox!!.isShowing) {
+            if (!requireNotNull(comboBox) { "comboBox is null" }.isShowing) {
                 comboBox.show()
             }
             caretPos = -1
@@ -26,10 +26,10 @@ class AutoCompleteComboBoxListener<T>(private val comboBox: ComboBox<Any>?) : Ev
             return
         } else if (event.code == KeyCode.BACK_SPACE) {
             moveCaretToPos = true
-            caretPos = comboBox!!.editor.caretPosition
+            caretPos = requireNotNull(comboBox) { "comboBox is null" }.editor.caretPosition
         } else if (event.code == KeyCode.DELETE) {
             moveCaretToPos = true
-            caretPos = comboBox!!.editor.caretPosition
+            caretPos = requireNotNull(comboBox) { "comboBox is null" }.editor.caretPosition
         }
         if (event.code == KeyCode.RIGHT || event.code == KeyCode.LEFT || event.isControlDown || event.code == KeyCode.HOME || event.code == KeyCode.END || event.code == KeyCode.TAB) {
             return
@@ -42,7 +42,7 @@ class AutoCompleteComboBoxListener<T>(private val comboBox: ComboBox<Any>?) : Ev
                 }
             }
         }
-        val t = comboBox!!.editor.text
+        val t = requireNotNull(comboBox) { "comboBox is null" }.editor.text
         comboBox.items = list
         comboBox.editor.text = t
         if (!moveCaretToPos) {
@@ -56,9 +56,9 @@ class AutoCompleteComboBoxListener<T>(private val comboBox: ComboBox<Any>?) : Ev
 
     private fun moveCaret(textLength: Int) {
         if (caretPos == -1) {
-            comboBox!!.editor.positionCaret(textLength)
+            requireNotNull(comboBox) { "comboBox is null" }.editor.positionCaret(textLength)
         } else {
-            comboBox!!.editor.positionCaret(caretPos)
+            requireNotNull(comboBox) { "comboBox is null" }.editor.positionCaret(caretPos)
         }
         moveCaretToPos = false
     }
@@ -67,7 +67,7 @@ class AutoCompleteComboBoxListener<T>(private val comboBox: ComboBox<Any>?) : Ev
     init {
         sb = StringBuilder()
         @Suppress("UNCHECKED_CAST")
-        data = comboBox!!.items as ObservableList<T>
+        data = requireNotNull(comboBox) { "comboBox is null" }.items as ObservableList<T>
         comboBox.isEditable = true
         comboBox.onKeyPressed = EventHandler { comboBox.hide() }
         comboBox.onKeyReleased = this@AutoCompleteComboBoxListener

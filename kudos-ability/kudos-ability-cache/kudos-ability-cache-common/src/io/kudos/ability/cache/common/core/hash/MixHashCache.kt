@@ -68,10 +68,10 @@ internal class MixHashCache(
         sortableProperties: Set<String>
     ) {
         when (strategy) {
-            CacheStrategy.SINGLE_LOCAL -> local!!.save(name, entity, filterableProperties, sortableProperties)
-            CacheStrategy.REMOTE -> remote!!.save(name, entity, filterableProperties, sortableProperties)
+            CacheStrategy.SINGLE_LOCAL -> requireNotNull(local) { "local hash cache is null" }.save(name, entity, filterableProperties, sortableProperties)
+            CacheStrategy.REMOTE -> requireNotNull(remote) { "remote hash cache is null" }.save(name, entity, filterableProperties, sortableProperties)
             CacheStrategy.LOCAL_REMOTE -> {
-                remote!!.save(name, entity, filterableProperties, sortableProperties)
+                requireNotNull(remote) { "remote hash cache is null" }.save(name, entity, filterableProperties, sortableProperties)
                 local?.save(name, entity, filterableProperties, sortableProperties)
                 pushHashNotify(entity.id)
             }
@@ -85,10 +85,10 @@ internal class MixHashCache(
         sortableProperties: Set<String>
     ) {
         when (strategy) {
-            CacheStrategy.SINGLE_LOCAL -> local!!.saveBatch(name, entities, filterableProperties, sortableProperties)
-            CacheStrategy.REMOTE -> remote!!.saveBatch(name, entities, filterableProperties, sortableProperties)
+            CacheStrategy.SINGLE_LOCAL -> requireNotNull(local) { "local hash cache is null" }.saveBatch(name, entities, filterableProperties, sortableProperties)
+            CacheStrategy.REMOTE -> requireNotNull(remote) { "remote hash cache is null" }.saveBatch(name, entities, filterableProperties, sortableProperties)
             CacheStrategy.LOCAL_REMOTE -> {
-                remote!!.saveBatch(name, entities, filterableProperties, sortableProperties)
+                requireNotNull(remote) { "remote hash cache is null" }.saveBatch(name, entities, filterableProperties, sortableProperties)
                 local?.saveBatch(name, entities, filterableProperties, sortableProperties)
                 entities.forEach { pushHashNotify(it.id) }
             }
@@ -103,10 +103,10 @@ internal class MixHashCache(
         sortableProperties: Set<String>
     ) {
         when (strategy) {
-            CacheStrategy.SINGLE_LOCAL -> local!!.deleteById(name, id, entityClass, filterableProperties, sortableProperties)
-            CacheStrategy.REMOTE -> remote!!.deleteById(name, id, entityClass, filterableProperties, sortableProperties)
+            CacheStrategy.SINGLE_LOCAL -> requireNotNull(local) { "local hash cache is null" }.deleteById(name, id, entityClass, filterableProperties, sortableProperties)
+            CacheStrategy.REMOTE -> requireNotNull(remote) { "remote hash cache is null" }.deleteById(name, id, entityClass, filterableProperties, sortableProperties)
             CacheStrategy.LOCAL_REMOTE -> {
-                remote!!.deleteById(name, id, entityClass, filterableProperties, sortableProperties)
+                requireNotNull(remote) { "remote hash cache is null" }.deleteById(name, id, entityClass, filterableProperties, sortableProperties)
                 local?.deleteById(name, id, entityClass, filterableProperties, sortableProperties)
                 pushHashNotify(id)
             }
@@ -201,10 +201,10 @@ internal class MixHashCache(
         sortableProperties: Set<String>
     ) {
         when (strategy) {
-            CacheStrategy.SINGLE_LOCAL -> local!!.refreshAll(name, entities, filterableProperties, sortableProperties)
-            CacheStrategy.REMOTE -> remote!!.refreshAll(name, entities, filterableProperties, sortableProperties)
+            CacheStrategy.SINGLE_LOCAL -> requireNotNull(local) { "local hash cache is null" }.refreshAll(name, entities, filterableProperties, sortableProperties)
+            CacheStrategy.REMOTE -> requireNotNull(remote) { "remote hash cache is null" }.refreshAll(name, entities, filterableProperties, sortableProperties)
             CacheStrategy.LOCAL_REMOTE -> {
-                remote!!.refreshAll(name, entities, filterableProperties, sortableProperties)
+                requireNotNull(remote) { "remote hash cache is null" }.refreshAll(name, entities, filterableProperties, sortableProperties)
                 local?.refreshAll(name, entities, filterableProperties, sortableProperties)
                 pushHashNotify(null)
             }

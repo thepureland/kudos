@@ -67,7 +67,7 @@ data class UserLogLoginDetail (
 
     //region your codes 3
 
-    constructor() : this(null)
+    constructor() : this("")
 
     //endregion your codes 3
 
