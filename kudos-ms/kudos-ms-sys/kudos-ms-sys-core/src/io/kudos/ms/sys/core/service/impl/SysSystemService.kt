@@ -42,7 +42,7 @@ open class SysSystemService : BaseCrudService<String, SysSystem, SysSystemDao>()
             active = true
         }
         @Suppress("UNCHECKED_CAST")
-        return dao.search(searchPayload) as List<SysSystemRecord>
+        return dao.search(searchPayload, SysSystemRecord::class)
     }
 
     @Transactional
@@ -68,7 +68,7 @@ open class SysSystemService : BaseCrudService<String, SysSystem, SysSystemDao>()
             parentCode = systemCode
         }
         @Suppress("UNCHECKED_CAST")
-        return dao.search(searchPayload) as List<SysSystemRecord>
+        return dao.search(searchPayload, SysSystemRecord::class)
     }
 
     @Transactional

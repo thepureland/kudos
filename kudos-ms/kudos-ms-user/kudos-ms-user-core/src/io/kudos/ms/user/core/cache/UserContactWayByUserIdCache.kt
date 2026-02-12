@@ -57,7 +57,7 @@ open class UserContactWayByUserIdCache : AbstractKeyValueCacheHandler<List<UserC
             active = true
         }
         @Suppress("UNCHECKED_CAST")
-        val results = userContactWayDao.search(searchPayload) as List<UserContactWayCacheItem>
+        val results = userContactWayDao.search(searchPayload, UserContactWayCacheItem::class)
         log.debug("从数据库加载了${results.size}条联系方式。")
 
         // 清除缓存
@@ -95,7 +95,7 @@ open class UserContactWayByUserIdCache : AbstractKeyValueCacheHandler<List<UserC
             this.active = true
         }
         @Suppress("UNCHECKED_CAST")
-        val results = userContactWayDao.search(searchPayload) as List<UserContactWayCacheItem>
+        val results = userContactWayDao.search(searchPayload, UserContactWayCacheItem::class)
         if (results.isEmpty()) {
             log.warn("数据库中不存在用户${userId}的active=true的联系方式！")
         } else {

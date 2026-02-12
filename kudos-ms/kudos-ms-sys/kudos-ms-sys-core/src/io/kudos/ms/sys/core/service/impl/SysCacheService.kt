@@ -94,8 +94,7 @@ open class SysCacheService : BaseCrudService<String, SysCache, SysCacheDao>(), I
 
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {
-        @Suppress("UNCHECKED_CAST")
-        val names = dao.inSearchPropertyById(ids, SysCache::name.name) as List<String>
+        val names = dao.inSearchPropertyById(ids, SysCache::name)
         val count = super.batchDelete(ids)
         log.debug("批量删除缓存配置，期望删除${ids.size}条，实际删除${count}条。")
         cacheConfigCacheHandler.syncOnBatchDelete(ids, names)
@@ -114,8 +113,7 @@ open class SysCacheService : BaseCrudService<String, SysCache, SysCacheDao>(), I
         val searchPayload = SysCacheSearchPayload().apply {
             this.atomicServiceCode = atomicServiceCode
         }
-        @Suppress("UNCHECKED_CAST")
-        return dao.search(searchPayload) as List<SysCacheRecord>
+        return dao.search(searchPayload, SysCacheRecord::class)
     }
 
     /**
@@ -129,8 +127,7 @@ open class SysCacheService : BaseCrudService<String, SysCache, SysCacheDao>(), I
         val searchPayload = SysCacheSearchPayload().apply {
             this.active = true
         }
-        @Suppress("UNCHECKED_CAST")
-        return dao.search(searchPayload) as List<SysCacheRecord>
+        return dao.search(searchPayload, SysCacheRecord::class)
     }
 
     //endregion your codes 2

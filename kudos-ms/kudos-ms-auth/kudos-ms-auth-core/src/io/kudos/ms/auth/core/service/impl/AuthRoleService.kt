@@ -109,7 +109,7 @@ open class AuthRoleService : BaseCrudService<String, AuthRole, AuthRoleDao>(),
             this.tenantId = tenantId
         }
         @Suppress("UNCHECKED_CAST")
-        return dao.search(searchPayload) as List<AuthRoleRecord>
+        return dao.search(searchPayload, AuthRoleRecord::class)
     }
 
     override fun getRolesBySubsysCode(tenantId: String, subsysCode: String): List<AuthRoleRecord> {
@@ -118,7 +118,7 @@ open class AuthRoleService : BaseCrudService<String, AuthRole, AuthRoleDao>(),
             this.subsysCode = subsysCode
         }
         @Suppress("UNCHECKED_CAST")
-        return dao.search(searchPayload) as List<AuthRoleRecord>
+        return dao.search(searchPayload, AuthRoleRecord::class)
     }
 
     @Transactional

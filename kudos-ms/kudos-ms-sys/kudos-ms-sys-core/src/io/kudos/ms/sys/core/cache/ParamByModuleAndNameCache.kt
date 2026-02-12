@@ -60,7 +60,7 @@ open class ParamByModuleAndNameCache : AbstractKeyValueCacheHandler<SysParamCach
         }
 
         @Suppress("UNCHECKED_CAST")
-        val params = sysParamDao.search(searchPayload) as List<SysParamCacheItem>
+        val params = sysParamDao.search(searchPayload, SysParamCacheItem::class)
         log.debug("从数据库加载了${params.size}条参数信息。")
 
         // 清除缓存

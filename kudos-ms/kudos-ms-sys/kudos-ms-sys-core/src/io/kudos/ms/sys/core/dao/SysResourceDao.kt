@@ -45,8 +45,7 @@ open class SysResourceDao : BaseCrudDao<String, SysResource, SysResources>() {
             SysResource::subSystemCode eq subSystemCode,
             SysResource::resourceTypeDictCode eq resourceTypeDictCode,
         )
-        @Suppress("UNCHECKED_CAST")
-        return searchProperty(criteria, SysResource::id.name) as List<String>
+        return searchProperty(criteria, SysResource::id).filterNotNull()
     }
 
 }

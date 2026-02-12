@@ -42,7 +42,7 @@ open class SysParamService : BaseCrudService<String, SysParam, SysParamDao>(), I
             this.atomicServiceCode = atomicServiceCode
         }
         @Suppress("UNCHECKED_CAST")
-        return dao.search(searchPayload) as List<SysParamRecord>
+        return dao.search(searchPayload, SysParamRecord::class)
     }
 
     @Transactional

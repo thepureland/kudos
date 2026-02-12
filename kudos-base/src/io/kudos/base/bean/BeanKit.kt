@@ -64,17 +64,18 @@ object BeanKit {
      */
     fun <T : Any> copyProperties(srcObj: Any, destObj: T, propertyMap: Map<String, String>? = null): T {
         val map = if (propertyMap.isNullOrEmpty()) { // 将拷贝所有源对象的属性
-            val desProps = destObj::class.memberProperties.map { it.name }
+            val desProps = destObj::class.memberProperties.map { it.name }.toSet()
             srcObj::class.memberProperties
-                .filter { desProps.contains(it.name) }
+                .filter { it.name in desProps }
                 .associate { it.name to it.name }
         } else propertyMap
 
-        for ((srcPropertyName, destPropertyName) in map) {
-            if (srcPropertyName.isNotBlank() && destPropertyName.isNotBlank()) {
-                val result = getProperty(srcObj, srcPropertyName)
-                setProperty(destObj, destPropertyName, result)
+        map.forEach { (srcPropertyName, destPropertyName) ->
+            if (srcPropertyName.isBlank() || destPropertyName.isBlank()) {
+                return@forEach
             }
+            val result = getProperty(srcObj, srcPropertyName)
+            setProperty(destObj, destPropertyName, result)
         }
         return destObj
     }

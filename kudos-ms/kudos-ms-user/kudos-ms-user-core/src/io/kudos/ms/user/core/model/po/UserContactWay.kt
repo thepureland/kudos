@@ -18,7 +18,7 @@ interface UserContactWay : IDbEntity<String, UserContactWay> {
     companion object : DbEntityFactory<UserContactWay>()
 
     /** 用户ID */
-    var userId: String?
+    var userId: String
 
     /** 联系方式字典码 */
     var contactWayDictCode: String

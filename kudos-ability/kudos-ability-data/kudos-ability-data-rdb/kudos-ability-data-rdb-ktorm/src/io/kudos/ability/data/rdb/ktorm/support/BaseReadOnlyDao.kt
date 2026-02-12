@@ -13,6 +13,7 @@ import io.kudos.base.support.dao.IBaseReadOnlyDao
 import io.kudos.base.support.logic.AndOrEnum
 import io.kudos.base.support.payload.ListSearchPayload
 import io.kudos.base.support.payload.SearchPayload
+import io.kudos.base.support.query.ReadQuery
 import io.kudos.context.core.KudosContextHolder
 import org.ktorm.database.Database
 import org.ktorm.dsl.*
@@ -23,6 +24,7 @@ import org.ktorm.schema.Column
 import org.ktorm.schema.ColumnDeclaring
 import org.ktorm.schema.Table
 import kotlin.reflect.KClass
+import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
 
 /**
@@ -206,24 +208,41 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
 
     //endregion Search
 
+    override fun oneSearch(property: KProperty1<E, *>, value: Any?, vararg orders: Order): List<E> =
+        oneSearch(property.name, value, *orders)
+
+    override fun <R> oneSearchProperty(
+        property: KProperty1<E, *>,
+        value: Any?,
+        returnProperty: KProperty1<E, R>,
+        vararg orders: Order
+    ): List<R> = oneSearchProperty(property.name, value, returnProperty.name, *orders)
+
+    override fun oneSearchProperties(
+        property: KProperty1<E, *>,
+        value: Any?,
+        returnProperties: Collection<KProperty1<E, *>>,
+        vararg orders: Order
+    ): List<Map<String, *>> = oneSearchProperties(property.name, value, returnProperties.map { it.name }, *orders)
 
     //region oneSearch
 
-    override fun oneSearch(property: String, value: Any?, vararg orders: Order): List<E> {
+    protected fun oneSearch(property: String, value: Any?, vararg orders: Order): List<E> {
         return doSearchEntity(mapOf(property to value), null, null, *orders)
     }
 
-    override fun oneSearchProperty(
+    @Suppress("UNCHECKED_CAST")
+    protected fun <R> oneSearchProperty(
         property: String,
         value: Any?,
         returnProperty: String,
         vararg orders: Order
-    ): List<*> {
+    ): List<R> {
         val results = doSearchProperties(mapOf(property to value), null, listOf(returnProperty), null, *orders)
-        return results.flatMap { it.values }
+        return results.flatMap { it.values } as List<R>
     }
 
-    override fun oneSearchProperties(
+    protected fun oneSearchProperties(
         property: String, value: Any?, returnProperties: Collection<String>, vararg orders: Order
     ): List<Map<String, *>> {
         return doSearchProperties(mapOf(property to value), null, returnProperties, null, *orders)
@@ -238,22 +257,43 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         return entitySequence().toList()
     }
 
-    override fun allSearchProperty(returnProperty: String, vararg orders: Order): List<*> {
+    @Suppress("UNCHECKED_CAST")
+    protected fun <R> allSearchProperty(returnProperty: String, vararg orders: Order): List<R> {
         val results = doSearchProperties(null, null, listOf(returnProperty), null, *orders)
-        return results.flatMap { it.values }
+        return results.flatMap { it.values } as List<R>
     }
 
-    override fun allSearchProperties(returnProperties: Collection<String>, vararg orders: Order): List<Map<String, *>> {
+    protected fun allSearchProperties(returnProperties: Collection<String>, vararg orders: Order): List<Map<String, *>> {
         return doSearchProperties(null, null, returnProperties, null, *orders)
     }
+
+    override fun <R> allSearchProperty(returnProperty: KProperty1<E, R>, vararg orders: Order): List<R> =
+        allSearchProperty(returnProperty.name, *orders)
+
+    override fun allSearchPropertiesBy(
+        returnProperties: Collection<KProperty1<E, *>>,
+        vararg orders: Order
+    ): List<Map<String, *>> = allSearchProperties(returnProperties.map { it.name }, *orders)
 
     //endregion allSearch
 
 
     //region andSearch
 
-    override fun andSearch(properties: Map<String, *>, vararg orders: Order): List<E> {
+    protected fun andSearch(properties: Map<String, *>, vararg orders: Order): List<E> {
         return doSearchEntity(properties, AndOrEnum.AND, null, *orders)
+    }
+
+    override fun andSearchBy(properties: Map<KProperty1<E, *>, *>, vararg orders: Order): List<E> =
+        andSearch(properties.entries.associate { it.key.name to it.value }, *orders)
+
+    open fun andSearchBy(
+        properties: Map<KProperty1<E, *>, *>,
+        whereConditionFactory: ((Column<Any>, Any?) -> ColumnDeclaring<Boolean>?)?,
+        vararg orders: Order
+    ): List<E> {
+        val mapped = properties.entries.associate { it.key.name to it.value }
+        return andSearch(mapped, *orders, whereConditionFactory = whereConditionFactory)
     }
 
     /**
@@ -274,7 +314,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         return doSearchEntity(properties, AndOrEnum.AND, whereConditionFactory, *orders)
     }
 
-    override fun andSearchProperty(
+    protected fun andSearchProperty(
         properties: Map<String, *>, returnProperty: String, vararg orders: Order
     ): List<*> {
         val results = doSearchProperties(properties, AndOrEnum.AND, listOf(returnProperty), null, *orders)
@@ -303,7 +343,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         return results.flatMap { it.values }
     }
 
-    override fun andSearchProperties(
+    protected fun andSearchProperties(
         properties: Map<String, *>,
         returnProperties: Collection<String>,
         vararg orders: Order
@@ -336,8 +376,20 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
 
     //region orSearch
 
-    override fun orSearch(properties: Map<String, *>, vararg orders: Order): List<E> {
+    protected fun orSearch(properties: Map<String, *>, vararg orders: Order): List<E> {
         return doSearchEntity(properties, AndOrEnum.OR, null, *orders)
+    }
+
+    override fun orSearchBy(properties: Map<KProperty1<E, *>, *>, vararg orders: Order): List<E> =
+        orSearch(properties.entries.associate { it.key.name to it.value }, *orders)
+
+    open fun orSearchBy(
+        properties: Map<KProperty1<E, *>, *>,
+        whereConditionFactory: ((Column<Any>, Any?) -> ColumnDeclaring<Boolean>?)?,
+        vararg orders: Order
+    ): List<E> {
+        val mapped = properties.entries.associate { it.key.name to it.value }
+        return orSearch(mapped, *orders, whereConditionFactory = whereConditionFactory)
     }
 
     /**
@@ -358,7 +410,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         return doSearchEntity(properties, AndOrEnum.OR, whereConditionFactory, *orders)
     }
 
-    override fun orSearchProperty(
+    protected fun orSearchProperty(
         properties: Map<String, *>,
         returnProperty: String,
         vararg orders: Order,
@@ -389,7 +441,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         return results.flatMap { it.values }
     }
 
-    override fun orSearchProperties(
+    protected fun orSearchProperties(
         properties: Map<String, *>,
         returnProperties: Collection<String>,
         vararg orders: Order
@@ -422,21 +474,24 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
 
     //region inSearch
 
-    override fun inSearch(property: String, values: Collection<*>, vararg orders: Order): List<E> {
+    protected fun inSearch(property: String, values: Collection<*>, vararg orders: Order): List<E> {
         val column = ColumnHelper.columnOf(table(), property)[property]!!
         var entitySequence = entitySequence().filter { column.inCollection(values) }
         entitySequence = entitySequence.sortedBy(*sortBy(*orders))
         return entitySequence.toList()
     }
 
-    override fun inSearchProperty(
+    override fun inSearch(property: KProperty1<E, *>, values: Collection<*>, vararg orders: Order): List<E> =
+        inSearch(property.name, values, *orders)
+
+    protected fun inSearchProperty(
         property: String, values: Collection<*>, returnProperty: String, vararg orders: Order
     ): List<*> {
         val results = doInSearchProperties(property, values, listOf(returnProperty), *orders)
         return results.flatMap { it.values }
     }
 
-    override fun inSearchProperties(
+    protected fun inSearchProperties(
         property: String, values: Collection<*>, returnProperties: Collection<String>, vararg orders: Order
     ): List<Map<String, *>> {
         return doInSearchProperties(property, values, returnProperties, *orders)
@@ -451,6 +506,13 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         return results.flatMap { it.values }
     }
 
+    @Suppress("UNCHECKED_CAST")
+    override fun <R> inSearchPropertyById(
+        values: Collection<PK>,
+        returnProperty: KProperty1<E, R>,
+        vararg orders: Order
+    ): List<R> = inSearchPropertyById(values, returnProperty.name, *orders) as List<R>
+
     override fun inSearchPropertiesById(
         values: Collection<PK>, returnProperties: Collection<String>, vararg orders: Order
     ): List<Map<String, *>> {
@@ -462,11 +524,11 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
 
     //region search Criteria
 
-    override fun search(criteria: Criteria?, vararg orders: Order): List<E> {
+    protected fun search(criteria: Criteria?, vararg orders: Order): List<E> {
         return searchEntityCriteria(criteria, 0, 0, *orders)
     }
 
-    override fun <T : Any> search(
+    protected fun <T : Any> search(
         criteria: Criteria?,
         returnItemClass: KClass<T>?,
         vararg orders: Order
@@ -501,29 +563,63 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
     inline fun <reified T : Any> searchAs(
         criteria: Criteria? = null,
         vararg orders: Order
-    ): List<T> = search(criteria, T::class, *orders)
+    ): List<T> = search(ReadQuery(criteria = criteria, orders = orders.toList()), T::class)
 
-    override fun searchProperty(criteria: Criteria, returnProperty: String, vararg orders: Order): List<*> {
-        val results = searchPropertiesCriteria(criteria, listOf(returnProperty), 0, 0, *orders)
-        return results.flatMap { it.values }
+    override fun search(query: ReadQuery): List<E> {
+        val orders = query.orders.toTypedArray()
+        return if (query.isPagingEnabled) {
+            val (pageNo, pageSize) = query.requirePaging()
+            pagingSearch(query.criteria, pageNo, pageSize, *orders)
+        } else {
+            search(query.criteria, *orders)
+        }
     }
 
-    override fun searchProperties(
+    override fun <T : Any> search(query: ReadQuery, returnItemClass: KClass<T>?): List<T> {
+        val orders = query.orders.toTypedArray()
+        return if (query.isPagingEnabled) {
+            val (pageNo, pageSize) = query.requirePaging()
+            pagingSearch(query.criteria, returnItemClass, pageNo, pageSize, *orders)
+        } else {
+            search(query.criteria, returnItemClass, *orders)
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    protected fun <R> searchProperty(criteria: Criteria, returnProperty: String, vararg orders: Order): List<R> {
+        val results = searchPropertiesCriteria(criteria, listOf(returnProperty), 0, 0, *orders)
+        return results.flatMap { it.values } as List<R>
+    }
+
+    override fun <R> searchProperty(
+        criteria: Criteria,
+        returnProperty: KProperty1<E, R>,
+        vararg orders: Order
+    ): List<R> =
+        searchProperty(criteria, returnProperty.name, *orders)
+
+    protected fun searchProperties(
         criteria: Criteria, returnProperties: Collection<String>, vararg orders: Order
     ): List<Map<String, Any?>> {
         return searchPropertiesCriteria(criteria, returnProperties, 0, 0, *orders)
     }
+
+    override fun searchPropertiesBy(
+        criteria: Criteria,
+        returnProperties: Collection<KProperty1<E, *>>,
+        vararg orders: Order
+    ): List<Map<String, Any?>> = searchProperties(criteria, returnProperties.map { it.name }, *orders)
 
     //endregion search Criteria
 
 
     //region pagingSearch
 
-    override fun pagingSearch(criteria: Criteria?, pageNo: Int, pageSize: Int, vararg orders: Order): List<E> {
+    protected fun pagingSearch(criteria: Criteria?, pageNo: Int, pageSize: Int, vararg orders: Order): List<E> {
         return searchEntityCriteria(criteria, pageNo, pageSize, *orders)
     }
 
-    override fun <T : Any> pagingSearch(
+    protected fun <T : Any> pagingSearch(
         criteria: Criteria?,
         returnItemClass: KClass<T>?,
         pageNo: Int,
@@ -561,20 +657,40 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         pageNo: Int,
         pageSize: Int,
         vararg orders: Order
-    ): List<T> = pagingSearch(criteria, T::class, pageNo, pageSize, *orders)
+    ): List<T> = search(
+        ReadQuery(criteria = criteria, orders = orders.toList(), pageNo = pageNo, pageSize = pageSize),
+        T::class
+    )
 
-    override fun pagingReturnProperty(
+    @Suppress("UNCHECKED_CAST")
+    protected fun <R> pagingReturnProperty(
         criteria: Criteria, returnProperty: String, pageNo: Int, pageSize: Int, vararg orders: Order
-    ): List<*> {
+    ): List<R> {
         val results = searchPropertiesCriteria(criteria, listOf(returnProperty), pageNo, pageSize, *orders)
-        return results.flatMap { it.values }
+        return results.flatMap { it.values } as List<R>
     }
 
-    override fun pagingReturnProperties(
+    override fun <R> pagingReturnProperty(
+        criteria: Criteria,
+        returnProperty: KProperty1<E, R>,
+        pageNo: Int,
+        pageSize: Int,
+        vararg orders: Order
+    ): List<R> = pagingReturnProperty(criteria, returnProperty.name, pageNo, pageSize, *orders)
+
+    protected fun pagingReturnProperties(
         criteria: Criteria, returnProperties: Collection<String>, pageNo: Int, pageSize: Int, vararg orders: Order
     ): List<Map<String, *>> {
         return searchPropertiesCriteria(criteria, returnProperties, pageNo, pageSize, *orders)
     }
+
+    override fun pagingReturnPropertiesBy(
+        criteria: Criteria,
+        returnProperties: Collection<KProperty1<E, *>>,
+        pageNo: Int,
+        pageSize: Int,
+        vararg orders: Order
+    ): List<Map<String, *>> = pagingReturnProperties(criteria, returnProperties.map { it.name }, pageNo, pageSize, *orders)
 
     //endregion pagingSearch
 
@@ -583,6 +699,24 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
 
     override fun search(listSearchPayload: ListSearchPayload?): List<*> {
         return search(listSearchPayload, null)
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : Any> search(listSearchPayload: ListSearchPayload?, returnItemClass: KClass<T>): List<T> {
+        require(listSearchPayload?.returnProperties.isNullOrEmpty()) {
+            "ListSearchPayload.returnProperties 不为空时，search(payload, returnItemClass) 无法保证返回元素类型。"
+        }
+        return if (listSearchPayload == null) {
+            search(criteria = null, returnItemClass = returnItemClass)
+        } else {
+            val originalReturnEntityClass = listSearchPayload.returnEntityClass
+            listSearchPayload.returnEntityClass = returnItemClass
+            try {
+                search(listSearchPayload) as List<T>
+            } finally {
+                listSearchPayload.returnEntityClass = originalReturnEntityClass
+            }
+        }
     }
 
     /**
@@ -660,7 +794,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
 
     //region aggregate
 
-    override fun count(criteria: Criteria?): Int {
+    protected fun count(criteria: Criteria?): Int {
         return if (criteria == null) {
             entitySequence().count()
         } else {
@@ -691,8 +825,10 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         return query.totalRecordsInAllPages
     }
 
+    override fun count(query: ReadQuery): Int = count(query.criteria)
+
     @Suppress("UNCHECKED_CAST")
-    override fun sum(property: String, criteria: Criteria?): Number {
+    protected fun sum(property: String, criteria: Criteria?): Number {
         var entitySequence = entitySequence()
         if (criteria != null) {
             entitySequence = entitySequence.filter { CriteriaConverter.convert(criteria, table()) }
@@ -703,7 +839,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun avg(property: String, criteria: Criteria?): Number {
+    protected fun avg(property: String, criteria: Criteria?): Number {
         var entitySequence = entitySequence()
         if (criteria != null) {
             entitySequence = entitySequence.filter { CriteriaConverter.convert(criteria, table()) }
@@ -714,26 +850,31 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun max(property: String, criteria: Criteria?): Any? {
+    protected fun <R : Comparable<R>> max(property: String, criteria: Criteria?): R? {
         var entitySequence = entitySequence()
         if (criteria != null) {
             entitySequence = entitySequence.filter { CriteriaConverter.convert(criteria, table()) }
         }
         return entitySequence.aggregateColumns {
             max(ColumnHelper.columnOf(table(), property)[property] as Column<Comparable<Any>>)
-        }
+        } as R?
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun min(property: String, criteria: Criteria?): Any? {
+    protected fun <R : Comparable<R>> min(property: String, criteria: Criteria?): R? {
         var entitySequence = entitySequence()
         if (criteria != null) {
             entitySequence = entitySequence.filter { CriteriaConverter.convert(criteria, table()) }
         }
         return entitySequence.aggregateColumns {
             min(ColumnHelper.columnOf(table(), property)[property] as Column<Comparable<Any>>)
-        }
+        } as R?
     }
+
+    override fun sum(property: KProperty1<E, *>, criteria: Criteria?): Number = sum(property.name, criteria)
+    override fun avg(property: KProperty1<E, *>, criteria: Criteria?): Number = avg(property.name, criteria)
+    override fun <R : Comparable<R>> max(property: KProperty1<E, R?>, criteria: Criteria?): R? = max(property.name, criteria)
+    override fun <R : Comparable<R>> min(property: KProperty1<E, R?>, criteria: Criteria?): R? = min(property.name, criteria)
 
     //endregion aggregate
 

@@ -44,8 +44,7 @@ open class UserOrgUserDao : BaseCrudDao<String, UserOrgUser, UserOrgUsers>() {
      */
     fun searchOrgIdsByUserId(userId: String): List<String> {
         val criteria = Criteria(UserOrgUser::userId eq userId)
-        @Suppress("UNCHECKED_CAST")
-        return searchProperty(criteria, UserOrgUser::orgId.name) as List<String>
+        return searchProperty(criteria, UserOrgUser::orgId)
     }
 
     /**
@@ -53,8 +52,7 @@ open class UserOrgUserDao : BaseCrudDao<String, UserOrgUser, UserOrgUsers>() {
      */
     fun searchUserIdsByOrgId(orgId: String): List<String> {
         val criteria = Criteria(UserOrgUser::orgId eq orgId)
-        @Suppress("UNCHECKED_CAST")
-        return searchProperty(criteria, UserOrgUser::userId.name) as List<String>
+        return searchProperty(criteria, UserOrgUser::userId)
     }
 
     /**
@@ -112,8 +110,7 @@ open class UserOrgUserDao : BaseCrudDao<String, UserOrgUser, UserOrgUsers>() {
     fun searchAdminUserIdsByOrgId(orgId: String): List<String> {
         val criteria = Criteria(UserOrgUser::orgId eq orgId)
             .addAnd(UserOrgUser::orgAdmin eq true)
-        @Suppress("UNCHECKED_CAST")
-        return searchProperty(criteria, UserOrgUser::userId.name) as List<String>
+        return searchProperty(criteria, UserOrgUser::userId)
     }
 
     //endregion your codes 2

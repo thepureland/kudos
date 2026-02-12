@@ -43,8 +43,7 @@ open class UserOrgDao : BaseCrudDao<String, UserOrg, UserOrgs>() {
     fun searchActiveChildOrgIds(parentId: String): List<String> {
         val criteria = Criteria(UserOrg::parentId eq parentId)
             .addAnd(UserOrg::active eq true)
-        @Suppress("UNCHECKED_CAST")
-        return searchProperty(criteria, UserOrg::id.name) as List<String>
+        return searchProperty(criteria, UserOrg::id).filterNotNull()
     }
 
     /**

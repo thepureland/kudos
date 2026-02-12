@@ -141,7 +141,7 @@ open class SysTenantService : BaseCrudService<String, SysTenant, SysTenantDao>()
     override fun getAllActiveTenants(): Map<String, List<SysTenantRecord>> {
         val searchPayload = SysTenantSearchPayload().apply { active = true }
         @Suppress("UNCHECKED_CAST")
-        val records = dao.search(searchPayload) as List<SysTenantRecord>
+        val records = dao.search(searchPayload, SysTenantRecord::class)
         // 根据租户的子系统关系分组
         val tenantIds = records.mapNotNull { it.id }
         val tenantSubSystemMap = sysTenantSystemBiz.groupingSystemCodesByTenantIds(tenantIds)
@@ -188,7 +188,7 @@ open class SysTenantService : BaseCrudService<String, SysTenant, SysTenantDao>()
             this.name = name
         }
         @Suppress("UNCHECKED_CAST")
-        val records = dao.search(searchPayload) as List<SysTenantRecord>
+        val records = dao.search(searchPayload, SysTenantRecord::class)
         return records.firstOrNull()
     }
 

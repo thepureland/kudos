@@ -47,8 +47,7 @@ open class AuthRoleUserDao : BaseCrudDao<String, AuthRoleUser, AuthRoleUsers>() 
      */
     fun searchRoleIdsByUserId(userId: String): List<String> {
         val criteria = Criteria(AuthRoleUser::userId eq userId)
-        @Suppress("UNCHECKED_CAST")
-        return searchProperty(criteria, AuthRoleUser::roleId.name) as List<String>
+        return searchProperty(criteria, AuthRoleUser::roleId).filterNotNull()
     }
 
     /**
@@ -69,8 +68,7 @@ open class AuthRoleUserDao : BaseCrudDao<String, AuthRoleUser, AuthRoleUsers>() 
      */
     fun searchUserIdsByRoleId(roleId: String): List<String> {
         val criteria = Criteria(AuthRoleUser::roleId eq roleId)
-        @Suppress("UNCHECKED_CAST")
-        return searchProperty(criteria, AuthRoleUser::userId.name) as List<String>
+        return searchProperty(criteria, AuthRoleUser::userId).filterNotNull()
     }
 
     /**

@@ -32,7 +32,7 @@ open class SysAccessRuleService : BaseCrudService<String, SysAccessRule, SysAcce
             this.systemCode = systemCode
         }
         @Suppress("UNCHECKED_CAST")
-        val records = dao.search(searchPayload) as List<SysAccessRuleRecord>
+        val records = dao.search(searchPayload, SysAccessRuleRecord::class)
         return records.firstOrNull()
     }
 
@@ -41,7 +41,7 @@ open class SysAccessRuleService : BaseCrudService<String, SysAccessRule, SysAcce
             this.tenantId = tenantId
         }
         @Suppress("UNCHECKED_CAST")
-        return dao.search(searchPayload) as List<SysAccessRuleRecord>
+        return dao.search(searchPayload, SysAccessRuleRecord::class)
     }
 
     override fun getAccessRulesBySystemCode(systemCode: String): List<SysAccessRuleRecord> {
@@ -49,7 +49,7 @@ open class SysAccessRuleService : BaseCrudService<String, SysAccessRule, SysAcce
             this.systemCode = systemCode
         }
         @Suppress("UNCHECKED_CAST")
-        return dao.search(searchPayload) as List<SysAccessRuleRecord>
+        return dao.search(searchPayload, SysAccessRuleRecord::class)
     }
 
     @Transactional

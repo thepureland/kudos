@@ -30,8 +30,7 @@ open class SysTenantResourceDao : BaseCrudDao<String, SysTenantResource, SysTena
      */
     fun searchResourceIdsByTenantId(tenantId: String): Set<String> {
         val criteria = Criteria(SysTenantResource::tenantId eq tenantId)
-        @Suppress("UNCHECKED_CAST")
-        return searchProperty(criteria, SysTenantResource::resourceId.name).toSet() as Set<String>
+        return searchProperty(criteria, SysTenantResource::resourceId).toSet()
     }
 
     /**
@@ -42,8 +41,7 @@ open class SysTenantResourceDao : BaseCrudDao<String, SysTenantResource, SysTena
      */
     fun searchTenantIdsByResourceId(resourceId: String): Set<String> {
         val criteria = Criteria(SysTenantResource::resourceId eq resourceId)
-        @Suppress("UNCHECKED_CAST")
-        return searchProperty(criteria, SysTenantResource::tenantId.name).toSet() as Set<String>
+        return searchProperty(criteria, SysTenantResource::tenantId).toSet()
     }
 
     /**

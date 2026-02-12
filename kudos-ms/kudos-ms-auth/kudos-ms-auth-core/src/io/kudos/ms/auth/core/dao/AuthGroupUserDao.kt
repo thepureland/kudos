@@ -49,8 +49,7 @@ open class AuthGroupUserDao : BaseCrudDao<String, AuthGroupUser, AuthGroupUsers>
      */
     fun searchUserIdsByGroupId(groupId: String): Set<String> {
         val criteria = Criteria(AuthGroupUser::groupId eq groupId)
-        @Suppress("UNCHECKED_CAST")
-        val userIds = searchProperty(criteria, AuthGroupUser::userId.name) as List<String>
+        val userIds = searchProperty(criteria, AuthGroupUser::userId)
         return userIds.toSet()
     }
 
@@ -64,8 +63,7 @@ open class AuthGroupUserDao : BaseCrudDao<String, AuthGroupUser, AuthGroupUsers>
      */
     fun searchGroupIdsByUserId(userId: String): Set<String> {
         val criteria = Criteria(AuthGroupUser::userId eq userId)
-        @Suppress("UNCHECKED_CAST")
-        val groupIds = searchProperty(criteria, AuthGroupUser::groupId.name) as List<String>
+        val groupIds = searchProperty(criteria, AuthGroupUser::groupId)
         return groupIds.toSet()
     }
 

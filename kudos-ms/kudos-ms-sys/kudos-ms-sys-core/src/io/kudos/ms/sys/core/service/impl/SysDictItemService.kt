@@ -3,8 +3,11 @@ package io.kudos.ms.sys.core.service.impl
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
+import io.kudos.base.query.Criteria
+import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.query.sort.Order
 import io.kudos.base.support.payload.ListSearchPayload
+import io.kudos.base.support.query.ReadQuery
 import io.kudos.ms.sys.common.vo.dict.SysDictPayload
 import io.kudos.ms.sys.common.vo.dict.SysDictTreeNode
 import io.kudos.ms.sys.common.vo.dictitem.SysDictItemCacheItem
@@ -110,13 +113,13 @@ open class SysDictItemService : BaseCrudService<String, SysDictItem, SysDictItem
         val dictItems = dao.pagingSearch(listSearchPayload as SysDictItemSearchPayload)
         val totalCount = if (dictItems.isNotEmpty()) {
             // 查询parentCode
-            val parentIds = dictItems.filter { !it.parentId.isNullOrBlank() }.map { it.parentId }.toSet()
-            val returnProperties = listOf(SysDictItems.id.name, SysDictItems.itemCode.name)
-            val idAndCodeMaps = inSearchProperties(SysDictItems.id.name, parentIds, returnProperties)
+            val parentIds = dictItems.filter { !it.parentId.isNullOrBlank() }.mapNotNull { it.parentId }.toSet()
+            val criteria = Criteria.of(SysDictItem::id.name, OperatorEnum.IN, parentIds)
+            val idAndCodeMaps = dao.searchPropertiesBy(criteria, listOf(SysDictItem::id, SysDictItem::itemCode))
             dictItems.forEach { dictItem ->
-                val idAndCodeMap = idAndCodeMaps.singleOrNull { it[SysDictItems.id.name] == dictItem.parentId }
+                val idAndCodeMap = idAndCodeMaps.singleOrNull { it[SysDictItem::id.name] == dictItem.parentId }
                 if (idAndCodeMap != null) {
-                    dictItem.parentCode = idAndCodeMap[SysDictItems.itemCode.name] as String?
+                    dictItem.parentCode = idAndCodeMap[SysDictItem::itemCode.name] as String?
                 }
             }
             dao.count(listSearchPayload)
@@ -164,7 +167,13 @@ open class SysDictItemService : BaseCrudService<String, SysDictItem, SysDictItem
                 }
             }
             isModule -> { // 加载SysDict数据
-                val results = dao.oneSearch(SysDicts.atomicServiceCode.name, parent, Order.asc(SysDicts.dictType.name))
+                val criteria = Criteria.of(SysDicts.atomicServiceCode.name, OperatorEnum.EQ, parent)
+                val results = dao.search(
+                    ReadQuery(
+                        criteria = criteria,
+                        orders = listOf(Order.asc(SysDicts.dictType.name))
+                    )
+                )
                 results.map {
                     val treeNode = BeanKit.copyProperties(
                         SysDictTreeNode::class, it, mapOf(
@@ -222,7 +231,7 @@ open class SysDictItemService : BaseCrudService<String, SysDictItem, SysDictItem
     }
 
     private fun recursionFindAllParentId(itemId: String, results: MutableList<String>) {
-        val list = dao.oneSearchProperty(SysDictItem::id.name, itemId, SysDictItem::parentId.name)
+        val list = dao.oneSearchProperty(SysDictItem::id, itemId, SysDictItem::parentId)
         if (list.isNotEmpty()) {
             val parentId = list.first() as String
             results.add(parentId)
@@ -231,7 +240,7 @@ open class SysDictItemService : BaseCrudService<String, SysDictItem, SysDictItem
     }
 
     private fun recursionFindAllChildId(itemId: String, results: MutableList<String>) {
-        val itemIds = dao.oneSearchProperty(SysDictItem::parentId.name, itemId, SysDictItem::id.name)
+        val itemIds = dao.oneSearchProperty(SysDictItem::parentId, itemId, SysDictItem::id)
         itemIds.forEach { id ->
             results.add(id as String)
             recursionFindAllChildId(id, results)

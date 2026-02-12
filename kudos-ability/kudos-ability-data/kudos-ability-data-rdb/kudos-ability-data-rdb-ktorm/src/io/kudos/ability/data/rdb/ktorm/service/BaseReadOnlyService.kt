@@ -7,8 +7,10 @@ import io.kudos.base.query.sort.Order
 import io.kudos.base.support.iservice.IBaseReadOnlyService
 import io.kudos.base.support.payload.ListSearchPayload
 import io.kudos.base.support.payload.SearchPayload
+import io.kudos.base.support.query.ReadQuery
 import org.springframework.beans.factory.annotation.Autowired
 import kotlin.reflect.KClass
+import kotlin.reflect.KProperty1
 
 /**
  * 基于关系型数据库表的基础的只读业务操作
@@ -65,55 +67,41 @@ open class BaseReadOnlyService<PK : Any, E : IDbEntity<PK, E>, DAO : BaseReadOnl
     inline fun <reified T : Any> getByIdsAs(ids: Collection<PK>, countOfEachBatch: Int = 1000): List<T> =
         getByIds(ids, T::class, countOfEachBatch)
 
-    override fun oneSearch(property: String, value: Any?, vararg orders: Order): List<E> =
+    override fun oneSearch(property: KProperty1<E, *>, value: Any?, vararg orders: Order): List<E> =
         dao.oneSearch(property, value, *orders)
 
-    override fun oneSearchProperty(
-        property: String, value: Any?, returnProperty: String, vararg orders: Order
-    ): List<*> = dao.oneSearchProperty(property, value, returnProperty, *orders)
+    override fun <R> oneSearchProperty(
+        property: KProperty1<E, *>,
+        value: Any?,
+        returnProperty: KProperty1<E, R>,
+        vararg orders: Order
+    ): List<R> = dao.oneSearchProperty(property, value, returnProperty, *orders)
 
     override fun oneSearchProperties(
-        property: String, value: Any?, returnProperties: Collection<String>, vararg orders: Order
+        property: KProperty1<E, *>,
+        value: Any?,
+        returnProperties: Collection<KProperty1<E, *>>,
+        vararg orders: Order
     ): List<Map<String, *>> = dao.oneSearchProperties(property, value, returnProperties, *orders)
 
-    override fun allSearch(vararg orders: Order): List<E> = dao.allSearch(*orders)
-
-    override fun allSearchProperty(returnProperty: String, vararg orders: Order): List<*> =
+    override fun <R> allSearchProperty(returnProperty: KProperty1<E, R>, vararg orders: Order): List<R> =
         dao.allSearchProperty(returnProperty, *orders)
 
-    override fun allSearchProperties(returnProperties: Collection<String>, vararg orders: Order): List<Map<String, *>> =
-        dao.allSearchProperties(returnProperties, *orders)
+    override fun allSearchPropertiesBy(
+        returnProperties: Collection<KProperty1<E, *>>,
+        vararg orders: Order
+    ): List<Map<String, *>> = dao.allSearchPropertiesBy(returnProperties, *orders)
 
-    override fun andSearch(properties: Map<String, *>, vararg orders: Order): List<E> =
-        dao.andSearch(properties, *orders)
+    override fun andSearchBy(properties: Map<KProperty1<E, *>, *>, vararg orders: Order): List<E> =
+        dao.andSearchBy(properties, *orders)
 
-    override fun andSearchProperty(properties: Map<String, *>, returnProperty: String, vararg orders: Order): List<*> =
-        dao.andSearchProperty(properties, returnProperty, *orders)
+    override fun orSearchBy(properties: Map<KProperty1<E, *>, *>, vararg orders: Order): List<E> =
+        dao.orSearchBy(properties, *orders)
 
-    override fun andSearchProperties(
-        properties: Map<String, *>, returnProperties: Collection<String>, vararg orders: Order,
-    ): List<Map<String, *>> = dao.andSearchProperties(properties, returnProperties, *orders)
-
-    override fun orSearch(properties: Map<String, *>, vararg orders: Order): List<E> = dao.orSearch(properties, *orders)
-
-    override fun orSearchProperty(
-        properties: Map<String, *>, returnProperty: String, vararg orders: Order
-    ): List<*> = dao.orSearchProperty(properties, returnProperty, *orders)
-
-    override fun orSearchProperties(
-        properties: Map<String, *>, returnProperties: Collection<String>, vararg orders: Order
-    ): List<Map<String, *>> = dao.orSearchProperties(properties, returnProperties, *orders)
-
-    override fun inSearch(property: String, values: Collection<*>, vararg orders: Order): List<E> =
+    override fun inSearch(property: KProperty1<E, *>, values: Collection<*>, vararg orders: Order): List<E> =
         dao.inSearch(property, values, *orders)
 
-    override fun inSearchProperty(
-        property: String, values: Collection<*>, returnProperty: String, vararg orders: Order
-    ): List<*> = dao.inSearchProperty(property, values, returnProperty, *orders)
-
-    override fun inSearchProperties(
-        property: String, values: Collection<*>, returnProperties: Collection<String>, vararg orders: Order
-    ): List<Map<String, *>> = dao.inSearchProperties(property, values, returnProperties, *orders)
+    override fun allSearch(vararg orders: Order): List<E> = dao.allSearch(*orders)
 
     override fun inSearchById(values: Collection<PK>, vararg orders: Order): List<E> =
         dao.inSearchById(values, *orders)
@@ -121,18 +109,20 @@ open class BaseReadOnlyService<PK : Any, E : IDbEntity<PK, E>, DAO : BaseReadOnl
     override fun inSearchPropertyById(values: Collection<PK>, returnProperty: String, vararg orders: Order): List<*> =
         dao.inSearchPropertyById(values, returnProperty, *orders)
 
+    override fun <R> inSearchPropertyById(
+        values: Collection<PK>,
+        returnProperty: KProperty1<E, R>,
+        vararg orders: Order
+    ): List<R> = dao.inSearchPropertyById(values, returnProperty, *orders)
+
     override fun inSearchPropertiesById(
         values: Collection<PK>, returnProperties: Collection<String>, vararg orders: Order
     ): List<Map<String, *>> = dao.inSearchPropertiesById(values, returnProperties, *orders)
 
-    override fun search(criteria: Criteria, vararg orders: Order): List<E> =
-        dao.search(criteria, *orders)
+    override fun search(query: ReadQuery): List<E> = dao.search(query)
 
-    override fun <T : Any> search(
-        criteria: Criteria?,
-        returnItemClass: KClass<T>?,
-        vararg orders: Order
-    ): List<T> = dao.search(criteria, returnItemClass, *orders)
+    override fun <T : Any> search(query: ReadQuery, returnItemClass: KClass<T>?): List<T> =
+        dao.search(query, returnItemClass)
 
     /**
      * 复杂条件查询，可以指定返回的封装类。会忽略与表实体不匹配的属性。
@@ -151,25 +141,20 @@ open class BaseReadOnlyService<PK : Any, E : IDbEntity<PK, E>, DAO : BaseReadOnl
     inline fun <reified T : Any> searchAs(
         criteria: Criteria?,
         vararg orders: Order
-    ): List<T> = search(criteria, T::class, *orders)
+    ): List<T> = search(ReadQuery(criteria = criteria, orders = orders.toList()), T::class)
 
-    override fun searchProperty(criteria: Criteria, returnProperty: String, vararg orders: Order): List<*> =
+    override fun <R> searchProperty(
+        criteria: Criteria,
+        returnProperty: KProperty1<E, R>,
+        vararg orders: Order
+    ): List<R> =
         dao.searchProperty(criteria, returnProperty, *orders)
 
-    override fun searchProperties(
-        criteria: Criteria, returnProperties: Collection<String>, vararg orders: Order
-    ): List<Map<String, Any?>> = dao.searchProperties(criteria, returnProperties, *orders)
-
-    override fun pagingSearch(criteria: Criteria?, pageNo: Int, pageSize: Int, vararg orders: Order): List<E> =
-        dao.pagingSearch(criteria, pageNo, pageSize, *orders)
-
-    override fun <T : Any> pagingSearch(
-        criteria: Criteria?,
-        returnItemClass: KClass<T>?,
-        pageNo: Int,
-        pageSize: Int,
+    override fun searchPropertiesBy(
+        criteria: Criteria,
+        returnProperties: Collection<KProperty1<E, *>>,
         vararg orders: Order
-    ): List<T> = dao.pagingSearch(criteria, returnItemClass, pageNo, pageSize, *orders)
+    ): List<Map<String, Any?>> = dao.searchPropertiesBy(criteria, returnProperties, *orders)
 
     /**
      * 分页查询，可以指定返回的封装类。会忽略与表实体不匹配的属性。
@@ -193,15 +178,26 @@ open class BaseReadOnlyService<PK : Any, E : IDbEntity<PK, E>, DAO : BaseReadOnl
         pageNo: Int,
         pageSize: Int,
         vararg orders: Order
-    ): List<T> = pagingSearch(criteria, T::class, pageNo, pageSize, *orders)
+    ): List<T> = search(
+        ReadQuery(criteria = criteria, orders = orders.toList(), pageNo = pageNo, pageSize = pageSize),
+        T::class
+    )
 
-    override fun pagingReturnProperty(
-        criteria: Criteria, returnProperty: String, pageNo: Int, pageSize: Int, vararg orders: Order
-    ): List<*> = dao.pagingReturnProperty(criteria, returnProperty, pageNo, pageSize, *orders)
+    override fun <R> pagingReturnProperty(
+        criteria: Criteria,
+        returnProperty: KProperty1<E, R>,
+        pageNo: Int,
+        pageSize: Int,
+        vararg orders: Order
+    ): List<R> = dao.pagingReturnProperty(criteria, returnProperty, pageNo, pageSize, *orders)
 
-    override fun pagingReturnProperties(
-        criteria: Criteria, returnProperties: Collection<String>, pageNo: Int, pageSize: Int, vararg orders: Order
-    ): List<Map<String, *>> = dao.pagingReturnProperties(criteria, returnProperties, pageNo, pageSize, *orders)
+    override fun pagingReturnPropertiesBy(
+        criteria: Criteria,
+        returnProperties: Collection<KProperty1<E, *>>,
+        pageNo: Int,
+        pageSize: Int,
+        vararg orders: Order
+    ): List<Map<String, *>> = dao.pagingReturnPropertiesBy(criteria, returnProperties, pageNo, pageSize, *orders)
 
     override fun pagingSearch(listSearchPayload: ListSearchPayload): Pair<List<*>, Int> {
         val results = search(listSearchPayload)
@@ -215,16 +211,19 @@ open class BaseReadOnlyService<PK : Any, E : IDbEntity<PK, E>, DAO : BaseReadOnl
 
     override fun search(listSearchPayload: ListSearchPayload): List<*> = dao.search(listSearchPayload)
 
-    override fun count(criteria: Criteria?): Int = dao.count(criteria)
+    override fun <T : Any> search(listSearchPayload: ListSearchPayload, returnItemClass: KClass<T>): List<T> =
+        dao.search(listSearchPayload, returnItemClass)
+
+    override fun count(query: ReadQuery): Int = dao.count(query)
 
     override fun count(searchPayload: SearchPayload): Int = dao.count(searchPayload)
 
-    override fun sum(property: String, criteria: Criteria?): Number = dao.sum(property, criteria)
+    override fun sum(property: KProperty1<E, *>, criteria: Criteria?): Number = dao.sum(property, criteria)
+    override fun avg(property: KProperty1<E, *>, criteria: Criteria?): Number = dao.avg(property, criteria)
+    override fun <R : Comparable<R>> max(property: KProperty1<E, R?>, criteria: Criteria?): R? =
+        dao.max(property, criteria)
 
-    override fun avg(property: String, criteria: Criteria?): Number = dao.avg(property, criteria)
-
-    override fun max(property: String, criteria: Criteria?): Any = dao.avg(property, criteria)
-
-    override fun min(property: String, criteria: Criteria?): Any = dao.avg(property, criteria)
+    override fun <R : Comparable<R>> min(property: KProperty1<E, R?>, criteria: Criteria?): R? =
+        dao.min(property, criteria)
 
 }

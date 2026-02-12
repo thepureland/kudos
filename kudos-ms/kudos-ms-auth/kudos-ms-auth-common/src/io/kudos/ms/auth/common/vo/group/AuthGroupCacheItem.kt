@@ -15,7 +15,7 @@ import java.time.LocalDateTime
 data class AuthGroupCacheItem (
 
     /** 主键 */
-    override var id: String? = null,
+    override var id: String = null,
 
     //region your codes 1
 

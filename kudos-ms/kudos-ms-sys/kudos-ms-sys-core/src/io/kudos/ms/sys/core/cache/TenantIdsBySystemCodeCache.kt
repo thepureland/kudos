@@ -77,11 +77,10 @@ open class TenantIdsBySystemCodeCache : AbstractKeyValueCacheHandler<List<String
         }
 
         val tenantIds = sysTenantSystemDao.oneSearchProperty(
-            SysTenantSystem::systemCode.name, systemCode, SysTenantSystem::tenantId.name
+            SysTenantSystem::systemCode, systemCode, SysTenantSystem::tenantId
         )
         log.debug("从数据库加载了系统为${systemCode}的${tenantIds.size}条租户id。")
-        @Suppress("UNCHECKED_CAST")
-        return tenantIds as List<String>
+        return tenantIds.filterNotNull()
     }
 
 //    @CacheEvict(cacheNames = [CACHE_NAME], key = "#subSystemCode", beforeInvocation = true)

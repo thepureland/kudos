@@ -6,6 +6,7 @@ import io.kudos.ability.data.rdb.ktorm.table.TestTableKtorms
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.support.payload.SearchPayload
+import io.kudos.base.support.query.ReadQuery
 import io.kudos.base.support.payload.UpdatePayload
 import io.kudos.test.common.init.EnableKudosTest
 import jakarta.annotation.Resource
@@ -433,7 +434,7 @@ internal open class BaseCrudDaoTest {
         assertEquals(3, testTableDao.batchUpdateProperties(criteria, properties))
         criteria.addAnd(TestTableKtorm::active.name, OperatorEnum.EQ, false)
         criteria.addAnd(TestTableKtorm::height.name, OperatorEnum.IS_NULL, null)
-        assertEquals(3, testTableDao.count(criteria))
+        assertEquals(3, testTableDao.count(ReadQuery(criteria = criteria)))
     }
 
     @Test
@@ -455,9 +456,9 @@ internal open class BaseCrudDaoTest {
         )
         val properties = arrayOf(TestTableKtorm::id.name, TestTableKtorm::name.name, TestTableKtorm::weight.name)
         assertEquals(2, testTableDao.batchUpdateOnly(entities, 3, *properties))
-        assertEquals(2, testTableDao.oneSearch(TestTableKtorm::name.name, "11").size)
-        assertEquals(2, testTableDao.oneSearch(TestTableKtorm::weight.name, 0.0).size)
-        assertEquals(0, testTableDao.oneSearch(TestTableKtorm::height.name, 0).size)
+        assertEquals(2, testTableDao.oneSearch(TestTableKtorm::name, "11").size)
+        assertEquals(2, testTableDao.oneSearch(TestTableKtorm::weight, 0.0).size)
+        assertEquals(0, testTableDao.oneSearch(TestTableKtorm::height, 0).size)
     }
 
     @Test
@@ -480,9 +481,9 @@ internal open class BaseCrudDaoTest {
         var criteria = Criteria.of(TestTableKtorm::name.name, OperatorEnum.LIKE_S, "name1")
         val properties = arrayOf(TestTableKtorm::id.name, TestTableKtorm::name.name, TestTableKtorm::weight.name)
         assertEquals(1, testTableDao.batchUpdateOnlyWhen(entities, criteria, 1, *properties))
-        assertEquals(1, testTableDao.oneSearch(TestTableKtorm::name.name, "11").size)
-        assertEquals(1, testTableDao.oneSearch(TestTableKtorm::weight.name, 0.0).size)
-        assertEquals(0, testTableDao.oneSearch(TestTableKtorm::height.name, 0).size)
+        assertEquals(1, testTableDao.oneSearch(TestTableKtorm::name, "11").size)
+        assertEquals(1, testTableDao.oneSearch(TestTableKtorm::weight, 0.0).size)
+        assertEquals(0, testTableDao.oneSearch(TestTableKtorm::height, 0).size)
     }
 
     @Test
@@ -501,8 +502,8 @@ internal open class BaseCrudDaoTest {
             }
         )
         assertEquals(2, testTableDao.batchUpdateExcludeProperties(entities, 1, TestTableKtorm::weight.name))
-        assertEquals(2, testTableDao.oneSearch(TestTableKtorm::name.name, "11").size)
-        assertEquals(0, testTableDao.oneSearch(TestTableKtorm::weight.name, 0.0).size)
+        assertEquals(2, testTableDao.oneSearch(TestTableKtorm::name, "11").size)
+        assertEquals(0, testTableDao.oneSearch(TestTableKtorm::weight, 0.0).size)
     }
 
     @Test
@@ -522,8 +523,8 @@ internal open class BaseCrudDaoTest {
         )
         var criteria = Criteria.of(TestTableKtorm::name.name, OperatorEnum.LIKE_S, "name1")
         assertEquals(1, testTableDao.batchUpdateExcludePropertiesWhen(entities, criteria, 1, TestTableKtorm::weight.name))
-        assertEquals(1, testTableDao.oneSearch(TestTableKtorm::name.name, "11").size)
-        assertEquals(0, testTableDao.oneSearch(TestTableKtorm::weight.name, 0.0).size)
+        assertEquals(1, testTableDao.oneSearch(TestTableKtorm::name, "11").size)
+        assertEquals(0, testTableDao.oneSearch(TestTableKtorm::weight, 0.0).size)
     }
     //endregion Update
 
@@ -554,7 +555,7 @@ internal open class BaseCrudDaoTest {
         val ids = listOf(-1, -2)
         val count = testTableDao.batchDelete(ids)
         assertEquals(2, count)
-        assert(testTableDao.inSearch(TestTableKtorm::id.name, ids).isEmpty())
+        assert(testTableDao.inSearch(TestTableKtorm::id, ids).isEmpty())
     }
 
     @Test
@@ -562,7 +563,7 @@ internal open class BaseCrudDaoTest {
     open fun batchDeleteCriteria() {
         val criteria = Criteria.of(TestTableKtorm::name.name, OperatorEnum.LIKE_E, "1")
         assertEquals(2, testTableDao.batchDeleteCriteria(criteria))
-        assertEquals(0, testTableDao.count(criteria))
+        assertEquals(0, testTableDao.count(ReadQuery(criteria = criteria)))
     }
 
     @Test

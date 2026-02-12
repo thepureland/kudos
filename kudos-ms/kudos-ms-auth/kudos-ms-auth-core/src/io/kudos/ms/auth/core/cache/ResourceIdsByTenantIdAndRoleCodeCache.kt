@@ -5,6 +5,7 @@ import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
+import io.kudos.base.support.query.ReadQuery
 import io.kudos.context.support.Consts
 import io.kudos.ms.auth.core.dao.AuthRoleDao
 import io.kudos.ms.auth.core.dao.AuthRoleResourceDao
@@ -63,11 +64,9 @@ open class ResourceIdsByTenantIdAndRoleCodeCache : AbstractKeyValueCacheHandler<
         // 加载所有active=true的角色
         val roleCriteria = Criteria(AuthRole::active.name, OperatorEnum.EQ, true)
 
-        @Suppress("UNCHECKED_CAST")
-        val roles = authRoleDao.search(roleCriteria)
+        val roles = authRoleDao.search(ReadQuery(criteria = roleCriteria))
 
         // 加载所有角色-资源关系
-        @Suppress("UNCHECKED_CAST")
         val allRoleResources = authRoleResourceDao.allSearch()
         val roleIdToResourceIdsMap = allRoleResources
             .groupBy { it.roleId }
@@ -115,11 +114,10 @@ open class ResourceIdsByTenantIdAndRoleCodeCache : AbstractKeyValueCacheHandler<
 
         // 2. 根据角色ID查询资源ID列表
         val resourceCriteria = Criteria(AuthRoleResource::roleId.name, OperatorEnum.EQ, roleId)
-        val resourceIds = authRoleResourceDao.searchProperty(resourceCriteria, AuthRoleResource::resourceId.name)
+        val resourceIds = authRoleResourceDao.searchProperty(resourceCriteria, AuthRoleResource::resourceId)
 
         log.debug("从数据库加载了租户${tenantId}角色${roleCode}的${resourceIds.size}条资源ID。")
-        @Suppress("UNCHECKED_CAST")
-        return (resourceIds as List<String>).map { it.trim() }
+        return resourceIds.filterNotNull().map { it.trim() }
     }
 
     /**

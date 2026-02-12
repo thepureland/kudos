@@ -113,8 +113,7 @@ open class DictItemsByModuleAndTypeCache : AbstractKeyValueCacheHandler<List<Sys
             this.dictType = dictType
             this.active = true
         }
-        @Suppress("UNCHECKED_CAST")
-        val result = sysDictDao.search(searchPayload) as List<SysDictRecord>
+        val result = sysDictDao.search(searchPayload, SysDictRecord::class)
 
         return if (result.isEmpty()) {
             log.warn("数据库中不存在模块为${atomicServiceCode}且字典类型为${dictType}的active为true字典项！")
@@ -206,7 +205,7 @@ open class DictItemsByModuleAndTypeCache : AbstractKeyValueCacheHandler<List<Sys
     open fun syncOnUpdateActive(id: String) {
         if (CacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("更新id为${id}的字典项的启用状态后，同步${CACHE_NAME}缓存...")
-            val dictIds = sysDictItemDao.oneSearchProperty(SysDictItem::id.name, id, SysDictItem::dictId.name)
+            val dictIds = sysDictItemDao.oneSearchProperty(SysDictItem::id, id, SysDictItem::dictId)
             val dict = dictByIdCache.getDictById(dictIds.first() as String)
             if (dict == null) {
                 log.error("缓存${dictByIdCache.cacheName()}中找不到id为${id}的字典！")
