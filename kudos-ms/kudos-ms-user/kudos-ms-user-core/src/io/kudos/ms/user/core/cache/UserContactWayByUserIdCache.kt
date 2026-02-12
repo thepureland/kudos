@@ -154,10 +154,11 @@ open class UserContactWayByUserIdCache : AbstractKeyValueCacheHandler<List<UserC
                 log.warn("同步联系方式缓存时未找到id为${id}的记录。")
                 return
             }
-            val key = getKey(contactWay.userId ?: return)
+            val userId = contactWay.userId
+            val key = getKey(userId)
             CacheKit.evict(CACHE_NAME, key)
             if (active && CacheKit.isWriteInTime(CACHE_NAME)) {
-                getSelf<UserContactWayByUserIdCache>().getContactWays(contactWay.userId!!)
+                getSelf<UserContactWayByUserIdCache>().getContactWays(userId)
             }
             log.debug("缓存同步完成。")
         }

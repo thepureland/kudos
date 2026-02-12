@@ -5,7 +5,6 @@ import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
-import io.kudos.base.support.query.ReadQuery
 import io.kudos.context.support.Consts
 import io.kudos.ms.auth.core.dao.AuthRoleDao
 import io.kudos.ms.auth.core.dao.AuthRoleResourceDao
@@ -64,7 +63,7 @@ open class ResourceIdsByTenantIdAndRoleCodeCache : AbstractKeyValueCacheHandler<
         // 加载所有active=true的角色
         val roleCriteria = Criteria(AuthRole::active.name, OperatorEnum.EQ, true)
 
-        val roles = authRoleDao.search(ReadQuery(criteria = roleCriteria))
+        val roles = authRoleDao.search(roleCriteria)
 
         // 加载所有角色-资源关系
         val allRoleResources = authRoleResourceDao.allSearch()

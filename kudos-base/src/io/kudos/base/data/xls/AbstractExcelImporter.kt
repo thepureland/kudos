@@ -210,8 +210,7 @@ abstract class AbstractExcelImporter<T : Any> : IExcelImporter<T> {
         propertyNames = getPropertyNames()
         try {
             val rows = sheet.rows
-            val rowObjectClass = GenericKit.getSuperClassGenricClass(this::class) as? KClass<T>
-                ?: error("无法解析导入行对象类型: ${this::class.qualifiedName}")
+            val rowObjectClass = resolveRowObjectClass()
             lateinit var rowObject: T
             for (row in 1 until rows) { // 扣掉列头
                 val rowCells = sheet.getRow(row)
@@ -317,6 +316,13 @@ abstract class AbstractExcelImporter<T : Any> : IExcelImporter<T> {
             value = valueStr.toType(argType)
         }
         return value
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun resolveRowObjectClass(): KClass<T> {
+        val rowObjectClass = GenericKit.getSuperClassGenricClass(this::class)
+        require(rowObjectClass != Nothing::class) { "无法解析导入行对象类型: ${this::class.qualifiedName}" }
+        return rowObjectClass as KClass<T>
     }
 
 }

@@ -71,7 +71,7 @@ class HashCacheableBySecondaryAspect {
             val value = parser.parseExpression(expr.trim()).getValue(context) ?: return joinPoint.proceed()
             prop to value
         }
-        val entityClass = ann.entityClass as KClass<out IIdEntity<Any?>>
+        val entityClass = resolveEntityClass(ann.entityClass)
         val returnMode = resolveReturnMode(method)
 
         val hashCache = HashCacheKit.getHashCache(cacheName)
@@ -172,7 +172,12 @@ class HashCacheableBySecondaryAspect {
         val intersectIds = lists.map { list -> list.mapNotNull { it.id }.toSet() }.reduce { a, b -> a.intersect(b) }
         if (intersectIds.isEmpty()) return emptyList()
         return intersectIds.mapNotNull { id ->
-            hashCache.getById(cacheName, id, entityClass) as? IIdEntity<Any?>
+            hashCache.getById(cacheName, id, entityClass)
         }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun resolveEntityClass(entityClass: KClass<out IIdEntity<*>>): KClass<out IIdEntity<Any?>> {
+        return entityClass as KClass<out IIdEntity<Any?>>
     }
 }

@@ -60,7 +60,7 @@ open class RememberMeByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<U
             return
         }
 
-        val rows = userLoginRememberMeDao.allSearchPropertiesBy(
+        val rows = userLoginRememberMeDao.allSearchProperties(
             listOf(
                 UserLoginRememberMe::tenantId,
                 UserLoginRememberMe::username,
@@ -104,7 +104,7 @@ open class RememberMeByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<U
         val trimmedUsername = username.trim()
         val criteria = Criteria.of(UserLoginRememberMe::tenantId.name, OperatorEnum.EQ, trimmedTenantId)
             .addAnd(UserLoginRememberMe::username.name, OperatorEnum.EQ, trimmedUsername)
-        val rows = userLoginRememberMeDao.searchPropertiesBy(
+        val rows = userLoginRememberMeDao.searchProperties(
             criteria,
             listOf(
                 UserLoginRememberMe::id,

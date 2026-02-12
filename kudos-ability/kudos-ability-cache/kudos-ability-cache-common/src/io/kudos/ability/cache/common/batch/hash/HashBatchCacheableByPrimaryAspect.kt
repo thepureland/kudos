@@ -44,10 +44,10 @@ class HashBatchCacheableByPrimaryAspect {
     fun around(joinPoint: ProceedingJoinPoint): Map<String, Any?> {
         val signature = joinPoint.signature as MethodSignature
         val method = signature.method
-        val function = method.kotlinFunction ?: return joinPoint.proceed() as Map<String, Any?>
-        val ann = function.findAnnotation<HashBatchCacheableByPrimary>() ?: return joinPoint.proceed() as Map<String, Any?>
+        val function = method.kotlinFunction ?: return proceedAsStringAnyMap(joinPoint)
+        val ann = function.findAnnotation<HashBatchCacheableByPrimary>() ?: return proceedAsStringAnyMap(joinPoint)
 
-        val cacheName = resolveCacheName(joinPoint, ann) ?: return joinPoint.proceed() as Map<String, Any?>
+        val cacheName = resolveCacheName(joinPoint, ann) ?: return proceedAsStringAnyMap(joinPoint)
         validateReturnType(function, ann)
 
         val keysGenerator = getKeysGenerator(ann)
@@ -102,6 +102,17 @@ class HashBatchCacheableByPrimaryAspect {
         val bean = SpringKit.getBeanOrNull(ann.keysGenerator)
         if (bean != null) return bean as IKeysGenerator
         return DefaultHashBatchKeysGenerator()
+    }
+
+    private fun proceedAsStringAnyMap(joinPoint: ProceedingJoinPoint): Map<String, Any?> {
+        val result = joinPoint.proceed()
+        if (result !is Map<*, *>) {
+            error("HashBatchCacheableByPrimary 期望方法返回 Map<String, Any?>，实际返回: ${result?.let { it::class.qualifiedName } ?: "null"}")
+        }
+        require(result.keys.all { it is String }) {
+            "HashBatchCacheableByPrimary 期望方法返回 Map<String, Any?>，但检测到非 String key。"
+        }
+        return result.entries.associate { it.key as String to it.value }
     }
 
     @Suppress("UNCHECKED_CAST")

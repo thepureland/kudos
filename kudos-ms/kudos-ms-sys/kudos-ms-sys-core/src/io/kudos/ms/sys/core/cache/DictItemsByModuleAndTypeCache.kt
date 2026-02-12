@@ -206,7 +206,7 @@ open class DictItemsByModuleAndTypeCache : AbstractKeyValueCacheHandler<List<Sys
         if (CacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("更新id为${id}的字典项的启用状态后，同步${CACHE_NAME}缓存...")
             val dictIds = sysDictItemDao.oneSearchProperty(SysDictItem::id, id, SysDictItem::dictId)
-            val dict = dictByIdCache.getDictById(dictIds.first() as String)
+            val dict = dictByIdCache.getDictById(dictIds.first())
             if (dict == null) {
                 log.error("缓存${dictByIdCache.cacheName()}中找不到id为${id}的字典！")
                 return

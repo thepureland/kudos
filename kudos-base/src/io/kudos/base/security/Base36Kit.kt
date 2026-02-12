@@ -69,7 +69,9 @@ object Base36Kit {
         replaceWith = ReplaceWith("tryDecryptIgnoreCase(srcString, KEY).getOrThrow()")
     )
     fun decryptIgnoreCase(srcString: String): String {
-        return decryptIgnoreCase(srcString, KEY)
+        return tryDecryptIgnoreCase(srcString, KEY).getOrElse { ex ->
+            if (ex.message == "校验位不匹配！") "校验位不匹配！" else throw ex
+        }
     }
 
     /**
