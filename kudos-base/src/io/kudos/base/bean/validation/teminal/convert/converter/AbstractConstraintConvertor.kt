@@ -45,9 +45,12 @@ abstract class AbstractConstraintConvertor(protected var annotation: Annotation)
         if (annotationClass.endsWith(".List")) {
             // 为List注解包装具体约束注解的形式，遍历处理每一个具体约束注解
             val annotationsProp = annotation.annotationClass.declaredMemberProperties.first()
-            val constraintAnnotations = annotationsProp.call(annotation) as Array<*>
+            val constraintAnnotations = annotationsProp.call(annotation) as? Array<*>
+                ?: error("List 注解【$annotationClass】的 value 属性不是数组类型")
             constraintAnnotations.forEach {
-                rules.add(handleRule(it as Annotation))
+                val constraint = it as? Annotation
+                    ?: error("List 注解【$annotationClass】包含非注解元素: $it")
+                rules.add(handleRule(constraint))
             }
         } else {
             // 为具体约束注解，没有其List注解包装
@@ -75,7 +78,7 @@ abstract class AbstractConstraintConvertor(protected var annotation: Annotation)
      * @param rule Map<注解属性名></注解属性名>，注解属性值>
      */
     private fun handleMessageI18n(rule: Map<String, Any>) {
-//        System.out.println(rule); //TODO
+        // 预留：后续可在此统一处理终端校验消息的 i18n key 转换。
     }
 
 }

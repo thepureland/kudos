@@ -93,8 +93,17 @@ class GoogleAuthenticatorTest {
         assertFalse(resultFalse, "使用错误 code，应返回 false")
 
         // 5.3）在超出 window 范围的偏移时间内也应返回 false
-        val outOfWindowT = ga.windowSize + 1L
-        val outOfWindowCode = GoogleAuthenticator.verifyCode(decodedKey, outOfWindowT)
+        // 为避免极小概率的 TOTP 碰撞导致偶发失败，这里先收集窗口内合法 code，
+        // 再在窗口外寻找一个“不属于窗口内”的 code 进行断言。
+        val validWindowCodes = (-ga.windowSize..ga.windowSize)
+            .map { offset -> GoogleAuthenticator.verifyCode(decodedKey, t + offset.toLong()) }
+            .toSet()
+        var outOfWindowT = ga.windowSize + 1L
+        var outOfWindowCode = GoogleAuthenticator.verifyCode(decodedKey, outOfWindowT)
+        while (outOfWindowCode in validWindowCodes) {
+            outOfWindowT++
+            outOfWindowCode = GoogleAuthenticator.verifyCode(decodedKey, outOfWindowT)
+        }
         val resultOutOfWindow = ga.checkCode(secret, outOfWindowCode.toLong(), timeMsec)
         assertFalse(resultOutOfWindow, "超出 window_size 范围的 code，应返回 false")
     }

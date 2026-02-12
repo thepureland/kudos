@@ -7,7 +7,9 @@ import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import java.io.IOException
 import java.net.InetSocketAddress
+import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
@@ -15,6 +17,7 @@ import java.util.concurrent.Executors
 import kotlin.io.path.*
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -73,6 +76,9 @@ class HttpClientKitTest {
         server.createContext("/json") { ex ->
             val body = """{"code":0,"data":{"id":1,"name":"kudos"}}"""
             ex.respond(200, body, "application/json; charset=utf-8")
+        }
+        server.createContext("/json-invalid") { ex ->
+            ex.respond(200, "not-json", "application/json; charset=utf-8")
         }
 
         // GET /arrayByte -> [1,2,3]
@@ -169,10 +175,19 @@ class HttpClientKitTest {
     }
 
     @Test
+    fun get_byte_buffer() {
+        val resp = HttpClientKit.get<ByteBuffer>(url("/bytes"))
+        assertEquals(200, resp.statusCode())
+        val body = resp.body()
+        val bytes = ByteArray(body.remaining()).also { body.get(it) }
+        assertContentEquals(byteArrayOf(1, 2, 3), bytes)
+    }
+
+    @Test
     fun get_unit_no_body() {
         val resp = HttpClientKit.get<Unit>(url("/empty"))
         assertEquals(204, resp.statusCode())
-        // 不访问 resp.body()（discarding）
+        assertEquals(Unit, resp.body())
     }
 
     /* =========================
@@ -188,6 +203,13 @@ class HttpClientKitTest {
         assertEquals(0, body.code)
         assertEquals(1, body.data.id)
         assertEquals("kudos", body.data.name)
+    }
+
+    @Test
+    fun default_json_mapping_should_fail_for_invalid_json() {
+        assertFailsWith<IOException> {
+            HttpClientKit.get<Wrapper<Foo>>(url("/json-invalid"))
+        }
     }
 
     /* =========================
@@ -343,12 +365,11 @@ class HttpClientKitTest {
        ========================= */
 
     @Test
-    fun document_only_notes_for_bytebuffer_and_unit() {
-        // 说明：
-        // 1) 你当前 __createBodyHandler 对 ByteBuffer 使用 ofByteArrayConsumer 实际返回 Void。
-        //    若要真正得到 ByteBuffer，建议改为 mapping(ofByteArray()) { ByteBuffer.wrap(bytes) }。
-        // 2) Unit 映射到了 discarding()，不要访问 body，只断言状态码。
-        assertTrue(true)
+    fun unit_and_byte_buffer_behavior_documented_by_real_assertions() {
+        val unitResp = HttpClientKit.get<Unit>(url("/empty"))
+        assertEquals(Unit, unitResp.body())
+        val bufferResp = HttpClientKit.get<ByteBuffer>(url("/bytes"))
+        assertEquals(3, bufferResp.body().remaining())
     }
 
     /* =========================

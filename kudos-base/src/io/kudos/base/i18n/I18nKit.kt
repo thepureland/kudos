@@ -338,7 +338,9 @@ object I18nKit {
                             dictTypeMap[dictType] = module + "_" + oneType
                             log.error("i18n:字典国际化模块:{0},类型:{1},缺少Code！", module, oneType)
                         }
-                    } catch (_: Exception) {
+                    } catch (_: IndexOutOfBoundsException) {
+                        log.error("i18n:字典国际化模块:{0},类型:{1},缺少Code！", module, oneType)
+                    } catch (_: IllegalArgumentException) {
                         log.error("i18n:字典国际化模块:{0},类型:{1},缺少Code！", module, oneType)
                     }
                 }

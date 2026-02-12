@@ -1,5 +1,6 @@
 package io.kudos.base.net.ftp
 
+import io.kudos.base.logger.LogFactory
 import org.apache.commons.net.ftp.FTPClient
 import org.apache.commons.net.ftp.FTPReply
 import java.io.File
@@ -15,6 +16,8 @@ import java.io.OutputStream
  * @since 1.0.0
  */
 class FtpClientKit {
+
+    private val log = LogFactory.getLog(this)
 
     /**
      * 下载文件
@@ -64,8 +67,8 @@ class FtpClientKit {
             }
             ftpClient.logout()
             flag = true
-        } catch (e: Exception) {
-            e.printStackTrace()
+        } catch (e: IOException) {
+            log.error(e)
         } finally {
             if (ftpClient.isConnected) {
                 try {

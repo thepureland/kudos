@@ -15,11 +15,10 @@ enum class DirectionEnum {
 
     companion object Companion {
 
-//        @JsonCreator //TODO
         fun fromString(value: String): DirectionEnum {
             return try {
                 valueOf(value.uppercase(Locale.US))
-            } catch (e: Exception) {
+            } catch (_: IllegalArgumentException) {
                 val msg = "非法排序值${value}！取值必须为 'desc' 或 'asc' (大小写不敏感)。"
                 error(msg)
             }

@@ -19,12 +19,10 @@ data class TeminalConstraint(
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (javaClass != other?.javaClass) return false
+        val otherConstraint = other as? TeminalConstraint ?: return false
 
-        other as TeminalConstraint
-
-        if (prop != other.prop) return false
-        if (constraint != other.constraint) return false
+        if (prop != otherConstraint.prop) return false
+        if (constraint != otherConstraint.constraint) return false
 
         return true
     }

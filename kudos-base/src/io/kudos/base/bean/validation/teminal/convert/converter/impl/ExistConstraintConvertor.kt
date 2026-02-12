@@ -14,7 +14,7 @@ class ExistConstraintConvertor(annotation: Annotation) : DefaultConstraintConver
 
     override fun getRule(constraintAnnotation: Annotation): LinkedHashMap<String, Any> {
         val map = linkedMapOf<String, Any>()
-        constraintAnnotation as Exist
+        require(constraintAnnotation is Exist) { "ExistConstraintConvertor 仅支持 Exist 注解" }
         val annotations = ConstraintsValidator.getAnnotations(constraintAnnotation.value)
         annotations.forEach {
             val constraintName = requireNotNull(it.annotationClass.simpleName) { "无法解析注解名: ${it.annotationClass}" }

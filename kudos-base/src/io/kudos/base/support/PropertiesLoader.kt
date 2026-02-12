@@ -1,6 +1,7 @@
 package io.kudos.base.support
 
 import io.kudos.base.logger.LogFactory
+import java.io.IOException
 import java.util.*
 
 
@@ -160,7 +161,9 @@ class PropertiesLoader {
                 stream?.use { input ->
                     props.load(input)
                 } ?: log.warn("Could not load properties from path:$location (normalized:$normalizedPath), resource not found")
-            } catch (ex: Exception) {
+            } catch (ex: IOException) {
+                log.warn("Could not load properties from path:$location, ${ex.message}")
+            } catch (ex: IllegalArgumentException) {
                 log.warn("Could not load properties from path:$location, ${ex.message}")
             }
         }

@@ -114,7 +114,12 @@ object FileKit {
                 zip.addFile(file, params)
             }
             zipFile
-        } catch (e: Exception) {
+        } catch (e: IOException) {
+            // 发生错误时删除临时文件
+            log.error(e)
+            zipFile.delete()
+            null
+        } catch (e: RuntimeException) {
             // 发生错误时删除临时文件
             log.error(e)
             zipFile.delete()

@@ -17,7 +17,11 @@ import jakarta.validation.constraints.Null
 import jakarta.validation.metadata.ConstraintDescriptor
 import org.hibernate.validator.constraintvalidation.HibernateConstraintValidator
 import java.lang.reflect.InvocationHandler
+import java.lang.reflect.Method
 import java.lang.reflect.Proxy
+import java.util.Collections
+import java.util.concurrent.ConcurrentHashMap
+import java.util.WeakHashMap
 import kotlin.reflect.full.declaredMemberProperties
 
 /**
@@ -62,23 +66,34 @@ class ConstraintsValidator : ConstraintValidator<Constraints, Any?> {
     }
 
     companion object {
+        private val hvInitMethodCache = ConcurrentHashMap<Class<*>, Method>()
+        private val initMethodCache = ConcurrentHashMap<Class<*>, Method>()
+        private val isValidMethodCache = ConcurrentHashMap<Class<*>, Method>()
+        private val annotationAttributeMethodsCache = ConcurrentHashMap<Class<out Annotation>, List<Method>>()
+        private val annotationMessageMethodCache = ConcurrentHashMap<Class<out Annotation>, Method>()
+        private val constraintDescriptorCache = Collections.synchronizedMap(WeakHashMap<Annotation, ConstraintDescriptor<*>>())
+        private val excludedConstraintPropertyNames = setOf("order", "andOr", "message", "groups", "payload")
+        private val emptyComposingConstraints: Set<ConstraintDescriptor<*>> = emptySet()
+        private val emptyValidatorClasses: List<Class<*>> = emptyList()
+        private val priorityConstraintTypes = setOf(
+            NotBlank::class,
+            NotEmpty::class,
+            NotNull::class,
+            Null::class
+        )
+
         fun getAnnotations(constraints: Constraints): List<Annotation> {
             // 获取定义的子约束
             val annotations = mutableListOf<Annotation>()
             var priorityAnnotation: Annotation? = null // 强制优先NotBlank、NotEmpty、NotNull、Null之一
             constraints.annotationClass.declaredMemberProperties.forEach {
-                if (it.name != "order" && it.name != "andOr" && it.name != "message" && it.name != "groups" && it.name != "payload") {
-                    val annotation = it.call(constraints) as Annotation
-                    val message = annotation.annotationClass.getMemberPropertyValue(annotation, "message")
+                if (it.name !in excludedConstraintPropertyNames) {
+                    val annotation = it.call(constraints) as? Annotation
+                        ?: error("Constraints 子约束属性【${it.name}】不是注解类型")
+                    val message = getAnnotationMessage(annotation)
                     if (message != Constraints.MESSAGE) {
                         annotations.add(annotation)
-                        if (annotation.annotationClass in setOf(
-                                NotBlank::class,
-                                NotEmpty::class,
-                                NotNull::class,
-                                Null::class
-                            )
-                        ) {
+                        if (annotation.annotationClass in priorityConstraintTypes) {
                             priorityAnnotation = annotation
                         }
                     }
@@ -112,6 +127,15 @@ class ConstraintsValidator : ConstraintValidator<Constraints, Any?> {
                 result
             }
         }
+
+        private fun getAnnotationMessage(annotation: Annotation): String {
+            val annotationClass = annotation.annotationClass.java
+            val method = annotationMessageMethodCache.getOrPut(annotationClass) {
+                annotationClass.getDeclaredMethod("message").apply { isAccessible = true }
+            }
+            return method.invoke(annotation) as? String
+                ?: error("注解【${annotation.annotationClass}】的 message 返回值不是 String")
+        }
     }
 
     private fun validate(
@@ -143,31 +167,46 @@ class ConstraintsValidator : ConstraintValidator<Constraints, Any?> {
     }
 
 
-    @Suppress("UNCHECKED_CAST")
-    private fun <A : Annotation> doValidate(
-        constraintValidator: ConstraintValidator<A, Any?>,
+    private fun doValidate(
+        constraintValidator: ConstraintValidator<*, *>,
         annotation: Annotation,
         value: Any?,
         context: ConstraintValidatorContext
     ): Boolean {
+        val validatorClass = constraintValidator.javaClass
         if (constraintValidator is HibernateConstraintValidator<*, *>) {
             val initCtx = ValidationContext.getHvInitCtx()
-            val descriptor = proxyConstraintDescriptor(annotation as A)
-
-            @Suppress("UNCHECKED_CAST")
-            (constraintValidator as HibernateConstraintValidator<A, Any?>)
-                .initialize(descriptor, initCtx)
+            val descriptor = proxyConstraintDescriptor(annotation)
+            val initMethod = hvInitMethodCache.getOrPut(validatorClass) {
+                validatorClass.methods.firstOrNull {
+                    it.name == "initialize" && it.parameterCount == 2
+                } ?: error("无法找到HibernateConstraintValidator.initialize(descriptor, initCtx)方法")
+            }
+            initMethod.invoke(constraintValidator, descriptor, initCtx)
         } else {
-            constraintValidator.initialize(annotation as A)
+            val initMethod = initMethodCache.getOrPut(validatorClass) {
+                validatorClass.methods.firstOrNull {
+                    it.name == "initialize" && it.parameterCount == 1
+                } ?: error("无法找到ConstraintValidator.initialize(annotation)方法")
+            }
+            initMethod.invoke(constraintValidator, annotation)
         }
 
-        return constraintValidator.isValid(value, context)
+        val isValidMethod = isValidMethodCache.getOrPut(validatorClass) {
+            validatorClass.methods.firstOrNull {
+                it.name == "isValid" && it.parameterCount == 2
+            } ?: error("无法找到ConstraintValidator.isValid(value, context)方法")
+        }
+        val result = isValidMethod.invoke(constraintValidator, value, context)
+        return result as? Boolean
+            ?: error("ConstraintValidator.isValid必须返回Boolean")
     }
 
     private fun addViolation(context: ConstraintValidatorContext, annotation: Annotation) {
         context.disableDefaultConstraintViolation()
+        val message = getAnnotationMessage(annotation)
         context.buildConstraintViolationWithTemplate(
-            annotation.annotationClass.getMemberProperty("message").call(annotation) as String
+            message
         ).addConstraintViolation()
     }
 
@@ -197,38 +236,55 @@ class ConstraintsValidator : ConstraintValidator<Constraints, Any?> {
      * @author AI: ChatGPT
      * @since 1.0.0
      */
-    private fun <A : Annotation> proxyConstraintDescriptor(annotation: A): ConstraintDescriptor<A> {
-        val attributes: Map<String, Any?> =
+    private fun proxyConstraintDescriptor(annotation: Annotation): ConstraintDescriptor<*> {
+        synchronized(constraintDescriptorCache) {
+            constraintDescriptorCache[annotation]?.let { return it }
+        }
+
+        val attributeMethods = annotationAttributeMethodsCache.getOrPut(annotation.annotationClass.java) {
             annotation.annotationClass.java.declaredMethods
                 .filter { it.parameterCount == 0 && it.name != "annotationType" }
-                .associate { it.name to it.invoke(annotation) }
+        }
+        val attributes: Map<String, Any?> = attributeMethods.associate { it.name to it.invoke(annotation) }
+        val messageTemplate = (attributes["message"] ?: "").toString()
+        val groups = ((attributes["groups"] as? Array<*>)?.filterIsInstance<Class<*>>()?.toSet())
+            ?: emptySet<Class<*>>()
+        val payload = ((attributes["payload"] as? Array<*>)?.filterIsInstance<Class<out Payload>>()?.toSet())
+            ?: emptySet<Class<out Payload>>()
 
         val handler = InvocationHandler { _, method, _ ->
             when (method.name) {
                 "getAnnotation" -> annotation
                 "getAnnotationType" -> annotation.annotationClass.java
                 "getAttributes" -> attributes
-                "getMessageTemplate" -> (attributes["message"] ?: "").toString()
-                "getGroups" -> ((attributes["groups"] as? Array<*>)?.filterIsInstance<Class<*>>()?.toSet())
-                    ?: emptySet<Class<*>>()
+                "getMessageTemplate" -> messageTemplate
+                "getGroups" -> groups
+                "getPayload" -> payload
 
-                "getPayload" -> ((attributes["payload"] as? Array<*>)?.filterIsInstance<Class<out Payload>>()?.toSet())
-                    ?: emptySet<Class<out Payload>>()
-
-                "getComposingConstraints" -> emptySet<ConstraintDescriptor<*>>()
+                "getComposingConstraints" -> emptyComposingConstraints
                 "isReportAsSingleViolation" -> false
-                "getConstraintValidatorClasses" -> emptyList<Class<*>>() // 一般 PatternValidator 初始化不靠这个
+                "getConstraintValidatorClasses" -> emptyValidatorClasses // 一般 PatternValidator 初始化不靠这个
                 "getValidationAppliesTo" -> attributes["validationAppliesTo"] // 可能为 null
                 else -> defaultReturn(method.returnType)
             }
         }
 
-        @Suppress("UNCHECKED_CAST")
-        return Proxy.newProxyInstance(
+        val proxy = Proxy.newProxyInstance(
             annotation.annotationClass.java.classLoader,
             arrayOf(ConstraintDescriptor::class.java),
             handler
-        ) as ConstraintDescriptor<A>
+        )
+        if (proxy is ConstraintDescriptor<*>) {
+            synchronized(constraintDescriptorCache) {
+                val cached = constraintDescriptorCache[annotation]
+                if (cached != null) {
+                    return cached
+                }
+                constraintDescriptorCache[annotation] = proxy
+                return proxy
+            }
+        }
+        error("构造 ConstraintDescriptor 代理失败")
     }
 
     private fun defaultReturn(type: Class<*>): Any? = when {

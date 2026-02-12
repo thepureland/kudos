@@ -39,14 +39,16 @@ object SystemKit {
         try {
             val peClass = Class.forName("java.lang.ProcessEnvironment")
             val envField = peClass.getDeclaredField("theEnvironment").apply { isAccessible = true }
-            @Suppress("UNCHECKED_CAST")
-            val env = envField.get(null) as MutableMap<String, String>
-            env.putAll(vars)
+            val env = envField.get(null)
+            require(updateMutableStringMap(env, vars, clearFirst = false)) {
+                "ProcessEnvironment.theEnvironment 类型不是 MutableMap<String, String>"
+            }
 
             val cienvField = peClass.getDeclaredField("theCaseInsensitiveEnvironment").apply { isAccessible = true }
-            @Suppress("UNCHECKED_CAST")
-            val cienv = cienvField.get(null) as MutableMap<String, String>
-            cienv.putAll(vars)
+            val cienv = cienvField.get(null)
+            require(updateMutableStringMap(cienv, vars, clearFirst = false)) {
+                "ProcessEnvironment.theCaseInsensitiveEnvironment 类型不是 MutableMap<String, String>"
+            }
 
             return  // 如果这一段没有抛异常，就直接返回
         } catch (_: Throwable) {
@@ -55,21 +57,43 @@ object SystemKit {
 
         // 第二种方式：修改 Collections$UnmodifiableMap 底层的 m 字段
         try {
-            val env: MutableMap<String, String> = System.getenv() as MutableMap<String, String>
+            val env = System.getenv()
             val classes = Collections::class.java.declaredClasses
             for (cl in classes) {
                 if (cl.name == "java.util.Collections\$UnmodifiableMap") {
                     val mField = cl.getDeclaredField("m").apply { isAccessible = true }
-                    @Suppress("UNCHECKED_CAST")
-                    val internal: MutableMap<String, String> = mField.get(env) as MutableMap<String, String>
-                    internal.clear()
-                    internal.putAll(vars)
+                    val internal = mField.get(env)
+                    require(updateMutableStringMap(internal, vars, clearFirst = true)) {
+                        "Collections\$UnmodifiableMap.m 类型不是 MutableMap<String, String>"
+                    }
                     return
                 }
             }
         } catch (_: Throwable) {
             // 兜底：如果这里也失败，就不做任何事
         }
+    }
+
+    private fun updateMutableStringMap(target: Any?, vars: Map<String, String>, clearFirst: Boolean): Boolean {
+        val map = target as? MutableMap<*, *> ?: return false
+        if (!map.keys.all { it is String } || !map.values.all { it is String }) {
+            return false
+        }
+        return runCatching {
+            if (clearFirst) {
+                val clearMethod = map.javaClass.methods.firstOrNull {
+                    it.name == "clear" && it.parameterCount == 0
+                } ?: return false
+                clearMethod.invoke(map)
+            }
+            val putAllMethod = map.javaClass.methods.firstOrNull {
+                it.name == "putAll" &&
+                    it.parameterCount == 1 &&
+                    Map::class.java.isAssignableFrom(it.parameterTypes[0])
+            } ?: return false
+            putAllMethod.invoke(map, vars)
+            true
+        }.getOrElse { false }
     }
 
     /**

@@ -210,8 +210,8 @@ abstract class AbstractExcelImporter<T : Any> : IExcelImporter<T> {
         propertyNames = getPropertyNames()
         try {
             val rows = sheet.rows
-            @Suppress("UNCHECKED_CAST")
-            val rowObjectClass = GenericKit.getSuperClassGenricClass(this::class) as KClass<T>
+            val rowObjectClass = GenericKit.getSuperClassGenricClass(this::class) as? KClass<T>
+                ?: error("无法解析导入行对象类型: ${this::class.qualifiedName}")
             lateinit var rowObject: T
             for (row in 1 until rows) { // 扣掉列头
                 val rowCells = sheet.getRow(row)
@@ -226,8 +226,9 @@ abstract class AbstractExcelImporter<T : Any> : IExcelImporter<T> {
                     if (rowObjectClass.isData) {
                         propNameValueMap[propertyName] = value
                     } else {
-                        val prop = propertyMap[propertyName] as KMutableProperty1
-                        prop.set(rowObject, value)
+                        val mutableProp = propertyMap[propertyName] as? KMutableProperty1<*, *>
+                            ?: error("属性【$propertyName】必须是可写属性(var)")
+                        mutableProp.setter.call(rowObject, value)
                     }
                 }
                 if (rowObjectClass.isData) {
@@ -246,7 +247,16 @@ abstract class AbstractExcelImporter<T : Any> : IExcelImporter<T> {
                 }
                 rowObjectList.add(rowObject)
             }
-        } catch (ex: Exception) {
+        } catch (ex: IllegalArgumentException) {
+            log.error(ex)
+            error("读取excel数据出错!")
+        } catch (ex: IllegalStateException) {
+            log.error(ex)
+            error("读取excel数据出错!")
+        } catch (ex: ClassCastException) {
+            log.error(ex)
+            error("读取excel数据出错!")
+        } catch (ex: IndexOutOfBoundsException) {
             log.error(ex)
             error("读取excel数据出错!")
         }

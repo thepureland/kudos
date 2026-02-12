@@ -47,12 +47,10 @@ class GoogleAuthenticator {
         for (i in -windowSize..windowSize) {
             val hash: Long = try {
                 verifyCode(decodedKey, t + i).toLong()
-            } catch (e: Exception) {
-                // Yes, this is bad form - but
-                // the exceptions thrown would be rare and a static configuration problem
-                e.printStackTrace()
-                throw RuntimeException(e.message)
-                //return false;
+            } catch (e: NoSuchAlgorithmException) {
+                throw IllegalStateException("TOTP algorithm not available", e)
+            } catch (e: InvalidKeyException) {
+                throw IllegalStateException("Invalid TOTP secret key", e)
             }
             if (hash == code) {
                 return true

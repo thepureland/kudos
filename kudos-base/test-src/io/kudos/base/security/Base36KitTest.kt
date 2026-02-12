@@ -45,7 +45,7 @@ internal class Base36KitTest {
             Base36Kit.encryptIgnoreCase("")
         }
         assertFailsWith<StringIndexOutOfBoundsException> {
-            Base36Kit.decryptIgnoreCase("")
+            Base36Kit.tryDecryptIgnoreCase("", Base36Kit.KEY).getOrThrow()
         }
     }
 

@@ -89,10 +89,11 @@ object EnumKit {
      */
 
     fun getCodeMap(enumClass: KClass<out IDictEnum>): Map<String, String> {
-        val enumConstants = enumClass.java.enumConstants as Array<IDictEnum>
         val codeMap = mutableMapOf<String, String>()
-        for (e in enumConstants) {
-            codeMap[e.code] = e.trans
+        for (constant in enumClass.java.enumConstants) {
+            if (constant is IDictEnum) {
+                codeMap[constant.code] = constant.trans
+            }
         }
         return codeMap
     }
@@ -129,9 +130,7 @@ object EnumKit {
         }
         require(enumClazz.isEnum) { "类【${enumClassStr}】不是枚举！" }
         require(IDictEnum::class.java.isAssignableFrom(enumClazz)) { "类【${enumClassStr}】没有实现【${IDictEnum::class}】接口！" }
-
-        @Suppress("UNCHECKED_CAST")
-        return enumClazz.kotlin as KClass<out IDictEnum>
+        return enumClazz.asSubclass(IDictEnum::class.java).kotlin
     }
 
 

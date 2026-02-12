@@ -8,5 +8,4 @@ import java.io.Serializable
  * @author K
  * @since 1.0.0
  */
-//@JsonInclude(JsonInclude.Include.NON_NULL) //TODO
 interface IJsonResult: Serializable

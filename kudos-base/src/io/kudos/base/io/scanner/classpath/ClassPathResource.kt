@@ -78,7 +78,7 @@ class ClassPathResource(override val location: String) : Comparable<ClassPathRes
         if (other == null || javaClass != other.javaClass) {
             return false
         }
-        val that = other as ClassPathResource
+        val that = other as? ClassPathResource ?: return false
         return location == that.location
     }
 

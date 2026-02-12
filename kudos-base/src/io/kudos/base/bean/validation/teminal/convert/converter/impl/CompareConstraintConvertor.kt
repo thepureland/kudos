@@ -21,7 +21,7 @@ class CompareConstraintConvertor(annotation: Annotation) : DefaultConstraintConv
         if (returnType.isSubtypeOf(Number::class.starProjectedType)) {
             map["isNumber"] = "true"
         }
-        constraintAnnotation as Compare
+        require(constraintAnnotation is Compare) { "CompareConstraintConvertor 仅支持 Compare 注解" }
         val depends = constraintAnnotation.depends
         if (depends.properties.isNotEmpty()) {
             map["depends"] = super.getRule(depends)

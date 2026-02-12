@@ -186,8 +186,10 @@ object BeanKit {
      * @author K
      * @since 1.0.0
      */
-    @Suppress("UNCHECKED_CAST")
-    fun <T> shallowClone(bean: T): T = BeanUtils.cloneBean(bean) as T
+    fun <T : Any> shallowClone(bean: T): T {
+        val cloned = BeanUtils.cloneBean(bean)
+        return bean::class.java.cast(cloned)
+    }
 
 //    /**
 //     * 拷贝(浅克隆)所有源bean的属性值到目标bean相同的属性值，能进行类型转换
@@ -205,7 +207,7 @@ object BeanKit {
 //        BeanUtils.copyProperties(orig, dest)
 ////        org.springframework.beans.BeanUtils.copyProperties(orig, dest)
 ////        return dest
-//        TODO()
+//        // reserved
 //    }
 
     /**
@@ -266,8 +268,10 @@ object BeanKit {
      * @author K
      * @since 1.0.0
      */
-    @Suppress("UNCHECKED_CAST")
-    fun <T> setProperty(bean: T, name: String?, value: Any?): T = BeanUtils.copyProperty(bean, name, value) as T
+    fun <T> setProperty(bean: T, name: String?, value: Any?): T {
+        BeanUtils.copyProperty(bean, name, value)
+        return bean
+    }
 
     //endregion 封装org.apache.commons.beanutils.BeanUtils和PropertyUtils
 

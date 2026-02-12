@@ -7,6 +7,7 @@ import org.apache.commons.lang3.Strings
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.util.regex.Matcher
+import kotlin.jvm.javaObjectType
 import kotlin.math.ceil
 import kotlin.reflect.KClass
 
@@ -68,7 +69,6 @@ fun CharSequence.capitalizeString(): String =
  * - 只支持基本类型和数值类型，不支持自定义类型
  * - 数值转换遵循Kotlin标准，可能抛出异常
  * - Char类型只取第一个字符，如果字符串为空会抛出异常
- * - 使用@Suppress抑制类型转换警告
  * 
  * @param T 目标类型
  * @param returnType 目标类型的KClass对象
@@ -77,24 +77,24 @@ fun CharSequence.capitalizeString(): String =
  * @throws NumberFormatException 如果数值转换失败
  * @throws NoSuchElementException 如果字符串为空且目标类型为Char
  */
-@Suppress("UNCHECKED_CAST")
-fun <T : Any> CharSequence.toType(returnType: KClass<out T>): T { //TODO junit
-    return this.toString().run {
+fun <T : Any> CharSequence.toType(returnType: KClass<out T>): T {
+    val converted: Any = this.toString().run {
         when (returnType) {
-            Double::class -> toDouble() as T
-            Int::class -> toInt() as T
-            Long::class -> toLong() as T
-            Float::class -> toFloat() as T
-            Short::class -> toShort() as T
-            BigDecimal::class -> toBigDecimal() as T
-            BigInteger::class -> toBigInteger() as T
-            Boolean::class -> toBoolean() as T
-            Byte::class -> toByte() as T
-            Char::class -> toCharArray().first() as T
-            String::class -> this as T
+            Double::class -> toDouble()
+            Int::class -> toInt()
+            Long::class -> toLong()
+            Float::class -> toFloat()
+            Short::class -> toShort()
+            BigDecimal::class -> toBigDecimal()
+            BigInteger::class -> toBigInteger()
+            Boolean::class -> toBoolean()
+            Byte::class -> toByte()
+            Char::class -> toCharArray().first()
+            String::class -> this
             else -> error("不支持的类型【$returnType】!")
         }
     }
+    return returnType.javaObjectType.cast(converted)
 }
 
 

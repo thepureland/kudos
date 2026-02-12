@@ -152,7 +152,6 @@ object ListToTreeConverter {
      * - 排序后的子节点列表会替换原来的列表
      * 
      * 类型安全：
-     * - 使用@Suppress("UNCHECKED_CAST")抑制类型转换警告
      * - 在运行时检查节点是否实现Comparable接口
      * - 如果未实现，会抛出异常
      * 
@@ -168,7 +167,6 @@ object ListToTreeConverter {
      * @return 排序后的节点列表
      * @throws IllegalStateException 如果节点类型未实现Comparable接口
      */
-    @Suppress("UNCHECKED_CAST")
     private fun <T, E : ITreeNode<T>> sort(nodes: List<E>, direction: DirectionEnum): List<E> {
         if (nodes.isEmpty()) {
             return nodes
@@ -178,7 +176,7 @@ object ListToTreeConverter {
         }
 
         val nodeList = nodes.sortedWith { o1, o2 ->
-            val result = (o1 as Comparable<E>).compareTo(o2)
+            val result = compareNodes(o1, o2)
             if (direction == DirectionEnum.ASC) result else 0 - result
         }
 
@@ -194,7 +192,6 @@ object ListToTreeConverter {
         return nodeList
     }
 
-    @Suppress("UNCHECKED_CAST")
     private fun <T> sortChildren(nodes: List<ITreeNode<T>>, direction: DirectionEnum): List<ITreeNode<T>> {
         if (nodes.isEmpty()) {
             return nodes
@@ -204,7 +201,7 @@ object ListToTreeConverter {
         }
 
         val sorted = nodes.sortedWith { o1, o2 ->
-            val result = (o1 as Comparable<ITreeNode<T>>).compareTo(o2)
+            val result = compareNodes(o1, o2)
             if (direction == DirectionEnum.ASC) result else 0 - result
         }
         sorted.forEach { child ->
@@ -216,6 +213,15 @@ object ListToTreeConverter {
             }
         }
         return sorted
+    }
+
+    private fun compareNodes(left: Any, right: Any): Int {
+        val compareMethod = left.javaClass.methods.firstOrNull {
+            it.name == "compareTo" && it.parameterCount == 1
+        } ?: error("类${left::class.simpleName}必须实现Comparable接口！")
+        val compareResult = compareMethod.invoke(left, right)
+        return compareResult as? Int
+            ?: error("compareTo返回值类型异常: ${left::class.simpleName}")
     }
 
 }

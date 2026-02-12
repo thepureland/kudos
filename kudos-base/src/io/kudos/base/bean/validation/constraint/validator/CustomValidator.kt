@@ -35,10 +35,13 @@ class CustomValidator : ConstraintValidator<Custom, Any?> {
             val bean = requireNotNull(ValidationContext.get(context)) {
                 "CustomValidator 需要 ValidationContext 中存在 bean"
             }
-            @Suppress("UNCHECKED_CAST")
-            val validatorClass = checkClass as KClass<IBeanValidator<Any>>
-            val validator = validatorClass.java.getDeclaredConstructor().newInstance()
-            return validator.validate(bean)
+            val validator = checkClass.java.getDeclaredConstructor().newInstance()
+            val validateMethod = validator.javaClass.methods.firstOrNull {
+                it.name == "validate" && it.parameterCount == 1
+            } ?: error("校验器【${checkClass.qualifiedName}】缺少 validate(bean) 方法")
+            val result = validateMethod.invoke(validator, bean)
+            return result as? Boolean
+                ?: error("校验器【${checkClass.qualifiedName}】validate 返回值必须为 Boolean")
         }
     }
 
