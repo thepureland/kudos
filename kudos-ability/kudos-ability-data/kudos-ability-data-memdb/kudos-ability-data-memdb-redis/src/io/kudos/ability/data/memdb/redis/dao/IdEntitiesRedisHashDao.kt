@@ -10,6 +10,7 @@ import io.kudos.base.query.sort.Order
 import io.kudos.base.support.IIdEntity
 import org.springframework.data.redis.core.RedisCallback
 import org.springframework.data.redis.core.RedisTemplate
+import org.springframework.data.redis.core.ScanOptions
 import org.springframework.data.redis.serializer.RedisSerializer
 import java.lang.reflect.Method
 import java.nio.charset.StandardCharsets
@@ -72,14 +73,18 @@ open class IdEntitiesRedisHashDao(
         filterableProperties: Set<String> = emptySet(),
         sortableProperties: Set<String> = emptySet()
     ) {
-        if (entities.isEmpty()) return
+        val valid = entities.filter { e ->
+            val id = e.id ?: return@filter false
+            id.toString().isNotBlank()
+        }
+        if (valid.isEmpty()) return
         val template = getRedisTemplate()
         val hashKeySer = template.hashKeySerializer as? RedisSerializer<Any>
         val hashValSer = template.hashValueSerializer as? RedisSerializer<Any>
         val dataKeyBytes = dataKeyPrefix.toByteArray(StandardCharsets.UTF_8)
         template.executePipelined(RedisCallback<Any?> { connection ->
-            entities.forEach { entity ->
-                val id = entity.id ?: return@forEach
+            valid.forEach { entity ->
+                val id = entity.id
                 val fieldBytes = hashKeySer?.serialize(id.toString())
                 val valueBytes = hashValSer?.serialize(entity)
                 if (fieldBytes != null && valueBytes != null) {
@@ -88,8 +93,8 @@ open class IdEntitiesRedisHashDao(
             }
             null
         })
-        entities.forEach { entity ->
-            val id = entity.id ?: return@forEach
+        valid.forEach { entity ->
+            val id = entity.id
             updateIndexForEntity(dataKeyPrefix, id, entity, filterableProperties, sortableProperties, add = true)
         }
     }
@@ -298,12 +303,17 @@ open class IdEntitiesRedisHashDao(
 
     /**
      * 删除当前表相关的所有二级索引 key（按前缀匹配）。
+     * 使用 SCAN 替代 KEYS，兼容 Lettuce 7.x（KEYS 在 Lettuce 7 中 API 变更），且不阻塞。
      */
     protected open fun deleteAllIndexKeys(dataKeyPrefix: String) {
         val pattern = "${getIndexKeyPrefix(dataKeyPrefix)}*"
         getRedisTemplate().execute { connection ->
-            val keys = connection.keyCommands().keys(pattern.toByteArray(StandardCharsets.UTF_8))
-            keys?.forEach { connection.keyCommands().del(it) }
+            val keyCmds = connection.keyCommands()
+            keyCmds.scan(ScanOptions.scanOptions().match(pattern).build()).use { cursor ->
+                while (cursor.hasNext()) {
+                    keyCmds.del(cursor.next())
+                }
+            }
             null
         }
     }
