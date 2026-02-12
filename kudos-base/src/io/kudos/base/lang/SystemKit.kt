@@ -58,7 +58,7 @@ object SystemKit {
             val env: MutableMap<String, String> = System.getenv() as MutableMap<String, String>
             val classes = Collections::class.java.declaredClasses
             for (cl in classes) {
-                if (cl.name == $$"java.util.Collections$UnmodifiableMap") {
+                if (cl.name == "java.util.Collections\$UnmodifiableMap") {
                     val mField = cl.getDeclaredField("m").apply { isAccessible = true }
                     @Suppress("UNCHECKED_CAST")
                     val internal: MutableMap<String, String> = mField.get(env) as MutableMap<String, String>
@@ -116,12 +116,8 @@ object SystemKit {
     private fun loadStream(inputStream: InputStream): String {
         inputStream.use { stream ->
             BufferedReader(InputStreamReader(stream)).use { reader ->
-                val buffer = StringBuffer()
-                var line: String?
-                while (reader.readLine().also { line = it } != null) {
-                    buffer.append(line).append("\n")
-                }
-                return buffer.toString()
+                val text = reader.lineSequence().joinToString("\n")
+                return if (text.isEmpty()) "" else "$text\n"
             }
         }
     }

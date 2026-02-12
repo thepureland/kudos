@@ -49,8 +49,7 @@ open class AuthGroupRoleDao : BaseCrudDao<String, AuthGroupRole, AuthGroupRoles>
      */
     fun searchRoleIdsByGroupId(groupId: String): Set<String> {
         val criteria = Criteria(AuthGroupRole::groupId eq groupId)
-        @Suppress("UNCHECKED_CAST")
-        val roleIds = searchProperty(criteria, AuthGroupRole::roleId.name) as List<String>
+        val roleIds = searchProperty(criteria, AuthGroupRole::roleId)
         return roleIds.toSet()
     }
 
@@ -64,8 +63,7 @@ open class AuthGroupRoleDao : BaseCrudDao<String, AuthGroupRole, AuthGroupRoles>
      */
     fun searchGroupIdsByRoleId(roleId: String): Set<String> {
         val criteria = Criteria(AuthGroupRole::roleId eq roleId)
-        @Suppress("UNCHECKED_CAST")
-        val groupIds = searchProperty(criteria, AuthGroupRole::groupId.name) as List<String>
+        val groupIds = searchProperty(criteria, AuthGroupRole::groupId)
         return groupIds.toSet()
     }
 

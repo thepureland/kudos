@@ -28,23 +28,12 @@ object IpKit {
      * @since 1.0.0
      */
     fun isValidIpv4(ip: String): Boolean {
-        if (ip.isBlank()) {
-            return false
+        if (ip.isBlank()) return false
+        val segments = ip.split('.')
+        if (segments.size != 4) return false
+        return segments.all { part ->
+            part.toIntOrNull()?.let { it in 0..255 } == true
         }
-        val st = StringTokenizer(ip, ".")
-        var i = 0
-        while (st.hasMoreTokens()) {
-            val n = try {
-                Integer.valueOf(st.nextToken())
-            } catch (_: Exception) {
-                return false
-            }
-            if (n !in 0..255) {
-                return false
-            }
-            i++
-        }
-        return i == 4
     }
 
     /**
@@ -56,20 +45,11 @@ object IpKit {
      * @since 1.0.0
      */
     fun ipv4StringToLong(ipv4: String): Long {
-        var ip = ipv4
-        if (!isValidIpv4(ip)) {
-            return -1
-        }
-        var temp: Long = 0
-        var cur: String
-        var pos = ip.indexOf(".", 0)
-        while (pos != -1) {
-            cur = ip.substring(0, pos)
-            ip = ip.substring(pos + 1, ip.length)
-            temp = temp shl 8 or java.lang.Long.valueOf(cur)
-            pos = ip.indexOf(".", 0)
-        }
-        return temp shl 8 or java.lang.Long.valueOf(ip)
+        if (!isValidIpv4(ipv4)) return -1
+        return ipv4
+            .split('.')
+            .map { it.toLong() }
+            .fold(0L) { acc, part -> (acc shl 8) or part }
     }
 
     /**
@@ -138,26 +118,15 @@ object IpKit {
      * @since 1.0.0
      */
     fun isSameIpv4Seg(maskAddress: String, vararg ipv4s: String): Boolean {
-        if (maskAddress.isBlank() || ipv4s.isEmpty()) {
-            return false
-        }
+        if (maskAddress.isBlank() || ipv4s.isEmpty()) return false
         val maskIp = ipv4StringToLong(maskAddress)
-        if (maskIp == -1L) {
-            return false
-        }
-        var firstValue: Long? = null
-        for (ipv4 in ipv4s) {
+        if (maskIp == -1L) return false
+        val segValues = ipv4s.map { ipv4 ->
             val ipLong = ipv4StringToLong(ipv4)
-            val value = maskIp and ipLong
-            if (firstValue == null) {
-                firstValue = value
-            } else {
-                if (firstValue != value) {
-                    return false
-                }
-            }
+            if (ipLong == -1L) return false
+            maskIp and ipLong
         }
-        return true
+        return segValues.distinct().size == 1
     }
 
     /**
@@ -204,19 +173,10 @@ object IpKit {
         } else if (size == 1) {
             return listOf(beginIpStr)
         }
-        val longIps = LongArray(size)
-        for (k in 0 until size) {
-            longIps[k] = longBeginIp + k.toLong()
-        }
-        // 各个段装换成字符串
-        val strip = arrayOfNulls<String>(4)
-        val ipList: MutableList<String> = ArrayList(size)
-        for (longIp in longIps) {
-            strip[0] = (longIp and 0x00000000000000ff).toString()
-            strip[1] = (longIp shr 8 and 0x00000000000000ff).toString()
-            strip[2] = (longIp shr 16 and 0x00000000000000ff).toString()
-            strip[3] = (longIp shr 24 and 0x00000000000000ff).toString()
-            ipList.add(strip[3].toString() + "." + strip[2] + "." + strip[1] + "." + strip[0])
+        val ipList = ArrayList<String>(size)
+        for (offset in 0 until size) {
+            val longIp = longBeginIp + offset.toLong()
+            ipList.add(ipv4LongToString(longIp))
         }
         return ipList
     }

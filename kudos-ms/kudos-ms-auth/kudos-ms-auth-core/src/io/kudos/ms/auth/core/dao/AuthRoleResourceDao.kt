@@ -48,8 +48,7 @@ open class AuthRoleResourceDao : BaseCrudDao<String, AuthRoleResource, AuthRoleR
      */
     fun searchRoleIdsByResourceId(resourceId: String): Set<String> {
         val criteria = Criteria(AuthRoleResource::resourceId eq resourceId)
-        @Suppress("UNCHECKED_CAST")
-        val roleIds = searchProperty(criteria, AuthRoleResource::roleId.name) as List<String>
+        val roleIds = searchProperty(criteria, AuthRoleResource::roleId)
         return roleIds.toSet()
     }
 
@@ -62,8 +61,7 @@ open class AuthRoleResourceDao : BaseCrudDao<String, AuthRoleResource, AuthRoleR
     fun searchResourceIdsByRoleIds(roleIds: Collection<String>): Set<String> {
         if (roleIds.isEmpty()) return emptySet()
         val criteria = Criteria(AuthRoleResource::roleId inList roleIds.toList())
-        @Suppress("UNCHECKED_CAST")
-        val list = searchProperty(criteria, AuthRoleResource::resourceId.name) as List<String>
+        val list = searchProperty(criteria, AuthRoleResource::resourceId)
         return list.map { it.trim() }.distinct().toSet()
     }
 

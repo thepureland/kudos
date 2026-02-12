@@ -30,8 +30,7 @@ open class SysSubSystemMicroServiceDao : BaseCrudDao<String, SysSubSystemMicroSe
      */
     fun searchMicroServiceCodesBySubSystemCode(subSystemCode: String): Set<String> {
         val criteria = Criteria(SysSubSystemMicroService::subSystemCode eq subSystemCode)
-        @Suppress("UNCHECKED_CAST")
-        return searchProperty(criteria, SysSubSystemMicroService::microServiceCode.name).toSet() as Set<String>
+        return searchProperty(criteria, SysSubSystemMicroService::microServiceCode).toSet()
     }
 
     /**
@@ -42,8 +41,7 @@ open class SysSubSystemMicroServiceDao : BaseCrudDao<String, SysSubSystemMicroSe
      */
     fun fetchSubSystemCodesByMicroServiceCode(microServiceCode: String): Set<String> {
         val criteria = Criteria(SysSubSystemMicroService::microServiceCode eq microServiceCode)
-        @Suppress("UNCHECKED_CAST")
-        return searchProperty(criteria, SysSubSystemMicroService::subSystemCode.name).toSet() as Set<String>
+        return searchProperty(criteria, SysSubSystemMicroService::subSystemCode).toSet()
     }
 
     /**

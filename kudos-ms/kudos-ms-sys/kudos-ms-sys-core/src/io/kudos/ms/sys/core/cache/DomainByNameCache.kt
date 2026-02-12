@@ -53,7 +53,7 @@ open class DomainByNameCache : AbstractKeyValueCacheHandler<SysDomainCacheItem>(
         }
 
         @Suppress("UNCHECKED_CAST")
-        val domains = dao.search(searchPayload) as List<SysDomainCacheItem>
+        val domains = dao.search(searchPayload, SysDomainCacheItem::class)
         log.debug("从数据库加载了${domains.size}条域名信息。")
 
         // 清除缓存
@@ -91,7 +91,7 @@ open class DomainByNameCache : AbstractKeyValueCacheHandler<SysDomainCacheItem>(
         }
 
         @Suppress("UNCHECKED_CAST")
-        val domains = dao.search(searchPayload) as List<SysDomainCacheItem>
+        val domains = dao.search(searchPayload, SysDomainCacheItem::class)
         return if (domains.isEmpty()) {
             log.debug("从数据库找不到active=true且名为${domain}的域名信息。")
             null

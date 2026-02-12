@@ -125,7 +125,7 @@ open class SysDictService : BaseCrudService<String, SysDict, SysDictDao>(), ISys
             this.atomicServiceCode = atomicServiceCode
         }
         @Suppress("UNCHECKED_CAST")
-        return dao.search(searchPayload) as List<SysDictRecord>
+        return dao.search(searchPayload, SysDictRecord::class)
     }
 
     /**
@@ -143,7 +143,7 @@ open class SysDictService : BaseCrudService<String, SysDict, SysDictDao>(), ISys
             this.dictType = dictType
         }
         @Suppress("UNCHECKED_CAST")
-        val records = dao.search(searchPayload) as List<SysDictRecord>
+        val records = dao.search(searchPayload, SysDictRecord::class)
         return records.firstOrNull()
     }
 

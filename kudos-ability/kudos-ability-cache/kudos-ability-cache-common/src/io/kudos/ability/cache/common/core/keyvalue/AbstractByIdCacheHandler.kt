@@ -62,8 +62,7 @@ abstract class AbstractByIdCacheHandler<PK : Any, T : IIdEntity<*>, DAO : IBaseR
             criterions = listOf(Criterion("id", OperatorEnum.IN, ids))
         }
 
-        @Suppress("UNCHECKED_CAST")
-        val results = dao.search(searchPayload) as List<T>
+        val results = dao.search(searchPayload, getCacheItemClass())
         log.debug("数据库中加载到${results.size}条${itemDesc()}.")
         return results.associateBy { it.id!!.toString() }
     }
@@ -79,8 +78,7 @@ abstract class AbstractByIdCacheHandler<PK : Any, T : IIdEntity<*>, DAO : IBaseR
             returnEntityClass = getCacheItemClass()
         }
 
-        @Suppress("UNCHECKED_CAST")
-        val results = dao.search(searchPayload) as List<T>
+        val results = dao.search(searchPayload, getCacheItemClass())
         log.debug("从数据库加载了${results.size}条${itemDesc()}信息。")
 
         // 先清除缓存

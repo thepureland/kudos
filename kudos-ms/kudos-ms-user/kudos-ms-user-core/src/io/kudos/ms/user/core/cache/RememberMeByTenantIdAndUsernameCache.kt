@@ -4,6 +4,8 @@ import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
 import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
+import io.kudos.base.query.Criteria
+import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.context.support.Consts
 import io.kudos.ms.user.common.vo.loginremember.UserLoginRememberMeCacheItem
 import io.kudos.ms.user.core.dao.UserLoginRememberMeDao
@@ -58,13 +60,13 @@ open class RememberMeByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<U
             return
         }
 
-        val rows = userLoginRememberMeDao.allSearchProperties(
+        val rows = userLoginRememberMeDao.allSearchPropertiesBy(
             listOf(
-                UserLoginRememberMe::tenantId.name,
-                UserLoginRememberMe::username.name,
-                UserLoginRememberMe::token.name,
-                UserLoginRememberMe::lastUsed.name,
-                UserLoginRememberMe::id.name
+                UserLoginRememberMe::tenantId,
+                UserLoginRememberMe::username,
+                UserLoginRememberMe::token,
+                UserLoginRememberMe::lastUsed,
+                UserLoginRememberMe::id
             )
         )
         log.debug("从数据库加载了${rows.size}条记住我登录信息。")
@@ -100,16 +102,15 @@ open class RememberMeByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<U
         }
         val trimmedTenantId = tenantId.trim()
         val trimmedUsername = username.trim()
-        val rows = userLoginRememberMeDao.andSearchProperties(
-            mapOf(
-                UserLoginRememberMe::tenantId.name to trimmedTenantId,
-                UserLoginRememberMe::username.name to trimmedUsername
-            ),
+        val criteria = Criteria.of(UserLoginRememberMe::tenantId.name, OperatorEnum.EQ, trimmedTenantId)
+            .addAnd(UserLoginRememberMe::username.name, OperatorEnum.EQ, trimmedUsername)
+        val rows = userLoginRememberMeDao.searchPropertiesBy(
+            criteria,
             listOf(
-                UserLoginRememberMe::id.name,
-                UserLoginRememberMe::username.name,
-                UserLoginRememberMe::token.name,
-                UserLoginRememberMe::lastUsed.name
+                UserLoginRememberMe::id,
+                UserLoginRememberMe::username,
+                UserLoginRememberMe::token,
+                UserLoginRememberMe::lastUsed
             )
         )
         return if (rows.isEmpty()) {
@@ -214,9 +215,9 @@ open class RememberMeByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<U
             return tenantId to username
         }
         val rows = userLoginRememberMeDao.oneSearchProperties(
-            UserLoginRememberMe::id.name,
+            UserLoginRememberMe::id,
             id,
-            listOf(UserLoginRememberMe::tenantId.name, UserLoginRememberMe::username.name)
+            listOf(UserLoginRememberMe::tenantId, UserLoginRememberMe::username)
         )
         if (rows.isEmpty()) {
             log.warn("同步记住我登录缓存时未找到id为${id}的记录。")

@@ -42,7 +42,7 @@ open class SysDomainService : BaseCrudService<String, SysDomain, SysDomainDao>()
             this.tenantId = tenantId
         }
         @Suppress("UNCHECKED_CAST")
-        return dao.search(searchPayload) as List<SysDomainRecord>
+        return dao.search(searchPayload, SysDomainRecord::class)
     }
 
     override fun getDomainsBySystemCode(systemCode: String): List<SysDomainRecord> {
@@ -50,7 +50,7 @@ open class SysDomainService : BaseCrudService<String, SysDomain, SysDomainDao>()
             this.systemCode = systemCode
         }
         @Suppress("UNCHECKED_CAST")
-        return dao.search(searchPayload) as List<SysDomainRecord>
+        return dao.search(searchPayload, SysDomainRecord::class)
     }
 
     @Transactional

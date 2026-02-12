@@ -30,8 +30,7 @@ open class SysTenantLocaleDao : BaseCrudDao<String, SysTenantLocale, SysTenantLo
      */
     fun searchLocaleCodesByTenantId(tenantId: String): Set<String> {
         val criteria = Criteria(SysTenantLocale::tenantId eq tenantId)
-        @Suppress("UNCHECKED_CAST")
-        return searchProperty(criteria, SysTenantLocale::localeCode.name).toSet() as Set<String>
+        return searchProperty(criteria, SysTenantLocale::localeCode).toSet()
     }
 
     /**
@@ -42,8 +41,7 @@ open class SysTenantLocaleDao : BaseCrudDao<String, SysTenantLocale, SysTenantLo
      */
     fun searchTenantIdsByLocaleCode(localeCode: String): Set<String> {
         val criteria = Criteria(SysTenantLocale::localeCode eq localeCode)
-        @Suppress("UNCHECKED_CAST")
-        return searchProperty(criteria, SysTenantLocale::tenantId.name).toSet() as Set<String>
+        return searchProperty(criteria, SysTenantLocale::tenantId).toSet()
     }
 
     /**

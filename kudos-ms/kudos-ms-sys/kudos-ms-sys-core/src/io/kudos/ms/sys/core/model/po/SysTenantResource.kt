@@ -16,10 +16,10 @@ interface SysTenantResource : IDbEntity<String, SysTenantResource> {
     companion object : DbEntityFactory<SysTenantResource>()
 
     /** 租户id */
-    var tenantId: String?
+    var tenantId: String
 
     /** 资源id */
-    var resourceId: String?
+    var resourceId: String
 
 
     //region your codes 2

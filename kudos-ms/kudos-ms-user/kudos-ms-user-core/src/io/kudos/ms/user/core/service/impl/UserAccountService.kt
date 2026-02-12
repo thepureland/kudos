@@ -88,7 +88,7 @@ open class UserAccountService : BaseCrudService<String, UserAccount, UserAccount
             this.tenantId = tenantId
         }
         @Suppress("UNCHECKED_CAST")
-        return dao.search(searchPayload) as List<UserAccountRecord>
+        return dao.search(searchPayload, UserAccountRecord::class)
     }
 
     override fun getUsersByOrgId(orgId: String): List<UserAccountRecord> {
@@ -96,7 +96,7 @@ open class UserAccountService : BaseCrudService<String, UserAccount, UserAccount
             this.orgId = orgId
         }
         @Suppress("UNCHECKED_CAST")
-        return dao.search(searchPayload) as List<UserAccountRecord>
+        return dao.search(searchPayload, UserAccountRecord::class)
     }
 
     @Transactional

@@ -63,7 +63,7 @@ open class AccountThirdByUserIdAndProviderCodeCache : AbstractKeyValueCacheHandl
             active = true
         }
         @Suppress("UNCHECKED_CAST")
-        val results = userAccountThirdDao.search(searchPayload) as List<UserAccountThirdCacheItem>
+        val results = userAccountThirdDao.search(searchPayload, UserAccountThirdCacheItem::class)
         log.debug("从数据库加载了${results.size}条第三方账号信息。")
 
         if (clear) {
@@ -101,7 +101,7 @@ open class AccountThirdByUserIdAndProviderCodeCache : AbstractKeyValueCacheHandl
             this.active = true
         }
         @Suppress("UNCHECKED_CAST")
-        val results = userAccountThirdDao.search(searchPayload) as List<UserAccountThirdCacheItem>
+        val results = userAccountThirdDao.search(searchPayload, UserAccountThirdCacheItem::class)
         return if (results.isEmpty()) {
             log.warn("数据库中不存在用户${userId}且提供方为${accountProviderDictCode}的active=true的第三方账号！")
             null

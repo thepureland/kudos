@@ -7,6 +7,7 @@ import io.kudos.ability.distributed.stream.common.model.table.SysMqFailMsgs
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
+import io.kudos.base.support.query.ReadQuery
 import jakarta.annotation.Resource
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
@@ -44,7 +45,7 @@ open class SysMqFailMsgService :
     override fun query(topic: String, startTime: LocalDateTime): List<SysMqFailMsg> {
         val criteria = Criteria(SysMqFailMsgs.topic.name, OperatorEnum.EQ, topic)
             .addAnd(SysMqFailMsgs.createTime.name, OperatorEnum.GE, startTime)
-        return streamExceptionMsgDao.search(criteria)
+        return streamExceptionMsgDao.search(ReadQuery(criteria = criteria))
     }
 
     /**

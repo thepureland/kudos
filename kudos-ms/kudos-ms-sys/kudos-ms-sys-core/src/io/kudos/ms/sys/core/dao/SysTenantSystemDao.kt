@@ -31,8 +31,7 @@ open class SysTenantSystemDao : BaseCrudDao<String, SysTenantSystem, SysTenantSy
      */
     fun searchSystemCodesByTenantId(tenantId: String): Set<String> {
         val criteria = Criteria(SysTenantSystem::tenantId eq tenantId)
-        @Suppress("UNCHECKED_CAST")
-        return searchProperty(criteria, SysTenantSystem::systemCode.name).toSet() as Set<String>
+        return searchProperty(criteria, SysTenantSystem::systemCode).toSet()
     }
 
     /**
@@ -43,8 +42,7 @@ open class SysTenantSystemDao : BaseCrudDao<String, SysTenantSystem, SysTenantSy
      */
     fun searchTenantIdsBySystemCode(systemCode: String): Set<String> {
         val criteria = Criteria(SysTenantSystem::systemCode eq systemCode)
-        @Suppress("UNCHECKED_CAST")
-        return searchProperty(criteria, SysTenantSystem::tenantId.name).toSet() as Set<String>
+        return searchProperty(criteria, SysTenantSystem::tenantId).toSet()
     }
 
     /**
@@ -55,16 +53,20 @@ open class SysTenantSystemDao : BaseCrudDao<String, SysTenantSystem, SysTenantSy
      */
     fun groupingSystemCodesByTenantIds(tenantIds: Collection<String>? = null): Map<String, List<String>> {
         val returnProperties = listOf(SysTenantSystem::tenantId.name, SysTenantSystem::systemCode.name)
-        @Suppress("UNCHECKED_CAST")
         val results = if (tenantIds == null) {
             allSearchProperties(returnProperties)
         } else {
             val criteria = Criteria(SysTenantSystem::tenantId inList tenantIds)
             searchProperties(criteria, returnProperties)
-        } as List<Map<String, String>>
-        return results.groupBy(
-            keySelector = { it[SysTenantSystem::tenantId.name]!! },
-            valueTransform = { it[SysTenantSystem::systemCode.name]!! }
+        }
+        val pairs = results.mapNotNull { row ->
+            val tenantId = row[SysTenantSystem::tenantId.name] as? String
+            val systemCode = row[SysTenantSystem::systemCode.name] as? String
+            if (tenantId != null && systemCode != null) tenantId to systemCode else null
+        }
+        return pairs.groupBy(
+            keySelector = { it.first },
+            valueTransform = { it.second }
         )
     }
 
@@ -76,16 +78,20 @@ open class SysTenantSystemDao : BaseCrudDao<String, SysTenantSystem, SysTenantSy
      */
     fun groupingTenantIdsBySystemCodes(systemCodes: Collection<String>? = null): Map<String, List<String>> {
         val returnProperties = listOf(SysTenantSystem::systemCode.name, SysTenantSystem::tenantId.name)
-        @Suppress("UNCHECKED_CAST")
         val results = if (systemCodes == null) {
             allSearchProperties(returnProperties)
         } else {
             val criteria = Criteria(SysTenantSystem::systemCode inList systemCodes)
             searchProperties(criteria, returnProperties)
-        } as List<Map<String, String>>
-        return results.groupBy(
-            keySelector = { it[SysTenantSystem::systemCode.name]!! },
-            valueTransform = { it[SysTenantSystem::tenantId.name]!! }
+        }
+        val pairs = results.mapNotNull { row ->
+            val systemCode = row[SysTenantSystem::systemCode.name] as? String
+            val tenantId = row[SysTenantSystem::tenantId.name] as? String
+            if (systemCode != null && tenantId != null) systemCode to tenantId else null
+        }
+        return pairs.groupBy(
+            keySelector = { it.first },
+            valueTransform = { it.second }
         )
     }
 

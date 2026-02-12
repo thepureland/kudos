@@ -42,7 +42,7 @@ open class SysI18NService : BaseCrudService<String, SysI18n, SysI18nDao>(), ISys
             this.active = true
         }
         @Suppress("UNCHECKED_CAST")
-        val records = dao.search(searchPayload) as List<SysI18nRecord>
+        val records = dao.search(searchPayload, SysI18nRecord::class)
         return records.firstOrNull()?.value
     }
 
@@ -53,7 +53,7 @@ open class SysI18NService : BaseCrudService<String, SysI18n, SysI18nDao>(), ISys
             this.locale = locale
         }
         @Suppress("UNCHECKED_CAST")
-        return dao.search(searchPayload) as List<SysI18nRecord>
+        return dao.search(searchPayload, SysI18nRecord::class)
     }
 
     @Transactional

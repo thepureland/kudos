@@ -57,8 +57,7 @@ open class UserAccountDao : BaseCrudDao<String, UserAccount, UserAccounts>() {
     fun searchActiveUserIdsByTenantId(tenantId: String): List<String> {
         val criteria = Criteria(UserAccount::tenantId eq tenantId)
             .addAnd(UserAccount::active eq true)
-        @Suppress("UNCHECKED_CAST")
-        return searchProperty(criteria, UserAccount::id.name) as List<String>
+        return searchProperty(criteria, UserAccount::id).filterNotNull()
     }
 
     //endregion your codes 2

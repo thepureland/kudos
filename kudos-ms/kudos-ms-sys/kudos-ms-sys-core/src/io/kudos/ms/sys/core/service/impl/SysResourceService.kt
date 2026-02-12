@@ -51,7 +51,7 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
             this.subSystemCode = subSystemCode
         }
         @Suppress("UNCHECKED_CAST")
-        return dao.search(searchPayload) as List<SysResourceRecord>
+        return dao.search(searchPayload, SysResourceRecord::class)
     }
 
     override fun getChildResources(parentId: String): List<SysResourceRecord> {
@@ -59,7 +59,7 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
             this.parentId = parentId
         }
         @Suppress("UNCHECKED_CAST")
-        return dao.search(searchPayload) as List<SysResourceRecord>
+        return dao.search(searchPayload, SysResourceRecord::class)
     }
 
     override fun getResourceTree(subSystemCode: String, parentId: String?): List<SysResourceTreeRecord> {
@@ -68,7 +68,7 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
             this.parentId = parentId
         }
         @Suppress("UNCHECKED_CAST")
-        val records = dao.search(searchPayload) as List<SysResourceRecord>
+        val records = dao.search(searchPayload, SysResourceRecord::class)
         
         // 转换为树节点
         val treeNodes = records.map { record ->

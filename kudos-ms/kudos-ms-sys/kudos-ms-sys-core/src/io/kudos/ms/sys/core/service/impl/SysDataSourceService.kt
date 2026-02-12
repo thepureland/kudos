@@ -50,12 +50,11 @@ open class SysDataSourceService : BaseCrudService<String, SysDataSource, SysData
         return sysDataSourceHashCache.getDataSources(tenantId, subSystemCode, microServiceCode)
     }
 
-    @Suppress("UNCHECKED_CAST")
     override fun pagingSearch(listSearchPayload: ListSearchPayload): Pair<List<*>, Int> {
         val pair = super.pagingSearch(listSearchPayload)
 
         // 根据租户id获取租户名称
-        val records = pair.first as List<SysDataSourceRecord>
+        val records = pair.first.filterIsInstance<SysDataSourceRecord>()
         if (records.isNotEmpty()) {
             val tenantIds = records.map { it.tenantId!! }
             val tenants = sysTenantApi.getTenants(tenantIds)
@@ -165,8 +164,7 @@ open class SysDataSourceService : BaseCrudService<String, SysDataSource, SysData
         val searchPayload = SysDataSourceSearchPayload().apply {
             this.tenantId = tenantId
         }
-        @Suppress("UNCHECKED_CAST")
-        return dao.search(searchPayload) as List<SysDataSourceRecord>
+        return dao.search(searchPayload, SysDataSourceRecord::class)
     }
 
     /**
@@ -181,8 +179,7 @@ open class SysDataSourceService : BaseCrudService<String, SysDataSource, SysData
         val searchPayload = SysDataSourceSearchPayload().apply {
             this.subSystemCode = subSystemCode
         }
-        @Suppress("UNCHECKED_CAST")
-        return dao.search(searchPayload) as List<SysDataSourceRecord>
+        return dao.search(searchPayload, SysDataSourceRecord::class)
     }
 
     //endregion your codes 2

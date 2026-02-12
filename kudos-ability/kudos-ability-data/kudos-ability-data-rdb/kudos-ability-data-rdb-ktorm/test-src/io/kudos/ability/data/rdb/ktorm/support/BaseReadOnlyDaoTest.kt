@@ -11,6 +11,7 @@ import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.query.sort.Order
 import io.kudos.base.support.payload.ListSearchPayload
 import io.kudos.base.support.payload.SearchPayload
+import io.kudos.base.support.query.ReadQuery
 import io.kudos.test.common.init.EnableKudosTest
 import jakarta.annotation.Resource
 import org.ktorm.dsl.eq
@@ -104,29 +105,29 @@ internal open class BaseReadOnlyDaoTest {
     //region oneSearch
     @Test
     fun oneSearch() {
-        var results = testTableDao.oneSearch(TestTableKtorm::name.name, "name1")
+        var results = testTableDao.oneSearch(TestTableKtorm::name, "name1")
         assertEquals(1, results.size)
         assertEquals(-1, results.first().id)
 
         // value为null的情况
-        results = testTableDao.oneSearch(TestTableKtorm::weight.name, null)
+        results = testTableDao.oneSearch(TestTableKtorm::weight, null)
         assertEquals(2, results.size)
 
         // 单条件升序
-        results = testTableDao.oneSearch(TestTableKtorm::active.name, true, Order.asc(TestTableKtorm::name.name))
+        results = testTableDao.oneSearch(TestTableKtorm::active, true, Order.asc(TestTableKtorm::name.name))
         assertEquals(8, results.size)
         assertEquals("name1", results.first().name)
         assertEquals("name9", results.last().name)
 
         // 单条件降序
-        results = testTableDao.oneSearch(TestTableKtorm::active.name, true, Order.desc(TestTableKtorm::name.name))
+        results = testTableDao.oneSearch(TestTableKtorm::active, true, Order.desc(TestTableKtorm::name.name))
         assertEquals(8, results.size)
         assertEquals("name9", results.first().name)
         assertEquals("name1", results.last().name)
 
         // 多个排序条件
         val orders = arrayOf(Order.asc(TestTableKtorm::height.name), Order.desc(TestTableKtorm::name.name))
-        results = testTableDao.oneSearch(TestTableKtorm::active.name, true, *orders)
+        results = testTableDao.oneSearch(TestTableKtorm::active, true, *orders)
         assertEquals(8, results.size)
         assertEquals("name5", results.first().name)
         assertEquals("name4", results[5].name)
@@ -134,17 +135,17 @@ internal open class BaseReadOnlyDaoTest {
 
     @Test
     fun oneSearchProperty() {
-        var results = testTableDao.oneSearchProperty(TestTableKtorm::name.name, "name1", TestTableKtorm::id.name)
+        var results = testTableDao.oneSearchProperty(TestTableKtorm::name, "name1", TestTableKtorm::id)
         assertEquals(1, results.size)
         assertEquals(-1, results.first())
-        results = testTableDao.oneSearchProperty(TestTableKtorm::weight.name, null, TestTableKtorm::id.name)
+        results = testTableDao.oneSearchProperty(TestTableKtorm::weight, null, TestTableKtorm::id)
         assertEquals(2, results.size)
     }
 
     @Test
     fun oneSearchProperties() {
-        val returnProperties = listOf(TestTableKtorm::name.name, TestTableKtorm::id.name)
-        val results = testTableDao.oneSearchProperties(TestTableKtorm::name.name, "name1", returnProperties)
+        val returnProperties = listOf(TestTableKtorm::name, TestTableKtorm::id)
+        val results = testTableDao.oneSearchProperties(TestTableKtorm::name, "name1", returnProperties)
         assertEquals(1, results.size)
         assertEquals("name1", results.first()[TestTableKtorm::name.name])
     }
@@ -160,7 +161,7 @@ internal open class BaseReadOnlyDaoTest {
 
     @Test
     fun allSearchProperty() {
-        val results = testTableDao.allSearchProperty(TestTableKtorm::id.name, Order.desc(TestTableKtorm::id.name))
+        val results = testTableDao.allSearchProperty(TestTableKtorm::id, Order.desc(TestTableKtorm::id.name))
         assertEquals(11, results.size)
         assertEquals(Integer.valueOf(-1), results[0])
         assertEquals(Integer.valueOf(-11), results[10])
@@ -168,8 +169,8 @@ internal open class BaseReadOnlyDaoTest {
 
     @Test
     fun allSearchProperties() {
-        val returnProperties = listOf(TestTableKtorm::name.name, TestTableKtorm::id.name)
-        val results = testTableDao.allSearchProperties(returnProperties)
+        val returnProperties = listOf(TestTableKtorm::name, TestTableKtorm::id)
+        val results = testTableDao.allSearchPropertiesBy(returnProperties)
         assertEquals(11, results.size)
     }
     //endregion allSearch
@@ -178,32 +179,37 @@ internal open class BaseReadOnlyDaoTest {
     //region andSearch
     @Test
     fun andSearch() {
-        val propertyMap = mapOf(TestTableKtorm::name.name to "name5", TestTableKtorm::weight.name to null)
-        var results = testTableDao.andSearch(propertyMap)
+        val propertyMap = mapOf(TestTableKtorm::name to "name5", TestTableKtorm::weight to null)
+        var results = testTableDao.andSearchBy(propertyMap)
         assertEquals(1, results.size)
 
         // 自定义查询逻辑
-        results = testTableDao.andSearch(propertyMap) { column, _ ->
-            if (column.name == TestTableKtorms.name.name) {
-                column.ilike("%Me5")
-            } else null
-        }
+        results = testTableDao.andSearchBy(
+            propertyMap,
+            whereConditionFactory = { column, _ ->
+                if (column.name == TestTableKtorms.name.name) {
+                    column.ilike("%Me5")
+                } else null
+            }
+        )
         assertEquals(1, results.size)
         assertEquals("name5", results.first().name)
     }
 
     @Test
     fun andSearchProperty() {
-        val propertyMap = mapOf(TestTableKtorm::name.name to "name5", TestTableKtorm::weight.name to null)
-        val results = testTableDao.andSearchProperty(propertyMap, TestTableKtorm::name.name)
+        val criteria = Criteria.of(TestTableKtorm::name.name, OperatorEnum.EQ, "name5")
+            .addAnd(TestTableKtorm::weight.name, OperatorEnum.IS_NULL, null)
+        val results = testTableDao.searchProperty(criteria, TestTableKtorm::name)
         assertEquals("name5", results.first())
     }
 
     @Test
     fun andSearchProperties() {
-        val propertyMap = mapOf(TestTableKtorm::name.name to "name1", TestTableKtorm::active.name to true)
-        val returnProperties = listOf(TestTableKtorm::name.name, TestTableKtorm::id.name)
-        val results = testTableDao.andSearchProperties(propertyMap, returnProperties)
+        val criteria = Criteria.of(TestTableKtorm::name.name, OperatorEnum.EQ, "name1")
+            .addAnd(TestTableKtorm::active.name, OperatorEnum.EQ, true)
+        val returnProperties = listOf(TestTableKtorm::name, TestTableKtorm::id)
+        val results = testTableDao.searchPropertiesBy(criteria, returnProperties)
         assertEquals(1, results.size)
         assertEquals("name1", results.first()[TestTableKtorm::name.name])
     }
@@ -213,26 +219,28 @@ internal open class BaseReadOnlyDaoTest {
     //region orSearch
     @Test
     fun orSearch() {
-        val propertyMap = mapOf(TestTableKtorm::name.name to "name5", TestTableKtorm::weight.name to null)
-        val results = testTableDao.orSearch(propertyMap)
+        val propertyMap = mapOf(TestTableKtorm::name to "name5", TestTableKtorm::weight to null)
+        val results = testTableDao.orSearchBy(propertyMap)
         assertEquals(2, results.size)
     }
 
     @Test
     fun orSearchProperty() {
-        val propertyMap = mapOf(TestTableKtorm::name.name to "name5", TestTableKtorm::weight.name to null)
+        val criteria = Criteria.of(TestTableKtorm::name.name, OperatorEnum.EQ, "name5")
+            .addOr(TestTableKtorm::weight.name, OperatorEnum.IS_NULL, null)
         val results =
-            testTableDao.orSearchProperty(propertyMap, TestTableKtorm::name.name, Order.desc(TestTableKtorm::id.name))
+            testTableDao.searchProperty(criteria, TestTableKtorm::name, Order.desc(TestTableKtorm::id.name))
         assertEquals(2, results.size)
         assertEquals("name5", results.first())
     }
 
     @Test
     fun orSearchProperties() {
-        val propertyMap = mapOf(TestTableKtorm::name.name to "name5", TestTableKtorm::weight.name to null)
-        val returnProperties = listOf(TestTableKtorm::name.name, TestTableKtorm::id.name)
+        val criteria = Criteria.of(TestTableKtorm::name.name, OperatorEnum.EQ, "name5")
+            .addOr(TestTableKtorm::weight.name, OperatorEnum.IS_NULL, null)
+        val returnProperties = listOf(TestTableKtorm::name, TestTableKtorm::id)
         val results =
-            testTableDao.orSearchProperties(propertyMap, returnProperties, Order.desc(TestTableKtorm::id.name))
+            testTableDao.searchPropertiesBy(criteria, returnProperties, Order.desc(TestTableKtorm::id.name))
         assertEquals(2, results.size)
         assertEquals("name5", results.first()[TestTableKtorm::name.name])
     }
@@ -243,7 +251,7 @@ internal open class BaseReadOnlyDaoTest {
     @Test
     fun inSearch() {
         val ids = listOf(-3, -2, -1, null)
-        val results = testTableDao.inSearch(TestTableKtorm::id.name, ids, Order.desc(TestTableKtorm::id.name))
+        val results = testTableDao.inSearch(TestTableKtorm::id, ids, Order.desc(TestTableKtorm::id.name))
         assertEquals(3, results.size)
         assertEquals("name1", results.first().name)
     }
@@ -288,9 +296,18 @@ internal open class BaseReadOnlyDaoTest {
     fun inSearchPropertyById() {
         val ids = listOf(-3, -2, -1)
         val results =
-            testTableDao.inSearchPropertyById(ids, TestTableKtorm::name.name, Order.desc(TestTableKtorm::id.name))
+            testTableDao.inSearchPropertyById(ids, TestTableKtorm::name, Order.desc(TestTableKtorm::id.name))
         assertEquals(3, results.size)
         assertEquals("name1", results.first())
+    }
+
+    @Test
+    fun inSearchPropertyByIdNullableProperty() {
+        val ids = listOf(-11, -1)
+        val results = testTableDao.inSearchPropertyById(ids, TestTableKtorm::weight, Order.asc(TestTableKtorm::id.name))
+        assertEquals(2, results.size)
+        assert(results.contains(null))
+        assert(results.contains(56.5))
     }
 
     @Test
@@ -314,7 +331,7 @@ internal open class BaseReadOnlyDaoTest {
         val orCriteria: Criteria = Criteria.or(likeName, andCriteria)
         val noNull = Criterion(TestTableKtorm::weight.name, OperatorEnum.IS_NOT_NULL, null)
         val criteria: Criteria = Criteria.and(orCriteria, noNull)
-        val results = testTableDao.search(criteria, Order.desc(TestTableKtorm::weight.name))
+        val results = testTableDao.search(ReadQuery(criteria = criteria, orders = listOf(Order.desc(TestTableKtorm::weight.name))))
         assertEquals(5, results.size)
         assertEquals(-10, results.first().id)
     }
@@ -338,7 +355,7 @@ internal open class BaseReadOnlyDaoTest {
 
         // returnItemClass 为 null：应与 search(criteria, order) 结果一致，返回实体列表
         val resultsAsEntity = testTableDao.searchAs<TestTableKtorm>(criteria, order)
-        val resultsPlain = testTableDao.search(criteria, order)
+        val resultsPlain = testTableDao.search(ReadQuery(criteria = criteria, orders = listOf(order)))
         assertEquals(resultsPlain.size, resultsAsEntity.size)
         assertEquals(resultsPlain.map { it.id }, resultsAsEntity.map { it.id })
         assertEquals(-10, resultsAsEntity.first().id)
@@ -363,24 +380,32 @@ internal open class BaseReadOnlyDaoTest {
             Criterion(TestTableKtorm::height.name, OperatorEnum.GT, 160)
         )
         var results =
-            testTableDao.searchProperty(criteria, TestTableKtorm::id.name, Order.desc(TestTableKtorm::weight.name))
+            testTableDao.searchProperty(criteria, TestTableKtorm::id, Order.desc(TestTableKtorm::weight.name))
         assertEquals(2, results.size)
         assertEquals(-10, results.first())
 
         // IEQ
         criteria = Criteria.of(TestTableKtorm::name.name, OperatorEnum.IEQ, "Name1")
-        results = testTableDao.searchProperty(criteria, TestTableKtorm::id.name)
+        results = testTableDao.searchProperty(criteria, TestTableKtorm::id)
         assertEquals(1, results.size)
 
         // GT_P
         criteria = Criteria.of(TestTableKtorm::height.name, OperatorEnum.GT_P, TestTableKtorm::weight.name)
-        results = testTableDao.searchProperty(criteria, TestTableKtorm::id.name)
+        results = testTableDao.searchProperty(criteria, TestTableKtorm::id)
         assertEquals(9, results.size)
 
         // NE_P
         criteria = Criteria.of(TestTableKtorm::height.name, OperatorEnum.NE_P, TestTableKtorm::weight.name)
-        results = testTableDao.searchProperty(criteria, TestTableKtorm::id.name)
+        results = testTableDao.searchProperty(criteria, TestTableKtorm::id)
         assertEquals(9, results.size)
+    }
+
+    @Test
+    fun searchPropertyNullableProperty() {
+        val criteria = Criteria.of(TestTableKtorm::active.name, OperatorEnum.EQ, true)
+        val results = testTableDao.searchProperty(criteria, TestTableKtorm::weight, Order.asc(TestTableKtorm::id.name))
+        assertEquals(8, results.size)
+        assert(results.contains(null))
     }
 
     @Test
@@ -392,8 +417,8 @@ internal open class BaseReadOnlyDaoTest {
         val orCriteria: Criteria = Criteria.or(likeName, andCriteria)
         val noNull = Criterion(TestTableKtorm::weight.name, OperatorEnum.IS_NOT_NULL, null)
         val criteria: Criteria = Criteria.and(orCriteria, noNull)
-        val returnProperties = listOf(TestTableKtorm::active.name, TestTableKtorm::name.name)
-        val results = testTableDao.searchProperties(criteria, returnProperties, Order.desc(TestTableKtorm::weight.name))
+        val returnProperties = listOf(TestTableKtorm::active, TestTableKtorm::name)
+        val results = testTableDao.searchPropertiesBy(criteria, returnProperties, Order.desc(TestTableKtorm::weight.name))
         assertEquals(5, results.size)
         assertEquals("name10", results.first()[TestTableKtorm::name.name])
         assertEquals(false, results.first()[TestTableKtorm::active.name])
@@ -406,7 +431,9 @@ internal open class BaseReadOnlyDaoTest {
     fun pagingSearch() {
         if (isSupportPaging()) {
             val criteria = Criteria.of(TestTableKtorm::active.name, OperatorEnum.EQ, true)
-            val entities = testTableDao.pagingSearch(criteria, 1, 4, Order.asc(TestTableKtorm::id.name))
+            val entities = testTableDao.search(
+                ReadQuery(criteria = criteria, orders = listOf(Order.asc(TestTableKtorm::id.name)), pageNo = 1, pageSize = 4)
+            )
             assertEquals(4, entities.size)
             assertEquals(-11, entities.first().id)
         }
@@ -419,7 +446,7 @@ internal open class BaseReadOnlyDaoTest {
             val results =
                 testTableDao.pagingReturnProperty(
                     criteria,
-                    TestTableKtorm::id.name,
+                    TestTableKtorm::id,
                     1,
                     4,
                     Order.asc(TestTableKtorm::id.name)
@@ -430,12 +457,29 @@ internal open class BaseReadOnlyDaoTest {
     }
 
     @Test
+    fun pagingReturnPropertyNullableProperty() {
+        if (isSupportPaging()) {
+            val criteria = Criteria.of(TestTableKtorm::active.name, OperatorEnum.EQ, true)
+            val results =
+                testTableDao.pagingReturnProperty(
+                    criteria,
+                    TestTableKtorm::weight,
+                    1,
+                    4,
+                    Order.asc(TestTableKtorm::id.name)
+                )
+            assertEquals(4, results.size)
+            assert(results.contains(null))
+        }
+    }
+
+    @Test
     fun pagingReturnProperties() {
         if (isSupportPaging()) {
             val criteria = Criteria.of(TestTableKtorm::active.name, OperatorEnum.EQ, true)
-            val returnProperties = listOf(TestTableKtorm::id.name, TestTableKtorm::name.name)
+            val returnProperties = listOf(TestTableKtorm::id, TestTableKtorm::name)
             val results =
-                testTableDao.pagingReturnProperties(
+                testTableDao.pagingReturnPropertiesBy(
                     criteria,
                     returnProperties,
                     1,
@@ -549,6 +593,11 @@ internal open class BaseReadOnlyDaoTest {
         assert(result.first() is Result)
         assertEquals(-1, (result.first() as Result).id)
 
+        // 指定结果封装类（类型安全入口）
+        val typedResult = testTableDao.search(searchPayload1, Result::class)
+        assertEquals(3, typedResult.size)
+        assertEquals(-1, typedResult.first().id)
+
         // 自定义查询逻辑（通过工厂）
         searchPayload1.name = "nAme1"
         searchPayload1.pageNo = null
@@ -611,9 +660,9 @@ internal open class BaseReadOnlyDaoTest {
     //region aggregate
     @Test
     fun count() {
-        assertEquals(11, testTableDao.count(null as Criteria?))
+        assertEquals(11, testTableDao.count(ReadQuery()))
         val criteria = Criteria.of(TestTableKtorm::name.name, OperatorEnum.LIKE_S, "name1")
-        assertEquals(3, testTableDao.count(criteria))
+        assertEquals(3, testTableDao.count(ReadQuery(criteria = criteria)))
     }
 
     @Test
@@ -641,26 +690,28 @@ internal open class BaseReadOnlyDaoTest {
     fun sum() {
         assertEquals(1382, testTableDao.sum(TestTableKtorm::height.name))
         val criteria = Criteria.of(TestTableKtorm::name.name, OperatorEnum.LIKE_S, "name1")
-        assertEquals(122.5, testTableDao.sum(TestTableKtorm::weight.name, criteria))
+        assertEquals(122.5, testTableDao.sum(TestTableKtorm::weight, criteria))
         assertEquals(445.74, testTableDao.sum(TestTableKtorm::weight.name))
     }
 
     @Test
     fun avg() {
         val criteria = Criteria.of(TestTableKtorm::name.name, OperatorEnum.LIKE_S, "name1")
-        assertEquals(61.25, testTableDao.avg(TestTableKtorm::weight.name, criteria))
+        assertEquals(61.25, testTableDao.avg(TestTableKtorm::weight, criteria))
     }
 
     @Test
     fun max() {
         val criteria = Criteria.of(TestTableKtorm::name.name, OperatorEnum.LIKE_S, "name1")
-        assertEquals(66.0, testTableDao.max(TestTableKtorm::weight.name, criteria))
+        val result = testTableDao.max(TestTableKtorm::weight, criteria)
+        assertEquals(66.0, result)
     }
 
     @Test
     fun min() {
         val criteria = Criteria.of(TestTableKtorm::name.name, OperatorEnum.LIKE_S, "name1")
-        assertEquals(56.5, testTableDao.min(TestTableKtorm::weight.name, criteria))
+        val result = testTableDao.min(TestTableKtorm::weight, criteria)
+        assertEquals(56.5, result)
     }
     //endregion aggregate
 

@@ -5,6 +5,7 @@ import io.kudos.ability.cache.common.kit.CacheKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
+import io.kudos.base.support.query.ReadQuery
 import io.kudos.ms.auth.core.dao.AuthRoleResourceDao
 import io.kudos.ms.auth.core.dao.AuthRoleUserDao
 import io.kudos.ms.auth.core.model.po.AuthRoleUser
@@ -134,7 +135,7 @@ open class ResourceIdsByUserIdCache : AbstractKeyValueCacheHandler<Set<String>>(
             // 查询拥有该角色的所有用户
             val roleUserCriteria = Criteria(AuthRoleUser::roleId.name, OperatorEnum.EQ, roleId)
             @Suppress("UNCHECKED_CAST")
-            val roleUsers = authRoleUserDao.search(roleUserCriteria)
+            val roleUsers = authRoleUserDao.search(ReadQuery(criteria = roleUserCriteria))
             
             // 踢除这些用户的缓存
             val userIds = roleUsers.map { it.userId }.distinct()

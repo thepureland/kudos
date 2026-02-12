@@ -58,8 +58,7 @@ open class AuthRoleDao : BaseCrudDao<String, AuthRole, AuthRoles>() {
     fun searchActiveRoleIdsByTenantId(tenantId: String): List<String> {
         val criteria = Criteria(AuthRole::tenantId eq tenantId)
             .addAnd(AuthRole::active eq true)
-        @Suppress("UNCHECKED_CAST")
-        return searchProperty(criteria, AuthRole::id.name) as List<String>
+        return searchProperty(criteria, AuthRole::id).filterNotNull()
     }
 
     //endregion your codes 2

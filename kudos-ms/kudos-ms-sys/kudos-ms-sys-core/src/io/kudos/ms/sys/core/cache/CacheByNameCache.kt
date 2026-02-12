@@ -53,7 +53,7 @@ open class CacheByNameCache : AbstractKeyValueCacheHandler<SysCacheCacheItem>() 
         }
 
         @Suppress("UNCHECKED_CAST")
-        val results = sysCacheDao.search(searchPayload) as List<SysCacheCacheItem>
+        val results = sysCacheDao.search(searchPayload, SysCacheCacheItem::class)
         log.debug("从数据库加载了${results.size}条缓存配置信息。")
 
         // 先清除缓存
@@ -90,7 +90,7 @@ open class CacheByNameCache : AbstractKeyValueCacheHandler<SysCacheCacheItem>() 
             active = true
         }
 
-        val result = sysCacheDao.search(searchPayload).firstOrNull() as SysCacheCacheItem?
+        val result = sysCacheDao.search(searchPayload, SysCacheCacheItem::class).firstOrNull()
         if (result == null) {
             log.warn("数据库中不存在名称为${name}的缓存配置信息！")
         } else {

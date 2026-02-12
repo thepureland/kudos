@@ -56,7 +56,7 @@ open class SysMicroServiceService : BaseCrudService<String, SysMicroService, Sys
             this.parentCode = parentCode
         }
         @Suppress("UNCHECKED_CAST")
-        return dao.search(searchPayload) as List<SysMicroServiceRecord>
+        return dao.search(searchPayload, SysMicroServiceRecord::class)
     }
 
     @Transactional

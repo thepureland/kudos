@@ -30,27 +30,24 @@ import java.io.Serializable
  * 
  * @since 1.0.0
  */
-class Criterion : Serializable {
-
-    /**
-     * 查询条件逻辑操作符枚举
-     */
-    var operator: OperatorEnum
-
+data class Criterion(
     /**
      * 要查询的属性名
      */
-    var property: String
-
+    var property: String,
+    /**
+     * 查询条件逻辑操作符枚举
+     */
+    var operator: OperatorEnum,
     /**
      * 要查询的属性名对应的值
      */
-    var value: Any? = null
-
+    var value: Any? = null,
     /**
      * 别名，用于同一属性名多个条件时
      */
     var alias: String? = null
+) : Serializable {
 
     /**
      * 条件是否已经加密过了.
@@ -64,24 +61,6 @@ class Criterion : Serializable {
      * @param operator 查询条件逻辑操作符枚举
      * @param value 要查询的属性名对应的值
      */
-    constructor(property: String, operator: OperatorEnum, value: Any? = null) {
-        this.property = property
-        this.operator = operator
-        this.value = value
-    }
-
-    /**
-     * 封装查询条件
-     *
-     * @param property 要查询的属性名
-     * @param operator 查询条件逻辑操作符枚举
-     * @param value 要查询的属性名对应的值
-     * @param alias 别名，用于同一属性名多个条件时
-     */
-    constructor(property: String, operator: OperatorEnum, value: Any?, alias: String?) : this(property, operator, value) {
-        this.alias = alias
-    }
-
     var operatorCode: String
         get() = operator.code
         set(operatorCode) {
@@ -111,9 +90,7 @@ class Criterion : Serializable {
      * @return　查询条件字符串
      */
     override fun toString(): String {
-        val op = operator.code
-        val v = (if (value == null) "" else value)!!
-        return "$property $op $v".trim { it <= ' ' }
+        return "$property ${operator.code} ${value ?: ""}".trim()
     }
 
     companion object {

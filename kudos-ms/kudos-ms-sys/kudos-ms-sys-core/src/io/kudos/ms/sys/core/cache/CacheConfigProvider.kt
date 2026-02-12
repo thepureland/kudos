@@ -33,7 +33,7 @@ open class CacheConfigProvider : ICacheConfigProvider {
             }
 
             @Suppress("UNCHECKED_CAST")
-            cacheConfigs = sysCacheDao.search(searchPayload) as List<CacheConfig>
+            cacheConfigs = sysCacheDao.search(searchPayload, CacheConfig::class)
         }
         return cacheConfigs ?: emptyList()
     }
