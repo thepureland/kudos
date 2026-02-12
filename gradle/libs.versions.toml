@@ -60,6 +60,7 @@ minio = "8.6.0"
 controlsfx = "11.2.3"
 commons-fileupload = "1.6.0"
 servlet-api = "6.1.0"
+lettuce = "7.4.0.RELEASE"
 
 
 [libraries]
@@ -99,6 +100,7 @@ apache-xmlgraphics-batik-dom = { module = "org.apache.xmlgraphics:batik-dom", ve
 apache-xmlgraphics-batik-bridge = { module = "org.apache.xmlgraphics:batik-bridge", version.ref = "apache-xmlgraphics-batik" }
 github-classgraph = { module = "io.github.classgraph:classgraph", version.ref = "github-classgraph" }
 servlet-api = { module = "jakarta.servlet:jakarta.servlet-api", version.ref = "servlet-api" }
+lettuce-core = { module = "io.lettuce:lettuce-core", version.ref = "lettuce"}
 
 # kudos-context
 spring-boot-starter-aop = { module = "org.springframework.boot:spring-boot-starter-aspectj" }

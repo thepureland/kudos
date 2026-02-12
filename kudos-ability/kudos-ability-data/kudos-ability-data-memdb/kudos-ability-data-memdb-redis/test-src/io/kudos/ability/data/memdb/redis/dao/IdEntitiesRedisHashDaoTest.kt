@@ -190,11 +190,12 @@ internal class IdEntitiesRedisHashDaoTest {
     fun saveBatch_skipsNullId() {
         val dao = dao()
         val k = key("saveBatchNullId")
+        redisTemplates.defaultRedisTemplate.delete(k)
         dao.saveBatch(
             k,
             listOf(
                 TestRow(id = "ok1", name = "OK", type = 1),
-                TestRow(id = null, name = "Skipped", type = 0),
+                TestRow(id = "", name = "Skipped", type = 0),
                 TestRow(id = "ok2", name = "OK2", type = 2)
             )
         )
