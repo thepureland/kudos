@@ -49,37 +49,34 @@ object FileKit {
         includeDirs: Boolean = true
     ): List<String> {
         val jarFilePath = jarPath.removePrefix("jar:file:").substringBefore("!")
-        val jarFile = JarFile(jarFilePath)
         val result = mutableSetOf<String>()
-
         val normalizedDir = dirInJar.removePrefix("/").trimEnd('/') + "/"
+        JarFile(jarFilePath).use { jarFile ->
+            val entries = jarFile.entries()
+            while (entries.hasMoreElements()) {
+                val entry = entries.nextElement()
+                val name = entry.name
 
-        val entries = jarFile.entries()
-        while (entries.hasMoreElements()) {
-            val entry = entries.nextElement()
-            val name = entry.name
+                if (name == normalizedDir) continue
+                if (!name.startsWith(normalizedDir)) continue
 
-            if (name == normalizedDir) continue
-            if (!name.startsWith(normalizedDir)) continue
+                val relative = name.removePrefix(normalizedDir)
 
-            val relative = name.removePrefix(normalizedDir)
-
-            if (!recursive && relative.contains("/")) {
-                // 只保留一级目录中的直接子目录或文件
-                val firstSegment = relative.substringBefore("/")
-                val fullPath = "$normalizedDir$firstSegment/"
-                if (includeDirs) result.add(fullPath)
-            } else {
-                // 递归或文件
-                if (entry.isDirectory && includeDirs) {
-                    result.add(name)
-                } else if (!entry.isDirectory) {
-                    result.add(name)
+                if (!recursive && relative.contains("/")) {
+                    // 只保留一级目录中的直接子目录或文件
+                    val firstSegment = relative.substringBefore("/")
+                    val fullPath = "$normalizedDir$firstSegment/"
+                    if (includeDirs) result.add(fullPath)
+                } else {
+                    // 递归或文件
+                    if (entry.isDirectory && includeDirs) {
+                        result.add(name)
+                    } else if (!entry.isDirectory) {
+                        result.add(name)
+                    }
                 }
             }
         }
-
-        jarFile.close()
         return result.toList().distinct().sorted()
     }
 
@@ -314,9 +311,8 @@ object FileKit {
      * @author K
      * @since 1.0.0
      */
-    @Suppress("UNCHECKED_CAST")
     fun listFiles(directory: File, extensions: Array<String>?, recursive: Boolean): List<File> =
-        FileUtils.listFiles(directory, extensions, recursive) as List<File>
+        FileUtils.listFiles(directory, extensions, recursive).toList()
 
     /**
      * 查找指定目录(子目录是可选的)中匹配扩展名的文件.

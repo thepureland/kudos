@@ -2,7 +2,7 @@ package io.kudos.base.security
 
 import io.kudos.base.lang.string.EncodeKit
 import io.kudos.base.logger.LogFactory
-import java.io.UnsupportedEncodingException
+import java.security.MessageDigest
 import java.security.SecureRandom
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
@@ -33,7 +33,6 @@ object CryptoKit {
 
     private const val DEFAULT_HMACSHA1_KEYSIZE = 160 //RFC2401
 
-    private const val DEFAULT_AES_KEYSIZE = 128
     private const val DEFAULT_IVSIZE = 16
 
     private val DIGITS = charArrayOf(
@@ -118,13 +117,22 @@ object CryptoKit {
      * @since 1.0.0
      */
     fun aesDecrypt(content: ByteArray, password: String): ByteArray {
-        return aes(
-            content, password.toByteArray(charset(CHARSET)),
-            Cipher.DECRYPT_MODE
-        )
+        val passwordBytes = password.toByteArray(charset(CHARSET))
+        return runCatching {
+            aes(content, passwordBytes, Cipher.DECRYPT_MODE)
+        }.getOrElse {
+            // Backward compatibility: fallback for historical SHA1PRNG-derived data.
+            aesLegacy(content, passwordBytes, Cipher.DECRYPT_MODE)
+        }
     }
 
     private fun aes(input: ByteArray, password: ByteArray, mode: Int): ByteArray {
+        val cipher = Cipher.getInstance(AES)
+        cipher.init(mode, buildAesKey(password))
+        return cipher.doFinal(input)
+    }
+
+    private fun aesLegacy(input: ByteArray, password: ByteArray, mode: Int): ByteArray {
         val generator = KeyGenerator.getInstance(AES)
         val secureRandom = SecureRandom.getInstance("SHA1PRNG")
         secureRandom.setSeed(password)
@@ -132,6 +140,12 @@ object CryptoKit {
         val cipher = Cipher.getInstance(AES)
         cipher.init(mode, generator.generateKey())
         return cipher.doFinal(input)
+    }
+
+    private fun buildAesKey(password: ByteArray): SecretKeySpec {
+        val digest = MessageDigest.getInstance("SHA-256").digest(password)
+        val key = digest.copyOf(16) // AES-128
+        return SecretKeySpec(key, AES)
     }
 
     /**
@@ -144,14 +158,25 @@ object CryptoKit {
      * @since 1.0.0
      */
     fun aesDecrypt(contentHex: String, password: String): String {
-        val bytes = aesDecryptBytes(contentHex, password)
-        val result = aesDecrypt(bytes, password)
-        try {
-            return String(result, charset(CHARSET))
-        } catch (e: UnsupportedEncodingException) {
-            logger.error(e)
+        return tryAesDecrypt(contentHex, password).getOrElse {
+            logger.warn("AES decrypt failed, returning empty string for compatibility: {0}", it.message)
+            ""
         }
-        return ""
+    }
+
+    /**
+     * 将使用aes加密并转为十六进制的字符串进行解密，返回Result用于显式表达失败语义。
+     *
+     * @param contentHex 使用aes加密并转为十六进制的字符串
+     * @param password   加密时使用的密钥
+     * @return 成功时返回明文字符串，失败时返回异常
+     */
+    fun tryAesDecrypt(contentHex: String, password: String): Result<String> {
+        return runCatching {
+            val bytes = aesDecryptBytes(contentHex, password)
+            val result = aesDecrypt(bytes, password)
+            String(result, charset(CHARSET))
+        }
     }
 
     /**

@@ -1,6 +1,7 @@
 package io.kudos.base.support
 
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * 对象注册器
@@ -13,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap
  * 3. 去重机制：自动去重，避免重复注册相同对象
  * 
  * 数据结构：
- * - 使用ConcurrentHashMap存储，key为String，value为MutableList<Any>
+ * - 使用ConcurrentHashMap存储，key为String，value为CopyOnWriteArrayList<Any>
  * - 支持一个key对应多个对象
  * - 线程安全，支持并发访问
  * 
@@ -36,7 +37,7 @@ object Registry {
      * 所有注册的对象Map
      * key为注册键，value为注册的对象列表
      */
-    private val map = ConcurrentHashMap<String, MutableList<Any>>()
+    private val map = ConcurrentHashMap<String, CopyOnWriteArrayList<Any>>()
 
     /**
      * 根据key查询所注册的对象
@@ -45,21 +46,19 @@ object Registry {
      * 
      * 工作流程：
      * 1. 从map中查找key对应的列表
-     * 2. 如果存在，返回该列表
+     * 2. 如果存在，返回该列表的只读快照
      * 3. 如果不存在，返回空列表（不返回null）
      * 
      * 返回值：
-     * - 如果key已注册对象，返回包含所有对象的列表
+     * - 如果key已注册对象，返回包含所有对象的只读列表
      * - 如果key未注册，返回空列表（不是null）
      * 
-     * 注意事项：
-     * - 返回的列表是实际存储的列表，修改会影响注册表
-     * - 如果key不存在，返回的是新创建的空列表，不会添加到map中
+     * 注意事项：返回列表是快照，不会暴露注册表内部可变状态。
      * 
      * @param key 注册键
      * @return 注册的对象列表，如果key不存在则返回空列表
      */
-    fun lookup(key: String): MutableList<Any> = map[key] ?: mutableListOf()
+    fun lookup(key: String): List<Any> = map[key]?.toList() ?: emptyList()
 
     /**
      * 注册单个对象
@@ -86,11 +85,8 @@ object Registry {
      * @param obj 要注册的对象
      */
     fun register(key: String, obj: Any) {
-        val resultList: MutableList<Any> = lookup(key)
-        if (!resultList.contains(obj)) {
-            resultList.add(obj)
-        }
-        map[key] = resultList
+        val resultList = map.computeIfAbsent(key) { CopyOnWriteArrayList() }
+        resultList.addIfAbsent(obj)
     }
 
     /**
@@ -121,8 +117,7 @@ object Registry {
         if (objs.isEmpty()) {
             return
         }
-        val resultList: MutableList<Any> = lookup(key)
+        val resultList = map.computeIfAbsent(key) { CopyOnWriteArrayList() }
         resultList.addAll(listOf(*objs))
-        map[key] = resultList
     }
 }

@@ -53,28 +53,37 @@ class SeriesValidator : ConstraintValidator<Series, Any?> {
         if (value == null) {
             return true
         }
-        if (value is Array<*> || value is List<*>) {
-            var values = if (value is Array<*>) {
-                value.toList()
-            } else {
-                value as List<*>
-            }
-            if (values.size <= 1) {
-                return true
-            }
-            if (series.size != 0 && values.size != series.size) {
-                return false
-            }
-            values.forEach {
-                it ?: error("@Series约束注解限制数组中每个元素均不能为null！数组为：$value")
-            }
+        if (value !is Array<*> && value !is List<*>) {
+            return fail(context, "@Series约束注解只能设置在返回值类型为Array或List的get方法上！")
+        }
+        var values = when (value) {
+            is Array<*> -> value.toList()
+            is List<*> -> value
+            else -> emptyList()
+        }
+        if (values.size <= 1) {
+            return true
+        }
+        if (series.size != 0 && values.size != series.size) {
+            return false
+        }
+        if (values.any { it == null }) {
+            return fail(context, "@Series约束注解限制数组中每个元素均不能为null！数组为：$value")
+        }
 
+        return try {
             // 将数组元素全部转为String，方便用BigDecimal进行高精度运算
             values = values.map { BigDecimal(it.toString()) }
-            return validate(series.type, series.step, *values.toTypedArray())
-        } else {
-            error("@Series约束注解只能设置在返回值类型为Array或List的get方法上！")
+            validate(series.type, series.step, *values.toTypedArray())
+        } catch (_: RuntimeException) {
+            fail(context, "@Series约束注解仅支持可转为数值的元素类型，数组为：$value")
         }
+    }
+
+    private fun fail(context: ConstraintValidatorContext, message: String): Boolean {
+        context.disableDefaultConstraintViolation()
+        context.buildConstraintViolationWithTemplate(message).addConstraintViolation()
+        return false
     }
 
     /**

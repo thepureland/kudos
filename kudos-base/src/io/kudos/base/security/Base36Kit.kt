@@ -50,7 +50,7 @@ object Base36Kit {
         var srcString = src
         srcString = srcString.uppercase(Locale.getDefault())
         //生成校验位
-        val checkBit = getMD5(srcString)!!.substring(0, 1)
+        val checkBit = requireNotNull(getMD5(srcString)) { "MD5计算失败" }.substring(0, 1)
         //加密
         val targStr = encrypt(srcString, key, true)
         //增加校验位
@@ -63,6 +63,10 @@ object Base36Kit {
      * @param srcString
      * @return
      */
+    @Deprecated(
+        message = "请优先使用tryDecryptIgnoreCase，显式处理校验失败语义",
+        replaceWith = ReplaceWith("tryDecryptIgnoreCase(srcString, KEY).getOrThrow()")
+    )
     fun decryptIgnoreCase(srcString: String): String {
         return decryptIgnoreCase(srcString, KEY)
     }
@@ -73,6 +77,10 @@ object Base36Kit {
      * @param key
      * @return
      */
+    @Deprecated(
+        message = "请优先使用tryDecryptIgnoreCase，显式处理校验失败语义",
+        replaceWith = ReplaceWith("tryDecryptIgnoreCase(src, key).getOrThrow()")
+    )
     fun decryptIgnoreCase(src: String, key: Long): String { //取校验位
         var srcString = src
         val checkBit = srcString.substring(0, 1)
@@ -81,9 +89,23 @@ object Base36Kit {
         //解密
         val targStr = decrypt(srcString, key, true)
         //验证校验位
-        return if (checkBit != getMD5(targStr)!!.substring(0, 1)) {
+        return if (checkBit != requireNotNull(getMD5(targStr)) { "MD5计算失败" }.substring(0, 1)) {
             "校验位不匹配！"
         } else targStr
+    }
+
+    /**
+     * 接收含有校验位的加密字符串，对其解密并返回Result。
+     *
+     * 与 `decryptIgnoreCase` 的区别在于：校验位不匹配时返回Failure，而不是固定错误字符串。
+     */
+    fun tryDecryptIgnoreCase(src: String, key: Long = KEY): Result<String> = runCatching {
+        var srcString = src
+        val checkBit = srcString.substring(0, 1)
+        srcString = srcString.substring(1, srcString.length)
+        val targStr = decrypt(srcString, key, true)
+        require(checkBit == requireNotNull(getMD5(targStr)) { "MD5计算失败" }.substring(0, 1)) { "校验位不匹配！" }
+        targStr
     }
 
     /**
@@ -187,7 +209,9 @@ object Base36Kit {
         var temp: Array<String?>
         for (i in 0 until arr.size - 1) {
             for (j in arr.size - 1 downTo i + 1) {
-                if (arr[j][col]!!.toInt() < arr[j - 1][col]!!.toInt()) {
+                val left = requireNotNull(arr[j][col]) { "排序列值为空" }.toInt()
+                val right = requireNotNull(arr[j - 1][col]) { "排序列值为空" }.toInt()
+                if (left < right) {
                     temp = arr[j]
                     arr[j] = arr[j - 1]
                     arr[j - 1] = temp
@@ -242,9 +266,9 @@ object Base36Kit {
     //把自定义的36位或/62位编码重新转为ASCII码，0~9为数字，10~35为大写字母，36~51位为小写字母
     private fun diyToAscii(codeNum: Int): Int { //把自定义编码转回ASCII码
         return when(codeNum) {
-            in -1..10 -> codeNum + 48
-            in 9..36 -> codeNum - 10 + 65
-            in 35..62 -> codeNum - 36 + 97
+            in -1..9 -> codeNum + 48
+            in 10..36 -> codeNum - 10 + 65
+            in 37..62 -> codeNum - 36 + 97
             else -> codeNum
         }
     }
@@ -270,8 +294,7 @@ object Base36Kit {
                 str[k++] = hexDigits[byte0.toInt() and 0xf]
             }
             String(str)
-        } catch (e: Exception) {
-            e.printStackTrace()
+        } catch (_: Exception) {
             null
         }
     }

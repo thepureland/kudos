@@ -107,7 +107,7 @@ object ArrayKit {
      * @author K
      * @since 1.0.0
      */
-    fun isByteArrayNotEmpty(array: ByteArray?): Boolean = array != null && array.isNotEmpty()
+    fun isByteArrayNotEmpty(array: ByteArray?): Boolean = !isByteArrayEmpty(array)
 
     /**
      * 检测字符数组是否不为null且不为空
@@ -117,7 +117,7 @@ object ArrayKit {
      * @author K
      * @since 1.0.0
      */
-    fun isCharArrayNotEmpty(array: CharArray?): Boolean = array != null && array.isNotEmpty()
+    fun isCharArrayNotEmpty(array: CharArray?): Boolean = !isCharArrayEmpty(array)
 
     /**
      * 检测Short数组是否不为null且不为空
@@ -127,7 +127,7 @@ object ArrayKit {
      * @author K
      * @since 1.0.0
      */
-    fun isShortArrayNotEmpty(array: ShortArray?): Boolean = array != null && array.isNotEmpty()
+    fun isShortArrayNotEmpty(array: ShortArray?): Boolean = !isShortArrayEmpty(array)
 
     /**
      * 检测Int数组是否不为null且不为空
@@ -137,7 +137,7 @@ object ArrayKit {
      * @author K
      * @since 1.0.0
      */
-    fun isIntArrayNotEmpty(array: IntArray?): Boolean = array != null && array.isNotEmpty()
+    fun isIntArrayNotEmpty(array: IntArray?): Boolean = !isIntArrayEmpty(array)
 
     /**
      * 检测Long数组是否不为null且不为空
@@ -147,7 +147,7 @@ object ArrayKit {
      * @author K
      * @since 1.0.0
      */
-    fun isLongArrayNotEmpty(array: LongArray?): Boolean = array != null && array.isNotEmpty()
+    fun isLongArrayNotEmpty(array: LongArray?): Boolean = !isLongArrayEmpty(array)
 
     /**
      * 检测Float数组是否不为null且不为空
@@ -157,7 +157,7 @@ object ArrayKit {
      * @author K
      * @since 1.0.0
      */
-    fun isFloatArrayNotEmpty(array: FloatArray?): Boolean = array != null && array.isNotEmpty()
+    fun isFloatArrayNotEmpty(array: FloatArray?): Boolean = !isFloatArrayEmpty(array)
 
     /**
      * 检测Double数组是否不为null且不为空
@@ -167,7 +167,7 @@ object ArrayKit {
      * @author K
      * @since 1.0.0
      */
-    fun isDoubleArrayNotEmpty(array: DoubleArray?): Boolean = array != null && array.isNotEmpty()
+    fun isDoubleArrayNotEmpty(array: DoubleArray?): Boolean = !isDoubleArrayEmpty(array)
 
     /**
      * 检测布尔数组是否不为null且不为空
@@ -177,6 +177,6 @@ object ArrayKit {
      * @author K
      * @since 1.0.0
      */
-    fun isBooleanArrayNotEmpty(array: BooleanArray?): Boolean = array != null && array.isNotEmpty()
+    fun isBooleanArrayNotEmpty(array: BooleanArray?): Boolean = !isBooleanArrayEmpty(array)
 
 }

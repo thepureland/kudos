@@ -25,6 +25,13 @@ internal class ValidationContextTest {
     }
 
     @Test
+    fun testIsFailFastHasDefaultValue() {
+        // 在未显式设置时应提供默认值，避免出现null语义
+        ValidationContext.setFailFast(true)
+        assertTrue(ValidationContext.isFailFast())
+    }
+
+    @Test
     fun testSetAndGetValidator() {
         val validator = ValidationKit.getValidator()
         val testBean = TestBean("test", 25)

@@ -18,7 +18,7 @@ class ConstraintsConstraintConvertor(annotation: Annotation) : DefaultConstraint
         constraintAnnotation as Constraints
         val annotations = ConstraintsValidator.getAnnotations(constraintAnnotation)
         annotations.forEach {
-            val constraintName = it.annotationClass.simpleName!!
+            val constraintName = requireNotNull(it.annotationClass.simpleName) { "无法解析注解名: ${it.annotationClass}" }
             val ruleMap = super.getRule(it)
             if (constraintAnnotation.andOr == AndOrEnum.OR) {
                 ruleMap.remove("message") // 当子约束间的校验逻辑为OR时，子约束的message无意义，提示信息取Constraints约束的message

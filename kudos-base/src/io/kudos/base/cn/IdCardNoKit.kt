@@ -56,8 +56,7 @@ object IdCardNoKit {
             var birthDate: Date? = null
             try {
                 birthDate = SimpleDateFormat("yyMMdd").parse(birthday)
-            } catch (e: ParseException) {
-                e.printStackTrace()
+            } catch (_: ParseException) {
             }
             val cal = Calendar.getInstance()
             if (birthDate != null) {
@@ -149,8 +148,7 @@ object IdCardNoKit {
             var birthDate: Date? = null
             try {
                 birthDate = SimpleDateFormat("yy").parse(birthCode.substring(0, 2))
-            } catch (e: ParseException) {
-                e.printStackTrace()
+            } catch (_: ParseException) {
             }
             val cal = Calendar.getInstance()
             if (birthDate != null) {
@@ -313,7 +311,7 @@ object IdCardNoKit {
         if (len < MAINLAND_ID_MIN_LENGTH) {
             return null
         } else if (len == MAINLAND_ID_MIN_LENGTH) {
-            idNo = convert15To18(idNo)!!
+            idNo = convert15To18(idNo) ?: return null
         }
         return idNo.substring(6, 14)
     }
@@ -339,7 +337,7 @@ object IdCardNoKit {
         }
         val sGender: SexEnum
         if (idNo.length == MAINLAND_ID_MIN_LENGTH) {
-            idNo = convert15To18(idNo)!!
+            idNo = convert15To18(idNo) ?: return SexEnum.SECRET
         }
         val sCardNum = idNo.substring(16, 17)
         sGender = if (sCardNum.toInt() % 2 != 0) {

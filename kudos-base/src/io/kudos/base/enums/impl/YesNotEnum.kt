@@ -23,7 +23,7 @@ enum class YesNotEnum(
 
         fun initTrans(map: Map<String, String>) {
             for (yesNot in entries) {
-                yesNot.trans = map[yesNot.code]!!
+                yesNot.trans = map[yesNot.code] ?: yesNot.trans
             }
         }
 

@@ -27,6 +27,7 @@ object ThreadKit {
             Thread.sleep(millis)
         } catch (e: InterruptedException) {
             LOG.error(e)
+            Thread.currentThread().interrupt()
         }
     }
 
@@ -43,6 +44,7 @@ object ThreadKit {
             Thread.sleep(unit.toMillis(duration))
         } catch (e: InterruptedException) {
             LOG.error(e)
+            Thread.currentThread().interrupt()
         }
     }
 

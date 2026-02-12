@@ -125,7 +125,11 @@ class ConstraintsValidator : ConstraintValidator<Constraints, Any?> {
                     && annotation.annotationClass != NotBlank::class
         }
 
-        val v = if (annotation is AtLeast) bean!! else value
+        val v = if (annotation is AtLeast) {
+            requireNotNull(bean) { "AtLeast 子约束需要从 ValidationContext 获取 bean" }
+        } else {
+            value
+        }
         val validators = ValidatorFactory.getValidator(annotation, v)
         if (validators.isEmpty()) {
             error("Constraints约束不支持【${annotation.annotationClass}】作为其子约束！")

@@ -16,7 +16,8 @@ class EachConstraintConvertor(annotation: Annotation) : DefaultConstraintConvert
         constraintAnnotation as Each
         val annotations = ConstraintsValidator.getAnnotations(constraintAnnotation.value)
         annotations.forEach {
-            map[it.annotationClass.simpleName!!] = super.getRule(it)
+            val constraintName = requireNotNull(it.annotationClass.simpleName) { "无法解析注解名: ${it.annotationClass}" }
+            map[constraintName] = super.getRule(it)
         }
         return map
     }

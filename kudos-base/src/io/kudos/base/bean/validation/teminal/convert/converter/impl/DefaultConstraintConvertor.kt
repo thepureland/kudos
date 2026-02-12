@@ -15,7 +15,9 @@ open class DefaultConstraintConvertor(annotation: Annotation) : AbstractConstrai
         val rules = linkedMapOf<String, Any>()
         constraintAnnotation.annotationClass.memberProperties.forEach {
             if (it.name != "groups" && it.name != "payload") {
-                rules[it.name] = it.call(constraintAnnotation)!!
+                rules[it.name] = requireNotNull(it.call(constraintAnnotation)) {
+                    "约束属性值为空: ${constraintAnnotation.annotationClass}.${it.name}"
+                }
             }
         }
         return rules

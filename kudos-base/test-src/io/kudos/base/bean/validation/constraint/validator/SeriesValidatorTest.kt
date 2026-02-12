@@ -379,6 +379,27 @@ internal class SeriesValidatorTest {
         assertFalse(ValidationKit.validateValue(TestSeriesBean::class, "intEq", arrayOf(1, 1, 1, 1, 1)).isEmpty())
     }
 
+    @Test
+    fun validateInvalidRuntimeInputShouldFailNotThrow() {
+        assertFalse(ValidationKit.validateValue(TestSeriesBean::class, "intIncDiff", "not-a-list-or-array").isEmpty())
+
+        assertFalse(
+            ValidationKit.validateValue(
+                TestSeriesBean::class,
+                "stringDescEq",
+                arrayOf<String?>("11", null, "1")
+            ).isEmpty()
+        )
+
+        assertFalse(
+            ValidationKit.validateValue(
+                TestSeriesBean::class,
+                "stringDescEq",
+                arrayOf("11", "not-number", "1")
+            ).isEmpty()
+        )
+    }
+
     internal data class TestSeriesBean(
 
         @get:Series(type = SeriesTypeEnum.INC_DIFF, message = "必须递增且互不相等")

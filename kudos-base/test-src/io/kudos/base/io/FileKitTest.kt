@@ -533,7 +533,7 @@ internal class FileKitTest {
         val child = File(parent, "child.txt")
         child.parentFile.mkdirs()
         FileKit.writeStringToFile(child, "x")
-        assertTrue(FileKit.directoryContains(parent, child)!!)
+        assertTrue(FileKit.directoryContains(parent, child))
     }
 
     @Test

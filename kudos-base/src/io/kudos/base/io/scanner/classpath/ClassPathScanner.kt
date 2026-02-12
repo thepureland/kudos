@@ -161,8 +161,8 @@ object ClassPathScanner {
      * @param resourceName The resource name.
      * @return The class name.
      */
-    private fun toClassName(resourceName: String?): String {
-        val nameWithDots = resourceName!!.replace("/", ".")
+    private fun toClassName(resourceName: String): String {
+        val nameWithDots = resourceName.replace("/", ".")
         return nameWithDots.substring(0, nameWithDots.length - ".class".length)
     }
 
@@ -176,8 +176,8 @@ object ClassPathScanner {
      * @return The resource names.
      * @throws IOException when scanning this location failed.
      */
-    private fun findResourceNames(path: String, prefix: String, suffix: String): Set<String?> {
-        val resourceNames: MutableSet<String?> = TreeSet()
+    private fun findResourceNames(path: String, prefix: String, suffix: String): Set<String> {
+        val resourceNames: MutableSet<String> = TreeSet()
         val locationsUrls = getLocationUrlsForPath(path)
         for (locationUrl in locationsUrls) {
             logger.debug("Scanning URL: " + locationUrl.toExternalForm())
@@ -235,13 +235,13 @@ object ClassPathScanner {
      * @param suffix The suffix to match.
      * @return The filtered names set.
      */
-    private fun filterResourceNames(resourceNames: Set<String?>, prefix: String, suffix: String): Set<String?> {
-        val filteredResourceNames: MutableSet<String?> = TreeSet()
+    private fun filterResourceNames(resourceNames: Set<String>, prefix: String, suffix: String): Set<String> {
+        val filteredResourceNames: MutableSet<String> = TreeSet()
         for (resourceName in resourceNames) {
             if (prefix.isBlank() && suffix.isBlank()) {
                 filteredResourceNames.add(resourceName)
             } else {
-                val fileName = resourceName!!.substring(resourceName.lastIndexOf("/") + 1)
+                val fileName = resourceName.substring(resourceName.lastIndexOf("/") + 1)
                 if (prefix.isBlank() && fileName.endsWith(suffix)) {
                     filteredResourceNames.add(resourceName)
                 } else if (suffix.isBlank() && fileName.startsWith(prefix)) {

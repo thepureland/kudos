@@ -94,4 +94,13 @@ internal class Base36KitTest {
         assertEquals("C", recovered)
     }
 
+    @Test
+    fun tryDecryptIgnoreCase_checksumMismatch_returnsFailure() {
+        val cipher = Base36Kit.encryptIgnoreCase("HELLO", defaultKey)
+        // 篡改校验位
+        val tampered = if (cipher.first() == '0') "1" + cipher.substring(1) else "0" + cipher.substring(1)
+        val result = Base36Kit.tryDecryptIgnoreCase(tampered, defaultKey)
+        assertTrue(result.isFailure)
+    }
+
 }

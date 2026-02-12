@@ -5,6 +5,7 @@ import io.kudos.base.enums.impl.YesNotEnum
 import io.kudos.base.lang.EnumKit
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -99,6 +100,14 @@ internal class EnumKitTest {
         } catch (e: IllegalArgumentException) {
             assertTrue(true)
         }
+    }
+
+    @Test
+    fun getEnum() {
+        assertEquals(Thread.State.NEW, EnumKit.getEnum(Thread.State::class, "NEW"))
+        assertNull(EnumKit.getEnum(Thread.State::class, "NOT_EXISTS"))
+        assertNull(EnumKit.getEnum(Thread.State::class, null))
+        assertNotNull(EnumKit.getEnum(Thread.State::class, "RUNNABLE"))
     }
 
     internal enum class TimeUnit(codeStr: String, var transStr: String) : IDictEnum {

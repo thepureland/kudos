@@ -32,7 +32,9 @@ class CustomValidator : ConstraintValidator<Custom, Any?> {
                 return true
             }
 
-            val bean = ValidationContext.get(context)!!
+            val bean = requireNotNull(ValidationContext.get(context)) {
+                "CustomValidator 需要 ValidationContext 中存在 bean"
+            }
             @Suppress("UNCHECKED_CAST")
             val validatorClass = checkClass as KClass<IBeanValidator<Any>>
             val validator = validatorClass.java.getDeclaredConstructor().newInstance()

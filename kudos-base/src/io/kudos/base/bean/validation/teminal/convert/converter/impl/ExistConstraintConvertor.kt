@@ -17,7 +17,7 @@ class ExistConstraintConvertor(annotation: Annotation) : DefaultConstraintConver
         constraintAnnotation as Exist
         val annotations = ConstraintsValidator.getAnnotations(constraintAnnotation.value)
         annotations.forEach {
-            val constraintName = it.annotationClass.simpleName!!
+            val constraintName = requireNotNull(it.annotationClass.simpleName) { "无法解析注解名: ${it.annotationClass}" }
             val ruleMap = super.getRule(it)
             ruleMap.remove("message") // 对于Exist约束来说，子约束的message无意义
             map[constraintName] = ruleMap

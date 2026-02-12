@@ -34,7 +34,7 @@ object EnumKit {
         if (enumClazz != null) {
             return enumClazz.trans
         }
-        LOG.error("枚举类【${enumClassStr}】，不存在code为【${code}】的枚举元素！")
+        LOG.warn("枚举类【${enumClassStr}】不存在code为【${code}】的枚举元素")
         return null
     }
 
@@ -50,7 +50,7 @@ object EnumKit {
      * @since 1.0.0
      */
     fun <E : IDictEnum> enumOf(enumClass: KClass<E>, code: String): E? {
-        assert(enumClass.isEnum()) { "指定的类【${enumClass}】非枚举类" }
+        require(enumClass.isEnum()) { "指定的类【${enumClass}】非枚举类" }
         require(code.isNotBlank()) { "字典代码参数不能为空" }
 
         for (e in enumClass.java.enumConstants) {
@@ -58,7 +58,7 @@ object EnumKit {
                 return e
             }
         }
-        LOG.error("枚举类【${enumClass}】不存在code为【$code】的枚举元素！")
+        LOG.warn("枚举类【${enumClass}】不存在code为【$code】的枚举元素")
         return null
     }
 
@@ -121,9 +121,7 @@ object EnumKit {
      * @since 1.0.0
      */
     fun getCodeEnumClass(enumClassStr: String): KClass<out IDictEnum> {
-        require(!enumClassStr.isBlank()) { "字典枚举全类名参数不能为空" }
-
-        require(!enumClassStr.isBlank()) { "enumClass参数不能为空！" }
+        require(enumClassStr.isNotBlank()) { "字典枚举全类名参数不能为空" }
         val enumClazz = try {
             Class.forName(enumClassStr)
         } catch (_: ClassNotFoundException) {
@@ -187,7 +185,7 @@ object EnumKit {
      * @author K
      * @since 1.0.0
      */
-    fun <E : Enum<E>> getEnum(enumClass: KClass<E>, enumName: String?): E = EnumUtils.getEnum(enumClass.java, enumName)
+    fun <E : Enum<E>> getEnum(enumClass: KClass<E>, enumName: String?): E? = EnumUtils.getEnum(enumClass.java, enumName)
 
     /**
      * 创建一个long型位向量来表示指定的枚举子集。

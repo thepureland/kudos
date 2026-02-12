@@ -69,7 +69,9 @@ object TeminalConstraintsCreator {
                     val parentClazz = clazz
                     clazz = prop.returnType.classifier as KClass<*>
                     if (clazz == Array<Any>::class) {
-                        clazz = clazz.companionObject!!
+                        clazz = requireNotNull(clazz.companionObject) {
+                            "无法获取数组类型的 companionObject: ${clazz.qualifiedName}"
+                        }
                     }
                     if (clazz.isSubclassOf(List::class)) {
                         val paramType = prop.typeParameters
@@ -156,7 +158,7 @@ object TeminalConstraintsCreator {
                 val annoList = annotationMap[propertyName] ?: mutableListOf()
                 annotationMap[propertyName] = annoList
                 if (annotation.annotationClass.hasAnnotation<Constraint>()
-                    || annotation.annotationClass.qualifiedName!!.endsWith(".List")
+                    || annotation.annotationClass.qualifiedName?.endsWith(".List") == true
                 ) { // 是约束注解
                     annoList.add(annotation)
                 }
@@ -181,13 +183,14 @@ object TeminalConstraintsCreator {
                 val annotations = prop.getter.annotations
                 for (annotation in annotations) {
                     if (annotation.annotationClass.hasAnnotation<Constraint>()
-                        || annotation.annotationClass.qualifiedName!!.endsWith(".List")
+                        || annotation.annotationClass.qualifiedName?.endsWith(".List") == true
                     ) { // 是约束注解
                         annotationList.add(annotation)
                     }
                 }
             } catch (_: Exception) {
-                return getAnnotationsOnGetter(clazz.getSuperClass()!!, property)
+                val superClass = clazz.getSuperClass() ?: return annotationList
+                return getAnnotationsOnGetter(superClass, property)
             }
         }
         return annotationList

@@ -203,4 +203,16 @@ internal class PropertiesLoaderTest {
         val loadedProps = loader.properties
         assertEquals("value1", loadedProps.getProperty("key1"))
     }
+
+    @Test
+    fun testConstructorWithMissingAndNullResourcePath() {
+        val loader = PropertiesLoader(null, "/not-exists.properties")
+        assertNull(loader.getProperty("any.key"))
+    }
+
+    @Test
+    fun testConstructorWithClasspathPrefixPath() {
+        val loader = PropertiesLoader("classpath:i18n/kudos-base-test_zh_CN.properties")
+        assertEquals("中文简体", loader.getProperty("language.zh_CN"))
+    }
 }

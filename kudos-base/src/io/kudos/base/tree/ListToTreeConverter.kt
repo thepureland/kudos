@@ -41,6 +41,7 @@ import io.kudos.base.support.ICallback
  * - 父节点必须在列表中，否则子节点会被忽略
  * - 排序会递归应用到所有层级的节点
  * - 回调在节点挂载完成后执行
+ * - 排序时会就地重排每个节点的children集合（有副作用）
  * 
  * @since 1.0.0
  */
@@ -106,9 +107,9 @@ object ListToTreeConverter {
         }
         val nodeList = ArrayList<E>()
         for (obj in treeNodeList) {
-            val node = treeNodeMap[obj._getId()]!!
+            val node = obj
             val pId = obj._getParentId()
-            if (pId == null || "" == pId) { // 根
+            if (pId == null || (pId is CharSequence && pId.isEmpty())) { // 根
                 nodeList.add(node)
                 callback?.execute(node)
             } else {
@@ -169,6 +170,9 @@ object ListToTreeConverter {
      */
     @Suppress("UNCHECKED_CAST")
     private fun <T, E : ITreeNode<T>> sort(nodes: List<E>, direction: DirectionEnum): List<E> {
+        if (nodes.isEmpty()) {
+            return nodes
+        }
         if (nodes.first() !is Comparable<*>) {
             error("类${nodes.first()::class.simpleName}必须实现Comparable接口！")
         }
@@ -181,13 +185,37 @@ object ListToTreeConverter {
         nodeList.forEach {
             val origChildren = it._getChildren()
             if (origChildren.isNotEmpty()) {
-                val children = sort(origChildren as List<E>, direction)
-                (origChildren as MutableList).clear()
+                val children = sortChildren(origChildren, direction)
+                origChildren.clear()
                 origChildren.addAll(children)
             }
         }
 
         return nodeList
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun <T> sortChildren(nodes: List<ITreeNode<T>>, direction: DirectionEnum): List<ITreeNode<T>> {
+        if (nodes.isEmpty()) {
+            return nodes
+        }
+        if (nodes.first() !is Comparable<*>) {
+            error("类${nodes.first()::class.simpleName}必须实现Comparable接口！")
+        }
+
+        val sorted = nodes.sortedWith { o1, o2 ->
+            val result = (o1 as Comparable<ITreeNode<T>>).compareTo(o2)
+            if (direction == DirectionEnum.ASC) result else 0 - result
+        }
+        sorted.forEach { child ->
+            val grandChildren = child._getChildren()
+            if (grandChildren.isNotEmpty()) {
+                val sortedGrandChildren = sortChildren(grandChildren, direction)
+                grandChildren.clear()
+                grandChildren.addAll(sortedGrandChildren)
+            }
+        }
+        return sorted
     }
 
 }

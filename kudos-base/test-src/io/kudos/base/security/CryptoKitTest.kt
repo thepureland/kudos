@@ -3,6 +3,9 @@ package io.kudos.base.security
 import io.kudos.base.lang.string.EncodeKit
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import java.nio.charset.StandardCharsets
+import java.security.SecureRandom
+import javax.crypto.Cipher
+import javax.crypto.KeyGenerator
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 import kotlin.test.*
@@ -103,6 +106,48 @@ internal class CryptoKitTest {
         // 4. 再直接调用 aesDecrypt(String, password) 得到明文字符串
         val roundTrip = CryptoKit.aesDecrypt(cipherHex, password)
         assertEquals(plaintext, roundTrip, "aesDecrypt(hexString, password) should return original plaintext string")
+
+        val roundTripResult = CryptoKit.tryAesDecrypt(cipherHex, password)
+        assertTrue(roundTripResult.isSuccess, "tryAesDecrypt should succeed for valid input")
+        assertEquals(plaintext, roundTripResult.getOrThrow(), "tryAesDecrypt should return original plaintext string")
+    }
+
+    @Test
+    fun testTryAesDecryptReturnsFailureOnInvalidHex() {
+        val result = CryptoKit.tryAesDecrypt("zz", "password123")
+        assertTrue(result.isFailure, "tryAesDecrypt should return failure for invalid hex input")
+
+        // 兼容旧API：失败时仍返回空字符串
+        assertEquals("", CryptoKit.aesDecrypt("zz", "password123"))
+    }
+
+    @Test
+    fun testAesDecryptCanFallbackLegacySha1PrngCiphertext() {
+        val password = "legacy-password"
+        val plaintext = "legacy-compatible-content"
+        val legacyCipherHex = legacyAesEncryptToHex(plaintext, password)
+
+        val decrypted = CryptoKit.aesDecrypt(legacyCipherHex, password)
+        assertEquals(plaintext, decrypted, "aesDecrypt should fallback to legacy SHA1PRNG-derived key data")
+    }
+
+    @Test
+    fun testAesDecryptLegacyCiphertextWithWrongPasswordReturnsEmpty() {
+        val password = "legacy-password"
+        val legacyCipherHex = legacyAesEncryptToHex("legacy-compatible-content", password)
+
+        val decrypted = CryptoKit.aesDecrypt(legacyCipherHex, "wrong-password")
+        assertEquals("", decrypted, "legacy ciphertext with wrong password should keep compatibility and return empty")
+    }
+
+    @Test
+    fun testAesDecryptLegacyCiphertextWithHtbUpperHexCanFallback() {
+        val password = "_HTBlegacy-password"
+        val plaintext = "legacy-htb-content"
+        val legacyCipherHexUpper = legacyAesEncryptToHex(plaintext, password).uppercase()
+
+        val decrypted = CryptoKit.aesDecrypt(legacyCipherHexUpper, password)
+        assertEquals(plaintext, decrypted, "HTB uppercase hex should still fallback to legacy decryption correctly")
     }
 
     @Test
@@ -194,6 +239,17 @@ internal class CryptoKitTest {
         assertFailsWith<NumberFormatException> {
             CryptoKit.decodeHex(invalidHexBytes)
         }
+    }
+
+    private fun legacyAesEncryptToHex(input: String, password: String): String {
+        val generator = KeyGenerator.getInstance("AES")
+        val secureRandom = SecureRandom.getInstance("SHA1PRNG")
+        secureRandom.setSeed(password.toByteArray(StandardCharsets.UTF_8))
+        generator.init(128, secureRandom)
+        val cipher = Cipher.getInstance("AES")
+        cipher.init(Cipher.ENCRYPT_MODE, generator.generateKey())
+        val encrypted = cipher.doFinal(input.toByteArray(StandardCharsets.UTF_8))
+        return EncodeKit.encodeHex(encrypted)
     }
 
 }

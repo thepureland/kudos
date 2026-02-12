@@ -231,7 +231,17 @@ abstract class AbstractExcelImporter<T : Any> : IExcelImporter<T> {
                     }
                 }
                 if (rowObjectClass.isData) {
-                    val values = rowObjectClass.primaryConstructor!!.parameters.map { propNameValueMap[it.name]!! }
+                    val constructor = requireNotNull(rowObjectClass.primaryConstructor) {
+                        "数据类必须存在主构造函数: ${rowObjectClass.qualifiedName}"
+                    }
+                    val values = constructor.parameters.map { parameter ->
+                        val paramName = requireNotNull(parameter.name) {
+                            "主构造函数参数名为空: ${rowObjectClass.qualifiedName}"
+                        }
+                        requireNotNull(propNameValueMap[paramName]) {
+                            "缺少数据类构造参数值: ${rowObjectClass.qualifiedName}.$paramName"
+                        }
+                    }
                     rowObject = rowObjectClass.newInstance(*values.toTypedArray())
                 }
                 rowObjectList.add(rowObject)
