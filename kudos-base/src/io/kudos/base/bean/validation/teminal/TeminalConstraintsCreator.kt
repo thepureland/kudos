@@ -67,7 +67,8 @@ object TeminalConstraintsCreator {
                 if (prop.getter.hasAnnotation<Valid>()) { // 级联验证
                     parentProp = prop
                     val parentClazz = clazz
-                    clazz = prop.returnType.classifier as KClass<*>
+                    clazz = prop.returnType.classifier as? KClass<*>
+                        ?: error("无法解析级联属性类型: ${prop.name}")
                     if (clazz == Array<Any>::class) {
                         clazz = requireNotNull(clazz.companionObject) {
                             "无法获取数组类型的 companionObject: ${clazz.qualifiedName}"
@@ -75,11 +76,13 @@ object TeminalConstraintsCreator {
                     }
                     if (clazz.isSubclassOf(List::class)) {
                         val paramType = prop.typeParameters
-                        clazz = paramType[0].starProjectedType.classifier as KClass<*>
+                        clazz = paramType[0].starProjectedType.classifier as? KClass<*>
+                            ?: error("无法解析 List 级联属性泛型: ${prop.name}")
                     }
                     if (clazz.isSubclassOf(Map::class)) {
                         val paramType = prop.typeParameters
-                        clazz = paramType[1].starProjectedType.classifier as KClass<*>
+                        clazz = paramType[1].starProjectedType.classifier as? KClass<*>
+                            ?: error("无法解析 Map 级联属性 value 泛型: ${prop.name}")
                     }
                     parseAnnotations(annotations, clazz, parentProp) // 递归解析所有类中的注解
                     clazz = parentClazz
@@ -152,8 +155,7 @@ object TeminalConstraintsCreator {
         val annotationMap = mutableMapOf<String, MutableList<Annotation>>()
         for (annotation in clazz.annotations) {
             val prop = annotation::class.getMemberProperty("properties") // 自定义的类级别约束注解中, 代表类属性数组的属性名定义统一用properties
-            @Suppress("UNCHECKED_CAST")
-            val propertyNames = prop.call(annotation) as Array<String>
+            val propertyNames = (prop.call(annotation) as? Array<*>)?.filterIsInstance<String>() ?: emptyList()
             propertyNames.forEach { propertyName ->
                 val annoList = annotationMap[propertyName] ?: mutableListOf()
                 annotationMap[propertyName] = annoList
@@ -188,7 +190,10 @@ object TeminalConstraintsCreator {
                         annotationList.add(annotation)
                     }
                 }
-            } catch (_: Exception) {
+            } catch (_: NoSuchElementException) {
+                val superClass = clazz.getSuperClass() ?: return annotationList
+                return getAnnotationsOnGetter(superClass, property)
+            } catch (_: IllegalArgumentException) {
                 val superClass = clazz.getSuperClass() ?: return annotationList
                 return getAnnotationsOnGetter(superClass, property)
             }

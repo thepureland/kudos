@@ -37,7 +37,7 @@ import kotlin.reflect.typeOf
  *
  * 注意：
  * - 默认分支会将响应体按 **JSON** 解析为 `T`（使用 `JsonKit`），因此若响应并非 JSON，请在调用时显式指定 `T` 为具体类型（如 String/ByteArray）。
- * - `ByteBuffer` 的分支当前使用 `ofByteArrayConsumer {}`，此种写法会消费字节但**不返回** ByteBuffer 实例（更像丢弃/侧写语义），见方法内注释。
+ * - `ByteBuffer` 分支将字节映射为 `ByteBuffer.wrap(bytes)` 并返回。
  *
  * @author K
  * @author AI: ChatGPT
@@ -236,28 +236,50 @@ object HttpClientKit {
      * - String              -> `BodyHandlers.ofString()`
      * - ByteArray           -> `BodyHandlers.ofByteArray()`
      * - InputStream         -> `BodyHandlers.ofInputStream()`
-     * - ByteBuffer          -> `BodyHandlers.ofByteArrayConsumer { }`（注意：该写法消费字节但不返回 ByteBuffer 实例，见下方注释）
+     * - ByteBuffer          -> `BodyHandlers.ofByteArray()` 后映射为 `ByteBuffer.wrap(bytes)`
      * - Void / Unit         -> `BodyHandlers.discarding()`（无响应体场景，典型如 204；只关心状态码/头）
      * - Array<Byte>         -> 将 `ofByteArray()` 的结果映射到 `Array<Byte>`
      * - 其他类型（默认）      -> 先取原始字节，再用 `JsonKit.fromJson<T>()` 解析为 JSON 对象/集合/泛型
      *
      * 风险/注意：
-     * - `ByteBuffer` 分支当前写法：`ofByteArrayConsumer { }` 的返回类型为 `BodyHandler<Void>` 类别的消费器（适于“边消费边处理”），
-     *   **不会**像 `mapping(ofByteArray()) { ByteBuffer.wrap(bytes) }` 那样返回 `ByteBuffer`。若调用方期望拿到 `ByteBuffer`，需要调整实现。
      * - 默认 JSON 分支：确保响应是合法 JSON，且 `JsonKit` 能正确解析为 `T`（包含复杂泛型）。
      */
-    @Suppress("UNCHECKED_CAST")
     inline fun <reified T: Any> __createBodyHandler() : BodyHandler<T> {
         val kType = typeOf<T>()
         return when (kType) {
-            typeOf<String>() -> BodyHandlers.ofString()                 // 文本响应
-            typeOf<ByteArray>() -> BodyHandlers.ofByteArray()           // 原始字节
-            typeOf<InputStream>() -> BodyHandlers.ofInputStream()       // 流（适合大文件/流式处理）
-            typeOf<ByteBuffer>() -> BodyHandlers.ofByteArrayConsumer { } // 注意：消费器，不返回 ByteBuffer（见上方注释）
-            typeOf<Void>(), typeOf<Unit>() -> BodyHandlers.discarding() // 无响应体：只关心状态码/headers；Kotlin 的 Unit 也做兼容
+            typeOf<String>() -> BodyHandler { responseInfo ->
+                BodySubscribers.mapping(BodyHandlers.ofString().apply(responseInfo)) { body ->
+                    T::class.java.cast(body)
+                }
+            }
+            typeOf<ByteArray>() -> BodyHandler { responseInfo ->
+                BodySubscribers.mapping(BodyHandlers.ofByteArray().apply(responseInfo)) { body ->
+                    T::class.java.cast(body)
+                }
+            }
+            typeOf<InputStream>() -> BodyHandler { responseInfo ->
+                BodySubscribers.mapping(BodyHandlers.ofInputStream().apply(responseInfo)) { body ->
+                    T::class.java.cast(body)
+                }
+            }
+            typeOf<ByteBuffer>() -> BodyHandler { responseInfo ->
+                BodySubscribers.mapping(BodyHandlers.ofByteArray().apply(responseInfo)) { bytes ->
+                    T::class.java.cast(ByteBuffer.wrap(bytes))
+                }
+            }
+            typeOf<Void>() -> BodyHandler { _ ->
+                BodySubscribers.mapping(BodySubscribers.discarding()) {
+                    T::class.java.cast(null)
+                }
+            }
+            typeOf<Unit>() -> BodyHandler { _ ->
+                BodySubscribers.mapping(BodySubscribers.discarding()) {
+                    T::class.java.cast(Unit)
+                }
+            }
             typeOf<Array<Byte>>() -> BodyHandler {
                 BodySubscribers.mapping(BodySubscribers.ofByteArray()) { bytes ->
-                    bytes.toTypedArray()                                // 将原始 ByteArray 转为 Array<Byte>
+                    T::class.java.cast(bytes.toTypedArray())           // 将原始 ByteArray 转为 Array<Byte>
                 }
             }
             else -> {
@@ -265,10 +287,11 @@ object HttpClientKit {
                 BodyHandler {
                     BodySubscribers.mapping(BodySubscribers.ofByteArray()) { bytes ->
                         JsonKit.fromJson<T>(bytes.toString(StandardCharsets.UTF_8))
+                            ?: error("Http 响应 JSON 反序列化失败：${T::class.qualifiedName}")
                     }
                 }
             }
-        } as BodyHandler<T>
+        }
     }
 
     // -------------- x-www-form-urlencoded 的 BodyPublisher 构造 --------------

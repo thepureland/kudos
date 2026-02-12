@@ -1,6 +1,7 @@
 package io.kudos.base.security
 
 import java.security.MessageDigest
+import java.security.NoSuchAlgorithmException
 import java.util.*
 
 /**
@@ -294,7 +295,7 @@ object Base36Kit {
                 str[k++] = hexDigits[byte0.toInt() and 0xf]
             }
             String(str)
-        } catch (_: Exception) {
+        } catch (_: NoSuchAlgorithmException) {
             null
         }
     }

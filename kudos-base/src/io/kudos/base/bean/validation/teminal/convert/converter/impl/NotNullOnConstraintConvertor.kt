@@ -13,7 +13,7 @@ class NotNullOnConstraintConvertor(annotation: Annotation) : DefaultConstraintCo
 
     override fun getRule(constraintAnnotation: Annotation): LinkedHashMap<String, Any> {
         val map = super.getRule(constraintAnnotation)
-        constraintAnnotation as NotNullOn
+        require(constraintAnnotation is NotNullOn) { "NotNullOnConstraintConvertor 仅支持 NotNullOn 注解" }
         val depends = constraintAnnotation.depends
         map["depends"] = super.getRule(depends)
         return map

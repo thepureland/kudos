@@ -44,7 +44,7 @@ object ValidatorFactory {
      * @author K
      * @since 1.0.0
      */
-    fun getValidator(annotation: Annotation, value: Any): List<ConstraintValidator<*, Any?>> {
+    fun getValidator(annotation: Annotation, value: Any): List<ConstraintValidator<*, *>> {
         val validators: Any  = when (annotation) {
             // jakarta.validation定义的约束
             is AssertFalse -> AssertFalseValidator()
@@ -362,15 +362,10 @@ object ValidatorFactory {
         }
         val validatorList = if (validators is List<*>) validators else listOf(validators)
         return validatorList.map { validator ->
-            val constraintValidator = validator as? ConstraintValidator<*, *>
+            validator as? ConstraintValidator<*, *>
                 ?: error("无法识别的验证器类型：${validator?.let { it::class }}")
-            toAnyConstraintValidator(constraintValidator)
         }
     }
-
-    @Suppress("UNCHECKED_CAST")
-    private fun toAnyConstraintValidator(validator: ConstraintValidator<*, *>): ConstraintValidator<*, Any?> =
-        validator as ConstraintValidator<*, Any?>
 
     private fun <A : Annotation> createAnnotationByNamedArgs(
         annotationClass: KClass<A>,

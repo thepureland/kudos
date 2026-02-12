@@ -15,7 +15,7 @@ class ConstraintsConstraintConvertor(annotation: Annotation) : DefaultConstraint
 
     override fun getRule(constraintAnnotation: Annotation): LinkedHashMap<String, Any> {
         val map = linkedMapOf<String, Any>()
-        constraintAnnotation as Constraints
+        require(constraintAnnotation is Constraints) { "ConstraintsConstraintConvertor 仅支持 Constraints 注解" }
         val annotations = ConstraintsValidator.getAnnotations(constraintAnnotation)
         annotations.forEach {
             val constraintName = requireNotNull(it.annotationClass.simpleName) { "无法解析注解名: ${it.annotationClass}" }

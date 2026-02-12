@@ -108,8 +108,8 @@ object XmlKit {
         sax.isNamespaceAware = ignoreNameSpace
         val xmlReader = sax.newSAXParser().xmlReader
         val source = SAXSource(xmlReader, InputSource(reader))
-        @Suppress("UNCHECKED_CAST")
-        return createUnmarshaller(clazz).unmarshal(source) as T
+        val result = createUnmarshaller(clazz).unmarshal(source)
+        return clazz.java.cast(result)
     }
 
     /**

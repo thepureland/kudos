@@ -11,13 +11,17 @@ import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.*
 import kotlinx.serialization.modules.SerializersModule
 import java.beans.Introspector
+import java.lang.reflect.Method
 import java.nio.charset.StandardCharsets
 import java.time.*
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
+import kotlin.reflect.KProperty1
 import kotlin.reflect.KType
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.isAccessible
+import kotlin.reflect.jvm.javaMethod
 
 /**
  * Json 工具类 (基于 kotlinx.serialization)
@@ -31,9 +35,30 @@ import kotlin.reflect.jvm.isAccessible
  * @since 1.0.0
  */
 object JsonKit {
+    private data class DataClassPropertyAccessor(
+        val name: String,
+        val read: (Any) -> Any?
+    )
 
     /** 日志记录器 */
     val log = LogFactory.getLog(this)
+
+    private val encodeToStringMethod: Method by lazy {
+        Json::class.java.methods.firstOrNull {
+            it.name == "encodeToString" &&
+                it.parameterCount == 2 &&
+                SerializationStrategy::class.java.isAssignableFrom(it.parameterTypes[0])
+        } ?: error("Json.encodeToString(serializer, value) 方法不存在")
+    }
+    private val encodeToJsonElementMethod: Method by lazy {
+        Json::class.java.methods.firstOrNull {
+            it.name == "encodeToJsonElement" &&
+                it.parameterCount == 2 &&
+                SerializationStrategy::class.java.isAssignableFrom(it.parameterTypes[0])
+        } ?: error("Json.encodeToJsonElement(serializer, value) 方法不存在")
+    }
+    private val dataClassPropertyCache = ConcurrentHashMap<KClass<*>, List<DataClassPropertyAccessor>>()
+    private val javaBeanReadMethodCache = ConcurrentHashMap<Class<*>, List<Pair<String, Method>>>()
 
     /** 默认 Json 引擎：忽略未知字段，不输出 null，支持 LocalDate */
     val defaultJson: Json = Json {
@@ -72,7 +97,10 @@ object JsonKit {
         val root = defaultJson.parseToJsonElement(jsonStr)
         val elem = (root as? JsonObject)?.get(propertyName)
         elem?.let { unwrap(elem) }
-    } catch (e: Exception) {
+    } catch (e: SerializationException) {
+        log.error(e)
+        null
+    } catch (e: IllegalArgumentException) {
         log.error(e)
         null
     }
@@ -100,7 +128,10 @@ object JsonKit {
      */
     inline fun <reified T> fromJson(json: String): T? = try {
         defaultJson.decodeFromString<T>(json)
-    } catch (e: Exception) {
+    } catch (e: SerializationException) {
+        log.error(e)
+        null
+    } catch (e: IllegalArgumentException) {
         log.error(e)
         null
     }
@@ -125,7 +156,10 @@ object JsonKit {
         val engine = if (preserveNull) preserveJson else defaultJson
         val elem = _encodeAnyToJsonElement(engine, obj as Any?)
         engine.encodeToString(JsonElement.serializer(), elem)
-    } catch (e: Exception) {
+    } catch (e: IllegalArgumentException) {
+        log.error(e)
+        ""
+    } catch (e: RuntimeException) {
         log.error(e)
         ""
     }
@@ -153,7 +187,10 @@ object JsonKit {
         val decoded: T = defaultJson.decodeFromString<T>(jsonStr)
         BeanKit.copyProperties(decoded, obj)
         obj
-    } catch (e: Exception) {
+    } catch (e: SerializationException) {
+        log.error(e)
+        null
+    } catch (e: IllegalArgumentException) {
         log.error(e)
         null
     }
@@ -193,10 +230,10 @@ object JsonKit {
         // 顶层即为 null：输出 "null"
         if (data == null) return "null".toByteArray(StandardCharsets.UTF_8)
 
-        val ser: KSerializer<Any>? = findKSerializer(engine, data)
+        val ser = findKSerializer(engine, data)
         val jsonString = if (ser != null) {
             // 找到序列化器：标准编码
-            engine.encodeToString(ser, data)
+            encodeToStringWithSerializer(engine, ser, data)
         } else {
             // 未找到序列化器：递归转 JsonElement 再编码
             val elem = _encodeAnyToJsonElement(engine, data)
@@ -262,8 +299,8 @@ object JsonKit {
                         "如需支持 List<T>/Map<K,V> 等，请改用 readValue(bytes, kType)。"
             )
 
-        @Suppress("UNCHECKED_CAST")
-        return engine.decodeFromString(ser, text)
+        val decoded = engine.decodeFromString(ser, text)
+        return kClass.java.cast(decoded)
     }
 
     /**
@@ -425,19 +462,28 @@ object JsonKit {
      * @return KSerializer序列化器，如果未找到返回null
      */
     @OptIn(InternalSerializationApi::class, ExperimentalSerializationApi::class)
-    @Suppress("UNCHECKED_CAST")
-    private fun findKSerializer(json: Json, value: Any): KSerializer<Any>? {
+    private fun findKSerializer(json: Json, value: Any): KSerializer<*>? {
         val k = value::class
         // 1) 尝试上下文序列化器（你已经为 LocalDate/Time/DateTime 注册了 contextual）
-        json.serializersModule.getContextual(k)?.let { return it as KSerializer<Any> }
+        json.serializersModule.getContextual(k)?.let { return it }
 
         // 2) 尝试直连（@Serializable 或 sealed 层级子类）
-        k.serializerOrNull()?.let { return it as KSerializer<Any> }
+        k.serializerOrNull()?.let { return it }
 
         // 3) 尝试多态（如果你之后在 module 里配了 polymorphic）
         //   例：json.serializersModule.getPolymorphic(Base::class, value)
         //   这里不知道你的基类是谁，先不默认写死；如果你有开放多态，可在此处补充。
         return null
+    }
+
+    private fun encodeToStringWithSerializer(json: Json, serializer: KSerializer<*>, value: Any): String {
+        return encodeToStringMethod.invoke(json, serializer, value) as? String
+            ?: error("Json.encodeToString 返回值类型异常")
+    }
+
+    private fun encodeToJsonElementWithSerializer(json: Json, serializer: KSerializer<*>, value: Any): JsonElement {
+        return encodeToJsonElementMethod.invoke(json, serializer, value) as? JsonElement
+            ?: error("Json.encodeToJsonElement 返回值类型异常")
     }
 
 
@@ -483,95 +529,129 @@ object JsonKit {
      * @throws SerializationException 如果无法序列化该类型
      */
     fun _encodeAnyToJsonElement(json: Json, v: Any?): JsonElement {
-        return when (v) {
+        encodeFastPath(json, v)?.let { return it }
+        return encodeComplexObject(json, requireNotNull(v))
+    }
+
+    private fun encodeFastPath(json: Json, value: Any?): JsonElement? {
+        return when (value) {
             null -> JsonNull
-            is JsonElement -> v
-
-            // 基础类型
-            is String -> JsonPrimitive(v)
-            is Boolean -> JsonPrimitive(v)
-            is Number -> JsonPrimitive(v)
-            is Char -> JsonPrimitive(v.toString())
-
-            // Enum：用 name，稳定
-            is Enum<*> -> JsonPrimitive(v.name)
-
-            // java.time：走已注册的 contextual
+            is JsonElement -> value
+            is String -> JsonPrimitive(value)
+            is Boolean -> JsonPrimitive(value)
+            is Number -> JsonPrimitive(value)
+            is Char -> JsonPrimitive(value.toString())
+            is Enum<*> -> JsonPrimitive(value.name)
             is LocalDate, is LocalTime, is LocalDateTime -> {
-                val ser = findKSerializer(json, v)
-                    ?: throw SerializationException("缺少 ${v::class.qualifiedName} 的序列化器")
-                json.encodeToJsonElement(ser, v)
+                val ser = findKSerializer(json, value)
+                    ?: throw SerializationException("缺少 ${value::class.qualifiedName} 的序列化器")
+                encodeToJsonElementWithSerializer(json, ser, value)
             }
-
-            // Map（建议 String 键；非 String 键用 toString 并给出风险提醒）
-            is Map<*, *> -> {
-                val entries = buildMap {
-                    for ((k, value) in v) {
-                        val key = when (k) {
-                            null -> "null"
-                            is String -> k
-                            else -> k.toString() // 如需更强稳定性可自行规范化
-                        }
-                        put(key, _encodeAnyToJsonElement(json, value))
-                    }
-                }
-                JsonObject(entries)
-            }
-
-            // Iterable / 数组
-            is Iterable<*> -> JsonArray(v.map { _encodeAnyToJsonElement(json, it) })
-            is Array<*> -> JsonArray(v.map { _encodeAnyToJsonElement(json, it) })
-            is IntArray -> JsonArray(v.map { JsonPrimitive(it) })
-            is LongArray -> JsonArray(v.map { JsonPrimitive(it) })
-            is ShortArray -> JsonArray(v.map { JsonPrimitive(it.toInt()) })
-            is ByteArray -> JsonArray(v.map { JsonPrimitive(it.toInt()) })
-            is DoubleArray -> JsonArray(v.map { JsonPrimitive(it) })
-            is FloatArray -> JsonArray(v.map { JsonPrimitive(it.toDouble()) })
-            is BooleanArray -> JsonArray(v.map { JsonPrimitive(it) })
-            is CharArray -> JsonArray(v.map { JsonPrimitive(it.toString()) })
-
-            else -> {
-                val k = v::class
-
-                // 如果这是一个 data class：按“主构造参数顺序”取属性，尽量与 kotlinx 默认顺序一致
-                if (k.isData) {
-                    val ctor = k.primaryConstructor
-                    val propsByName = k.memberProperties.associateBy { it.name }
-
-                    val orderedPairs = buildList {
-                        // 先主构造参数顺序
-                        ctor?.parameters?.forEach { p ->
-                            val name = p.name ?: return@forEach
-                            val prop = propsByName[name] ?: return@forEach
-                            try { prop.isAccessible = true } catch (_: Throwable) { }
-                            val pv = runCatching { prop.getter.call(v) }.getOrNull()
-                            add(name to _encodeAnyToJsonElement(json, pv))
-                        }
-                        // 再补上不在主构造里的属性（如有）
-                        for ((name, prop) in propsByName) {
-                            if (ctor?.parameters?.any { it.name == name } == true) continue
-                            try { prop.isAccessible = true } catch (_: Throwable) { }
-                            val pv = runCatching { prop.getter.call(v) }.getOrNull()
-                            add(name to _encodeAnyToJsonElement(json, pv))
-                        }
-                    }
-
-                    JsonObject(linkedMapOf<String, JsonElement>().apply {
-                        orderedPairs.forEach { (n, e) -> put(n, e) }
-                    })
-                } else {
-                    // 尝试按 Java Bean 反射兜底
-                    val beanElem = runCatching { javaBeanToJsonElement(json, v) }.getOrNull()
-                    if (beanElem != null) return beanElem
-
-                    // 仍然兜不住，再给出明确提示
-                    throw SerializationException(
-                        "无法序列化 ${k.qualifiedName}：请添加 @Serializable，或改为 data class，" +
-                                "或在外层改用可序列化的 DTO/JsonElement/基础类型集合"
-                    )
-                }
-            }
+            is Map<*, *> -> encodeMapToJsonObject(json, value)
+            is Iterable<*> -> encodeIterable(json, value)
+            is Array<*> -> encodeObjectArray(json, value)
+            is IntArray -> encodeIntArray(value)
+            is LongArray -> encodeLongArray(value)
+            is ShortArray -> encodeShortArray(value)
+            is ByteArray -> encodeByteArray(value)
+            is DoubleArray -> encodeDoubleArray(value)
+            is FloatArray -> encodeFloatArray(value)
+            is BooleanArray -> encodeBooleanArray(value)
+            is CharArray -> encodeCharArray(value)
+            else -> null
         }
+    }
+
+    private fun encodeIterable(json: Json, value: Iterable<*>): JsonArray {
+        val items = if (value is Collection<*>) {
+            ArrayList<JsonElement>(value.size)
+        } else {
+            ArrayList<JsonElement>()
+        }
+        value.forEach { items.add(_encodeAnyToJsonElement(json, it)) }
+        return JsonArray(items)
+    }
+
+    private fun encodeObjectArray(json: Json, value: Array<*>): JsonArray {
+        val items = ArrayList<JsonElement>(value.size)
+        value.forEach { items.add(_encodeAnyToJsonElement(json, it)) }
+        return JsonArray(items)
+    }
+
+    private inline fun encodePrimitiveArray(size: Int, producer: (Int) -> JsonElement): JsonArray {
+        val items = ArrayList<JsonElement>(size)
+        for (i in 0 until size) {
+            items.add(producer(i))
+        }
+        return JsonArray(items)
+    }
+
+    private fun encodeIntArray(value: IntArray): JsonArray {
+        return encodePrimitiveArray(value.size) { idx -> JsonPrimitive(value[idx]) }
+    }
+
+    private fun encodeLongArray(value: LongArray): JsonArray {
+        return encodePrimitiveArray(value.size) { idx -> JsonPrimitive(value[idx]) }
+    }
+
+    private fun encodeShortArray(value: ShortArray): JsonArray {
+        return encodePrimitiveArray(value.size) { idx -> JsonPrimitive(value[idx].toInt()) }
+    }
+
+    private fun encodeByteArray(value: ByteArray): JsonArray {
+        return encodePrimitiveArray(value.size) { idx -> JsonPrimitive(value[idx].toInt()) }
+    }
+
+    private fun encodeDoubleArray(value: DoubleArray): JsonArray {
+        return encodePrimitiveArray(value.size) { idx -> JsonPrimitive(value[idx]) }
+    }
+
+    private fun encodeFloatArray(value: FloatArray): JsonArray {
+        return encodePrimitiveArray(value.size) { idx -> JsonPrimitive(value[idx].toDouble()) }
+    }
+
+    private fun encodeBooleanArray(value: BooleanArray): JsonArray {
+        return encodePrimitiveArray(value.size) { idx -> JsonPrimitive(value[idx]) }
+    }
+
+    private fun encodeCharArray(value: CharArray): JsonArray {
+        return encodePrimitiveArray(value.size) { idx -> JsonPrimitive(value[idx].toString()) }
+    }
+
+    private fun encodeMapToJsonObject(json: Json, value: Map<*, *>): JsonObject {
+        return encodeObjectEntries(
+            json = json,
+            size = value.size,
+            entries = value.entries,
+            keyOf = { entry ->
+                when (val key = entry.key) {
+                    null -> "null"
+                    is String -> key
+                    else -> key.toString()
+                }
+            },
+            valueOf = { entry -> entry.value }
+        )
+    }
+
+    private fun encodeComplexObject(json: Json, value: Any): JsonElement {
+        val k = value::class
+        if (k.isData) {
+            val orderedProperties = getOrderedDataClassProperties(k)
+            return encodeObjectEntries(
+                json = json,
+                size = orderedProperties.size,
+                entries = orderedProperties,
+                keyOf = { it.name },
+                valueOf = { it.read(value) }
+            )
+        }
+        val beanElem = runCatching { javaBeanToJsonElement(json, value) }.getOrNull()
+        if (beanElem != null) return beanElem
+        throw SerializationException(
+            "无法序列化 ${k.qualifiedName}：请添加 @Serializable，或改为 data class，" +
+                "或在外层改用可序列化的 DTO/JsonElement/基础类型集合"
+        )
     }
 
     /**
@@ -614,17 +694,76 @@ object JsonKit {
      * @return 转换后的JsonObject
      */
     private fun javaBeanToJsonElement(json: Json, bean: Any): JsonElement {
-        val info = Introspector.getBeanInfo(bean.javaClass, Any::class.java)
-        val props = info.propertyDescriptors
-        val ordered = LinkedHashMap<String, JsonElement>(props.size)
-        for (pd in props) {
-            val read = pd.readMethod ?: continue
-            val name = pd.name ?: continue
-            try { read.isAccessible = true } catch (_: Throwable) {}
-            val value = runCatching { read.invoke(bean) }.getOrNull()
-            ordered[name] = _encodeAnyToJsonElement(json, value)
+        val readMethods = javaBeanReadMethodCache.getOrPut(bean.javaClass) {
+            Introspector.getBeanInfo(bean.javaClass, Any::class.java).propertyDescriptors.mapNotNull { pd ->
+                val read = pd.readMethod ?: return@mapNotNull null
+                val name = pd.name ?: return@mapNotNull null
+                try { read.isAccessible = true } catch (_: Throwable) {}
+                name to read
+            }
         }
-        return JsonObject(ordered)
+        return encodeObjectEntries(
+            json = json,
+            size = readMethods.size,
+            entries = readMethods,
+            keyOf = { it.first },
+            valueOf = { runCatching { it.second.invoke(bean) }.getOrNull() }
+        )
+    }
+
+    private inline fun <T> encodeObjectEntries(
+        json: Json,
+        size: Int,
+        entries: Iterable<T>,
+        keyOf: (T) -> String,
+        valueOf: (T) -> Any?
+    ): JsonObject {
+        val encoded = LinkedHashMap<String, JsonElement>(size)
+        entries.forEach { entry ->
+            encoded[keyOf(entry)] = _encodeAnyToJsonElement(json, valueOf(entry))
+        }
+        return JsonObject(encoded)
+    }
+
+    private fun getOrderedDataClassProperties(kClass: KClass<*>): List<DataClassPropertyAccessor> {
+        return dataClassPropertyCache.getOrPut(kClass) {
+            val ctorParamNames = kClass.primaryConstructor?.parameters?.mapNotNull { it.name } ?: emptyList()
+            val ctorParamNameSet = ctorParamNames.toSet()
+            val propsByName = kClass.memberProperties.associateBy { it.name }
+            val ordered = mutableListOf<DataClassPropertyAccessor>()
+
+            ctorParamNames.forEach { name ->
+                val prop = propsByName[name] ?: return@forEach
+                ordered.add(buildDataClassPropertyAccessor(name, prop))
+            }
+            propsByName.forEach { (name, prop) ->
+                if (name !in ctorParamNameSet) {
+                    ordered.add(buildDataClassPropertyAccessor(name, prop))
+                }
+            }
+            ordered
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun buildDataClassPropertyAccessor(
+        name: String,
+        prop: KProperty1<out Any, *>
+    ): DataClassPropertyAccessor {
+        try { prop.isAccessible = true } catch (_: Throwable) {}
+        val javaGetter = runCatching { prop.getter.javaMethod }.getOrNull()?.also { method ->
+            runCatching { method.isAccessible = true }
+        }
+        return if (javaGetter != null) {
+            DataClassPropertyAccessor(name) { instance ->
+                runCatching { javaGetter.invoke(instance) }.getOrNull()
+            }
+        } else {
+            val safeProp = prop as KProperty1<Any, *>
+            DataClassPropertyAccessor(name) { instance ->
+                runCatching { safeProp.get(instance) }.getOrNull()
+            }
+        }
     }
 
 

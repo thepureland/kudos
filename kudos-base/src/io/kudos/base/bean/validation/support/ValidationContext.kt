@@ -7,7 +7,9 @@ import jakarta.validation.metadata.ConstraintDescriptor
 import jakarta.validation.metadata.PropertyDescriptor
 import org.hibernate.validator.constraintvalidation.HibernateConstraintValidatorInitializationContext
 import org.hibernate.validator.internal.engine.constraintvalidation.ConstraintValidatorContextImpl
-import org.hibernate.validator.internal.metadata.descriptor.ConstraintDescriptorImpl
+import java.lang.reflect.Field
+import java.lang.reflect.Method
+import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Consumer
 
 /**
@@ -21,6 +23,12 @@ object ValidationContext {
 
     /** 缓存 HV 的 initializationContext */
     private var hvInitCtx: HibernateConstraintValidatorInitializationContext? = null
+    private const val jakartaAnnotationPrefix = "jakarta"
+    private const val hibernateAnnotationPrefix = "org.hibernate"
+    private val scopedContextMethodCache = ConcurrentHashMap<Class<*>, Method>()
+    private val scopedContextFieldCache = ConcurrentHashMap<Class<*>, Field>()
+    private val initCtxMethodCache = ConcurrentHashMap<Class<*>, Method>()
+    private val businessConstraintAnnotationCache = ConcurrentHashMap<Class<out Annotation>, Boolean>()
 
     fun setFactory(factory: jakarta.validation.ValidatorFactory) {
         hvInitCtx = extractHvInitCtx(factory)
@@ -51,25 +59,32 @@ object ValidationContext {
     private fun extractHvInitCtx(factory: jakarta.validation.ValidatorFactory): HibernateConstraintValidatorInitializationContext {
         // 1) 先走方法：factory.getValidatorFactoryScopedContext()
         val scopedContext = runCatching {
-            factory.javaClass.getDeclaredMethod("getValidatorFactoryScopedContext").apply { isAccessible = true }
-                .invoke(factory)
+            val method = scopedContextMethodCache.getOrPut(factory.javaClass) {
+                factory.javaClass.getDeclaredMethod("getValidatorFactoryScopedContext").apply { isAccessible = true }
+            }
+            method.invoke(factory)
         }.getOrNull()
             ?: runCatching {
                 // 2) 再走字段：factory.validatorFactoryScopedContext
-                factory.javaClass.getDeclaredField("validatorFactoryScopedContext").apply { isAccessible = true }
-                    .get(factory)
+                val field = scopedContextFieldCache.getOrPut(factory.javaClass) {
+                    factory.javaClass.getDeclaredField("validatorFactoryScopedContext").apply { isAccessible = true }
+                }
+                field.get(factory)
             }.getOrNull()
             ?: error("无法从 ${factory.javaClass.name} 获取 ValidatorFactoryScopedContext（HV 版本/实现可能变化）")
 
         // 3) scopedContext.getConstraintValidatorInitializationContext()
         val initCtx = runCatching {
-            scopedContext.javaClass.getDeclaredMethod("getConstraintValidatorInitializationContext")
-                .apply { isAccessible = true }
-                .invoke(scopedContext)
+            val method = initCtxMethodCache.getOrPut(scopedContext.javaClass) {
+                scopedContext.javaClass.getDeclaredMethod("getConstraintValidatorInitializationContext")
+                    .apply { isAccessible = true }
+            }
+            method.invoke(scopedContext)
         }.getOrNull()
             ?: error("无法从 ${scopedContext.javaClass.name} 获取 ConstraintValidatorInitializationContext（HV 版本/实现可能变化）")
 
-        return initCtx as HibernateConstraintValidatorInitializationContext
+        return initCtx as? HibernateConstraintValidatorInitializationContext
+            ?: error("ConstraintValidatorInitializationContext 类型不匹配: ${initCtx.javaClass.name}")
     }
 
     /** 用于传递Bean给ConstraintValidator，因为hibernate validation的ConstraintValidatorContext取不到Bean */
@@ -90,10 +105,15 @@ object ValidationContext {
      * @since 1.0.0
      */
     fun set(validator: Validator, bean: Any) {
-        set(validator, bean, null)
+        set(validator, bean, null, beanMapThreadLocal.get())
     }
 
-    private fun set(validator: Validator, bean: Any, parentPath: String?) {
+    private fun set(
+        validator: Validator,
+        bean: Any,
+        parentPath: String?,
+        beanStore: MutableMap<Int, Any>
+    ) {
         // 获取 bean 的描述符
         val beanDescriptor = validator.getConstraintsForClass(bean.javaClass)
 
@@ -106,10 +126,15 @@ object ValidationContext {
 
             // 对每个属性的约束进行检查
             descriptor.constraintDescriptors.forEach(Consumer { des: ConstraintDescriptor<*> ->
-                val annoClassName = (des as ConstraintDescriptorImpl<*>).getAnnotationDescriptor().getType().getName()
+                val annotationClass = des.annotation.annotationClass.java
+                val isBusinessConstraint = businessConstraintAnnotationCache.getOrPut(annotationClass) {
+                    val annoClassName = annotationClass.name
+                    !annoClassName.startsWith(jakartaAnnotationPrefix) &&
+                        !annoClassName.startsWith(hibernateAnnotationPrefix)
+                }
                 // 过滤掉 Jakarta 和 Hibernate 的注解
-                if (!annoClassName.startsWith("jakarta") && !annoClassName.startsWith("org.hibernate")) {
-                    beanMapThreadLocal.get()[des.hashCode()] = bean
+                if (isBusinessConstraint) {
+                    beanStore[des.hashCode()] = bean
                 }
             })
 
@@ -123,13 +148,13 @@ object ValidationContext {
                         val listElement: Any? = nestedBean[i]
                         if (listElement != null) {
                             // 针对每个列表元素，递归校验并拼接索引到路径中
-                            set(validator, listElement, "$fullPath[$i]")
+                            set(validator, listElement, "$fullPath[$i]", beanStore)
                         }
                     }
                 } else {
                     // 处理普通嵌套对象
                     if (nestedBean != null) {
-                        set(validator, nestedBean, fullPath)
+                        set(validator, nestedBean, fullPath, beanStore)
                     }
                 }
             }
@@ -145,7 +170,8 @@ object ValidationContext {
      * @since 1.0.0
      */
     fun get(constraintValidatorContext: ConstraintValidatorContext): Any? {
-        val descriptor = (constraintValidatorContext as ConstraintValidatorContextImpl).constraintDescriptor
+        val descriptor = (constraintValidatorContext as? ConstraintValidatorContextImpl)?.constraintDescriptor
+            ?: return null
         return beanMapThreadLocal.get().remove(descriptor.hashCode())
     }
 

@@ -231,7 +231,7 @@ object IpKit {
             val a = InetAddress.getByName(pure)
             a is Inet6Address || a.address.size == 16 || // 纯 IPv6
                     a.address.size == 4  // 让嵌 IPv4 的形式也通过，再交给 toFullIpv6 统一
-        } catch (_: Exception) {
+        } catch (_: UnknownHostException) {
             false
         }
     }
@@ -255,7 +255,7 @@ object IpKit {
 
         val addr = try {
             InetAddress.getByName(pure)
-        } catch (e: Exception) {
+        } catch (e: UnknownHostException) {
             throw IllegalArgumentException("invalid IP: $ip", e)
         }
 

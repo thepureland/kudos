@@ -13,7 +13,7 @@ class DictEnumCodeConstraintConvertor(annotation: Annotation) : DefaultConstrain
 
     override fun getRule(constraintAnnotation: Annotation): LinkedHashMap<String, Any> {
         val map = super.getRule(constraintAnnotation)
-        constraintAnnotation as DictEnumCode
+        require(constraintAnnotation is DictEnumCode) { "DictEnumCodeConstraintConvertor 仅支持 DictEnumCode 注解" }
         map.remove("enumClass")
         val codeMap = EnumKit.getCodeMap(constraintAnnotation.enumClass)
         map["values"] = codeMap.keys

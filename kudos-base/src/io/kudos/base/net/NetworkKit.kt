@@ -2,6 +2,7 @@ package io.kudos.base.net
 
 import java.net.NetworkInterface
 import java.net.Socket
+import java.io.IOException
 
 /**
  * 网络工具
@@ -26,7 +27,9 @@ object NetworkKit {
         try {
             Socket(ip, port).close()
             return true
-        } catch (_: Exception) {
+        } catch (_: IOException) {
+            return false
+        } catch (_: IllegalArgumentException) {
             return false
         }
     }

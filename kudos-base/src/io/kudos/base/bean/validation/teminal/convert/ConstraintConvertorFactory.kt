@@ -32,6 +32,6 @@ object ConstraintConvertorFactory {
             Constraints::class -> ConstraintsConstraintConvertor(annotation)
             Remote::class -> RemoteConstraintConvertor(annotation)
             else -> DefaultConstraintConvertor(annotation)
-        } as IConstraintConvertor?
+        }
 
 }

@@ -4,6 +4,7 @@ import org.apache.commons.io.FileUtils
 import java.io.File
 import java.net.URL
 import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
@@ -41,10 +42,12 @@ object PathKit {
                 "无法定位类资源：${c.name}/$className"
             }.path
             thisClass.replace(className, "")
-        } catch (_: Exception) {
+        } catch (_: IllegalArgumentException) {
+            c.protectionDomain.codeSource.location.path
+        } catch (_: SecurityException) {
             c.protectionDomain.codeSource.location.path
         }
-        return URLDecoder.decode(path, "UTF-8")
+        return URLDecoder.decode(path, StandardCharsets.UTF_8)
     }
 
     /**
@@ -66,7 +69,7 @@ object PathKit {
             return ""
         }
         val path = c.protectionDomain.codeSource.location.path
-        return URLDecoder.decode(path, "UTF-8")
+        return URLDecoder.decode(path, StandardCharsets.UTF_8)
     }
 
     /**

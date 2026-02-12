@@ -29,12 +29,20 @@ class ExistValidator : ConstraintValidator<Exist, Any?> {
         val validator = ConstraintsValidator()
         validator.initialize(constraints)
 
-        val path = (context as ConstraintValidatorContextImpl).constraintViolationCreationContexts.first().path
+        val hvContext = context as? ConstraintValidatorContextImpl
+            ?: return validator.isValid(value, context)
+        val path = hvContext.constraintViolationCreationContexts.first().path
         if (path is Path) {
             val propName = path.leafNode.name
             // 新建临时context对象的目的是为了避免context会有子约束的错误信息，子约束的message无意义，最终的错误信息是取主约束Exist的message
-            val tempContext = ConstraintValidatorContextImpl(context.clockProvider, MutablePath.createPathFromString(propName),
-                context.constraintDescriptor, null, null, null)
+            val tempContext = ConstraintValidatorContextImpl(
+                hvContext.clockProvider,
+                MutablePath.createPathFromString(propName),
+                hvContext.constraintDescriptor,
+                null,
+                null,
+                null
+            )
 
             val pass = when (value) {
                 is Array<*> -> value.any { validator.isValid(it, tempContext) }
@@ -51,8 +59,8 @@ class ExistValidator : ConstraintValidator<Exist, Any?> {
                 else -> validator.isValid(value, tempContext)
             }
 
-            context.disableDefaultConstraintViolation()
-            context.buildConstraintViolationWithTemplate(exist.message).addConstraintViolation()
+            hvContext.disableDefaultConstraintViolation()
+            hvContext.buildConstraintViolationWithTemplate(exist.message).addConstraintViolation()
             return pass
         } else {
             error("should never happen")

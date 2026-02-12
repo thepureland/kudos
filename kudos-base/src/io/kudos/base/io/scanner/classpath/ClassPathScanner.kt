@@ -91,7 +91,7 @@ object ClassPathScanner {
                 resources.add(ClassPathResource(resourceName))
                 logger.debug("Found resource for $path (Prefix: $prefix, Suffix: $suffix): $resourceName")
             }
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             logger.error(e)
         }
         return resources.toTypedArray()
@@ -117,7 +117,10 @@ object ClassPathScanner {
             val resourceNames = findResourceNames(location, "", ".class")
             for (resourceName in resourceNames) {
                 val className = toClassName(resourceName)
-                val clazz = classLoader.loadClass(className)
+                val clazz = runCatching { classLoader.loadClass(className) }
+                    .onFailure { logger.warn("Skip class $className: ${it.message}") }
+                    .getOrNull()
+                    ?: continue
                 if (Modifier.isAbstract(clazz.modifiers)) {
                     logger.debug("Skipping abstract class: $className")
                     continue
@@ -125,12 +128,15 @@ object ClassPathScanner {
                 if (!implementedInterface.java.isAssignableFrom(clazz)) {
                     continue
                 }
-                Class.forName(className)
+                runCatching { Class.forName(className) }
+                    .onFailure { logger.warn("Skip initializing class $className: ${it.message}") }
+                    .getOrNull()
+                    ?: continue
 //                ClassKit.instantiate(className)
                 classes.add(clazz)
                 logger.debug("Found class: $className")
             }
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             logger.error(e)
         }
         return classes.toTypedArray()

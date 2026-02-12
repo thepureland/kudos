@@ -12,7 +12,8 @@ class DictCodeConstraintConvertor(annotation: Annotation) : DefaultConstraintCon
 
     override fun getRule(constraintAnnotation: Annotation): LinkedHashMap<String, Any> {
         val map = super.getRule(constraintAnnotation)
-        val dictCode = constraintAnnotation as DictCode
+        require(constraintAnnotation is DictCode) { "DictCodeConstraintConvertor 仅支持 DictCode 注解" }
+        val dictCode = constraintAnnotation
         val codeMap = dictCodeConvertor(dictCode.module, dictCode.dictType)
         map["values"] = codeMap.keys
         return map

@@ -100,7 +100,7 @@ object NumberKit {
                 // 直接用 BigDecimal 解析
                 try {
                     BigDecimal(s)
-                } catch (ex: Exception) {
+                } catch (ex: NumberFormatException) {
                     throw NumberFormatException("无法将 \"$s\" 转换为 BigDecimal: ${ex.message}")
                 }
             }
@@ -110,7 +110,7 @@ object NumberKit {
                 try {
                     // 支持以 0 开头的八进制? Java 不再默认识别八进制，统一用 BigInteger 十进制
                     BigInteger(s)
-                } catch (ex: Exception) {
+                } catch (ex: NumberFormatException) {
                     throw NumberFormatException("无法将 \"$s\" 转换为整数: ${ex.message}")
                 }
             }
@@ -162,7 +162,7 @@ object NumberKit {
         return try {
             BigDecimal(s)
             true
-        } catch (_: Exception) {
+        } catch (_: NumberFormatException) {
             false
         }
     }

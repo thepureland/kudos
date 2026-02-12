@@ -53,7 +53,7 @@ class CompareValidator : ConstraintValidator<Compare, Any?> {
                 if (v !is Comparable<*> || anotherValue[index] !is Comparable<*>) {
                     error("【Compare】约束注解校验的两个数组中的每个元素的类型必须都实现【Comparable】接口！")
                 }
-                val result = compare.logic.compare(v, anotherValue[index] as Comparable<*>)
+                val result = compare.logic.compare(v, anotherValue[index])
                 if (!result) { // 只要数组中一对元素校验不通过，就当整个校验不过
                     return false
                 }
@@ -64,7 +64,7 @@ class CompareValidator : ConstraintValidator<Compare, Any?> {
             if (value !is Comparable<*>) {
                 error("【Compare】约束注解校验的两个属性类型必须都实现【Comparable】接口！")
             }
-            return compare.logic.compare(value, anotherValue as Comparable<*>)
+            return compare.logic.compare(value, anotherValue)
         }
     }
 }

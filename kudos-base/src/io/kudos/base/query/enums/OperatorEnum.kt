@@ -3,6 +3,9 @@ package io.kudos.base.query.enums
 import io.kudos.base.enums.ienums.IDictEnum
 import io.kudos.base.lang.EnumKit
 import io.kudos.base.lang.collections.containsAll
+import java.math.BigDecimal
+import java.lang.reflect.Method
+import java.util.concurrent.ConcurrentHashMap
 
 
 /**
@@ -215,7 +218,6 @@ enum class OperatorEnum(
      * @param v2 右值，比较的目标值（对于IS_NULL等操作符无意义）
      * @return true表示满足逻辑关系，false表示不满足
      */
-    @Suppress("UNCHECKED_CAST")
     fun compare(v1: Any?, v2: Any?): Boolean {
         return when (this) {
             EQ -> {
@@ -252,27 +254,19 @@ enum class OperatorEnum(
                 if (v1 == null && v2 == null) {
                     return true
                 }
-                if (v1 is Comparable<*> && v2 is Comparable<*>) {
-                    v1 as Comparable<Any> >= v2 as Comparable<Any>
-                } else false
+                compareComparableValues(v1, v2)?.let { it >= 0 } ?: false
             }
             LE -> {
                 if (v1 == null && v2 == null) {
                     return true
                 }
-                if (v1 is Comparable<*> && v2 is Comparable<*>) {
-                    v1 as Comparable<Any> <= v2 as Comparable<Any>
-                } else false
+                compareComparableValues(v1, v2)?.let { it <= 0 } ?: false
             }
             GT -> {
-                if (v1 is Comparable<*> && v2 is Comparable<*>) {
-                    v1 as Comparable<Any> > v2 as Comparable<Any>
-                } else false
+                compareComparableValues(v1, v2)?.let { it > 0 } ?: false
             }
             LT -> {
-                if (v1 is Comparable<*> && v2 is Comparable<*>) {
-                    v1 as Comparable<Any> < v2 as Comparable<Any>
-                } else false
+                compareComparableValues(v1, v2)?.let { it < 0 } ?: false
             }
             LIKE -> {
                 if (v1 is String && v2 is String) {
@@ -343,18 +337,70 @@ enum class OperatorEnum(
                 } else v1.toString().isEmpty()
             }
             BETWEEN -> {
-                if (v1 is Comparable<*> && v2 is ClosedFloatingPointRange<*>) {
-                    (v1 as Comparable<Any>) >= v2.start && v1 <= v2.endInclusive
-                } else false
+                if (v2 !is ClosedFloatingPointRange<*>) {
+                    false
+                } else {
+                    val geStart = compareComparableValues(v1, v2.start)?.let { it >= 0 } ?: false
+                    val leEnd = compareComparableValues(v1, v2.endInclusive)?.let { it <= 0 } ?: false
+                    geStart && leEnd
+                }
             }
             NOT_BETWEEN -> {
-                if (v1 !is Comparable<*> || v2 !is ClosedFloatingPointRange<*>) {
+                if (v2 !is ClosedFloatingPointRange<*>) {
                     true
                 } else {
-                    (v1 as Comparable<Any>) < v2.start && v1 > v2.endInclusive
+                    val ltStart = compareComparableValues(v1, v2.start)?.let { it < 0 } ?: false
+                    val gtEnd = compareComparableValues(v1, v2.endInclusive)?.let { it > 0 } ?: false
+                    ltStart && gtEnd
                 }
             }
             else -> false
+        }
+    }
+
+    private fun compareComparableValues(left: Any?, right: Any?): Int? {
+        if (left == null || right == null) {
+            return null
+        }
+        if (left is Number && right is Number) {
+            return compareNumbers(left, right)
+        }
+        if (left is String && right is String) {
+            return left.compareTo(right)
+        }
+        if (left is Char && right is Char) {
+            return left.compareTo(right)
+        }
+        if (left is Boolean && right is Boolean) {
+            return left.compareTo(right)
+        }
+        val compareToMethod = getCompareToMethod(left.javaClass, right.javaClass) ?: return null
+        return runCatching { compareToMethod.invoke(left, right) as? Int }.getOrNull()
+    }
+
+    private fun getCompareToMethod(leftClass: Class<*>, rightClass: Class<*>): Method? {
+        val cacheKey = MethodCacheKey(leftClass, rightClass)
+        compareToMethodCache[cacheKey]?.let { return it }
+        val method = leftClass.methods.firstOrNull { candidate ->
+            candidate.name == "compareTo" &&
+                candidate.parameterCount == 1 &&
+                candidate.parameterTypes.first().isAssignableFrom(rightClass)
+        } ?: return null
+        compareToMethodCache[cacheKey] = method
+        return method
+    }
+
+    private fun compareNumbers(left: Number, right: Number): Int? {
+        return when {
+            left is Int && right is Int -> left.compareTo(right)
+            left is Long && right is Long -> left.compareTo(right)
+            left is Double && right is Double -> left.compareTo(right)
+            left is Float && right is Float -> left.compareTo(right)
+            left is Short && right is Short -> left.compareTo(right)
+            left is Byte && right is Byte -> left.compareTo(right)
+            else -> runCatching {
+                BigDecimal(left.toString()).compareTo(BigDecimal(right.toString()))
+            }.getOrNull()
         }
     }
 
@@ -427,6 +473,9 @@ enum class OperatorEnum(
     }
 
     companion object Companion {
+        private data class MethodCacheKey(val leftClass: Class<*>, val rightClass: Class<*>)
+        private val compareToMethodCache = ConcurrentHashMap<MethodCacheKey, Method>()
+
         fun enumOf(code: String): OperatorEnum {
             var operatorCode = code
             if (operatorCode.isNotBlank()) {
