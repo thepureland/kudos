@@ -6,7 +6,6 @@ import io.kudos.ability.data.rdb.ktorm.table.TestTableKtorms
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.support.payload.SearchPayload
-import io.kudos.base.support.query.ReadQuery
 import io.kudos.base.support.payload.UpdatePayload
 import io.kudos.test.common.init.EnableKudosTest
 import jakarta.annotation.Resource
@@ -434,7 +433,7 @@ internal open class BaseCrudDaoTest {
         assertEquals(3, testTableDao.batchUpdateProperties(criteria, properties))
         criteria.addAnd(TestTableKtorm::active.name, OperatorEnum.EQ, false)
         criteria.addAnd(TestTableKtorm::height.name, OperatorEnum.IS_NULL, null)
-        assertEquals(3, testTableDao.count(ReadQuery(criteria = criteria)))
+        assertEquals(3, testTableDao.count(criteria))
     }
 
     @Test
@@ -563,7 +562,7 @@ internal open class BaseCrudDaoTest {
     open fun batchDeleteCriteria() {
         val criteria = Criteria.of(TestTableKtorm::name.name, OperatorEnum.LIKE_E, "1")
         assertEquals(2, testTableDao.batchDeleteCriteria(criteria))
-        assertEquals(0, testTableDao.count(ReadQuery(criteria = criteria)))
+        assertEquals(0, testTableDao.count(criteria))
     }
 
     @Test

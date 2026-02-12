@@ -7,7 +7,6 @@ import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.query.sort.Order
 import io.kudos.base.support.payload.ListSearchPayload
-import io.kudos.base.support.query.ReadQuery
 import io.kudos.ms.sys.common.vo.dict.SysDictPayload
 import io.kudos.ms.sys.common.vo.dict.SysDictTreeNode
 import io.kudos.ms.sys.common.vo.dictitem.SysDictItemCacheItem
@@ -115,7 +114,7 @@ open class SysDictItemService : BaseCrudService<String, SysDictItem, SysDictItem
             // 查询parentCode
             val parentIds = dictItems.filter { !it.parentId.isNullOrBlank() }.mapNotNull { it.parentId }.toSet()
             val criteria = Criteria.of(SysDictItem::id.name, OperatorEnum.IN, parentIds)
-            val idAndCodeMaps = dao.searchPropertiesBy(criteria, listOf(SysDictItem::id, SysDictItem::itemCode))
+            val idAndCodeMaps = dao.searchProperties(criteria, listOf(SysDictItem::id, SysDictItem::itemCode))
             dictItems.forEach { dictItem ->
                 val idAndCodeMap = idAndCodeMaps.singleOrNull { it[SysDictItem::id.name] == dictItem.parentId }
                 if (idAndCodeMap != null) {
@@ -168,12 +167,7 @@ open class SysDictItemService : BaseCrudService<String, SysDictItem, SysDictItem
             }
             isModule -> { // 加载SysDict数据
                 val criteria = Criteria.of(SysDicts.atomicServiceCode.name, OperatorEnum.EQ, parent)
-                val results = dao.search(
-                    ReadQuery(
-                        criteria = criteria,
-                        orders = listOf(Order.asc(SysDicts.dictType.name))
-                    )
-                )
+                val results = dao.search(criteria, Order.asc(SysDicts.dictType.name))
                 results.map {
                     val treeNode = BeanKit.copyProperties(
                         SysDictTreeNode::class, it, mapOf(

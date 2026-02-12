@@ -52,7 +52,7 @@ open class SysTenantSystemDao : BaseCrudDao<String, SysTenantSystem, SysTenantSy
      * @return Map<租户id， List<系统编码>>
      */
     fun groupingSystemCodesByTenantIds(tenantIds: Collection<String>? = null): Map<String, List<String>> {
-        val returnProperties = listOf(SysTenantSystem::tenantId.name, SysTenantSystem::systemCode.name)
+        val returnProperties = listOf(SysTenantSystem::tenantId, SysTenantSystem::systemCode)
         val results = if (tenantIds == null) {
             allSearchProperties(returnProperties)
         } else {
@@ -77,7 +77,7 @@ open class SysTenantSystemDao : BaseCrudDao<String, SysTenantSystem, SysTenantSy
      * @return Map<系统编码， List<租户id>>
      */
     fun groupingTenantIdsBySystemCodes(systemCodes: Collection<String>? = null): Map<String, List<String>> {
-        val returnProperties = listOf(SysTenantSystem::systemCode.name, SysTenantSystem::tenantId.name)
+        val returnProperties = listOf(SysTenantSystem::systemCode, SysTenantSystem::tenantId)
         val results = if (systemCodes == null) {
             allSearchProperties(returnProperties)
         } else {

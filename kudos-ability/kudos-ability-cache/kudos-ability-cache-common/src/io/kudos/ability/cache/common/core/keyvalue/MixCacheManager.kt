@@ -70,6 +70,8 @@ class MixCacheManager : AbstractCacheManager() {
 
     private val caches: MutableList<Cache> = ArrayList<Cache>()
 
+    private fun hasLocalCacheManager(): Boolean = this::localCacheManager.isInitialized
+
     override fun loadCaches(): Collection<Cache> {
         return caches
     }
@@ -115,7 +117,7 @@ class MixCacheManager : AbstractCacheManager() {
             log.warn("缓存未开启,不加载缓存配置.")
             return
         }
-        if (localCacheManager == null && remoteCacheManager == null) {
+        if (!hasLocalCacheManager() && remoteCacheManager == null) {
             log.warn("无法找到缓存策略,不加载缓存配置.")
             return
         }
@@ -123,7 +125,7 @@ class MixCacheManager : AbstractCacheManager() {
         val localCacheConfigs = cacheConfigProvider!!.getLocalCacheConfigs()
         val remoteCacheConfigs = cacheConfigProvider.getRemoteCacheConfigs()
         val localRemoteCacheConfigs = cacheConfigProvider.getLocalRemoteCacheConfigs()
-        if (localCacheManager != null && localCacheManager is CacheItemInitializing) {
+        if (hasLocalCacheManager() && localCacheManager is CacheItemInitializing) {
             (localCacheManager as CacheItemInitializing).initCacheAfterSystemInit(
                 localCacheConfigs + localRemoteCacheConfigs
             )
@@ -152,7 +154,7 @@ class MixCacheManager : AbstractCacheManager() {
     private fun loadLocalCacheConfig(localCacheConfigs: Map<String, CacheConfig>): MutableList<Cache> {
         val localCaches: MutableList<Cache> = ArrayList<Cache>()
         //本地缓存
-        if (localCacheManager != null) {
+        if (hasLocalCacheManager()) {
             if (localCacheConfigs.isNotEmpty()) {
                 localCacheConfigs.forEach { (key: String, _: CacheConfig?) ->
                     val realKey = versionConfig!!.getFinalCacheName(key)
@@ -227,10 +229,10 @@ class MixCacheManager : AbstractCacheManager() {
         if (localRemoteCacheConfigs.isNotEmpty()) {
             localRemoteCacheConfigs.forEach { (key: String, _: CacheConfig?) ->
                 val realKey = versionConfig!!.getFinalCacheName(key)
-                val localCache = localCacheManager?.getCache(realKey)
+                val localCache = if (hasLocalCacheManager()) localCacheManager.getCache(realKey) else null
                 val remoteCache = remoteCacheManager?.getCache(realKey)
                 lateinit var strategy: CacheStrategy
-                if (localCacheManager == null) {
+                if (!hasLocalCacheManager()) {
                     if (remoteCacheManager != null) {
                         strategy = CacheStrategy.REMOTE
                         log.warn("mix缓存,key={0}升级为远程缓存", key)
@@ -260,7 +262,7 @@ class MixCacheManager : AbstractCacheManager() {
         val mixCache = cache as MixCache
         if (key is String
             && key.endsWith("*")
-            && localCacheManager != null
+            && hasLocalCacheManager()
         ) {
             (localCacheManager as IKeyValueCacheManager<*>).evictByPattern(cacheName, key)
         } else {

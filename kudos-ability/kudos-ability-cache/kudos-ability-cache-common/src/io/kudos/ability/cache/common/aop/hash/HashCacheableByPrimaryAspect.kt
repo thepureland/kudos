@@ -56,7 +56,7 @@ class HashCacheableByPrimaryAspect {
         }
 
         val keyValue = parser.parseExpression(ann.key).getValue(context) ?: return joinPoint.proceed()
-        val entityClass = ann.entityClass as KClass<out IIdEntity<Any?>>
+        val entityClass = resolveEntityClass(ann.entityClass)
 
         val hashCache = HashCacheKit.getHashCache(cacheName)
         if (CacheKit.isCacheActive(cacheName)) {
@@ -90,5 +90,10 @@ class HashCacheableByPrimaryAspect {
         val cacheConfig = joinPoint.target::class.findAnnotation<CacheConfig>()
         if (cacheConfig != null && cacheConfig.cacheNames.isNotEmpty()) return cacheConfig.cacheNames.first()
         return null
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun resolveEntityClass(entityClass: KClass<out IIdEntity<*>>): KClass<out IIdEntity<Any?>> {
+        return entityClass as KClass<out IIdEntity<Any?>>
     }
 }
