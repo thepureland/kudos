@@ -37,7 +37,7 @@ class KtorSpringTest {
         val response = client.get("/")
         assertEquals("Hello World!", response.bodyAsText())
 
-        assertNotNull(SpringKit.getBean(KtorAutoConfiguration::class))
+        assertNotNull(SpringKit.getBean<KtorAutoConfiguration>())
     }
 
 }

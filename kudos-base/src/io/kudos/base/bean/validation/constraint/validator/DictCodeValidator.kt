@@ -21,7 +21,7 @@ class DictCodeValidator : ConstraintValidator<DictCode, CharSequence?> {
         if (value.isNullOrBlank()) {
             return true
         }
-        val dictMap: MutableMap<*, *> = dictCodeConvertor(dictCode.module, dictCode.dictType)
+        val dictMap: MutableMap<*, *> = dictCodeConvertor(dictCode.atomicServiceCode, dictCode.dictType)
         return dictMap.containsKey(value)
     }
 

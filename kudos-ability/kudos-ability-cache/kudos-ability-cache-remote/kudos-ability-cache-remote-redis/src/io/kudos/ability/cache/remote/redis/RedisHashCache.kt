@@ -34,7 +34,7 @@ class RedisHashCache(
     private fun dataKeyPrefix(cacheName: String): String = versionConfig.getFinalCacheName(cacheName)
 
     private fun pushHashNotify(cacheName: String, key: Any?) {
-        val handler = messageHandler ?: SpringKit.getBeansOfType(ICacheMessageHandler::class).values.firstOrNull() ?: return
+        val handler = messageHandler ?: SpringKit.getBeansOfType<ICacheMessageHandler>().values.firstOrNull() ?: return
         val msg = CacheMessage(versionConfig.getFinalCacheName(cacheName), key).apply {
             cacheType = "hash"
             this.nodeId = this@RedisHashCache.nodeId

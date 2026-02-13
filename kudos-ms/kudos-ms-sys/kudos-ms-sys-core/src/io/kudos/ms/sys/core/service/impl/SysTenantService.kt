@@ -143,7 +143,7 @@ open class SysTenantService : BaseCrudService<String, SysTenant, SysTenantDao>()
         @Suppress("UNCHECKED_CAST")
         val records = dao.search(searchPayload, SysTenantRecord::class)
         // 根据租户的子系统关系分组
-        val tenantIds = records.mapNotNull { it.id }
+        val tenantIds = records.map { it.id }
         val tenantSubSystemMap = sysTenantSystemBiz.groupingSystemCodesByTenantIds(tenantIds)
         val result = mutableMapOf<String, MutableList<SysTenantRecord>>()
         records.forEach { tenant ->

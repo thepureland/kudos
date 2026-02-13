@@ -1,6 +1,7 @@
 package io.kudos.ms.sys.core.service.iservice
 
 import io.kudos.base.support.iservice.IBaseCrudService
+import io.kudos.ms.sys.common.api.ISysDictApi
 import io.kudos.ms.sys.common.vo.dict.SysDictCacheItem
 import io.kudos.ms.sys.common.vo.dict.SysDictPayload
 import io.kudos.ms.sys.common.vo.dict.SysDictRecord
@@ -15,7 +16,7 @@ import io.kudos.ms.sys.core.model.po.SysDict
  * @since 1.0.0
  */
 //region your codes 1
-interface ISysDictService : IBaseCrudService<String, SysDict> {
+interface ISysDictService : IBaseCrudService<String, SysDict>, ISysDictApi {
 //endregion your codes 1
 
     //region your codes 2

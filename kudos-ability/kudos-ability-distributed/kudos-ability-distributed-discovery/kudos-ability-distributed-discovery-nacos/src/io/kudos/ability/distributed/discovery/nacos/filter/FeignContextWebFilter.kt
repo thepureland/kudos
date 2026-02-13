@@ -104,7 +104,7 @@ class FeignContextWebFilter : Filter {
                 context.dataSourceId = dataSourceId
             }
             //feign服務端上下文解析支持擴展
-            val contextProcessMap = SpringKit.getBeansOfType(IFeignProviderContextProcess::class)
+            val contextProcessMap = SpringKit.getBeansOfType<IFeignProviderContextProcess>()
             if (contextProcessMap.isNotEmpty()) {
                 for (value in contextProcessMap.values) {
                     value.processContext(request, context)

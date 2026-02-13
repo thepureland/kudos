@@ -84,7 +84,7 @@ class CacheOperatorVo(
         val messageVo: NotifyMessageVo<*> = NotifyMessageVo<CacheOperatorVo>(CacheNotifyListener.CACHE_OPERATOR, this)
         var notify = false
         try {
-            val notifyTool = SpringKit.getBean(NotifyTool::class)
+            val notifyTool = SpringKit.getBean<NotifyTool>()
             notify = notifyTool.notify(messageVo)
         } catch (e: NoSuchBeanDefinitionException) {
             LOG.warn(e.message)

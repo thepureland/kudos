@@ -35,7 +35,7 @@ object AuditLogTool {
 
     private fun initSourceTenantProvider() {
         tenantProvider = try {
-            SpringKit.getBean(ILogSourceTenantProvider::class)
+            SpringKit.getBean<ILogSourceTenantProvider>()
         } catch (_: Exception) {
             null
         }
@@ -65,7 +65,7 @@ object AuditLogTool {
         formatterClazz: KClass<out IAuditLogDetailDescriptionFormatter>
     ): IAuditLogDetailDescriptionFormatter? {
         if (formatterClazz == DefaultAuditLogDetailDescriptionFormatter::class.java) {
-            val formatterMap = SpringKit.getBeansOfType(IAuditLogDetailDescriptionFormatter::class)
+            val formatterMap = SpringKit.getBeansOfType<IAuditLogDetailDescriptionFormatter>()
             if (formatterMap.isEmpty()) {
                 return null
             }

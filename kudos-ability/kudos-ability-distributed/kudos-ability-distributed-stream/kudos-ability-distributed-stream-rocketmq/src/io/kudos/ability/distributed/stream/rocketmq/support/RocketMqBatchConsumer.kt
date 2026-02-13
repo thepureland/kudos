@@ -232,7 +232,7 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
         exceptionMsg.topic = topic!!
         exceptionMsg.msgBodyJson = JSONObject.toJSONString(data)
         exceptionMsg.createTime = LocalDateTime.now()
-        SpringKit.getBean(ISysMqFailMsgService::class).save(exceptionMsg)
+        SpringKit.getBean<ISysMqFailMsgService>().save(exceptionMsg)
     }
 
     fun destroy() {

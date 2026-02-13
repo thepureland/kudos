@@ -15,7 +15,7 @@ object MonitorMsgTool {
     fun pushErrMsg(msg: String?, exceptionType: String?, throwable: Throwable?) {
         val callSource: Pair<String?, String?>? = callSource
         val sysMonitorMsgVo = realCreateSysMonitorMsgVo(msg, exceptionType, throwable, callSource)
-        SpringKit.getBean(IMonitorService::class).submit(sysMonitorMsgVo)
+        SpringKit.getBean<IMonitorService>().submit(sysMonitorMsgVo)
     }
 
     fun createSysMonitorMsgVo(msg: String?, exceptionType: String?, throwable: Throwable?): SysMonitorMsgVo {

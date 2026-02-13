@@ -10,6 +10,7 @@ import io.kudos.ms.sys.common.vo.datasource.SysDataSourceCacheItem
 import io.kudos.ms.sys.common.vo.datasource.SysDataSourceDetail
 import io.kudos.ms.sys.common.vo.datasource.SysDataSourceRecord
 import io.kudos.ms.sys.common.vo.datasource.SysDataSourceSearchPayload
+import io.kudos.ms.sys.common.vo.datasource.TenantIdAndASCodePayload
 import io.kudos.ms.sys.core.cache.SysDataSourceHashCache
 import io.kudos.ms.sys.core.dao.SysDataSourceDao
 import io.kudos.ms.sys.core.model.po.SysDataSource
@@ -180,6 +181,10 @@ open class SysDataSourceService : BaseCrudService<String, SysDataSource, SysData
             this.subSystemCode = subSystemCode
         }
         return dao.search(searchPayload, SysDataSourceRecord::class)
+    }
+
+    override fun getDataSource(payload: TenantIdAndASCodePayload): SysDataSourceCacheItem? {
+        TODO("Not yet implemented")
     }
 
     //endregion your codes 2

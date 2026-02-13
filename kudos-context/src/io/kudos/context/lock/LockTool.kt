@@ -39,7 +39,7 @@ object LockTool {
         get() = LOCK_SERVICE
 
     private fun initLockService() {
-        val beansOfType = SpringKit.getBeansOfType(ILockProvider::class)
+        val beansOfType = SpringKit.getBeansOfType<ILockProvider<*>>()
         if (beansOfType.isEmpty()) {
             LOCK_SERVICE = NormalLockService()
         } else {

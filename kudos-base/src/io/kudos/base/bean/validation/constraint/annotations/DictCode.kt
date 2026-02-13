@@ -16,14 +16,17 @@ import kotlin.reflect.KClass
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY_GETTER, AnnotationTarget.PROPERTY_SETTER)
 annotation class DictCode(
+
     /**
-     * 所属模块
+     * 所属原子服务编码
      */
-    val module: String = "",
+    val atomicServiceCode: String = "",
+
     /**
      * 字典类型
      */
     val dictType: String,
+
     /**
      * 校验不通过时的提示，或其国际化key。
      * 每个约束定义中都包含有一个用于提示验证结果的消息模版, 并且在声明一个约束条件的时候,你可以通过这个约束中的message属性来重写默认的消息模版,
@@ -34,6 +37,7 @@ annotation class DictCode(
      * /org/hibernate/validator/ValidationMessages.properties的ResourceBundle, 依次类推,递归的匹配所有的占位符.
      */
     val message: String = "{io.kudos.base.bean.validation.constraint.annotations.DictCode.message}",
+
     /**
      * 该校验规则所从属的分组类，通过分组可以过滤校验规则或排序校验顺序。默认值必须是空数组。
      * 校验组能够让你在验证的时候选择应用哪些约束条件. 这样在某些情况下( 例如向导 ) 就可以对每一步进行校验的时候, 选取对应这步的那些约束条件进行验证了.
@@ -49,6 +53,7 @@ annotation class DictCode(
      * 注：同一分组间的约束校验是无序的
      */
     val groups: Array<KClass<*>> = [],
+
     /**
      * 约束注解的有效负载(通常用来将一些元数据信息与该约束注解相关联，常用的一种情况是用负载表示验证结果的严重程度)
      */

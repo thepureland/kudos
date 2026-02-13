@@ -41,7 +41,7 @@ internal class DictCodeConstraintConvertorTest {
     }
 
     data class TestBean(
-        @get:DictCode(module = "test", dictType = "test", message = "无效的字典码")
+        @get:DictCode(atomicServiceCode = "test", dictType = "test", message = "无效的字典码")
         val code: String?
     )
 }

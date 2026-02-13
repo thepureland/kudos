@@ -95,7 +95,7 @@ class GlobalHeaderRequestInterceptor : RequestInterceptor {
             requestTemplate.header(Consts.RequestHeader.DATASOURCE_ID, dataSourceId)
         }
         requestTemplate.header(Consts.RequestHeader.FEIGN_REQUEST, "true")
-        val contextProcessMap = SpringKit.getBeansOfType(IFeignRequestContextProcess::class)
+        val contextProcessMap = SpringKit.getBeansOfType<IFeignRequestContextProcess>()
         if (contextProcessMap.isNotEmpty()) {
             for (value in contextProcessMap.values) {
                 value.processContext(requestTemplate, context)

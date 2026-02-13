@@ -33,8 +33,8 @@ open class SysDomainService : BaseCrudService<String, SysDomain, SysDomainDao>()
     @Autowired
     private lateinit var domainByNameCache: DomainByNameCache
 
-    override fun getDomainByName(domain: String): SysDomainCacheItem? {
-        return domainByNameCache.getDomain(domain)
+    override fun getDomainByName(domainName: String): SysDomainCacheItem? {
+        return domainByNameCache.getDomain(domainName)
     }
 
     override fun getDomainsByTenantId(tenantId: String): List<SysDomainRecord> {

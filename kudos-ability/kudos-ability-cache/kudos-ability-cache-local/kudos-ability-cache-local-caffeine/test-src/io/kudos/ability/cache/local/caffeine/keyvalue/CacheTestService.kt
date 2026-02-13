@@ -16,7 +16,7 @@ import org.springframework.cache.annotation.Cacheable
 open class CacheTestService {
 
     fun getData(id: String): String {
-        return SpringKit.getBean(CacheTestService::class).getFromDB(id)
+        return SpringKit.getBean<CacheTestService>().getFromDB(id)
     }
 
     @Cacheable(cacheNames = ["test"], key = "#id")

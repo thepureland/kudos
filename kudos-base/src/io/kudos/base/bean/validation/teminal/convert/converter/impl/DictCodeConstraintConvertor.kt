@@ -14,7 +14,7 @@ class DictCodeConstraintConvertor(annotation: Annotation) : DefaultConstraintCon
         val map = super.getRule(constraintAnnotation)
         require(constraintAnnotation is DictCode) { "DictCodeConstraintConvertor 仅支持 DictCode 注解" }
         val dictCode = constraintAnnotation
-        val codeMap = dictCodeConvertor(dictCode.module, dictCode.dictType)
+        val codeMap = dictCodeConvertor(dictCode.atomicServiceCode, dictCode.dictType)
         map["values"] = codeMap.keys
         return map
     }

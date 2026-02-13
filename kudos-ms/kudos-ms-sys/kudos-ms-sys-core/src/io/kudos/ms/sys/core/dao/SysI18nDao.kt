@@ -36,10 +36,12 @@ open class SysI18nDao : BaseCrudDao<String, SysI18n, SysI18ns>() {
         i18nTypeDictCode: String,
         atomicServiceCode: String
     ): List<SysI18nCacheItem> {
-        val criteria = Criteria(SysI18n::locale eq locale)
-            .addAnd(SysI18n::i18nTypeDictCode eq i18nTypeDictCode)
-            .addAnd(SysI18n::atomicServiceCode eq atomicServiceCode)
-            .addAnd(SysI18n::active eq true)
+        val criteria = Criteria.and(
+            SysI18n::locale eq locale,
+            SysI18n::i18nTypeDictCode eq i18nTypeDictCode,
+            SysI18n::atomicServiceCode eq atomicServiceCode,
+            SysI18n::active eq true
+        )
         return searchAs<SysI18nCacheItem>(criteria)
     }
 
