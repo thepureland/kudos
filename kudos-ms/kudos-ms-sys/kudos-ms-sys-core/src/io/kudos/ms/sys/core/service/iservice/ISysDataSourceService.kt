@@ -1,6 +1,7 @@
 package io.kudos.ms.sys.core.service.iservice
 
 import io.kudos.base.support.iservice.IBaseCrudService
+import io.kudos.ms.sys.common.api.ISysDataSourceApi
 import io.kudos.ms.sys.common.vo.datasource.SysDataSourceCacheItem
 import io.kudos.ms.sys.common.vo.datasource.SysDataSourceRecord
 import io.kudos.ms.sys.core.model.po.SysDataSource
@@ -14,7 +15,7 @@ import io.kudos.ms.sys.core.model.po.SysDataSource
  * @since 1.0.0
  */
 //region your codes 1
-interface ISysDataSourceService : IBaseCrudService<String, SysDataSource> {
+interface ISysDataSourceService : IBaseCrudService<String, SysDataSource>, ISysDataSourceApi {
 //endregion your codes 1
 
     //region your codes 2

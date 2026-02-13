@@ -245,7 +245,7 @@ object CacheKit {
         }
         val cacheConfig = getCacheConfig(cacheName) ?: return
         if (cacheConfig.writeOnBoot == true) {
-            val beansOfType = SpringKit.getBeansOfType(AbstractKeyValueCacheHandler::class)
+            val beansOfType = SpringKit.getBeansOfType<AbstractKeyValueCacheHandler<*>>()
             beansOfType.values.forEach {
                 if (it.cacheName() == cacheName) {
                     it.reload(key)
@@ -267,7 +267,7 @@ object CacheKit {
         }
         val cacheConfig = getCacheConfig(cacheName) ?: return
         if (cacheConfig.writeOnBoot == true) {
-            val beansOfType = SpringKit.getBeansOfType(AbstractKeyValueCacheHandler::class)
+            val beansOfType = SpringKit.getBeansOfType<AbstractKeyValueCacheHandler<*>>()
             beansOfType.values.forEach {
                 if (it.cacheName() == cacheName) {
                     it.reloadAll(true)
@@ -309,7 +309,7 @@ object CacheKit {
      * @return ICacheConfigProvider
      */
     private fun getCacheConfigProvider(): ICacheConfigProvider {
-        return SpringKit.getBean(ICacheConfigProvider::class)
+        return SpringKit.getBean<ICacheConfigProvider>()
     }
 
 }

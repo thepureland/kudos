@@ -1,5 +1,5 @@
 dependencies {
-    api(project(":kudos-base"))
+    api(project(":kudos-context"))
     
     //region your codes 1
 

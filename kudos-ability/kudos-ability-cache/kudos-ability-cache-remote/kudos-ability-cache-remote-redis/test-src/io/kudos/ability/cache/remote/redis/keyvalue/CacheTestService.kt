@@ -12,7 +12,7 @@ open class CacheTestService {
 //    private lateinit var self: CacheTestService
 
     fun getData(id: String): String {
-        return SpringKit.getBean(CacheTestService::class).getFromDB(id)
+        return SpringKit.getBean<CacheTestService>().getFromDB(id)
     }
 
     @Cacheable(cacheNames = ["test"], key = "#id")

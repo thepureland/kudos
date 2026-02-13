@@ -3,6 +3,7 @@ package io.kudos.ms.sys.core.service.impl
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
+import io.kudos.ms.sys.common.vo.param.ParamNameAndASCodePayload
 import io.kudos.ms.sys.common.vo.param.SysParamCacheItem
 import io.kudos.ms.sys.common.vo.param.SysParamRecord
 import io.kudos.ms.sys.common.vo.param.SysParamSearchPayload
@@ -112,6 +113,10 @@ open class SysParamService : BaseCrudService<String, SysParam, SysParamDao>(), I
         log.debug("批量删除参数，期望删除${ids.size}条，实际删除${count}条。")
         paramByModuleAndNameCache.syncOnBatchDelete(ids, moduleAndNames)
         return count
+    }
+
+    override fun getParam(payload: ParamNameAndASCodePayload): SysParamCacheItem? {
+        TODO("Not yet implemented")
     }
 
     //endregion your codes 2

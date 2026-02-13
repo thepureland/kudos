@@ -42,7 +42,7 @@ internal class MixHashCache(
     }
 
     private fun pushHashNotify(key: Any?) {
-        val handlers = SpringKit.getBeansOfType(ICacheMessageHandler::class)
+        val handlers = SpringKit.getBeansOfType<ICacheMessageHandler>()
         if (handlers.isEmpty()) return
         val msg = CacheMessage(name, key).apply {
             cacheType = "hash"

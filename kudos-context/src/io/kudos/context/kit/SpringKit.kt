@@ -1,5 +1,6 @@
 package io.kudos.context.kit
 
+import org.springframework.beans.factory.getBean
 import org.springframework.context.ApplicationContext
 import kotlin.reflect.KClass
 
@@ -51,6 +52,16 @@ object SpringKit {
     fun <T : Any> getBean(beanClass: KClass<T>): T = requireNotNull(applicationContext) { "applicationContext is not initialized" }.getBean(beanClass.java)
 
     /**
+     * 返回指定泛型类型的Spring Bean对象，不存在会抛BeansException异常
+     *
+     * @param T bean类型
+     * @return Spring Bean对象
+     * @author K
+     * @since 1.0.0
+     */
+    inline fun <reified T : Any> getBean(): T = getBean(T::class)
+
+    /**
      * 返回指定类的Spring Bean对象，不存在返回null
      *
      * @param T bean类型
@@ -83,5 +94,15 @@ object SpringKit {
      * @since 1.0.0
      */
     fun <T : Any> getBeansOfType(clazz: KClass<T>): Map<String, T> = requireNotNull(applicationContext) { "applicationContext is not initialized" }.getBeansOfType(clazz.java)
+
+    /**
+     * 返回指定类型的所有实现bean实例（包括子类）
+     *
+     * @param T 类或接口
+     * @return Map(bean名称, bean实例)
+     * @author K
+     * @since 1.0.0
+     */
+    inline fun <reified T : Any> getBeansOfType(): Map<String, T> = getBeansOfType(T::class)
 
 }

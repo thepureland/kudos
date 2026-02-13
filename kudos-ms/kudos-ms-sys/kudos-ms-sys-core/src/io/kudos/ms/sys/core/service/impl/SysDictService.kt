@@ -3,10 +3,12 @@ package io.kudos.ms.sys.core.service.impl
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
+import io.kudos.ms.sys.common.vo.dict.DictTypeAndASCodePayload
 import io.kudos.ms.sys.common.vo.dict.SysDictCacheItem
 import io.kudos.ms.sys.common.vo.dict.SysDictPayload
 import io.kudos.ms.sys.common.vo.dict.SysDictRecord
 import io.kudos.ms.sys.common.vo.dict.SysDictSearchPayload
+import io.kudos.ms.sys.common.vo.dictitem.SysDictItemCacheItem
 import io.kudos.ms.sys.core.cache.DictByIdCache
 import io.kudos.ms.sys.core.dao.SysDictDao
 import io.kudos.ms.sys.core.model.po.SysDict
@@ -249,6 +251,22 @@ open class SysDictService : BaseCrudService<String, SysDict, SysDictDao>(), ISys
         log.debug("批量删除字典，期望删除${ids.size}条，实际删除${count}条。")
         dictCacheHandler.syncOnBatchDelete(ids)
         return count
+    }
+
+    override fun getDictItems(payload: DictTypeAndASCodePayload): List<SysDictItemCacheItem> {
+        TODO("Not yet implemented")
+    }
+
+    override fun getDictItemMap(payload: DictTypeAndASCodePayload): LinkedHashMap<String, String> {
+        TODO("Not yet implemented")
+    }
+
+    override fun batchGetDictItems(payloads: List<DictTypeAndASCodePayload>): Map<Pair<String, String>, List<SysDictItemCacheItem>> {
+        TODO("Not yet implemented")
+    }
+
+    override fun batchGetDictItemMap(payloads: List<DictTypeAndASCodePayload>): Map<Pair<String, String>, LinkedHashMap<String, String>> {
+        TODO("Not yet implemented")
     }
 
     //endregion your codes 2

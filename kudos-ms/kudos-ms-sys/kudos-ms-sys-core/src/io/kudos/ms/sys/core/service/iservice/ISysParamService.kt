@@ -1,6 +1,7 @@
 package io.kudos.ms.sys.core.service.iservice
 
 import io.kudos.base.support.iservice.IBaseCrudService
+import io.kudos.ms.sys.common.api.ISysParamApi
 import io.kudos.ms.sys.common.vo.param.SysParamCacheItem
 import io.kudos.ms.sys.common.vo.param.SysParamRecord
 import io.kudos.ms.sys.core.model.po.SysParam
@@ -13,7 +14,7 @@ import io.kudos.ms.sys.core.model.po.SysParam
  * @since 1.0.0
  */
 //region your codes 1
-interface ISysParamService : IBaseCrudService<String, SysParam> {
+interface ISysParamService : IBaseCrudService<String, SysParam>, ISysParamApi {
 //endregion your codes 1
 
     //region your codes 2

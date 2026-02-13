@@ -35,7 +35,7 @@ open class AtSeataTest : SeataTestBase() {
 
     @Test
     fun datasource() {
-        val ds = SpringKit.getBean(DataSource::class)
+        val ds = SpringKit.getBean<DataSource>()
         ds.connection.use { conn ->
             println("conn = $conn , class = ${conn.javaClass.name}")
         }

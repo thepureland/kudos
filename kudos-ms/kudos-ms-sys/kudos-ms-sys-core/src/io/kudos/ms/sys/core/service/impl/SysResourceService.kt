@@ -3,6 +3,9 @@ package io.kudos.ms.sys.core.service.impl
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
+import io.kudos.ms.sys.common.enums.ResourceTypeEnum
+import io.kudos.ms.sys.common.vo.resource.BaseMenuTreeNode
+import io.kudos.ms.sys.common.vo.resource.MenuTreeNode
 import io.kudos.ms.sys.common.vo.resource.SysResourceCacheItem
 import io.kudos.ms.sys.common.vo.resource.SysResourceRecord
 import io.kudos.ms.sys.common.vo.resource.SysResourceSearchPayload
@@ -199,6 +202,49 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
             sysResourceHashCache.syncOnDelete(resource.id, resource.subSystemCode, resource.resourceTypeDictCode)
         }
         return count
+    }
+
+    override fun getResource(resourceId: String): SysResourceCacheItem? {
+        TODO("Not yet implemented")
+    }
+
+    override fun getResources(resourceIds: Collection<String>): Map<String, SysResourceCacheItem> {
+        TODO("Not yet implemented")
+    }
+
+    override fun getResources(
+        subSysDictCode: String,
+        resourceType: ResourceTypeEnum
+    ): List<SysResourceCacheItem> {
+        TODO("Not yet implemented")
+    }
+
+    override fun getSimpleMenus(subSysDictCode: String): List<BaseMenuTreeNode> {
+        TODO("Not yet implemented")
+    }
+
+    override fun getMenus(subSysDictCode: String): List<MenuTreeNode> {
+        TODO("Not yet implemented")
+    }
+
+    override fun getResourceId(subSysDictCode: String, url: String): String? {
+        TODO("Not yet implemented")
+    }
+
+    override fun getDirectChildrenResources(
+        subSysDictCode: String,
+        resourceType: ResourceTypeEnum,
+        parentId: String?
+    ): List<SysResourceCacheItem> {
+        TODO("Not yet implemented")
+    }
+
+    override fun getChildrenResources(
+        subSysDictCode: String,
+        resourceType: ResourceTypeEnum,
+        parentId: String
+    ): List<SysResourceCacheItem> {
+        TODO("Not yet implemented")
     }
 
     //endregion your codes 2

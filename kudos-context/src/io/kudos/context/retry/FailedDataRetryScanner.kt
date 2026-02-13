@@ -48,7 +48,7 @@ class FailedDataRetryScanner {
      */
     @jakarta.annotation.PostConstruct
     fun scheduleAll() {
-        val handlers = SpringKit.getBeansOfType(IFailedDataHandler::class)
+        val handlers = SpringKit.getBeansOfType<IFailedDataHandler<*>>()
         handlers.values.forEach(Consumer { handler: IFailedDataHandler<*>? ->
             taskScheduler.schedule({
                 lockRetry(

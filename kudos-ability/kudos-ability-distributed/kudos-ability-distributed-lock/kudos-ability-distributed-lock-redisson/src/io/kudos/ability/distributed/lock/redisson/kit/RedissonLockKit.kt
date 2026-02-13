@@ -100,7 +100,7 @@ object RedissonLockKit {
     @Synchronized
     private fun initLockBean() {
         if (lockBean == null) {
-            lockBean = SpringKit.getBean(RedissonLocker::class)
+            lockBean = SpringKit.getBean<RedissonLocker>()
         }
     }
 

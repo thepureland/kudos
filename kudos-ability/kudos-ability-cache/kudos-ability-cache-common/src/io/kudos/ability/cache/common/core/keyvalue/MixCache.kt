@@ -160,7 +160,7 @@ class MixCache(
     }
 
     fun pushMsgRedis(name: String, key: Any?) {
-        val cacheMessageHandlers = SpringKit.getBeansOfType(ICacheMessageHandler::class)
+        val cacheMessageHandlers = SpringKit.getBeansOfType<ICacheMessageHandler>()
         if (cacheMessageHandlers.isNotEmpty()) {
             cacheMessageHandlers.forEach { (_: String?, handler: ICacheMessageHandler) ->
                 val msg = CacheMessage(name, key)

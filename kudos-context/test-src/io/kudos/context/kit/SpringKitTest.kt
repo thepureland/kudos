@@ -20,7 +20,7 @@ internal open class SpringKitTest {
 
     @Test
     fun getBeanByType() {
-        assertNotNull(SpringKit.getBean(AnotherTestBean::class))
+        assertNotNull(SpringKit.getBean<AnotherTestBean>())
     }
 
     @Test
@@ -30,6 +30,6 @@ internal open class SpringKitTest {
 
     @Test
     fun getBeansOfType() {
-        assertEquals(2, SpringKit.getBeansOfType(ITestBean::class).size)
+        assertEquals(2, SpringKit.getBeansOfType<ITestBean>().size)
     }
 }

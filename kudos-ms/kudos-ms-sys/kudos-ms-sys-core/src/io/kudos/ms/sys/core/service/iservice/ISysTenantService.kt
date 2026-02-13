@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.core.service.iservice
 
 import io.kudos.base.support.iservice.IBaseCrudService
-import io.kudos.ms.sys.common.vo.tenant.SysTenantCacheItem
+import io.kudos.ms.sys.common.api.ISysTenantApi
 import io.kudos.ms.sys.common.vo.tenant.SysTenantRecord
 import io.kudos.ms.sys.core.model.po.SysTenant
 
@@ -14,41 +14,10 @@ import io.kudos.ms.sys.core.model.po.SysTenant
  * @since 1.0.0
  */
 //region your codes 1
-interface ISysTenantService : IBaseCrudService<String, SysTenant> {
+interface ISysTenantService : IBaseCrudService<String, SysTenant>, ISysTenantApi {
 //endregion your codes 1
 
     //region your codes 2
-
-    /**
-     * 根据id取得对应租户信息，并将结果缓存，查不到不缓存
-     *
-     * @param id 主键
-     * @return 租户信息
-     * @author K
-     * @since 1.0.0
-     */
-    fun getTenant(id: String): SysTenantCacheItem?
-
-    /**
-     * 根据id集合取得对应租户信息，并将结果缓存，查不到不缓存
-     *
-     * @param ids 租户id集合
-     * @return Map(租户id, SysTenantCacheItem)
-     * @author K
-     * @since 1.0.0
-     */
-    fun getTenants(ids: Collection<String>): Map<String, SysTenantCacheItem>
-
-
-    /**
-     * 根据子系统代码，取得对应租户信息(仅包括处于启用状态的)，并将结果缓存，查不到不缓存
-     *
-     * @param subSysDictCode 子系统代码
-     * @return List(租户信息)
-     * @author K
-     * @since 1.0.0
-     */
-    fun getTenants(subSysDictCode: String): List<SysTenantCacheItem>
 
     /**
      * 返回所有启用的租户

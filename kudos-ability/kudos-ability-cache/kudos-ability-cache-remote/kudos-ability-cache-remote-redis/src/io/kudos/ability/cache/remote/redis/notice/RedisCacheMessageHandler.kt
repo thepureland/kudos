@@ -148,7 +148,7 @@ open class RedisCacheMessageHandler(
         // 只有非当前节点的清理才需要删除本地缓存，本节点自己已经删除过了
         if (message.nodeId != nodeId) {
             if (message.cacheType == "hash") {
-                val sync = SpringKit.getBeansOfType(IHashCacheSync::class).values.firstOrNull()
+                val sync = SpringKit.getBeansOfType<IHashCacheSync>().values.firstOrNull()
                 sync?.let {
                     if (message.key == null) it.clearLocal(message.cacheName!!)
                     else it.evictLocal(message.cacheName!!, message.key!!)

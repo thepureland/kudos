@@ -133,7 +133,7 @@ internal class ConstraintConvertorFactoryTest {
         @get:Remote(checkClass = IBeanValidator::class, requestUrl = "")
         val remote: String?,
         
-        @get:DictCode(module = "test", dictType = "test")
+        @get:DictCode(atomicServiceCode = "test", dictType = "test")
         val dictCode: String?,
         
         @get:NotNull

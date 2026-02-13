@@ -19,7 +19,7 @@ import kotlin.time.Duration.Companion.seconds
  * @since 1.0.0
  */
 fun Application.installPlugins(ktorProperties: KtorProperties? = null) {
-    val properties = ktorProperties ?: SpringKit.getBean(KtorProperties::class)
+    val properties = ktorProperties ?: SpringKit.getBean<KtorProperties>()
     val pluginsProperties = properties.plugins
 
     // 序列化/反序列化

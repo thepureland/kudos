@@ -98,8 +98,8 @@ class DistributedCacheGuardAspect {
                 } else (if (tenantCacheable.cacheNames.isNotEmpty()) {
                     tenantCacheable.cacheNames[0]
                 } else null)
-            val cacheKey = SpringKit.getBean(TenantCacheKeyGenerator::class)
-                .generalNormalKey(pjp.target, method, tenantCacheable.suffix, *pjp.getArgs())
+            val cacheKey = SpringKit.getBean<TenantCacheKeyGenerator>()
+                .generalNormalKey(pjp.target, method, tenantCacheable.suffix, *pjp.args)
             return Pair(cacheName!!, cacheKey)
         }
     }

@@ -19,7 +19,7 @@ class RocketMqProperties {
 
     companion object {
         val instance: RocketMqProperties
-            get() = SpringKit.getBean(RocketMqProperties::class)
+            get() = SpringKit.getBean<RocketMqProperties>()
     }
 
 }
