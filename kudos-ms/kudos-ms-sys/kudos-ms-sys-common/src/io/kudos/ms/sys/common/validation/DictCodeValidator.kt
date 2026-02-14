@@ -3,7 +3,6 @@ package io.kudos.ms.sys.common.validation
 import io.kudos.base.bean.validation.constraint.annotations.DictCode
 import io.kudos.context.kit.SpringKit
 import io.kudos.ms.sys.common.api.ISysDictApi
-import io.kudos.ms.sys.common.vo.dict.DictTypeAndASCodePayload
 import jakarta.validation.ConstraintValidator
 import jakarta.validation.ConstraintValidatorContext
 
@@ -29,7 +28,7 @@ class DictCodeValidator : ConstraintValidator<DictCode, CharSequence?> {
         if (value == null) {
             return true
         }
-        val dictItems = dictApi.getDictItems(DictTypeAndASCodePayload(dictCode.dictType, dictCode.atomicServiceCode))
+        val dictItems = dictApi.getActiveDictItems(dictCode.dictType, dictCode.atomicServiceCode)
         val itemCodes = dictItems.map { it.itemCode!! }
         return itemCodes.contains(value)
     }

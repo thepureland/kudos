@@ -34,15 +34,17 @@ open class SysMicroServiceService : BaseCrudService<String, SysMicroService, Sys
     private lateinit var sysMicroServiceHashCache: SysMicroServiceHashCache
 
     override fun getAllActiveMicroService(): List<SysMicroServiceCacheItem> {
-        TODO("Not yet implemented")
+        val atomic = sysMicroServiceHashCache.listAtomicServices()
+        val nonAtomic = sysMicroServiceHashCache.getMicroServicesByType(false)
+        return (atomic + nonAtomic).filter { it.active == true }
     }
 
     override fun getAllActiveMicroServiceExcludeAtomicService(): List<SysMicroServiceCacheItem> {
-        TODO("Not yet implemented")
+        return sysMicroServiceHashCache.getMicroServicesByType(false).filter { it.active == true }
     }
 
     override fun getAllActiveAtomicService(): List<SysMicroServiceCacheItem> {
-        TODO("Not yet implemented")
+        return sysMicroServiceHashCache.listAtomicServices().filter { it.active == true }
     }
 
     override fun getMicroServiceByCode(code: String): SysMicroServiceCacheItem? {

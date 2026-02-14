@@ -3,8 +3,8 @@ package io.kudos.ms.sys.core.api
 import io.kudos.ms.sys.common.api.ISysTenantApi
 import io.kudos.ms.sys.common.vo.tenant.SysTenantCacheItem
 import io.kudos.ms.sys.core.service.iservice.ISysTenantService
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.stereotype.Service
+import jakarta.annotation.Resource
+import org.springframework.stereotype.Component
 
 
 /**
@@ -14,25 +14,25 @@ import org.springframework.stereotype.Service
  * @since 1.0.0
  */
 //region your codes 1
-@Service
+@Component
 open class SysTenantApi : ISysTenantApi {
 //endregion your codes 1
 
     //region your codes 2
 
-    @Autowired
-    private lateinit var sysTenantBiz: ISysTenantService
+    @Resource
+    protected lateinit var sysTenantService: ISysTenantService
 
     override fun getTenant(id: String): SysTenantCacheItem? {
-        return sysTenantBiz.getTenant(id)
+        return sysTenantService.getTenant(id)
     }
 
     override fun getTenants(ids: Collection<String>): Map<String, SysTenantCacheItem> {
-        return sysTenantBiz.getTenants(ids)
+        return sysTenantService.getTenants(ids)
     }
 
     override fun getTenants(subSysDictCode: String): List<SysTenantCacheItem> {
-        return sysTenantBiz.getTenants(subSysDictCode)
+        return sysTenantService.getTenants(subSysDictCode)
     }
 
     //endregion your codes 2

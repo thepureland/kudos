@@ -65,8 +65,8 @@ open class SysDictItemService : BaseCrudService<String, SysDictItem, SysDictItem
     }
 
 
-    override fun getItemsFromCache(module: String, type: String): List<SysDictItemCacheItem> {
-        return dictItemCacheHandler.getDictItems(module, type)
+    override fun getItemsFromCache(atomicServiceCode: String?, type: String): List<SysDictItemCacheItem> {
+        return dictItemCacheHandler.getDictItems(atomicServiceCode, type)
     }
 
     override fun transDictCode(module: String, type: String, code: String): String? {

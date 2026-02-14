@@ -4,12 +4,7 @@ import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.sys.common.enums.ResourceTypeEnum
-import io.kudos.ms.sys.common.vo.resource.BaseMenuTreeNode
-import io.kudos.ms.sys.common.vo.resource.MenuTreeNode
-import io.kudos.ms.sys.common.vo.resource.SysResourceCacheItem
-import io.kudos.ms.sys.common.vo.resource.SysResourceRecord
-import io.kudos.ms.sys.common.vo.resource.SysResourceSearchPayload
-import io.kudos.ms.sys.common.vo.resource.SysResourceTreeRecord
+import io.kudos.ms.sys.common.vo.resource.*
 import io.kudos.ms.sys.core.cache.SysResourceHashCache
 import io.kudos.ms.sys.core.dao.SysResourceDao
 import io.kudos.ms.sys.core.model.po.SysResource
@@ -205,30 +200,49 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
     }
 
     override fun getResource(resourceId: String): SysResourceCacheItem? {
-        TODO("Not yet implemented")
+        return sysResourceHashCache.getResourceById(resourceId)
     }
 
     override fun getResources(resourceIds: Collection<String>): Map<String, SysResourceCacheItem> {
-        TODO("Not yet implemented")
+        if (resourceIds.isEmpty()) return emptyMap()
+        return sysResourceHashCache.getResourcesByIds(resourceIds.toSet())
     }
 
     override fun getResources(
         subSysDictCode: String,
         resourceType: ResourceTypeEnum
     ): List<SysResourceCacheItem> {
-        TODO("Not yet implemented")
+        return sysResourceHashCache.getResourcesBySubSystemCodeAndType(subSysDictCode, resourceType.code)
     }
 
     override fun getSimpleMenus(subSysDictCode: String): List<BaseMenuTreeNode> {
-        TODO("Not yet implemented")
+        val resources = sysResourceHashCache.getResourcesBySubSystemCodeAndType(subSysDictCode, ResourceTypeEnum.MENU.code)
+        return buildMenuTree(resources) { item ->
+            BaseMenuTreeNode().apply {
+                id = item.id
+                title = item.name
+                parentId = item.parentId
+                seqNo = item.orderNum
+            }
+        }.sortedBy { it.seqNo }
     }
 
     override fun getMenus(subSysDictCode: String): List<MenuTreeNode> {
-        TODO("Not yet implemented")
+        val resources = sysResourceHashCache.getResourcesBySubSystemCodeAndType(subSysDictCode, ResourceTypeEnum.MENU.code)
+        return buildMenuTree(resources) { item ->
+            MenuTreeNode().apply {
+                id = item.id
+                title = item.name
+                parentId = item.parentId
+                seqNo = item.orderNum
+                index = item.url
+                icon = item.icon
+            }
+        }.sortedBy { it.seqNo }
     }
 
     override fun getResourceId(subSysDictCode: String, url: String): String? {
-        TODO("Not yet implemented")
+        return sysResourceHashCache.getResourceBySubSystemCodeAndUrl(subSysDictCode, url)?.id
     }
 
     override fun getDirectChildrenResources(
@@ -236,7 +250,8 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
         resourceType: ResourceTypeEnum,
         parentId: String?
     ): List<SysResourceCacheItem> {
-        TODO("Not yet implemented")
+        val list = sysResourceHashCache.getResourcesBySubSystemCodeAndType(subSysDictCode, resourceType.code)
+        return list.filter { it.parentId == parentId }
     }
 
     override fun getChildrenResources(
@@ -244,7 +259,33 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
         resourceType: ResourceTypeEnum,
         parentId: String
     ): List<SysResourceCacheItem> {
-        TODO("Not yet implemented")
+        val list = sysResourceHashCache.getResourcesBySubSystemCodeAndType(subSysDictCode, resourceType.code)
+        return list.filter { it.parentId == parentId }
+    }
+
+    /**
+     * 将资源列表组装为树，返回根节点列表（parentId 为 null 或空的节点，或父节点不在列表中的节点）。
+     */
+    private fun <T : BaseMenuTreeNode> buildMenuTree(
+        resources: List<SysResourceCacheItem>,
+        nodeFactory: (SysResourceCacheItem) -> T
+    ): List<T> {
+        val nodeMap = resources.associate { it.id to nodeFactory(it) }
+        val roots = mutableListOf<T>()
+        resources.sortedBy { it.orderNum ?: Int.MAX_VALUE }.forEach { item ->
+            val node = nodeMap[item.id] as T
+            if (item.parentId.isNullOrBlank()) {
+                roots.add(node)
+            } else {
+                val parent = nodeMap[item.parentId] as? BaseMenuTreeNode
+                if (parent != null) {
+                    parent.children.add(node)
+                } else {
+                    roots.add(node)
+                }
+            }
+        }
+        return roots
     }
 
     //endregion your codes 2
