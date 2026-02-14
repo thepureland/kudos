@@ -51,7 +51,9 @@ interface ISysMicroServiceApi {
      * @author K
      * @since 1.0.0
      */
-    fun getMicroServiceByCode(code: String): SysMicroServiceCacheItem?
+    fun getMicroServiceByCode(
+        code: String
+    ): SysMicroServiceCacheItem?
 
     /**
      * 返回指定父编码下的所有启用的原子服务

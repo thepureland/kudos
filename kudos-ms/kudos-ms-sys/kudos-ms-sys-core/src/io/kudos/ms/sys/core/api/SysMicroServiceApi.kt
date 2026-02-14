@@ -5,7 +5,7 @@ import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceCacheItem
 import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceRecord
 import io.kudos.ms.sys.core.service.iservice.ISysMicroServiceService
 import jakarta.annotation.Resource
-import org.springframework.stereotype.Service
+import org.springframework.stereotype.Component
 
 
 /**
@@ -15,14 +15,14 @@ import org.springframework.stereotype.Service
  * @since 1.0.0
  */
 //region your codes 1
-@Service
+@Component
 open class SysMicroServiceApi : ISysMicroServiceApi {
 //endregion your codes 1
 
     //region your codes 2
 
     @Resource
-    private lateinit var sysMicroServiceService: ISysMicroServiceService
+    protected lateinit var sysMicroServiceService: ISysMicroServiceService
 
     override fun getAllActiveMicroService(): List<SysMicroServiceCacheItem> {
         return sysMicroServiceService.getAllActiveMicroService()

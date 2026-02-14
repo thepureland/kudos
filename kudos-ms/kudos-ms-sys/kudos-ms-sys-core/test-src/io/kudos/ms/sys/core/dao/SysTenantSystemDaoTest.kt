@@ -4,8 +4,8 @@ import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbTestBase
 import jakarta.annotation.Resource
 import kotlin.test.Test
-import kotlin.test.assertNotNull
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**

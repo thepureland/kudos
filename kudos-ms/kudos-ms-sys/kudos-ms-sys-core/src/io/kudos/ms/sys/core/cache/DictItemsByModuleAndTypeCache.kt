@@ -48,7 +48,7 @@ open class DictItemsByModuleAndTypeCache : AbstractKeyValueCacheHandler<List<Sys
 
     override fun doReload(key: String): List<SysDictItemCacheItem> {
         require(key.contains(Consts.CACHE_KEY_DEFAULT_DELIMITER)) {
-            "缓存${CACHE_NAME}的key格式必须是：模块代码${Consts.CACHE_KEY_DEFAULT_DELIMITER}字典类型代码"
+            "缓存${CACHE_NAME}的key格式必须是：原子服务代码${Consts.CACHE_KEY_DEFAULT_DELIMITER}字典类型代码"
         }
         val moduleAndDictType = key.split(Consts.CACHE_KEY_DEFAULT_DELIMITER)
         return getSelf<DictItemsByModuleAndTypeCache>().getDictItems(
@@ -107,9 +107,9 @@ open class DictItemsByModuleAndTypeCache : AbstractKeyValueCacheHandler<List<Sys
         key = "#atomicServiceCode.concat('${Consts.CACHE_KEY_DEFAULT_DELIMITER}').concat(#dictType)",
         unless = "#result == null || #result.isEmpty()"
     )
-    open fun getDictItems(atomicServiceCode: String, dictType: String): List<SysDictItemCacheItem> {
+    open fun getDictItems(atomicServiceCode: String?, dictType: String): List<SysDictItemCacheItem> {
         if (CacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("缓存中不存在模块为${atomicServiceCode}且字典类型为${dictType}的字典项，从数据库中加载...")
+            log.debug("缓存中不存在原子服务为${atomicServiceCode}且字典类型为${dictType}的字典项，从数据库中加载...")
         }
         // 查出对应的dict
         val searchPayload = SysDictSearchPayload().apply {
@@ -120,12 +120,12 @@ open class DictItemsByModuleAndTypeCache : AbstractKeyValueCacheHandler<List<Sys
         val result = sysDictDao.search(searchPayload, SysDictRecord::class)
 
         return if (result.isEmpty()) {
-            log.warn("数据库中不存在模块为${atomicServiceCode}且字典类型为${dictType}的active为true字典项！")
+            log.warn("数据库中不存在原子服务为${atomicServiceCode}且字典类型为${dictType}的active为true字典项！")
             listOf()
         } else {
             // 查出dict id的所有字典项(按orderNum排序)
             val items = sysDictItemDao.searchActiveItemByDictId(result.first().id)
-            log.debug("数据库中加载到模块为${atomicServiceCode}且字典类型为${dictType}的字典项共${items.size}条.")
+            log.debug("数据库中加载到原子服务为${atomicServiceCode}且字典类型为${dictType}的字典项共${items.size}条.")
             items.map {
                 SysDictItemCacheItem().apply {
                     id = it.id

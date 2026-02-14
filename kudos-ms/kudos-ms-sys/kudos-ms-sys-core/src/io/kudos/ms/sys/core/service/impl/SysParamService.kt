@@ -3,7 +3,6 @@ package io.kudos.ms.sys.core.service.impl
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
-import io.kudos.ms.sys.common.vo.param.ParamNameAndASCodePayload
 import io.kudos.ms.sys.common.vo.param.SysParamCacheItem
 import io.kudos.ms.sys.common.vo.param.SysParamRecord
 import io.kudos.ms.sys.common.vo.param.SysParamSearchPayload
@@ -115,8 +114,11 @@ open class SysParamService : BaseCrudService<String, SysParam, SysParamDao>(), I
         return count
     }
 
-    override fun getParam(payload: ParamNameAndASCodePayload): SysParamCacheItem? {
-        TODO("Not yet implemented")
+    override fun getParam(
+        paramName: String,
+        atomicServiceCode: String
+    ): SysParamCacheItem? {
+        return paramByModuleAndNameCache.getParam(atomicServiceCode, paramName)
     }
 
     //endregion your codes 2

@@ -1,6 +1,7 @@
-package io.kudos.context.validation
+package io.kudos.context.init
 
 import io.kudos.base.bean.validation.support.ValidationContext
+import io.kudos.context.validation.CustomConstraintValidatorFactory
 import org.hibernate.validator.HibernateValidator
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Bean
@@ -9,7 +10,6 @@ import org.springframework.context.annotation.Primary
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean
 import org.springframework.validation.beanvalidation.MethodValidationPostProcessor
 
-
 /**
  * 验证器配置类
  *
@@ -17,7 +17,7 @@ import org.springframework.validation.beanvalidation.MethodValidationPostProcess
  * @since 1.0.0
  */
 @Configuration
-open class ValidatorConfiguration {
+open class ValidatorAutoConfiguration : IComponentInitializer {
 
     @Bean
     @Qualifier("mvcValidator")
@@ -36,5 +36,7 @@ open class ValidatorConfiguration {
         processor.setValidator(validator)
         return processor
     }
+
+    override fun getComponentName() = "kudos-bean-validator"
 
 }

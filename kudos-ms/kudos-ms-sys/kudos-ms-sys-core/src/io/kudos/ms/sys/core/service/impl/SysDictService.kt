@@ -3,7 +3,6 @@ package io.kudos.ms.sys.core.service.impl
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
-import io.kudos.ms.sys.common.vo.dict.DictTypeAndASCodePayload
 import io.kudos.ms.sys.common.vo.dict.SysDictCacheItem
 import io.kudos.ms.sys.common.vo.dict.SysDictPayload
 import io.kudos.ms.sys.common.vo.dict.SysDictRecord
@@ -36,7 +35,7 @@ open class SysDictService : BaseCrudService<String, SysDict, SysDictDao>(), ISys
     //region your codes 2
 
     @Autowired
-    private lateinit var sysDictItemBiz: ISysDictItemService
+    private lateinit var sysDictItemService: ISysDictItemService
 
     @Autowired
     private lateinit var dictCacheHandler: DictByIdCache
@@ -72,7 +71,7 @@ open class SysDictService : BaseCrudService<String, SysDict, SysDictDao>(), ISys
                 dictCacheHandler.syncOnInsert(id) // 同步缓存
                 id
             } else { // 添加SysDictItem
-                sysDictItemBiz.saveOrUpdate(payload)
+                sysDictItemService.saveOrUpdate(payload)
             }
         } else { // 更新
             if (payload.parentId.isNullOrBlank()) { // SysDict
@@ -94,7 +93,7 @@ open class SysDictService : BaseCrudService<String, SysDict, SysDictDao>(), ISys
                 }
 
             } else { // SysDictItem
-                sysDictItemBiz.saveOrUpdate(payload)
+                sysDictItemService.saveOrUpdate(payload)
             }
             payload.id
         }
@@ -116,7 +115,7 @@ open class SysDictService : BaseCrudService<String, SysDict, SysDictDao>(), ISys
             }
             success
         } else {
-            sysDictItemBiz.cascadeDeleteChildren(id)
+            sysDictItemService.cascadeDeleteChildren(id)
         }
     }
 
@@ -253,20 +252,41 @@ open class SysDictService : BaseCrudService<String, SysDict, SysDictDao>(), ISys
         return count
     }
 
-    override fun getDictItems(payload: DictTypeAndASCodePayload): List<SysDictItemCacheItem> {
-        TODO("Not yet implemented")
+    override fun getActiveDictItems(
+        dictType: String,
+        atomicServiceCode: String?
+    ): List<SysDictItemCacheItem> {
+        return sysDictItemService.getItemsFromCache(atomicServiceCode, dictType)
     }
 
-    override fun getDictItemMap(payload: DictTypeAndASCodePayload): LinkedHashMap<String, String> {
-        TODO("Not yet implemented")
+    override fun getActiveDictItemMap(
+        dictType: String,
+        atomicServiceCode: String?
+    ): LinkedHashMap<String, String> {
+        val items = sysDictItemService.getItemsFromCache(atomicServiceCode, dictType)
+        return LinkedHashMap<String, String>().apply {
+            items.filter { it.itemCode != null }.forEach { put(it.itemCode!!, it.itemName ?: "") }
+        }
     }
 
-    override fun batchGetDictItems(payloads: List<DictTypeAndASCodePayload>): Map<Pair<String, String>, List<SysDictItemCacheItem>> {
-        TODO("Not yet implemented")
+    override fun batchGetActiveDictItems(
+        dictTypeAndASCodePairs: List<Pair<String, String>>
+    ): Map<Pair<String, String>, List<SysDictItemCacheItem>> {
+        return dictTypeAndASCodePairs.associate { (dictType, atomicServiceCode) ->
+            Pair(atomicServiceCode, dictType) to sysDictItemService.getItemsFromCache(atomicServiceCode, dictType)
+        }
     }
 
-    override fun batchGetDictItemMap(payloads: List<DictTypeAndASCodePayload>): Map<Pair<String, String>, LinkedHashMap<String, String>> {
-        TODO("Not yet implemented")
+    override fun batchGetActiveDictItemMap(
+        dictTypeAndASCodePairs: List<Pair<String, String>>
+    ): Map<Pair<String, String>, LinkedHashMap<String, String>> {
+        return dictTypeAndASCodePairs.associate { (dictType, atomicServiceCode) ->
+            val items = sysDictItemService.getItemsFromCache(atomicServiceCode, dictType)
+            val map = LinkedHashMap<String, String>().apply {
+                items.filter { it.itemCode != null }.forEach { put(it.itemCode!!, it.itemName ?: "") }
+            }
+            Pair(atomicServiceCode, dictType) to map
+        }
     }
 
     //endregion your codes 2
