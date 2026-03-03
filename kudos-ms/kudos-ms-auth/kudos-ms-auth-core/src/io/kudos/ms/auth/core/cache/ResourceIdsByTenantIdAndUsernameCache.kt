@@ -1,7 +1,7 @@
 package io.kudos.ms.auth.core.cache
 
 import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
-import io.kudos.ability.cache.common.kit.CacheKit
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.context.support.Consts
 import io.kudos.ms.auth.core.dao.AuthRoleResourceDao
@@ -59,7 +59,7 @@ open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<
     }
 
     override fun reloadAll(clear: Boolean) {
-        if (!CacheKit.isCacheActive(CACHE_NAME)) {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.info("缓存未开启，不加载和缓存所有用户的资源ID！")
             return
         }
@@ -87,7 +87,7 @@ open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<
             }.distinct()
             
             if (resourceIds.isNotEmpty()) {
-                CacheKit.put(CACHE_NAME, getKey(tenantId, username), resourceIds)
+                KeyValueCacheKit.put(CACHE_NAME, getKey(tenantId, username), resourceIds)
                 log.debug("缓存了租户${user.tenantId}用户${user.username}的${resourceIds.size}条资源ID。")
             }
         }
@@ -106,7 +106,7 @@ open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<
         unless = "#result == null || #result.isEmpty()"
     )
     open fun getResourceIds(tenantId: String, username: String): Set<String> {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("缓存中不存在租户${tenantId}用户${username}的资源ID，从数据库中加载...")
         }
 
@@ -138,15 +138,15 @@ open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<
      * @param newUsername 新用户名（如果未变更则与旧值相同）
      */
     open fun syncOnUserUpdate(oldTenantId: String, oldUsername: String, newTenantId: String, newUsername: String) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("用户信息更新后，同步${CACHE_NAME}缓存...")
             
             // 踢除旧的缓存
-            CacheKit.evict(CACHE_NAME, getKey(oldTenantId, oldUsername))
+            KeyValueCacheKit.evict(CACHE_NAME, getKey(oldTenantId, oldUsername))
             
             // 如果用户名或租户改变，也要踢除新的缓存（如果存在）
             if (oldTenantId != newTenantId || oldUsername != newUsername) {
-                CacheKit.evict(CACHE_NAME, getKey(newTenantId, newUsername))
+                KeyValueCacheKit.evict(CACHE_NAME, getKey(newTenantId, newUsername))
             }
             
             log.debug("${CACHE_NAME}缓存同步完成。")
@@ -160,10 +160,10 @@ open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<
      * @param username 用户名
      */
     open fun syncOnRoleUserChange(tenantId: String, username: String) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("用户${username}的角色关系变更后，同步${CACHE_NAME}缓存...")
             evict(getKey(tenantId, username))
-            if (CacheKit.isWriteInTime(CACHE_NAME)) {
+            if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                 getSelf<ResourceIdsByTenantIdAndUsernameCache>().getResourceIds(tenantId, username)
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
@@ -176,7 +176,7 @@ open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<
      * @param roleId 角色ID
      */
     open fun syncOnRoleResourceChange(roleId: String) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("角色${roleId}的资源关系变更后，同步${CACHE_NAME}缓存...")
             
             val userIds = authRoleUserDao.searchUserIdsByRoleId(roleId)
@@ -185,7 +185,7 @@ open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<
                 users.forEach { user ->
                     val t = user.tenantId ?: return@forEach
                     val u = user.username ?: return@forEach
-                    CacheKit.evict(CACHE_NAME, getKey(t, u))
+                    KeyValueCacheKit.evict(CACHE_NAME, getKey(t, u))
                     log.debug("踢除了用户$u 的资源缓存。")
                 }
             }
@@ -200,9 +200,9 @@ open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<
      * @param username 用户名
      */
     open fun syncOnUserDelete(tenantId: String, username: String) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("删除租户${tenantId}用户${username}后，同步从${CACHE_NAME}缓存中踢除...")
-            CacheKit.evict(CACHE_NAME, getKey(tenantId, username))
+            KeyValueCacheKit.evict(CACHE_NAME, getKey(tenantId, username))
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
         // 同时从用户 Hash 缓存中移除该用户，确保后续 getResourceIds 时按 tenantId+username 查不到已删除用户，返回空列表

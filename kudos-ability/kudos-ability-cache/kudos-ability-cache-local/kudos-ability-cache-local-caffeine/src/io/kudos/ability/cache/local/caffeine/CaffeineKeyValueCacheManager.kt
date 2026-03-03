@@ -40,6 +40,11 @@ class CaffeineKeyValueCacheManager : AbstractKeyValueCacheManager<CaffeineCache>
             .forEach { key: Any -> cache.evict(key) }
     }
 
+    override fun existsKey(cacheName: String, key: Any): Boolean {
+        val cache = getCache(cacheName) ?: return false
+        return (cache as CaffeineCache).nativeCache.asMap().containsKey(key)
+    }
+
     private val log = LogFactory.getLog(this)
 
 }

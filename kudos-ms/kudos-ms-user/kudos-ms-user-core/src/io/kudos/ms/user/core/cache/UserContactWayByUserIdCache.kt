@@ -1,7 +1,7 @@
 package io.kudos.ms.user.core.cache
 
 import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
-import io.kudos.ability.cache.common.kit.CacheKit
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.user.common.vo.contact.UserContactWayCacheItem
@@ -46,7 +46,7 @@ open class UserContactWayByUserIdCache : AbstractKeyValueCacheHandler<List<UserC
     }
 
     override fun reloadAll(clear: Boolean) {
-        if (!CacheKit.isCacheActive(CACHE_NAME)) {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.info("缓存未开启，不加载和缓存所有启用状态的联系方式！")
             return
         }
@@ -69,7 +69,7 @@ open class UserContactWayByUserIdCache : AbstractKeyValueCacheHandler<List<UserC
         val grouped = results.groupBy { it.userId }
         grouped.forEach { (userId, items) ->
             if (userId.isNullOrBlank()) return@forEach
-            CacheKit.put(CACHE_NAME, getKey(userId), items)
+            KeyValueCacheKit.put(CACHE_NAME, getKey(userId), items)
         }
         log.debug("缓存了${results.size}条联系方式。")
     }
@@ -86,7 +86,7 @@ open class UserContactWayByUserIdCache : AbstractKeyValueCacheHandler<List<UserC
         unless = "#result == null || #result.isEmpty()"
     )
     open fun getContactWays(userId: String): List<UserContactWayCacheItem> {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("缓存中不存在用户${userId}的联系方式，从数据库中加载...")
         }
         val searchPayload = UserContactWaySearchPayload().apply {
@@ -111,11 +111,11 @@ open class UserContactWayByUserIdCache : AbstractKeyValueCacheHandler<List<UserC
      * @param id 联系方式id
      */
     open fun syncOnInsert(any: Any, id: String) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("新增id为${id}的联系方式后，同步${CACHE_NAME}缓存...")
             val userId = BeanKit.getProperty(any, UserContactWay::userId.name) as String
-            CacheKit.evict(CACHE_NAME, getKey(userId))
-            if (CacheKit.isWriteInTime(CACHE_NAME)) {
+            KeyValueCacheKit.evict(CACHE_NAME, getKey(userId))
+            if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                 getSelf<UserContactWayByUserIdCache>().getContactWays(userId)
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
@@ -129,11 +129,11 @@ open class UserContactWayByUserIdCache : AbstractKeyValueCacheHandler<List<UserC
      * @param id 联系方式id
      */
     open fun syncOnUpdate(any: Any, id: String) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("更新id为${id}的联系方式后，同步${CACHE_NAME}缓存...")
             val userId = BeanKit.getProperty(any, UserContactWay::userId.name) as String
-            CacheKit.evict(CACHE_NAME, getKey(userId))
-            if (CacheKit.isWriteInTime(CACHE_NAME)) {
+            KeyValueCacheKit.evict(CACHE_NAME, getKey(userId))
+            if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                 getSelf<UserContactWayByUserIdCache>().getContactWays(userId)
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
@@ -147,7 +147,7 @@ open class UserContactWayByUserIdCache : AbstractKeyValueCacheHandler<List<UserC
      * @param active 是否启用
      */
     open fun syncOnUpdateActive(id: String, active: Boolean) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("更新id为${id}的联系方式的启用状态后，同步缓存...")
             val contactWay = userContactWayDao.get(id)
             if (contactWay == null) {
@@ -156,8 +156,8 @@ open class UserContactWayByUserIdCache : AbstractKeyValueCacheHandler<List<UserC
             }
             val userId = contactWay.userId
             val key = getKey(userId)
-            CacheKit.evict(CACHE_NAME, key)
-            if (active && CacheKit.isWriteInTime(CACHE_NAME)) {
+            KeyValueCacheKit.evict(CACHE_NAME, key)
+            if (active && KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                 getSelf<UserContactWayByUserIdCache>().getContactWays(userId)
             }
             log.debug("缓存同步完成。")
@@ -171,10 +171,10 @@ open class UserContactWayByUserIdCache : AbstractKeyValueCacheHandler<List<UserC
      * @param id 联系方式id
      */
     open fun syncOnDelete(any: Any, id: String) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             val userId = BeanKit.getProperty(any, UserContactWay::userId.name) as String
             log.debug("删除id为${id}的联系方式后，同步从${CACHE_NAME}缓存中踢除...")
-            CacheKit.evict(CACHE_NAME, getKey(userId))
+            KeyValueCacheKit.evict(CACHE_NAME, getKey(userId))
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
     }
@@ -186,10 +186,10 @@ open class UserContactWayByUserIdCache : AbstractKeyValueCacheHandler<List<UserC
      * @param userIds 用户id集合
      */
     open fun syncOnBatchDelete(ids: Collection<String>, userIds: Collection<String>) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("批量删除id为${ids}的联系方式后，同步从${CACHE_NAME}缓存中踢除...")
             userIds.distinct().forEach {
-                CacheKit.evict(CACHE_NAME, getKey(it))
+                KeyValueCacheKit.evict(CACHE_NAME, getKey(it))
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
         }

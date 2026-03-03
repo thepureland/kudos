@@ -59,6 +59,52 @@ interface ISysCacheService : IBaseCrudService<String, SysCache> {
      */
     fun getAllActiveCaches(): List<SysCacheRecord>
 
+    /**
+     * 重载指定缓存名称和key的缓存项
+     *
+     * @param name 缓存名称
+     * @param key 缓存key
+     */
+    fun reload(name: String, key: String)
+
+    /**
+     * 重载指定缓存名称的所有缓存项
+     *
+     * @param name 缓存名称
+     */
+    fun reloadAll(name: String)
+
+    /**
+     * 踢除指定缓存名称和key的缓存项
+     *
+     * @param name 缓存名称
+     * @param key 缓存key
+     */
+    fun evict(name: String, key: String)
+
+    /**
+     * 踢除指定缓存名称的所有缓存项
+     *
+     * @param name 缓存名称
+     */
+    fun evictAll(name: String)
+
+    /**
+     * 检测指定名称和key的缓存项是否存在
+     *
+     * @param name 缓存名称
+     * @param key 缓存key
+     */
+    fun hasKey(name: String, key: String): Boolean
+
+    /**
+     * 获取指定名称和key的缓存项的值的信息
+     *
+     * @param name 缓存名称
+     * @param key 缓存key
+     */
+    fun getValueInfo(name: String, key: String): Any?
+
     //endregion your codes 2
 
 }

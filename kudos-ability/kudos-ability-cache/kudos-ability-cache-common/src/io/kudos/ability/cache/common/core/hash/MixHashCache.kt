@@ -61,6 +61,14 @@ internal class MixHashCache(
         return remoteOrLocal().getById(name, id, entityClass)
     }
 
+    override fun existsById(cacheName: String, id: Any): Boolean {
+        return when (strategy) {
+            CacheStrategy.SINGLE_LOCAL -> local?.existsById(name, id) == true
+            CacheStrategy.REMOTE -> remote?.existsById(name, id) == true
+            CacheStrategy.LOCAL_REMOTE -> local?.existsById(name, id) == true || remote?.existsById(name, id) == true
+        }
+    }
+
     override fun <PK, E : IIdEntity<PK>> save(
         cacheName: String,
         entity: E,
@@ -206,6 +214,18 @@ internal class MixHashCache(
             CacheStrategy.LOCAL_REMOTE -> {
                 requireNotNull(remote) { "remote hash cache is null" }.refreshAll(name, entities, filterableProperties, sortableProperties)
                 local?.refreshAll(name, entities, filterableProperties, sortableProperties)
+                pushHashNotify(null)
+            }
+        }
+    }
+
+    override fun clear(cacheName: String) {
+        when (strategy) {
+            CacheStrategy.SINGLE_LOCAL -> requireNotNull(local) { "local hash cache is null" }.clear(name)
+            CacheStrategy.REMOTE -> requireNotNull(remote) { "remote hash cache is null" }.clear(name)
+            CacheStrategy.LOCAL_REMOTE -> {
+                requireNotNull(remote) { "remote hash cache is null" }.clear(name)
+                local?.clear(name)
                 pushHashNotify(null)
             }
         }

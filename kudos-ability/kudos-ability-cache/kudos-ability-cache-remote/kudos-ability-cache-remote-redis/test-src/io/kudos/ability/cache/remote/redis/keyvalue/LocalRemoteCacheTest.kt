@@ -2,6 +2,8 @@ package io.kudos.ability.cache.remote.redis.keyvalue
 
 import io.kudos.ability.cache.common.core.keyvalue.MixCacheManager
 import io.kudos.ability.cache.common.enums.CacheStrategy
+import io.kudos.ability.cache.common.init.properties.CacheVersionConfig
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.test.common.init.EnableKudosTest
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.container.containers.RedisTestContainer
@@ -14,6 +16,8 @@ import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import java.util.concurrent.CountDownLatch
 import kotlin.test.Test
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 
 /**
@@ -53,6 +57,9 @@ internal class LocalRemoteCacheTest {
     @Resource
     private lateinit var mixCacheManager: MixCacheManager
 
+    @Resource
+    private lateinit var versionConfig: CacheVersionConfig
+
     private val CACHE_NAME = "test"
 
     @Test
@@ -82,6 +89,25 @@ internal class LocalRemoteCacheTest {
             latch.countDown()
         }.start()
         latch.await()
+    }
+
+    @Test
+    fun testExistsKey() {
+        assertFalse(KeyValueCacheKit.existsKey(CACHE_NAME, "non_existent_key"))
+
+        val key = "exists_local_remote_key"
+        cacheTestService.getData(key)
+        assertTrue(KeyValueCacheKit.existsKey(CACHE_NAME, key))
+
+        val keyLocalOnly = "exists_after_clear_remote_key"
+        cacheTestService.getData(keyLocalOnly)
+        mixCacheManager.clearLocal(CACHE_NAME, keyLocalOnly)
+        assertTrue(KeyValueCacheKit.existsKey(CACHE_NAME, keyLocalOnly))
+
+        val keyRemoteOnly = "exists_remote_only_key"
+        val realName = versionConfig.getFinalCacheName(CACHE_NAME)
+        remoteCacheManager.getCache(realName)!!.put(keyRemoteOnly, "remote_only_value")
+        assertTrue(KeyValueCacheKit.existsKey(CACHE_NAME, keyRemoteOnly))
     }
 
 }

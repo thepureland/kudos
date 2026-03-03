@@ -321,6 +321,25 @@ class MixCacheManager : AbstractCacheManager() {
         }
     }
 
+    /**
+     * 缓存中是否存在指定的 key（不依赖 value 是否为 null）
+     * 按策略委托本地/远程管理器；LOCAL_REMOTE 时任一级存在即视为存在。
+     *
+     * @param cacheName 缓存名称（逻辑名，内部会加版本前缀）
+     * @param key       缓存 key
+     * @return true：存在，false：不存在或缓存未配置
+     */
+    fun existsKey(cacheName: String, key: Any): Boolean {
+        val realName = requireVersionConfig().getFinalCacheName(cacheName)
+        val cache = super.getCache(realName) as? MixCache ?: return false
+        return when (cache.strategy) {
+            CacheStrategy.SINGLE_LOCAL -> (localCacheManager as IKeyValueCacheManager<*>).existsKey(realName, key)
+            CacheStrategy.REMOTE -> (remoteCacheManager as IKeyValueCacheManager<*>).existsKey(realName, key)
+            CacheStrategy.LOCAL_REMOTE -> (localCacheManager as IKeyValueCacheManager<*>).existsKey(realName, key) ||
+                (remoteCacheManager as IKeyValueCacheManager<*>).existsKey(realName, key)
+        }
+    }
+
     private val log = LogFactory.getLog(this)
 
 }

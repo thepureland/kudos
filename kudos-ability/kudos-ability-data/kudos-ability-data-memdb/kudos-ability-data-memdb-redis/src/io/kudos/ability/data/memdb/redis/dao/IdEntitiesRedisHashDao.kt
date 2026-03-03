@@ -108,6 +108,12 @@ open class IdEntitiesRedisHashDao(
     }
 
     /**
+     * 轻量级判断指定 id 是否存在于 Hash（使用 HEXISTS，不反序列化 value）。
+     */
+    open fun existsById(dataKeyPrefix: String, id: Any): Boolean =
+        getRedisTemplate().opsForHash<String, Any>().hasKey(dataKeyPrefix, id.toString())
+
+    /**
      * 按 id 删除一行，并从二级索引中移除。
      *
      * @param filterableProperties 建 Set 索引时用的属性名集合，需与保存时一致才能正确从索引移除
@@ -268,15 +274,11 @@ open class IdEntitiesRedisHashDao(
         filterableProperties: Set<String> = emptySet(),
         sortableProperties: Set<String> = emptySet()
     ) {
-        val dataKeyBytes = dataKeyPrefix.toByteArray(StandardCharsets.UTF_8)
         if (entities.isEmpty()) {
-            getRedisTemplate().execute { connection ->
-                connection.keyCommands().del(dataKeyBytes)
-                null
-            }
-            deleteAllIndexKeys(dataKeyPrefix)
+            clear(dataKeyPrefix)
             return
         }
+        val dataKeyBytes = dataKeyPrefix.toByteArray(StandardCharsets.UTF_8)
         val tmpKey = CacheKey.getCacheKey(dataKeyPrefix, "tmp", System.currentTimeMillis().toString())
         val tmpKeyBytes = tmpKey.toByteArray(StandardCharsets.UTF_8)
         val template = getRedisTemplate()
@@ -299,6 +301,18 @@ open class IdEntitiesRedisHashDao(
         }
         deleteAllIndexKeys(dataKeyPrefix)
         entities.forEach { save(dataKeyPrefix, it, filterableProperties, sortableProperties) }
+    }
+
+    /**
+     * 清除该 Hash 的所有数据（主数据及二级索引）。
+     */
+    open fun clear(dataKeyPrefix: String) {
+        val dataKeyBytes = dataKeyPrefix.toByteArray(StandardCharsets.UTF_8)
+        getRedisTemplate().execute { connection ->
+            connection.keyCommands().del(dataKeyBytes)
+            null
+        }
+        deleteAllIndexKeys(dataKeyPrefix)
     }
 
     /**

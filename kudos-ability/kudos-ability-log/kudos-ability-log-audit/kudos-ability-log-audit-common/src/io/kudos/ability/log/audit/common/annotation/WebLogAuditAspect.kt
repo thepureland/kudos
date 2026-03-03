@@ -42,7 +42,7 @@ class WebLogAuditAspect {
         }
         val signature = joinPoint.signature as org.aspectj.lang.reflect.MethodSignature
         val audit = signature.method.getAnnotation(WebAudit::class.java)
-        val logVo = AuditLogTool.createLogVo(audit, request, joinPoint)
+        val logVo = AuditLogTool.createLogVo(audit, request!!, joinPoint)
         LogAuditContext.set(logVo)
     }
 

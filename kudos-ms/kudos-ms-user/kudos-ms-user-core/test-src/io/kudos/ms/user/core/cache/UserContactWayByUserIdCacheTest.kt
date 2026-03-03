@@ -1,6 +1,6 @@
 package io.kudos.ms.user.core.cache
 
-import io.kudos.ability.cache.common.kit.CacheKit
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.ms.user.common.vo.contact.UserContactWayCacheItem
 import io.kudos.ms.user.core.dao.UserContactWayDao
 import io.kudos.ms.user.core.model.po.UserContactWay
@@ -84,7 +84,7 @@ class UserContactWayByUserIdCacheTest : RdbAndRedisCacheTestBase() {
 
         val key = cacheHandler.getKey(userId)
         @Suppress("UNCHECKED_CAST")
-        val cacheItems = CacheKit.getValue(cacheHandler.cacheName(), key) as List<UserContactWayCacheItem>?
+        val cacheItems = KeyValueCacheKit.getValue(cacheHandler.cacheName(), key) as List<UserContactWayCacheItem>?
         assertNotNull(cacheItems)
         assertTrue(cacheItems.any { it.id == contactWay.id })
         assertTrue(cacheHandler.getContactWays(userId).any { it.id == contactWay.id })
@@ -101,7 +101,7 @@ class UserContactWayByUserIdCacheTest : RdbAndRedisCacheTestBase() {
 
         val key = cacheHandler.getKey(contactWay.userId)
         @Suppress("UNCHECKED_CAST")
-        val cacheItems = CacheKit.getValue(cacheHandler.cacheName(), key) as List<UserContactWayCacheItem>?
+        val cacheItems = KeyValueCacheKit.getValue(cacheHandler.cacheName(), key) as List<UserContactWayCacheItem>?
         assertNotNull(cacheItems)
         assertEquals(newValue, cacheItems.first { it.id == id }.contactWayValue)
         assertEquals(newValue, cacheHandler.getContactWays(contactWay.userId).first { it.id == id }.contactWayValue)
@@ -115,14 +115,14 @@ class UserContactWayByUserIdCacheTest : RdbAndRedisCacheTestBase() {
         cacheHandler.syncOnUpdateActive(id, false)
         val userId = "7a1a0000-0000-0000-0000-000000000001"
         val key = cacheHandler.getKey(userId)
-        assertNull(CacheKit.getValue(cacheHandler.cacheName(), key))
+        assertNull(KeyValueCacheKit.getValue(cacheHandler.cacheName(), key))
         assertFalse(cacheHandler.getContactWays(userId).any { it.id == id })
 
         id = "8b1a0000-0000-0000-0000-000000000003"
         success = dao.updateProperties(id, mapOf(UserContactWay::active.name to true))
         assertTrue(success)
         cacheHandler.syncOnUpdateActive(id, true)
-        assertNotNull(CacheKit.getValue(cacheHandler.cacheName(), key))
+        assertNotNull(KeyValueCacheKit.getValue(cacheHandler.cacheName(), key))
         assertTrue(cacheHandler.getContactWays(userId).any { it.id == id })
     }
 
@@ -136,7 +136,7 @@ class UserContactWayByUserIdCacheTest : RdbAndRedisCacheTestBase() {
         cacheHandler.syncOnDelete(contactWay, id)
 
         val key = cacheHandler.getKey(contactWay.userId)
-        assertNull(CacheKit.getValue(cacheHandler.cacheName(), key))
+        assertNull(KeyValueCacheKit.getValue(cacheHandler.cacheName(), key))
         assertFalse(cacheHandler.getContactWays(contactWay.userId).any { it.id == id })
     }
 
@@ -153,7 +153,7 @@ class UserContactWayByUserIdCacheTest : RdbAndRedisCacheTestBase() {
         cacheHandler.syncOnBatchDelete(ids, listOf(userId1))
 
         val key = cacheHandler.getKey(userId1)
-        assertNull(CacheKit.getValue(cacheHandler.cacheName(), key))
+        assertNull(KeyValueCacheKit.getValue(cacheHandler.cacheName(), key))
     }
 
     private fun insertNewRecordToDb(

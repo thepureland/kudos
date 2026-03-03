@@ -34,10 +34,10 @@ open class BaseCrudController<PK : Any, B : IBaseCrudService<PK, *>, S : ListSea
      */
     @PostMapping("/saveOrUpdate")
     open fun saveOrUpdate(@RequestBody @Valid payload: F): PK {
-        return if (payload.id == "") {
-            biz.insert(payload)
+        return if (payload.id == "" || payload.id == 0) {
+            service.insert(payload)
         } else {
-            biz.update(payload)
+            service.update(payload)
             payload.id
         }
     }
@@ -52,7 +52,7 @@ open class BaseCrudController<PK : Any, B : IBaseCrudService<PK, *>, S : ListSea
      */
     @DeleteMapping("/delete")
     open fun delete(id: PK): Boolean {
-        return biz.deleteById(id)
+        return service.deleteById(id)
     }
 
     /**
@@ -65,7 +65,7 @@ open class BaseCrudController<PK : Any, B : IBaseCrudService<PK, *>, S : ListSea
      */
     @PostMapping("/batchDelete")
     open fun batchDelete(@RequestBody ids: List<PK>): Boolean {
-        return biz.batchDelete(ids) == ids.size
+        return service.batchDelete(ids) == ids.size
     }
 
 }

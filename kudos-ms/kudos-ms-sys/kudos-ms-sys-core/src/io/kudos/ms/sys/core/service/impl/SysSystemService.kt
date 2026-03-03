@@ -3,6 +3,8 @@ package io.kudos.ms.sys.core.service.impl
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
+import io.kudos.base.query.Criteria
+import io.kudos.base.query.eq
 import io.kudos.ms.sys.common.vo.system.SysSystemCacheItem
 import io.kudos.ms.sys.common.vo.system.SysSystemRecord
 import io.kudos.ms.sys.common.vo.system.SysSystemSearchPayload
@@ -62,13 +64,11 @@ open class SysSystemService : BaseCrudService<String, SysSystem, SysSystemDao>()
     }
 
     override fun getSubSystemsBySystemCode(systemCode: String): List<SysSystemRecord> {
-        val searchPayload = SysSystemSearchPayload().apply {
-            returnEntityClass = SysSystemRecord::class
-            active = true
-            parentCode = systemCode
-        }
-        @Suppress("UNCHECKED_CAST")
-        return dao.search(searchPayload, SysSystemRecord::class)
+        val criteria = Criteria.and(
+            SysSystem::active eq true,
+            SysSystem::parentCode eq systemCode
+        )
+        return dao.search<SysSystemRecord>(criteria)
     }
 
     @Transactional

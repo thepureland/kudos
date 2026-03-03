@@ -1,7 +1,7 @@
 package io.kudos.ms.user.core.cache
 
 import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
-import io.kudos.ability.cache.common.kit.CacheKit
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
@@ -55,7 +55,7 @@ open class RememberMeByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<U
     }
 
     override fun reloadAll(clear: Boolean) {
-        if (!CacheKit.isCacheActive(CACHE_NAME)) {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.info("缓存未开启，不加载和缓存所有记住我登录信息！")
             return
         }
@@ -79,7 +79,7 @@ open class RememberMeByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<U
             val tenantId = (row[UserLoginRememberMe::tenantId.name] as String?)?.trim() ?: return@forEach
             val username = (row[UserLoginRememberMe::username.name] as String?)?.trim() ?: return@forEach
             val cacheItem = buildCacheItem(row, username)
-            CacheKit.put(CACHE_NAME, getKey(tenantId, username), cacheItem)
+            KeyValueCacheKit.put(CACHE_NAME, getKey(tenantId, username), cacheItem)
         }
         log.debug("缓存了${rows.size}条记住我登录信息。")
     }
@@ -97,7 +97,7 @@ open class RememberMeByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<U
         unless = "#result == null"
     )
     open fun getRememberMe(tenantId: String, username: String): UserLoginRememberMeCacheItem? {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("缓存中不存在租户${tenantId}且用户名为${username}的记住我登录信息，从数据库中加载...")
         }
         val trimmedTenantId = tenantId.trim()
@@ -128,11 +128,11 @@ open class RememberMeByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<U
      * @param id 记住我登录id
      */
     open fun syncOnInsert(any: Any, id: String) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("新增id为${id}的记住我登录信息后，同步${CACHE_NAME}缓存...")
             val (tenantId, username) = resolveKeyParts(any, id) ?: return
-            CacheKit.evict(CACHE_NAME, getKey(tenantId, username))
-            if (CacheKit.isWriteInTime(CACHE_NAME)) {
+            KeyValueCacheKit.evict(CACHE_NAME, getKey(tenantId, username))
+            if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                 getSelf<RememberMeByTenantIdAndUsernameCache>().getRememberMe(tenantId, username)
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
@@ -146,11 +146,11 @@ open class RememberMeByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<U
      * @param id 记住我登录id
      */
     open fun syncOnUpdate(any: Any, id: String) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("更新id为${id}的记住我登录信息后，同步${CACHE_NAME}缓存...")
             val (tenantId, username) = resolveKeyParts(any, id) ?: return
-            CacheKit.evict(CACHE_NAME, getKey(tenantId, username))
-            if (CacheKit.isWriteInTime(CACHE_NAME)) {
+            KeyValueCacheKit.evict(CACHE_NAME, getKey(tenantId, username))
+            if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                 getSelf<RememberMeByTenantIdAndUsernameCache>().getRememberMe(tenantId, username)
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
@@ -164,10 +164,10 @@ open class RememberMeByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<U
      * @param id 记住我登录id
      */
     open fun syncOnDelete(any: Any, id: String) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("删除id为${id}的记住我登录信息后，同步从${CACHE_NAME}缓存中踢除...")
             val (tenantId, username) = resolveKeyParts(any, id) ?: return
-            CacheKit.evict(CACHE_NAME, getKey(tenantId, username))
+            KeyValueCacheKit.evict(CACHE_NAME, getKey(tenantId, username))
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
     }
@@ -179,10 +179,10 @@ open class RememberMeByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<U
      * @param tenantIdAndUsernames List<Pair<租户ID，用户名>>
      */
     open fun syncOnBatchDelete(ids: Collection<String>, tenantIdAndUsernames: List<Pair<String, String>>) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("批量删除id为${ids}的记住我登录信息后，同步从${CACHE_NAME}缓存中踢除...")
             tenantIdAndUsernames.forEach {
-                CacheKit.evict(CACHE_NAME, getKey(it.first, it.second))
+                KeyValueCacheKit.evict(CACHE_NAME, getKey(it.first, it.second))
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
         }

@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.core.cache
 
 import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
-import io.kudos.ability.cache.common.kit.CacheKit
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.sys.core.dao.SysTenantSystemDao
@@ -39,7 +39,7 @@ open class TenantIdsBySystemCodeCache : AbstractKeyValueCacheHandler<List<String
 
 
     override fun reloadAll(clear: Boolean) {
-        if (!CacheKit.isCacheActive(CACHE_NAME)) {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.info("缓存未开启，不加载和缓存所有系统下的租户id！")
             return
         }
@@ -55,7 +55,7 @@ open class TenantIdsBySystemCodeCache : AbstractKeyValueCacheHandler<List<String
 
         // 缓存租户
         subSysCodeAndTenantIdsMap.forEach {
-            CacheKit.put(CACHE_NAME, it.key, it.value)
+            KeyValueCacheKit.put(CACHE_NAME, it.key, it.value)
             log.debug("缓存了系统${it.key}的${it.value}条租户id。")
         }
     }
@@ -72,7 +72,7 @@ open class TenantIdsBySystemCodeCache : AbstractKeyValueCacheHandler<List<String
         unless = "#result == null || #result.isEmpty()"
     )
     open fun getTenantIds(systemCode: String): List<String> {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("缓存中不存在系统为${systemCode}的租户id，从数据库中加载...")
         }
 
@@ -94,11 +94,11 @@ open class TenantIdsBySystemCodeCache : AbstractKeyValueCacheHandler<List<String
      * @param id 主键
      */
     open fun syncOnInsert(any: Any, id: String) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("新增id为${id}的租户-系统关系后，同步${CACHE_NAME}缓存...")
             val systemCode = BeanKit.getProperty(any, SysTenantSystem::systemCode.name) as String
             evict(systemCode) // 踢除缓存，因为缓存的粒度为系统
-            if (CacheKit.isWriteInTime(CACHE_NAME)) {
+            if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                 getSelf<TenantIdsBySystemCodeCache>().getTenantIds(systemCode) // 重新缓存
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
@@ -112,11 +112,11 @@ open class TenantIdsBySystemCodeCache : AbstractKeyValueCacheHandler<List<String
      * @param systemCodes 系统编码集合
      */
     open fun syncOnDelete(tenantId: String, systemCodes: Collection<String>) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("删除租户id为${tenantId}的租户-系统关系后，同步从${CACHE_NAME}缓存中踢除...")
             systemCodes.forEach { systemCode ->
                 evict(systemCode) // 踢除缓存，缓存的粒度为系统
-                if (CacheKit.isWriteInTime(CACHE_NAME)) {
+                if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                     getSelf<TenantIdsBySystemCodeCache>().getTenantIds(systemCode) // 重新缓存
                 }
                 log.debug("${CACHE_NAME}缓存同步完成。")
@@ -131,11 +131,11 @@ open class TenantIdsBySystemCodeCache : AbstractKeyValueCacheHandler<List<String
      * @param systemCodes 系统编码集合
      */
     open fun syncOnBatchDelete(tenantIds: Collection<String>, systemCodes: Collection<String>) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("批量删除id为${tenantIds}的租户后，同步从${CACHE_NAME}缓存中踢除...")
             systemCodes.forEach { systemCode ->
-                CacheKit.evict(CACHE_NAME, systemCode) // 踢除缓存，缓存的粒度为系统
-                if (CacheKit.isWriteInTime(CACHE_NAME)) {
+                KeyValueCacheKit.evict(CACHE_NAME, systemCode) // 踢除缓存，缓存的粒度为系统
+                if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                     getSelf<TenantIdsBySystemCodeCache>().getTenantIds(systemCode) // 重新缓存
                 }
             }

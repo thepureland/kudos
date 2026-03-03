@@ -4,7 +4,7 @@ import io.kudos.ability.cache.common.aop.hash.HashCacheableByPrimary
 import io.kudos.ability.cache.common.aop.hash.HashCacheableBySecondary
 import io.kudos.ability.cache.common.batch.hash.HashBatchCacheableByPrimary
 import io.kudos.ability.cache.common.core.hash.AbstractHashCacheHandler
-import io.kudos.ability.cache.common.kit.CacheKit
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.sys.common.vo.system.SysSystemCacheItem
 import io.kudos.ms.sys.core.cache.SysSystemHashCache.Companion.CACHE_NAME
@@ -100,12 +100,12 @@ open class SysSystemHashCache : AbstractHashCacheHandler<SysSystemCacheItem>() {
      * @param clear 为 true 时先清空再写入；为 false 时覆盖写入
      */
     override fun reloadAll(clear: Boolean) {
-        if (!CacheKit.isCacheActive(CACHE_NAME)) {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.info("缓存未开启，不加载系统 Hash 缓存")
             return
         }
         val cache = hashCache()
-        if (clear) cache.refreshAll(CACHE_NAME, emptyList<SysSystemCacheItem>(), FILTERABLE_PROPERTIES, emptySet())
+        if (clear) cache.clear(CACHE_NAME)
         val list = sysSystemDao.searchAs<SysSystemCacheItem>()
         log.debug("从数据库加载 ${list.size} 条系统，刷新 Hash 缓存")
         cache.refreshAll(CACHE_NAME, list, FILTERABLE_PROPERTIES, emptySet())
@@ -113,29 +113,29 @@ open class SysSystemHashCache : AbstractHashCacheHandler<SysSystemCacheItem>() {
 
     /** 新增系统后同步：将指定 code 的实体从库加载并写入缓存。 */
     open fun syncOnInsert(code: String) {
-        if (!CacheKit.isCacheActive(CACHE_NAME) || !CacheKit.isWriteInTime(CACHE_NAME)) return
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME) || !KeyValueCacheKit.isWriteInTime(CACHE_NAME)) return
         val item = sysSystemDao.getAs<SysSystemCacheItem>(code) ?: return
         hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
     }
 
     /** 更新系统后同步：从库重新加载并写入缓存。 */
     open fun syncOnUpdate(code: String) {
-        if (!CacheKit.isCacheActive(CACHE_NAME)) return
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
         val item = sysSystemDao.getAs<SysSystemCacheItem>(code) ?: return
-        if (CacheKit.isWriteInTime(CACHE_NAME)) {
+        if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
             hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
         }
     }
 
     /** 删除系统后同步：从缓存中移除该 code。 */
     open fun syncOnDelete(code: String) {
-        if (!CacheKit.isCacheActive(CACHE_NAME)) return
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
         hashCache().deleteById(CACHE_NAME, code, SysSystemCacheItem::class, FILTERABLE_PROPERTIES, emptySet())
     }
 
     /** 批量删除系统后同步：从缓存中移除这些 code。 */
     open fun syncOnBatchDelete(codes: Collection<String>) {
-        if (!CacheKit.isCacheActive(CACHE_NAME)) return
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
         val cache = hashCache()
         codes.forEach { cache.deleteById(CACHE_NAME, it, SysSystemCacheItem::class, FILTERABLE_PROPERTIES, emptySet()) }
     }

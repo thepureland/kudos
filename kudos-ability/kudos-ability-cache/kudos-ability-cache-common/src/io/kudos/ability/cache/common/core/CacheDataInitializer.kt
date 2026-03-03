@@ -1,6 +1,6 @@
 package io.kudos.ability.cache.common.core
 
-import io.kudos.ability.cache.common.kit.CacheKit
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import org.springframework.beans.factory.SmartInitializingSingleton
 import org.springframework.beans.factory.config.BeanPostProcessor
 
@@ -85,7 +85,7 @@ class CacheDataInitializer : BeanPostProcessor, SmartInitializingSingleton {
     // 所有非懒加载的单例 bean 都实例化完成后，再加载缓存数据。防止类似flyway还未初始化数据库, 就可能有地方先去库里加载缓存的事情发生。
     override fun afterSingletonsInstantiated() {
         cacheHandlers.forEach {
-            val cacheConfig = CacheKit.getCacheConfig(it.cacheName())
+            val cacheConfig = KeyValueCacheKit.getCacheConfig(it.cacheName())
             if (cacheConfig != null && cacheConfig.writeOnBoot == true) {
                 it.reloadAll(false)
             }

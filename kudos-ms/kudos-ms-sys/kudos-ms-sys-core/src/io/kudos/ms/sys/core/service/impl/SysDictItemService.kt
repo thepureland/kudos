@@ -5,7 +5,6 @@ import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
-import io.kudos.base.query.sort.Order
 import io.kudos.base.support.payload.ListSearchPayload
 import io.kudos.ms.sys.common.vo.dict.SysDictPayload
 import io.kudos.ms.sys.common.vo.dict.SysDictTreeNode
@@ -15,14 +14,8 @@ import io.kudos.ms.sys.common.vo.dictitem.SysDictItemSearchPayload
 import io.kudos.ms.sys.common.vo.dictitem.SysDictItemTreeRecord
 import io.kudos.ms.sys.core.cache.DictItemsByModuleAndTypeCache
 import io.kudos.ms.sys.core.dao.SysDictItemDao
-import io.kudos.ms.sys.core.model.po.SysDict
 import io.kudos.ms.sys.core.model.po.SysDictItem
-import io.kudos.ms.sys.core.model.table.SysDictItems
-import io.kudos.ms.sys.core.model.table.SysDicts
 import io.kudos.ms.sys.core.service.iservice.ISysDictItemService
-import org.ktorm.dsl.asc
-import org.ktorm.dsl.map
-import org.ktorm.dsl.orderBy
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -170,31 +163,10 @@ open class SysDictItemService : BaseCrudService<String, SysDictItem, SysDictItem
                 }
             }
             isModule -> { // 加载SysDict数据
-                val criteria = Criteria.of(SysDicts.atomicServiceCode.name, OperatorEnum.EQ, parent)
-                val results = dao.search(criteria, Order.asc(SysDicts.dictType.name))
-                results.map {
-                    val treeNode = BeanKit.copyProperties(
-                        SysDictTreeNode::class, it, mapOf(
-                            SysDict::id.name to SysDictTreeNode::id.name,
-                            SysDict::dictType.name to SysDictTreeNode::code.name,
-                        )
-                    )
-                    treeNode
-                }
+                dao.searchDictNodesByAtomicServiceCode(parent)
             }
             else -> { // 加载SysDictItem数据
-                val searchPayload = SysDictItemSearchPayload().apply {
-                    this.parentId = parent
-                    this.active = if (activeOnly) true else null
-                }
-                dao.leftJoinSearch(searchPayload)
-                    .orderBy(SysDictItems.orderNum.asc())
-                    .map { row ->
-                        SysDictTreeNode().apply {
-                            id = row[SysDictItems.id] ?: ""
-                            code = row[SysDictItems.itemCode]
-                        }
-                    }
+                dao.searchDirectChildrenNodes(parent, activeOnly)
             }
         }
     }

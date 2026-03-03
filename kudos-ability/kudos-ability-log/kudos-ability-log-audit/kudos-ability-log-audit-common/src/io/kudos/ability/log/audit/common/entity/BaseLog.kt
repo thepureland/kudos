@@ -71,7 +71,7 @@ class BaseLog : Serializable {
     /**
      * 描述信息国际化参数值,${user.name}等
      */
-    private var objectParams: MutableMap<String?, LogParamVo?>? = null
+    private var objectParams: MutableMap<String, LogParamVo>? = null
 
     /**
      * 旧数据信息: 用于传输到明细转换
@@ -168,11 +168,11 @@ class BaseLog : Serializable {
      * @param param
      * @param value
      */
-    fun addParam(param: String?, value: Any?): BaseLog {
+    fun addParam(param: String, value: Any?): BaseLog {
         if (this.objectParams == null) {
             this.objectParams = HashMap()
         }
-        (this.objectParams ?: HashMap<String, LogParamVo>().also { this.objectParams = it })[param] = LogParamVo(param, value)
+        this.objectParams!![param] = LogParamVo(param, value)
         return this
     }
 
@@ -185,7 +185,7 @@ class BaseLog : Serializable {
         if (this.objectParams == null) {
             this.objectParams = HashMap()
         }
-        (this.objectParams ?: HashMap<String, LogParamVo>().also { this.objectParams = it })[param.name] = param
+        this.objectParams!![param.name!!] = param
         return this
     }
 

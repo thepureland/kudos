@@ -1,6 +1,6 @@
 package io.kudos.ability.cache.common.core.keyvalue
 
-import io.kudos.ability.cache.common.kit.CacheKit
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.lang.GenericKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criterion
@@ -34,7 +34,7 @@ abstract class AbstractByIdCacheHandler<PK : Any, T : IIdEntity<*>, DAO : IBaseR
         if (id is CharSequence) {
             require(id.isNotEmpty()) { log.error("从${cacheName()}缓存中获取${itemDesc()}时，id不能为空！") }
         }
-        if (CacheKit.isCacheActive(cacheName())) {
+        if (KeyValueCacheKit.isCacheActive(cacheName())) {
             log.debug("缓存中不存在id为${id}的${itemDesc()}，从数据库中加载...")
         }
         val result = dao.get(id, getCacheItemClass())
@@ -54,7 +54,7 @@ abstract class AbstractByIdCacheHandler<PK : Any, T : IIdEntity<*>, DAO : IBaseR
      */
     protected fun getByIds(ids: Collection<PK>): Map<String, T> {
         require(ids.isNotEmpty()) { log.error("批量从${cacheName()}缓存中获取${itemDesc()}时，id集合不能为空！") }
-        if (CacheKit.isCacheActive(cacheName())) {
+        if (KeyValueCacheKit.isCacheActive(cacheName())) {
             log.debug("${cacheName()}缓存中没有找到所有这些id为${ids}的${itemDesc()}，从数据库中加载...")
         }
         val searchPayload = ListSearchPayload().apply {
@@ -73,7 +73,7 @@ abstract class AbstractByIdCacheHandler<PK : Any, T : IIdEntity<*>, DAO : IBaseR
     }
 
     override fun reloadAll(clear: Boolean) {
-        if (!CacheKit.isCacheActive(cacheName())) {
+        if (!KeyValueCacheKit.isCacheActive(cacheName())) {
             log.info("缓存未开启，不加载和缓存所有${itemDesc()}信息！")
             return
         }
@@ -95,7 +95,7 @@ abstract class AbstractByIdCacheHandler<PK : Any, T : IIdEntity<*>, DAO : IBaseR
         results.forEach {
             val usableId = toUsableId(it.id)
             if (usableId != null) {
-                CacheKit.put(cacheName(), usableId, it)
+                KeyValueCacheKit.put(cacheName(), usableId, it)
             } else {
                 log.warn("跳过缓存空白id的${itemDesc()}记录: $it")
             }
@@ -110,7 +110,7 @@ abstract class AbstractByIdCacheHandler<PK : Any, T : IIdEntity<*>, DAO : IBaseR
      * @param id 主键
      */
     open fun syncOnInsert(id: PK) {
-        if (CacheKit.isCacheActive(cacheName()) && CacheKit.isWriteInTime(cacheName())) {
+        if (KeyValueCacheKit.isCacheActive(cacheName()) && KeyValueCacheKit.isWriteInTime(cacheName())) {
             log.debug("新增id为${id}的${itemDesc()}后，同步${cacheName()}缓存...")
             doReload(id.toString()) // 缓存
             log.debug("${cacheName()}缓存同步完成。")
@@ -123,10 +123,10 @@ abstract class AbstractByIdCacheHandler<PK : Any, T : IIdEntity<*>, DAO : IBaseR
      * @param id 主键
      */
     open fun syncOnUpdate(id: PK) {
-        if (CacheKit.isCacheActive(cacheName())) {
+        if (KeyValueCacheKit.isCacheActive(cacheName())) {
             log.debug("更新id为${id}的${itemDesc()}后，同步${cacheName()}缓存...")
-            CacheKit.evict(cacheName(), id) // 踢除缓存
-            if (CacheKit.isWriteInTime(cacheName())) {
+            KeyValueCacheKit.evict(cacheName(), id) // 踢除缓存
+            if (KeyValueCacheKit.isWriteInTime(cacheName())) {
                 doReload(id.toString()) // 缓存
             }
             log.debug("${cacheName()}缓存同步完成。")
@@ -139,9 +139,9 @@ abstract class AbstractByIdCacheHandler<PK : Any, T : IIdEntity<*>, DAO : IBaseR
      * @param id 主键
      */
     open fun syncOnDelete(id: PK) {
-        if (CacheKit.isCacheActive(cacheName())) {
+        if (KeyValueCacheKit.isCacheActive(cacheName())) {
             log.debug("删除id为${id}的${itemDesc()}后，同步${cacheName()}缓存...")
-            CacheKit.evict(cacheName(), id) // 踢除缓存
+            KeyValueCacheKit.evict(cacheName(), id) // 踢除缓存
             log.debug("${cacheName()}缓存同步完成。")
         }
     }
@@ -152,10 +152,10 @@ abstract class AbstractByIdCacheHandler<PK : Any, T : IIdEntity<*>, DAO : IBaseR
      * @param ids 主键集合
      */
     open fun syncOnBatchDelete(ids: Collection<String>) {
-        if (CacheKit.isCacheActive(cacheName())) {
+        if (KeyValueCacheKit.isCacheActive(cacheName())) {
             log.debug("批量删除id为${ids}的${itemDesc()}后，同步从${cacheName()}缓存中踢除...")
             ids.forEach {
-                CacheKit.evict(cacheName(), it) // 踢除角色缓存
+                KeyValueCacheKit.evict(cacheName(), it) // 踢除角色缓存
             }
             log.debug("${cacheName()}缓存同步完成。")
         }

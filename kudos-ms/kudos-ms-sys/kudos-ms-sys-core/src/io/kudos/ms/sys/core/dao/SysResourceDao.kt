@@ -29,7 +29,7 @@ open class SysResourceDao : BaseCrudDao<String, SysResource, SysResources>() {
             SysResource::subSystemCode eq subSystemCode,
             SysResource::url eq url,
         )
-        criteria.addAnd(SysResource::active eq null)
+        criteria.addAnd(SysResource::active eq true)
         return searchAs<SysResourceCacheItem>(criteria).firstOrNull()
     }
 
@@ -44,6 +44,7 @@ open class SysResourceDao : BaseCrudDao<String, SysResource, SysResources>() {
         val criteria = Criteria.and(
             SysResource::subSystemCode eq subSystemCode,
             SysResource::resourceTypeDictCode eq resourceTypeDictCode,
+            SysResource::active eq true,
         )
         return searchProperty(criteria, SysResource::id).filterNotNull()
     }

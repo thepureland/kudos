@@ -28,7 +28,7 @@ open class BaseReadOnlyController<PK : Any, B : IBaseReadOnlyService<PK, *>, S :
     : BaseController<F>() {
 
     @Resource
-    protected lateinit var biz: B
+    protected lateinit var service: B
 
     private var resultClass: KClass<F>? = null
     private var detailClass: KClass<D>? = null
@@ -44,7 +44,7 @@ open class BaseReadOnlyController<PK : Any, B : IBaseReadOnlyService<PK, *>, S :
     @PostMapping("/search")
     @Suppress("UNCHECKED_CAST")
     open fun search(@RequestBody searchPayload: S): Pair<List<R>, Int> {
-        return biz.pagingSearch(searchPayload) as Pair<List<R>, Int>
+        return service.pagingSearch(searchPayload) as Pair<List<R>, Int>
     }
 
     /**
@@ -60,7 +60,7 @@ open class BaseReadOnlyController<PK : Any, B : IBaseReadOnlyService<PK, *>, S :
         if (resultClass == null) {
             resultClass = GenericKit.getSuperClassGenricClass(this::class, 5) as KClass<F>
         }
-        return biz.get(id, requireNotNull(resultClass) { "resultClass is null" }) ?: throw ObjectNotFoundException("找不到记录！")
+        return service.get(id, requireNotNull(resultClass) { "resultClass is null" }) ?: throw ObjectNotFoundException("找不到记录！")
     }
 
     /**
@@ -76,7 +76,7 @@ open class BaseReadOnlyController<PK : Any, B : IBaseReadOnlyService<PK, *>, S :
         if (detailClass == null) {
             detailClass = GenericKit.getSuperClassGenricClass(this::class, 4) as KClass<D>
         }
-        return biz.get(id, requireNotNull(detailClass) { "detailClass is null" }) ?: throw ObjectNotFoundException("找不到记录！")
+        return service.get(id, requireNotNull(detailClass) { "detailClass is null" }) ?: throw ObjectNotFoundException("找不到记录！")
     }
 
 }

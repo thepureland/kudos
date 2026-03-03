@@ -78,6 +78,9 @@ class CaffeineHashCache : IHashCache, IHashCacheSync {
         return main(cacheName)[id.toString()] as? E
     }
 
+    override fun existsById(cacheName: String, id: Any): Boolean =
+        main(cacheName).containsKey(id.toString())
+
     override fun <PK, E : IIdEntity<PK>> save(
         cacheName: String,
         entity: E,
@@ -223,5 +226,9 @@ class CaffeineHashCache : IHashCache, IHashCacheSync {
     ) {
         clearLocal(cacheName)
         entities.forEach { save(cacheName, it, filterableProperties, sortableProperties) }
+    }
+
+    override fun clear(cacheName: String) {
+        clearLocal(cacheName)
     }
 }

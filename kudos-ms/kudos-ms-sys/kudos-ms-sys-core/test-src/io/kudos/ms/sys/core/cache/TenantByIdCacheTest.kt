@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.core.cache
 
-import io.kudos.ability.cache.common.kit.CacheKit
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.ms.sys.common.vo.tenant.SysTenantCacheItem
 import io.kudos.ms.sys.core.dao.SysTenantDao
 import io.kudos.ms.sys.core.model.po.SysTenant
@@ -75,7 +75,7 @@ class TenantByIdCacheTest : RdbAndRedisCacheTestBase() {
         cacheHandler.syncOnInsert(id)
 
         // 验证新记录是否在缓存中
-        val cacheItem1 = CacheKit.getValue(cacheHandler.cacheName(), id)
+        val cacheItem1 = KeyValueCacheKit.getValue(cacheHandler.cacheName(), id)
         assertNotNull(cacheItem1)
         val cacheItem2 = cacheHandler.getTenantById(id)
         assertNotNull(cacheItem2)
@@ -94,7 +94,7 @@ class TenantByIdCacheTest : RdbAndRedisCacheTestBase() {
         cacheHandler.syncOnUpdate(id)
 
         // 验证缓存中的记录
-        val cacheItem1 = CacheKit.getValue(cacheHandler.cacheName(), id) as SysTenantCacheItem?
+        val cacheItem1 = KeyValueCacheKit.getValue(cacheHandler.cacheName(), id) as SysTenantCacheItem?
         assertNotNull(cacheItem1)
         assertEquals(newTenantName, cacheItem1.name)
         val cacheItem2 = cacheHandler.getTenantById(id)
@@ -113,7 +113,7 @@ class TenantByIdCacheTest : RdbAndRedisCacheTestBase() {
         cacheHandler.syncOnDelete(id)
 
         // 验证缓存中有没有
-        val cacheItem1 = CacheKit.getValue(cacheHandler.cacheName(), id)
+        val cacheItem1 = KeyValueCacheKit.getValue(cacheHandler.cacheName(), id)
         assertNull(cacheItem1)
         val cacheItem2 = cacheHandler.getTenantById(id)
         assertNull(cacheItem2)
@@ -132,11 +132,11 @@ class TenantByIdCacheTest : RdbAndRedisCacheTestBase() {
         cacheHandler.syncOnBatchDelete(ids)
 
         // 验证缓存中有没有
-        var cacheItem = CacheKit.getValue(cacheHandler.cacheName(), id1)
+        var cacheItem = KeyValueCacheKit.getValue(cacheHandler.cacheName(), id1)
         assertNull(cacheItem)
         cacheItem = cacheHandler.getTenantById(id1)
         assertNull(cacheItem)
-        cacheItem = CacheKit.getValue(cacheHandler.cacheName(), id2)
+        cacheItem = KeyValueCacheKit.getValue(cacheHandler.cacheName(), id2)
         assertNull(cacheItem)
         cacheItem = cacheHandler.getTenantById(id2)
         assertNull(cacheItem)

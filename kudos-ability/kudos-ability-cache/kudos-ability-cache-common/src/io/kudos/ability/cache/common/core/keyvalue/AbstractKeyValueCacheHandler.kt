@@ -1,7 +1,7 @@
 package io.kudos.ability.cache.common.core.keyvalue
 
 import io.kudos.ability.cache.common.core.AbstractCacheHandler
-import io.kudos.ability.cache.common.kit.CacheKit
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.logger.LogFactory
 
 /**
@@ -31,7 +31,7 @@ abstract class AbstractKeyValueCacheHandler<T> : AbstractCacheHandler<T>() {
      */
     open fun value(key: String): T? {
         @Suppress("UNCHECKED_CAST")
-        return CacheKit.getValue(cacheName(), key) as T?
+        return KeyValueCacheKit.getValue(cacheName(), key) as T?
     }
 
     /**
@@ -40,7 +40,7 @@ abstract class AbstractKeyValueCacheHandler<T> : AbstractCacheHandler<T>() {
      * @param key 缓存的key
      */
     open fun evict(key: String) {
-        CacheKit.evict(cacheName(), key)
+        KeyValueCacheKit.evict(cacheName(), key)
         log.info("手动踢除名称为${cacheName()}，key为${key}的缓存。")
     }
 
@@ -48,7 +48,7 @@ abstract class AbstractKeyValueCacheHandler<T> : AbstractCacheHandler<T>() {
      * 清除所有缓存
      */
     open fun clear() {
-        CacheKit.clear(cacheName())
+        KeyValueCacheKit.clear(cacheName())
         log.info("手动清除名称为${cacheName()}的所有缓存。")
     }
 

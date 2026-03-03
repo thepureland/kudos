@@ -76,7 +76,7 @@ class DefaultCacheConfigProvider(itemsProperties: CacheItemsProperties) : ICache
     }
 
     override fun getHashCacheConfigs(): Map<String, CacheConfig> {
-        return getAllCacheConfigs().filter { (_, config) -> config.hash == true }
+        return getAllCacheConfigs().filter { (_, config) -> config.hash }
     }
 
     companion object {

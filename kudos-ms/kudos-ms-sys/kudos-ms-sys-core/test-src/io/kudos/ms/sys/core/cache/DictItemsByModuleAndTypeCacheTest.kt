@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.core.cache
 
-import io.kudos.ability.cache.common.kit.CacheKit
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.ms.sys.common.vo.dictitem.SysDictItemCacheItem
 import io.kudos.ms.sys.core.dao.SysDictItemDao
 import io.kudos.ms.sys.core.model.po.SysDictItem
@@ -111,7 +111,7 @@ class DictItemsByModuleAndTypeCacheTest : RdbAndRedisCacheTestBase() {
         // 验证新记录是否在缓存中
         val key = cacheHandler.getKey(dict.atomicServiceCode, dict.dictType)
         @Suppress("UNCHECKED_CAST") 
-        val cacheItems = CacheKit.getValue(cacheHandler.cacheName(), key) as List<SysDictItemCacheItem>
+        val cacheItems = KeyValueCacheKit.getValue(cacheHandler.cacheName(), key) as List<SysDictItemCacheItem>
         assert(cacheItems.any { it.id == dictItem.id })
         val atomicServiceCode = assertNotNull(dict.atomicServiceCode)
         val dictType = assertNotNull(dict.dictType)
@@ -135,7 +135,7 @@ class DictItemsByModuleAndTypeCacheTest : RdbAndRedisCacheTestBase() {
         // 验证缓存中的记录
         val key = cacheHandler.getKey(dict.atomicServiceCode, dict.dictType)
         @Suppress("UNCHECKED_CAST")
-        val cacheItems = CacheKit.getValue(cacheHandler.cacheName(), key) as List<SysDictItemCacheItem>
+        val cacheItems = KeyValueCacheKit.getValue(cacheHandler.cacheName(), key) as List<SysDictItemCacheItem>
         assertEquals(newName, cacheItems.first { it.id == id }.itemName)
         val atomicServiceCode = assertNotNull(dict.atomicServiceCode)
         val dictType = assertNotNull(dict.dictType)
@@ -154,7 +154,7 @@ class DictItemsByModuleAndTypeCacheTest : RdbAndRedisCacheTestBase() {
         cacheHandler.syncOnUpdateActive(id)
         var key = cacheHandler.getKey(dict.atomicServiceCode, dict.dictType)
         @Suppress("UNCHECKED_CAST")
-        var cacheItems1 = CacheKit.getValue(cacheHandler.cacheName(), key) as List<SysDictItemCacheItem>
+        var cacheItems1 = KeyValueCacheKit.getValue(cacheHandler.cacheName(), key) as List<SysDictItemCacheItem>
         assertFalse(cacheItems1.any { it.id == id })
         var atomicServiceCode = assertNotNull(dict.atomicServiceCode)
         var dictType = assertNotNull(dict.dictType)
@@ -170,7 +170,7 @@ class DictItemsByModuleAndTypeCacheTest : RdbAndRedisCacheTestBase() {
         cacheHandler.syncOnUpdateActive(id)
         key = cacheHandler.getKey(dict.atomicServiceCode, dict.dictType)
         @Suppress("UNCHECKED_CAST")
-        cacheItems1 = CacheKit.getValue(cacheHandler.cacheName(), key) as List<SysDictItemCacheItem>
+        cacheItems1 = KeyValueCacheKit.getValue(cacheHandler.cacheName(), key) as List<SysDictItemCacheItem>
         assert(cacheItems1.any { it.id == id })
         atomicServiceCode = assertNotNull(dict.atomicServiceCode)
         dictType = assertNotNull(dict.dictType)
@@ -194,7 +194,7 @@ class DictItemsByModuleAndTypeCacheTest : RdbAndRedisCacheTestBase() {
         // 验证缓存中有没有
         val key = cacheHandler.getKey(dict.atomicServiceCode, dict.dictType)
         @Suppress("UNCHECKED_CAST")
-        val cacheItems1 = CacheKit.getValue(cacheHandler.cacheName(), key) as List<SysDictItemCacheItem>?
+        val cacheItems1 = KeyValueCacheKit.getValue(cacheHandler.cacheName(), key) as List<SysDictItemCacheItem>?
         assert(cacheItems1 == null || !cacheItems1.any { it.id == id })
         val atomicServiceCode = assertNotNull(dict.atomicServiceCode)
         val dictType = assertNotNull(dict.dictType)

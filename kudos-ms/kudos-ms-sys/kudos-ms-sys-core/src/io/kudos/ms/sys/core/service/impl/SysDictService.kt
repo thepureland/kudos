@@ -11,10 +11,8 @@ import io.kudos.ms.sys.common.vo.dictitem.SysDictItemCacheItem
 import io.kudos.ms.sys.core.cache.DictByIdCache
 import io.kudos.ms.sys.core.dao.SysDictDao
 import io.kudos.ms.sys.core.model.po.SysDict
-import io.kudos.ms.sys.core.model.table.SysDictItems
 import io.kudos.ms.sys.core.service.iservice.ISysDictItemService
 import io.kudos.ms.sys.core.service.iservice.ISysDictService
-import org.ktorm.dsl.eq
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -102,11 +100,7 @@ open class SysDictService : BaseCrudService<String, SysDict, SysDictDao>(), ISys
     @Transactional
     override fun delete(id: String, isDict: Boolean): Boolean {
         return if (isDict) {
-            dao.batchDeleteWhen { column, _ ->
-                if (column.name == SysDictItems.dictId.name) {
-                    column.eq(id)
-                } else null
-            }
+            dao.deleteDictItemsByDictId(id)
             val success = dao.deleteById(id)
             if (success) {
                 dictCacheHandler.syncOnDelete(id) // 同步缓存

@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.core.cache
 
 import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
-import io.kudos.ability.cache.common.kit.CacheKit
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.context.support.Consts
@@ -47,11 +47,12 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
             "缓存${CACHE_NAME}的key格式非法!"
         }
         val parts = key.split(Consts.CACHE_KEY_DEFAULT_DELIMITER)
-        return getSelf<AccessRuleIpsBySubSysAndTenantIdCache>().getAccessRuleIps(parts[0], parts[1])
+        val tenantId = parts.getOrNull(1)?.takeIf { it != "null" }
+        return getSelf<AccessRuleIpsBySubSysAndTenantIdCache>().getAccessRuleIps(parts[0], tenantId)
     }
 
     override fun reloadAll(clear: Boolean) {
-        if (!CacheKit.isCacheActive(CACHE_NAME)) {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.info("缓存未开启，不加载和缓存所有启用状态的ip访问规则！")
             return
         }
@@ -75,7 +76,7 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
         }.groupBy({ it.first }, { it.second })
         ipRulesMap.forEach { (key, ipRules) ->
             val cacheItems = mapToCacheItems(ipRules)
-            CacheKit.put(CACHE_NAME, key, cacheItems)
+            KeyValueCacheKit.put(CACHE_NAME, key, cacheItems)
         }
         log.debug("缓存了ip访问规则共${results.size}条。")
     }
@@ -95,7 +96,7 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
         unless = "#result == null"
     )
     open fun getAccessRuleIps(systemCode: String, tenantId: String? = null): List<SysAccessRuleIpCacheItem> {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug(
                 "${CACHE_NAME}缓存中不存在系统编码为${systemCode}且租户id为${tenantId}的ip访问规则，从数据库中加载..."
             )
@@ -125,7 +126,7 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
      * @param ipRuleId ip访问规则id
      */
     open fun syncOnInsert(any: Any, ipRuleId: String) {
-        if (CacheKit.isCacheActive(CACHE_NAME) && CacheKit.isWriteInTime(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME) && KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
             log.debug("新增id为${ipRuleId}的ip访问规则后，同步${CACHE_NAME}缓存...")
 
             val props = BeanKit.extract(any)
@@ -133,10 +134,10 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
             val tenantId = props[SysAccessRule::tenantId.name] as String?
 
             // 踢除ip访问规则缓存
-            CacheKit.evict(CACHE_NAME, getKey(systemCode, tenantId))
+            KeyValueCacheKit.evict(CACHE_NAME, getKey(systemCode, tenantId))
 
             val active = props[SysAccessRule::active.name] as Boolean?
-            if (CacheKit.isWriteInTime(CACHE_NAME) && (active == null || active)) {
+            if (KeyValueCacheKit.isWriteInTime(CACHE_NAME) && (active == null || active)) {
                 // 缓存
                 getSelf<AccessRuleIpsBySubSysAndTenantIdCache>().getAccessRuleIps(systemCode, tenantId)
                 log.debug("${CACHE_NAME}缓存同步完成。")
@@ -153,17 +154,17 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
      * @param id ip访问规则id
      */
     open fun syncOnUpdate(any: Any, id: String) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("更新id为${id}的ip访问规则后，同步${CACHE_NAME}缓存...")
             val props = BeanKit.extract(any)
             val systemCode = props[SysAccessRule::systemCode.name] as String
             val tenantId = props[SysAccessRule::tenantId.name] as String?
 
             // 踢除ip访问规则缓存
-            CacheKit.evict(CACHE_NAME, getKey(systemCode, tenantId))
+            KeyValueCacheKit.evict(CACHE_NAME, getKey(systemCode, tenantId))
 
             // 重新缓存
-            if (CacheKit.isWriteInTime(CACHE_NAME)) {
+            if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                 val active = props[SysAccessRule::active.name] as Boolean?
                 if (active == null || active) {
                     getSelf<AccessRuleIpsBySubSysAndTenantIdCache>().getAccessRuleIps(systemCode, tenantId)
@@ -180,7 +181,7 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
      * @param active 是否启用
      */
     open fun syncOnUpdateActive(ipRuleId: String, active: Boolean) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("更新id为${ipRuleId}的ip访问规则的启用状态后，同步${CACHE_NAME}缓存...")
             val sysAccessRuleIp = sysAccessRuleIpDao.get(ipRuleId)
             if (sysAccessRuleIp == null) {
@@ -195,10 +196,10 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
             }
 
             // 踢除ip访问规则缓存
-            CacheKit.evict(CACHE_NAME, getKey(sysAccessRule.systemCode, sysAccessRule.tenantId))
+            KeyValueCacheKit.evict(CACHE_NAME, getKey(sysAccessRule.systemCode, sysAccessRule.tenantId))
 
             // 重新缓存
-            if (CacheKit.isWriteInTime(CACHE_NAME)) {
+            if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                 getSelf<AccessRuleIpsBySubSysAndTenantIdCache>().getAccessRuleIps(
                     sysAccessRule.systemCode, sysAccessRule.tenantId
                 )
@@ -213,7 +214,7 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
      * @param ipRuleId ip访问规则id
      */
     open fun syncOnDelete(ipRuleId: String) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("删除id为${ipRuleId}的ip访问规则后，同步从${CACHE_NAME}缓存中踢除...")
             val sysAccessRuleIp = sysAccessRuleIpDao.get(ipRuleId)
             if (sysAccessRuleIp == null) {
@@ -228,14 +229,26 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
             }
 
             // 踢除缓存
-            CacheKit.evict(CACHE_NAME, getKey(sysAccessRule.systemCode, sysAccessRule.tenantId))
-            if (CacheKit.isWriteInTime(CACHE_NAME)) {
+            KeyValueCacheKit.evict(CACHE_NAME, getKey(sysAccessRule.systemCode, sysAccessRule.tenantId))
+            if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                 // 重新缓存
                 getSelf<AccessRuleIpsBySubSysAndTenantIdCache>().getAccessRuleIps(
                     sysAccessRule.systemCode, sysAccessRule.tenantId
                 )
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
+        }
+    }
+
+    /**
+     * 依据系统编码与租户维度删除并回填缓存，适用于删除前已拿到维度键的场景。
+     */
+    open fun syncOnDeleteBySystemAndTenant(systemCode: String, tenantId: String?) {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
+        val cacheKey = getKey(systemCode, tenantId)
+        KeyValueCacheKit.evict(CACHE_NAME, cacheKey)
+        if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
+            getSelf<AccessRuleIpsBySubSysAndTenantIdCache>().getAccessRuleIps(systemCode, tenantId)
         }
     }
 

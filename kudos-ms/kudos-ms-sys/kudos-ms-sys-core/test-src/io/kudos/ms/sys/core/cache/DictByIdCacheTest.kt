@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.core.cache
 
-import io.kudos.ability.cache.common.kit.CacheKit
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.ms.sys.common.vo.dict.SysDictCacheItem
 import io.kudos.ms.sys.core.dao.SysDictDao
 import io.kudos.ms.sys.core.model.po.SysDict
@@ -77,7 +77,7 @@ class DictByIdCacheTest : RdbAndRedisCacheTestBase() {
         cacheHandler.syncOnInsert(id)
 
         // 验证新记录是否在缓存中
-        val cacheItem1 = CacheKit.getValue(cacheHandler.cacheName(), id)
+        val cacheItem1 = KeyValueCacheKit.getValue(cacheHandler.cacheName(), id)
         assertNotNull(cacheItem1)
         val cacheItem2 = cacheHandler.getDictById(id)
         assertNotNull(cacheItem2)
@@ -96,7 +96,7 @@ class DictByIdCacheTest : RdbAndRedisCacheTestBase() {
         cacheHandler.syncOnUpdate(id)
 
         // 验证缓存中的记录
-        val cacheItem1 = CacheKit.getValue(cacheHandler.cacheName(), id) as SysDictCacheItem?
+        val cacheItem1 = KeyValueCacheKit.getValue(cacheHandler.cacheName(), id) as SysDictCacheItem?
         assertNotNull(cacheItem1)
         assertEquals(newDictName, cacheItem1.dictName)
         val cacheItem2 = cacheHandler.getDictById(id)
@@ -115,7 +115,7 @@ class DictByIdCacheTest : RdbAndRedisCacheTestBase() {
         cacheHandler.syncOnDelete(id)
 
         // 验证缓存中有没有
-        val cacheItem1 = CacheKit.getValue(cacheHandler.cacheName(), id)
+        val cacheItem1 = KeyValueCacheKit.getValue(cacheHandler.cacheName(), id)
         assertNull(cacheItem1)
         val cacheItem2 = cacheHandler.getDictById(id)
         assertNull(cacheItem2)
@@ -134,11 +134,11 @@ class DictByIdCacheTest : RdbAndRedisCacheTestBase() {
         cacheHandler.syncOnBatchDelete(ids)
 
         // 验证缓存中有没有
-        var cacheItem = CacheKit.getValue(cacheHandler.cacheName(), id1)
+        var cacheItem = KeyValueCacheKit.getValue(cacheHandler.cacheName(), id1)
         assertNull(cacheItem)
         cacheItem = cacheHandler.getDictById(id1)
         assertNull(cacheItem)
-        cacheItem = CacheKit.getValue(cacheHandler.cacheName(), id2)
+        cacheItem = KeyValueCacheKit.getValue(cacheHandler.cacheName(), id2)
         assertNull(cacheItem)
         cacheItem = cacheHandler.getDictById(id2)
         assertNull(cacheItem)

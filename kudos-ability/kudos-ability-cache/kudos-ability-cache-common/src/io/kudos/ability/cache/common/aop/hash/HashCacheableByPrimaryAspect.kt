@@ -1,7 +1,7 @@
 package io.kudos.ability.cache.common.aop.hash
 
 import io.kudos.ability.cache.common.core.hash.MixHashCacheManager
-import io.kudos.ability.cache.common.kit.CacheKit
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.ability.cache.common.kit.HashCacheKit
 import io.kudos.base.support.IIdEntity
 import org.aspectj.lang.ProceedingJoinPoint
@@ -59,7 +59,7 @@ class HashCacheableByPrimaryAspect {
         val entityClass = resolveEntityClass(ann.entityClass)
 
         val hashCache = HashCacheKit.getHashCache(cacheName)
-        if (CacheKit.isCacheActive(cacheName)) {
+        if (KeyValueCacheKit.isCacheActive(cacheName)) {
             @Suppress("UNCHECKED_CAST")
             val cached = hashCache.getById(cacheName, keyValue, entityClass)
             if (cached != null) return cached
@@ -75,7 +75,7 @@ class HashCacheableByPrimaryAspect {
             if (unlessResult == true) return result
         }
 
-        if (result is IIdEntity<*> && CacheKit.isCacheActive(cacheName) && CacheKit.isWriteInTime(cacheName)) {
+        if (result is IIdEntity<*> && KeyValueCacheKit.isCacheActive(cacheName) && KeyValueCacheKit.isWriteInTime(cacheName)) {
             val filterable = ann.filterableProperties.toSet()
             val sortable = ann.sortableProperties.toSet()
             @Suppress("UNCHECKED_CAST")

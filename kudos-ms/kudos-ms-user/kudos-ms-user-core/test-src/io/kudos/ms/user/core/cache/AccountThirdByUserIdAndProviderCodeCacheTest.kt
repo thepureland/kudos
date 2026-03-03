@@ -1,6 +1,6 @@
 package io.kudos.ms.user.core.cache
 
-import io.kudos.ability.cache.common.kit.CacheKit
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.ms.user.common.vo.user.UserAccountThirdCacheItem
 import io.kudos.ms.user.core.dao.UserAccountThirdDao
 import io.kudos.ms.user.core.model.po.UserAccountThird
@@ -90,7 +90,7 @@ class AccountThirdByUserIdAndProviderCodeCacheTest : RdbAndRedisCacheTestBase() 
 
         val key = cacheHandler.getKey(userId, "DING")
         @Suppress("UNCHECKED_CAST")
-        val cacheItem = CacheKit.getValue(cacheHandler.cacheName(), key) as UserAccountThirdCacheItem?
+        val cacheItem = KeyValueCacheKit.getValue(cacheHandler.cacheName(), key) as UserAccountThirdCacheItem?
         assertNotNull(cacheItem)
         assertEquals(accountThird.id, cacheItem.id)
     }
@@ -106,7 +106,7 @@ class AccountThirdByUserIdAndProviderCodeCacheTest : RdbAndRedisCacheTestBase() 
 
         val key = cacheHandler.getKey(accountThird.userId, accountThird.accountProviderDictCode)
         @Suppress("UNCHECKED_CAST")
-        val cacheItem = CacheKit.getValue(cacheHandler.cacheName(), key) as UserAccountThirdCacheItem?
+        val cacheItem = KeyValueCacheKit.getValue(cacheHandler.cacheName(), key) as UserAccountThirdCacheItem?
         assertNotNull(cacheItem)
         assertEquals(newEmail, cacheItem.externalEmail)
     }
@@ -119,7 +119,7 @@ class AccountThirdByUserIdAndProviderCodeCacheTest : RdbAndRedisCacheTestBase() 
         cacheHandler.syncOnUpdateActive(id, false)
         val userId = "9a1a0000-0000-0000-0000-000000000001"
         val key = cacheHandler.getKey(userId, "QQ")
-        assertNull(CacheKit.getValue(cacheHandler.cacheName(), key))
+        assertNull(KeyValueCacheKit.getValue(cacheHandler.cacheName(), key))
         assertNull(cacheHandler.getAccountThird(userId, "QQ"))
 
         id = "9b1a0000-0000-0000-0000-000000000003"
@@ -127,7 +127,7 @@ class AccountThirdByUserIdAndProviderCodeCacheTest : RdbAndRedisCacheTestBase() 
         assertTrue(success)
         cacheHandler.syncOnUpdateActive(id, true)
         val key2 = cacheHandler.getKey(userId, "GITHUB")
-        assertNotNull(CacheKit.getValue(cacheHandler.cacheName(), key2))
+        assertNotNull(KeyValueCacheKit.getValue(cacheHandler.cacheName(), key2))
         assertNotNull(cacheHandler.getAccountThird(userId, "GITHUB"))
     }
 
@@ -141,7 +141,7 @@ class AccountThirdByUserIdAndProviderCodeCacheTest : RdbAndRedisCacheTestBase() 
         cacheHandler.syncOnDelete(accountThird, id)
 
         val key = cacheHandler.getKey(accountThird.userId, accountThird.accountProviderDictCode)
-        assertNull(CacheKit.getValue(cacheHandler.cacheName(), key))
+        assertNull(KeyValueCacheKit.getValue(cacheHandler.cacheName(), key))
         assertNull(cacheHandler.getAccountThird(accountThird.userId, accountThird.accountProviderDictCode))
     }
 
@@ -161,7 +161,7 @@ class AccountThirdByUserIdAndProviderCodeCacheTest : RdbAndRedisCacheTestBase() 
         cacheHandler.syncOnBatchDelete(listOf(id1, id2), keys)
 
         keys.forEach {
-            assertNull(CacheKit.getValue(cacheHandler.cacheName(), cacheHandler.getKey(it.first, it.second)))
+            assertNull(KeyValueCacheKit.getValue(cacheHandler.cacheName(), cacheHandler.getKey(it.first, it.second)))
         }
     }
 

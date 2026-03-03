@@ -2,7 +2,7 @@ package io.kudos.ability.cache.common.batch.hash
 
 import io.kudos.ability.cache.common.batch.keyvalue.IKeysGenerator
 import io.kudos.ability.cache.common.core.hash.MixHashCacheManager
-import io.kudos.ability.cache.common.kit.CacheKit
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.ability.cache.common.kit.HashCacheKit
 import io.kudos.base.lang.string.toType
 import io.kudos.base.support.IIdEntity
@@ -58,7 +58,7 @@ class HashBatchCacheableByPrimaryAspect {
         keys.forEach { cachedData[it] = null }
 
         val hashCache = HashCacheKit.getHashCache(cacheName)
-        if (CacheKit.isCacheActive(cacheName)) {
+        if (KeyValueCacheKit.isCacheActive(cacheName)) {
             @Suppress("UNCHECKED_CAST")
             val entityClass = ann.entityClass as KClass<out IIdEntity<Any?>>
             val list = hashCache.findByIds(cacheName, keys, entityClass)
@@ -71,7 +71,7 @@ class HashBatchCacheableByPrimaryAspect {
         val uncachedMap = readUncachedData(uncachedKeys, joinPoint, function, keysGenerator)
             ?: return cachedData.filterValues { it != null }
 
-        if (CacheKit.isCacheActive(cacheName) && CacheKit.isWriteInTime(cacheName)) {
+        if (KeyValueCacheKit.isCacheActive(cacheName) && KeyValueCacheKit.isWriteInTime(cacheName)) {
             val toSave = uncachedMap.values.filterIsInstance<IIdEntity<*>>().filter { it.id != null }
             if (toSave.isNotEmpty()) {
                 val filterable = ann.filterableProperties.toSet()

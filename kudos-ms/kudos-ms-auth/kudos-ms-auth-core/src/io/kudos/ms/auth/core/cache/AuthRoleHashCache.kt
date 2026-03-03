@@ -4,7 +4,7 @@ import io.kudos.ability.cache.common.aop.hash.HashCacheableByPrimary
 import io.kudos.ability.cache.common.aop.hash.HashCacheableBySecondary
 import io.kudos.ability.cache.common.batch.hash.HashBatchCacheableByPrimary
 import io.kudos.ability.cache.common.core.hash.AbstractHashCacheHandler
-import io.kudos.ability.cache.common.kit.CacheKit
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.auth.common.vo.role.AuthRoleCacheItem
 import io.kudos.ms.auth.core.cache.AuthRoleHashCache.Companion.CACHE_NAME
@@ -104,12 +104,12 @@ open class AuthRoleHashCache : AbstractHashCacheHandler<AuthRoleCacheItem>() {
      * @param clear 为 true 时先清空再写入；为 false 时覆盖写入
      */
     override fun reloadAll(clear: Boolean) {
-        if (!CacheKit.isCacheActive(CACHE_NAME)) {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.info("缓存未开启，不加载角色 Hash 缓存")
             return
         }
         val cache = hashCache()
-        if (clear) cache.refreshAll(CACHE_NAME, emptyList<AuthRoleCacheItem>(), FILTERABLE_PROPERTIES, emptySet())
+        if (clear) cache.clear(CACHE_NAME)
         val list = authRoleDao.searchAs<AuthRoleCacheItem>()
         log.debug("从数据库加载 ${list.size} 条角色，刷新 Hash 缓存")
         cache.refreshAll(CACHE_NAME, list, FILTERABLE_PROPERTIES, emptySet())
@@ -117,29 +117,29 @@ open class AuthRoleHashCache : AbstractHashCacheHandler<AuthRoleCacheItem>() {
 
     /** 新增角色后同步：将指定 id 的实体从库加载并写入缓存。 */
     open fun syncOnInsert(id: String) {
-        if (!CacheKit.isCacheActive(CACHE_NAME) || !CacheKit.isWriteInTime(CACHE_NAME)) return
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME) || !KeyValueCacheKit.isWriteInTime(CACHE_NAME)) return
         val item = authRoleDao.getAs<AuthRoleCacheItem>(id) ?: return
         hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
     }
 
     /** 更新角色后同步：从库重新加载并写入缓存。 */
     open fun syncOnUpdate(id: String) {
-        if (!CacheKit.isCacheActive(CACHE_NAME)) return
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
         val item = authRoleDao.getAs<AuthRoleCacheItem>(id) ?: return
-        if (CacheKit.isWriteInTime(CACHE_NAME)) {
+        if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
             hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
         }
     }
 
     /** 删除角色后同步：从缓存中移除该 id。 */
     open fun syncOnDelete(id: String) {
-        if (!CacheKit.isCacheActive(CACHE_NAME)) return
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
         hashCache().deleteById(CACHE_NAME, id, AuthRoleCacheItem::class, FILTERABLE_PROPERTIES, emptySet())
     }
 
     /** 批量删除角色后同步：从缓存中移除这些 id。 */
     open fun syncOnBatchDelete(ids: Collection<String>) {
-        if (!CacheKit.isCacheActive(CACHE_NAME)) return
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
         val cache = hashCache()
         ids.forEach { cache.deleteById(CACHE_NAME, it, AuthRoleCacheItem::class, FILTERABLE_PROPERTIES, emptySet()) }
     }

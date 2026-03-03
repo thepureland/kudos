@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.core.cache
 
-import io.kudos.ability.cache.common.kit.CacheKit
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpCacheItem
 import io.kudos.ms.sys.core.dao.SysAccessRuleDao
 import io.kudos.ms.sys.core.dao.SysAccessRuleIpDao
@@ -120,7 +120,7 @@ class AccessRuleIpsBySubSysAndTenantIdCacheTest : RdbAndRedisCacheTestBase() {
         // 验证新记录是否在缓存中
         val key = cacheHandler.getKey(accessRule.systemCode, accessRule.tenantId)
         @Suppress("UNCHECKED_CAST")
-        val cacheItems = CacheKit.getValue(cacheHandler.cacheName(), key) as List<SysAccessRuleIpCacheItem>
+        val cacheItems = KeyValueCacheKit.getValue(cacheHandler.cacheName(), key) as List<SysAccessRuleIpCacheItem>
         assert(cacheItems.any { it.id == ipRule.id })
         val cacheItems2 = cacheHandler.getAccessRuleIps(accessRule.systemCode, accessRule.tenantId)
         assert(cacheItems.size == cacheItems2.size)
@@ -143,7 +143,7 @@ class AccessRuleIpsBySubSysAndTenantIdCacheTest : RdbAndRedisCacheTestBase() {
         // 验证缓存中的记录
         val key = cacheHandler.getKey(accessRule.systemCode, tenantId)
         @Suppress("UNCHECKED_CAST")
-        val cacheItems = CacheKit.getValue(cacheHandler.cacheName(), key) as? List<SysAccessRuleIpCacheItem>
+        val cacheItems = KeyValueCacheKit.getValue(cacheHandler.cacheName(), key) as? List<SysAccessRuleIpCacheItem>
         assertNotNull(cacheItems, "Cache should contain key $key after syncOnUpdate")
         assertEquals(newExpirationTime, cacheItems.first { it.id == ipRuleId }.expirationTime)
         val cacheItems2 = cacheHandler.getAccessRuleIps(accessRule.systemCode, tenantId)
@@ -161,7 +161,7 @@ class AccessRuleIpsBySubSysAndTenantIdCacheTest : RdbAndRedisCacheTestBase() {
         cacheHandler.syncOnUpdateActive(ipRuleId, false)
         var key = cacheHandler.getKey(accessRule.systemCode, accessRule.tenantId)
         @Suppress("UNCHECKED_CAST")
-        var cacheItems1 = CacheKit.getValue(cacheHandler.cacheName(), key) as List<SysAccessRuleIpCacheItem>
+        var cacheItems1 = KeyValueCacheKit.getValue(cacheHandler.cacheName(), key) as List<SysAccessRuleIpCacheItem>
         assertFalse(cacheItems1.any { it.id == ipRuleId })
         var cacheItems2 = cacheHandler.getAccessRuleIps(accessRule.systemCode, accessRule.tenantId)
         assertFalse(cacheItems2.any { it.id == ipRuleId })
@@ -175,7 +175,7 @@ class AccessRuleIpsBySubSysAndTenantIdCacheTest : RdbAndRedisCacheTestBase() {
         cacheHandler.syncOnUpdateActive(ipRuleId, true)
         key = cacheHandler.getKey(accessRule.systemCode, accessRule.tenantId)
         @Suppress("UNCHECKED_CAST")
-        cacheItems1 = CacheKit.getValue(cacheHandler.cacheName(), key) as List<SysAccessRuleIpCacheItem>
+        cacheItems1 = KeyValueCacheKit.getValue(cacheHandler.cacheName(), key) as List<SysAccessRuleIpCacheItem>
         assert(cacheItems1.any { it.id == ipRuleId })
         cacheItems2 = cacheHandler.getAccessRuleIps(accessRule.systemCode, accessRule.tenantId)
         assert(cacheItems2.any { it.id == ipRuleId })
@@ -196,11 +196,11 @@ class AccessRuleIpsBySubSysAndTenantIdCacheTest : RdbAndRedisCacheTestBase() {
 
         // 删除后踢掉该 key 的缓存，使后续 getAccessRuleIps 从 DB 重载（syncOnDelete 已 evict 并 repopulate，当时记录还在，故此处需再 evict）
         val key = cacheHandler.getKey(accessRule.systemCode, accessRule.tenantId)
-        CacheKit.evict(cacheHandler.cacheName(), key)
+        KeyValueCacheKit.evict(cacheHandler.cacheName(), key)
 
         // 验证缓存中有没有
         @Suppress("UNCHECKED_CAST")
-        val cacheItems1 = CacheKit.getValue(cacheHandler.cacheName(), key) as List<SysAccessRuleIpCacheItem>?
+        val cacheItems1 = KeyValueCacheKit.getValue(cacheHandler.cacheName(), key) as List<SysAccessRuleIpCacheItem>?
         assert(cacheItems1 == null || !cacheItems1.any { it.id == ipRuleId })
         val cacheItems2 = cacheHandler.getAccessRuleIps(accessRule.systemCode, accessRule.tenantId)
         assertFalse(cacheItems2.any { it.id == ipRuleId })

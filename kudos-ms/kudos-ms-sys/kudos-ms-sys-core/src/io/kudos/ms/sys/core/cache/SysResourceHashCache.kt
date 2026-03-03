@@ -4,7 +4,7 @@ import io.kudos.ability.cache.common.aop.hash.HashCacheableByPrimary
 import io.kudos.ability.cache.common.aop.hash.HashCacheableBySecondary
 import io.kudos.ability.cache.common.batch.hash.HashBatchCacheableByPrimary
 import io.kudos.ability.cache.common.core.hash.AbstractHashCacheHandler
-import io.kudos.ability.cache.common.kit.CacheKit
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.context.support.Consts
 import io.kudos.ms.sys.common.vo.resource.SysResourceCacheItem
@@ -86,7 +86,8 @@ open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheItem>
     open fun getResourcesByIds(ids: Set<String>): Map<String, SysResourceCacheItem> {
         if (ids.isEmpty()) return emptyMap()
         val list = sysResourceDao.getByIdsAs<SysResourceCacheItem>(ids)
-        return ids.associateWith { id -> list.first { it.id == id } }
+        val byId = list.associateBy { it.id }
+        return ids.mapNotNull { id -> byId[id]?.let { id to it } }.toMap()
     }
 
     // ---------- 2. 按子系统+URL ----------
@@ -139,7 +140,7 @@ open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheItem>
      * @param clear 为 true 时先清空当前缓存再写入；为 false 时覆盖写入
      */
     override fun reloadAll(clear: Boolean) {
-        if (!CacheKit.isCacheActive(CACHE_NAME)) {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.info("缓存未开启，不加载资源 Hash 缓存")
             return
         }
@@ -158,7 +159,7 @@ open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheItem>
      * @param id 新增的资源主键
      */
     open fun syncOnInsert(id: String) {
-        if (!CacheKit.isCacheActive(CACHE_NAME) || !CacheKit.isWriteInTime(CACHE_NAME)) return
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME) || !KeyValueCacheKit.isWriteInTime(CACHE_NAME)) return
         val item = sysResourceDao.getAs<SysResourceCacheItem>(id) ?: return
         hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
     }
@@ -179,9 +180,9 @@ open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheItem>
      * @param id 被更新的资源主键
      */
     open fun syncOnUpdate(id: String) {
-        if (!CacheKit.isCacheActive(CACHE_NAME)) return
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
         val item = sysResourceDao.getAs<SysResourceCacheItem>(id) ?: return
-        if (CacheKit.isWriteInTime(CACHE_NAME)) {
+        if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
             hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
         }
     }
@@ -225,7 +226,7 @@ open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheItem>
      * @param urlOrResourceType URL 或资源类型，仅用于索引移除，可为 null
      */
     open fun syncOnDelete(id: String, subSystemCode: String, urlOrResourceType: String?) {
-        if (!CacheKit.isCacheActive(CACHE_NAME)) return
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
         hashCache().deleteById(CACHE_NAME, id, SysResourceCacheItem::class, FILTERABLE_PROPERTIES, emptySet())
     }
 
@@ -235,7 +236,7 @@ open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheItem>
      * @param ids 被删除的资源主键集合
      */
     open fun syncOnBatchDelete(ids: Collection<String>) {
-        if (!CacheKit.isCacheActive(CACHE_NAME)) return
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
         val cache = hashCache()
         ids.forEach { cache.deleteById(CACHE_NAME, it, SysResourceCacheItem::class, FILTERABLE_PROPERTIES, emptySet()) }
     }

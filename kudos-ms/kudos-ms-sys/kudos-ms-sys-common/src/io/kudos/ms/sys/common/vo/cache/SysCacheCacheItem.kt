@@ -46,25 +46,7 @@ data class SysCacheCacheItem (
     var builtIn: Boolean? = null,
 
     /** 是否为 Hash 缓存 */
-    var hash: Boolean? = null,
-
-    /** 创建者id */
-    var createUserId: String? = null,
-
-    /** 创建者名称 */
-    var createUserName: String? = null,
-
-    /** 创建时间 */
-    var createTime: LocalDateTime? = null,
-
-    /** 更新者id */
-    var updateUserId: String? = null,
-
-    /** 更新者名称 */
-    var updateUserName: String? = null,
-
-    /** 更新时间 */
-    var updateTime: LocalDateTime? = null,
+    var hash: Boolean,
 
     //endregion your codes 1
 //region your codes 2
@@ -73,7 +55,7 @@ data class SysCacheCacheItem (
 
     //region your codes 3
 
-    constructor() : this("")
+//    constructor() : this("")
 
     // endregion your codes 3
 

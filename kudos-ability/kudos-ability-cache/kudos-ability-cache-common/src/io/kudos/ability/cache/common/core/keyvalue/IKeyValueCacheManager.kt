@@ -31,4 +31,13 @@ interface IKeyValueCacheManager<T : Cache> : CacheManager, CacheItemInitializing
      */
     fun evictByPattern(cacheName: String, pattern: String)
 
+    /**
+     * 缓存中是否存在指定的 key（不依赖 value 是否为 null）
+     *
+     * @param cacheName Spring Cache 名称
+     * @param key       缓存 key
+     * @return true：存在，false：不存在
+     */
+    fun existsKey(cacheName: String, key: Any): Boolean
+
 }

@@ -13,6 +13,16 @@ interface ISysSubSystemMicroServiceApi {
 
     //region your codes 2
 
+    fun getMicroServiceCodesBySubSystemCode(subSystemCode: String): Set<String>
+
+    fun getSubSystemCodesByMicroServiceCode(microServiceCode: String): Set<String>
+
+    fun batchBind(subSystemCode: String, microServiceCodes: Collection<String>): Int
+
+    fun unbind(subSystemCode: String, microServiceCode: String): Boolean
+
+    fun exists(subSystemCode: String, microServiceCode: String): Boolean
+
     //endregion your codes 2
 
 }

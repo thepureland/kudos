@@ -47,6 +47,13 @@ class ServiceException : CustomRuntimeException {
     var params: Array<Any?>? = null
         private set
 
+    constructor(message: String, vararg args: Any?) : super(message, *args)
+
+    constructor(cause: Throwable) : super(cause)
+
+    constructor(cause: Throwable, message: String, vararg args: Any?): super(cause, message, *args)
+
+    constructor(cause: Throwable, message: String, log: Boolean, vararg args: Any?): super(cause, message, log, *args)
 
     constructor(errorCode: IErrorCodeEnum) {
         this.errorCode = errorCode

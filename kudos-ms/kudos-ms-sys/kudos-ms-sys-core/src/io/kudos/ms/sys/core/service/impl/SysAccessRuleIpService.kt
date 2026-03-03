@@ -156,10 +156,19 @@ open class SysAccessRuleIpService : BaseCrudService<String, SysAccessRuleIp, Sys
 
     @Transactional
     override fun deleteById(id: String): Boolean {
+        val ipRule = dao.get(id)
+        val accessRule = ipRule?.let { sysAccessRuleDao.get(it.parentRuleId) }
         val success = super.deleteById(id)
         if (success) {
             log.debug("删除id为${id}的IP访问规则。")
-            accessRuleIpsBySubSysAndTenantIdCache.syncOnDelete(id)
+            if (accessRule != null) {
+                accessRuleIpsBySubSysAndTenantIdCache.syncOnDeleteBySystemAndTenant(
+                    accessRule.systemCode,
+                    accessRule.tenantId
+                )
+            } else {
+                accessRuleIpsBySubSysAndTenantIdCache.syncOnDelete(id)
+            }
         } else {
             log.error("删除id为${id}的IP访问规则失败！")
         }
