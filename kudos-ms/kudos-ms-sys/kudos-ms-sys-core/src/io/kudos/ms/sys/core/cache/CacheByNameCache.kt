@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.core.cache
 
 import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
-import io.kudos.ability.cache.common.kit.CacheKit
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.sys.common.vo.cache.SysCacheCacheItem
@@ -41,7 +41,7 @@ open class CacheByNameCache : AbstractKeyValueCacheHandler<SysCacheCacheItem>() 
     }
 
     override fun reloadAll(clear: Boolean) {
-        if (!CacheKit.isCacheActive(CACHE_NAME)) {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.info("缓存未开启，不加载和缓存所有缓存配置信息！")
             return
         }
@@ -64,7 +64,7 @@ open class CacheByNameCache : AbstractKeyValueCacheHandler<SysCacheCacheItem>() 
         // 放入缓存
         results.forEach {
             val name = it.name ?: return@forEach
-            CacheKit.put(cacheName(), name, it)
+            KeyValueCacheKit.put(cacheName(), name, it)
         }
 
         log.debug("缓存了${results.size}条缓存配置。")
@@ -82,7 +82,7 @@ open class CacheByNameCache : AbstractKeyValueCacheHandler<SysCacheCacheItem>() 
         unless = "#result == null"
     )
     open fun getCache(name: String): SysCacheCacheItem? {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("缓存中不存在名称为${name}的缓存配置信息，从数据库中加载...")
         }
         val searchPayload = SysCacheSearchPayload().apply {
@@ -107,7 +107,7 @@ open class CacheByNameCache : AbstractKeyValueCacheHandler<SysCacheCacheItem>() 
      * @param id 缓存配置id
      */
     open fun syncOnInsert(any: Any, id: String) {
-        if (CacheKit.isCacheActive(CACHE_NAME) && CacheKit.isWriteInTime(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME) && KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
             log.debug("新增id为${id}的缓存配置后，同步${CACHE_NAME}缓存...")
             val name = BeanKit.getProperty(any, SysCache::name.name) as String
             getSelf<CacheByNameCache>().getCache(name) // 缓存
@@ -122,15 +122,15 @@ open class CacheByNameCache : AbstractKeyValueCacheHandler<SysCacheCacheItem>() 
      * @param id 缓存配置id
      */
     open fun syncOnUpdate(any: Any, id: String) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("更新id为${id}的缓存配置后，同步${CACHE_NAME}缓存...")
             var name = BeanKit.getProperty(any, SysCache::name.name) as String?
             if (name == null) {
                 name = sysCacheDao.get(id)?.name
             }
             val cacheName = name?.takeIf { it.isNotBlank() } ?: return
-            CacheKit.evict(CACHE_NAME, cacheName) // 踢除缓存配置缓存
-            if (CacheKit.isWriteInTime(CACHE_NAME)) {
+            KeyValueCacheKit.evict(CACHE_NAME, cacheName) // 踢除缓存配置缓存
+            if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                 getSelf<CacheByNameCache>().getCache(cacheName) // 重新缓存
                 log.debug("${CACHE_NAME}缓存同步完成。")
             }
@@ -144,9 +144,9 @@ open class CacheByNameCache : AbstractKeyValueCacheHandler<SysCacheCacheItem>() 
      * @param name 缓存配置名称
      */
     open fun syncOnDelete(id: String, name: String) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("删除id为${id}的缓存配置后，同步从${CACHE_NAME}缓存中踢除...")
-            CacheKit.evict(CACHE_NAME, name) // 踢除缓存
+            KeyValueCacheKit.evict(CACHE_NAME, name) // 踢除缓存
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
     }
@@ -158,10 +158,10 @@ open class CacheByNameCache : AbstractKeyValueCacheHandler<SysCacheCacheItem>() 
      * @param names 缓存配置名称列表
      */
     open fun syncOnBatchDelete(ids: Collection<String>, names: List<String>) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("批量删除id为${ids}的缓存配置后，同步从${CACHE_NAME}缓存中踢除...")
             names.forEach {
-                CacheKit.evict(CACHE_NAME, it) // 踢除缓存
+                KeyValueCacheKit.evict(CACHE_NAME, it) // 踢除缓存
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
         }

@@ -110,9 +110,7 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
         val success = dao.update(resource)
         if (success) {
             log.debug("更新id为${id}的资源的启用状态为${active}。")
-            sysResourceHashCache.syncOnUpdate(id)
             sysResourceHashCache.syncOnUpdateActive(id, active)
-            sysResourceHashCache.syncOnUpdateActive(id)
         } else {
             log.error("更新id为${id}的资源的启用状态为${active}失败！")
         }
@@ -141,7 +139,6 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
         val id = super.insert(any)
         log.debug("新增id为${id}的资源。")
         sysResourceHashCache.syncOnInsert(id)
-        sysResourceHashCache.syncOnInsert(any, id)
         sysResourceHashCache.syncOnInsert(any, id)
         return id
     }

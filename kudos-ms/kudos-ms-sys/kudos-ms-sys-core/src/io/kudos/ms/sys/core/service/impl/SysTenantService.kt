@@ -52,7 +52,7 @@ open class SysTenantService : BaseCrudService<String, SysTenant, SysTenantDao>()
 
     override fun getTenants(subSysDictCode: String): List<SysTenantCacheItem> {
         val tenantIds = tenantIdsBySystemCodeCache.getTenantIds(subSysDictCode)
-        return tenantByIdCache.getTenantsByIds(tenantIds).values.toList()
+        return tenantByIdCache.getTenantsByIds(tenantIds).values.filter { it.active == true }
     }
 
     @Transactional

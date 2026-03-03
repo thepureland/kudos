@@ -1,6 +1,7 @@
 package io.kudos.ms.auth.common.api
 
-import io.kuark.service.sys.common.vo.resource.MenuTreeNode
+import io.kudos.ms.sys.common.vo.resource.MenuTreeNode
+
 
 /**
  * 被允许访问的资源接口

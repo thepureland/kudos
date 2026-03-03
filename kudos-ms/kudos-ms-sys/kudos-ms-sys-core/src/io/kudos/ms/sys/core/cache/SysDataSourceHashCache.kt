@@ -4,10 +4,9 @@ import io.kudos.ability.cache.common.aop.hash.HashCacheableByPrimary
 import io.kudos.ability.cache.common.aop.hash.HashCacheableBySecondary
 import io.kudos.ability.cache.common.batch.hash.HashBatchCacheableByPrimary
 import io.kudos.ability.cache.common.core.hash.AbstractHashCacheHandler
-import io.kudos.ability.cache.common.kit.CacheKit
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.sys.common.vo.datasource.SysDataSourceCacheItem
-import io.kudos.ms.sys.common.vo.system.SysSystemCacheItem
 import io.kudos.ms.sys.core.cache.SysDataSourceHashCache.Companion.CACHE_NAME
 import io.kudos.ms.sys.core.dao.SysDataSourceDao
 import jakarta.annotation.Resource
@@ -120,12 +119,12 @@ open class SysDataSourceHashCache : AbstractHashCacheHandler<SysDataSourceCacheI
      * @param clear 为 true 时先清空再写入；为 false 时覆盖写入
      */
     override fun reloadAll(clear: Boolean) {
-        if (!CacheKit.isCacheActive(CACHE_NAME)) {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.info("缓存未开启，不加载数据源 Hash 缓存")
             return
         }
         val cache = hashCache()
-        if (clear) cache.refreshAll(CACHE_NAME, emptyList<SysSystemCacheItem>(), FILTERABLE_PROPERTIES, emptySet())
+        if (clear) cache.clear(CACHE_NAME)
         val list = sysDataSourceDao.searchAs<SysDataSourceCacheItem>()
         log.debug("从数据库加载 ${list.size} 条数据源，刷新 Hash 缓存")
         cache.refreshAll(CACHE_NAME, list, FILTERABLE_PROPERTIES, emptySet())
@@ -138,7 +137,7 @@ open class SysDataSourceHashCache : AbstractHashCacheHandler<SysDataSourceCacheI
      * @param id 数据源 id
      */
     open fun syncOnInsert(any: Any, id: String) {
-        if (!CacheKit.isCacheActive(CACHE_NAME) || !CacheKit.isWriteInTime(CACHE_NAME)) return
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME) || !KeyValueCacheKit.isWriteInTime(CACHE_NAME)) return
         val item = sysDataSourceDao.get(id, SysDataSourceCacheItem::class) ?: return
         hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
     }
@@ -150,9 +149,9 @@ open class SysDataSourceHashCache : AbstractHashCacheHandler<SysDataSourceCacheI
      * @param id 数据源 id
      */
     open fun syncOnUpdate(any: Any, id: String) {
-        if (!CacheKit.isCacheActive(CACHE_NAME)) return
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
         val item = sysDataSourceDao.get(id, SysDataSourceCacheItem::class) ?: return
-        if (CacheKit.isWriteInTime(CACHE_NAME)) {
+        if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
             hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
         }
     }
@@ -164,9 +163,9 @@ open class SysDataSourceHashCache : AbstractHashCacheHandler<SysDataSourceCacheI
      * @param active 是否启用
      */
     open fun syncOnUpdateActive(id: String, active: Boolean) {
-        if (!CacheKit.isCacheActive(CACHE_NAME)) return
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
         val item = sysDataSourceDao.getAs<SysDataSourceCacheItem>(id) ?: return
-        if (CacheKit.isWriteInTime(CACHE_NAME)) {
+        if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
             hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
         }
     }
@@ -177,7 +176,7 @@ open class SysDataSourceHashCache : AbstractHashCacheHandler<SysDataSourceCacheI
      * @param id 数据源 id
      */
     open fun syncOnDelete(id: String) {
-        if (!CacheKit.isCacheActive(CACHE_NAME)) return
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
         hashCache().deleteById(CACHE_NAME, id, SysDataSourceCacheItem::class, FILTERABLE_PROPERTIES, emptySet())
     }
 
@@ -187,14 +186,13 @@ open class SysDataSourceHashCache : AbstractHashCacheHandler<SysDataSourceCacheI
      * @param ids 主键集合
      */
     open fun syncOnBatchDelete(ids: Collection<String>) {
-        if (CacheKit.isCacheActive(cacheName())) {
-            log.debug("批量删除id为${ids}的sys_data_source后，同步从${cacheName()}缓存中踢除...")
-            //TODO batch
-            ids.forEach {
-                CacheKit.evict(cacheName(), it) // 踢除角色缓存
-            }
-            log.debug("${cacheName()}缓存同步完成。")
+        if (!KeyValueCacheKit.isCacheActive(cacheName())) return
+        log.debug("批量删除id为${ids}的sys_data_source后，同步从${cacheName()}缓存中踢除...")
+        val cache = hashCache()
+        ids.forEach {
+            cache.deleteById(cacheName(), it, SysDataSourceCacheItem::class, FILTERABLE_PROPERTIES, emptySet())
         }
+        log.debug("${cacheName()}缓存同步完成。")
     }
 
 }

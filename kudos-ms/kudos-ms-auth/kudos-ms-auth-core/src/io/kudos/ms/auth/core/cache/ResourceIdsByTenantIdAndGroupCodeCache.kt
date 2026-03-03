@@ -1,7 +1,7 @@
 package io.kudos.ms.auth.core.cache
 
 import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
-import io.kudos.ability.cache.common.kit.CacheKit
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.context.support.Consts
 import io.kudos.ms.auth.core.dao.AuthGroupDao
@@ -57,7 +57,7 @@ open class ResourceIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler
     }
 
     override fun reloadAll(clear: Boolean) {
-        if (!CacheKit.isCacheActive(CACHE_NAME)) {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.info("缓存未开启，不加载和缓存所有用户组下的资源ID！")
             return
         }
@@ -79,7 +79,7 @@ open class ResourceIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler
             val groupCode = group.code ?: return@forEach
             val roleIds = groupIdToRoleIdsMap[groupId] ?: emptyList()
             val resourceIds = roleIds.flatMap { roleId -> roleIdToResourceIdsMap[roleId] ?: emptyList() }.distinct()
-            CacheKit.put(CACHE_NAME, getKey(tenantId, groupCode), resourceIds)
+            KeyValueCacheKit.put(CACHE_NAME, getKey(tenantId, groupCode), resourceIds)
             log.debug("缓存了租户${group.tenantId}用户组${group.code}的${resourceIds.size}条资源ID。")
         }
     }
@@ -97,7 +97,7 @@ open class ResourceIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler
         unless = "#result == null || #result.isEmpty()"
     )
     open fun getResourceIds(tenantId: String, groupCode: String): Set<String> {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("缓存中不存在租户${tenantId}用户组${groupCode}的资源ID，从数据库中加载...")
         }
 
@@ -123,10 +123,10 @@ open class ResourceIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler
      * 用户组-角色关系新增后同步缓存
      */
     open fun syncOnGroupRoleInsert(tenantId: String, groupCode: String) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("新增租户${tenantId}用户组${groupCode}的组-角色关系后，同步${CACHE_NAME}缓存...")
             evict(getKey(tenantId, groupCode))
-            if (CacheKit.isWriteInTime(CACHE_NAME)) {
+            if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                 getSelf<ResourceIdsByTenantIdAndGroupCodeCache>().getResourceIds(tenantId, groupCode)
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
@@ -137,10 +137,10 @@ open class ResourceIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler
      * 用户组-角色关系删除后同步缓存
      */
     open fun syncOnGroupRoleDelete(tenantId: String, groupCode: String) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("删除租户${tenantId}用户组${groupCode}的组-角色关系后，同步${CACHE_NAME}缓存...")
             evict(getKey(tenantId, groupCode))
-            if (CacheKit.isWriteInTime(CACHE_NAME)) {
+            if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                 getSelf<ResourceIdsByTenantIdAndGroupCodeCache>().getResourceIds(tenantId, groupCode)
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
@@ -151,7 +151,7 @@ open class ResourceIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler
      * 角色-资源关系变更后同步缓存
      */
     open fun syncOnRoleResourceChange(roleId: String) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("角色${roleId}的资源关系变更后，同步${CACHE_NAME}缓存...")
             // 简化处理：清除所有缓存，避免复杂的反查
             clear()
@@ -163,11 +163,11 @@ open class ResourceIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler
      * 用户组更新后同步缓存
      */
     open fun syncOnGroupUpdate(oldTenantId: String, oldGroupCode: String, newTenantId: String, newGroupCode: String) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("用户组信息更新后，同步${CACHE_NAME}缓存...")
-            CacheKit.evict(CACHE_NAME, getKey(oldTenantId, oldGroupCode))
+            KeyValueCacheKit.evict(CACHE_NAME, getKey(oldTenantId, oldGroupCode))
             if (oldTenantId != newTenantId || oldGroupCode != newGroupCode) {
-                CacheKit.evict(CACHE_NAME, getKey(newTenantId, newGroupCode))
+                KeyValueCacheKit.evict(CACHE_NAME, getKey(newTenantId, newGroupCode))
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
@@ -177,9 +177,9 @@ open class ResourceIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler
      * 用户组删除后同步缓存
      */
     open fun syncOnGroupDelete(tenantId: String, groupCode: String) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("删除租户${tenantId}用户组${groupCode}后，同步从${CACHE_NAME}缓存中踢除...")
-            CacheKit.evict(CACHE_NAME, getKey(tenantId, groupCode))
+            KeyValueCacheKit.evict(CACHE_NAME, getKey(tenantId, groupCode))
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
         val groupId = authGroupHashCache.getGroupByTenantIdAndGroupCode(tenantId, groupCode)?.id

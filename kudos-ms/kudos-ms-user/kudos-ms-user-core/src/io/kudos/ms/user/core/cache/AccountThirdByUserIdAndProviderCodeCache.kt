@@ -1,7 +1,7 @@
 package io.kudos.ms.user.core.cache
 
 import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
-import io.kudos.ability.cache.common.kit.CacheKit
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.context.support.Consts
@@ -53,7 +53,7 @@ open class AccountThirdByUserIdAndProviderCodeCache : AbstractKeyValueCacheHandl
     }
 
     override fun reloadAll(clear: Boolean) {
-        if (!CacheKit.isCacheActive(CACHE_NAME)) {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.info("缓存未开启，不加载和缓存所有启用状态的第三方账号信息！")
             return
         }
@@ -73,7 +73,7 @@ open class AccountThirdByUserIdAndProviderCodeCache : AbstractKeyValueCacheHandl
         results.forEach { item ->
             val userId = item.userId ?: return@forEach
             val providerCode = item.accountProviderDictCode ?: return@forEach
-            CacheKit.put(CACHE_NAME, getKey(userId, providerCode), item)
+            KeyValueCacheKit.put(CACHE_NAME, getKey(userId, providerCode), item)
         }
         log.debug("缓存了${results.size}条第三方账号信息。")
     }
@@ -91,7 +91,7 @@ open class AccountThirdByUserIdAndProviderCodeCache : AbstractKeyValueCacheHandl
         unless = "#result == null"
     )
     open fun getAccountThird(userId: String, accountProviderDictCode: String): UserAccountThirdCacheItem? {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("缓存中不存在用户${userId}且提供方为${accountProviderDictCode}的第三方账号，从数据库中加载...")
         }
         val searchPayload = UserAccountThirdSearchPayload().apply {
@@ -117,12 +117,12 @@ open class AccountThirdByUserIdAndProviderCodeCache : AbstractKeyValueCacheHandl
      * @param id 第三方账号id
      */
     open fun syncOnInsert(any: Any, id: String) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("新增id为${id}的第三方账号后，同步${CACHE_NAME}缓存...")
             val userId = BeanKit.getProperty(any, UserAccountThird::userId.name) as String
             val providerCode = BeanKit.getProperty(any, UserAccountThird::accountProviderDictCode.name) as String
-            CacheKit.evict(CACHE_NAME, getKey(userId, providerCode))
-            if (CacheKit.isWriteInTime(CACHE_NAME)) {
+            KeyValueCacheKit.evict(CACHE_NAME, getKey(userId, providerCode))
+            if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                 getSelf<AccountThirdByUserIdAndProviderCodeCache>().getAccountThird(userId, providerCode)
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
@@ -136,12 +136,12 @@ open class AccountThirdByUserIdAndProviderCodeCache : AbstractKeyValueCacheHandl
      * @param id 第三方账号id
      */
     open fun syncOnUpdate(any: Any, id: String) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("更新id为${id}的第三方账号后，同步${CACHE_NAME}缓存...")
             val userId = BeanKit.getProperty(any, UserAccountThird::userId.name) as String
             val providerCode = BeanKit.getProperty(any, UserAccountThird::accountProviderDictCode.name) as String
-            CacheKit.evict(CACHE_NAME, getKey(userId, providerCode))
-            if (CacheKit.isWriteInTime(CACHE_NAME)) {
+            KeyValueCacheKit.evict(CACHE_NAME, getKey(userId, providerCode))
+            if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                 getSelf<AccountThirdByUserIdAndProviderCodeCache>().getAccountThird(userId, providerCode)
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
@@ -155,7 +155,7 @@ open class AccountThirdByUserIdAndProviderCodeCache : AbstractKeyValueCacheHandl
      * @param active 是否启用
      */
     open fun syncOnUpdateActive(id: String, active: Boolean) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("更新id为${id}的第三方账号的启用状态后，同步缓存...")
             val accountThird = userAccountThirdDao.get(id)
             if (accountThird == null) {
@@ -163,8 +163,8 @@ open class AccountThirdByUserIdAndProviderCodeCache : AbstractKeyValueCacheHandl
                 return
             }
             val key = getKey(accountThird.userId, accountThird.accountProviderDictCode)
-            CacheKit.evict(CACHE_NAME, key)
-            if (active && CacheKit.isWriteInTime(CACHE_NAME)) {
+            KeyValueCacheKit.evict(CACHE_NAME, key)
+            if (active && KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                 getSelf<AccountThirdByUserIdAndProviderCodeCache>().getAccountThird(
                     accountThird.userId, accountThird.accountProviderDictCode
                 )
@@ -180,11 +180,11 @@ open class AccountThirdByUserIdAndProviderCodeCache : AbstractKeyValueCacheHandl
      * @param id 第三方账号id
      */
     open fun syncOnDelete(any: Any, id: String) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             val userId = BeanKit.getProperty(any, UserAccountThird::userId.name) as String
             val providerCode = BeanKit.getProperty(any, UserAccountThird::accountProviderDictCode.name) as String
             log.debug("删除id为${id}的第三方账号后，同步从${CACHE_NAME}缓存中踢除...")
-            CacheKit.evict(CACHE_NAME, getKey(userId, providerCode))
+            KeyValueCacheKit.evict(CACHE_NAME, getKey(userId, providerCode))
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
     }
@@ -196,10 +196,10 @@ open class AccountThirdByUserIdAndProviderCodeCache : AbstractKeyValueCacheHandl
      * @param userIdAndProviderCodes List<Pair<用户ID，提供方字典码>>
      */
     open fun syncOnBatchDelete(ids: Collection<String>, userIdAndProviderCodes: List<Pair<String, String>>) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("批量删除id为${ids}的第三方账号后，同步从${CACHE_NAME}缓存中踢除...")
             userIdAndProviderCodes.forEach {
-                CacheKit.evict(CACHE_NAME, getKey(it.first, it.second))
+                KeyValueCacheKit.evict(CACHE_NAME, getKey(it.first, it.second))
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
         }

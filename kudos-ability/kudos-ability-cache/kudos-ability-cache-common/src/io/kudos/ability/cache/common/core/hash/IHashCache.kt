@@ -21,6 +21,15 @@ interface IHashCache {
     fun <PK, E : IIdEntity<PK>> getById(cacheName: String, id: PK, entityClass: KClass<E>): E?
 
     /**
+     * 轻量级判断指定 id 的实体是否存在于 Hash 缓存（不反序列化 value）。
+     *
+     * @param cacheName 缓存名称
+     * @param id        实体 id
+     * @return true：存在，false：不存在
+     */
+    fun existsById(cacheName: String, id: Any): Boolean
+
+    /**
      * 保存实体；[filterableProperties]/[sortableProperties] 为副属性名集合，用于构建 Set/ZSet 二级索引。数值型范围查询条件放 sortableProperties。
      */
     fun <PK, E : IIdEntity<PK>> save(
@@ -94,4 +103,9 @@ interface IHashCache {
         filterableProperties: Set<String> = emptySet(),
         sortableProperties: Set<String> = emptySet()
     )
+
+    /**
+     * 清除该缓存的所有数据（主数据及二级索引）。
+     */
+    fun clear(cacheName: String)
 }

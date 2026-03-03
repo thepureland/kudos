@@ -1,6 +1,9 @@
 package io.kudos.ms.sys.core.api
 
 import io.kudos.ms.sys.common.api.ISysAccessRuleApi
+import io.kudos.ms.sys.common.vo.accessrule.SysAccessRuleRecord
+import io.kudos.ms.sys.core.service.iservice.ISysAccessRuleService
+import jakarta.annotation.Resource
 import org.springframework.stereotype.Service
 
 
@@ -16,6 +19,17 @@ open class SysAccessRuleApi : ISysAccessRuleApi {
 //endregion your codes 1
 
     //region your codes 2
+
+    @Resource
+    protected lateinit var sysAccessRuleService: ISysAccessRuleService
+
+    override fun getAccessRuleByTenantAndSystem(tenantId: String?, systemCode: String): SysAccessRuleRecord? {
+        return sysAccessRuleService.getAccessRuleByTenantAndSystem(tenantId, systemCode)
+    }
+
+    override fun updateActive(id: String, active: Boolean): Boolean {
+        return sysAccessRuleService.updateActive(id, active)
+    }
 
     //endregion your codes 2
 

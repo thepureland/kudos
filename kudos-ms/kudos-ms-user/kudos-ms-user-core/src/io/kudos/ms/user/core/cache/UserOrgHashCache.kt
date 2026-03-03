@@ -4,7 +4,7 @@ import io.kudos.ability.cache.common.aop.hash.HashCacheableByPrimary
 import io.kudos.ability.cache.common.aop.hash.HashCacheableBySecondary
 import io.kudos.ability.cache.common.batch.hash.HashBatchCacheableByPrimary
 import io.kudos.ability.cache.common.core.hash.AbstractHashCacheHandler
-import io.kudos.ability.cache.common.kit.CacheKit
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.user.common.vo.org.UserOrgCacheItem
 import io.kudos.ms.user.core.cache.UserOrgHashCache.Companion.CACHE_NAME
@@ -102,12 +102,12 @@ open class UserOrgHashCache : AbstractHashCacheHandler<UserOrgCacheItem>() {
      * @param clear 为 true 时先清空再写入；为 false 时覆盖写入
      */
     override fun reloadAll(clear: Boolean) {
-        if (!CacheKit.isCacheActive(CACHE_NAME)) {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.info("缓存未开启，不加载机构 Hash 缓存")
             return
         }
         val cache = hashCache()
-        if (clear) cache.refreshAll(CACHE_NAME, emptyList<UserOrgCacheItem>(), FILTERABLE_PROPERTIES, emptySet())
+        if (clear) cache.clear(CACHE_NAME)
         val list = userOrgDao.searchAs<UserOrgCacheItem>()
         log.debug("从数据库加载 ${list.size} 条机构，刷新 Hash 缓存")
         cache.refreshAll(CACHE_NAME, list, FILTERABLE_PROPERTIES, emptySet())
@@ -115,29 +115,29 @@ open class UserOrgHashCache : AbstractHashCacheHandler<UserOrgCacheItem>() {
 
     /** 新增机构后同步：将指定 id 的实体从库加载并写入缓存。 */
     open fun syncOnInsert(id: String) {
-        if (!CacheKit.isCacheActive(CACHE_NAME) || !CacheKit.isWriteInTime(CACHE_NAME)) return
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME) || !KeyValueCacheKit.isWriteInTime(CACHE_NAME)) return
         val item = userOrgDao.getAs<UserOrgCacheItem>(id) ?: return
         hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
     }
 
     /** 更新机构后同步：从库重新加载并写入缓存。 */
     open fun syncOnUpdate(id: String) {
-        if (!CacheKit.isCacheActive(CACHE_NAME)) return
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
         val item = userOrgDao.getAs<UserOrgCacheItem>(id) ?: return
-        if (CacheKit.isWriteInTime(CACHE_NAME)) {
+        if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
             hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
         }
     }
 
     /** 删除机构后同步：从缓存中移除该 id。 */
     open fun syncOnDelete(id: String) {
-        if (!CacheKit.isCacheActive(CACHE_NAME)) return
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
         hashCache().deleteById(CACHE_NAME, id, UserOrgCacheItem::class, FILTERABLE_PROPERTIES, emptySet())
     }
 
     /** 批量删除机构后同步：从缓存中移除这些 id。 */
     open fun syncOnBatchDelete(ids: Collection<String>) {
-        if (!CacheKit.isCacheActive(CACHE_NAME)) return
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
         val cache = hashCache()
         ids.forEach { cache.deleteById(CACHE_NAME, it, UserOrgCacheItem::class, FILTERABLE_PROPERTIES, emptySet()) }
     }

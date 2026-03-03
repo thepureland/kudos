@@ -1,6 +1,8 @@
 package io.kudos.ms.sys.core.api
 
 import io.kudos.ms.sys.common.api.ISysSubSystemMicroServiceApi
+import io.kudos.ms.sys.core.service.iservice.ISysSubSystemMicroServiceService
+import jakarta.annotation.Resource
 import org.springframework.stereotype.Service
 
 
@@ -16,6 +18,29 @@ open class SysSubSystemMicroServiceApi : ISysSubSystemMicroServiceApi {
 //endregion your codes 1
 
     //region your codes 2
+
+    @Resource
+    protected lateinit var sysSubSystemMicroServiceService: ISysSubSystemMicroServiceService
+
+    override fun getMicroServiceCodesBySubSystemCode(subSystemCode: String): Set<String> {
+        return sysSubSystemMicroServiceService.getMicroServiceCodesBySubSystemCode(subSystemCode)
+    }
+
+    override fun getSubSystemCodesByMicroServiceCode(microServiceCode: String): Set<String> {
+        return sysSubSystemMicroServiceService.getSubSystemCodesByMicroServiceCode(microServiceCode)
+    }
+
+    override fun batchBind(subSystemCode: String, microServiceCodes: Collection<String>): Int {
+        return sysSubSystemMicroServiceService.batchBind(subSystemCode, microServiceCodes)
+    }
+
+    override fun unbind(subSystemCode: String, microServiceCode: String): Boolean {
+        return sysSubSystemMicroServiceService.unbind(subSystemCode, microServiceCode)
+    }
+
+    override fun exists(subSystemCode: String, microServiceCode: String): Boolean {
+        return sysSubSystemMicroServiceService.exists(subSystemCode, microServiceCode)
+    }
 
     //endregion your codes 2
 

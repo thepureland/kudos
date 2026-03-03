@@ -10,7 +10,7 @@ import io.kudos.base.support.IIdEntity
  * @author K
  * @since 1.0.0
  */
-open class FormPayload<T>: IIdEntity<T> {
+abstract class FormPayload<T>: IIdEntity<T> {
 
     /** 惟一标识 */
     @Suppress("UNCHECKED_CAST")

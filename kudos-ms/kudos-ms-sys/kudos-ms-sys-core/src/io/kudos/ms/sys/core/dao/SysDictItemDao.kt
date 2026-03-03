@@ -4,6 +4,7 @@ import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.ability.data.rdb.ktorm.support.ColumnHelper
 import io.kudos.base.error.ObjectNotFoundException
 import io.kudos.base.query.enums.OperatorEnum
+import io.kudos.ms.sys.common.vo.dict.SysDictTreeNode
 import io.kudos.ms.sys.common.vo.dictitem.SysDictItemRecord
 import io.kudos.ms.sys.common.vo.dictitem.SysDictItemSearchPayload
 import io.kudos.ms.sys.core.model.po.SysDictItem
@@ -178,6 +179,40 @@ open class SysDictItemDao : BaseCrudDao<String, SysDictItem, SysDictItems>() {
                     whereExpr(SysDictItems.itemName, OperatorEnum.ILIKE, itemName.trim())?.let { expr ->
                         it += expr
                     }
+                }
+            }
+    }
+
+    /**
+     * 根据原子服务编码查询字典节点（用于树加载）
+     */
+    fun searchDictNodesByAtomicServiceCode(atomicServiceCode: String): List<SysDictTreeNode> {
+        val query = database().from(SysDicts)
+            .select(SysDicts.id, SysDicts.dictType)
+            .where { SysDicts.atomicServiceCode eq atomicServiceCode }
+            .orderBy(SysDicts.dictType.asc())
+        return query.map { row ->
+            SysDictTreeNode().apply {
+                id = row[SysDicts.id] ?: ""
+                code = row[SysDicts.dictType]
+            }
+        }
+    }
+
+    /**
+     * 查询指定父节点的直接孩子节点（用于树加载）
+     */
+    fun searchDirectChildrenNodes(parentId: String, activeOnly: Boolean): List<SysDictTreeNode> {
+        val searchPayload = SysDictItemSearchPayload().apply {
+            this.parentId = parentId
+            this.active = if (activeOnly) true else null
+        }
+        return leftJoinSearch(searchPayload)
+            .orderBy(SysDictItems.orderNum.asc())
+            .map { row ->
+                SysDictTreeNode().apply {
+                    id = row[SysDictItems.id] ?: ""
+                    code = row[SysDictItems.itemCode]
                 }
             }
     }

@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.core.cache
 
 import io.kudos.ability.cache.common.enums.CacheStrategy
-import io.kudos.ability.cache.common.kit.CacheKit
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.ms.sys.common.vo.cache.SysCacheCacheItem
 import io.kudos.ms.sys.core.dao.SysCacheDao
 import io.kudos.ms.sys.core.model.po.SysCache
@@ -105,7 +105,7 @@ class CacheByNameCacheTest : RdbAndRedisCacheTestBase() {
         cacheByNameCache.syncOnInsert(sysCache, sysCache.id)
 
         // 验证新记录是否在缓存中
-        val cacheItem1 = CacheKit.getValue(cacheByNameCache.cacheName(), newCacheName)
+        val cacheItem1 = KeyValueCacheKit.getValue(cacheByNameCache.cacheName(), newCacheName)
         assertNotNull(cacheItem1)
         val cacheItem2 = cacheByNameCache.getCache(newCacheName)
         assert(cacheItem1 === cacheItem2)
@@ -125,7 +125,7 @@ class CacheByNameCacheTest : RdbAndRedisCacheTestBase() {
         cacheByNameCache.syncOnUpdate(sysCache, cacheId)
 
         // 验证缓存中的记录
-        val cacheItem1 = CacheKit.getValue(cacheByNameCache.cacheName(), cacheName)
+        val cacheItem1 = KeyValueCacheKit.getValue(cacheByNameCache.cacheName(), cacheName)
         assertEquals(newTtl, (cacheItem1 as SysCacheCacheItem).ttl)
         val cacheItem2 = cacheByNameCache.getCache(cacheName)
         assertEquals(newTtl, (cacheItem2 as SysCacheCacheItem).ttl)
@@ -143,7 +143,7 @@ class CacheByNameCacheTest : RdbAndRedisCacheTestBase() {
         cacheByNameCache.syncOnDelete(id, name)
 
         // 验证缓存中有没有
-        val cacheItem1 = CacheKit.getValue(cacheByNameCache.cacheName(), name)
+        val cacheItem1 = KeyValueCacheKit.getValue(cacheByNameCache.cacheName(), name)
         assertNull(cacheItem1)
         val cacheItem2 = cacheByNameCache.getCache(name)
         assertNull(cacheItem2)
@@ -164,11 +164,11 @@ class CacheByNameCacheTest : RdbAndRedisCacheTestBase() {
         cacheByNameCache.syncOnBatchDelete(ids, listOf(name1, name2))
 
         // 验证缓存中有没有
-        val cacheItem1 = CacheKit.getValue(cacheByNameCache.cacheName(), name1)
+        val cacheItem1 = KeyValueCacheKit.getValue(cacheByNameCache.cacheName(), name1)
         assertNull(cacheItem1)
         val cacheItem2 = cacheByNameCache.getCache(name1)
         assertNull(cacheItem2)
-        val cacheItem3 = CacheKit.getValue(cacheByNameCache.cacheName(), name2)
+        val cacheItem3 = KeyValueCacheKit.getValue(cacheByNameCache.cacheName(), name2)
         assertNull(cacheItem3)
         val cacheItem4 = cacheByNameCache.getCache(name2)
         assertNull(cacheItem4)

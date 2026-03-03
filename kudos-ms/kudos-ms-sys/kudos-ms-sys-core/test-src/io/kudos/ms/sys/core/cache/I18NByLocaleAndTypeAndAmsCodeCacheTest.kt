@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.core.cache
 
-import io.kudos.ability.cache.common.kit.CacheKit
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.ability.data.rdb.jdbc.kit.RdbKit
 import io.kudos.ms.sys.core.dao.SysI18nDao
 import io.kudos.ms.sys.core.model.po.SysI18n
@@ -96,7 +96,7 @@ class I18NByLocaleAndTypeAndAmsCodeCacheTest : RdbAndRedisCacheTestBase() {
 
         val cacheKey = cacheHandler.getKey(locale, i18nTypeDictCode, atomicServiceCode)
         @Suppress("UNCHECKED_CAST")
-        val cacheMap = CacheKit.getValue(cacheHandler.cacheName(), cacheKey) as Map<String, String>?
+        val cacheMap = KeyValueCacheKit.getValue(cacheHandler.cacheName(), cacheKey) as Map<String, String>?
         assertNotNull(cacheMap)
         assertTrue(cacheMap.containsKey(key))
         assertTrue(cacheHandler.getI18ns(locale, i18nTypeDictCode, atomicServiceCode).containsKey(key))
@@ -112,7 +112,7 @@ class I18NByLocaleAndTypeAndAmsCodeCacheTest : RdbAndRedisCacheTestBase() {
 
         val cacheKey = cacheHandler.getKey(i18n.locale, i18n.i18nTypeDictCode, i18n.atomicServiceCode)
         @Suppress("UNCHECKED_CAST")
-        val cacheMap = CacheKit.getValue(cacheHandler.cacheName(), cacheKey) as Map<String, String>?
+        val cacheMap = KeyValueCacheKit.getValue(cacheHandler.cacheName(), cacheKey) as Map<String, String>?
         assertNotNull(cacheMap)
         assertEquals(newValue, cacheMap["i18n.key.4"])
         assertEquals(newValue, cacheHandler.getI18ns(i18n.locale, i18n.i18nTypeDictCode, i18n.atomicServiceCode)["i18n.key.4"])
@@ -125,7 +125,7 @@ class I18NByLocaleAndTypeAndAmsCodeCacheTest : RdbAndRedisCacheTestBase() {
         assertTrue(success)
         cacheHandler.syncOnUpdateActive(id, false)
         val key1 = cacheHandler.getKey("zh_CN", "label", "as-i18n-test-1_8910")
-        assertNull(CacheKit.getValue(cacheHandler.cacheName(), key1))
+        assertNull(KeyValueCacheKit.getValue(cacheHandler.cacheName(), key1))
         assertFalse(cacheHandler.getI18ns("zh_CN", "label", "as-i18n-test-1_8910").containsKey("i18n.key.6"))
 
         id = "40000000-0000-0000-0000-000000008913"
@@ -133,7 +133,7 @@ class I18NByLocaleAndTypeAndAmsCodeCacheTest : RdbAndRedisCacheTestBase() {
         assertTrue(success)
         cacheHandler.syncOnUpdateActive(id, true)
         val key2 = cacheHandler.getKey("zh_CN", "label", "as-i18n-test-1_8910")
-        assertNotNull(CacheKit.getValue(cacheHandler.cacheName(), key2))
+        assertNotNull(KeyValueCacheKit.getValue(cacheHandler.cacheName(), key2))
         assertTrue(cacheHandler.getI18ns("zh_CN", "label", "as-i18n-test-1_8910").containsKey("i18n.key.7"))
     }
 
@@ -147,7 +147,7 @@ class I18NByLocaleAndTypeAndAmsCodeCacheTest : RdbAndRedisCacheTestBase() {
         cacheHandler.syncOnDelete(i18n, id)
 
         val key = cacheHandler.getKey(i18n.locale, i18n.i18nTypeDictCode, i18n.atomicServiceCode)
-        assertNull(CacheKit.getValue(cacheHandler.cacheName(), key))
+        assertNull(KeyValueCacheKit.getValue(cacheHandler.cacheName(), key))
         assertFalse(cacheHandler.getI18ns(i18n.locale, i18n.i18nTypeDictCode, i18n.atomicServiceCode).containsKey("i18n.key.5"))
     }
 
@@ -168,7 +168,7 @@ class I18NByLocaleAndTypeAndAmsCodeCacheTest : RdbAndRedisCacheTestBase() {
         cacheHandler.syncOnBatchDelete(listOf(id1, id2), keys)
 
         keys.forEach {
-            assertNull(CacheKit.getValue(cacheHandler.cacheName(), it))
+            assertNull(KeyValueCacheKit.getValue(cacheHandler.cacheName(), it))
         }
     }
 

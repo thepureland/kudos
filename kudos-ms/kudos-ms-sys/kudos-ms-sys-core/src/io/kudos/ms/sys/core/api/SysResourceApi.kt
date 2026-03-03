@@ -27,30 +27,30 @@ open class SysResourceApi : ISysResourceApi {
     protected lateinit var sysResourceService: ISysResourceService
 
     override fun getResource(resourceId: String): SysResourceCacheItem? {
-        TODO("Not yet implemented")
+        return sysResourceService.getResource(resourceId)
     }
 
     override fun getResources(resourceIds: Collection<String>): Map<String, SysResourceCacheItem> {
-        TODO("Not yet implemented")
+        return sysResourceService.getResources(resourceIds)
     }
 
     override fun getResources(
         subSysDictCode: String,
         resourceType: ResourceTypeEnum
     ): List<SysResourceCacheItem> {
-        TODO("Not yet implemented")
+        return sysResourceService.getResources(subSysDictCode, resourceType)
     }
 
     override fun getSimpleMenus(subSysDictCode: String): List<BaseMenuTreeNode> {
-        TODO("Not yet implemented")
+        return sysResourceService.getSimpleMenus(subSysDictCode)
     }
 
     override fun getMenus(subSysDictCode: String): List<MenuTreeNode> {
-        TODO("Not yet implemented")
+        return sysResourceService.getMenus(subSysDictCode)
     }
 
     override fun getResourceId(subSysDictCode: String, url: String): String? {
-        TODO("Not yet implemented")
+        return sysResourceService.getResourceId(subSysDictCode, url)
     }
 
     override fun getDirectChildrenResources(
@@ -58,7 +58,7 @@ open class SysResourceApi : ISysResourceApi {
         resourceType: ResourceTypeEnum,
         parentId: String?
     ): List<SysResourceCacheItem> {
-        TODO("Not yet implemented")
+        return sysResourceService.getDirectChildrenResources(subSysDictCode, resourceType, parentId)
     }
 
     override fun getChildrenResources(
@@ -66,7 +66,7 @@ open class SysResourceApi : ISysResourceApi {
         resourceType: ResourceTypeEnum,
         parentId: String
     ): List<SysResourceCacheItem> {
-        TODO("Not yet implemented")
+        return sysResourceService.getChildrenResources(subSysDictCode, resourceType, parentId)
     }
 
     //endregion your codes 2

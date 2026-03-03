@@ -45,6 +45,9 @@ class RedisHashCache(
     override fun <PK, E : IIdEntity<PK>> getById(cacheName: String, id: PK, entityClass: KClass<E>): E? =
         dao.getById(dataKeyPrefix(cacheName), id, entityClass)
 
+    override fun existsById(cacheName: String, id: Any): Boolean =
+        dao.existsById(dataKeyPrefix(cacheName), id)
+
     override fun <PK, E : IIdEntity<PK>> save(
         cacheName: String,
         entity: E,
@@ -114,6 +117,11 @@ class RedisHashCache(
         sortableProperties: Set<String>
     ) {
         dao.refreshAll(dataKeyPrefix(cacheName), entities, filterableProperties, sortableProperties)
+        pushHashNotify(cacheName, null)
+    }
+
+    override fun clear(cacheName: String) {
+        dao.clear(dataKeyPrefix(cacheName))
         pushHashNotify(cacheName, null)
     }
 }

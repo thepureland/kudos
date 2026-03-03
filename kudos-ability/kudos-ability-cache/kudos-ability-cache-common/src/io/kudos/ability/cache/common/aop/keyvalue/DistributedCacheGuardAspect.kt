@@ -1,6 +1,6 @@
 package io.kudos.ability.cache.common.aop.keyvalue
 
-import io.kudos.ability.cache.common.kit.CacheKit
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.ability.cache.common.support.TenantCacheKeyGenerator
 import io.kudos.context.kit.SpringKit
 import io.kudos.context.lock.LockTool
@@ -42,7 +42,7 @@ class DistributedCacheGuardAspect {
 
         val lockKey = "lock:$cacheName:$cacheKey"
         // 3. 先查缓存,有检查到直接返回
-        var cached = CacheKit.getValue(cacheName, cacheKey)
+        var cached = KeyValueCacheKit.getValue(cacheName, cacheKey)
         if (cached != null) {
             return cached
         }
@@ -50,7 +50,7 @@ class DistributedCacheGuardAspect {
         val lock = lockProvider.lock(lockKey) as Lock
         try {
             // 5. 锁内双重检查
-            cached = CacheKit.getValue(cacheName, cacheKey)
+            cached = KeyValueCacheKit.getValue(cacheName, cacheKey)
             if (cached != null) {
                 return cached
             }

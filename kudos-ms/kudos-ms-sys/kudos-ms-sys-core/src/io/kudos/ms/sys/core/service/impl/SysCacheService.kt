@@ -1,7 +1,9 @@
 package io.kudos.ms.sys.core.service.impl
 
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.bean.BeanKit
+import io.kudos.base.error.ServiceException
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.sys.common.vo.cache.SysCacheCacheItem
 import io.kudos.ms.sys.common.vo.cache.SysCacheRecord
@@ -128,6 +130,35 @@ open class SysCacheService : BaseCrudService<String, SysCache, SysCacheDao>(), I
             this.active = true
         }
         return dao.search(searchPayload, SysCacheRecord::class)
+    }
+
+    override fun reload(name: String, key: String) {
+        KeyValueCacheKit.reload(name, key)
+    }
+
+    override fun reloadAll(name: String) {
+        KeyValueCacheKit.reloadAll(name)
+    }
+
+    override fun evict(name: String, key: String) {
+        KeyValueCacheKit.evict(name, key)
+    }
+
+    override fun evictAll(name: String) {
+        KeyValueCacheKit.evictByPattern(name, "*")
+    }
+
+    override fun hasKey(name: String, key: String): Boolean {
+        return KeyValueCacheKit.existsKey(name, key)
+    }
+
+    override fun getValueInfo(name: String, key: String): Any? {
+        TODO("Not yet implemented")
+    }
+
+    private fun isKeyValueCache(cacheName: String) : Boolean {
+        val cache = cacheConfigCacheHandler.getCache(cacheName) ?: throw ServiceException("缓存【${cacheName}】不存在！")
+        return cache.hash
     }
 
     //endregion your codes 2

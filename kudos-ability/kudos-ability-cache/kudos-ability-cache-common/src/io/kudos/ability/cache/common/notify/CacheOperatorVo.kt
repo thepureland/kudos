@@ -1,6 +1,6 @@
 package io.kudos.ability.cache.common.notify
 
-import io.kudos.ability.cache.common.kit.CacheKit
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.ability.distributed.notify.common.model.NotifyMessageVo
 import io.kudos.ability.distributed.notify.common.support.NotifyTool
 import io.kudos.base.logger.LogFactory
@@ -91,10 +91,10 @@ class CacheOperatorVo(
         }
         if (!notify) {
             if (TYPE_CLEAR == this.type) {
-                CacheKit.doClear(this.cacheName)
+                KeyValueCacheKit.doClear(this.cacheName)
             }
             if (TYPE_EVICT == this.type) {
-                CacheKit.doEvict(this.cacheName, this.key!!)
+                KeyValueCacheKit.doEvict(this.cacheName, this.key!!)
             }
         }
     }

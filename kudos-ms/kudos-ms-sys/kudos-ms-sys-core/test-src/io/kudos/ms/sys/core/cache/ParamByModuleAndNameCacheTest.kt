@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.core.cache
 
-import io.kudos.ability.cache.common.kit.CacheKit
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.ms.sys.common.vo.param.SysParamCacheItem
 import io.kudos.ms.sys.core.dao.SysParamDao
 import io.kudos.ms.sys.core.model.po.SysParam
@@ -103,7 +103,7 @@ class ParamByModuleAndNameCacheTest : RdbAndRedisCacheTestBase() {
 
         // 验证新记录是否在缓存中
         val key = cacheHandler.getKey(sysParam.atomicServiceCode, sysParam.paramName)
-        assertNotNull(CacheKit.getValue(cacheHandler.cacheName(), key))
+        assertNotNull(KeyValueCacheKit.getValue(cacheHandler.cacheName(), key))
         assertNotNull(cacheHandler.getParam(sysParam.atomicServiceCode, sysParam.paramName))
     }
 
@@ -121,7 +121,7 @@ class ParamByModuleAndNameCacheTest : RdbAndRedisCacheTestBase() {
 
         // 验证缓存中的记录
         val key = cacheHandler.getKey(sysParam.atomicServiceCode, sysParam.paramName)
-        var cacheItem = CacheKit.getValue(cacheHandler.cacheName(), key) as SysParamCacheItem?
+        var cacheItem = KeyValueCacheKit.getValue(cacheHandler.cacheName(), key) as SysParamCacheItem?
         assertNotNull(cacheItem)
         assertEquals(newValue, cacheItem.paramValue)
         cacheItem = cacheHandler.getParam(sysParam.atomicServiceCode, sysParam.paramName)
@@ -138,7 +138,7 @@ class ParamByModuleAndNameCacheTest : RdbAndRedisCacheTestBase() {
         var sysParam = assertNotNull(dao.get(id))
         cacheHandler.syncOnUpdateActive(id, false)
         var key = cacheHandler.getKey(sysParam.atomicServiceCode, sysParam.paramName)
-        assertNull(CacheKit.getValue(cacheHandler.cacheName(), key))
+        assertNull(KeyValueCacheKit.getValue(cacheHandler.cacheName(), key))
         assertNull(cacheHandler.getParam(sysParam.atomicServiceCode, sysParam.paramName))
 
         // 由false更新为true
@@ -148,7 +148,7 @@ class ParamByModuleAndNameCacheTest : RdbAndRedisCacheTestBase() {
         sysParam = assertNotNull(dao.get(id))
         cacheHandler.syncOnUpdateActive(id, true)
         key = cacheHandler.getKey(sysParam.atomicServiceCode, sysParam.paramName)
-        assertNotNull(CacheKit.getValue(cacheHandler.cacheName(), key))
+        assertNotNull(KeyValueCacheKit.getValue(cacheHandler.cacheName(), key))
         assertNotNull(cacheHandler.getParam(sysParam.atomicServiceCode, sysParam.paramName))
     }
 
@@ -166,7 +166,7 @@ class ParamByModuleAndNameCacheTest : RdbAndRedisCacheTestBase() {
 
         // 验证缓存中有没有
         val key = cacheHandler.getKey(sysParam.atomicServiceCode, sysParam.paramName)
-        assertNull(CacheKit.getValue(cacheHandler.cacheName(), key))
+        assertNull(KeyValueCacheKit.getValue(cacheHandler.cacheName(), key))
         assertNull(cacheHandler.getParam(sysParam.atomicServiceCode, sysParam.paramName))
     }
 
@@ -193,10 +193,10 @@ class ParamByModuleAndNameCacheTest : RdbAndRedisCacheTestBase() {
 
         // 验证缓存中有没有
         var key = cacheHandler.getKey(atomicServiceCode1, paramName1)
-        assertNull(CacheKit.getValue(cacheHandler.cacheName(), key))
+        assertNull(KeyValueCacheKit.getValue(cacheHandler.cacheName(), key))
         assertNull(cacheHandler.getParam(atomicServiceCode1, paramName1))
         key = cacheHandler.getKey(atomicServiceCode2, paramName2)
-        assertNull(CacheKit.getValue(cacheHandler.cacheName(), key))
+        assertNull(KeyValueCacheKit.getValue(cacheHandler.cacheName(), key))
         assertNull(cacheHandler.getParam(atomicServiceCode2, paramName2))
     }
 

@@ -1,7 +1,7 @@
 package io.kudos.ms.user.core.cache
 
 import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
-import io.kudos.ability.cache.common.kit.CacheKit
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.user.core.dao.UserAccountDao
 import io.kudos.ms.user.core.dao.UserOrgUserDao
@@ -40,7 +40,7 @@ open class OrgIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() {
     override fun doReload(key: String): List<String> = getSelf<OrgIdsByUserIdCache>().getOrgIds(key)
 
     override fun reloadAll(clear: Boolean) {
-        if (!CacheKit.isCacheActive(CACHE_NAME)) {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.info("缓存未开启，不加载和缓存所有用户的机构ID！")
             return
         }
@@ -61,7 +61,7 @@ open class OrgIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() {
             if (userId.isBlank()) return@forEach
             val orgIds = userIdToOrgIdsMap[userId] ?: emptyList()
             if (orgIds.isNotEmpty()) {
-                CacheKit.put(CACHE_NAME, userId, orgIds)
+                KeyValueCacheKit.put(CACHE_NAME, userId, orgIds)
                 log.debug("缓存了用户${userId}的${orgIds.size}条机构ID。")
             }
         }
@@ -79,7 +79,7 @@ open class OrgIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() {
         unless = "#result == null || #result.isEmpty()"
     )
     open fun getOrgIds(userId: String): List<String> {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("缓存中不存在用户${userId}的机构ID，从数据库中加载...")
         }
 
@@ -94,10 +94,10 @@ open class OrgIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() {
      * @param userId 用户ID
      */
     open fun syncOnOrgUserChange(userId: String) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("用户${userId}的机构关系变更后，同步${CACHE_NAME}缓存...")
             evict(userId)
-            if (CacheKit.isWriteInTime(CACHE_NAME)) {
+            if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                 getSelf<OrgIdsByUserIdCache>().getOrgIds(userId)
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
@@ -110,11 +110,11 @@ open class OrgIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() {
      * @param userIds 用户ID集合
      */
     open fun syncOnBatchOrgUserChange(userIds: Collection<String>) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("批量用户机构关系变更后，同步${CACHE_NAME}缓存...")
             userIds.forEach { userId ->
-                CacheKit.evict(CACHE_NAME, userId)
-                if (CacheKit.isWriteInTime(CACHE_NAME)) {
+                KeyValueCacheKit.evict(CACHE_NAME, userId)
+                if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                     getSelf<OrgIdsByUserIdCache>().getOrgIds(userId)
                 }
             }
@@ -128,9 +128,9 @@ open class OrgIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() {
      * @param userId 用户ID
      */
     open fun syncOnUserDelete(userId: String) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("删除用户${userId}后，同步从${CACHE_NAME}缓存中踢除...")
-            CacheKit.evict(CACHE_NAME, userId)
+            KeyValueCacheKit.evict(CACHE_NAME, userId)
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
     }

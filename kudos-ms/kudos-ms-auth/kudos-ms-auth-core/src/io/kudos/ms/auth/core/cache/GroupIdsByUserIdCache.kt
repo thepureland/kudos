@@ -1,7 +1,7 @@
 package io.kudos.ms.auth.core.cache
 
 import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
-import io.kudos.ability.cache.common.kit.CacheKit
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.auth.core.dao.AuthGroupUserDao
 import io.kudos.ms.user.core.dao.UserAccountDao
@@ -40,7 +40,7 @@ open class GroupIdsByUserIdCache : AbstractKeyValueCacheHandler<Set<String>>() {
     override fun doReload(key: String): Set<String> = getSelf<GroupIdsByUserIdCache>().getGroupIds(key)
 
     override fun reloadAll(clear: Boolean) {
-        if (!CacheKit.isCacheActive(CACHE_NAME)) {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.info("缓存未开启，不加载和缓存所有用户的用户组ID！")
             return
         }
@@ -61,7 +61,7 @@ open class GroupIdsByUserIdCache : AbstractKeyValueCacheHandler<Set<String>>() {
             if (userId.isBlank()) return@forEach
             val groupIds = userIdToGroupIdsMap[userId] ?: emptyList()
             if (groupIds.isNotEmpty()) {
-                CacheKit.put(CACHE_NAME, userId, groupIds)
+                KeyValueCacheKit.put(CACHE_NAME, userId, groupIds)
                 log.debug("缓存了用户${userId}的${groupIds.size}条用户组ID。")
             }
         }
@@ -79,7 +79,7 @@ open class GroupIdsByUserIdCache : AbstractKeyValueCacheHandler<Set<String>>() {
         unless = "#result == null || #result.isEmpty()"
     )
     open fun getGroupIds(userId: String): Set<String> {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("缓存中不存在用户${userId}的用户组ID，从数据库中加载...")
         }
 
@@ -94,10 +94,10 @@ open class GroupIdsByUserIdCache : AbstractKeyValueCacheHandler<Set<String>>() {
      * @param userId 用户ID
      */
     open fun syncOnGroupUserChange(userId: String) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("用户${userId}的用户组关系变更后，同步${CACHE_NAME}缓存...")
             evict(userId)
-            if (CacheKit.isWriteInTime(CACHE_NAME)) {
+            if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                 getSelf<GroupIdsByUserIdCache>().getGroupIds(userId)
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
@@ -110,11 +110,11 @@ open class GroupIdsByUserIdCache : AbstractKeyValueCacheHandler<Set<String>>() {
      * @param userIds 用户ID集合
      */
     open fun syncOnBatchGroupUserChange(userIds: Collection<String>) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("批量用户用户组关系变更后，同步${CACHE_NAME}缓存...")
             userIds.forEach { userId ->
-                CacheKit.evict(CACHE_NAME, userId)
-                if (CacheKit.isWriteInTime(CACHE_NAME)) {
+                KeyValueCacheKit.evict(CACHE_NAME, userId)
+                if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                     getSelf<GroupIdsByUserIdCache>().getGroupIds(userId)
                 }
             }
@@ -128,9 +128,9 @@ open class GroupIdsByUserIdCache : AbstractKeyValueCacheHandler<Set<String>>() {
      * @param userId 用户ID
      */
     open fun syncOnUserDelete(userId: String) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("删除用户${userId}后，同步从${CACHE_NAME}缓存中踢除...")
-            CacheKit.evict(CACHE_NAME, userId)
+            KeyValueCacheKit.evict(CACHE_NAME, userId)
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
     }

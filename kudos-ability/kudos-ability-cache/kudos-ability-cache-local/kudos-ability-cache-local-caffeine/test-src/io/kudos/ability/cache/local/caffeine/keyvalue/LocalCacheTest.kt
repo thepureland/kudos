@@ -2,6 +2,7 @@ package io.kudos.ability.cache.local.caffeine.keyvalue
 
 import io.kudos.ability.cache.common.core.keyvalue.MixCacheManager
 import io.kudos.ability.cache.common.enums.CacheStrategy
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.test.common.init.EnableKudosTest
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
@@ -11,6 +12,8 @@ import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import java.util.concurrent.CountDownLatch
 import kotlin.test.Test
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 
 /**
@@ -72,7 +75,18 @@ internal class LocalCacheTest {
         latch.await()
     }
 
+    @Test
+    fun testExistsKey() {
+        assertFalse(KeyValueCacheKit.existsKey(cacheName, "non_existent_key"))
 
+        val key = "exists_key"
+        cacheTestService.getFromDB(key)
+        assertTrue(KeyValueCacheKit.existsKey(cacheName, key))
+
+        val nullKey = "exists_null_value_key"
+        KeyValueCacheKit.put(cacheName, nullKey, null)
+        assertTrue(KeyValueCacheKit.existsKey(cacheName, nullKey))
+    }
 
 }
 

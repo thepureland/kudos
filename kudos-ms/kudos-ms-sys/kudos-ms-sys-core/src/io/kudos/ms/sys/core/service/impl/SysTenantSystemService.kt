@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.core.service.impl
 
-import io.kudos.ability.cache.common.kit.CacheKit
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.sys.core.cache.TenantIdsBySystemCodeCache
@@ -35,7 +35,7 @@ open class SysTenantSystemService : BaseCrudService<String, SysTenantSystem, Sys
         dao.searchSystemCodesByTenantId(tenantId)
 
     override fun searchTenantIdsBySystemCode(systemCode: String): Set<String> =
-        dao.searchTenantIdsBySystemCode(systemCode)
+        tenantIdsBySystemCodeCache.getTenantIds(systemCode).toSet()
 
     override fun groupingSystemCodesByTenantIds(tenantIds: Collection<String>?): Map<String, List<String>> =
         dao.groupingSystemCodesByTenantIds(tenantIds)
@@ -74,7 +74,7 @@ open class SysTenantSystemService : BaseCrudService<String, SysTenantSystem, Sys
         // 同步缓存
         insertedSystemCodes.forEach { systemCode ->
             tenantIdsBySystemCodeCache.evict(systemCode)
-            if (CacheKit.isWriteInTime(tenantIdsBySystemCodeCache.cacheName())) {
+            if (KeyValueCacheKit.isWriteInTime(tenantIdsBySystemCodeCache.cacheName())) {
                 tenantIdsBySystemCodeCache.getTenantIds(systemCode)
             }
         }
@@ -118,11 +118,23 @@ open class SysTenantSystemService : BaseCrudService<String, SysTenantSystem, Sys
     }
 
     override fun deleteByTenantId(tenantId: String): Int {
-        return dao.batchDeleteByTenantIds(listOf(tenantId))
+        val systemCodes = searchSystemCodesByTenantId(tenantId)
+        val count = dao.batchDeleteByTenantIds(listOf(tenantId))
+        if (count > 0 && systemCodes.isNotEmpty()) {
+            tenantIdsBySystemCodeCache.syncOnDelete(tenantId, systemCodes)
+        }
+        return count
     }
 
     override fun batchDeleteByTenantIds(tenantIds: Collection<String>): Int {
-        return dao.batchDeleteByTenantIds(tenantIds)
+        if (tenantIds.isEmpty()) return 0
+        val tenantAndSystemCodes = groupingSystemCodesByTenantIds(tenantIds)
+        val systemCodes = tenantAndSystemCodes.values.flatten().toSet()
+        val count = dao.batchDeleteByTenantIds(tenantIds)
+        if (count > 0 && systemCodes.isNotEmpty()) {
+            tenantIdsBySystemCodeCache.syncOnBatchDelete(tenantIds, systemCodes)
+        }
+        return count
     }
 
     /**

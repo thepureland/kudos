@@ -15,7 +15,7 @@ create table if not exists "sys_access_rule"
     "update_user_name"    character varying(32),
     "update_time"         timestamp(6),
     constraint "uq_sys_access_rule"
-        unique ("tenant_id", "system_code")
+        unique ("system_code", "tenant_id")
 );
 
 create index if not exists "idx_sys_access_rule_tenant_id" on "sys_access_rule" ("tenant_id");

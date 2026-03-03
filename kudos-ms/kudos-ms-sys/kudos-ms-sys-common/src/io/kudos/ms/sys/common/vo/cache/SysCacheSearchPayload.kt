@@ -1,6 +1,9 @@
 package io.kudos.ms.sys.common.vo.cache
 
+import io.kudos.base.bean.validation.constraint.annotations.DictCode
 import io.kudos.base.support.payload.ListSearchPayload
+import io.kudos.ms.sys.common.consts.SysConsts
+import io.kudos.ms.sys.common.consts.SysDictTypes
 import kotlin.reflect.KClass
 
 
@@ -23,25 +26,11 @@ data class SysCacheSearchPayload (
     var atomicServiceCode: String? = null,
 
     /** 缓存策略代码 */
+    @get:DictCode(dictType = SysDictTypes.CACHE_STRATEGY, atomicServiceCode = SysConsts.ATOMIC_SERVICE_NAME)
     var strategyDictCode: String? = null,
-
-    /** 是否启动时写缓存 */
-    var writeOnBoot: Boolean? = null,
-
-    /** 是否及时回写缓存 */
-    var writeInTime: Boolean? = null,
-
-    /** 缓存生存时间(秒) */
-    var ttl: Int? = null,
-
-    /** 备注 */
-    var remark: String? = null,
 
     /** 是否启用 */
     var active: Boolean? = null,
-
-    /** 是否内置 */
-    var builtIn: Boolean? = null,
 
     //endregion your codes 1
 //region your codes 2

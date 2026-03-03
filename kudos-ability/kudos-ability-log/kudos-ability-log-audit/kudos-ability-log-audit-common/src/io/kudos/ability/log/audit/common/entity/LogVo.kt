@@ -16,12 +16,7 @@ class LogVo : ILogVo {
      *
      * @author admin
      */
-    var logs: MutableList<BaseLog?>? = null
-        private set
-
-    init {
-        newLogs()
-    }
+    var logs = mutableListOf<BaseLog>()
 
     /**
      * 添加系统级日志
@@ -30,7 +25,7 @@ class LogVo : ILogVo {
      */
     fun addAuditLog(audit: WebAudit): BaseLog {
         val sysLog = BaseLog(audit)
-        (this.logs ?: mutableListOf<BaseLog>().also { this.logs = it }).add(sysLog)
+        this.logs.add(sysLog)
         return sysLog
     }
 
@@ -41,14 +36,8 @@ class LogVo : ILogVo {
      */
     fun addAuditLog(audit: Audit): BaseLog {
         val sysLog = BaseLog(audit)
-        (this.logs ?: mutableListOf<BaseLog>().also { this.logs = it }).add(sysLog)
+        this.logs.add(sysLog)
         return sysLog
-    }
-
-    private fun newLogs() {
-        if (this.logs == null) {
-            logs = ArrayList(2)
-        }
     }
 
     companion object {

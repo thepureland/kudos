@@ -21,7 +21,7 @@ import kotlin.reflect.KClass
  * @since 1.0.0
  */
 @Component
-object CacheKit {
+object KeyValueCacheKit {
 
     private val log = LogFactory.getLog(this)
 
@@ -289,6 +289,21 @@ object CacheKit {
         }
         val cacheManager = getCacheManager() ?: return
         cacheManager.evictByPattern(cacheName, keyPattern)
+    }
+
+    /**
+     * 缓存中是否存在指定的key（不依赖 value 是否为 null）,LOCAL_REMOTE 时任一级存在即视为存在。
+     *
+     * @param cacheName 缓存名称
+     * @param key 缓存key
+     * @return true：存在， false: 不存在
+     */
+    fun existsKey(cacheName: String, key: String): Boolean {
+        if (!isCacheActive(cacheName)) {
+            return false
+        }
+        val cacheManager = getCacheManager() ?: return false
+        return cacheManager.existsKey(cacheName, key)
     }
 
     /**

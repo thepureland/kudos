@@ -42,7 +42,7 @@ object TenantCacheTool {
      * @since 1.0.0
      */
     fun isCacheActive(cacheName: String): Boolean {
-        return CacheKit.isCacheActive(cacheName)
+        return KeyValueCacheKit.isCacheActive(cacheName)
     }
 
     /**
@@ -54,7 +54,7 @@ object TenantCacheTool {
      * @since 1.0.0
      */
     fun getCache(name: String): Cache? {
-        return CacheKit.getCache(name)
+        return KeyValueCacheKit.getCache(name)
     }
 
     /**
@@ -68,7 +68,7 @@ object TenantCacheTool {
      * @since 1.0.0
      */
     fun <T: Any> getValue(cacheName: String, key: Any, valueClass: KClass<T>): T? {
-        return CacheKit.getValue(cacheName, getTenantKey(key), valueClass)
+        return KeyValueCacheKit.getValue(cacheName, getTenantKey(key), valueClass)
     }
 
     /**
@@ -81,7 +81,7 @@ object TenantCacheTool {
      * @since 1.0.0
      */
     fun getValue(cacheName: String, key: Any): Any? {
-        return CacheKit.getValue(cacheName, getTenantKey(key))
+        return KeyValueCacheKit.getValue(cacheName, getTenantKey(key))
     }
 
     /**
@@ -94,7 +94,7 @@ object TenantCacheTool {
      * @since 1.0.0
      */
     fun put(cacheName: String, key: Any, value: Any?) {
-        CacheKit.put(cacheName, getTenantKey(key), value)
+        KeyValueCacheKit.put(cacheName, getTenantKey(key), value)
     }
 
     /**
@@ -107,7 +107,7 @@ object TenantCacheTool {
      * @since 1.0.0
      */
     fun putIfAbsent(cacheName: String, key: Any, value: Any?) {
-        CacheKit.putIfAbsent(cacheName, getTenantKey(key), value)
+        KeyValueCacheKit.putIfAbsent(cacheName, getTenantKey(key), value)
     }
 
     /**
@@ -131,7 +131,7 @@ object TenantCacheTool {
      * @since 1.0.0
      */
     fun doEvict(cacheName: String, key: Any) {
-        CacheKit.doEvict(cacheName, getTenantKey(key))
+        KeyValueCacheKit.doEvict(cacheName, getTenantKey(key))
     }
 
     /**
@@ -142,7 +142,7 @@ object TenantCacheTool {
      * @since 1.0.0
      */
     fun clear(cacheName: String) {
-        CacheKit.clear(cacheName)
+        KeyValueCacheKit.clear(cacheName)
     }
 
     /**
@@ -153,7 +153,7 @@ object TenantCacheTool {
      * @since 1.0.0
      */
     fun doClear(cacheName: String) {
-        CacheKit.doClear(cacheName)
+        KeyValueCacheKit.doClear(cacheName)
     }
 
     /**
@@ -165,7 +165,7 @@ object TenantCacheTool {
      * @since 1.0.0
      */
     fun isWriteInTime(cacheName: String): Boolean {
-        return CacheKit.isWriteInTime(cacheName)
+        return KeyValueCacheKit.isWriteInTime(cacheName)
     }
 
     /**
@@ -177,7 +177,7 @@ object TenantCacheTool {
      * @since 1.0.0
      */
     fun getCacheConfig(cacheName: String): CacheConfig? {
-        return CacheKit.getCacheConfig(cacheName)
+        return KeyValueCacheKit.getCacheConfig(cacheName)
     }
 
     /**
@@ -187,7 +187,7 @@ object TenantCacheTool {
      * @param key       key
      */
     fun reload(cacheName: String, key: String) {
-        CacheKit.reload(cacheName, getTenantKey(key))
+        KeyValueCacheKit.reload(cacheName, getTenantKey(key))
     }
 
     /**
@@ -200,7 +200,7 @@ object TenantCacheTool {
             return
         }
         val realKeyPattern = getTenantKey(keyPattern)
-        CacheKit.evictByPattern(cacheName, realKeyPattern)
+        KeyValueCacheKit.evictByPattern(cacheName, realKeyPattern)
     }
 
     /**
@@ -209,7 +209,7 @@ object TenantCacheTool {
      * @param cacheName 缓存名
      */
     fun reloadAll(cacheName: String) {
-        CacheKit.reloadAll(cacheName)
+        KeyValueCacheKit.reloadAll(cacheName)
     }
 
     /**

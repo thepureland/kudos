@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.core.cache
 
 import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
-import io.kudos.ability.cache.common.kit.CacheKit
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.context.support.Consts
@@ -57,7 +57,7 @@ open class DictItemsByModuleAndTypeCache : AbstractKeyValueCacheHandler<List<Sys
     }
 
     override fun reloadAll(clear: Boolean) {
-        if (!CacheKit.isCacheActive(CACHE_NAME)) {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.info("缓存未开启，不加载和缓存所有启用状态的字典项！")
             return
         }
@@ -90,7 +90,7 @@ open class DictItemsByModuleAndTypeCache : AbstractKeyValueCacheHandler<List<Sys
                     orderNum = it.orderNum
                 }
             }
-            CacheKit.put(CACHE_NAME, key, valueItems)
+            KeyValueCacheKit.put(CACHE_NAME, key, valueItems)
             log.debug("缓存字典${key}，共${valueItems.size}条字典项。")
         }
     }
@@ -108,7 +108,7 @@ open class DictItemsByModuleAndTypeCache : AbstractKeyValueCacheHandler<List<Sys
         unless = "#result == null || #result.isEmpty()"
     )
     open fun getDictItems(atomicServiceCode: String?, dictType: String): List<SysDictItemCacheItem> {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("缓存中不存在原子服务为${atomicServiceCode}且字典类型为${dictType}的字典项，从数据库中加载...")
         }
         // 查出对应的dict
@@ -145,7 +145,7 @@ open class DictItemsByModuleAndTypeCache : AbstractKeyValueCacheHandler<List<Sys
      * @param id 字典项id
      */
     open fun syncOnInsert(any: Any, id: String) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("新增id为${id}的字典项后，同步${CACHE_NAME}缓存...")
             val dictId = BeanKit.getProperty(any, SysDictItem::dictId.name) as String
             val dict = dictByIdCache.getDictById(dictId)
@@ -155,8 +155,8 @@ open class DictItemsByModuleAndTypeCache : AbstractKeyValueCacheHandler<List<Sys
             }
 
             val key = getKey(dict.atomicServiceCode, dict.dictType)
-            CacheKit.evict(CACHE_NAME, key) // 踢除缓存（缓存粒度为字典类型）
-            if (CacheKit.isWriteInTime(CACHE_NAME)) {
+            KeyValueCacheKit.evict(CACHE_NAME, key) // 踢除缓存（缓存粒度为字典类型）
+            if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                 if (dict.active == null || dict.active == true) {
                     val atomicServiceCode = dict.atomicServiceCode ?: return
                     val dictType = dict.dictType ?: return
@@ -177,7 +177,7 @@ open class DictItemsByModuleAndTypeCache : AbstractKeyValueCacheHandler<List<Sys
      * @param id 字典项id
      */
     open fun syncOnUpdate(any: Any, id: String) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("更新id为${id}的字典项后，同步${CACHE_NAME}缓存...")
             val dictId = BeanKit.getProperty(any, SysDictItem::dictId.name) as String
             val dict = dictByIdCache.getDictById(dictId)
@@ -187,8 +187,8 @@ open class DictItemsByModuleAndTypeCache : AbstractKeyValueCacheHandler<List<Sys
             }
 
             val key = getKey(dict.atomicServiceCode, dict.dictType)
-            CacheKit.evict(CACHE_NAME, key) // 踢除缓存（缓存粒度为字典类型）
-            if (CacheKit.isWriteInTime(CACHE_NAME)) {
+            KeyValueCacheKit.evict(CACHE_NAME, key) // 踢除缓存（缓存粒度为字典类型）
+            if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                 if (dict.active == null || dict.active == true) {
                     val atomicServiceCode = dict.atomicServiceCode ?: return
                     val dictType = dict.dictType ?: return
@@ -207,7 +207,7 @@ open class DictItemsByModuleAndTypeCache : AbstractKeyValueCacheHandler<List<Sys
      * @param id 字典项id
      */
     open fun syncOnUpdateActive(id: String) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("更新id为${id}的字典项的启用状态后，同步${CACHE_NAME}缓存...")
             val dictIds = sysDictItemDao.oneSearchProperty(SysDictItem::id, id, SysDictItem::dictId)
             val dict = dictByIdCache.getDictById(dictIds.first())
@@ -216,8 +216,8 @@ open class DictItemsByModuleAndTypeCache : AbstractKeyValueCacheHandler<List<Sys
                 return
             }
 
-            CacheKit.evict(CACHE_NAME, getKey(dict.atomicServiceCode, dict.dictType)) // 踢除缓存（缓存粒度为字典类型）
-            if (CacheKit.isWriteInTime(CACHE_NAME)) {
+            KeyValueCacheKit.evict(CACHE_NAME, getKey(dict.atomicServiceCode, dict.dictType)) // 踢除缓存（缓存粒度为字典类型）
+            if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                 // 重新缓存
                 val atomicServiceCode = dict.atomicServiceCode ?: return
                 val dictType = dict.dictType ?: return
@@ -234,7 +234,7 @@ open class DictItemsByModuleAndTypeCache : AbstractKeyValueCacheHandler<List<Sys
      * @param dictId 字典id
      */
     open fun syncOnDelete(id: String, dictId: String) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("删除id为${id}的租户后，同步从${CACHE_NAME}缓存中踢除...")
             val dict = dictByIdCache.getDictById(dictId)
             if (dict == null) {
@@ -242,8 +242,8 @@ open class DictItemsByModuleAndTypeCache : AbstractKeyValueCacheHandler<List<Sys
                 return
             }
 
-            CacheKit.evict(CACHE_NAME, getKey(dict.atomicServiceCode, dict.dictType)) // 踢除缓存（缓存粒度为字典类型）
-            if (CacheKit.isWriteInTime(CACHE_NAME)) {
+            KeyValueCacheKit.evict(CACHE_NAME, getKey(dict.atomicServiceCode, dict.dictType)) // 踢除缓存（缓存粒度为字典类型）
+            if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                 // 重新缓存
                 val atomicServiceCode = dict.atomicServiceCode ?: return
                 val dictType = dict.dictType ?: return

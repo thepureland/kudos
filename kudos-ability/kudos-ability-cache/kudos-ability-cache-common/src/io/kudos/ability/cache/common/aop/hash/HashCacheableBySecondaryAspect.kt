@@ -2,7 +2,7 @@ package io.kudos.ability.cache.common.aop.hash
 
 import io.kudos.ability.cache.common.core.hash.IHashCache
 import io.kudos.ability.cache.common.core.hash.MixHashCacheManager
-import io.kudos.ability.cache.common.kit.CacheKit
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.ability.cache.common.kit.HashCacheKit
 import io.kudos.base.support.IIdEntity
 import org.aspectj.lang.ProceedingJoinPoint
@@ -75,7 +75,7 @@ class HashCacheableBySecondaryAspect {
         val returnMode = resolveReturnMode(method)
 
         val hashCache = HashCacheKit.getHashCache(cacheName)
-        if (CacheKit.isCacheActive(cacheName)) {
+        if (KeyValueCacheKit.isCacheActive(cacheName)) {
             @Suppress("UNCHECKED_CAST")
             val cached = queryByKeys(hashCache, cacheName, entityClass, propertyValues)
             if (cached.isNotEmpty()) {
@@ -102,7 +102,7 @@ class HashCacheableBySecondaryAspect {
             ReturnMode.SINGLE_ID, ReturnMode.LIST_IDS -> return result
             ReturnMode.LIST_ENTITIES -> {
                 val list = (result as? List<*>)?.filterIsInstance<IIdEntity<*>>() ?: return result
-                if (list.isNotEmpty() && CacheKit.isCacheActive(cacheName) && CacheKit.isWriteInTime(cacheName)) {
+                if (list.isNotEmpty() && KeyValueCacheKit.isCacheActive(cacheName) && KeyValueCacheKit.isWriteInTime(cacheName)) {
                     val filterable = ann.filterableProperties.toSet()
                     val sortable = ann.sortableProperties.toSet()
                     @Suppress("UNCHECKED_CAST")
@@ -112,7 +112,7 @@ class HashCacheableBySecondaryAspect {
             }
             ReturnMode.SINGLE_ENTITY -> {
                 val entity = (result as? IIdEntity<*>)?.let { listOf(it) }
-                if (!entity.isNullOrEmpty() && CacheKit.isCacheActive(cacheName) && CacheKit.isWriteInTime(cacheName)) {
+                if (!entity.isNullOrEmpty() && KeyValueCacheKit.isCacheActive(cacheName) && KeyValueCacheKit.isWriteInTime(cacheName)) {
                     val filterable = ann.filterableProperties.toSet()
                     val sortable = ann.sortableProperties.toSet()
                     @Suppress("UNCHECKED_CAST")

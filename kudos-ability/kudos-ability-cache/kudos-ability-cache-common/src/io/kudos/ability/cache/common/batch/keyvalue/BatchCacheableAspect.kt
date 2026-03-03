@@ -1,7 +1,7 @@
 package io.kudos.ability.cache.common.batch.keyvalue
 
 import io.kudos.ability.cache.common.core.keyvalue.MixCacheManager
-import io.kudos.ability.cache.common.kit.CacheKit
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.lang.string.toType
 import io.kudos.context.kit.SpringKit
 import org.aspectj.lang.ProceedingJoinPoint
@@ -73,7 +73,7 @@ class BatchCacheableAspect {
         val uncachedData = readUncachedData(cachedData, joinPoint, function, batchCacheable) // 未缓存的数据。Map<缓存key, 缓存值>
 
         // 缓存从@BatchCacheable标注的方法读取(未缓存)的数据(注意：已存在的缓存并不会被更新)
-        uncachedData?.forEach { (k, v) -> CacheKit.putIfAbsent(cacheName, k, v) }
+        uncachedData?.forEach { (k, v) -> KeyValueCacheKit.putIfAbsent(cacheName, k, v) }
 
         // 组装两部分数据：缓存中读取的和刚加载的，并作为@BatchCacheable标注的方法的返回值返回
         if (uncachedData != null) {
@@ -157,7 +157,7 @@ class BatchCacheableAspect {
         keys: List<String>, cacheName: String, batchCacheable: BatchCacheable, result: MutableMap<String, Any?>
     ) {
         keys.forEach {
-            val value = CacheKit.getValue(cacheName, it, batchCacheable.valueClass) //TODO 缓存不存在时，怎么防止缓存击穿
+            val value = KeyValueCacheKit.getValue(cacheName, it, batchCacheable.valueClass) //TODO 缓存不存在时，怎么防止缓存击穿
             if (value != null) {
                 result[it] = value
             }

@@ -102,7 +102,7 @@ merge into "sys_dict_item" ("id", "dict_id", "item_code", "item_name", "order_nu
 merge into "sys_dict_item" ("id", "dict_id", "item_code", "item_name", "order_num", "remark", "built_in") values
     ('1264c011-172e-16fc-b607-28061810c9b1', 'ad52c541-02c1-3c7f-1a96-a20eecb32881', '0', 'access_rule_type.0', 1, '不限制', true),
     ('1264c011-172e-16fc-b607-28061810c9b2', 'ad52c541-02c1-3c7f-1a96-a20eecb32881', '1', 'access_rule_type.1', 2, '白名单', true),
-    ('1264c011-172e-16fc-b607-28061810c9b3', 'ad52c541-02c1-3c7f-1a96-a20eecb32881', '2', 'access_rule_type.2', 2, '黑名单', true),
-    ('1264c011-172e-16fc-b607-28061810c9b4', 'ad52c541-02c1-3c7f-1a96-a20eecb32881', '3', 'access_rule_type.3', 2, '白名单+黑名单', true);
+    ('1264c011-172e-16fc-b607-28061810c9b3', 'ad52c541-02c1-3c7f-1a96-a20eecb32881', '2', 'access_rule_type.2', 3, '黑名单', true),
+    ('1264c011-172e-16fc-b607-28061810c9b4', 'ad52c541-02c1-3c7f-1a96-a20eecb32881', '3', 'access_rule_type.3', 4, '白名单+黑名单', true);
 
 --endregion DML

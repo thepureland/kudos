@@ -2,6 +2,7 @@ package io.kudos.ability.cache.remote.redis.keyvalue
 
 import io.kudos.ability.cache.common.core.keyvalue.MixCacheManager
 import io.kudos.ability.cache.common.enums.CacheStrategy
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.test.common.init.EnableKudosTest
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.container.containers.RedisTestContainer
@@ -15,6 +16,8 @@ import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import java.util.concurrent.CountDownLatch
 import kotlin.test.Test
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 
 /**
@@ -75,6 +78,15 @@ internal class RemoteCacheTest {
             latch.countDown()
         }.start()
         latch.await()
+    }
+
+    @Test
+    fun testExistsKey() {
+        assertFalse(KeyValueCacheKit.existsKey(CACHE_NAME, "non_existent_key"))
+
+        val key = "exists_remote_key"
+        cacheTestService.getFromDB(key)
+        assertTrue(KeyValueCacheKit.existsKey(CACHE_NAME, key))
     }
 
 }

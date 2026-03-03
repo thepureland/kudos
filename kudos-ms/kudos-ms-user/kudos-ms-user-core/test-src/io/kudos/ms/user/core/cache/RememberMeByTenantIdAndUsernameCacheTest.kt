@@ -1,6 +1,6 @@
 package io.kudos.ms.user.core.cache
 
-import io.kudos.ability.cache.common.kit.CacheKit
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.ms.user.common.vo.loginremember.UserLoginRememberMeCacheItem
 import io.kudos.ms.user.core.dao.UserLoginRememberMeDao
 import io.kudos.ms.user.core.model.po.UserLoginRememberMe
@@ -109,7 +109,7 @@ class RememberMeByTenantIdAndUsernameCacheTest : RdbAndRedisCacheTestBase() {
 
         val key = cacheHandler.getKey(tenantId, username)
         @Suppress("UNCHECKED_CAST")
-        val cacheItem = CacheKit.getValue(cacheHandler.cacheName(), key) as UserLoginRememberMeCacheItem?
+        val cacheItem = KeyValueCacheKit.getValue(cacheHandler.cacheName(), key) as UserLoginRememberMeCacheItem?
         assertNotNull(cacheItem)
         assertEquals(record.id, cacheItem.id)
     }
@@ -124,7 +124,7 @@ class RememberMeByTenantIdAndUsernameCacheTest : RdbAndRedisCacheTestBase() {
 
         val key = cacheHandler.getKey(record.tenantId, record.username)
         @Suppress("UNCHECKED_CAST")
-        val cacheItem = CacheKit.getValue(cacheHandler.cacheName(), key) as UserLoginRememberMeCacheItem?
+        val cacheItem = KeyValueCacheKit.getValue(cacheHandler.cacheName(), key) as UserLoginRememberMeCacheItem?
         assertNotNull(cacheItem)
         assertEquals(newToken, cacheItem.token)
     }
@@ -138,7 +138,7 @@ class RememberMeByTenantIdAndUsernameCacheTest : RdbAndRedisCacheTestBase() {
         cacheHandler.syncOnDelete(record, id)
 
         val key = cacheHandler.getKey(record.tenantId, record.username)
-        assertNull(CacheKit.getValue(cacheHandler.cacheName(), key))
+        assertNull(KeyValueCacheKit.getValue(cacheHandler.cacheName(), key))
         assertNull(cacheHandler.getRememberMe(record.tenantId, record.username))
     }
 
@@ -157,7 +157,7 @@ class RememberMeByTenantIdAndUsernameCacheTest : RdbAndRedisCacheTestBase() {
 
         keys.forEach {
             val key = cacheHandler.getKey(it.first, it.second)
-            assertNull(CacheKit.getValue(cacheHandler.cacheName(), key))
+            assertNull(KeyValueCacheKit.getValue(cacheHandler.cacheName(), key))
         }
     }
 

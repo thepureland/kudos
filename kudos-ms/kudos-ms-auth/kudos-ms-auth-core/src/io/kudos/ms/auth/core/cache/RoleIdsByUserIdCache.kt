@@ -1,7 +1,7 @@
 package io.kudos.ms.auth.core.cache
 
 import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
-import io.kudos.ability.cache.common.kit.CacheKit
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.auth.core.dao.AuthRoleUserDao
 import io.kudos.ms.user.core.dao.UserAccountDao
@@ -40,7 +40,7 @@ open class RoleIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() {
     override fun doReload(key: String): List<String> = getSelf<RoleIdsByUserIdCache>().getRoleIds(key)
 
     override fun reloadAll(clear: Boolean) {
-        if (!CacheKit.isCacheActive(CACHE_NAME)) {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.info("缓存未开启，不加载和缓存所有用户的角色ID！")
             return
         }
@@ -61,7 +61,7 @@ open class RoleIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() {
             if (userId.isBlank()) return@forEach
             val roleIds = userIdToRoleIdsMap[userId] ?: emptyList()
             if (roleIds.isNotEmpty()) {
-                CacheKit.put(CACHE_NAME, userId, roleIds)
+                KeyValueCacheKit.put(CACHE_NAME, userId, roleIds)
                 log.debug("缓存了用户${userId}的${roleIds.size}条角色ID。")
             }
         }
@@ -79,7 +79,7 @@ open class RoleIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() {
         unless = "#result == null || #result.isEmpty()"
     )
     open fun getRoleIds(userId: String): List<String> {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("缓存中不存在用户${userId}的角色ID，从数据库中加载...")
         }
 
@@ -94,10 +94,10 @@ open class RoleIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() {
      * @param userId 用户ID
      */
     open fun syncOnRoleUserChange(userId: String) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("用户${userId}的角色关系变更后，同步${CACHE_NAME}缓存...")
             evict(userId)
-            if (CacheKit.isWriteInTime(CACHE_NAME)) {
+            if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                 getSelf<RoleIdsByUserIdCache>().getRoleIds(userId)
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
@@ -110,11 +110,11 @@ open class RoleIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() {
      * @param userIds 用户ID集合
      */
     open fun syncOnBatchRoleUserChange(userIds: Collection<String>) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("批量用户角色关系变更后，同步${CACHE_NAME}缓存...")
             userIds.forEach { userId ->
-                CacheKit.evict(CACHE_NAME, userId)
-                if (CacheKit.isWriteInTime(CACHE_NAME)) {
+                KeyValueCacheKit.evict(CACHE_NAME, userId)
+                if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                     getSelf<RoleIdsByUserIdCache>().getRoleIds(userId)
                 }
             }
@@ -128,9 +128,9 @@ open class RoleIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() {
      * @param userId 用户ID
      */
     open fun syncOnUserDelete(userId: String) {
-        if (CacheKit.isCacheActive(CACHE_NAME)) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("删除用户${userId}后，同步从${CACHE_NAME}缓存中踢除...")
-            CacheKit.evict(CACHE_NAME, userId)
+            KeyValueCacheKit.evict(CACHE_NAME, userId)
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
     }

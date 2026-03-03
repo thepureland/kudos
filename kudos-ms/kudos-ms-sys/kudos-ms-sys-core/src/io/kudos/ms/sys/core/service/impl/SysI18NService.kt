@@ -34,16 +34,8 @@ open class SysI18NService : BaseCrudService<String, SysI18n, SysI18nDao>(), ISys
     private lateinit var i18nCacheHandler: I18NByLocaleAndTypeAndAmsCodeCache
 
     override fun getI18nValue(locale: String, atomicServiceCode: String, i18nTypeDictCode: String, key: String): String? {
-        val searchPayload = SysI18nSearchPayload().apply {
-            this.locale = locale
-            this.atomicServiceCode = atomicServiceCode
-            this.i18nTypeDictCode = i18nTypeDictCode
-            this.key = key
-            this.active = true
-        }
-        @Suppress("UNCHECKED_CAST")
-        val records = dao.search(searchPayload, SysI18nRecord::class)
-        return records.firstOrNull()?.value
+        val i18nMap = i18nCacheHandler.getI18ns(locale, i18nTypeDictCode, atomicServiceCode)
+        return i18nMap[key]
     }
 
     override fun getI18nsByAtomicServiceAndType(atomicServiceCode: String, i18nTypeDictCode: String, locale: String?): List<SysI18nRecord> {

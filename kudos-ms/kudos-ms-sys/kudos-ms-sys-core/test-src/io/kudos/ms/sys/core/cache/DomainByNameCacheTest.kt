@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.core.cache
 
-import io.kudos.ability.cache.common.kit.CacheKit
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.ms.sys.common.vo.domain.SysDomainCacheItem
 import io.kudos.ms.sys.core.dao.SysDomainDao
 import io.kudos.ms.sys.core.model.po.SysDomain
@@ -105,7 +105,7 @@ class DomainByNameCacheTest : RdbAndRedisCacheTestBase() {
         cacheHandler.syncOnInsert(sysDomain, sysDomain.id)
 
         // 验证新记录是否在缓存中
-        val cacheItem = CacheKit.getValue(cacheHandler.cacheName(), sysDomain.domain)
+        val cacheItem = KeyValueCacheKit.getValue(cacheHandler.cacheName(), sysDomain.domain)
         assertNotNull(cacheItem)
         val cacheItem2 = cacheHandler.getDomain(sysDomain.domain)
         assertNotNull(cacheItem2)
@@ -123,7 +123,7 @@ class DomainByNameCacheTest : RdbAndRedisCacheTestBase() {
         cacheHandler.syncOnUpdate(null, id)
 
         // 验证缓存中的记录
-        var cacheItem = CacheKit.getValue(cacheHandler.cacheName(), newName) as SysDomainCacheItem?
+        var cacheItem = KeyValueCacheKit.getValue(cacheHandler.cacheName(), newName) as SysDomainCacheItem?
         assertNotNull(cacheItem)
         assertEquals(newName, cacheItem.domain)
         cacheItem = cacheHandler.getDomain(newName)
@@ -144,7 +144,7 @@ class DomainByNameCacheTest : RdbAndRedisCacheTestBase() {
         cacheHandler.syncOnDelete(sysDomain, id)
 
         // 验证缓存中有没有
-        var cacheItem = CacheKit.getValue(cacheHandler.cacheName(), sysDomain.domain)
+        var cacheItem = KeyValueCacheKit.getValue(cacheHandler.cacheName(), sysDomain.domain)
         assertNull(cacheItem)
         cacheItem = cacheHandler.getDomain(sysDomain.domain)
         assertNull(cacheItem)
@@ -167,11 +167,11 @@ class DomainByNameCacheTest : RdbAndRedisCacheTestBase() {
         cacheHandler.syncOnBatchDelete(ids, domains)
 
         // 验证缓存中有没有
-        var cacheItem = CacheKit.getValue(cacheHandler.cacheName(), domain1)
+        var cacheItem = KeyValueCacheKit.getValue(cacheHandler.cacheName(), domain1)
         assertNull(cacheItem)
         cacheItem = cacheHandler.getDomain(domain1)
         assertNull(cacheItem)
-        cacheItem = CacheKit.getValue(cacheHandler.cacheName(), domain2)
+        cacheItem = KeyValueCacheKit.getValue(cacheHandler.cacheName(), domain2)
         assertNull(cacheItem)
         cacheItem = cacheHandler.getDomain(domain2)
         assertNull(cacheItem)
