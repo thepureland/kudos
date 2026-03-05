@@ -46,6 +46,12 @@ open class AuthGroupHashCache : AbstractHashCacheHandler<AuthGroupCacheItem>() {
 
     override fun cacheName(): String = CACHE_NAME
 
+    override fun entityClass() = AuthGroupCacheItem::class
+
+    override fun filterableProperties(): Set<String> = FILTERABLE_PROPERTIES
+
+    override fun doReload(id: Any): AuthGroupCacheItem? = authGroupDao.getAs(id.toString())
+
     /**
      * 根据 id 从缓存获取用户组，未命中则查库并回写。
      *

@@ -17,19 +17,19 @@ data class SysCacheRecord (
     override var id: String = "",
 
     /** 名称 */
-    var name: String? = null,
+    var name: String = "",
 
     /** 原子服务编码 */
-    var atomicServiceCode: String? = null,
+    var atomicServiceCode: String = "",
 
     /** 缓存策略代码 */
-    var strategyDictCode: String? = null,
+    var strategyDictCode: String = "",
 
     /** 是否启动时写缓存 */
-    var writeOnBoot: Boolean? = null,
+    var writeOnBoot: Boolean = true,
 
     /** 是否及时回写缓存 */
-    var writeInTime: Boolean? = null,
+    var writeInTime: Boolean = true,
 
     /** 缓存生存时间(秒) */
     var ttl: Int? = null,
@@ -38,13 +38,13 @@ data class SysCacheRecord (
     var remark: String? = null,
 
     /** 是否启用 */
-    var active: Boolean? = null,
+    var active: Boolean = true,
 
     /** 是否内置 */
-    var builtIn: Boolean? = null,
+    var builtIn: Boolean = true,
 
     /** 是否为 Hash 缓存 */
-    var hash: Boolean? = null,
+    var hash: Boolean = false,
 
     //endregion your codes 1
 //region your codes 2

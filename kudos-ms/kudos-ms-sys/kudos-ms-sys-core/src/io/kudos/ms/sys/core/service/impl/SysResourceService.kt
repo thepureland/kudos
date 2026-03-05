@@ -66,9 +66,10 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
             this.subSystemCode = subSystemCode
             this.parentId = parentId
         }
+
         @Suppress("UNCHECKED_CAST")
         val records = dao.search(searchPayload, SysResourceRecord::class)
-        
+
         // 转换为树节点
         val treeNodes = records.map { record ->
             SysResourceTreeRecord().apply {
@@ -76,11 +77,11 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
                 this.children = mutableListOf()
             }
         }
-        
+
         // 构建树形结构
         val nodeMap = treeNodes.associateBy { it.id }
         val rootNodes = mutableListOf<SysResourceTreeRecord>()
-        
+
         treeNodes.forEach { node ->
             if (node.parentId == null) {
                 rootNodes.add(node)
@@ -89,7 +90,7 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
                 parent?.children?.add(node)
             }
         }
-        
+
         // 按 orderNum 排序
         fun sortTree(nodes: List<SysResourceTreeRecord>) {
             nodes.sortedBy { it.orderNum ?: Int.MAX_VALUE }.forEach { node ->
@@ -97,7 +98,7 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
             }
         }
         sortTree(rootNodes)
-        
+
         return rootNodes.sortedBy { it.orderNum ?: Int.MAX_VALUE }
     }
 
@@ -212,8 +213,9 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
         return sysResourceHashCache.getResourcesBySubSystemCodeAndType(subSysDictCode, resourceType.code)
     }
 
-    override fun getSimpleMenus(subSysDictCode: String): List<BaseMenuTreeNode> {
-        val resources = sysResourceHashCache.getResourcesBySubSystemCodeAndType(subSysDictCode, ResourceTypeEnum.MENU.code)
+    override fun getSimpleMenus(subSystemCode: String): List<BaseMenuTreeNode> {
+        val resources =
+            sysResourceHashCache.getResourcesBySubSystemCodeAndType(subSystemCode, ResourceTypeEnum.MENU.code)
         return buildMenuTree(resources) { item ->
             BaseMenuTreeNode().apply {
                 id = item.id
@@ -224,8 +226,9 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
         }.sortedBy { it.seqNo }
     }
 
-    override fun getMenus(subSysDictCode: String): List<MenuTreeNode> {
-        val resources = sysResourceHashCache.getResourcesBySubSystemCodeAndType(subSysDictCode, ResourceTypeEnum.MENU.code)
+    override fun getMenus(subSystemCode: String): List<MenuTreeNode> {
+        val resources =
+            sysResourceHashCache.getResourcesBySubSystemCodeAndType(subSystemCode, ResourceTypeEnum.MENU.code)
         return buildMenuTree(resources) { item ->
             MenuTreeNode().apply {
                 id = item.id
@@ -243,21 +246,36 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
     }
 
     override fun getDirectChildrenResources(
-        subSysDictCode: String,
+        subSystemCode: String,
         resourceType: ResourceTypeEnum,
         parentId: String?
     ): List<SysResourceCacheItem> {
-        val list = sysResourceHashCache.getResourcesBySubSystemCodeAndType(subSysDictCode, resourceType.code)
+        val list = sysResourceHashCache.getResourcesBySubSystemCodeAndType(subSystemCode, resourceType.code)
         return list.filter { it.parentId == parentId }
     }
 
     override fun getChildrenResources(
-        subSysDictCode: String,
+        subSystemCode: String,
         resourceType: ResourceTypeEnum,
         parentId: String
     ): List<SysResourceCacheItem> {
-        val list = sysResourceHashCache.getResourcesBySubSystemCodeAndType(subSysDictCode, resourceType.code)
-        return list.filter { it.parentId == parentId }
+        val resources = sysResourceHashCache.getResourcesBySubSystemCodeAndType(subSystemCode, resourceType.code)
+        val children = mutableListOf<SysResourceCacheItem>()
+        filterChildrenRecursively(parentId, children, resources)
+        return children
+    }
+
+    /**
+     * 递归地过滤孩子资源
+     */
+    private fun filterChildrenRecursively(
+        parentId: String,
+        children: MutableList<SysResourceCacheItem>,
+        resources: Collection<SysResourceCacheItem>
+    ) {
+        val filteredChildren = resources.filter { it.parentId == parentId }
+        children.addAll(filteredChildren)
+        filteredChildren.forEach { filterChildrenRecursively(it.parentId!!, children, resources) }
     }
 
     /**

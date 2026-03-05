@@ -1,6 +1,7 @@
 package io.kudos.ability.cache.common.notify
 
 import io.kudos.ability.cache.common.enums.CacheStrategy
+import io.kudos.ability.cache.common.kit.HashCacheKit
 import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.ability.distributed.notify.common.api.INotifyListener
 import io.kudos.ability.distributed.notify.common.model.NotifyMessageVo
@@ -72,17 +73,22 @@ class CacheNotifyListener : INotifyListener {
      */
     override fun notifyProcess(notifyMessageVo: NotifyMessageVo<out Serializable>) {
         val messageBody = notifyMessageVo.messageBody as CacheOperatorVo
-        if (!KeyValueCacheKit.isCacheActive(messageBody.cacheName)) {
+        val cacheName = messageBody.cacheName
+        val kvActive = KeyValueCacheKit.isCacheActive(cacheName)
+        val hashActive = HashCacheKit.isCacheActive(cacheName)
+        if (!kvActive && !hashActive) {
             return
         }
         log.info(
             "收到清理缓存Notify：cacheName={0},type={1},key={2}",
-            messageBody.cacheName,
+            cacheName,
             messageBody.type,
             messageBody.key
         )
-        //通过mq过来的清理缓存，只需一个应用处理就好
-        val strategy = KeyValueCacheKit.getCacheConfig(messageBody.cacheName)!!.strategy
+        val kvConfig = KeyValueCacheKit.getCacheConfig(cacheName)
+        val hashConfig = HashCacheKit.getCacheConfig(cacheName)
+        val strategy = kvConfig?.strategy ?: kvConfig?.strategyDictCode
+            ?: hashConfig?.strategy ?: hashConfig?.strategyDictCode
         if (CacheStrategy.SINGLE_LOCAL.name == strategy) {
             doClear(messageBody)
         }
@@ -105,11 +111,22 @@ class CacheNotifyListener : INotifyListener {
      * @param messageBody 缓存操作信息对象，包含操作类型、缓存名称、key等信息
      */
     private fun doClear(messageBody: CacheOperatorVo) {
+        val cacheName = messageBody.cacheName
         if (CacheOperatorVo.TYPE_CLEAR == messageBody.type) {
-            KeyValueCacheKit.doClear(messageBody.cacheName)
+            if (KeyValueCacheKit.isCacheActive(cacheName)) {
+                KeyValueCacheKit.doClear(cacheName)
+            }
+            if (HashCacheKit.isCacheActive(cacheName)) {
+                HashCacheKit.doClear(cacheName)
+            }
         }
-        if (CacheOperatorVo.TYPE_EVICT == messageBody.type) {
-            KeyValueCacheKit.doEvict(messageBody.cacheName, messageBody.key!!)
+        if (CacheOperatorVo.TYPE_EVICT == messageBody.type && messageBody.key != null) {
+            if (KeyValueCacheKit.isCacheActive(cacheName)) {
+                KeyValueCacheKit.doEvict(cacheName, messageBody.key!!)
+            }
+            if (HashCacheKit.isCacheActive(cacheName)) {
+                HashCacheKit.doEvict(cacheName, messageBody.key!!)
+            }
         }
     }
 

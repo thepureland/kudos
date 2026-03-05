@@ -13,6 +13,8 @@ data class SysAccessRulePayload (
 
     //region your codes 1
 
+    override var id: String,
+
     /** 租户id */
     var tenantId: String? = null,
 

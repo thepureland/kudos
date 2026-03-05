@@ -18,11 +18,16 @@ interface ISysAccessRuleApi {
     /**
      * 获取访问规则
      *
-     * @param tenantId 租户id，可以为null
-     * @param systemCode 系统编码
+     * @param systemCode 系统编码，缺省为"default"
+     * @param tenantId 租户id，缺省为"default"
      * @return 访问规则记录，找不到返回null
+     * @author K
+     * @since 1.0.0
      */
-    fun getAccessRuleByTenantAndSystem(tenantId: String?, systemCode: String): SysAccessRuleRecord?
+    fun getAccessRuleByTenantAndSystem(
+        systemCode: String = "default",
+        tenantId: String = "default"
+    ): SysAccessRuleRecord?
 
     /**
      * 更新启用状态

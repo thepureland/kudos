@@ -50,6 +50,12 @@ open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheItem>
 
     override fun cacheName(): String = CACHE_NAME
 
+    override fun entityClass() = SysResourceCacheItem::class
+
+    override fun filterableProperties(): Set<String> = FILTERABLE_PROPERTIES
+
+    override fun doReload(id: Any): SysResourceCacheItem? = sysResourceDao.getAs(id.toString())
+
     // ---------- 1. 按主键 id ----------
 
     /**

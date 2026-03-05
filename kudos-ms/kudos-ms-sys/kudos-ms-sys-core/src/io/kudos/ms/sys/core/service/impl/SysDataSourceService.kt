@@ -3,6 +3,7 @@ package io.kudos.ms.sys.core.service.impl
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
+import io.kudos.base.query.PagingSearchResult
 import io.kudos.base.security.CryptoKit
 import io.kudos.base.support.payload.ListSearchPayload
 import io.kudos.ms.sys.common.api.ISysTenantApi
@@ -50,11 +51,11 @@ open class SysDataSourceService : BaseCrudService<String, SysDataSource, SysData
         return sysDataSourceHashCache.getDataSources(tenantId, subSystemCode, microServiceCode)
     }
 
-    override fun pagingSearch(listSearchPayload: ListSearchPayload): Pair<List<*>, Int> {
-        val pair = super.pagingSearch(listSearchPayload)
+    override fun pagingSearch(listSearchPayload: ListSearchPayload): PagingSearchResult<*> {
+        val result = super.pagingSearch(listSearchPayload)
 
         // 根据租户id获取租户名称
-        val records = pair.first.filterIsInstance<SysDataSourceRecord>()
+        val records = result.data.filterIsInstance<SysDataSourceRecord>()
         if (records.isNotEmpty()) {
             val tenantIds = records.mapNotNull { it.tenantId }
             val tenants = sysTenantApi.getTenants(tenantIds)
@@ -63,7 +64,7 @@ open class SysDataSourceService : BaseCrudService<String, SysDataSource, SysData
             }
         }
 
-        return pair
+        return result
     }
 
     override fun <R : Any> get(id: String, returnType: KClass<R>): R? {

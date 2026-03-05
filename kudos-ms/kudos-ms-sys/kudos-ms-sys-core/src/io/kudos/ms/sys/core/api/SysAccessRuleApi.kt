@@ -23,9 +23,13 @@ open class SysAccessRuleApi : ISysAccessRuleApi {
     @Resource
     protected lateinit var sysAccessRuleService: ISysAccessRuleService
 
-    override fun getAccessRuleByTenantAndSystem(tenantId: String?, systemCode: String): SysAccessRuleRecord? {
-        return sysAccessRuleService.getAccessRuleByTenantAndSystem(tenantId, systemCode)
+    override fun getAccessRuleByTenantAndSystem(
+        systemCode: String,
+        tenantId: String
+    ): SysAccessRuleRecord? {
+        return sysAccessRuleService.getAccessRuleByTenantAndSystem(systemCode, tenantId)
     }
+
 
     override fun updateActive(id: String, active: Boolean): Boolean {
         return sysAccessRuleService.updateActive(id, active)

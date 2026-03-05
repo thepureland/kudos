@@ -95,15 +95,16 @@ interface ISysCacheService : IBaseCrudService<String, SysCache> {
      * @param name 缓存名称
      * @param key 缓存key
      */
-    fun hasKey(name: String, key: String): Boolean
+    fun existsKey(name: String, key: String): Boolean
 
     /**
-     * 获取指定名称和key的缓存项的值的信息
+     * 获取指定名称和key的缓存项的值的json表示
      *
      * @param name 缓存名称
      * @param key 缓存key
+     * @return value的json串,value为null或出错返回空串
      */
-    fun getValueInfo(name: String, key: String): Any?
+    fun getValueJson(name: String, key: String): String
 
     //endregion your codes 2
 

@@ -26,7 +26,10 @@ open class SysAccessRuleService : BaseCrudService<String, SysAccessRule, SysAcce
 
     private val log = LogFactory.getLog(this)
 
-    override fun getAccessRuleByTenantAndSystem(tenantId: String?, systemCode: String): SysAccessRuleRecord? {
+    override fun getAccessRuleByTenantAndSystem(
+        systemCode: String,
+        tenantId: String
+    ): SysAccessRuleRecord? {
         val searchPayload = SysAccessRuleSearchPayload().apply {
             this.tenantId = tenantId
             this.systemCode = systemCode

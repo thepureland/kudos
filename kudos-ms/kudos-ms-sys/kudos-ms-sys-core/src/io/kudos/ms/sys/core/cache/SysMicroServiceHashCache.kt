@@ -41,6 +41,12 @@ open class SysMicroServiceHashCache : AbstractHashCacheHandler<SysMicroServiceCa
 
     override fun cacheName(): String = CACHE_NAME
 
+    override fun entityClass() = SysMicroServiceCacheItem::class
+
+    override fun filterableProperties(): Set<String> = FILTERABLE_PROPERTIES
+
+    override fun doReload(id: Any): SysMicroServiceCacheItem? = sysMicroServiceDao.getAs(id.toString())
+
     /**
      * 根据 code 从缓存获取微服务信息，未命中则查库并回写。
      *

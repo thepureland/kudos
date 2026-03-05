@@ -1,8 +1,10 @@
 package io.kudos.ms.sys.core.service.impl
 
+import io.kudos.ability.cache.common.kit.HashCacheKit
 import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.bean.BeanKit
+import io.kudos.base.data.json.JsonKit
 import io.kudos.base.error.ServiceException
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.sys.common.vo.cache.SysCacheCacheItem
@@ -133,27 +135,52 @@ open class SysCacheService : BaseCrudService<String, SysCache, SysCacheDao>(), I
     }
 
     override fun reload(name: String, key: String) {
-        KeyValueCacheKit.reload(name, key)
+        if (isKeyValueCache(name)) {
+            KeyValueCacheKit.reload(name, key)
+        } else {
+            HashCacheKit.reload(name, key)
+        }
     }
 
     override fun reloadAll(name: String) {
-        KeyValueCacheKit.reloadAll(name)
+        if (isKeyValueCache(name)) {
+            KeyValueCacheKit.reloadAll(name)
+        } else {
+            HashCacheKit.reloadAll(name)
+        }
     }
 
     override fun evict(name: String, key: String) {
-        KeyValueCacheKit.evict(name, key)
+        if (isKeyValueCache(name)) {
+            KeyValueCacheKit.evict(name, key)
+        } else {
+            HashCacheKit.evict(name, key)
+        }
     }
 
     override fun evictAll(name: String) {
-        KeyValueCacheKit.evictByPattern(name, "*")
+        if (isKeyValueCache(name)) {
+            KeyValueCacheKit.clear(name)
+        } else {
+            HashCacheKit.clear(name)
+        }
     }
 
-    override fun hasKey(name: String, key: String): Boolean {
-        return KeyValueCacheKit.existsKey(name, key)
+    override fun existsKey(name: String, key: String): Boolean {
+        return if (isKeyValueCache(name)) {
+            KeyValueCacheKit.existsKey(name, key)
+        } else {
+            HashCacheKit.existsById(name, key)
+        }
     }
 
-    override fun getValueInfo(name: String, key: String): Any? {
-        TODO("Not yet implemented")
+    override fun getValueJson(name: String, key: String): String {
+        val value = if (isKeyValueCache(name)) {
+            KeyValueCacheKit.getValue(name, key)
+        } else {
+            HashCacheKit.getValue(name, key)
+        }
+        return JsonKit.toJson(value)
     }
 
     private fun isKeyValueCache(cacheName: String) : Boolean {

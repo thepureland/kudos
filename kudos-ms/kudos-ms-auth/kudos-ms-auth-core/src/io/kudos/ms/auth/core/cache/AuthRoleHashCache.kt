@@ -46,6 +46,12 @@ open class AuthRoleHashCache : AbstractHashCacheHandler<AuthRoleCacheItem>() {
 
     override fun cacheName(): String = CACHE_NAME
 
+    override fun entityClass() = AuthRoleCacheItem::class
+
+    override fun filterableProperties(): Set<String> = FILTERABLE_PROPERTIES
+
+    override fun doReload(id: Any): AuthRoleCacheItem? = authRoleDao.getAs(id.toString())
+
     /**
      * 根据 id 从缓存获取角色，未命中则查库并回写。
      *
