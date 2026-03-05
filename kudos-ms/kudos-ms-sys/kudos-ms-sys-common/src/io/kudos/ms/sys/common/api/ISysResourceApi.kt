@@ -64,24 +64,20 @@ interface ISysResourceApi {
 //    ): List<SysResourceCacheItem>
 
     /**
-     * 根据子系统和资源类型，返回对应的资源
+     * 根据子系统，返回对应的基础菜单树
      *
-     * @param subSysDictCode 子系统编码
+     * @param subSystemCode 子系统编码
      * @return List(基础的菜单树结点)
-     * @author K
-     * @since 1.0.0
      */
-    fun getSimpleMenus(subSysDictCode: String): List<BaseMenuTreeNode>
+    fun getSimpleMenus(subSystemCode: String): List<BaseMenuTreeNode>
 
     /**
-     * 根据子系统和资源类型，返回对应的资源
+     * 根据子系统，返回对应的菜单树
      *
-     * @param subSysDictCode 子系统编码
+     * @param subSystemCode 子系统编码
      * @return List(菜单树结点)
-     * @author K
-     * @since 1.0.0
      */
-    fun getMenus(subSysDictCode: String): List<MenuTreeNode>
+    fun getMenus(subSystemCode: String): List<MenuTreeNode>
 
     /**
      * 返回指定子系统和url对应的资源的id
@@ -97,16 +93,13 @@ interface ISysResourceApi {
     /**
      * 返回指定父菜单id的直接孩子菜单(active的)
      *
-     * @param subSysDictCode 子系统编码
-     *
-     * @param parentId 父菜单id，为null时返回第一层菜单
+     * @param subSystemCode 子系统编码
      * @param resourceType 资源类型枚举
+     * @param parentId 父菜单id，为null时返回第一层菜单
      * @return List(资源对象)
-     * @author K
-     * @since 1.0.0
      */
     fun getDirectChildrenResources(
-        subSysDictCode: String,
+        subSystemCode: String,
         resourceType: ResourceTypeEnum,
         parentId: String?
     ): List<SysResourceCacheItem>
@@ -114,15 +107,13 @@ interface ISysResourceApi {
     /**
      * 返回指定参数的孩子资源
      *
-     * @param subSysDictCode 子系统编码
+     * @param subSystemCode 子系统编码
      * @param resourceType 资源类型枚举
      * @param parentId 父资源id
      * @return List(资源对象)
-     * @author K
-     * @since 1.0.0
      */
     fun getChildrenResources(
-        subSysDictCode: String,
+        subSystemCode: String,
         resourceType: ResourceTypeEnum,
         parentId: String
     ): List<SysResourceCacheItem>

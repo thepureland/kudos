@@ -3,6 +3,7 @@ package io.kudos.ability.data.rdb.ktorm.service
 import io.kudos.ability.data.rdb.ktorm.support.BaseReadOnlyDao
 import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
 import io.kudos.base.query.Criteria
+import io.kudos.base.query.PagingSearchResult
 import io.kudos.base.query.sort.Order
 import io.kudos.base.support.iservice.IBaseReadOnlyService
 import io.kudos.base.support.payload.ListSearchPayload
@@ -150,14 +151,14 @@ open class BaseReadOnlyService<PK : Any, E : IDbEntity<PK, E>, DAO : BaseReadOnl
         vararg orders: Order
     ): List<Map<String, *>> = dao.pagingReturnProperties(criteria, returnProperties, pageNo, pageSize, *orders)
 
-    override fun pagingSearch(listSearchPayload: ListSearchPayload): Pair<List<*>, Int> {
+    override fun pagingSearch(listSearchPayload: ListSearchPayload): PagingSearchResult<*> {
         val results = search(listSearchPayload)
         val count = if (listSearchPayload.pageNo != null) {
             count(listSearchPayload)
         } else {
             results.size
         }
-        return Pair(results, count)
+        return PagingSearchResult(results, count)
     }
 
     override fun search(listSearchPayload: ListSearchPayload): List<*> = dao.search(listSearchPayload)

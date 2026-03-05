@@ -1,6 +1,7 @@
 package io.kudos.base.support.iservice
 
 import io.kudos.base.query.Criteria
+import io.kudos.base.query.PagingSearchResult
 import io.kudos.base.query.sort.Order
 import io.kudos.base.support.IIdEntity
 import io.kudos.base.support.payload.ListSearchPayload
@@ -289,9 +290,9 @@ interface IBaseReadOnlyService<PK : Any, E : IIdEntity<PK>> {
      * 按查询载体执行分页查询，返回结果与总数。
      *
      * @param listSearchPayload 列表查询载体
-     * @return Pair(结果列表, 总记录数)
+     * @return PagingSearchResult
      */
-    fun pagingSearch(listSearchPayload: ListSearchPayload): Pair<List<*>, Int>
+    fun pagingSearch(listSearchPayload: ListSearchPayload): PagingSearchResult<*>
 
     /**
      * 根据列表查询载体查询结果列表。

@@ -63,7 +63,7 @@ open class BaseCrudController<PK : Any, B : IBaseCrudService<PK, *>, S : ListSea
      * @author K
      * @since 1.0.0
      */
-    @PostMapping("/batchDelete")
+    @DeleteMapping("/batchDelete")
     open fun batchDelete(@RequestBody ids: List<PK>): Boolean {
         return service.batchDelete(ids) == ids.size
     }

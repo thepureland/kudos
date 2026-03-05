@@ -6,6 +6,9 @@ import io.kudos.ms.sys.common.vo.cache.SysCachePayload
 import io.kudos.ms.sys.common.vo.cache.SysCacheRecord
 import io.kudos.ms.sys.common.vo.cache.SysCacheSearchPayload
 import io.kudos.ms.sys.core.service.impl.SysCacheService
+import io.kudos.ms.sys.core.service.iservice.ISysCacheService
+import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
@@ -17,8 +20,8 @@ import org.springframework.web.bind.annotation.RestController
  */
 @RestController
 @RequestMapping("/api/admin/sys/cache")
-class CacheAdminController :
-    BaseCrudController<String, SysCacheService, SysCacheSearchPayload, SysCacheRecord, SysCacheDetail, SysCachePayload>() {
+open class SysCacheAdminController :
+    BaseCrudController<String, ISysCacheService, SysCacheSearchPayload, SysCacheRecord, SysCacheDetail, SysCachePayload>() {
 
     /**
      * 重载指定缓存名称和key的缓存项
@@ -26,8 +29,9 @@ class CacheAdminController :
      * @param name 缓存名称
      * @param key 缓存key
      */
+    @GetMapping("/reload")
     fun reload(name: String, key: String) {
-
+        return service.reload(name, key)
     }
 
     /**
@@ -35,8 +39,9 @@ class CacheAdminController :
      *
      * @param name 缓存名称
      */
+    @GetMapping("/reloadAll")
     fun reloadAll(name: String) {
-
+        return service.reloadAll(name)
     }
 
     /**
@@ -45,8 +50,9 @@ class CacheAdminController :
      * @param name 缓存名称
      * @param key 缓存key
      */
+    @DeleteMapping("/evict")
     fun evict(name: String, key: String) {
-
+        return service.evict(name, key)
     }
 
     /**
@@ -54,8 +60,9 @@ class CacheAdminController :
      *
      * @param name 缓存名称
      */
+    @DeleteMapping("/evictAll")
     fun evictAll(name: String) {
-
+        return service.evictAll(name)
     }
 
     /**
@@ -64,18 +71,21 @@ class CacheAdminController :
      * @param name 缓存名称
      * @param key 缓存key
      */
-    fun existKey(name: String, key: String): Boolean {
-
+    @GetMapping("/existsKey")
+    fun existsKey(name: String, key: String): Boolean {
+        return service.existsKey(name, key)
     }
 
     /**
-     * 获取指定名称和key的缓存项的值的信息
+     * 获取指定名称和key的缓存项的值的json表示
      *
      * @param name 缓存名称
      * @param key 缓存key
+     * @return value的json串,value为null或出错返回空串
      */
-    fun getValueInfo(name: String, key: String): Any? {
-
+    @GetMapping("/getValueJson")
+    fun getValueJson(name: String, key: String): String {
+        return service.getValueJson(name, key)
     }
 
 }

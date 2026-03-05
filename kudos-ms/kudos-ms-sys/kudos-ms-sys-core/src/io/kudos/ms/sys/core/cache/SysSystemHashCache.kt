@@ -40,6 +40,12 @@ open class SysSystemHashCache : AbstractHashCacheHandler<SysSystemCacheItem>() {
 
     override fun cacheName(): String = CACHE_NAME
 
+    override fun entityClass() = SysSystemCacheItem::class
+
+    override fun filterableProperties(): Set<String> = FILTERABLE_PROPERTIES
+
+    override fun doReload(id: Any): SysSystemCacheItem? = sysSystemDao.getAs(id.toString())
+
     /**
      * 根据 code 从缓存获取系统信息，未命中则查库并回写。
      *

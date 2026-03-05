@@ -5,12 +5,15 @@ import io.kudos.ability.cache.common.core.hash.IHashCache
 import io.kudos.ability.cache.common.core.hash.MixHashCacheManager
 import io.kudos.ability.cache.common.enums.CacheStrategy
 import io.kudos.ability.cache.common.kit.HashCacheKit.getHashCache
+import io.kudos.ability.cache.common.notify.CacheOperatorVo
 import io.kudos.ability.cache.common.support.CacheConfig
 import io.kudos.ability.cache.common.support.ICacheConfigProvider
 import io.kudos.base.logger.LogFactory
 import io.kudos.context.kit.SpringKit
+import io.kudos.base.support.IIdEntity
 import org.springframework.stereotype.Component
 import kotlin.collections.emptyList
+import kotlin.reflect.KClass
 
 /**
  * Hash 缓存工具：按 cacheName 获取 [IHashCache]（策略封装后的统一抽象）。
@@ -69,6 +72,82 @@ object HashCacheKit {
     }
 
     /**
+     * 踢除指定 id 的 Hash 缓存（若为 SINGLE_LOCAL 会发通知，否则直接删除）。
+     *
+     * @param cacheName 缓存名
+     * @param id        实体主键
+     */
+    fun evict(cacheName: String, id: Any) {
+        if (!isCacheActive(cacheName)) return
+        val config = getCacheConfig(cacheName) ?: return
+        val strategy = config.strategy ?: config.strategyDictCode
+        if (strategy == CacheStrategy.SINGLE_LOCAL.name) {
+            CacheOperatorVo(CacheOperatorVo.TYPE_EVICT, cacheName, id).doNotify()
+        } else {
+            doEvict(cacheName, id)
+        }
+    }
+
+    /**
+     * 踢除指定 id 的 Hash 缓存（直接删除，不发通知）。
+     *
+     * @param cacheName 缓存名
+     * @param id        实体主键
+     */
+    fun doEvict(cacheName: String, id: Any) {
+        if (!isCacheActive(cacheName)) return
+        val beansOfType = SpringKit.getBeansOfType<AbstractHashCacheHandler<*>>()
+        beansOfType.values.forEach {
+            if (it.cacheName() == cacheName) {
+                it.evict(id)
+            }
+        }
+    }
+
+    /**
+     * 清空 Hash 缓存（若为 SINGLE_LOCAL 会发通知，否则直接清空）。
+     *
+     * @param cacheName 缓存名
+     */
+    fun clear(cacheName: String) {
+        if (!isCacheActive(cacheName)) return
+        val config = getCacheConfig(cacheName) ?: return
+        val strategy = config.strategy ?: config.strategyDictCode
+        if (strategy == CacheStrategy.SINGLE_LOCAL.name) {
+            CacheOperatorVo(CacheOperatorVo.TYPE_CLEAR, cacheName, null).doNotify()
+        } else {
+            doClear(cacheName)
+        }
+    }
+
+    /**
+     * 清空 Hash 缓存（直接清空，不发通知）。
+     *
+     * @param cacheName 缓存名
+     */
+    fun doClear(cacheName: String) {
+        if (!isCacheActive(cacheName)) return
+        getHashCache(cacheName).clear(cacheName)
+    }
+
+    /**
+     * 重新加载指定 id 的 Hash 缓存。
+     * 委托该 cacheName 对应的 Handler：先从 Hash 中删除该 id，若配置了 writeOnBoot 且 Handler 实现了 [AbstractHashCacheHandler.doReload] 则从数据源加载并回写。
+     *
+     * @param cacheName 缓存名
+     * @param id        实体主键
+     */
+    fun reload(cacheName: String, id: Any) {
+        if (!isCacheActive(cacheName)) return
+        val beansOfType = SpringKit.getBeansOfType<AbstractHashCacheHandler<*>>()
+        beansOfType.values.forEach {
+            if (it.cacheName() == cacheName) {
+                it.reload(id)
+            }
+        }
+    }
+
+    /**
      * 重新加载所有 Hash 缓存。
      *
      * @param cacheName 缓存名
@@ -102,6 +181,36 @@ object HashCacheKit {
             return false
         }
         return getHashCache(cacheName).existsById(cacheName, id)
+    }
+
+    /**
+     * 获取 Hash 缓存中指定 id 的实体值（带类型）。
+     *
+     * @param cacheName  缓存名称
+     * @param id         实体主键
+     * @param valueClass 实体类型
+     * @return 实体，不存在时返回 null
+     */
+    fun <PK, T : IIdEntity<PK>> getValue(cacheName: String, id: PK, valueClass: KClass<T>): T? {
+        if (!isCacheActive(cacheName)) return null
+        return getHashCache(cacheName).getById(cacheName, id, valueClass)
+    }
+
+    /**
+     * 获取 Hash 缓存中指定 id 的实体值（无类型，返回 Any?）。
+     * 内部通过该 cacheName 对应的 Handler 的实体类型反序列化。
+     *
+     * @param cacheName 缓存名称
+     * @param id        实体主键
+     * @return 实体，不存在或未配置对应 Handler 时返回 null
+     */
+    fun getValue(cacheName: String, id: Any): Any? {
+        if (!isCacheActive(cacheName)) return null
+        val handler = SpringKit.getBeansOfType<AbstractHashCacheHandler<*>>().values
+            .firstOrNull { it.cacheName() == cacheName } ?: return null
+        @Suppress("UNCHECKED_CAST")
+        val entityClass = handler.exposedEntityClass() as KClass<IIdEntity<Any?>>
+        return getHashCache(cacheName).getById(cacheName, id, entityClass)
     }
 
     /**

@@ -162,7 +162,7 @@ object KeyValueCacheKit {
     }
 
     /**
-     * 清空缓存通知发送消息通知
+     * 清空缓存，发送消息通知
      *
      * @param cacheName 缓存名称
      * @author K

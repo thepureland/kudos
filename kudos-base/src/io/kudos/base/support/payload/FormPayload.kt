@@ -12,8 +12,8 @@ import io.kudos.base.support.IIdEntity
  */
 abstract class FormPayload<T>: IIdEntity<T> {
 
-    /** 惟一标识 */
-    @Suppress("UNCHECKED_CAST")
-    override var id: T = null as T
+//    /** 惟一标识 */
+//    @Suppress("UNCHECKED_CAST")
+//    override var id: T = null as T
 
 }

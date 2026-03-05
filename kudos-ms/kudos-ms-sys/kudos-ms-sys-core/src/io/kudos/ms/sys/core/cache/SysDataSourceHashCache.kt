@@ -47,6 +47,13 @@ open class SysDataSourceHashCache : AbstractHashCacheHandler<SysDataSourceCacheI
 
     override fun cacheName(): String = CACHE_NAME
 
+    override fun entityClass() = SysDataSourceCacheItem::class
+
+    override fun filterableProperties(): Set<String> = FILTERABLE_PROPERTIES
+
+    override fun doReload(id: Any): SysDataSourceCacheItem? =
+        sysDataSourceDao.get(id.toString(), SysDataSourceCacheItem::class)
+
     // ---------- 按主键 id（与 DataSourceByIdCache 等价） ----------
 
     /**

@@ -4,6 +4,7 @@ import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
+import io.kudos.base.query.PagingSearchResult
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.support.payload.ListSearchPayload
 import io.kudos.ms.sys.common.vo.dict.SysDictPayload
@@ -105,7 +106,7 @@ open class SysDictItemService : BaseCrudService<String, SysDictItem, SysDictItem
         }
     }
 
-    override fun pagingSearch(listSearchPayload: ListSearchPayload): Pair<List<SysDictItemRecord>, Int> {
+    override fun pagingSearch(listSearchPayload: ListSearchPayload): PagingSearchResult<SysDictItemRecord> {
         val dictItems = dao.pagingSearch(listSearchPayload as SysDictItemSearchPayload)
         val totalCount = if (dictItems.isNotEmpty()) {
             // 查询parentCode
@@ -120,7 +121,7 @@ open class SysDictItemService : BaseCrudService<String, SysDictItem, SysDictItem
             }
             dao.count(listSearchPayload)
         } else 0
-        return Pair(dictItems, totalCount)
+        return PagingSearchResult(dictItems, totalCount)
     }
 
     override fun fetchAllParentIds(itemId: String): List<String> {

@@ -29,6 +29,9 @@ data class SysCacheSearchPayload (
     @get:DictCode(dictType = SysDictTypes.CACHE_STRATEGY, atomicServiceCode = SysConsts.ATOMIC_SERVICE_NAME)
     var strategyDictCode: String? = null,
 
+    /** 是否为Hash缓存 */
+    var hash: Boolean? = null,
+
     /** 是否启用 */
     var active: Boolean? = null,
 

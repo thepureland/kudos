@@ -23,22 +23,22 @@ data class SysCachePayload (
 
     /** 名称 */
     @get:NotBlank(message = "名称不能为空！")
-    var name: String? = null,
+    var name: String = "",
 
     /** 原子服务编码 */
     @get:NotBlank(message = "原子服务不能为空！")
-    var atomicServiceCode: String? = null,
+    var atomicServiceCode: String = "",
 
     /** 缓存策略代码 */
     @get:NotBlank(message = "缓存策略不能为空！")
     @get:DictCode(dictType = SysDictTypes.CACHE_STRATEGY, atomicServiceCode = SysConsts.ATOMIC_SERVICE_NAME, message = "缓存策略非法！")
-    var strategyDictCode: String? = null,
+    var strategyDictCode: String = "",
 
     /** 是否启动时写缓存 */
-    var writeOnBoot: Boolean? = null,
+    var writeOnBoot: Boolean = true,
 
     /** 是否及时回写缓存 */
-    var writeInTime: Boolean? = null,
+    var writeInTime: Boolean = true,
 
     /** 缓存生存时间(秒) */
     var ttl: Int? = null,
@@ -47,8 +47,7 @@ data class SysCachePayload (
     var remark: String? = null,
 
     /** 是否为 Hash 缓存 */
-    @get:NotNull(message = "必须指明是否为Hash缓存！")
-    var hash: Boolean? = null,
+    var hash: Boolean = false,
 
     //endregion your codes 1
 //region your codes 2

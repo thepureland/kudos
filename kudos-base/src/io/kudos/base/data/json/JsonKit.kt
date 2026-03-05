@@ -146,22 +146,25 @@ object JsonKit {
      *
      * @param obj 要序列化的对象，可以是一般对象，也可以是 Collection 或数组，如果集合为空集合, 返回"[]"
      * @param preserveNull 是否保留 null 值，默认为否
-     * @return 序列化后的 json 串，出错时返回空串
+     * @return 序列化后的 json 串，obj为null或出错时返回空串
      */
-    inline fun <reified T> toJson(obj: T, preserveNull: Boolean = false): String = try {
-        val engine = if (preserveNull) preserveJson else defaultJson
-        engine.encodeToString<T>(obj)
-    } catch (_: SerializationException) {
-        // 触发纯 kotlinx 兜底
-        val engine = if (preserveNull) preserveJson else defaultJson
-        val elem = _encodeAnyToJsonElement(engine, obj as Any?)
-        engine.encodeToString(JsonElement.serializer(), elem)
-    } catch (e: IllegalArgumentException) {
-        log.error(e)
-        ""
-    } catch (e: RuntimeException) {
-        log.error(e)
-        ""
+    inline fun <reified T> toJson(obj: T, preserveNull: Boolean = false): String {
+        if (obj == null) return ""
+        return try {
+            val engine = if (preserveNull) preserveJson else defaultJson
+            engine.encodeToString<T>(obj)
+        } catch (_: SerializationException) {
+            // 触发纯 kotlinx 兜底
+            val engine = if (preserveNull) preserveJson else defaultJson
+            val elem = _encodeAnyToJsonElement(engine, obj as Any?)
+            engine.encodeToString(JsonElement.serializer(), elem)
+        } catch (e: IllegalArgumentException) {
+            log.error(e)
+            ""
+        } catch (e: RuntimeException) {
+            log.error(e)
+            ""
+        }
     }
 
     /**
