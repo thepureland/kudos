@@ -22,7 +22,7 @@ internal class ConstraintConvertorFactoryTest {
     @Test
     fun testGetInstanceForDictEnumCode() {
         val annotation = TestBean::class.java.getDeclaredField("dictEnumCode")
-            .getAnnotation(DictEnumCode::class.java)
+            .getAnnotation(DictEnumItemCode::class.java)
         if (annotation != null) {
             val convertor = ConstraintConvertorFactory.getInstance(annotation)
             assertNotNull(convertor)
@@ -92,7 +92,7 @@ internal class ConstraintConvertorFactoryTest {
     @Test
     fun testGetInstanceForDictCode() {
         val annotation = TestBean::class.java.getDeclaredField("dictCode")
-            .getAnnotation(DictCode::class.java)
+            .getAnnotation(DictItemCode::class.java)
         if (annotation != null) {
             val convertor = ConstraintConvertorFactory.getInstance(annotation)
             // DictCode应该返回null
@@ -112,30 +112,30 @@ internal class ConstraintConvertorFactoryTest {
     }
 
     data class TestBean(
-        @get:DictEnumCode(enumClass = SexEnum::class)
-        val dictEnumCode: String?,
-        
+        @get:DictEnumItemCode(enumClass = SexEnum::class)
+        val dictEnumItemCode: String?,
+
         @get:Compare(anotherProperty = "other", logic = LogicOperatorEnum.EQ)
         val compare: String?,
-        
+
         @get:NotNullOn(depends = Depends(properties = ["other"], values = ["test"]))
         val notNullOn: String?,
-        
+
         @get:Each(value = Constraints(notNull = NotNull()))
         val each: List<String>?,
-        
+
         @get:Exist(value = Constraints(notNull = NotNull()))
         val exist: String?,
-        
+
         @get:Constraints
         val constraints: String?,
-        
+
         @get:Remote(checkClass = IBeanValidator::class, requestUrl = "")
         val remote: String?,
-        
-        @get:DictCode(atomicServiceCode = "test", dictType = "test")
-        val dictCode: String?,
-        
+
+        @get:DictItemCode(atomicServiceCode = "test", dictType = "test")
+        val dictItemCode: String?,
+
         @get:NotNull
         val notNull: String?
     )

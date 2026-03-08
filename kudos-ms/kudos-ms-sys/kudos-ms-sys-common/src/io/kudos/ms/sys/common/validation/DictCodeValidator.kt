@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.common.validation
 
-import io.kudos.base.bean.validation.constraint.annotations.DictCode
+import io.kudos.base.bean.validation.constraint.annotations.DictItemCode
 import io.kudos.context.kit.SpringKit
 import io.kudos.ms.sys.common.api.ISysDictApi
 import jakarta.validation.ConstraintValidator
@@ -13,14 +13,14 @@ import jakarta.validation.ConstraintValidatorContext
  * @author K
  * @since 1.0.0
  */
-class DictCodeValidator : ConstraintValidator<DictCode, CharSequence?> {
+class DictCodeValidator : ConstraintValidator<DictItemCode, CharSequence?> {
 
-    private lateinit var dictCode: DictCode
+    private lateinit var dictItemCode: DictItemCode
 
     private lateinit var dictApi: ISysDictApi
 
-    override fun initialize(dictCode: DictCode) {
-        this.dictCode = dictCode
+    override fun initialize(dictItemCode: DictItemCode) {
+        this.dictItemCode = dictItemCode
         dictApi = SpringKit.getBean<ISysDictApi>()
     }
 
@@ -28,7 +28,7 @@ class DictCodeValidator : ConstraintValidator<DictCode, CharSequence?> {
         if (value == null) {
             return true
         }
-        val dictItems = dictApi.getActiveDictItems(dictCode.dictType, dictCode.atomicServiceCode)
+        val dictItems = dictApi.getActiveDictItems(dictItemCode.dictType, dictItemCode.atomicServiceCode)
         val itemCodes = dictItems.map { it.itemCode!! }
         return itemCodes.contains(value)
     }

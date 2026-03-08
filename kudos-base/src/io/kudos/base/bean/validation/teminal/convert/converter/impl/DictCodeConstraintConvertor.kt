@@ -1,7 +1,7 @@
 package io.kudos.base.bean.validation.teminal.convert.converter.impl
 
-import io.kudos.base.bean.validation.constraint.annotations.DictCode
-import io.kudos.base.bean.validation.teminal.convert.converter.IDictCodeFinder
+import io.kudos.base.bean.validation.constraint.annotations.DictItemCode
+import io.kudos.base.bean.validation.teminal.convert.converter.IDictItemCodeFinder
 import java.util.*
 
 /**
@@ -12,18 +12,18 @@ class DictCodeConstraintConvertor(annotation: Annotation) : DefaultConstraintCon
 
     override fun getRule(constraintAnnotation: Annotation): LinkedHashMap<String, Any> {
         val map = super.getRule(constraintAnnotation)
-        require(constraintAnnotation is DictCode) { "DictCodeConstraintConvertor 仅支持 DictCode 注解" }
+        require(constraintAnnotation is DictItemCode) { "DictCodeConstraintConvertor 仅支持 DictCode 注解" }
         val dictCode = constraintAnnotation
-        val codeMap = dictCodeConvertor(dictCode.atomicServiceCode, dictCode.dictType)
-        map["values"] = codeMap.keys
+        val codes = dictCodeConvertor(dictCode.atomicServiceCode, dictCode.dictType)
+        map["values"] = codes
         return map
     }
 
-    private fun dictCodeConvertor(module: String?, dictType: String?): MutableMap<String?, String?> {
-        val dictCodeFinders = ServiceLoader.load(IDictCodeFinder::class.java)
+    private fun dictCodeConvertor(module: String, dictType: String): Set<String> {
+        val dictCodeFinders = ServiceLoader.load(IDictItemCodeFinder::class.java)
         for (dictCodeFinder in dictCodeFinders) {
-            return dictCodeFinder.getDictData(module, dictType)
+            return dictCodeFinder.getDictItemCodes(module, dictType)
         }
-        return HashMap<String?, String?>()
+        return emptySet()
     }
 }

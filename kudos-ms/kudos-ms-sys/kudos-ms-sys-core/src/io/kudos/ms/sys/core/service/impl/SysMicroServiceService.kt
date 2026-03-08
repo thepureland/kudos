@@ -3,9 +3,10 @@ package io.kudos.ms.sys.core.service.impl
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
+import io.kudos.base.query.Criteria
+import io.kudos.base.query.eq
 import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceCacheItem
 import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceRecord
-import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceSearchPayload
 import io.kudos.ms.sys.core.cache.SysMicroServiceHashCache
 import io.kudos.ms.sys.core.dao.SysMicroServiceDao
 import io.kudos.ms.sys.core.model.po.SysMicroService
@@ -33,7 +34,7 @@ open class SysMicroServiceService : BaseCrudService<String, SysMicroService, Sys
     @Resource
     private lateinit var sysMicroServiceHashCache: SysMicroServiceHashCache
 
-    override fun getAllActiveMicroService(): List<SysMicroServiceCacheItem> {
+    override fun getAllActiveMicroServices(): List<SysMicroServiceCacheItem> {
         val atomic = sysMicroServiceHashCache.listAtomicServices()
         val nonAtomic = sysMicroServiceHashCache.getMicroServicesByType(false)
         return (atomic + nonAtomic).filter { it.active == true }
@@ -43,7 +44,7 @@ open class SysMicroServiceService : BaseCrudService<String, SysMicroService, Sys
         return sysMicroServiceHashCache.getMicroServicesByType(false).filter { it.active == true }
     }
 
-    override fun getAllActiveAtomicService(): List<SysMicroServiceCacheItem> {
+    override fun getAllActiveAtomicServices(): List<SysMicroServiceCacheItem> {
         return sysMicroServiceHashCache.listAtomicServices().filter { it.active == true }
     }
 
@@ -52,13 +53,11 @@ open class SysMicroServiceService : BaseCrudService<String, SysMicroService, Sys
     }
 
     override fun getAllActiveAtomicServiceByParentCode(parentCode: String): List<SysMicroServiceRecord> {
-        val searchPayload = SysMicroServiceSearchPayload().apply {
-            returnEntityClass = SysMicroServiceRecord::class
-            active = true
-            this.parentCode = parentCode
-        }
-        @Suppress("UNCHECKED_CAST")
-        return dao.search(searchPayload, SysMicroServiceRecord::class)
+        val criteria = Criteria.and(
+            SysMicroService::parentCode eq parentCode,
+            SysMicroService::active eq true
+        )
+        return dao.searchAs<SysMicroServiceRecord>(criteria)
     }
 
     @Transactional

@@ -14,28 +14,26 @@ data class SysSystemSearchPayload (
 
     //region your codes 1
 
-    override var returnEntityClass: KClass<*>? = SysSystemRecord::class,
-
     /** 编码 */
-    var code: String? = null,
+    val code: String? = null,
 
     /** 名称 */
-    var name: String? = null,
+    val name: String? = null,
 
     /** 是否子系统 */
-    var subSystem: Boolean? = null,
+    val subSystem: Boolean? = null,
 
     /** 父系统编号 */
-    var parentCode: String? = null,
+    val parentCode: String? = null,
 
     /** 备注 */
-    var remark: String? = null,
+    val remark: String? = null,
 
     /** 是否启用 */
-    var active: Boolean? = null,
+    val active: Boolean? = null,
 
     /** 是否内置 */
-    var builtIn: Boolean? = null,
+    val builtIn: Boolean? = null,
 
     //endregion your codes 1
 //region your codes 2
@@ -44,7 +42,9 @@ data class SysSystemSearchPayload (
 
     //region your codes 3
 
-    constructor() : this(SysSystemRecord::class)
+    constructor() : this("")
+
+    override var returnEntityClass: KClass<*>? = SysSystemRecord::class
 
     //endregion your codes 3
 

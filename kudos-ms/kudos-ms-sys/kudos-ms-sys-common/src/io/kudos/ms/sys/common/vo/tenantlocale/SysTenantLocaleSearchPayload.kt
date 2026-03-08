@@ -14,13 +14,11 @@ data class SysTenantLocaleSearchPayload (
 
     //region your codes 1
 
-    override var returnEntityClass: KClass<*>? = SysTenantLocaleRecord::class,
-
     /** 租户id */
-    var tenantId: String? = null,
+    val tenantId: String? = null,
 
     /** 语言代码 */
-    var localeCode: String? = null,
+    val localeCode: String? = null,
 
     //endregion your codes 1
 //region your codes 2
@@ -29,7 +27,9 @@ data class SysTenantLocaleSearchPayload (
 
     //region your codes 3
 
-    constructor() : this(SysTenantLocaleRecord::class)
+    constructor() : this("")
+
+    override var returnEntityClass: KClass<*>? = SysTenantLocaleRecord::class
 
     //endregion your codes 3
 

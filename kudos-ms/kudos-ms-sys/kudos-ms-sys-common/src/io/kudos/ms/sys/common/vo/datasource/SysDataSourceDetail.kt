@@ -13,78 +13,78 @@ import java.time.LocalDateTime
 data class SysDataSourceDetail (
 
     /** 主键 */
-    override var id: String = "",
+    override val id: String = "",
 
     //region your codes 1
 
     /** 名称 */
-    var name: String? = null,
+    val name: String? = null,
 
     /** 子系统编码 */
-    var subSystemCode: String? = null,
+    val subSystemCode: String? = null,
 
     /** 微服务编码 */
-    var microServiceCode: String? = null,
+    val microServiceCode: String? = null,
 
     /** 租户id */
-    var tenantId: String? = null,
+    val tenantId: String? = null,
 
     /** 租房名称 */
     var tenantName: String? = null,
 
     /** url */
-    var url: String? = null,
+    val url: String? = null,
 
     /** 用户名 */
-    var username: String? = null,
+    val username: String? = null,
 
     /** 密码 */
-    var password: String? = null,
+    val password: String? = null,
 
     /** 初始连接数。初始化发生在显示调用init方法，或者第一次getConnection时 */
-    var initialSize: Int? = null,
+    val initialSize: Int? = null,
 
     /** 最大连接数 */
-    var maxActive: Int? = null,
+    val maxActive: Int? = null,
 
     /** 最大空闲连接数 */
-    var maxIdle: Int? = null,
+    val maxIdle: Int? = null,
 
     /** 最小空闲连接数。至少维持多少个空闲连接 */
-    var minIdle: Int? = null,
+    val minIdle: Int? = null,
 
     /** 出借最长期限(毫秒)。客户端从连接池获取（借出）一个连接后，超时没有归还（return），则连接池会抛出异常 */
-    var maxWait: Int? = null,
+    val maxWait: Int? = null,
 
     /** 连接寿命(毫秒)。超时(相对于初始化时间)连接池将在出借或归还时删除这个连接 */
-    var maxAge: Int? = null,
+    val maxAge: Int? = null,
 
     /** 备注 */
-    var remark: String? = null,
+    val remark: String? = null,
 
     /** 是否启用 */
-    var active: Boolean? = null,
+    val active: Boolean? = null,
 
     /** 是否内置 */
-    var builtIn: Boolean? = null,
+    val builtIn: Boolean? = null,
 
     /** 创建者id */
-    var createUserId: String? = null,
+    val createUserId: String? = null,
 
     /** 创建者名称 */
-    var createUserName: String? = null,
+    val createUserName: String? = null,
 
     /** 创建时间 */
-    var createTime: LocalDateTime? = null,
+    val createTime: LocalDateTime? = null,
 
     /** 更新者id */
-    var updateUserId: String? = null,
+    val updateUserId: String? = null,
 
     /** 更新者名称 */
-    var updateUserName: String? = null,
+    val updateUserName: String? = null,
 
     /** 更新时间 */
-    var updateTime: LocalDateTime? = null,
+    val updateTime: LocalDateTime? = null,
 
     //endregion your codes 1
 //region your codes 2

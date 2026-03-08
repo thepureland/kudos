@@ -15,40 +15,38 @@ data class MsgTemplateSearchPayload (
 
     //region your codes 1
 
-    override var returnEntityClass: KClass<*>? = MsgTemplateRecord::class,
-
     /** 发送类型字典码 */
-    var sendTypeDictCode: String? = null,
+    val sendTypeDictCode: String? = null,
 
     /** 事件类型字典码 */
-    var eventTypeDictCode: String? = null,
+    val eventTypeDictCode: String? = null,
 
     /** 消息类型字典码 */
-    var msgTypeDictCode: String? = null,
+    val msgTypeDictCode: String? = null,
 
     /** 模板分组编码 */
-    var receiverGroupCode: String? = null,
+    val receiverGroupCode: String? = null,
 
     /** 国家-语言字典码 */
-    var localeDictCode: String? = null,
+    val localeDictCode: String? = null,
 
     /** 模板标题 */
-    var title: String? = null,
+    val title: String? = null,
 
     /** 模板内容 */
-    var content: String? = null,
+    val content: String? = null,
 
     /** 是否启用默认值 */
-    var defaultActive: Boolean? = null,
+    val defaultActive: Boolean? = null,
 
     /** 模板标题默认值 */
-    var defaultTitle: String? = null,
+    val defaultTitle: String? = null,
 
     /** 模板内容默认值 */
-    var defaultContent: String? = null,
+    val defaultContent: String? = null,
 
     /** 租户ID */
-    var tenantId: String? = null,
+    val tenantId: String? = null,
 
     //endregion your codes 1
 //region your codes 2
@@ -57,7 +55,9 @@ data class MsgTemplateSearchPayload (
 
     //region your codes 3
 
-    constructor() : this(MsgTemplateRecord::class)
+    constructor() : this("")
+
+    override var returnEntityClass: KClass<*>? = MsgTemplateRecord::class
 
     //endregion your codes 3
 

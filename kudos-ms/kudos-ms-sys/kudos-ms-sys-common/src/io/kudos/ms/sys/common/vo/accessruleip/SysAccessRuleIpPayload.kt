@@ -14,28 +14,28 @@ data class SysAccessRuleIpPayload (
 
     //region your codes 1
 
-    override var id: String,
+    override val id: String,
 
     /** ip起 */
-    var ipStart: Long? = null,
+    val ipStart: Long? = null,
 
     /** ip止 */
-    var ipEnd: Long? = null,
+    val ipEnd: Long? = null,
 
     /** ip类型 */
-    var ipType: Int? = null,
+    val ipType: Int? = null,
 
     /** 过期时间 */
-    var expirationDate: LocalDateTime? = null,
+    val expirationDate: LocalDateTime? = null,
 
     /** 父规则id */
-    var parentRuleId: String? = null,
+    val parentRuleId: String? = null,
 
     /** 备注 */
-    var remark: String? = null,
+    val remark: String? = null,
 
     /** 是否启用 */
-    var active: Boolean? = null,
+    val active: Boolean? = null,
 
     //endregion your codes 1
 //region your codes 2

@@ -7,7 +7,6 @@ import io.kudos.base.query.Criteria
 import io.kudos.base.query.eq
 import io.kudos.ms.sys.common.vo.system.SysSystemCacheItem
 import io.kudos.ms.sys.common.vo.system.SysSystemRecord
-import io.kudos.ms.sys.common.vo.system.SysSystemSearchPayload
 import io.kudos.ms.sys.core.cache.SysSystemHashCache
 import io.kudos.ms.sys.core.dao.SysSystemDao
 import io.kudos.ms.sys.core.model.po.SysSystem
@@ -40,11 +39,8 @@ open class SysSystemService : BaseCrudService<String, SysSystem, SysSystemDao>()
     }
 
     override fun getAllActiveSystems(): List<SysSystemRecord> {
-        val searchPayload = SysSystemSearchPayload().apply {
-            active = true
-        }
-        @Suppress("UNCHECKED_CAST")
-        return dao.search(searchPayload, SysSystemRecord::class)
+        val criteria = Criteria(SysSystem::active eq true)
+        return dao.searchAs<SysSystemRecord>(criteria)
     }
 
     @Transactional

@@ -27,23 +27,25 @@ class SysI18NServiceTest : RdbAndRedisCacheTestBase() {
     @Test
     fun getI18nValue() {
         val locale = "zh_CN"
-        val atomicServiceCode = "svc-as-i18n-test-1_8449"
         val i18nTypeDictCode = "label"
+        val namespace = "label"
+        val atomicServiceCode = "svc-as-i18n-test-1_8449"
         val key = "svc-i18n-key-1"
-        val value = sysI18nService.getI18nValue(locale, atomicServiceCode, i18nTypeDictCode, key)
+        val value = sysI18nService.getI18nValue(locale, i18nTypeDictCode, namespace, atomicServiceCode, key)
         assertNotNull(value)
         assertEquals("svc-i18n-value-1", value)
     }
 
     @Test
-    fun getI18nsByAtomicServiceAndType() {
-        val atomicServiceCode = "svc-as-i18n-test-1_8449"
+    fun getI18ns() {
+        val locale = "zh_CN"
         val i18nTypeDictCode = "label"
-        val i18ns = sysI18nService.getI18nsByAtomicServiceAndType(atomicServiceCode, i18nTypeDictCode, null)
+        val namespace = "label"
+        val atomicServiceCode = "svc-as-i18n-test-1_8449"
+        val i18ns = sysI18nService.getI18ns(locale, i18nTypeDictCode, namespace, atomicServiceCode)
         assertTrue(i18ns.isNotEmpty())
-        
-        val zhI18ns = sysI18nService.getI18nsByAtomicServiceAndType(atomicServiceCode, i18nTypeDictCode, "zh_CN")
-        assertTrue(zhI18ns.any { it.locale == "zh_CN" })
+        assertTrue(i18ns.containsKey("svc-i18n-key-1"))
+        assertEquals("svc-i18n-value-1", i18ns["svc-i18n-key-1"])
     }
 
     @Test

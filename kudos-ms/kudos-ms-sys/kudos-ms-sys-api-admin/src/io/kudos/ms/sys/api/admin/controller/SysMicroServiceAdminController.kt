@@ -1,0 +1,35 @@
+package io.kudos.ms.sys.api.admin.controller
+
+import io.kudos.ability.web.springmvc.controller.BaseCrudController
+import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceCacheItem
+import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceDetail
+import io.kudos.ms.sys.common.vo.microservice.SysMicroServicePayload
+import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceRecord
+import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceSearchPayload
+import io.kudos.ms.sys.core.service.iservice.ISysMicroServiceService
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
+
+/**
+ * 原子服务管理控制器
+ *
+ * @author K
+ * @since 1.0.0
+ */
+@RestController
+@RequestMapping("/api/admin/sys/microService")
+class SysMicroServiceAdminController:
+    BaseCrudController<String, ISysMicroServiceService, SysMicroServiceSearchPayload, SysMicroServiceRecord, SysMicroServiceDetail, SysMicroServicePayload>() {
+
+    /**
+     * 返回所有启用的原子服务编码
+     *
+     * @return List<原子服务编码>
+     */
+    @GetMapping("/getAllActiveAtomicServiceCodes")
+    fun getAllActiveAtomicServiceCodes(): List<String> {
+        return service.getAllActiveAtomicServices().map { it.code }
+    }
+    
+}

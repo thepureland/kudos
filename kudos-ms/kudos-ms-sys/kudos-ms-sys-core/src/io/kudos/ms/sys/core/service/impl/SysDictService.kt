@@ -3,10 +3,11 @@ package io.kudos.ms.sys.core.service.impl
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
+import io.kudos.base.query.Criteria
+import io.kudos.base.query.eq
 import io.kudos.ms.sys.common.vo.dict.SysDictCacheItem
 import io.kudos.ms.sys.common.vo.dict.SysDictPayload
 import io.kudos.ms.sys.common.vo.dict.SysDictRecord
-import io.kudos.ms.sys.common.vo.dict.SysDictSearchPayload
 import io.kudos.ms.sys.common.vo.dictitem.SysDictItemCacheItem
 import io.kudos.ms.sys.core.cache.DictByIdCache
 import io.kudos.ms.sys.core.dao.SysDictDao
@@ -122,11 +123,8 @@ open class SysDictService : BaseCrudService<String, SysDict, SysDictDao>(), ISys
      * @since 1.0.0
      */
     override fun getDictsByAtomicServiceCode(atomicServiceCode: String): List<SysDictRecord> {
-        val searchPayload = SysDictSearchPayload().apply {
-            this.atomicServiceCode = atomicServiceCode
-        }
-        @Suppress("UNCHECKED_CAST")
-        return dao.search(searchPayload, SysDictRecord::class)
+        val criteria = Criteria(SysDict::atomicServiceCode eq atomicServiceCode)
+        return dao.searchAs<SysDictRecord>(criteria)
     }
 
     /**
@@ -139,12 +137,11 @@ open class SysDictService : BaseCrudService<String, SysDict, SysDictDao>(), ISys
      * @since 1.0.0
      */
     override fun getDictByAtomicServiceAndType(atomicServiceCode: String, dictType: String): SysDictRecord? {
-        val searchPayload = SysDictSearchPayload().apply {
-            this.atomicServiceCode = atomicServiceCode
-            this.dictType = dictType
-        }
-        @Suppress("UNCHECKED_CAST")
-        val records = dao.search(searchPayload, SysDictRecord::class)
+        val criteria = Criteria.and(
+            SysDict::atomicServiceCode eq atomicServiceCode,
+            SysDict::dictType eq dictType
+        )
+        val records = dao.searchAs<SysDictRecord>(criteria)
         return records.firstOrNull()
     }
 
@@ -248,18 +245,18 @@ open class SysDictService : BaseCrudService<String, SysDict, SysDictDao>(), ISys
 
     override fun getActiveDictItems(
         dictType: String,
-        atomicServiceCode: String?
+        atomicServiceCode: String
     ): List<SysDictItemCacheItem> {
-        return sysDictItemService.getItemsFromCache(atomicServiceCode, dictType)
+        return sysDictItemService.getItems(dictType, atomicServiceCode)
     }
 
     override fun getActiveDictItemMap(
         dictType: String,
-        atomicServiceCode: String?
+        atomicServiceCode: String
     ): LinkedHashMap<String, String> {
-        val items = sysDictItemService.getItemsFromCache(atomicServiceCode, dictType)
+        val items = sysDictItemService.getItems(dictType, atomicServiceCode)
         return LinkedHashMap<String, String>().apply {
-            items.filter { it.itemCode != null }.forEach { put(it.itemCode!!, it.itemName ?: "") }
+            items.forEach { put(it.itemCode, it.itemName) }
         }
     }
 
@@ -267,7 +264,7 @@ open class SysDictService : BaseCrudService<String, SysDict, SysDictDao>(), ISys
         dictTypeAndASCodePairs: List<Pair<String, String>>
     ): Map<Pair<String, String>, List<SysDictItemCacheItem>> {
         return dictTypeAndASCodePairs.associate { (dictType, atomicServiceCode) ->
-            Pair(atomicServiceCode, dictType) to sysDictItemService.getItemsFromCache(atomicServiceCode, dictType)
+            Pair(atomicServiceCode, dictType) to sysDictItemService.getItems(dictType, atomicServiceCode)
         }
     }
 
@@ -275,7 +272,7 @@ open class SysDictService : BaseCrudService<String, SysDict, SysDictDao>(), ISys
         dictTypeAndASCodePairs: List<Pair<String, String>>
     ): Map<Pair<String, String>, LinkedHashMap<String, String>> {
         return dictTypeAndASCodePairs.associate { (dictType, atomicServiceCode) ->
-            val items = sysDictItemService.getItemsFromCache(atomicServiceCode, dictType)
+            val items = sysDictItemService.getItems(dictType, atomicServiceCode)
             val map = LinkedHashMap<String, String>().apply {
                 items.filter { it.itemCode != null }.forEach { put(it.itemCode!!, it.itemName ?: "") }
             }

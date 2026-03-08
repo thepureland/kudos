@@ -14,25 +14,23 @@ data class SysDomainSearchPayload (
 
     //region your codes 1
 
-    override var returnEntityClass: KClass<*>? = SysDomainRecord::class,
-
     /** 域名 */
-    var domain: String? = null,
+    val domain: String? = null,
 
     /** 系统编码 */
-    var systemCode: String? = null,
+    val systemCode: String? = null,
 
     /** 租户id */
-    var tenantId: String? = null,
+    val tenantId: String? = null,
 
     /** 备注 */
-    var remark: String? = null,
+    val remark: String? = null,
 
     /** 是否启用 */
-    var active: Boolean? = null,
+    val active: Boolean? = null,
 
     /** 是否内置 */
-    var builtIn: Boolean? = null,
+    val builtIn: Boolean? = null,
 
     //endregion your codes 1
 //region your codes 2
@@ -41,7 +39,9 @@ data class SysDomainSearchPayload (
 
     //region your codes 3
 
-    constructor() : this(SysDomainRecord::class)
+    constructor() : this("")
+
+    override var returnEntityClass: KClass<*>? = SysDomainRecord::class
 
     //endregion your codes 3
 

@@ -10,19 +10,19 @@ import jakarta.annotation.Resource
 import kotlin.test.*
 
 /**
- * junit test for I18NByLocaleAndTypeAndAmsCodeCacheHandler
+ * junit test for I18NByLocaleAndTypeAndMsCodeCacheHandler
  *
- * 测试数据来源：`I18NByLocaleAndTypeAndAmsCodeCacheTest.sql`
+ * 测试数据来源：`I18NByLocaleAndTypeAndMsCodeCacheTest.sql`
  *
  * @author K
  * @author AI: Codex
  * @since 1.0.0
  */
 @EnabledIfDockerInstalled
-class I18NByLocaleAndTypeAndAmsCodeCacheTest : RdbAndRedisCacheTestBase() {
+class I18NByLocaleAndTypeAndMsCodeCacheTest : RdbAndRedisCacheTestBase() {
 
     @Resource
-    private lateinit var cacheHandler: I18NByLocaleAndTypeAndAmsCodeCache
+    private lateinit var cacheHandler: I18NByLocaleAndTypeAndMsCodeCache
 
     @Resource
     private lateinit var dao: SysI18nDao
@@ -31,7 +31,7 @@ class I18NByLocaleAndTypeAndAmsCodeCacheTest : RdbAndRedisCacheTestBase() {
 
     override fun getTestDataSqlPath(): String {
         val rdbType = RdbKit.determineRdbTypeByDataSource(dataSource)
-        return "sql/${rdbType.name.lowercase()}/cache/I18NByLocaleAndTypeAndAmsCodeCacheTest.sql"
+        return "sql/${rdbType.name.lowercase()}/cache/I18NByLocaleAndTypeAndMsCodeCacheTest.sql"
     }
 
     @Test
@@ -40,19 +40,21 @@ class I18NByLocaleAndTypeAndAmsCodeCacheTest : RdbAndRedisCacheTestBase() {
 
         val locale = "zh_CN"
         val i18nTypeDictCode = "label"
+        val namespace = "i18n.key"
         val atomicServiceCode = "as-i18n-test-1_8910"
-        val cacheItems = cacheHandler.getI18ns(locale, i18nTypeDictCode, atomicServiceCode)
+        val cacheItems = cacheHandler.getI18ns(locale, i18nTypeDictCode, namespace, atomicServiceCode)
         assertTrue(cacheItems.size >= 5)
-        assertFalse(cacheItems.containsKey("i18n.key.3"))
+        assertFalse(cacheItems.containsKey("3"))
 
         val deleteLocale = "en_US"
         val deleteType = "label"
+        val deleteKeyNamespace = "i18n.key"
         val deleteAtomicServiceCode = "as-i18n-test-2_8910"
-        val deleteCacheItems = cacheHandler.getI18ns(deleteLocale, deleteType, deleteAtomicServiceCode)
+        val deleteCacheItems = cacheHandler.getI18ns(deleteLocale, deleteType, deleteKeyNamespace, deleteAtomicServiceCode)
         assertTrue(deleteCacheItems.isNotEmpty())
 
-        val newKey = "i18n.key.new"
-        insertNewRecordToDb(locale, i18nTypeDictCode, atomicServiceCode, newKey, "value-new")
+        val newKey = "new"
+        insertNewRecordToDb(locale, i18nTypeDictCode, namespace, atomicServiceCode, newKey, "value-new")
 
         val idUpdate = "40000000-0000-0000-0000-000000008910"
         dao.updateProperties(idUpdate, mapOf(SysI18n::value.name to newValue))
@@ -62,25 +64,25 @@ class I18NByLocaleAndTypeAndAmsCodeCacheTest : RdbAndRedisCacheTestBase() {
 
         cacheHandler.reloadAll(false)
 
-        val cacheItemsNew = cacheHandler.getI18ns(locale, i18nTypeDictCode, atomicServiceCode)
+        val cacheItemsNew = cacheHandler.getI18ns(locale, i18nTypeDictCode, namespace, atomicServiceCode)
         assertTrue(cacheItemsNew.containsKey(newKey))
-        assertEquals(newValue, cacheItemsNew["i18n.key.4"])
+        assertEquals(newValue, cacheItemsNew["4"])
 
-        val cacheItemsDeleteGroup = cacheHandler.getI18ns(deleteLocale, deleteType, deleteAtomicServiceCode)
-        assertTrue(cacheItemsDeleteGroup.containsKey("i18n.key.2"))
+        val cacheItemsDeleteGroup = cacheHandler.getI18ns(deleteLocale, deleteType, deleteKeyNamespace, deleteAtomicServiceCode)
+        assertTrue(cacheItemsDeleteGroup.containsKey("2"))
 
         cacheHandler.reloadAll(true)
-        val cacheItemsDeleteGroupCleared = cacheHandler.getI18ns(deleteLocale, deleteType, deleteAtomicServiceCode)
-        assertTrue(cacheItemsDeleteGroupCleared.containsKey("i18n.key.2"))
+        val cacheItemsDeleteGroupCleared = cacheHandler.getI18ns(deleteLocale, deleteType, deleteKeyNamespace, deleteAtomicServiceCode)
+        assertTrue(cacheItemsDeleteGroupCleared.containsKey("2"))
     }
 
     @Test
     fun getI18ns() {
-        val cacheItems = cacheHandler.getI18ns("zh_CN", "label", "as-i18n-test-1_8910")
-        assertTrue(cacheItems.containsKey("i18n.key.1"))
-        assertFalse(cacheItems.containsKey("i18n.key.3"))
+        val cacheItems = cacheHandler.getI18ns("zh_CN", "label", "i18n.key", "as-i18n-test-1_8910")
+        assertTrue(cacheItems.containsKey("1"))
+        assertFalse(cacheItems.containsKey("3"))
 
-        val emptyItems = cacheHandler.getI18ns("ja_JP", "label", "as-i18n-test-1_8910")
+        val emptyItems = cacheHandler.getI18ns("ja_JP", "label", "i18n.key", "as-i18n-test-1_8910")
         assertTrue(emptyItems.isEmpty())
     }
 
@@ -88,18 +90,19 @@ class I18NByLocaleAndTypeAndAmsCodeCacheTest : RdbAndRedisCacheTestBase() {
     fun syncOnInsert() {
         val locale = "zh_CN"
         val i18nTypeDictCode = "label"
+        val namespace = "i18n.key"
         val atomicServiceCode = "as-i18n-test-1_8910"
-        val key = "i18n.key.insert"
-        val i18n = insertNewRecordToDb(locale, i18nTypeDictCode, atomicServiceCode, key, "value-insert")
+        val key = "insert"
+        val i18n = insertNewRecordToDb(locale, i18nTypeDictCode, namespace, atomicServiceCode, key, "value-insert")
 
         cacheHandler.syncOnInsert(i18n, i18n.id)
 
-        val cacheKey = cacheHandler.getKey(locale, i18nTypeDictCode, atomicServiceCode)
+        val cacheKey = cacheHandler.getKey(locale, i18nTypeDictCode, namespace, atomicServiceCode)
         @Suppress("UNCHECKED_CAST")
         val cacheMap = KeyValueCacheKit.getValue(cacheHandler.cacheName(), cacheKey) as Map<String, String>?
         assertNotNull(cacheMap)
         assertTrue(cacheMap.containsKey(key))
-        assertTrue(cacheHandler.getI18ns(locale, i18nTypeDictCode, atomicServiceCode).containsKey(key))
+        assertTrue(cacheHandler.getI18ns(locale, i18nTypeDictCode, namespace, atomicServiceCode).containsKey(key))
     }
 
     @Test
@@ -110,12 +113,12 @@ class I18NByLocaleAndTypeAndAmsCodeCacheTest : RdbAndRedisCacheTestBase() {
 
         cacheHandler.syncOnUpdate(i18n, id)
 
-        val cacheKey = cacheHandler.getKey(i18n.locale, i18n.i18nTypeDictCode, i18n.atomicServiceCode)
+        val cacheKey = cacheHandler.getKey(i18n.locale, i18n.i18nTypeDictCode, i18n.namespace ?: "", i18n.atomicServiceCode)
         @Suppress("UNCHECKED_CAST")
         val cacheMap = KeyValueCacheKit.getValue(cacheHandler.cacheName(), cacheKey) as Map<String, String>?
         assertNotNull(cacheMap)
-        assertEquals(newValue, cacheMap["i18n.key.4"])
-        assertEquals(newValue, cacheHandler.getI18ns(i18n.locale, i18n.i18nTypeDictCode, i18n.atomicServiceCode)["i18n.key.4"])
+        assertEquals(newValue, cacheMap["4"])
+        assertEquals(newValue, cacheHandler.getI18ns(i18n.locale, i18n.i18nTypeDictCode, i18n.namespace ?: "", i18n.atomicServiceCode)["4"])
     }
 
     @Test
@@ -124,17 +127,18 @@ class I18NByLocaleAndTypeAndAmsCodeCacheTest : RdbAndRedisCacheTestBase() {
         var success = dao.updateProperties(id, mapOf(SysI18n::active.name to false))
         assertTrue(success)
         cacheHandler.syncOnUpdateActive(id, false)
-        val key1 = cacheHandler.getKey("zh_CN", "label", "as-i18n-test-1_8910")
+        val namespace = "i18n.key"
+        val key1 = cacheHandler.getKey("zh_CN", "label", namespace, "as-i18n-test-1_8910")
         assertNull(KeyValueCacheKit.getValue(cacheHandler.cacheName(), key1))
-        assertFalse(cacheHandler.getI18ns("zh_CN", "label", "as-i18n-test-1_8910").containsKey("i18n.key.6"))
+        assertFalse(cacheHandler.getI18ns("zh_CN", "label", namespace, "as-i18n-test-1_8910").containsKey("6"))
 
         id = "40000000-0000-0000-0000-000000008913"
         success = dao.updateProperties(id, mapOf(SysI18n::active.name to true))
         assertTrue(success)
         cacheHandler.syncOnUpdateActive(id, true)
-        val key2 = cacheHandler.getKey("zh_CN", "label", "as-i18n-test-1_8910")
+        val key2 = cacheHandler.getKey("zh_CN", "label", namespace, "as-i18n-test-1_8910")
         assertNotNull(KeyValueCacheKit.getValue(cacheHandler.cacheName(), key2))
-        assertTrue(cacheHandler.getI18ns("zh_CN", "label", "as-i18n-test-1_8910").containsKey("i18n.key.7"))
+        assertTrue(cacheHandler.getI18ns("zh_CN", "label", namespace, "as-i18n-test-1_8910").containsKey("7"))
     }
 
     @Test
@@ -146,9 +150,9 @@ class I18NByLocaleAndTypeAndAmsCodeCacheTest : RdbAndRedisCacheTestBase() {
 
         cacheHandler.syncOnDelete(i18n, id)
 
-        val key = cacheHandler.getKey(i18n.locale, i18n.i18nTypeDictCode, i18n.atomicServiceCode)
+        val key = cacheHandler.getKey(i18n.locale, i18n.i18nTypeDictCode, i18n.namespace ?: "", i18n.atomicServiceCode)
         assertNull(KeyValueCacheKit.getValue(cacheHandler.cacheName(), key))
-        assertFalse(cacheHandler.getI18ns(i18n.locale, i18n.i18nTypeDictCode, i18n.atomicServiceCode).containsKey("i18n.key.5"))
+        assertFalse(cacheHandler.getI18ns(i18n.locale, i18n.i18nTypeDictCode, i18n.namespace ?: "", i18n.atomicServiceCode).containsKey("5"))
     }
 
     @Test
@@ -158,8 +162,8 @@ class I18NByLocaleAndTypeAndAmsCodeCacheTest : RdbAndRedisCacheTestBase() {
         val i18n1 = assertNotNull(dao.get(id1))
         val i18n2 = assertNotNull(dao.get(id2))
         val keys = listOf(
-            cacheHandler.getKey(i18n1.locale, i18n1.i18nTypeDictCode, i18n1.atomicServiceCode),
-            cacheHandler.getKey(i18n2.locale, i18n2.i18nTypeDictCode, i18n2.atomicServiceCode)
+            cacheHandler.getKey(i18n1.locale, i18n1.i18nTypeDictCode, i18n1.namespace ?: "", i18n1.atomicServiceCode),
+            cacheHandler.getKey(i18n2.locale, i18n2.i18nTypeDictCode, i18n2.namespace ?: "", i18n2.atomicServiceCode)
         )
 
         val count = dao.batchDelete(listOf(id1, id2))
@@ -175,6 +179,7 @@ class I18NByLocaleAndTypeAndAmsCodeCacheTest : RdbAndRedisCacheTestBase() {
     private fun insertNewRecordToDb(
         locale: String,
         i18nTypeDictCode: String,
+        namespace: String,
         atomicServiceCode: String,
         key: String,
         value: String
@@ -183,6 +188,7 @@ class I18NByLocaleAndTypeAndAmsCodeCacheTest : RdbAndRedisCacheTestBase() {
             this.locale = locale
             this.atomicServiceCode = atomicServiceCode
             this.i18nTypeDictCode = i18nTypeDictCode
+            this.namespace = namespace
             this.key = key
             this.value = value
             this.active = true

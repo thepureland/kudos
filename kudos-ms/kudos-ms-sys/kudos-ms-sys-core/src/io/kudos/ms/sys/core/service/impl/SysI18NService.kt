@@ -4,13 +4,12 @@ import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.sys.common.vo.i18n.SysI18nPayload
-import io.kudos.ms.sys.common.vo.i18n.SysI18nRecord
-import io.kudos.ms.sys.common.vo.i18n.SysI18nSearchPayload
-import io.kudos.ms.sys.core.cache.I18NByLocaleAndTypeAndAmsCodeCache
+import io.kudos.ms.sys.core.cache.DictItemsByMsCodeAndTypeCache
+import io.kudos.ms.sys.core.cache.I18NByLocaleAndTypeAndMsCodeCache
 import io.kudos.ms.sys.core.dao.SysI18nDao
 import io.kudos.ms.sys.core.model.po.SysI18n
 import io.kudos.ms.sys.core.service.iservice.ISysI18nService
-import org.springframework.beans.factory.annotation.Autowired
+import jakarta.annotation.Resource
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -30,38 +29,66 @@ open class SysI18NService : BaseCrudService<String, SysI18n, SysI18nDao>(), ISys
 
     private val log = LogFactory.getLog(this)
 
-    @Autowired
-    private lateinit var i18nCacheHandler: I18NByLocaleAndTypeAndAmsCodeCache
+    @Resource
+    private lateinit var i18nCacheHandler: I18NByLocaleAndTypeAndMsCodeCache
 
-    override fun getI18nValue(locale: String, atomicServiceCode: String, i18nTypeDictCode: String, key: String): String? {
-        val i18nMap = i18nCacheHandler.getI18ns(locale, i18nTypeDictCode, atomicServiceCode)
+    @Resource
+    private lateinit var dictItemsByMsCodeAndTypeCache: DictItemsByMsCodeAndTypeCache
+
+
+    override fun getI18nValue(
+        locale: String,
+        i18nTypeDictCode: String,
+        namespace: String,
+        atomicServiceCode: String,
+        key: String
+    ): String? {
+        val i18nMap = i18nCacheHandler.getI18ns(locale, i18nTypeDictCode, namespace, atomicServiceCode)
         return i18nMap[key]
     }
 
-    override fun getI18nsByAtomicServiceAndType(atomicServiceCode: String, i18nTypeDictCode: String, locale: String?): List<SysI18nRecord> {
-        val searchPayload = SysI18nSearchPayload().apply {
-            this.atomicServiceCode = atomicServiceCode
-            this.i18nTypeDictCode = i18nTypeDictCode
-            this.locale = locale
+    override fun getI18ns(
+        locale: String,
+        i18nTypeDictCode: String,
+        namespace: String,
+        atomicServiceCode: String
+    ): Map<String, String> {
+        return i18nCacheHandler.getI18ns(locale, i18nTypeDictCode, namespace, atomicServiceCode)
+    }
+
+    override fun batchGetI18ns(
+        locale: String,
+        namespacesByI18nTypeDictCode: Map<String, Collection<String>>,
+        atomicServiceCodes: Collection<String>
+    ): Map<String, Map<String, Map<String, String>>> {
+        return namespacesByI18nTypeDictCode.mapValues { (i18nTypeDictCode, namespaces) ->
+            namespaces.associateWith { namespace ->
+                val map = mutableMapOf<String, String>()
+                atomicServiceCodes.forEach { atomicServiceCode ->
+                    map.putAll(i18nCacheHandler.getI18ns(locale, i18nTypeDictCode, namespace, atomicServiceCode))
+                }
+                map
+            }
         }
-        @Suppress("UNCHECKED_CAST")
-        return dao.search(searchPayload, SysI18nRecord::class)
     }
 
     @Transactional
     override fun batchSaveOrUpdate(i18ns: List<SysI18nPayload>): Int {
         var count = 0
         i18ns.forEach { payload ->
-            if (payload.id.isNullOrBlank()) {
+            if (payload.id.isBlank()) {
                 val locale = requireNotNull(payload.locale) { "新增国际化内容时，locale不能为空。" }
-                val atomicServiceCode = requireNotNull(payload.atomicServiceCode) { "新增国际化内容时，atomicServiceCode不能为空。" }
-                val i18nTypeDictCode = requireNotNull(payload.i18nTypeDictCode) { "新增国际化内容时，i18nTypeDictCode不能为空。" }
-                val key = requireNotNull(payload.key) { "新增国际化内容时，key不能为空。" }
+                val atomicServiceCode =
+                    requireNotNull(payload.atomicServiceCode) { "新增国际化内容时，atomicServiceCode不能为空。" }
+                val i18nTypeDictCode =
+                    requireNotNull(payload.i18nTypeDictCode) { "新增国际化内容时，i18nTypeDictCode不能为空。" }
+                val (namespace, key) = resolveNamespaceAndKey(payload)
                 val value = requireNotNull(payload.value) { "新增国际化内容时，value不能为空。" }
                 val i18n = SysI18n {
                     this.locale = locale
                     this.atomicServiceCode = atomicServiceCode
                     this.i18nTypeDictCode = i18nTypeDictCode
+                    this.namespace = namespace
                     this.key = key
                     this.value = value
                     this.active = payload.active ?: true
@@ -71,15 +98,18 @@ open class SysI18NService : BaseCrudService<String, SysI18n, SysI18nDao>(), ISys
                 count++
             } else {
                 val locale = requireNotNull(payload.locale) { "更新国际化内容时，locale不能为空。" }
-                val atomicServiceCode = requireNotNull(payload.atomicServiceCode) { "更新国际化内容时，atomicServiceCode不能为空。" }
-                val i18nTypeDictCode = requireNotNull(payload.i18nTypeDictCode) { "更新国际化内容时，i18nTypeDictCode不能为空。" }
-                val key = requireNotNull(payload.key) { "更新国际化内容时，key不能为空。" }
+                val atomicServiceCode =
+                    requireNotNull(payload.atomicServiceCode) { "更新国际化内容时，atomicServiceCode不能为空。" }
+                val i18nTypeDictCode =
+                    requireNotNull(payload.i18nTypeDictCode) { "更新国际化内容时，i18nTypeDictCode不能为空。" }
+                val (namespace, key) = resolveNamespaceAndKey(payload)
                 val value = requireNotNull(payload.value) { "更新国际化内容时，value不能为空。" }
                 val i18n = SysI18n {
                     this.id = payload.id
                     this.locale = locale
                     this.atomicServiceCode = atomicServiceCode
                     this.i18nTypeDictCode = i18nTypeDictCode
+                    this.namespace = namespace
                     this.key = key
                     this.value = value
                     this.active = payload.active ?: true
@@ -151,12 +181,26 @@ open class SysI18NService : BaseCrudService<String, SysI18n, SysI18nDao>(), ISys
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {
         val i18ns = dao.inSearchById(ids)
-        val keys = i18ns.map { i18nCacheHandler.getKey(it.locale, it.i18nTypeDictCode, it.atomicServiceCode) }
+        val keys = i18ns.map {
+            i18nCacheHandler.getKey(
+                it.locale,
+                it.i18nTypeDictCode,
+                it.namespace ?: "",
+                it.atomicServiceCode
+            )
+        }
             .distinct()
         val count = super.batchDelete(ids)
         log.debug("批量删除国际化内容，期望删除${ids.size}条，实际删除${count}条。")
         i18nCacheHandler.syncOnBatchDelete(ids, keys)
         return count
+    }
+
+    private fun resolveNamespaceAndKey(payload: SysI18nPayload): Pair<String, String> {
+        val key = requireNotNull(payload.key) { "key不能为空。" }
+        val i18nTypeDictCode = requireNotNull(payload.i18nTypeDictCode) { "i18nTypeDictCode不能为空。" }
+        val namespace = payload.namespace?.takeIf { it.isNotBlank() } ?: i18nTypeDictCode
+        return namespace to key
     }
 
     //endregion your codes 2

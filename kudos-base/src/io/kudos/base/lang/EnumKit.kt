@@ -80,10 +80,10 @@ object EnumKit {
     }
 
     /**
-     * 取得字典枚举的所有代码及其翻译信息
+     * 取得字典枚举的所有字典项代码及其翻译信息
      *
      * @param enumClass 字典枚举类
-     * @return Map(字典代码，译文)
+     * @return Map(字典项代码，译文)
      * @author K
      * @since 1.0.0
      */

@@ -17,19 +17,19 @@ data class SysAccessRuleIpCacheItem (
     //region your codes 1
 
     /** 主键 */
-    override var id: String = "",
+    override val id: String = "",
 
     /** ip起 */
-    var ipStart: Long? = null,
+    val ipStart: Long? = null,
 
     /** ip止 */
-    var ipEnd: Long? = null,
+    val ipEnd: Long? = null,
 
     /** ip类型字典代码 */
-    var ipTypeDictCode: String? = null,
+    val ipTypeDictCode: String? = null,
 
     /** 过期时间 */
-    var expirationTime: LocalDateTime? = null,
+    val expirationTime: LocalDateTime? = null,
 
     //endregion your codes 1
 //region your codes 2

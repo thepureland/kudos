@@ -14,27 +14,25 @@ data class SysTenantSearchPayload (
 
     //region your codes 1
 
-    override var returnEntityClass: KClass<*>? = SysTenantRecord::class,
-
     /** 名称 */
-    var name: String? = null,
+    val name: String? = null,
 
-    var subSystemCode: String? = null,
+    val subSystemCode: String? = null,
 
     /** 时区 */
-    var timezone: String? = null,
+    val timezone: String? = null,
 
     /** 默认语言编码 */
-    var defaultLanguageCode: String? = null,
+    val defaultLanguageCode: String? = null,
 
     /** 备注 */
-    var remark: String? = null,
+    val remark: String? = null,
 
     /** 是否启用 */
-    var active: Boolean? = null,
+    val active: Boolean? = null,
 
     /** 是否内置 */
-    var builtIn: Boolean? = null,
+    val builtIn: Boolean? = null,
 
     //endregion your codes 1
 //region your codes 2
@@ -43,7 +41,9 @@ data class SysTenantSearchPayload (
 
     //region your codes 3
 
-    constructor() : this(SysTenantRecord::class)
+    constructor() : this("")
+
+    override var returnEntityClass: KClass<*>? = SysTenantRecord::class
 
     //endregion your codes 3
 

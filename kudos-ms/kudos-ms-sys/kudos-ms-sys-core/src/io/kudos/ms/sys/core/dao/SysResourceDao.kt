@@ -34,19 +34,19 @@ open class SysResourceDao : BaseCrudDao<String, SysResource, SysResources>() {
     }
 
     /**
-     * 按子系统编码+资源类型代码查询资源 id 列表
+     * 按子系统编码+资源类型代码查询资源列表
      *
      * @param subSystemCode 子系统编码
      * @param resourceTypeDictCode 资源类型字典码
-     * @return List<资源ID>
+     * @return List<SysResourceCacheItem>
      */
-    open fun fetchResourceIdsBySubSysAndType(subSystemCode: String, resourceTypeDictCode: String): List<String> {
+    open fun searchBySubSysAndType(subSystemCode: String, resourceTypeDictCode: String): List<SysResourceCacheItem> {
         val criteria = Criteria.and(
             SysResource::subSystemCode eq subSystemCode,
             SysResource::resourceTypeDictCode eq resourceTypeDictCode,
             SysResource::active eq true,
         )
-        return searchProperty(criteria, SysResource::id).filterNotNull()
+        return searchAs<SysResourceCacheItem>(criteria)
     }
 
 }

@@ -1,6 +1,6 @@
 package io.kudos.base.bean.validation.constraint.validator
 
-import io.kudos.base.bean.validation.constraint.annotations.DictEnumCode
+import io.kudos.base.bean.validation.constraint.annotations.DictEnumItemCode
 import io.kudos.base.bean.validation.kit.ValidationKit
 import io.kudos.base.enums.ienums.IDictEnum
 import kotlin.test.Test
@@ -12,7 +12,7 @@ import kotlin.test.assertFalse
  * @author K
  * @since 1.0.0
  */
-internal class DictEnumCodeValidatorTest {
+internal class DictEnumItemCodeValidatorTest {
 
     @Test
     fun validate() {
@@ -25,7 +25,7 @@ internal class DictEnumCodeValidatorTest {
 
     internal data class TestDictEnumCodeBean(
 
-        @get:DictEnumCode(enumClass = TestEnum::class, message = "值必须在枚举TestEnum的代码中")
+        @get:DictEnumItemCode(enumClass = TestEnum::class, message = "值必须在枚举TestEnum的代码中")
         val elemCode: String?
 
     )

@@ -4,9 +4,10 @@ import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
 import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
+import io.kudos.base.query.Criteria
+import io.kudos.base.query.eq
 import io.kudos.context.support.Consts
 import io.kudos.ms.sys.common.vo.param.SysParamCacheItem
-import io.kudos.ms.sys.common.vo.param.SysParamSearchPayload
 import io.kudos.ms.sys.core.dao.SysParamDao
 import io.kudos.ms.sys.core.model.po.SysParam
 import org.springframework.beans.factory.annotation.Autowired
@@ -54,13 +55,8 @@ open class ParamByModuleAndNameCache : AbstractKeyValueCacheHandler<SysParamCach
         }
 
         // 加载所有可用的参数
-        val searchPayload = SysParamSearchPayload().apply {
-            active = true
-            returnEntityClass = SysParamCacheItem::class
-        }
-
-        @Suppress("UNCHECKED_CAST")
-        val params = sysParamDao.search(searchPayload, SysParamCacheItem::class)
+        val criteria = Criteria(SysParam::active eq true)
+        val params = sysParamDao.searchAs<SysParamCacheItem>(criteria)
         log.debug("从数据库加载了${params.size}条参数信息。")
 
         // 清除缓存

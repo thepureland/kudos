@@ -14,28 +14,28 @@ data class SysDictItemTreeRecord (
     //region your codes 1
 
     /** 字典项ID */
-    override var id: String = "",
+    override val id: String = "",
 
     /** 字典项编号 */
-    var itemCode: String? = null,
+    val itemCode: String = "",
 
     /** 字典项名称 */
-    var itemName: String? = null,
+    val itemName: String = "",
 
     /** 父项ID */
-    var parentId: String? = null,
+    val parentId: String? = null,
 
     /** 该字典编号在同父节点下的排序号 */
-    var orderNum: Int? = null,
+    val orderNum: Int? = null,
 
     /** 是否启用 */
-    var active: Boolean? = null,
+    val active: Boolean = true,
 
     /** 备注 */
-    var remark: String? = null,
+    val remark: String? = null,
 
     /** 子字典项列表 */
-    var children: MutableList<SysDictItemTreeRecord>? = null,
+    val children: MutableList<SysDictItemTreeRecord>? = null,
 
     //endregion your codes 1
 //region your codes 2

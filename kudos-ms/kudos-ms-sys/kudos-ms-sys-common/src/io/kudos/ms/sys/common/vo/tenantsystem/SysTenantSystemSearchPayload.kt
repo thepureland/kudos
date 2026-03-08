@@ -14,13 +14,11 @@ data class SysTenantSystemSearchPayload (
 
     //region your codes 1
 
-    override var returnEntityClass: KClass<*>? = SysTenantSystemRecord::class,
-
     /** 租户id */
-    var tenantId: String? = null,
+    val tenantId: String? = null,
 
     /** 系统编码 */
-    var systemCode: String? = null,
+    val systemCode: String? = null,
 
     //endregion your codes 1
 //region your codes 2
@@ -29,7 +27,9 @@ data class SysTenantSystemSearchPayload (
 
     //region your codes 3
 
-    constructor() : this(SysTenantSystemRecord::class)
+    constructor() : this("")
+
+    override var returnEntityClass: KClass<*>? = SysTenantSystemRecord::class
 
     //endregion your codes 3
 

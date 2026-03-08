@@ -158,7 +158,7 @@ annotation class Constraints(
     /** 字符串日期时间约束，被校验对象类型必须为CharSequence或其子类 */
     val dateTime: DateTime = DateTime("", message = MESSAGE),
     /** 字典枚举代码约束，被校验对象类型必须为CharSequence或其子类 */
-    val dictEnumCode: DictEnumCode = DictEnumCode(IDictEnum::class, message = MESSAGE),
+    val dictEnumItemCode: DictEnumItemCode = DictEnumItemCode(IDictEnum::class, message = MESSAGE),
     /** 非null依赖约束，被校验对象可以为任何类型 */
     val notNullOn: NotNullOn = NotNullOn(Depends([]), message = MESSAGE),
     /** 数列约束，被校验对象类型必须为以下之一或其子类: List<*>、Array<*> */

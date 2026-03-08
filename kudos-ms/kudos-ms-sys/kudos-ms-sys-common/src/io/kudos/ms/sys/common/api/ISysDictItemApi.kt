@@ -22,9 +22,9 @@ interface ISysDictItemApi {
 
     fun get(id: String, fetchAllParentIds: Boolean = false): SysDictItemRecord?
 
-    fun getItemsFromCache(atomicServiceCode: String? = null, type: String): List<SysDictItemCacheItem>
+    fun getItemsFromCache(type: String, atomicServiceCode: String): List<SysDictItemCacheItem>
 
-    fun transDictCode(module: String, type: String, code: String): String?
+    fun transDictCode(dictType: String, itemCode: String, atomicServiceCode: String): String?
 
     fun saveOrUpdate(payload: SysDictPayload): String
 
@@ -40,7 +40,7 @@ interface ISysDictItemApi {
 
     fun getDictItemsByDictId(dictId: String): List<SysDictItemRecord>
 
-    fun getDictItemsByAtomicServiceAndType(atomicServiceCode: String, dictType: String): List<SysDictItemCacheItem>
+    fun getDictItemsByAtomicServiceAndType(dictType: String, atomicServiceCode: String): List<SysDictItemCacheItem>
 
     fun getDictItemTree(dictId: String, parentId: String? = null): List<SysDictItemTreeRecord>
 

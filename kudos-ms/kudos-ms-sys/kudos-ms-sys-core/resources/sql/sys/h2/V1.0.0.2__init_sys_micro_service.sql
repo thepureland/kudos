@@ -5,7 +5,7 @@ create table if not exists "sys_micro_service"
     "name"        character varying(128) not null
         constraint "uq_sys_micro_service" unique,
     "context"     character varying(32) default '/'  not null,
-    "atomic_service" boolean default FALSE   not null,
+    "atomic_service" boolean default  TRUE   not null,
     "parent_code" character varying(32),
     "remark"      character varying(256),
     "active"      boolean default TRUE   not null,
@@ -37,6 +37,6 @@ comment on column "sys_micro_service"."update_time" is '更新时间';
 
 
 --region DML
-merge into "sys_micro_service" ("code", "name", "context", "remark", "active", "built_in")
-    values ('kudos-sys', 'kudos-sys', '/sys', null, true, true);
+merge into "sys_micro_service" ("code", "name", "atomic_service", "context", "remark", "active", "built_in")
+    values ('sys', 'sys', true, '/api/sys', null, true, true);
 --endregion DML

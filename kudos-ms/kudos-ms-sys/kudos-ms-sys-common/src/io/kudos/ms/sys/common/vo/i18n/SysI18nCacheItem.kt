@@ -1,5 +1,6 @@
 package io.kudos.ms.sys.common.vo.i18n
 
+import io.kudos.base.support.IIdEntity
 
 /**
  * 国际化缓存项
@@ -9,26 +10,32 @@ package io.kudos.ms.sys.common.vo.i18n
  */
 data class SysI18nCacheItem (
 
+    /** 主键 */
+    override val id: String = "",
+
     //region your codes 1
 
     /** 语言_地区 */
-    var locale: String? = null,
+    val locale: String = "",
 
     /** 原子服务编码 */
-    var atomicServiceCode: String? = null,
+    val atomicServiceCode: String = "",
 
     /** 国际化类型字典代码 */
-    var i18nTypeDictCode: String? = null,
+    val i18nTypeDictCode: String = "",
+
+    /** 国际化命名空间 */
+    val namespace: String = "",
 
     /** 国际化key */
-    var key: String? = null,
+    val key: String = "",
 
     /** 国际化值 */
-    var value: String? = null,
+    val value: String = "",
 
     //endregion your codes 1
 //region your codes 2
-) {
+) : IIdEntity<String> {
 //endregion your codes 2
 
     //region your codes 3

@@ -15,6 +15,7 @@ import org.ktorm.entity.filter
 import org.ktorm.entity.sortedBy
 import org.ktorm.entity.toList
 import org.ktorm.expression.OrderByExpression
+import org.ktorm.schema.Column
 import org.springframework.stereotype.Repository
 
 
@@ -90,20 +91,20 @@ open class SysDictItemDao : BaseCrudDao<String, SysDictItem, SysDictItems>() {
             query = query.limit((pageNo - 1) * pageSize, pageSize)
         }
 
+        @Suppress("UNCHECKED_CAST")
+        val recordExtraColumns = mapOf(
+            "atomicServiceCode" to (SysDicts.atomicServiceCode as Column<Any>),
+            "dictType" to (SysDicts.dictType as Column<Any>),
+            "dictName" to (SysDicts.dictName as Column<Any>),
+            "itemId" to (SysDictItems.id as Column<Any>)
+        )
+
         return query.map { row ->
-            SysDictItemRecord().apply {
-                atomicServiceCode = row[SysDicts.atomicServiceCode]
-                dictId = row[SysDicts.id]
-                dictType = row[SysDicts.dictType]
-                dictName = row[SysDicts.dictName]
-                itemId = row[SysDictItems.id]
-                itemCode = row[SysDictItems.itemCode]
-                parentId = row[SysDictItems.parentId]
-                itemName = row[SysDictItems.itemName]
-                orderNum = row[SysDictItems.orderNum]
-                active = row[SysDictItems.active]
-                remark = row[SysDictItems.remark]
-            }
+            mapTo(
+                row,
+                SysDictItemRecord::class,
+                extraColumns = recordExtraColumns
+            )
         }
     }
 
@@ -203,10 +204,10 @@ open class SysDictItemDao : BaseCrudDao<String, SysDictItem, SysDictItems>() {
      * 查询指定父节点的直接孩子节点（用于树加载）
      */
     fun searchDirectChildrenNodes(parentId: String, activeOnly: Boolean): List<SysDictTreeNode> {
-        val searchPayload = SysDictItemSearchPayload().apply {
-            this.parentId = parentId
-            this.active = if (activeOnly) true else null
-        }
+        val searchPayload = SysDictItemSearchPayload(
+            parentId = parentId,
+            active = if (activeOnly) true else null
+        )
         return leftJoinSearch(searchPayload)
             .orderBy(SysDictItems.orderNum.asc())
             .map { row ->

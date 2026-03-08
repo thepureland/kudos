@@ -26,6 +26,9 @@ object SysI18ns : StringIdTable<SysI18n>("sys_i18n") {
     /** 国际化类型字典代码 */
     var i18nTypeDictCode = varchar("i18n_type_dict_code").bindTo { it.i18nTypeDictCode }
 
+    /** 国际化命名空间 */
+    var namespace = varchar("namespace").bindTo { it.namespace }
+
     /** 国际化key */
     var key = varchar("key").bindTo { it.key }
 

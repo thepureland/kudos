@@ -85,8 +85,34 @@ internal class BeanKitTest {
     fun setProperty() {
         BeanKit.setProperty(person, "address.zipcode", "361000")
         assertEquals("361000", person.address?.zipcode)
-        BeanKit.setProperty(person, "isActive", "361000")
+        BeanKit.setProperty(person, "isActive", "true")
         assertEquals(true, person.active)
+    }
+
+    /**
+     * 无 setter 的类（如 Kotlin data class 的 val）：setProperty 应通过反射设置 backing field 成功。
+     */
+    @Test
+    fun setPropertyOnValOnlyBean() {
+        val record = ValOnlyRecord()
+        BeanKit.setProperty(record, "id", "pk1")
+        BeanKit.setProperty(record, "name", "cache-a")
+        BeanKit.setProperty(record, "atomicServiceCode", "sys")
+        BeanKit.setProperty(record, "active", true)
+        assertEquals("pk1", record.id)
+        assertEquals("cache-a", record.name)
+        assertEquals("sys", record.atomicServiceCode)
+        assertEquals(true, record.active)
+    }
+
+    /** 仅 val 属性、无 setter，用于测试 setProperty 的 field 回退逻辑 */
+    internal data class ValOnlyRecord(
+        val id: String = "",
+        val name: String = "",
+        val atomicServiceCode: String = "",
+        val active: Boolean = false
+    ) {
+        constructor() : this("")
     }
 
     @Test
@@ -114,7 +140,7 @@ internal class BeanKitTest {
         BeanKit.copyPropertiesExcludeId(person, dest)
         assertEquals(person.age, dest.age)
         assertSame(person.address, dest.address)
-        assertNull(dest._getId())
+        assertTrue(dest._getId().isNullOrBlank())
         assertEquals(true, dest.active)
     }
 

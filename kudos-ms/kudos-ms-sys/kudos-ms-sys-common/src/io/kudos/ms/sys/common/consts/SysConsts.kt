@@ -11,4 +11,7 @@ object SysConsts {
     /** 原子服务名称 */
     const val ATOMIC_SERVICE_NAME = "sys"
 
+    /** 默认的子系统编码 */
+    const val DEFAULT_SUB_SYSTEM_CODE = "default"
+
 }

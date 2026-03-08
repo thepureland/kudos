@@ -354,7 +354,7 @@ object ValidatorFactory {
             is Compare -> CompareValidator().apply { initialize(annotation) }
             is Custom -> CustomValidator().apply { initialize(annotation) }
             is DateTime -> DateTimeValidator().apply { initialize(annotation) }
-            is DictEnumCode -> DictEnumCodeValidator().apply { initialize(annotation) }
+            is DictEnumItemCode -> DictEnumCodeValidator().apply { initialize(annotation) }
             is NotNullOn -> NotNullOnValidator().apply { initialize(annotation) }
             is Series -> SeriesValidator().apply { initialize(annotation) }
 

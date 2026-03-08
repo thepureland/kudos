@@ -25,6 +25,7 @@ import org.ktorm.schema.Table
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
+import kotlin.reflect.full.primaryConstructor
 
 /**
  * 基础只读数据访问对象，封装某数据库表的通用查询操作
@@ -1188,6 +1189,32 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         val properties = returnType.memberProperties.map { it.name }
         val returnProps = entityProperties.intersect(properties.toSet()) // 取交集,保证要查询的列一定存在
         return ColumnHelper.columnOf(table(), *returnProps.toTypedArray())
+    }
+
+    /**
+     * 将 QueryRowSet 按列映射自动填充到指定类型实例
+     *
+     * @param rowSet QueryRowSet
+     * @param destClass 目标类型
+     * @param defaultValues 可选，属性名 -> 默认值（如 id 的 ""）
+     * @param extraColumns 可选，主表外的列信息（如关联表列），属性名 -> 列；与 getColumns 合并使用，extraColumns 优先；传 null 与不传等价于空 Map
+     */
+    protected fun <R : Any> mapTo(
+        rowSet: QueryRowSet,
+        destClass: KClass<R>,
+        defaultValues: Map<String, Any>? = null,
+        extraColumns: Map<String, Column<Any>>? = null
+    ): R {
+        val columnMap = getColumns(destClass)
+        val extras = extraColumns ?: emptyMap()
+
+        val constructor = destClass.primaryConstructor!!
+        val args = constructor.parameters.map { param ->
+            val column = extras[param.name] ?: columnMap[param.name]
+            val value = if (column != null) rowSet[column] else null
+            value ?: (defaultValues?.get(param.name))  // 处理默认值
+        }
+        return constructor.call(*args.toTypedArray())
     }
 
 }

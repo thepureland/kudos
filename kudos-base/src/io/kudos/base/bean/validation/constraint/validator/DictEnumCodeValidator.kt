@@ -1,6 +1,6 @@
 package io.kudos.base.bean.validation.constraint.validator
 
-import io.kudos.base.bean.validation.constraint.annotations.DictEnumCode
+import io.kudos.base.bean.validation.constraint.annotations.DictEnumItemCode
 import io.kudos.base.lang.EnumKit
 import jakarta.validation.ConstraintValidator
 import jakarta.validation.ConstraintValidatorContext
@@ -11,18 +11,18 @@ import jakarta.validation.ConstraintValidatorContext
  * @author K
  * @since 1.0.0
  */
-class DictEnumCodeValidator : ConstraintValidator<DictEnumCode, CharSequence?> {
-    private lateinit var dictEnumCode: DictEnumCode
+class DictEnumCodeValidator : ConstraintValidator<DictEnumItemCode, CharSequence?> {
+    private lateinit var dictEnumItemCode: DictEnumItemCode
 
-    override fun initialize(dictEnumCode: DictEnumCode) {
-        this.dictEnumCode = dictEnumCode
+    override fun initialize(dictEnumItemCode: DictEnumItemCode) {
+        this.dictEnumItemCode = dictEnumItemCode
     }
 
     override fun isValid(value: CharSequence?, constraintValidatorContext: ConstraintValidatorContext?): Boolean {
         if (value == null) {
             return true
         }
-        val dictMap = EnumKit.getCodeMap(dictEnumCode.enumClass)
+        val dictMap = EnumKit.getCodeMap(dictEnumItemCode.enumClass)
         return dictMap.containsKey(value)
     }
 }

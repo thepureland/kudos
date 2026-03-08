@@ -1,6 +1,6 @@
 package io.kudos.base.bean.validation.teminal.convert.converter.impl
 
-import io.kudos.base.bean.validation.constraint.annotations.DictEnumCode
+import io.kudos.base.bean.validation.constraint.annotations.DictEnumItemCode
 import io.kudos.base.lang.EnumKit
 
 /**
@@ -13,7 +13,7 @@ class DictEnumCodeConstraintConvertor(annotation: Annotation) : DefaultConstrain
 
     override fun getRule(constraintAnnotation: Annotation): LinkedHashMap<String, Any> {
         val map = super.getRule(constraintAnnotation)
-        require(constraintAnnotation is DictEnumCode) { "DictEnumCodeConstraintConvertor 仅支持 DictEnumCode 注解" }
+        require(constraintAnnotation is DictEnumItemCode) { "DictEnumCodeConstraintConvertor 仅支持 DictEnumCode 注解" }
         map.remove("enumClass")
         val codeMap = EnumKit.getCodeMap(constraintAnnotation.enumClass)
         map["values"] = codeMap.keys

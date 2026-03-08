@@ -14,44 +14,46 @@ data class SysAccessRuleIpDetail (
 
     //region your codes 1
 
+    override val id: String = "",
+
     /** ip起 */
-    var ipStart: Long? = null,
+    val ipStart: Long? = null,
 
     /** ip止 */
-    var ipEnd: Long? = null,
+    val ipEnd: Long? = null,
 
     /** ip类型 */
-    var ipType: Int? = null,
+    val ipType: Int? = null,
 
     /** 过期时间 */
-    var expirationDate: LocalDateTime? = null,
+    val expirationDate: LocalDateTime? = null,
 
     /** 父规则id */
-    var parentRuleId: String? = null,
+    val parentRuleId: String? = null,
 
     /** 备注 */
-    var remark: String? = null,
+    val remark: String? = null,
 
     /** 是否启用 */
-    var active: Boolean? = null,
+    val active: Boolean? = null,
 
     /** 创建者id */
-    var createUserId: String? = null,
+    val createUserId: String? = null,
 
     /** 创建者名称 */
-    var createUserName: String? = null,
+    val createUserName: String? = null,
 
     /** 创建时间 */
-    var createTime: LocalDateTime? = null,
+    val createTime: LocalDateTime? = null,
 
     /** 更新者id */
-    var updateUserId: String? = null,
+    val updateUserId: String? = null,
 
     /** 更新者名称 */
-    var updateUserName: String? = null,
+    val updateUserName: String? = null,
 
     /** 更新时间 */
-    var updateTime: LocalDateTime? = null,
+    val updateTime: LocalDateTime? = null,
 
     //endregion your codes 1
 //region your codes 2
@@ -60,7 +62,7 @@ data class SysAccessRuleIpDetail (
 
     //region your codes 3
 
-    constructor() : this(null)
+    constructor() : this("")
 
     //endregion your codes 3
 

@@ -1,11 +1,10 @@
 package io.kudos.ms.sys.common.vo.cache
 
-import io.kudos.base.bean.validation.constraint.annotations.DictCode
+import io.kudos.base.bean.validation.constraint.annotations.DictItemCode
 import io.kudos.base.support.payload.FormPayload
 import io.kudos.ms.sys.common.consts.SysConsts
 import io.kudos.ms.sys.common.consts.SysDictTypes
 import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.NotNull
 
 
 /**
@@ -17,46 +16,46 @@ import jakarta.validation.constraints.NotNull
 data class SysCachePayload (
 
     /** 主键 */
-    override var id: String = "",
+    override var id: String? = null,
 
     //region your codes 1
 
     /** 名称 */
-    @get:NotBlank(message = "名称不能为空！")
-    var name: String = "",
+    @get:NotBlank
+    val name: String = "",
 
     /** 原子服务编码 */
-    @get:NotBlank(message = "原子服务不能为空！")
-    var atomicServiceCode: String = "",
+    @get:NotBlank
+    val atomicServiceCode: String = "",
 
     /** 缓存策略代码 */
-    @get:NotBlank(message = "缓存策略不能为空！")
-    @get:DictCode(dictType = SysDictTypes.CACHE_STRATEGY, atomicServiceCode = SysConsts.ATOMIC_SERVICE_NAME, message = "缓存策略非法！")
-    var strategyDictCode: String = "",
+    @get:NotBlank
+    @get:DictItemCode(dictType = SysDictTypes.CACHE_STRATEGY, atomicServiceCode = SysConsts.ATOMIC_SERVICE_NAME)
+    val strategyDictCode: String = "",
 
     /** 是否启动时写缓存 */
-    var writeOnBoot: Boolean = true,
+    val writeOnBoot: Boolean = true,
 
     /** 是否及时回写缓存 */
-    var writeInTime: Boolean = true,
+    val writeInTime: Boolean = true,
 
     /** 缓存生存时间(秒) */
-    var ttl: Int? = null,
+    val ttl: Int? = null,
 
     /** 备注 */
-    var remark: String? = null,
+    val remark: String? = null,
 
     /** 是否为 Hash 缓存 */
-    var hash: Boolean = false,
+    val hash: Boolean = false,
 
     //endregion your codes 1
 //region your codes 2
-) : FormPayload<String>() {
+) : FormPayload<String?>() {
 //endregion your codes 2
 
     //region your codes 3
 
-    constructor() : this("")
+    constructor() : this(null)
 
     // endregion your codes 3
 

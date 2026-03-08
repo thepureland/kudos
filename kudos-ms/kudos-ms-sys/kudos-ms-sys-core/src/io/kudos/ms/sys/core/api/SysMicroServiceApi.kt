@@ -25,7 +25,7 @@ open class SysMicroServiceApi : ISysMicroServiceApi {
     protected lateinit var sysMicroServiceService: ISysMicroServiceService
 
     override fun getAllActiveMicroService(): List<SysMicroServiceCacheItem> {
-        return sysMicroServiceService.getAllActiveMicroService()
+        return sysMicroServiceService.getAllActiveMicroServices()
     }
 
     override fun getAllActiveMicroServiceExcludeAtomicService(): List<SysMicroServiceCacheItem> {
@@ -33,7 +33,7 @@ open class SysMicroServiceApi : ISysMicroServiceApi {
     }
 
     override fun getAllActiveAtomicService(): List<SysMicroServiceCacheItem> {
-        return sysMicroServiceService.getAllActiveAtomicService()
+        return sysMicroServiceService.getAllActiveAtomicServices()
     }
 
     override fun getMicroServiceByCode(code: String): SysMicroServiceCacheItem? {

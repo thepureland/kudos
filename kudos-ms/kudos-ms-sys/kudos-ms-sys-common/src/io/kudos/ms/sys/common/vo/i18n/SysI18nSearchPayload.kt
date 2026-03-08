@@ -14,28 +14,29 @@ data class SysI18nSearchPayload (
 
     //region your codes 1
 
-    override var returnEntityClass: KClass<*>? = SysI18nRecord::class,
-
     /** 语言_地区 */
-    var locale: String? = null,
+    val locale: String? = null,
 
     /** 原子服务编码 */
-    var atomicServiceCode: String? = null,
+    val atomicServiceCode: String? = null,
 
     /** 国际化类型字典代码 */
-    var i18nTypeDictCode: String? = null,
+    val i18nTypeDictCode: String? = null,
+
+    /** 国际化命名空间 */
+    val namespace: String? = null,
 
     /** 国际化key */
-    var key: String? = null,
+    val key: String? = null,
 
     /** 国际化值 */
-    var value: String? = null,
+    val value: String? = null,
 
     /** 是否启用 */
-    var active: Boolean? = null,
+    val active: Boolean? = null,
 
     /** 是否内置 */
-    var builtIn: Boolean? = null,
+    val builtIn: Boolean? = null,
 
     //endregion your codes 1
 //region your codes 2
@@ -44,7 +45,9 @@ data class SysI18nSearchPayload (
 
     //region your codes 3
 
-    constructor() : this(SysI18nRecord::class)
+    constructor() : this("")
+
+    override var returnEntityClass: KClass<*>? = SysI18nRecord::class
 
     //endregion your codes 3
 

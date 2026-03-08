@@ -41,13 +41,13 @@ interface ISysResourceApi {
     /**
      * 根据子系统和资源类型，返回对应的资源
      *
-     * @param subSysDictCode 子系统编码
      * @param resourceType 资源类型枚举
+     * @param subSystemCode 子系统编码
      * @return List(资源对象)
      * @author K
      * @since 1.0.0
      */
-    fun getResources(subSysDictCode: String, resourceType: ResourceTypeEnum): List<SysResourceCacheItem>
+    fun getResources(resourceType: ResourceTypeEnum, subSystemCode: String): List<SysResourceCacheItem>
 
 //    /**
 //     * 根据资源id返回对应的资源
@@ -93,15 +93,15 @@ interface ISysResourceApi {
     /**
      * 返回指定父菜单id的直接孩子菜单(active的)
      *
-     * @param subSystemCode 子系统编码
      * @param resourceType 资源类型枚举
      * @param parentId 父菜单id，为null时返回第一层菜单
+     * @param subSystemCode 子系统编码
      * @return List(资源对象)
      */
     fun getDirectChildrenResources(
-        subSystemCode: String,
         resourceType: ResourceTypeEnum,
-        parentId: String?
+        parentId: String?,
+        subSystemCode: String,
     ): List<SysResourceCacheItem>
 
     /**

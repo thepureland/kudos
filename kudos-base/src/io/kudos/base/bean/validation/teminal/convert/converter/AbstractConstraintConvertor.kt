@@ -13,6 +13,7 @@ import kotlin.reflect.full.declaredMemberProperties
 abstract class AbstractConstraintConvertor(protected var annotation: Annotation) : IConstraintConvertor {
 
     protected lateinit var context: ConstraintConvertContext
+
     private lateinit var constraintAnnotation: Annotation
 
     override fun convert(context: ConstraintConvertContext): TeminalConstraint {
@@ -68,17 +69,36 @@ abstract class AbstractConstraintConvertor(protected var annotation: Annotation)
     private fun handleRule(constraintAnnotation: Annotation): Map<String, Any> {
         this.constraintAnnotation = constraintAnnotation
         val rule = getRule(constraintAnnotation)
-        handleMessageI18n(rule)
+        handleMessageI18n(rule, constraintAnnotation)
         return rule
     }
 
     /**
-     * 处理错误消息的国际化
+     * 处理错误消息的国际化。
+     * 仅当 message 为 {@code {...}} 且花括号内以 {@code jakarta.validation.constraints} 或
+     * {@code org.hibernate.validator.constraints} 开头时，用 [getCustomDefaultMsgI18nKey] 返回的模板直接替换。
      *
-     * @param rule Map<注解属性名></注解属性名>，注解属性值>
+     * @param rule 约束规则（可变），可能被修改 rule["message"]
+     * @param constraintAnnotation 当前约束注解
      */
-    private fun handleMessageI18n(rule: Map<String, Any>) {
-        // 预留：后续可在此统一处理终端校验消息的 i18n key 转换。
+    protected open fun handleMessageI18n(rule: MutableMap<String, Any>, constraintAnnotation: Annotation) {
+        val raw = rule["message"] as? String ?: return
+        if (raw.isEmpty()) return
+        if (!raw.startsWith("{") || !raw.endsWith("}")) return
+        val key = raw.drop(1).dropLast(1).trim()
+        if (!key.startsWith("jakarta.validation.constraints") && !key.startsWith("org.hibernate.validator.constraints")) return
+        val template = getCustomDefaultMsgI18nKey(constraintAnnotation)
+        rule["message"] = template
+    }
+
+    /**
+     * 获取第三方约束注解的自定义默认国际化key
+     *
+     * @param constraintAnnotation 约束注解
+     * @return 默认国际化key字符串
+     */
+    protected open fun getCustomDefaultMsgI18nKey(constraintAnnotation: Annotation): String {
+        return "sys.valid-msg.default.${constraintAnnotation.annotationClass.simpleName}"
     }
 
 }

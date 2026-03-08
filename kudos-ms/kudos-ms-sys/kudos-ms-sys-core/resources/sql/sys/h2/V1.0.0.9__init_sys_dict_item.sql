@@ -68,6 +68,25 @@ merge into "sys_dict_item" ("id", "dict_id", "item_code", "item_name", "order_nu
     ('9e0b76f7-68f7-4f02-81f1-36e9b1fa26bd', '2601c57f-3900-4be8-9ebf-e79781db9d3d', 'LOCAL_REMOTE', 'cache_strategy.LOCAL_REMOTE', 1, '本地-远程两级联动缓存', true);
 
 -- locale
+merge into "sys_dict_item" ("id", "dict_id", "item_code", "item_name", "order_num", "remark", "built_in") values
+    ('26c199d9-b64e-4461-i18n-type00000001', '54094f46-dddb-41a2-b747-0eaa7d0ekil6', 'dict', 'i18n_type.dict', 1, '字典', true),
+    ('26c199d9-b64e-4461-i18n-type00000002', '54094f46-dddb-41a2-b747-0eaa7d0ekil6', 'dict-item', 'i18n_type.dict-item', 2, '字典项', true),
+    ('26c199d9-b64e-4461-i18n-type00000003', '54094f46-dddb-41a2-b747-0eaa7d0ekil6', 'valid-msg', 'i18n_type.valid-msg', 3, '验证提示', true),
+    ('26c199d9-b64e-4461-i18n-type00000004', '54094f46-dddb-41a2-b747-0eaa7d0ekil6', 'view', 'i18n_type.view', 4, '页面', true);
+
+
+-- terminal_type
+    merge into "sys_dict_item" ("id", "dict_id", "item_code", "item_name", "order_num", "remark", "built_in") values
+    ('a2456908-e102-49a5-9fd0-82552e3560c9', 'ad52c551-01c1-4c7f-9a96-720eecb32885', '1', 'terminal_type.1', 2, 'PC端', true),
+    ('d8f07398-8a95-4a55-9a49-299c955e03bc', 'ad52c551-01c1-4c7f-9a96-720eecb32885', '2', 'terminal_type.2', 3, '手机端', true),
+    ('b4bafd4b-021e-402c-9f16-8249fa86cedd', 'ad52c551-01c1-4c7f-9a96-720eecb32885', '4', 'terminal_type.4', 4, '手机端H5-Android', true),
+    ('f58aec33-4294-4431-8e6c-c43b6ca02ec3', 'ad52c551-01c1-4c7f-9a96-720eecb32885', '8', 'terminal_type.8', 5, '手机端H5-iOS', true),
+    ('d36a0e12-310f-4f91-aecd-49adef85104d', 'ad52c551-01c1-4c7f-9a96-720eecb32885', '9', 'terminal_type.9', 6, '安卓收藏桌面', true),
+    ('c323ddb9-ccba-4b99-bb00-172bcb654d05', 'ad52c551-01c1-4c7f-9a96-720eecb32885', '10', 'terminal_type.10', 7, 'iOS收藏桌面', true),
+    ('11c088b6-31e7-4173-aa0f-367b1715e54f', 'ad52c551-01c1-4c7f-9a96-720eecb32885', '12', 'terminal_type.12', 8, '手机端Android', true),
+    ('d264c01e-072e-46fc-b607-88061810c9b6', 'ad52c551-01c1-4c7f-9a96-720eecb32885', '16', 'terminal_type.16', 9, '手机端iOS', true);
+
+-- i18n_type
 merge into "sys_dict_item" ("id", "dict_id", "item_code", "item_name", "order_num", "built_in") values
     ('26c199d9-b64e-4461-a445-59477b7a1395', '54094f46-dddb-41a2-b747-0eaa7d0e59b6', 'zh_CN', 'locale.zh_CN', 0, true),
     ('dc5971ac-7c46-413c-99f0-95f256d74fb6', '54094f46-dddb-41a2-b747-0eaa7d0e59b6', 'zh_TW', 'locale.zh_TW', 1, true),
@@ -80,23 +99,6 @@ merge into "sys_dict_item" ("id", "dict_id", "item_code", "item_name", "order_nu
     ('89c5d589-7c92-4090-94c5-c092e8287866', '54094f46-dddb-41a2-b747-0eaa7d0e59b6', 'fr_FR', 'locale.fr_FR', 8, true),
     ('b0c29b54-a292-4e7d-b5df-3b79beef7b15', '54094f46-dddb-41a2-b747-0eaa7d0e59b6', 'es_ES', 'locale.es_ES', 9, true),
     ('a2b158b4-d42f-4dde-b020-67ae1486393a', '54094f46-dddb-41a2-b747-0eaa7d0e59b6', 'pt_BR', 'locale.pt_BR', 10, true);
-
--- i18n_type
-merge into "sys_dict_item" ("id", "dict_id", "item_code", "item_name", "order_num", "remark", "built_in") values
-    ('26c199d9-b64e-4461-i18n-type00000001', '54094f46-dddb-41a2-b747-0eaa7d0ekil6', 'dict', 'i18n_type.dict', 1, '字典', true),
-    ('26c199d9-b64e-4461-i18n-type00000002', '54094f46-dddb-41a2-b747-0eaa7d0ekil6', 'dict-item', 'i18n_type.dict-item', 2, '字典项', true),
-    ('26c199d9-b64e-4461-i18n-type00000003', '54094f46-dddb-41a2-b747-0eaa7d0ekil6', 'view', 'i18n_type.view', 3, '页面', true);
-
--- terminal_type
-merge into "sys_dict_item" ("id", "dict_id", "item_code", "item_name", "order_num", "remark", "built_in") values
-    ('a2456908-e102-49a5-9fd0-82552e3560c9', 'ad52c551-01c1-4c7f-9a96-720eecb32885', '1', 'terminal_type.1', 2, 'PC端', true),
-    ('d8f07398-8a95-4a55-9a49-299c955e03bc', 'ad52c551-01c1-4c7f-9a96-720eecb32885', '2', 'terminal_type.2', 3, '手机端', true),
-    ('b4bafd4b-021e-402c-9f16-8249fa86cedd', 'ad52c551-01c1-4c7f-9a96-720eecb32885', '4', 'terminal_type.4', 4, '手机端H5-Android', true),
-    ('f58aec33-4294-4431-8e6c-c43b6ca02ec3', 'ad52c551-01c1-4c7f-9a96-720eecb32885', '8', 'terminal_type.8', 5, '手机端H5-iOS', true),
-    ('d36a0e12-310f-4f91-aecd-49adef85104d', 'ad52c551-01c1-4c7f-9a96-720eecb32885', '9', 'terminal_type.9', 6, '安卓收藏桌面', true),
-    ('c323ddb9-ccba-4b99-bb00-172bcb654d05', 'ad52c551-01c1-4c7f-9a96-720eecb32885', '10', 'terminal_type.10', 7, 'iOS收藏桌面', true),
-    ('11c088b6-31e7-4173-aa0f-367b1715e54f', 'ad52c551-01c1-4c7f-9a96-720eecb32885', '12', 'terminal_type.12', 8, '手机端Android', true),
-    ('d264c01e-072e-46fc-b607-88061810c9b6', 'ad52c551-01c1-4c7f-9a96-720eecb32885', '16', 'terminal_type.16', 9, '手机端iOS', true);
 
 -- access_rule_type
 merge into "sys_dict_item" ("id", "dict_id", "item_code", "item_name", "order_num", "remark", "built_in") values

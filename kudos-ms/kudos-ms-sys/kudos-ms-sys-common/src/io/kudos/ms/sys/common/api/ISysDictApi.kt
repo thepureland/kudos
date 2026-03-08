@@ -19,7 +19,7 @@ interface ISysDictApi {
      * 根据字典类型和原子服务编码，取得对应字典项(仅包括处于启用状态的)
      *
      * @param dictType 字典类型
-     * @param atomicServiceCode 原子服务编码，缺省为null, 为空时将忽略该条件
+     * @param atomicServiceCode 原子服务编码
      * @return 字典项列表（自然排序）。查无结果返回空列表。
      * @throws IllegalArgumentException 参数校验不通过时
      * @author K
@@ -27,14 +27,14 @@ interface ISysDictApi {
      */
     fun getActiveDictItems(
         dictType: String,
-        atomicServiceCode: String? = null
+        atomicServiceCode: String
     ): List<SysDictItemCacheItem>
 
     /**
      * 根据字典类型和原子服务编码，取得对应字典项的编码和名称(仅包括处于启用状态的)
      *
      * @param dictType 字典类型
-     * @param atomicServiceCode 原子服务编码，缺省为null，为空时将忽略该条件
+     * @param atomicServiceCode 原子服务编码
      * @return LinkedHashMap(编码，名称)，自然排序。查无结果返回空Map。
      * @throws IllegalArgumentException 参数校验不通过时
      * @author K
@@ -42,7 +42,7 @@ interface ISysDictApi {
      */
     fun getActiveDictItemMap(
         dictType: String,
-        atomicServiceCode: String? = null
+        atomicServiceCode: String
     ): LinkedHashMap<String, String>
 
     /**

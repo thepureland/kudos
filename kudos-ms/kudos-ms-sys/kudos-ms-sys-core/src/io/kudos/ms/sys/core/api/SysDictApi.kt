@@ -25,14 +25,14 @@ open class SysDictApi : ISysDictApi {
 
     override fun getActiveDictItems(
         dictType: String,
-        atomicServiceCode: String?
+        atomicServiceCode: String
     ): List<SysDictItemCacheItem> {
         return sysDictService.getActiveDictItems(dictType, atomicServiceCode)
     }
 
     override fun getActiveDictItemMap(
         dictType: String,
-        atomicServiceCode: String?
+        atomicServiceCode: String
     ): LinkedHashMap<String, String> {
         return sysDictService.getActiveDictItemMap(dictType, atomicServiceCode)
     }

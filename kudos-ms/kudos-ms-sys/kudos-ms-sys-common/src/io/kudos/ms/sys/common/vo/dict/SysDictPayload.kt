@@ -12,32 +12,32 @@ import io.kudos.base.support.payload.FormPayload
 data class SysDictPayload (
 
     /** 主键 */
-    override var id: String = "",
+    override val id: String = "",
 
     //region your codes 1
 
     /** 字典类型 */
-    var dictType: String? = null,
+    val dictType: String = "",
 
     /** 字典名称 */
-    var dictName: String? = null,
+    val dictName: String = "",
 
     /** 原子服务编码 */
-    var atomicServiceCode: String? = null,
+    val atomicServiceCode: String = "",
 
-    var parentId: String? = null,
+    val parentId: String? = null,
 
     /** 备注 */
-    var remark: String? = null,
+    val remark: String? = null,
 
     /** 是否启用 */
-    var active: Boolean? = null,
+    val active: Boolean = true,
 
-    var code: String? = null, //TODO
+    val code: String? = null, //TODO
 
-    var name: String? = null, //TODO
+    val name: String? = null, //TODO
 
-    var seqNo: Int? = null, //TODO
+    val seqNo: Int? = null, //TODO
 
 
     //endregion your codes 1

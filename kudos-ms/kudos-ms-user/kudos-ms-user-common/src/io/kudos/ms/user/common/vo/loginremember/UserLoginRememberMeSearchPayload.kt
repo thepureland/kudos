@@ -15,10 +15,8 @@ data class UserLoginRememberMeSearchPayload (
 
     //region your codes 1
 
-    override var returnEntityClass: KClass<*>? = UserLoginRememberMeRecord::class,
-
     /** 用户名 */
-    var username: String? = null,
+    val username: String? = null,
 
     //endregion your codes 1
 //region your codes 2
@@ -27,7 +25,9 @@ data class UserLoginRememberMeSearchPayload (
 
     //region your codes 3
 
-    constructor() : this(UserLoginRememberMeRecord::class)
+    constructor() : this("")
+
+    override var returnEntityClass: KClass<*>? = UserLoginRememberMeRecord::class
 
     //endregion your codes 3
 

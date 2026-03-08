@@ -32,12 +32,12 @@ open class SysDictItemApi : ISysDictItemApi {
         return sysDictItemService.get(id, fetchAllParentIds)
     }
 
-    override fun getItemsFromCache(atomicServiceCode: String?, type: String): List<SysDictItemCacheItem> {
-        return sysDictItemService.getItemsFromCache(atomicServiceCode, type)
+    override fun getItemsFromCache(type: String, atomicServiceCode: String): List<SysDictItemCacheItem> {
+        return sysDictItemService.getItems(type, atomicServiceCode)
     }
 
-    override fun transDictCode(module: String, type: String, code: String): String? {
-        return sysDictItemService.transDictCode(module, type, code)
+    override fun transDictCode(dictType: String, itemCode: String, atomicServiceCode: String): String? {
+        return sysDictItemService.transDictCode(dictType, itemCode, atomicServiceCode)
     }
 
     override fun saveOrUpdate(payload: SysDictPayload): String {
@@ -68,8 +68,8 @@ open class SysDictItemApi : ISysDictItemApi {
         return sysDictItemService.getDictItemsByDictId(dictId)
     }
 
-    override fun getDictItemsByAtomicServiceAndType(atomicServiceCode: String, dictType: String): List<SysDictItemCacheItem> {
-        return sysDictItemService.getDictItemsByAtomicServiceAndType(atomicServiceCode, dictType)
+    override fun getDictItemsByAtomicServiceAndType(dictType: String, atomicServiceCode: String): List<SysDictItemCacheItem> {
+        return sysDictItemService.getDictItemsByAtomicServiceAndType(dictType, atomicServiceCode)
     }
 
     override fun getDictItemTree(dictId: String, parentId: String?): List<SysDictItemTreeRecord> {

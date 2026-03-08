@@ -1,6 +1,6 @@
 package io.kudos.ability.data.rdb.ktorm.support
 
-import io.kudos.base.support.IIdEntity
+import io.kudos.base.support.IMutableIdEntity
 import org.ktorm.entity.Entity
 
 /**
@@ -11,4 +11,4 @@ import org.ktorm.entity.Entity
  * @author K
  * @since 1.0.0
  */
-interface IDbEntity<ID, E : Entity<E>>: IIdEntity<ID>, Entity<E>
+interface IDbEntity<ID, E : Entity<E>>: IMutableIdEntity<ID>, Entity<E>

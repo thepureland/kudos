@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RequestBody
  * @author K
  * @since 1.0.0
  */
-open class BaseCrudController<PK : Any, B : IBaseCrudService<PK, *>, S : ListSearchPayload, R : IJsonResult, D : IJsonResult, F : FormPayload<PK>> :
+open class BaseCrudController<PK : Any, B : IBaseCrudService<PK, *>, S : ListSearchPayload, R : IJsonResult, D : IJsonResult, F : FormPayload<*>> :
     BaseReadOnlyController<PK, B, S, R, D, F>() {
 
     /**
@@ -34,11 +34,12 @@ open class BaseCrudController<PK : Any, B : IBaseCrudService<PK, *>, S : ListSea
      */
     @PostMapping("/saveOrUpdate")
     open fun saveOrUpdate(@RequestBody @Valid payload: F): PK {
-        return if (payload.id == "" || payload.id == 0) {
+        return if (payload.id == null ||payload.id == "" || payload.id == 0) {
             service.insert(payload)
         } else {
             service.update(payload)
-            payload.id
+            @Suppress("UNCHECKED_CAST")
+            payload.id as PK
         }
     }
 

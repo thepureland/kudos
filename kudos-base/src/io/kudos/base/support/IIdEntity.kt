@@ -1,7 +1,7 @@
 package io.kudos.base.support
 
 /**
- * id实体接口
+ * id不可变的实体接口
  *
  * @param T 实体类型
  * @author K
@@ -10,6 +10,6 @@ package io.kudos.base.support
 interface IIdEntity<T> {
 
     /** 惟一标识 */
-    var id: T
+    val id: T
 
 }

@@ -29,7 +29,7 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-open class DictItemsByModuleAndTypeCache : AbstractKeyValueCacheHandler<List<SysDictItemCacheItem>>() {
+open class DictItemsByMsCodeAndTypeCache : AbstractKeyValueCacheHandler<List<SysDictItemCacheItem>>() {
 
     @Autowired
     private lateinit var sysDictDao: SysDictDao
@@ -41,7 +41,7 @@ open class DictItemsByModuleAndTypeCache : AbstractKeyValueCacheHandler<List<Sys
     private lateinit var dictByIdCache: DictByIdCache
 
     companion object {
-        private const val CACHE_NAME = "SYS_DICT_ITEMS_BY_MODULE_AND_TYPE"
+        private const val CACHE_NAME = "SYS_DICT_ITEMS_BY_MS_CODE_AND_TYPE"
     }
 
     override fun cacheName(): String = CACHE_NAME
@@ -51,7 +51,7 @@ open class DictItemsByModuleAndTypeCache : AbstractKeyValueCacheHandler<List<Sys
             "缓存${CACHE_NAME}的key格式必须是：原子服务代码${Consts.CACHE_KEY_DEFAULT_DELIMITER}字典类型代码"
         }
         val moduleAndDictType = key.split(Consts.CACHE_KEY_DEFAULT_DELIMITER)
-        return getSelf<DictItemsByModuleAndTypeCache>().getDictItems(
+        return getSelf<DictItemsByMsCodeAndTypeCache>().getDictItems(
             moduleAndDictType[0], moduleAndDictType[1]
         )
     }
@@ -63,10 +63,10 @@ open class DictItemsByModuleAndTypeCache : AbstractKeyValueCacheHandler<List<Sys
         }
 
         // 加载所有可用的字典项
-        val payload = SysDictItemSearchPayload().apply {
-            active = true
+        val payload = SysDictItemSearchPayload(
+            active = true,
             dictActive = true
-        }
+        )
         val results = sysDictItemDao.pagingSearch(payload)
 
         // 清除缓存
@@ -75,20 +75,20 @@ open class DictItemsByModuleAndTypeCache : AbstractKeyValueCacheHandler<List<Sys
         }
 
         // 缓存数据
-        val dictMap = results.mapNotNull { record ->
-            val atomicServiceCode = record.atomicServiceCode ?: return@mapNotNull null
-            val dictType = record.dictType ?: return@mapNotNull null
+        val dictMap = results.map { record ->
+            val atomicServiceCode = record.atomicServiceCode
+            val dictType = record.dictType
             getKey(atomicServiceCode, dictType) to record
         }.groupBy({ it.first }, { it.second })
         dictMap.forEach { (key, value) ->
             val valueItems = value.map { it ->
-                SysDictItemCacheItem().apply {
-                    id = it.itemId ?: ""
-                    itemCode = it.itemCode
-                    itemName = it.itemName
-                    parentId = it.parentId
+                SysDictItemCacheItem(
+                    id = it.itemId,
+                    itemCode = it.itemCode,
+                    itemName = it.itemName,
+                    parentId = it.parentId,
                     orderNum = it.orderNum
-                }
+                )
             }
             KeyValueCacheKit.put(CACHE_NAME, key, valueItems)
             log.debug("缓存字典${key}，共${valueItems.size}条字典项。")
@@ -107,16 +107,16 @@ open class DictItemsByModuleAndTypeCache : AbstractKeyValueCacheHandler<List<Sys
         key = "#atomicServiceCode.concat('${Consts.CACHE_KEY_DEFAULT_DELIMITER}').concat(#dictType)",
         unless = "#result == null || #result.isEmpty()"
     )
-    open fun getDictItems(atomicServiceCode: String?, dictType: String): List<SysDictItemCacheItem> {
+    open fun getDictItems(atomicServiceCode: String, dictType: String): List<SysDictItemCacheItem> {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("缓存中不存在原子服务为${atomicServiceCode}且字典类型为${dictType}的字典项，从数据库中加载...")
         }
         // 查出对应的dict
-        val searchPayload = SysDictSearchPayload().apply {
-            this.atomicServiceCode = atomicServiceCode
-            this.dictType = dictType
-            this.active = true
-        }
+        val searchPayload = SysDictSearchPayload(
+            atomicServiceCode = atomicServiceCode,
+            dictType = dictType,
+            active = true
+        )
         val result = sysDictDao.search(searchPayload, SysDictRecord::class)
 
         return if (result.isEmpty()) {
@@ -127,13 +127,13 @@ open class DictItemsByModuleAndTypeCache : AbstractKeyValueCacheHandler<List<Sys
             val items = sysDictItemDao.searchActiveItemByDictId(result.first().id)
             log.debug("数据库中加载到原子服务为${atomicServiceCode}且字典类型为${dictType}的字典项共${items.size}条.")
             items.map {
-                SysDictItemCacheItem().apply {
-                    id = it.id
-                    itemCode = it.itemCode
-                    itemName = it.itemName
-                    parentId = it.parentId
+                SysDictItemCacheItem(
+                    id = it.id,
+                    itemCode = it.itemCode,
+                    itemName = it.itemName,
+                    parentId = it.parentId,
                     orderNum = it.orderNum
-                }
+                )
             }
         }
     }
@@ -160,7 +160,7 @@ open class DictItemsByModuleAndTypeCache : AbstractKeyValueCacheHandler<List<Sys
                 if (dict.active == null || dict.active == true) {
                     val atomicServiceCode = dict.atomicServiceCode ?: return
                     val dictType = dict.dictType ?: return
-                    getSelf<DictItemsByModuleAndTypeCache>().getDictItems(atomicServiceCode, dictType)
+                    getSelf<DictItemsByMsCodeAndTypeCache>().getDictItems(atomicServiceCode, dictType)
                     log.debug("${CACHE_NAME}缓存同步完成。")
                 } else {
                     log.debug("新增的字典项的字典active为false，不需要同步回写${CACHE_NAME}缓存。")
@@ -192,7 +192,7 @@ open class DictItemsByModuleAndTypeCache : AbstractKeyValueCacheHandler<List<Sys
                 if (dict.active == null || dict.active == true) {
                     val atomicServiceCode = dict.atomicServiceCode ?: return
                     val dictType = dict.dictType ?: return
-                    getSelf<DictItemsByModuleAndTypeCache>().getDictItems(atomicServiceCode, dictType)
+                    getSelf<DictItemsByMsCodeAndTypeCache>().getDictItems(atomicServiceCode, dictType)
                     log.debug("${CACHE_NAME}缓存同步完成。")
                 } else {
                     log.debug("更新的字典项的字典active为false，不需要同步回写${CACHE_NAME}缓存。")
@@ -221,7 +221,7 @@ open class DictItemsByModuleAndTypeCache : AbstractKeyValueCacheHandler<List<Sys
                 // 重新缓存
                 val atomicServiceCode = dict.atomicServiceCode ?: return
                 val dictType = dict.dictType ?: return
-                getSelf<DictItemsByModuleAndTypeCache>().getDictItems(atomicServiceCode, dictType)
+                getSelf<DictItemsByMsCodeAndTypeCache>().getDictItems(atomicServiceCode, dictType)
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
@@ -247,7 +247,7 @@ open class DictItemsByModuleAndTypeCache : AbstractKeyValueCacheHandler<List<Sys
                 // 重新缓存
                 val atomicServiceCode = dict.atomicServiceCode ?: return
                 val dictType = dict.dictType ?: return
-                getSelf<DictItemsByModuleAndTypeCache>().getDictItems(atomicServiceCode, dictType)
+                getSelf<DictItemsByMsCodeAndTypeCache>().getDictItems(atomicServiceCode, dictType)
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
         }

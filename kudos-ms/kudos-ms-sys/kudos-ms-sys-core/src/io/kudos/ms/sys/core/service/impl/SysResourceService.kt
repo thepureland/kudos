@@ -3,6 +3,8 @@ package io.kudos.ms.sys.core.service.impl
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
+import io.kudos.base.query.Criteria
+import io.kudos.base.query.eq
 import io.kudos.ms.sys.common.enums.ResourceTypeEnum
 import io.kudos.ms.sys.common.vo.resource.*
 import io.kudos.ms.sys.core.cache.SysResourceHashCache
@@ -46,35 +48,26 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
     }
 
     override fun getResourcesBySubSystemCode(subSystemCode: String): List<SysResourceRecord> {
-        val searchPayload = SysResourceSearchPayload().apply {
-            this.subSystemCode = subSystemCode
-        }
-        @Suppress("UNCHECKED_CAST")
-        return dao.search(searchPayload, SysResourceRecord::class)
+        val criteria = Criteria(SysResource::subSystemCode eq subSystemCode)
+        return dao.searchAs<SysResourceRecord>(criteria)
     }
 
     override fun getChildResources(parentId: String): List<SysResourceRecord> {
-        val searchPayload = SysResourceSearchPayload().apply {
-            this.parentId = parentId
-        }
-        @Suppress("UNCHECKED_CAST")
-        return dao.search(searchPayload, SysResourceRecord::class)
+        val criteria = Criteria(SysResource::parentId eq parentId)
+        return dao.searchAs<SysResourceRecord>(criteria)
     }
 
     override fun getResourceTree(subSystemCode: String, parentId: String?): List<SysResourceTreeRecord> {
-        val searchPayload = SysResourceSearchPayload().apply {
-            this.subSystemCode = subSystemCode
-            this.parentId = parentId
-        }
-
-        @Suppress("UNCHECKED_CAST")
-        val records = dao.search(searchPayload, SysResourceRecord::class)
+        val criteria = Criteria.and(
+            SysResource::subSystemCode eq subSystemCode,
+            SysResource::parentId eq parentId
+        )
+        val records = dao.searchAs<SysResourceRecord>(criteria)
 
         // 转换为树节点
         val treeNodes = records.map { record ->
-            SysResourceTreeRecord().apply {
+            SysResourceTreeRecord(children = mutableListOf()).apply {
                 BeanKit.copyProperties(record, this)
-                this.children = mutableListOf()
             }
         }
 
@@ -207,10 +200,10 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
     }
 
     override fun getResources(
-        subSysDictCode: String,
-        resourceType: ResourceTypeEnum
+        resourceType: ResourceTypeEnum,
+        subSystemCode: String,
     ): List<SysResourceCacheItem> {
-        return sysResourceHashCache.getResourcesBySubSystemCodeAndType(subSysDictCode, resourceType.code)
+        return sysResourceHashCache.getResourcesBySubSystemCodeAndType(subSystemCode, resourceType.code)
     }
 
     override fun getSimpleMenus(subSystemCode: String): List<BaseMenuTreeNode> {
@@ -246,9 +239,9 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
     }
 
     override fun getDirectChildrenResources(
-        subSystemCode: String,
         resourceType: ResourceTypeEnum,
-        parentId: String?
+        parentId: String?,
+        subSystemCode: String,
     ): List<SysResourceCacheItem> {
         val list = sysResourceHashCache.getResourcesBySubSystemCodeAndType(subSystemCode, resourceType.code)
         return list.filter { it.parentId == parentId }

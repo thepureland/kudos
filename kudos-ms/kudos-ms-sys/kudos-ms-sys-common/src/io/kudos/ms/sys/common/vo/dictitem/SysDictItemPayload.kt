@@ -12,30 +12,30 @@ import io.kudos.base.support.payload.FormPayload
 data class SysDictItemPayload (
 
     /** 主键 */
-    override var id: String = "",
+    override val id: String = "",
 
     //region your codes 1
 
     /** 字典项代码 */
-    var itemCode: String? = null,
+    val itemCode: String = "",
 
     /** 字典项名称 */
-    var itemName: String? = null,
+    val itemName: String = "",
 
     /** 字典id */
-    var dictId: String? = null,
+    val dictId: String = "",
 
     /** 字典项排序 */
-    var orderNum: Int? = null,
+    val orderNum: Int? = null,
 
     /** 父id */
-    var parentId: String? = null,
+    val parentId: String? = null,
 
     /** 备注 */
-    var remark: String? = null,
+    val remark: String? = null,
 
     /** 是否启用 */
-    var active: Boolean? = null,
+    val active: Boolean = true,
 
     //endregion your codes 1
 //region your codes 2

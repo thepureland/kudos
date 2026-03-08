@@ -23,8 +23,8 @@ object ConstraintConvertorFactory {
      */
     fun getInstance(annotation: Annotation): IConstraintConvertor? =
         when (annotation.annotationClass) {
-            DictCode::class -> null // 为null不需要返回给终端
-            DictEnumCode::class -> DictEnumCodeConstraintConvertor(annotation)
+            DictItemCode::class -> null // 为null不需要返回给终端
+            DictEnumItemCode::class -> DictEnumCodeConstraintConvertor(annotation)
             Compare::class, Compare.List::class -> CompareConstraintConvertor(annotation)
             NotNullOn::class -> NotNullOnConstraintConvertor(annotation)
             Each::class -> EachConstraintConvertor(annotation)

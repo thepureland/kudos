@@ -3,6 +3,8 @@ package io.kudos.ms.sys.core.service.impl
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
+import io.kudos.base.query.Criteria
+import io.kudos.base.query.eq
 import io.kudos.ms.sys.common.vo.domain.SysDomainCacheItem
 import io.kudos.ms.sys.common.vo.domain.SysDomainRecord
 import io.kudos.ms.sys.common.vo.domain.SysDomainSearchPayload
@@ -38,19 +40,14 @@ open class SysDomainService : BaseCrudService<String, SysDomain, SysDomainDao>()
     }
 
     override fun getDomainsByTenantId(tenantId: String): List<SysDomainRecord> {
-        val searchPayload = SysDomainSearchPayload().apply {
-            this.tenantId = tenantId
-        }
+        val searchPayload = SysDomainSearchPayload(tenantId = tenantId)
         @Suppress("UNCHECKED_CAST")
         return dao.search(searchPayload, SysDomainRecord::class)
     }
 
     override fun getDomainsBySystemCode(systemCode: String): List<SysDomainRecord> {
-        val searchPayload = SysDomainSearchPayload().apply {
-            this.systemCode = systemCode
-        }
-        @Suppress("UNCHECKED_CAST")
-        return dao.search(searchPayload, SysDomainRecord::class)
+        val criteria = Criteria(SysDomain::systemCode eq systemCode)
+        return dao.searchAs<SysDomainRecord>(criteria)
     }
 
     @Transactional

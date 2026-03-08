@@ -16,61 +16,61 @@ data class UserAccountThirdDetail (
     //region your codes 1
 
     /** 关联用户账号ID */
-    var userId: String? = null,
+    val userId: String? = null,
 
     /** 第三方平台字典码 */
-    var accountProviderDictCode: String? = null,
+    val accountProviderDictCode: String? = null,
 
     /** 发行方/平台租户 */
-    var accountProviderIssuer: String? = null,
+    val accountProviderIssuer: String? = null,
 
     /** 第三方用户唯一标识 */
-    var subject: String? = null,
+    val subject: String? = null,
 
     /** 跨应用统一标识 */
-    var unionId: String? = null,
+    val unionId: String? = null,
 
     /** 第三方展示名 */
-    var externalDisplayName: String? = null,
+    val externalDisplayName: String? = null,
 
     /** 第三方邮箱 */
-    var externalEmail: String? = null,
+    val externalEmail: String? = null,
 
     /** 头像URL */
-    var avatarUrl: String? = null,
+    val avatarUrl: String? = null,
 
     /** 最后登录时间 */
-    var lastLoginTime: LocalDateTime? = null,
+    val lastLoginTime: LocalDateTime? = null,
 
     /** 租户ID */
-    var tenantId: String? = null,
+    val tenantId: String? = null,
 
     /** 备注 */
-    var remark: String? = null,
+    val remark: String? = null,
 
     /** 是否激活 */
-    var active: Boolean? = null,
+    val active: Boolean? = null,
 
     /** 是否内置 */
-    var builtIn: Boolean? = null,
+    val builtIn: Boolean? = null,
 
     /** 创建用户ID */
-    var createUserId: String? = null,
+    val createUserId: String? = null,
 
     /** 创建用户名称 */
-    var createUserName: String? = null,
+    val createUserName: String? = null,
 
     /** 创建时间 */
-    var createTime: LocalDateTime? = null,
+    val createTime: LocalDateTime? = null,
 
     /** 更新用户ID */
-    var updateUserId: String? = null,
+    val updateUserId: String? = null,
 
     /** 更新用户名称 */
-    var updateUserName: String? = null,
+    val updateUserName: String? = null,
 
     /** 更新时间 */
-    var updateTime: LocalDateTime? = null,
+    val updateTime: LocalDateTime? = null,
 
     //endregion your codes 1
 //region your codes 2

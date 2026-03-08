@@ -16,79 +16,79 @@ data class UserAccountRecord (
     //region your codes 1
 
     /** 用户名 */
-    var username: String? = null,
+    val username: String? = null,
 
     /** 租户id */
-    var tenantId: String? = null,
+    val tenantId: String? = null,
 
     /** 用户类型字典码 */
-    var accountTypeDictCode: String? = null,
+    val accountTypeDictCode: String? = null,
 
     /** 用户状态字典码 */
-    var accountStatusDictCode: String? = null,
+    val accountStatusDictCode: String? = null,
 
     /** 默认语言 */
-    var defaultLocale: String? = null,
+    val defaultLocale: String? = null,
 
     /** 默认时区 */
-    var defaultTimezone: String? = null,
+    val defaultTimezone: String? = null,
 
     /** 默认货币 */
-    var defaultCurrency: String? = null,
+    val defaultCurrency: String? = null,
 
     /** 最后登录时间 */
-    var lastLoginTime: LocalDateTime? = null,
+    val lastLoginTime: LocalDateTime? = null,
 
     /** 最后登录IP */
-    var lastLoginIp: Long? = null,
+    val lastLoginIp: Long? = null,
 
     /** 最后登出时间 */
-    var lastLogoutTime: LocalDateTime? = null,
+    val lastLogoutTime: LocalDateTime? = null,
 
     /** 登录错误次数 */
-    var loginErrorTimes: Int? = null,
+    val loginErrorTimes: Int? = null,
 
     /** 安全密码错误次数 */
-    var securityPasswordErrorTimes: Int? = null,
+    val securityPasswordErrorTimes: Int? = null,
 
     /** 会话密钥 */
-    var sessionKey: String? = null,
+    val sessionKey: String? = null,
 
     /** 认证密钥 */
-    var authenticationKey: String? = null,
+    val authenticationKey: String? = null,
 
     /** 机构id */
-    var orgId: String? = null,
+    val orgId: String? = null,
 
     /** 主管id */
-    var supervisorId: String? = null,
+    val supervisorId: String? = null,
 
     /** 备注 */
-    var remark: String? = null,
+    val remark: String? = null,
 
     /** 是否激活 */
-    var active: Boolean? = null,
+    val active: Boolean? = null,
 
     /** 是否内置 */
-    var builtIn: Boolean? = null,
+    val builtIn: Boolean? = null,
 
     /** 创建者id */
-    var createUserId: String? = null,
+    val createUserId: String? = null,
 
     /** 创建者名称 */
-    var createUserName: String? = null,
+    val createUserName: String? = null,
 
     /** 创建时间 */
-    var createTime: LocalDateTime? = null,
+    val createTime: LocalDateTime? = null,
 
     /** 更新者id */
-    var updateUserId: String? = null,
+    val updateUserId: String? = null,
 
     /** 更新者名称 */
-    var updateUserName: String? = null,
+    val updateUserName: String? = null,
 
     /** 更新时间 */
-    var updateTime: LocalDateTime? = null,
+    val updateTime: LocalDateTime? = null,
 
     //endregion your codes 1
 //region your codes 2

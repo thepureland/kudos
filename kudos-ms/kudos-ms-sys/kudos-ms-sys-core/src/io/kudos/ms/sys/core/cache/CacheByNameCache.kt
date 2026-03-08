@@ -4,8 +4,9 @@ import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
 import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
+import io.kudos.base.query.Criteria
+import io.kudos.base.query.eq
 import io.kudos.ms.sys.common.vo.cache.SysCacheCacheItem
-import io.kudos.ms.sys.common.vo.cache.SysCacheSearchPayload
 import io.kudos.ms.sys.core.dao.SysCacheDao
 import io.kudos.ms.sys.core.model.po.SysCache
 import org.springframework.beans.factory.annotation.Autowired
@@ -47,13 +48,8 @@ open class CacheByNameCache : AbstractKeyValueCacheHandler<SysCacheCacheItem>() 
         }
 
         // 加载所有可用的缓存配置
-        val searchPayload = SysCacheSearchPayload().apply {
-            returnEntityClass = SysCacheCacheItem::class
-            active = true
-        }
-
-        @Suppress("UNCHECKED_CAST")
-        val results = sysCacheDao.search(searchPayload, SysCacheCacheItem::class)
+        val criteria = Criteria(SysCache::active eq true)
+        val results = sysCacheDao.searchAs<SysCacheCacheItem>(criteria)
         log.debug("从数据库加载了${results.size}条缓存配置信息。")
 
         // 先清除缓存
@@ -63,7 +59,7 @@ open class CacheByNameCache : AbstractKeyValueCacheHandler<SysCacheCacheItem>() 
 
         // 放入缓存
         results.forEach {
-            val name = it.name ?: return@forEach
+            val name = it.name
             KeyValueCacheKit.put(cacheName(), name, it)
         }
 
@@ -85,13 +81,11 @@ open class CacheByNameCache : AbstractKeyValueCacheHandler<SysCacheCacheItem>() 
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("缓存中不存在名称为${name}的缓存配置信息，从数据库中加载...")
         }
-        val searchPayload = SysCacheSearchPayload().apply {
-            returnEntityClass = SysCacheCacheItem::class
-            this.name = name
-            active = true
-        }
-
-        val result = sysCacheDao.search(searchPayload, SysCacheCacheItem::class).firstOrNull()
+        val criteria = Criteria.and(
+            SysCache::name eq name,
+            SysCache::active eq true
+        )
+        val result = sysCacheDao.searchAs<SysCacheCacheItem>(criteria).firstOrNull()
         if (result == null) {
             log.warn("数据库中不存在名称为${name}的缓存配置信息！")
         } else {

@@ -1,6 +1,6 @@
 package io.kudos.base.bean.validation.constraint.validator
 
-import io.kudos.base.bean.validation.constraint.annotations.DictCode
+import io.kudos.base.bean.validation.constraint.annotations.DictItemCode
 import io.kudos.base.bean.validation.kit.ValidationKit
 import kotlin.test.Test
 import kotlin.test.assertTrue
@@ -12,7 +12,7 @@ import kotlin.test.assertTrue
  * @author K
  * @since 1.0.0
  */
-internal class DictCodeValidatorTest {
+internal class DictItemCodeValidatorTest {
 
     @Test
     fun testIsValidWithNull() {
@@ -56,9 +56,9 @@ internal class DictCodeValidatorTest {
 
     @Test
     fun testInitialize() {
-        val validator = DictCodeValidator()
+        val validator = DictItemCodeValidator()
         val annotation = TestDictCodeBean::class.java.getDeclaredField("code")
-            .getAnnotation(DictCode::class.java)
+            .getAnnotation(DictItemCode::class.java)
         if (annotation != null) {
             validator.initialize(annotation)
             // 初始化应该成功
@@ -66,7 +66,7 @@ internal class DictCodeValidatorTest {
     }
 
     data class TestDictCodeBean(
-        @get:DictCode(atomicServiceCode = "test", dictType = "test", message = "无效的字典码")
+        @get:DictItemCode(atomicServiceCode = "test", dictType = "test", message = "无效的字典码")
         val code: String?
     )
 }

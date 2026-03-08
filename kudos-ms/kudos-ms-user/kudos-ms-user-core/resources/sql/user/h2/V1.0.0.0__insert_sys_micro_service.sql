@@ -1,6 +1,6 @@
 --region DML
 
-merge into "sys_micro_service" ("code", "name", "context", "remark", "active", "built_in")
-    values ('kudos-user', 'kudos-user', '/user', null, true, true);
+merge into "sys_micro_service" ("code", "name", "atomic_service", "context", "remark", "active", "built_in")
+    values ('user', 'user', true, '/api/user', null, true, true);
 
 --endregion DML

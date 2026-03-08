@@ -15,40 +15,38 @@ data class UserAccountThirdSearchPayload (
 
     //region your codes 1
 
-    override var returnEntityClass: KClass<*>? = UserAccountThirdRecord::class,
-
     /** 关联用户账号ID */
-    var userId: String? = null,
+    val userId: String? = null,
 
     /** 第三方平台字典码 */
-    var accountProviderDictCode: String? = null,
+    val accountProviderDictCode: String? = null,
 
     /** 发行方/平台租户 */
-    var accountProviderIssuer: String? = null,
+    val accountProviderIssuer: String? = null,
 
     /** 第三方用户唯一标识 */
-    var subject: String? = null,
+    val subject: String? = null,
 
     /** 跨应用统一标识 */
-    var unionId: String? = null,
+    val unionId: String? = null,
 
     /** 第三方展示名 */
-    var externalDisplayName: String? = null,
+    val externalDisplayName: String? = null,
 
     /** 第三方邮箱 */
-    var externalEmail: String? = null,
+    val externalEmail: String? = null,
 
     /** 头像URL */
-    var avatarUrl: String? = null,
+    val avatarUrl: String? = null,
 
     /** 租户ID */
-    var tenantId: String? = null,
+    val tenantId: String? = null,
 
     /** 是否激活 */
-    var active: Boolean? = null,
+    val active: Boolean? = null,
 
     /** 是否内置 */
-    var builtIn: Boolean? = null,
+    val builtIn: Boolean? = null,
 
     //endregion your codes 1
 //region your codes 2
@@ -57,7 +55,9 @@ data class UserAccountThirdSearchPayload (
 
     //region your codes 3
 
-    constructor() : this(UserAccountThirdRecord::class)
+    constructor() : this("")
+
+    override var returnEntityClass: KClass<*>? = UserAccountThirdRecord::class
 
     //endregion your codes 3
 

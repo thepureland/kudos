@@ -2,6 +2,7 @@ package io.kudos.ms.sys.core.dao
 
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.base.query.Criteria
+import io.kudos.base.query.Criterion
 import io.kudos.base.query.eq
 import io.kudos.ms.sys.common.vo.i18n.SysI18nCacheItem
 import io.kudos.ms.sys.core.model.po.SysI18n
@@ -24,17 +25,20 @@ open class SysI18nDao : BaseCrudDao<String, SysI18n, SysI18ns>() {
     //region your codes 2
 
     /**
-     * 根据语言、类型、原子服务编码获取对应的启用的国际化内容（for cache）
+     * 根据语言、类型、命名空间、原子服务编码获取对应的启用的国际化内容（for cache）。
+     * namespace 传空时不过滤 namespace，仅按 locale、atomicServiceCode、i18nTypeDictCode 查询。
      *
-     * @param locale 语言_地区
-     * @param i18nTypeDictCode 国际化类型字典代码
+     * @param locale 语言-地区
      * @param atomicServiceCode 原子服务编码
+     * @param i18nTypeDictCode 国际化类型字典代码
+     * @param namespace 命名空间，缺省为null，为null不参与查询
      * @return List<SysI18nCacheItem>，找不到返回空列表
      */
     open fun fetchActiveI18nsForCache(
         locale: String,
+        atomicServiceCode: String,
         i18nTypeDictCode: String,
-        atomicServiceCode: String
+        namespace: String? = null
     ): List<SysI18nCacheItem> {
         val criteria = Criteria.and(
             SysI18n::locale eq locale,
@@ -42,6 +46,9 @@ open class SysI18nDao : BaseCrudDao<String, SysI18n, SysI18ns>() {
             SysI18n::atomicServiceCode eq atomicServiceCode,
             SysI18n::active eq true
         )
+        if (!namespace.isNullOrBlank()) {
+            criteria.addAnd(SysI18n::namespace eq namespace)
+        }
         return searchAs<SysI18nCacheItem>(criteria)
     }
 

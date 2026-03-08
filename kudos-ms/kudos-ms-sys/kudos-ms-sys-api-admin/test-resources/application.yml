@@ -2,7 +2,7 @@
 spring:
   datasource:
     dynamic:
-      primary: h2
+      primary: h2-tcp
       hikari:
         connection-timeout: 30000
         validation-timeout: 5000
@@ -18,18 +18,18 @@ spring:
         is-register-mbeans: false
         is-allow-pool-suspension: false
       datasource:
-        h2:
-          hikari:
-            is-auto-commit: false
-          driver-class-name: org.h2.Driver
-          url: jdbc:h2:~/h2/sys;DATABASE_TO_LOWER=TRUE;
-          username: sa
-          password: sa
-#        h2-tcp:
+#        h2:
+#          hikari:
+#            is-auto-commit: false
 #          driver-class-name: org.h2.Driver
-#          url: jdbc:h2:tcp://localhost:1521/mem:test;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;
+#          url: jdbc:h2:~/h2/sys;DATABASE_TO_LOWER=TRUE;
 #          username: sa
 #          password: sa
+        h2-tcp:
+          driver-class-name: org.h2.Driver
+          url: jdbc:h2:tcp://localhost:1521/mem:test;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;
+          username: sa
+          password: sa
 
 
 kudos:
@@ -41,5 +41,5 @@ kudos:
       #fly数据源配置
       datasource-config:
         #demo：代表resource下db/{demo}/模块,对应的jdbc多数据源的数据源名
-        sys: h2
+        sys: h2-tcp
 #//endregion your codes 1

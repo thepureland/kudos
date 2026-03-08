@@ -15,69 +15,69 @@ import java.time.LocalDateTime
 data class UserAccountProtectionCacheItem (
 
     /** 主键 */
-    override var id: String = "",
+    override val id: String = "",
 
     //region your codes 1
 
     /** 用户ID */
-    var userId: String? = null,
+    val userId: String? = null,
 
     /** 问题1 */
-    var question1: String? = null,
+    val question1: String? = null,
 
     /** 答案1 */
-    var answer1: String? = null,
+    val answer1: String? = null,
 
     /** 问题2 */
-    var question2: String? = null,
+    val question2: String? = null,
 
     /** 答案2 */
-    var answer2: String? = null,
+    val answer2: String? = null,
 
     /** 问题3 */
-    var question3: String? = null,
+    val question3: String? = null,
 
     /** 答案3 */
-    var answer3: String? = null,
+    val answer3: String? = null,
 
     /** 安全联系方式ID */
-    var safeContactWayId: String? = null,
+    val safeContactWayId: String? = null,
 
     /** 总的找回密码次数 */
-    var totalValidateCount: Int? = null,
+    val totalValidateCount: Int? = null,
 
     /** 必须答对的问题数 */
-    var matchQuestionCount: Int? = null,
+    val matchQuestionCount: Int? = null,
 
     /** 错误次数 */
-    var errorTimes: Int? = null,
+    val errorTimes: Int? = null,
 
     /** 备注 */
-    var remark: String? = null,
+    val remark: String? = null,
 
     /** 是否启用 */
-    var active: Boolean? = null,
+    val active: Boolean? = null,
 
     /** 是否内置 */
-    var builtIn: Boolean? = null,
+    val builtIn: Boolean? = null,
 
     /** 创建者ID */
-    var createUserId: String? = null,
+    val createUserId: String? = null,
 
     /** 创建者名称 */
-    var createUserName: String? = null,
+    val createUserName: String? = null,
 
     /** 创建时间 */
-    var createTime: LocalDateTime? = null,
+    val createTime: LocalDateTime? = null,
 
     /** 更新者ID */
-    var updateUserId: String? = null,
+    val updateUserId: String? = null,
 
     /** 更新者名称 */
-    var updateUserName: String? = null,
+    val updateUserName: String? = null,
 
     /** 更新时间 */
-    var updateTime: LocalDateTime? = null,
+    val updateTime: LocalDateTime? = null,
 
     //endregion your codes 1
 //region your codes 2

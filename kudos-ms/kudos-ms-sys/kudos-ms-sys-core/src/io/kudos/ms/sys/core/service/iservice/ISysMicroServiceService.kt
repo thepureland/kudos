@@ -25,7 +25,7 @@ interface ISysMicroServiceService : IBaseCrudService<String, SysMicroService> {
      * @author K
      * @since 1.0.0
      */
-    fun getAllActiveMicroService(): List<SysMicroServiceCacheItem>
+    fun getAllActiveMicroServices(): List<SysMicroServiceCacheItem>
 
     /**
      * 返回所有启用的微服务,不包括原子服务
@@ -40,10 +40,8 @@ interface ISysMicroServiceService : IBaseCrudService<String, SysMicroService> {
      * 返回所有启用的原子服务(atomicService为true的微服务)
      *
      * @return List<原子服务(微服务)缓存对象>, 不存在返回空列表
-     * @author K
-     * @since 1.0.0
      */
-    fun getAllActiveAtomicService(): List<SysMicroServiceCacheItem>
+    fun getAllActiveAtomicServices(): List<SysMicroServiceCacheItem>
 
     /**
      * 返回指定编码的微/原子服务，可能是未启用的

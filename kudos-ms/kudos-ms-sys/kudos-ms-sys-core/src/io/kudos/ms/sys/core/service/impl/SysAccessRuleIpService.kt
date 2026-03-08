@@ -39,9 +39,9 @@ open class SysAccessRuleIpService : BaseCrudService<String, SysAccessRuleIp, Sys
     private lateinit var sysAccessRuleDao: SysAccessRuleDao
 
     override fun getIpsByRuleId(ruleId: String): List<SysAccessRuleIpRecord> {
-        val searchPayload = SysAccessRuleIpSearchPayload().apply {
-            this.parentRuleId = ruleId
-        }
+        val searchPayload = SysAccessRuleIpSearchPayload(
+            parentRuleId = ruleId
+        )
         return dao.pagingSearch(searchPayload)
     }
 

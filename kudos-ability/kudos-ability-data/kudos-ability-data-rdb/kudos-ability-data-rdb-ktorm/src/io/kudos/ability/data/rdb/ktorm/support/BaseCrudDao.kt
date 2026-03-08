@@ -44,9 +44,8 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
             val entity = Entity.create(entityClass)
             BeanKit.copyProperties(any, entity)
             entity
-        }
-        entitySequence().add(entity as E)
-        return entity.id
+        } as E
+        return insertExclude(entity, "id")
     }
 
     @Suppress("UNCHECKED_CAST")

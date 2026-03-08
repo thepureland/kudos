@@ -1,6 +1,6 @@
 package io.kudos.base.bean.validation.teminal.convert.converter.impl
 
-import io.kudos.base.bean.validation.constraint.annotations.DictEnumCode
+import io.kudos.base.bean.validation.constraint.annotations.DictEnumItemCode
 import io.kudos.base.enums.impl.SexEnum
 import kotlin.test.Test
 import kotlin.test.assertFalse
@@ -14,12 +14,12 @@ import kotlin.test.assertTrue
  * @author K
  * @since 1.0.0
  */
-internal class DictEnumCodeConstraintConvertorTest {
+internal class DictEnumItemCodeConstraintConvertorTest {
 
     @Test
     fun testGetRule() {
         val annotation = TestBean::class.java.getDeclaredField("sex")
-            .getAnnotation(DictEnumCode::class.java)
+            .getAnnotation(DictEnumItemCode::class.java)
         if (annotation != null) {
             val convertor = DictEnumCodeConstraintConvertor(annotation)
             val rule = convertor.getRule(annotation)
@@ -34,7 +34,7 @@ internal class DictEnumCodeConstraintConvertorTest {
     @Test
     fun testGetRuleWithEnumValues() {
         val annotation = TestBean::class.java.getDeclaredField("sex")
-            .getAnnotation(DictEnumCode::class.java)
+            .getAnnotation(DictEnumItemCode::class.java)
         if (annotation != null) {
             val convertor = DictEnumCodeConstraintConvertor(annotation)
             val rule = convertor.getRule(annotation)
@@ -45,7 +45,7 @@ internal class DictEnumCodeConstraintConvertorTest {
     }
 
     data class TestBean(
-        @get:DictEnumCode(enumClass = SexEnum::class, message = "无效的性别")
+        @get:DictEnumItemCode(enumClass = SexEnum::class, message = "无效的性别")
         val sex: String?
     )
 }
