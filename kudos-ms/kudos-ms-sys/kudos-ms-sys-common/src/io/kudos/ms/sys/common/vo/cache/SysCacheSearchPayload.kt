@@ -1,6 +1,7 @@
 package io.kudos.ms.sys.common.vo.cache
 
-import io.kudos.base.bean.validation.constraint.annotations.DictCode
+import io.kudos.base.bean.validation.constraint.annotations.DictItemCode
+import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.support.payload.ListSearchPayload
 import io.kudos.ms.sys.common.consts.SysConsts
 import io.kudos.ms.sys.common.consts.SysDictTypes
@@ -17,23 +18,21 @@ data class SysCacheSearchPayload (
 
     //region your codes 1
 
-    override var returnEntityClass: KClass<*>? = SysCacheRecord::class,
-
     /** 名称 */
-    var name: String? = null,
+    val name: String? = null,
 
     /** 原子服务编码 */
-    var atomicServiceCode: String? = null,
+    val atomicServiceCode: String? = null,
 
     /** 缓存策略代码 */
-    @get:DictCode(dictType = SysDictTypes.CACHE_STRATEGY, atomicServiceCode = SysConsts.ATOMIC_SERVICE_NAME)
-    var strategyDictCode: String? = null,
+    @get:DictItemCode(dictType = SysDictTypes.CACHE_STRATEGY, atomicServiceCode = SysConsts.ATOMIC_SERVICE_NAME)
+    val strategyDictCode: String? = null,
 
     /** 是否为Hash缓存 */
-    var hash: Boolean? = null,
+    val hash: Boolean? = null,
 
     /** 是否启用 */
-    var active: Boolean? = null,
+    val active: Boolean? = null,
 
     //endregion your codes 1
 //region your codes 2
@@ -42,7 +41,11 @@ data class SysCacheSearchPayload (
 
     //region your codes 3
 
-    constructor() : this(SysCacheRecord::class)
+    constructor() : this(null)
+
+    override var returnEntityClass: KClass<*>? = SysCacheRecord::class
+
+    override var operators: Map<String, OperatorEnum>? = mapOf(::name.name to OperatorEnum.ILIKE)
 
     //endregion your codes 3
 

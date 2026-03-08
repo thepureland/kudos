@@ -16,13 +16,13 @@ data class UserLoginRememberMeRecord (
     //region your codes 1
 
     /** 用户名 */
-    var username: String? = null,
+    val username: String? = null,
 
     /** 令牌 */
-    var token: String? = null,
+    val token: String? = null,
 
     /** 最后使用时间 */
-    var lastUsed: LocalDateTime? = null,
+    val lastUsed: LocalDateTime? = null,
 
     //endregion your codes 1
 //region your codes 2

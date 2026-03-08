@@ -3,14 +3,15 @@ package io.kudos.ms.sys.core.service.impl
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
+import io.kudos.base.query.Criteria
 import io.kudos.base.query.PagingSearchResult
+import io.kudos.base.query.eq
 import io.kudos.base.security.CryptoKit
 import io.kudos.base.support.payload.ListSearchPayload
 import io.kudos.ms.sys.common.api.ISysTenantApi
 import io.kudos.ms.sys.common.vo.datasource.SysDataSourceCacheItem
 import io.kudos.ms.sys.common.vo.datasource.SysDataSourceDetail
 import io.kudos.ms.sys.common.vo.datasource.SysDataSourceRecord
-import io.kudos.ms.sys.common.vo.datasource.SysDataSourceSearchPayload
 import io.kudos.ms.sys.core.cache.SysDataSourceHashCache
 import io.kudos.ms.sys.core.dao.SysDataSourceDao
 import io.kudos.ms.sys.core.model.po.SysDataSource
@@ -162,10 +163,8 @@ open class SysDataSourceService : BaseCrudService<String, SysDataSource, SysData
      * @since 1.0.0
      */
     override fun getDataSourcesByTenantId(tenantId: String): List<SysDataSourceRecord> {
-        val searchPayload = SysDataSourceSearchPayload().apply {
-            this.tenantId = tenantId
-        }
-        return dao.search(searchPayload, SysDataSourceRecord::class)
+        val criteria = Criteria(SysDataSource::tenantId eq tenantId)
+        return dao.searchAs<SysDataSourceRecord>(criteria)
     }
 
     /**
@@ -177,10 +176,8 @@ open class SysDataSourceService : BaseCrudService<String, SysDataSource, SysData
      * @since 1.0.0
      */
     override fun getDataSourcesBySubSystemCode(subSystemCode: String): List<SysDataSourceRecord> {
-        val searchPayload = SysDataSourceSearchPayload().apply {
-            this.subSystemCode = subSystemCode
-        }
-        return dao.search(searchPayload, SysDataSourceRecord::class)
+        val criteria = Criteria(SysDataSource::subSystemCode eq subSystemCode)
+        return dao.searchAs<SysDataSourceRecord>(criteria)
     }
 
     override fun getDataSource(

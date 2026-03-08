@@ -25,6 +25,9 @@ interface SysI18n : IDbEntity<String, SysI18n> {
     /** 国际化类型字典代码 */
     var i18nTypeDictCode: String
 
+    /** 国际化命名空间 */
+    var namespace: String
+
     /** 国际化key */
     var key: String
 

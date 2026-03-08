@@ -10,10 +10,10 @@ import io.kudos.base.support.IIdEntity
  * @author K
  * @since 1.0.0
  */
-open class IdJsonResult<T>: IJsonResult, IIdEntity<T> {
+abstract class IdJsonResult<T>: IJsonResult, IIdEntity<T> {
 
-    /** 惟一标识 */
-    @Suppress("UNCHECKED_CAST")
-    override var id: T = null as T
+//    /** 惟一标识 */
+//    @Suppress("UNCHECKED_CAST")
+//    override var id: T = null as T
 
 }

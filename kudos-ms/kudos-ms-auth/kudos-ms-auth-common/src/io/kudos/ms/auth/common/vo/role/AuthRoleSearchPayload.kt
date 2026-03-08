@@ -15,28 +15,26 @@ data class AuthRoleSearchPayload (
 
     //region your codes 1
 
-    override var returnEntityClass: KClass<*>? = AuthRoleRecord::class,
-
     /** 角色编码 */
-    var code: String? = null,
+    val code: String? = null,
 
     /** 角色名称 */
-    var name: String? = null,
+    val name: String? = null,
 
     /** 租户id */
-    var tenantId: String? = null,
+    val tenantId: String? = null,
 
     /** 子系统编码 */
-    var subsysCode: String? = null,
+    val subsysCode: String? = null,
 
     /** 备注 */
-    var remark: String? = null,
+    val remark: String? = null,
 
     /** 是否激活 */
-    var active: Boolean? = null,
+    val active: Boolean? = null,
 
     /** 是否内置 */
-    var builtIn: Boolean? = null,
+    val builtIn: Boolean? = null,
 
     //endregion your codes 1
 //region your codes 2
@@ -45,7 +43,9 @@ data class AuthRoleSearchPayload (
 
     //region your codes 3
 
-    constructor() : this(AuthRoleRecord::class)
+    constructor() : this("")
+
+    override var returnEntityClass: KClass<*>? = AuthRoleRecord::class
 
     //endregion your codes 3
 

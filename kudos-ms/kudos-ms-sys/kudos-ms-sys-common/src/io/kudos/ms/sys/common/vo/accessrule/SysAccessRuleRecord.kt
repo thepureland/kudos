@@ -14,16 +14,16 @@ data class SysAccessRuleRecord (
     //region your codes 1
 
     /** 主键 */
-    override var id: String = "",
+    override val id: String = "",
 
     /** 租户id */
-    var tenantId: String? = null,
+    val tenantId: String? = null,
 
     /** 系统编码 */
-    var systemCode: String? = null,
+    val systemCode: String? = null,
 
     /** 规则类型 */
-    var ruleType: Int? = null,
+    val ruleType: Int? = null,
 
     //endregion your codes 1
 //region your codes 2

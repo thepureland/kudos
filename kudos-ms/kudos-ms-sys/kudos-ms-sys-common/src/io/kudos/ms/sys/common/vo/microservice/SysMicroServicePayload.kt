@@ -13,26 +13,28 @@ data class SysMicroServicePayload (
 
     //region your codes 1
 
+    override val id: String = "",
+
     /** 编码 */
-    var code: String? = null,
+    val code: String = "",
 
     /** 名称 */
-    var name: String? = null,
+    val name: String = "",
 
     /** 上下文 */
-    var context: String? = null,
+    val context: String? = null,
 
     /** 是否为原子服务 */
-    var atomicService: Boolean? = null,
+    val atomicService: Boolean = true,
 
     /** 父服务编码 */
-    var parentCode: String? = null,
+    val parentCode: String? = null,
 
     /** 备注 */
-    var remark: String? = null,
+    val remark: String? = null,
 
     /** 是否启用 */
-    var active: Boolean? = null,
+    val active: Boolean = true,
 
     //endregion your codes 1
 //region your codes 2
@@ -42,10 +44,6 @@ data class SysMicroServicePayload (
     //region your codes 3
 
     constructor() : this("")
-
-    override var id: String
-        get() = this.code ?: ""
-        set(value) { this.code = value }
 
     // endregion your codes 3
 

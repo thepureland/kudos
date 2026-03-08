@@ -15,34 +15,32 @@ data class UserAccountSearchPayload (
 
     //region your codes 1
 
-    override var returnEntityClass: KClass<*>? = UserAccountRecord::class,
-
     /** 用户名 */
-    var username: String? = null,
+    val username: String? = null,
 
     /** 租户id */
-    var tenantId: String? = null,
+    val tenantId: String? = null,
 
     /** 用户类型字典码 */
-    var accountTypeDictCode: String? = null,
+    val accountTypeDictCode: String? = null,
 
     /** 用户状态字典码 */
-    var accountStatusDictCode: String? = null,
+    val accountStatusDictCode: String? = null,
 
     /** 机构id */
-    var orgId: String? = null,
+    val orgId: String? = null,
 
     /** 主管id */
-    var supervisorId: String? = null,
+    val supervisorId: String? = null,
 
     /** 备注 */
-    var remark: String? = null,
+    val remark: String? = null,
 
     /** 是否激活 */
-    var active: Boolean? = null,
+    val active: Boolean? = null,
 
     /** 是否内置 */
-    var builtIn: Boolean? = null,
+    val builtIn: Boolean? = null,
 
     //endregion your codes 1
 //region your codes 2
@@ -51,7 +49,9 @@ data class UserAccountSearchPayload (
 
     //region your codes 3
 
-    constructor() : this(UserAccountRecord::class)
+    constructor() : this("")
+
+    override var returnEntityClass: KClass<*>? = UserAccountRecord::class
 
     //endregion your codes 3
 

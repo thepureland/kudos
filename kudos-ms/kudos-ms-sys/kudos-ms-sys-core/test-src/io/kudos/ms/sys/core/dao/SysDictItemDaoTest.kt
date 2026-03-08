@@ -38,8 +38,9 @@ class SysDictItemDaoTest : RdbTestBase() {
 
     @Test
     fun pagingSearch() {
-        val searchPayload = SysDictItemSearchPayload().apply {
-            this.dictType = "svc-dict-ditem-dao-test-1"
+        val searchPayload = SysDictItemSearchPayload(
+            dictType = "svc-dict-ditem-dao-test-1"
+        ).apply {
             this.pageNo = 1
             this.pageSize = 10
         }
@@ -50,19 +51,19 @@ class SysDictItemDaoTest : RdbTestBase() {
 
     @Test
     fun count() {
-        val searchPayload = SysDictItemSearchPayload().apply {
-            this.dictType = "svc-dict-ditem-dao-test-1"
-            this.active = true
-        }
+        val searchPayload = SysDictItemSearchPayload(
+            dictType = "svc-dict-ditem-dao-test-1",
+            active = true
+        )
         val count = sysDictItemDao.count(searchPayload)
         assertTrue(count >= 2)
     }
 
     @Test
     fun leftJoinSearch() {
-        val searchPayload = SysDictItemSearchPayload().apply {
-            this.itemCode = "svc-item-ditem-dao-test-1"
-        }
+        val searchPayload = SysDictItemSearchPayload(
+            itemCode = "svc-item-ditem-dao-test-1"
+        )
         val query = sysDictItemDao.leftJoinSearch(searchPayload)
         assertNotNull(query)
         // 验证查询对象可以正常使用

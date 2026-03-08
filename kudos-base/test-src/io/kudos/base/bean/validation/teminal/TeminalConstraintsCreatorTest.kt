@@ -150,7 +150,7 @@ internal class TeminalConstraintsCreatorTest {
         @get:Size(min = 3, max = 6, message = "业余爱好必须选3到6项")
         val hobbies: Array<String>?,
 
-        @get:DictEnumCode(enumClass = SexEnum::class, message = "性别错误")
+        @get:DictEnumItemCode(enumClass = SexEnum::class, message = "性别错误")
         val sex: String,
 
         @get:NotEmpty

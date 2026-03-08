@@ -16,28 +16,28 @@ data class AuthGroupUserDetail (
     //region your codes 1
 
     /** 组id */
-    var groupId: String? = null,
+    val groupId: String? = null,
 
     /** 用户id */
-    var userId: String? = null,
+    val userId: String? = null,
 
     /** 创建者id */
-    var createUserId: String? = null,
+    val createUserId: String? = null,
 
     /** 创建者名称 */
-    var createUserName: String? = null,
+    val createUserName: String? = null,
 
     /** 创建时间 */
-    var createTime: LocalDateTime? = null,
+    val createTime: LocalDateTime? = null,
 
     /** 更新者id */
-    var updateUserId: String? = null,
+    val updateUserId: String? = null,
 
     /** 更新者名称 */
-    var updateUserName: String? = null,
+    val updateUserName: String? = null,
 
     /** 更新时间 */
-    var updateTime: LocalDateTime? = null,
+    val updateTime: LocalDateTime? = null,
 
     //endregion your codes 1
 //region your codes 2

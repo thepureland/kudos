@@ -1,6 +1,6 @@
 package io.kudos.base.bean.validation.teminal.convert.converter.impl
 
-import io.kudos.base.bean.validation.constraint.annotations.DictCode
+import io.kudos.base.bean.validation.constraint.annotations.DictItemCode
 import kotlin.test.Test
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -12,12 +12,12 @@ import kotlin.test.assertTrue
  * @author K
  * @since 1.0.0
  */
-internal class DictCodeConstraintConvertorTest {
+internal class DictItemCodeConstraintConvertorTest {
 
     @Test
     fun testGetRule() {
         val annotation = TestBean::class.java.getDeclaredField("code")
-            .getAnnotation(DictCode::class.java)
+            .getAnnotation(DictItemCode::class.java)
         if (annotation != null) {
             val convertor = DictCodeConstraintConvertor(annotation)
             val rule = convertor.getRule(annotation)
@@ -30,7 +30,7 @@ internal class DictCodeConstraintConvertorTest {
     @Test
     fun testGetRuleWithValues() {
         val annotation = TestBean::class.java.getDeclaredField("code")
-            .getAnnotation(DictCode::class.java)
+            .getAnnotation(DictItemCode::class.java)
         if (annotation != null) {
             val convertor = DictCodeConstraintConvertor(annotation)
             val rule = convertor.getRule(annotation)
@@ -41,7 +41,7 @@ internal class DictCodeConstraintConvertorTest {
     }
 
     data class TestBean(
-        @get:DictCode(atomicServiceCode = "test", dictType = "test", message = "无效的字典码")
+        @get:DictItemCode(atomicServiceCode = "test", dictType = "test", message = "无效的字典码")
         val code: String?
     )
 }

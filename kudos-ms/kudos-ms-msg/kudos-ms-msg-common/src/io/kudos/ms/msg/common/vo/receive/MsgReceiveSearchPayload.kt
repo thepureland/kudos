@@ -16,25 +16,23 @@ data class MsgReceiveSearchPayload (
 
     //region your codes 1
 
-    override var returnEntityClass: KClass<*>? = MsgReceiveRecord::class,
-
     /** 接收者ID */
-    var receiverId: String? = null,
+    val receiverId: String? = null,
 
     /** 发送ID */
-    var sendId: String? = null,
+    val sendId: String? = null,
 
     /** 接收状态字典码 */
-    var receiveStatusDictCode: String? = null,
+    val receiveStatusDictCode: String? = null,
 
     /** 创建时间 */
-    var createTime: LocalDateTime? = null,
+    val createTime: LocalDateTime? = null,
 
     /** 更新时间 */
-    var updateTime: LocalDateTime? = null,
+    val updateTime: LocalDateTime? = null,
 
     /** 租户ID */
-    var tenantId: String? = null,
+    val tenantId: String? = null,
 
     //endregion your codes 1
 //region your codes 2
@@ -43,7 +41,9 @@ data class MsgReceiveSearchPayload (
 
     //region your codes 3
 
-    constructor() : this(MsgReceiveRecord::class)
+    constructor() : this("")
+
+    override var returnEntityClass: KClass<*>? = MsgReceiveRecord::class
 
     //endregion your codes 3
 

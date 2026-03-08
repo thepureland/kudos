@@ -14,13 +14,11 @@ data class SysSubSystemMicroServiceSearchPayload (
 
     //region your codes 1
 
-    override var returnEntityClass: KClass<*>? = SysSubSystemMicroServiceRecord::class,
-
     /** 子系统编码 */
-    var subSystemCode: String? = null,
+    val subSystemCode: String? = null,
 
     /** 微服务编码 */
-    var microServiceCode: String? = null,
+    val microServiceCode: String? = null,
 
     //endregion your codes 1
 //region your codes 2
@@ -29,7 +27,9 @@ data class SysSubSystemMicroServiceSearchPayload (
 
     //region your codes 3
 
-    constructor() : this(SysSubSystemMicroServiceRecord::class)
+    constructor() : this("")
+
+    override var returnEntityClass: KClass<*>? = SysSubSystemMicroServiceRecord::class
 
     //endregion your codes 3
 

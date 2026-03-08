@@ -24,16 +24,24 @@ open class SysI18nApi : ISysI18nApi {
     @Resource
     protected lateinit var sysI18nService: ISysI18nService
 
-    override fun getI18nValue(locale: String, atomicServiceCode: String, i18nTypeDictCode: String, key: String): String? {
-        return sysI18nService.getI18nValue(locale, atomicServiceCode, i18nTypeDictCode, key)
+    override fun getI18nValue(
+        locale: String,
+        i18nTypeDictCode: String,
+        namespace: String,
+        atomicServiceCode: String,
+        key: String
+    ): String? {
+        return sysI18nService.getI18nValue(locale, i18nTypeDictCode, namespace, atomicServiceCode, key)
     }
 
-    override fun getI18nsByAtomicServiceAndType(
-        atomicServiceCode: String,
+
+    override fun getI18ns(
+        locale: String,
         i18nTypeDictCode: String,
-        locale: String?
-    ): List<SysI18nRecord> {
-        return sysI18nService.getI18nsByAtomicServiceAndType(atomicServiceCode, i18nTypeDictCode, locale)
+        namespace: String,
+        atomicServiceCode: String
+    ): Map<String, String> {
+        return sysI18nService.getI18ns(locale, i18nTypeDictCode, namespace, atomicServiceCode)
     }
 
     override fun batchSaveOrUpdate(i18ns: List<SysI18nPayload>): Int {

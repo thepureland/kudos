@@ -1,0 +1,28 @@
+<configuration>
+
+    <!-- 控制台彩色输出（logback 自带转换器，Spring Boot 环境也常用） -->
+    <conversionRule conversionWord="clr" converterClass="org.springframework.boot.logging.logback.ColorConverter" />
+    <conversionRule conversionWord="wex" converterClass="org.springframework.boot.logging.logback.WhitespaceThrowableProxyConverter" />
+    <conversionRule conversionWord="wEx" converterClass="org.springframework.boot.logging.logback.ExtendedWhitespaceThrowableProxyConverter" />
+
+    <property name="CONSOLE_PATTERN"
+              value="%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr([%15.15thread]){faint} %clr(%-5level) %clr(%-40.40logger{40}){cyan} %clr(:){faint} %msg%n%wex"/>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>${CONSOLE_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="STDOUT"/>
+    </root>
+
+    <!-- 你的业务日志 -->
+    <logger name="io.kudos" level="DEBUG"/>
+
+    <!-- Ktorm SQL 日志 -->
+    <logger name="org.ktorm" level="DEBUG"/>
+
+</configuration>

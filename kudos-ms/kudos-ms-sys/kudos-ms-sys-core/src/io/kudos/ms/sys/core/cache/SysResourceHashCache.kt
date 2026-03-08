@@ -133,9 +133,7 @@ open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheItem>
         filterableProperties = ["subSystemCode", "url", "resourceTypeDictCode"]
     )
     open fun getResourcesBySubSystemCodeAndType(subSystemCode: String, resourceTypeDictCode: String): List<SysResourceCacheItem> {
-        val ids = sysResourceDao.fetchResourceIdsBySubSysAndType(subSystemCode, resourceTypeDictCode)
-        if (ids.isEmpty()) return emptyList()
-        return sysResourceDao.getByIdsAs<SysResourceCacheItem>(ids)
+        return sysResourceDao.searchBySubSysAndType(subSystemCode, resourceTypeDictCode)
     }
 
     // ---------- 全量刷新 ----------

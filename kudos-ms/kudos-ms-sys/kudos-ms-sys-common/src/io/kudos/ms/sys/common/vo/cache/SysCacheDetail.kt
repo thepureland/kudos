@@ -13,57 +13,57 @@ import java.time.LocalDateTime
 data class SysCacheDetail (
 
     /** 主键 */
-    override var id: String = "",
+    override val id: String = "",
 
     //region your codes 1
 
     /** 名称 */
-    var name: String = "",
+    val name: String = "",
 
     /** 原子服务编码 */
-    var atomicServiceCode: String = "",
+    val atomicServiceCode: String = "",
 
     /** 缓存策略代码 */
-    var strategyDictCode: String = "",
+    val strategyDictCode: String = "",
 
     /** 是否启动时写缓存 */
-    var writeOnBoot: Boolean = true,
+    val writeOnBoot: Boolean = true,
 
     /** 是否及时回写缓存 */
-    var writeInTime: Boolean = true,
+    val writeInTime: Boolean = true,
 
     /** 缓存生存时间(秒) */
-    var ttl: Int? = null,
+    val ttl: Int? = null,
 
     /** 备注 */
-    var remark: String? = null,
+    val remark: String? = null,
 
     /** 是否启用 */
-    var active: Boolean = true,
+    val active: Boolean = true,
 
     /** 是否内置 */
-    var builtIn: Boolean = true,
+    val builtIn: Boolean = true,
 
     /** 是否为 Hash 缓存 */
-    var hash: Boolean = false,
+    val hash: Boolean = false,
 
     /** 创建者id */
-    var createUserId: String? = null,
+    val createUserId: String? = null,
 
     /** 创建者名称 */
-    var createUserName: String? = null,
+    val createUserName: String? = null,
 
     /** 创建时间 */
-    var createTime: LocalDateTime? = null,
+    val createTime: LocalDateTime? = null,
 
     /** 更新者id */
-    var updateUserId: String? = null,
+    val updateUserId: String? = null,
 
     /** 更新者名称 */
-    var updateUserName: String? = null,
+    val updateUserName: String? = null,
 
     /** 更新时间 */
-    var updateTime: LocalDateTime? = null,
+    val updateTime: LocalDateTime? = null,
 
     //endregion your codes 1
 //region your codes 2

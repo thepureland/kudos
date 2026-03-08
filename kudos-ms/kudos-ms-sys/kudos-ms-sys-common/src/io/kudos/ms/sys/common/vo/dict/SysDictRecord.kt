@@ -14,39 +14,39 @@ data class SysDictRecord (
     //region your codes 1
 
     /** 主键 */
-    override var id: String = "",
+    override val id: String = "",
 
     /** 字典类型 */
-    var dictType: String? = null,
+    val dictType: String = "",
 
     /** 字典名称 */
-    var dictName: String? = null,
+    val dictName: String = "",
 
     /** 原子服务编码 */
-    var atomicServiceCode: String? = null,
+    val atomicServiceCode: String = "",
 
-    var parentId: String? = null,
+    val parentId: String? = null,
 
-    var parentCode: String? = null,
+    val parentCode: String? = null,
 
-    var parentIds: List<String>? = null,
+    val parentIds: List<String>? = null,
 
     /** 备注 */
-    var remark: String? = null,
+    val remark: String? = null,
 
     /** 是否启用 */
-    var active: Boolean? = null,
+    val active: Boolean = true,
 
     /** 是否内置 */
-    var builtIn: Boolean? = null,
+    val builtIn: Boolean = true,
 
-    var itemId: String? = null, //TODO
+    val itemId: String? = null, //TODO
 
-    var itemCode: String? = null, //TODO
+    val itemCode: String? = null, //TODO
 
-    var itemName: String? = null, //TODO
+    val itemName: String? = null, //TODO
 
-    var seqNo: Int? = null, //TODO
+    val seqNo: Int? = null, //TODO
 
     //endregion your codes 1
 //region your codes 2

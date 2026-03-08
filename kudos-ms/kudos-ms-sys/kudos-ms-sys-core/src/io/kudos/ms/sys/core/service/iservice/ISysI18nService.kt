@@ -2,7 +2,6 @@ package io.kudos.ms.sys.core.service.iservice
 
 import io.kudos.base.support.iservice.IBaseCrudService
 import io.kudos.ms.sys.common.vo.i18n.SysI18nPayload
-import io.kudos.ms.sys.common.vo.i18n.SysI18nRecord
 import io.kudos.ms.sys.core.model.po.SysI18n
 
 
@@ -22,26 +21,50 @@ interface ISysI18nService : IBaseCrudService<String, SysI18n> {
      * 获取国际化值
      *
      * @param locale 语言地区
-     * @param atomicServiceCode 原子服务编码
      * @param i18nTypeDictCode 国际化类型字典代码
+     * @param namespace 命名空间
+     * @param atomicServiceCode 原子服务编码
      * @param key 国际化key
      * @return 国际化值，找不到返回null
-     * @author K
-     * @since 1.0.0
      */
-    fun getI18nValue(locale: String, atomicServiceCode: String, i18nTypeDictCode: String, key: String): String?
+    fun getI18nValue(
+        locale: String,
+        i18nTypeDictCode: String,
+        namespace: String,
+        atomicServiceCode: String,
+        key: String
+    ): String?
 
     /**
-     * 获取国际化列表
+     * 获取指定参数的国际化信息
      *
-     * @param atomicServiceCode 原子服务编码
+     * @param locale 语言地区
      * @param i18nTypeDictCode 国际化类型字典代码
-     * @param locale 语言地区，为null时返回所有语言
-     * @return 国际化记录列表
-     * @author K
-     * @since 1.0.0
+     * @param namespace 命名空间
+     * @param atomicServiceCode 原子服务编码
+     * @return Map<国际化key, 译文>
      */
-    fun getI18nsByAtomicServiceAndType(atomicServiceCode: String, i18nTypeDictCode: String, locale: String? = null): List<SysI18nRecord>
+    fun getI18ns(
+        locale: String,
+        i18nTypeDictCode: String,
+        namespace: String,
+        atomicServiceCode: String,
+    ): Map<String, String>
+
+    /**
+     * 批量获取国际化信息
+     *
+     * @param locale 语言地区
+     * @param namespacesByI18nTypeDictCode Map<国际化类型字典代码，Collection<命名空间>>
+     * @param atomicServiceCodes 原子服务编码集合
+     * @return Map<国际化类型字典代码，Map<命名空间，Map<国际化key, 译文>>>
+     */
+    fun batchGetI18ns(
+        locale: String,
+        namespacesByI18nTypeDictCode: Map<String, Collection<String>>,
+        atomicServiceCodes: Collection<String>,
+    ): Map<String, Map<String, Map<String, String>>>
+
 
     /**
      * 批量保存或更新国际化内容

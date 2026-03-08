@@ -58,10 +58,10 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
         }
 
         // 关联查询
-        val searchPayload = SysAccessRuleIpSearchPayload().apply {
-            active = true
+        val searchPayload = SysAccessRuleIpSearchPayload(
+            active = true,
             parentRuleActive = true
-        }
+        )
         val results = sysAccessRuleIpDao.pagingSearch(searchPayload)
 
         // 清除缓存
@@ -102,11 +102,12 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
             )
         }
         require(systemCode.isNotBlank()) { "获取ip访问规则时，系统代码必须指定！" }
-        val searchPayload = SysAccessRuleIpSearchPayload().apply {
-            active = true
-            parentRuleActive = true
-            this.systemCode = systemCode
-            this.tenantId = tenantId
+        val searchPayload = SysAccessRuleIpSearchPayload(
+            active = true,
+            parentRuleActive = true,
+            systemCode = systemCode,
+            tenantId = tenantId,
+        ).apply {
             nullProperties = listOf(this::tenantId.name)
         }
 
@@ -254,13 +255,13 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
 
     private fun mapToCacheItems(ruleIpRecords: List<SysAccessRuleIpRecord>): List<SysAccessRuleIpCacheItem> {
         return ruleIpRecords.map {
-            SysAccessRuleIpCacheItem().apply {
-                id = it.id
-                ipStart = it.ipStart
-                ipEnd = it.ipEnd
-                ipTypeDictCode = it.ipTypeDictCode
+            SysAccessRuleIpCacheItem(
+                id = it.id,
+                ipStart = it.ipStart,
+                ipEnd = it.ipEnd,
+                ipTypeDictCode = it.ipTypeDictCode,
                 expirationTime = it.expirationTime
-            }
+            )
         }
     }
 

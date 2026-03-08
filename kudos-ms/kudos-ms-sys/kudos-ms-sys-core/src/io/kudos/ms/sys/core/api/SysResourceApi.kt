@@ -35,10 +35,10 @@ open class SysResourceApi : ISysResourceApi {
     }
 
     override fun getResources(
-        subSysDictCode: String,
-        resourceType: ResourceTypeEnum
+        resourceType: ResourceTypeEnum,
+        subSystemCode: String,
     ): List<SysResourceCacheItem> {
-        return sysResourceService.getResources(subSysDictCode, resourceType)
+        return sysResourceService.getResources(resourceType, subSystemCode)
     }
 
     override fun getSimpleMenus(subSystemCode: String): List<BaseMenuTreeNode> {
@@ -54,11 +54,11 @@ open class SysResourceApi : ISysResourceApi {
     }
 
     override fun getDirectChildrenResources(
-        subSystemCode: String,
         resourceType: ResourceTypeEnum,
-        parentId: String?
+        parentId: String?,
+        subSystemCode: String,
     ): List<SysResourceCacheItem> {
-        return sysResourceService.getDirectChildrenResources(subSystemCode, resourceType, parentId)
+        return sysResourceService.getDirectChildrenResources(resourceType, parentId, subSystemCode)
     }
 
     override fun getChildrenResources(

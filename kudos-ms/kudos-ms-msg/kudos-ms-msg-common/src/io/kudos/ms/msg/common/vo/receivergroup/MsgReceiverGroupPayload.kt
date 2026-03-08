@@ -13,24 +13,24 @@ import io.kudos.base.support.payload.FormPayload
 data class MsgReceiverGroupPayload (
 
     /** 主键 */
-    override var id: String = "",
+    override val id: String = "",
 
     //region your codes 1
 
     /** 接收者群组类型字典码 */
-    var receiverGroupTypeDictCode: String? = null,
+    val receiverGroupTypeDictCode: String? = null,
 
     /** 群组定义的表 */
-    var defineTable: String? = null,
+    val defineTable: String? = null,
 
     /** 群组名称在具体群组表中的字段名 */
-    var nameColumn: String? = null,
+    val nameColumn: String? = null,
 
     /** 备注 */
-    var remark: String? = null,
+    val remark: String? = null,
 
     /** 是否启用 */
-    var active: Boolean? = null,
+    val active: Boolean? = null,
 
     //endregion your codes 1
 //region your codes 2

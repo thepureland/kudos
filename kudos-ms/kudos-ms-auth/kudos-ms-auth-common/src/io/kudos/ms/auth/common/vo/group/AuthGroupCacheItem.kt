@@ -15,48 +15,48 @@ import java.time.LocalDateTime
 data class AuthGroupCacheItem (
 
     /** 主键 */
-    override var id: String = EMPTY_ID,
+    override val id: String = EMPTY_ID,
 
     //region your codes 1
 
     /** 用户组编码 */
-    var code: String? = null,
+    val code: String? = null,
 
     /** 用户组名称 */
-    var name: String? = null,
+    val name: String? = null,
 
     /** 租户id */
-    var tenantId: String? = null,
+    val tenantId: String? = null,
 
     /** 子系统编码 */
-    var subsysCode: String? = null,
+    val subsysCode: String? = null,
 
     /** 备注 */
-    var remark: String? = null,
+    val remark: String? = null,
 
     /** 是否激活 */
-    var active: Boolean? = null,
+    val active: Boolean? = null,
 
     /** 是否内置 */
-    var builtIn: Boolean? = null,
+    val builtIn: Boolean? = null,
 
     /** 创建者id */
-    var createUserId: String? = null,
+    val createUserId: String? = null,
 
     /** 创建者名称 */
-    var createUserName: String? = null,
+    val createUserName: String? = null,
 
     /** 创建时间 */
-    var createTime: LocalDateTime? = null,
+    val createTime: LocalDateTime? = null,
 
     /** 更新者id */
-    var updateUserId: String? = null,
+    val updateUserId: String? = null,
 
     /** 更新者名称 */
-    var updateUserName: String? = null,
+    val updateUserName: String? = null,
 
     /** 更新时间 */
-    var updateTime: LocalDateTime? = null,
+    val updateTime: LocalDateTime? = null,
 
     //endregion your codes 1
 //region your codes 2
@@ -72,7 +72,7 @@ data class AuthGroupCacheItem (
      *
      * 默认值可能是空字符串（用于无参构造/反射创建），业务侧可通过该属性要求“非空白 id”。
      */
-    var requiredId: String
+    val requiredId: String
         get() = id.takeIf { it.isNotBlank() }
             ?: error("AuthGroupCacheItem.id 为空白，当前对象可能尚未持久化。")
         set(value) {

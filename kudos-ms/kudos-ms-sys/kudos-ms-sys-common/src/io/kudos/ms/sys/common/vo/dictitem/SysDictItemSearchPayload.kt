@@ -14,50 +14,48 @@ data class SysDictItemSearchPayload (
 
     //region your codes 1
 
-    override var returnEntityClass: KClass<*>? = SysDictItemRecord::class,
-
     /** 主键 */
-    var id: String? = null,
+    val id: String? = null,
 
     /** 字典项代码 */
-    var itemCode: String? = null,
+    val itemCode: String? = null,
 
     /** 字典项名称 */
-    var itemName: String? = null,
+    val itemName: String? = null,
 
     /** 字典id */
-    var dictId: String? = null,
+    val dictId: String? = null,
 
     /** 字典项排序 */
-    var orderNum: Int? = null,
+    val orderNum: Int? = null,
 
     /** 父id */
     var parentId: String? = null,
 
     /** 备注 */
-    var remark: String? = null,
+    val remark: String? = null,
 
     /** 是否启用 */
     var active: Boolean? = null,
 
     /** 是否内置 */
-    var builtIn: Boolean? = null,
+    val builtIn: Boolean? = null,
 
     /** 是否为第一层树节点 */
-    var firstLevel: Boolean? = null,
+    val firstLevel: Boolean? = null,
 
 
     /** 字典类型 */
-    var dictType: String? = null,
+    val dictType: String? = null,
 
     /** 字典名称 */
-    var dictName: String? = null,
+    val dictName: String? = null,
 
     /** 原子服务编码 */
     var atomicServiceCode: String? = null,
 
     /** 字典是否启用 */
-    var dictActive: Boolean? = null,
+    val dictActive: Boolean? = null,
 
     //endregion your codes 1
 //region your codes 2
@@ -66,7 +64,9 @@ data class SysDictItemSearchPayload (
 
     //region your codes 3
 
-    constructor() : this(SysDictItemRecord::class)
+    constructor() : this("")
+
+    override var returnEntityClass: KClass<*>? = SysDictItemRecord::class
 
     //endregion your codes 3
 

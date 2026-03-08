@@ -15,25 +15,23 @@ data class AuthGroupSearchPayload (
 
     //region your codes 1
 
-    override var returnEntityClass: KClass<*>? = AuthGroupRecord::class,
-
     /** 用户组编码 */
-    var code: String? = null,
+    val code: String? = null,
 
     /** 用户组名称 */
-    var name: String? = null,
+    val name: String? = null,
 
     /** 租户id */
-    var tenantId: String? = null,
+    val tenantId: String? = null,
 
     /** 子系统编码 */
-    var subsysCode: String? = null,
+    val subsysCode: String? = null,
 
     /** 是否激活 */
-    var active: Boolean? = null,
+    val active: Boolean? = null,
 
     /** 是否内置 */
-    var builtIn: Boolean? = null,
+    val builtIn: Boolean? = null,
 
     //endregion your codes 1
 //region your codes 2
@@ -42,7 +40,9 @@ data class AuthGroupSearchPayload (
 
     //region your codes 3
 
-    constructor() : this(AuthGroupRecord::class)
+    constructor() : this("")
+
+    override var returnEntityClass: KClass<*>? = AuthGroupRecord::class
 
     //endregion your codes 3
 

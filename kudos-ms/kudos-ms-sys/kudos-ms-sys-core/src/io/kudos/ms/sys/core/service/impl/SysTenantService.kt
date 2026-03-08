@@ -3,9 +3,10 @@ package io.kudos.ms.sys.core.service.impl
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
+import io.kudos.base.query.Criteria
+import io.kudos.base.query.eq
 import io.kudos.ms.sys.common.vo.tenant.SysTenantCacheItem
 import io.kudos.ms.sys.common.vo.tenant.SysTenantRecord
-import io.kudos.ms.sys.common.vo.tenant.SysTenantSearchPayload
 import io.kudos.ms.sys.core.cache.TenantByIdCache
 import io.kudos.ms.sys.core.cache.TenantIdsBySystemCodeCache
 import io.kudos.ms.sys.core.dao.SysTenantDao
@@ -139,9 +140,8 @@ open class SysTenantService : BaseCrudService<String, SysTenant, SysTenantDao>()
 
 
     override fun getAllActiveTenants(): Map<String, List<SysTenantRecord>> {
-        val searchPayload = SysTenantSearchPayload().apply { active = true }
-        @Suppress("UNCHECKED_CAST")
-        val records = dao.search(searchPayload, SysTenantRecord::class)
+        val criteria = Criteria(SysTenant::active eq true)
+        val records = dao.searchAs<SysTenantRecord>(criteria)
         // 根据租户的子系统关系分组
         val tenantIds = records.map { it.id }
         val tenantSubSystemMap = sysTenantSystemBiz.groupingSystemCodesByTenantIds(tenantIds)
@@ -184,11 +184,8 @@ open class SysTenantService : BaseCrudService<String, SysTenant, SysTenantDao>()
      * @since 1.0.0
      */
     override fun getTenantByName(name: String): SysTenantRecord? {
-        val searchPayload = SysTenantSearchPayload().apply {
-            this.name = name
-        }
-        @Suppress("UNCHECKED_CAST")
-        val records = dao.search(searchPayload, SysTenantRecord::class)
+        val criteria = Criteria(SysTenant::name eq name)
+        val records = dao.searchAs<SysTenantRecord>(criteria)
         return records.firstOrNull()
     }
 

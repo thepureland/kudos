@@ -2,8 +2,9 @@ package io.kudos.ms.sys.core.service.impl
 
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.logger.LogFactory
+import io.kudos.base.query.Criteria
+import io.kudos.base.query.eq
 import io.kudos.ms.sys.common.vo.accessrule.SysAccessRuleRecord
-import io.kudos.ms.sys.common.vo.accessrule.SysAccessRuleSearchPayload
 import io.kudos.ms.sys.core.dao.SysAccessRuleDao
 import io.kudos.ms.sys.core.model.po.SysAccessRule
 import io.kudos.ms.sys.core.service.iservice.ISysAccessRuleService
@@ -30,29 +31,22 @@ open class SysAccessRuleService : BaseCrudService<String, SysAccessRule, SysAcce
         systemCode: String,
         tenantId: String
     ): SysAccessRuleRecord? {
-        val searchPayload = SysAccessRuleSearchPayload().apply {
-            this.tenantId = tenantId
-            this.systemCode = systemCode
-        }
-        @Suppress("UNCHECKED_CAST")
-        val records = dao.search(searchPayload, SysAccessRuleRecord::class)
+        val criteria = Criteria.and(
+            SysAccessRule::tenantId eq tenantId,
+            SysAccessRule::systemCode eq systemCode,
+        )
+        val records = dao.searchAs<SysAccessRuleRecord>(criteria)
         return records.firstOrNull()
     }
 
     override fun getAccessRulesByTenantId(tenantId: String): List<SysAccessRuleRecord> {
-        val searchPayload = SysAccessRuleSearchPayload().apply {
-            this.tenantId = tenantId
-        }
-        @Suppress("UNCHECKED_CAST")
-        return dao.search(searchPayload, SysAccessRuleRecord::class)
+        val criteria = Criteria.and(SysAccessRule::tenantId eq tenantId)
+        return dao.searchAs<SysAccessRuleRecord>(criteria)
     }
 
     override fun getAccessRulesBySystemCode(systemCode: String): List<SysAccessRuleRecord> {
-        val searchPayload = SysAccessRuleSearchPayload().apply {
-            this.systemCode = systemCode
-        }
-        @Suppress("UNCHECKED_CAST")
-        return dao.search(searchPayload, SysAccessRuleRecord::class)
+        val criteria = Criteria.and(SysAccessRule::systemCode eq systemCode)
+        return dao.searchAs<SysAccessRuleRecord>(criteria)
     }
 
     @Transactional

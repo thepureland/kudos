@@ -7,9 +7,10 @@ import io.kudos.base.bean.BeanKit
 import io.kudos.base.data.json.JsonKit
 import io.kudos.base.error.ServiceException
 import io.kudos.base.logger.LogFactory
+import io.kudos.base.query.Criteria
+import io.kudos.base.query.eq
 import io.kudos.ms.sys.common.vo.cache.SysCacheCacheItem
 import io.kudos.ms.sys.common.vo.cache.SysCacheRecord
-import io.kudos.ms.sys.common.vo.cache.SysCacheSearchPayload
 import io.kudos.ms.sys.core.cache.CacheByNameCache
 import io.kudos.ms.sys.core.dao.SysCacheDao
 import io.kudos.ms.sys.core.model.po.SysCache
@@ -114,10 +115,8 @@ open class SysCacheService : BaseCrudService<String, SysCache, SysCacheDao>(), I
      * @since 1.0.0
      */
     override fun getCachesByAtomicServiceCode(atomicServiceCode: String): List<SysCacheRecord> {
-        val searchPayload = SysCacheSearchPayload().apply {
-            this.atomicServiceCode = atomicServiceCode
-        }
-        return dao.search(searchPayload, SysCacheRecord::class)
+        val criteria = Criteria(SysCache::atomicServiceCode eq atomicServiceCode)
+        return dao.searchAs<SysCacheRecord>(criteria)
     }
 
     /**
@@ -128,10 +127,8 @@ open class SysCacheService : BaseCrudService<String, SysCache, SysCacheDao>(), I
      * @since 1.0.0
      */
     override fun getAllActiveCaches(): List<SysCacheRecord> {
-        val searchPayload = SysCacheSearchPayload().apply {
-            this.active = true
-        }
-        return dao.search(searchPayload, SysCacheRecord::class)
+        val criteria = Criteria(SysCache::active eq true)
+        return dao.searchAs<SysCacheRecord>(criteria)
     }
 
     override fun reload(name: String, key: String) {

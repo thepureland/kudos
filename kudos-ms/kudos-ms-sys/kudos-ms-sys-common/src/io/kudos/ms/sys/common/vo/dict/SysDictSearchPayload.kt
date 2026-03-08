@@ -14,37 +14,35 @@ data class SysDictSearchPayload (
 
     //region your codes 1
 
-    override var returnEntityClass: KClass<*>? = SysDictRecord::class,
-
-    var id: String? = null,
+    val id: String? = null,
 
     /** 字典类型 */
-    var dictType: String? = null,
+    val dictType: String? = null,
 
     /** 字典名称 */
-    var dictName: String? = null,
+    val dictName: String? = null,
 
     /** 原子服务编码 */
-    var atomicServiceCode: String? = null,
+    val atomicServiceCode: String? = null,
 
-    var parentId: String? = null,
+    val parentId: String? = null,
 
-    var firstLevel: Boolean? = null,
+    val firstLevel: Boolean? = null,
 
     /** 备注 */
-    var remark: String? = null,
+    val remark: String? = null,
 
     /** 是否启用 */
-    var active: Boolean? = null,
+    val active: Boolean? = null,
 
     /** 是否内置 */
-    var builtIn: Boolean? = null,
+    val builtIn: Boolean? = null,
 
-    var isDict: Boolean = true,
+    val isDict: Boolean = true,
 
-    var itemCode: String? = null,
+    val itemCode: String? = null,
 
-    var itemName: String? = null,
+    val itemName: String? = null,
 
     //endregion your codes 1
 //region your codes 2
@@ -53,7 +51,9 @@ data class SysDictSearchPayload (
 
     //region your codes 3
 
-    constructor() : this(SysDictRecord::class)
+    constructor() : this("")
+
+    override var returnEntityClass: KClass<*>? = SysDictRecord::class
 
     //endregion your codes 3
 

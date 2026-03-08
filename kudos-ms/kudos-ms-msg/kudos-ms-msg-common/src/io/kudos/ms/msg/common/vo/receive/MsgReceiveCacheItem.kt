@@ -15,27 +15,27 @@ import java.time.LocalDateTime
 data class MsgReceiveCacheItem (
 
     /** 主键 */
-    override var id: String = "",
+    override val id: String = "",
 
     //region your codes 1
 
     /** 接收者ID */
-    var receiverId: String? = null,
+    val receiverId: String? = null,
 
     /** 发送ID */
-    var sendId: String? = null,
+    val sendId: String? = null,
 
     /** 接收状态字典码 */
-    var receiveStatusDictCode: String? = null,
+    val receiveStatusDictCode: String? = null,
 
     /** 创建时间 */
-    var createTime: LocalDateTime? = null,
+    val createTime: LocalDateTime? = null,
 
     /** 更新时间 */
-    var updateTime: LocalDateTime? = null,
+    val updateTime: LocalDateTime? = null,
 
     /** 租户ID */
-    var tenantId: String? = null,
+    val tenantId: String? = null,
 
     //endregion your codes 1
 //region your codes 2

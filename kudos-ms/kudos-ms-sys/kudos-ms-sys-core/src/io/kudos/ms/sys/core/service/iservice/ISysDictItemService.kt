@@ -34,27 +34,54 @@ interface ISysDictItemService : IBaseCrudService<String, SysDictItem> {
     fun get(id: String, fetchAllParentIds: Boolean = false): SysDictItemRecord?
 
     /**
-     * 根据模块和字典类型，取得对应字典项(仅包括处于启用状态的)，并将结果缓存，查不到不缓存
+     * 根据字典类型和原子服务编码取得对应的字典项
      *
-     * @param atomicServiceCode 原子服务编码，如果没有请传入空串，此时请保证type的惟一性，否则结果将不确定是哪条记录
-     * @param type 字典类型
-     * @return 字典项列表。如果module为空串，且存在多个同名type，将任意返回一个type对应的字典项。查无结果返回空列表。
-     * @author K
-     * @since 1.0.0
+     * @param dictType 字典类型
+     * @param atomicServiceCode 原子服务编码
+     * @return 字典项缓存对象列表
      */
-    fun getItemsFromCache(atomicServiceCode: String? = null, type: String): List<SysDictItemCacheItem>
+    fun getItems(dictType: String, atomicServiceCode: String): List<SysDictItemCacheItem>
+
+    /**
+     * 根据字典类型集合和原子服务编码取得对应的字典项
+     *
+     * @param dictTypesByAtomicServiceCode Map<原子服务编码，Collection<字典类型编码>>
+     * @return Map<原子服务编码，Map<字典类型，字典项缓存对象列表>>
+     */
+    fun batchGetDictItems(
+        dictTypesByAtomicServiceCode: Map<String, Collection<String>>
+    ): Map<String, Map<String, List<SysDictItemCacheItem>>>
+
+    /**
+     * 根据字典类型和原子服务编码取得对应的字典项
+     *
+     * @param dictType 字典类型
+     * @param atomicServiceCode 原子服务编码
+     * @return LinkedHashMap<字典项编码，字典项译文或其国际化key>
+     */
+    fun getItemMap(dictType: String, atomicServiceCode: String): LinkedHashMap<String, String>
+
+    /**
+     * 批量获取字典项信息
+     *
+     * @param dictTypesByAtomicServiceCode Map<原子服务编码，Collection<字典类型编码>>
+     * @return Map<原子服务编码，Map<字典类型，LinkedHashMap<字典项编码，字典项译文或其国际化key>>>
+     */
+    fun batchGetDictItemMap(
+        dictTypesByAtomicServiceCode: Map<String, Collection<String>>,
+    ): Map<String, Map<String, LinkedHashMap<String, String>>>
 
     /**
      * 翻译字典项代码
      *
-     * @param module 如果没有请传入空串，此时请保证type的惟一性，否则结果将不确定是哪条记录
-     * @param type 字典类型
-     * @param code 字典项代码
+     * @param dictType 字典类型
+     * @param itemCode 字典项代码
+     * @param atomicServiceCode 原子服务编码
      * @return 字典项名称，找不到返回null
      * @author K
      * @since 1.0.0
      */
-    fun transDictCode(module: String, type: String, code: String): String?
+    fun transDictCode(dictType: String, itemCode: String, atomicServiceCode: String): String?
 
     /**
      * 保存或更新
@@ -138,7 +165,7 @@ interface ISysDictItemService : IBaseCrudService<String, SysDictItem> {
      * @author K
      * @since 1.0.0
      */
-    fun getDictItemsByAtomicServiceAndType(atomicServiceCode: String, dictType: String): List<SysDictItemCacheItem>
+    fun getDictItemsByAtomicServiceAndType(dictType: String, atomicServiceCode: String): List<SysDictItemCacheItem>
 
     /**
      * 获取字典项树（递归结构）

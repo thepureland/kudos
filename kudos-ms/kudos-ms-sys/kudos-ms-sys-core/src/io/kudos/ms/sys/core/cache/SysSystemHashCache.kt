@@ -18,8 +18,6 @@ import org.springframework.stereotype.Component
  * 数据来源表：sys_system；主键为 code，缓存的 key 即 code，value 为 [SysSystemCacheItem]。
  * 使用 Hash 结构存储，通过 [HashCacheableByPrimary] / [HashBatchCacheableByPrimary] 按 code 存取。
  *
- * 使用前需在缓存配置表 sys_cache 中增加名为 [CACHE_NAME] 的配置项且 hash=true。
- *
  * @author K
  * @since 1.0.0
  */

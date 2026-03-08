@@ -27,7 +27,7 @@ import kotlin.reflect.KClass
  * @author K
  * @since 1.0.0
  */
-open class BaseReadOnlyController<PK : Any, B : IBaseReadOnlyService<PK, *>, S : ListSearchPayload, R : IJsonResult, D : IJsonResult, F : FormPayload<PK>>
+open class BaseReadOnlyController<PK : Any, B : IBaseReadOnlyService<PK, *>, S : ListSearchPayload, R : IJsonResult, D : IJsonResult, F : FormPayload<*>>
     : BaseController<F>() {
 
     @Autowired
@@ -47,7 +47,8 @@ open class BaseReadOnlyController<PK : Any, B : IBaseReadOnlyService<PK, *>, S :
     @PostMapping("/search")
     @Suppress("UNCHECKED_CAST")
     open fun search(@RequestBody searchPayload: S): PagingSearchResult<R> {
-        return service.pagingSearch(searchPayload) as PagingSearchResult<R>
+        val result = service.pagingSearch(searchPayload) as PagingSearchResult<R>
+        return result
     }
 
     /**

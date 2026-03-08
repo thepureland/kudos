@@ -12,8 +12,11 @@ import io.kudos.ms.sys.core.model.po.SysAccessRule
 import io.kudos.ms.sys.core.model.po.SysAccessRuleIp
 import io.kudos.ms.sys.core.model.table.SysAccessRuleIps
 import io.kudos.ms.sys.core.model.table.SysAccessRules
+import io.kudos.ms.sys.core.model.table.SysDictItems
+import io.kudos.ms.sys.core.model.table.SysDicts
 import org.ktorm.dsl.*
 import org.ktorm.expression.OrderByExpression
+import org.ktorm.schema.Column
 import org.springframework.stereotype.Repository
 
 
@@ -80,22 +83,16 @@ open class SysAccessRuleIpDao : BaseCrudDao<String, SysAccessRuleIp, SysAccessRu
             query = query.limit((pageNo - 1) * pageSize, pageSize)
         }
 
+        @Suppress("UNCHECKED_CAST")
+        val extraColumns = mapOf(
+            "parentRuleActive" to (SysAccessRules.active as Column<Any>),
+            "tenantId" to (SysAccessRules.tenantId as Column<Any>),
+            "systemCode" to (SysAccessRules.systemCode as Column<Any>),
+            "ruleTypeDictCode" to (SysAccessRules.ruleTypeDictCode as Column<Any>)
+        )
+
         return query.map { row ->
-            SysAccessRuleIpRecord().apply {
-                id = row[SysAccessRuleIps.id] ?: ""
-                ipStart = row[SysAccessRuleIps.ipStart]
-                ipEnd = row[SysAccessRuleIps.ipEnd]
-                ipTypeDictCode = row[SysAccessRuleIps.ipTypeDictCode]
-                expirationTime = row[SysAccessRuleIps.expirationTime]
-                parentRuleId = row[SysAccessRuleIps.parentRuleId] ?: row[SysAccessRules.id]
-                remark = row[SysAccessRuleIps.remark]
-                active = row[SysAccessRuleIps.active]
-                remark = row[SysAccessRuleIps.remark]
-                parentRuleActive = row[SysAccessRules.active]
-                tenantId = row[SysAccessRules.tenantId]
-                systemCode = row[SysAccessRules.systemCode]
-                ruleTypeDictCode = row[SysAccessRules.ruleTypeDictCode]
-            }
+            mapTo(row, SysAccessRuleIpRecord::class, extraColumns = extraColumns)
         }
     }
 
@@ -188,6 +185,21 @@ open class SysAccessRuleIpDao : BaseCrudDao<String, SysAccessRuleIp, SysAccessRu
         val criteria = Criteria(SysAccessRuleIp::parentRuleId eq ruleId)
         return batchDeleteCriteria(criteria)
     }
+
+//    private fun mapRowToRecord(row: QueryRowSet) = SysAccessRuleIpRecord(
+//        id = row[SysAccessRuleIps.id] ?: "",
+//        ipStart = row[SysAccessRuleIps.ipStart],
+//        ipEnd = row[SysAccessRuleIps.ipEnd],
+//        ipTypeDictCode = row[SysAccessRuleIps.ipTypeDictCode],
+//        expirationTime = row[SysAccessRuleIps.expirationTime],
+//        parentRuleId = row[SysAccessRuleIps.parentRuleId] ?: row[SysAccessRules.id],
+//        remark = row[SysAccessRuleIps.remark],
+//        active = row[SysAccessRuleIps.active],
+//        parentRuleActive = row[SysAccessRules.active],
+//        tenantId = row[SysAccessRules.tenantId],
+//        systemCode = row[SysAccessRules.systemCode],
+//        ruleTypeDictCode = row[SysAccessRules.ruleTypeDictCode]
+//    )
 
     //endregion your codes 2
 

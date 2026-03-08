@@ -34,7 +34,10 @@ object TeminalConstraintsCreator {
      * @author K
      * @since 1.0.0
      */
-    fun create(beanClass: KClass<*>, propertyPrefix: String = ""): Map<String, LinkedHashMap<String, Array<Map<String, Any>>>> {
+    fun create(
+        beanClass: KClass<*>,
+        propertyPrefix: String = ""
+    ): Map<String, LinkedHashMap<String, Array<Map<String, Any>>>> {
         val cacheKey = "${beanClass.qualifiedName}-$propertyPrefix"
         var rules = constrainCacheMap[cacheKey]
         if (rules == null || SystemKit.isDebug()) {
@@ -120,7 +123,9 @@ object TeminalConstraintsCreator {
      * @since 1.0.0
      */
     private fun genRule(
-        annotationsMap: Map<String, MutableList<Annotation>>, propertyPrefix: String, beanClass: KClass<*>
+        annotationsMap: Map<String, MutableList<Annotation>>,
+        propertyPrefix: String,
+        beanClass: KClass<*>
     ): Map<String, LinkedHashMap<String, Array<Map<String, Any>>>> {
         if (annotationsMap.isEmpty()) {
             return emptyMap()

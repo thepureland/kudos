@@ -14,13 +14,13 @@ data class SysTenantLocaleRecord (
     //region your codes 1
 
     /** 主键 */
-    override var id: String = "",
+    override val id: String = "",
 
     /** 租户id */
-    var tenantId: String? = null,
+    val tenantId: String? = null,
 
     /** 语言代码 */
-    var localeCode: String? = null,
+    val localeCode: String? = null,
 
     //endregion your codes 1
 //region your codes 2

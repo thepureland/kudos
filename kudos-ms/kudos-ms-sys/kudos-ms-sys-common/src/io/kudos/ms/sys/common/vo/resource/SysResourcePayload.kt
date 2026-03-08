@@ -12,36 +12,36 @@ import io.kudos.base.support.payload.FormPayload
 data class SysResourcePayload (
 
     /** 主键 */
-    override var id: String = "",
+    override val id: String = "",
 
     //region your codes 1
 
     /** 名称 */
-    var name: String? = null,
+    val name: String? = null,
 
     /** url */
-    var url: String? = null,
+    val url: String? = null,
 
     /** 资源类型字典代码 */
-    var resourceTypeDictCode: String? = null,
+    val resourceTypeDictCode: String? = null,
 
     /** 父id */
-    var parentId: String? = null,
+    val parentId: String? = null,
 
     /** 在同父节点下的排序号 */
-    var orderNum: Int? = null,
+    val orderNum: Int? = null,
 
     /** 图标 */
-    var icon: String? = null,
+    val icon: String? = null,
 
     /** 子系统编码 */
-    var subSystemCode: String? = null,
+    val subSystemCode: String? = null,
 
     /** 备注 */
-    var remark: String? = null,
+    val remark: String? = null,
 
     /** 是否启用 */
-    var active: Boolean? = null,
+    val active: Boolean? = null,
 
     //endregion your codes 1
 //region your codes 2

@@ -4,10 +4,12 @@ import io.kudos.base.lang.SerializationKit
 import io.kudos.base.lang.reflect.getEmptyConstructor
 import io.kudos.base.support.IIdEntity
 import org.apache.commons.beanutils.BeanUtils
+import org.apache.commons.beanutils.ConvertUtils
 import org.apache.commons.beanutils.PropertyUtils
 import java.beans.Introspector
 import java.beans.PropertyDescriptor
 import java.io.Serializable
+import java.lang.reflect.Field
 import java.lang.reflect.Modifier
 import kotlin.reflect.KClass
 import kotlin.reflect.full.memberProperties
@@ -98,7 +100,7 @@ object BeanKit {
     fun <T> copyPropertiesExcludeId(src: IIdEntity<T>, dest: IIdEntity<T>): IIdEntity<T> {
         val id = dest.id
         copyProperties(src, dest, null)
-        dest.id = id
+        setPropertyByField(dest, "id", id)
         return dest
     }
 
@@ -156,7 +158,7 @@ object BeanKit {
         }
         val emptyEntity: IIdEntity<T> = constructor.call()
         copyProperties(emptyEntity, entity, null)
-        entity.id = id
+        setPropertyByField(entity, "id", id)
     }
 
     /**
@@ -269,8 +271,57 @@ object BeanKit {
      * @since 1.0.0
      */
     fun <T> setProperty(bean: T, name: String?, value: Any?): T {
-        BeanUtils.copyProperty(bean, name, value)
+        if (name.isNullOrBlank()) return bean
+        val pd = PropertyUtils.getPropertyDescriptor(bean, name)
+        if (pd?.writeMethod != null) {
+            BeanUtils.copyProperty(bean, name, value)
+        } else {
+            setPropertyByField(bean as Any, name, value)
+        }
         return bean
+    }
+
+    /**
+     * 通过反射直接设置字段值，用于无 setter 的只读属性（如 Kotlin data class 的 val）。
+     */
+    private fun setPropertyByField(bean: Any, name: String, value: Any?) {
+        val fieldNamesToTry = sequence {
+            yield(name)
+            // JavaBean boolean 常以 isXxx 暴露，backing field 多为 xxx
+            if (name.startsWith("is") && name.length > 2 && Character.isUpperCase(name[2])) {
+                yield(name[2].lowercaseChar().toString() + name.substring(3))
+            }
+        }
+        var clazz: Class<*>? = bean.javaClass
+        while (clazz != null) {
+            var field: Field? = null
+            for (fieldName in fieldNamesToTry) {
+                field = try {
+                    clazz.getDeclaredField(fieldName)
+                } catch (_: NoSuchFieldException) {
+                    null
+                }
+                if (field != null) break
+            }
+            if (field == null) {
+                clazz = clazz.superclass
+                continue
+            }
+            field.setAccessible(true)
+            val targetType = field.type
+            val toSet = when {
+                value == null -> null
+                targetType.isAssignableFrom(value.javaClass) -> value
+                else -> try {
+                    ConvertUtils.convert(value, targetType)
+                } catch (_: Exception) {
+                    value
+                }
+            }
+            field.set(bean, toSet)
+            return
+        }
+        throw NoSuchFieldException("Property '$name' has no setter and no accessible field in class '${bean.javaClass.name}'.")
     }
 
     //endregion 封装org.apache.commons.beanutils.BeanUtils和PropertyUtils

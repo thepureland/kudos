@@ -16,9 +16,20 @@ interface ISysI18nApi {
 
     //region your codes 2
 
-    fun getI18nValue(locale: String, atomicServiceCode: String, i18nTypeDictCode: String, key: String): String?
+    fun getI18nValue(
+        locale: String,
+        i18nTypeDictCode: String,
+        namespace: String,
+        atomicServiceCode: String,
+        key: String
+    ): String?
 
-    fun getI18nsByAtomicServiceAndType(atomicServiceCode: String, i18nTypeDictCode: String, locale: String? = null): List<SysI18nRecord>
+    fun getI18ns(
+        locale: String,
+        i18nTypeDictCode: String,
+        namespace: String,
+        atomicServiceCode: String
+    ): Map<String, String>
 
     fun batchSaveOrUpdate(i18ns: List<SysI18nPayload>): Int
 

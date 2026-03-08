@@ -12,15 +12,15 @@ import io.kudos.base.support.payload.FormPayload
 data class SysTenantLocalePayload (
 
     /** 主键 */
-    override var id: String = "",
+    override val id: String = "",
 
     //region your codes 1
 
     /** 租户id */
-    var tenantId: String? = null,
+    val tenantId: String? = null,
 
     /** 语言代码 */
-    var localeCode: String? = null,
+    val localeCode: String? = null,
 
     //endregion your codes 1
 //region your codes 2

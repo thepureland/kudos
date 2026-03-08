@@ -25,11 +25,13 @@ class SysAccessRuleIpDaoTest : RdbTestBase() {
 
     @Test
     fun pagingSearch() {
-        val searchPayload = SysAccessRuleIpSearchPayload().apply {
-            this.tenantId = "40000000-0000-0000-0000-000000002666"
-            this.systemCode = "svc-system-arip-dao-test-1_3790"
-            this.pageNo = 1
-            this.pageSize = 10
+        val searchPayload = SysAccessRuleIpSearchPayload(
+            tenantId = "40000000-0000-0000-0000-000000002666",
+            systemCode = "svc-system-arip-dao-test-1_3790",
+        ).apply {
+            pageNo = 1
+            pageSize = 10
+
         }
         val records = sysAccessRuleIpDao.pagingSearch(searchPayload)
         assertTrue(records.isNotEmpty())
@@ -38,19 +40,19 @@ class SysAccessRuleIpDaoTest : RdbTestBase() {
 
     @Test
     fun count() {
-        val searchPayload = SysAccessRuleIpSearchPayload().apply {
-            this.tenantId = "40000000-0000-0000-0000-000000002666"
-            this.active = true
-        }
+        val searchPayload = SysAccessRuleIpSearchPayload(
+            tenantId = "40000000-0000-0000-0000-000000002666",
+            active = true
+        )
         val count = sysAccessRuleIpDao.count(searchPayload)
         assertTrue(count >= 2)
     }
 
     @Test
     fun leftJoinSearch() {
-        val searchPayload = SysAccessRuleIpSearchPayload().apply {
-            this.id = "40000000-0000-0000-0000-000000002666"
-        }
+        val searchPayload = SysAccessRuleIpSearchPayload(
+            id = "40000000-0000-0000-0000-000000002666"
+        )
         val query = sysAccessRuleIpDao.leftJoinSearch(searchPayload)
         assertNotNull(query)
         val totalRecords = query.totalRecordsInAllPages

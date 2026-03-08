@@ -4,8 +4,9 @@ import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
 import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
+import io.kudos.base.query.Criteria
+import io.kudos.base.query.eq
 import io.kudos.ms.sys.common.vo.domain.SysDomainCacheItem
-import io.kudos.ms.sys.common.vo.domain.SysDomainSearchPayload
 import io.kudos.ms.sys.core.dao.SysDomainDao
 import io.kudos.ms.sys.core.model.po.SysDomain
 import org.springframework.beans.factory.annotation.Autowired
@@ -47,13 +48,8 @@ open class DomainByNameCache : AbstractKeyValueCacheHandler<SysDomainCacheItem>(
         }
 
         // 加载所有active为true的域名
-        val searchPayload = SysDomainSearchPayload().apply {
-            returnEntityClass = SysDomainCacheItem::class
-            active = true
-        }
-
-        @Suppress("UNCHECKED_CAST")
-        val domains = dao.search(searchPayload, SysDomainCacheItem::class)
+        val criteria = Criteria(SysDomain::active eq true)
+        val domains = dao.searchAs<SysDomainCacheItem>(criteria)
         log.debug("从数据库加载了${domains.size}条域名信息。")
 
         // 清除缓存
@@ -85,14 +81,11 @@ open class DomainByNameCache : AbstractKeyValueCacheHandler<SysDomainCacheItem>(
             log.debug("缓存中不存在域名${domain}，从数据库中加载...")
         }
 
-        val searchPayload = SysDomainSearchPayload().apply {
-            returnEntityClass = SysDomainCacheItem::class
-            this.domain = domain
-            active = true
-        }
-
-        @Suppress("UNCHECKED_CAST")
-        val domains = dao.search(searchPayload, SysDomainCacheItem::class)
+        val criteria = Criteria.and(
+            SysDomain::domain eq domain,
+            SysDomain::active eq true
+        )
+        val domains = dao.searchAs<SysDomainCacheItem>(criteria)
         return if (domains.isEmpty()) {
             log.debug("从数据库找不到active=true且名为${domain}的域名信息。")
             null

@@ -13,23 +13,25 @@ data class SysSystemPayload (
 
     //region your codes 1
 
+    override val id: String = "",
+
     /** 编码 */
-    var code: String? = null,
+    val code: String? = null,
 
     /** 名称 */
-    var name: String? = null,
+    val name: String? = null,
 
     /** 是否子系统 */
-    var subSystem: Boolean? = null,
+    val subSystem: Boolean? = null,
 
     /** 父系统编号 */
-    var parentCode: String? = null,
+    val parentCode: String? = null,
 
     /** 备注 */
-    var remark: String? = null,
+    val remark: String? = null,
 
     /** 是否启用 */
-    var active: Boolean? = null,
+    val active: Boolean? = null,
 
     //endregion your codes 1
 //region your codes 2
@@ -39,10 +41,6 @@ data class SysSystemPayload (
     //region your codes 3
 
     constructor() : this("")
-
-    override var id: String
-        get() = this.code ?: ""
-        set(value) { this.code = value }
 
     // endregion your codes 3
 

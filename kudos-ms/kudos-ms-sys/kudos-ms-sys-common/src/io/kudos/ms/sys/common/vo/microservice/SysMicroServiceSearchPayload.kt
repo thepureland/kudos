@@ -14,31 +14,29 @@ data class SysMicroServiceSearchPayload (
 
     //region your codes 1
 
-    override var returnEntityClass: KClass<*>? = SysMicroServiceRecord::class,
-
     /** 编码 */
-    var code: String? = null,
+    val code: String? = null,
 
     /** 名称 */
-    var name: String? = null,
+    val name: String? = null,
 
     /** 上下文 */
-    var context: String? = null,
+    val context: String? = null,
 
     /** 是否为原子服务 */
-    var atomicService: Boolean? = null,
+    val atomicService: Boolean? = null,
 
     /** 父服务编码 */
-    var parentCode: String? = null,
+    val parentCode: String? = null,
 
     /** 备注 */
-    var remark: String? = null,
+    val remark: String? = null,
 
     /** 是否启用 */
-    var active: Boolean? = null,
+    val active: Boolean? = null,
 
     /** 是否内置 */
-    var builtIn: Boolean? = null,
+    val builtIn: Boolean? = null,
 
     //endregion your codes 1
 //region your codes 2
@@ -47,7 +45,9 @@ data class SysMicroServiceSearchPayload (
 
     //region your codes 3
 
-    constructor() : this(SysMicroServiceRecord::class)
+    constructor() : this("")
+
+    override var returnEntityClass: KClass<*>? = SysMicroServiceRecord::class
 
     //endregion your codes 3
 

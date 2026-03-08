@@ -14,27 +14,27 @@ import java.io.Serializable
 data class UserContactWayCacheItem (
 
     /** 主键 */
-    override var id: String = "",
+    override val id: String = "",
 
     //region your codes 1
 
     /** 用户ID */
-    var userId: String? = null,
+    val userId: String? = null,
 
     /** 联系方式字典码 */
-    var contactWayDictCode: String? = null,
+    val contactWayDictCode: String? = null,
 
     /** 联系方式值 */
-    var contactWayValue: String? = null,
+    val contactWayValue: String? = null,
 
     /** 联系方式状态字典码 */
-    var contactWayStatusDictCode: String? = null,
+    val contactWayStatusDictCode: String? = null,
 
     /** 优先级 */
-    var priority: Short? = null,
+    val priority: Short? = null,
 
     /** 备注 */
-    var remark: String? = null,
+    val remark: String? = null,
 
     //endregion your codes 1
 //region your codes 2

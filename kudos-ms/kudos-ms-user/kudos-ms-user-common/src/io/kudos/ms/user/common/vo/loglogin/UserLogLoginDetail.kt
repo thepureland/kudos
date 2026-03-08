@@ -16,49 +16,49 @@ data class UserLogLoginDetail (
     //region your codes 1
 
     /** 用户ID */
-    var userId: String? = null,
+    val userId: String? = null,
 
     /** 用户名 */
-    var username: String? = null,
+    val username: String? = null,
 
     /** 租户ID */
-    var tenantId: String? = null,
+    val tenantId: String? = null,
 
     /** 登录时间 */
-    var loginTime: LocalDateTime? = null,
+    val loginTime: LocalDateTime? = null,
 
     /** 登录IP */
-    var loginIp: Long? = null,
+    val loginIp: Long? = null,
 
     /** 登录地点 */
-    var loginLocation: String? = null,
+    val loginLocation: String? = null,
 
     /** 登录设备 */
-    var loginDevice: String? = null,
+    val loginDevice: String? = null,
 
     /** 浏览器 */
-    var loginBrowser: String? = null,
+    val loginBrowser: String? = null,
 
     /** 操作系统 */
-    var loginOs: String? = null,
+    val loginOs: String? = null,
 
     /** 用户代理字符串 */
-    var userAgent: String? = null,
+    val userAgent: String? = null,
 
     /** 是否登录成功 */
-    var loginSuccess: Boolean? = null,
+    val loginSuccess: Boolean? = null,
 
     /** 失败原因 */
-    var failureReason: String? = null,
+    val failureReason: String? = null,
 
     /** 会话ID */
-    var sessionId: String? = null,
+    val sessionId: String? = null,
 
     /** 备注 */
-    var remark: String? = null,
+    val remark: String? = null,
 
     /** 创建时间 */
-    var createTime: LocalDateTime? = null,
+    val createTime: LocalDateTime? = null,
 
     //endregion your codes 1
 //region your codes 2

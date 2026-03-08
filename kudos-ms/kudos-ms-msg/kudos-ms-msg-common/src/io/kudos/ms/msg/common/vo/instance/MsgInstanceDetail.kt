@@ -14,39 +14,39 @@ import java.time.LocalDateTime
 data class MsgInstanceDetail (
 
     /** 主键 */
-    override var id: String = "",
+    override val id: String = "",
 
     //region your codes 1
 
     /** 国家-语言字典码 */
-    var localeDictCode: String? = null,
+    val localeDictCode: String? = null,
 
     /** 标题 */
-    var title: String? = null,
+    val title: String? = null,
 
     /** 通知内容 */
-    var content: String? = null,
+    val content: String? = null,
 
     /** 消息模板id */
-    var templateId: String? = null,
+    val templateId: String? = null,
 
     /** 发送类型字典码 */
-    var sendTypeDictCode: String? = null,
+    val sendTypeDictCode: String? = null,
 
     /** 事件类型字典码 */
-    var eventTypeDictCode: String? = null,
+    val eventTypeDictCode: String? = null,
 
     /** 消息类型字典码 */
-    var msgTypeDictCode: String? = null,
+    val msgTypeDictCode: String? = null,
 
     /** 有效期起 */
-    var validTimeStart: LocalDateTime? = null,
+    val validTimeStart: LocalDateTime? = null,
 
     /** 有效期止 */
-    var validTimeEnd: LocalDateTime? = null,
+    val validTimeEnd: LocalDateTime? = null,
 
     /** 租户ID */
-    var tenantId: String? = null,
+    val tenantId: String? = null,
 
     //endregion your codes 1
 //region your codes 2

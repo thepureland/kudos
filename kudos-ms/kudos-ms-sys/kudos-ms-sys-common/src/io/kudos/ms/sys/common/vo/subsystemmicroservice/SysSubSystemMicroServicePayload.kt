@@ -12,15 +12,15 @@ import io.kudos.base.support.payload.FormPayload
 data class SysSubSystemMicroServicePayload (
 
     /**  */
-    override var id: String = "",
+    override val id: String = "",
 
     //region your codes 1
 
     /** 子系统编码 */
-    var subSystemCode: String? = null,
+    val subSystemCode: String? = null,
 
     /** 微服务编码 */
-    var microServiceCode: String? = null,
+    val microServiceCode: String? = null,
 
     //endregion your codes 1
 //region your codes 2

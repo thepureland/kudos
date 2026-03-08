@@ -14,31 +14,31 @@ data class SysParamRecord (
     //region your codes 1
 
     /** 主键 */
-    override var id: String = "",
+    override val id: String = "",
 
     /** 参数名称 */
-    var paramName: String? = null,
+    val paramName: String? = null,
 
     /** 参数值 */
-    var paramValue: String? = null,
+    val paramValue: String? = null,
 
     /** 默认参数值 */
-    var defaultValue: String? = null,
+    val defaultValue: String? = null,
 
     /** 模块 */
-    var atomicServiceCode: String? = null,
+    val atomicServiceCode: String? = null,
 
     /** 序号 */
-    var orderNum: Int? = null,
+    val orderNum: Int? = null,
 
     /** 备注 */
-    var remark: String? = null,
+    val remark: String? = null,
 
     /** 是否启用 */
-    var active: Boolean? = null,
+    val active: Boolean? = null,
 
     /** 是否内置 */
-    var builtIn: Boolean? = null,
+    val builtIn: Boolean? = null,
 
     //endregion your codes 1
 //region your codes 2

@@ -14,45 +14,45 @@ import java.time.LocalDateTime
 data class MsgSendPayload (
 
     /** 主键 */
-    override var id: String = "",
+    override val id: String = "",
 
     //region your codes 1
 
     /** 接收者群组类型字典码 */
-    var receiverGroupTypeDictCode: String? = null,
+    val receiverGroupTypeDictCode: String? = null,
 
     /** 接收者群组ID */
-    var receiverGroupId: String? = null,
+    val receiverGroupId: String? = null,
 
     /** 消息实例ID */
-    var instanceId: String? = null,
+    val instanceId: String? = null,
 
     /** 消息类型字典码 */
-    var msgTypeDictCode: String? = null,
+    val msgTypeDictCode: String? = null,
 
     /** 国家-语言字典码 */
-    var localeDictCode: String? = null,
+    val localeDictCode: String? = null,
 
     /** 发送状态字典码 */
-    var sendStatusDictCode: String? = null,
+    val sendStatusDictCode: String? = null,
 
     /** 创建时间 */
-    var createTime: LocalDateTime? = null,
+    val createTime: LocalDateTime? = null,
 
     /** 更新时间 */
-    var updateTime: LocalDateTime? = null,
+    val updateTime: LocalDateTime? = null,
 
     /** 发送成功数量 */
-    var successCount: Int? = null,
+    val successCount: Int? = null,
 
     /** 发送失败数量 */
-    var failCount: Int? = null,
+    val failCount: Int? = null,
 
     /** 定时任务ID */
-    var jobId: String? = null,
+    val jobId: String? = null,
 
     /** 租户ID */
-    var tenantId: String? = null,
+    val tenantId: String? = null,
 
     //endregion your codes 1
 //region your codes 2

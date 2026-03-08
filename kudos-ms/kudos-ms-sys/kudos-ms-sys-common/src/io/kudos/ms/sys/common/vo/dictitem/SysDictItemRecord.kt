@@ -14,37 +14,37 @@ data class SysDictItemRecord (
     //region your codes 1
 
     /** 原子服务编码 */
-    var atomicServiceCode: String? = null,
+    val atomicServiceCode: String = "",
 
     /** 字典id */
-    var dictId: String? = null,
+    val dictId: String = "",
 
     /** 字典类型 */
-    var dictType: String? = null,
+    val dictType: String = "",
 
     /** 字典名称 */
-    var dictName: String? = null,
+    val dictName: String = "",
 
     /** 字典项ID */
-    var itemId: String? = null,
+    val itemId: String = "",
 
     /** 字典项编号 */
-    var itemCode: String? = null,
+    val itemCode: String = "",
 
     /** 父项ID */
-    var parentId: String? = null,
+    val parentId: String? = null,
 
     /** 字典项名称，或其国际化key */
-    var itemName: String? = null,
+    val itemName: String = "",
 
     /** 该字典编号在同父节点下的排序号 */
-    var orderNum: Int? = null,
+    val orderNum: Int? = null,
 
     /** 是否启用 */
-    var active: Boolean? = null,
+    val active: Boolean = true,
 
     /** 备注 */
-    var remark: String? = null,
+    val remark: String? = null,
 
     /** 父项编号 */
     var parentCode: String? = null,

@@ -3,9 +3,10 @@ package io.kudos.ms.sys.core.service.impl
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
+import io.kudos.base.query.Criteria
+import io.kudos.base.query.eq
 import io.kudos.ms.sys.common.vo.param.SysParamCacheItem
 import io.kudos.ms.sys.common.vo.param.SysParamRecord
-import io.kudos.ms.sys.common.vo.param.SysParamSearchPayload
 import io.kudos.ms.sys.core.cache.ParamByModuleAndNameCache
 import io.kudos.ms.sys.core.dao.SysParamDao
 import io.kudos.ms.sys.core.model.po.SysParam
@@ -38,11 +39,8 @@ open class SysParamService : BaseCrudService<String, SysParam, SysParamDao>(), I
     }
 
     override fun getParamsByAtomicServiceCode(atomicServiceCode: String): List<SysParamRecord> {
-        val searchPayload = SysParamSearchPayload().apply {
-            this.atomicServiceCode = atomicServiceCode
-        }
-        @Suppress("UNCHECKED_CAST")
-        return dao.search(searchPayload, SysParamRecord::class)
+        val criteria = Criteria(SysParam::atomicServiceCode eq atomicServiceCode)
+        return dao.searchAs<SysParamRecord>(criteria)
     }
 
     @Transactional

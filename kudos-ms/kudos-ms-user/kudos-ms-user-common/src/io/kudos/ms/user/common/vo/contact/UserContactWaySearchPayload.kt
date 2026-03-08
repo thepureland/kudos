@@ -15,25 +15,23 @@ data class UserContactWaySearchPayload (
 
     //region your codes 1
 
-    override var returnEntityClass: KClass<*>? = UserContactWayRecord::class,
-
     /** 用户ID */
-    var userId: String? = null,
+    val userId: String? = null,
 
     /** 联系方式字典码 */
-    var contactWayDictCode: String? = null,
+    val contactWayDictCode: String? = null,
 
     /** 联系方式值 */
-    var contactWayValue: String? = null,
+    val contactWayValue: String? = null,
 
     /** 联系方式状态字典码 */
-    var contactWayStatusDictCode: String? = null,
+    val contactWayStatusDictCode: String? = null,
 
     /** 是否启用 */
-    var active: Boolean? = null,
+    val active: Boolean? = null,
 
     /** 是否内置 */
-    var builtIn: Boolean? = null,
+    val builtIn: Boolean? = null,
 
     //endregion your codes 1
 //region your codes 2
@@ -42,7 +40,9 @@ data class UserContactWaySearchPayload (
 
     //region your codes 3
 
-    constructor() : this(UserContactWayRecord::class)
+    constructor() : this("")
+
+    override var returnEntityClass: KClass<*>? = UserContactWayRecord::class
 
     //endregion your codes 3
 

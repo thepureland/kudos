@@ -29,7 +29,7 @@ annotation class DateTime(
      * 然后将占位符和这个文件中定义的resource进行匹配,如果匹配不成功的话,那么它会继续匹配Hibernate Validator自带的位于
      * /org/hibernate/validator/ValidationMessages.properties的ResourceBundle, 依次类推,递归的匹配所有的占位符.
      */
-    val message: String = "{io.kudos.base.bean.validation.constraint.annotations.DateTime.message}",
+    val message: String = "sys.valid-msg.default.DateTime",
     /**
      * 该校验规则所从属的分组类，通过分组可以过滤校验规则或排序校验顺序。默认值必须是空数组。
      * 校验组能够让你在验证的时候选择应用哪些约束条件. 这样在某些情况下( 例如向导 ) 就可以对每一步进行校验的时候, 选取对应这步的那些约束条件进行验证了.

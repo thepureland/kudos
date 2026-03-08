@@ -3,8 +3,10 @@ package io.kudos.ms.sys.core.cache
 import io.kudos.ability.cache.common.enums.CacheStrategy
 import io.kudos.ability.cache.common.support.CacheConfig
 import io.kudos.ability.cache.common.support.ICacheConfigProvider
-import io.kudos.ms.sys.common.vo.cache.SysCacheSearchPayload
+import io.kudos.base.query.Criteria
+import io.kudos.base.query.eq
 import io.kudos.ms.sys.core.dao.SysCacheDao
+import io.kudos.ms.sys.core.model.po.SysCache
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.DependsOn
 import org.springframework.stereotype.Component
@@ -27,13 +29,8 @@ open class CacheConfigProvider : ICacheConfigProvider {
 
     private fun getCacheConfigs(): List<CacheConfig> {
         if (cacheConfigs == null) {
-            val searchPayload = SysCacheSearchPayload().apply {
-                returnEntityClass = CacheConfig::class
-                active = true
-            }
-
-            @Suppress("UNCHECKED_CAST")
-            cacheConfigs = sysCacheDao.search(searchPayload, CacheConfig::class)
+            val criteria = Criteria(SysCache::active eq true)
+            cacheConfigs = sysCacheDao.searchAs<CacheConfig>(criteria)
         }
         return cacheConfigs ?: emptyList()
     }
