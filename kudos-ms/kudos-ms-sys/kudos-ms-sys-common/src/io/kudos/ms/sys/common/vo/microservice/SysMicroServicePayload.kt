@@ -1,6 +1,7 @@
 package io.kudos.ms.sys.common.vo.microservice
 
 import io.kudos.base.support.payload.FormPayload
+import jakarta.validation.constraints.NotBlank
 
 
 /**
@@ -13,16 +14,17 @@ data class SysMicroServicePayload (
 
     //region your codes 1
 
-    override val id: String = "",
-
     /** 编码 */
+    @get:NotBlank
     val code: String = "",
 
     /** 名称 */
+    @get:NotBlank
     val name: String = "",
 
     /** 上下文 */
-    val context: String? = null,
+    @get:NotBlank
+    val context: String = "",
 
     /** 是否为原子服务 */
     val atomicService: Boolean = true,
@@ -33,9 +35,6 @@ data class SysMicroServicePayload (
     /** 备注 */
     val remark: String? = null,
 
-    /** 是否启用 */
-    val active: Boolean = true,
-
     //endregion your codes 1
 //region your codes 2
 ) : FormPayload<String>() {
@@ -44,6 +43,9 @@ data class SysMicroServicePayload (
     //region your codes 3
 
     constructor() : this("")
+
+    override val id: String
+        get() = code
 
     // endregion your codes 3
 

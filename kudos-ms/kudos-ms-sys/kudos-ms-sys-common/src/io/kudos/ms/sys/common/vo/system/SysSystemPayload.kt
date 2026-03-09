@@ -1,6 +1,7 @@
 package io.kudos.ms.sys.common.vo.system
 
 import io.kudos.base.support.payload.FormPayload
+import jakarta.validation.constraints.NotBlank
 
 
 /**
@@ -13,25 +14,22 @@ data class SysSystemPayload (
 
     //region your codes 1
 
-    override val id: String = "",
-
     /** 编码 */
-    val code: String? = null,
+    @get:NotBlank
+    val code: String = "",
 
     /** 名称 */
-    val name: String? = null,
+    @get:NotBlank
+    val name: String = "",
 
     /** 是否子系统 */
-    val subSystem: Boolean? = null,
+    val subSystem: Boolean = true,
 
     /** 父系统编号 */
     val parentCode: String? = null,
 
     /** 备注 */
     val remark: String? = null,
-
-    /** 是否启用 */
-    val active: Boolean? = null,
 
     //endregion your codes 1
 //region your codes 2
@@ -41,6 +39,9 @@ data class SysSystemPayload (
     //region your codes 3
 
     constructor() : this("")
+
+    override val id: String
+        get() = code
 
     // endregion your codes 3
 

@@ -17,13 +17,13 @@ data class SysResourceRecord (
     override val id: String = "",
 
     /** 名称 */
-    val name: String? = null,
+    val name: String = "",
 
     /** url */
     val url: String? = null,
 
     /** 资源类型字典代码 */
-    val resourceTypeDictCode: String? = null,
+    val resourceTypeDictCode: String = "",
 
     /** 父id */
     val parentId: String? = null,
@@ -35,16 +35,16 @@ data class SysResourceRecord (
     val icon: String? = null,
 
     /** 子系统编码 */
-    val subSystemCode: String? = null,
+    val subSystemCode: String = "",
 
     /** 备注 */
     val remark: String? = null,
 
     /** 是否启用 */
-    val active: Boolean? = null,
+    val active: Boolean = true,
 
     /** 是否内置 */
-    val builtIn: Boolean? = null,
+    val builtIn: Boolean = false,
 
     //endregion your codes 1
 //region your codes 2

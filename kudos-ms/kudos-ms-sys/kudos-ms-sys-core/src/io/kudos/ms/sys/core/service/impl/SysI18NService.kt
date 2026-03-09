@@ -91,7 +91,7 @@ open class SysI18NService : BaseCrudService<String, SysI18n, SysI18nDao>(), ISys
                     this.namespace = namespace
                     this.key = key
                     this.value = value
-                    this.active = payload.active ?: true
+                    this.active = payload.active
                 }
                 val id = dao.insert(i18n)
                 i18nCacheHandler.syncOnInsert(i18n, id)
@@ -112,7 +112,7 @@ open class SysI18NService : BaseCrudService<String, SysI18n, SysI18nDao>(), ISys
                     this.namespace = namespace
                     this.key = key
                     this.value = value
-                    this.active = payload.active ?: true
+                    this.active = payload.active
                 }
                 if (dao.update(i18n)) {
                     i18nCacheHandler.syncOnUpdate(i18n, i18n.id)
@@ -185,7 +185,7 @@ open class SysI18NService : BaseCrudService<String, SysI18n, SysI18nDao>(), ISys
             i18nCacheHandler.getKey(
                 it.locale,
                 it.i18nTypeDictCode,
-                it.namespace ?: "",
+                it.namespace,
                 it.atomicServiceCode
             )
         }
@@ -199,7 +199,7 @@ open class SysI18NService : BaseCrudService<String, SysI18n, SysI18nDao>(), ISys
     private fun resolveNamespaceAndKey(payload: SysI18nPayload): Pair<String, String> {
         val key = requireNotNull(payload.key) { "key不能为空。" }
         val i18nTypeDictCode = requireNotNull(payload.i18nTypeDictCode) { "i18nTypeDictCode不能为空。" }
-        val namespace = payload.namespace?.takeIf { it.isNotBlank() } ?: i18nTypeDictCode
+        val namespace = payload.namespace.takeIf { it.isNotBlank() } ?: i18nTypeDictCode
         return namespace to key
     }
 

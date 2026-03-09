@@ -157,9 +157,9 @@ open class DictItemsByMsCodeAndTypeCache : AbstractKeyValueCacheHandler<List<Sys
             val key = getKey(dict.atomicServiceCode, dict.dictType)
             KeyValueCacheKit.evict(CACHE_NAME, key) // 踢除缓存（缓存粒度为字典类型）
             if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
-                if (dict.active == null || dict.active == true) {
-                    val atomicServiceCode = dict.atomicServiceCode ?: return
-                    val dictType = dict.dictType ?: return
+                if (dict.active) {
+                    val atomicServiceCode = dict.atomicServiceCode
+                    val dictType = dict.dictType
                     getSelf<DictItemsByMsCodeAndTypeCache>().getDictItems(atomicServiceCode, dictType)
                     log.debug("${CACHE_NAME}缓存同步完成。")
                 } else {
@@ -189,9 +189,9 @@ open class DictItemsByMsCodeAndTypeCache : AbstractKeyValueCacheHandler<List<Sys
             val key = getKey(dict.atomicServiceCode, dict.dictType)
             KeyValueCacheKit.evict(CACHE_NAME, key) // 踢除缓存（缓存粒度为字典类型）
             if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
-                if (dict.active == null || dict.active == true) {
-                    val atomicServiceCode = dict.atomicServiceCode ?: return
-                    val dictType = dict.dictType ?: return
+                if (dict.active) {
+                    val atomicServiceCode = dict.atomicServiceCode
+                    val dictType = dict.dictType
                     getSelf<DictItemsByMsCodeAndTypeCache>().getDictItems(atomicServiceCode, dictType)
                     log.debug("${CACHE_NAME}缓存同步完成。")
                 } else {
@@ -219,8 +219,8 @@ open class DictItemsByMsCodeAndTypeCache : AbstractKeyValueCacheHandler<List<Sys
             KeyValueCacheKit.evict(CACHE_NAME, getKey(dict.atomicServiceCode, dict.dictType)) // 踢除缓存（缓存粒度为字典类型）
             if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                 // 重新缓存
-                val atomicServiceCode = dict.atomicServiceCode ?: return
-                val dictType = dict.dictType ?: return
+                val atomicServiceCode = dict.atomicServiceCode
+                val dictType = dict.dictType
                 getSelf<DictItemsByMsCodeAndTypeCache>().getDictItems(atomicServiceCode, dictType)
             }
             log.debug("${CACHE_NAME}缓存同步完成。")
@@ -245,8 +245,8 @@ open class DictItemsByMsCodeAndTypeCache : AbstractKeyValueCacheHandler<List<Sys
             KeyValueCacheKit.evict(CACHE_NAME, getKey(dict.atomicServiceCode, dict.dictType)) // 踢除缓存（缓存粒度为字典类型）
             if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                 // 重新缓存
-                val atomicServiceCode = dict.atomicServiceCode ?: return
-                val dictType = dict.dictType ?: return
+                val atomicServiceCode = dict.atomicServiceCode
+                val dictType = dict.dictType
                 getSelf<DictItemsByMsCodeAndTypeCache>().getDictItems(atomicServiceCode, dictType)
             }
             log.debug("${CACHE_NAME}缓存同步完成。")

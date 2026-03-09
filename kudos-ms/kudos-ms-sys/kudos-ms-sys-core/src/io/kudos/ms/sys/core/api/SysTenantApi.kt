@@ -27,12 +27,12 @@ open class SysTenantApi : ISysTenantApi {
         return sysTenantService.getTenant(id)
     }
 
-    override fun getTenants(ids: Collection<String>): Map<String, SysTenantCacheItem> {
-        return sysTenantService.getTenants(ids)
+    override fun getTenantsBySubSystemCode(ids: Collection<String>): Map<String, SysTenantCacheItem> {
+        return sysTenantService.getTenantsBySubSystemCode(ids)
     }
 
-    override fun getTenants(subSysDictCode: String): List<SysTenantCacheItem> {
-        return sysTenantService.getTenants(subSysDictCode)
+    override fun getTenantsBySubSystemCode(subSystemCode: String): List<SysTenantCacheItem> {
+        return sysTenantService.getTenantsBySubSystemCode(subSystemCode)
     }
 
     //endregion your codes 2

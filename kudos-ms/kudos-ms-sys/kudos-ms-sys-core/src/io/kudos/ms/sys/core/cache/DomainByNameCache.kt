@@ -59,7 +59,7 @@ open class DomainByNameCache : AbstractKeyValueCacheHandler<SysDomainCacheItem>(
 
         // 缓存域名
         domains.forEach {
-            val domain = it.domain ?: return@forEach
+            val domain = it.domain
             KeyValueCacheKit.put(CACHE_NAME, domain, it)
         }
         log.debug("缓存了${domains.size}条域名信息。")

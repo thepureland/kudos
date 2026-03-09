@@ -31,8 +31,8 @@ data class SysCacheSearchPayload (
     /** 是否为Hash缓存 */
     val hash: Boolean? = null,
 
-    /** 是否启用 */
-    val active: Boolean? = null,
+    /** 仅启用 */
+    val active: Boolean? = true,
 
     //endregion your codes 1
 //region your codes 2

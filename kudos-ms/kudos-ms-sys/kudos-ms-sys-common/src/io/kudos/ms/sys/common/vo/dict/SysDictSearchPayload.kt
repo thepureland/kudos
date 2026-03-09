@@ -29,9 +29,6 @@ data class SysDictSearchPayload (
 
     val firstLevel: Boolean? = null,
 
-    /** 备注 */
-    val remark: String? = null,
-
     /** 是否启用 */
     val active: Boolean? = null,
 

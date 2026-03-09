@@ -7,6 +7,7 @@ package io.kudos.ms.sys.common.vo.i18n
  * @since 1.0.0
  */
 data class SysI18nBatchPayload(
+
     /** 语言地区 */
     val locale: String = "",
 
@@ -15,4 +16,5 @@ data class SysI18nBatchPayload(
 
     /** 原子服务编码集合 */
     val atomicServiceCodes: Set<String> = emptySet()
+
 )

@@ -59,7 +59,7 @@ open class SysDataSourceService : BaseCrudService<String, SysDataSource, SysData
         val records = result.data.filterIsInstance<SysDataSourceRecord>()
         if (records.isNotEmpty()) {
             val tenantIds = records.mapNotNull { it.tenantId }
-            val tenants = sysTenantApi.getTenants(tenantIds)
+            val tenants = sysTenantApi.getTenantsBySubSystemCode(tenantIds)
             records.forEach {
                 it.tenantName = tenants[it.tenantId]?.name
             }

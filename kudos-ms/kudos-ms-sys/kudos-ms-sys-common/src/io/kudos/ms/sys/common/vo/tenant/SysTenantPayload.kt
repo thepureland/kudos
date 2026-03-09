@@ -1,6 +1,7 @@
 package io.kudos.ms.sys.common.vo.tenant
 
 import io.kudos.base.support.payload.FormPayload
+import jakarta.validation.constraints.NotBlank
 
 
 /**
@@ -12,12 +13,13 @@ import io.kudos.base.support.payload.FormPayload
 data class SysTenantPayload (
 
     /** 主键 */
-    override val id: String = "",
+    override val id: String? = null,
 
     //region your codes 1
 
     /** 名称 */
-    val name: String? = null,
+    @get:NotBlank
+    val name: String = "",
 
     /** 时区 */
     val timezone: String? = null,
@@ -28,17 +30,14 @@ data class SysTenantPayload (
     /** 备注 */
     val remark: String? = null,
 
-    /** 是否启用 */
-    val active: Boolean? = null,
-
     //endregion your codes 1
 //region your codes 2
-) : FormPayload<String>() {
+) : FormPayload<String?>() {
 //endregion your codes 2
 
     //region your codes 3
 
-    constructor() : this("")
+    constructor() : this(null)
 
     // endregion your codes 3
 

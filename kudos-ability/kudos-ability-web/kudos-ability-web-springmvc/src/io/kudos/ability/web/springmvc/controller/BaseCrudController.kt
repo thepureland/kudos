@@ -7,6 +7,7 @@ import io.kudos.base.support.result.IJsonResult
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 
 
@@ -25,22 +26,27 @@ open class BaseCrudController<PK : Any, B : IBaseCrudService<PK, *>, S : ListSea
     BaseReadOnlyController<PK, B, S, R, D, F>() {
 
     /**
-     * 保存或更新记录
+     * 保存新增的记录
      *
      * @param payload 表单实体
      * @return WebResult(主键)
-     * @author K
-     * @since 1.0.0
      */
-    @PostMapping("/saveOrUpdate")
-    open fun saveOrUpdate(@RequestBody @Valid payload: F): PK {
-        return if (payload.id == null ||payload.id == "" || payload.id == 0) {
-            service.insert(payload)
-        } else {
-            service.update(payload)
-            @Suppress("UNCHECKED_CAST")
-            payload.id as PK
-        }
+    @PostMapping("/save")
+    open fun save(@RequestBody @Valid payload: F): PK {
+        return service.insert(payload)
+    }
+
+    /**
+     * 更新记录
+     *
+     * @param payload 表单实体
+     * @return WebResult(主键)
+     */
+    @PutMapping("/update")
+    open fun update(@RequestBody @Valid payload: F): PK {
+        service.update(payload)
+        @Suppress("UNCHECKED_CAST")
+        return payload.id as PK
     }
 
     /**
@@ -64,7 +70,7 @@ open class BaseCrudController<PK : Any, B : IBaseCrudService<PK, *>, S : ListSea
      * @author K
      * @since 1.0.0
      */
-    @DeleteMapping("/batchDelete")
+    @PostMapping("/batchDelete")
     open fun batchDelete(@RequestBody ids: List<PK>): Boolean {
         return service.batchDelete(ids) == ids.size
     }

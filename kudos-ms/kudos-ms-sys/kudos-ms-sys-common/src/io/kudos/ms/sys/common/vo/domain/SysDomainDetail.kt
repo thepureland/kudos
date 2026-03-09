@@ -18,22 +18,22 @@ data class SysDomainDetail (
     //region your codes 1
 
     /** 域名 */
-    val domain: String? = null,
+    val domain: String = "",
 
     /** 系统编码 */
-    val systemCode: String? = null,
+    val systemCode: String = "",
 
     /** 租户id */
-    val tenantId: String? = null,
+    val tenantId: String = "",
 
     /** 备注 */
     val remark: String? = null,
 
     /** 是否启用 */
-    val active: Boolean? = null,
+    val active: Boolean = true,
 
     /** 是否内置 */
-    val builtIn: Boolean? = null,
+    val builtIn: Boolean = false,
 
     /** 创建者id */
     val createUserId: String? = null,

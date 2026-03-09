@@ -33,17 +33,17 @@ interface ISysTenantApi {
      * @author K
      * @since 1.0.0
      */
-    fun getTenants(ids: Collection<String>): Map<String, SysTenantCacheItem>
+    fun getTenantsBySubSystemCode(ids: Collection<String>): Map<String, SysTenantCacheItem>
 
     /**
      * 返回指定子系统的所有租户(仅启用的)
      *
-     * @param subSysDictCode 子系统代码
+     * @param subSystemCode 子系统代码
      * @return List(租户信息对象)
      * @author K
      * @since 1.0.0
      */
-    fun getTenants(subSysDictCode: String): List<SysTenantCacheItem>
+    fun getTenantsBySubSystemCode(subSystemCode: String): List<SysTenantCacheItem>
 
     //endregion your codes 2
 

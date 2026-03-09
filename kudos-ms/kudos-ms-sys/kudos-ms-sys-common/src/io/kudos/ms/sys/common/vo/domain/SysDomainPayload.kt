@@ -1,6 +1,7 @@
 package io.kudos.ms.sys.common.vo.domain
 
 import io.kudos.base.support.payload.FormPayload
+import jakarta.validation.constraints.NotBlank
 
 
 /**
@@ -17,19 +18,19 @@ data class SysDomainPayload (
     //region your codes 1
 
     /** 域名 */
-    val domain: String? = null,
+    @get:NotBlank
+    val domain: String = "",
 
     /** 系统编码 */
-    val systemCode: String? = null,
+    @get:NotBlank
+    val systemCode: String = "",
 
     /** 租户id */
-    val tenantId: String? = null,
+    @get:NotBlank
+    val tenantId: String = "",
 
     /** 备注 */
     val remark: String? = null,
-
-    /** 是否启用 */
-    val active: Boolean? = null,
 
     //endregion your codes 1
 //region your codes 2

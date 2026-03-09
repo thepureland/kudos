@@ -17,13 +17,13 @@ data class SysDataSourceRecord (
     override val id: String = "",
 
     /** 名称 */
-    val name: String? = null,
+    val name: String = "",
 
     /** 子系统编码 */
-    val subSystemCode: String? = null,
+    val subSystemCode: String = "",
 
     /** 微服务编码 */
-    val microServiceCode: String? = null,
+    val microServiceCode: String = "",
 
     /** 租户id */
     val tenantId: String? = null,
@@ -32,10 +32,10 @@ data class SysDataSourceRecord (
     var tenantName: String? = null,
 
     /** url */
-    val url: String? = null,
+    val url: String = "",
 
     /** 用户名 */
-    val username: String? = null,
+    val username: String = "",
 
     /** 密码 */
     val password: String? = null,

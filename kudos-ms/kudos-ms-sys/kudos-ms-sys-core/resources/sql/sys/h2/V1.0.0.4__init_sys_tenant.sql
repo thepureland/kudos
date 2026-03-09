@@ -36,5 +36,5 @@ comment on column "sys_tenant"."update_time" is '更新时间';
 
 --region DML
 merge into "sys_tenant" ("id", "name", "timezone", "default_language_code", "remark", "active", "built_in")
-    values ('818772a0-c053-4634-a5e5-31c486b3146a', 'default-tenant', null, null, null, true, true);
+    values ('818772a0-c053-4634-a5e5-31c486b3146a', 'default', null, null, null, true, true);
 --endregion DML
