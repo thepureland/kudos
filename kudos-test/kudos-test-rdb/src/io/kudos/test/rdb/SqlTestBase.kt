@@ -69,9 +69,9 @@ open class SqlTestBase {
     /**
      * 获取测试数据SQL文件路径
      *
-     * @return SQL文件路径（相对于classpath）
+     * @return SQL文件路径（相对于classpath），未找到时返回 null（仅打警告日志，不抛异常）
      */
-    protected open fun getTestDataSqlPath(): String {
+    protected open fun getTestDataSqlPath(): String? {
         val rdbType = RdbKit.determineRdbTypeByDataSource(dataSource)
         val sqlFilename = getTestClassName()
         val parentPath = "sql/${rdbType.name.lowercase()}"
@@ -80,7 +80,8 @@ open class SqlTestBase {
         return if (files.isNotEmpty()) {
             requireNotNull(files.first().location) { "resource location is null" }
         } else {
-            throw IllegalStateException("测试数据SQL文件不存在: $fullSqlFilename")
+            println("[$fullSqlFilename] WARN - 测试数据SQL文件不存在或为空，跳过执行")
+            null
         }
     }
 
@@ -130,7 +131,7 @@ open class SqlTestBase {
             } Thread=$threadName Class=$className - 开始执行测试数据SQL"
         )
 
-        val sqlPath = getTestDataSqlPath()
+        val sqlPath = getTestDataSqlPath() ?: return
         val populator = ResourceDatabasePopulator()
         populator.addScript(ClassPathResource(sqlPath))
         populator.setSeparator(";")

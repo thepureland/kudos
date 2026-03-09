@@ -32,11 +32,8 @@ data class SysI18nSearchPayload (
     /** 国际化值 */
     val value: String? = null,
 
-    /** 是否启用 */
-    val active: Boolean? = null,
-
-    /** 是否内置 */
-    val builtIn: Boolean? = null,
+    /** 仅启用 */
+    val active: Boolean? = true,
 
     //endregion your codes 1
 //region your codes 2

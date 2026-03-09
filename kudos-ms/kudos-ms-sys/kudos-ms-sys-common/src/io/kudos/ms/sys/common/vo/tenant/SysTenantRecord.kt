@@ -1,6 +1,7 @@
 package io.kudos.ms.sys.common.vo.tenant
 
 import io.kudos.base.support.result.IdJsonResult
+import java.time.LocalDateTime
 
 
 /**
@@ -17,7 +18,10 @@ data class SysTenantRecord (
     override val id: String = "",
 
     /** 名称 */
-    val name: String? = null,
+    val name: String = "",
+
+    /** 子系统编码 */
+    val subSystemCode: String = "",
 
     /** 时区 */
     val timezone: String? = null,
@@ -25,14 +29,17 @@ data class SysTenantRecord (
     /** 默认语言编码 */
     val defaultLanguageCode: String? = null,
 
+    /** 创建时间 */
+    val createTime: LocalDateTime? = null,
+
     /** 备注 */
     val remark: String? = null,
 
     /** 是否启用 */
-    val active: Boolean? = null,
+    val active: Boolean = true,
 
     /** 是否内置 */
-    val builtIn: Boolean? = null,
+    val builtIn: Boolean = false,
 
     //endregion your codes 1
 //region your codes 2

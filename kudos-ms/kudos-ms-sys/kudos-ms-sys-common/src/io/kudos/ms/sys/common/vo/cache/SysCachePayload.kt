@@ -16,7 +16,7 @@ import jakarta.validation.constraints.NotBlank
 data class SysCachePayload (
 
     /** 主键 */
-    override var id: String? = null,
+    override val id: String? = null,
 
     //region your codes 1
 

@@ -18,16 +18,16 @@ data class SysParamDetail (
     //region your codes 1
 
     /** 参数名称 */
-    val paramName: String? = null,
+    val paramName: String = "",
 
     /** 参数值 */
-    val paramValue: String? = null,
+    val paramValue: String = "",
 
     /** 默认参数值 */
     val defaultValue: String? = null,
 
-    /** 模块 */
-    val atomicServiceCode: String? = null,
+    /** 原子服务编码 */
+    val atomicServiceCode: String = "",
 
     /** 序号 */
     val orderNum: Int? = null,
@@ -36,10 +36,10 @@ data class SysParamDetail (
     val remark: String? = null,
 
     /** 是否启用 */
-    val active: Boolean? = null,
+    val active: Boolean = true,
 
     /** 是否内置 */
-    val builtIn: Boolean? = null,
+    val builtIn: Boolean = true,
 
     /** 创建者id */
     val createUserId: String? = null,

@@ -47,12 +47,12 @@ open class SysTenantService : BaseCrudService<String, SysTenant, SysTenantDao>()
         return tenantByIdCache.getTenantById(id)
     }
 
-    override fun getTenants(ids: Collection<String>): Map<String, SysTenantCacheItem> {
+    override fun getTenantsBySubSystemCode(ids: Collection<String>): Map<String, SysTenantCacheItem> {
         return tenantByIdCache.getTenantsByIds(ids)
     }
 
-    override fun getTenants(subSysDictCode: String): List<SysTenantCacheItem> {
-        val tenantIds = tenantIdsBySystemCodeCache.getTenantIds(subSysDictCode)
+    override fun getTenantsBySubSystemCode(subSystemCode: String): List<SysTenantCacheItem> {
+        val tenantIds = tenantIdsBySystemCodeCache.getTenantIds(subSystemCode)
         return tenantByIdCache.getTenantsByIds(tenantIds).values.filter { it.active == true }
     }
 

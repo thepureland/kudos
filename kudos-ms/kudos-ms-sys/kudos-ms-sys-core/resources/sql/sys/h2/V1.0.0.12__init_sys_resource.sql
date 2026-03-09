@@ -64,7 +64,7 @@ comment on column "sys_resource"."update_time" is '更新时间';
 merge into "sys_resource" ("id", "name", "url", "resource_type_dict_code", "parent_id", "order_num", "icon", "sub_system_code", "built_in") values
     ('68139ed2-kres-47fa-ac0d-2932fb0ee000', 'view.menu.home', '/home', '1', null, 1, 'HomeFilled', 'default', true),
     ('68139ed2-kres-47fa-ac0d-2932fb0ee001', 'view.menu.sys', '/sys', '1', null, 2, 'Setting', 'default', true),
-    ('68139ed2-kres-47fa-ac0d-2932fb0ee002', 'view.menu.subSys', '/sys/subSys', '1', '68139ed2-kres-47fa-ac0d-2932fb0ee001', 1, 'Mouse', 'default', true),
+    ('68139ed2-kres-47fa-ac0d-2932fb0ee002', 'view.menu.system', '/sys/system', '1', '68139ed2-kres-47fa-ac0d-2932fb0ee001', 1, 'Mouse', 'default', true),
     ('68139ed2-kres-47fa-ac0d-2932fb0ee003', 'view.menu.microService', '/sys/microService', '1', '68139ed2-kres-47fa-ac0d-2932fb0ee001', 2, 'Cpu', 'default', true),
     ('68139ed2-kres-47fa-ac0d-2932fb0ee004', 'view.menu.tenant', '/sys/tenant', '1', '68139ed2-kres-47fa-ac0d-2932fb0ee001', 3, 'Phone', 'default', true),
     ('68139ed2-kres-47fa-ac0d-2932fb0ee005', 'view.menu.dataSource', '/sys/dataSource', '1', '68139ed2-kres-47fa-ac0d-2932fb0ee001', 4, 'Coin', 'default', true),

@@ -274,7 +274,7 @@ open class SysDictService : BaseCrudService<String, SysDict, SysDictDao>(), ISys
         return dictTypeAndASCodePairs.associate { (dictType, atomicServiceCode) ->
             val items = sysDictItemService.getItems(dictType, atomicServiceCode)
             val map = LinkedHashMap<String, String>().apply {
-                items.filter { it.itemCode != null }.forEach { put(it.itemCode!!, it.itemName ?: "") }
+                items.forEach { put(it.itemCode, it.itemName) }
             }
             Pair(atomicServiceCode, dictType) to map
         }

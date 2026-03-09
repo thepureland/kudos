@@ -66,8 +66,8 @@ open class ParamByModuleAndNameCache : AbstractKeyValueCacheHandler<SysParamCach
 
         // 缓存参数
         params.forEach {
-            val atomicServiceCode = it.atomicServiceCode ?: return@forEach
-            val paramName = it.paramName ?: return@forEach
+            val atomicServiceCode = it.atomicServiceCode
+            val paramName = it.paramName
             KeyValueCacheKit.put(CACHE_NAME, getKey(atomicServiceCode, paramName), it)
         }
         log.debug("缓存了${params.size}条参数信息。")

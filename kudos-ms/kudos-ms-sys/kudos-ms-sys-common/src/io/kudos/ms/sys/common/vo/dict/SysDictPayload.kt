@@ -30,9 +30,6 @@ data class SysDictPayload (
     /** 备注 */
     val remark: String? = null,
 
-    /** 是否启用 */
-    val active: Boolean = true,
-
     val code: String? = null, //TODO
 
     val name: String? = null, //TODO

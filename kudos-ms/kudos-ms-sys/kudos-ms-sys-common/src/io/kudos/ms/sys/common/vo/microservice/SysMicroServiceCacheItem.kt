@@ -24,7 +24,7 @@ data class SysMicroServiceCacheItem (
     val name: String = "",
 
     /** 上下文 */
-    val context: String? = null,
+    val context: String = "",
 
     /** 是否为原子服务 */
     val atomicService: Boolean = true,

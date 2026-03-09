@@ -23,14 +23,8 @@ data class SysDomainSearchPayload (
     /** 租户id */
     val tenantId: String? = null,
 
-    /** 备注 */
-    val remark: String? = null,
-
-    /** 是否启用 */
+    /** 仅启用 */
     val active: Boolean? = null,
-
-    /** 是否内置 */
-    val builtIn: Boolean? = null,
 
     //endregion your codes 1
 //region your codes 2

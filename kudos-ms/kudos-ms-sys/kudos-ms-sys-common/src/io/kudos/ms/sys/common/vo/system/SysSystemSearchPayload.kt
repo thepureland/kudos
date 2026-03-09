@@ -23,17 +23,8 @@ data class SysSystemSearchPayload (
     /** 是否子系统 */
     val subSystem: Boolean? = null,
 
-    /** 父系统编号 */
-    val parentCode: String? = null,
-
-    /** 备注 */
-    val remark: String? = null,
-
     /** 是否启用 */
-    val active: Boolean? = null,
-
-    /** 是否内置 */
-    val builtIn: Boolean? = null,
+    val active: Boolean? = true,
 
     //endregion your codes 1
 //region your codes 2

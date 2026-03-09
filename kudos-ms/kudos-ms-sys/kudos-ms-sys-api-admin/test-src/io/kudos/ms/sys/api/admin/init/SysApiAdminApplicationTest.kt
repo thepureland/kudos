@@ -1,15 +1,22 @@
 package io.kudos.ms.sys.api.admin.init
 
-import io.kudos.test.container.containers.H2TestContainer
-import io.kudos.test.container.containers.RedisTestContainer
-import org.springframework.boot.SpringApplication
+import io.kudos.test.common.init.EnableKudosTest
+import io.kudos.test.container.annotations.EnabledIfDockerInstalled
+import io.kudos.test.rdb.RdbAndRedisCacheTestBase
+import org.springframework.boot.test.context.SpringBootTest
+import kotlin.test.Test
 
-fun main(args : Array<String>) {
+@EnableKudosTest(
+    classes = [SysApiAdminApplication::class],
+    webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
+    properties = ["server.port=8080"]
+)
+@EnabledIfDockerInstalled
+class SysApiAdminApplicationTest: RdbAndRedisCacheTestBase() {
 
-    // 构造中间件环境
-    H2TestContainer.startIfNeeded(null)
-    RedisTestContainer.startIfNeeded(null)
+    @Test
+    fun test() {
+        Thread.sleep(Long.MAX_VALUE)
+    }
 
-    // 运行主应用
-    SpringApplication.run(SysApiAdminApplication::class.java, *args)
 }

@@ -34,9 +34,8 @@ spring:
 
 kudos:
   ability:
-    # 本地开发无 Redis 时可设为 false，避免启动时报 RedisConnectionFailureException
     cache:
-      enabled: false
+      enabled: true
     flyway:
       #fly数据源配置
       datasource-config:

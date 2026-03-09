@@ -19,20 +19,8 @@ data class SysTenantSearchPayload (
 
     val subSystemCode: String? = null,
 
-    /** 时区 */
-    val timezone: String? = null,
-
-    /** 默认语言编码 */
-    val defaultLanguageCode: String? = null,
-
-    /** 备注 */
-    val remark: String? = null,
-
-    /** 是否启用 */
-    val active: Boolean? = null,
-
-    /** 是否内置 */
-    val builtIn: Boolean? = null,
+    /** 仅启用 */
+    val active: Boolean? = true,
 
     //endregion your codes 1
 //region your codes 2

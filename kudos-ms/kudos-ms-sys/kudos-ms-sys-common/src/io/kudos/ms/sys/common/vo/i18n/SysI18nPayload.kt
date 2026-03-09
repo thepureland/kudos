@@ -1,6 +1,7 @@
 package io.kudos.ms.sys.common.vo.i18n
 
 import io.kudos.base.support.payload.FormPayload
+import jakarta.validation.constraints.NotBlank
 
 
 /**
@@ -17,21 +18,27 @@ data class SysI18nPayload (
     //region your codes 1
 
     /** 语言_地区 */
+    @get:NotBlank
     val locale: String = "",
 
     /** 原子服务编码 */
+    @get:NotBlank
     val atomicServiceCode: String = "",
 
     /** 国际化类型字典代码 */
+    @get:NotBlank
     val i18nTypeDictCode: String = "",
 
     /** 国际化命名空间 */
+    @get:NotBlank
     val namespace: String = "",
 
     /** 国际化key */
+    @get:NotBlank
     val key: String = "",
 
     /** 国际化值 */
+    @get:NotBlank
     val value: String = "",
 
     /** 是否启用 */

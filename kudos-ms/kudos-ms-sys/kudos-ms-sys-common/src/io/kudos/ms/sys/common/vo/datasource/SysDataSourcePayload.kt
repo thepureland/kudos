@@ -1,6 +1,7 @@
 package io.kudos.ms.sys.common.vo.datasource
 
 import io.kudos.base.support.payload.FormPayload
+import jakarta.validation.constraints.NotBlank
 
 
 /**
@@ -17,22 +18,27 @@ data class SysDataSourcePayload (
     //region your codes 1
 
     /** 名称 */
-    val name: String? = null,
+    @get:NotBlank
+    val name: String = "",
 
     /** 子系统编码 */
-    val subSystemCode: String? = null,
+    @get:NotBlank
+    val subSystemCode: String = "",
 
     /** 微服务编码 */
-    val microServiceCode: String? = null,
+    @get:NotBlank
+    val microServiceCode: String = "",
 
     /** 租户id */
     val tenantId: String? = null,
 
     /** url */
-    val url: String? = null,
+    @get:NotBlank
+    val url: String = "",
 
     /** 用户名 */
-    val username: String? = null,
+    @get:NotBlank
+    val username: String = "",
 
     /** 密码 */
     val password: String? = null,
@@ -57,9 +63,6 @@ data class SysDataSourcePayload (
 
     /** 备注 */
     val remark: String? = null,
-
-    /** 是否启用 */
-    val active: Boolean? = null,
 
     //endregion your codes 1
 //region your codes 2

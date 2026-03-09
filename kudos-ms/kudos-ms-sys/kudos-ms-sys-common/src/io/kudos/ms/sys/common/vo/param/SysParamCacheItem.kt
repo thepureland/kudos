@@ -2,7 +2,6 @@ package io.kudos.ms.sys.common.vo.param
 
 import io.kudos.base.support.IIdEntity
 import java.io.Serializable
-import java.time.LocalDateTime
 
 
 /**
@@ -19,16 +18,16 @@ data class SysParamCacheItem (
     //region your codes 1
 
     /** 参数名称 */
-    val paramName: String? = null,
+    val paramName: String = "",
 
     /** 参数值 */
-    val paramValue: String? = null,
+    val paramValue: String = "",
 
     /** 默认参数值 */
     val defaultValue: String? = null,
 
-    /** 模块 */
-    val atomicServiceCode: String? = null,
+    /** 原子服务编码 */
+    val atomicServiceCode: String = "",
 
     /** 序号 */
     val orderNum: Int? = null,
@@ -37,28 +36,10 @@ data class SysParamCacheItem (
     val remark: String? = null,
 
     /** 是否启用 */
-    val active: Boolean? = null,
+    val active: Boolean = true,
 
     /** 是否内置 */
-    val builtIn: Boolean? = null,
-
-    /** 创建者id */
-    val createUserId: String? = null,
-
-    /** 创建者名称 */
-    val createUserName: String? = null,
-
-    /** 创建时间 */
-    val createTime: LocalDateTime? = null,
-
-    /** 更新者id */
-    val updateUserId: String? = null,
-
-    /** 更新者名称 */
-    val updateUserName: String? = null,
-
-    /** 更新时间 */
-    val updateTime: LocalDateTime? = null,
+    val builtIn: Boolean = true,
 
     //endregion your codes 1
 //region your codes 2

@@ -1,6 +1,7 @@
 package io.kudos.ms.sys.common.vo.param
 
 import io.kudos.base.support.payload.FormPayload
+import jakarta.validation.constraints.NotBlank
 
 
 /**
@@ -17,25 +18,25 @@ data class SysParamPayload (
     //region your codes 1
 
     /** 参数名称 */
-    val paramName: String? = null,
+    @get:NotBlank
+    val paramName: String = "",
 
     /** 参数值 */
-    val paramValue: String? = null,
+    @get:NotBlank
+    val paramValue: String = "",
 
     /** 默认参数值 */
     val defaultValue: String? = null,
 
-    /** 模块 */
-    val atomicServiceCode: String? = null,
+    /** 原子服务编码 */
+    @get:NotBlank
+    val atomicServiceCode: String = "",
 
     /** 序号 */
     val orderNum: Int? = null,
 
     /** 备注 */
     val remark: String? = null,
-
-    /** 是否启用 */
-    val active: Boolean? = null,
 
     //endregion your codes 1
 //region your codes 2

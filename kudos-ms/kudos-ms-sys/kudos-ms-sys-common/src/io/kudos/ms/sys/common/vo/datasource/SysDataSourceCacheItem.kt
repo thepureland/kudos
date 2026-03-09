@@ -19,22 +19,22 @@ data class SysDataSourceCacheItem (
     //region your codes 1
 
     /** 名称 */
-    val name: String? = null,
+    val name: String = "",
 
     /** 子系统编码 */
-    val subSystemCode: String? = null,
+    val subSystemCode: String = "",
 
     /** 微服务编码 */
-    val microServiceCode: String? = null,
+    val microServiceCode: String = "",
 
     /** 租户id */
     val tenantId: String? = null,
 
     /** url */
-    val url: String? = null,
+    val url: String = "",
 
     /** 用户名 */
-    val username: String? = null,
+    val username: String = "",
 
     /** 密码 */
     val password: String? = null,
@@ -65,24 +65,6 @@ data class SysDataSourceCacheItem (
 
     /** 是否内置 */
     val builtIn: Boolean? = null,
-
-    /** 创建者id */
-    val createUserId: String? = null,
-
-    /** 创建者名称 */
-    val createUserName: String? = null,
-
-    /** 创建时间 */
-    val createTime: LocalDateTime? = null,
-
-    /** 更新者id */
-    val updateUserId: String? = null,
-
-    /** 更新者名称 */
-    val updateUserName: String? = null,
-
-    /** 更新时间 */
-    val updateTime: LocalDateTime? = null,
 
     //endregion your codes 1
 //region your codes 2

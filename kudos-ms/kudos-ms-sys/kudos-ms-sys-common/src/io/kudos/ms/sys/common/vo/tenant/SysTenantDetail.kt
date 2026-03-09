@@ -18,7 +18,7 @@ data class SysTenantDetail (
     //region your codes 1
 
     /** 名称 */
-    val name: String? = null,
+    val name: String = "",
 
     /** 时区 */
     val timezone: String? = null,
@@ -30,10 +30,10 @@ data class SysTenantDetail (
     val remark: String? = null,
 
     /** 是否启用 */
-    val active: Boolean? = null,
+    val active: Boolean = true,
 
     /** 是否内置 */
-    val builtIn: Boolean? = null,
+    val builtIn: Boolean = false,
 
     /** 创建者id */
     val createUserId: String? = null,
