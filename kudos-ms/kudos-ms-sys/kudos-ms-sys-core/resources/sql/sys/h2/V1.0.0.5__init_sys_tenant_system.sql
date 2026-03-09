@@ -39,6 +39,6 @@ comment on column "sys_tenant_system"."update_time" is '更新时间';
 
 
 --region DML
-merge into "sys_tenant_system" ("id", "tenant_id", "system_code")
-    values ('a3846388-5e61-4b58-8fd8-3415a2782e56', '818772a0-c053-4634-a5e5-31c486b3146a', 'default');
+insert into "sys_tenant_system" ("tenant_id", "system_code")
+    values ('818772a0-c053-4634-a5e5-31c486b3146a', 'default');
 --endregion DML

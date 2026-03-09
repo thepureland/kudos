@@ -28,6 +28,6 @@ comment on column "sys_sub_system_micro_service"."update_time" is '更新时间'
 
 
 --region DML
-merge into "sys_sub_system_micro_service" ("id", "sub_system_code", "micro_service_code")
-    values ('a9638b2b-52a2-47e1-b88a-2138ca1b2274', 'default', 'default');
+insert into "sys_sub_system_micro_service" ("sub_system_code", "micro_service_code")
+    values ('default', 'default');
 --endregion DML
