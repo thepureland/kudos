@@ -1,8 +1,8 @@
 package io.kudos.ms.user.core.api
 
 import io.kudos.ms.user.common.api.IUserOrgApi
-import io.kudos.ms.user.common.vo.org.UserOrgCacheItem
-import io.kudos.ms.user.common.vo.user.UserAccountCacheItem
+import io.kudos.ms.user.common.vo.org.UserOrgCacheEntry
+import io.kudos.ms.user.common.vo.user.UserAccountCacheEntry
 import io.kudos.ms.user.core.cache.UserOrgHashCache
 import io.kudos.ms.user.core.service.iservice.IUserOrgService
 import jakarta.annotation.Resource
@@ -29,11 +29,11 @@ open class UserOrgApi : IUserOrgApi {
     @Resource
     private lateinit var userOrgService: IUserOrgService
 
-    override fun getOrgById(id: String): UserOrgCacheItem? {
+    override fun getOrgById(id: String): UserOrgCacheEntry? {
         return userOrgHashCache.getOrgById(id)
     }
 
-    override fun getOrgsByIds(ids: Collection<String>): Map<String, UserOrgCacheItem> {
+    override fun getOrgsByIds(ids: Collection<String>): Map<String, UserOrgCacheEntry> {
         return userOrgHashCache.getOrgsByIds(ids)
     }
 
@@ -41,11 +41,11 @@ open class UserOrgApi : IUserOrgApi {
         return userOrgHashCache.getOrgsByTenantId(tenantId).map { it.id }
     }
 
-    override fun getOrgAdmins(orgId: String): List<UserAccountCacheItem> {
+    override fun getOrgAdmins(orgId: String): List<UserAccountCacheEntry> {
         return userOrgService.getOrgAdmins(orgId)
     }
 
-    override fun getOrgUsers(orgId: String): List<UserAccountCacheItem> {
+    override fun getOrgUsers(orgId: String): List<UserAccountCacheEntry> {
         return userOrgService.getOrgUsers(orgId)
     }
 
@@ -53,11 +53,11 @@ open class UserOrgApi : IUserOrgApi {
         return userOrgService.isUserInOrg(userId, orgId)
     }
 
-    override fun getChildOrgs(orgId: String): List<UserOrgCacheItem> {
+    override fun getChildOrgs(orgId: String): List<UserOrgCacheEntry> {
         return userOrgService.getChildOrgs(orgId)
     }
 
-    override fun getParentOrg(orgId: String): UserOrgCacheItem? {
+    override fun getParentOrg(orgId: String): UserOrgCacheEntry? {
         return userOrgService.getParentOrg(orgId)
     }
 

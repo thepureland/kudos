@@ -4,7 +4,7 @@ import io.kudos.ability.cache.common.aop.hash.HashCacheableBySecondary
 import io.kudos.ability.cache.common.core.hash.AbstractHashCacheHandler
 import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.logger.LogFactory
-import io.kudos.ms.sys.common.vo.i18n.SysI18nCacheItem
+import io.kudos.ms.sys.common.vo.i18n.SysI18nCacheEntry
 import io.kudos.ms.sys.core.cache.SysI18nHashCache.Companion.CACHE_NAME
 import io.kudos.ms.sys.core.cache.SysI18nHashCache.Companion.FILTERABLE_PROPERTIES
 import io.kudos.ms.sys.core.dao.SysI18nDao
@@ -12,7 +12,7 @@ import jakarta.annotation.Resource
 import org.springframework.stereotype.Component
 
 /**
- * 国际化统一缓存处理器，基于 Hash 结构存储 [SysI18nCacheItem]。
+ * 国际化统一缓存处理器，基于 Hash 结构存储 [SysI18nCacheEntry]。
  *
  * 提供按副属性查询与回写能力：
  *  locale + atomicServiceCode + i18nTypeDictCode + namespace
@@ -28,7 +28,7 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-open class SysI18nHashCache : AbstractHashCacheHandler<SysI18nCacheItem>() {
+open class SysI18nHashCache : AbstractHashCacheHandler<SysI18nCacheEntry>() {
 
     @Resource
     private lateinit var sysI18nDao: SysI18nDao
@@ -40,21 +40,21 @@ open class SysI18nHashCache : AbstractHashCacheHandler<SysI18nCacheItem>() {
 
         /** 可筛选副属性，用于按 locale / atomicServiceCode / i18nTypeDictCode / namespace 建二级索引 */
         val FILTERABLE_PROPERTIES = setOf(
-            SysI18nCacheItem::locale.name,
-            SysI18nCacheItem::atomicServiceCode.name,
-            SysI18nCacheItem::i18nTypeDictCode.name,
-            SysI18nCacheItem::namespace.name
+            SysI18nCacheEntry::locale.name,
+            SysI18nCacheEntry::atomicServiceCode.name,
+            SysI18nCacheEntry::i18nTypeDictCode.name,
+            SysI18nCacheEntry::namespace.name
         )
     }
 
     override fun cacheName(): String = CACHE_NAME
 
-    override fun entityClass() = SysI18nCacheItem::class
+    override fun entityClass() = SysI18nCacheEntry::class
 
     override fun filterableProperties(): Set<String> = FILTERABLE_PROPERTIES
 
-    override fun doReload(id: Any): SysI18nCacheItem? =
-        sysI18nDao.get(id.toString(), SysI18nCacheItem::class)
+    override fun doReload(id: Any): SysI18nCacheEntry? =
+        sysI18nDao.get(id.toString(), SysI18nCacheEntry::class)
 
     // ---------- 按 locale + atomicServiceCode + i18nTypeDictCode + namespace ----------
 
@@ -72,7 +72,7 @@ open class SysI18nHashCache : AbstractHashCacheHandler<SysI18nCacheItem>() {
     @HashCacheableBySecondary(
         cacheNames = [CACHE_NAME],
         filterExpressions = ["#locale", "#atomicServiceCode", "#i18nTypeDictCode", "#namespace"],
-        entityClass = SysI18nCacheItem::class,
+        entityClass = SysI18nCacheEntry::class,
         filterableProperties = ["locale", "atomicServiceCode", "i18nTypeDictCode", "namespace"]
     )
     open fun getI18ns(
@@ -80,7 +80,7 @@ open class SysI18nHashCache : AbstractHashCacheHandler<SysI18nCacheItem>() {
         atomicServiceCode: String,
         i18nTypeDictCode: String,
         namespace: String? = null
-    ): List<SysI18nCacheItem> {
+    ): List<SysI18nCacheEntry> {
         require(locale.isNotBlank()) { "获取国际化时 locale 不能为空" }
         require(atomicServiceCode.isNotBlank()) { "获取国际化时 atomicServiceCode 不能为空" }
         require(i18nTypeDictCode.isNotBlank()) { "获取国际化时 i18nTypeDictCode 不能为空" }
@@ -113,7 +113,7 @@ open class SysI18nHashCache : AbstractHashCacheHandler<SysI18nCacheItem>() {
      */
     open fun syncOnInsert(id: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME) || !KeyValueCacheKit.isWriteInTime(CACHE_NAME)) return
-        val item = sysI18nDao.get(id, SysI18nCacheItem::class) ?: return
+        val item = sysI18nDao.get(id, SysI18nCacheEntry::class) ?: return
         hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
     }
 
@@ -134,7 +134,7 @@ open class SysI18nHashCache : AbstractHashCacheHandler<SysI18nCacheItem>() {
      */
     open fun syncOnUpdate(id: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
-        val item = sysI18nDao.get(id, SysI18nCacheItem::class) ?: return
+        val item = sysI18nDao.get(id, SysI18nCacheEntry::class) ?: return
         if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
             hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
         }
@@ -157,7 +157,7 @@ open class SysI18nHashCache : AbstractHashCacheHandler<SysI18nCacheItem>() {
      */
     open fun syncOnDelete(id: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
-        hashCache().deleteById(CACHE_NAME, id, SysI18nCacheItem::class, FILTERABLE_PROPERTIES, emptySet())
+        hashCache().deleteById(CACHE_NAME, id, SysI18nCacheEntry::class, FILTERABLE_PROPERTIES, emptySet())
     }
 
     /**
@@ -170,7 +170,7 @@ open class SysI18nHashCache : AbstractHashCacheHandler<SysI18nCacheItem>() {
         log.debug("批量删除 id 为 $ids 的 sys_i18n 后，同步从 ${cacheName()} 缓存中踢除...")
         val cache = hashCache()
         ids.forEach {
-            cache.deleteById(cacheName(), it, SysI18nCacheItem::class, FILTERABLE_PROPERTIES, emptySet())
+            cache.deleteById(cacheName(), it, SysI18nCacheEntry::class, FILTERABLE_PROPERTIES, emptySet())
         }
         log.debug("${cacheName()} 缓存同步完成。")
     }

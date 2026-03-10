@@ -34,7 +34,7 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
     @Resource
     private lateinit var sysResourceHashCache: SysResourceHashCache
 
-    override fun getResourceById(id: String): SysResourceCacheItem? {
+    override fun getResourceById(id: String): SysResourceCacheEntry? {
         return sysResourceHashCache.getResourceById(id)
     }
 
@@ -47,33 +47,33 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
             .map { it.id }
     }
 
-    override fun getResourcesBySubSystemCode(subSystemCode: String): List<SysResourceRecord> {
+    override fun getResourcesBySubSystemCode(subSystemCode: String): List<SysResourceRow> {
         val criteria = Criteria(SysResource::subSystemCode eq subSystemCode)
-        return dao.searchAs<SysResourceRecord>(criteria)
+        return dao.searchAs<SysResourceRow>(criteria)
     }
 
-    override fun getChildResources(parentId: String): List<SysResourceRecord> {
+    override fun getChildResources(parentId: String): List<SysResourceRow> {
         val criteria = Criteria(SysResource::parentId eq parentId)
-        return dao.searchAs<SysResourceRecord>(criteria)
+        return dao.searchAs<SysResourceRow>(criteria)
     }
 
-    override fun getResourceTree(subSystemCode: String, parentId: String?): List<SysResourceTreeRecord> {
+    override fun getResourceTree(subSystemCode: String, parentId: String?): List<SysResourceTreeRow> {
         val criteria = Criteria.and(
             SysResource::subSystemCode eq subSystemCode,
             SysResource::parentId eq parentId
         )
-        val records = dao.searchAs<SysResourceRecord>(criteria)
+        val records = dao.searchAs<SysResourceRow>(criteria)
 
         // 转换为树节点
         val treeNodes = records.map { record ->
-            SysResourceTreeRecord(children = mutableListOf()).apply {
+            SysResourceTreeRow(children = mutableListOf()).apply {
                 BeanKit.copyProperties(record, this)
             }
         }
 
         // 构建树形结构
         val nodeMap = treeNodes.associateBy { it.id }
-        val rootNodes = mutableListOf<SysResourceTreeRecord>()
+        val rootNodes = mutableListOf<SysResourceTreeRow>()
 
         treeNodes.forEach { node ->
             if (node.parentId == null) {
@@ -85,7 +85,7 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
         }
 
         // 按 orderNum 排序
-        fun sortTree(nodes: List<SysResourceTreeRecord>) {
+        fun sortTree(nodes: List<SysResourceTreeRow>) {
             nodes.sortedBy { it.orderNum ?: Int.MAX_VALUE }.forEach { node ->
                 node.children?.let { sortTree(it) }
             }
@@ -190,11 +190,11 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
         return count
     }
 
-    override fun getResource(resourceId: String): SysResourceCacheItem? {
+    override fun getResource(resourceId: String): SysResourceCacheEntry? {
         return sysResourceHashCache.getResourceById(resourceId)
     }
 
-    override fun getResources(resourceIds: Collection<String>): Map<String, SysResourceCacheItem> {
+    override fun getResources(resourceIds: Collection<String>): Map<String, SysResourceCacheEntry> {
         if (resourceIds.isEmpty()) return emptyMap()
         return sysResourceHashCache.getResourcesByIds(resourceIds.toSet())
     }
@@ -202,7 +202,7 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
     override fun getResources(
         resourceType: ResourceTypeEnum,
         subSystemCode: String,
-    ): List<SysResourceCacheItem> {
+    ): List<SysResourceCacheEntry> {
         return sysResourceHashCache.getResourcesBySubSystemCodeAndType(subSystemCode, resourceType.code)
     }
 
@@ -242,7 +242,7 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
         resourceType: ResourceTypeEnum,
         parentId: String?,
         subSystemCode: String,
-    ): List<SysResourceCacheItem> {
+    ): List<SysResourceCacheEntry> {
         val list = sysResourceHashCache.getResourcesBySubSystemCodeAndType(subSystemCode, resourceType.code)
         return list.filter { it.parentId == parentId }
     }
@@ -251,9 +251,9 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
         subSystemCode: String,
         resourceType: ResourceTypeEnum,
         parentId: String
-    ): List<SysResourceCacheItem> {
+    ): List<SysResourceCacheEntry> {
         val resources = sysResourceHashCache.getResourcesBySubSystemCodeAndType(subSystemCode, resourceType.code)
-        val children = mutableListOf<SysResourceCacheItem>()
+        val children = mutableListOf<SysResourceCacheEntry>()
         filterChildrenRecursively(parentId, children, resources)
         return children
     }
@@ -263,8 +263,8 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
      */
     private fun filterChildrenRecursively(
         parentId: String,
-        children: MutableList<SysResourceCacheItem>,
-        resources: Collection<SysResourceCacheItem>
+        children: MutableList<SysResourceCacheEntry>,
+        resources: Collection<SysResourceCacheEntry>
     ) {
         val filteredChildren = resources.filter { it.parentId == parentId }
         children.addAll(filteredChildren)
@@ -275,8 +275,8 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
      * 将资源列表组装为树，返回根节点列表（parentId 为 null 或空的节点，或父节点不在列表中的节点）。
      */
     private fun <T : BaseMenuTreeNode> buildMenuTree(
-        resources: List<SysResourceCacheItem>,
-        nodeFactory: (SysResourceCacheItem) -> T
+        resources: List<SysResourceCacheEntry>,
+        nodeFactory: (SysResourceCacheEntry) -> T
     ): List<T> {
         val nodeMap = resources.associate { it.id to nodeFactory(it) }
         val roots = mutableListOf<T>()

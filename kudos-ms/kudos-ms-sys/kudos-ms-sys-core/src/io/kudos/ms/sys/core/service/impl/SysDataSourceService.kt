@@ -9,9 +9,9 @@ import io.kudos.base.query.eq
 import io.kudos.base.security.CryptoKit
 import io.kudos.base.support.payload.ListSearchPayload
 import io.kudos.ms.sys.common.api.ISysTenantApi
-import io.kudos.ms.sys.common.vo.datasource.SysDataSourceCacheItem
+import io.kudos.ms.sys.common.vo.datasource.SysDataSourceCacheEntry
 import io.kudos.ms.sys.common.vo.datasource.SysDataSourceDetail
-import io.kudos.ms.sys.common.vo.datasource.SysDataSourceRecord
+import io.kudos.ms.sys.common.vo.datasource.SysDataSourceRow
 import io.kudos.ms.sys.core.cache.SysDataSourceHashCache
 import io.kudos.ms.sys.core.dao.SysDataSourceDao
 import io.kudos.ms.sys.core.model.po.SysDataSource
@@ -48,7 +48,7 @@ open class SysDataSourceService : BaseCrudService<String, SysDataSource, SysData
         tenantId: String,
         subSystemCode: String,
         microServiceCode: String?
-    ): List<SysDataSourceCacheItem> {
+    ): List<SysDataSourceCacheEntry> {
         return sysDataSourceHashCache.getDataSources(tenantId, subSystemCode, microServiceCode)
     }
 
@@ -56,7 +56,7 @@ open class SysDataSourceService : BaseCrudService<String, SysDataSource, SysData
         val result = super.pagingSearch(listSearchPayload)
 
         // 根据租户id获取租户名称
-        val records = result.data.filterIsInstance<SysDataSourceRecord>()
+        val records = result.data.filterIsInstance<SysDataSourceRow>()
         if (records.isNotEmpty()) {
             val tenantIds = records.mapNotNull { it.tenantId }
             val tenants = sysTenantApi.getTenantsBySubSystemCode(tenantIds)
@@ -162,9 +162,9 @@ open class SysDataSourceService : BaseCrudService<String, SysDataSource, SysData
      * @author AI: Cursor
      * @since 1.0.0
      */
-    override fun getDataSourcesByTenantId(tenantId: String): List<SysDataSourceRecord> {
+    override fun getDataSourcesByTenantId(tenantId: String): List<SysDataSourceRow> {
         val criteria = Criteria(SysDataSource::tenantId eq tenantId)
-        return dao.searchAs<SysDataSourceRecord>(criteria)
+        return dao.searchAs<SysDataSourceRow>(criteria)
     }
 
     /**
@@ -175,15 +175,15 @@ open class SysDataSourceService : BaseCrudService<String, SysDataSource, SysData
      * @author AI: Cursor
      * @since 1.0.0
      */
-    override fun getDataSourcesBySubSystemCode(subSystemCode: String): List<SysDataSourceRecord> {
+    override fun getDataSourcesBySubSystemCode(subSystemCode: String): List<SysDataSourceRow> {
         val criteria = Criteria(SysDataSource::subSystemCode eq subSystemCode)
-        return dao.searchAs<SysDataSourceRecord>(criteria)
+        return dao.searchAs<SysDataSourceRow>(criteria)
     }
 
     override fun getDataSource(
         tenantId: String,
         atomicServiceCode: String?
-    ): SysDataSourceCacheItem? {
+    ): SysDataSourceCacheEntry? {
         return sysDataSourceHashCache.getDataSources(tenantId, null, atomicServiceCode).firstOrNull()
     }
 

@@ -1,11 +1,11 @@
 package io.kudos.ms.sys.common.api
 
-import io.kudos.ms.sys.common.vo.dict.SysDictPayload
+import io.kudos.ms.sys.common.vo.dict.SysDictForm
 import io.kudos.ms.sys.common.vo.dict.SysDictTreeNode
-import io.kudos.ms.sys.common.vo.dictitem.SysDictItemCacheItem
-import io.kudos.ms.sys.common.vo.dictitem.SysDictItemRecord
-import io.kudos.ms.sys.common.vo.dictitem.SysDictItemSearchPayload
-import io.kudos.ms.sys.common.vo.dictitem.SysDictItemTreeRecord
+import io.kudos.ms.sys.common.vo.dictitem.SysDictItemCacheEntry
+import io.kudos.ms.sys.common.vo.dictitem.SysDictItemRow
+import io.kudos.ms.sys.common.vo.dictitem.SysDictItemQuery
+import io.kudos.ms.sys.common.vo.dictitem.SysDictItemTreeRow
 
 
 /**
@@ -20,13 +20,13 @@ interface ISysDictItemApi {
 
     //region your codes 2
 
-    fun get(id: String, fetchAllParentIds: Boolean = false): SysDictItemRecord?
+    fun get(id: String, fetchAllParentIds: Boolean = false): SysDictItemRow?
 
-    fun getItemsFromCache(type: String, atomicServiceCode: String): List<SysDictItemCacheItem>
+    fun getItemsFromCache(type: String, atomicServiceCode: String): List<SysDictItemCacheEntry>
 
     fun transDictCode(dictType: String, itemCode: String, atomicServiceCode: String): String?
 
-    fun saveOrUpdate(payload: SysDictPayload): String
+    fun saveOrUpdate(payload: SysDictForm): String
 
     fun fetchAllParentIds(itemId: String): List<String>
 
@@ -34,17 +34,17 @@ interface ISysDictItemApi {
 
     fun loadDirectChildrenForTree(parent: String?, isModule: Boolean, activeOnly: Boolean = true): List<SysDictTreeNode>
 
-    fun loadDirectChildrenForList(searchPayload: SysDictItemSearchPayload): Pair<List<SysDictItemRecord>, Int>
+    fun loadDirectChildrenForList(searchPayload: SysDictItemQuery): Pair<List<SysDictItemRow>, Int>
 
     fun updateActive(dictItemId: String, active: Boolean): Boolean
 
-    fun getDictItemsByDictId(dictId: String): List<SysDictItemRecord>
+    fun getDictItemsByDictId(dictId: String): List<SysDictItemRow>
 
-    fun getDictItemsByAtomicServiceAndType(dictType: String, atomicServiceCode: String): List<SysDictItemCacheItem>
+    fun getDictItemsByAtomicServiceAndType(dictType: String, atomicServiceCode: String): List<SysDictItemCacheEntry>
 
-    fun getDictItemTree(dictId: String, parentId: String? = null): List<SysDictItemTreeRecord>
+    fun getDictItemTree(dictId: String, parentId: String? = null): List<SysDictItemTreeRow>
 
-    fun getChildItems(parentId: String): List<SysDictItemRecord>
+    fun getChildItems(parentId: String): List<SysDictItemRow>
 
     fun moveItem(id: String, newParentId: String?, newOrderNum: Int?): Boolean
 

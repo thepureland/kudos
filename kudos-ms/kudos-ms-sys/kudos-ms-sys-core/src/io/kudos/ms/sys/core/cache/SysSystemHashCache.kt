@@ -6,7 +6,7 @@ import io.kudos.ability.cache.common.batch.hash.HashBatchCacheableByPrimary
 import io.kudos.ability.cache.common.core.hash.AbstractHashCacheHandler
 import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.logger.LogFactory
-import io.kudos.ms.sys.common.vo.system.SysSystemCacheItem
+import io.kudos.ms.sys.common.vo.system.SysSystemCacheEntry
 import io.kudos.ms.sys.core.cache.SysSystemHashCache.Companion.CACHE_NAME
 import io.kudos.ms.sys.core.dao.SysSystemDao
 import jakarta.annotation.Resource
@@ -15,14 +15,14 @@ import org.springframework.stereotype.Component
 /**
  * 系统（按 code）Hash 缓存处理器。
  *
- * 数据来源表：sys_system；主键为 code，缓存的 key 即 code，value 为 [SysSystemCacheItem]。
+ * 数据来源表：sys_system；主键为 code，缓存的 key 即 code，value 为 [SysSystemCacheEntry]。
  * 使用 Hash 结构存储，通过 [HashCacheableByPrimary] / [HashBatchCacheableByPrimary] 按 code 存取。
  *
  * @author K
  * @since 1.0.0
  */
 @Component
-open class SysSystemHashCache : AbstractHashCacheHandler<SysSystemCacheItem>() {
+open class SysSystemHashCache : AbstractHashCacheHandler<SysSystemCacheEntry>() {
 
     @Resource
     private lateinit var sysSystemDao: SysSystemDao
@@ -33,16 +33,16 @@ open class SysSystemHashCache : AbstractHashCacheHandler<SysSystemCacheItem>() {
         const val CACHE_NAME = "SYS_SYSTEM__HASH"
 
         /** 可筛选副属性：按 subSystem 建二级索引，用于按是否子系统查询 */
-        val FILTERABLE_PROPERTIES = setOf(SysSystemCacheItem::subSystem.name)
+        val FILTERABLE_PROPERTIES = setOf(SysSystemCacheEntry::subSystem.name)
     }
 
     override fun cacheName(): String = CACHE_NAME
 
-    override fun entityClass() = SysSystemCacheItem::class
+    override fun entityClass() = SysSystemCacheEntry::class
 
     override fun filterableProperties(): Set<String> = FILTERABLE_PROPERTIES
 
-    override fun doReload(id: Any): SysSystemCacheItem? = sysSystemDao.getAs(id.toString())
+    override fun doReload(id: Any): SysSystemCacheEntry? = sysSystemDao.getAs(id.toString())
 
     /**
      * 根据 code 从缓存获取系统信息，未命中则查库并回写。
@@ -53,13 +53,13 @@ open class SysSystemHashCache : AbstractHashCacheHandler<SysSystemCacheItem>() {
     @HashCacheableByPrimary(
         cacheNames = [CACHE_NAME],
         key = "#code",
-        entityClass = SysSystemCacheItem::class,
+        entityClass = SysSystemCacheEntry::class,
         unless = "#result == null",
         filterableProperties = ["subSystem"]
     )
-    open fun getSystemByCode(code: String): SysSystemCacheItem? {
+    open fun getSystemByCode(code: String): SysSystemCacheEntry? {
         require(code.isNotBlank()) { "获取系统时 code 不能为空" }
-        return sysSystemDao.getAs<SysSystemCacheItem>(code)
+        return sysSystemDao.getAs<SysSystemCacheEntry>(code)
     }
 
     /**
@@ -70,12 +70,12 @@ open class SysSystemHashCache : AbstractHashCacheHandler<SysSystemCacheItem>() {
      */
     @HashBatchCacheableByPrimary(
         cacheNames = [CACHE_NAME],
-        entityClass = SysSystemCacheItem::class,
+        entityClass = SysSystemCacheEntry::class,
         filterableProperties = ["subSystem"]
     )
-    open fun getSystemsByCodes(codes: List<String>): Map<String, SysSystemCacheItem> {
+    open fun getSystemsByCodes(codes: List<String>): Map<String, SysSystemCacheEntry> {
         if (codes.isEmpty()) return emptyMap()
-        val list = sysSystemDao.getByIdsAs<SysSystemCacheItem>(codes)
+        val list = sysSystemDao.getByIdsAs<SysSystemCacheEntry>(codes)
         return list.filter { it.id.isNotBlank() && it.id in codes }.associateBy { it.id }
     }
 
@@ -88,15 +88,15 @@ open class SysSystemHashCache : AbstractHashCacheHandler<SysSystemCacheItem>() {
     @HashCacheableBySecondary(
         cacheNames = [CACHE_NAME],
         filterExpressions = ["#subSystem"],
-        entityClass = SysSystemCacheItem::class,
+        entityClass = SysSystemCacheEntry::class,
         filterableProperties = ["subSystem"]
     )
-    open fun getSystemsByType(subSystem: Boolean): List<SysSystemCacheItem> {
+    open fun getSystemsByType(subSystem: Boolean): List<SysSystemCacheEntry> {
         return sysSystemDao.fetchSystemsByType(subSystem)
     }
 
     /** 获取所有子系统列表（subSystem=true）。 */
-    open fun listSubSystems(): List<SysSystemCacheItem> = getSystemsByType(true)
+    open fun listSubSystems(): List<SysSystemCacheEntry> = getSystemsByType(true)
 
     /**
      * 从库全量加载系统并刷新 Hash 缓存。
@@ -110,7 +110,7 @@ open class SysSystemHashCache : AbstractHashCacheHandler<SysSystemCacheItem>() {
         }
         val cache = hashCache()
         if (clear) cache.clear(CACHE_NAME)
-        val list = sysSystemDao.searchAs<SysSystemCacheItem>()
+        val list = sysSystemDao.searchAs<SysSystemCacheEntry>()
         log.debug("从数据库加载 ${list.size} 条系统，刷新 Hash 缓存")
         cache.refreshAll(CACHE_NAME, list, FILTERABLE_PROPERTIES, emptySet())
     }
@@ -118,14 +118,14 @@ open class SysSystemHashCache : AbstractHashCacheHandler<SysSystemCacheItem>() {
     /** 新增系统后同步：将指定 code 的实体从库加载并写入缓存。 */
     open fun syncOnInsert(code: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME) || !KeyValueCacheKit.isWriteInTime(CACHE_NAME)) return
-        val item = sysSystemDao.getAs<SysSystemCacheItem>(code) ?: return
+        val item = sysSystemDao.getAs<SysSystemCacheEntry>(code) ?: return
         hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
     }
 
     /** 更新系统后同步：从库重新加载并写入缓存。 */
     open fun syncOnUpdate(code: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
-        val item = sysSystemDao.getAs<SysSystemCacheItem>(code) ?: return
+        val item = sysSystemDao.getAs<SysSystemCacheEntry>(code) ?: return
         if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
             hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
         }
@@ -134,13 +134,13 @@ open class SysSystemHashCache : AbstractHashCacheHandler<SysSystemCacheItem>() {
     /** 删除系统后同步：从缓存中移除该 code。 */
     open fun syncOnDelete(code: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
-        hashCache().deleteById(CACHE_NAME, code, SysSystemCacheItem::class, FILTERABLE_PROPERTIES, emptySet())
+        hashCache().deleteById(CACHE_NAME, code, SysSystemCacheEntry::class, FILTERABLE_PROPERTIES, emptySet())
     }
 
     /** 批量删除系统后同步：从缓存中移除这些 code。 */
     open fun syncOnBatchDelete(codes: Collection<String>) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
         val cache = hashCache()
-        codes.forEach { cache.deleteById(CACHE_NAME, it, SysSystemCacheItem::class, FILTERABLE_PROPERTIES, emptySet()) }
+        codes.forEach { cache.deleteById(CACHE_NAME, it, SysSystemCacheEntry::class, FILTERABLE_PROPERTIES, emptySet()) }
     }
 }

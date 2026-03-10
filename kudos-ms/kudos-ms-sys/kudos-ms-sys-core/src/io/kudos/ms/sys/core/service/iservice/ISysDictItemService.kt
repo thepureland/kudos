@@ -1,12 +1,12 @@
 package io.kudos.ms.sys.core.service.iservice
 
 import io.kudos.base.support.iservice.IBaseCrudService
-import io.kudos.ms.sys.common.vo.dict.SysDictPayload
+import io.kudos.ms.sys.common.vo.dict.SysDictForm
 import io.kudos.ms.sys.common.vo.dict.SysDictTreeNode
-import io.kudos.ms.sys.common.vo.dictitem.SysDictItemCacheItem
-import io.kudos.ms.sys.common.vo.dictitem.SysDictItemRecord
-import io.kudos.ms.sys.common.vo.dictitem.SysDictItemSearchPayload
-import io.kudos.ms.sys.common.vo.dictitem.SysDictItemTreeRecord
+import io.kudos.ms.sys.common.vo.dictitem.SysDictItemCacheEntry
+import io.kudos.ms.sys.common.vo.dictitem.SysDictItemRow
+import io.kudos.ms.sys.common.vo.dictitem.SysDictItemQuery
+import io.kudos.ms.sys.common.vo.dictitem.SysDictItemTreeRow
 import io.kudos.ms.sys.core.model.po.SysDictItem
 
 
@@ -27,11 +27,11 @@ interface ISysDictItemService : IBaseCrudService<String, SysDictItem> {
      *
      * @param id 字典项id
      * @param fetchAllParentIds 是否要获取所有父项id，默认为false
-     * @return SysDictItemRecord，找不到返回null
+     * @return SysDictItemRow，找不到返回null
      * @author K
      * @since 1.0.0
      */
-    fun get(id: String, fetchAllParentIds: Boolean = false): SysDictItemRecord?
+    fun get(id: String, fetchAllParentIds: Boolean = false): SysDictItemRow?
 
     /**
      * 根据字典类型和原子服务编码取得对应的字典项
@@ -40,7 +40,7 @@ interface ISysDictItemService : IBaseCrudService<String, SysDictItem> {
      * @param atomicServiceCode 原子服务编码
      * @return 字典项缓存对象列表
      */
-    fun getItems(dictType: String, atomicServiceCode: String): List<SysDictItemCacheItem>
+    fun getItems(dictType: String, atomicServiceCode: String): List<SysDictItemCacheEntry>
 
     /**
      * 根据字典类型集合和原子服务编码取得对应的字典项
@@ -50,7 +50,7 @@ interface ISysDictItemService : IBaseCrudService<String, SysDictItem> {
      */
     fun batchGetDictItems(
         dictTypesByAtomicServiceCode: Map<String, Collection<String>>
-    ): Map<String, Map<String, List<SysDictItemCacheItem>>>
+    ): Map<String, Map<String, List<SysDictItemCacheEntry>>>
 
     /**
      * 根据字典类型和原子服务编码取得对应的字典项
@@ -91,7 +91,7 @@ interface ISysDictItemService : IBaseCrudService<String, SysDictItem> {
      * @author K
      * @since 1.0.0
      */
-    fun saveOrUpdate(payload: SysDictPayload): String
+    fun saveOrUpdate(payload: SysDictForm): String
 
     /**
      * 获取字典项的所有祖先id
@@ -129,11 +129,11 @@ interface ISysDictItemService : IBaseCrudService<String, SysDictItem> {
      * 加载直接孩子结点(用于列表)
      *
      * @param searchPayload 查询参数
-     * @return Pair(List(SysDictItemRecord), 总记录数)
+     * @return Pair(List(SysDictItemRow), 总记录数)
      * @author K
      * @since 1.0.0
      */
-    fun loadDirectChildrenForList(searchPayload: SysDictItemSearchPayload): Pair<List<SysDictItemRecord>, Int>
+    fun loadDirectChildrenForList(searchPayload: SysDictItemQuery): Pair<List<SysDictItemRow>, Int>
 
     /**
      * 更新启用状态，并同步缓存
@@ -154,7 +154,7 @@ interface ISysDictItemService : IBaseCrudService<String, SysDictItem> {
      * @author K
      * @since 1.0.0
      */
-    fun getDictItemsByDictId(dictId: String): List<SysDictItemRecord>
+    fun getDictItemsByDictId(dictId: String): List<SysDictItemRow>
 
     /**
      * 根据原子服务编码和字典类型从缓存获取字典项列表
@@ -165,7 +165,7 @@ interface ISysDictItemService : IBaseCrudService<String, SysDictItem> {
      * @author K
      * @since 1.0.0
      */
-    fun getDictItemsByAtomicServiceAndType(dictType: String, atomicServiceCode: String): List<SysDictItemCacheItem>
+    fun getDictItemsByAtomicServiceAndType(dictType: String, atomicServiceCode: String): List<SysDictItemCacheEntry>
 
     /**
      * 获取字典项树（递归结构）
@@ -176,7 +176,7 @@ interface ISysDictItemService : IBaseCrudService<String, SysDictItem> {
      * @author AI: Cursor
      * @since 1.0.0
      */
-    fun getDictItemTree(dictId: String, parentId: String? = null): List<SysDictItemTreeRecord>
+    fun getDictItemTree(dictId: String, parentId: String? = null): List<SysDictItemTreeRow>
 
     /**
      * 获取子字典项列表
@@ -186,7 +186,7 @@ interface ISysDictItemService : IBaseCrudService<String, SysDictItem> {
      * @author K
      * @since 1.0.0
      */
-    fun getChildItems(parentId: String): List<SysDictItemRecord>
+    fun getChildItems(parentId: String): List<SysDictItemRow>
 
     /**
      * 移动字典项（调整父节点和排序）

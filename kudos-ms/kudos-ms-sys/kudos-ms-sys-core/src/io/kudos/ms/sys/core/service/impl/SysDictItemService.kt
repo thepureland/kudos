@@ -6,12 +6,12 @@ import io.kudos.base.query.Criteria
 import io.kudos.base.query.PagingSearchResult
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.support.payload.ListSearchPayload
-import io.kudos.ms.sys.common.vo.dict.SysDictPayload
+import io.kudos.ms.sys.common.vo.dict.SysDictForm
 import io.kudos.ms.sys.common.vo.dict.SysDictTreeNode
-import io.kudos.ms.sys.common.vo.dictitem.SysDictItemCacheItem
-import io.kudos.ms.sys.common.vo.dictitem.SysDictItemRecord
-import io.kudos.ms.sys.common.vo.dictitem.SysDictItemSearchPayload
-import io.kudos.ms.sys.common.vo.dictitem.SysDictItemTreeRecord
+import io.kudos.ms.sys.common.vo.dictitem.SysDictItemCacheEntry
+import io.kudos.ms.sys.common.vo.dictitem.SysDictItemRow
+import io.kudos.ms.sys.common.vo.dictitem.SysDictItemQuery
+import io.kudos.ms.sys.common.vo.dictitem.SysDictItemTreeRow
 import io.kudos.ms.sys.core.cache.DictItemsByMsCodeAndTypeCache
 import io.kudos.ms.sys.core.dao.SysDictItemDao
 import io.kudos.ms.sys.core.model.po.SysDictItem
@@ -39,8 +39,8 @@ open class SysDictItemService : BaseCrudService<String, SysDictItem, SysDictItem
 
     private val log = LogFactory.getLog(this)
 
-    override fun get(id: String, fetchAllParentIds: Boolean): SysDictItemRecord? {
-        val searchPayload = SysDictItemSearchPayload(id = id).apply {
+    override fun get(id: String, fetchAllParentIds: Boolean): SysDictItemRow? {
+        val searchPayload = SysDictItemQuery(id = id).apply {
             pageSize = 1
         }
         val result = dao.pagingSearch(searchPayload).firstOrNull()
@@ -57,13 +57,13 @@ open class SysDictItemService : BaseCrudService<String, SysDictItem, SysDictItem
     }
 
 
-    override fun getItems(dictType: String, atomicServiceCode: String): List<SysDictItemCacheItem> {
+    override fun getItems(dictType: String, atomicServiceCode: String): List<SysDictItemCacheEntry> {
         return dictItemCacheHandler.getDictItems(dictType, atomicServiceCode)
     }
 
     override fun batchGetDictItems(
         dictTypesByAtomicServiceCode: Map<String, Collection<String>>
-    ): Map<String, Map<String, List<SysDictItemCacheItem>>> {
+    ): Map<String, Map<String, List<SysDictItemCacheEntry>>> {
         return dictTypesByAtomicServiceCode.mapValues { (atomicServiceCode, dictTypes) ->
             dictTypes.associateWith { dictType ->
                 dictItemCacheHandler.getDictItems(dictType, atomicServiceCode)
@@ -93,7 +93,7 @@ open class SysDictItemService : BaseCrudService<String, SysDictItem, SysDictItem
     }
 
     @Transactional
-    override fun saveOrUpdate(payload: SysDictPayload): String {
+    override fun saveOrUpdate(payload: SysDictForm): String {
         return if (payload.id.isBlank()) { // 新增
             val payloadCode = requireNotNull(payload.code) { "新增字典项时，code不能为空。" }
             val payloadName = requireNotNull(payload.name) { "新增字典项时，name不能为空。" }
@@ -130,8 +130,8 @@ open class SysDictItemService : BaseCrudService<String, SysDictItem, SysDictItem
         }
     }
 
-    override fun pagingSearch(listSearchPayload: ListSearchPayload): PagingSearchResult<SysDictItemRecord> {
-        val dictItems = dao.pagingSearch(listSearchPayload as SysDictItemSearchPayload)
+    override fun pagingSearch(listSearchPayload: ListSearchPayload): PagingSearchResult<SysDictItemRow> {
+        val dictItems = dao.pagingSearch(listSearchPayload as SysDictItemQuery)
         val totalCount = if (dictItems.isNotEmpty()) {
             // 查询parentCode
             val parentIds = dictItems.filter { !it.parentId.isNullOrBlank() }.mapNotNull { it.parentId }.toSet()
@@ -198,7 +198,7 @@ open class SysDictItemService : BaseCrudService<String, SysDictItem, SysDictItem
         }
     }
 
-    override fun loadDirectChildrenForList(searchPayload: SysDictItemSearchPayload): Pair<List<SysDictItemRecord>, Int> {
+    override fun loadDirectChildrenForList(searchPayload: SysDictItemQuery): Pair<List<SysDictItemRow>, Int> {
         val activeOnly = searchPayload.active ?: false // 是否只加载启用状态的数据, 默认为是
         searchPayload.active = if (activeOnly) true else null
         val isModule = searchPayload.firstLevel ?: false // 是否parent代表模块名
@@ -244,15 +244,15 @@ open class SysDictItemService : BaseCrudService<String, SysDictItem, SysDictItem
         }
     }
 
-    override fun getDictItemsByDictId(dictId: String): List<SysDictItemRecord> {
-        val searchPayload = SysDictItemSearchPayload(dictId = dictId)
+    override fun getDictItemsByDictId(dictId: String): List<SysDictItemRow> {
+        val searchPayload = SysDictItemQuery(dictId = dictId)
         return dao.pagingSearch(searchPayload)
     }
 
     override fun getDictItemsByAtomicServiceAndType(
         dictType: String,
         atomicServiceCode: String
-    ): List<SysDictItemCacheItem> {
+    ): List<SysDictItemCacheEntry> {
         return getItems(dictType, atomicServiceCode)
     }
 
@@ -265,8 +265,8 @@ open class SysDictItemService : BaseCrudService<String, SysDictItem, SysDictItem
      * @author AI: Cursor
      * @since 1.0.0
      */
-    override fun getDictItemTree(dictId: String, parentId: String?): List<SysDictItemTreeRecord> {
-        val searchPayload = SysDictItemSearchPayload(
+    override fun getDictItemTree(dictId: String, parentId: String?): List<SysDictItemTreeRow> {
+        val searchPayload = SysDictItemQuery(
             dictId = dictId,
             parentId = parentId,
         )
@@ -274,7 +274,7 @@ open class SysDictItemService : BaseCrudService<String, SysDictItem, SysDictItem
 
         // 转换为树节点
         val treeNodes = records.map { record ->
-            SysDictItemTreeRecord(
+            SysDictItemTreeRow(
                 id = record.itemId,
                 itemCode = record.itemCode,
                 itemName = record.itemName,
@@ -288,7 +288,7 @@ open class SysDictItemService : BaseCrudService<String, SysDictItem, SysDictItem
 
         // 构建树形结构
         val nodeMap = treeNodes.associateBy { it.id }
-        val rootNodes = mutableListOf<SysDictItemTreeRecord>()
+        val rootNodes = mutableListOf<SysDictItemTreeRow>()
 
         treeNodes.forEach { node ->
             if (node.parentId == null) {
@@ -300,7 +300,7 @@ open class SysDictItemService : BaseCrudService<String, SysDictItem, SysDictItem
         }
 
         // 按 orderNum 排序
-        fun sortTree(nodes: List<SysDictItemTreeRecord>) {
+        fun sortTree(nodes: List<SysDictItemTreeRow>) {
             nodes.sortedBy { it.orderNum ?: Int.MAX_VALUE }.forEach { node ->
                 node.children?.let { sortTree(it) }
             }
@@ -310,8 +310,8 @@ open class SysDictItemService : BaseCrudService<String, SysDictItem, SysDictItem
         return rootNodes.sortedBy { it.orderNum ?: Int.MAX_VALUE }
     }
 
-    override fun getChildItems(parentId: String): List<SysDictItemRecord> {
-        val searchPayload = SysDictItemSearchPayload().apply {
+    override fun getChildItems(parentId: String): List<SysDictItemRow> {
+        val searchPayload = SysDictItemQuery().apply {
             this.parentId = parentId
         }
         return dao.pagingSearch(searchPayload)

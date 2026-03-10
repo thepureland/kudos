@@ -4,7 +4,7 @@ import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.eq
-import io.kudos.ms.sys.common.vo.accessrule.SysAccessRuleRecord
+import io.kudos.ms.sys.common.vo.accessrule.SysAccessRuleRow
 import io.kudos.ms.sys.core.dao.SysAccessRuleDao
 import io.kudos.ms.sys.core.model.po.SysAccessRule
 import io.kudos.ms.sys.core.service.iservice.ISysAccessRuleService
@@ -30,23 +30,23 @@ open class SysAccessRuleService : BaseCrudService<String, SysAccessRule, SysAcce
     override fun getAccessRuleByTenantAndSystem(
         systemCode: String,
         tenantId: String
-    ): SysAccessRuleRecord? {
+    ): SysAccessRuleRow? {
         val criteria = Criteria.and(
             SysAccessRule::tenantId eq tenantId,
             SysAccessRule::systemCode eq systemCode,
         )
-        val records = dao.searchAs<SysAccessRuleRecord>(criteria)
+        val records = dao.searchAs<SysAccessRuleRow>(criteria)
         return records.firstOrNull()
     }
 
-    override fun getAccessRulesByTenantId(tenantId: String): List<SysAccessRuleRecord> {
+    override fun getAccessRulesByTenantId(tenantId: String): List<SysAccessRuleRow> {
         val criteria = Criteria.and(SysAccessRule::tenantId eq tenantId)
-        return dao.searchAs<SysAccessRuleRecord>(criteria)
+        return dao.searchAs<SysAccessRuleRow>(criteria)
     }
 
-    override fun getAccessRulesBySystemCode(systemCode: String): List<SysAccessRuleRecord> {
+    override fun getAccessRulesBySystemCode(systemCode: String): List<SysAccessRuleRow> {
         val criteria = Criteria.and(SysAccessRule::systemCode eq systemCode)
-        return dao.searchAs<SysAccessRuleRecord>(criteria)
+        return dao.searchAs<SysAccessRuleRow>(criteria)
     }
 
     @Transactional

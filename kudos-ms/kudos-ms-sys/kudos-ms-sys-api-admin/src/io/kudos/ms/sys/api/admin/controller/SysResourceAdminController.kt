@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/admin/sys/resource")
 open class SysResourceAdminController :
-    BaseCrudController<String, ISysResourceService, SysResourceSearchPayload, SysResourceRecord, SysResourceDetail, SysResourcePayload>() {
+    BaseCrudController<String, ISysResourceService, SysResourceQuery, SysResourceRow, SysResourceDetail, SysResourceForm>() {
 
     /**
      * 根据资源类型和子系统，返回对应的资源
@@ -31,7 +31,7 @@ open class SysResourceAdminController :
     fun getResources(
         resourceType: ResourceTypeEnum,
         subSystemCode: String = SysConsts.DEFAULT_SUB_SYSTEM_CODE
-    ): List<SysResourceCacheItem> {
+    ): List<SysResourceCacheEntry> {
         return service.getResources(resourceType, subSystemCode)
     }
 
@@ -70,7 +70,7 @@ open class SysResourceAdminController :
         resourceType: ResourceTypeEnum,
         parentId: String?,
         subSystemCode: String = SysConsts.DEFAULT_SUB_SYSTEM_CODE,
-    ): List<SysResourceCacheItem> {
+    ): List<SysResourceCacheEntry> {
         return service.getDirectChildrenResources(resourceType, parentId, subSystemCode)
     }
 
@@ -87,7 +87,7 @@ open class SysResourceAdminController :
         resourceType: ResourceTypeEnum,
         parentId: String,
         subSystemCode: String,
-    ): List<SysResourceCacheItem> {
+    ): List<SysResourceCacheEntry> {
         return service.getChildrenResources(subSystemCode, resourceType, parentId)
     }
 

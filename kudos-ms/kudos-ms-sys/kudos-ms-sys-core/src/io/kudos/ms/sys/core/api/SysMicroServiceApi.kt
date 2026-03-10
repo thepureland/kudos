@@ -1,8 +1,8 @@
 package io.kudos.ms.sys.core.api
 
 import io.kudos.ms.sys.common.api.ISysMicroServiceApi
-import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceCacheItem
-import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceRecord
+import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceCacheEntry
+import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceRow
 import io.kudos.ms.sys.core.service.iservice.ISysMicroServiceService
 import jakarta.annotation.Resource
 import org.springframework.stereotype.Component
@@ -24,23 +24,23 @@ open class SysMicroServiceApi : ISysMicroServiceApi {
     @Resource
     protected lateinit var sysMicroServiceService: ISysMicroServiceService
 
-    override fun getAllActiveMicroService(): List<SysMicroServiceCacheItem> {
+    override fun getAllActiveMicroService(): List<SysMicroServiceCacheEntry> {
         return sysMicroServiceService.getAllActiveMicroServices()
     }
 
-    override fun getAllActiveMicroServiceExcludeAtomicService(): List<SysMicroServiceCacheItem> {
+    override fun getAllActiveMicroServiceExcludeAtomicService(): List<SysMicroServiceCacheEntry> {
         return sysMicroServiceService.getAllActiveMicroServiceExcludeAtomicService()
     }
 
-    override fun getAllActiveAtomicService(): List<SysMicroServiceCacheItem> {
+    override fun getAllActiveAtomicService(): List<SysMicroServiceCacheEntry> {
         return sysMicroServiceService.getAllActiveAtomicServices()
     }
 
-    override fun getMicroServiceByCode(code: String): SysMicroServiceCacheItem? {
+    override fun getMicroServiceByCode(code: String): SysMicroServiceCacheEntry? {
         return sysMicroServiceService.getMicroServiceByCode(code)
     }
 
-    override fun getAllActiveAtomicServiceByParentCode(parentCode: String): List<SysMicroServiceRecord> {
+    override fun getAllActiveAtomicServiceByParentCode(parentCode: String): List<SysMicroServiceRow> {
         return sysMicroServiceService.getAllActiveAtomicServiceByParentCode(parentCode)
     }
 

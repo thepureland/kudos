@@ -3,9 +3,9 @@ package io.kudos.ms.user.core.service.impl
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
-import io.kudos.ms.user.common.vo.org.UserOrgCacheItem
-import io.kudos.ms.user.common.vo.org.UserOrgTreeRecord
-import io.kudos.ms.user.common.vo.user.UserAccountCacheItem
+import io.kudos.ms.user.common.vo.org.UserOrgCacheEntry
+import io.kudos.ms.user.common.vo.org.UserOrgTreeRow
+import io.kudos.ms.user.common.vo.user.UserAccountCacheEntry
 import io.kudos.ms.user.core.cache.UserAccountHashCache
 import io.kudos.ms.user.core.cache.UserIdsByOrgIdCache
 import io.kudos.ms.user.core.cache.UserOrgHashCache
@@ -48,7 +48,7 @@ open class UserOrgService : BaseCrudService<String, UserOrg, UserOrgDao>(), IUse
 
     private val log = LogFactory.getLog(this)
 
-    override fun getOrgAdmins(orgId: String): List<UserAccountCacheItem> {
+    override fun getOrgAdmins(orgId: String): List<UserAccountCacheEntry> {
         val adminUserIds = userOrgUserDao.searchAdminUserIdsByOrgId(orgId)
         
         // 如果没有管理员，直接返回空列表
@@ -71,7 +71,7 @@ open class UserOrgService : BaseCrudService<String, UserOrg, UserOrgDao>(), IUse
         return dao.searchActiveChildOrgIds(orgId)
     }
 
-    override fun getOrgUsers(orgId: String): List<UserAccountCacheItem> {
+    override fun getOrgUsers(orgId: String): List<UserAccountCacheEntry> {
         val userIds = getOrgUserIds(orgId)
         if (userIds.isEmpty()) {
             return emptyList()
@@ -85,7 +85,7 @@ open class UserOrgService : BaseCrudService<String, UserOrg, UserOrgDao>(), IUse
         return userIds.contains(userId)
     }
 
-    override fun getChildOrgs(orgId: String): List<UserOrgCacheItem> {
+    override fun getChildOrgs(orgId: String): List<UserOrgCacheEntry> {
         val childOrgIds = getChildOrgIds(orgId)
         if (childOrgIds.isEmpty()) {
             return emptyList()
@@ -94,17 +94,17 @@ open class UserOrgService : BaseCrudService<String, UserOrg, UserOrgDao>(), IUse
         return childOrgIds.mapNotNull { orgsMap[it] }
     }
 
-    override fun getParentOrg(orgId: String): UserOrgCacheItem? {
+    override fun getParentOrg(orgId: String): UserOrgCacheEntry? {
         val org = userOrgHashCache.getOrgById(orgId) ?: return null
         val parentId = org.parentId ?: return null
         return userOrgHashCache.getOrgById(parentId)
     }
 
-    override fun getOrgRecord(id: String): UserOrgCacheItem? {
+    override fun getOrgRecord(id: String): UserOrgCacheEntry? {
         return userOrgHashCache.getOrgById(id)
     }
 
-    override fun getOrgsByTenantId(tenantId: String): List<UserOrgCacheItem> {
+    override fun getOrgsByTenantId(tenantId: String): List<UserOrgCacheEntry> {
         val orgIds = userOrgHashCache.getOrgsByTenantId(tenantId).map { it.id }
         if (orgIds.isEmpty()) {
             return emptyList()
@@ -113,14 +113,14 @@ open class UserOrgService : BaseCrudService<String, UserOrg, UserOrgDao>(), IUse
         return orgIds.mapNotNull { orgsMap[it] }
     }
 
-    override fun getOrgTree(tenantId: String, parentId: String?): List<UserOrgTreeRecord> {
+    override fun getOrgTree(tenantId: String, parentId: String?): List<UserOrgTreeRow> {
         // 如果指定了parentId，只查询该父机构下的直接子机构；否则查询租户下全部启用机构
         val orgs = dao.searchActiveOrgsByTenantId(tenantId, parentId)
         
         // 转换为树节点
         val treeNodes = orgs.map { org ->
             val cacheItem = userOrgHashCache.getOrgById(org.id) ?: return@map null
-            UserOrgTreeRecord().apply {
+            UserOrgTreeRow().apply {
                 BeanKit.copyProperties(cacheItem, this)
                 this.children = mutableListOf()
             }
@@ -133,7 +133,7 @@ open class UserOrgService : BaseCrudService<String, UserOrg, UserOrgDao>(), IUse
         
         // 构建树形结构（仅当parentId == null时）
         val nodeMap = treeNodes.associateBy { it.id }
-        val rootNodes = mutableListOf<UserOrgTreeRecord>()
+        val rootNodes = mutableListOf<UserOrgTreeRow>()
         
         treeNodes.forEach { node ->
             if (node.parentId == null) {
@@ -145,7 +145,7 @@ open class UserOrgService : BaseCrudService<String, UserOrg, UserOrgDao>(), IUse
         }
         
         // 按 sortNum 排序
-        fun sortTree(nodes: MutableList<UserOrgTreeRecord>) {
+        fun sortTree(nodes: MutableList<UserOrgTreeRow>) {
             nodes.sortBy { it.sortNum ?: Int.MAX_VALUE }
             nodes.forEach { node ->
                 node.children?.let { sortTree(it) }

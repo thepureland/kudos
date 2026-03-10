@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.common.api
 
-import io.kudos.ms.sys.common.vo.domain.SysDomainCacheItem
+import io.kudos.ms.sys.common.vo.domain.SysDomainCacheEntry
 
 
 /**
@@ -23,7 +23,7 @@ interface ISysDomainApi {
      * @author K
      * @since 1.0.0
      */
-    fun getDomainByName(domainName: String): SysDomainCacheItem?
+    fun getDomainByName(domainName: String): SysDomainCacheEntry?
 
     //endregion your codes 2
 

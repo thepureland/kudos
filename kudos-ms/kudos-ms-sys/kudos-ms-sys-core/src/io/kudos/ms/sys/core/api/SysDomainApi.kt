@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.core.api
 
 import io.kudos.ms.sys.common.api.ISysDomainApi
-import io.kudos.ms.sys.common.vo.domain.SysDomainCacheItem
+import io.kudos.ms.sys.common.vo.domain.SysDomainCacheEntry
 import io.kudos.ms.sys.core.service.iservice.ISysDomainService
 import jakarta.annotation.Resource
 import org.springframework.stereotype.Component
@@ -23,7 +23,7 @@ open class SysDomainApi : ISysDomainApi {
     @Resource
     protected lateinit var sysDomainService: ISysDomainService
 
-    override fun getDomainByName(domainName: String): SysDomainCacheItem? {
+    override fun getDomainByName(domainName: String): SysDomainCacheEntry? {
         return sysDomainService.getDomainByName(domainName)
     }
 

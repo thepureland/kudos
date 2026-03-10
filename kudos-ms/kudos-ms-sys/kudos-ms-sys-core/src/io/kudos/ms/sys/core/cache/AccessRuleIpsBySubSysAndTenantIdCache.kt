@@ -5,9 +5,9 @@ import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.context.support.Consts
-import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpCacheItem
-import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpRecord
-import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpSearchPayload
+import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpCacheEntry
+import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpRow
+import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpQuery
 import io.kudos.ms.sys.core.dao.SysAccessRuleDao
 import io.kudos.ms.sys.core.dao.SysAccessRuleIpDao
 import io.kudos.ms.sys.core.model.po.SysAccessRule
@@ -22,13 +22,13 @@ import org.springframework.stereotype.Component
  * 1.数据来源表：sys_access_rule & sys_access_rule_ip
  * 2.仅缓存active=true的
  * 3.缓存key为：系统编码::租户id，租户id有可能为null
- * 4.缓存value为：SysAccessRuleIpCacheItem对象
+ * 4.缓存value为：SysAccessRuleIpCacheEntry对象
  *
  * @author K
  * @since 1.0.0
  */
 @Component
-open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<List<SysAccessRuleIpCacheItem>>() {
+open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<List<SysAccessRuleIpCacheEntry>>() {
 
     @Autowired
     private lateinit var sysAccessRuleIpDao: SysAccessRuleIpDao
@@ -42,7 +42,7 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
 
     override fun cacheName() = CACHE_NAME
 
-    override fun doReload(key: String): List<SysAccessRuleIpCacheItem> {
+    override fun doReload(key: String): List<SysAccessRuleIpCacheEntry> {
         require(key.contains(Consts.CACHE_KEY_DEFAULT_DELIMITER)) {
             "缓存${CACHE_NAME}的key格式非法!"
         }
@@ -58,7 +58,7 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
         }
 
         // 关联查询
-        val searchPayload = SysAccessRuleIpSearchPayload(
+        val searchPayload = SysAccessRuleIpQuery(
             active = true,
             parentRuleActive = true
         )
@@ -88,21 +88,21 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
      *
      * @param systemCode 系统编码
      * @param tenantId 租户id，可以为null
-     * @return SysAccessRuleIpCacheItem，不存在时返回null
+     * @return SysAccessRuleIpCacheEntry，不存在时返回null
      */
     @Cacheable(
         cacheNames = [CACHE_NAME],
         key = "#systemCode.concat('${Consts.CACHE_KEY_DEFAULT_DELIMITER}').concat(#tenantId ?: 'null')",
         unless = "#result == null"
     )
-    open fun getAccessRuleIps(systemCode: String, tenantId: String? = null): List<SysAccessRuleIpCacheItem> {
+    open fun getAccessRuleIps(systemCode: String, tenantId: String? = null): List<SysAccessRuleIpCacheEntry> {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug(
                 "${CACHE_NAME}缓存中不存在系统编码为${systemCode}且租户id为${tenantId}的ip访问规则，从数据库中加载..."
             )
         }
         require(systemCode.isNotBlank()) { "获取ip访问规则时，系统代码必须指定！" }
-        val searchPayload = SysAccessRuleIpSearchPayload(
+        val searchPayload = SysAccessRuleIpQuery(
             active = true,
             parentRuleActive = true,
             systemCode = systemCode,
@@ -253,9 +253,9 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
         }
     }
 
-    private fun mapToCacheItems(ruleIpRecords: List<SysAccessRuleIpRecord>): List<SysAccessRuleIpCacheItem> {
+    private fun mapToCacheItems(ruleIpRecords: List<SysAccessRuleIpRow>): List<SysAccessRuleIpCacheEntry> {
         return ruleIpRecords.map {
-            SysAccessRuleIpCacheItem(
+            SysAccessRuleIpCacheEntry(
                 id = it.id,
                 ipStart = it.ipStart,
                 ipEnd = it.ipEnd,

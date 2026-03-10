@@ -2,8 +2,8 @@ package io.kudos.ms.sys.core.service.iservice
 
 import io.kudos.base.support.iservice.IBaseCrudService
 import io.kudos.ms.sys.common.api.ISysParamApi
-import io.kudos.ms.sys.common.vo.param.SysParamCacheItem
-import io.kudos.ms.sys.common.vo.param.SysParamRecord
+import io.kudos.ms.sys.common.vo.param.SysParamCacheEntry
+import io.kudos.ms.sys.common.vo.param.SysParamRow
 import io.kudos.ms.sys.core.model.po.SysParam
 
 
@@ -24,11 +24,11 @@ interface ISysParamService : IBaseCrudService<String, SysParam>, ISysParamApi {
      *
      * @param atomicServiceCode 原子服务编码
      * @param paramName 参数名称
-     * @return SysParamCacheItem，找不到返回null
+     * @return SysParamCacheEntry，找不到返回null
      * @author K
      * @since 1.0.0
      */
-    fun getParamByAtomicServiceAndName(atomicServiceCode: String, paramName: String): SysParamCacheItem?
+    fun getParamByAtomicServiceAndName(atomicServiceCode: String, paramName: String): SysParamCacheEntry?
 
     /**
      * 获取模块的所有参数
@@ -38,7 +38,7 @@ interface ISysParamService : IBaseCrudService<String, SysParam>, ISysParamApi {
      * @author K
      * @since 1.0.0
      */
-    fun getParamsByAtomicServiceCode(atomicServiceCode: String): List<SysParamRecord>
+    fun getParamsByAtomicServiceCode(atomicServiceCode: String): List<SysParamRow>
 
     /**
      * 更新启用状态，并同步缓存

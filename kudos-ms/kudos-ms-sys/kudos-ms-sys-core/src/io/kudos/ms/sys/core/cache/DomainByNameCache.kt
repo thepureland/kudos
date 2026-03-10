@@ -6,7 +6,7 @@ import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.eq
-import io.kudos.ms.sys.common.vo.domain.SysDomainCacheItem
+import io.kudos.ms.sys.common.vo.domain.SysDomainCacheEntry
 import io.kudos.ms.sys.core.dao.SysDomainDao
 import io.kudos.ms.sys.core.model.po.SysDomain
 import org.springframework.beans.factory.annotation.Autowired
@@ -20,13 +20,13 @@ import org.springframework.stereotype.Component
  * 1.数据来源表：sys_domain
  * 2.缓存域名，不包含active=false的
  * 3.缓存的key为：domain name
- * 4.缓存的value为：SysDomainCacheItem对象
+ * 4.缓存的value为：SysDomainCacheEntry对象
  *
  * @author K
  * @since 1.0.0
  */
 @Component
-open class DomainByNameCache : AbstractKeyValueCacheHandler<SysDomainCacheItem>() {
+open class DomainByNameCache : AbstractKeyValueCacheHandler<SysDomainCacheEntry>() {
 
     @Autowired
     private lateinit var dao: SysDomainDao
@@ -37,7 +37,7 @@ open class DomainByNameCache : AbstractKeyValueCacheHandler<SysDomainCacheItem>(
 
     override fun cacheName() = CACHE_NAME
 
-    override fun doReload(key: String): SysDomainCacheItem? {
+    override fun doReload(key: String): SysDomainCacheEntry? {
         return getSelf<DomainByNameCache>().getDomain(key)
     }
 
@@ -49,7 +49,7 @@ open class DomainByNameCache : AbstractKeyValueCacheHandler<SysDomainCacheItem>(
 
         // 加载所有active为true的域名
         val criteria = Criteria(SysDomain::active eq true)
-        val domains = dao.searchAs<SysDomainCacheItem>(criteria)
+        val domains = dao.searchAs<SysDomainCacheEntry>(criteria)
         log.debug("从数据库加载了${domains.size}条域名信息。")
 
         // 清除缓存
@@ -69,14 +69,14 @@ open class DomainByNameCache : AbstractKeyValueCacheHandler<SysDomainCacheItem>(
      * 根据名称从缓存中获取域名信息，如果缓存中不存在，则从数据库中加载，并写入缓存
      *
      * @param domain 域名名称
-     * @return SysDomainCacheItem对象，如果找不到返回null
+     * @return SysDomainCacheEntry对象，如果找不到返回null
      */
     @Cacheable(
         cacheNames = [CACHE_NAME],
         key = "#domain",
         unless = "#result == null"
     )
-    open fun getDomain(domain: String): SysDomainCacheItem? {
+    open fun getDomain(domain: String): SysDomainCacheEntry? {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("缓存中不存在域名${domain}，从数据库中加载...")
         }
@@ -85,7 +85,7 @@ open class DomainByNameCache : AbstractKeyValueCacheHandler<SysDomainCacheItem>(
             SysDomain::domain eq domain,
             SysDomain::active eq true
         )
-        val domains = dao.searchAs<SysDomainCacheItem>(criteria)
+        val domains = dao.searchAs<SysDomainCacheEntry>(criteria)
         return if (domains.isEmpty()) {
             log.debug("从数据库找不到active=true且名为${domain}的域名信息。")
             null

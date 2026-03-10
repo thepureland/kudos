@@ -1,9 +1,9 @@
 package io.kudos.ms.sys.core.service.iservice
 
 import io.kudos.base.support.iservice.IBaseCrudService
-import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpCacheItem
-import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpPayload
-import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpRecord
+import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpCacheEntry
+import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpForm
+import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpRow
 import io.kudos.ms.sys.core.model.po.SysAccessRuleIp
 
 
@@ -27,7 +27,7 @@ interface ISysAccessRuleIpService : IBaseCrudService<String, SysAccessRuleIp> {
      * @author K
      * @since 1.0.0
      */
-    fun getIpsByRuleId(ruleId: String): List<SysAccessRuleIpRecord>
+    fun getIpsByRuleId(ruleId: String): List<SysAccessRuleIpRow>
 
     /**
      * 根据系统编码和租户id从缓存获取IP规则列表
@@ -38,7 +38,7 @@ interface ISysAccessRuleIpService : IBaseCrudService<String, SysAccessRuleIp> {
      * @author K
      * @since 1.0.0
      */
-    fun getIpsBySystemAndTenant(systemCode: String, tenantId: String?): List<SysAccessRuleIpCacheItem>
+    fun getIpsBySystemAndTenant(systemCode: String, tenantId: String?): List<SysAccessRuleIpCacheEntry>
 
     /**
      * 检查IP是否允许访问
@@ -61,7 +61,7 @@ interface ISysAccessRuleIpService : IBaseCrudService<String, SysAccessRuleIp> {
      * @author K
      * @since 1.0.0
      */
-    fun batchSaveOrUpdate(ruleId: String, ips: List<SysAccessRuleIpPayload>): Int
+    fun batchSaveOrUpdate(ruleId: String, ips: List<SysAccessRuleIpForm>): Int
 
     /**
      * 删除规则的所有IP

@@ -1,8 +1,8 @@
 package io.kudos.ms.sys.core.api
 
 import io.kudos.ms.sys.common.api.ISysCacheApi
-import io.kudos.ms.sys.common.vo.cache.SysCacheCacheItem
-import io.kudos.ms.sys.common.vo.cache.SysCacheRecord
+import io.kudos.ms.sys.common.vo.cache.SysCacheCacheEntry
+import io.kudos.ms.sys.common.vo.cache.SysCacheRow
 import io.kudos.ms.sys.core.service.iservice.ISysCacheService
 import jakarta.annotation.Resource
 import org.springframework.stereotype.Service
@@ -24,7 +24,7 @@ open class SysCacheApi : ISysCacheApi {
     @Resource
     protected lateinit var sysCacheService: ISysCacheService
 
-    override fun getCacheFromCache(name: String): SysCacheCacheItem? {
+    override fun getCacheFromCache(name: String): SysCacheCacheEntry? {
         return sysCacheService.getCacheFromCache(name)
     }
 
@@ -32,11 +32,11 @@ open class SysCacheApi : ISysCacheApi {
         return sysCacheService.updateActive(id, active)
     }
 
-    override fun getCachesByAtomicServiceCode(atomicServiceCode: String): List<SysCacheRecord> {
+    override fun getCachesByAtomicServiceCode(atomicServiceCode: String): List<SysCacheRow> {
         return sysCacheService.getCachesByAtomicServiceCode(atomicServiceCode)
     }
 
-    override fun getAllActiveCaches(): List<SysCacheRecord> {
+    override fun getAllActiveCaches(): List<SysCacheRow> {
         return sysCacheService.getAllActiveCaches()
     }
 

@@ -5,8 +5,8 @@ import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.eq
-import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceCacheItem
-import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceRecord
+import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceCacheEntry
+import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceRow
 import io.kudos.ms.sys.core.cache.SysMicroServiceHashCache
 import io.kudos.ms.sys.core.dao.SysMicroServiceDao
 import io.kudos.ms.sys.core.model.po.SysMicroService
@@ -34,30 +34,30 @@ open class SysMicroServiceService : BaseCrudService<String, SysMicroService, Sys
     @Resource
     private lateinit var sysMicroServiceHashCache: SysMicroServiceHashCache
 
-    override fun getAllActiveMicroServices(): List<SysMicroServiceCacheItem> {
+    override fun getAllActiveMicroServices(): List<SysMicroServiceCacheEntry> {
         val atomic = sysMicroServiceHashCache.listAtomicServices()
         val nonAtomic = sysMicroServiceHashCache.getMicroServicesByType(false)
         return (atomic + nonAtomic).filter { it.active == true }
     }
 
-    override fun getAllActiveMicroServiceExcludeAtomicService(): List<SysMicroServiceCacheItem> {
+    override fun getAllActiveMicroServiceExcludeAtomicService(): List<SysMicroServiceCacheEntry> {
         return sysMicroServiceHashCache.getMicroServicesByType(false).filter { it.active == true }
     }
 
-    override fun getAllActiveAtomicServices(): List<SysMicroServiceCacheItem> {
+    override fun getAllActiveAtomicServices(): List<SysMicroServiceCacheEntry> {
         return sysMicroServiceHashCache.listAtomicServices().filter { it.active == true }
     }
 
-    override fun getMicroServiceByCode(code: String): SysMicroServiceCacheItem? {
+    override fun getMicroServiceByCode(code: String): SysMicroServiceCacheEntry? {
         return sysMicroServiceHashCache.getMicroServiceByCode(code)
     }
 
-    override fun getAllActiveAtomicServiceByParentCode(parentCode: String): List<SysMicroServiceRecord> {
+    override fun getAllActiveAtomicServiceByParentCode(parentCode: String): List<SysMicroServiceRow> {
         val criteria = Criteria.and(
             SysMicroService::parentCode eq parentCode,
             SysMicroService::active eq true
         )
-        return dao.searchAs<SysMicroServiceRecord>(criteria)
+        return dao.searchAs<SysMicroServiceRow>(criteria)
     }
 
     @Transactional

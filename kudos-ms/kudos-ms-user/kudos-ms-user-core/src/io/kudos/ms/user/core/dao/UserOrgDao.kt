@@ -3,7 +3,7 @@ package io.kudos.ms.user.core.dao
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.eq
-import io.kudos.ms.user.common.vo.org.UserOrgCacheItem
+import io.kudos.ms.user.common.vo.org.UserOrgCacheEntry
 import io.kudos.ms.user.core.model.po.UserOrg
 import io.kudos.ms.user.core.model.table.UserOrgs
 import org.springframework.stereotype.Repository
@@ -27,11 +27,11 @@ open class UserOrgDao : BaseCrudDao<String, UserOrg, UserOrgs>() {
      * 按租户ID查询，返回缓存用 VO 列表
      *
      * @param tenantId 租户ID
-     * @return List<UserOrgCacheItem>
+     * @return List<UserOrgCacheEntry>
      */
-    open fun searchOrgsByTenantIdForCache(tenantId: String): List<UserOrgCacheItem> {
+    open fun searchOrgsByTenantIdForCache(tenantId: String): List<UserOrgCacheEntry> {
         val criteria = Criteria(UserOrg::tenantId eq tenantId)
-        return searchAs<UserOrgCacheItem>(criteria)
+        return searchAs<UserOrgCacheEntry>(criteria)
     }
 
     /**

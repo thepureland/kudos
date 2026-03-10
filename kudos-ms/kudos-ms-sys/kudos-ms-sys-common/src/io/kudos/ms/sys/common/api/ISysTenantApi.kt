@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.common.api
 
-import io.kudos.ms.sys.common.vo.tenant.SysTenantCacheItem
+import io.kudos.ms.sys.common.vo.tenant.SysTenantCacheEntry
 
 
 /**
@@ -23,17 +23,17 @@ interface ISysTenantApi {
      * @author K
      * @since 1.0.0
      */
-    fun getTenant(id: String): SysTenantCacheItem?
+    fun getTenant(id: String): SysTenantCacheEntry?
 
     /**
      * 根据id集合取得对应租户信息，并将结果缓存，查不到不缓存
      *
      * @param ids 租户id集合
-     * @return Map(租户id, SysTenantCacheItem)
+     * @return Map(租户id, SysTenantCacheEntry)
      * @author K
      * @since 1.0.0
      */
-    fun getTenantsBySubSystemCode(ids: Collection<String>): Map<String, SysTenantCacheItem>
+    fun getTenantsBySubSystemCode(ids: Collection<String>): Map<String, SysTenantCacheEntry>
 
     /**
      * 返回指定子系统的所有租户(仅启用的)
@@ -43,7 +43,7 @@ interface ISysTenantApi {
      * @author K
      * @since 1.0.0
      */
-    fun getTenantsBySubSystemCode(subSystemCode: String): List<SysTenantCacheItem>
+    fun getTenantsBySubSystemCode(subSystemCode: String): List<SysTenantCacheEntry>
 
     //endregion your codes 2
 

@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.core.api
 
 import io.kudos.ms.sys.common.api.ISysParamApi
-import io.kudos.ms.sys.common.vo.param.SysParamCacheItem
+import io.kudos.ms.sys.common.vo.param.SysParamCacheEntry
 import io.kudos.ms.sys.core.service.iservice.ISysParamService
 import jakarta.annotation.Resource
 import org.springframework.stereotype.Component
@@ -26,7 +26,7 @@ open class SysParamApi : ISysParamApi {
     override fun getParam(
         paramName: String,
         atomicServiceCode: String
-    ): SysParamCacheItem? {
+    ): SysParamCacheEntry? {
         return sysParamService.getParam(paramName, atomicServiceCode)
     }
 

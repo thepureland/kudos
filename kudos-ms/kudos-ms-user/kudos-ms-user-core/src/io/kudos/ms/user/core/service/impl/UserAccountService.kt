@@ -4,10 +4,10 @@ import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.security.CryptoKit
-import io.kudos.ms.user.common.vo.org.UserOrgCacheItem
-import io.kudos.ms.user.common.vo.user.UserAccountCacheItem
-import io.kudos.ms.user.common.vo.user.UserAccountRecord
-import io.kudos.ms.user.common.vo.user.UserAccountSearchPayload
+import io.kudos.ms.user.common.vo.org.UserOrgCacheEntry
+import io.kudos.ms.user.common.vo.user.UserAccountCacheEntry
+import io.kudos.ms.user.common.vo.user.UserAccountRow
+import io.kudos.ms.user.common.vo.user.UserAccountQuery
 import io.kudos.ms.user.core.cache.OrgIdsByUserIdCache
 import io.kudos.ms.user.core.cache.UserAccountHashCache
 import io.kudos.ms.user.core.cache.UserOrgHashCache
@@ -57,7 +57,7 @@ open class UserAccountService : BaseCrudService<String, UserAccount, UserAccount
     }
 
 
-    override fun getUserOrgs(userId: String): List<UserOrgCacheItem> {
+    override fun getUserOrgs(userId: String): List<UserOrgCacheEntry> {
         val orgIds = getUserOrgIds(userId)
         if (orgIds.isEmpty()) {
             return emptyList()
@@ -71,32 +71,32 @@ open class UserAccountService : BaseCrudService<String, UserAccount, UserAccount
         return orgIds.contains(orgId)
     }
 
-    override fun getUserByTenantIdAndUsername(tenantId: String, username: String): UserAccountCacheItem? {
+    override fun getUserByTenantIdAndUsername(tenantId: String, username: String): UserAccountCacheEntry? {
         val userId = userAccountHashCache.getUsersByTenantIdAndUsername(tenantId, username)?.id
         return userId?.let { userAccountHashCache.getUserById(it) }
     }
 
-    override fun getUserRecord(id: String): UserAccountRecord? {
+    override fun getUserRecord(id: String): UserAccountRow? {
         val user = dao.get(id) ?: return null
-        val record = UserAccountRecord()
+        val record = UserAccountRow()
         BeanKit.copyProperties(user, record)
         return record
     }
 
-    override fun getUsersByTenantId(tenantId: String): List<UserAccountRecord> {
-        val searchPayload = UserAccountSearchPayload().apply {
+    override fun getUsersByTenantId(tenantId: String): List<UserAccountRow> {
+        val searchPayload = UserAccountQuery().apply {
             this.tenantId = tenantId
         }
         @Suppress("UNCHECKED_CAST")
-        return dao.search(searchPayload, UserAccountRecord::class)
+        return dao.search(searchPayload, UserAccountRow::class)
     }
 
-    override fun getUsersByOrgId(orgId: String): List<UserAccountRecord> {
-        val searchPayload = UserAccountSearchPayload().apply {
+    override fun getUsersByOrgId(orgId: String): List<UserAccountRow> {
+        val searchPayload = UserAccountQuery().apply {
             this.orgId = orgId
         }
         @Suppress("UNCHECKED_CAST")
-        return dao.search(searchPayload, UserAccountRecord::class)
+        return dao.search(searchPayload, UserAccountRow::class)
     }
 
     @Transactional

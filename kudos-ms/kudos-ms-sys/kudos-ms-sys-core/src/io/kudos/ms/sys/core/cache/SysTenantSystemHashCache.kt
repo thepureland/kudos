@@ -4,7 +4,7 @@ import io.kudos.ability.cache.common.aop.hash.HashCacheableBySecondary
 import io.kudos.ability.cache.common.core.hash.AbstractHashCacheHandler
 import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.logger.LogFactory
-import io.kudos.ms.sys.common.vo.tenant.SysTenantSystemCacheItem
+import io.kudos.ms.sys.common.vo.tenant.SysTenantSystemCacheEntry
 import io.kudos.ms.sys.core.dao.SysTenantSystemDao
 import jakarta.annotation.Resource
 import org.springframework.stereotype.Component
@@ -27,7 +27,7 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-open class SysTenantSystemHashCache : AbstractHashCacheHandler<SysTenantSystemCacheItem>() {
+open class SysTenantSystemHashCache : AbstractHashCacheHandler<SysTenantSystemCacheEntry>() {
 
     @Resource
     private lateinit var sysTenantSystemDao: SysTenantSystemDao
@@ -39,19 +39,19 @@ open class SysTenantSystemHashCache : AbstractHashCacheHandler<SysTenantSystemCa
 
         /** 可筛选副属性，用于按 tenantId / systemCode 建二级索引 */
         val FILTERABLE_PROPERTIES = setOf(
-            SysTenantSystemCacheItem::tenantId.name,
-            SysTenantSystemCacheItem::systemCode.name
+            SysTenantSystemCacheEntry::tenantId.name,
+            SysTenantSystemCacheEntry::systemCode.name
         )
     }
 
     override fun cacheName(): String = CACHE_NAME
 
-    override fun entityClass() = SysTenantSystemCacheItem::class
+    override fun entityClass() = SysTenantSystemCacheEntry::class
 
     override fun filterableProperties(): Set<String> = FILTERABLE_PROPERTIES
 
-    override fun doReload(id: Any): SysTenantSystemCacheItem? =
-        sysTenantSystemDao.get(id.toString(), SysTenantSystemCacheItem::class)
+    override fun doReload(id: Any): SysTenantSystemCacheEntry? =
+        sysTenantSystemDao.get(id.toString(), SysTenantSystemCacheEntry::class)
 
     // ---------- 按子系统编码 / 按租户id ----------
 
@@ -65,7 +65,7 @@ open class SysTenantSystemHashCache : AbstractHashCacheHandler<SysTenantSystemCa
     @HashCacheableBySecondary(
         cacheNames = [CACHE_NAME],
         filterExpressions = ["#systemCode"],
-        entityClass = SysTenantSystemCacheItem::class,
+        entityClass = SysTenantSystemCacheEntry::class,
         filterableProperties = ["tenantId", "systemCode"],
         returnProperty = "tenantId"
     )
@@ -88,7 +88,7 @@ open class SysTenantSystemHashCache : AbstractHashCacheHandler<SysTenantSystemCa
     @HashCacheableBySecondary(
         cacheNames = [CACHE_NAME],
         filterExpressions = ["#tenantId"],
-        entityClass = SysTenantSystemCacheItem::class,
+        entityClass = SysTenantSystemCacheEntry::class,
         filterableProperties = ["tenantId", "systemCode"],
         returnProperty = "systemCode"
     )
@@ -127,7 +127,7 @@ open class SysTenantSystemHashCache : AbstractHashCacheHandler<SysTenantSystemCa
      */
     open fun syncOnInsert(id: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME) || !KeyValueCacheKit.isWriteInTime(CACHE_NAME)) return
-        val item = sysTenantSystemDao.get(id, SysTenantSystemCacheItem::class) ?: return
+        val item = sysTenantSystemDao.get(id, SysTenantSystemCacheEntry::class) ?: return
         hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
     }
 
@@ -148,7 +148,7 @@ open class SysTenantSystemHashCache : AbstractHashCacheHandler<SysTenantSystemCa
      */
     open fun syncOnUpdate(id: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
-        val item = sysTenantSystemDao.get(id, SysTenantSystemCacheItem::class) ?: return
+        val item = sysTenantSystemDao.get(id, SysTenantSystemCacheEntry::class) ?: return
         if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
             hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
         }
@@ -171,7 +171,7 @@ open class SysTenantSystemHashCache : AbstractHashCacheHandler<SysTenantSystemCa
      */
     open fun syncOnDelete(id: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
-        hashCache().deleteById(CACHE_NAME, id, SysTenantSystemCacheItem::class, FILTERABLE_PROPERTIES, emptySet())
+        hashCache().deleteById(CACHE_NAME, id, SysTenantSystemCacheEntry::class, FILTERABLE_PROPERTIES, emptySet())
     }
 
     /**
@@ -184,7 +184,7 @@ open class SysTenantSystemHashCache : AbstractHashCacheHandler<SysTenantSystemCa
         log.debug("批量删除 id 为 $ids 的 sys_tenant_system 后，同步从 ${cacheName()} 缓存中踢除...")
         val cache = hashCache()
         ids.forEach {
-            cache.deleteById(cacheName(), it, SysTenantSystemCacheItem::class, FILTERABLE_PROPERTIES, emptySet())
+            cache.deleteById(cacheName(), it, SysTenantSystemCacheEntry::class, FILTERABLE_PROPERTIES, emptySet())
         }
         log.debug("${cacheName()} 缓存同步完成。")
     }

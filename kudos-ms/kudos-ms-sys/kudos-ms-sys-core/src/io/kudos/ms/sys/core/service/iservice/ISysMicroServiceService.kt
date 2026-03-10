@@ -1,8 +1,8 @@
 package io.kudos.ms.sys.core.service.iservice
 
 import io.kudos.base.support.iservice.IBaseCrudService
-import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceCacheItem
-import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceRecord
+import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceCacheEntry
+import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceRow
 import io.kudos.ms.sys.core.model.po.SysMicroService
 
 
@@ -25,7 +25,7 @@ interface ISysMicroServiceService : IBaseCrudService<String, SysMicroService> {
      * @author K
      * @since 1.0.0
      */
-    fun getAllActiveMicroServices(): List<SysMicroServiceCacheItem>
+    fun getAllActiveMicroServices(): List<SysMicroServiceCacheEntry>
 
     /**
      * 返回所有启用的微服务,不包括原子服务
@@ -34,14 +34,14 @@ interface ISysMicroServiceService : IBaseCrudService<String, SysMicroService> {
      * @author K
      * @since 1.0.0
      */
-    fun getAllActiveMicroServiceExcludeAtomicService(): List<SysMicroServiceCacheItem>
+    fun getAllActiveMicroServiceExcludeAtomicService(): List<SysMicroServiceCacheEntry>
 
     /**
      * 返回所有启用的原子服务(atomicService为true的微服务)
      *
      * @return List<原子服务(微服务)缓存对象>, 不存在返回空列表
      */
-    fun getAllActiveAtomicServices(): List<SysMicroServiceCacheItem>
+    fun getAllActiveAtomicServices(): List<SysMicroServiceCacheEntry>
 
     /**
      * 返回指定编码的微/原子服务，可能是未启用的
@@ -51,17 +51,17 @@ interface ISysMicroServiceService : IBaseCrudService<String, SysMicroService> {
      * @author K
      * @since 1.0.0
      */
-    fun getMicroServiceByCode(code: String): SysMicroServiceCacheItem?
+    fun getMicroServiceByCode(code: String): SysMicroServiceCacheEntry?
 
     /**
      * 返回指定父编码下的所有启用的原子服务
      *
      * @param parentCode 父编码（微服务编码）
-     * @return List<SysMicroServiceRecord>，不存在返回空列表
+     * @return List<SysMicroServiceRow>，不存在返回空列表
      * @author K
      * @since 1.0.0
      */
-    fun getAllActiveAtomicServiceByParentCode(parentCode: String): List<SysMicroServiceRecord>
+    fun getAllActiveAtomicServiceByParentCode(parentCode: String): List<SysMicroServiceRow>
 
     /**
      * 更新启用状态，并同步缓存

@@ -2,10 +2,10 @@ package io.kudos.ms.sys.api.admin.controller
 
 import io.kudos.ability.web.springmvc.controller.BaseCrudController
 import io.kudos.ms.sys.common.vo.dict.SysDictDetail
-import io.kudos.ms.sys.common.vo.dict.SysDictPayload
-import io.kudos.ms.sys.common.vo.dict.SysDictRecord
-import io.kudos.ms.sys.common.vo.dict.SysDictSearchPayload
-import io.kudos.ms.sys.common.vo.dictitem.SysDictItemCacheItem
+import io.kudos.ms.sys.common.vo.dict.SysDictForm
+import io.kudos.ms.sys.common.vo.dict.SysDictRow
+import io.kudos.ms.sys.common.vo.dict.SysDictQuery
+import io.kudos.ms.sys.common.vo.dictitem.SysDictItemCacheEntry
 import io.kudos.ms.sys.core.service.impl.SysDictItemService
 import io.kudos.ms.sys.core.service.iservice.ISysDictItemService
 import io.kudos.ms.sys.core.service.iservice.ISysDictService
@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/admin/sys/dict")
 class SysDictAdminController :
-    BaseCrudController<String, ISysDictService, SysDictSearchPayload, SysDictRecord, SysDictDetail, SysDictPayload>() {
+    BaseCrudController<String, ISysDictService, SysDictQuery, SysDictRow, SysDictDetail, SysDictForm>() {
 
     @Resource
     private lateinit var sysDictItemService: ISysDictItemService
@@ -39,7 +39,7 @@ class SysDictAdminController :
      * @return 字典项列表
      */
     @GetMapping("/getDictItems")
-    fun getDictItems(dictType: String, atomicServiceCode: String): List<SysDictItemCacheItem> {
+    fun getDictItems(dictType: String, atomicServiceCode: String): List<SysDictItemCacheEntry> {
         return sysDictItemService.getItems(dictType, atomicServiceCode)
     }
 
@@ -54,7 +54,7 @@ class SysDictAdminController :
     fun batchGetDictItems(
         @RequestBody
         dictTypesByAtomicServiceCode: Map<String, Collection<String>>
-    ): Map<String, Map<String, List<SysDictItemCacheItem>>> {
+    ): Map<String, Map<String, List<SysDictItemCacheEntry>>> {
        return sysDictItemService.batchGetDictItems(dictTypesByAtomicServiceCode)
     }
 

@@ -1,7 +1,7 @@
 package io.kudos.ms.user.core.cache
 
 import io.kudos.ability.cache.common.kit.KeyValueCacheKit
-import io.kudos.ms.user.common.vo.user.UserAccountThirdCacheItem
+import io.kudos.ms.user.common.vo.user.UserAccountThirdCacheEntry
 import io.kudos.ms.user.core.dao.UserAccountThirdDao
 import io.kudos.ms.user.core.model.po.UserAccountThird
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
@@ -90,7 +90,7 @@ class AccountThirdByUserIdAndProviderCodeCacheTest : RdbAndRedisCacheTestBase() 
 
         val key = cacheHandler.getKey(userId, "DING")
         @Suppress("UNCHECKED_CAST")
-        val cacheItem = KeyValueCacheKit.getValue(cacheHandler.cacheName(), key) as UserAccountThirdCacheItem?
+        val cacheItem = KeyValueCacheKit.getValue(cacheHandler.cacheName(), key) as UserAccountThirdCacheEntry?
         assertNotNull(cacheItem)
         assertEquals(accountThird.id, cacheItem.id)
     }
@@ -106,7 +106,7 @@ class AccountThirdByUserIdAndProviderCodeCacheTest : RdbAndRedisCacheTestBase() 
 
         val key = cacheHandler.getKey(accountThird.userId, accountThird.accountProviderDictCode)
         @Suppress("UNCHECKED_CAST")
-        val cacheItem = KeyValueCacheKit.getValue(cacheHandler.cacheName(), key) as UserAccountThirdCacheItem?
+        val cacheItem = KeyValueCacheKit.getValue(cacheHandler.cacheName(), key) as UserAccountThirdCacheEntry?
         assertNotNull(cacheItem)
         assertEquals(newEmail, cacheItem.externalEmail)
     }

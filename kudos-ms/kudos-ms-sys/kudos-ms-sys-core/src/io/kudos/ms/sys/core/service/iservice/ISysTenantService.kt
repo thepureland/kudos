@@ -2,8 +2,8 @@ package io.kudos.ms.sys.core.service.iservice
 
 import io.kudos.base.support.iservice.IBaseCrudService
 import io.kudos.ms.sys.common.api.ISysTenantApi
-import io.kudos.ms.sys.common.vo.tenant.SysTenantCacheItem
-import io.kudos.ms.sys.common.vo.tenant.SysTenantRecord
+import io.kudos.ms.sys.common.vo.tenant.SysTenantCacheEntry
+import io.kudos.ms.sys.common.vo.tenant.SysTenantRow
 import io.kudos.ms.sys.core.model.po.SysTenant
 
 
@@ -39,7 +39,7 @@ interface ISysTenantService : IBaseCrudService<String, SysTenant>, ISysTenantApi
      * @author AI: Cursor
      * @since 1.0.0
      */
-    fun getTenantRecord(id: String): SysTenantRecord?
+    fun getTenantRecord(id: String): SysTenantRow?
 
     /**
      * 根据名称获取租户记录
@@ -49,7 +49,7 @@ interface ISysTenantService : IBaseCrudService<String, SysTenant>, ISysTenantApi
      * @author AI: Cursor
      * @since 1.0.0
      */
-    fun getTenantByName(name: String): SysTenantRecord?
+    fun getTenantByName(name: String): SysTenantRow?
 
     /**
      * 获取租户的子系统编码列表

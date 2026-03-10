@@ -7,7 +7,7 @@ import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.context.support.Consts
-import io.kudos.ms.user.common.vo.loginremember.UserLoginRememberMeCacheItem
+import io.kudos.ms.user.common.vo.loginremember.UserLoginRememberMeCacheEntry
 import io.kudos.ms.user.core.dao.UserLoginRememberMeDao
 import io.kudos.ms.user.core.model.po.UserLoginRememberMe
 import org.springframework.beans.factory.annotation.Autowired
@@ -21,7 +21,7 @@ import java.time.LocalDateTime
  *
  * 1.数据来源表：user_login_remember_me
  * 2.缓存的key为：tenant_id::username
- * 3.缓存的value为：UserLoginRememberMeCacheItem对象
+ * 3.缓存的value为：UserLoginRememberMeCacheEntry对象
  *
  * @author K
  * @author AI: Codex
@@ -29,7 +29,7 @@ import java.time.LocalDateTime
  */
 @Component
 //region your codes 1
-open class RememberMeByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<UserLoginRememberMeCacheItem>() {
+open class RememberMeByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<UserLoginRememberMeCacheEntry>() {
 //endregion your codes 1
 
     //region your codes 2
@@ -43,7 +43,7 @@ open class RememberMeByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<U
 
     override fun cacheName() = CACHE_NAME
 
-    override fun doReload(key: String): UserLoginRememberMeCacheItem? {
+    override fun doReload(key: String): UserLoginRememberMeCacheEntry? {
         require(key.contains(Consts.CACHE_KEY_DEFAULT_DELIMITER)) {
             "缓存${CACHE_NAME}的key格式必须是：tenantId${Consts.CACHE_KEY_DEFAULT_DELIMITER}username"
         }
@@ -89,14 +89,14 @@ open class RememberMeByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<U
      *
      * @param tenantId 租户ID
      * @param username 用户名
-     * @return UserLoginRememberMeCacheItem，找不到返回null
+     * @return UserLoginRememberMeCacheEntry，找不到返回null
      */
     @Cacheable(
         cacheNames = [CACHE_NAME],
         key = "#tenantId.concat('${Consts.CACHE_KEY_DEFAULT_DELIMITER}').concat(#username)",
         unless = "#result == null"
     )
-    open fun getRememberMe(tenantId: String, username: String): UserLoginRememberMeCacheItem? {
+    open fun getRememberMe(tenantId: String, username: String): UserLoginRememberMeCacheEntry? {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("缓存中不存在租户${tenantId}且用户名为${username}的记住我登录信息，从数据库中加载...")
         }
@@ -199,8 +199,8 @@ open class RememberMeByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<U
         return "${tenantId.trim()}${Consts.CACHE_KEY_DEFAULT_DELIMITER}${username.trim()}"
     }
 
-    private fun buildCacheItem(row: Map<String, *>, username: String): UserLoginRememberMeCacheItem {
-        return UserLoginRememberMeCacheItem(
+    private fun buildCacheItem(row: Map<String, *>, username: String): UserLoginRememberMeCacheEntry {
+        return UserLoginRememberMeCacheEntry(
             id = (row[UserLoginRememberMe::id.name] as String?) ?: "",
             username = username,
             token = row[UserLoginRememberMe::token.name] as String?,

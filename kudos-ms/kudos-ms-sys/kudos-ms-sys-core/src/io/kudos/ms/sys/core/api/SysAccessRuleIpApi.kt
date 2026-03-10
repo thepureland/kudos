@@ -1,9 +1,9 @@
 package io.kudos.ms.sys.core.api
 
 import io.kudos.ms.sys.common.api.ISysAccessRuleIpApi
-import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpCacheItem
-import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpPayload
-import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpRecord
+import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpCacheEntry
+import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpForm
+import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpRow
 import io.kudos.ms.sys.core.service.iservice.ISysAccessRuleIpService
 import jakarta.annotation.Resource
 import org.springframework.stereotype.Service
@@ -25,11 +25,11 @@ open class SysAccessRuleIpApi : ISysAccessRuleIpApi {
     @Resource
     protected lateinit var sysAccessRuleIpService: ISysAccessRuleIpService
 
-    override fun getIpsByRuleId(ruleId: String): List<SysAccessRuleIpRecord> {
+    override fun getIpsByRuleId(ruleId: String): List<SysAccessRuleIpRow> {
         return sysAccessRuleIpService.getIpsByRuleId(ruleId)
     }
 
-    override fun getIpsBySystemAndTenant(systemCode: String, tenantId: String?): List<SysAccessRuleIpCacheItem> {
+    override fun getIpsBySystemAndTenant(systemCode: String, tenantId: String?): List<SysAccessRuleIpCacheEntry> {
         return sysAccessRuleIpService.getIpsBySystemAndTenant(systemCode, tenantId)
     }
 
@@ -37,7 +37,7 @@ open class SysAccessRuleIpApi : ISysAccessRuleIpApi {
         return sysAccessRuleIpService.checkIpAccess(ip, systemCode, tenantId)
     }
 
-    override fun batchSaveOrUpdate(ruleId: String, ips: List<SysAccessRuleIpPayload>): Int {
+    override fun batchSaveOrUpdate(ruleId: String, ips: List<SysAccessRuleIpForm>): Int {
         return sysAccessRuleIpService.batchSaveOrUpdate(ruleId, ips)
     }
 

@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.core.api
 
 import io.kudos.ms.sys.common.api.ISysDictApi
-import io.kudos.ms.sys.common.vo.dictitem.SysDictItemCacheItem
+import io.kudos.ms.sys.common.vo.dictitem.SysDictItemCacheEntry
 import io.kudos.ms.sys.core.service.iservice.ISysDictService
 import jakarta.annotation.Resource
 import org.springframework.stereotype.Component
@@ -26,7 +26,7 @@ open class SysDictApi : ISysDictApi {
     override fun getActiveDictItems(
         dictType: String,
         atomicServiceCode: String
-    ): List<SysDictItemCacheItem> {
+    ): List<SysDictItemCacheEntry> {
         return sysDictService.getActiveDictItems(dictType, atomicServiceCode)
     }
 
@@ -39,7 +39,7 @@ open class SysDictApi : ISysDictApi {
 
     override fun batchGetActiveDictItems(
         dictTypeAndASCodePairs: List<Pair<String, String>>
-    ): Map<Pair<String, String>, List<SysDictItemCacheItem>> {
+    ): Map<Pair<String, String>, List<SysDictItemCacheEntry>> {
         return sysDictService.batchGetActiveDictItems(dictTypeAndASCodePairs)
     }
 

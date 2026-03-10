@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.common.api
 
-import io.kudos.ms.sys.common.vo.datasource.SysDataSourceCacheItem
+import io.kudos.ms.sys.common.vo.datasource.SysDataSourceCacheEntry
 
 
 /**
@@ -20,14 +20,14 @@ interface ISysDataSourceApi {
      *
      * @param tenantId 租户ID
      * @param atomicServiceCode 原子服务编码，缺省为null，为空时请自行确保tenantId对应数据源的惟一性，否则将随机返回一条
-     * @return SysDataSourceCacheItem，找不到时返回null
+     * @return SysDataSourceCacheEntry，找不到时返回null
      * @author K
      * @since 1.0.0
      */
     fun getDataSource(
         tenantId: String,
         atomicServiceCode: String? = null
-    ): SysDataSourceCacheItem?
+    ): SysDataSourceCacheEntry?
 
     //endregion your codes 2
 

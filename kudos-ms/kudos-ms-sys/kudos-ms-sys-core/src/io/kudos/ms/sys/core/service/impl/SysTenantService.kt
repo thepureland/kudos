@@ -7,10 +7,10 @@ import io.kudos.base.query.Criteria
 import io.kudos.base.query.PagingSearchResult
 import io.kudos.base.query.eq
 import io.kudos.base.support.payload.ListSearchPayload
-import io.kudos.ms.sys.common.vo.tenant.SysTenantCacheItem
+import io.kudos.ms.sys.common.vo.tenant.SysTenantCacheEntry
 import io.kudos.ms.sys.common.vo.tenant.SysTenantDetail
-import io.kudos.ms.sys.common.vo.tenant.SysTenantPayload
-import io.kudos.ms.sys.common.vo.tenant.SysTenantRecord
+import io.kudos.ms.sys.common.vo.tenant.SysTenantForm
+import io.kudos.ms.sys.common.vo.tenant.SysTenantRow
 import io.kudos.ms.sys.core.cache.SysTenantSystemHashCache
 import io.kudos.ms.sys.core.cache.TenantByIdCache
 import io.kudos.ms.sys.core.dao.SysTenantDao
@@ -53,7 +53,7 @@ open class SysTenantService : BaseCrudService<String, SysTenant, SysTenantDao>()
         val result = super.get(id, returnType)
         if (result is SysTenantDetail) {
             result.subSystemCodes = getSubSystemCodesString(id)
-        } else if(result is SysTenantPayload) {
+        } else if(result is SysTenantForm) {
             result.subSystemCodes = sysTenantSystemHashCache.getSubSystemCodesByTenantId(id)
         }
         return result
@@ -62,22 +62,22 @@ open class SysTenantService : BaseCrudService<String, SysTenant, SysTenantDao>()
     override fun pagingSearch(listSearchPayload: ListSearchPayload): PagingSearchResult<*> {
         val result = super.pagingSearch(listSearchPayload)
         result.data.forEach {
-            if (it is SysTenantRecord) {
+            if (it is SysTenantRow) {
                 it.subSystemCodes = getSubSystemCodesString(it.id)
             }
         }
         return result
     }
 
-    override fun getTenant(id: String): SysTenantCacheItem? {
+    override fun getTenant(id: String): SysTenantCacheEntry? {
         return tenantByIdCache.getTenantById(id)
     }
 
-    override fun getTenantsBySubSystemCode(ids: Collection<String>): Map<String, SysTenantCacheItem> {
+    override fun getTenantsBySubSystemCode(ids: Collection<String>): Map<String, SysTenantCacheEntry> {
         return tenantByIdCache.getTenantsByIds(ids)
     }
 
-    override fun getTenantsBySubSystemCode(subSystemCode: String): List<SysTenantCacheItem> {
+    override fun getTenantsBySubSystemCode(subSystemCode: String): List<SysTenantCacheEntry> {
         val tenantIds = sysTenantSystemHashCache.getTenantIdsBySubSystemCode(subSystemCode)
         return tenantByIdCache.getTenantsByIds(tenantIds).values.filter { it.active }
     }
@@ -88,7 +88,7 @@ open class SysTenantService : BaseCrudService<String, SysTenant, SysTenantDao>()
         log.debug("新增id为${id}的租户。")
 
         // 保存租户-系统关系
-        if (any is SysTenantPayload) {
+        if (any is SysTenantForm) {
             insertSysTenantSystems(any)
         }
 
@@ -98,7 +98,7 @@ open class SysTenantService : BaseCrudService<String, SysTenant, SysTenantDao>()
         return id
     }
 
-    private fun insertSysTenantSystems(any: SysTenantPayload) {
+    private fun insertSysTenantSystems(any: SysTenantForm) {
         val tenantSystems = any.subSystemCodes.mapTo(mutableSetOf()) { subSystemCode ->
             SysTenantSystem().apply {
                 this.systemCode = subSystemCode
@@ -113,7 +113,7 @@ open class SysTenantService : BaseCrudService<String, SysTenant, SysTenantDao>()
         val success = super.update(any)
         val id = BeanKit.getProperty(any, SysTenant::id.name) as String
         if (success) {
-            if (any is SysTenantPayload) {
+            if (any is SysTenantForm) {
                 val tenantId = any.id!!
                 val subSystemCodes = sysTenantSystemHashCache.getSubSystemCodesByTenantId(tenantId)
                 // 判断租户-系统关系有没有变，有变要更新租户-系统关系
@@ -202,9 +202,9 @@ open class SysTenantService : BaseCrudService<String, SysTenant, SysTenantDao>()
      * @author AI: Cursor
      * @since 1.0.0
      */
-    override fun getTenantRecord(id: String): SysTenantRecord? {
+    override fun getTenantRecord(id: String): SysTenantRow? {
         val tenant = dao.get(id) ?: return null
-        val record = SysTenantRecord()
+        val record = SysTenantRow()
         BeanKit.copyProperties(tenant, record)
         return record
     }
@@ -217,9 +217,9 @@ open class SysTenantService : BaseCrudService<String, SysTenant, SysTenantDao>()
      * @author AI: Cursor
      * @since 1.0.0
      */
-    override fun getTenantByName(name: String): SysTenantRecord? {
+    override fun getTenantByName(name: String): SysTenantRow? {
         val criteria = Criteria(SysTenant::name eq name)
-        val records = dao.searchAs<SysTenantRecord>(criteria)
+        val records = dao.searchAs<SysTenantRow>(criteria)
         return records.firstOrNull()
     }
 

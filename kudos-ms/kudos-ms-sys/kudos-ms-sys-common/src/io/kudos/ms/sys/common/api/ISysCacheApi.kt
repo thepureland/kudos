@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.common.api
 
-import io.kudos.ms.sys.common.vo.cache.SysCacheCacheItem
-import io.kudos.ms.sys.common.vo.cache.SysCacheRecord
+import io.kudos.ms.sys.common.vo.cache.SysCacheCacheEntry
+import io.kudos.ms.sys.common.vo.cache.SysCacheRow
 
 
 /**
@@ -22,7 +22,7 @@ interface ISysCacheApi {
      * @param name 缓存名称
      * @return 缓存详情对象，找不到返回null
      */
-    fun getCacheFromCache(name: String): SysCacheCacheItem?
+    fun getCacheFromCache(name: String): SysCacheCacheEntry?
 
     /**
      * 更新启用状态，并同步缓存
@@ -39,14 +39,14 @@ interface ISysCacheApi {
      * @param atomicServiceCode 原子服务编码
      * @return 缓存记录列表
      */
-    fun getCachesByAtomicServiceCode(atomicServiceCode: String): List<SysCacheRecord>
+    fun getCachesByAtomicServiceCode(atomicServiceCode: String): List<SysCacheRow>
 
     /**
      * 获取所有启用的缓存配置
      *
      * @return 缓存记录列表
      */
-    fun getAllActiveCaches(): List<SysCacheRecord>
+    fun getAllActiveCaches(): List<SysCacheRow>
 
     //endregion your codes 2
 

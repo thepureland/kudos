@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.common.api
 
-import io.kudos.ms.sys.common.vo.param.SysParamCacheItem
+import io.kudos.ms.sys.common.vo.param.SysParamCacheEntry
 
 
 /**
@@ -27,7 +27,7 @@ interface ISysParamApi {
     fun getParam(
         paramName: String,
         atomicServiceCode: String = "default"
-    ): SysParamCacheItem?
+    ): SysParamCacheEntry?
 
     //endregion your codes 2
 

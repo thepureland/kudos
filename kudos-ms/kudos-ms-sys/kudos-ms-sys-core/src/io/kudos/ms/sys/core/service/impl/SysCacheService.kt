@@ -9,8 +9,8 @@ import io.kudos.base.error.ServiceException
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.eq
-import io.kudos.ms.sys.common.vo.cache.SysCacheCacheItem
-import io.kudos.ms.sys.common.vo.cache.SysCacheRecord
+import io.kudos.ms.sys.common.vo.cache.SysCacheCacheEntry
+import io.kudos.ms.sys.common.vo.cache.SysCacheRow
 import io.kudos.ms.sys.core.cache.CacheByNameCache
 import io.kudos.ms.sys.core.dao.SysCacheDao
 import io.kudos.ms.sys.core.model.po.SysCache
@@ -39,7 +39,7 @@ open class SysCacheService : BaseCrudService<String, SysCache, SysCacheDao>(), I
     @Autowired
     private lateinit var cacheConfigCacheHandler: CacheByNameCache
 
-    override fun getCacheFromCache(name: String): SysCacheCacheItem? {
+    override fun getCacheFromCache(name: String): SysCacheCacheEntry? {
         return cacheConfigCacheHandler.getCache(name)
     }
 
@@ -114,9 +114,9 @@ open class SysCacheService : BaseCrudService<String, SysCache, SysCacheDao>(), I
      * @author AI: Cursor
      * @since 1.0.0
      */
-    override fun getCachesByAtomicServiceCode(atomicServiceCode: String): List<SysCacheRecord> {
+    override fun getCachesByAtomicServiceCode(atomicServiceCode: String): List<SysCacheRow> {
         val criteria = Criteria(SysCache::atomicServiceCode eq atomicServiceCode)
-        return dao.searchAs<SysCacheRecord>(criteria)
+        return dao.searchAs<SysCacheRow>(criteria)
     }
 
     /**
@@ -126,9 +126,9 @@ open class SysCacheService : BaseCrudService<String, SysCache, SysCacheDao>(), I
      * @author AI: Cursor
      * @since 1.0.0
      */
-    override fun getAllActiveCaches(): List<SysCacheRecord> {
+    override fun getAllActiveCaches(): List<SysCacheRow> {
         val criteria = Criteria(SysCache::active eq true)
-        return dao.searchAs<SysCacheRecord>(criteria)
+        return dao.searchAs<SysCacheRow>(criteria)
     }
 
     override fun reload(name: String, key: String) {

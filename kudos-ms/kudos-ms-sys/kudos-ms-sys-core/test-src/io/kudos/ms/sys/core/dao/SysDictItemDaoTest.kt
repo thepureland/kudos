@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.core.dao
 
-import io.kudos.ms.sys.common.vo.dictitem.SysDictItemSearchPayload
+import io.kudos.ms.sys.common.vo.dictitem.SysDictItemQuery
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbTestBase
 import jakarta.annotation.Resource
@@ -38,7 +38,7 @@ class SysDictItemDaoTest : RdbTestBase() {
 
     @Test
     fun pagingSearch() {
-        val searchPayload = SysDictItemSearchPayload(
+        val searchPayload = SysDictItemQuery(
             dictType = "svc-dict-ditem-dao-test-1"
         ).apply {
             this.pageNo = 1
@@ -51,7 +51,7 @@ class SysDictItemDaoTest : RdbTestBase() {
 
     @Test
     fun count() {
-        val searchPayload = SysDictItemSearchPayload(
+        val searchPayload = SysDictItemQuery(
             dictType = "svc-dict-ditem-dao-test-1",
             active = true
         )
@@ -61,7 +61,7 @@ class SysDictItemDaoTest : RdbTestBase() {
 
     @Test
     fun leftJoinSearch() {
-        val searchPayload = SysDictItemSearchPayload(
+        val searchPayload = SysDictItemQuery(
             itemCode = "svc-item-ditem-dao-test-1"
         )
         val query = sysDictItemDao.leftJoinSearch(searchPayload)

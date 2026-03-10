@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.common.api
 
-import io.kudos.ms.sys.common.vo.system.SysSystemCacheItem
-import io.kudos.ms.sys.common.vo.system.SysSystemRecord
+import io.kudos.ms.sys.common.vo.system.SysSystemCacheEntry
+import io.kudos.ms.sys.common.vo.system.SysSystemRow
 
 
 /**
@@ -16,13 +16,13 @@ interface ISysSystemApi {
 
     //region your codes 2
 
-    fun getSystemByCode(code: String): SysSystemCacheItem?
+    fun getSystemByCode(code: String): SysSystemCacheEntry?
 
-    fun getAllActiveSystems(): List<SysSystemRecord>
+    fun getAllActiveSystems(): List<SysSystemRow>
 
     fun updateActive(code: String, active: Boolean): Boolean
 
-    fun getSubSystemsBySystemCode(systemCode: String): List<SysSystemRecord>
+    fun getSubSystemsBySystemCode(systemCode: String): List<SysSystemRow>
 
     //endregion your codes 2
 

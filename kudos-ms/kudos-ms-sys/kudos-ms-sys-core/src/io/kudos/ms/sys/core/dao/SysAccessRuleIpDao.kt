@@ -6,8 +6,8 @@ import io.kudos.base.error.ObjectNotFoundException
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.query.eq
-import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpRecord
-import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpSearchPayload
+import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpRow
+import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpQuery
 import io.kudos.ms.sys.core.model.po.SysAccessRule
 import io.kudos.ms.sys.core.model.po.SysAccessRuleIp
 import io.kudos.ms.sys.core.model.table.SysAccessRuleIps
@@ -37,11 +37,11 @@ open class SysAccessRuleIpDao : BaseCrudDao<String, SysAccessRuleIp, SysAccessRu
      * 分页连接查询符合条件的ip访问规则明细和父访问规则
      *
      * @param searchPayload 查询项载体
-     * @return List<SysAccessRuleIpRecord>
+     * @return List<SysAccessRuleIpRow>
      * @author K
      * @since 1.0.0
      */
-    fun pagingSearch(searchPayload: SysAccessRuleIpSearchPayload): List<SysAccessRuleIpRecord> {
+    fun pagingSearch(searchPayload: SysAccessRuleIpQuery): List<SysAccessRuleIpRow> {
         var query = leftJoinSearch(searchPayload)
         val orders = searchPayload.orders
         if (orders.isNullOrEmpty()) {
@@ -85,14 +85,14 @@ open class SysAccessRuleIpDao : BaseCrudDao<String, SysAccessRuleIp, SysAccessRu
 
         @Suppress("UNCHECKED_CAST")
         val extraColumns = mapOf(
-            SysAccessRuleIpRecord::parentRuleActive.name to (SysAccessRules.active as Column<Any>),
-            SysAccessRuleIpRecord::tenantId.name to (SysAccessRules.tenantId as Column<Any>),
-            SysAccessRuleIpRecord::systemCode.name to (SysAccessRules.systemCode as Column<Any>),
-            SysAccessRuleIpRecord::ruleTypeDictCode.name to (SysAccessRules.ruleTypeDictCode as Column<Any>)
+            SysAccessRuleIpRow::parentRuleActive.name to (SysAccessRules.active as Column<Any>),
+            SysAccessRuleIpRow::tenantId.name to (SysAccessRules.tenantId as Column<Any>),
+            SysAccessRuleIpRow::systemCode.name to (SysAccessRules.systemCode as Column<Any>),
+            SysAccessRuleIpRow::ruleTypeDictCode.name to (SysAccessRules.ruleTypeDictCode as Column<Any>)
         )
 
         return query.map { row ->
-            mapTo(row, SysAccessRuleIpRecord::class, extraColumns = extraColumns)
+            mapTo(row, SysAccessRuleIpRow::class, extraColumns = extraColumns)
         }
     }
 
@@ -104,7 +104,7 @@ open class SysAccessRuleIpDao : BaseCrudDao<String, SysAccessRuleIp, SysAccessRu
      * @author K
      * @since 1.0.0
      */
-    fun count(searchPayload: SysAccessRuleIpSearchPayload): Int {
+    fun count(searchPayload: SysAccessRuleIpQuery): Int {
         return leftJoinSearch(searchPayload).totalRecordsInAllPages
     }
 
@@ -116,7 +116,7 @@ open class SysAccessRuleIpDao : BaseCrudDao<String, SysAccessRuleIp, SysAccessRu
      * @author K
      * @since 1.0.0
      */
-    fun leftJoinSearch(searchPayload: SysAccessRuleIpSearchPayload): Query {
+    fun leftJoinSearch(searchPayload: SysAccessRuleIpQuery): Query {
         var onExpr = SysAccessRuleIps.parentRuleId.eq(SysAccessRules.id)
         val active = searchPayload.active
         if (active != null) {
@@ -186,7 +186,7 @@ open class SysAccessRuleIpDao : BaseCrudDao<String, SysAccessRuleIp, SysAccessRu
         return batchDeleteCriteria(criteria)
     }
 
-//    private fun mapRowToRecord(row: QueryRowSet) = SysAccessRuleIpRecord(
+//    private fun mapRowToRecord(row: QueryRowSet) = SysAccessRuleIpRow(
 //        id = row[SysAccessRuleIps.id] ?: "",
 //        ipStart = row[SysAccessRuleIps.ipStart],
 //        ipEnd = row[SysAccessRuleIps.ipEnd],

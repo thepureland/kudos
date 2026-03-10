@@ -3,7 +3,7 @@ package io.kudos.ms.user.core.dao
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.eq
-import io.kudos.ms.user.common.vo.user.UserAccountCacheItem
+import io.kudos.ms.user.common.vo.user.UserAccountCacheEntry
 import io.kudos.ms.user.core.model.po.UserAccount
 import io.kudos.ms.user.core.model.table.UserAccounts
 import org.springframework.stereotype.Repository
@@ -28,24 +28,24 @@ open class UserAccountDao : BaseCrudDao<String, UserAccount, UserAccounts>() {
      *
      * @param tenantId 租户id
      * @param username 用户名
-     * @return UserAccountCacheItem，不存在返回null
+     * @return UserAccountCacheEntry，不存在返回null
      */
-    open fun getUsersByTenantIdAndUsername(tenantId: String, username: String): UserAccountCacheItem? {
+    open fun getUsersByTenantIdAndUsername(tenantId: String, username: String): UserAccountCacheEntry? {
         val criteria = Criteria.and(
             UserAccount::tenantId eq tenantId,
             UserAccount::username eq username
         )
-        return searchAs<UserAccountCacheItem>(criteria).firstOrNull()
+        return searchAs<UserAccountCacheEntry>(criteria).firstOrNull()
     }
 
     /**
      * 查询所有 active=true 的用户
      *
-     * @return List<UserAccountCacheItem>
+     * @return List<UserAccountCacheEntry>
      */
-    open fun searchActiveUsersForCache(): List<UserAccountCacheItem> {
+    open fun searchActiveUsersForCache(): List<UserAccountCacheEntry> {
         val criteria = Criteria(UserAccount::active eq true)
-        return searchAs<UserAccountCacheItem>(criteria)
+        return searchAs<UserAccountCacheEntry>(criteria)
     }
 
     /**

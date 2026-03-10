@@ -2,7 +2,7 @@ package io.kudos.ms.sys.core.service.iservice
 
 import io.kudos.base.support.iservice.IBaseCrudService
 import io.kudos.ms.sys.common.api.ISysDomainApi
-import io.kudos.ms.sys.common.vo.domain.SysDomainRecord
+import io.kudos.ms.sys.common.vo.domain.SysDomainRow
 import io.kudos.ms.sys.core.model.po.SysDomain
 
 
@@ -26,7 +26,7 @@ interface ISysDomainService : IBaseCrudService<String, SysDomain>, ISysDomainApi
      * @author K
      * @since 1.0.0
      */
-    fun getDomainsByTenantId(tenantId: String): List<SysDomainRecord>
+    fun getDomainsByTenantId(tenantId: String): List<SysDomainRow>
 
     /**
      * 获取系统的域名列表
@@ -36,7 +36,7 @@ interface ISysDomainService : IBaseCrudService<String, SysDomain>, ISysDomainApi
      * @author K
      * @since 1.0.0
      */
-    fun getDomainsBySystemCode(systemCode: String): List<SysDomainRecord>
+    fun getDomainsBySystemCode(systemCode: String): List<SysDomainRow>
 
     /**
      * 更新启用状态，并同步缓存

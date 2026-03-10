@@ -5,10 +5,10 @@ import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.eq
-import io.kudos.ms.sys.common.vo.dict.SysDictCacheItem
-import io.kudos.ms.sys.common.vo.dict.SysDictPayload
-import io.kudos.ms.sys.common.vo.dict.SysDictRecord
-import io.kudos.ms.sys.common.vo.dictitem.SysDictItemCacheItem
+import io.kudos.ms.sys.common.vo.dict.SysDictCacheEntry
+import io.kudos.ms.sys.common.vo.dict.SysDictForm
+import io.kudos.ms.sys.common.vo.dict.SysDictRow
+import io.kudos.ms.sys.common.vo.dictitem.SysDictItemCacheEntry
 import io.kudos.ms.sys.core.cache.DictByIdCache
 import io.kudos.ms.sys.core.dao.SysDictDao
 import io.kudos.ms.sys.core.model.po.SysDict
@@ -41,20 +41,20 @@ open class SysDictService : BaseCrudService<String, SysDict, SysDictDao>(), ISys
 
     private val log = LogFactory.getLog(this)
 
-    override fun getDictFromCache(dictId: String): SysDictCacheItem? {
+    override fun getDictFromCache(dictId: String): SysDictCacheEntry? {
         return dictCacheHandler.getDictById(dictId)
     }
 
 
-    override fun getRecord(id: String): SysDictRecord? {
+    override fun getRecord(id: String): SysDictRow? {
         val dict = dao.get(id) ?: return null
-        val sysDictRecord = SysDictRecord()
+        val sysDictRecord = SysDictRow()
         BeanKit.copyProperties(dict, sysDictRecord)
         return sysDictRecord
     }
 
     @Transactional
-    override fun saveOrUpdate(payload: SysDictPayload): String {
+    override fun saveOrUpdate(payload: SysDictForm): String {
         return if (payload.id.isBlank()) { // 新增
             if (!payload.parentId.isNullOrBlank()) { // 添加SysDict
                 val atomicServiceCode = requireNotNull(payload.atomicServiceCode) { "新增字典时，atomicServiceCode不能为空。" }
@@ -122,9 +122,9 @@ open class SysDictService : BaseCrudService<String, SysDict, SysDictDao>(), ISys
      * @author AI: Cursor
      * @since 1.0.0
      */
-    override fun getDictsByAtomicServiceCode(atomicServiceCode: String): List<SysDictRecord> {
+    override fun getDictsByAtomicServiceCode(atomicServiceCode: String): List<SysDictRow> {
         val criteria = Criteria(SysDict::atomicServiceCode eq atomicServiceCode)
-        return dao.searchAs<SysDictRecord>(criteria)
+        return dao.searchAs<SysDictRow>(criteria)
     }
 
     /**
@@ -136,12 +136,12 @@ open class SysDictService : BaseCrudService<String, SysDict, SysDictDao>(), ISys
      * @author AI: Cursor
      * @since 1.0.0
      */
-    override fun getDictByAtomicServiceAndType(atomicServiceCode: String, dictType: String): SysDictRecord? {
+    override fun getDictByAtomicServiceAndType(atomicServiceCode: String, dictType: String): SysDictRow? {
         val criteria = Criteria.and(
             SysDict::atomicServiceCode eq atomicServiceCode,
             SysDict::dictType eq dictType
         )
-        val records = dao.searchAs<SysDictRecord>(criteria)
+        val records = dao.searchAs<SysDictRow>(criteria)
         return records.firstOrNull()
     }
 
@@ -246,7 +246,7 @@ open class SysDictService : BaseCrudService<String, SysDict, SysDictDao>(), ISys
     override fun getActiveDictItems(
         dictType: String,
         atomicServiceCode: String
-    ): List<SysDictItemCacheItem> {
+    ): List<SysDictItemCacheEntry> {
         return sysDictItemService.getItems(dictType, atomicServiceCode)
     }
 
@@ -262,7 +262,7 @@ open class SysDictService : BaseCrudService<String, SysDict, SysDictDao>(), ISys
 
     override fun batchGetActiveDictItems(
         dictTypeAndASCodePairs: List<Pair<String, String>>
-    ): Map<Pair<String, String>, List<SysDictItemCacheItem>> {
+    ): Map<Pair<String, String>, List<SysDictItemCacheEntry>> {
         return dictTypeAndASCodePairs.associate { (dictType, atomicServiceCode) ->
             Pair(atomicServiceCode, dictType) to sysDictItemService.getItems(dictType, atomicServiceCode)
         }

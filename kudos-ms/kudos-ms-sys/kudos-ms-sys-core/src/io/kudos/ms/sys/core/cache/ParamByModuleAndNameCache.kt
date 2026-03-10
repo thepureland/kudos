@@ -7,7 +7,7 @@ import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.eq
 import io.kudos.context.support.Consts
-import io.kudos.ms.sys.common.vo.param.SysParamCacheItem
+import io.kudos.ms.sys.common.vo.param.SysParamCacheEntry
 import io.kudos.ms.sys.core.dao.SysParamDao
 import io.kudos.ms.sys.core.model.po.SysParam
 import org.springframework.beans.factory.annotation.Autowired
@@ -21,13 +21,13 @@ import org.springframework.stereotype.Component
  * 1.数据来源表：sys_param
  * 2.缓存所有active=true的参数
  * 3.缓存的key为：atomicServiceCode::paramName
- * 4.缓存的value为：SysParamCacheItem对象
+ * 4.缓存的value为：SysParamCacheEntry对象
  *
  * @author K
  * @since 1.0.0
  */
 @Component
-open class ParamByModuleAndNameCache : AbstractKeyValueCacheHandler<SysParamCacheItem>() {
+open class ParamByModuleAndNameCache : AbstractKeyValueCacheHandler<SysParamCacheEntry>() {
 
     @Autowired
     private lateinit var sysParamDao: SysParamDao
@@ -38,7 +38,7 @@ open class ParamByModuleAndNameCache : AbstractKeyValueCacheHandler<SysParamCach
 
     override fun cacheName(): String = CACHE_NAME
 
-    override fun doReload(key: String): SysParamCacheItem? {
+    override fun doReload(key: String): SysParamCacheEntry? {
         require(key.contains(Consts.CACHE_KEY_DEFAULT_DELIMITER)) {
             "缓存${CACHE_NAME}的key格式必须是 模块代码${Consts.CACHE_KEY_DEFAULT_DELIMITER}参数名称"
         }
@@ -56,7 +56,7 @@ open class ParamByModuleAndNameCache : AbstractKeyValueCacheHandler<SysParamCach
 
         // 加载所有可用的参数
         val criteria = Criteria(SysParam::active eq true)
-        val params = sysParamDao.searchAs<SysParamCacheItem>(criteria)
+        val params = sysParamDao.searchAs<SysParamCacheEntry>(criteria)
         log.debug("从数据库加载了${params.size}条参数信息。")
 
         // 清除缓存
@@ -78,14 +78,14 @@ open class ParamByModuleAndNameCache : AbstractKeyValueCacheHandler<SysParamCach
      *
      * @param atomicServiceCode 模块编号
      * @param paramName 参数名称
-     * @return SysParamCacheItem，找不到返回null
+     * @return SysParamCacheEntry，找不到返回null
      */
     @Cacheable(
         value = [CACHE_NAME],
         key = "#atomicServiceCode.concat('${Consts.CACHE_KEY_DEFAULT_DELIMITER}').concat(#paramName)",
         unless = "#result == null"
     )
-    open fun getParam(atomicServiceCode: String, paramName: String): SysParamCacheItem? {
+    open fun getParam(atomicServiceCode: String, paramName: String): SysParamCacheEntry? {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("缓存中不存在模块为${atomicServiceCode}且名称为${paramName}的参数，从数据库中加载...")
         }

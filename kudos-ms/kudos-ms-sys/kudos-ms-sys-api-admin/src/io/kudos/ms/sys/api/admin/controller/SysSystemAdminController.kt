@@ -2,9 +2,9 @@ package io.kudos.ms.sys.api.admin.controller
 
 import io.kudos.ability.web.springmvc.controller.BaseCrudController
 import io.kudos.ms.sys.common.vo.system.SysSystemDetail
-import io.kudos.ms.sys.common.vo.system.SysSystemPayload
-import io.kudos.ms.sys.common.vo.system.SysSystemRecord
-import io.kudos.ms.sys.common.vo.system.SysSystemSearchPayload
+import io.kudos.ms.sys.common.vo.system.SysSystemForm
+import io.kudos.ms.sys.common.vo.system.SysSystemRow
+import io.kudos.ms.sys.common.vo.system.SysSystemQuery
 import io.kudos.ms.sys.core.service.iservice.ISysSystemService
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/admin/sys/system")
 class SysSystemAdminController:
-    BaseCrudController<String, ISysSystemService, SysSystemSearchPayload, SysSystemRecord, SysSystemDetail, SysSystemPayload>() {
+    BaseCrudController<String, ISysSystemService, SysSystemQuery, SysSystemRow, SysSystemDetail, SysSystemForm>() {
 
     /**
      * 返回所有启用的子系统编码

@@ -5,8 +5,8 @@ import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.eq
-import io.kudos.ms.sys.common.vo.param.SysParamCacheItem
-import io.kudos.ms.sys.common.vo.param.SysParamRecord
+import io.kudos.ms.sys.common.vo.param.SysParamCacheEntry
+import io.kudos.ms.sys.common.vo.param.SysParamRow
 import io.kudos.ms.sys.core.cache.ParamByModuleAndNameCache
 import io.kudos.ms.sys.core.dao.SysParamDao
 import io.kudos.ms.sys.core.model.po.SysParam
@@ -34,13 +34,13 @@ open class SysParamService : BaseCrudService<String, SysParam, SysParamDao>(), I
     @Autowired
     private lateinit var paramByModuleAndNameCache: ParamByModuleAndNameCache
 
-    override fun getParamByAtomicServiceAndName(atomicServiceCode: String, paramName: String): SysParamCacheItem? {
+    override fun getParamByAtomicServiceAndName(atomicServiceCode: String, paramName: String): SysParamCacheEntry? {
         return paramByModuleAndNameCache.getParam(atomicServiceCode, paramName)
     }
 
-    override fun getParamsByAtomicServiceCode(atomicServiceCode: String): List<SysParamRecord> {
+    override fun getParamsByAtomicServiceCode(atomicServiceCode: String): List<SysParamRow> {
         val criteria = Criteria(SysParam::atomicServiceCode eq atomicServiceCode)
-        return dao.searchAs<SysParamRecord>(criteria)
+        return dao.searchAs<SysParamRow>(criteria)
     }
 
     @Transactional
@@ -115,7 +115,7 @@ open class SysParamService : BaseCrudService<String, SysParam, SysParamDao>(), I
     override fun getParam(
         paramName: String,
         atomicServiceCode: String
-    ): SysParamCacheItem? {
+    ): SysParamCacheEntry? {
         return paramByModuleAndNameCache.getParam(atomicServiceCode, paramName)
     }
 

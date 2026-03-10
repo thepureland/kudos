@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.core.service.iservice
 
 import io.kudos.base.support.iservice.IBaseCrudService
-import io.kudos.ms.sys.common.vo.accessrule.SysAccessRuleRecord
+import io.kudos.ms.sys.common.vo.accessrule.SysAccessRuleRow
 import io.kudos.ms.sys.core.model.po.SysAccessRule
 
 
@@ -29,7 +29,7 @@ interface ISysAccessRuleService : IBaseCrudService<String, SysAccessRule> {
     fun getAccessRuleByTenantAndSystem(
         systemCode: String = "default",
         tenantId: String = "default"
-    ): SysAccessRuleRecord?
+    ): SysAccessRuleRow?
 
     /**
      * 获取租户的访问规则列表
@@ -39,7 +39,7 @@ interface ISysAccessRuleService : IBaseCrudService<String, SysAccessRule> {
      * @author K
      * @since 1.0.0
      */
-    fun getAccessRulesByTenantId(tenantId: String): List<SysAccessRuleRecord>
+    fun getAccessRulesByTenantId(tenantId: String): List<SysAccessRuleRow>
 
     /**
      * 获取系统的访问规则列表
@@ -49,7 +49,7 @@ interface ISysAccessRuleService : IBaseCrudService<String, SysAccessRule> {
      * @author K
      * @since 1.0.0
      */
-    fun getAccessRulesBySystemCode(systemCode: String): List<SysAccessRuleRecord>
+    fun getAccessRulesBySystemCode(systemCode: String): List<SysAccessRuleRow>
 
     /**
      * 更新启用状态

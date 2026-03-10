@@ -1,7 +1,7 @@
 package io.kudos.ms.user.core.cache
 
 import io.kudos.ability.cache.common.kit.KeyValueCacheKit
-import io.kudos.ms.user.common.vo.loginremember.UserLoginRememberMeCacheItem
+import io.kudos.ms.user.common.vo.loginremember.UserLoginRememberMeCacheEntry
 import io.kudos.ms.user.core.dao.UserLoginRememberMeDao
 import io.kudos.ms.user.core.model.po.UserLoginRememberMe
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
@@ -109,7 +109,7 @@ class RememberMeByTenantIdAndUsernameCacheTest : RdbAndRedisCacheTestBase() {
 
         val key = cacheHandler.getKey(tenantId, username)
         @Suppress("UNCHECKED_CAST")
-        val cacheItem = KeyValueCacheKit.getValue(cacheHandler.cacheName(), key) as UserLoginRememberMeCacheItem?
+        val cacheItem = KeyValueCacheKit.getValue(cacheHandler.cacheName(), key) as UserLoginRememberMeCacheEntry?
         assertNotNull(cacheItem)
         assertEquals(record.id, cacheItem.id)
     }
@@ -124,7 +124,7 @@ class RememberMeByTenantIdAndUsernameCacheTest : RdbAndRedisCacheTestBase() {
 
         val key = cacheHandler.getKey(record.tenantId, record.username)
         @Suppress("UNCHECKED_CAST")
-        val cacheItem = KeyValueCacheKit.getValue(cacheHandler.cacheName(), key) as UserLoginRememberMeCacheItem?
+        val cacheItem = KeyValueCacheKit.getValue(cacheHandler.cacheName(), key) as UserLoginRememberMeCacheEntry?
         assertNotNull(cacheItem)
         assertEquals(newToken, cacheItem.token)
     }

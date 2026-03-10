@@ -3,7 +3,7 @@ package io.kudos.ms.sys.core.dao
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.eq
-import io.kudos.ms.sys.common.vo.resource.SysResourceCacheItem
+import io.kudos.ms.sys.common.vo.resource.SysResourceCacheEntry
 import io.kudos.ms.sys.core.model.po.SysResource
 import io.kudos.ms.sys.core.model.table.SysResources
 import org.springframework.stereotype.Repository
@@ -22,15 +22,15 @@ open class SysResourceDao : BaseCrudDao<String, SysResource, SysResources>() {
      *
      * @param subSystemCode 子系统编码
      * @param url 资源url
-     * @return SysResourceCacheItem，不存在返回null
+     * @return SysResourceCacheEntry，不存在返回null
      */
-    open fun fetchResourceBySubSysAndUrl(subSystemCode: String, url: String): SysResourceCacheItem? {
+    open fun fetchResourceBySubSysAndUrl(subSystemCode: String, url: String): SysResourceCacheEntry? {
         val criteria = Criteria.and(
             SysResource::subSystemCode eq subSystemCode,
             SysResource::url eq url,
         )
         criteria.addAnd(SysResource::active eq true)
-        return searchAs<SysResourceCacheItem>(criteria).firstOrNull()
+        return searchAs<SysResourceCacheEntry>(criteria).firstOrNull()
     }
 
     /**
@@ -38,15 +38,15 @@ open class SysResourceDao : BaseCrudDao<String, SysResource, SysResources>() {
      *
      * @param subSystemCode 子系统编码
      * @param resourceTypeDictCode 资源类型字典码
-     * @return List<SysResourceCacheItem>
+     * @return List<SysResourceCacheEntry>
      */
-    open fun searchBySubSysAndType(subSystemCode: String, resourceTypeDictCode: String): List<SysResourceCacheItem> {
+    open fun searchBySubSysAndType(subSystemCode: String, resourceTypeDictCode: String): List<SysResourceCacheEntry> {
         val criteria = Criteria.and(
             SysResource::subSystemCode eq subSystemCode,
             SysResource::resourceTypeDictCode eq resourceTypeDictCode,
             SysResource::active eq true,
         )
-        return searchAs<SysResourceCacheItem>(criteria)
+        return searchAs<SysResourceCacheEntry>(criteria)
     }
 
 }

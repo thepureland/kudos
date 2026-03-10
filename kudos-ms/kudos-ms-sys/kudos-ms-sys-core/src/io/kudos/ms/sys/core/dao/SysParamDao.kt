@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.core.dao
 
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
-import io.kudos.ms.sys.common.vo.param.SysParamCacheItem
+import io.kudos.ms.sys.common.vo.param.SysParamCacheEntry
 import io.kudos.ms.sys.core.model.po.SysParam
 import io.kudos.ms.sys.core.model.table.SysParams
 import org.ktorm.dsl.*
@@ -26,9 +26,9 @@ open class SysParamDao : BaseCrudDao<String, SysParam, SysParams>() {
      *
      * @param atomicServiceCode 原子服务编码
      * @param paramName 参数名称
-     * @return SysParamCacheItem，找不到返回null
+     * @return SysParamCacheEntry，找不到返回null
      */
-    open fun getActiveParamsForCache(atomicServiceCode: String, paramName: String): SysParamCacheItem? {
+    open fun getActiveParamsForCache(atomicServiceCode: String, paramName: String): SysParamCacheEntry? {
         return querySource()
             .select(SysParams.columns)
             .whereWithConditions {
@@ -38,7 +38,7 @@ open class SysParamDao : BaseCrudDao<String, SysParam, SysParams>() {
                 }
             }
             .map { row ->
-                SysParamCacheItem(
+                SysParamCacheEntry(
                     id = row[SysParams.id].orEmpty(),
                     paramName = row[SysParams.paramName].orEmpty(),
                     paramValue = row[SysParams.paramValue].orEmpty(),

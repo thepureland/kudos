@@ -6,7 +6,7 @@ import io.kudos.ability.cache.common.batch.hash.HashBatchCacheableByPrimary
 import io.kudos.ability.cache.common.core.hash.AbstractHashCacheHandler
 import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.logger.LogFactory
-import io.kudos.ms.sys.common.vo.datasource.SysDataSourceCacheItem
+import io.kudos.ms.sys.common.vo.datasource.SysDataSourceCacheEntry
 import io.kudos.ms.sys.core.cache.SysDataSourceHashCache.Companion.CACHE_NAME
 import io.kudos.ms.sys.core.dao.SysDataSourceDao
 import jakarta.annotation.Resource
@@ -27,7 +27,7 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-open class SysDataSourceHashCache : AbstractHashCacheHandler<SysDataSourceCacheItem>() {
+open class SysDataSourceHashCache : AbstractHashCacheHandler<SysDataSourceCacheEntry>() {
 
     @Resource
     private lateinit var sysDataSourceDao: SysDataSourceDao
@@ -39,20 +39,20 @@ open class SysDataSourceHashCache : AbstractHashCacheHandler<SysDataSourceCacheI
 
         /** 可筛选副属性，用于按 tenantId/subSystemCode/microServiceCode 建二级索引 */
         val FILTERABLE_PROPERTIES = setOf(
-            SysDataSourceCacheItem::tenantId.name,
-            SysDataSourceCacheItem::subSystemCode.name,
-            SysDataSourceCacheItem::microServiceCode.name
+            SysDataSourceCacheEntry::tenantId.name,
+            SysDataSourceCacheEntry::subSystemCode.name,
+            SysDataSourceCacheEntry::microServiceCode.name
         )
     }
 
     override fun cacheName(): String = CACHE_NAME
 
-    override fun entityClass() = SysDataSourceCacheItem::class
+    override fun entityClass() = SysDataSourceCacheEntry::class
 
     override fun filterableProperties(): Set<String> = FILTERABLE_PROPERTIES
 
-    override fun doReload(id: Any): SysDataSourceCacheItem? =
-        sysDataSourceDao.get(id.toString(), SysDataSourceCacheItem::class)
+    override fun doReload(id: Any): SysDataSourceCacheEntry? =
+        sysDataSourceDao.get(id.toString(), SysDataSourceCacheEntry::class)
 
     // ---------- 按主键 id（与 DataSourceByIdCache 等价） ----------
 
@@ -65,13 +65,13 @@ open class SysDataSourceHashCache : AbstractHashCacheHandler<SysDataSourceCacheI
     @HashCacheableByPrimary(
         cacheNames = [CACHE_NAME],
         key = "#id",
-        entityClass = SysDataSourceCacheItem::class,
+        entityClass = SysDataSourceCacheEntry::class,
         unless = "#result == null",
         filterableProperties = ["tenantId", "subSystemCode", "microServiceCode"]
     )
-    open fun getDataSourceById(id: String): SysDataSourceCacheItem? {
+    open fun getDataSourceById(id: String): SysDataSourceCacheEntry? {
         require(id.isNotBlank()) { "获取数据源时 id 不能为空" }
-        return sysDataSourceDao.get(id, SysDataSourceCacheItem::class)
+        return sysDataSourceDao.get(id, SysDataSourceCacheEntry::class)
     }
 
     /**
@@ -82,10 +82,10 @@ open class SysDataSourceHashCache : AbstractHashCacheHandler<SysDataSourceCacheI
      */
     @HashBatchCacheableByPrimary(
         cacheNames = [CACHE_NAME],
-        entityClass = SysDataSourceCacheItem::class,
+        entityClass = SysDataSourceCacheEntry::class,
         filterableProperties = ["tenantId", "subSystemCode", "microServiceCode"]
     )
-    open fun getDataSourcesByIds(ids: List<String>): Map<String, SysDataSourceCacheItem> {
+    open fun getDataSourcesByIds(ids: List<String>): Map<String, SysDataSourceCacheEntry> {
         if (ids.isEmpty()) return emptyMap()
         val list = sysDataSourceDao.fetchDataSourcesByIdsForCache(ids)
         return list.filter { it.id.isNotBlank() && it.id in ids }.associateBy { it.id }
@@ -105,14 +105,14 @@ open class SysDataSourceHashCache : AbstractHashCacheHandler<SysDataSourceCacheI
     @HashCacheableBySecondary(
         cacheNames = [CACHE_NAME],
         filterExpressions = ["#tenantId", "#subSystemCode", "#microServiceCode"],
-        entityClass = SysDataSourceCacheItem::class,
+        entityClass = SysDataSourceCacheEntry::class,
         filterableProperties = ["tenantId", "subSystemCode", "microServiceCode"]
     )
     open fun getDataSources(
         tenantId: String,
         subSystemCode: String?,
         microServiceCode: String?
-    ): List<SysDataSourceCacheItem> {
+    ): List<SysDataSourceCacheEntry> {
         require(tenantId.isNotBlank()) { "获取数据源时租户ID必须指定" }
         return sysDataSourceDao.fetchDataSourcesForCache(tenantId, subSystemCode, microServiceCode)
     }
@@ -132,7 +132,7 @@ open class SysDataSourceHashCache : AbstractHashCacheHandler<SysDataSourceCacheI
         }
         val cache = hashCache()
         if (clear) cache.clear(CACHE_NAME)
-        val list = sysDataSourceDao.searchAs<SysDataSourceCacheItem>()
+        val list = sysDataSourceDao.searchAs<SysDataSourceCacheEntry>()
         log.debug("从数据库加载 ${list.size} 条数据源，刷新 Hash 缓存")
         cache.refreshAll(CACHE_NAME, list, FILTERABLE_PROPERTIES, emptySet())
     }
@@ -145,7 +145,7 @@ open class SysDataSourceHashCache : AbstractHashCacheHandler<SysDataSourceCacheI
      */
     open fun syncOnInsert(any: Any, id: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME) || !KeyValueCacheKit.isWriteInTime(CACHE_NAME)) return
-        val item = sysDataSourceDao.get(id, SysDataSourceCacheItem::class) ?: return
+        val item = sysDataSourceDao.get(id, SysDataSourceCacheEntry::class) ?: return
         hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
     }
 
@@ -157,7 +157,7 @@ open class SysDataSourceHashCache : AbstractHashCacheHandler<SysDataSourceCacheI
      */
     open fun syncOnUpdate(any: Any, id: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
-        val item = sysDataSourceDao.get(id, SysDataSourceCacheItem::class) ?: return
+        val item = sysDataSourceDao.get(id, SysDataSourceCacheEntry::class) ?: return
         if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
             hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
         }
@@ -171,7 +171,7 @@ open class SysDataSourceHashCache : AbstractHashCacheHandler<SysDataSourceCacheI
      */
     open fun syncOnUpdateActive(id: String, active: Boolean) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
-        val item = sysDataSourceDao.getAs<SysDataSourceCacheItem>(id) ?: return
+        val item = sysDataSourceDao.getAs<SysDataSourceCacheEntry>(id) ?: return
         if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
             hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
         }
@@ -184,7 +184,7 @@ open class SysDataSourceHashCache : AbstractHashCacheHandler<SysDataSourceCacheI
      */
     open fun syncOnDelete(id: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
-        hashCache().deleteById(CACHE_NAME, id, SysDataSourceCacheItem::class, FILTERABLE_PROPERTIES, emptySet())
+        hashCache().deleteById(CACHE_NAME, id, SysDataSourceCacheEntry::class, FILTERABLE_PROPERTIES, emptySet())
     }
 
     /**
@@ -197,7 +197,7 @@ open class SysDataSourceHashCache : AbstractHashCacheHandler<SysDataSourceCacheI
         log.debug("批量删除id为${ids}的sys_data_source后，同步从${cacheName()}缓存中踢除...")
         val cache = hashCache()
         ids.forEach {
-            cache.deleteById(cacheName(), it, SysDataSourceCacheItem::class, FILTERABLE_PROPERTIES, emptySet())
+            cache.deleteById(cacheName(), it, SysDataSourceCacheEntry::class, FILTERABLE_PROPERTIES, emptySet())
         }
         log.debug("${cacheName()}缓存同步完成。")
     }

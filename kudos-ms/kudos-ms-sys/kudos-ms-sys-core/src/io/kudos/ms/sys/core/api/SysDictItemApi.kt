@@ -1,12 +1,12 @@
 package io.kudos.ms.sys.core.api
 
 import io.kudos.ms.sys.common.api.ISysDictItemApi
-import io.kudos.ms.sys.common.vo.dict.SysDictPayload
+import io.kudos.ms.sys.common.vo.dict.SysDictForm
 import io.kudos.ms.sys.common.vo.dict.SysDictTreeNode
-import io.kudos.ms.sys.common.vo.dictitem.SysDictItemCacheItem
-import io.kudos.ms.sys.common.vo.dictitem.SysDictItemRecord
-import io.kudos.ms.sys.common.vo.dictitem.SysDictItemSearchPayload
-import io.kudos.ms.sys.common.vo.dictitem.SysDictItemTreeRecord
+import io.kudos.ms.sys.common.vo.dictitem.SysDictItemCacheEntry
+import io.kudos.ms.sys.common.vo.dictitem.SysDictItemRow
+import io.kudos.ms.sys.common.vo.dictitem.SysDictItemQuery
+import io.kudos.ms.sys.common.vo.dictitem.SysDictItemTreeRow
 import io.kudos.ms.sys.core.service.iservice.ISysDictItemService
 import jakarta.annotation.Resource
 import org.springframework.stereotype.Service
@@ -28,11 +28,11 @@ open class SysDictItemApi : ISysDictItemApi {
     @Resource
     protected lateinit var sysDictItemService: ISysDictItemService
 
-    override fun get(id: String, fetchAllParentIds: Boolean): SysDictItemRecord? {
+    override fun get(id: String, fetchAllParentIds: Boolean): SysDictItemRow? {
         return sysDictItemService.get(id, fetchAllParentIds)
     }
 
-    override fun getItemsFromCache(type: String, atomicServiceCode: String): List<SysDictItemCacheItem> {
+    override fun getItemsFromCache(type: String, atomicServiceCode: String): List<SysDictItemCacheEntry> {
         return sysDictItemService.getItems(type, atomicServiceCode)
     }
 
@@ -40,7 +40,7 @@ open class SysDictItemApi : ISysDictItemApi {
         return sysDictItemService.transDictCode(dictType, itemCode, atomicServiceCode)
     }
 
-    override fun saveOrUpdate(payload: SysDictPayload): String {
+    override fun saveOrUpdate(payload: SysDictForm): String {
         return sysDictItemService.saveOrUpdate(payload)
     }
 
@@ -56,7 +56,7 @@ open class SysDictItemApi : ISysDictItemApi {
         return sysDictItemService.loadDirectChildrenForTree(parent, isModule, activeOnly)
     }
 
-    override fun loadDirectChildrenForList(searchPayload: SysDictItemSearchPayload): Pair<List<SysDictItemRecord>, Int> {
+    override fun loadDirectChildrenForList(searchPayload: SysDictItemQuery): Pair<List<SysDictItemRow>, Int> {
         return sysDictItemService.loadDirectChildrenForList(searchPayload)
     }
 
@@ -64,19 +64,19 @@ open class SysDictItemApi : ISysDictItemApi {
         return sysDictItemService.updateActive(dictItemId, active)
     }
 
-    override fun getDictItemsByDictId(dictId: String): List<SysDictItemRecord> {
+    override fun getDictItemsByDictId(dictId: String): List<SysDictItemRow> {
         return sysDictItemService.getDictItemsByDictId(dictId)
     }
 
-    override fun getDictItemsByAtomicServiceAndType(dictType: String, atomicServiceCode: String): List<SysDictItemCacheItem> {
+    override fun getDictItemsByAtomicServiceAndType(dictType: String, atomicServiceCode: String): List<SysDictItemCacheEntry> {
         return sysDictItemService.getDictItemsByAtomicServiceAndType(dictType, atomicServiceCode)
     }
 
-    override fun getDictItemTree(dictId: String, parentId: String?): List<SysDictItemTreeRecord> {
+    override fun getDictItemTree(dictId: String, parentId: String?): List<SysDictItemTreeRow> {
         return sysDictItemService.getDictItemTree(dictId, parentId)
     }
 
-    override fun getChildItems(parentId: String): List<SysDictItemRecord> {
+    override fun getChildItems(parentId: String): List<SysDictItemRow> {
         return sysDictItemService.getChildItems(parentId)
     }
 
