@@ -1,5 +1,6 @@
 package io.kudos.ms.sys.common.vo.system
 
+import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.support.payload.ListSearchPayload
 import kotlin.reflect.KClass
 

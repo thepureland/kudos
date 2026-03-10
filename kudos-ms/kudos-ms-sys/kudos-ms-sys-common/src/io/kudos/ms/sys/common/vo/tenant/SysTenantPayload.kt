@@ -2,6 +2,7 @@ package io.kudos.ms.sys.common.vo.tenant
 
 import io.kudos.base.support.payload.FormPayload
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotEmpty
 
 
 /**
@@ -20,6 +21,10 @@ data class SysTenantPayload (
     /** 名称 */
     @get:NotBlank
     val name: String = "",
+
+    /** 所属子系统 */
+    @get:NotEmpty
+    var subSystemCodes: Set<String> = emptySet(),
 
     /** 时区 */
     val timezone: String? = null,

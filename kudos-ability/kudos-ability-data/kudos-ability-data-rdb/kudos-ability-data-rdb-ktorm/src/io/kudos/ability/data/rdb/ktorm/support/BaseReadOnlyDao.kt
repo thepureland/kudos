@@ -6,6 +6,7 @@ import io.kudos.base.lang.GenericKit
 import io.kudos.base.lang.reflect.newInstance
 import io.kudos.base.lang.string.underscoreToHump
 import io.kudos.base.query.Criteria
+import io.kudos.base.query.PagingSearchResult
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.query.sort.Order
 import io.kudos.base.support.GroupExecutor
@@ -655,7 +656,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         return search(listSearchPayload, null)
     }
 
-    @Suppress("UNCHECKED_CAST")
+        @Suppress("UNCHECKED_CAST")
     override fun <T : Any> search(listSearchPayload: ListSearchPayload?, returnItemClass: KClass<T>): List<T> {
         require(listSearchPayload?.returnProperties.isNullOrEmpty()) {
             "ListSearchPayload.returnProperties 不为空时，search(payload, returnItemClass) 无法保证返回元素类型。"

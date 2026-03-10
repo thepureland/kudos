@@ -44,9 +44,9 @@ open class BaseReadOnlyController<PK : Any, B : IBaseReadOnlyService<PK, *>, S :
      * @author K
      * @since 1.0.0
      */
-    @PostMapping("/search")
+    @PostMapping("/pagingSearch")
     @Suppress("UNCHECKED_CAST")
-    open fun search(@RequestBody searchPayload: S): PagingSearchResult<R> {
+    open fun pagingSearch(@RequestBody searchPayload: S): PagingSearchResult<R> {
         val result = service.pagingSearch(searchPayload) as PagingSearchResult<R>
         return result
     }

@@ -20,9 +20,6 @@ data class SysTenantRecord (
     /** 名称 */
     val name: String = "",
 
-    /** 子系统编码 */
-    val subSystemCode: String = "",
-
     /** 时区 */
     val timezone: String? = null,
 
@@ -49,6 +46,9 @@ data class SysTenantRecord (
     //region your codes 3
 
     constructor() : this("")
+
+    /** 以逗号分隔的子系统编码 */
+    var subSystemCodes: String = ""
 
     // endregion your codes 3
 

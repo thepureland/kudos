@@ -175,13 +175,12 @@ class SysResourceHashCacheTest : RdbAndRedisCacheTestBase() {
     fun syncOnUpdateActive() {
         cache.reloadAll(true)
         val id = "srch5001-1a2b-4c5d-8e9f-000000000051"
-        val subSystemCode = "srch-sys-sync-active"
-        val url = "/srch/sync/active/001"
         val res = assertNotNull(sysResourceDao.get(id))
         res.active = false
         sysResourceDao.update(res)
         cache.syncOnUpdateActive(id, false)
-        val resource = assertNotNull(sysResourceDao.fetchResourceBySubSysAndUrl(subSystemCode, url))
+        // fetchResourceBySubSysAndUrl 只查 active=true，故改用 get 校验 DB 中已为 false
+        val resource = assertNotNull(sysResourceDao.get(id))
         assertEquals(false, resource.active)
     }
 

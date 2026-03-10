@@ -4,18 +4,24 @@ import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
+import io.kudos.base.query.PagingSearchResult
 import io.kudos.base.query.eq
+import io.kudos.base.support.payload.ListSearchPayload
 import io.kudos.ms.sys.common.vo.tenant.SysTenantCacheItem
+import io.kudos.ms.sys.common.vo.tenant.SysTenantDetail
+import io.kudos.ms.sys.common.vo.tenant.SysTenantPayload
 import io.kudos.ms.sys.common.vo.tenant.SysTenantRecord
+import io.kudos.ms.sys.core.cache.SysTenantSystemHashCache
 import io.kudos.ms.sys.core.cache.TenantByIdCache
-import io.kudos.ms.sys.core.cache.TenantIdsBySystemCodeCache
 import io.kudos.ms.sys.core.dao.SysTenantDao
 import io.kudos.ms.sys.core.model.po.SysTenant
+import io.kudos.ms.sys.core.model.po.SysTenantSystem
 import io.kudos.ms.sys.core.service.iservice.ISysTenantService
 import io.kudos.ms.sys.core.service.iservice.ISysTenantSystemService
-import org.springframework.beans.factory.annotation.Autowired
+import jakarta.annotation.Resource
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import kotlin.reflect.KClass
 
 
 /**
@@ -34,14 +40,34 @@ open class SysTenantService : BaseCrudService<String, SysTenant, SysTenantDao>()
 
     private val log = LogFactory.getLog(this::class)
 
-    @Autowired
+    @Resource
     private lateinit var tenantByIdCache: TenantByIdCache
 
-    @Autowired
-    private lateinit var tenantIdsBySystemCodeCache: TenantIdsBySystemCodeCache
+    @Resource
+    private lateinit var sysTenantSystemHashCache: SysTenantSystemHashCache
 
-    @Autowired
-    private lateinit var sysTenantSystemBiz: ISysTenantSystemService
+    @Resource
+    private lateinit var sysTenantSystemService: ISysTenantSystemService
+
+    override fun <R : Any> get(id: String, returnType: KClass<R>): R? {
+        val result = super.get(id, returnType)
+        if (result is SysTenantDetail) {
+            result.subSystemCodes = getSubSystemCodesString(id)
+        } else if(result is SysTenantPayload) {
+            result.subSystemCodes = sysTenantSystemHashCache.getSubSystemCodesByTenantId(id)
+        }
+        return result
+    }
+
+    override fun pagingSearch(listSearchPayload: ListSearchPayload): PagingSearchResult<*> {
+        val result = super.pagingSearch(listSearchPayload)
+        result.data.forEach {
+            if (it is SysTenantRecord) {
+                it.subSystemCodes = getSubSystemCodesString(it.id)
+            }
+        }
+        return result
+    }
 
     override fun getTenant(id: String): SysTenantCacheItem? {
         return tenantByIdCache.getTenantById(id)
@@ -52,18 +78,34 @@ open class SysTenantService : BaseCrudService<String, SysTenant, SysTenantDao>()
     }
 
     override fun getTenantsBySubSystemCode(subSystemCode: String): List<SysTenantCacheItem> {
-        val tenantIds = tenantIdsBySystemCodeCache.getTenantIds(subSystemCode)
-        return tenantByIdCache.getTenantsByIds(tenantIds).values.filter { it.active == true }
+        val tenantIds = sysTenantSystemHashCache.getTenantIdsBySubSystemCode(subSystemCode)
+        return tenantByIdCache.getTenantsByIds(tenantIds).values.filter { it.active }
     }
 
     @Transactional
     override fun insert(any: Any): String {
         val id = super.insert(any)
         log.debug("新增id为${id}的租户。")
+
+        // 保存租户-系统关系
+        if (any is SysTenantPayload) {
+            insertSysTenantSystems(any)
+        }
+
         // 同步缓存
         tenantByIdCache.syncOnInsert(id)
-        tenantIdsBySystemCodeCache.syncOnInsert(any, id)
+        sysTenantSystemHashCache.syncOnInsert(any, id)
         return id
+    }
+
+    private fun insertSysTenantSystems(any: SysTenantPayload) {
+        val tenantSystems = any.subSystemCodes.mapTo(mutableSetOf()) { subSystemCode ->
+            SysTenantSystem().apply {
+                this.systemCode = subSystemCode
+                this.tenantId = any.id.toString()
+            }
+        }
+        sysTenantSystemService.batchInsert(tenantSystems)
     }
 
     @Transactional
@@ -71,8 +113,22 @@ open class SysTenantService : BaseCrudService<String, SysTenant, SysTenantDao>()
         val success = super.update(any)
         val id = BeanKit.getProperty(any, SysTenant::id.name) as String
         if (success) {
+            if (any is SysTenantPayload) {
+                val tenantId = any.id!!
+                val subSystemCodes = sysTenantSystemHashCache.getSubSystemCodesByTenantId(tenantId)
+                // 判断租户-系统关系有没有变，有变要更新租户-系统关系
+                if (subSystemCodes != any.subSystemCodes) {
+                    // 先删除该租户的所有与系统的关系记录
+                    sysTenantSystemService.deleteByTenantId(tenantId)
+
+                    // 再插入新的关系
+                    insertSysTenantSystems(any)
+                }
+            }
+
             // 同步缓存
             tenantByIdCache.syncOnUpdate(id)
+
         } else {
             log.error("更新id为${id}的租户失败！")
         }
@@ -98,20 +154,23 @@ open class SysTenantService : BaseCrudService<String, SysTenant, SysTenantDao>()
 
     @Transactional
     override fun deleteById(id: String): Boolean {
-        // 1. 先删除租户-子系统关系
-        val subSystemCodes = sysTenantSystemBiz.searchSystemCodesByTenantId(id)
-        val count = sysTenantSystemBiz.deleteByTenantId(id)
+        // 1. 先删除租户-系统关系
+        val count = sysTenantSystemService.deleteByTenantId(id)
         if (count > 0) {
             // 同步缓存
-            tenantIdsBySystemCodeCache.syncOnDelete(id, subSystemCodes)
+            sysTenantSystemHashCache.syncOnDelete(id)
+        } else {
+            log.error("删除id为${id}的租户的所有系统关系失败！")
+            return false
         }
 
         // 2. 再删除租户
-        val success = super.deleteById(id)
+        var success = super.deleteById(id)
         if (success) {
             // 同步缓存
             tenantByIdCache.syncOnDelete(id)
         } else {
+            success = false
             log.error("删除id为${id}的租户失败！")
         }
         return success
@@ -119,46 +178,21 @@ open class SysTenantService : BaseCrudService<String, SysTenant, SysTenantDao>()
 
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {
-        // 1.查出对应的子系统编码
-        val tenantIdAndSubSysCodesMap = sysTenantSystemBiz.groupingSystemCodesByTenantIds(ids)
-        val subSystemCodes = tenantIdAndSubSysCodesMap.values.flatten().toSet()
+        // 1.删除租户-子系统关系
+        var count = sysTenantSystemService.batchDeleteByTenantIds(ids)
 
-        // 2.删除租户-子系统关系
-        val count = sysTenantSystemBiz.batchDeleteByTenantIds(ids)
-
-        // 3.删除租户
+        // 2.删除租户
         if (count >= 0) {
-            val count = super.batchDelete(ids)
+            count = super.batchDelete(ids)
             log.debug("批量删除租户，期望删除${ids.size}条，实际删除${count}条。")
+
+            // 同步缓存
+            tenantByIdCache.syncOnBatchDelete(ids)
         }
 
-        // 3.同步缓存
-        tenantByIdCache.syncOnBatchDelete(ids)
-        tenantIdsBySystemCodeCache.syncOnBatchDelete(ids, subSystemCodes)
         return count
     }
 
-
-    override fun getAllActiveTenants(): Map<String, List<SysTenantRecord>> {
-        val criteria = Criteria(SysTenant::active eq true)
-        val records = dao.searchAs<SysTenantRecord>(criteria)
-        // 根据租户的子系统关系分组
-        val tenantIds = records.map { it.id }
-        val tenantSubSystemMap = sysTenantSystemBiz.groupingSystemCodesByTenantIds(tenantIds)
-        val result = mutableMapOf<String, MutableList<SysTenantRecord>>()
-        records.forEach { tenant ->
-            val subSystemCodes = tenantSubSystemMap[tenant.id] ?: emptyList()
-            if (subSystemCodes.isEmpty()) {
-                // 没有子系统的租户，使用空字符串作为key
-                result.getOrPut("") { mutableListOf() }.add(tenant)
-            } else {
-                subSystemCodes.forEach { subSystemCode ->
-                    result.getOrPut(subSystemCode) { mutableListOf() }.add(tenant)
-                }
-            }
-        }
-        return result
-    }
 
     /**
      * 根据id获取租户记录（非缓存）
@@ -198,7 +232,11 @@ open class SysTenantService : BaseCrudService<String, SysTenant, SysTenantDao>()
      * @since 1.0.0
      */
     override fun getSubSystemCodesByTenantId(tenantId: String): Set<String> {
-        return sysTenantSystemBiz.searchSystemCodesByTenantId(tenantId)
+        return sysTenantSystemService.searchSystemCodesByTenantId(tenantId)
+    }
+
+    private fun getSubSystemCodesString(tenantId: String): String {
+        return sysTenantSystemHashCache.getSubSystemCodesByTenantId(tenantId).joinToString(", ")
     }
 
     //endregion your codes 2

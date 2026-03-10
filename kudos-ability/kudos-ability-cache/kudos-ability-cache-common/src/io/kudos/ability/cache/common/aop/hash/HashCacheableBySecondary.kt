@@ -52,5 +52,11 @@ annotation class HashCacheableBySecondary(
     val filterableProperties: Array<String> = [],
 
     /** 可排序/范围副属性名（ZSet 索引），回写时可选；数值型范围查询条件放本项。 */
-    val sortableProperties: Array<String> = []
+    val sortableProperties: Array<String> = [],
+
+    /**
+     * 当方法返回类型为 [List][String] 或 [Set][String] 时，命中缓存后从每个实体上取该属性值组成集合返回；
+     * 为空时仍按实体 id 列表返回。未命中时由方法体负责回写并返回。
+     */
+    val returnProperty: String = ""
 )

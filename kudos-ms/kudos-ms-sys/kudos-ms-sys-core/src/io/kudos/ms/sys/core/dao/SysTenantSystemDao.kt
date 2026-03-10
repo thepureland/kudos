@@ -4,6 +4,7 @@ import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.eq
 import io.kudos.base.query.inList
+import io.kudos.ms.sys.common.vo.tenant.SysTenantSystemCacheItem
 import io.kudos.ms.sys.core.model.po.SysTenantSystem
 import io.kudos.ms.sys.core.model.table.SysTenantSystems
 import org.springframework.stereotype.Repository
@@ -138,6 +139,36 @@ open class SysTenantSystemDao : BaseCrudDao<String, SysTenantSystem, SysTenantSy
         }
         val criteria = Criteria(SysTenantSystem::tenantId inList tenantIds)
         return batchDeleteCriteria(criteria)
+    }
+
+    /**
+     * 全量查询供 Hash 缓存加载
+     *
+     * @return 所有租户-系统关系缓存项
+     */
+    open fun fetchAllForCache(): List<SysTenantSystemCacheItem> =
+        searchAs<SysTenantSystemCacheItem>(null)
+
+    /**
+     * 按系统编码查询供 Hash 缓存按副属性回写
+     *
+     * @param systemCode 系统编码
+     * @return 该系统下的租户-系统关系缓存项列表
+     */
+    open fun fetchCacheItemsBySystemCode(systemCode: String): List<SysTenantSystemCacheItem> {
+        val criteria = Criteria(SysTenantSystem::systemCode eq systemCode)
+        return searchAs<SysTenantSystemCacheItem>(criteria)
+    }
+
+    /**
+     * 按租户id查询供 Hash 缓存按副属性回写
+     *
+     * @param tenantId 租户id
+     * @return 该租户下的租户-系统关系缓存项列表
+     */
+    open fun fetchCacheItemsByTenantId(tenantId: String): List<SysTenantSystemCacheItem> {
+        val criteria = Criteria(SysTenantSystem::tenantId eq tenantId)
+        return searchAs<SysTenantSystemCacheItem>(criteria)
     }
 
     //endregion your codes 2
