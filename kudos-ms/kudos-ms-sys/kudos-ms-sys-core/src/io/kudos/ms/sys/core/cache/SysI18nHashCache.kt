@@ -1,6 +1,8 @@
 package io.kudos.ms.sys.core.cache
 
+import io.kudos.ability.cache.common.aop.hash.HashCacheableByPrimary
 import io.kudos.ability.cache.common.aop.hash.HashCacheableBySecondary
+import io.kudos.ability.cache.common.batch.hash.HashBatchCacheableByPrimary
 import io.kudos.ability.cache.common.core.hash.AbstractHashCacheHandler
 import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.logger.LogFactory
@@ -14,8 +16,9 @@ import org.springframework.stereotype.Component
 /**
  * 国际化统一缓存处理器，基于 Hash 结构存储 [SysI18nCacheEntry]。
  *
- * 提供按副属性查询与回写能力：
- *  locale + atomicServiceCode + i18nTypeDictCode + namespace
+ * 提供按主属性与按副属性查询与回写能力：
+ *  1. 按主键 id：单条 [getI18nById]、批量 [getI18nsByIds]
+ *  2. 按副属性：locale + atomicServiceCode + i18nTypeDictCode + namespace
  *
  * 数据来源表：sys_i18n
  *
@@ -56,6 +59,43 @@ open class SysI18nHashCache : AbstractHashCacheHandler<SysI18nCacheEntry>() {
     override fun doReload(id: Any): SysI18nCacheEntry? =
         sysI18nDao.get(id.toString(), SysI18nCacheEntry::class)
 
+    // ---------- 按主键 id ----------
+
+    /**
+     * 根据主键 id 从缓存获取国际化项，未命中则查库并回写。
+     *
+     * @param id 国际化主键，非空
+     * @return 国际化缓存项，不存在时 null
+     */
+    @HashCacheableByPrimary(
+        cacheNames = [CACHE_NAME],
+        key = "#id",
+        entityClass = SysI18nCacheEntry::class,
+        unless = "#result == null",
+        filterableProperties = ["locale", "atomicServiceCode", "i18nTypeDictCode", "namespace"]
+    )
+    open fun getI18nById(id: String): SysI18nCacheEntry? {
+        require(id.isNotBlank()) { "获取国际化时 id 不能为空" }
+        return sysI18nDao.get(id, SysI18nCacheEntry::class)
+    }
+
+    /**
+     * 根据多个主键 id 批量从缓存获取国际化项，未命中的从库加载并回写。
+     *
+     * @param ids 国际化主键集合，可为空
+     * @return id -> 缓存对象 映射，仅包含能查到的 id
+     */
+    @HashBatchCacheableByPrimary(
+        cacheNames = [CACHE_NAME],
+        entityClass = SysI18nCacheEntry::class,
+        filterableProperties = ["locale", "atomicServiceCode", "i18nTypeDictCode", "namespace"]
+    )
+    open fun getI18nsByIds(ids: List<String>): Map<String, SysI18nCacheEntry> {
+        if (ids.isEmpty()) return emptyMap()
+        val list = sysI18nDao.getByIdsAs<SysI18nCacheEntry>(ids)
+        return list.filter { it.id.isNotBlank() && it.id in ids }.associateBy { it.id }
+    }
+
     // ---------- 按 locale + atomicServiceCode + i18nTypeDictCode + namespace ----------
 
     /**
@@ -85,6 +125,47 @@ open class SysI18nHashCache : AbstractHashCacheHandler<SysI18nCacheEntry>() {
         require(atomicServiceCode.isNotBlank()) { "获取国际化时 atomicServiceCode 不能为空" }
         require(i18nTypeDictCode.isNotBlank()) { "获取国际化时 i18nTypeDictCode 不能为空" }
         return sysI18nDao.fetchActiveI18nsForCache(locale, atomicServiceCode, i18nTypeDictCode, namespace ?: "")
+    }
+
+    /**
+     * 按语言、原子服务编码、国际化类型、命名空间多条件等值查询，返回匹配的启用的国际化信息Map。
+     * 先按副属性索引查缓存，未命中则查库并回写。
+     *
+     * @param locale 语言—地区，非空
+     * @param atomicServiceCode 原子服务编码，非空
+     * @param i18nTypeDictCode 国际化类型字典代码，非空
+     * @param namespace 命名空间
+     * @return Map<国际化key，译文>
+     */
+    open fun getI18nMap(
+        locale: String,
+        atomicServiceCode: String,
+        i18nTypeDictCode: String,
+        namespace: String
+    ): Map<String, String> {
+        val items = getSelf<SysI18nHashCache>().getI18ns(locale, atomicServiceCode, i18nTypeDictCode, namespace)
+        return items.associateBy({ it.key }, { it.value })
+    }
+
+    /**
+     * 按语言、原子服务编码、国际化类型多条件等值查询，返回匹配的启用的国际化信息Map。
+     * 先按副属性索引查缓存，未命中则查库并回写。
+     *
+     * @param locale 语言—地区，非空
+     * @param atomicServiceCode 原子服务编码，非空
+     * @param i18nTypeDictCode 国际化类型字典代码，非空
+     * @return Map<命名空间，Map<国际化key，译文>>
+     */
+    open fun getI18nMap(
+        locale: String,
+        atomicServiceCode: String,
+        i18nTypeDictCode: String,
+    ): Map<String, Map<String, String>> {
+        val items = getSelf<SysI18nHashCache>().getI18ns(locale, atomicServiceCode, i18nTypeDictCode)
+        return items.groupBy { it.namespace }
+            .mapValues { (_, values) ->
+                values.associate { it.key to it.value }
+            }
     }
 
     // ---------- 全量刷新与同步 ----------
