@@ -3,10 +3,10 @@ package io.kudos.ms.sys.core.service.impl
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
-import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpCacheItem
-import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpPayload
-import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpRecord
-import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpSearchPayload
+import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpCacheEntry
+import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpForm
+import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpRow
+import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpQuery
 import io.kudos.ms.sys.core.cache.AccessRuleIpsBySubSysAndTenantIdCache
 import io.kudos.ms.sys.core.dao.SysAccessRuleDao
 import io.kudos.ms.sys.core.dao.SysAccessRuleIpDao
@@ -38,14 +38,14 @@ open class SysAccessRuleIpService : BaseCrudService<String, SysAccessRuleIp, Sys
     @Autowired
     private lateinit var sysAccessRuleDao: SysAccessRuleDao
 
-    override fun getIpsByRuleId(ruleId: String): List<SysAccessRuleIpRecord> {
-        val searchPayload = SysAccessRuleIpSearchPayload(
+    override fun getIpsByRuleId(ruleId: String): List<SysAccessRuleIpRow> {
+        val searchPayload = SysAccessRuleIpQuery(
             parentRuleId = ruleId
         )
         return dao.pagingSearch(searchPayload)
     }
 
-    override fun getIpsBySystemAndTenant(systemCode: String, tenantId: String?): List<SysAccessRuleIpCacheItem> {
+    override fun getIpsBySystemAndTenant(systemCode: String, tenantId: String?): List<SysAccessRuleIpCacheEntry> {
         return accessRuleIpsBySubSysAndTenantIdCache.getAccessRuleIps(systemCode, tenantId)
     }
 
@@ -65,7 +65,7 @@ open class SysAccessRuleIpService : BaseCrudService<String, SysAccessRuleIp, Sys
     }
 
     @Transactional
-    override fun batchSaveOrUpdate(ruleId: String, ips: List<SysAccessRuleIpPayload>): Int {
+    override fun batchSaveOrUpdate(ruleId: String, ips: List<SysAccessRuleIpForm>): Int {
         var count = 0
         ips.forEach { payload ->
             if (payload.id.isNullOrBlank()) {

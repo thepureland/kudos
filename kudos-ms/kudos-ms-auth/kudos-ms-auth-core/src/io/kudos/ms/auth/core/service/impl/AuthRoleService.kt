@@ -3,16 +3,16 @@ package io.kudos.ms.auth.core.service.impl
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
-import io.kudos.ms.auth.common.vo.role.AuthRoleCacheItem
-import io.kudos.ms.auth.common.vo.role.AuthRoleRecord
-import io.kudos.ms.auth.common.vo.role.AuthRoleSearchPayload
+import io.kudos.ms.auth.common.vo.role.AuthRoleCacheEntry
+import io.kudos.ms.auth.common.vo.role.AuthRoleRow
+import io.kudos.ms.auth.common.vo.role.AuthRoleQuery
 import io.kudos.ms.auth.core.cache.*
 import io.kudos.ms.auth.core.dao.AuthRoleDao
 import io.kudos.ms.auth.core.model.po.AuthRole
 import io.kudos.ms.auth.core.service.iservice.IAuthRoleService
-import io.kudos.ms.sys.common.vo.resource.SysResourceCacheItem
+import io.kudos.ms.sys.common.vo.resource.SysResourceCacheEntry
 import io.kudos.ms.sys.core.cache.SysResourceHashCache
-import io.kudos.ms.user.common.vo.user.UserAccountCacheItem
+import io.kudos.ms.user.common.vo.user.UserAccountCacheEntry
 import io.kudos.ms.user.core.cache.UserAccountHashCache
 import jakarta.annotation.Resource
 import org.springframework.stereotype.Service
@@ -69,7 +69,7 @@ open class AuthRoleService : BaseCrudService<String, AuthRole, AuthRoleDao>(),
         return dao.searchActiveRoleIdsByTenantId(tenantId)
     }
 
-    override fun getRoleUsers(roleId: String): List<UserAccountCacheItem> {
+    override fun getRoleUsers(roleId: String): List<UserAccountCacheEntry> {
         val userIds = getRoleUserIds(roleId)
         if (userIds.isEmpty()) {
             return emptyList()
@@ -78,7 +78,7 @@ open class AuthRoleService : BaseCrudService<String, AuthRole, AuthRoleDao>(),
         return userIds.mapNotNull { usersMap[it] }
     }
 
-    override fun getRoleResources(roleId: String): List<SysResourceCacheItem> {
+    override fun getRoleResources(roleId: String): List<SysResourceCacheEntry> {
         val resourceIds = getRoleResourceIds(roleId)
         if (resourceIds.isEmpty()) {
             return emptyList()
@@ -92,33 +92,33 @@ open class AuthRoleService : BaseCrudService<String, AuthRole, AuthRoleDao>(),
         return resourceIds.contains(resourceId)
     }
 
-    override fun getRoleByTenantIdAndCode(tenantId: String, roleCode: String): AuthRoleCacheItem? {
+    override fun getRoleByTenantIdAndCode(tenantId: String, roleCode: String): AuthRoleCacheEntry? {
         val roleId = authRoleHashCache.getRoleByTenantIdAndRoleCode(tenantId, roleCode)?.id
         return roleId?.let { authRoleHashCache.getRoleById(it) }
     }
 
-    override fun getRoleRecord(id: String): AuthRoleRecord? {
+    override fun getRoleRecord(id: String): AuthRoleRow? {
         val role = dao.get(id) ?: return null
-        val record = AuthRoleRecord()
+        val record = AuthRoleRow()
         BeanKit.copyProperties(role, record)
         return record
     }
 
-    override fun getRolesByTenantId(tenantId: String): List<AuthRoleRecord> {
-        val searchPayload = AuthRoleSearchPayload().apply {
+    override fun getRolesByTenantId(tenantId: String): List<AuthRoleRow> {
+        val searchPayload = AuthRoleQuery().apply {
             this.tenantId = tenantId
         }
         @Suppress("UNCHECKED_CAST")
-        return dao.search(searchPayload, AuthRoleRecord::class)
+        return dao.search(searchPayload, AuthRoleRow::class)
     }
 
-    override fun getRolesBySubsysCode(tenantId: String, subsysCode: String): List<AuthRoleRecord> {
-        val searchPayload = AuthRoleSearchPayload().apply {
+    override fun getRolesBySubsysCode(tenantId: String, subsysCode: String): List<AuthRoleRow> {
+        val searchPayload = AuthRoleQuery().apply {
             this.tenantId = tenantId
             this.subsysCode = subsysCode
         }
         @Suppress("UNCHECKED_CAST")
-        return dao.search(searchPayload, AuthRoleRecord::class)
+        return dao.search(searchPayload, AuthRoleRow::class)
     }
 
     @Transactional
@@ -197,7 +197,7 @@ open class AuthRoleService : BaseCrudService<String, AuthRole, AuthRoleDao>(),
         return roleId != null && hasRole(userId, roleId)
     }
 
-    override fun getUserRoles(userId: String): List<AuthRoleCacheItem> {
+    override fun getUserRoles(userId: String): List<AuthRoleCacheEntry> {
         val roleIds = getUserRoleIds(userId)
         if (roleIds.isEmpty()) {
             return emptyList()
@@ -210,7 +210,7 @@ open class AuthRoleService : BaseCrudService<String, AuthRole, AuthRoleDao>(),
         return roleIdsByUserIdCache.getRoleIds(userId)
     }
 
-    override fun getUsersByRoleCode(tenantId: String, roleCode: String): List<UserAccountCacheItem> {
+    override fun getUsersByRoleCode(tenantId: String, roleCode: String): List<UserAccountCacheEntry> {
         val roleId = authRoleHashCache.getRoleByTenantIdAndRoleCode(tenantId, roleCode)?.id ?: return emptyList()
         val userIds = userIdsByRoleIdCache.getUserIds(roleId)
         if (userIds.isEmpty()) {
@@ -228,7 +228,7 @@ open class AuthRoleService : BaseCrudService<String, AuthRole, AuthRoleDao>(),
         return resourceIdsByUserIdCache.getResourceIds(userId)
     }
 
-    override fun getResources(userId: String): List<SysResourceCacheItem> {
+    override fun getResources(userId: String): List<SysResourceCacheEntry> {
         // 通过用户ID获取资源ID列表
         val resourceIds = resourceIdsByUserIdCache.getResourceIds(userId)
 

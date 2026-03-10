@@ -2,9 +2,9 @@ package io.kudos.ms.sys.api.admin.controller
 
 import io.kudos.ability.web.springmvc.controller.BaseCrudController
 import io.kudos.ms.sys.common.vo.cache.SysCacheDetail
-import io.kudos.ms.sys.common.vo.cache.SysCachePayload
-import io.kudos.ms.sys.common.vo.cache.SysCacheRecord
-import io.kudos.ms.sys.common.vo.cache.SysCacheSearchPayload
+import io.kudos.ms.sys.common.vo.cache.SysCacheForm
+import io.kudos.ms.sys.common.vo.cache.SysCacheRow
+import io.kudos.ms.sys.common.vo.cache.SysCacheQuery
 import io.kudos.ms.sys.core.service.impl.SysCacheService
 import io.kudos.ms.sys.core.service.iservice.ISysCacheService
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/admin/sys/cache")
 open class SysCacheAdminController :
-    BaseCrudController<String, ISysCacheService, SysCacheSearchPayload, SysCacheRecord, SysCacheDetail, SysCachePayload>() {
+    BaseCrudController<String, ISysCacheService, SysCacheQuery, SysCacheRow, SysCacheDetail, SysCacheForm>() {
 
     /**
      * 重载指定缓存名称和key的缓存项

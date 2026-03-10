@@ -6,7 +6,7 @@ import io.kudos.base.logger.LogFactory
 import io.kudos.context.support.Consts
 import io.kudos.ms.auth.core.dao.AuthRoleResourceDao
 import io.kudos.ms.auth.core.dao.AuthRoleUserDao
-import io.kudos.ms.user.common.vo.user.UserAccountCacheItem
+import io.kudos.ms.user.common.vo.user.UserAccountCacheEntry
 import io.kudos.ms.user.core.cache.UserAccountHashCache
 import io.kudos.ms.user.core.dao.UserAccountDao
 import jakarta.annotation.Resource
@@ -181,7 +181,7 @@ open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<
             
             val userIds = authRoleUserDao.searchUserIdsByRoleId(roleId)
             if (userIds.isNotEmpty()) {
-                val users = userAccountDao.getByIdsAs<UserAccountCacheItem>(userIds)
+                val users = userAccountDao.getByIdsAs<UserAccountCacheEntry>(userIds)
                 users.forEach { user ->
                     val t = user.tenantId ?: return@forEach
                     val u = user.username ?: return@forEach

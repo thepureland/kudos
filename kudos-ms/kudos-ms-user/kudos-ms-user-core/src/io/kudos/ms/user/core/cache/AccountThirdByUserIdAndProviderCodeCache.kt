@@ -5,8 +5,8 @@ import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.context.support.Consts
-import io.kudos.ms.user.common.vo.user.UserAccountThirdCacheItem
-import io.kudos.ms.user.common.vo.user.UserAccountThirdSearchPayload
+import io.kudos.ms.user.common.vo.user.UserAccountThirdCacheEntry
+import io.kudos.ms.user.common.vo.user.UserAccountThirdQuery
 import io.kudos.ms.user.core.dao.UserAccountThirdDao
 import io.kudos.ms.user.core.model.po.UserAccountThird
 import org.springframework.beans.factory.annotation.Autowired
@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component
  * 1.数据来源表：user_account_third
  * 2.缓存所有active=true的第三方账号信息
  * 3.缓存的key为：user_id::account_provider_dict_code
- * 4.缓存的value为：UserAccountThirdCacheItem对象
+ * 4.缓存的value为：UserAccountThirdCacheEntry对象
  *
  * @author K
  * @author AI: Codex
@@ -28,7 +28,7 @@ import org.springframework.stereotype.Component
  */
 @Component
 //region your codes 1
-open class AccountThirdByUserIdAndProviderCodeCache : AbstractKeyValueCacheHandler<UserAccountThirdCacheItem>() {
+open class AccountThirdByUserIdAndProviderCodeCache : AbstractKeyValueCacheHandler<UserAccountThirdCacheEntry>() {
 //endregion your codes 1
 
     //region your codes 2
@@ -42,7 +42,7 @@ open class AccountThirdByUserIdAndProviderCodeCache : AbstractKeyValueCacheHandl
 
     override fun cacheName() = CACHE_NAME
 
-    override fun doReload(key: String): UserAccountThirdCacheItem? {
+    override fun doReload(key: String): UserAccountThirdCacheEntry? {
         require(key.contains(Consts.CACHE_KEY_DEFAULT_DELIMITER)) {
             "缓存${CACHE_NAME}的key格式必须是：userId${Consts.CACHE_KEY_DEFAULT_DELIMITER}accountProviderDictCode"
         }
@@ -58,12 +58,12 @@ open class AccountThirdByUserIdAndProviderCodeCache : AbstractKeyValueCacheHandl
             return
         }
 
-        val searchPayload = UserAccountThirdSearchPayload().apply {
-            returnEntityClass = UserAccountThirdCacheItem::class
+        val searchPayload = UserAccountThirdQuery().apply {
+            returnEntityClass = UserAccountThirdCacheEntry::class
             active = true
         }
         @Suppress("UNCHECKED_CAST")
-        val results = userAccountThirdDao.search(searchPayload, UserAccountThirdCacheItem::class)
+        val results = userAccountThirdDao.search(searchPayload, UserAccountThirdCacheEntry::class)
         log.debug("从数据库加载了${results.size}条第三方账号信息。")
 
         if (clear) {
@@ -83,25 +83,25 @@ open class AccountThirdByUserIdAndProviderCodeCache : AbstractKeyValueCacheHandl
      *
      * @param userId 用户ID
      * @param accountProviderDictCode 第三方平台字典码
-     * @return UserAccountThirdCacheItem，找不到返回null
+     * @return UserAccountThirdCacheEntry，找不到返回null
      */
     @Cacheable(
         cacheNames = [CACHE_NAME],
         key = "#userId.concat('${Consts.CACHE_KEY_DEFAULT_DELIMITER}').concat(#accountProviderDictCode)",
         unless = "#result == null"
     )
-    open fun getAccountThird(userId: String, accountProviderDictCode: String): UserAccountThirdCacheItem? {
+    open fun getAccountThird(userId: String, accountProviderDictCode: String): UserAccountThirdCacheEntry? {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("缓存中不存在用户${userId}且提供方为${accountProviderDictCode}的第三方账号，从数据库中加载...")
         }
-        val searchPayload = UserAccountThirdSearchPayload().apply {
-            returnEntityClass = UserAccountThirdCacheItem::class
+        val searchPayload = UserAccountThirdQuery().apply {
+            returnEntityClass = UserAccountThirdCacheEntry::class
             this.userId = userId
             this.accountProviderDictCode = accountProviderDictCode
             this.active = true
         }
         @Suppress("UNCHECKED_CAST")
-        val results = userAccountThirdDao.search(searchPayload, UserAccountThirdCacheItem::class)
+        val results = userAccountThirdDao.search(searchPayload, UserAccountThirdCacheEntry::class)
         return if (results.isEmpty()) {
             log.warn("数据库中不存在用户${userId}且提供方为${accountProviderDictCode}的active=true的第三方账号！")
             null

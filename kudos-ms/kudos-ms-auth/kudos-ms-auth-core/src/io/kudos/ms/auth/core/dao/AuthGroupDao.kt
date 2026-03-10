@@ -3,7 +3,7 @@ package io.kudos.ms.auth.core.dao
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.eq
-import io.kudos.ms.auth.common.vo.group.AuthGroupCacheItem
+import io.kudos.ms.auth.common.vo.group.AuthGroupCacheEntry
 import io.kudos.ms.auth.core.model.po.AuthGroup
 import io.kudos.ms.auth.core.model.table.AuthGroups
 import org.springframework.stereotype.Repository
@@ -26,9 +26,9 @@ open class AuthGroupDao : BaseCrudDao<String, AuthGroup, AuthGroups>() {
     /**
      * 查询所有 active=true 的用户组
      *
-     * @return List<AuthGroupCacheItem>
+     * @return List<AuthGroupCacheEntry>
      */
-    open fun searchActiveGroupsForCache(): List<AuthGroupCacheItem> {
+    open fun searchActiveGroupsForCache(): List<AuthGroupCacheEntry> {
         val criteria = Criteria(AuthGroup::active eq true)
         return searchAs(criteria)
     }
@@ -36,12 +36,12 @@ open class AuthGroupDao : BaseCrudDao<String, AuthGroup, AuthGroups>() {
     /**
      * 按租户、用户组编码查询（不区分 active），返回单条缓存用 VO
      */
-    open fun searchGroupByTenantIdAndGroupCode(tenantId: String, code: String): AuthGroupCacheItem? {
+    open fun searchGroupByTenantIdAndGroupCode(tenantId: String, code: String): AuthGroupCacheEntry? {
         val criteria = Criteria.and(
             AuthGroup::tenantId eq tenantId,
             AuthGroup::code eq code
         )
-        return searchAs<AuthGroupCacheItem>(criteria).firstOrNull()
+        return searchAs<AuthGroupCacheEntry>(criteria).firstOrNull()
     }
 
     //endregion your codes 2

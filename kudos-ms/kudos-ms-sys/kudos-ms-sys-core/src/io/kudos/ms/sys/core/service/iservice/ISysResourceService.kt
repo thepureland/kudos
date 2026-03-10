@@ -2,9 +2,9 @@ package io.kudos.ms.sys.core.service.iservice
 
 import io.kudos.base.support.iservice.IBaseCrudService
 import io.kudos.ms.sys.common.api.ISysResourceApi
-import io.kudos.ms.sys.common.vo.resource.SysResourceCacheItem
-import io.kudos.ms.sys.common.vo.resource.SysResourceRecord
-import io.kudos.ms.sys.common.vo.resource.SysResourceTreeRecord
+import io.kudos.ms.sys.common.vo.resource.SysResourceCacheEntry
+import io.kudos.ms.sys.common.vo.resource.SysResourceRow
+import io.kudos.ms.sys.common.vo.resource.SysResourceTreeRow
 import io.kudos.ms.sys.core.model.po.SysResource
 
 
@@ -24,11 +24,11 @@ interface ISysResourceService : IBaseCrudService<String, SysResource>, ISysResou
      * 根据id从缓存获取资源信息
      *
      * @param id 资源id
-     * @return SysResourceCacheItem，找不到返回null
+     * @return SysResourceCacheEntry，找不到返回null
      * @author K
      * @since 1.0.0
      */
-    fun getResourceById(id: String): SysResourceCacheItem?
+    fun getResourceById(id: String): SysResourceCacheEntry?
 
     /**
      * 根据子系统编码和URL从缓存获取资源ID
@@ -60,7 +60,7 @@ interface ISysResourceService : IBaseCrudService<String, SysResource>, ISysResou
      * @author K
      * @since 1.0.0
      */
-    fun getResourcesBySubSystemCode(subSystemCode: String): List<SysResourceRecord>
+    fun getResourcesBySubSystemCode(subSystemCode: String): List<SysResourceRow>
 
     /**
      * 获取子资源列表
@@ -70,7 +70,7 @@ interface ISysResourceService : IBaseCrudService<String, SysResource>, ISysResou
      * @author K
      * @since 1.0.0
      */
-    fun getChildResources(parentId: String): List<SysResourceRecord>
+    fun getChildResources(parentId: String): List<SysResourceRow>
 
     /**
      * 获取资源树（递归结构）
@@ -81,7 +81,7 @@ interface ISysResourceService : IBaseCrudService<String, SysResource>, ISysResou
      * @author K
      * @since 1.0.0
      */
-    fun getResourceTree(subSystemCode: String, parentId: String? = null): List<SysResourceTreeRecord>
+    fun getResourceTree(subSystemCode: String, parentId: String? = null): List<SysResourceTreeRow>
 
     /**
      * 更新启用状态，并同步缓存

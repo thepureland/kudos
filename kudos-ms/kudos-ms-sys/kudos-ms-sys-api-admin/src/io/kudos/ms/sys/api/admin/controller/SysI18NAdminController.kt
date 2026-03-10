@@ -2,11 +2,11 @@ package io.kudos.ms.sys.api.admin.controller
 
 import io.kudos.ability.web.springmvc.controller.BaseCrudController
 import io.kudos.base.net.http.HttpClientKit.request
-import io.kudos.ms.sys.common.vo.i18n.SysI18nBatchPayload
+import io.kudos.ms.sys.common.vo.i18n.SysI18nBatchForm
 import io.kudos.ms.sys.common.vo.i18n.SysI18nDetail
-import io.kudos.ms.sys.common.vo.i18n.SysI18nPayload
-import io.kudos.ms.sys.common.vo.i18n.SysI18nRecord
-import io.kudos.ms.sys.common.vo.i18n.SysI18nSearchPayload
+import io.kudos.ms.sys.common.vo.i18n.SysI18nForm
+import io.kudos.ms.sys.common.vo.i18n.SysI18nRow
+import io.kudos.ms.sys.common.vo.i18n.SysI18nQuery
 import io.kudos.ms.sys.core.service.iservice.ISysI18nService
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.web.bind.annotation.GetMapping
@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/admin/sys/i18n")
 class SysI18NAdminController :
-    BaseCrudController<String, ISysI18nService, SysI18nSearchPayload, SysI18nRecord, SysI18nDetail, SysI18nPayload>() {
+    BaseCrudController<String, ISysI18nService, SysI18nQuery, SysI18nRow, SysI18nDetail, SysI18nForm>() {
 
     /**
      * 获取国际化信息
@@ -57,7 +57,7 @@ class SysI18NAdminController :
     @ResponseBody
     fun batchGetI18ns(
         @RequestBody
-        payload: SysI18nBatchPayload
+        payload: SysI18nBatchForm
     ): Map<String, Map<String, Map<String, String>>> {
         return service.batchGetI18ns(
             payload.locale,

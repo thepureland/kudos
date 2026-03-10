@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.core.cache
 
 import io.kudos.ability.cache.common.kit.KeyValueCacheKit
-import io.kudos.ms.sys.common.vo.tenant.SysTenantCacheItem
+import io.kudos.ms.sys.common.vo.tenant.SysTenantCacheEntry
 import io.kudos.ms.sys.core.dao.SysTenantDao
 import io.kudos.ms.sys.core.model.po.SysTenant
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
@@ -94,7 +94,7 @@ class TenantByIdCacheTest : RdbAndRedisCacheTestBase() {
         cacheHandler.syncOnUpdate(id)
 
         // 验证缓存中的记录
-        val cacheItem1 = KeyValueCacheKit.getValue(cacheHandler.cacheName(), id) as SysTenantCacheItem?
+        val cacheItem1 = KeyValueCacheKit.getValue(cacheHandler.cacheName(), id) as SysTenantCacheEntry?
         assertNotNull(cacheItem1)
         assertEquals(newTenantName, cacheItem1.name)
         val cacheItem2 = cacheHandler.getTenantById(id)

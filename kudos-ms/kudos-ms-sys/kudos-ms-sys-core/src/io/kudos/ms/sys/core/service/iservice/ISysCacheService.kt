@@ -1,8 +1,8 @@
 package io.kudos.ms.sys.core.service.iservice
 
 import io.kudos.base.support.iservice.IBaseCrudService
-import io.kudos.ms.sys.common.vo.cache.SysCacheCacheItem
-import io.kudos.ms.sys.common.vo.cache.SysCacheRecord
+import io.kudos.ms.sys.common.vo.cache.SysCacheCacheEntry
+import io.kudos.ms.sys.common.vo.cache.SysCacheRow
 import io.kudos.ms.sys.core.model.po.SysCache
 
 
@@ -27,7 +27,7 @@ interface ISysCacheService : IBaseCrudService<String, SysCache> {
      * @author K
      * @since 1.0.0
      */
-    fun getCacheFromCache(name: String): SysCacheCacheItem?
+    fun getCacheFromCache(name: String): SysCacheCacheEntry?
 
     /**
      * 更新启用状态，并同步缓存
@@ -48,7 +48,7 @@ interface ISysCacheService : IBaseCrudService<String, SysCache> {
      * @author AI: Cursor
      * @since 1.0.0
      */
-    fun getCachesByAtomicServiceCode(atomicServiceCode: String): List<SysCacheRecord>
+    fun getCachesByAtomicServiceCode(atomicServiceCode: String): List<SysCacheRow>
 
     /**
      * 获取所有启用的缓存配置
@@ -57,7 +57,7 @@ interface ISysCacheService : IBaseCrudService<String, SysCache> {
      * @author AI: Cursor
      * @since 1.0.0
      */
-    fun getAllActiveCaches(): List<SysCacheRecord>
+    fun getAllActiveCaches(): List<SysCacheRow>
 
     /**
      * 重载指定缓存名称和key的缓存项

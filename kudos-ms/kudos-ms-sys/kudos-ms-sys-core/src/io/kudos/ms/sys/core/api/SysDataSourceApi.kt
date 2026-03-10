@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.core.api
 
 import io.kudos.ms.sys.common.api.ISysDataSourceApi
-import io.kudos.ms.sys.common.vo.datasource.SysDataSourceCacheItem
+import io.kudos.ms.sys.common.vo.datasource.SysDataSourceCacheEntry
 import io.kudos.ms.sys.core.service.iservice.ISysDataSourceService
 import jakarta.annotation.Resource
 import org.springframework.stereotype.Component
@@ -26,7 +26,7 @@ open class SysDataSourceApi : ISysDataSourceApi {
     override fun getDataSource(
         tenantId: String,
         atomicServiceCode: String?
-    ): SysDataSourceCacheItem? {
+    ): SysDataSourceCacheEntry? {
         return sysDataSourceService.getDataSource(tenantId, atomicServiceCode)
     }
 

@@ -5,10 +5,10 @@ import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.context.support.Consts
-import io.kudos.ms.sys.common.vo.dict.SysDictRecord
-import io.kudos.ms.sys.common.vo.dict.SysDictSearchPayload
-import io.kudos.ms.sys.common.vo.dictitem.SysDictItemCacheItem
-import io.kudos.ms.sys.common.vo.dictitem.SysDictItemSearchPayload
+import io.kudos.ms.sys.common.vo.dict.SysDictRow
+import io.kudos.ms.sys.common.vo.dict.SysDictQuery
+import io.kudos.ms.sys.common.vo.dictitem.SysDictItemCacheEntry
+import io.kudos.ms.sys.common.vo.dictitem.SysDictItemQuery
 import io.kudos.ms.sys.core.dao.SysDictDao
 import io.kudos.ms.sys.core.dao.SysDictItemDao
 import io.kudos.ms.sys.core.model.po.SysDictItem
@@ -23,13 +23,13 @@ import org.springframework.stereotype.Component
  * 1.数据来源表：sys_dict & sys_dict_item
  * 2.缓存active=true的字典的所有active=true的字典项
  * 3.缓存key为：atomicServiceCode::dictType
- * 4.缓存value为：SysDictItemCacheItem列表，按orderNum排序
+ * 4.缓存value为：SysDictItemCacheEntry列表，按orderNum排序
  *
  * @author K
  * @since 1.0.0
  */
 @Component
-open class DictItemsByMsCodeAndTypeCache : AbstractKeyValueCacheHandler<List<SysDictItemCacheItem>>() {
+open class DictItemsByMsCodeAndTypeCache : AbstractKeyValueCacheHandler<List<SysDictItemCacheEntry>>() {
 
     @Autowired
     private lateinit var sysDictDao: SysDictDao
@@ -46,7 +46,7 @@ open class DictItemsByMsCodeAndTypeCache : AbstractKeyValueCacheHandler<List<Sys
 
     override fun cacheName(): String = CACHE_NAME
 
-    override fun doReload(key: String): List<SysDictItemCacheItem> {
+    override fun doReload(key: String): List<SysDictItemCacheEntry> {
         require(key.contains(Consts.CACHE_KEY_DEFAULT_DELIMITER)) {
             "缓存${CACHE_NAME}的key格式必须是：原子服务代码${Consts.CACHE_KEY_DEFAULT_DELIMITER}字典类型代码"
         }
@@ -63,7 +63,7 @@ open class DictItemsByMsCodeAndTypeCache : AbstractKeyValueCacheHandler<List<Sys
         }
 
         // 加载所有可用的字典项
-        val payload = SysDictItemSearchPayload(
+        val payload = SysDictItemQuery(
             active = true,
             dictActive = true
         )
@@ -82,7 +82,7 @@ open class DictItemsByMsCodeAndTypeCache : AbstractKeyValueCacheHandler<List<Sys
         }.groupBy({ it.first }, { it.second })
         dictMap.forEach { (key, value) ->
             val valueItems = value.map { it ->
-                SysDictItemCacheItem(
+                SysDictItemCacheEntry(
                     id = it.itemId,
                     itemCode = it.itemCode,
                     itemName = it.itemName,
@@ -100,24 +100,24 @@ open class DictItemsByMsCodeAndTypeCache : AbstractKeyValueCacheHandler<List<Sys
      *
      * @param atomicServiceCode 原子服务编码
      * @param dictType 字典类型
-     * @return List<SysDictItemCacheItem>，找不到返回空列表
+     * @return List<SysDictItemCacheEntry>，找不到返回空列表
      */
     @Cacheable(
         cacheNames = [CACHE_NAME],
         key = "#atomicServiceCode.concat('${Consts.CACHE_KEY_DEFAULT_DELIMITER}').concat(#dictType)",
         unless = "#result == null || #result.isEmpty()"
     )
-    open fun getDictItems(atomicServiceCode: String, dictType: String): List<SysDictItemCacheItem> {
+    open fun getDictItems(atomicServiceCode: String, dictType: String): List<SysDictItemCacheEntry> {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("缓存中不存在原子服务为${atomicServiceCode}且字典类型为${dictType}的字典项，从数据库中加载...")
         }
         // 查出对应的dict
-        val searchPayload = SysDictSearchPayload(
+        val searchPayload = SysDictQuery(
             atomicServiceCode = atomicServiceCode,
             dictType = dictType,
             active = true
         )
-        val result = sysDictDao.search(searchPayload, SysDictRecord::class)
+        val result = sysDictDao.search(searchPayload, SysDictRow::class)
 
         return if (result.isEmpty()) {
             log.warn("数据库中不存在原子服务为${atomicServiceCode}且字典类型为${dictType}的active为true字典项！")
@@ -127,7 +127,7 @@ open class DictItemsByMsCodeAndTypeCache : AbstractKeyValueCacheHandler<List<Sys
             val items = sysDictItemDao.searchActiveItemByDictId(result.first().id)
             log.debug("数据库中加载到原子服务为${atomicServiceCode}且字典类型为${dictType}的字典项共${items.size}条.")
             items.map {
-                SysDictItemCacheItem(
+                SysDictItemCacheEntry(
                     id = it.id,
                     itemCode = it.itemCode,
                     itemName = it.itemName,

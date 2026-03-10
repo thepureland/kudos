@@ -3,7 +3,7 @@ package io.kudos.ms.sys.common.api
 import io.kudos.ms.sys.common.enums.ResourceTypeEnum
 import io.kudos.ms.sys.common.vo.resource.BaseMenuTreeNode
 import io.kudos.ms.sys.common.vo.resource.MenuTreeNode
-import io.kudos.ms.sys.common.vo.resource.SysResourceCacheItem
+import io.kudos.ms.sys.common.vo.resource.SysResourceCacheEntry
 
 
 /**
@@ -26,7 +26,7 @@ interface ISysResourceApi {
      * @author K
      * @since 1.0.0
      */
-    fun getResource(resourceId: String): SysResourceCacheItem?
+    fun getResource(resourceId: String): SysResourceCacheEntry?
 
     /**
      * 返回资源id集合对应的资源
@@ -36,7 +36,7 @@ interface ISysResourceApi {
      * @author K
      * @since 1.0.0
      */
-    fun getResources(resourceIds: Collection<String>): Map<String, SysResourceCacheItem>
+    fun getResources(resourceIds: Collection<String>): Map<String, SysResourceCacheEntry>
 
     /**
      * 根据子系统和资源类型，返回对应的资源
@@ -47,7 +47,7 @@ interface ISysResourceApi {
      * @author K
      * @since 1.0.0
      */
-    fun getResources(resourceType: ResourceTypeEnum, subSystemCode: String): List<SysResourceCacheItem>
+    fun getResources(resourceType: ResourceTypeEnum, subSystemCode: String): List<SysResourceCacheEntry>
 
 //    /**
 //     * 根据资源id返回对应的资源
@@ -61,7 +61,7 @@ interface ISysResourceApi {
 //     */
 //    fun getResources(
 //        subSysDictCode: String, resourceType: ResourceType, vararg resourceIds: String
-//    ): List<SysResourceCacheItem>
+//    ): List<SysResourceCacheEntry>
 
     /**
      * 根据子系统，返回对应的基础菜单树
@@ -102,7 +102,7 @@ interface ISysResourceApi {
         resourceType: ResourceTypeEnum,
         parentId: String?,
         subSystemCode: String,
-    ): List<SysResourceCacheItem>
+    ): List<SysResourceCacheEntry>
 
     /**
      * 返回指定参数的孩子资源
@@ -116,7 +116,7 @@ interface ISysResourceApi {
         subSystemCode: String,
         resourceType: ResourceTypeEnum,
         parentId: String
-    ): List<SysResourceCacheItem>
+    ): List<SysResourceCacheEntry>
 
     //endregion your codes 2
 

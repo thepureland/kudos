@@ -6,7 +6,7 @@ import io.kudos.ability.cache.common.batch.hash.HashBatchCacheableByPrimary
 import io.kudos.ability.cache.common.core.hash.AbstractHashCacheHandler
 import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.logger.LogFactory
-import io.kudos.ms.user.common.vo.org.UserOrgCacheItem
+import io.kudos.ms.user.common.vo.org.UserOrgCacheEntry
 import io.kudos.ms.user.core.cache.UserOrgHashCache.Companion.CACHE_NAME
 import io.kudos.ms.user.core.dao.UserOrgDao
 import jakarta.annotation.Resource
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component
 /**
  * 机构 Hash 缓存处理器
  *
- * 数据来源表：user_org；主键为 id，缓存的 key 即 id，value 为 [UserOrgCacheItem]。
+ * 数据来源表：user_org；主键为 id，缓存的 key 即 id，value 为 [UserOrgCacheEntry]。
  * 使用 Hash 结构存储，支持按 id 存取、按 tenantId 二级索引查询。
  *
  * - 按 id：getOrgById、getOrgsByIds（等价原 OrgByIdCache，含 active=false）
@@ -27,7 +27,7 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-open class UserOrgHashCache : AbstractHashCacheHandler<UserOrgCacheItem>() {
+open class UserOrgHashCache : AbstractHashCacheHandler<UserOrgCacheEntry>() {
 
     @Resource
     private lateinit var userOrgDao: UserOrgDao
@@ -39,17 +39,17 @@ open class UserOrgHashCache : AbstractHashCacheHandler<UserOrgCacheItem>() {
 
         /** 可筛选副属性：按 tenantId 索引，用于按租户查询 */
         val FILTERABLE_PROPERTIES = setOf(
-            UserOrgCacheItem::tenantId.name,
+            UserOrgCacheEntry::tenantId.name,
         )
     }
 
     override fun cacheName(): String = CACHE_NAME
 
-    override fun entityClass() = UserOrgCacheItem::class
+    override fun entityClass() = UserOrgCacheEntry::class
 
     override fun filterableProperties(): Set<String> = FILTERABLE_PROPERTIES
 
-    override fun doReload(id: Any): UserOrgCacheItem? = userOrgDao.getAs(id.toString())
+    override fun doReload(id: Any): UserOrgCacheEntry? = userOrgDao.getAs(id.toString())
 
     /**
      * 根据 id 从缓存获取机构，未命中则查库并回写。
@@ -60,13 +60,13 @@ open class UserOrgHashCache : AbstractHashCacheHandler<UserOrgCacheItem>() {
     @HashCacheableByPrimary(
         cacheNames = [CACHE_NAME],
         key = "#id",
-        entityClass = UserOrgCacheItem::class,
+        entityClass = UserOrgCacheEntry::class,
         unless = "#result == null",
         filterableProperties = ["tenantId"]
     )
-    open fun getOrgById(id: String): UserOrgCacheItem? {
+    open fun getOrgById(id: String): UserOrgCacheEntry? {
         require(id.isNotBlank()) { "获取机构时 id 不能为空" }
-        return userOrgDao.getAs<UserOrgCacheItem>(id)
+        return userOrgDao.getAs<UserOrgCacheEntry>(id)
     }
 
     /**
@@ -77,12 +77,12 @@ open class UserOrgHashCache : AbstractHashCacheHandler<UserOrgCacheItem>() {
      */
     @HashBatchCacheableByPrimary(
         cacheNames = [CACHE_NAME],
-        entityClass = UserOrgCacheItem::class,
+        entityClass = UserOrgCacheEntry::class,
         filterableProperties = ["tenantId"]
     )
-    open fun getOrgsByIds(ids: Collection<String>): Map<String, UserOrgCacheItem> {
+    open fun getOrgsByIds(ids: Collection<String>): Map<String, UserOrgCacheEntry> {
         if (ids.isEmpty()) return emptyMap()
-        val list = userOrgDao.getByIdsAs<UserOrgCacheItem>(ids)
+        val list = userOrgDao.getByIdsAs<UserOrgCacheEntry>(ids)
         return list.filter { it.id.isNotBlank() && it.id in ids }.associateBy { it.id }
     }
 
@@ -95,10 +95,10 @@ open class UserOrgHashCache : AbstractHashCacheHandler<UserOrgCacheItem>() {
     @HashCacheableBySecondary(
         cacheNames = [CACHE_NAME],
         filterExpressions = ["#tenantId", "#active"],
-        entityClass = UserOrgCacheItem::class,
+        entityClass = UserOrgCacheEntry::class,
         filterableProperties = ["tenantId"]
     )
-    open fun getOrgsByTenantId(tenantId: String): List<UserOrgCacheItem> {
+    open fun getOrgsByTenantId(tenantId: String): List<UserOrgCacheEntry> {
         return userOrgDao.searchOrgsByTenantIdForCache(tenantId)
     }
 
@@ -114,7 +114,7 @@ open class UserOrgHashCache : AbstractHashCacheHandler<UserOrgCacheItem>() {
         }
         val cache = hashCache()
         if (clear) cache.clear(CACHE_NAME)
-        val list = userOrgDao.searchAs<UserOrgCacheItem>()
+        val list = userOrgDao.searchAs<UserOrgCacheEntry>()
         log.debug("从数据库加载 ${list.size} 条机构，刷新 Hash 缓存")
         cache.refreshAll(CACHE_NAME, list, FILTERABLE_PROPERTIES, emptySet())
     }
@@ -122,14 +122,14 @@ open class UserOrgHashCache : AbstractHashCacheHandler<UserOrgCacheItem>() {
     /** 新增机构后同步：将指定 id 的实体从库加载并写入缓存。 */
     open fun syncOnInsert(id: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME) || !KeyValueCacheKit.isWriteInTime(CACHE_NAME)) return
-        val item = userOrgDao.getAs<UserOrgCacheItem>(id) ?: return
+        val item = userOrgDao.getAs<UserOrgCacheEntry>(id) ?: return
         hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
     }
 
     /** 更新机构后同步：从库重新加载并写入缓存。 */
     open fun syncOnUpdate(id: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
-        val item = userOrgDao.getAs<UserOrgCacheItem>(id) ?: return
+        val item = userOrgDao.getAs<UserOrgCacheEntry>(id) ?: return
         if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
             hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
         }
@@ -138,13 +138,13 @@ open class UserOrgHashCache : AbstractHashCacheHandler<UserOrgCacheItem>() {
     /** 删除机构后同步：从缓存中移除该 id。 */
     open fun syncOnDelete(id: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
-        hashCache().deleteById(CACHE_NAME, id, UserOrgCacheItem::class, FILTERABLE_PROPERTIES, emptySet())
+        hashCache().deleteById(CACHE_NAME, id, UserOrgCacheEntry::class, FILTERABLE_PROPERTIES, emptySet())
     }
 
     /** 批量删除机构后同步：从缓存中移除这些 id。 */
     open fun syncOnBatchDelete(ids: Collection<String>) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
         val cache = hashCache()
-        ids.forEach { cache.deleteById(CACHE_NAME, it, UserOrgCacheItem::class, FILTERABLE_PROPERTIES, emptySet()) }
+        ids.forEach { cache.deleteById(CACHE_NAME, it, UserOrgCacheEntry::class, FILTERABLE_PROPERTIES, emptySet()) }
     }
 }

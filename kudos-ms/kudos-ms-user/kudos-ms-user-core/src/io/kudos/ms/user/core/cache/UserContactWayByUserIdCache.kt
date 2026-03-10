@@ -4,8 +4,8 @@ import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
 import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
-import io.kudos.ms.user.common.vo.contact.UserContactWayCacheItem
-import io.kudos.ms.user.common.vo.contact.UserContactWaySearchPayload
+import io.kudos.ms.user.common.vo.contact.UserContactWayCacheEntry
+import io.kudos.ms.user.common.vo.contact.UserContactWayQuery
 import io.kudos.ms.user.core.dao.UserContactWayDao
 import io.kudos.ms.user.core.model.po.UserContactWay
 import org.springframework.beans.factory.annotation.Autowired
@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component
  * 1.数据来源表：user_contact_way
  * 2.仅缓存active=true的联系方式
  * 3.缓存的key为：user_id
- * 4.缓存的value为：UserContactWayCacheItem对象列表
+ * 4.缓存的value为：UserContactWayCacheEntry对象列表
  *
  * @author K
  * @author AI: Codex
@@ -27,7 +27,7 @@ import org.springframework.stereotype.Component
  */
 @Component
 //region your codes 1
-open class UserContactWayByUserIdCache : AbstractKeyValueCacheHandler<List<UserContactWayCacheItem>>() {
+open class UserContactWayByUserIdCache : AbstractKeyValueCacheHandler<List<UserContactWayCacheEntry>>() {
 //endregion your codes 1
 
     //region your codes 2
@@ -41,7 +41,7 @@ open class UserContactWayByUserIdCache : AbstractKeyValueCacheHandler<List<UserC
 
     override fun cacheName() = CACHE_NAME
 
-    override fun doReload(key: String): List<UserContactWayCacheItem>? {
+    override fun doReload(key: String): List<UserContactWayCacheEntry>? {
         return getSelf<UserContactWayByUserIdCache>().getContactWays(key)
     }
 
@@ -52,12 +52,12 @@ open class UserContactWayByUserIdCache : AbstractKeyValueCacheHandler<List<UserC
         }
 
         // 加载所有可用的联系方式
-        val searchPayload = UserContactWaySearchPayload().apply {
-            returnEntityClass = UserContactWayCacheItem::class
+        val searchPayload = UserContactWayQuery().apply {
+            returnEntityClass = UserContactWayCacheEntry::class
             active = true
         }
         @Suppress("UNCHECKED_CAST")
-        val results = userContactWayDao.search(searchPayload, UserContactWayCacheItem::class)
+        val results = userContactWayDao.search(searchPayload, UserContactWayCacheEntry::class)
         log.debug("从数据库加载了${results.size}条联系方式。")
 
         // 清除缓存
@@ -78,24 +78,24 @@ open class UserContactWayByUserIdCache : AbstractKeyValueCacheHandler<List<UserC
      * 根据用户ID从缓存获取联系方式，如果缓存中不存在，则从数据库加载并写入缓存
      *
      * @param userId 用户ID
-     * @return List<UserContactWayCacheItem>，找不到返回空列表
+     * @return List<UserContactWayCacheEntry>，找不到返回空列表
      */
     @Cacheable(
         cacheNames = [CACHE_NAME],
         key = "#userId",
         unless = "#result == null || #result.isEmpty()"
     )
-    open fun getContactWays(userId: String): List<UserContactWayCacheItem> {
+    open fun getContactWays(userId: String): List<UserContactWayCacheEntry> {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("缓存中不存在用户${userId}的联系方式，从数据库中加载...")
         }
-        val searchPayload = UserContactWaySearchPayload().apply {
-            returnEntityClass = UserContactWayCacheItem::class
+        val searchPayload = UserContactWayQuery().apply {
+            returnEntityClass = UserContactWayCacheEntry::class
             this.userId = userId
             this.active = true
         }
         @Suppress("UNCHECKED_CAST")
-        val results = userContactWayDao.search(searchPayload, UserContactWayCacheItem::class)
+        val results = userContactWayDao.search(searchPayload, UserContactWayCacheEntry::class)
         if (results.isEmpty()) {
             log.warn("数据库中不存在用户${userId}的active=true的联系方式！")
         } else {

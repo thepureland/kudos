@@ -6,7 +6,7 @@ import io.kudos.ability.cache.common.batch.hash.HashBatchCacheableByPrimary
 import io.kudos.ability.cache.common.core.hash.AbstractHashCacheHandler
 import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.logger.LogFactory
-import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceCacheItem
+import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceCacheEntry
 import io.kudos.ms.sys.core.cache.SysMicroServiceHashCache.Companion.CACHE_NAME
 import io.kudos.ms.sys.core.dao.SysMicroServiceDao
 import jakarta.annotation.Resource
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component
 /**
  * 微服务（按 code）Hash 缓存处理器
  *
- * 数据来源表：sys_micro_service；主键为 code，缓存的 key 即 code，value 为 [SysMicroServiceCacheItem]。
+ * 数据来源表：sys_micro_service；主键为 code，缓存的 key 即 code，value 为 [SysMicroServiceCacheEntry]。
  * 使用 Hash 结构存储，通过 [HashCacheableByPrimary] / [HashBatchCacheableByPrimary] 按 code 存取。
  *
  * 使用前需在缓存配置表 sys_cache 中增加名为 [CACHE_NAME] 的配置项且 hash=true。
@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-open class SysMicroServiceHashCache : AbstractHashCacheHandler<SysMicroServiceCacheItem>() {
+open class SysMicroServiceHashCache : AbstractHashCacheHandler<SysMicroServiceCacheEntry>() {
 
     @Resource
     private lateinit var sysMicroServiceDao: SysMicroServiceDao
@@ -36,16 +36,16 @@ open class SysMicroServiceHashCache : AbstractHashCacheHandler<SysMicroServiceCa
         const val CACHE_NAME = "SYS_MICRO_SERVICE__HASH"
 
         /** 可筛选副属性：按 atomicService 建二级索引，用于按是否原子服务查询 */
-        val FILTERABLE_PROPERTIES = setOf(SysMicroServiceCacheItem::atomicService.name)
+        val FILTERABLE_PROPERTIES = setOf(SysMicroServiceCacheEntry::atomicService.name)
     }
 
     override fun cacheName(): String = CACHE_NAME
 
-    override fun entityClass() = SysMicroServiceCacheItem::class
+    override fun entityClass() = SysMicroServiceCacheEntry::class
 
     override fun filterableProperties(): Set<String> = FILTERABLE_PROPERTIES
 
-    override fun doReload(id: Any): SysMicroServiceCacheItem? = sysMicroServiceDao.getAs(id.toString())
+    override fun doReload(id: Any): SysMicroServiceCacheEntry? = sysMicroServiceDao.getAs(id.toString())
 
     /**
      * 根据 code 从缓存获取微服务信息，未命中则查库并回写。
@@ -56,13 +56,13 @@ open class SysMicroServiceHashCache : AbstractHashCacheHandler<SysMicroServiceCa
     @HashCacheableByPrimary(
         cacheNames = [CACHE_NAME],
         key = "#code",
-        entityClass = SysMicroServiceCacheItem::class,
+        entityClass = SysMicroServiceCacheEntry::class,
         unless = "#result == null",
         filterableProperties = ["atomicService"]
     )
-    open fun getMicroServiceByCode(code: String): SysMicroServiceCacheItem? {
+    open fun getMicroServiceByCode(code: String): SysMicroServiceCacheEntry? {
         require(code.isNotBlank()) { "获取微服务时 code 不能为空" }
-        return sysMicroServiceDao.get(code, SysMicroServiceCacheItem::class)
+        return sysMicroServiceDao.get(code, SysMicroServiceCacheEntry::class)
     }
 
     /**
@@ -73,12 +73,12 @@ open class SysMicroServiceHashCache : AbstractHashCacheHandler<SysMicroServiceCa
      */
     @HashBatchCacheableByPrimary(
         cacheNames = [CACHE_NAME],
-        entityClass = SysMicroServiceCacheItem::class,
+        entityClass = SysMicroServiceCacheEntry::class,
         filterableProperties = ["atomicService"]
     )
-    open fun getMicroServicesByCodes(codes: List<String>): Map<String, SysMicroServiceCacheItem> {
+    open fun getMicroServicesByCodes(codes: List<String>): Map<String, SysMicroServiceCacheEntry> {
         if (codes.isEmpty()) return emptyMap()
-        val list = sysMicroServiceDao.getByIdsAs<SysMicroServiceCacheItem>(codes)
+        val list = sysMicroServiceDao.getByIdsAs<SysMicroServiceCacheEntry>(codes)
         return list.filter { it.id.isNotBlank() && it.id in codes }.associateBy { it.id }
     }
 
@@ -91,15 +91,15 @@ open class SysMicroServiceHashCache : AbstractHashCacheHandler<SysMicroServiceCa
     @HashCacheableBySecondary(
         cacheNames = [CACHE_NAME],
         filterExpressions = ["#atomicService"],
-        entityClass = SysMicroServiceCacheItem::class,
+        entityClass = SysMicroServiceCacheEntry::class,
         filterableProperties = ["atomicService"]
     )
-    open fun getMicroServicesByType(atomicService: Boolean): List<SysMicroServiceCacheItem> {
+    open fun getMicroServicesByType(atomicService: Boolean): List<SysMicroServiceCacheEntry> {
         return sysMicroServiceDao.fetchMicroServiceByTypeForCache(atomicService)
     }
 
     /** 获取所有原子服务列表（atomicService=true）。 */
-    open fun listAtomicServices(): List<SysMicroServiceCacheItem> = getMicroServicesByType(true)
+    open fun listAtomicServices(): List<SysMicroServiceCacheEntry> = getMicroServicesByType(true)
 
     /**
      * 从库全量加载微服务并刷新 Hash 缓存。
@@ -113,7 +113,7 @@ open class SysMicroServiceHashCache : AbstractHashCacheHandler<SysMicroServiceCa
         }
         val cache = hashCache()
         if (clear) cache.clear(CACHE_NAME)
-        val list = sysMicroServiceDao.searchAs<SysMicroServiceCacheItem>()
+        val list = sysMicroServiceDao.searchAs<SysMicroServiceCacheEntry>()
         log.debug("从数据库加载 ${list.size} 条微服务，刷新 Hash 缓存")
         cache.refreshAll(CACHE_NAME, list, FILTERABLE_PROPERTIES, emptySet())
     }
@@ -121,14 +121,14 @@ open class SysMicroServiceHashCache : AbstractHashCacheHandler<SysMicroServiceCa
     /** 新增微服务后同步：将指定 code 的实体从库加载并写入缓存。 */
     open fun syncOnInsert(code: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME) || !KeyValueCacheKit.isWriteInTime(CACHE_NAME)) return
-        val item = sysMicroServiceDao.get(code, SysMicroServiceCacheItem::class) ?: return
+        val item = sysMicroServiceDao.get(code, SysMicroServiceCacheEntry::class) ?: return
         hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
     }
 
     /** 更新微服务后同步：从库重新加载并写入缓存。 */
     open fun syncOnUpdate(code: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
-        val item = sysMicroServiceDao.get(code, SysMicroServiceCacheItem::class) ?: return
+        val item = sysMicroServiceDao.get(code, SysMicroServiceCacheEntry::class) ?: return
         if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
             hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
         }
@@ -137,13 +137,13 @@ open class SysMicroServiceHashCache : AbstractHashCacheHandler<SysMicroServiceCa
     /** 删除微服务后同步：从缓存中移除该 code。 */
     open fun syncOnDelete(code: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
-        hashCache().deleteById(CACHE_NAME, code, SysMicroServiceCacheItem::class, FILTERABLE_PROPERTIES, emptySet())
+        hashCache().deleteById(CACHE_NAME, code, SysMicroServiceCacheEntry::class, FILTERABLE_PROPERTIES, emptySet())
     }
 
     /** 批量删除微服务后同步：从缓存中移除这些 code。 */
     open fun syncOnBatchDelete(codes: Collection<String>) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
         val cache = hashCache()
-        codes.forEach { cache.deleteById(CACHE_NAME, it, SysMicroServiceCacheItem::class, FILTERABLE_PROPERTIES, emptySet()) }
+        codes.forEach { cache.deleteById(CACHE_NAME, it, SysMicroServiceCacheEntry::class, FILTERABLE_PROPERTIES, emptySet()) }
     }
 }

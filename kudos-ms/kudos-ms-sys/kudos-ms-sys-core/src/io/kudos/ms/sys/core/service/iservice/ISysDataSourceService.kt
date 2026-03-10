@@ -2,8 +2,8 @@ package io.kudos.ms.sys.core.service.iservice
 
 import io.kudos.base.support.iservice.IBaseCrudService
 import io.kudos.ms.sys.common.api.ISysDataSourceApi
-import io.kudos.ms.sys.common.vo.datasource.SysDataSourceCacheItem
-import io.kudos.ms.sys.common.vo.datasource.SysDataSourceRecord
+import io.kudos.ms.sys.common.vo.datasource.SysDataSourceCacheEntry
+import io.kudos.ms.sys.common.vo.datasource.SysDataSourceRow
 import io.kudos.ms.sys.core.model.po.SysDataSource
 
 
@@ -26,7 +26,7 @@ interface ISysDataSourceService : IBaseCrudService<String, SysDataSource>, ISysD
      * @param tenantId 租户id
      * @param subSystemCode 子系统编码
      * @param microServiceCode 微服务编码
-     * @return List<SysDataSourceCacheItem>
+     * @return List<SysDataSourceCacheEntry>
      * @author K
      * @since 1.0.0
      */
@@ -34,7 +34,7 @@ interface ISysDataSourceService : IBaseCrudService<String, SysDataSource>, ISysD
         tenantId: String,
         subSystemCode: String,
         microServiceCode: String?
-    ): List<SysDataSourceCacheItem>
+    ): List<SysDataSourceCacheEntry>
 
     /**
      * 更新启用状态，并同步缓存
@@ -65,7 +65,7 @@ interface ISysDataSourceService : IBaseCrudService<String, SysDataSource>, ISysD
      * @author AI: Cursor
      * @since 1.0.0
      */
-    fun getDataSourcesByTenantId(tenantId: String): List<SysDataSourceRecord>
+    fun getDataSourcesByTenantId(tenantId: String): List<SysDataSourceRow>
 
     /**
      * 获取子系统的数据源列表
@@ -75,7 +75,7 @@ interface ISysDataSourceService : IBaseCrudService<String, SysDataSource>, ISysD
      * @author AI: Cursor
      * @since 1.0.0
      */
-    fun getDataSourcesBySubSystemCode(subSystemCode: String): List<SysDataSourceRecord>
+    fun getDataSourcesBySubSystemCode(subSystemCode: String): List<SysDataSourceRow>
 
     //endregion your codes 2
 

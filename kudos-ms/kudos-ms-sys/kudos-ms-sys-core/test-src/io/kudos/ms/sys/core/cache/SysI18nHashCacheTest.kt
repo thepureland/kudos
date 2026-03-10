@@ -2,7 +2,7 @@ package io.kudos.ms.sys.core.cache
 
 import io.kudos.ability.cache.common.kit.HashCacheKit
 import io.kudos.ability.data.rdb.jdbc.kit.RdbKit
-import io.kudos.ms.sys.common.vo.i18n.SysI18nCacheItem
+import io.kudos.ms.sys.common.vo.i18n.SysI18nCacheEntry
 import io.kudos.ms.sys.core.dao.SysI18nDao
 import io.kudos.ms.sys.core.model.po.SysI18n
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
@@ -131,7 +131,7 @@ class SysI18nHashCacheTest : RdbAndRedisCacheTestBase() {
         val id = "40000000-0000-0000-0000-000000008910"
         val success = sysI18nDao.updateProperties(id, mapOf(SysI18n::value.name to newValue))
         assertTrue(success)
-        val item = sysI18nDao.get(id, SysI18nCacheItem::class)
+        val item = sysI18nDao.get(id, SysI18nCacheEntry::class)
         assertNotNull(item)
         cacheHandler.syncOnUpdate(item!!, id)
         val list = cacheHandler.getI18ns(locale, atomicServiceCode, i18nTypeDictCode, namespace)

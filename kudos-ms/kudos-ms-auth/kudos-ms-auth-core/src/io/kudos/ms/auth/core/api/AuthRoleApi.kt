@@ -1,12 +1,12 @@
 package io.kudos.ms.auth.core.api
 
 import io.kudos.ms.auth.common.api.IAuthRoleApi
-import io.kudos.ms.auth.common.vo.role.AuthRoleCacheItem
+import io.kudos.ms.auth.common.vo.role.AuthRoleCacheEntry
 import io.kudos.ms.auth.core.cache.AuthRoleHashCache
 import io.kudos.ms.auth.core.cache.UserIdsByTenantIdAndRoleCodeCache
 import io.kudos.ms.auth.core.service.iservice.IAuthRoleService
-import io.kudos.ms.sys.common.vo.resource.SysResourceCacheItem
-import io.kudos.ms.user.common.vo.user.UserAccountCacheItem
+import io.kudos.ms.sys.common.vo.resource.SysResourceCacheEntry
+import io.kudos.ms.user.common.vo.user.UserAccountCacheEntry
 import jakarta.annotation.Resource
 import org.springframework.stereotype.Service
 
@@ -34,11 +34,11 @@ open class AuthRoleApi : IAuthRoleApi {
     @Resource
     private lateinit var userIdsByTenantIdAndRoleCodeCache: UserIdsByTenantIdAndRoleCodeCache
 
-    override fun getRoleById(id: String): AuthRoleCacheItem? {
+    override fun getRoleById(id: String): AuthRoleCacheEntry? {
         return authRoleHashCache.getRoleById(id)
     }
 
-    override fun getRolesByIds(ids: Collection<String>): Map<String, AuthRoleCacheItem> {
+    override fun getRolesByIds(ids: Collection<String>): Map<String, AuthRoleCacheEntry> {
         return authRoleHashCache.getRolesByIds(ids)
     }
 
@@ -46,7 +46,7 @@ open class AuthRoleApi : IAuthRoleApi {
         return authRoleHashCache.getRoleByTenantIdAndRoleCode(tenantId, code)?.id
     }
 
-    override fun getRoleUsers(roleId: String): List<UserAccountCacheItem> {
+    override fun getRoleUsers(roleId: String): List<UserAccountCacheEntry> {
         return authRoleService.getRoleUsers(roleId)
     }
 
@@ -54,7 +54,7 @@ open class AuthRoleApi : IAuthRoleApi {
         return userIdsByTenantIdAndRoleCodeCache.getUserIds(tenantId, roleCode)
     }
 
-    override fun getRoleResources(roleId: String): List<SysResourceCacheItem> {
+    override fun getRoleResources(roleId: String): List<SysResourceCacheEntry> {
         return authRoleService.getRoleResources(roleId)
     }
 
@@ -66,11 +66,11 @@ open class AuthRoleApi : IAuthRoleApi {
         return authRoleService.getRoleIds(tenantId)
     }
 
-    override fun getResources(userId: String): List<SysResourceCacheItem> {
+    override fun getResources(userId: String): List<SysResourceCacheEntry> {
         return authRoleService.getResources(userId)
     }
 
-    override fun getUserRoles(userId: String): List<AuthRoleCacheItem> {
+    override fun getUserRoles(userId: String): List<AuthRoleCacheEntry> {
         return authRoleService.getUserRoles(userId)
     }
 

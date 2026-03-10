@@ -3,7 +3,7 @@ package io.kudos.ms.auth.core.dao
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.eq
-import io.kudos.ms.auth.common.vo.role.AuthRoleCacheItem
+import io.kudos.ms.auth.common.vo.role.AuthRoleCacheEntry
 import io.kudos.ms.auth.core.model.po.AuthRole
 import io.kudos.ms.auth.core.model.table.AuthRoles
 import org.springframework.stereotype.Repository
@@ -27,11 +27,11 @@ open class AuthRoleDao : BaseCrudDao<String, AuthRole, AuthRoles>() {
     /**
      * 查询所有 active=true 的角色
      *
-     * @return List<AuthRoleCacheItem>
+     * @return List<AuthRoleCacheEntry>
      */
-    open fun searchActiveRolesForCache(): List<AuthRoleCacheItem> {
+    open fun searchActiveRolesForCache(): List<AuthRoleCacheEntry> {
         val criteria = Criteria(AuthRole::active eq true)
-        return searchAs<AuthRoleCacheItem>(criteria)
+        return searchAs<AuthRoleCacheEntry>(criteria)
     }
 
     /**
@@ -39,14 +39,14 @@ open class AuthRoleDao : BaseCrudDao<String, AuthRole, AuthRoles>() {
      *
      * @param tenantId 租户id
      * @param code 角色编码
-     * @return AuthRoleCacheItem，不存在返回null
+     * @return AuthRoleCacheEntry，不存在返回null
      */
-    open fun searchRoleByTenantIdAndRoleCode(tenantId: String, code: String): AuthRoleCacheItem? {
+    open fun searchRoleByTenantIdAndRoleCode(tenantId: String, code: String): AuthRoleCacheEntry? {
         val criteria = Criteria.and(
             AuthRole::tenantId eq tenantId,
             AuthRole::code eq code
         )
-        return searchAs<AuthRoleCacheItem>(criteria).firstOrNull()
+        return searchAs<AuthRoleCacheEntry>(criteria).firstOrNull()
     }
 
     /**

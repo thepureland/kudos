@@ -1,8 +1,8 @@
 package io.kudos.ms.sys.core.api
 
 import io.kudos.ms.sys.common.api.ISysSystemApi
-import io.kudos.ms.sys.common.vo.system.SysSystemCacheItem
-import io.kudos.ms.sys.common.vo.system.SysSystemRecord
+import io.kudos.ms.sys.common.vo.system.SysSystemCacheEntry
+import io.kudos.ms.sys.common.vo.system.SysSystemRow
 import io.kudos.ms.sys.core.service.iservice.ISysSystemService
 import jakarta.annotation.Resource
 import org.springframework.stereotype.Service
@@ -24,11 +24,11 @@ open class SysSystemApi : ISysSystemApi {
     @Resource
     protected lateinit var sysSystemService: ISysSystemService
 
-    override fun getSystemByCode(code: String): SysSystemCacheItem? {
+    override fun getSystemByCode(code: String): SysSystemCacheEntry? {
         return sysSystemService.getSystemByCode(code)
     }
 
-    override fun getAllActiveSystems(): List<SysSystemRecord> {
+    override fun getAllActiveSystems(): List<SysSystemRow> {
         return sysSystemService.getAllActiveSystems()
     }
 
@@ -36,7 +36,7 @@ open class SysSystemApi : ISysSystemApi {
         return sysSystemService.updateActive(code, active)
     }
 
-    override fun getSubSystemsBySystemCode(systemCode: String): List<SysSystemRecord> {
+    override fun getSubSystemsBySystemCode(systemCode: String): List<SysSystemRow> {
         return sysSystemService.getSubSystemsBySystemCode(systemCode)
     }
 

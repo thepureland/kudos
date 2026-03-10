@@ -1,7 +1,7 @@
 package io.kudos.ms.user.core.cache
 
 import io.kudos.ability.cache.common.kit.KeyValueCacheKit
-import io.kudos.ms.user.common.vo.contact.UserContactWayCacheItem
+import io.kudos.ms.user.common.vo.contact.UserContactWayCacheEntry
 import io.kudos.ms.user.core.dao.UserContactWayDao
 import io.kudos.ms.user.core.model.po.UserContactWay
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
@@ -84,7 +84,7 @@ class UserContactWayByUserIdCacheTest : RdbAndRedisCacheTestBase() {
 
         val key = cacheHandler.getKey(userId)
         @Suppress("UNCHECKED_CAST")
-        val cacheItems = KeyValueCacheKit.getValue(cacheHandler.cacheName(), key) as List<UserContactWayCacheItem>?
+        val cacheItems = KeyValueCacheKit.getValue(cacheHandler.cacheName(), key) as List<UserContactWayCacheEntry>?
         assertNotNull(cacheItems)
         assertTrue(cacheItems.any { it.id == contactWay.id })
         assertTrue(cacheHandler.getContactWays(userId).any { it.id == contactWay.id })
@@ -101,7 +101,7 @@ class UserContactWayByUserIdCacheTest : RdbAndRedisCacheTestBase() {
 
         val key = cacheHandler.getKey(contactWay.userId)
         @Suppress("UNCHECKED_CAST")
-        val cacheItems = KeyValueCacheKit.getValue(cacheHandler.cacheName(), key) as List<UserContactWayCacheItem>?
+        val cacheItems = KeyValueCacheKit.getValue(cacheHandler.cacheName(), key) as List<UserContactWayCacheEntry>?
         assertNotNull(cacheItems)
         assertEquals(newValue, cacheItems.first { it.id == id }.contactWayValue)
         assertEquals(newValue, cacheHandler.getContactWays(contactWay.userId).first { it.id == id }.contactWayValue)

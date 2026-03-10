@@ -1,9 +1,9 @@
 package io.kudos.ms.user.core.service.iservice
 
 import io.kudos.base.support.iservice.IBaseCrudService
-import io.kudos.ms.user.common.vo.org.UserOrgCacheItem
-import io.kudos.ms.user.common.vo.org.UserOrgTreeRecord
-import io.kudos.ms.user.common.vo.user.UserAccountCacheItem
+import io.kudos.ms.user.common.vo.org.UserOrgCacheEntry
+import io.kudos.ms.user.common.vo.org.UserOrgTreeRow
+import io.kudos.ms.user.common.vo.user.UserAccountCacheEntry
 import io.kudos.ms.user.core.model.po.UserOrg
 
 
@@ -24,9 +24,9 @@ interface IUserOrgService : IBaseCrudService<String, UserOrg> {
      * 根据机构ID获取该机构的所有管理员用户信息
      *
      * @param orgId 机构ID
-     * @return List<UserAccountCacheItem> 机构管理员用户列表，如果没有管理员则返回空列表
+     * @return List<UserAccountCacheEntry> 机构管理员用户列表，如果没有管理员则返回空列表
      */
-    fun getOrgAdmins(orgId: String): List<UserAccountCacheItem>
+    fun getOrgAdmins(orgId: String): List<UserAccountCacheEntry>
 
     /**
      * 根据机构ID获取该机构下的所有用户ID列表（包括管理员和普通用户）
@@ -48,9 +48,9 @@ interface IUserOrgService : IBaseCrudService<String, UserOrg> {
      * 根据机构ID获取该机构下的所有用户列表（包括管理员和普通用户）
      *
      * @param orgId 机构ID
-     * @return List<UserAccountCacheItem> 用户列表，如果机构不存在或没有用户则返回空列表
+     * @return List<UserAccountCacheEntry> 用户列表，如果机构不存在或没有用户则返回空列表
      */
-    fun getOrgUsers(orgId: String): List<UserAccountCacheItem>
+    fun getOrgUsers(orgId: String): List<UserAccountCacheEntry>
 
     /**
      * 检查用户是否属于指定机构
@@ -65,17 +65,17 @@ interface IUserOrgService : IBaseCrudService<String, UserOrg> {
      * 根据机构ID获取该机构的所有直接子机构列表
      *
      * @param orgId 机构ID
-     * @return List<UserOrgCacheItem> 子机构列表，如果没有子机构则返回空列表
+     * @return List<UserOrgCacheEntry> 子机构列表，如果没有子机构则返回空列表
      */
-    fun getChildOrgs(orgId: String): List<UserOrgCacheItem>
+    fun getChildOrgs(orgId: String): List<UserOrgCacheEntry>
 
     /**
      * 根据机构ID获取该机构的父机构
      *
      * @param orgId 机构ID
-     * @return UserOrgCacheItem 父机构，如果没有父机构则返回null
+     * @return UserOrgCacheEntry 父机构，如果没有父机构则返回null
      */
-    fun getParentOrg(orgId: String): UserOrgCacheItem?
+    fun getParentOrg(orgId: String): UserOrgCacheEntry?
 
     /**
      * 根据ID获取机构记录（从缓存）
@@ -85,7 +85,7 @@ interface IUserOrgService : IBaseCrudService<String, UserOrg> {
      * @author AI: Cursor
      * @since 1.0.0
      */
-    fun getOrgRecord(id: String): UserOrgCacheItem?
+    fun getOrgRecord(id: String): UserOrgCacheEntry?
 
     /**
      * 根据租户ID获取机构列表
@@ -95,7 +95,7 @@ interface IUserOrgService : IBaseCrudService<String, UserOrg> {
      * @author AI: Cursor
      * @since 1.0.0
      */
-    fun getOrgsByTenantId(tenantId: String): List<UserOrgCacheItem>
+    fun getOrgsByTenantId(tenantId: String): List<UserOrgCacheEntry>
 
     /**
      * 获取机构树形结构
@@ -106,7 +106,7 @@ interface IUserOrgService : IBaseCrudService<String, UserOrg> {
      * @author AI: Cursor
      * @since 1.0.0
      */
-    fun getOrgTree(tenantId: String, parentId: String? = null): List<UserOrgTreeRecord>
+    fun getOrgTree(tenantId: String, parentId: String? = null): List<UserOrgTreeRow>
 
     /**
      * 获取所有祖先机构ID列表（向上递归）

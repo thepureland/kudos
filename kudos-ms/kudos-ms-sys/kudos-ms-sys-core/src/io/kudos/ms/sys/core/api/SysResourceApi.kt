@@ -4,7 +4,7 @@ import io.kudos.ms.sys.common.api.ISysResourceApi
 import io.kudos.ms.sys.common.enums.ResourceTypeEnum
 import io.kudos.ms.sys.common.vo.resource.BaseMenuTreeNode
 import io.kudos.ms.sys.common.vo.resource.MenuTreeNode
-import io.kudos.ms.sys.common.vo.resource.SysResourceCacheItem
+import io.kudos.ms.sys.common.vo.resource.SysResourceCacheEntry
 import io.kudos.ms.sys.core.service.iservice.ISysResourceService
 import jakarta.annotation.Resource
 import org.springframework.stereotype.Component
@@ -26,18 +26,18 @@ open class SysResourceApi : ISysResourceApi {
     @Resource
     protected lateinit var sysResourceService: ISysResourceService
 
-    override fun getResource(resourceId: String): SysResourceCacheItem? {
+    override fun getResource(resourceId: String): SysResourceCacheEntry? {
         return sysResourceService.getResource(resourceId)
     }
 
-    override fun getResources(resourceIds: Collection<String>): Map<String, SysResourceCacheItem> {
+    override fun getResources(resourceIds: Collection<String>): Map<String, SysResourceCacheEntry> {
         return sysResourceService.getResources(resourceIds)
     }
 
     override fun getResources(
         resourceType: ResourceTypeEnum,
         subSystemCode: String,
-    ): List<SysResourceCacheItem> {
+    ): List<SysResourceCacheEntry> {
         return sysResourceService.getResources(resourceType, subSystemCode)
     }
 
@@ -57,7 +57,7 @@ open class SysResourceApi : ISysResourceApi {
         resourceType: ResourceTypeEnum,
         parentId: String?,
         subSystemCode: String,
-    ): List<SysResourceCacheItem> {
+    ): List<SysResourceCacheEntry> {
         return sysResourceService.getDirectChildrenResources(resourceType, parentId, subSystemCode)
     }
 
@@ -65,7 +65,7 @@ open class SysResourceApi : ISysResourceApi {
         subSysDictCode: String,
         resourceType: ResourceTypeEnum,
         parentId: String
-    ): List<SysResourceCacheItem> {
+    ): List<SysResourceCacheEntry> {
         return sysResourceService.getChildrenResources(subSysDictCode, resourceType, parentId)
     }
 

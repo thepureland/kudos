@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.core.cache
 
 import io.kudos.ability.cache.common.kit.KeyValueCacheKit
-import io.kudos.ms.sys.common.vo.param.SysParamCacheItem
+import io.kudos.ms.sys.common.vo.param.SysParamCacheEntry
 import io.kudos.ms.sys.core.dao.SysParamDao
 import io.kudos.ms.sys.core.model.po.SysParam
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
@@ -121,7 +121,7 @@ class ParamByModuleAndNameCacheTest : RdbAndRedisCacheTestBase() {
 
         // 验证缓存中的记录
         val key = cacheHandler.getKey(sysParam.atomicServiceCode, sysParam.paramName)
-        var cacheItem = KeyValueCacheKit.getValue(cacheHandler.cacheName(), key) as SysParamCacheItem?
+        var cacheItem = KeyValueCacheKit.getValue(cacheHandler.cacheName(), key) as SysParamCacheEntry?
         assertNotNull(cacheItem)
         assertEquals(newValue, cacheItem.paramValue)
         cacheItem = cacheHandler.getParam(sysParam.atomicServiceCode, sysParam.paramName)

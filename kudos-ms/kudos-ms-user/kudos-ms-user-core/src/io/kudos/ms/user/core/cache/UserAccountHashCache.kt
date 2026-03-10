@@ -6,7 +6,7 @@ import io.kudos.ability.cache.common.batch.hash.HashBatchCacheableByPrimary
 import io.kudos.ability.cache.common.core.hash.AbstractHashCacheHandler
 import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.logger.LogFactory
-import io.kudos.ms.user.common.vo.user.UserAccountCacheItem
+import io.kudos.ms.user.common.vo.user.UserAccountCacheEntry
 import io.kudos.ms.user.core.cache.UserAccountHashCache.Companion.CACHE_NAME
 import io.kudos.ms.user.core.dao.UserAccountDao
 import jakarta.annotation.Resource
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component
 /**
  * 用户 Hash 缓存处理器（整合原 UserByIdCache、UserIdByTenantIdAndUsernameCache 逻辑）
  *
- * 数据来源表：user_account；主键为 id，缓存的 key 即 id，value 为 [UserAccountCacheItem]。
+ * 数据来源表：user_account；主键为 id，缓存的 key 即 id，value 为 [UserAccountCacheEntry]。
  * 使用 Hash 结构存储，支持按 id 存取、按 tenantId+username 二级索引查询。
  *
  * - 按 id：getUserById、getUsersByIds（等价原 UserByIdCache，含 active=false）
@@ -27,7 +27,7 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-open class UserAccountHashCache : AbstractHashCacheHandler<UserAccountCacheItem>() {
+open class UserAccountHashCache : AbstractHashCacheHandler<UserAccountCacheEntry>() {
 
     @Resource
     private lateinit var userAccountDao: UserAccountDao
@@ -39,18 +39,18 @@ open class UserAccountHashCache : AbstractHashCacheHandler<UserAccountCacheItem>
 
         /** 可筛选副属性：按 tenantId、username 建二级索引 */
         val FILTERABLE_PROPERTIES = setOf(
-            UserAccountCacheItem::tenantId.name,
-            UserAccountCacheItem::username.name
+            UserAccountCacheEntry::tenantId.name,
+            UserAccountCacheEntry::username.name
         )
     }
 
     override fun cacheName(): String = CACHE_NAME
 
-    override fun entityClass() = UserAccountCacheItem::class
+    override fun entityClass() = UserAccountCacheEntry::class
 
     override fun filterableProperties(): Set<String> = FILTERABLE_PROPERTIES
 
-    override fun doReload(id: Any): UserAccountCacheItem? = userAccountDao.getAs(id.toString())
+    override fun doReload(id: Any): UserAccountCacheEntry? = userAccountDao.getAs(id.toString())
 
     /**
      * 根据 id 从缓存获取用户，未命中则查库并回写。
@@ -61,13 +61,13 @@ open class UserAccountHashCache : AbstractHashCacheHandler<UserAccountCacheItem>
     @HashCacheableByPrimary(
         cacheNames = [CACHE_NAME],
         key = "#id",
-        entityClass = UserAccountCacheItem::class,
+        entityClass = UserAccountCacheEntry::class,
         unless = "#result == null",
         filterableProperties = ["tenantId", "username"]
     )
-    open fun getUserById(id: String): UserAccountCacheItem? {
+    open fun getUserById(id: String): UserAccountCacheEntry? {
         require(id.isNotBlank()) { "获取用户时 id 不能为空" }
-        return userAccountDao.getAs<UserAccountCacheItem>(id)
+        return userAccountDao.getAs<UserAccountCacheEntry>(id)
     }
 
     /**
@@ -78,12 +78,12 @@ open class UserAccountHashCache : AbstractHashCacheHandler<UserAccountCacheItem>
      */
     @HashBatchCacheableByPrimary(
         cacheNames = [CACHE_NAME],
-        entityClass = UserAccountCacheItem::class,
+        entityClass = UserAccountCacheEntry::class,
         filterableProperties = ["tenantId", "username"]
     )
-    open fun getUsersByIds(ids: Collection<String>): Map<String, UserAccountCacheItem> {
+    open fun getUsersByIds(ids: Collection<String>): Map<String, UserAccountCacheEntry> {
         if (ids.isEmpty()) return emptyMap()
-        val list = userAccountDao.getByIdsAs<UserAccountCacheItem>(ids)
+        val list = userAccountDao.getByIdsAs<UserAccountCacheEntry>(ids)
         return list.filter { it.id.isNotBlank() && it.id in ids }.associateBy { it.id }
     }
 
@@ -97,10 +97,10 @@ open class UserAccountHashCache : AbstractHashCacheHandler<UserAccountCacheItem>
     @HashCacheableBySecondary(
         cacheNames = [CACHE_NAME],
         filterExpressions = ["#tenantId", "#username"],
-        entityClass = UserAccountCacheItem::class,
+        entityClass = UserAccountCacheEntry::class,
         filterableProperties = ["tenantId", "username"]
     )
-    open fun getUsersByTenantIdAndUsername(tenantId: String, username: String): UserAccountCacheItem? {
+    open fun getUsersByTenantIdAndUsername(tenantId: String, username: String): UserAccountCacheEntry? {
         return userAccountDao.getUsersByTenantIdAndUsername(tenantId, username)
     }
 
@@ -116,7 +116,7 @@ open class UserAccountHashCache : AbstractHashCacheHandler<UserAccountCacheItem>
         }
         val cache = hashCache()
         if (clear) cache.clear(CACHE_NAME)
-        val list = userAccountDao.searchAs<UserAccountCacheItem>()
+        val list = userAccountDao.searchAs<UserAccountCacheEntry>()
         log.debug("从数据库加载 ${list.size} 条用户，刷新 Hash 缓存")
         cache.refreshAll(CACHE_NAME, list, FILTERABLE_PROPERTIES, emptySet())
     }
@@ -124,14 +124,14 @@ open class UserAccountHashCache : AbstractHashCacheHandler<UserAccountCacheItem>
     /** 新增用户后同步：将指定 id 的实体从库加载并写入缓存。 */
     open fun syncOnInsert(id: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME) || !KeyValueCacheKit.isWriteInTime(CACHE_NAME)) return
-        val item = userAccountDao.getAs<UserAccountCacheItem>(id) ?: return
+        val item = userAccountDao.getAs<UserAccountCacheEntry>(id) ?: return
         hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
     }
 
     /** 更新用户后同步：从库重新加载并写入缓存。 */
     open fun syncOnUpdate(id: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
-        val item = userAccountDao.getAs<UserAccountCacheItem>(id) ?: return
+        val item = userAccountDao.getAs<UserAccountCacheEntry>(id) ?: return
         if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
             hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
         }
@@ -140,13 +140,13 @@ open class UserAccountHashCache : AbstractHashCacheHandler<UserAccountCacheItem>
     /** 删除用户后同步：从缓存中移除该 id。 */
     open fun syncOnDelete(id: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
-        hashCache().deleteById(CACHE_NAME, id, UserAccountCacheItem::class, FILTERABLE_PROPERTIES, emptySet())
+        hashCache().deleteById(CACHE_NAME, id, UserAccountCacheEntry::class, FILTERABLE_PROPERTIES, emptySet())
     }
 
     /** 批量删除用户后同步：从缓存中移除这些 id。 */
     open fun syncOnBatchDelete(ids: Collection<String>) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
         val cache = hashCache()
-        ids.forEach { cache.deleteById(CACHE_NAME, it, UserAccountCacheItem::class, FILTERABLE_PROPERTIES, emptySet()) }
+        ids.forEach { cache.deleteById(CACHE_NAME, it, UserAccountCacheEntry::class, FILTERABLE_PROPERTIES, emptySet()) }
     }
 }

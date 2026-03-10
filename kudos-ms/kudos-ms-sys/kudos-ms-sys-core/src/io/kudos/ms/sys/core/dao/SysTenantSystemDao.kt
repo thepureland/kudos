@@ -4,7 +4,7 @@ import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.eq
 import io.kudos.base.query.inList
-import io.kudos.ms.sys.common.vo.tenant.SysTenantSystemCacheItem
+import io.kudos.ms.sys.common.vo.tenant.SysTenantSystemCacheEntry
 import io.kudos.ms.sys.core.model.po.SysTenantSystem
 import io.kudos.ms.sys.core.model.table.SysTenantSystems
 import org.springframework.stereotype.Repository
@@ -146,8 +146,8 @@ open class SysTenantSystemDao : BaseCrudDao<String, SysTenantSystem, SysTenantSy
      *
      * @return 所有租户-系统关系缓存项
      */
-    open fun fetchAllForCache(): List<SysTenantSystemCacheItem> =
-        searchAs<SysTenantSystemCacheItem>(null)
+    open fun fetchAllForCache(): List<SysTenantSystemCacheEntry> =
+        searchAs<SysTenantSystemCacheEntry>(null)
 
     /**
      * 按系统编码查询供 Hash 缓存按副属性回写
@@ -155,9 +155,9 @@ open class SysTenantSystemDao : BaseCrudDao<String, SysTenantSystem, SysTenantSy
      * @param systemCode 系统编码
      * @return 该系统下的租户-系统关系缓存项列表
      */
-    open fun fetchCacheItemsBySystemCode(systemCode: String): List<SysTenantSystemCacheItem> {
+    open fun fetchCacheItemsBySystemCode(systemCode: String): List<SysTenantSystemCacheEntry> {
         val criteria = Criteria(SysTenantSystem::systemCode eq systemCode)
-        return searchAs<SysTenantSystemCacheItem>(criteria)
+        return searchAs<SysTenantSystemCacheEntry>(criteria)
     }
 
     /**
@@ -166,9 +166,9 @@ open class SysTenantSystemDao : BaseCrudDao<String, SysTenantSystem, SysTenantSy
      * @param tenantId 租户id
      * @return 该租户下的租户-系统关系缓存项列表
      */
-    open fun fetchCacheItemsByTenantId(tenantId: String): List<SysTenantSystemCacheItem> {
+    open fun fetchCacheItemsByTenantId(tenantId: String): List<SysTenantSystemCacheEntry> {
         val criteria = Criteria(SysTenantSystem::tenantId eq tenantId)
-        return searchAs<SysTenantSystemCacheItem>(criteria)
+        return searchAs<SysTenantSystemCacheEntry>(criteria)
     }
 
     //endregion your codes 2

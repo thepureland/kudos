@@ -1,8 +1,8 @@
 package io.kudos.ms.auth.common.api
 
-import io.kudos.ms.auth.common.vo.role.AuthRoleCacheItem
-import io.kudos.ms.sys.common.vo.resource.SysResourceCacheItem
-import io.kudos.ms.user.common.vo.user.UserAccountCacheItem
+import io.kudos.ms.auth.common.vo.role.AuthRoleCacheEntry
+import io.kudos.ms.sys.common.vo.resource.SysResourceCacheEntry
+import io.kudos.ms.user.common.vo.user.UserAccountCacheEntry
 
 
 /**
@@ -22,21 +22,21 @@ interface IAuthRoleApi {
      * 根据id从缓存中获取角色信息，如果缓存中不存在，则从数据库中加载，并回写缓存
      *
      * @param id 角色id
-     * @return AuthRoleCacheItem, 找不到返回null
+     * @return AuthRoleCacheEntry, 找不到返回null
      * @author K
      * @since 1.0.0
      */
-    fun getRoleById(id: String): AuthRoleCacheItem?
+    fun getRoleById(id: String): AuthRoleCacheEntry?
 
     /**
      * 根据多个id从缓存中批量获取角色信息，缓存中不存在的，从数据库中加载，并回写缓存
      *
      * @param ids 角色id集合
-     * @return Map<角色id，AuthRoleCacheItem>
+     * @return Map<角色id，AuthRoleCacheEntry>
      * @author K
      * @since 1.0.0
      */
-    fun getRolesByIds(ids: Collection<String>): Map<String, AuthRoleCacheItem>
+    fun getRolesByIds(ids: Collection<String>): Map<String, AuthRoleCacheEntry>
 
     /**
      * 根据租户ID和角色编码从缓存获取对应的角色ID，如果缓存中不存在，则从数据库中加载，并写回缓存
@@ -54,11 +54,11 @@ interface IAuthRoleApi {
      * 根据角色ID获取拥有该角色的所有用户列表
      *
      * @param roleId 角色ID
-     * @return List<UserAccountCacheItem> 用户列表，如果角色不存在或没有用户则返回空列表
+     * @return List<UserAccountCacheEntry> 用户列表，如果角色不存在或没有用户则返回空列表
      * @author K
      * @since 1.0.0
      */
-    fun getRoleUsers(roleId: String): List<UserAccountCacheItem>
+    fun getRoleUsers(roleId: String): List<UserAccountCacheEntry>
 
     /**
      * 根据租户ID和角色编码获取拥有该角色的所有用户ID列表
@@ -75,11 +75,11 @@ interface IAuthRoleApi {
      * 根据角色ID获取该角色拥有的所有资源列表
      *
      * @param roleId 角色ID
-     * @return List<SysResourceCacheItem> 资源列表，如果角色不存在或没有资源则返回空列表
+     * @return List<SysResourceCacheEntry> 资源列表，如果角色不存在或没有资源则返回空列表
      * @author K
      * @since 1.0.0
      */
-    fun getRoleResources(roleId: String): List<SysResourceCacheItem>
+    fun getRoleResources(roleId: String): List<SysResourceCacheEntry>
 
     /**
      * 检查角色是否拥有指定资源
@@ -108,21 +108,21 @@ interface IAuthRoleApi {
      * 查询流程：用户 → 角色 → 资源（三级关联）
      *
      * @param userId 用户ID
-     * @return List<SysResourceCacheItem> 资源缓存对象列表，如果用户不存在或没有资源则返回空列表
+     * @return List<SysResourceCacheEntry> 资源缓存对象列表，如果用户不存在或没有资源则返回空列表
      * @author K
      * @since 1.0.0
      */
-    fun getResources(userId: String): List<SysResourceCacheItem>
+    fun getResources(userId: String): List<SysResourceCacheEntry>
 
     /**
      * 根据用户ID获取该用户拥有的所有角色列表
      *
      * @param userId 用户ID
-     * @return List<AuthRoleCacheItem> 角色列表，如果用户不存在或没有角色则返回空列表
+     * @return List<AuthRoleCacheEntry> 角色列表，如果用户不存在或没有角色则返回空列表
      * @author K
      * @since 1.0.0
      */
-    fun getUserRoles(userId: String): List<AuthRoleCacheItem>
+    fun getUserRoles(userId: String): List<AuthRoleCacheEntry>
 
     /**
      * 检查用户是否拥有指定角色

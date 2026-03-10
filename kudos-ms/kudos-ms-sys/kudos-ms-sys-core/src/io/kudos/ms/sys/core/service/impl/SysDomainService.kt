@@ -5,9 +5,9 @@ import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.eq
-import io.kudos.ms.sys.common.vo.domain.SysDomainCacheItem
-import io.kudos.ms.sys.common.vo.domain.SysDomainRecord
-import io.kudos.ms.sys.common.vo.domain.SysDomainSearchPayload
+import io.kudos.ms.sys.common.vo.domain.SysDomainCacheEntry
+import io.kudos.ms.sys.common.vo.domain.SysDomainRow
+import io.kudos.ms.sys.common.vo.domain.SysDomainQuery
 import io.kudos.ms.sys.core.cache.DomainByNameCache
 import io.kudos.ms.sys.core.dao.SysDomainDao
 import io.kudos.ms.sys.core.model.po.SysDomain
@@ -35,19 +35,19 @@ open class SysDomainService : BaseCrudService<String, SysDomain, SysDomainDao>()
     @Autowired
     private lateinit var domainByNameCache: DomainByNameCache
 
-    override fun getDomainByName(domainName: String): SysDomainCacheItem? {
+    override fun getDomainByName(domainName: String): SysDomainCacheEntry? {
         return domainByNameCache.getDomain(domainName)
     }
 
-    override fun getDomainsByTenantId(tenantId: String): List<SysDomainRecord> {
-        val searchPayload = SysDomainSearchPayload(tenantId = tenantId)
+    override fun getDomainsByTenantId(tenantId: String): List<SysDomainRow> {
+        val searchPayload = SysDomainQuery(tenantId = tenantId)
         @Suppress("UNCHECKED_CAST")
-        return dao.search(searchPayload, SysDomainRecord::class)
+        return dao.search(searchPayload, SysDomainRow::class)
     }
 
-    override fun getDomainsBySystemCode(systemCode: String): List<SysDomainRecord> {
+    override fun getDomainsBySystemCode(systemCode: String): List<SysDomainRow> {
         val criteria = Criteria(SysDomain::systemCode eq systemCode)
-        return dao.searchAs<SysDomainRecord>(criteria)
+        return dao.searchAs<SysDomainRow>(criteria)
     }
 
     @Transactional

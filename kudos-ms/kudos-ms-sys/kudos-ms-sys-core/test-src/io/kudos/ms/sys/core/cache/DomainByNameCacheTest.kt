@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.core.cache
 
 import io.kudos.ability.cache.common.kit.KeyValueCacheKit
-import io.kudos.ms.sys.common.vo.domain.SysDomainCacheItem
+import io.kudos.ms.sys.common.vo.domain.SysDomainCacheEntry
 import io.kudos.ms.sys.core.dao.SysDomainDao
 import io.kudos.ms.sys.core.model.po.SysDomain
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
@@ -123,7 +123,7 @@ class DomainByNameCacheTest : RdbAndRedisCacheTestBase() {
         cacheHandler.syncOnUpdate(null, id)
 
         // 验证缓存中的记录
-        var cacheItem = KeyValueCacheKit.getValue(cacheHandler.cacheName(), newName) as SysDomainCacheItem?
+        var cacheItem = KeyValueCacheKit.getValue(cacheHandler.cacheName(), newName) as SysDomainCacheEntry?
         assertNotNull(cacheItem)
         assertEquals(newName, cacheItem.domain)
         cacheItem = cacheHandler.getDomain(newName)

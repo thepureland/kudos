@@ -1,8 +1,8 @@
 package io.kudos.ms.sys.core.api
 
 import io.kudos.ms.sys.common.api.ISysI18nApi
-import io.kudos.ms.sys.common.vo.i18n.SysI18nPayload
-import io.kudos.ms.sys.common.vo.i18n.SysI18nRecord
+import io.kudos.ms.sys.common.vo.i18n.SysI18nForm
+import io.kudos.ms.sys.common.vo.i18n.SysI18nRow
 import io.kudos.ms.sys.core.service.iservice.ISysI18nService
 import jakarta.annotation.Resource
 import org.springframework.stereotype.Service
@@ -44,7 +44,7 @@ open class SysI18nApi : ISysI18nApi {
         return sysI18nService.getI18ns(locale, i18nTypeDictCode, namespace, atomicServiceCode)
     }
 
-    override fun batchSaveOrUpdate(i18ns: List<SysI18nPayload>): Int {
+    override fun batchSaveOrUpdate(i18ns: List<SysI18nForm>): Int {
         return sysI18nService.batchSaveOrUpdate(i18ns)
     }
 

@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.common.api
 
-import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceCacheItem
-import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceRecord
+import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceCacheEntry
+import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceRow
 
 
 /**
@@ -23,7 +23,7 @@ interface ISysMicroServiceApi {
      * @author K
      * @since 1.0.0
      */
-    fun getAllActiveMicroService(): List<SysMicroServiceCacheItem>
+    fun getAllActiveMicroService(): List<SysMicroServiceCacheEntry>
 
     /**
      * 返回所有启用的微服务,不包括原子服务
@@ -32,7 +32,7 @@ interface ISysMicroServiceApi {
      * @author K
      * @since 1.0.0
      */
-    fun getAllActiveMicroServiceExcludeAtomicService(): List<SysMicroServiceCacheItem>
+    fun getAllActiveMicroServiceExcludeAtomicService(): List<SysMicroServiceCacheEntry>
 
     /**
      * 返回所有启用的原子服务(atomicService为true的微服务)
@@ -41,7 +41,7 @@ interface ISysMicroServiceApi {
      * @author K
      * @since 1.0.0
      */
-    fun getAllActiveAtomicService(): List<SysMicroServiceCacheItem>
+    fun getAllActiveAtomicService(): List<SysMicroServiceCacheEntry>
 
     /**
      * 返回指定编码的微/原子服务，可能是未启用的
@@ -53,17 +53,17 @@ interface ISysMicroServiceApi {
      */
     fun getMicroServiceByCode(
         code: String
-    ): SysMicroServiceCacheItem?
+    ): SysMicroServiceCacheEntry?
 
     /**
      * 返回指定父编码下的所有启用的原子服务
      *
      * @param parentCode 父编码（微服务编码）
-     * @return List<SysMicroServiceRecord>, 不存在返回空列表
+     * @return List<SysMicroServiceRow>, 不存在返回空列表
      * @author K
      * @since 1.0.0
      */
-    fun getAllActiveAtomicServiceByParentCode(parentCode: String): List<SysMicroServiceRecord>
+    fun getAllActiveAtomicServiceByParentCode(parentCode: String): List<SysMicroServiceRow>
 
     /**
      * 更新启用状态，并同步缓存

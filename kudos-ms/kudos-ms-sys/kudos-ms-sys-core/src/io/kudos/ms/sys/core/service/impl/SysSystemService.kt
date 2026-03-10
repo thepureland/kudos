@@ -5,8 +5,8 @@ import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.eq
-import io.kudos.ms.sys.common.vo.system.SysSystemCacheItem
-import io.kudos.ms.sys.common.vo.system.SysSystemRecord
+import io.kudos.ms.sys.common.vo.system.SysSystemCacheEntry
+import io.kudos.ms.sys.common.vo.system.SysSystemRow
 import io.kudos.ms.sys.core.cache.SysSystemHashCache
 import io.kudos.ms.sys.core.dao.SysSystemDao
 import io.kudos.ms.sys.core.model.po.SysSystem
@@ -34,13 +34,13 @@ open class SysSystemService : BaseCrudService<String, SysSystem, SysSystemDao>()
     @Autowired
     private lateinit var sysSystemHashCache: SysSystemHashCache
 
-    override fun getSystemByCode(code: String): SysSystemCacheItem? {
+    override fun getSystemByCode(code: String): SysSystemCacheEntry? {
         return sysSystemHashCache.getSystemByCode(code)
     }
 
-    override fun getAllActiveSystems(): List<SysSystemRecord> {
+    override fun getAllActiveSystems(): List<SysSystemRow> {
         val criteria = Criteria(SysSystem::active eq true)
-        return dao.searchAs<SysSystemRecord>(criteria)
+        return dao.searchAs<SysSystemRow>(criteria)
     }
 
     @Transactional
@@ -59,12 +59,12 @@ open class SysSystemService : BaseCrudService<String, SysSystem, SysSystemDao>()
         return success
     }
 
-    override fun getSubSystemsBySystemCode(systemCode: String): List<SysSystemRecord> {
+    override fun getSubSystemsBySystemCode(systemCode: String): List<SysSystemRow> {
         val criteria = Criteria.and(
             SysSystem::active eq true,
             SysSystem::parentCode eq systemCode
         )
-        return dao.search<SysSystemRecord>(criteria)
+        return dao.search<SysSystemRow>(criteria)
     }
 
     @Transactional

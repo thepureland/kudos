@@ -1,9 +1,9 @@
 package io.kudos.ms.user.core.service.iservice
 
 import io.kudos.base.support.iservice.IBaseCrudService
-import io.kudos.ms.user.common.vo.org.UserOrgCacheItem
-import io.kudos.ms.user.common.vo.user.UserAccountCacheItem
-import io.kudos.ms.user.common.vo.user.UserAccountRecord
+import io.kudos.ms.user.common.vo.org.UserOrgCacheEntry
+import io.kudos.ms.user.common.vo.user.UserAccountCacheEntry
+import io.kudos.ms.user.common.vo.user.UserAccountRow
 import io.kudos.ms.user.core.model.po.UserAccount
 import java.time.LocalDateTime
 
@@ -44,9 +44,9 @@ interface IUserAccountService : IBaseCrudService<String, UserAccount> {
      * 根据用户ID获取该用户所属的所有机构列表
      *
      * @param userId 用户ID
-     * @return List<UserOrgCacheItem> 机构列表，如果用户不存在或没有机构则返回空列表
+     * @return List<UserOrgCacheEntry> 机构列表，如果用户不存在或没有机构则返回空列表
      */
-    fun getUserOrgs(userId: String): List<UserOrgCacheItem>
+    fun getUserOrgs(userId: String): List<UserOrgCacheEntry>
 
 
 
@@ -70,7 +70,7 @@ interface IUserAccountService : IBaseCrudService<String, UserAccount> {
      * @author AI: Cursor
      * @since 1.0.0
      */
-    fun getUserByTenantIdAndUsername(tenantId: String, username: String): UserAccountCacheItem?
+    fun getUserByTenantIdAndUsername(tenantId: String, username: String): UserAccountCacheEntry?
 
     /**
      * 根据ID获取用户记录（非缓存）
@@ -80,7 +80,7 @@ interface IUserAccountService : IBaseCrudService<String, UserAccount> {
      * @author AI: Cursor
      * @since 1.0.0
      */
-    fun getUserRecord(id: String): UserAccountRecord?
+    fun getUserRecord(id: String): UserAccountRow?
 
     /**
      * 根据租户ID获取用户列表
@@ -90,7 +90,7 @@ interface IUserAccountService : IBaseCrudService<String, UserAccount> {
      * @author AI: Cursor
      * @since 1.0.0
      */
-    fun getUsersByTenantId(tenantId: String): List<UserAccountRecord>
+    fun getUsersByTenantId(tenantId: String): List<UserAccountRow>
 
     /**
      * 根据机构ID获取用户列表
@@ -100,7 +100,7 @@ interface IUserAccountService : IBaseCrudService<String, UserAccount> {
      * @author AI: Cursor
      * @since 1.0.0
      */
-    fun getUsersByOrgId(orgId: String): List<UserAccountRecord>
+    fun getUsersByOrgId(orgId: String): List<UserAccountRow>
 
 
 

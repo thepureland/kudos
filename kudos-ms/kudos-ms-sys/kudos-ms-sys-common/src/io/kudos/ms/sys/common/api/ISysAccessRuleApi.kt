@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.common.api
 
-import io.kudos.ms.sys.common.vo.accessrule.SysAccessRuleRecord
+import io.kudos.ms.sys.common.vo.accessrule.SysAccessRuleRow
 
 
 /**
@@ -27,7 +27,7 @@ interface ISysAccessRuleApi {
     fun getAccessRuleByTenantAndSystem(
         systemCode: String = "default",
         tenantId: String = "default"
-    ): SysAccessRuleRecord?
+    ): SysAccessRuleRow?
 
     /**
      * 更新启用状态

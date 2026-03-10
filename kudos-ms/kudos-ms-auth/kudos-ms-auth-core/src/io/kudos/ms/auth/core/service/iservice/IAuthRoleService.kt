@@ -1,11 +1,11 @@
 package io.kudos.ms.auth.core.service.iservice
 
 import io.kudos.base.support.iservice.IBaseCrudService
-import io.kudos.ms.auth.common.vo.role.AuthRoleCacheItem
-import io.kudos.ms.auth.common.vo.role.AuthRoleRecord
+import io.kudos.ms.auth.common.vo.role.AuthRoleCacheEntry
+import io.kudos.ms.auth.common.vo.role.AuthRoleRow
 import io.kudos.ms.auth.core.model.po.AuthRole
-import io.kudos.ms.sys.common.vo.resource.SysResourceCacheItem
-import io.kudos.ms.user.common.vo.user.UserAccountCacheItem
+import io.kudos.ms.sys.common.vo.resource.SysResourceCacheEntry
+import io.kudos.ms.user.common.vo.user.UserAccountCacheEntry
 
 
 /**
@@ -50,17 +50,17 @@ interface IAuthRoleService : IBaseCrudService<String, AuthRole> {
      * 根据角色ID获取拥有该角色的所有用户列表
      *
      * @param roleId 角色ID
-     * @return List<UserAccountCacheItem> 用户列表，如果角色不存在或没有用户则返回空列表
+     * @return List<UserAccountCacheEntry> 用户列表，如果角色不存在或没有用户则返回空列表
      */
-    fun getRoleUsers(roleId: String): List<UserAccountCacheItem>
+    fun getRoleUsers(roleId: String): List<UserAccountCacheEntry>
 
     /**
      * 根据角色ID获取该角色拥有的所有资源列表
      *
      * @param roleId 角色ID
-     * @return List<SysResourceCacheItem> 资源列表，如果角色不存在或没有资源则返回空列表
+     * @return List<SysResourceCacheEntry> 资源列表，如果角色不存在或没有资源则返回空列表
      */
-    fun getRoleResources(roleId: String): List<SysResourceCacheItem>
+    fun getRoleResources(roleId: String): List<SysResourceCacheEntry>
 
     /**
      * 检查角色是否拥有指定资源
@@ -80,7 +80,7 @@ interface IAuthRoleService : IBaseCrudService<String, AuthRole> {
      * @author AI: Cursor
      * @since 1.0.0
      */
-    fun getRoleByTenantIdAndCode(tenantId: String, roleCode: String): AuthRoleCacheItem?
+    fun getRoleByTenantIdAndCode(tenantId: String, roleCode: String): AuthRoleCacheEntry?
 
     /**
      * 根据ID获取角色记录（非缓存）
@@ -90,7 +90,7 @@ interface IAuthRoleService : IBaseCrudService<String, AuthRole> {
      * @author AI: Cursor
      * @since 1.0.0
      */
-    fun getRoleRecord(id: String): AuthRoleRecord?
+    fun getRoleRecord(id: String): AuthRoleRow?
 
     /**
      * 根据租户ID获取角色列表
@@ -100,7 +100,7 @@ interface IAuthRoleService : IBaseCrudService<String, AuthRole> {
      * @author AI: Cursor
      * @since 1.0.0
      */
-    fun getRolesByTenantId(tenantId: String): List<AuthRoleRecord>
+    fun getRolesByTenantId(tenantId: String): List<AuthRoleRow>
 
     /**
      * 根据子系统编码获取角色列表
@@ -111,7 +111,7 @@ interface IAuthRoleService : IBaseCrudService<String, AuthRole> {
      * @author AI: Cursor
      * @since 1.0.0
      */
-    fun getRolesBySubsysCode(tenantId: String, subsysCode: String): List<AuthRoleRecord>
+    fun getRolesBySubsysCode(tenantId: String, subsysCode: String): List<AuthRoleRow>
 
     /**
      * 更新角色启用状态
@@ -155,9 +155,9 @@ interface IAuthRoleService : IBaseCrudService<String, AuthRole> {
      * 根据用户ID获取该用户拥有的所有角色列表
      *
      * @param userId 用户ID
-     * @return List<AuthRoleCacheItem> 角色列表，如果用户不存在或没有角色则返回空列表
+     * @return List<AuthRoleCacheEntry> 角色列表，如果用户不存在或没有角色则返回空列表
      */
-    fun getUserRoles(userId: String): List<AuthRoleCacheItem>
+    fun getUserRoles(userId: String): List<AuthRoleCacheEntry>
 
     /**
      * 根据角色编码获取用户列表
@@ -168,7 +168,7 @@ interface IAuthRoleService : IBaseCrudService<String, AuthRole> {
      * @author AI: Cursor
      * @since 1.0.0
      */
-    fun getUsersByRoleCode(tenantId: String, roleCode: String): List<UserAccountCacheItem>
+    fun getUsersByRoleCode(tenantId: String, roleCode: String): List<UserAccountCacheEntry>
 
     /**
      * 检查用户是否有指定资源的访问权限
@@ -192,9 +192,9 @@ interface IAuthRoleService : IBaseCrudService<String, AuthRole> {
      * 查询流程：用户 → 角色 → 资源（三级关联）
      *
      * @param userId 用户ID
-     * @return List<SysResourceCacheItem> 资源缓存对象列表，如果用户不存在或没有资源则返回空列表
+     * @return List<SysResourceCacheEntry> 资源缓存对象列表，如果用户不存在或没有资源则返回空列表
      */
-    fun getResources(userId: String): List<SysResourceCacheItem>
+    fun getResources(userId: String): List<SysResourceCacheEntry>
 
     //endregion your codes 2
 

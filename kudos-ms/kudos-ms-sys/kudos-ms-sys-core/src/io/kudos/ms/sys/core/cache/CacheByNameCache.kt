@@ -6,7 +6,7 @@ import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.eq
-import io.kudos.ms.sys.common.vo.cache.SysCacheCacheItem
+import io.kudos.ms.sys.common.vo.cache.SysCacheCacheEntry
 import io.kudos.ms.sys.core.dao.SysCacheDao
 import io.kudos.ms.sys.core.model.po.SysCache
 import org.springframework.beans.factory.annotation.Autowired
@@ -20,13 +20,13 @@ import org.springframework.stereotype.Component
  * 1.数据来源表：sys_cache
  * 2.缓存所有缓存配置，不包括active=false的
  * 3.缓存key为：缓存name
- * 4.缓存value为：SysCacheCacheItem对象
+ * 4.缓存value为：SysCacheCacheEntry对象
  *
  * @author K
  * @since 1.0.0
  */
 @Component
-open class CacheByNameCache : AbstractKeyValueCacheHandler<SysCacheCacheItem>() {
+open class CacheByNameCache : AbstractKeyValueCacheHandler<SysCacheCacheEntry>() {
 
     @Autowired
     private lateinit var sysCacheDao: SysCacheDao
@@ -37,7 +37,7 @@ open class CacheByNameCache : AbstractKeyValueCacheHandler<SysCacheCacheItem>() 
 
     override fun cacheName(): String = CACHE_NAME
 
-    override fun doReload(key: String): SysCacheCacheItem? {
+    override fun doReload(key: String): SysCacheCacheEntry? {
         return getSelf<CacheByNameCache>().getCache(key)
     }
 
@@ -49,7 +49,7 @@ open class CacheByNameCache : AbstractKeyValueCacheHandler<SysCacheCacheItem>() 
 
         // 加载所有可用的缓存配置
         val criteria = Criteria(SysCache::active eq true)
-        val results = sysCacheDao.searchAs<SysCacheCacheItem>(criteria)
+        val results = sysCacheDao.searchAs<SysCacheCacheEntry>(criteria)
         log.debug("从数据库加载了${results.size}条缓存配置信息。")
 
         // 先清除缓存
@@ -70,14 +70,14 @@ open class CacheByNameCache : AbstractKeyValueCacheHandler<SysCacheCacheItem>() 
      * 根据名称从缓存中加载缓存配置信息，如果缓存中不存在，则从数据库加载，并写入缓存。
      *
      * @param name 缓存配置名称
-     * @return SysCacheCacheItem，如果找不到返回null
+     * @return SysCacheCacheEntry，如果找不到返回null
      */
     @Cacheable(
         cacheNames = [CACHE_NAME],
         key = "#name",
         unless = "#result == null"
     )
-    open fun getCache(name: String): SysCacheCacheItem? {
+    open fun getCache(name: String): SysCacheCacheEntry? {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("缓存中不存在名称为${name}的缓存配置信息，从数据库中加载...")
         }
@@ -85,7 +85,7 @@ open class CacheByNameCache : AbstractKeyValueCacheHandler<SysCacheCacheItem>() 
             SysCache::name eq name,
             SysCache::active eq true
         )
-        val result = sysCacheDao.searchAs<SysCacheCacheItem>(criteria).firstOrNull()
+        val result = sysCacheDao.searchAs<SysCacheCacheEntry>(criteria).firstOrNull()
         if (result == null) {
             log.warn("数据库中不存在名称为${name}的缓存配置信息！")
         } else {

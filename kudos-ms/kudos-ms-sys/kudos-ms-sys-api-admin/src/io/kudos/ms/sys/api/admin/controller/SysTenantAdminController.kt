@@ -1,11 +1,11 @@
 package io.kudos.ms.sys.api.admin.controller
 
 import io.kudos.ability.web.springmvc.controller.BaseCrudController
-import io.kudos.ms.sys.common.vo.tenant.SysTenantCacheItem
+import io.kudos.ms.sys.common.vo.tenant.SysTenantCacheEntry
 import io.kudos.ms.sys.common.vo.tenant.SysTenantDetail
-import io.kudos.ms.sys.common.vo.tenant.SysTenantPayload
-import io.kudos.ms.sys.common.vo.tenant.SysTenantRecord
-import io.kudos.ms.sys.common.vo.tenant.SysTenantSearchPayload
+import io.kudos.ms.sys.common.vo.tenant.SysTenantForm
+import io.kudos.ms.sys.common.vo.tenant.SysTenantRow
+import io.kudos.ms.sys.common.vo.tenant.SysTenantQuery
 import io.kudos.ms.sys.core.service.iservice.ISysTenantService
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/admin/sys/tenant")
 class SysTenantAdminController: 
-    BaseCrudController<String, ISysTenantService, SysTenantSearchPayload, SysTenantRecord, SysTenantDetail, SysTenantPayload>() {
+    BaseCrudController<String, ISysTenantService, SysTenantQuery, SysTenantRow, SysTenantDetail, SysTenantForm>() {
 
     /**
      * 返回指定子系统的所有租户(仅启用的)
@@ -29,7 +29,7 @@ class SysTenantAdminController:
      * @return List(租户缓存对象)
      */
     @GetMapping("/getTenantsBySubSystemCode")
-    fun getTenantsBySubSystemCode(subSystemCode: String): List<SysTenantCacheItem> {
+    fun getTenantsBySubSystemCode(subSystemCode: String): List<SysTenantCacheEntry> {
        return service.getTenantsBySubSystemCode(subSystemCode)
     }
 

@@ -2,7 +2,7 @@ package io.kudos.ms.sys.core.cache
 
 import io.kudos.ability.cache.common.enums.CacheStrategy
 import io.kudos.ability.cache.common.kit.KeyValueCacheKit
-import io.kudos.ms.sys.common.vo.cache.SysCacheCacheItem
+import io.kudos.ms.sys.common.vo.cache.SysCacheCacheEntry
 import io.kudos.ms.sys.core.dao.SysCacheDao
 import io.kudos.ms.sys.core.model.po.SysCache
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
@@ -126,9 +126,9 @@ class CacheByNameCacheTest : RdbAndRedisCacheTestBase() {
 
         // 验证缓存中的记录
         val cacheItem1 = KeyValueCacheKit.getValue(cacheByNameCache.cacheName(), cacheName)
-        assertEquals(newTtl, (cacheItem1 as SysCacheCacheItem).ttl)
+        assertEquals(newTtl, (cacheItem1 as SysCacheCacheEntry).ttl)
         val cacheItem2 = cacheByNameCache.getCache(cacheName)
-        assertEquals(newTtl, (cacheItem2 as SysCacheCacheItem).ttl)
+        assertEquals(newTtl, (cacheItem2 as SysCacheCacheEntry).ttl)
     }
 
     @Test

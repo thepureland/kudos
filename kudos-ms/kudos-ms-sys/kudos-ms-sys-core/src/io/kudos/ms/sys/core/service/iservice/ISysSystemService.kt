@@ -1,8 +1,8 @@
 package io.kudos.ms.sys.core.service.iservice
 
 import io.kudos.base.support.iservice.IBaseCrudService
-import io.kudos.ms.sys.common.vo.system.SysSystemCacheItem
-import io.kudos.ms.sys.common.vo.system.SysSystemRecord
+import io.kudos.ms.sys.common.vo.system.SysSystemCacheEntry
+import io.kudos.ms.sys.common.vo.system.SysSystemRow
 import io.kudos.ms.sys.core.model.po.SysSystem
 
 
@@ -22,11 +22,11 @@ interface ISysSystemService : IBaseCrudService<String, SysSystem> {
      * 根据编码从缓存获取系统信息
      *
      * @param code 系统编码
-     * @return SysSystemCacheItem，找不到返回null
+     * @return SysSystemCacheEntry，找不到返回null
      * @author K
      * @since 1.0.0
      */
-    fun getSystemByCode(code: String): SysSystemCacheItem?
+    fun getSystemByCode(code: String): SysSystemCacheEntry?
 
     /**
      * 获取所有启用的系统
@@ -35,7 +35,7 @@ interface ISysSystemService : IBaseCrudService<String, SysSystem> {
      * @author K
      * @since 1.0.0
      */
-    fun getAllActiveSystems(): List<SysSystemRecord>
+    fun getAllActiveSystems(): List<SysSystemRow>
 
     /**
      * 更新启用状态，并同步缓存
@@ -56,7 +56,7 @@ interface ISysSystemService : IBaseCrudService<String, SysSystem> {
      * @author K
      * @since 1.0.0
      */
-    fun getSubSystemsBySystemCode(systemCode: String): List<SysSystemRecord>
+    fun getSubSystemsBySystemCode(systemCode: String): List<SysSystemRow>
 
     //endregion your codes 2
 

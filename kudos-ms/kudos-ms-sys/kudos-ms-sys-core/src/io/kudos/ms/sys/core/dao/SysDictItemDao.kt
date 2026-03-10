@@ -5,8 +5,8 @@ import io.kudos.ability.data.rdb.ktorm.support.ColumnHelper
 import io.kudos.base.error.ObjectNotFoundException
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.ms.sys.common.vo.dict.SysDictTreeNode
-import io.kudos.ms.sys.common.vo.dictitem.SysDictItemRecord
-import io.kudos.ms.sys.common.vo.dictitem.SysDictItemSearchPayload
+import io.kudos.ms.sys.common.vo.dictitem.SysDictItemRow
+import io.kudos.ms.sys.common.vo.dictitem.SysDictItemQuery
 import io.kudos.ms.sys.core.model.po.SysDictItem
 import io.kudos.ms.sys.core.model.table.SysDictItems
 import io.kudos.ms.sys.core.model.table.SysDicts
@@ -48,11 +48,11 @@ open class SysDictItemDao : BaseCrudDao<String, SysDictItem, SysDictItems>() {
      * 分页连接查询符合条件的字典项及字典
      *
      * @param searchPayload 查询项载体
-     * @return List<SysDictItemRecord>
+     * @return List<SysDictItemRow>
      * @author K
      * @since 1.0.0
      */
-    fun pagingSearch(searchPayload: SysDictItemSearchPayload): List<SysDictItemRecord> {
+    fun pagingSearch(searchPayload: SysDictItemQuery): List<SysDictItemRow> {
         var query = leftJoinSearch(searchPayload)
         val orders = searchPayload.orders
         if (orders.isNullOrEmpty()) {
@@ -102,7 +102,7 @@ open class SysDictItemDao : BaseCrudDao<String, SysDictItem, SysDictItems>() {
         return query.map { row ->
             mapTo(
                 row,
-                SysDictItemRecord::class,
+                SysDictItemRow::class,
                 extraColumns = recordExtraColumns
             )
         }
@@ -116,7 +116,7 @@ open class SysDictItemDao : BaseCrudDao<String, SysDictItem, SysDictItems>() {
      * @author K
      * @since 1.0.0
      */
-    fun count(searchPayload: SysDictItemSearchPayload): Int {
+    fun count(searchPayload: SysDictItemQuery): Int {
         return leftJoinSearch(searchPayload).totalRecordsInAllPages
     }
 
@@ -128,7 +128,7 @@ open class SysDictItemDao : BaseCrudDao<String, SysDictItem, SysDictItems>() {
      * @author K
      * @since 1.0.0
      */
-    fun leftJoinSearch(searchPayload: SysDictItemSearchPayload): Query {
+    fun leftJoinSearch(searchPayload: SysDictItemQuery): Query {
         val querySource = database()
             .from(SysDictItems)
             .leftJoin(SysDicts, on = SysDictItems.dictId.eq(SysDicts.id))
@@ -204,7 +204,7 @@ open class SysDictItemDao : BaseCrudDao<String, SysDictItem, SysDictItems>() {
      * 查询指定父节点的直接孩子节点（用于树加载）
      */
     fun searchDirectChildrenNodes(parentId: String, activeOnly: Boolean): List<SysDictTreeNode> {
-        val searchPayload = SysDictItemSearchPayload(
+        val searchPayload = SysDictItemQuery(
             parentId = parentId,
             active = if (activeOnly) true else null
         )

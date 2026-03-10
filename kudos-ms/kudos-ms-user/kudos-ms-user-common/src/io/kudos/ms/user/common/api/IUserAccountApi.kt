@@ -1,7 +1,7 @@
 package io.kudos.ms.user.common.api
 
-import io.kudos.ms.user.common.vo.org.UserOrgCacheItem
-import io.kudos.ms.user.common.vo.user.UserAccountCacheItem
+import io.kudos.ms.user.common.vo.org.UserOrgCacheEntry
+import io.kudos.ms.user.common.vo.user.UserAccountCacheEntry
 
 
 /**
@@ -21,21 +21,21 @@ interface IUserAccountApi {
      * 根据id从缓存中获取用户信息，如果缓存中不存在，则从数据库中加载，并回写缓存
      *
      * @param id 用户id
-     * @return UserAccountCacheItem, 找不到返回null
+     * @return UserAccountCacheEntry, 找不到返回null
      * @author K
      * @since 1.0.0
      */
-    fun getUserById(id: String): UserAccountCacheItem?
+    fun getUserById(id: String): UserAccountCacheEntry?
 
     /**
      * 根据多个id从缓存中批量获取用户信息，缓存中不存在的，从数据库中加载，并回写缓存
      *
      * @param ids 用户id集合
-     * @return Map<用户id，UserAccountCacheItem>
+     * @return Map<用户id，UserAccountCacheEntry>
      * @author K
      * @since 1.0.0
      */
-    fun getUsersByIds(ids: Collection<String>): Map<String, UserAccountCacheItem>
+    fun getUsersByIds(ids: Collection<String>): Map<String, UserAccountCacheEntry>
 
     /**
      * 根据租户ID和用户名从缓存获取对应的用户ID，如果缓存中不存在，则从数据库中加载，并写回缓存
@@ -55,11 +55,11 @@ interface IUserAccountApi {
      * 根据用户ID获取该用户所属的所有机构列表
      *
      * @param userId 用户ID
-     * @return List<UserOrgCacheItem> 机构列表，如果用户不存在或没有机构则返回空列表
+     * @return List<UserOrgCacheEntry> 机构列表，如果用户不存在或没有机构则返回空列表
      * @author K
      * @since 1.0.0
      */
-    fun getUserOrgs(userId: String): List<UserOrgCacheItem>
+    fun getUserOrgs(userId: String): List<UserOrgCacheEntry>
 
 
     /**

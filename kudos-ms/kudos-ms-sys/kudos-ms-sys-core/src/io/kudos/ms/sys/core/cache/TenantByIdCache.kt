@@ -2,7 +2,7 @@ package io.kudos.ms.sys.core.cache
 
 import io.kudos.ability.cache.common.batch.keyvalue.BatchCacheable
 import io.kudos.ability.cache.common.core.keyvalue.AbstractByIdCacheHandler
-import io.kudos.ms.sys.common.vo.tenant.SysTenantCacheItem
+import io.kudos.ms.sys.common.vo.tenant.SysTenantCacheEntry
 import io.kudos.ms.sys.core.dao.SysTenantDao
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
@@ -14,13 +14,13 @@ import org.springframework.stereotype.Component
  * 1.数据来源表：sys_tenant
  * 2.缓存所有租户，包括active=false的
  * 3.缓存的key为：id
- * 4.缓存的value为：SysTenantCacheItem对象
+ * 4.缓存的value为：SysTenantCacheEntry对象
  *
  * @author K
  * @since 1.0.0
  */
 @Component
-open class TenantByIdCache : AbstractByIdCacheHandler<String, SysTenantCacheItem, SysTenantDao>() {
+open class TenantByIdCache : AbstractByIdCacheHandler<String, SysTenantCacheEntry, SysTenantDao>() {
 
     companion object {
         private const val CACHE_NAME = "SYS_TENANT_BY_ID"
@@ -28,7 +28,7 @@ open class TenantByIdCache : AbstractByIdCacheHandler<String, SysTenantCacheItem
 
     override fun cacheName(): String = CACHE_NAME
 
-    override fun doReload(key: String): SysTenantCacheItem? {
+    override fun doReload(key: String): SysTenantCacheEntry? {
         return getSelf<TenantByIdCache>().getTenantById(key)
     }
 
@@ -36,14 +36,14 @@ open class TenantByIdCache : AbstractByIdCacheHandler<String, SysTenantCacheItem
      * 根据id从缓存中获取租户信息，如果缓存中不存在，则从数据库中加载，并回写缓存
      *
      * @param id 租户id
-     * @return SysTenantCacheItem, 找不到返回null
+     * @return SysTenantCacheEntry, 找不到返回null
      */
     @Cacheable(
         cacheNames = [CACHE_NAME],
         key = "#id",
         unless = "#result == null"
     )
-    open fun getTenantById(id: String): SysTenantCacheItem? {
+    open fun getTenantById(id: String): SysTenantCacheEntry? {
         return getById(id)
     }
 
@@ -51,13 +51,13 @@ open class TenantByIdCache : AbstractByIdCacheHandler<String, SysTenantCacheItem
      * 根据多个id从缓存中批量获取租户信息，缓存中不存在的，从数据库中加载，并回写缓存
      *
      * @param ids 租户id集合
-     * @return Map<租户id，SysTenantCacheItem>
+     * @return Map<租户id，SysTenantCacheEntry>
      */
     @BatchCacheable(
         cacheNames = [CACHE_NAME],
-        valueClass = SysTenantCacheItem::class
+        valueClass = SysTenantCacheEntry::class
     )
-    open fun getTenantsByIds(ids: Collection<String>): Map<String, SysTenantCacheItem> {
+    open fun getTenantsByIds(ids: Collection<String>): Map<String, SysTenantCacheEntry> {
         return getByIds(ids)
     }
 

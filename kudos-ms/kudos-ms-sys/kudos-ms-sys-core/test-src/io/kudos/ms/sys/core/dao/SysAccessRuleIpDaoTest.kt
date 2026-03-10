@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.core.dao
 
-import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpSearchPayload
+import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpQuery
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbTestBase
 import jakarta.annotation.Resource
@@ -25,7 +25,7 @@ class SysAccessRuleIpDaoTest : RdbTestBase() {
 
     @Test
     fun pagingSearch() {
-        val searchPayload = SysAccessRuleIpSearchPayload(
+        val searchPayload = SysAccessRuleIpQuery(
             tenantId = "40000000-0000-0000-0000-000000002666",
             systemCode = "svc-system-arip-dao-test-1_3790",
         ).apply {
@@ -40,7 +40,7 @@ class SysAccessRuleIpDaoTest : RdbTestBase() {
 
     @Test
     fun count() {
-        val searchPayload = SysAccessRuleIpSearchPayload(
+        val searchPayload = SysAccessRuleIpQuery(
             tenantId = "40000000-0000-0000-0000-000000002666",
             active = true
         )
@@ -50,7 +50,7 @@ class SysAccessRuleIpDaoTest : RdbTestBase() {
 
     @Test
     fun leftJoinSearch() {
-        val searchPayload = SysAccessRuleIpSearchPayload(
+        val searchPayload = SysAccessRuleIpQuery(
             id = "40000000-0000-0000-0000-000000002666"
         )
         val query = sysAccessRuleIpDao.leftJoinSearch(searchPayload)

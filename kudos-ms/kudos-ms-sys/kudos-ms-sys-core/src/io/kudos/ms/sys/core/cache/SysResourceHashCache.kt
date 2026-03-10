@@ -7,7 +7,7 @@ import io.kudos.ability.cache.common.core.hash.AbstractHashCacheHandler
 import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.context.support.Consts
-import io.kudos.ms.sys.common.vo.resource.SysResourceCacheItem
+import io.kudos.ms.sys.common.vo.resource.SysResourceCacheEntry
 import io.kudos.ms.sys.core.cache.SysResourceHashCache.Companion.CACHE_NAME
 import io.kudos.ms.sys.core.cache.SysResourceHashCache.Companion.FILTERABLE_PROPERTIES
 import io.kudos.ms.sys.core.dao.SysResourceDao
@@ -15,7 +15,7 @@ import jakarta.annotation.Resource
 import org.springframework.stereotype.Component
 
 /**
- * 系统资源统一缓存处理器，基于 Hash 结构存储 [SysResourceCacheItem]。
+ * 系统资源统一缓存处理器，基于 Hash 结构存储 [SysResourceCacheEntry]。
  *
  * 提供三类查询与回写能力：
  * - **按主键**：按 id 取单条或批量实体。
@@ -30,7 +30,7 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheItem>() {
+open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheEntry>() {
 
     @Resource
     private lateinit var sysResourceDao: SysResourceDao
@@ -42,19 +42,19 @@ open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheItem>
 
         /** 用于等值筛选与 Set 索引的副属性名集合，写入/删除/全量刷新时须与此一致（不含 active，不建 active 二级索引） */
         val FILTERABLE_PROPERTIES = setOf(
-            SysResourceCacheItem::subSystemCode.name,
-            SysResourceCacheItem::url.name,
-            SysResourceCacheItem::resourceTypeDictCode.name
+            SysResourceCacheEntry::subSystemCode.name,
+            SysResourceCacheEntry::url.name,
+            SysResourceCacheEntry::resourceTypeDictCode.name
         )
     }
 
     override fun cacheName(): String = CACHE_NAME
 
-    override fun entityClass() = SysResourceCacheItem::class
+    override fun entityClass() = SysResourceCacheEntry::class
 
     override fun filterableProperties(): Set<String> = FILTERABLE_PROPERTIES
 
-    override fun doReload(id: Any): SysResourceCacheItem? = sysResourceDao.getAs(id.toString())
+    override fun doReload(id: Any): SysResourceCacheEntry? = sysResourceDao.getAs(id.toString())
 
     // ---------- 1. 按主键 id ----------
 
@@ -68,13 +68,13 @@ open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheItem>
     @HashCacheableByPrimary(
         cacheNames = [CACHE_NAME],
         key = "#id",
-        entityClass = SysResourceCacheItem::class,
+        entityClass = SysResourceCacheEntry::class,
         unless = "#result == null",
         filterableProperties = ["subSystemCode", "url", "resourceTypeDictCode"]
     )
-    open fun getResourceById(id: String): SysResourceCacheItem? {
+    open fun getResourceById(id: String): SysResourceCacheEntry? {
         require(id.isNotBlank()) { "获取资源时 id 不能为空" }
-        return sysResourceDao.getAs<SysResourceCacheItem>(id)
+        return sysResourceDao.getAs<SysResourceCacheEntry>(id)
     }
 
     /**
@@ -86,12 +86,12 @@ open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheItem>
      */
     @HashBatchCacheableByPrimary(
         cacheNames = [CACHE_NAME],
-        entityClass = SysResourceCacheItem::class,
+        entityClass = SysResourceCacheEntry::class,
         filterableProperties = ["subSystemCode", "url", "resourceTypeDictCode"]
     )
-    open fun getResourcesByIds(ids: Set<String>): Map<String, SysResourceCacheItem> {
+    open fun getResourcesByIds(ids: Set<String>): Map<String, SysResourceCacheEntry> {
         if (ids.isEmpty()) return emptyMap()
-        val list = sysResourceDao.getByIdsAs<SysResourceCacheItem>(ids)
+        val list = sysResourceDao.getByIdsAs<SysResourceCacheEntry>(ids)
         val byId = list.associateBy { it.id }
         return ids.mapNotNull { id -> byId[id]?.let { id to it } }.toMap()
     }
@@ -109,10 +109,10 @@ open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheItem>
     @HashCacheableBySecondary(
         cacheNames = [CACHE_NAME],
         filterExpressions = ["#subSystemCode", "#url"],
-        entityClass = SysResourceCacheItem::class,
+        entityClass = SysResourceCacheEntry::class,
         filterableProperties = ["subSystemCode", "url", "resourceTypeDictCode"]
     )
-    open fun getResourceBySubSystemCodeAndUrl(subSystemCode: String, url: String): SysResourceCacheItem? {
+    open fun getResourceBySubSystemCodeAndUrl(subSystemCode: String, url: String): SysResourceCacheEntry? {
         return sysResourceDao.fetchResourceBySubSysAndUrl(subSystemCode, url)
     }
 
@@ -129,10 +129,10 @@ open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheItem>
     @HashCacheableBySecondary(
         cacheNames = [CACHE_NAME],
         filterExpressions = ["#subSystemCode", "#resourceTypeDictCode"],
-        entityClass = SysResourceCacheItem::class,
+        entityClass = SysResourceCacheEntry::class,
         filterableProperties = ["subSystemCode", "url", "resourceTypeDictCode"]
     )
-    open fun getResourcesBySubSystemCodeAndType(subSystemCode: String, resourceTypeDictCode: String): List<SysResourceCacheItem> {
+    open fun getResourcesBySubSystemCodeAndType(subSystemCode: String, resourceTypeDictCode: String): List<SysResourceCacheEntry> {
         return sysResourceDao.searchBySubSysAndType(subSystemCode, resourceTypeDictCode)
     }
 
@@ -149,7 +149,7 @@ open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheItem>
             return
         }
         val cache = hashCache()
-        val list = sysResourceDao.searchAs<SysResourceCacheItem>()
+        val list = sysResourceDao.searchAs<SysResourceCacheEntry>()
         log.debug("从数据库加载 ${list.size} 条资源，刷新 Hash 缓存")
         cache.refreshAll(CACHE_NAME, list, FILTERABLE_PROPERTIES, emptySet())
         log.debug("资源 Hash 缓存刷新完成")
@@ -164,7 +164,7 @@ open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheItem>
      */
     open fun syncOnInsert(id: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME) || !KeyValueCacheKit.isWriteInTime(CACHE_NAME)) return
-        val item = sysResourceDao.getAs<SysResourceCacheItem>(id) ?: return
+        val item = sysResourceDao.getAs<SysResourceCacheEntry>(id) ?: return
         hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
     }
 
@@ -185,7 +185,7 @@ open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheItem>
      */
     open fun syncOnUpdate(id: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
-        val item = sysResourceDao.getAs<SysResourceCacheItem>(id) ?: return
+        val item = sysResourceDao.getAs<SysResourceCacheEntry>(id) ?: return
         if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
             hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
         }
@@ -231,7 +231,7 @@ open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheItem>
      */
     open fun syncOnDelete(id: String, subSystemCode: String, urlOrResourceType: String?) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
-        hashCache().deleteById(CACHE_NAME, id, SysResourceCacheItem::class, FILTERABLE_PROPERTIES, emptySet())
+        hashCache().deleteById(CACHE_NAME, id, SysResourceCacheEntry::class, FILTERABLE_PROPERTIES, emptySet())
     }
 
     /**
@@ -242,7 +242,7 @@ open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheItem>
     open fun syncOnBatchDelete(ids: Collection<String>) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
         val cache = hashCache()
-        ids.forEach { cache.deleteById(CACHE_NAME, it, SysResourceCacheItem::class, FILTERABLE_PROPERTIES, emptySet()) }
+        ids.forEach { cache.deleteById(CACHE_NAME, it, SysResourceCacheEntry::class, FILTERABLE_PROPERTIES, emptySet()) }
     }
 
     /**

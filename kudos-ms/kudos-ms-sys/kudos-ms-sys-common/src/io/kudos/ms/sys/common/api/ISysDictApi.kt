@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.common.api
 
-import io.kudos.ms.sys.common.vo.dictitem.SysDictItemCacheItem
+import io.kudos.ms.sys.common.vo.dictitem.SysDictItemCacheEntry
 
 
 /**
@@ -28,7 +28,7 @@ interface ISysDictApi {
     fun getActiveDictItems(
         dictType: String,
         atomicServiceCode: String
-    ): List<SysDictItemCacheItem>
+    ): List<SysDictItemCacheEntry>
 
     /**
      * 根据字典类型和原子服务编码，取得对应字典项的编码和名称(仅包括处于启用状态的)
@@ -56,7 +56,7 @@ interface ISysDictApi {
      */
     fun batchGetActiveDictItems(
         dictTypeAndASCodePairs: List<Pair<String, String>>
-    ): Map<Pair<String, String>, List<SysDictItemCacheItem>>
+    ): Map<Pair<String, String>, List<SysDictItemCacheEntry>>
 
     /**
      * 根据字典类型和原子服务编码列表，取得对应字典项的编码和名称(仅包括处于启用状态的)
