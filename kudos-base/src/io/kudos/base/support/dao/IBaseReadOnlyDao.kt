@@ -289,7 +289,7 @@ interface IBaseReadOnlyDao<PK : Any, E : IIdEntity<PK>> {
     ): List<Map<String, *>>
 
     /**
-     * 根据列表查询载体查询结果列表。
+     * 根据列表查询载体查询结果列表，支持分页（listSearchPayload.pageNo不为null时）。
      *
      * 返回类型由 `listSearchPayload.returnProperties` 与 `listSearchPayload.returnEntityClass` 决定，
      * 可能为实体列表、单属性值列表或属性映射列表。
@@ -299,7 +299,7 @@ interface IBaseReadOnlyDao<PK : Any, E : IIdEntity<PK>> {
     fun search(listSearchPayload: ListSearchPayload? = null): List<*>
 
     /**
-     * 根据列表查询载体查询，并指定返回元素类型。
+     * 根据列表查询载体查询，并指定返回元素类型。支持分页（listSearchPayload.pageNo不为null时）。
      *
      * 仅当 `listSearchPayload.returnProperties` 为空时可安全使用该方法。
      *

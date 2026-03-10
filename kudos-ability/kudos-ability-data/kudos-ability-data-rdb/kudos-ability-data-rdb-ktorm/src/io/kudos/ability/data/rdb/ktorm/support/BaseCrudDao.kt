@@ -1,6 +1,7 @@
 package io.kudos.ability.data.rdb.ktorm.support
 
 import io.kudos.base.bean.BeanKit
+import io.kudos.base.lang.string.underscoreToHump
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.support.GroupExecutor
@@ -45,7 +46,11 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
             BeanKit.copyProperties(any, entity)
             entity
         } as E
-        return insertExclude(entity, "id")
+        val idPropName = getPkColumn().name.underscoreToHump()
+        val id = insertExclude(entity, "id")
+        // 按主键列对应的实体属性名回写，避免 Ktorm 代理下通过 entity.id 触发 interface 的 default setId 导致 IllegalStateException（如 SysSystem.id 委托给 code）
+        BeanKit.setProperty(entity, idPropName, id)
+        return id
     }
 
     @Suppress("UNCHECKED_CAST")

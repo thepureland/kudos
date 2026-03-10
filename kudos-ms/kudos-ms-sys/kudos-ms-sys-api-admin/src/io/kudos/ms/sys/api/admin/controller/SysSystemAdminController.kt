@@ -6,6 +6,7 @@ import io.kudos.ms.sys.common.vo.system.SysSystemPayload
 import io.kudos.ms.sys.common.vo.system.SysSystemRecord
 import io.kudos.ms.sys.common.vo.system.SysSystemSearchPayload
 import io.kudos.ms.sys.core.service.iservice.ISysSystemService
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
@@ -19,6 +20,15 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/admin/sys/system")
 class SysSystemAdminController:
     BaseCrudController<String, ISysSystemService, SysSystemSearchPayload, SysSystemRecord, SysSystemDetail, SysSystemPayload>() {
-    
+
+    /**
+     * 返回所有启用的子系统编码
+     *
+     * @return List<子系统编码>
+     */
+    @GetMapping("/getAllActiveSubSystemCodes")
+    fun getAllActiveSubSystemCodes(): List<String> {
+        return service.getAllActiveSystems().filter { it.subSystem }.map { it.code }
+    }
     
 }

@@ -85,10 +85,10 @@ open class SysAccessRuleIpDao : BaseCrudDao<String, SysAccessRuleIp, SysAccessRu
 
         @Suppress("UNCHECKED_CAST")
         val extraColumns = mapOf(
-            "parentRuleActive" to (SysAccessRules.active as Column<Any>),
-            "tenantId" to (SysAccessRules.tenantId as Column<Any>),
-            "systemCode" to (SysAccessRules.systemCode as Column<Any>),
-            "ruleTypeDictCode" to (SysAccessRules.ruleTypeDictCode as Column<Any>)
+            SysAccessRuleIpRecord::parentRuleActive.name to (SysAccessRules.active as Column<Any>),
+            SysAccessRuleIpRecord::tenantId.name to (SysAccessRules.tenantId as Column<Any>),
+            SysAccessRuleIpRecord::systemCode.name to (SysAccessRules.systemCode as Column<Any>),
+            SysAccessRuleIpRecord::ruleTypeDictCode.name to (SysAccessRules.ruleTypeDictCode as Column<Any>)
         )
 
         return query.map { row ->
@@ -124,8 +124,8 @@ open class SysAccessRuleIpDao : BaseCrudDao<String, SysAccessRuleIp, SysAccessRu
         }
 
         val querySource = database()
-            .from(SysAccessRules)
-            .leftJoin(SysAccessRuleIps, on = onExpr)
+            .from(SysAccessRuleIps)
+            .leftJoin(SysAccessRules, on = onExpr)
 
         return querySource.select().whereWithConditions {
             val id = searchPayload.id

@@ -1,7 +1,6 @@
 package io.kudos.ms.sys.core.dao
 
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
-import io.kudos.base.bean.BeanKit
 import io.kudos.ms.sys.common.vo.param.SysParamCacheItem
 import io.kudos.ms.sys.core.model.po.SysParam
 import io.kudos.ms.sys.core.model.table.SysParams
@@ -39,8 +38,17 @@ open class SysParamDao : BaseCrudDao<String, SysParam, SysParams>() {
                 }
             }
             .map { row ->
-                val entity = SysParams.createEntity(row)
-                BeanKit.copyProperties(entity, SysParamCacheItem())
+                SysParamCacheItem(
+                    id = row[SysParams.id].orEmpty(),
+                    paramName = row[SysParams.paramName].orEmpty(),
+                    paramValue = row[SysParams.paramValue].orEmpty(),
+                    defaultValue = row[SysParams.defaultValue],
+                    atomicServiceCode = row[SysParams.atomicServiceCode].orEmpty(),
+                    orderNum = row[SysParams.orderNum],
+                    remark = row[SysParams.remark],
+                    active = row[SysParams.active] ?: true,
+                    builtIn = row[SysParams.builtIn] ?: true
+                )
             }
             .toList().firstOrNull()
     }

@@ -1,5 +1,6 @@
 package io.kudos.ms.sys.common.vo.tenant
 
+import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.support.payload.ListSearchPayload
 import kotlin.reflect.KClass
 
@@ -32,6 +33,11 @@ data class SysTenantSearchPayload (
     constructor() : this("")
 
     override var returnEntityClass: KClass<*>? = SysTenantRecord::class
+
+    override var operators: Map<String, OperatorEnum>? = mapOf(
+        ::name.name to OperatorEnum.ILIKE,
+        ::subSystemCode.name to OperatorEnum.LIKE
+    )
 
     //endregion your codes 3
 

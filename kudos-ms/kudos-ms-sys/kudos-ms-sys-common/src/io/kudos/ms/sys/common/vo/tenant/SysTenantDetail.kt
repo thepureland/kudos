@@ -62,6 +62,9 @@ data class SysTenantDetail (
 
     constructor() : this("")
 
+    /** 以逗号分隔的子系统编码 */
+    var subSystemCodes: String = ""
+
     //endregion your codes 3
 
 }

@@ -2,6 +2,7 @@ package io.kudos.ms.sys.core.service.iservice
 
 import io.kudos.base.support.iservice.IBaseCrudService
 import io.kudos.ms.sys.common.api.ISysTenantApi
+import io.kudos.ms.sys.common.vo.tenant.SysTenantCacheItem
 import io.kudos.ms.sys.common.vo.tenant.SysTenantRecord
 import io.kudos.ms.sys.core.model.po.SysTenant
 
@@ -18,15 +19,6 @@ interface ISysTenantService : IBaseCrudService<String, SysTenant>, ISysTenantApi
 //endregion your codes 1
 
     //region your codes 2
-
-    /**
-     * 返回所有启用的租户
-     *
-     * @return Map(子系统代码，List(租户记录对象))
-     * @author K
-     * @since 1.0.0
-     */
-    fun getAllActiveTenants(): Map<String, List<SysTenantRecord>>
 
     /**
      * 更新启用状态，并同步缓存

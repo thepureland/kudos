@@ -51,7 +51,7 @@ insert into "sys_cache" ("name", "atomic_service_code", "strategy_dict_code", "w
     ('SYS_DOMAIN_BY_NAME', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '域名缓存(by name)', false),
     ('SYS_PARAM_BY_MODULE_AND_NAME', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '参数缓存(by atomicServiceCode & name)', false),
     ('SYS_TENANT_BY_ID', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '租户缓存(by id)', false),
-    ('SYS_TENANT_IDS_BY_SYSTEM_CODE', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '租户缓存(by subSystemCode)', false),
+    ('SYS_TENANT_SYSTEM__HASH', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '租户-系统关系缓存', true),
     ('SYS_ATOMIC_SERVICE_BY_CODE', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '原子服务缓存(by code)', false),
     ('I18N_BY_LOCALE_AND_TYPE_AND_MS_CODE', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '国际化信息缓存(by locale & type & atomicServiceCode)', false),
     ('SYS_I18N__HASH', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '国际化信息Hash缓存', true),

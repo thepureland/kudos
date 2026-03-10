@@ -18,6 +18,7 @@ import org.springframework.core.DefaultParameterNameDiscoverer
 import org.springframework.expression.ExpressionParser
 import org.springframework.expression.spel.standard.SpelExpressionParser
 import org.springframework.stereotype.Component
+import io.kudos.base.bean.BeanKit
 import java.lang.reflect.ParameterizedType
 import kotlin.reflect.KClass
 import kotlin.reflect.full.findAnnotation
@@ -79,9 +80,17 @@ class HashCacheableBySecondaryAspect {
             @Suppress("UNCHECKED_CAST")
             val cached = queryByKeys(hashCache, cacheName, entityClass, propertyValues)
             if (cached.isNotEmpty()) {
+                val returnProperty = ann.returnProperty
                 return when (returnMode) {
                     ReturnMode.SINGLE_ID -> cached.firstOrNull()?.id
-                    ReturnMode.LIST_IDS -> cached.mapNotNull { it.id }
+                    ReturnMode.LIST_IDS -> {
+                        val values = if (returnProperty.isNotBlank()) {
+                            cached.mapNotNull { BeanKit.getProperty(it, returnProperty)?.toString() }.distinct()
+                        } else {
+                            cached.mapNotNull { it.id?.toString() }
+                        }
+                        if (method.returnType == java.util.Set::class.java) values.toSet() else values
+                    }
                     ReturnMode.LIST_ENTITIES -> cached
                     ReturnMode.SINGLE_ENTITY -> cached.firstOrNull()
                 }
@@ -128,6 +137,12 @@ class HashCacheableBySecondaryAspect {
     private fun resolveReturnMode(method: java.lang.reflect.Method): ReturnMode {
         val returnType = method.returnType
         if (returnType == String::class.java) return ReturnMode.SINGLE_ID
+        if (Set::class.java.isAssignableFrom(returnType)) {
+            val generic = method.genericReturnType
+            if (generic is ParameterizedType && generic.actualTypeArguments.getOrNull(0) == String::class.java) {
+                return ReturnMode.LIST_IDS
+            }
+        }
         if (List::class.java.isAssignableFrom(returnType)) {
             val generic = method.genericReturnType
             if (generic is ParameterizedType) {
