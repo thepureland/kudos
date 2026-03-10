@@ -5,7 +5,7 @@ import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.sys.common.vo.i18n.SysI18nForm
 import io.kudos.ms.sys.core.cache.DictItemsByMsCodeAndTypeCache
-import io.kudos.ms.sys.core.cache.I18NByLocaleAndTypeAndMsCodeCache
+import io.kudos.ms.sys.core.cache.SysI18nHashCache
 import io.kudos.ms.sys.core.dao.SysI18nDao
 import io.kudos.ms.sys.core.model.po.SysI18n
 import io.kudos.ms.sys.core.service.iservice.ISysI18nService
@@ -30,7 +30,7 @@ open class SysI18NService : BaseCrudService<String, SysI18n, SysI18nDao>(), ISys
     private val log = LogFactory.getLog(this)
 
     @Resource
-    private lateinit var i18nCacheHandler: I18NByLocaleAndTypeAndMsCodeCache
+    private lateinit var sysI18nHashCache: SysI18nHashCache
 
     @Resource
     private lateinit var dictItemsByMsCodeAndTypeCache: DictItemsByMsCodeAndTypeCache
@@ -43,7 +43,7 @@ open class SysI18NService : BaseCrudService<String, SysI18n, SysI18nDao>(), ISys
         atomicServiceCode: String,
         key: String
     ): String? {
-        val i18nMap = i18nCacheHandler.getI18ns(locale, i18nTypeDictCode, namespace, atomicServiceCode)
+        val i18nMap = getI18ns(locale, i18nTypeDictCode, namespace, atomicServiceCode)
         return i18nMap[key]
     }
 
@@ -53,7 +53,7 @@ open class SysI18NService : BaseCrudService<String, SysI18n, SysI18nDao>(), ISys
         namespace: String,
         atomicServiceCode: String
     ): Map<String, String> {
-        return i18nCacheHandler.getI18ns(locale, i18nTypeDictCode, namespace, atomicServiceCode)
+        return sysI18nHashCache.getI18nMap(locale, atomicServiceCode, i18nTypeDictCode, namespace)
     }
 
     override fun batchGetI18ns(
@@ -65,7 +65,7 @@ open class SysI18NService : BaseCrudService<String, SysI18n, SysI18nDao>(), ISys
             namespaces.associateWith { namespace ->
                 val map = mutableMapOf<String, String>()
                 atomicServiceCodes.forEach { atomicServiceCode ->
-                    map.putAll(i18nCacheHandler.getI18ns(locale, i18nTypeDictCode, namespace, atomicServiceCode))
+                    map.putAll(sysI18nHashCache.getI18nMap(locale, atomicServiceCode, i18nTypeDictCode, namespace))
                 }
                 map
             }
@@ -94,7 +94,7 @@ open class SysI18NService : BaseCrudService<String, SysI18n, SysI18nDao>(), ISys
                     this.active = payload.active
                 }
                 val id = dao.insert(i18n)
-                i18nCacheHandler.syncOnInsert(i18n, id)
+                sysI18nHashCache.syncOnInsert(i18n, id)
                 count++
             } else {
                 val locale = requireNotNull(payload.locale) { "更新国际化内容时，locale不能为空。" }
@@ -115,7 +115,7 @@ open class SysI18NService : BaseCrudService<String, SysI18n, SysI18nDao>(), ISys
                     this.active = payload.active
                 }
                 if (dao.update(i18n)) {
-                    i18nCacheHandler.syncOnUpdate(i18n, i18n.id)
+                    sysI18nHashCache.syncOnUpdate(i18n, i18n.id)
                     count++
                 }
             }
@@ -133,7 +133,7 @@ open class SysI18NService : BaseCrudService<String, SysI18n, SysI18nDao>(), ISys
         val success = dao.update(i18n)
         if (success) {
             log.debug("更新id为${id}的国际化内容的启用状态为${active}。")
-            i18nCacheHandler.syncOnUpdateActive(id, active)
+            sysI18nHashCache.syncOnUpdate(id)
         } else {
             log.error("更新id为${id}的国际化内容的启用状态为${active}失败！")
         }
@@ -144,7 +144,7 @@ open class SysI18NService : BaseCrudService<String, SysI18n, SysI18nDao>(), ISys
     override fun insert(any: Any): String {
         val id = super.insert(any)
         log.debug("新增id为${id}的国际化内容。")
-        i18nCacheHandler.syncOnInsert(any, id)
+        sysI18nHashCache.syncOnInsert(any, id)
         return id
     }
 
@@ -154,7 +154,7 @@ open class SysI18NService : BaseCrudService<String, SysI18n, SysI18nDao>(), ISys
         val id = BeanKit.getProperty(any, SysI18n::id.name) as String
         if (success) {
             log.debug("更新id为${id}的国际化内容。")
-            i18nCacheHandler.syncOnUpdate(any, id)
+            sysI18nHashCache.syncOnUpdate(any, id)
         } else {
             log.error("更新id为${id}的国际化内容失败！")
         }
@@ -163,15 +163,10 @@ open class SysI18NService : BaseCrudService<String, SysI18n, SysI18nDao>(), ISys
 
     @Transactional
     override fun deleteById(id: String): Boolean {
-        val i18n = dao.get(id)
-        if (i18n == null) {
-            log.warn("删除id为${id}的国际化内容时，发现其已不存在！")
-            return false
-        }
         val success = super.deleteById(id)
         if (success) {
             log.debug("删除id为${id}的国际化内容。")
-            i18nCacheHandler.syncOnDelete(i18n, id)
+            sysI18nHashCache.syncOnDelete(id)
         } else {
             log.error("删除id为${id}的国际化内容失败！")
         }
@@ -180,19 +175,9 @@ open class SysI18NService : BaseCrudService<String, SysI18n, SysI18nDao>(), ISys
 
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {
-        val i18ns = dao.inSearchById(ids)
-        val keys = i18ns.map {
-            i18nCacheHandler.getKey(
-                it.locale,
-                it.i18nTypeDictCode,
-                it.namespace,
-                it.atomicServiceCode
-            )
-        }
-            .distinct()
         val count = super.batchDelete(ids)
         log.debug("批量删除国际化内容，期望删除${ids.size}条，实际删除${count}条。")
-        i18nCacheHandler.syncOnBatchDelete(ids, keys)
+        sysI18nHashCache.syncOnBatchDelete(ids)
         return count
     }
 
