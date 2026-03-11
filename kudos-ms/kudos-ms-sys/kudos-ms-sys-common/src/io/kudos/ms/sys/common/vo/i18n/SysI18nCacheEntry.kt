@@ -11,7 +11,7 @@ import io.kudos.base.support.IIdEntity
 data class SysI18nCacheEntry (
 
     /** 主键 */
-    override val id: String = "",
+    override val id: String? = null,
 
     //region your codes 1
 
@@ -35,12 +35,12 @@ data class SysI18nCacheEntry (
 
     //endregion your codes 1
 //region your codes 2
-) : IIdEntity<String> {
+) : IIdEntity<String?> {
 //endregion your codes 2
 
     //region your codes 3
 
-    constructor() : this("")
+    constructor() : this(null)
 
     // endregion your codes 3
 

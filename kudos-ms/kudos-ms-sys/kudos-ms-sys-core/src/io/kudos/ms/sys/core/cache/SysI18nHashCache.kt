@@ -93,7 +93,7 @@ open class SysI18nHashCache : AbstractHashCacheHandler<SysI18nCacheEntry>() {
     open fun getI18nsByIds(ids: List<String>): Map<String, SysI18nCacheEntry> {
         if (ids.isEmpty()) return emptyMap()
         val list = sysI18nDao.getByIdsAs<SysI18nCacheEntry>(ids)
-        return list.filter { it.id.isNotBlank() && it.id in ids }.associateBy { it.id }
+        return list.filter { it.id!!.isNotBlank() && it.id in ids }.associateBy { it.id!! }
     }
 
     // ---------- 按 locale + atomicServiceCode + i18nTypeDictCode + namespace ----------

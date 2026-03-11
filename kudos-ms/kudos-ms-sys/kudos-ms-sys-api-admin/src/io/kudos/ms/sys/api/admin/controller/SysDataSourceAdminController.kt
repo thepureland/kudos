@@ -1,0 +1,25 @@
+package io.kudos.ms.sys.api.admin.controller
+
+import io.kudos.ability.web.springmvc.controller.BaseCrudController
+import io.kudos.ms.sys.common.vo.datasource.SysDataSourceDetail
+import io.kudos.ms.sys.common.vo.datasource.SysDataSourceForm
+import io.kudos.ms.sys.common.vo.datasource.SysDataSourceQuery
+import io.kudos.ms.sys.common.vo.datasource.SysDataSourceRow
+import io.kudos.ms.sys.core.service.iservice.ISysDataSourceService
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
+
+/**
+ * 数据源管理控制器
+ *
+ * @author K
+ * @since 1.0.0
+ */
+@RestController
+@RequestMapping("/api/admin/sys/dataSource")
+class SysDataSourceAdminController:
+    BaseCrudController<String, ISysDataSourceService, SysDataSourceQuery, SysDataSourceRow, SysDataSourceDetail, SysDataSourceForm>() {
+
+
+
+}

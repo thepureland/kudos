@@ -1,5 +1,6 @@
 package io.kudos.ms.sys.common.vo.resource
 
+import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.support.payload.ListSearchPayload
 import kotlin.reflect.KClass
 
@@ -39,6 +40,8 @@ data class SysResourceQuery (
     constructor() : this("")
 
     override var returnEntityClass: KClass<*>? = SysResourceRow::class
+
+    override var operators: Map<String, OperatorEnum>? = mapOf(::name.name to OperatorEnum.ILIKE)
 
     //endregion your codes 3
 

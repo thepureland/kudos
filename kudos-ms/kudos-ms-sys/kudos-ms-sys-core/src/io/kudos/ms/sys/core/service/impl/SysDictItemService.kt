@@ -93,32 +93,32 @@ open class SysDictItemService : BaseCrudService<String, SysDictItem, SysDictItem
     }
 
     @Transactional
-    override fun saveOrUpdate(payload: SysDictForm): String {
-        return if (payload.id.isBlank()) { // 新增
-            val payloadCode = requireNotNull(payload.code) { "新增字典项时，code不能为空。" }
-            val payloadName = requireNotNull(payload.name) { "新增字典项时，name不能为空。" }
+    override fun saveOrUpdate(form: SysDictForm): String {
+        return if (form.id!!.isBlank()) { // 新增
+            val payloadCode = requireNotNull(form.code) { "新增字典项时，code不能为空。" }
+            val payloadName = requireNotNull(form.name) { "新增字典项时，name不能为空。" }
             val sysDictItem = SysDictItem().apply {
-                dictId = payload.id
-                parentId = payload.parentId
+                dictId = form.id!!
+                parentId = form.parentId
                 itemCode = payloadCode
                 itemName = payloadName
-                orderNum = payload.seqNo
-                remark = payload.remark
+                orderNum = form.seqNo
+                remark = form.remark
             }
             val id = dao.insert(sysDictItem)
             dictItemCacheHandler.syncOnInsert(sysDictItem, id) // 同步缓存
             id
         } else { // 更新
-            val payloadCode = requireNotNull(payload.code) { "更新字典项时，code不能为空。" }
-            val payloadName = requireNotNull(payload.name) { "更新字典项时，name不能为空。" }
+            val payloadCode = requireNotNull(form.code) { "更新字典项时，code不能为空。" }
+            val payloadName = requireNotNull(form.name) { "更新字典项时，name不能为空。" }
             val sysDictItem = SysDictItem {
-                id = payload.id
-                dictId = payload.id
-                parentId = payload.parentId
+                id = form.id!!
+                dictId = form.id!!
+                parentId = form.parentId
                 itemCode = payloadCode
                 itemName = payloadName
-                orderNum = payload.seqNo
-                remark = payload.remark
+                orderNum = form.seqNo
+                remark = form.remark
             }
             val success = dao.update(sysDictItem)
             if (success) {

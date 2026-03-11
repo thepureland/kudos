@@ -1,6 +1,7 @@
 package io.kudos.ms.sys.core.service.iservice
 
 import io.kudos.base.support.iservice.IBaseCrudService
+import io.kudos.base.tree.IdAndNameTreeNode
 import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceCacheEntry
 import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceRow
 import io.kudos.ms.sys.core.model.po.SysMicroService
@@ -42,6 +43,13 @@ interface ISysMicroServiceService : IBaseCrudService<String, SysMicroService> {
      * @return List<原子服务(微服务)缓存对象>, 不存在返回空列表
      */
     fun getAllActiveAtomicServices(): List<SysMicroServiceCacheEntry>
+
+    /**
+     * 返回整棵微服务树
+     *
+     * @return List<IdAndNameTreeNode<String>>
+     */
+    fun getFullMicroServiceTree(): List<IdAndNameTreeNode<String>>
 
     /**
      * 返回指定编码的微/原子服务，可能是未启用的

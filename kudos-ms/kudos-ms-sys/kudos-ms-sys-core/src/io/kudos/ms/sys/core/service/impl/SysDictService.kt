@@ -54,35 +54,35 @@ open class SysDictService : BaseCrudService<String, SysDict, SysDictDao>(), ISys
     }
 
     @Transactional
-    override fun saveOrUpdate(payload: SysDictForm): String {
-        return if (payload.id.isBlank()) { // 新增
-            if (!payload.parentId.isNullOrBlank()) { // 添加SysDict
-                val atomicServiceCode = requireNotNull(payload.atomicServiceCode) { "新增字典时，atomicServiceCode不能为空。" }
-                val dictType = requireNotNull(payload.dictType) { "新增字典时，dictType不能为空。" }
-                val dictName = requireNotNull(payload.dictName) { "新增字典时，dictName不能为空。" }
+    override fun saveOrUpdate(form: SysDictForm): String {
+        return if (form.id!!.isBlank()) { // 新增
+            if (!form.parentId.isNullOrBlank()) { // 添加SysDict
+                val atomicServiceCode = requireNotNull(form.atomicServiceCode) { "新增字典时，atomicServiceCode不能为空。" }
+                val dictType = requireNotNull(form.dictType) { "新增字典时，dictType不能为空。" }
+                val dictName = requireNotNull(form.dictName) { "新增字典时，dictName不能为空。" }
                 val sysDict = SysDict().apply {
                     this.atomicServiceCode = atomicServiceCode
                     this.dictType = dictType
                     this.dictName = dictName
-                    remark = payload.remark
+                    remark = form.remark
                 }
                 val id = dao.insert(sysDict)
                 dictCacheHandler.syncOnInsert(id) // 同步缓存
                 id
             } else { // 添加SysDictItem
-                sysDictItemService.saveOrUpdate(payload)
+                sysDictItemService.saveOrUpdate(form)
             }
         } else { // 更新
-            if (payload.parentId.isNullOrBlank()) { // SysDict
-                val atomicServiceCode = requireNotNull(payload.atomicServiceCode) { "更新字典时，atomicServiceCode不能为空。" }
-                val dictType = requireNotNull(payload.dictType) { "更新字典时，dictType不能为空。" }
-                val dictName = requireNotNull(payload.dictName) { "更新字典时，dictName不能为空。" }
+            if (form.parentId.isNullOrBlank()) { // SysDict
+                val atomicServiceCode = requireNotNull(form.atomicServiceCode) { "更新字典时，atomicServiceCode不能为空。" }
+                val dictType = requireNotNull(form.dictType) { "更新字典时，dictType不能为空。" }
+                val dictName = requireNotNull(form.dictName) { "更新字典时，dictName不能为空。" }
                 val sysDict = SysDict {
-                    id = payload.id
+                    id = form.id!!
                     this.atomicServiceCode = atomicServiceCode
                     this.dictType = dictType
                     this.dictName = dictName
-                    remark = payload.remark
+                    remark = form.remark
                 }
                 val success = dao.update(sysDict)
                 if (success) {
@@ -92,9 +92,9 @@ open class SysDictService : BaseCrudService<String, SysDict, SysDictDao>(), ISys
                 }
 
             } else { // SysDictItem
-                sysDictItemService.saveOrUpdate(payload)
+                sysDictItemService.saveOrUpdate(form)
             }
-            payload.id
+            form.id!!
         }
     }
 

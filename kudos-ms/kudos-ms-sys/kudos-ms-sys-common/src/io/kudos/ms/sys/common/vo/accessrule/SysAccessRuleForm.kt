@@ -13,7 +13,7 @@ data class SysAccessRuleForm (
 
     //region your codes 1
 
-    override val id: String,
+    override val id: String? = null,
 
     /** 租户id */
     val tenantId: String? = null,
@@ -26,12 +26,12 @@ data class SysAccessRuleForm (
 
     //endregion your codes 1
 //region your codes 2
-) : FormPayload<String>() {
+) : FormPayload<String?>() {
 //endregion your codes 2
 
     //region your codes 3
 
-    constructor() : this("")
+    constructor() : this(null)
 
     // endregion your codes 3
 

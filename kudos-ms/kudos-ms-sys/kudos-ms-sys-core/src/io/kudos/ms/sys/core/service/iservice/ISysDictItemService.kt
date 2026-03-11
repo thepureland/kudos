@@ -86,12 +86,12 @@ interface ISysDictItemService : IBaseCrudService<String, SysDictItem> {
     /**
      * 保存或更新
      *
-     * @param payload 载体对象
+     * @param form 表单对象
      * @return 主键
      * @author K
      * @since 1.0.0
      */
-    fun saveOrUpdate(payload: SysDictForm): String
+    fun saveOrUpdate(form: SysDictForm): String
 
     /**
      * 获取字典项的所有祖先id

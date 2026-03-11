@@ -5,6 +5,8 @@ import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.eq
+import io.kudos.base.tree.IdAndNameTreeNode
+import io.kudos.base.tree.ListToTreeConverter
 import io.kudos.ms.sys.common.vo.system.SysSystemCacheEntry
 import io.kudos.ms.sys.common.vo.system.SysSystemRow
 import io.kudos.ms.sys.core.cache.SysSystemHashCache
@@ -36,6 +38,12 @@ open class SysSystemService : BaseCrudService<String, SysSystem, SysSystemDao>()
 
     override fun getSystemByCode(code: String): SysSystemCacheEntry? {
         return sysSystemHashCache.getSystemByCode(code)
+    }
+
+    override fun getFullSystemTree(): List<IdAndNameTreeNode<String>> {
+        val cacheEntries = sysSystemHashCache.getAllSystems()
+        val nodes = cacheEntries.map { IdAndNameTreeNode(it.code, it.name, it.parentCode) }
+        return ListToTreeConverter.convert(nodes)
     }
 
     override fun getAllActiveSystems(): List<SysSystemRow> {

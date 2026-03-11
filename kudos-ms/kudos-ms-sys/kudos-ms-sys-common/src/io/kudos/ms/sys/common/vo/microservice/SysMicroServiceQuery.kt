@@ -1,5 +1,6 @@
 package io.kudos.ms.sys.common.vo.microservice
 
+import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.support.payload.ListSearchPayload
 import kotlin.reflect.KClass
 
@@ -36,6 +37,11 @@ data class SysMicroServiceQuery (
     constructor() : this("")
 
     override var returnEntityClass: KClass<*>? = SysMicroServiceRow::class
+
+    override var operators: Map<String, OperatorEnum>? = mapOf(
+        ::code.name to OperatorEnum.ILIKE,
+        ::name.name to OperatorEnum.ILIKE
+    )
 
     //endregion your codes 3
 

@@ -1,6 +1,7 @@
 package io.kudos.ms.sys.api.admin.controller
 
 import io.kudos.ability.web.springmvc.controller.BaseCrudController
+import io.kudos.base.tree.IdAndNameTreeNode
 import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceCacheEntry
 import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceDetail
 import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceForm
@@ -19,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController
  */
 @RestController
 @RequestMapping("/api/admin/sys/microService")
-class SysMicroServiceAdminController:
+class SysMicroServiceAdminController :
     BaseCrudController<String, ISysMicroServiceService, SysMicroServiceQuery, SysMicroServiceRow, SysMicroServiceDetail, SysMicroServiceForm>() {
 
     /**
@@ -31,5 +32,15 @@ class SysMicroServiceAdminController:
     fun getAllActiveAtomicServiceCodes(): List<String> {
         return service.getAllActiveAtomicServices().map { it.code }
     }
-    
+
+    /**
+     * 返回整棵微服务树
+     *
+     * @return List<IdAndNameTreeNode>
+     */
+    @GetMapping("/getFullMicroServiceTree")
+    fun getFullMicroServiceTree(): List<IdAndNameTreeNode<String>> {
+        return service.getFullMicroServiceTree()
+    }
+
 }

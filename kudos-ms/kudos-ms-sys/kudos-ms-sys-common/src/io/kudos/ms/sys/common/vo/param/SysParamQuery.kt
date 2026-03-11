@@ -1,5 +1,6 @@
 package io.kudos.ms.sys.common.vo.param
 
+import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.support.payload.ListSearchPayload
 import kotlin.reflect.KClass
 
@@ -39,6 +40,11 @@ data class SysParamQuery (
     constructor() : this("")
 
     override var returnEntityClass: KClass<*>? = SysParamRow::class
+
+    override var operators: Map<String, OperatorEnum>? = mapOf(
+        ::paramName.name to OperatorEnum.ILIKE,
+        ::paramValue.name to OperatorEnum.LIKE_S
+    )
 
     //endregion your codes 3
 

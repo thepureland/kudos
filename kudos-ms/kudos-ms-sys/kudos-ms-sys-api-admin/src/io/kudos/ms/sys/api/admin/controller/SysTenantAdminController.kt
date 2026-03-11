@@ -1,6 +1,7 @@
 package io.kudos.ms.sys.api.admin.controller
 
 import io.kudos.ability.web.springmvc.controller.BaseCrudController
+import io.kudos.base.support.vo.IdAndName
 import io.kudos.ms.sys.common.vo.tenant.SysTenantCacheEntry
 import io.kudos.ms.sys.common.vo.tenant.SysTenantDetail
 import io.kudos.ms.sys.common.vo.tenant.SysTenantForm
@@ -26,11 +27,11 @@ class SysTenantAdminController:
      * 返回指定子系统的所有租户(仅启用的)
      *
      * @param subSystemCode 子系统代码
-     * @return List(租户缓存对象)
+     * @return List<IdAndName>
      */
     @GetMapping("/getTenantsBySubSystemCode")
-    fun getTenantsBySubSystemCode(subSystemCode: String): List<SysTenantCacheEntry> {
-       return service.getTenantsBySubSystemCode(subSystemCode)
+    fun getTenantsBySubSystemCode(subSystemCode: String): List<IdAndName<String>> {
+       return service.getTenantsBySubSystemCode(subSystemCode).map { IdAndName(it.id, it.name) }
     }
 
 }
