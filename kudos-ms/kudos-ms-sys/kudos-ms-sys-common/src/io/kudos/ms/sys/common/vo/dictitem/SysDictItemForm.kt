@@ -12,7 +12,7 @@ import io.kudos.base.support.payload.FormPayload
 data class SysDictItemForm (
 
     /** 主键 */
-    override val id: String = "",
+    override val id: String? = null,
 
     //region your codes 1
 
@@ -39,12 +39,12 @@ data class SysDictItemForm (
 
     //endregion your codes 1
 //region your codes 2
-) : FormPayload<String>() {
+) : FormPayload<String?>() {
 //endregion your codes 2
 
     //region your codes 3
 
-    constructor() : this("")
+    constructor() : this(null)
 
     // endregion your codes 3
 

@@ -67,35 +67,35 @@ open class SysAccessRuleIpService : BaseCrudService<String, SysAccessRuleIp, Sys
     @Transactional
     override fun batchSaveOrUpdate(ruleId: String, ips: List<SysAccessRuleIpForm>): Int {
         var count = 0
-        ips.forEach { payload ->
-            if (payload.id.isNullOrBlank()) {
-                val ipStart = requireNotNull(payload.ipStart) { "新增IP规则时，ipStart不能为空。" }
-                val ipEnd = requireNotNull(payload.ipEnd) { "新增IP规则时，ipEnd不能为空。" }
+        ips.forEach { form ->
+            if (form.id.isNullOrBlank()) {
+                val ipStart = requireNotNull(form.ipStart) { "新增IP规则时，ipStart不能为空。" }
+                val ipEnd = requireNotNull(form.ipEnd) { "新增IP规则时，ipEnd不能为空。" }
                 val ipRule = SysAccessRuleIp {
                     this.parentRuleId = ruleId
                     this.ipStart = ipStart
                     this.ipEnd = ipEnd
-                    this.ipTypeDictCode = payload.ipType?.toString() ?: "0"
-                    this.expirationTime = payload.expirationDate
-                    this.active = payload.active ?: true
+                    this.ipTypeDictCode = form.ipType?.toString() ?: "0"
+                    this.expirationTime = form.expirationDate
+                    this.active = form.active ?: true
                 }
                 val id = dao.insert(ipRule)
                 accessRuleIpsBySubSysAndTenantIdCache.syncOnInsert(ipRule, id)
                 count++
             } else {
-                val ipStart = requireNotNull(payload.ipStart) { "更新IP规则时，ipStart不能为空。" }
-                val ipEnd = requireNotNull(payload.ipEnd) { "更新IP规则时，ipEnd不能为空。" }
+                val ipStart = requireNotNull(form.ipStart) { "更新IP规则时，ipStart不能为空。" }
+                val ipEnd = requireNotNull(form.ipEnd) { "更新IP规则时，ipEnd不能为空。" }
                 val ipRule = SysAccessRuleIp {
-                    this.id = payload.id
+                    this.id = form.id!!
                     this.parentRuleId = ruleId
                     this.ipStart = ipStart
                     this.ipEnd = ipEnd
-                    this.ipTypeDictCode = payload.ipType?.toString() ?: "0"
-                    this.expirationTime = payload.expirationDate
-                    this.active = payload.active ?: true
+                    this.ipTypeDictCode = form.ipType?.toString() ?: "0"
+                    this.expirationTime = form.expirationDate
+                    this.active = form.active ?: true
                 }
                 if (dao.update(ipRule)) {
-                    accessRuleIpsBySubSysAndTenantIdCache.syncOnUpdate(ipRule, payload.id)
+                    accessRuleIpsBySubSysAndTenantIdCache.syncOnUpdate(ipRule, form.id!!)
                     count++
                 }
             }

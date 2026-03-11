@@ -99,6 +99,24 @@ open class SysSystemHashCache : AbstractHashCacheHandler<SysSystemCacheEntry>() 
     open fun listSubSystems(): List<SysSystemCacheEntry> = getSystemsByType(true)
 
     /**
+     * 获取所有系统（来自缓存）；若缓存为空则从库加载并回写后再返回。
+     *
+     * @return 系统缓存项列表，缓存未开启时直接从库查询返回
+     */
+    open fun getAllSystems(): List<SysSystemCacheEntry> {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
+            return sysSystemDao.searchAs<SysSystemCacheEntry>()
+        }
+        val cache = hashCache()
+        var list = cache.listAll(CACHE_NAME, SysSystemCacheEntry::class)
+        if (list.isEmpty()) {
+            reloadAll(clear = false)
+            list = cache.listAll(CACHE_NAME, SysSystemCacheEntry::class)
+        }
+        return list
+    }
+
+    /**
      * 从库全量加载系统并刷新 Hash 缓存。
      *
      * @param clear 为 true 时先清空再写入；为 false 时覆盖写入

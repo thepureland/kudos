@@ -47,12 +47,12 @@ interface ISysDictService : IBaseCrudService<String, SysDict>, ISysDictApi {
     /**
      * 保存或更新字典或字典项
      *
-     * @param payload 数据载体
+     * @param form 表单数据载体
      * @return 主键
      * @author K
      * @since 1.0.0
      */
-    fun saveOrUpdate(payload: SysDictForm): String
+    fun saveOrUpdate(form: SysDictForm): String
 
     /**
      * 删除字典或字典项

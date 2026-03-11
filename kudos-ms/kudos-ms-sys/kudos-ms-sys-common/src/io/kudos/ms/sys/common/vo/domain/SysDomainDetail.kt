@@ -62,6 +62,9 @@ data class SysDomainDetail (
 
     constructor() : this("")
 
+    /** 租户名称 */
+    var tenantName: String = ""
+
     //endregion your codes 3
 
 }

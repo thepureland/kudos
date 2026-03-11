@@ -1,6 +1,7 @@
 package io.kudos.ms.sys.core.service.iservice
 
 import io.kudos.base.support.iservice.IBaseCrudService
+import io.kudos.base.tree.IdAndNameTreeNode
 import io.kudos.ms.sys.common.vo.system.SysSystemCacheEntry
 import io.kudos.ms.sys.common.vo.system.SysSystemRow
 import io.kudos.ms.sys.core.model.po.SysSystem
@@ -57,6 +58,13 @@ interface ISysSystemService : IBaseCrudService<String, SysSystem> {
      * @since 1.0.0
      */
     fun getSubSystemsBySystemCode(systemCode: String): List<SysSystemRow>
+
+    /**
+     * 返回整棵系统树（含层级关系）。
+     *
+     * @return 系统树节点列表（根节点及其 children）
+     */
+    fun getFullSystemTree(): List<IdAndNameTreeNode<String>>
 
     //endregion your codes 2
 

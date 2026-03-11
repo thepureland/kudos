@@ -102,6 +102,24 @@ open class SysMicroServiceHashCache : AbstractHashCacheHandler<SysMicroServiceCa
     open fun listAtomicServices(): List<SysMicroServiceCacheEntry> = getMicroServicesByType(true)
 
     /**
+     * 获取所有微服务；若缓存为空则从库加载并回写后再返回。
+     *
+     * @return 微服务缓存项列表，缓存未开启时直接从库查询返回
+     */
+    open fun getAllMicroServices(): List<SysMicroServiceCacheEntry> {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
+            return sysMicroServiceDao.searchAs<SysMicroServiceCacheEntry>()
+        }
+        val cache = hashCache()
+        var list = cache.listAll(CACHE_NAME, SysMicroServiceCacheEntry::class)
+        if (list.isEmpty()) {
+            reloadAll(clear = false)
+            list = cache.listAll(CACHE_NAME, SysMicroServiceCacheEntry::class)
+        }
+        return list
+    }
+
+    /**
      * 从库全量加载微服务并刷新 Hash 缓存。
      *
      * @param clear 为 true 时先清空再写入；为 false 时覆盖写入

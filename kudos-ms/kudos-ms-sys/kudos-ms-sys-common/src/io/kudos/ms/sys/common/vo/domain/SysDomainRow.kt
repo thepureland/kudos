@@ -1,6 +1,7 @@
 package io.kudos.ms.sys.common.vo.domain
 
 import io.kudos.base.support.result.IdJsonResult
+import java.time.LocalDateTime
 
 
 /**
@@ -34,6 +35,9 @@ data class SysDomainRow (
     /** 是否内置 */
     val builtIn: Boolean = false,
 
+    /** 创建时间 */
+    val createTime: LocalDateTime? = null,
+
     //endregion your codes 1
 //region your codes 2
 ) : IdJsonResult<String>() {
@@ -42,6 +46,9 @@ data class SysDomainRow (
     //region your codes 3
 
     constructor() : this("")
+
+    /** 租户名称 */
+    var tenantName: String = ""
 
     // endregion your codes 3
 

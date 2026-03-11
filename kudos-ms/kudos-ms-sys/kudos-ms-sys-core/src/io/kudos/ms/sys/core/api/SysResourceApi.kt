@@ -62,11 +62,11 @@ open class SysResourceApi : ISysResourceApi {
     }
 
     override fun getChildrenResources(
-        subSysDictCode: String,
+        subSystemCode: String,
         resourceType: ResourceTypeEnum,
         parentId: String
     ): List<SysResourceCacheEntry> {
-        return sysResourceService.getChildrenResources(subSysDictCode, resourceType, parentId)
+        return sysResourceService.getChildrenResources(subSystemCode, resourceType, parentId)
     }
 
     //endregion your codes 2

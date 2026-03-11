@@ -5,6 +5,8 @@ import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.eq
+import io.kudos.base.tree.IdAndNameTreeNode
+import io.kudos.base.tree.ListToTreeConverter
 import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceCacheEntry
 import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceRow
 import io.kudos.ms.sys.core.cache.SysMicroServiceHashCache
@@ -24,7 +26,8 @@ import org.springframework.transaction.annotation.Transactional
  */
 @Service
 //region your codes 1
-open class SysMicroServiceService : BaseCrudService<String, SysMicroService, SysMicroServiceDao>(), ISysMicroServiceService {
+open class SysMicroServiceService : BaseCrudService<String, SysMicroService, SysMicroServiceDao>(),
+    ISysMicroServiceService {
 //endregion your codes 1
 
     //region your codes 2
@@ -37,15 +40,21 @@ open class SysMicroServiceService : BaseCrudService<String, SysMicroService, Sys
     override fun getAllActiveMicroServices(): List<SysMicroServiceCacheEntry> {
         val atomic = sysMicroServiceHashCache.listAtomicServices()
         val nonAtomic = sysMicroServiceHashCache.getMicroServicesByType(false)
-        return (atomic + nonAtomic).filter { it.active == true }
+        return (atomic + nonAtomic).filter { it.active }
     }
 
     override fun getAllActiveMicroServiceExcludeAtomicService(): List<SysMicroServiceCacheEntry> {
-        return sysMicroServiceHashCache.getMicroServicesByType(false).filter { it.active == true }
+        return sysMicroServiceHashCache.getMicroServicesByType(false).filter { it.active }
     }
 
     override fun getAllActiveAtomicServices(): List<SysMicroServiceCacheEntry> {
-        return sysMicroServiceHashCache.listAtomicServices().filter { it.active == true }
+        return sysMicroServiceHashCache.listAtomicServices().filter { it.active }
+    }
+
+    override fun getFullMicroServiceTree(): List<IdAndNameTreeNode<String>> {
+        val cacheEntries = sysMicroServiceHashCache.getAllMicroServices()
+        val nodes = cacheEntries.map { IdAndNameTreeNode(it.code, it.name, it.parentCode) }
+        return ListToTreeConverter.convert(nodes)
     }
 
     override fun getMicroServiceByCode(code: String): SysMicroServiceCacheEntry? {

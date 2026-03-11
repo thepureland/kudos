@@ -38,6 +38,11 @@ data class SysSystemQuery (
 
     override var returnEntityClass: KClass<*>? = SysSystemRow::class
 
+    override var operators: Map<String, OperatorEnum>? = mapOf(
+        ::code.name to OperatorEnum.ILIKE,
+        ::name.name to OperatorEnum.ILIKE
+    )
+
     //endregion your codes 3
 
 }

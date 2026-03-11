@@ -1,5 +1,6 @@
 package io.kudos.ms.sys.common.vo.i18n
 
+import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.support.payload.ListSearchPayload
 import kotlin.reflect.KClass
 
@@ -45,6 +46,10 @@ data class SysI18nQuery (
     constructor() : this("")
 
     override var returnEntityClass: KClass<*>? = SysI18nRow::class
+
+    override var operators: Map<String, OperatorEnum>? = mapOf(
+        ::key.name to OperatorEnum.LIKE_S
+    )
 
     //endregion your codes 3
 

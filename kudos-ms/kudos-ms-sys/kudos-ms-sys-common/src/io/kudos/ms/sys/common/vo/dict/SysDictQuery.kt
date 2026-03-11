@@ -1,5 +1,6 @@
 package io.kudos.ms.sys.common.vo.dict
 
+import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.support.payload.ListSearchPayload
 import kotlin.reflect.KClass
 
@@ -51,6 +52,13 @@ data class SysDictQuery (
     constructor() : this("")
 
     override var returnEntityClass: KClass<*>? = SysDictRow::class
+
+    override var operators: Map<String, OperatorEnum>? = mapOf(
+        ::dictType.name to OperatorEnum.ILIKE,
+        ::dictName.name to OperatorEnum.ILIKE,
+        ::itemCode.name to OperatorEnum.LIKE_S,
+        ::itemName.name to OperatorEnum.LIKE_S,
+    )
 
     //endregion your codes 3
 

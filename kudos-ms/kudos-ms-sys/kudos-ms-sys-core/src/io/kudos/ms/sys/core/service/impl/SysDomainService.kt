@@ -4,17 +4,22 @@ import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
+import io.kudos.base.query.PagingSearchResult
 import io.kudos.base.query.eq
+import io.kudos.base.support.payload.ListSearchPayload
 import io.kudos.ms.sys.common.vo.domain.SysDomainCacheEntry
+import io.kudos.ms.sys.common.vo.domain.SysDomainDetail
 import io.kudos.ms.sys.common.vo.domain.SysDomainRow
 import io.kudos.ms.sys.common.vo.domain.SysDomainQuery
 import io.kudos.ms.sys.core.cache.DomainByNameCache
+import io.kudos.ms.sys.core.cache.TenantByIdCache
 import io.kudos.ms.sys.core.dao.SysDomainDao
 import io.kudos.ms.sys.core.model.po.SysDomain
 import io.kudos.ms.sys.core.service.iservice.ISysDomainService
-import org.springframework.beans.factory.annotation.Autowired
+import jakarta.annotation.Resource
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import kotlin.reflect.KClass
 
 
 /**
@@ -32,8 +37,31 @@ open class SysDomainService : BaseCrudService<String, SysDomain, SysDomainDao>()
 
     private val log = LogFactory.getLog(this)
 
-    @Autowired
+    @Resource
     private lateinit var domainByNameCache: DomainByNameCache
+
+    @Resource
+    private lateinit var tenantByIdCache: TenantByIdCache
+
+    override fun <R : Any> get(id: String, returnType: KClass<R>): R? {
+        val result = super.get(id, returnType)
+        if (result is SysDomainDetail) {
+            result.tenantName = tenantByIdCache.getTenantById(result.tenantId)!!.name
+        }
+        return result
+    }
+
+    override fun pagingSearch(listSearchPayload: ListSearchPayload): PagingSearchResult<*> {
+        val result = super.pagingSearch(listSearchPayload)
+        val rows = result.data
+        if (rows.isNotEmpty() && rows.first() is SysDomainRow) {
+            val tenantIds = rows.map { (it as SysDomainRow).tenantId }
+            val tenants = tenantByIdCache.getTenantsByIds(tenantIds)
+            val idAndNameMap = tenants.mapValues { entry -> entry.value.name }
+            rows.forEach { (it as SysDomainRow).tenantName = idAndNameMap[it.tenantId]!! }
+        }
+        return result
+    }
 
     override fun getDomainByName(domainName: String): SysDomainCacheEntry? {
         return domainByNameCache.getDomain(domainName)

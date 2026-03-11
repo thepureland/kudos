@@ -1,6 +1,7 @@
 package io.kudos.ms.sys.api.admin.controller
 
 import io.kudos.ability.web.springmvc.controller.BaseCrudController
+import io.kudos.base.tree.IdAndNameTreeNode
 import io.kudos.ms.sys.common.vo.system.SysSystemDetail
 import io.kudos.ms.sys.common.vo.system.SysSystemForm
 import io.kudos.ms.sys.common.vo.system.SysSystemRow
@@ -30,5 +31,14 @@ class SysSystemAdminController:
     fun getAllActiveSubSystemCodes(): List<String> {
         return service.getAllActiveSystems().filter { it.subSystem }.map { it.code }
     }
-    
+
+    /**
+     * 返回整棵系统树
+     *
+     * @return 系统树节点列表（根节点及其 children）
+     */
+    @GetMapping("/getFullSystemTree")
+    fun getFullSystemTree(): List<IdAndNameTreeNode<String>> {
+        return service.getFullSystemTree()
+    }
 }
