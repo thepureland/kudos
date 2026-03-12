@@ -1,8 +1,10 @@
 package io.kudos.ms.sys.core.service.iservice
 
 import io.kudos.base.support.iservice.IBaseCrudService
+import io.kudos.base.tree.IdAndNameTreeNode
 import io.kudos.ms.sys.common.api.ISysResourceApi
 import io.kudos.ms.sys.common.vo.resource.SysResourceCacheEntry
+import io.kudos.ms.sys.common.vo.resource.SysResourceQuery
 import io.kudos.ms.sys.common.vo.resource.SysResourceRow
 import io.kudos.ms.sys.common.vo.resource.SysResourceTreeRow
 import io.kudos.ms.sys.core.model.po.SysResource
@@ -84,6 +86,14 @@ interface ISysResourceService : IBaseCrudService<String, SysResource>, ISysResou
     fun getResourceTree(subSystemCode: String, parentId: String? = null): List<SysResourceTreeRow>
 
     /**
+     * 按资源类型(0层)->子系统(1层)->资源(>=2层)逐层加载资源树的直接孩子结点
+     *
+     * @param sysResourceQuery 资源查询条件
+     * @return List<IdAndNameTreeNode>
+     */
+    fun loadDirectChildrenForTree(sysResourceQuery: SysResourceQuery): List<IdAndNameTreeNode<String>>
+
+    /**
      * 更新启用状态，并同步缓存
      *
      * @param id 资源id
@@ -105,6 +115,14 @@ interface ISysResourceService : IBaseCrudService<String, SysResource>, ISysResou
      * @since 1.0.0
      */
     fun moveResource(id: String, newParentId: String?, newOrderNum: Int?): Boolean
+
+    /**
+     * 获取所有祖先id
+     *
+     * @param id 当前资源id
+     * @return List(祖先id)
+     */
+    fun fetchAllParentIds(id: String): List<String>
 
     //endregion your codes 2
 

@@ -1,11 +1,14 @@
 package io.kudos.ms.sys.api.admin.controller
 
 import io.kudos.ability.web.springmvc.controller.BaseCrudController
+import io.kudos.base.tree.IdAndNameTreeNode
 import io.kudos.ms.sys.common.consts.SysConsts
 import io.kudos.ms.sys.common.enums.ResourceTypeEnum
 import io.kudos.ms.sys.common.vo.resource.*
 import io.kudos.ms.sys.core.service.iservice.ISysResourceService
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
@@ -19,6 +22,22 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/admin/sys/resource")
 open class SysResourceAdminController :
     BaseCrudController<String, ISysResourceService, SysResourceQuery, SysResourceRow, SysResourceDetail, SysResourceForm>() {
+
+    /**
+     * 根据id获取资源详情信息，可以指定是否要获取所有父结点的id
+     *
+     * @param id 主键
+     * @param fetchAllParentIds 是否要获取所有父结点的id
+     * @return SysResourceDetail
+     */
+    @GetMapping("/getResourceDetail")
+    fun getResourceDetail(id: String, fetchAllParentIds: Boolean = false): SysResourceDetail {
+        val detail = super.getDetail(id)
+        if (fetchAllParentIds) {
+            detail.parentIds = service.fetchAllParentIds(id)
+        }
+        return detail
+    }
 
     /**
      * 根据资源类型和子系统，返回对应的资源
@@ -91,5 +110,15 @@ open class SysResourceAdminController :
         return service.getChildrenResources(subSystemCode, resourceType, parentId)
     }
 
+    /**
+     * 按资源类型(0层)->子系统(1层)->资源(>=2层)逐层加载资源树的直接孩子结点
+     *
+     * @param sysResourceQuery 资源查询条件
+     * @return List<IdAndNameTreeNode>
+     */
+    @PostMapping("/loadDirectChildrenForTree")
+    fun loadDirectChildrenForTree(@RequestBody sysResourceQuery: SysResourceQuery): List<IdAndNameTreeNode<String>> {
+        return service.loadDirectChildrenForTree(sysResourceQuery)
+    }
 
 }

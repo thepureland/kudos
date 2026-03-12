@@ -9,7 +9,7 @@ package io.kudos.base.tree
 data class IdAndNameTreeNode<T>(
 
     /** 惟一标识 */
-    val id: T,
+    val id: T? = null,
 
     /** 名称 */
     val name: String,
@@ -25,7 +25,9 @@ data class IdAndNameTreeNode<T>(
 
 ) : ITreeNode<T>,Comparable<IdAndNameTreeNode<T>> {
 
-    override fun _getId(): T = id
+    constructor(): this(null, "")
+
+    override fun _getId(): T = id!!
 
     override fun _getParentId(): T? = parentId
 

@@ -44,9 +44,6 @@ data class SysResourceForm (
     /** 备注 */
     val remark: String? = null,
 
-    /** 是否启用 */
-    val active: Boolean? = true,
-
     //endregion your codes 1
 //region your codes 2
 ) : FormPayload<String?>() {
