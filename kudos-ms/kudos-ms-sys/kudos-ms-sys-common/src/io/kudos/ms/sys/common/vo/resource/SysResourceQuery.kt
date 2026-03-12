@@ -28,7 +28,13 @@ data class SysResourceQuery (
     val subSystemCode: String? = null,
 
     /** 仅启用 */
-    val active: Boolean? = true,
+    var active: Boolean? = true,
+
+    /** 父资源id */
+    val parentId: String? = null,
+
+    /** 树层级 */
+    val level: Int? = null
 
     //endregion your codes 1
 //region your codes 2

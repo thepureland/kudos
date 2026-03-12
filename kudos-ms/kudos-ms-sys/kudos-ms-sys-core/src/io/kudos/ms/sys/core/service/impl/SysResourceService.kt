@@ -5,13 +5,20 @@ import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.eq
+import io.kudos.base.tree.IdAndNameTreeNode
+import io.kudos.ms.sys.common.consts.SysConsts
+import io.kudos.ms.sys.common.consts.SysDictTypes
 import io.kudos.ms.sys.common.enums.ResourceTypeEnum
 import io.kudos.ms.sys.common.vo.resource.*
+import io.kudos.ms.sys.core.cache.DictItemsByMsCodeAndTypeCache
 import io.kudos.ms.sys.core.cache.SysResourceHashCache
+import io.kudos.ms.sys.core.cache.SysSystemHashCache
 import io.kudos.ms.sys.core.dao.SysResourceDao
 import io.kudos.ms.sys.core.model.po.SysResource
+import io.kudos.ms.sys.core.model.table.SysResources
 import io.kudos.ms.sys.core.service.iservice.ISysResourceService
 import jakarta.annotation.Resource
+import org.ktorm.dsl.isNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -33,6 +40,12 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
 
     @Resource
     private lateinit var sysResourceHashCache: SysResourceHashCache
+
+    @Resource
+    private lateinit var dictItemsByMsCodeAndTypeCache: DictItemsByMsCodeAndTypeCache
+
+    @Resource
+    private lateinit var sysSystemHashCache: SysSystemHashCache
 
     override fun getResourceById(id: String): SysResourceCacheEntry? {
         return sysResourceHashCache.getResourceById(id)
@@ -294,6 +307,58 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
             }
         }
         return roots
+    }
+
+    override fun loadDirectChildrenForTree(sysResourceQuery: SysResourceQuery): List<IdAndNameTreeNode<String>> {
+        return when (if (sysResourceQuery.level == null) Int.MAX_VALUE else sysResourceQuery.level) {
+            0 -> { // 资源类型
+                val dictItems = dictItemsByMsCodeAndTypeCache.getDictItems(
+                    SysConsts.ATOMIC_SERVICE_NAME, SysDictTypes.RESOURCE_TYPE
+                )
+                dictItems.map {
+                    IdAndNameTreeNode(it.itemCode, it.itemName)
+                }
+            }
+
+            1 -> { // 子系统
+                val cacheEntries = sysSystemHashCache.getAllSystems()
+                cacheEntries.map {
+                    IdAndNameTreeNode(it.code, it.name)
+                }
+            }
+
+            else -> { // 资源
+                if (sysResourceQuery.active == false) { // 非仅启用状态
+                    sysResourceQuery.active = null
+                }
+                sysResourceQuery.returnEntityClass = IdAndNameTreeNode::class
+                sysResourceQuery.pageNo = null // 不分页
+                @Suppress("UNCHECKED_CAST")
+                dao.search(sysResourceQuery) { column, _ ->
+                    if (column.name == SysResources.parentId.name && sysResourceQuery.level == 2) { // 1层是资源类型，2层是子系统，从第3层开始才是SysResource
+                        column.isNull()
+                    } else null
+                } as List<IdAndNameTreeNode<String>>
+            }
+        }
+    }
+
+    override fun fetchAllParentIds(id: String): List<String> {
+        val results = mutableListOf<String>()
+        recursionFindAllParentId(id, results)
+        results.reverse()
+        return results
+    }
+
+    private fun recursionFindAllParentId(itemId: String, results: MutableList<String>) {
+        val cacheEntry = sysResourceHashCache.getResourceById(itemId)
+        if (cacheEntry != null) {
+            val parentId = cacheEntry.parentId
+            if (parentId != null) {
+                results.add(parentId)
+                recursionFindAllParentId(parentId, results)
+            }
+        }
     }
 
     //endregion your codes 2

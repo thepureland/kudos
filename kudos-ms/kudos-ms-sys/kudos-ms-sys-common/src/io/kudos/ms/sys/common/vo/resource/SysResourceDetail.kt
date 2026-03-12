@@ -74,6 +74,9 @@ data class SysResourceDetail (
 
     constructor() : this("")
 
+    /** 所有父项ID */
+    var parentIds: List<String>? = null
+
     //endregion your codes 3
 
 }
