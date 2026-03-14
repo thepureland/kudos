@@ -16,7 +16,6 @@ data class SysDomainCacheEntry (
     /** 主键 */
     override val id: String = "",
 
-    //region your codes 1
 
     /** 域名 */
     val domain: String = "",
@@ -36,16 +35,11 @@ data class SysDomainCacheEntry (
     /** 是否内置 */
     val builtIn: Boolean = false,
 
-    //endregion your codes 1
-//region your codes 2
 ) : IIdEntity<String>, Serializable {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
-    // endregion your codes 3
 
     companion object {
         private const val serialVersionUID = 8344729285406513964L

@@ -17,11 +17,8 @@ import org.springframework.stereotype.Repository
  * @since 1.0.0
  */
 @Repository
-//region your codes 1
 open class UserOrgDao : BaseCrudDao<String, UserOrg, UserOrgs>() {
-//endregion your codes 1
 
-    //region your codes 2
 
     /**
      * 按租户ID查询，返回缓存用 VO 列表
@@ -62,6 +59,5 @@ open class UserOrgDao : BaseCrudDao<String, UserOrg, UserOrgs>() {
         return search(criteria)
     }
 
-    //endregion your codes 2
 
 }

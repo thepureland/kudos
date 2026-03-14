@@ -18,7 +18,6 @@ data class SysCacheForm (
     /** 主键 */
     override val id: String? = null,
 
-    //region your codes 1
 
     /** 名称 */
     @get:NotBlank
@@ -48,15 +47,10 @@ data class SysCacheForm (
     /** 是否为 Hash 缓存 */
     val hash: Boolean = false,
 
-    //endregion your codes 1
-//region your codes 2
 ) : FormPayload<String?>() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this(null)
 
-    // endregion your codes 3
 
 }

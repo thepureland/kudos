@@ -12,9 +12,7 @@ import org.ktorm.schema.varchar
  * @author AI: Codex
  * @since 1.0.0
  */
-//region your codes 1
 object MsgReceiverGroups : MaintainableTable<MsgReceiverGroup>("msg_receiver_group") {
-//endregion your codes 1
 
     /** 接收者群组类型字典码 */
     var receiverGroupTypeDictCode = varchar("receiver_group_type_dict_code").bindTo { it.receiverGroupTypeDictCode }
@@ -26,8 +24,6 @@ object MsgReceiverGroups : MaintainableTable<MsgReceiverGroup>("msg_receiver_gro
     var nameColumn = varchar("name_column").bindTo { it.nameColumn }
 
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

@@ -13,11 +13,8 @@ import io.kudos.ms.sys.core.model.po.SysMicroService
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 interface ISysMicroServiceService : IBaseCrudService<String, SysMicroService> {
-//endregion your codes 1
 
-    //region your codes 2
 
     /**
      * 返回所有启用的微服务(包括原子服务，原子服务本质上也是微服务)
@@ -82,6 +79,5 @@ interface ISysMicroServiceService : IBaseCrudService<String, SysMicroService> {
      */
     fun updateActive(code: String, active: Boolean): Boolean
 
-    //endregion your codes 2
 
 }

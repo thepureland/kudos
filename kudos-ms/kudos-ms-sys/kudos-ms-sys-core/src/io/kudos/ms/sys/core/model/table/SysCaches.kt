@@ -13,9 +13,7 @@ import org.ktorm.schema.varchar
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 object SysCaches : MaintainableTable<SysCache>("sys_cache") {
-//endregion your codes 1
 
     /** 名称 */
     var name = varchar("name").bindTo { it.name }
@@ -38,8 +36,6 @@ object SysCaches : MaintainableTable<SysCache>("sys_cache") {
     /** 是否为 Hash 缓存 */
     var hash = boolean("hash").bindTo { it.hash }
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

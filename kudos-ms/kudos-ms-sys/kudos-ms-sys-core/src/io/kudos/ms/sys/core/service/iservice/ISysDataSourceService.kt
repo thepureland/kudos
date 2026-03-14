@@ -14,11 +14,8 @@ import io.kudos.ms.sys.core.model.po.SysDataSource
  * @author AI: Cursor
  * @since 1.0.0
  */
-//region your codes 1
 interface ISysDataSourceService : IBaseCrudService<String, SysDataSource>, ISysDataSourceApi {
-//endregion your codes 1
 
-    //region your codes 2
 
     /**
      * 返回指定租户、子系统、微服务的数据源，先从缓存找，找不到从数据库加载，并缓存
@@ -77,6 +74,5 @@ interface ISysDataSourceService : IBaseCrudService<String, SysDataSource>, ISysD
      */
     fun getDataSourcesBySubSystemCode(subSystemCode: String): List<SysDataSourceRow>
 
-    //endregion your codes 2
 
 }

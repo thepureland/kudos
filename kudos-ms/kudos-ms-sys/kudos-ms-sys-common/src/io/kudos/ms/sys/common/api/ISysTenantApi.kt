@@ -9,11 +9,8 @@ import io.kudos.ms.sys.common.vo.tenant.SysTenantCacheEntry
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 interface ISysTenantApi {
-//endregion your codes 1
 
-    //region your codes 2
 
     /**
      * 返回指定id的租户(包括未启用的)
@@ -45,6 +42,5 @@ interface ISysTenantApi {
      */
     fun getTenantsBySubSystemCode(subSystemCode: String): List<SysTenantCacheEntry>
 
-    //endregion your codes 2
 
 }

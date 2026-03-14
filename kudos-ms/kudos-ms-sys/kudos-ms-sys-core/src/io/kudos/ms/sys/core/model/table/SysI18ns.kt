@@ -14,9 +14,7 @@ import org.ktorm.schema.varchar
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 object SysI18ns : MaintainableTable<SysI18n>("sys_i18n") {
-//endregion your codes 1
 
     /** 语言_地区 */
     var locale = varchar("locale").bindTo { it.locale }
@@ -36,8 +34,6 @@ object SysI18ns : MaintainableTable<SysI18n>("sys_i18n") {
     /** 国际化值 */
     var value = varchar("value").bindTo { it.value }
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

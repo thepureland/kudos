@@ -15,9 +15,7 @@ import org.ktorm.schema.varchar
  * @author AI: Cursor
  * @since 1.0.0
  */
-//region your codes 1
 object UserOrgs : StringIdTable<UserOrg>("user_org") {
-//endregion your codes 1
 
     /** 机构名称 */
     var name = varchar("name").bindTo { it.name }
@@ -65,8 +63,6 @@ object UserOrgs : StringIdTable<UserOrg>("user_org") {
     var updateTime = datetime("update_time").bindTo { it.updateTime }
 
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

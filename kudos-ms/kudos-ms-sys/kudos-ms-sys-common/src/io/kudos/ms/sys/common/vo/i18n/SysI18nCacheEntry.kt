@@ -13,7 +13,6 @@ data class SysI18nCacheEntry (
     /** 主键 */
     override val id: String? = null,
 
-    //region your codes 1
 
     /** 语言_地区 */
     val locale: String = "",
@@ -33,15 +32,10 @@ data class SysI18nCacheEntry (
     /** 国际化值 */
     val value: String = "",
 
-    //endregion your codes 1
-//region your codes 2
 ) : IIdEntity<String?> {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this(null)
 
-    // endregion your codes 3
 
 }

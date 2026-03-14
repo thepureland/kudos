@@ -11,7 +11,6 @@ import io.kudos.base.support.payload.FormPayload
  */
 data class SysAccessRuleForm (
 
-    //region your codes 1
 
     override val id: String? = null,
 
@@ -24,15 +23,10 @@ data class SysAccessRuleForm (
     /** 规则类型 */
     val ruleType: Int? = null,
 
-    //endregion your codes 1
-//region your codes 2
 ) : FormPayload<String?>() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this(null)
 
-    // endregion your codes 3
 
 }

@@ -15,7 +15,6 @@ data class SysParamCacheEntry (
     /** 主键 */
     override val id: String = "",
 
-    //region your codes 1
 
     /** 参数名称 */
     val paramName: String = "",
@@ -41,16 +40,11 @@ data class SysParamCacheEntry (
     /** 是否内置 */
     val builtIn: Boolean = true,
 
-    //endregion your codes 1
-//region your codes 2
 ) : IIdEntity<String>, Serializable {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
-    // endregion your codes 3
 
     companion object {
         private const val serialVersionUID = 4541811200495435621L

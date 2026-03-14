@@ -13,7 +13,6 @@ import kotlin.reflect.KClass
  */
 data class SysTenantQuery (
 
-    //region your codes 1
 
     /** 名称 */
     val name: String? = null,
@@ -23,12 +22,8 @@ data class SysTenantQuery (
     /** 仅启用 */
     val active: Boolean? = true,
 
-    //endregion your codes 1
-//region your codes 2
 ) : ListSearchPayload() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
@@ -39,6 +34,5 @@ data class SysTenantQuery (
         ::subSystemCode.name to OperatorEnum.LIKE
     )
 
-    //endregion your codes 3
 
 }

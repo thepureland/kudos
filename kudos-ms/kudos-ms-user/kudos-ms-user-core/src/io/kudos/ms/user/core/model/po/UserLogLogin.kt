@@ -11,9 +11,7 @@ import java.time.LocalDateTime
  * @author AI: Cursor
  * @since 1.0.0
  */
-//region your codes 1
 interface UserLogLogin : IDbEntity<String, UserLogLogin> {
-//endregion your codes 1
 
     companion object : DbEntityFactory<UserLogLogin>()
 
@@ -63,8 +61,6 @@ interface UserLogLogin : IDbEntity<String, UserLogLogin> {
     var createTime: LocalDateTime?
 
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

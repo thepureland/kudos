@@ -14,12 +14,9 @@ import org.springframework.stereotype.Service
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 @Service
 open class SysCacheApi : ISysCacheApi {
-//endregion your codes 1
 
-    //region your codes 2
 
     @Resource
     protected lateinit var sysCacheService: ISysCacheService
@@ -40,6 +37,5 @@ open class SysCacheApi : ISysCacheApi {
         return sysCacheService.getAllActiveCaches()
     }
 
-    //endregion your codes 2
 
 }

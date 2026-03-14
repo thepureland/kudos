@@ -10,9 +10,7 @@ import java.time.LocalDateTime
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 interface SysTenantLocale : IDbEntity<String, SysTenantLocale> {
-//endregion your codes 1
 
     companion object : DbEntityFactory<SysTenantLocale>()
 
@@ -41,8 +39,6 @@ interface SysTenantLocale : IDbEntity<String, SysTenantLocale> {
     var updateTime: LocalDateTime?
 
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

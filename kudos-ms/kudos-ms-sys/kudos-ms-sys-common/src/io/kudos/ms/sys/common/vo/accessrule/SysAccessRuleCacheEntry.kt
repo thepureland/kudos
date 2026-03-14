@@ -15,7 +15,6 @@ data class SysAccessRuleCacheEntry (
     /** 主键 */
     override val id: String = "",
 
-    //region your codes 1
 
     /** 租户id */
     val tenantId: String = "",
@@ -26,16 +25,11 @@ data class SysAccessRuleCacheEntry (
     /** 规则类型 */
     val ruleType: Int = 0,
 
-    //endregion your codes 1
-//region your codes 2
 ) : IIdEntity<String>, Serializable {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
-    // endregion your codes 3
 
     companion object {
         private const val serialVersionUID = 8253788046293050901L

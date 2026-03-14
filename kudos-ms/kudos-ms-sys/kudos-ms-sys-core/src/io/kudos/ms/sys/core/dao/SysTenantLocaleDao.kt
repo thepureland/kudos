@@ -16,11 +16,8 @@ import org.springframework.stereotype.Repository
  * @since 1.0.0
  */
 @Repository
-//region your codes 1
 open class SysTenantLocaleDao : BaseCrudDao<String, SysTenantLocale, SysTenantLocales>() {
-//endregion your codes 1
 
-    //region your codes 2
 
     /**
      * 根据租户id查找对应的语言代码
@@ -74,6 +71,5 @@ open class SysTenantLocaleDao : BaseCrudDao<String, SysTenantLocale, SysTenantLo
         return batchDeleteCriteria(criteria)
     }
 
-    //endregion your codes 2
 
 }

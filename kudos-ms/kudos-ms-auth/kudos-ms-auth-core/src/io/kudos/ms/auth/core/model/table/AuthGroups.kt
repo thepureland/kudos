@@ -14,9 +14,7 @@ import org.ktorm.schema.varchar
  * @author AI: Codex
  * @since 1.0.0
  */
-//region your codes 1
 object AuthGroups : StringIdTable<AuthGroup>("auth_group") {
-//endregion your codes 1
 
     /** 用户组编码 */
     var code = varchar("code").bindTo { it.code }
@@ -58,8 +56,6 @@ object AuthGroups : StringIdTable<AuthGroup>("auth_group") {
     var updateTime = datetime("update_time").bindTo { it.updateTime }
 
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

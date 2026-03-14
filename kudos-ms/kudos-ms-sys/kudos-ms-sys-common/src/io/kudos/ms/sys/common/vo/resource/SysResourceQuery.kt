@@ -13,7 +13,6 @@ import kotlin.reflect.KClass
  */
 data class SysResourceQuery (
 
-    //region your codes 1
 
     /** 名称 */
     val name: String? = null,
@@ -36,12 +35,8 @@ data class SysResourceQuery (
     /** 树层级 */
     val level: Int? = null
 
-    //endregion your codes 1
-//region your codes 2
 ) : ListSearchPayload() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
@@ -49,6 +44,5 @@ data class SysResourceQuery (
 
     override var operators: Map<String, OperatorEnum>? = mapOf(::name.name to OperatorEnum.ILIKE)
 
-    //endregion your codes 3
 
 }

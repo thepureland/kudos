@@ -20,11 +20,8 @@ import org.springframework.transaction.annotation.Transactional
  * @since 1.0.0
  */
 @Service
-//region your codes 1
 open class UserOrgUserService : BaseCrudService<String, UserOrgUser, UserOrgUserDao>(), IUserOrgUserService {
-//endregion your codes 1
 
-    //region your codes 2
 
     @Autowired
     private lateinit var userIdsByOrgIdCache: UserIdsByOrgIdCache
@@ -112,6 +109,5 @@ open class UserOrgUserService : BaseCrudService<String, UserOrgUser, UserOrgUser
         return success
     }
 
-    //endregion your codes 2
 
 }

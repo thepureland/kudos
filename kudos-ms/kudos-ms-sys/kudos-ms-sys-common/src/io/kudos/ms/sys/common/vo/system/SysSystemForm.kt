@@ -12,7 +12,6 @@ import jakarta.validation.constraints.NotBlank
  */
 data class SysSystemForm (
 
-    //region your codes 1
 
     /** 编码 */
     @get:NotBlank
@@ -31,18 +30,13 @@ data class SysSystemForm (
     /** 备注 */
     val remark: String? = null,
 
-    //endregion your codes 1
-//region your codes 2
 ) : FormPayload<String>() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
     override val id: String
         get() = code
 
-    // endregion your codes 3
 
 }

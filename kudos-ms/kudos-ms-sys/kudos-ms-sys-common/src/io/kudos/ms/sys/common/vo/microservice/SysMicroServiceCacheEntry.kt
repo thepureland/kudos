@@ -13,7 +13,6 @@ import java.io.Serializable
 data class SysMicroServiceCacheEntry (
 
 
-    //region your codes 1
 
     override val id: String = "",
 
@@ -41,17 +40,12 @@ data class SysMicroServiceCacheEntry (
     /** 是否内置 */
     val builtIn: Boolean = true,
 
-    //endregion your codes 1
-//region your codes 2
 ) : IIdEntity<String>, Serializable {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
 
-    // endregion your codes 3
 
     companion object {
         private const val serialVersionUID = 3759252597026207298L

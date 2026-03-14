@@ -13,7 +13,6 @@ import kotlin.reflect.KClass
  */
 data class SysDictItemQuery (
 
-    //region your codes 1
 
     /** 主键 */
     val id: String? = null,
@@ -54,12 +53,8 @@ data class SysDictItemQuery (
     /** 字典是否启用 */
     val dictActive: Boolean? = null,
 
-    //endregion your codes 1
-//region your codes 2
 ) : ListSearchPayload() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
@@ -72,6 +67,5 @@ data class SysDictItemQuery (
         ::itemName.name to OperatorEnum.ILIKE,
     )
 
-    //endregion your codes 3
 
 }

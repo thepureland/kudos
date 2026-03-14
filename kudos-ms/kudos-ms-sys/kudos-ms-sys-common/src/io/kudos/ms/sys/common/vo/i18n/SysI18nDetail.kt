@@ -15,7 +15,6 @@ data class SysI18nDetail (
     /** 主键 */
     override val id: String = "",
 
-    //region your codes 1
 
     /** 语言_地区 */
     val locale: String = "",
@@ -62,15 +61,10 @@ data class SysI18nDetail (
     /** 更新时间 */
     val updateTime: LocalDateTime? = null,
 
-    //endregion your codes 1
-//region your codes 2
 ) : IdJsonResult<String>() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
-    //endregion your codes 3
 
 }

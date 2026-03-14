@@ -20,11 +20,8 @@ import org.springframework.transaction.annotation.Transactional
  * @since 1.0.0
  */
 @Service
-//region your codes 1
 open class SysI18NService : BaseCrudService<String, SysI18n, SysI18nDao>(), ISysI18nService {
-//endregion your codes 1
 
-    //region your codes 2
 
     private val log = LogFactory.getLog(this)
 
@@ -183,6 +180,5 @@ open class SysI18NService : BaseCrudService<String, SysI18n, SysI18nDao>(), ISys
         return namespace to key
     }
 
-    //endregion your codes 2
 
 }

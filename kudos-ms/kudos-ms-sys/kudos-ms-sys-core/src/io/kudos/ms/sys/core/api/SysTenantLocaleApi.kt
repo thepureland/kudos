@@ -12,12 +12,9 @@ import org.springframework.stereotype.Service
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 @Service
 open class SysTenantLocaleApi : ISysTenantLocaleApi {
-//endregion your codes 1
 
-    //region your codes 2
 
     @Resource
     protected lateinit var sysTenantLocaleService: ISysTenantLocaleService
@@ -42,6 +39,5 @@ open class SysTenantLocaleApi : ISysTenantLocaleApi {
         return sysTenantLocaleService.exists(tenantId, localeCode)
     }
 
-    //endregion your codes 2
 
 }

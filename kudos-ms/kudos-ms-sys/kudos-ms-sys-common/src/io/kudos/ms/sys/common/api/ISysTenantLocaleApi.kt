@@ -7,11 +7,8 @@ package io.kudos.ms.sys.common.api
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 interface ISysTenantLocaleApi {
-//endregion your codes 1
 
-    //region your codes 2
 
     fun getLocaleCodesByTenantId(tenantId: String): Set<String>
 
@@ -23,6 +20,5 @@ interface ISysTenantLocaleApi {
 
     fun exists(tenantId: String, localeCode: String): Boolean
 
-    //endregion your codes 2
 
 }

@@ -14,7 +14,6 @@ import java.time.LocalDateTime
 data class SysAccessRuleIpCacheEntry (
 
 
-    //region your codes 1
 
     /** 主键 */
     override val id: String = "",
@@ -31,16 +30,11 @@ data class SysAccessRuleIpCacheEntry (
     /** 过期时间 */
     val expirationTime: LocalDateTime? = null,
 
-    //endregion your codes 1
-//region your codes 2
 ) : IIdEntity<String>, Serializable {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
-    // endregion your codes 3
 
     companion object {
         private const val serialVersionUID = 6895365638061974342L

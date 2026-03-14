@@ -12,9 +12,7 @@ import org.ktorm.schema.varchar
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 object SysResources : MaintainableTable<SysResource>("sys_resource") {
-//endregion your codes 1
 
     /** 名称 */
     var name = varchar("name").bindTo { it.name }
@@ -38,8 +36,6 @@ object SysResources : MaintainableTable<SysResource>("sys_resource") {
     var subSystemCode = varchar("sub_system_code").bindTo { it.subSystemCode }
 
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

@@ -13,9 +13,7 @@ import org.ktorm.schema.varchar
  * @author AI: Codex
  * @since 1.0.0
  */
-//region your codes 1
 object MsgTemplates : StringIdTable<MsgTemplate>("msg_template") {
-//endregion your codes 1
 
     /** 发送类型字典码 */
     var sendTypeDictCode = varchar("send_type_dict_code").bindTo { it.sendTypeDictCode }
@@ -51,8 +49,6 @@ object MsgTemplates : StringIdTable<MsgTemplate>("msg_template") {
     var tenantId = varchar("tenant_id").bindTo { it.tenantId }
 
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

@@ -18,11 +18,8 @@ import org.springframework.stereotype.Repository
  * @since 1.0.0
  */
 @Repository
-//region your codes 1
 open class SysTenantSystemDao : BaseCrudDao<String, SysTenantSystem, SysTenantSystems>() {
-//endregion your codes 1
 
-    //region your codes 2
 
     /**
      * 根据租户id查找对应的系统编码
@@ -171,6 +168,5 @@ open class SysTenantSystemDao : BaseCrudDao<String, SysTenantSystem, SysTenantSy
         return searchAs<SysTenantSystemCacheEntry>(criteria)
     }
 
-    //endregion your codes 2
 
 }

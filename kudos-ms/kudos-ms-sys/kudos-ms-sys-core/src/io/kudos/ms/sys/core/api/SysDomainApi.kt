@@ -13,12 +13,9 @@ import org.springframework.stereotype.Component
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 @Component
 open class SysDomainApi : ISysDomainApi {
-//endregion your codes 1
 
-    //region your codes 2
 
     @Resource
     protected lateinit var sysDomainService: ISysDomainService
@@ -27,6 +24,5 @@ open class SysDomainApi : ISysDomainApi {
         return sysDomainService.getDomainByName(domainName)
     }
 
-    //endregion your codes 2
 
 }

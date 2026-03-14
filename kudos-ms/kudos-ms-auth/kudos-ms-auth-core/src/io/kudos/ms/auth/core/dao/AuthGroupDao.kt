@@ -17,11 +17,8 @@ import org.springframework.stereotype.Repository
  * @since 1.0.0
  */
 @Repository
-//region your codes 1
 open class AuthGroupDao : BaseCrudDao<String, AuthGroup, AuthGroups>() {
-//endregion your codes 1
 
-    //region your codes 2
 
     /**
      * 查询所有 active=true 的用户组
@@ -44,6 +41,5 @@ open class AuthGroupDao : BaseCrudDao<String, AuthGroup, AuthGroups>() {
         return searchAs<AuthGroupCacheEntry>(criteria).firstOrNull()
     }
 
-    //endregion your codes 2
 
 }

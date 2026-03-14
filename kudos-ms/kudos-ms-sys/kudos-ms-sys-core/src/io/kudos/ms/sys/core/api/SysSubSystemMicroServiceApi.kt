@@ -12,12 +12,9 @@ import org.springframework.stereotype.Service
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 @Service
 open class SysSubSystemMicroServiceApi : ISysSubSystemMicroServiceApi {
-//endregion your codes 1
 
-    //region your codes 2
 
     @Resource
     protected lateinit var sysSubSystemMicroServiceService: ISysSubSystemMicroServiceService
@@ -42,6 +39,5 @@ open class SysSubSystemMicroServiceApi : ISysSubSystemMicroServiceApi {
         return sysSubSystemMicroServiceService.exists(subSystemCode, microServiceCode)
     }
 
-    //endregion your codes 2
 
 }

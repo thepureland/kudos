@@ -16,7 +16,6 @@ data class MsgTemplateCacheEntry (
     /** 主键 */
     override val id: String = "",
 
-    //region your codes 1
 
     /** 发送类型字典码 */
     val sendTypeDictCode: String? = null,
@@ -51,16 +50,11 @@ data class MsgTemplateCacheEntry (
     /** 租户ID */
     val tenantId: String? = null,
 
-    //endregion your codes 1
-//region your codes 2
 ) : IIdEntity<String>, Serializable {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
-    //endregion your codes 3
 
     companion object {
         private const val serialVersionUID = 5801009370756956314L

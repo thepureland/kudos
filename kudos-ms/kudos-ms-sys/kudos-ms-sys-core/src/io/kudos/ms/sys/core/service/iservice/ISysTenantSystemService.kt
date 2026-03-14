@@ -11,11 +11,8 @@ import io.kudos.ms.sys.core.model.po.SysTenantSystem
  * @author AI: Cursor
  * @since 1.0.0
  */
-//region your codes 1
 interface ISysTenantSystemService : IBaseCrudService<String, SysTenantSystem> {
-//endregion your codes 1
 
-    //region your codes 2
 
     /**
      * 根据租户id查找对应的系统编码
@@ -98,6 +95,5 @@ interface ISysTenantSystemService : IBaseCrudService<String, SysTenantSystem> {
      */
     fun batchDeleteByTenantIds(tenantIds: Collection<String>): Int
 
-    //endregion your codes 2
 
 }

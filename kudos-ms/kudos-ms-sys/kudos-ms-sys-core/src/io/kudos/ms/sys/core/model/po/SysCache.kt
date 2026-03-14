@@ -9,9 +9,7 @@ import io.kudos.ability.data.rdb.ktorm.support.IMaintainableDbEntity
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 interface SysCache : IMaintainableDbEntity<String, SysCache> {
-//endregion your codes 1
 
     companion object : DbEntityFactory<SysCache>()
 
@@ -36,8 +34,6 @@ interface SysCache : IMaintainableDbEntity<String, SysCache> {
     /** 是否为 Hash 缓存（true 时参与 MixHashCacheManager 初始化） */
     var hash: Boolean
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

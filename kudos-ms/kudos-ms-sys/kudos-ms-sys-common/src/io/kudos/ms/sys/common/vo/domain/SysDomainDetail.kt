@@ -15,7 +15,6 @@ data class SysDomainDetail (
     /** 主键 */
     override val id: String = "",
 
-    //region your codes 1
 
     /** 域名 */
     val domain: String = "",
@@ -53,18 +52,13 @@ data class SysDomainDetail (
     /** 更新时间 */
     val updateTime: LocalDateTime? = null,
 
-    //endregion your codes 1
-//region your codes 2
 ) : IdJsonResult<String>() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
     /** 租户名称 */
     var tenantName: String = ""
 
-    //endregion your codes 3
 
 }

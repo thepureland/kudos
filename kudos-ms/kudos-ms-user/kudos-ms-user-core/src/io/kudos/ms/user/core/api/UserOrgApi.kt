@@ -16,12 +16,9 @@ import org.springframework.stereotype.Service
  * @author AI: Cursor
  * @since 1.0.0
  */
-//region your codes 1
 @Service
 open class UserOrgApi : IUserOrgApi {
-//endregion your codes 1
 
-    //region your codes 2
 
     @Resource
     private lateinit var userOrgHashCache: UserOrgHashCache 
@@ -61,6 +58,5 @@ open class UserOrgApi : IUserOrgApi {
         return userOrgService.getParentOrg(orgId)
     }
 
-    //endregion your codes 2
 
 }

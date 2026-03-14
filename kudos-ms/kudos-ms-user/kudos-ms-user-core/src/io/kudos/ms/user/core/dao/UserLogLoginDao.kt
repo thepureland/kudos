@@ -18,11 +18,8 @@ import java.time.LocalDateTime
  * @since 1.0.0
  */
 @Repository
-//region your codes 1
 open class UserLogLoginDao : BaseCrudDao<String, UserLogLogin, UserLogLogins>() {
-//endregion your codes 1
 
-    //region your codes 2
 
     /**
      * 按用户ID查询登录日志
@@ -118,6 +115,5 @@ open class UserLogLoginDao : BaseCrudDao<String, UserLogLogin, UserLogLogins>() 
         return criteria
     }
 
-    //endregion your codes 2
 
 }

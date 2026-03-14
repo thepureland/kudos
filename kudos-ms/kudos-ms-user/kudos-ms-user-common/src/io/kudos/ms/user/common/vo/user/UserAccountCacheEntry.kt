@@ -17,7 +17,6 @@ data class UserAccountCacheEntry (
     /** 主键 */
     override val id: String = "",
 
-    //region your codes 1
 
     /** 用户名 */
     val username: String? = null,
@@ -100,16 +99,11 @@ data class UserAccountCacheEntry (
     /** 更新时间 */
     val updateTime: LocalDateTime? = null,
 
-    //endregion your codes 1
-//region your codes 2
 ) : IIdEntity<String>, Serializable {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
-    //endregion your codes 3
 
     companion object {
         private const val serialVersionUID = 1L

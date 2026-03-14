@@ -17,11 +17,8 @@ import org.springframework.stereotype.Repository
  * @since 1.0.0
  */
 @Repository
-//region your codes 1
 open class UserAccountDao : BaseCrudDao<String, UserAccount, UserAccounts>() {
-//endregion your codes 1
 
-    //region your codes 2
 
     /**
      * 按租户、用户名查询，返回缓存用 VO 列表
@@ -60,6 +57,5 @@ open class UserAccountDao : BaseCrudDao<String, UserAccount, UserAccounts>() {
         return searchProperty(criteria, UserAccount::id).filterNotNull()
     }
 
-    //endregion your codes 2
 
 }

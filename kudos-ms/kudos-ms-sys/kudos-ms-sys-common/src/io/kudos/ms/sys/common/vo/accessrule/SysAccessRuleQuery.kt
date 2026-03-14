@@ -13,7 +13,6 @@ import kotlin.reflect.KClass
  */
 data class SysAccessRuleQuery (
 
-    //region your codes 1
 
 
     /** 租户id */
@@ -25,17 +24,12 @@ data class SysAccessRuleQuery (
     /** 规则类型 */
     val ruleType: Int? = null,
 
-    //endregion your codes 1
-//region your codes 2
 ) : ListSearchPayload() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
     override var returnEntityClass: KClass<*>? = SysAccessRuleRow::class
 
-    //endregion your codes 3
 
 }

@@ -11,11 +11,8 @@ import io.kudos.ms.sys.core.model.po.SysI18n
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 interface ISysI18nService : IBaseCrudService<String, SysI18n> {
-//endregion your codes 1
 
-    //region your codes 2
 
     /**
      * 获取国际化值
@@ -87,6 +84,5 @@ interface ISysI18nService : IBaseCrudService<String, SysI18n> {
      */
     fun updateActive(id: String, active: Boolean): Boolean
 
-    //endregion your codes 2
 
 }

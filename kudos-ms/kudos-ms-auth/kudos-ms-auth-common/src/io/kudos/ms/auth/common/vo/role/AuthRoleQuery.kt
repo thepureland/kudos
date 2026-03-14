@@ -13,7 +13,6 @@ import kotlin.reflect.KClass
  */
 data class AuthRoleQuery (
 
-    //region your codes 1
 
     /** 角色编码 */
     val code: String? = null,
@@ -36,17 +35,12 @@ data class AuthRoleQuery (
     /** 是否内置 */
     val builtIn: Boolean? = null,
 
-    //endregion your codes 1
-//region your codes 2
 ) : ListSearchPayload() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
     override var returnEntityClass: KClass<*>? = AuthRoleRow::class
 
-    //endregion your codes 3
 
 }

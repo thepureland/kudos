@@ -10,11 +10,8 @@ import io.kudos.ms.sys.core.model.po.SysTenantResource
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 interface ISysTenantResourceService : IBaseCrudService<String, SysTenantResource> {
-//endregion your codes 1
 
-    //region your codes 2
 
     /**
      * 根据租户id获取资源id列表
@@ -69,6 +66,5 @@ interface ISysTenantResourceService : IBaseCrudService<String, SysTenantResource
      */
     fun exists(tenantId: String, resourceId: String): Boolean
 
-    //endregion your codes 2
 
 }

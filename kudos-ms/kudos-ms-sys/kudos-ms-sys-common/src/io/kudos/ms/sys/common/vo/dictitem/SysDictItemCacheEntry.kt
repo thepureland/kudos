@@ -15,7 +15,6 @@ data class SysDictItemCacheEntry (
     /** 主键 */
     override val id: String = "",
 
-    //region your codes 1
 
     /** 字典项代码 */
     val itemCode: String = "",
@@ -50,16 +49,11 @@ data class SysDictItemCacheEntry (
     /** 原子服务编码（来自 v_sys_dict_item 视图，用于 Hash 缓存副属性索引） */
     val atomicServiceCode: String = "",
 
-    //endregion your codes 1
-//region your codes 2
 ) : IIdEntity<String>, Serializable {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
-    // endregion your codes 3
 
     companion object {
         private const val serialVersionUID = 3064983536187872915L

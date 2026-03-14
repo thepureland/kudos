@@ -26,11 +26,8 @@ import org.springframework.stereotype.Repository
  * @since 1.0.0
  */
 @Repository
-//region your codes 1
 open class SysDictItemDao : BaseCrudDao<String, SysDictItem, SysDictItems>() {
-//endregion your codes 1
 
-    //region your codes 2
 
     fun searchActiveItemByDictId(dictId: String): List<SysDictItem> {
         return entitySequence().filter {
@@ -44,6 +41,5 @@ open class SysDictItemDao : BaseCrudDao<String, SysDictItem, SysDictItems>() {
 //            .toList()
     }
 
-    //endregion your codes 2
 
 }

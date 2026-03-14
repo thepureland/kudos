@@ -23,11 +23,8 @@ import org.springframework.transaction.annotation.Transactional
  * @since 1.0.0
  */
 @Service
-//region your codes 1
 open class SysParamService : BaseCrudService<String, SysParam, SysParamDao>(), ISysParamService {
-//endregion your codes 1
 
-    //region your codes 2
 
     private val log = LogFactory.getLog(this)
 
@@ -119,6 +116,5 @@ open class SysParamService : BaseCrudService<String, SysParam, SysParamDao>(), I
         return paramByModuleAndNameCache.getParam(atomicServiceCode, paramName)
     }
 
-    //endregion your codes 2
 
 }

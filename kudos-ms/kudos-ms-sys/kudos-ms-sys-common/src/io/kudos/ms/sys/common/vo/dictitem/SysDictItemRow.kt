@@ -11,7 +11,6 @@ import io.kudos.base.support.result.IJsonResult
  */
 data class SysDictItemRow (
 
-    //region your codes 1
 
     /** 字典项id */
     val id: String = "",
@@ -52,15 +51,10 @@ data class SysDictItemRow (
     /** 所有父项ID */
     var parentIds: List<String>? = null
 
-    //endregion your codes 1
-//region your codes 2
 ) : IJsonResult {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
-    // endregion your codes 3
 
 }

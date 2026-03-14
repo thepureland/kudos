@@ -13,12 +13,9 @@ import org.springframework.stereotype.Service
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 @Service
 open class SysAccessRuleApi : ISysAccessRuleApi {
-//endregion your codes 1
 
-    //region your codes 2
 
     @Resource
     protected lateinit var sysAccessRuleService: ISysAccessRuleService
@@ -35,6 +32,5 @@ open class SysAccessRuleApi : ISysAccessRuleApi {
         return sysAccessRuleService.updateActive(id, active)
     }
 
-    //endregion your codes 2
 
 }

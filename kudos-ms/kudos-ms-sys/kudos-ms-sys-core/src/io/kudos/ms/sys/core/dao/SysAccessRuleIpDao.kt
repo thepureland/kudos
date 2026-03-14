@@ -27,11 +27,8 @@ import org.springframework.stereotype.Repository
  * @since 1.0.0
  */
 @Repository
-//region your codes 1
 open class SysAccessRuleIpDao : BaseCrudDao<String, SysAccessRuleIp, SysAccessRuleIps>() {
-//endregion your codes 1
 
-    //region your codes 2
 
     /**
      * 分页连接查询符合条件的ip访问规则明细和父访问规则
@@ -201,6 +198,5 @@ open class SysAccessRuleIpDao : BaseCrudDao<String, SysAccessRuleIp, SysAccessRu
 //        ruleTypeDictCode = row[SysAccessRules.ruleTypeDictCode]
 //    )
 
-    //endregion your codes 2
 
 }

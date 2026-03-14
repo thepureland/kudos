@@ -13,7 +13,6 @@ import java.time.LocalDateTime
  */
 data class UserOrgTreeRow (
 
-    //region your codes 1
 
     /** 主键 */
     override val id: String = "",
@@ -66,15 +65,10 @@ data class UserOrgTreeRow (
     /** 子机构列表 */
     val children: MutableList<UserOrgTreeRow>? = null,
 
-    //endregion your codes 1
-//region your codes 2
 ) : IdJsonResult<String>() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
-    // endregion your codes 3
 
 }

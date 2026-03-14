@@ -15,7 +15,6 @@ data class SysDictItemDetail (
     /** 主键 */
     override val id: String = "",
 
-    //region your codes 1
 
     /** 字典项代码 */
     val itemCode: String = "",
@@ -59,15 +58,10 @@ data class SysDictItemDetail (
     /** 更新时间 */
     val updateTime: LocalDateTime? = null,
 
-    //endregion your codes 1
-//region your codes 2
 ) : IdJsonResult<String>() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
-    //endregion your codes 3
 
 }

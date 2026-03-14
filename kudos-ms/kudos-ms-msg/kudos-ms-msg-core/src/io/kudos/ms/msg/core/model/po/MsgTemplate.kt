@@ -11,9 +11,7 @@ import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
  * @author AI: Codex
  * @since 1.0.0
  */
-//region your codes 1
 interface MsgTemplate : IDbEntity<String, MsgTemplate> {
-//endregion your codes 1
 
     companion object : DbEntityFactory<MsgTemplate>()
 
@@ -51,8 +49,6 @@ interface MsgTemplate : IDbEntity<String, MsgTemplate> {
     var tenantId: String
 
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

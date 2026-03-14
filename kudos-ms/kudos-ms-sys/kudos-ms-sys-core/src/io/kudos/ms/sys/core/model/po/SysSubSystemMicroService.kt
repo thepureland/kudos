@@ -10,9 +10,7 @@ import java.time.LocalDateTime
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 interface SysSubSystemMicroService : IDbEntity<String, SysSubSystemMicroService> {
-//endregion your codes 1
 
     companion object : DbEntityFactory<SysSubSystemMicroService>()
 
@@ -41,8 +39,6 @@ interface SysSubSystemMicroService : IDbEntity<String, SysSubSystemMicroService>
     var updateTime: LocalDateTime?
 
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

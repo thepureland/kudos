@@ -12,7 +12,6 @@ import java.time.LocalDateTime
  */
 data class SysAccessRuleIpRow (
 
-    //region your codes 1
 
     /** ipRule的id */
     override val id: String = "",
@@ -50,15 +49,10 @@ data class SysAccessRuleIpRow (
     /** 规则类型字典代码 */
     val ruleTypeDictCode: String? = null,
 
-    //endregion your codes 1
-//region your codes 2
 ) : IdJsonResult<String>() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
-    // endregion your codes 3
 
 }

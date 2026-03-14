@@ -13,7 +13,6 @@ import kotlin.reflect.KClass
  */
 data class SysDomainQuery (
 
-    //region your codes 1
 
     /** 域名 */
     val domain: String? = null,
@@ -27,12 +26,8 @@ data class SysDomainQuery (
     /** 仅启用 */
     val active: Boolean? = null,
 
-    //endregion your codes 1
-//region your codes 2
 ) : ListSearchPayload() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
@@ -40,6 +35,5 @@ data class SysDomainQuery (
 
     override var operators: Map<String, OperatorEnum>? = mapOf(::domain.name to OperatorEnum.ILIKE)
 
-    //endregion your codes 3
 
 }

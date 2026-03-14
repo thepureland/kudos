@@ -9,11 +9,8 @@ import io.kudos.ms.sys.common.vo.param.SysParamCacheEntry
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 interface ISysParamApi {
-//endregion your codes 1
 
-    //region your codes 2
 
     /**
      * 根据参数名称和原子服务编码，取得对应参数
@@ -29,6 +26,5 @@ interface ISysParamApi {
         atomicServiceCode: String = "default"
     ): SysParamCacheEntry?
 
-    //endregion your codes 2
 
 }

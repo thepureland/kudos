@@ -14,12 +14,9 @@ import org.springframework.stereotype.Service
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 @Service
 open class SysSystemApi : ISysSystemApi {
-//endregion your codes 1
 
-    //region your codes 2
 
     @Resource
     protected lateinit var sysSystemService: ISysSystemService
@@ -40,6 +37,5 @@ open class SysSystemApi : ISysSystemApi {
         return sysSystemService.getSubSystemsBySystemCode(systemCode)
     }
 
-    //endregion your codes 2
 
 }

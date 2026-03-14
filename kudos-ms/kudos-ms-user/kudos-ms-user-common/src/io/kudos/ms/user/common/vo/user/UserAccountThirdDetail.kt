@@ -13,7 +13,6 @@ import java.time.LocalDateTime
  */
 data class UserAccountThirdDetail (
 
-    //region your codes 1
 
     /** 关联用户账号ID */
     val userId: String? = null,
@@ -72,15 +71,10 @@ data class UserAccountThirdDetail (
     /** 更新时间 */
     val updateTime: LocalDateTime? = null,
 
-    //endregion your codes 1
-//region your codes 2
 ) : IdJsonResult<String>() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
-    //endregion your codes 3
 
 }

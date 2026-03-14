@@ -11,13 +11,9 @@ import org.springframework.boot.SpringApplication
  * @since 1.0.0
  */
 @EnableKudos
-//region your codes 1
 class AuthApiAdminApplication
-//endregion your codes 1
 
 fun main(args : Array<String>) {
-    //region your codes 2
 
-    //endregion your codes 2
     SpringApplication.run(AuthApiAdminApplication::class.java, *args)
 }

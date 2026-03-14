@@ -15,7 +15,6 @@ data class SysDictItemForm (
     /** 主键 */
     override val id: String? = null,
 
-    //region your codes 1
 
     /** 字典项代码 */
     @get:NotBlank
@@ -37,15 +36,10 @@ data class SysDictItemForm (
     /** 备注 */
     val remark: String? = null,
 
-    //endregion your codes 1
-//region your codes 2
 ) : FormPayload<String?>() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this(null)
 
-    // endregion your codes 3
 
 }

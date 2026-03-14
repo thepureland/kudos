@@ -30,11 +30,8 @@ import kotlin.reflect.KClass
  * @since 1.0.0
  */
 @Service
-//region your codes 1
 open class SysDataSourceService : BaseCrudService<String, SysDataSource, SysDataSourceDao>(), ISysDataSourceService {
-//endregion your codes 1
 
-    //region your codes 2
 
     @Resource
     private lateinit var sysTenantApi: ISysTenantApi
@@ -187,6 +184,5 @@ open class SysDataSourceService : BaseCrudService<String, SysDataSource, SysData
         return sysDataSourceHashCache.getDataSources(tenantId, null, atomicServiceCode).firstOrNull()
     }
 
-    //endregion your codes 2
 
 }

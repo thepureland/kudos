@@ -13,12 +13,8 @@ import io.kudos.ms.sys.common.vo.dictitem.SysDictItemQuery
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 interface ISysDictItemApi {
-//endregion your codes 1
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

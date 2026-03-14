@@ -19,11 +19,8 @@ import org.springframework.transaction.annotation.Transactional
  * @since 1.0.0
  */
 @Service
-//region your codes 1
 open class SysDictItemService : BaseCrudService<String, SysDictItem, SysDictItemDao>(), ISysDictItemService {
-//endregion your codes 1
 
-    //region your codes 2
 
     @Autowired
     private lateinit var sysDictItemHashCache: SysDictItemHashCache
@@ -183,6 +180,5 @@ open class SysDictItemService : BaseCrudService<String, SysDictItem, SysDictItem
         return items
     }
 
-    //endregion your codes 2
 
 }

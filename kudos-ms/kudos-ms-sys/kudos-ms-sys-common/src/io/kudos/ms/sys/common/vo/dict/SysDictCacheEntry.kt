@@ -16,7 +16,6 @@ data class SysDictCacheEntry (
     /** 主键 */
     override val id: String = "",
 
-    //region your codes 1
 
     /** 字典类型 */
     val dictType: String = "",
@@ -36,16 +35,11 @@ data class SysDictCacheEntry (
     /** 是否内置 */
     val builtIn: Boolean = true,
 
-    //endregion your codes 1
-//region your codes 2
 ) : IIdEntity<String>, Serializable {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
-    // endregion your codes 3
 
     companion object {
         private const val serialVersionUID = 7553349815212490728L

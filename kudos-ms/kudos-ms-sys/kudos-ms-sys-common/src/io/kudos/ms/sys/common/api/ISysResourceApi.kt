@@ -14,11 +14,8 @@ import io.kudos.ms.sys.common.vo.resource.SysResourceQuery
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 interface ISysResourceApi {
-//endregion your codes 1
 
-    //region your codes 2
 
     /**
      * 返回资源id对应的资源
@@ -120,6 +117,5 @@ interface ISysResourceApi {
         parentId: String
     ): List<SysResourceCacheEntry>
 
-    //endregion your codes 2
 
 }

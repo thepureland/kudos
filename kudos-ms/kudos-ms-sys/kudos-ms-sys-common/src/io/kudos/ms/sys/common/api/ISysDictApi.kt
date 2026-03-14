@@ -9,11 +9,8 @@ import io.kudos.ms.sys.common.vo.dictitem.SysDictItemCacheEntry
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 interface ISysDictApi {
-//endregion your codes 1
 
-    //region your codes 2
 
     /**
      * 根据字典类型和原子服务编码，取得对应字典项(仅包括处于启用状态的)
@@ -72,6 +69,5 @@ interface ISysDictApi {
     ): Map<Pair<String, String>, LinkedHashMap<String, String>>
 
 
-    //endregion your codes 2
 
 }

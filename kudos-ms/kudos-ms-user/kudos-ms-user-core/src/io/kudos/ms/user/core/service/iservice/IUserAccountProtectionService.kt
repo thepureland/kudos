@@ -11,12 +11,8 @@ import io.kudos.ms.user.core.model.po.UserAccountProtection
  * @author AI: Codex
  * @since 1.0.0
  */
-//region your codes 1
 interface IUserAccountProtectionService : IBaseCrudService<String, UserAccountProtection> {
-//endregion your codes 1
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

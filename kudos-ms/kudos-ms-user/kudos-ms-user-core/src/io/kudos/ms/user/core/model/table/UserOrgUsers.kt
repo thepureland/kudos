@@ -14,9 +14,7 @@ import org.ktorm.schema.varchar
  * @author AI: Cursor
  * @since 1.0.0
  */
-//region your codes 1
 object UserOrgUsers : StringIdTable<UserOrgUser>("user_org_user") {
-//endregion your codes 1
 
     /** 机构id */
     var orgId = varchar("org_id").bindTo { it.orgId }
@@ -46,8 +44,6 @@ object UserOrgUsers : StringIdTable<UserOrgUser>("user_org_user") {
     var updateTime = datetime("update_time").bindTo { it.updateTime }
 
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

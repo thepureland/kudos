@@ -11,12 +11,8 @@ import io.kudos.ms.auth.core.model.po.AuthGroup
  * @author AI: Codex
  * @since 1.0.0
  */
-//region your codes 1
 interface IAuthGroupService : IBaseCrudService<String, AuthGroup> {
-//endregion your codes 1
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

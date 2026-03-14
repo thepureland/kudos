@@ -22,12 +22,9 @@ import org.springframework.transaction.annotation.Transactional
  * @since 1.0.0
  */
 @Service
-//region your codes 1
 open class AuthRoleResourceService : BaseCrudService<String, AuthRoleResource, AuthRoleResourceDao>(),
     IAuthRoleResourceService {
-//endregion your codes 1
 
-    //region your codes 2
 
     @Autowired
     private lateinit var resourceIdsByRoleIdCache: ResourceIdsByRoleIdCache
@@ -96,6 +93,5 @@ open class AuthRoleResourceService : BaseCrudService<String, AuthRoleResource, A
         return dao.exists(roleId, resourceId.trim())
     }
 
-    //endregion your codes 2
 
 }

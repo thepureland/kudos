@@ -11,7 +11,6 @@ import io.kudos.base.support.result.IdJsonResult
  */
 data class SysResourceTreeRow (
 
-    //region your codes 1
 
     /** 主键 */
     override val id: String = "",
@@ -49,15 +48,10 @@ data class SysResourceTreeRow (
     /** 子资源列表 */
     val children: MutableList<SysResourceTreeRow>? = null,
 
-    //endregion your codes 1
-//region your codes 2
 ) : IdJsonResult<String>() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
-    // endregion your codes 3
 
 }

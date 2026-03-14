@@ -15,7 +15,6 @@ data class MsgTemplateRow (
     /** 主键 */
     override val id: String = "",
 
-    //region your codes 1
 
     /** 发送类型字典码 */
     val sendTypeDictCode: String? = null,
@@ -50,15 +49,10 @@ data class MsgTemplateRow (
     /** 租户ID */
     val tenantId: String? = null,
 
-    //endregion your codes 1
-//region your codes 2
 ) : IdJsonResult<String>() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
-    //endregion your codes 3
 
 }

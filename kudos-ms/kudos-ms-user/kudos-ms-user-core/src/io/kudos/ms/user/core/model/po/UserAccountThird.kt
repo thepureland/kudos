@@ -11,9 +11,7 @@ import java.time.LocalDateTime
  * @author AI: Codex
  * @since 1.0.0
  */
-//region your codes 1
 interface UserAccountThird : IDbEntity<String, UserAccountThird> {
-//endregion your codes 1
 
     companion object : DbEntityFactory<UserAccountThird>()
 
@@ -75,8 +73,6 @@ interface UserAccountThird : IDbEntity<String, UserAccountThird> {
     var updateTime: LocalDateTime?
 
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

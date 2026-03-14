@@ -9,11 +9,8 @@ import io.kudos.ms.sys.common.vo.datasource.SysDataSourceCacheEntry
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 interface ISysDataSourceApi {
-//endregion your codes 1
 
-    //region your codes 2
 
     /**
      * 返回指定租户ID和原子服务编码的数据源
@@ -29,6 +26,5 @@ interface ISysDataSourceApi {
         atomicServiceCode: String? = null
     ): SysDataSourceCacheEntry?
 
-    //endregion your codes 2
 
 }

@@ -12,9 +12,7 @@ import org.ktorm.schema.varchar
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 object SysSubSystemMicroServices : StringIdTable<SysSubSystemMicroService>("sys_sub_system_micro_service") {
-//endregion your codes 1
 
     /** 子系统编码 */
     var subSystemCode = varchar("sub_system_code").bindTo { it.subSystemCode }
@@ -41,8 +39,6 @@ object SysSubSystemMicroServices : StringIdTable<SysSubSystemMicroService>("sys_
     var updateTime = datetime("update_time").bindTo { it.updateTime }
 
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

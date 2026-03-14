@@ -13,9 +13,7 @@ import org.ktorm.schema.varchar
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 object SysAccessRuleIps : MaintainableTable<SysAccessRuleIp>("sys_access_rule_ip") {
-//endregion your codes 1
 
     /** ip起 */
     var ipStart = long("ip_start").bindTo { it.ipStart }
@@ -33,8 +31,6 @@ object SysAccessRuleIps : MaintainableTable<SysAccessRuleIp>("sys_access_rule_ip
     var parentRuleId = varchar("parent_rule_id").bindTo { it.parentRuleId }
 
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

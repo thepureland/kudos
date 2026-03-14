@@ -13,7 +13,6 @@ import java.time.LocalDateTime
  */
 data class UserOrgDetail (
 
-    //region your codes 1
 
     /** 机构名称 */
     val name: String? = null,
@@ -60,15 +59,10 @@ data class UserOrgDetail (
     /** 更新时间 */
     val updateTime: LocalDateTime? = null,
 
-    //endregion your codes 1
-//region your codes 2
 ) : IdJsonResult<String>() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
-    //endregion your codes 3
 
 }

@@ -12,13 +12,9 @@ import org.springframework.cloud.openfeign.FeignClient
  * @author AI: Codex
  * @since 1.0.0
  */
-//region your codes 1
 @FeignClient(name = "user-contact-way", fallback = UserContactWayFallback::class)
 interface IUserContactWayProxy : IUserContactWayApi {
-//endregion your codes 1
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

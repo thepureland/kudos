@@ -28,11 +28,8 @@ import java.time.LocalDateTime
  * @since 1.0.0
  */
 @Service
-//region your codes 1
 open class UserAccountService : BaseCrudService<String, UserAccount, UserAccountDao>(), IUserAccountService {
-//endregion your codes 1
 
-    //region your codes 2
 
 
 
@@ -303,6 +300,5 @@ open class UserAccountService : BaseCrudService<String, UserAccount, UserAccount
         return count
     }
 
-    //endregion your codes 2
 
 }

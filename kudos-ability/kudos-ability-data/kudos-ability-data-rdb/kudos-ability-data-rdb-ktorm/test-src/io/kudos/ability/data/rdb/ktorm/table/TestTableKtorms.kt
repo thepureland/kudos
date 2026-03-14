@@ -9,9 +9,7 @@ import org.ktorm.schema.*
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 internal object TestTableKtorms : IntIdTable<TestTableKtorm>("test_table_ktorm") {
-//endregion your codes 1
 
     /** 名字 */
     var name = varchar("name").bindTo { it.name }
@@ -29,8 +27,6 @@ internal object TestTableKtorms : IntIdTable<TestTableKtorm>("test_table_ktorm")
     var height = int("height").bindTo { it.height }
 
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

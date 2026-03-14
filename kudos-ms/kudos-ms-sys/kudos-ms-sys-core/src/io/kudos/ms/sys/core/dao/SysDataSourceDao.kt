@@ -17,9 +17,7 @@ import org.springframework.stereotype.Repository
  * @since 1.0.0
  */
 @Repository
-//region your codes 1
 open class SysDataSourceDao : BaseCrudDao<String, SysDataSource, SysDataSources>() {
-//endregion your codes 1
 
     /** 按 id 集合批量查询，返回缓存用 VO 列表 */
     open fun fetchDataSourcesByIdsForCache(ids: Collection<String>): List<SysDataSourceCacheEntry> {

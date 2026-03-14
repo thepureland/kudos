@@ -11,9 +11,7 @@ import org.ktorm.schema.varchar
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 object SysAccessRules : MaintainableTable<SysAccessRule>("sys_access_rule") {
-//endregion your codes 1
 
     /** 租户id */
     var tenantId = varchar("tenant_id").bindTo { it.tenantId }
@@ -25,8 +23,6 @@ object SysAccessRules : MaintainableTable<SysAccessRule>("sys_access_rule") {
     var ruleTypeDictCode = varchar("rule_type_dict_code").bindTo { it.ruleTypeDictCode }
 
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

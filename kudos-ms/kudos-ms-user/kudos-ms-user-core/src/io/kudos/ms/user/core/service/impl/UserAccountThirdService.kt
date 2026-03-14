@@ -15,11 +15,8 @@ import org.springframework.stereotype.Service
  * @since 1.0.0
  */
 @Service
-//region your codes 1
 open class UserAccountThirdService : BaseCrudService<String, UserAccountThird, UserAccountThirdDao>(), IUserAccountThirdService {
-//endregion your codes 1
 
-    //region your codes 2
 
     override fun getByUserAccountId(userId: String): List<UserAccountThird> {
         return dao.searchByUserId(userId)
@@ -34,6 +31,5 @@ open class UserAccountThirdService : BaseCrudService<String, UserAccountThird, U
         return dao.fetchByProviderSubject(tenantId, accountProviderDictCode, accountProviderIssuer, subject)
     }
 
-    //endregion your codes 2
 
 }

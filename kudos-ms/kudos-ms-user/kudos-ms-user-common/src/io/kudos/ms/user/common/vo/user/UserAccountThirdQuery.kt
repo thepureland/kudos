@@ -13,7 +13,6 @@ import kotlin.reflect.KClass
  */
 data class UserAccountThirdQuery (
 
-    //region your codes 1
 
     /** 关联用户账号ID */
     val userId: String? = null,
@@ -48,17 +47,12 @@ data class UserAccountThirdQuery (
     /** 是否内置 */
     val builtIn: Boolean? = null,
 
-    //endregion your codes 1
-//region your codes 2
 ) : ListSearchPayload() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
     override var returnEntityClass: KClass<*>? = UserAccountThirdRow::class
 
-    //endregion your codes 3
 
 }

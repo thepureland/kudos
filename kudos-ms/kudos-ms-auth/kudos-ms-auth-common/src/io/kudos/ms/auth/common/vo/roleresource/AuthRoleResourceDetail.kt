@@ -13,7 +13,6 @@ import java.time.LocalDateTime
  */
 data class AuthRoleResourceDetail (
 
-    //region your codes 1
 
     /** 角色id */
     val roleId: String? = null,
@@ -39,15 +38,10 @@ data class AuthRoleResourceDetail (
     /** 更新时间 */
     val updateTime: LocalDateTime? = null,
 
-    //endregion your codes 1
-//region your codes 2
 ) : IdJsonResult<String>() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
-    //endregion your codes 3
 
 }

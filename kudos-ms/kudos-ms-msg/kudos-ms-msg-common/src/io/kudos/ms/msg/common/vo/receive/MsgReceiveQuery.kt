@@ -14,7 +14,6 @@ import kotlin.reflect.KClass
  */
 data class MsgReceiveQuery (
 
-    //region your codes 1
 
     /** 接收者ID */
     val receiverId: String? = null,
@@ -34,17 +33,12 @@ data class MsgReceiveQuery (
     /** 租户ID */
     val tenantId: String? = null,
 
-    //endregion your codes 1
-//region your codes 2
 ) : ListSearchPayload() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
     override var returnEntityClass: KClass<*>? = MsgReceiveRow::class
 
-    //endregion your codes 3
 
 }

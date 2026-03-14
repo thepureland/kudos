@@ -14,11 +14,8 @@ import io.kudos.ms.user.core.model.po.UserOrg
  * @author AI: Cursor
  * @since 1.0.0
  */
-//region your codes 1
 interface IUserOrgService : IBaseCrudService<String, UserOrg> {
-//endregion your codes 1
 
-    //region your codes 2
 
     /**
      * 根据机构ID获取该机构的所有管理员用户信息
@@ -151,6 +148,5 @@ interface IUserOrgService : IBaseCrudService<String, UserOrg> {
      */
     fun moveOrg(id: String, newParentId: String?, newSortNum: Int?): Boolean
 
-    //endregion your codes 2
 
 }

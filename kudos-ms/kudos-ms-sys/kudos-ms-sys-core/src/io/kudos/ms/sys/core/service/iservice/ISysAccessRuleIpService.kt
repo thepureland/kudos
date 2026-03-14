@@ -13,11 +13,8 @@ import io.kudos.ms.sys.core.model.po.SysAccessRuleIp
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 interface ISysAccessRuleIpService : IBaseCrudService<String, SysAccessRuleIp> {
-//endregion your codes 1
 
-    //region your codes 2
 
     /**
      * 获取规则的IP列表
@@ -73,6 +70,5 @@ interface ISysAccessRuleIpService : IBaseCrudService<String, SysAccessRuleIp> {
      */
     fun deleteByRuleId(ruleId: String): Int
 
-    //endregion your codes 2
 
 }

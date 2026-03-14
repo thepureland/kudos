@@ -17,11 +17,8 @@ import org.springframework.stereotype.Repository
  * @since 1.0.0
  */
 @Repository
-//region your codes 1
 open class UserAccountThirdDao : BaseCrudDao<String, UserAccountThird, UserAccountThirds>() {
-//endregion your codes 1
 
-    //region your codes 2
 
     /**
      * 按用户ID查询第三方绑定记录
@@ -60,6 +57,5 @@ open class UserAccountThirdDao : BaseCrudDao<String, UserAccountThird, UserAccou
         return search(criteria).firstOrNull()
     }
 
-    //endregion your codes 2
 
 }

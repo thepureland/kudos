@@ -12,9 +12,7 @@ import org.ktorm.schema.varchar
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 object SysDictItems : MaintainableTable<SysDictItem>("sys_dict_item") {
-//endregion your codes 1
 
     /** 字典项代码 */
     var itemCode = varchar("item_code").bindTo { it.itemCode }
@@ -32,8 +30,6 @@ object SysDictItems : MaintainableTable<SysDictItem>("sys_dict_item") {
     var parentId = varchar("parent_id").bindTo { it.parentId }
 
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

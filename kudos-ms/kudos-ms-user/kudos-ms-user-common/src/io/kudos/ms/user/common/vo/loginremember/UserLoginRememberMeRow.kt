@@ -13,7 +13,6 @@ import java.time.LocalDateTime
  */
 data class UserLoginRememberMeRow (
 
-    //region your codes 1
 
     /** 用户名 */
     val username: String? = null,
@@ -24,15 +23,10 @@ data class UserLoginRememberMeRow (
     /** 最后使用时间 */
     val lastUsed: LocalDateTime? = null,
 
-    //endregion your codes 1
-//region your codes 2
 ) : IdJsonResult<String>() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
-    //endregion your codes 3
 
 }

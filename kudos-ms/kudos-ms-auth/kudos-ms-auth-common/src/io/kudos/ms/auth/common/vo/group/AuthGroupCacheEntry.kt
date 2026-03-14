@@ -17,7 +17,6 @@ data class AuthGroupCacheEntry (
     /** 主键 */
     override val id: String = EMPTY_ID,
 
-    //region your codes 1
 
     /** 用户组编码 */
     val code: String? = null,
@@ -58,12 +57,8 @@ data class AuthGroupCacheEntry (
     /** 更新时间 */
     val updateTime: LocalDateTime? = null,
 
-    //endregion your codes 1
-//region your codes 2
 ) : IIdEntity<String>, Serializable {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this(EMPTY_ID)
 
@@ -80,7 +75,6 @@ data class AuthGroupCacheEntry (
             id = value
         }
 
-    //endregion your codes 3
 
     companion object {
         private const val serialVersionUID = 1L

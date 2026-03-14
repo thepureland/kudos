@@ -15,11 +15,8 @@ import java.time.LocalDateTime
  * @author AI: Cursor
  * @since 1.0.0
  */
-//region your codes 1
 interface IUserAccountService : IBaseCrudService<String, UserAccount> {
-//endregion your codes 1
 
-    //region your codes 2
 
     /**
      * 根据用户ID获取该用户所属的所有机构ID列表
@@ -200,6 +197,5 @@ interface IUserAccountService : IBaseCrudService<String, UserAccount> {
      */
     fun resetSecurityPasswordErrorTimes(id: String): Boolean
 
-    //endregion your codes 2
 
 }

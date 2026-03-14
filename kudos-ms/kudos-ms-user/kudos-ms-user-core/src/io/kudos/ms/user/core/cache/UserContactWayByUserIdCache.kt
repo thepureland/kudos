@@ -26,11 +26,8 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-//region your codes 1
 open class UserContactWayByUserIdCache : AbstractKeyValueCacheHandler<List<UserContactWayCacheEntry>>() {
-//endregion your codes 1
 
-    //region your codes 2
 
     @Autowired
     private lateinit var userContactWayDao: UserContactWayDao
@@ -207,6 +204,5 @@ open class UserContactWayByUserIdCache : AbstractKeyValueCacheHandler<List<UserC
 
     private val log = LogFactory.getLog(this)
 
-    //endregion your codes 2
 
 }

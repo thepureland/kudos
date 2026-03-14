@@ -9,9 +9,7 @@ import io.kudos.ability.data.rdb.ktorm.support.IMaintainableDbEntity
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 interface SysDictItem : IMaintainableDbEntity<String, SysDictItem> {
-//endregion your codes 1
 
     companion object : DbEntityFactory<SysDictItem>()
 
@@ -31,8 +29,6 @@ interface SysDictItem : IMaintainableDbEntity<String, SysDictItem> {
     var parentId: String?
 
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

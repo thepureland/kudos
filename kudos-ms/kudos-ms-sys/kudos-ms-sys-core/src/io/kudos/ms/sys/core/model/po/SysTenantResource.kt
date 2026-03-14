@@ -9,9 +9,7 @@ import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 interface SysTenantResource : IDbEntity<String, SysTenantResource> {
-//endregion your codes 1
 
     companion object : DbEntityFactory<SysTenantResource>()
 
@@ -22,8 +20,6 @@ interface SysTenantResource : IDbEntity<String, SysTenantResource> {
     var resourceId: String
 
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

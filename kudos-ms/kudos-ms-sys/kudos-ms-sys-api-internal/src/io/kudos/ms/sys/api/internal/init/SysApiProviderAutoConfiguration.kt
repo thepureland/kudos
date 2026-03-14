@@ -13,13 +13,9 @@ import org.springframework.context.annotation.Configuration
  */
 @Configuration
 @ComponentScan(basePackages = ["io.kudos.ms.sys.api.internal"])
-//region your codes 1
 open class SysApiProviderAutoConfiguration : IComponentInitializer {
-//endregion your codes 1
 
-    //region your codes 2
 
-    //endregion your codes 2
 
     override fun getComponentName() = "kudos-ms-sys-api-internal"
 

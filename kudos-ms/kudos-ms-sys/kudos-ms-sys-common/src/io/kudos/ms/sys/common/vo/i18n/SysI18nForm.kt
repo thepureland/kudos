@@ -15,7 +15,6 @@ data class SysI18nForm (
     /** 主键 */
     override val id: String? = null,
 
-    //region your codes 1
 
     /** 语言_地区 */
     @get:NotBlank
@@ -44,15 +43,10 @@ data class SysI18nForm (
     /** 备注 */
     val remark: String? = null,
 
-    //endregion your codes 1
-//region your codes 2
 ) : FormPayload<String?>() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
-    // endregion your codes 3
 
 }
