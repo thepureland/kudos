@@ -11,6 +11,7 @@ import io.kudos.ms.sys.core.service.iservice.ISysI18nService
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -66,6 +67,16 @@ class SysI18NAdminController :
         )
     }
 
-
+    /**
+     * 更新active状态
+     *
+     * @param id 主键
+     * @param active 是否启用
+     * @return 是否更新成功
+     */
+    @PutMapping("/updateActive")
+    fun updateActive(id: String, active: Boolean): Boolean {
+        return service.updateActive(id, active)
+    }
 
 }

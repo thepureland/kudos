@@ -1,6 +1,7 @@
 package io.kudos.ms.sys.common.vo.dict
 
 import io.kudos.base.support.payload.FormPayload
+import jakarta.validation.constraints.NotBlank
 
 
 /**
@@ -17,25 +18,19 @@ data class SysDictForm (
     //region your codes 1
 
     /** 字典类型 */
+    @get:NotBlank
     val dictType: String = "",
 
     /** 字典名称 */
+    @get:NotBlank
     val dictName: String = "",
 
     /** 原子服务编码 */
+    @get:NotBlank
     val atomicServiceCode: String = "",
-
-    val parentId: String? = null,
 
     /** 备注 */
     val remark: String? = null,
-
-    val code: String? = null, //TODO
-
-    val name: String? = null, //TODO
-
-    val seqNo: Int? = null, //TODO
-
 
     //endregion your codes 1
 //region your codes 2

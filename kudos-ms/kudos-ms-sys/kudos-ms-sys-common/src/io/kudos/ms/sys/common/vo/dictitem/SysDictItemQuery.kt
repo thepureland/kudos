@@ -1,5 +1,6 @@
 package io.kudos.ms.sys.common.vo.dictitem
 
+import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.support.payload.ListSearchPayload
 import kotlin.reflect.KClass
 
@@ -41,10 +42,6 @@ data class SysDictItemQuery (
     /** 是否内置 */
     val builtIn: Boolean? = null,
 
-    /** 是否为第一层树节点 */
-    val firstLevel: Boolean? = null,
-
-
     /** 字典类型 */
     val dictType: String? = null,
 
@@ -67,6 +64,13 @@ data class SysDictItemQuery (
     constructor() : this("")
 
     override var returnEntityClass: KClass<*>? = SysDictItemRow::class
+
+    override var operators: Map<String, OperatorEnum>? = mapOf(
+        ::dictType.name to OperatorEnum.ILIKE,
+        ::dictName.name to OperatorEnum.ILIKE,
+        ::itemCode.name to OperatorEnum.ILIKE,
+        ::itemName.name to OperatorEnum.ILIKE,
+    )
 
     //endregion your codes 3
 

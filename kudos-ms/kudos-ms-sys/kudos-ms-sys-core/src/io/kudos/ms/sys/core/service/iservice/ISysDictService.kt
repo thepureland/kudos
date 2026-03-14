@@ -3,7 +3,6 @@ package io.kudos.ms.sys.core.service.iservice
 import io.kudos.base.support.iservice.IBaseCrudService
 import io.kudos.ms.sys.common.api.ISysDictApi
 import io.kudos.ms.sys.common.vo.dict.SysDictCacheEntry
-import io.kudos.ms.sys.common.vo.dict.SysDictForm
 import io.kudos.ms.sys.common.vo.dict.SysDictRow
 import io.kudos.ms.sys.core.model.po.SysDict
 
@@ -21,18 +20,7 @@ interface ISysDictService : IBaseCrudService<String, SysDict>, ISysDictApi {
 
     //region your codes 2
 
-    fun getDictFromCache(dictId: String): SysDictCacheEntry?
-
-
-//    /**
-//     * 查询符合条件的字典项及字典
-//     *
-//     * @param searchPayload 查询参数
-//     * @return Pair(List(SysDictListModel), 总记录数)
-//     * @author K
-//     * @since 1.0.0
-//     */
-//    fun pagingSearch(searchPayload: SysDictQuery): Pair<List<RegDictRecord>, Int>
+    fun getFromCache(dictId: String): SysDictCacheEntry?
 
     /**
      * 返回指定id的字典信息
@@ -43,16 +31,6 @@ interface ISysDictService : IBaseCrudService<String, SysDict>, ISysDictApi {
      * @since 1.0.0
      */
     fun getRecord(id: String): SysDictRow?
-
-    /**
-     * 保存或更新字典或字典项
-     *
-     * @param form 表单数据载体
-     * @return 主键
-     * @author K
-     * @since 1.0.0
-     */
-    fun saveOrUpdate(form: SysDictForm): String
 
     /**
      * 删除字典或字典项
@@ -69,11 +47,12 @@ interface ISysDictService : IBaseCrudService<String, SysDict>, ISysDictApi {
      * 获取模块的所有字典
      *
      * @param atomicServiceCode 原子服务编码
-     * @return 字典记录列表
+     * @param activeOnly 仅启用，为null或false将包含未启用的
+     * @return List<SysDictCacheEntry>
      * @author AI: Cursor
      * @since 1.0.0
      */
-    fun getDictsByAtomicServiceCode(atomicServiceCode: String): List<SysDictRow>
+    fun getDictsByAtomicServiceCode(atomicServiceCode: String, activeOnly: Boolean = true): List<SysDictCacheEntry>
 
     /**
      * 根据原子服务编码和字典类型获取字典

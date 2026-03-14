@@ -26,21 +26,11 @@ data class SysDictQuery (
     /** 原子服务编码 */
     val atomicServiceCode: String? = null,
 
-    val parentId: String? = null,
-
-    val firstLevel: Boolean? = null,
-
     /** 是否启用 */
     val active: Boolean? = null,
 
     /** 是否内置 */
     val builtIn: Boolean? = null,
-
-    val isDict: Boolean = true,
-
-    val itemCode: String? = null,
-
-    val itemName: String? = null,
 
     //endregion your codes 1
 //region your codes 2
@@ -56,8 +46,6 @@ data class SysDictQuery (
     override var operators: Map<String, OperatorEnum>? = mapOf(
         ::dictType.name to OperatorEnum.ILIKE,
         ::dictName.name to OperatorEnum.ILIKE,
-        ::itemCode.name to OperatorEnum.LIKE_S,
-        ::itemName.name to OperatorEnum.LIKE_S,
     )
 
     //endregion your codes 3

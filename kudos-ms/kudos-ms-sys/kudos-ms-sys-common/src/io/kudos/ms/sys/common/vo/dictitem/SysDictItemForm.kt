@@ -1,6 +1,7 @@
 package io.kudos.ms.sys.common.vo.dictitem
 
 import io.kudos.base.support.payload.FormPayload
+import jakarta.validation.constraints.NotBlank
 
 
 /**
@@ -17,9 +18,11 @@ data class SysDictItemForm (
     //region your codes 1
 
     /** 字典项代码 */
+    @get:NotBlank
     val itemCode: String = "",
 
     /** 字典项名称 */
+    @get:NotBlank
     val itemName: String = "",
 
     /** 字典id */
@@ -33,9 +36,6 @@ data class SysDictItemForm (
 
     /** 备注 */
     val remark: String? = null,
-
-    /** 是否启用 */
-    val active: Boolean = true,
 
     //endregion your codes 1
 //region your codes 2

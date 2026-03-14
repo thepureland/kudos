@@ -8,6 +8,7 @@ import io.kudos.ms.sys.common.vo.system.SysSystemRow
 import io.kudos.ms.sys.common.vo.system.SysSystemQuery
 import io.kudos.ms.sys.core.service.iservice.ISysSystemService
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
@@ -41,4 +42,17 @@ class SysSystemAdminController:
     fun getFullSystemTree(): List<IdAndNameTreeNode<String>> {
         return service.getFullSystemTree()
     }
+
+    /**
+     * 更新active状态
+     *
+     * @param id 主键
+     * @param active 是否启用
+     * @return 是否更新成功
+     */
+    @PutMapping("/updateActive")
+    fun updateActive(id: String, active: Boolean): Boolean {
+        return service.updateActive(id, active)
+    }
+
 }
