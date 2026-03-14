@@ -28,9 +28,9 @@ data class SysTenantQuery (
 
     constructor() : this("")
 
-    override var returnEntityClass: KClass<*>? = SysTenantRow::class
+    override fun getReturnEntityClass() = SysTenantRow::class
 
-    override val operators: Map<KProperty0<*>, OperatorEnum> = mapOf(
+    override fun getOperators(): Map<KProperty0<*>, OperatorEnum> = mapOf(
         ::name to OperatorEnum.ILIKE,
         ::subSystemCode to OperatorEnum.LIKE
     )

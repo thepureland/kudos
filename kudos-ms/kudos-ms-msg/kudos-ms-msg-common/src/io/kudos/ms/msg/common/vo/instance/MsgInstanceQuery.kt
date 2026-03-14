@@ -50,7 +50,7 @@ data class MsgInstanceQuery (
 
     constructor() : this("")
 
-    override var returnEntityClass: KClass<*>? = MsgInstanceRow::class
+    override fun getReturnEntityClass() = MsgInstanceRow::class
 
 
 }

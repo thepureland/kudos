@@ -40,8 +40,10 @@ open class SysAccessRuleIpDao : BaseCrudDao<String, SysAccessRuleIp, SysAccessRu
      */
     fun pagingSearch(searchPayload: SysAccessRuleIpQuery): List<SysAccessRuleIpRow> {
         var query = leftJoinSearch(searchPayload)
-        val orders = searchPayload.orders
-        if (orders.isNullOrEmpty()) {
+        val whitelist = searchPayload.getSortableProperties()
+        val allowedOrders = if (whitelist.isEmpty()) emptyList()
+        else searchPayload.orders?.filter { it.property in whitelist } ?: emptyList()
+        if (allowedOrders.isEmpty()) {
             val orderList = listOf(
                 SysAccessRules.systemCode.asc(),
                 SysAccessRules.tenantId.asc(),
@@ -50,7 +52,7 @@ open class SysAccessRuleIpDao : BaseCrudDao<String, SysAccessRuleIp, SysAccessRu
             query = query.orderBy(*orderList.toTypedArray())
         } else {
             val orderExps = mutableListOf<OrderByExpression>()
-            orders.forEach {
+            allowedOrders.forEach {
                 //TODO
                 var columns = try {
                     ColumnHelper.columnOf(SysAccessRules, it.property)
@@ -74,9 +76,10 @@ open class SysAccessRuleIpDao : BaseCrudDao<String, SysAccessRuleIp, SysAccessRu
             }
             query = query.orderBy(*orderExps.toTypedArray())
         }
-        val pageNo = searchPayload.pageNo
+        val pageNo = searchPayload.pageNo?.let { maxOf(1, it) }
         if (pageNo != null) {
-            val pageSize = searchPayload.pageSize ?: 10
+            val rawSize = searchPayload.pageSize ?: 10
+            val pageSize = minOf(rawSize, searchPayload.getMaxPageSize())
             query = query.limit((pageNo - 1) * pageSize, pageSize)
         }
 
@@ -138,7 +141,7 @@ open class SysAccessRuleIpDao : BaseCrudDao<String, SysAccessRuleIp, SysAccessRu
                 it += SysAccessRules.active.eq(parentRuleActive)
             }
             val tenantId = searchPayload.tenantId
-            if (tenantId == null && searchPayload.nullProperties?.contains(SysAccessRule::tenantId.name) == true) {
+            if (tenantId == null && searchPayload.getNullProperties()?.contains(SysAccessRule::tenantId.name) == true) {
                 it += SysAccessRules.tenantId.isNull()
             } else if (!tenantId.isNullOrBlank()) {
                 whereExpr(SysAccessRules.tenantId, OperatorEnum.EQ, tenantId.trim())?.let { expr ->

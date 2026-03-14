@@ -59,9 +59,9 @@ data class SysDictItemQuery (
 
     constructor() : this("")
 
-    override var returnEntityClass: KClass<*>? = SysDictItemRow::class
+    override fun getReturnEntityClass() = SysDictItemRow::class
 
-    override val operators: Map<KProperty0<*>, OperatorEnum> = mapOf(
+    override fun getOperators(): Map<KProperty0<*>, OperatorEnum> = mapOf(
         ::dictType to OperatorEnum.ILIKE,
         ::dictName to OperatorEnum.ILIKE,
         ::itemCode to OperatorEnum.ILIKE,

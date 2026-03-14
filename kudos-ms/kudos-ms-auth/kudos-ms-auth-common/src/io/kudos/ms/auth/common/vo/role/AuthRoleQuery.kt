@@ -40,7 +40,7 @@ data class AuthRoleQuery (
 
     constructor() : this("")
 
-    override var returnEntityClass: KClass<*>? = AuthRoleRow::class
+    override fun getReturnEntityClass() = AuthRoleRow::class
 
 
 }

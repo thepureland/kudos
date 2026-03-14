@@ -35,9 +35,9 @@ data class SysDataSourceQuery (
 
     constructor() : this("")
 
-    override var returnEntityClass: KClass<*>? = SysDataSourceRow::class
+    override fun getReturnEntityClass() = SysDataSourceRow::class
 
-    override val operators: Map<KProperty0<*>, OperatorEnum> = mapOf(::name to OperatorEnum.ILIKE)
+    override fun getOperators(): Map<KProperty0<*>, OperatorEnum> = mapOf(::name to OperatorEnum.ILIKE)
 
 
 }

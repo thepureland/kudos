@@ -36,8 +36,6 @@ data class ${entityName}SearchPayload (
 
     //region your codes 1
 
-    override var returnEntityClass: KClass<*>? = ${entityName}Record::class,
-
     <#list listItemColumns as column>
     <#if column.name?lower_case != "id">
     /** ${column.comment!""} */
@@ -52,7 +50,9 @@ data class ${entityName}SearchPayload (
 
     //region your codes 3
 
-    constructor() : this(${entityName}Record::class)
+    override fun getReturnEntityClass() = ${entityName}Record::class
+
+    constructor() : this()
 
     //endregion your codes 3
 

@@ -7,7 +7,7 @@ import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.support.GroupExecutor
 import io.kudos.base.support.dao.IBaseCrudDao
 import io.kudos.base.support.logic.AndOrEnum
-import io.kudos.base.support.payload.ImmutableSearchPayload
+import io.kudos.base.support.payload.ISearchPayload
 import io.kudos.base.support.payload.UpdatePayload
 import org.ktorm.dsl.*
 import org.ktorm.entity.Entity
@@ -204,7 +204,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
         return batchUpdateByCriteria(entities, countOfEachBatch, criteria)
     }
 
-    override fun <S : ImmutableSearchPayload> batchUpdateWhen(updatePayload: UpdatePayload<S>): Int {
+    override fun <S : ISearchPayload> batchUpdateWhen(updatePayload: UpdatePayload<S>): Int {
         return batchUpdateWhen(updatePayload, null)
     }
 
@@ -223,7 +223,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
      * @since 1.0.0
      */
     @Suppress("UNCHECKED_CAST")
-    open fun <S : ImmutableSearchPayload> batchUpdateWhen(
+    open fun <S : ISearchPayload> batchUpdateWhen(
         updatePayload: UpdatePayload<S>,
         whereConditionFactory: ((Column<Any>, Any?) -> ColumnDeclaring<Boolean>?)? = null
     ): Int {
@@ -251,7 +251,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
         }
 
         val updateColumnMap = ColumnHelper.columnOf(table(), *updatePropertyMap.keys.toTypedArray())
-        val andOr = searchPayload?.andOr ?: AndOrEnum.AND
+        val andOr = searchPayload?.getAndOr() ?: AndOrEnum.AND
         val whereExpression = processWhere(wherePropertyMap, andOr, true, whereConditionFactory)
         whereExpression ?: throw IllegalArgumentException("不能做无条件的数据库表的更新操作！")
 
@@ -341,7 +341,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
         return entitySequence().removeIf { CriteriaConverter.convert(criteria, table()) }
     }
 
-    override fun batchDeleteWhen(searchPayload: ImmutableSearchPayload): Int {
+    override fun batchDeleteWhen(searchPayload: ISearchPayload): Int {
         return batchDeleteWhen(searchPayload, null)
     }
 
@@ -358,7 +358,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
      * @since 1.0.0
      */
     open fun batchDeleteWhen(
-        searchPayload: ImmutableSearchPayload? = null,
+        searchPayload: ISearchPayload? = null,
         whereConditionFactory: ((Column<Any>, Any?) -> ColumnDeclaring<Boolean>?)? = null
     ): Int {
         val wherePropertyMap = if (searchPayload == null) {
@@ -368,7 +368,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
             getWherePropertyMap(searchPayload, entityProperties)
         }
 
-        val andOr = searchPayload?.andOr ?: AndOrEnum.AND
+        val andOr = searchPayload?.getAndOr() ?: AndOrEnum.AND
         val whereExpression = processWhere(wherePropertyMap, andOr, true, whereConditionFactory)
         whereExpression ?: throw IllegalArgumentException("不能做无条件的数据库表的删除操作！")
         return entitySequence().removeIf { whereExpression }

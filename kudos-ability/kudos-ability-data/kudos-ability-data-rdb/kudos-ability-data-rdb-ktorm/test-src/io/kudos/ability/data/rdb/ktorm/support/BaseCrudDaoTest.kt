@@ -5,7 +5,7 @@ import io.kudos.ability.data.rdb.ktorm.table.TestTableKtormDao
 import io.kudos.ability.data.rdb.ktorm.table.TestTableKtorms
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
-import io.kudos.base.support.payload.ImmutableSearchPayload
+import io.kudos.base.support.payload.ListSearchPayload
 import io.kudos.base.support.payload.UpdatePayload
 import io.kudos.test.common.init.EnableKudosTest
 import jakarta.annotation.Resource
@@ -373,11 +373,12 @@ internal open class BaseCrudDaoTest {
     @Test
     @Transactional
     open fun batchUpdateWhenByUpdatePayload() {
-        class SearchPayload1 : ImmutableSearchPayload() {
+        class SearchPayload1 : ListSearchPayload() {
             var name: String? = null
             var weight: Double? = null
             var noExistProp: String? = "noExistProp"
-            override var returnProperties: List<String>? = listOf("id", "name", "height")
+            var returnPropertiesField: List<String>? = listOf("id", "name", "height")
+            override fun getReturnProperties() = returnPropertiesField
         }
 
         class UpdatePayload1 : UpdatePayload<SearchPayload1>() {
@@ -568,7 +569,7 @@ internal open class BaseCrudDaoTest {
     @Test
     @Transactional
     open fun batchDeleteWhen() {
-        class SearchPayload1 : ImmutableSearchPayload() {
+        class SearchPayload1 : ListSearchPayload() {
             var name: String? = null
             var weight: Double? = null
             var noExistProp: String? = "noExistProp"

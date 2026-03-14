@@ -35,9 +35,9 @@ data class SysParamQuery (
 
     constructor() : this("")
 
-    override var returnEntityClass: KClass<*>? = SysParamRow::class
+    override fun getReturnEntityClass() = SysParamRow::class
 
-    override val operators: Map<KProperty0<*>, OperatorEnum> = mapOf(
+    override fun getOperators(): Map<KProperty0<*>, OperatorEnum> = mapOf(
         ::paramName to OperatorEnum.ILIKE,
         ::paramValue to OperatorEnum.ILIKE
     )

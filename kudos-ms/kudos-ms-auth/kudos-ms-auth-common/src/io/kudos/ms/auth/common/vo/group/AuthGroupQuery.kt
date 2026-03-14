@@ -37,7 +37,7 @@ data class AuthGroupQuery (
 
     constructor() : this("")
 
-    override var returnEntityClass: KClass<*>? = AuthGroupRow::class
+    override fun getReturnEntityClass() = AuthGroupRow::class
 
 
 }

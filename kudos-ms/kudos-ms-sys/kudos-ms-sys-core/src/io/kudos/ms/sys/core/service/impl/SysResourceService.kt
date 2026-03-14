@@ -328,14 +328,22 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
                 if (sysResourceQuery.active == false) { // 非仅启用状态
                     sysResourceQuery.active = null
                 }
-                sysResourceQuery.returnEntityClass = IdAndNameTreeNode::class
-                sysResourceQuery.pageNo = null // 不分页
-                @Suppress("UNCHECKED_CAST")
-                dao.search(sysResourceQuery) { column, _ ->
-                    if (column.name == SysResources.parentId.name && sysResourceQuery.level == 2) { // 1层是资源类型，2层是子系统，从第3层开始才是SysResource
-                        column.isNull()
-                    } else null
-                } as List<IdAndNameTreeNode<String>>
+                val originalPageNo = sysResourceQuery.pageNo
+                sysResourceQuery.pageNo = null
+                try {
+                    @Suppress("UNCHECKED_CAST")
+                    dao.search(
+                        sysResourceQuery,
+                        whereConditionFactory = { column, _ ->
+                            if (column.name == SysResources.parentId.name && sysResourceQuery.level == 2) { // 1层是资源类型，2层是子系统，从第3层开始才是SysResource
+                                column.isNull()
+                            } else null
+                        },
+                        returnItemClassOverride = IdAndNameTreeNode::class
+                    ) as List<IdAndNameTreeNode<String>>
+                } finally {
+                    sysResourceQuery.pageNo = originalPageNo
+                }
             }
         }
     }

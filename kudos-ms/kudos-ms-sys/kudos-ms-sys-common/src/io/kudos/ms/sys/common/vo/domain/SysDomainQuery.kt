@@ -32,9 +32,9 @@ data class SysDomainQuery (
 
     constructor() : this("")
 
-    override var returnEntityClass: KClass<*>? = SysDomainRow::class
+    override fun getReturnEntityClass() = SysDomainRow::class
 
-    override val operators: Map<KProperty0<*>, OperatorEnum> = mapOf(::domain to OperatorEnum.ILIKE)
+    override fun getOperators(): Map<KProperty0<*>, OperatorEnum> = mapOf(::domain to OperatorEnum.ILIKE)
 
 
 }

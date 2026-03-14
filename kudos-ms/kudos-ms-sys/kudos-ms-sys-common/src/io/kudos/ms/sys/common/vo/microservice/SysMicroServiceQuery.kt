@@ -32,9 +32,9 @@ data class SysMicroServiceQuery (
 
     constructor() : this("")
 
-    override var returnEntityClass: KClass<*>? = SysMicroServiceRow::class
+    override fun getReturnEntityClass() = SysMicroServiceRow::class
 
-    override val operators: Map<KProperty0<*>, OperatorEnum> = mapOf(
+    override fun getOperators(): Map<KProperty0<*>, OperatorEnum> = mapOf(
         ::code to OperatorEnum.ILIKE,
         ::name to OperatorEnum.ILIKE
     )

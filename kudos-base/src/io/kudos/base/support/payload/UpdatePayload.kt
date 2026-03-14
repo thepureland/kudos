@@ -3,6 +3,8 @@ package io.kudos.base.support.payload
 /**
  * 更新数据项载体父类
  *
+ * 注意：该类不应该被开放给不受信任的源，如：客户端 !!!
+ *
  * 更新规则:
  *    1. id属性不会被更新
  *    2. nullProperties的所有属性的值都更新为null
@@ -11,7 +13,7 @@ package io.kudos.base.support.payload
  * @author K
  * @since 1.0.0
  */
-open class UpdatePayload<S: ImmutableSearchPayload> {
+open class UpdatePayload<S: ISearchPayload> {
 
     /** 值要设置为null的属性的列表 */
     open var nullProperties: List<String>? = null

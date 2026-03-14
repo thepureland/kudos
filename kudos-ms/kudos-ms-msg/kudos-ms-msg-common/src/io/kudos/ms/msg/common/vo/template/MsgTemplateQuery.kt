@@ -52,7 +52,7 @@ data class MsgTemplateQuery (
 
     constructor() : this("")
 
-    override var returnEntityClass: KClass<*>? = MsgTemplateRow::class
+    override fun getReturnEntityClass() = MsgTemplateRow::class
 
 
 }

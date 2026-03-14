@@ -22,7 +22,7 @@ data class UserLoginRememberMeQuery (
 
     constructor() : this("")
 
-    override var returnEntityClass: KClass<*>? = UserLoginRememberMeRow::class
+    override fun getReturnEntityClass() = UserLoginRememberMeRow::class
 
 
 }

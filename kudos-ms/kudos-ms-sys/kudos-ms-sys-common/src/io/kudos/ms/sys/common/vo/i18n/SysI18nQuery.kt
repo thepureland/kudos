@@ -42,9 +42,9 @@ data class SysI18nQuery (
 
     constructor() : this("")
 
-    override var returnEntityClass: KClass<*>? = SysI18nRow::class
+    override fun getReturnEntityClass() = SysI18nRow::class
 
-    override val operators: Map<KProperty0<*>, OperatorEnum> = mapOf(
+    override fun getOperators(): Map<KProperty0<*>, OperatorEnum> = mapOf(
         ::key to OperatorEnum.ILIKE,
         ::namespace to OperatorEnum.ILIKE,
     )

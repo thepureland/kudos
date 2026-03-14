@@ -12,7 +12,7 @@ import io.kudos.base.support.GroupExecutor
 import io.kudos.base.support.dao.IBaseReadOnlyDao
 import io.kudos.base.support.logic.AndOrEnum
 import io.kudos.base.support.payload.ListSearchPayload
-import io.kudos.base.support.payload.ImmutableSearchPayload
+import io.kudos.base.support.payload.ISearchPayload
 import io.kudos.base.support.payload.MutableListSearchPayload
 import io.kudos.context.core.KudosContextHolder
 import org.ktorm.database.Database
@@ -662,23 +662,21 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
 
     @Suppress("UNCHECKED_CAST")
     override fun <T : Any> search(listSearchPayload: ListSearchPayload?, returnItemClass: KClass<T>): List<T> {
-        require(listSearchPayload?.returnProperties.isNullOrEmpty()) {
+        require(listSearchPayload?.getReturnProperties().isNullOrEmpty()) {
             "ListSearchPayload.returnProperties 不为空时，search(payload, returnItemClass) 无法保证返回元素类型。"
         }
         return if (listSearchPayload == null) {
             search(criteria = null, returnItemClass = returnItemClass)
-        } else {
-            val originalReturnEntityClass = listSearchPayload.returnEntityClass
-            if (listSearchPayload is MutableListSearchPayload) {
-                listSearchPayload.returnEntityClass = returnItemClass
-            }
+        } else if (listSearchPayload is MutableListSearchPayload) {
+            val originalReturnEntityClass = listSearchPayload.getReturnEntityClass()
             try {
+                listSearchPayload.setReturnEntityClass(returnItemClass)
                 search(listSearchPayload) as List<T>
             } finally {
-                if (listSearchPayload is MutableListSearchPayload) {
-                    listSearchPayload.returnEntityClass = originalReturnEntityClass
-                }
+                listSearchPayload.setReturnEntityClass(originalReturnEntityClass)
             }
+        } else {
+            search(listSearchPayload, null, returnItemClass) as List<T>
         }
     }
 
@@ -696,41 +694,46 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
     @Suppress("UNCHECKED_CAST")
     open fun search(
         listSearchPayload: ListSearchPayload? = null,
-        whereConditionFactory: ((Column<Any>, Any?) -> ColumnDeclaring<Boolean>?)? = null
+        whereConditionFactory: ((Column<Any>, Any?) -> ColumnDeclaring<Boolean>?)? = null,
+        returnItemClassOverride: KClass<*>? = null
     ): List<*> {
         // select, where
-        val objects = searchByPayload(listSearchPayload, whereConditionFactory)
+        val objects = searchByPayload(listSearchPayload, whereConditionFactory, returnItemClassOverride)
         var query = objects[0] as Query
         val returnProps = objects[1] as Set<String>
         val returnColumnMap = objects[2] as Map<String, Column<Any>>
 
-        // order
+        // order（仅白名单内字段参与排序）
         if (listSearchPayload != null) {
-            val orders = listSearchPayload.orders
-            if (!orders.isNullOrEmpty()) {
-                val orderExps = sortOf(*orders.toTypedArray())
+            val whitelist = listSearchPayload.getSortableProperties()
+            val allowedOrders = if (whitelist.isEmpty()) emptyList()
+            else listSearchPayload.orders?.filter { it.property in whitelist } ?: emptyList()
+            if (allowedOrders.isNotEmpty()) {
+                val orderExps = sortOf(*allowedOrders.toTypedArray())
                 query = query.orderBy(orderExps)
             }
         }
 
         // paging
         if (listSearchPayload != null) {
-            val pageNo = listSearchPayload.pageNo
+            val pageNo = listSearchPayload.pageNo?.let { maxOf(1, it) }
             if (pageNo != null) {
-                val pageSize = listSearchPayload.pageSize ?: 10
+                val rawSize = listSearchPayload.pageSize ?: 10
+                val pageSize = minOf(rawSize, listSearchPayload.getMaxPageSize())
                 query = query.limit((pageNo - 1) * pageSize, pageSize)
             }
         }
 
         // result
-        val returnProperties = listSearchPayload?.returnProperties ?: emptyList()
+        val returnProperties = listSearchPayload?.getReturnProperties() ?: emptyList()
+        val effectiveReturnClass = returnItemClassOverride ?: listSearchPayload?.getReturnEntityClass()
         val mapList = processResult(query, returnColumnMap)
         return when {
             returnProperties.isEmpty() -> {
                 val beanList = mutableListOf<Any>()
                 mapList.forEach { map ->
-                    val bean = if (listSearchPayload?.returnEntityClass != null) {
-                        requireNotNull(listSearchPayload.returnEntityClass).newInstance()
+                    val bean = if (effectiveReturnClass != null) {
+                        effectiveReturnClass.newInstance()
                     } else {
                         val tableEntityClass =
                             requireNotNull(table().entityClass) { "表未绑定实体类型，无法创建返回对象。" }
@@ -775,7 +778,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         }
     }
 
-    override fun count(searchPayload: ImmutableSearchPayload?): Int {
+    override fun count(searchPayload: ISearchPayload?): Int {
         return count(searchPayload, null)
     }
 
@@ -789,7 +792,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
      * @since 1.0.0
      */
     open fun count(
-        searchPayload: ImmutableSearchPayload?,
+        searchPayload: ISearchPayload?,
         whereConditionFactory: ((Column<Any>, Any?) -> ColumnDeclaring<Boolean>?)? = null
     ): Int {
         val query = searchByPayload(searchPayload, whereConditionFactory)[0] as Query
@@ -1130,16 +1133,17 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
     }
 
     private fun searchByPayload(
-        searchPayload: ImmutableSearchPayload? = null,
-        whereConditionFactory: ((Column<Any>, Any?) -> ColumnDeclaring<Boolean>?)? = null
+        searchPayload: ISearchPayload? = null,
+        whereConditionFactory: ((Column<Any>, Any?) -> ColumnDeclaring<Boolean>?)? = null,
+        returnItemClassOverride: KClass<*>? = null
     ): List<Any> {
         val entityProperties = getEntityProperties()
 
         // select
-        val returnProperties = searchPayload?.returnProperties ?: emptyList()
+        val returnProperties = searchPayload?.getReturnProperties() ?: emptyList()
+        val effectiveReturnClass = returnItemClassOverride ?: searchPayload?.getReturnEntityClass()
         val props = returnProperties.ifEmpty {
-            val returnEntityClass = searchPayload?.returnEntityClass
-            returnEntityClass?.memberProperties?.map { it.name } ?: entityProperties
+            effectiveReturnClass?.memberProperties?.map { it.name } ?: entityProperties
         }
         val returnProps = entityProperties.intersect(props.toSet()) // 取交集,保证要查询的列一定存在
         val returnColumnMap = ColumnHelper.columnOf(table(), *returnProps.toTypedArray())
@@ -1151,7 +1155,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         } else {
             getWherePropertyMap(searchPayload, entityProperties)
         }
-        val andOr = searchPayload?.andOr ?: AndOrEnum.AND
+        val andOr = searchPayload?.getAndOr() ?: AndOrEnum.AND
         val fullExpression = processWhere(propMap, andOr, true, whereConditionFactory)
         if (fullExpression != null) {
             query = query.where { fullExpression }
@@ -1168,9 +1172,9 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
     }
 
     protected fun getWherePropertyMap(
-        searchPayload: ImmutableSearchPayload, entityProperties: List<String>
+        searchPayload: ISearchPayload, entityProperties: List<String>
     ): Map<String, Pair<OperatorEnum, *>> {
-        val operatorByNameMap = searchPayload.operators
+        val operatorByNameMap = searchPayload.getOperators()
             ?.entries
             ?.associate { it.key.name to it.value }
             ?: emptyMap()
@@ -1185,7 +1189,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
             }
             resultMap[propName] = Pair(operator, value)
         }
-        val nullProperties = searchPayload.nullProperties
+        val nullProperties = searchPayload.getNullProperties()
         if (!nullProperties.isNullOrEmpty()) {
             nullProperties.forEach { propName ->
                 if (propNameAndValueMap[propName] == null) {
@@ -1193,7 +1197,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
                 }
             }
         }
-        val criterions = searchPayload.criterions
+        val criterions = searchPayload.getCriterions()
         if (!criterions.isNullOrEmpty()) {
             criterions.forEach {
                 resultMap[it.property] = Pair(it.operator, it.value)

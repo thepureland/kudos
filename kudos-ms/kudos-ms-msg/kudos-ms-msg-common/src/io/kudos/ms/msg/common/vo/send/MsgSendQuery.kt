@@ -56,7 +56,7 @@ data class MsgSendQuery (
 
     constructor() : this("")
 
-    override var returnEntityClass: KClass<*>? = MsgSendRow::class
+    override fun getReturnEntityClass() = MsgSendRow::class
 
 
 }
