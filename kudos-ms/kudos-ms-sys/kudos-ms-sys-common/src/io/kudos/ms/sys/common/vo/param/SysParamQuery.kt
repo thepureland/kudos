@@ -43,7 +43,7 @@ data class SysParamQuery (
 
     override var operators: Map<String, OperatorEnum>? = mapOf(
         ::paramName.name to OperatorEnum.ILIKE,
-        ::paramValue.name to OperatorEnum.LIKE_S
+        ::paramValue.name to OperatorEnum.ILIKE
     )
 
     //endregion your codes 3

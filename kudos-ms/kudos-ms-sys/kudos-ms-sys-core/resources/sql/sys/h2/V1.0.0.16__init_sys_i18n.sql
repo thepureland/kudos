@@ -8,6 +8,7 @@ create table if not exists "sys_i18n"
     "namespace"       character varying(128)             not null,
     "key"                 character varying(128)              not null,
     "value"               character varying(1000)             not null,
+    "remark"              character varying(300),
     "active"              boolean       default TRUE          not null,
     "built_in"            boolean       default FALSE         not null,
     "create_user_id"      character varying(36),
@@ -30,6 +31,7 @@ comment on column "sys_i18n"."i18n_type_dict_code" is '国际化类型字典代�
 comment on column "sys_i18n"."namespace" is '国际化命名空间';
 comment on column "sys_i18n"."key" is '国际化key';
 comment on column "sys_i18n"."value" is '国际化值';
+comment on column "sys_i18n"."remark" is '备注';
 comment on column "sys_i18n"."active" is '是否启用';
 comment on column "sys_i18n"."built_in" is '是否内置';
 comment on column "sys_i18n"."create_user_id" is '创建者id';

@@ -48,7 +48,8 @@ data class SysI18nQuery (
     override var returnEntityClass: KClass<*>? = SysI18nRow::class
 
     override var operators: Map<String, OperatorEnum>? = mapOf(
-        ::key.name to OperatorEnum.LIKE_S
+        ::key.name to OperatorEnum.ILIKE,
+        ::namespace.name to OperatorEnum.ILIKE,
     )
 
     //endregion your codes 3

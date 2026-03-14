@@ -1,8 +1,7 @@
 package io.kudos.ms.sys.core.model.po
 
 import io.kudos.ability.data.rdb.ktorm.support.DbEntityFactory
-import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
-import java.time.LocalDateTime
+import io.kudos.ability.data.rdb.ktorm.support.IMaintainableDbEntity
 
 /**
  * 国际化数据库实体
@@ -11,7 +10,7 @@ import java.time.LocalDateTime
  * @since 1.0.0
  */
 //region your codes 1
-interface SysI18n : IDbEntity<String, SysI18n> {
+interface SysI18n : IMaintainableDbEntity<String, SysI18n> {
 //endregion your codes 1
 
     companion object : DbEntityFactory<SysI18n>()
@@ -33,31 +32,6 @@ interface SysI18n : IDbEntity<String, SysI18n> {
 
     /** 国际化值 */
     var value: String
-
-    /** 是否启用 */
-    var active: Boolean
-
-    /** 是否内置 */
-    var builtIn: Boolean
-
-    /** 创建者id */
-    var createUserId: String?
-
-    /** 创建者名称 */
-    var createUserName: String?
-
-    /** 创建时间 */
-    var createTime: LocalDateTime
-
-    /** 更新者id */
-    var updateUserId: String?
-
-    /** 更新者名称 */
-    var updateUserName: String?
-
-    /** 更新时间 */
-    var updateTime: LocalDateTime?
-
 
     //region your codes 2
 
