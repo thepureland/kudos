@@ -13,9 +13,7 @@ import org.ktorm.schema.varchar
  * @author AI: Codex
  * @since 1.0.0
  */
-//region your codes 1
 object UserLoginRememberMes : StringIdTable<UserLoginRememberMe>("user_login_remember_me") {
-//endregion your codes 1
 
     /** 用户ID */
     var userId = varchar("user_id").bindTo { it.userId }
@@ -33,8 +31,6 @@ object UserLoginRememberMes : StringIdTable<UserLoginRememberMe>("user_login_rem
     var lastUsed = datetime("last_used").bindTo { it.lastUsed }
 
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

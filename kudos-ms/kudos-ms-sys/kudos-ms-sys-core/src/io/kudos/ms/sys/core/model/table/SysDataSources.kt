@@ -12,9 +12,7 @@ import org.ktorm.schema.varchar
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 object SysDataSources : MaintainableTable<SysDataSource>("sys_data_source") {
-//endregion your codes 1
 
     /** 名称 */
     var name = varchar("name").bindTo { it.name }
@@ -56,8 +54,6 @@ object SysDataSources : MaintainableTable<SysDataSource>("sys_data_source") {
     var maxAge = int("max_age").bindTo { it.maxAge }
 
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

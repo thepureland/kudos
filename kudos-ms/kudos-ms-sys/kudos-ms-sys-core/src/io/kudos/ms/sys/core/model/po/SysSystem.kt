@@ -10,9 +10,7 @@ import java.time.LocalDateTime
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 interface SysSystem : IDbEntity<String, SysSystem> {
-//endregion your codes 1
 
     companion object : DbEntityFactory<SysSystem>()
 
@@ -56,12 +54,10 @@ interface SysSystem : IDbEntity<String, SysSystem> {
     var updateTime: LocalDateTime?
 
 
-    //region your codes 2
 
     override var id: String
         get() = this.code
         set(value) { this.code = value }
 
-    //endregion your codes 2
 
 }

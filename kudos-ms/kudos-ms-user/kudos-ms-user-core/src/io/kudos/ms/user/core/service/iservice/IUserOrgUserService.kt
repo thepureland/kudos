@@ -11,11 +11,8 @@ import io.kudos.ms.user.core.model.po.UserOrgUser
  * @author AI: Cursor
  * @since 1.0.0
  */
-//region your codes 1
 interface IUserOrgUserService : IBaseCrudService<String, UserOrgUser> {
-//endregion your codes 1
 
-    //region your codes 2
 
     /**
      * 根据机构ID获取用户ID集合
@@ -83,6 +80,5 @@ interface IUserOrgUserService : IBaseCrudService<String, UserOrgUser> {
      */
     fun setOrgAdmin(orgId: String, userId: String, isAdmin: Boolean): Boolean
 
-    //endregion your codes 2
 
 }

@@ -19,11 +19,8 @@ import org.springframework.transaction.annotation.Transactional
  * @since 1.0.0
  */
 @Service
-//region your codes 1
 open class SysAccessRuleService : BaseCrudService<String, SysAccessRule, SysAccessRuleDao>(), ISysAccessRuleService {
-//endregion your codes 1
 
-    //region your codes 2
 
     private val log = LogFactory.getLog(this)
 
@@ -64,6 +61,5 @@ open class SysAccessRuleService : BaseCrudService<String, SysAccessRule, SysAcce
         return success
     }
 
-    //endregion your codes 2
 
 }

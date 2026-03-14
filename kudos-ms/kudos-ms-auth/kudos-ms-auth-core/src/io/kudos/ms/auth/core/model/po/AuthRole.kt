@@ -11,9 +11,7 @@ import java.time.LocalDateTime
  * @author AI: Cursor
  * @since 1.0.0
  */
-//region your codes 1
 interface AuthRole : IDbEntity<String, AuthRole> {
-//endregion your codes 1
 
     companion object : DbEntityFactory<AuthRole>()
 
@@ -57,8 +55,6 @@ interface AuthRole : IDbEntity<String, AuthRole> {
     var updateTime: LocalDateTime?
 
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

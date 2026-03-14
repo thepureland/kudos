@@ -28,11 +28,8 @@ import java.time.LocalDateTime
  * @since 1.0.0
  */
 @Component
-//region your codes 1
 open class RememberMeByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<UserLoginRememberMeCacheEntry>() {
-//endregion your codes 1
 
-    //region your codes 2
 
     @Autowired
     private lateinit var userLoginRememberMeDao: UserLoginRememberMeDao
@@ -235,6 +232,5 @@ open class RememberMeByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<U
 
     private val log = LogFactory.getLog(this)
 
-    //endregion your codes 2
 
 }

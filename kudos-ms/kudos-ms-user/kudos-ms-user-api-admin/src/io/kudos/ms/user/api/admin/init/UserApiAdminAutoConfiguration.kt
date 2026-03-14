@@ -13,13 +13,9 @@ import org.springframework.context.annotation.Configuration
  */
 @Configuration
 @ComponentScan(basePackages = ["io.kudos.ms.user.api.admin"])
-//region your codes 1
 open class UserApiAdminAutoConfiguration : IComponentInitializer {
-//endregion your codes 1
 
-    //region your codes 2
 
-    //endregion your codes 2
 
     override fun getComponentName() = "kudos-ms-user-api-admin"
 

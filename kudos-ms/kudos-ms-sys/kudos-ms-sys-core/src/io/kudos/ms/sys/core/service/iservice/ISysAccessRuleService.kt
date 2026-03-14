@@ -11,11 +11,8 @@ import io.kudos.ms.sys.core.model.po.SysAccessRule
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 interface ISysAccessRuleService : IBaseCrudService<String, SysAccessRule> {
-//endregion your codes 1
 
-    //region your codes 2
 
     /**
      * 获取访问规则
@@ -62,6 +59,5 @@ interface ISysAccessRuleService : IBaseCrudService<String, SysAccessRule> {
      */
     fun updateActive(id: String, active: Boolean): Boolean
 
-    //endregion your codes 2
 
 }

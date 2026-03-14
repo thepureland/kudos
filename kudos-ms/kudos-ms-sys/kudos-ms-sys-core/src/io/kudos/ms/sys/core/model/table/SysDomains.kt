@@ -11,9 +11,7 @@ import org.ktorm.schema.varchar
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 object SysDomains : MaintainableTable<SysDomain>("sys_domain") {
-//endregion your codes 1
 
     /** 域名 */
     var domain = varchar("domain").bindTo { it.domain }
@@ -25,8 +23,6 @@ object SysDomains : MaintainableTable<SysDomain>("sys_domain") {
     var tenantId = varchar("tenant_id").bindTo { it.tenantId }
 
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

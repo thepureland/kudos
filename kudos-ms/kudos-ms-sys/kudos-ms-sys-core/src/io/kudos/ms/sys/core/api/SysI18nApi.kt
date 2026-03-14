@@ -14,12 +14,9 @@ import org.springframework.stereotype.Service
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 @Service
 open class SysI18nApi : ISysI18nApi {
-//endregion your codes 1
 
-    //region your codes 2
 
     @Resource
     protected lateinit var sysI18nService: ISysI18nService
@@ -52,6 +49,5 @@ open class SysI18nApi : ISysI18nApi {
         return sysI18nService.updateActive(id, active)
     }
 
-    //endregion your codes 2
 
 }

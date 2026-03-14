@@ -11,9 +11,7 @@ import java.time.LocalDateTime
  * @author AI: Codex
  * @since 1.0.0
  */
-//region your codes 1
 interface UserLoginRememberMe : IDbEntity<String, UserLoginRememberMe> {
-//endregion your codes 1
 
     companion object : DbEntityFactory<UserLoginRememberMe>()
 
@@ -33,8 +31,6 @@ interface UserLoginRememberMe : IDbEntity<String, UserLoginRememberMe> {
     var lastUsed: LocalDateTime?
 
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

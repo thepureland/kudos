@@ -13,9 +13,7 @@ import org.ktorm.schema.varchar
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 object SysSystems : Table<SysSystem>("sys_system") {
-//endregion your codes 1
 
     /** 编码 */
     var code = varchar("code").bindTo { it.code }
@@ -57,11 +55,9 @@ object SysSystems : Table<SysSystem>("sys_system") {
     var updateTime = datetime("update_time").bindTo { it.updateTime }
 
 
-    //region your codes 2
 
     /** 主键别名 */
     var id = code.primaryKey()
 
-    //endregion your codes 2
 
 }

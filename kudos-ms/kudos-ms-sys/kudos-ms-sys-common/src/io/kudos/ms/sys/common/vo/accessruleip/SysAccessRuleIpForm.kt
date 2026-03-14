@@ -12,7 +12,6 @@ import java.time.LocalDateTime
  */
 data class SysAccessRuleIpForm (
 
-    //region your codes 1
 
     override val id: String? = null,
 
@@ -37,15 +36,10 @@ data class SysAccessRuleIpForm (
     /** 是否启用 */
     val active: Boolean? = null,
 
-    //endregion your codes 1
-//region your codes 2
 ) : FormPayload<String?>() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this(null)
 
-    // endregion your codes 3
 
 }

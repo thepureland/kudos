@@ -16,7 +16,6 @@ data class MsgSendRow (
     /** 主键 */
     override val id: String = "",
 
-    //region your codes 1
 
     /** 接收者群组类型字典码 */
     val receiverGroupTypeDictCode: String? = null,
@@ -54,15 +53,10 @@ data class MsgSendRow (
     /** 租户ID */
     val tenantId: String? = null,
 
-    //endregion your codes 1
-//region your codes 2
 ) : IdJsonResult<String>() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
-    //endregion your codes 3
 
 }

@@ -14,11 +14,8 @@ import io.kudos.ms.sys.core.model.po.SysTenant
  * @author AI: Cursor
  * @since 1.0.0
  */
-//region your codes 1
 interface ISysTenantService : IBaseCrudService<String, SysTenant>, ISysTenantApi {
-//endregion your codes 1
 
-    //region your codes 2
 
     /**
      * 更新启用状态，并同步缓存
@@ -61,6 +58,5 @@ interface ISysTenantService : IBaseCrudService<String, SysTenant>, ISysTenantApi
      */
     fun getSubSystemCodesByTenantId(tenantId: String): Set<String>
 
-    //endregion your codes 2
 
 }

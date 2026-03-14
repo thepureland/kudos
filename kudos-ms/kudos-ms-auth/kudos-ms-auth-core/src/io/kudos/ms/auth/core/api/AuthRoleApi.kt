@@ -18,12 +18,9 @@ import org.springframework.stereotype.Service
  * @author AI: Cursor
  * @since 1.0.0
  */
-//region your codes 1
 @Service
 open class AuthRoleApi : IAuthRoleApi {
-//endregion your codes 1
 
-    //region your codes 2
 
     @Resource
     private lateinit var authRoleHashCache: AuthRoleHashCache
@@ -86,6 +83,5 @@ open class AuthRoleApi : IAuthRoleApi {
         return authRoleService.hasResource(userId, resourceId)
     }
 
-    //endregion your codes 2
 
 }

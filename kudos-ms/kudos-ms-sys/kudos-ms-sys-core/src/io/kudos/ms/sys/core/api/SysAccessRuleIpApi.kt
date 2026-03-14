@@ -15,12 +15,9 @@ import org.springframework.stereotype.Service
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 @Service
 open class SysAccessRuleIpApi : ISysAccessRuleIpApi {
-//endregion your codes 1
 
-    //region your codes 2
 
     @Resource
     protected lateinit var sysAccessRuleIpService: ISysAccessRuleIpService
@@ -45,6 +42,5 @@ open class SysAccessRuleIpApi : ISysAccessRuleIpApi {
         return sysAccessRuleIpService.deleteByRuleId(ruleId)
     }
 
-    //endregion your codes 2
 
 }

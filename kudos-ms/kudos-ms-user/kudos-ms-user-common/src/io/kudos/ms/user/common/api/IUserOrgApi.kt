@@ -11,11 +11,8 @@ import io.kudos.ms.user.common.vo.user.UserAccountCacheEntry
  * @author AI: Cursor
  * @since 1.0.0
  */
-//region your codes 1
 interface IUserOrgApi {
-//endregion your codes 1
 
-    //region your codes 2
 
     /**
      * 根据id从缓存中获取机构信息，如果缓存中不存在，则从数据库中加载，并回写缓存
@@ -99,6 +96,5 @@ interface IUserOrgApi {
      */
     fun getParentOrg(orgId: String): UserOrgCacheEntry?
 
-    //endregion your codes 2
 
 }

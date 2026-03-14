@@ -28,11 +28,8 @@ import org.springframework.transaction.annotation.Transactional
  * @since 1.0.0
  */
 @Service
-//region your codes 1
 open class SysCacheService : BaseCrudService<String, SysCache, SysCacheDao>(), ISysCacheService {
-//endregion your codes 1
 
-    //region your codes 2
 
     private val log = LogFactory.getLog(this)
 
@@ -185,6 +182,5 @@ open class SysCacheService : BaseCrudService<String, SysCache, SysCacheDao>(), I
         return cache.hash
     }
 
-    //endregion your codes 2
 
 }

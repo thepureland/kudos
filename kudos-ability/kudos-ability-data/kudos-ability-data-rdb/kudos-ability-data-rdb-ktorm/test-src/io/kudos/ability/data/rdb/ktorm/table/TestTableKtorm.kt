@@ -10,9 +10,7 @@ import java.time.LocalDateTime
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 internal interface TestTableKtorm : IDbEntity<Int, TestTableKtorm> {
-//endregion your codes 1
 
     companion object Companion : DbEntityFactory<TestTableKtorm>()
 
@@ -32,8 +30,6 @@ internal interface TestTableKtorm : IDbEntity<Int, TestTableKtorm> {
     var height: Int?
 
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

@@ -13,7 +13,6 @@ import kotlin.reflect.KClass
  */
 data class MsgReceiverGroupQuery (
 
-    //region your codes 1
 
     /** 接收者群组类型字典码 */
     val receiverGroupTypeDictCode: String? = null,
@@ -33,17 +32,12 @@ data class MsgReceiverGroupQuery (
     /** 是否内置 */
     val builtIn: Boolean? = null,
 
-    //endregion your codes 1
-//region your codes 2
 ) : ListSearchPayload() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
     override var returnEntityClass: KClass<*>? = MsgReceiverGroupRow::class
 
-    //endregion your codes 3
 
 }

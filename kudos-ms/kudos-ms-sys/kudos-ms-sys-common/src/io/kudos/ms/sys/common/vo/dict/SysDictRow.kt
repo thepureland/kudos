@@ -11,7 +11,6 @@ import io.kudos.base.support.result.IdJsonResult
  */
 data class SysDictRow (
 
-    //region your codes 1
 
     /** 主键 */
     override val id: String = "",
@@ -48,15 +47,10 @@ data class SysDictRow (
 
     val seqNo: Int? = null, //TODO
 
-    //endregion your codes 1
-//region your codes 2
 ) : IdJsonResult<String>() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
-    // endregion your codes 3
 
 }

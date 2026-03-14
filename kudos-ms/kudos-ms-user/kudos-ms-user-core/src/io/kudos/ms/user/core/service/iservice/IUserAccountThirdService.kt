@@ -11,11 +11,8 @@ import io.kudos.ms.user.core.model.po.UserAccountThird
  * @author AI: Codex
  * @since 1.0.0
  */
-//region your codes 1
 interface IUserAccountThirdService : IBaseCrudService<String, UserAccountThird> {
-//endregion your codes 1
 
-    //region your codes 2
 
     /**
      * 根据用户账号ID查询绑定列表
@@ -41,6 +38,5 @@ interface IUserAccountThirdService : IBaseCrudService<String, UserAccountThird> 
         subject: String
     ): UserAccountThird?
 
-    //endregion your codes 2
 
 }

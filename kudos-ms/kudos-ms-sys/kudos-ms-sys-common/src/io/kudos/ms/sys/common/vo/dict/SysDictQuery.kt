@@ -13,7 +13,6 @@ import kotlin.reflect.KClass
  */
 data class SysDictQuery (
 
-    //region your codes 1
 
     val id: String? = null,
 
@@ -32,12 +31,8 @@ data class SysDictQuery (
     /** 是否内置 */
     val builtIn: Boolean? = null,
 
-    //endregion your codes 1
-//region your codes 2
 ) : ListSearchPayload() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
@@ -48,6 +43,5 @@ data class SysDictQuery (
         ::dictName.name to OperatorEnum.ILIKE,
     )
 
-    //endregion your codes 3
 
 }

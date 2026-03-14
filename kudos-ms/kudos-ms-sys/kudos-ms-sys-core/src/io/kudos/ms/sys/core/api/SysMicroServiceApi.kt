@@ -14,12 +14,9 @@ import org.springframework.stereotype.Component
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 @Component
 open class SysMicroServiceApi : ISysMicroServiceApi {
-//endregion your codes 1
 
-    //region your codes 2
 
     @Resource
     protected lateinit var sysMicroServiceService: ISysMicroServiceService
@@ -48,6 +45,5 @@ open class SysMicroServiceApi : ISysMicroServiceApi {
         return sysMicroServiceService.updateActive(code, active)
     }
 
-    //endregion your codes 2
 
 }

@@ -15,11 +15,8 @@ import io.kudos.ms.user.common.vo.user.UserAccountCacheEntry
  * @author AI: Cursor
  * @since 1.0.0
  */
-//region your codes 1
 interface IAuthRoleService : IBaseCrudService<String, AuthRole> {
-//endregion your codes 1
 
-    //region your codes 2
 
     /**
      * 根据角色ID获取拥有该角色的所有用户ID列表
@@ -196,6 +193,5 @@ interface IAuthRoleService : IBaseCrudService<String, AuthRole> {
      */
     fun getResources(userId: String): List<SysResourceCacheEntry>
 
-    //endregion your codes 2
 
 }

@@ -13,11 +13,8 @@ import io.kudos.ms.sys.core.model.po.SysSystem
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 interface ISysSystemService : IBaseCrudService<String, SysSystem> {
-//endregion your codes 1
 
-    //region your codes 2
 
     /**
      * 根据编码从缓存获取系统信息
@@ -66,6 +63,5 @@ interface ISysSystemService : IBaseCrudService<String, SysSystem> {
      */
     fun getFullSystemTree(): List<IdAndNameTreeNode<String>>
 
-    //endregion your codes 2
 
 }

@@ -9,9 +9,7 @@ import io.kudos.ability.data.rdb.ktorm.support.IMaintainableDbEntity
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 interface SysI18n : IMaintainableDbEntity<String, SysI18n> {
-//endregion your codes 1
 
     companion object : DbEntityFactory<SysI18n>()
 
@@ -33,8 +31,6 @@ interface SysI18n : IMaintainableDbEntity<String, SysI18n> {
     /** 国际化值 */
     var value: String
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

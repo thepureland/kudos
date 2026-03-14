@@ -13,7 +13,6 @@ import kotlin.reflect.KClass
  */
 data class MsgTemplateQuery (
 
-    //region your codes 1
 
     /** 发送类型字典码 */
     val sendTypeDictCode: String? = null,
@@ -48,17 +47,12 @@ data class MsgTemplateQuery (
     /** 租户ID */
     val tenantId: String? = null,
 
-    //endregion your codes 1
-//region your codes 2
 ) : ListSearchPayload() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
     override var returnEntityClass: KClass<*>? = MsgTemplateRow::class
 
-    //endregion your codes 3
 
 }

@@ -17,11 +17,8 @@ import org.springframework.stereotype.Repository
  * @since 1.0.0
  */
 @Repository
-//region your codes 1
 open class AuthRoleDao : BaseCrudDao<String, AuthRole, AuthRoles>() {
-//endregion your codes 1
 
-    //region your codes 2
 
 
     /**
@@ -61,6 +58,5 @@ open class AuthRoleDao : BaseCrudDao<String, AuthRole, AuthRoles>() {
         return searchProperty(criteria, AuthRole::id).filterNotNull()
     }
 
-    //endregion your codes 2
 
 }

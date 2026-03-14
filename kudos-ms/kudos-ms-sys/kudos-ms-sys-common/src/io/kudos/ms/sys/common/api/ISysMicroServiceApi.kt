@@ -10,11 +10,8 @@ import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceRow
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 interface ISysMicroServiceApi {
-//endregion your codes 1
 
-    //region your codes 2
 
     /**
      * 返回所有启用的微服务(包括原子服务，原子服务本质上也是微服务)
@@ -76,6 +73,5 @@ interface ISysMicroServiceApi {
      */
     fun updateActive(code: String, active: Boolean): Boolean
 
-    //endregion your codes 2
 
 }

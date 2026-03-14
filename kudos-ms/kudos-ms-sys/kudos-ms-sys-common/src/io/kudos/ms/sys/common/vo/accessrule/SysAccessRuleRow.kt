@@ -11,7 +11,6 @@ import io.kudos.base.support.result.IdJsonResult
  */
 data class SysAccessRuleRow (
 
-    //region your codes 1
 
     /** 主键 */
     override val id: String = "",
@@ -25,15 +24,10 @@ data class SysAccessRuleRow (
     /** 规则类型 */
     val ruleType: Int? = null,
 
-    //endregion your codes 1
-//region your codes 2
 ) : IdJsonResult<String>() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
-    // endregion your codes 3
 
 }

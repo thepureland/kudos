@@ -12,9 +12,7 @@ import java.time.LocalDateTime
  * @author AI: Codex
  * @since 1.0.0
  */
-//region your codes 1
 interface MsgSend : IDbEntity<String, MsgSend> {
-//endregion your codes 1
 
     companion object : DbEntityFactory<MsgSend>()
 
@@ -55,8 +53,6 @@ interface MsgSend : IDbEntity<String, MsgSend> {
     var tenantId: String
 
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

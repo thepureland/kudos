@@ -7,11 +7,8 @@ package io.kudos.ms.sys.common.api
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 interface ISysTenantResourceApi {
-//endregion your codes 1
 
-    //region your codes 2
 
     fun getResourceIdsByTenantId(tenantId: String): Set<String>
 
@@ -23,6 +20,5 @@ interface ISysTenantResourceApi {
 
     fun exists(tenantId: String, resourceId: String): Boolean
 
-    //endregion your codes 2
 
 }

@@ -27,12 +27,9 @@ import org.springframework.transaction.annotation.Transactional
  * @since 1.0.0
  */
 @Service
-//region your codes 1
 open class AuthRoleService : BaseCrudService<String, AuthRole, AuthRoleDao>(),
     IAuthRoleService {
-//endregion your codes 1
 
-    //region your codes 2
 
     @Resource
     private lateinit var userIdsByRoleIdCache: UserIdsByRoleIdCache
@@ -244,6 +241,5 @@ open class AuthRoleService : BaseCrudService<String, AuthRole, AuthRoleDao>(),
         return resourceIds.mapNotNull { resourcesMap[it] }
     }
 
-    //endregion your codes 2
 
 }

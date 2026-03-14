@@ -11,12 +11,8 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-//region your codes 1
 interface SysDomainFallback : ISysDomainProxy {
-//endregion your codes 1
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

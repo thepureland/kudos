@@ -12,7 +12,6 @@ import java.time.LocalDateTime
  */
 data class SysDomainRow (
 
-    //region your codes 1
 
     /** 主键 */
     override val id: String = "",
@@ -38,18 +37,13 @@ data class SysDomainRow (
     /** 创建时间 */
     val createTime: LocalDateTime? = null,
 
-    //endregion your codes 1
-//region your codes 2
 ) : IdJsonResult<String>() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
     /** 租户名称 */
     var tenantName: String = ""
 
-    // endregion your codes 3
 
 }

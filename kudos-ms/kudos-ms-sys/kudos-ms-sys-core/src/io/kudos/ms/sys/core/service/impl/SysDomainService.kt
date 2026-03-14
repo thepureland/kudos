@@ -29,11 +29,8 @@ import kotlin.reflect.KClass
  * @since 1.0.0
  */
 @Service
-//region your codes 1
 open class SysDomainService : BaseCrudService<String, SysDomain, SysDomainDao>(), ISysDomainService {
-//endregion your codes 1
 
-    //region your codes 2
 
     private val log = LogFactory.getLog(this)
 
@@ -143,6 +140,5 @@ open class SysDomainService : BaseCrudService<String, SysDomain, SysDomainDao>()
         return count
     }
 
-    //endregion your codes 2
 
 }

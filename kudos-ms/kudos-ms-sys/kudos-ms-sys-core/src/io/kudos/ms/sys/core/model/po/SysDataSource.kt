@@ -9,9 +9,7 @@ import io.kudos.ability.data.rdb.ktorm.support.IMaintainableDbEntity
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 interface SysDataSource : IMaintainableDbEntity<String, SysDataSource> {
-//endregion your codes 1
 
     companion object : DbEntityFactory<SysDataSource>()
 
@@ -55,8 +53,6 @@ interface SysDataSource : IMaintainableDbEntity<String, SysDataSource> {
     var maxAge: Int?
 
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

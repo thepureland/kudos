@@ -15,7 +15,6 @@ data class MsgReceiverGroupRow (
     /** 主键 */
     override val id: String = "",
 
-    //region your codes 1
 
     /** 接收者群组类型字典码 */
     val receiverGroupTypeDictCode: String? = null,
@@ -35,15 +34,10 @@ data class MsgReceiverGroupRow (
     /** 是否内置 */
     val builtIn: Boolean? = null,
 
-    //endregion your codes 1
-//region your codes 2
 ) : IdJsonResult<String>() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
-    //endregion your codes 3
 
 }

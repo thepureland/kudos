@@ -16,7 +16,6 @@ import kotlin.reflect.KClass
  */
 data class SysCacheQuery (
 
-    //region your codes 1
 
     /** 名称 */
     val name: String? = null,
@@ -34,12 +33,8 @@ data class SysCacheQuery (
     /** 仅启用 */
     val active: Boolean? = true,
 
-    //endregion your codes 1
-//region your codes 2
 ) : ListSearchPayload() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this(null)
 
@@ -47,6 +42,5 @@ data class SysCacheQuery (
 
     override var operators: Map<String, OperatorEnum>? = mapOf(::name.name to OperatorEnum.ILIKE)
 
-    //endregion your codes 3
 
 }

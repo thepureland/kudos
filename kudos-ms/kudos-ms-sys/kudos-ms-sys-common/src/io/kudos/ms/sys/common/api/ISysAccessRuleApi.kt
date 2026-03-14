@@ -9,11 +9,8 @@ import io.kudos.ms.sys.common.vo.accessrule.SysAccessRuleRow
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 interface ISysAccessRuleApi {
-//endregion your codes 1
 
-    //region your codes 2
 
     /**
      * 获取访问规则
@@ -38,6 +35,5 @@ interface ISysAccessRuleApi {
      */
     fun updateActive(id: String, active: Boolean): Boolean
 
-    //endregion your codes 2
 
 }

@@ -9,9 +9,7 @@ import io.kudos.ability.data.rdb.ktorm.support.IMaintainableDbEntity
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 interface SysDict : IMaintainableDbEntity<String, SysDict> {
-//endregion your codes 1
 
     companion object : DbEntityFactory<SysDict>()
 
@@ -25,8 +23,6 @@ interface SysDict : IMaintainableDbEntity<String, SysDict> {
     var atomicServiceCode: String
 
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

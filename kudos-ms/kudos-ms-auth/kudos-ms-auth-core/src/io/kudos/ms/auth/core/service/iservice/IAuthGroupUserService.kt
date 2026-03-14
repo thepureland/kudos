@@ -11,11 +11,8 @@ import io.kudos.ms.auth.core.model.po.AuthGroupUser
  * @author AI: Codex
  * @since 1.0.0
  */
-//region your codes 1
 interface IAuthGroupUserService : IBaseCrudService<String, AuthGroupUser> {
-//endregion your codes 1
 
-    //region your codes 2
 
     /**
      * 根据组ID获取用户ID集合
@@ -70,6 +67,5 @@ interface IAuthGroupUserService : IBaseCrudService<String, AuthGroupUser> {
      */
     fun exists(groupId: String, userId: String): Boolean
 
-    //endregion your codes 2
 
 }

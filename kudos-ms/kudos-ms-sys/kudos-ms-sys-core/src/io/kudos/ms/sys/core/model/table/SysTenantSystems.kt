@@ -12,9 +12,7 @@ import org.ktorm.schema.varchar
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 object SysTenantSystems : StringIdTable<SysTenantSystem>("sys_tenant_system") {
-//endregion your codes 1
 
     /** 租户id */
     var tenantId = varchar("tenant_id").bindTo { it.tenantId }
@@ -41,8 +39,6 @@ object SysTenantSystems : StringIdTable<SysTenantSystem>("sys_tenant_system") {
     var updateTime = datetime("update_time").bindTo { it.updateTime }
 
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

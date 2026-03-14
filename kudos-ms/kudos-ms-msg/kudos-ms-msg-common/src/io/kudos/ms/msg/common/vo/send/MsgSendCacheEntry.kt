@@ -17,7 +17,6 @@ data class MsgSendCacheEntry (
     /** 主键 */
     override val id: String = "",
 
-    //region your codes 1
 
     /** 接收者群组类型字典码 */
     val receiverGroupTypeDictCode: String? = null,
@@ -55,16 +54,11 @@ data class MsgSendCacheEntry (
     /** 租户ID */
     val tenantId: String? = null,
 
-    //endregion your codes 1
-//region your codes 2
 ) : IIdEntity<String>, Serializable {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
-    //endregion your codes 3
 
     companion object {
         private const val serialVersionUID = 6949395793750221523L

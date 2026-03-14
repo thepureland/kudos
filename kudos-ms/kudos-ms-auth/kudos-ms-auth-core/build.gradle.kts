@@ -4,7 +4,6 @@ dependencies {
     api(project(":kudos-ability:kudos-ability-data:kudos-ability-data-rdb:kudos-ability-data-rdb-ktorm"))
     api(project(":kudos-ability:kudos-ability-data:kudos-ability-data-rdb:kudos-ability-data-rdb-flyway"))
     
-    //region your codes 1
     api(project(":kudos-ms:kudos-ms-user:kudos-ms-user-core"))
     api(project(":kudos-ability:kudos-ability-cache:kudos-ability-cache-local:kudos-ability-cache-local-caffeine"))
     api(project(":kudos-ability:kudos-ability-cache:kudos-ability-cache-remote:kudos-ability-cache-remote-redis"))
@@ -17,7 +16,6 @@ dependencies {
     testImplementation(libs.postgresql)
     testImplementation(libs.ktorm.support.postgresql)
 
-    //endregion your codes 1
 
     testImplementation(project(":kudos-test:kudos-test-rdb"))
 }

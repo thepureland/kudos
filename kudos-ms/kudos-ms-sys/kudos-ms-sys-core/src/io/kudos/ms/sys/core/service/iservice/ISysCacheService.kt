@@ -13,11 +13,8 @@ import io.kudos.ms.sys.core.model.po.SysCache
  * @author AI: Cursor
  * @since 1.0.0
  */
-//region your codes 1
 interface ISysCacheService : IBaseCrudService<String, SysCache> {
-//endregion your codes 1
 
-    //region your codes 2
 
     /**
      * 加载指定名称的缓存，并缓存结果
@@ -106,6 +103,5 @@ interface ISysCacheService : IBaseCrudService<String, SysCache> {
      */
     fun getValueJson(name: String, key: String): String
 
-    //endregion your codes 2
 
 }

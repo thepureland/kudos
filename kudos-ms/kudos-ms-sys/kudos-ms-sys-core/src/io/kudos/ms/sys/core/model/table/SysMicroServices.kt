@@ -13,9 +13,7 @@ import org.ktorm.schema.varchar
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 object SysMicroServices : Table<SysMicroService>("sys_micro_service") {
-//endregion your codes 1
 
     /** 编码 */
     var code = varchar("code").bindTo { it.code }
@@ -60,11 +58,9 @@ object SysMicroServices : Table<SysMicroService>("sys_micro_service") {
     var updateTime = datetime("update_time").bindTo { it.updateTime }
 
 
-    //region your codes 2
 
     /** 主键别名 */
     var id = code.primaryKey()
 
-    //endregion your codes 2
 
 }

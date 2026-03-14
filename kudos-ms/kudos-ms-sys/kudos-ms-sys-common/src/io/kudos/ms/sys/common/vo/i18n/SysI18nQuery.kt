@@ -13,7 +13,6 @@ import kotlin.reflect.KClass
  */
 data class SysI18nQuery (
 
-    //region your codes 1
 
     /** 语言_地区 */
     val locale: String? = null,
@@ -36,12 +35,8 @@ data class SysI18nQuery (
     /** 仅启用 */
     val active: Boolean? = true,
 
-    //endregion your codes 1
-//region your codes 2
 ) : ListSearchPayload() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
@@ -52,6 +47,5 @@ data class SysI18nQuery (
         ::namespace.name to OperatorEnum.ILIKE,
     )
 
-    //endregion your codes 3
 
 }

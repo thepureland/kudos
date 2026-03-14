@@ -18,11 +18,8 @@ import org.springframework.stereotype.Repository
  * @since 1.0.0
  */
 @Repository
-//region your codes 1
 open class SysI18nDao : BaseCrudDao<String, SysI18n, SysI18ns>() {
-//endregion your codes 1
 
-    //region your codes 2
 
     /**
      * 根据语言、类型、命名空间、原子服务编码获取对应的启用的国际化内容（for cache）。
@@ -62,6 +59,5 @@ open class SysI18nDao : BaseCrudDao<String, SysI18n, SysI18ns>() {
         return searchAs<SysI18nCacheEntry>(criteria)
     }
 
-    //endregion your codes 2
 
 }

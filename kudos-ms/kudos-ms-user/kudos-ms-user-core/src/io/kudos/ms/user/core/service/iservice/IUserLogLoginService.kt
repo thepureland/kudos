@@ -11,11 +11,8 @@ import java.time.LocalDateTime
  * @author AI: Cursor
  * @since 1.0.0
  */
-//region your codes 1
 interface IUserLogLoginService : IBaseCrudService<String, UserLogLogin> {
-//endregion your codes 1
 
-    //region your codes 2
 
     /**
      * 根据用户ID查询登录日志
@@ -103,6 +100,5 @@ interface IUserLogLoginService : IBaseCrudService<String, UserLogLogin> {
      */
     fun countFailureLogins(tenantId: String?, userId: String?, startTime: LocalDateTime?, endTime: LocalDateTime?): Long
 
-    //endregion your codes 2
 
 }

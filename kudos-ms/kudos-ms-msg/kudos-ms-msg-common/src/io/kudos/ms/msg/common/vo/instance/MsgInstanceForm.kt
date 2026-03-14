@@ -16,7 +16,6 @@ data class MsgInstanceForm (
     /** 主键 */
     override val id: String = "",
 
-    //region your codes 1
 
     /** 国家-语言字典码 */
     val localeDictCode: String? = null,
@@ -48,15 +47,10 @@ data class MsgInstanceForm (
     /** 租户ID */
     val tenantId: String? = null,
 
-    //endregion your codes 1
-//region your codes 2
 ) : FormPayload<String>() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
-    //endregion your codes 3
 
 }

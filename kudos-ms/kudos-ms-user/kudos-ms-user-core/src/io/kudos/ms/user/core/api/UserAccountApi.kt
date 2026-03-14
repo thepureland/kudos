@@ -16,12 +16,9 @@ import org.springframework.stereotype.Service
  * @author AI: Cursor
  * @since 1.0.0
  */
-//region your codes 1
 @Service
 open class UserAccountApi : IUserAccountApi {
-//endregion your codes 1
 
-    //region your codes 2
 
     @Autowired
     private lateinit var userAccountHashCache: UserAccountHashCache
@@ -53,6 +50,5 @@ open class UserAccountApi : IUserAccountApi {
         return userAccountService.getUserIds(tenantId)
     }
 
-    //endregion your codes 2
 
 }

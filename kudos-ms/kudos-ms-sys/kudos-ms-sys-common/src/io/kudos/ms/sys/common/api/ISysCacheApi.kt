@@ -10,11 +10,8 @@ import io.kudos.ms.sys.common.vo.cache.SysCacheRow
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 interface ISysCacheApi {
-//endregion your codes 1
 
-    //region your codes 2
 
     /**
      * 加载指定名称的缓存，并缓存结果
@@ -48,6 +45,5 @@ interface ISysCacheApi {
      */
     fun getAllActiveCaches(): List<SysCacheRow>
 
-    //endregion your codes 2
 
 }

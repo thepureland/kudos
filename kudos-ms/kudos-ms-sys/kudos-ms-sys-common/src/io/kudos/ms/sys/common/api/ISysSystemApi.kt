@@ -10,11 +10,8 @@ import io.kudos.ms.sys.common.vo.system.SysSystemRow
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 interface ISysSystemApi {
-//endregion your codes 1
 
-    //region your codes 2
 
     fun getSystemByCode(code: String): SysSystemCacheEntry?
 
@@ -24,6 +21,5 @@ interface ISysSystemApi {
 
     fun getSubSystemsBySystemCode(systemCode: String): List<SysSystemRow>
 
-    //endregion your codes 2
 
 }

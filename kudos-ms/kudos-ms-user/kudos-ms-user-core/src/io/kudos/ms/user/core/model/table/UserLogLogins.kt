@@ -14,9 +14,7 @@ import org.ktorm.schema.varchar
  * @author AI: Cursor
  * @since 1.0.0
  */
-//region your codes 1
 object UserLogLogins : StringIdTable<UserLogLogin>("user_log_login") {
-//endregion your codes 1
 
     /** 用户ID */
     var userId = varchar("user_id").bindTo { it.userId }
@@ -64,8 +62,6 @@ object UserLogLogins : StringIdTable<UserLogLogin>("user_log_login") {
     var createTime = datetime("create_time").bindTo { it.createTime }
 
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

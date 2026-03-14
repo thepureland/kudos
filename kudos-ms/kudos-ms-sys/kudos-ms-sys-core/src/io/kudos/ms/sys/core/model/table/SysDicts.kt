@@ -11,9 +11,7 @@ import org.ktorm.schema.varchar
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 object SysDicts : MaintainableTable<SysDict>("sys_dict") {
-//endregion your codes 1
 
     /** 字典类型 */
     var dictType = varchar("dict_type").bindTo { it.dictType }
@@ -25,8 +23,6 @@ object SysDicts : MaintainableTable<SysDict>("sys_dict") {
     var atomicServiceCode = varchar("atomic_service_code").bindTo { it.atomicServiceCode }
 
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

@@ -10,9 +10,7 @@ import java.time.LocalDateTime
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 interface SysAccessRuleIp : IMaintainableDbEntity<String, SysAccessRuleIp> {
-//endregion your codes 1
 
     companion object : DbEntityFactory<SysAccessRuleIp>()
 
@@ -32,8 +30,6 @@ interface SysAccessRuleIp : IMaintainableDbEntity<String, SysAccessRuleIp> {
     var parentRuleId: String
 
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

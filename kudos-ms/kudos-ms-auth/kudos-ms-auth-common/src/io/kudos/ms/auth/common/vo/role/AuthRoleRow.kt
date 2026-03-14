@@ -13,7 +13,6 @@ import java.time.LocalDateTime
  */
 data class AuthRoleRow (
 
-    //region your codes 1
 
     /** 角色编码 */
     val code: String? = null,
@@ -54,15 +53,10 @@ data class AuthRoleRow (
     /** 更新时间 */
     val updateTime: LocalDateTime? = null,
 
-    //endregion your codes 1
-//region your codes 2
 ) : IdJsonResult<String>() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
-    //endregion your codes 3
 
 }

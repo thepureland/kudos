@@ -16,11 +16,8 @@ import org.springframework.stereotype.Repository
  * @since 1.0.0
  */
 @Repository
-//region your codes 1
 open class SysSubSystemMicroServiceDao : BaseCrudDao<String, SysSubSystemMicroService, SysSubSystemMicroServices>() {
-//endregion your codes 1
 
-    //region your codes 2
 
     /**
      * 根据子系统编码查找对应的微服务编码
@@ -74,6 +71,5 @@ open class SysSubSystemMicroServiceDao : BaseCrudDao<String, SysSubSystemMicroSe
         return batchDeleteCriteria(criteria)
     }
 
-    //endregion your codes 2
 
 }

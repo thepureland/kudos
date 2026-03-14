@@ -14,7 +14,6 @@ import kotlin.reflect.KClass
  */
 data class MsgSendQuery (
 
-    //region your codes 1
 
     /** 接收者群组类型字典码 */
     val receiverGroupTypeDictCode: String? = null,
@@ -52,17 +51,12 @@ data class MsgSendQuery (
     /** 租户ID */
     val tenantId: String? = null,
 
-    //endregion your codes 1
-//region your codes 2
 ) : ListSearchPayload() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
     override var returnEntityClass: KClass<*>? = MsgSendRow::class
 
-    //endregion your codes 3
 
 }

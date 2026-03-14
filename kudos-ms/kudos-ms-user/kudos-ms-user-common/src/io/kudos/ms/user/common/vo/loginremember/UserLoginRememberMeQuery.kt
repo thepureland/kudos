@@ -13,22 +13,16 @@ import kotlin.reflect.KClass
  */
 data class UserLoginRememberMeQuery (
 
-    //region your codes 1
 
     /** 用户名 */
     val username: String? = null,
 
-    //endregion your codes 1
-//region your codes 2
 ) : ListSearchPayload() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
     override var returnEntityClass: KClass<*>? = UserLoginRememberMeRow::class
 
-    //endregion your codes 3
 
 }

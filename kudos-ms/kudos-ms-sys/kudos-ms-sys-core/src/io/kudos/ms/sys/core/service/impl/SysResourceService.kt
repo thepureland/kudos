@@ -30,11 +30,8 @@ import org.springframework.transaction.annotation.Transactional
  * @since 1.0.0
  */
 @Service
-//region your codes 1
 open class SysResourceService : BaseCrudService<String, SysResource, SysResourceDao>(), ISysResourceService {
-//endregion your codes 1
 
-    //region your codes 2
 
     private val log = LogFactory.getLog(this)
 
@@ -361,6 +358,5 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
         }
     }
 
-    //endregion your codes 2
 
 }

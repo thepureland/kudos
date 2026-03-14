@@ -16,11 +16,8 @@ import org.springframework.stereotype.Repository
  * @since 1.0.0
  */
 @Repository
-//region your codes 1
 open class AuthGroupRoleDao : BaseCrudDao<String, AuthGroupRole, AuthGroupRoles>() {
-//endregion your codes 1
 
-    //region your codes 2
 
     /**
      * 检查关系是否存在
@@ -92,6 +89,5 @@ open class AuthGroupRoleDao : BaseCrudDao<String, AuthGroupRole, AuthGroupRoles>
         return batchDeleteCriteria(criteria)
     }
 
-    //endregion your codes 2
 
 }

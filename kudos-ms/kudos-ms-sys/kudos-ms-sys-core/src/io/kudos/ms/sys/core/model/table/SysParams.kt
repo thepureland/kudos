@@ -12,9 +12,7 @@ import org.ktorm.schema.varchar
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 object SysParams : MaintainableTable<SysParam>("sys_param") {
-//endregion your codes 1
 
     /** 参数名称 */
     var paramName = varchar("param_name").bindTo { it.paramName }
@@ -32,8 +30,6 @@ object SysParams : MaintainableTable<SysParam>("sys_param") {
     var orderNum = int("order_num").bindTo { it.orderNum }
 
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

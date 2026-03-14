@@ -16,12 +16,9 @@ import org.springframework.stereotype.Component
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 @Component
 open class SysResourceApi : ISysResourceApi {
-//endregion your codes 1
 
-    //region your codes 2
 
     @Resource
     protected lateinit var sysResourceService: ISysResourceService
@@ -69,6 +66,5 @@ open class SysResourceApi : ISysResourceApi {
         return sysResourceService.getChildrenResources(subSystemCode, resourceType, parentId)
     }
 
-    //endregion your codes 2
 
 }

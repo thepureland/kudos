@@ -32,11 +32,8 @@ import kotlin.reflect.KClass
  * @since 1.0.0
  */
 @Service
-//region your codes 1
 open class SysTenantService : BaseCrudService<String, SysTenant, SysTenantDao>(), ISysTenantService {
-//endregion your codes 1
 
-    //region your codes 2
 
     private val log = LogFactory.getLog(this::class)
 
@@ -239,6 +236,5 @@ open class SysTenantService : BaseCrudService<String, SysTenant, SysTenantDao>()
         return sysTenantSystemHashCache.getSubSystemCodesByTenantId(tenantId).joinToString(", ")
     }
 
-    //endregion your codes 2
 
 }

@@ -28,11 +28,8 @@ import org.springframework.transaction.annotation.Transactional
  * @since 1.0.0
  */
 @Service
-//region your codes 1
 open class UserOrgService : BaseCrudService<String, UserOrg, UserOrgDao>(), IUserOrgService {
-//endregion your codes 1
 
-    //region your codes 2
 
     @Autowired
     private lateinit var userOrgUserDao: UserOrgUserDao
@@ -269,6 +266,5 @@ open class UserOrgService : BaseCrudService<String, UserOrg, UserOrgDao>(), IUse
         return count
     }
 
-    //endregion your codes 2
 
 }

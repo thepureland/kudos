@@ -12,13 +12,9 @@ import org.springframework.cloud.openfeign.FeignClient
  * @author AI: Codex
  * @since 1.0.0
  */
-//region your codes 1
 @FeignClient(name = "user-login-remember-me", fallback = UserLoginRememberMeFallback::class)
 interface IUserLoginRememberMeProxy : IUserLoginRememberMeApi {
-//endregion your codes 1
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

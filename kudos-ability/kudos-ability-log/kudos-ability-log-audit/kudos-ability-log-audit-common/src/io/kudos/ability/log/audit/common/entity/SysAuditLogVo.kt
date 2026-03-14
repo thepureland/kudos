@@ -11,7 +11,6 @@ import java.util.*
  * @tableAuthor admin
  * @time 2016-9-3 16:07:08
  */
-//region your codes 1
 class SysAuditLogVo  //endregion
 //region constuctors
     : Serializable {

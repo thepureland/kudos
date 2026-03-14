@@ -13,9 +13,7 @@ import org.ktorm.schema.varchar
  * @author AI: Cursor
  * @since 1.0.0
  */
-//region your codes 1
 object AuthRoleUsers : StringIdTable<AuthRoleUser>("auth_role_user") {
-//endregion your codes 1
 
     /** 角色id */
     var roleId = varchar("role_id").bindTo { it.roleId }
@@ -42,8 +40,6 @@ object AuthRoleUsers : StringIdTable<AuthRoleUser>("auth_role_user") {
     var updateTime = datetime("update_time").bindTo { it.updateTime }
 
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

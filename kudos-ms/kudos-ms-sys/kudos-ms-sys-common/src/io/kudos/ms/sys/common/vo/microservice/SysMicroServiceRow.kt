@@ -11,7 +11,6 @@ import io.kudos.base.support.result.IdJsonResult
  */
 data class SysMicroServiceRow (
 
-    //region your codes 1
 
     override val id: String = "",
 
@@ -39,15 +38,10 @@ data class SysMicroServiceRow (
     /** 是否内置 */
     val builtIn: Boolean = true,
 
-    //endregion your codes 1
-//region your codes 2
 ) : IdJsonResult<String>() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
-    // endregion your codes 3
 
 }

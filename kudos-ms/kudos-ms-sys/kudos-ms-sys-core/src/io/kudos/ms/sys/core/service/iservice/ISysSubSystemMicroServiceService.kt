@@ -10,11 +10,8 @@ import io.kudos.ms.sys.core.model.po.SysSubSystemMicroService
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 interface ISysSubSystemMicroServiceService : IBaseCrudService<String, SysSubSystemMicroService> {
-//endregion your codes 1
 
-    //region your codes 2
 
     /**
      * 根据子系统编码获取微服务编码列表
@@ -69,6 +66,5 @@ interface ISysSubSystemMicroServiceService : IBaseCrudService<String, SysSubSyst
      */
     fun exists(subSystemCode: String, microServiceCode: String): Boolean
 
-    //endregion your codes 2
 
 }

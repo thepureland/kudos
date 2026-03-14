@@ -13,7 +13,6 @@ import kotlin.reflect.KClass
  */
 data class SysMicroServiceQuery (
 
-    //region your codes 1
 
     /** 编码 */
     val code: String? = null,
@@ -27,12 +26,8 @@ data class SysMicroServiceQuery (
     /** 仅启用 */
     val active: Boolean? = true,
 
-    //endregion your codes 1
-//region your codes 2
 ) : ListSearchPayload() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
@@ -43,6 +38,5 @@ data class SysMicroServiceQuery (
         ::name.name to OperatorEnum.ILIKE
     )
 
-    //endregion your codes 3
 
 }

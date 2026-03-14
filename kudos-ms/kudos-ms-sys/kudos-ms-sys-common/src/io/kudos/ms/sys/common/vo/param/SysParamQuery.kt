@@ -13,7 +13,6 @@ import kotlin.reflect.KClass
  */
 data class SysParamQuery (
 
-    //region your codes 1
 
     /** 参数名称 */
     val paramName: String? = null,
@@ -30,12 +29,8 @@ data class SysParamQuery (
     /** 仅启用 */
     val active: Boolean? = true,
 
-    //endregion your codes 1
-//region your codes 2
 ) : ListSearchPayload() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
@@ -46,6 +41,5 @@ data class SysParamQuery (
         ::paramValue.name to OperatorEnum.ILIKE
     )
 
-    //endregion your codes 3
 
 }

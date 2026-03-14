@@ -14,7 +14,6 @@ import kotlin.reflect.KClass
  */
 data class MsgInstanceQuery (
 
-    //region your codes 1
 
     /** 国家-语言字典码 */
     val localeDictCode: String? = null,
@@ -46,17 +45,12 @@ data class MsgInstanceQuery (
     /** 租户ID */
     val tenantId: String? = null,
 
-    //endregion your codes 1
-//region your codes 2
 ) : ListSearchPayload() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
     override var returnEntityClass: KClass<*>? = MsgInstanceRow::class
 
-    //endregion your codes 3
 
 }

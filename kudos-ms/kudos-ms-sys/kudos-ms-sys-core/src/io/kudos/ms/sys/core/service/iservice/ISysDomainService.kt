@@ -12,11 +12,8 @@ import io.kudos.ms.sys.core.model.po.SysDomain
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 interface ISysDomainService : IBaseCrudService<String, SysDomain>, ISysDomainApi {
-//endregion your codes 1
 
-    //region your codes 2
 
     /**
      * 获取租户的域名列表
@@ -49,6 +46,5 @@ interface ISysDomainService : IBaseCrudService<String, SysDomain>, ISysDomainApi
      */
     fun updateActive(id: String, active: Boolean): Boolean
 
-    //endregion your codes 2
 
 }

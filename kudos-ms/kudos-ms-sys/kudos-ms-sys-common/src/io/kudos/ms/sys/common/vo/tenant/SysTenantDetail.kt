@@ -15,7 +15,6 @@ data class SysTenantDetail (
     /** 主键 */
     override val id: String = "",
 
-    //region your codes 1
 
     /** 名称 */
     val name: String = "",
@@ -53,18 +52,13 @@ data class SysTenantDetail (
     /** 更新时间 */
     val updateTime: LocalDateTime? = null,
 
-    //endregion your codes 1
-//region your codes 2
 ) : IdJsonResult<String>() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
     /** 以逗号分隔的子系统编码 */
     var subSystemCodes: String = ""
 
-    //endregion your codes 3
 
 }

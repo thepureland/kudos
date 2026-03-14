@@ -11,11 +11,8 @@ import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpRow
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 interface ISysAccessRuleIpApi {
-//endregion your codes 1
 
-    //region your codes 2
 
     /**
      * 获取规则的IP列表
@@ -61,6 +58,5 @@ interface ISysAccessRuleIpApi {
      */
     fun deleteByRuleId(ruleId: String): Int
 
-    //endregion your codes 2
 
 }

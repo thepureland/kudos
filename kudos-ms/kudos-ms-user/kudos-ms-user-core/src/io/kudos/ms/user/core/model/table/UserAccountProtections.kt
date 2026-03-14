@@ -15,9 +15,7 @@ import org.ktorm.schema.varchar
  * @author AI: Codex
  * @since 1.0.0
  */
-//region your codes 1
 object UserAccountProtections : StringIdTable<UserAccountProtection>("user_account_protection") {
-//endregion your codes 1
 
     /** 用户ID */
     var userId = varchar("user_id").bindTo { it.userId }
@@ -80,8 +78,6 @@ object UserAccountProtections : StringIdTable<UserAccountProtection>("user_accou
     var updateTime = datetime("update_time").bindTo { it.updateTime }
 
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

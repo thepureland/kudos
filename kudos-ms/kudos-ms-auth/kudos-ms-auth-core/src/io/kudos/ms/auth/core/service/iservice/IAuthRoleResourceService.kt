@@ -11,11 +11,8 @@ import io.kudos.ms.auth.core.model.po.AuthRoleResource
  * @author AI: Cursor
  * @since 1.0.0
  */
-//region your codes 1
 interface IAuthRoleResourceService : IBaseCrudService<String, AuthRoleResource> {
-//endregion your codes 1
 
-    //region your codes 2
 
     /**
      * 根据角色ID获取资源ID集合
@@ -70,6 +67,5 @@ interface IAuthRoleResourceService : IBaseCrudService<String, AuthRoleResource> 
      */
     fun exists(roleId: String, resourceId: String): Boolean
 
-    //endregion your codes 2
 
 }

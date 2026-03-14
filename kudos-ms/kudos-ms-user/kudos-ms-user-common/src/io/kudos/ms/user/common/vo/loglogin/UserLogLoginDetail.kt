@@ -13,7 +13,6 @@ import java.time.LocalDateTime
  */
 data class UserLogLoginDetail (
 
-    //region your codes 1
 
     /** 用户ID */
     val userId: String? = null,
@@ -60,15 +59,10 @@ data class UserLogLoginDetail (
     /** 创建时间 */
     val createTime: LocalDateTime? = null,
 
-    //endregion your codes 1
-//region your codes 2
 ) : IdJsonResult<String>() {
-//endregion your codes 2
 
-    //region your codes 3
 
     constructor() : this("")
 
-    //endregion your codes 3
 
 }

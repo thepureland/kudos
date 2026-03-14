@@ -12,9 +12,7 @@ import org.ktorm.schema.*
  * @author AI: Cursor
  * @since 1.0.0
  */
-//region your codes 1
 object UserAccounts : StringIdTable<UserAccount>("user_account") {
-//endregion your codes 1
 
     /** 用户名 */
     var username = varchar("username").bindTo { it.username }
@@ -98,8 +96,6 @@ object UserAccounts : StringIdTable<UserAccount>("user_account") {
     var updateTime = datetime("update_time").bindTo { it.updateTime }
 
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

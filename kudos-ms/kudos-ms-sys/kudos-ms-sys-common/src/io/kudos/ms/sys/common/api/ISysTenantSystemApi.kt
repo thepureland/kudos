@@ -7,11 +7,8 @@ package io.kudos.ms.sys.common.api
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 interface ISysTenantSystemApi {
-//endregion your codes 1
 
-    //region your codes 2
 
     fun searchSystemCodesByTenantId(tenantId: String): Set<String>
 
@@ -31,6 +28,5 @@ interface ISysTenantSystemApi {
 
     fun batchDeleteByTenantIds(tenantIds: Collection<String>): Int
 
-    //endregion your codes 2
 
 }

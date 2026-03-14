@@ -12,13 +12,9 @@ import org.springframework.cloud.openfeign.FeignClient
  * @author AI: Cursor
  * @since 1.0.0
  */
-//region your codes 1
 @FeignClient(name = "user-org", fallback = UserOrgFallback::class)
 interface IUserOrgProxy : IUserOrgApi {
-//endregion your codes 1
 
-    //region your codes 2
 
-    //endregion your codes 2
 
 }

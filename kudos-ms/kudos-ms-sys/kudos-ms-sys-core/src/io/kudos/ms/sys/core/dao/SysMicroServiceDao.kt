@@ -16,9 +16,7 @@ import org.springframework.stereotype.Repository
  * @since 1.0.0
  */
 @Repository
-//region your codes 1
 open class SysMicroServiceDao : BaseCrudDao<String, SysMicroService, SysMicroServices>() {
-//endregion your codes 1
 
     /**
      * 按类型返回微服务，返回缓存用 VO 列表

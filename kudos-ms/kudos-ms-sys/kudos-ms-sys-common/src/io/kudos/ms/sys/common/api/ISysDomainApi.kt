@@ -9,11 +9,8 @@ import io.kudos.ms.sys.common.vo.domain.SysDomainCacheEntry
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 interface ISysDomainApi {
-//endregion your codes 1
 
-    //region your codes 2
 
     /**
      * 返回指定名称的域名信息
@@ -25,6 +22,5 @@ interface ISysDomainApi {
      */
     fun getDomainByName(domainName: String): SysDomainCacheEntry?
 
-    //endregion your codes 2
 
 }

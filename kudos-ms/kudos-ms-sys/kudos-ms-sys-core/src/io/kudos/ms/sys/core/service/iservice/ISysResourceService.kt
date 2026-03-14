@@ -16,11 +16,8 @@ import io.kudos.ms.sys.core.model.po.SysResource
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 interface ISysResourceService : IBaseCrudService<String, SysResource>, ISysResourceApi {
-//endregion your codes 1
 
-    //region your codes 2
 
     /**
      * 根据id从缓存获取资源信息
@@ -124,6 +121,5 @@ interface ISysResourceService : IBaseCrudService<String, SysResource>, ISysResou
      */
     fun fetchAllParentIds(id: String): List<String>
 
-    //endregion your codes 2
 
 }

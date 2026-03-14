@@ -11,11 +11,8 @@ import io.kudos.ms.sys.core.model.po.SysDictItem
  * @author K
  * @since 1.0.0
  */
-//region your codes 1
 interface ISysDictItemService : IBaseCrudService<String, SysDictItem> {
-//endregion your codes 1
 
-    //region your codes 2
 
     /**
      * 根据字典类型和原子服务编码取得对应的字典项
@@ -160,6 +157,5 @@ interface ISysDictItemService : IBaseCrudService<String, SysDictItem> {
      */
     fun getDirectChildrenOfItem(parentId: String, activeOnly: Boolean = true): List<SysDictItemCacheEntry>
 
-    //endregion your codes 2
 
 }
