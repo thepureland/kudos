@@ -24,9 +24,9 @@ class SysDictServiceTest : RdbAndRedisCacheTestBase() {
     private lateinit var sysDictService: ISysDictService
 
     @Test
-    fun getDictFromCache() {
+    fun getFromCache() {
         val dictId = "20000000-0000-0000-0000-000000007514"
-        val cacheItem = sysDictService.getDictFromCache(dictId)
+        val cacheItem = sysDictService.getFromCache(dictId)
         assertNotNull(cacheItem)
     }
 

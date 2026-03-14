@@ -41,6 +41,15 @@ data class SysDictItemCacheEntry (
     /** 是否内置 */
     val builtIn: Boolean = true,
 
+    /** 字典类型（来自 v_sys_dict_item 视图，用于 Hash 缓存副属性索引） */
+    val dictType: String = "",
+
+    /** 字典名称或其国际化key */
+    val dictName: String = "",
+
+    /** 原子服务编码（来自 v_sys_dict_item 视图，用于 Hash 缓存副属性索引） */
+    val atomicServiceCode: String = "",
+
     //endregion your codes 1
 //region your codes 2
 ) : IIdEntity<String>, Serializable {
@@ -55,5 +64,17 @@ data class SysDictItemCacheEntry (
     companion object {
         private const val serialVersionUID = 3064983536187872915L
     }
+
+    /** 返回字符串字段 trim 后的副本，用于与 H2 CHAR 右填充对齐，保证缓存 key 一致。 */
+    fun trimmed(): SysDictItemCacheEntry = copy(
+        id = id.trim(),
+        itemCode = itemCode.trim(),
+        itemName = itemName.trim(),
+        dictId = dictId.trim(),
+        parentId = parentId?.trim(),
+        remark = remark?.trim(),
+        dictType = dictType.trim(),
+        atomicServiceCode = atomicServiceCode.trim()
+    )
 
 }

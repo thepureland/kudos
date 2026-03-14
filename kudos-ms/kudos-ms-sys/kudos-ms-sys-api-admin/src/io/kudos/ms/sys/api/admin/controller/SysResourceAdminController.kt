@@ -8,6 +8,7 @@ import io.kudos.ms.sys.common.vo.resource.*
 import io.kudos.ms.sys.core.service.iservice.ISysResourceService
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
@@ -119,6 +120,18 @@ open class SysResourceAdminController :
     @PostMapping("/loadDirectChildrenForTree")
     fun loadDirectChildrenForTree(@RequestBody sysResourceQuery: SysResourceQuery): List<IdAndNameTreeNode<String>> {
         return service.loadDirectChildrenForTree(sysResourceQuery)
+    }
+
+    /**
+     * 更新active状态
+     *
+     * @param id 主键
+     * @param active 是否启用
+     * @return 是否更新成功
+     */
+    @PutMapping("/updateActive")
+    fun updateActive(id: String, active: Boolean): Boolean {
+        return service.updateActive(id, active)
     }
 
 }

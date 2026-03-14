@@ -6,6 +6,7 @@ import io.kudos.ms.sys.common.vo.datasource.SysDataSourceForm
 import io.kudos.ms.sys.common.vo.datasource.SysDataSourceQuery
 import io.kudos.ms.sys.common.vo.datasource.SysDataSourceRow
 import io.kudos.ms.sys.core.service.iservice.ISysDataSourceService
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
@@ -20,6 +21,16 @@ import org.springframework.web.bind.annotation.RestController
 class SysDataSourceAdminController:
     BaseCrudController<String, ISysDataSourceService, SysDataSourceQuery, SysDataSourceRow, SysDataSourceDetail, SysDataSourceForm>() {
 
-
+    /**
+     * 更新active状态
+     *
+     * @param id 主键
+     * @param active 是否启用
+     * @return 是否更新成功
+     */
+    @PutMapping("/updateActive")
+    fun updateActive(id: String, active: Boolean): Boolean {
+        return service.updateActive(id, active)
+    }
 
 }

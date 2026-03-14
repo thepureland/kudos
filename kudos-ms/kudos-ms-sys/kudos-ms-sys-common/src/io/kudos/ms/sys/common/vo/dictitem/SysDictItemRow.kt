@@ -13,6 +13,9 @@ data class SysDictItemRow (
 
     //region your codes 1
 
+    /** 字典项id */
+    val id: String = "",
+
     /** 原子服务编码 */
     val atomicServiceCode: String = "",
 
@@ -24,9 +27,6 @@ data class SysDictItemRow (
 
     /** 字典名称 */
     val dictName: String = "",
-
-    /** 字典项ID */
-    val itemId: String = "",
 
     /** 字典项编号 */
     val itemCode: String = "",

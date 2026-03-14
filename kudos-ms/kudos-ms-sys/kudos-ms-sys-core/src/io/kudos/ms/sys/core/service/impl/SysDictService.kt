@@ -9,7 +9,7 @@ import io.kudos.ms.sys.common.vo.dict.SysDictCacheEntry
 import io.kudos.ms.sys.common.vo.dict.SysDictForm
 import io.kudos.ms.sys.common.vo.dict.SysDictRow
 import io.kudos.ms.sys.common.vo.dictitem.SysDictItemCacheEntry
-import io.kudos.ms.sys.core.cache.DictByIdCache
+import io.kudos.ms.sys.core.cache.SysDictHashCache
 import io.kudos.ms.sys.core.dao.SysDictDao
 import io.kudos.ms.sys.core.model.po.SysDict
 import io.kudos.ms.sys.core.service.iservice.ISysDictItemService
@@ -37,12 +37,12 @@ open class SysDictService : BaseCrudService<String, SysDict, SysDictDao>(), ISys
     private lateinit var sysDictItemService: ISysDictItemService
 
     @Autowired
-    private lateinit var dictCacheHandler: DictByIdCache
+    private lateinit var sysDictHashCache: SysDictHashCache
 
     private val log = LogFactory.getLog(this)
 
-    override fun getDictFromCache(dictId: String): SysDictCacheEntry? {
-        return dictCacheHandler.getDictById(dictId)
+    override fun getFromCache(dictId: String): SysDictCacheEntry? {
+        return sysDictHashCache.getDictById(dictId)
     }
 
 
@@ -54,57 +54,12 @@ open class SysDictService : BaseCrudService<String, SysDict, SysDictDao>(), ISys
     }
 
     @Transactional
-    override fun saveOrUpdate(form: SysDictForm): String {
-        return if (form.id!!.isBlank()) { // 新增
-            if (!form.parentId.isNullOrBlank()) { // 添加SysDict
-                val atomicServiceCode = requireNotNull(form.atomicServiceCode) { "新增字典时，atomicServiceCode不能为空。" }
-                val dictType = requireNotNull(form.dictType) { "新增字典时，dictType不能为空。" }
-                val dictName = requireNotNull(form.dictName) { "新增字典时，dictName不能为空。" }
-                val sysDict = SysDict().apply {
-                    this.atomicServiceCode = atomicServiceCode
-                    this.dictType = dictType
-                    this.dictName = dictName
-                    remark = form.remark
-                }
-                val id = dao.insert(sysDict)
-                dictCacheHandler.syncOnInsert(id) // 同步缓存
-                id
-            } else { // 添加SysDictItem
-                sysDictItemService.saveOrUpdate(form)
-            }
-        } else { // 更新
-            if (form.parentId.isNullOrBlank()) { // SysDict
-                val atomicServiceCode = requireNotNull(form.atomicServiceCode) { "更新字典时，atomicServiceCode不能为空。" }
-                val dictType = requireNotNull(form.dictType) { "更新字典时，dictType不能为空。" }
-                val dictName = requireNotNull(form.dictName) { "更新字典时，dictName不能为空。" }
-                val sysDict = SysDict {
-                    id = form.id!!
-                    this.atomicServiceCode = atomicServiceCode
-                    this.dictType = dictType
-                    this.dictName = dictName
-                    remark = form.remark
-                }
-                val success = dao.update(sysDict)
-                if (success) {
-                    dictCacheHandler.syncOnUpdate(sysDict.id) // 同步缓存
-                } else {
-                    log.error("删除id为${sysDict.id}的字典失败！")
-                }
-
-            } else { // SysDictItem
-                sysDictItemService.saveOrUpdate(form)
-            }
-            form.id!!
-        }
-    }
-
-    @Transactional
     override fun delete(id: String, isDict: Boolean): Boolean {
         return if (isDict) {
             dao.deleteDictItemsByDictId(id)
             val success = dao.deleteById(id)
             if (success) {
-                dictCacheHandler.syncOnDelete(id) // 同步缓存
+                sysDictHashCache.syncOnDelete(id)
             } else {
                 log.error("删除id为${id}的字典失败！")
             }
@@ -114,28 +69,17 @@ open class SysDictService : BaseCrudService<String, SysDict, SysDictDao>(), ISys
         }
     }
 
-    /**
-     * 获取模块的所有字典
-     *
-     * @param atomicServiceCode 原子服务编码
-     * @return 字典记录列表
-     * @author AI: Cursor
-     * @since 1.0.0
-     */
-    override fun getDictsByAtomicServiceCode(atomicServiceCode: String): List<SysDictRow> {
-        val criteria = Criteria(SysDict::atomicServiceCode eq atomicServiceCode)
-        return dao.searchAs<SysDictRow>(criteria)
+    override fun getDictsByAtomicServiceCode(
+        atomicServiceCode: String,
+        activeOnly: Boolean
+    ): List<SysDictCacheEntry> {
+        var dictTypes = sysDictHashCache.getDictsByAtomicServiceCode(atomicServiceCode)
+        if (activeOnly) {
+            dictTypes = dictTypes.filter { it.active }
+        }
+        return dictTypes
     }
 
-    /**
-     * 根据原子服务编码和字典类型获取字典
-     *
-     * @param atomicServiceCode 原子服务编码
-     * @param dictType 字典类型
-     * @return 字典记录，找不到返回null
-     * @author AI: Cursor
-     * @since 1.0.0
-     */
     override fun getDictByAtomicServiceAndType(atomicServiceCode: String, dictType: String): SysDictRow? {
         val criteria = Criteria.and(
             SysDict::atomicServiceCode eq atomicServiceCode,
@@ -145,15 +89,6 @@ open class SysDictService : BaseCrudService<String, SysDict, SysDictDao>(), ISys
         return records.firstOrNull()
     }
 
-    /**
-     * 更新启用状态，并同步缓存
-     *
-     * @param id 字典id
-     * @param active 是否启用
-     * @return 是否更新成功
-     * @author AI: Cursor
-     * @since 1.0.0
-     */
     @Transactional
     override fun updateActive(id: String, active: Boolean): Boolean {
         val dict = SysDict {
@@ -163,83 +98,51 @@ open class SysDictService : BaseCrudService<String, SysDict, SysDictDao>(), ISys
         val success = dao.update(dict)
         if (success) {
             log.debug("更新id为${id}的字典的启用状态为${active}。")
-            dictCacheHandler.syncOnUpdate(id)
+            sysDictHashCache.syncOnUpdate(id)
         } else {
             log.error("更新id为${id}的字典的启用状态为${active}失败！")
         }
         return success
     }
 
-    /**
-     * 新增字典
-     *
-     * @param any 字典对象
-     * @return 主键
-     * @author AI: Cursor
-     * @since 1.0.0
-     */
     @Transactional
     override fun insert(any: Any): String {
         val id = super.insert(any)
         log.debug("新增id为${id}的字典。")
-        dictCacheHandler.syncOnInsert(id)
+        sysDictHashCache.syncOnInsert(id)
         return id
     }
 
-    /**
-     * 更新字典
-     *
-     * @param any 字典对象
-     * @return 是否更新成功
-     * @author AI: Cursor
-     * @since 1.0.0
-     */
     @Transactional
     override fun update(any: Any): Boolean {
         val success = super.update(any)
         val id = BeanKit.getProperty(any, SysDict::id.name) as String
         if (success) {
             log.debug("更新id为${id}的字典。")
-            dictCacheHandler.syncOnUpdate(id)
+            sysDictHashCache.syncOnUpdate(id)
         } else {
             log.error("更新id为${id}的字典失败！")
         }
         return success
     }
 
-    /**
-     * 删除字典
-     *
-     * @param id 主键
-     * @return 是否删除成功
-     * @author AI: Cursor
-     * @since 1.0.0
-     */
     @Transactional
     override fun deleteById(id: String): Boolean {
         val success = super.deleteById(id)
         if (success) {
             log.debug("删除id为${id}的字典。")
-            dictCacheHandler.syncOnDelete(id)
+            sysDictHashCache.syncOnDelete(id)
         } else {
             log.error("删除id为${id}的字典失败！")
         }
         return success
     }
 
-    /**
-     * 批量删除字典
-     *
-     * @param ids 主键集合
-     * @return 删除的数量
-     * @author AI: Cursor
-     * @since 1.0.0
-     */
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {
         val count = super.batchDelete(ids)
         log.debug("批量删除字典，期望删除${ids.size}条，实际删除${count}条。")
-        dictCacheHandler.syncOnBatchDelete(ids)
+        sysDictHashCache.syncOnBatchDelete(ids)
         return count
     }
 

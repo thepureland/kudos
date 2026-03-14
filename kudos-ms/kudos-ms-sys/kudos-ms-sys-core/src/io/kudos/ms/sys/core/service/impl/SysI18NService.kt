@@ -4,7 +4,6 @@ import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.sys.common.vo.i18n.SysI18nForm
-import io.kudos.ms.sys.core.cache.DictItemsByMsCodeAndTypeCache
 import io.kudos.ms.sys.core.cache.SysI18nHashCache
 import io.kudos.ms.sys.core.dao.SysI18nDao
 import io.kudos.ms.sys.core.model.po.SysI18n
@@ -31,10 +30,6 @@ open class SysI18NService : BaseCrudService<String, SysI18n, SysI18nDao>(), ISys
 
     @Resource
     private lateinit var sysI18nHashCache: SysI18nHashCache
-
-    @Resource
-    private lateinit var dictItemsByMsCodeAndTypeCache: DictItemsByMsCodeAndTypeCache
-
 
     override fun getI18nValue(
         locale: String,

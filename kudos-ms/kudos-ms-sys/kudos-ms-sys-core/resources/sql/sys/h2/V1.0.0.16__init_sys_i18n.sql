@@ -107,6 +107,10 @@ insert into "sys_i18n" ("locale", "atomic_service_code", "i18n_type_dict_code", 
     ('zh-TW', 'sys', 'dict-item', 'i18n_type', 'dict-item', '字典項', true),
     ('en-US', 'sys', 'dict-item', 'i18n_type', 'dict-item', 'Dictionary Item', true),
 
+    ('zh-CN', 'sys', 'dict-item', 'i18n_type', 'valid-msg', '校验失败信息', true),
+    ('zh-TW', 'sys', 'dict-item', 'i18n_type', 'valid-msg', '驗證失敗訊息', true),
+    ('en-US', 'sys', 'dict-item', 'i18n_type', 'valid-msg', 'Validation failed message', true),
+
     ('zh-CN', 'sys', 'dict-item', 'i18n_type', 'view', '页面', true),
     ('zh-TW', 'sys', 'dict-item', 'i18n_type', 'view', '頁面', true),
     ('en-US', 'sys', 'dict-item', 'i18n_type', 'view', 'Page', true);

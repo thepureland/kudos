@@ -2,7 +2,7 @@ package io.kudos.ms.sys.core.support
 
 import io.kudos.base.bean.validation.teminal.convert.converter.IDictItemCodeFinder
 import io.kudos.context.kit.SpringKit
-import io.kudos.ms.sys.core.cache.DictItemsByMsCodeAndTypeCache
+import io.kudos.ms.sys.core.cache.SysDictItemHashCache
 
 /**
  * 字典项编码查找器
@@ -13,16 +13,16 @@ import io.kudos.ms.sys.core.cache.DictItemsByMsCodeAndTypeCache
 class DictItemCodeFinder : IDictItemCodeFinder {
 
     // 该类通过java ServiceLoader 加载，所以不能用bean注入
-    private var dictItemsByMsCodeAndTypeCache: DictItemsByMsCodeAndTypeCache? = null
+    private var sysDictItemHashCache: SysDictItemHashCache? = null
 
     override fun getDictItemCodes(
         atomicServiceCode: String,
         dictType: String
     ): Set<String> {
-        if (dictItemsByMsCodeAndTypeCache == null) {
-            dictItemsByMsCodeAndTypeCache = SpringKit.getBean<DictItemsByMsCodeAndTypeCache>()
+        if (sysDictItemHashCache == null) {
+            sysDictItemHashCache = SpringKit.getBean<SysDictItemHashCache>()
         }
-        val items = dictItemsByMsCodeAndTypeCache!!.getDictItems(atomicServiceCode, dictType)
+        val items = sysDictItemHashCache!!.getDictItems(atomicServiceCode, dictType)
         return items.map { it.itemCode }.toSet()
     }
 

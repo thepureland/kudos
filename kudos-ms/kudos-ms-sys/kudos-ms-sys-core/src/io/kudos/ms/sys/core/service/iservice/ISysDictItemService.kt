@@ -1,12 +1,7 @@
 package io.kudos.ms.sys.core.service.iservice
 
 import io.kudos.base.support.iservice.IBaseCrudService
-import io.kudos.ms.sys.common.vo.dict.SysDictForm
-import io.kudos.ms.sys.common.vo.dict.SysDictTreeNode
 import io.kudos.ms.sys.common.vo.dictitem.SysDictItemCacheEntry
-import io.kudos.ms.sys.common.vo.dictitem.SysDictItemRow
-import io.kudos.ms.sys.common.vo.dictitem.SysDictItemQuery
-import io.kudos.ms.sys.common.vo.dictitem.SysDictItemTreeRow
 import io.kudos.ms.sys.core.model.po.SysDictItem
 
 
@@ -21,17 +16,6 @@ interface ISysDictItemService : IBaseCrudService<String, SysDictItem> {
 //endregion your codes 1
 
     //region your codes 2
-
-    /**
-     * 返回指定id的字典项信息
-     *
-     * @param id 字典项id
-     * @param fetchAllParentIds 是否要获取所有父项id，默认为false
-     * @return SysDictItemRow，找不到返回null
-     * @author K
-     * @since 1.0.0
-     */
-    fun get(id: String, fetchAllParentIds: Boolean = false): SysDictItemRow?
 
     /**
      * 根据字典类型和原子服务编码取得对应的字典项
@@ -84,16 +68,6 @@ interface ISysDictItemService : IBaseCrudService<String, SysDictItem> {
     fun transDictCode(dictType: String, itemCode: String, atomicServiceCode: String): String?
 
     /**
-     * 保存或更新
-     *
-     * @param form 表单对象
-     * @return 主键
-     * @author K
-     * @since 1.0.0
-     */
-    fun saveOrUpdate(form: SysDictForm): String
-
-    /**
      * 获取字典项的所有祖先id
      *
      * @param itemId 字典项id
@@ -114,28 +88,6 @@ interface ISysDictItemService : IBaseCrudService<String, SysDictItem> {
     fun cascadeDeleteChildren(id: String): Boolean
 
     /**
-     * 加载直接孩子结点(用于树)
-     *
-     * @param parent 父项标识，为null时加载模块列表
-     * @param isModule 是否parent代表模块名
-     * @param activeOnly 是否只加载启用状态的数据, 默认为是
-     * @return List(SysDictTreeNode)
-     * @author K
-     * @since 1.0.0
-     */
-    fun loadDirectChildrenForTree(parent: String?, isModule: Boolean, activeOnly: Boolean = true): List<SysDictTreeNode>
-
-    /**
-     * 加载直接孩子结点(用于列表)
-     *
-     * @param searchPayload 查询参数
-     * @return Pair(List(SysDictItemRow), 总记录数)
-     * @author K
-     * @since 1.0.0
-     */
-    fun loadDirectChildrenForList(searchPayload: SysDictItemQuery): Pair<List<SysDictItemRow>, Int>
-
-    /**
      * 更新启用状态，并同步缓存
      *
      * @param dictItemId 字典项id
@@ -145,16 +97,6 @@ interface ISysDictItemService : IBaseCrudService<String, SysDictItem> {
      * @since 1.0.0
      */
     fun updateActive(dictItemId: String, active: Boolean): Boolean
-
-    /**
-     * 获取字典的所有字典项
-     *
-     * @param dictId 字典id
-     * @return 字典项记录列表
-     * @author K
-     * @since 1.0.0
-     */
-    fun getDictItemsByDictId(dictId: String): List<SysDictItemRow>
 
     /**
      * 根据原子服务编码和字典类型从缓存获取字典项列表
@@ -168,27 +110,6 @@ interface ISysDictItemService : IBaseCrudService<String, SysDictItem> {
     fun getDictItemsByAtomicServiceAndType(dictType: String, atomicServiceCode: String): List<SysDictItemCacheEntry>
 
     /**
-     * 获取字典项树（递归结构）
-     *
-     * @param dictId 字典id
-     * @param parentId 父字典项id，为null时返回顶级字典项
-     * @return 字典项树节点列表（树形结构，包含children字段）
-     * @author AI: Cursor
-     * @since 1.0.0
-     */
-    fun getDictItemTree(dictId: String, parentId: String? = null): List<SysDictItemTreeRow>
-
-    /**
-     * 获取子字典项列表
-     *
-     * @param parentId 父字典项id
-     * @return 子字典项记录列表
-     * @author K
-     * @since 1.0.0
-     */
-    fun getChildItems(parentId: String): List<SysDictItemRow>
-
-    /**
      * 移动字典项（调整父节点和排序）
      *
      * @param id 字典项id
@@ -199,6 +120,45 @@ interface ISysDictItemService : IBaseCrudService<String, SysDictItem> {
      * @since 1.0.0
      */
     fun moveItem(id: String, newParentId: String?, newOrderNum: Int?): Boolean
+
+    /**
+     * 返回指定字典类型的直接孩子(第一层字典项)
+     *
+     * @param atomicServiceCode 原子服务编码
+     * @param dictType 字典类型
+     * @param activeOnly 仅启用，为false将包含未启用的
+     * @return List<SysDictItemCacheEntry>
+     */
+    fun getDirectChildrenOfDict(
+        atomicServiceCode: String,
+        dictType: String,
+        activeOnly: Boolean = true
+    ): List<SysDictItemCacheEntry>
+
+    /**
+     * 返回指定字典项的直接孩子
+     *
+     * @param atomicServiceCode 原子服务编码
+     * @param dictType 字典类型
+     * @param itemCode 字典项编码
+     * @param activeOnly 仅启用，为false将包含未启用的
+     * @return List<SysDictItemCacheEntry>
+     */
+    fun getDirectChildrenOfItem(
+        atomicServiceCode: String,
+        dictType: String,
+        itemCode: String,
+        activeOnly: Boolean = true
+    ): List<SysDictItemCacheEntry>
+
+    /**
+     * 返回指定父字典项id的直接孩子
+     *
+     * @param parentId 父字典项id
+     * @param activeOnly 仅启用，为false将包含未启用的
+     * @return List<SysDictItemCacheEntry>
+     */
+    fun getDirectChildrenOfItem(parentId: String, activeOnly: Boolean = true): List<SysDictItemCacheEntry>
 
     //endregion your codes 2
 

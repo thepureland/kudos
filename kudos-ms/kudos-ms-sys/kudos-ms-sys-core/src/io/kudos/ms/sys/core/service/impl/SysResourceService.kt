@@ -10,7 +10,7 @@ import io.kudos.ms.sys.common.consts.SysConsts
 import io.kudos.ms.sys.common.consts.SysDictTypes
 import io.kudos.ms.sys.common.enums.ResourceTypeEnum
 import io.kudos.ms.sys.common.vo.resource.*
-import io.kudos.ms.sys.core.cache.DictItemsByMsCodeAndTypeCache
+import io.kudos.ms.sys.core.cache.SysDictItemHashCache
 import io.kudos.ms.sys.core.cache.SysResourceHashCache
 import io.kudos.ms.sys.core.cache.SysSystemHashCache
 import io.kudos.ms.sys.core.dao.SysResourceDao
@@ -42,7 +42,7 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
     private lateinit var sysResourceHashCache: SysResourceHashCache
 
     @Resource
-    private lateinit var dictItemsByMsCodeAndTypeCache: DictItemsByMsCodeAndTypeCache
+    private lateinit var sysDictItemHashCache: SysDictItemHashCache
 
     @Resource
     private lateinit var sysSystemHashCache: SysSystemHashCache
@@ -312,7 +312,7 @@ open class SysResourceService : BaseCrudService<String, SysResource, SysResource
     override fun loadDirectChildrenForTree(sysResourceQuery: SysResourceQuery): List<IdAndNameTreeNode<String>> {
         return when (if (sysResourceQuery.level == null) Int.MAX_VALUE else sysResourceQuery.level) {
             0 -> { // 资源类型
-                val dictItems = dictItemsByMsCodeAndTypeCache.getDictItems(
+                val dictItems = sysDictItemHashCache.getDictItems(
                     SysConsts.ATOMIC_SERVICE_NAME, SysDictTypes.RESOURCE_TYPE
                 )
                 dictItems.map {
