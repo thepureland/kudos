@@ -70,15 +70,15 @@ open class SysI18NService : BaseCrudService<String, SysI18n, SysI18nDao>(), ISys
     @Transactional
     override fun batchSaveOrUpdate(i18ns: List<SysI18nForm>): Int {
         var count = 0
-        i18ns.forEach { payload ->
-            if (payload.id.isBlank()) {
-                val locale = requireNotNull(payload.locale) { "新增国际化内容时，locale不能为空。" }
+        i18ns.forEach { form ->
+            if (form.id.isNullOrBlank()) {
+                val locale = requireNotNull(form.locale) { "新增国际化内容时，locale不能为空。" }
                 val atomicServiceCode =
-                    requireNotNull(payload.atomicServiceCode) { "新增国际化内容时，atomicServiceCode不能为空。" }
+                    requireNotNull(form.atomicServiceCode) { "新增国际化内容时，atomicServiceCode不能为空。" }
                 val i18nTypeDictCode =
-                    requireNotNull(payload.i18nTypeDictCode) { "新增国际化内容时，i18nTypeDictCode不能为空。" }
-                val (namespace, key) = resolveNamespaceAndKey(payload)
-                val value = requireNotNull(payload.value) { "新增国际化内容时，value不能为空。" }
+                    requireNotNull(form.i18nTypeDictCode) { "新增国际化内容时，i18nTypeDictCode不能为空。" }
+                val (namespace, key) = resolveNamespaceAndKey(form)
+                val value = requireNotNull(form.value) { "新增国际化内容时，value不能为空。" }
                 val i18n = SysI18n {
                     this.locale = locale
                     this.atomicServiceCode = atomicServiceCode
@@ -86,28 +86,28 @@ open class SysI18NService : BaseCrudService<String, SysI18n, SysI18nDao>(), ISys
                     this.namespace = namespace
                     this.key = key
                     this.value = value
-                    this.active = payload.active
+                    this.remark = form.remark
                 }
                 val id = dao.insert(i18n)
                 sysI18nHashCache.syncOnInsert(i18n, id)
                 count++
             } else {
-                val locale = requireNotNull(payload.locale) { "更新国际化内容时，locale不能为空。" }
+                val locale = requireNotNull(form.locale) { "更新国际化内容时，locale不能为空。" }
                 val atomicServiceCode =
-                    requireNotNull(payload.atomicServiceCode) { "更新国际化内容时，atomicServiceCode不能为空。" }
+                    requireNotNull(form.atomicServiceCode) { "更新国际化内容时，atomicServiceCode不能为空。" }
                 val i18nTypeDictCode =
-                    requireNotNull(payload.i18nTypeDictCode) { "更新国际化内容时，i18nTypeDictCode不能为空。" }
-                val (namespace, key) = resolveNamespaceAndKey(payload)
-                val value = requireNotNull(payload.value) { "更新国际化内容时，value不能为空。" }
+                    requireNotNull(form.i18nTypeDictCode) { "更新国际化内容时，i18nTypeDictCode不能为空。" }
+                val (namespace, key) = resolveNamespaceAndKey(form)
+                val value = requireNotNull(form.value) { "更新国际化内容时，value不能为空。" }
                 val i18n = SysI18n {
-                    this.id = payload.id
+                    this.id = form.id!!
                     this.locale = locale
                     this.atomicServiceCode = atomicServiceCode
                     this.i18nTypeDictCode = i18nTypeDictCode
                     this.namespace = namespace
                     this.key = key
                     this.value = value
-                    this.active = payload.active
+                    this.remark = form.remark
                 }
                 if (dao.update(i18n)) {
                     sysI18nHashCache.syncOnUpdate(i18n, i18n.id)

@@ -67,7 +67,7 @@ insert into "sys_dict_item" ("dict_id", "item_code", "item_name", "order_num", "
     ('2601c57f-3900-4be8-9ebf-e79781db9d3d', 'REMOTE', 'cache_strategy.REMOTE', 1, '远程缓存', true),
     ('2601c57f-3900-4be8-9ebf-e79781db9d3d', 'LOCAL_REMOTE', 'cache_strategy.LOCAL_REMOTE', 1, '本地-远程两级联动缓存', true);
 
--- locale
+-- i18n_type
 insert into "sys_dict_item" ("dict_id", "item_code", "item_name", "order_num", "remark", "built_in") values
     ('54094f46-dddb-41a2-b747-0eaa7d0ekil6', 'dict', 'i18n_type.dict', 1, '字典', true),
     ('54094f46-dddb-41a2-b747-0eaa7d0ekil6', 'dict-item', 'i18n_type.dict-item', 2, '字典项', true),
@@ -86,19 +86,19 @@ insert into "sys_dict_item" ("dict_id", "item_code", "item_name", "order_num", "
     ('ad52c551-01c1-4c7f-9a96-720eecb32885', '12', 'terminal_type.12', 8, '手机端Android', true),
     ('ad52c551-01c1-4c7f-9a96-720eecb32885', '16', 'terminal_type.16', 9, '手机端iOS', true);
 
--- i18n_type
+-- locale
 insert into "sys_dict_item" ("dict_id", "item_code", "item_name", "order_num", "built_in") values
-    ('54094f46-dddb-41a2-b747-0eaa7d0e59b6', 'zh_CN', 'locale.zh_CN', 0, true),
-    ('54094f46-dddb-41a2-b747-0eaa7d0e59b6', 'zh_TW', 'locale.zh_TW', 1, true),
-    ('54094f46-dddb-41a2-b747-0eaa7d0e59b6', 'en_US', 'locale.en_US', 2, true),
-    ('54094f46-dddb-41a2-b747-0eaa7d0e59b6', 'ja_JP', 'locale.ja_JP', 3, true),
-    ('54094f46-dddb-41a2-b747-0eaa7d0e59b6', 'ko_KR', 'locale.ko_KR', 4, true),
-    ('54094f46-dddb-41a2-b747-0eaa7d0e59b6', 'ru_RU', 'locale.ru_RU', 5, true),
-    ('54094f46-dddb-41a2-b747-0eaa7d0e59b6', 'in_ID', 'locale.in_ID', 6, true),
-    ('54094f46-dddb-41a2-b747-0eaa7d0e59b6', 'ar_AE', 'locale.ar_AE', 7, true),
-    ('54094f46-dddb-41a2-b747-0eaa7d0e59b6', 'fr_FR', 'locale.fr_FR', 8, true),
-    ('54094f46-dddb-41a2-b747-0eaa7d0e59b6', 'es_ES', 'locale.es_ES', 9, true),
-    ('54094f46-dddb-41a2-b747-0eaa7d0e59b6', 'pt_BR', 'locale.pt_BR', 10, true);
+    ('54094f46-dddb-41a2-b747-0eaa7d0e59b6', 'zh-CN', 'locale.zh_CN', 0, true),
+    ('54094f46-dddb-41a2-b747-0eaa7d0e59b6', 'zh-TW', 'locale.zh_TW', 1, true),
+    ('54094f46-dddb-41a2-b747-0eaa7d0e59b6', 'en-US', 'locale.en_US', 2, true),
+    ('54094f46-dddb-41a2-b747-0eaa7d0e59b6', 'ja-JP', 'locale.ja_JP', 3, true),
+    ('54094f46-dddb-41a2-b747-0eaa7d0e59b6', 'ko-KR', 'locale.ko_KR', 4, true),
+    ('54094f46-dddb-41a2-b747-0eaa7d0e59b6', 'ru-RU', 'locale.ru_RU', 5, true),
+    ('54094f46-dddb-41a2-b747-0eaa7d0e59b6', 'in-ID', 'locale.in_ID', 6, true),
+    ('54094f46-dddb-41a2-b747-0eaa7d0e59b6', 'ar-AE', 'locale.ar_AE', 7, true),
+    ('54094f46-dddb-41a2-b747-0eaa7d0e59b6', 'fr-FR', 'locale.fr_FR', 8, true),
+    ('54094f46-dddb-41a2-b747-0eaa7d0e59b6', 'es-ES', 'locale.es_ES', 9, true),
+    ('54094f46-dddb-41a2-b747-0eaa7d0e59b6', 'pt-BR', 'locale.pt_BR', 10, true);
 
 -- access_rule_type
 insert into "sys_dict_item" ("dict_id", "item_code", "item_name", "order_num", "remark", "built_in") values

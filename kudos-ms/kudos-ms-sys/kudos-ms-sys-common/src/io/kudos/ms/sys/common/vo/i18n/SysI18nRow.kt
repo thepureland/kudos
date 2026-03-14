@@ -34,6 +34,9 @@ data class SysI18nRow (
     /** 国际化值 */
     val value: String = "",
 
+    /** 备注 */
+    val remark: String? = null,
+
     /** 是否启用 */
     val active: Boolean = true,
 

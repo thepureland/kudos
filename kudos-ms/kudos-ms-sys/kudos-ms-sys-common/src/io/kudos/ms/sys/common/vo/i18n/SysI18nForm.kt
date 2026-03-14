@@ -13,7 +13,7 @@ import jakarta.validation.constraints.NotBlank
 data class SysI18nForm (
 
     /** 主键 */
-    override val id: String = "",
+    override val id: String? = null,
 
     //region your codes 1
 
@@ -41,12 +41,12 @@ data class SysI18nForm (
     @get:NotBlank
     val value: String = "",
 
-    /** 是否启用 */
-    val active: Boolean = true,
+    /** 备注 */
+    val remark: String? = null,
 
     //endregion your codes 1
 //region your codes 2
-) : FormPayload<String>() {
+) : FormPayload<String?>() {
 //endregion your codes 2
 
     //region your codes 3
