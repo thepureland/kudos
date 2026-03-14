@@ -4,7 +4,7 @@ import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
 import io.kudos.base.query.Criteria
 import io.kudos.base.support.iservice.IBaseCrudService
-import io.kudos.base.support.payload.ImmutableSearchPayload
+import io.kudos.base.support.payload.ISearchPayload
 import io.kudos.base.support.payload.UpdatePayload
 import org.springframework.transaction.annotation.Transactional
 
@@ -77,7 +77,7 @@ open class BaseCrudService<PK : Any, E : IDbEntity<PK, E>, DAO : BaseCrudDao<PK,
         dao.batchUpdateWhen(entities, criteria, countOfEachBatch)
 
     @Transactional
-    override fun <S : ImmutableSearchPayload> batchUpdateWhen(updatePayload: UpdatePayload<S>): Int =
+    override fun <S : ISearchPayload> batchUpdateWhen(updatePayload: UpdatePayload<S>): Int =
         dao.batchUpdateWhen(updatePayload)
 
     @Transactional
@@ -117,7 +117,7 @@ open class BaseCrudService<PK : Any, E : IDbEntity<PK, E>, DAO : BaseCrudDao<PK,
     override fun batchDeleteCriteria(criteria: Criteria): Int = dao.batchDeleteCriteria(criteria)
 
     @Transactional
-    override fun batchDeleteWhen(searchPayload: ImmutableSearchPayload): Int = dao.batchDeleteWhen(searchPayload)
+    override fun batchDeleteWhen(searchPayload: ISearchPayload): Int = dao.batchDeleteWhen(searchPayload)
 
     @Transactional
     override fun delete(entity: E): Boolean = dao.delete(entity)

@@ -55,6 +55,6 @@ data class SysAccessRuleIpQuery (
 
     constructor() : this("")
 
-    override val returnEntityClass: KClass<*> = SysAccessRuleIpRow::class
+    override fun getReturnEntityClass() = SysAccessRuleIpRow::class
 
 }

@@ -27,7 +27,7 @@ data class SysAccessRuleQuery (
 
     constructor() : this("")
 
-    override var returnEntityClass: KClass<*>? = SysAccessRuleRow::class
+    override fun getReturnEntityClass() = SysAccessRuleRow::class
 
 
 }

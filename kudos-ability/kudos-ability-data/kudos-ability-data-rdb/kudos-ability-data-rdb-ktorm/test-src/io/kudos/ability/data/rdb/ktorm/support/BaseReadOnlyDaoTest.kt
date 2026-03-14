@@ -10,7 +10,6 @@ import io.kudos.base.query.Criterion
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.query.sort.Order
 import io.kudos.base.support.payload.ListSearchPayload
-import io.kudos.base.support.payload.ImmutableSearchPayload
 import io.kudos.test.common.init.EnableKudosTest
 import jakarta.annotation.Resource
 import org.ktorm.dsl.eq
@@ -537,7 +536,10 @@ internal open class BaseReadOnlyDaoTest {
             var name: String? = null
             var weight: Double? = null
             var noExistProp: String? = "noExistProp"
-            override var returnProperties: List<String>? = listOf("id", "name", "height")
+            var returnPropertiesField: List<String>? = listOf("id", "name", "height")
+            override fun getReturnProperties() = returnPropertiesField
+            var returnEntityClassField: kotlin.reflect.KClass<*>? = null
+            override fun getReturnEntityClass() = returnEntityClassField
         }
 
         // 仅指定SearchPayload
@@ -552,13 +554,13 @@ internal open class BaseReadOnlyDaoTest {
         assertEquals(-1, (result.first() as Map<*, *>)["id"])
 
         // 指定returnProperties, 单个属性
-        searchPayload1.returnProperties = listOf("id")
+        searchPayload1.returnPropertiesField = listOf("id")
         result = testTableDao.search(searchPayload1)
         assertEquals(1, result.size)
         assertEquals(-1, result.first())
 
         // returnProperties为null
-        searchPayload1.returnProperties = null
+        searchPayload1.returnPropertiesField = null
         result = testTableDao.search(searchPayload1)
         assertEquals(1, result.size)
         assert(result.first() is TestTableKtorm)
@@ -582,7 +584,7 @@ internal open class BaseReadOnlyDaoTest {
             var weight: Double? = null
             var noExistProp: String? = "noExistProp"
         }
-        searchPayload1.returnEntityClass = Result::class
+        searchPayload1.returnEntityClassField = Result::class
         result = testTableDao.search(searchPayload1)
         assertEquals(3, result.size)
         assert(result.first() is Result)
@@ -596,13 +598,13 @@ internal open class BaseReadOnlyDaoTest {
         // 自定义查询逻辑（通过工厂）
         searchPayload1.name = "nAme1"
         searchPayload1.pageNo = null
-        result = testTableDao.search(searchPayload1) { column, value ->
+        result = testTableDao.search(searchPayload1, whereConditionFactory = { column, value ->
             if (column.name == TestTableKtorms::name.name) {
                 testTableDao.whereExpr(column, OperatorEnum.ILIKE_S, value)
             } else {
                 null
             }
-        }
+        })
         assertEquals(3, result.size)
 
         // 自定义查询逻辑（通过工厂+通过SearchPayload，工厂方式优先）
@@ -610,8 +612,9 @@ internal open class BaseReadOnlyDaoTest {
             var name: String? = null
             var weight: Double? = null
             var noExistProp: String? = "noExistProp"
-            override var returnProperties: List<String>? = listOf("id", "name", "height")
-            override val operators: Map<KProperty0<*>, OperatorEnum> = mapOf(SearchPayload2::name to OperatorEnum.ILIKE)
+            var returnPropertiesField: List<String>? = listOf("id", "name", "height")
+            override fun getReturnProperties() = returnPropertiesField
+            override fun getOperators(): Map<KProperty0<*>, OperatorEnum> = mapOf(SearchPayload2::name as KProperty0<*> to OperatorEnum.ILIKE)
         }
 
         val searchPayload2 = SearchPayload2().apply {
@@ -619,17 +622,17 @@ internal open class BaseReadOnlyDaoTest {
             weight = 56.5
             pageNo = null
         }
-        result = testTableDao.search(searchPayload2) { column, value ->
+        result = testTableDao.search(searchPayload2, whereConditionFactory = { column, value ->
             if (column.name == TestTableKtorms::name.name) {
                 testTableDao.whereExpr(column, OperatorEnum.ILIKE_S, value)
             } else {
                 null
             }
-        }
+        })
         assertEquals(1, result.size)
 
         // 仅指定whereConditionFactory
-        result = testTableDao.search { column, _ ->
+        result = testTableDao.search(whereConditionFactory = { column, _ ->
             when (column.name) {
                 TestTableKtorms::name.name -> {
                     column.ilike("nAme1%")
@@ -641,7 +644,7 @@ internal open class BaseReadOnlyDaoTest {
 
                 else -> null
             }
-        }
+        })
         assertEquals(2, result.size)
 
         // 不指定任何条件，相当于allSearch()
@@ -662,7 +665,7 @@ internal open class BaseReadOnlyDaoTest {
 
     @Test
     fun countByPayload() {
-        class SearchPayload1 : ImmutableSearchPayload() {
+        class SearchPayload1 : ListSearchPayload() {
             var name: String? = null
             var weight: Double? = null
             var noExistProp: String? = "noExistProp"

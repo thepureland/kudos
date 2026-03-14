@@ -46,7 +46,7 @@ data class UserAccountQuery (
 
     constructor() : this("")
 
-    override var returnEntityClass: KClass<*>? = UserAccountRow::class
+    override fun getReturnEntityClass() = UserAccountRow::class
 
 
 }

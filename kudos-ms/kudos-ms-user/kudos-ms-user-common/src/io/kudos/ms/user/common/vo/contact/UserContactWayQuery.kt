@@ -37,7 +37,7 @@ data class UserContactWayQuery (
 
     constructor() : this("")
 
-    override var returnEntityClass: KClass<*>? = UserContactWayRow::class
+    override fun getReturnEntityClass() = UserContactWayRow::class
 
 
 }

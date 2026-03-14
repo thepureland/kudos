@@ -5,7 +5,7 @@ import io.kudos.base.query.PagingSearchResult
 import io.kudos.base.query.sort.Order
 import io.kudos.base.support.IIdEntity
 import io.kudos.base.support.payload.ListSearchPayload
-import io.kudos.base.support.payload.ImmutableSearchPayload
+import io.kudos.base.support.payload.ISearchPayload
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
@@ -321,7 +321,7 @@ interface IBaseReadOnlyService<PK : Any, E : IIdEntity<PK>> {
      * @param searchPayload 查询载体
      * @return 记录数
      */
-    fun count(searchPayload: ImmutableSearchPayload): Int
+    fun count(searchPayload: ISearchPayload): Int
 
     /**
      * 求和聚合。

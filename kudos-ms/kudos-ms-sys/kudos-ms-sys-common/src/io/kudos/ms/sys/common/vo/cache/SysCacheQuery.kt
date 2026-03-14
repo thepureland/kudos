@@ -39,9 +39,9 @@ data class SysCacheQuery (
 
     constructor() : this(null)
 
-    override var returnEntityClass: KClass<*>? = SysCacheRow::class
+    override fun getReturnEntityClass() = SysCacheRow::class
 
-    override val operators: Map<KProperty0<*>, OperatorEnum> = mapOf(::name to OperatorEnum.ILIKE)
+    override fun getOperators(): Map<KProperty0<*>, OperatorEnum> = mapOf(::name to OperatorEnum.ILIKE)
 
 
 }

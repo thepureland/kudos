@@ -7,6 +7,8 @@ import io.kudos.base.query.Criterion
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.support.IIdEntity
 import io.kudos.base.support.dao.IBaseReadOnlyDao
+import io.kudos.base.support.logic.AndOrEnum
+import io.kudos.base.support.payload.ISearchPayload
 import io.kudos.base.support.payload.MutableListSearchPayload
 import org.springframework.beans.factory.annotation.Autowired
 import kotlin.reflect.KClass
@@ -58,8 +60,8 @@ abstract class AbstractByIdCacheHandler<PK : Any, T : IIdEntity<*>, DAO : IBaseR
             log.debug("${cacheName()}缓存中没有找到所有这些id为${ids}的${itemDesc()}，从数据库中加载...")
         }
         val searchPayload = MutableListSearchPayload().apply {
-            returnEntityClass = getCacheItemClass()
-            criterions = listOf(Criterion("id", OperatorEnum.IN, ids))
+            setReturnEntityClass(getCacheItemClass())
+            setCriterions(listOf(Criterion("id", OperatorEnum.IN, ids)))
         }
 
         val results = dao.search(searchPayload, getCacheItemClass())
@@ -80,7 +82,7 @@ abstract class AbstractByIdCacheHandler<PK : Any, T : IIdEntity<*>, DAO : IBaseR
 
         // 加载所有
         val searchPayload = MutableListSearchPayload().apply {
-            returnEntityClass = getCacheItemClass()
+            setReturnEntityClass(getCacheItemClass())
         }
 
         val results = dao.search(searchPayload, getCacheItemClass())

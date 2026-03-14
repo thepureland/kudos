@@ -52,7 +52,7 @@ data class UserAccountThirdQuery (
 
     constructor() : this("")
 
-    override var returnEntityClass: KClass<*>? = UserAccountThirdRow::class
+    override fun getReturnEntityClass() = UserAccountThirdRow::class
 
 
 }

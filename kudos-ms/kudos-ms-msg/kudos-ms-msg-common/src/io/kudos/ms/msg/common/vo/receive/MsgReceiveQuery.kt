@@ -38,7 +38,7 @@ data class MsgReceiveQuery (
 
     constructor() : this("")
 
-    override var returnEntityClass: KClass<*>? = MsgReceiveRow::class
+    override fun getReturnEntityClass() = MsgReceiveRow::class
 
 
 }

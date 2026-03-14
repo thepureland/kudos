@@ -32,9 +32,9 @@ data class SysSystemQuery (
 
     constructor() : this("")
 
-    override var returnEntityClass: KClass<*>? = SysSystemRow::class
+    override fun getReturnEntityClass() = SysSystemRow::class
 
-    override val operators: Map<KProperty0<*>, OperatorEnum> = mapOf(
+    override fun getOperators(): Map<KProperty0<*>, OperatorEnum> = mapOf(
         ::code to OperatorEnum.ILIKE,
         ::name to OperatorEnum.ILIKE
     )

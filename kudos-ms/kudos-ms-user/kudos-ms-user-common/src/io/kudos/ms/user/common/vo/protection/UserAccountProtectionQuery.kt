@@ -28,7 +28,7 @@ data class UserAccountProtectionQuery (
 
     constructor() : this("")
 
-    override var returnEntityClass: KClass<*>? = UserAccountProtectionRow::class
+    override fun getReturnEntityClass() = UserAccountProtectionRow::class
 
 
 }
