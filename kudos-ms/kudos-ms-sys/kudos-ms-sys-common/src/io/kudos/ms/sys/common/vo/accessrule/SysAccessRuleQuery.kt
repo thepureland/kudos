@@ -13,8 +13,6 @@ import kotlin.reflect.KClass
  */
 data class SysAccessRuleQuery (
 
-
-
     /** 租户id */
     val tenantId: String? = null,
 

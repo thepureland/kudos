@@ -7,7 +7,7 @@ import io.kudos.base.query.PagingSearchResult
 import io.kudos.base.query.sort.Order
 import io.kudos.base.support.iservice.IBaseReadOnlyService
 import io.kudos.base.support.payload.ListSearchPayload
-import io.kudos.base.support.payload.SearchPayload
+import io.kudos.base.support.payload.ImmutableSearchPayload
 import org.springframework.beans.factory.annotation.Autowired
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
@@ -168,7 +168,7 @@ open class BaseReadOnlyService<PK : Any, E : IDbEntity<PK, E>, DAO : BaseReadOnl
 
     override fun count(criteria: Criteria?): Int = dao.count(criteria)
 
-    override fun count(searchPayload: SearchPayload): Int = dao.count(searchPayload)
+    override fun count(searchPayload: ImmutableSearchPayload): Int = dao.count(searchPayload)
 
     override fun sum(property: KProperty1<E, *>, criteria: Criteria?): Number = dao.sum(property, criteria)
     override fun avg(property: KProperty1<E, *>, criteria: Criteria?): Number = dao.avg(property, criteria)
