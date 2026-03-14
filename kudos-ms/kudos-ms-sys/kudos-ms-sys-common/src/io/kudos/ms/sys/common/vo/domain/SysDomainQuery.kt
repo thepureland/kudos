@@ -3,6 +3,7 @@ package io.kudos.ms.sys.common.vo.domain
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.support.payload.ListSearchPayload
 import kotlin.reflect.KClass
+import kotlin.reflect.KProperty0
 
 
 /**
@@ -33,7 +34,7 @@ data class SysDomainQuery (
 
     override var returnEntityClass: KClass<*>? = SysDomainRow::class
 
-    override var operators: Map<String, OperatorEnum>? = mapOf(::domain.name to OperatorEnum.ILIKE)
+    override val operators: Map<KProperty0<*>, OperatorEnum> = mapOf(::domain to OperatorEnum.ILIKE)
 
 
 }

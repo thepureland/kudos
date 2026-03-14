@@ -2,7 +2,7 @@ package io.kudos.base.support.iservice
 
 import io.kudos.base.query.Criteria
 import io.kudos.base.support.IIdEntity
-import io.kudos.base.support.payload.SearchPayload
+import io.kudos.base.support.payload.ImmutableSearchPayload
 import io.kudos.base.support.payload.UpdatePayload
 
 /**
@@ -263,7 +263,7 @@ interface IBaseCrudService<PK : Any, E : IIdEntity<PK>> : IBaseReadOnlyService<P
      * @author K
      * @since 1.0.0
      */
-    fun <S : SearchPayload> batchUpdateWhen(updatePayload: UpdatePayload<S>): Int
+    fun <S : ImmutableSearchPayload> batchUpdateWhen(updatePayload: UpdatePayload<S>): Int
 
     /**
      * 有条件的批量更新实体对象（仅当满足给定的附加查询条件时）
@@ -408,7 +408,7 @@ interface IBaseCrudService<PK : Any, E : IIdEntity<PK>> : IBaseReadOnlyService<P
      * @author K
      * @since 1.0.0
      */
-    fun batchDeleteWhen(searchPayload: SearchPayload): Int
+    fun batchDeleteWhen(searchPayload: ImmutableSearchPayload): Int
 
     /**
      * 删除实体对应的记录

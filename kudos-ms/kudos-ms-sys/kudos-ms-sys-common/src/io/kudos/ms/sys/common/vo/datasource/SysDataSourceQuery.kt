@@ -3,6 +3,7 @@ package io.kudos.ms.sys.common.vo.datasource
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.support.payload.ListSearchPayload
 import kotlin.reflect.KClass
+import kotlin.reflect.KProperty0
 
 
 /**
@@ -36,7 +37,7 @@ data class SysDataSourceQuery (
 
     override var returnEntityClass: KClass<*>? = SysDataSourceRow::class
 
-    override var operators: Map<String, OperatorEnum>? = mapOf(::name.name to OperatorEnum.ILIKE)
+    override val operators: Map<KProperty0<*>, OperatorEnum> = mapOf(::name to OperatorEnum.ILIKE)
 
 
 }

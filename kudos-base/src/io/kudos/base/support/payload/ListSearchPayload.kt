@@ -8,7 +8,7 @@ import io.kudos.base.query.sort.Order
  * @author K
  * @since 1.0.0
  */
-open class ListSearchPayload: SearchPayload() {
+open class ListSearchPayload: ImmutableSearchPayload() {
 
     /** 当前页码(为null不分页) */
     open var pageNo: Int? = null

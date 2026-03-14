@@ -7,11 +7,10 @@ import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.support.GroupExecutor
 import io.kudos.base.support.dao.IBaseCrudDao
 import io.kudos.base.support.logic.AndOrEnum
-import io.kudos.base.support.payload.SearchPayload
+import io.kudos.base.support.payload.ImmutableSearchPayload
 import io.kudos.base.support.payload.UpdatePayload
 import org.ktorm.dsl.*
 import org.ktorm.entity.Entity
-import org.ktorm.entity.add
 import org.ktorm.entity.removeIf
 import org.ktorm.entity.update
 import org.ktorm.schema.Column
@@ -205,7 +204,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
         return batchUpdateByCriteria(entities, countOfEachBatch, criteria)
     }
 
-    override fun <S : SearchPayload> batchUpdateWhen(updatePayload: UpdatePayload<S>): Int {
+    override fun <S : ImmutableSearchPayload> batchUpdateWhen(updatePayload: UpdatePayload<S>): Int {
         return batchUpdateWhen(updatePayload, null)
     }
 
@@ -224,7 +223,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
      * @since 1.0.0
      */
     @Suppress("UNCHECKED_CAST")
-    open fun <S : SearchPayload> batchUpdateWhen(
+    open fun <S : ImmutableSearchPayload> batchUpdateWhen(
         updatePayload: UpdatePayload<S>,
         whereConditionFactory: ((Column<Any>, Any?) -> ColumnDeclaring<Boolean>?)? = null
     ): Int {
@@ -342,7 +341,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
         return entitySequence().removeIf { CriteriaConverter.convert(criteria, table()) }
     }
 
-    override fun batchDeleteWhen(searchPayload: SearchPayload): Int {
+    override fun batchDeleteWhen(searchPayload: ImmutableSearchPayload): Int {
         return batchDeleteWhen(searchPayload, null)
     }
 
@@ -359,7 +358,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
      * @since 1.0.0
      */
     open fun batchDeleteWhen(
-        searchPayload: SearchPayload? = null,
+        searchPayload: ImmutableSearchPayload? = null,
         whereConditionFactory: ((Column<Any>, Any?) -> ColumnDeclaring<Boolean>?)? = null
     ): Int {
         val wherePropertyMap = if (searchPayload == null) {

@@ -11,7 +11,7 @@ package io.kudos.base.support.payload
  * @author K
  * @since 1.0.0
  */
-open class UpdatePayload<S: SearchPayload> {
+open class UpdatePayload<S: ImmutableSearchPayload> {
 
     /** 值要设置为null的属性的列表 */
     open var nullProperties: List<String>? = null

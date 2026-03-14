@@ -2,7 +2,7 @@ package io.kudos.base.support.dao
 
 import io.kudos.base.query.Criteria
 import io.kudos.base.support.IIdEntity
-import io.kudos.base.support.payload.SearchPayload
+import io.kudos.base.support.payload.ImmutableSearchPayload
 import io.kudos.base.support.payload.UpdatePayload
 
 /**
@@ -281,7 +281,7 @@ interface IBaseCrudDao<PK : Any, E : IIdEntity<PK>> {
      * @author K
      * @since 1.0.0
      */
-    fun <S : SearchPayload> batchUpdateWhen(updatePayload: UpdatePayload<S>): Int
+    fun <S : ImmutableSearchPayload> batchUpdateWhen(updatePayload: UpdatePayload<S>): Int
 
     /**
      * 批量更新实体对象, 只更新实体的某几个属性
@@ -411,7 +411,7 @@ interface IBaseCrudDao<PK : Any, E : IIdEntity<PK>> {
      * @author K
      * @since 1.0.0
      */
-    fun batchDeleteWhen(searchPayload: SearchPayload): Int
+    fun batchDeleteWhen(searchPayload: ImmutableSearchPayload): Int
 
     //endregion Delete
 

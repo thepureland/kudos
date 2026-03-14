@@ -7,7 +7,7 @@ import io.kudos.base.query.Criterion
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.support.IIdEntity
 import io.kudos.base.support.dao.IBaseReadOnlyDao
-import io.kudos.base.support.payload.ListSearchPayload
+import io.kudos.base.support.payload.MutableListSearchPayload
 import org.springframework.beans.factory.annotation.Autowired
 import kotlin.reflect.KClass
 
@@ -57,7 +57,7 @@ abstract class AbstractByIdCacheHandler<PK : Any, T : IIdEntity<*>, DAO : IBaseR
         if (KeyValueCacheKit.isCacheActive(cacheName())) {
             log.debug("${cacheName()}缓存中没有找到所有这些id为${ids}的${itemDesc()}，从数据库中加载...")
         }
-        val searchPayload = ListSearchPayload().apply {
+        val searchPayload = MutableListSearchPayload().apply {
             returnEntityClass = getCacheItemClass()
             criterions = listOf(Criterion("id", OperatorEnum.IN, ids))
         }
@@ -79,7 +79,7 @@ abstract class AbstractByIdCacheHandler<PK : Any, T : IIdEntity<*>, DAO : IBaseR
         }
 
         // 加载所有
-        val searchPayload = ListSearchPayload().apply {
+        val searchPayload = MutableListSearchPayload().apply {
             returnEntityClass = getCacheItemClass()
         }
 

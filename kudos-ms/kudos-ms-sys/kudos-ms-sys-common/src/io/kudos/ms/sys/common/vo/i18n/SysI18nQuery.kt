@@ -3,6 +3,9 @@ package io.kudos.ms.sys.common.vo.i18n
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.support.payload.ListSearchPayload
 import kotlin.reflect.KClass
+import kotlin.reflect.KProperty
+import kotlin.reflect.KProperty0
+import kotlin.reflect.KProperty1
 
 
 /**
@@ -37,14 +40,13 @@ data class SysI18nQuery (
 
 ) : ListSearchPayload() {
 
-
     constructor() : this("")
 
     override var returnEntityClass: KClass<*>? = SysI18nRow::class
 
-    override var operators: Map<String, OperatorEnum>? = mapOf(
-        ::key.name to OperatorEnum.ILIKE,
-        ::namespace.name to OperatorEnum.ILIKE,
+    override val operators: Map<KProperty0<*>, OperatorEnum> = mapOf(
+        ::key to OperatorEnum.ILIKE,
+        ::namespace to OperatorEnum.ILIKE,
     )
 
 

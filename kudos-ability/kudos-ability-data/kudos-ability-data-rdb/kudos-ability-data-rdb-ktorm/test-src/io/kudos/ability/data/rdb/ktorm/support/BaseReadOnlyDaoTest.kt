@@ -10,11 +10,12 @@ import io.kudos.base.query.Criterion
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.query.sort.Order
 import io.kudos.base.support.payload.ListSearchPayload
-import io.kudos.base.support.payload.SearchPayload
+import io.kudos.base.support.payload.ImmutableSearchPayload
 import io.kudos.test.common.init.EnableKudosTest
 import jakarta.annotation.Resource
 import org.ktorm.dsl.eq
 import java.time.LocalDateTime
+import kotlin.reflect.KProperty0
 import kotlin.reflect.KProperty1
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -610,7 +611,7 @@ internal open class BaseReadOnlyDaoTest {
             var weight: Double? = null
             var noExistProp: String? = "noExistProp"
             override var returnProperties: List<String>? = listOf("id", "name", "height")
-            override var operators: Map<String, OperatorEnum>? = mapOf(SearchPayload2::name.name to OperatorEnum.ILIKE)
+            override val operators: Map<KProperty0<*>, OperatorEnum> = mapOf(SearchPayload2::name to OperatorEnum.ILIKE)
         }
 
         val searchPayload2 = SearchPayload2().apply {
@@ -661,7 +662,7 @@ internal open class BaseReadOnlyDaoTest {
 
     @Test
     fun countByPayload() {
-        class SearchPayload1 : SearchPayload() {
+        class SearchPayload1 : ImmutableSearchPayload() {
             var name: String? = null
             var weight: Double? = null
             var noExistProp: String? = "noExistProp"
