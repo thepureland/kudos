@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RequestBody
  * @author K
  * @since 1.0.0
  */
-open class BaseCrudController<PK : Any, B : IBaseCrudService<PK, *>, S : ListSearchPayload, R : IJsonResult, D : IJsonResult, F : FormPayload<*>> :
+open class BaseCrudController<PK : Any, B : IBaseCrudService<PK, *>, S : ListSearchPayload, R : Any, D: Any, F : FormPayload<*>> :
     BaseReadOnlyController<PK, B, S, R, D, F>() {
 
     /**

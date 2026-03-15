@@ -45,7 +45,7 @@ comment on column "sys_cache"."update_time" is '更新时间';
 
 --region DML
 insert into "sys_cache" ("name", "atomic_service_code", "strategy_dict_code", "write_on_boot", "write_in_time", "ttl", "remark", "hash") values
-    ('SYS_CACHE_BY_NAME', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '缓存配置信息的缓存(by name)', false),
+    ('SYS_CACHE__HASH', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '缓存配置信息Hash缓存', true),
     ('SYS_DICT__HASH', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '字典Hash缓存', true),
     ('SYS_DICT_ITEM__HASH', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '字典项Hash缓存(v_sys_dict_item)', true),
     ('SYS_DOMAIN_BY_NAME', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '域名缓存(by name)', false),

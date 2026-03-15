@@ -2,6 +2,7 @@ package io.kudos.ms.sys.common.vo.cache
 
 import io.kudos.base.support.IIdEntity
 import java.io.Serializable
+import java.time.LocalDateTime
 
 
 /**
@@ -14,7 +15,6 @@ data class SysCacheCacheEntry (
 
     /** 主键 */
     override val id: String = "",
-
 
     /** 名称 */
     val name: String = "",
@@ -45,6 +45,24 @@ data class SysCacheCacheEntry (
 
     /** 是否为 Hash 缓存 */
     val hash: Boolean = false,
+
+    /** 创建者id */
+    val createUserId: String? = null,
+
+    /** 创建者名称 */
+    val createUserName: String? = null,
+
+    /** 创建时间 */
+    val createTime: LocalDateTime? = null,
+
+    /** 更新者id */
+    val updateUserId: String? = null,
+
+    /** 更新者名称 */
+    val updateUserName: String? = null,
+
+    /** 更新时间 */
+    val updateTime: LocalDateTime? = null,
 
 ) : IIdEntity<String>, Serializable {
 
