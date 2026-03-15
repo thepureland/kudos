@@ -4,8 +4,8 @@ import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
 import io.kudos.base.query.Criteria
 import io.kudos.base.support.iservice.IBaseCrudService
-import io.kudos.base.support.payload.ISearchPayload
-import io.kudos.base.support.payload.UpdatePayload
+import io.kudos.base.model.payload.ISearchPayload
+import io.kudos.base.model.payload.UpdatePayload
 import org.springframework.transaction.annotation.Transactional
 
 /**

@@ -1,4 +1,4 @@
-package io.kudos.base.support.payload
+package io.kudos.base.model.payload
 
 /**
  * 更新数据项载体父类

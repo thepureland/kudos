@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.common.vo.dictitem
 
-import io.kudos.base.support.result.IJsonResult
+import io.kudos.base.model.contract.result.IJsonResult
 
 
 /**

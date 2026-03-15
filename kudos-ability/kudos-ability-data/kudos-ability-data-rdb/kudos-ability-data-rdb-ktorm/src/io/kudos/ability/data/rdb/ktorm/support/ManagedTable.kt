@@ -5,13 +5,13 @@ import org.ktorm.schema.datetime
 import org.ktorm.schema.varchar
 
 /**
- * 可维护型的数据库记录的实体（主键类型为字符串）
+ * 带有管理字段的数据库实体（主键类型为字符串）
  *
  * @param E 实体类型
  * @author K
  * @since 1.0.0
  */
-open class MaintainableTable<E : IMaintainableDbEntity<String, E>>(tableName: String): StringIdTable<E>(tableName) {
+open class ManagedTable<E : IManagedDbEntity<String, E>>(tableName: String): StringIdTable<E>(tableName) {
 
     /** 记录创建时间 */
     val createTime = datetime("create_time").bindTo { it.createTime }

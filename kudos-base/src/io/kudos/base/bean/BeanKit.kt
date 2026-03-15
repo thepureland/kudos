@@ -2,7 +2,7 @@ package io.kudos.base.bean
 
 import io.kudos.base.lang.SerializationKit
 import io.kudos.base.lang.reflect.getEmptyConstructor
-import io.kudos.base.support.IIdEntity
+import io.kudos.base.model.contract.entity.IIdEntity
 import org.apache.commons.beanutils.BeanUtils
 import org.apache.commons.beanutils.ConvertUtils
 import org.apache.commons.beanutils.PropertyUtils

@@ -1,6 +1,6 @@
 package io.kudos.ability.web.common.model
 
-import io.kudos.base.support.result.IJsonResult
+import io.kudos.base.model.contract.result.IJsonResult
 
 /**
  * 返回给前端的统一结果

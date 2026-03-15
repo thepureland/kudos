@@ -1,6 +1,6 @@
 package io.kudos.ms.user.common.vo.user
 
-import io.kudos.base.support.payload.ListSearchPayload
+import io.kudos.base.model.payload.ListSearchPayload
 
 
 /**

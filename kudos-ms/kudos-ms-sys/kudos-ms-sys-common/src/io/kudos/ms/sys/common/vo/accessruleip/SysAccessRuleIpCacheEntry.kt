@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.common.vo.accessruleip
 
-import io.kudos.base.support.IIdEntity
+import io.kudos.base.model.contract.entity.IIdEntity
 import java.io.Serializable
 import java.time.LocalDateTime
 

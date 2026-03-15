@@ -7,7 +7,7 @@ import io.kudos.base.query.Criteria
 import io.kudos.base.query.PagingSearchResult
 import io.kudos.base.query.eq
 import io.kudos.base.security.CryptoKit
-import io.kudos.base.support.payload.ListSearchPayload
+import io.kudos.base.model.payload.ListSearchPayload
 import io.kudos.ms.sys.common.api.ISysTenantApi
 import io.kudos.ms.sys.common.vo.datasource.SysDataSourceCacheEntry
 import io.kudos.ms.sys.common.vo.datasource.SysDataSourceDetail

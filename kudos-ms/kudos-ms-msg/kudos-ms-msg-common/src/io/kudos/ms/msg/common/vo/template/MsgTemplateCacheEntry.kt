@@ -1,6 +1,6 @@
 package io.kudos.ms.msg.common.vo.template
 
-import io.kudos.base.support.IIdEntity
+import io.kudos.base.model.contract.entity.IIdEntity
 import java.io.Serializable
 
 

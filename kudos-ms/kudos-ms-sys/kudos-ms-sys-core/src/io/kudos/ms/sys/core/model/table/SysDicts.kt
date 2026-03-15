@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.core.model.table
 
-import io.kudos.ability.data.rdb.ktorm.support.MaintainableTable
+import io.kudos.ability.data.rdb.ktorm.support.ManagedTable
 import io.kudos.ms.sys.core.model.po.SysDict
 import org.ktorm.schema.varchar
 
@@ -11,7 +11,7 @@ import org.ktorm.schema.varchar
  * @author K
  * @since 1.0.0
  */
-object SysDicts : MaintainableTable<SysDict>("sys_dict") {
+object SysDicts : ManagedTable<SysDict>("sys_dict") {
 
     /** 字典类型 */
     var dictType = varchar("dict_type").bindTo { it.dictType }

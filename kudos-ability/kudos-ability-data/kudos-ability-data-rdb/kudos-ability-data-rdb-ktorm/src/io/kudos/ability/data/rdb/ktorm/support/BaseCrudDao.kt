@@ -2,13 +2,14 @@ package io.kudos.ability.data.rdb.ktorm.support
 
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.lang.string.underscoreToHump
+import io.kudos.base.model.contract.common.IAuditable
+import io.kudos.base.model.payload.ISearchPayload
+import io.kudos.base.model.payload.UpdatePayload
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.support.GroupExecutor
 import io.kudos.base.support.dao.IBaseCrudDao
 import io.kudos.base.support.logic.AndOrEnum
-import io.kudos.base.support.payload.ISearchPayload
-import io.kudos.base.support.payload.UpdatePayload
 import org.ktorm.dsl.*
 import org.ktorm.entity.Entity
 import org.ktorm.entity.removeIf
@@ -447,7 +448,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
      * @param e 数据库表实体
      */
     private fun setDefault(e: E) {
-        if (e is IUpdatableDbEntity<*, *> && e.updateTime == null) {
+        if (e is IAuditable && e.updateTime == null) {
             e.updateTime = LocalDateTime.now()
         }
     }
@@ -458,8 +459,8 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
      * @param properties Map(属性名，属性值)
      */
     private fun setDefault(properties: MutableMap<String, Any?>) {
-        val key = IUpdatableDbEntity<*, *>::updateTime.name
-        if (!properties.containsKey(key) && entityClass().superclasses.contains(IUpdatableDbEntity::class)) {
+        val key = IAuditable::updateTime.name
+        if (!properties.containsKey(key) && entityClass().superclasses.contains(IAuditable::class)) {
             properties[key] = LocalDateTime.now()
         }
     }

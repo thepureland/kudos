@@ -1,6 +1,6 @@
 package io.kudos.ms.user.common.vo.protection
 
-import io.kudos.base.support.result.IdJsonResult
+import io.kudos.base.model.contract.result.IdJsonResult
 import java.time.LocalDateTime
 
 

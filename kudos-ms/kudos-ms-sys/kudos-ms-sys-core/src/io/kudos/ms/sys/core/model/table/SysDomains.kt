@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.core.model.table
 
-import io.kudos.ability.data.rdb.ktorm.support.MaintainableTable
+import io.kudos.ability.data.rdb.ktorm.support.ManagedTable
 import io.kudos.ms.sys.core.model.po.SysDomain
 import org.ktorm.schema.varchar
 
@@ -11,7 +11,7 @@ import org.ktorm.schema.varchar
  * @author K
  * @since 1.0.0
  */
-object SysDomains : MaintainableTable<SysDomain>("sys_domain") {
+object SysDomains : ManagedTable<SysDomain>("sys_domain") {
 
     /** 域名 */
     var domain = varchar("domain").bindTo { it.domain }

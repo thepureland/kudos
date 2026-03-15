@@ -1,6 +1,6 @@
 package io.kudos.ability.data.rdb.ktorm.support
 
-import io.kudos.base.support.IMutableIdEntity
+import io.kudos.base.model.contract.entity.IMutableIdEntity
 import org.ktorm.entity.Entity
 
 /**

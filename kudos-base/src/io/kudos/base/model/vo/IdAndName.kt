@@ -1,4 +1,4 @@
-package io.kudos.base.support.vo
+package io.kudos.base.model.vo
 
 /**
  * id和name的封装类

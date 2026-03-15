@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.api.admin.controller
 
 import io.kudos.ability.web.springmvc.controller.BaseCrudController
-import io.kudos.base.support.vo.IdAndName
+import io.kudos.base.model.vo.IdAndName
 import io.kudos.ms.sys.common.vo.tenant.SysTenantDetail
 import io.kudos.ms.sys.common.vo.tenant.SysTenantForm
 import io.kudos.ms.sys.common.vo.tenant.SysTenantQuery

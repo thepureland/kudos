@@ -1,4 +1,4 @@
-package io.kudos.base.support.payload
+package io.kudos.base.model.payload
 
 import io.kudos.base.query.sort.Order
 

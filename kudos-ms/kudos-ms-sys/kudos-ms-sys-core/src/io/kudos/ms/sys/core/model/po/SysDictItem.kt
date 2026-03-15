@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.core.model.po
 
 import io.kudos.ability.data.rdb.ktorm.support.DbEntityFactory
-import io.kudos.ability.data.rdb.ktorm.support.IMaintainableDbEntity
+import io.kudos.ability.data.rdb.ktorm.support.IManagedDbEntity
 
 /**
  * 字典项数据库实体
@@ -9,7 +9,7 @@ import io.kudos.ability.data.rdb.ktorm.support.IMaintainableDbEntity
  * @author K
  * @since 1.0.0
  */
-interface SysDictItem : IMaintainableDbEntity<String, SysDictItem> {
+interface SysDictItem : IManagedDbEntity<String, SysDictItem> {
 
     companion object : DbEntityFactory<SysDictItem>()
 
@@ -27,8 +27,5 @@ interface SysDictItem : IMaintainableDbEntity<String, SysDictItem> {
 
     /** 父id */
     var parentId: String?
-
-
-
 
 }

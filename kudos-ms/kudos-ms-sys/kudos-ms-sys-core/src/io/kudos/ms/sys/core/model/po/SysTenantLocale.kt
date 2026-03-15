@@ -38,7 +38,4 @@ interface SysTenantLocale : IDbEntity<String, SysTenantLocale> {
     /** 更新时间 */
     var updateTime: LocalDateTime?
 
-
-
-
 }

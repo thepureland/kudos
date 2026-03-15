@@ -1,6 +1,6 @@
 package io.kudos.ms.msg.common.vo.instance
 
-import io.kudos.base.support.payload.FormPayload
+import io.kudos.base.model.payload.FormPayload
 import java.time.LocalDateTime
 
 

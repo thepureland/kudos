@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.common.vo.accessruleip
 
-import io.kudos.base.support.payload.ListSearchPayload
+import io.kudos.base.model.payload.ListSearchPayload
 import java.time.LocalDateTime
 
 

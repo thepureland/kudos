@@ -3,7 +3,7 @@ package io.kudos.ability.cache.common.core.hash
 import io.kudos.ability.cache.common.core.AbstractCacheHandler
 import io.kudos.ability.cache.common.kit.HashCacheKit
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.support.IIdEntity
+import io.kudos.base.model.contract.entity.IIdEntity
 import kotlin.reflect.KClass
 
 /**

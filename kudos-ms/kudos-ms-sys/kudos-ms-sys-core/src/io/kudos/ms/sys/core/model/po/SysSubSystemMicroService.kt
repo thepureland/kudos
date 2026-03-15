@@ -38,7 +38,4 @@ interface SysSubSystemMicroService : IDbEntity<String, SysSubSystemMicroService>
     /** 更新时间 */
     var updateTime: LocalDateTime?
 
-
-
-
 }

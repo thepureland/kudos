@@ -65,4 +65,5 @@ interface VSysDictItem : IDbEntity<String, VSysDictItem> {
 
     /** 原子服务编码（来自 sys_dict） */
     var atomicServiceCode: String?
+
 }

@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.core.model.table
 
-import io.kudos.ability.data.rdb.ktorm.support.MaintainableTable
+import io.kudos.ability.data.rdb.ktorm.support.ManagedTable
 import io.kudos.ms.sys.core.model.po.SysDictItem
 import org.ktorm.schema.int
 import org.ktorm.schema.varchar
@@ -12,7 +12,7 @@ import org.ktorm.schema.varchar
  * @author K
  * @since 1.0.0
  */
-object SysDictItems : MaintainableTable<SysDictItem>("sys_dict_item") {
+object SysDictItems : ManagedTable<SysDictItem>("sys_dict_item") {
 
     /** 字典项代码 */
     var itemCode = varchar("item_code").bindTo { it.itemCode }

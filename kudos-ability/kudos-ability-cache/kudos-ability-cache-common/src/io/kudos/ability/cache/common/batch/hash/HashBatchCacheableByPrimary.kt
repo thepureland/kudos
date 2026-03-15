@@ -1,6 +1,6 @@
 package io.kudos.ability.cache.common.batch.hash
 
-import io.kudos.base.support.IIdEntity
+import io.kudos.base.model.contract.entity.IIdEntity
 import kotlin.reflect.KClass
 
 /**

@@ -1,9 +1,9 @@
 package io.kudos.base.support.iservice
 
 import io.kudos.base.query.Criteria
-import io.kudos.base.support.IIdEntity
-import io.kudos.base.support.payload.ISearchPayload
-import io.kudos.base.support.payload.UpdatePayload
+import io.kudos.base.model.contract.entity.IIdEntity
+import io.kudos.base.model.payload.ISearchPayload
+import io.kudos.base.model.payload.UpdatePayload
 
 /**
  * 基础业务操作接口

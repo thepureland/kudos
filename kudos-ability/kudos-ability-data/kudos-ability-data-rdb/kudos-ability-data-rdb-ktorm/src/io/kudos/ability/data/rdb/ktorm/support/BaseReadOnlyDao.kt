@@ -11,9 +11,9 @@ import io.kudos.base.query.sort.Order
 import io.kudos.base.support.GroupExecutor
 import io.kudos.base.support.dao.IBaseReadOnlyDao
 import io.kudos.base.support.logic.AndOrEnum
-import io.kudos.base.support.payload.ISearchPayload
-import io.kudos.base.support.payload.ListSearchPayload
-import io.kudos.base.support.payload.MutableListSearchPayload
+import io.kudos.base.model.payload.ISearchPayload
+import io.kudos.base.model.payload.ListSearchPayload
+import io.kudos.base.model.payload.MutableListSearchPayload
 import io.kudos.context.core.KudosContextHolder
 import org.ktorm.database.Database
 import org.ktorm.dsl.*

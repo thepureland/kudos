@@ -59,5 +59,4 @@ interface SysSystem : IDbEntity<String, SysSystem> {
         get() = this.code
         set(value) { this.code = value }
 
-
 }

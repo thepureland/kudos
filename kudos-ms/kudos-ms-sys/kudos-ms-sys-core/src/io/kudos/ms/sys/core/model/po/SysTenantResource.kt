@@ -19,7 +19,4 @@ interface SysTenantResource : IDbEntity<String, SysTenantResource> {
     /** 资源id */
     var resourceId: String
 
-
-
-
 }

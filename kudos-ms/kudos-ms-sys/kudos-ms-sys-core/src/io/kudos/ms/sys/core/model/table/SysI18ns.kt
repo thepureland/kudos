@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.core.model.table
 
-import io.kudos.ability.data.rdb.ktorm.support.MaintainableTable
+import io.kudos.ability.data.rdb.ktorm.support.ManagedTable
 import io.kudos.ms.sys.core.model.po.SysI18n
 import org.ktorm.schema.varchar
 
@@ -11,7 +11,7 @@ import org.ktorm.schema.varchar
  * @author K
  * @since 1.0.0
  */
-object SysI18ns : MaintainableTable<SysI18n>("sys_i18n") {
+object SysI18ns : ManagedTable<SysI18n>("sys_i18n") {
 
     /** 语言_地区 */
     var locale = varchar("locale").bindTo { it.locale }

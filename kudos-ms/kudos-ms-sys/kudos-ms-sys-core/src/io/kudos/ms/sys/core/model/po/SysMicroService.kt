@@ -57,10 +57,8 @@ interface SysMicroService : IDbEntity<String, SysMicroService> {
     var updateTime: LocalDateTime?
 
 
-
     override var id: String
         get() = this.code
         set(value) { this.code = value }
-
 
 }

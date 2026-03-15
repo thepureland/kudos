@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.common.vo.domain
 
 import io.kudos.base.query.enums.OperatorEnum
-import io.kudos.base.support.payload.ListSearchPayload
+import io.kudos.base.model.payload.ListSearchPayload
 import kotlin.reflect.KProperty0
 
 

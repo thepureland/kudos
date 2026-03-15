@@ -1,7 +1,7 @@
 package io.kudos.ms.msg.core.model.po
 
 import io.kudos.ability.data.rdb.ktorm.support.DbEntityFactory
-import io.kudos.ability.data.rdb.ktorm.support.IMaintainableDbEntity
+import io.kudos.ability.data.rdb.ktorm.support.IManagedDbEntity
 
 
 /**
@@ -11,7 +11,7 @@ import io.kudos.ability.data.rdb.ktorm.support.IMaintainableDbEntity
  * @author AI: Codex
  * @since 1.0.0
  */
-interface MsgReceiverGroup : IMaintainableDbEntity<String, MsgReceiverGroup> {
+interface MsgReceiverGroup : IManagedDbEntity<String, MsgReceiverGroup> {
 
     companion object : DbEntityFactory<MsgReceiverGroup>()
 

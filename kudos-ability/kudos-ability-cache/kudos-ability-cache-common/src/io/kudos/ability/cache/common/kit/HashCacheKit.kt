@@ -9,7 +9,7 @@ import io.kudos.ability.cache.common.notify.CacheOperatorVo
 import io.kudos.ability.cache.common.support.CacheConfig
 import io.kudos.ability.cache.common.support.ICacheConfigProvider
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.support.IIdEntity
+import io.kudos.base.model.contract.entity.IIdEntity
 import io.kudos.context.kit.SpringKit
 import org.springframework.stereotype.Component
 import kotlin.reflect.KClass

@@ -2,7 +2,7 @@ package io.kudos.ms.sys.common.vo.cache
 
 import io.kudos.base.bean.validation.constraint.annotations.DictItemCode
 import io.kudos.base.query.enums.OperatorEnum
-import io.kudos.base.support.payload.ListSearchPayload
+import io.kudos.base.model.payload.ListSearchPayload
 import io.kudos.ms.sys.common.consts.SysConsts
 import io.kudos.ms.sys.common.consts.SysDictTypes
 import kotlin.reflect.KProperty0

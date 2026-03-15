@@ -1,9 +1,8 @@
 package io.kudos.ability.web.springmvc.controller
 
 import io.kudos.base.support.iservice.IBaseCrudService
-import io.kudos.base.support.payload.FormPayload
-import io.kudos.base.support.payload.ListSearchPayload
-import io.kudos.base.support.result.IJsonResult
+import io.kudos.base.model.payload.FormPayload
+import io.kudos.base.model.payload.ListSearchPayload
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.PostMapping

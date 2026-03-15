@@ -1,17 +1,14 @@
-package io.kudos.ability.data.rdb.ktorm.support
+package io.kudos.base.model.contract.common
 
-import org.ktorm.entity.Entity
 import java.time.LocalDateTime
 
 /**
- * 可更新的数据库记录的实体接口
+ * 可审计的（带有审计相关属性）模型接口
  *
- * @param ID 主键类型
- * @param E 实体类型
  * @author K
  * @since 1.0.0
  */
-interface IUpdatableDbEntity<ID, E : Entity<E>> : IDbEntity<ID, E> {
+interface IAuditable {
 
     /** 记录创建时间 */
     var createTime: LocalDateTime?
@@ -30,11 +27,5 @@ interface IUpdatableDbEntity<ID, E : Entity<E>> : IDbEntity<ID, E> {
 
     /** 记录更新者名称 */
     var updateUserName: String?
-
-    /** 是否内置 */
-    var builtIn: Boolean
-
-    /** 备注 */
-    var remark: String?
 
 }

@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.common.vo.tenant
 
-import io.kudos.base.support.payload.FormPayload
+import io.kudos.base.model.payload.FormPayload
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
 
