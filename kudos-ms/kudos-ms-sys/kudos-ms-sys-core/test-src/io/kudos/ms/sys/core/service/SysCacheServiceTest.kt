@@ -25,22 +25,16 @@ class SysCacheServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun getCacheFromCache() {
-        val name = "svc-cache-test-1"
-        val cacheItem = sysCacheService.getCacheFromCache(name)
+        val id = "20000000-0000-0000-0000-000000007838"
+        val cacheItem = sysCacheService.getCacheFromCache(id)
         assertNotNull(cacheItem)
     }
 
     @Test
-    fun getCachesByAtomicServiceCode() {
+    fun getCachesFromCache() {
         val atomicServiceCode = "svc-as-cache-test-1_7838"
-        val caches = sysCacheService.getCachesByAtomicServiceCode(atomicServiceCode)
+        val caches = sysCacheService.getCachesFromCache(atomicServiceCode)
         assertTrue(caches.any { it.name == "svc-cache-test-1" })
-    }
-
-    @Test
-    fun getAllActiveCaches() {
-        val caches = sysCacheService.getAllActiveCaches()
-        assertTrue(caches.isNotEmpty())
     }
 
     @Test

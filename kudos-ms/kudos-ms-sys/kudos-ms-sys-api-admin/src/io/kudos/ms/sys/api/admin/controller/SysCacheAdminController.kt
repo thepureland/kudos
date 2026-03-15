@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.api.admin.controller
 
 import io.kudos.ability.web.springmvc.controller.BaseCrudController
-import io.kudos.ms.sys.common.vo.cache.SysCacheDetail
+import io.kudos.ms.sys.common.vo.cache.SysCacheCacheEntry
 import io.kudos.ms.sys.common.vo.cache.SysCacheForm
 import io.kudos.ms.sys.common.vo.cache.SysCacheQuery
 import io.kudos.ms.sys.common.vo.cache.SysCacheRow
@@ -17,71 +17,71 @@ import org.springframework.web.bind.annotation.*
 @RestController
 @RequestMapping("/api/admin/sys/cache")
 open class SysCacheAdminController :
-    BaseCrudController<String, ISysCacheService, SysCacheQuery, SysCacheRow, SysCacheDetail, SysCacheForm>() {
+    BaseCrudController<String, ISysCacheService, SysCacheQuery, SysCacheRow, SysCacheCacheEntry, SysCacheForm>() {
 
     /**
-     * 重载指定缓存名称和key的缓存项
+     * 重载指定缓存配置（按 id）下某 key 的缓存项
      *
-     * @param name 缓存名称
-     * @param key 缓存key
+     * @param id 缓存配置主键
+     * @param key 缓存 key
      */
     @GetMapping("/reload")
-    fun reload(name: String, key: String) {
-        return service.reload(name, key)
+    fun reload(id: String, key: String) {
+        return service.reload(id, key)
     }
 
     /**
-     * 重载指定缓存名称的所有缓存项
+     * 重载指定缓存配置（按 id）下的所有缓存项
      *
-     * @param name 缓存名称
+     * @param id 缓存配置主键
      */
     @GetMapping("/reloadAll")
-    fun reloadAll(name: String) {
-        return service.reloadAll(name)
+    fun reloadAll(id: String) {
+        return service.reloadAll(id)
     }
 
     /**
-     * 踢除指定缓存名称和key的缓存项
+     * 踢除指定缓存配置（按 id）下某 key 的缓存项
      *
-     * @param name 缓存名称
-     * @param key 缓存key
+     * @param id 缓存配置主键
+     * @param key 缓存 key
      */
     @DeleteMapping("/evict")
-    fun evict(name: String, key: String) {
-        return service.evict(name, key)
+    fun evict(id: String, key: String) {
+        return service.evict(id, key)
     }
 
     /**
-     * 踢除指定缓存名称的所有缓存项
+     * 踢除指定缓存配置（按 id）下的所有缓存项
      *
-     * @param name 缓存名称
+     * @param id 缓存配置主键
      */
     @DeleteMapping("/evictAll")
-    fun evictAll(name: String) {
-        return service.evictAll(name)
+    fun evictAll(id: String) {
+        return service.evictAll(id)
     }
 
     /**
-     * 检测指定名称和key的缓存项是否存在
+     * 检测指定缓存配置（按 id）下某 key 是否存在
      *
-     * @param name 缓存名称
-     * @param key 缓存key
+     * @param id 缓存配置主键
+     * @param key 缓存 key
      */
     @GetMapping("/existsKey")
-    fun existsKey(name: String, key: String): Boolean {
-        return service.existsKey(name, key)
+    fun existsKey(id: String, key: String): Boolean {
+        return service.existsKey(id, key)
     }
 
     /**
-     * 获取指定名称和key的缓存项的值的json表示
+     * 获取指定缓存配置（按 id）下某 key 的值的 json 表示
      *
-     * @param name 缓存名称
-     * @param key 缓存key
-     * @return value的json串,value为null或出错返回空串
+     * @param id 缓存配置主键
+     * @param key 缓存 key
+     * @return value 的 json 串，value 为 null 或出错返回空串
      */
     @GetMapping("/getValueJson")
-    fun getValueJson(name: String, key: String): String {
-        return service.getValueJson(name, key)
+    fun getValueJson(id: String, key: String): String {
+        return service.getValueJson(id, key)
     }
 
     /**

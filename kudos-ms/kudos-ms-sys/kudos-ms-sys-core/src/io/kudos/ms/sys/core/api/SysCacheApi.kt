@@ -17,25 +17,11 @@ import org.springframework.stereotype.Service
 @Service
 open class SysCacheApi : ISysCacheApi {
 
-
     @Resource
     protected lateinit var sysCacheService: ISysCacheService
 
-    override fun getCacheFromCache(name: String): SysCacheCacheEntry? {
-        return sysCacheService.getCacheFromCache(name)
-    }
 
-    override fun updateActive(id: String, active: Boolean): Boolean {
-        return sysCacheService.updateActive(id, active)
-    }
 
-    override fun getCachesByAtomicServiceCode(atomicServiceCode: String): List<SysCacheRow> {
-        return sysCacheService.getCachesByAtomicServiceCode(atomicServiceCode)
-    }
-
-    override fun getAllActiveCaches(): List<SysCacheRow> {
-        return sysCacheService.getAllActiveCaches()
-    }
 
 
 }

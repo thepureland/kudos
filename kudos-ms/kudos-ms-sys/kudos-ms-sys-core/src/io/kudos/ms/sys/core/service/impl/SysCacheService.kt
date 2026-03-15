@@ -11,13 +11,14 @@ import io.kudos.base.query.Criteria
 import io.kudos.base.query.eq
 import io.kudos.ms.sys.common.vo.cache.SysCacheCacheEntry
 import io.kudos.ms.sys.common.vo.cache.SysCacheRow
-import io.kudos.ms.sys.core.cache.CacheByNameCache
+import io.kudos.ms.sys.core.cache.SysCacheHashCache
 import io.kudos.ms.sys.core.dao.SysCacheDao
 import io.kudos.ms.sys.core.model.po.SysCache
 import io.kudos.ms.sys.core.service.iservice.ISysCacheService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import kotlin.reflect.KClass
 
 
 /**
@@ -30,21 +31,29 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 open class SysCacheService : BaseCrudService<String, SysCache, SysCacheDao>(), ISysCacheService {
 
-
     private val log = LogFactory.getLog(this)
 
     @Autowired
-    private lateinit var cacheConfigCacheHandler: CacheByNameCache
+    private lateinit var sysCacheHashCache: SysCacheHashCache
 
-    override fun getCacheFromCache(name: String): SysCacheCacheEntry? {
-        return cacheConfigCacheHandler.getCache(name)
+    override fun <R : Any> get(id: String, returnType: KClass<R>): R? {
+        return if (returnType == SysCacheCacheEntry::class) {
+            @Suppress("UNCHECKED_CAST")
+            sysCacheHashCache.getCacheById(id) as R?
+        } else {
+            super.get(id, returnType)
+        }
+    }
+
+    override fun getCacheFromCache(id: String): SysCacheCacheEntry? {
+        return sysCacheHashCache.getCacheById(id)
     }
 
     @Transactional
     override fun insert(any: Any): String {
         val id = super.insert(any)
         log.debug("新增id为${id}的缓存配置。")
-        cacheConfigCacheHandler.syncOnInsert(any, id) // 同步缓存
+        sysCacheHashCache.syncOnInsert(any, id) // 同步 Hash 缓存
         return id
     }
 
@@ -54,7 +63,7 @@ open class SysCacheService : BaseCrudService<String, SysCache, SysCacheDao>(), I
         val id = BeanKit.getProperty(any, SysCache::id.name) as String
         if (success) {
             log.debug("更新id为${id}的缓存配置。")
-            cacheConfigCacheHandler.syncOnUpdate(any, id)
+            sysCacheHashCache.syncOnUpdate(any, id)
         } else {
             log.error("更新id为${id}的缓存配置失败！")
         }
@@ -70,7 +79,7 @@ open class SysCacheService : BaseCrudService<String, SysCache, SysCacheDao>(), I
         val success = dao.update(cache)
         if (success) {
             // 同步缓存
-            cacheConfigCacheHandler.syncOnUpdate(cache, id)
+            sysCacheHashCache.syncOnUpdate(cache, id)
         } else {
             log.error("更新id为${id}的缓存配置的启用状态为${active}失败！")
         }
@@ -87,7 +96,7 @@ open class SysCacheService : BaseCrudService<String, SysCache, SysCacheDao>(), I
         val success = super.deleteById(id)
         if (success) {
             log.debug("删除id为${id}的缓存配置成功！")
-            cacheConfigCacheHandler.syncOnDelete(id, sysCache.name)
+            sysCacheHashCache.syncOnDelete(id)
         } else {
             log.error("删除id为${id}的缓存配置失败！")
         }
@@ -96,10 +105,9 @@ open class SysCacheService : BaseCrudService<String, SysCache, SysCacheDao>(), I
 
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {
-        val names = dao.inSearchPropertyById(ids, SysCache::name)
         val count = super.batchDelete(ids)
         log.debug("批量删除缓存配置，期望删除${ids.size}条，实际删除${count}条。")
-        cacheConfigCacheHandler.syncOnBatchDelete(ids, names)
+        sysCacheHashCache.syncOnBatchDelete(ids)
         return count
     }
 
@@ -108,68 +116,65 @@ open class SysCacheService : BaseCrudService<String, SysCache, SysCacheDao>(), I
      *
      * @param atomicServiceCode 原子服务编码
      * @return 缓存记录列表
-     * @author AI: Cursor
-     * @since 1.0.0
      */
-    override fun getCachesByAtomicServiceCode(atomicServiceCode: String): List<SysCacheRow> {
-        val criteria = Criteria(SysCache::atomicServiceCode eq atomicServiceCode)
-        return dao.searchAs<SysCacheRow>(criteria)
+    override fun getCachesFromCache(atomicServiceCode: String): List<SysCacheCacheEntry> {
+        return sysCacheHashCache.getCaches(atomicServiceCode)
     }
 
-    /**
-     * 获取所有启用的缓存配置
-     *
-     * @return 缓存记录列表
-     * @author AI: Cursor
-     * @since 1.0.0
-     */
-    override fun getAllActiveCaches(): List<SysCacheRow> {
-        val criteria = Criteria(SysCache::active eq true)
-        return dao.searchAs<SysCacheRow>(criteria)
-    }
-
-    override fun reload(name: String, key: String) {
-        if (isKeyValueCache(name)) {
+    override fun reload(id: String, key: String) {
+        val cache = getCacheConfigById(id)
+        val name = cache.name
+        if (isKeyValueCache(cache)) {
             KeyValueCacheKit.reload(name, key)
         } else {
             HashCacheKit.reload(name, key)
         }
     }
 
-    override fun reloadAll(name: String) {
-        if (isKeyValueCache(name)) {
+    override fun reloadAll(id: String) {
+        val cache = getCacheConfigById(id)
+        val name = cache.name
+        if (isKeyValueCache(cache)) {
             KeyValueCacheKit.reloadAll(name)
         } else {
             HashCacheKit.reloadAll(name)
         }
     }
 
-    override fun evict(name: String, key: String) {
-        if (isKeyValueCache(name)) {
+    override fun evict(id: String, key: String) {
+        val cache = getCacheConfigById(id)
+        val name = cache.name
+        if (isKeyValueCache(cache)) {
             KeyValueCacheKit.evict(name, key)
         } else {
             HashCacheKit.evict(name, key)
         }
     }
 
-    override fun evictAll(name: String) {
-        if (isKeyValueCache(name)) {
+    override fun evictAll(id: String) {
+        val cache = getCacheConfigById(id)
+        val name = cache.name
+        if (isKeyValueCache(cache)) {
             KeyValueCacheKit.clear(name)
         } else {
             HashCacheKit.clear(name)
         }
     }
 
-    override fun existsKey(name: String, key: String): Boolean {
-        return if (isKeyValueCache(name)) {
+    override fun existsKey(id: String, key: String): Boolean {
+        val cache = getCacheConfigById(id)
+        val name = cache.name
+        return if (isKeyValueCache(cache)) {
             KeyValueCacheKit.existsKey(name, key)
         } else {
             HashCacheKit.existsById(name, key)
         }
     }
 
-    override fun getValueJson(name: String, key: String): String {
-        val value = if (isKeyValueCache(name)) {
+    override fun getValueJson(id: String, key: String): String {
+        val cache = getCacheConfigById(id)
+        val name = cache.name
+        val value = if (isKeyValueCache(cache)) {
             KeyValueCacheKit.getValue(name, key)
         } else {
             HashCacheKit.getValue(name, key)
@@ -177,10 +182,12 @@ open class SysCacheService : BaseCrudService<String, SysCache, SysCacheDao>(), I
         return JsonKit.toJson(value)
     }
 
-    private fun isKeyValueCache(cacheName: String) : Boolean {
-        val cache = cacheConfigCacheHandler.getCache(cacheName) ?: throw ServiceException("缓存【${cacheName}】不存在！")
-        return cache.hash
+    /** 按 id 获取缓存配置，不存在则抛异常 */
+    private fun getCacheConfigById(id: String): SysCacheCacheEntry {
+        return sysCacheHashCache.getCacheById(id) ?: throw ServiceException("缓存配置【$id】不存在！")
     }
+
+    private fun isKeyValueCache(cache: SysCacheCacheEntry): Boolean = !cache.hash
 
 
 }

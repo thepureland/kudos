@@ -1,7 +1,5 @@
 package io.kudos.ms.sys.common.vo.cache
 
-import io.kudos.base.support.result.IdJsonResult
-
 
 /**
  * 缓存查询记录
@@ -11,9 +9,8 @@ import io.kudos.base.support.result.IdJsonResult
  */
 data class SysCacheRow (
 
-
     /** 主键 */
-    override val id: String = "",
+    val id: String = "",
 
     /** 名称 */
     val name: String = "",
@@ -45,10 +42,8 @@ data class SysCacheRow (
     /** 是否为 Hash 缓存 */
     val hash: Boolean = false,
 
-) : IdJsonResult<String>() {
-
+) {
 
     constructor() : this("")
-
 
 }

@@ -25,7 +25,7 @@ import kotlin.reflect.KClass
  * @author K
  * @since 1.0.0
  */
-open class BaseReadOnlyController<PK : Any, B : IBaseReadOnlyService<PK, *>, S : ListSearchPayload, R : IJsonResult, D : IJsonResult, F : FormPayload<*>>
+open class BaseReadOnlyController<PK : Any, B : IBaseReadOnlyService<PK, *>, S : ListSearchPayload, R : Any, D: Any, F : FormPayload<*>>
     : BaseController<F>() {
 
     @Autowired

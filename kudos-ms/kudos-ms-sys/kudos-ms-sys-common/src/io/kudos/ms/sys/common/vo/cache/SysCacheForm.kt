@@ -5,6 +5,7 @@ import io.kudos.base.support.payload.FormPayload
 import io.kudos.ms.sys.common.consts.SysConsts
 import io.kudos.ms.sys.common.consts.SysDictTypes
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Positive
 
 
 /**
@@ -17,7 +18,6 @@ data class SysCacheForm (
 
     /** 主键 */
     override val id: String? = null,
-
 
     /** 名称 */
     @get:NotBlank
@@ -39,6 +39,7 @@ data class SysCacheForm (
     val writeInTime: Boolean = true,
 
     /** 缓存生存时间(秒) */
+    @get:Positive
     val ttl: Int? = null,
 
     /** 备注 */
@@ -49,8 +50,6 @@ data class SysCacheForm (
 
 ) : FormPayload<String?>() {
 
-
     constructor() : this(null)
-
 
 }
