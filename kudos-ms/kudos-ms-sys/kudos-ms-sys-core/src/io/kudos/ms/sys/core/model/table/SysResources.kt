@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.core.model.table
 
-import io.kudos.ability.data.rdb.ktorm.support.MaintainableTable
+import io.kudos.ability.data.rdb.ktorm.support.ManagedTable
 import io.kudos.ms.sys.core.model.po.SysResource
 import org.ktorm.schema.int
 import org.ktorm.schema.varchar
@@ -12,7 +12,7 @@ import org.ktorm.schema.varchar
  * @author K
  * @since 1.0.0
  */
-object SysResources : MaintainableTable<SysResource>("sys_resource") {
+object SysResources : ManagedTable<SysResource>("sys_resource") {
 
     /** 名称 */
     var name = varchar("name").bindTo { it.name }

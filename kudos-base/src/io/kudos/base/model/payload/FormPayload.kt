@@ -1,6 +1,6 @@
-package io.kudos.base.support.payload
+package io.kudos.base.model.payload
 
-import io.kudos.base.support.IIdEntity
+import io.kudos.base.model.contract.entity.IIdEntity
 
 
 /**

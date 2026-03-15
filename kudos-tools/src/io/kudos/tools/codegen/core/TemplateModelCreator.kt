@@ -108,19 +108,19 @@ open class TemplateModelCreator {
         when (pkKotlinType) {
             String::class -> {
                 val maintainColumns = listOf(
-                    MaintainableTable<*>::id.name,
-                    MaintainableTable<*>::createTime.name.humpToUnderscore(false),
-                    MaintainableTable<*>::createUserId.name,
-                    MaintainableTable<*>::updateTime.name.humpToUnderscore(false),
-                    MaintainableTable<*>::updateUserId.name,
-                    MaintainableTable<*>::active.name,
-                    MaintainableTable<*>::builtIn.name.humpToUnderscore(false),
-                    MaintainableTable<*>::remark.name,
+                    ManagedTable<*>::id.name,
+                    ManagedTable<*>::createTime.name.humpToUnderscore(false),
+                    ManagedTable<*>::createUserId.name,
+                    ManagedTable<*>::updateTime.name.humpToUnderscore(false),
+                    ManagedTable<*>::updateUserId.name,
+                    ManagedTable<*>::active.name,
+                    ManagedTable<*>::builtIn.name.humpToUnderscore(false),
+                    ManagedTable<*>::remark.name,
                 )
                 if (origColumns.map { it.name }.containsAll(maintainColumns)) {
                     // 包括所有维护字段，po实现IMaintainableDbEntity，dao实现MaintainableTable
-                    poSuperClass = IMaintainableDbEntity::class.simpleName
-                    daoSuperClass = requireNotNull(MaintainableTable::class.simpleName) { "MaintainableTable simpleName is null" }
+                    poSuperClass = IManagedDbEntity::class.simpleName
+                    daoSuperClass = requireNotNull(ManagedTable::class.simpleName) { "MaintainableTable simpleName is null" }
                     // 过滤掉父类中已有的列
                     templateModel["columns"] = origColumns.filter { !maintainColumns.contains(it.name) }
                 } else {

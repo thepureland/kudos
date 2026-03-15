@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.core.model.po
 
 import io.kudos.ability.data.rdb.ktorm.support.DbEntityFactory
-import io.kudos.ability.data.rdb.ktorm.support.IMaintainableDbEntity
+import io.kudos.ability.data.rdb.ktorm.support.IManagedDbEntity
 
 /**
  * 国际化数据库实体
@@ -9,7 +9,7 @@ import io.kudos.ability.data.rdb.ktorm.support.IMaintainableDbEntity
  * @author K
  * @since 1.0.0
  */
-interface SysI18n : IMaintainableDbEntity<String, SysI18n> {
+interface SysI18n : IManagedDbEntity<String, SysI18n> {
 
     companion object : DbEntityFactory<SysI18n>()
 
@@ -30,7 +30,5 @@ interface SysI18n : IMaintainableDbEntity<String, SysI18n> {
 
     /** 国际化值 */
     var value: String
-
-
 
 }

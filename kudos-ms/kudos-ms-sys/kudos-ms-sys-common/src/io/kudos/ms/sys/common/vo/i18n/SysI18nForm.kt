@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.common.vo.i18n
 
-import io.kudos.base.support.payload.FormPayload
+import io.kudos.base.model.payload.FormPayload
 import jakarta.validation.constraints.NotBlank
 
 

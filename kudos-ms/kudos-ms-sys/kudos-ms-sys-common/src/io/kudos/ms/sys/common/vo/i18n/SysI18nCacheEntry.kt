@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.common.vo.i18n
 
-import io.kudos.base.support.IIdEntity
+import io.kudos.base.model.contract.entity.IIdEntity
 
 /**
  * 国际化缓存项

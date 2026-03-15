@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.core.model.table
 
-import io.kudos.ability.data.rdb.ktorm.support.MaintainableTable
+import io.kudos.ability.data.rdb.ktorm.support.ManagedTable
 import io.kudos.ms.sys.core.model.po.SysCache
 import org.ktorm.schema.boolean
 import org.ktorm.schema.int
@@ -13,7 +13,7 @@ import org.ktorm.schema.varchar
  * @author K
  * @since 1.0.0
  */
-object SysCaches : MaintainableTable<SysCache>("sys_cache") {
+object SysCaches : ManagedTable<SysCache>("sys_cache") {
 
     /** 名称 */
     var name = varchar("name").bindTo { it.name }

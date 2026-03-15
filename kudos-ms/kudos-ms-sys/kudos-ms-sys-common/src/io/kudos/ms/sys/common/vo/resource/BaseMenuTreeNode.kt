@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.common.vo.resource
 
-import io.kudos.base.support.result.IJsonResult
+import io.kudos.base.model.contract.result.IJsonResult
 import io.kudos.base.tree.ITreeNode
 import java.beans.Transient
 

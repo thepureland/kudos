@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.core.model.table
 
-import io.kudos.ability.data.rdb.ktorm.support.MaintainableTable
+import io.kudos.ability.data.rdb.ktorm.support.ManagedTable
 import io.kudos.ms.sys.core.model.po.SysTenant
 import org.ktorm.schema.varchar
 
@@ -11,7 +11,7 @@ import org.ktorm.schema.varchar
  * @author K
  * @since 1.0.0
  */
-object SysTenants : MaintainableTable<SysTenant>("sys_tenant") {
+object SysTenants : ManagedTable<SysTenant>("sys_tenant") {
 
     /** 名称 */
     var name = varchar("name").bindTo { it.name }

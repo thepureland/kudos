@@ -1,4 +1,4 @@
-package io.kudos.base.support
+package io.kudos.base.model.vo
 
 /**
  * 一个只包装单个值的轻量容器（类似 Pair 的“单值版本”）。

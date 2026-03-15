@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.core.model.table
 
-import io.kudos.ability.data.rdb.ktorm.support.MaintainableTable
+import io.kudos.ability.data.rdb.ktorm.support.ManagedTable
 import io.kudos.ms.sys.core.model.po.SysAccessRuleIp
 import org.ktorm.schema.datetime
 import org.ktorm.schema.long
@@ -13,7 +13,7 @@ import org.ktorm.schema.varchar
  * @author K
  * @since 1.0.0
  */
-object SysAccessRuleIps : MaintainableTable<SysAccessRuleIp>("sys_access_rule_ip") {
+object SysAccessRuleIps : ManagedTable<SysAccessRuleIp>("sys_access_rule_ip") {
 
     /** ip起 */
     var ipStart = long("ip_start").bindTo { it.ipStart }

@@ -7,7 +7,7 @@ import io.kudos.ability.data.memdb.redis.dao.support.CriteriaRedisResolver
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.sort.DirectionEnum
 import io.kudos.base.query.sort.Order
-import io.kudos.base.support.IIdEntity
+import io.kudos.base.model.contract.entity.IIdEntity
 import org.springframework.data.redis.core.RedisCallback
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.data.redis.core.ScanOptions

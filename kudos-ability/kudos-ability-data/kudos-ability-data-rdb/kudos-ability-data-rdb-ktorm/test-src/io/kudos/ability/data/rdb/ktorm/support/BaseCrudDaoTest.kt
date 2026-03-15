@@ -5,8 +5,8 @@ import io.kudos.ability.data.rdb.ktorm.table.TestTableKtormDao
 import io.kudos.ability.data.rdb.ktorm.table.TestTableKtorms
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
-import io.kudos.base.support.payload.ListSearchPayload
-import io.kudos.base.support.payload.UpdatePayload
+import io.kudos.base.model.payload.ListSearchPayload
+import io.kudos.base.model.payload.UpdatePayload
 import io.kudos.test.common.init.EnableKudosTest
 import jakarta.annotation.Resource
 import org.ktorm.dsl.eq

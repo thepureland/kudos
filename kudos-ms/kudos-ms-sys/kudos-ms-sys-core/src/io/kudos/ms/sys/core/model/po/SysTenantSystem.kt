@@ -38,7 +38,4 @@ interface SysTenantSystem : IDbEntity<String, SysTenantSystem> {
     /** 更新时间 */
     var updateTime: LocalDateTime?
 
-
-
-
 }

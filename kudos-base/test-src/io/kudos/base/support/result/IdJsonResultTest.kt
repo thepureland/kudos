@@ -1,5 +1,6 @@
 package io.kudos.base.support.result
 
+import io.kudos.base.model.contract.result.IdJsonResult
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull

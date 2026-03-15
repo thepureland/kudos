@@ -42,7 +42,7 @@ class SysDictItemHashCacheTest : RdbAndRedisCacheTestBase() {
         val item = cache.getDictItemById(id)
         assertNotNull(item)
         assertEquals(id, item.id.trim())
-        assertEquals("sdih-ms-7f3e2d1c", item.atomicServiceCode?.trim())
+        assertEquals("sdih-ms-7f3e2d1c", item.atomicServiceCode.trim())
         assertEquals("sdih-type-001", item.dictType)
         assertEquals("sdih-code-001", item.itemCode)
         val itemAgain = cache.getDictItemById(id)
@@ -79,7 +79,7 @@ class SysDictItemHashCacheTest : RdbAndRedisCacheTestBase() {
             atomicServiceCode, dictType, itemCode
         )?.id
         assertNotNull(idFromDao, "测试数据未加载：应有 atomic_service_code=$atomicServiceCode, dict_type=$dictType, item_code=$itemCode, active=true 的记录")
-        assertEquals("sdih-ia1-4d5e-7f8a-1b2c-000011", idFromDao?.trim())
+        assertEquals("sdih-ia1-4d5e-7f8a-1b2c-000011", idFromDao.trim())
         val res1 = cache.getDictItem(atomicServiceCode, dictType, itemCode)
         assertEquals("sdih-ia1-4d5e-7f8a-1b2c-000011", res1?.id?.trim())
         val res2 = cache.getDictItem(atomicServiceCode, dictType, itemCode)
@@ -95,7 +95,7 @@ class SysDictItemHashCacheTest : RdbAndRedisCacheTestBase() {
         val dictType = "sdih-type-a1"
         val list = cache.getDictItems(atomicServiceCode, dictType)
         assertEquals(2, list.size)
-        assertTrue(list.all { it.atomicServiceCode?.trim() == atomicServiceCode && it.dictType?.trim() == dictType })
+        assertTrue(list.all { it.atomicServiceCode.trim() == atomicServiceCode && it.dictType.trim() == dictType })
         val listAgain = cache.getDictItems(atomicServiceCode, dictType)
         if (isLocalCacheEnabled()) assertSame(list.first(), listAgain.first(), "local 启用时同一维度再次从缓存获取应返回同一对象引用")
         assertTrue(cache.getDictItems("sdih-ms-nonexistent", "sdih-type-x").isEmpty())
@@ -157,7 +157,7 @@ class SysDictItemHashCacheTest : RdbAndRedisCacheTestBase() {
         cache.syncOnUpdate(id)
         val updated = cache.getDictItemById(id)
         assertNotNull(updated)
-        assertEquals(newItemName, updated.itemName?.trim())
+        assertEquals(newItemName, updated.itemName.trim())
         val updatedAgain = cache.getDictItemById(id)
         if (isLocalCacheEnabled()) assertSame(updated, updatedAgain, "同一 id 再次从缓存获取应返回同一对象引用")
     }
@@ -180,7 +180,7 @@ class SysDictItemHashCacheTest : RdbAndRedisCacheTestBase() {
         val id = "sdih-idel-8e9f-2a3b-000000000033"
         val item = assertNotNull(cache.getDictItemById(id))
         sysDictItemDao.deleteById(id)
-        cache.syncOnDelete(id, item.atomicServiceCode?.trim() ?: "", item.dictType?.trim(), item.itemCode?.trim())
+        cache.syncOnDelete(id, item.atomicServiceCode.trim() ?: "", item.dictType.trim(), item.itemCode.trim())
         assertNull(vSysDictItemDao.get(id), "删除并 sync 后视图中该 id 应不存在")
     }
 

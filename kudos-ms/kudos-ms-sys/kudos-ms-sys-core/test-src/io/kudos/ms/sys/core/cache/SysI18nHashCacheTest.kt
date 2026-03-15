@@ -133,7 +133,7 @@ class SysI18nHashCacheTest : RdbAndRedisCacheTestBase() {
         assertTrue(success)
         val item = sysI18nDao.get(id, SysI18nCacheEntry::class)
         assertNotNull(item)
-        cacheHandler.syncOnUpdate(item!!, id)
+        cacheHandler.syncOnUpdate(item, id)
         val list = cacheHandler.getI18ns(locale, atomicServiceCode, i18nTypeDictCode, namespace)
         assertEquals(newValue, list.find { it.key == "4" }?.value)
     }

@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.common.vo.param
 
-import io.kudos.base.support.result.IdJsonResult
+import io.kudos.base.model.contract.result.IdJsonResult
 
 
 /**

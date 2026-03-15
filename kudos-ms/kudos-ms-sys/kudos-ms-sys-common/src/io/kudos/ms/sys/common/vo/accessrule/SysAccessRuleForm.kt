@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.common.vo.accessrule
 
-import io.kudos.base.support.payload.FormPayload
+import io.kudos.base.model.payload.FormPayload
 
 
 /**

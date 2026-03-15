@@ -6,7 +6,7 @@ import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.PagingSearchResult
 import io.kudos.base.query.eq
-import io.kudos.base.support.payload.ListSearchPayload
+import io.kudos.base.model.payload.ListSearchPayload
 import io.kudos.ms.sys.common.vo.tenant.SysTenantCacheEntry
 import io.kudos.ms.sys.common.vo.tenant.SysTenantDetail
 import io.kudos.ms.sys.common.vo.tenant.SysTenantForm

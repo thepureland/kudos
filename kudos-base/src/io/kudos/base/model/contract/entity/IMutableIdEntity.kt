@@ -1,4 +1,4 @@
-package io.kudos.base.support
+package io.kudos.base.model.contract.entity
 
 /**
  * id可变的实体接口

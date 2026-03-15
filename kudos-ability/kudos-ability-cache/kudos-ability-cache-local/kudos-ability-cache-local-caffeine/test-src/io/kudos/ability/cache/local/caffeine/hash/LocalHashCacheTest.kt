@@ -5,7 +5,7 @@ import io.kudos.ability.cache.common.kit.HashCacheKit
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.query.sort.Order
-import io.kudos.base.support.IIdEntity
+import io.kudos.base.model.contract.entity.IIdEntity
 import io.kudos.test.common.init.EnableKudosTest
 import org.junit.jupiter.api.BeforeEach
 import org.springframework.beans.factory.annotation.Autowired

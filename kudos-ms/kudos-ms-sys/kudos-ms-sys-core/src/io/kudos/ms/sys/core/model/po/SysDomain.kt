@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.core.model.po
 
 import io.kudos.ability.data.rdb.ktorm.support.DbEntityFactory
-import io.kudos.ability.data.rdb.ktorm.support.IMaintainableDbEntity
+import io.kudos.ability.data.rdb.ktorm.support.IManagedDbEntity
 
 /**
  * 域名数据库实体
@@ -9,7 +9,7 @@ import io.kudos.ability.data.rdb.ktorm.support.IMaintainableDbEntity
  * @author K
  * @since 1.0.0
  */
-interface SysDomain : IMaintainableDbEntity<String, SysDomain> {
+interface SysDomain : IManagedDbEntity<String, SysDomain> {
 
     companion object : DbEntityFactory<SysDomain>()
 
@@ -21,8 +21,5 @@ interface SysDomain : IMaintainableDbEntity<String, SysDomain> {
 
     /** 租户id */
     var tenantId: String
-
-
-
 
 }

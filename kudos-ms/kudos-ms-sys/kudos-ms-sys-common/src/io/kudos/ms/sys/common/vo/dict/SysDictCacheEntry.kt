@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.common.vo.dict
 
-import io.kudos.base.support.IIdEntity
+import io.kudos.base.model.contract.entity.IIdEntity
 import java.io.Serializable
 
 

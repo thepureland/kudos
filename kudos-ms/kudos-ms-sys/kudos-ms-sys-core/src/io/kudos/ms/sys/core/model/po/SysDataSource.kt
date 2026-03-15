@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.core.model.po
 
 import io.kudos.ability.data.rdb.ktorm.support.DbEntityFactory
-import io.kudos.ability.data.rdb.ktorm.support.IMaintainableDbEntity
+import io.kudos.ability.data.rdb.ktorm.support.IManagedDbEntity
 
 /**
  * 数据源数据库实体
@@ -9,7 +9,7 @@ import io.kudos.ability.data.rdb.ktorm.support.IMaintainableDbEntity
  * @author K
  * @since 1.0.0
  */
-interface SysDataSource : IMaintainableDbEntity<String, SysDataSource> {
+interface SysDataSource : IManagedDbEntity<String, SysDataSource> {
 
     companion object : DbEntityFactory<SysDataSource>()
 
@@ -51,8 +51,5 @@ interface SysDataSource : IMaintainableDbEntity<String, SysDataSource> {
 
     /** 连接寿命(毫秒)。超时(相对于初始化时间)连接池将在出借或归还时删除这个连接 */
     var maxAge: Int?
-
-
-
 
 }

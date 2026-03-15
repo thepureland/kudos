@@ -1,6 +1,6 @@
 package io.kudos.ms.msg.common.vo.send
 
-import io.kudos.base.support.result.IdJsonResult
+import io.kudos.base.model.contract.result.IdJsonResult
 import java.time.LocalDateTime
 
 

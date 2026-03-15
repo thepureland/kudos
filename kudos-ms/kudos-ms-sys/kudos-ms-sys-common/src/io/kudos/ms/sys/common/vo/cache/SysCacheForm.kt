@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.common.vo.cache
 
 import io.kudos.base.bean.validation.constraint.annotations.DictItemCode
-import io.kudos.base.support.payload.FormPayload
+import io.kudos.base.model.payload.FormPayload
 import io.kudos.ms.sys.common.consts.SysConsts
 import io.kudos.ms.sys.common.consts.SysDictTypes
 import jakarta.validation.constraints.NotBlank

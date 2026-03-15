@@ -9,7 +9,7 @@ import io.kudos.base.query.Criteria
 import io.kudos.base.query.Criterion
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.query.sort.Order
-import io.kudos.base.support.payload.ListSearchPayload
+import io.kudos.base.model.payload.ListSearchPayload
 import io.kudos.test.common.init.EnableKudosTest
 import jakarta.annotation.Resource
 import org.ktorm.dsl.eq

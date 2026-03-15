@@ -5,7 +5,7 @@ import io.kudos.ability.cache.common.notify.CacheMessage
 import io.kudos.ability.cache.common.notify.ICacheMessageHandler
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.sort.Order
-import io.kudos.base.support.IIdEntity
+import io.kudos.base.model.contract.entity.IIdEntity
 import io.kudos.context.kit.SpringKit
 import kotlin.reflect.KClass
 

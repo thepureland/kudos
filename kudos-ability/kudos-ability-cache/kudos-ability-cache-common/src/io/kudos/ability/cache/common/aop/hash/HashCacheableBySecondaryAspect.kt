@@ -5,7 +5,7 @@ import io.kudos.ability.cache.common.core.hash.MixHashCacheManager
 import io.kudos.ability.cache.common.kit.HashCacheKit
 import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.bean.BeanKit
-import io.kudos.base.support.IIdEntity
+import io.kudos.base.model.contract.entity.IIdEntity
 import org.aspectj.lang.ProceedingJoinPoint
 import org.aspectj.lang.annotation.Around
 import org.aspectj.lang.annotation.Aspect

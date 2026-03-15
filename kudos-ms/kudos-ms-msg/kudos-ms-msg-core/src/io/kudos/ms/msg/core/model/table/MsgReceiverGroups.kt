@@ -1,6 +1,6 @@
 package io.kudos.ms.msg.core.model.table
 
-import io.kudos.ability.data.rdb.ktorm.support.MaintainableTable
+import io.kudos.ability.data.rdb.ktorm.support.ManagedTable
 import io.kudos.ms.msg.core.model.po.MsgReceiverGroup
 import org.ktorm.schema.varchar
 
@@ -12,7 +12,7 @@ import org.ktorm.schema.varchar
  * @author AI: Codex
  * @since 1.0.0
  */
-object MsgReceiverGroups : MaintainableTable<MsgReceiverGroup>("msg_receiver_group") {
+object MsgReceiverGroups : ManagedTable<MsgReceiverGroup>("msg_receiver_group") {
 
     /** 接收者群组类型字典码 */
     var receiverGroupTypeDictCode = varchar("receiver_group_type_dict_code").bindTo { it.receiverGroupTypeDictCode }
