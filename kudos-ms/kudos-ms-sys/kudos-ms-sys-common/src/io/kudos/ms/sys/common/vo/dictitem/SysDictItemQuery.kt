@@ -2,7 +2,6 @@ package io.kudos.ms.sys.common.vo.dictitem
 
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.support.payload.ListSearchPayload
-import kotlin.reflect.KClass
 import kotlin.reflect.KProperty0
 
 

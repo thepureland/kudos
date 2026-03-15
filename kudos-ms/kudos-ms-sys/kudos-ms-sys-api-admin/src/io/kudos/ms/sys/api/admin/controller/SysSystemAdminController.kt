@@ -4,8 +4,8 @@ import io.kudos.ability.web.springmvc.controller.BaseCrudController
 import io.kudos.base.tree.IdAndNameTreeNode
 import io.kudos.ms.sys.common.vo.system.SysSystemDetail
 import io.kudos.ms.sys.common.vo.system.SysSystemForm
-import io.kudos.ms.sys.common.vo.system.SysSystemRow
 import io.kudos.ms.sys.common.vo.system.SysSystemQuery
+import io.kudos.ms.sys.common.vo.system.SysSystemRow
 import io.kudos.ms.sys.core.service.iservice.ISysSystemService
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PutMapping

@@ -1,11 +1,9 @@
 package io.kudos.ms.sys.common.api
 
-import io.kudos.base.tree.IdAndNameTreeNode
 import io.kudos.ms.sys.common.enums.ResourceTypeEnum
 import io.kudos.ms.sys.common.vo.resource.BaseMenuTreeNode
 import io.kudos.ms.sys.common.vo.resource.MenuTreeNode
 import io.kudos.ms.sys.common.vo.resource.SysResourceCacheEntry
-import io.kudos.ms.sys.common.vo.resource.SysResourceQuery
 
 
 /**

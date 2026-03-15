@@ -1,22 +1,9 @@
 package io.kudos.ms.sys.api.admin.controller
 
 import io.kudos.ability.web.springmvc.controller.BaseCrudController
-import io.kudos.base.net.http.HttpClientKit.request
-import io.kudos.ms.sys.common.vo.i18n.SysI18nBatchForm
-import io.kudos.ms.sys.common.vo.i18n.SysI18nDetail
-import io.kudos.ms.sys.common.vo.i18n.SysI18nForm
-import io.kudos.ms.sys.common.vo.i18n.SysI18nRow
-import io.kudos.ms.sys.common.vo.i18n.SysI18nQuery
+import io.kudos.ms.sys.common.vo.i18n.*
 import io.kudos.ms.sys.core.service.iservice.ISysI18nService
-import jakarta.servlet.http.HttpServletRequest
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.PutMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.ResponseBody
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 
 /**
  * 国际化管理控制器

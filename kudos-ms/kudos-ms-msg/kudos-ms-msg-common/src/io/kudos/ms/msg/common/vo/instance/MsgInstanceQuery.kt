@@ -2,7 +2,6 @@ package io.kudos.ms.msg.common.vo.instance
 
 import io.kudos.base.support.payload.ListSearchPayload
 import java.time.LocalDateTime
-import kotlin.reflect.KClass
 
 
 /**

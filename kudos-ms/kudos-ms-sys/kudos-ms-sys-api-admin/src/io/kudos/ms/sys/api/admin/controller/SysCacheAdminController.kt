@@ -3,15 +3,10 @@ package io.kudos.ms.sys.api.admin.controller
 import io.kudos.ability.web.springmvc.controller.BaseCrudController
 import io.kudos.ms.sys.common.vo.cache.SysCacheDetail
 import io.kudos.ms.sys.common.vo.cache.SysCacheForm
-import io.kudos.ms.sys.common.vo.cache.SysCacheRow
 import io.kudos.ms.sys.common.vo.cache.SysCacheQuery
-import io.kudos.ms.sys.core.service.impl.SysCacheService
+import io.kudos.ms.sys.common.vo.cache.SysCacheRow
 import io.kudos.ms.sys.core.service.iservice.ISysCacheService
-import org.springframework.web.bind.annotation.DeleteMapping
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PutMapping
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 
 /**
  * 缓存管理控制器

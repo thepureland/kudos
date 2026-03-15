@@ -2,7 +2,6 @@ package io.kudos.ms.sys.core.service.iservice
 
 import io.kudos.base.support.iservice.IBaseCrudService
 import io.kudos.ms.sys.common.api.ISysTenantApi
-import io.kudos.ms.sys.common.vo.tenant.SysTenantCacheEntry
 import io.kudos.ms.sys.common.vo.tenant.SysTenantRow
 import io.kudos.ms.sys.core.model.po.SysTenant
 

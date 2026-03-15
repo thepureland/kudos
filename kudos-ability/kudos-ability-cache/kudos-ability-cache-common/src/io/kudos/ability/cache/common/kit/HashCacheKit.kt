@@ -9,10 +9,9 @@ import io.kudos.ability.cache.common.notify.CacheOperatorVo
 import io.kudos.ability.cache.common.support.CacheConfig
 import io.kudos.ability.cache.common.support.ICacheConfigProvider
 import io.kudos.base.logger.LogFactory
-import io.kudos.context.kit.SpringKit
 import io.kudos.base.support.IIdEntity
+import io.kudos.context.kit.SpringKit
 import org.springframework.stereotype.Component
-import kotlin.collections.emptyList
 import kotlin.reflect.KClass
 
 /**

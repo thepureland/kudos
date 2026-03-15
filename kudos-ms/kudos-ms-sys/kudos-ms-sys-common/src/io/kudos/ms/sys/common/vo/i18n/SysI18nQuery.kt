@@ -2,10 +2,7 @@ package io.kudos.ms.sys.common.vo.i18n
 
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.support.payload.ListSearchPayload
-import kotlin.reflect.KClass
-import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty0
-import kotlin.reflect.KProperty1
 
 
 /**

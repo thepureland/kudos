@@ -7,8 +7,6 @@ import io.kudos.base.query.Criterion
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.support.IIdEntity
 import io.kudos.base.support.dao.IBaseReadOnlyDao
-import io.kudos.base.support.logic.AndOrEnum
-import io.kudos.base.support.payload.ISearchPayload
 import io.kudos.base.support.payload.MutableListSearchPayload
 import org.springframework.beans.factory.annotation.Autowired
 import kotlin.reflect.KClass

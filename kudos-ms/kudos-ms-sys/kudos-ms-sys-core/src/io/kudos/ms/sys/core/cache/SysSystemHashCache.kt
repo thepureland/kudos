@@ -7,7 +7,6 @@ import io.kudos.ability.cache.common.core.hash.AbstractHashCacheHandler
 import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.sys.common.vo.system.SysSystemCacheEntry
-import io.kudos.ms.sys.core.cache.SysSystemHashCache.Companion.CACHE_NAME
 import io.kudos.ms.sys.core.dao.SysSystemDao
 import jakarta.annotation.Resource
 import org.springframework.stereotype.Component

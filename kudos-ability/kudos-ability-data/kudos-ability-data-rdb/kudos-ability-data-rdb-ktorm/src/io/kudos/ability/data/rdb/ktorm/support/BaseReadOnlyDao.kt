@@ -11,8 +11,8 @@ import io.kudos.base.query.sort.Order
 import io.kudos.base.support.GroupExecutor
 import io.kudos.base.support.dao.IBaseReadOnlyDao
 import io.kudos.base.support.logic.AndOrEnum
-import io.kudos.base.support.payload.ListSearchPayload
 import io.kudos.base.support.payload.ISearchPayload
+import io.kudos.base.support.payload.ListSearchPayload
 import io.kudos.base.support.payload.MutableListSearchPayload
 import io.kudos.context.core.KudosContextHolder
 import org.ktorm.database.Database
@@ -714,9 +714,13 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
             }
         }
 
-        // paging
+        // paging（pageNo 为 null 且不允许查全量时按第 1 页分页）
         if (listSearchPayload != null) {
-            val pageNo = listSearchPayload.pageNo?.let { maxOf(1, it) }
+            val pageNo = when {
+                listSearchPayload.pageNo != null -> maxOf(1, listSearchPayload.pageNo!!)
+                listSearchPayload.isUnpagedSearchAllowed() -> null
+                else -> 1
+            }
             if (pageNo != null) {
                 val rawSize = listSearchPayload.pageSize ?: 10
                 val pageSize = minOf(rawSize, listSearchPayload.getMaxPageSize())

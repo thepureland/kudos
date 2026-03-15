@@ -5,7 +5,6 @@ import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.support.payload.ListSearchPayload
 import io.kudos.ms.sys.common.consts.SysConsts
 import io.kudos.ms.sys.common.consts.SysDictTypes
-import kotlin.reflect.KClass
 import kotlin.reflect.KProperty0
 
 
@@ -36,12 +35,12 @@ data class SysCacheQuery (
 
 ) : ListSearchPayload() {
 
-
     constructor() : this(null)
 
     override fun getReturnEntityClass() = SysCacheRow::class
 
     override fun getOperators(): Map<KProperty0<*>, OperatorEnum> = mapOf(::name to OperatorEnum.ILIKE)
 
+    override fun isUnpagedSearchAllowed(): Boolean = true
 
 }

@@ -2,7 +2,6 @@ package io.kudos.ms.sys.common.vo.tenant
 
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.support.payload.ListSearchPayload
-import kotlin.reflect.KClass
 import kotlin.reflect.KProperty0
 
 
@@ -35,5 +34,6 @@ data class SysTenantQuery (
         ::subSystemCode to OperatorEnum.LIKE
     )
 
+    override fun isUnpagedSearchAllowed(): Boolean = true
 
 }

@@ -2,26 +2,9 @@ package io.kudos.ms.sys.api.admin.controller
 
 import io.kudos.ability.web.springmvc.controller.BaseCrudController
 import io.kudos.base.query.PagingSearchResult
-import io.kudos.ms.sys.common.vo.dict.SysDictCacheEntry
-import io.kudos.ms.sys.common.vo.dict.SysDictDetail
-import io.kudos.ms.sys.common.vo.dict.SysDictForm
-import io.kudos.ms.sys.common.vo.dict.SysDictRow
-import io.kudos.ms.sys.common.vo.dict.SysDictQuery
-import io.kudos.ms.sys.common.vo.dictitem.SysDictItemCacheEntry
-import io.kudos.ms.sys.common.vo.dictitem.SysDictItemNode
-import io.kudos.ms.sys.common.vo.dictitem.SysDictItemQuery
-import io.kudos.ms.sys.common.vo.dictitem.SysDictItemRow
-import io.kudos.ms.sys.core.service.impl.VSysDictItemService
-import io.kudos.ms.sys.core.service.iservice.ISysDictItemService
+import io.kudos.ms.sys.common.vo.dict.*
 import io.kudos.ms.sys.core.service.iservice.ISysDictService
-import jakarta.annotation.Resource
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.PutMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.ResponseBody
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 
 /**
  * 字典管理控制器
