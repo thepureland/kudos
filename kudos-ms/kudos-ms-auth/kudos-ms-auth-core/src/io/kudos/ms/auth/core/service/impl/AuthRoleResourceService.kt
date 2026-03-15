@@ -7,7 +7,6 @@ import io.kudos.ms.auth.core.cache.ResourceIdsByUserIdCache
 import io.kudos.ms.auth.core.dao.AuthRoleResourceDao
 import io.kudos.ms.auth.core.dao.AuthRoleUserDao
 import io.kudos.ms.auth.core.model.po.AuthRoleResource
-import io.kudos.ms.auth.core.model.po.AuthRoleUser
 import io.kudos.ms.auth.core.service.iservice.IAuthRoleResourceService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service

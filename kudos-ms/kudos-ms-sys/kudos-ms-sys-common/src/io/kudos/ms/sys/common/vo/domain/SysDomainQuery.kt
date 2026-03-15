@@ -2,7 +2,6 @@ package io.kudos.ms.sys.common.vo.domain
 
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.support.payload.ListSearchPayload
-import kotlin.reflect.KClass
 import kotlin.reflect.KProperty0
 
 
@@ -36,5 +35,6 @@ data class SysDomainQuery (
 
     override fun getOperators(): Map<KProperty0<*>, OperatorEnum> = mapOf(::domain to OperatorEnum.ILIKE)
 
+    override fun isUnpagedSearchAllowed(): Boolean = true
 
 }

@@ -2,7 +2,6 @@ package io.kudos.ms.sys.common.vo.dict
 
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.support.payload.ListSearchPayload
-import kotlin.reflect.KClass
 import kotlin.reflect.KProperty0
 
 
@@ -13,7 +12,6 @@ import kotlin.reflect.KProperty0
  * @since 1.0.0
  */
 data class SysDictQuery (
-
 
     val id: String? = null,
 
@@ -34,7 +32,6 @@ data class SysDictQuery (
 
 ) : ListSearchPayload() {
 
-
     constructor() : this("")
 
     override fun getReturnEntityClass() = SysDictRow::class
@@ -44,5 +41,6 @@ data class SysDictQuery (
         ::dictName to OperatorEnum.ILIKE,
     )
 
+    override fun isUnpagedSearchAllowed(): Boolean = true
 
 }

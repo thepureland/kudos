@@ -2,7 +2,6 @@ package io.kudos.ms.sys.common.vo.system
 
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.support.payload.ListSearchPayload
-import kotlin.reflect.KClass
 import kotlin.reflect.KProperty0
 
 
@@ -39,5 +38,6 @@ data class SysSystemQuery (
         ::name to OperatorEnum.ILIKE
     )
 
+    override fun isUnpagedSearchAllowed(): Boolean = true
 
 }

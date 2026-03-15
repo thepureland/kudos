@@ -3,11 +3,7 @@ package io.kudos.base.support.enums
 import io.kudos.base.enums.ienums.IDictEnum
 import io.kudos.base.enums.impl.YesNotEnum
 import io.kudos.base.lang.EnumKit
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 /**
  * EnumKit测试用例

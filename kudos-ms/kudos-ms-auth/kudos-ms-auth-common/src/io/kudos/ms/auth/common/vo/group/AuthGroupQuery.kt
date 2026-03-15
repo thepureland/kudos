@@ -1,7 +1,6 @@
 package io.kudos.ms.auth.common.vo.group
 
 import io.kudos.base.support.payload.ListSearchPayload
-import kotlin.reflect.KClass
 
 
 /**

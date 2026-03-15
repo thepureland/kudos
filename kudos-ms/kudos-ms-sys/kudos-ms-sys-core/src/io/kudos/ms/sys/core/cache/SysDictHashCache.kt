@@ -8,6 +8,8 @@ import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.context.support.Consts
 import io.kudos.ms.sys.common.vo.dict.SysDictCacheEntry
+import io.kudos.ms.sys.core.cache.SysDictHashCache.Companion.CACHE_NAME
+import io.kudos.ms.sys.core.cache.SysDictHashCache.Companion.FILTERABLE_PROPERTIES
 import io.kudos.ms.sys.core.dao.SysDictDao
 import jakarta.annotation.Resource
 import org.springframework.stereotype.Component

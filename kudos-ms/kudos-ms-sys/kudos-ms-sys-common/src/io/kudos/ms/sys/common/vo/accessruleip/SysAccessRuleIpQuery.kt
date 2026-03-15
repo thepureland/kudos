@@ -2,7 +2,6 @@ package io.kudos.ms.sys.common.vo.accessruleip
 
 import io.kudos.base.support.payload.ListSearchPayload
 import java.time.LocalDateTime
-import kotlin.reflect.KClass
 
 
 /**
@@ -12,7 +11,6 @@ import kotlin.reflect.KClass
  * @since 1.0.0
  */
 data class SysAccessRuleIpQuery (
-
 
     /** 主键 */
     val id: String? = null,
@@ -52,9 +50,10 @@ data class SysAccessRuleIpQuery (
 
 ) : ListSearchPayload() {
 
-
     constructor() : this("")
 
     override fun getReturnEntityClass() = SysAccessRuleIpRow::class
+
+    override fun isUnpagedSearchAllowed(): Boolean = true
 
 }

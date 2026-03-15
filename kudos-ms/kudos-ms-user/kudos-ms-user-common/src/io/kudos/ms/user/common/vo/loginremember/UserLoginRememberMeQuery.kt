@@ -1,7 +1,6 @@
 package io.kudos.ms.user.common.vo.loginremember
 
 import io.kudos.base.support.payload.ListSearchPayload
-import kotlin.reflect.KClass
 
 
 /**

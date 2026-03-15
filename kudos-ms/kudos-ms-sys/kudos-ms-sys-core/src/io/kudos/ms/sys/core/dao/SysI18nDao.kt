@@ -2,7 +2,6 @@ package io.kudos.ms.sys.core.dao
 
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.base.query.Criteria
-import io.kudos.base.query.Criterion
 import io.kudos.base.query.eq
 import io.kudos.ms.sys.common.vo.i18n.SysI18nCacheEntry
 import io.kudos.ms.sys.core.model.po.SysI18n

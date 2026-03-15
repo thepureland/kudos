@@ -2,7 +2,6 @@ package io.kudos.ms.sys.common.vo.dict
 
 import io.kudos.base.support.IIdEntity
 import java.io.Serializable
-import java.time.LocalDateTime
 
 
 /**

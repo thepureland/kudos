@@ -1,7 +1,6 @@
 package io.kudos.ms.msg.common.vo.receivergroup
 
 import io.kudos.base.support.payload.ListSearchPayload
-import kotlin.reflect.KClass
 
 
 /**

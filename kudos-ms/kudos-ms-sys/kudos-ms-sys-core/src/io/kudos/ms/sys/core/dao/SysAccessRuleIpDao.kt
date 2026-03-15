@@ -6,14 +6,12 @@ import io.kudos.base.error.ObjectNotFoundException
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.query.eq
-import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpRow
 import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpQuery
+import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpRow
 import io.kudos.ms.sys.core.model.po.SysAccessRule
 import io.kudos.ms.sys.core.model.po.SysAccessRuleIp
 import io.kudos.ms.sys.core.model.table.SysAccessRuleIps
 import io.kudos.ms.sys.core.model.table.SysAccessRules
-import io.kudos.ms.sys.core.model.table.SysDictItems
-import io.kudos.ms.sys.core.model.table.SysDicts
 import org.ktorm.dsl.*
 import org.ktorm.expression.OrderByExpression
 import org.ktorm.schema.Column
@@ -76,7 +74,11 @@ open class SysAccessRuleIpDao : BaseCrudDao<String, SysAccessRuleIp, SysAccessRu
             }
             query = query.orderBy(*orderExps.toTypedArray())
         }
-        val pageNo = searchPayload.pageNo?.let { maxOf(1, it) }
+        val pageNo = when {
+            searchPayload.pageNo != null -> maxOf(1, searchPayload.pageNo!!)
+            searchPayload.isUnpagedSearchAllowed() -> null
+            else -> 1
+        }
         if (pageNo != null) {
             val rawSize = searchPayload.pageSize ?: 10
             val pageSize = minOf(rawSize, searchPayload.getMaxPageSize())

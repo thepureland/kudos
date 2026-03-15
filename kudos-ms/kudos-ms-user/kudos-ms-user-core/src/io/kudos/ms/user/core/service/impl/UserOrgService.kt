@@ -12,7 +12,6 @@ import io.kudos.ms.user.core.cache.UserOrgHashCache
 import io.kudos.ms.user.core.dao.UserOrgDao
 import io.kudos.ms.user.core.dao.UserOrgUserDao
 import io.kudos.ms.user.core.model.po.UserOrg
-import io.kudos.ms.user.core.model.po.UserOrgUser
 import io.kudos.ms.user.core.service.iservice.IUserOrgService
 import jakarta.annotation.Resource
 import org.springframework.beans.factory.annotation.Autowired

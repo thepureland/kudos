@@ -3,8 +3,8 @@ package io.kudos.base.query.enums
 import io.kudos.base.enums.ienums.IDictEnum
 import io.kudos.base.lang.EnumKit
 import io.kudos.base.lang.collections.containsAll
-import java.math.BigDecimal
 import java.lang.reflect.Method
+import java.math.BigDecimal
 import java.util.concurrent.ConcurrentHashMap
 
 

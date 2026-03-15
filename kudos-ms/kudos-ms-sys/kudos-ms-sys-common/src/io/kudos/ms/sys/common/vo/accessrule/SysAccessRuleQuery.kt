@@ -1,8 +1,6 @@
 package io.kudos.ms.sys.common.vo.accessrule
 
-import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.support.payload.ListSearchPayload
-import kotlin.reflect.KClass
 
 
 /**
@@ -24,10 +22,10 @@ data class SysAccessRuleQuery (
 
 ) : ListSearchPayload() {
 
-
     constructor() : this("")
 
     override fun getReturnEntityClass() = SysAccessRuleRow::class
 
+    override fun isUnpagedSearchAllowed(): Boolean = true
 
 }

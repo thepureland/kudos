@@ -1,6 +1,5 @@
 package io.kudos.context.kit
 
-import org.springframework.beans.factory.getBean
 import org.springframework.context.ApplicationContext
 import kotlin.reflect.KClass
 

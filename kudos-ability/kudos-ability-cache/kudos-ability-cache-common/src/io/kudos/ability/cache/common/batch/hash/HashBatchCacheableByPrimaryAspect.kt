@@ -2,8 +2,8 @@ package io.kudos.ability.cache.common.batch.hash
 
 import io.kudos.ability.cache.common.batch.keyvalue.IKeysGenerator
 import io.kudos.ability.cache.common.core.hash.MixHashCacheManager
-import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.ability.cache.common.kit.HashCacheKit
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.lang.string.toType
 import io.kudos.base.support.IIdEntity
 import io.kudos.context.kit.SpringKit
