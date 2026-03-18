@@ -9,15 +9,12 @@ import jakarta.validation.constraints.Positive
 
 
 /**
- * 缓存表单载体
+ * 缓存新增页表单载体
  *
  * @author K
  * @since 1.0.0
  */
-data class SysCacheForm (
-
-    /** 主键 */
-    override val id: String? = null,
+data class SysCacheFormCreate (
 
     /** 名称 */
     @get:NotBlank
@@ -48,8 +45,8 @@ data class SysCacheForm (
     /** 是否为 Hash 缓存 */
     val hash: Boolean = false,
 
-) : FormPayload<String?>() {
+) {
 
-    constructor() : this(null)
+    constructor() : this("")
 
 }

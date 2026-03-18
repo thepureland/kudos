@@ -16,7 +16,6 @@ import kotlin.reflect.KProperty0
  */
 data class SysCacheQuery (
 
-
     /** 名称 */
     val name: String? = null,
 
