@@ -6,7 +6,7 @@ import java.time.LocalDateTime
 
 
 /**
- * 缓存缓存项
+ * 缓存配置缓存项
  *
  * @author K
  * @since 1.0.0

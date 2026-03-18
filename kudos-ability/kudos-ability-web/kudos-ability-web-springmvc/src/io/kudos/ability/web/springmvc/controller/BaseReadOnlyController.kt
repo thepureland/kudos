@@ -20,17 +20,21 @@ import kotlin.reflect.KClass
  * @param B 业务处理类
  * @param S 列表查询条件载体类
  * @param R 记录类型
- * @param F 表单实体类
  * @author K
  * @since 1.0.0
  */
-open class BaseReadOnlyController<PK : Any, B : IBaseReadOnlyService<PK, *>, S : ListSearchPayload, R : Any, D: Any, F : FormPayload<*>>
-    : BaseController<F>() {
+open class BaseReadOnlyController<
+        PK : Any,
+        B : IBaseReadOnlyService<PK, *>,
+        S : ListSearchPayload,
+        R : Any,
+        D: Any>
+    : BaseController() {
 
     @Autowired
     protected lateinit var service: B
 
-    private var resultClass: KClass<F>? = null
+    private var resultClass: KClass<R>? = null
     private var detailClass: KClass<D>? = null
 
     /**
@@ -57,9 +61,9 @@ open class BaseReadOnlyController<PK : Any, B : IBaseReadOnlyService<PK, *>, S :
      */
     @GetMapping("/get")
     @Suppress("UNCHECKED_CAST")
-    open fun get(id: PK): F {
+    open fun get(id: PK): R {
         if (resultClass == null) {
-            resultClass = GenericKit.getSuperClassGenricClass(this::class, 5) as KClass<F>
+            resultClass = GenericKit.getSuperClassGenricClass(this::class, 3) as KClass<R>
         }
         return service.get(id, requireNotNull(resultClass) { "resultClass is null" }) ?: throw ObjectNotFoundException("找不到记录！")
     }
