@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.core.dao
 
-import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpQuery
+import io.kudos.ms.sys.common.vo.accessruleip.request.SysAccessRuleIpQuery
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbTestBase
 import jakarta.annotation.Resource

@@ -3,7 +3,7 @@ package io.kudos.ms.sys.core.service.impl
 import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
-import io.kudos.ms.sys.common.vo.i18n.SysI18nForm
+import io.kudos.ms.sys.common.vo.i18n.request.SysI18nFormUpdate
 import io.kudos.ms.sys.core.cache.SysI18nHashCache
 import io.kudos.ms.sys.core.dao.SysI18nDao
 import io.kudos.ms.sys.core.model.po.SysI18n
@@ -65,7 +65,7 @@ open class SysI18NService : BaseCrudService<String, SysI18n, SysI18nDao>(), ISys
     }
 
     @Transactional
-    override fun batchSaveOrUpdate(i18ns: List<SysI18nForm>): Int {
+    override fun batchSaveOrUpdate(i18ns: List<SysI18nFormUpdate>): Int {
         var count = 0
         i18ns.forEach { form ->
             if (form.id.isNullOrBlank()) {
@@ -173,7 +173,7 @@ open class SysI18NService : BaseCrudService<String, SysI18n, SysI18nDao>(), ISys
         return count
     }
 
-    private fun resolveNamespaceAndKey(payload: SysI18nForm): Pair<String, String> {
+    private fun resolveNamespaceAndKey(payload: SysI18nFormUpdate): Pair<String, String> {
         val key = requireNotNull(payload.key) { "key不能为空。" }
         val i18nTypeDictCode = requireNotNull(payload.i18nTypeDictCode) { "i18nTypeDictCode不能为空。" }
         val namespace = payload.namespace.takeIf { it.isNotBlank() } ?: i18nTypeDictCode

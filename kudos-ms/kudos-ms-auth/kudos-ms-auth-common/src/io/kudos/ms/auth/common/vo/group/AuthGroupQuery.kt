@@ -34,7 +34,6 @@ data class AuthGroupQuery (
 ) : ListSearchPayload() {
 
 
-    constructor() : this("")
 
     override fun getReturnEntityClass() = AuthGroupRow::class
 

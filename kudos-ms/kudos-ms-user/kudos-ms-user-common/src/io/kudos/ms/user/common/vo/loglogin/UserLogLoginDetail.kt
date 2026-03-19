@@ -59,10 +59,4 @@ data class UserLogLoginDetail (
     /** 创建时间 */
     val createTime: LocalDateTime? = null,
 
-) : IdJsonResult<String>() {
-
-
-    constructor() : this("")
-
-
-}
+) : IdJsonResult<String>()

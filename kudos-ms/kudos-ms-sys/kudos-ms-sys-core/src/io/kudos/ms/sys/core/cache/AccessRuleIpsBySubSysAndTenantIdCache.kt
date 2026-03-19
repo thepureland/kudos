@@ -6,8 +6,8 @@ import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.context.support.Consts
 import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpCacheEntry
-import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpQuery
-import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpRow
+import io.kudos.ms.sys.common.vo.accessruleip.request.SysAccessRuleIpQuery
+import io.kudos.ms.sys.common.vo.accessruleip.response.SysAccessRuleIpRow
 import io.kudos.ms.sys.core.dao.SysAccessRuleDao
 import io.kudos.ms.sys.core.dao.SysAccessRuleIpDao
 import io.kudos.ms.sys.core.model.po.SysAccessRule

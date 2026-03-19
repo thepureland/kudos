@@ -2,10 +2,12 @@ package io.kudos.ms.sys.api.admin.controller
 
 import io.kudos.ability.web.springmvc.controller.BaseCrudController
 import io.kudos.base.tree.IdAndNameTreeNode
-import io.kudos.ms.sys.common.vo.system.SysSystemDetail
-import io.kudos.ms.sys.common.vo.system.SysSystemForm
-import io.kudos.ms.sys.common.vo.system.SysSystemQuery
-import io.kudos.ms.sys.common.vo.system.SysSystemRow
+import io.kudos.ms.sys.common.vo.system.request.SysSystemFormCreate
+import io.kudos.ms.sys.common.vo.system.request.SysSystemFormUpdate
+import io.kudos.ms.sys.common.vo.system.request.SysSystemQuery
+import io.kudos.ms.sys.common.vo.system.response.SysSystemDetail
+import io.kudos.ms.sys.common.vo.system.response.SysSystemEdit
+import io.kudos.ms.sys.common.vo.system.response.SysSystemRow
 import io.kudos.ms.sys.core.service.iservice.ISysSystemService
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PutMapping
@@ -21,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/admin/sys/system")
 class SysSystemAdminController:
-    BaseCrudController<String, ISysSystemService, SysSystemQuery, SysSystemRow, SysSystemDetail, SysSystemForm>() {
+    BaseCrudController<String, ISysSystemService, SysSystemQuery, SysSystemRow, SysSystemDetail, SysSystemEdit, SysSystemFormCreate, SysSystemFormUpdate>() {
 
     /**
      * 返回所有启用的子系统编码

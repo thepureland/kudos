@@ -6,7 +6,7 @@ import java.time.LocalDateTime
 
 
 /**
- * 缓存配置缓存项
+ * 缓存缓存项
  *
  * @author K
  * @since 1.0.0
@@ -65,10 +65,6 @@ data class SysCacheCacheEntry (
     val updateTime: LocalDateTime? = null,
 
 ) : IIdEntity<String>, Serializable {
-
-
-    constructor() : this("")
-
 
     companion object {
         private const val serialVersionUID = 7167286658481070161L

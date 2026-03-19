@@ -53,7 +53,6 @@ data class MsgSendQuery (
 ) : ListSearchPayload() {
 
 
-    constructor() : this("")
 
     override fun getReturnEntityClass() = MsgSendRow::class
 

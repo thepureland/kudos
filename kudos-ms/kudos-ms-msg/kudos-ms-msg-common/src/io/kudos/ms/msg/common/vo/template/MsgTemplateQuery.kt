@@ -49,7 +49,6 @@ data class MsgTemplateQuery (
 ) : ListSearchPayload() {
 
 
-    constructor() : this("")
 
     override fun getReturnEntityClass() = MsgTemplateRow::class
 

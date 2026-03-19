@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.common.api
 
 import io.kudos.ms.sys.common.vo.system.SysSystemCacheEntry
-import io.kudos.ms.sys.common.vo.system.SysSystemRow
+import io.kudos.ms.sys.common.vo.system.response.SysSystemRow
 
 
 /**

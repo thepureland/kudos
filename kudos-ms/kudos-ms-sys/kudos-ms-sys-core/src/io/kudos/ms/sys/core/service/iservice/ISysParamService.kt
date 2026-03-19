@@ -3,7 +3,7 @@ package io.kudos.ms.sys.core.service.iservice
 import io.kudos.base.support.iservice.IBaseCrudService
 import io.kudos.ms.sys.common.api.ISysParamApi
 import io.kudos.ms.sys.common.vo.param.SysParamCacheEntry
-import io.kudos.ms.sys.common.vo.param.SysParamRow
+import io.kudos.ms.sys.common.vo.param.response.SysParamRow
 import io.kudos.ms.sys.core.model.po.SysParam
 
 

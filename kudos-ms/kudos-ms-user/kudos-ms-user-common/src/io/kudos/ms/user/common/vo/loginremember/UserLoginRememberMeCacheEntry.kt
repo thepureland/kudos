@@ -30,7 +30,6 @@ data class UserLoginRememberMeCacheEntry (
 ) : IIdEntity<String>, Serializable {
 
 
-    constructor() : this("")
 
 
     companion object {

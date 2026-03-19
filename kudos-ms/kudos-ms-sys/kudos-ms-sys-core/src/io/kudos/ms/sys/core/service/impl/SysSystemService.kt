@@ -8,7 +8,7 @@ import io.kudos.base.query.eq
 import io.kudos.base.tree.IdAndNameTreeNode
 import io.kudos.base.tree.ListToTreeConverter
 import io.kudos.ms.sys.common.vo.system.SysSystemCacheEntry
-import io.kudos.ms.sys.common.vo.system.SysSystemRow
+import io.kudos.ms.sys.common.vo.system.response.SysSystemRow
 import io.kudos.ms.sys.core.cache.SysSystemHashCache
 import io.kudos.ms.sys.core.dao.SysSystemDao
 import io.kudos.ms.sys.core.model.po.SysSystem

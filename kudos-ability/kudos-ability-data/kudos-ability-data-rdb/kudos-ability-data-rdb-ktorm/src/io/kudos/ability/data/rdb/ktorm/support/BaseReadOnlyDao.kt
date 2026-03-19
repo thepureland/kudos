@@ -3,7 +3,6 @@ package io.kudos.ability.data.rdb.ktorm.support
 import io.kudos.ability.data.rdb.ktorm.datasource.currentDatabase
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.lang.GenericKit
-import io.kudos.base.lang.reflect.newInstance
 import io.kudos.base.lang.string.underscoreToHump
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
@@ -24,6 +23,7 @@ import org.ktorm.schema.Column
 import org.ktorm.schema.ColumnDeclaring
 import org.ktorm.schema.Table
 import kotlin.reflect.KClass
+import kotlin.reflect.KParameter
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
@@ -145,11 +145,8 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
                 .where { getPkColumn().eq(id) }
             val columnMap = getColumns(returnType)
             query.forEach { row ->
-                val bean = returnType.newInstance()
-                columnMap.forEach { (property, column) ->
-                    BeanKit.setProperty(bean, property, row[column])
-                }
-                return bean
+                val values = columnMap.mapValues { (_, column) -> row[column] }
+                return instantiateResultItem(returnType, values)
             }
             null
         }
@@ -706,8 +703,11 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         // order（仅白名单内字段参与排序）
         if (listSearchPayload != null) {
             val whitelist = listSearchPayload.getSortableProperties()
-            val allowedOrders = if (whitelist.isEmpty()) emptyList()
-            else listSearchPayload.orders?.filter { it.property in whitelist } ?: emptyList()
+            val allowedOrders = if (whitelist.isEmpty()) {
+                listSearchPayload.orders ?: emptyList()
+            } else {
+                listSearchPayload.orders?.filter { it.property in whitelist } ?: emptyList()
+            }
             if (allowedOrders.isNotEmpty()) {
                 val orderExps = sortOf(*allowedOrders.toTypedArray())
                 query = query.orderBy(orderExps)
@@ -731,20 +731,16 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         // result
         val returnProperties = listSearchPayload?.getReturnProperties() ?: emptyList()
         val effectiveReturnClass = returnItemClassOverride ?: listSearchPayload?.getReturnEntityClass()
-        val mapList = processResult(query, returnColumnMap)
         return when {
             returnProperties.isEmpty() -> {
                 val beanList = mutableListOf<Any>()
-                mapList.forEach { map ->
-                    val bean = if (effectiveReturnClass != null) {
-                        effectiveReturnClass.newInstance()
-                    } else {
+                processResult(query, returnColumnMap).forEach { map ->
+                    val bean = if (effectiveReturnClass == null) {
                         val tableEntityClass =
                             requireNotNull(table().entityClass) { "表未绑定实体类型，无法创建返回对象。" }
-                        Entity.create(tableEntityClass)
-                    }
-                    returnProps.forEach { prop ->
-                        BeanKit.setProperty(bean, prop, map[prop])
+                        Entity.create(tableEntityClass).also { populateResultItem(it, map) }
+                    } else {
+                        instantiateResultItem(effectiveReturnClass, map)
                     }
                     beanList.add(bean)
                 }
@@ -752,10 +748,12 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
             }
 
             returnProperties.size == 1 -> {
+                val mapList = processResult(query, returnColumnMap)
                 mapList.flatMap { it.values }
             }
 
             else -> {
+                val mapList = processResult(query, returnColumnMap)
                 mapList
             }
         }
@@ -1027,13 +1025,9 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         returnColumnMap: Map<String, Column<Any>>
     ): List<T> {
         val resultList = mutableListOf<T>()
-        val propNames = returnColumnMap.keys
         query.forEach { row ->
-            val item = returnItemClass.newInstance()
-            propNames.forEach { propName ->
-                val column = requireNotNull(returnColumnMap[propName]) { "未找到返回属性[$propName]对应的数据库列。" }
-                BeanKit.setProperty(item, propName, row[column])
-            }
+            val values = returnColumnMap.mapValues { (_, column) -> row[column] }
+            val item = instantiateResultItem(returnItemClass, values)
             resultList.add(item)
         }
         return resultList
@@ -1233,14 +1227,68 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
     ): R {
         val columnMap = getColumns(destClass)
         val extras = extraColumns ?: emptyMap()
+        val values = (columnMap + extras).mapValues { (_, column) -> rowSet[column] }
+        return instantiateResultItem(destClass, values, defaultValues ?: emptyMap())
+    }
 
-        val constructor = destClass.primaryConstructor!!
-        val args = constructor.parameters.map { param ->
-            val column = extras[param.name] ?: columnMap[param.name]
-            val value = if (column != null) rowSet[column] else null
-            value ?: (defaultValues?.get(param.name))  // 处理默认值
+    private fun <R : Any> instantiateResultItem(
+        destClass: KClass<R>,
+        propertyValues: Map<String, Any?>,
+        defaultValues: Map<String, Any?> = emptyMap()
+    ): R {
+        // 兼容传统 JavaBean/普通 Kotlin 类：优先走无参构造 + 属性回填。
+        val emptyConstructor = destClass.constructors.firstOrNull { it.parameters.isEmpty() }
+        if (emptyConstructor != null) {
+            return emptyConstructor.call().also { populateResultItem(it, propertyValues) }
         }
-        return constructor.call(*args.toTypedArray())
+
+        // 兼容 data class 等不可变对象：通过主构造器按参数名装配。
+        val constructor = requireNotNull(destClass.primaryConstructor) {
+            "类${destClass.qualifiedName}既没有无参构造器，也没有主构造器，无法封装查询结果。"
+        }
+        val args = mutableMapOf<KParameter, Any?>()
+        val missingRequiredParams = mutableListOf<String>()
+
+        constructor.parameters.forEach { param ->
+            val name = param.name ?: return@forEach
+            val hasPropertyValue = propertyValues.containsKey(name)
+            val hasDefaultValue = defaultValues.containsKey(name)
+            if (!hasPropertyValue && !hasDefaultValue) {
+                // 非可空且无默认值的必填构造参数，必须能从查询结果中拿到值。
+                if (!param.isOptional && !param.type.isMarkedNullable) {
+                    missingRequiredParams.add(name)
+                }
+                return@forEach
+            }
+            val value = when {
+                hasPropertyValue -> propertyValues[name]
+                else -> defaultValues[name]
+            }
+            // 对带 Kotlin 默认值的参数，传 null 会覆盖默认值；这里直接跳过，让 callBy 使用默认值。
+            if (value == null && param.isOptional) {
+                return@forEach
+            }
+            args[param] = value
+        }
+
+        require(missingRequiredParams.isEmpty()) {
+            "类${destClass.qualifiedName}缺少构造参数${missingRequiredParams.joinToString(prefix = "[", postfix = "]")}对应的查询结果，无法实例化。"
+        }
+        return constructor.callBy(args)
+    }
+
+    private fun populateResultItem(target: Any, propertyValues: Map<String, Any?>) {
+        if (target is Entity<*>) {
+            // Ktorm Entity 通过代理维护属性值，直接走其下标写入，避免绕过代理状态。
+            propertyValues.forEach { (property, value) ->
+                target[property] = value
+            }
+            return
+        }
+        // 普通对象仍沿用 BeanKit，兼容 setter / 反射字段写入。
+        propertyValues.forEach { (property, value) ->
+            BeanKit.setProperty(target, property, value)
+        }
     }
 
 }

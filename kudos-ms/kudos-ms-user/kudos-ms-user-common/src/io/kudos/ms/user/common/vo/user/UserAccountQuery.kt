@@ -43,7 +43,6 @@ data class UserAccountQuery (
 ) : ListSearchPayload() {
 
 
-    constructor() : this("")
 
     override fun getReturnEntityClass() = UserAccountRow::class
 

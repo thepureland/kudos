@@ -53,7 +53,6 @@ data class MsgTemplateCacheEntry (
 ) : IIdEntity<String>, Serializable {
 
 
-    constructor() : this("")
 
 
     companion object {

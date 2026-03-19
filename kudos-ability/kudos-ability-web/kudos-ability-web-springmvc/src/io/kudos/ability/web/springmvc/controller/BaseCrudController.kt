@@ -1,6 +1,7 @@
 package io.kudos.ability.web.springmvc.controller
 
 import io.kudos.base.bean.validation.teminal.TeminalConstraintsCreator
+import io.kudos.base.error.ObjectNotFoundException
 import io.kudos.base.lang.GenericKit
 import io.kudos.base.model.payload.ListSearchPayload
 import io.kudos.base.support.iservice.IBaseCrudService
@@ -14,10 +15,12 @@ import kotlin.reflect.KClass
  *
  * @param PK 主键类型
  * @param B 业务处理类
- * @param S 列表查询载体类
- * @param R 记录类型
- * @param CF 新增页表单实体类
- * @param UF 编辑页表单实体类
+ * @param S 列表查询条件VO类(请求)
+ * @param R 列表查询结果VO类(响应)
+ * @param D 详情VO类(响应)
+ * @param E 编辑VO类(响应)
+ * @param CF 新增页表单VO类(请求)
+ * @param UF 编辑页表单VO类(请求)
  * @author K
  * @since 1.0.0
  */
@@ -27,13 +30,16 @@ open class BaseCrudController<
         S: ListSearchPayload,
         R: Any,
         D: Any,
+        E: Any,
         CF: Any,
         UF: Any>
     :BaseReadOnlyController<PK, B, S, R, D>() {
 
-    private var createFormModelClass: KClass<CF>? = null
+    private var createFormVoClass: KClass<CF>? = null
 
-    private var updateFormModelClass: KClass<UF>? = null
+    private var updateFormVoClass: KClass<UF>? = null
+
+    private var editVoClass: KClass<E>? = null
 
     /**
      * 返回新增页表单校验规则
@@ -42,10 +48,11 @@ open class BaseCrudController<
      */
     @GetMapping("/getCreateValidationRule")
     open fun getCreateValidationRule(): Map<String, LinkedHashMap<String, Array<Map<String, Any>>>> {
-        if (createFormModelClass == null) {
-            createFormModelClass = getCreateFormModelClass()
+        if (createFormVoClass == null) {
+            @Suppress("UNCHECKED_CAST")
+            createFormVoClass = GenericKit.getSuperClassGenricClass(this::class, 6) as KClass<CF>
         }
-        return TeminalConstraintsCreator.create(requireNotNull(createFormModelClass) { "createFormModelClass is null" })
+        return TeminalConstraintsCreator.create(requireNotNull(createFormVoClass) { "createFormVoClass is null" })
     }
 
     /**
@@ -55,41 +62,54 @@ open class BaseCrudController<
      */
     @GetMapping("/getUpdateValidationRule")
     open fun getUpdateValidationRule(): Map<String, LinkedHashMap<String, Array<Map<String, Any>>>> {
-        if (updateFormModelClass == null) {
-            updateFormModelClass = getUpdateFormModelClass()
+        if (updateFormVoClass == null) {
+            @Suppress("UNCHECKED_CAST")
+            updateFormVoClass = GenericKit.getSuperClassGenricClass(this::class, 7) as KClass<UF>
         }
-        return TeminalConstraintsCreator.create(requireNotNull(updateFormModelClass) { "updateFormModelClass is null" })
+        return TeminalConstraintsCreator.create(requireNotNull(updateFormVoClass) { "updateFormVoClass is null" })
+    }
+
+    /**
+     * 返回指定主键的编辑记录
+     *
+     * @param id 主键
+     * @return 编辑VO
+     */
+    @GetMapping("/getEdit")
+    open fun getEdit(id: PK): E {
+        if (editVoClass == null) {
+            @Suppress("UNCHECKED_CAST")
+            editVoClass = GenericKit.getSuperClassGenricClass(this::class, 5) as KClass<E>
+        }
+        return service.get(id, requireNotNull(editVoClass) { "editVoClass is null" }) ?: throw ObjectNotFoundException("找不到记录！")
     }
 
     /**
      * 保存新增的记录
      *
-     * @param payload 表单实体
-     * @return WebResult(主键)
+     * @param formCreateVo 表单新增VO
+     * @return 主键
      */
     @PostMapping("/save")
-    open fun save(@RequestBody @Valid payload: CF): PK {
-        return service.insert(payload)
+    open fun save(@RequestBody @Valid formCreateVo: CF): PK {
+        return service.insert(formCreateVo)
     }
 
     /**
      * 更新记录
      *
-     * @param payload 表单实体
-     * @return WebResult(主键)
+     * @param formUpdateVo 表单更新VO
      */
     @PutMapping("/update")
-    open fun update(@RequestBody @Valid payload: UF) {
-        service.update(payload)
+    open fun update(@RequestBody @Valid formUpdateVo: UF) {
+        service.update(formUpdateVo)
     }
 
     /**
      * 删除指定主键的记录
      *
      * @param id 主键
-     * @return WebResult(是否删除成功)
-     * @author K
-     * @since 1.0.0
+     * @return 是否删除成功
      */
     @DeleteMapping("/delete")
     open fun delete(id: PK): Boolean {
@@ -100,35 +120,11 @@ open class BaseCrudController<
      * 批量删除指定主键的记录
      *
      * @param ids 主键列表
-     * @return WebResult(是否删除成功)
-     * @author K
-     * @since 1.0.0
+     * @return 是否删除成功
      */
     @PostMapping("/batchDelete")
     open fun batchDelete(@RequestBody ids: List<PK>): Boolean {
         return service.batchDelete(ids) == ids.size
-    }
-
-    /**
-     * 返回新增页表单模型类
-     *
-     * @param CF 表单模型类
-     * @return KClass
-     */
-    @Suppress("UNCHECKED_CAST")
-    open fun getCreateFormModelClass(): KClass<CF> {
-        return GenericKit.getSuperClassGenricClass(this::class, 5) as KClass<CF>
-    }
-
-    /**
-     * 返回编辑页表单模型类
-     *
-     * @param UF 表单模型类
-     * @return KClass
-     */
-    @Suppress("UNCHECKED_CAST")
-    open fun getUpdateFormModelClass(): KClass<UF> {
-        return GenericKit.getSuperClassGenricClass(this::class, 6) as KClass<UF>
     }
 
 }

@@ -23,10 +23,4 @@ data class UserLoginRememberMeRow (
     /** 最后使用时间 */
     val lastUsed: LocalDateTime? = null,
 
-) : IdJsonResult<String>() {
-
-
-    constructor() : this("")
-
-
-}
+) : IdJsonResult<String>()

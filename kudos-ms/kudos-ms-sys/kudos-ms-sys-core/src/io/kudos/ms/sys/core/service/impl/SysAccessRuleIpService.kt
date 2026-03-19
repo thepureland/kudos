@@ -4,9 +4,9 @@ import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpCacheEntry
-import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpForm
-import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpQuery
-import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpRow
+import io.kudos.ms.sys.common.vo.accessruleip.request.SysAccessRuleIpBatchItem
+import io.kudos.ms.sys.common.vo.accessruleip.request.SysAccessRuleIpQuery
+import io.kudos.ms.sys.common.vo.accessruleip.response.SysAccessRuleIpRow
 import io.kudos.ms.sys.core.cache.AccessRuleIpsBySubSysAndTenantIdCache
 import io.kudos.ms.sys.core.dao.SysAccessRuleDao
 import io.kudos.ms.sys.core.dao.SysAccessRuleIpDao
@@ -62,7 +62,7 @@ open class SysAccessRuleIpService : BaseCrudService<String, SysAccessRuleIp, Sys
     }
 
     @Transactional
-    override fun batchSaveOrUpdate(ruleId: String, ips: List<SysAccessRuleIpForm>): Int {
+    override fun batchSaveOrUpdate(ruleId: String, ips: List<SysAccessRuleIpBatchItem>): Int {
         var count = 0
         ips.forEach { form ->
             if (form.id.isNullOrBlank()) {

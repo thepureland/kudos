@@ -39,7 +39,6 @@ data class MsgReceiveCacheEntry (
 ) : IIdEntity<String>, Serializable {
 
 
-    constructor() : this("")
 
 
     companion object {

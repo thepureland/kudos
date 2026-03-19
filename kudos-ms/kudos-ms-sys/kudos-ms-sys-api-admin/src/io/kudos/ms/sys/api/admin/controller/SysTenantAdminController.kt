@@ -2,10 +2,12 @@ package io.kudos.ms.sys.api.admin.controller
 
 import io.kudos.ability.web.springmvc.controller.BaseCrudController
 import io.kudos.base.model.vo.IdAndName
-import io.kudos.ms.sys.common.vo.tenant.SysTenantDetail
-import io.kudos.ms.sys.common.vo.tenant.SysTenantForm
-import io.kudos.ms.sys.common.vo.tenant.SysTenantQuery
-import io.kudos.ms.sys.common.vo.tenant.SysTenantRow
+import io.kudos.ms.sys.common.vo.tenant.request.SysTenantFormCreate
+import io.kudos.ms.sys.common.vo.tenant.request.SysTenantFormUpdate
+import io.kudos.ms.sys.common.vo.tenant.request.SysTenantQuery
+import io.kudos.ms.sys.common.vo.tenant.response.SysTenantDetail
+import io.kudos.ms.sys.common.vo.tenant.response.SysTenantEdit
+import io.kudos.ms.sys.common.vo.tenant.response.SysTenantRow
 import io.kudos.ms.sys.core.service.iservice.ISysTenantService
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PutMapping
@@ -21,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/admin/sys/tenant")
 class SysTenantAdminController: 
-    BaseCrudController<String, ISysTenantService, SysTenantQuery, SysTenantRow, SysTenantDetail, SysTenantForm>() {
+    BaseCrudController<String, ISysTenantService, SysTenantQuery, SysTenantRow, SysTenantDetail, SysTenantEdit, SysTenantFormCreate, SysTenantFormUpdate>() {
 
     /**
      * 返回指定子系统的所有租户(仅启用的)

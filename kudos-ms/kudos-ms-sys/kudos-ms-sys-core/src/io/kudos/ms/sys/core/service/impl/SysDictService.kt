@@ -6,7 +6,7 @@ import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.eq
 import io.kudos.ms.sys.common.vo.dict.SysDictCacheEntry
-import io.kudos.ms.sys.common.vo.dict.SysDictRow
+import io.kudos.ms.sys.common.vo.dict.response.SysDictRow
 import io.kudos.ms.sys.common.vo.dictitem.SysDictItemCacheEntry
 import io.kudos.ms.sys.core.cache.SysDictHashCache
 import io.kudos.ms.sys.core.dao.SysDictDao

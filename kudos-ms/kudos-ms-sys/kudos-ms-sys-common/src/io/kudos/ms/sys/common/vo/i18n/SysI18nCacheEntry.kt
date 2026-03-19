@@ -1,6 +1,8 @@
 package io.kudos.ms.sys.common.vo.i18n
 
 import io.kudos.base.model.contract.entity.IIdEntity
+import java.io.Serializable
+
 
 /**
  * 国际化缓存项
@@ -32,10 +34,10 @@ data class SysI18nCacheEntry (
     /** 国际化值 */
     val value: String = "",
 
-) : IIdEntity<String?> {
+) : IIdEntity<String?>, Serializable {
 
-
-    constructor() : this(null)
-
+    companion object {
+        private const val serialVersionUID = 6101001001001001011L
+    }
 
 }

@@ -35,10 +35,4 @@ data class MsgReceiveDetail (
     /** 租户ID */
     val tenantId: String? = null,
 
-) : IdJsonResult<String>() {
-
-
-    constructor() : this("")
-
-
-}
+) : IdJsonResult<String>()

@@ -12,7 +12,6 @@ import java.io.Serializable
  */
 data class SysSystemCacheEntry (
 
-
     override val id: String = "",
 
     /** 编码 */
@@ -37,10 +36,6 @@ data class SysSystemCacheEntry (
     val builtIn: Boolean = false,
 
 ) : IIdEntity<String>, Serializable {
-
-
-    constructor() : this("")
-
 
     companion object {
         private const val serialVersionUID = 8383289873002046675L

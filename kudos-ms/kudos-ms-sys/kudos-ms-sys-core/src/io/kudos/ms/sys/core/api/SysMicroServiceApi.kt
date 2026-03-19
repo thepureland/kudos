@@ -2,7 +2,7 @@ package io.kudos.ms.sys.core.api
 
 import io.kudos.ms.sys.common.api.ISysMicroServiceApi
 import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceCacheEntry
-import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceRow
+import io.kudos.ms.sys.common.vo.microservice.response.SysMicroServiceRow
 import io.kudos.ms.sys.core.service.iservice.ISysMicroServiceService
 import jakarta.annotation.Resource
 import org.springframework.stereotype.Component

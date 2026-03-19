@@ -49,7 +49,6 @@ data class UserAccountThirdQuery (
 ) : ListSearchPayload() {
 
 
-    constructor() : this("")
 
     override fun getReturnEntityClass() = UserAccountThirdRow::class
 

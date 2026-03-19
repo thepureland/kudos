@@ -47,7 +47,6 @@ data class MsgInstanceQuery (
 ) : ListSearchPayload() {
 
 
-    constructor() : this("")
 
     override fun getReturnEntityClass() = MsgInstanceRow::class
 

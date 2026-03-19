@@ -60,7 +60,6 @@ data class AuthRoleCacheEntry (
 ) : IIdEntity<String>, Serializable {
 
 
-    constructor() : this("")
 
 
     companion object {

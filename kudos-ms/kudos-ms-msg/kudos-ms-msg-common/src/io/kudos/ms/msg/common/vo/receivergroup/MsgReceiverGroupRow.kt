@@ -34,10 +34,4 @@ data class MsgReceiverGroupRow (
     /** 是否内置 */
     val builtIn: Boolean? = null,
 
-) : IdJsonResult<String>() {
-
-
-    constructor() : this("")
-
-
-}
+) : IdJsonResult<String>()

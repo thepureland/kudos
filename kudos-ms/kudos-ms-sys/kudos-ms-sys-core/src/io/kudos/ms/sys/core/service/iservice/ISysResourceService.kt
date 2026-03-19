@@ -4,9 +4,9 @@ import io.kudos.base.support.iservice.IBaseCrudService
 import io.kudos.base.tree.IdAndNameTreeNode
 import io.kudos.ms.sys.common.api.ISysResourceApi
 import io.kudos.ms.sys.common.vo.resource.SysResourceCacheEntry
-import io.kudos.ms.sys.common.vo.resource.SysResourceQuery
-import io.kudos.ms.sys.common.vo.resource.SysResourceRow
-import io.kudos.ms.sys.common.vo.resource.SysResourceTreeRow
+import io.kudos.ms.sys.common.vo.resource.request.SysResourceQuery
+import io.kudos.ms.sys.common.vo.resource.response.SysResourceRow
+import io.kudos.ms.sys.common.vo.resource.response.SysResourceTreeRow
 import io.kudos.ms.sys.core.model.po.SysResource
 
 

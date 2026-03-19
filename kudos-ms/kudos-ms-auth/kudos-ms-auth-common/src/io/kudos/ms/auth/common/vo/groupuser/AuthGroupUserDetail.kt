@@ -38,10 +38,4 @@ data class AuthGroupUserDetail (
     /** 更新时间 */
     val updateTime: LocalDateTime? = null,
 
-) : IdJsonResult<String>() {
-
-
-    constructor() : this("")
-
-
-}
+) : IdJsonResult<String>()

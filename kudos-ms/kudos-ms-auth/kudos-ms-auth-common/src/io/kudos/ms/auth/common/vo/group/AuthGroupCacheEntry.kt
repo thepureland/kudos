@@ -60,7 +60,6 @@ data class AuthGroupCacheEntry (
 ) : IIdEntity<String>, Serializable {
 
 
-    constructor() : this(EMPTY_ID)
 
     /**
      * 以非空语义访问 id。

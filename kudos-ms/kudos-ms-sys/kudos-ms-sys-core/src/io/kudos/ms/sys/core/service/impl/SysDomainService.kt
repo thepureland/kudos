@@ -8,9 +8,9 @@ import io.kudos.base.query.PagingSearchResult
 import io.kudos.base.query.eq
 import io.kudos.base.model.payload.ListSearchPayload
 import io.kudos.ms.sys.common.vo.domain.SysDomainCacheEntry
-import io.kudos.ms.sys.common.vo.domain.SysDomainDetail
-import io.kudos.ms.sys.common.vo.domain.SysDomainQuery
-import io.kudos.ms.sys.common.vo.domain.SysDomainRow
+import io.kudos.ms.sys.common.vo.domain.request.SysDomainQuery
+import io.kudos.ms.sys.common.vo.domain.response.SysDomainDetail
+import io.kudos.ms.sys.common.vo.domain.response.SysDomainRow
 import io.kudos.ms.sys.core.cache.DomainByNameCache
 import io.kudos.ms.sys.core.cache.TenantByIdCache
 import io.kudos.ms.sys.core.dao.SysDomainDao

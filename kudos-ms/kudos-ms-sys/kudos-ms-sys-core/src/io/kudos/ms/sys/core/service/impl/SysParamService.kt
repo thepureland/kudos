@@ -6,7 +6,7 @@ import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.eq
 import io.kudos.ms.sys.common.vo.param.SysParamCacheEntry
-import io.kudos.ms.sys.common.vo.param.SysParamRow
+import io.kudos.ms.sys.common.vo.param.response.SysParamRow
 import io.kudos.ms.sys.core.cache.ParamByModuleAndNameCache
 import io.kudos.ms.sys.core.dao.SysParamDao
 import io.kudos.ms.sys.core.model.po.SysParam

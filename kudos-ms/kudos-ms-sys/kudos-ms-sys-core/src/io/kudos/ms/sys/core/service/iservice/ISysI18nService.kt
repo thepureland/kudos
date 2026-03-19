@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.core.service.iservice
 
 import io.kudos.base.support.iservice.IBaseCrudService
-import io.kudos.ms.sys.common.vo.i18n.SysI18nForm
+import io.kudos.ms.sys.common.vo.i18n.request.SysI18nFormUpdate
 import io.kudos.ms.sys.core.model.po.SysI18n
 
 
@@ -71,7 +71,7 @@ interface ISysI18nService : IBaseCrudService<String, SysI18n> {
      * @author K
      * @since 1.0.0
      */
-    fun batchSaveOrUpdate(i18ns: List<SysI18nForm>): Int
+    fun batchSaveOrUpdate(i18ns: List<SysI18nFormUpdate>): Int
 
     /**
      * 更新启用状态

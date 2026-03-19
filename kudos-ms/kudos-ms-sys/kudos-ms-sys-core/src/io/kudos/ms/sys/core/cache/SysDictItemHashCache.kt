@@ -56,7 +56,7 @@ open class SysDictItemHashCache : AbstractHashCacheHandler<SysDictItemCacheEntry
 
     override fun filterableProperties(): Set<String> = FILTERABLE_PROPERTIES
 
-    override fun doReload(id: Any): SysDictItemCacheEntry? = vSysDictItemDao.getAs<SysDictItemCacheEntry>(id.toString())?.trimmed()
+    override fun doReload(id: Any): SysDictItemCacheEntry? = vSysDictItemDao.getAs<SysDictItemCacheEntry>(id.toString())
 
     // ---------- 1. 按主键 id ----------
 
@@ -76,7 +76,7 @@ open class SysDictItemHashCache : AbstractHashCacheHandler<SysDictItemCacheEntry
     )
     open fun getDictItemById(id: String): SysDictItemCacheEntry? {
         require(id.isNotBlank()) { "获取字典项时 id 不能为空" }
-        return vSysDictItemDao.getAs<SysDictItemCacheEntry>(id)?.trimmed()
+        return vSysDictItemDao.getAs<SysDictItemCacheEntry>(id)
     }
 
     /**
@@ -93,7 +93,7 @@ open class SysDictItemHashCache : AbstractHashCacheHandler<SysDictItemCacheEntry
     )
     open fun getDictItemsByIds(ids: Set<String>): Map<String, SysDictItemCacheEntry> {
         if (ids.isEmpty()) return emptyMap()
-        val list = vSysDictItemDao.getByIdsAs<SysDictItemCacheEntry>(ids).map { it.trimmed() }
+        val list = vSysDictItemDao.getByIdsAs<SysDictItemCacheEntry>(ids).map { it }
         val byId = list.associateBy { it.id }
         return ids.mapNotNull { id -> byId[id]?.let { id to it } }.toMap()
     }
@@ -124,7 +124,7 @@ open class SysDictItemHashCache : AbstractHashCacheHandler<SysDictItemCacheEntry
             atomicServiceCode,
             dictType,
             itemCode
-        )?.trimmed()
+        )
     }
 
     // ---------- 3. 按 atomicServiceCode + dictType ----------
@@ -147,7 +147,7 @@ open class SysDictItemHashCache : AbstractHashCacheHandler<SysDictItemCacheEntry
         atomicServiceCode: String,
         dictType: String
     ): List<SysDictItemCacheEntry> {
-        return vSysDictItemDao.searchByAtomicServiceCodeAndDictType(atomicServiceCode, dictType).map { it.trimmed() }
+        return vSysDictItemDao.searchByAtomicServiceCodeAndDictType(atomicServiceCode, dictType).map { it }
     }
 
     // ---------- 4. 按 parentId ----------
@@ -167,7 +167,7 @@ open class SysDictItemHashCache : AbstractHashCacheHandler<SysDictItemCacheEntry
     )
     open fun getDictItems(parentId: String): List<SysDictItemCacheEntry> {
         require(parentId.isNotBlank()) { "获取子字典项时 parentId 不能为空" }
-        return vSysDictItemDao.searchByParentId(parentId).map { it.trimmed() }
+        return vSysDictItemDao.searchByParentId(parentId).map { it }
     }
 
     // ---------- 全量刷新 ----------
@@ -183,7 +183,7 @@ open class SysDictItemHashCache : AbstractHashCacheHandler<SysDictItemCacheEntry
             return
         }
         val cache = hashCache()
-        val list = vSysDictItemDao.searchAs<SysDictItemCacheEntry>().map { it.trimmed() }
+        val list = vSysDictItemDao.searchAs<SysDictItemCacheEntry>().map { it }
         log.debug("从视图 v_sys_dict_item 加载 ${list.size} 条字典项，刷新 Hash 缓存")
         cache.refreshAll(CACHE_NAME, list, FILTERABLE_PROPERTIES, emptySet())
         log.debug("字典项 Hash 缓存刷新完成")
@@ -198,7 +198,7 @@ open class SysDictItemHashCache : AbstractHashCacheHandler<SysDictItemCacheEntry
      */
     open fun syncOnInsert(id: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME) || !KeyValueCacheKit.isWriteInTime(CACHE_NAME)) return
-        val item = vSysDictItemDao.getAs<SysDictItemCacheEntry>(id)?.trimmed() ?: return
+        val item = vSysDictItemDao.getAs<SysDictItemCacheEntry>(id) ?: return
         hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
     }
 
@@ -216,7 +216,7 @@ open class SysDictItemHashCache : AbstractHashCacheHandler<SysDictItemCacheEntry
      */
     open fun syncOnUpdate(id: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
-        val item = vSysDictItemDao.getAs<SysDictItemCacheEntry>(id)?.trimmed() ?: return
+        val item = vSysDictItemDao.getAs<SysDictItemCacheEntry>(id) ?: return
         if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
             hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
         }
