@@ -7,10 +7,7 @@ import io.kudos.base.bean.BeanKit
 import io.kudos.base.data.json.JsonKit
 import io.kudos.base.error.ServiceException
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.query.Criteria
-import io.kudos.base.query.eq
 import io.kudos.ms.sys.common.vo.cache.SysCacheCacheEntry
-import io.kudos.ms.sys.common.vo.cache.SysCacheRow
 import io.kudos.ms.sys.core.cache.SysCacheHashCache
 import io.kudos.ms.sys.core.dao.SysCacheDao
 import io.kudos.ms.sys.core.model.po.SysCache

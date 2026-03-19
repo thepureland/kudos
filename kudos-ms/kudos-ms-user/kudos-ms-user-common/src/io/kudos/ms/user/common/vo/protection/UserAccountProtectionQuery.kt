@@ -25,7 +25,6 @@ data class UserAccountProtectionQuery (
 ) : ListSearchPayload() {
 
 
-    constructor() : this("")
 
     override fun getReturnEntityClass() = UserAccountProtectionRow::class
 

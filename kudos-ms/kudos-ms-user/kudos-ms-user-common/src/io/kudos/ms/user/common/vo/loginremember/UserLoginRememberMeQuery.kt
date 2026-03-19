@@ -19,7 +19,6 @@ data class UserLoginRememberMeQuery (
 ) : ListSearchPayload() {
 
 
-    constructor() : this("")
 
     override fun getReturnEntityClass() = UserLoginRememberMeRow::class
 

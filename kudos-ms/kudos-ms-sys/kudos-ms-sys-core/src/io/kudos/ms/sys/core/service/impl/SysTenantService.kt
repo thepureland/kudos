@@ -8,9 +8,10 @@ import io.kudos.base.query.PagingSearchResult
 import io.kudos.base.query.eq
 import io.kudos.base.model.payload.ListSearchPayload
 import io.kudos.ms.sys.common.vo.tenant.SysTenantCacheEntry
-import io.kudos.ms.sys.common.vo.tenant.SysTenantDetail
-import io.kudos.ms.sys.common.vo.tenant.SysTenantForm
-import io.kudos.ms.sys.common.vo.tenant.SysTenantRow
+import io.kudos.ms.sys.common.vo.tenant.request.SysTenantFormCreate
+import io.kudos.ms.sys.common.vo.tenant.request.SysTenantFormUpdate
+import io.kudos.ms.sys.common.vo.tenant.response.SysTenantDetail
+import io.kudos.ms.sys.common.vo.tenant.response.SysTenantRow
 import io.kudos.ms.sys.core.cache.SysTenantSystemHashCache
 import io.kudos.ms.sys.core.cache.TenantByIdCache
 import io.kudos.ms.sys.core.dao.SysTenantDao
@@ -50,8 +51,6 @@ open class SysTenantService : BaseCrudService<String, SysTenant, SysTenantDao>()
         val result = super.get(id, returnType)
         if (result is SysTenantDetail) {
             result.subSystemCodes = getSubSystemCodesString(id)
-        } else if(result is SysTenantForm) {
-            result.subSystemCodes = sysTenantSystemHashCache.getSubSystemCodesByTenantId(id)
         }
         return result
     }
@@ -85,8 +84,8 @@ open class SysTenantService : BaseCrudService<String, SysTenant, SysTenantDao>()
         log.debug("新增id为${id}的租户。")
 
         // 保存租户-系统关系
-        if (any is SysTenantForm) {
-            insertSysTenantSystems(any)
+        if (any is SysTenantFormCreate) {
+            insertSysTenantSystems(id, any.subSystemCodes)
         }
 
         // 同步缓存
@@ -95,11 +94,11 @@ open class SysTenantService : BaseCrudService<String, SysTenant, SysTenantDao>()
         return id
     }
 
-    private fun insertSysTenantSystems(any: SysTenantForm) {
-        val tenantSystems = any.subSystemCodes.mapTo(mutableSetOf()) { subSystemCode ->
+    private fun insertSysTenantSystems(tenantId: String, subSystemCodes: Set<String>) {
+        val tenantSystems = subSystemCodes.mapTo(mutableSetOf()) { subSystemCode ->
             SysTenantSystem().apply {
                 this.systemCode = subSystemCode
-                this.tenantId = any.id.toString()
+                this.tenantId = tenantId
             }
         }
         sysTenantSystemService.batchInsert(tenantSystems)
@@ -110,7 +109,7 @@ open class SysTenantService : BaseCrudService<String, SysTenant, SysTenantDao>()
         val success = super.update(any)
         val id = BeanKit.getProperty(any, SysTenant::id.name) as String
         if (success) {
-            if (any is SysTenantForm) {
+            if (any is SysTenantFormUpdate) {
                 val tenantId = any.id!!
                 val subSystemCodes = sysTenantSystemHashCache.getSubSystemCodesByTenantId(tenantId)
                 // 判断租户-系统关系有没有变，有变要更新租户-系统关系
@@ -119,7 +118,7 @@ open class SysTenantService : BaseCrudService<String, SysTenant, SysTenantDao>()
                     sysTenantSystemService.deleteByTenantId(tenantId)
 
                     // 再插入新的关系
-                    insertSysTenantSystems(any)
+                    insertSysTenantSystems(tenantId, any.subSystemCodes)
                 }
             }
 

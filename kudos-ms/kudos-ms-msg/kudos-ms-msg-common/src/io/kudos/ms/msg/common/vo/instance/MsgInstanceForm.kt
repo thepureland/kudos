@@ -47,10 +47,4 @@ data class MsgInstanceForm (
     /** 租户ID */
     val tenantId: String? = null,
 
-) : FormPayload<String>() {
-
-
-    constructor() : this("")
-
-
-}
+) : FormPayload<String>()

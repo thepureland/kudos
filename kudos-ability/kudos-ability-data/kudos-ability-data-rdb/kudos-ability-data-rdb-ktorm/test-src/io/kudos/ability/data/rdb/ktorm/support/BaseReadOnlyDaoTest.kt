@@ -61,6 +61,15 @@ internal open class BaseReadOnlyDaoTest {
     }
 
     @Test
+    fun getAsImmutableDataClass() {
+        val record = testTableDao.getAs<TestTableImmutableRecord>(-1)!!
+        assertEquals(-1, record.id)
+        assertEquals("name1", record.name)
+        assertEquals(true, record.active)
+        assertEquals(null, record.extraProp)
+    }
+
+    @Test
     fun getByIds() {
         var entities = testTableDao.getByIds(setOf(-1, -2, -3))
         assertEquals(3, entities.size)
@@ -365,6 +374,10 @@ internal open class BaseReadOnlyDaoTest {
         val resultsAsCacheItem = testTableDao.searchAs<TestTableCacheItem>(criteria)
         assertEquals(5, resultsAsCacheItem.size)
         assert(resultsAsCacheItem.any { it.id == -10 && it.name == "name10" })
+
+        val immutableResults = testTableDao.searchAs<TestTableImmutableRecord>(criteria)
+        assertEquals(5, immutableResults.size)
+        assert(immutableResults.any { it.id == -10 && it.name == "name10" && it.extraProp == null })
     }
 
     @Test
@@ -614,7 +627,7 @@ internal open class BaseReadOnlyDaoTest {
             var noExistProp: String? = "noExistProp"
             var returnPropertiesField: List<String>? = listOf("id", "name", "height")
             override fun getReturnProperties() = returnPropertiesField
-            override fun getOperators(): Map<KProperty0<*>, OperatorEnum> = mapOf(SearchPayload2::name as KProperty0<*> to OperatorEnum.ILIKE)
+            override fun getOperators(): Map<KProperty0<*>, OperatorEnum> = mapOf(::name to OperatorEnum.ILIKE)
         }
 
         val searchPayload2 = SearchPayload2().apply {
@@ -726,3 +739,12 @@ internal class TestTableCacheItem {
     var height: Int? = null
     val extraProp: String? = null
 }
+
+internal data class TestTableImmutableRecord(
+    val id: Int,
+    val name: String,
+    val weight: Double?,
+    val height: Int?,
+    val active: Boolean,
+    val extraProp: String? = null
+)

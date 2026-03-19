@@ -36,10 +36,6 @@ data class SysTenantCacheEntry (
 
 ) : IIdEntity<String>, Serializable {
 
-
-    constructor() : this("")
-
-
     companion object {
         private const val serialVersionUID = 2728865406469746023L
     }

@@ -34,7 +34,6 @@ data class UserContactWayQuery (
 ) : ListSearchPayload() {
 
 
-    constructor() : this("")
 
     override fun getReturnEntityClass() = UserContactWayRow::class
 

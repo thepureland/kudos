@@ -2,7 +2,7 @@ package io.kudos.ms.sys.core.api
 
 import io.kudos.ms.sys.common.api.ISysSystemApi
 import io.kudos.ms.sys.common.vo.system.SysSystemCacheEntry
-import io.kudos.ms.sys.common.vo.system.SysSystemRow
+import io.kudos.ms.sys.common.vo.system.response.SysSystemRow
 import io.kudos.ms.sys.core.service.iservice.ISysSystemService
 import jakarta.annotation.Resource
 import org.springframework.stereotype.Service

@@ -2,8 +2,8 @@ package io.kudos.ms.sys.core.service.iservice
 
 import io.kudos.base.support.iservice.IBaseCrudService
 import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpCacheEntry
-import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpForm
-import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpRow
+import io.kudos.ms.sys.common.vo.accessruleip.request.SysAccessRuleIpBatchItem
+import io.kudos.ms.sys.common.vo.accessruleip.response.SysAccessRuleIpRow
 import io.kudos.ms.sys.core.model.po.SysAccessRuleIp
 
 
@@ -58,7 +58,7 @@ interface ISysAccessRuleIpService : IBaseCrudService<String, SysAccessRuleIp> {
      * @author K
      * @since 1.0.0
      */
-    fun batchSaveOrUpdate(ruleId: String, ips: List<SysAccessRuleIpForm>): Int
+    fun batchSaveOrUpdate(ruleId: String, ips: List<SysAccessRuleIpBatchItem>): Int
 
     /**
      * 删除规则的所有IP

@@ -66,7 +66,6 @@ data class UserOrgCacheEntry (
 ) : IIdEntity<String>, Serializable {
 
 
-    constructor() : this("")
 
 
     companion object {

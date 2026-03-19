@@ -1,10 +1,12 @@
 package io.kudos.ms.sys.api.admin.controller
 
 import io.kudos.ability.web.springmvc.controller.BaseCrudController
-import io.kudos.ms.sys.common.vo.accessrule.SysAccessRuleDetail
-import io.kudos.ms.sys.common.vo.accessrule.SysAccessRuleForm
-import io.kudos.ms.sys.common.vo.accessrule.SysAccessRuleQuery
-import io.kudos.ms.sys.common.vo.accessrule.SysAccessRuleRow
+import io.kudos.ms.sys.common.vo.accessrule.request.SysAccessRuleFormCreate
+import io.kudos.ms.sys.common.vo.accessrule.request.SysAccessRuleFormUpdate
+import io.kudos.ms.sys.common.vo.accessrule.request.SysAccessRuleQuery
+import io.kudos.ms.sys.common.vo.accessrule.response.SysAccessRuleDetail
+import io.kudos.ms.sys.common.vo.accessrule.response.SysAccessRuleEdit
+import io.kudos.ms.sys.common.vo.accessrule.response.SysAccessRuleRow
 import io.kudos.ms.sys.core.service.iservice.ISysAccessRuleService
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestMapping
@@ -19,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/admin/sys/accessRule")
 class SysAccessRuleAdminController:
-    BaseCrudController<String, ISysAccessRuleService, SysAccessRuleQuery, SysAccessRuleRow, SysAccessRuleDetail, SysAccessRuleForm>() {
+    BaseCrudController<String, ISysAccessRuleService, SysAccessRuleQuery, SysAccessRuleRow, SysAccessRuleDetail, SysAccessRuleEdit, SysAccessRuleFormCreate, SysAccessRuleFormUpdate>() {
 
     /**
      * 更新active状态

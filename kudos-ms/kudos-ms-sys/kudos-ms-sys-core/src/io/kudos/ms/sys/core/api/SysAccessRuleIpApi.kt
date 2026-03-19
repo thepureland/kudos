@@ -2,8 +2,8 @@ package io.kudos.ms.sys.core.api
 
 import io.kudos.ms.sys.common.api.ISysAccessRuleIpApi
 import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpCacheEntry
-import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpForm
-import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpRow
+import io.kudos.ms.sys.common.vo.accessruleip.request.SysAccessRuleIpBatchItem
+import io.kudos.ms.sys.common.vo.accessruleip.response.SysAccessRuleIpRow
 import io.kudos.ms.sys.core.service.iservice.ISysAccessRuleIpService
 import jakarta.annotation.Resource
 import org.springframework.stereotype.Service
@@ -34,7 +34,7 @@ open class SysAccessRuleIpApi : ISysAccessRuleIpApi {
         return sysAccessRuleIpService.checkIpAccess(ip, systemCode, tenantId)
     }
 
-    override fun batchSaveOrUpdate(ruleId: String, ips: List<SysAccessRuleIpForm>): Int {
+    override fun batchSaveOrUpdate(ruleId: String, ips: List<SysAccessRuleIpBatchItem>): Int {
         return sysAccessRuleIpService.batchSaveOrUpdate(ruleId, ips)
     }
 

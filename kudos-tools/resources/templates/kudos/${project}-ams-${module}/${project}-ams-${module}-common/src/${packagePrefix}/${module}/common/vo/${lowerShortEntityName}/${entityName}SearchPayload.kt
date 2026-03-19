@@ -52,7 +52,6 @@ data class ${entityName}SearchPayload (
 
     override fun getReturnEntityClass() = ${entityName}Record::class
 
-    constructor() : this()
 
     //endregion your codes 3
 

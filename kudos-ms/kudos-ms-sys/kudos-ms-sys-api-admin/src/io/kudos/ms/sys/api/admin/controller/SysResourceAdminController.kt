@@ -4,7 +4,15 @@ import io.kudos.ability.web.springmvc.controller.BaseCrudController
 import io.kudos.base.tree.IdAndNameTreeNode
 import io.kudos.ms.sys.common.consts.SysConsts
 import io.kudos.ms.sys.common.enums.ResourceTypeEnum
-import io.kudos.ms.sys.common.vo.resource.*
+import io.kudos.ms.sys.common.vo.resource.SysResourceCacheEntry
+import io.kudos.ms.sys.common.vo.resource.request.SysResourceFormCreate
+import io.kudos.ms.sys.common.vo.resource.request.SysResourceFormUpdate
+import io.kudos.ms.sys.common.vo.resource.request.SysResourceQuery
+import io.kudos.ms.sys.common.vo.resource.response.BaseMenuTreeNode
+import io.kudos.ms.sys.common.vo.resource.response.MenuTreeNode
+import io.kudos.ms.sys.common.vo.resource.response.SysResourceDetail
+import io.kudos.ms.sys.common.vo.resource.response.SysResourceEdit
+import io.kudos.ms.sys.common.vo.resource.response.SysResourceRow
 import io.kudos.ms.sys.core.service.iservice.ISysResourceService
 import org.springframework.web.bind.annotation.*
 
@@ -17,7 +25,7 @@ import org.springframework.web.bind.annotation.*
 @RestController
 @RequestMapping("/api/admin/sys/resource")
 open class SysResourceAdminController :
-    BaseCrudController<String, ISysResourceService, SysResourceQuery, SysResourceRow, SysResourceDetail, SysResourceForm>() {
+    BaseCrudController<String, ISysResourceService, SysResourceQuery, SysResourceRow, SysResourceDetail, SysResourceEdit, SysResourceFormCreate, SysResourceFormUpdate>() {
 
     /**
      * 根据id获取资源详情信息，可以指定是否要获取所有父结点的id

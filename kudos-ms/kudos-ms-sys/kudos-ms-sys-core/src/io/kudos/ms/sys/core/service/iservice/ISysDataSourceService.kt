@@ -3,7 +3,7 @@ package io.kudos.ms.sys.core.service.iservice
 import io.kudos.base.support.iservice.IBaseCrudService
 import io.kudos.ms.sys.common.api.ISysDataSourceApi
 import io.kudos.ms.sys.common.vo.datasource.SysDataSourceCacheEntry
-import io.kudos.ms.sys.common.vo.datasource.SysDataSourceRow
+import io.kudos.ms.sys.common.vo.datasource.response.SysDataSourceRow
 import io.kudos.ms.sys.core.model.po.SysDataSource
 
 

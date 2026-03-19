@@ -35,7 +35,6 @@ data class MsgReceiveQuery (
 ) : ListSearchPayload() {
 
 
-    constructor() : this("")
 
     override fun getReturnEntityClass() = MsgReceiveRow::class
 

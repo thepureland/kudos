@@ -2,10 +2,12 @@ package io.kudos.ms.sys.api.admin.controller
 
 import io.kudos.ability.web.springmvc.controller.BaseCrudController
 import io.kudos.base.tree.IdAndNameTreeNode
-import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceDetail
-import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceForm
-import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceQuery
-import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceRow
+import io.kudos.ms.sys.common.vo.microservice.request.SysMicroServiceFormCreate
+import io.kudos.ms.sys.common.vo.microservice.request.SysMicroServiceFormUpdate
+import io.kudos.ms.sys.common.vo.microservice.request.SysMicroServiceQuery
+import io.kudos.ms.sys.common.vo.microservice.response.SysMicroServiceDetail
+import io.kudos.ms.sys.common.vo.microservice.response.SysMicroServiceEdit
+import io.kudos.ms.sys.common.vo.microservice.response.SysMicroServiceRow
 import io.kudos.ms.sys.core.service.iservice.ISysMicroServiceService
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PutMapping
@@ -21,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/admin/sys/microService")
 class SysMicroServiceAdminController :
-    BaseCrudController<String, ISysMicroServiceService, SysMicroServiceQuery, SysMicroServiceRow, SysMicroServiceDetail, SysMicroServiceForm>() {
+    BaseCrudController<String, ISysMicroServiceService, SysMicroServiceQuery, SysMicroServiceRow, SysMicroServiceDetail, SysMicroServiceEdit, SysMicroServiceFormCreate, SysMicroServiceFormUpdate>() {
 
     /**
      * 返回所有启用的原子服务编码

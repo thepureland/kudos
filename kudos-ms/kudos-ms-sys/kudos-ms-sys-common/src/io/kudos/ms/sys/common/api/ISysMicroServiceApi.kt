@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.common.api
 
 import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceCacheEntry
-import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceRow
+import io.kudos.ms.sys.common.vo.microservice.response.SysMicroServiceRow
 
 
 /**

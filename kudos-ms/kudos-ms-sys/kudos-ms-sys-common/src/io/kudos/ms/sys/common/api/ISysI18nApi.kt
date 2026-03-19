@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.common.api
 
-import io.kudos.ms.sys.common.vo.i18n.SysI18nForm
+import io.kudos.ms.sys.common.vo.i18n.request.SysI18nFormUpdate
 
 
 /**
@@ -27,7 +27,7 @@ interface ISysI18nApi {
         atomicServiceCode: String
     ): Map<String, String>
 
-    fun batchSaveOrUpdate(i18ns: List<SysI18nForm>): Int
+    fun batchSaveOrUpdate(i18ns: List<SysI18nFormUpdate>): Int
 
     fun updateActive(id: String, active: Boolean): Boolean
 

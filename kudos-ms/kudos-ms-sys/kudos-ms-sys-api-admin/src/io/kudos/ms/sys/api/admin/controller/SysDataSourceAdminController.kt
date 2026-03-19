@@ -1,10 +1,12 @@
 package io.kudos.ms.sys.api.admin.controller
 
 import io.kudos.ability.web.springmvc.controller.BaseCrudController
-import io.kudos.ms.sys.common.vo.datasource.SysDataSourceDetail
-import io.kudos.ms.sys.common.vo.datasource.SysDataSourceForm
-import io.kudos.ms.sys.common.vo.datasource.SysDataSourceQuery
-import io.kudos.ms.sys.common.vo.datasource.SysDataSourceRow
+import io.kudos.ms.sys.common.vo.datasource.request.SysDataSourceFormCreate
+import io.kudos.ms.sys.common.vo.datasource.request.SysDataSourceFormUpdate
+import io.kudos.ms.sys.common.vo.datasource.request.SysDataSourceQuery
+import io.kudos.ms.sys.common.vo.datasource.response.SysDataSourceDetail
+import io.kudos.ms.sys.common.vo.datasource.response.SysDataSourceEdit
+import io.kudos.ms.sys.common.vo.datasource.response.SysDataSourceRow
 import io.kudos.ms.sys.core.service.iservice.ISysDataSourceService
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestMapping
@@ -19,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/admin/sys/dataSource")
 class SysDataSourceAdminController:
-    BaseCrudController<String, ISysDataSourceService, SysDataSourceQuery, SysDataSourceRow, SysDataSourceDetail, SysDataSourceForm>() {
+    BaseCrudController<String, ISysDataSourceService, SysDataSourceQuery, SysDataSourceRow, SysDataSourceDetail, SysDataSourceEdit, SysDataSourceFormCreate, SysDataSourceFormUpdate>() {
 
     /**
      * 更新active状态

@@ -15,7 +15,6 @@ data class SysDictItemCacheEntry (
     /** 主键 */
     override val id: String = "",
 
-
     /** 字典项代码 */
     val itemCode: String = "",
 
@@ -51,24 +50,8 @@ data class SysDictItemCacheEntry (
 
 ) : IIdEntity<String>, Serializable {
 
-
-    constructor() : this("")
-
-
     companion object {
         private const val serialVersionUID = 3064983536187872915L
     }
-
-    /** 返回字符串字段 trim 后的副本，用于与 H2 CHAR 右填充对齐，保证缓存 key 一致。 */
-    fun trimmed(): SysDictItemCacheEntry = copy(
-        id = id.trim(),
-        itemCode = itemCode.trim(),
-        itemName = itemName.trim(),
-        dictId = dictId.trim(),
-        parentId = parentId?.trim(),
-        remark = remark?.trim(),
-        dictType = dictType.trim(),
-        atomicServiceCode = atomicServiceCode.trim()
-    )
 
 }

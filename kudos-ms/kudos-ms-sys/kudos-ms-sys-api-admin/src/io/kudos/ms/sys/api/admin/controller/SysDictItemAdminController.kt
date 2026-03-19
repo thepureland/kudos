@@ -2,7 +2,14 @@ package io.kudos.ms.sys.api.admin.controller
 
 import io.kudos.ability.web.springmvc.controller.BaseCrudController
 import io.kudos.base.query.PagingSearchResult
-import io.kudos.ms.sys.common.vo.dictitem.*
+import io.kudos.ms.sys.common.vo.dictitem.SysDictItemCacheEntry
+import io.kudos.ms.sys.common.vo.dictitem.request.SysDictItemFormCreate
+import io.kudos.ms.sys.common.vo.dictitem.request.SysDictItemFormUpdate
+import io.kudos.ms.sys.common.vo.dictitem.request.SysDictItemQuery
+import io.kudos.ms.sys.common.vo.dictitem.response.SysDictItemDetail
+import io.kudos.ms.sys.common.vo.dictitem.response.SysDictItemEdit
+import io.kudos.ms.sys.common.vo.dictitem.response.SysDictItemNode
+import io.kudos.ms.sys.common.vo.dictitem.response.SysDictItemRow
 import io.kudos.ms.sys.core.service.impl.VSysDictItemService
 import io.kudos.ms.sys.core.service.iservice.ISysDictItemService
 import jakarta.annotation.Resource
@@ -17,7 +24,7 @@ import org.springframework.web.bind.annotation.*
 @RestController
 @RequestMapping("/api/admin/sys/dictItem")
 class SysDictItemAdminController :
-    BaseCrudController<String, ISysDictItemService, SysDictItemQuery, SysDictItemRow, SysDictItemDetail, SysDictItemForm>() {
+    BaseCrudController<String, ISysDictItemService, SysDictItemQuery, SysDictItemRow, SysDictItemDetail, SysDictItemEdit, SysDictItemFormCreate, SysDictItemFormUpdate>() {
 
     @Resource
     private lateinit var vSysDictItemService: VSysDictItemService

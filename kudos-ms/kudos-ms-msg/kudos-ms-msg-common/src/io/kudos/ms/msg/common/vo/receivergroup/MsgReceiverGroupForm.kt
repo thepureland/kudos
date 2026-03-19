@@ -31,10 +31,4 @@ data class MsgReceiverGroupForm (
     /** 是否启用 */
     val active: Boolean? = null,
 
-) : FormPayload<String>() {
-
-
-    constructor() : this("")
-
-
-}
+) : FormPayload<String>()

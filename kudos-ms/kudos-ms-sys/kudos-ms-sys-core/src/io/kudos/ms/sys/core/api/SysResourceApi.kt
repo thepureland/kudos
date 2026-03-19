@@ -2,9 +2,9 @@ package io.kudos.ms.sys.core.api
 
 import io.kudos.ms.sys.common.api.ISysResourceApi
 import io.kudos.ms.sys.common.enums.ResourceTypeEnum
-import io.kudos.ms.sys.common.vo.resource.BaseMenuTreeNode
-import io.kudos.ms.sys.common.vo.resource.MenuTreeNode
 import io.kudos.ms.sys.common.vo.resource.SysResourceCacheEntry
+import io.kudos.ms.sys.common.vo.resource.response.BaseMenuTreeNode
+import io.kudos.ms.sys.common.vo.resource.response.MenuTreeNode
 import io.kudos.ms.sys.core.service.iservice.ISysResourceService
 import jakarta.annotation.Resource
 import org.springframework.stereotype.Component

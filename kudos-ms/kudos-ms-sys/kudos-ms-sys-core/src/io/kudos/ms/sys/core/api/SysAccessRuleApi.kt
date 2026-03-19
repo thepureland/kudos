@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.core.api
 
 import io.kudos.ms.sys.common.api.ISysAccessRuleApi
-import io.kudos.ms.sys.common.vo.accessrule.SysAccessRuleRow
+import io.kudos.ms.sys.common.vo.accessrule.response.SysAccessRuleRow
 import io.kudos.ms.sys.core.service.iservice.ISysAccessRuleService
 import jakarta.annotation.Resource
 import org.springframework.stereotype.Service

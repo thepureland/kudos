@@ -10,8 +10,8 @@ import io.kudos.base.security.CryptoKit
 import io.kudos.base.model.payload.ListSearchPayload
 import io.kudos.ms.sys.common.api.ISysTenantApi
 import io.kudos.ms.sys.common.vo.datasource.SysDataSourceCacheEntry
-import io.kudos.ms.sys.common.vo.datasource.SysDataSourceDetail
-import io.kudos.ms.sys.common.vo.datasource.SysDataSourceRow
+import io.kudos.ms.sys.common.vo.datasource.response.SysDataSourceDetail
+import io.kudos.ms.sys.common.vo.datasource.response.SysDataSourceRow
 import io.kudos.ms.sys.core.cache.SysDataSourceHashCache
 import io.kudos.ms.sys.core.dao.SysDataSourceDao
 import io.kudos.ms.sys.core.model.po.SysDataSource

@@ -62,7 +62,6 @@ data class ${entityName}CacheItem (
 
     //region your codes 3
 
-    constructor() : this("")
 
     // endregion your codes 3
 

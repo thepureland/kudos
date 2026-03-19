@@ -78,7 +78,6 @@ data class UserAccountThirdCacheEntry (
 ) : IIdEntity<String>, Serializable {
 
 
-    constructor() : this("")
 
 
     companion object {

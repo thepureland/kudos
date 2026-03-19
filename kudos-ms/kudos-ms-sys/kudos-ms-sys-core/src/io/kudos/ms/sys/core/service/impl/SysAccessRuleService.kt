@@ -4,7 +4,7 @@ import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.eq
-import io.kudos.ms.sys.common.vo.accessrule.SysAccessRuleRow
+import io.kudos.ms.sys.common.vo.accessrule.response.SysAccessRuleRow
 import io.kudos.ms.sys.core.dao.SysAccessRuleDao
 import io.kudos.ms.sys.core.model.po.SysAccessRule
 import io.kudos.ms.sys.core.service.iservice.ISysAccessRuleService

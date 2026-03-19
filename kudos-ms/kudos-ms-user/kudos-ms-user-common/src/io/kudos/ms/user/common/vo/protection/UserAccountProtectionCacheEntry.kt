@@ -81,7 +81,6 @@ data class UserAccountProtectionCacheEntry (
 ) : IIdEntity<String>, Serializable {
 
 
-    constructor() : this("")
 
 
     companion object {

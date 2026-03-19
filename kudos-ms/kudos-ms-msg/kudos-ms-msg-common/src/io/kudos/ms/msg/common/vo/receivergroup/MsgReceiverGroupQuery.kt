@@ -34,7 +34,6 @@ data class MsgReceiverGroupQuery (
 ) : ListSearchPayload() {
 
 
-    constructor() : this("")
 
     override fun getReturnEntityClass() = MsgReceiverGroupRow::class
 

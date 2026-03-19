@@ -1,10 +1,12 @@
 package io.kudos.ms.sys.api.admin.controller
 
 import io.kudos.ability.web.springmvc.controller.BaseCrudController
-import io.kudos.ms.sys.common.vo.cache.SysCacheCacheEntry
-import io.kudos.ms.sys.common.vo.cache.SysCacheFormCreate
-import io.kudos.ms.sys.common.vo.cache.SysCacheQuery
-import io.kudos.ms.sys.common.vo.cache.SysCacheRow
+import io.kudos.ms.sys.common.vo.cache.response.SysCacheDetail
+import io.kudos.ms.sys.common.vo.cache.response.SysCacheEdit
+import io.kudos.ms.sys.common.vo.cache.request.SysCacheFormCreate
+import io.kudos.ms.sys.common.vo.cache.request.SysCacheFormUpdate
+import io.kudos.ms.sys.common.vo.cache.request.SysCacheQuery
+import io.kudos.ms.sys.common.vo.cache.response.SysCacheRow
 import io.kudos.ms.sys.core.service.iservice.ISysCacheService
 import org.springframework.web.bind.annotation.*
 
@@ -17,7 +19,7 @@ import org.springframework.web.bind.annotation.*
 @RestController
 @RequestMapping("/api/admin/sys/cache")
 open class SysCacheAdminController :
-    BaseCrudController<String, ISysCacheService, SysCacheQuery, SysCacheRow, SysCacheCacheEntry, SysCacheFormCreate, SysCacheFormCreate>() {
+    BaseCrudController<String, ISysCacheService, SysCacheQuery, SysCacheRow, SysCacheDetail, SysCacheEdit, SysCacheFormCreate, SysCacheFormUpdate>() {
 
     /**
      * 重载指定缓存配置（按 id）下某 key 的缓存项

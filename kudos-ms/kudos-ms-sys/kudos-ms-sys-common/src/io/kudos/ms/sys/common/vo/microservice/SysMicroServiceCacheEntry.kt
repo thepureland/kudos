@@ -12,8 +12,6 @@ import java.io.Serializable
  */
 data class SysMicroServiceCacheEntry (
 
-
-
     override val id: String = "",
 
     /** 编码 */
@@ -41,11 +39,6 @@ data class SysMicroServiceCacheEntry (
     val builtIn: Boolean = true,
 
 ) : IIdEntity<String>, Serializable {
-
-
-    constructor() : this("")
-
-
 
     companion object {
         private const val serialVersionUID = 3759252597026207298L

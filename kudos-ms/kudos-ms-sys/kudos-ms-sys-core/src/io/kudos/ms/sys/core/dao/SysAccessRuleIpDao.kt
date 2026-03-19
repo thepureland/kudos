@@ -6,8 +6,8 @@ import io.kudos.base.error.ObjectNotFoundException
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.query.eq
-import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpQuery
-import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpRow
+import io.kudos.ms.sys.common.vo.accessruleip.request.SysAccessRuleIpQuery
+import io.kudos.ms.sys.common.vo.accessruleip.response.SysAccessRuleIpRow
 import io.kudos.ms.sys.core.model.po.SysAccessRule
 import io.kudos.ms.sys.core.model.po.SysAccessRuleIp
 import io.kudos.ms.sys.core.model.table.SysAccessRuleIps

@@ -1,8 +1,5 @@
 package io.kudos.ms.sys.common.api
 
-import io.kudos.ms.sys.common.vo.cache.SysCacheCacheEntry
-import io.kudos.ms.sys.common.vo.cache.SysCacheRow
-
 
 /**
  * 缓存 对外API

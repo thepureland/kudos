@@ -102,7 +102,6 @@ data class UserAccountCacheEntry (
 ) : IIdEntity<String>, Serializable {
 
 
-    constructor() : this("")
 
 
     companion object {

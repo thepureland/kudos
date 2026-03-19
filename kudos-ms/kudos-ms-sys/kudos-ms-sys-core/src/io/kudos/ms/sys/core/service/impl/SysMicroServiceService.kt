@@ -8,7 +8,7 @@ import io.kudos.base.query.eq
 import io.kudos.base.tree.IdAndNameTreeNode
 import io.kudos.base.tree.ListToTreeConverter
 import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceCacheEntry
-import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceRow
+import io.kudos.ms.sys.common.vo.microservice.response.SysMicroServiceRow
 import io.kudos.ms.sys.core.cache.SysMicroServiceHashCache
 import io.kudos.ms.sys.core.dao.SysMicroServiceDao
 import io.kudos.ms.sys.core.model.po.SysMicroService

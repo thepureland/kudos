@@ -1,8 +1,8 @@
 package io.kudos.ms.sys.common.api
 
 import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpCacheEntry
-import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpForm
-import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpRow
+import io.kudos.ms.sys.common.vo.accessruleip.request.SysAccessRuleIpBatchItem
+import io.kudos.ms.sys.common.vo.accessruleip.response.SysAccessRuleIpRow
 
 
 /**
@@ -48,7 +48,7 @@ interface ISysAccessRuleIpApi {
      * @param ips IP规则载体列表
      * @return 成功保存或更新的数量
      */
-    fun batchSaveOrUpdate(ruleId: String, ips: List<SysAccessRuleIpForm>): Int
+    fun batchSaveOrUpdate(ruleId: String, ips: List<SysAccessRuleIpBatchItem>): Int
 
     /**
      * 删除规则的所有IP

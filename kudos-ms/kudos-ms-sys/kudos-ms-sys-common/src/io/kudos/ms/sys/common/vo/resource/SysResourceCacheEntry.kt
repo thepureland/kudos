@@ -16,7 +16,6 @@ data class SysResourceCacheEntry (
     /** 主键 */
     override val id: String = "",
 
-
     /** 名称 */
     val name: String? = null,
 
@@ -66,10 +65,6 @@ data class SysResourceCacheEntry (
     val updateTime: LocalDateTime? = null,
 
 ) : IIdEntity<String>, Serializable {
-
-
-    constructor() : this("")
-
 
     companion object {
         private const val serialVersionUID = 8029707342616140104L

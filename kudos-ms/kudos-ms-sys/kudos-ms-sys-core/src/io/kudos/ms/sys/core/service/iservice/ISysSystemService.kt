@@ -3,7 +3,7 @@ package io.kudos.ms.sys.core.service.iservice
 import io.kudos.base.support.iservice.IBaseCrudService
 import io.kudos.base.tree.IdAndNameTreeNode
 import io.kudos.ms.sys.common.vo.system.SysSystemCacheEntry
-import io.kudos.ms.sys.common.vo.system.SysSystemRow
+import io.kudos.ms.sys.common.vo.system.response.SysSystemRow
 import io.kudos.ms.sys.core.model.po.SysSystem
 
 

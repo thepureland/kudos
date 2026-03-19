@@ -54,7 +54,6 @@ data class ${entityName}Detail (
 
     //region your codes 3
 
-    constructor() : this("")
 
     //endregion your codes 3
 

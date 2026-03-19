@@ -71,10 +71,4 @@ data class UserAccountThirdRow (
     /** 更新时间 */
     val updateTime: LocalDateTime? = null,
 
-) : IdJsonResult<String>() {
-
-
-    constructor() : this("")
-
-
-}
+) : IdJsonResult<String>()

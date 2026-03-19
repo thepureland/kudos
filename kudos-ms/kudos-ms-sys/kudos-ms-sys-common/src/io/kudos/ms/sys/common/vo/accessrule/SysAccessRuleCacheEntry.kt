@@ -15,7 +15,6 @@ data class SysAccessRuleCacheEntry (
     /** 主键 */
     override val id: String = "",
 
-
     /** 租户id */
     val tenantId: String = "",
 
@@ -26,10 +25,6 @@ data class SysAccessRuleCacheEntry (
     val ruleType: Int = 0,
 
 ) : IIdEntity<String>, Serializable {
-
-
-    constructor() : this("")
-
 
     companion object {
         private const val serialVersionUID = 8253788046293050901L

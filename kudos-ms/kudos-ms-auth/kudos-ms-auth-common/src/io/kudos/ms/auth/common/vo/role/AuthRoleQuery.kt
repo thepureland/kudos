@@ -37,7 +37,6 @@ data class AuthRoleQuery (
 ) : ListSearchPayload() {
 
 
-    constructor() : this("")
 
     override fun getReturnEntityClass() = AuthRoleRow::class
 

@@ -38,7 +38,6 @@ data class UserContactWayCacheEntry (
 ) : IIdEntity<String>, Serializable {
 
 
-    constructor() : this("")
 
 
     companion object {

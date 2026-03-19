@@ -65,10 +65,4 @@ data class UserOrgTreeRow (
     /** 子机构列表 */
     val children: MutableList<UserOrgTreeRow>? = null,
 
-) : IdJsonResult<String>() {
-
-
-    constructor() : this("")
-
-
-}
+) : IdJsonResult<String>()
