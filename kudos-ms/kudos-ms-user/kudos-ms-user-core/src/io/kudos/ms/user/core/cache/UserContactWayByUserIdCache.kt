@@ -5,7 +5,7 @@ import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.user.common.vo.contact.UserContactWayCacheEntry
-import io.kudos.ms.user.common.vo.contact.UserContactWayQuery
+import io.kudos.ms.user.common.vo.contact.request.UserContactWayQuery
 import io.kudos.ms.user.core.dao.UserContactWayDao
 import io.kudos.ms.user.core.model.po.UserContactWay
 import org.springframework.beans.factory.annotation.Autowired
@@ -49,10 +49,7 @@ open class UserContactWayByUserIdCache : AbstractKeyValueCacheHandler<List<UserC
         }
 
         // 加载所有可用的联系方式
-        val searchPayload = UserContactWayQuery().apply {
-            returnEntityClass = UserContactWayCacheEntry::class
-            active = true
-        }
+        val searchPayload = UserContactWayQuery(active = true)
         @Suppress("UNCHECKED_CAST")
         val results = userContactWayDao.search(searchPayload, UserContactWayCacheEntry::class)
         log.debug("从数据库加载了${results.size}条联系方式。")
@@ -86,11 +83,10 @@ open class UserContactWayByUserIdCache : AbstractKeyValueCacheHandler<List<UserC
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("缓存中不存在用户${userId}的联系方式，从数据库中加载...")
         }
-        val searchPayload = UserContactWayQuery().apply {
-            returnEntityClass = UserContactWayCacheEntry::class
-            this.userId = userId
-            this.active = true
-        }
+        val searchPayload = UserContactWayQuery(
+            userId = userId,
+            active = true
+        )
         @Suppress("UNCHECKED_CAST")
         val results = userContactWayDao.search(searchPayload, UserContactWayCacheEntry::class)
         if (results.isEmpty()) {

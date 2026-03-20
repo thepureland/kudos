@@ -9,14 +9,12 @@ import java.time.LocalDateTime
  * 用户组缓存项
  *
  * @author K
- * @author AI: Codex
  * @since 1.0.0
  */
 data class AuthGroupCacheEntry (
 
     /** 主键 */
-    override val id: String = EMPTY_ID,
-
+    override val id: String = "",
 
     /** 用户组编码 */
     val code: String? = null,
@@ -59,25 +57,8 @@ data class AuthGroupCacheEntry (
 
 ) : IIdEntity<String>, Serializable {
 
-
-
-    /**
-     * 以非空语义访问 id。
-     *
-     * 默认值可能是空字符串（用于无参构造/反射创建），业务侧可通过该属性要求“非空白 id”。
-     */
-    val requiredId: String
-        get() = id.takeIf { it.isNotBlank() }
-            ?: error("AuthGroupCacheEntry.id 为空白，当前对象可能尚未持久化。")
-        set(value) {
-            require(value.isNotBlank()) { "AuthGroupCacheEntry.id 不能为空白字符串。" }
-            id = value
-        }
-
-
     companion object {
         private const val serialVersionUID = 1L
-        private const val EMPTY_ID = ""
     }
 
 }

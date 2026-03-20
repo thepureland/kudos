@@ -2,7 +2,7 @@ package io.kudos.ms.auth.core.service.iservice
 
 import io.kudos.base.support.iservice.IBaseCrudService
 import io.kudos.ms.auth.common.vo.role.AuthRoleCacheEntry
-import io.kudos.ms.auth.common.vo.role.AuthRoleRow
+import io.kudos.ms.auth.common.vo.role.response.AuthRoleRow
 import io.kudos.ms.auth.core.model.po.AuthRole
 import io.kudos.ms.sys.common.vo.resource.SysResourceCacheEntry
 import io.kudos.ms.user.common.vo.user.UserAccountCacheEntry

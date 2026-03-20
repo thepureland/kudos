@@ -4,7 +4,7 @@ import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.user.common.vo.org.UserOrgCacheEntry
-import io.kudos.ms.user.common.vo.org.UserOrgTreeRow
+import io.kudos.ms.user.common.vo.org.response.UserOrgTreeRow
 import io.kudos.ms.user.common.vo.user.UserAccountCacheEntry
 import io.kudos.ms.user.core.cache.UserAccountHashCache
 import io.kudos.ms.user.core.cache.UserIdsByOrgIdCache
