@@ -9,14 +9,12 @@ import java.time.LocalDateTime
  * 用户账号保护缓存项
  *
  * @author K
- * @author AI: Codex
  * @since 1.0.0
  */
 data class UserAccountProtectionCacheEntry (
 
     /** 主键 */
     override val id: String = "",
-
 
     /** 用户ID */
     val userId: String? = null,
@@ -79,9 +77,6 @@ data class UserAccountProtectionCacheEntry (
     val updateTime: LocalDateTime? = null,
 
 ) : IIdEntity<String>, Serializable {
-
-
-
 
     companion object {
         private const val serialVersionUID = 1L

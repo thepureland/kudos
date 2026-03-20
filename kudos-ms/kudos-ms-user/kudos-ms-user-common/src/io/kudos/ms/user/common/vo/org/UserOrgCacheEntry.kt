@@ -9,14 +9,12 @@ import java.time.LocalDateTime
  * 机构缓存项
  *
  * @author K
- * @author AI: Cursor
  * @since 1.0.0
  */
 data class UserOrgCacheEntry (
 
     /** 主键 */
     override val id: String = "",
-
 
     /** 机构名称 */
     val name: String? = null,
@@ -64,9 +62,6 @@ data class UserOrgCacheEntry (
     val updateTime: LocalDateTime? = null,
 
 ) : IIdEntity<String>, Serializable {
-
-
-
 
     companion object {
         private const val serialVersionUID = 1L

@@ -3,7 +3,7 @@ package io.kudos.ms.user.core.service.iservice
 import io.kudos.base.support.iservice.IBaseCrudService
 import io.kudos.ms.user.common.vo.org.UserOrgCacheEntry
 import io.kudos.ms.user.common.vo.user.UserAccountCacheEntry
-import io.kudos.ms.user.common.vo.user.UserAccountRow
+import io.kudos.ms.user.common.vo.user.response.UserAccountRow
 import io.kudos.ms.user.core.model.po.UserAccount
 import java.time.LocalDateTime
 

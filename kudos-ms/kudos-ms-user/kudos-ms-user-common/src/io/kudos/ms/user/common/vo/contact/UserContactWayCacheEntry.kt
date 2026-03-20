@@ -8,14 +8,12 @@ import java.io.Serializable
  * 用户联系方式缓存项
  *
  * @author K
- * @author AI: Codex
  * @since 1.0.0
  */
 data class UserContactWayCacheEntry (
 
     /** 主键 */
     override val id: String = "",
-
 
     /** 用户ID */
     val userId: String? = null,
@@ -36,9 +34,6 @@ data class UserContactWayCacheEntry (
     val remark: String? = null,
 
 ) : IIdEntity<String>, Serializable {
-
-
-
 
     companion object {
         private const val serialVersionUID = 1L

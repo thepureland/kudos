@@ -9,14 +9,12 @@ import java.time.LocalDateTime
  * 记住我登录缓存项
  *
  * @author K
- * @author AI: Codex
  * @since 1.0.0
  */
 data class UserLoginRememberMeCacheEntry (
 
     /** 主键 */
     override val id: String = "",
-
 
     /** 用户名 */
     val username: String? = null,
@@ -28,9 +26,6 @@ data class UserLoginRememberMeCacheEntry (
     val lastUsed: LocalDateTime? = null,
 
 ) : IIdEntity<String>, Serializable {
-
-
-
 
     companion object {
         private const val serialVersionUID = 1L

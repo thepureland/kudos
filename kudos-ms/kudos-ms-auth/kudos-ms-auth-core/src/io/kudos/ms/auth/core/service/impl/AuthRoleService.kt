@@ -4,8 +4,8 @@ import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.auth.common.vo.role.AuthRoleCacheEntry
-import io.kudos.ms.auth.common.vo.role.AuthRoleQuery
-import io.kudos.ms.auth.common.vo.role.AuthRoleRow
+import io.kudos.ms.auth.common.vo.role.request.AuthRoleQuery
+import io.kudos.ms.auth.common.vo.role.response.AuthRoleRow
 import io.kudos.ms.auth.core.cache.*
 import io.kudos.ms.auth.core.dao.AuthRoleDao
 import io.kudos.ms.auth.core.model.po.AuthRole
@@ -95,25 +95,20 @@ open class AuthRoleService : BaseCrudService<String, AuthRole, AuthRoleDao>(),
     }
 
     override fun getRoleRecord(id: String): AuthRoleRow? {
-        val role = dao.get(id) ?: return null
-        val record = AuthRoleRow()
-        BeanKit.copyProperties(role, record)
-        return record
+        return dao.getAs<AuthRoleRow>(id)
     }
 
     override fun getRolesByTenantId(tenantId: String): List<AuthRoleRow> {
-        val searchPayload = AuthRoleQuery().apply {
-            this.tenantId = tenantId
-        }
+        val searchPayload = AuthRoleQuery(tenantId = tenantId)
         @Suppress("UNCHECKED_CAST")
         return dao.search(searchPayload, AuthRoleRow::class)
     }
 
     override fun getRolesBySubsysCode(tenantId: String, subsysCode: String): List<AuthRoleRow> {
-        val searchPayload = AuthRoleQuery().apply {
-            this.tenantId = tenantId
-            this.subsysCode = subsysCode
-        }
+        val searchPayload = AuthRoleQuery(
+            tenantId = tenantId,
+            subsysCode = subsysCode
+        )
         @Suppress("UNCHECKED_CAST")
         return dao.search(searchPayload, AuthRoleRow::class)
     }

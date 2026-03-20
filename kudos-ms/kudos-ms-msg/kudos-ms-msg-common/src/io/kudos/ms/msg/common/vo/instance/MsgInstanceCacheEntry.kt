@@ -9,14 +9,12 @@ import java.time.LocalDateTime
  * 消息实例缓存项
  *
  * @author K
- * @author AI: Codex
  * @since 1.0.0
  */
 data class MsgInstanceCacheEntry (
 
     /** 主键 */
     override val id: String = "",
-
 
     /** 国家-语言字典码 */
     val localeDictCode: String? = null,
@@ -49,9 +47,6 @@ data class MsgInstanceCacheEntry (
     val tenantId: String? = null,
 
 ) : IIdEntity<String>, Serializable {
-
-
-
 
     companion object {
         private const val serialVersionUID = 5744943131449847637L

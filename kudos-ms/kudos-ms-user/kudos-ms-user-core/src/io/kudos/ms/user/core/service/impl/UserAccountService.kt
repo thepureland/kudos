@@ -6,8 +6,8 @@ import io.kudos.base.logger.LogFactory
 import io.kudos.base.security.CryptoKit
 import io.kudos.ms.user.common.vo.org.UserOrgCacheEntry
 import io.kudos.ms.user.common.vo.user.UserAccountCacheEntry
-import io.kudos.ms.user.common.vo.user.UserAccountQuery
-import io.kudos.ms.user.common.vo.user.UserAccountRow
+import io.kudos.ms.user.common.vo.user.request.UserAccountQuery
+import io.kudos.ms.user.common.vo.user.response.UserAccountRow
 import io.kudos.ms.user.core.cache.OrgIdsByUserIdCache
 import io.kudos.ms.user.core.cache.UserAccountHashCache
 import io.kudos.ms.user.core.cache.UserOrgHashCache
@@ -74,24 +74,17 @@ open class UserAccountService : BaseCrudService<String, UserAccount, UserAccount
     }
 
     override fun getUserRecord(id: String): UserAccountRow? {
-        val user = dao.get(id) ?: return null
-        val record = UserAccountRow()
-        BeanKit.copyProperties(user, record)
-        return record
+        return dao.getAs<UserAccountRow>(id)
     }
 
     override fun getUsersByTenantId(tenantId: String): List<UserAccountRow> {
-        val searchPayload = UserAccountQuery().apply {
-            this.tenantId = tenantId
-        }
+        val searchPayload = UserAccountQuery(tenantId = tenantId)
         @Suppress("UNCHECKED_CAST")
         return dao.search(searchPayload, UserAccountRow::class)
     }
 
     override fun getUsersByOrgId(orgId: String): List<UserAccountRow> {
-        val searchPayload = UserAccountQuery().apply {
-            this.orgId = orgId
-        }
+        val searchPayload = UserAccountQuery(orgId = orgId)
         @Suppress("UNCHECKED_CAST")
         return dao.search(searchPayload, UserAccountRow::class)
     }

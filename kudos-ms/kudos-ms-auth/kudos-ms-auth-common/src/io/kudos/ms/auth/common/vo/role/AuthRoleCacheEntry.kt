@@ -9,14 +9,12 @@ import java.time.LocalDateTime
  * 角色缓存项
  *
  * @author K
- * @author AI: Cursor
  * @since 1.0.0
  */
 data class AuthRoleCacheEntry (
 
     /** 主键 */
     override val id: String = "",
-
 
     /** 角色编码 */
     val code: String? = null,
@@ -58,9 +56,6 @@ data class AuthRoleCacheEntry (
     val updateTime: LocalDateTime? = null,
 
 ) : IIdEntity<String>, Serializable {
-
-
-
 
     companion object {
         private const val serialVersionUID = 1L

@@ -6,7 +6,7 @@ import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.context.support.Consts
 import io.kudos.ms.user.common.vo.user.UserAccountThirdCacheEntry
-import io.kudos.ms.user.common.vo.user.UserAccountThirdQuery
+import io.kudos.ms.user.common.vo.user.request.UserAccountThirdQuery
 import io.kudos.ms.user.core.dao.UserAccountThirdDao
 import io.kudos.ms.user.core.model.po.UserAccountThird
 import org.springframework.beans.factory.annotation.Autowired
@@ -55,10 +55,7 @@ open class AccountThirdByUserIdAndProviderCodeCache : AbstractKeyValueCacheHandl
             return
         }
 
-        val searchPayload = UserAccountThirdQuery().apply {
-            returnEntityClass = UserAccountThirdCacheEntry::class
-            active = true
-        }
+        val searchPayload = UserAccountThirdQuery(active = true)
         @Suppress("UNCHECKED_CAST")
         val results = userAccountThirdDao.search(searchPayload, UserAccountThirdCacheEntry::class)
         log.debug("从数据库加载了${results.size}条第三方账号信息。")
@@ -91,12 +88,11 @@ open class AccountThirdByUserIdAndProviderCodeCache : AbstractKeyValueCacheHandl
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("缓存中不存在用户${userId}且提供方为${accountProviderDictCode}的第三方账号，从数据库中加载...")
         }
-        val searchPayload = UserAccountThirdQuery().apply {
-            returnEntityClass = UserAccountThirdCacheEntry::class
-            this.userId = userId
-            this.accountProviderDictCode = accountProviderDictCode
-            this.active = true
-        }
+        val searchPayload = UserAccountThirdQuery(
+            userId = userId,
+            accountProviderDictCode = accountProviderDictCode,
+            active = true
+        )
         @Suppress("UNCHECKED_CAST")
         val results = userAccountThirdDao.search(searchPayload, UserAccountThirdCacheEntry::class)
         return if (results.isEmpty()) {

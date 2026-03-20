@@ -9,14 +9,12 @@ import java.time.LocalDateTime
  * 消息接收者群组缓存项
  *
  * @author K
- * @author AI: Codex
  * @since 1.0.0
  */
 data class MsgReceiverGroupCacheEntry (
 
     /** 主键 */
     override val id: String = "",
-
 
     /** 接收者群组类型字典码 */
     val receiverGroupTypeDictCode: String? = null,
@@ -55,9 +53,6 @@ data class MsgReceiverGroupCacheEntry (
     val updateTime: LocalDateTime? = null,
 
 ) : IIdEntity<String>, Serializable {
-
-
-
 
     companion object {
         private const val serialVersionUID = 4762236923181019117L

@@ -8,14 +8,12 @@ import java.io.Serializable
  * 消息模板缓存项
  *
  * @author K
- * @author AI: Codex
  * @since 1.0.0
  */
 data class MsgTemplateCacheEntry (
 
     /** 主键 */
     override val id: String = "",
-
 
     /** 发送类型字典码 */
     val sendTypeDictCode: String? = null,
@@ -51,9 +49,6 @@ data class MsgTemplateCacheEntry (
     val tenantId: String? = null,
 
 ) : IIdEntity<String>, Serializable {
-
-
-
 
     companion object {
         private const val serialVersionUID = 5801009370756956314L
