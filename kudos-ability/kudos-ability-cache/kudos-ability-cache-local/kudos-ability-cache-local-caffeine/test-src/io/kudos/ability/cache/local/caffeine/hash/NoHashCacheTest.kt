@@ -9,7 +9,8 @@ import org.springframework.context.annotation.Import
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import kotlin.test.Test
-import kotlin.test.assertNotEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNotSame
 
 /**
  * 不启用 Hash 缓存测试用例（仿照 [io.kudos.ability.cache.local.caffeine.keyvalue.NoCacheTest]）。
@@ -42,8 +43,11 @@ internal class NoHashCacheTest {
         assertThrows<IllegalStateException> { HashCacheKit.getHashCache("testHash") }
 
         val key = "key"
-        val value1 = hashCacheableTestService.getFromDB(key)
-        val value2 = hashCacheableTestService.getFromDB(key)
-        assertNotEquals(value1.name, value2.name)
+        hashCacheableTestService.putTestData(key, TestRow(id = key, name = "NoCache", type = 1))
+        val value1 = hashCacheableTestService.getTestRowById(key)
+        val value2 = hashCacheableTestService.getTestRowById(key)
+        assertNotNull(value1)
+        assertNotNull(value2)
+        assertNotSame(value1, value2)
     }
 }
