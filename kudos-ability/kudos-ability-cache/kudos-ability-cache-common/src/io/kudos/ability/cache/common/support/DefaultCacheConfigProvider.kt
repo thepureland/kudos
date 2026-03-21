@@ -43,7 +43,6 @@ class DefaultCacheConfigProvider(itemsProperties: CacheItemsProperties) : ICache
         val params = cacheItem.split("&".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
         for (param in params) {
             val item = param.split("=".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-
             BeanKit.setProperty<CacheConfig?>(config, item[0], item[1])
         }
         return config

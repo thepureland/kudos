@@ -64,6 +64,8 @@ object JsonKit {
     val defaultJson: Json = Json {
         // 序列化时包含默认值与 null
         encodeDefaults = true
+        // JSON 中显式 null 且属性有默认值时，用默认值替代（如 "id":null -> id=""）
+        coerceInputValues = true
         serializersModule = SerializersModule {
             contextual(LocalDate::class, LocalDateSerializer)
             contextual(LocalTime::class, LocalTimeSerializer)
@@ -77,6 +79,7 @@ object JsonKit {
     val preserveJson: Json = Json {
         // 序列化时包含默认值与 null
         encodeDefaults = true
+        coerceInputValues = true
         serializersModule = SerializersModule {
             contextual(LocalDate::class, LocalDateSerializer)
             contextual(LocalTime::class, LocalTimeSerializer)

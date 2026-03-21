@@ -2,6 +2,7 @@ package io.kudos.base.io.scanner.classpath
 
 import java.io.File
 import java.net.URI
+import java.net.URL
 import java.nio.file.Files
 import java.util.jar.JarEntry
 import java.util.jar.JarOutputStream
@@ -52,9 +53,17 @@ internal class JarFileClassPathLocationScannerTest {
         }
     }
 
+    /**
+     * 构造合法的 `jar:` URL。Windows 下不可用 `jar:file:${absolutePath}` 直接拼路径（反斜杠会破坏 URI）。
+     */
+    private fun jarUrl(entryPathInJar: String): URL {
+        val fileUri = jarFile.toURI()
+        return URI("jar:$fileUri!/$entryPathInJar").toURL()
+    }
+
     @Test
     fun testFindResourceNames() {
-        val locationUrl = URI("jar:file:${jarFile.absolutePath}!/test/").toURL()
+        val locationUrl = jarUrl("test/")
         val resourceNames = scanner.findResourceNames("test/", locationUrl)
         
         assertNotNull(resourceNames)
@@ -64,7 +73,7 @@ internal class JarFileClassPathLocationScannerTest {
 
     @Test
     fun testFindResourceNamesWithRootLocation() {
-        val locationUrl = URI("jar:file:${jarFile.absolutePath}!/").toURL()
+        val locationUrl = jarUrl("")
         val resourceNames = scanner.findResourceNames("", locationUrl)
         
         assertNotNull(resourceNames)
@@ -73,7 +82,7 @@ internal class JarFileClassPathLocationScannerTest {
 
     @Test
     fun testFindResourceNamesWithSpecificLocation() {
-        val locationUrl = URI("jar:file:${jarFile.absolutePath}!/test/").toURL()
+        val locationUrl = jarUrl("test/")
         val resourceNames = scanner.findResourceNames("test/", locationUrl)
         
         // 应该只包含test/目录下的文件
@@ -82,7 +91,7 @@ internal class JarFileClassPathLocationScannerTest {
 
     @Test
     fun testFindResourceNamesExcludesOtherLocations() {
-        val locationUrl = URI("jar:file:${jarFile.absolutePath}!/test/").toURL()
+        val locationUrl = jarUrl("test/")
         val resourceNames = scanner.findResourceNames("test/", locationUrl)
         
         // 不应该包含other/目录下的文件
