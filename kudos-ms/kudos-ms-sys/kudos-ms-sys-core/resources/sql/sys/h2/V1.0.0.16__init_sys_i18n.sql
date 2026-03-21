@@ -490,6 +490,18 @@ insert into "sys_i18n" ("locale", "atomic_service_code", "i18n_type_dict_code", 
 
     ('zh-CN', 'sys', 'valid-msg', 'default', 'DictItemCode', '不是为{atomicServiceCode}中{dictType}定义的字典项', true),
     ('zh-TW', 'sys', 'valid-msg', 'default', 'DictItemCode', '不是為 {atomicServiceCode} 中 {dictType} 定義的字典項目', true),
-    ('en-US', 'sys', 'valid-msg', 'default', 'DictItemCode', 'not a dictionary item defined for {dictType} in {atomicServiceCode}', true);
+    ('en-US', 'sys', 'valid-msg', 'default', 'DictItemCode', 'not a dictionary item defined for {dictType} in {atomicServiceCode}', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'MaxSize', '个数不得大于{max}', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'MaxSize', '數量不得大於 {max}', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'MaxSize', 'the count must not exceed {max}', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'MaxLength', '长度不得大于{max}', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'MaxLength', '長度不得大於 {max}', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'MaxLength', 'length must not exceed {max}', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'cache', 'Pattern::var-name', '只允许字母、数字、下划线，且不能以数字开头', true),
+    ('zh-TW', 'sys', 'valid-msg', 'cache', 'Pattern::var-name', '只允許英文字母、數字與底線，且不得以數字開頭', true),
+    ('en-US', 'sys', 'valid-msg', 'cache', 'Pattern::var-name', 'only letters, numbers, and underscores; cannot start with a number', true);
 
 --endregion DML

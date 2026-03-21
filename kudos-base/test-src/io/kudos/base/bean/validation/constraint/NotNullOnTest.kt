@@ -1,4 +1,4 @@
-package io.kudos.base.bean.validation.constraint.validator
+package io.kudos.base.bean.validation.constraint
 
 import io.kudos.base.bean.validation.constraint.annotations.NotNullOn
 import io.kudos.base.bean.validation.kit.ValidationKit
@@ -7,12 +7,12 @@ import org.hibernate.validator.constraints.Length
 import kotlin.test.Test
 
 /**
- * NotNullOnValidator测试用例
+ * NotNullOn测试用例
  *
  * @author K
  * @since 1.0.0
  */
-internal class NotNullOnValidatorTest {
+internal class NotNullOnTest {
 
     @Test
     fun validate() {

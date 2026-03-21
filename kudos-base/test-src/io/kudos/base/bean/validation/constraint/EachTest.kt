@@ -1,4 +1,4 @@
-package io.kudos.base.bean.validation.constraint.validator
+package io.kudos.base.bean.validation.constraint
 
 import io.kudos.base.bean.validation.constraint.annotations.Constraints
 import io.kudos.base.bean.validation.constraint.annotations.Each
@@ -9,12 +9,12 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * EachValidator测试用例
+ * Each测试用例
  *
  * @author K
  * @since 1.0.0
  */
-internal class EachValidatorTest {
+internal class EachTest {
 
     @Test
     fun validate() {

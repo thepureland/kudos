@@ -1,18 +1,19 @@
-package io.kudos.base.bean.validation.constraint.validator
+package io.kudos.base.bean.validation.constraint
 
 import io.kudos.base.bean.validation.constraint.annotations.DictItemCode
+import io.kudos.base.bean.validation.constraint.validator.DictItemCodeValidator
 import io.kudos.base.bean.validation.kit.ValidationKit
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
 /**
- * DictCodeValidator测试用例
+ * DictItemCode测试用例
  *
  * @author AI: cursor
  * @author K
  * @since 1.0.0
  */
-internal class DictItemCodeValidatorTest {
+internal class DictItemCodeTest {
 
     @Test
     fun testIsValidWithNull() {

@@ -1,4 +1,4 @@
-package io.kudos.base.bean.validation.constraint.validator
+package io.kudos.base.bean.validation.constraint
 
 import io.kudos.base.bean.validation.constraint.annotations.Custom
 import io.kudos.base.bean.validation.kit.ValidationKit
@@ -8,12 +8,12 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * CustomValidator测试用例
+ * Custom测试用例
  *
  * @author K
  * @since 1.0.0
  */
-internal class CustomValidatorTest {
+internal class CustomTest {
 
     @Test
     fun validate() {

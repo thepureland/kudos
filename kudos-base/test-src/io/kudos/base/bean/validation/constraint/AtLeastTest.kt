@@ -1,4 +1,4 @@
-package io.kudos.base.bean.validation.constraint.validator
+package io.kudos.base.bean.validation.constraint
 
 import io.kudos.base.bean.validation.constraint.annotations.AtLeast
 import io.kudos.base.bean.validation.kit.ValidationKit
@@ -7,12 +7,12 @@ import kotlin.test.Test
 import kotlin.test.assertFailsWith
 
 /**
- * AtLeastValidator测试用例
+ * AtLeast测试用例
  *
  * @author K
  * @since 1.0.0
  */
-internal class AtLeastValidatorTest {
+internal class AtLeastTest {
 
     /**
      * 测试参数非法情况

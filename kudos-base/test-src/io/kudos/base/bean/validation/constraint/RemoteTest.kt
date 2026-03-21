@@ -1,6 +1,7 @@
-package io.kudos.base.bean.validation.constraint.validator
+package io.kudos.base.bean.validation.constraint
 
 import io.kudos.base.bean.validation.constraint.annotations.Remote
+import io.kudos.base.bean.validation.constraint.validator.RemoteValidator
 import io.kudos.base.bean.validation.kit.ValidationKit
 import io.kudos.base.bean.validation.support.IBeanValidator
 import kotlin.test.Test
@@ -8,14 +9,14 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * RemoteValidator测试用例
+ * Remote测试用例
  *
  * @author AI: cursor
  * @author K
  * @author K
  * @since 1.0.0
  */
-internal class RemoteValidatorTest {
+internal class RemoteTest {
 
     @Test
     fun testIsValidWithNull() {
