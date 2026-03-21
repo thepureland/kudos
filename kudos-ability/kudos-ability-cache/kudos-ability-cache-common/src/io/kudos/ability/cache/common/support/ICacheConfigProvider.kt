@@ -60,5 +60,5 @@ interface ICacheConfigProvider {
      * @return Map(cacheName, CacheConfig)
      * @since 1.0.0
      */
-    fun getHashCacheConfigs(): Map<String, CacheConfig> = getAllCacheConfigs().filter { (_, config) -> config.hash == true }
+    fun getHashCacheConfigs(): Map<String, CacheConfig> = getAllCacheConfigs().filter { (_, config) -> config.hash }
 }
