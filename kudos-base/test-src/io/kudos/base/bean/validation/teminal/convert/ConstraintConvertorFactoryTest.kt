@@ -21,7 +21,7 @@ internal class ConstraintConvertorFactoryTest {
 
     @Test
     fun testGetInstanceForDictEnumCode() {
-        val annotation = TestBean::class.java.getDeclaredField("dictEnumCode")
+        val annotation = TestBean::class.java.getDeclaredField("dictEnumItemCode")
             .getAnnotation(DictEnumItemCode::class.java)
         if (annotation != null) {
             val convertor = ConstraintConvertorFactory.getInstance(annotation)
@@ -91,7 +91,7 @@ internal class ConstraintConvertorFactoryTest {
 
     @Test
     fun testGetInstanceForDictCode() {
-        val annotation = TestBean::class.java.getDeclaredField("dictCode")
+        val annotation = TestBean::class.java.getDeclaredField("dictItemCode")
             .getAnnotation(DictItemCode::class.java)
         if (annotation != null) {
             val convertor = ConstraintConvertorFactory.getInstance(annotation)

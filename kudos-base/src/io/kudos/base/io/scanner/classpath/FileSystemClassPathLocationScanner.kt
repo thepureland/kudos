@@ -20,7 +20,7 @@ import io.kudos.base.logger.LogFactory
 import java.io.File
 import java.io.IOException
 import java.net.URL
-import java.net.URLDecoder
+import java.nio.file.Paths
 import java.util.*
 
 /**
@@ -92,15 +92,14 @@ class FileSystemClassPathLocationScanner : IClassPathLocationScanner {
      */
     @Throws(IOException::class)
     private fun toResourceNameOnClasspath(classPathRootOnDisk: String?, file: File): String {
-        val fileName = URLDecoder.decode(file.toURI().toURL().file, "UTF-8")
-
-        // Cut off the part on disk leading to the root of the classpath
-        // This leaves a resource name starting with the scanRootLocation,
-        // with no leading slash, containing subDirs and the fileName.
-        if (classPathRootOnDisk != null) {
-            return fileName.substring(classPathRootOnDisk.length)
+        if (classPathRootOnDisk.isNullOrEmpty()) {
+            return ""
         }
-        return ""
+        // 使用 Path 相对路径：在 Windows 上 File.path 为反斜杠，而 URL.file 为正斜杠，
+        // 旧实现用 substring 对齐两者会失败，导致资源名始终对不上。
+        val root = Paths.get(classPathRootOnDisk.trimEnd('/', '\\')).normalize().toAbsolutePath()
+        val absoluteFile = file.toPath().normalize().toAbsolutePath()
+        return root.relativize(absoluteFile).toString().replace('\\', '/')
     }
 
 }
