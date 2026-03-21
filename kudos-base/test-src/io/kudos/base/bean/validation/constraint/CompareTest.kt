@@ -1,4 +1,4 @@
-package io.kudos.base.bean.validation.constraint.validator
+package io.kudos.base.bean.validation.constraint
 
 import io.kudos.base.bean.validation.constraint.annotations.Compare
 import io.kudos.base.bean.validation.kit.ValidationKit
@@ -15,7 +15,7 @@ import kotlin.test.assertFailsWith
  * @author K
  * @since 1.0.0
  */
-internal class CompareValidatorTest {
+internal class CompareTest {
 
     /**
      * 测试有Depends的情况

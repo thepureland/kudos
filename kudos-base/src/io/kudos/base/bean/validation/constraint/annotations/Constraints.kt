@@ -115,6 +115,12 @@ annotation class Constraints(
      * CharSequence、Array<*>、Collection<*>、DoubleArray、IntArray、LongArray、CharArray、FloatArray、BooleanArray、ByteArray、ShortArray、Map<*, *>
      */
     val size: Size = Size(message = MESSAGE),
+    /**
+     * 最大尺寸约束，等价于只指定 max 的 Size。
+     * 被校验对象类型必须为以下之一或其子类：
+     * CharSequence、Array<*>、Collection<*>、DoubleArray、IntArray、LongArray、CharArray、FloatArray、BooleanArray、ByteArray、ShortArray、Map<*, *>
+     */
+    val maxSize: MaxSize = MaxSize(0, message = MESSAGE),
 
     // hibernate定义的约束
     /** 字符串代码点长度(实际字符数)约束，被校验对象类型必须为CharSequence或其子类 */
@@ -129,6 +135,8 @@ annotation class Constraints(
     val isbn: ISBN = ISBN(message = MESSAGE),
     /** 字符串长度约束，被校验对象类型必须为CharSequence或其子类 */
     val length: Length = Length(message = MESSAGE),
+    /** 最大长度约束，等价于只指定 max 的 Length，被校验对象类型必须为CharSequence或其子类 */
+    val maxLength: MaxLength = MaxLength(0, message = MESSAGE),
     /** 字符串Luhn算法(模10算法)约束，可检测银行卡、信用卡。被校验对象类型必须为CharSequence或其子类 */
     val luhnCheck: LuhnCheck = LuhnCheck(message = MESSAGE),
     /** 字符串模10算法约束，可检测银行卡、信用卡。被校验对象类型必须为CharSequence或其子类 */

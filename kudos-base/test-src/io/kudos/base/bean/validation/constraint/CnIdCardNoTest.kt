@@ -1,16 +1,16 @@
-package io.kudos.base.bean.validation.constraint.validator
+package io.kudos.base.bean.validation.constraint
 
 import io.kudos.base.bean.validation.constraint.annotations.CnIdCardNo
 import io.kudos.base.bean.validation.kit.ValidationKit
 import kotlin.test.Test
 
 /**
- * CnIdCardNoValidator测试用例
+ * CnIdCardNo测试用例
  *
  * @author K
  * @since 1.0.0
  */
-internal class CnIdCardNoValidatorTest {
+internal class CnIdCardNoTest {
 
     @Test
     fun validate() {

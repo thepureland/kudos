@@ -1,4 +1,4 @@
-package io.kudos.base.bean.validation.constraint.validator
+package io.kudos.base.bean.validation.constraint
 
 import io.kudos.base.bean.validation.constraint.annotations.Series
 import io.kudos.base.bean.validation.kit.ValidationKit
@@ -9,12 +9,12 @@ import kotlin.test.Test
 import kotlin.test.assertFalse
 
 /**
- * 数列验证器测试用例
+ * 数列测试用例
  *
  * @author K
  * @since 1.0.0
  */
-internal class SeriesValidatorTest {
+internal class SeriesTest {
 
     @Test
     fun validateIncDiff() {

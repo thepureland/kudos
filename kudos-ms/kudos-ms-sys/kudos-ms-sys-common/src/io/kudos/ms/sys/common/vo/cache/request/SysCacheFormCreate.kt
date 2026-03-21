@@ -1,10 +1,15 @@
 package io.kudos.ms.sys.common.vo.cache.request
 
 import io.kudos.base.bean.validation.constraint.annotations.DictItemCode
+import io.kudos.base.bean.validation.constraint.annotations.MaxLength
+import io.kudos.base.bean.validation.support.RegExps
 import io.kudos.ms.sys.common.consts.SysConsts
 import io.kudos.ms.sys.common.consts.SysDictTypes
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Positive
+import jakarta.validation.constraints.Size
+import org.hibernate.validator.constraints.Length
 
 /**
  * 缓存表单新建请求VO
@@ -16,6 +21,8 @@ data class SysCacheFormCreate (
 
     /** 名称 */
     @get:NotBlank
+    @get:Pattern(regexp = RegExps.VAR_NAME, message = "sys.valid-msg.cache.Pattern::var-name")
+    @get:MaxLength(64)
     val name: String = "",
 
     /** 原子服务编码 */
