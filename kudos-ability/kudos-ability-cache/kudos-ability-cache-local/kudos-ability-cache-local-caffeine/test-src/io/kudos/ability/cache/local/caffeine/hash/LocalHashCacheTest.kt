@@ -56,7 +56,7 @@ internal class LocalHashCacheTest {
 
     @Test
     fun saveAndGetById() {
-        val cache = HashCacheKit.getHashCache(cacheName)!!
+        val cache = HashCacheKit.getHashCache(cacheName)
         cache.save(cacheName, TestRow(id = "u1", name = "Alice", type = 1))
         val found = cache.getById(cacheName, "u1", TestRow::class)
         assertEquals("u1", found?.id)
@@ -87,7 +87,7 @@ internal class LocalHashCacheTest {
     fun hashCacheableWritesSetIndex() {
         hashCacheableTestService.putTestData("s1", TestRow(id = "s1", name = "SetOne", type = 1))
         hashCacheableTestService.getTestRowById("s1")
-        val cache = HashCacheKit.getHashCache(cacheName)!!
+        val cache = HashCacheKit.getHashCache(cacheName)
         val byType1 = cache.listBySetIndex(cacheName, TestRow::class, "type", 1)
         assertEquals(1, byType1.size)
         assertEquals("s1", byType1.first().id)
@@ -104,14 +104,14 @@ internal class LocalHashCacheTest {
 
     @Test
     fun getByIdReturnsNullWhenMissing() {
-        val cache = HashCacheKit.getHashCache(cacheName)!!
+        val cache = HashCacheKit.getHashCache(cacheName)
         val found = cache.getById(cacheName, "nonexistent", TestRow::class)
         assertNull(found)
     }
 
     @Test
     fun findByIds() {
-        val cache = HashCacheKit.getHashCache(cacheName)!!
+        val cache = HashCacheKit.getHashCache(cacheName)
         cache.save(cacheName, TestRow(id = "u1", name = "A"))
         cache.save(cacheName, TestRow(id = "u2", name = "B"))
         cache.save(cacheName, TestRow(id = "u3", name = "C"))
@@ -130,14 +130,14 @@ internal class LocalHashCacheTest {
 
     @Test
     fun findByIdsEmpty() {
-        val cache = HashCacheKit.getHashCache(cacheName)!!
+        val cache = HashCacheKit.getHashCache(cacheName)
         val list = cache.findByIds(cacheName, emptyList<String>(), TestRow::class)
         assertTrue(list.isEmpty())
     }
 
     @Test
     fun listAll() {
-        val cache = HashCacheKit.getHashCache(cacheName)!!
+        val cache = HashCacheKit.getHashCache(cacheName)
         cache.save(cacheName, TestRow(id = "u1", name = "A"))
         cache.save(cacheName, TestRow(id = "u2", name = "B"))
         val all = cache.listAll(cacheName, TestRow::class)
@@ -150,7 +150,7 @@ internal class LocalHashCacheTest {
 
     @Test
     fun deleteById() {
-        val cache = HashCacheKit.getHashCache(cacheName)!!
+        val cache = HashCacheKit.getHashCache(cacheName)
         cache.save(cacheName, TestRow(id = "u1", name = "A"))
         assertEquals("A", cache.getById(cacheName, "u1", TestRow::class)?.name)
         cache.deleteById(cacheName, "u1", TestRow::class)
@@ -159,7 +159,7 @@ internal class LocalHashCacheTest {
 
     @Test
     fun deleteById_withIndex() {
-        val cache = HashCacheKit.getHashCache(cacheName)!!
+        val cache = HashCacheKit.getHashCache(cacheName)
         cache.save(cacheName, TestRowWithTime(id = "1", type = 1, sortScore = 100.0), setIdx, zsetIdx)
         cache.save(cacheName, TestRowWithTime(id = "2", type = 1, sortScore = 200.0), setIdx, zsetIdx)
         assertEquals(2, cache.listBySetIndex(cacheName, TestRowWithTime::class, "type", 1).size)
@@ -171,7 +171,7 @@ internal class LocalHashCacheTest {
 
     @Test
     fun refreshAll() {
-        val cache = HashCacheKit.getHashCache(cacheName)!!
+        val cache = HashCacheKit.getHashCache(cacheName)
         cache.save(cacheName, TestRow(id = "old", name = "Old"))
         val newList = listOf(
             TestRow(id = "a", name = "A"),
@@ -187,7 +187,7 @@ internal class LocalHashCacheTest {
 
     @Test
     fun refreshAll_withIndex() {
-        val cache = HashCacheKit.getHashCache(cacheName)!!
+        val cache = HashCacheKit.getHashCache(cacheName)
         cache.save(cacheName, TestRowWithTime(id = "old", type = 1, sortScore = 50.0), setIdx, zsetIdx)
         val newList = listOf(
             TestRowWithTime(id = "a", type = 1, sortScore = 100.0),
@@ -204,7 +204,7 @@ internal class LocalHashCacheTest {
 
     @Test
     fun saveBatch_thenGetByIdAndListAll() {
-        val cache = HashCacheKit.getHashCache(cacheName)!!
+        val cache = HashCacheKit.getHashCache(cacheName)
         val list = listOf(
             TestRow(id = "b1", name = "Batch1", type = 1),
             TestRow(id = "b2", name = "Batch2", type = 2),
@@ -220,7 +220,7 @@ internal class LocalHashCacheTest {
 
     @Test
     fun listBySetIndex() {
-        val cache = HashCacheKit.getHashCache(cacheName)!!
+        val cache = HashCacheKit.getHashCache(cacheName)
         cache.save(cacheName, TestRowWithTime(id = "1", type = 1, sortScore = 100.0), setIdx, zsetIdx)
         cache.save(cacheName, TestRowWithTime(id = "2", type = 1, sortScore = 200.0), setIdx, zsetIdx)
         cache.save(cacheName, TestRowWithTime(id = "3", type = 2, sortScore = 150.0), setIdx, zsetIdx)
@@ -238,7 +238,7 @@ internal class LocalHashCacheTest {
 
     @Test
     fun listPageByZSetIndex() {
-        val cache = HashCacheKit.getHashCache(cacheName)!!
+        val cache = HashCacheKit.getHashCache(cacheName)
         cache.save(cacheName, TestRowWithTime(id = "a", type = 0, sortScore = 10.0), setIdx, zsetIdx)
         cache.save(cacheName, TestRowWithTime(id = "b", type = 0, sortScore = 20.0), setIdx, zsetIdx)
         cache.save(cacheName, TestRowWithTime(id = "c", type = 0, sortScore = 30.0), setIdx, zsetIdx)
@@ -254,7 +254,7 @@ internal class LocalHashCacheTest {
 
     @Test
     fun list_noCriteria_firstPage() {
-        val cache = HashCacheKit.getHashCache(cacheName)!!
+        val cache = HashCacheKit.getHashCache(cacheName)
         cache.save(cacheName, TestRowWithTime(id = "1", type = 1, sortScore = 100.0), setIdx, zsetIdx)
         cache.save(cacheName, TestRowWithTime(id = "2", type = 1, sortScore = 200.0), setIdx, zsetIdx)
         cache.save(cacheName, TestRowWithTime(id = "3", type = 2, sortScore = 150.0), setIdx, zsetIdx)
@@ -266,7 +266,7 @@ internal class LocalHashCacheTest {
 
     @Test
     fun list_withCriteria_andOrder() {
-        val cache = HashCacheKit.getHashCache(cacheName)!!
+        val cache = HashCacheKit.getHashCache(cacheName)
         cache.save(cacheName, TestRowWithTime(id = "1", type = 1, sortScore = 100.0), setIdx, zsetIdx)
         cache.save(cacheName, TestRowWithTime(id = "2", type = 1, sortScore = 200.0), setIdx, zsetIdx)
         cache.save(cacheName, TestRowWithTime(id = "3", type = 2, sortScore = 150.0), setIdx, zsetIdx)
@@ -279,7 +279,7 @@ internal class LocalHashCacheTest {
 
     @Test
     fun list_pagination() {
-        val cache = HashCacheKit.getHashCache(cacheName)!!
+        val cache = HashCacheKit.getHashCache(cacheName)
         cache.save(cacheName, TestRowWithTime(id = "a", type = 0, sortScore = 10.0), setIdx, zsetIdx)
         cache.save(cacheName, TestRowWithTime(id = "b", type = 0, sortScore = 20.0), setIdx, zsetIdx)
         cache.save(cacheName, TestRowWithTime(id = "c", type = 0, sortScore = 30.0), setIdx, zsetIdx)
@@ -302,7 +302,7 @@ internal class LocalHashCacheTest {
         hashCacheableTestService.getTestRowById("v1")
         hashCacheableTestService.getTestRowById("v2")
         hashCacheableTestService.getTestRowById("v3")
-        val cache = HashCacheKit.getHashCache(cacheName)!!
+        val cache = HashCacheKit.getHashCache(cacheName)
         val expectedByType1 = hashCacheableTestService.listTestRowsByType(1).map { it.id }.toSet()
         val actualByType1 = cache.listBySetIndex(cacheName, TestRow::class, "type", 1).map { it.id }.toSet()
         assertEquals(expectedByType1, actualByType1)
@@ -314,11 +314,31 @@ internal class LocalHashCacheTest {
     }
 
     @Test
+    fun serviceListByTypeAndStatusHitsCompositeSecondaryIndex() {
+        hashCacheableTestService.putTestData("cs1", TestRow(id = "cs1", name = "CS1", type = 1, status = 1))
+        hashCacheableTestService.putTestData("cs2", TestRow(id = "cs2", name = "CS2", type = 1, status = 2))
+        hashCacheableTestService.putTestData("cs3", TestRow(id = "cs3", name = "CS3", type = 2, status = 1))
+        hashCacheableTestService.getTestRowById("cs1")
+        hashCacheableTestService.getTestRowById("cs2")
+        hashCacheableTestService.getTestRowById("cs3")
+
+        val expected = hashCacheableTestService.listTestRowsByTypeAndStatus(1, 1).map { it.id }
+        assertEquals(listOf("cs1"), expected)
+
+        hashCacheableTestService.removeTestData("cs1")
+        hashCacheableTestService.removeTestData("cs2")
+        hashCacheableTestService.removeTestData("cs3")
+
+        val fromCache = hashCacheableTestService.listTestRowsByTypeAndStatus(1, 1).map { it.id }
+        assertEquals(expected, fromCache)
+    }
+
+    @Test
     fun serviceSortScorePageMatchesCacheZSetPage() {
         hashCacheableTestService.putTestDataWithTime("t1", TestRowWithTime(id = "t1", type = 0, sortScore = 10.0))
         hashCacheableTestService.putTestDataWithTime("t2", TestRowWithTime(id = "t2", type = 0, sortScore = 20.0))
         hashCacheableTestService.putTestDataWithTime("t3", TestRowWithTime(id = "t3", type = 0, sortScore = 30.0))
-        val cache = HashCacheKit.getHashCache(cacheName)!!
+        val cache = HashCacheKit.getHashCache(cacheName)
         cache.save(cacheName, TestRowWithTime(id = "t1", type = 0, sortScore = 10.0), setIdx, zsetIdx)
         cache.save(cacheName, TestRowWithTime(id = "t2", type = 0, sortScore = 20.0), setIdx, zsetIdx)
         cache.save(cacheName, TestRowWithTime(id = "t3", type = 0, sortScore = 30.0), setIdx, zsetIdx)
@@ -333,7 +353,7 @@ internal class LocalHashCacheTest {
         hashCacheableTestService.putTestDataWithTime("p1", TestRowWithTime(id = "p1", type = 1, sortScore = 100.0))
         hashCacheableTestService.putTestDataWithTime("p2", TestRowWithTime(id = "p2", type = 1, sortScore = 200.0))
         hashCacheableTestService.putTestDataWithTime("p3", TestRowWithTime(id = "p3", type = 2, sortScore = 150.0))
-        val cache = HashCacheKit.getHashCache(cacheName)!!
+        val cache = HashCacheKit.getHashCache(cacheName)
         cache.save(cacheName, TestRowWithTime(id = "p1", type = 1, sortScore = 100.0), setIdx, zsetIdx)
         cache.save(cacheName, TestRowWithTime(id = "p2", type = 1, sortScore = 200.0), setIdx, zsetIdx)
         cache.save(cacheName, TestRowWithTime(id = "p3", type = 2, sortScore = 150.0), setIdx, zsetIdx)

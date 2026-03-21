@@ -14,12 +14,12 @@ enum class CacheHandleType(
     override val trans: String
 ) : IDictEnum {
 
-    OVERLOAD("overload", "重载"),
-    OVERLOAD_ALL("overloadAll", "重载所有"),
-    EVICT("evict", "剔除"),
-    EVICT_ALL("evictAll", "清除所有"),
-    GET_KEY("getKey", "重载"),
-    GET_VALUE("getValue", "重载所有");
+    OVERLOAD("overload", "重载指定key的緩存"),
+    OVERLOAD_ALL("overloadAll", "重载所有緩存"),
+    EVICT("evict", "剔除指定key的緩存"),
+    EVICT_ALL("evictAll", "清除所有緩存"),
+    GET_KEY("getKey", "檢查key是否存在"),
+    GET_VALUE("getValue", "獲取key對應的值");
 
     companion object {
         fun get(code: String): CacheHandleType? {

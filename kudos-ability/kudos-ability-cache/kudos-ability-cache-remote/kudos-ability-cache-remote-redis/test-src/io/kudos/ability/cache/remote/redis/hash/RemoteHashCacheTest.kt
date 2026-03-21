@@ -299,6 +299,26 @@ internal class RemoteHashCacheTest {
     }
 
     @Test
+    fun serviceListByTypeAndStatusHitsCompositeSecondaryIndex() {
+        hashCacheableTestService.putTestData("cs1", TestRow(id = "cs1", name = "CS1", type = 1, status = 1))
+        hashCacheableTestService.putTestData("cs2", TestRow(id = "cs2", name = "CS2", type = 1, status = 2))
+        hashCacheableTestService.putTestData("cs3", TestRow(id = "cs3", name = "CS3", type = 2, status = 1))
+        hashCacheableTestService.getTestRowById("cs1")
+        hashCacheableTestService.getTestRowById("cs2")
+        hashCacheableTestService.getTestRowById("cs3")
+
+        val expected = hashCacheableTestService.listTestRowsByTypeAndStatus(1, 1).map { it.id }
+        assertEquals(listOf("cs1"), expected)
+
+        hashCacheableTestService.removeTestData("cs1")
+        hashCacheableTestService.removeTestData("cs2")
+        hashCacheableTestService.removeTestData("cs3")
+
+        val fromCache = hashCacheableTestService.listTestRowsByTypeAndStatus(1, 1).map { it.id }
+        assertEquals(expected, fromCache)
+    }
+
+    @Test
     fun serviceSortScorePageMatchesCacheZSetPage() {
         hashCacheableTestService.putTestDataWithTime("t1", TestRowWithTime(id = "t1", type = 0, sortScore = 10.0))
         hashCacheableTestService.putTestDataWithTime("t2", TestRowWithTime(id = "t2", type = 0, sortScore = 20.0))
