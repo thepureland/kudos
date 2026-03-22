@@ -50,7 +50,7 @@ open class SysCacheService : BaseCrudService<String, SysCache, SysCacheDao>(), I
     override fun insert(any: Any): String {
         val id = super.insert(any)
         log.debug("新增id为${id}的缓存配置。")
-        sysCacheHashCache.syncOnInsert(any, id) // 同步 Hash 缓存
+        sysCacheHashCache.syncOnInsert(any, id) // 同步缓存
         return id
     }
 
@@ -108,12 +108,6 @@ open class SysCacheService : BaseCrudService<String, SysCache, SysCacheDao>(), I
         return count
     }
 
-    /**
-     * 获取原子服务的缓存配置列表
-     *
-     * @param atomicServiceCode 原子服务编码
-     * @return 缓存记录列表
-     */
     override fun getCachesFromCache(atomicServiceCode: String): List<SysCacheCacheEntry> {
         return sysCacheHashCache.getCaches(atomicServiceCode)
     }

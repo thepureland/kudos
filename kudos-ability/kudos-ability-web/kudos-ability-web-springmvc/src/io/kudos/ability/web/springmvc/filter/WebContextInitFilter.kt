@@ -6,10 +6,12 @@ import io.kudos.ability.web.springmvc.support.getRemoteIp
 import io.kudos.context.core.ClientInfo
 import io.kudos.context.core.KudosContext
 import io.kudos.context.core.KudosContextHolder
+import io.kudos.context.support.Consts
 import jakarta.servlet.FilterChain
 import jakarta.servlet.ServletRequest
 import jakarta.servlet.ServletResponse
 import jakarta.servlet.http.HttpServletRequest
+import java.util.UUID
 
 
 /**
@@ -40,6 +42,8 @@ open class WebContextInitFilter : IWebContextInitFilter {
             val value = request.getHeader(name)
             context.addHeaderAttributes(Pair(name, value))
         }
+        context.traceKey = request.getHeader(Consts.RequestHeader.TRACE_KEY)?.takeIf { it.isNotBlank() }
+            ?: UUID.randomUUID().toString()
 
         // client info
         val clientInfoBuilder = ClientInfo.Builder()

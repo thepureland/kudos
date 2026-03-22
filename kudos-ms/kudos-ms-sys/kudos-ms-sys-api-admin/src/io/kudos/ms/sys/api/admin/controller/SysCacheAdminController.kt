@@ -22,12 +22,24 @@ open class SysCacheAdminController :
     BaseCrudController<String, ISysCacheService, SysCacheQuery, SysCacheRow, SysCacheDetail, SysCacheEdit, SysCacheFormCreate, SysCacheFormUpdate>() {
 
     /**
+     * 更新active状态
+     *
+     * @param id 主键
+     * @param active 是否启用
+     * @return 是否更新成功
+     */
+    @PutMapping("/updateActive")
+    fun updateActive(id: String, active: Boolean): Boolean {
+        return service.updateActive(id, active)
+    }
+
+    /**
      * 重载指定缓存配置（按 id）下某 key 的缓存项
      *
      * @param id 缓存配置主键
      * @param key 缓存 key
      */
-    @GetMapping("/reload")
+    @GetMapping("/management/reload")
     fun reload(id: String, key: String) {
         return service.reload(id, key)
     }
@@ -37,7 +49,7 @@ open class SysCacheAdminController :
      *
      * @param id 缓存配置主键
      */
-    @GetMapping("/reloadAll")
+    @GetMapping("/management/reloadAll")
     fun reloadAll(id: String) {
         return service.reloadAll(id)
     }
@@ -48,7 +60,7 @@ open class SysCacheAdminController :
      * @param id 缓存配置主键
      * @param key 缓存 key
      */
-    @DeleteMapping("/evict")
+    @DeleteMapping("/management/evict")
     fun evict(id: String, key: String) {
         return service.evict(id, key)
     }
@@ -58,7 +70,7 @@ open class SysCacheAdminController :
      *
      * @param id 缓存配置主键
      */
-    @DeleteMapping("/evictAll")
+    @DeleteMapping("/management/evictAll")
     fun evictAll(id: String) {
         return service.evictAll(id)
     }
@@ -69,7 +81,7 @@ open class SysCacheAdminController :
      * @param id 缓存配置主键
      * @param key 缓存 key
      */
-    @GetMapping("/existsKey")
+    @GetMapping("/management/existsKey")
     fun existsKey(id: String, key: String): Boolean {
         return service.existsKey(id, key)
     }
@@ -81,21 +93,9 @@ open class SysCacheAdminController :
      * @param key 缓存 key
      * @return value 的 json 串，value 为 null 或出错返回空串
      */
-    @GetMapping("/getValueJson")
+    @GetMapping("/management/getValueJson")
     fun getValueJson(id: String, key: String): String {
         return service.getValueJson(id, key)
-    }
-
-    /**
-     * 更新active状态
-     *
-     * @param id 主键
-     * @param active 是否启用
-     * @return 是否更新成功
-     */
-    @PutMapping("/updateActive")
-    fun updateActive(id: String, active: Boolean): Boolean {
-        return service.updateActive(id, active)
     }
 
 }

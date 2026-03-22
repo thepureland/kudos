@@ -1,5 +1,6 @@
 package io.kudos.ms.sys.common.vo.dictitem.request
 
+import io.kudos.base.bean.validation.constraint.annotations.MaxLength
 import jakarta.validation.constraints.NotBlank
 
 
@@ -29,6 +30,7 @@ data class SysDictItemFormCreate (
     val parentId: String? = null,
 
     /** 备注 */
+    @get:MaxLength(128)
     val remark: String? = null,
 
 )

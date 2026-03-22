@@ -1,6 +1,7 @@
 package io.kudos.ms.sys.common.vo.cache.request
 
 import io.kudos.base.bean.validation.constraint.annotations.DictItemCode
+import io.kudos.base.bean.validation.constraint.annotations.MaxLength
 import io.kudos.base.model.contract.entity.IIdEntity
 import io.kudos.ms.sys.common.consts.SysConsts
 import io.kudos.ms.sys.common.consts.SysDictTypes
@@ -34,6 +35,7 @@ data class SysCacheFormUpdate (
     val ttl: Int? = null,
 
     /** 备注 */
+    @get:MaxLength(128)
     val remark: String? = null,
 
 ) : IIdEntity<String?>
