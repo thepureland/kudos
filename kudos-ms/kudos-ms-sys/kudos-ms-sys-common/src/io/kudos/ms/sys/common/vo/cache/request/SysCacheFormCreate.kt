@@ -45,6 +45,7 @@ data class SysCacheFormCreate (
     val ttl: Int? = null,
 
     /** 备注 */
+    @get:MaxLength(128)
     val remark: String? = null,
 
     /** 是否为 Hash 缓存 */

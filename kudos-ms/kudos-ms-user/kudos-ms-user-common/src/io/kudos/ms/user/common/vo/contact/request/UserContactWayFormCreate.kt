@@ -1,5 +1,7 @@
 package io.kudos.ms.user.common.vo.contact.request
 
+import io.kudos.base.bean.validation.constraint.annotations.MaxLength
+
 /**
  * 用户联系方式表单新建请求VO
  *
@@ -24,6 +26,7 @@ data class UserContactWayFormCreate (
     val priority: Short? = null,
 
     /** 备注 */
+    @get:MaxLength(128)
     val remark: String? = null,
 
 )

@@ -8,8 +8,9 @@ import java.text.MessageFormat
  */
 enum class FileErrorCode(
     override val code: String,
-    override val trans: String,
-    override val printAllStackTrace: Boolean = false
+    override val rawTrans: String,
+    override val printAllStackTrace: Boolean = false,
+    override val i18nKeyPrefix: String = ""
 ) : IErrorCodeEnum {
 
     FILE_INVALID_ACCESS_KEY("FS00000000", "无效认证信息"),

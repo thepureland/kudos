@@ -42,7 +42,7 @@ import java.util.*
  */
 class ServiceException : CustomRuntimeException {
 
-    var errorCode: IErrorCodeEnum? = null
+    lateinit var errorCode: IErrorCodeEnum
 
     var params: Array<Any?>? = null
         private set

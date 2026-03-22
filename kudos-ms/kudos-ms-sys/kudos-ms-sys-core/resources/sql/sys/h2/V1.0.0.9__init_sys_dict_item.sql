@@ -72,7 +72,8 @@ insert into "sys_dict_item" ("dict_id", "item_code", "item_name", "order_num", "
     ('54094f46-dddb-41a2-b747-0eaa7d0ekil6', 'dict', 'i18n_type.dict', 1, '字典', true),
     ('54094f46-dddb-41a2-b747-0eaa7d0ekil6', 'dict-item', 'i18n_type.dict-item', 2, '字典项', true),
     ('54094f46-dddb-41a2-b747-0eaa7d0ekil6', 'valid-msg', 'i18n_type.valid-msg', 3, '验证提示', true),
-    ('54094f46-dddb-41a2-b747-0eaa7d0ekil6', 'view', 'i18n_type.view', 4, '页面', true);
+    ('54094f46-dddb-41a2-b747-0eaa7d0ekil6', 'error-msg', 'i18n_type.error-msg', 4, '错误提示', true),
+    ('54094f46-dddb-41a2-b747-0eaa7d0ekil6', 'view', 'i18n_type.view', 5, '页面', true);
 
 
 -- terminal_type

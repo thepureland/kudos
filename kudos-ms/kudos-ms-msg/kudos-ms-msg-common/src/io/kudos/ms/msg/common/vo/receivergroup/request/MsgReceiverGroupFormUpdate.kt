@@ -1,5 +1,6 @@
 package io.kudos.ms.msg.common.vo.receivergroup.request
 
+import io.kudos.base.bean.validation.constraint.annotations.MaxLength
 import io.kudos.base.model.contract.entity.IIdEntity
 
 
@@ -24,6 +25,7 @@ data class MsgReceiverGroupFormUpdate (
     val nameColumn: String? = null,
 
     /** 备注 */
+    @get:MaxLength(128)
     val remark: String? = null,
 
     /** 是否启用 */

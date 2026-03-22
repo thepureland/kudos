@@ -2,6 +2,9 @@ package io.kudos.ability.web.springmvc.init
 
 import io.kudos.ability.web.springmvc.filter.IWebContextInitFilter
 import io.kudos.ability.web.springmvc.filter.WebContextInitFilter
+import io.kudos.ability.web.springmvc.handler.BadRequestExceptionHandler
+import io.kudos.ability.web.springmvc.handler.GlobalExceptionHandler
+import io.kudos.ability.web.springmvc.handler.GlobalResponseBodyHandler
 import io.kudos.ability.web.springmvc.interceptor.CorsHandlerInterceptor
 import io.kudos.context.config.YamlPropertySourceFactory
 import io.kudos.context.init.IComponentInitializer
@@ -21,6 +24,7 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry
 import org.springframework.web.servlet.config.annotation.EnableWebMvc
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
+import tools.jackson.databind.ObjectMapper
 import java.util.*
 
 
@@ -76,6 +80,23 @@ open class SpringMvcAutoConfiguration : WebMvcConfigurer, IComponentInitializer 
     @Bean
     @ConditionalOnMissingBean
     open fun corsHandlerInterceptor(): HandlerInterceptor = CorsHandlerInterceptor()
+
+    @Bean
+    @ConditionalOnMissingBean
+    open fun objectMapper(): ObjectMapper = ObjectMapper()
+
+    @Bean
+    @ConditionalOnMissingBean
+    open fun badRequestExceptionHandler(): BadRequestExceptionHandler = BadRequestExceptionHandler()
+
+    @Bean
+    @ConditionalOnMissingBean
+    open fun globalExceptionHandler(): GlobalExceptionHandler = GlobalExceptionHandler()
+
+    @Bean
+    @ConditionalOnMissingBean
+    open fun globalResponseBodyHandler(objectMapper: ObjectMapper): GlobalResponseBodyHandler =
+        GlobalResponseBodyHandler(objectMapper)
 
     override fun addInterceptors(registry: InterceptorRegistry) {
         registry.addInterceptor(corsHandlerInterceptor()).addPathPatterns("/**")

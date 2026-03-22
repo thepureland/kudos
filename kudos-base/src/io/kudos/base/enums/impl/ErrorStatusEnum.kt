@@ -12,9 +12,10 @@ import io.kudos.base.enums.ienums.IErrorCodeEnum
  */
 enum class ErrorStatusEnum(
     override val code: String,
-    override val trans: String,
+    override val rawTrans: String,
     val url: String?,
-    override val printAllStackTrace: Boolean = false
+    override val printAllStackTrace: Boolean = false,
+    override val i18nKeyPrefix: String = ""
 ) : IErrorCodeEnum {
 
     //原生状态 @see HttpStatus.SC_BAD_GATEWAY
