@@ -11,3 +11,8 @@ INSERT INTO "test_table_ktorm" ("id", "name", "birthday", "active", "weight", "h
 (-10, 'name10', '1884-03-29 06:40:00', 'f', 66, 178),
 (-11, 'name11', '2015-01-30 17:20:00', 't', NULL, NULL);
 
+INSERT INTO "test_built_in_ktorm" ("id", "name", "built_in") VALUES
+(901, 'custom_del_a', 'f'),
+(902, 'built_in_row', 't'),
+(903, 'custom_del_b', 'f');
+

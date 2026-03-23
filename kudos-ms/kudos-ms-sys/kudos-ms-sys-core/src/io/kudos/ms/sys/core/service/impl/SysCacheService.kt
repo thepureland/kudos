@@ -117,16 +117,16 @@ open class SysCacheService : BaseCrudService<String, SysCache, SysCacheDao>(), I
         val cache = getCacheConfigById(id)
         val name = cache.name
         if (isKeyValueCache(cache)) {
-            if (!KeyValueCacheKit.existsKey(name, key)) {
-                throw ServiceException(SysCacheErrorCodeEnum.CACHE_KEY_NOT_FOUND)
-            } else {
+            if (KeyValueCacheKit.existsKey(name, key)) {
                 KeyValueCacheKit.reload(name, key)
+            } else {
+                throw ServiceException(SysCacheErrorCodeEnum.CACHE_KEY_NOT_FOUND)
             }
         } else {
-            if (!HashCacheKit.existsById(name, key)) {
-                throw ServiceException(SysCacheErrorCodeEnum.CACHE_KEY_NOT_FOUND)
-            } else {
+            if (HashCacheKit.existsById(name, key)) {
                 HashCacheKit.reload(name, key)
+            } else {
+                throw ServiceException(SysCacheErrorCodeEnum.CACHE_KEY_NOT_FOUND)
             }
         }
     }
@@ -145,9 +145,17 @@ open class SysCacheService : BaseCrudService<String, SysCache, SysCacheDao>(), I
         val cache = getCacheConfigById(id)
         val name = cache.name
         if (isKeyValueCache(cache)) {
-            KeyValueCacheKit.evict(name, key)
+            if (KeyValueCacheKit.existsKey(name, key)) {
+                KeyValueCacheKit.evict(name, key)
+            } else {
+                throw ServiceException(SysCacheErrorCodeEnum.CACHE_KEY_NOT_FOUND)
+            }
         } else {
-            HashCacheKit.evict(name, key)
+            if (HashCacheKit.existsById(name, key)) {
+                HashCacheKit.evict(name, key)
+            } else {
+                throw ServiceException(SysCacheErrorCodeEnum.CACHE_KEY_NOT_FOUND)
+            }
         }
     }
 
@@ -165,9 +173,17 @@ open class SysCacheService : BaseCrudService<String, SysCache, SysCacheDao>(), I
         val cache = getCacheConfigById(id)
         val name = cache.name
         return if (isKeyValueCache(cache)) {
-            KeyValueCacheKit.existsKey(name, key)
+            if (KeyValueCacheKit.existsKey(name, key)) {
+                KeyValueCacheKit.existsKey(name, key)
+            } else {
+                throw ServiceException(SysCacheErrorCodeEnum.CACHE_KEY_NOT_FOUND)
+            }
         } else {
-            HashCacheKit.existsById(name, key)
+            if (HashCacheKit.existsById(name, key)) {
+                HashCacheKit.existsById(name, key)
+            } else {
+                throw ServiceException(SysCacheErrorCodeEnum.CACHE_KEY_NOT_FOUND)
+            }
         }
     }
 
@@ -175,9 +191,17 @@ open class SysCacheService : BaseCrudService<String, SysCache, SysCacheDao>(), I
         val cache = getCacheConfigById(id)
         val name = cache.name
         val value = if (isKeyValueCache(cache)) {
-            KeyValueCacheKit.getValue(name, key)
+            if (KeyValueCacheKit.existsKey(name, key)) {
+                KeyValueCacheKit.getValue(name, key)
+            } else {
+                throw ServiceException(SysCacheErrorCodeEnum.CACHE_KEY_NOT_FOUND)
+            }
         } else {
-            HashCacheKit.getValue(name, key)
+            if (HashCacheKit.existsById(name, key)) {
+                HashCacheKit.getValue(name, key)
+            } else {
+                throw ServiceException(SysCacheErrorCodeEnum.CACHE_KEY_NOT_FOUND)
+            }
         }
         return JsonKit.toJson(value)
     }

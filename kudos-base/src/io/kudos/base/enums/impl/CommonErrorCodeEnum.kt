@@ -41,6 +41,9 @@ enum class CommonErrorCodeEnum(
     /** 业务处理失败 */
     BUSINESS_ERROR("4002", "操作未完成，请稍后再试"),
 
+    /** 内置记录不可删除 */
+    BUILTIN_NOT_DELETABLE("4003", "内置记录不可删除"),
+
     /** 系统异常 */
     SYSTEM_ERROR("500", "系统开小差了，请稍后再试");
 
