@@ -543,6 +543,10 @@ insert into "sys_i18n" ("locale", "atomic_service_code", "i18n_type_dict_code", 
     ('zh-TW', 'sys', 'error-msg', 'default', '4002', '操作未完成，請稍後再試', true),
     ('en-US', 'sys', 'error-msg', 'default', '4002', 'The action could not be completed. Please try again later', true),
 
+    ('zh-CN', 'sys', 'error-msg', 'default', '4003', '内置记录不可删除', true),
+    ('zh-TW', 'sys', 'error-msg', 'default', '4003', '內建記錄不可刪除', true),
+    ('en-US', 'sys', 'error-msg', 'default', '4003', 'Built-in records cannot be deleted', true),
+
     ('zh-CN', 'sys', 'error-msg', 'default', '500', '系统开小差了，请稍后再试', true),
     ('zh-TW', 'sys', 'error-msg', 'default', '500', '系統出了點狀況，請稍後再試', true),
     ('en-US', 'sys', 'error-msg', 'default', '500', 'Something went wrong on our side. Please try again later', true),
