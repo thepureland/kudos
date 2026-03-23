@@ -1,6 +1,6 @@
 package io.kudos.ms.user.core.service.iservice
 
-import io.kudos.base.support.iservice.IBaseCrudService
+import io.kudos.base.support.service.iservice.IBaseCrudService
 import io.kudos.ms.user.common.vo.org.UserOrgCacheEntry
 import io.kudos.ms.user.common.vo.org.response.UserOrgTreeRow
 import io.kudos.ms.user.common.vo.user.UserAccountCacheEntry

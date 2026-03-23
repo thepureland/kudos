@@ -4,7 +4,7 @@ import io.kudos.base.bean.validation.teminal.TeminalConstraintsCreator
 import io.kudos.base.error.ObjectNotFoundException
 import io.kudos.base.lang.GenericKit
 import io.kudos.base.model.payload.ListSearchPayload
-import io.kudos.base.support.iservice.IBaseCrudService
+import io.kudos.base.support.service.iservice.IBaseCrudService
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.*
 import kotlin.reflect.KClass

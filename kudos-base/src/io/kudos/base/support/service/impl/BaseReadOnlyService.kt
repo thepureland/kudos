@@ -1,4 +1,4 @@
-package io.kudos.base.support.service
+package io.kudos.base.support.service.impl
 
 import io.kudos.base.model.contract.entity.IIdEntity
 import io.kudos.base.model.payload.ISearchPayload
@@ -7,7 +7,7 @@ import io.kudos.base.query.Criteria
 import io.kudos.base.query.PagingSearchResult
 import io.kudos.base.query.sort.Order
 import io.kudos.base.support.dao.IBaseReadOnlyDao
-import io.kudos.base.support.iservice.IBaseReadOnlyService
+import io.kudos.base.support.service.iservice.IBaseReadOnlyService
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 

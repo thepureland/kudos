@@ -1,6 +1,6 @@
 package io.kudos.ms.user.core.service.impl
 
-import io.kudos.base.support.service.BaseCrudService
+import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.user.core.dao.UserLogLoginDao
 import io.kudos.ms.user.core.model.po.UserLogLogin

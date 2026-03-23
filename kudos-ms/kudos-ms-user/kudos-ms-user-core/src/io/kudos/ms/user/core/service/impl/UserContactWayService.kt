@@ -1,6 +1,6 @@
 package io.kudos.ms.user.core.service.impl
 
-import io.kudos.base.support.service.BaseCrudService
+import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.ms.user.core.dao.UserContactWayDao
 import io.kudos.ms.user.core.model.po.UserContactWay
 import io.kudos.ms.user.core.service.iservice.IUserContactWayService

@@ -1,6 +1,6 @@
 package io.kudos.ms.auth.core.service.impl
 
-import io.kudos.base.support.service.BaseCrudService
+import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.auth.core.dao.AuthGroupUserDao
 import io.kudos.ms.auth.core.model.po.AuthGroupUser

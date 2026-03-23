@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.core.service.impl
 
-import io.kudos.base.support.service.BaseCrudService
+import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.sys.core.dao.SysSubSystemMicroServiceDao
 import io.kudos.ms.sys.core.model.po.SysSubSystemMicroService
