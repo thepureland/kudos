@@ -545,6 +545,14 @@ insert into "sys_i18n" ("locale", "atomic_service_code", "i18n_type_dict_code", 
 
     ('zh-CN', 'sys', 'error-msg', 'default', '500', '系统开小差了，请稍后再试', true),
     ('zh-TW', 'sys', 'error-msg', 'default', '500', '系統出了點狀況，請稍後再試', true),
-    ('en-US', 'sys', 'error-msg', 'default', '500', 'Something went wrong on our side. Please try again later', true);
+    ('en-US', 'sys', 'error-msg', 'default', '500', 'Something went wrong on our side. Please try again later', true),
+
+    ('zh-CN', 'sys', 'error-msg', 'cache', 'SC00000001', '缓存键不存在', true),
+    ('zh-TW', 'sys', 'error-msg', 'cache', 'SC00000001', '快取鍵不存在', true),
+    ('en-US', 'sys', 'error-msg', 'cache', 'SC00000001', 'Cache key does not exist', true),
+
+    ('zh-CN', 'sys', 'error-msg', 'cache', 'SC00000002', '缓存配置不存在', true),
+    ('zh-TW', 'sys', 'error-msg', 'cache', 'SC00000002', '快取設定不存在', true),
+    ('en-US', 'sys', 'error-msg', 'cache', 'SC00000002', 'Cache configuration does not exist', true);
 
 --endregion DML

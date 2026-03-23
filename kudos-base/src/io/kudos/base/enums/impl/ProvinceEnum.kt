@@ -12,7 +12,7 @@ import io.kudos.base.lang.EnumKit
  */
 enum class ProvinceEnum(
     override val code: String,
-    override val trans: String,
+    override val displayText: String,
     val abbr: String)
     : IDictEnum {
 
@@ -52,7 +52,7 @@ enum class ProvinceEnum(
     AO_MEN("82", "澳门", "澳");
 
     override fun toString(): String {
-        return trans
+        return displayText
     }
 
     companion object {

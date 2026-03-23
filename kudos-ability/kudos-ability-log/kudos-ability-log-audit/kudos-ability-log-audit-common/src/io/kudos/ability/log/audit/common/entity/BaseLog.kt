@@ -200,7 +200,7 @@ class BaseLog : Serializable {
             sysLogVo.moduleCode = this.moduleCode
             val op = requireNotNull(opType) { "opType is null" }
             sysLogVo.operateTypeId = Integer.valueOf(op.code)
-            sysLogVo.operateType = op.trans
+            sysLogVo.operateType = op.displayText
             sysLogVo.description = description
             sysLogVo.moduleId = this.moduleId
             sysLogVo.id = RandomStringKit.uuid()

@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.common.api
 
-import io.kudos.ms.sys.common.enums.ResourceTypeEnum
+import io.kudos.ms.sys.common.enums.resource.ResourceTypeEnum
 import io.kudos.ms.sys.common.vo.resource.SysResourceCacheEntry
 import io.kudos.ms.sys.common.vo.resource.response.BaseMenuTreeNode
 import io.kudos.ms.sys.common.vo.resource.response.MenuTreeNode

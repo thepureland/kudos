@@ -8,7 +8,7 @@ import io.kudos.base.enums.ienums.IDictEnum
  * @author K
  * @since 1.0.0
  */
-enum class SexEnum(override val code: String, override val trans: String) : IDictEnum {
+enum class SexEnum(override val code: String, override val displayText: String) : IDictEnum {
 
     FEMALE("0", "女性"),
     MALE("1", "男性"),

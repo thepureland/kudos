@@ -11,7 +11,7 @@ import io.kudos.base.enums.ienums.IDictEnum
  */
 enum class CacheHandleType(
     override val code: String,
-    override val trans: String
+    override val displayText: String
 ) : IDictEnum {
 
     OVERLOAD("overload", "重载指定key的緩存"),

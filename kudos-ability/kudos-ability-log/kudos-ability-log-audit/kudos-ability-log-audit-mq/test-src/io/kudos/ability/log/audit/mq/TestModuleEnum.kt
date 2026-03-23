@@ -5,7 +5,7 @@ import io.kudos.base.enums.ienums.IDictEnum
 
 enum class TestModuleEnum(
     override val code: String,
-    override val trans: String
+    override val displayText: String
 ) : IDictEnum {
 
     DEMO("demo", "测试模块");

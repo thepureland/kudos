@@ -1,4 +1,4 @@
-package io.kudos.ms.sys.common.enums
+package io.kudos.ms.sys.common.enums.resource
 
 import io.kudos.base.enums.ienums.IDictEnum
 
@@ -8,7 +8,7 @@ import io.kudos.base.enums.ienums.IDictEnum
  * @author K
  * @since 1.0.0
  */
-enum class ResourceTypeEnum(override val code: String, override val trans: String): IDictEnum {
+enum class ResourceTypeEnum(override val code: String, override val displayText: String): IDictEnum {
 
     MENU("1", "菜单"),
     FUNCTION("2", "功能"),

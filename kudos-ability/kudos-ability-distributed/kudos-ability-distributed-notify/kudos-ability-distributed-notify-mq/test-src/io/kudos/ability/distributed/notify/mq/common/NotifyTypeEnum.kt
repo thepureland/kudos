@@ -5,7 +5,7 @@ import io.kudos.base.enums.ienums.IDictEnum
 
 enum class NotifyTypeEnum(
     override val code: String,
-    override val trans: String
+    override val displayText: String
 ) : IDictEnum {
 
     DS("DS", "数据源");

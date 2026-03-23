@@ -30,7 +30,7 @@ internal class DictEnumItemCodeTest {
 
     )
 
-    internal enum class TestEnum(override val code: String, override var trans: String): IDictEnum {
+    internal enum class TestEnum(override val code: String, override var displayText: String): IDictEnum {
 
         ELEM1("1", "元素1"),
         ELEM2("2", "元素2"),

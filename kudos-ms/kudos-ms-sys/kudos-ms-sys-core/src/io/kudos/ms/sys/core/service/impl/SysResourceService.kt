@@ -8,7 +8,7 @@ import io.kudos.base.query.eq
 import io.kudos.base.tree.IdAndNameTreeNode
 import io.kudos.ms.sys.common.consts.SysConsts
 import io.kudos.ms.sys.common.consts.SysDictTypes
-import io.kudos.ms.sys.common.enums.ResourceTypeEnum
+import io.kudos.ms.sys.common.enums.resource.ResourceTypeEnum
 import io.kudos.ms.sys.common.vo.resource.SysResourceCacheEntry
 import io.kudos.ms.sys.common.vo.resource.request.SysResourceQuery
 import io.kudos.ms.sys.common.vo.resource.response.BaseMenuTreeNode

@@ -138,7 +138,7 @@ data class ApiResponse<T>(
             ApiResponse(
                 success = true,
                 code = CommonErrorCodeEnum.SUCCESS.code,
-                message = CommonErrorCodeEnum.SUCCESS.trans,
+                message = CommonErrorCodeEnum.SUCCESS.displayText,
                 data = data
             )
 
@@ -199,7 +199,7 @@ data class ApiResponse<T>(
          * 构造失败响应
          *
          * 由错误码枚举对象生成失败响应，
-         * 自动读取枚举中的 code 和 trans 作为响应码和响应消息。
+         * 自动读取枚举中的 code 和 displayText 作为响应码和响应消息。
          *
          * 适用于：
          * - 统一业务异常返回
@@ -219,7 +219,7 @@ data class ApiResponse<T>(
             return ApiResponse(
                 success = false,
                 code = resultCode.code,
-                message = resultCode.trans,
+                message = resultCode.displayText,
                 data = data,
                 errors = errors
             )
