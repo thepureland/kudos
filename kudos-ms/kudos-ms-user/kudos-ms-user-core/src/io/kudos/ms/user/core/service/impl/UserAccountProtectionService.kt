@@ -1,6 +1,6 @@
 package io.kudos.ms.user.core.service.impl
 
-import io.kudos.base.support.service.BaseCrudService
+import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.ms.user.core.dao.UserAccountProtectionDao
 import io.kudos.ms.user.core.model.po.UserAccountProtection
 import io.kudos.ms.user.core.service.iservice.IUserAccountProtectionService

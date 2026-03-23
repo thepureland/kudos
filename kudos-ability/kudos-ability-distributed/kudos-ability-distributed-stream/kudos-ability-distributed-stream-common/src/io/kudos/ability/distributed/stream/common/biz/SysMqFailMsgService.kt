@@ -1,6 +1,6 @@
 package io.kudos.ability.distributed.stream.common.biz
 
-import io.kudos.base.support.service.BaseCrudService
+import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.ability.distributed.stream.common.dao.StreamExceptionMsgDao
 import io.kudos.ability.distributed.stream.common.model.po.SysMqFailMsg
 import io.kudos.ability.distributed.stream.common.model.table.SysMqFailMsgs

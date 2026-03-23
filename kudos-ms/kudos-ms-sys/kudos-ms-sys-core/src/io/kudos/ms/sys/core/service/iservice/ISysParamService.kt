@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.core.service.iservice
 
-import io.kudos.base.support.iservice.IBaseCrudService
+import io.kudos.base.support.service.iservice.IBaseCrudService
 import io.kudos.ms.sys.common.api.ISysParamApi
 import io.kudos.ms.sys.common.vo.param.SysParamCacheEntry
 import io.kudos.ms.sys.common.vo.param.response.SysParamRow

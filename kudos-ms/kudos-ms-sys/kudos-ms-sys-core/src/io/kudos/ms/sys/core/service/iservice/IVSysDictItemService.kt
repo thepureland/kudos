@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.core.service.iservice
 
-import io.kudos.base.support.iservice.IBaseReadOnlyService
+import io.kudos.base.support.service.iservice.IBaseReadOnlyService
 import io.kudos.ms.sys.common.vo.dictitem.SysDictItemCacheEntry
 import io.kudos.ms.sys.core.model.po.VSysDictItem
 

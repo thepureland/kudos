@@ -1,4 +1,4 @@
-package io.kudos.base.support.iservice
+package io.kudos.base.support.service.iservice
 
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.PagingSearchResult

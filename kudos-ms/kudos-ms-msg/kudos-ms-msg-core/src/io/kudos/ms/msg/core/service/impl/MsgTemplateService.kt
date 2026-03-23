@@ -1,6 +1,6 @@
 package io.kudos.ms.msg.core.service.impl
 
-import io.kudos.base.support.service.BaseCrudService
+import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.ms.msg.core.dao.MsgTemplateDao
 import io.kudos.ms.msg.core.model.po.MsgTemplate
 import io.kudos.ms.msg.core.service.iservice.IMsgTemplateService

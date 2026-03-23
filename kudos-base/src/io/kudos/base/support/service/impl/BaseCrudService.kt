@@ -1,4 +1,4 @@
-package io.kudos.base.support.service
+package io.kudos.base.support.service.impl
 
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.enums.impl.CommonErrorCodeEnum
@@ -13,7 +13,7 @@ import io.kudos.base.model.payload.UpdatePayload
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.support.dao.IBaseCrudDao
-import io.kudos.base.support.iservice.IBaseCrudService
+import io.kudos.base.support.service.iservice.IBaseCrudService
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties

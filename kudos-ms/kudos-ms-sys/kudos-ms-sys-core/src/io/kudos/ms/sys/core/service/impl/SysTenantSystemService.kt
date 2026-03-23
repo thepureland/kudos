@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.core.service.impl
 
 import io.kudos.ability.cache.common.kit.KeyValueCacheKit
-import io.kudos.base.support.service.BaseCrudService
+import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.sys.core.cache.SysTenantSystemHashCache
 import io.kudos.ms.sys.core.dao.SysTenantSystemDao
