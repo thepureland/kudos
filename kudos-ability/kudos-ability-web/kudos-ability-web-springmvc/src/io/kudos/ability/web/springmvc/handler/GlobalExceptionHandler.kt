@@ -42,7 +42,7 @@ class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleMethodArgumentNotValidException(ex: MethodArgumentNotValidException): ApiResponse<Any> {
         val message = ex.bindingResult.fieldErrors.firstOrNull()?.defaultMessage
-            ?: CommonErrorCodeEnum.VALIDATION_ERROR.trans
+            ?: CommonErrorCodeEnum.VALIDATION_ERROR.displayText
         return ApiResponse.fail(CommonErrorCodeEnum.VALIDATION_ERROR.code, message)
     }
 
@@ -52,7 +52,7 @@ class GlobalExceptionHandler {
     @ExceptionHandler(BindException::class)
     fun handleBindException(ex: BindException): ApiResponse<Any> {
         val message = ex.bindingResult.fieldErrors.firstOrNull()?.defaultMessage
-            ?: CommonErrorCodeEnum.VALIDATION_ERROR.trans
+            ?: CommonErrorCodeEnum.VALIDATION_ERROR.displayText
         return ApiResponse.fail(CommonErrorCodeEnum.VALIDATION_ERROR.code, message)
     }
 
@@ -62,7 +62,7 @@ class GlobalExceptionHandler {
     @ExceptionHandler(ConstraintViolationException::class)
     fun handleConstraintViolationException(ex: ConstraintViolationException): ApiResponse<Any> {
         val message = ex.constraintViolations.firstOrNull()?.message
-            ?: CommonErrorCodeEnum.VALIDATION_ERROR.trans
+            ?: CommonErrorCodeEnum.VALIDATION_ERROR.displayText
         return ApiResponse.fail(CommonErrorCodeEnum.VALIDATION_ERROR.code, message)
     }
 
@@ -96,7 +96,7 @@ class GlobalExceptionHandler {
     @ExceptionHandler(Exception::class)
     fun handleException(ex: Exception): ApiResponse<Any> {
         log.error("Unhandled exception", ex)
-        return ApiResponse.fail(CommonErrorCodeEnum.SYSTEM_ERROR.code, CommonErrorCodeEnum.SYSTEM_ERROR.trans)
+        return ApiResponse.fail(CommonErrorCodeEnum.SYSTEM_ERROR.code, CommonErrorCodeEnum.SYSTEM_ERROR.displayText)
     }
 
 }

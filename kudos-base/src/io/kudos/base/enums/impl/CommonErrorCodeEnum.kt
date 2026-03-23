@@ -13,14 +13,8 @@ enum class CommonErrorCodeEnum(
     /** 错误码 */
     override val code: String,
 
-    /** 原始错误描述 */
-    override val rawTrans: String,
-
-    /** 是否打印完整堆栈 */
-    override val printAllStackTrace: Boolean = false,
-
-    /** 国际化key的前缀 */
-    override val i18nKeyPrefix: String = "sys.error-msg.default",
+    /** 默认展示文本 */
+    override val defaultDisplayText: String,
 ) : IErrorCodeEnum {
 
     /** 请求成功 */
@@ -48,6 +42,9 @@ enum class CommonErrorCodeEnum(
     BUSINESS_ERROR("4002", "操作未完成，请稍后再试"),
 
     /** 系统异常 */
-    SYSTEM_ERROR("500", "系统开小差了，请稍后再试")
+    SYSTEM_ERROR("500", "系统开小差了，请稍后再试");
+
+    override val i18nKeyPrefix: String
+        get() = "sys.error-msg.default"
 
 }

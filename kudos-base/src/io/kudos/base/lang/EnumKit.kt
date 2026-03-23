@@ -29,10 +29,10 @@ object EnumKit {
      * @author K
      * @since 1.0.0
      */
-    fun trans(enumClassStr: String, code: String): String? {
+    fun displayText(enumClassStr: String, code: String): String? {
         val enumClazz = enumOf(enumClassStr, code)
         if (enumClazz != null) {
-            return enumClazz.trans
+            return enumClazz.displayText
         }
         LOG.warn("枚举类【${enumClassStr}】不存在code为【${code}】的枚举元素")
         return null
@@ -92,7 +92,7 @@ object EnumKit {
         val codeMap = mutableMapOf<String, String>()
         for (constant in enumClass.java.enumConstants) {
             if (constant is IDictEnum) {
-                codeMap[constant.code] = constant.trans
+                codeMap[constant.code] = constant.displayText
             }
         }
         return codeMap

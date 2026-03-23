@@ -48,7 +48,7 @@ class BadRequestExceptionHandler : ResponseEntityExceptionHandler() {
         request: WebRequest
     ): ResponseEntity<Any> {
         val errors = toErrorDetails(ex.bindingResult)
-        val message = errors.firstOrNull()?.message ?: CommonErrorCodeEnum.VALIDATION_ERROR.trans
+        val message = errors.firstOrNull()?.message ?: CommonErrorCodeEnum.VALIDATION_ERROR.displayText
         log.warn("MethodArgumentNotValidException: $message")
         return createResponseEntity(message, errors, headers, status, CommonErrorCodeEnum.VALIDATION_ERROR.code)
     }
@@ -61,7 +61,7 @@ class BadRequestExceptionHandler : ResponseEntityExceptionHandler() {
         ex: BindException,
     ): ResponseEntity<Any> {
         val errors = toErrorDetails(ex.bindingResult)
-        val message = errors.firstOrNull()?.message ?: CommonErrorCodeEnum.VALIDATION_ERROR.trans
+        val message = errors.firstOrNull()?.message ?: CommonErrorCodeEnum.VALIDATION_ERROR.displayText
         log.warn("BindException: $message")
         return createResponseEntity(message, errors, HttpHeaders(), HttpStatus.BAD_REQUEST, CommonErrorCodeEnum.VALIDATION_ERROR.code)
     }
@@ -106,7 +106,7 @@ class BadRequestExceptionHandler : ResponseEntityExceptionHandler() {
         val message = if (ex is MethodArgumentTypeMismatchException) {
             "参数类型错误：${ex.name}"
         } else {
-            CommonErrorCodeEnum.BAD_REQUEST.trans
+            CommonErrorCodeEnum.BAD_REQUEST.displayText
         }
         log.warn("TypeMismatchException: $message")
         return createResponseEntity(message, null, headers, status, CommonErrorCodeEnum.BAD_REQUEST.code)
@@ -135,7 +135,7 @@ class BadRequestExceptionHandler : ResponseEntityExceptionHandler() {
                 code = it.code,
                 field = it.field,
                 target = it.objectName,
-                message = it.defaultMessage ?: CommonErrorCodeEnum.VALIDATION_ERROR.trans,
+                message = it.defaultMessage ?: CommonErrorCodeEnum.VALIDATION_ERROR.displayText,
                 rejectedValue = it.rejectedValue
             )
         }
@@ -143,7 +143,7 @@ class BadRequestExceptionHandler : ResponseEntityExceptionHandler() {
             ErrorDetail(
                 code = it.code,
                 target = it.objectName,
-                message = it.defaultMessage ?: CommonErrorCodeEnum.VALIDATION_ERROR.trans
+                message = it.defaultMessage ?: CommonErrorCodeEnum.VALIDATION_ERROR.displayText
             )
         }
         return fieldErrors + globalErrors

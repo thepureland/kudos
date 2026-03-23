@@ -8,9 +8,7 @@ import java.text.MessageFormat
  */
 enum class FileErrorCode(
     override val code: String,
-    override val rawTrans: String,
-    override val printAllStackTrace: Boolean = false,
-    override val i18nKeyPrefix: String = ""
+    override val defaultDisplayText: String
 ) : IErrorCodeEnum {
 
     FILE_INVALID_ACCESS_KEY("FS00000000", "无效认证信息"),
@@ -21,6 +19,9 @@ enum class FileErrorCode(
     FILE_DELETE_FAIL("FS00000005", "文件删除失败");
 
     fun getMessage(vararg params: Any): String {
-        return MessageFormat.format(this.trans, *params)
+        return MessageFormat.format(this.displayText, *params)
     }
+
+    override val i18nKeyPrefix: String
+        get() = ""
 }

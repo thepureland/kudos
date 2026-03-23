@@ -68,13 +68,17 @@ open class CustomRuntimeException : RuntimeException {
 
     protected fun resolveException(errorCode: IErrorCodeEnum) {
         fillCustomStackTrace(errorCode)
-        handleMessageWithoutLog(errorCode.trans)
+        handleMessageWithoutLog(errorCode.displayText)
         log.error(this)
     }
 
-    protected fun resolveException(errorCode: IErrorCodeEnum, vararg args: Any?) {
-        fillCustomStackTrace(errorCode)
-        handleMessageWithoutLog(errorCode.trans, args)
+    protected fun resolveException(
+        errorCode: IErrorCodeEnum,
+        printAllStackTrace: Boolean,
+        vararg args: Any?
+    ) {
+        fillCustomStackTrace(errorCode, printAllStackTrace)
+        handleMessageWithoutLog(errorCode.displayText, args)
         log.error(this)
     }
 
@@ -114,11 +118,15 @@ open class CustomRuntimeException : RuntimeException {
      * - 配置由errorCode决定，不能动态修改
      * 
      * @param errorCode 错误码枚举，包含堆栈输出配置
+     * @param printAllStackTrace 输出完整堆栈信息
      * @return 当前异常对象
      */
     @Synchronized
-    protected fun fillCustomStackTrace(errorCode: IErrorCodeEnum): Throwable? {
-        if (errorCode.printAllStackTrace) {
+    protected fun fillCustomStackTrace(
+        errorCode: IErrorCodeEnum,
+        printAllStackTrace: Boolean = false
+    ): Throwable? {
+        if (printAllStackTrace) {
             return fillInStackTrace()
         } else {
             //精简输出日志，如果error定义不输出全部堆栈信息

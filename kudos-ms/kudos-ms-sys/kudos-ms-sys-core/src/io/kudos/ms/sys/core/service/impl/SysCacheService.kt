@@ -7,6 +7,7 @@ import io.kudos.base.bean.BeanKit
 import io.kudos.base.data.json.JsonKit
 import io.kudos.base.error.ServiceException
 import io.kudos.base.logger.LogFactory
+import io.kudos.ms.sys.common.enums.cache.SysCacheErrorCodeEnum
 import io.kudos.ms.sys.common.vo.cache.SysCacheCacheEntry
 import io.kudos.ms.sys.core.cache.SysCacheHashCache
 import io.kudos.ms.sys.core.dao.SysCacheDao
@@ -116,9 +117,17 @@ open class SysCacheService : BaseCrudService<String, SysCache, SysCacheDao>(), I
         val cache = getCacheConfigById(id)
         val name = cache.name
         if (isKeyValueCache(cache)) {
-            KeyValueCacheKit.reload(name, key)
+            if (!KeyValueCacheKit.existsKey(name, key)) {
+                throw ServiceException(SysCacheErrorCodeEnum.CACHE_KEY_NOT_FOUND)
+            } else {
+                KeyValueCacheKit.reload(name, key)
+            }
         } else {
-            HashCacheKit.reload(name, key)
+            if (!HashCacheKit.existsById(name, key)) {
+                throw ServiceException(SysCacheErrorCodeEnum.CACHE_KEY_NOT_FOUND)
+            } else {
+                HashCacheKit.reload(name, key)
+            }
         }
     }
 
@@ -175,7 +184,7 @@ open class SysCacheService : BaseCrudService<String, SysCache, SysCacheDao>(), I
 
     /** 按 id 获取缓存配置，不存在则抛异常 */
     private fun getCacheConfigById(id: String): SysCacheCacheEntry {
-        return sysCacheHashCache.getCacheById(id) ?: throw ServiceException("缓存配置【$id】不存在！")
+        return sysCacheHashCache.getCacheById(id) ?: throw ServiceException(SysCacheErrorCodeEnum.CACHE_CONFIG_NOT_FOUND)
     }
 
     private fun isKeyValueCache(cache: SysCacheCacheEntry): Boolean = !cache.hash

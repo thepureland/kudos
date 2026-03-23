@@ -8,7 +8,7 @@ import io.kudos.base.enums.ienums.IDictEnum
  */
 enum class EmailStatusEnum(
     override val code: String,
-    override val trans: String
+    override val displayText: String
 ) : IDictEnum {
 
     FAIL("0", "失败"),

@@ -1,4 +1,4 @@
-package io.kudos.ms.sys.common.enums
+package io.kudos.ms.sys.common.enums.accessrule
 
 import io.kudos.base.enums.ienums.IDictEnum
 
@@ -8,7 +8,7 @@ import io.kudos.base.enums.ienums.IDictEnum
  * @author K
  * @since 1.0.0
  */
-enum class AccessRuleTypeEnum(override val code: String, override val trans: String): IDictEnum {
+enum class AccessRuleTypeEnum(override val code: String, override val displayText: String): IDictEnum {
 
     UNLIMITED("1", "不限制"),
     WHITELIST("2", "白名单"),
