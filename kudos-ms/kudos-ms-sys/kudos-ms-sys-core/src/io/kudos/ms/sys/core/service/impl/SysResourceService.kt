@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.core.service.impl
 
-import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
+import io.kudos.base.support.service.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
@@ -35,7 +35,10 @@ import org.springframework.transaction.annotation.Transactional
  * @since 1.0.0
  */
 @Service
-open class SysResourceService : BaseCrudService<String, SysResource, SysResourceDao>(), ISysResourceService {
+@Transactional
+open class SysResourceService(
+    dao: SysResourceDao
+) : BaseCrudService<String, SysResource, SysResourceDao>(dao), ISysResourceService {
 
 
     private val log = LogFactory.getLog(this)

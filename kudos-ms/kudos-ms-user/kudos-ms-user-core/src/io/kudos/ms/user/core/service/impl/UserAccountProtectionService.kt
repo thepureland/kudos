@@ -1,10 +1,11 @@
 package io.kudos.ms.user.core.service.impl
 
-import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
+import io.kudos.base.support.service.BaseCrudService
 import io.kudos.ms.user.core.dao.UserAccountProtectionDao
 import io.kudos.ms.user.core.model.po.UserAccountProtection
 import io.kudos.ms.user.core.service.iservice.IUserAccountProtectionService
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 
 /**
@@ -15,7 +16,10 @@ import org.springframework.stereotype.Service
  * @since 1.0.0
  */
 @Service
-open class UserAccountProtectionService : BaseCrudService<String, UserAccountProtection, UserAccountProtectionDao>(), IUserAccountProtectionService {
+@Transactional
+open class UserAccountProtectionService(
+    dao: UserAccountProtectionDao
+) : BaseCrudService<String, UserAccountProtection, UserAccountProtectionDao>(dao), IUserAccountProtectionService {
 
 
 

@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.core.service.impl
 
-import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
+import io.kudos.base.support.service.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
@@ -25,7 +25,10 @@ import org.springframework.transaction.annotation.Transactional
  * @since 1.0.0
  */
 @Service
-open class SysMicroServiceService : BaseCrudService<String, SysMicroService, SysMicroServiceDao>(),
+@Transactional
+open class SysMicroServiceService(
+    dao: SysMicroServiceDao
+) : BaseCrudService<String, SysMicroService, SysMicroServiceDao>(dao),
     ISysMicroServiceService {
 
 

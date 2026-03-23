@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.core.service.impl
 
-import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
+import io.kudos.base.support.service.BaseCrudService
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.sys.core.dao.SysSubSystemMicroServiceDao
 import io.kudos.ms.sys.core.model.po.SysSubSystemMicroService
@@ -16,7 +16,10 @@ import org.springframework.transaction.annotation.Transactional
  * @since 1.0.0
  */
 @Service
-open class SysSubSystemMicroServiceService : BaseCrudService<String, SysSubSystemMicroService, SysSubSystemMicroServiceDao>(), ISysSubSystemMicroServiceService {
+@Transactional
+open class SysSubSystemMicroServiceService(
+    dao: SysSubSystemMicroServiceDao
+) : BaseCrudService<String, SysSubSystemMicroService, SysSubSystemMicroServiceDao>(dao), ISysSubSystemMicroServiceService {
 
 
     private val log = LogFactory.getLog(this)

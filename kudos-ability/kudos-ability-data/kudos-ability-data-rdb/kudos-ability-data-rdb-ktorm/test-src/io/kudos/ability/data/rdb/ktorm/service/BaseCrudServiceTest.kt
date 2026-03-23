@@ -12,13 +12,7 @@ import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.test.common.init.EnableKudosTest
 import jakarta.annotation.Resource
 import org.springframework.transaction.annotation.Transactional
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
-import kotlin.test.assertFalse
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 /**
  * [BaseCrudService] 测试（含 IHasBuiltIn 删除约束）

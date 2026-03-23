@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.core.service.impl
 
-import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
+import io.kudos.base.support.service.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
@@ -30,7 +30,10 @@ import kotlin.reflect.KClass
  * @since 1.0.0
  */
 @Service
-open class SysDataSourceService : BaseCrudService<String, SysDataSource, SysDataSourceDao>(), ISysDataSourceService {
+@Transactional
+open class SysDataSourceService(
+    dao: SysDataSourceDao
+) : BaseCrudService<String, SysDataSource, SysDataSourceDao>(dao), ISysDataSourceService {
 
 
     @Resource
