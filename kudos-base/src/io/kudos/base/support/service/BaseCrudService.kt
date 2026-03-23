@@ -1,123 +1,102 @@
-package io.kudos.ability.data.rdb.ktorm.service
+package io.kudos.base.support.service
 
-import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
-import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.enums.impl.CommonErrorCodeEnum
 import io.kudos.base.error.ServiceException
 import io.kudos.base.lang.GenericKit
 import io.kudos.base.model.contract.common.IHasBuiltIn
+import io.kudos.base.model.contract.entity.IIdEntity
 import io.kudos.base.model.payload.ISearchPayload
 import io.kudos.base.model.payload.ListSearchPayload
 import io.kudos.base.model.payload.MutableListSearchPayload
 import io.kudos.base.model.payload.UpdatePayload
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
+import io.kudos.base.support.dao.IBaseCrudDao
 import io.kudos.base.support.iservice.IBaseCrudService
-import org.springframework.transaction.annotation.Transactional
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
 
 /**
- * 基于关系型数据库表的基础业务操作
+ * 基础可写业务操作：将 [IBaseCrudService] 委托给 [IBaseCrudDao]，仅依赖 base 中的 DAO 契约，不绑定 Ktorm。
+ * 事务由 Spring 等容器在具体业务 Service 实现类上使用 `@Transactional` 等声明；本模块不依赖 Spring。
  *
  * 删除说明：当实体类型 [E] 实现 [IHasBuiltIn] 时，所有删除入口仅允许删除 `builtIn == false` 的行；
  * 若调用方针对内置行（`builtIn == true`）删除，将抛出 [ServiceException]（[CommonErrorCodeEnum.BUILTIN_NOT_DELETABLE]）。
  * 实现上在 Service 层拼接 `builtIn` 条件并委托现有 DAO，不修改 DAO；校验阶段尽量只查 `builtIn`（或 `id`+`builtIn`）列，避免 `get` 整行。
  *
  * @param PK 实体主键类型
- * @param E 实体类型
+ * @param E 实体类型，须实现 [IIdEntity]
+ * @param DAO 可写 DAO 实现类型（须同时满足只读能力，见 [IBaseCrudDao] 继承 [io.kudos.base.support.dao.IBaseReadOnlyDao]）
  * @author K
  * @since 1.0.0
  */
-open class BaseCrudService<PK : Any, E : IDbEntity<PK, E>, DAO : BaseCrudDao<PK, E, *>>
-    : BaseReadOnlyService<PK, E, DAO>(), IBaseCrudService<PK, E> {
+open class BaseCrudService<PK : Any, E : IIdEntity<PK>, DAO : IBaseCrudDao<PK, E>>(dao: DAO) :
+    BaseReadOnlyService<PK, E, DAO>(dao), IBaseCrudService<PK, E> {
 
-    @Transactional
     override fun insert(any: Any): PK = dao.insert(any)
 
-    @Transactional
     override fun insertOnly(entity: E, vararg propertyNames: String): PK = dao.insertOnly(entity, *propertyNames)
 
-    @Transactional
     override fun insertExclude(entity: E, vararg excludePropertyNames: String): PK =
         dao.insertExclude(entity, *excludePropertyNames)
 
-    @Transactional
     override fun batchInsert(objects: Collection<Any>, countOfEachBatch: Int): Int =
         dao.batchInsert(objects, countOfEachBatch)
 
-    @Transactional
     override fun batchInsertOnly(entities: Collection<E>, countOfEachBatch: Int, vararg propertyNames: String): Int =
         dao.batchInsertOnly(entities, countOfEachBatch, *propertyNames)
 
-    @Transactional
     override fun batchInsertExclude(
         entities: Collection<E>, countOfEachBatch: Int, vararg excludePropertyNames: String
     ): Int = dao.batchInsertExclude(entities, countOfEachBatch, *excludePropertyNames)
 
-    @Transactional
     override fun update(any: Any): Boolean = dao.update(any)
 
-    @Transactional
     override fun updateWhen(entity: E, criteria: Criteria): Boolean = dao.updateWhen(entity, criteria)
 
-    @Transactional
     override fun updateProperties(id: PK, properties: Map<String, *>): Boolean =
         dao.updateProperties(id, properties)
 
-    @Transactional
     override fun updatePropertiesWhen(id: PK, properties: Map<String, *>, criteria: Criteria): Boolean =
         dao.updatePropertiesWhen(id, properties, criteria)
 
-    @Transactional
     override fun updateOnly(entity: E, vararg propertyNames: String): Boolean = dao.updateOnly(entity, *propertyNames)
 
-    @Transactional
     override fun updateOnlyWhen(entity: E, criteria: Criteria, vararg propertyNames: String): Boolean =
         dao.updateOnlyWhen(entity, criteria, *propertyNames)
 
-    @Transactional
     override fun updateExcludePropertiesWhen(
         entity: E, criteria: Criteria, vararg excludePropertyNames: String
     ): Boolean = dao.updateExcludePropertiesWhen(entity, criteria, *excludePropertyNames)
 
-    @Transactional
     override fun batchUpdate(entities: Collection<E>, countOfEachBatch: Int): Int =
         dao.batchUpdate(entities, countOfEachBatch)
 
-    @Transactional
     override fun batchUpdateWhen(entities: Collection<E>, criteria: Criteria, countOfEachBatch: Int): Int =
         dao.batchUpdateWhen(entities, criteria, countOfEachBatch)
 
-    @Transactional
     override fun <S : ISearchPayload> batchUpdateWhen(updatePayload: UpdatePayload<S>): Int =
         dao.batchUpdateWhen(updatePayload)
 
-    @Transactional
     override fun updateExcludeProperties(entity: E, vararg excludePropertyNames: String): Boolean =
         dao.updateExcludeProperties(entity, *excludePropertyNames)
 
-    @Transactional
     override fun batchUpdateProperties(criteria: Criteria, properties: Map<String, *>): Int =
         dao.batchUpdateProperties(criteria, properties)
 
-    @Transactional
     override fun batchUpdateOnly(entities: Collection<E>, countOfEachBatch: Int, vararg propertyNames: String): Int =
         dao.batchUpdateOnly(entities, countOfEachBatch, *propertyNames)
 
-    @Transactional
     override fun batchUpdateOnlyWhen(
         entities: Collection<E>, criteria: Criteria, countOfEachBatch: Int, vararg propertyNames: String
-    ): Int = dao.batchUpdateOnlyWhen(entities, criteria, countOfEachBatch)
+    ): Int = dao.batchUpdateOnlyWhen(entities, criteria, countOfEachBatch, *propertyNames)
 
-    @Transactional
     override fun batchUpdateExcludeProperties(
         entities: Collection<E>, countOfEachBatch: Int, vararg excludePropertyNames: String
     ): Int = dao.batchUpdateExcludeProperties(entities, countOfEachBatch, *excludePropertyNames)
 
-    @Transactional
     override fun batchUpdateExcludePropertiesWhen(
         entities: Collection<E>, criteria: Criteria, countOfEachBatch: Int, vararg excludePropertyNames: String
     ): Int = dao.batchUpdateExcludePropertiesWhen(entities, criteria, countOfEachBatch, *excludePropertyNames)
@@ -149,7 +128,7 @@ open class BaseCrudService<PK : Any, E : IDbEntity<PK, E>, DAO : BaseCrudDao<PK,
     }
 
     private val idPropertyName: String
-        get() = IDbEntity<PK, E>::id.name
+        get() = IIdEntity<PK>::id.name
 
     private val builtInPropertyName: String
         get() = IHasBuiltIn::builtIn.name
@@ -260,29 +239,24 @@ open class BaseCrudService<PK : Any, E : IDbEntity<PK, E>, DAO : BaseCrudDao<PK,
     }
 
     /** 按主键删除；若 [E] 实现 [IHasBuiltIn]，仅删除非内置行。 */
-    @Transactional
     override fun deleteById(id: PK): Boolean =
         if (!hasBuiltInField) dao.deleteById(id) else deleteByIdForBuiltInEntity(id)
 
     /** 批量按主键删除；若 [E] 实现 [IHasBuiltIn]，仅删除非内置行。 */
-    @Transactional
     override fun batchDelete(ids: Collection<PK>): Int =
         if (!hasBuiltInField) dao.batchDelete(ids) else batchDeleteForBuiltInEntity(ids)
 
     /** 按条件批量删除；若 [E] 实现 [IHasBuiltIn]，自动附加 `builtIn = false`。 */
-    @Transactional
     override fun batchDeleteCriteria(criteria: Criteria): Int =
         if (!hasBuiltInField) dao.batchDeleteCriteria(criteria) else batchDeleteCriteriaForBuiltInEntity(criteria)
 
     /**
      * 按查询载体批量删除；若 [E] 实现 [IHasBuiltIn]，[searchPayload] 须为 [ListSearchPayload]（见 [batchDeleteWhenForBuiltInEntity]）。
      */
-    @Transactional
     override fun batchDeleteWhen(searchPayload: ISearchPayload): Int =
         if (!hasBuiltInField) dao.batchDeleteWhen(searchPayload) else batchDeleteWhenForBuiltInEntity(searchPayload)
 
     /** 删除实体对应行；内置表等价于 [deleteById]（以数据库中 builtIn 为准）。 */
-    @Transactional
     override fun delete(entity: E): Boolean =
         if (!hasBuiltInField) dao.delete(entity) else deleteByIdForBuiltInEntity(entity.id)
 

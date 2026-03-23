@@ -65,7 +65,7 @@ import io.kudos.base.model.payload.UpdatePayload
  * @param E 实体类型，必须实现IIdEntity接口
  * @since 1.0.0
  */
-interface IBaseCrudDao<PK : Any, E : IIdEntity<PK>> {
+interface IBaseCrudDao<PK : Any, E : IIdEntity<PK>> : IBaseReadOnlyDao<PK, E> {
 
     //region Insert
 

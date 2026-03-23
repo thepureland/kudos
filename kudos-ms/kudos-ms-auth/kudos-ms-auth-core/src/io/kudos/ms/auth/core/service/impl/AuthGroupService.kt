@@ -1,10 +1,11 @@
 package io.kudos.ms.auth.core.service.impl
 
-import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
+import io.kudos.base.support.service.BaseCrudService
 import io.kudos.ms.auth.core.dao.AuthGroupDao
 import io.kudos.ms.auth.core.model.po.AuthGroup
 import io.kudos.ms.auth.core.service.iservice.IAuthGroupService
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 
 /**
@@ -15,7 +16,10 @@ import org.springframework.stereotype.Service
  * @since 1.0.0
  */
 @Service
-open class AuthGroupService : BaseCrudService<String, AuthGroup, AuthGroupDao>(), IAuthGroupService {
+@Transactional
+open class AuthGroupService(
+    dao: AuthGroupDao
+) : BaseCrudService<String, AuthGroup, AuthGroupDao>(dao), IAuthGroupService {
 
 
 

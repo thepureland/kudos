@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.core.service.impl
 
-import io.kudos.ability.data.rdb.ktorm.service.BaseReadOnlyService
+import io.kudos.base.support.service.BaseReadOnlyService
 import io.kudos.ms.sys.common.vo.dictitem.SysDictItemCacheEntry
 import io.kudos.ms.sys.core.cache.SysDictItemHashCache
 import io.kudos.ms.sys.core.dao.VSysDictItemDao
@@ -18,7 +18,9 @@ import org.springframework.stereotype.Service
  * @since 1.0.0
  */
 @Service
-open class VSysDictItemService : BaseReadOnlyService<String, VSysDictItem, VSysDictItemDao>(),
+open class VSysDictItemService(
+    dao: VSysDictItemDao
+) : BaseReadOnlyService<String, VSysDictItem, VSysDictItemDao>(dao),
     IVSysDictItemService {
 
     @Resource

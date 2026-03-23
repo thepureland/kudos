@@ -2,7 +2,7 @@ package io.kudos.ms.sys.core.service.impl
 
 import io.kudos.ability.cache.common.kit.HashCacheKit
 import io.kudos.ability.cache.common.kit.KeyValueCacheKit
-import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
+import io.kudos.base.support.service.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.data.json.JsonKit
 import io.kudos.base.error.ServiceException
@@ -27,7 +27,10 @@ import kotlin.reflect.KClass
  * @since 1.0.0
  */
 @Service
-open class SysCacheService : BaseCrudService<String, SysCache, SysCacheDao>(), ISysCacheService {
+@Transactional
+open class SysCacheService(
+    dao: SysCacheDao
+) : BaseCrudService<String, SysCache, SysCacheDao>(dao), ISysCacheService {
 
     private val log = LogFactory.getLog(this)
 

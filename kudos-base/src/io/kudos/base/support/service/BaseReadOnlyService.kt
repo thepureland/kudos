@@ -1,29 +1,28 @@
-package io.kudos.ability.data.rdb.ktorm.service
+package io.kudos.base.support.service
 
-import io.kudos.ability.data.rdb.ktorm.support.BaseReadOnlyDao
-import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
+import io.kudos.base.model.contract.entity.IIdEntity
+import io.kudos.base.model.payload.ISearchPayload
+import io.kudos.base.model.payload.ListSearchPayload
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.PagingSearchResult
 import io.kudos.base.query.sort.Order
+import io.kudos.base.support.dao.IBaseReadOnlyDao
 import io.kudos.base.support.iservice.IBaseReadOnlyService
-import io.kudos.base.model.payload.ISearchPayload
-import io.kudos.base.model.payload.ListSearchPayload
-import org.springframework.beans.factory.annotation.Autowired
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
 /**
- * 基于关系型数据库表的基础的只读业务操作
+ * 基础只读业务操作：将 [IBaseReadOnlyService] 委托给 [IBaseReadOnlyDao]，与具体持久化实现（如 Ktorm）解耦。
  *
  * @param PK 实体主键类型
- * @param E 实体类型
+ * @param E 实体类型，须实现 [IIdEntity]
+ * @param DAO 只读 DAO 实现类型
  * @author K
  * @since 1.0.0
  */
-open class BaseReadOnlyService<PK : Any, E : IDbEntity<PK, E>, DAO : BaseReadOnlyDao<PK, E, *>> : IBaseReadOnlyService<PK, E> {
-
-    @Autowired // 注意：不能改为 @Resource
-    protected lateinit var dao: DAO
+open class BaseReadOnlyService<PK : Any, E : IIdEntity<PK>, DAO : IBaseReadOnlyDao<PK, E>>(
+    protected val dao: DAO
+) : IBaseReadOnlyService<PK, E> {
 
     override fun get(id: PK): E? = dao.get(id)
 

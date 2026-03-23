@@ -62,7 +62,8 @@ open class StreamCommonConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    open fun streamExceptionBiz(): ISysMqFailMsgService = SysMqFailMsgService()
+    open fun streamExceptionBiz(streamExceptionMsgDao: StreamExceptionMsgDao): ISysMqFailMsgService =
+        SysMqFailMsgService(streamExceptionMsgDao)
 
     @Bean
     @ConditionalOnMissingBean

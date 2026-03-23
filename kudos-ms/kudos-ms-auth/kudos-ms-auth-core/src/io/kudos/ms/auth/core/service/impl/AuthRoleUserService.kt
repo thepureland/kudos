@@ -1,6 +1,6 @@
 package io.kudos.ms.auth.core.service.impl
 
-import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
+import io.kudos.base.support.service.BaseCrudService
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.auth.core.cache.ResourceIdsByUserIdCache
 import io.kudos.ms.auth.core.cache.RoleIdsByUserIdCache
@@ -21,7 +21,10 @@ import org.springframework.transaction.annotation.Transactional
  * @since 1.0.0
  */
 @Service
-open class AuthRoleUserService : BaseCrudService<String, AuthRoleUser, AuthRoleUserDao>(),
+@Transactional
+open class AuthRoleUserService(
+    dao: AuthRoleUserDao
+) : BaseCrudService<String, AuthRoleUser, AuthRoleUserDao>(dao),
     IAuthRoleUserService {
 
 

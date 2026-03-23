@@ -1,10 +1,11 @@
 package io.kudos.ms.msg.core.service.impl
 
-import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
+import io.kudos.base.support.service.BaseCrudService
 import io.kudos.ms.msg.core.dao.MsgReceiverGroupDao
 import io.kudos.ms.msg.core.model.po.MsgReceiverGroup
 import io.kudos.ms.msg.core.service.iservice.IMsgReceiverGroupService
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 
 /**
@@ -15,7 +16,10 @@ import org.springframework.stereotype.Service
  * @since 1.0.0
  */
 @Service
-open class MsgReceiverGroupService : BaseCrudService<String, MsgReceiverGroup, MsgReceiverGroupDao>(), IMsgReceiverGroupService {
+@Transactional
+open class MsgReceiverGroupService(
+    dao: MsgReceiverGroupDao
+) : BaseCrudService<String, MsgReceiverGroup, MsgReceiverGroupDao>(dao), IMsgReceiverGroupService {
 
 
 

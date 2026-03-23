@@ -1,10 +1,11 @@
 package io.kudos.ms.user.core.service.impl
 
-import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
+import io.kudos.base.support.service.BaseCrudService
 import io.kudos.ms.user.core.dao.UserAccountThirdDao
 import io.kudos.ms.user.core.model.po.UserAccountThird
 import io.kudos.ms.user.core.service.iservice.IUserAccountThirdService
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 
 /**
@@ -15,7 +16,10 @@ import org.springframework.stereotype.Service
  * @since 1.0.0
  */
 @Service
-open class UserAccountThirdService : BaseCrudService<String, UserAccountThird, UserAccountThirdDao>(), IUserAccountThirdService {
+@Transactional
+open class UserAccountThirdService(
+    dao: UserAccountThirdDao
+) : BaseCrudService<String, UserAccountThird, UserAccountThirdDao>(dao), IUserAccountThirdService {
 
 
     override fun getByUserAccountId(userId: String): List<UserAccountThird> {

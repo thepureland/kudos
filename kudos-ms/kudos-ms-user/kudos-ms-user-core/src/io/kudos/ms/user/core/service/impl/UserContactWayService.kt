@@ -1,10 +1,11 @@
 package io.kudos.ms.user.core.service.impl
 
-import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
+import io.kudos.base.support.service.BaseCrudService
 import io.kudos.ms.user.core.dao.UserContactWayDao
 import io.kudos.ms.user.core.model.po.UserContactWay
 import io.kudos.ms.user.core.service.iservice.IUserContactWayService
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 
 /**
@@ -15,7 +16,10 @@ import org.springframework.stereotype.Service
  * @since 1.0.0
  */
 @Service
-open class UserContactWayService : BaseCrudService<String, UserContactWay, UserContactWayDao>(), IUserContactWayService {
+@Transactional
+open class UserContactWayService(
+    dao: UserContactWayDao
+) : BaseCrudService<String, UserContactWay, UserContactWayDao>(dao), IUserContactWayService {
 
 
 

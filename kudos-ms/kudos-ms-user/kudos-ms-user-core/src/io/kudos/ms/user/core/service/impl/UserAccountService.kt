@@ -1,6 +1,6 @@
 package io.kudos.ms.user.core.service.impl
 
-import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
+import io.kudos.base.support.service.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.security.CryptoKit
@@ -28,7 +28,10 @@ import java.time.LocalDateTime
  * @since 1.0.0
  */
 @Service
-open class UserAccountService : BaseCrudService<String, UserAccount, UserAccountDao>(), IUserAccountService {
+@Transactional
+open class UserAccountService(
+    dao: UserAccountDao
+) : BaseCrudService<String, UserAccount, UserAccountDao>(dao), IUserAccountService {
 
 
 

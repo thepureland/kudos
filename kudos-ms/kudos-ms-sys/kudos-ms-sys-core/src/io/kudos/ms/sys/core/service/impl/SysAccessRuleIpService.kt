@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.core.service.impl
 
-import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
+import io.kudos.base.support.service.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpCacheEntry
@@ -24,7 +24,10 @@ import org.springframework.transaction.annotation.Transactional
  * @since 1.0.0
  */
 @Service
-open class SysAccessRuleIpService : BaseCrudService<String, SysAccessRuleIp, SysAccessRuleIpDao>(), ISysAccessRuleIpService {
+@Transactional
+open class SysAccessRuleIpService(
+    dao: SysAccessRuleIpDao
+) : BaseCrudService<String, SysAccessRuleIp, SysAccessRuleIpDao>(dao), ISysAccessRuleIpService {
 
 
     private val log = LogFactory.getLog(this)

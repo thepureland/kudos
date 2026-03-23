@@ -1,6 +1,6 @@
 package io.kudos.ms.user.core.service.impl
 
-import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
+import io.kudos.base.support.service.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.user.common.vo.org.UserOrgCacheEntry
@@ -27,7 +27,10 @@ import org.springframework.transaction.annotation.Transactional
  * @since 1.0.0
  */
 @Service
-open class UserOrgService : BaseCrudService<String, UserOrg, UserOrgDao>(), IUserOrgService {
+@Transactional
+open class UserOrgService(
+    dao: UserOrgDao
+) : BaseCrudService<String, UserOrg, UserOrgDao>(dao), IUserOrgService {
 
 
     @Autowired
