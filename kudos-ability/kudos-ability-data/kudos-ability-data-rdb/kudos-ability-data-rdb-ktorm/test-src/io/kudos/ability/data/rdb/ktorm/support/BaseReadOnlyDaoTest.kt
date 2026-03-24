@@ -579,7 +579,7 @@ internal open class BaseReadOnlyDaoTest {
         assert(result.first() is TestTableKtorm)
         assertEquals(-1, (result.first() as TestTableKtorm).id)
 
-        // 分页 & 排序
+        // 分页 & 排序（TestTableKtorm 仅 name、height 带 @Sortable；按 name 升序合法）
         searchPayload1.name = null
         searchPayload1.weight = null
         searchPayload1.pageNo = 1
@@ -725,6 +725,75 @@ internal open class BaseReadOnlyDaoTest {
         assertEquals(56.5, result)
     }
     //endregion aggregate
+
+    //region @Sortable（ListSearchPayload.orders：每项均须在表 PO 上有 @Sortable，否则 WARN 并忽略）
+
+    private class TestTableDaoForSortAccess : TestTableKtormDao() {
+        fun sortWhitelistForTest() = sortWhitelistFromPo()
+        fun filterOrdersForTest(raw: List<Order>?) = filterOrdersBySortWhitelist(raw, sortWhitelistFromPo())
+    }
+
+    @Test
+    fun sortWhitelistFromPo_collectsSortableAnnotationsOnEntity() {
+        assertEquals(
+            setOf(TestTableKtorm::name.name, TestTableKtorm::height.name),
+            TestTableDaoForSortAccess().sortWhitelistForTest()
+        )
+    }
+
+    @Test
+    fun filterOrdersBySortWhitelist_stripsPropertiesWithoutSortable() {
+        val dao = TestTableDaoForSortAccess()
+        val filtered = dao.filterOrdersForTest(
+            listOf(Order.desc(TestTableKtorm::weight.name), Order.asc(TestTableKtorm::name.name))
+        )
+        assertEquals(1, filtered.size)
+        assertEquals(TestTableKtorm::name.name, filtered[0].property)
+        assertEquals(true, filtered[0].isAscending())
+    }
+
+    /**
+     * weight 未标 @Sortable，仅 name 生效：结果按 name 升序，首条仍为 name1。
+     */
+    @Test
+    fun search_payloadOrders_keepsOnlySortableProperties() {
+        class P : ListSearchPayload() {
+            var active: Boolean? = null
+        }
+        val p = P().apply {
+            active = true
+            pageNo = 1
+            pageSize = 8
+            orders = listOf(
+                Order.desc(TestTableKtorm::weight.name),
+                Order.asc(TestTableKtorm::name.name)
+            )
+        }
+        @Suppress("UNCHECKED_CAST")
+        val result = testTableDao.search(p) as List<TestTableKtorm>
+        assertEquals(8, result.size)
+        assertEquals("name1", result.first().name)
+    }
+
+    /**
+     * 仅请求 weight 排序：weight 无 @Sortable，客户端排序全部被忽略（无 ORDER BY from payload），仍返回 8 条。
+     */
+    @Test
+    fun search_payloadOrders_whenOnlyNonSortableRequested_noOrderByFromPayload() {
+        class P : ListSearchPayload() {
+            var active: Boolean? = null
+        }
+        val p = P().apply {
+            active = true
+            pageNo = 1
+            pageSize = 8
+            orders = listOf(Order.desc(TestTableKtorm::weight.name))
+        }
+        val result = testTableDao.search(p)
+        assertEquals(8, result.size)
+    }
+
+    //endregion @Sortable
 
 }
 

@@ -55,6 +55,4 @@ data class SysAccessRuleIpQuery (
 
     override fun isUnpagedSearchAllowed(): Boolean = true
 
-    override fun getSortableProperties() = setOf(::id.name)
-
 }

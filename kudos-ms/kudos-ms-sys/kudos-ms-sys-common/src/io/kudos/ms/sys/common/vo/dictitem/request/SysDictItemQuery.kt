@@ -66,9 +66,4 @@ data class SysDictItemQuery (
 
     override fun isUnpagedSearchAllowed(): Boolean = true
 
-    override fun getSortableProperties() = setOf(
-        ::itemCode.name,
-        ::itemName.name,
-    )
-
 }

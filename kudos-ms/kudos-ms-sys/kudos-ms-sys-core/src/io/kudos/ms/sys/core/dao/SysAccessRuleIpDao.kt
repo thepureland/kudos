@@ -38,9 +38,8 @@ open class SysAccessRuleIpDao : BaseCrudDao<String, SysAccessRuleIp, SysAccessRu
      */
     fun pagingSearch(searchPayload: SysAccessRuleIpQuery): List<SysAccessRuleIpRow> {
         var query = leftJoinSearch(searchPayload)
-        val whitelist = searchPayload.getSortableProperties()
-        val allowedOrders = if (whitelist.isEmpty()) emptyList()
-        else searchPayload.orders?.filter { it.property in whitelist } ?: emptyList()
+        val whitelist = sortWhitelistFromPo()
+        val allowedOrders = filterOrdersBySortWhitelist(searchPayload.orders, whitelist)
         if (allowedOrders.isEmpty()) {
             val orderList = listOf(
                 SysAccessRules.systemCode.asc(),

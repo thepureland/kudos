@@ -2,6 +2,7 @@ package io.kudos.ms.sys.core.model.po
 
 import io.kudos.ability.data.rdb.ktorm.support.DbEntityFactory
 import io.kudos.ability.data.rdb.ktorm.support.IManagedDbEntity
+import io.kudos.base.query.sort.Sortable
 
 /**
  * 资源数据库实体
@@ -14,6 +15,7 @@ interface SysResource : IManagedDbEntity<String, SysResource> {
     companion object : DbEntityFactory<SysResource>()
 
     /** 名称 */
+    @get:Sortable
     var name: String
 
     /** url */

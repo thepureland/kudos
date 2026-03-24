@@ -43,8 +43,4 @@ data class SysCacheQuery (
 
     override fun isUnpagedSearchAllowed(): Boolean = true
 
-    override fun getSortableProperties() = setOf(
-        ::name.name
-    )
-
 }

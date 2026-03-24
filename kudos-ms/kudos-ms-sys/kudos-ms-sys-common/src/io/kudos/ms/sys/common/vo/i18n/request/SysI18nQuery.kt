@@ -46,9 +46,4 @@ data class SysI18nQuery (
 
     override fun isUnpagedSearchAllowed(): Boolean = true
 
-    override fun getSortableProperties() = setOf(
-        ::key.name,
-        ::namespace.name,
-    )
-
 }

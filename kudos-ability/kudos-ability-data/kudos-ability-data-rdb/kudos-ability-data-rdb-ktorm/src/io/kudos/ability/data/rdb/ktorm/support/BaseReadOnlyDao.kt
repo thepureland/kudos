@@ -2,11 +2,13 @@ package io.kudos.ability.data.rdb.ktorm.support
 
 import io.kudos.ability.data.rdb.ktorm.datasource.currentDatabase
 import io.kudos.base.bean.BeanKit
+import io.kudos.base.logger.LogFactory
 import io.kudos.base.lang.GenericKit
 import io.kudos.base.lang.string.underscoreToHump
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.query.sort.Order
+import io.kudos.base.query.sort.sortablePropertyNamesForEntity
 import io.kudos.base.support.GroupExecutor
 import io.kudos.base.support.dao.IBaseReadOnlyDao
 import io.kudos.base.support.logic.AndOrEnum
@@ -73,6 +75,37 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
             entityClass = GenericKit.getSuperClassGenricClass(this::class, 1) as KClass<E>
         }
         return requireNotNull(entityClass) { "未能解析DAO对应的实体类型。" }
+    }
+
+    /**
+     * 根据当前 DAO 表绑定实体（PO）上的 [io.kudos.base.query.sort.Sortable] 得到可排序属性名集合（与请求中的 VO/PO 返回类型无关）。
+     */
+    protected fun sortWhitelistFromPo(): Set<String> {
+        val ec = table().entityClass ?: return emptySet()
+        return sortablePropertyNamesForEntity(ec)
+    }
+
+    /**
+     * 按 PO 上 [io.kudos.base.query.sort.Sortable] 过滤客户端传入的排序。
+     * 参与排序的每个属性都必须在 PO 上有对应注解；未标注的项会打 WARN（含实体类与属性名）并在查询中忽略该排序。
+     * [whitelist] 为 PO 上全部 @Sortable 属性名；若 PO 未标注任何 @Sortable，则 [whitelist] 为空，所有请求的排序项均会被忽略并告警。
+     */
+    protected fun filterOrdersBySortWhitelist(rawOrders: List<Order>?, whitelist: Set<String>): List<Order> {
+        val list = rawOrders ?: emptyList()
+        val rejected = list.filter { it.property !in whitelist }
+        if (rejected.isNotEmpty()) {
+            val entityName = table().entityClass?.qualifiedName
+                ?: table().entityClass?.simpleName
+                ?: "unknown"
+            for (order in rejected) {
+                log.warn(
+                    "查询排序请求中的属性未在表实体上标注 @Sortable，已忽略该排序项: entityClass={0}, property={1}",
+                    entityName,
+                    order.property
+                )
+            }
+        }
+        return list.filter { it.property in whitelist }
     }
 
     /**
@@ -702,12 +735,8 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
 
         // order（仅白名单内字段参与排序）
         if (listSearchPayload != null) {
-            val whitelist = listSearchPayload.getSortableProperties()
-            val allowedOrders = if (whitelist.isEmpty()) {
-                listSearchPayload.orders ?: emptyList()
-            } else {
-                listSearchPayload.orders?.filter { it.property in whitelist } ?: emptyList()
-            }
+            val whitelist = sortWhitelistFromPo()
+            val allowedOrders = filterOrdersBySortWhitelist(listSearchPayload.orders, whitelist)
             if (allowedOrders.isNotEmpty()) {
                 val orderExps = sortOf(*allowedOrders.toTypedArray())
                 query = query.orderBy(orderExps)
@@ -1289,6 +1318,10 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         propertyValues.forEach { (property, value) ->
             BeanKit.setProperty(target, property, value)
         }
+    }
+
+    companion object {
+        private val log = LogFactory.getLog(BaseReadOnlyDao::class)
     }
 
 }
