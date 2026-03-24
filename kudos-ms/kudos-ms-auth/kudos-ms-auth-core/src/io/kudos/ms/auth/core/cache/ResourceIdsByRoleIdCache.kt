@@ -135,6 +135,6 @@ open class ResourceIdsByRoleIdCache : AbstractKeyValueCacheHandler<Set<String>>(
         }
     }
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
 }

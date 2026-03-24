@@ -170,7 +170,7 @@ class MixCache(
     }
 
     companion object {
-        private val log = LogFactory.getLog(this)
+        private val log = LogFactory.getLog(this::class)
 
         private val cacheVersion: String? = null
     }

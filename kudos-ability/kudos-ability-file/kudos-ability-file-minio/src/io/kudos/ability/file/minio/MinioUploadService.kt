@@ -126,6 +126,6 @@ open class MinioUploadService : AbstractUploadService() {
         return requireNotNull(properties.publicEndpoint) { "publicEndpoint is null" }
     }
 
-    private val LOG = LogFactory.getLog(this)
+    private val LOG = LogFactory.getLog(this::class)
 
 }

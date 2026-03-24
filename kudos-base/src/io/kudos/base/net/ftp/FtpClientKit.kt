@@ -17,7 +17,7 @@ import java.io.OutputStream
  */
 class FtpClientKit {
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     /**
      * 下载文件

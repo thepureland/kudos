@@ -55,7 +55,7 @@ open class AuthRoleService(
     @Resource
     private lateinit var resourceIdsByUserIdCache: ResourceIdsByUserIdCache
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     override fun getRoleUserIds(roleId: String): List<String> {
         return userIdsByRoleIdCache.getUserIds(roleId)

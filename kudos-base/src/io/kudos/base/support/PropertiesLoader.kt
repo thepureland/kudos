@@ -173,6 +173,6 @@ class PropertiesLoader {
     private fun normalizeResourcePath(path: String): String =
         path.removePrefix("classpath:").removePrefix("/")
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
 }

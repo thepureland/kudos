@@ -29,7 +29,7 @@ open class SysParamService(
 ) : BaseCrudService<String, SysParam, SysParamDao>(dao), ISysParamService {
 
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     @Autowired
     private lateinit var paramByModuleAndNameCache: ParamByModuleAndNameCache

@@ -32,7 +32,7 @@ open class SysCacheService(
     dao: SysCacheDao
 ) : BaseCrudService<String, SysCache, SysCacheDao>(dao), ISysCacheService {
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     @Autowired
     private lateinit var sysCacheHashCache: SysCacheHashCache

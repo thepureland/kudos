@@ -28,7 +28,7 @@ open class SysDictItemService(
     @Autowired
     private lateinit var sysDictItemHashCache: SysDictItemHashCache
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     override fun getItems(dictType: String, atomicServiceCode: String): List<SysDictItemCacheEntry> {
         return sysDictItemHashCache.getDictItems(atomicServiceCode, dictType)

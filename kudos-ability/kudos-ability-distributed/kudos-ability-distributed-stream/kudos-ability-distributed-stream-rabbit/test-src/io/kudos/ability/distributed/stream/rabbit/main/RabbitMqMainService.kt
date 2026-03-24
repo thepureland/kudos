@@ -16,7 +16,7 @@ import java.time.LocalDateTime
 @Service
 class RabbitMqMainService : IRabbitMqMainService {
     
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
     
     private val topicName = "RABBIT_TEST_TOPIC"
 

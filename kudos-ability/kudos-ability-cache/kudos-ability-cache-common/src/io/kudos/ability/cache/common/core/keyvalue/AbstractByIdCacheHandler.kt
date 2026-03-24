@@ -184,6 +184,6 @@ abstract class AbstractByIdCacheHandler<PK : Any, T : IIdEntity<*>, DAO : IBaseR
         else -> id
     }
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
 }

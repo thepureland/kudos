@@ -45,7 +45,7 @@ open class UserAccountService(
     @Resource
     private lateinit var orgIdsByUserIdCache: OrgIdsByUserIdCache
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     override fun getUserOrgIds(userId: String): List<String> {
         return orgIdsByUserIdCache.getOrgIds(userId)

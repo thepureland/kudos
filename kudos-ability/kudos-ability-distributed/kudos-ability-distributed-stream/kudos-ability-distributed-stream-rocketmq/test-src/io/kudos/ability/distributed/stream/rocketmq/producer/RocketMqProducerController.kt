@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/producer")
 open class RocketMqProducerController {
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     @Autowired
     private lateinit var producerService: IRocketMqProducerService

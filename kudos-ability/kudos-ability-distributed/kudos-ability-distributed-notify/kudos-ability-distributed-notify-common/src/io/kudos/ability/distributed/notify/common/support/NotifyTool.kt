@@ -14,7 +14,7 @@ import java.io.Serializable
 @Component
 class NotifyTool {
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     @Autowired(required = false)
     private val notifyProducer: INotifyProducer? = null

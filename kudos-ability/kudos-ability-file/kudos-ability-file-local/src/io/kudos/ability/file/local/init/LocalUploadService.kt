@@ -73,6 +73,6 @@ open class LocalUploadService : AbstractUploadService() {
         return ""
     }
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
 }

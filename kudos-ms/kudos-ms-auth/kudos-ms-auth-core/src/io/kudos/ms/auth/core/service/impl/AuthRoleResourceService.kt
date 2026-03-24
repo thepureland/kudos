@@ -37,7 +37,7 @@ open class AuthRoleResourceService(
     @Autowired
     private lateinit var authRoleUserDao: AuthRoleUserDao
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     override fun getResourceIdsByRoleId(roleId: String): Set<String> {
         return resourceIdsByRoleIdCache.getResourceIds(roleId).toSet()

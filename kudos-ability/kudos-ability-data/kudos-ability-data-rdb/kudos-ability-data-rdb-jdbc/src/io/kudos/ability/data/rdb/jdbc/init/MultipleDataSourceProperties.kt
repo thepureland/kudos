@@ -15,7 +15,7 @@ import kotlin.concurrent.Volatile
  * @since 1.0.0
  */
 class MultipleDataSourceProperties : InitializingBean {
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     /**
      * 获取所有动态数据源配置

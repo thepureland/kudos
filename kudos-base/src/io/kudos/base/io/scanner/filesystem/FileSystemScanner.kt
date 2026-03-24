@@ -28,7 +28,7 @@ import java.util.*
  */
 object FileSystemScanner {
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     /**
      * Scans the FileSystem for resources under the specified location, starting

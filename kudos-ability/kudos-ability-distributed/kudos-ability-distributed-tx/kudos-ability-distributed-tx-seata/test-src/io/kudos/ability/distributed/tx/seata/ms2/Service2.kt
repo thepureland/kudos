@@ -20,7 +20,7 @@ open class Service2 : IService2 {
     @Autowired
     private lateinit var testTableDao: TestTableDao
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
         @Transactional // 可加可不加
     override fun increase(id: Int, money: Double) {

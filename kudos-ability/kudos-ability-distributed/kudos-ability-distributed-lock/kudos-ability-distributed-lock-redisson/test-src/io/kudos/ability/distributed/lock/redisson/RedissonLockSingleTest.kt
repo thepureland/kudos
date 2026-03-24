@@ -29,7 +29,7 @@ open class RedissonLockSingleTest {
     @Autowired
     private lateinit var testLockByAnnotation: TestLockByAnnotation
 
-    val log = LogFactory.getLog(this)
+    val log = LogFactory.getLog(this::class)
 
     /** 锁测试共享变量 */
     private var lockCount = 10

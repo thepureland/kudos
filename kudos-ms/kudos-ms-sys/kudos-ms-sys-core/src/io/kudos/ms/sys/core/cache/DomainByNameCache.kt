@@ -165,6 +165,6 @@ open class DomainByNameCache : AbstractKeyValueCacheHandler<SysDomainCacheEntry>
         }
     }
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
 }

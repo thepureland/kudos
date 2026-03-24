@@ -24,7 +24,7 @@ open class AuthGroupRoleService(
     IAuthGroupRoleService {
 
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     override fun getRoleIdsByGroupId(groupId: String): Set<String> {
         return dao.searchRoleIdsByGroupId(groupId)

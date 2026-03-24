@@ -195,6 +195,6 @@ open class UserIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler<Set
         return "${tenantId}${Consts.CACHE_KEY_DEFAULT_DELIMITER}${groupCode}"
     }
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
 }

@@ -38,7 +38,7 @@ open class SysDictService(
     @Autowired
     private lateinit var sysDictHashCache: SysDictHashCache
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     override fun getFromCache(dictId: String): SysDictCacheEntry? {
         return sysDictHashCache.getDictById(dictId)

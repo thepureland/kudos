@@ -35,7 +35,7 @@ open class SysDomainService(
 ) : BaseCrudService<String, SysDomain, SysDomainDao>(dao), ISysDomainService {
 
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     @Resource
     private lateinit var domainByNameCache: DomainByNameCache

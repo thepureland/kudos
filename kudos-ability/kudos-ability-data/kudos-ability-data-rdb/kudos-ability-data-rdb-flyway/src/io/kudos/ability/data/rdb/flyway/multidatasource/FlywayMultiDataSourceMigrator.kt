@@ -34,7 +34,7 @@ open class FlywayMultiDataSourceMigrator {
     @Resource
     private lateinit var dsContextProcessor: DsContextProcessor
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     fun migrate() {
         val sqlRootPath = FlywayKit.SQL_ROOT_PATH

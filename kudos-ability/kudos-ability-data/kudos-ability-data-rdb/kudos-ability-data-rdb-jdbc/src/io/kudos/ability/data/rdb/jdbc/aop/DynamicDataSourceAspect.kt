@@ -142,7 +142,7 @@ class DynamicDataSourceAspect {
 
     companion object {
         private const val CONTEXT_DATASOURCE = "_context"
-        private val log = LogFactory.getLog(this)
+        private val log = LogFactory.getLog(this::class)
         private val dsCacheMap = ConcurrentHashMap<String, String>()
 
         private val READ_WRITE_LOCK: ReadWriteLock = ReentrantReadWriteLock()

@@ -31,7 +31,7 @@ open class SysSystemService(
 ) : BaseCrudService<String, SysSystem, SysSystemDao>(dao), ISysSystemService {
 
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     @Autowired
     private lateinit var sysSystemHashCache: SysSystemHashCache

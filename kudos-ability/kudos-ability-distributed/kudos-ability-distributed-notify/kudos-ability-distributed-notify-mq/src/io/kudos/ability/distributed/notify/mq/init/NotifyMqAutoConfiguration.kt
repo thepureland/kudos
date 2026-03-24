@@ -41,7 +41,7 @@ import java.util.function.Consumer
 @Import(NotifyListenerBeanPostProcessor::class)
 open class NotifyMqAutoConfiguration : NotifyCommonAutoConfiguration(), IComponentInitializer {
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     @Bean(name = [INotifyProducer.BEAN_NAME])
     @ConditionalOnMissingBean

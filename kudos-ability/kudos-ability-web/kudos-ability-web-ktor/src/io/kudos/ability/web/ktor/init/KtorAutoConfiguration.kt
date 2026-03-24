@@ -100,7 +100,7 @@ open class KtorAutoConfiguration : IComponentInitializer {
 
     override fun getComponentName() = "kudos-ability-web-ktor-base"
 
-    private val logger = LogFactory.getLog(this)
+    private val logger = LogFactory.getLog(this::class)
 
 }
 

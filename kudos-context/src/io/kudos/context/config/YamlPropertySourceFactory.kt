@@ -19,7 +19,7 @@ import java.util.*
  */
 class YamlPropertySourceFactory : PropertySourceFactory {
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     override fun createPropertySource(name: String?, encodedResource: EncodedResource): PropertySource<*> {
         val sourceName = name ?: encodedResource.resource.filename ?: "application"

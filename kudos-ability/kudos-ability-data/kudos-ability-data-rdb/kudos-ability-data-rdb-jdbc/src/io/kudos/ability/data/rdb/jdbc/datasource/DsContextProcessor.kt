@@ -143,6 +143,6 @@ open class DsContextProcessor {
         }
     }
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
 }

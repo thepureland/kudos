@@ -22,7 +22,7 @@ open class SysTenantLocaleService(
 ) : BaseCrudService<String, SysTenantLocale, SysTenantLocaleDao>(dao), ISysTenantLocaleService {
 
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     override fun getLocaleCodesByTenantId(tenantId: String): Set<String> {
         return dao.searchLocaleCodesByTenantId(tenantId)
