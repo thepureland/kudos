@@ -1,6 +1,7 @@
 package io.kudos.ability.web.springmvc.handler
 
 import io.kudos.base.annotations.IgnoreApiResponseWrap
+import io.kudos.base.enums.impl.CommonErrorCodeEnum
 import io.kudos.base.model.response.ApiResponse
 import io.kudos.context.core.KudosContextHolder
 import org.springframework.core.MethodParameter
@@ -56,10 +57,11 @@ class GlobalResponseBodyHandler(
         response: ServerHttpResponse
     ): Any? {
         if (body is ApiResponse<*>) {
-            return enrichTraceId(body)
+            @Suppress("UNCHECKED_CAST")
+            return enrichAndSanitize(body as ApiResponse<Any>)
         }
 
-        val wrapped = enrichTraceId(ApiResponse.success(body))
+        val wrapped = enrichAndSanitize(ApiResponse.success(body))
 
         return if (StringHttpMessageConverter::class.java.isAssignableFrom(selectedConverterType)) {
             objectMapper.writeValueAsString(wrapped)
@@ -69,11 +71,31 @@ class GlobalResponseBodyHandler(
     }
 
     /**
+     * 回填 traceId；若成功响应的 message 仍为未解析的 [CommonErrorCodeEnum.SUCCESS] 的 [io.kudos.base.enums.ienums.IErrorCodeEnum.displayText]
+     *（即 `sys.error-msg.default.200`），则将 message 置为空串，避免对外暴露占位 key。
+     */
+    private fun <T> enrichAndSanitize(response: ApiResponse<T>): ApiResponse<T> {
+        val withTrace = enrichTraceId(response)
+        return clearUnresolvedSuccessPlaceholderMessage(withTrace)
+    }
+
+    /**
      * 将当前请求上下文中的 traceKey 回填到响应 traceId
      */
     private fun <T> enrichTraceId(response: ApiResponse<T>): ApiResponse<T> {
         val traceId = KudosContextHolder.get().traceKey
         return if (traceId.isNullOrBlank() || response.traceId == traceId) response else response.copy(traceId = traceId)
+    }
+
+    private fun <T> clearUnresolvedSuccessPlaceholderMessage(response: ApiResponse<T>): ApiResponse<T> {
+        if (!response.success || response.code != CommonErrorCodeEnum.SUCCESS.code) {
+            return response
+        }
+        val placeholder = CommonErrorCodeEnum.SUCCESS.displayText
+        if (response.message == placeholder) {
+            return response.copy(message = null)
+        }
+        return response
     }
 
 }

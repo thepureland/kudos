@@ -117,6 +117,8 @@ open class SysCacheService(
     }
 
     override fun reload(id: String, key: String) {
+        require(id.isNotBlank())
+        require(key.isNotBlank())
         val cache = getCacheConfigById(id)
         val name = cache.name
         if (isKeyValueCache(cache)) {
@@ -135,6 +137,7 @@ open class SysCacheService(
     }
 
     override fun reloadAll(id: String) {
+        require(id.isNotBlank())
         val cache = getCacheConfigById(id)
         val name = cache.name
         if (isKeyValueCache(cache)) {
@@ -145,6 +148,8 @@ open class SysCacheService(
     }
 
     override fun evict(id: String, key: String) {
+        require(id.isNotBlank())
+        require(key.isNotBlank())
         val cache = getCacheConfigById(id)
         val name = cache.name
         if (isKeyValueCache(cache)) {
@@ -163,6 +168,7 @@ open class SysCacheService(
     }
 
     override fun evictAll(id: String) {
+        require(id.isNotBlank())
         val cache = getCacheConfigById(id)
         val name = cache.name
         if (isKeyValueCache(cache)) {
@@ -173,24 +179,20 @@ open class SysCacheService(
     }
 
     override fun existsKey(id: String, key: String): Boolean {
+        require(id.isNotBlank())
+        require(key.isNotBlank())
         val cache = getCacheConfigById(id)
         val name = cache.name
         return if (isKeyValueCache(cache)) {
-            if (KeyValueCacheKit.existsKey(name, key)) {
-                KeyValueCacheKit.existsKey(name, key)
-            } else {
-                throw ServiceException(SysCacheErrorCodeEnum.CACHE_KEY_NOT_FOUND)
-            }
+            KeyValueCacheKit.existsKey(name, key)
         } else {
-            if (HashCacheKit.existsById(name, key)) {
-                HashCacheKit.existsById(name, key)
-            } else {
-                throw ServiceException(SysCacheErrorCodeEnum.CACHE_KEY_NOT_FOUND)
-            }
+            HashCacheKit.existsById(name, key)
         }
     }
 
     override fun getValueJson(id: String, key: String): String {
+        require(id.isNotBlank())
+        require(key.isNotBlank())
         val cache = getCacheConfigById(id)
         val name = cache.name
         val value = if (isKeyValueCache(cache)) {
@@ -211,7 +213,8 @@ open class SysCacheService(
 
     /** 按 id 获取缓存配置，不存在则抛异常 */
     private fun getCacheConfigById(id: String): SysCacheCacheEntry {
-        return sysCacheHashCache.getCacheById(id) ?: throw ServiceException(SysCacheErrorCodeEnum.CACHE_CONFIG_NOT_FOUND)
+        return sysCacheHashCache.getCacheById(id)
+            ?: throw ServiceException(SysCacheErrorCodeEnum.CACHE_CONFIG_NOT_FOUND)
     }
 
     private fun isKeyValueCache(cache: SysCacheCacheEntry): Boolean = !cache.hash

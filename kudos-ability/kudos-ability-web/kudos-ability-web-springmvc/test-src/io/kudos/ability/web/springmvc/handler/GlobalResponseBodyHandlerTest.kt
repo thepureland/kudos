@@ -1,6 +1,7 @@
 package io.kudos.ability.web.springmvc.handler
 
 import io.kudos.base.annotations.IgnoreApiResponseWrap
+import io.kudos.base.enums.impl.CommonErrorCodeEnum
 import io.kudos.base.model.response.ApiResponse
 import io.kudos.context.core.KudosContext
 import io.kudos.context.core.KudosContextHolder
@@ -59,7 +60,7 @@ class GlobalResponseBodyHandlerTest {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.success").value(true))
             .andExpect(jsonPath("$.code").value("200"))
-            .andExpect(jsonPath("$.message").value("success"))
+            .andExpect(jsonPath("$.message").value(""))
             .andExpect(jsonPath("$.data.name").value("kudos"))
     }
 
@@ -71,6 +72,15 @@ class GlobalResponseBodyHandlerTest {
             .andExpect(jsonPath("$.code").value("200"))
             .andExpect(jsonPath("$.message").value("already wrapped"))
             .andExpect(jsonPath("$.data").doesNotExist())
+    }
+
+    @Test
+    fun clearSuccessPlaceholderWhenControllerReturnsApiResponse() {
+        mockMvc.perform(get("/test/response/api-success-placeholder"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.success").value(true))
+            .andExpect(jsonPath("$.code").value("200"))
+            .andExpect(jsonPath("$.message").value(""))
     }
 
     @Test
@@ -117,6 +127,15 @@ class GlobalResponseBodyHandlerTest {
         fun apiResponse(): ApiResponse<Any> {
             return ApiResponse.success("already wrapped")
         }
+
+        @GetMapping("/api-success-placeholder")
+        fun apiSuccessPlaceholder(): ApiResponse<Any> =
+            ApiResponse(
+                success = true,
+                code = CommonErrorCodeEnum.SUCCESS.code,
+                message = CommonErrorCodeEnum.SUCCESS.displayText,
+                data = null
+            )
 
         @GetMapping("/string")
         fun stringResponse(): String {
