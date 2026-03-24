@@ -17,7 +17,7 @@ import kotlin.reflect.KClass
  */
 object EnumKit {
 
-    private val LOG = LogFactory.getLog(this)
+    private val LOG = LogFactory.getLog(this::class)
 
     /**
      * 根据字典枚举全类名字符串和字典代码，取得对应的枚举元素的译文

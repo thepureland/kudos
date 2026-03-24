@@ -152,7 +152,7 @@ class AwsSmsHandler {
     }
 
     companion object {
-        private val LOG = LogFactory.getLog(this)
+        private val LOG = LogFactory.getLog(this::class)
         private var HTTP_CLIENT: SdkHttpClient? = null
     }
 }

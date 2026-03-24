@@ -22,7 +22,7 @@ open class SysTenantResourceService(
 ) : BaseCrudService<String, SysTenantResource, SysTenantResourceDao>(dao), ISysTenantResourceService {
 
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     override fun getResourceIdsByTenantId(tenantId: String): Set<String> {
         return dao.searchResourceIdsByTenantId(tenantId)

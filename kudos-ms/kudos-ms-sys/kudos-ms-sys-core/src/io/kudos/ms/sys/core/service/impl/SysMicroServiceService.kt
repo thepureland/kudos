@@ -32,7 +32,7 @@ open class SysMicroServiceService(
     ISysMicroServiceService {
 
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     @Resource
     private lateinit var sysMicroServiceHashCache: SysMicroServiceHashCache

@@ -22,7 +22,7 @@ open class Service1 : IService1 {
     @Autowired
     private lateinit var testTableDao: TestTableDao
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     override fun getById(id: Int): TestTable = testTableDao.get(id)!!
 

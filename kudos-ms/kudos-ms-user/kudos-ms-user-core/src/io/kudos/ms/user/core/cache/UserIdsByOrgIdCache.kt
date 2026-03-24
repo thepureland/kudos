@@ -172,6 +172,6 @@ open class UserIdsByOrgIdCache : AbstractKeyValueCacheHandler<List<String>>() {
         }
     }
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
 }

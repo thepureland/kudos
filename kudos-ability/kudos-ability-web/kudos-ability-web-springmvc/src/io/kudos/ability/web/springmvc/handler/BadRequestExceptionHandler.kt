@@ -36,7 +36,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @RestControllerAdvice
 class BadRequestExceptionHandler : ResponseEntityExceptionHandler() {
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     /**
      * 处理@RequestBody配合@Valid触发的参数校验异常

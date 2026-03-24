@@ -209,7 +209,7 @@ open class AccountThirdByUserIdAndProviderCodeCache : AbstractKeyValueCacheHandl
         return "${userId}${Consts.CACHE_KEY_DEFAULT_DELIMITER}${accountProviderDictCode}"
     }
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
 
 }

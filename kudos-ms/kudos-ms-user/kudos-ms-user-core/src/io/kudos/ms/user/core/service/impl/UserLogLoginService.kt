@@ -23,7 +23,7 @@ open class UserLogLoginService(
 ) : BaseCrudService<String, UserLogLogin, UserLogLoginDao>(dao), IUserLogLoginService {
 
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     override fun getLoginsByUserId(userId: String, limit: Int): List<UserLogLogin> {
         val logins = dao.searchByUserId(userId)

@@ -31,7 +31,7 @@ object FileKit {
      */
     const val PREFIX_TEMP_FILE: String = "FileKit_"
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     /**
      * 列出 jar 包中指定目录下的资源名称（包括文件和目录）

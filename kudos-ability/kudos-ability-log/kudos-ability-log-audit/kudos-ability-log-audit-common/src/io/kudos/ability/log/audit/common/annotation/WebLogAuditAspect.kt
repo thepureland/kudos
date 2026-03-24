@@ -82,5 +82,5 @@ class WebLogAuditAspect {
         return false
     }
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 }

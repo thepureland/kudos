@@ -149,6 +149,6 @@ class StreamProducerHelper {
         return GenericMessage<StreamMessageVo<T>>(streamMessageVo, headers)
     }
 
-    private val LOG = LogFactory.getLog(this)
+    private val LOG = LogFactory.getLog(this::class)
 
 }

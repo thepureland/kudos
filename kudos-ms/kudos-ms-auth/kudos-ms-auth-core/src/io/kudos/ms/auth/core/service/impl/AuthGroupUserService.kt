@@ -24,7 +24,7 @@ open class AuthGroupUserService(
     IAuthGroupUserService {
 
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     override fun getUserIdsByGroupId(groupId: String): Set<String> {
         return dao.searchUserIdsByGroupId(groupId)

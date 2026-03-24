@@ -10,7 +10,7 @@ import java.time.LocalDateTime
 @CacheConfig(cacheNames = ["test"])
 open class BatchCacheableTestService {
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     private var allData = listOf(
         TestCacheObject("1", 2, "5", null, 7),

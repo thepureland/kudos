@@ -26,7 +26,7 @@ open class SysTenantSystemService(
 ) : BaseCrudService<String, SysTenantSystem, SysTenantSystemDao>(dao), ISysTenantSystemService {
 
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     @Autowired
     private lateinit var sysTenantSystemHashCache: SysTenantSystemHashCache

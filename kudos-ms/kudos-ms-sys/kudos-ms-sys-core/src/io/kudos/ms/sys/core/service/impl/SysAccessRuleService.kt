@@ -25,7 +25,7 @@ open class SysAccessRuleService(
 ) : BaseCrudService<String, SysAccessRule, SysAccessRuleDao>(dao), ISysAccessRuleService {
 
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     override fun getAccessRuleByTenantAndSystem(
         systemCode: String,

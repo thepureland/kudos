@@ -71,5 +71,5 @@ class FeignCacheResponseInterceptor(
         return result
     }
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 }

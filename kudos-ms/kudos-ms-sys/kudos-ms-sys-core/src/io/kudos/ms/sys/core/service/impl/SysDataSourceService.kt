@@ -42,7 +42,7 @@ open class SysDataSourceService(
     @Resource
     private lateinit var sysDataSourceHashCache: SysDataSourceHashCache
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     override fun getDataSource(
         tenantId: String,

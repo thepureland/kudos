@@ -45,7 +45,7 @@ open class UserOrgService(
     @Autowired
     private lateinit var userIdsByOrgIdCache: UserIdsByOrgIdCache
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     override fun getOrgAdmins(orgId: String): List<UserAccountCacheEntry> {
         val adminUserIds = userOrgUserDao.searchAdminUserIdsByOrgId(orgId)

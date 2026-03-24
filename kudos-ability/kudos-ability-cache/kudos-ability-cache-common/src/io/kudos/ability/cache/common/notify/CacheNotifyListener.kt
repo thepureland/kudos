@@ -39,7 +39,7 @@ import java.io.Serializable
  */
 class CacheNotifyListener : INotifyListener {
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     override fun notifyType(): String {
         return CACHE_OPERATOR

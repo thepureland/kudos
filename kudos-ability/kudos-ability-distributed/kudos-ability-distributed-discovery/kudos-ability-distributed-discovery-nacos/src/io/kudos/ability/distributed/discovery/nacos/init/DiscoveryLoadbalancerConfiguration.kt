@@ -58,7 +58,7 @@ open class DiscoveryLoadbalancerConfiguration {
 
         @PostConstruct
         fun init() {
-            LogFactory.getLog(this).info("[blocking hint zone preference]初始化完成...")
+            LogFactory.getLog(this::class).info("[blocking hint zone preference]初始化完成...")
         }
     }
 
@@ -81,7 +81,7 @@ open class DiscoveryLoadbalancerConfiguration {
 
         @PostConstruct
         fun init() {
-            LogFactory.getLog(this).info("[reactive hint zone preference]初始化完成...")
+            LogFactory.getLog(this::class).info("[reactive hint zone preference]初始化完成...")
         }
     }
 }

@@ -67,6 +67,6 @@ class ClientCacheHelper : InitializingBean {
         cacheManager!!.getCache(ClientCacheKey.FEIGN_CACHE_PREFIX)!!.put(cacheKey, data)
     }
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
 }

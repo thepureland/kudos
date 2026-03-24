@@ -26,7 +26,7 @@ open class SysI18NService(
 ) : BaseCrudService<String, SysI18n, SysI18nDao>(dao), ISysI18nService {
 
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     @Resource
     private lateinit var sysI18nHashCache: SysI18nHashCache

@@ -22,7 +22,7 @@ open class SysSubSystemMicroServiceService(
 ) : BaseCrudService<String, SysSubSystemMicroService, SysSubSystemMicroServiceDao>(dao), ISysSubSystemMicroServiceService {
 
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     override fun getMicroServiceCodesBySubSystemCode(subSystemCode: String): Set<String> {
         return dao.searchMicroServiceCodesBySubSystemCode(subSystemCode)

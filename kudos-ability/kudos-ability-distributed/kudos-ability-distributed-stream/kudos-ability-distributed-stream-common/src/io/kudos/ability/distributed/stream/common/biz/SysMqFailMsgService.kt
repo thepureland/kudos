@@ -56,6 +56,6 @@ open class SysMqFailMsgService(
         LOG.info("删除stream异常消息条数:{0}", count)
     }
 
-    private val LOG = LogFactory.getLog(this)
+    private val LOG = LogFactory.getLog(this::class)
 
 }

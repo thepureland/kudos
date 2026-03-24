@@ -207,6 +207,6 @@ open class ResourceIdsByTenantIdAndRoleCodeCache : AbstractKeyValueCacheHandler<
         return "${tenantId}${Consts.CACHE_KEY_DEFAULT_DELIMITER}${roleCode}"
     }
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
 }

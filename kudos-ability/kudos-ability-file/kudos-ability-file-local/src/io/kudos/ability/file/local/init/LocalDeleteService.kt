@@ -36,6 +36,6 @@ class LocalDeleteService : IDeleteService {
         return file.delete()
     }
 
-    private val log= LogFactory.getLog(this)
+    private val log= LogFactory.getLog(this::class)
 
 }

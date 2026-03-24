@@ -14,7 +14,7 @@ import java.util.*
  */
 object IpKit {
 
-    private val LOG = LogFactory.getLog(this)
+    private val LOG = LogFactory.getLog(this::class)
 
     // 二进制32位为全1的整数值
     private const val ALL32ONE = 4294967295L

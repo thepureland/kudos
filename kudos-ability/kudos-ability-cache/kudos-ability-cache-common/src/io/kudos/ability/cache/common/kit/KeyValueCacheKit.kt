@@ -23,7 +23,7 @@ import kotlin.reflect.KClass
 @Component
 object KeyValueCacheKit {
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     /**
      * 是否开启缓存。必须是全局开关和指定的缓存开关都开启，才算开启

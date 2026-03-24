@@ -18,7 +18,7 @@ import kotlin.test.Test
  */
 internal class PayloadValidationTest {
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     @Test
     fun testPayload() {
@@ -62,7 +62,7 @@ internal class PayloadValidationTest {
     internal class ErrorLogHandler : Payload {
 
         fun onError(violation: ConstraintViolation<*>) {
-            LogFactory.getLog(this).warn("${violation.propertyPath}: ${violation.message} ")
+            LogFactory.getLog(this::class).warn("${violation.propertyPath}: ${violation.message} ")
         }
 
     }

@@ -181,6 +181,6 @@ class FailedDataRetryScanner {
         }
     }
 
-    private val logger = LogFactory.getLog(this)
+    private val logger = LogFactory.getLog(this::class)
 
 }

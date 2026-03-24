@@ -41,7 +41,7 @@ open class SysResourceService(
 ) : BaseCrudService<String, SysResource, SysResourceDao>(dao), ISysResourceService {
 
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     @Resource
     private lateinit var sysResourceHashCache: SysResourceHashCache

@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service
 @Service
 open class RabbitMqProducerService : IRabbitMqProducerService {
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
 //    @Bean
 //    fun contextParam(): ContextParam {

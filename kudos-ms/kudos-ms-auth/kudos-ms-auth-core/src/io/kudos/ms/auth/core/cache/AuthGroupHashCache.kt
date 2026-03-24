@@ -32,7 +32,7 @@ open class AuthGroupHashCache : AbstractHashCacheHandler<AuthGroupCacheEntry>() 
     @Resource
     private lateinit var authGroupDao: AuthGroupDao
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     companion object {
         const val CACHE_NAME = "AUTH_GROUP__HASH"

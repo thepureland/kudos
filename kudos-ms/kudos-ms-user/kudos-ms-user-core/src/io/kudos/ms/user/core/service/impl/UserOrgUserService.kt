@@ -32,7 +32,7 @@ open class UserOrgUserService(
     @Autowired
     private lateinit var orgIdsByUserIdCache: OrgIdsByUserIdCache
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     override fun getUserIdsByOrgId(orgId: String): Set<String> {
         return userIdsByOrgIdCache.getUserIds(orgId).toSet()

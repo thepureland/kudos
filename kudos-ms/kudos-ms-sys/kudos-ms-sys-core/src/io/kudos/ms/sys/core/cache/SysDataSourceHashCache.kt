@@ -32,7 +32,7 @@ open class SysDataSourceHashCache : AbstractHashCacheHandler<SysDataSourceCacheE
     @Resource
     private lateinit var sysDataSourceDao: SysDataSourceDao
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     companion object {
         const val CACHE_NAME = "SYS_DATA_SOURCE__HASH"

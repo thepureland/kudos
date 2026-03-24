@@ -79,7 +79,7 @@ class DefaultCacheConfigProvider(itemsProperties: CacheItemsProperties) : ICache
     }
 
     companion object {
-        private val log = LogFactory.getLog(this)
+        private val log = LogFactory.getLog(this::class)
 
         /**
          * Map<Strategy></Strategy>, Map<CacheName></CacheName>, CacheConfig>>

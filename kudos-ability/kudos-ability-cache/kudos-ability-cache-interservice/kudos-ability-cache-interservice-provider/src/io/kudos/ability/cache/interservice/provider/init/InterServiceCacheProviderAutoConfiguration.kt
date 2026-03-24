@@ -22,7 +22,7 @@ import org.springframework.context.annotation.Configuration
 @AutoConfigureAfter(LinkableCacheAutoConfiguration::class)
 open class InterServiceCacheProviderAutoConfiguration : IComponentInitializer {
 
-    private val logger = LogFactory.getLog(this)
+    private val logger = LogFactory.getLog(this::class)
 
     @Bean
     @ConditionalOnMissingBean
