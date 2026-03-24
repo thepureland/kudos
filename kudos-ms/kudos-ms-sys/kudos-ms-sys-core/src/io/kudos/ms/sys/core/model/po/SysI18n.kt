@@ -2,6 +2,7 @@ package io.kudos.ms.sys.core.model.po
 
 import io.kudos.ability.data.rdb.ktorm.support.DbEntityFactory
 import io.kudos.ability.data.rdb.ktorm.support.IManagedDbEntity
+import io.kudos.base.query.sort.Sortable
 
 /**
  * 国际化数据库实体
@@ -23,9 +24,11 @@ interface SysI18n : IManagedDbEntity<String, SysI18n> {
     var i18nTypeDictCode: String
 
     /** 国际化命名空间 */
+    @get:Sortable
     var namespace: String
 
     /** 国际化key */
+    @get:Sortable
     var key: String
 
     /** 国际化值 */

@@ -34,6 +34,4 @@ data class SysDomainQuery (
 
     override fun isUnpagedSearchAllowed(): Boolean = true
 
-    override fun getSortableProperties() = setOf(::domain.name)
-
 }

@@ -31,13 +31,9 @@ open class ListSearchPayload : ISearchPayload {
     open fun isUnpagedSearchAllowed(): Boolean = false
 
     /**
-     * 可排序字段白名单（属性名集合）。
-     * 仅当 [orders] 中的属性名在此集合内时才会参与排序，避免恶意排序字段。
-     * 默认为空表示不接受来自 payload 的排序；子类可重写并返回允许的字段名集合。
+     * 排序请求（属性名与方向）。
+     * 每个参与排序的属性均须在 DAO 对应表实体（PO）上标注 [io.kudos.base.query.sort.Sortable]；未标注的项会被忽略并记 WARN，与 [getReturnEntityClass] 是否为 VO 无关。
      */
-    open fun getSortableProperties(): Set<String> = emptySet()
-
-    /** 排序规则 */
     open var orders: List<Order>? = null
 
 }
