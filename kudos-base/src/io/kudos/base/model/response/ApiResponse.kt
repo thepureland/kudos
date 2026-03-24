@@ -57,7 +57,7 @@ data class ApiResponse<T>(
      * - 用户不存在
      * - 保存成功
      */
-    val message: String,
+    val message: String? = null,
 
     /**
      * 响应数据

@@ -50,7 +50,7 @@ class GlobalExceptionHandlerTest {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.success").value(false))
             .andExpect(jsonPath("$.code").value("4002"))
-            .andExpect(jsonPath("$.message").value("业务处理失败"))
+            .andExpect(jsonPath("$.message").value(CommonErrorCodeEnum.BUSINESS_ERROR.displayText))
     }
 
     @Test
@@ -63,7 +63,7 @@ class GlobalExceptionHandlerTest {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.success").value(false))
             .andExpect(jsonPath("$.code").value("4001"))
-            .andExpect(jsonPath("$.message").value("名称不能为空"))
+            .andExpect(jsonPath("$.message").value(CommonErrorCodeEnum.VALIDATION_ERROR.displayText))
     }
 
     @Test
@@ -72,7 +72,7 @@ class GlobalExceptionHandlerTest {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.success").value(false))
             .andExpect(jsonPath("$.code").value("4001"))
-            .andExpect(jsonPath("$.message").value("数量不能为空"))
+            .andExpect(jsonPath("$.message").value(CommonErrorCodeEnum.VALIDATION_ERROR.displayText))
     }
 
     @Test
@@ -81,7 +81,7 @@ class GlobalExceptionHandlerTest {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.success").value(false))
             .andExpect(jsonPath("$.code").value("400"))
-            .andExpect(jsonPath("$.message").value("缺少请求参数：name"))
+            .andExpect(jsonPath("$.message").value(CommonErrorCodeEnum.BAD_REQUEST.displayText))
     }
 
     @Test
@@ -90,7 +90,7 @@ class GlobalExceptionHandlerTest {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.success").value(false))
             .andExpect(jsonPath("$.code").value("400"))
-            .andExpect(jsonPath("$.message").value("参数类型错误：age"))
+            .andExpect(jsonPath("$.message").value(CommonErrorCodeEnum.BAD_REQUEST.displayText))
     }
 
     @Test
@@ -103,16 +103,34 @@ class GlobalExceptionHandlerTest {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.success").value(false))
             .andExpect(jsonPath("$.code").value("400"))
-            .andExpect(jsonPath("$.message").value("请求体格式错误"))
+            .andExpect(jsonPath("$.message").value(CommonErrorCodeEnum.BAD_REQUEST.displayText))
+    }
+
+    @Test
+    fun handleRequireException() {
+        mockMvc.perform(get("/test/global-exception/require"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.success").value(false))
+            .andExpect(jsonPath("$.code").value("400"))
+            .andExpect(jsonPath("$.message").value(CommonErrorCodeEnum.BAD_REQUEST.displayText))
+    }
+
+    @Test
+    fun handleCheckException() {
+        mockMvc.perform(get("/test/global-exception/check"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.success").value(false))
+            .andExpect(jsonPath("$.code").value("400"))
+            .andExpect(jsonPath("$.message").value(CommonErrorCodeEnum.BAD_REQUEST.displayText))
     }
 
     @Test
     fun handleException() {
-        mockMvc.perform(get("/test/global-exception/system"))
+        mockMvc.perform(get("/test/global-exception/runtime"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.success").value(false))
             .andExpect(jsonPath("$.code").value("500"))
-            .andExpect(jsonPath("$.message").value("系统异常"))
+            .andExpect(jsonPath("$.message").value(CommonErrorCodeEnum.SYSTEM_ERROR.displayText))
     }
 
     private class TestRequest {
@@ -156,6 +174,23 @@ class GlobalExceptionHandlerTest {
         @GetMapping("/system")
         fun system(): String {
             throw IllegalStateException("boom")
+        }
+
+        @GetMapping("/require")
+        fun requireCase(): String {
+            require(false) { "name 不能为空" }
+            return "ok"
+        }
+
+        @GetMapping("/check")
+        fun checkCase(): String {
+            check(false) { "状态不合法" }
+            return "ok"
+        }
+
+        @GetMapping("/runtime")
+        fun runtime(): String {
+            throw RuntimeException("boom")
         }
 
     }

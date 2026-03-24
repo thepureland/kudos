@@ -33,7 +33,7 @@ class GlobalExceptionHandler {
     @ExceptionHandler(ServiceException::class)
     fun handleServiceException(ex: ServiceException): ApiResponse<Any> {
         log.warn("ServiceException: code=${ex.errorCode.code}, message=${ex.message}")
-        return ApiResponse.fail(ex.errorCode.code, ex.message!!, null)
+        return ApiResponse.fail(ex.errorCode.code, ex.errorCode.displayText, null)
     }
 
     /**
@@ -41,9 +41,7 @@ class GlobalExceptionHandler {
      */
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleMethodArgumentNotValidException(ex: MethodArgumentNotValidException): ApiResponse<Any> {
-        val message = ex.bindingResult.fieldErrors.firstOrNull()?.defaultMessage
-            ?: CommonErrorCodeEnum.VALIDATION_ERROR.displayText
-        return ApiResponse.fail(CommonErrorCodeEnum.VALIDATION_ERROR.code, message)
+        return ApiResponse.fail(CommonErrorCodeEnum.VALIDATION_ERROR.code, CommonErrorCodeEnum.VALIDATION_ERROR.displayText)
     }
 
     /**
@@ -51,9 +49,7 @@ class GlobalExceptionHandler {
      */
     @ExceptionHandler(BindException::class)
     fun handleBindException(ex: BindException): ApiResponse<Any> {
-        val message = ex.bindingResult.fieldErrors.firstOrNull()?.defaultMessage
-            ?: CommonErrorCodeEnum.VALIDATION_ERROR.displayText
-        return ApiResponse.fail(CommonErrorCodeEnum.VALIDATION_ERROR.code, message)
+        return ApiResponse.fail(CommonErrorCodeEnum.VALIDATION_ERROR.code, CommonErrorCodeEnum.VALIDATION_ERROR.displayText)
     }
 
     /**
@@ -61,9 +57,7 @@ class GlobalExceptionHandler {
      */
     @ExceptionHandler(ConstraintViolationException::class)
     fun handleConstraintViolationException(ex: ConstraintViolationException): ApiResponse<Any> {
-        val message = ex.constraintViolations.firstOrNull()?.message
-            ?: CommonErrorCodeEnum.VALIDATION_ERROR.displayText
-        return ApiResponse.fail(CommonErrorCodeEnum.VALIDATION_ERROR.code, message)
+        return ApiResponse.fail(CommonErrorCodeEnum.VALIDATION_ERROR.code, CommonErrorCodeEnum.VALIDATION_ERROR.displayText)
     }
 
     /**
@@ -71,7 +65,7 @@ class GlobalExceptionHandler {
      */
     @ExceptionHandler(MissingServletRequestParameterException::class)
     fun handleMissingServletRequestParameterException(ex: MissingServletRequestParameterException): ApiResponse<Any> {
-        return ApiResponse.fail(CommonErrorCodeEnum.BAD_REQUEST.code, "缺少请求参数：${ex.parameterName}")
+        return ApiResponse.fail(CommonErrorCodeEnum.BAD_REQUEST.code, CommonErrorCodeEnum.BAD_REQUEST.displayText)
     }
 
     /**
@@ -79,7 +73,7 @@ class GlobalExceptionHandler {
      */
     @ExceptionHandler(MethodArgumentTypeMismatchException::class)
     fun handleMethodArgumentTypeMismatchException(ex: MethodArgumentTypeMismatchException): ApiResponse<Any> {
-        return ApiResponse.fail(CommonErrorCodeEnum.BAD_REQUEST.code, "参数类型错误：${ex.name}")
+        return ApiResponse.fail(CommonErrorCodeEnum.BAD_REQUEST.code, CommonErrorCodeEnum.BAD_REQUEST.displayText)
     }
 
     /**
@@ -87,7 +81,17 @@ class GlobalExceptionHandler {
      */
     @ExceptionHandler(HttpMessageNotReadableException::class)
     fun handleHttpMessageNotReadableException(ex: HttpMessageNotReadableException): ApiResponse<Any> {
-        return ApiResponse.fail(CommonErrorCodeEnum.BAD_REQUEST.code, "请求体格式错误")
+        return ApiResponse.fail(CommonErrorCodeEnum.BAD_REQUEST.code, CommonErrorCodeEnum.BAD_REQUEST.displayText)
+    }
+
+    /**
+     * 处理 Kotlin require/check 触发的参数/状态断言异常
+     */
+    @ExceptionHandler(IllegalArgumentException::class, IllegalStateException::class)
+    fun handleIllegalArgumentOrStateException(ex: RuntimeException): ApiResponse<Any> {
+        val message = ex.message ?: CommonErrorCodeEnum.BAD_REQUEST.displayText
+        log.warn("${ex::class.simpleName}: $message")
+        return ApiResponse.fail(CommonErrorCodeEnum.BAD_REQUEST.code, CommonErrorCodeEnum.BAD_REQUEST.displayText)
     }
 
     /**
