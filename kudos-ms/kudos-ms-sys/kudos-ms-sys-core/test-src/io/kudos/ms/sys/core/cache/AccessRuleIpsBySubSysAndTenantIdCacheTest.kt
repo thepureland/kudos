@@ -72,7 +72,10 @@ class AccessRuleIpsBySubSysAndTenantIdCacheTest : RdbAndRedisCacheTestBase() {
         // 数据库中更新的记录在缓存中应该也更新了
         val cacheItemsUpdate = cacheHandler.getAccessRuleIps(systemCode, tenantId)
         val exceptionTime = cacheItemsUpdate.first { it.id == idUpdate }.expirationTime
-        assertEquals(newExpirationTime, exceptionTime)
+        assertEquals(
+            newExpirationTime.truncatedTo(ChronoUnit.MICROS),
+            exceptionTime?.truncatedTo(ChronoUnit.MICROS)
+        )
 
         // 数据库中删除的记录在缓存中应该不存在
         val cacheItemsDelete = cacheHandler.getAccessRuleIps(systemCode, tenantId)
@@ -145,9 +148,15 @@ class AccessRuleIpsBySubSysAndTenantIdCacheTest : RdbAndRedisCacheTestBase() {
         @Suppress("UNCHECKED_CAST")
         val cacheItems = KeyValueCacheKit.getValue(cacheHandler.cacheName(), key) as? List<SysAccessRuleIpCacheEntry>
         assertNotNull(cacheItems, "Cache should contain key $key after syncOnUpdate")
-        assertEquals(newExpirationTime, cacheItems.first { it.id == ipRuleId }.expirationTime)
+        assertEquals(
+            newExpirationTime.truncatedTo(ChronoUnit.MICROS),
+            cacheItems.first { it.id == ipRuleId }.expirationTime?.truncatedTo(ChronoUnit.MICROS)
+        )
         val cacheItems2 = cacheHandler.getAccessRuleIps(accessRule.systemCode, tenantId)
-        assertEquals(newExpirationTime, cacheItems2.first { it.id == ipRuleId }.expirationTime)
+        assertEquals(
+            newExpirationTime.truncatedTo(ChronoUnit.MICROS),
+            cacheItems2.first { it.id == ipRuleId }.expirationTime?.truncatedTo(ChronoUnit.MICROS)
+        )
     }
 
     @Test

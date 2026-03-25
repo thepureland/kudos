@@ -41,6 +41,11 @@ open class IdEntitiesRedisHashDao(
     protected val redisTemplates: RedisTemplates
 ) {
 
+    /**
+     * 主键作为 Hash field / Set·ZSet 成员时的规范形式，避免 CHAR 等类型尾部空格与调用方 trim 后的主键不一致。
+     */
+    protected open fun normalizePkField(id: Any?): String = (id ?: "").toString().trim()
+
     // ---------- 单条 CRUD ----------
 
     /**
@@ -56,7 +61,7 @@ open class IdEntitiesRedisHashDao(
         sortableProperties: Set<String> = emptySet()
     ) {
         val id = entity.id ?: throw IllegalArgumentException("entity.id must not be null")
-        getRedisTemplate().opsForHash<String, Any>().put(dataKeyPrefix, id.toString(), entity)
+        getRedisTemplate().opsForHash<String, Any>().put(dataKeyPrefix, normalizePkField(id), entity)
         updateIndexForEntity(dataKeyPrefix, id, entity, filterableProperties, sortableProperties, add = true)
     }
 
@@ -75,7 +80,7 @@ open class IdEntitiesRedisHashDao(
     ) {
         val valid = entities.filter { e ->
             val id = e.id ?: return@filter false
-            id.toString().isNotBlank()
+            normalizePkField(id).isNotBlank()
         }
         if (valid.isEmpty()) return
         val template = getRedisTemplate()
@@ -85,7 +90,7 @@ open class IdEntitiesRedisHashDao(
         template.executePipelined(RedisCallback<Any?> { connection ->
             valid.forEach { entity ->
                 val id = entity.id
-                val fieldBytes = hashKeySer?.serialize(id.toString())
+                val fieldBytes = hashKeySer?.serialize(normalizePkField(id))
                 val valueBytes = hashValSer?.serialize(entity)
                 if (fieldBytes != null && valueBytes != null) {
                     connection.hashCommands().hSet(dataKeyBytes, fieldBytes, valueBytes)
@@ -103,7 +108,7 @@ open class IdEntitiesRedisHashDao(
      * 按 id 查询一行。
      */
     open fun <PK, E : IIdEntity<PK>> getById(dataKeyPrefix: String, id: PK, entityClass: KClass<E>): E? {
-        val raw = getRedisTemplate().opsForHash<String, Any>().get(dataKeyPrefix, id.toString()) ?: return null
+        val raw = getRedisTemplate().opsForHash<String, Any>().get(dataKeyPrefix, normalizePkField(id)) ?: return null
         return parseToEntity(raw, entityClass)
     }
 
@@ -111,7 +116,7 @@ open class IdEntitiesRedisHashDao(
      * 轻量级判断指定 id 是否存在于 Hash（使用 HEXISTS，不反序列化 value）。
      */
     open fun existsById(dataKeyPrefix: String, id: Any): Boolean =
-        getRedisTemplate().opsForHash<String, Any>().hasKey(dataKeyPrefix, id.toString())
+        getRedisTemplate().opsForHash<String, Any>().hasKey(dataKeyPrefix, normalizePkField(id))
 
     /**
      * 按 id 删除一行，并从二级索引中移除。
@@ -127,10 +132,10 @@ open class IdEntitiesRedisHashDao(
         sortableProperties: Set<String> = emptySet()
     ) {
         val entity = getById(dataKeyPrefix, id, entityClass) ?: run {
-            getRedisTemplate().opsForHash<String, Any>().delete(dataKeyPrefix, id.toString())
+            getRedisTemplate().opsForHash<String, Any>().delete(dataKeyPrefix, normalizePkField(id))
             return
         }
-        getRedisTemplate().opsForHash<String, Any>().delete(dataKeyPrefix, id.toString())
+        getRedisTemplate().opsForHash<String, Any>().delete(dataKeyPrefix, normalizePkField(id))
         updateIndexForEntity(dataKeyPrefix, id, entity, filterableProperties, sortableProperties, add = false)
     }
 
@@ -143,7 +148,7 @@ open class IdEntitiesRedisHashDao(
         entityClass: KClass<E>
     ): List<E> {
         if (ids.isEmpty()) return emptyList()
-        val fields = ids.map { it.toString() }
+        val fields = ids.map { normalizePkField(it) }
         val rawList = getRedisTemplate().opsForHash<String, Any>().multiGet(dataKeyPrefix, fields)
             ?: return emptyList()
         return rawList.mapNotNull { raw -> raw?.let { parseToEntity(it, entityClass) } }
@@ -287,7 +292,7 @@ open class IdEntitiesRedisHashDao(
         getRedisTemplate().executePipelined(RedisCallback<Any?> { connection ->
             entities.forEach { entity ->
                 val id = entity.id ?: return@forEach
-                val fieldBytes = hashKeySer?.serialize(id.toString())
+                val fieldBytes = hashKeySer?.serialize(normalizePkField(id))
                 val valueBytes = hashValSer?.serialize(entity)
                 if (fieldBytes != null && valueBytes != null) {
                     connection.hashCommands().hSet(tmpKeyBytes, fieldBytes, valueBytes)
@@ -343,7 +348,7 @@ open class IdEntitiesRedisHashDao(
         add: Boolean
     ) {
         val idxPrefix = getIndexKeyPrefix(dataKeyPrefix)
-        val idStr = id.toString()
+        val idStr = normalizePkField(id)
         for (prop in filterableProperties) {
             getPropertyValue(entity, prop)?.let { value ->
                 val key = CacheKey.getCacheKey(idxPrefix, "set", prop, value.toString())

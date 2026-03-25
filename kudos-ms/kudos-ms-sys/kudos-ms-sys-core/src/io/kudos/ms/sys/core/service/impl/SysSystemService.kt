@@ -48,7 +48,8 @@ open class SysSystemService(
 
     override fun getAllActiveSystems(): List<SysSystemRow> {
         val criteria = Criteria(SysSystem::active eq true)
-        return dao.searchAs<SysSystemRow>(criteria)
+        // 必须传入 SysSystemRow::class：写成 search<SysSystemRow>(criteria) 时 returnItemClass 仍为默认 null，会走 PO 查询并强转导致 ClassCastException
+        return dao.search(criteria, SysSystemRow::class)
     }
 
     @Transactional
@@ -72,7 +73,7 @@ open class SysSystemService(
             SysSystem::active eq true,
             SysSystem::parentCode eq systemCode
         )
-        return dao.search<SysSystemRow>(criteria)
+        return dao.search(criteria, SysSystemRow::class)
     }
 
     @Transactional
