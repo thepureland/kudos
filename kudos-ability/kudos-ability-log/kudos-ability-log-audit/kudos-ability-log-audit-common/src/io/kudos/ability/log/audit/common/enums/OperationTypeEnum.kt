@@ -9,7 +9,7 @@ import io.kudos.base.enums.ienums.IDictTypeEnum
  */
 enum class OperationTypeEnum(
     override val code: String,
-    override val trans: String
+    override val displayText: String
 ) : IDictEnum {
 
     //Module.LOG op_type

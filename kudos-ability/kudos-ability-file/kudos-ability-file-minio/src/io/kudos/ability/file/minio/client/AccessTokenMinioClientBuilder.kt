@@ -30,7 +30,7 @@ import java.security.ProviderException
  */
 open class AccessTokenMinioClientBuilder : MinioClientBuilder<AccessTokenServerParam> {
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     private lateinit var minioProperties: MinioProperties
 

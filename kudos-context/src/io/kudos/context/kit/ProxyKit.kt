@@ -15,7 +15,7 @@ import kotlin.reflect.KClass
  */
 object ProxyKit {
 
-    private val LOG = LogFactory.getLog(this)
+    private val LOG = LogFactory.getLog(this::class)
 
     /**
      * 取得JDK动态代理/CGLIB代理对象

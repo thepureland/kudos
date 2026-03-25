@@ -37,6 +37,4 @@ data class SysDataSourceQuery (
 
     override fun isUnpagedSearchAllowed(): Boolean = true
 
-    override fun getSortableProperties() = setOf(::name.name)
-
 }

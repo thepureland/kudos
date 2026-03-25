@@ -46,7 +46,7 @@ import java.util.concurrent.TimeUnit
 @Aspect
 @Lazy(false)
 class DistributedLockAspect {
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
     private val parameterNameDiscoverer = DefaultParameterNameDiscoverer()
 
     @Pointcut("@annotation(io.kudos.ability.distributed.lock.common.annotations.DistributedLock)")

@@ -35,7 +35,7 @@ open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheEntry
     @Resource
     private lateinit var sysResourceDao: SysResourceDao
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     companion object {
         const val CACHE_NAME = "SYS_RESOURCE__HASH"

@@ -263,4 +263,10 @@ object RegExps {
      * 中文或英文大小写和数字
      */
     const val CNANDEN_NUMBER = "^[0-9a-zA-Z\\u4e00-\\u9fa5]+$"
+
+    /**
+     * 变量名(由大/小写英文字母或数字或下划算组成，但不能以数字开头)
+     */
+    const val VAR_NAME = "^[A-Za-z_][A-Za-z0-9_]*$"
+
 }

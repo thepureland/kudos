@@ -16,7 +16,7 @@ import kotlin.reflect.KClass
  */
 open class ComponentInitializerSelector : ImportSelector {
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     override fun selectImports(importingClassMetadata: AnnotationMetadata): Array<String> {
         val exclusionComponentInitializer = getExclusionComponentInitializer(importingClassMetadata)

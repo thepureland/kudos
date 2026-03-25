@@ -113,9 +113,14 @@ insert into "sys_i18n" ("locale", "atomic_service_code", "i18n_type_dict_code", 
     ('zh-TW', 'sys', 'dict-item', 'i18n_type', 'valid-msg', '驗證失敗訊息', true),
     ('en-US', 'sys', 'dict-item', 'i18n_type', 'valid-msg', 'Validation failed message', true),
 
+    ('zh-CN', 'sys', 'dict-item', 'i18n_type', 'error-msg', '错误信息', true),
+    ('zh-TW', 'sys', 'dict-item', 'i18n_type', 'error-msg', '錯誤訊息', true),
+    ('en-US', 'sys', 'dict-item', 'i18n_type', 'error-msg', 'Error message', true),
+
     ('zh-CN', 'sys', 'dict-item', 'i18n_type', 'view', '页面', true),
     ('zh-TW', 'sys', 'dict-item', 'i18n_type', 'view', '頁面', true),
     ('en-US', 'sys', 'dict-item', 'i18n_type', 'view', 'Page', true);
+
 
 -- dict-item terminal_type
 insert into "sys_i18n" ("locale", "atomic_service_code", "i18n_type_dict_code", "namespace", "key", "value", "built_in") values
@@ -490,6 +495,68 @@ insert into "sys_i18n" ("locale", "atomic_service_code", "i18n_type_dict_code", 
 
     ('zh-CN', 'sys', 'valid-msg', 'default', 'DictItemCode', '不是为{atomicServiceCode}中{dictType}定义的字典项', true),
     ('zh-TW', 'sys', 'valid-msg', 'default', 'DictItemCode', '不是為 {atomicServiceCode} 中 {dictType} 定義的字典項目', true),
-    ('en-US', 'sys', 'valid-msg', 'default', 'DictItemCode', 'not a dictionary item defined for {dictType} in {atomicServiceCode}', true);
+    ('en-US', 'sys', 'valid-msg', 'default', 'DictItemCode', 'not a dictionary item defined for {dictType} in {atomicServiceCode}', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'MaxSize', '个数不得大于{max}', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'MaxSize', '數量不得大於 {max}', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'MaxSize', 'the count must not exceed {max}', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'MaxLength', '长度不得大于{max}', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'MaxLength', '長度不得大於 {max}', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'MaxLength', 'length must not exceed {max}', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'cache', 'Pattern::var-name', '只允许字母、数字、下划线，且不能以数字开头', true),
+    ('zh-TW', 'sys', 'valid-msg', 'cache', 'Pattern::var-name', '只允許英文字母、數字與底線，且不得以數字開頭', true),
+    ('en-US', 'sys', 'valid-msg', 'cache', 'Pattern::var-name', 'only letters, numbers, and underscores; cannot start with a number', true);
+
+-- error-msg
+insert into "sys_i18n" ("locale", "atomic_service_code", "i18n_type_dict_code", "namespace", "key", "value", "built_in") values
+    ('zh-CN', 'sys', 'error-msg', 'default', '200', '操作成功', true),
+    ('zh-TW', 'sys', 'error-msg', 'default', '200', '操作成功', true),
+    ('en-US', 'sys', 'error-msg', 'default', '200', 'Operation completed successfully', true),
+
+    ('zh-CN', 'sys', 'error-msg', 'default', '400', '请求有误，请检查后重试', true),
+    ('zh-TW', 'sys', 'error-msg', 'default', '400', '請求有誤，請檢查後再試', true),
+    ('en-US', 'sys', 'error-msg', 'default', '400', 'There is an issue with your request. Please check and try again', true),
+
+    ('zh-CN', 'sys', 'error-msg', 'default', '401', '请先登录', true),
+    ('zh-TW', 'sys', 'error-msg', 'default', '401', '請先登入', true),
+    ('en-US', 'sys', 'error-msg', 'default', '401', 'Please sign in first', true),
+
+    ('zh-CN', 'sys', 'error-msg', 'default', '403', '抱歉，您暂无权限执行此操作', true),
+    ('zh-TW', 'sys', 'error-msg', 'default', '403', '抱歉，您目前沒有權限執行此操作', true),
+    ('en-US', 'sys', 'error-msg', 'default', '403', 'Sorry, you do not have permission to perform this action', true),
+
+    ('zh-CN', 'sys', 'error-msg', 'default', '404', '抱歉，您访问的内容不存在', true),
+    ('zh-TW', 'sys', 'error-msg', 'default', '404', '抱歉，您要存取的內容不存在', true),
+    ('en-US', 'sys', 'error-msg', 'default', '404', 'Sorry, the content you are looking for does not exist', true),
+
+    ('zh-CN', 'sys', 'error-msg', 'default', '405', '当前请求方式不支持，请换一种方式再试', true),
+    ('zh-TW', 'sys', 'error-msg', 'default', '405', '目前不支援此請求方式，請改用其他方式再試', true),
+    ('en-US', 'sys', 'error-msg', 'default', '405', 'This request method is not supported. Please try a different one', true),
+
+    ('zh-CN', 'sys', 'error-msg', 'default', '4001', '您填写的信息有误，请检查后重试', true),
+    ('zh-TW', 'sys', 'error-msg', 'default', '4001', '您填寫的資訊有誤，請檢查後再試', true),
+    ('en-US', 'sys', 'error-msg', 'default', '4001', 'Some of the information you entered is invalid. Please check and try again', true),
+
+    ('zh-CN', 'sys', 'error-msg', 'default', '4002', '操作未完成，请稍后再试', true),
+    ('zh-TW', 'sys', 'error-msg', 'default', '4002', '操作未完成，請稍後再試', true),
+    ('en-US', 'sys', 'error-msg', 'default', '4002', 'The action could not be completed. Please try again later', true),
+
+    ('zh-CN', 'sys', 'error-msg', 'default', '4003', '内置记录不可删除', true),
+    ('zh-TW', 'sys', 'error-msg', 'default', '4003', '內建記錄不可刪除', true),
+    ('en-US', 'sys', 'error-msg', 'default', '4003', 'Built-in records cannot be deleted', true),
+
+    ('zh-CN', 'sys', 'error-msg', 'default', '500', '系统开小差了，请稍后再试', true),
+    ('zh-TW', 'sys', 'error-msg', 'default', '500', '系統出了點狀況，請稍後再試', true),
+    ('en-US', 'sys', 'error-msg', 'default', '500', 'Something went wrong on our side. Please try again later', true),
+
+    ('zh-CN', 'sys', 'error-msg', 'cache', 'SC00000001', '缓存键不存在', true),
+    ('zh-TW', 'sys', 'error-msg', 'cache', 'SC00000001', '快取鍵不存在', true),
+    ('en-US', 'sys', 'error-msg', 'cache', 'SC00000001', 'Cache key does not exist', true),
+
+    ('zh-CN', 'sys', 'error-msg', 'cache', 'SC00000002', '缓存配置不存在', true),
+    ('zh-TW', 'sys', 'error-msg', 'cache', 'SC00000002', '快取設定不存在', true),
+    ('en-US', 'sys', 'error-msg', 'cache', 'SC00000002', 'Cache configuration does not exist', true);
 
 --endregion DML

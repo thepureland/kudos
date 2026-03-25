@@ -18,7 +18,7 @@ import javax.sql.DataSource
  */
 object FlywayKit {
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     const val SQL_ROOT_PATH = "sql"
 

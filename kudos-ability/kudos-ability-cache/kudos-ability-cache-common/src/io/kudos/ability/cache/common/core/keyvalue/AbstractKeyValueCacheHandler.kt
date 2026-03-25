@@ -76,6 +76,6 @@ abstract class AbstractKeyValueCacheHandler<T> : AbstractCacheHandler<T>() {
      */
     protected abstract fun doReload(key: String): T?
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
 }

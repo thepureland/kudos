@@ -128,4 +128,5 @@ internal class ValidationKitTest {
         @get:NotNull(message = "age不能为空", groups = [TestGroup2::class])
         val age: Int?
     )
+
 }

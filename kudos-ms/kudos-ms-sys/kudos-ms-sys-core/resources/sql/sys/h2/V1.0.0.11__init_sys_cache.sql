@@ -44,21 +44,21 @@ comment on column "sys_cache"."update_time" is '更新时间';
 
 
 --region DML
-insert into "sys_cache" ("name", "atomic_service_code", "strategy_dict_code", "write_on_boot", "write_in_time", "ttl", "remark", "hash") values
-    ('SYS_CACHE__HASH', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '缓存配置信息Hash缓存', true),
-    ('SYS_DICT__HASH', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '字典Hash缓存', true),
-    ('SYS_DICT_ITEM__HASH', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '字典项Hash缓存(v_sys_dict_item)', true),
-    ('SYS_DOMAIN_BY_NAME', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '域名缓存(by name)', false),
-    ('SYS_PARAM_BY_MODULE_AND_NAME', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '参数缓存(by atomicServiceCode & name)', false),
-    ('SYS_TENANT_BY_ID', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '租户缓存(by id)', false),
-    ('SYS_TENANT_SYSTEM__HASH', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '租户-系统关系缓存', true),
-    ('SYS_ATOMIC_SERVICE_BY_CODE', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '原子服务缓存(by code)', false),
-    ('SYS_I18N__HASH', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '国际化信息Hash缓存', true),
-    ('SYS_MODULE_BY_CODE', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '模块缓存(by code)', false),
-    ('SYS_ACCESS_RULE_IPS_BY_SYSTEM_CODE_AND_TENANT_ID', 'sys', 'LOCAL_REMOTE', true, true, 999999999, 'ip访问规则缓存(by subSystemCode & tenantId)', false),
-    ('SYS_RESOURCE__HASH', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '资源Hash缓存', true),
-    ('SYS_SYSTEM__HASH', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '系统Hash缓存', true),
-    ('SYS_DATA_SOURCE__HASH', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '数据源Hash缓存', true),
-    ('SYS_MICRO_SERVICE__HASH', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '微服务Hash缓存', true);
+insert into "sys_cache" ("name", "atomic_service_code", "strategy_dict_code", "write_on_boot", "write_in_time", "ttl", "remark", "built_in", "hash") values
+    ('SYS_CACHE__HASH', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '缓存配置信息Hash缓存', true, true),
+    ('SYS_DICT__HASH', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '字典Hash缓存', true, true),
+    ('SYS_DICT_ITEM__HASH', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '字典项Hash缓存(v_sys_dict_item)', true, true),
+    ('SYS_DOMAIN_BY_NAME', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '域名缓存(by name)', true, false),
+    ('SYS_PARAM_BY_MODULE_AND_NAME', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '参数缓存(by atomicServiceCode & name)', true, false),
+    ('SYS_TENANT_BY_ID', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '租户缓存(by id)', true, false),
+    ('SYS_TENANT_SYSTEM__HASH', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '租户-系统关系缓存', true, true),
+    ('SYS_ATOMIC_SERVICE_BY_CODE', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '原子服务缓存(by code)', true, false),
+    ('SYS_I18N__HASH', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '国际化信息Hash缓存', true, true),
+    ('SYS_MODULE_BY_CODE', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '模块缓存(by code)', true, false),
+    ('SYS_ACCESS_RULE_IPS_BY_SYSTEM_CODE_AND_TENANT_ID', 'sys', 'LOCAL_REMOTE', true, true, 999999999, 'ip访问规则缓存(by subSystemCode & tenantId)', true, false),
+    ('SYS_RESOURCE__HASH', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '资源Hash缓存', true, true),
+    ('SYS_SYSTEM__HASH', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '系统Hash缓存', true, true),
+    ('SYS_DATA_SOURCE__HASH', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '数据源Hash缓存', true, true),
+    ('SYS_MICRO_SERVICE__HASH', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '微服务Hash缓存', true, true);
 
 --endregion DML

@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.core.service.impl
 
 import io.kudos.ability.cache.common.kit.KeyValueCacheKit
-import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
+import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.sys.core.cache.SysTenantSystemHashCache
 import io.kudos.ms.sys.core.dao.SysTenantSystemDao
@@ -20,10 +20,13 @@ import org.springframework.transaction.annotation.Transactional
  * @since 1.0.0
  */
 @Service
-open class SysTenantSystemService : BaseCrudService<String, SysTenantSystem, SysTenantSystemDao>(), ISysTenantSystemService {
+@Transactional
+open class SysTenantSystemService(
+    dao: SysTenantSystemDao
+) : BaseCrudService<String, SysTenantSystem, SysTenantSystemDao>(dao), ISysTenantSystemService {
 
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     @Autowired
     private lateinit var sysTenantSystemHashCache: SysTenantSystemHashCache

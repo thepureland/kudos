@@ -1,5 +1,6 @@
 package io.kudos.ms.user.common.vo.user.request
 
+import io.kudos.base.bean.validation.constraint.annotations.MaxLength
 import java.time.LocalDateTime
 
 
@@ -66,6 +67,7 @@ data class UserAccountFormCreate (
     val supervisorId: String? = null,
 
     /** 备注 */
+    @get:MaxLength(128)
     val remark: String? = null,
 
 )

@@ -3,7 +3,7 @@ package io.kudos.ability.web.springmvc.controller
 import io.kudos.base.error.ObjectNotFoundException
 import io.kudos.base.lang.GenericKit
 import io.kudos.base.query.PagingSearchResult
-import io.kudos.base.support.iservice.IBaseReadOnlyService
+import io.kudos.base.support.service.iservice.IBaseReadOnlyService
 import io.kudos.base.model.payload.ListSearchPayload
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.GetMapping

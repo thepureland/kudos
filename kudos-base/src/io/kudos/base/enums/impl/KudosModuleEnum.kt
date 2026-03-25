@@ -8,9 +8,10 @@ import io.kudos.base.enums.ienums.IModuleEnum
  * @author K
  * @since 1.0.0
  */
+@Deprecated("各服务中自己定义")
 enum class KudosModuleEnum(
     override val code: String,
-    override val trans: String
+    override val displayText: String
 ) : IModuleEnum {
 
     /** 日志审计模块 */

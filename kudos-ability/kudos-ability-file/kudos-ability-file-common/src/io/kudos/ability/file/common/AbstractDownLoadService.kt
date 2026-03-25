@@ -30,6 +30,6 @@ abstract class AbstractDownLoadService : IDownLoadService {
 
     protected abstract fun readFileToStream(downloadFileModel: DownloadFileModel<*>): InputStream?
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
 }

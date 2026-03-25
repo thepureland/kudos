@@ -1,7 +1,7 @@
 package io.kudos.ability.distributed.stream.common.biz
 
 import io.kudos.ability.distributed.stream.common.model.po.SysMqFailMsg
-import io.kudos.base.support.iservice.IBaseCrudService
+import io.kudos.base.support.service.iservice.IBaseCrudService
 import java.time.LocalDateTime
 
 /**

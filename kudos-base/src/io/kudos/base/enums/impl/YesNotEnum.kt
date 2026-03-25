@@ -11,7 +11,7 @@ import io.kudos.base.enums.ienums.IDictEnum
 enum class YesNotEnum(
     val bool: Boolean,
     override val code: String,
-    override var trans: String
+    override var displayText: String
 ) : IDictEnum {
 
     YES(true, "1", "是"),
@@ -23,7 +23,7 @@ enum class YesNotEnum(
 
         fun initTrans(map: Map<String, String>) {
             for (yesNot in entries) {
-                yesNot.trans = map[yesNot.code] ?: yesNot.trans
+                yesNot.displayText = map[yesNot.code] ?: yesNot.displayText
             }
         }
 

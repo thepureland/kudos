@@ -1,10 +1,11 @@
 package io.kudos.ms.msg.core.service.impl
 
-import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
+import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.ms.msg.core.dao.MsgSendDao
 import io.kudos.ms.msg.core.model.po.MsgSend
 import io.kudos.ms.msg.core.service.iservice.IMsgSendService
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 
 /**
@@ -15,7 +16,10 @@ import org.springframework.stereotype.Service
  * @since 1.0.0
  */
 @Service
-open class MsgSendService : BaseCrudService<String, MsgSend, MsgSendDao>(), IMsgSendService {
+@Transactional
+open class MsgSendService(
+    dao: MsgSendDao
+) : BaseCrudService<String, MsgSend, MsgSendDao>(dao), IMsgSendService {
 
 
 

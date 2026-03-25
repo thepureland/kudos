@@ -1,5 +1,7 @@
 package io.kudos.ms.auth.common.vo.role.request
 
+import io.kudos.base.bean.validation.constraint.annotations.MaxLength
+
 /**
  * 角色表单新建请求VO
  *
@@ -21,6 +23,7 @@ data class AuthRoleFormCreate (
     val subsysCode: String? = null,
 
     /** 备注 */
+    @get:MaxLength(128)
     val remark: String? = null,
 
 )

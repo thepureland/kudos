@@ -15,7 +15,7 @@ import kotlin.reflect.KClass
  */
 abstract class AbstractHashCacheHandler<T : IIdEntity<*>> : AbstractCacheHandler<T>() {
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     /** 缓存实体类型，用于按 id 删除/回写时指定类型。 */
     protected abstract fun entityClass(): KClass<T>

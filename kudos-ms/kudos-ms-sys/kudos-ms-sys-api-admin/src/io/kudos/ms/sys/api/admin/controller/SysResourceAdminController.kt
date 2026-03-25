@@ -3,7 +3,7 @@ package io.kudos.ms.sys.api.admin.controller
 import io.kudos.ability.web.springmvc.controller.BaseCrudController
 import io.kudos.base.tree.IdAndNameTreeNode
 import io.kudos.ms.sys.common.consts.SysConsts
-import io.kudos.ms.sys.common.enums.ResourceTypeEnum
+import io.kudos.ms.sys.common.enums.resource.ResourceTypeEnum
 import io.kudos.ms.sys.common.vo.resource.SysResourceCacheEntry
 import io.kudos.ms.sys.common.vo.resource.request.SysResourceFormCreate
 import io.kudos.ms.sys.common.vo.resource.request.SysResourceFormUpdate

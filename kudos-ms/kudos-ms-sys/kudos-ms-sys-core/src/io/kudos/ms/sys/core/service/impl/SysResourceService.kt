@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.core.service.impl
 
-import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
+import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
@@ -8,7 +8,7 @@ import io.kudos.base.query.eq
 import io.kudos.base.tree.IdAndNameTreeNode
 import io.kudos.ms.sys.common.consts.SysConsts
 import io.kudos.ms.sys.common.consts.SysDictTypes
-import io.kudos.ms.sys.common.enums.ResourceTypeEnum
+import io.kudos.ms.sys.common.enums.resource.ResourceTypeEnum
 import io.kudos.ms.sys.common.vo.resource.SysResourceCacheEntry
 import io.kudos.ms.sys.common.vo.resource.request.SysResourceQuery
 import io.kudos.ms.sys.common.vo.resource.response.BaseMenuTreeNode
@@ -35,10 +35,13 @@ import org.springframework.transaction.annotation.Transactional
  * @since 1.0.0
  */
 @Service
-open class SysResourceService : BaseCrudService<String, SysResource, SysResourceDao>(), ISysResourceService {
+@Transactional
+open class SysResourceService(
+    dao: SysResourceDao
+) : BaseCrudService<String, SysResource, SysResourceDao>(dao), ISysResourceService {
 
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     @Resource
     private lateinit var sysResourceHashCache: SysResourceHashCache

@@ -41,7 +41,7 @@ object JsonKit {
     )
 
     /** 日志记录器 */
-    val log = LogFactory.getLog(this)
+    val log = LogFactory.getLog(this::class)
 
     private val encodeToStringMethod: Method by lazy {
         Json::class.java.methods.firstOrNull {

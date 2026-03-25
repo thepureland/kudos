@@ -13,7 +13,7 @@ import java.io.Serializable
 @Component
 open class DataSourceNotifyListener<T: Serializable> : INotifyListener {
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     @Autowired
     private lateinit var mainClinet: IMainClinet

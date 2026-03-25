@@ -2,6 +2,7 @@ package io.kudos.ms.sys.core.model.po
 
 import io.kudos.ability.data.rdb.ktorm.support.DbEntityFactory
 import io.kudos.ability.data.rdb.ktorm.support.IManagedDbEntity
+import io.kudos.base.query.sort.Sortable
 import java.time.LocalDateTime
 
 /**
@@ -13,6 +14,9 @@ import java.time.LocalDateTime
 interface SysAccessRuleIp : IManagedDbEntity<String, SysAccessRuleIp> {
 
     companion object : DbEntityFactory<SysAccessRuleIp>()
+
+    @get:Sortable
+    override var id: String
 
     /** ip起 */
     var ipStart: Long

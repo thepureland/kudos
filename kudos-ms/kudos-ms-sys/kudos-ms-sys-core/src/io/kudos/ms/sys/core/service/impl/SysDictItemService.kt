@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.core.service.impl
 
-import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
+import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.sys.common.vo.dictitem.SysDictItemCacheEntry
 import io.kudos.ms.sys.core.cache.SysDictItemHashCache
@@ -19,13 +19,16 @@ import org.springframework.transaction.annotation.Transactional
  * @since 1.0.0
  */
 @Service
-open class SysDictItemService : BaseCrudService<String, SysDictItem, SysDictItemDao>(), ISysDictItemService {
+@Transactional
+open class SysDictItemService(
+    dao: SysDictItemDao
+) : BaseCrudService<String, SysDictItem, SysDictItemDao>(dao), ISysDictItemService {
 
 
     @Autowired
     private lateinit var sysDictItemHashCache: SysDictItemHashCache
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     override fun getItems(dictType: String, atomicServiceCode: String): List<SysDictItemCacheEntry> {
         return sysDictItemHashCache.getDictItems(atomicServiceCode, dictType)

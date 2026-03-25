@@ -16,7 +16,7 @@ import java.time.LocalDateTime
 @Service
 open class KafkaMainService : IKafkaMainService {
     
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
     
     private val topicName = "KAFKA_TEST_TOPIC"
 

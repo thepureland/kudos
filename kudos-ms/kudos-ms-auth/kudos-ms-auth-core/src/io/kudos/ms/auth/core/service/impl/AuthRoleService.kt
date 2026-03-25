@@ -1,6 +1,6 @@
 package io.kudos.ms.auth.core.service.impl
 
-import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
+import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.auth.common.vo.role.AuthRoleCacheEntry
@@ -27,7 +27,10 @@ import org.springframework.transaction.annotation.Transactional
  * @since 1.0.0
  */
 @Service
-open class AuthRoleService : BaseCrudService<String, AuthRole, AuthRoleDao>(),
+@Transactional
+open class AuthRoleService(
+    dao: AuthRoleDao
+) : BaseCrudService<String, AuthRole, AuthRoleDao>(dao),
     IAuthRoleService {
 
 
@@ -52,7 +55,7 @@ open class AuthRoleService : BaseCrudService<String, AuthRole, AuthRoleDao>(),
     @Resource
     private lateinit var resourceIdsByUserIdCache: ResourceIdsByUserIdCache
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     override fun getRoleUserIds(roleId: String): List<String> {
         return userIdsByRoleIdCache.getUserIds(roleId)

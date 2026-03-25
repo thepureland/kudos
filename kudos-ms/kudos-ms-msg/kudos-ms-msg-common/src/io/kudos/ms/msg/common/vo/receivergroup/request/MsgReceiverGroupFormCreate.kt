@@ -1,5 +1,7 @@
 package io.kudos.ms.msg.common.vo.receivergroup.request
 
+import io.kudos.base.bean.validation.constraint.annotations.MaxLength
+
 /**
  * 消息接收者群组表单新建请求VO
  *
@@ -18,6 +20,7 @@ data class MsgReceiverGroupFormCreate (
     val nameColumn: String? = null,
 
     /** 备注 */
+    @get:MaxLength(128)
     val remark: String? = null,
 
     /** 是否启用 */

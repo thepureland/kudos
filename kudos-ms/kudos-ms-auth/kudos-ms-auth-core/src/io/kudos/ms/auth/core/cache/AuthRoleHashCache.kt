@@ -32,7 +32,7 @@ open class AuthRoleHashCache : AbstractHashCacheHandler<AuthRoleCacheEntry>() {
     @Resource
     private lateinit var authRoleDao: AuthRoleDao
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     companion object {
         const val CACHE_NAME = "AUTH_ROLE__HASH"

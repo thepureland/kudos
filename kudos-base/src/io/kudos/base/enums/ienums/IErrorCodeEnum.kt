@@ -8,6 +8,18 @@ package io.kudos.base.enums.ienums
  */
 interface IErrorCodeEnum : IDictEnum {
 
-    val printAllStackTrace: Boolean
+    /** 默认展示文本 */
+    val defaultDisplayText: String
+
+    /** 展示文本或国际化key */
+    override val displayText: String
+        get() = if (i18nKeyPrefix.isBlank()) {
+            defaultDisplayText
+        } else {
+            "$i18nKeyPrefix.$code"
+        }
+
+    /** 国际化key的前缀 */
+    val i18nKeyPrefix: String
 
 }

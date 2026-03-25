@@ -30,7 +30,7 @@ import org.springframework.context.annotation.PropertySource
 @EnableAutoConfiguration(exclude = [DataSourceAutoConfiguration::class])
 open class SeataAutoConfiguration : IComponentInitializer {
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
 //    @Bean
 //    open fun database(ds: DataSource, dsProxy: IDataSourceProxy): Database {

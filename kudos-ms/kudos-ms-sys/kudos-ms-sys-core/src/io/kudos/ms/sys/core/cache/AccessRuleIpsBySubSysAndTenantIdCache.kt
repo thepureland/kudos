@@ -278,6 +278,6 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
         return "${systemCode}${Consts.CACHE_KEY_DEFAULT_DELIMITER}${tenantId}"
     }
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
 }

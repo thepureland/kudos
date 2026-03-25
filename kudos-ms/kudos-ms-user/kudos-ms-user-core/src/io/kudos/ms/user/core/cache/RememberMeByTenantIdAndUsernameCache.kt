@@ -230,7 +230,7 @@ open class RememberMeByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<U
         return dbTenantId to dbUsername
     }
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
 
 }

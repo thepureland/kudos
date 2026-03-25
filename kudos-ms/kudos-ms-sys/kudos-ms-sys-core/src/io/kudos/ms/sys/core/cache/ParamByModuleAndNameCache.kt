@@ -197,6 +197,6 @@ open class ParamByModuleAndNameCache : AbstractKeyValueCacheHandler<SysParamCach
         return "${atomicServiceCode}${Consts.CACHE_KEY_DEFAULT_DELIMITER}${paramName}"
     }
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
 }

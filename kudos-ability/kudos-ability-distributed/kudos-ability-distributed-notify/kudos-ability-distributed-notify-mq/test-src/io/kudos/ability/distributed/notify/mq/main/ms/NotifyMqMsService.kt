@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service
 @Service
 open class NotifyMqMsService {
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     @Autowired
     private val notifyProducer: INotifyProducer? = null

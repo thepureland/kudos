@@ -54,7 +54,7 @@ import java.util.*
 @ConditionalOnProperty(prefix = "kudos.ability.cache", name = ["enabled"], havingValue = "true", matchIfMissing = true)
 open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentInitializer {
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     @Value($$"${kudos.ability.cache.remoteStore}")
     private val remoteStore: String? = null

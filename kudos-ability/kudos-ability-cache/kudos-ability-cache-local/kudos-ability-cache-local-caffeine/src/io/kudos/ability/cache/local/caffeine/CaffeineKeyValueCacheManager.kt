@@ -45,6 +45,6 @@ class CaffeineKeyValueCacheManager : AbstractKeyValueCacheManager<CaffeineCache>
         return (cache as CaffeineCache).nativeCache.asMap().containsKey(key)
     }
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
 }

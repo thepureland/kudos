@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component
 @Order(-100)
 class TenantDsChangeAspect {
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     /**
      * 定义切入点

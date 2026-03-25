@@ -42,9 +42,4 @@ data class SysDictQuery (
 
     override fun isUnpagedSearchAllowed(): Boolean = true
 
-    override fun getSortableProperties() = setOf(
-        ::dictType.name,
-        ::dictName.name,
-    )
-
 }
