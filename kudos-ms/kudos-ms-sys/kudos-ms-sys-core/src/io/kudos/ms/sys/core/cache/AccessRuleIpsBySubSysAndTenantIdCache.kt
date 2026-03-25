@@ -108,8 +108,9 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
             systemCode = systemCode,
             tenantId = tenantId,
         ).apply {
-            TODO()
-//            nullProperties = listOf(this::tenantId.name)
+            if (tenantId == null) {
+                nullProperties = listOf(SysAccessRule::tenantId.name)
+            }
         }
 
         val results = sysAccessRuleIpDao.pagingSearch(searchPayload)

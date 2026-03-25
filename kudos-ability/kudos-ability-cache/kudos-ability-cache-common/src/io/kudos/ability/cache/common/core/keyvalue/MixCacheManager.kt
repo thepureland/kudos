@@ -258,7 +258,8 @@ class MixCacheManager : AbstractCacheManager() {
      * @param key
      */
     fun clearLocal(cacheName: String, key: Any?) {
-        val cache = super.getCache(cacheName) ?: return
+        // 调用方可能传逻辑名（如 test），也可能传已带版本前缀的名（如 MixCache.getName() / 分布式消息里的名）
+        val cache = getCache(cacheName) ?: super.getCache(cacheName) ?: return
         val mixCache = cache as MixCache
         if (key is String
             && key.endsWith("*")

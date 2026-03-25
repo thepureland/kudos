@@ -94,8 +94,11 @@ open class SysDictItemHashCache : AbstractHashCacheHandler<SysDictItemCacheEntry
     open fun getDictItemsByIds(ids: Set<String>): Map<String, SysDictItemCacheEntry> {
         if (ids.isEmpty()) return emptyMap()
         val list = vSysDictItemDao.getByIdsAs<SysDictItemCacheEntry>(ids).map { it }
-        val byId = list.associateBy { it.id }
-        return ids.mapNotNull { id -> byId[id]?.let { id to it } }.toMap()
+        val byId = list.associateBy { it.id.toString().trim() }
+        return ids.mapNotNull { id ->
+            val key = id.trim()
+            byId[key]?.let { key to it }
+        }.toMap()
     }
 
     // ---------- 2. 按 atomicServiceCode + dictType + itemCode ----------
