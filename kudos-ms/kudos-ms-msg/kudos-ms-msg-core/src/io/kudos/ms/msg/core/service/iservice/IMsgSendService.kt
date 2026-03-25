@@ -1,6 +1,6 @@
 package io.kudos.ms.msg.core.service.iservice
 
-import io.kudos.base.support.iservice.IBaseCrudService
+import io.kudos.base.support.service.iservice.IBaseCrudService
 import io.kudos.ms.msg.core.model.po.MsgSend
 
 

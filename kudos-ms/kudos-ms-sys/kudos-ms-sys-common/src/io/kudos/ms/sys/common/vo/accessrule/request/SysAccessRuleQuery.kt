@@ -27,9 +27,4 @@ data class SysAccessRuleQuery (
 
     override fun isUnpagedSearchAllowed(): Boolean = true
 
-    override fun getSortableProperties() = setOf(
-        ::tenantId.name,
-        ::systemCode.name,
-    )
-
 }

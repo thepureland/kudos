@@ -170,6 +170,6 @@ open class RedisCacheMessageHandler(
         get() = redisTemplates.getRedisTemplate(remoteStore) as RedisTemplate<*, *>
 
     companion object {
-        private val logger = LogFactory.getLog(this)
+        private val logger = LogFactory.getLog(this::class)
     }
 }

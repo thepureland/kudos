@@ -14,8 +14,8 @@ interface IDictEnum {
     val code: String
 
     /**
-     * 译文
+     * 展示文本（可为描述文本或国际化key）
      */
-    val trans: String
+    val displayText: String
 
 }

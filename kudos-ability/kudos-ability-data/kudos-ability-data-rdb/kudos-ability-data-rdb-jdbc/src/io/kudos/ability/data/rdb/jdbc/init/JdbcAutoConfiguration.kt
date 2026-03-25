@@ -31,7 +31,7 @@ import org.springframework.context.annotation.Primary
 //@ImportAutoConfiguration(DynamicDataSourceCreatorAutoConfiguration::class, DynamicDataSourceAutoConfiguration::class)
 open class JdbcAutoConfiguration : IComponentInitializer {
 
-    private val logger = LogFactory.getLog(this)
+    private val logger = LogFactory.getLog(this::class)
 
 //    @Bean("dataSourceProxy")
 //    @ConditionalOnMissingBean

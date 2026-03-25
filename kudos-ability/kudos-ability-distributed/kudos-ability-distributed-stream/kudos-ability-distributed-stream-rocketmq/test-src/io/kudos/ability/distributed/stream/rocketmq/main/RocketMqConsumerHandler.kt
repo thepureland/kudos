@@ -19,7 +19,7 @@ import java.util.function.Consumer
 @Component
 open class RocketMqConsumerHandler {
     
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
     val defaultMsg: String = "Hello simple msg"
     var flag = false
     var errorFlag = false

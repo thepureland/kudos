@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.core.service.impl
 
-import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
+import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
@@ -29,10 +29,13 @@ import kotlin.reflect.KClass
  * @since 1.0.0
  */
 @Service
-open class SysDomainService : BaseCrudService<String, SysDomain, SysDomainDao>(), ISysDomainService {
+@Transactional
+open class SysDomainService(
+    dao: SysDomainDao
+) : BaseCrudService<String, SysDomain, SysDomainDao>(dao), ISysDomainService {
 
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     @Resource
     private lateinit var domainByNameCache: DomainByNameCache

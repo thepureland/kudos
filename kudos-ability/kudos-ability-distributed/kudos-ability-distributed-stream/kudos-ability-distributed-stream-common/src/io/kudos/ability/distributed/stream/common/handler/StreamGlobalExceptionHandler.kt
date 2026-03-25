@@ -139,6 +139,6 @@ class StreamGlobalExceptionHandler {
         }
     }
 
-    private val LOG = LogFactory.getLog(this)
+    private val LOG = LogFactory.getLog(this::class)
 
 }

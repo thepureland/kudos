@@ -1,6 +1,6 @@
 package io.kudos.ms.user.core.service.impl
 
-import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
+import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.user.core.cache.OrgIdsByUserIdCache
 import io.kudos.ms.user.core.cache.UserIdsByOrgIdCache
@@ -20,7 +20,10 @@ import org.springframework.transaction.annotation.Transactional
  * @since 1.0.0
  */
 @Service
-open class UserOrgUserService : BaseCrudService<String, UserOrgUser, UserOrgUserDao>(), IUserOrgUserService {
+@Transactional
+open class UserOrgUserService(
+    dao: UserOrgUserDao
+) : BaseCrudService<String, UserOrgUser, UserOrgUserDao>(dao), IUserOrgUserService {
 
 
     @Autowired
@@ -29,7 +32,7 @@ open class UserOrgUserService : BaseCrudService<String, UserOrgUser, UserOrgUser
     @Autowired
     private lateinit var orgIdsByUserIdCache: OrgIdsByUserIdCache
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     override fun getUserIdsByOrgId(orgId: String): Set<String> {
         return userIdsByOrgIdCache.getUserIds(orgId).toSet()

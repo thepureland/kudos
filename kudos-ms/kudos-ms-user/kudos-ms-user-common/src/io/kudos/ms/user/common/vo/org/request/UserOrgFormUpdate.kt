@@ -1,5 +1,6 @@
 package io.kudos.ms.user.common.vo.org.request
 
+import io.kudos.base.bean.validation.constraint.annotations.MaxLength
 import io.kudos.base.model.contract.entity.IIdEntity
 
 
@@ -33,6 +34,7 @@ data class UserOrgFormUpdate (
     val sortNum: Int? = null,
 
     /** 备注 */
+    @get:MaxLength(128)
     val remark: String? = null,
 
 ) : IIdEntity<String?>

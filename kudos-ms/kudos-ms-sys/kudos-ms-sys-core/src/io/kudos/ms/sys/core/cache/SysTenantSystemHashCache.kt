@@ -34,7 +34,7 @@ open class SysTenantSystemHashCache : AbstractHashCacheHandler<SysTenantSystemCa
     @Resource
     private lateinit var sysTenantSystemDao: SysTenantSystemDao
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     companion object {
         const val CACHE_NAME = "SYS_TENANT_SYSTEM__HASH"

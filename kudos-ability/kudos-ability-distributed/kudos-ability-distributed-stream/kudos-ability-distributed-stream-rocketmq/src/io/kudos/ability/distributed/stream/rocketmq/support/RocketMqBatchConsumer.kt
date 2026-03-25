@@ -248,7 +248,7 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
     class BatchConsumerItem<T>(var data: T?, var properties: MutableMap<String?, String?>?)
 
     companion object {
-        private val log = LogFactory.getLog(this)
+        private val log = LogFactory.getLog(this::class)
     }
 
 }

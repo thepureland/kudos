@@ -1,5 +1,7 @@
 package io.kudos.ms.user.common.vo.org.request
 
+import io.kudos.base.bean.validation.constraint.annotations.MaxLength
+
 /**
  * 机构表单新建请求VO
  *
@@ -27,6 +29,7 @@ data class UserOrgFormCreate (
     val sortNum: Int? = null,
 
     /** 备注 */
+    @get:MaxLength(128)
     val remark: String? = null,
 
 )

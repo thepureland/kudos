@@ -2,6 +2,7 @@ package io.kudos.ms.sys.core.model.po
 
 import io.kudos.ability.data.rdb.ktorm.support.DbEntityFactory
 import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
+import io.kudos.base.query.sort.Sortable
 import java.time.LocalDateTime
 
 /**
@@ -15,9 +16,11 @@ interface SysMicroService : IDbEntity<String, SysMicroService> {
     companion object : DbEntityFactory<SysMicroService>()
 
     /** 编码 */
+    @get:Sortable
     var code: String
 
     /** 名称 */
+    @get:Sortable
     var name: String
 
     /** 上下文 */

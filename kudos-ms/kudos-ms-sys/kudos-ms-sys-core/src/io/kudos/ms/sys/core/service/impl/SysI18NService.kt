@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.core.service.impl
 
-import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
+import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.sys.common.vo.i18n.request.SysI18nFormUpdate
@@ -20,10 +20,13 @@ import org.springframework.transaction.annotation.Transactional
  * @since 1.0.0
  */
 @Service
-open class SysI18NService : BaseCrudService<String, SysI18n, SysI18nDao>(), ISysI18nService {
+@Transactional
+open class SysI18NService(
+    dao: SysI18nDao
+) : BaseCrudService<String, SysI18n, SysI18nDao>(dao), ISysI18nService {
 
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     @Resource
     private lateinit var sysI18nHashCache: SysI18nHashCache

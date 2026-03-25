@@ -1,11 +1,12 @@
 package io.kudos.ms.user.core.service.impl
 
-import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
+import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.user.core.dao.UserLogLoginDao
 import io.kudos.ms.user.core.model.po.UserLogLogin
 import io.kudos.ms.user.core.service.iservice.IUserLogLoginService
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 
 /**
@@ -16,10 +17,13 @@ import java.time.LocalDateTime
  * @since 1.0.0
  */
 @Service
-open class UserLogLoginService : BaseCrudService<String, UserLogLogin, UserLogLoginDao>(), IUserLogLoginService {
+@Transactional
+open class UserLogLoginService(
+    dao: UserLogLoginDao
+) : BaseCrudService<String, UserLogLogin, UserLogLoginDao>(dao), IUserLogLoginService {
 
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     override fun getLoginsByUserId(userId: String, limit: Int): List<UserLogLogin> {
         val logins = dao.searchByUserId(userId)

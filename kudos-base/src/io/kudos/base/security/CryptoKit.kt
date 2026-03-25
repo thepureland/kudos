@@ -20,7 +20,7 @@ import javax.crypto.spec.SecretKeySpec
  */
 object CryptoKit {
 
-    private val logger = LogFactory.getLog(this)
+    private val logger = LogFactory.getLog(this::class)
 
     private const val AES = "AES"
     private const val HMACSHA1 = "HmacSHA1"

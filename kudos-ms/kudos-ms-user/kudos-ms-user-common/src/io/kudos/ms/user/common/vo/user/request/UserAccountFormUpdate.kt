@@ -1,5 +1,6 @@
 package io.kudos.ms.user.common.vo.user.request
 
+import io.kudos.base.bean.validation.constraint.annotations.MaxLength
 import io.kudos.base.model.contract.entity.IIdEntity
 import java.time.LocalDateTime
 
@@ -70,6 +71,7 @@ data class UserAccountFormUpdate (
     val supervisorId: String? = null,
 
     /** 备注 */
+    @get:MaxLength(128)
     val remark: String? = null,
 
 ) : IIdEntity<String?>

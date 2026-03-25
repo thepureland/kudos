@@ -30,7 +30,7 @@ open class SysMicroServiceHashCache : AbstractHashCacheHandler<SysMicroServiceCa
     @Resource
     private lateinit var sysMicroServiceDao: SysMicroServiceDao
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     companion object {
         const val CACHE_NAME = "SYS_MICRO_SERVICE__HASH"

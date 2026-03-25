@@ -1,5 +1,6 @@
 package io.kudos.ms.sys.common.vo.i18n.request
 
+import io.kudos.base.bean.validation.constraint.annotations.MaxLength
 import jakarta.validation.constraints.NotBlank
 
 
@@ -36,6 +37,7 @@ data class SysI18nFormCreate (
     val value: String = "",
 
     /** 备注 */
+    @get:MaxLength(128)
     val remark: String? = null,
 
 )

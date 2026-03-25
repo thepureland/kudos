@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap
  */
 enum class OperatorEnum(
     override val code: String,
-    override val trans: String,
+    override val displayText: String,
     val acceptNull: Boolean = false, // 值是否可接受null
     val stringOnly: Boolean = false  // 操作值只接收字符串类型
 ) : IDictEnum {

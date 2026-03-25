@@ -1,5 +1,6 @@
 package io.kudos.ms.sys.common.vo.dictitem.request
 
+import io.kudos.base.bean.validation.constraint.annotations.MaxLength
 import io.kudos.base.model.contract.entity.IIdEntity
 import jakarta.validation.constraints.NotBlank
 
@@ -33,6 +34,7 @@ data class SysDictItemFormUpdate (
     val parentId: String? = null,
 
     /** 备注 */
+    @get:MaxLength(128)
     val remark: String? = null,
 
 ) : IIdEntity<String?>

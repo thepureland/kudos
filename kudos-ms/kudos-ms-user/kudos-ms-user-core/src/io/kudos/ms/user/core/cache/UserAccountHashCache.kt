@@ -32,7 +32,7 @@ open class UserAccountHashCache : AbstractHashCacheHandler<UserAccountCacheEntry
     @Resource
     private lateinit var userAccountDao: UserAccountDao
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     companion object {
         const val CACHE_NAME = "USER_ACCOUNT__HASH"

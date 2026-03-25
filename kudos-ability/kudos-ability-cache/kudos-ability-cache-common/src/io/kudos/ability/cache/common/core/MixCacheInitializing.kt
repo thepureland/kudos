@@ -37,5 +37,5 @@ class MixCacheInitializing : SmartInitializingSingleton {
         hashCacheManager?.initHashCacheAfterSystemInit()
     }
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 }

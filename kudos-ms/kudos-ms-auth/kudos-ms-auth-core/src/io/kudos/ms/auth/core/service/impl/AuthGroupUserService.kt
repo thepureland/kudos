@@ -1,6 +1,6 @@
 package io.kudos.ms.auth.core.service.impl
 
-import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
+import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.auth.core.dao.AuthGroupUserDao
 import io.kudos.ms.auth.core.model.po.AuthGroupUser
@@ -17,11 +17,14 @@ import org.springframework.transaction.annotation.Transactional
  * @since 1.0.0
  */
 @Service
-open class AuthGroupUserService : BaseCrudService<String, AuthGroupUser, AuthGroupUserDao>(),
+@Transactional
+open class AuthGroupUserService(
+    dao: AuthGroupUserDao
+) : BaseCrudService<String, AuthGroupUser, AuthGroupUserDao>(dao),
     IAuthGroupUserService {
 
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     override fun getUserIdsByGroupId(groupId: String): Set<String> {
         return dao.searchUserIdsByGroupId(groupId)

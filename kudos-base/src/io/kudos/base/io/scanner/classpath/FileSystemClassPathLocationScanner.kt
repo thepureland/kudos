@@ -28,7 +28,7 @@ import java.util.*
  */
 class FileSystemClassPathLocationScanner : IClassPathLocationScanner {
 
-    private val logger = LogFactory.getLog(this)
+    private val logger = LogFactory.getLog(this::class)
 
 
     @Throws(IOException::class)

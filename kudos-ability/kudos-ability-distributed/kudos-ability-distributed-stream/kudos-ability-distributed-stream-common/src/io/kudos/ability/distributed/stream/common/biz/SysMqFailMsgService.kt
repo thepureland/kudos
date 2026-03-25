@@ -1,13 +1,12 @@
 package io.kudos.ability.distributed.stream.common.biz
 
-import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
+import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.ability.distributed.stream.common.dao.StreamExceptionMsgDao
 import io.kudos.ability.distributed.stream.common.model.po.SysMqFailMsg
 import io.kudos.ability.distributed.stream.common.model.table.SysMqFailMsgs
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
-import jakarta.annotation.Resource
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
@@ -17,12 +16,11 @@ import java.time.LocalDateTime
  * @Author paul
  * @Date 2022/10/19 16:06
  */
-open class SysMqFailMsgService :
-    BaseCrudService<String, SysMqFailMsg, StreamExceptionMsgDao>(),
+@Transactional
+open class SysMqFailMsgService(
+    dao: StreamExceptionMsgDao
+) : BaseCrudService<String, SysMqFailMsg, StreamExceptionMsgDao>(dao),
     ISysMqFailMsgService {
-
-    @Resource
-    private lateinit var streamExceptionMsgDao: StreamExceptionMsgDao
 
     /**
      * 保存异常消息
@@ -31,7 +29,7 @@ open class SysMqFailMsgService :
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     override fun save(exceptionMsg: SysMqFailMsg): Boolean {
-        streamExceptionMsgDao.insert(exceptionMsg)
+        dao.insert(exceptionMsg)
         return true
     }
 
@@ -44,7 +42,7 @@ open class SysMqFailMsgService :
     override fun query(topic: String, startTime: LocalDateTime): List<SysMqFailMsg> {
         val criteria = Criteria(SysMqFailMsgs.topic.name, OperatorEnum.EQ, topic)
             .addAnd(SysMqFailMsgs.createTime.name, OperatorEnum.GE, startTime)
-        return streamExceptionMsgDao.search(criteria)
+        return dao.search(criteria)
     }
 
     /**
@@ -54,10 +52,10 @@ open class SysMqFailMsgService :
      */
     @Transactional(rollbackFor = [Exception::class])
     override fun delete(ids: List<String>) {
-        val count = streamExceptionMsgDao.batchDelete(ids)
+        val count = dao.batchDelete(ids)
         LOG.info("删除stream异常消息条数:{0}", count)
     }
 
-    private val LOG = LogFactory.getLog(this)
+    private val LOG = LogFactory.getLog(this::class)
 
 }

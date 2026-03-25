@@ -162,6 +162,6 @@ class EmailHandler {
         }
     }
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
 }

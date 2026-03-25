@@ -10,7 +10,7 @@ import kotlin.test.Test
  */
 class LogTest {
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     @Test
     fun log() {

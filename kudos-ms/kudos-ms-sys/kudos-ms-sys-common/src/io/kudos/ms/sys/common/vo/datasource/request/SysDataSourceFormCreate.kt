@@ -1,5 +1,6 @@
 package io.kudos.ms.sys.common.vo.datasource.request
 
+import io.kudos.base.bean.validation.constraint.annotations.MaxLength
 import jakarta.validation.constraints.NotBlank
 
 
@@ -56,6 +57,7 @@ data class SysDataSourceFormCreate (
     val maxAge: Int? = null,
 
     /** 备注 */
+    @get:MaxLength(128)
     val remark: String? = null,
 
 )

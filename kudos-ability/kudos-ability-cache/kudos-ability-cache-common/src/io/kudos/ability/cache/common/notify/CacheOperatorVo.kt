@@ -100,7 +100,7 @@ class CacheOperatorVo(
     }
 
     companion object {
-        private val LOG = LogFactory.getLog(this)
+        private val LOG = LogFactory.getLog(this::class)
 
         @Serial
         private val serialVersionUID = -1233873328202104930L

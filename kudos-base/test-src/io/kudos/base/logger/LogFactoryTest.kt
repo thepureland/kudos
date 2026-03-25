@@ -20,7 +20,7 @@ internal class LogFactoryTest {
 
     @Test
     fun testGetLogWithAny() {
-        val log = LogFactory.getLog(this)
+        val log = LogFactory.getLog(this::class)
         assertNotNull(log)
     }
 

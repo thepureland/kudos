@@ -16,7 +16,7 @@ import java.time.LocalDateTime
 @Service
 class RocketMqMainService : IRocketMqMainService {
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     private val topicName = "ROCKETMQ_TEST_TOPIC"
 

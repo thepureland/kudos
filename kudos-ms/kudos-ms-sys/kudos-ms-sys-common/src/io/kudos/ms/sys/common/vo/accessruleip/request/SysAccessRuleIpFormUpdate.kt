@@ -1,5 +1,6 @@
 package io.kudos.ms.sys.common.vo.accessruleip.request
 
+import io.kudos.base.bean.validation.constraint.annotations.MaxLength
 import io.kudos.base.model.contract.entity.IIdEntity
 import java.time.LocalDateTime
 
@@ -30,6 +31,7 @@ data class SysAccessRuleIpFormUpdate (
     val parentRuleId: String? = null,
 
     /** 备注 */
+    @get:MaxLength(128)
     val remark: String? = null,
 
     /** 是否启用 */

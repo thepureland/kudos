@@ -36,7 +36,7 @@ open class SysDictHashCache : AbstractHashCacheHandler<SysDictCacheEntry>() {
     @Resource
     private lateinit var sysDictDao: SysDictDao
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     companion object {
         const val CACHE_NAME = "SYS_DICT__HASH"

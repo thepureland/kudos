@@ -1,6 +1,6 @@
 package io.kudos.ms.auth.core.service.impl
 
-import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
+import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.auth.core.dao.AuthGroupRoleDao
 import io.kudos.ms.auth.core.model.po.AuthGroupRole
@@ -17,11 +17,14 @@ import org.springframework.transaction.annotation.Transactional
  * @since 1.0.0
  */
 @Service
-open class AuthGroupRoleService : BaseCrudService<String, AuthGroupRole, AuthGroupRoleDao>(),
+@Transactional
+open class AuthGroupRoleService(
+    dao: AuthGroupRoleDao
+) : BaseCrudService<String, AuthGroupRole, AuthGroupRoleDao>(dao),
     IAuthGroupRoleService {
 
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     override fun getRoleIdsByGroupId(groupId: String): Set<String> {
         return dao.searchRoleIdsByGroupId(groupId)

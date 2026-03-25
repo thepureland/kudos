@@ -7,7 +7,7 @@ import io.kudos.base.enums.ienums.IDictEnum
  */
 enum class LogParamTypeEnum(
     override val code: String,
-    override val trans: String
+    override val displayText: String
 ) : IDictEnum {
 
     STRING("1", "字符串"),

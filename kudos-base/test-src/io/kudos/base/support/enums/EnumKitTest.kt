@@ -44,16 +44,16 @@ internal class EnumKitTest {
     fun getCodeMap() {
         val codeMap: Map<String, String?> = EnumKit.getCodeMap(enumClass)
         assertTrue(codeMap.size >= 9)
-        assertEquals(TimeUnit.YEAR.trans, codeMap["1"])
-        assertEquals(TimeUnit.MICROSECOND.trans, codeMap["9"])
+        assertEquals(TimeUnit.YEAR.displayText, codeMap["1"])
+        assertEquals(TimeUnit.MICROSECOND.displayText, codeMap["9"])
     }
 
     @Test
     fun getCodeMapStr() {
         val codeMap: Map<String, String?> = EnumKit.getCodeMap(enumClassStr)
         //		Assert.assertTrue(codeMap.size() >= 9);
-        assertEquals(TimeUnit.YEAR.trans, codeMap["1"])
-        assertEquals(TimeUnit.MICROSECOND.trans, codeMap["9"])
+        assertEquals(TimeUnit.YEAR.displayText, codeMap["1"])
+        assertEquals(TimeUnit.MICROSECOND.displayText, codeMap["9"])
         try {
             EnumKit.getCodeMap("")
             assertTrue(false)
@@ -136,7 +136,7 @@ internal class EnumKitTest {
 
         override val code: String = codeStr
 
-        override val trans: String = transStr
+        override val displayText: String = transStr
 
     }
 

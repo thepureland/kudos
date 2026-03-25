@@ -1,6 +1,6 @@
 package io.kudos.ms.auth.core.service.iservice
 
-import io.kudos.base.support.iservice.IBaseCrudService
+import io.kudos.base.support.service.iservice.IBaseCrudService
 import io.kudos.ms.auth.common.vo.role.AuthRoleCacheEntry
 import io.kudos.ms.auth.common.vo.role.response.AuthRoleRow
 import io.kudos.ms.auth.core.model.po.AuthRole

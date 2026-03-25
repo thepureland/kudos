@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.core.service.impl
 
-import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
+import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
@@ -33,7 +33,10 @@ import kotlin.reflect.KClass
  * @since 1.0.0
  */
 @Service
-open class SysTenantService : BaseCrudService<String, SysTenant, SysTenantDao>(), ISysTenantService {
+@Transactional
+open class SysTenantService(
+    dao: SysTenantDao
+) : BaseCrudService<String, SysTenant, SysTenantDao>(dao), ISysTenantService {
 
 
     private val log = LogFactory.getLog(this::class)

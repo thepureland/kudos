@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.core.service.impl
 
-import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
+import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.eq
@@ -19,10 +19,13 @@ import org.springframework.transaction.annotation.Transactional
  * @since 1.0.0
  */
 @Service
-open class SysAccessRuleService : BaseCrudService<String, SysAccessRule, SysAccessRuleDao>(), ISysAccessRuleService {
+@Transactional
+open class SysAccessRuleService(
+    dao: SysAccessRuleDao
+) : BaseCrudService<String, SysAccessRule, SysAccessRuleDao>(dao), ISysAccessRuleService {
 
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     override fun getAccessRuleByTenantAndSystem(
         systemCode: String,

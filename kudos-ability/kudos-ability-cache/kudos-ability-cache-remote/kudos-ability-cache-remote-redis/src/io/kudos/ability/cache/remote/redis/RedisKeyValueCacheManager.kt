@@ -153,6 +153,6 @@ class RedisKeyValueCacheManager(
         return redisCache.get(key) != null
     }
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
 }

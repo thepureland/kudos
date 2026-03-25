@@ -198,7 +198,7 @@ open class UserContactWayByUserIdCache : AbstractKeyValueCacheHandler<List<UserC
         return userId
     }
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
 
 }

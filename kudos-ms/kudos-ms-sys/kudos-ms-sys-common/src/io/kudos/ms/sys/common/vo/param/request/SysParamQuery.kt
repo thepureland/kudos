@@ -40,6 +40,4 @@ data class SysParamQuery (
 
     override fun isUnpagedSearchAllowed(): Boolean = true
 
-    override fun getSortableProperties() = setOf(::paramName.name)
-
 }

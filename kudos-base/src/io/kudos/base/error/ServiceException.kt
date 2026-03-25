@@ -23,7 +23,7 @@ import java.util.*
  * - errorCode + cause + log：支持控制是否记录日志
  * 
  * 错误码机制：
- * - 错误码包含错误代码和错误描述（trans）
+ * - 错误码包含错误代码和错误描述（displayText）
  * - 错误描述支持MessageFormat格式，可以使用{0}、{1}等占位符
  * - 参数通过args数组传入，自动替换占位符
  * 
@@ -35,14 +35,14 @@ import java.util.*
  * 
  * 注意事项：
  * - 继承自CustomRuntimeException，自动支持消息格式化和堆栈控制
- * - 错误码的trans字段会作为异常消息
+ * - 错误码的displayText字段会作为异常消息
  * - 参数会保存到params属性中，便于后续处理
  * 
  * @since 1.0.0
  */
 class ServiceException : CustomRuntimeException {
 
-    var errorCode: IErrorCodeEnum? = null
+    lateinit var errorCode: IErrorCodeEnum
 
     var params: Array<Any?>? = null
         private set
@@ -55,30 +55,30 @@ class ServiceException : CustomRuntimeException {
 
     constructor(cause: Throwable, message: String, log: Boolean, vararg args: Any?): super(cause, message, log, *args)
 
-    constructor(errorCode: IErrorCodeEnum) {
+    constructor(errorCode: IErrorCodeEnum, printAllStackTrace: Boolean = false) {
         this.errorCode = errorCode
-        resolveException(errorCode)
+        resolveException(errorCode, printAllStackTrace)
     }
 
-    constructor(errorCode: IErrorCodeEnum, vararg args: Any?) {
+    constructor(errorCode: IErrorCodeEnum, printAllStackTrace: Boolean = false, vararg args: Any?) {
         this.errorCode = errorCode
         this.params = Arrays.stream<Any?>(args).toArray()
-        resolveException(errorCode, *args)
+        resolveException(errorCode, printAllStackTrace, *args)
     }
 
     constructor(errorCode: IErrorCodeEnum, cause: Throwable, vararg args: Any?) {
         this.errorCode = errorCode
-        resolveCauseException(cause, errorCode.trans, args)
+        resolveCauseException(cause, errorCode.displayText, args)
     }
 
     constructor(errorCode: IErrorCodeEnum, cause: Throwable, log: Boolean, vararg args: Any?) {
         this.errorCode = errorCode
-        resolveCauseException(cause, log, errorCode.trans, args)
+        resolveCauseException(cause, log, errorCode.displayText, args)
     }
 
     constructor(errorCode: IErrorCodeEnum, ex: Throwable) {
         this.errorCode = errorCode
-        resolveCauseException(ex, errorCode.trans)
+        resolveCauseException(ex, errorCode.displayText)
     }
 
     companion object {

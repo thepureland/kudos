@@ -2,11 +2,12 @@ package io.kudos.ms.sys.core.service.impl
 
 import io.kudos.ability.cache.common.kit.HashCacheKit
 import io.kudos.ability.cache.common.kit.KeyValueCacheKit
-import io.kudos.ability.data.rdb.ktorm.service.BaseCrudService
+import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.data.json.JsonKit
 import io.kudos.base.error.ServiceException
 import io.kudos.base.logger.LogFactory
+import io.kudos.ms.sys.common.enums.cache.SysCacheErrorCodeEnum
 import io.kudos.ms.sys.common.vo.cache.SysCacheCacheEntry
 import io.kudos.ms.sys.core.cache.SysCacheHashCache
 import io.kudos.ms.sys.core.dao.SysCacheDao
@@ -26,9 +27,12 @@ import kotlin.reflect.KClass
  * @since 1.0.0
  */
 @Service
-open class SysCacheService : BaseCrudService<String, SysCache, SysCacheDao>(), ISysCacheService {
+@Transactional
+open class SysCacheService(
+    dao: SysCacheDao
+) : BaseCrudService<String, SysCache, SysCacheDao>(dao), ISysCacheService {
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     @Autowired
     private lateinit var sysCacheHashCache: SysCacheHashCache
@@ -50,7 +54,7 @@ open class SysCacheService : BaseCrudService<String, SysCache, SysCacheDao>(), I
     override fun insert(any: Any): String {
         val id = super.insert(any)
         log.debug("新增id为${id}的缓存配置。")
-        sysCacheHashCache.syncOnInsert(any, id) // 同步 Hash 缓存
+        sysCacheHashCache.syncOnInsert(any, id) // 同步缓存
         return id
     }
 
@@ -108,27 +112,32 @@ open class SysCacheService : BaseCrudService<String, SysCache, SysCacheDao>(), I
         return count
     }
 
-    /**
-     * 获取原子服务的缓存配置列表
-     *
-     * @param atomicServiceCode 原子服务编码
-     * @return 缓存记录列表
-     */
     override fun getCachesFromCache(atomicServiceCode: String): List<SysCacheCacheEntry> {
         return sysCacheHashCache.getCaches(atomicServiceCode)
     }
 
     override fun reload(id: String, key: String) {
+        require(id.isNotBlank())
+        require(key.isNotBlank())
         val cache = getCacheConfigById(id)
         val name = cache.name
         if (isKeyValueCache(cache)) {
-            KeyValueCacheKit.reload(name, key)
+            if (KeyValueCacheKit.existsKey(name, key)) {
+                KeyValueCacheKit.reload(name, key)
+            } else {
+                throw ServiceException(SysCacheErrorCodeEnum.CACHE_KEY_NOT_FOUND)
+            }
         } else {
-            HashCacheKit.reload(name, key)
+            if (HashCacheKit.existsById(name, key)) {
+                HashCacheKit.reload(name, key)
+            } else {
+                throw ServiceException(SysCacheErrorCodeEnum.CACHE_KEY_NOT_FOUND)
+            }
         }
     }
 
     override fun reloadAll(id: String) {
+        require(id.isNotBlank())
         val cache = getCacheConfigById(id)
         val name = cache.name
         if (isKeyValueCache(cache)) {
@@ -139,16 +148,27 @@ open class SysCacheService : BaseCrudService<String, SysCache, SysCacheDao>(), I
     }
 
     override fun evict(id: String, key: String) {
+        require(id.isNotBlank())
+        require(key.isNotBlank())
         val cache = getCacheConfigById(id)
         val name = cache.name
         if (isKeyValueCache(cache)) {
-            KeyValueCacheKit.evict(name, key)
+            if (KeyValueCacheKit.existsKey(name, key)) {
+                KeyValueCacheKit.evict(name, key)
+            } else {
+                throw ServiceException(SysCacheErrorCodeEnum.CACHE_KEY_NOT_FOUND)
+            }
         } else {
-            HashCacheKit.evict(name, key)
+            if (HashCacheKit.existsById(name, key)) {
+                HashCacheKit.evict(name, key)
+            } else {
+                throw ServiceException(SysCacheErrorCodeEnum.CACHE_KEY_NOT_FOUND)
+            }
         }
     }
 
     override fun evictAll(id: String) {
+        require(id.isNotBlank())
         val cache = getCacheConfigById(id)
         val name = cache.name
         if (isKeyValueCache(cache)) {
@@ -159,6 +179,8 @@ open class SysCacheService : BaseCrudService<String, SysCache, SysCacheDao>(), I
     }
 
     override fun existsKey(id: String, key: String): Boolean {
+        require(id.isNotBlank())
+        require(key.isNotBlank())
         val cache = getCacheConfigById(id)
         val name = cache.name
         return if (isKeyValueCache(cache)) {
@@ -169,19 +191,30 @@ open class SysCacheService : BaseCrudService<String, SysCache, SysCacheDao>(), I
     }
 
     override fun getValueJson(id: String, key: String): String {
+        require(id.isNotBlank())
+        require(key.isNotBlank())
         val cache = getCacheConfigById(id)
         val name = cache.name
         val value = if (isKeyValueCache(cache)) {
-            KeyValueCacheKit.getValue(name, key)
+            if (KeyValueCacheKit.existsKey(name, key)) {
+                KeyValueCacheKit.getValue(name, key)
+            } else {
+                throw ServiceException(SysCacheErrorCodeEnum.CACHE_KEY_NOT_FOUND)
+            }
         } else {
-            HashCacheKit.getValue(name, key)
+            if (HashCacheKit.existsById(name, key)) {
+                HashCacheKit.getValue(name, key)
+            } else {
+                throw ServiceException(SysCacheErrorCodeEnum.CACHE_KEY_NOT_FOUND)
+            }
         }
         return JsonKit.toJson(value)
     }
 
     /** 按 id 获取缓存配置，不存在则抛异常 */
     private fun getCacheConfigById(id: String): SysCacheCacheEntry {
-        return sysCacheHashCache.getCacheById(id) ?: throw ServiceException("缓存配置【$id】不存在！")
+        return sysCacheHashCache.getCacheById(id)
+            ?: throw ServiceException(SysCacheErrorCodeEnum.CACHE_CONFIG_NOT_FOUND)
     }
 
     private fun isKeyValueCache(cache: SysCacheCacheEntry): Boolean = !cache.hash

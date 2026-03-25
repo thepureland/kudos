@@ -21,7 +21,7 @@ import tools.jackson.databind.ObjectMapper
 @AutoConfigureAfter(LinkableCacheAutoConfiguration::class)
 open class InterServiceCacheClientAutoConfiguration : IComponentInitializer {
 
-    private val logger = LogFactory.getLog(this)
+    private val logger = LogFactory.getLog(this::class)
 
     @Bean("feignCacheHelper")
     @ConditionalOnMissingBean

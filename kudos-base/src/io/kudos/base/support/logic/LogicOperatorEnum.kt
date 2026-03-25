@@ -22,7 +22,7 @@ import java.util.*
  * 
  * 属性说明：
  * - code：操作符代码，用于序列化和传输
- * - trans：操作符的中文描述
+ * - displayText：操作符的中文描述
  * - acceptNull：是否接受null值，true表示null值也是有效的比较值
  * - stringOnly：是否只接受字符串类型，true表示只能用于字符串比较
  * 
@@ -44,7 +44,7 @@ import java.util.*
  */
 enum class LogicOperatorEnum(
     override val code: String,
-    override val trans: String,
+    override val displayText: String,
     // 值是否可接受null
     val acceptNull: Boolean = false,
     // 操作值只接收字符串类型

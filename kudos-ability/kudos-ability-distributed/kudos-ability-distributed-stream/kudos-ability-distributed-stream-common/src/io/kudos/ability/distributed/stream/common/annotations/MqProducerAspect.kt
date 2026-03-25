@@ -22,7 +22,7 @@ open class MqProducerAspect {
     @Resource
     private lateinit var producerHelper: StreamProducerHelper
 
-    private val log = LogFactory.getLog(this)
+    private val log = LogFactory.getLog(this::class)
 
     @Pointcut("@annotation(io.kudos.ability.distributed.stream.common.annotations.MqProducer)")
     open fun producerPointcut() {
