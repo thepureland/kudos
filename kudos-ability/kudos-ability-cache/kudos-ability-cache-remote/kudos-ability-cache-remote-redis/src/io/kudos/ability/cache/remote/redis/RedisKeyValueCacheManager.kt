@@ -9,7 +9,6 @@ import org.springframework.data.redis.cache.RedisCache
 import org.springframework.data.redis.cache.RedisCacheConfiguration
 import org.springframework.data.redis.cache.RedisCacheManager
 import org.springframework.data.redis.cache.RedisCacheWriter
-import org.springframework.data.redis.connection.RedisConnectionFactory
 import java.nio.charset.StandardCharsets
 import java.time.Duration
 import java.util.*
@@ -41,8 +40,7 @@ import java.util.*
  */
 class RedisKeyValueCacheManager(
     private val cacheWriter: RedisCacheWriter,
-    private val defaultCacheConfiguration: RedisCacheConfiguration,
-    private val connectionFactory: RedisConnectionFactory?
+    private val defaultCacheConfiguration: RedisCacheConfiguration
 ) : RedisCacheManager(
     cacheWriter,
     defaultCacheConfiguration
@@ -149,26 +147,10 @@ class RedisKeyValueCacheManager(
     }
 
     override fun existsKey(cacheName: String, key: Any): Boolean {
-        if (connectionFactory == null) return false
         val redisCache = getCache(cacheName) as? RedisCache ?: return false
-        val keyBytes = createRedisCacheKeyBytes(redisCache, key) ?: return false
-        return connectionFactory.connection.use { conn ->
-            conn.keyCommands().exists(keyBytes)
-        }
-    }
-
-    /**
-     * 通过反射调用 RedisCache.createAndConvertCacheKey 得到与 Redis 中一致的 key 字节，用于 EXISTS 等命令。
-     */
-    private fun createRedisCacheKeyBytes(redisCache: RedisCache, key: Any): ByteArray? {
-        return try {
-            val method = RedisCache::class.java.getDeclaredMethod("createAndConvertCacheKey", Any::class.java)
-            method.isAccessible = true
-            method.invoke(redisCache, key) as? ByteArray
-        } catch (e: Exception) {
-            log.warn("反射调用 RedisCache.createAndConvertCacheKey 失败", e)
-            null
-        }
+        // 使用公开 Cache API，避免反射调用包可见的 createAndConvertCacheKey（在模块系统下可能失败）。
+        // 当前配置 disableCachingNullValues()，无“存 null”语义冲突；key 存在即返回非 null 的 ValueWrapper。
+        return redisCache.get(key) != null
     }
 
     private val log = LogFactory.getLog(this::class)

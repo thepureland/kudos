@@ -33,6 +33,11 @@ class CaffeineHashCache : IHashCache, IHashCacheSync {
     private fun setKey(property: String, value: String) = "set:$property:$value"
     private fun zsetKey(property: String) = "zset:$property"
 
+    /**
+     * 主键在 Hash field / 索引中的规范形式，避免 CHAR 等类型尾部空格与调用方传入的 trim 后主键不一致导致无法命中。
+     */
+    private fun normalizePkField(id: Any?): String = (id ?: "").toString().trim()
+
     private fun toDouble(value: Any): Double = when (value) {
         is Number -> value.toDouble()
         is String -> value.toDoubleOrNull() ?: Double.MIN_VALUE
@@ -66,7 +71,7 @@ class CaffeineHashCache : IHashCache, IHashCacheSync {
     }
 
     override fun evictLocal(cacheName: String, id: Any) {
-        val idStr = id.toString()
+        val idStr = normalizePkField(id)
         val map = mainData[cacheName] ?: return
         map.remove(idStr) ?: return
         setIdx(cacheName).entries.forEach { (_, ids) -> ids.remove(idStr) }
@@ -75,11 +80,11 @@ class CaffeineHashCache : IHashCache, IHashCacheSync {
 
     override fun <PK, E : IIdEntity<PK>> getById(cacheName: String, id: PK, entityClass: KClass<E>): E? {
         @Suppress("UNCHECKED_CAST")
-        return main(cacheName)[id.toString()] as? E
+        return main(cacheName)[normalizePkField(id)] as? E
     }
 
     override fun existsById(cacheName: String, id: Any): Boolean =
-        main(cacheName).containsKey(id.toString())
+        main(cacheName).containsKey(normalizePkField(id))
 
     override fun <PK, E : IIdEntity<PK>> save(
         cacheName: String,
@@ -88,7 +93,7 @@ class CaffeineHashCache : IHashCache, IHashCacheSync {
         sortableProperties: Set<String>
     ) {
         val id = entity.id ?: throw IllegalArgumentException("entity.id must not be null")
-        val idStr = id.toString()
+        val idStr = normalizePkField(id)
         main(cacheName)[idStr] = entity
         filterableProperties.forEach { prop ->
             getPropertyValue(entity, prop)?.let { value ->
@@ -118,7 +123,7 @@ class CaffeineHashCache : IHashCache, IHashCacheSync {
         filterableProperties: Set<String>,
         sortableProperties: Set<String>
     ) {
-        val idStr = id.toString()
+        val idStr = normalizePkField(id)
         val entity = main(cacheName).remove(idStr) ?: return
         filterableProperties.forEach { prop ->
             getPropertyValue(entity, prop)?.let { value ->
@@ -135,7 +140,7 @@ class CaffeineHashCache : IHashCache, IHashCacheSync {
         val map = main(cacheName)
         return ids.mapNotNull {
             @Suppress("UNCHECKED_CAST")
-            map[it.toString()] as? E
+            map[normalizePkField(it)] as? E
         }
     }
 
