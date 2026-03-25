@@ -86,7 +86,7 @@ open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentIni
             .serializeValuesWith(valueSerializationPair)
         val connectionFactory = redisTemplate.connectionFactory!!
         val redisCacheWriter = RedisCacheWriter.nonLockingRedisCacheWriter(connectionFactory)
-        return RedisKeyValueCacheManager(redisCacheWriter, defaultRedisCacheConfiguration, redisTemplate.connectionFactory)
+        return RedisKeyValueCacheManager(redisCacheWriter, defaultRedisCacheConfiguration)
     }
 
     @Bean

@@ -9,8 +9,8 @@ kotlinxSerializationJSON = "1.10.0"
 kotlinxCoroutines = "1.10.2"
 ktor = "3.3.0"
 ktorm = "4.1.1"
-spring-boot = "4.0.1"
-spring-cloud = "2025.1.0"
+spring-boot = "4.0.4"
+spring-cloud = "2025.1.1"
 jackson-module-kotlin = "3.1.0"
 alibaba-cloud = "2025.1.0.0"
 h2 = "2.4.240"
@@ -37,7 +37,7 @@ apache-xmlgraphics-batik = "1.19"
 github-classgraph = "4.8.184"
 
 # kudos-test
-testcontainers = "2.0.3"
+testcontainers = "2.0.4"
 
 # kudos-tools
 freemarker = "2.3.34"

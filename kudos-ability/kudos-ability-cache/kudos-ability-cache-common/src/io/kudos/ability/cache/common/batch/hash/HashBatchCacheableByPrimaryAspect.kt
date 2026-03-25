@@ -62,7 +62,11 @@ class HashBatchCacheableByPrimaryAspect {
             @Suppress("UNCHECKED_CAST")
             val entityClass = ann.entityClass as KClass<out IIdEntity<Any?>>
             val list = hashCache.findByIds(cacheName, keys, entityClass)
-            list.forEach { e -> e.id?.let { id -> cachedData[id.toString()] = e } }
+            list.forEach { e ->
+                val tid = e.id?.toString()?.trim() ?: return@forEach
+                val slot = cachedData.keys.find { it.toString().trim() == tid } ?: tid
+                cachedData[slot] = e
+            }
         }
 
         val uncachedKeys = cachedData.filterValues { it == null }.keys.toList()

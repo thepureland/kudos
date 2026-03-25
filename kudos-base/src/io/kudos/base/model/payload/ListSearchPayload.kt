@@ -40,4 +40,12 @@ open class ListSearchPayload : ISearchPayload {
     /** 排序规则 */
     open var orders: List<Order>? = null
 
+    /**
+     * 值为 null 时仍作为查询条件的属性名（例如列 IS NULL）。
+     * 见 [ISearchPayload.getNullProperties]。
+     */
+    open var nullProperties: List<String>? = null
+
+    override fun getNullProperties(): List<String>? = nullProperties
+
 }
