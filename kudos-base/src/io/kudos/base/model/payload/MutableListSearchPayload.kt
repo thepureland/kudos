@@ -34,9 +34,9 @@ class MutableListSearchPayload : ListSearchPayload() {
     override fun getReturnEntityClass(): KClass<*>? = returnEntityClass
     fun setReturnEntityClass(value: KClass<*>?) { returnEntityClass = value }
 
-    fun setNullProperties(value: List<String>?) {
-        nullProperties = value
-    }
+    private var nullProperties: List<String>? = null
+    override fun getNullProperties(): List<String>? = nullProperties
+    fun setNullProperties(value: List<String>?) { nullProperties = value }
 
     private var operators: Map<KProperty0<*>, OperatorEnum>? = null
     override fun getOperators(): Map<KProperty0<*>, OperatorEnum>? = operators
