@@ -5,6 +5,7 @@ import io.kudos.ability.web.springmvc.filter.WebContextInitFilter
 import io.kudos.ability.web.springmvc.handler.BadRequestExceptionHandler
 import io.kudos.ability.web.springmvc.handler.GlobalExceptionHandler
 import io.kudos.ability.web.springmvc.handler.GlobalResponseBodyHandler
+import io.kudos.ability.web.springmvc.handler.MutableListSearchPayloadGuardAdvice
 import io.kudos.ability.web.springmvc.interceptor.CorsHandlerInterceptor
 import io.kudos.context.config.YamlPropertySourceFactory
 import io.kudos.context.init.IComponentInitializer
@@ -97,6 +98,11 @@ open class SpringMvcAutoConfiguration : WebMvcConfigurer, IComponentInitializer 
     @ConditionalOnMissingBean
     open fun globalResponseBodyHandler(objectMapper: ObjectMapper): GlobalResponseBodyHandler =
         GlobalResponseBodyHandler(objectMapper)
+
+    @Bean
+    @ConditionalOnMissingBean
+    open fun mutableListSearchPayloadGuardAdvice(): MutableListSearchPayloadGuardAdvice =
+        MutableListSearchPayloadGuardAdvice()
 
     override fun addInterceptors(registry: InterceptorRegistry) {
         registry.addInterceptor(corsHandlerInterceptor()).addPathPatterns("/**")
