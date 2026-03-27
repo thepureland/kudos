@@ -99,7 +99,7 @@ class GlobalExceptionHandler {
      */
     @ExceptionHandler(Exception::class)
     fun handleException(ex: Exception): ApiResponse<Any> {
-        log.error("Unhandled exception", ex)
+        log.error(ex, "Unhandled exception")
         return ApiResponse.fail(CommonErrorCodeEnum.SYSTEM_ERROR.code, CommonErrorCodeEnum.SYSTEM_ERROR.displayText)
     }
 
