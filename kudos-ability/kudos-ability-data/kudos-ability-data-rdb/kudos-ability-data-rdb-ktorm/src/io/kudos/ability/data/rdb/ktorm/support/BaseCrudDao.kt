@@ -318,12 +318,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
     //region Delete
 
     override fun deleteById(id: PK): Boolean {
-        val count = when (id) {
-            is String -> entitySequence().removeIf { (table() as StringIdTable<*>).id eq id }
-            is Int -> entitySequence().removeIf { (table() as IntIdTable<*>).id eq id }
-            is Long -> entitySequence().removeIf { (table() as LongIdTable<*>).id eq id }
-            else -> error("不支持的主键类型【${id::class}】")
-        }
+        val count = entitySequence().removeIf { getPkColumn() eq id }
         return count == 1
     }
 
