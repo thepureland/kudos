@@ -49,10 +49,18 @@ data class SysAccessRuleIpQuery (
     /** 规则类型字典代码 */
     val ruleTypeDictCode: String? = null,
 
+    /**
+     * 值为 null 但仍需作为查询条件的属性名（例如配合 [tenantId] 为 null 时表示父规则租户 IS NULL）。
+     * 语义同 [io.kudos.base.model.payload.ISearchPayload.getNullProperties]。
+     */
+    val explicitNullProperties: List<String>? = null,
+
 ) : ListSearchPayload() {
 
     override fun getReturnEntityClass() = SysAccessRuleIpRow::class
 
     override fun isUnpagedSearchAllowed(): Boolean = true
+
+    override fun getNullProperties(): List<String>? = explicitNullProperties
 
 }
