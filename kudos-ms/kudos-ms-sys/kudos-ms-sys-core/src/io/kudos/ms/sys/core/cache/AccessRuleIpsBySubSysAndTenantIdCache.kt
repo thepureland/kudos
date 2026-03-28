@@ -107,12 +107,12 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
             parentRuleActive = true,
             systemCode = systemCode,
             tenantId = tenantId,
-        ).apply {
-            TODO()
-//            if (tenantId == null) {
-//                nullProperties = listOf(SysAccessRule::tenantId.name)
-//            }
-        }
+            explicitNullProperties = if (tenantId == null) {
+                listOf(SysAccessRule::tenantId.name)
+            } else {
+                null
+            },
+        )
 
         val results = sysAccessRuleIpDao.pagingSearch(searchPayload)
         return if (results.isEmpty()) {
