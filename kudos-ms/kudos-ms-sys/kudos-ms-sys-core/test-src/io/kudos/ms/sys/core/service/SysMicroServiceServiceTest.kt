@@ -1,6 +1,7 @@
 package io.kudos.ms.sys.core.service
 
 import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceCacheEntry
+import io.kudos.ms.sys.core.cache.SysMicroServiceHashCache
 import io.kudos.ms.sys.core.model.po.SysMicroService
 import io.kudos.ms.sys.core.service.iservice.ISysMicroServiceService
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
@@ -27,6 +28,9 @@ class SysMicroServiceServiceTest : RdbAndRedisCacheTestBase() {
 
     @Resource
     private lateinit var sysMicroServiceService: ISysMicroServiceService
+
+    @Resource
+    private lateinit var sysMicroServiceHashCache: SysMicroServiceHashCache
 
     /** 种子数据中的微服务编码（物理主键列为 code，无 id 列；实体 id 与 code 等价） */
     private val seededMicroServiceCode = "svc-microservice-test-1_2407"
@@ -79,6 +83,8 @@ class SysMicroServiceServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun getAtomicServicesByParentCodeFromCache() {
+        // 测试 SQL 在库中 merge 了新行，但 Hash 全量列表在缓存非空时不会自动重载，需刷新后再断言
+        sysMicroServiceHashCache.reloadAll(clear = true)
         val microServiceCode = seededMicroServiceCode
         val atomicServices = sysMicroServiceService.getAtomicServicesByParentCodeFromCache(microServiceCode)
         assertTrue(atomicServices.any { it.code == "svc-as-ms-test-1_2407" })
