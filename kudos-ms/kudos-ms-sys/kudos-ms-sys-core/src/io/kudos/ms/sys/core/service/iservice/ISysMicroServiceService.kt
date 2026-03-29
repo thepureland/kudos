@@ -3,7 +3,6 @@ package io.kudos.ms.sys.core.service.iservice
 import io.kudos.base.support.service.iservice.IBaseCrudService
 import io.kudos.base.tree.IdAndNameTreeNode
 import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceCacheEntry
-import io.kudos.ms.sys.common.vo.microservice.response.SysMicroServiceRow
 import io.kudos.ms.sys.core.model.po.SysMicroService
 
 
@@ -11,71 +10,69 @@ import io.kudos.ms.sys.core.model.po.SysMicroService
  * 微服务业务接口
  *
  * @author K
+ * @author AI: Cursor
  * @since 1.0.0
  */
 interface ISysMicroServiceService : IBaseCrudService<String, SysMicroService> {
 
-
     /**
-     * 返回所有启用的微服务(包括原子服务，原子服务本质上也是微服务)
+     * 按微服务编码加载微服务信息，并缓存结果
      *
-     * @return List<微服务(包括原子服务)缓存对象>
-     * @author K
-     * @since 1.0.0
+     * @param code 微服务编码（主键），非空
+     * @return 缓存项，找不到返回 null
      */
-    fun getAllActiveMicroServices(): List<SysMicroServiceCacheEntry>
+    fun getMicroServiceFromCache(code: String): SysMicroServiceCacheEntry?
 
     /**
-     * 返回所有启用的微服务,不包括原子服务
+     * 从缓存获取全部微服务（含原子服务、含未启用）
      *
-     * @return List<微服务(不包括原子服务)缓存对象>，不存在返回空列表
-     * @author K
-     * @since 1.0.0
+     * @return 微服务缓存项列表
      */
-    fun getAllActiveMicroServiceExcludeAtomicService(): List<SysMicroServiceCacheEntry>
+    fun getAllMicroServicesFromCache(): List<SysMicroServiceCacheEntry>
 
     /**
-     * 返回所有启用的原子服务(atomicService为true的微服务)
+     * 从缓存获取非原子微服务列表，即 `atomicService == false`（含未启用）
      *
-     * @return List<原子服务(微服务)缓存对象>, 不存在返回空列表
+     * @return 微服务缓存项列表
      */
-    fun getAllActiveAtomicServices(): List<SysMicroServiceCacheEntry>
+    fun getMicroServicesExcludeAtomicFromCache(): List<SysMicroServiceCacheEntry>
 
     /**
-     * 返回整棵微服务树
+     * 从缓存获取全部原子微服务（`atomicService == true`，含未启用）
      *
-     * @return List<IdAndNameTreeNode<String>>
+     * @return 微服务缓存项列表
+     */
+    fun getAtomicServicesFromCache(): List<SysMicroServiceCacheEntry>
+
+    /**
+     * 从缓存获取指定父编码下的微服务列表（按 parentCode 匹配，含未启用）
+     *
+     * @param parentCode 父微服务编码
+     * @return 子级微服务缓存项列表
+     */
+    fun getSubMicroServicesFromCache(parentCode: String): List<SysMicroServiceCacheEntry>
+
+    /**
+     * 从缓存获取指定父编码下的原子微服务列表（`parentCode` 匹配且 `atomicService == true`，含未启用）
+     *
+     * @param parentCode 父微服务编码
+     * @return 原子微服务缓存项列表
+     */
+    fun getAtomicServicesByParentCodeFromCache(parentCode: String): List<SysMicroServiceCacheEntry>
+
+    /**
+     * 返回整棵微服务树（含层级关系）。
+     *
+     * @return 微服务树节点列表（根节点及其 children）
      */
     fun getFullMicroServiceTree(): List<IdAndNameTreeNode<String>>
 
     /**
-     * 返回指定编码的微/原子服务，可能是未启用的
-     *
-     * @param code 微/原子服务编码
-     * @return 微/原子服务缓存对象，不存在返回null
-     * @author K
-     * @since 1.0.0
-     */
-    fun getMicroServiceByCode(code: String): SysMicroServiceCacheEntry?
-
-    /**
-     * 返回指定父编码下的所有启用的原子服务
-     *
-     * @param parentCode 父编码（微服务编码）
-     * @return List<SysMicroServiceRow>，不存在返回空列表
-     * @author K
-     * @since 1.0.0
-     */
-    fun getAllActiveAtomicServiceByParentCode(parentCode: String): List<SysMicroServiceRow>
-
-    /**
      * 更新启用状态，并同步缓存
      *
-     * @param code 微服务编码
+     * @param code 微服务编码（主键）
      * @param active 是否启用
      * @return 是否更新成功
-     * @author K
-     * @since 1.0.0
      */
     fun updateActive(code: String, active: Boolean): Boolean
 
