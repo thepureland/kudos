@@ -1,5 +1,6 @@
 package io.kudos.ms.sys.core.service
 
+import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceCacheEntry
 import io.kudos.ms.sys.core.model.po.SysMicroService
 import io.kudos.ms.sys.core.service.iservice.ISysMicroServiceService
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
@@ -39,6 +40,15 @@ class SysMicroServiceServiceTest : RdbAndRedisCacheTestBase() {
     }
 
     @Test
+    fun get_withCacheEntryReturnType_delegatesToCache() {
+        val fromGet = sysMicroServiceService.get(seededMicroServiceCode, SysMicroServiceCacheEntry::class)
+        val fromCache = sysMicroServiceService.getMicroServiceFromCache(seededMicroServiceCode)
+        assertNotNull(fromGet)
+        assertNotNull(fromCache)
+        assertEquals(fromCache.code, fromGet.code)
+    }
+
+    @Test
     fun deleteById_usesCodeColumn_notPhysicalIdColumn() {
         val unique = UUID.randomUUID().toString().replace("-", "").take(12)
         val code = "tc_del_$unique"
@@ -59,19 +69,18 @@ class SysMicroServiceServiceTest : RdbAndRedisCacheTestBase() {
     }
 
     @Test
-    fun getMicroServiceByCode_and_updateActive() {
+    fun getMicroServiceFromCache_and_updateActive() {
         val code = seededMicroServiceCode
-        val cacheItem = sysMicroServiceService.getMicroServiceByCode(code)
+        val cacheItem = sysMicroServiceService.getMicroServiceFromCache(code)
         assertNotNull(cacheItem)
         assertTrue(sysMicroServiceService.updateActive(code, false))
         assertTrue(sysMicroServiceService.updateActive(code, true))
     }
 
     @Test
-    fun getAtomicServicesByMicroServiceCode() {
+    fun getAtomicServicesByParentCodeFromCache() {
         val microServiceCode = seededMicroServiceCode
-        val atomicServices = sysMicroServiceService.getAllActiveAtomicServiceByParentCode(microServiceCode)
+        val atomicServices = sysMicroServiceService.getAtomicServicesByParentCodeFromCache(microServiceCode)
         assertTrue(atomicServices.any { it.code == "svc-as-ms-test-1_2407" })
     }
 }
-

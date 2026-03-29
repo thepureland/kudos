@@ -143,6 +143,16 @@ open class SysMicroServiceHashCache : AbstractHashCacheHandler<SysMicroServiceCa
         hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
     }
 
+    /**
+     * 新增微服务后同步（重载，接收业务对象与 code）。行为同 [syncOnInsert]。
+     *
+     * @param any 业务对象，仅用于重载区分
+     * @param code 微服务编码（主键）
+     */
+    open fun syncOnInsert(any: Any, code: String) {
+        syncOnInsert(code)
+    }
+
     /** 更新微服务后同步：从库重新加载并写入缓存。 */
     open fun syncOnUpdate(code: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
@@ -150,6 +160,16 @@ open class SysMicroServiceHashCache : AbstractHashCacheHandler<SysMicroServiceCa
         if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
             hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
         }
+    }
+
+    /**
+     * 更新微服务后同步（重载，带业务对象）。行为同 [syncOnUpdate]。
+     *
+     * @param any 业务对象
+     * @param code 微服务编码（主键）
+     */
+    open fun syncOnUpdate(any: Any, code: String) {
+        syncOnUpdate(code)
     }
 
     /** 删除微服务后同步：从缓存中移除该 code。 */
