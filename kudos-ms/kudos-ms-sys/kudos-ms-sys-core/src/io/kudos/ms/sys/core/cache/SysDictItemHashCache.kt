@@ -94,7 +94,7 @@ open class SysDictItemHashCache : AbstractHashCacheHandler<SysDictItemCacheEntry
     open fun getDictItemsByIds(ids: Set<String>): Map<String, SysDictItemCacheEntry> {
         if (ids.isEmpty()) return emptyMap()
         val list = vSysDictItemDao.getByIdsAs<SysDictItemCacheEntry>(ids).map { it }
-        val byId = list.associateBy { it.id.toString().trim() }
+        val byId = list.associateBy { it.id.trim() }
         return ids.mapNotNull { id ->
             val key = id.trim()
             byId[key]?.let { key to it }

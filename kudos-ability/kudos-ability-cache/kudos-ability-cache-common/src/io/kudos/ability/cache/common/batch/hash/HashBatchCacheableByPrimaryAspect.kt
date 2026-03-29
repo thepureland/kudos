@@ -64,7 +64,7 @@ class HashBatchCacheableByPrimaryAspect {
             val list = hashCache.findByIds(cacheName, keys, entityClass)
             list.forEach { e ->
                 val tid = e.id?.toString()?.trim() ?: return@forEach
-                val slot = cachedData.keys.find { it.toString().trim() == tid } ?: tid
+                val slot = cachedData.keys.find { it.trim() == tid } ?: tid
                 cachedData[slot] = e
             }
         }

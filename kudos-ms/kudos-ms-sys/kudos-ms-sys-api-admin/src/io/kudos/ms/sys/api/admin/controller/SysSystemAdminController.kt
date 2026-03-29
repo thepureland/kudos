@@ -32,7 +32,17 @@ class SysSystemAdminController:
      */
     @GetMapping("/getAllActiveSubSystemCodes")
     fun getAllActiveSubSystemCodes(): List<String> {
-        return service.getAllActiveSystems().filter { it.subSystem }.map { it.code }
+        return service.getAllSystemsFromCache().filter { it.subSystem && it.active }.map { it.code }
+    }
+
+    /**
+     * 返回所有启用的系统（不含子系统）编码
+     *
+     * @return List<系统编码>
+     */
+    @GetMapping("/getAllActiveSystemCodes")
+    fun getAllActiveSystemCodes(): List<String> {
+        return service.getSystemsExcludeSubSystemFromCache().filter { it.active }.map { it.code }
     }
 
     /**
