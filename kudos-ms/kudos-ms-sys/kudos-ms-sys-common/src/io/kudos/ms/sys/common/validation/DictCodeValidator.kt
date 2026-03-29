@@ -29,7 +29,7 @@ class DictCodeValidator : ConstraintValidator<DictItemCode, CharSequence?> {
             return true
         }
         val dictItems = dictApi.getActiveDictItems(dictItemCode.dictType, dictItemCode.atomicServiceCode)
-        val itemCodes = dictItems.map { it.itemCode!! }
+        val itemCodes = dictItems.map { it.itemCode }
         return itemCodes.contains(value)
     }
 

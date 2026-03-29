@@ -3,12 +3,9 @@ package io.kudos.ms.sys.core.service.impl
 import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.query.Criteria
-import io.kudos.base.query.eq
 import io.kudos.base.tree.IdAndNameTreeNode
 import io.kudos.base.tree.ListToTreeConverter
 import io.kudos.ms.sys.common.vo.system.SysSystemCacheEntry
-import io.kudos.ms.sys.common.vo.system.response.SysSystemRow
 import io.kudos.ms.sys.core.cache.SysSystemHashCache
 import io.kudos.ms.sys.core.dao.SysSystemDao
 import io.kudos.ms.sys.core.model.po.SysSystem
@@ -16,12 +13,14 @@ import io.kudos.ms.sys.core.service.iservice.ISysSystemService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import kotlin.reflect.KClass
 
 
 /**
  * 系统业务
  *
  * @author K
+ * @author AI: Cursor
  * @since 1.0.0
  */
 @Service
@@ -30,26 +29,36 @@ open class SysSystemService(
     dao: SysSystemDao
 ) : BaseCrudService<String, SysSystem, SysSystemDao>(dao), ISysSystemService {
 
-
     private val log = LogFactory.getLog(this::class)
 
     @Autowired
     private lateinit var sysSystemHashCache: SysSystemHashCache
 
-    override fun getSystemByCode(code: String): SysSystemCacheEntry? {
+    override fun <R : Any> get(id: String, returnType: KClass<R>): R? {
+        return if (returnType == SysSystemCacheEntry::class) {
+            @Suppress("UNCHECKED_CAST")
+            sysSystemHashCache.getSystemByCode(id) as R?
+        } else {
+            super.get(id, returnType)
+        }
+    }
+
+    override fun getSystemFromCache(code: String): SysSystemCacheEntry? {
         return sysSystemHashCache.getSystemByCode(code)
     }
 
     override fun getFullSystemTree(): List<IdAndNameTreeNode<String>> {
-        val cacheEntries = sysSystemHashCache.getAllSystems()
+        val cacheEntries = getAllSystemsFromCache()
         val nodes = cacheEntries.map { IdAndNameTreeNode(it.code, it.name, it.parentCode) }
         return ListToTreeConverter.convert(nodes)
     }
 
-    override fun getAllActiveSystems(): List<SysSystemRow> {
-        val criteria = Criteria(SysSystem::active eq true)
-        // 必须传入 SysSystemRow::class：写成 search<SysSystemRow>(criteria) 时 returnItemClass 仍为默认 null，会走 PO 查询并强转导致 ClassCastException
-        return dao.search(criteria, SysSystemRow::class)
+    override fun getAllSystemsFromCache(): List<SysSystemCacheEntry> {
+        return sysSystemHashCache.getAllSystems()
+    }
+
+    override fun getSystemsExcludeSubSystemFromCache(): List<SysSystemCacheEntry> {
+        return sysSystemHashCache.getSystemsByType(false)
     }
 
     @Transactional
@@ -61,26 +70,23 @@ open class SysSystemService(
         val success = dao.update(system)
         if (success) {
             log.debug("更新编码为${code}的系统的启用状态为${active}。")
-            sysSystemHashCache.syncOnUpdate(code)
+            sysSystemHashCache.syncOnUpdate(system, code)
         } else {
             log.error("更新编码为${code}的系统的启用状态为${active}失败！")
         }
         return success
     }
 
-    override fun getSubSystemsBySystemCode(systemCode: String): List<SysSystemRow> {
-        val criteria = Criteria.and(
-            SysSystem::active eq true,
-            SysSystem::parentCode eq systemCode
-        )
-        return dao.search(criteria, SysSystemRow::class)
+    override fun getSubSystemsFromCache(systemCode: String): List<SysSystemCacheEntry> {
+        return sysSystemHashCache.getAllSystems()
+            .filter { it.parentCode == systemCode }
     }
 
     @Transactional
     override fun insert(any: Any): String {
         val code = super.insert(any)
         log.debug("新增编码为${code}的系统。")
-        sysSystemHashCache.syncOnInsert(code)
+        sysSystemHashCache.syncOnInsert(any, code) // 同步缓存
         return code
     }
 
@@ -90,7 +96,7 @@ open class SysSystemService(
         val code = BeanKit.getProperty(any, SysSystem::code.name) as String
         if (success) {
             log.debug("更新编码为${code}的系统。")
-            sysSystemHashCache.syncOnUpdate(code)
+            sysSystemHashCache.syncOnUpdate(any, code)
         } else {
             log.error("更新编码为${code}的系统失败！")
         }
@@ -99,9 +105,14 @@ open class SysSystemService(
 
     @Transactional
     override fun deleteById(id: String): Boolean {
+        val sysSystem = dao.get(id)
+        if (sysSystem == null) {
+            log.warn("删除编码为${id}的系统时，发现其已不存在！")
+            return false
+        }
         val success = super.deleteById(id)
         if (success) {
-            log.debug("删除编码为${id}的系统。")
+            log.debug("删除编码为${id}的系统成功！")
             sysSystemHashCache.syncOnDelete(id)
         } else {
             log.error("删除编码为${id}的系统失败！")

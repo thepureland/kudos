@@ -7,6 +7,7 @@ import jakarta.annotation.Resource
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
@@ -25,21 +26,31 @@ class SysSystemServiceTest : RdbAndRedisCacheTestBase() {
     private lateinit var sysSystemService: ISysSystemService
 
     @Test
-    fun getSystemByCode_and_getAllActiveSystems() {
+    fun getSystemFromCache_and_getAllSystemsFromCache() {
         val code = "svc-system-test-1_6368"
-        val cacheItem = sysSystemService.getSystemByCode(code)
+        val cacheItem = sysSystemService.getSystemFromCache(code)
         assertNotNull(cacheItem)
         assertEquals(code, cacheItem.code)
 
-        val activeSystems = sysSystemService.getAllActiveSystems()
-        assertTrue(activeSystems.any { it.code == code })
+        val allSystems = sysSystemService.getAllSystemsFromCache()
+        assertTrue(allSystems.any { it.code == code })
     }
 
     @Test
-    fun getSubSystemsBySystemCode() {
+    fun getSubSystemsFromCache() {
         val systemCode = "svc-system-test-1_6368"
-        val subSystems = sysSystemService.getSubSystemsBySystemCode(systemCode)
+        val subSystems = sysSystemService.getSubSystemsFromCache(systemCode)
         assertTrue(subSystems.any { it.code == "svc-subsystem-test-system-1_6368" })
+    }
+
+    @Test
+    fun getSystemsExcludeSubSystemFromCache() {
+        val rootCode = "svc-system-test-1_6368"
+        val subCode = "svc-subsystem-test-system-1_6368"
+        val list = sysSystemService.getSystemsExcludeSubSystemFromCache()
+        assertTrue(list.any { it.code == rootCode })
+        assertFalse(list.any { it.code == subCode })
+        assertTrue(list.all { !it.subSystem })
     }
 
     @Test
@@ -53,4 +64,3 @@ class SysSystemServiceTest : RdbAndRedisCacheTestBase() {
         assertTrue(success2)
     }
 }
-
