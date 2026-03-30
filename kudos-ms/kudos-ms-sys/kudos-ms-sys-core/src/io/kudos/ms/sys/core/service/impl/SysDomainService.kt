@@ -17,6 +17,7 @@ import io.kudos.ms.sys.core.dao.SysDomainDao
 import io.kudos.ms.sys.core.model.po.SysDomain
 import io.kudos.ms.sys.core.service.iservice.ISysDomainService
 import jakarta.annotation.Resource
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import kotlin.reflect.KClass
@@ -37,14 +38,19 @@ open class SysDomainService(
 
     private val log = LogFactory.getLog(this::class)
 
-    @Resource
+    @Autowired
     private lateinit var domainByNameCache: DomainByNameCache
 
     @Resource
     private lateinit var tenantByIdCache: TenantByIdCache
 
     override fun <R : Any> get(id: String, returnType: KClass<R>): R? {
-        val result = super.get(id, returnType)
+        val result = if (returnType == SysDomainCacheEntry::class) {
+            @Suppress("UNCHECKED_CAST")
+            dao.get(id, SysDomainCacheEntry::class) as R?
+        } else {
+            super.get(id, returnType)
+        }
         if (result is SysDomainDetail) {
             result.tenantName = tenantByIdCache.getTenantById(result.tenantId)!!.name
         }
@@ -63,7 +69,7 @@ open class SysDomainService(
         return result
     }
 
-    override fun getDomainByName(domainName: String): SysDomainCacheEntry? {
+    override fun getDomainFromCache(domainName: String): SysDomainCacheEntry? {
         return domainByNameCache.getDomain(domainName)
     }
 
