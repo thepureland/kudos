@@ -1,7 +1,6 @@
 package io.kudos.ms.sys.core.service.iservice
 
 import io.kudos.base.support.service.iservice.IBaseCrudService
-import io.kudos.ms.sys.common.api.ISysDataSourceApi
 import io.kudos.ms.sys.common.vo.datasource.SysDataSourceCacheEntry
 import io.kudos.ms.sys.common.vo.datasource.response.SysDataSourceRow
 import io.kudos.ms.sys.core.model.po.SysDataSource
@@ -14,24 +13,29 @@ import io.kudos.ms.sys.core.model.po.SysDataSource
  * @author AI: Cursor
  * @since 1.0.0
  */
-interface ISysDataSourceService : IBaseCrudService<String, SysDataSource>, ISysDataSourceApi {
-
+interface ISysDataSourceService : IBaseCrudService<String, SysDataSource> {
 
     /**
-     * 返回指定租户、子系统、微服务的数据源，先从缓存找，找不到从数据库加载，并缓存
+     * 按主键 id 加载数据源缓存项，并缓存结果
      *
-     * @param tenantId 租户id
-     * @param subSystemCode 子系统编码
-     * @param microServiceCode 微服务编码
-     * @return List<SysDataSourceCacheEntry>
-     * @author K
-     * @since 1.0.0
+     * @param id 数据源主键，非空
+     * @return 缓存项，找不到返回 null
      */
-    fun getDataSource(
+    fun getDataSourceFromCache(id: String): SysDataSourceCacheEntry?
+
+    /**
+     * 按租户 id、子系统编码、微服务编码从缓存查询数据源列表（含未启用）
+     */
+    fun getDataSourcesFromCache(
         tenantId: String,
         subSystemCode: String,
         microServiceCode: String?
     ): List<SysDataSourceCacheEntry>
+
+    /**
+     * 按租户 id 与原子服务编码从缓存取一条数据源（内部按 tenantId + subSystem=null + microService=atomicServiceCode 查询后取首条）
+     */
+    fun getDataSourceFromCache(tenantId: String, atomicServiceCode: String?): SysDataSourceCacheEntry?
 
     /**
      * 更新启用状态，并同步缓存
@@ -39,8 +43,6 @@ interface ISysDataSourceService : IBaseCrudService<String, SysDataSource>, ISysD
      * @param id 主键
      * @param active 是否启用
      * @return 是否更新成功
-     * @author K
-     * @since 1.0.0
      */
     fun updateActive(id: String, active: Boolean): Boolean
 
@@ -49,8 +51,6 @@ interface ISysDataSourceService : IBaseCrudService<String, SysDataSource>, ISysD
      *
      * @param id 主键
      * @param newPassword 新密码
-     * @author K
-     * @since 1.0.0
      */
     fun resetPassword(id: String, newPassword: String)
 
@@ -59,8 +59,6 @@ interface ISysDataSourceService : IBaseCrudService<String, SysDataSource>, ISysD
      *
      * @param tenantId 租户id
      * @return 数据源记录列表
-     * @author AI: Cursor
-     * @since 1.0.0
      */
     fun getDataSourcesByTenantId(tenantId: String): List<SysDataSourceRow>
 
@@ -69,8 +67,6 @@ interface ISysDataSourceService : IBaseCrudService<String, SysDataSource>, ISysD
      *
      * @param subSystemCode 子系统编码
      * @return 数据源记录列表
-     * @author AI: Cursor
-     * @since 1.0.0
      */
     fun getDataSourcesBySubSystemCode(subSystemCode: String): List<SysDataSourceRow>
 
