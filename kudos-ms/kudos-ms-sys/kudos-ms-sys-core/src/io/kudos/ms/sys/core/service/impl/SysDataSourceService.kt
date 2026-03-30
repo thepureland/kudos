@@ -67,7 +67,7 @@ open class SysDataSourceService(
         val records = result.data.filterIsInstance<SysDataSourceRow>()
         if (records.isNotEmpty()) {
             val tenantIds = records.mapNotNull { it.tenantId }
-            val tenants = sysTenantApi.getTenantsBySubSystemCode(tenantIds)
+            val tenants = sysTenantApi.getTenantsFromCacheByIds(tenantIds)
             records.forEach {
                 it.tenantName = tenants[it.tenantId]?.name
             }
@@ -85,7 +85,7 @@ open class SysDataSourceService(
             if (returnType == SysDataSourceDetail::class && result != null) {
                 val detail = result as SysDataSourceDetail
                 val tenantId = detail.tenantId
-                detail.tenantName = if (tenantId.isNullOrBlank()) null else sysTenantApi.getTenant(tenantId)?.name
+                detail.tenantName = if (tenantId.isNullOrBlank()) null else sysTenantApi.getTenantFromCache(tenantId)?.name
             }
             result
         }
