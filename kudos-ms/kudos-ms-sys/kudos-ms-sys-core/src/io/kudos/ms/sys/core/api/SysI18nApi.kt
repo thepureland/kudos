@@ -27,7 +27,7 @@ open class SysI18nApi : ISysI18nApi {
         atomicServiceCode: String,
         key: String
     ): String? {
-        return sysI18nService.getI18nValue(locale, i18nTypeDictCode, namespace, atomicServiceCode, key)
+        return sysI18nService.getI18nValueFromCache(locale, i18nTypeDictCode, namespace, atomicServiceCode, key)
     }
 
 
@@ -37,7 +37,7 @@ open class SysI18nApi : ISysI18nApi {
         namespace: String,
         atomicServiceCode: String
     ): Map<String, String> {
-        return sysI18nService.getI18ns(locale, i18nTypeDictCode, namespace, atomicServiceCode)
+        return sysI18nService.getI18nsFromCache(locale, i18nTypeDictCode, namespace, atomicServiceCode)
     }
 
     override fun batchSaveOrUpdate(i18ns: List<SysI18nFormUpdate>): Int {
