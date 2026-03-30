@@ -24,26 +24,26 @@ open class SysDictApi : ISysDictApi {
         dictType: String,
         atomicServiceCode: String
     ): List<SysDictItemCacheEntry> {
-        return sysDictService.getActiveDictItems(dictType, atomicServiceCode)
+        return sysDictService.getActiveDictItemsFromCache(dictType, atomicServiceCode)
     }
 
     override fun getActiveDictItemMap(
         dictType: String,
         atomicServiceCode: String
     ): LinkedHashMap<String, String> {
-        return sysDictService.getActiveDictItemMap(dictType, atomicServiceCode)
+        return sysDictService.getActiveDictItemMapFromCache(dictType, atomicServiceCode)
     }
 
     override fun batchGetActiveDictItems(
         dictTypeAndASCodePairs: List<Pair<String, String>>
     ): Map<Pair<String, String>, List<SysDictItemCacheEntry>> {
-        return sysDictService.batchGetActiveDictItems(dictTypeAndASCodePairs)
+        return sysDictService.batchGetActiveDictItemsFromCache(dictTypeAndASCodePairs)
     }
 
     override fun batchGetActiveDictItemMap(
         dictTypeAndASCodePairs: List<Pair<String, String>>
     ): Map<Pair<String, String>, LinkedHashMap<String, String>> {
-        return sysDictService.batchGetActiveDictItemMap(dictTypeAndASCodePairs)
+        return sysDictService.batchGetActiveDictItemMapFromCache(dictTypeAndASCodePairs)
     }
 
 

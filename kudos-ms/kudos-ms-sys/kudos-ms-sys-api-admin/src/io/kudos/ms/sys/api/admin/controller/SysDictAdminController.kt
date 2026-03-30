@@ -34,7 +34,7 @@ class SysDictAdminController :
      */
     @GetMapping("/getDict")
     fun getDict(id: String): SysDictCacheEntry? {
-        return service.getFromCache(id)
+        return service.getDictFromCache(id)
     }
 
     /**
@@ -58,7 +58,7 @@ class SysDictAdminController :
      */
     @GetMapping("/getDictTypesByAtomicServiceCode")
     fun getDictTypesByAtomicServiceCode(atomicServiceCode: String, activeOnly: Boolean = true): Map<String, String> {
-        val dictTypes = service.getDictsByAtomicServiceCode(atomicServiceCode, activeOnly)
+        val dictTypes = service.getDictsFromCacheByAtomicServiceCode(atomicServiceCode, activeOnly)
         return dictTypes.associate { it.id to it.dictType }
     }
 

@@ -1,9 +1,11 @@
 package io.kudos.ms.sys.core.service.iservice
 
+import java.util.LinkedHashMap
+
 import io.kudos.base.support.service.iservice.IBaseCrudService
-import io.kudos.ms.sys.common.api.ISysDictApi
 import io.kudos.ms.sys.common.vo.dict.SysDictCacheEntry
 import io.kudos.ms.sys.common.vo.dict.response.SysDictRow
+import io.kudos.ms.sys.common.vo.dictitem.SysDictItemCacheEntry
 import io.kudos.ms.sys.core.model.po.SysDict
 
 
@@ -14,18 +16,25 @@ import io.kudos.ms.sys.core.model.po.SysDict
  * @author AI: Cursor
  * @since 1.0.0
  */
-interface ISysDictService : IBaseCrudService<String, SysDict>, ISysDictApi {
-
-
-    fun getFromCache(dictId: String): SysDictCacheEntry?
+interface ISysDictService : IBaseCrudService<String, SysDict> {
 
     /**
-     * 返回指定id的字典信息
-     *
-     * @param id 字典id
-     * @return SysDictRow，找不到返回null
-     * @author K
-     * @since 1.0.0
+     * 按字典主键从 Hash 缓存加载字典配置
+     */
+    fun getDictFromCache(dictId: String): SysDictCacheEntry?
+
+    /**
+     * 按原子服务编码从缓存取字典列表；[activeOnly] 为 true 时仅保留启用项（内存过滤）
+     */
+    fun getDictsFromCacheByAtomicServiceCode(atomicServiceCode: String, activeOnly: Boolean = true): List<SysDictCacheEntry>
+
+    /**
+     * 根据原子服务编码和字典类型直查库得到列表行
+     */
+    fun getDictByAtomicServiceAndType(atomicServiceCode: String, dictType: String): SysDictRow?
+
+    /**
+     * 根据 id 直查库得到列表行
      */
     fun getRecord(id: String): SysDictRow?
 
@@ -33,45 +42,40 @@ interface ISysDictService : IBaseCrudService<String, SysDict>, ISysDictApi {
      * 删除字典或字典项
      *
      * @param id 主键
-     * @param isDict true: 字典id，false：字典项id
-     * @return 是否删除成功
-     * @author K
-     * @since 1.0.0
+     * @param isDict true: 字典 id，false：字典项 id
      */
     fun delete(id: String, isDict: Boolean): Boolean
 
     /**
-     * 获取模块的所有字典
-     *
-     * @param atomicServiceCode 原子服务编码
-     * @param activeOnly 仅启用，为null或false将包含未启用的
-     * @return List<SysDictCacheEntry>
-     * @author AI: Cursor
-     * @since 1.0.0
-     */
-    fun getDictsByAtomicServiceCode(atomicServiceCode: String, activeOnly: Boolean = true): List<SysDictCacheEntry>
-
-    /**
-     * 根据原子服务编码和字典类型获取字典
-     *
-     * @param atomicServiceCode 原子服务编码
-     * @param dictType 字典类型
-     * @return 字典记录，找不到返回null
-     * @author AI: Cursor
-     * @since 1.0.0
-     */
-    fun getDictByAtomicServiceAndType(atomicServiceCode: String, dictType: String): SysDictRow?
-
-    /**
      * 更新启用状态，并同步缓存
-     *
-     * @param id 字典id
-     * @param active 是否启用
-     * @return 是否更新成功
-     * @author AI: Cursor
-     * @since 1.0.0
      */
     fun updateActive(id: String, active: Boolean): Boolean
 
+    /**
+     * 根据字典类型和原子服务编码取启用字典项（经字典项缓存）
+     */
+    fun getActiveDictItemsFromCache(dictType: String, atomicServiceCode: String): List<SysDictItemCacheEntry>
+
+    /**
+     * 根据字典类型和原子服务编码取启用字典项 code→name 映射
+     */
+    fun getActiveDictItemMapFromCache(
+        dictType: String,
+        atomicServiceCode: String
+    ): LinkedHashMap<String, String>
+
+    /**
+     * 批量取启用字典项
+     */
+    fun batchGetActiveDictItemsFromCache(
+        dictTypeAndASCodePairs: List<Pair<String, String>>
+    ): Map<Pair<String, String>, List<SysDictItemCacheEntry>>
+
+    /**
+     * 批量取启用字典项 code→name 映射
+     */
+    fun batchGetActiveDictItemMapFromCache(
+        dictTypeAndASCodePairs: List<Pair<String, String>>
+    ): Map<Pair<String, String>, LinkedHashMap<String, String>>
 
 }

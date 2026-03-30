@@ -16,6 +16,8 @@ import io.kudos.ms.sys.core.service.iservice.ISysDictService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.util.LinkedHashMap
+import kotlin.reflect.KClass
 
 
 /**
@@ -31,7 +33,6 @@ open class SysDictService(
     dao: SysDictDao
 ) : BaseCrudService<String, SysDict, SysDictDao>(dao), ISysDictService {
 
-
     @Autowired
     private lateinit var sysDictItemService: ISysDictItemService
 
@@ -40,16 +41,22 @@ open class SysDictService(
 
     private val log = LogFactory.getLog(this::class)
 
-    override fun getFromCache(dictId: String): SysDictCacheEntry? {
+    override fun <R : Any> get(id: String, returnType: KClass<R>): R? {
+        return if (returnType == SysDictCacheEntry::class) {
+            @Suppress("UNCHECKED_CAST")
+            sysDictHashCache.getDictById(id) as R?
+        } else {
+            super.get(id, returnType)
+        }
+    }
+
+    override fun getDictFromCache(dictId: String): SysDictCacheEntry? {
         return sysDictHashCache.getDictById(dictId)
     }
 
-
     override fun getRecord(id: String): SysDictRow? {
         val dict = dao.get(id) ?: return null
-        val sysDictRecord = SysDictRow()
-        BeanKit.copyProperties(dict, sysDictRecord)
-        return sysDictRecord
+        return toSysDictRow(dict)
     }
 
     @Transactional
@@ -68,7 +75,7 @@ open class SysDictService(
         }
     }
 
-    override fun getDictsByAtomicServiceCode(
+    override fun getDictsFromCacheByAtomicServiceCode(
         atomicServiceCode: String,
         activeOnly: Boolean
     ): List<SysDictCacheEntry> {
@@ -84,8 +91,8 @@ open class SysDictService(
             SysDict::atomicServiceCode eq atomicServiceCode,
             SysDict::dictType eq dictType
         )
-        val records = dao.searchAs<SysDictRow>(criteria)
-        return records.firstOrNull()
+        val dict = dao.search(criteria).firstOrNull() ?: return null
+        return toSysDictRow(dict)
     }
 
     @Transactional
@@ -108,7 +115,7 @@ open class SysDictService(
     override fun insert(any: Any): String {
         val id = super.insert(any)
         log.debug("新增id为${id}的字典。")
-        sysDictHashCache.syncOnInsert(id)
+        sysDictHashCache.syncOnInsert(any, id)
         return id
     }
 
@@ -127,6 +134,10 @@ open class SysDictService(
 
     @Transactional
     override fun deleteById(id: String): Boolean {
+        if (dao.get(id) == null) {
+            log.warn("删除id为${id}的字典时，发现其已不存在！")
+            return false
+        }
         val success = super.deleteById(id)
         if (success) {
             log.debug("删除id为${id}的字典。")
@@ -145,14 +156,14 @@ open class SysDictService(
         return count
     }
 
-    override fun getActiveDictItems(
+    override fun getActiveDictItemsFromCache(
         dictType: String,
         atomicServiceCode: String
     ): List<SysDictItemCacheEntry> {
         return sysDictItemService.getItems(dictType, atomicServiceCode)
     }
 
-    override fun getActiveDictItemMap(
+    override fun getActiveDictItemMapFromCache(
         dictType: String,
         atomicServiceCode: String
     ): LinkedHashMap<String, String> {
@@ -162,7 +173,7 @@ open class SysDictService(
         }
     }
 
-    override fun batchGetActiveDictItems(
+    override fun batchGetActiveDictItemsFromCache(
         dictTypeAndASCodePairs: List<Pair<String, String>>
     ): Map<Pair<String, String>, List<SysDictItemCacheEntry>> {
         return dictTypeAndASCodePairs.associate { (dictType, atomicServiceCode) ->
@@ -170,7 +181,7 @@ open class SysDictService(
         }
     }
 
-    override fun batchGetActiveDictItemMap(
+    override fun batchGetActiveDictItemMapFromCache(
         dictTypeAndASCodePairs: List<Pair<String, String>>
     ): Map<Pair<String, String>, LinkedHashMap<String, String>> {
         return dictTypeAndASCodePairs.associate { (dictType, atomicServiceCode) ->
@@ -182,5 +193,16 @@ open class SysDictService(
         }
     }
 
+    private fun toSysDictRow(dict: SysDict): SysDictRow {
+        return SysDictRow(
+            id = dict.id,
+            dictType = dict.dictType,
+            dictName = dict.dictName,
+            atomicServiceCode = dict.atomicServiceCode,
+            remark = dict.remark,
+            active = dict.active,
+            builtIn = dict.builtIn,
+        )
+    }
 
 }
