@@ -72,7 +72,7 @@ internal class TeminalConstraintsCreatorTest {
         )
         val confirmPassword: String?,
 
-        @get:Pattern(regexp = RegExps.MOBILE, message = "手机号码格式错误")
+        @get:Pattern(regexp = RegExps.CN_MAINLAND_MOBILE, message = "手机号码格式错误")
         val mobile: String?,
 
         @get:Email

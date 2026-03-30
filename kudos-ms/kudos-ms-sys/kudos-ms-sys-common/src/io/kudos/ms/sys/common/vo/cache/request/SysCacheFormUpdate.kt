@@ -22,6 +22,7 @@ data class SysCacheFormUpdate (
     /** 缓存策略代码 */
     @get:NotBlank
     @get:DictItemCode(dictType = SysDictTypes.CACHE_STRATEGY, atomicServiceCode = SysConsts.ATOMIC_SERVICE_NAME)
+    @get:MaxLength(16)
     val strategyDictCode: String = "",
 
     /** 是否启动时写缓存 */

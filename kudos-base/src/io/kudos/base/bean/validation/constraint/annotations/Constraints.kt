@@ -2,6 +2,7 @@ package io.kudos.base.bean.validation.constraint.annotations
 
 import io.kudos.base.bean.validation.constraint.validator.ConstraintsValidator
 import io.kudos.base.bean.validation.support.Depends
+import io.kudos.base.bean.validation.support.RegExpEnum
 import io.kudos.base.bean.validation.support.IBeanValidator
 import io.kudos.base.enums.ienums.IDictEnum
 import io.kudos.base.support.logic.AndOrEnum
@@ -171,6 +172,8 @@ annotation class Constraints(
     val notNullOn: NotNullOn = NotNullOn(Depends([]), message = MESSAGE),
     /** 数列约束，被校验对象类型必须为以下之一或其子类: List<*>、Array<*> */
     val series: Series = Series(message = MESSAGE),
+    /** 按内置 [RegExpEnum] 做模式匹配，被校验对象类型必须为 CharSequence 或其子类 */
+    val matches: Matches = Matches(value = RegExpEnum.VAR_NAME, message = MESSAGE),
 
 //  val each: Each = Each(Constraints(), message = MESSAGE),  // 会循环引用，而且本身就是组合约束，没必要作为Constraints的子约束了
 //  val exist: Exist = Exist(Constraints(), message = MESSAGE),  // 会循环引用，而且本身就是组合约束，没必要作为Constraints的子约束了

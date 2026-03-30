@@ -3,6 +3,7 @@ package io.kudos.base.bean.validation.teminal.convert
 import io.kudos.base.bean.validation.constraint.annotations.*
 import io.kudos.base.bean.validation.support.Depends
 import io.kudos.base.bean.validation.support.IBeanValidator
+import io.kudos.base.bean.validation.support.RegExpEnum
 import io.kudos.base.enums.impl.SexEnum
 import io.kudos.base.support.logic.LogicOperatorEnum
 import jakarta.validation.constraints.NotNull
@@ -101,6 +102,16 @@ internal class ConstraintConvertorFactoryTest {
     }
 
     @Test
+    fun testGetInstanceForMatches() {
+        val annotation = TestBean::class.java.getDeclaredField("matches")
+            .getAnnotation(Matches::class.java)
+        if (annotation != null) {
+            val convertor = ConstraintConvertorFactory.getInstance(annotation)
+            assertNotNull(convertor)
+        }
+    }
+
+    @Test
     fun testGetInstanceForDefault() {
         val annotation = TestBean::class.java.getDeclaredField("notNull")
             .getAnnotation(NotNull::class.java)
@@ -135,6 +146,9 @@ internal class ConstraintConvertorFactoryTest {
 
         @get:DictItemCode(atomicServiceCode = "test", dictType = "test")
         val dictItemCode: String?,
+
+        @get:Matches(RegExpEnum.VAR_NAME)
+        val matches: String?,
 
         @get:NotNull
         val notNull: String?
