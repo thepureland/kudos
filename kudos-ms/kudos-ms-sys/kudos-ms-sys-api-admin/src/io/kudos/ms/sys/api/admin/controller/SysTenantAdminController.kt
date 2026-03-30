@@ -33,7 +33,8 @@ class SysTenantAdminController:
      */
     @GetMapping("/getTenantsBySubSystemCode")
     fun getTenantsBySubSystemCode(subSystemCode: String): List<IdAndName<String>> {
-       return service.getTenantsBySubSystemCode(subSystemCode).map { IdAndName(it.id, it.name) }
+       return service.getTenantsForSubSystemFromCache(subSystemCode).filter { it.active }
+            .map { IdAndName(it.id, it.name) }
     }
 
     /**

@@ -20,6 +20,7 @@ import io.kudos.ms.sys.core.model.po.SysTenantSystem
 import io.kudos.ms.sys.core.service.iservice.ISysTenantService
 import io.kudos.ms.sys.core.service.iservice.ISysTenantSystemService
 import jakarta.annotation.Resource
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import kotlin.reflect.KClass
@@ -38,10 +39,9 @@ open class SysTenantService(
     dao: SysTenantDao
 ) : BaseCrudService<String, SysTenant, SysTenantDao>(dao), ISysTenantService {
 
-
     private val log = LogFactory.getLog(this::class)
 
-    @Resource
+    @Autowired
     private lateinit var tenantByIdCache: TenantByIdCache
 
     @Resource
@@ -51,11 +51,16 @@ open class SysTenantService(
     private lateinit var sysTenantSystemService: ISysTenantSystemService
 
     override fun <R : Any> get(id: String, returnType: KClass<R>): R? {
-        val result = super.get(id, returnType)
-        if (result is SysTenantDetail) {
-            result.subSystemCodes = getSubSystemCodesString(id)
+        return if (returnType == SysTenantCacheEntry::class) {
+            @Suppress("UNCHECKED_CAST")
+            tenantByIdCache.getTenantById(id) as R?
+        } else {
+            val result = super.get(id, returnType)
+            if (result is SysTenantDetail) {
+                result.subSystemCodes = getSubSystemCodesString(id)
+            }
+            result
         }
-        return result
     }
 
     override fun pagingSearch(listSearchPayload: ListSearchPayload): PagingSearchResult<*> {
@@ -68,17 +73,22 @@ open class SysTenantService(
         return result
     }
 
-    override fun getTenant(id: String): SysTenantCacheEntry? {
+    override fun getTenantFromCache(id: String): SysTenantCacheEntry? {
         return tenantByIdCache.getTenantById(id)
     }
 
-    override fun getTenantsBySubSystemCode(ids: Collection<String>): Map<String, SysTenantCacheEntry> {
+    override fun getTenantsFromCacheByIds(ids: Collection<String>): Map<String, SysTenantCacheEntry> {
+        if (ids.isEmpty()) return emptyMap()
         return tenantByIdCache.getTenantsByIds(ids)
     }
 
-    override fun getTenantsBySubSystemCode(subSystemCode: String): List<SysTenantCacheEntry> {
+    override fun getTenantsForSubSystemFromCache(subSystemCode: String): List<SysTenantCacheEntry> {
         val tenantIds = sysTenantSystemHashCache.getTenantIdsBySubSystemCode(subSystemCode)
-        return tenantByIdCache.getTenantsByIds(tenantIds).values.filter { it.active }
+        return tenantByIdCache.getTenantsByIds(tenantIds).values.toList()
+    }
+
+    override fun getAllTenantsFromCache(): List<SysTenantCacheEntry> {
+        return dao.searchAs<SysTenantCacheEntry>()
     }
 
     @Transactional
@@ -86,13 +96,11 @@ open class SysTenantService(
         val id = super.insert(any)
         log.debug("新增id为${id}的租户。")
 
-        // 保存租户-系统关系
         if (any is SysTenantFormCreate) {
             insertSysTenantSystems(id, any.subSystemCodes)
         }
 
-        // 同步缓存
-        tenantByIdCache.syncOnInsert(id)
+        tenantByIdCache.syncOnInsert(any, id) // 同步缓存
         sysTenantSystemHashCache.syncOnInsert(any, id)
         return id
     }
@@ -115,19 +123,13 @@ open class SysTenantService(
             if (any is SysTenantFormUpdate) {
                 val tenantId = any.id!!
                 val subSystemCodes = sysTenantSystemHashCache.getSubSystemCodesByTenantId(tenantId)
-                // 判断租户-系统关系有没有变，有变要更新租户-系统关系
                 if (subSystemCodes != any.subSystemCodes) {
-                    // 先删除该租户的所有与系统的关系记录
                     sysTenantSystemService.deleteByTenantId(tenantId)
-
-                    // 再插入新的关系
                     insertSysTenantSystems(tenantId, any.subSystemCodes)
                 }
             }
 
-            // 同步缓存
-            tenantByIdCache.syncOnUpdate(id)
-
+            tenantByIdCache.syncOnUpdate(any, id)
         } else {
             log.error("更新id为${id}的租户失败！")
         }
@@ -143,8 +145,7 @@ open class SysTenantService(
         val success = dao.update(tenant)
         if (success) {
             log.debug("更新id为${id}的租户的启用状态为${active}。")
-            // 同步缓存
-            tenantByIdCache.syncOnUpdate(id)
+            tenantByIdCache.syncOnUpdate(tenant, id)
         } else {
             log.error("更新id为${id}的租户的启用状态为${active}失败！")
         }
@@ -153,23 +154,24 @@ open class SysTenantService(
 
     @Transactional
     override fun deleteById(id: String): Boolean {
-        // 1. 先删除租户-系统关系
+        if (dao.get(id) == null) {
+            log.warn("删除id为${id}的租户时，发现其已不存在！")
+            return false
+        }
+
         val count = sysTenantSystemService.deleteByTenantId(id)
         if (count > 0) {
-            // 同步缓存
             sysTenantSystemHashCache.syncOnDelete(id)
         } else {
             log.error("删除id为${id}的租户的所有系统关系失败！")
             return false
         }
 
-        // 2. 再删除租户
-        var success = super.deleteById(id)
+        val success = super.deleteById(id)
         if (success) {
-            // 同步缓存
+            log.debug("删除id为${id}的租户成功！")
             tenantByIdCache.syncOnDelete(id)
         } else {
-            success = false
             log.error("删除id为${id}的租户失败！")
         }
         return success
@@ -177,61 +179,41 @@ open class SysTenantService(
 
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {
-        // 1.删除租户-子系统关系
         var count = sysTenantSystemService.batchDeleteByTenantIds(ids)
-
-        // 2.删除租户
         if (count >= 0) {
             count = super.batchDelete(ids)
             log.debug("批量删除租户，期望删除${ids.size}条，实际删除${count}条。")
-
-            // 同步缓存
             tenantByIdCache.syncOnBatchDelete(ids)
         }
-
         return count
     }
 
-
-    /**
-     * 根据id获取租户记录（非缓存）
-     *
-     * @param id 主键
-     * @return 租户记录，找不到返回null
-     * @author AI: Cursor
-     * @since 1.0.0
-     */
     override fun getTenantRecord(id: String): SysTenantRow? {
         val tenant = dao.get(id) ?: return null
-        val record = SysTenantRow()
-        BeanKit.copyProperties(tenant, record)
-        return record
+        return toSysTenantRow(tenant)
     }
 
-    /**
-     * 根据名称获取租户记录
-     *
-     * @param name 租户名称
-     * @return 租户记录，找不到返回null
-     * @author AI: Cursor
-     * @since 1.0.0
-     */
     override fun getTenantByName(name: String): SysTenantRow? {
         val criteria = Criteria(SysTenant::name eq name)
-        val records = dao.searchAs<SysTenantRow>(criteria)
-        return records.firstOrNull()
+        val tenant = dao.search(criteria).firstOrNull() ?: return null
+        return toSysTenantRow(tenant)
     }
 
-    /**
-     * 获取租户的子系统编码列表
-     *
-     * @param tenantId 租户id
-     * @return 子系统编码集合
-     * @author AI: Cursor
-     * @since 1.0.0
-     */
-    override fun getSubSystemCodesByTenantId(tenantId: String): Set<String> {
-        return sysTenantSystemService.searchSystemCodesByTenantId(tenantId)
+    private fun toSysTenantRow(tenant: SysTenant): SysTenantRow {
+        return SysTenantRow(
+            id = tenant.id,
+            name = tenant.name,
+            timezone = tenant.timezone,
+            defaultLanguageCode = tenant.defaultLanguageCode,
+            createTime = tenant.createTime,
+            remark = tenant.remark,
+            active = tenant.active,
+            builtIn = tenant.builtIn,
+        )
+    }
+
+    override fun getSubSystemCodesFromCache(tenantId: String): Set<String> {
+        return sysTenantSystemHashCache.getSubSystemCodesByTenantId(tenantId)
     }
 
     private fun getSubSystemCodesString(tenantId: String): String {

@@ -61,6 +61,23 @@ open class TenantByIdCache : AbstractByIdCacheHandler<String, SysTenantCacheEntr
         return getByIds(ids)
     }
 
+    /**
+     * 新增租户后同步（重载，接收业务对象与 id）。行为同单参 [syncOnInsert]。
+     *
+     * @param any 业务对象，仅用于重载区分
+     * @param id 租户 id
+     */
+    open fun syncOnInsert(any: Any, id: String) {
+        syncOnInsert(id)
+    }
+
+    /**
+     * 更新租户后同步（重载，带业务对象）。行为同单参 [syncOnUpdate]。
+     */
+    open fun syncOnUpdate(any: Any, id: String) {
+        syncOnUpdate(id)
+    }
+
     override fun itemDesc() = "租户"
 
 }
