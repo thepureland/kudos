@@ -24,8 +24,10 @@ import io.kudos.ms.sys.core.model.table.SysResources
 import io.kudos.ms.sys.core.service.iservice.ISysResourceService
 import jakarta.annotation.Resource
 import org.ktorm.dsl.isNull
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import kotlin.reflect.KClass
 
 
 /**
@@ -43,7 +45,7 @@ open class SysResourceService(
 
     private val log = LogFactory.getLog(this::class)
 
-    @Resource
+    @Autowired
     private lateinit var sysResourceHashCache: SysResourceHashCache
 
     @Resource
@@ -52,15 +54,27 @@ open class SysResourceService(
     @Resource
     private lateinit var sysSystemHashCache: SysSystemHashCache
 
-    override fun getResourceById(id: String): SysResourceCacheEntry? {
+    override fun <R : Any> get(id: String, returnType: KClass<R>): R? {
+        return if (returnType == SysResourceCacheEntry::class) {
+            @Suppress("UNCHECKED_CAST")
+            sysResourceHashCache.getResourceById(id) as R?
+        } else {
+            super.get(id, returnType)
+        }
+    }
+
+    override fun getResourceFromCache(id: String): SysResourceCacheEntry? {
         return sysResourceHashCache.getResourceById(id)
     }
 
-    override fun getResourceBySubSystemAndUrl(subSystemCode: String, url: String): String? {
+    override fun getResourceIdFromCacheBySubSystemAndUrl(subSystemCode: String, url: String): String? {
         return sysResourceHashCache.getResourceBySubSystemCodeAndUrl(subSystemCode, url)?.id
     }
 
-    override fun getResourceIdsBySubSystemAndType(subSystemCode: String, resourceTypeDictCode: String): List<String> {
+    override fun getResourceIdsFromCacheBySubSystemAndType(
+        subSystemCode: String,
+        resourceTypeDictCode: String
+    ): List<String> {
         return sysResourceHashCache.getResourcesBySubSystemCodeAndType(subSystemCode, resourceTypeDictCode)
             .map { it.id }
     }
@@ -150,7 +164,6 @@ open class SysResourceService(
     override fun insert(any: Any): String {
         val id = super.insert(any)
         log.debug("新增id为${id}的资源。")
-        sysResourceHashCache.syncOnInsert(id)
         sysResourceHashCache.syncOnInsert(any, id)
         return id
     }
@@ -208,23 +221,19 @@ open class SysResourceService(
         return count
     }
 
-    override fun getResource(resourceId: String): SysResourceCacheEntry? {
-        return sysResourceHashCache.getResourceById(resourceId)
-    }
-
-    override fun getResources(resourceIds: Collection<String>): Map<String, SysResourceCacheEntry> {
+    override fun getResourcesFromCacheByIds(resourceIds: Collection<String>): Map<String, SysResourceCacheEntry> {
         if (resourceIds.isEmpty()) return emptyMap()
         return sysResourceHashCache.getResourcesByIds(resourceIds.toSet())
     }
 
-    override fun getResources(
+    override fun getResourcesFromCacheBySubSystemAndType(
         resourceType: ResourceTypeEnum,
         subSystemCode: String,
     ): List<SysResourceCacheEntry> {
         return sysResourceHashCache.getResourcesBySubSystemCodeAndType(subSystemCode, resourceType.code)
     }
 
-    override fun getSimpleMenus(subSystemCode: String): List<BaseMenuTreeNode> {
+    override fun getSimpleMenusFromCache(subSystemCode: String): List<BaseMenuTreeNode> {
         val resources =
             sysResourceHashCache.getResourcesBySubSystemCodeAndType(subSystemCode, ResourceTypeEnum.MENU.code)
         return buildMenuTree(resources) { item ->
@@ -237,7 +246,7 @@ open class SysResourceService(
         }.sortedBy { it.seqNo }
     }
 
-    override fun getMenus(subSystemCode: String): List<MenuTreeNode> {
+    override fun getMenusFromCache(subSystemCode: String): List<MenuTreeNode> {
         val resources =
             sysResourceHashCache.getResourcesBySubSystemCodeAndType(subSystemCode, ResourceTypeEnum.MENU.code)
         return buildMenuTree(resources) { item ->
@@ -252,11 +261,11 @@ open class SysResourceService(
         }.sortedBy { it.seqNo }
     }
 
-    override fun getResourceId(subSysDictCode: String, url: String): String? {
-        return sysResourceHashCache.getResourceBySubSystemCodeAndUrl(subSysDictCode, url)?.id
+    override fun getResourceIdFromCache(subSysDictCode: String, url: String): String? {
+        return getResourceIdFromCacheBySubSystemAndUrl(subSysDictCode, url)
     }
 
-    override fun getDirectChildrenResources(
+    override fun getDirectChildrenResourcesFromCache(
         resourceType: ResourceTypeEnum,
         parentId: String?,
         subSystemCode: String,
@@ -265,7 +274,7 @@ open class SysResourceService(
         return list.filter { it.parentId == parentId }
     }
 
-    override fun getChildrenResources(
+    override fun getChildrenResourcesFromCache(
         subSystemCode: String,
         resourceType: ResourceTypeEnum,
         parentId: String
