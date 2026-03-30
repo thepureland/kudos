@@ -24,7 +24,7 @@ open class SysParamApi : ISysParamApi {
         paramName: String,
         atomicServiceCode: String
     ): SysParamCacheEntry? {
-        return sysParamService.getParam(paramName, atomicServiceCode)
+        return sysParamService.getParamFromCache(atomicServiceCode, paramName)
     }
 
 

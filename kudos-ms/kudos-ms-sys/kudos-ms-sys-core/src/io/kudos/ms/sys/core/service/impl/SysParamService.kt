@@ -14,12 +14,14 @@ import io.kudos.ms.sys.core.service.iservice.ISysParamService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import kotlin.reflect.KClass
 
 
 /**
  * 参数业务
  *
  * @author K
+ * @author AI: Cursor
  * @since 1.0.0
  */
 @Service
@@ -28,13 +30,21 @@ open class SysParamService(
     dao: SysParamDao
 ) : BaseCrudService<String, SysParam, SysParamDao>(dao), ISysParamService {
 
-
     private val log = LogFactory.getLog(this::class)
 
     @Autowired
     private lateinit var paramByModuleAndNameCache: ParamByModuleAndNameCache
 
-    override fun getParamByAtomicServiceAndName(atomicServiceCode: String, paramName: String): SysParamCacheEntry? {
+    override fun <R : Any> get(id: String, returnType: KClass<R>): R? {
+        return if (returnType == SysParamCacheEntry::class) {
+            @Suppress("UNCHECKED_CAST")
+            dao.get(id, SysParamCacheEntry::class) as R?
+        } else {
+            super.get(id, returnType)
+        }
+    }
+
+    override fun getParamFromCache(atomicServiceCode: String, paramName: String): SysParamCacheEntry? {
         return paramByModuleAndNameCache.getParam(atomicServiceCode, paramName)
     }
 
@@ -59,8 +69,8 @@ open class SysParamService(
         return success
     }
 
-    override fun getParamValue(atomicServiceCode: String, paramName: String, defaultValue: String?): String? {
-        val param = getParamByAtomicServiceAndName(atomicServiceCode, paramName)
+    override fun getParamValueFromCache(atomicServiceCode: String, paramName: String, defaultValue: String?): String? {
+        val param = getParamFromCache(atomicServiceCode, paramName)
         return param?.paramValue ?: param?.defaultValue ?: defaultValue
     }
 
@@ -111,13 +121,5 @@ open class SysParamService(
         paramByModuleAndNameCache.syncOnBatchDelete(ids, moduleAndNames)
         return count
     }
-
-    override fun getParam(
-        paramName: String,
-        atomicServiceCode: String
-    ): SysParamCacheEntry? {
-        return paramByModuleAndNameCache.getParam(atomicServiceCode, paramName)
-    }
-
 
 }

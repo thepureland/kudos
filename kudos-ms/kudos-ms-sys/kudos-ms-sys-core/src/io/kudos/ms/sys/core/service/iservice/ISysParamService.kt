@@ -1,7 +1,6 @@
 package io.kudos.ms.sys.core.service.iservice
 
 import io.kudos.base.support.service.iservice.IBaseCrudService
-import io.kudos.ms.sys.common.api.ISysParamApi
 import io.kudos.ms.sys.common.vo.param.SysParamCacheEntry
 import io.kudos.ms.sys.common.vo.param.response.SysParamRow
 import io.kudos.ms.sys.core.model.po.SysParam
@@ -11,54 +10,33 @@ import io.kudos.ms.sys.core.model.po.SysParam
  * 参数业务接口
  *
  * @author K
+ * @author AI: Cursor
  * @since 1.0.0
  */
-interface ISysParamService : IBaseCrudService<String, SysParam>, ISysParamApi {
-
+interface ISysParamService : IBaseCrudService<String, SysParam> {
 
     /**
-     * 根据原子服务编码和参数名称从缓存获取参数信息
-     *
-     * @param atomicServiceCode 原子服务编码
-     * @param paramName 参数名称
-     * @return SysParamCacheEntry，找不到返回null
-     * @author K
-     * @since 1.0.0
+     * 按原子服务编码 + 参数名从按模块缓存读取（仅 active=true 会写入该缓存）
      */
-    fun getParamByAtomicServiceAndName(atomicServiceCode: String, paramName: String): SysParamCacheEntry?
+    fun getParamFromCache(atomicServiceCode: String, paramName: String): SysParamCacheEntry?
 
     /**
-     * 获取模块的所有参数
-     *
-     * @param atomicServiceCode 原子服务编码
-     * @return 参数记录列表
-     * @author K
-     * @since 1.0.0
+     * 按原子服务编码直查库得到参数列表行
      */
     fun getParamsByAtomicServiceCode(atomicServiceCode: String): List<SysParamRow>
 
     /**
-     * 更新启用状态，并同步缓存
-     *
-     * @param id 参数id
-     * @param active 是否启用
-     * @return 是否更新成功
-     * @author K
-     * @since 1.0.0
+     * 读取参数取值：优先 [SysParamCacheEntry.paramValue]，其次 [SysParamCacheEntry.defaultValue]，否则 [defaultValue]
      */
-    fun updateActive(id: String, active: Boolean): Boolean
+    fun getParamValueFromCache(
+        atomicServiceCode: String,
+        paramName: String,
+        defaultValue: String? = null
+    ): String?
 
     /**
-     * 获取参数值，如果找不到则返回默认值
-     *
-     * @param atomicServiceCode 原子服务编码
-     * @param paramName 参数名称
-     * @param defaultValue 默认值，如果为null且参数不存在则返回null
-     * @return 参数值
-     * @author K
-     * @since 1.0.0
+     * 更新启用状态，并同步按模块缓存
      */
-    fun getParamValue(atomicServiceCode: String, paramName: String, defaultValue: String? = null): String?
-
+    fun updateActive(id: String, active: Boolean): Boolean
 
 }
