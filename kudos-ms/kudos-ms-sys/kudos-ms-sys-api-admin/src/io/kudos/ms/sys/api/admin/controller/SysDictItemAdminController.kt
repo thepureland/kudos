@@ -75,7 +75,7 @@ class SysDictItemAdminController :
         dictType: String,
         activeOnly: Boolean = true
     ): List<SysDictItemNode> {
-        val cacheEntries = sysDictItemService.getDirectChildrenOfDict(atomicServiceCode, dictType, activeOnly)
+        val cacheEntries = sysDictItemService.getDirectChildrenOfDictFromCache(atomicServiceCode, dictType, activeOnly)
         return cacheEntries.map { SysDictItemNode(it.id, it.itemCode, it.itemName) }
     }
 
@@ -95,7 +95,7 @@ class SysDictItemAdminController :
         itemCode: String,
         activeOnly: Boolean = true
     ): List<SysDictItemNode> {
-        val cacheEntries = sysDictItemService.getDirectChildrenOfItem(atomicServiceCode, dictType, itemCode, activeOnly)
+        val cacheEntries = sysDictItemService.getDirectChildrenOfItemFromCache(atomicServiceCode, dictType, itemCode, activeOnly)
         return cacheEntries.map { SysDictItemNode(it.id, it.itemCode, it.itemName) }
     }
 
@@ -108,7 +108,7 @@ class SysDictItemAdminController :
      */
     @GetMapping("/getDictItems")
     fun getDictItems(dictType: String, atomicServiceCode: String): List<SysDictItemCacheEntry> {
-        return sysDictItemService.getItems(dictType, atomicServiceCode)
+        return sysDictItemService.getDictItemsFromCache(dictType, atomicServiceCode)
     }
 
     /**
@@ -123,7 +123,7 @@ class SysDictItemAdminController :
         @RequestBody
         dictTypesByAtomicServiceCode: Map<String, Collection<String>>
     ): Map<String, Map<String, List<SysDictItemCacheEntry>>> {
-        return sysDictItemService.batchGetDictItems(dictTypesByAtomicServiceCode)
+        return sysDictItemService.batchGetDictItemsFromCache(dictTypesByAtomicServiceCode)
     }
 
     /**
@@ -135,7 +135,7 @@ class SysDictItemAdminController :
      */
     @GetMapping("/getDictItemMap")
     fun getDictItemMap(dictType: String, atomicServiceCode: String): LinkedHashMap<String, String> {
-        return sysDictItemService.getItemMap(dictType, atomicServiceCode)
+        return sysDictItemService.getDictItemMapFromCache(dictType, atomicServiceCode)
     }
 
     /**
@@ -150,7 +150,7 @@ class SysDictItemAdminController :
         @RequestBody
         dictTypesByAtomicServiceCode: Map<String, Collection<String>>,
     ): Map<String, Map<String, LinkedHashMap<String, String>>> {
-        return sysDictItemService.batchGetDictItemMap(dictTypesByAtomicServiceCode)
+        return sysDictItemService.batchGetDictItemMapFromCache(dictTypesByAtomicServiceCode)
     }
 
     /**
