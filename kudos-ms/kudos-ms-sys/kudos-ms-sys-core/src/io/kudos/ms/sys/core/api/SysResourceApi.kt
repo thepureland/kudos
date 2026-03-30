@@ -24,30 +24,30 @@ open class SysResourceApi : ISysResourceApi {
     protected lateinit var sysResourceService: ISysResourceService
 
     override fun getResource(resourceId: String): SysResourceCacheEntry? {
-        return sysResourceService.getResource(resourceId)
+        return sysResourceService.getResourceFromCache(resourceId)
     }
 
     override fun getResources(resourceIds: Collection<String>): Map<String, SysResourceCacheEntry> {
-        return sysResourceService.getResources(resourceIds)
+        return sysResourceService.getResourcesFromCacheByIds(resourceIds)
     }
 
     override fun getResources(
         resourceType: ResourceTypeEnum,
         subSystemCode: String,
     ): List<SysResourceCacheEntry> {
-        return sysResourceService.getResources(resourceType, subSystemCode)
+        return sysResourceService.getResourcesFromCacheBySubSystemAndType(resourceType, subSystemCode)
     }
 
     override fun getSimpleMenus(subSystemCode: String): List<BaseMenuTreeNode> {
-        return sysResourceService.getSimpleMenus(subSystemCode)
+        return sysResourceService.getSimpleMenusFromCache(subSystemCode)
     }
 
     override fun getMenus(subSystemCode: String): List<MenuTreeNode> {
-        return sysResourceService.getMenus(subSystemCode)
+        return sysResourceService.getMenusFromCache(subSystemCode)
     }
 
     override fun getResourceId(subSysDictCode: String, url: String): String? {
-        return sysResourceService.getResourceId(subSysDictCode, url)
+        return sysResourceService.getResourceIdFromCache(subSysDictCode, url)
     }
 
     override fun getDirectChildrenResources(
@@ -55,7 +55,7 @@ open class SysResourceApi : ISysResourceApi {
         parentId: String?,
         subSystemCode: String,
     ): List<SysResourceCacheEntry> {
-        return sysResourceService.getDirectChildrenResources(resourceType, parentId, subSystemCode)
+        return sysResourceService.getDirectChildrenResourcesFromCache(resourceType, parentId, subSystemCode)
     }
 
     override fun getChildrenResources(
@@ -63,7 +63,7 @@ open class SysResourceApi : ISysResourceApi {
         resourceType: ResourceTypeEnum,
         parentId: String
     ): List<SysResourceCacheEntry> {
-        return sysResourceService.getChildrenResources(subSystemCode, resourceType, parentId)
+        return sysResourceService.getChildrenResourcesFromCache(subSystemCode, resourceType, parentId)
     }
 
 

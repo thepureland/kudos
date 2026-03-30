@@ -55,7 +55,7 @@ open class SysResourceAdminController :
         resourceType: ResourceTypeEnum,
         subSystemCode: String = SysConsts.DEFAULT_SUB_SYSTEM_CODE
     ): List<SysResourceCacheEntry> {
-        return service.getResources(resourceType, subSystemCode)
+        return service.getResourcesFromCacheBySubSystemAndType(resourceType, subSystemCode)
     }
 
     /**
@@ -66,7 +66,7 @@ open class SysResourceAdminController :
      */
     @GetMapping("/getSimpleMenus")
     fun getSimpleMenus(subSystemCode: String = SysConsts.DEFAULT_SUB_SYSTEM_CODE): List<BaseMenuTreeNode> {
-        return service.getSimpleMenus(subSystemCode)
+        return service.getSimpleMenusFromCache(subSystemCode)
     }
 
     /**
@@ -77,7 +77,7 @@ open class SysResourceAdminController :
      */
     @GetMapping("/getMenus")
     fun getMenus(subSystemCode: String = SysConsts.DEFAULT_SUB_SYSTEM_CODE): List<MenuTreeNode> {
-        return service.getMenus(subSystemCode)
+        return service.getMenusFromCache(subSystemCode)
     }
 
     /**
@@ -94,7 +94,7 @@ open class SysResourceAdminController :
         parentId: String?,
         subSystemCode: String = SysConsts.DEFAULT_SUB_SYSTEM_CODE,
     ): List<SysResourceCacheEntry> {
-        return service.getDirectChildrenResources(resourceType, parentId, subSystemCode)
+        return service.getDirectChildrenResourcesFromCache(resourceType, parentId, subSystemCode)
     }
 
     /**
@@ -111,7 +111,7 @@ open class SysResourceAdminController :
         parentId: String,
         subSystemCode: String,
     ): List<SysResourceCacheEntry> {
-        return service.getChildrenResources(subSystemCode, resourceType, parentId)
+        return service.getChildrenResourcesFromCache(subSystemCode, resourceType, parentId)
     }
 
     /**
