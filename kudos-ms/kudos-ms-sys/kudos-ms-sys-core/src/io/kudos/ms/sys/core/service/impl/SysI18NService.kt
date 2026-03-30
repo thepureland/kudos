@@ -3,20 +3,23 @@ package io.kudos.ms.sys.core.service.impl
 import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
+import io.kudos.ms.sys.common.vo.i18n.SysI18nCacheEntry
 import io.kudos.ms.sys.common.vo.i18n.request.SysI18nFormUpdate
 import io.kudos.ms.sys.core.cache.SysI18nHashCache
 import io.kudos.ms.sys.core.dao.SysI18nDao
 import io.kudos.ms.sys.core.model.po.SysI18n
 import io.kudos.ms.sys.core.service.iservice.ISysI18nService
-import jakarta.annotation.Resource
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import kotlin.reflect.KClass
 
 
 /**
  * 国际化业务
  *
  * @author K
+ * @author AI: Cursor
  * @since 1.0.0
  */
 @Service
@@ -25,24 +28,36 @@ open class SysI18NService(
     dao: SysI18nDao
 ) : BaseCrudService<String, SysI18n, SysI18nDao>(dao), ISysI18nService {
 
-
     private val log = LogFactory.getLog(this::class)
 
-    @Resource
+    @Autowired
     private lateinit var sysI18nHashCache: SysI18nHashCache
 
-    override fun getI18nValue(
+    override fun <R : Any> get(id: String, returnType: KClass<R>): R? {
+        return if (returnType == SysI18nCacheEntry::class) {
+            @Suppress("UNCHECKED_CAST")
+            sysI18nHashCache.getI18nById(id) as R?
+        } else {
+            super.get(id, returnType)
+        }
+    }
+
+    override fun getI18nFromCache(id: String): SysI18nCacheEntry? {
+        return sysI18nHashCache.getI18nById(id)
+    }
+
+    override fun getI18nValueFromCache(
         locale: String,
         i18nTypeDictCode: String,
         namespace: String,
         atomicServiceCode: String,
         key: String
     ): String? {
-        val i18nMap = getI18ns(locale, i18nTypeDictCode, namespace, atomicServiceCode)
+        val i18nMap = getI18nsFromCache(locale, i18nTypeDictCode, namespace, atomicServiceCode)
         return i18nMap[key]
     }
 
-    override fun getI18ns(
+    override fun getI18nsFromCache(
         locale: String,
         i18nTypeDictCode: String,
         namespace: String,
@@ -51,7 +66,7 @@ open class SysI18NService(
         return sysI18nHashCache.getI18nMap(locale, atomicServiceCode, i18nTypeDictCode, namespace)
     }
 
-    override fun batchGetI18ns(
+    override fun batchGetI18nsFromCache(
         locale: String,
         namespacesByI18nTypeDictCode: Map<String, Collection<String>>,
         atomicServiceCodes: Collection<String>
@@ -60,7 +75,9 @@ open class SysI18NService(
             namespaces.associateWith { namespace ->
                 val map = mutableMapOf<String, String>()
                 atomicServiceCodes.forEach { atomicServiceCode ->
-                    map.putAll(sysI18nHashCache.getI18nMap(locale, atomicServiceCode, i18nTypeDictCode, namespace))
+                    map.putAll(
+                        sysI18nHashCache.getI18nMap(locale, atomicServiceCode, i18nTypeDictCode, namespace)
+                    )
                 }
                 map
             }
@@ -158,6 +175,10 @@ open class SysI18NService(
 
     @Transactional
     override fun deleteById(id: String): Boolean {
+        if (dao.get(id) == null) {
+            log.warn("删除id为${id}的国际化内容时，发现其已不存在！")
+            return false
+        }
         val success = super.deleteById(id)
         if (success) {
             log.debug("删除id为${id}的国际化内容。")
@@ -182,6 +203,5 @@ open class SysI18NService(
         val namespace = payload.namespace.takeIf { it.isNotBlank() } ?: i18nTypeDictCode
         return namespace to key
     }
-
 
 }

@@ -38,7 +38,7 @@ class SysI18NAdminController :
         namespace: String,
         atomicServiceCode: String,
     ): Map<String, String> {
-        return service.getI18ns(locale, i18nTypeDictCode, namespace, atomicServiceCode)
+        return service.getI18nsFromCache(locale, i18nTypeDictCode, namespace, atomicServiceCode)
     }
 
     /**
@@ -53,7 +53,7 @@ class SysI18NAdminController :
         @RequestBody
         payload: SysI18nBatchPayload
     ): Map<String, Map<String, Map<String, String>>> {
-        return service.batchGetI18ns(
+        return service.batchGetI18nsFromCache(
             payload.locale,
             payload.namespacesByI18nTypeDictCode,
             payload.atomicServiceCodes
