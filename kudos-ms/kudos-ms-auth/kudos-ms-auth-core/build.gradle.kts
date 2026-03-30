@@ -1,4 +1,5 @@
 dependencies {
+    api(project(":kudos-ms:kudos-ms-auth:kudos-ms-auth-sql"))
     api(project(":kudos-ms:kudos-ms-auth:kudos-ms-auth-common"))
     api(project(":kudos-ability:kudos-ability-cache:kudos-ability-cache-common"))
     api(project(":kudos-ability:kudos-ability-data:kudos-ability-data-rdb:kudos-ability-data-rdb-ktorm"))
