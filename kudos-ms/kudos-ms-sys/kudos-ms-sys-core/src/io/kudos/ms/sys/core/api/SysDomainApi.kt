@@ -21,7 +21,7 @@ open class SysDomainApi : ISysDomainApi {
     protected lateinit var sysDomainService: ISysDomainService
 
     override fun getDomainByName(domainName: String): SysDomainCacheEntry? {
-        return sysDomainService.getDomainByName(domainName)
+        return sysDomainService.getDomainFromCache(domainName)
     }
 
 
