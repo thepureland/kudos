@@ -1,9 +1,9 @@
 package io.kudos.ms.sys.common.vo.datasource.request
 
+import io.kudos.base.bean.validation.constraint.annotations.Matches
 import io.kudos.base.bean.validation.constraint.annotations.MaxLength
+import io.kudos.base.bean.validation.support.RegExpEnum
 import jakarta.validation.constraints.NotBlank
-
-
 /**
  * 数据源表单新建请求VO
  *
@@ -14,6 +14,8 @@ data class SysDataSourceFormCreate (
 
     /** 名称 */
     @get:NotBlank
+    @get:MaxLength(64)
+    @get:Matches(RegExpEnum.VAR_NAME)
     val name: String = "",
 
     /** 子系统编码 */

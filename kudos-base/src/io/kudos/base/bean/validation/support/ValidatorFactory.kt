@@ -357,6 +357,12 @@ object ValidatorFactory {
             is DictEnumItemCode -> DictEnumCodeValidator().apply { initialize(annotation) }
             is NotNullOn -> NotNullOnValidator().apply { initialize(annotation) }
             is Series -> SeriesValidator().apply { initialize(annotation) }
+            is Matches -> {
+                when (value) {
+                    is CharSequence -> MatchesValidator().apply { initialize(annotation) }
+                    else -> error("Matches约束注解不支持【${value::class}】类型的校验！")
+                }
+            }
 
             else -> listOf<ConstraintValidator<*, *>>()
         }

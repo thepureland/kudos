@@ -505,9 +505,253 @@ insert into "sys_i18n" ("locale", "atomic_service_code", "i18n_type_dict_code", 
     ('zh-TW', 'sys', 'valid-msg', 'default', 'MaxLength', '長度不得大於 {max}', true),
     ('en-US', 'sys', 'valid-msg', 'default', 'MaxLength', 'length must not exceed {max}', true),
 
-    ('zh-CN', 'sys', 'valid-msg', 'cache', 'Pattern::var-name', '只允许字母、数字、下划线，且不能以数字开头', true),
-    ('zh-TW', 'sys', 'valid-msg', 'cache', 'Pattern::var-name', '只允許英文字母、數字與底線，且不得以數字開頭', true),
-    ('en-US', 'sys', 'valid-msg', 'cache', 'Pattern::var-name', 'only letters, numbers, and underscores; cannot start with a number', true);
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::cn-mainland-mobile', '须为中国大陆11位手机号码', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::cn-mainland-mobile', '須為中國大陸 11 位手機號碼', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::cn-mainland-mobile', 'must be an 11-digit mainland China mobile number', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::qq-number', '须为5～11位数字的QQ号', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::qq-number', '須為 5～11 位數字的 QQ 號碼', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::qq-number', 'must be a QQ number with 5–11 digits', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::phone-digits-7-20', '须为7～20位数字的手机或电话号码', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::phone-digits-7-20', '須為 7～20 位數字的手機或電話號碼', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::phone-digits-7-20', 'must be 7–20 digits (mobile or phone)', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::ipv4', '须为合法的IPv4地址', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::ipv4', '須為合法的 IPv4 位址', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::ipv4', 'must be a valid IPv4 address', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::http-url', '须为合法的URL地址', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::http-url', '須為合法的 URL', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::http-url', 'must be a valid URL', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::tel-or-cn-mobile', '须为合法的电话或手机号码', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::tel-or-cn-mobile', '須為合法的電話或手機號碼', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::tel-or-cn-mobile', 'must be a valid landline or mobile number', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::short-person-name', '须为2～30位姓名（汉字、英文字母与间隔号·）', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::short-person-name', '須為 2～30 字姓名（漢字、英文字母與間隔號·）', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::short-person-name', 'must be 2–30 characters (Chinese, Latin letters, or middle dot)', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::real-person-name', '须符合真实姓名格式（中英日文、空格与分隔符，且不能为纯数字）', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::real-person-name', '須符合真實姓名格式（中英日文、空格與分隔符，且不得為純數字）', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::real-person-name', 'must match real-name rules (multi-script; not all digits)', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::bank-account-holder-name', '须符合银行账户姓名格式', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::bank-account-holder-name', '須符合銀行帳戶姓名格式', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::bank-account-holder-name', 'must match bank account holder name format', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::payer-display-name', '须符合存款人姓名格式', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::payer-display-name', '須符合存款人姓名格式', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::payer-display-name', 'must match payer display name format', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::text-without-special-chars', '不能包含 & * = | { } < > / … — 等特殊字符', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::text-without-special-chars', '不得包含 & * = | { } < > / … — 等特殊字元', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::text-without-special-chars', 'must not contain special characters such as & * = | { } < > / … —', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::email', '须为合法的电子邮箱地址', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::email', '須為合法的電子郵件地址', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::email', 'must be a valid email address', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::mail-or-cn-mobile', '须为邮箱或中国大陆手机号', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::mail-or-cn-mobile', '須為電子郵件或中國大陸手機號碼', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::mail-or-cn-mobile', 'must be an email or mainland China mobile number', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::cn-landline-phone', '须为合法的固定电话号码（含区号与分机格式）', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::cn-landline-phone', '須為合法的市話號碼（含區碼與分機格式）', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::cn-landline-phone', 'must be a valid landline number (area code / extension format)', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::login-password', '须为6～20位登录密码（字母、数字及允许符号）', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::login-password', '須為 6～20 位登入密碼（字母、數字及允許符號）', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::login-password', 'must be 6–20 characters (letters, digits, allowed symbols)', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::security-pin-six-digits', '须为6位数字安全密码', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::security-pin-six-digits', '須為 6 位數字安全密碼', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::security-pin-six-digits', 'must be a 6-digit security code', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::positive-int-text', '须为正整数', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::positive-int-text', '須為正整數', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::positive-int-text', 'must be a positive integer', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::ipv4-semicolon-list', '须为分号分隔的多个IPv4地址', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::ipv4-semicolon-list', '須為分號分隔的多個 IPv4 位址', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::ipv4-semicolon-list', 'must be IPv4 addresses separated by semicolons', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::ipv6-full', '须为标准全写IPv6地址', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::ipv6-full', '須為標準全寫 IPv6 位址', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::ipv6-full', 'must be a full standard IPv6 address', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::ipv6-compact', '须为合法的压缩写法IPv6地址（含::）', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::ipv6-compact', '須為合法的壓縮寫法 IPv6 位址（含::）', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::ipv6-compact', 'must be a valid compressed IPv6 address (with ::)', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::single-char-repeated', '须为同一字符连续重复（如aaa）', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::single-char-repeated', '須為同一字元連續重複', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::single-char-repeated', 'must be repeated occurrences of a single character', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::digits-non-empty', '须为纯数字（至少一位）', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::digits-non-empty', '須為純數字（至少一位）', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::digits-non-empty', 'must contain digits only (at least one)', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::latin-letters-only', '须为纯英文字母', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::latin-letters-only', '須為純英文字母', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::latin-letters-only', 'must be Latin letters only', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::latin-lowercase-only', '须为纯小写英文字母', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::latin-lowercase-only', '須為純小寫英文字母', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::latin-lowercase-only', 'must be lowercase Latin letters only', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::lowercase-alnum-not-all-digits', '须为小写字母与数字组合且不能为纯数字', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::lowercase-alnum-not-all-digits', '須為小寫字母與數字組合且不得為純數字', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::lowercase-alnum-not-all-digits', 'must be lowercase letters and digits, not all digits', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::nick-name', '须为3～15位昵称（中文、英文与数字）', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::nick-name', '須為 3～15 字暱稱（中文、英文與數字）', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::nick-name', 'must be 3–15 characters (Chinese, Latin, digits)', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::text-1-to-30-chars', '长度须为1～30个字符', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::text-1-to-30-chars', '長度須為 1～30 個字元', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::text-1-to-30-chars', 'length must be between 1 and 30 characters', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::msn', '须为合法的MSN账号（规则同邮箱）', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::msn', '須為合法的 MSN 帳號（規則同電子郵件）', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::msn', 'must be a valid MSN identifier (same rules as email)', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::password-strength-letters-only', '密码强度不足：仅包含字母', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::password-strength-letters-only', '密碼強度不足：僅包含字母', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::password-strength-letters-only', 'password too weak: letters only', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::password-strength-digits-only', '密码强度不足：仅包含数字', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::password-strength-digits-only', '密碼強度不足：僅包含數字', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::password-strength-digits-only', 'password too weak: digits only', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::password-strength-letters-and-digits', '密码须同时包含字母与数字', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::password-strength-letters-and-digits', '密碼須同時包含字母與數字', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::password-strength-letters-and-digits', 'must contain both letters and digits', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::password-strength-with-symbols', '须包含字母、数字及允许的符号', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::password-strength-with-symbols', '須包含字母、數字及允許的符號', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::password-strength-with-symbols', 'must include letters, digits, and allowed symbols', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::score-or-handicap-text', '须为合法的让分或比分格式', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::score-or-handicap-text', '須為合法的讓分或比分格式', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::score-or-handicap-text', 'must be a valid handicap or score format', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::positive-decimal-text', '须为正数（整数或小数，格式合法）', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::positive-decimal-text', '須為正數（整數或小數，格式合法）', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::positive-decimal-text', 'must be a positive number in valid format', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::positive-number-text', '须为合法的整数或小数（正数）', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::positive-number-text', '須為合法的整數或小數（正數）', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::positive-number-text', 'must be a valid positive integer or decimal', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::signed-integer-text', '须为整数（可带正负号）', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::signed-integer-text', '須為整數（可含正負號）', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::signed-integer-text', 'must be an integer (optional sign)', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::bank-card-number', '须为10～25位数字的银行卡号', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::bank-card-number', '須為 10～25 位數字的銀行卡號', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::bank-card-number', 'must be a bank card number with 10–25 digits', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::btc-amount-text', '须为合法的比特币数量（精度与下限符合规则）', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::btc-amount-text', '須為合法的比特幣數量（精度與下限符合規則）', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::btc-amount-text', 'must be a valid Bitcoin amount per precision rules', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::site-ids-comma-separated', '须为逗号分隔的数字站点ID、单个数字，或为空', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::site-ids-comma-separated', '須為逗號分隔的數字站台 ID、單一數字，或為空', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::site-ids-comma-separated', 'must be comma-separated numeric site IDs, a single number, or empty', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::empty-or-positive-int-text', '须为空或正整数', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::empty-or-positive-int-text', '須為空或正整數', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::empty-or-positive-int-text', 'must be empty or a positive integer', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::digits-at-most-9', '须为至多9位数字', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::digits-at-most-9', '須為至多 9 位數字', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::digits-at-most-9', 'must be at most 9 digits', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::signed-amount-loose', '须为合法金额（可选负号，最多两位小数）', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::signed-amount-loose', '須為合法金額（可選負號，最多兩位小數）', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::signed-amount-loose', 'must be a valid amount (optional minus; up to 2 decimal places)', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::wechat-id', '须为合法的微信号', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::wechat-id', '須為合法的微信帳號', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::wechat-id', 'must be a valid WeChat ID', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::game-player-account', '须为合法的玩家账号（含游客）', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::game-player-account', '須為合法的玩家帳號（含訪客）', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::game-player-account', 'must be a valid player account (including guest)', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::uuid-hyphenated', '须为合法UUID（8-4-4-4-12）', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::uuid-hyphenated', '須為合法 UUID（8-4-4-4-12）', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::uuid-hyphenated', 'must be a valid UUID (8-4-4-4-12)', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::domain-list-comma-separated', '须为逗号分隔的域名列表格式', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::domain-list-comma-separated', '須為逗號分隔的網域名稱清單格式', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::domain-list-comma-separated', 'must match comma-separated domain list format', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::amount-nonzero-two-decimals', '须为合法金额（非零，最多两位小数）', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::amount-nonzero-two-decimals', '須為合法金額（非零，最多兩位小數）', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::amount-nonzero-two-decimals', 'must be a non-zero amount with up to 2 decimal places', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::text-starts-with-digit', '须以数字开头', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::text-starts-with-digit', '須以數字開頭', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::text-starts-with-digit', 'must start with a digit', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::digits-only-optional-empty', '仅允许数字（可为空）', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::digits-only-optional-empty', '僅允許數字（可為空）', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::digits-only-optional-empty', 'digits only (may be empty)', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::han-latin-alnum', '仅允许中文、英文字母与数字', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::han-latin-alnum', '僅允許中文、英文字母與數字', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::han-latin-alnum', 'Chinese characters, Latin letters, and digits only', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::date-iso-yyyy-mm-dd', '须为 yyyy-MM-dd 格式的日期', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::date-iso-yyyy-mm-dd', '須為 yyyy-MM-dd 格式的日期', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::date-iso-yyyy-mm-dd', 'must be a date in yyyy-MM-dd format', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::time-24h-mm-optional-ss', '须为 24 小时制时间（HH:mm 或 HH:mm:ss）', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::time-24h-mm-optional-ss', '須為 24 小時制時間（HH:mm 或 HH:mm:ss）', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::time-24h-mm-optional-ss', 'must be 24-hour time (HH:mm or HH:mm:ss)', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::cn-mainland-postal-code', '须为 6 位数字的中国大陆邮政编码', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::cn-mainland-postal-code', '須為 6 位數字的中國大陸郵遞區號', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::cn-mainland-postal-code', 'must be a 6-digit mainland China postal code', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::hex-color-css', '须为 #RGB、#RRGGBB 或 #RRGGBBAA 形式的十六进制颜色', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::hex-color-css', '須為 #RGB、#RRGGBB 或 #RRGGBBAA 形式的十六進位色彩', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::hex-color-css', 'must be a hex color (#RGB, #RRGGBB, or #RRGGBBAA)', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::mac-address-colon-or-hyphen', '须为合法的 MAC 地址（冒号或连字符分组）', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::mac-address-colon-or-hyphen', '須為合法的 MAC 位址（冒號或連字號分組）', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::mac-address-colon-or-hyphen', 'must be a valid MAC address (colon- or hyphen-separated pairs)', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::network-port-1-65535', '须为 1～65535 的端口号', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::network-port-1-65535', '須為 1～65535 的連接埠編號', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::network-port-1-65535', 'must be a port number from 1 through 65535', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::slug-kebab-lowercase', '须为小写字母、数字与连字符组成的 slug（不以连字符开头或结尾）', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::slug-kebab-lowercase', '須為小寫字母、數字與連字號組成的 slug（不以連字號開頭或結尾）', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::slug-kebab-lowercase', 'must be a lowercase kebab-case slug (letters, digits, hyphens; no leading/trailing hyphen)', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::latin-alnum-only', '仅允许英文字母与数字（无空格或符号）', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::latin-alnum-only', '僅允許英文字母與數字（無空格或符號）', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::latin-alnum-only', 'Latin letters and digits only (no spaces or symbols)', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::ipv4-cidr-notation', '须为 IPv4 CIDR 表示法（地址/前缀长度 0～32）', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::ipv4-cidr-notation', '須為 IPv4 CIDR 表示法（位址/前置長度 0～32）', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::ipv4-cidr-notation', 'must be IPv4 in CIDR notation (address / prefix 0–32)', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::percent-integer-0-100', '须为 0～100 的整数百分比', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::percent-integer-0-100', '須為 0～100 的整數百分比', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::percent-integer-0-100', 'must be an integer percentage from 0 through 100', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::latin-alnum-dash-underscore', '仅允许英文字母、数字、连字符与下划线', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::latin-alnum-dash-underscore', '僅允許英文字母、數字、連字號與底線', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::latin-alnum-dash-underscore', 'Latin letters, digits, hyphens, and underscores only', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::var-name', '只允许字母、数字、下划线，且不能以数字开头', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::var-name', '只允許英文字母、數字與底線，且不得以數字開頭', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::var-name', 'only letters, numbers, and underscores; cannot start with a number', true);
 
 -- error-msg
 insert into "sys_i18n" ("locale", "atomic_service_code", "i18n_type_dict_code", "namespace", "key", "value", "built_in") values

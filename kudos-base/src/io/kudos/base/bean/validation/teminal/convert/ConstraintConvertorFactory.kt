@@ -31,6 +31,7 @@ object ConstraintConvertorFactory {
             Exist::class -> ExistConstraintConvertor(annotation)
             Constraints::class -> ConstraintsConstraintConvertor(annotation)
             Remote::class -> RemoteConstraintConvertor(annotation)
+            Matches::class -> MatchesConstraintConvertor(annotation)
             else -> DefaultConstraintConvertor(annotation)
         }
 
