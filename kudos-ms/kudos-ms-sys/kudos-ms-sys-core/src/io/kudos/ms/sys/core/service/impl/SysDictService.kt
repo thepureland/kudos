@@ -160,14 +160,14 @@ open class SysDictService(
         dictType: String,
         atomicServiceCode: String
     ): List<SysDictItemCacheEntry> {
-        return sysDictItemService.getItems(dictType, atomicServiceCode)
+        return sysDictItemService.getDictItemsFromCache(dictType, atomicServiceCode)
     }
 
     override fun getActiveDictItemMapFromCache(
         dictType: String,
         atomicServiceCode: String
     ): LinkedHashMap<String, String> {
-        val items = sysDictItemService.getItems(dictType, atomicServiceCode)
+        val items = sysDictItemService.getDictItemsFromCache(dictType, atomicServiceCode)
         return LinkedHashMap<String, String>().apply {
             items.forEach { put(it.itemCode, it.itemName) }
         }
@@ -177,7 +177,7 @@ open class SysDictService(
         dictTypeAndASCodePairs: List<Pair<String, String>>
     ): Map<Pair<String, String>, List<SysDictItemCacheEntry>> {
         return dictTypeAndASCodePairs.associate { (dictType, atomicServiceCode) ->
-            Pair(atomicServiceCode, dictType) to sysDictItemService.getItems(dictType, atomicServiceCode)
+            Pair(atomicServiceCode, dictType) to sysDictItemService.getDictItemsFromCache(dictType, atomicServiceCode)
         }
     }
 
@@ -185,7 +185,7 @@ open class SysDictService(
         dictTypeAndASCodePairs: List<Pair<String, String>>
     ): Map<Pair<String, String>, LinkedHashMap<String, String>> {
         return dictTypeAndASCodePairs.associate { (dictType, atomicServiceCode) ->
-            val items = sysDictItemService.getItems(dictType, atomicServiceCode)
+            val items = sysDictItemService.getDictItemsFromCache(dictType, atomicServiceCode)
             val map = LinkedHashMap<String, String>().apply {
                 items.forEach { put(it.itemCode, it.itemName) }
             }
