@@ -22,4 +22,4 @@ data class ISysDictFormUpdate (
 
     override val remark: String? = null,
 
-) : IIdEntity<String?>, ISysDictFormCommonConstraints
+) : IIdEntity<String?>, ISysDictFormBase

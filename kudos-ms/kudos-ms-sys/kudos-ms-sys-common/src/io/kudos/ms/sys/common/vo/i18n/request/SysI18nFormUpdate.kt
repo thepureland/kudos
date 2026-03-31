@@ -1,8 +1,6 @@
 package io.kudos.ms.sys.common.vo.i18n.request
 
-import io.kudos.base.bean.validation.constraint.annotations.MaxLength
 import io.kudos.base.model.contract.entity.IIdEntity
-import jakarta.validation.constraints.NotBlank
 
 
 /**
@@ -16,32 +14,18 @@ data class SysI18nFormUpdate (
     /** 主键 */
     override val id: String? = null,
 
-    /** 语言_地区 */
-    @get:NotBlank
-    val locale: String = "",
+    override val locale: String = "",
 
-    /** 原子服务编码 */
-    @get:NotBlank
-    val atomicServiceCode: String = "",
+    override val atomicServiceCode: String = "",
 
-    /** 国际化类型字典代码 */
-    @get:NotBlank
-    val i18nTypeDictCode: String = "",
+    override val i18nTypeDictCode: String = "",
 
-    /** 国际化命名空间 */
-    @get:NotBlank
-    val namespace: String = "",
+    override val namespace: String = "",
 
-    /** 国际化key */
-    @get:NotBlank
-    val key: String = "",
+    override val key: String = "",
 
-    /** 国际化值 */
-    @get:NotBlank
-    val value: String = "",
+    override val value: String = "",
 
-    /** 备注 */
-    @get:MaxLength(128)
-    val remark: String? = null,
+    override val remark: String? = null,
 
-) : IIdEntity<String?>
+) : IIdEntity<String?>, ISysI18nFormBase

@@ -1,9 +1,5 @@
 package io.kudos.ms.sys.common.vo.tenant.request
 
-import io.kudos.base.bean.validation.constraint.annotations.MaxLength
-import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.NotEmpty
-
 
 /**
  * 租户表单新建请求VO
@@ -13,22 +9,14 @@ import jakarta.validation.constraints.NotEmpty
  */
 data class SysTenantFormCreate (
 
-    /** 名称 */
-    @get:NotBlank
-    val name: String = "",
+    override val name: String = "",
 
-    /** 所属子系统 */
-    @get:NotEmpty
-    var subSystemCodes: Set<String> = emptySet(),
+    override var subSystemCodes: Set<String> = emptySet(),
 
-    /** 时区 */
-    val timezone: String? = null,
+    override val timezone: String? = null,
 
-    /** 默认语言编码 */
-    val defaultLanguageCode: String? = null,
+    override val defaultLanguageCode: String? = null,
 
-    /** 备注 */
-    @get:MaxLength(128)
-    val remark: String? = null,
+    override val remark: String? = null,
 
-)
+) : ISysTenantFormBase

@@ -1,8 +1,5 @@
 package io.kudos.ms.sys.common.vo.system.request
 
-import io.kudos.base.bean.validation.constraint.annotations.MaxLength
-import jakarta.validation.constraints.NotBlank
-
 
 /**
  * 系统表单新建请求VO
@@ -12,22 +9,14 @@ import jakarta.validation.constraints.NotBlank
  */
 data class SysSystemFormCreate (
 
-    /** 编码 */
-    @get:NotBlank
-    val code: String = "",
+    override val code: String = "",
 
-    /** 名称 */
-    @get:NotBlank
-    val name: String = "",
+    override val name: String = "",
 
-    /** 是否子系统 */
-    val subSystem: Boolean = true,
+    override val subSystem: Boolean = true,
 
-    /** 父系统编号 */
-    val parentCode: String? = null,
+    override val parentCode: String? = null,
 
-    /** 备注 */
-    @get:MaxLength(128)
-    val remark: String? = null,
+    override val remark: String? = null,
 
-)
+) : ISysSystemFormBase

@@ -1,5 +1,6 @@
 package io.kudos.ms.msg.common.vo.template.request
 
+
 /**
  * 消息模板表单新建请求VO
  *
@@ -8,37 +9,26 @@ package io.kudos.ms.msg.common.vo.template.request
  */
 data class MsgTemplateFormCreate (
 
-    /** 发送类型字典码 */
-    val sendTypeDictCode: String? = null,
+    override val sendTypeDictCode: String? = null,
 
-    /** 事件类型字典码 */
-    val eventTypeDictCode: String? = null,
+    override val eventTypeDictCode: String? = null,
 
-    /** 消息类型字典码 */
-    val msgTypeDictCode: String? = null,
+    override val msgTypeDictCode: String? = null,
 
-    /** 模板分组编码 */
-    val receiverGroupCode: String? = null,
+    override val receiverGroupCode: String? = null,
 
-    /** 国家-语言字典码 */
-    val localeDictCode: String? = null,
+    override val localeDictCode: String? = null,
 
-    /** 模板标题 */
-    val title: String? = null,
+    override val title: String? = null,
 
-    /** 模板内容 */
-    val content: String? = null,
+    override val content: String? = null,
 
-    /** 是否启用默认值 */
-    val defaultActive: Boolean? = null,
+    override val defaultActive: Boolean? = null,
 
-    /** 模板标题默认值 */
-    val defaultTitle: String? = null,
+    override val defaultTitle: String? = null,
 
-    /** 模板内容默认值 */
-    val defaultContent: String? = null,
+    override val defaultContent: String? = null,
 
-    /** 租户ID */
-    val tenantId: String? = null,
+    override val tenantId: String? = null,
 
-)
+) : IMsgTemplateFormBase

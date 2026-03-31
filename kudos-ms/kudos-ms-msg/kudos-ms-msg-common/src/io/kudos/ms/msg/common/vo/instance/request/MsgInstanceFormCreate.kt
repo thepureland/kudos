@@ -11,34 +11,24 @@ import java.time.LocalDateTime
  */
 data class MsgInstanceFormCreate (
 
-    /** 国家-语言字典码 */
-    val localeDictCode: String? = null,
+    override val localeDictCode: String? = null,
 
-    /** 标题 */
-    val title: String? = null,
+    override val title: String? = null,
 
-    /** 通知内容 */
-    val content: String? = null,
+    override val content: String? = null,
 
-    /** 消息模板id */
-    val templateId: String? = null,
+    override val templateId: String? = null,
 
-    /** 发送类型字典码 */
-    val sendTypeDictCode: String? = null,
+    override val sendTypeDictCode: String? = null,
 
-    /** 事件类型字典码 */
-    val eventTypeDictCode: String? = null,
+    override val eventTypeDictCode: String? = null,
 
-    /** 消息类型字典码 */
-    val msgTypeDictCode: String? = null,
+    override val msgTypeDictCode: String? = null,
 
-    /** 有效期起 */
-    val validTimeStart: LocalDateTime? = null,
+    override val validTimeStart: LocalDateTime? = null,
 
-    /** 有效期止 */
-    val validTimeEnd: LocalDateTime? = null,
+    override val validTimeEnd: LocalDateTime? = null,
 
-    /** 租户ID */
-    val tenantId: String? = null,
+    override val tenantId: String? = null,
 
-)
+) : IMsgInstanceFormBase
