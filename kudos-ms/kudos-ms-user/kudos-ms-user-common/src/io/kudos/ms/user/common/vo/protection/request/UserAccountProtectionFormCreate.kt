@@ -1,6 +1,5 @@
 package io.kudos.ms.user.common.vo.protection.request
 
-import io.kudos.base.bean.validation.constraint.annotations.MaxLength
 
 /**
  * 用户账号保护表单新建请求VO
@@ -10,41 +9,28 @@ import io.kudos.base.bean.validation.constraint.annotations.MaxLength
  */
 data class UserAccountProtectionFormCreate (
 
-    /** 用户ID */
-    val userId: String? = null,
+    override val userId: String? = null,
 
-    /** 问题1 */
-    val question1: String? = null,
+    override val question1: String? = null,
 
-    /** 答案1 */
-    val answer1: String? = null,
+    override val answer1: String? = null,
 
-    /** 问题2 */
-    val question2: String? = null,
+    override val question2: String? = null,
 
-    /** 答案2 */
-    val answer2: String? = null,
+    override val answer2: String? = null,
 
-    /** 问题3 */
-    val question3: String? = null,
+    override val question3: String? = null,
 
-    /** 答案3 */
-    val answer3: String? = null,
+    override val answer3: String? = null,
 
-    /** 安全联系方式ID */
-    val safeContactWayId: String? = null,
+    override val safeContactWayId: String? = null,
 
-    /** 总的找回密码次数 */
-    val totalValidateCount: Int? = null,
+    override val totalValidateCount: Int? = null,
 
-    /** 必须答对的问题数 */
-    val matchQuestionCount: Int? = null,
+    override val matchQuestionCount: Int? = null,
 
-    /** 错误次数 */
-    val errorTimes: Int? = null,
+    override val errorTimes: Int? = null,
 
-    /** 备注 */
-    @get:MaxLength(128)
-    val remark: String? = null,
+    override val remark: String? = null,
 
-)
+) : IUserAccountProtectionFormBase

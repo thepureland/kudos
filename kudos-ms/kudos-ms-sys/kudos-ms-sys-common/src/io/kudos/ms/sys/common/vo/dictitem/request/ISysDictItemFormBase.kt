@@ -1,0 +1,34 @@
+package io.kudos.ms.sys.common.vo.dictitem.request
+
+import io.kudos.base.bean.validation.constraint.annotations.MaxLength
+import jakarta.validation.constraints.NotBlank
+
+/**
+ * 字典项表单基础字段（新建 / 更新共用）
+ *
+ * @author K
+ * @since 1.0.0
+ */
+interface ISysDictItemFormBase {
+
+    /** 字典项代码 */
+    @get:NotBlank
+    val itemCode: String
+
+    /** 字典项名称 */
+    @get:NotBlank
+    val itemName: String
+
+    /** 字典id */
+    val dictId: String
+
+    /** 字典项排序 */
+    val orderNum: Int?
+
+    /** 父id */
+    val parentId: String?
+
+    /** 备注 */
+    @get:MaxLength(128)
+    val remark: String?
+}

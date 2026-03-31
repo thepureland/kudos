@@ -1,6 +1,5 @@
 package io.kudos.ms.auth.common.vo.group.request
 
-import io.kudos.base.bean.validation.constraint.annotations.MaxLength
 import io.kudos.base.model.contract.entity.IIdEntity
 
 
@@ -15,20 +14,14 @@ data class AuthGroupFormUpdate (
     /** 主键 */
     override val id: String? = null,
 
-    /** 用户组编码 */
-    val code: String? = null,
+    override val code: String? = null,
 
-    /** 用户组名称 */
-    val name: String? = null,
+    override val name: String? = null,
 
-    /** 租户id */
-    val tenantId: String? = null,
+    override val tenantId: String? = null,
 
-    /** 子系统编码 */
-    val subsysCode: String? = null,
+    override val subsysCode: String? = null,
 
-    /** 备注 */
-    @get:MaxLength(128)
-    val remark: String? = null,
+    override val remark: String? = null,
 
-) : IIdEntity<String?>
+) : IIdEntity<String?>, IAuthGroupFormBase

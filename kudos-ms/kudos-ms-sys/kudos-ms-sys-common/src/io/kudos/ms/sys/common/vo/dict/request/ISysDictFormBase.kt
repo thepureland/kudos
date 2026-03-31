@@ -6,12 +6,12 @@ import io.kudos.base.bean.validation.support.RegExpEnum
 import jakarta.validation.constraints.NotBlank
 
 /**
- * 字典表单公共字段与校验约束（新建 / 更新共用）
+ * 字典表单基础字段（新建 / 更新共用）
  *
  * @author K
  * @since 1.0.0
  */
-interface ISysDictFormCommonConstraints {
+interface ISysDictFormBase {
 
     /** 字典类型 */
     @get:NotBlank

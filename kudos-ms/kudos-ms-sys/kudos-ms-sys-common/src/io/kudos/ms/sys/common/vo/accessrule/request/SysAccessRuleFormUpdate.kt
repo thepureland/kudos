@@ -11,15 +11,13 @@ import io.kudos.base.model.contract.entity.IIdEntity
  */
 data class SysAccessRuleFormUpdate (
 
+    /** 主键 */
     override val id: String? = null,
 
-    /** 租户id */
-    val tenantId: String? = null,
+    override val tenantId: String? = null,
 
-    /** 系统编码 */
-    val systemCode: String? = null,
+    override val systemCode: String? = null,
 
-    /** 规则类型 */
-    val ruleType: Int? = null,
+    override val ruleType: Int? = null,
 
-) : IIdEntity<String?>
+) : IIdEntity<String?>, ISysAccessRuleFormBase

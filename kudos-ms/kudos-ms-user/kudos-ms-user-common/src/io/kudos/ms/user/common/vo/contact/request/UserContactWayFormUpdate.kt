@@ -1,6 +1,5 @@
 package io.kudos.ms.user.common.vo.contact.request
 
-import io.kudos.base.bean.validation.constraint.annotations.MaxLength
 import io.kudos.base.model.contract.entity.IIdEntity
 
 
@@ -15,23 +14,16 @@ data class UserContactWayFormUpdate (
     /** 主键 */
     override val id: String? = null,
 
-    /** 用户ID */
-    val userId: String? = null,
+    override val userId: String? = null,
 
-    /** 联系方式字典码 */
-    val contactWayDictCode: String? = null,
+    override val contactWayDictCode: String? = null,
 
-    /** 联系方式值 */
-    val contactWayValue: String? = null,
+    override val contactWayValue: String? = null,
 
-    /** 联系方式状态字典码 */
-    val contactWayStatusDictCode: String? = null,
+    override val contactWayStatusDictCode: String? = null,
 
-    /** 优先级 */
-    val priority: Short? = null,
+    override val priority: Short? = null,
 
-    /** 备注 */
-    @get:MaxLength(128)
-    val remark: String? = null,
+    override val remark: String? = null,
 
-) : IIdEntity<String?>
+) : IIdEntity<String?>, IUserContactWayFormBase

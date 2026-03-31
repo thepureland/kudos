@@ -9,13 +9,10 @@ package io.kudos.ms.sys.common.vo.accessrule.request
  */
 data class SysAccessRuleFormCreate (
 
-    /** 租户id */
-    val tenantId: String? = null,
+    override val tenantId: String? = null,
 
-    /** 系统编码 */
-    val systemCode: String? = null,
+    override val systemCode: String? = null,
 
-    /** 规则类型 */
-    val ruleType: Int? = null,
+    override val ruleType: Int? = null,
 
-)
+) : ISysAccessRuleFormBase

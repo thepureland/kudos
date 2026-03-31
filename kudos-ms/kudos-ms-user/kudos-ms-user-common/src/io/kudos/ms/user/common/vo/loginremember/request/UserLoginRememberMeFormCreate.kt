@@ -11,13 +11,10 @@ import java.time.LocalDateTime
  */
 data class UserLoginRememberMeFormCreate (
 
-    /** 用户名 */
-    val username: String? = null,
+    override val username: String? = null,
 
-    /** 令牌 */
-    val token: String? = null,
+    override val token: String? = null,
 
-    /** 最后使用时间 */
-    val lastUsed: LocalDateTime? = null,
+    override val lastUsed: LocalDateTime? = null,
 
-)
+) : IUserLoginRememberMeFormBase

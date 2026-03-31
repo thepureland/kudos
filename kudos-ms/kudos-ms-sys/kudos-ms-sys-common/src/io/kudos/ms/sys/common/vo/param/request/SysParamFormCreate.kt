@@ -1,8 +1,5 @@
 package io.kudos.ms.sys.common.vo.param.request
 
-import io.kudos.base.bean.validation.constraint.annotations.MaxLength
-import jakarta.validation.constraints.NotBlank
-
 
 /**
  * 参数表单新建请求VO
@@ -12,26 +9,16 @@ import jakarta.validation.constraints.NotBlank
  */
 data class SysParamFormCreate (
 
-    /** 参数名称 */
-    @get:NotBlank
-    val paramName: String = "",
+    override val paramName: String = "",
 
-    /** 参数值 */
-    @get:NotBlank
-    val paramValue: String = "",
+    override val paramValue: String = "",
 
-    /** 默认参数值 */
-    val defaultValue: String? = null,
+    override val defaultValue: String? = null,
 
-    /** 原子服务编码 */
-    @get:NotBlank
-    val atomicServiceCode: String = "",
+    override val atomicServiceCode: String = "",
 
-    /** 序号 */
-    val orderNum: Int? = null,
+    override val orderNum: Int? = null,
 
-    /** 备注 */
-    @get:MaxLength(128)
-    val remark: String? = null,
+    override val remark: String? = null,
 
-)
+) : ISysParamFormBase

@@ -1,6 +1,5 @@
 package io.kudos.ms.user.common.vo.user.request
 
-import io.kudos.base.bean.validation.constraint.annotations.MaxLength
 import java.time.LocalDateTime
 
 
@@ -12,38 +11,26 @@ import java.time.LocalDateTime
  */
 data class UserAccountThirdFormCreate (
 
-    /** 关联用户账号ID */
-    val userId: String? = null,
+    override val userId: String? = null,
 
-    /** 第三方平台字典码 */
-    val accountProviderDictCode: String? = null,
+    override val accountProviderDictCode: String? = null,
 
-    /** 发行方/平台租户 */
-    val accountProviderIssuer: String? = null,
+    override val accountProviderIssuer: String? = null,
 
-    /** 第三方用户唯一标识 */
-    val subject: String? = null,
+    override val subject: String? = null,
 
-    /** 跨应用统一标识 */
-    val unionId: String? = null,
+    override val unionId: String? = null,
 
-    /** 第三方展示名 */
-    val externalDisplayName: String? = null,
+    override val externalDisplayName: String? = null,
 
-    /** 第三方邮箱 */
-    val externalEmail: String? = null,
+    override val externalEmail: String? = null,
 
-    /** 头像URL */
-    val avatarUrl: String? = null,
+    override val avatarUrl: String? = null,
 
-    /** 最后登录时间 */
-    val lastLoginTime: LocalDateTime? = null,
+    override val lastLoginTime: LocalDateTime? = null,
 
-    /** 租户ID */
-    val tenantId: String? = null,
+    override val tenantId: String? = null,
 
-    /** 备注 */
-    @get:MaxLength(128)
-    val remark: String? = null,
+    override val remark: String? = null,
 
-)
+) : IUserAccountThirdFormBase

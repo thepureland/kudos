@@ -1,8 +1,6 @@
 package io.kudos.ms.sys.common.vo.microservice.request
 
-import io.kudos.base.bean.validation.constraint.annotations.MaxLength
 import io.kudos.base.model.contract.entity.IIdEntity
-import jakarta.validation.constraints.NotBlank
 
 
 /**
@@ -13,29 +11,19 @@ import jakarta.validation.constraints.NotBlank
  */
 data class SysMicroServiceFormUpdate (
 
-    /** 编码 */
-    @get:NotBlank
-    val code: String = "",
+    override val code: String = "",
 
-    /** 名称 */
-    @get:NotBlank
-    val name: String = "",
+    override val name: String = "",
 
-    /** 上下文 */
-    @get:NotBlank
-    val context: String = "",
+    override val context: String = "",
 
-    /** 是否为原子服务 */
-    val atomicService: Boolean = true,
+    override val atomicService: Boolean = true,
 
-    /** 父服务编码 */
-    val parentCode: String? = null,
+    override val parentCode: String? = null,
 
-    /** 备注 */
-    @get:MaxLength(128)
-    val remark: String? = null,
+    override val remark: String? = null,
 
-) : IIdEntity<String> {
+) : ISysMicroServiceFormBase, IIdEntity<String> {
 
     override val id: String
         get() = code

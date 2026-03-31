@@ -1,6 +1,5 @@
 package io.kudos.ms.user.common.vo.org.request
 
-import io.kudos.base.bean.validation.constraint.annotations.MaxLength
 import io.kudos.base.model.contract.entity.IIdEntity
 
 
@@ -15,26 +14,18 @@ data class UserOrgFormUpdate (
     /** 主键 */
     override val id: String? = null,
 
-    /** 机构名称 */
-    val name: String? = null,
+    override val name: String? = null,
 
-    /** 机构简称 */
-    val shortName: String? = null,
+    override val shortName: String? = null,
 
-    /** 租户id */
-    val tenantId: String? = null,
+    override val tenantId: String? = null,
 
-    /** 父机构id */
-    val parentId: String? = null,
+    override val parentId: String? = null,
 
-    /** 机构类型字典码 */
-    val orgTypeDictCode: String? = null,
+    override val orgTypeDictCode: String? = null,
 
-    /** 排序号 */
-    val sortNum: Int? = null,
+    override val sortNum: Int? = null,
 
-    /** 备注 */
-    @get:MaxLength(128)
-    val remark: String? = null,
+    override val remark: String? = null,
 
-) : IIdEntity<String?>
+) : IIdEntity<String?>, IUserOrgFormBase

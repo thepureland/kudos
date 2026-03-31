@@ -15,13 +15,10 @@ data class UserLoginRememberMeFormUpdate (
     /** 主键 */
     override val id: String? = null,
 
-    /** 用户名 */
-    val username: String? = null,
+    override val username: String? = null,
 
-    /** 令牌 */
-    val token: String? = null,
+    override val token: String? = null,
 
-    /** 最后使用时间 */
-    val lastUsed: LocalDateTime? = null,
+    override val lastUsed: LocalDateTime? = null,
 
-) : IIdEntity<String?>
+) : IIdEntity<String?>, IUserLoginRememberMeFormBase

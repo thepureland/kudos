@@ -15,40 +15,28 @@ data class MsgSendFormUpdate (
     /** 主键 */
     override val id: String? = null,
 
-    /** 接收者群组类型字典码 */
-    val receiverGroupTypeDictCode: String? = null,
+    override val receiverGroupTypeDictCode: String? = null,
 
-    /** 接收者群组ID */
-    val receiverGroupId: String? = null,
+    override val receiverGroupId: String? = null,
 
-    /** 消息实例ID */
-    val instanceId: String? = null,
+    override val instanceId: String? = null,
 
-    /** 消息类型字典码 */
-    val msgTypeDictCode: String? = null,
+    override val msgTypeDictCode: String? = null,
 
-    /** 国家-语言字典码 */
-    val localeDictCode: String? = null,
+    override val localeDictCode: String? = null,
 
-    /** 发送状态字典码 */
-    val sendStatusDictCode: String? = null,
+    override val sendStatusDictCode: String? = null,
 
-    /** 创建时间 */
-    val createTime: LocalDateTime? = null,
+    override val createTime: LocalDateTime? = null,
 
-    /** 更新时间 */
-    val updateTime: LocalDateTime? = null,
+    override val updateTime: LocalDateTime? = null,
 
-    /** 发送成功数量 */
-    val successCount: Int? = null,
+    override val successCount: Int? = null,
 
-    /** 发送失败数量 */
-    val failCount: Int? = null,
+    override val failCount: Int? = null,
 
-    /** 定时任务ID */
-    val jobId: String? = null,
+    override val jobId: String? = null,
 
-    /** 租户ID */
-    val tenantId: String? = null,
+    override val tenantId: String? = null,
 
-) : IIdEntity<String?>
+) : IIdEntity<String?>, IMsgSendFormBase

@@ -17,4 +17,4 @@ data class ISysDictFormCreate (
 
     override val remark: String? = null,
 
-) : ISysDictFormCommonConstraints
+) : ISysDictFormBase
