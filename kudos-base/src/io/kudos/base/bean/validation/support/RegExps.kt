@@ -222,4 +222,7 @@ object RegExps {
 
     /** jdbc url */
     const val JDBC_URL = "^jdbc:[a-zA-Z0-9][a-zA-Z0-9+._-]*:\\S+$"
+
+    /** 域名 */
+    const val DOMAIN = "^(localhost|(?=.{1,253}$)(?!-)(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.)+[A-Za-z]{2,63})$"
 }
