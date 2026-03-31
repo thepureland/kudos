@@ -755,7 +755,11 @@ insert into "sys_i18n" ("locale", "atomic_service_code", "i18n_type_dict_code", 
 
     ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::jdbc-url', '须为合法的JDBC连接地址', true),
     ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::jdbc-url', '須為合法的 JDBC 連線位址', true),
-    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::jdbc-url', 'must be a valid JDBC URL', true);
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::jdbc-url', 'must be a valid JDBC URL', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::domain', '须为合法的域名', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::domain', '須為合法的網域名稱', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::domain', 'must be a valid domain name', true);
 
 insert into "sys_i18n" ("locale", "atomic_service_code", "i18n_type_dict_code", "namespace", "key", "value", "built_in") values
     ('zh-CN', 'sys', 'valid-msg', 'dataSource', 'Compare::maxActive', '不得小于初始连接数', true),

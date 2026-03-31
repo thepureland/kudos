@@ -2,7 +2,7 @@
 create table if not exists "sys_domain"
 (
     "id"              character(36) default RANDOM_UUID() not null primary key,
-    "domain"          character varying(64)               not null,
+    "domain"          character varying(256)               not null,
     "system_code"     character varying(32)               not null,
     "tenant_id"       character varying(36),
     "remark"          character varying(128),

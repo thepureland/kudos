@@ -206,5 +206,8 @@ enum class RegExpEnum(
     /* jdbc url */
     JDBC_URL(RegExps.JDBC_URL, regExpMsg("jdbc-url")),
 
+    /* 域名 */
+    DOMAIN(RegExps.DOMAIN, regExpMsg("domain")),
+
     ;
 }

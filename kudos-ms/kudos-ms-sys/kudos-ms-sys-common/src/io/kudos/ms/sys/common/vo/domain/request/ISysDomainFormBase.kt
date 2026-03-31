@@ -1,6 +1,8 @@
 package io.kudos.ms.sys.common.vo.domain.request
 
+import io.kudos.base.bean.validation.constraint.annotations.Matches
 import io.kudos.base.bean.validation.constraint.annotations.MaxLength
+import io.kudos.base.bean.validation.support.RegExpEnum
 import jakarta.validation.constraints.NotBlank
 
 /**
@@ -13,10 +15,13 @@ interface ISysDomainFormBase {
 
     /** 域名 */
     @get:NotBlank
+    @get:MaxLength(256)
+    @get:Matches(RegExpEnum.DOMAIN)
     val domain: String
 
     /** 系统编码 */
     @get:NotBlank
+    @get:MaxLength(32)
     val systemCode: String
 
     /** 租户id */
