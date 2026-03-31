@@ -3,8 +3,8 @@ package io.kudos.ms.sys.api.admin.controller
 import io.kudos.ability.web.springmvc.controller.BaseCrudController
 import io.kudos.base.query.PagingSearchResult
 import io.kudos.ms.sys.common.vo.dict.SysDictCacheEntry
-import io.kudos.ms.sys.common.vo.dict.request.SysDictFormCreate
-import io.kudos.ms.sys.common.vo.dict.request.SysDictFormUpdate
+import io.kudos.ms.sys.common.vo.dict.request.ISysDictFormCreate
+import io.kudos.ms.sys.common.vo.dict.request.ISysDictFormUpdate
 import io.kudos.ms.sys.common.vo.dict.request.SysDictQuery
 import io.kudos.ms.sys.common.vo.dict.response.SysDictDetail
 import io.kudos.ms.sys.common.vo.dict.response.SysDictEdit
@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*
 @RestController
 @RequestMapping("/api/admin/sys/dict")
 class SysDictAdminController :
-    BaseCrudController<String, ISysDictService, SysDictQuery, SysDictRow, SysDictDetail, SysDictEdit, SysDictFormCreate, SysDictFormUpdate>() {
+    BaseCrudController<String, ISysDictService, SysDictQuery, SysDictRow, SysDictDetail, SysDictEdit, ISysDictFormCreate, ISysDictFormUpdate>() {
 
 
 
