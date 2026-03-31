@@ -203,5 +203,8 @@ enum class RegExpEnum(
     /* 变量名 */
     VAR_NAME(RegExps.VAR_NAME, regExpMsg("var-name")),
 
+    /* jdbc url */
+    JDBC_URL(RegExps.JDBC_URL, regExpMsg("jdbc-url")),
+
     ;
 }

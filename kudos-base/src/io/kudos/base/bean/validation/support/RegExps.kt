@@ -219,4 +219,7 @@ object RegExps {
 
     /** 标识符：字母或下划线开头，后跟字母数字下划线 */
     const val VAR_NAME = "^[A-Za-z_][A-Za-z0-9_]*$"
+
+    /** jdbc url */
+    const val JDBC_URL = "^jdbc:[a-zA-Z0-9][a-zA-Z0-9+._-]*:\\S+$"
 }

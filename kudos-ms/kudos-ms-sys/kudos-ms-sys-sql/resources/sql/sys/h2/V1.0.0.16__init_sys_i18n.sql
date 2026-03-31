@@ -751,7 +751,24 @@ insert into "sys_i18n" ("locale", "atomic_service_code", "i18n_type_dict_code", 
 
     ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::var-name', '只允许字母、数字、下划线，且不能以数字开头', true),
     ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::var-name', '只允許英文字母、數字與底線，且不得以數字開頭', true),
-    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::var-name', 'only letters, numbers, and underscores; cannot start with a number', true);
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::var-name', 'only letters, numbers, and underscores; cannot start with a number', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::jdbc-url', '须为合法的JDBC连接地址', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::jdbc-url', '須為合法的 JDBC 連線位址', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::jdbc-url', 'must be a valid JDBC URL', true);
+
+insert into "sys_i18n" ("locale", "atomic_service_code", "i18n_type_dict_code", "namespace", "key", "value", "built_in") values
+    ('zh-CN', 'sys', 'valid-msg', 'dataSource', 'Compare::maxActive', '不得小于初始连接数', true),
+    ('zh-TW', 'sys', 'valid-msg', 'dataSource', 'Compare::maxActive', '不得小於初始連線數', true),
+    ('en-US', 'sys', 'valid-msg', 'dataSource', 'Compare::maxActive', 'must not be less than initial size', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'dataSource', 'Compare::maxIdle', '不得大于最大连接数', true),
+    ('zh-TW', 'sys', 'valid-msg', 'dataSource', 'Compare::maxIdle', '不得大於最大連線數', true),
+    ('en-US', 'sys', 'valid-msg', 'dataSource', 'Compare::maxIdle', 'must not exceed max active', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'dataSource', 'Compare::minIdle', '不得大于最大连接数', true),
+    ('zh-TW', 'sys', 'valid-msg', 'dataSource', 'Compare::minIdle', '不得大於最大連線數', true),
+    ('en-US', 'sys', 'valid-msg', 'dataSource', 'Compare::minIdle', 'must not exceed max active', true);
 
 -- error-msg
 insert into "sys_i18n" ("locale", "atomic_service_code", "i18n_type_dict_code", "namespace", "key", "value", "built_in") values
