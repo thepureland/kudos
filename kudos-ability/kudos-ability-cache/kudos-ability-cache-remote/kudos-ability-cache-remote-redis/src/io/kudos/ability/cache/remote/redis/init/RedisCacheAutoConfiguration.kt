@@ -35,7 +35,7 @@ import org.springframework.data.redis.listener.ChannelTopic
 import org.springframework.data.redis.listener.RedisMessageListenerContainer
 import org.springframework.data.redis.serializer.RedisSerializationContext
 import java.time.Duration
-import java.util.*
+import java.util.UUID
 
 
 /**
