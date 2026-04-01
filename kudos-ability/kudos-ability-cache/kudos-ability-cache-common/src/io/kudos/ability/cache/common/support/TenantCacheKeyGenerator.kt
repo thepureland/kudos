@@ -16,7 +16,6 @@ import org.springframework.expression.ExpressionParser
 import org.springframework.expression.spel.standard.SpelExpressionParser
 import org.springframework.expression.spel.support.StandardEvaluationContext
 import java.lang.reflect.Method
-import java.util.*
 
 /**
  * 租户缓存key生成器
@@ -133,13 +132,12 @@ class TenantCacheKeyGenerator : KeyGenerator {
      * @return 从注解中提取的key配置（suffix值），如果不存在则返回空字符串
      */
     private fun getAnnotationKey(method: Method): String {
-        return KEY_ANNOTATIONS.stream()
-            .map { type: Class<out Annotation?>? -> AnnotationUtils.findAnnotation(method, type) }
-            .filter { obj: Any? -> Objects.nonNull(obj) }
-            .map<String> { ann: Annotation? -> AnnotationUtils.getValue(ann, "suffix") as String? }
-            .filter { obj: String? -> Objects.nonNull(obj) }
-            .findFirst()
-            .orElse("")
+        for (type in KEY_ANNOTATIONS) {
+            val ann = AnnotationUtils.findAnnotation(method, type) ?: continue
+            val suffix = AnnotationUtils.getValue(ann, "suffix") as? String?
+            if (suffix != null) return suffix
+        }
+        return ""
     }
 
     /**
@@ -185,7 +183,9 @@ class TenantCacheKeyGenerator : KeyGenerator {
         context.setVariable("method", method)
         context.setVariable("tenantId", KudosContextHolder.get().tenantId)
         val expression = parser.parseExpression(cacheKey)
-        return expression.getValue(context, String::class.java)!!
+        return requireNotNull(expression.getValue(context, String::class.java)) {
+            "SpEL cache key must resolve to non-null String"
+        }
     }
 
     companion object {
