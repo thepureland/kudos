@@ -45,10 +45,10 @@ open class FlywayMultiDataSourceMigrator {
         locationUrls.forEach { url ->
             val path = url.path
             val childFolders = if (url.protocol == "jar") {
-                val pathes = FileKit.listFilesOrDirsInJar(url.toString().removeSuffix(sqlRootPath), sqlRootPath)
-                pathes.map { it.removePrefix("$sqlRootPath/").removeSuffix("/") }
+                val paths = FileKit.listFilesOrDirsInJar(url.toString().removeSuffix(sqlRootPath), sqlRootPath)
+                paths.map { it.removePrefix("$sqlRootPath/").removeSuffix("/") }
             } else {
-                File(path).listFiles().map { it.name }
+                File(path).listFiles()?.map { it.name }.orEmpty()
             }
             childFolders.forEach { moduleName ->
                 if (!moduleNames.contains(moduleName)) {
@@ -73,9 +73,11 @@ open class FlywayMultiDataSourceMigrator {
         val finalModuleNames = modules - diffModules
 
         // 升级各模块的sql脚本
-        finalModuleNames.forEach {
-            val datasourceKey = flywayMultiDatasourceProperties.getDataSourceKey(it)!!
-            migrateByModule(it, datasourceKey)
+        finalModuleNames.forEach { module ->
+            val datasourceKey = checkNotNull(flywayMultiDatasourceProperties.getDataSourceKey(module)) {
+                "datasource key missing for module: $module"
+            }
+            migrateByModule(module, datasourceKey)
         }
 
     }
@@ -87,8 +89,10 @@ open class FlywayMultiDataSourceMigrator {
             error(errMsg)
         }
 
-        val dataSource = dsContextProcessor.getDataSource(datasourceKey)
-        FlywayKit.migrate(moduleName, dataSource!!, flywayProperties)
+        val dataSource = checkNotNull(dsContextProcessor.getDataSource(datasourceKey)) {
+            "数据源【$datasourceKey】解析为 null"
+        }
+        FlywayKit.migrate(moduleName, dataSource, flywayProperties)
     }
 
 }
