@@ -34,13 +34,17 @@ open class MqProducerAspect {
             log.warn("MqProducer 方法返回false，跳过发送。method={0}", joinPoint.signature.toShortString())
             return
         }
-        if (joinPoint.args == null || joinPoint.args.size == 0) {
+        if (joinPoint.args.isEmpty()) {
             log.warn("Stream生产消息体为空，忽略本次消息")
             return
         }
         val signature = joinPoint.signature as MethodSignature
         val annotation = signature.method.getAnnotation(MqProducer::class.java)
-        val bindingName = annotation!!.bindingName
+            ?: run {
+                log.warn("MqProducer 注解缺失，method={0}", signature.toShortString())
+                return
+            }
+        val bindingName = annotation.bindingName
         val data = joinPoint.args[0]
         val success = producerHelper.sendMessage(bindingName, data)
         if (!success) {
