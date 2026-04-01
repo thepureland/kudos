@@ -12,9 +12,7 @@ import java.util.concurrent.locks.Lock
  */
 class RedissonLockProvider : ILockProvider<RLock> {
     
-    override fun lock(key: String): RLock {
-        return RedissonLockKit.lock(key)
-    }
+    override fun lock(key: String): RLock = RedissonLockKit.lock(key)
 
     override fun unLock(lock: Lock, key: String) {
         lock.unlock()
@@ -24,11 +22,8 @@ class RedissonLockProvider : ILockProvider<RLock> {
         RedissonLockKit.unlock(key)
     }
 
-    override fun order(): Int {
-        return 90
-    }
+    override fun order(): Int = 90
 
-    override fun tryLock(lockKey: String, sec: Int): Boolean {
-        return RedissonLockKit.tryLock(lockKey, TimeUnit.SECONDS, 0, sec.toLong())
-    }
+    override fun tryLock(lockKey: String, sec: Int): Boolean =
+        RedissonLockKit.tryLock(lockKey, TimeUnit.SECONDS, 0, sec.toLong())
 }

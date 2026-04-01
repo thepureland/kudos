@@ -21,10 +21,7 @@ object RedissonLockKit {
      * @param lockKey 锁的key
      * @return RLock
      */
-    fun getLock(lockKey: String): RLock {
-        initLockBean()
-        return lockBean!!.getLock(getLockKey(lockKey))
-    }
+    fun getLock(lockKey: String): RLock = locker().getLock(getLockKey(lockKey))
 
     /**
      * 获取分布式锁
@@ -32,10 +29,7 @@ object RedissonLockKit {
      * @param lockKey 锁的key
      * @return RLock
      */
-    fun lock(lockKey: String): RLock {
-        initLockBean()
-        return lockBean!!.lock(getLockKey(lockKey))
-    }
+    fun lock(lockKey: String): RLock = locker().lock(getLockKey(lockKey))
 
     /**
      * 获取分布式锁，并指定锁失效秒数
@@ -44,10 +38,7 @@ object RedissonLockKit {
      * @param timeOut timeOut
      * @return RLock
      */
-    fun lock(lockKey: String, timeOut: Long): RLock {
-        initLockBean()
-        return lockBean!!.lock(getLockKey(lockKey), timeOut)
-    }
+    fun lock(lockKey: String, timeOut: Long): RLock = locker().lock(getLockKey(lockKey), timeOut)
 
     /**
      * 获取分布式锁，并指定锁失效时间
@@ -57,10 +48,8 @@ object RedissonLockKit {
      * @param timeOut timeOut
      * @return RLock
      */
-    fun lock(lockKey: String, unit: TimeUnit, timeOut: Long): RLock {
-        initLockBean()
-        return lockBean!!.lock(getLockKey(lockKey), unit, timeOut)
-    }
+    fun lock(lockKey: String, unit: TimeUnit, timeOut: Long): RLock =
+        locker().lock(getLockKey(lockKey), unit, timeOut)
 
     /**
      * 尝试获取锁，如果获取成功返回true，否则返回false
@@ -70,10 +59,8 @@ object RedissonLockKit {
      * @param timeOut   获取锁等待时间
      * @param leaseTime 获取锁成功后，锁失效时间
      */
-    fun tryLock(lockKey: String, unit: TimeUnit, timeOut: Long, leaseTime: Long): Boolean {
-        initLockBean()
-        return lockBean!!.tryLock(getLockKey(lockKey), unit, timeOut, leaseTime)
-    }
+    fun tryLock(lockKey: String, unit: TimeUnit, timeOut: Long, leaseTime: Long): Boolean =
+        locker().tryLock(getLockKey(lockKey), unit, timeOut, leaseTime)
 
     /**
      * 解除分布式锁
@@ -81,8 +68,7 @@ object RedissonLockKit {
      * @param lockKey lockKey
      */
     fun unlock(lockKey: String) {
-        initLockBean()
-        lockBean!!.unlock(getLockKey(lockKey))
+        locker().unlock(getLockKey(lockKey))
     }
 
     /**
@@ -91,8 +77,7 @@ object RedissonLockKit {
      * @param lock lock
      */
     fun unlock(lock: RLock) {
-        initLockBean()
-        if (lock.isLocked()) {
+        if (lock.isLocked) {
             lock.unlock()
         }
     }
@@ -104,13 +89,15 @@ object RedissonLockKit {
         }
     }
 
+    private fun locker(): RedissonLocker {
+        initLockBean()
+        return requireNotNull(lockBean) { "RedissonLocker 未就绪" }
+    }
+
     const val REDISSON_CLIENT_BEAN_NAME: String = "redissonClient"
 
-    fun redissonClient(): RedissonClient {
-        return SpringKit.getBean(REDISSON_CLIENT_BEAN_NAME) as RedissonClient
-    }
+    fun redissonClient(): RedissonClient =
+        SpringKit.getBean(REDISSON_CLIENT_BEAN_NAME) as RedissonClient
 
-    fun getLockKey(key: String): String {
-        return LOCK_KEY_PREFIX + key
-    }
+    fun getLockKey(key: String): String = LOCK_KEY_PREFIX + key
 }
