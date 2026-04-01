@@ -13,6 +13,7 @@ import java.io.ByteArrayInputStream
 import java.io.ObjectInputStream
 import java.time.LocalDateTime
 import java.util.function.Consumer
+import kotlin.concurrent.thread
 
 /**
  * RocketMQ批量消息消费者
@@ -52,7 +53,7 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
     private val consumer: DefaultLitePullConsumer
     private var pullTime: Long = 5000
     private var batchProcessSize = 1000
-    private var bizBachProcess: Consumer<MutableList<BatchConsumerItem<T?>?>?>? = null
+    private var bizBatchProcess: Consumer<MutableList<BatchConsumerItem<T?>?>?>? = null
     private val groupName: String?
     private val topic: String?
 
@@ -117,35 +118,33 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
      * - 线程退出时会处理剩余的批量数据，避免消息丢失
      * - 批量处理失败时，根据saveException配置决定是否保存异常数据
      * 
-     * @param bizBachProcess 业务处理方法，接收批量消息列表进行处理
+     * @param bizBatchProcess 业务处理方法，接收批量消息列表进行处理
      */
-    fun start(bizBachProcess: Consumer<MutableList<BatchConsumerItem<T?>?>?>) {
-        this.bizBachProcess = bizBachProcess
+    fun start(bizBatchProcess: Consumer<MutableList<BatchConsumerItem<T?>?>?>) {
+        this.bizBatchProcess = bizBatchProcess
         this.isRunning = true
-        daemonThread = Thread {
+        daemonThread = thread(
+            name = "RocketMqBatchConsumer-$groupName",
+            isDaemon = true
+        ) {
             var lastCommitTime = System.currentTimeMillis()
-            var batchData: MutableList<MessageExt?> = ArrayList()
+            val batchData = mutableListOf<MessageExt?>()
             while (isRunning) {
                 val poll = consumer.poll()
                 if (poll != null && poll.isNotEmpty()) {
-                    log.debug("本次拉到数据：" + poll.size)
+                    log.debug("本次拉到数据：${poll.size}")
                     batchData.addAll(poll)
                 }
                 val nowTime = System.currentTimeMillis()
-                //超过1000条或者超过5秒
                 if (batchData.size >= batchProcessSize || nowTime - lastCommitTime > pullTime) {
-                    log.info("本次处理业务数据量：" + batchData.size)
+                    log.info("本次处理业务数据量：${batchData.size}")
                     toProcessBizData(batchData)
                     lastCommitTime = System.currentTimeMillis()
-                    //清理内存数据
-                    batchData = ArrayList()
+                    batchData.clear()
                 }
             }
             toProcessBizData(batchData)
         }
-        daemonThread?.name = "RocketMqBatchConsumer-$groupName"
-        daemonThread?.isDaemon = true
-        daemonThread?.start()
     }
 
     /**
@@ -192,27 +191,26 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
      * @param batchData 批量消息列表，包含从MQ拉取的消息
      */
     private fun toProcessBizData(batchData: MutableList<MessageExt?>) {
-        val list = batchData.stream().map { s: MessageExt? ->
+        val list = batchData.filterNotNull().map { s ->
             try {
-                val properties = s!!.properties
-                val ois = ObjectInputStream(ByteArrayInputStream(s.body))
-                ois.use {
+                val properties = s.properties
+                val data = ObjectInputStream(ByteArrayInputStream(s.body)).use { ois ->
                     @Suppress("UNCHECKED_CAST")
-                    val data = ois.readObject() as T?
-                    return@map BatchConsumerItem<T?>(data, properties)
+                    ois.readObject() as T?
                 }
+                BatchConsumerItem(data, properties)
             } catch (e: Exception) {
-                //一般编码过程才会出现此问题，直接报错
                 throw RuntimeException(e)
             }
-        }.toList()
+        }.toMutableList()
         try {
-            val processor = bizBachProcess
+            val processor = bizBatchProcess
             if (processor == null) {
                 log.warn("业务消费处理器为空，跳过本批次消费。topic=$topic")
                 return
             }
-            processor.accept(list)
+            @Suppress("UNCHECKED_CAST")
+            processor.accept(list as MutableList<BatchConsumerItem<T?>?>?)
             consumer.commit()
         } catch (e: Exception) {
             if (saveException) {
@@ -244,7 +242,7 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
         try {
             daemonThread?.join()
         } catch (e: InterruptedException) {
-            log.error("停止mq消费失败" + e.message)
+            log.error(e, "停止 mq 消费失败")
         }
     }
 
