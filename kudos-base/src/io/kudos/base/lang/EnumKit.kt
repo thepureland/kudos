@@ -6,7 +6,7 @@ import io.kudos.base.lang.EnumKit.processBitVector
 import io.kudos.base.lang.reflect.isEnum
 import io.kudos.base.logger.LogFactory
 import org.apache.commons.lang3.EnumUtils
-import java.util.*
+import java.util.EnumSet
 import kotlin.reflect.KClass
 
 /**
@@ -30,10 +30,7 @@ object EnumKit {
      * @since 1.0.0
      */
     fun displayText(enumClassStr: String, code: String): String? {
-        val enumClazz = enumOf(enumClassStr, code)
-        if (enumClazz != null) {
-            return enumClazz.displayText
-        }
+        enumOf(enumClassStr, code)?.let { return it.displayText }
         LOG.warn("枚举类【${enumClassStr}】不存在code为【${code}】的枚举元素")
         return null
     }
@@ -53,11 +50,7 @@ object EnumKit {
         require(enumClass.isEnum()) { "指定的类【${enumClass}】非枚举类" }
         require(code.isNotBlank()) { "字典代码参数不能为空" }
 
-        for (e in enumClass.java.enumConstants) {
-            if (e.code == code) {
-                return e
-            }
-        }
+        enumClass.java.enumConstants.firstOrNull { it.code == code }?.let { return it }
         LOG.warn("枚举类【${enumClass}】不存在code为【$code】的枚举元素")
         return null
     }

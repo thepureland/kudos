@@ -19,7 +19,7 @@ import io.kudos.base.io.scanner.support.Resource
 import io.kudos.base.logger.LogFactory
 import java.io.File
 import java.io.IOException
-import java.util.*
+import java.util.TreeSet
 
 /**
  * FileSystem scanner.

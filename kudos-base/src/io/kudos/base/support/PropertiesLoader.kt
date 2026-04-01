@@ -2,7 +2,7 @@ package io.kudos.base.support
 
 import io.kudos.base.logger.LogFactory
 import java.io.IOException
-import java.util.*
+import java.util.Properties
 
 
 /**
