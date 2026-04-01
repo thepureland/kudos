@@ -76,17 +76,17 @@ class StreamProducerExceptionHandler : AbstractFailedDataHandler<StreamProducerM
      * @return true表示发送操作成功（异步），false表示发送失败
      */
     override fun processFailedData(data: StreamProducerMsgVo): Boolean {
-        val bindName = data.bindName
-        val msgBodyJson = data.msgBodyJson
-        val msgHeaderJson = data.msgHeaderJson
-        val obj = JsonKit.fromJson<Any>(msgBodyJson!!)
+        val bindName = requireNotNull(data.bindName) { "bindName 不能为空" }
+        val msgBodyJson = requireNotNull(data.msgBodyJson) { "msgBodyJson 不能为空" }
+        val msgHeaderJson = requireNotNull(data.msgHeaderJson) { "msgHeaderJson 不能为空" }
+        val obj = requireNotNull(JsonKit.fromJson<Any>(msgBodyJson)) { "msgBodyJson 反序列化失败" }
         val streamMessageVo: StreamMessageVo<Any?> = StreamMessageVo(obj)
-        val headMap = JsonKit.fromJson<MutableMap<String, Any>>(msgHeaderJson!!)
-        val messageHeaders = MessageHeaders(headMap!!)
+        val headMap = requireNotNull(JsonKit.fromJson<MutableMap<String, Any>>(msgHeaderJson)) { "msgHeaderJson 反序列化失败" }
+        val messageHeaders = MessageHeaders(headMap)
         val message = GenericMessage(streamMessageVo, messageHeaders)
         //如果本次发送为异步flush报错，则它会继续被异常拦截
         //如果本次直接返回false，它则没提交到mq的等待flush队列中，本地文件不做删除
-        return streamProducerHelper.doRealSend(bindName!!, message, true)
+        return streamProducerHelper.doRealSend(bindName, message, true)
     }
 
     override val businessType: String

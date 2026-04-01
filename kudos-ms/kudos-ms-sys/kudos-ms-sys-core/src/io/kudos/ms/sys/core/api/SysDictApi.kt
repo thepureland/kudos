@@ -3,7 +3,6 @@ package io.kudos.ms.sys.core.api
 import io.kudos.ms.sys.common.api.ISysDictApi
 import io.kudos.ms.sys.common.vo.dictitem.SysDictItemCacheEntry
 import io.kudos.ms.sys.core.service.iservice.ISysDictService
-import jakarta.annotation.Resource
 import org.springframework.stereotype.Component
 
 
@@ -14,37 +13,27 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-open class SysDictApi : ISysDictApi {
-
-
-    @Resource
-    protected lateinit var sysDictService: ISysDictService
+open class SysDictApi(
+    private val sysDictService: ISysDictService,
+) : ISysDictApi {
 
     override fun getActiveDictItems(
         dictType: String,
         atomicServiceCode: String
-    ): List<SysDictItemCacheEntry> {
-        return sysDictService.getActiveDictItemsFromCache(dictType, atomicServiceCode)
-    }
+    ): List<SysDictItemCacheEntry> = sysDictService.getActiveDictItemsFromCache(dictType, atomicServiceCode)
 
     override fun getActiveDictItemMap(
         dictType: String,
         atomicServiceCode: String
-    ): LinkedHashMap<String, String> {
-        return sysDictService.getActiveDictItemMapFromCache(dictType, atomicServiceCode)
-    }
+    ): LinkedHashMap<String, String> = sysDictService.getActiveDictItemMapFromCache(dictType, atomicServiceCode)
 
     override fun batchGetActiveDictItems(
         dictTypeAndASCodePairs: List<Pair<String, String>>
-    ): Map<Pair<String, String>, List<SysDictItemCacheEntry>> {
-        return sysDictService.batchGetActiveDictItemsFromCache(dictTypeAndASCodePairs)
-    }
+    ): Map<Pair<String, String>, List<SysDictItemCacheEntry>> =
+        sysDictService.batchGetActiveDictItemsFromCache(dictTypeAndASCodePairs)
 
     override fun batchGetActiveDictItemMap(
         dictTypeAndASCodePairs: List<Pair<String, String>>
-    ): Map<Pair<String, String>, LinkedHashMap<String, String>> {
-        return sysDictService.batchGetActiveDictItemMapFromCache(dictTypeAndASCodePairs)
-    }
-
-
+    ): Map<Pair<String, String>, LinkedHashMap<String, String>> =
+        sysDictService.batchGetActiveDictItemMapFromCache(dictTypeAndASCodePairs)
 }

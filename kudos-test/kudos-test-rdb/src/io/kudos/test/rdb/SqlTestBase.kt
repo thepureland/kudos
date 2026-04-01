@@ -104,6 +104,14 @@ open class SqlTestBase {
     protected lateinit var dataSource: DataSource
 
     /**
+     * 测试数据加载完成后的扩展钩子。
+     *
+     * 默认不做任何事；子类可在此基础上同步缓存、清理外部状态等。
+     */
+    protected open fun afterTestDataSetup() {
+    }
+
+    /**
      * 在每个测试方法的事务启动前，加载并执行测试数据SQL文件
      *
      * 关键修复：问题的根本原因是：
@@ -144,6 +152,7 @@ open class SqlTestBase {
             // 这样测试方法在事务中可以看到这些数据
             // 虽然测试结束后数据不会回滚，但每个测试方法执行前都会重新执行 SQL，所以数据是干净的
             populator.execute(dataSource)
+            afterTestDataSetup()
             println(
                 "[$timestamp] PID=${
                     ProcessHandle.current().pid()

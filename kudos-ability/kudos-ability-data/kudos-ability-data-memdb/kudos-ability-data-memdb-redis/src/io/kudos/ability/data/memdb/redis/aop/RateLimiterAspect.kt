@@ -65,8 +65,12 @@ class RateLimiterAspect {
         return buildString {
             append("rate.limit")
             when (rateLimiter.limitType) {
-                LimitType.IP -> append(KudosContextHolder.get().clientInfo!!.ip).append("-")
-                LimitType.USER -> append(KudosContextHolder.get().user!!.id).append("-")
+                LimitType.IP -> append(
+                    requireNotNull(KudosContextHolder.get().clientInfo?.ip) { "限流(IP)需要 clientInfo.ip" }
+                ).append("-")
+                LimitType.USER -> append(
+                    requireNotNull(KudosContextHolder.get().user?.id) { "限流(USER)需要 user.id" }
+                ).append("-")
                 LimitType.DEFAULT -> Unit
             }
             append(method.declaringClass.name).append("-").append(method.name)

@@ -222,24 +222,17 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
             log.debug("删除id为${ipRuleId}的ip访问规则后，同步从${CACHE_NAME}缓存中踢除...")
             val sysAccessRuleIp = sysAccessRuleIpDao.get(ipRuleId)
             if (sysAccessRuleIp == null) {
-                log.error("数据库中找不到id为${ipRuleId}的ip访问规则！")
+                log.warn("数据库中已找不到id为${ipRuleId}的ip访问规则，无法反查维度键；请优先使用 syncOnDeleteBySystemAndTenant。")
                 return
             }
 
             val sysAccessRule = sysAccessRuleDao.get(sysAccessRuleIp.parentRuleId)
             if (sysAccessRule == null) {
-                log.error("数据库中找不到id为${sysAccessRuleIp.parentRuleId}的访问规则！")
+                log.warn("数据库中已找不到id为${sysAccessRuleIp.parentRuleId}的访问规则，无法反查维度键；请优先使用 syncOnDeleteBySystemAndTenant。")
                 return
             }
 
-            // 踢除缓存
-            KeyValueCacheKit.evict(CACHE_NAME, getKey(sysAccessRule.systemCode, sysAccessRule.tenantId))
-            if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
-                // 重新缓存
-                getSelf<AccessRuleIpsBySubSysAndTenantIdCache>().getAccessRuleIps(
-                    sysAccessRule.systemCode, sysAccessRule.tenantId
-                )
-            }
+            syncOnDeleteBySystemAndTenant(sysAccessRule.systemCode, sysAccessRule.tenantId)
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
     }

@@ -160,7 +160,8 @@ internal class MinioDeleteServiceTest {
         FileKit.forceDelete(localFile)
 
         // 4) 删除 MinIO 中的对象
-        val model = DeleteFileModel.from(uploadFileResult.filePath!!)
+        val path = requireNotNull(uploadFileResult.filePath) { "filePath" }
+        val model = DeleteFileModel.from(path)
         assertTrue(deleteService.delete(model))
     }
 
@@ -197,7 +198,8 @@ internal class MinioDeleteServiceTest {
         FileKit.forceDelete(localFile)
 
         // 4) 指定“仅删除用户”的凭证并删除 MinIO 对象
-        val model = DeleteFileModel.from(uploadFileResult.filePath!!)
+        val path = requireNotNull(uploadFileResult.filePath) { "filePath" }
+        val model = DeleteFileModel.from(path)
         model.authServerParam = AccessKeyServerParam(DELETE_ONLY_USER, DELETE_ONLY_USER_SECRET)
         assertTrue(deleteService.delete(model))
     }

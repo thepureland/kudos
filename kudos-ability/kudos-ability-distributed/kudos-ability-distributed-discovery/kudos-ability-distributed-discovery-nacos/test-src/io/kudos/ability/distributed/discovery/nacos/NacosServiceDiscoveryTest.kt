@@ -22,10 +22,9 @@ import kotlin.test.assertFalse
 @EnabledIfDockerInstalled
 @ActiveProfiles("client")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-open class NacosServiceDiscoveryTest {
-
-    @Autowired
-    private lateinit var discoveryClient: DiscoveryClient
+open class NacosServiceDiscoveryTest @Autowired constructor(
+    private val discoveryClient: DiscoveryClient
+) {
 
     @BeforeAll
     fun setup() {

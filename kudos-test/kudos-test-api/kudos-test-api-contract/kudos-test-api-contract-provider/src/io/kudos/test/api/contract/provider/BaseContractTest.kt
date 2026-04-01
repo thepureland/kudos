@@ -12,7 +12,7 @@ import org.springframework.test.web.servlet.MockMvc
 abstract class BaseContractTest {
 
     @Resource
-    lateinit var mockMvc: MockMvc
+    protected lateinit var mockMvc: MockMvc
 
     @BeforeEach
     fun setup() {

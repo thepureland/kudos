@@ -80,12 +80,9 @@ class AwsSmsHandler {
                 .phoneNumber(smsRequest.phoneNumber)
                 .message(smsRequest.message)
 
-            // messageAttributes: MutableMap<String?, MessageAttributeValue?>?
             smsRequest.messageAttributes
-                ?.filterKeys { it != null }
-                ?.filterValues { it != null }
-                ?.mapKeys { requireNotNull(it.key) { "key is null" } }
-                ?.mapValues { requireNotNull(it.value) { "value is null" } }
+                ?.mapNotNull { (k, v) -> if (k != null && v != null) k to v else null }
+                ?.toMap()
                 ?.takeIf { it.isNotEmpty() }
                 ?.let { reqBuilder.messageAttributes(it) }
 
@@ -108,7 +105,7 @@ class AwsSmsHandler {
                 statusCode = e.statusCode()
                 statusText = e.awsErrorDetails()?.errorMessage()
                     ?: e.awsErrorDetails()?.errorCode()
-                            ?: "AwsServiceException"
+                    ?: "AwsServiceException"
             }
             LOG.error(e, "[aws] 发送短信失败（AWS 服务异常）")
         } catch (e: SdkServiceException) {

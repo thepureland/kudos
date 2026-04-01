@@ -28,8 +28,8 @@ open class RocketMqConsumerHandler {
     fun consumer(): Consumer<Message<StreamMessageVo<JSONObject>>?> {
         return Consumer { msg: Message<StreamMessageVo<JSONObject>>? ->
             //获取消息体
-            val streamMsgVo : StreamMessageVo<JSONObject> = msg!!.getPayload()
-            val simpleMsgJson = streamMsgVo.data!!
+            val streamMsgVo = msg?.payload ?: return@Consumer
+            val simpleMsgJson = streamMsgVo.data ?: return@Consumer
             val simpleMsg = simpleMsgJson.toJavaObject(RocketMqSimpleMsg::class.java)
             log.info("receive message: ${simpleMsg.msg}")
             //记录日志

@@ -45,8 +45,8 @@ class StreamGlobalExceptionHandler {
         try {
             val messageHandlingException = errorMessage.payload
             if (messageHandlingException is MessageHandlingException) {
-                val message = messageHandlingException.failedMessage
-                val headers = message!!.headers
+                val message = messageHandlingException.failedMessage ?: return
+                val headers = message.headers
                 if (!isFromConsumer(headers)) {
                     return
                 }
@@ -97,11 +97,11 @@ class StreamGlobalExceptionHandler {
             val messageHandlingException = errorMessage.payload
             if (messageHandlingException is MessageHandlingException) {
                 // 取出 MessagingException 和原始消息
-                val message = messageHandlingException.failedMessage
-                processProducerError(message!!)
+                val message = messageHandlingException.failedMessage ?: return
+                processProducerError(message)
             } else if (errorMessage.originalMessage != null) {
-                val message = errorMessage.originalMessage
-                processProducerError(message!!)
+                val message = errorMessage.originalMessage ?: return
+                processProducerError(message)
             }
         } catch (e: Exception) {
             LOG.error(e, "文件持久化失败！")

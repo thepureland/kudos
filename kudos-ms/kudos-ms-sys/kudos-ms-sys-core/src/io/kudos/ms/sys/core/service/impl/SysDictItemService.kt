@@ -1,14 +1,13 @@
 package io.kudos.ms.sys.core.service.impl
 
 import io.kudos.base.support.service.impl.BaseCrudService
-import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
+import io.kudos.base.model.contract.entity.IIdEntity
 import io.kudos.ms.sys.common.vo.dictitem.SysDictItemCacheEntry
 import io.kudos.ms.sys.core.cache.SysDictItemHashCache
 import io.kudos.ms.sys.core.dao.SysDictItemDao
 import io.kudos.ms.sys.core.model.po.SysDictItem
 import io.kudos.ms.sys.core.service.iservice.ISysDictItemService
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.LinkedHashMap
@@ -25,11 +24,9 @@ import kotlin.reflect.KClass
 @Service
 @Transactional
 open class SysDictItemService(
-    dao: SysDictItemDao
+    dao: SysDictItemDao,
+    private val sysDictItemHashCache: SysDictItemHashCache,
 ) : BaseCrudService<String, SysDictItem, SysDictItemDao>(dao), ISysDictItemService {
-
-    @Autowired
-    private lateinit var sysDictItemHashCache: SysDictItemHashCache
 
     private val log = LogFactory.getLog(this::class)
 
@@ -42,13 +39,10 @@ open class SysDictItemService(
         }
     }
 
-    override fun getDictItemFromCache(id: String): SysDictItemCacheEntry? {
-        return sysDictItemHashCache.getDictItemById(id)
-    }
+    override fun getDictItemFromCache(id: String): SysDictItemCacheEntry? = sysDictItemHashCache.getDictItemById(id)
 
-    override fun getDictItemsFromCache(dictType: String, atomicServiceCode: String): List<SysDictItemCacheEntry> {
-        return sysDictItemHashCache.getDictItems(atomicServiceCode, dictType)
-    }
+    override fun getDictItemsFromCache(dictType: String, atomicServiceCode: String): List<SysDictItemCacheEntry> =
+        sysDictItemHashCache.getDictItems(atomicServiceCode, dictType)
 
     override fun batchGetDictItemsFromCache(
         dictTypesByAtomicServiceCode: Map<String, Collection<String>>
@@ -60,18 +54,17 @@ open class SysDictItemService(
         }
     }
 
-    override fun getDictItemMapFromCache(dictType: String, atomicServiceCode: String): LinkedHashMap<String, String> {
-        val items = sysDictItemHashCache.getDictItems(atomicServiceCode, dictType)
-        return items.associate { it.itemCode to it.itemName }.toMap(LinkedHashMap())
-    }
+    override fun getDictItemMapFromCache(dictType: String, atomicServiceCode: String): LinkedHashMap<String, String> =
+        sysDictItemHashCache.getDictItems(atomicServiceCode, dictType)
+            .associateTo(LinkedHashMap()) { it.itemCode to it.itemName }
 
     override fun batchGetDictItemMapFromCache(
         dictTypesByAtomicServiceCode: Map<String, Collection<String>>,
     ): Map<String, Map<String, LinkedHashMap<String, String>>> {
         return dictTypesByAtomicServiceCode.mapValues { (atomicServiceCode, dictTypes) ->
             dictTypes.associateWith { dictType ->
-                val cacheItems = sysDictItemHashCache.getDictItems(atomicServiceCode, dictType)
-                cacheItems.associate { it.itemCode to it.itemName }.toMap(LinkedHashMap())
+                sysDictItemHashCache.getDictItems(atomicServiceCode, dictType)
+                    .associateTo(LinkedHashMap()) { it.itemCode to it.itemName }
             }
         }
     }
@@ -121,35 +114,36 @@ open class SysDictItemService(
             this.id = dictItemId
             this.active = active
         }
-        val success = dao.update(dictItem)
-        if (success) {
-            log.debug("更新id为${dictItemId}的字典项的启用状态为${active}。")
+        return completeCrudUpdate(
+            success = dao.update(dictItem),
+            log = log,
+            successMessage = "更新id为${dictItemId}的字典项的启用状态为${active}。",
+            failureMessage = "更新id为${dictItemId}的字典项的启用状态为${active}失败！",
+        ) {
             sysDictItemHashCache.syncOnUpdate(dictItemId)
-        } else {
-            log.error("更新id为${dictItemId}的字典项的启用状态为${active}失败！")
         }
-        return success
     }
 
     @Transactional
     override fun insert(any: Any): String {
         val id = super.insert(any)
-        log.debug("新增id为${id}的字典项。")
-        sysDictItemHashCache.syncOnInsert(any, id)
+        completeCrudInsert(log, "新增id为${id}的字典项。") {
+            sysDictItemHashCache.syncOnInsert(any, id)
+        }
         return id
     }
 
     @Transactional
     override fun update(any: Any): Boolean {
-        val success = super.update(any)
-        val id = BeanKit.getProperty(any, SysDictItem::id.name) as String
-        if (success) {
-            log.debug("更新id为${id}的字典项。")
+        val id = requireDictItemId(any)
+        return completeCrudUpdate(
+            success = super.update(any),
+            log = log,
+            successMessage = "更新id为${id}的字典项。",
+            failureMessage = "更新id为${id}的字典项失败！",
+        ) {
             sysDictItemHashCache.syncOnUpdate(id)
-        } else {
-            log.error("更新id为${id}的字典项失败！")
         }
-        return success
     }
 
     @Transactional
@@ -159,19 +153,19 @@ open class SysDictItemService(
             return false
         }
         val entry = sysDictItemHashCache.getDictItemById(id)
-        val success = super.deleteById(id)
-        if (success) {
-            log.debug("删除id为${id}的字典项。")
+        return completeCrudUpdate(
+            success = super.deleteById(id),
+            log = log,
+            successMessage = "删除id为${id}的字典项。",
+            failureMessage = "删除id为${id}的字典项失败！",
+        ) {
             sysDictItemHashCache.syncOnDelete(
                 id,
                 entry?.atomicServiceCode ?: "",
                 entry?.dictType,
                 entry?.itemCode
             )
-        } else {
-            log.error("删除id为${id}的字典项失败！")
         }
-        return success
     }
 
     @Transactional
@@ -184,9 +178,7 @@ open class SysDictItemService(
 
     private fun recursionFindAllParentId(itemId: String, results: MutableList<String>) {
         val list = dao.oneSearchProperty(SysDictItem::id, itemId, SysDictItem::parentId)
-        if (list.isEmpty()) return
-        val parentId = list.first() as? String ?: return
-        if (parentId.isBlank()) return
+        val parentId = list.firstOrNull()?.takeIf { it.isNotBlank() } ?: return
         results.add(parentId)
         recursionFindAllParentId(parentId, results)
     }
@@ -206,48 +198,39 @@ open class SysDictItemService(
             this.parentId = newParentId
             this.orderNum = newOrderNum
         }
-        val success = dao.update(dictItem)
-        if (success) {
-            log.debug("移动字典项${id}到父节点${newParentId}，排序号${newOrderNum}。")
+        return completeCrudUpdate(
+            success = dao.update(dictItem),
+            log = log,
+            successMessage = "移动字典项${id}到父节点${newParentId}，排序号${newOrderNum}。",
+            failureMessage = "移动字典项${id}失败！",
+        ) {
             sysDictItemHashCache.syncOnUpdate(id)
-        } else {
-            log.error("移动字典项${id}失败！")
         }
-        return success
     }
 
     override fun getDirectChildrenOfDictFromCache(
         atomicServiceCode: String,
         dictType: String,
         activeOnly: Boolean
-    ): List<SysDictItemCacheEntry> {
-        var items = sysDictItemHashCache.getDictItems(atomicServiceCode, dictType)
-        if (activeOnly) {
-            items = items.filter { it.active }
-        }
-        return items.filter { it.parentId == null }
-    }
+    ): List<SysDictItemCacheEntry> =
+        sysDictItemHashCache.getDictItems(atomicServiceCode, dictType)
+            .let { items -> if (activeOnly) items.filter { it.active } else items }
+            .filter { it.parentId == null }
 
     override fun getDirectChildrenOfItemFromCache(
         atomicServiceCode: String,
         dictType: String,
         itemCode: String,
         activeOnly: Boolean
-    ): List<SysDictItemCacheEntry> {
-        val item = sysDictItemHashCache.getDictItem(atomicServiceCode, dictType, itemCode)
-        return if (item != null) {
-            getDirectChildrenOfItemFromCache(item.id, activeOnly)
-        } else {
-            emptyList()
-        }
-    }
+    ): List<SysDictItemCacheEntry> =
+        sysDictItemHashCache.getDictItem(atomicServiceCode, dictType, itemCode)
+            ?.let { getDirectChildrenOfItemFromCache(it.id, activeOnly) }
+            ?: emptyList()
 
-    override fun getDirectChildrenOfItemFromCache(parentId: String, activeOnly: Boolean): List<SysDictItemCacheEntry> {
-        var items = sysDictItemHashCache.getDictItems(parentId)
-        if (activeOnly) {
-            items = items.filter { it.active }
-        }
-        return items
-    }
+    override fun getDirectChildrenOfItemFromCache(parentId: String, activeOnly: Boolean): List<SysDictItemCacheEntry> =
+        sysDictItemHashCache.getDictItems(parentId).let { items -> if (activeOnly) items.filter { it.active } else items }
 
+    private fun requireDictItemId(any: Any): String =
+        (any as? IIdEntity<*>)?.id as? String
+            ?: error("更新字典项时不支持的入参类型: ${any::class.qualifiedName}")
 }

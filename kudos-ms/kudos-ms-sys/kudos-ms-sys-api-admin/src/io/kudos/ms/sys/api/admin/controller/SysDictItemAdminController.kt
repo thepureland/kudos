@@ -53,10 +53,12 @@ class SysDictItemAdminController :
     @Suppress("UNCHECKED_CAST")
     fun pagingSearchDict(@RequestBody sysDictItemQuery: SysDictItemQuery): PagingSearchResult<SysDictItemRow> {
         val result = vSysDictItemService.pagingSearch(sysDictItemQuery)
-        val parentIds = (result.data as List<SysDictItemRow>).filter { it.parentId != null }.map { it.parentId!! }
+        val parentIds = (result.data as List<SysDictItemRow>).mapNotNull { it.parentId }
         val map = vSysDictItemService.searchByIds(parentIds.toSet())
         if (map.isNotEmpty()) {
-            (result.data as List<SysDictItemRow>).forEach { it.parentCode = map[it.id]!!.itemCode }
+            (result.data as List<SysDictItemRow>).forEach { row ->
+                row.parentCode = row.parentId?.let { map[it]?.itemCode }
+            }
         }
         return result as PagingSearchResult<SysDictItemRow>
     }

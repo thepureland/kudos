@@ -76,7 +76,6 @@ class HintZoneServiceInstanceListSupplier(
             return filteredInstances
         }
 
-
         // If instances cannot be found based on hint,
         // we return all instances retrieved for given service id.
         return instances

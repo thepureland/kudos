@@ -17,7 +17,7 @@ import javafx.scene.control.ComboBox
 import javafx.scene.control.TableView
 import javafx.scene.control.TextField
 import java.net.URL
-import java.util.*
+import java.util.ResourceBundle
 
 /**
  * 数据库表的列信息界面JavaFx控制器

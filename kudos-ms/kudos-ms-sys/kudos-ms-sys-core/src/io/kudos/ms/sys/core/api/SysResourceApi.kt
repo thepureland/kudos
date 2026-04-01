@@ -6,7 +6,6 @@ import io.kudos.ms.sys.common.vo.resource.SysResourceCacheEntry
 import io.kudos.ms.sys.common.vo.resource.response.BaseMenuTreeNode
 import io.kudos.ms.sys.common.vo.resource.response.MenuTreeNode
 import io.kudos.ms.sys.core.service.iservice.ISysResourceService
-import jakarta.annotation.Resource
 import org.springframework.stereotype.Component
 
 
@@ -17,54 +16,36 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-open class SysResourceApi : ISysResourceApi {
+open class SysResourceApi(
+    private val sysResourceService: ISysResourceService,
+) : ISysResourceApi {
 
+    override fun getResource(resourceId: String): SysResourceCacheEntry? = sysResourceService.getResourceFromCache(resourceId)
 
-    @Resource
-    protected lateinit var sysResourceService: ISysResourceService
-
-    override fun getResource(resourceId: String): SysResourceCacheEntry? {
-        return sysResourceService.getResourceFromCache(resourceId)
-    }
-
-    override fun getResources(resourceIds: Collection<String>): Map<String, SysResourceCacheEntry> {
-        return sysResourceService.getResourcesFromCacheByIds(resourceIds)
-    }
+    override fun getResources(resourceIds: Collection<String>): Map<String, SysResourceCacheEntry> =
+        sysResourceService.getResourcesFromCacheByIds(resourceIds)
 
     override fun getResources(
         resourceType: ResourceTypeEnum,
         subSystemCode: String,
-    ): List<SysResourceCacheEntry> {
-        return sysResourceService.getResourcesFromCacheBySubSystemAndType(resourceType, subSystemCode)
-    }
+    ): List<SysResourceCacheEntry> = sysResourceService.getResourcesFromCacheBySubSystemAndType(resourceType, subSystemCode)
 
-    override fun getSimpleMenus(subSystemCode: String): List<BaseMenuTreeNode> {
-        return sysResourceService.getSimpleMenusFromCache(subSystemCode)
-    }
+    override fun getSimpleMenus(subSystemCode: String): List<BaseMenuTreeNode> = sysResourceService.getSimpleMenusFromCache(subSystemCode)
 
-    override fun getMenus(subSystemCode: String): List<MenuTreeNode> {
-        return sysResourceService.getMenusFromCache(subSystemCode)
-    }
+    override fun getMenus(subSystemCode: String): List<MenuTreeNode> = sysResourceService.getMenusFromCache(subSystemCode)
 
-    override fun getResourceId(subSysDictCode: String, url: String): String? {
-        return sysResourceService.getResourceIdFromCache(subSysDictCode, url)
-    }
+    override fun getResourceId(subSysDictCode: String, url: String): String? = sysResourceService.getResourceIdFromCache(subSysDictCode, url)
 
     override fun getDirectChildrenResources(
         resourceType: ResourceTypeEnum,
         parentId: String?,
         subSystemCode: String,
-    ): List<SysResourceCacheEntry> {
-        return sysResourceService.getDirectChildrenResourcesFromCache(resourceType, parentId, subSystemCode)
-    }
+    ): List<SysResourceCacheEntry> =
+        sysResourceService.getDirectChildrenResourcesFromCache(resourceType, parentId, subSystemCode)
 
     override fun getChildrenResources(
         subSystemCode: String,
         resourceType: ResourceTypeEnum,
         parentId: String
-    ): List<SysResourceCacheEntry> {
-        return sysResourceService.getChildrenResourcesFromCache(subSystemCode, resourceType, parentId)
-    }
-
-
+    ): List<SysResourceCacheEntry> = sysResourceService.getChildrenResourcesFromCache(subSystemCode, resourceType, parentId)
 }

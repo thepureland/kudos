@@ -3,7 +3,6 @@ package io.kudos.ms.sys.core.api
 import io.kudos.ms.sys.common.api.ISysSystemApi
 import io.kudos.ms.sys.common.vo.system.SysSystemCacheEntry
 import io.kudos.ms.sys.core.service.iservice.ISysSystemService
-import jakarta.annotation.Resource
 import org.springframework.stereotype.Service
 
 
@@ -15,31 +14,19 @@ import org.springframework.stereotype.Service
  * @since 1.0.0
  */
 @Service
-open class SysSystemApi : ISysSystemApi {
+open class SysSystemApi(
+    private val sysSystemService: ISysSystemService,
+) : ISysSystemApi {
 
+    override fun getSystemFromCache(code: String): SysSystemCacheEntry? = sysSystemService.getSystemFromCache(code)
 
-    @Resource
-    protected lateinit var sysSystemService: ISysSystemService
+    override fun getAllSystemsFromCache(): List<SysSystemCacheEntry> = sysSystemService.getAllSystemsFromCache()
 
-    override fun getSystemFromCache(code: String): SysSystemCacheEntry? {
-        return sysSystemService.getSystemFromCache(code)
-    }
+    override fun getSystemsExcludeSubSystemFromCache(): List<SysSystemCacheEntry> =
+        sysSystemService.getSystemsExcludeSubSystemFromCache()
 
-    override fun getAllSystemsFromCache(): List<SysSystemCacheEntry> {
-        return sysSystemService.getAllSystemsFromCache()
-    }
+    override fun updateActive(code: String, active: Boolean): Boolean = sysSystemService.updateActive(code, active)
 
-    override fun getSystemsExcludeSubSystemFromCache(): List<SysSystemCacheEntry> {
-        return sysSystemService.getSystemsExcludeSubSystemFromCache()
-    }
-
-    override fun updateActive(code: String, active: Boolean): Boolean {
-        return sysSystemService.updateActive(code, active)
-    }
-
-    override fun getSubSystemsFromCache(systemCode: String): List<SysSystemCacheEntry> {
-        return sysSystemService.getSubSystemsFromCache(systemCode)
-    }
-
-
+    override fun getSubSystemsFromCache(systemCode: String): List<SysSystemCacheEntry> =
+        sysSystemService.getSubSystemsFromCache(systemCode)
 }

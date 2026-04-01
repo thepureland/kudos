@@ -12,7 +12,6 @@ import org.apache.rocketmq.common.message.MessageExt
 import java.io.ByteArrayInputStream
 import java.io.ObjectInputStream
 import java.time.LocalDateTime
-import java.util.function.Consumer
 import kotlin.concurrent.thread
 
 /**
@@ -53,7 +52,7 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
     private val consumer: DefaultLitePullConsumer
     private var pullTime: Long = 5000
     private var batchProcessSize = 1000
-    private var bizBatchProcess: Consumer<MutableList<BatchConsumerItem<T?>?>?>? = null
+    private var bizBatchProcess: ((MutableList<BatchConsumerItem<T?>?>?) -> Unit)? = null
     private val groupName: String?
     private val topic: String?
 
@@ -120,7 +119,7 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
      * 
      * @param bizBatchProcess 业务处理方法，接收批量消息列表进行处理
      */
-    fun start(bizBatchProcess: Consumer<MutableList<BatchConsumerItem<T?>?>?>) {
+    fun start(bizBatchProcess: (MutableList<BatchConsumerItem<T?>?>?) -> Unit) {
         this.bizBatchProcess = bizBatchProcess
         this.isRunning = true
         daemonThread = thread(
@@ -210,7 +209,7 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
                 return
             }
             @Suppress("UNCHECKED_CAST")
-            processor.accept(list as MutableList<BatchConsumerItem<T?>?>?)
+            processor.invoke(list as MutableList<BatchConsumerItem<T?>?>?)
             consumer.commit()
         } catch (e: Exception) {
             if (saveException) {
@@ -231,7 +230,7 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
         }
         log.warn("保存异常消费日志，避免mq堵塞")
         val exceptionMsg = SysMqFailMsg()
-        exceptionMsg.topic = topic!!
+        exceptionMsg.topic = requireNotNull(topic) { "topic is null" }
         exceptionMsg.msgBodyJson = JSONObject.toJSONString(data)
         exceptionMsg.createTime = LocalDateTime.now()
         SpringKit.getBean<ISysMqFailMsgService>().save(exceptionMsg)

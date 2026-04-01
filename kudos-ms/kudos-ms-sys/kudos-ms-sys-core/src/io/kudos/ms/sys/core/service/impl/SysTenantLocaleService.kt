@@ -21,22 +21,16 @@ open class SysTenantLocaleService(
     dao: SysTenantLocaleDao
 ) : BaseCrudService<String, SysTenantLocale, SysTenantLocaleDao>(dao), ISysTenantLocaleService {
 
-
     private val log = LogFactory.getLog(this::class)
 
-    override fun getLocaleCodesByTenantId(tenantId: String): Set<String> {
-        return dao.searchLocaleCodesByTenantId(tenantId)
-    }
+    override fun getLocaleCodesByTenantId(tenantId: String): Set<String> = dao.searchLocaleCodesByTenantId(tenantId)
 
-    override fun getTenantIdsByLocaleCode(localeCode: String): Set<String> {
-        return dao.searchTenantIdsByLocaleCode(localeCode)
-    }
+    override fun getTenantIdsByLocaleCode(localeCode: String): Set<String> = dao.searchTenantIdsByLocaleCode(localeCode)
 
     @Transactional
     override fun batchBind(tenantId: String, localeCodes: Collection<String>): Int {
-        if (localeCodes.isEmpty()) {
-            return 0
-        }
+        if (localeCodes.isEmpty()) return 0
+
         var count = 0
         localeCodes.forEach { localeCode ->
             if (!exists(tenantId, localeCode)) {
@@ -64,9 +58,5 @@ open class SysTenantLocaleService(
         return success
     }
 
-    override fun exists(tenantId: String, localeCode: String): Boolean {
-        return dao.exists(tenantId, localeCode)
-    }
-
-
+    override fun exists(tenantId: String, localeCode: String): Boolean = dao.exists(tenantId, localeCode)
 }

@@ -9,8 +9,6 @@ import javafx.scene.control.TextField
 import javafx.scene.control.TextInputControl
 import javafx.scene.control.cell.TextFieldTableCell
 import javafx.util.StringConverter
-import java.util.stream.Collectors
-
 
 /**
  * TexFieldTableCell which supports terminating an ongoing edit.
@@ -117,10 +115,9 @@ open class XTextFieldTableCell<S, T> @JvmOverloads constructor(converter: String
         // corner case: there's a "real" graphic which is/contains
         // a textfield, differentiate by text
         val expectedText = converter.toString(item)
-        val fields = nodes.stream()
-            .filter { field: Node? -> field is TextField }
-            .filter { field: Node -> expectedText == (field as TextInputControl).text }
-            .collect(Collectors.toList())
+        val fields = nodes
+            .filter { it is TextField && expectedText == (it as TextInputControl).text }
+            .toList()
         return if (fields.size == 1) fields[0] as TextField else null
     }
 

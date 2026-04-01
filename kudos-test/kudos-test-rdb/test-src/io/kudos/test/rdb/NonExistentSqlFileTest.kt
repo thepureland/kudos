@@ -3,7 +3,7 @@ package io.kudos.test.rdb
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.assertThrows
-import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
  * 测试SQL文件不存在时的测试用例
@@ -23,9 +23,8 @@ class NonExistentSqlFileTest : RdbTestBase() {
             super.setUpTestData()
         }
 
-        assertEquals(
-            exception.message?.contains("测试数据SQL文件不存在"),
-            true,
+        assertTrue(
+            exception.message?.contains("测试数据SQL文件不存在") == true,
             "异常消息应该包含'测试数据SQL文件不存在'，实际消息: ${exception.message}"
         )
     }

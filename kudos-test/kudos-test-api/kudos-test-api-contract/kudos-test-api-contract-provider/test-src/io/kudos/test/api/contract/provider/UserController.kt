@@ -16,7 +16,6 @@ class UserController {
         val user = UserDto(id = id, name = "Tom")
         return ResponseEntity.ok(user)
     }
-    
 }
 
 data class UserDto(
