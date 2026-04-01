@@ -8,10 +8,9 @@ import kotlin.test.Test
 
 @EnableKudosTest(properties = ["spring.flyway.enabled=false"])
 @Import(TestMqAuditService::class)
-class AuditMqTest {
-
-    @Autowired
-    private lateinit var service: TestMqAuditService
+class AuditMqTest @Autowired constructor(
+    private val service: TestMqAuditService
+) {
 
     @Test
     fun testLog() {
