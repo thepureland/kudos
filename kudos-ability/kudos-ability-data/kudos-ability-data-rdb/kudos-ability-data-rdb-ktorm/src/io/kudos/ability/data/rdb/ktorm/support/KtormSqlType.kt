@@ -1,6 +1,6 @@
 package io.kudos.ability.data.rdb.ktorm.support
 
-import java.util.*
+import java.util.UUID
 import kotlin.reflect.KClass
 
 /**
