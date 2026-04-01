@@ -46,14 +46,10 @@ class DsDataSourceCreator : DefaultDataSourceCreator() {
      * @return 数据源
      */
     override fun createDataSource(dataSourceProperty: DataSourceProperty): DataSource {
-        var dataSourceCreator: DataSourceCreator? = null
-        for (creator in this.creators!!) {
-            if (creator.support(dataSourceProperty)) {
-                dataSourceCreator = creator
-                break
-            }
-        }
-        checkNotNull(dataSourceCreator) { "creator must not be null,please check the DataSourceCreator" }
+        val dataSourceCreator = checkNotNull(
+            checkNotNull(creators) { "creators must be set" }
+                .firstOrNull { it.support(dataSourceProperty) }
+        ) { "creator must not be null,please check the DataSourceCreator" }
         if (dataSourceProxy != null && dataSourceProxy.isSeata()) {
             dataSourceProperty.druid?.defaultAutoCommit = true
             dataSourceProperty.hikari?.isAutoCommit = true
@@ -68,13 +64,9 @@ class DsDataSourceCreator : DefaultDataSourceCreator() {
         if (propertyLazy == null) {
             dataSourceProperty.lazy = lazy
         }
-        if (dataSourceInitEvent != null) {
-            dataSourceInitEvent!!.beforeCreate(dataSourceProperty)
-        }
+        dataSourceInitEvent?.beforeCreate(dataSourceProperty)
         val dataSource = dataSourceCreator.createDataSource(dataSourceProperty)
-        if (dataSourceInitEvent != null) {
-            dataSourceInitEvent!!.afterCreate(dataSource)
-        }
+        dataSourceInitEvent?.afterCreate(dataSource)
         this.runScrip(dataSource, dataSourceProperty)
         return wrapDataSource(dataSource, dataSourceProperty)
     }

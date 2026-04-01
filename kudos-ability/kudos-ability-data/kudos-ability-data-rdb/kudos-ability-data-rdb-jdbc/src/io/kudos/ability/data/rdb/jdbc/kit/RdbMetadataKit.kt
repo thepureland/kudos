@@ -3,7 +3,7 @@ package io.kudos.ability.data.rdb.jdbc.kit
 import io.kudos.ability.data.rdb.jdbc.metadata.*
 import java.sql.Connection
 import java.sql.DatabaseMetaData
-import java.util.*
+import java.util.Locale
 
 /**
  * 关系型数据库元数据工具类
@@ -72,7 +72,7 @@ object RdbMetadataKit {
 
     private fun _getTablesByType(conn: Connection, vararg tableTypes: TableTypeEnum?): List<Table> {
         val dbMetaData = conn.metaData
-        val types = tableTypes.mapTo(mutableListOf()) { it!!.name }.toTypedArray()
+        val types = tableTypes.map { checkNotNull(it) { "table type must not be null" }.name }.toTypedArray()
         val talbes = mutableListOf<Table>()
         val tableRs = dbMetaData.getTables(conn.catalog, conn.schema, "%", types)
         tableRs.use {
@@ -145,7 +145,7 @@ object RdbMetadataKit {
         primaryKeyRs.use {
             while (primaryKeyRs.next()) {
                 val columnName = primaryKeyRs.getString("COLUMN_NAME")
-                linkedMap[columnName]!!.primaryKey = true
+                linkedMap.getValue(columnName).primaryKey = true
             }
         }
 
@@ -154,7 +154,7 @@ object RdbMetadataKit {
         foreignKeyRs.use {
             while (foreignKeyRs.next()) {
                 val columnName = foreignKeyRs.getString("FKCOLUMN_NAME")
-                linkedMap[columnName]!!.foreignKey = true
+                linkedMap.getValue(columnName).foreignKey = true
             }
         }
 
@@ -163,7 +163,7 @@ object RdbMetadataKit {
         indexInfoRs.use {
             while (indexInfoRs.next()) {
                 val columnName = indexInfoRs.getString("COLUMN_NAME")
-                linkedMap[columnName]!!.indexed = true
+                linkedMap.getValue(columnName).indexed = true
             }
         }
 
@@ -173,7 +173,7 @@ object RdbMetadataKit {
         uniqueInfoRs.use {
             while (uniqueInfoRs.next()) {
                 val columnName = uniqueInfoRs.getString("COLUMN_NAME")
-                linkedMap[columnName]!!.unique = true
+                linkedMap.getValue(columnName).unique = true
             }
         }
 

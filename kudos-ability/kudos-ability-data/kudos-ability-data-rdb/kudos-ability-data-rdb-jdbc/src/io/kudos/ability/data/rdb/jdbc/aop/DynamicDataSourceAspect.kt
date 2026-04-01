@@ -73,7 +73,7 @@ class DynamicDataSourceAspect {
             val datasourcePair = convertDatasourceConfig(dsKeyConfig)
             //兼容多租户，不同上下文的数据源不同
             val mapKey: String = DatasourceKeyTool.convertCacheMapKey(
-                datasourcePair.first!!,
+                checkNotNull(datasourcePair.first) { "datasource config first must not be null" },
                 KudosContextHolder.get().dataSourceId, datasourcePair.second
             )
             //如果已经切换过了数据源，则缓存起来
@@ -81,8 +81,10 @@ class DynamicDataSourceAspect {
             if (dsKey.isNullOrBlank()) {
                 READ_WRITE_LOCK.readLock().lock()
                 try {
-                    dsKey = dsCacheMap.computeIfAbsent(mapKey) { k: String? ->
-                        dsContextProcessor.doDetermineDatasource(k!!, dsKeyConfig)!!
+                    dsKey = dsCacheMap.computeIfAbsent(mapKey) { k ->
+                        requireNotNull(dsContextProcessor.doDetermineDatasource(k, dsKeyConfig)) {
+                            "doDetermineDatasource returned null for $k"
+                        }
                     }
                 } finally {
                     READ_WRITE_LOCK.readLock().unlock()

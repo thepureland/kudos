@@ -8,7 +8,6 @@ import io.kudos.ability.data.rdb.jdbc.datasource.DefaultDynamicDataSourceLoad
 import io.kudos.ability.data.rdb.jdbc.datasource.DsContextProcessor
 import io.kudos.ability.data.rdb.jdbc.datasource.DsDataSourceCreator
 import io.kudos.ability.data.rdb.jdbc.datasource.IDynamicDataSourceLoad
-import io.kudos.base.logger.LogFactory
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
@@ -30,8 +29,6 @@ import org.springframework.context.annotation.Primary
 //@EnableAutoConfiguration // 不然dynamic data source会找不到
 //@ImportAutoConfiguration(DynamicDataSourceCreatorAutoConfiguration::class, DynamicDataSourceAutoConfiguration::class)
 open class JdbcAutoConfiguration : IComponentInitializer {
-
-    private val logger = LogFactory.getLog(this::class)
 
 //    @Bean("dataSourceProxy")
 //    @ConditionalOnMissingBean
