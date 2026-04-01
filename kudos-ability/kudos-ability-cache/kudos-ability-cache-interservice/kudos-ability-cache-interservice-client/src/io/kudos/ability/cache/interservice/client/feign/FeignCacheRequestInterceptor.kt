@@ -83,7 +83,7 @@ class FeignCacheRequestInterceptor : RequestInterceptor {
         val localCacheKey = genCacheKey(requestTemplate)
         //拼装本次请求的key值
         requestTemplate.header(ClientCacheKey.HEADER_KEY_CACHE_KEY, localCacheKey)
-        val data = cacheHelper.loadFromLocalCache(localCacheKey!!)
+        val data = cacheHelper.loadFromLocalCache(localCacheKey)
         if (data != null) {
             //去除本次请求的uid值
             requestTemplate.header(ClientCacheKey.HEADER_KEY_CACHE_UID, data.uuid)
@@ -124,13 +124,9 @@ class FeignCacheRequestInterceptor : RequestInterceptor {
      * @param requestTemplate Feign请求模板
      * @return MD5加密后的缓存key
      */
-    private fun genCacheKey(requestTemplate: RequestTemplate): String? {
+    private fun genCacheKey(requestTemplate: RequestTemplate): String {
         val request = requestTemplate.request()
-        var tenantId: String? = ""
-        val tempTenantId = KudosContextHolder.get().tenantId
-        if (tempTenantId != null) {
-            tenantId = tempTenantId
-        }
+        val tenantId = KudosContextHolder.get().tenantId ?: ""
         val feignCacheKey = ClientCacheKey(request.url(), request.httpMethod().name, request.body())
         val result = arrayOf(
             ClientCacheKey.FEIGN_CACHE_DELIMITER,
