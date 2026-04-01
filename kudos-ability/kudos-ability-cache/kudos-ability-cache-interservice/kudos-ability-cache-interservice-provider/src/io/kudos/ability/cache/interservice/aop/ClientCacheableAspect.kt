@@ -96,31 +96,24 @@ class ClientCacheableAspect {
         if (result == null) {
             return null
         }
-        //获取RequestAttributes
-        val requestAttributes = RequestContextHolder.getRequestAttributes()!!
+        val requestAttributes = RequestContextHolder.getRequestAttributes() ?: return result
         val request = requestAttributes.resolveReference(RequestAttributes.REFERENCE_REQUEST) as HttpServletRequest
-        if (request is CacheClientRequest) {
-            //客户端数据的uid
-            val reqUid: String? = request.getHeader(ClientCacheKey.HEADER_KEY_CACHE_UID)
-            //服务端结果的uid
-            val resUid: String = ClientCacheItem.genUid(result)
-            request.getServletResponse()!!.setHeader(ClientCacheKey.HEADER_KEY_CACHE_UID, resUid)
-            request.getServletResponse()!!
-                .setHeader(ClientCacheKey.HEADER_KEY_CACHE_STATUS, ClientCacheKey.STATUS_DO_CACHE)
-            if (reqUid.isNullOrBlank()) {
-                return result
-            }
-            //判断请求uid和结果uid
-            if (resUid == reqUid) {
-                //判断结果的uid与请求uid是否一致，一致则告知客户端直接使用缓存（304），并返回空
-                request.getServletResponse()!!
-                    .setHeader(ClientCacheKey.HEADER_KEY_CACHE_STATUS, ClientCacheKey.STATUS_USE_CACHE)
-                return null
-            }
-            return result
-        } else {
+        if (request !is CacheClientRequest) {
             return result
         }
+        val response = request.getServletResponse() ?: return result
+        val reqUid: String? = request.getHeader(ClientCacheKey.HEADER_KEY_CACHE_UID)
+        val resUid: String = ClientCacheItem.genUid(result)
+        response.setHeader(ClientCacheKey.HEADER_KEY_CACHE_UID, resUid)
+        response.setHeader(ClientCacheKey.HEADER_KEY_CACHE_STATUS, ClientCacheKey.STATUS_DO_CACHE)
+        if (reqUid.isNullOrBlank()) {
+            return result
+        }
+        if (resUid == reqUid) {
+            response.setHeader(ClientCacheKey.HEADER_KEY_CACHE_STATUS, ClientCacheKey.STATUS_USE_CACHE)
+            return null
+        }
+        return result
     }
 
     /**
@@ -144,10 +137,8 @@ class ClientCacheableAspect {
      */
     private fun validateClass(joinPoint: ProceedingJoinPoint) {
         val clazz: Class<*> = joinPoint.target.javaClass
-        val restController = clazz.getAnnotation(RestController::class.java)
-        val controller = clazz.getAnnotation(Controller::class.java)
-        check(!(restController == null && controller == null)) {
-            "类${clazz.getName()}必须是Controller才可使用ClientCacheable！"
+        require(clazz.isAnnotationPresent(RestController::class.java) || clazz.isAnnotationPresent(Controller::class.java)) {
+            "类${clazz.name}必须是Controller才可使用ClientCacheable！"
         }
     }
 

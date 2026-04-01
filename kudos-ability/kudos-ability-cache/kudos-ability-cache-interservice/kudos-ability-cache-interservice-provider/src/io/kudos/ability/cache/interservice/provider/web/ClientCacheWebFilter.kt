@@ -18,8 +18,8 @@ class ClientCacheWebFilter : Filter {
         servletResponse: ServletResponse?,
         filterChain: FilterChain
     ) {
-        val feinRequest: HttpServletRequest =
+        val wrappedRequest: HttpServletRequest =
             CacheClientRequest(servletRequest as HttpServletRequest?, servletResponse as HttpServletResponse?)
-        filterChain.doFilter(feinRequest, servletResponse)
+        filterChain.doFilter(wrappedRequest, servletResponse)
     }
 }
