@@ -29,7 +29,8 @@ class CaffeineKeyValueCacheManager : AbstractKeyValueCacheManager<CaffeineCache>
 
     override fun evictByPattern(cacheName: String, pattern: String) {
         val cache = getCache(cacheName) ?: return
-        val realPattern: String = versionConfig.getFinalCacheName(pattern)
+        // 入参可能是逻辑模式（如 user:*）或已带版本前缀的实际模式，先去版本再统一加版本，避免重复前缀。
+        val realPattern: String = versionConfig.getFinalCacheName(versionConfig.getRealCacheName(pattern))
         // 拿到底层 ConcurrentMap
         val nativeCache = (cache as CaffeineCache).nativeCache.asMap()
         val regex = "^" + realPattern.replace("*", ".*") + "$"

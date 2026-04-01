@@ -13,6 +13,10 @@ object LockTool {
         initLockService()
     }
 
+    /**
+     * 在 [second] 秒窗口内尝试获取租约式锁；若 **未能** 取得（即 [ILockProvider.tryLock] 为 false），返回 `true`。
+     * 语义等价于「当前 key 已被占用 / 本线程未拿到锁」，与 `tryLock` 布尔值取反。
+     */
     fun hasKeyLock(lockKey: String, second: Int): Boolean {
         return !LOCK_SERVICE.tryLock(lockKey, second)
     }

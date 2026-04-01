@@ -28,8 +28,12 @@ open class MqProducerAspect {
     open fun producerPointcut() {
     }
 
-    @AfterReturning(pointcut = "producerPointcut()", returning = "joinPoint")
-    open fun afterReturning(joinPoint: JoinPoint) {
+    @AfterReturning(pointcut = "producerPointcut()", returning = "retVal")
+    open fun afterReturning(joinPoint: JoinPoint, retVal: Any?) {
+        if (retVal is Boolean && !retVal) {
+            log.warn("MqProducer 方法返回false，跳过发送。method={0}", joinPoint.signature.toShortString())
+            return
+        }
         if (joinPoint.args == null || joinPoint.args.size == 0) {
             log.warn("Stream生产消息体为空，忽略本次消息")
             return
@@ -38,7 +42,10 @@ open class MqProducerAspect {
         val annotation = signature.method.getAnnotation(MqProducer::class.java)
         val bindingName = annotation!!.bindingName
         val data = joinPoint.args[0]
-        producerHelper.sendMessage(bindingName, data)
+        val success = producerHelper.sendMessage(bindingName, data)
+        if (!success) {
+            log.warn("Stream生产消息发送结果:false, bindingName={0}", bindingName)
+        }
     }
 
 }

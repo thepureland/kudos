@@ -66,7 +66,7 @@ open class RedisAutoConfiguration : IComponentInitializer {
      * 根据redis连接工厂创建redisTemplate
      *
      * @param redisConnectionFactory redisConnectionFactory
-     * @return RedisTemplate<String></String>, Object>
+     * @return RedisTemplate<Any, Any?>
      */
     private fun createRedisTemplate(
         redisConnectionFactory: RedisConnectionFactory,

@@ -10,9 +10,17 @@ import org.springframework.beans.factory.config.BeanPostProcessor
  */
 open class NotifyListenerBeanPostProcessor : BeanPostProcessor {
 
+    constructor()
+
+    constructor(namespace: String) {
+        this.namespace = namespace
+    }
+
+    private var namespace: String = NotifyListenerItem.DEFAULT_NAMESPACE
+
     override fun postProcessAfterInitialization(bean: Any, beanName: String): Any {
         if (bean is INotifyListener) {
-            NotifyListenerItem.put(bean.notifyType(), bean)
+            NotifyListenerItem.put(namespace, bean.notifyType(), bean)
         }
         return bean
     }

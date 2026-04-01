@@ -127,7 +127,7 @@ fun HttpServletRequest.getOsInfo(): Pair<String, String> {
  * @author K
  * @since 1.0.0
  */
-fun HttpServletRequest.getClientTeminal(): String {
+fun HttpServletRequest.getClientTerminal(): String {
     val agent = this.getHeader("User-Agent")
     var name = "unknown"
     if (agent.isNullOrBlank()) {

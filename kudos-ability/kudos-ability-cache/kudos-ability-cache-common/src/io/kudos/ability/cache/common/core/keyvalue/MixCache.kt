@@ -113,23 +113,30 @@ class MixCache(
 
     @Nullable
     override fun putIfAbsent(key: Any, @Nullable value: Any?): Cache.ValueWrapper? {
-        when (strategy) {
-            CacheStrategy.SINGLE_LOCAL -> requireNotNull(localCache) { "localCache is null for strategy $strategy" }.putIfAbsent(key, value)
-            CacheStrategy.REMOTE -> requireNotNull(remoteCache) { "remoteCache is null for strategy $strategy" }.putIfAbsent(key, value)
-            CacheStrategy.LOCAL_REMOTE -> {
-                requireNotNull(remoteCache) { "remoteCache is null for strategy $strategy" }.putIfAbsent(key, value)
+        return when (strategy) {
+            CacheStrategy.SINGLE_LOCAL -> {
                 requireNotNull(localCache) { "localCache is null for strategy $strategy" }.putIfAbsent(key, value)
-                val name = getName()
-                log.debug("put远程缓存{0}。key为{1}", name, key)
-                pushMsgRedis(name, key) //TODO 异步?
+            }
+            CacheStrategy.REMOTE -> {
+                requireNotNull(remoteCache) { "remoteCache is null for strategy $strategy" }.putIfAbsent(key, value)
+            }
+            CacheStrategy.LOCAL_REMOTE -> {
+                val remote = requireNotNull(remoteCache) { "remoteCache is null for strategy $strategy" }
+                val local = requireNotNull(localCache) { "localCache is null for strategy $strategy" }
+                val existed = remote.putIfAbsent(key, value)
+                if (existed == null) {
+                    local.putIfAbsent(key, value)
+                    val name = getName()
+                    log.debug("putIfAbsent远程缓存{0}。key为{1}", name, key)
+                    pushMsgRedis(name, key) //TODO 异步?
+                    null
+                } else {
+                    // 远程已存在，回填本地，避免本节点后续再次回源
+                    local.put(key, existed.get())
+                    existed
+                }
             }
         }
-        //super putIfAbsent
-        val existingValue = this.get(key)
-        if (existingValue == null) {
-            this.put(key, value)
-        }
-        return existingValue
     }
 
     override fun clear() {

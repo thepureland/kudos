@@ -1,0 +1,7 @@
+kudos:
+  ability:
+    distributed:
+      notify:
+        fail-on-missing-producer: false
+        listener-namespace: ""
+

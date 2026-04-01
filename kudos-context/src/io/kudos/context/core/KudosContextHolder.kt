@@ -15,18 +15,20 @@ object KudosContextHolder {
     private val contextThreadLocal = InheritableThreadLocal<KudosContext>()
 
     /**
-     * 返回当前线程关联的KudosContext
-     * 如果当前线程没有上下文，会创建一个新的并设置到 ThreadLocal 中
-     *
-     * @return Kudos上下文对象
-     * @author K
-     * @since 1.0.0
+     * 返回当前线程关联的 KudosContext。
+     * 若当前线程尚未绑定上下文，会 **新建** [KudosContext] 并写入 ThreadLocal（不会返回 null）。
+     * 若需区分「未初始化」与「已存在」，请使用 [getOrNull]。
      */
     fun get(): KudosContext {
         val kudosContext = contextThreadLocal.get() ?: KudosContext()
         contextThreadLocal.set(kudosContext)
         return kudosContext
     }
+
+    /**
+     * 返回当前线程已绑定的上下文；若尚未 [set]，返回 null（**不会**自动创建）。
+     */
+    fun getOrNull(): KudosContext? = contextThreadLocal.get()
 
     /**
      * 设置当前线程的KudosContext

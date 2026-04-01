@@ -13,7 +13,10 @@ import java.util.concurrent.TimeUnit
 class RedissonLocker : ILocker<RLock> {
 
     @Autowired(required = false)
-    private lateinit var redissonClient: RedissonClient
+    private var redissonClient: RedissonClient? = null
+
+    private fun client(): RedissonClient =
+        requireNotNull(redissonClient) { "RedissonClient未初始化，请检查redisson配置是否启用并注入成功" }
 
     /**
      * 获取分布式锁对象
@@ -21,7 +24,7 @@ class RedissonLocker : ILocker<RLock> {
      * @param lockKey
      */
     override fun getLock(lockKey: String): RLock {
-        return this.redissonClient.getLock(lockKey)
+        return client().getLock(lockKey)
     }
 
     /**
@@ -31,7 +34,7 @@ class RedissonLocker : ILocker<RLock> {
      * @return RLock
      */
     override fun lock(lockKey: String): RLock {
-        val lock: RLock = this.redissonClient.getLock(lockKey)
+        val lock: RLock = client().getLock(lockKey)
         lock.lock()
         return lock
     }
@@ -44,7 +47,7 @@ class RedissonLocker : ILocker<RLock> {
      * @return RLock
      */
     override fun lock(lockKey: String, timeOut: Long): RLock {
-        val lock: RLock = this.redissonClient.getLock(lockKey)
+        val lock: RLock = client().getLock(lockKey)
         lock.lock(timeOut, TimeUnit.SECONDS)
         return lock
     }
@@ -62,7 +65,7 @@ class RedissonLocker : ILocker<RLock> {
         unit: TimeUnit,
         timeOut: Long
     ): RLock {
-        val lock: RLock = this.redissonClient.getLock(lockKey)
+        val lock: RLock = client().getLock(lockKey)
         lock.lock(timeOut, unit)
         return lock
     }
@@ -106,7 +109,7 @@ class RedissonLocker : ILocker<RLock> {
         timeOut: Long,
         leaseTime: Long
     ): Boolean {
-        val lock: RLock = this.redissonClient.getLock(lockKey)
+        val lock: RLock = client().getLock(lockKey)
         return try {
             lock.tryLock(timeOut, leaseTime, unit)
         } catch (_: InterruptedException) {
@@ -120,8 +123,10 @@ class RedissonLocker : ILocker<RLock> {
      * @param lockKey lockKey
      */
     override fun unlock(lockKey: String) {
-        val lock: RLock = this.redissonClient.getLock(lockKey)
-        lock.unlock()
+        val lock: RLock = client().getLock(lockKey)
+        if (lock.isLocked && lock.isHeldByCurrentThread) {
+            lock.unlock()
+        }
     }
 
     /**
@@ -130,6 +135,8 @@ class RedissonLocker : ILocker<RLock> {
      * @param lock lockKey
      */
     override fun unlock(lock: RLock) {
-        lock.unlock()
+        if (lock.isLocked && lock.isHeldByCurrentThread) {
+            lock.unlock()
+        }
     }
 }
