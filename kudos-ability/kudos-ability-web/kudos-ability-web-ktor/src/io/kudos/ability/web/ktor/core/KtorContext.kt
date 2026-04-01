@@ -14,11 +14,13 @@ object KtorContext {
     /**
      * Ktor的application对象
      */
-    lateinit var application : Application
+    lateinit var application: Application
 
     /**
      * kudos的Ktor配置
      */
     lateinit var properties: KtorProperties
 
+    /** 供 Spring 关闭等场景判断：test 模式或未启动时不会赋值 [application] */
+    fun isApplicationInitialized(): Boolean = ::application.isInitialized
 }
