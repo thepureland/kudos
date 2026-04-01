@@ -6,7 +6,12 @@ import io.kudos.base.lang.GenericKit
 import io.kudos.base.model.payload.ListSearchPayload
 import io.kudos.base.support.service.iservice.IBaseCrudService
 import jakarta.validation.Valid
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
+import org.springframework.web.bind.annotation.RequestBody
+import java.util.LinkedHashMap
 import kotlin.reflect.KClass
 
 
@@ -91,9 +96,7 @@ open class BaseCrudController<
      * @return 主键
      */
     @PostMapping("/save")
-    open fun save(@RequestBody @Valid formCreateVo: CF): PK {
-        return service.insert(formCreateVo)
-    }
+    open fun save(@RequestBody @Valid formCreateVo: CF): PK = service.insert(formCreateVo)
 
     /**
      * 更新记录
@@ -112,9 +115,7 @@ open class BaseCrudController<
      * @return 是否删除成功
      */
     @DeleteMapping("/delete")
-    open fun delete(id: PK): Boolean {
-        return service.deleteById(id)
-    }
+    open fun delete(id: PK): Boolean = service.deleteById(id)
 
     /**
      * 批量删除指定主键的记录
@@ -123,8 +124,6 @@ open class BaseCrudController<
      * @return 是否删除成功
      */
     @PostMapping("/batchDelete")
-    open fun batchDelete(@RequestBody ids: List<PK>): Boolean {
-        return service.batchDelete(ids) == ids.size
-    }
+    open fun batchDelete(@RequestBody ids: List<PK>): Boolean = service.batchDelete(ids) == ids.size
 
 }
