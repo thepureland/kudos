@@ -2,7 +2,7 @@ package io.kudos.ability.file.common
 
 import io.kudos.ability.file.common.entity.UploadFileModel
 import io.kudos.ability.file.common.entity.UploadFileResult
-import java.util.*
+import java.time.LocalDate
 
 abstract class AbstractUploadService : IUploadService {
     
@@ -24,25 +24,19 @@ abstract class AbstractUploadService : IUploadService {
      * @param model
      */
     protected open fun dispatchFileDir(model: UploadFileModel<*>): String {
-        val calendar = Calendar.getInstance()
-        val year = calendar.get(Calendar.YEAR)
-        val month = calendar.get(Calendar.MONTH) + 1
-        val day = calendar.get(Calendar.DAY_OF_MONTH)
-        val fpLs = ArrayList<String?>()
-        if (!model.tenantId.isNullOrBlank()) {
-            fpLs.add(model.tenantId)
-        }
-        if (!model.category.isNullOrBlank()) {
-            //优先使用:分类目录
-            fpLs.add(model.category)
+        val today = LocalDate.now()
+        val fpLs = mutableListOf<String>()
+        model.tenantId?.takeIf { it.isNotBlank() }?.let { fpLs.add(it) }
+        val category = model.category?.takeIf { it.isNotBlank() }
+        if (category != null) {
+            fpLs.add(category)
         } else {
-            //默认分类:年/月/日
-            fpLs.add(year.toString())
-            fpLs.add(month.toString())
-            fpLs.add(day.toString())
+            fpLs.add(today.year.toString())
+            fpLs.add(today.monthValue.toString())
+            fpLs.add(today.dayOfMonth.toString())
         }
         //waring: 使用/作为分割符,适合windows cmd + unix like shell + web browsers
-        return fpLs.toTypedArray().joinToString("/")
+        return fpLs.joinToString("/")
     }
 
     /**

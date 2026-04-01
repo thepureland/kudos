@@ -2,7 +2,6 @@ package io.kudos.ability.file.common.entity
 
 import io.kudos.ability.file.common.auth.AuthServerParam
 import java.io.Serializable
-import java.util.*
 
 class DeleteFileModel : Serializable {
     /**
@@ -22,14 +21,15 @@ class DeleteFileModel : Serializable {
 
     companion object {
         fun from(fullPath: String): DeleteFileModel {
-            Objects.nonNull(fullPath)
-            val split: Array<String?> = fullPath.split("/".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-            val bucketName = split[1]
-            val filePath = fullPath.replaceFirst(("/$bucketName").toRegex(), "")
-            val downloadFileModel = DeleteFileModel()
-            downloadFileModel.bucketName = bucketName
-            downloadFileModel.filePath = filePath
-            return downloadFileModel
+            require(fullPath.isNotBlank()) { "fullPath must not be blank" }
+            val segments = fullPath.split('/').dropLastWhile { it.isEmpty() }
+            val bucketName = segments.getOrNull(1)
+                ?: throw IllegalArgumentException("fullPath must contain bucket segment: $fullPath")
+            val filePath = fullPath.removePrefix("/$bucketName")
+            return DeleteFileModel().apply {
+                this.bucketName = bucketName
+                this.filePath = filePath
+            }
         }
     }
 }
