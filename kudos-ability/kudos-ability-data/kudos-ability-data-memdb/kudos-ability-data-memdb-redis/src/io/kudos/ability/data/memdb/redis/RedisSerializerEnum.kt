@@ -21,14 +21,6 @@ enum class RedisSerializerEnum(
     FASTJSON("fastjson", GenericFastJsonRedisSerializer::class.java);
 
     companion object {
-        fun ofEnum(type: String?): RedisSerializerEnum? {
-            val enums = entries.toTypedArray()
-            for (anEnum in enums) {
-                if (anEnum.type == type) {
-                    return anEnum
-                }
-            }
-            return null
-        }
+        fun ofEnum(type: String?): RedisSerializerEnum? = entries.find { it.type == type }
     }
 }

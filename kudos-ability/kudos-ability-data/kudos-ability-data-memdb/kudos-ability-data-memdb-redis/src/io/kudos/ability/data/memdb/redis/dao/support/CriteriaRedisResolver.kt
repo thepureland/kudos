@@ -27,7 +27,7 @@ internal class CriteriaRedisResolver(
      * @return 满足条件的 id 集合；若 criteria 为空则返回 null（表示“全部”，由调用方用 HKEYS 等处理）
      */
     fun resolveToIds(criteria: Criteria?): Set<String>? {
-        if (criteria ==null || criteria.isEmpty()) return null
+        if (criteria == null || criteria.isEmpty()) return null
         val groups = criteria.getCriterionGroups()
         if (groups.isEmpty()) return null
         var result: Set<String>? = null
@@ -114,8 +114,8 @@ internal class CriteriaRedisResolver(
             }
             OperatorEnum.IN -> {
                 val values = when (value) {
-                    is Collection<*> -> value.map { toDouble(it!!) }
-                    is Array<*> -> value.map { toDouble(it!!) }
+                    is Collection<*> -> value.mapNotNull { it?.let(::toDouble) }
+                    is Array<*> -> value.mapNotNull { it?.let(::toDouble) }
                     else -> listOf(toDouble(value))
                 }
                 var union = emptySet<String>()
@@ -163,8 +163,8 @@ internal class CriteriaRedisResolver(
 
     private fun rangeMinMax(value: Any): Pair<Double, Double>? = when (value) {
         is ClosedFloatingPointRange<*> -> (value.start as Number).toDouble() to (value.endInclusive as Number).toDouble()
-        is Array<*> -> if (value.size >= 2) toDouble(value[0]!!) to toDouble(value[1]!!) else null
-        is List<*> -> if (value.size >= 2) toDouble(value[0]!!) to toDouble(value[1]!!) else null
+        is Array<*> -> value.takeIf { it.size >= 2 }?.let { toDouble(it[0]!!) to toDouble(it[1]!!) }
+        is List<*> -> value.takeIf { it.size >= 2 }?.let { toDouble(it[0]!!) to toDouble(it[1]!!) }
         else -> null
     }
 }

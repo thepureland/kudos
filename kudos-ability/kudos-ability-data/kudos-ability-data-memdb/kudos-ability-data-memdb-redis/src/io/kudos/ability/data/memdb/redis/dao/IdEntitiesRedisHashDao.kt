@@ -180,11 +180,12 @@ open class IdEntitiesRedisHashDao(
         desc: Boolean = true
     ): List<E> {
         val indexKey = CacheKey.getCacheKey(getIndexKeyPrefix(dataKeyPrefix), "zset", zsetIndexName)
-        val ids = if (desc)
-            getRedisTemplate().opsForZSet().reverseRange(indexKey, offset, offset + limit - 1)
-        else
-            getRedisTemplate().opsForZSet().range(indexKey, offset, offset + limit - 1)
-                ?: return emptyList()
+        val ids = (
+            if (desc)
+                getRedisTemplate().opsForZSet().reverseRange(indexKey, offset, offset + limit - 1)
+            else
+                getRedisTemplate().opsForZSet().range(indexKey, offset, offset + limit - 1)
+            ) ?: return emptyList()
         return findByIds(dataKeyPrefix, ids.filterNotNull(), entityClass)
     }
 
@@ -397,12 +398,9 @@ open class IdEntitiesRedisHashDao(
         null
     }
 
-    protected fun getRedisTemplate(): RedisTemplate<Any, Any?> {
-        return redisTemplates.defaultRedisTemplate
-    }
+    protected fun getRedisTemplate(): RedisTemplate<Any, Any?> = redisTemplates.defaultRedisTemplate
 
     /** 二级索引 key 前缀 */
-    protected fun getIndexKeyPrefix(dataKeyPrefix: String): String {
-        return CacheKey.getCacheKey(dataKeyPrefix, "idx")
-    }
+    protected fun getIndexKeyPrefix(dataKeyPrefix: String): String =
+        CacheKey.getCacheKey(dataKeyPrefix, "idx")
 }
