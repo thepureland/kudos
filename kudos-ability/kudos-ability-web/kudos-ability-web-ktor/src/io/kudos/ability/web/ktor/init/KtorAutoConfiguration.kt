@@ -39,48 +39,46 @@ open class KtorAutoConfiguration : IComponentInitializer {
     open fun ktorProperties() = KtorProperties()
 
     @Bean
-    open fun ktorEngine(ktorProperties: KtorProperties) : EmbeddedServer<*, *>? {
+    open fun ktorEngine(ktorProperties: KtorProperties): EmbeddedServer<*, *>? {
         logger.info("初始化 ktorEngine ...")
         KtorContext.properties = ktorProperties
         val engineName = ktorProperties.engine.name
-        if (engineName.isBlank()) {
-            error("kudos.ability.web.ktor.engine.name丢失！")
-        }
+        require(engineName.isNotBlank()) { "kudos.ability.web.ktor.engine.name丢失！" }
 
         if (engineName.lowercase() == "test") {
             logger.info("engineName配置为test, 将使用测试用例中Ktor内置的虚拟内存测试引擎。")
             return null
-        } else {
-            val engineClassName = when (engineName.lowercase()) {
-                "cio" -> "io.ktor.server.cio.CIO"
-                "netty" -> "io.ktor.server.netty.Netty"
-                "jetty" -> "io.ktor.server.jetty.jakarta.Jetty"
-                "tomcat" -> "io.ktor.server.tomcat.jakarta.Tomcat"
-                else -> error("kudos.ability.web.ktor.engine.name值非法！")
-            }
-
-            val factory = Class.forName(engineClassName)
-                .getField("INSTANCE")
-                .get(null) as ApplicationEngineFactory<*, *>
-
-            val started = CompletableFuture<Unit>()
-            val port = ktorProperties.engine.port
-
-            val server = embeddedServer(factory, port) {
-                KtorContext.application = this
-                installPlugins(ktorProperties)
-                routing {
-                    routeRegistrar.forEach { it.register(this) }
-                }
-                monitor.subscribe(ApplicationStarted) {
-                    logger.info("$engineName 引擎启动成功，port：$port")
-                    started.complete(Unit)
-                }
-            }
-            server.start(wait = false)
-            started.join()
-            return server
         }
+
+        val engineClassName = when (engineName.lowercase()) {
+            "cio" -> "io.ktor.server.cio.CIO"
+            "netty" -> "io.ktor.server.netty.Netty"
+            "jetty" -> "io.ktor.server.jetty.jakarta.Jetty"
+            "tomcat" -> "io.ktor.server.tomcat.jakarta.Tomcat"
+            else -> error("kudos.ability.web.ktor.engine.name值非法！")
+        }
+
+        val factory = Class.forName(engineClassName)
+            .getField("INSTANCE")
+            .get(null) as ApplicationEngineFactory<*, *>
+
+        val started = CompletableFuture<Unit>()
+        val port = ktorProperties.engine.port
+
+        val server = embeddedServer(factory, port) {
+            KtorContext.application = this
+            installPlugins(ktorProperties)
+            routing {
+                routeRegistrar.forEach { it.register(this) }
+            }
+            monitor.subscribe(ApplicationStarted) {
+                logger.info("$engineName 引擎启动成功，port：$port")
+                started.complete(Unit)
+            }
+        }
+        server.start(wait = false)
+        started.join()
+        return server
     }
 
     /**
@@ -89,13 +87,14 @@ open class KtorAutoConfiguration : IComponentInitializer {
      */
     @PreDestroy
     open fun shutDownKtor() {
-        KtorContext.application.engine.let {
-            val engineName = KtorProperties().engine.name
-            logger.info(">>> Spring Context 关闭，准备关闭 $engineName 引擎...")
-            // gracePeriod = 0 秒，timeout = 1 秒，可以根据需要调整
-            it.stop(2000L, 3000L)
-            logger.info(">>> $engineName 引擎已停止.")
+        if (!KtorContext.isApplicationInitialized()) {
+            logger.debug("Ktor Application 未初始化，跳过引擎关闭")
+            return
         }
+        val engineName = KtorContext.properties.engine.name
+        logger.info(">>> Spring Context 关闭，准备关闭 $engineName 引擎...")
+        KtorContext.application.engine.stop(2000L, 3000L)
+        logger.info(">>> $engineName 引擎已停止.")
     }
 
     override fun getComponentName() = "kudos-ability-web-ktor-base"
