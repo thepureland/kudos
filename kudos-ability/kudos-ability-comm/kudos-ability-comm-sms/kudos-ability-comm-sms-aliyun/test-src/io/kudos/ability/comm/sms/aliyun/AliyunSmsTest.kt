@@ -188,7 +188,7 @@ class AliyunSmsTest {
         private fun registerProperties(registry: DynamicPropertyRegistry) {
             val container = WireMockTestContainer.startIfNeeded(registry)
             baseUrl = "http://${container.ports.first().ip}:${container.ports.first().publicPort}"
-            registry.add("kudos.ability.comm.sms.aliyun") { baseUrl }
+            registry.add("kudos.ability.comm.sms.aliyun.endpoint") { baseUrl }
         }
     }
 

@@ -11,7 +11,7 @@ object DatasourceKeyTool {
         if (!dsKeyConfig.contains(SEPERATOR)) {
             return listOf(dsKeyConfig, SERVER_CODE_DEFAULT, tenantId, suffix).joinToString(SEPERATOR)
         }
-        return listOf(dsKeyConfig, tenantId, suffix).joinToString()
+        return listOf(dsKeyConfig, tenantId, suffix).joinToString(SEPERATOR)
     }
 
     fun getServerCode(contextMapKey: String?): String? {

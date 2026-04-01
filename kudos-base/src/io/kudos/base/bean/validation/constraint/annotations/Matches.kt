@@ -10,7 +10,7 @@ import kotlin.reflect.KClass
  * 仅支持框架内置 [RegExpEnum] 与 [io.kudos.base.bean.validation.support.RegExps] 的分类正则；
  * 行为与 [jakarta.validation.constraints.Pattern] 一致（含 null 视为合法，与 [NotBlank] 等组合使用）。
  * 业务自定义规则请使用 [@Pattern][jakarta.validation.constraints.Pattern] 并引用 [io.kudos.base.bean.validation.support.RegExps] 中的常量。
- * 终端约束通过 [io.kudos.base.bean.validation.teminal.convert.converter.impl.MatchesConstraintConvertor] 转为 `Pattern` 的规则描述。
+ * 终端约束通过 [io.kudos.base.bean.validation.terminal.convert.converter.impl.MatchesConstraintConvertor] 转为 `Pattern` 的规则描述。
  *
  * @author K
  * @author AI: Cursor

@@ -4,10 +4,10 @@ import io.kudos.ability.comm.sms.aliyun.handler.AliyunSmsHandler
 import io.kudos.context.config.YamlPropertySourceFactory
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
-import org.springframework.beans.factory.annotation.Configurable
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.PropertySource
 
 
@@ -17,7 +17,7 @@ import org.springframework.context.annotation.PropertySource
  * @author K
  * @since 1.0.0
  */
-@Configurable
+@Configuration
 @AutoConfigureAfter(ContextAutoConfiguration::class)
 @PropertySource(
     value = ["classpath:kudos-ability-comm-sms-aliyun.yml"],

@@ -1,6 +1,6 @@
 package io.kudos.ability.web.springmvc.controller
 
-import io.kudos.base.bean.validation.teminal.TeminalConstraintsCreator
+import io.kudos.base.bean.validation.terminal.TerminalConstraintsCreator
 import io.kudos.base.error.ObjectNotFoundException
 import io.kudos.base.lang.GenericKit
 import io.kudos.base.model.payload.ListSearchPayload
@@ -52,7 +52,7 @@ open class BaseCrudController<
             @Suppress("UNCHECKED_CAST")
             createFormVoClass = GenericKit.getSuperClassGenricClass(this::class, 6) as KClass<CF>
         }
-        return TeminalConstraintsCreator.create(requireNotNull(createFormVoClass) { "createFormVoClass is null" })
+        return TerminalConstraintsCreator.create(requireNotNull(createFormVoClass) { "createFormVoClass is null" })
     }
 
     /**
@@ -66,7 +66,7 @@ open class BaseCrudController<
             @Suppress("UNCHECKED_CAST")
             updateFormVoClass = GenericKit.getSuperClassGenricClass(this::class, 7) as KClass<UF>
         }
-        return TeminalConstraintsCreator.create(requireNotNull(updateFormVoClass) { "updateFormVoClass is null" })
+        return TerminalConstraintsCreator.create(requireNotNull(updateFormVoClass) { "updateFormVoClass is null" })
     }
 
     /**

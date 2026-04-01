@@ -171,18 +171,12 @@ open class ComponentInitializationDispatcher :
     }
 
     /**
-     * 获取早期Bean引用
-     * 
-     * 对于需要代理的Bean，确保代理也参与初始化后的计数处理。
-     * 
-     * 工作流程：
-     * - 调用postProcessAfterInitialization处理代理Bean
-     * - 确保代理Bean的初始化也被计入组件的子Bean计数
-     * 
-     * 使用场景：
-     * - AOP代理Bean
-     * - 其他需要代理的Bean
-     * 
+     * 获取早期 Bean 引用（例如循环依赖解析阶段）。
+     *
+     * 此处转发到 [postProcessAfterInitialization]，使代理对象也参与子 Bean 完成计数。
+     * 若 Spring 版本或代理策略导致同一 beanName 多次进入该路径，可能与纯初始化路径叠加；
+     * 若出现 `afterInit` 触发时机异常，请用集成测试对照当前 Spring 小版本行为。
+     *
      * @param bean Bean实例
      * @param beanName Bean名称
      * @return 处理后的Bean实例（可能是代理）

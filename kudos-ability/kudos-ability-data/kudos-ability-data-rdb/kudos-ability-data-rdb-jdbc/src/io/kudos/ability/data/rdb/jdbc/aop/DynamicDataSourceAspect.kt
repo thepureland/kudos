@@ -54,7 +54,7 @@ class DynamicDataSourceAspect {
         } finally {
             if (changeDatasource) {
                 DynamicDataSourceContextHolder.poll()
-                log.debug("回退数据源.joinPoint.target.javaClass.getPackageName()")
+                log.debug("回退数据源,{0}", joinPoint.target.javaClass.packageName)
             }
         }
     }

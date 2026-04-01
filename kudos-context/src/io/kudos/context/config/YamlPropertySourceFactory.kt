@@ -6,7 +6,9 @@ import org.springframework.core.env.PropertiesPropertySource
 import org.springframework.core.env.PropertySource
 import org.springframework.core.io.support.EncodedResource
 import org.springframework.core.io.support.PropertySourceFactory
-import java.util.*
+import java.util.Collections
+import java.util.Properties
+import java.util.ServiceLoader
 
 
 /**
@@ -84,15 +86,12 @@ class YamlPropertySourceFactory : PropertySourceFactory {
 
 
     companion object {
-        private val SOURCE_MAP: MutableMap<String?, String?> = HashMap<String?, String?>()
+        private val SOURCE_MAP: MutableMap<String?, String?> = HashMap()
 
-        fun getSourceMap(): MutableMap<String?, String?> {
-            return SOURCE_MAP
-        }
+        /** 返回只读视图，避免外部篡改内部映射。 */
+        fun getSourceMap(): Map<String?, String?> = Collections.unmodifiableMap(SOURCE_MAP)
 
-        fun allSourcePath(): MutableList<String?> {
-            return SOURCE_MAP.keys.stream().toList()
-        }
+        fun allSourcePath(): List<String?> = SOURCE_MAP.keys.toList()
     }
 
 }

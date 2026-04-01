@@ -44,7 +44,7 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
     topic: String?,
     batchProcessSize: Int,
     pullTime: Long,
-    saveException: Boolean = false
+    private val saveException: Boolean = false
 ) {
 
     private var isRunning = false
@@ -55,7 +55,6 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
     private var bizBachProcess: Consumer<MutableList<BatchConsumerItem<T?>?>?>? = null
     private val groupName: String?
     private val topic: String?
-    private val saveException = false
 
     /**
      * @param groupName     分组名
@@ -144,9 +143,9 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
             }
             toProcessBizData(batchData)
         }
-        daemonThread!!.setName("RocketMqBatchConsumer-$groupName")
-        daemonThread!!.setDaemon(true)
-        daemonThread!!.start()
+        daemonThread?.name = "RocketMqBatchConsumer-$groupName"
+        daemonThread?.isDaemon = true
+        daemonThread?.start()
     }
 
     /**
@@ -208,7 +207,12 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
             }
         }.toList()
         try {
-            bizBachProcess!!.accept(list)
+            val processor = bizBachProcess
+            if (processor == null) {
+                log.warn("业务消费处理器为空，跳过本批次消费。topic=$topic")
+                return
+            }
+            processor.accept(list)
             consumer.commit()
         } catch (e: Exception) {
             if (saveException) {
@@ -238,7 +242,7 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
     fun destroy() {
         this.isRunning = false
         try {
-            daemonThread!!.join()
+            daemonThread?.join()
         } catch (e: InterruptedException) {
             log.error("停止mq消费失败" + e.message)
         }

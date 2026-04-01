@@ -22,7 +22,7 @@ class FeignCacheResponseInterceptor(
     @Throws(IOException::class, FeignException::class)
     override fun decode(response: Response, type: Type): Any? {
         // 没开本地缓存，直接走原始 decoder
-        if (!cacheHelper.havaLocalCache()) {
+        if (!cacheHelper.hasLocalCache()) {
             return delegate.decode(response, type)
         }
 

@@ -3,6 +3,15 @@ kudos:
     distributed:
       stream:
         save-exception: true
+        async-executor:
+          core-pool-size: 32
+          max-pool-size: 128
+          queue-capacity: 1024
+          thread-name-prefix: "stream-async-"
+        binding-verify:
+          enabled: false
+          fail-on-missing: false
+          required-producer-bindings: []
     flyway:
       datasource-config:
         mq: ds-master

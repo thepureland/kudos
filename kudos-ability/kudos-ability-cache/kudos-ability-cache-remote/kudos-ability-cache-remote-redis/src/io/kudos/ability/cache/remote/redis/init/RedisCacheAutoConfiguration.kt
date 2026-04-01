@@ -69,15 +69,29 @@ open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentIni
         redisTemplates: RedisTemplates,
         redisProperties: RedisProperties
     ): CacheManager {
-        var redisTemplate = redisTemplates.getRedisTemplate(remoteStore!!)
+        val configuredStore = remoteStore?.trim().orEmpty()
+        val defaultStore = redisProperties.defaultRedis?.trim().orEmpty()
+        val selectedStore = when {
+            configuredStore.isNotBlank() -> configuredStore
+            defaultStore.isNotBlank() -> defaultStore
+            else -> throw IllegalStateException(
+                "kudos.ability.cache.remoteStore 与 kudos.ability.data.redis.defaultRedis 同时为空，无法初始化 remoteCacheManager"
+            )
+        }
+        var redisTemplate = redisTemplates.getRedisTemplate(selectedStore)
         if (redisTemplate == null) {
-            log.warn("找不到${remoteStore}对应的redis配置，使用默认的redis配置")
+            log.warn("找不到{0}对应的redis配置，使用默认的redis模板", selectedStore)
             redisTemplate = redisTemplates.defaultRedisTemplate
         }
         val keySerializationPair =
             RedisSerializationContext.SerializationPair.fromSerializer(RedisTemplates.REDIS_KEY_SERIALIZER)
+        val extProps = redisProperties.redisMap[selectedStore]
+            ?: redisProperties.redisMap[defaultStore]
+            ?: throw IllegalStateException(
+                "找不到redis序列化配置: selectedStore=$selectedStore, defaultStore=$defaultStore"
+            )
         val valueSerializationPair =
-            RedisSerializationContext.SerializationPair.fromSerializer(redisProperties.redisMap[remoteStore]!!.valueSerializer())
+            RedisSerializationContext.SerializationPair.fromSerializer(extProps.valueSerializer())
         val defaultRedisCacheConfiguration = RedisCacheConfiguration
             .defaultCacheConfig()
             .disableCachingNullValues()
