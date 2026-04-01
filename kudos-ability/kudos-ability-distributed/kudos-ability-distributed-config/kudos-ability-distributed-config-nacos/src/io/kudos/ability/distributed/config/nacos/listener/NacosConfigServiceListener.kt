@@ -3,7 +3,7 @@ package io.kudos.ability.distributed.config.nacos.listener
 import com.alibaba.nacos.api.NacosFactory
 import com.alibaba.nacos.api.config.ConfigService
 import com.alibaba.nacos.api.exception.NacosException
-import java.util.*
+import java.util.Properties
 import kotlin.concurrent.Volatile
 
 /**
@@ -35,11 +35,11 @@ class NacosConfigServiceListener {
 
     @Throws(NacosException::class)
     fun addListener(dataId: String?, group: String?, listener: AbstractConfigChangeListener?) {
-        configService!!.addListener(dataId, group, listener)
+        requireNotNull(configService) { "Nacos ConfigService not initialized" }.addListener(dataId, group, listener)
     }
 
     fun removeListener(dataId: String?, group: String?, listener: AbstractConfigChangeListener?) {
-        configService!!.removeListener(dataId, group, listener)
+        requireNotNull(configService) { "Nacos ConfigService not initialized" }.removeListener(dataId, group, listener)
     }
 
     class PropertiesBuilder {
@@ -50,9 +50,7 @@ class NacosConfigServiceListener {
             return this
         }
 
-        fun get(): Properties {
-            return this.properties
-        }
+        fun get(): Properties = properties
     }
 
     companion object {
