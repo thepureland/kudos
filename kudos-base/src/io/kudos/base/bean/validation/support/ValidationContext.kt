@@ -10,7 +10,6 @@ import org.hibernate.validator.internal.engine.constraintvalidation.ConstraintVa
 import java.lang.reflect.Field
 import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
-import java.util.function.Consumer
 
 /**
  * Bean校验的上下文
@@ -118,14 +117,14 @@ object ValidationContext {
         val beanDescriptor = validator.getConstraintsForClass(bean.javaClass)
 
         // 遍历该 bean 中所有有约束的属性
-        beanDescriptor.constrainedProperties.forEach(Consumer { descriptor: PropertyDescriptor ->
+        beanDescriptor.constrainedProperties.forEach { descriptor: PropertyDescriptor ->
             val propertyName = descriptor.propertyName
             // 拼接路径时确保 parentPath 为空时不会导致前面多一个 "."
             val fullPath =
                 if (parentPath.isNullOrEmpty()) propertyName else "$parentPath.$propertyName"
 
             // 对每个属性的约束进行检查
-            descriptor.constraintDescriptors.forEach(Consumer { des: ConstraintDescriptor<*> ->
+            descriptor.constraintDescriptors.forEach { des: ConstraintDescriptor<*> ->
                 val annotationClass = des.annotation.annotationClass.java
                 val isBusinessConstraint = businessConstraintAnnotationCache.getOrPut(annotationClass) {
                     val annoClassName = annotationClass.name
@@ -136,7 +135,7 @@ object ValidationContext {
                 if (isBusinessConstraint) {
                     beanStore[des.hashCode()] = bean
                 }
-            })
+            }
 
             // 判断是否为嵌套对象，即该属性是否有其他受约束的属性（嵌套校验）
             if (descriptor.isCascaded) {
@@ -158,7 +157,7 @@ object ValidationContext {
                     }
                 }
             }
-        })
+        }
     }
 
     /**

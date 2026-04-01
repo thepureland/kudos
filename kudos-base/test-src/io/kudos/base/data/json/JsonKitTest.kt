@@ -6,7 +6,7 @@ import io.kudos.base.bean.Person
 import io.kudos.base.time.toLocalDate
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
-import java.util.*
+import java.util.Date
 import kotlin.reflect.typeOf
 import kotlin.test.BeforeTest
 import kotlin.test.Test

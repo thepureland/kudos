@@ -1,6 +1,7 @@
 package io.kudos.base.time
 
-import java.util.*
+import java.util.Calendar
+import java.util.Date
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
