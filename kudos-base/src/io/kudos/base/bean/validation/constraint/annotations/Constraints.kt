@@ -138,6 +138,12 @@ annotation class Constraints(
     val length: Length = Length(message = MESSAGE),
     /** 最大长度约束，等价于只指定 max 的 Length，被校验对象类型必须为CharSequence或其子类 */
     val maxLength: MaxLength = MaxLength(0, message = MESSAGE),
+    /**
+     * 定长约束，等价于 min 与 max 相等的 Size。
+     * 被校验对象类型必须为以下之一或其子类：
+     * CharSequence、Array<*>、Collection<*>、DoubleArray、IntArray、LongArray、CharArray、FloatArray、BooleanArray、ByteArray、ShortArray、Map<*, *>
+     */
+    val fixedLength: FixedLength = FixedLength(0, message = MESSAGE),
     /** 字符串Luhn算法(模10算法)约束，可检测银行卡、信用卡。被校验对象类型必须为CharSequence或其子类 */
     val luhnCheck: LuhnCheck = LuhnCheck(message = MESSAGE),
     /** 字符串模10算法约束，可检测银行卡、信用卡。被校验对象类型必须为CharSequence或其子类 */

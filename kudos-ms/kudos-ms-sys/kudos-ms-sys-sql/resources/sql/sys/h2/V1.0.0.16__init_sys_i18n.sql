@@ -505,6 +505,10 @@ insert into "sys_i18n" ("locale", "atomic_service_code", "i18n_type_dict_code", 
     ('zh-TW', 'sys', 'valid-msg', 'default', 'MaxLength', '長度不得大於 {max}', true),
     ('en-US', 'sys', 'valid-msg', 'default', 'MaxLength', 'length must not exceed {max}', true),
 
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'FixedLength', '长度必须为{value}个字符', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'FixedLength', '長度必須為 {value} 個字元', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'FixedLength', 'length must be exactly {value} characters', true),
+
     ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::cn-mainland-mobile', '须为中国大陆11位手机号码', true),
     ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::cn-mainland-mobile', '須為中國大陸 11 位手機號碼', true),
     ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::cn-mainland-mobile', 'must be an 11-digit mainland China mobile number', true),
