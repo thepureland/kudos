@@ -17,7 +17,7 @@ import org.springframework.messaging.MessageHandlingException
 import org.springframework.messaging.MessageHeaders
 import org.springframework.messaging.support.ErrorMessage
 import java.time.LocalDateTime
-import java.util.*
+import java.util.Locale
 
 /**
  * @Description Stream消费异常全局处理类
@@ -76,25 +76,23 @@ class StreamGlobalExceptionHandler {
 
     @ServiceActivator(inputChannel = IntegrationContextUtils.ERROR_CHANNEL_BEAN_NAME)
     fun handleProducerError(errorMessage: ErrorMessage) {
-        doRealChannelErrorHandl(errorMessage)
+        doRealChannelErrorHandle(errorMessage)
     }
 
     @ServiceActivator(inputChannel = IStreamFailHandler.CHANNEL_BEN_NAME)
     fun handSyncChannelError(errorMessage: ErrorMessage) {
-        doRealChannelErrorHandl(errorMessage)
+        doRealChannelErrorHandle(errorMessage)
     }
 
     private fun isFromConsumer(headers: MessageHeaders): Boolean {
-        return headers.keys.stream()
-            .map<String?> { obj: String? -> obj!!.lowercase(Locale.getDefault()) }
-            .anyMatch { k: String? ->
-                k!!.startsWith("kafka_")
-                        || k.startsWith("amqp_")
-                        || k.startsWith("rocket_")
-            }
+        val locale = Locale.getDefault()
+        return headers.keys.any { key ->
+            val k = key.lowercase(locale)
+            k.startsWith("kafka_") || k.startsWith("amqp_") || k.startsWith("rocket_")
+        }
     }
 
-    private fun doRealChannelErrorHandl(errorMessage: ErrorMessage) {
+    private fun doRealChannelErrorHandle(errorMessage: ErrorMessage) {
         try {
             val messageHandlingException = errorMessage.payload
             if (messageHandlingException is MessageHandlingException) {
