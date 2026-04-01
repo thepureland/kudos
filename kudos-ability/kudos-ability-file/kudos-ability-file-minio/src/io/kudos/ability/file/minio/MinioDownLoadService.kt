@@ -7,8 +7,8 @@ import io.kudos.ability.file.minio.client.MinioClientBuilderFactory
 import io.kudos.base.error.ServiceException
 import io.kudos.base.logger.LogFactory
 import io.minio.GetObjectArgs
-import io.minio.GetObjectResponse
 import io.minio.MinioClient
+import java.io.InputStream
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 
@@ -30,54 +30,35 @@ open class MinioDownLoadService : AbstractDownLoadService() {
      * @throws Exception
      */
     protected fun getMinioClient(model: DownloadFileModel<*>): MinioClient {
-        if (model.authServerParam != null) {
-            LOG.info(
-                "Minio use auth server type:{0}",
-                requireNotNull(model.authServerParam) { "authServerParam is null" }.javaClass.getSimpleName()
-            )
-            return requireNotNull(minioClientBuilderFactory.getInstance(requireNotNull(model.authServerParam) { "authServerParam is null" })) { "MinioClient builder not found" }.build()
-        }
-        return minioClientDefault
+        val auth = model.authServerParam ?: return minioClientDefault
+        LOG.info("Minio use auth server type:{0}", auth.javaClass.simpleName)
+        return requireNotNull(minioClientBuilderFactory.getInstance(auth)) { "MinioClient builder not found" }.build()
     }
 
     override fun readFileToByte(downloadFileModel: DownloadFileModel<*>): ByteArray? {
-        val getArgs: GetObjectArgs? = GetObjectArgs
-            .builder()
+        val getArgs = GetObjectArgs.builder()
             .bucket(downloadFileModel.bucketName)
             .`object`(downloadFileModel.filePath)
             .build()
-        try {
-            val minioClient: MinioClient = getMinioClient(downloadFileModel)
-            val `object`: GetObjectResponse? = minioClient.getObject(getArgs)
-            if (`object` != null) {
-                return `object`.readAllBytes()
-            } else {
-                throw ServiceException(FileErrorCode.FILE_NO_EXISTS)
-            }
+        return try {
+            getMinioClient(downloadFileModel).getObject(getArgs).use { it.readAllBytes() }
         } catch (e: io.minio.errors.ErrorResponseException) {
             throw ServiceException(FileErrorCode.FILE_ACCESS_DENY, e)
-        } catch (e: java.lang.Exception) {
+        } catch (e: Exception) {
             throw ServiceException(FileErrorCode.FILE_ACCESS_ERROR, e)
         }
     }
 
-    override fun readFileToStream(downloadFileModel: DownloadFileModel<*>): java.io.InputStream {
-        val getArgs = GetObjectArgs
-            .builder()
+    override fun readFileToStream(downloadFileModel: DownloadFileModel<*>): InputStream {
+        val getArgs = GetObjectArgs.builder()
             .bucket(downloadFileModel.bucketName)
             .`object`(downloadFileModel.filePath)
             .build()
-        try {
-            val minioClient: MinioClient = getMinioClient(downloadFileModel)
-            val obj = minioClient.getObject(getArgs)
-            if (obj != null) {
-                return obj
-            } else {
-                throw ServiceException(FileErrorCode.FILE_NO_EXISTS)
-            }
+        return try {
+            getMinioClient(downloadFileModel).getObject(getArgs)
         } catch (e: io.minio.errors.ErrorResponseException) {
             throw ServiceException(FileErrorCode.FILE_ACCESS_DENY, e)
-        } catch (e: java.lang.Exception) {
+        } catch (e: Exception) {
             throw ServiceException(FileErrorCode.FILE_ACCESS_ERROR, e)
         }
     }

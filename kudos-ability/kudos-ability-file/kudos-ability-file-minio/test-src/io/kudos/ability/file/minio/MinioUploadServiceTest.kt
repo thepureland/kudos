@@ -13,7 +13,7 @@ import io.minio.BucketExistsArgs
 import io.minio.MakeBucketArgs
 import io.minio.MinioClient
 import io.minio.admin.MinioAdminClient
-import io.minio.admin.UserInfo
+import io.minio.admin.Status
 import jakarta.annotation.Resource
 import org.junit.jupiter.api.TestInstance
 import org.springframework.core.io.InputStreamResource
@@ -258,10 +258,10 @@ internal class MinioUploadServiceTest {
 
             // 创建用户（若已存在可忽略异常）
             runCatching {
-                admin.addUser(DEFAULT_UPLOADER, UserInfo.Status.ENABLED, DEFAULT_UPLOADER_SECRET, null, null)
+                admin.addUser(DEFAULT_UPLOADER, Status.ENABLED, DEFAULT_UPLOADER_SECRET, null, null)
             }
             runCatching {
-                admin.addUser(UPLOAD_ONLY_USER, UserInfo.Status.ENABLED, UPLOAD_ONLY_USER_SECRET, null, null)
+                admin.addUser(UPLOAD_ONLY_USER, Status.ENABLED, UPLOAD_ONLY_USER_SECRET, null, null)
             }
 
             // 绑定策略
