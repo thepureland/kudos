@@ -50,17 +50,15 @@ open class RedisAutoConfiguration : IComponentInitializer {
             redisTemplateMap[key] = redisTemplate
         }
 
-        //拼装KudosRedisTemplate
-        val defaultRedisTemplate = redisTemplateMap[redisProperties.defaultRedis]!!
-        val redisTemplates = RedisTemplates(redisTemplateMap, defaultRedisTemplate)
-        return redisTemplates
+        val defaultKey = requireNotNull(redisProperties.defaultRedis) { "kudos.ability.data.redis.default-redis must be set" }
+        val defaultRedisTemplate = requireNotNull(redisTemplateMap[defaultKey]) { "no redis config for default-redis: $defaultKey" }
+        return RedisTemplates(redisTemplateMap, defaultRedisTemplate)
     }
 
     @Bean("redisTemplate")
     @ConditionalOnMissingBean
-    open fun redisTemplate(redisTemplateMap: RedisTemplates): RedisTemplate<Any, Any?> {
-        return redisTemplateMap.defaultRedisTemplate
-    }
+    open fun redisTemplate(redisTemplateMap: RedisTemplates): RedisTemplate<Any, Any?> =
+        redisTemplateMap.defaultRedisTemplate
 
     /**
      * 根据redis连接工厂创建redisTemplate

@@ -10,16 +10,11 @@ class StringRedisSerializer(prefix: String?) : RedisSerializer<String> {
 
     private val delegate: StringRedisSerializer = StringRedisSerializer(StandardCharsets.UTF_8)
 
-    override fun serialize(key: String?): ByteArray {
-        return delegate.serialize(prefix + key)
-    }
+    override fun serialize(key: String?): ByteArray = delegate.serialize(prefix + key)
 
     override fun deserialize(bytes: ByteArray?): String? {
-        val key: String? = delegate.deserialize(bytes)
-        if (key != null && key.startsWith(prefix)) {
-            return key.substring(prefix.length)
-        }
-        return key
+        val key = delegate.deserialize(bytes) ?: return null
+        return key.removePrefix(prefix).takeIf { it.length < key.length } ?: key
     }
 
 }
