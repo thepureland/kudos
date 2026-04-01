@@ -17,7 +17,7 @@ import io.minio.MakeBucketArgs
 import io.minio.MinioClient
 import io.minio.PutObjectArgs
 import io.minio.admin.MinioAdminClient
-import io.minio.admin.UserInfo
+import io.minio.admin.Status
 import jakarta.annotation.Resource
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
@@ -226,8 +226,8 @@ internal class MinioDownLoadServiceTest {
             runCatching { admin.addCannedPolicy("ro-policy", roPolicy) }
 
             // 创建用户（若已存在可忽略异常）
-            runCatching { admin.addUser(RW_USER, UserInfo.Status.ENABLED, RW_USER_SECRET, null, null) }
-            runCatching { admin.addUser(RO_USER, UserInfo.Status.ENABLED, RO_USER_SECRET, null, null) }
+            runCatching { admin.addUser(RW_USER, Status.ENABLED, RW_USER_SECRET, null, null) }
+            runCatching { admin.addUser(RO_USER, Status.ENABLED, RO_USER_SECRET, null, null) }
 
             // 绑定策略
             admin.setPolicy(RW_USER, false, "rw-policy")

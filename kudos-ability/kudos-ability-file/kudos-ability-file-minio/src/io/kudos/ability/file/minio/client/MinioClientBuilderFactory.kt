@@ -16,21 +16,17 @@ class MinioClientBuilderFactory {
     @Autowired
     private lateinit var accessTokenServer: AccessTokenServerProperties
 
-    fun getInstance(authServerParam: AuthServerParam): MinioClientBuilder<*>? {
-        if (authServerParam is AccessKeyServerParam) {
-            val builder = AccessKeyMinioClientBuilder()
-            builder.setMinioProperties(minioProperties)
-            builder.setAuthServerParam(authServerParam)
-            return builder
+    fun getInstance(authServerParam: AuthServerParam): MinioClientBuilder<*>? = when (authServerParam) {
+        is AccessKeyServerParam -> AccessKeyMinioClientBuilder().apply {
+            setMinioProperties(minioProperties)
+            setAuthServerParam(authServerParam)
         }
-        if (authServerParam is AccessTokenServerParam) {
-            val builder = AccessTokenMinioClientBuilder()
-            builder.setMinioProperties(minioProperties)
-            builder.setAccessTokenServerProperties(accessTokenServer)
-            builder.setAuthServerParam(authServerParam)
-            return builder
+        is AccessTokenServerParam -> AccessTokenMinioClientBuilder().apply {
+            setMinioProperties(minioProperties)
+            setAccessTokenServerProperties(accessTokenServer)
+            setAuthServerParam(authServerParam)
         }
-        return null
+        else -> null
     }
 
 }

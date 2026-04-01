@@ -18,7 +18,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
 import java.io.IOException
-import java.io.UnsupportedEncodingException
+import java.nio.charset.StandardCharsets
 import java.security.ProviderException
 
 /**
@@ -64,12 +64,8 @@ open class AccessTokenMinioClientBuilder : MinioClientBuilder<AccessTokenServerP
             .add("grant_type", requireNotNull(accessTokenServerProperties.authorizationGrantType) { "authorizationGrantType is null" })
             .build()
 
-        var basic = "${accessTokenServerProperties.clientId}:${accessTokenServerProperties.clientSecret}"
-        try {
-            basic = EncodeKit.encodeBase64(basic.toByteArray(charset("UTF-8")))
-        } catch (e: UnsupportedEncodingException) {
-            throw RuntimeException(e)
-        }
+        val basicRaw = "${accessTokenServerProperties.clientId}:${accessTokenServerProperties.clientSecret}"
+        val basic = EncodeKit.encodeBase64(basicRaw.toByteArray(StandardCharsets.UTF_8))
         log.info("Minio oauth2 server: ${accessTokenServerProperties.endpoint}")
         val request = Request.Builder()
             .url(requireNotNull(accessTokenServerProperties.endpoint) { "endpoint is null" })
