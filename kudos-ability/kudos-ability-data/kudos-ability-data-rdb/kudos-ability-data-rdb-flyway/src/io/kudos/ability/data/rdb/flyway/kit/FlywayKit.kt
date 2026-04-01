@@ -4,7 +4,6 @@ import io.kudos.ability.data.rdb.jdbc.kit.RdbKit
 import io.kudos.base.logger.LogFactory
 import org.flywaydb.core.Flyway
 import org.springframework.boot.flyway.autoconfigure.FlywayProperties
-import java.sql.Connection
 import javax.sql.DataSource
 
 
@@ -30,10 +29,10 @@ object FlywayKit {
      * @param flywayProperties FlywayProperties
      */
     fun migrate(moduleName: String, dataSource: DataSource, flywayProperties: FlywayProperties) {
-        var connection: Connection? = null
+        val dbType = dataSource.connection.use { conn ->
+            RdbKit.determinRdbTypeByUrl(conn.metaData.url).name.lowercase()
+        }
         try {
-            connection = dataSource.connection
-            val dbType = RdbKit.determinRdbTypeByUrl(connection.metaData.url).name.lowercase()
             val flyway = Flyway.configure()
                 .dataSource(dataSource)
                 .table("flyway_history_$moduleName")
@@ -60,8 +59,6 @@ object FlywayKit {
         } catch (e: Exception) {
             log.error(e, "flyway升级模块【${moduleName}】数据库出错！")
             throw e
-        } finally {
-            connection?.close()
         }
     }
 
