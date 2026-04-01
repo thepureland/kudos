@@ -60,17 +60,22 @@ object JsonKit {
     private val dataClassPropertyCache = ConcurrentHashMap<KClass<*>, List<DataClassPropertyAccessor>>()
     private val javaBeanReadMethodCache = ConcurrentHashMap<Class<*>, List<Pair<String, Method>>>()
 
+    /**
+     * LocalDate / LocalTime / LocalDateTime 的序列化模块，供 [defaultJson] 与 [preserveJson] 共用，避免配置漂移。
+     */
+    private val javaTimeSerializersModule = SerializersModule {
+        contextual(LocalDate::class, LocalDateSerializer)
+        contextual(LocalTime::class, LocalTimeSerializer)
+        contextual(LocalDateTime::class, LocalDateTimeSerializer)
+    }
+
     /** 默认 Json 引擎：忽略未知字段，不输出 null，支持 LocalDate */
     val defaultJson: Json = Json {
         // 序列化时包含默认值与 null
         encodeDefaults = true
         // JSON 中显式 null 且属性有默认值时，用默认值替代（如 "id":null -> id=""）
         coerceInputValues = true
-        serializersModule = SerializersModule {
-            contextual(LocalDate::class, LocalDateSerializer)
-            contextual(LocalTime::class, LocalTimeSerializer)
-            contextual(LocalDateTime::class, LocalDateTimeSerializer)
-        }
+        serializersModule = javaTimeSerializersModule
         ignoreUnknownKeys = true
         explicitNulls = false
     }
@@ -80,11 +85,7 @@ object JsonKit {
         // 序列化时包含默认值与 null
         encodeDefaults = true
         coerceInputValues = true
-        serializersModule = SerializersModule {
-            contextual(LocalDate::class, LocalDateSerializer)
-            contextual(LocalTime::class, LocalTimeSerializer)
-            contextual(LocalDateTime::class, LocalDateTimeSerializer)
-        }
+        serializersModule = javaTimeSerializersModule
         ignoreUnknownKeys = true
         explicitNulls = true
     }

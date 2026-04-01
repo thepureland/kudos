@@ -48,6 +48,11 @@ kudos:
     distributed:
       stream:
         save-exception: true
+        binding-verify:
+          enabled: false
+          fail-on-missing: false
+          required-producer-bindings:
+            - producer-out-0
     flyway:
       datasource-config:
         mq: ds-master

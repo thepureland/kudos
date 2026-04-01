@@ -4,7 +4,13 @@ import io.kudos.base.enums.ienums.IErrorCodeEnum
 import io.kudos.base.error.ServiceException
 import java.util.concurrent.locks.Lock
 
-
+/**
+ * 锁提供者抽象（本地可重入锁、进程内租约、分布式实现等由具体 [ILockProvider] 决定）。
+ *
+ * **语义说明**：[tryLock] 与 [lock] 是否共享同一套底层机制依实现而定。例如 [NormalLockService] 中
+ * [tryLock] 使用租约表 + 延迟队列；[lock]/[unLock] 使用 [java.util.concurrent.locks.ReentrantLock]。
+ * [lockExecute] 仅调用 [tryLock]/[unLock(key)]，不会走 [lock] 返回的锁对象，调用方勿混用两套 API。
+ */
 interface ILockProvider<L : Lock> {
     /**
      * 类似锁

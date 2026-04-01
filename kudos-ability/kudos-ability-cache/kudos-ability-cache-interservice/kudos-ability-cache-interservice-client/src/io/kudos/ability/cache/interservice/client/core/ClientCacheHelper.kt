@@ -21,16 +21,19 @@ class ClientCacheHelper : InitializingBean {
     @Qualifier("localCacheManager")
     private val cacheManager: IKeyValueCacheManager<*>? = null
 
-    fun havaLocalCache(): Boolean {
+    fun hasLocalCache(): Boolean {
         return cacheManager != null
     }
+
+    @Deprecated("Use hasLocalCache()")
+    fun havaLocalCache(): Boolean = hasLocalCache()
 
     /**
      * 初始化缓存空间
      */
     @Throws(Exception::class)
     override fun afterPropertiesSet() {
-        if (!havaLocalCache()) {
+        if (!hasLocalCache()) {
             log.info("未找到本地缓存实现，功能不开启...")
             return
         }

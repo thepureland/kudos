@@ -151,6 +151,10 @@ class AwsSmsHandler {
         }
     }
 
+    /**
+     * 全进程共享的 `SdkHttpClient`（启用代理时由 `initApacheHttpClient` 赋值）。
+     * 代理配置变更需重启进程；多租户若需不同代理应另行设计客户端工厂。
+     */
     companion object {
         private val LOG = LogFactory.getLog(this::class)
         private var HTTP_CLIENT: SdkHttpClient? = null

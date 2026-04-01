@@ -5,11 +5,11 @@ import io.kudos.ability.comm.sms.aws.init.properties.SmsAwsProxyProperties
 import io.kudos.context.config.YamlPropertySourceFactory
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
-import org.springframework.beans.factory.annotation.Configurable
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.PropertySource
 
 
@@ -19,7 +19,7 @@ import org.springframework.context.annotation.PropertySource
  * @author K
  * @since 1.0.0
  */
-@Configurable
+@Configuration
 @AutoConfigureAfter(ContextAutoConfiguration::class)
 @PropertySource(
     value = ["classpath:kudos-ability-comm-sms-aws.yml"],
@@ -29,7 +29,7 @@ open class AwsSmsAutoConfiguration : IComponentInitializer {
 
     @Bean
     @ConditionalOnMissingBean
-    open fun aliyunSmsHandler() = AwsSmsHandler()
+    open fun awsSmsHandler() = AwsSmsHandler()
 
     @Bean
     @ConditionalOnMissingBean

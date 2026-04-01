@@ -1,7 +1,7 @@
 package io.kudos.base.bean.validation.constraint.validator
 
 import io.kudos.base.bean.validation.constraint.annotations.DictItemCode
-import io.kudos.base.bean.validation.teminal.convert.converter.IDictItemCodeFinder
+import io.kudos.base.bean.validation.terminal.convert.converter.IDictItemCodeFinder
 import jakarta.validation.ConstraintValidator
 import jakarta.validation.ConstraintValidatorContext
 import java.util.*

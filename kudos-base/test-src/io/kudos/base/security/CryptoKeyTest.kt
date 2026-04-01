@@ -33,6 +33,23 @@ internal class CryptoKeyTest {
     }
 
     @Test
+    fun testConfigureDefaultKeyRejectsBlank() {
+        assertFailsWith<IllegalArgumentException> {
+            CryptoKey.configureDefaultKey("   ")
+        }
+        assertFailsWith<IllegalArgumentException> {
+            CryptoKey.configureDefaultKey("")
+        }
+    }
+
+    @Test
+    fun testConfigureDefaultKeySetsKey() {
+        val k = "configured-at-startup-${System.nanoTime()}"
+        CryptoKey.configureDefaultKey(k)
+        assertEquals(k, CryptoKey.KEY_DEFAULT)
+    }
+
+    @Test
     fun testSetKey() {
         val newKey = "new-secret-key"
         

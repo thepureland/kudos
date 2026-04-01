@@ -7,13 +7,17 @@ import java.security.SecureRandom
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.Mac
+import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
 /**
  * 加密工具类
  *
- * 支持HMAC-SHA1消息签名 及 DES/AES对称加密.
- * 支持Hex与Base64两种编码方式.
+ * 支持 HMAC-SHA1 消息签名及 AES 对称加密。
+ * 支持 Hex 与 Base64 两种编码方式（本类主要暴露 Hex）。
+ *
+ * **AES 说明**：新产生的密文使用 **AES-128-GCM**（随机 IV，认证加密）。读路径仍支持旧版 **AES/ECB** 及
+ * 历史 **SHA1PRNG 派生密钥** 数据，以便兼容存量数据。
  *
  * @author K
  * @since 1.0.0
@@ -22,23 +26,29 @@ object CryptoKit {
 
     private val logger = LogFactory.getLog(this::class)
 
-    private const val AES = "AES"
+    private const val AES_ALGORITHM = "AES"
+    /** 与历史 `Cipher.getInstance("AES")` 行为一致，显式写出便于审阅。 */
+    private const val AES_ECB_TRANSFORM = "AES/ECB/PKCS5Padding"
+    private const val AES_GCM_TRANSFORM = "AES/GCM/NoPadding"
     private const val HMACSHA1 = "HmacSHA1"
     private const val HTB = "_HTB"
-
-    private val KEY = CryptoKey.KEY_DEFAULT
 
     private const val PREFIX = "┼"
     private const val CHARSET = "UTF-8"
 
-    private const val DEFAULT_HMACSHA1_KEYSIZE = 160 //RFC2401
+    private const val DEFAULT_HMACSHA1_KEYSIZE = 160 // RFC2401
 
     private const val DEFAULT_IVSIZE = 16
+
+    /** 新格式密文前缀：ASCII 「GCM」+ 版本字节 0x01。 */
+    private val AES_GCM_MAGIC = byteArrayOf(0x47, 0x43, 0x4D, 0x01)
+
+    private const val GCM_IV_LENGTH = 12
+    private const val GCM_TAG_LENGTH_BITS = 128
 
     private val DIGITS = charArrayOf(
         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
     )
-
 
     private val random = SecureRandom()
 
@@ -91,7 +101,7 @@ object CryptoKit {
 
     //region AES
     /**
-     * 使用AES加密原始字符串，返回其十六进制表示
+     * 使用 AES-GCM 加密原始字符串，返回其十六进制表示（内含魔数前缀与 IV，**非** ECB 旧格式）。
      *
      * @param input    原始输入字符串.
      * @param password 密钥字符串.
@@ -100,17 +110,16 @@ object CryptoKit {
      * @since 1.0.0
      */
     fun aesEncrypt(input: String, password: String): String {
-        val result = aes(
-            input.toByteArray(charset(CHARSET)),
-            password.toByteArray(charset(CHARSET)), Cipher.ENCRYPT_MODE
-        )
-        return aesEncryptBytes(result, password)
+        val plain = input.toByteArray(charset(CHARSET))
+        val passwordBytes = password.toByteArray(charset(CHARSET))
+        val packed = aesGcmEncrypt(plain, passwordBytes)
+        return aesEncryptBytes(packed, password)
     }
 
     /**
-     * 将使用aes加密字节数组进行解密
+     * 将使用 aes 加密字节数组进行解密（自动识别 GCM 新格式与 ECB/SHA1PRNG 旧格式）.
      *
-     * @param content  使用aes加密字节数组
+     * @param content  使用 aes 加密字节数组
      * @param password 加密时使用的密钥
      * @return 原字符串的字节数组
      * @author K
@@ -118,26 +127,50 @@ object CryptoKit {
      */
     fun aesDecrypt(content: ByteArray, password: String): ByteArray {
         val passwordBytes = password.toByteArray(charset(CHARSET))
+        if (content.size >= AES_GCM_MAGIC.size &&
+            content.copyOfRange(0, AES_GCM_MAGIC.size).contentEquals(AES_GCM_MAGIC)
+        ) {
+            return aesGcmDecrypt(content, passwordBytes)
+        }
         return runCatching {
-            aes(content, passwordBytes, Cipher.DECRYPT_MODE)
+            aesEcb(content, passwordBytes, Cipher.DECRYPT_MODE)
         }.getOrElse {
             // Backward compatibility: fallback for historical SHA1PRNG-derived data.
             aesLegacy(content, passwordBytes, Cipher.DECRYPT_MODE)
         }
     }
 
-    private fun aes(input: ByteArray, password: ByteArray, mode: Int): ByteArray {
-        val cipher = Cipher.getInstance(AES)
+    private fun aesGcmEncrypt(plain: ByteArray, password: ByteArray): ByteArray {
+        val iv = ByteArray(GCM_IV_LENGTH)
+        random.nextBytes(iv)
+        val cipher = Cipher.getInstance(AES_GCM_TRANSFORM)
+        cipher.init(Cipher.ENCRYPT_MODE, buildAesKey(password), GCMParameterSpec(GCM_TAG_LENGTH_BITS, iv))
+        val ct = cipher.doFinal(plain)
+        return AES_GCM_MAGIC + iv + ct
+    }
+
+    private fun aesGcmDecrypt(input: ByteArray, password: ByteArray): ByteArray {
+        val headerLen = AES_GCM_MAGIC.size + GCM_IV_LENGTH
+        require(input.size > headerLen) { "Invalid AES-GCM payload length" }
+        val iv = input.copyOfRange(AES_GCM_MAGIC.size, headerLen)
+        val ct = input.copyOfRange(headerLen, input.size)
+        val cipher = Cipher.getInstance(AES_GCM_TRANSFORM)
+        cipher.init(Cipher.DECRYPT_MODE, buildAesKey(password), GCMParameterSpec(GCM_TAG_LENGTH_BITS, iv))
+        return cipher.doFinal(ct)
+    }
+
+    private fun aesEcb(input: ByteArray, password: ByteArray, mode: Int): ByteArray {
+        val cipher = Cipher.getInstance(AES_ECB_TRANSFORM)
         cipher.init(mode, buildAesKey(password))
         return cipher.doFinal(input)
     }
 
     private fun aesLegacy(input: ByteArray, password: ByteArray, mode: Int): ByteArray {
-        val generator = KeyGenerator.getInstance(AES)
+        val generator = KeyGenerator.getInstance(AES_ALGORITHM)
         val secureRandom = SecureRandom.getInstance("SHA1PRNG")
         secureRandom.setSeed(password)
         generator.init(128, secureRandom)
-        val cipher = Cipher.getInstance(AES)
+        val cipher = Cipher.getInstance(AES_ECB_TRANSFORM)
         cipher.init(mode, generator.generateKey())
         return cipher.doFinal(input)
     }
@@ -145,15 +178,18 @@ object CryptoKit {
     private fun buildAesKey(password: ByteArray): SecretKeySpec {
         val digest = MessageDigest.getInstance("SHA-256").digest(password)
         val key = digest.copyOf(16) // AES-128
-        return SecretKeySpec(key, AES)
+        return SecretKeySpec(key, AES_ALGORITHM)
     }
 
     /**
-     * 将使用aes加密并转为十六进制的字符串进行解密
+     * 将使用 aes 加密并转为十六进制的字符串进行解密。
      *
-     * @param contentHex 使用aes加密并转为十六进制的字符串
+     * 与 [tryAesDecrypt] 的关系：本方法在解密失败时记录告警并返回空字符串，以保持历史调用约定；
+     * 若需区分失败与空明文，请使用 [tryAesDecrypt]。
+     *
+     * @param contentHex 使用 aes 加密并转为十六进制的字符串
      * @param password   加密时使用的密钥
-     * @return 原字符串
+     * @return 原字符串；解密失败时返回 `""`
      * @author K
      * @since 1.0.0
      */
@@ -165,11 +201,11 @@ object CryptoKit {
     }
 
     /**
-     * 将使用aes加密并转为十六进制的字符串进行解密，返回Result用于显式表达失败语义。
+     * 将使用 aes 加密并转为十六进制的字符串进行解密，返回 [Result] 以显式表达失败语义。
      *
-     * @param contentHex 使用aes加密并转为十六进制的字符串
+     * @param contentHex 使用 aes 加密并转为十六进制的字符串
      * @param password   加密时使用的密钥
-     * @return 成功时返回明文字符串，失败时返回异常
+     * @return 成功时返回明文字符串，失败时封装异常
      */
     fun tryAesDecrypt(contentHex: String, password: String): Result<String> {
         return runCatching {
@@ -180,19 +216,19 @@ object CryptoKit {
     }
 
     /**
-     * 使用AES加密原始字符串，返回其十六进制表示
+     * 使用 AES 加密原始字符串，返回其十六进制表示（含 [PREFIX] 前缀，内层为 GCM 密文）.
      *
      * @param input 原始输入字符串.
      * @return 加密后的字符串(十六进制表示)
      * @author K
      * @since 1.0.0
      */
-    fun aesEncrypt(input: String): String = PREFIX + aesEncrypt(input, KEY)
+    fun aesEncrypt(input: String): String = PREFIX + aesEncrypt(input, CryptoKey.KEY_DEFAULT)
 
     /**
-     * 将使用aes加密并转为十六进制的字符串进行解密，兼容未加密的历史数据
+     * 将使用 aes 加密并转为十六进制的字符串进行解密，兼容未加密的历史数据
      *
-     * @param contentHex 使用aes加密并转为十六进制的字符串
+     * @param contentHex 使用 aes 加密并转为十六进制的字符串
      * @return 原字符串
      * @author K
      * @since 1.0.0
@@ -200,7 +236,7 @@ object CryptoKit {
     fun aesDecrypt(contentHex: String): String {
         return if (contentHex.startsWith(PREFIX)) { // 有加密过的
             val content = contentHex.replaceFirst(PREFIX.toRegex(), "")
-            aesDecrypt(content, KEY)
+            aesDecrypt(content, CryptoKey.KEY_DEFAULT)
         } else { // 未加密的历史数据
             contentHex
         }
@@ -244,7 +280,7 @@ object CryptoKit {
     }
 
     /**
-     * 将十六进制编码的字节数组解码
+     * 将十六进制编码的字节数组解码（输入为 ASCII 十六进制字符的字节表示，如 UTF-8 下的 `0-9a-fA-F`）.
      *
      * @param bytes 十六进制编码的字节数组
      * @return 解码后的字节数组
@@ -253,15 +289,27 @@ object CryptoKit {
      */
     fun decodeHex(bytes: ByteArray): ByteArray {
         val iLen = bytes.size
-        // 两个字符表示一个字节，所以字节数组长度是字符串长度除以2
+        require(iLen % 2 == 0) { "Hex string length must be even, got $iLen" }
         val arrOut = ByteArray(iLen / 2)
         var i = 0
+        var o = 0
         while (i < iLen) {
-            val strTmp = String(bytes, i, 2)
-            arrOut[i / 2] = strTmp.toInt(16).toByte()
+            val hi = hexNibble(bytes[i])
+            val lo = hexNibble(bytes[i + 1])
+            arrOut[o++] = ((hi shl 4) or lo).toByte()
             i += 2
         }
         return arrOut
+    }
+
+    private fun hexNibble(b: Byte): Int {
+        val c = b.toInt() and 0xFF
+        return when {
+            c in 48..57 -> c - 48
+            c in 97..102 -> c - 97 + 10
+            c in 65..70 -> c - 65 + 10
+            else -> throw NumberFormatException("Invalid hex digit: $c")
+        }
     }
 
     /**

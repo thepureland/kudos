@@ -24,15 +24,19 @@ open class ComponentInitializerSelector : ImportSelector {
         val locations = listOf("io.kudos.context", "io.kudos.ability", "io.kudos.ms")
         locations.forEach { location ->
             val classes = ScanKit.findImplementations(location, IComponentInitializer::class)
-            classes.filter { it !in exclusionComponentInitializer }
-                .forEach { clazz -> classNames.add(clazz.qualifiedName ?: clazz.simpleName ?: "Unknown") }
+            val toImport = classes.filterNot { it in exclusionComponentInitializer }
+            for (clazz in toImport) {
+                classNames.add(clazz.qualifiedName ?: clazz.simpleName ?: "Unknown")
+            }
         }
         return classNames.toTypedArray()
     }
 
     protected fun getExclusionComponentInitializer(importingClassMetadata: AnnotationMetadata): List<KClass<out IComponentInitializer>> {
         val appClass = Class.forName(importingClassMetadata.className).kotlin
-        val enableKudosAnno = appClass.annotations.first { it.annotationClass == EnableKudos::class } as EnableKudos
+        val enableKudosAnno = appClass.annotations
+            .firstOrNull { it.annotationClass == EnableKudos::class } as? EnableKudos
+            ?: return emptyList()
         val exclusions = enableKudosAnno.exclusions.asList()
         exclusions.forEach { log.info("${it.simpleName}通过@EnableKudos被排除初始化!") }
         return exclusions

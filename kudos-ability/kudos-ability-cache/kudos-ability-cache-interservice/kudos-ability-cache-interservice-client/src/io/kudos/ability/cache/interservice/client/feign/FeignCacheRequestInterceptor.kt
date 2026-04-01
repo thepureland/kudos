@@ -77,7 +77,7 @@ class FeignCacheRequestInterceptor : RequestInterceptor {
      * @param requestTemplate Feign请求模板
      */
     override fun apply(requestTemplate: RequestTemplate) {
-        if (!cacheHelper.havaLocalCache()) {
+        if (!cacheHelper.hasLocalCache()) {
             return
         }
         val localCacheKey = genCacheKey(requestTemplate)
