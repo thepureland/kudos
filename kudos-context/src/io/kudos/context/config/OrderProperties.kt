@@ -1,6 +1,10 @@
 package io.kudos.context.config
 
-import java.util.*
+import java.util.AbstractMap
+import java.util.Collections
+import java.util.Enumeration
+import java.util.LinkedHashSet
+import java.util.Properties
 
 /**
  * 一个记录顺序的properties扩展适配器
@@ -11,7 +15,7 @@ import java.util.*
  */
 class OrderProperties : Properties {
 
-    private val keyList: MutableList<Any> = ArrayList<Any>()
+    private val keyList: MutableList<Any> = mutableListOf()
 
     constructor() : super()
 
@@ -52,9 +56,7 @@ class OrderProperties : Properties {
 
     override fun stringPropertyNames(): MutableSet<String?> {
         val set = LinkedHashSet<String?>()
-        for (k in keyList) {
-            set.add(k.toString())
-        }
+        keyList.mapTo(set) { it.toString() }
         // include defaults if any
         if (defaults != null) {
             for (dk in defaults.stringPropertyNames()) {

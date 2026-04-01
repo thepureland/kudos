@@ -19,11 +19,8 @@ object KudosContextHolder {
      * 若当前线程尚未绑定上下文，会 **新建** [KudosContext] 并写入 ThreadLocal（不会返回 null）。
      * 若需区分「未初始化」与「已存在」，请使用 [getOrNull]。
      */
-    fun get(): KudosContext {
-        val kudosContext = contextThreadLocal.get() ?: KudosContext()
-        contextThreadLocal.set(kudosContext)
-        return kudosContext
-    }
+    fun get(): KudosContext =
+        contextThreadLocal.get() ?: KudosContext().also { contextThreadLocal.set(it) }
 
     /**
      * 返回当前线程已绑定的上下文；若尚未 [set]，返回 null（**不会**自动创建）。
