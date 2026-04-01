@@ -35,15 +35,9 @@ class GlobalResponseBodyHandler(
     override fun supports(
         returnType: MethodParameter,
         converterType: Class<out HttpMessageConverter<*>>
-    ): Boolean {
-        if (returnType.containingClass.isAnnotationPresent(IgnoreApiResponseWrap::class.java)) {
-            return false
-        }
-        if (returnType.hasMethodAnnotation(IgnoreApiResponseWrap::class.java)) {
-            return false
-        }
-        return true
-    }
+    ): Boolean =
+        !returnType.containingClass.isAnnotationPresent(IgnoreApiResponseWrap::class.java) &&
+            !returnType.hasMethodAnnotation(IgnoreApiResponseWrap::class.java)
 
     /**
      * 对返回结果进行统一包装，并兼容String类型响应
