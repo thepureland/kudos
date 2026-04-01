@@ -5,7 +5,6 @@ import io.kudos.ability.distributed.notify.common.api.INotifyProducer
 import io.kudos.ability.distributed.notify.common.init.NotifyCommonAutoConfiguration
 import io.kudos.ability.distributed.notify.common.init.properties.NotifyCommonProperties
 import io.kudos.ability.distributed.notify.common.model.NotifyMessageVo
-import io.kudos.ability.distributed.notify.common.support.NotifyListenerBeanPostProcessor
 import io.kudos.ability.distributed.notify.common.support.NotifyListenerItem
 import io.kudos.ability.distributed.notify.mq.producer.NotifyMqProducer
 import io.kudos.ability.distributed.stream.common.annotations.MqConsumer
@@ -70,49 +69,41 @@ open class NotifyMqAutoConfiguration : NotifyCommonAutoConfiguration(), ICompone
     }
 
     @MqConsumer(topic = "mqNotify", bindingName = "mqNotify-in-0", beanName = ["mqNotify"])
-    open fun mqNotify(): Consumer<Message<StreamMessageVo<JSONObject>>?> {
-        return Consumer { msg: Message<StreamMessageVo<JSONObject>>? ->
-            val streamMsgVo = msg?.payload
-            if (streamMsgVo == null) {
-                log.warn("[mqNotify] 收到空消息，忽略")
-                return@Consumer
-            }
-
-            val socketMsgJson = streamMsgVo.data
-            if (socketMsgJson == null) {
-                log.warn("[mqNotify] 收到空data，忽略")
-                return@Consumer
-            }
-
-            val simpleMsgVo = runCatching { socketMsgJson.toJavaObject(NotifyMessageVo::class.java) }
-                .getOrElse {
-                    log.error(it, "[mqNotify] 通知消息反序列化失败")
-                    return@Consumer
-                }
-
-            val notifyType = simpleMsgVo.notifyType
-            if (notifyType.isNullOrBlank()) {
-                log.warn("[mqNotify] 通知类型为空，忽略")
-                return@Consumer
-            }
-
-            log.info("[mqNotify]消费通知, 类型:$notifyType")
-            val namespace = resolveListenerNamespace()
-            val listener = NotifyListenerItem.get(namespace, notifyType) ?: NotifyListenerItem.get(notifyType)
-            if (listener != null) {
-                listener.notifyProcess(simpleMsgVo)
-            } else {
-                log.info("[mqNotify] 命名空间:$namespace, 类型:$notifyType, 无 listener 配置")
-            }
+    open fun mqNotify(): Consumer<Message<StreamMessageVo<JSONObject>>?> = Consumer { msg ->
+        val streamMsgVo = msg?.payload ?: run {
+            log.warn("[mqNotify] 收到空消息，忽略")
+            return@Consumer
         }
+
+        val socketMsgJson = streamMsgVo.data ?: run {
+            log.warn("[mqNotify] 收到空 data，忽略")
+            return@Consumer
+        }
+
+        val simpleMsgVo = runCatching { socketMsgJson.toJavaObject(NotifyMessageVo::class.java) }
+            .getOrElse {
+                log.error(it, "[mqNotify] 通知消息反序列化失败")
+                return@Consumer
+            }
+
+        val notifyType = simpleMsgVo.notifyType
+        if (notifyType.isBlank()) {
+            log.warn("[mqNotify] 通知类型为空，忽略")
+            return@Consumer
+        }
+
+        log.info("[mqNotify] 消费通知, 类型: $notifyType")
+        val namespace = resolveListenerNamespace()
+        val listener = NotifyListenerItem.get(namespace, notifyType) ?: NotifyListenerItem.get(notifyType)
+        listener?.notifyProcess(simpleMsgVo)
+            ?: log.info("[mqNotify] 命名空间: $namespace, 类型: $notifyType, 无 listener 配置")
     }
 
-    private fun resolveListenerNamespace(): String {
-        return notifyCommonProperties?.listenerNamespace
+    private fun resolveListenerNamespace(): String =
+        notifyCommonProperties?.listenerNamespace
             ?.takeIf { it.isNotBlank() }
             ?: environment?.getProperty("spring.application.name")
             ?: NotifyListenerItem.DEFAULT_NAMESPACE
-    }
 
     override fun getComponentName() = "kudos-ability-distributed-notify-mq"
 

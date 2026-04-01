@@ -18,8 +18,8 @@ open class NotifyMqProducer : INotifyProducer {
 
     @MqProducer(topic = "mqNotify", bindingName = "mqNotify-out-0")
     override fun notify(messageVo: NotifyMessageVo<out Serializable>): Boolean {
-        if (messageVo.notifyType.isNullOrBlank()) {
-            log.warn("notifyType为空，取消发送通知")
+        if (messageVo.notifyType.isBlank()) {
+            log.warn("notifyType 为空，取消发送通知")
             return false
         }
         return true
