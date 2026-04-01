@@ -11,13 +11,6 @@ import org.springframework.core.env.PropertySource
  * @since 1.0.0
  */
 class NacosConfigDataFinder : IConfigDataFinder {
-    override fun findConfigData(name: String?): PropertySource<*>? {
-        val nacosPropertySources = NacosPropertySourceRepository.getAll()
-        for (nacosPropertySource in nacosPropertySources) {
-            if (nacosPropertySource.dataId == name) {
-                return nacosPropertySource
-            }
-        }
-        return null
-    }
+    override fun findConfigData(name: String?): PropertySource<*>? =
+        NacosPropertySourceRepository.getAll().firstOrNull { it.dataId == name }
 }
