@@ -38,7 +38,7 @@ class DsChangeAspect {
             DbContext.get().forcedDs = dsChange.value
         }
         DbContext.get().readonly = dsChange.readonly
-        log.debug("强制指定数据源:ds=" + DbContext.get().forcedDs + ",readonly=" + dsChange.readonly)
+        log.debug("强制指定数据源:ds=${DbContext.get().forcedDs},readonly=${dsChange.readonly}")
         var result: Any?
         try {
             result = joinPoint.proceed()

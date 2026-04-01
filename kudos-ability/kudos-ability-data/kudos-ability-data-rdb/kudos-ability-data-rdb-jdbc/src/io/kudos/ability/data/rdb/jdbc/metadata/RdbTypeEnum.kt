@@ -1,7 +1,5 @@
 package io.kudos.ability.data.rdb.jdbc.metadata
 
-import java.util.*
-
 /**
  * 支持的关系型数据库类型枚举
  *
@@ -28,10 +26,8 @@ enum class RdbTypeEnum(val productName: String, val jdbcDriverName: String) {
          * @author K
          * @since 1.0.0
          */
-        fun ofProductName(productName: String?): RdbTypeEnum {
-            return Arrays.stream(entries.toTypedArray())
-                .filter { type: RdbTypeEnum? -> type != null && type.productName == productName }.findFirst().get()
-        }
+        fun ofProductName(productName: String?): RdbTypeEnum =
+            entries.first { it.productName == productName }
 
         /**
          * 返回JDBC驱动名称对应的关系型数据库类型枚举
@@ -41,9 +37,7 @@ enum class RdbTypeEnum(val productName: String, val jdbcDriverName: String) {
          * @author K
          * @since 1.0.0
          */
-        fun ofJdbcDriverName(jdbcDriverName: String?): RdbTypeEnum {
-            return Arrays.stream(entries.toTypedArray())
-                .filter { type: RdbTypeEnum? -> type != null && type.jdbcDriverName == jdbcDriverName }.findFirst().get()
-        }
+        fun ofJdbcDriverName(jdbcDriverName: String?): RdbTypeEnum =
+            entries.first { it.jdbcDriverName == jdbcDriverName }
     }
 }

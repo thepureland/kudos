@@ -48,7 +48,7 @@ class MultipleDataSourceProperties : InitializingBean {
         try {
             var result = serviceDataSource.get(packageName)
             if (result.isNullOrBlank()) {
-                result = serviceDataSource.computeIfAbsent(packageName) { _: String? ->
+                result = serviceDataSource.computeIfAbsent(packageName) { _ ->
                     for (entry in packageDataSource.entries) {
                         if (packageName.startsWith(entry.key)) {
                             return@computeIfAbsent entry.value
