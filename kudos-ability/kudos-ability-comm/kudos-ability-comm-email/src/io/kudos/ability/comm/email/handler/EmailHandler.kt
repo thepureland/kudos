@@ -12,7 +12,7 @@ import org.springframework.mail.MailSendException
 import org.springframework.mail.javamail.JavaMailSenderImpl
 import org.springframework.mail.javamail.MimeMessageHelper
 import org.springframework.stereotype.Component
-import java.util.*
+import java.util.Properties
 
 
 /**
@@ -46,7 +46,7 @@ class EmailHandler {
 
             //设置邮件服务器信息
             sender.host = emailRequest.serverHost
-            sender.port = emailRequest.serverPort!!
+            sender.port = requireNotNull(emailRequest.serverPort) { "serverPort is required" }
             sender.username = emailRequest.senderAccount
             sender.password = emailRequest.senderPassword
             sender.protocol = emailRequest.protocol
@@ -63,9 +63,7 @@ class EmailHandler {
             extra["mail.password"] = emailRequest.senderPassword
             extra["mail.smtp.host"] = emailRequest.serverHost
             extra["mail.smtp.sendpartial"] = emailRequest.sendpartial.toString()
-            if (!emailRequest.extra.isNullOrEmpty()) {
-                extra.putAll(emailRequest.extra!!)
-            }
+            emailRequest.extra?.takeIf { it.isNotEmpty() }?.let { extra.putAll(it) }
             val properties = Properties()
             properties.putAll(extra)
             sender.javaMailProperties = properties
@@ -77,14 +75,11 @@ class EmailHandler {
             //设置收件人、寄件人、主题与正文
             val receivers = emailRequest.receivers.toTypedArray()
             messageHelper.setTo(receivers)
-            if (!emailRequest.fromMailAddress.isNullOrBlank()) {
-                messageHelper.setFrom(emailRequest.fromMailAddress!!)
-            } else {
-                messageHelper.setFrom(emailRequest.senderAccount!!)
-            }
-
-            messageHelper.setSubject(emailRequest.subject!!)
-            messageHelper.setText(emailRequest.body!!, emailRequest.htmlFormat)
+            val from = emailRequest.fromMailAddress?.takeIf { it.isNotBlank() }
+                ?: requireNotNull(emailRequest.senderAccount) { "senderAccount is required" }
+            messageHelper.setFrom(from)
+            messageHelper.setSubject(requireNotNull(emailRequest.subject) { "subject is required" })
+            messageHelper.setText(requireNotNull(emailRequest.body) { "body is required" }, emailRequest.htmlFormat)
 
             //发送邮件
             log.info("开始发送邮件...")
@@ -114,7 +109,7 @@ class EmailHandler {
                     putAddressToSet(unreceivedSet, messageException.invalidAddresses)
                     emailCallBackParam.successEmails = receiveSet
                     emailCallBackParam.failEmails = unreceivedSet
-                    if (emailCallBackParam.successEmails!!.isNotEmpty() && emailCallBackParam.failEmails!!.isNotEmpty()) {
+                    if (receiveSet.isNotEmpty() && unreceivedSet.isNotEmpty()) {
                         emailCallBackParam.status = EmailStatusEnum.SUCCESS_PART
                     } else {
                         emailCallBackParam.status = EmailStatusEnum.FAIL
@@ -156,7 +151,7 @@ class EmailHandler {
     private fun putAddressToSet(set: MutableSet<String>, addresses: Array<Address>) {
         if (addresses.isNotEmpty()) {
             for (add in addresses) {
-                val address = (add as InternetAddress).getAddress()
+                val address = (add as InternetAddress).address
                 set.add(address)
             }
         }
