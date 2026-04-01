@@ -31,7 +31,11 @@ class ClientCacheItem : Serializable {
          * @param obj
          */
         fun genUid(obj: Any): String {
-            return DigestKit.getMD5((obj.javaClass.getName() + JsonKit.toJson(obj)).toByteArray(), "feignCache")!!
+            val md5 = DigestKit.getMD5(
+                (obj::class.java.name + JsonKit.toJson(obj)).toByteArray(),
+                "feignCache"
+            )
+            return requireNotNull(md5) { "feignCache MD5 计算结果为空" }
         }
     }
 }

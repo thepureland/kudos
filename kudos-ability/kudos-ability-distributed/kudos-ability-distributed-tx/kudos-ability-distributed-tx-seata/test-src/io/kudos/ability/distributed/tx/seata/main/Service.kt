@@ -49,7 +49,8 @@ open class Service : IService {
     @Resource
     private lateinit var testTableDao: TestTableDao
 
-    override fun getById(id: Int): TestTable = testTableDao.get(id)!!
+    override fun getById(id: Int): TestTable =
+        requireNotNull(testTableDao.get(id)) { "TestTable not found: $id" }
 
     @GlobalTransactional
     override fun getGlobalTxId(): String? = RootContext.getXID()
@@ -75,20 +76,20 @@ open class Service : IService {
 
     @GlobalTransactional
     override fun normalRemote() {
-        this.client1!!.decrease(1, 50.0) // 扣款
-        this.client2!!.increase(2, 50.0) // 加款
+        requireNotNull(client1) { "Feign 客户端未配置: dataSourceProxyMode=$dataSourceProxyMode" }.decrease(1, 50.0) // 扣款
+        requireNotNull(client2) { "Feign 客户端未配置: dataSourceProxyMode=$dataSourceProxyMode" }.increase(2, 50.0) // 加款
     }
 
     @GlobalTransactional
     override fun onBranchErrorRemote() {
-        this.client1!!.decrease(1, 50.0) // 扣款
-        this.client2!!.increaseFail(2, 50.0) // 模拟加款失败
+        requireNotNull(client1) { "Feign 客户端未配置: dataSourceProxyMode=$dataSourceProxyMode" }.decrease(1, 50.0) // 扣款
+        requireNotNull(client2) { "Feign 客户端未配置: dataSourceProxyMode=$dataSourceProxyMode" }.increaseFail(2, 50.0) // 模拟加款失败
     }
 
     @GlobalTransactional
     override fun onGlobalErrorRemote() {
-        this.client1!!.decrease(1, 50.0) // 扣款
-        this.client2!!.increase(2, 50.0) // 加款
+        requireNotNull(client1) { "Feign 客户端未配置: dataSourceProxyMode=$dataSourceProxyMode" }.decrease(1, 50.0) // 扣款
+        requireNotNull(client2) { "Feign 客户端未配置: dataSourceProxyMode=$dataSourceProxyMode" }.increase(2, 50.0) // 加款
         throw TxException("模拟全局事务最后错误发生，事务应回滚.")
     }
 

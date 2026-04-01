@@ -67,10 +67,8 @@ open class RabbitMqTest {
         val future = EXECUTOR.submit<String?>(task)
         try {
             future.get(5, TimeUnit.SECONDS)
-        } catch (e: Exception) {
-            throw e
-        } catch (_ : TimeoutException) {
-            throw RuntimeException("等待时间超过5秒，mq接收异常")
+        } catch (e: TimeoutException) {
+            throw RuntimeException("等待时间超过5秒，mq接收异常", e)
         } finally {
             future.cancel(true)
         }

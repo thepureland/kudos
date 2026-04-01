@@ -80,9 +80,10 @@ internal class MinioUploadServiceTest {
         }
 
         val uploadFileResult = uploadService.fileUpload(uploadFileModel)
-        assertTrue(uploadFileResult.filePath!!.startsWith("/$bucketName"))
-        assertTrue(uploadFileResult.filePath!!.contains(tenantId))
-        assertTrue(uploadFileResult.filePath!!.endsWith(".txt"))
+        val path = requireNotNull(uploadFileResult.filePath) { "filePath" }
+        assertTrue(path.startsWith("/$bucketName"))
+        assertTrue(path.contains(tenantId))
+        assertTrue(path.endsWith(".txt"))
     }
 
     /**
@@ -146,8 +147,9 @@ internal class MinioUploadServiceTest {
         uploadFileModel.authServerParam = AccessKeyServerParam(UPLOAD_ONLY_USER, UPLOAD_ONLY_USER_SECRET)
 
         val uploadFileResult = uploadService.fileUpload(uploadFileModel)
-        assertTrue(uploadFileResult.filePath!!.startsWith("/$bucketName"))
-        assertTrue(uploadFileResult.filePath!!.endsWith(".txt"))
+        val path = requireNotNull(uploadFileResult.filePath) { "filePath" }
+        assertTrue(path.startsWith("/$bucketName"))
+        assertTrue(path.endsWith(".txt"))
     }
 
     companion object {

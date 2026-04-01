@@ -5,6 +5,7 @@ import io.kudos.base.lang.SystemKit
 import java.io.File
 import java.time.Duration
 import java.util.concurrent.TimeUnit
+import kotlin.concurrent.thread
 
 
 /**
@@ -203,16 +204,12 @@ object DockerKit {
             val stdout = StringBuilder()
             val stderr = StringBuilder()
 
-            val outThread = Thread {
-                p.inputStream.bufferedReader().useLines { it.forEach { line -> stdout.appendLine(line) } }
+            val outThread = thread(name = "docker-cmd-stdout", isDaemon = true) {
+                p.inputStream.bufferedReader().useLines { lines -> lines.forEach { line -> stdout.appendLine(line) } }
             }
-            val errThread = Thread {
-                p.errorStream.bufferedReader().useLines { it.forEach { line -> stderr.appendLine(line) } }
+            val errThread = thread(name = "docker-cmd-stderr", isDaemon = true) {
+                p.errorStream.bufferedReader().useLines { lines -> lines.forEach { line -> stderr.appendLine(line) } }
             }
-            outThread.isDaemon = true
-            errThread.isDaemon = true
-            outThread.start()
-            errThread.start()
 
             val finished = p.waitFor(timeoutMillis, TimeUnit.MILLISECONDS)
             if (!finished) {

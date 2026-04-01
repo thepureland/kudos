@@ -37,7 +37,6 @@ open class FlywayAutoConfiguration : IComponentInitializer {
     @ConfigurationProperties(prefix = "kudos.ability.flyway")
     open fun flywayMultiDataSourceProperties() = FlywayMultiDataSourceProperties()
 
-
     override fun getComponentName() = "kudos-ability-data-rdb-flyway"
 
 }

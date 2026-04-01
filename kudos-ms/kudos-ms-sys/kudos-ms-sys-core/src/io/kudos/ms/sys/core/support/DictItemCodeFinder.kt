@@ -22,7 +22,8 @@ class DictItemCodeFinder : IDictItemCodeFinder {
         if (sysDictItemHashCache == null) {
             sysDictItemHashCache = SpringKit.getBean<SysDictItemHashCache>()
         }
-        val items = sysDictItemHashCache!!.getDictItems(atomicServiceCode, dictType)
+        val cache = requireNotNull(sysDictItemHashCache) { "SysDictItemHashCache 未初始化" }
+        val items = cache.getDictItems(atomicServiceCode, dictType)
         return items.map { it.itemCode }.toSet()
     }
 

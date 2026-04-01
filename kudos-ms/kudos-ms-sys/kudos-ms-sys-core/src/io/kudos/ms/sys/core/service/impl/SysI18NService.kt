@@ -1,15 +1,14 @@
 package io.kudos.ms.sys.core.service.impl
 
 import io.kudos.base.support.service.impl.BaseCrudService
-import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
+import io.kudos.base.model.contract.entity.IIdEntity
 import io.kudos.ms.sys.common.vo.i18n.SysI18nCacheEntry
 import io.kudos.ms.sys.common.vo.i18n.request.SysI18nFormUpdate
 import io.kudos.ms.sys.core.cache.SysI18nHashCache
 import io.kudos.ms.sys.core.dao.SysI18nDao
 import io.kudos.ms.sys.core.model.po.SysI18n
 import io.kudos.ms.sys.core.service.iservice.ISysI18nService
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import kotlin.reflect.KClass
@@ -25,13 +24,11 @@ import kotlin.reflect.KClass
 @Service
 @Transactional
 open class SysI18NService(
-    dao: SysI18nDao
+    dao: SysI18nDao,
+    private val sysI18nHashCache: SysI18nHashCache,
 ) : BaseCrudService<String, SysI18n, SysI18nDao>(dao), ISysI18nService {
 
     private val log = LogFactory.getLog(this::class)
-
-    @Autowired
-    private lateinit var sysI18nHashCache: SysI18nHashCache
 
     override fun <R : Any> get(id: String, returnType: KClass<R>): R? {
         return if (returnType == SysI18nCacheEntry::class) {
@@ -117,7 +114,7 @@ open class SysI18NService(
                 val (namespace, key) = resolveNamespaceAndKey(form)
                 val value = requireNotNull(form.value) { "更新国际化内容时，value不能为空。" }
                 val i18n = SysI18n {
-                    this.id = form.id!!
+                    this.id = requireNotNull(form.id) { "更新国际化内容时，id不能为空。" }
                     this.locale = locale
                     this.atomicServiceCode = atomicServiceCode
                     this.i18nTypeDictCode = i18nTypeDictCode
@@ -142,35 +139,36 @@ open class SysI18NService(
             this.id = id
             this.active = active
         }
-        val success = dao.update(i18n)
-        if (success) {
-            log.debug("更新id为${id}的国际化内容的启用状态为${active}。")
+        return completeCrudUpdate(
+            success = dao.update(i18n),
+            log = log,
+            successMessage = "更新id为${id}的国际化内容的启用状态为${active}。",
+            failureMessage = "更新id为${id}的国际化内容的启用状态为${active}失败！",
+        ) {
             sysI18nHashCache.syncOnUpdate(id)
-        } else {
-            log.error("更新id为${id}的国际化内容的启用状态为${active}失败！")
         }
-        return success
     }
 
     @Transactional
     override fun insert(any: Any): String {
         val id = super.insert(any)
-        log.debug("新增id为${id}的国际化内容。")
-        sysI18nHashCache.syncOnInsert(any, id)
+        completeCrudInsert(log, "新增id为${id}的国际化内容。") {
+            sysI18nHashCache.syncOnInsert(any, id)
+        }
         return id
     }
 
     @Transactional
     override fun update(any: Any): Boolean {
-        val success = super.update(any)
-        val id = BeanKit.getProperty(any, SysI18n::id.name) as String
-        if (success) {
-            log.debug("更新id为${id}的国际化内容。")
+        val id = requireI18nId(any)
+        return completeCrudUpdate(
+            success = super.update(any),
+            log = log,
+            successMessage = "更新id为${id}的国际化内容。",
+            failureMessage = "更新id为${id}的国际化内容失败！",
+        ) {
             sysI18nHashCache.syncOnUpdate(any, id)
-        } else {
-            log.error("更新id为${id}的国际化内容失败！")
         }
-        return success
     }
 
     @Transactional
@@ -179,14 +177,14 @@ open class SysI18NService(
             log.warn("删除id为${id}的国际化内容时，发现其已不存在！")
             return false
         }
-        val success = super.deleteById(id)
-        if (success) {
-            log.debug("删除id为${id}的国际化内容。")
+        return completeCrudUpdate(
+            success = super.deleteById(id),
+            log = log,
+            successMessage = "删除id为${id}的国际化内容。",
+            failureMessage = "删除id为${id}的国际化内容失败！",
+        ) {
             sysI18nHashCache.syncOnDelete(id)
-        } else {
-            log.error("删除id为${id}的国际化内容失败！")
         }
-        return success
     }
 
     @Transactional
@@ -204,4 +202,7 @@ open class SysI18NService(
         return namespace to key
     }
 
+    private fun requireI18nId(any: Any): String =
+        (any as? IIdEntity<*>)?.id as? String
+            ?: error("更新国际化内容时不支持的入参类型: ${any::class.qualifiedName}")
 }

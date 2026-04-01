@@ -1,8 +1,8 @@
 package io.kudos.ms.sys.core.service.impl
 
 import io.kudos.base.support.service.impl.BaseCrudService
-import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
+import io.kudos.base.model.contract.entity.IIdEntity
 import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpCacheEntry
 import io.kudos.ms.sys.common.vo.accessruleip.request.SysAccessRuleIpBatchItem
 import io.kudos.ms.sys.common.vo.accessruleip.request.SysAccessRuleIpQuery
@@ -12,7 +12,6 @@ import io.kudos.ms.sys.core.dao.SysAccessRuleDao
 import io.kudos.ms.sys.core.dao.SysAccessRuleIpDao
 import io.kudos.ms.sys.core.model.po.SysAccessRuleIp
 import io.kudos.ms.sys.core.service.iservice.ISysAccessRuleIpService
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -26,28 +25,18 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 @Transactional
 open class SysAccessRuleIpService(
-    dao: SysAccessRuleIpDao
+    dao: SysAccessRuleIpDao,
+    private val accessRuleIpsBySubSysAndTenantIdCache: AccessRuleIpsBySubSysAndTenantIdCache,
+    private val sysAccessRuleDao: SysAccessRuleDao,
 ) : BaseCrudService<String, SysAccessRuleIp, SysAccessRuleIpDao>(dao), ISysAccessRuleIpService {
-
 
     private val log = LogFactory.getLog(this::class)
 
-    @Autowired
-    private lateinit var accessRuleIpsBySubSysAndTenantIdCache: AccessRuleIpsBySubSysAndTenantIdCache
+    override fun getIpsByRuleId(ruleId: String): List<SysAccessRuleIpRow> =
+        dao.pagingSearch(SysAccessRuleIpQuery(parentRuleId = ruleId))
 
-    @Autowired
-    private lateinit var sysAccessRuleDao: SysAccessRuleDao
-
-    override fun getIpsByRuleId(ruleId: String): List<SysAccessRuleIpRow> {
-        val searchPayload = SysAccessRuleIpQuery(
-            parentRuleId = ruleId
-        )
-        return dao.pagingSearch(searchPayload)
-    }
-
-    override fun getIpsBySystemAndTenant(systemCode: String, tenantId: String?): List<SysAccessRuleIpCacheEntry> {
-        return accessRuleIpsBySubSysAndTenantIdCache.getAccessRuleIps(systemCode, tenantId)
-    }
+    override fun getIpsBySystemAndTenant(systemCode: String, tenantId: String?): List<SysAccessRuleIpCacheEntry> =
+        accessRuleIpsBySubSysAndTenantIdCache.getAccessRuleIps(systemCode, tenantId)
 
     override fun checkIpAccess(ip: Long, systemCode: String, tenantId: String?): Boolean {
         val ipRules = getIpsBySystemAndTenant(systemCode, tenantId)
@@ -86,7 +75,7 @@ open class SysAccessRuleIpService(
                 val ipStart = requireNotNull(form.ipStart) { "更新IP规则时，ipStart不能为空。" }
                 val ipEnd = requireNotNull(form.ipEnd) { "更新IP规则时，ipEnd不能为空。" }
                 val ipRule = SysAccessRuleIp {
-                    this.id = form.id!!
+                    this.id = requireNotNull(form.id) { "更新IP规则时，id不能为空。" }
                     this.parentRuleId = ruleId
                     this.ipStart = ipStart
                     this.ipEnd = ipEnd
@@ -95,7 +84,7 @@ open class SysAccessRuleIpService(
                     this.active = form.active ?: true
                 }
                 if (dao.update(ipRule)) {
-                    accessRuleIpsBySubSysAndTenantIdCache.syncOnUpdate(ipRule, form.id!!)
+                    accessRuleIpsBySubSysAndTenantIdCache.syncOnUpdate(ipRule, requireNotNull(form.id) { "更新IP规则时，id不能为空。" })
                     count++
                 }
             }
@@ -124,12 +113,13 @@ open class SysAccessRuleIpService(
     @Transactional
     override fun insert(any: Any): String {
         val id = super.insert(any)
-        log.debug("新增id为${id}的IP访问规则。")
-        val ipRule = dao.get(id)
-        if (ipRule != null) {
-            val accessRule = sysAccessRuleDao.get(ipRule.parentRuleId)
-            if (accessRule != null) {
-                accessRuleIpsBySubSysAndTenantIdCache.syncOnInsert(accessRule, id)
+        completeCrudInsert(log, "新增id为${id}的IP访问规则。") {
+            val ipRule = dao.get(id)
+            if (ipRule != null) {
+                val accessRule = sysAccessRuleDao.get(ipRule.parentRuleId)
+                if (accessRule != null) {
+                    accessRuleIpsBySubSysAndTenantIdCache.syncOnInsert(accessRule, id)
+                }
             }
         }
         return id
@@ -137,10 +127,13 @@ open class SysAccessRuleIpService(
 
     @Transactional
     override fun update(any: Any): Boolean {
-        val success = super.update(any)
-        val id = BeanKit.getProperty(any, SysAccessRuleIp::id.name) as String
-        if (success) {
-            log.debug("更新id为${id}的IP访问规则。")
+        val id = requireIpRuleId(any)
+        return completeCrudUpdate(
+            success = super.update(any),
+            log = log,
+            successMessage = "更新id为${id}的IP访问规则。",
+            failureMessage = "更新id为${id}的IP访问规则失败！",
+        ) {
             val ipRule = dao.get(id)
             if (ipRule != null) {
                 val accessRule = sysAccessRuleDao.get(ipRule.parentRuleId)
@@ -148,19 +141,19 @@ open class SysAccessRuleIpService(
                     accessRuleIpsBySubSysAndTenantIdCache.syncOnUpdate(accessRule, id)
                 }
             }
-        } else {
-            log.error("更新id为${id}的IP访问规则失败！")
         }
-        return success
     }
 
     @Transactional
     override fun deleteById(id: String): Boolean {
         val ipRule = dao.get(id)
         val accessRule = ipRule?.let { sysAccessRuleDao.get(it.parentRuleId) }
-        val success = super.deleteById(id)
-        if (success) {
-            log.debug("删除id为${id}的IP访问规则。")
+        return completeCrudUpdate(
+            success = super.deleteById(id),
+            log = log,
+            successMessage = "删除id为${id}的IP访问规则。",
+            failureMessage = "删除id为${id}的IP访问规则失败！",
+        ) {
             if (accessRule != null) {
                 accessRuleIpsBySubSysAndTenantIdCache.syncOnDeleteBySystemAndTenant(
                     accessRule.systemCode,
@@ -169,11 +162,10 @@ open class SysAccessRuleIpService(
             } else {
                 accessRuleIpsBySubSysAndTenantIdCache.syncOnDelete(id)
             }
-        } else {
-            log.error("删除id为${id}的IP访问规则失败！")
         }
-        return success
     }
 
-
+    private fun requireIpRuleId(any: Any): String =
+        (any as? IIdEntity<*>)?.id as? String
+            ?: error("更新IP访问规则时不支持的入参类型: ${any::class.qualifiedName}")
 }

@@ -4,7 +4,6 @@ import com.alibaba.cloud.nacos.NacosPropertySourceRepository
 import io.kudos.context.config.IConfigDataFinder
 import org.springframework.core.env.PropertySource
 
-
 /**
  *
  * @author hanson

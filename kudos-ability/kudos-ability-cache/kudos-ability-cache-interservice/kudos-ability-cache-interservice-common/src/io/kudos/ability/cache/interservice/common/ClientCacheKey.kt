@@ -28,7 +28,7 @@ class ClientCacheKey : Serializable {
 
     companion object {
         @Serial
-        private val serialVersionUID = -5550889928680327059L
+        private const val serialVersionUID: Long = -5550889928680327059L
 
         //feign缓存的主key
         const val FEIGN_CACHE_PREFIX: String = "FEIGN-CACHE"

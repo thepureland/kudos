@@ -70,10 +70,10 @@ object TestContainerKit {
      * @param serviceInstanceName 服务实例名
      * @return true: 运行中，false：未运行
      */
-    fun isServiceRunning(compose: ComposeContainer, serviceInstanceName: String): Boolean {
-        val opt = compose.getContainerByServiceName(serviceInstanceName)
-        return opt.isPresent && opt.get().isRunning
-    }
+    fun isServiceRunning(compose: ComposeContainer, serviceInstanceName: String): Boolean =
+        compose.getContainerByServiceName(serviceInstanceName)
+            .map { it.isRunning }
+            .orElse(false)
 
     /**
      * 根据label获取对应的容器

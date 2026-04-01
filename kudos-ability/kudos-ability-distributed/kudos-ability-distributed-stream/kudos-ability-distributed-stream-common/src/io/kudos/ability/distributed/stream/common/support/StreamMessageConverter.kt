@@ -29,7 +29,7 @@ import java.io.Serializable
  * 注意事项：
  * - 消息体类必须实现Serializable接口
  * - 序列化后的字节数组会作为消息的payload
- * - 反序列化时使用非空断言（!!），确保类型正确
+ * - 反序列化结果若为 null 会抛出 IllegalArgumentException
  */
 class StreamMessageConverter : AbstractMessageConverter(MESSAGE_TYPE) {
 
@@ -58,7 +58,7 @@ class StreamMessageConverter : AbstractMessageConverter(MESSAGE_TYPE) {
      * 
      * 注意事项：
      * - payload必须是ByteArray类型
-     * - 使用非空断言（!!），确保反序列化结果不为null
+     * - 反序列化结果为 null 时抛出 IllegalArgumentException
      * - 如果反序列化失败，会抛出相应的异常
      * 
      * @param message Spring消息对象
@@ -74,7 +74,7 @@ class StreamMessageConverter : AbstractMessageConverter(MESSAGE_TYPE) {
         conversionHint: Any?
     ): Any {
         val payload = message.getPayload()
-        return SerializationKit.deserialize(payload as ByteArray)!!
+        return requireNotNull(SerializationKit.deserialize(payload as ByteArray)) { "deserialize returned null" }
     }
 
     /**

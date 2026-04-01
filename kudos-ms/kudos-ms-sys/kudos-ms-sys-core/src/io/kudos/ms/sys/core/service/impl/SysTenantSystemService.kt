@@ -7,7 +7,6 @@ import io.kudos.ms.sys.core.cache.SysTenantSystemHashCache
 import io.kudos.ms.sys.core.dao.SysTenantSystemDao
 import io.kudos.ms.sys.core.model.po.SysTenantSystem
 import io.kudos.ms.sys.core.service.iservice.ISysTenantSystemService
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -22,14 +21,11 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 @Transactional
 open class SysTenantSystemService(
-    dao: SysTenantSystemDao
+    dao: SysTenantSystemDao,
+    private val sysTenantSystemHashCache: SysTenantSystemHashCache,
 ) : BaseCrudService<String, SysTenantSystem, SysTenantSystemDao>(dao), ISysTenantSystemService {
 
-
     private val log = LogFactory.getLog(this::class)
-
-    @Autowired
-    private lateinit var sysTenantSystemHashCache: SysTenantSystemHashCache
 
     override fun searchSystemCodesByTenantId(tenantId: String): Set<String> =
         dao.searchSystemCodesByTenantId(tenantId)
@@ -54,9 +50,8 @@ open class SysTenantSystemService(
      */
     @Transactional
     override fun batchBind(tenantId: String, systemCodes: Collection<String>): Int {
-        if (systemCodes.isEmpty()) {
-            return 0
-        }
+        if (systemCodes.isEmpty()) return 0
+
         var count = 0
         val insertedSystemCodes = mutableSetOf<String>()
         systemCodes.forEach { systemCode ->
@@ -113,9 +108,7 @@ open class SysTenantSystemService(
      * @author AI: Cursor
      * @since 1.0.0
      */
-    override fun exists(tenantId: String, systemCode: String): Boolean {
-        return dao.exists(tenantId, systemCode)
-    }
+    override fun exists(tenantId: String, systemCode: String): Boolean = dao.exists(tenantId, systemCode)
 
     override fun deleteByTenantId(tenantId: String): Int {
         val systemCodes = searchSystemCodesByTenantId(tenantId)
@@ -201,6 +194,4 @@ open class SysTenantSystemService(
         }
         return count
     }
-
-
 }

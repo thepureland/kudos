@@ -27,8 +27,8 @@ open class KafkaConsumerHandler {
     fun consumer(): Consumer<Message<StreamMessageVo<KafkaSimpleMsg>>?> {
         return Consumer { msg: Message<StreamMessageVo<KafkaSimpleMsg>>? ->
             //获取消息体
-            val streamMsgVo: StreamMessageVo<KafkaSimpleMsg> = msg!!.getPayload()
-            val simpleMsg = streamMsgVo.data!!
+            val streamMsgVo = msg?.payload ?: return@Consumer
+            val simpleMsg = streamMsgVo.data ?: return@Consumer
             log.info("receive message: ${simpleMsg.msg}")
             //记录日志
             if (this.defaultMsg == simpleMsg.msg) {

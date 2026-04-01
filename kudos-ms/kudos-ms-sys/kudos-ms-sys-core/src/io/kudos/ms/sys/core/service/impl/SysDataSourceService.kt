@@ -1,8 +1,8 @@
 package io.kudos.ms.sys.core.service.impl
 
 import io.kudos.base.support.service.impl.BaseCrudService
-import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
+import io.kudos.base.model.contract.entity.IIdEntity
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.PagingSearchResult
 import io.kudos.base.query.eq
@@ -16,8 +16,6 @@ import io.kudos.ms.sys.core.cache.SysDataSourceHashCache
 import io.kudos.ms.sys.core.dao.SysDataSourceDao
 import io.kudos.ms.sys.core.model.po.SysDataSource
 import io.kudos.ms.sys.core.service.iservice.ISysDataSourceService
-import jakarta.annotation.Resource
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import kotlin.reflect.KClass
@@ -33,14 +31,10 @@ import kotlin.reflect.KClass
 @Service
 @Transactional
 open class SysDataSourceService(
-    dao: SysDataSourceDao
+    dao: SysDataSourceDao,
+    private val sysTenantApi: ISysTenantApi,
+    private val sysDataSourceHashCache: SysDataSourceHashCache,
 ) : BaseCrudService<String, SysDataSource, SysDataSourceDao>(dao), ISysDataSourceService {
-
-    @Resource
-    private lateinit var sysTenantApi: ISysTenantApi
-
-    @Autowired
-    private lateinit var sysDataSourceHashCache: SysDataSourceHashCache
 
     private val log = LogFactory.getLog(this::class)
 
@@ -48,17 +42,12 @@ open class SysDataSourceService(
         tenantId: String,
         subSystemCode: String,
         microServiceCode: String?
-    ): List<SysDataSourceCacheEntry> {
-        return sysDataSourceHashCache.getDataSources(tenantId, subSystemCode, microServiceCode)
-    }
+    ): List<SysDataSourceCacheEntry> = sysDataSourceHashCache.getDataSources(tenantId, subSystemCode, microServiceCode)
 
-    override fun getDataSourceFromCache(tenantId: String, atomicServiceCode: String?): SysDataSourceCacheEntry? {
-        return sysDataSourceHashCache.getDataSources(tenantId, null, atomicServiceCode).firstOrNull()
-    }
+    override fun getDataSourceFromCache(tenantId: String, atomicServiceCode: String?): SysDataSourceCacheEntry? =
+        sysDataSourceHashCache.getDataSources(tenantId, null, atomicServiceCode).firstOrNull()
 
-    override fun getDataSourceFromCache(id: String): SysDataSourceCacheEntry? {
-        return sysDataSourceHashCache.getDataSourceById(id)
-    }
+    override fun getDataSourceFromCache(id: String): SysDataSourceCacheEntry? = sysDataSourceHashCache.getDataSourceById(id)
 
     override fun pagingSearch(listSearchPayload: ListSearchPayload): PagingSearchResult<*> {
         val result = super.pagingSearch(listSearchPayload)
@@ -94,22 +83,23 @@ open class SysDataSourceService(
     @Transactional
     override fun insert(any: Any): String {
         val id = super.insert(any)
-        log.debug("新增id为${id}的数据源。")
-        sysDataSourceHashCache.syncOnInsert(any, id) // 同步缓存
+        completeCrudInsert(log, "新增id为${id}的数据源。") {
+            sysDataSourceHashCache.syncOnInsert(any, id)
+        }
         return id
     }
 
     @Transactional
     override fun update(any: Any): Boolean {
-        val success = super.update(any)
-        val id = BeanKit.getProperty(any, SysDataSource::id.name) as String
-        if (success) {
-            log.debug("更新id为${id}的数据源。")
+        val id = requireDataSourceId(any)
+        return completeCrudUpdate(
+            success = super.update(any),
+            log = log,
+            successMessage = "更新id为${id}的数据源。",
+            failureMessage = "更新id为${id}的数据源失败！",
+        ) {
             sysDataSourceHashCache.syncOnUpdate(any, id)
-        } else {
-            log.error("更新id为${id}的数据源失败！")
         }
-        return success
     }
 
     @Transactional
@@ -118,13 +108,14 @@ open class SysDataSourceService(
             this.id = id
             this.active = active
         }
-        val success = dao.update(dataSource)
-        if (success) {
+        return completeCrudUpdate(
+            success = dao.update(dataSource),
+            log = log,
+            successMessage = "更新id为${id}的数据源的启用状态为${active}。",
+            failureMessage = "更新id为${id}的数据源的启用状态为${active}失败！",
+        ) {
             sysDataSourceHashCache.syncOnUpdate(dataSource, id)
-        } else {
-            log.error("更新id为${id}的数据源的启用状态为${active}失败！")
         }
-        return success
     }
 
     @Transactional
@@ -134,12 +125,14 @@ open class SysDataSourceService(
             this.id = id
             this.password = newPwd
         }
-        val success = dao.update(dataSource)
-        if (success) {
+        completeCrudUpdate(
+            success = dao.update(dataSource),
+            log = log,
+            successMessage = "重置id为${id}的数据源密码。",
+            failureMessage = "重置id为${id}的数据源密码失败！",
+        ) {
             val ds = requireNotNull(get(id)) { "重置数据源密码后找不到id=${id}的数据源。" }
             sysDataSourceHashCache.syncOnUpdate(ds, id)
-        } else {
-            log.error("重置id为${id}的数据源密码失败！")
         }
     }
 
@@ -150,14 +143,14 @@ open class SysDataSourceService(
             log.warn("删除id为${id}的数据源时，发现其已不存在！")
             return false
         }
-        val success = super.deleteById(id)
-        if (success) {
-            log.debug("删除id为${id}的数据源成功！")
+        return completeCrudUpdate(
+            success = super.deleteById(id),
+            log = log,
+            successMessage = "删除id为${id}的数据源成功！",
+            failureMessage = "删除id为${id}的数据源失败！",
+        ) {
             sysDataSourceHashCache.syncOnDelete(id)
-        } else {
-            log.error("删除id为${id}的数据源失败！")
         }
-        return success
     }
 
     @Transactional
@@ -168,15 +161,13 @@ open class SysDataSourceService(
         return count
     }
 
-    override fun getDataSourcesByTenantId(tenantId: String): List<SysDataSourceRow> {
-        val criteria = Criteria(SysDataSource::tenantId eq tenantId)
-        return dao.searchAs<SysDataSourceRow>(criteria)
-    }
+    override fun getDataSourcesByTenantId(tenantId: String): List<SysDataSourceRow> =
+        dao.searchAs(Criteria(SysDataSource::tenantId eq tenantId))
 
-    override fun getDataSourcesBySubSystemCode(subSystemCode: String): List<SysDataSourceRow> {
-        val criteria = Criteria(SysDataSource::subSystemCode eq subSystemCode)
-        return dao.searchAs<SysDataSourceRow>(criteria)
-    }
+    override fun getDataSourcesBySubSystemCode(subSystemCode: String): List<SysDataSourceRow> =
+        dao.searchAs(Criteria(SysDataSource::subSystemCode eq subSystemCode))
 
-
+    private fun requireDataSourceId(any: Any): String =
+        (any as? IIdEntity<*>)?.id as? String
+            ?: error("更新数据源时不支持的入参类型: ${any::class.qualifiedName}")
 }

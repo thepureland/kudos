@@ -6,7 +6,7 @@ import io.kudos.ms.sys.core.model.po.SysMicroService
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
-import java.util.*
+import java.util.UUID
 import kotlin.test.*
 
 /**

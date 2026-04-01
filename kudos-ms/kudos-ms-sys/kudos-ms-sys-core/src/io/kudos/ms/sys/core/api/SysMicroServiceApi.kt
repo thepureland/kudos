@@ -3,7 +3,6 @@ package io.kudos.ms.sys.core.api
 import io.kudos.ms.sys.common.api.ISysMicroServiceApi
 import io.kudos.ms.sys.common.vo.microservice.SysMicroServiceCacheEntry
 import io.kudos.ms.sys.core.service.iservice.ISysMicroServiceService
-import jakarta.annotation.Resource
 import org.springframework.stereotype.Component
 
 
@@ -15,39 +14,24 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-open class SysMicroServiceApi : ISysMicroServiceApi {
+open class SysMicroServiceApi(
+    private val sysMicroServiceService: ISysMicroServiceService,
+) : ISysMicroServiceApi {
 
+    override fun getMicroServiceFromCache(code: String): SysMicroServiceCacheEntry? = sysMicroServiceService.getMicroServiceFromCache(code)
 
-    @Resource
-    protected lateinit var sysMicroServiceService: ISysMicroServiceService
+    override fun getAllMicroServicesFromCache(): List<SysMicroServiceCacheEntry> = sysMicroServiceService.getAllMicroServicesFromCache()
 
-    override fun getMicroServiceFromCache(code: String): SysMicroServiceCacheEntry? {
-        return sysMicroServiceService.getMicroServiceFromCache(code)
-    }
+    override fun getMicroServicesExcludeAtomicFromCache(): List<SysMicroServiceCacheEntry> =
+        sysMicroServiceService.getMicroServicesExcludeAtomicFromCache()
 
-    override fun getAllMicroServicesFromCache(): List<SysMicroServiceCacheEntry> {
-        return sysMicroServiceService.getAllMicroServicesFromCache()
-    }
+    override fun getAtomicServicesFromCache(): List<SysMicroServiceCacheEntry> = sysMicroServiceService.getAtomicServicesFromCache()
 
-    override fun getMicroServicesExcludeAtomicFromCache(): List<SysMicroServiceCacheEntry> {
-        return sysMicroServiceService.getMicroServicesExcludeAtomicFromCache()
-    }
+    override fun getSubMicroServicesFromCache(parentCode: String): List<SysMicroServiceCacheEntry> =
+        sysMicroServiceService.getSubMicroServicesFromCache(parentCode)
 
-    override fun getAtomicServicesFromCache(): List<SysMicroServiceCacheEntry> {
-        return sysMicroServiceService.getAtomicServicesFromCache()
-    }
+    override fun getAtomicServicesByParentCodeFromCache(parentCode: String): List<SysMicroServiceCacheEntry> =
+        sysMicroServiceService.getAtomicServicesByParentCodeFromCache(parentCode)
 
-    override fun getSubMicroServicesFromCache(parentCode: String): List<SysMicroServiceCacheEntry> {
-        return sysMicroServiceService.getSubMicroServicesFromCache(parentCode)
-    }
-
-    override fun getAtomicServicesByParentCodeFromCache(parentCode: String): List<SysMicroServiceCacheEntry> {
-        return sysMicroServiceService.getAtomicServicesByParentCodeFromCache(parentCode)
-    }
-
-    override fun updateActive(code: String, active: Boolean): Boolean {
-        return sysMicroServiceService.updateActive(code, active)
-    }
-
-
+    override fun updateActive(code: String, active: Boolean): Boolean = sysMicroServiceService.updateActive(code, active)
 }

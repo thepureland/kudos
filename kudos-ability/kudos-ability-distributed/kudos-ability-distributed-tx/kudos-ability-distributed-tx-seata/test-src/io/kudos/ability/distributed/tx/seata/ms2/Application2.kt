@@ -14,7 +14,7 @@ import org.springframework.context.annotation.PropertySource
  * @since 1.0.0
  */
 @EnableDiscoveryClient
-//@ActiveProfiles("ms2") // 在SpringApplication.run(Application2.class)方式下无效!!!
+//@ActiveProfiles("ms2") // 在SpringApplication.run(Application2.class)方式下无效
 @PropertySource(
     value = ["classpath:application-ms2.yml"],
     factory = YamlPropertySourceFactory::class

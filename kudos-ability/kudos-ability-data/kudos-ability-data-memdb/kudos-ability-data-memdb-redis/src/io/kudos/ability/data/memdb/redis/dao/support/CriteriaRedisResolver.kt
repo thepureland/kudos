@@ -163,8 +163,16 @@ internal class CriteriaRedisResolver(
 
     private fun rangeMinMax(value: Any): Pair<Double, Double>? = when (value) {
         is ClosedFloatingPointRange<*> -> (value.start as Number).toDouble() to (value.endInclusive as Number).toDouble()
-        is Array<*> -> value.takeIf { it.size >= 2 }?.let { toDouble(it[0]!!) to toDouble(it[1]!!) }
-        is List<*> -> value.takeIf { it.size >= 2 }?.let { toDouble(it[0]!!) to toDouble(it[1]!!) }
+        is Array<*> -> value.takeIf { it.size >= 2 }?.let { arr ->
+            val a = arr[0]
+            val b = arr[1]
+            if (a == null || b == null) null else toDouble(a) to toDouble(b)
+        }
+        is List<*> -> value.takeIf { it.size >= 2 }?.let { list ->
+            val a = list[0]
+            val b = list[1]
+            if (a == null || b == null) null else toDouble(a) to toDouble(b)
+        }
         else -> null
     }
 }

@@ -1,5 +1,6 @@
 package io.kudos.ms.sys.core.service
 
+import io.kudos.ms.sys.common.vo.tenant.request.SysTenantFormCreate
 import io.kudos.ms.sys.common.vo.tenant.SysTenantCacheEntry
 import io.kudos.ms.sys.common.vo.tenant.response.SysTenantDetail
 import io.kudos.ms.sys.core.cache.SysTenantSystemHashCache
@@ -133,5 +134,19 @@ class SysTenantServiceTest : RdbAndRedisCacheTestBase() {
     @Test
     fun deleteById_returnsFalseWhenRowMissing() {
         assertFalse(sysTenantService.deleteById("00000000-0000-0000-0000-000000000001"))
+    }
+
+    /** 没有关联任何系统关系的租户也应允许删除。 */
+    @Test
+    fun deleteById_succeedsWhenTenantHasNoSystemRelations() {
+        val tenantId = sysTenantService.insert(
+            SysTenantFormCreate(
+                name = "svc-tenant-without-system",
+                subSystemCodes = emptySet(),
+            )
+        )
+
+        assertTrue(sysTenantService.deleteById(tenantId))
+        assertEquals(null, sysTenantService.getTenantFromCache(tenantId))
     }
 }

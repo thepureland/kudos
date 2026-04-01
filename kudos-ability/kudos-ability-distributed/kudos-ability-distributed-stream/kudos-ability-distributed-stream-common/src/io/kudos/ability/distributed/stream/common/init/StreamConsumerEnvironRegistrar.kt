@@ -94,7 +94,8 @@ class StreamConsumerEnvironRegistrar : ImportBeanDefinitionRegistrar, Environmen
         env.getProperty(KEY)?.takeIf { it.isNotBlank() }?.let(::addDefinitions)
 
         for (loc in locations) {
-            val res = DefaultResourceLoader().getResource(loc!!)
+            if (loc.isNullOrBlank()) continue
+            val res = DefaultResourceLoader().getResource(loc)
             if (!res.exists()) continue
             try {
                 val sources = loader.load(loc, res)

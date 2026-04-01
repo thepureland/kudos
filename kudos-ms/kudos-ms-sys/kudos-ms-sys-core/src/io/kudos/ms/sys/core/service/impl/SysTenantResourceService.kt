@@ -21,22 +21,16 @@ open class SysTenantResourceService(
     dao: SysTenantResourceDao
 ) : BaseCrudService<String, SysTenantResource, SysTenantResourceDao>(dao), ISysTenantResourceService {
 
-
     private val log = LogFactory.getLog(this::class)
 
-    override fun getResourceIdsByTenantId(tenantId: String): Set<String> {
-        return dao.searchResourceIdsByTenantId(tenantId)
-    }
+    override fun getResourceIdsByTenantId(tenantId: String): Set<String> = dao.searchResourceIdsByTenantId(tenantId)
 
-    override fun getTenantIdsByResourceId(resourceId: String): Set<String> {
-        return dao.searchTenantIdsByResourceId(resourceId)
-    }
+    override fun getTenantIdsByResourceId(resourceId: String): Set<String> = dao.searchTenantIdsByResourceId(resourceId)
 
     @Transactional
     override fun batchBind(tenantId: String, resourceIds: Collection<String>): Int {
-        if (resourceIds.isEmpty()) {
-            return 0
-        }
+        if (resourceIds.isEmpty()) return 0
+
         var count = 0
         resourceIds.forEach { resourceId ->
             if (!exists(tenantId, resourceId)) {
@@ -64,9 +58,5 @@ open class SysTenantResourceService(
         return success
     }
 
-    override fun exists(tenantId: String, resourceId: String): Boolean {
-        return dao.exists(tenantId, resourceId)
-    }
-
-
+    override fun exists(tenantId: String, resourceId: String): Boolean = dao.exists(tenantId, resourceId)
 }

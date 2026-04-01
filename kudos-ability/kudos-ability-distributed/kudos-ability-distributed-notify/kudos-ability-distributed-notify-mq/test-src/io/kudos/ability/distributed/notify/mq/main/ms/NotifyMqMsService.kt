@@ -14,7 +14,7 @@ open class NotifyMqMsService {
 
     @Autowired
     private val notifyProducer: INotifyProducer? = null
-    private val data: MutableMap<String?, HashSet<Int?>?> = HashMap()
+    private val data: MutableMap<String?, HashSet<Int?>> = HashMap()
 
     private val registryMap: MutableMap<Int?, String?> = HashMap()
 
@@ -32,18 +32,16 @@ open class NotifyMqMsService {
         val messageVo = NotifyMessageVo<String>()
         messageVo.notifyType = NotifyTypeEnum.DS.code
         messageVo.messageBody = key
-        return notifyProducer!!.notify(messageVo)
+        return requireNotNull(notifyProducer) { "INotifyProducer 未注入" }.notify(messageVo)
     }
 
     fun collection(port: Int?, appKey: String, key: String?): Boolean {
         var result = false
         if (registryMap.containsKey(port)) {
             if (appKey == registryMap[port]) {
-                if (!data.containsKey(key)) {
-                    data[key] = HashSet()
-                }
-                if (!data[key]!!.contains(port)) {
-                    data[key]!!.add(port)
+                val ports = data.getOrPut(key) { HashSet() }
+                if (!ports.contains(port)) {
+                    ports.add(port)
                     log.info("@@@ collection, port:{0}, appKey:{1}, key:{2}", port, appKey, key)
                     result = true
                 }
@@ -61,11 +59,8 @@ open class NotifyMqMsService {
     }
 
     fun isSync(key: String?): Boolean {
-        var result = false
-        if (data.containsKey(key)) {
-            if (data[key]!!.size == registryMap.size) result = true
-        }
-        return result
+        val ports = data[key] ?: return false
+        return ports.size == registryMap.size
     }
 
     fun registry(appKey: String?, port: Int?): Boolean {

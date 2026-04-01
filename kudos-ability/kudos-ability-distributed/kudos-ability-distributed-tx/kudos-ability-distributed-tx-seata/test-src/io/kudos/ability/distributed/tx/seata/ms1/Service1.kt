@@ -24,9 +24,10 @@ open class Service1 : IService1 {
 
     private val log = LogFactory.getLog(this::class)
 
-    override fun getById(id: Int): TestTable = testTableDao.get(id)!!
+    override fun getById(id: Int): TestTable =
+        requireNotNull(testTableDao.get(id)) { "TestTable not found: $id" }
 
-            @Transactional // 可加可不加
+    @Transactional // 可加可不加
     override fun decrease(id: Int, money: Double) {
         val ds = KudosContextHolder.currentDataSource()
         ds.connection.use { conn ->
@@ -40,12 +41,13 @@ open class Service1 : IService1 {
 //            println("seataConn? = ${seataConn != null}")
         }
         log.info("seata全局事务id【${RootContext.getXID()}】")
-        val entity = testTableDao.get(id)!!
+        val entity = requireNotNull(testTableDao.get(id)) { "TestTable not found: $id" }
         log.info("用户【$id】当前余额【${entity.balance}】")
         log.info("为用户【$id】扣减余额【${money}】")
         entity.balance = entity.balance.minus(money)
         testTableDao.update(entity)
-        log.info("用户【$id】当前余额【${testTableDao.get(id)!!.balance}】")
+        val after = requireNotNull(testTableDao.get(id)) { "TestTable not found: $id" }
+        log.info("用户【$id】当前余额【${after.balance}】")
     }
 
 }
