@@ -8,6 +8,7 @@ import java.util.concurrent.Delayed
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.thread
 
 /**
  * 普通锁服务实现
@@ -68,18 +69,17 @@ class NormalLockService : ILockProvider<ReentrantLock> {
          * - 捕获InterruptedException，恢复中断状态
          * - 确保线程能够正确响应中断信号
          */
-        //守护线程删除过期key
-        Thread {
+        // 守护线程删除过期 key（与文档一致：daemon 不阻止 JVM 退出）
+        thread(name = "kudos-normal-lock-expiry", isDaemon = true) {
             try {
                 while (true) {
-                    // 阻塞直到有过期 key
                     val expKey = delayQueue.take()
-                    cacheKeyMap.remove(expKey.key) // 只有值匹配时才删除
+                    cacheKeyMap.remove(expKey.key)
                 }
             } catch (_: InterruptedException) {
                 Thread.currentThread().interrupt()
             }
-        }.start()
+        }
     }
 
     /**
@@ -102,9 +102,7 @@ class NormalLockService : ILockProvider<ReentrantLock> {
      * @param key 锁的key
      * @return true表示锁存在，false表示锁不存在
      */
-    fun hasKey(key: String?): Boolean {
-        return cacheKeyMap.containsKey(key)
-    }
+    fun hasKey(key: String?): Boolean = cacheKeyMap.containsKey(key)
 
     /**
      * 获取锁对象
@@ -114,9 +112,7 @@ class NormalLockService : ILockProvider<ReentrantLock> {
      * @param key 锁的key
      * @return ReentrantLock对象，如果获取失败返回null
      */
-    override fun lock(key: String): ReentrantLock? {
-        return reentrantLockManager.tryLock(key)
-    }
+    override fun lock(key: String): ReentrantLock? = reentrantLockManager.tryLock(key)
 
     /**
      * 释放锁
@@ -269,11 +265,8 @@ class NormalLockService : ILockProvider<ReentrantLock> {
          * @param other 另一个Delayed对象
          * @return 负数表示当前对象过期更早，0表示同时过期，正数表示当前对象过期更晚
          */
-        override fun compareTo(other: Delayed): Int {
-            // 统一按毫秒比较到期时间
-            val diff = this.getDelay(TimeUnit.MILLISECONDS) - other.getDelay(TimeUnit.MILLISECONDS)
-            return diff.compareTo(0L)
-        }
+        override fun compareTo(other: Delayed): Int =
+            getDelay(TimeUnit.MILLISECONDS).compareTo(other.getDelay(TimeUnit.MILLISECONDS))
 
         /**
          * 判断两个ExpiringKey是否相等

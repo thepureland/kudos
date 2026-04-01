@@ -1,7 +1,7 @@
 package io.kudos.context.support
 
 /**
- * 常量類
+ * 常量类
  *
  * @author K
  * @since 1.0.0

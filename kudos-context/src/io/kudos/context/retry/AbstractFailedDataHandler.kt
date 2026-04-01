@@ -2,11 +2,11 @@ package io.kudos.context.retry
 
 import io.kudos.base.data.json.JsonKit
 import io.kudos.base.lang.GenericKit
-import kotlinx.io.IOException
 import java.io.File
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Paths
-import java.util.*
+import java.util.UUID
 
 /**
  * 失败数据处理器抽象类
@@ -68,7 +68,7 @@ abstract class AbstractFailedDataHandler<T> : IFailedDataHandler<T> {
             if (Files.notExists(dir)) {
                 Files.createDirectories(dir)
             }
-            val fileName = System.currentTimeMillis().toString() + "-" + UUID.randomUUID() + ".json"
+            val fileName = "${System.currentTimeMillis()}-${UUID.randomUUID()}.json"
             val file = dir.resolve(fileName)
             val bytes: ByteArray = JsonKit.writeAnyAsBytes(data)
             Files.write(file, bytes)

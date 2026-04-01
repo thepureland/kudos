@@ -32,10 +32,8 @@ interface ILockProvider<L : Lock> {
      */
     fun unLock(key: String)
 
-    fun order(): Int {
-        //优先级顺序，值越小顺序越大
-        return 99
-    }
+    /** 优先级顺序，值越小顺序越大 */
+    fun order(): Int = 99
 
     fun tryLock(lockKey: String, sec: Int): Boolean
 
@@ -81,19 +79,15 @@ interface ILockProvider<L : Lock> {
         sec: Int,
         errorCode: IErrorCodeEnum?
     ): T? {
-        val b = tryLock(lockKey, sec)
-        if (b) {
-            try {
-                return supplier.get()
-            } finally {
-                unLock(lockKey)
-            }
-        } else {
-            if (errorCode != null) {
-                throw ServiceException(errorCode)
-            }
+        if (!tryLock(lockKey, sec)) {
+            if (errorCode != null) throw ServiceException(errorCode)
+            return null
         }
-        return null
+        return try {
+            supplier.get()
+        } finally {
+            unLock(lockKey)
+        }
     }
 
     /**
@@ -132,17 +126,14 @@ interface ILockProvider<L : Lock> {
      * @throws ServiceException 如果获取锁失败且errorCode不为null
      */
     fun lockExecute(lockKey: String, runnable: Runnable, sec: Int, errorCode: IErrorCodeEnum?) {
-        val b = tryLock(lockKey, sec)
-        if (b) {
-            try {
-                runnable.run()
-            } finally {
-                unLock(lockKey)
-            }
-        } else {
-            if (errorCode != null) {
-                throw ServiceException(errorCode)
-            }
+        if (!tryLock(lockKey, sec)) {
+            if (errorCode != null) throw ServiceException(errorCode)
+            return
+        }
+        try {
+            runnable.run()
+        } finally {
+            unLock(lockKey)
         }
     }
 

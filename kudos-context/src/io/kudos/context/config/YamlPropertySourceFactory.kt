@@ -52,18 +52,8 @@ class YamlPropertySourceFactory : PropertySourceFactory {
      *
      * @param sourceName
      */
-    private fun loadFromConfigCenter(sourceName: String?): PropertySource<*>? {
-        val configDataFinders = ServiceLoader.load(IConfigDataFinder::class.java)
-        if (configDataFinders != null) {
-            for (configDataFinder in configDataFinders) {
-                val configData: PropertySource<*>? = configDataFinder.findConfigData(sourceName)
-                if (configData != null) {
-                    return configData
-                }
-            }
-        }
-        return null
-    }
+    private fun loadFromConfigCenter(sourceName: String?): PropertySource<*>? =
+        ServiceLoader.load(IConfigDataFinder::class.java).firstNotNullOfOrNull { it.findConfigData(sourceName) }
 
     private fun loadYamlProperties(resource: EncodedResource): Properties {
         val factory = YamlPropertiesFactoryBean()
@@ -73,13 +63,12 @@ class YamlPropertySourceFactory : PropertySourceFactory {
     }
 
     private fun initConfigJarMap(sourceName: String?, encodedRes: EncodedResource) {
-        var url: String? = ""
-        try {
-            val res = encodedRes.resource
-            val uri = res.uri // 例如 "jar:file:/…/libs/soul-foo.jar!/application.yml"
-            url = uri.toString()
-        } catch (_: Exception) {
+        val url = runCatching {
+            // 例如 "jar:file:/…/libs/soul-foo.jar!/application.yml"
+            encodedRes.resource.uri.toString()
+        }.getOrElse {
             log.warn("设置config和jar关系失败！")
+            ""
         }
         SOURCE_MAP[sourceName] = url
     }
