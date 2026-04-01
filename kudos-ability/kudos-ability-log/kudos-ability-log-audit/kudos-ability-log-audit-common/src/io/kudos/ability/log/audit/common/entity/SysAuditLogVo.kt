@@ -2,7 +2,7 @@ package io.kudos.ability.log.audit.common.entity
 
 import java.io.Serial
 import java.io.Serializable
-import java.util.*
+import java.util.Date
 
 /**
  * 系统审计日志表实体
