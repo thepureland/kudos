@@ -11,7 +11,10 @@ import java.util.concurrent.locks.ReentrantLock
 
 /**
  * 普通锁服务实现
- * 
+ *
+ * **实现说明**：[tryLock]（租约键 + [DelayQueue] 过期）与 [lock]/[unLock]（[KeyLockRegistry] 内 [ReentrantLock]）
+ * 为两套机制；[ILockProvider.lockExecute] 及 [LockTool] 常用路径只使用 [tryLock]，与「按 key 取 [ReentrantLock]」无联动。
+ *
  * 基于内存的锁服务，支持锁的自动过期和清理。
  * 
  * 核心特性：

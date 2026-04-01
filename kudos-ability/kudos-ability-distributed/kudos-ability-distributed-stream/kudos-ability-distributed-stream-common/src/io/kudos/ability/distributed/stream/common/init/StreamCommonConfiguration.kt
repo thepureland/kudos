@@ -7,10 +7,16 @@ import io.kudos.ability.distributed.stream.common.dao.StreamExceptionMsgDao
 import io.kudos.ability.distributed.stream.common.handler.IStreamFailHandler
 import io.kudos.ability.distributed.stream.common.handler.StreamGlobalExceptionHandler
 import io.kudos.ability.distributed.stream.common.handler.StreamProducerExceptionHandler
+import io.kudos.ability.distributed.stream.common.init.properties.StreamBindingVerifyProperties
 import io.kudos.ability.distributed.stream.common.support.StreamMessageConverter
 import io.kudos.ability.distributed.stream.common.support.StreamProducerFailHandlerProcessor
 import io.kudos.ability.distributed.stream.common.support.StreamProducerHelper
+import io.kudos.ability.distributed.stream.common.init.properties.StreamAsyncSendExecutorProperties
+import io.kudos.base.logger.LogFactory
+import org.springframework.beans.factory.InitializingBean
+import org.springframework.beans.factory.ObjectProvider
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
+import org.springframework.cloud.stream.config.BindingServiceProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.integration.channel.DirectChannel
 import org.springframework.messaging.MessageChannel
@@ -24,14 +30,24 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
  */
 open class StreamCommonConfiguration {
 
+    private val log = LogFactory.getLog(this::class)
+
+    @Bean
+    @ConditionalOnMissingBean
+    open fun streamAsyncSendExecutorProperties() = StreamAsyncSendExecutorProperties()
+
+    @Bean
+    @ConditionalOnMissingBean
+    open fun streamBindingVerifyProperties() = StreamBindingVerifyProperties()
+
     @Bean("streamAsyncSendExecutor")
     @ConditionalOnMissingBean
-    open fun streamAsyncSendExecutor(): ThreadPoolTaskExecutor {
+    open fun streamAsyncSendExecutor(props: StreamAsyncSendExecutorProperties): ThreadPoolTaskExecutor {
         val executor = ThreadPoolTaskExecutor()
-        executor.corePoolSize = 32 // 设置核心线程数
-        executor.maxPoolSize = 128 // 设置最大线程数
-        executor.queueCapacity = 1024 // 设置队列大小
-        executor.setThreadNamePrefix("stream-async-") // 设置线程名前缀
+        executor.corePoolSize = props.corePoolSize
+        executor.maxPoolSize = props.maxPoolSize
+        executor.queueCapacity = props.queueCapacity
+        executor.setThreadNamePrefix(props.threadNamePrefix)
         executor.initialize()
         return executor
     }
@@ -72,5 +88,31 @@ open class StreamCommonConfiguration {
     @Bean(IStreamFailHandler.CHANNEL_BEN_NAME)
     @ConditionalOnMissingBean
     open fun mqProducerChannel(): MessageChannel = DirectChannel()
+
+    @Bean
+    @ConditionalOnMissingBean(name = ["streamBindingVerifier"])
+    open fun streamBindingVerifier(
+        verifyProps: StreamBindingVerifyProperties,
+        bindingPropsProvider: ObjectProvider<BindingServiceProperties>
+    ): InitializingBean = InitializingBean {
+        if (!verifyProps.enabled) {
+            return@InitializingBean
+        }
+        val bindings = bindingPropsProvider.ifAvailable?.bindings?.keys ?: emptySet()
+        val required = verifyProps.requiredProducerBindings.filter { it.isNotBlank() }
+        if (required.isEmpty()) {
+            log.warn("Stream binding自检已启用，但未配置requiredProducerBindings")
+            return@InitializingBean
+        }
+        val missing = required.filter { !bindings.contains(it) }
+        if (missing.isNotEmpty()) {
+            val msg = "缺少必需的Stream producer bindings: $missing"
+            if (verifyProps.failOnMissing) {
+                error(msg)
+            } else {
+                log.warn(msg)
+            }
+        }
+    }
 
 }

@@ -7,7 +7,6 @@ import com.aliyun.sdk.service.dysmsapi20170525.models.SendSmsRequest
 import com.aliyun.sdk.service.dysmsapi20170525.models.SendSmsResponseBody
 import darabonba.core.client.ClientOverrideConfiguration
 import io.kudos.ability.comm.sms.aliyun.model.AliyunSmsRequest
-import io.kudos.base.data.json.JsonKit
 import io.kudos.base.logger.LogFactory
 import org.springframework.beans.factory.annotation.Value
 import java.net.URI
@@ -15,14 +14,13 @@ import java.net.URI
 /**
  * 阿里云短信发送处理器（支持可配置 endpoint，便于测试注入 WireMock）
  *
- * 配置项：
- * - kudos.sms.aliyun.endpoint（可选）：覆盖默认终端，示例：
- *   - 生产默认留空（SDK 按 region 使用官方域名）
- *   - 测试填 "http://<wiremock-host>:<port>"
+ * 配置项（优先 `kudos.ability.comm.sms.aliyun.endpoint`，兼容旧键 `kudos.ability.comm.sms.aliyun`）：
+ * - 生产可留空（SDK 按 region 使用官方域名）
+ * - 测试填完整 URI，例如 `http://<wiremock-host>:<port>`（勿省略 scheme，本地 Mock 需显式 `http`）
  */
 class AliyunSmsHandler {
 
-    @Value("\${kudos.ability.comm.sms.aliyun}")
+    @Value("\${kudos.ability.comm.sms.aliyun.endpoint:\${kudos.ability.comm.sms.aliyun:}}")
     private lateinit var endpointOverrideStr: String
 
     /**
@@ -109,7 +107,7 @@ class AliyunSmsHandler {
             LOG.info("[aliyun] 开始发送短信...")
             val response = client.sendSms(request)
             result = response.get()?.body
-            LOG.info("[aliyun] 发送短信成功, 结果:{0}", JsonKit.toJson(result ?: "null"))
+            LOG.debug("[aliyun] 发送短信成功, code={0}, requestId={1}", result?.code, result?.requestId)
         } catch (e: Exception) {
             lastError = e
             LOG.error(e, "[aliyun] 发送短信失败")
@@ -148,9 +146,8 @@ class AliyunSmsHandler {
      * - 纯域名："dysmsapi.aliyuncs.com"
      * 
      * 协议处理：
-     * - 如果URI包含scheme，使用该scheme（转为大写）
-     * - 如果URI不包含scheme，默认使用"http"（测试环境）
-     * - 生产环境通常使用"https"
+     * - 若 URI 含 scheme，使用该 scheme（转大写）
+     * - 若无 scheme（仅 host[:port]），默认 **https**；本地 WireMock 等请写全量 `http://...`
      * 
      * 端口处理：
      * - 如果URI包含端口，使用该端口
@@ -163,8 +160,8 @@ class AliyunSmsHandler {
      * - 开发环境：可以使用本地代理
      * 
      * 注意事项：
-     * - endpointOverrideStr为空时，使用阿里云默认endpoint
-     * - 协议默认为http（适合测试），生产环境建议使用https
+     * - endpointOverrideStr 为空时，使用阿里云默认 endpoint
+     * - 无 scheme 时默认 https；测试请使用带 `http://` 的完整 URI
      * - URI解析失败时会fallback到原始字符串
      * 
      * @param region 区域代码（如"cn-hangzhou"）
@@ -192,7 +189,7 @@ class AliyunSmsHandler {
         if (endpointOverrideStr.isNotBlank()) {
             // 既兼容 "http://host:port" 也支持 "host:port"/纯域名
             val uri = runCatching { URI(endpointOverrideStr) }.getOrNull()
-            val protocol = (uri?.scheme ?: "http").uppercase() // WireMock 用 http；生产默认 https
+            val protocol = (uri?.scheme ?: "https").uppercase()
             val hostPort = when {
                 uri == null -> endpointOverrideStr.trim()
                 uri.port == -1 -> uri.host

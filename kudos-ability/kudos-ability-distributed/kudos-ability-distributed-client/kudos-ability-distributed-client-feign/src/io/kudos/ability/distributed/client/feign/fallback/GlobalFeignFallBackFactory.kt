@@ -1,20 +1,42 @@
 package io.kudos.ability.distributed.client.feign.fallback
 
+import feign.FeignException
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.net.http.HttpResult
 import org.springframework.cloud.openfeign.FallbackFactory
+import java.net.ConnectException
+import java.net.SocketTimeoutException
+import java.util.concurrent.TimeoutException
 
 /**
- * 全局Feign降级工厂
- * 当Feign调用失败时提供统一的降级处理，返回404错误结果
+ * 全局 Feign 降级工厂：按异常类型映射 HTTP 状态码，避免一律返回 404。
  */
 class GlobalFeignFallBackFactory : FallbackFactory<HttpResult> {
 
+    private val log = LogFactory.getLog(this::class)
+
     override fun create(cause: Throwable): HttpResult {
-        val result = HttpResult(404, cause.message ?: cause.toString())
-        log.debug("Hystrix FallBackFactory -----------------------------------------------------------")
-        return result
+        val status = resolveHttpStatus(cause)
+        val msg = cause.message ?: cause.toString()
+        log.debug("Feign fallback, status={0}, type={1}", status, cause.javaClass.name)
+        return HttpResult(status, msg)
     }
 
-    private val log = LogFactory.getLog(this::class)
+    private fun resolveHttpStatus(cause: Throwable): Int {
+        var t: Throwable? = cause
+        while (t != null) {
+            if (t is FeignException) {
+                val s = t.status()
+                if (s in 100..599) {
+                    return s
+                }
+            }
+            t = t.cause
+        }
+        return when (cause) {
+            is SocketTimeoutException, is TimeoutException -> 504
+            is ConnectException -> 503
+            else -> 503
+        }
+    }
 }

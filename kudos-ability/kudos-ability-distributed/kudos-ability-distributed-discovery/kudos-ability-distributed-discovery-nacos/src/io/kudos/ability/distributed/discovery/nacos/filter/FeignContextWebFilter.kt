@@ -4,6 +4,7 @@ import io.kudos.ability.distributed.discovery.nacos.support.IFeignProviderContex
 import io.kudos.context.core.ClientInfo
 import io.kudos.context.core.KudosContextHolder
 import io.kudos.context.kit.SpringKit
+import io.kudos.base.logger.LogFactory
 import io.kudos.context.support.Consts
 import jakarta.servlet.Filter
 import jakarta.servlet.FilterChain
@@ -30,18 +31,20 @@ import java.util.*
  * - LOCAL：语言环境，格式为"语言代码_国家代码"（如zh_CN）
  * 
  * 工作流程：
- * - 判断请求是否为Feign请求（通过FEIGN_REQUEST或NOTIFY_REQUEST请求头）
+ * - 判断请求是否带 Feign / 通知透传标记（[Consts.RequestHeader.FEIGN_REQUEST] 或 [Consts.RequestHeader.NOTIFY_REQUEST] 非空）
  * - 提取请求头中的上下文信息
  * - 设置到KudosContext中
  * - 调用扩展处理器进行额外的上下文处理
  * - 继续执行过滤器链
  * 
  * 注意事项：
- * - 仅处理Feign请求，普通HTTP请求会直接放行
+ * - 无上述标记的普通 HTTP 请求直接放行
  * - 如果ClientInfo不存在，会自动创建
  * - 语言环境字符串会被解析为Locale对象
  */
 class FeignContextWebFilter : Filter {
+
+    private val log = LogFactory.getLog(this::class)
 
     /**
      * 执行过滤：提取Feign请求的上下文信息
@@ -49,9 +52,7 @@ class FeignContextWebFilter : Filter {
      * 从HTTP请求头中提取Feign调用传递的上下文信息，并设置到KudosContext中。
      * 
      * 请求判断逻辑：
-     * - 如果FEIGN_REQUEST请求头不为空，或者NOTIFY_REQUEST请求头为空，则处理上下文
-     * - 注意：这里的逻辑是"FEIGN_REQUEST不为空 OR NOTIFY_REQUEST为空"
-     * - 这意味着：Feign请求会处理，非通知请求也会处理
+     * - 仅当 FEIGN_REQUEST 或 NOTIFY_REQUEST 任一请求头非空时解析上下文（二者为显式透传标记）
      * 
      * 上下文提取和设置：
      * 1. 从请求头提取：租户ID、子系统代码、追踪键、数据源ID、语言环境
@@ -64,7 +65,7 @@ class FeignContextWebFilter : Filter {
      * - 支持自定义扩展，例如添加额外的上下文信息
      * 
      * 注意事项：
-     * - 仅处理Feign请求或非通知请求，普通HTTP请求也会处理
+     * - 无透传标记的请求不修改上下文
      * - 如果ClientInfo不存在，会自动创建
      * - 语言环境字符串会被解析为Locale对象
      * - 数据源ID如果为空，不会设置到上下文中
@@ -79,40 +80,46 @@ class FeignContextWebFilter : Filter {
         filterChain: FilterChain
     ) {
         val request: HttpServletRequest = servletRequest as HttpServletRequest
-        if (!request.getHeader(Consts.RequestHeader.FEIGN_REQUEST).isNullOrBlank() ||
-            request.getHeader(Consts.RequestHeader.NOTIFY_REQUEST).isNullOrBlank()
-        ) {
-            val tenantId: String? = request.getHeader(Consts.RequestHeader.TENANT_ID)
-            val subSysCode: String? = request.getHeader(Consts.RequestHeader.SUB_SYS_CODE)
-            val opKey: String? = request.getHeader(Consts.RequestHeader.TRACE_KEY)
-            val dataSourceId: String = request.getHeader(Consts.RequestHeader.DATASOURCE_ID)
-            val local: String = request.getHeader(Consts.RequestHeader.LOCAL)
-            val context = KudosContextHolder.get()
-            var clientInfo = context.clientInfo
-            if (clientInfo == null) {
-                clientInfo = ClientInfo(ClientInfo.Builder())
-                context.clientInfo = clientInfo
+        val isFeign = !request.getHeader(Consts.RequestHeader.FEIGN_REQUEST).isNullOrBlank()
+        val isNotify = !request.getHeader(Consts.RequestHeader.NOTIFY_REQUEST).isNullOrBlank()
+        if (!isFeign && !isNotify) {
+            filterChain.doFilter(servletRequest, servletResponse)
+            return
+        }
+
+        val tenantId: String? = request.getHeader(Consts.RequestHeader.TENANT_ID)
+        val subSysCode: String? = request.getHeader(Consts.RequestHeader.SUB_SYS_CODE)
+        val opKey: String? = request.getHeader(Consts.RequestHeader.TRACE_KEY)
+        val dataSourceId: String? = request.getHeader(Consts.RequestHeader.DATASOURCE_ID)
+        val local: String? = request.getHeader(Consts.RequestHeader.LOCAL)
+        val context = KudosContextHolder.get()
+        var clientInfo = context.clientInfo
+        if (clientInfo == null) {
+            clientInfo = ClientInfo(ClientInfo.Builder())
+            context.clientInfo = clientInfo
+        }
+        if (!local.isNullOrBlank()) {
+            val parts = local.split("_").filter { it.isNotEmpty() }
+            if (parts.size >= 2) {
+                clientInfo.locale = Locale.of(parts[0], parts[1])
             }
-            if (local.isNotBlank()) {
-                val arr = local.split("_".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-                clientInfo.locale = Locale.of(arr[0], arr[1])
-            }
-            context.tenantId = tenantId
-            context.subSystemCode = subSysCode
-            context.traceKey = opKey
-            if (dataSourceId.isNotBlank()) {
-                context.dataSourceId = dataSourceId
-            }
-            //feign服務端上下文解析支持擴展
-            val contextProcessMap = SpringKit.getBeansOfType<IFeignProviderContextProcess>()
-            if (contextProcessMap.isNotEmpty()) {
-                for (value in contextProcessMap.values) {
+        }
+        context.tenantId = tenantId
+        context.subSystemCode = subSysCode
+        context.traceKey = opKey
+        if (!dataSourceId.isNullOrBlank()) {
+            context.dataSourceId = dataSourceId
+        }
+        val contextProcessMap = SpringKit.getBeansOfType<IFeignProviderContextProcess>()
+        if (contextProcessMap.isNotEmpty()) {
+            for (value in contextProcessMap.values) {
+                try {
                     value.processContext(request, context)
+                } catch (e: Exception) {
+                    log.error(e, "IFeignProviderContextProcess 执行失败: {0}", value.javaClass.name)
                 }
             }
-            filterChain.doFilter(servletRequest, servletResponse)
-        } else {
-            filterChain.doFilter(servletRequest, servletResponse)
         }
+        filterChain.doFilter(servletRequest, servletResponse)
     }
 }

@@ -109,9 +109,9 @@ open class LinkableCacheAutoConfiguration : IComponentInitializer {
     @ConditionalOnMissingBean
     open fun cacheNotifyListener(): CacheNotifyListener = CacheNotifyListener()
 
-    @Bean
+    @Bean("notifyTool", "notityTool")
     @ConditionalOnMissingBean
-    open fun notityTool() = NotifyTool()
+    open fun notifyTool() = NotifyTool()
 
     @Bean
     @ConditionalOnMissingBean
