@@ -2,7 +2,7 @@ package io.kudos.base.security
 
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
-import java.util.*
+import java.util.Locale
 
 /**
  * 目的：根据输入的秘钥，对提供的字符串进行加密，和对以此加密规则生成的密文解密

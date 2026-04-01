@@ -1,6 +1,6 @@
 package io.kudos.base.query.sort
 
-import java.util.*
+import java.util.Locale
 
 /**
  * 排序方向

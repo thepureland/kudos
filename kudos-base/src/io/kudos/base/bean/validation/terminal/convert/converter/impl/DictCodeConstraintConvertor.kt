@@ -2,7 +2,8 @@ package io.kudos.base.bean.validation.terminal.convert.converter.impl
 
 import io.kudos.base.bean.validation.constraint.annotations.DictItemCode
 import io.kudos.base.bean.validation.terminal.convert.converter.IDictItemCodeFinder
-import java.util.*
+import java.util.LinkedHashMap
+import java.util.ServiceLoader
 
 /**
  * 字典码约束转换器
@@ -19,11 +20,7 @@ class DictCodeConstraintConvertor(annotation: Annotation) : DefaultConstraintCon
         return map
     }
 
-    private fun dictCodeConvertor(module: String, dictType: String): Set<String> {
-        val dictCodeFinders = ServiceLoader.load(IDictItemCodeFinder::class.java)
-        for (dictCodeFinder in dictCodeFinders) {
-            return dictCodeFinder.getDictItemCodes(module, dictType)
-        }
-        return emptySet()
-    }
+    private fun dictCodeConvertor(module: String, dictType: String): Set<String> =
+        ServiceLoader.load(IDictItemCodeFinder::class.java).firstOrNull()
+            ?.getDictItemCodes(module, dictType) ?: emptySet()
 }

@@ -1,7 +1,6 @@
 package io.kudos.base.error
 
 import io.kudos.base.enums.ienums.IErrorCodeEnum
-import java.util.*
 
 
 /**
@@ -62,7 +61,8 @@ class ServiceException : CustomRuntimeException {
 
     constructor(errorCode: IErrorCodeEnum, printAllStackTrace: Boolean = false, vararg args: Any?) {
         this.errorCode = errorCode
-        this.params = Arrays.stream<Any?>(args).toArray()
+        @Suppress("UNCHECKED_CAST")
+        this.params = args.copyOf() as Array<Any?>
         resolveException(errorCode, printAllStackTrace, *args)
     }
 

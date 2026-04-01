@@ -4,7 +4,8 @@ import io.kudos.base.logger.LogFactory
 import java.net.Inet6Address
 import java.net.InetAddress
 import java.net.UnknownHostException
-import java.util.*
+import java.util.ArrayList
+import java.util.Locale
 
 /**
  * IP工具类，支持ipv4和ipv6

@@ -19,7 +19,7 @@ import java.io.*
 import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Paths
-import java.util.*
+import java.util.Base64
 import javax.imageio.ImageIO
 import javax.imageio.stream.MemoryCacheImageInputStream
 import javax.swing.JFrame
