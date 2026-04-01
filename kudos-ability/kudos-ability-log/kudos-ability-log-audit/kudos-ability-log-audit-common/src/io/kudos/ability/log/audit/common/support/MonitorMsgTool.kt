@@ -4,9 +4,7 @@ import io.kudos.ability.log.audit.common.api.IMonitorService
 import io.kudos.ability.log.audit.common.entity.SysMonitorMsgVo
 import io.kudos.context.core.KudosContextHolder
 import io.kudos.context.kit.SpringKit
-import java.util.*
-import java.util.function.Function
-import java.util.stream.Stream
+import java.util.Date
 import kotlin.math.min
 
 object MonitorMsgTool {
@@ -33,30 +31,23 @@ object MonitorMsgTool {
         sysMonitorMsgVo.callSource = callSource?.toString() ?: ""
         sysMonitorMsgVo.tenantId = KudosContextHolder.get().tenantId
         sysMonitorMsgVo.applicationName = KudosContextHolder.get().atomicServiceCode
-        sysMonitorMsgVo.exceptionType=exceptionType
+        sysMonitorMsgVo.exceptionType = exceptionType
         sysMonitorMsgVo.createTime = Date()
         var errorMsg = msg
         if (throwable != null) {
             val topStackTraceLines = getTopStackTraceLines(throwable, 10)
             errorMsg += "\n\n" + topStackTraceLines
         }
-        sysMonitorMsgVo.exceptionMsg=errorMsg
+        sysMonitorMsgVo.exceptionMsg = errorMsg
         return sysMonitorMsgVo
     }
 
     private val callSource: Pair<String?, String?>?
         get() {
-            val caller =
-                WALKER.walk<StackWalker.StackFrame?>(Function { frames: Stream<StackWalker.StackFrame?>? ->
-                    requireNotNull(frames) { "frames is null" }.skip(2)
-                        .findFirst()
-                        .orElse(null)
-                }
-                )
-            if (caller != null) {
-                return Pair(caller.className, caller.methodName)
+            val caller = WALKER.walk { s ->
+                s.skip(2).findFirst().orElse(null)
             }
-            return null
+            return caller?.let { Pair(it.className, it.methodName) }
         }
 
 

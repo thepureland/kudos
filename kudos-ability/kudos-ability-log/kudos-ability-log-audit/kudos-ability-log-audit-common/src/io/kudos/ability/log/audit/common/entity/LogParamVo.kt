@@ -2,7 +2,7 @@ package io.kudos.ability.log.audit.common.entity
 
 import io.kudos.ability.log.audit.common.enums.LogParamTypeEnum
 import java.io.Serializable
-import java.util.*
+import java.util.Locale
 
 /**
  * Create by (admin) on 7/10/15.
