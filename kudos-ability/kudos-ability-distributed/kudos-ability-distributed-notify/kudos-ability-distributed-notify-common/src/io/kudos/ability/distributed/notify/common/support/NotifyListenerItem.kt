@@ -16,8 +16,7 @@ object NotifyListenerItem {
 
     fun put(namespace: String, key: String, listener: INotifyListener) {
         val actualNamespace = namespace.ifBlank { DEFAULT_NAMESPACE }
-        val namespaceMap = notifyListenerMap.computeIfAbsent(actualNamespace) { mutableMapOf() }
-        namespaceMap[key] = listener
+        notifyListenerMap.getOrPut(actualNamespace) { mutableMapOf() }[key] = listener
     }
 
     fun put(key: String, listener: INotifyListener) {
@@ -29,8 +28,6 @@ object NotifyListenerItem {
         return notifyListenerMap[actualNamespace]?.get(key)
     }
 
-    fun get(key: String): INotifyListener? {
-        return get(DEFAULT_NAMESPACE, key)
-    }
+    fun get(key: String): INotifyListener? = get(DEFAULT_NAMESPACE, key)
 
 }
