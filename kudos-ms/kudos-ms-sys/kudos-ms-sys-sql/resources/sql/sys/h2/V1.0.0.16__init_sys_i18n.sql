@@ -2,7 +2,7 @@
 create table if not exists "sys_i18n"
 (
     "id"                  character(36) default RANDOM_UUID() not null primary key,
-    "locale"              character varying(5)                not null,
+    "locale"              character(5)                not null,
     "atomic_service_code" character varying(32)               not null,
     "i18n_type_dict_code" character varying(32)               not null,
     "namespace"       character varying(128)             not null,
@@ -763,7 +763,11 @@ insert into "sys_i18n" ("locale", "atomic_service_code", "i18n_type_dict_code", 
 
     ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::domain', '须为合法的域名', true),
     ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::domain', '須為合法的網域名稱', true),
-    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::domain', 'must be a valid domain name', true);
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::domain', 'must be a valid domain name', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::context', '必须以 / 开头，且仅由小写字母、数字、短横线和分级斜杠组成', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::context', '需以 / 開頭，後續只可使用小寫英文字母、數字及連字號 -，並以 / 區分層級', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::context', 'must start with /; only lowercase letters, digits, hyphens, and / separators are allowed', true);
 
 insert into "sys_i18n" ("locale", "atomic_service_code", "i18n_type_dict_code", "namespace", "key", "value", "built_in") values
     ('zh-CN', 'sys', 'valid-msg', 'dataSource', 'Compare::maxActive', '不得小于初始连接数', true),
@@ -777,6 +781,7 @@ insert into "sys_i18n" ("locale", "atomic_service_code", "i18n_type_dict_code", 
     ('zh-CN', 'sys', 'valid-msg', 'dataSource', 'Compare::minIdle', '不得大于最大连接数', true),
     ('zh-TW', 'sys', 'valid-msg', 'dataSource', 'Compare::minIdle', '不得大於最大連線數', true),
     ('en-US', 'sys', 'valid-msg', 'dataSource', 'Compare::minIdle', 'must not exceed max active', true);
+
 
 -- error-msg
 insert into "sys_i18n" ("locale", "atomic_service_code", "i18n_type_dict_code", "namespace", "key", "value", "built_in") values
