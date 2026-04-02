@@ -613,10 +613,6 @@ insert into "sys_i18n" ("locale", "atomic_service_code", "i18n_type_dict_code", 
     ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::nick-name', '須為 3～15 字暱稱（中文、英文與數字）', true),
     ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::nick-name', 'must be 3–15 characters (Chinese, Latin, digits)', true),
 
-    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::text-1-to-30-chars', '长度须为1～30个字符', true),
-    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::text-1-to-30-chars', '長度須為 1～30 個字元', true),
-    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::text-1-to-30-chars', 'length must be between 1 and 30 characters', true),
-
     ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::msn', '须为合法的MSN账号（规则同邮箱）', true),
     ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::msn', '須為合法的 MSN 帳號（規則同電子郵件）', true),
     ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::msn', 'must be a valid MSN identifier (same rules as email)', true),
