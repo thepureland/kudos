@@ -47,21 +47,13 @@ open class SysTenantService(
             @Suppress("UNCHECKED_CAST")
             tenantByIdCache.getTenantById(id) as R?
         } else {
-            val result = super.get(id, returnType)
-            if (result is SysTenantDetail) {
-                result.subSystemCodes = getSubSystemCodesString(id)
-            }
-            result
+            enrichTenantDetail(super.get(id, returnType), id)
         }
     }
 
     override fun pagingSearch(listSearchPayload: ListSearchPayload): PagingSearchResult<*> {
         val result = super.pagingSearch(listSearchPayload)
-        result.data.forEach {
-            if (it is SysTenantRow) {
-                it.subSystemCodes = getSubSystemCodesString(it.id)
-            }
-        }
+        result.data.filterIsInstance<SysTenantRow>().forEach(::enrichTenantRow)
         return result
     }
 
@@ -79,9 +71,7 @@ open class SysTenantService(
     override fun insert(any: Any): String {
         val id = super.insert(any)
         completeCrudInsert(log, "新增id为${id}的租户。") {
-            if (any is SysTenantFormCreate) {
-                insertSysTenantSystems(id, any.subSystemCodes)
-            }
+            insertTenantSystemsOnCreate(any, id)
             tenantByIdCache.syncOnInsert(any, id)
             sysTenantSystemHashCache.syncOnInsert(any, id)
         }
@@ -135,8 +125,7 @@ open class SysTenantService(
             return false
         }
 
-        sysTenantSystemService.deleteByTenantId(id)
-        sysTenantSystemHashCache.syncOnDelete(id)
+        deleteTenantSystems(id)
 
         return completeCrudUpdate(
             success = super.deleteById(id),
@@ -150,12 +139,10 @@ open class SysTenantService(
 
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {
-        var count = sysTenantSystemService.batchDeleteByTenantIds(ids)
-        if (count >= 0) {
-            count = super.batchDelete(ids)
-            log.debug("批量删除租户，期望删除${ids.size}条，实际删除${count}条。")
-            tenantByIdCache.syncOnBatchDelete(ids)
-        }
+        if (sysTenantSystemService.batchDeleteByTenantIds(ids) < 0) return 0
+        val count = super.batchDelete(ids)
+        log.debug("批量删除租户，期望删除${ids.size}条，实际删除${count}条。")
+        tenantByIdCache.syncOnBatchDelete(ids)
         return count
     }
 
@@ -170,9 +157,35 @@ open class SysTenantService(
         val tenantId = requireNotNull(any.id) { "更新租户时 id 不能为空" }
         val subSystemCodes = sysTenantSystemHashCache.getSubSystemCodesByTenantId(tenantId)
         if (subSystemCodes != any.subSystemCodes) {
-            sysTenantSystemService.deleteByTenantId(tenantId)
+            replaceTenantSystems(tenantId, any.subSystemCodes)
+        }
+    }
+
+    private fun replaceTenantSystems(tenantId: String, subSystemCodes: Set<String>) {
+        deleteTenantSystems(tenantId)
+        insertSysTenantSystems(tenantId, subSystemCodes)
+    }
+
+    private fun deleteTenantSystems(tenantId: String) {
+        sysTenantSystemService.deleteByTenantId(tenantId)
+        sysTenantSystemHashCache.syncOnDelete(tenantId)
+    }
+
+    private fun insertTenantSystemsOnCreate(any: Any, tenantId: String) {
+        if (any is SysTenantFormCreate) {
             insertSysTenantSystems(tenantId, any.subSystemCodes)
         }
+    }
+
+    private fun <R : Any> enrichTenantDetail(result: R?, tenantId: String): R? {
+        if (result is SysTenantDetail) {
+            result.subSystemCodes = getSubSystemCodesString(tenantId)
+        }
+        return result
+    }
+
+    private fun enrichTenantRow(row: SysTenantRow) {
+        row.subSystemCodes = getSubSystemCodesString(row.id)
     }
 
     private fun toSysTenantRow(tenant: SysTenant): SysTenantRow = SysTenantRow(

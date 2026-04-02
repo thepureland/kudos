@@ -51,17 +51,7 @@ open class SysDataSourceService(
 
     override fun pagingSearch(listSearchPayload: ListSearchPayload): PagingSearchResult<*> {
         val result = super.pagingSearch(listSearchPayload)
-
-        // 根据租户id获取租户名称
-        val records = result.data.filterIsInstance<SysDataSourceRow>()
-        if (records.isNotEmpty()) {
-            val tenantIds = records.mapNotNull { it.tenantId }
-            val tenants = sysTenantApi.getTenantsFromCacheByIds(tenantIds)
-            records.forEach {
-                it.tenantName = tenants[it.tenantId]?.name
-            }
-        }
-
+        enrichTenantNames(result.data.filterIsInstance<SysDataSourceRow>())
         return result
     }
 
@@ -70,13 +60,7 @@ open class SysDataSourceService(
             @Suppress("UNCHECKED_CAST")
             sysDataSourceHashCache.getDataSourceById(id) as R?
         } else {
-            val result = super.get(id, returnType)
-            if (returnType == SysDataSourceDetail::class && result != null) {
-                val detail = result as SysDataSourceDetail
-                val tenantId = detail.tenantId
-                detail.tenantName = if (tenantId.isNullOrBlank()) null else sysTenantApi.getTenantFromCache(tenantId)?.name
-            }
-            result
+            enrichDataSourceDetail(super.get(id, returnType), returnType)
         }
     }
 
@@ -131,8 +115,7 @@ open class SysDataSourceService(
             successMessage = "重置id为${id}的数据源密码。",
             failureMessage = "重置id为${id}的数据源密码失败！",
         ) {
-            val ds = requireNotNull(get(id)) { "重置数据源密码后找不到id=${id}的数据源。" }
-            sysDataSourceHashCache.syncOnUpdate(ds, id)
+            syncDataSourceUpdate(id)
         }
     }
 
@@ -166,6 +149,28 @@ open class SysDataSourceService(
 
     override fun getDataSourcesBySubSystemCode(subSystemCode: String): List<SysDataSourceRow> =
         dao.searchAs(Criteria(SysDataSource::subSystemCode eq subSystemCode))
+
+    private fun enrichTenantNames(records: List<SysDataSourceRow>) {
+        if (records.isEmpty()) return
+        val tenants = sysTenantApi.getTenantsFromCacheByIds(records.mapNotNull { it.tenantId })
+        records.forEach { record ->
+            record.tenantName = tenants[record.tenantId]?.name
+        }
+    }
+
+    private fun <R : Any> enrichDataSourceDetail(result: R?, returnType: KClass<R>): R? {
+        if (returnType == SysDataSourceDetail::class && result is SysDataSourceDetail) {
+            result.tenantName = result.tenantId
+                ?.takeUnless(String::isBlank)
+                ?.let { sysTenantApi.getTenantFromCache(it)?.name }
+        }
+        return result
+    }
+
+    private fun syncDataSourceUpdate(id: String) {
+        val dataSource = requireNotNull(get(id)) { "重置数据源密码后找不到id=${id}的数据源。" }
+        sysDataSourceHashCache.syncOnUpdate(dataSource, id)
+    }
 
     private fun requireDataSourceId(any: Any): String =
         (any as? IIdEntity<*>)?.id as? String

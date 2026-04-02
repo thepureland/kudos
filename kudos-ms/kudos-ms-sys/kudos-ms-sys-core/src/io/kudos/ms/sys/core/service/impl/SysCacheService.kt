@@ -113,72 +113,77 @@ open class SysCacheService(
     override fun reload(id: String, key: String) {
         require(id.isNotBlank())
         require(key.isNotBlank())
-        val cache = getCacheConfigById(id)
-        val name = cache.name
-        if (isKeyValueCache(cache)) {
-            requireKeyExists(name, key, keyValueCache = true)
-            KeyValueCacheKit.reload(name, key)
-        } else {
-            requireKeyExists(name, key, keyValueCache = false)
-            HashCacheKit.reload(name, key)
+        withCacheConfig(id) { cache ->
+            val name = cache.name
+            if (isKeyValueCache(cache)) {
+                requireKeyExists(name, key, keyValueCache = true)
+                KeyValueCacheKit.reload(name, key)
+            } else {
+                requireKeyExists(name, key, keyValueCache = false)
+                HashCacheKit.reload(name, key)
+            }
         }
     }
 
     override fun reloadAll(id: String) {
         require(id.isNotBlank())
-        val cache = getCacheConfigById(id)
-        val name = cache.name
-        if (isKeyValueCache(cache)) {
-            KeyValueCacheKit.reloadAll(name)
-        } else {
-            HashCacheKit.reloadAll(name)
+        withCacheConfig(id) { cache ->
+            val name = cache.name
+            if (isKeyValueCache(cache)) {
+                KeyValueCacheKit.reloadAll(name)
+            } else {
+                HashCacheKit.reloadAll(name)
+            }
         }
     }
 
     override fun evict(id: String, key: String) {
         require(id.isNotBlank())
         require(key.isNotBlank())
-        val cache = getCacheConfigById(id)
-        val name = cache.name
-        if (isKeyValueCache(cache)) {
-            requireKeyExists(name, key, keyValueCache = true)
-            KeyValueCacheKit.evict(name, key)
-        } else {
-            requireKeyExists(name, key, keyValueCache = false)
-            HashCacheKit.evict(name, key)
+        withCacheConfig(id) { cache ->
+            val name = cache.name
+            if (isKeyValueCache(cache)) {
+                requireKeyExists(name, key, keyValueCache = true)
+                KeyValueCacheKit.evict(name, key)
+            } else {
+                requireKeyExists(name, key, keyValueCache = false)
+                HashCacheKit.evict(name, key)
+            }
         }
     }
 
     override fun evictAll(id: String) {
         require(id.isNotBlank())
-        val cache = getCacheConfigById(id)
-        val name = cache.name
-        if (isKeyValueCache(cache)) {
-            KeyValueCacheKit.clear(name)
-        } else {
-            HashCacheKit.clear(name)
+        withCacheConfig(id) { cache ->
+            val name = cache.name
+            if (isKeyValueCache(cache)) {
+                KeyValueCacheKit.clear(name)
+            } else {
+                HashCacheKit.clear(name)
+            }
         }
     }
 
     override fun existsKey(id: String, key: String): Boolean {
         require(id.isNotBlank())
         require(key.isNotBlank())
-        val cache = getCacheConfigById(id)
-        val name = cache.name
-        return existsKey(name, key, isKeyValueCache(cache))
+        return withCacheConfig(id) { cache ->
+            existsKey(cache.name, key, isKeyValueCache(cache))
+        }
     }
 
     override fun getValueJson(id: String, key: String): String {
         require(id.isNotBlank())
         require(key.isNotBlank())
-        val cache = getCacheConfigById(id)
-        val name = cache.name
-        val value = if (isKeyValueCache(cache)) {
-            requireKeyExists(name, key, keyValueCache = true)
-            KeyValueCacheKit.getValue(name, key)
-        } else {
-            requireKeyExists(name, key, keyValueCache = false)
-            HashCacheKit.getValue(name, key)
+        val value = withCacheConfig(id) { cache ->
+            val name = cache.name
+            if (isKeyValueCache(cache)) {
+                requireKeyExists(name, key, keyValueCache = true)
+                KeyValueCacheKit.getValue(name, key)
+            } else {
+                requireKeyExists(name, key, keyValueCache = false)
+                HashCacheKit.getValue(name, key)
+            }
         }
         return JsonKit.toJson(value)
     }
@@ -202,6 +207,9 @@ open class SysCacheService(
             HashCacheKit.existsById(name, key)
         }
     }
+
+    private inline fun <T> withCacheConfig(id: String, block: (SysCacheCacheEntry) -> T): T =
+        block(getCacheConfigById(id))
 
     private fun requireCacheId(any: Any): String =
         (any as? IIdEntity<*>)?.id as? String

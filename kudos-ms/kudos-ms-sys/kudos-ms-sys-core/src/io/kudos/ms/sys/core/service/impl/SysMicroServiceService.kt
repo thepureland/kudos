@@ -44,7 +44,7 @@ open class SysMicroServiceService(
     override fun getMicroServiceFromCache(code: String): SysMicroServiceCacheEntry? = sysMicroServiceHashCache.getMicroServiceByCode(code)
 
     override fun getFullMicroServiceTree(): List<IdAndNameTreeNode<String>> =
-        ListToTreeConverter.convert(getAllMicroServicesFromCache().map { IdAndNameTreeNode(it.code, it.name, it.parentCode) })
+        ListToTreeConverter.convert(getAllMicroServicesFromCache().map(::toTreeNode))
 
     override fun getAllMicroServicesFromCache(): List<SysMicroServiceCacheEntry> = sysMicroServiceHashCache.getAllMicroServices()
 
@@ -54,10 +54,10 @@ open class SysMicroServiceService(
     override fun getAtomicServicesFromCache(): List<SysMicroServiceCacheEntry> = sysMicroServiceHashCache.getMicroServicesByType(true)
 
     override fun getSubMicroServicesFromCache(parentCode: String): List<SysMicroServiceCacheEntry> =
-        sysMicroServiceHashCache.getAllMicroServices().filter { it.parentCode == parentCode }
+        getAllMicroServicesFromCache().filter { it.parentCode == parentCode }
 
     override fun getAtomicServicesByParentCodeFromCache(parentCode: String): List<SysMicroServiceCacheEntry> =
-        sysMicroServiceHashCache.getAllMicroServices().filter { it.parentCode == parentCode && it.atomicService }
+        getAllMicroServicesFromCache().filter { it.parentCode == parentCode && it.atomicService }
 
     @Transactional
     override fun updateActive(code: String, active: Boolean): Boolean {
@@ -121,6 +121,9 @@ open class SysMicroServiceService(
         sysMicroServiceHashCache.syncOnBatchDelete(ids)
         return count
     }
+
+    private fun toTreeNode(microService: SysMicroServiceCacheEntry): IdAndNameTreeNode<String> =
+        IdAndNameTreeNode(microService.code, microService.name, microService.parentCode)
 
     private fun requireMicroServiceCode(any: Any): String =
         (any as? IIdEntity<*>)?.id as? String

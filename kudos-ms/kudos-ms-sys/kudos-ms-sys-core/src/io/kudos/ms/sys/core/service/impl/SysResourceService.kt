@@ -56,17 +56,14 @@ open class SysResourceService(
 
     override fun getResourceFromCache(id: String): SysResourceCacheEntry? = sysResourceHashCache.getResourceById(id)
 
-    override fun getResourceIdFromCacheBySubSystemAndUrl(subSystemCode: String, url: String): String? {
-        return sysResourceHashCache.getResourceBySubSystemCodeAndUrl(subSystemCode, url)?.id
-    }
+    override fun getResourceIdFromCacheBySubSystemAndUrl(subSystemCode: String, url: String): String? =
+        sysResourceHashCache.getResourceBySubSystemCodeAndUrl(subSystemCode, url)?.id
 
     override fun getResourceIdsFromCacheBySubSystemAndType(
         subSystemCode: String,
         resourceTypeDictCode: String
-    ): List<String> {
-        return sysResourceHashCache.getResourcesBySubSystemCodeAndType(subSystemCode, resourceTypeDictCode)
-            .map { it.id }
-    }
+    ): List<String> = sysResourceHashCache.getResourcesBySubSystemCodeAndType(subSystemCode, resourceTypeDictCode)
+        .map { it.id }
 
     override fun getResourcesBySubSystemCode(subSystemCode: String): List<SysResourceRow> =
         dao.searchAs(Criteria(SysResource::subSystemCode eq subSystemCode))
@@ -74,45 +71,8 @@ open class SysResourceService(
     override fun getChildResources(parentId: String): List<SysResourceRow> =
         dao.searchAs(Criteria(SysResource::parentId eq parentId))
 
-    override fun getResourceTree(subSystemCode: String, parentId: String?): List<SysResourceTreeRow> {
-        val treeNodes = getResourcesBySubSystemCode(subSystemCode).map { record ->
-            SysResourceTreeRow(
-                id = record.id,
-                name = record.name,
-                url = record.url,
-                resourceTypeDictCode = record.resourceTypeDictCode,
-                parentId = record.parentId,
-                orderNum = record.orderNum,
-                icon = record.icon,
-                subSystemCode = record.subSystemCode,
-                remark = record.remark,
-                active = record.active,
-                builtIn = record.builtIn,
-                children = mutableListOf(),
-            )
-        }
-        val nodeMap = treeNodes.associateBy { it.id }
-        val rootNodes = mutableListOf<SysResourceTreeRow>()
-
-        treeNodes.forEach { node ->
-            val parent = node.parentId?.let(nodeMap::get)
-            if (parent == null) {
-                rootNodes += node
-            } else {
-                parent.children?.add(node)
-            }
-        }
-
-        fun sortTree(nodes: MutableList<SysResourceTreeRow>) {
-            nodes.sortBy { it.orderNum ?: Int.MAX_VALUE }
-            nodes.forEach { node ->
-                node.children?.let(::sortTree)
-            }
-        }
-
-        sortTree(rootNodes)
-        return parentId?.let { nodeMap[it]?.children.orEmpty() } ?: rootNodes
-    }
+    override fun getResourceTree(subSystemCode: String, parentId: String?): List<SysResourceTreeRow> =
+        buildResourceTree(getResourcesBySubSystemCode(subSystemCode), parentId)
 
     @Transactional
     override fun updateActive(id: String, active: Boolean): Boolean {
@@ -166,14 +126,7 @@ open class SysResourceService(
             successMessage = "更新id为${id}的资源。",
             failureMessage = "更新id为${id}的资源失败！",
         ) {
-            sysResourceHashCache.syncOnUpdate(id)
-            val oldUrl = oldResource?.url
-            sysResourceHashCache.syncOnUpdate(any, id, oldUrl)
-            val oldSubSystemCode = oldResource?.subSystemCode
-            val oldResourceTypeDictCode = oldResource?.resourceTypeDictCode
-            if (oldSubSystemCode != null && oldResourceTypeDictCode != null) {
-                sysResourceHashCache.syncOnUpdate(any, id, oldSubSystemCode, oldResourceTypeDictCode)
-            }
+            syncResourceUpdate(any, id, oldResource)
         }
     }
 
@@ -190,8 +143,7 @@ open class SysResourceService(
             successMessage = "删除id为${id}的资源。",
             failureMessage = "删除id为${id}的资源失败！",
         ) {
-            sysResourceHashCache.syncOnDelete(id, resource.subSystemCode, resource.url)
-            sysResourceHashCache.syncOnDelete(id, resource.subSystemCode, resource.resourceTypeDictCode)
+            syncResourceDelete(resource)
         }
     }
 
@@ -202,10 +154,7 @@ open class SysResourceService(
         val count = super.batchDelete(ids)
         log.debug("批量删除资源，期望删除${ids.size}条，实际删除${count}条。")
         sysResourceHashCache.syncOnBatchDelete(ids)
-        resources.forEach { resource ->
-            sysResourceHashCache.syncOnDelete(resource.id, resource.subSystemCode, resource.url)
-            sysResourceHashCache.syncOnDelete(resource.id, resource.subSystemCode, resource.resourceTypeDictCode)
-        }
+        resources.forEach(::syncResourceDelete)
         return count
     }
 
@@ -217,12 +166,10 @@ open class SysResourceService(
     override fun getResourcesFromCacheBySubSystemAndType(
         resourceType: ResourceTypeEnum,
         subSystemCode: String,
-    ): List<SysResourceCacheEntry> = sysResourceHashCache.getResourcesBySubSystemCodeAndType(subSystemCode, resourceType.code)
+    ): List<SysResourceCacheEntry> = getCachedResourcesByType(subSystemCode, resourceType)
 
     override fun getSimpleMenusFromCache(subSystemCode: String): List<BaseMenuTreeNode> {
-        val resources =
-            sysResourceHashCache.getResourcesBySubSystemCodeAndType(subSystemCode, ResourceTypeEnum.MENU.code)
-        return buildMenuTree(resources) { item ->
+        return buildMenuTree(getCachedResourcesByType(subSystemCode, ResourceTypeEnum.MENU)) { item ->
             BaseMenuTreeNode().apply {
                 id = item.id
                 title = item.name
@@ -233,9 +180,7 @@ open class SysResourceService(
     }
 
     override fun getMenusFromCache(subSystemCode: String): List<MenuTreeNode> {
-        val resources =
-            sysResourceHashCache.getResourcesBySubSystemCodeAndType(subSystemCode, ResourceTypeEnum.MENU.code)
-        return buildMenuTree(resources) { item ->
+        return buildMenuTree(getCachedResourcesByType(subSystemCode, ResourceTypeEnum.MENU)) { item ->
             MenuTreeNode().apply {
                 id = item.id
                 title = item.name
@@ -254,8 +199,7 @@ open class SysResourceService(
         resourceType: ResourceTypeEnum,
         parentId: String?,
         subSystemCode: String,
-    ): List<SysResourceCacheEntry> =
-        sysResourceHashCache.getResourcesBySubSystemCodeAndType(subSystemCode, resourceType.code)
+    ): List<SysResourceCacheEntry> = getCachedResourcesByType(subSystemCode, resourceType)
             .filter { it.parentId == parentId }
 
     override fun getChildrenResourcesFromCache(
@@ -263,7 +207,7 @@ open class SysResourceService(
         resourceType: ResourceTypeEnum,
         parentId: String
     ): List<SysResourceCacheEntry> {
-        val resources = sysResourceHashCache.getResourcesBySubSystemCodeAndType(subSystemCode, resourceType.code)
+        val resources = getCachedResourcesByType(subSystemCode, resourceType)
         val children = mutableListOf<SysResourceCacheEntry>()
         filterChildrenRecursively(parentId, children, resources)
         return children
@@ -349,15 +293,74 @@ open class SysResourceService(
 
     override fun fetchAllParentIds(id: String): List<String> {
         val results = mutableListOf<String>()
-        recursionFindAllParentId(id, results)
+        collectParentIds(id, results)
         results.reverse()
         return results
     }
 
-    private fun recursionFindAllParentId(itemId: String, results: MutableList<String>) {
-        val parentId = sysResourceHashCache.getResourceById(itemId)?.parentId ?: return
-        results.add(parentId)
-        recursionFindAllParentId(parentId, results)
+    private fun getCachedResourcesByType(
+        subSystemCode: String,
+        resourceType: ResourceTypeEnum,
+    ): List<SysResourceCacheEntry> =
+        sysResourceHashCache.getResourcesBySubSystemCodeAndType(subSystemCode, resourceType.code)
+
+    private fun buildResourceTree(
+        records: List<SysResourceRow>,
+        parentId: String?,
+    ): List<SysResourceTreeRow> {
+        val nodeMap = records.map(::toTreeRow).associateBy { it.id }
+        val rootNodes = mutableListOf<SysResourceTreeRow>()
+
+        nodeMap.values.forEach { node ->
+            node.parentId?.let(nodeMap::get)?.children?.add(node) ?: rootNodes.add(node)
+        }
+        sortResourceTree(rootNodes)
+        return parentId?.let { nodeMap[it]?.children.orEmpty() } ?: rootNodes
+    }
+
+    private fun toTreeRow(record: SysResourceRow): SysResourceTreeRow =
+        SysResourceTreeRow(
+            id = record.id,
+            name = record.name,
+            url = record.url,
+            resourceTypeDictCode = record.resourceTypeDictCode,
+            parentId = record.parentId,
+            orderNum = record.orderNum,
+            icon = record.icon,
+            subSystemCode = record.subSystemCode,
+            remark = record.remark,
+            active = record.active,
+            builtIn = record.builtIn,
+            children = mutableListOf(),
+        )
+
+    private fun sortResourceTree(nodes: MutableList<SysResourceTreeRow>) {
+        nodes.sortBy { it.orderNum ?: Int.MAX_VALUE }
+        nodes.forEach { node ->
+            node.children?.let(::sortResourceTree)
+        }
+    }
+
+    private fun syncResourceUpdate(any: Any, id: String, oldResource: SysResource?) {
+        sysResourceHashCache.syncOnUpdate(id)
+        sysResourceHashCache.syncOnUpdate(any, id, oldResource?.url)
+        oldResource?.let {
+            sysResourceHashCache.syncOnUpdate(any, id, it.subSystemCode, it.resourceTypeDictCode)
+        }
+    }
+
+    private fun syncResourceDelete(resource: SysResource) {
+        sysResourceHashCache.syncOnDelete(resource.id, resource.subSystemCode, resource.url)
+        sysResourceHashCache.syncOnDelete(resource.id, resource.subSystemCode, resource.resourceTypeDictCode)
+    }
+
+    private fun collectParentIds(itemId: String, results: MutableList<String>) {
+        var currentId: String? = itemId
+        while (currentId != null) {
+            val parentId = sysResourceHashCache.getResourceById(currentId)?.parentId ?: break
+            results += parentId
+            currentId = parentId
+        }
     }
 
     private fun requireResourceId(any: Any): String =
