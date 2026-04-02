@@ -14,88 +14,88 @@ import java.time.LocalDateTime
 data class UserAccountCacheEntry (
 
     /** 主键 */
-    override val id: String = "",
+    override val id: String,
 
     /** 用户名 */
-    val username: String? = null,
+    val username: String?,
 
     /** 租户ID */
-    val tenantId: String? = null,
+    val tenantId: String?,
 
     /** 登录密码 */
-    val loginPassword: String? = null,
+    val loginPassword: String?,
 
     /** 安全密码 */
-    val securityPassword: String? = null,
+    val securityPassword: String?,
 
     /** 用户类型字典码 */
-    val accountTypeDictCode: String? = null,
+    val accountTypeDictCode: String?,
 
     /** 用户状态字典码 */
-    val accountStatusDictCode: String? = null,
+    val accountStatusDictCode: String?,
 
     /** 默认语言环境 */
-    val defaultLocale: String? = null,
+    val defaultLocale: String?,
 
     /** 默认时区 */
-    val defaultTimezone: String? = null,
+    val defaultTimezone: String?,
 
     /** 默认货币 */
-    val defaultCurrency: String? = null,
+    val defaultCurrency: String?,
 
     /** 最后登录时间 */
-    val lastLoginTime: LocalDateTime? = null,
+    val lastLoginTime: LocalDateTime?,
 
     /** 最后登录IP */
-    val lastLoginIp: Long? = null,
+    val lastLoginIp: Long?,
 
     /** 最后登出时间 */
-    val lastLogoutTime: LocalDateTime? = null,
+    val lastLogoutTime: LocalDateTime?,
 
     /** 登录错误次数 */
-    val loginErrorTimes: Int? = null,
+    val loginErrorTimes: Int?,
 
     /** 安全密码错误次数 */
-    val securityPasswordErrorTimes: Int? = null,
+    val securityPasswordErrorTimes: Int?,
 
     /** 会话密钥 */
-    val sessionKey: String? = null,
+    val sessionKey: String?,
 
     /** 认证密钥 */
-    val authenticationKey: String? = null,
+    val authenticationKey: String?,
 
     /** 所属机构ID */
-    val orgId: String? = null,
+    val orgId: String?,
 
     /** 直属上级ID */
-    val supervisorId: String? = null,
+    val supervisorId: String?,
 
     /** 备注 */
-    val remark: String? = null,
+    val remark: String?,
 
     /** 是否激活 */
-    val active: Boolean? = null,
+    val active: Boolean?,
 
     /** 是否内置 */
-    val builtIn: Boolean? = null,
+    val builtIn: Boolean?,
 
     /** 创建者id */
-    val createUserId: String? = null,
+    val createUserId: String?,
 
     /** 创建者名称 */
-    val createUserName: String? = null,
+    val createUserName: String?,
 
     /** 创建时间 */
-    val createTime: LocalDateTime? = null,
+    val createTime: LocalDateTime?,
 
     /** 更新者id */
-    val updateUserId: String? = null,
+    val updateUserId: String?,
 
     /** 更新者名称 */
-    val updateUserName: String? = null,
+    val updateUserName: String?,
 
     /** 更新时间 */
-    val updateTime: LocalDateTime? = null,
+    val updateTime: LocalDateTime?,
 
 ) : IIdEntity<String>, Serializable {
 

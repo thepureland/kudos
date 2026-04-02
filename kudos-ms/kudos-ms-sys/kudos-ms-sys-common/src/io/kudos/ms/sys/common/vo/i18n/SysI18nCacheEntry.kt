@@ -13,26 +13,26 @@ import java.io.Serializable
 data class SysI18nCacheEntry (
 
     /** 主键 */
-    override val id: String? = null,
+    override val id: String?,
 
 
     /** 语言_地区 */
-    val locale: String = "",
+    val locale: String,
 
     /** 原子服务编码 */
-    val atomicServiceCode: String = "",
+    val atomicServiceCode: String,
 
     /** 国际化类型字典代码 */
-    val i18nTypeDictCode: String = "",
+    val i18nTypeDictCode: String,
 
     /** 国际化命名空间 */
-    val namespace: String = "",
+    val namespace: String,
 
     /** 国际化key */
-    val key: String = "",
+    val key: String,
 
     /** 国际化值 */
-    val value: String = "",
+    val value: String,
 
 ) : IIdEntity<String?>, Serializable {
 

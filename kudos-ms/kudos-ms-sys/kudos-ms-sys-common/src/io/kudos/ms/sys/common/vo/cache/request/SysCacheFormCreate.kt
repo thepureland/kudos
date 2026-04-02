@@ -17,24 +17,24 @@ data class SysCacheFormCreate (
     @get:NotBlank
     @get:Matches(RegExpEnum.VAR_NAME)
     @get:MaxLength(64)
-    val name: String = "",
+    val name: String ,
 
     /** 原子服务编码 */
     @get:NotBlank
     @get:MaxLength(32)
-    val atomicServiceCode: String = "",
+    val atomicServiceCode: String ,
 
-    override val strategyDictCode: String = "",
+    override val strategyDictCode: String ,
 
-    override val writeOnBoot: Boolean = true,
+    override val writeOnBoot: Boolean ,
 
-    override val writeInTime: Boolean = true,
+    override val writeInTime: Boolean ,
 
-    override val ttl: Int? = null,
+    override val ttl: Int? ,
 
-    override val remark: String? = null,
+    override val remark: String? ,
 
     /** 是否为 Hash 缓存 */
-    val hash: Boolean = false,
+    val hash: Boolean ,
 
 ) : ISysCacheFormBase

@@ -377,6 +377,23 @@ enum class RegExpEnum(
 
     /**
      * 规则：
+     * 宽松标识符/变量名
+     * 允许大小写字母、数字、下划线、短横线
+     * 首字符只能是字母或下划线
+     * 后续字符允许字母、数字、下划线、短横线
+     *
+     * 例如：
+     * `name`
+     * `_user-name`
+     * `Abc_123-x`
+     */
+    RELAXED_VAR_NAME(
+        RegExps.CharacterSet.RELAXED_VAR_NAME,
+        regExpMsg("relaxed-var-name"),
+    ),
+
+    /**
+     * 规则：
      * 标识符
      * 首字符必须是字母或下划线
      * 后续允许字母、数字、下划线

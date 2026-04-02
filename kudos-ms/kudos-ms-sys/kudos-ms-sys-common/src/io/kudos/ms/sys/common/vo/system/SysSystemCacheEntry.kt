@@ -12,28 +12,28 @@ import java.io.Serializable
  */
 data class SysSystemCacheEntry (
 
-    override val id: String = "",
+    override val id: String,
 
     /** 编码 */
-    val code: String = "",
+    val code: String,
 
     /** 名称 */
-    val name: String = "",
+    val name: String,
 
     /** 是否子系统 */
-    val subSystem: Boolean = true,
+    val subSystem: Boolean,
 
     /** 父系统编号 */
-    val parentCode: String? = null,
+    val parentCode: String?,
 
     /** 备注 */
-    val remark: String? = null,
+    val remark: String?,
 
     /** 是否启用 */
-    val active: Boolean = true,
+    val active: Boolean,
 
     /** 是否内置 */
-    val builtIn: Boolean = false,
+    val builtIn: Boolean,
 
 ) : IIdEntity<String>, Serializable {
 

@@ -12,28 +12,28 @@ import io.kudos.base.model.contract.entity.IIdEntity
 data class MsgTemplateFormUpdate (
 
     /** 主键 */
-    override val id: String? = null,
+    override val id: String,
 
-    override val sendTypeDictCode: String? = null,
+    override val sendTypeDictCode: String?,
 
-    override val eventTypeDictCode: String? = null,
+    override val eventTypeDictCode: String?,
 
-    override val msgTypeDictCode: String? = null,
+    override val msgTypeDictCode: String?,
 
-    override val receiverGroupCode: String? = null,
+    override val receiverGroupCode: String?,
 
-    override val localeDictCode: String? = null,
+    override val localeDictCode: String?,
 
-    override val title: String? = null,
+    override val title: String?,
 
-    override val content: String? = null,
+    override val content: String?,
 
-    override val defaultActive: Boolean? = null,
+    override val defaultActive: Boolean?,
 
-    override val defaultTitle: String? = null,
+    override val defaultTitle: String?,
 
-    override val defaultContent: String? = null,
+    override val defaultContent: String?,
 
-    override val tenantId: String? = null,
+    override val tenantId: String?,
 
-) : IIdEntity<String?>, IMsgTemplateFormBase
+) : IIdEntity<String>, IMsgTemplateFormBase

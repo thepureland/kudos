@@ -14,16 +14,16 @@ import java.time.LocalDateTime
 data class UserLoginRememberMeCacheEntry (
 
     /** 主键 */
-    override val id: String = "",
+    override val id: String,
 
     /** 用户名 */
-    val username: String? = null,
+    val username: String?,
 
     /** 令牌 */
-    val token: String? = null,
+    val token: String?,
 
     /** 最后使用时间 */
-    val lastUsed: LocalDateTime? = null,
+    val lastUsed: LocalDateTime?,
 
 ) : IIdEntity<String>, Serializable {
 

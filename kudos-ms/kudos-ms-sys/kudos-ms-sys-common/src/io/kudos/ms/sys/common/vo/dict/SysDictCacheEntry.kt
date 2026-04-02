@@ -13,25 +13,25 @@ import java.io.Serializable
 data class SysDictCacheEntry (
 
     /** 主键 */
-    override val id: String = "",
+    override val id: String,
 
     /** 字典类型 */
-    val dictType: String = "",
+    val dictType: String,
 
     /** 字典名称 */
-    val dictName: String = "",
+    val dictName: String,
 
     /** 原子服务编码 */
-    val atomicServiceCode: String = "",
+    val atomicServiceCode: String,
 
     /** 备注 */
-    val remark: String? = null,
+    val remark: String?,
 
     /** 是否启用 */
-    val active: Boolean = true,
+    val active: Boolean,
 
     /** 是否内置 */
-    val builtIn: Boolean = true,
+    val builtIn: Boolean,
 
 ) : IIdEntity<String>, Serializable {
 

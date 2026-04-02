@@ -13,26 +13,26 @@ import java.io.Serializable
 data class SysTenantCacheEntry (
 
     /** 主键 */
-    override val id: String = "",
+    override val id: String,
 
 
     /** 名称 */
-    val name: String = "",
+    val name: String,
 
     /** 时区 */
-    val timezone: String? = null,
+    val timezone: String?,
 
     /** 默认语言编码 */
-    val defaultLanguageCode: String? = null,
+    val defaultLanguageCode: String?,
 
     /** 备注 */
-    val remark: String? = null,
+    val remark: String?,
 
     /** 是否启用 */
-    val active: Boolean = true,
+    val active: Boolean,
 
     /** 是否内置 */
-    val builtIn: Boolean = false,
+    val builtIn: Boolean,
 
 ) : IIdEntity<String>, Serializable {
 

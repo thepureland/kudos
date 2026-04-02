@@ -9,16 +9,16 @@ package io.kudos.ms.sys.common.vo.microservice.request
  */
 data class SysMicroServiceFormCreate (
 
-    override val code: String = "",
+    override val code: String ,
 
-    override val name: String = "",
+    override val name: String ,
 
-    override val context: String = "",
+    override val context: String ,
 
-    override val atomicService: Boolean = true,
+    override val atomicService: Boolean ,
 
-    override val parentCode: String? = null,
+    override val parentCode: String? ,
 
-    override val remark: String? = null,
+    override val remark: String? ,
 
 ) : ISysMicroServiceFormBase

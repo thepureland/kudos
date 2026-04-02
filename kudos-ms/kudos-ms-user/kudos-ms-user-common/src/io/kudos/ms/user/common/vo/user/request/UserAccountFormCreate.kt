@@ -11,42 +11,42 @@ import java.time.LocalDateTime
  */
 data class UserAccountFormCreate (
 
-    override val username: String? = null,
+    override val username: String? ,
 
-    override val tenantId: String? = null,
+    override val tenantId: String? ,
 
-    override val loginPassword: String? = null,
+    override val loginPassword: String? ,
 
-    override val securityPassword: String? = null,
+    override val securityPassword: String? ,
 
-    override val accountTypeDictCode: String? = null,
+    override val accountTypeDictCode: String? ,
 
-    override val accountStatusDictCode: String? = null,
+    override val accountStatusDictCode: String? ,
 
-    override val defaultLocale: String? = null,
+    override val defaultLocale: String? ,
 
-    override val defaultTimezone: String? = null,
+    override val defaultTimezone: String? ,
 
-    override val defaultCurrency: String? = null,
+    override val defaultCurrency: String? ,
 
-    override val lastLoginTime: LocalDateTime? = null,
+    override val lastLoginTime: LocalDateTime? ,
 
-    override val lastLoginIp: Long? = null,
+    override val lastLoginIp: Long? ,
 
-    override val lastLogoutTime: LocalDateTime? = null,
+    override val lastLogoutTime: LocalDateTime? ,
 
-    override val loginErrorTimes: Int? = null,
+    override val loginErrorTimes: Int? ,
 
-    override val securityPasswordErrorTimes: Int? = null,
+    override val securityPasswordErrorTimes: Int? ,
 
-    override val sessionKey: String? = null,
+    override val sessionKey: String? ,
 
-    override val authenticationKey: String? = null,
+    override val authenticationKey: String? ,
 
-    override val orgId: String? = null,
+    override val orgId: String? ,
 
-    override val supervisorId: String? = null,
+    override val supervisorId: String? ,
 
-    override val remark: String? = null,
+    override val remark: String? ,
 
 ) : IUserAccountFormBase

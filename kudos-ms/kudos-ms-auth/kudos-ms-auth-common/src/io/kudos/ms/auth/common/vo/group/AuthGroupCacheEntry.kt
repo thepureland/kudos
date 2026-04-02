@@ -14,46 +14,46 @@ import java.time.LocalDateTime
 data class AuthGroupCacheEntry (
 
     /** 主键 */
-    override val id: String = "",
+    override val id: String,
 
     /** 用户组编码 */
-    val code: String? = null,
+    val code: String?,
 
     /** 用户组名称 */
-    val name: String? = null,
+    val name: String?,
 
     /** 租户id */
-    val tenantId: String? = null,
+    val tenantId: String?,
 
     /** 子系统编码 */
-    val subsysCode: String? = null,
+    val subsysCode: String?,
 
     /** 备注 */
-    val remark: String? = null,
+    val remark: String?,
 
     /** 是否激活 */
-    val active: Boolean? = null,
+    val active: Boolean?,
 
     /** 是否内置 */
-    val builtIn: Boolean? = null,
+    val builtIn: Boolean?,
 
     /** 创建者id */
-    val createUserId: String? = null,
+    val createUserId: String?,
 
     /** 创建者名称 */
-    val createUserName: String? = null,
+    val createUserName: String?,
 
     /** 创建时间 */
-    val createTime: LocalDateTime? = null,
+    val createTime: LocalDateTime?,
 
     /** 更新者id */
-    val updateUserId: String? = null,
+    val updateUserId: String?,
 
     /** 更新者名称 */
-    val updateUserName: String? = null,
+    val updateUserName: String?,
 
     /** 更新时间 */
-    val updateTime: LocalDateTime? = null,
+    val updateTime: LocalDateTime?,
 
 ) : IIdEntity<String>, Serializable {
 

@@ -14,19 +14,19 @@ import java.time.LocalDateTime
 data class SysAccessRuleIpCacheEntry (
 
     /** 主键 */
-    override val id: String = "",
+    override val id: String,
 
     /** ip起 */
-    val ipStart: Long? = null,
+    val ipStart: Long?,
 
     /** ip止 */
-    val ipEnd: Long? = null,
+    val ipEnd: Long?,
 
     /** ip类型字典代码 */
-    val ipTypeDictCode: String? = null,
+    val ipTypeDictCode: String?,
 
     /** 过期时间 */
-    val expirationTime: LocalDateTime? = null,
+    val expirationTime: LocalDateTime?,
 
 ) : IIdEntity<String>, Serializable {
 

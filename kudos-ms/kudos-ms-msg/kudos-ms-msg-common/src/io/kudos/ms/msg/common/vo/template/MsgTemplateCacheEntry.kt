@@ -13,40 +13,40 @@ import java.io.Serializable
 data class MsgTemplateCacheEntry (
 
     /** 主键 */
-    override val id: String = "",
+    override val id: String,
 
     /** 发送类型字典码 */
-    val sendTypeDictCode: String? = null,
+    val sendTypeDictCode: String?,
 
     /** 事件类型字典码 */
-    val eventTypeDictCode: String? = null,
+    val eventTypeDictCode: String?,
 
     /** 消息类型字典码 */
-    val msgTypeDictCode: String? = null,
+    val msgTypeDictCode: String?,
 
     /** 模板分组编码 */
-    val receiverGroupCode: String? = null,
+    val receiverGroupCode: String?,
 
     /** 国家-语言字典码 */
-    val localeDictCode: String? = null,
+    val localeDictCode: String?,
 
     /** 模板标题 */
-    val title: String? = null,
+    val title: String?,
 
     /** 模板内容 */
-    val content: String? = null,
+    val content: String?,
 
     /** 是否启用默认值 */
-    val defaultActive: Boolean? = null,
+    val defaultActive: Boolean?,
 
     /** 模板标题默认值 */
-    val defaultTitle: String? = null,
+    val defaultTitle: String?,
 
     /** 模板内容默认值 */
-    val defaultContent: String? = null,
+    val defaultContent: String?,
 
     /** 租户ID */
-    val tenantId: String? = null,
+    val tenantId: String?,
 
 ) : IIdEntity<String>, Serializable {
 

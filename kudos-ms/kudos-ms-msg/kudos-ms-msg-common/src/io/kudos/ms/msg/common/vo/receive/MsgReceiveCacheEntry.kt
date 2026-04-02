@@ -14,25 +14,25 @@ import java.time.LocalDateTime
 data class MsgReceiveCacheEntry (
 
     /** 主键 */
-    override val id: String = "",
+    override val id: String,
 
     /** 接收者ID */
-    val receiverId: String? = null,
+    val receiverId: String?,
 
     /** 发送ID */
-    val sendId: String? = null,
+    val sendId: String?,
 
     /** 接收状态字典码 */
-    val receiveStatusDictCode: String? = null,
+    val receiveStatusDictCode: String?,
 
     /** 创建时间 */
-    val createTime: LocalDateTime? = null,
+    val createTime: LocalDateTime?,
 
     /** 更新时间 */
-    val updateTime: LocalDateTime? = null,
+    val updateTime: LocalDateTime?,
 
     /** 租户ID */
-    val tenantId: String? = null,
+    val tenantId: String?,
 
 ) : IIdEntity<String>, Serializable {
 

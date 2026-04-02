@@ -4,6 +4,7 @@ import io.kudos.base.bean.validation.constraint.annotations.Matches
 import io.kudos.base.bean.validation.constraint.annotations.MaxLength
 import io.kudos.base.bean.validation.support.RegExpEnum
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Positive
 
 /**
  * 参数表单基础字段（新建 / 更新共用）
@@ -16,7 +17,7 @@ interface ISysParamFormBase {
     /** 参数名称 */
     @get:NotBlank
     @get:MaxLength(32)
-    @get:Matches(RegExpEnum.)
+    @get:Matches(RegExpEnum.RELAXED_VAR_NAME)
     val paramName: String
 
     /** 参数值 */
@@ -30,9 +31,11 @@ interface ISysParamFormBase {
 
     /** 原子服务编码 */
     @get:NotBlank
+    @get:Matches(RegExpEnum.VAR_NAME)
     val atomicServiceCode: String
 
     /** 序号 */
+    @get:Positive
     val orderNum: Int?
 
     /** 备注 */
