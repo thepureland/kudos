@@ -39,9 +39,7 @@ open class SysI18NService(
         }
     }
 
-    override fun getI18nFromCache(id: String): SysI18nCacheEntry? {
-        return sysI18nHashCache.getI18nById(id)
-    }
+    override fun getI18nFromCache(id: String): SysI18nCacheEntry? = sysI18nHashCache.getI18nById(id)
 
     override fun getI18nValueFromCache(
         locale: String,
@@ -49,10 +47,7 @@ open class SysI18NService(
         namespace: String,
         atomicServiceCode: String,
         key: String
-    ): String? {
-        val i18nMap = getI18nsFromCache(locale, i18nTypeDictCode, namespace, atomicServiceCode)
-        return i18nMap[key]
-    }
+    ): String? = getI18nsFromCache(locale, i18nTypeDictCode, namespace, atomicServiceCode)[key]
 
     override fun getI18nsFromCache(
         locale: String,
@@ -83,52 +78,7 @@ open class SysI18NService(
 
     @Transactional
     override fun batchSaveOrUpdate(i18ns: List<SysI18nFormUpdate>): Int {
-        var count = 0
-        i18ns.forEach { form ->
-            if (form.id.isNullOrBlank()) {
-                val locale = requireNotNull(form.locale) { "新增国际化内容时，locale不能为空。" }
-                val atomicServiceCode =
-                    requireNotNull(form.atomicServiceCode) { "新增国际化内容时，atomicServiceCode不能为空。" }
-                val i18nTypeDictCode =
-                    requireNotNull(form.i18nTypeDictCode) { "新增国际化内容时，i18nTypeDictCode不能为空。" }
-                val (namespace, key) = resolveNamespaceAndKey(form)
-                val value = requireNotNull(form.value) { "新增国际化内容时，value不能为空。" }
-                val i18n = SysI18n {
-                    this.locale = locale
-                    this.atomicServiceCode = atomicServiceCode
-                    this.i18nTypeDictCode = i18nTypeDictCode
-                    this.namespace = namespace
-                    this.key = key
-                    this.value = value
-                    this.remark = form.remark
-                }
-                val id = dao.insert(i18n)
-                sysI18nHashCache.syncOnInsert(i18n, id)
-                count++
-            } else {
-                val locale = requireNotNull(form.locale) { "更新国际化内容时，locale不能为空。" }
-                val atomicServiceCode =
-                    requireNotNull(form.atomicServiceCode) { "更新国际化内容时，atomicServiceCode不能为空。" }
-                val i18nTypeDictCode =
-                    requireNotNull(form.i18nTypeDictCode) { "更新国际化内容时，i18nTypeDictCode不能为空。" }
-                val (namespace, key) = resolveNamespaceAndKey(form)
-                val value = requireNotNull(form.value) { "更新国际化内容时，value不能为空。" }
-                val i18n = SysI18n {
-                    this.id = requireNotNull(form.id) { "更新国际化内容时，id不能为空。" }
-                    this.locale = locale
-                    this.atomicServiceCode = atomicServiceCode
-                    this.i18nTypeDictCode = i18nTypeDictCode
-                    this.namespace = namespace
-                    this.key = key
-                    this.value = value
-                    this.remark = form.remark
-                }
-                if (dao.update(i18n)) {
-                    sysI18nHashCache.syncOnUpdate(i18n, i18n.id)
-                    count++
-                }
-            }
-        }
+        val count = i18ns.count(::saveOrUpdateI18n)
         log.debug("批量保存或更新国际化内容，期望处理${i18ns.size}条，实际处理${count}条。")
         return count
     }
@@ -200,6 +150,43 @@ open class SysI18NService(
         val i18nTypeDictCode = requireNotNull(payload.i18nTypeDictCode) { "i18nTypeDictCode不能为空。" }
         val namespace = payload.namespace.takeIf { it.isNotBlank() } ?: i18nTypeDictCode
         return namespace to key
+    }
+
+    private fun saveOrUpdateI18n(form: SysI18nFormUpdate): Boolean {
+        return if (form.id.isNullOrBlank()) {
+            val i18n = toI18n(form, creating = true)
+            val id = dao.insert(i18n)
+            sysI18nHashCache.syncOnInsert(i18n, id)
+            true
+        } else {
+            val i18n = toI18n(form, creating = false)
+            dao.update(i18n).also { updated ->
+                if (updated) {
+                    sysI18nHashCache.syncOnUpdate(i18n, i18n.id)
+                }
+            }
+        }
+    }
+
+    private fun toI18n(form: SysI18nFormUpdate, creating: Boolean): SysI18n {
+        val operation = if (creating) "新增" else "更新"
+        val (namespace, key) = resolveNamespaceAndKey(form)
+        return SysI18n {
+            if (!creating) {
+                this.id = requireNotNull(form.id) { "更新国际化内容时，id不能为空。" }
+            }
+            this.locale = requireNotNull(form.locale) { "${operation}国际化内容时，locale不能为空。" }
+            this.atomicServiceCode = requireNotNull(form.atomicServiceCode) {
+                "${operation}国际化内容时，atomicServiceCode不能为空。"
+            }
+            this.i18nTypeDictCode = requireNotNull(form.i18nTypeDictCode) {
+                "${operation}国际化内容时，i18nTypeDictCode不能为空。"
+            }
+            this.namespace = namespace
+            this.key = key
+            this.value = requireNotNull(form.value) { "${operation}国际化内容时，value不能为空。" }
+            this.remark = form.remark
+        }
     }
 
     private fun requireI18nId(any: Any): String =

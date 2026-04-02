@@ -50,28 +50,14 @@ open class SysDictService(
     override fun getRecord(id: String): SysDictRow? = dao.get(id)?.let(::toSysDictRow)
 
     @Transactional
-    override fun delete(id: String, isDict: Boolean): Boolean {
-        return if (isDict) {
-            dao.deleteDictItemsByDictId(id)
-            val success = dao.deleteById(id)
-            if (success) {
-                sysDictHashCache.syncOnDelete(id)
-            } else {
-                log.error("删除id为${id}的字典失败！")
-            }
-            success
-        } else {
-            sysDictItemService.cascadeDeleteChildren(id)
-        }
-    }
+    override fun delete(id: String, isDict: Boolean): Boolean =
+        if (isDict) deleteDictWithItems(id) else sysDictItemService.cascadeDeleteChildren(id)
 
     override fun getDictsFromCacheByAtomicServiceCode(
         atomicServiceCode: String,
         activeOnly: Boolean
-    ): List<SysDictCacheEntry> {
-        val dicts = sysDictHashCache.getDictsByAtomicServiceCode(atomicServiceCode)
-        return if (activeOnly) dicts.filter { it.active } else dicts
-    }
+    ): List<SysDictCacheEntry> = sysDictHashCache.getDictsByAtomicServiceCode(atomicServiceCode)
+        .let { dicts -> if (activeOnly) dicts.filter { it.active } else dicts }
 
     override fun getDictByAtomicServiceAndType(atomicServiceCode: String, dictType: String): SysDictRow? =
         dao.search(
@@ -145,29 +131,51 @@ open class SysDictService(
 
     override fun getActiveDictItemsFromCache(
         dictType: String,
-        atomicServiceCode: String
-    ): List<SysDictItemCacheEntry> = sysDictItemService.getDictItemsFromCache(dictType, atomicServiceCode)
+        atomicServiceCode: String,
+    ): List<SysDictItemCacheEntry> = getActiveDictItems(dictType, atomicServiceCode)
 
     override fun getActiveDictItemMapFromCache(
         dictType: String,
-        atomicServiceCode: String
-    ): LinkedHashMap<String, String> = sysDictItemService.getDictItemsFromCache(dictType, atomicServiceCode)
-        .associateTo(LinkedHashMap()) { it.itemCode to it.itemName }
+        atomicServiceCode: String,
+    ): LinkedHashMap<String, String> = getActiveDictItemMap(dictType, atomicServiceCode)
 
     override fun batchGetActiveDictItemsFromCache(
         dictTypeAndASCodePairs: List<Pair<String, String>>
     ): Map<Pair<String, String>, List<SysDictItemCacheEntry>> =
         dictTypeAndASCodePairs.associate { (dictType, atomicServiceCode) ->
-            Pair(atomicServiceCode, dictType) to sysDictItemService.getDictItemsFromCache(dictType, atomicServiceCode)
+            dictCacheKey(dictType, atomicServiceCode) to getActiveDictItems(dictType, atomicServiceCode)
         }
 
     override fun batchGetActiveDictItemMapFromCache(
         dictTypeAndASCodePairs: List<Pair<String, String>>
     ): Map<Pair<String, String>, LinkedHashMap<String, String>> =
         dictTypeAndASCodePairs.associate { (dictType, atomicServiceCode) ->
-            Pair(atomicServiceCode, dictType) to sysDictItemService.getDictItemsFromCache(dictType, atomicServiceCode)
-                .associateTo(LinkedHashMap()) { it.itemCode to it.itemName }
+            dictCacheKey(dictType, atomicServiceCode) to getActiveDictItemMap(dictType, atomicServiceCode)
         }
+
+    private fun deleteDictWithItems(id: String): Boolean {
+        dao.deleteDictItemsByDictId(id)
+        return deleteDict(id)
+    }
+
+    private fun deleteDict(id: String): Boolean {
+        val success = dao.deleteById(id)
+        if (success) {
+            sysDictHashCache.syncOnDelete(id)
+        } else {
+            log.error("删除id为${id}的字典失败！")
+        }
+        return success
+    }
+
+    private fun getActiveDictItems(dictType: String, atomicServiceCode: String): List<SysDictItemCacheEntry> =
+        sysDictItemService.getDictItemsFromCache(dictType, atomicServiceCode)
+
+    private fun getActiveDictItemMap(dictType: String, atomicServiceCode: String): LinkedHashMap<String, String> =
+        getActiveDictItems(dictType, atomicServiceCode).associateTo(LinkedHashMap()) { it.itemCode to it.itemName }
+
+    private fun dictCacheKey(dictType: String, atomicServiceCode: String): Pair<String, String> =
+        Pair(atomicServiceCode, dictType)
 
     private fun toSysDictRow(dict: SysDict): SysDictRow = SysDictRow(
         id = dict.id,

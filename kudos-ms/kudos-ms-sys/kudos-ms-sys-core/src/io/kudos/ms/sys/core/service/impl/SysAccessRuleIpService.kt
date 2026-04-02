@@ -55,46 +55,15 @@ open class SysAccessRuleIpService(
 
     @Transactional
     override fun batchSaveOrUpdate(ruleId: String, ips: List<SysAccessRuleIpBatchItem>): Int {
-        var count = 0
-        ips.forEach { form ->
+        val count = ips.count { form ->
             if (form.id.isNullOrBlank()) {
-                val ipStart = requireNotNull(form.ipStart) { "新增IP规则时，ipStart不能为空。" }
-                val ipEnd = requireNotNull(form.ipEnd) { "新增IP规则时，ipEnd不能为空。" }
-                val ipRule = SysAccessRuleIp {
-                    this.parentRuleId = ruleId
-                    this.ipStart = ipStart
-                    this.ipEnd = ipEnd
-                    this.ipTypeDictCode = form.ipType?.toString() ?: "0"
-                    this.expirationTime = form.expirationDate
-                    this.active = form.active ?: true
-                }
-                val id = dao.insert(ipRule)
-                accessRuleIpsBySubSysAndTenantIdCache.syncOnInsert(ipRule, id)
-                count++
+                insertIpRule(ruleId, form)
             } else {
-                val ipStart = requireNotNull(form.ipStart) { "更新IP规则时，ipStart不能为空。" }
-                val ipEnd = requireNotNull(form.ipEnd) { "更新IP规则时，ipEnd不能为空。" }
-                val ipRule = SysAccessRuleIp {
-                    this.id = requireNotNull(form.id) { "更新IP规则时，id不能为空。" }
-                    this.parentRuleId = ruleId
-                    this.ipStart = ipStart
-                    this.ipEnd = ipEnd
-                    this.ipTypeDictCode = form.ipType?.toString() ?: "0"
-                    this.expirationTime = form.expirationDate
-                    this.active = form.active ?: true
-                }
-                if (dao.update(ipRule)) {
-                    accessRuleIpsBySubSysAndTenantIdCache.syncOnUpdate(ipRule, requireNotNull(form.id) { "更新IP规则时，id不能为空。" })
-                    count++
-                }
+                updateIpRule(ruleId, form)
             }
         }
         log.debug("批量保存或更新IP规则，期望处理${ips.size}条，实际处理${count}条。")
-        // 同步父规则缓存
-        val accessRule = sysAccessRuleDao.get(ruleId)
-        if (accessRule != null) {
-            accessRuleIpsBySubSysAndTenantIdCache.syncOnUpdate(accessRule, ruleId)
-        }
+        syncParentRuleCache(ruleId)
         return count
     }
 
@@ -102,11 +71,7 @@ open class SysAccessRuleIpService(
     override fun deleteByRuleId(ruleId: String): Int {
         val count = dao.deleteByParentRuleId(ruleId)
         log.debug("删除规则${ruleId}的所有IP，共删除${count}条。")
-        // 同步缓存
-        val accessRule = sysAccessRuleDao.get(ruleId)
-        if (accessRule != null) {
-            accessRuleIpsBySubSysAndTenantIdCache.syncOnUpdate(accessRule, ruleId)
-        }
+        syncParentRuleCache(ruleId)
         return count
     }
 
@@ -114,12 +79,8 @@ open class SysAccessRuleIpService(
     override fun insert(any: Any): String {
         val id = super.insert(any)
         completeCrudInsert(log, "新增id为${id}的IP访问规则。") {
-            val ipRule = dao.get(id)
-            if (ipRule != null) {
-                val accessRule = sysAccessRuleDao.get(ipRule.parentRuleId)
-                if (accessRule != null) {
-                    accessRuleIpsBySubSysAndTenantIdCache.syncOnInsert(accessRule, id)
-                }
+            findParentAccessRuleByIpRuleId(id)?.let {
+                accessRuleIpsBySubSysAndTenantIdCache.syncOnInsert(it, id)
             }
         }
         return id
@@ -134,20 +95,15 @@ open class SysAccessRuleIpService(
             successMessage = "更新id为${id}的IP访问规则。",
             failureMessage = "更新id为${id}的IP访问规则失败！",
         ) {
-            val ipRule = dao.get(id)
-            if (ipRule != null) {
-                val accessRule = sysAccessRuleDao.get(ipRule.parentRuleId)
-                if (accessRule != null) {
-                    accessRuleIpsBySubSysAndTenantIdCache.syncOnUpdate(accessRule, id)
-                }
+            findParentAccessRuleByIpRuleId(id)?.let {
+                accessRuleIpsBySubSysAndTenantIdCache.syncOnUpdate(it, id)
             }
         }
     }
 
     @Transactional
     override fun deleteById(id: String): Boolean {
-        val ipRule = dao.get(id)
-        val accessRule = ipRule?.let { sysAccessRuleDao.get(it.parentRuleId) }
+        val accessRule = findParentAccessRuleByIpRuleId(id)
         return completeCrudUpdate(
             success = super.deleteById(id),
             log = log,
@@ -168,4 +124,46 @@ open class SysAccessRuleIpService(
     private fun requireIpRuleId(any: Any): String =
         (any as? IIdEntity<*>)?.id as? String
             ?: error("更新IP访问规则时不支持的入参类型: ${any::class.qualifiedName}")
+
+    private fun insertIpRule(ruleId: String, form: SysAccessRuleIpBatchItem): Boolean {
+        val ipRule = toIpRule(ruleId, form, creating = true)
+        val id = dao.insert(ipRule)
+        accessRuleIpsBySubSysAndTenantIdCache.syncOnInsert(ipRule, id)
+        return true
+    }
+
+    private fun updateIpRule(ruleId: String, form: SysAccessRuleIpBatchItem): Boolean {
+        val ipRule = toIpRule(ruleId, form, creating = false)
+        val updated = dao.update(ipRule)
+        if (updated) {
+            accessRuleIpsBySubSysAndTenantIdCache.syncOnUpdate(ipRule, ipRule.id)
+        }
+        return updated
+    }
+
+    private fun toIpRule(ruleId: String, form: SysAccessRuleIpBatchItem, creating: Boolean): SysAccessRuleIp {
+        val operation = if (creating) "新增" else "更新"
+        val ipStart = requireNotNull(form.ipStart) { "${operation}IP规则时，ipStart不能为空。" }
+        val ipEnd = requireNotNull(form.ipEnd) { "${operation}IP规则时，ipEnd不能为空。" }
+
+        return SysAccessRuleIp {
+            if (!creating) {
+                this.id = requireNotNull(form.id) { "更新IP规则时，id不能为空。" }
+            }
+            this.parentRuleId = ruleId
+            this.ipStart = ipStart
+            this.ipEnd = ipEnd
+            this.ipTypeDictCode = form.ipType?.toString() ?: "0"
+            this.expirationTime = form.expirationDate
+            this.active = form.active ?: true
+        }
+    }
+
+    private fun findParentAccessRuleByIpRuleId(id: String) =
+        dao.get(id)?.let { sysAccessRuleDao.get(it.parentRuleId) }
+
+    private fun syncParentRuleCache(ruleId: String) {
+        val accessRule = sysAccessRuleDao.get(ruleId) ?: return
+        accessRuleIpsBySubSysAndTenantIdCache.syncOnUpdate(accessRule, ruleId)
+    }
 }
