@@ -11,26 +11,26 @@ import java.time.LocalDateTime
  */
 data class UserAccountThirdFormCreate (
 
-    override val userId: String? = null,
+    override val userId: String? ,
 
-    override val accountProviderDictCode: String? = null,
+    override val accountProviderDictCode: String? ,
 
-    override val accountProviderIssuer: String? = null,
+    override val accountProviderIssuer: String? ,
 
-    override val subject: String? = null,
+    override val subject: String? ,
 
-    override val unionId: String? = null,
+    override val unionId: String? ,
 
-    override val externalDisplayName: String? = null,
+    override val externalDisplayName: String? ,
 
-    override val externalEmail: String? = null,
+    override val externalEmail: String? ,
 
-    override val avatarUrl: String? = null,
+    override val avatarUrl: String? ,
 
-    override val lastLoginTime: LocalDateTime? = null,
+    override val lastLoginTime: LocalDateTime? ,
 
-    override val tenantId: String? = null,
+    override val tenantId: String? ,
 
-    override val remark: String? = null,
+    override val remark: String? ,
 
 ) : IUserAccountThirdFormBase

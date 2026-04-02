@@ -9,12 +9,12 @@ package io.kudos.ms.sys.common.vo.dict.request
  */
 data class ISysDictFormCreate (
 
-    override val dictType: String = "",
+    override val dictType: String ,
 
-    override val dictName: String = "",
+    override val dictName: String ,
 
-    override val atomicServiceCode: String = "",
+    override val atomicServiceCode: String ,
 
-    override val remark: String? = null,
+    override val remark: String? ,
 
 ) : ISysDictFormBase

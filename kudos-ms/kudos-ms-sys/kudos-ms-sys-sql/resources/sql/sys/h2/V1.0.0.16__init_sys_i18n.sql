@@ -749,6 +749,10 @@ insert into "sys_i18n" ("locale", "atomic_service_code", "i18n_type_dict_code", 
     ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::latin-alnum-dash-underscore', '僅允許英文字母、數字、連字號與底線', true),
     ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::latin-alnum-dash-underscore', 'Latin letters, digits, hyphens, and underscores only', true),
 
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::relaxed-var-name', '仅允许英文字母、数字、连字符与下划线，且必须以字母或下划线开头', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::relaxed-var-name', '僅允許英文字母、數字、連字號與底線，且必須以字母或底線開頭', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::relaxed-var-name', 'Latin letters, digits, hyphens, and underscores only; must start with a letter or underscore', true),
+
     ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::var-name', '只允许字母、数字、下划线，且不能以数字开头', true),
     ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::var-name', '只允許英文字母、數字與底線，且不得以數字開頭', true),
     ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::var-name', 'only letters, numbers, and underscores; cannot start with a number', true),

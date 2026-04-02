@@ -11,24 +11,24 @@ import java.time.LocalDateTime
  */
 data class MsgInstanceFormCreate (
 
-    override val localeDictCode: String? = null,
+    override val localeDictCode: String? ,
 
-    override val title: String? = null,
+    override val title: String? ,
 
-    override val content: String? = null,
+    override val content: String? ,
 
-    override val templateId: String? = null,
+    override val templateId: String? ,
 
-    override val sendTypeDictCode: String? = null,
+    override val sendTypeDictCode: String? ,
 
-    override val eventTypeDictCode: String? = null,
+    override val eventTypeDictCode: String? ,
 
-    override val msgTypeDictCode: String? = null,
+    override val msgTypeDictCode: String? ,
 
-    override val validTimeStart: LocalDateTime? = null,
+    override val validTimeStart: LocalDateTime? ,
 
-    override val validTimeEnd: LocalDateTime? = null,
+    override val validTimeEnd: LocalDateTime? ,
 
-    override val tenantId: String? = null,
+    override val tenantId: String? ,
 
 ) : IMsgInstanceFormBase

@@ -9,14 +9,14 @@ package io.kudos.ms.sys.common.vo.system.request
  */
 data class SysSystemFormCreate (
 
-    override val code: String = "",
+    override val code: String ,
 
-    override val name: String = "",
+    override val name: String ,
 
-    override val subSystem: Boolean = true,
+    override val subSystem: Boolean ,
 
-    override val parentCode: String? = null,
+    override val parentCode: String? ,
 
-    override val remark: String? = null,
+    override val remark: String? ,
 
 ) : ISysSystemFormBase

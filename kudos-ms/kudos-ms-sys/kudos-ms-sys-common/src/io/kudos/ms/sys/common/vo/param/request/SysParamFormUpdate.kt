@@ -1,6 +1,8 @@
 package io.kudos.ms.sys.common.vo.param.request
 
+import io.kudos.base.bean.validation.constraint.annotations.FixedLength
 import io.kudos.base.model.contract.entity.IIdEntity
+import jakarta.validation.constraints.NotBlank
 
 
 /**
@@ -12,18 +14,20 @@ import io.kudos.base.model.contract.entity.IIdEntity
 data class SysParamFormUpdate (
 
     /** 主键 */
-    override val id: String? = null,
+    @get:NotBlank
+    @get:FixedLength(36)
+    override val id: String,
 
-    override val paramName: String = "",
+    override val paramName: String,
 
-    override val paramValue: String = "",
+    override val paramValue: String,
 
-    override val defaultValue: String? = null,
+    override val defaultValue: String?,
 
-    override val atomicServiceCode: String = "",
+    override val atomicServiceCode: String,
 
-    override val orderNum: Int? = null,
+    override val orderNum: Int?,
 
-    override val remark: String? = null,
+    override val remark: String?,
 
-) : IIdEntity<String?>, ISysParamFormBase
+) : IIdEntity<String>, ISysParamFormBase

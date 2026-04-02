@@ -13,40 +13,40 @@ import java.io.Serializable
 data class SysDictItemCacheEntry (
 
     /** 主键 */
-    override val id: String = "",
+    override val id: String,
 
     /** 字典项代码 */
-    val itemCode: String = "",
+    val itemCode: String,
 
     /** 字典项名称 */
-    val itemName: String = "",
+    val itemName: String,
 
     /** 字典id */
-    val dictId: String = "",
+    val dictId: String,
 
     /** 字典项排序 */
-    val orderNum: Int? = null,
+    val orderNum: Int?,
 
     /** 父id */
-    val parentId: String? = null,
+    val parentId: String?,
 
     /** 备注 */
-    val remark: String? = null,
+    val remark: String?,
 
     /** 是否启用 */
-    val active: Boolean = true,
+    val active: Boolean,
 
     /** 是否内置 */
-    val builtIn: Boolean = true,
+    val builtIn: Boolean,
 
     /** 字典类型（来自 v_sys_dict_item 视图，用于 Hash 缓存副属性索引） */
-    val dictType: String = "",
+    val dictType: String,
 
     /** 字典名称或其国际化key */
-    val dictName: String = "",
+    val dictName: String,
 
     /** 原子服务编码（来自 v_sys_dict_item 视图，用于 Hash 缓存副属性索引） */
-    val atomicServiceCode: String = "",
+    val atomicServiceCode: String,
 
 ) : IIdEntity<String>, Serializable {
 

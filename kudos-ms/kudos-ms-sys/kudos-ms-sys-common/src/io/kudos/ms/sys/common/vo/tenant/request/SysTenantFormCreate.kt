@@ -9,14 +9,14 @@ package io.kudos.ms.sys.common.vo.tenant.request
  */
 data class SysTenantFormCreate (
 
-    override val name: String = "",
+    override val name: String ,
 
     override var subSystemCodes: Set<String> = emptySet(),
 
-    override val timezone: String? = null,
+    override val timezone: String? ,
 
-    override val defaultLanguageCode: String? = null,
+    override val defaultLanguageCode: String? ,
 
-    override val remark: String? = null,
+    override val remark: String? ,
 
 ) : ISysTenantFormBase

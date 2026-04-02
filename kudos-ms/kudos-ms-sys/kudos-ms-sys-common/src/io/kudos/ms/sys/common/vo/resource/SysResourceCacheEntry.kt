@@ -14,55 +14,55 @@ import java.time.LocalDateTime
 data class SysResourceCacheEntry (
 
     /** 主键 */
-    override val id: String = "",
+    override val id: String,
 
     /** 名称 */
-    val name: String? = null,
+    val name: String?,
 
     /** url */
-    val url: String? = null,
+    val url: String?,
 
     /** 资源类型字典代码 */
-    val resourceTypeDictCode: String? = null,
+    val resourceTypeDictCode: String?,
 
     /** 父id */
-    val parentId: String? = null,
+    val parentId: String?,
 
     /** 在同父节点下的排序号 */
-    val orderNum: Int? = null,
+    val orderNum: Int?,
 
     /** 图标 */
-    val icon: String? = null,
+    val icon: String?,
 
     /** 子系统编码 */
-    val subSystemCode: String? = null,
+    val subSystemCode: String?,
 
     /** 备注 */
-    val remark: String? = null,
+    val remark: String?,
 
     /** 是否启用 */
-    val active: Boolean? = null,
+    val active: Boolean?,
 
     /** 是否内置 */
-    val builtIn: Boolean? = null,
+    val builtIn: Boolean?,
 
     /** 创建者id */
-    val createUserId: String? = null,
+    val createUserId: String?,
 
     /** 创建者名称 */
-    val createUserName: String? = null,
+    val createUserName: String?,
 
     /** 创建时间 */
-    val createTime: LocalDateTime? = null,
+    val createTime: LocalDateTime?,
 
     /** 更新者id */
-    val updateUserId: String? = null,
+    val updateUserId: String?,
 
     /** 更新者名称 */
-    val updateUserName: String? = null,
+    val updateUserName: String?,
 
     /** 更新时间 */
-    val updateTime: LocalDateTime? = null,
+    val updateTime: LocalDateTime?,
 
 ) : IIdEntity<String>, Serializable {
 

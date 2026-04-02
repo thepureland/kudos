@@ -1,6 +1,8 @@
 package io.kudos.ms.sys.common.vo.datasource.request
 
+import io.kudos.base.bean.validation.constraint.annotations.FixedLength
 import io.kudos.base.model.contract.entity.IIdEntity
+import jakarta.validation.constraints.NotBlank
 
 
 /**
@@ -12,34 +14,36 @@ import io.kudos.base.model.contract.entity.IIdEntity
 data class SysDataSourceFormUpdate (
 
     /** 主键 */
-    override val id: String? = null,
+    @get:NotBlank
+    @get:FixedLength(36)
+    override val id: String,
 
-    override val name: String = "",
+    override val name: String,
 
-    override val subSystemCode: String = "",
+    override val subSystemCode: String,
 
-    override val microServiceCode: String = "",
+    override val microServiceCode: String,
 
-    override val tenantId: String? = null,
+    override val tenantId: String?,
 
-    override val url: String = "",
+    override val url: String,
 
-    override val username: String = "",
+    override val username: String,
 
-    override val password: String? = null,
+    override val password: String?,
 
-    override val initialSize: Int? = null,
+    override val initialSize: Int?,
 
-    override val maxActive: Int? = null,
+    override val maxActive: Int?,
 
-    override val maxIdle: Int? = null,
+    override val maxIdle: Int?,
 
-    override val minIdle: Int? = null,
+    override val minIdle: Int?,
 
-    override val maxWait: Int? = null,
+    override val maxWait: Int?,
 
-    override val maxAge: Int? = null,
+    override val maxAge: Int?,
 
-    override val remark: String? = null,
+    override val remark: String?,
 
-) : IIdEntity<String?>, ISysDataSourceFormBase
+) : IIdEntity<String>, ISysDataSourceFormBase

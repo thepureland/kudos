@@ -1,6 +1,8 @@
 package io.kudos.ms.sys.common.vo.microservice.request
 
+import io.kudos.base.bean.validation.constraint.annotations.FixedLength
 import io.kudos.base.model.contract.entity.IIdEntity
+import jakarta.validation.constraints.NotBlank
 
 
 /**
@@ -11,17 +13,18 @@ import io.kudos.base.model.contract.entity.IIdEntity
  */
 data class SysMicroServiceFormUpdate (
 
-    override val code: String = "",
+    @get:NotBlank
+    override val code: String,
 
-    override val name: String = "",
+    override val name: String,
 
-    override val context: String = "",
+    override val context: String,
 
     override val atomicService: Boolean = true,
 
-    override val parentCode: String? = null,
+    override val parentCode: String?,
 
-    override val remark: String? = null,
+    override val remark: String?,
 
 ) : ISysMicroServiceFormBase, IIdEntity<String> {
 

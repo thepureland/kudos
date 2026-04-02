@@ -9,12 +9,12 @@ package io.kudos.ms.sys.common.vo.domain.request
  */
 data class SysDomainFormCreate (
 
-    override val domain: String = "",
+    override val domain: String ,
 
-    override val systemCode: String = "",
+    override val systemCode: String ,
 
-    override val tenantId: String = "",
+    override val tenantId: String ,
 
-    override val remark: String? = null,
+    override val remark: String? ,
 
 ) : ISysDomainFormBase

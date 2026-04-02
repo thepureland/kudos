@@ -9,18 +9,18 @@ package io.kudos.ms.user.common.vo.org.request
  */
 data class UserOrgFormCreate (
 
-    override val name: String? = null,
+    override val name: String? ,
 
-    override val shortName: String? = null,
+    override val shortName: String? ,
 
-    override val tenantId: String? = null,
+    override val tenantId: String? ,
 
-    override val parentId: String? = null,
+    override val parentId: String? ,
 
-    override val orgTypeDictCode: String? = null,
+    override val orgTypeDictCode: String? ,
 
-    override val sortNum: Int? = null,
+    override val sortNum: Int? ,
 
-    override val remark: String? = null,
+    override val remark: String? ,
 
 ) : IUserOrgFormBase

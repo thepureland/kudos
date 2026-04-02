@@ -710,6 +710,27 @@ internal class RegExpsTest {
     }
 
     @Test
+    fun relaxedVarName() {
+        assertMatches(
+            RegExps.CharacterSet.RELAXED_VAR_NAME,
+            "a",
+            "_x",
+            "Abc_123-x",
+            "user-name",
+            "_user-name",
+        )
+        assertNotMatches(
+            RegExps.CharacterSet.RELAXED_VAR_NAME,
+            "",
+            "1abc",
+            "-abc",
+            "a b",
+            "a@b",
+            "变量名",
+        )
+    }
+
+    @Test
     fun varName() {
         assertMatches(RegExps.CharacterSet.VAR_NAME, "a", "_x", "a1", "Ab_c", "__init")
         assertNotMatches(RegExps.CharacterSet.VAR_NAME, "", "1a", "a-b", "a.b", "9_", "变量名")

@@ -1,6 +1,8 @@
 package io.kudos.ms.sys.common.vo.dictitem.request
 
+import io.kudos.base.bean.validation.constraint.annotations.FixedLength
 import io.kudos.base.model.contract.entity.IIdEntity
+import jakarta.validation.constraints.NotBlank
 
 
 /**
@@ -12,18 +14,20 @@ import io.kudos.base.model.contract.entity.IIdEntity
 data class SysDictItemFormUpdate (
 
     /** 主键 */
-    override val id: String? = null,
+    @get:NotBlank
+    @get:FixedLength(36)
+    override val id: String,
 
-    override val itemCode: String = "",
+    override val itemCode: String,
 
-    override val itemName: String = "",
+    override val itemName: String,
 
-    override val dictId: String = "",
+    override val dictId: String,
 
-    override val orderNum: Int? = null,
+    override val orderNum: Int?,
 
-    override val parentId: String? = null,
+    override val parentId: String?,
 
-    override val remark: String? = null,
+    override val remark: String?,
 
-) : IIdEntity<String?>, ISysDictItemFormBase
+) : IIdEntity<String>, ISysDictItemFormBase

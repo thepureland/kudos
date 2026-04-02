@@ -12,20 +12,20 @@ import io.kudos.base.model.contract.entity.IIdEntity
 data class UserOrgFormUpdate (
 
     /** 主键 */
-    override val id: String? = null,
+    override val id: String,
 
-    override val name: String? = null,
+    override val name: String?,
 
-    override val shortName: String? = null,
+    override val shortName: String?,
 
-    override val tenantId: String? = null,
+    override val tenantId: String?,
 
-    override val parentId: String? = null,
+    override val parentId: String?,
 
-    override val orgTypeDictCode: String? = null,
+    override val orgTypeDictCode: String?,
 
-    override val sortNum: Int? = null,
+    override val sortNum: Int?,
 
-    override val remark: String? = null,
+    override val remark: String?,
 
-) : IIdEntity<String?>, IUserOrgFormBase
+) : IIdEntity<String>, IUserOrgFormBase

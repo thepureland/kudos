@@ -14,37 +14,37 @@ import java.time.LocalDateTime
 data class MsgInstanceCacheEntry (
 
     /** 主键 */
-    override val id: String = "",
+    override val id: String,
 
     /** 国家-语言字典码 */
-    val localeDictCode: String? = null,
+    val localeDictCode: String?,
 
     /** 标题 */
-    val title: String? = null,
+    val title: String?,
 
     /** 通知内容 */
-    val content: String? = null,
+    val content: String?,
 
     /** 消息模板id */
-    val templateId: String? = null,
+    val templateId: String?,
 
     /** 发送类型字典码 */
-    val sendTypeDictCode: String? = null,
+    val sendTypeDictCode: String?,
 
     /** 事件类型字典码 */
-    val eventTypeDictCode: String? = null,
+    val eventTypeDictCode: String?,
 
     /** 消息类型字典码 */
-    val msgTypeDictCode: String? = null,
+    val msgTypeDictCode: String?,
 
     /** 有效期起 */
-    val validTimeStart: LocalDateTime? = null,
+    val validTimeStart: LocalDateTime?,
 
     /** 有效期止 */
-    val validTimeEnd: LocalDateTime? = null,
+    val validTimeEnd: LocalDateTime?,
 
     /** 租户ID */
-    val tenantId: String? = null,
+    val tenantId: String?,
 
 ) : IIdEntity<String>, Serializable {
 
