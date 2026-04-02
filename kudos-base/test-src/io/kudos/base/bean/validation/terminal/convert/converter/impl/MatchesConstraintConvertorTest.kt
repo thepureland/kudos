@@ -26,7 +26,7 @@ internal class MatchesConstraintConvertorTest {
         val convertor = MatchesConstraintConvertor(annotation)
         val rule = convertor.getRule(annotation)
         println(rule)
-        assertEquals(RegExps.VAR_NAME, rule["regexp"])
+        assertEquals(RegExps.CharacterSet.VAR_NAME, rule["regexp"])
         assertEquals("sys.valid-msg.default.Pattern::var-name", rule["message"])
         assertEquals(0, rule["flags"])
         assertFalse(rule.containsKey("value"))
@@ -39,7 +39,7 @@ internal class MatchesConstraintConvertorTest {
         val ctx = ConstraintConvertContext("code", null, TerminalBean::class)
         val terminal = MatchesConstraintConvertor(annotation).convert(ctx)
         assertEquals(Pattern::class.java.simpleName, terminal.constraint)
-        assertEquals(RegExps.VAR_NAME, terminal.rule.single()["regexp"])
+        assertEquals(RegExps.CharacterSet.VAR_NAME, terminal.rule.single()["regexp"])
     }
 
     internal data class TestBean(

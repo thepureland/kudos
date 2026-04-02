@@ -34,6 +34,8 @@ interface ISysMicroServiceFormBase {
     val atomicService: Boolean
 
     /** 父服务编码 */
+    @get:MaxLength(32)
+    @get:Matches(RegExpEnum.VAR_NAME)
     val parentCode: String?
 
     /** 备注 */
