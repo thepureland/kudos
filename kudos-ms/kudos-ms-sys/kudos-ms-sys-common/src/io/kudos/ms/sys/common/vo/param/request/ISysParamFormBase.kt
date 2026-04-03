@@ -4,7 +4,6 @@ import io.kudos.base.bean.validation.constraint.annotations.Matches
 import io.kudos.base.bean.validation.constraint.annotations.MaxLength
 import io.kudos.base.bean.validation.support.RegExpEnum
 import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.Positive
 
 /**
  * 参数表单基础字段（新建 / 更新共用）
@@ -35,7 +34,6 @@ interface ISysParamFormBase {
     val atomicServiceCode: String
 
     /** 序号 */
-    @get:Positive
     val orderNum: Int?
 
     /** 备注 */

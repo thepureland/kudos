@@ -4,7 +4,6 @@ import io.kudos.base.bean.validation.constraint.annotations.Matches
 import io.kudos.base.bean.validation.constraint.annotations.MaxLength
 import io.kudos.base.bean.validation.support.RegExpEnum
 import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.Positive
 
 /**
  * 字典项表单基础字段（新建 / 更新共用）
@@ -30,7 +29,6 @@ interface ISysDictItemFormBase {
     val dictId: String
 
     /** 字典项排序 */
-    @get:Positive
     val orderNum: Int?
 
     /** 父id */

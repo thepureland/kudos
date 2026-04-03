@@ -8,6 +8,8 @@ import io.kudos.base.bean.validation.support.RegExpEnum
 import io.kudos.ms.sys.common.consts.SysConsts
 import io.kudos.ms.sys.common.consts.SysDictTypes
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Positive
+import jakarta.validation.constraints.PositiveOrZero
 
 /**
  * 资源表单基础字段（新建 / 更新共用）
@@ -41,10 +43,12 @@ interface ISysResourceFormBase {
     val orderNum: Int?
 
     /** 图标 */
+    @get:MaxLength(256)
     val icon: String?
 
     /** 子系统编码 */
     @get:NotBlank
+    @get:MaxLength(32)
     val subSystemCode: String
 
     /** 备注 */
