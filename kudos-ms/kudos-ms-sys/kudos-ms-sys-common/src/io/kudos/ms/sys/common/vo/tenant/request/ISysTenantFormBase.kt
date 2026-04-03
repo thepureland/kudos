@@ -1,5 +1,6 @@
 package io.kudos.ms.sys.common.vo.tenant.request
 
+import io.kudos.base.bean.validation.constraint.annotations.FixedLength
 import io.kudos.base.bean.validation.constraint.annotations.MaxLength
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
@@ -14,6 +15,7 @@ interface ISysTenantFormBase {
 
     /** 名称 */
     @get:NotBlank
+    @get:MaxLength(128)
     val name: String
 
     /** 所属子系统 */
@@ -21,9 +23,11 @@ interface ISysTenantFormBase {
     var subSystemCodes: Set<String>
 
     /** 时区 */
+    @get:MaxLength(128)
     val timezone: String?
 
     /** 默认语言编码 */
+    @get:FixedLength(5)
     val defaultLanguageCode: String?
 
     /** 备注 */

@@ -11,7 +11,7 @@ data class SysTenantFormCreate (
 
     override val name: String ,
 
-    override var subSystemCodes: Set<String> = emptySet(),
+    override var subSystemCodes: Set<String>,
 
     override val timezone: String? ,
 

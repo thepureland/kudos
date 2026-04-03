@@ -17,7 +17,7 @@ interface ISysMicroServiceFormBase {
     /** 编码 */
     @get:NotBlank
     @get:MaxLength(32)
-    @get:Matches(RegExpEnum.VAR_NAME)
+    @get:Matches(RegExpEnum.RELAXED_VAR_NAME)
     val code: String
 
     /** 名称 */
