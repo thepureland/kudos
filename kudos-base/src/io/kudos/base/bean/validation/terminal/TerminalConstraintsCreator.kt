@@ -6,6 +6,7 @@ import io.kudos.base.bean.validation.terminal.convert.ConstraintConvertorFactory
 import io.kudos.base.lang.SystemKit
 import io.kudos.base.lang.reflect.getMemberProperty
 import io.kudos.base.lang.reflect.getSuperClass
+import io.kudos.base.lang.reflect.getSuperInterfaces
 import jakarta.validation.Constraint
 import jakarta.validation.Valid
 import kotlin.reflect.KClass
@@ -183,25 +184,41 @@ object TerminalConstraintsCreator {
      * @since 1.0.0
      */
     private fun getAnnotationsOnGetter(clazz: KClass<*>, property: String): MutableList<Annotation> {
+        return collectAnnotationsOnGetter(clazz, property, mutableSetOf())
+    }
+
+    /**
+     * 递归获取 Getter 上的约束注解。
+     * 当子类 override 属性但未重新声明约束时，继续向父接口和父类上查找。
+     */
+    private fun collectAnnotationsOnGetter(
+        clazz: KClass<*>,
+        property: String,
+        visited: MutableSet<KClass<*>>
+    ): MutableList<Annotation> {
+        if (clazz == Any::class || !visited.add(clazz)) {
+            return mutableListOf()
+        }
         val annotationList = mutableListOf<Annotation>()
-        if (clazz != Any::class && !clazz.isAbstract) {
-            try {
-                val prop = clazz.getMemberProperty(property)
-                val annotations = prop.getter.annotations
-                for (annotation in annotations) {
-                    if (annotation.annotationClass.hasAnnotation<Constraint>()
-                        || annotation.annotationClass.qualifiedName?.endsWith(".List") == true
-                    ) { // 是约束注解
-                        annotationList.add(annotation)
-                    }
+        try {
+            val prop = clazz.declaredMemberProperties.first { it.name == property }
+            prop.getter.annotations.forEach { annotation ->
+                if (annotation.annotationClass.hasAnnotation<Constraint>()
+                    || annotation.annotationClass.qualifiedName?.endsWith(".List") == true
+                ) {
+                    annotationList.add(annotation)
                 }
-            } catch (_: NoSuchElementException) {
-                val superClass = clazz.getSuperClass() ?: return annotationList
-                return getAnnotationsOnGetter(superClass, property)
-            } catch (_: IllegalArgumentException) {
-                val superClass = clazz.getSuperClass() ?: return annotationList
-                return getAnnotationsOnGetter(superClass, property)
             }
+        } catch (_: NoSuchElementException) {
+            // 当前类未声明该属性，继续向上查找
+        } catch (_: IllegalArgumentException) {
+            // 当前类未声明该属性，继续向上查找
+        }
+        clazz.getSuperInterfaces().forEach { superInterface ->
+            annotationList.addAll(collectAnnotationsOnGetter(superInterface, property, visited))
+        }
+        clazz.getSuperClass()?.let { superClass ->
+            annotationList.addAll(collectAnnotationsOnGetter(superClass, property, visited))
         }
         return annotationList
     }
