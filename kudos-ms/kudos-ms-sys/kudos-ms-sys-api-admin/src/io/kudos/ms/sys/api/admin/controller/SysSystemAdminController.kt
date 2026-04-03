@@ -23,7 +23,16 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/admin/sys/system")
 class SysSystemAdminController:
-    BaseCrudController<String, ISysSystemService, SysSystemQuery, SysSystemRow, SysSystemDetail, SysSystemEdit, SysSystemFormCreate, SysSystemFormUpdate>() {
+    BaseCrudController<
+            String,
+            ISysSystemService,
+            SysSystemQuery,
+            SysSystemRow,
+            SysSystemDetail,
+            SysSystemEdit,
+            SysSystemFormCreate,
+            SysSystemFormUpdate
+            >() {
 
     /**
      * 返回所有启用的子系统编码
