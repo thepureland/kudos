@@ -3,7 +3,6 @@ package io.kudos.ms.sys.core.api
 import io.kudos.ms.sys.common.api.ISysTenantApi
 import io.kudos.ms.sys.common.vo.tenant.SysTenantCacheEntry
 import io.kudos.ms.sys.core.service.iservice.ISysTenantService
-import jakarta.annotation.Resource
 import org.springframework.stereotype.Component
 
 
@@ -15,23 +14,15 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-open class SysTenantApi : ISysTenantApi {
+open class SysTenantApi(
+    private val sysTenantService: ISysTenantService,
+) : ISysTenantApi {
 
+    override fun getTenantFromCache(id: String): SysTenantCacheEntry? = sysTenantService.getTenantFromCache(id)
 
-    @Resource
-    protected lateinit var sysTenantService: ISysTenantService
+    override fun getTenantsFromCacheByIds(ids: Collection<String>): Map<String, SysTenantCacheEntry> =
+        sysTenantService.getTenantsFromCacheByIds(ids)
 
-    override fun getTenantFromCache(id: String): SysTenantCacheEntry? {
-        return sysTenantService.getTenantFromCache(id)
-    }
-
-    override fun getTenantsFromCacheByIds(ids: Collection<String>): Map<String, SysTenantCacheEntry> {
-        return sysTenantService.getTenantsFromCacheByIds(ids)
-    }
-
-    override fun getTenantsBySubSystemCode(subSystemCode: String): List<SysTenantCacheEntry> {
-        return sysTenantService.getTenantsForSubSystemFromCache(subSystemCode).filter { it.active }
-    }
-
-
+    override fun getTenantsBySubSystemCode(subSystemCode: String): List<SysTenantCacheEntry> =
+        sysTenantService.getTenantsForSubSystemFromCache(subSystemCode).filter { it.active }
 }

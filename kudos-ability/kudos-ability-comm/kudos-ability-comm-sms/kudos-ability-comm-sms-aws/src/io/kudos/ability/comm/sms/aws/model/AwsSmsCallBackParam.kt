@@ -14,14 +14,8 @@ class AwsSmsCallBackParam : Serializable {
     var messageId: String? = null
     var sequenceNumber: String? = null
 
-    override fun toString(): String {
-        return "AwsSmsResponse{" +
-                "statusCode=" + statusCode +
-                ", statusText='" + statusText + '\'' +
-                ", messageId='" + messageId + '\'' +
-                ", sequenceNumber='" + sequenceNumber + '\'' +
-                '}'
-    }
+    override fun toString(): String =
+        "AwsSmsResponse(statusCode=$statusCode, statusText='$statusText', messageId='$messageId', sequenceNumber='$sequenceNumber')"
 
     companion object {
         @Serial

@@ -31,7 +31,7 @@ object RedisConnectFactory {
         var clientOptions: ClientOptions? = null
         var redisConfiguration: RedisConfiguration? = null
         //集群模式下的lettuce配置
-        if (redisProperties.cluster != null && !redisProperties.cluster!!.nodes.isNullOrEmpty()) {
+        if (!redisProperties.cluster?.nodes.isNullOrEmpty()) {
             val clusterTopologyRefreshOptions: ClusterTopologyRefreshOptions? = ClusterTopologyRefreshOptions.builder()
                 .enablePeriodicRefresh(Duration.ofSeconds(60L))
                 .enableAdaptiveRefreshTrigger(
@@ -113,12 +113,10 @@ object RedisConnectFactory {
      * @return redisClusterConfiguration
      */
     private fun getClusterRedisConfiguration(redisProperties: DataRedisProperties): RedisClusterConfiguration {
-        //集群模式下链接
-        val clusterProperties = redisProperties.cluster!!
-        val config = RedisClusterConfiguration(clusterProperties.nodes!!)
-        if (clusterProperties.maxRedirects != null) {
-            config.setMaxRedirects(clusterProperties.maxRedirects!!)
-        }
+        val clusterProperties = checkNotNull(redisProperties.cluster) { "cluster must be set when using cluster mode" }
+        val nodes = checkNotNull(clusterProperties.nodes) { "cluster.nodes must not be empty" }
+        val config = RedisClusterConfiguration(nodes)
+        clusterProperties.maxRedirects?.let { config.setMaxRedirects(it) }
         if (redisProperties.password != null) {
             config.password = RedisPassword.of(redisProperties.password)
         }

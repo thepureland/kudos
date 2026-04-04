@@ -24,7 +24,5 @@ interface IFailedDataHandler<T> {
      */
     fun handleFailedData(file: File): Boolean
 
-    fun filePath(): String {
-        return "/var/data/failed/" + KudosContextHolder.get().atomicServiceCode
-    }
+    fun filePath(): String = "/var/data/failed/${KudosContextHolder.get().atomicServiceCode}"
 }

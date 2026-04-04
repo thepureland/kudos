@@ -10,7 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
-import java.util.*
+import java.util.UUID
 
 /**
  * Hash 缓存策略封装管理器：按配置为每个 hash 缓存名创建 [IHashCache] 视图（本地/远程/两级），

@@ -13,7 +13,6 @@ import jakarta.annotation.Resource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
-import java.util.*
 import javax.sql.DataSource
 
 /**
@@ -45,7 +44,7 @@ open class DsContextProcessor {
     private val keyLockRegistry = KeyLockRegistry<String>()
 
     fun doDetermineDatasource(dsKey: String, dsKeyConfig: String?): String? {
-        if (Objects.isNull(KudosContextHolder.get())) {
+        if (KudosContextHolder.get() == null) {
             return null
         }
         val context = KudosContextHolder.get()
@@ -120,7 +119,7 @@ open class DsContextProcessor {
         log.warn("收到刷新數據源id為：{0} 的請求", dsId)
         if (dsId == null) {
             val ds = dataSource as DynamicRoutingDataSource
-            val strings  = (dataSource as DynamicRoutingDataSource).dataSources.keys
+            val strings = (dataSource as DynamicRoutingDataSource).dataSources.keys
             for (dsKey in strings) {
                 if (primary != dsKey) {
                     ds.removeDataSource(dsKey)

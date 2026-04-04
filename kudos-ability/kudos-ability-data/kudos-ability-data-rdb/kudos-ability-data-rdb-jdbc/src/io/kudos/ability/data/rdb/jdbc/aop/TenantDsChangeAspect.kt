@@ -36,13 +36,11 @@ class TenantDsChangeAspect {
         val signature = joinPoint.signature as MethodSignature
         val dsChange = signature.method.getAnnotation(TenantDsChange::class.java)
         if (dsChange.value.isNotBlank()) {
-            if (dsChange.value.startsWith("_context")) {
-                DbContext.get().forcedDs = dsChange.value
-            } else {
-                DbContext.get().forcedDs = "_context::" + dsChange.value
-            }
+            DbContext.get().forcedDs =
+                if (dsChange.value.startsWith("_context")) dsChange.value
+                else "_context::${dsChange.value}"
             DbContext.get().readonly = dsChange.readonly
-            log.debug("强制指定数据源:ds=" + DbContext.get().forcedDs + ",readonly=" + dsChange.readonly)
+            log.debug("强制指定数据源:ds=${DbContext.get().forcedDs},readonly=${dsChange.readonly}")
         }
         var result: Any?
         try {

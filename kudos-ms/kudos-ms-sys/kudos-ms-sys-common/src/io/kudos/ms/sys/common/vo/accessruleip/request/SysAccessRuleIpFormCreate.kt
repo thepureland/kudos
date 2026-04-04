@@ -11,18 +11,18 @@ import java.time.LocalDateTime
  */
 data class SysAccessRuleIpFormCreate (
 
-    override val ipStart: Long? = null,
+    override val ipStart: Long? ,
 
-    override val ipEnd: Long? = null,
+    override val ipEnd: Long? ,
 
-    override val ipType: Int? = null,
+    override val ipType: Int? ,
 
-    override val expirationDate: LocalDateTime? = null,
+    override val expirationDate: LocalDateTime? ,
 
-    override val parentRuleId: String? = null,
+    override val parentRuleId: String? ,
 
-    override val remark: String? = null,
+    override val remark: String? ,
 
-    override val active: Boolean? = null,
+    override val active: Boolean? ,
 
 ) : ISysAccessRuleIpFormBase

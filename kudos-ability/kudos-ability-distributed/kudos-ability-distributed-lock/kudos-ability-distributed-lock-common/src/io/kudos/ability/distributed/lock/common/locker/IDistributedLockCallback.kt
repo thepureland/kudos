@@ -9,8 +9,7 @@ interface IDistributedLockCallback {
      * 成功上锁增加处理
      * @param lockKey
      */
-    fun doLockSuccess(lockKey: String) {
-    }
+    fun doLockSuccess(lockKey: String) {}
 
     /**
      * 上锁失败处理

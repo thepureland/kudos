@@ -1,8 +1,8 @@
 package io.kudos.ms.sys.core.service.impl
 
 import io.kudos.base.support.service.impl.BaseCrudService
-import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
+import io.kudos.base.model.contract.entity.IIdEntity
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.PagingSearchResult
 import io.kudos.base.query.eq
@@ -16,8 +16,6 @@ import io.kudos.ms.sys.core.cache.TenantByIdCache
 import io.kudos.ms.sys.core.dao.SysDomainDao
 import io.kudos.ms.sys.core.model.po.SysDomain
 import io.kudos.ms.sys.core.service.iservice.ISysDomainService
-import jakarta.annotation.Resource
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import kotlin.reflect.KClass
@@ -32,17 +30,12 @@ import kotlin.reflect.KClass
 @Service
 @Transactional
 open class SysDomainService(
-    dao: SysDomainDao
+    dao: SysDomainDao,
+    private val domainByNameCache: DomainByNameCache,
+    private val tenantByIdCache: TenantByIdCache,
 ) : BaseCrudService<String, SysDomain, SysDomainDao>(dao), ISysDomainService {
 
-
     private val log = LogFactory.getLog(this::class)
-
-    @Autowired
-    private lateinit var domainByNameCache: DomainByNameCache
-
-    @Resource
-    private lateinit var tenantByIdCache: TenantByIdCache
 
     override fun <R : Any> get(id: String, returnType: KClass<R>): R? {
         val result = if (returnType == SysDomainCacheEntry::class) {
@@ -52,7 +45,7 @@ open class SysDomainService(
             super.get(id, returnType)
         }
         if (result is SysDomainDetail) {
-            result.tenantName = tenantByIdCache.getTenantById(result.tenantId)!!.name
+            result.tenantName = tenantByIdCache.getTenantById(result.tenantId)?.name.orEmpty()
         }
         return result
     }
@@ -64,25 +57,21 @@ open class SysDomainService(
             val tenantIds = rows.map { (it as SysDomainRow).tenantId }
             val tenants = tenantByIdCache.getTenantsByIds(tenantIds)
             val idAndNameMap = tenants.mapValues { entry -> entry.value.name }
-            rows.forEach { (it as SysDomainRow).tenantName = idAndNameMap[it.tenantId]!! }
+            rows.forEach { row ->
+                val r = row as SysDomainRow
+                r.tenantName = requireNotNull(idAndNameMap[r.tenantId]) { "tenantId=${r.tenantId} 未在缓存中" }
+            }
         }
         return result
     }
 
-    override fun getDomainFromCache(domainName: String): SysDomainCacheEntry? {
-        return domainByNameCache.getDomain(domainName)
-    }
+    override fun getDomainFromCache(domainName: String): SysDomainCacheEntry? = domainByNameCache.getDomain(domainName)
 
-    override fun getDomainsByTenantId(tenantId: String): List<SysDomainRow> {
-        val searchPayload = SysDomainQuery(tenantId = tenantId)
-        @Suppress("UNCHECKED_CAST")
-        return dao.search(searchPayload, SysDomainRow::class)
-    }
+    override fun getDomainsByTenantId(tenantId: String): List<SysDomainRow> =
+        dao.search(SysDomainQuery(tenantId = tenantId), SysDomainRow::class)
 
-    override fun getDomainsBySystemCode(systemCode: String): List<SysDomainRow> {
-        val criteria = Criteria(SysDomain::systemCode eq systemCode)
-        return dao.searchAs<SysDomainRow>(criteria)
-    }
+    override fun getDomainsBySystemCode(systemCode: String): List<SysDomainRow> =
+        dao.searchAs(Criteria(SysDomain::systemCode eq systemCode))
 
     @Transactional
     override fun updateActive(id: String, active: Boolean): Boolean {
@@ -90,35 +79,36 @@ open class SysDomainService(
             this.id = id
             this.active = active
         }
-        val success = dao.update(domain)
-        if (success) {
-            log.debug("更新id为${id}的域名的启用状态为${active}。")
+        return completeCrudUpdate(
+            success = dao.update(domain),
+            log = log,
+            successMessage = "更新id为${id}的域名的启用状态为${active}。",
+            failureMessage = "更新id为${id}的域名的启用状态为${active}失败！",
+        ) {
             domainByNameCache.syncOnUpdate(null, id)
-        } else {
-            log.error("更新id为${id}的域名的启用状态为${active}失败！")
         }
-        return success
     }
 
     @Transactional
     override fun insert(any: Any): String {
         val id = super.insert(any)
-        log.debug("新增id为${id}的域名。")
-        domainByNameCache.syncOnInsert(any, id)
+        completeCrudInsert(log, "新增id为${id}的域名。") {
+            domainByNameCache.syncOnInsert(any, id)
+        }
         return id
     }
 
     @Transactional
     override fun update(any: Any): Boolean {
-        val success = super.update(any)
-        val id = BeanKit.getProperty(any, SysDomain::id.name) as String
-        if (success) {
-            log.debug("更新id为${id}的域名。")
+        val id = requireDomainId(any)
+        return completeCrudUpdate(
+            success = super.update(any),
+            log = log,
+            successMessage = "更新id为${id}的域名。",
+            failureMessage = "更新id为${id}的域名失败！",
+        ) {
             domainByNameCache.syncOnUpdate(any, id)
-        } else {
-            log.error("更新id为${id}的域名失败！")
         }
-        return success
     }
 
     @Transactional
@@ -128,14 +118,14 @@ open class SysDomainService(
             log.warn("删除id为${id}的域名时，发现其已不存在！")
             return false
         }
-        val success = super.deleteById(id)
-        if (success) {
-            log.debug("删除id为${id}的域名。")
+        return completeCrudUpdate(
+            success = super.deleteById(id),
+            log = log,
+            successMessage = "删除id为${id}的域名。",
+            failureMessage = "删除id为${id}的域名失败！",
+        ) {
             domainByNameCache.syncOnDelete(domain, id)
-        } else {
-            log.error("删除id为${id}的域名失败！")
         }
-        return success
     }
 
     @Transactional
@@ -149,5 +139,7 @@ open class SysDomainService(
         return count
     }
 
-
+    private fun requireDomainId(any: Any): String =
+        (any as? IIdEntity<*>)?.id as? String
+            ?: error("更新域名时不支持的入参类型: ${any::class.qualifiedName}")
 }

@@ -32,15 +32,16 @@ open class BaseMenuTreeNode: IJsonResult, ITreeNode<String>, Comparable<BaseMenu
 //    @get:JsonInclude(JsonInclude.Include.NON_EMPTY) //TODO
     var children = mutableListOf<ITreeNode<String>>()
 
-    override fun _getId(): String = this.id!!
+    override fun _getId(): String = requireNotNull(id) { "BaseMenuTreeNode.id 不能为空" }
 
     override fun _getParentId(): String? = parentId
 
     override fun _getChildren(): MutableList<ITreeNode<String>> = children
 
     override fun compareTo(other: BaseMenuTreeNode): Int {
-        if (seqNo == null || other.seqNo == null) return 0
-        return seqNo!!.compareTo(other.seqNo!!)
+        val a = seqNo ?: return 0
+        val b = other.seqNo ?: return 0
+        return a.compareTo(b)
     }
 
 }

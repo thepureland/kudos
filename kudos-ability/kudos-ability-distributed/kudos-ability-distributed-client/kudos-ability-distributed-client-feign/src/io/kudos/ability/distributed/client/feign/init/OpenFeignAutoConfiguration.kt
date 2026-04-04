@@ -19,7 +19,7 @@ import org.springframework.context.annotation.Configuration
  */
 @Configuration
 @AutoConfigureAfter(ContextAutoConfiguration::class)
-open class OpenFeignAutoConfiguration: IComponentInitializer {
+open class OpenFeignAutoConfiguration : IComponentInitializer {
 
 //    @Autowired
 //    lateinit var objectMapper: ObjectMapper

@@ -81,7 +81,9 @@ class SysI18NServiceTest : RdbAndRedisCacheTestBase() {
             mapOf(i18nTypeDictCode to listOf(namespace)),
             setOf(atomicServiceCode)
         )
-        assertEquals("svc-i18n-value-1", batch[i18nTypeDictCode]!![namespace]!![key])
+        val byType = requireNotNull(batch[i18nTypeDictCode]) { "batch missing i18nTypeDictCode" }
+        val byNs = requireNotNull(byType[namespace]) { "batch missing namespace" }
+        assertEquals("svc-i18n-value-1", byNs[key])
     }
 
     @Test

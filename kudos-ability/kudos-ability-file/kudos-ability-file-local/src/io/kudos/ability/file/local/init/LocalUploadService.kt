@@ -27,13 +27,11 @@ open class LocalUploadService : AbstractUploadService() {
     }
 
     override fun saveFile(model: UploadFileModel<*>, fileDir: String): String {
-        var fileDir = fileDir
         createBucket(model)
-        if (!model.bucketName.isNullOrBlank()) {
-            //本地存储路径,需要bucketName
-            fileDir = model.bucketName + File.separator + fileDir
-        }
-        val rDir = properties.basePath + File.separator + fileDir
+        val relativeDir = model.bucketName?.takeIf { it.isNotBlank() }?.let { bucket ->
+            bucket + File.separator + fileDir
+        } ?: fileDir
+        val rDir = properties.basePath + File.separator + relativeDir
         createFileDir(rDir)
         var fName = model.fileName
         if (fName.isNullOrBlank()) {
@@ -44,14 +42,11 @@ open class LocalUploadService : AbstractUploadService() {
             requireNotNull(model.inputStreamSource) { "inputStreamSource is null" }.getInputStream().use { inputStream ->
                 CompressionPipeline.compressAndOutputFile(inputStream, fullFilePath, model.compressionConfig)
             }
-        } catch (e: java.lang.Exception) {
+        } catch (e: Exception) {
             throw ServiceException(FileErrorCode.FILE_UPLOAD_FAIL, e)
         }
         //隐藏basePath
-        var filePath = fileDir + File.separator + fName
-        if (filePath.indexOf("\\") != -1) {
-            filePath = filePath.replace("\\\\".toRegex(), "/")
-        }
+        val filePath = (relativeDir + File.separator + fName).replace('\\', '/')
         return "/$filePath"
     }
 

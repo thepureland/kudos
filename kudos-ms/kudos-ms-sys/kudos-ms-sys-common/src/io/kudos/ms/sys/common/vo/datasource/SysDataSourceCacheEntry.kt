@@ -13,56 +13,56 @@ import java.io.Serializable
 data class SysDataSourceCacheEntry (
 
     /** 主键 */
-    override val id: String = "",
+    override val id: String,
 
 
     /** 名称 */
-    val name: String = "",
+    val name: String,
 
     /** 子系统编码 */
-    val subSystemCode: String = "",
+    val subSystemCode: String,
 
     /** 微服务编码 */
-    val microServiceCode: String = "",
+    val microServiceCode: String,
 
     /** 租户id */
-    val tenantId: String? = null,
+    val tenantId: String?,
 
     /** url */
-    val url: String = "",
+    val url: String,
 
     /** 用户名 */
-    val username: String = "",
+    val username: String,
 
     /** 密码 */
-    val password: String? = null,
+    val password: String?,
 
     /** 初始连接数。初始化发生在显示调用init方法，或者第一次getConnection时 */
-    val initialSize: Int? = null,
+    val initialSize: Int?,
 
     /** 最大连接数 */
-    val maxActive: Int? = null,
+    val maxActive: Int?,
 
     /** 最大空闲连接数 */
-    val maxIdle: Int? = null,
+    val maxIdle: Int?,
 
     /** 最小空闲连接数。至少维持多少个空闲连接 */
-    val minIdle: Int? = null,
+    val minIdle: Int?,
 
     /** 出借最长期限(毫秒)。客户端从连接池获取（借出）一个连接后，超时没有归还（return），则连接池会抛出异常 */
-    val maxWait: Int? = null,
+    val maxWait: Int?,
 
     /** 连接寿命(毫秒)。超时(相对于初始化时间)连接池将在出借或归还时删除这个连接 */
-    val maxAge: Int? = null,
+    val maxAge: Int?,
 
     /** 备注 */
-    val remark: String? = null,
+    val remark: String?,
 
     /** 是否启用 */
-    val active: Boolean? = null,
+    val active: Boolean?,
 
     /** 是否内置 */
-    val builtIn: Boolean? = null,
+    val builtIn: Boolean?,
 
 ) : IIdEntity<String>, Serializable {
 

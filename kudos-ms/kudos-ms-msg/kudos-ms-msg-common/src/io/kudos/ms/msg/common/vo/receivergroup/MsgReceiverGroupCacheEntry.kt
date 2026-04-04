@@ -14,43 +14,43 @@ import java.time.LocalDateTime
 data class MsgReceiverGroupCacheEntry (
 
     /** 主键 */
-    override val id: String = "",
+    override val id: String,
 
     /** 接收者群组类型字典码 */
-    val receiverGroupTypeDictCode: String? = null,
+    val receiverGroupTypeDictCode: String?,
 
     /** 群组定义的表 */
-    val defineTable: String? = null,
+    val defineTable: String?,
 
     /** 群组名称在具体群组表中的字段名 */
-    val nameColumn: String? = null,
+    val nameColumn: String?,
 
     /** 备注 */
-    val remark: String? = null,
+    val remark: String?,
 
     /** 是否启用 */
-    val active: Boolean? = null,
+    val active: Boolean?,
 
     /** 是否内置 */
-    val builtIn: Boolean? = null,
+    val builtIn: Boolean?,
 
     /** 创建者id */
-    val createUserId: String? = null,
+    val createUserId: String?,
 
     /** 创建者名称 */
-    val createUserName: String? = null,
+    val createUserName: String?,
 
     /** 创建时间 */
-    val createTime: LocalDateTime? = null,
+    val createTime: LocalDateTime?,
 
     /** 更新者id */
-    val updateUserId: String? = null,
+    val updateUserId: String?,
 
     /** 更新者名称 */
-    val updateUserName: String? = null,
+    val updateUserName: String?,
 
     /** 更新时间 */
-    val updateTime: LocalDateTime? = null,
+    val updateTime: LocalDateTime?,
 
 ) : IIdEntity<String>, Serializable {
 

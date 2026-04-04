@@ -11,8 +11,7 @@ open class FlywayMultiDataSourceProperties {
     /**
      * 数据源配置信息：key=模块名，value=数据源名
      */
-    var datasourceConfig = linkedMapOf<String, String>()
+    var datasourceConfig: LinkedHashMap<String, String> = linkedMapOf()
 
     fun getDataSourceKey(moduleName: String): String? = datasourceConfig[moduleName]
-
 }

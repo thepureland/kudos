@@ -137,7 +137,7 @@ class StreamProducerHelper {
     }
 
     private fun <T> createMessage(bindingName: String, data: T): Message<StreamMessageVo<T>> {
-        val destination = properties.bindings[bindingName]!!.destination
+        val destination = requireNotNull(properties.bindings[bindingName]) { "未配置 stream binding: $bindingName" }.destination
         val header = StreamHeader.initHeader(destination)
         val headerMap = BeanKit.extract(header)
         val map = mutableMapOf<String, Any>()

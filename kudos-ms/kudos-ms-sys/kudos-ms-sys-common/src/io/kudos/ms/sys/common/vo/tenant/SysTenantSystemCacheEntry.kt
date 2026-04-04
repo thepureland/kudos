@@ -11,11 +11,11 @@ import java.io.Serializable
  */
 data class SysTenantSystemCacheEntry(
     /** 主键 */
-    override val id: String = "",
+    override val id: String,
     /** 租户id */
-    val tenantId: String = "",
+    val tenantId: String,
     /** 系统编码 */
-    val systemCode: String = ""
+    val systemCode: String
 ) : IIdEntity<String>, Serializable {
 
     companion object {

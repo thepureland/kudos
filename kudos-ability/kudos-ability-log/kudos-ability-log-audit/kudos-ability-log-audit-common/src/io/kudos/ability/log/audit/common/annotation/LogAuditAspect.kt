@@ -51,7 +51,7 @@ class LogAuditAspect {
                 if (auditService != null && modelAudit != null) {
                     auditService.submit(modelAudit)
                 }
-            } catch (e: java.lang.Exception) {
+            } catch (e: Exception) {
                 LOG.error(e, "审计日志组件,拦截器异常!")
             }
         }

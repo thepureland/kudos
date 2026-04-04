@@ -35,10 +35,11 @@ open class MinioAutoConfiguration : IComponentInitializer {
 
     @Bean
     @ConditionalOnMissingBean
-    open fun minioClient(minioProperties: MinioProperties): MinioClient {
-        return MinioClient.builder().endpoint(URI(minioProperties.endpoint).toURL())
-            .credentials(minioProperties.accessKey, minioProperties.secretKey).build()
-    }
+    open fun minioClient(minioProperties: MinioProperties): MinioClient =
+        MinioClient.builder()
+            .endpoint(URI(minioProperties.endpoint).toURL())
+            .credentials(minioProperties.accessKey, minioProperties.secretKey)
+            .build()
 
     @Bean
     @ConditionalOnMissingBean

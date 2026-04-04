@@ -10,6 +10,8 @@ import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import java.net.HttpURLConnection
 import java.net.URL
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlin.test.Test
@@ -20,7 +22,7 @@ import kotlin.test.assertEquals
  *
  * @author AI: ChatGPT
  * @author K
- * @since 1.0.-0
+ * @since 1.0.0
  */
 @EnableKudosTest
 @EnabledIfDockerInstalled
@@ -127,7 +129,7 @@ class AwsSmsTest {
 
     /** 限流桩：指定手机号触发 429 */
     private fun stubPublishRateLimitedFor(phone: String) {
-        val encodedPhone = java.net.URLEncoder.encode(phone, java.nio.charset.StandardCharsets.UTF_8)
+        val encodedPhone = URLEncoder.encode(phone, StandardCharsets.UTF_8)
 
         // 429 + AWS Query 错误 XML
         val errorXml = """

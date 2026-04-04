@@ -18,7 +18,9 @@ import org.aspectj.lang.JoinPoint
 import org.springframework.core.DefaultParameterNameDiscoverer
 import org.springframework.core.ParameterNameDiscoverer
 import org.springframework.web.util.ContentCachingRequestWrapper
-import java.util.*
+import java.util.ArrayList
+import java.util.Date
+import java.util.LinkedList
 import kotlin.reflect.KClass
 
 /**
@@ -66,15 +68,7 @@ object AuditLogTool {
     ): IAuditLogDetailDescriptionFormatter? {
         if (formatterClazz == DefaultAuditLogDetailDescriptionFormatter::class.java) {
             val formatterMap = SpringKit.getBeansOfType<IAuditLogDetailDescriptionFormatter>()
-            if (formatterMap.isEmpty()) {
-                return null
-            }
-            for (value in formatterMap.values) {
-                if (value.needFormat(baseLog)) {
-                    return value
-                }
-            }
-            return null
+            return formatterMap.values.firstOrNull { it.needFormat(baseLog) }
         } else {
             return SpringKit.getBean(formatterClazz)
         }
@@ -104,7 +98,7 @@ object AuditLogTool {
     fun createLogVo(audit: Audit, model: Any, joinPoint: JoinPoint): LogVo {
         val logVo = LogVo()
         val baseLog: BaseLog = logVo.addAuditLog(audit)
-        if (audit.ignoreForm === YesNotEnum.NOT) {
+        if (audit.ignoreForm == YesNotEnum.NOT) {
             KudosContextHolder.get().clientInfo?.requestContentString = JsonKit.toJson(model)
         }
         try {
@@ -128,7 +122,7 @@ object AuditLogTool {
     fun createLogVo(audit: WebAudit, request: HttpServletRequest, joinPoint: JoinPoint): LogVo {
         val logVo = LogVo()
         val baseLog: BaseLog = logVo.addAuditLog(audit)
-        if (audit.ignoreForm === YesNotEnum.NOT) {
+        if (audit.ignoreForm == YesNotEnum.NOT) {
             val body: String = getRequestData(request)
             KudosContextHolder.get().clientInfo?.requestContentString = body
         }
@@ -226,42 +220,36 @@ object AuditLogTool {
     fun setOperator(modelAudit: SysAuditLogModel) {
         val context = KudosContextHolder.get()
         for (entity in requireNotNull(modelAudit.entities) { "entities is null" }) {
-            entity.operateTime=Date()
+            entity.operateTime = Date()
             val ip = context.clientInfo?.ip
             if (ip != null) {
-                entity.operateIp= IpKit.ipv4StringToLong(ip)
+                entity.operateIp = IpKit.ipv4StringToLong(ip)
             }
 
             //TODO ..
             //entity.setOperateIpDictCode(contextParam.getUserIpDictCode());
 //            entity.operator=contextParam.getUsername())
-            entity.operatorId=context.user?.id
+            entity.operatorId = context.user?.id
 //            entity.setOperatorUserType(contextParam.getUserType())
 
             entity.clientBrowser = context.clientInfo?.browser?.first
-            entity.clientOs=context.clientInfo?.os?.first
-            entity.requestType=context.clientInfo?.requestType
-            entity.subSysCode=subSysCode
-            entity.tenantId=context.tenantId
+            entity.clientOs = context.clientInfo?.os?.first
+            entity.requestType = context.clientInfo?.requestType
+            entity.subSysCode = subSysCode
+            entity.tenantId = context.tenantId
             if (tenantProvider != null) {
-                entity.sourceTenantId=requireNotNull(tenantProvider) { "tenantProvider is null" }.getSourceTenant(entity.tenantId, entity.operatorId)
+                entity.sourceTenantId = requireNotNull(tenantProvider) { "tenantProvider is null" }.getSourceTenant(entity.tenantId, entity.operatorId)
             } else {
-                entity.sourceTenantId=entity.tenantId
+                entity.sourceTenantId = entity.tenantId
             }
         }
 
-        modelAudit.subSysCode=subSysCode
-        modelAudit.tenantId=context.tenantId
+        modelAudit.subSysCode = subSysCode
+        modelAudit.tenantId = context.tenantId
     }
 
     private val subSysCode: String?
-        get() {
-            val subSysCode = KudosContextHolder.get().subSystemCode
-            if (!subSysCode.isNullOrBlank()) {
-                return subSysCode
-            }
-            return subSysCode
-        }
+        get() = KudosContextHolder.get().subSystemCode
 
     private fun getAuditDetail(sysAuditLog: SysAuditLogVo): SysAuditDetailLogVo {
         val sysAuditDetailLog = SysAuditDetailLogVo()

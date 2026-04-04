@@ -9,18 +9,18 @@ package io.kudos.ms.sys.common.vo.i18n.request
  */
 data class SysI18nFormCreate (
 
-    override val locale: String = "",
+    override val locale: String ,
 
-    override val atomicServiceCode: String = "",
+    override val atomicServiceCode: String ,
 
-    override val i18nTypeDictCode: String = "",
+    override val i18nTypeDictCode: String ,
 
-    override val namespace: String = "",
+    override val namespace: String ,
 
-    override val key: String = "",
+    override val key: String ,
 
-    override val value: String = "",
+    override val value: String ,
 
-    override val remark: String? = null,
+    override val remark: String? ,
 
 ) : ISysI18nFormBase

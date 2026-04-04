@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Configuration
  */
 @Configuration
 @AutoConfigureAfter(ContextAutoConfiguration::class)
-open class NacosConfigAutoConfiguration: IComponentInitializer {
+open class NacosConfigAutoConfiguration : IComponentInitializer {
 
     override fun getComponentName() = "kudos-ability-distributed-config-nacos"
 

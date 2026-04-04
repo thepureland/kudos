@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.cache.Cache
 import org.springframework.cache.CacheManager
 import org.springframework.cache.support.AbstractCacheManager
-import java.util.*
+import java.util.Objects
 
 /**
  * 混合缓存管理器
@@ -68,7 +68,7 @@ class MixCacheManager : AbstractCacheManager() {
     @Resource
     private val cacheConfigProvider: ICacheConfigProvider? = null
 
-    private val caches: MutableList<Cache> = ArrayList<Cache>()
+    private val caches: MutableList<Cache> = mutableListOf()
 
     private fun hasLocalCacheManager(): Boolean = this::localCacheManager.isInitialized
 
@@ -153,7 +153,7 @@ class MixCacheManager : AbstractCacheManager() {
      * @return List<Cache>
     </Cache> */
     private fun loadLocalCacheConfig(localCacheConfigs: Map<String, CacheConfig>): MutableList<Cache> {
-        val localCaches: MutableList<Cache> = ArrayList<Cache>()
+        val localCaches: MutableList<Cache> = mutableListOf()
         //本地缓存
         if (hasLocalCacheManager()) {
             if (localCacheConfigs.isNotEmpty()) {
@@ -175,7 +175,7 @@ class MixCacheManager : AbstractCacheManager() {
      * @return remoteCaches
      */
     private fun loadRemoteCacheConfig(remoteCacheConfigs: Map<String, CacheConfig>): MutableList<Cache> {
-        val remoteCaches: MutableList<Cache> = ArrayList<Cache>()
+        val remoteCaches: MutableList<Cache> = mutableListOf()
         //远程二级缓存
         if (remoteCacheManager != null) {
             if (remoteCacheConfigs.isNotEmpty()) {
@@ -225,7 +225,7 @@ class MixCacheManager : AbstractCacheManager() {
      * @return 混合缓存实例列表
      */
     private fun loadMixCacheConfig(localRemoteCacheConfigs: Map<String, CacheConfig>): MutableList<Cache> {
-        val mixCacheConfig: MutableList<Cache> = ArrayList<Cache>()
+        val mixCacheConfig: MutableList<Cache> = mutableListOf()
         // 本地-远程两级联动缓存
         if (localRemoteCacheConfigs.isNotEmpty()) {
             localRemoteCacheConfigs.forEach { (key: String, _: CacheConfig?) ->

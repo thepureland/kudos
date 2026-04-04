@@ -2,7 +2,8 @@ package io.kudos.base.lang.string
 
 
 import java.security.SecureRandom
-import java.util.*
+import java.util.Random
+import java.util.UUID
 import kotlin.test.*
 
 /**

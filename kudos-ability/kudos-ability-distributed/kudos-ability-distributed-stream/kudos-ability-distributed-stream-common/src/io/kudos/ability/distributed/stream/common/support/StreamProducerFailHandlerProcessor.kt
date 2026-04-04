@@ -15,7 +15,10 @@ class StreamProducerFailHandlerProcessor : BeanPostProcessor {
     override fun postProcessAfterInitialization(bean: Any, beanName: String): Any {
         if (bean is IStreamFailHandler) {
             val handler: IStreamFailHandler = bean
-            StreamFailHandlerItem.put(handler.bindName()!!, handler)
+            StreamFailHandlerItem.put(
+                requireNotNull(handler.bindName()) { "IStreamFailHandler.bindName() 不能为 null: ${handler.javaClass.name}" },
+                handler
+            )
         }
         return bean
     }

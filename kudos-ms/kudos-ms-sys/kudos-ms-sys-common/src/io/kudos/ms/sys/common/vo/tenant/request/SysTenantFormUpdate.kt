@@ -1,6 +1,8 @@
 package io.kudos.ms.sys.common.vo.tenant.request
 
+import io.kudos.base.bean.validation.constraint.annotations.FixedLength
 import io.kudos.base.model.contract.entity.IIdEntity
+import jakarta.validation.constraints.NotBlank
 
 
 /**
@@ -12,16 +14,18 @@ import io.kudos.base.model.contract.entity.IIdEntity
 data class SysTenantFormUpdate (
 
     /** 主键 */
-    override val id: String? = null,
+    @get:NotBlank
+    @get:FixedLength(36)
+    override val id: String,
 
-    override val name: String = "",
+    override val name: String,
 
     override var subSystemCodes: Set<String> = emptySet(),
 
-    override val timezone: String? = null,
+    override val timezone: String?,
 
-    override val defaultLanguageCode: String? = null,
+    override val defaultLanguageCode: String?,
 
-    override val remark: String? = null,
+    override val remark: String?,
 
-) : IIdEntity<String?>, ISysTenantFormBase
+) : IIdEntity<String>, ISysTenantFormBase

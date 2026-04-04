@@ -9,28 +9,28 @@ package io.kudos.ms.user.common.vo.protection.request
  */
 data class UserAccountProtectionFormCreate (
 
-    override val userId: String? = null,
+    override val userId: String? ,
 
-    override val question1: String? = null,
+    override val question1: String? ,
 
-    override val answer1: String? = null,
+    override val answer1: String? ,
 
-    override val question2: String? = null,
+    override val question2: String? ,
 
-    override val answer2: String? = null,
+    override val answer2: String? ,
 
-    override val question3: String? = null,
+    override val question3: String? ,
 
-    override val answer3: String? = null,
+    override val answer3: String? ,
 
-    override val safeContactWayId: String? = null,
+    override val safeContactWayId: String? ,
 
-    override val totalValidateCount: Int? = null,
+    override val totalValidateCount: Int? ,
 
-    override val matchQuestionCount: Int? = null,
+    override val matchQuestionCount: Int? ,
 
-    override val errorTimes: Int? = null,
+    override val errorTimes: Int? ,
 
-    override val remark: String? = null,
+    override val remark: String? ,
 
 ) : IUserAccountProtectionFormBase

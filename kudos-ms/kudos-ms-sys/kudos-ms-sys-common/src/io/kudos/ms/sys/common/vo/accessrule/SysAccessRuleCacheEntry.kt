@@ -13,16 +13,16 @@ import java.io.Serializable
 data class SysAccessRuleCacheEntry (
 
     /** 主键 */
-    override val id: String = "",
+    override val id: String,
 
     /** 租户id */
-    val tenantId: String = "",
+    val tenantId: String,
 
     /** 系统编码 */
-    val systemCode: String = "",
+    val systemCode: String,
 
     /** 规则类型 */
-    val ruleType: Int = 0,
+    val ruleType: Int,
 
 ) : IIdEntity<String>, Serializable {
 

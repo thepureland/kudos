@@ -3,8 +3,8 @@ create table if not exists "sys_param"
 (
     "id"            character(36) default RANDOM_UUID() not null primary key,
     "param_name"    character varying(32)               not null,
-    "param_value"   character varying(128)              not null,
-    "default_value" character varying(128),
+    "param_value"   character varying(256)              not null,
+    "default_value" character varying(256),
     "atomic_service_code"   character varying(32)               not null,
     "order_num"     int2,
     "remark"        character varying(128),

@@ -31,14 +31,9 @@ open class MinioDeleteService : IDeleteService {
      * @throws Exception 异常
      */
     protected fun getMinioClient(model: DeleteFileModel): MinioClient? {
-        if (model.authServerParam != null) {
-            LOG.info(
-                "Minio use auth server type:{0}",
-                requireNotNull(model.authServerParam) { "authServerParam is null" }.javaClass.getSimpleName()
-            )
-            return requireNotNull(minioClientBuilderFactory.getInstance(requireNotNull(model.authServerParam) { "authServerParam is null" })) { "MinioClient builder not found" }.build()
-        }
-        return minioClientDefault
+        val auth = model.authServerParam ?: return minioClientDefault
+        LOG.info("Minio use auth server type:{0}", auth.javaClass.simpleName)
+        return requireNotNull(minioClientBuilderFactory.getInstance(auth)) { "MinioClient builder not found" }.build()
     }
 
     /**
@@ -51,17 +46,13 @@ open class MinioDeleteService : IDeleteService {
         }
 
         try {
-            //判定文件在存在
-            requireNotNull(getMinioClient(model)) { "MinioClient is null" }
-                .statObject(
-                    StatObjectArgs.builder()
-                        .bucket(model.bucketName)
-                        .`object`(model.filePath)
-                        .build()
-                )
-
-            //具体删除
-            requireNotNull(getMinioClient(model)) { "MinioClient is null" }.removeObject(
+            val client = requireNotNull(getMinioClient(model)) { "MinioClient is null" }
+            val objectArgs = StatObjectArgs.builder()
+                .bucket(model.bucketName)
+                .`object`(model.filePath)
+                .build()
+            client.statObject(objectArgs)
+            client.removeObject(
                 RemoveObjectArgs.builder()
                     .bucket(model.bucketName)
                     .`object`(model.filePath)
@@ -70,15 +61,13 @@ open class MinioDeleteService : IDeleteService {
             return true
         } catch (e: io.minio.errors.ErrorResponseException) {
             val code = e.errorResponse().code()
-            if ("NoSuchKey" == code || "NoSuchBucket" == code) {
-                throw ServiceException(FileErrorCode.FILE_NO_EXISTS, e)
-            } else if ("InvalidAccessKeyId" == code) {
-                throw ServiceException((FileErrorCode.FILE_INVALID_ACCESS_KEY))
-            } else if ("AccessDenied" == code) {
-                throw ServiceException((FileErrorCode.FILE_ACCESS_DENY))
+            when (code) {
+                "NoSuchKey", "NoSuchBucket" -> throw ServiceException(FileErrorCode.FILE_NO_EXISTS, e)
+                "InvalidAccessKeyId" -> throw ServiceException(FileErrorCode.FILE_INVALID_ACCESS_KEY)
+                "AccessDenied" -> throw ServiceException(FileErrorCode.FILE_ACCESS_DENY)
+                else -> throw ServiceException(FileErrorCode.FILE_DELETE_FAIL, e)
             }
-            throw ServiceException(FileErrorCode.FILE_DELETE_FAIL, e)
-        } catch (e: java.lang.Exception) {
+        } catch (e: Exception) {
             throw ServiceException(FileErrorCode.FILE_DELETE_FAIL, e)
         }
     }

@@ -165,6 +165,9 @@ class SysResourceServiceTest : RdbAndRedisCacheTestBase() {
     fun getResourceTree() {
         val tree = sysResourceService.getResourceTree(seededSubSystemCode, null)
         assertTrue(tree.isNotEmpty())
+        val parent = tree.firstOrNull { it.id == seededParentId }
+        assertNotNull(parent)
+        assertTrue(parent.children.orEmpty().any { it.id == seededChildId })
     }
 
     /** 子结点的祖先链包含父 id。 */

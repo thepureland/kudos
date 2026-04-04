@@ -36,7 +36,9 @@ import javafx.scene.control.ButtonBar.ButtonData
 import javafx.scene.control.ButtonType
 import javafx.scene.control.Dialog
 import javafx.scene.control.DialogPane
-import java.util.*
+import java.util.HashMap
+import java.util.Optional
+import java.util.Stack
 
 class Wizard(title: String = "") {
     /**************************************************************************

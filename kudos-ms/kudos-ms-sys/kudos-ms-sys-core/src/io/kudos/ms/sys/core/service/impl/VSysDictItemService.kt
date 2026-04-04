@@ -6,7 +6,6 @@ import io.kudos.ms.sys.core.cache.SysDictItemHashCache
 import io.kudos.ms.sys.core.dao.VSysDictItemDao
 import io.kudos.ms.sys.core.model.po.VSysDictItem
 import io.kudos.ms.sys.core.service.iservice.IVSysDictItemService
-import jakarta.annotation.Resource
 import org.springframework.stereotype.Service
 
 /**
@@ -19,12 +18,10 @@ import org.springframework.stereotype.Service
  */
 @Service
 open class VSysDictItemService(
-    dao: VSysDictItemDao
+    dao: VSysDictItemDao,
+    private val sysDictItemHashCache: SysDictItemHashCache,
 ) : BaseReadOnlyService<String, VSysDictItem, VSysDictItemDao>(dao),
     IVSysDictItemService {
-
-    @Resource
-    private lateinit var sysDictItemHashCache: SysDictItemHashCache
 
     override fun fetchByAtomicServiceCodeAndDictTypeAndItemCode(
         atomicServiceCode: String,

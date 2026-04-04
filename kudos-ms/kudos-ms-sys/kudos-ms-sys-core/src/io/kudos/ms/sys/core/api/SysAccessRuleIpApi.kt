@@ -5,7 +5,6 @@ import io.kudos.ms.sys.common.vo.accessruleip.SysAccessRuleIpCacheEntry
 import io.kudos.ms.sys.common.vo.accessruleip.request.SysAccessRuleIpBatchItem
 import io.kudos.ms.sys.common.vo.accessruleip.response.SysAccessRuleIpRow
 import io.kudos.ms.sys.core.service.iservice.ISysAccessRuleIpService
-import jakarta.annotation.Resource
 import org.springframework.stereotype.Service
 
 
@@ -16,31 +15,20 @@ import org.springframework.stereotype.Service
  * @since 1.0.0
  */
 @Service
-open class SysAccessRuleIpApi : ISysAccessRuleIpApi {
+open class SysAccessRuleIpApi(
+    private val sysAccessRuleIpService: ISysAccessRuleIpService,
+) : ISysAccessRuleIpApi {
 
+    override fun getIpsByRuleId(ruleId: String): List<SysAccessRuleIpRow> = sysAccessRuleIpService.getIpsByRuleId(ruleId)
 
-    @Resource
-    protected lateinit var sysAccessRuleIpService: ISysAccessRuleIpService
+    override fun getIpsBySystemAndTenant(systemCode: String, tenantId: String?): List<SysAccessRuleIpCacheEntry> =
+        sysAccessRuleIpService.getIpsBySystemAndTenant(systemCode, tenantId)
 
-    override fun getIpsByRuleId(ruleId: String): List<SysAccessRuleIpRow> {
-        return sysAccessRuleIpService.getIpsByRuleId(ruleId)
-    }
+    override fun checkIpAccess(ip: Long, systemCode: String, tenantId: String?): Boolean =
+        sysAccessRuleIpService.checkIpAccess(ip, systemCode, tenantId)
 
-    override fun getIpsBySystemAndTenant(systemCode: String, tenantId: String?): List<SysAccessRuleIpCacheEntry> {
-        return sysAccessRuleIpService.getIpsBySystemAndTenant(systemCode, tenantId)
-    }
+    override fun batchSaveOrUpdate(ruleId: String, ips: List<SysAccessRuleIpBatchItem>): Int =
+        sysAccessRuleIpService.batchSaveOrUpdate(ruleId, ips)
 
-    override fun checkIpAccess(ip: Long, systemCode: String, tenantId: String?): Boolean {
-        return sysAccessRuleIpService.checkIpAccess(ip, systemCode, tenantId)
-    }
-
-    override fun batchSaveOrUpdate(ruleId: String, ips: List<SysAccessRuleIpBatchItem>): Int {
-        return sysAccessRuleIpService.batchSaveOrUpdate(ruleId, ips)
-    }
-
-    override fun deleteByRuleId(ruleId: String): Int {
-        return sysAccessRuleIpService.deleteByRuleId(ruleId)
-    }
-
-
+    override fun deleteByRuleId(ruleId: String): Int = sysAccessRuleIpService.deleteByRuleId(ruleId)
 }

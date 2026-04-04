@@ -10,7 +10,7 @@ import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import java.io.Serializable
 import java.time.LocalDateTime
-import java.util.*
+import java.util.Date
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

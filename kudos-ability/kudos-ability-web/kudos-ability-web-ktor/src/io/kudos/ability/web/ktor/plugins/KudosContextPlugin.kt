@@ -5,7 +5,7 @@ import io.ktor.util.*
 import io.kudos.context.core.KudosContext
 import io.kudos.context.core.KudosContextElement
 import kotlinx.coroutines.withContext
-import java.util.*
+import java.util.UUID
 
 
 class KudosContextPlugin private constructor(

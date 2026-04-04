@@ -9,20 +9,20 @@ package io.kudos.ms.sys.common.vo.resource.request
  */
 data class SysResourceFormCreate (
 
-    override val name: String = "",
+    override val name: String ,
 
-    override val url: String? = null,
+    override val url: String? ,
 
-    override val resourceTypeDictCode: String = "",
+    override val resourceTypeDictCode: String ,
 
-    override val parentId: String? = null,
+    override val parentId: String? ,
 
-    override val orderNum: Int? = null,
+    override val orderNum: Int? ,
 
-    override val icon: String? = null,
+    override val icon: String? ,
 
-    override val subSystemCode: String = "",
+    override val subSystemCode: String ,
 
-    override val remark: String? = null,
+    override val remark: String? ,
 
 ) : ISysResourceFormBase

@@ -3,7 +3,7 @@ package io.kudos.ability.data.rdb.ktorm.support
 import io.kudos.base.lang.string.humpToUnderscore
 import org.ktorm.schema.BaseTable
 import org.ktorm.schema.Column
-import java.util.*
+import java.util.Locale
 
 object ColumnHelper {
 

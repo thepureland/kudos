@@ -9,14 +9,14 @@ package io.kudos.ms.auth.common.vo.role.request
  */
 data class AuthRoleFormCreate (
 
-    override val code: String? = null,
+    override val code: String? ,
 
-    override val name: String? = null,
+    override val name: String? ,
 
-    override val tenantId: String? = null,
+    override val tenantId: String? ,
 
-    override val subsysCode: String? = null,
+    override val subsysCode: String? ,
 
-    override val remark: String? = null,
+    override val remark: String? ,
 
 ) : IAuthRoleFormBase

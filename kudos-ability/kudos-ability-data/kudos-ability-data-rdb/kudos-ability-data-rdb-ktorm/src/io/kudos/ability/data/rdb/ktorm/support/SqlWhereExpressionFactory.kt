@@ -13,6 +13,8 @@ import org.ktorm.schema.ColumnDeclaring
  */
 object SqlWhereExpressionFactory {
 
+    private val NULLABLE_OPERATORS = setOf(OperatorEnum.IS_NULL, OperatorEnum.IS_NOT_NULL)
+
     /**
      * 创建查询条件表达式
      *
@@ -25,7 +27,7 @@ object SqlWhereExpressionFactory {
      */
     @Suppress("UNCHECKED_CAST")
     fun create(column: Column<Any>, operator: OperatorEnum, value: Any?): ColumnDeclaring<Boolean>? {
-        if (value == null && operator !in arrayOf(OperatorEnum.IS_NULL, OperatorEnum.IS_NOT_NULL)) {
+        if (value == null && operator !in NULLABLE_OPERATORS) {
             return null
         }
         return when (operator) {

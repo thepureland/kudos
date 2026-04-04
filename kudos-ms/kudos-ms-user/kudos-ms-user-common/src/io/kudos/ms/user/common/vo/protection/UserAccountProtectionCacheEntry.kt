@@ -14,67 +14,67 @@ import java.time.LocalDateTime
 data class UserAccountProtectionCacheEntry (
 
     /** 主键 */
-    override val id: String = "",
+    override val id: String,
 
     /** 用户ID */
-    val userId: String? = null,
+    val userId: String?,
 
     /** 问题1 */
-    val question1: String? = null,
+    val question1: String?,
 
     /** 答案1 */
-    val answer1: String? = null,
+    val answer1: String?,
 
     /** 问题2 */
-    val question2: String? = null,
+    val question2: String?,
 
     /** 答案2 */
-    val answer2: String? = null,
+    val answer2: String?,
 
     /** 问题3 */
-    val question3: String? = null,
+    val question3: String?,
 
     /** 答案3 */
-    val answer3: String? = null,
+    val answer3: String?,
 
     /** 安全联系方式ID */
-    val safeContactWayId: String? = null,
+    val safeContactWayId: String?,
 
     /** 总的找回密码次数 */
-    val totalValidateCount: Int? = null,
+    val totalValidateCount: Int?,
 
     /** 必须答对的问题数 */
-    val matchQuestionCount: Int? = null,
+    val matchQuestionCount: Int?,
 
     /** 错误次数 */
-    val errorTimes: Int? = null,
+    val errorTimes: Int?,
 
     /** 备注 */
-    val remark: String? = null,
+    val remark: String?,
 
     /** 是否启用 */
-    val active: Boolean? = null,
+    val active: Boolean?,
 
     /** 是否内置 */
-    val builtIn: Boolean? = null,
+    val builtIn: Boolean?,
 
     /** 创建者ID */
-    val createUserId: String? = null,
+    val createUserId: String?,
 
     /** 创建者名称 */
-    val createUserName: String? = null,
+    val createUserName: String?,
 
     /** 创建时间 */
-    val createTime: LocalDateTime? = null,
+    val createTime: LocalDateTime?,
 
     /** 更新者ID */
-    val updateUserId: String? = null,
+    val updateUserId: String?,
 
     /** 更新者名称 */
-    val updateUserName: String? = null,
+    val updateUserName: String?,
 
     /** 更新时间 */
-    val updateTime: LocalDateTime? = null,
+    val updateTime: LocalDateTime?,
 
 ) : IIdEntity<String>, Serializable {
 

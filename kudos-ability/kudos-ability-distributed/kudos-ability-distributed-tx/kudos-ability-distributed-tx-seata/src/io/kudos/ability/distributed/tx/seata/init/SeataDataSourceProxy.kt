@@ -24,33 +24,25 @@ class SeataDataSourceProxy : IDataSourceProxy {
     private var enableProxy: Boolean = true
 
     override fun proxyDatasource(dataSource: DataSource): DataSource {
-        if (!enableProxy) {
-            return dataSource
-        }
-        try {
-            if (BranchType.AT.name.equals(proxyMode, ignoreCase = true)) {
-                return DataSourceProxy(dataSource)
+        if (!enableProxy) return dataSource
+        return try {
+            when {
+                proxyMode.equals(BranchType.AT.name, ignoreCase = true) -> DataSourceProxy(dataSource)
+                proxyMode.equals(BranchType.XA.name, ignoreCase = true) -> DataSourceProxyXA(dataSource)
+                else -> throw IllegalArgumentException("Unknown dataSourceProxyMode: $proxyMode")
             }
-            if (BranchType.XA.name.equals(proxyMode, ignoreCase = true)) {
-                return DataSourceProxyXA(dataSource)
-            }
+        } catch (e: IllegalArgumentException) {
+            throw e
         } catch (e: Exception) {
             throw IllegalArgumentException("代理数据源失败", e)
         }
-        throw IllegalArgumentException("Unknown dataSourceProxyMode: $proxyMode")
     }
 
-    override fun isSeata(): Boolean {
-        return true
-    }
+    override fun isSeata(): Boolean = true
 
-    override fun seataMode(): SeataMode? {
-        if (BranchType.AT.name.equals(proxyMode, ignoreCase = true)) {
-            return SeataMode.AT
-        }
-        if (BranchType.XA.name.equals(proxyMode, ignoreCase = true)) {
-            return SeataMode.XA
-        }
-        return null
+    override fun seataMode(): SeataMode? = when {
+        proxyMode.equals(BranchType.AT.name, ignoreCase = true) -> SeataMode.AT
+        proxyMode.equals(BranchType.XA.name, ignoreCase = true) -> SeataMode.XA
+        else -> null
     }
 }

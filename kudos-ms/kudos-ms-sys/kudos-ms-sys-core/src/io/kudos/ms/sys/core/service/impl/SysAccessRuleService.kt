@@ -24,30 +24,23 @@ open class SysAccessRuleService(
     dao: SysAccessRuleDao
 ) : BaseCrudService<String, SysAccessRule, SysAccessRuleDao>(dao), ISysAccessRuleService {
 
-
     private val log = LogFactory.getLog(this::class)
 
     override fun getAccessRuleByTenantAndSystem(
         systemCode: String,
         tenantId: String
-    ): SysAccessRuleRow? {
-        val criteria = Criteria.and(
+    ): SysAccessRuleRow? = dao.searchAs<SysAccessRuleRow>(
+        Criteria.and(
             SysAccessRule::tenantId eq tenantId,
             SysAccessRule::systemCode eq systemCode,
         )
-        val records = dao.searchAs<SysAccessRuleRow>(criteria)
-        return records.firstOrNull()
-    }
+    ).firstOrNull()
 
-    override fun getAccessRulesByTenantId(tenantId: String): List<SysAccessRuleRow> {
-        val criteria = Criteria.and(SysAccessRule::tenantId eq tenantId)
-        return dao.searchAs<SysAccessRuleRow>(criteria)
-    }
+    override fun getAccessRulesByTenantId(tenantId: String): List<SysAccessRuleRow> =
+        dao.searchAs(Criteria.and(SysAccessRule::tenantId eq tenantId))
 
-    override fun getAccessRulesBySystemCode(systemCode: String): List<SysAccessRuleRow> {
-        val criteria = Criteria.and(SysAccessRule::systemCode eq systemCode)
-        return dao.searchAs<SysAccessRuleRow>(criteria)
-    }
+    override fun getAccessRulesBySystemCode(systemCode: String): List<SysAccessRuleRow> =
+        dao.searchAs(Criteria.and(SysAccessRule::systemCode eq systemCode))
 
     @Transactional
     override fun updateActive(id: String, active: Boolean): Boolean {
@@ -63,6 +56,4 @@ open class SysAccessRuleService(
         }
         return success
     }
-
-
 }

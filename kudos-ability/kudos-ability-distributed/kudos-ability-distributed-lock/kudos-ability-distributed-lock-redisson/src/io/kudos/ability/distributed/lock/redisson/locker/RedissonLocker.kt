@@ -23,9 +23,7 @@ class RedissonLocker : ILocker<RLock> {
      *
      * @param lockKey
      */
-    override fun getLock(lockKey: String): RLock {
-        return client().getLock(lockKey)
-    }
+    override fun getLock(lockKey: String): RLock = client().getLock(lockKey)
 
     /**
      * 获取分布式锁
@@ -33,11 +31,8 @@ class RedissonLocker : ILocker<RLock> {
      * @param lockKey 锁的key
      * @return RLock
      */
-    override fun lock(lockKey: String): RLock {
-        val lock: RLock = client().getLock(lockKey)
-        lock.lock()
-        return lock
-    }
+    override fun lock(lockKey: String): RLock =
+        client().getLock(lockKey).also { it.lock() }
 
     /**
      * 获取分布式锁，并指定锁失效秒数
@@ -46,11 +41,8 @@ class RedissonLocker : ILocker<RLock> {
      * @param timeOut timeOut
      * @return RLock
      */
-    override fun lock(lockKey: String, timeOut: Long): RLock {
-        val lock: RLock = client().getLock(lockKey)
-        lock.lock(timeOut, TimeUnit.SECONDS)
-        return lock
-    }
+    override fun lock(lockKey: String, timeOut: Long): RLock =
+        client().getLock(lockKey).also { it.lock(timeOut, TimeUnit.SECONDS) }
 
     /**
      * 获取分布式锁，并指定锁失效时间
@@ -60,15 +52,8 @@ class RedissonLocker : ILocker<RLock> {
      * @param timeOut timeOut
      * @return RLock
      */
-    override fun lock(
-        lockKey: String,
-        unit: TimeUnit,
-        timeOut: Long
-    ): RLock {
-        val lock: RLock = client().getLock(lockKey)
-        lock.lock(timeOut, unit)
-        return lock
-    }
+    override fun lock(lockKey: String, unit: TimeUnit, timeOut: Long): RLock =
+        client().getLock(lockKey).also { it.lock(timeOut, unit) }
 
     /**
      * 尝试获取分布式锁
@@ -108,14 +93,12 @@ class RedissonLocker : ILocker<RLock> {
         unit: TimeUnit,
         timeOut: Long,
         leaseTime: Long
-    ): Boolean {
-        val lock: RLock = client().getLock(lockKey)
-        return try {
-            lock.tryLock(timeOut, leaseTime, unit)
+    ): Boolean =
+        try {
+            client().getLock(lockKey).tryLock(timeOut, leaseTime, unit)
         } catch (_: InterruptedException) {
             false
         }
-    }
 
     /**
      * 解除分布式锁
@@ -123,10 +106,7 @@ class RedissonLocker : ILocker<RLock> {
      * @param lockKey lockKey
      */
     override fun unlock(lockKey: String) {
-        val lock: RLock = client().getLock(lockKey)
-        if (lock.isLocked && lock.isHeldByCurrentThread) {
-            lock.unlock()
-        }
+        client().getLock(lockKey).takeIf { it.isLocked && it.isHeldByCurrentThread }?.unlock()
     }
 
     /**
@@ -135,8 +115,6 @@ class RedissonLocker : ILocker<RLock> {
      * @param lock lockKey
      */
     override fun unlock(lock: RLock) {
-        if (lock.isLocked && lock.isHeldByCurrentThread) {
-            lock.unlock()
-        }
+        if (lock.isLocked && lock.isHeldByCurrentThread) lock.unlock()
     }
 }

@@ -15,6 +15,7 @@ import org.hibernate.validator.constraints.time.DurationMax
 import org.hibernate.validator.constraints.time.DurationMin
 import java.time.Duration
 import java.time.LocalDate
+import kotlin.test.assertContains
 import kotlin.test.Test
 
 /**
@@ -29,6 +30,22 @@ internal class TerminalConstraintsCreatorTest {
     fun create() {
         val result = TerminalConstraintsCreator.create(TestRegisterBean::class)
         println(JsonKit.toJson(result))
+    }
+
+    @Test
+    fun createFromParentInterfacePropertyConstraint() {
+        val result = TerminalConstraintsCreator.create(TestChildFromInterface::class)
+        assertContains(result, "code")
+        assertContains(requireNotNull(result["code"]), "NotBlank")
+        assertContains(requireNotNull(result["code"]), "Length")
+    }
+
+    @Test
+    fun createFromOverriddenParentPropertyConstraint() {
+        val result = TerminalConstraintsCreator.create(TestChildOverrideBean::class)
+        assertContains(result, "name")
+        assertContains(requireNotNull(result["name"]), "NotBlank")
+        assertContains(requireNotNull(result["name"]), "Length")
     }
 
     @AtLeast(properties = ["mobile", "email"], message = "必须至少提供一种联系方式")
@@ -72,7 +89,7 @@ internal class TerminalConstraintsCreatorTest {
         )
         val confirmPassword: String?,
 
-        @get:Pattern(regexp = RegExps.CN_MAINLAND_MOBILE, message = "手机号码格式错误")
+        @get:Pattern(regexp = RegExps.Communication.CN_MAINLAND_MOBILE, message = "手机号码格式错误")
         val mobile: String?,
 
         @get:Email
@@ -212,5 +229,29 @@ internal class TerminalConstraintsCreatorTest {
         }
 
     }
+
+    internal interface TestParentInterface {
+
+        @get:NotBlank
+        @get:Length(max = 16)
+        val code: String?
+
+    }
+
+    internal data class TestChildFromInterface(
+        override val code: String?
+    ) : TestParentInterface
+
+    internal interface TestParentBean {
+
+        @get:NotBlank
+        @get:Length(max = 32)
+        val name: String?
+
+    }
+
+    internal data class TestChildOverrideBean(
+        override val name: String?
+    ) : TestParentBean
 
 }

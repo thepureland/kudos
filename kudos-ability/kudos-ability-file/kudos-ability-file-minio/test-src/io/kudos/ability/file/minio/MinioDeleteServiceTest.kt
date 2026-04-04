@@ -15,7 +15,7 @@ import io.minio.MakeBucketArgs
 import io.minio.MinioClient
 import io.minio.PutObjectArgs
 import io.minio.admin.MinioAdminClient
-import io.minio.admin.UserInfo
+import io.minio.admin.Status
 import jakarta.annotation.Resource
 import org.junit.jupiter.api.TestInstance
 import org.springframework.core.io.FileSystemResource
@@ -160,7 +160,8 @@ internal class MinioDeleteServiceTest {
         FileKit.forceDelete(localFile)
 
         // 4) 删除 MinIO 中的对象
-        val model = DeleteFileModel.from(uploadFileResult.filePath!!)
+        val path = requireNotNull(uploadFileResult.filePath) { "filePath" }
+        val model = DeleteFileModel.from(path)
         assertTrue(deleteService.delete(model))
     }
 
@@ -197,7 +198,8 @@ internal class MinioDeleteServiceTest {
         FileKit.forceDelete(localFile)
 
         // 4) 指定“仅删除用户”的凭证并删除 MinIO 对象
-        val model = DeleteFileModel.from(uploadFileResult.filePath!!)
+        val path = requireNotNull(uploadFileResult.filePath) { "filePath" }
+        val model = DeleteFileModel.from(path)
         model.authServerParam = AccessKeyServerParam(DELETE_ONLY_USER, DELETE_ONLY_USER_SECRET)
         assertTrue(deleteService.delete(model))
     }
@@ -295,7 +297,7 @@ internal class MinioDeleteServiceTest {
             runCatching {
                 admin.addUser(
                     DELETE_ONLY_USER,
-                    UserInfo.Status.ENABLED,
+                    Status.ENABLED,
                     DELETE_ONLY_USER_SECRET,
                     null,
                     null

@@ -10,10 +10,11 @@ import io.kudos.test.container.containers.NacosTestContainer
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
 import org.springframework.beans.factory.annotation.Value
-import java.util.*
+import java.util.Properties
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 /**
  * nacos作为配置中心的测试用例
@@ -25,7 +26,7 @@ import kotlin.test.assertNull
 @EnabledIfDockerInstalled
 @TestInstance(value = TestInstance.Lifecycle.PER_CLASS)
 open class NacosConfigTest {
-    
+
     @Value($$"${spring.cloud.nacos.config.server-addr}")
     private val serverAddr: String? = null
 
@@ -47,7 +48,7 @@ open class NacosConfigTest {
         val content = "testContent"
 
         // 发布配置
-        assert(configService.publishConfig(dataId, group, content))
+        assertTrue(configService.publishConfig(dataId, group, content))
 
         // 读取配置，因为客户端刷新需要时间，这里循环延迟读取
         var remoteConfig: String?
@@ -81,7 +82,7 @@ open class NacosConfigTest {
         assertNull(receiveConfig)
 
         // 发布配置
-        assert(configService.publishConfig(dataId, group, content))
+        assertTrue(configService.publishConfig(dataId, group, content))
 
         // 读取配置，因为客户端刷新需要时间，这里循环延迟读取
         var remoteConfig: String?

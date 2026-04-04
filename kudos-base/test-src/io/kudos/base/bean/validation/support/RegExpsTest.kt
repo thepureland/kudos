@@ -33,7 +33,7 @@ internal class RegExpsTest {
     @Test
     fun cnMainlandMobile() {
         assertMatches(
-            RegExps.CN_MAINLAND_MOBILE,
+            RegExps.Communication.CN_MAINLAND_MOBILE,
             "13800138000",
             "15912345678",
             "18800001111",
@@ -43,7 +43,7 @@ internal class RegExpsTest {
             "19912345678",
         )
         assertNotMatches(
-            RegExps.CN_MAINLAND_MOBILE,
+            RegExps.Communication.CN_MAINLAND_MOBILE,
             "",
             "12345678901",
             "23800138000",
@@ -61,14 +61,14 @@ internal class RegExpsTest {
     @Test
     fun qqNumber() {
         assertMatches(
-            RegExps.QQ_NUMBER,
+            RegExps.Communication.QQ_NUMBER,
             "12345",
             "10000",
             "12345678901",
             "99999999999",
         )
         assertNotMatches(
-            RegExps.QQ_NUMBER,
+            RegExps.Communication.QQ_NUMBER,
             "",
             "1234",
             "123456789012",
@@ -82,14 +82,14 @@ internal class RegExpsTest {
     @Test
     fun phoneDigits7_20() {
         assertMatches(
-            RegExps.PHONE_DIGITS_7_20,
+            RegExps.Communication.PHONE_DIGITS_7_20,
             "1234567",
             "0000000",
             "99999999999999999999",
             "12345678901234567890",
         )
         assertNotMatches(
-            RegExps.PHONE_DIGITS_7_20,
+            RegExps.Communication.PHONE_DIGITS_7_20,
             "",
             "123456",
             "123456789012345678901",
@@ -102,7 +102,7 @@ internal class RegExpsTest {
     @Test
     fun ipv4() {
         assertMatches(
-            RegExps.IPV4,
+            RegExps.Network.IPV4,
             "0.0.0.0",
             "127.0.0.1",
             "192.168.1.1",
@@ -114,7 +114,7 @@ internal class RegExpsTest {
             "192.168.01.1",
         )
         assertNotMatches(
-            RegExps.IPV4,
+            RegExps.Network.IPV4,
             "",
             "256.1.1.1",
             "192.168.1",
@@ -126,7 +126,7 @@ internal class RegExpsTest {
     @Test
     fun httpUrl() {
         assertMatches(
-            RegExps.HTTP_URL,
+            RegExps.Network.HTTP_URL,
             "https://example.com",
             "http://example.com/",
             "https://api.example.com/v1/resource",
@@ -136,7 +136,7 @@ internal class RegExpsTest {
             "https://example.com/search?q=中文",
         )
         assertNotMatches(
-            RegExps.HTTP_URL,
+            RegExps.Network.HTTP_URL,
             "",
             "not-a-url",
             "://missing-scheme",
@@ -149,7 +149,7 @@ internal class RegExpsTest {
     @Test
     fun telOrCnMobile() {
         assertMatches(
-            RegExps.TEL_OR_CN_MOBILE,
+            RegExps.Communication.TEL_OR_CN_MOBILE,
             "010-12345678",
             "021-1234567",
             "0755-12345678",
@@ -159,7 +159,7 @@ internal class RegExpsTest {
             "18800001111",
         )
         assertNotMatches(
-            RegExps.TEL_OR_CN_MOBILE,
+            RegExps.Communication.TEL_OR_CN_MOBILE,
             "",
             "12345",
             "abc-def-ghij",
@@ -173,7 +173,7 @@ internal class RegExpsTest {
     @Test
     fun shortPersonName() {
         assertMatches(
-            RegExps.SHORT_PERSON_NAME,
+            RegExps.Name.SHORT_PERSON_NAME,
             "张三",
             "ZhangSan",
             "李·四",
@@ -183,7 +183,7 @@ internal class RegExpsTest {
             "a".repeat(30),
         )
         assertNotMatches(
-            RegExps.SHORT_PERSON_NAME,
+            RegExps.Name.SHORT_PERSON_NAME,
             "",
             "a",
             "a".repeat(31),
@@ -194,7 +194,7 @@ internal class RegExpsTest {
     @Test
     fun realPersonName() {
         assertMatches(
-            RegExps.REAL_PERSON_NAME,
+            RegExps.Name.REAL_PERSON_NAME,
             "张三",
             "John Smith",
             "李 四",
@@ -202,7 +202,7 @@ internal class RegExpsTest {
             "佐藤 太郎",
         )
         assertNotMatches(
-            RegExps.REAL_PERSON_NAME,
+            RegExps.Name.REAL_PERSON_NAME,
             "",
             "12345",
             "999",
@@ -214,14 +214,14 @@ internal class RegExpsTest {
     @Test
     fun bankAccountHolderName() {
         assertMatches(
-            RegExps.BANK_ACCOUNT_HOLDER_NAME,
+            RegExps.Name.BANK_ACCOUNT_HOLDER_NAME,
             "张三",
             "John",
             "王五（公司）",
             "Li（个人）",
         )
         assertNotMatches(
-            RegExps.BANK_ACCOUNT_HOLDER_NAME,
+            RegExps.Name.BANK_ACCOUNT_HOLDER_NAME,
             "",
             "A",
             "a".repeat(50),
@@ -231,14 +231,14 @@ internal class RegExpsTest {
     @Test
     fun payerDisplayName() {
         assertMatches(
-            RegExps.PAYER_DISPLAY_NAME,
+            RegExps.Name.PAYER_DISPLAY_NAME,
             "张三",
             "Li Si",
             "王五",
             "张·三丰",
         )
         assertNotMatches(
-            RegExps.PAYER_DISPLAY_NAME,
+            RegExps.Name.PAYER_DISPLAY_NAME,
             "",
             "a".repeat(50),
         )
@@ -247,7 +247,7 @@ internal class RegExpsTest {
     @Test
     fun textWithoutSpecialChars() {
         assertMatches(
-            RegExps.TEXT_WITHOUT_SPECIAL_CHARS,
+            RegExps.Text.TEXT_WITHOUT_SPECIAL_CHARS,
             "",
             "普通文本",
             "hello world",
@@ -255,7 +255,7 @@ internal class RegExpsTest {
             "多行\n第二行",
         )
         assertNotMatches(
-            RegExps.TEXT_WITHOUT_SPECIAL_CHARS,
+            RegExps.Text.TEXT_WITHOUT_SPECIAL_CHARS,
             "a&b",
             "x=y",
             "a{b}",
@@ -267,15 +267,15 @@ internal class RegExpsTest {
 
     @Test
     fun email() {
-        // [RegExps.EMAIL] 实现对域名段形态较严，样例以实际匹配为准
+        // [RegExps.Communication.EMAIL] 实现对域名段形态较严，样例以实际匹配为准
         assertMatches(
-            RegExps.EMAIL,
+            RegExps.Communication.EMAIL,
             "user@example.com",
             "a1@mail.example.org",
             "admin@site.example.org",
         )
         assertNotMatches(
-            RegExps.EMAIL,
+            RegExps.Communication.EMAIL,
             "",
             "@nodomain",
             "no-at",
@@ -290,13 +290,13 @@ internal class RegExpsTest {
     @Test
     fun mailOrCnMobile() {
         assertMatches(
-            RegExps.MAIL_OR_CN_MOBILE,
+            RegExps.Communication.MAIL_OR_CN_MOBILE,
             "user@example.com",
             "13800138000",
             "15812345678",
         )
         assertNotMatches(
-            RegExps.MAIL_OR_CN_MOBILE,
+            RegExps.Communication.MAIL_OR_CN_MOBILE,
             "",
             "12345",
             "user@",
@@ -310,14 +310,14 @@ internal class RegExpsTest {
     @Test
     fun cnLandlinePhone() {
         assertMatches(
-            RegExps.CN_LANDLINE_PHONE,
+            RegExps.Communication.CN_LANDLINE_PHONE,
             "010-12345678",
             "0755-12345678",
             "010-12345678-9",
             "0755-1234567-123",
         )
         assertNotMatches(
-            RegExps.CN_LANDLINE_PHONE,
+            RegExps.Communication.CN_LANDLINE_PHONE,
             "",
             "1234",
             "01012345678",
@@ -329,7 +329,7 @@ internal class RegExpsTest {
     @Test
     fun loginPassword() {
         assertMatches(
-            RegExps.LOGIN_PASSWORD,
+            RegExps.Security.LOGIN_PASSWORD,
             "abc123",
             "Passw0rd!",
             "a".repeat(6),
@@ -339,7 +339,7 @@ internal class RegExpsTest {
             "{}[]|:",
         )
         assertNotMatches(
-            RegExps.LOGIN_PASSWORD,
+            RegExps.Security.LOGIN_PASSWORD,
             "",
             "12345",
             "a".repeat(21),
@@ -350,9 +350,9 @@ internal class RegExpsTest {
 
     @Test
     fun securityPinSixDigits() {
-        assertMatches(RegExps.SECURITY_PIN_SIX_DIGITS, "000000", "123456", "987654")
+        assertMatches(RegExps.Security.SECURITY_PIN_SIX_DIGITS, "000000", "123456", "987654")
         assertNotMatches(
-            RegExps.SECURITY_PIN_SIX_DIGITS,
+            RegExps.Security.SECURITY_PIN_SIX_DIGITS,
             "",
             "12345",
             "1234567",
@@ -364,9 +364,9 @@ internal class RegExpsTest {
 
     @Test
     fun positiveIntText() {
-        assertMatches(RegExps.POSITIVE_INT_TEXT, "1", "9", "123456", "10")
+        assertMatches(RegExps.Numeric.POSITIVE_INT_TEXT, "1", "9", "123456", "10")
         assertNotMatches(
-            RegExps.POSITIVE_INT_TEXT,
+            RegExps.Numeric.POSITIVE_INT_TEXT,
             "",
             "0",
             "01",
@@ -380,13 +380,13 @@ internal class RegExpsTest {
     @Test
     fun ipv4SemicolonList() {
         assertMatches(
-            RegExps.IPV4_SEMICOLON_LIST,
+            RegExps.Network.IPV4_SEMICOLON_LIST,
             "192.168.0.1",
             "10.0.0.1;10.0.0.2",
             "1.1.1.1;2.2.2.2;3.3.3.3",
         )
         assertNotMatches(
-            RegExps.IPV4_SEMICOLON_LIST,
+            RegExps.Network.IPV4_SEMICOLON_LIST,
             "",
             "192.168.0.1;",
             ";192.168.0.1",
@@ -397,97 +397,97 @@ internal class RegExpsTest {
     @Test
     fun ipv6Full() {
         assertMatches(
-            RegExps.IPV6_FULL,
+            RegExps.Network.IPV6_FULL,
             "2001:0db8:0000:0000:0000:0000:0000:0001",
             "0000:0000:0000:0000:0000:0000:0000:0000",
             "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
         )
-        assertNotMatches(RegExps.IPV6_FULL, "", "2001:db8::1", "gggg::1", "2001::1::1")
+        assertNotMatches(RegExps.Network.IPV6_FULL, "", "2001:db8::1", "gggg::1", "2001::1::1")
     }
 
     @Test
     fun ipv6Compact() {
-        assertMatches(RegExps.IPV6_COMPACT, "::1", "2001:db8::", "fe80::1", "::")
-        assertNotMatches(RegExps.IPV6_COMPACT, "", "not-ipv6", "2001:db8::1::2")
+        assertMatches(RegExps.Network.IPV6_COMPACT, "::1", "2001:db8::", "fe80::1", "::")
+        assertNotMatches(RegExps.Network.IPV6_COMPACT, "", "not-ipv6", "2001:db8::1::2")
     }
 
     @Test
     fun singleCharRepeated() {
-        assertMatches(RegExps.SINGLE_CHAR_REPEATED, "aaa", "1111", "..", "··", "你你你")
-        assertNotMatches(RegExps.SINGLE_CHAR_REPEATED, "", "a", "aba", "aab")
+        assertMatches(RegExps.CharacterSet.SINGLE_CHAR_REPEATED, "aaa", "1111", "..", "··", "你你你")
+        assertNotMatches(RegExps.CharacterSet.SINGLE_CHAR_REPEATED, "", "a", "aba", "aab")
     }
 
     @Test
     fun digitsNonEmpty() {
-        assertMatches(RegExps.DIGITS_NON_EMPTY, "0", "123", "000")
-        assertNotMatches(RegExps.DIGITS_NON_EMPTY, "", "12a", " 1", "1\n", "１２３")
+        assertMatches(RegExps.CharacterSet.DIGITS_NON_EMPTY, "0", "123", "000")
+        assertNotMatches(RegExps.CharacterSet.DIGITS_NON_EMPTY, "", "12a", " 1", "1\n", "１２３")
     }
 
     @Test
     fun latinLettersOnly() {
-        assertMatches(RegExps.LATIN_LETTERS_ONLY, "a", "AbC", "XYZ")
-        assertNotMatches(RegExps.LATIN_LETTERS_ONLY, "", "a1", "a ", "ñ", "中文")
+        assertMatches(RegExps.CharacterSet.LATIN_LETTERS_ONLY, "a", "AbC", "XYZ")
+        assertNotMatches(RegExps.CharacterSet.LATIN_LETTERS_ONLY, "", "a1", "a ", "ñ", "中文")
     }
 
     @Test
     fun passwordStrengthLettersOnly() {
-        assertSame(RegExps.LATIN_LETTERS_ONLY, RegExps.PASSWORD_STRENGTH_LETTERS_ONLY)
-        assertMatches(RegExps.PASSWORD_STRENGTH_LETTERS_ONLY, "abc", "XYZ", "z")
-        assertNotMatches(RegExps.PASSWORD_STRENGTH_LETTERS_ONLY, "a1", "", "a-b", "中文")
+        assertSame(RegExps.CharacterSet.LATIN_LETTERS_ONLY, RegExps.Security.PASSWORD_STRENGTH_LETTERS_ONLY)
+        assertMatches(RegExps.Security.PASSWORD_STRENGTH_LETTERS_ONLY, "abc", "XYZ", "z")
+        assertNotMatches(RegExps.Security.PASSWORD_STRENGTH_LETTERS_ONLY, "a1", "", "a-b", "中文")
     }
 
     @Test
     fun latinLowercaseOnly() {
-        assertMatches(RegExps.LATIN_LOWERCASE_ONLY, "abc", "z", "hello")
-        assertNotMatches(RegExps.LATIN_LOWERCASE_ONLY, "", "A", "a1", "a\n", "汉字")
+        assertMatches(RegExps.CharacterSet.LATIN_LOWERCASE_ONLY, "abc", "z", "hello")
+        assertNotMatches(RegExps.CharacterSet.LATIN_LOWERCASE_ONLY, "", "A", "a1", "a\n", "汉字")
     }
 
     @Test
     fun lowercaseAlnumNotAllDigits() {
-        assertMatches(RegExps.LOWERCASE_ALNUM_NOT_ALL_DIGITS, "a1", "ab", "1a", "0z9")
-        assertNotMatches(RegExps.LOWERCASE_ALNUM_NOT_ALL_DIGITS, "", "123", "A1", "a-A", "a中文")
+        assertMatches(RegExps.CharacterSet.LOWERCASE_ALNUM_NOT_ALL_DIGITS, "a1", "ab", "1a", "0z9")
+        assertNotMatches(RegExps.CharacterSet.LOWERCASE_ALNUM_NOT_ALL_DIGITS, "", "123", "A1", "a-A", "a中文")
     }
 
     @Test
     fun nickName() {
-        assertMatches(RegExps.NICK_NAME, "abc", "用户123", "nick01", "好的昵称12", "a".repeat(15))
-        assertNotMatches(RegExps.NICK_NAME, "", "ab", "a".repeat(16), "nick name", "用户_1")
+        assertMatches(RegExps.Name.NICK_NAME, "abc", "用户123", "nick01", "好的昵称12", "a".repeat(15))
+        assertNotMatches(RegExps.Name.NICK_NAME, "", "ab", "a".repeat(16), "nick name", "用户_1")
     }
 
     @Test
     fun text1To30Chars() {
-        assertMatches(RegExps.TEXT_1_TO_30_CHARS, "a", "你好", "x".repeat(30), "\t!", " ")
-        assertNotMatches(RegExps.TEXT_1_TO_30_CHARS, "", "x".repeat(31))
+        assertMatches(RegExps.Text.TEXT_1_TO_30_CHARS, "a", "你好", "x".repeat(30), "\t!", " ")
+        assertNotMatches(RegExps.Text.TEXT_1_TO_30_CHARS, "", "x".repeat(31))
     }
 
     @Test
     fun asciiDigitsOnly() {
-        assertMatches(RegExps.ASCII_DIGITS_ONLY, "0", "123", "0000")
-        assertNotMatches(RegExps.ASCII_DIGITS_ONLY, "", "12a", "12 3", "１２３")
+        assertMatches(RegExps.CharacterSet.ASCII_DIGITS_ONLY, "0", "123", "0000")
+        assertNotMatches(RegExps.CharacterSet.ASCII_DIGITS_ONLY, "", "12a", "12 3", "１２３")
     }
 
     @Test
     fun passwordStrengthDigitsOnly() {
-        assertSame(RegExps.ASCII_DIGITS_ONLY, RegExps.PASSWORD_STRENGTH_DIGITS_ONLY)
-        assertMatches(RegExps.PASSWORD_STRENGTH_DIGITS_ONLY, "0", "999", "012")
+        assertSame(RegExps.CharacterSet.ASCII_DIGITS_ONLY, RegExps.Security.PASSWORD_STRENGTH_DIGITS_ONLY)
+        assertMatches(RegExps.Security.PASSWORD_STRENGTH_DIGITS_ONLY, "0", "999", "012")
     }
 
     @Test
     fun passwordStrengthLettersAndDigits() {
-        assertMatches(RegExps.PASSWORD_STRENGTH_LETTERS_AND_DIGITS, "a1", "A0", "123", "Z9z")
-        assertNotMatches(RegExps.PASSWORD_STRENGTH_LETTERS_AND_DIGITS, "a-b", "a_1", "a·1", "中1")
+        assertMatches(RegExps.Security.PASSWORD_STRENGTH_LETTERS_AND_DIGITS, "a1", "A0", "123", "Z9z")
+        assertNotMatches(RegExps.Security.PASSWORD_STRENGTH_LETTERS_AND_DIGITS, "a-b", "a_1", "a·1", "中1")
     }
 
     @Test
     fun passwordStrengthWithSymbols() {
-        assertMatches(RegExps.PASSWORD_STRENGTH_WITH_SYMBOLS, "Aa1!", "test@123", "P@ss#1")
-        assertNotMatches(RegExps.PASSWORD_STRENGTH_WITH_SYMBOLS, "", "a b", "中文")
+        assertMatches(RegExps.Security.PASSWORD_STRENGTH_WITH_SYMBOLS, "Aa1!", "test@123", "P@ss#1")
+        assertNotMatches(RegExps.Security.PASSWORD_STRENGTH_WITH_SYMBOLS, "", "a b", "中文")
     }
 
     @Test
     fun scoreOrHandicapText() {
         assertMatches(
-            RegExps.SCORE_OR_HANDICAP_TEXT,
+            RegExps.Numeric.SCORE_OR_HANDICAP_TEXT,
             "1",
             "1/2",
             "3.5/4.25",
@@ -495,32 +495,32 @@ internal class RegExpsTest {
             "0/0",
             "10-5",
         )
-        assertNotMatches(RegExps.SCORE_OR_HANDICAP_TEXT, "", "a/b", "1//2", "一/二")
+        assertNotMatches(RegExps.Numeric.SCORE_OR_HANDICAP_TEXT, "", "a/b", "1//2", "一/二")
     }
 
     @Test
     fun positiveDecimalText() {
-        assertMatches(RegExps.POSITIVE_DECIMAL_TEXT, "1", "1.5", "0.5", "10", "100.00")
-        assertNotMatches(RegExps.POSITIVE_DECIMAL_TEXT, "", "01", "-1", "0")
+        assertMatches(RegExps.Numeric.POSITIVE_DECIMAL_TEXT, "1", "1.5", "0.5", "10", "100.00")
+        assertNotMatches(RegExps.Numeric.POSITIVE_DECIMAL_TEXT, "", "01", "-1", "0")
     }
 
     @Test
     fun positiveNumberText() {
-        assertMatches(RegExps.POSITIVE_NUMBER_TEXT, "1", "1.5", "0.5", "0.000001", "999")
-        assertNotMatches(RegExps.POSITIVE_NUMBER_TEXT, "", "0", "-1", "0.0", "00.5")
+        assertMatches(RegExps.Numeric.POSITIVE_NUMBER_TEXT, "1", "1.5", "0.5", "0.000001", "999")
+        assertNotMatches(RegExps.Numeric.POSITIVE_NUMBER_TEXT, "", "0", "-1", "0.0", "00.5")
     }
 
     @Test
     fun signedIntegerText() {
-        assertMatches(RegExps.SIGNED_INTEGER_TEXT, "0", "-1", "+42", "100", "-0")
-        assertNotMatches(RegExps.SIGNED_INTEGER_TEXT, "", "12.3", "1a", "--1", "+-2", "＋１００")
+        assertMatches(RegExps.Numeric.SIGNED_INTEGER_TEXT, "0", "-1", "+42", "100", "-0")
+        assertNotMatches(RegExps.Numeric.SIGNED_INTEGER_TEXT, "", "12.3", "1a", "--1", "+-2", "＋１００")
     }
 
     @Test
     fun bankCardNumber() {
-        assertMatches(RegExps.BANK_CARD_NUMBER, "1234567890", "1".repeat(25), "0".repeat(10))
+        assertMatches(RegExps.Business.BANK_CARD_NUMBER, "1234567890", "1".repeat(25), "0".repeat(10))
         assertNotMatches(
-            RegExps.BANK_CARD_NUMBER,
+            RegExps.Business.BANK_CARD_NUMBER,
             "",
             "123456789",
             "1".repeat(26),
@@ -532,15 +532,15 @@ internal class RegExpsTest {
 
     @Test
     fun btcAmountText() {
-        assertMatches(RegExps.BTC_AMOUNT_TEXT, "", "1", "0.1", "1.23456789", "0.00001")
-        assertNotMatches(RegExps.BTC_AMOUNT_TEXT, "0", "0.0", "0.000000")
+        assertMatches(RegExps.Numeric.BTC_AMOUNT_TEXT, "", "1", "0.1", "1.23456789", "0.00001")
+        assertNotMatches(RegExps.Numeric.BTC_AMOUNT_TEXT, "0", "0.0", "0.000000")
     }
 
     @Test
     fun siteIdsCommaSeparated() {
-        assertMatches(RegExps.SITE_IDS_COMMA_SEPARATED, "", " ", "1", "1,2,3", "  \t  ")
+        assertMatches(RegExps.Business.SITE_IDS_COMMA_SEPARATED, "", " ", "1", "1,2,3", "  \t  ")
         assertNotMatches(
-            RegExps.SITE_IDS_COMMA_SEPARATED,
+            RegExps.Business.SITE_IDS_COMMA_SEPARATED,
             "1,",
             ",1",
             "1,,2",
@@ -552,39 +552,39 @@ internal class RegExpsTest {
 
     @Test
     fun emptyOrPositiveIntText() {
-        assertMatches(RegExps.EMPTY_OR_POSITIVE_INT_TEXT, "", "1", "100", "01", "0099")
-        assertNotMatches(RegExps.EMPTY_OR_POSITIVE_INT_TEXT, "0", "a", "00", "-1", "１２")
+        assertMatches(RegExps.Numeric.EMPTY_OR_POSITIVE_INT_TEXT, "", "1", "100", "01", "0099")
+        assertNotMatches(RegExps.Numeric.EMPTY_OR_POSITIVE_INT_TEXT, "0", "a", "00", "-1", "１２")
     }
 
     @Test
     fun digitsAtMost9() {
-        assertMatches(RegExps.DIGITS_AT_MOST_9, "", "0", "123456789")
-        assertNotMatches(RegExps.DIGITS_AT_MOST_9, "1234567890", "12a", " 0", "１２３")
+        assertMatches(RegExps.Numeric.DIGITS_AT_MOST_9, "", "0", "123456789")
+        assertNotMatches(RegExps.Numeric.DIGITS_AT_MOST_9, "1234567890", "12a", " 0", "１２３")
     }
 
     @Test
     fun signedAmountLoose() {
-        assertMatches(RegExps.SIGNED_AMOUNT_LOOSE, "0", "1", "-1", "1.2", "-0.5", "1234567890", "-0.99")
-        assertNotMatches(RegExps.SIGNED_AMOUNT_LOOSE, "", "1.234", "00", "-00.5", "１２.３４")
+        assertMatches(RegExps.Numeric.SIGNED_AMOUNT_LOOSE, "0", "1", "-1", "1.2", "-0.5", "1234567890", "-0.99")
+        assertNotMatches(RegExps.Numeric.SIGNED_AMOUNT_LOOSE, "", "1.234", "00", "-00.5", "１２.３４")
     }
 
     @Test
     fun wechatId() {
-        assertMatches(RegExps.WECHAT_ID, "a12345", "wx_user-name", "Z99999", "a-----b")
-        assertNotMatches(RegExps.WECHAT_ID, "", "1", "a".repeat(25), "abcde", "_badwx", "微信abc")
+        assertMatches(RegExps.Communication.WECHAT_ID, "a12345", "wx_user-name", "Z99999", "a-----b")
+        assertNotMatches(RegExps.Communication.WECHAT_ID, "", "1", "a".repeat(25), "abcde", "_badwx", "微信abc")
     }
 
     @Test
     fun gamePlayerAccount() {
-        assertMatches(RegExps.GAME_PLAYER_ACCOUNT, "user1", "a123", "\$guest", "Ab12", "x".repeat(15), "1user")
-        assertNotMatches(RegExps.GAME_PLAYER_ACCOUNT, "", "ab", "a".repeat(20), "u\$er", "玩家1234")
+        assertMatches(RegExps.Business.GAME_PLAYER_ACCOUNT, "user1", "a123", "\$guest", "Ab12", "x".repeat(15), "1user")
+        assertNotMatches(RegExps.Business.GAME_PLAYER_ACCOUNT, "", "ab", "a".repeat(20), "u\$er", "玩家1234")
     }
 
     @Test
     fun uuidHyphenated() {
-        assertMatches(RegExps.UUID_HYPHENATED, "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
+        assertMatches(RegExps.Format.UUID_HYPHENATED, "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
         assertNotMatches(
-            RegExps.UUID_HYPHENATED,
+            RegExps.Format.UUID_HYPHENATED,
             "",
             "not-a-uuid",
             "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeee",
@@ -594,9 +594,9 @@ internal class RegExpsTest {
 
     @Test
     fun domainListCommaSeparated() {
-        assertMatches(RegExps.DOMAIN_LIST_COMMA_SEPARATED, "a.com", "a.com,b.com", "sub.a.com")
+        assertMatches(RegExps.Network.DOMAIN_LIST_COMMA_SEPARATED, "a.com", "a.com,b.com", "sub.a.com")
         assertNotMatches(
-            RegExps.DOMAIN_LIST_COMMA_SEPARATED,
+            RegExps.Network.DOMAIN_LIST_COMMA_SEPARATED,
             "",
             "a.com,",
             ",a.com",
@@ -609,33 +609,33 @@ internal class RegExpsTest {
 
     @Test
     fun amountNonzeroTwoDecimals() {
-        assertMatches(RegExps.AMOUNT_NONZERO_TWO_DECIMALS, "1", "0.01", "10.99", "999")
-        assertNotMatches(RegExps.AMOUNT_NONZERO_TWO_DECIMALS, "", "0", "0.0", "1.234", "00.01")
+        assertMatches(RegExps.Numeric.AMOUNT_NONZERO_TWO_DECIMALS, "1", "0.01", "10.99", "999")
+        assertNotMatches(RegExps.Numeric.AMOUNT_NONZERO_TWO_DECIMALS, "", "0", "0.0", "1.234", "00.01")
     }
 
     @Test
     fun textStartsWithDigit() {
-        assertMatches(RegExps.TEXT_STARTS_WITH_DIGIT, "0a", "9xyz", "0", "1中文")
-        assertNotMatches(RegExps.TEXT_STARTS_WITH_DIGIT, "", "a1", "\t0")
+        assertMatches(RegExps.Text.TEXT_STARTS_WITH_DIGIT, "0a", "9xyz", "0", "1中文")
+        assertNotMatches(RegExps.Text.TEXT_STARTS_WITH_DIGIT, "", "a1", "\t0")
     }
 
     @Test
     fun digitsOnlyOptionalEmpty() {
-        assertMatches(RegExps.DIGITS_ONLY_OPTIONAL_EMPTY, "", "0", "123", "000")
-        assertNotMatches(RegExps.DIGITS_ONLY_OPTIONAL_EMPTY, "12a", " 1", "-1", "１２")
+        assertMatches(RegExps.Text.DIGITS_ONLY_OPTIONAL_EMPTY, "", "0", "123", "000")
+        assertNotMatches(RegExps.Text.DIGITS_ONLY_OPTIONAL_EMPTY, "12a", " 1", "-1", "１２")
     }
 
     @Test
     fun hanLatinAlnum() {
-        assertMatches(RegExps.HAN_LATIN_ALNUM, "abc", "中文", "a1中", "汉字ABC123")
-        assertNotMatches(RegExps.HAN_LATIN_ALNUM, "", "a b", "a-b", "a_1")
+        assertMatches(RegExps.Text.HAN_LATIN_ALNUM, "abc", "中文", "a1中", "汉字ABC123")
+        assertNotMatches(RegExps.Text.HAN_LATIN_ALNUM, "", "a b", "a-b", "a_1")
     }
 
     @Test
     fun dateIsoYyyyMmDd() {
-        assertMatches(RegExps.DATE_ISO_YYYY_MM_DD, "2020-01-01", "1999-12-31", "2024-02-29")
+        assertMatches(RegExps.Format.DATE_ISO_YYYY_MM_DD, "2020-01-01", "1999-12-31", "2024-02-29")
         assertNotMatches(
-            RegExps.DATE_ISO_YYYY_MM_DD,
+            RegExps.Format.DATE_ISO_YYYY_MM_DD,
             "",
             "2020-13-01",
             "20-01-01",
@@ -646,79 +646,100 @@ internal class RegExpsTest {
 
     @Test
     fun time24hMmOptionalSs() {
-        assertMatches(RegExps.TIME_24H_MM_OPTIONAL_SS, "00:00", "23:59", "12:30:45", "09:05:00")
-        assertNotMatches(RegExps.TIME_24H_MM_OPTIONAL_SS, "", "24:00", "1:30", "12:60", "12:30:")
+        assertMatches(RegExps.Format.TIME_24H_MM_OPTIONAL_SS, "00:00", "23:59", "12:30:45", "09:05:00")
+        assertNotMatches(RegExps.Format.TIME_24H_MM_OPTIONAL_SS, "", "24:00", "1:30", "12:60", "12:30:")
     }
 
     @Test
     fun cnMainlandPostalCode() {
-        assertMatches(RegExps.CN_MAINLAND_POSTAL_CODE, "100000", "518000", "000000")
-        assertNotMatches(RegExps.CN_MAINLAND_POSTAL_CODE, "", "12345", "1234567", "abcdee", " 100000", "１０００００")
+        assertMatches(RegExps.Format.CN_MAINLAND_POSTAL_CODE, "100000", "518000", "000000")
+        assertNotMatches(RegExps.Format.CN_MAINLAND_POSTAL_CODE, "", "12345", "1234567", "abcdee", " 100000", "１０００００")
     }
 
     @Test
     fun hexColorCss() {
-        assertMatches(RegExps.HEX_COLOR_CSS, "#fff", "#ffffff", "#ffffffff", "#aBc", "#0F0F0F")
-        assertNotMatches(RegExps.HEX_COLOR_CSS, "", "#gggggg", "ffffff", "#ff", "#fffffff")
+        assertMatches(RegExps.Format.HEX_COLOR_CSS, "#fff", "#ffffff", "#ffffffff", "#aBc", "#0F0F0F")
+        assertNotMatches(RegExps.Format.HEX_COLOR_CSS, "", "#gggggg", "ffffff", "#ff", "#fffffff")
     }
 
     @Test
     fun macAddressColonOrHyphen() {
         assertMatches(
-            RegExps.MAC_ADDRESS_COLON_OR_HYPHEN,
+            RegExps.Network.MAC_ADDRESS_COLON_OR_HYPHEN,
             "00:11:22:33:44:55",
             "00-11-22-33-44-55",
             "ff:FF:aa:bb:cc:dd",
         )
-        assertNotMatches(RegExps.MAC_ADDRESS_COLON_OR_HYPHEN, "", "00:11:22:33:44", "gg:gg:gg:gg:gg:gg")
+        assertNotMatches(RegExps.Network.MAC_ADDRESS_COLON_OR_HYPHEN, "", "00:11:22:33:44", "gg:gg:gg:gg:gg:gg")
     }
 
     @Test
     fun networkPort1_65535() {
-        assertMatches(RegExps.NETWORK_PORT_1_65535, "1", "80", "65535", "8080", "443", "1024")
-        assertNotMatches(RegExps.NETWORK_PORT_1_65535, "", "0", "65536", "abc", "080")
+        assertMatches(RegExps.Network.NETWORK_PORT_1_65535, "1", "80", "65535", "8080", "443", "1024")
+        assertNotMatches(RegExps.Network.NETWORK_PORT_1_65535, "", "0", "65536", "abc", "080")
     }
 
     @Test
     fun slugKebabLowercase() {
-        assertMatches(RegExps.SLUG_KEBAB_LOWERCASE, "a", "a-b", "ab-cd-ef", "api-v2")
-        assertNotMatches(RegExps.SLUG_KEBAB_LOWERCASE, "", "-a", "a-", "A-b", "a_b", "a--b", "slug-中文")
+        assertMatches(RegExps.CharacterSet.SLUG_KEBAB_LOWERCASE, "a", "a-b", "ab-cd-ef", "api-v2")
+        assertNotMatches(RegExps.CharacterSet.SLUG_KEBAB_LOWERCASE, "", "-a", "a-", "A-b", "a_b", "a--b", "slug-中文")
     }
 
     @Test
     fun latinAlnumOnly() {
-        assertMatches(RegExps.LATIN_ALNUM_ONLY, "a", "A1", "09", "Test01")
-        assertNotMatches(RegExps.LATIN_ALNUM_ONLY, "", "a-b", "a ", "a_1", "中文")
+        assertMatches(RegExps.CharacterSet.LATIN_ALNUM_ONLY, "a", "A1", "09", "Test01")
+        assertNotMatches(RegExps.CharacterSet.LATIN_ALNUM_ONLY, "", "a-b", "a ", "a_1", "中文")
     }
 
     @Test
     fun ipv4CidrNotation() {
-        assertMatches(RegExps.IPV4_CIDR_NOTATION, "0.0.0.0/0", "192.168.0.0/24", "10.0.0.0/32", "172.16.0.0/16")
-        assertNotMatches(RegExps.IPV4_CIDR_NOTATION, "", "192.168.0.0/33", "256.0.0.0/24", "192.168.0.0")
+        assertMatches(RegExps.Network.IPV4_CIDR_NOTATION, "0.0.0.0/0", "192.168.0.0/24", "10.0.0.0/32", "172.16.0.0/16")
+        assertNotMatches(RegExps.Network.IPV4_CIDR_NOTATION, "", "192.168.0.0/33", "256.0.0.0/24", "192.168.0.0")
     }
 
     @Test
     fun percentInteger0_100() {
-        assertMatches(RegExps.PERCENT_INTEGER_0_100, "0", "50", "100", "9", "99", "1")
-        assertNotMatches(RegExps.PERCENT_INTEGER_0_100, "", "101", "-1", "1.5", "01", "５０")
+        assertMatches(RegExps.Numeric.PERCENT_INTEGER_0_100, "0", "50", "100", "9", "99", "1")
+        assertNotMatches(RegExps.Numeric.PERCENT_INTEGER_0_100, "", "101", "-1", "1.5", "01", "５０")
     }
 
     @Test
     fun latinAlnumDashUnderscore() {
-        assertMatches(RegExps.LATIN_ALNUM_DASH_UNDERSCORE, "a", "a-b", "a_b", "A1", "x-y_z")
-        assertNotMatches(RegExps.LATIN_ALNUM_DASH_UNDERSCORE, "", "a b", "a@b", "a·b", "用户_a")
+        assertMatches(RegExps.CharacterSet.LATIN_ALNUM_DASH_UNDERSCORE, "a", "a-b", "a_b", "A1", "x-y_z")
+        assertNotMatches(RegExps.CharacterSet.LATIN_ALNUM_DASH_UNDERSCORE, "", "a b", "a@b", "a·b", "用户_a")
+    }
+
+    @Test
+    fun relaxedVarName() {
+        assertMatches(
+            RegExps.CharacterSet.RELAXED_VAR_NAME,
+            "a",
+            "_x",
+            "Abc_123-x",
+            "user-name",
+            "_user-name",
+        )
+        assertNotMatches(
+            RegExps.CharacterSet.RELAXED_VAR_NAME,
+            "",
+            "1abc",
+            "-abc",
+            "a b",
+            "a@b",
+            "变量名",
+        )
     }
 
     @Test
     fun varName() {
-        assertMatches(RegExps.VAR_NAME, "a", "_x", "a1", "Ab_c", "__init")
-        assertNotMatches(RegExps.VAR_NAME, "", "1a", "a-b", "a.b", "9_", "变量名")
+        assertMatches(RegExps.CharacterSet.VAR_NAME, "a", "_x", "a1", "Ab_c", "__init")
+        assertNotMatches(RegExps.CharacterSet.VAR_NAME, "", "1a", "a-b", "a.b", "9_", "变量名")
     }
 
     @Test
     fun jdbcUrl() {
         assertMatches(
-            RegExps.JDBC_URL,
+            RegExps.Network.JDBC_URL,
             // 单实例
             "jdbc:mysql://localhost:3306/db",
             "jdbc:h2:mem:testdb",
@@ -736,7 +757,7 @@ internal class RegExpsTest {
             "jdbc:mysql://localhost:3306/用户库",
         )
         assertNotMatches(
-            RegExps.JDBC_URL,
+            RegExps.Network.JDBC_URL,
             "",
             "jdbc:",
             "mysql://localhost",
@@ -748,7 +769,7 @@ internal class RegExpsTest {
     @Test
     fun domain() {
         assertMatches(
-            RegExps.DOMAIN,
+            RegExps.Network.DOMAIN,
             "localhost",
             "example.com",
             "sub.example.co.uk",
@@ -756,7 +777,7 @@ internal class RegExpsTest {
             "xn--fiqs8s.cn",
         )
         assertNotMatches(
-            RegExps.DOMAIN,
+            RegExps.Network.DOMAIN,
             "",
             "-bad.com",
             "example",

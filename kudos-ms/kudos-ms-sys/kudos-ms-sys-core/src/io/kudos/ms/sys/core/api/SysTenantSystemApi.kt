@@ -2,7 +2,6 @@ package io.kudos.ms.sys.core.api
 
 import io.kudos.ms.sys.common.api.ISysTenantSystemApi
 import io.kudos.ms.sys.core.service.iservice.ISysTenantSystemService
-import jakarta.annotation.Resource
 import org.springframework.stereotype.Service
 
 
@@ -13,47 +12,33 @@ import org.springframework.stereotype.Service
  * @since 1.0.0
  */
 @Service
-open class SysTenantSystemApi : ISysTenantSystemApi {
+open class SysTenantSystemApi(
+    private val sysTenantSystemService: ISysTenantSystemService,
+) : ISysTenantSystemApi {
 
+    override fun searchSystemCodesByTenantId(tenantId: String): Set<String> =
+        sysTenantSystemService.searchSystemCodesByTenantId(tenantId)
 
-    @Resource
-    protected lateinit var sysTenantSystemService: ISysTenantSystemService
+    override fun searchTenantIdsBySystemCode(systemCode: String): Set<String> =
+        sysTenantSystemService.searchTenantIdsBySystemCode(systemCode)
 
-    override fun searchSystemCodesByTenantId(tenantId: String): Set<String> {
-        return sysTenantSystemService.searchSystemCodesByTenantId(tenantId)
-    }
+    override fun groupingSystemCodesByTenantIds(tenantIds: Collection<String>?): Map<String, List<String>> =
+        sysTenantSystemService.groupingSystemCodesByTenantIds(tenantIds)
 
-    override fun searchTenantIdsBySystemCode(systemCode: String): Set<String> {
-        return sysTenantSystemService.searchTenantIdsBySystemCode(systemCode)
-    }
+    override fun groupingTenantIdsBySystemCodes(systemCodes: Collection<String>?): Map<String, List<String>> =
+        sysTenantSystemService.groupingTenantIdsBySystemCodes(systemCodes)
 
-    override fun groupingSystemCodesByTenantIds(tenantIds: Collection<String>?): Map<String, List<String>> {
-        return sysTenantSystemService.groupingSystemCodesByTenantIds(tenantIds)
-    }
+    override fun batchBind(tenantId: String, systemCodes: Collection<String>): Int =
+        sysTenantSystemService.batchBind(tenantId, systemCodes)
 
-    override fun groupingTenantIdsBySystemCodes(systemCodes: Collection<String>?): Map<String, List<String>> {
-        return sysTenantSystemService.groupingTenantIdsBySystemCodes(systemCodes)
-    }
+    override fun unbind(tenantId: String, systemCode: String): Boolean =
+        sysTenantSystemService.unbind(tenantId, systemCode)
 
-    override fun batchBind(tenantId: String, systemCodes: Collection<String>): Int {
-        return sysTenantSystemService.batchBind(tenantId, systemCodes)
-    }
+    override fun exists(tenantId: String, systemCode: String): Boolean =
+        sysTenantSystemService.exists(tenantId, systemCode)
 
-    override fun unbind(tenantId: String, systemCode: String): Boolean {
-        return sysTenantSystemService.unbind(tenantId, systemCode)
-    }
+    override fun deleteByTenantId(tenantId: String): Int = sysTenantSystemService.deleteByTenantId(tenantId)
 
-    override fun exists(tenantId: String, systemCode: String): Boolean {
-        return sysTenantSystemService.exists(tenantId, systemCode)
-    }
-
-    override fun deleteByTenantId(tenantId: String): Int {
-        return sysTenantSystemService.deleteByTenantId(tenantId)
-    }
-
-    override fun batchDeleteByTenantIds(tenantIds: Collection<String>): Int {
-        return sysTenantSystemService.batchDeleteByTenantIds(tenantIds)
-    }
-
-
+    override fun batchDeleteByTenantIds(tenantIds: Collection<String>): Int =
+        sysTenantSystemService.batchDeleteByTenantIds(tenantIds)
 }

@@ -4,7 +4,6 @@ import io.kudos.ability.data.rdb.flyway.multidatasource.FlywayMultiDataSourceMig
 import io.kudos.ability.data.rdb.jdbc.datasource.DsContextProcessor
 import io.kudos.test.common.init.EnableKudosTest
 import jakarta.annotation.Resource
-import java.sql.Connection
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -31,19 +30,14 @@ class FlywayTest {
     @Test
     fun migrate() {
         migrator.migrate() // 模拟重复执行数据库更新也没有问题
-        val datasource = dsContextProcessor.getDataSource("ds1")!!
-        var connection: Connection? = null
-        try {
-            connection = datasource.connection
-            val sql = "select count(*) from test_table_flyway"
-            val statement = connection.createStatement()
-            val rs = statement.executeQuery(sql)
-            assert(rs.next())
-            assertEquals(2, rs.getInt(1))
-            rs.close()
-            statement.close()
-        } finally {
-            connection?.close()
+        val datasource = requireNotNull(dsContextProcessor.getDataSource("ds1")) { "数据源 ds1 不存在" }
+        datasource.connection.use { connection ->
+            connection.createStatement().use { statement ->
+                statement.executeQuery("select count(*) from test_table_flyway").use { rs ->
+                    assert(rs.next())
+                    assertEquals(2, rs.getInt(1))
+                }
+            }
         }
     }
 

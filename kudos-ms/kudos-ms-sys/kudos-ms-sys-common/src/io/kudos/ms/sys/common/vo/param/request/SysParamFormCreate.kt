@@ -9,16 +9,16 @@ package io.kudos.ms.sys.common.vo.param.request
  */
 data class SysParamFormCreate (
 
-    override val paramName: String = "",
+    override val paramName: String,
 
-    override val paramValue: String = "",
+    override val paramValue: String,
 
-    override val defaultValue: String? = null,
+    override val defaultValue: String?,
 
-    override val atomicServiceCode: String = "",
+    override val atomicServiceCode: String,
 
-    override val orderNum: Int? = null,
+    override val orderNum: Int?,
 
-    override val remark: String? = null,
+    override val remark: String?,
 
 ) : ISysParamFormBase

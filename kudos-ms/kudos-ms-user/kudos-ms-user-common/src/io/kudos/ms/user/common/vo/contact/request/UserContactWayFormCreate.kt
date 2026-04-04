@@ -9,16 +9,16 @@ package io.kudos.ms.user.common.vo.contact.request
  */
 data class UserContactWayFormCreate (
 
-    override val userId: String? = null,
+    override val userId: String? ,
 
-    override val contactWayDictCode: String? = null,
+    override val contactWayDictCode: String? ,
 
-    override val contactWayValue: String? = null,
+    override val contactWayValue: String? ,
 
-    override val contactWayStatusDictCode: String? = null,
+    override val contactWayStatusDictCode: String? ,
 
-    override val priority: Short? = null,
+    override val priority: Short? ,
 
-    override val remark: String? = null,
+    override val remark: String? ,
 
 ) : IUserContactWayFormBase

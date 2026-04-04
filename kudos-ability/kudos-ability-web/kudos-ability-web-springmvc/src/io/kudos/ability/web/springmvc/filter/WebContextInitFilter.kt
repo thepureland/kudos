@@ -27,20 +27,18 @@ open class WebContextInitFilter : IWebContextInitFilter {
 
         // session
         val session = (request as HttpServletRequest).session
-        session.attributeNames.asIterator().forEach { name ->
-            val value = session.getAttribute(name)
-            context.addSessionAttributes(Pair(name, value))
+        session.attributeNames.toList().forEach { name ->
+            context.addSessionAttributes(name to session.getAttribute(name))
         }
 
         // cookie
         request.cookies?.forEach { cookie ->
-            context.addCookieAttributes(Pair(cookie.name, cookie.value))
+            context.addCookieAttributes(cookie.name to cookie.value)
         }
 
         // header
-        request.headerNames.asIterator().forEach { name ->
-            val value = request.getHeader(name)
-            context.addHeaderAttributes(Pair(name, value))
+        request.headerNames.toList().forEach { name ->
+            context.addHeaderAttributes(name to request.getHeader(name))
         }
         context.traceKey = request.getHeader(Consts.RequestHeader.TRACE_KEY)?.takeIf { it.isNotBlank() }
             ?: UUID.randomUUID().toString()

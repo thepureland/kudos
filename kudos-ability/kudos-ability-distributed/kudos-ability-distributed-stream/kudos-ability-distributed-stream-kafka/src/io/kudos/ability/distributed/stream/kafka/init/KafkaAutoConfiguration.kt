@@ -8,7 +8,6 @@ import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.PropertySource
 
-
 /**
  * Kafka队列自动配置类
  *

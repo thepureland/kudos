@@ -3,7 +3,6 @@ package io.kudos.ms.sys.core.api
 import io.kudos.ms.sys.common.api.ISysParamApi
 import io.kudos.ms.sys.common.vo.param.SysParamCacheEntry
 import io.kudos.ms.sys.core.service.iservice.ISysParamService
-import jakarta.annotation.Resource
 import org.springframework.stereotype.Component
 
 
@@ -14,18 +13,12 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-open class SysParamApi : ISysParamApi {
-
-
-    @Resource
-    protected lateinit var sysParamService: ISysParamService
+open class SysParamApi(
+    private val sysParamService: ISysParamService,
+) : ISysParamApi {
 
     override fun getParam(
         paramName: String,
         atomicServiceCode: String
-    ): SysParamCacheEntry? {
-        return sysParamService.getParamFromCache(atomicServiceCode, paramName)
-    }
-
-
+    ): SysParamCacheEntry? = sysParamService.getParamFromCache(atomicServiceCode, paramName)
 }

@@ -5,12 +5,9 @@ import io.kudos.ability.file.local.init.LocalUploadService
 import io.kudos.test.common.init.EnableKudosTest
 import jakarta.annotation.Resource
 import org.springframework.core.io.InputStreamResource
-import java.lang.String
-import java.util.*
-import kotlin.arrayOf
+import java.time.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertTrue
-import kotlin.text.contains
 
 /**
  * 本地文件服务器上传操作测试用例
@@ -40,8 +37,8 @@ internal class LocalUploadServiceTest {
         val uploadFileResult = localUploadService.fileUpload(uploadFileModel)
         val filename = uploadFileResult.filePath
 
-        val arr = arrayOf("0", "doc")
-        assertTrue(filename!!.contains(String.join("/", *arr)))
+        val pathSnippet = listOf("0", "doc").joinToString("/")
+        assertTrue(checkNotNull(filename) { "filePath must not be null" }.contains(pathSnippet))
     }
 
     @Test
@@ -56,12 +53,10 @@ internal class LocalUploadServiceTest {
         val uploadFileResult = localUploadService.fileUpload(uploadFileModel)
         val filename = uploadFileResult.filePath
 
-        val calendar = Calendar.getInstance()
-        val year = calendar.get(Calendar.YEAR)
-        val month = calendar.get(Calendar.MONTH) + 1
-        val day = calendar.get(Calendar.DAY_OF_MONTH)
-        val arr = arrayOf("0", year.toString(), month.toString(), day.toString())
-        assertTrue(filename!!.contains(String.join("/", *arr)))
+        val today = LocalDate.now()
+        val pathSnippet = listOf("0", today.year.toString(), today.monthValue.toString(), today.dayOfMonth.toString())
+            .joinToString("/")
+        assertTrue(checkNotNull(filename) { "filePath must not be null" }.contains(pathSnippet))
     }
 
 }

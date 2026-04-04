@@ -13,31 +13,31 @@ import java.io.Serializable
 data class SysParamCacheEntry (
 
     /** 主键 */
-    override val id: String = "",
+    override val id: String,
 
     /** 参数名称 */
-    val paramName: String = "",
+    val paramName: String,
 
     /** 参数值 */
-    val paramValue: String = "",
+    val paramValue: String,
 
     /** 默认参数值 */
-    val defaultValue: String? = null,
+    val defaultValue: String?,
 
     /** 原子服务编码 */
-    val atomicServiceCode: String = "",
+    val atomicServiceCode: String,
 
     /** 序号 */
-    val orderNum: Int? = null,
+    val orderNum: Int?,
 
     /** 备注 */
-    val remark: String? = null,
+    val remark: String?,
 
     /** 是否启用 */
-    val active: Boolean = true,
+    val active: Boolean,
 
     /** 是否内置 */
-    val builtIn: Boolean = true,
+    val builtIn: Boolean,
 
 ) : IIdEntity<String>, Serializable {
 

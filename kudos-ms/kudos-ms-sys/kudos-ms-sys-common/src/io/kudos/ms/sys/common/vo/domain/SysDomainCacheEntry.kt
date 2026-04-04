@@ -13,25 +13,25 @@ import java.io.Serializable
 data class SysDomainCacheEntry (
 
     /** 主键 */
-    override val id: String = "",
+    override val id: String,
 
     /** 域名 */
-    val domain: String = "",
+    val domain: String,
 
     /** 系统编码 */
-    val systemCode: String = "",
+    val systemCode: String,
 
     /** 租户id */
-    val tenantId: String = "",
+    val tenantId: String,
 
     /** 备注 */
-    val remark: String? = null,
+    val remark: String?,
 
     /** 是否启用 */
-    val active: Boolean = true,
+    val active: Boolean,
 
     /** 是否内置 */
-    val builtIn: Boolean = false,
+    val builtIn: Boolean,
 
 ) : IIdEntity<String>, Serializable {
 

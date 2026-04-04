@@ -36,7 +36,7 @@ class TextFieldCell<S, T> @JvmOverloads constructor(private val sc: StringConver
 //                }
 //            }
 //            System.out.println("item=" + item + " ObservableValue<String>=" + ov.getValue());
-            //this.textField.setText(item);  // No longer need this!!!
+            //this.textField.setText(item);  // No longer need this
             textField.text = if (sc == null) item as String else sc.toString(item)
         } else {
             setContentDisplay(ContentDisplay.TEXT_ONLY)

@@ -11,16 +11,16 @@ import java.time.LocalDateTime
  */
 data class MsgReceiveFormCreate (
 
-    override val receiverId: String? = null,
+    override val receiverId: String? ,
 
-    override val sendId: String? = null,
+    override val sendId: String? ,
 
-    override val receiveStatusDictCode: String? = null,
+    override val receiveStatusDictCode: String? ,
 
-    override val createTime: LocalDateTime? = null,
+    override val createTime: LocalDateTime? ,
 
-    override val updateTime: LocalDateTime? = null,
+    override val updateTime: LocalDateTime? ,
 
-    override val tenantId: String? = null,
+    override val tenantId: String? ,
 
 ) : IMsgReceiveFormBase

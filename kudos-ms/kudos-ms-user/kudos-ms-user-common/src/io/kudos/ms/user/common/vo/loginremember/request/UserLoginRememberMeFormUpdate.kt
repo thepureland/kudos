@@ -13,12 +13,12 @@ import java.time.LocalDateTime
 data class UserLoginRememberMeFormUpdate (
 
     /** 主键 */
-    override val id: String? = null,
+    override val id: String,
 
-    override val username: String? = null,
+    override val username: String?,
 
-    override val token: String? = null,
+    override val token: String?,
 
-    override val lastUsed: LocalDateTime? = null,
+    override val lastUsed: LocalDateTime?,
 
-) : IIdEntity<String?>, IUserLoginRememberMeFormBase
+) : IIdEntity<String>, IUserLoginRememberMeFormBase

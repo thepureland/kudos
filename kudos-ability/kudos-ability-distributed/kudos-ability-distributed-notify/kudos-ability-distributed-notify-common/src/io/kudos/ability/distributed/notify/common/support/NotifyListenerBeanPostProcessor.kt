@@ -8,15 +8,9 @@ import org.springframework.beans.factory.config.BeanPostProcessor
  * 日期： 2022/11/14 16:29
  * 描述：
  */
-open class NotifyListenerBeanPostProcessor : BeanPostProcessor {
-
-    constructor()
-
-    constructor(namespace: String) {
-        this.namespace = namespace
-    }
-
-    private var namespace: String = NotifyListenerItem.DEFAULT_NAMESPACE
+open class NotifyListenerBeanPostProcessor(
+    private val namespace: String = NotifyListenerItem.DEFAULT_NAMESPACE
+) : BeanPostProcessor {
 
     override fun postProcessAfterInitialization(bean: Any, beanName: String): Any {
         if (bean is INotifyListener) {

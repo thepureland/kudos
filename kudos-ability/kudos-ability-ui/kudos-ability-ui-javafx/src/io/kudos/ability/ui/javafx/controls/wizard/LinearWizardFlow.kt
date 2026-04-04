@@ -24,7 +24,8 @@
  */
 package io.kudos.ability.ui.javafx.controls.wizard
 
-import java.util.*
+import java.util.ArrayList
+import java.util.Optional
 
 class LinearWizardFlow(pages: Collection<Wizard.WizardPane?>?) : Wizard.Flow {
 

@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileNotFoundException
+import java.io.InputStream
 
 
 class LocalDownLoadService : AbstractDownLoadService() {
@@ -18,9 +19,11 @@ class LocalDownLoadService : AbstractDownLoadService() {
     private lateinit var properties: LocalProperties
 
     override fun readFileToByte(downloadFileModel: DownloadFileModel<*>): ByteArray {
-        val bucketName = downloadFileModel.bucketName
-        val filePath = downloadFileModel.filePath
-        val realFilePath = properties.basePath + File.separator + bucketName + File.separator + filePath
+        val realFilePath = listOf(
+            properties.basePath,
+            downloadFileModel.bucketName,
+            downloadFileModel.filePath,
+        ).joinToString(File.separator)
         val file = File(realFilePath)
         if (!file.exists()) {
             throw ServiceException(FileErrorCode.FILE_NO_EXISTS)
@@ -28,11 +31,13 @@ class LocalDownLoadService : AbstractDownLoadService() {
         return FileKit.readFileToByteArray(file)
     }
 
-    override fun readFileToStream(downloadFileModel: DownloadFileModel<*>): java.io.InputStream {
+    override fun readFileToStream(downloadFileModel: DownloadFileModel<*>): InputStream {
         try {
-            val bucketName = downloadFileModel.bucketName
-            val filePath: String? = downloadFileModel.filePath
-            val realFilePath = properties.basePath + File.separator + bucketName + File.separator + filePath
+            val realFilePath = listOf(
+                properties.basePath,
+                downloadFileModel.bucketName,
+                downloadFileModel.filePath,
+            ).joinToString(File.separator)
             return FileInputStream(realFilePath)
         } catch (_: FileNotFoundException) {
             throw ServiceException(FileErrorCode.FILE_NO_EXISTS)

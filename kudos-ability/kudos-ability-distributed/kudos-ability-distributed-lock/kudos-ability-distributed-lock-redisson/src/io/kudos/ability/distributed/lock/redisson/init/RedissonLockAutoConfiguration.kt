@@ -35,7 +35,6 @@ import java.time.temporal.ChronoUnit
 )
 open class RedissonLockAutoConfiguration : IComponentInitializer {
 
-
     @Bean
     @ConditionalOnMissingBean
     open fun redissonLockProvider() = RedissonLockProvider()

@@ -59,7 +59,9 @@ open class NotifyCommonAutoConfiguration {
         properties: NotifyCommonProperties
     ): InitializingBean = InitializingBean {
         if (properties.failOnMissingProducer && notifyProducerProvider.ifAvailable == null) {
-            error("未找到INotifyProducer实现，且已开启kudos.ability.distributed.notify.fail-on-missing-producer")
+            error(
+                "未找到 INotifyProducer 实现，且已开启 kudos.ability.distributed.notify.fail-on-missing-producer"
+            )
         }
     }
 

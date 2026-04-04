@@ -4,7 +4,6 @@ import io.kudos.ability.file.common.auth.AuthServerParam
 import org.springframework.core.io.InputStreamSource
 import java.io.Serial
 import java.io.Serializable
-import java.util.*
 
 class DownloadFileModel<S : InputStreamSource> : Serializable {
     /**
@@ -27,14 +26,15 @@ class DownloadFileModel<S : InputStreamSource> : Serializable {
         private val serialVersionUID = -8498350660950356072L
 
         fun from(fullPath: String): DownloadFileModel<*> {
-            Objects.nonNull(fullPath)
-            val split: Array<String?> = fullPath.split("/".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-            val bucketName = split[1]
-            val filePath = fullPath.replaceFirst(("/$bucketName").toRegex(), "")
-            val downloadFileModel = DownloadFileModel<InputStreamSource>()
-            downloadFileModel.bucketName = bucketName
-            downloadFileModel.filePath = filePath
-            return downloadFileModel
+            require(fullPath.isNotBlank()) { "fullPath must not be blank" }
+            val segments = fullPath.split('/').dropLastWhile { it.isEmpty() }
+            val bucketName = segments.getOrNull(1)
+                ?: throw IllegalArgumentException("fullPath must contain bucket segment: $fullPath")
+            val filePath = fullPath.removePrefix("/$bucketName")
+            return DownloadFileModel<InputStreamSource>().apply {
+                this.bucketName = bucketName
+                this.filePath = filePath
+            }
         }
     }
 

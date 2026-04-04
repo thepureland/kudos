@@ -2,7 +2,7 @@ package io.kudos.tools.sql
 
 import java.io.File
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
 
 
 class EmptySqlFileCreator

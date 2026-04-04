@@ -13,9 +13,6 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.function.Consumer
-
-
 @Component
 class FailedDataRetryScanner {
 
@@ -49,14 +46,13 @@ class FailedDataRetryScanner {
     @jakarta.annotation.PostConstruct
     fun scheduleAll() {
         val handlers = SpringKit.getBeansOfType<IFailedDataHandler<*>>()
-        handlers.values.forEach(Consumer { handler: IFailedDataHandler<*>? ->
-            taskScheduler.schedule({
-                lockRetry(
-                    handler, KudosContextHolder.get().atomicServiceCode
-                )
-            }, CronTrigger(requireNotNull(handler) { "handler is null" }.cronExpression))
+        handlers.values.forEach { handler ->
+            taskScheduler.schedule(
+                { lockRetry(handler, KudosContextHolder.get().atomicServiceCode) },
+                CronTrigger(handler.cronExpression)
+            )
             logger.info("Scheduled retry for ${handler.businessType} [${handler.cronExpression}]")
-        })
+        }
     }
 
     /**
@@ -73,8 +69,8 @@ class FailedDataRetryScanner {
      */
     private fun lockRetry(handler: IFailedDataHandler<*>, appName: String?) {
         val lockProvider = LockTool.lockProvider
-        val key = FAILED_DATA_RETRY_LOCK_PREFIX + handler.businessType + "_" + appName
-        val lock: Boolean = lockProvider.tryLock(key, 600)
+        val key = "$FAILED_DATA_RETRY_LOCK_PREFIX${handler.businessType}_$appName"
+        val lock = lockProvider.tryLock(key, 600)
         if (!lock) {
             logger.warn("还有其他任务在处理中，未正确释放锁")
             return
@@ -101,8 +97,7 @@ class FailedDataRetryScanner {
                 stream
                     .filter { p: Path ->
                         val name = p.fileName.toString()
-                        Files.isRegularFile(p) &&
-                            name.matches("\\d+-[0-9a-fA-F\\-]+\\.json".toRegex())
+                        Files.isRegularFile(p) && FAILED_DATA_FILE_PATTERN.matches(name)
                     }
                     .sorted()
                     .forEach { path: Path ->
@@ -140,5 +135,7 @@ class FailedDataRetryScanner {
     companion object {
         /** 失败数据重试锁键前缀（已修正历史拼写 faile-data-retry） */
         private const val FAILED_DATA_RETRY_LOCK_PREFIX = "failed-data-retry-"
+
+        private val FAILED_DATA_FILE_PATTERN = Regex("""\d+-[0-9a-fA-F\-]+\.json""")
     }
 }
