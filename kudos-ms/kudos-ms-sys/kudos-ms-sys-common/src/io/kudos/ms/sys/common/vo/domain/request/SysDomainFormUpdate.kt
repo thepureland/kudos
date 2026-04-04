@@ -1,6 +1,8 @@
 package io.kudos.ms.sys.common.vo.domain.request
 
+import io.kudos.base.bean.validation.constraint.annotations.FixedLength
 import io.kudos.base.model.contract.entity.IIdEntity
+import jakarta.validation.constraints.NotBlank
 
 
 /**
@@ -12,14 +14,16 @@ import io.kudos.base.model.contract.entity.IIdEntity
 data class SysDomainFormUpdate (
 
     /** 主键 */
-    override val id: String? = null,
+    @get:NotBlank
+    @get:FixedLength(36)
+    override val id: String,
 
-    override val domain: String = "",
+    override val domain: String,
 
-    override val systemCode: String = "",
+    override val systemCode: String,
 
-    override val tenantId: String = "",
+    override val tenantId: String,
 
-    override val remark: String? = null,
+    override val remark: String?,
 
-) : IIdEntity<String?>, ISysDomainFormBase
+) : IIdEntity<String>, ISysDomainFormBase

@@ -2,7 +2,7 @@
 create table if not exists "sys_i18n"
 (
     "id"                  character(36) default RANDOM_UUID() not null primary key,
-    "locale"              character varying(5)                not null,
+    "locale"              character(5)                not null,
     "atomic_service_code" character varying(32)               not null,
     "i18n_type_dict_code" character varying(32)               not null,
     "namespace"       character varying(128)             not null,
@@ -505,6 +505,10 @@ insert into "sys_i18n" ("locale", "atomic_service_code", "i18n_type_dict_code", 
     ('zh-TW', 'sys', 'valid-msg', 'default', 'MaxLength', '長度不得大於 {max}', true),
     ('en-US', 'sys', 'valid-msg', 'default', 'MaxLength', 'length must not exceed {max}', true),
 
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'FixedLength', '长度必须为{value}个字符', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'FixedLength', '長度必須為 {value} 個字元', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'FixedLength', 'length must be exactly {value} characters', true),
+
     ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::cn-mainland-mobile', '须为中国大陆11位手机号码', true),
     ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::cn-mainland-mobile', '須為中國大陸 11 位手機號碼', true),
     ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::cn-mainland-mobile', 'must be an 11-digit mainland China mobile number', true),
@@ -608,10 +612,6 @@ insert into "sys_i18n" ("locale", "atomic_service_code", "i18n_type_dict_code", 
     ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::nick-name', '须为3～15位昵称（中文、英文与数字）', true),
     ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::nick-name', '須為 3～15 字暱稱（中文、英文與數字）', true),
     ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::nick-name', 'must be 3–15 characters (Chinese, Latin, digits)', true),
-
-    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::text-1-to-30-chars', '长度须为1～30个字符', true),
-    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::text-1-to-30-chars', '長度須為 1～30 個字元', true),
-    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::text-1-to-30-chars', 'length must be between 1 and 30 characters', true),
 
     ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::msn', '须为合法的MSN账号（规则同邮箱）', true),
     ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::msn', '須為合法的 MSN 帳號（規則同電子郵件）', true),
@@ -749,6 +749,10 @@ insert into "sys_i18n" ("locale", "atomic_service_code", "i18n_type_dict_code", 
     ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::latin-alnum-dash-underscore', '僅允許英文字母、數字、連字號與底線', true),
     ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::latin-alnum-dash-underscore', 'Latin letters, digits, hyphens, and underscores only', true),
 
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::relaxed-var-name', '仅允许英文字母、数字、连字符与下划线，且必须以字母或下划线开头', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::relaxed-var-name', '僅允許英文字母、數字、連字號與底線，且必須以字母或底線開頭', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::relaxed-var-name', 'Latin letters, digits, hyphens, and underscores only; must start with a letter or underscore', true),
+
     ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::var-name', '只允许字母、数字、下划线，且不能以数字开头', true),
     ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::var-name', '只允許英文字母、數字與底線，且不得以數字開頭', true),
     ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::var-name', 'only letters, numbers, and underscores; cannot start with a number', true),
@@ -759,7 +763,11 @@ insert into "sys_i18n" ("locale", "atomic_service_code", "i18n_type_dict_code", 
 
     ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::domain', '须为合法的域名', true),
     ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::domain', '須為合法的網域名稱', true),
-    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::domain', 'must be a valid domain name', true);
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::domain', 'must be a valid domain name', true),
+
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::context', '必须以 / 开头，且仅由小写字母、数字、短横线和分级斜杠组成', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::context', '需以 / 開頭，後續只可使用小寫英文字母、數字及連字號 -，並以 / 區分層級', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::context', 'must start with /; only lowercase letters, digits, hyphens, and / separators are allowed', true);
 
 insert into "sys_i18n" ("locale", "atomic_service_code", "i18n_type_dict_code", "namespace", "key", "value", "built_in") values
     ('zh-CN', 'sys', 'valid-msg', 'dataSource', 'Compare::maxActive', '不得小于初始连接数', true),
@@ -773,6 +781,7 @@ insert into "sys_i18n" ("locale", "atomic_service_code", "i18n_type_dict_code", 
     ('zh-CN', 'sys', 'valid-msg', 'dataSource', 'Compare::minIdle', '不得大于最大连接数', true),
     ('zh-TW', 'sys', 'valid-msg', 'dataSource', 'Compare::minIdle', '不得大於最大連線數', true),
     ('en-US', 'sys', 'valid-msg', 'dataSource', 'Compare::minIdle', 'must not exceed max active', true);
+
 
 -- error-msg
 insert into "sys_i18n" ("locale", "atomic_service_code", "i18n_type_dict_code", "namespace", "key", "value", "built_in") values

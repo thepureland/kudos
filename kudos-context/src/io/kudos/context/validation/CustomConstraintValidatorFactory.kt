@@ -21,11 +21,7 @@ open class CustomConstraintValidatorFactory: LocalValidatorFactoryBean(), Applic
 
     private lateinit var applicationContext: ApplicationContext
 
-    override fun getClockProvider(): ClockProvider {
-        return ClockProvider {
-            Clock.systemDefaultZone()
-        }
-    }
+    override fun getClockProvider(): ClockProvider = ClockProvider { Clock.systemDefaultZone() }
 
     override fun postProcessConfiguration(configuration: Configuration<*>) {
         val hibernateConfiguration = configuration as HibernateValidatorConfiguration

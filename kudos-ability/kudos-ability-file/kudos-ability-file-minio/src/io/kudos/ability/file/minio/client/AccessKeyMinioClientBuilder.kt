@@ -18,9 +18,11 @@ class AccessKeyMinioClientBuilder : MinioClientBuilder<AccessKeyServerParam> {
     private var authServerParam: AccessKeyServerParam? = null
 
     override fun build(): MinioClient {
+        val props = requireNotNull(minioProperties) { "minioProperties is null" }
+        val auth = requireNotNull(authServerParam) { "authServerParam is null" }
         return MinioClient.builder()
-            .endpoint(URI(requireNotNull(minioProperties) { "minioProperties is null" }.endpoint).toURL())
-            .credentials(requireNotNull(authServerParam) { "authServerParam is null" }.accessKey, requireNotNull(authServerParam) { "authServerParam is null" }.secretKey)
+            .endpoint(URI(props.endpoint).toURL())
+            .credentials(auth.accessKey, auth.secretKey)
             .build()
     }
 

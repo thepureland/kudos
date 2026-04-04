@@ -1,7 +1,7 @@
 package io.kudos.base.bean
 
 import io.kudos.base.time.toLocalDate
-import java.util.*
+import java.util.Date
 import kotlin.test.*
 
 /**

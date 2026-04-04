@@ -14,43 +14,43 @@ import java.time.LocalDateTime
 data class MsgSendCacheEntry (
 
     /** 主键 */
-    override val id: String = "",
+    override val id: String,
 
     /** 接收者群组类型字典码 */
-    val receiverGroupTypeDictCode: String? = null,
+    val receiverGroupTypeDictCode: String?,
 
     /** 接收者群组ID */
-    val receiverGroupId: String? = null,
+    val receiverGroupId: String?,
 
     /** 消息实例ID */
-    val instanceId: String? = null,
+    val instanceId: String?,
 
     /** 消息类型字典码 */
-    val msgTypeDictCode: String? = null,
+    val msgTypeDictCode: String?,
 
     /** 国家-语言字典码 */
-    val localeDictCode: String? = null,
+    val localeDictCode: String?,
 
     /** 发送状态字典码 */
-    val sendStatusDictCode: String? = null,
+    val sendStatusDictCode: String?,
 
     /** 创建时间 */
-    val createTime: LocalDateTime? = null,
+    val createTime: LocalDateTime?,
 
     /** 更新时间 */
-    val updateTime: LocalDateTime? = null,
+    val updateTime: LocalDateTime?,
 
     /** 发送成功数量 */
-    val successCount: Int? = null,
+    val successCount: Int?,
 
     /** 发送失败数量 */
-    val failCount: Int? = null,
+    val failCount: Int?,
 
     /** 定时任务ID */
-    val jobId: String? = null,
+    val jobId: String?,
 
     /** 租户ID */
-    val tenantId: String? = null,
+    val tenantId: String?,
 
 ) : IIdEntity<String>, Serializable {
 

@@ -8,8 +8,6 @@ import io.kudos.ability.log.audit.common.entity.SysAuditLogModel
 class MqAuditService : IAuditService {
 
     @MqProducer(topic = "LOG_AUDIT_TOPIC", bindingName = "logAudit-out-0")
-    override fun submit(sysAuditLogVo: SysAuditLogModel): Boolean {
-        return true
-    }
+    override fun submit(sysAuditLogVo: SysAuditLogModel): Boolean = true
 
 }

@@ -12,31 +12,31 @@ import java.io.Serializable
  */
 data class SysMicroServiceCacheEntry (
 
-    override val id: String = "",
+    override val id: String,
 
     /** 编码 */
-    val code: String = "",
+    val code: String,
 
     /** 名称 */
-    val name: String = "",
+    val name: String,
 
     /** 上下文 */
-    val context: String = "",
+    val context: String,
 
     /** 是否为原子服务 */
-    val atomicService: Boolean = true,
+    val atomicService: Boolean,
 
     /** 父服务编码 */
-    val parentCode: String? = null,
+    val parentCode: String?,
 
     /** 备注 */
-    val remark: String? = null,
+    val remark: String?,
 
     /** 是否启用 */
-    val active: Boolean = true,
+    val active: Boolean,
 
     /** 是否内置 */
-    val builtIn: Boolean = true,
+    val builtIn: Boolean,
 
 ) : IIdEntity<String>, Serializable {
 

@@ -9,7 +9,6 @@ import org.springframework.cloud.loadbalancer.core.DelegatingServiceInstanceList
 import org.springframework.cloud.loadbalancer.core.ServiceInstanceListSupplier
 import org.springframework.util.StringUtils
 import reactor.core.publisher.Flux
-import java.util.function.Function
 
 /**
  * 服务实例列表提示者,通过Request Header Hint 选择分区
@@ -21,18 +20,16 @@ class HintZoneServiceInstanceListSupplier(
 ) : DelegatingServiceInstanceListSupplier(delegate) {
     private val text = "zone"
 
-    private val properties = factory.getProperties(serviceId)!!
+    private val properties = checkNotNull(factory.getProperties(serviceId)) { "load balancer properties for $serviceId" }
 
     override fun get(): Flux<MutableList<ServiceInstance>> {
         return delegate.get()
     }
 
-    override fun get(request: Request<*>): Flux<MutableList<ServiceInstance>> {
-        return delegate.get(request)
-            .map(Function { instances: MutableList<ServiceInstance> ->
-                filteredByHint(instances, getHint(request.getContext()))
-            } as Function<in MutableList<ServiceInstance>, out MutableList<ServiceInstance>>)
-    }
+    override fun get(request: Request<*>): Flux<MutableList<ServiceInstance>> =
+        delegate.get(request).map { instances ->
+            filteredByHint(instances, getHint(request.getContext()))
+        }
 
     private fun getHint(requestContext: Any?): String? {
         if (requestContext == null) {
@@ -69,7 +66,7 @@ class HintZoneServiceInstanceListSupplier(
             return filteredInstances
         }
 
-        val filteredInstances: MutableList<ServiceInstance> = ArrayList(instances.size)
+        val filteredInstances = mutableListOf<ServiceInstance>()
         for (serviceInstance in instances) {
             if (serviceInstance.metadata?.getOrDefault(text, "") == hint) {
                 filteredInstances.add(serviceInstance)
@@ -78,7 +75,6 @@ class HintZoneServiceInstanceListSupplier(
         if (filteredInstances.isNotEmpty()) {
             return filteredInstances
         }
-
 
         // If instances cannot be found based on hint,
         // we return all instances retrieved for given service id.

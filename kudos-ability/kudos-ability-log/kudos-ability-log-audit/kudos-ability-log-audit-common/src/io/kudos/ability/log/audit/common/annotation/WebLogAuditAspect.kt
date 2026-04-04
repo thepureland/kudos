@@ -37,12 +37,12 @@ class WebLogAuditAspect {
         //if (ServletFileUpload.isMultipartContent(request)) {
         //    return;
         //}
-        if (request != null && isMultipartContent(request)) {
+        if (request == null || isMultipartContent(request)) {
             return
         }
         val signature = joinPoint.signature as org.aspectj.lang.reflect.MethodSignature
         val audit = signature.method.getAnnotation(WebAudit::class.java)
-        val logVo = AuditLogTool.createLogVo(audit, request!!, joinPoint)
+        val logVo = AuditLogTool.createLogVo(audit, request, joinPoint)
         LogAuditContext.set(logVo)
     }
 
@@ -55,7 +55,7 @@ class WebLogAuditAspect {
         //if (ServletFileUpload.isMultipartContent(request)) {
         //    return;
         //}
-        if (request != null && isMultipartContent(request)) {
+        if (request == null || isMultipartContent(request)) {
             return
         }
         val logVo = LogAuditContext.get()
@@ -66,7 +66,7 @@ class WebLogAuditAspect {
                 if (auditService != null && modelAudit != null) {
                     auditService.submit(modelAudit)
                 }
-            } catch (e: java.lang.Exception) {
+            } catch (e: Exception) {
                 log.error(e, "审计日志组件,拦截器异常!")
             }
         }

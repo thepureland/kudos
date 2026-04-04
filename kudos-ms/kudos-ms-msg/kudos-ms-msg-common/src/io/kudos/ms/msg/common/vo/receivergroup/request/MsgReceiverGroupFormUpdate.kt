@@ -12,16 +12,16 @@ import io.kudos.base.model.contract.entity.IIdEntity
 data class MsgReceiverGroupFormUpdate (
 
     /** 主键 */
-    override val id: String? = null,
+    override val id: String,
 
-    override val receiverGroupTypeDictCode: String? = null,
+    override val receiverGroupTypeDictCode: String?,
 
-    override val defineTable: String? = null,
+    override val defineTable: String?,
 
-    override val nameColumn: String? = null,
+    override val nameColumn: String?,
 
-    override val remark: String? = null,
+    override val remark: String?,
 
-    override val active: Boolean? = null,
+    override val active: Boolean?,
 
-) : IIdEntity<String?>, IMsgReceiverGroupFormBase
+) : IIdEntity<String>, IMsgReceiverGroupFormBase

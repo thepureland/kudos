@@ -14,10 +14,11 @@ import java.util.regex.Pattern
 class CaffeineKeyValueCacheManager : AbstractKeyValueCacheManager<CaffeineCache>() {
 
     override fun createCache(cacheConfig: CacheConfig): CaffeineCache {
-        val spec = properties.caffeine.spec
-        val cacheBuilder = Caffeine.from(spec!!)
-        cacheBuilder.expireAfterWrite(cacheConfig.ttl!!.toLong(), TimeUnit.SECONDS)
-        var name = cacheConfig.name!!
+        val spec = requireNotNull(properties.caffeine.spec) { "caffeine spec is required" }
+        val cacheBuilder = Caffeine.from(spec)
+        val ttlSec = requireNotNull(cacheConfig.ttl) { "cache ttl is required" }.toLong()
+        cacheBuilder.expireAfterWrite(ttlSec, TimeUnit.SECONDS)
+        var name = requireNotNull(cacheConfig.name) { "cache name is required" }
         val ignoreVersion: Boolean? = cacheConfig.ignoreVersion
         if (ignoreVersion == null || !ignoreVersion) {
             name = versionConfig.getFinalCacheName(name)
@@ -35,10 +36,11 @@ class CaffeineKeyValueCacheManager : AbstractKeyValueCacheManager<CaffeineCache>
         val nativeCache = (cache as CaffeineCache).nativeCache.asMap()
         val regex = "^" + realPattern.replace("*", ".*") + "$"
         val p = Pattern.compile(regex)
-        // 遍历 keySet，匹配后再 evict
-        nativeCache.keys.stream()
-            .filter { key: Any -> p.matcher(key.toString()).matches() }
-            .forEach { key: Any -> cache.evict(key) }
+        for (key in nativeCache.keys) {
+            if (p.matcher(key.toString()).matches()) {
+                cache.evict(key)
+            }
+        }
     }
 
     override fun existsKey(cacheName: String, key: Any): Boolean {

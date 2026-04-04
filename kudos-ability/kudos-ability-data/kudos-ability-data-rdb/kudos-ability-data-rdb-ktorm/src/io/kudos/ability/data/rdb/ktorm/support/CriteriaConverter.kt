@@ -35,8 +35,7 @@ internal object CriteriaConverter {
                     criterionGroup.forEach { groupElem ->
                         when (groupElem) {
                             is Criterion -> {
-                                val columnDeclaring = convertCriterion(groupElem, table)
-                                columnDeclaring?.let { orExpressions.add(columnDeclaring) }
+                                convertCriterion(groupElem, table)?.let { orExpressions.add(it) }
                             }
                             is Criteria -> {
                                 orExpressions.add(convert(groupElem, table))
@@ -46,17 +45,10 @@ internal object CriteriaConverter {
                             }
                         }
                     }
-                    var expression = orExpressions[0]
-                    orExpressions.forEachIndexed { index, orExpression ->
-                        if (index != 0) {
-                            expression = expression.or(orExpression)
-                        }
-                    }
-                    andExpressions.add(expression)
+                    andExpressions.add(orExpressions.reduce { acc, e -> acc.or(e) })
                 }
                 is Criterion -> {
-                    val columnDeclaring = convertCriterion(criterionGroup, table)
-                    columnDeclaring?.let { andExpressions.add(columnDeclaring) }
+                    convertCriterion(criterionGroup, table)?.let { andExpressions.add(it) }
                 }
                 is Criteria -> {
                     andExpressions.add(convert(criterionGroup, table))
@@ -66,13 +58,7 @@ internal object CriteriaConverter {
                 }
             }
         }
-        var wholeExpression = andExpressions[0]
-        andExpressions.forEachIndexed { index, andExpression ->
-            if (index != 0) {
-                wholeExpression = wholeExpression.and(andExpression)
-            }
-        }
-        return wholeExpression
+        return andExpressions.reduce { acc, e -> acc.and(e) }
     }
 
     private fun convertCriterion(criterion: Criterion, table: Table<*>): ColumnDeclaring<Boolean>? {

@@ -16,7 +16,6 @@ import io.kudos.ability.cache.common.init.properties.CacheVersionConfig
 import io.kudos.ability.cache.common.notify.CacheNotifyListener
 import io.kudos.ability.cache.common.support.DefaultCacheConfigProvider
 import io.kudos.ability.cache.common.support.ICacheConfigProvider
-import io.kudos.ability.distributed.notify.common.support.NotifyTool
 import io.kudos.context.config.YamlPropertySourceFactory
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
@@ -108,10 +107,6 @@ open class LinkableCacheAutoConfiguration : IComponentInitializer {
     @Bean
     @ConditionalOnMissingBean
     open fun cacheNotifyListener(): CacheNotifyListener = CacheNotifyListener()
-
-    @Bean("notifyTool", "notityTool")
-    @ConditionalOnMissingBean
-    open fun notifyTool() = NotifyTool()
 
     @Bean
     @ConditionalOnMissingBean

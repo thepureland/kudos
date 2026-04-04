@@ -12,6 +12,7 @@ import org.springframework.boot.SpringApplication
 import org.springframework.cloud.openfeign.EnableFeignClients
 import org.springframework.test.context.ActiveProfiles
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
@@ -46,7 +47,7 @@ open class OpenFeignTest {
 
         // 测试post方式的请求
         val result = feignClient.post(PostParam(1, "name"))
-        assertTrue(result.success!!)
+        assertEquals(true, result.success)
 
         // 测试异常抛回
         assertFailsWith<RuntimeException> { feignClient.exception() }

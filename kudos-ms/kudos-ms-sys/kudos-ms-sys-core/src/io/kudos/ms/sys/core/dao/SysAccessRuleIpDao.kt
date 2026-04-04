@@ -73,8 +73,9 @@ open class SysAccessRuleIpDao : BaseCrudDao<String, SysAccessRuleIp, SysAccessRu
             }
             query = query.orderBy(*orderExps.toTypedArray())
         }
+        val rawPageNo = searchPayload.pageNo
         val pageNo = when {
-            searchPayload.pageNo != null -> maxOf(1, searchPayload.pageNo!!)
+            rawPageNo != null -> maxOf(1, rawPageNo)
             searchPayload.isUnpagedSearchAllowed() -> null
             else -> 1
         }

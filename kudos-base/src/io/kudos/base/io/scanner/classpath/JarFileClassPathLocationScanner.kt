@@ -20,7 +20,7 @@ import java.net.JarURLConnection
 import java.net.URI
 import java.net.URISyntaxException
 import java.net.URL
-import java.util.*
+import java.util.TreeSet
 import java.util.jar.JarFile
 
 /**

@@ -2,7 +2,6 @@ package io.kudos.context.core
 
 import io.kudos.base.model.contract.entity.IIdEntity
 
-
 /**
  * Kudos上下文
  *
@@ -66,25 +65,25 @@ class KudosContext {
 
     fun addSessionAttributes(vararg sessionAttributes: Pair<String, Any?>): KudosContext {
         val attrs = this.sessionAttributes ?: mutableMapOf<String, Any?>().also { this.sessionAttributes = it }
-        attrs.putAll(mapOf(*sessionAttributes))
+        attrs.putAll(sessionAttributes)
         return this
     }
 
     fun addCookieAttributes(vararg cookieAttributes: Pair<String, String?>): KudosContext {
         val attrs = this.cookieAttributes ?: mutableMapOf<String, String?>().also { this.cookieAttributes = it }
-        attrs.putAll(mapOf(*cookieAttributes))
+        attrs.putAll(cookieAttributes)
         return this
     }
 
     fun addHeaderAttributes(vararg headerAttributes: Pair<String, String?>): KudosContext {
         val attrs = this.headerAttributes ?: mutableMapOf<String, String?>().also { this.headerAttributes = it }
-        attrs.putAll(mapOf(*headerAttributes))
+        attrs.putAll(headerAttributes)
         return this
     }
 
     fun addOtherInfos(vararg otherInfos: Pair<String, Any?>): KudosContext {
         val infos = this.otherInfos ?: mutableMapOf<String, Any?>().also { this.otherInfos = it }
-        infos.putAll(mapOf(*otherInfos))
+        infos.putAll(otherInfos)
         return this
     }
 

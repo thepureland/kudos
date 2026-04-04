@@ -3,7 +3,6 @@ package io.kudos.ms.sys.core.api
 import io.kudos.ms.sys.common.api.ISysDomainApi
 import io.kudos.ms.sys.common.vo.domain.SysDomainCacheEntry
 import io.kudos.ms.sys.core.service.iservice.ISysDomainService
-import jakarta.annotation.Resource
 import org.springframework.stereotype.Component
 
 
@@ -14,15 +13,9 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-open class SysDomainApi : ISysDomainApi {
+open class SysDomainApi(
+    private val sysDomainService: ISysDomainService,
+) : ISysDomainApi {
 
-
-    @Resource
-    protected lateinit var sysDomainService: ISysDomainService
-
-    override fun getDomainByName(domainName: String): SysDomainCacheEntry? {
-        return sysDomainService.getDomainFromCache(domainName)
-    }
-
-
+    override fun getDomainByName(domainName: String): SysDomainCacheEntry? = sysDomainService.getDomainFromCache(domainName)
 }

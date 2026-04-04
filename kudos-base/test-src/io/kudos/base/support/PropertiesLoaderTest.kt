@@ -1,6 +1,6 @@
 package io.kudos.base.support
 
-import java.util.*
+import java.util.Properties
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith

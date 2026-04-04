@@ -11,7 +11,6 @@ import org.springframework.data.redis.cache.RedisCacheManager
 import org.springframework.data.redis.cache.RedisCacheWriter
 import java.nio.charset.StandardCharsets
 import java.time.Duration
-import java.util.*
 
 /**
  * Redis缓存管理器
@@ -46,7 +45,7 @@ class RedisKeyValueCacheManager(
     defaultCacheConfiguration
 ), IKeyValueCacheManager<RedisCache> {
 
-    var caches: MutableList<RedisCache> = LinkedList<RedisCache>()
+    var caches: MutableList<RedisCache> = mutableListOf()
 
     @Resource
     private lateinit var versionConfig: CacheVersionConfig
@@ -100,10 +99,10 @@ class RedisKeyValueCacheManager(
             .disableCachingNullValues()
             .serializeKeysWith(defaultCacheConfiguration.keySerializationPair)
             .serializeValuesWith(defaultCacheConfiguration.valueSerializationPair)
-        if (cacheConfig.ttl != null) {
-            redisCacheConfiguration = redisCacheConfiguration.entryTtl(Duration.ofSeconds(cacheConfig.ttl!!.toLong()))
+        cacheConfig.ttl?.let { ttl ->
+            redisCacheConfiguration = redisCacheConfiguration.entryTtl(Duration.ofSeconds(ttl.toLong()))
         }
-        val realKey: String = versionConfig.getFinalCacheName(cacheConfig.name!!)
+        val realKey: String = versionConfig.getFinalCacheName(requireNotNull(cacheConfig.name) { "cache name required" })
         return createRedisCache(realKey, redisCacheConfiguration)
     }
 

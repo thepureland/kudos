@@ -745,11 +745,8 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
 
         // paging（pageNo 为 null 且不允许查全量时按第 1 页分页）
         if (listSearchPayload != null) {
-            val pageNo = when {
-                listSearchPayload.pageNo != null -> maxOf(1, listSearchPayload.pageNo!!)
-                listSearchPayload.isUnpagedSearchAllowed() -> null
-                else -> 1
-            }
+            val pageNo = listSearchPayload.pageNo?.let { maxOf(1, it) }
+                ?: if (listSearchPayload.isUnpagedSearchAllowed()) null else 1
             if (pageNo != null) {
                 val rawSize = listSearchPayload.pageSize ?: 10
                 val pageSize = minOf(rawSize, listSearchPayload.getMaxPageSize())

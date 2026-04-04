@@ -1,7 +1,7 @@
 package io.kudos.ability.log.audit.common.entity
 
 import java.io.Serializable
-import java.util.*
+import java.util.Date
 
 class SysMonitorMsgVo : Serializable {
     /**

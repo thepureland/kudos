@@ -16,7 +16,7 @@ import javafx.scene.control.Alert
 import javafx.scene.control.CheckBox
 import javafx.scene.control.TableView
 import java.net.URL
-import java.util.*
+import java.util.ResourceBundle
 
 class BatchGenerationController : Initializable {
 

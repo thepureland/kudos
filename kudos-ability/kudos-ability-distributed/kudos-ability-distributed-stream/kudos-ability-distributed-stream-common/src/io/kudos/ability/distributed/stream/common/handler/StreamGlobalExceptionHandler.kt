@@ -17,7 +17,7 @@ import org.springframework.messaging.MessageHandlingException
 import org.springframework.messaging.MessageHeaders
 import org.springframework.messaging.support.ErrorMessage
 import java.time.LocalDateTime
-import java.util.*
+import java.util.Locale
 
 /**
  * @Description Stream消费异常全局处理类
@@ -45,8 +45,8 @@ class StreamGlobalExceptionHandler {
         try {
             val messageHandlingException = errorMessage.payload
             if (messageHandlingException is MessageHandlingException) {
-                val message = messageHandlingException.failedMessage
-                val headers = message!!.headers
+                val message = messageHandlingException.failedMessage ?: return
+                val headers = message.headers
                 if (!isFromConsumer(headers)) {
                     return
                 }
@@ -76,34 +76,32 @@ class StreamGlobalExceptionHandler {
 
     @ServiceActivator(inputChannel = IntegrationContextUtils.ERROR_CHANNEL_BEAN_NAME)
     fun handleProducerError(errorMessage: ErrorMessage) {
-        doRealChannelErrorHandl(errorMessage)
+        doRealChannelErrorHandle(errorMessage)
     }
 
     @ServiceActivator(inputChannel = IStreamFailHandler.CHANNEL_BEN_NAME)
     fun handSyncChannelError(errorMessage: ErrorMessage) {
-        doRealChannelErrorHandl(errorMessage)
+        doRealChannelErrorHandle(errorMessage)
     }
 
     private fun isFromConsumer(headers: MessageHeaders): Boolean {
-        return headers.keys.stream()
-            .map<String?> { obj: String? -> obj!!.lowercase(Locale.getDefault()) }
-            .anyMatch { k: String? ->
-                k!!.startsWith("kafka_")
-                        || k.startsWith("amqp_")
-                        || k.startsWith("rocket_")
-            }
+        val locale = Locale.getDefault()
+        return headers.keys.any { key ->
+            val k = key.lowercase(locale)
+            k.startsWith("kafka_") || k.startsWith("amqp_") || k.startsWith("rocket_")
+        }
     }
 
-    private fun doRealChannelErrorHandl(errorMessage: ErrorMessage) {
+    private fun doRealChannelErrorHandle(errorMessage: ErrorMessage) {
         try {
             val messageHandlingException = errorMessage.payload
             if (messageHandlingException is MessageHandlingException) {
                 // 取出 MessagingException 和原始消息
-                val message = messageHandlingException.failedMessage
-                processProducerError(message!!)
+                val message = messageHandlingException.failedMessage ?: return
+                processProducerError(message)
             } else if (errorMessage.originalMessage != null) {
-                val message = errorMessage.originalMessage
-                processProducerError(message!!)
+                val message = errorMessage.originalMessage ?: return
+                processProducerError(message)
             }
         } catch (e: Exception) {
             LOG.error(e, "文件持久化失败！")

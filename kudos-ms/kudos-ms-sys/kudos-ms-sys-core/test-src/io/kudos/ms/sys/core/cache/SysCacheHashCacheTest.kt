@@ -167,6 +167,6 @@ class SysCacheHashCacheTest : RdbAndRedisCacheTestBase() {
             hash = false
         }
         val id = sysCacheDao.insert(po)
-        return sysCacheDao.getAs<SysCacheCacheEntry>(id)!!
+        return requireNotNull(sysCacheDao.getAs<SysCacheCacheEntry>(id)) { "inserted cache row not found: $id" }
     }
 }

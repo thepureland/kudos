@@ -13,30 +13,30 @@ import java.time.LocalDateTime
 data class MsgSendFormUpdate (
 
     /** 主键 */
-    override val id: String? = null,
+    override val id: String,
 
-    override val receiverGroupTypeDictCode: String? = null,
+    override val receiverGroupTypeDictCode: String?,
 
-    override val receiverGroupId: String? = null,
+    override val receiverGroupId: String?,
 
-    override val instanceId: String? = null,
+    override val instanceId: String?,
 
-    override val msgTypeDictCode: String? = null,
+    override val msgTypeDictCode: String?,
 
-    override val localeDictCode: String? = null,
+    override val localeDictCode: String?,
 
-    override val sendStatusDictCode: String? = null,
+    override val sendStatusDictCode: String?,
 
-    override val createTime: LocalDateTime? = null,
+    override val createTime: LocalDateTime?,
 
-    override val updateTime: LocalDateTime? = null,
+    override val updateTime: LocalDateTime?,
 
-    override val successCount: Int? = null,
+    override val successCount: Int?,
 
-    override val failCount: Int? = null,
+    override val failCount: Int?,
 
-    override val jobId: String? = null,
+    override val jobId: String?,
 
-    override val tenantId: String? = null,
+    override val tenantId: String?,
 
-) : IIdEntity<String?>, IMsgSendFormBase
+) : IIdEntity<String>, IMsgSendFormBase

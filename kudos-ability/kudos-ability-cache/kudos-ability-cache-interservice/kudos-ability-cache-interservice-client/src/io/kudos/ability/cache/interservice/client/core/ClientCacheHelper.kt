@@ -8,6 +8,7 @@ import io.kudos.base.logger.LogFactory
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.cache.Cache
 import org.springframework.cache.get
 import org.springframework.stereotype.Component
 
@@ -38,13 +39,14 @@ class ClientCacheHelper : InitializingBean {
             return
         }
         log.info("初始化Feign缓存空间...")
-        val cacheConfig = CacheConfig()
-        cacheConfig.name = ClientCacheKey.FEIGN_CACHE_PREFIX
-        cacheConfig.ignoreVersion = true
-        cacheConfig.ttl = 600
-        val cacheConfigMap = mutableMapOf<String, CacheConfig>()
-        cacheConfigMap[cacheConfig.name!!] = cacheConfig
-        cacheManager!!.initCacheAfterSystemInit(cacheConfigMap)
+        val cacheName = ClientCacheKey.FEIGN_CACHE_PREFIX
+        val cacheConfig = CacheConfig().apply {
+            name = cacheName
+            ignoreVersion = true
+            ttl = 600
+        }
+        requireNotNull(cacheManager) { "localCacheManager not available" }
+            .initCacheAfterSystemInit(mapOf(cacheName to cacheConfig))
         log.debug("初始化Feign缓存空间{0}完成", ClientCacheKey.FEIGN_CACHE_PREFIX)
     }
 
@@ -56,7 +58,7 @@ class ClientCacheHelper : InitializingBean {
      */
     fun loadFromLocalCache(cacheKey: String): ClientCacheItem? {
         //可以考虑换成CacheKit
-        return cacheManager!!.getCache(ClientCacheKey.FEIGN_CACHE_PREFIX)!!.get<ClientCacheItem>(cacheKey)
+        return feignCache().get<ClientCacheItem>(cacheKey)
     }
 
     /**
@@ -67,7 +69,13 @@ class ClientCacheHelper : InitializingBean {
      */
     fun writeToLocalCache(cacheKey: String, data: ClientCacheItem?) {
         //可以考虑换成CacheKit
-        cacheManager!!.getCache(ClientCacheKey.FEIGN_CACHE_PREFIX)!!.put(cacheKey, data)
+        feignCache().put(cacheKey, data)
+    }
+
+    private fun feignCache(): Cache {
+        val mgr = cacheManager ?: error("localCacheManager not available")
+        return mgr.getCache(ClientCacheKey.FEIGN_CACHE_PREFIX)
+            ?: error("Feign cache region ${ClientCacheKey.FEIGN_CACHE_PREFIX} not initialized")
     }
 
     private val log = LogFactory.getLog(this::class)

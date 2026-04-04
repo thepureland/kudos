@@ -13,25 +13,25 @@ import java.io.Serializable
 data class UserContactWayCacheEntry (
 
     /** 主键 */
-    override val id: String = "",
+    override val id: String,
 
     /** 用户ID */
-    val userId: String? = null,
+    val userId: String?,
 
     /** 联系方式字典码 */
-    val contactWayDictCode: String? = null,
+    val contactWayDictCode: String?,
 
     /** 联系方式值 */
-    val contactWayValue: String? = null,
+    val contactWayValue: String?,
 
     /** 联系方式状态字典码 */
-    val contactWayStatusDictCode: String? = null,
+    val contactWayStatusDictCode: String?,
 
     /** 优先级 */
-    val priority: Short? = null,
+    val priority: Short?,
 
     /** 备注 */
-    val remark: String? = null,
+    val remark: String?,
 
 ) : IIdEntity<String>, Serializable {
 

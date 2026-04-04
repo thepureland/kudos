@@ -24,7 +24,7 @@ import org.springframework.context.annotation.PropertySource
     factory = YamlPropertySourceFactory::class
 )
 //@Import(StreamConsumerEnvironRegistrar::class)
-open class RabbitMqAutoConfiguration: StreamCommonConfiguration(), IComponentInitializer {
+open class RabbitMqAutoConfiguration : StreamCommonConfiguration(), IComponentInitializer {
 
     override fun getComponentName() = "kudos-ability-distributed-stream-rabbit"
 

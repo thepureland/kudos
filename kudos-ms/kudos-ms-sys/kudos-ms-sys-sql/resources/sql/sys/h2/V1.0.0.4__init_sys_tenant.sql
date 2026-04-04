@@ -4,7 +4,7 @@ create table if not exists "sys_tenant"
     "id"                    char(36)  default RANDOM_UUID() not null primary key,
     "name"                  character varying(128)          not null,
     "timezone"              character varying(16),
-    "default_language_code" character varying(64),
+    "default_language_code" character(64),
     "remark"                character varying(256),
     "active"                boolean   default TRUE          not null,
     "built_in"              boolean   default FALSE         not null,

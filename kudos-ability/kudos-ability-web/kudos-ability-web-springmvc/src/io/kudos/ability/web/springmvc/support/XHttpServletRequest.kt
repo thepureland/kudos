@@ -4,9 +4,6 @@ import io.kudos.base.net.IpKit
 import jakarta.servlet.http.HttpServletRequest
 import java.net.InetAddress
 import java.net.UnknownHostException
-import java.util.regex.Pattern
-
-
 /**
  * 获取请求的真实ip地址，支持多级反向代理
  *
@@ -15,16 +12,14 @@ import java.util.regex.Pattern
  * @since 1.0.0
  */
 fun HttpServletRequest.getRemoteIp(): String {
-    var ip = this.getHeader("x-forwarded-for")
-    if (ip.isNullOrBlank() || "unknown".equals(ip, true)) {
-        ip = this.getHeader("Proxy-Client-IP")
-    }
-    if (ip.isNullOrBlank() || "unknown".equals(ip, true)) {
-        ip = this.getHeader("WL-Proxy-Client-IP")
-    }
-    if (ip.isNullOrBlank() || "unknown".equals(ip, true)) {
-        ip = this.remoteAddr
-    }
+    val ip = sequenceOf(
+        getHeader("x-forwarded-for"),
+        getHeader("Proxy-Client-IP"),
+        getHeader("WL-Proxy-Client-IP"),
+    )
+        .mapNotNull { h -> h?.takeIf { it.isNotBlank() && !it.equals("unknown", ignoreCase = true) } }
+        .firstOrNull()
+        ?: remoteAddr
     return getIP(ip)
 }
 
@@ -43,19 +38,19 @@ fun HttpServletRequest.getBrowserInfo(): Pair<String, String> {
 //        error("用户浏览器头未提供User-Agent信息，${this.requestURL}")
         return Pair(name, version)
     }
-    var regex = "Version/([0-9.]+)"
+    var regex = """Version/([0-9.]+)"""
     when {
         agent.contains("MSIE") -> {
             name = "MSIE" // 微软IE
-            regex = "$name\\s([0-9.]+)"
+            regex = """$name\s([0-9.]+)"""
         }
         agent.contains("Firefox") -> {
             name = "Firefox" // 火狐
-            regex = "$name/([0-9.]+)"
+            regex = """$name/([0-9.]+)"""
         }
         agent.contains("Chrome") -> {
             name = "Chrome" // Google
-            regex = "$name/([0-9.]+)"
+            regex = """$name/([0-9.]+)"""
         }
         agent.contains("Opera") -> name = "Opera"
         agent.contains("Safari") -> name = "Safari"
@@ -69,11 +64,7 @@ fun HttpServletRequest.getBrowserInfo(): Pair<String, String> {
         agent.contains("UCBrowser") -> name = "UCBrowser"
         agent.contains("360SE") -> name = "360SE"
     }
-    val pattern = Pattern.compile(regex)
-    val matcher = pattern.matcher(agent)
-    if (matcher.find()) {
-        version = matcher.group(1)
-    }
+    Regex(regex).find(agent)?.groupValues?.getOrNull(1)?.let { version = it }
     return Pair(name, version)
 }
 
@@ -96,11 +87,7 @@ fun HttpServletRequest.getOsInfo(): Pair<String, String> {
     when {
         agent.contains("Windows") -> {
             name = "Windows" //如：win7 = Windows NT 6.1
-            val pattern = Pattern.compile("$name\\s([a-zA-Z0-9]+\\s[0-9.]+)")
-            val matcher = pattern.matcher(agent)
-            if (matcher.find()) {
-                version = matcher.group(1)
-            }
+            Regex("""$name\s([a-zA-Z0-9]+\s[0-9.]+)""").find(agent)?.groupValues?.getOrNull(1)?.let { version = it }
         }
         agent.contains("FreeBSD") -> name = "FreeBSD"
         agent.contains("Macintosh") -> name = "Mac"
@@ -176,10 +163,9 @@ fun HttpServletRequest.getDomainPath(): String {
 private fun getIP(ip: String): String {
     // 处理多级反向代理
     var ipAddress = ip
-    val ips = ipAddress.split(",").toTypedArray()
-    for (i in ips.indices) {
-        ipAddress = ips[i].trim { it <= ' ' }
-        val ipLong: Long = IpKit.ipv4StringToLong(ipAddress)
+    for (part in ip.split(',')) {
+        ipAddress = part.trim { it <= ' ' }
+        val ipLong = IpKit.ipv4StringToLong(ipAddress)
         if (!isLocalA(ipLong) && !isLocalB(ipLong) && !isLocalC(ipLong) && !isLocal0(ipLong)) {
             break
         }
@@ -196,18 +182,14 @@ private fun getIP(ip: String): String {
 }
 
 
-private fun isLocalC(ip: Long): Boolean {
-    return ip >= IpKit.ipv4StringToLong("192.168.0.0") && ip <= IpKit.ipv4StringToLong("192.168.255.255")
-}
+private fun isLocalC(ip: Long): Boolean =
+    ip in IpKit.ipv4StringToLong("192.168.0.0")..IpKit.ipv4StringToLong("192.168.255.255")
 
-private fun isLocalB(ip: Long): Boolean {
-    return ip >= IpKit.ipv4StringToLong("172.16.0.0") && ip <= IpKit.ipv4StringToLong("172.31.255.255")
-}
+private fun isLocalB(ip: Long): Boolean =
+    ip in IpKit.ipv4StringToLong("172.16.0.0")..IpKit.ipv4StringToLong("172.31.255.255")
 
-private fun isLocalA(ip: Long): Boolean {
-    return ip >= IpKit.ipv4StringToLong("10.0.0.0") && ip <= IpKit.ipv4StringToLong("10.255.255.255")
-}
+private fun isLocalA(ip: Long): Boolean =
+    ip in IpKit.ipv4StringToLong("10.0.0.0")..IpKit.ipv4StringToLong("10.255.255.255")
 
-private fun isLocal0(ip: Long): Boolean {
-    return ip == IpKit.ipv4StringToLong("127.0.0.1") || ip == IpKit.ipv4StringToLong("0.0.0.0")
-}
+private fun isLocal0(ip: Long): Boolean =
+    ip == IpKit.ipv4StringToLong("127.0.0.1") || ip == IpKit.ipv4StringToLong("0.0.0.0")

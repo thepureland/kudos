@@ -6,7 +6,7 @@ import io.kudos.ability.distributed.client.feign.support.IFeignRequestContextPro
 import io.kudos.context.core.KudosContextHolder
 import io.kudos.context.kit.SpringKit
 import io.kudos.context.support.Consts
-import java.util.*
+import java.util.UUID
 
 /**
  * 全局Feign请求拦截器
@@ -77,29 +77,20 @@ class GlobalHeaderRequestInterceptor : RequestInterceptor {
         val context = KudosContextHolder.get()
         val tenantId = context.tenantId
         val subSysCode = context.subSystemCode
-        var traceKey = context.traceKey
-        if (traceKey.isNullOrBlank()) {
-            traceKey = UUID.randomUUID().toString()
-        }
+        val traceKey = context.traceKey?.takeIf { it.isNotBlank() }
+            ?: UUID.randomUUID().toString()
         val dataSourceId = context.dataSourceId
         requestTemplate.header(Consts.RequestHeader.TENANT_ID, tenantId.toString())
         requestTemplate.header(Consts.RequestHeader.SUB_SYS_CODE, subSysCode)
         requestTemplate.header(Consts.RequestHeader.TRACE_KEY, traceKey)
-        val locale = context.clientInfo?.locale
-        if (locale != null) {
-            requestTemplate.header(Consts.RequestHeader.LOCAL, locale.toString())
-        } else {
-            requestTemplate.header(Consts.RequestHeader.LOCAL, "zh_CN")
-        }
+        val localeStr = context.clientInfo?.locale?.toString() ?: "zh_CN"
+        requestTemplate.header(Consts.RequestHeader.LOCAL, localeStr)
         if (dataSourceId != null) {
             requestTemplate.header(Consts.RequestHeader.DATASOURCE_ID, dataSourceId)
         }
         requestTemplate.header(Consts.RequestHeader.FEIGN_REQUEST, "true")
-        val contextProcessMap = SpringKit.getBeansOfType<IFeignRequestContextProcess>()
-        if (contextProcessMap.isNotEmpty()) {
-            for (value in contextProcessMap.values) {
-                value.processContext(requestTemplate, context)
-            }
+        SpringKit.getBeansOfType<IFeignRequestContextProcess>().values.forEach { processor ->
+            processor.processContext(requestTemplate, context)
         }
     }
 

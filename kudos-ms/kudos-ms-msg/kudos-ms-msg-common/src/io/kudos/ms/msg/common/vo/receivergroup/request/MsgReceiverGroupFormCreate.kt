@@ -9,14 +9,14 @@ package io.kudos.ms.msg.common.vo.receivergroup.request
  */
 data class MsgReceiverGroupFormCreate (
 
-    override val receiverGroupTypeDictCode: String? = null,
+    override val receiverGroupTypeDictCode: String? ,
 
-    override val defineTable: String? = null,
+    override val defineTable: String? ,
 
-    override val nameColumn: String? = null,
+    override val nameColumn: String? ,
 
-    override val remark: String? = null,
+    override val remark: String? ,
 
-    override val active: Boolean? = null,
+    override val active: Boolean? ,
 
 ) : IMsgReceiverGroupFormBase

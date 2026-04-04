@@ -162,18 +162,10 @@ object RdbKit {
      * @since 1.0.0
      */
     fun getOrderSql(vararg orders: Order): String {
-        var orderStr = ""
-        val orderSb = StringBuilder("ORDER BY ")
-        val length = orderSb.length
-        orders.forEach {
-            if (it.property.isNotBlank() && !it.property.contains("'")) {
-                orderSb.append("${it.property} ${it.direction.name},")
-            }
+        val parts = orders.mapNotNull { o ->
+            if (o.property.isNotBlank() && !o.property.contains("'")) "${o.property} ${o.direction.name}" else null
         }
-        if (orderSb.length != length) {
-            orderStr = orderSb.deleteCharAt(orderSb.lastIndex).toString()
-        }
-        return orderStr
+        return if (parts.isEmpty()) "" else "ORDER BY ${parts.joinToString(",")}"
     }
 
 }

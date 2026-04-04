@@ -35,14 +35,9 @@ open class MinioUploadService : AbstractUploadService() {
      * @throws Exception
      */
     protected fun getMinioClient(model: UploadFileModel<*>): MinioClient {
-        if (model.authServerParam != null) {
-            LOG.info(
-                "Minio use auth server type:{0}",
-                requireNotNull(model.authServerParam) { "authServerParam is null" }.javaClass.getSimpleName()
-            )
-            return requireNotNull(minioClientBuilderFactory.getInstance(requireNotNull(model.authServerParam) { "authServerParam is null" })) { "MinioClient builder not found" }.build()
-        }
-        return minioClientDefault
+        val auth = model.authServerParam ?: return minioClientDefault
+        LOG.info("Minio use auth server type:{0}", auth.javaClass.simpleName)
+        return requireNotNull(minioClientBuilderFactory.getInstance(auth)) { "MinioClient builder not found" }.build()
     }
 
     protected fun createBucket(minioClient: MinioClient, model: UploadFileModel<*>) {
@@ -114,10 +109,10 @@ open class MinioUploadService : AbstractUploadService() {
 
             val rs = minioClient.putObject(putArgs)
             //访问路径包含: bucketName,方便业务直接存储,前端拼接绝对http地址
-            return "/" + rs.bucket() + "/" + rs.`object`()
+            return "/${rs.bucket()}/${rs.`object`()}"
         } catch (e: io.minio.errors.ErrorResponseException) {
             throw ServiceException(FileErrorCode.FILE_ACCESS_DENY, e)
-        } catch (e: java.lang.Exception) {
+        } catch (e: Exception) {
             throw ServiceException(FileErrorCode.FILE_ACCESS_ERROR, e)
         }
     }

@@ -21,7 +21,9 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
 import java.net.URL
-import java.util.*
+import java.util.HashSet
+import java.util.Properties
+import java.util.ResourceBundle
 import javax.sql.DataSource
 
 /**

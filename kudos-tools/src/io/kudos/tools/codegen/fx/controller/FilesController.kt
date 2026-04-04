@@ -15,7 +15,7 @@ import javafx.scene.control.Alert
 import javafx.scene.control.CheckBox
 import javafx.scene.control.TableView
 import java.net.URL
-import java.util.*
+import java.util.ResourceBundle
 
 /**
  * 生成的文件选择界面JavaFx控制器

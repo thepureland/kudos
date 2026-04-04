@@ -18,16 +18,13 @@ class NotifyTool(
     private val log = LogFactory.getLog(this::class)
 
     fun notify(messageVo: NotifyMessageVo<out Serializable>): Boolean {
-        if (notifyProducer != null) {
-            return notifyProducer.notify(messageVo)
-        } else {
-            val msg = "未引入NotifyProduce实现.."
-            if (properties.failOnMissingProducer) {
-                throw IllegalStateException(msg)
-            }
-            log.warn(msg)
-            return false
+        notifyProducer?.let { return it.notify(messageVo) }
+        val msg = "未引入 INotifyProducer 实现"
+        if (properties.failOnMissingProducer) {
+            throw IllegalStateException(msg)
         }
+        log.warn(msg)
+        return false
     }
 
 }

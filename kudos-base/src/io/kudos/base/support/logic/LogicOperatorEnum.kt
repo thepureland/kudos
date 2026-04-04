@@ -3,7 +3,7 @@ package io.kudos.base.support.logic
 import io.kudos.base.enums.ienums.IDictEnum
 import io.kudos.base.lang.EnumKit
 import io.kudos.base.query.enums.OperatorEnum
-import java.util.*
+import java.util.Locale
 
 /**
  * 逻辑操作符枚举

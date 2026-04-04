@@ -4,6 +4,7 @@ import io.kudos.test.container.containers.H2TestContainer
 import io.kudos.test.container.containers.RedisTestContainer
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
+import kotlin.concurrent.thread
 
 /**
  * 所有需要关系型数据库和Redis缓存环境的测试用例的父类
@@ -52,56 +53,27 @@ import org.springframework.test.context.DynamicPropertySource
  */
 open class RdbAndRedisCacheTestBase : SqlTestBase() {
 
+    override fun afterTestDataSetup() {
+        CacheTestResetSupport.resetRedisAndApplicationCaches()
+    }
+
     companion object Companion {
 
         @DynamicPropertySource
         @JvmStatic
         private fun registerProperties(registry: DynamicPropertyRegistry) {
             val ryukDisabledKey = "testcontainers.ryuk.disabled"
-            val ryukDisabled = System.getProperty(ryukDisabledKey)
-            if (ryukDisabled.isNullOrBlank()) {
+            if (System.getProperty(ryukDisabledKey).isNullOrBlank()) {
                 System.setProperty(ryukDisabledKey, "true")
-                // #region agent log
-                kotlin.runCatching {
-                    val payload =
-                        """{"sessionId":"debug-session","runId":"post-fix","hypothesisId":"H5","location":"RdbAndRedisCacheTestBase.registerProperties","message":"ryuk disabled via system property","data":{"key":"$ryukDisabledKey","value":"true"},"timestamp":${System.currentTimeMillis()}}"""
-                    java.io.File("/Users/will/dev/code/kudos/.cursor/debug.log").appendText(payload + "\n")
-                }
-                // #endregion
-            } else {
-                // #region agent log
-                kotlin.runCatching {
-                    val payload =
-                        """{"sessionId":"debug-session","runId":"post-fix","hypothesisId":"H5","location":"RdbAndRedisCacheTestBase.registerProperties","message":"ryuk already configured","data":{"key":"$ryukDisabledKey","value":"$ryukDisabled"},"timestamp":${System.currentTimeMillis()}}"""
-                    java.io.File("/Users/will/dev/code/kudos/.cursor/debug.log").appendText(payload + "\n")
-                }
-                // #endregion
             }
-            // #region agent log
-            kotlin.runCatching {
-                val payload =
-                    """{"sessionId":"debug-session","runId":"pre-fix","hypothesisId":"H1","location":"RdbAndRedisCacheTestBase.registerProperties","message":"dynamic properties registration start","data":{"thread":"${Thread.currentThread().name}"},"timestamp":${System.currentTimeMillis()}}"""
-                java.io.File("/Users/will/dev/code/kudos/.cursor/debug.log").appendText(payload + "\n")
-            }
-            // #endregion
             registry.add("kudos.ability.cache.enabled") { "true" }
             registry.add("cache.config.strategy") { "SINGLE_LOCAL" } //TODO 由子类指定
 
-            val h2Thread = Thread { H2TestContainer.startIfNeeded(registry) } //TODO 由子类指定具体的TestContainer
-            val redisThread = Thread { RedisTestContainer.startIfNeeded(registry) }
-
-            h2Thread.start()
-            redisThread.start()
+            val h2Thread = thread(name = "h2-testcontainer-start") { H2TestContainer.startIfNeeded(registry) }
+            val redisThread = thread(name = "redis-testcontainer-start") { RedisTestContainer.startIfNeeded(registry) }
 
             h2Thread.join()
             redisThread.join()
-            // #region agent log
-            kotlin.runCatching {
-                val payload =
-                    """{"sessionId":"debug-session","runId":"pre-fix","hypothesisId":"H1","location":"RdbAndRedisCacheTestBase.registerProperties","message":"dynamic properties registration done","data":{"h2ThreadAlive":${h2Thread.isAlive},"redisThreadAlive":${redisThread.isAlive}},"timestamp":${System.currentTimeMillis()}}"""
-                java.io.File("/Users/will/dev/code/kudos/.cursor/debug.log").appendText(payload + "\n")
-            }
-            // #endregion
         }
     }
 

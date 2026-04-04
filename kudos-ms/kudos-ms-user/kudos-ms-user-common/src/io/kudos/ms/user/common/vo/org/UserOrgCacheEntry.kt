@@ -14,52 +14,52 @@ import java.time.LocalDateTime
 data class UserOrgCacheEntry (
 
     /** 主键 */
-    override val id: String = "",
+    override val id: String,
 
     /** 机构名称 */
-    val name: String? = null,
+    val name: String?,
 
     /** 机构简称 */
-    val shortName: String? = null,
+    val shortName: String?,
 
     /** 租户id */
-    val tenantId: String? = null,
+    val tenantId: String?,
 
     /** 父机构id */
-    val parentId: String? = null,
+    val parentId: String?,
 
     /** 机构类型字典码 */
-    val orgTypeDictCode: String? = null,
+    val orgTypeDictCode: String?,
 
     /** 排序号 */
-    val sortNum: Int? = null,
+    val sortNum: Int?,
 
     /** 备注 */
-    val remark: String? = null,
+    val remark: String?,
 
     /** 是否激活 */
-    val active: Boolean? = null,
+    val active: Boolean?,
 
     /** 是否内置 */
-    val builtIn: Boolean? = null,
+    val builtIn: Boolean?,
 
     /** 创建者id */
-    val createUserId: String? = null,
+    val createUserId: String?,
 
     /** 创建者名称 */
-    val createUserName: String? = null,
+    val createUserName: String?,
 
     /** 创建时间 */
-    val createTime: LocalDateTime? = null,
+    val createTime: LocalDateTime?,
 
     /** 更新者id */
-    val updateUserId: String? = null,
+    val updateUserId: String?,
 
     /** 更新者名称 */
-    val updateUserName: String? = null,
+    val updateUserName: String?,
 
     /** 更新时间 */
-    val updateTime: LocalDateTime? = null,
+    val updateTime: LocalDateTime?,
 
 ) : IIdEntity<String>, Serializable {
 

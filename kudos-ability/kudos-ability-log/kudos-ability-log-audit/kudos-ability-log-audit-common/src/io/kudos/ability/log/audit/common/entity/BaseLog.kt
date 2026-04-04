@@ -169,10 +169,8 @@ class BaseLog : Serializable {
      * @param value
      */
     fun addParam(param: String, value: Any?): BaseLog {
-        if (this.objectParams == null) {
-            this.objectParams = HashMap()
-        }
-        this.objectParams!![param] = LogParamVo(param, value)
+        val map = objectParams ?: HashMap<String, LogParamVo>().also { objectParams = it }
+        map[param] = LogParamVo(param, value)
         return this
     }
 
@@ -182,10 +180,9 @@ class BaseLog : Serializable {
      * @param param
      */
     fun addParam(param: LogParamVo): BaseLog {
-        if (this.objectParams == null) {
-            this.objectParams = HashMap()
-        }
-        this.objectParams!![param.name!!] = param
+        val map = objectParams ?: HashMap<String, LogParamVo>().also { objectParams = it }
+        val key = requireNotNull(param.name) { "LogParamVo.name is null" }
+        map[key] = param
         return this
     }
 

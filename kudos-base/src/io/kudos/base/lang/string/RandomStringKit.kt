@@ -3,7 +3,8 @@ package io.kudos.base.lang.string
 import io.kudos.base.lang.string.RandomStringKit.random
 import org.apache.commons.lang3.RandomStringUtils
 import java.security.SecureRandom
-import java.util.*
+import java.util.Random
+import java.util.UUID
 import kotlin.math.abs
 
 /**

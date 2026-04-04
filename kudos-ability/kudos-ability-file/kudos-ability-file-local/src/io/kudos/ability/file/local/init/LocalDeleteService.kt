@@ -20,11 +20,10 @@ class LocalDeleteService : IDeleteService {
             return false
         }
 
-        val fullPath = (properties.basePath
-                + File.separator + model.bucketName
-                + File.separator + model.filePath)
+        val fullPath =
+            listOf(properties.basePath, model.bucketName, model.filePath).joinToString(File.separator)
         val file = File(fullPath)
-        if (file.isDirectory()) {
+        if (file.isDirectory) {
             log.warn("can't delete a folder: $fullPath")
             return false
         }
@@ -36,6 +35,6 @@ class LocalDeleteService : IDeleteService {
         return file.delete()
     }
 
-    private val log= LogFactory.getLog(this::class)
+    private val log = LogFactory.getLog(this::class)
 
 }

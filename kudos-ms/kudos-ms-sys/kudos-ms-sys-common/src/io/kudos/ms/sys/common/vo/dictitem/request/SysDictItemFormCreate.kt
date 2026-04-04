@@ -9,16 +9,16 @@ package io.kudos.ms.sys.common.vo.dictitem.request
  */
 data class SysDictItemFormCreate (
 
-    override val itemCode: String = "",
+    override val itemCode: String ,
 
-    override val itemName: String = "",
+    override val itemName: String ,
 
-    override val dictId: String = "",
+    override val dictId: String ,
 
-    override val orderNum: Int? = null,
+    override val orderNum: Int? ,
 
-    override val parentId: String? = null,
+    override val parentId: String? ,
 
-    override val remark: String? = null,
+    override val remark: String? ,
 
 ) : ISysDictItemFormBase

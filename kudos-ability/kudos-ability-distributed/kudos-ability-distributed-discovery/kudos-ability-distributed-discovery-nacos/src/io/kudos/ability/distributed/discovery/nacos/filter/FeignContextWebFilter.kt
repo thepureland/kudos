@@ -1,17 +1,17 @@
 package io.kudos.ability.distributed.discovery.nacos.filter
 
 import io.kudos.ability.distributed.discovery.nacos.support.IFeignProviderContextProcess
+import io.kudos.base.logger.LogFactory
 import io.kudos.context.core.ClientInfo
 import io.kudos.context.core.KudosContextHolder
 import io.kudos.context.kit.SpringKit
-import io.kudos.base.logger.LogFactory
 import io.kudos.context.support.Consts
 import jakarta.servlet.Filter
 import jakarta.servlet.FilterChain
 import jakarta.servlet.ServletRequest
 import jakarta.servlet.ServletResponse
 import jakarta.servlet.http.HttpServletRequest
-import java.util.*
+import java.util.Locale
 
 /**
  * Feign上下文Web过滤器
@@ -110,14 +110,11 @@ class FeignContextWebFilter : Filter {
         if (!dataSourceId.isNullOrBlank()) {
             context.dataSourceId = dataSourceId
         }
-        val contextProcessMap = SpringKit.getBeansOfType<IFeignProviderContextProcess>()
-        if (contextProcessMap.isNotEmpty()) {
-            for (value in contextProcessMap.values) {
-                try {
-                    value.processContext(request, context)
-                } catch (e: Exception) {
-                    log.error(e, "IFeignProviderContextProcess 执行失败: {0}", value.javaClass.name)
-                }
+        SpringKit.getBeansOfType<IFeignProviderContextProcess>().values.forEach { processor ->
+            try {
+                processor.processContext(request, context)
+            } catch (e: Exception) {
+                log.error(e, "IFeignProviderContextProcess 执行失败: {0}", processor.javaClass.name)
             }
         }
         filterChain.doFilter(servletRequest, servletResponse)

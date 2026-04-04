@@ -124,7 +124,9 @@ class SysDictItemServiceTest : RdbAndRedisCacheTestBase() {
         val batch = sysDictItemService.batchGetDictItemsFromCache(
             mapOf(atomicServiceCode to listOf(dictType))
         )
-        assertEquals(2, batch[atomicServiceCode]!![dictType]!!.size)
+        val byAtomic = requireNotNull(batch[atomicServiceCode]) { "batch missing atomicServiceCode" }
+        val items = requireNotNull(byAtomic[dictType]) { "batch missing dictType" }
+        assertEquals(2, items.size)
     }
 
     /** 启用状态更新后缓存一致。 */

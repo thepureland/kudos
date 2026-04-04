@@ -50,7 +50,10 @@ class DistributedLockAspect {
     private val parameterNameDiscoverer = DefaultParameterNameDiscoverer()
 
     @Pointcut("@annotation(io.kudos.ability.distributed.lock.common.annotations.DistributedLock)")
-    fun cut() {
+    fun cut() = Unit
+
+    companion object {
+        private val spelParser = SpelExpressionParser()
     }
 
     /**
@@ -80,20 +83,21 @@ class DistributedLockAspect {
     @Around("cut()")
     fun around(joinPoint: ProceedingJoinPoint): Any? {
         val signature = joinPoint.signature as MethodSignature
-        val annotation = signature.method.getAnnotation(DistributedLock::class.java)
-        val lockKey = genLockKey(joinPoint)
+        val annotation = requireNotNull(signature.method.getAnnotation(DistributedLock::class.java)) {
+            "@DistributedLock 未出现在 ${joinPoint.target.javaClass.name}.${signature.method.name}"
+        }
+        val lockKey = genLockKey(joinPoint, signature, annotation)
         var res = false
         var obj: Any? = null
         try {
-            //尝试获取分布式锁
             log.debug("尝试获取分布式锁：key=$lockKey")
             res = RedissonLockKit.tryLock(lockKey, TimeUnit.SECONDS, annotation.waitTime, annotation.leaseTime)
         } catch (e: Throwable) {
-            log.warn("无法取得分布式锁，可能有任务还未完成." + e.message)
+            log.warn("无法取得分布式锁，可能有任务还未完成：${e.message}")
         }
         lockCallback(res, lockKey)
         if (!res) {
-            log.warn("无法取得分布式锁，可能有任务还未完成.key = $lockKey")
+            log.warn("无法取得分布式锁，可能有任务还未完成。key=$lockKey")
         } else {
             try {
                 obj = joinPoint.proceed()
@@ -104,7 +108,7 @@ class DistributedLockAspect {
                 try {
                     RedissonLockKit.unlock(lockKey)
                 } catch (e: Exception) {
-                    log.warn("释放锁异常，可能超时被自动释放.message={0}", e.message)
+                    log.warn("释放锁异常，可能超时被自动释放。message={0}", e.message)
                 }
             }
         }
@@ -117,13 +121,8 @@ class DistributedLockAspect {
      * @param lockKey
      */
     private fun lockCallback(success: Boolean, lockKey: String) {
-        val lockCallback = DistributedLockContext.get()
-        if (lockCallback != null) {
-            if (success) {
-                lockCallback.doLockSuccess(lockKey)
-            } else {
-                lockCallback.doLockFail(lockKey)
-            }
+        DistributedLockContext.get()?.let { cb ->
+            if (success) cb.doLockSuccess(lockKey) else cb.doLockFail(lockKey)
         }
     }
 
@@ -154,24 +153,24 @@ class DistributedLockAspect {
      * @param joinPoint 连接点，包含目标方法的信息和参数
      * @return 生成的锁键字符串
      */
-    private fun genLockKey(joinPoint: ProceedingJoinPoint): String {
-        val signature = joinPoint.signature as MethodSignature
-        val annotation = signature.method.getAnnotation(DistributedLock::class.java)
+    private fun genLockKey(
+        joinPoint: ProceedingJoinPoint,
+        signature: MethodSignature,
+        annotation: DistributedLock
+    ): String {
         val kudosContext = KudosContextHolder.get()
         val tenantId = kudosContext.tenantId
         if (annotation.key.isBlank()) {
-            val classNme = joinPoint.target.javaClass.getName()
+            val className = joinPoint.target.javaClass.name
             val methodName = signature.method.name
-            var paramType = ""
-            val parameterTypes = signature.method.parameterTypes
-            if (parameterTypes.size > 0) {
-                for (parameterType in parameterTypes) {
-                    paramType += "-" + parameterType.getTypeName()
-                }
-            }
-            paramType = paramType.replaceFirst("-".toRegex(), "")
-            return arrayOf(kudosContext.atomicServiceCode, tenantId, classNme, methodName, paramType)
-                .joinToString(Consts.CACHE_KEY_DEFAULT_DELIMITER)
+            val paramType = signature.method.parameterTypes.joinToString("-") { it.typeName }
+            return arrayOf(
+                kudosContext.atomicServiceCode,
+                tenantId,
+                className,
+                methodName,
+                paramType
+            ).joinToString(Consts.CACHE_KEY_DEFAULT_DELIMITER)
         }
 
         val context = MethodBasedEvaluationContext(
@@ -180,9 +179,7 @@ class DistributedLockAspect {
             joinPoint.args,
             parameterNameDiscoverer
         )
-        val parser = SpelExpressionParser()
-        val expression = parser.parseExpression(annotation.key)
-        val result = expression.getValue(context, String::class.java)
+        val result = spelParser.parseExpression(annotation.key).getValue(context, String::class.java)
         return "$tenantId::$result"
     }
 }

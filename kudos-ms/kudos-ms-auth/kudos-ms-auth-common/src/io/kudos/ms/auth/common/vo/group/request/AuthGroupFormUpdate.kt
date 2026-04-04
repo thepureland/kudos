@@ -12,16 +12,16 @@ import io.kudos.base.model.contract.entity.IIdEntity
 data class AuthGroupFormUpdate (
 
     /** 主键 */
-    override val id: String? = null,
+    override val id: String,
 
-    override val code: String? = null,
+    override val code: String?,
 
-    override val name: String? = null,
+    override val name: String?,
 
-    override val tenantId: String? = null,
+    override val tenantId: String?,
 
-    override val subsysCode: String? = null,
+    override val subsysCode: String?,
 
-    override val remark: String? = null,
+    override val remark: String?,
 
-) : IIdEntity<String?>, IAuthGroupFormBase
+) : IIdEntity<String>, IAuthGroupFormBase

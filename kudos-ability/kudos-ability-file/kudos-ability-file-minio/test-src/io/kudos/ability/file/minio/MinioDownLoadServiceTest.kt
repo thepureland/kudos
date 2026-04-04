@@ -17,7 +17,7 @@ import io.minio.MakeBucketArgs
 import io.minio.MinioClient
 import io.minio.PutObjectArgs
 import io.minio.admin.MinioAdminClient
-import io.minio.admin.UserInfo
+import io.minio.admin.Status
 import jakarta.annotation.Resource
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
@@ -87,9 +87,11 @@ internal class MinioDownLoadServiceTest {
      */
     @Test
     fun download_with_default_minio_client() {
-        val downloadFileModel = DownloadFileModel.from(uploadFileResult!!.filePath!!)
-        val rs = downLoadService.download(downloadFileModel)
-        assertTrue(rs!!.isNotEmpty(), "default download should return bytes")
+        val uploaded = requireNotNull(uploadFileResult) { "upload not completed" }
+        val path = requireNotNull(uploaded.filePath) { "filePath" }
+        val downloadFileModel = DownloadFileModel.from(path)
+        val rs = requireNotNull(downLoadService.download(downloadFileModel)) { "download returned null" }
+        assertTrue(rs.isNotEmpty(), "default download should return bytes")
     }
 
     /**
@@ -97,7 +99,9 @@ internal class MinioDownLoadServiceTest {
      */
     @Test
     fun download_with_specify_access_key_without_auth() {
-        val downloadFileModel = DownloadFileModel.from(uploadFileResult!!.filePath!!)
+        val uploaded = requireNotNull(uploadFileResult) { "upload not completed" }
+        val path = requireNotNull(uploaded.filePath) { "filePath" }
+        val downloadFileModel = DownloadFileModel.from(path)
 
         // 故意给错的 accessKey/secretKey
         downloadFileModel.authServerParam = AccessKeyServerParam("bad", "bad")
@@ -116,11 +120,13 @@ internal class MinioDownLoadServiceTest {
      */
     @Test
     fun download_with_specify_access_key_with_auth() {
-        val downloadFileModel = DownloadFileModel.from(uploadFileResult!!.filePath!!)
+        val uploaded = requireNotNull(uploadFileResult) { "upload not completed" }
+        val path = requireNotNull(uploaded.filePath) { "filePath" }
+        val downloadFileModel = DownloadFileModel.from(path)
         downloadFileModel.authServerParam = AccessKeyServerParam(RO_USER, RO_USER_SECRET)
 
-        val rs = downLoadService.download(downloadFileModel)
-        assertTrue(rs!!.isNotEmpty(), "download with ro_user should return bytes")
+        val rs = requireNotNull(downLoadService.download(downloadFileModel)) { "download returned null" }
+        assertTrue(rs.isNotEmpty(), "download with ro_user should return bytes")
     }
 
     companion object {
@@ -226,8 +232,8 @@ internal class MinioDownLoadServiceTest {
             runCatching { admin.addCannedPolicy("ro-policy", roPolicy) }
 
             // 创建用户（若已存在可忽略异常）
-            runCatching { admin.addUser(RW_USER, UserInfo.Status.ENABLED, RW_USER_SECRET, null, null) }
-            runCatching { admin.addUser(RO_USER, UserInfo.Status.ENABLED, RO_USER_SECRET, null, null) }
+            runCatching { admin.addUser(RW_USER, Status.ENABLED, RW_USER_SECRET, null, null) }
+            runCatching { admin.addUser(RO_USER, Status.ENABLED, RO_USER_SECRET, null, null) }
 
             // 绑定策略
             admin.setPolicy(RW_USER, false, "rw-policy")

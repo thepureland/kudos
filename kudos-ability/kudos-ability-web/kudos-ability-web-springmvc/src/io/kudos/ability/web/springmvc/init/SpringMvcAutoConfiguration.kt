@@ -26,7 +26,7 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 import tools.jackson.databind.ObjectMapper
-import java.util.*
+import java.util.EventListener
 
 
 /**
@@ -58,7 +58,7 @@ open class SpringMvcAutoConfiguration : WebMvcConfigurer, IComponentInitializer 
     @Bean
     open fun servletListenerRegistration(requestContextListener: RequestContextListener): ServletListenerRegistrationBean<EventListener> {
         val registrationBean = ServletListenerRegistrationBean<EventListener>()
-        registrationBean.setListener(requestContextListener())
+        registrationBean.setListener(requestContextListener)
         registrationBean.order = 1
         return registrationBean
     }
