@@ -5,6 +5,12 @@ import io.kudos.test.container.kit.TestContainerKit
 import io.kudos.test.container.kit.bindingPort
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.testcontainers.containers.GenericContainer
+import java.sql.Connection
+import java.sql.DriverManager
+import java.sql.PreparedStatement
+import java.sql.ResultSet
+import java.sql.SQLException
+import java.sql.Statement
 
 /**
  * postgres测试容器
@@ -13,6 +19,12 @@ import org.testcontainers.containers.GenericContainer
  * @since 1.0.0
  */
 object PostgresTestContainer {
+
+    private const val LOCALHOST = "127.0.0.1"
+
+    private const val DATABASE_READY_MAX_RETRIES = 20
+
+    private const val DATABASE_READY_RETRY_INTERVAL_MILLIS = 500L
 
     private const val IMAGE_NAME = "postgres:18.0-alpine3.22"
 
@@ -28,55 +40,156 @@ object PostgresTestContainer {
 
     const val LABEL = "PostgreSql"
 
-    val container = GenericContainer(IMAGE_NAME).apply {
-        withExposedPorts(CONTAINER_PORT)
-        bindingPort(Pair(PORT, CONTAINER_PORT))
-        withEnv("POSTGRES_DB", DATABASE)
-        withEnv("POSTGRES_USER", USERNAME)
-        withEnv("POSTGRES_PASSWORD", PASSWORD)
-        withCommand("postgres -c max_prepared_transactions=10") // seata XA模式需要，不能是默认值0，建议与最大连接数一样
-        withLabel(TestContainerKit.LABEL_KEY, LABEL)
-    }
-
+    private var container: GenericContainer<*>? = null
 
     /**
-     * 启动容器(若需要)
+     * 使用默认库名启动 postgres 容器。
      *
-     * 保证批量测试时共享一个容器，避免多次开/停容器，浪费大量时间。
-     * 另外，亦可手动运行该clazz类的main方法来启动容器，跑测试用例时共享它。
-     * 并注册 JVM 关闭钩子，当批量测试结束时自动停止容器，
-     * 而不是每个测试用例结束时就关闭，前提条件是不要加@Testcontainers注解。
-     * 当docker没安装时想忽略测试用例，可以用@EnabledIfDockerInstalled
-     *
-     * @param registry spring的动态属性注册器，可用来注册或覆盖已注册的属性
-     * @return 运行中的容器对象
+     * @param registry Spring 动态属性注册器，可用于注册或覆盖已注册属性，也可为 {@code null}
+     * @return 当前运行中的 postgres 容器信息
      */
     fun startIfNeeded(registry: DynamicPropertyRegistry?): Container {
+        return startIfNeeded(registry, DATABASE)
+    }
+
+    /**
+     * 启动 postgres 容器，并确保指定 database 已存在。
+     * <p>
+     * 如果容器尚未启动，则先启动容器；如果容器已存在，则直接在现有容器内补建 database。
+     *
+     * @param registry Spring 动态属性注册器，可用于注册或覆盖已注册属性，也可为 {@code null}
+     * @param database 需要确保存在的数据库名
+     * @return 当前运行中的 postgres 容器信息
+     */
+    fun startIfNeeded(registry: DynamicPropertyRegistry?, database: String): Container {
         synchronized(this) {
-            val runningContainer = TestContainerKit.startContainerIfNeeded(LABEL, container)
+            val runningContainer = TestContainerKit.startContainerIfNeeded(LABEL, getOrCreateContainer())
+            ensureDatabaseExists(runningContainer, database)
             if (registry != null) {
-                registerProperties(registry, runningContainer)
+                registerProperties(registry, runningContainer, database)
             }
             return runningContainer
         }
     }
 
-    private fun registerProperties(registry: DynamicPropertyRegistry, runningContainer: Container) {
+    /**
+     * 延迟创建容器定义，避免在对象初始化阶段就固定容器状态。
+     *
+     * @return postgres 容器定义
+     */
+    private fun getOrCreateContainer(): GenericContainer<*> {
+        if (container == null) {
+            container = GenericContainer(IMAGE_NAME).apply {
+                withExposedPorts(CONTAINER_PORT)
+                bindingPort(Pair(PORT, CONTAINER_PORT))
+                withEnv("POSTGRES_DB", DATABASE)
+                withEnv("POSTGRES_USER", USERNAME)
+                withEnv("POSTGRES_PASSWORD", PASSWORD)
+                withCommand("postgres -c max_prepared_transactions=10")
+                withLabel(TestContainerKit.LABEL_KEY, LABEL)
+            }
+        }
+        return requireNotNull(container)
+    }
+
+    /**
+     * 连接管理库 {@code postgres}，按需创建目标 database。
+     */
+    private fun ensureDatabaseExists(runningContainer: Container, database: String) {
+        validateDatabaseName(database)
+        val url = buildAdminJdbcUrl(runningContainer)
+        var lastException: SQLException? = null
+        repeat(DATABASE_READY_MAX_RETRIES) { attempt ->
+            try {
+                DriverManager.getConnection(url, USERNAME, PASSWORD).use { connection ->
+                    if (databaseExists(connection, database)) {
+                        return
+                    }
+                    connection.createStatement().use { statement ->
+                        statement.execute("""create database "${database.replace("\"", "\"\"")}"""")
+                    }
+                    return
+                }
+            } catch (e: SQLException) {
+                lastException = e
+                if (attempt == DATABASE_READY_MAX_RETRIES - 1) {
+                    return@repeat
+                }
+                sleepBeforeRetry()
+            }
+        }
+        throw RuntimeException("failed to ensure postgres database exists: $database", lastException)
+    }
+
+    /**
+     * 构造连接管理库使用的 JDBC URL。
+     *
+     * @param runningContainer 当前运行中的容器
+     * @return 指向 postgres 管理库的 JDBC URL
+     */
+    private fun buildAdminJdbcUrl(runningContainer: Container): String {
+        val port = runningContainer.ports.firstOrNull()?.publicPort ?: PORT
+        return "jdbc:postgresql://$LOCALHOST:$port/postgres?sslmode=disable"
+    }
+
+    /**
+     * 检查目标 database 是否已经存在。
+     */
+    private fun databaseExists(connection: Connection, database: String): Boolean {
+        val sql = "select 1 from pg_database where datname = ?"
+        connection.prepareStatement(sql).use { statement: PreparedStatement ->
+            statement.setString(1, database)
+            statement.executeQuery().use { resultSet: ResultSet ->
+                return resultSet.next()
+            }
+        }
+    }
+
+    /**
+     * 限制 database 名称字符集，避免空值和非法标识符带来建库风险。
+     */
+    private fun validateDatabaseName(database: String) {
+        require(database.isNotBlank()) { "database must not be blank" }
+        require(database.matches(Regex("[A-Za-z0-9_]+"))) {
+            "database contains unsupported characters: $database"
+        }
+    }
+
+    /**
+     * 在数据库尚未就绪时短暂等待后重试。
+     */
+    private fun sleepBeforeRetry() {
+        try {
+            Thread.sleep(DATABASE_READY_RETRY_INTERVAL_MILLIS)
+        } catch (e: InterruptedException) {
+            Thread.currentThread().interrupt()
+            throw RuntimeException("interrupted while waiting for postgres to become ready", e)
+        }
+    }
+
+    /**
+     * 注册指定 database 对应的数据源属性。
+     */
+    private fun registerProperties(
+        registry: DynamicPropertyRegistry,
+        runningContainer: Container,
+        database: String
+    ) {
         val host = runningContainer.ports.first().ip
         val port = runningContainer.ports.first().publicPort
 
-        val url = "jdbc:postgresql://$host:$port/$DATABASE"
+        val url = "jdbc:postgresql://$host:$port/$database"
         registry.add("spring.datasource.dynamic.datasource.postgres.url") { url }
         registry.add("spring.datasource.dynamic.datasource.postgres.username") { USERNAME }
         registry.add("spring.datasource.dynamic.datasource.postgres.password") { PASSWORD }
     }
 
     /**
-     * 返回运行中的容器对象
+     * 返回运行中的容器对象。
      *
-     * @return 容器对象，如果没有返回null
+     * @return 容器对象，如果没有则返回 {@code null}
      */
-    fun getRunningContainer() : Container? = TestContainerKit.getRunningContainer(LABEL)
+    fun getRunningContainer(): Container? = TestContainerKit.getRunningContainer(LABEL)
 
     @JvmStatic
     fun main(args: Array<String>?) {
