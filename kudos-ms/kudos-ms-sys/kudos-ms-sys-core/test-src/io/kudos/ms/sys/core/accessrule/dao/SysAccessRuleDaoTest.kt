@@ -1,0 +1,21 @@
+package io.kudos.ms.sys.core.accessrule.dao
+import io.kudos.test.container.annotations.EnabledIfDockerInstalled
+import io.kudos.test.rdb.RdbTestBase
+import jakarta.annotation.Resource
+
+/**
+ * junit test for SysAccessRuleDao
+ *
+ * 测试数据来源：`SysAccessRuleDaoTest.sql`
+ *
+ * @author K
+ * @author AI: Cursor
+ * @since 1.0.0
+ */
+@EnabledIfDockerInstalled
+class SysAccessRuleDaoTest : RdbTestBase() {
+
+    @Resource
+    private lateinit var sysAccessRuleDao: SysAccessRuleDao
+
+}

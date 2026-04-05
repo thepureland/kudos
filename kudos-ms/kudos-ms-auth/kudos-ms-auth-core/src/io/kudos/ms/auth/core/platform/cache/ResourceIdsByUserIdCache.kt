@@ -1,0 +1,184 @@
+package io.kudos.ms.auth.core.platform.cache
+import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
+import io.kudos.base.logger.LogFactory
+import io.kudos.base.query.Criteria
+import io.kudos.base.query.enums.OperatorEnum
+import io.kudos.ms.auth.core.roleresource.dao.AuthRoleResourceDao
+import io.kudos.ms.auth.core.roleuser.dao.AuthRoleUserDao
+import io.kudos.ms.auth.core.roleuser.model.po.AuthRoleUser
+import io.kudos.ms.user.core.user.dao.UserAccountDao
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.cache.annotation.Cacheable
+import org.springframework.stereotype.Component
+
+
+/**
+ * 资源ID列表（by user id）缓存处理器
+ *
+ * 1.数据来源表：auth_role_user + auth_role_resource
+ * 2.缓存各用户拥有的所有资源ID集合
+ * 3.缓存的key为：userId
+ * 4.缓存的value为：资源ID集合（List<String>）
+ * 5.查询流程：用户 → 角色 → 资源（三级关联）
+ *
+ * @author K
+ * @author AI: Cursor
+ * @since 1.0.0
+ */
+@Component
+open class ResourceIdsByUserIdCache : AbstractKeyValueCacheHandler<Set<String>>() {
+
+    @Autowired
+    private lateinit var authRoleUserDao: AuthRoleUserDao
+
+    @Autowired
+    private lateinit var authRoleResourceDao: AuthRoleResourceDao
+
+    @Autowired
+    private lateinit var userAccountDao: UserAccountDao
+
+    companion object {
+        private const val CACHE_NAME = "AUTH_RESOURCE_IDS_BY_USER_ID"
+    }
+
+    override fun cacheName(): String = CACHE_NAME
+
+    override fun doReload(key: String): Set<String> = getSelf<ResourceIdsByUserIdCache>().getResourceIds(key)
+
+    override fun reloadAll(clear: Boolean) {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
+            log.info("缓存未开启，不加载和缓存所有用户的资源ID！")
+            return
+        }
+
+        val users = userAccountDao.searchActiveUsersForCache()
+        val userIdToRoleIdsMap = authRoleUserDao.searchAllUserIdToRoleIdsForCache()
+        val roleIdToResourceIdsMap = authRoleResourceDao.searchAllRoleIdToResourceIdsForCache()
+
+        log.debug("从数据库加载了${users.size}条用户、角色-用户分组${userIdToRoleIdsMap.size}、角色-资源分组${roleIdToResourceIdsMap.size}。")
+
+        // 清除缓存
+        if (clear) {
+            clear()
+        }
+
+        // 缓存用户资源ID列表
+        users.forEach { user ->
+            val userId = user.id
+            if (userId.isBlank()) return@forEach
+            val roleIds = userIdToRoleIdsMap[userId] ?: emptyList()
+            val resourceIds = roleIds.flatMap { roleId ->
+                roleIdToResourceIdsMap[roleId] ?: emptyList()
+            }.map { it.trim() }
+            .distinct()
+            
+            if (resourceIds.isNotEmpty()) {
+                KeyValueCacheKit.put(CACHE_NAME, userId, resourceIds)
+                log.debug("缓存了用户${userId}的${resourceIds.size}条资源ID。")
+            }
+        }
+    }
+
+    /**
+     * 根据用户ID从缓存中获取该用户拥有的所有资源ID，如果缓存中不存在，则从数据库中加载，并回写缓存
+     *
+     * @param userId 用户ID
+     * @return Set<资源ID>
+     */
+    @Cacheable(
+        cacheNames = [CACHE_NAME],
+        key = "#userId",
+        unless = "#result == null || #result.isEmpty()"
+    )
+    open fun getResourceIds(userId: String): Set<String> {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
+            log.debug("缓存中不存在用户${userId}的资源ID，从数据库中加载...")
+        }
+
+        val roleIds = authRoleUserDao.searchRoleIdsByUserId(userId)
+        if (roleIds.isEmpty()) {
+            log.debug("用户${userId}没有分配任何角色。")
+            return emptySet()
+        }
+
+        val resultList = authRoleResourceDao.searchResourceIdsByRoleIds(roleIds)
+        log.debug("从数据库加载了用户${userId}的${roleIds.size}个角色，共${resultList.size}条资源ID（去重后）。")
+        return resultList
+    }
+
+    /**
+     * 用户-角色关系变更后同步缓存
+     *
+     * @param userId 用户ID
+     */
+    open fun syncOnRoleUserChange(userId: String) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
+            log.debug("用户${userId}的角色关系变更后，同步${CACHE_NAME}缓存...")
+            evict(userId)
+            if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
+                getSelf<ResourceIdsByUserIdCache>().getResourceIds(userId)
+            }
+            log.debug("${CACHE_NAME}缓存同步完成。")
+        }
+    }
+
+    /**
+     * 角色-资源关系变更后同步缓存（需要根据角色找到所有关联用户）
+     *
+     * @param roleId 角色ID
+     */
+    open fun syncOnRoleResourceChange(roleId: String) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
+            log.debug("角色${roleId}的资源关系变更后，同步${CACHE_NAME}缓存...")
+            
+            // 查询拥有该角色的所有用户
+            val roleUserCriteria = Criteria(AuthRoleUser::roleId.name, OperatorEnum.EQ, roleId)
+            @Suppress("UNCHECKED_CAST")
+            val roleUsers = authRoleUserDao.search(roleUserCriteria)
+            
+            // 踢除这些用户的缓存
+            val userIds = roleUsers.map { it.userId }.distinct()
+            userIds.forEach { userId ->
+                KeyValueCacheKit.evict(CACHE_NAME, userId)
+                log.debug("踢除了用户${userId}的资源缓存。")
+            }
+            
+            log.debug("${CACHE_NAME}缓存同步完成，共影响${userIds.size}个用户。")
+        }
+    }
+
+    /**
+     * 用户删除后同步缓存
+     *
+     * @param userId 用户ID
+     */
+    open fun syncOnUserDelete(userId: String) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
+            log.debug("删除用户${userId}后，同步从${CACHE_NAME}缓存中踢除...")
+            KeyValueCacheKit.evict(CACHE_NAME, userId)
+            log.debug("${CACHE_NAME}缓存同步完成。")
+        }
+    }
+
+    /**
+     * 批量用户-角色关系变更后同步缓存
+     *
+     * @param userIds 用户ID集合
+     */
+    open fun syncOnBatchRoleUserChange(userIds: Collection<String>) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
+            log.debug("批量用户角色关系变更后，同步${CACHE_NAME}缓存...")
+            userIds.forEach { userId ->
+                KeyValueCacheKit.evict(CACHE_NAME, userId)
+                if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
+                    getSelf<ResourceIdsByUserIdCache>().getResourceIds(userId)
+                }
+            }
+            log.debug("${CACHE_NAME}缓存同步完成，共影响${userIds.size}个用户。")
+        }
+    }
+
+    private val log = LogFactory.getLog(this::class)
+
+}

@@ -1,0 +1,40 @@
+package io.kudos.ms.sys.core.cache.model.table
+import io.kudos.ability.data.rdb.ktorm.support.ManagedTable
+import io.kudos.ms.sys.core.cache.model.po.SysCache
+import org.ktorm.schema.boolean
+import org.ktorm.schema.int
+import org.ktorm.schema.varchar
+
+
+/**
+ * 缓存数据库表-实体关联对象
+ *
+ * @author K
+ * @since 1.0.0
+ */
+object SysCaches : ManagedTable<SysCache>("sys_cache") {
+
+    /** 名称 */
+    var name = varchar("name").bindTo { it.name }
+
+    /** 原子服务编码 */
+    var atomicServiceCode = varchar("atomic_service_code").bindTo { it.atomicServiceCode }
+
+    /** 缓存策略代码 */
+    var strategyDictCode = varchar("strategy_dict_code").bindTo { it.strategyDictCode }
+
+    /** 是否启动时写缓存 */
+    var writeOnBoot = boolean("write_on_boot").bindTo { it.writeOnBoot }
+
+    /** 是否及时回写缓存 */
+    var writeInTime = boolean("write_in_time").bindTo { it.writeInTime }
+
+    /** 缓存生存时间(秒) */
+    var ttl = int("ttl").bindTo { it.ttl }
+
+    /** 是否为 Hash 缓存 */
+    var hash = boolean("hash").bindTo { it.hash }
+
+
+
+}

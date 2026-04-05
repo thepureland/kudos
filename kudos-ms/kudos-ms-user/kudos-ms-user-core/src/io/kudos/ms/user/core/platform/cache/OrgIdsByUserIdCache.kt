@@ -1,0 +1,139 @@
+package io.kudos.ms.user.core.platform.cache
+import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
+import io.kudos.ability.cache.common.kit.KeyValueCacheKit
+import io.kudos.base.logger.LogFactory
+import io.kudos.ms.user.core.user.dao.UserAccountDao
+import io.kudos.ms.user.core.orguser.dao.UserOrgUserDao
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.cache.annotation.Cacheable
+import org.springframework.stereotype.Component
+
+
+/**
+ * 机构ID列表（by user id）缓存处理器
+ *
+ * 1.数据来源表：user_org_user
+ * 2.缓存各用户所属的所有机构ID列表
+ * 3.缓存的key为：userId
+ * 4.缓存的value为：机构ID列表（List<String>）
+ *
+ * @author K
+ * @author AI: Cursor
+ * @since 1.0.0
+ */
+@Component
+open class OrgIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() {
+
+    @Autowired
+    private lateinit var userOrgUserDao: UserOrgUserDao
+
+    @Autowired
+    private lateinit var userAccountDao: UserAccountDao
+
+    companion object {
+        private const val CACHE_NAME = "USER_ORG_IDS_BY_USER_ID"
+    }
+
+    override fun cacheName(): String = CACHE_NAME
+
+    override fun doReload(key: String): List<String> = getSelf<OrgIdsByUserIdCache>().getOrgIds(key)
+
+    override fun reloadAll(clear: Boolean) {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
+            log.info("缓存未开启，不加载和缓存所有用户的机构ID！")
+            return
+        }
+
+        val users = userAccountDao.searchActiveUsersForCache()
+        val userIdToOrgIdsMap = userOrgUserDao.searchAllUserIdToOrgIds()
+
+        log.debug("从数据库加载了${users.size}条用户、机构-用户关系分组${userIdToOrgIdsMap.size}。")
+
+        // 清除缓存
+        if (clear) {
+            clear()
+        }
+
+        // 缓存用户机构ID列表
+        users.forEach { user ->
+            val userId = user.id
+            if (userId.isBlank()) return@forEach
+            val orgIds = userIdToOrgIdsMap[userId] ?: emptyList()
+            if (orgIds.isNotEmpty()) {
+                KeyValueCacheKit.put(CACHE_NAME, userId, orgIds)
+                log.debug("缓存了用户${userId}的${orgIds.size}条机构ID。")
+            }
+        }
+    }
+
+    /**
+     * 根据用户ID从缓存中获取该用户所属的所有机构ID，如果缓存中不存在，则从数据库中加载，并回写缓存
+     *
+     * @param userId 用户ID
+     * @return List<机构ID>
+     */
+    @Cacheable(
+        cacheNames = [CACHE_NAME],
+        key = "#userId",
+        unless = "#result == null || #result.isEmpty()"
+    )
+    open fun getOrgIds(userId: String): List<String> {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
+            log.debug("缓存中不存在用户${userId}的机构ID，从数据库中加载...")
+        }
+
+        val orgIds = userOrgUserDao.searchOrgIdsByUserId(userId)
+        log.debug("从数据库加载了用户${userId}的${orgIds.size}条机构ID。")
+        return orgIds
+    }
+
+    /**
+     * 用户-机构关系变更后同步缓存
+     *
+     * @param userId 用户ID
+     */
+    open fun syncOnOrgUserChange(userId: String) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
+            log.debug("用户${userId}的机构关系变更后，同步${CACHE_NAME}缓存...")
+            evict(userId)
+            if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
+                getSelf<OrgIdsByUserIdCache>().getOrgIds(userId)
+            }
+            log.debug("${CACHE_NAME}缓存同步完成。")
+        }
+    }
+
+    /**
+     * 批量用户-机构关系变更后同步缓存
+     *
+     * @param userIds 用户ID集合
+     */
+    open fun syncOnBatchOrgUserChange(userIds: Collection<String>) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
+            log.debug("批量用户机构关系变更后，同步${CACHE_NAME}缓存...")
+            userIds.forEach { userId ->
+                KeyValueCacheKit.evict(CACHE_NAME, userId)
+                if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
+                    getSelf<OrgIdsByUserIdCache>().getOrgIds(userId)
+                }
+            }
+            log.debug("${CACHE_NAME}缓存同步完成，共影响${userIds.size}个用户。")
+        }
+    }
+
+    /**
+     * 用户删除后同步缓存
+     *
+     * @param userId 用户ID
+     */
+    open fun syncOnUserDelete(userId: String) {
+        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
+            log.debug("删除用户${userId}后，同步从${CACHE_NAME}缓存中踢除...")
+            KeyValueCacheKit.evict(CACHE_NAME, userId)
+            log.debug("${CACHE_NAME}缓存同步完成。")
+        }
+    }
+
+    private val log = LogFactory.getLog(this::class)
+
+}

@@ -4,25 +4,25 @@
 
 系统（`sys`）原子服务的 **领域实现中心**：在 `kudos-ms-sys-common` 契约与 `kudos-ms-sys-sql` 表结构之上，提供 **Ktorm 数据访问、业务服务、多级缓存、以及 `ISys*Api` 的 Spring 实现**。不包含 HTTP 控制器（控制器在 `kudos-ms-sys-api-admin`）。
 
-`core` **不按** `vo` 同名建包，业务能力分布在 `model` / `dao` / `service` / `cache` / `api` 等通用分层中；下表按 **`kudos-ms-sys-common` 的 `io.kudos.ms.sys.common.vo` 下一级子包** 归纳各块在 `core` 中的职责（与 `ISys*Api`、`Sys*Service`、`Sys*Dao`、`*HashCache` 等对应）。其中 **`accessrule` 与 `accessruleip`、`dict` 与 `dictitem`** 在业务上一体，表中合并叙述。
+`core` **不按** `vo` 同名建包，业务能力分布在 `model` / `dao` / `service` / `cache` / `api` 等通用分层中；下表按 **`kudos-ms-sys-common` 中 `io.kudos.ms.sys.common.<模块>` 的业务模块名**归纳各块在 `core` 中的职责（与 `ISys*Api`、`Sys*Service`、`Sys*Dao`、`*HashCache` 等对应）。**字典项** 的契约与 VO 已在 **`common.dict`** 的 `api` / `vo` 叶子包（与字典头同模块），**无** `dictitem` 子包；**规则 IP** 同理在 **`common.accessrule`**，**无** `accessruleip` 子包；实现侧在 **`core.dict`** / **`core.accessrule`** 下同层。
 
 ---
 
-## 按业务划分（与 `common.vo` 子包对齐）
+## 按业务划分（与 `common` 模块包对齐）
 
-| `common.vo` 子包 | 在 `core` 中的作用概述 |
+| `common` 下模块名 | 在 `core` 中的作用概述 |
 |-------------------|------------------------|
-| **accessrule**（含 **accessruleip**） | **访问规则与 IP 明细**：主表按子系统/租户等配置策略；**IP（或 IP 段）** 挂在规则下，与主表联动；与视图 `VSysAccessRuleWithIp` 联合查询配合。对应 `SysAccessRule*`、`SysAccessRuleIp*` DAO/Service，`AccessRuleIpsBySubSysAndTenantIdCache`、`SysAccessRuleApi`、`SysAccessRuleIpApi` 及规则侧缓存一致性。 |
+| **accessrule** | **访问规则与 IP 明细**：主表按子系统/租户等配置策略；**IP（或 IP 段）** 挂在规则下，与主表联动；与视图 `VSysAccessRuleWithIp` 联合查询配合。对应 `SysAccessRule*`、`SysAccessRuleIp*` DAO/Service，`AccessRuleIpsBySubSysAndTenantIdCache`、`SysAccessRuleApi`、`SysAccessRuleIpApi` 及规则侧缓存一致性。 |
 | **cache** | **业务侧「缓存配置」元数据**（非本 README 中的 `io.kudos.ms.sys.core.cache` 基础设施包）：登记各业务缓存模块、名称等，供运维/控制台管理；对应 `SysCache*`、`SysCacheHashCache`、`SysCacheApi`。 |
 | **datasource** | 多租户/多子系统下的数据源定义与查询：与连接信息、作用范围相关；对应 `SysDataSource*`、`SysDataSourceHashCache`、`SysDataSourceApi`。 |
-| **dict**（含 **dictitem**） | **字典头与字典项**：字典类型（头）的树形结构、编码约束；**字典项**挂接在头下，配合项编码解析。对应 `SysDict*`、`SysDictItem*`、`VSysDictItem*` 视图服务、`SysDictHashCache`、`SysDictItemHashCache`、`SysDictApi`、`SysDictItemApi`，以及 `DictItemCodeFinder` 等支撑。 |
+| **dict** | **字典头与字典项**：字典类型（头）的树形结构、编码约束；**字典项**挂接在头下，配合项编码解析。对应 `SysDict*`、`SysDictItem*`、`VSysDictItem*` 视图服务、`SysDictHashCache`、`SysDictItemHashCache`、`SysDictApi`、`SysDictItemApi`，以及 `DictItemCodeFinder` 等支撑。 |
 | **domain** | 业务域（`SysDomain`）：用于域隔离、路由或切换上下文的领域标识；对应 `SysDomain*`、`DomainByNameCache`、`SysDomainApi`。 |
 | **i18n** | 国际化键值与多语言文案：按原子服务/命名空间等维度管理；对应 `SysI18n*`（实现中多为 `SysI18NService` 命名）、`SysI18nHashCache`、`SysI18nApi`。 |
-| **microservice** | 平台注册的微服务元数据（编码、名称等）：对应 `SysMicroService*`、`SysMicroServiceHashCache`、`SysMicroServiceApi`。子系统与微服务的 **绑定关系** 在表结构中单立，由 `SysSubSystemMicroService*` Service/API 实现（契约见 `ISysSubSystemMicroServiceApi`，`common.vo` 无单独子包时仍属本能力块）。 |
+| **microservice** | 平台注册的微服务元数据（编码、名称等）：对应 `SysMicroService*`、`SysMicroServiceHashCache`、`SysMicroServiceApi`。子系统与微服务的 **绑定关系** 在表结构中单立，由 `SysSubSystemMicroService*` Service/API 实现（契约见 `ISysSubSystemMicroServiceApi`，无独立 `vo` 子包时仍属本能力块）。 |
 | **param** | 系统/模块级参数键值：按模块名与参数名定位；对应 `SysParam*`、`ParamByModuleAndNameCache`、`SysParamApi`。 |
 | **resource** | 资源与菜单树（含 URL、类型、图标、层级）：支撑控制台路由与权限资源模型；对应 `SysResource*`、`SysResourceHashCache`、`SysResourceApi`（含菜单树构建等）。 |
 | **system** | **子系统**（subsystem / system）主数据：与租户、资源、访问规则等按 `subSystemCode` 关联；对应 `SysSystem*`、`SysSystemHashCache`、`SysSystemApi`。 |
-| **tenant** | **租户**主数据及其扩展关系：包括租户与 **子系统**、**资源**、**默认语言** 等关联（在 `common.vo.tenant` 内以多种 CacheEntry/表单体现）；对应 `SysTenant*`、`SysTenantSystem*`、`SysTenantResource*`、`SysTenantLocale*` 等 Service 与 DAO、`TenantByIdCache`、`SysTenantSystemHashCache`、`SysTenantApi` / `SysTenantSystemApi` / `SysTenantResourceApi` / `SysTenantLocaleApi` 等。 |
+| **tenant** | **租户**主数据及其扩展关系：包括租户与 **子系统**、**资源**、**默认语言** 等关联（在 `common.tenant.vo` 内以多种 CacheEntry/表单体现）；对应 `SysTenant*`、`SysTenantSystem*`、`SysTenantResource*`、`SysTenantLocale*` 等 Service 与 DAO、`TenantByIdCache`、`SysTenantSystemHashCache`、`SysTenantApi` / `SysTenantSystemApi` / `SysTenantResourceApi` / `SysTenantLocaleApi` 等。 |
 
 ---
 
@@ -95,7 +95,7 @@
 
 ## 测试
 
-- 源码测试位于 `test-src`，测试资源在 `test-resources/sql/h2` 等目录。
+- 源码测试位于 `test-src`，测试数据 SQL 位于 **`test-resources/sql/h2/<业务模块>/<分层>/`**：`<业务模块>` 与 `core` / `common` 中的模块名对齐（如 `dict`、`accessrule`、`tenant`；**缓存配置** 元数据相关为 `sys_cache`）；`<分层>` 为 `cache`、`dao`、`service` 之一，文件名为对应 `*Test.sql`（与测试类名一致）。`SqlTestBase` 会在 `sql/h2` 下递归解析。
 - 覆盖缓存、DAO、Service 等（以仓库内实际测试类为准）。
 
 ---

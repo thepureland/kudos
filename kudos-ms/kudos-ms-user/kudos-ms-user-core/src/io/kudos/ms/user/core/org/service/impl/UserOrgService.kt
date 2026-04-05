@@ -1,0 +1,271 @@
+package io.kudos.ms.user.core.org.service.impl
+import io.kudos.base.support.service.impl.BaseCrudService
+import io.kudos.base.bean.BeanKit
+import io.kudos.base.logger.LogFactory
+import io.kudos.ms.user.common.org.vo.UserOrgCacheEntry
+import io.kudos.ms.user.common.org.vo.response.UserOrgTreeRow
+import io.kudos.ms.user.common.user.vo.UserAccountCacheEntry
+import io.kudos.ms.user.core.user.cache.UserAccountHashCache
+import io.kudos.ms.user.core.platform.cache.UserIdsByOrgIdCache
+import io.kudos.ms.user.core.org.cache.UserOrgHashCache
+import io.kudos.ms.user.core.org.dao.UserOrgDao
+import io.kudos.ms.user.core.orguser.dao.UserOrgUserDao
+import io.kudos.ms.user.core.org.model.po.UserOrg
+import io.kudos.ms.user.core.org.service.iservice.IUserOrgService
+import jakarta.annotation.Resource
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+
+
+/**
+ * 机构业务
+ *
+ * @author K
+ * @author AI: Cursor
+ * @since 1.0.0
+ */
+@Service
+@Transactional
+open class UserOrgService(
+    dao: UserOrgDao
+) : BaseCrudService<String, UserOrg, UserOrgDao>(dao), IUserOrgService {
+
+
+    @Autowired
+    private lateinit var userOrgUserDao: UserOrgUserDao
+
+    @Autowired
+    private lateinit var userOrgHashCache: UserOrgHashCache
+
+    @Resource
+    private lateinit var userAccountHashCache: UserAccountHashCache
+
+    @Autowired
+    private lateinit var userIdsByOrgIdCache: UserIdsByOrgIdCache
+
+    private val log = LogFactory.getLog(this::class)
+
+    override fun getOrgAdmins(orgId: String): List<UserAccountCacheEntry> {
+        val adminUserIds = userOrgUserDao.searchAdminUserIdsByOrgId(orgId)
+        
+        // 如果没有管理员，直接返回空列表
+        if (adminUserIds.isEmpty()) {
+            return emptyList()
+        }
+        
+        // 批量获取用户信息
+        val usersMap = userAccountHashCache.getUsersByIds(adminUserIds)
+        
+        // 返回用户列表（按原始ID顺序）
+        return adminUserIds.mapNotNull { usersMap[it] }
+    }
+
+    override fun getOrgUserIds(orgId: String): List<String> {
+        return userIdsByOrgIdCache.getUserIds(orgId)
+    }
+
+    override fun getChildOrgIds(orgId: String): List<String> {
+        return dao.searchActiveChildOrgIds(orgId)
+    }
+
+    override fun getOrgUsers(orgId: String): List<UserAccountCacheEntry> {
+        val userIds = getOrgUserIds(orgId)
+        if (userIds.isEmpty()) {
+            return emptyList()
+        }
+        val usersMap = userAccountHashCache.getUsersByIds(userIds)
+        return userIds.mapNotNull { usersMap[it] }
+    }
+
+    override fun isUserInOrg(userId: String, orgId: String): Boolean {
+        val userIds = getOrgUserIds(orgId)
+        return userIds.contains(userId)
+    }
+
+    override fun getChildOrgs(orgId: String): List<UserOrgCacheEntry> {
+        val childOrgIds = getChildOrgIds(orgId)
+        if (childOrgIds.isEmpty()) {
+            return emptyList()
+        }
+        val orgsMap = userOrgHashCache.getOrgsByIds(childOrgIds)
+        return childOrgIds.mapNotNull { orgsMap[it] }
+    }
+
+    override fun getParentOrg(orgId: String): UserOrgCacheEntry? {
+        val org = userOrgHashCache.getOrgById(orgId) ?: return null
+        val parentId = org.parentId ?: return null
+        return userOrgHashCache.getOrgById(parentId)
+    }
+
+    override fun getOrgRecord(id: String): UserOrgCacheEntry? {
+        return userOrgHashCache.getOrgById(id)
+    }
+
+    override fun getOrgsByTenantId(tenantId: String): List<UserOrgCacheEntry> {
+        val orgIds = userOrgHashCache.getOrgsByTenantId(tenantId).map { it.id }
+        if (orgIds.isEmpty()) {
+            return emptyList()
+        }
+        val orgsMap = userOrgHashCache.getOrgsByIds(orgIds)
+        return orgIds.mapNotNull { orgsMap[it] }
+    }
+
+    override fun getOrgTree(tenantId: String, parentId: String?): List<UserOrgTreeRow> {
+        // 如果指定了parentId，只查询该父机构下的直接子机构；否则查询租户下全部启用机构
+        val orgs = dao.searchActiveOrgsByTenantId(tenantId, parentId)
+        
+        // 转换为树节点
+        val treeNodes = orgs.map { org ->
+            val cacheItem = userOrgHashCache.getOrgById(org.id) ?: return@map null
+            UserOrgTreeRow().apply {
+                BeanKit.copyProperties(cacheItem, this)
+                this.children = mutableListOf()
+            }
+        }.filterNotNull()
+        
+        // 如果指定了parentId，直接返回子机构列表（不构建树）
+        if (parentId != null) {
+            return treeNodes.sortedBy { it.sortNum ?: Int.MAX_VALUE }
+        }
+        
+        // 构建树形结构（仅当parentId == null时）
+        val nodeMap = treeNodes.associateBy { it.id }
+        val rootNodes = mutableListOf<UserOrgTreeRow>()
+        
+        treeNodes.forEach { node ->
+            if (node.parentId == null) {
+                rootNodes.add(node)
+            } else {
+                val parent = nodeMap[node.parentId]
+                parent?.children?.add(node)
+            }
+        }
+        
+        // 按 sortNum 排序
+        fun sortTree(nodes: MutableList<UserOrgTreeRow>) {
+            nodes.sortBy { it.sortNum ?: Int.MAX_VALUE }
+            nodes.forEach { node ->
+                node.children?.let { sortTree(it) }
+            }
+        }
+        sortTree(rootNodes)
+        
+        return rootNodes
+    }
+
+    override fun getAllAncestorOrgIds(orgId: String): List<String> {
+        val ancestors = mutableListOf<String>()
+        var currentOrg = userOrgHashCache.getOrgById(orgId) ?: return emptyList()
+        
+        while (true) {
+            val parentId = currentOrg.parentId ?: break
+            ancestors.add(parentId)
+            currentOrg = userOrgHashCache.getOrgById(parentId) ?: break
+        }
+        
+        return ancestors
+    }
+
+    override fun getAllDescendantOrgIds(orgId: String): List<String> {
+        val descendants = mutableListOf<String>()
+        val queue = mutableListOf(orgId)
+        
+        while (queue.isNotEmpty()) {
+            val currentId = queue.removeAt(0)
+            val childIds = getChildOrgIds(currentId)
+            descendants.addAll(childIds)
+            queue.addAll(childIds)
+        }
+        
+        return descendants
+    }
+
+    @Transactional
+    override fun updateActive(id: String, active: Boolean): Boolean {
+        val success = dao.updateProperties(id, mapOf(UserOrg::active.name to active))
+        if (success) {
+            log.debug("更新id为${id}的机构的启用状态为${active}。")
+            userOrgHashCache.syncOnUpdate(id)
+//            val existingOrg = dao.get(id)
+//            if (existingOrg != null) {
+//                orgIdsByTenantIdCache.syncOnUpdateActive(id, active)
+//            }
+        } else {
+            log.error("更新id为${id}的机构的启用状态为${active}失败！")
+        }
+        return success
+    }
+
+    @Transactional
+    override fun moveOrg(id: String, newParentId: String?, newSortNum: Int?): Boolean {
+        val props = mutableMapOf<String, Any?>(
+            UserOrg::parentId.name to newParentId
+        )
+        if (newSortNum != null) {
+            props[UserOrg::sortNum.name] = newSortNum
+        }
+        val success = dao.updateProperties(id, props)
+        if (success) {
+            log.debug("移动id为${id}的机构到父机构${newParentId}，排序号${newSortNum}。")
+            userOrgHashCache.syncOnUpdate(id)
+//            val existingOrg = dao.get(id)
+//            if (existingOrg != null) {
+//                orgIdsByTenantIdCache.syncOnUpdate(existingOrg, id)
+//            }
+        } else {
+            log.error("移动id为${id}的机构失败！")
+        }
+        return success
+    }
+
+    @Transactional
+    override fun insert(any: Any): String {
+        val id = super.insert(any)
+        log.debug("新增id为${id}的机构。")
+        userOrgHashCache.syncOnInsert(id)
+        return id
+    }
+
+    @Transactional
+    override fun update(any: Any): Boolean {
+        val success = super.update(any)
+        val id = BeanKit.getProperty(any, UserOrg::id.name) as String
+        if (success) {
+            log.debug("更新id为${id}的机构。")
+            userOrgHashCache.syncOnUpdate(id)
+        } else {
+            log.error("更新id为${id}的机构失败！")
+        }
+        return success
+    }
+
+    @Transactional
+    override fun deleteById(id: String): Boolean {
+        val org = dao.get(id)
+        if (org == null) {
+            log.warn("删除id为${id}的机构时，发现其已不存在！")
+            return false
+        }
+        val success = super.deleteById(id)
+        if (success) {
+            log.debug("删除id为${id}的机构。")
+            userOrgHashCache.syncOnDelete(id)
+        } else {
+            log.error("删除id为${id}的机构失败！")
+        }
+        return success
+    }
+
+    @Transactional
+    override fun batchDelete(ids: Collection<String>): Int {
+//        val orgs = dao.inSearchById(ids)
+//        orgs.map { it.tenantId }.toSet()
+        val count = super.batchDelete(ids)
+        log.debug("批量删除机构，期望删除${ids.size}条，实际删除${count}条。")
+        userOrgHashCache.syncOnBatchDelete(ids)
+        return count
+    }
+
+
+}
