@@ -5,9 +5,10 @@ import java.time.LocalDateTime
 
 
 /**
- * 访问规则详情响应VO
+ * 访问规则详情 DTO（含审计字段）。
  *
  * @author K
+ * @author AI: Cursor
  * @since 1.0.0
  */
 data class SysAccessRuleDetail (
@@ -20,8 +21,11 @@ data class SysAccessRuleDetail (
     /** 系统编码 */
     val systemCode: String? = null,
 
-    /** 规则类型 */
-    val ruleType: Int? = null,
+    /** 规则类型字典代码 */
+    val accessRuleTypeDictCode: String? = null,
+
+    /** 备注 */
+    val remark: String? = null,
 
     /** 创建者id */
     val createUserId: String? = null,

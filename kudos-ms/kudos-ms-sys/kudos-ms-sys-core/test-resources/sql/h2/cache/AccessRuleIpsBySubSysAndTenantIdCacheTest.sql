@@ -1,5 +1,5 @@
 -- sys_access_rule: 每条 (tenant_id, system_code) 一行，id 唯一。(tenantId-2, subSys-a) 的 id 为 8026f3ac-563b-4545-88dc-b8f70ea44847，供 sync 用例使用
-merge into "sys_access_rule" ("id", "tenant_id", "system_code", "rule_type_dict_code", "remark", "active", "built_in") values
+merge into "sys_access_rule" ("id", "tenant_id", "system_code", "access_rule_type_dict_code", "remark", "active", "built_in") values
     ('8026f3ac-563b-4545-88dc-b8f70ea44848', 'tenantId-1', 'subSys-a', '0', null, true, false),
     ('8026f3ac-563b-4545-88dc-b8f70ea44847', 'tenantId-2', 'subSys-a', '1', null, true, false),
     ('8026f3ac-563b-4545-88dc-b8f70ea44849', 'tenantId-3', 'subSys-a', '2', null, true, false),

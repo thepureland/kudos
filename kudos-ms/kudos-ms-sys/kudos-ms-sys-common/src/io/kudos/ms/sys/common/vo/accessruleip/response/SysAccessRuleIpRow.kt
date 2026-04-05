@@ -45,6 +45,6 @@ data class SysAccessRuleIpRow (
     val systemCode: String? = null,
 
     /** 规则类型字典代码 */
-    val ruleTypeDictCode: String? = null,
+    val accessRuleTypeDictCode: String? = null,
 
 )

@@ -8,7 +8,7 @@ create table if not exists "sys_resource"
     "parent_id"               char(36),
     "order_num"               int2,
     "icon"                    character varying(256),
-    "sub_system_code"         character varying(32) default 'default'  not null,
+    "sub_system_code"         character varying(32) default 'default-sub-system'  not null,
     "remark"                  character varying(256),
     "active"                  boolean   default TRUE          not null,
     "built_in"                boolean   default FALSE         not null,
@@ -62,18 +62,18 @@ comment on column "sys_resource"."update_time" is '更新时间';
 --region DML
 
 merge into "sys_resource" ("id", "name", "url", "resource_type_dict_code", "parent_id", "order_num", "icon", "sub_system_code", "built_in") values
-    ('68139ed2-kres-47fa-ac0d-2932fb0ee000', 'view.menu.home', '/home', '1', null, 1, 'HomeFilled', 'default', true),
-    ('68139ed2-kres-47fa-ac0d-2932fb0ee001', 'view.menu.sys', '/sys', '1', null, 2, 'Setting', 'default', true),
-    ('68139ed2-kres-47fa-ac0d-2932fb0ee002', 'view.menu.system', '/sys/system', '1', '68139ed2-kres-47fa-ac0d-2932fb0ee001', 1, 'Mouse', 'default', true),
-    ('68139ed2-kres-47fa-ac0d-2932fb0ee003', 'view.menu.microService', '/sys/microService', '1', '68139ed2-kres-47fa-ac0d-2932fb0ee001', 2, 'Cpu', 'default', true),
-    ('68139ed2-kres-47fa-ac0d-2932fb0ee004', 'view.menu.tenant', '/sys/tenant', '1', '68139ed2-kres-47fa-ac0d-2932fb0ee001', 3, 'Phone', 'default', true),
-    ('68139ed2-kres-47fa-ac0d-2932fb0ee005', 'view.menu.dataSource', '/sys/dataSource', '1', '68139ed2-kres-47fa-ac0d-2932fb0ee001', 4, 'Coin', 'default', true),
-    ('68139ed2-kres-47fa-ac0d-2932fb0ee006', 'view.menu.domain', '/sys/domain', '1', '68139ed2-kres-47fa-ac0d-2932fb0ee001', 5, 'Link', 'default', true),
-    ('68139ed2-kres-47fa-ac0d-2932fb0ee007', 'view.menu.resource', '/sys/resource', '1', '68139ed2-kres-47fa-ac0d-2932fb0ee001', 6, 'Document', 'default', true),
-    ('68139ed2-kres-47fa-ac0d-2932fb0ee008', 'view.menu.dict', '/sys/dict', '1', '68139ed2-kres-47fa-ac0d-2932fb0ee001', 7, 'Collection', 'default', true),
-    ('68139ed2-kres-47fa-ac0d-2932fb0ee009', 'view.menu.cache', '/sys/cache', '1', '68139ed2-kres-47fa-ac0d-2932fb0ee001', 8, 'CopyDocument', 'default', true),
-    ('68139ed2-kres-47fa-ac0d-2932fb0ee010', 'view.menu.param', '/sys/param', '1', '68139ed2-kres-47fa-ac0d-2932fb0ee001', 9, 'Operation', 'default', true),
-    ('68139ed2-kres-47fa-ac0d-2932fb0ee011', 'view.menu.i18n', '/sys/i18n', '1', '68139ed2-kres-47fa-ac0d-2932fb0ee001', 10, 'Location', 'default', true),
-    ('68139ed2-kres-47fa-ac0d-2932fb0ee012', 'view.menu.accessRule', '/sys/accessRule', '1', '68139ed2-kres-47fa-ac0d-2932fb0ee001', 11, 'Umbrella', 'default', true);
+    ('68139ed2-kres-47fa-ac0d-2932fb0ee000', 'view.menu.home', '/home', '1', null, 1, 'HomeFilled', 'default-sub-system', true),
+    ('68139ed2-kres-47fa-ac0d-2932fb0ee001', 'view.menu.sys', '/sys', '1', null, 2, 'Setting', 'default-sub-system', true),
+    ('68139ed2-kres-47fa-ac0d-2932fb0ee002', 'view.menu.system', '/sys/system', '1', '68139ed2-kres-47fa-ac0d-2932fb0ee001', 1, 'Mouse', 'default-sub-system', true),
+    ('68139ed2-kres-47fa-ac0d-2932fb0ee003', 'view.menu.microService', '/sys/microService', '1', '68139ed2-kres-47fa-ac0d-2932fb0ee001', 2, 'Cpu', 'default-sub-system', true),
+    ('68139ed2-kres-47fa-ac0d-2932fb0ee004', 'view.menu.tenant', '/sys/tenant', '1', '68139ed2-kres-47fa-ac0d-2932fb0ee001', 3, 'Phone', 'default-sub-system', true),
+    ('68139ed2-kres-47fa-ac0d-2932fb0ee005', 'view.menu.dataSource', '/sys/dataSource', '1', '68139ed2-kres-47fa-ac0d-2932fb0ee001', 4, 'Coin', 'default-sub-system', true),
+    ('68139ed2-kres-47fa-ac0d-2932fb0ee006', 'view.menu.domain', '/sys/domain', '1', '68139ed2-kres-47fa-ac0d-2932fb0ee001', 5, 'Link', 'default-sub-system', true),
+    ('68139ed2-kres-47fa-ac0d-2932fb0ee007', 'view.menu.resource', '/sys/resource', '1', '68139ed2-kres-47fa-ac0d-2932fb0ee001', 6, 'Document', 'default-sub-system', true),
+    ('68139ed2-kres-47fa-ac0d-2932fb0ee008', 'view.menu.dict', '/sys/dict', '1', '68139ed2-kres-47fa-ac0d-2932fb0ee001', 7, 'Collection', 'default-sub-system', true),
+    ('68139ed2-kres-47fa-ac0d-2932fb0ee009', 'view.menu.cache', '/sys/cache', '1', '68139ed2-kres-47fa-ac0d-2932fb0ee001', 8, 'CopyDocument', 'default-sub-system', true),
+    ('68139ed2-kres-47fa-ac0d-2932fb0ee010', 'view.menu.param', '/sys/param', '1', '68139ed2-kres-47fa-ac0d-2932fb0ee001', 9, 'Operation', 'default-sub-system', true),
+    ('68139ed2-kres-47fa-ac0d-2932fb0ee011', 'view.menu.i18n', '/sys/i18n', '1', '68139ed2-kres-47fa-ac0d-2932fb0ee001', 10, 'Location', 'default-sub-system', true),
+    ('68139ed2-kres-47fa-ac0d-2932fb0ee012', 'view.menu.accessRule', '/sys/accessRule', '1', '68139ed2-kres-47fa-ac0d-2932fb0ee001', 11, 'Umbrella', 'default-sub-system', true);
 
 --endregion DML
