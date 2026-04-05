@@ -22,7 +22,7 @@ interface SysAccessRule : IManagedDbEntity<String, SysAccessRule> {
     @get:Sortable
     var systemCode: String
 
-    /** 规则类型字典代码 */
-    var ruleTypeDictCode: String
+    /** 访问规则类型字典代码 */
+    var accessRuleTypeDictCode: String
 
 }

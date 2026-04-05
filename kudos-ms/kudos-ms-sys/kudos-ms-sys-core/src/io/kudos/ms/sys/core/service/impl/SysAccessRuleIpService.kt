@@ -17,9 +17,11 @@ import org.springframework.transaction.annotation.Transactional
 
 
 /**
- * ip访问规则业务
+ * IP 访问规则（`sys_access_rule_ip`）的增删改查与缓存同步；并与父表 `sys_access_rule` 联动刷新
+ * [AccessRuleIpsBySubSysAndTenantIdCache]。
  *
  * @author K
+ * @author AI: Cursor
  * @since 1.0.0
  */
 @Service
@@ -38,6 +40,9 @@ open class SysAccessRuleIpService(
     override fun getIpsBySystemAndTenant(systemCode: String, tenantId: String?): List<SysAccessRuleIpCacheEntry> =
         accessRuleIpsBySubSysAndTenantIdCache.getAccessRuleIps(systemCode, tenantId)
 
+    /**
+     * 判断给定整型 IP 是否落在当前系统与租户维度下任一未过期且区间包含该值的规则内。
+     */
     override fun checkIpAccess(ip: Long, systemCode: String, tenantId: String?): Boolean {
         val ipRules = getIpsBySystemAndTenant(systemCode, tenantId)
         val now = java.time.LocalDateTime.now()
@@ -159,11 +164,33 @@ open class SysAccessRuleIpService(
         }
     }
 
+    /** 根据 IP 规则主键加载其父访问规则（用于缓存维度）。 */
     private fun findParentAccessRuleByIpRuleId(id: String) =
         dao.get(id)?.let { sysAccessRuleDao.get(it.parentRuleId) }
 
+    /** 在批量变更某父规则下 IP 后，按父规则刷新对应维度的 IP 规则缓存。 */
     private fun syncParentRuleCache(ruleId: String) {
         val accessRule = sysAccessRuleDao.get(ruleId) ?: return
         accessRuleIpsBySubSysAndTenantIdCache.syncOnUpdate(accessRule, ruleId)
+    }
+
+    /**
+     * 批量删除 IP 规则；删除成功后对涉及父规则对应的「系统编码 + 租户」缓存维度分别执行 evict 与回填。
+     */
+    @Transactional
+    override fun batchDelete(ids: Collection<String>): Int {
+        if (ids.isEmpty()) return 0
+        val dimensionKeys = ids.mapNotNull { id ->
+            dao.get(id)?.let { ip ->
+                sysAccessRuleDao.get(ip.parentRuleId)?.let { r -> r.systemCode to r.tenantId }
+            }
+        }.distinct()
+        val count = super.batchDelete(ids)
+        if (count > 0) {
+            dimensionKeys.forEach { (systemCode, tenantId) ->
+                accessRuleIpsBySubSysAndTenantIdCache.syncOnDeleteBySystemAndTenant(systemCode, tenantId)
+            }
+        }
+        return count
     }
 }

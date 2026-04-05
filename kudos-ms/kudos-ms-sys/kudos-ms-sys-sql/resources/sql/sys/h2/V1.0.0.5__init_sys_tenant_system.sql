@@ -40,5 +40,5 @@ comment on column "sys_tenant_system"."update_time" is '更新时间';
 
 --region DML
 insert into "sys_tenant_system" ("tenant_id", "system_code")
-    values ('818772a0-c053-4634-a5e5-31c486b3146a', 'default');
+    values ('818772a0-c053-4634-a5e5-31c486b3146a', 'default-sub-system');
 --endregion DML

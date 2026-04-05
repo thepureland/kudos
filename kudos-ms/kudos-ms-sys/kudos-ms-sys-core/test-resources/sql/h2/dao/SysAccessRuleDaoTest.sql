@@ -8,6 +8,6 @@ merge into "sys_system" ("code", "name", "parent_code", "sub_system", "remark", 
     ('svc-system-ar-dao-test-1_1456', 'svc-system-accessrule-dao-test-1-name', null, false, 'from SysAccessRuleDaoTest', true, false),
     ('svc-subsys-ar-dao-test-1_1456', 'svc-subsys-accessrule-dao-test-1-name', 'svc-system-ar-dao-test-1_1456', true, 'from SysAccessRuleDaoTest', true, false);
 
-merge into "sys_access_rule" ("id", "tenant_id", "system_code", "rule_type_dict_code", "remark", "active", "built_in") values
+merge into "sys_access_rule" ("id", "tenant_id", "system_code", "access_rule_type_dict_code", "remark", "active", "built_in") values
     ('40000000-0000-0000-0000-000000001791', '40000000-0000-0000-0000-000000001791', 'svc-system-ar-dao-test-1_1456', 'RULE_TYPE_WHITELIST', 'from SysAccessRuleDaoTest', true, false),
     ('40000000-0000-0000-0000-000000001791', '40000000-0000-0000-0000-000000001791', 'svc-system-ar-dao-test-1_1456', 'RULE_TYPE_BLACKLIST', 'from SysAccessRuleDaoTest', true, false);

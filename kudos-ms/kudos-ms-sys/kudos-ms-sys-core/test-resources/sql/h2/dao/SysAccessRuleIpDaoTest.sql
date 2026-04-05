@@ -8,7 +8,7 @@ merge into "sys_system" ("code", "name", "remark", "active", "built_in") values
     ('svc-system-arip-dao-test-1_3790', 'svc-system-accessruleip-dao-test-1-name', 'from SysAccessRuleIpDaoTest', true, false),
     ('svc-system-arip-dao-test-2', 'svc-system-accessruleip-dao-test-2-name', 'from SysAccessRuleIpDaoTest', true, false);
 
-merge into "sys_access_rule" ("id", "tenant_id", "system_code", "rule_type_dict_code", "remark", "active", "built_in") values
+merge into "sys_access_rule" ("id", "tenant_id", "system_code", "access_rule_type_dict_code", "remark", "active", "built_in") values
     ('40000000-0000-0000-0000-000000002666', '40000000-0000-0000-0000-000000002666', 'svc-system-arip-dao-test-1_3790', 'RULE_TYPE_WHITELIST', 'from SysAccessRuleIpDaoTest', true, false),
     ('40000000-0000-0000-0000-000000002667', '40000000-0000-0000-0000-000000002666', 'svc-system-arip-dao-test-2', 'RULE_TYPE_BLACKLIST', 'from SysAccessRuleIpDaoTest', false, false);
 

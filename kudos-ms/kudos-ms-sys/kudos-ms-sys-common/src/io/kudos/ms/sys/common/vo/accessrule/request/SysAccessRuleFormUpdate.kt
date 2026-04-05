@@ -4,9 +4,10 @@ import io.kudos.base.model.contract.entity.IIdEntity
 
 
 /**
- * 访问规则表单更新请求VO
+ * 访问规则表单更新请求 VO。
  *
  * @author K
+ * @author AI: Cursor
  * @since 1.0.0
  */
 data class SysAccessRuleFormUpdate (
@@ -18,6 +19,8 @@ data class SysAccessRuleFormUpdate (
 
     override val systemCode: String?,
 
-    override val ruleType: Int?,
+    override val accessRuleTypeDictCode: String?,
+
+    override val remark: String?,
 
 ) : IIdEntity<String>, ISysAccessRuleFormBase

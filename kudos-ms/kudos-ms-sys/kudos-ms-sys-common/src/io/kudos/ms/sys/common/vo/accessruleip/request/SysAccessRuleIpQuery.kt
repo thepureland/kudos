@@ -47,7 +47,7 @@ data class SysAccessRuleIpQuery (
     val systemCode: String? = null,
 
     /** 规则类型字典代码 */
-    val ruleTypeDictCode: String? = null,
+    val accessRuleTypeDictCode: String? = null,
 
     /**
      * 值为 null 但仍需作为查询条件的属性名（例如配合 [tenantId] 为 null 时表示父规则租户 IS NULL）。

@@ -2,9 +2,10 @@ package io.kudos.ms.sys.common.vo.accessrule.response
 
 
 /**
- * 访问规则列表查询结果响应VO
+ * 访问规则列表行 DTO。
  *
  * @author K
+ * @author AI: Cursor
  * @since 1.0.0
  */
 data class SysAccessRuleRow (
@@ -18,7 +19,7 @@ data class SysAccessRuleRow (
     /** 系统编码 */
     val systemCode: String? = null,
 
-    /** 规则类型 */
-    val ruleType: Int? = null,
+    /** 规则类型字典代码 */
+    val accessRuleTypeDictCode: String? = null,
 
 )

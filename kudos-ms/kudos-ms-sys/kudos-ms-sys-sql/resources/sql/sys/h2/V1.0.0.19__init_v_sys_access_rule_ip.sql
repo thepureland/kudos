@@ -1,8 +1,11 @@
+-- 视图 v_sys_access_rule_with_ip：sys_access_rule 左连接 sys_access_rule_ip；首列 id = COALESCE(ip.id, ar.id)
+
 CREATE OR REPLACE VIEW v_sys_access_rule_with_ip AS
-SELECT ar."id"          AS parent_id,
+SELECT COALESCE(ip."id", ar."id") AS "id",
+       ar."id"          AS parent_id,
        ar."tenant_id",
        ar."system_code",
-       ar."rule_type_dict_code",
+       ar."access_rule_type_dict_code",
        ar."remark"           AS parent_remark,
        ar."active"           AS parent_active,
        ar."built_in"         AS parent_built_in,
@@ -12,7 +15,7 @@ SELECT ar."id"          AS parent_id,
        ar."update_user_id"   AS parent_update_user_id,
        ar."update_user_name" AS parent_update_user_name,
        ar."update_time"      AS parent_update_time,
-       ip."id",
+       ip."id"               AS ip_id,
        ip."ip_start",
        ip."ip_end",
        ip."ip_type_dict_code",

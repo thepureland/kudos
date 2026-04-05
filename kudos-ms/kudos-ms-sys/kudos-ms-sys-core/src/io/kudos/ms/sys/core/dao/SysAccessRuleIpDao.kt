@@ -90,7 +90,7 @@ open class SysAccessRuleIpDao : BaseCrudDao<String, SysAccessRuleIp, SysAccessRu
             SysAccessRuleIpRow::parentRuleActive.name to (SysAccessRules.active as Column<Any>),
             SysAccessRuleIpRow::tenantId.name to (SysAccessRules.tenantId as Column<Any>),
             SysAccessRuleIpRow::systemCode.name to (SysAccessRules.systemCode as Column<Any>),
-            SysAccessRuleIpRow::ruleTypeDictCode.name to (SysAccessRules.ruleTypeDictCode as Column<Any>)
+            SysAccessRuleIpRow::accessRuleTypeDictCode.name to (SysAccessRules.accessRuleTypeDictCode as Column<Any>)
         )
 
         return query.map { row ->
@@ -158,12 +158,12 @@ open class SysAccessRuleIpDao : BaseCrudDao<String, SysAccessRuleIp, SysAccessRu
                     systemCode.trim()
                 )?.let { expr -> it += expr }
             }
-            val ruleTypeDictCode = searchPayload.ruleTypeDictCode
-            if (!ruleTypeDictCode.isNullOrBlank()) {
+            val accessRuleTypeDictCode = searchPayload.accessRuleTypeDictCode
+            if (!accessRuleTypeDictCode.isNullOrBlank()) {
                 whereExpr(
-                    SysAccessRules.ruleTypeDictCode,
+                    SysAccessRules.accessRuleTypeDictCode,
                     OperatorEnum.EQ,
-                    ruleTypeDictCode.trim()
+                    accessRuleTypeDictCode.trim()
                 )?.let { expr -> it += expr }
             }
             val ipTypeDictCode = searchPayload.ipTypeDictCode
@@ -200,7 +200,7 @@ open class SysAccessRuleIpDao : BaseCrudDao<String, SysAccessRuleIp, SysAccessRu
 //        parentRuleActive = row[SysAccessRules.active],
 //        tenantId = row[SysAccessRules.tenantId],
 //        systemCode = row[SysAccessRules.systemCode],
-//        ruleTypeDictCode = row[SysAccessRules.ruleTypeDictCode]
+//        accessRuleTypeDictCode = row[SysAccessRules.accessRuleTypeDictCode]
 //    )
 
 

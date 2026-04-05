@@ -35,6 +35,6 @@ comment on column "sys_system"."update_time" is '更新时间';
 
 
 --region DML
-merge into "sys_system" ("code", "name", "remark", "active", "built_in")
-    values ('default', 'default-system', null, true, true);
+merge into "sys_system" ("code", "name", "sub_system", "remark", "active", "built_in")
+    values ('default-sub-system', 'default-sub-system', true, null, true, true);
 --endregion DML

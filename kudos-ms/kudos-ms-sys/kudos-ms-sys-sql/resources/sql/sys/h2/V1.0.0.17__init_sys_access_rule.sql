@@ -4,7 +4,7 @@ create table if not exists "sys_access_rule"
     "id"                  character(36) default RANDOM_UUID() not null primary key,
     "tenant_id"           character varying(36),
     "system_code"         character varying(32)               not null,
-    "rule_type_dict_code" character varying(32)               not null,
+    "access_rule_type_dict_code" character varying(32)               not null,
     "remark"              character varying(128),
     "active"              boolean       default TRUE          not null,
     "built_in"            boolean       default FALSE         not null,
@@ -32,7 +32,7 @@ comment on table "sys_access_rule" is '访问规则';
 comment on column "sys_access_rule"."id" is '主键';
 comment on column "sys_access_rule"."tenant_id" is '租户id';
 comment on column "sys_access_rule"."system_code" is '系统编码';
-comment on column "sys_access_rule"."rule_type_dict_code" is '规则类型字典代码';
+comment on column "sys_access_rule"."access_rule_type_dict_code" is '访问规则类型字典代码';
 comment on column "sys_access_rule"."remark" is '备注';
 comment on column "sys_access_rule"."active" is '是否启用';
 comment on column "sys_access_rule"."built_in" is '是否内置';
