@@ -1,0 +1,17 @@
+package io.kudos.ms.msg.core.instance.service.iservice
+import io.kudos.base.support.service.iservice.IBaseCrudService
+import io.kudos.ms.msg.core.instance.model.po.MsgInstance
+
+
+/**
+ * 消息实例业务接口
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
+ */
+interface IMsgInstanceService : IBaseCrudService<String, MsgInstance> {
+
+
+
+}

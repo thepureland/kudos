@@ -10,9 +10,9 @@
 
 ## 包结构
 
-### `io.kudos.ms.sys.client.proxy`
+在 **`io.kudos.ms.sys.client.<业务模块>`** 下与 **common/core** 的模块名对齐；每个模块内再分 **`proxy`**（`ISys*Proxy`，Feign）与 **`fallback`**（`Sys*Fallback`）子包。
 
-**Feign 接口**，命名 `ISys*Proxy`，典型形态：
+典型形态：
 
 ```kotlin
 @FeignClient(name = "sys-tenant", fallback = SysTenantFallback::class)
@@ -39,9 +39,7 @@ interface ISysTenantProxy : ISysTenantApi
 
 > 若实际部署将多个 API 合并为单一服务名，需在 **Feign 配置或网关** 中做路径/服务映射，上表为代码中的默认 `name`。
 
-### `io.kudos.ms.sys.client.fallback`
-
-与每个 Proxy 对应的 **`Sys*Fallback`**：在远程调用失败时执行降级逻辑（返回值、空列表或抛业务异常等，以各实现类为准），避免级联故障。
+**Fallback** 与对应 Proxy 分属同模块下的 **`fallback`** / **`proxy`** 包，在远程调用失败时执行降级逻辑（返回值、空列表或抛业务异常等，以各实现类为准），避免级联故障。
 
 ---
 
@@ -66,7 +64,7 @@ interface ISysTenantProxy : ISysTenantApi
 
 ## 使用注意
 
-1. **启用 Feign 扫描**：调用方 Spring Boot 应用需能扫描到 `io.kudos.ms.sys.client`（或通过 `@EnableFeignClients` 指定 basePackages）。
+1. **启用 Feign 扫描**：调用方 Spring Boot 应用需能扫描到 `io.kudos.ms.sys.client`（含各模块下的 `proxy`；或通过 `@EnableFeignClients` 指定 basePackages）。
 2. **服务发现**：`name` 需与 Nacos/Eureka 等中的实例一致；本地开发可用固定 URL 配置（视 Spring Cloud 版本而定）。
 3. **契约变更**：修改 `ISys*Api` 时须同步检查 **core 实现**、**fallback** 与 **服务端 Controller**（若有 HTTP 对齐），避免 Feign 与实现脱节。
 
@@ -74,4 +72,4 @@ interface ISysTenantProxy : ISysTenantApi
 
 ## 扩展建议
 
-- 新增远程能力：先在 **common** 定义 `ISys*Api`，再在 **core** 实现，最后在本模块增加 **`ISys*Proxy` + `Sys*Fallback`**，保持三者一一对应。
+- 新增远程能力：先在 **common** 定义 `ISys*Api`，再在 **core** 实现，最后在本模块对应业务目录下增加 **`proxy/ISys*Proxy`** 与 **`fallback/Sys*Fallback`**，保持三者一一对应。

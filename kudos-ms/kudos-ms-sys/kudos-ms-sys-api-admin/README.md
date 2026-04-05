@@ -15,6 +15,8 @@
 
 依赖 **`kudos-ability-web-springmvc`**，继承工程内通用 Controller 基类（如 `BaseCrudController`）实现标准 CRUD 与扩展接口。
 
+**包结构**：在 **`io.kudos.ms.sys.api.admin.controller`** 下再按业务模块分子包 **`...controller.<模块>`**（与 `common` / `core` 模块名对齐），例如 `...admin.controller.dict.SysDictAdminController`；启动与扫描仍在 **`...api.admin.init`**。
+
 ---
 
 ## 控制器一览

@@ -6,63 +6,73 @@
 
 ---
 
-## 包结构概览
+## 包结构（`io.kudos.ms.sys.common`）
 
-### `io.kudos.ms.sys.common.consts`
+**第一层按业务模块划分**，模块名与历史 `vo` 下的一级目录一致：
 
-- **`SysConsts`**：原子服务名、默认子系统编码等全局常量。
+`accessrule`、`cache`、`datasource`、`dict`、`domain`、`i18n`、`microservice`、`param`、`resource`、`system`、`tenant`
 
-### `io.kudos.ms.sys.common.api`
+**字典头** 与 **字典项** 同属 **`dict`**：`ISysDictApi` / `ISysDictItemApi` 均在 **`dict.api`**；相关 VO 在 **`dict.vo`**（含 `SysDictItem*` 等），**无** `dictitem` 子包。**访问规则 IP** 与主规则同属 **`accessrule`**（`accessrule.api` / `accessrule.vo`），**无** `accessruleip` 子包。
 
-领域对外 API 接口（`ISys*Api`），供 **进程内** 由 `kudos-ms-sys-core` 的 `Sys*Api` 实现，供 **进程间** 由 `kudos-ms-sys-client` 的 `ISys*Proxy`（Feign）继承同一契约。
+**第二层**在各模块下按类型分为四类子包（若该模块暂无某类内容可省略目录）：
 
-| 接口 | 职责概要 |
-|------|----------|
-| `ISysTenantApi` | 租户缓存查询、按子系统列举租户等 |
-| `ISysTenantSystemApi` | 租户与子系统关联 |
-| `ISysTenantResourceApi` | 租户与资源关联 |
-| `ISysTenantLocaleApi` | 租户默认语言等 |
-| `ISysSystemApi` | 子系统（system）相关 |
-| `ISysSubSystemMicroServiceApi` | 子系统与微服务绑定 |
-| `ISysMicroServiceApi` | 微服务元数据 |
-| `ISysResourceApi` | 资源/菜单树等 |
-| `ISysDictApi` / `ISysDictItemApi` | 字典与字典项 |
-| `ISysParamApi` | 系统参数 |
-| `ISysI18nApi` | 国际化文案 |
-| `ISysDomainApi` | 业务域 |
-| `ISysDataSourceApi` | 数据源 |
-| `ISysCacheApi` | 缓存配置 |
-| `ISysAccessRuleApi` / `ISysAccessRuleIpApi` | 访问规则及 IP 明细 |
+| 子包名 | 内容 |
+|--------|------|
+| **`api`** | 该模块对应的 `ISys*Api` 契约（若有） |
+| **`consts`** | 该模块专用常量（若有；绝大多数模块当前无独立 consts） |
+| **`enums`** | 错误码枚举 `*ErrorCodeEnum`、领域枚举（如 `ResourceTypeEnum`）等 |
+| **`vo`** | 值对象：`vo/request`、`vo/response` 及根下的 `*CacheEntry` 等 |
+
+**跨模块、不属于单一业务域**的契约放在 **`io.kudos.ms.sys.common.platform`** 下，同样按类型分子包：
+
+| 子包 | 说明 |
+|------|------|
+| **`platform.consts`** | 全局常量，如 **`SysConsts`**、**`SysDictTypes`** |
+| **`platform.validation`** | 跨模块校验器，如 **`DictCodeValidator`** 及 **`DictCodeConstraintValidatorProvider`** |
+
+示例（租户模块）：
+
+- `io.kudos.ms.sys.common.tenant.api` — `ISysTenantApi`、`ISysTenantSystemApi`、`ISysTenantResourceApi`、`ISysTenantLocaleApi`
+- `io.kudos.ms.sys.common.tenant.enums` — `SysTenantErrorCodeEnum`
+- `io.kudos.ms.sys.common.tenant.vo` — `request` / `response` 及 `SysTenantCacheEntry` 等
+
+各模块 `ISys*Api` 与模块对应关系与迁移前一致，仅包路径由 `common.api` / `common.vo.*` / `common.enums.*` 调整为 **`common.<模块>.api|enums|vo`**。
+
+---
+
+## 接口一览（`ISys*Api`）
 
 接口方法以**同步、面向缓存或领域服务**为主；具体语义见各接口 KDoc 与 `core` 实现。
 
-### `io.kudos.ms.sys.common.vo`
+| 接口 | 模块包 | 职责概要 |
+|------|--------|----------|
+| `ISysTenantApi` 等 | `tenant.api` | 租户及租户-子系统/资源/语言 |
+| `ISysSystemApi` | `system.api` | 子系统 |
+| `ISysMicroServiceApi`、`ISysSubSystemMicroServiceApi` | `microservice.api` | 微服务及子系统-微服务绑定 |
+| `ISysResourceApi` | `resource.api` | 资源/菜单树 |
+| `ISysDictApi` / `ISysDictItemApi` | `dict.api`（并列两个接口） | 字典与字典项 |
+| `ISysParamApi` | `param.api` | 系统参数 |
+| `ISysI18nApi` | `i18n.api` | 国际化 |
+| `ISysDomainApi` | `domain.api` | 业务域 |
+| `ISysDataSourceApi` | `datasource.api` | 数据源 |
+| `ISysCacheApi` | `cache.api` | 缓存配置元数据 |
+| `ISysAccessRuleApi` / `ISysAccessRuleIpApi` | `accessrule.api`（并列两个接口） | 访问规则及 IP |
 
-按业务域划分的 **值对象**，典型子包约定：
+---
 
-| 子包 | 内容 |
-|------|------|
-| `request` | 查询、创建、更新表单与查询条件（`Query` / `FormCreate` / `FormUpdate` / `ISys*FormBase`） |
-| `response` | 列表行、详情、编辑回显（`Row` / `Detail` / `Edit`） |
-| 根下或并列 | **缓存条目**（`*CacheEntry`）、树节点（如 `BaseMenuTreeNode`）、联合视图行（如带 IP 的访问规则） |
+## `vo` 命名约定
 
-命名上 **Row** 偏列表与表格，**Detail** 偏只读详情，**Edit** 偏表单回填；与控制台前端页面字段一般对应。
-
-### `io.kudos.ms.sys.common.enums`
-
-- 各子目录下的 **错误码枚举**（`*ErrorCodeEnum`），与业务异常或统一返回码配合。
-- 领域枚举，如 `ResourceTypeEnum`、`AccessRuleTypeEnum` 等。
-
-### `io.kudos.ms.sys.common.validation`
-
-- 如 **`DictCodeValidator`**：与字典编码相关的校验逻辑，供表单或 Bean 校验使用。
+- **Row**：列表/表格行  
+- **Detail**：只读详情  
+- **Edit**：表单回填  
+- **`*CacheEntry`**：缓存条目；树/联合视图见各模块 `vo` 下具体类名  
 
 ---
 
 ## 依赖关系
 
 - **直接依赖**：`kudos-context`（及 Gradle 传递依赖）。
-- **被依赖方**：`kudos-ms-sys-core`、`kudos-ms-sys-client`；其他微服务也可仅依赖本模块以使用 `ISys*Api` 类型与 VO。
+- **被依赖方**：`kudos-ms-sys-core`、`kudos-ms-sys-client`；其他微服务也可仅依赖本模块以使用 `ISys*Api` 与 VO。
 
 ---
 
@@ -70,13 +80,13 @@
 
 | 模块 | 关系 |
 |------|------|
-| **core** | 实现 `ISys*Api`，并大量使用 `vo` / `enums` |
+| **core** | 实现 `ISys*Api`，并大量使用各模块 `vo` / `enums` |
 | **client** | `ISys*Proxy : ISys*Api`，序列化同一套 VO |
-| **api-admin** | Controller 入参出参直接使用本模块 `vo` |
+| **api-admin** | Controller 入参出参直接使用本模块各模块 `vo` |
 
 ---
 
 ## 扩展建议
 
-- 新增跨服务契约时：优先在 `api` 增加或扩展 `ISys*Api`，在 `vo` 下按域新增 `request`/`response`，避免在 `core` 中定义对外 DTO。
-- 保持本模块**无 Spring 注解、无数据库类型**，以维持可移植性。
+- 新增契约：在对应业务模块下增加或扩展 **`api` / `vo` / `enums`**；若确属横切能力，再考虑放入 **`platform`**。
+- 保持本模块**无数据库类型**；与校验、Spring 相关的少数类以现有 `platform` 为准。
