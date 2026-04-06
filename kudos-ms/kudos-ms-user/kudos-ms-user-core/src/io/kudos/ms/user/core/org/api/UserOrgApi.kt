@@ -1,7 +1,7 @@
 package io.kudos.ms.user.core.org.api
 import io.kudos.ms.user.common.org.api.IUserOrgApi
 import io.kudos.ms.user.common.org.vo.UserOrgCacheEntry
-import io.kudos.ms.user.common.user.vo.UserAccountCacheEntry
+import io.kudos.ms.user.common.account.vo.UserAccountCacheEntry
 import io.kudos.ms.user.core.org.cache.UserOrgHashCache
 import io.kudos.ms.user.core.org.service.iservice.IUserOrgService
 import jakarta.annotation.Resource

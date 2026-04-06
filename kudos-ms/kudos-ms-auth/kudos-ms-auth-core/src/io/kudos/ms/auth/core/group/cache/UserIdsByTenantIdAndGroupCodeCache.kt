@@ -4,7 +4,7 @@ import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.context.support.Consts
 import io.kudos.ms.auth.core.group.dao.AuthGroupDao
-import io.kudos.ms.auth.core.groupuser.dao.AuthGroupUserDao
+import io.kudos.ms.auth.core.group.dao.AuthGroupUserDao
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component

@@ -4,11 +4,11 @@ import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.ms.auth.core.group.dao.AuthGroupDao
 import io.kudos.ms.auth.core.group.dao.AuthGroupRoleDao
 import io.kudos.ms.auth.core.role.dao.AuthRoleDao
-import io.kudos.ms.auth.core.roleresource.dao.AuthRoleResourceDao
+import io.kudos.ms.auth.core.role.dao.AuthRoleResourceDao
 import io.kudos.ms.auth.core.group.model.po.AuthGroup
 import io.kudos.ms.auth.core.group.model.po.AuthGroupRole
 import io.kudos.ms.auth.core.role.model.po.AuthRole
-import io.kudos.ms.auth.core.roleresource.model.po.AuthRoleResource
+import io.kudos.ms.auth.core.role.model.po.AuthRoleResource
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource

@@ -8,8 +8,7 @@
 |--------|----------------|
 | `send` | `IMsgSendApi` |
 | `instance` | `IMsgInstanceApi` |
-| `receive` | `IMsgReceiveApi` |
-| `receivergroup` | `IMsgReceiverGroupApi` |
+| `receiver` | `IMsgReceiveApi`、`IMsgReceiverGroupApi`（原 `receive` / `receivergroup` 合并为同一模块包） |
 | `template` | `IMsgTemplateApi` |
 
-路径示例：`io.kudos.ms.msg.common.send.api`、`io.kudos.ms.msg.common.template.vo`。
+路径示例：`io.kudos.ms.msg.common.send.api`、`io.kudos.ms.msg.common.receiver.api`、`io.kudos.ms.msg.common.template.vo`。

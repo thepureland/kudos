@@ -6,12 +6,9 @@
 
 | 模块包 | 内容 |
 |--------|------|
-| `user` | `IUserAccountApi`、`IUserAccountThirdApi`；账号与第三方账号 VO/枚举 |
-| `protection` | `IUserAccountProtectionApi` |
+| `account` | `IUserAccountApi`、`IUserAccountThirdApi`、`IUserAccountProtectionApi`；账号、第三方账号、账号保护、组织用户相关 VO/枚举（原 `user` / `protection` / `orguser` 合并） |
+| `login` | `IUserLoginRememberMeApi`；记住登录与登录日志相关 VO/枚举（原 `loginremember` / `loglogin` 合并） |
 | `contact` | `IUserContactWayApi` |
 | `org` | `IUserOrgApi` |
-| `loginremember` | `IUserLoginRememberMeApi` |
-| `loglogin` | 登录日志等 VO（以 `vo` 为准） |
-| `orguser` | 组织用户等 VO |
 
-路径示例：`io.kudos.ms.user.common.user.api`、`io.kudos.ms.user.common.org.vo.request`。
+路径示例：`io.kudos.ms.user.common.account.api`、`io.kudos.ms.user.common.org.vo.request`。

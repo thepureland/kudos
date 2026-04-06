@@ -1,6 +1,7 @@
 package io.kudos.ms.user.core.platform.cache
-import io.kudos.ms.user.core.orguser.dao.UserOrgUserDao
-import io.kudos.ms.user.core.orguser.model.po.UserOrgUser
+import io.kudos.ms.user.core.account.dao.UserOrgUserDao
+import io.kudos.ms.user.core.account.model.po.UserOrgUser
+import io.kudos.ms.user.core.org.cache.OrgIdsByUserIdCache
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource

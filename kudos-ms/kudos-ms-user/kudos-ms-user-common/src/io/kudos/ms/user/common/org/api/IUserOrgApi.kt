@@ -1,6 +1,6 @@
 package io.kudos.ms.user.common.org.api
 import io.kudos.ms.user.common.org.vo.UserOrgCacheEntry
-import io.kudos.ms.user.common.user.vo.UserAccountCacheEntry
+import io.kudos.ms.user.common.account.vo.UserAccountCacheEntry
 
 
 /**

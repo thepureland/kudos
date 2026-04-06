@@ -15,8 +15,8 @@ import io.kudos.ms.auth.core.role.model.po.AuthRole
 import io.kudos.ms.auth.core.role.service.iservice.IAuthRoleService
 import io.kudos.ms.sys.common.resource.vo.SysResourceCacheEntry
 import io.kudos.ms.sys.core.resource.cache.SysResourceHashCache
-import io.kudos.ms.user.common.user.vo.UserAccountCacheEntry
-import io.kudos.ms.user.core.user.cache.UserAccountHashCache
+import io.kudos.ms.user.common.account.vo.UserAccountCacheEntry
+import io.kudos.ms.user.core.account.cache.UserAccountHashCache
 import jakarta.annotation.Resource
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional

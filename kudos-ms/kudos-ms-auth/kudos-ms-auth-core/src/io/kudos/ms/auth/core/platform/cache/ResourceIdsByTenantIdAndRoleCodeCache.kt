@@ -7,9 +7,9 @@ import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.context.support.Consts
 import io.kudos.ms.auth.core.role.cache.AuthRoleHashCache
 import io.kudos.ms.auth.core.role.dao.AuthRoleDao
-import io.kudos.ms.auth.core.roleresource.dao.AuthRoleResourceDao
+import io.kudos.ms.auth.core.role.dao.AuthRoleResourceDao
 import io.kudos.ms.auth.core.role.model.po.AuthRole
-import io.kudos.ms.auth.core.roleresource.model.po.AuthRoleResource
+import io.kudos.ms.auth.core.role.model.po.AuthRoleResource
 import jakarta.annotation.Resource
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component

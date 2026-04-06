@@ -6,7 +6,7 @@ import io.kudos.context.support.Consts
 import io.kudos.ms.auth.core.group.cache.AuthGroupHashCache
 import io.kudos.ms.auth.core.group.dao.AuthGroupDao
 import io.kudos.ms.auth.core.group.dao.AuthGroupRoleDao
-import io.kudos.ms.auth.core.roleresource.dao.AuthRoleResourceDao
+import io.kudos.ms.auth.core.role.dao.AuthRoleResourceDao
 import jakarta.annotation.Resource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable

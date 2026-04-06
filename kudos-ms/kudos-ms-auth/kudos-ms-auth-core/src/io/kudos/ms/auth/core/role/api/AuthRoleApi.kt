@@ -5,7 +5,7 @@ import io.kudos.ms.auth.core.role.cache.AuthRoleHashCache
 import io.kudos.ms.auth.core.role.cache.UserIdsByTenantIdAndRoleCodeCache
 import io.kudos.ms.auth.core.role.service.iservice.IAuthRoleService
 import io.kudos.ms.sys.common.resource.vo.SysResourceCacheEntry
-import io.kudos.ms.user.common.user.vo.UserAccountCacheEntry
+import io.kudos.ms.user.common.account.vo.UserAccountCacheEntry
 import jakarta.annotation.Resource
 import org.springframework.stereotype.Service
 

@@ -6,8 +6,8 @@
 
 | 模块包 | 内容 |
 |--------|------|
-| `group` / `role` / `roleresource` / `roleuser` / `groupuser` | 各模块 `vo`、`enums` |
-| `role` | `IAuthRoleApi` |
+| `group` | 用户组及组-用户关联等 `vo`、`enums`（原 `groupuser` 已并入） |
+| `role` | `IAuthRoleApi`；角色及角色-资源、角色-用户关联等 `vo`、`enums`（原 `roleresource` / `roleuser` 已并入） |
 | `platform` | `IPermittedResource`（`platform.api`）等跨模块契约 |
 
 路径示例：`io.kudos.ms.auth.common.role.api`、`io.kudos.ms.auth.common.group.vo`。

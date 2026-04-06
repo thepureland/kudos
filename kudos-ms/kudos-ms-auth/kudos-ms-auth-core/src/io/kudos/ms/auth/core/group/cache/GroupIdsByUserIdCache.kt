@@ -2,8 +2,8 @@ package io.kudos.ms.auth.core.group.cache
 import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
 import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.logger.LogFactory
-import io.kudos.ms.auth.core.groupuser.dao.AuthGroupUserDao
-import io.kudos.ms.user.core.user.dao.UserAccountDao
+import io.kudos.ms.auth.core.group.dao.AuthGroupUserDao
+import io.kudos.ms.user.core.account.dao.UserAccountDao
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
