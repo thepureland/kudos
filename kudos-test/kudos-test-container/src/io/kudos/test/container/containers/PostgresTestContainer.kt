@@ -4,7 +4,10 @@ import com.github.dockerjava.api.model.Container
 import io.kudos.test.container.kit.TestContainerKit
 import io.kudos.test.container.kit.bindingPort
 import org.springframework.test.context.DynamicPropertyRegistry
+import org.testcontainers.containers.BindMode
 import org.testcontainers.containers.GenericContainer
+import java.nio.file.Files
+import java.nio.file.Paths
 import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.PreparedStatement
@@ -15,10 +18,23 @@ import java.sql.Statement
 /**
  * postgres测试容器
  *
+ * 若需将库文件持久到宿主机，请设置系统属性 [SYS_PROP_HOST_DATA_DIR] 或环境变量 [ENV_HOST_DATA_DIR]，
+ * 该路径将绑定到容器内 `/var/lib/postgresql/data`（读写）；未设置时数据仅存于容器层，与原先行为一致。
+ *
  * @author K
+ * @author AI: Cursor
  * @since 1.0.0
  */
 object PostgresTestContainer {
+
+    /** 宿主机数据目录；优先于 [ENV_HOST_DATA_DIR] */
+    const val SYS_PROP_HOST_DATA_DIR = "kudos.test.postgres.data.dir"
+
+    /** 宿主机数据目录（系统属性未设置时使用） */
+    const val ENV_HOST_DATA_DIR = "KUDOS_TEST_POSTGRES_DATA_DIR"
+
+    /** 官方镜像默认 PGDATA */
+    private const val CONTAINER_PGDATA = "/var/lib/postgresql/data"
 
     private const val LOCALHOST = "127.0.0.1"
 
@@ -87,9 +103,27 @@ object PostgresTestContainer {
                 withEnv("POSTGRES_PASSWORD", PASSWORD)
                 withCommand("postgres -c max_prepared_transactions=10")
                 withLabel(TestContainerKit.LABEL_KEY, LABEL)
+                resolveHostDataDir()?.let { hostPath ->
+                    Files.createDirectories(Paths.get(hostPath))
+                    withFileSystemBind(hostPath, CONTAINER_PGDATA, BindMode.READ_WRITE)
+                }
             }
         }
         return requireNotNull(container)
+    }
+
+    /**
+     * 解析宿主机上用于持久化 PGDATA 的目录。
+     *
+     * @return 非空绝对或规范路径时返回该路径；未配置时返回 `null`（不挂载卷）
+     */
+    private fun resolveHostDataDir(): String? {
+        val fromProp = System.getProperty(SYS_PROP_HOST_DATA_DIR)?.trim().orEmpty()
+        if (fromProp.isNotEmpty()) {
+            return fromProp
+        }
+        val fromEnv = System.getenv(ENV_HOST_DATA_DIR)?.trim().orEmpty()
+        return fromEnv.takeIf { it.isNotEmpty() }
     }
 
     /**
