@@ -3,7 +3,7 @@ import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
 import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.auth.core.role.dao.AuthRoleDao
-import io.kudos.ms.auth.core.roleuser.dao.AuthRoleUserDao
+import io.kudos.ms.auth.core.role.dao.AuthRoleUserDao
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component

@@ -4,10 +4,10 @@ import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
-import io.kudos.ms.auth.core.roleresource.dao.AuthRoleResourceDao
-import io.kudos.ms.auth.core.roleuser.dao.AuthRoleUserDao
-import io.kudos.ms.auth.core.roleuser.model.po.AuthRoleUser
-import io.kudos.ms.user.core.user.dao.UserAccountDao
+import io.kudos.ms.auth.core.role.dao.AuthRoleResourceDao
+import io.kudos.ms.auth.core.role.dao.AuthRoleUserDao
+import io.kudos.ms.auth.core.role.model.po.AuthRoleUser
+import io.kudos.ms.user.core.account.dao.UserAccountDao
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component

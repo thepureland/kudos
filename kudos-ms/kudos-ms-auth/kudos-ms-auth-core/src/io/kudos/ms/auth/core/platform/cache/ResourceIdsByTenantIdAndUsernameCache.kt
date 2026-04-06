@@ -3,11 +3,11 @@ import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
 import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.context.support.Consts
-import io.kudos.ms.auth.core.roleresource.dao.AuthRoleResourceDao
-import io.kudos.ms.auth.core.roleuser.dao.AuthRoleUserDao
-import io.kudos.ms.user.common.user.vo.UserAccountCacheEntry
-import io.kudos.ms.user.core.user.cache.UserAccountHashCache
-import io.kudos.ms.user.core.user.dao.UserAccountDao
+import io.kudos.ms.auth.core.role.dao.AuthRoleResourceDao
+import io.kudos.ms.auth.core.role.dao.AuthRoleUserDao
+import io.kudos.ms.user.common.account.vo.UserAccountCacheEntry
+import io.kudos.ms.user.core.account.cache.UserAccountHashCache
+import io.kudos.ms.user.core.account.dao.UserAccountDao
 import jakarta.annotation.Resource
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component

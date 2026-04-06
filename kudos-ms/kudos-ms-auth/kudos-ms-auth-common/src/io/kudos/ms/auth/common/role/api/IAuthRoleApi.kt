@@ -1,7 +1,7 @@
 package io.kudos.ms.auth.common.role.api
 import io.kudos.ms.auth.common.role.vo.AuthRoleCacheEntry
 import io.kudos.ms.sys.common.resource.vo.SysResourceCacheEntry
-import io.kudos.ms.user.common.user.vo.UserAccountCacheEntry
+import io.kudos.ms.user.common.account.vo.UserAccountCacheEntry
 
 
 /**

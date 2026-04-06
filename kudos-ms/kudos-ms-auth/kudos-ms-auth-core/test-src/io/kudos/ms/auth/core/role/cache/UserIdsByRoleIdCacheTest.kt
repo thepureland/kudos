@@ -1,6 +1,6 @@
 package io.kudos.ms.auth.core.role.cache
-import io.kudos.ms.auth.core.roleuser.dao.AuthRoleUserDao
-import io.kudos.ms.auth.core.roleuser.model.po.AuthRoleUser
+import io.kudos.ms.auth.core.role.dao.AuthRoleUserDao
+import io.kudos.ms.auth.core.role.model.po.AuthRoleUser
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource

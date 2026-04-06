@@ -4,12 +4,12 @@ import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.user.common.org.vo.UserOrgCacheEntry
 import io.kudos.ms.user.common.org.vo.response.UserOrgTreeRow
-import io.kudos.ms.user.common.user.vo.UserAccountCacheEntry
-import io.kudos.ms.user.core.user.cache.UserAccountHashCache
-import io.kudos.ms.user.core.platform.cache.UserIdsByOrgIdCache
+import io.kudos.ms.user.common.account.vo.UserAccountCacheEntry
+import io.kudos.ms.user.core.account.cache.UserAccountHashCache
+import io.kudos.ms.user.core.org.cache.UserIdsByOrgIdCache
 import io.kudos.ms.user.core.org.cache.UserOrgHashCache
 import io.kudos.ms.user.core.org.dao.UserOrgDao
-import io.kudos.ms.user.core.orguser.dao.UserOrgUserDao
+import io.kudos.ms.user.core.account.dao.UserOrgUserDao
 import io.kudos.ms.user.core.org.model.po.UserOrg
 import io.kudos.ms.user.core.org.service.iservice.IUserOrgService
 import jakarta.annotation.Resource

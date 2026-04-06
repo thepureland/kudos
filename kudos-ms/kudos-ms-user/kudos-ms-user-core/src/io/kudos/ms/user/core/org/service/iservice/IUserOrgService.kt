@@ -2,7 +2,7 @@ package io.kudos.ms.user.core.org.service.iservice
 import io.kudos.base.support.service.iservice.IBaseCrudService
 import io.kudos.ms.user.common.org.vo.UserOrgCacheEntry
 import io.kudos.ms.user.common.org.vo.response.UserOrgTreeRow
-import io.kudos.ms.user.common.user.vo.UserAccountCacheEntry
+import io.kudos.ms.user.common.account.vo.UserAccountCacheEntry
 import io.kudos.ms.user.core.org.model.po.UserOrg
 
 
