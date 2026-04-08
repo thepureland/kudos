@@ -108,4 +108,9 @@ insert into "sys_dict_item" ("dict_id", "item_code", "item_name", "order_num", "
     ('ad52c541-02c1-3c7f-1a96-a20eecb32881', '2', 'access_rule_type.2', 3, '黑名单', true),
     ('ad52c541-02c1-3c7f-1a96-a20eecb32881', '3', 'access_rule_type.3', 4, '白名单+黑名单', true);
 
+-- ip_type
+insert into "sys_dict_item" ("dict_id", "item_code", "item_name", "order_num", "remark", "built_in") values
+    ('ae52d541-02c1-3c7f-1a96-a20eecb32882', 'ipv4', 'ipv4', 1, 'ipv4', true),
+    ('ae52d541-02c1-3c7f-1a96-a20eecb32882', 'ipv6', 'ipv6', 2, 'ipv6', true);
+
 --endregion DML

@@ -37,4 +37,7 @@ object SysDictTypes {
     /** 访问规则类型 */
     const val ACCESS_RULE_TYPE = "access_rule_type"
 
+    /** ip类型 */
+    const val IP_TYPE = "ip_type"
+
 }

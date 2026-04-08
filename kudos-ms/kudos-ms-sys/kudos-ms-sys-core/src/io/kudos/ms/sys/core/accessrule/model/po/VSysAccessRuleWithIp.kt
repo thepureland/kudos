@@ -19,6 +19,8 @@ interface VSysAccessRuleWithIp : IDbEntity<String, VSysAccessRuleWithIp> {
 
     var tenantId: String?
 
+    var tenantName: String?
+
     var systemCode: String?
 
     var accessRuleTypeDictCode: String?

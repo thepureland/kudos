@@ -831,6 +831,10 @@ insert into "sys_i18n" ("locale", "atomic_service_code", "i18n_type_dict_code", 
 
     ('zh-CN', 'sys', 'error-msg', 'cache', 'SC00000002', '缓存配置不存在', true),
     ('zh-TW', 'sys', 'error-msg', 'cache', 'SC00000002', '快取設定不存在', true),
-    ('en-US', 'sys', 'error-msg', 'cache', 'SC00000002', 'Cache configuration does not exist', true);
+    ('en-US', 'sys', 'error-msg', 'cache', 'SC00000002', 'Cache configuration does not exist', true),
+
+    ('zh-CN', 'sys', 'error-msg', 'accessrule', 'PARENT_ACCESS_RULE_NOT_FOUND', '在当前子系统与租户下不存在访问规则，请先新增访问规则后再添加 IP 段。', true),
+    ('zh-TW', 'sys', 'error-msg', 'accessrule', 'PARENT_ACCESS_RULE_NOT_FOUND', '在目前子系統與租戶下不存在訪問規則，請先新增訪問規則後再新增 IP 段。', true),
+    ('en-US', 'sys', 'error-msg', 'accessrule', 'PARENT_ACCESS_RULE_NOT_FOUND', 'No access rule exists for this subsystem and tenant. Create an access rule before adding IP segments.', true);
 
 --endregion DML

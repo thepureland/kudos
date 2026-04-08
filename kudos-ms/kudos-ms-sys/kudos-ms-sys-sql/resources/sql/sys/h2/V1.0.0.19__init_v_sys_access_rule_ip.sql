@@ -4,6 +4,7 @@ CREATE OR REPLACE VIEW v_sys_access_rule_with_ip AS
 SELECT COALESCE(ip."id", ar."id") AS "id",
        ar."id"          AS parent_id,
        ar."tenant_id",
+       t."name"         AS tenant_name,
        ar."system_code",
        ar."access_rule_type_dict_code",
        ar."remark"           AS parent_remark,
@@ -32,4 +33,6 @@ SELECT COALESCE(ip."id", ar."id") AS "id",
        ip."update_time"
 FROM "sys_access_rule" ar
          LEFT JOIN "sys_access_rule_ip" ip
-                   ON ip."parent_rule_id" = ar."id";
+                   ON ip."parent_rule_id" = ar."id"
+         LEFT JOIN "sys_tenant" t
+                   ON ar."tenant_id" = t."id";

@@ -15,10 +15,12 @@ data class SysAccessRuleCacheEntry (
     /** 主键 */
     override val id: String,
 
-    /** 租户id */
+    /**
+     * 租户 id；**空串**表示平台级（与库表 `tenant_id IS NULL` 对应），与 Hash 副属性索引取值一致。
+     */
     val tenantId: String,
 
-    /** 系统编码 */
+    /** 系统编码（子系统 / 系统维度 `system_code`） */
     val systemCode: String,
 
     /** 规则类型字典代码 */

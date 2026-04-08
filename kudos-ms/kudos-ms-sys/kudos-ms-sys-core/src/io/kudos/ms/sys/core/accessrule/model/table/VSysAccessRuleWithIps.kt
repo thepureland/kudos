@@ -19,6 +19,8 @@ object VSysAccessRuleWithIps : StringIdTable<VSysAccessRuleWithIp>("v_sys_access
 
     var tenantId = varchar("tenant_id").bindTo { it.tenantId }
 
+    var tenantName = varchar("tenant_name").bindTo { it.tenantName }
+
     var systemCode = varchar("system_code").bindTo { it.systemCode }
 
     var accessRuleTypeDictCode = varchar("access_rule_type_dict_code").bindTo { it.accessRuleTypeDictCode }

@@ -55,6 +55,7 @@ insert into "sys_cache" ("name", "atomic_service_code", "strategy_dict_code", "w
     ('SYS_ATOMIC_SERVICE_BY_CODE', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '原子服务缓存(by code)', true, false),
     ('SYS_I18N__HASH', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '国际化信息Hash缓存', true, true),
     ('SYS_MODULE_BY_CODE', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '模块缓存(by code)', true, false),
+    ('SYS_ACCESS_RULE__HASH', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '访问规则 Hash 缓存', true, true),
     ('SYS_ACCESS_RULE_IPS_BY_SYSTEM_CODE_AND_TENANT_ID', 'sys', 'LOCAL_REMOTE', true, true, 999999999, 'ip访问规则缓存(by subSystemCode & tenantId)', true, false),
     ('SYS_RESOURCE__HASH', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '资源Hash缓存', true, true),
     ('SYS_SYSTEM__HASH', 'sys', 'LOCAL_REMOTE', true, true, 999999999, '系统Hash缓存', true, true),

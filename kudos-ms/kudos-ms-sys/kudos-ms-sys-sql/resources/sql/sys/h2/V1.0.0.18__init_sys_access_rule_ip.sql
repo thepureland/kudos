@@ -4,7 +4,7 @@ create table if not exists "sys_access_rule_ip"
     "id"                character(36) default RANDOM_UUID() not null primary key,
     "ip_start"          bigint                              not null,
     "ip_end"            bigint                              not null,
-    "ip_type_dict_code" character varying(36)               not null,
+    "ip_type_dict_code" character(4)               not null,
     "expiration_time"   timestamp(6),
     "parent_rule_id"    character(36)                        not null,
     "remark"            character varying(128),

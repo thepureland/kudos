@@ -19,7 +19,7 @@ data class SysAccessRuleIpBatchItem(
     val ipEnd: Long? = null,
 
     /** ip类型 */
-    val ipType: Int? = null,
+    val ipTypeDictCode: String? = null,
 
     /** 过期时间 */
     val expirationDate: LocalDateTime? = null,

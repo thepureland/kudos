@@ -19,8 +19,8 @@ data class SysAccessRuleIpEdit (
     /** ip止 */
     val ipEnd: Long? = null,
 
-    /** ip类型 */
-    val ipType: Int? = null,
+    /** ip 类型字典代码 */
+    val ipTypeDictCode: String? = null,
 
     /** 过期时间 */
     val expirationDate: LocalDateTime? = null,

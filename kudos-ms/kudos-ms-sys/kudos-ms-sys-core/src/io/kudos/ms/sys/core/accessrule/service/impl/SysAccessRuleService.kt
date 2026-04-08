@@ -1,24 +1,30 @@
 package io.kudos.ms.sys.core.accessrule.service.impl
-import io.kudos.ms.sys.core.platform.service.impl.completeCrudInsert
-import io.kudos.ms.sys.core.platform.service.impl.completeCrudUpdate
 
-import io.kudos.base.support.service.impl.BaseCrudService
+import io.kudos.base.enums.impl.CommonErrorCodeEnum
+import io.kudos.base.error.ServiceException
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.model.contract.entity.IIdEntity
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.eq
+import io.kudos.base.support.service.impl.BaseCrudService
+import io.kudos.ms.sys.common.accessrule.enums.SysAccessRuleErrorCodeEnum
+import io.kudos.ms.sys.common.accessrule.vo.request.SysAccessRuleFormCreate
 import io.kudos.ms.sys.common.accessrule.vo.response.SysAccessRuleRow
 import io.kudos.ms.sys.core.accessrule.cache.AccessRuleIpsBySubSysAndTenantIdCache
+import io.kudos.ms.sys.core.accessrule.cache.SysAccessRuleHashCache
 import io.kudos.ms.sys.core.accessrule.dao.SysAccessRuleDao
 import io.kudos.ms.sys.core.accessrule.model.po.SysAccessRule
 import io.kudos.ms.sys.core.accessrule.service.iservice.ISysAccessRuleService
+import io.kudos.ms.sys.core.platform.service.impl.completeCrudInsert
+import io.kudos.ms.sys.core.platform.service.impl.completeCrudUpdate
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 
 /**
  * 访问规则（`sys_access_rule`）的持久化与查询；写操作成功后刷新
- * [AccessRuleIpsBySubSysAndTenantIdCache] 中按「系统编码 + 租户」维度的 IP 规则缓存，保证父规则变更与缓存一致。
+ * [AccessRuleIpsBySubSysAndTenantIdCache] 中按「系统编码 + 租户」维度的 IP 规则缓存，以及
+ * [SysAccessRuleHashCache] 中主表 Hash 缓存，保证父规则变更与缓存一致。
  *
  * @author K
  * @author AI: Cursor
@@ -29,6 +35,7 @@ import org.springframework.transaction.annotation.Transactional
 open class SysAccessRuleService(
     dao: SysAccessRuleDao,
     private val accessRuleIpsBySubSysAndTenantIdCache: AccessRuleIpsBySubSysAndTenantIdCache,
+    private val sysAccessRuleHashCache: SysAccessRuleHashCache,
 ) : BaseCrudService<String, SysAccessRule, SysAccessRuleDao>(dao), ISysAccessRuleService {
 
     private val log = LogFactory.getLog(this::class)
@@ -73,18 +80,25 @@ open class SysAccessRuleService(
                 existing.systemCode,
                 existing.tenantId,
             )
+            sysAccessRuleHashCache.syncOnUpdate(id)
         }
     }
 
-    /**
-     * 新增访问规则并在成功后按新行的系统编码、租户刷新 IP 规则缓存。
-     */
     @Transactional
     override fun insert(any: Any): String {
+        if (any !is SysAccessRuleFormCreate) {
+            throw ServiceException(CommonErrorCodeEnum.BAD_REQUEST)
+        }
+
+        if (sysAccessRuleHashCache.getAccessRuleBySystemCodeAndTenantId(any.systemCode, any.tenantId) != null) {
+            throw ServiceException(SysAccessRuleErrorCodeEnum.ACCESS_RULE_ALREADY_EXISTS)
+        }
+
         val id = super.insert(any)
         completeCrudInsert(log, "新增id为${id}的访问规则。") {
             val rule = dao.get(id) ?: return@completeCrudInsert
             accessRuleIpsBySubSysAndTenantIdCache.syncOnDeleteBySystemAndTenant(rule.systemCode, rule.tenantId)
+            sysAccessRuleHashCache.syncOnInsert(id)
         }
         return id
     }
@@ -112,6 +126,7 @@ open class SysAccessRuleService(
                     before.tenantId,
                 )
             }
+            sysAccessRuleHashCache.syncOnUpdate(id)
         }
     }
 
@@ -135,6 +150,7 @@ open class SysAccessRuleService(
                 existing.systemCode,
                 existing.tenantId,
             )
+            sysAccessRuleHashCache.syncOnDelete(id)
         }
     }
 
@@ -152,6 +168,7 @@ open class SysAccessRuleService(
             keys.forEach { (systemCode, tenantId) ->
                 accessRuleIpsBySubSysAndTenantIdCache.syncOnDeleteBySystemAndTenant(systemCode, tenantId)
             }
+            sysAccessRuleHashCache.syncOnBatchDelete(ids)
         }
         return count
     }

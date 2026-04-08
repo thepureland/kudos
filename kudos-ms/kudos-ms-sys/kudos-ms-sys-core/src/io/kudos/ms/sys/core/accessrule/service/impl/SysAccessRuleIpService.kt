@@ -1,10 +1,8 @@
 package io.kudos.ms.sys.core.accessrule.service.impl
-import io.kudos.ms.sys.core.platform.service.impl.completeCrudInsert
-import io.kudos.ms.sys.core.platform.service.impl.completeCrudUpdate
 
-import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.model.contract.entity.IIdEntity
+import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.ms.sys.common.accessrule.vo.SysAccessRuleIpCacheEntry
 import io.kudos.ms.sys.common.accessrule.vo.request.SysAccessRuleIpBatchItem
 import io.kudos.ms.sys.common.accessrule.vo.request.SysAccessRuleIpQuery
@@ -14,6 +12,8 @@ import io.kudos.ms.sys.core.accessrule.dao.SysAccessRuleDao
 import io.kudos.ms.sys.core.accessrule.dao.SysAccessRuleIpDao
 import io.kudos.ms.sys.core.accessrule.model.po.SysAccessRuleIp
 import io.kudos.ms.sys.core.accessrule.service.iservice.ISysAccessRuleIpService
+import io.kudos.ms.sys.core.platform.service.impl.completeCrudInsert
+import io.kudos.ms.sys.core.platform.service.impl.completeCrudUpdate
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -160,7 +160,7 @@ open class SysAccessRuleIpService(
             this.parentRuleId = ruleId
             this.ipStart = ipStart
             this.ipEnd = ipEnd
-            this.ipTypeDictCode = form.ipType?.toString() ?: "0"
+            this.ipTypeDictCode = form.ipTypeDictCode?.trim()?.takeIf { it.isNotEmpty() } ?: "0"
             this.expirationTime = form.expirationDate
             this.active = form.active ?: true
         }
