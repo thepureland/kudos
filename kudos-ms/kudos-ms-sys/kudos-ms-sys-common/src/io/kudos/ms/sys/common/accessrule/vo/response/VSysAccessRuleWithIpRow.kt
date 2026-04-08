@@ -19,6 +19,9 @@ data class VSysAccessRuleWithIpRow(
 
     val tenantId: String? = null,
 
+    /** 关联 `sys_tenant.name`；平台级规则（无租户）为 null */
+    val tenantName: String? = null,
+
     val systemCode: String? = null,
 
     val accessRuleTypeDictCode: String? = null,

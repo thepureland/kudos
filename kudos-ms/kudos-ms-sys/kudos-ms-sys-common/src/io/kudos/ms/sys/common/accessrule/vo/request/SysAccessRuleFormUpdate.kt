@@ -1,5 +1,8 @@
 package io.kudos.ms.sys.common.accessrule.vo.request
+import io.kudos.base.bean.validation.constraint.annotations.FixedLength
 import io.kudos.base.model.contract.entity.IIdEntity
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Size
 
 
 /**
@@ -12,13 +15,11 @@ import io.kudos.base.model.contract.entity.IIdEntity
 data class SysAccessRuleFormUpdate (
 
     /** 主键 */
+    @get:NotBlank
+    @get:FixedLength(36)
     override val id: String,
 
-    override val tenantId: String?,
-
-    override val systemCode: String?,
-
-    override val accessRuleTypeDictCode: String?,
+    override val accessRuleTypeDictCode: String,
 
     override val remark: String?,
 

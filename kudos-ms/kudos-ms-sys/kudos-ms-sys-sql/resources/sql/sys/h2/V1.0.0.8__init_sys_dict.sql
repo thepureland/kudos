@@ -51,7 +51,8 @@ merge into "sys_dict" ("id", "atomic_service_code", "dict_type", "dict_name", "r
     ('1b87ef01-c033-06a6-0525-b317b623899f', 'sys', 'timezone', 'timezone', null, false),
     ('e960b247-16e0-4f4e-a767-2b17eb5b6982', 'sys', 'domain_type', 'domain_type', null, true),
     ('ad52c551-01c1-4c7f-9a96-720eecb32885', 'sys', 'terminal_type', 'terminal_type', null, true),
-    ('ad52c541-02c1-3c7f-1a96-a20eecb32881', 'sys', 'access_rule_type', 'access_rule_type', null, true);
+    ('ad52c541-02c1-3c7f-1a96-a20eecb32881', 'sys', 'access_rule_type', 'access_rule_type', null, true),
+    ('ae52d541-02c1-3c7f-1a96-a20eecb32882', 'sys', 'ip_type', 'ip_type', null, true);
 
 --endregion DML
 
