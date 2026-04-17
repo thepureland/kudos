@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.tenant.api
+
 import io.kudos.ms.sys.common.tenant.api.ISysTenantApi
 import io.kudos.ms.sys.common.tenant.vo.SysTenantCacheEntry
 import io.kudos.ms.sys.core.tenant.service.iservice.ISysTenantService

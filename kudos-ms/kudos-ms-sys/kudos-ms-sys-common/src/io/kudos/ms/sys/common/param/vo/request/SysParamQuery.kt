@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.common.param.vo.request
+
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.model.payload.ListSearchPayload
 import io.kudos.ms.sys.common.param.vo.response.SysParamRow

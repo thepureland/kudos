@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.common.system.api
+
 import io.kudos.ms.sys.common.system.vo.SysSystemCacheEntry
 
 

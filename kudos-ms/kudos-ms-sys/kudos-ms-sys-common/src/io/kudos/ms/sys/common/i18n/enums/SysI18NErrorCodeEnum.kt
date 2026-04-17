@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.common.i18n.enums
+
 import io.kudos.base.enums.ienums.IErrorCodeEnum
 
 /**

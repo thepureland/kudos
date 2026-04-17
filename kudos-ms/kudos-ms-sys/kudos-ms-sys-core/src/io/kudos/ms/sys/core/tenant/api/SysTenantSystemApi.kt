@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.tenant.api
+
 import io.kudos.ms.sys.common.tenant.api.ISysTenantSystemApi
 import io.kudos.ms.sys.core.tenant.service.iservice.ISysTenantSystemService
 import org.springframework.stereotype.Service

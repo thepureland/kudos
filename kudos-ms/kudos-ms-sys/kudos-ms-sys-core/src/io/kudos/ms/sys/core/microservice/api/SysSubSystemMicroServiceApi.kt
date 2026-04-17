@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.microservice.api
+
 import io.kudos.ms.sys.common.microservice.api.ISysSubSystemMicroServiceApi
 import io.kudos.ms.sys.core.microservice.service.iservice.ISysSubSystemMicroServiceService
 import org.springframework.stereotype.Service

@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.common.tenant.vo.request
+
 /**
  * 租户表单新建请求VO
  *

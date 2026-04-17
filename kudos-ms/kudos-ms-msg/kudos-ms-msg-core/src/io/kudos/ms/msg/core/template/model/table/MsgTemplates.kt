@@ -1,4 +1,5 @@
 package io.kudos.ms.msg.core.template.model.table
+
 import io.kudos.ability.data.rdb.ktorm.support.StringIdTable
 import io.kudos.ms.msg.core.template.model.po.MsgTemplate
 import org.ktorm.schema.boolean

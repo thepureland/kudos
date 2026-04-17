@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.common.i18n.vo.request
+
 /**
  * 国际化表单新建请求VO
  *

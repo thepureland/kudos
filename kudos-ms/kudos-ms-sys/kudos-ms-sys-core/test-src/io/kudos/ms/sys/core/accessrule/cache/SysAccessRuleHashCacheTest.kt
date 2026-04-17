@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.accessrule.cache
+
 import io.kudos.ability.cache.common.kit.HashCacheKit
 import io.kudos.ms.sys.core.accessrule.dao.SysAccessRuleDao
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled

@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.accessrule.service
+
 import io.kudos.base.error.ServiceException
 import io.kudos.ms.sys.common.accessrule.enums.SysAccessRuleErrorCodeEnum
 import io.kudos.ms.sys.common.accessrule.vo.request.SysAccessRuleFormCreate

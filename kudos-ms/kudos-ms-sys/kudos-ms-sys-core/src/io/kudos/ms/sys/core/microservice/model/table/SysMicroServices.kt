@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.microservice.model.table
+
 import io.kudos.ms.sys.core.microservice.model.po.SysMicroService
 import org.ktorm.schema.Table
 import org.ktorm.schema.boolean

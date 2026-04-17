@@ -659,6 +659,19 @@ enum class RegExpEnum(
 
     /**
      * 规则：
+     * IPv4 点分十进制完整(零补齐)地址
+     * 共 4 段
+     * 每段取值范围 000～255
+     *
+     * 例如：
+     * `127.000.000.001`
+     * `192.168.001.001`
+     * `255.255.255.255`
+     */
+    IPV4_FULL(RegExps.Network.IPV4_FULL, regExpMsg("ipv4-full")),
+
+    /**
+     * 规则：
      * URL，支持 `http`、`https`、`ftp`、`sftp`
      * 允许域名、IPv4、端口、路径、query、fragment
      * 属于宽松匹配，不等同完整 RFC 严格校验

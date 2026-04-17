@@ -1,4 +1,5 @@
 package io.kudos.ms.auth.core.role.service.iservice
+
 import io.kudos.base.support.service.iservice.IBaseCrudService
 import io.kudos.ms.auth.core.role.model.po.AuthRoleResource
 

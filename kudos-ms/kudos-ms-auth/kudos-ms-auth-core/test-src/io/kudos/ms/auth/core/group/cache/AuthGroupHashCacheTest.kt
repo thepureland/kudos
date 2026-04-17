@@ -1,4 +1,5 @@
 package io.kudos.ms.auth.core.group.cache
+
 import io.kudos.ability.cache.common.kit.HashCacheKit
 import io.kudos.ms.auth.core.group.dao.AuthGroupDao
 import io.kudos.ms.auth.core.group.model.po.AuthGroup

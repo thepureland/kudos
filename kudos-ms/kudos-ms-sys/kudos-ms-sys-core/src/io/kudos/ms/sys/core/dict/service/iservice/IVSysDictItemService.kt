@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.dict.service.iservice
+
 import io.kudos.base.support.service.iservice.IBaseReadOnlyService
 import io.kudos.ms.sys.common.dict.vo.SysDictItemCacheEntry
 import io.kudos.ms.sys.core.dict.model.po.VSysDictItem

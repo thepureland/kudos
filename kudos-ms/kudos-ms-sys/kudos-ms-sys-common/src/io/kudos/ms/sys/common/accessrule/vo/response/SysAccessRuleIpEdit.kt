@@ -1,10 +1,12 @@
 package io.kudos.ms.sys.common.accessrule.vo.response
+
 import io.kudos.base.model.contract.entity.IIdEntity
+import java.math.BigDecimal
 import java.time.LocalDateTime
 
 
 /**
- * IP访问规则编辑响应VO
+ * IP 访问规则编辑响应 VO：[ipStart]/[ipEnd] 为库内 `NUMERIC` 边界的十进制字符串；`ipv4*Str`/`ipv6*Str` 便于表单绑定。
  *
  * @author K
  * @since 1.0.0
@@ -13,11 +15,9 @@ data class SysAccessRuleIpEdit (
 
     override val id: String = "",
 
-    /** ip起 */
-    val ipStart: Long? = null,
+    val ipStart: BigDecimal? = null,
 
-    /** ip止 */
-    val ipEnd: Long? = null,
+    val ipEnd: BigDecimal? = null,
 
     /** ip 类型字典代码 */
     val ipTypeDictCode: String? = null,
@@ -52,4 +52,18 @@ data class SysAccessRuleIpEdit (
     /** 更新时间 */
     val updateTime: LocalDateTime? = null,
 
-) : IIdEntity<String>
+) : IIdEntity<String>, IIpBigDecimalToStringSupport {
+
+    override fun getIpStartBigDecimal(): BigDecimal? {
+        return ipStart
+    }
+
+    override fun getIpEndBigDecimal(): BigDecimal? {
+        return ipEnd
+    }
+
+    override fun getIpTypeDictCodeStr(): String? {
+        return ipTypeDictCode
+    }
+
+}

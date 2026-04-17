@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.common.cache.vo.request
+
 import io.kudos.base.bean.validation.constraint.annotations.DictItemCode
 import io.kudos.base.bean.validation.constraint.annotations.MaxLength
 import io.kudos.ms.sys.common.platform.consts.SysConsts

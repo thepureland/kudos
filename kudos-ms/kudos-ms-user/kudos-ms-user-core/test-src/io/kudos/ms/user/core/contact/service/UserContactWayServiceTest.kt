@@ -1,4 +1,5 @@
 package io.kudos.ms.user.core.contact.service
+
 import io.kudos.ms.user.core.contact.service.iservice.IUserContactWayService
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbAndRedisCacheTestBase

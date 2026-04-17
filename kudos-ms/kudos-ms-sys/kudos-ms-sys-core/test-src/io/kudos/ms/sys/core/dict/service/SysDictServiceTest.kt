@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.dict.service
+
 import io.kudos.ms.sys.common.dict.vo.SysDictCacheEntry
 import io.kudos.ms.sys.core.dict.cache.SysDictHashCache
 import io.kudos.ms.sys.core.dict.service.iservice.ISysDictService

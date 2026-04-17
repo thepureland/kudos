@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.common.platform.validation
+
 import io.kudos.base.bean.validation.constraint.annotations.DictItemCode
 import io.kudos.context.kit.SpringKit
 import io.kudos.ms.sys.common.dict.api.ISysDictApi

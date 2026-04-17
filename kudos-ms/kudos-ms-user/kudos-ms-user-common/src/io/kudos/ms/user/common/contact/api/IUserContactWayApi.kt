@@ -1,4 +1,5 @@
 package io.kudos.ms.user.common.contact.api
+
 /**
  * 用户联系方式 对外API
  *

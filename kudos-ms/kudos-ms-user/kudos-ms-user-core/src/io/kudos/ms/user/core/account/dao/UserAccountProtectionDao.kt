@@ -1,4 +1,5 @@
 package io.kudos.ms.user.core.account.dao
+
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.ms.user.core.account.model.po.UserAccountProtection
 import io.kudos.ms.user.core.account.model.table.UserAccountProtections

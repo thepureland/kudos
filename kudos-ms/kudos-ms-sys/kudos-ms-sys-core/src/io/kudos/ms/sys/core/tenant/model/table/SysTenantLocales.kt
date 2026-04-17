@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.tenant.model.table
+
 import io.kudos.ability.data.rdb.ktorm.support.StringIdTable
 import io.kudos.ms.sys.core.tenant.model.po.SysTenantLocale
 import org.ktorm.schema.datetime

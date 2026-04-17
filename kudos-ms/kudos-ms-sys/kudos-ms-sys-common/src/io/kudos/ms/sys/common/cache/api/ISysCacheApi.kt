@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.common.cache.api
+
 /**
  * 缓存 对外API
  *

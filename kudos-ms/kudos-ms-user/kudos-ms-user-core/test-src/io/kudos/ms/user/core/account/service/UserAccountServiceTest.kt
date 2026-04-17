@@ -1,4 +1,5 @@
 package io.kudos.ms.user.core.account.service
+
 import io.kudos.ms.user.core.account.service.iservice.IUserAccountService
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbAndRedisCacheTestBase

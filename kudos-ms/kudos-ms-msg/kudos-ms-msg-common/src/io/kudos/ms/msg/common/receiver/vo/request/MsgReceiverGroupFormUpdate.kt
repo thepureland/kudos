@@ -1,4 +1,5 @@
 package io.kudos.ms.msg.common.receiver.vo.request
+
 import io.kudos.base.model.contract.entity.IIdEntity
 
 

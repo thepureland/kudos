@@ -1,4 +1,5 @@
 package io.kudos.ms.msg.common.send.api
+
 /**
  * 消息发送对外API
  *

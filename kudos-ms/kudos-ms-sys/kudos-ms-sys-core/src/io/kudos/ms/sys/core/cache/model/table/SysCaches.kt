@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.cache.model.table
+
 import io.kudos.ability.data.rdb.ktorm.support.ManagedTable
 import io.kudos.ms.sys.core.cache.model.po.SysCache
 import org.ktorm.schema.boolean

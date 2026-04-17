@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.param.cache
+
 import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.ms.sys.common.param.vo.SysParamCacheEntry
 import io.kudos.ms.sys.core.param.dao.SysParamDao

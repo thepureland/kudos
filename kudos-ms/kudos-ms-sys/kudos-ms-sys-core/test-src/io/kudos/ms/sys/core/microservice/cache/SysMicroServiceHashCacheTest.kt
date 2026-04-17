@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.microservice.cache
+
 import io.kudos.ability.cache.common.kit.HashCacheKit
 import io.kudos.ms.sys.core.microservice.dao.SysMicroServiceDao
 import io.kudos.ms.sys.core.microservice.model.po.SysMicroService

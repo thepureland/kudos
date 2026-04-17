@@ -124,6 +124,30 @@ internal class RegExpsTest {
     }
 
     @Test
+    fun ipv4Full() {
+        assertMatches(
+            RegExps.Network.IPV4_FULL,
+            "127.000.000.001",
+            "192.168.001.001",
+            "255.255.255.255",
+            "000.000.000.000",
+            "010.020.030.040",
+            "001.002.003.004",
+        )
+        assertNotMatches(
+            RegExps.Network.IPV4_FULL,
+            "",
+            "127.0.0.1",
+            "192.168.1.1",
+            "192.168.001.01",
+            "192.168.01.001",
+            "256.000.000.001",
+            "192.168.001.001.1",
+            "192.168.001",
+        )
+    }
+
+    @Test
     fun httpUrl() {
         assertMatches(
             RegExps.Network.HTTP_URL,

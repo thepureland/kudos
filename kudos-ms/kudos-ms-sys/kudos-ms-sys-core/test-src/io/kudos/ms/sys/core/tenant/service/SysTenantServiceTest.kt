@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.tenant.service
+
 import io.kudos.ms.sys.common.tenant.vo.request.SysTenantFormCreate
 import io.kudos.ms.sys.common.tenant.vo.SysTenantCacheEntry
 import io.kudos.ms.sys.common.tenant.vo.response.SysTenantDetail

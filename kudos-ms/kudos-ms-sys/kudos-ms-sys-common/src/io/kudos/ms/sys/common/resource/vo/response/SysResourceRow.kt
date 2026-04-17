@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.common.resource.vo.response
+
 /**
  * 资源列表查询结果响应VO
  *

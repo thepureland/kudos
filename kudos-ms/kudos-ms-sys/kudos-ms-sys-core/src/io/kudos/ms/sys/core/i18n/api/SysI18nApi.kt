@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.i18n.api
+
 import io.kudos.ms.sys.common.i18n.api.ISysI18nApi
 import io.kudos.ms.sys.common.i18n.vo.request.SysI18nFormUpdate
 import io.kudos.ms.sys.core.i18n.service.iservice.ISysI18nService

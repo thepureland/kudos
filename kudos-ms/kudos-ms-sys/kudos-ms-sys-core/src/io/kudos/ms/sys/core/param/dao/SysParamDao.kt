@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.param.dao
+
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.ms.sys.common.param.vo.SysParamCacheEntry
 import io.kudos.ms.sys.core.param.model.po.SysParam

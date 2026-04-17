@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.accessrule.service.impl
+
 import io.kudos.base.support.service.impl.BaseReadOnlyService
 import io.kudos.ms.sys.common.accessrule.vo.response.VSysAccessRuleWithIpRow
 import io.kudos.ms.sys.core.accessrule.dao.VSysAccessRuleWithIpDao

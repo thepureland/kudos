@@ -1,4 +1,5 @@
 package io.kudos.ms.user.core.login.service.iservice
+
 import io.kudos.base.support.service.iservice.IBaseCrudService
 import io.kudos.ms.user.core.login.model.po.UserLogLogin
 import java.time.LocalDateTime

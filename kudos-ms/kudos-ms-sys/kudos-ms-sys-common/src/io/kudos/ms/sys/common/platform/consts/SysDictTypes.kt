@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.common.platform.consts
+
 /**
  * Sys中所有定义的字典类型常量
  *

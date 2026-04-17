@@ -1,4 +1,5 @@
 package io.kudos.ms.msg.common.instance.vo.request
+
 import io.kudos.base.model.payload.ListSearchPayload
 import java.time.LocalDateTime
 import io.kudos.ms.msg.common.instance.vo.response.MsgInstanceRow

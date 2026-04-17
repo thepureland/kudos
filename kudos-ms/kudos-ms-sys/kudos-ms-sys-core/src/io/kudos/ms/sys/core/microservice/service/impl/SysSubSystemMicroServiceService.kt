@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.microservice.service.impl
+
 import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.sys.core.microservice.dao.SysSubSystemMicroServiceDao

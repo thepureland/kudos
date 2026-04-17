@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.common.datasource.vo.request
+
 import io.kudos.base.bean.validation.constraint.annotations.Compare
 import io.kudos.base.bean.validation.constraint.annotations.Matches
 import io.kudos.base.bean.validation.constraint.annotations.MaxLength

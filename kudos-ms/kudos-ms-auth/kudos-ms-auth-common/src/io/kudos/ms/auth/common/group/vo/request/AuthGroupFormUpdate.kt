@@ -1,4 +1,5 @@
 package io.kudos.ms.auth.common.group.vo.request
+
 import io.kudos.base.model.contract.entity.IIdEntity
 
 

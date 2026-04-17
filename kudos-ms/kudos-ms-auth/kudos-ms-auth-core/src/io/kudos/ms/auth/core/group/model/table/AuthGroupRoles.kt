@@ -1,4 +1,5 @@
 package io.kudos.ms.auth.core.group.model.table
+
 import io.kudos.ability.data.rdb.ktorm.support.StringIdTable
 import io.kudos.ms.auth.core.group.model.po.AuthGroupRole
 import org.ktorm.schema.datetime

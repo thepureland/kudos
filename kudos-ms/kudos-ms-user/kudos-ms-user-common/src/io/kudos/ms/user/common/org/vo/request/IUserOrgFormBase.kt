@@ -1,4 +1,5 @@
 package io.kudos.ms.user.common.org.vo.request
+
 import io.kudos.base.bean.validation.constraint.annotations.MaxLength
 
 /**

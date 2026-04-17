@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.common.domain.api
+
 import io.kudos.ms.sys.common.domain.vo.SysDomainCacheEntry
 
 

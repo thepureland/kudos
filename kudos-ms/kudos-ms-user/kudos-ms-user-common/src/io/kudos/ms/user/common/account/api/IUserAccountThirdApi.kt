@@ -1,4 +1,5 @@
 package io.kudos.ms.user.common.account.api
+
 /**
  * 用户第三方账号 对外API
  *

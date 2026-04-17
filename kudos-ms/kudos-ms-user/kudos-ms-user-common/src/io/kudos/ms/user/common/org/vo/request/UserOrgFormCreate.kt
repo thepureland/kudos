@@ -1,4 +1,5 @@
 package io.kudos.ms.user.common.org.vo.request
+
 /**
  * 机构表单新建请求VO
  *

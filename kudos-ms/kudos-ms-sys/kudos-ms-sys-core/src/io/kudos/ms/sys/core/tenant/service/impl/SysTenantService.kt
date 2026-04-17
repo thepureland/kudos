@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.tenant.service.impl
+
 import io.kudos.ms.sys.core.platform.service.impl.completeCrudInsert
 import io.kudos.ms.sys.core.platform.service.impl.completeCrudUpdate
 

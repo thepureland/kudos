@@ -1,4 +1,5 @@
 package io.kudos.ms.msg.common.template.vo.request
+
 /**
  * 消息模板表单基础字段（新建 / 更新共用）
  *

@@ -1,4 +1,5 @@
 package io.kudos.ms.user.core.org.cache
+
 import io.kudos.ability.cache.common.kit.HashCacheKit
 import io.kudos.ms.user.core.org.dao.UserOrgDao
 import io.kudos.ms.user.core.org.model.po.UserOrg

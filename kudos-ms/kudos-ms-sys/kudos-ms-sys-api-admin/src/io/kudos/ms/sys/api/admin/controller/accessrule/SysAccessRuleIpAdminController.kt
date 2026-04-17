@@ -15,6 +15,7 @@ import io.kudos.ms.sys.core.accessrule.service.iservice.ISysAccessRuleIpService
 import jakarta.annotation.Resource
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -112,4 +113,13 @@ class SysAccessRuleIpAdminController :
             systemCode,
             tenantId?.takeIf { it.isNotBlank() },
         )
+
+    /**
+     * 仅更新单条 IP 访问规则的启用状态（列表开关）。
+     *
+     * @param id `sys_access_rule_ip.id`
+     * @param active 是否启用
+     */
+    @PutMapping("/updateActive")
+    fun updateActive(id: String, active: Boolean): Boolean = service.updateActive(id, active)
 }

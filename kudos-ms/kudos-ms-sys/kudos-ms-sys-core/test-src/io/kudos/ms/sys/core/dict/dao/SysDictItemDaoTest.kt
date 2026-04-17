@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.dict.dao
+
 import io.kudos.ms.sys.common.dict.vo.request.SysDictItemQuery
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbTestBase

@@ -1,4 +1,5 @@
 package io.kudos.ms.auth.core.platform.cache
+
 import io.kudos.ms.auth.core.role.dao.AuthRoleResourceDao
 import io.kudos.ms.auth.core.role.model.po.AuthRoleResource
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled

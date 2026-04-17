@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.common.dict.vo.request
+
 /**
  * 字典项表单新建请求VO
  *

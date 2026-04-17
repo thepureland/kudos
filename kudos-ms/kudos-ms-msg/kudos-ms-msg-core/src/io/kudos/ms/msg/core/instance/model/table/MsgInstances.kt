@@ -1,4 +1,5 @@
 package io.kudos.ms.msg.core.instance.model.table
+
 import io.kudos.ability.data.rdb.ktorm.support.StringIdTable
 import io.kudos.ms.msg.core.instance.model.po.MsgInstance
 import org.ktorm.schema.datetime

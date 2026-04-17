@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.domain.service
+
 import io.kudos.ms.sys.common.domain.vo.SysDomainCacheEntry
 import io.kudos.ms.sys.common.domain.vo.response.SysDomainDetail
 import io.kudos.ms.sys.core.domain.cache.DomainByNameCache

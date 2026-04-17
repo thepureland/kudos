@@ -1,4 +1,5 @@
 package io.kudos.ms.user.core.platform.cache
+
 import io.kudos.ms.user.core.account.dao.UserOrgUserDao
 import io.kudos.ms.user.core.account.model.po.UserOrgUser
 import io.kudos.ms.user.core.org.cache.OrgIdsByUserIdCache

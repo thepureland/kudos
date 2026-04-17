@@ -1,9 +1,10 @@
 package io.kudos.ms.sys.core.accessrule.model.table
+
 import io.kudos.ability.data.rdb.ktorm.support.StringIdTable
 import io.kudos.ms.sys.core.accessrule.model.po.VSysAccessRuleWithIp
 import org.ktorm.schema.boolean
 import org.ktorm.schema.datetime
-import org.ktorm.schema.long
+import org.ktorm.schema.decimal
 import org.ktorm.schema.varchar
 
 /**
@@ -45,9 +46,9 @@ object VSysAccessRuleWithIps : StringIdTable<VSysAccessRuleWithIp>("v_sys_access
 
     var ipId = varchar("ip_id").bindTo { it.ipId }
 
-    var ipStart = long("ip_start").bindTo { it.ipStart }
+    var ipStart = decimal("ip_start").bindTo { it.ipStart }
 
-    var ipEnd = long("ip_end").bindTo { it.ipEnd }
+    var ipEnd = decimal("ip_end").bindTo { it.ipEnd }
 
     var ipTypeDictCode = varchar("ip_type_dict_code").bindTo { it.ipTypeDictCode }
 

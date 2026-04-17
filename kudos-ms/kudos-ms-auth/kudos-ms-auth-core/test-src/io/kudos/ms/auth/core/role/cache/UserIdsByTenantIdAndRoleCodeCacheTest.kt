@@ -1,4 +1,5 @@
 package io.kudos.ms.auth.core.role.cache
+
 import io.kudos.ms.auth.core.role.dao.AuthRoleDao
 import io.kudos.ms.auth.core.role.dao.AuthRoleUserDao
 import io.kudos.ms.auth.core.role.model.po.AuthRole

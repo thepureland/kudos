@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.microservice.service.iservice
+
 import io.kudos.base.support.service.iservice.IBaseCrudService
 import io.kudos.base.tree.IdAndNameTreeNode
 import io.kudos.ms.sys.common.microservice.vo.SysMicroServiceCacheEntry

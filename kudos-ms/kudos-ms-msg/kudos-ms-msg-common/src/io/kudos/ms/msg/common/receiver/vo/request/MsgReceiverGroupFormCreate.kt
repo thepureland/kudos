@@ -1,4 +1,5 @@
 package io.kudos.ms.msg.common.receiver.vo.request
+
 /**
  * 消息接收者群组表单新建请求VO
  *

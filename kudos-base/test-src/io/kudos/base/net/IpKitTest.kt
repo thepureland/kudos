@@ -1,9 +1,12 @@
 package io.kudos.base.net
 
+import java.math.BigDecimal
+import java.math.BigInteger
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 
 
 /**
@@ -164,6 +167,59 @@ internal class IpKitTest {
         assertEquals("0000:0000:0000:0000:0000:FFFF:C0A8:0001", IpKit.toFullIpv6("::FFFF:192.168.0.1"))
     }
 
+    @Test
+    fun fullIpv6ColonGroupsTextToBigInteger_matchesToFullIpv6() {
+        val full = IpKit.toFullIpv6("192.168.0.1")
+        assertEquals(
+            IpKit.fullIpv6ColonGroupsTextToBigInteger(full),
+            IpKit.fullIpv6ColonGroupsTextToBigInteger("0000:0000:0000:0000:0000:FFFF:C0A8:0001"),
+        )
+    }
+
+    @Test
+    fun ipv6BigDecimalToFullString() {
+        assertEquals("", IpKit.ipv6BigDecimalToFullString(null))
+        assertEquals("", IpKit.ipv6BigDecimalToFullString(BigDecimal("-1")))
+        assertEquals("", IpKit.ipv6BigDecimalToFullString(BigDecimal("1.5")))
+        assertEquals(
+            "",
+            IpKit.ipv6BigDecimalToFullString(BigDecimal(BigInteger.ONE.shiftLeft(128))),
+        )
+        assertEquals("0000:0000:0000:0000:0000:0000:0000:0000", IpKit.ipv6BigDecimalToFullString(BigDecimal.ZERO))
+        val full = IpKit.toFullIpv6("::FFFF:192.168.0.1")
+        val dec = IpKit.fullIpv6ColonGroupsTextToUnsignedDecimal(full)
+        assertEquals(full, IpKit.ipv6BigDecimalToFullString(dec))
+        assertEquals(
+            "2001:0DB8:0000:0023:0008:0800:200C:417A",
+            IpKit.ipv6BigDecimalToFullString(
+                IpKit.fullIpv6ColonGroupsTextToUnsignedDecimal(
+                    "2001:0DB8:0000:0023:0008:0800:200C:417A",
+                ),
+            ),
+        )
+    }
+
+    @Test
+    fun ipTextToUnsignedStorageDecimal_modes() {
+        assertEquals(
+            BigDecimal("3232235777"),
+            IpKit.ipTextToUnsignedStorageDecimal("192.168.1.1", IpKit.IpStorageNumericMode.AUTO),
+        )
+        assertEquals(
+            BigDecimal("2130706433"),
+            IpKit.ipTextToUnsignedStorageDecimal("127.0.0.1", IpKit.IpStorageNumericMode.IPV4),
+        )
+        val loopback = IpKit.fullIpv6ColonGroupsTextToUnsignedDecimal(IpKit.toFullIpv6("::1"))
+        assertEquals(
+            loopback,
+            IpKit.ipTextToUnsignedStorageDecimal("::1", IpKit.IpStorageNumericMode.IPV6),
+        )
+        assertEquals(
+            BigDecimal("3232235777"),
+            IpKit.ipTextToUnsignedStorageDecimal("3232235777", IpKit.IpStorageNumericMode.IPV4),
+        )
+        assertNull(IpKit.ipTextToUnsignedStorageDecimal("   ", IpKit.IpStorageNumericMode.AUTO))
+    }
 
 }
 

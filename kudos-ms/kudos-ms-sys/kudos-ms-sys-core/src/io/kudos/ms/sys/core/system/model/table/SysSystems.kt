@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.system.model.table
+
 import io.kudos.ms.sys.core.system.model.po.SysSystem
 import org.ktorm.schema.Table
 import org.ktorm.schema.boolean

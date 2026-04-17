@@ -1,4 +1,5 @@
 package io.kudos.ms.user.core.contact.api
+
 import io.kudos.ms.user.common.contact.api.IUserContactWayApi
 import org.springframework.stereotype.Service
 

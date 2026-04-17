@@ -525,6 +525,10 @@ insert into "sys_i18n" ("locale", "atomic_service_code", "i18n_type_dict_code", 
     ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::ipv4', '須為合法的 IPv4 位址', true),
     ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::ipv4', 'must be a valid IPv4 address', true),
 
+    ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::ipv4-full', '须为零补齐的 IPv4 地址（4 段，每段 3 位数字，000～255，如 192.168.001.001）', true),
+    ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::ipv4-full', '須為零補齊的 IPv4 位址（4 段，每段 3 位數字，000～255，如 192.168.001.001）', true),
+    ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::ipv4-full', 'must be a zero-padded IPv4 address (four octets, three digits each, 000–255, e.g. 192.168.001.001)', true),
+
     ('zh-CN', 'sys', 'valid-msg', 'default', 'Pattern::http-url', '须为合法的URL地址', true),
     ('zh-TW', 'sys', 'valid-msg', 'default', 'Pattern::http-url', '須為合法的 URL', true),
     ('en-US', 'sys', 'valid-msg', 'default', 'Pattern::http-url', 'must be a valid URL', true),
@@ -780,8 +784,11 @@ insert into "sys_i18n" ("locale", "atomic_service_code", "i18n_type_dict_code", 
 
     ('zh-CN', 'sys', 'valid-msg', 'dataSource', 'Compare::minIdle', '不得大于最大连接数', true),
     ('zh-TW', 'sys', 'valid-msg', 'dataSource', 'Compare::minIdle', '不得大於最大連線數', true),
-    ('en-US', 'sys', 'valid-msg', 'dataSource', 'Compare::minIdle', 'must not exceed max active', true);
+    ('en-US', 'sys', 'valid-msg', 'dataSource', 'Compare::minIdle', 'must not exceed max active', true),
 
+    ('zh-CN', 'sys', 'valid-msg', 'accessrule', 'ge-ip-start', '不得小于IP起始值', true),
+    ('zh-TW', 'sys', 'valid-msg', 'accessrule', 'ge-ip-start', '不得小於 IP 起始值', true),
+    ('en-US', 'sys', 'valid-msg', 'accessrule', 'ge-ip-start', 'must not be less than the start IP value', true);
 
 -- error-msg
 insert into "sys_i18n" ("locale", "atomic_service_code", "i18n_type_dict_code", "namespace", "key", "value", "built_in") values
@@ -835,6 +842,26 @@ insert into "sys_i18n" ("locale", "atomic_service_code", "i18n_type_dict_code", 
 
     ('zh-CN', 'sys', 'error-msg', 'accessrule', 'PARENT_ACCESS_RULE_NOT_FOUND', '在当前子系统与租户下不存在访问规则，请先新增访问规则后再添加 IP 段。', true),
     ('zh-TW', 'sys', 'error-msg', 'accessrule', 'PARENT_ACCESS_RULE_NOT_FOUND', '在目前子系統與租戶下不存在訪問規則，請先新增訪問規則後再新增 IP 段。', true),
-    ('en-US', 'sys', 'error-msg', 'accessrule', 'PARENT_ACCESS_RULE_NOT_FOUND', 'No access rule exists for this subsystem and tenant. Create an access rule before adding IP segments.', true);
+    ('en-US', 'sys', 'error-msg', 'accessrule', 'PARENT_ACCESS_RULE_NOT_FOUND', 'No access rule exists for this subsystem and tenant. Create an access rule before adding IP segments.', true),
+
+    ('zh-CN', 'sys', 'error-msg', 'accessrule', 'ACCESS_RULE_ALREADY_EXISTS', '该子系统与租户下已存在访问规则，请勿重复新增。', true),
+    ('zh-TW', 'sys', 'error-msg', 'accessrule', 'ACCESS_RULE_ALREADY_EXISTS', '該子系統與租戶下已存在訪問規則，請勿重複新增。', true),
+    ('en-US', 'sys', 'error-msg', 'accessrule', 'ACCESS_RULE_ALREADY_EXISTS', 'An access rule already exists for this subsystem and tenant. Do not create duplicates.', true),
+
+    ('zh-CN', 'sys', 'error-msg', 'accessrule', 'IP_RULE_CREATE_SYSTEM_CODE_REQUIRED', '新增 IP 访问规则时未指定父规则：请传入 parentRuleId，或传入子系统编码（systemCode）由服务端解析父访问规则。', true),
+    ('zh-TW', 'sys', 'error-msg', 'accessrule', 'IP_RULE_CREATE_SYSTEM_CODE_REQUIRED', '新增 IP 訪問規則時未指定父規則：請傳入 parentRuleId，或傳入子系統編碼（systemCode）由服務端解析父訪問規則。', true),
+    ('en-US', 'sys', 'error-msg', 'accessrule', 'IP_RULE_CREATE_SYSTEM_CODE_REQUIRED', 'When creating an IP access rule, no parent was specified: pass parentRuleId, or pass systemCode so the server can resolve the parent access rule.', true),
+
+    ('zh-CN', 'sys', 'error-msg', 'accessrule', 'INVALID_IP_START_ADDRESS', '无效的IP起始地址', true),
+    ('zh-TW', 'sys', 'error-msg', 'accessrule', 'INVALID_IP_START_ADDRESS', '無效的 IP 起始位址', true),
+    ('en-US', 'sys', 'error-msg', 'accessrule', 'INVALID_IP_START_ADDRESS', 'Invalid IP start address', true),
+
+    ('zh-CN', 'sys', 'error-msg', 'accessrule', 'INVALID_IP_END_ADDRESS', '无效的IP结束地址', true),
+    ('zh-TW', 'sys', 'error-msg', 'accessrule', 'INVALID_IP_END_ADDRESS', '無效的 IP 結束位址', true),
+    ('en-US', 'sys', 'error-msg', 'accessrule', 'INVALID_IP_END_ADDRESS', 'Invalid IP end address', true),
+
+    ('zh-CN', 'sys', 'error-msg', 'accessrule', 'UNSPECIFIED', '未定义错误', true),
+    ('zh-TW', 'sys', 'error-msg', 'accessrule', 'UNSPECIFIED', '未定義錯誤', true),
+    ('en-US', 'sys', 'error-msg', 'accessrule', 'UNSPECIFIED', 'Undefined error', true);
 
 --endregion DML

@@ -1,4 +1,5 @@
 package io.kudos.ms.msg.common.receiver.api
+
 /**
  * 消息接收对外API
  *

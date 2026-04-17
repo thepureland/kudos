@@ -1,4 +1,5 @@
 package io.kudos.ms.auth.core.role.service
+
 import io.kudos.ms.auth.core.role.service.iservice.IAuthRoleService
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbAndRedisCacheTestBase

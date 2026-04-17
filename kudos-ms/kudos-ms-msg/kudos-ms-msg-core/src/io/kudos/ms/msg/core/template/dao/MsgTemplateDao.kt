@@ -1,4 +1,5 @@
 package io.kudos.ms.msg.core.template.dao
+
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.ms.msg.core.template.model.po.MsgTemplate
 import io.kudos.ms.msg.core.template.model.table.MsgTemplates

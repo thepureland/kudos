@@ -1,6 +1,8 @@
 package io.kudos.ms.sys.common.accessrule.vo.request
+
 import io.kudos.base.bean.validation.constraint.annotations.FixedLength
 import io.kudos.base.bean.validation.constraint.annotations.MaxLength
+import io.kudos.ms.sys.common.accessrule.enums.IpTypeEnum
 import jakarta.validation.constraints.NotBlank
 import java.time.LocalDateTime
 
@@ -13,13 +15,17 @@ import java.time.LocalDateTime
  */
 data class SysAccessRuleIpFormCreate (
 
-    override val ipStart: Long? ,
+    override val ipv4StartStr: String?,
 
-    override val ipEnd: Long? ,
+    override val ipv4EndStr: String?,
 
-    override val ipTypeDictCode: String ,
+    override val ipv6StartStr: String?,
 
-    override val expirationDate: LocalDateTime? ,
+    override val ipv6EndStr: String?,
+
+    override val ipTypeDictCode: String,
+
+    override val expirationDate: LocalDateTime?,
 
     /** 系统编码 */
     @get:NotBlank
@@ -31,8 +37,20 @@ data class SysAccessRuleIpFormCreate (
     @get:FixedLength(36)
     val tenantId: String,
 
-    override val remark: String? ,
+    override val remark: String?,
 
-    override val active: Boolean? ,
+    ) : ISysAccessRuleIpFormBase, IIpStringToBigDecimalSupport {
 
-) : ISysAccessRuleIpFormBase
+    override fun getIpStartString(): String {
+        return if (IpTypeEnum.IPV4.code == ipTypeDictCode) ipv4StartStr!! else ipv6StartStr!!
+    }
+
+    override fun getIpEndString(): String {
+        return if (IpTypeEnum.IPV4.code == ipTypeDictCode) ipv4EndStr!! else ipv6EndStr!!
+    }
+
+    override fun getIpTypeDictCodeString(): String {
+        return ipTypeDictCode
+    }
+
+}

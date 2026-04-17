@@ -1,4 +1,5 @@
 package io.kudos.ms.auth.core.platform.cache
+
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.ms.auth.core.group.dao.AuthGroupDao

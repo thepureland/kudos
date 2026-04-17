@@ -1,4 +1,5 @@
 package io.kudos.ms.msg.common.instance.api
+
 /**
  * 消息实例对外API
  *

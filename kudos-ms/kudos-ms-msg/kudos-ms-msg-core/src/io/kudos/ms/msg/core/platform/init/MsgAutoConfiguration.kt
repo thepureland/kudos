@@ -1,4 +1,5 @@
 package io.kudos.ms.msg.core.platform.init
+
 import io.kudos.ability.data.rdb.ktorm.init.KtormAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
 import org.springframework.boot.autoconfigure.AutoConfigureAfter

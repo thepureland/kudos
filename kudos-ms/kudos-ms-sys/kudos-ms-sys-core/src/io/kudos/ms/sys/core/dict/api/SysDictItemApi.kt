@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.dict.api
+
 import io.kudos.ms.sys.common.dict.api.ISysDictItemApi
 import org.springframework.stereotype.Service
 

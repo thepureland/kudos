@@ -1,4 +1,5 @@
 package io.kudos.ms.user.core.org.model.table
+
 import io.kudos.ability.data.rdb.ktorm.support.StringIdTable
 import io.kudos.ms.user.core.org.model.po.UserOrg
 import org.ktorm.schema.boolean

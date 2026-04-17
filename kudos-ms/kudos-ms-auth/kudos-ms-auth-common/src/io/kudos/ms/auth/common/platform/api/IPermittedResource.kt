@@ -1,4 +1,5 @@
 package io.kudos.ms.auth.common.platform.api
+
 import io.kudos.ms.sys.common.resource.vo.response.MenuTreeNode
 
 

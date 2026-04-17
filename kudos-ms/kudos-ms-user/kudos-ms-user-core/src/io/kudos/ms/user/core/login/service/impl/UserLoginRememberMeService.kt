@@ -1,4 +1,5 @@
 package io.kudos.ms.user.core.login.service.impl
+
 import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.ms.user.core.login.dao.UserLoginRememberMeDao
 import io.kudos.ms.user.core.login.model.po.UserLoginRememberMe

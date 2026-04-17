@@ -1,4 +1,5 @@
 package io.kudos.ms.msg.core.instance.service.iservice
+
 import io.kudos.base.support.service.iservice.IBaseCrudService
 import io.kudos.ms.msg.core.instance.model.po.MsgInstance
 

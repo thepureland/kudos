@@ -1,10 +1,11 @@
 package io.kudos.ms.sys.core.accessrule.api
+
 import io.kudos.ms.sys.common.accessrule.api.ISysAccessRuleIpApi
 import io.kudos.ms.sys.common.accessrule.vo.SysAccessRuleIpCacheEntry
-import io.kudos.ms.sys.common.accessrule.vo.request.SysAccessRuleIpBatchItem
 import io.kudos.ms.sys.common.accessrule.vo.response.SysAccessRuleIpRow
 import io.kudos.ms.sys.core.accessrule.service.iservice.ISysAccessRuleIpService
 import org.springframework.stereotype.Service
+import java.math.BigDecimal
 
 
 /**
@@ -23,11 +24,9 @@ open class SysAccessRuleIpApi(
     override fun getIpsBySystemAndTenant(systemCode: String, tenantId: String?): List<SysAccessRuleIpCacheEntry> =
         sysAccessRuleIpService.getIpsBySystemAndTenant(systemCode, tenantId)
 
-    override fun checkIpAccess(ip: Long, systemCode: String, tenantId: String?): Boolean =
+    override fun checkIpAccess(ip: BigDecimal, systemCode: String, tenantId: String?): Boolean =
         sysAccessRuleIpService.checkIpAccess(ip, systemCode, tenantId)
 
-    override fun batchSaveOrUpdate(ruleId: String, ips: List<SysAccessRuleIpBatchItem>): Int =
-        sysAccessRuleIpService.batchSaveOrUpdate(ruleId, ips)
 
     override fun deleteByRuleId(ruleId: String): Int = sysAccessRuleIpService.deleteByRuleId(ruleId)
 }

@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.dict.service.iservice
+
 import java.util.LinkedHashMap
 
 import io.kudos.base.support.service.iservice.IBaseCrudService

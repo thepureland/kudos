@@ -1,4 +1,5 @@
 package io.kudos.ms.msg.core.template.service.impl
+
 import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.ms.msg.core.template.dao.MsgTemplateDao
 import io.kudos.ms.msg.core.template.model.po.MsgTemplate

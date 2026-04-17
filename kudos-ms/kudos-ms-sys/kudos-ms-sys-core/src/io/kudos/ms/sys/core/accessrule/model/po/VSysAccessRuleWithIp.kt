@@ -1,6 +1,8 @@
 package io.kudos.ms.sys.core.accessrule.model.po
+
 import io.kudos.ability.data.rdb.ktorm.support.DbEntityFactory
 import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
+import java.math.BigDecimal
 import java.time.LocalDateTime
 
 /**
@@ -46,9 +48,11 @@ interface VSysAccessRuleWithIp : IDbEntity<String, VSysAccessRuleWithIp> {
     /** sys_access_rule_ip.id */
     var ipId: String?
 
-    var ipStart: Long?
+    /** 来自 `sys_access_rule_ip.ip_start`（NUMERIC，语义同 [SysAccessRuleIp.ipStart]）。 */
+    var ipStart: BigDecimal?
 
-    var ipEnd: Long?
+    /** 来自 `sys_access_rule_ip.ip_end`。 */
+    var ipEnd: BigDecimal?
 
     var ipTypeDictCode: String?
 

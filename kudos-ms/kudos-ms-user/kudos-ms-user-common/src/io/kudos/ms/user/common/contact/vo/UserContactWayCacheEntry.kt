@@ -1,4 +1,5 @@
 package io.kudos.ms.user.common.contact.vo
+
 import io.kudos.base.model.contract.entity.IIdEntity
 import java.io.Serializable
 

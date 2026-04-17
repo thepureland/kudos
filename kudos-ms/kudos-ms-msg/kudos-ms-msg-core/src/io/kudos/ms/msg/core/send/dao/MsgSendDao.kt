@@ -1,4 +1,5 @@
 package io.kudos.ms.msg.core.send.dao
+
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.ms.msg.core.send.model.po.MsgSend
 import io.kudos.ms.msg.core.send.model.table.MsgSends

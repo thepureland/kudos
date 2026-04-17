@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.i18n.model.po
+
 import io.kudos.ability.data.rdb.ktorm.support.DbEntityFactory
 import io.kudos.ability.data.rdb.ktorm.support.IManagedDbEntity
 import io.kudos.base.query.sort.Sortable

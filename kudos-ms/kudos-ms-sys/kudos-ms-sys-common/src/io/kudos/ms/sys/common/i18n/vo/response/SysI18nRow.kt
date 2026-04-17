@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.common.i18n.vo.response
+
 /**
  * 国际化列表查询结果响应VO
  *

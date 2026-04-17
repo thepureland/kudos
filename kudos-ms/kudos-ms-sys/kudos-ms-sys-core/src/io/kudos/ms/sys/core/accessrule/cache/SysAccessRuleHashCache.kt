@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.accessrule.cache
+
 import io.kudos.ability.cache.common.aop.hash.HashCacheableByPrimary
 import io.kudos.ability.cache.common.aop.hash.HashCacheableBySecondary
 import io.kudos.ability.cache.common.core.hash.AbstractHashCacheHandler
@@ -69,18 +70,18 @@ open class SysAccessRuleHashCache : AbstractHashCacheHandler<SysAccessRuleCacheE
      * 按系统编码与租户ID从缓存获取访问规则，未命中则查库并回写。
      *
      * @param systemCode 系统编码（子系统），非空白
-     * @param tenantKey 租户 id；**空串**表示平台级（与库中 `tenant_id IS NULL` 对应），须与缓存副属性索引存值一致；调用方若持有可空租户 id，需先规范为 `trim().takeIf { it.isNotEmpty() } ?: ""`
+     * @param tenantId 租户 id；**空串**表示平台级（与库中 `tenant_id IS NULL` 对应），须与缓存副属性索引存值一致；调用方若持有可空租户 id，需先规范为 `trim().takeIf { it.isNotEmpty() } ?: ""`
      * @return 命中时返回该维度下唯一一行；不存在时返回 `null`
      */
     @HashCacheableBySecondary(
         cacheNames = [CACHE_NAME],
-        filterExpressions = ["#systemCode", "#tenantKey"],
+        filterExpressions = ["#systemCode", "#tenantId"],
         entityClass = SysAccessRuleCacheEntry::class,
         filterableProperties = ["systemCode", "tenantId"],
     )
-    open fun getAccessRuleBySystemCodeAndTenantId(systemCode: String, tenantKey: String): SysAccessRuleCacheEntry? {
+    open fun getAccessRuleBySystemCodeAndTenantId(systemCode: String, tenantId: String): SysAccessRuleCacheEntry? {
         require(systemCode.isNotBlank()) { "按系统编码获取访问规则时 systemCode 不能为空" }
-        return sysAccessRuleDao.fetchCacheEntryBySystemCodeAndTenantKey(systemCode, tenantKey)
+        return sysAccessRuleDao.fetchCacheEntryBySystemCodeAndtenantId(systemCode, tenantId)
     }
 
     override fun reloadAll(clear: Boolean) {

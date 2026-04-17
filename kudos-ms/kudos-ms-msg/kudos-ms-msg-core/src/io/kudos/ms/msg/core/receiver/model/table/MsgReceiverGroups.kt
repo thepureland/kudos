@@ -1,4 +1,5 @@
 package io.kudos.ms.msg.core.receiver.model.table
+
 import io.kudos.ability.data.rdb.ktorm.support.ManagedTable
 import io.kudos.ms.msg.core.receiver.model.po.MsgReceiverGroup
 import org.ktorm.schema.varchar

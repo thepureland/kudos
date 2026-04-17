@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.common.accessrule.enums
+
 import io.kudos.base.enums.ienums.IErrorCodeEnum
 
 /**
@@ -35,6 +36,18 @@ enum class SysAccessRuleErrorCodeEnum(
     ACCESS_RULE_ALREADY_EXISTS(
         "ACCESS_RULE_ALREADY_EXISTS",
         "该子系统与租户下已存在访问规则，请勿重复新增。",
+    ),
+
+    /** IP 起始地址无法解析为合法存储值（如 IPv4/IPv6 文本或库内整值） */
+    INVALID_IP_START_ADDRESS(
+        "INVALID_IP_START_ADDRESS",
+        "无效的IP起始地址",
+    ),
+
+    /** IP 结束地址无法解析为合法存储值（如 IPv4/IPv6 文本或库内整值） */
+    INVALID_IP_END_ADDRESS(
+        "INVALID_IP_END_ADDRESS",
+        "无效的IP结束地址",
     );
 
     override val i18nKeyPrefix: String

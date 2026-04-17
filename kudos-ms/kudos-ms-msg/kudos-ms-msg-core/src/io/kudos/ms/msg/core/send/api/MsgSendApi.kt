@@ -1,4 +1,5 @@
 package io.kudos.ms.msg.core.send.api
+
 import io.kudos.ms.msg.common.send.api.IMsgSendApi
 import org.springframework.stereotype.Service
 

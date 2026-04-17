@@ -1,4 +1,5 @@
 package io.kudos.ms.auth.common.group.vo.request
+
 import io.kudos.base.model.payload.ListSearchPayload
 import io.kudos.ms.auth.common.group.vo.response.AuthGroupRow
 

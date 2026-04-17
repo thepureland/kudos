@@ -1,4 +1,5 @@
 package io.kudos.ms.auth.common.role.vo.request
+
 /**
  * 角色表单新建请求VO
  *

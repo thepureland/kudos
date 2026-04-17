@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.common.system.vo.request
+
 /**
  * 系统表单新建请求VO
  *
