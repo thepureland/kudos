@@ -1,4 +1,5 @@
 package io.kudos.ms.user.core.contact.service.iservice
+
 import io.kudos.base.support.service.iservice.IBaseCrudService
 import io.kudos.ms.user.core.contact.model.po.UserContactWay
 

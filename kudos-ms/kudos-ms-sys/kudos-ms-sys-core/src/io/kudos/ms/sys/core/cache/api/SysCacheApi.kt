@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.cache.api
+
 import io.kudos.ms.sys.common.cache.api.ISysCacheApi
 import org.springframework.stereotype.Service
 

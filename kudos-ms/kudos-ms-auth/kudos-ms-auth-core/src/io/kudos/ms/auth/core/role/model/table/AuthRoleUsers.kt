@@ -1,4 +1,5 @@
 package io.kudos.ms.auth.core.role.model.table
+
 import io.kudos.ability.data.rdb.ktorm.support.StringIdTable
 import io.kudos.ms.auth.core.role.model.po.AuthRoleUser
 import org.ktorm.schema.datetime

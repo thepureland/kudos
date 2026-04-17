@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.tenant.cache
+
 import io.kudos.ability.cache.common.batch.keyvalue.BatchCacheable
 import io.kudos.ability.cache.common.core.keyvalue.AbstractByIdCacheHandler
 import io.kudos.ms.sys.common.tenant.vo.SysTenantCacheEntry

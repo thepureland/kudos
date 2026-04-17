@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.accessrule.dao
+
 import io.kudos.ms.sys.common.accessrule.vo.request.SysAccessRuleIpQuery
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbTestBase

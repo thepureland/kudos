@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.common.accessrule.vo.response
+
 /**
  * 访问规则列表行 DTO。
  *

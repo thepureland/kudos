@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.common.platform.validation
+
 import io.kudos.base.bean.validation.constraint.annotations.DictItemCode
 import io.kudos.context.validation.IConstraintValidatorProviderBean
 import jakarta.validation.ConstraintValidator

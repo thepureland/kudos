@@ -1,4 +1,5 @@
 package io.kudos.ms.auth.common.group.vo.request
+
 /**
  * 用户组表单新建请求VO
  *

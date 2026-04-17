@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.dict.cache
+
 import io.kudos.ability.cache.common.kit.HashCacheKit
 import io.kudos.ms.sys.core.dict.dao.SysDictDao
 import io.kudos.ms.sys.core.dict.model.po.SysDict

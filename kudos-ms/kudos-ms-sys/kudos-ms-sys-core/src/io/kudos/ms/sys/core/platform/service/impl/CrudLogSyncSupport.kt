@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.platform.service.impl
+
 import io.kudos.base.logger.ILog
 
 internal inline fun completeCrudUpdate(

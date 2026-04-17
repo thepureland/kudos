@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.common.accessrule.enums
+
 import io.kudos.base.enums.ienums.IDictEnum
 
 /**

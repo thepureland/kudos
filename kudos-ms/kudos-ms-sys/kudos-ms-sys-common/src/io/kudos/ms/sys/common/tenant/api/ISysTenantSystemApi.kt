@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.common.tenant.api
+
 /**
  * 租户-系统关系 对外API
  *

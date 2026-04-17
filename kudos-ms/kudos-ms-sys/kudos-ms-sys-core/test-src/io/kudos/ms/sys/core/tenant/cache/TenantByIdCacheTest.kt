@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.tenant.cache
+
 import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.ms.sys.common.tenant.vo.SysTenantCacheEntry
 import io.kudos.ms.sys.core.tenant.dao.SysTenantDao

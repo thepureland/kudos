@@ -1,6 +1,8 @@
 package io.kudos.ms.sys.common.accessrule.vo.request
+
 import io.kudos.base.bean.validation.constraint.annotations.FixedLength
 import io.kudos.base.model.contract.entity.IIdEntity
+import io.kudos.ms.sys.common.accessrule.enums.IpTypeEnum
 import jakarta.validation.constraints.NotBlank
 import java.time.LocalDateTime
 
@@ -17,9 +19,13 @@ data class SysAccessRuleIpFormUpdate (
     @get:FixedLength(36)
     override val id: String,
 
-    override val ipStart: Long?,
+    override val ipv4StartStr: String?,
 
-    override val ipEnd: Long?,
+    override val ipv4EndStr: String?,
+
+    override val ipv6StartStr: String?,
+
+    override val ipv6EndStr: String?,
 
     override val ipTypeDictCode: String,
 
@@ -32,6 +38,18 @@ data class SysAccessRuleIpFormUpdate (
 
     override val remark: String?,
 
-    override val active: Boolean?,
+) : IIdEntity<String>, ISysAccessRuleIpFormBase, IIpStringToBigDecimalSupport {
 
-) : IIdEntity<String>, ISysAccessRuleIpFormBase
+    override fun getIpStartString(): String {
+        return if (IpTypeEnum.IPV4.code == ipTypeDictCode) ipv4StartStr!! else ipv6StartStr!!
+    }
+
+    override fun getIpEndString(): String {
+        return if (IpTypeEnum.IPV4.code == ipTypeDictCode) ipv4EndStr!! else ipv6EndStr!!
+    }
+
+    override fun getIpTypeDictCodeString(): String {
+        return ipTypeDictCode
+    }
+
+}

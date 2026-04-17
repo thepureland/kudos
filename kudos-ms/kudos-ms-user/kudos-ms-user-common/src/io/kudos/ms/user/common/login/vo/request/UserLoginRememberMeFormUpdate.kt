@@ -1,4 +1,5 @@
 package io.kudos.ms.user.common.login.vo.request
+
 import io.kudos.base.model.contract.entity.IIdEntity
 import java.time.LocalDateTime
 

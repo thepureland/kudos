@@ -1,4 +1,5 @@
 package io.kudos.ms.user.core.login.cache
+
 import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.ms.user.common.login.vo.UserLoginRememberMeCacheEntry
 import io.kudos.ms.user.core.login.dao.UserLoginRememberMeDao

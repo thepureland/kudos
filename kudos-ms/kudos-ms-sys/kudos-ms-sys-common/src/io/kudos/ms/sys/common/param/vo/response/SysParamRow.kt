@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.common.param.vo.response
+
 /**
  * 参数列表查询结果响应VO
  *

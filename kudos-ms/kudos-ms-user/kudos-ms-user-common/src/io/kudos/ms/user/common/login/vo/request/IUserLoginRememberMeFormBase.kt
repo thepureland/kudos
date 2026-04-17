@@ -1,4 +1,5 @@
 package io.kudos.ms.user.common.login.vo.request
+
 import java.time.LocalDateTime
 
 /**

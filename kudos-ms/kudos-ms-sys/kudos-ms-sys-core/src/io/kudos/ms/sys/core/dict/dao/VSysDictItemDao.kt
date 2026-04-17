@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.dict.dao
+
 import io.kudos.ability.data.rdb.ktorm.support.BaseReadOnlyDao
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.eq

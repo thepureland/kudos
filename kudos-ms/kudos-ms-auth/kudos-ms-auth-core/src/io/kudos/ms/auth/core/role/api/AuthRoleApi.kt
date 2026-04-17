@@ -1,4 +1,5 @@
 package io.kudos.ms.auth.core.role.api
+
 import io.kudos.ms.auth.common.role.api.IAuthRoleApi
 import io.kudos.ms.auth.common.role.vo.AuthRoleCacheEntry
 import io.kudos.ms.auth.core.role.cache.AuthRoleHashCache

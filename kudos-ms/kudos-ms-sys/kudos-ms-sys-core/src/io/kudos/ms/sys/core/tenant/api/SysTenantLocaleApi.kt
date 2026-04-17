@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.tenant.api
+
 import io.kudos.ms.sys.common.tenant.api.ISysTenantLocaleApi
 import io.kudos.ms.sys.core.tenant.service.iservice.ISysTenantLocaleService
 import org.springframework.stereotype.Service

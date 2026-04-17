@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.accessrule.service.iservice
+
 import io.kudos.base.support.service.iservice.IBaseCrudService
 import io.kudos.ms.sys.common.accessrule.vo.response.SysAccessRuleRow
 import io.kudos.ms.sys.core.accessrule.model.po.SysAccessRule

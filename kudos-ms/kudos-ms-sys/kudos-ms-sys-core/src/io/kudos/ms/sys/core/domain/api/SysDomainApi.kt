@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.domain.api
+
 import io.kudos.ms.sys.common.domain.api.ISysDomainApi
 import io.kudos.ms.sys.common.domain.vo.SysDomainCacheEntry
 import io.kudos.ms.sys.core.domain.service.iservice.ISysDomainService

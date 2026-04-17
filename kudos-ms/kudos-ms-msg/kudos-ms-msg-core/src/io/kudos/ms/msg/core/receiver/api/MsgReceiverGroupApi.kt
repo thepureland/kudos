@@ -1,4 +1,5 @@
 package io.kudos.ms.msg.core.receiver.api
+
 import io.kudos.ms.msg.common.receiver.api.IMsgReceiverGroupApi
 import org.springframework.stereotype.Service
 

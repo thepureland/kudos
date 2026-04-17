@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.common.resource.vo.response
+
 /**
  * 系统菜单树结点响应VO
  *

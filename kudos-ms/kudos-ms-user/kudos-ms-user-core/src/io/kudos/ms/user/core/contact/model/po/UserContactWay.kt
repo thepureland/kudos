@@ -1,4 +1,5 @@
 package io.kudos.ms.user.core.contact.model.po
+
 import io.kudos.ability.data.rdb.ktorm.support.DbEntityFactory
 import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
 import java.time.LocalDateTime

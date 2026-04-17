@@ -27,6 +27,7 @@ import org.ktorm.schema.Table
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
 import kotlin.reflect.KProperty1
+import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
 
@@ -37,6 +38,7 @@ import kotlin.reflect.full.primaryConstructor
  * @param E 实体类型
  * @param T 数据库表-实体关联对象的类型
  * @author K
+ * @author AI: Cursor
  * @since 1.0.0
  */
 open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBaseReadOnlyDao<PK, E> {
@@ -1262,6 +1264,14 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         propertyValues: Map<String, Any?>,
         defaultValues: Map<String, Any?> = emptyMap()
     ): R {
+        // Ktorm 接口型 PO（companion 继承 DbEntityFactory / Entity.Factory）无 Kotlin 构造器，须通过 Entity.create 实例化。
+        if (destClass.isSubclassOf(Entity::class)) {
+            @Suppress("UNCHECKED_CAST")
+            val entity = Entity.create(destClass as KClass<Entity<*>>) as R
+            populateResultItem(entity, defaultValues + propertyValues)
+            return entity
+        }
+
         // 兼容传统 JavaBean/普通 Kotlin 类：优先走无参构造 + 属性回填。
         val emptyConstructor = destClass.constructors.firstOrNull { it.parameters.isEmpty() }
         if (emptyConstructor != null) {

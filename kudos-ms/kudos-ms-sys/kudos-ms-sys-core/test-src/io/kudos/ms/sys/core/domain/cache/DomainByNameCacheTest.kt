@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.domain.cache
+
 import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.ms.sys.common.domain.vo.SysDomainCacheEntry
 import io.kudos.ms.sys.core.domain.dao.SysDomainDao

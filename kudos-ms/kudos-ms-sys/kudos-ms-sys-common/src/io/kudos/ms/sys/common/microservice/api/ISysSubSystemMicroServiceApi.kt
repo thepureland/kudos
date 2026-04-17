@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.common.microservice.api
+
 /**
  * 子系统-微服务关系 对外API
  *

@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.param.api
+
 import io.kudos.ms.sys.common.param.api.ISysParamApi
 import io.kudos.ms.sys.common.param.vo.SysParamCacheEntry
 import io.kudos.ms.sys.core.param.service.iservice.ISysParamService

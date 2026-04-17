@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.common.dict.api
+
 import io.kudos.ms.sys.common.dict.vo.SysDictItemCacheEntry
 
 

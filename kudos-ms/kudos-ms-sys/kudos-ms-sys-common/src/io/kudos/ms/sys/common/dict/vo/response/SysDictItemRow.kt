@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.common.dict.vo.response
+
 /**
  * 字典项列表查询结果响应VO
  *

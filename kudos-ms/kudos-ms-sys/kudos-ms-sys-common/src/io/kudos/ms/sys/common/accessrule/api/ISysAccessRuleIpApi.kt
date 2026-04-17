@@ -1,7 +1,8 @@
 package io.kudos.ms.sys.common.accessrule.api
+
 import io.kudos.ms.sys.common.accessrule.vo.SysAccessRuleIpCacheEntry
-import io.kudos.ms.sys.common.accessrule.vo.request.SysAccessRuleIpBatchItem
 import io.kudos.ms.sys.common.accessrule.vo.response.SysAccessRuleIpRow
+import java.math.BigDecimal
 
 
 /**
@@ -33,21 +34,12 @@ interface ISysAccessRuleIpApi {
     /**
      * 检查IP是否允许访问
      *
-     * @param ip IP地址（long类型）
+     * @param ip IP地址
      * @param systemCode 系统编码
      * @param tenantId 租户id，可以为null
      * @return 是否允许访问
      */
-    fun checkIpAccess(ip: Long, systemCode: String, tenantId: String?): Boolean
-
-    /**
-     * 批量保存或更新IP规则
-     *
-     * @param ruleId 规则id
-     * @param ips IP规则载体列表
-     * @return 成功保存或更新的数量
-     */
-    fun batchSaveOrUpdate(ruleId: String, ips: List<SysAccessRuleIpBatchItem>): Int
+    fun checkIpAccess(ip: BigDecimal, systemCode: String, tenantId: String?): Boolean
 
     /**
      * 删除规则的所有IP

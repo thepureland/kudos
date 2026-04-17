@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.cache.service.iservice
+
 import io.kudos.base.support.service.iservice.IBaseCrudService
 import io.kudos.ms.sys.common.cache.vo.SysCacheCacheEntry
 import io.kudos.ms.sys.core.cache.model.po.SysCache

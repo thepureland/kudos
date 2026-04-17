@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.tenant.dao
+
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.ms.sys.core.tenant.model.po.SysTenant
 import io.kudos.ms.sys.core.tenant.model.table.SysTenants

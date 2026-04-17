@@ -1,4 +1,5 @@
 package io.kudos.ms.auth.common.group.enums
+
 import io.kudos.base.enums.ienums.IErrorCodeEnum
 
 /**

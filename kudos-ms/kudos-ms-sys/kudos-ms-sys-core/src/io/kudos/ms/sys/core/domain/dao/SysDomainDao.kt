@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.domain.dao
+
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.ms.sys.core.domain.model.po.SysDomain
 import io.kudos.ms.sys.core.domain.model.table.SysDomains

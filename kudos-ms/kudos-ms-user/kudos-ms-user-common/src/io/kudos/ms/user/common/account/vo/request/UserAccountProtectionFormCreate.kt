@@ -1,4 +1,5 @@
 package io.kudos.ms.user.common.account.vo.request
+
 /**
  * 用户账号保护表单新建请求VO
  *

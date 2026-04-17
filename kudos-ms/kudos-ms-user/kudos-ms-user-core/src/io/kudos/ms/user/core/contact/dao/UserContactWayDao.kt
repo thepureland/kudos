@@ -1,4 +1,5 @@
 package io.kudos.ms.user.core.contact.dao
+
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.ms.user.core.contact.model.po.UserContactWay
 import io.kudos.ms.user.core.contact.model.table.UserContactWays

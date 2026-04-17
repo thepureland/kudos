@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.i18n.service.iservice
+
 import io.kudos.base.support.service.iservice.IBaseCrudService
 import io.kudos.ms.sys.common.i18n.vo.SysI18nCacheEntry
 import io.kudos.ms.sys.common.i18n.vo.request.SysI18nFormUpdate

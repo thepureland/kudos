@@ -1,4 +1,5 @@
 package io.kudos.ms.auth.common.role.vo
+
 import io.kudos.base.model.contract.entity.IIdEntity
 import java.io.Serializable
 import java.time.LocalDateTime

@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.dict.model.table
+
 import io.kudos.ability.data.rdb.ktorm.support.StringIdTable
 import io.kudos.ms.sys.core.dict.model.po.VSysDictItem
 import org.ktorm.schema.boolean

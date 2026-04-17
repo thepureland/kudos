@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.accessrule.service.iservice
+
 import io.kudos.base.support.service.iservice.IBaseReadOnlyService
 import io.kudos.ms.sys.common.accessrule.vo.response.VSysAccessRuleWithIpRow
 import io.kudos.ms.sys.core.accessrule.model.po.VSysAccessRuleWithIp

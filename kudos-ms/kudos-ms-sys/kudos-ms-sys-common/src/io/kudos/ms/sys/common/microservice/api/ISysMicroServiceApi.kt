@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.common.microservice.api
+
 import io.kudos.ms.sys.common.microservice.vo.SysMicroServiceCacheEntry
 
 

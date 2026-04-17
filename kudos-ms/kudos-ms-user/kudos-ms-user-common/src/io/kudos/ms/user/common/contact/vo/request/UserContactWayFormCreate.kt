@@ -1,4 +1,5 @@
 package io.kudos.ms.user.common.contact.vo.request
+
 /**
  * 用户联系方式表单新建请求VO
  *

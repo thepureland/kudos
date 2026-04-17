@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.common.accessrule.api
+
 import io.kudos.ms.sys.common.accessrule.vo.response.SysAccessRuleRow
 
 

@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.domain.service.iservice
+
 import io.kudos.base.support.service.iservice.IBaseCrudService
 import io.kudos.ms.sys.common.domain.vo.SysDomainCacheEntry
 import io.kudos.ms.sys.common.domain.vo.response.SysDomainRow

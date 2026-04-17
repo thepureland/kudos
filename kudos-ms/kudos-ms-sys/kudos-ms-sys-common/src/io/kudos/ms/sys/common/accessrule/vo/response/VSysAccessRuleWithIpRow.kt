@@ -1,4 +1,6 @@
 package io.kudos.ms.sys.common.accessrule.vo.response
+
+import java.math.BigDecimal
 import java.time.LocalDateTime
 
 
@@ -47,9 +49,9 @@ data class VSysAccessRuleWithIpRow(
     /** sys_access_rule_ip.id，无 IP 子行时为 null */
     val ipId: String? = null,
 
-    val ipStart: Long? = null,
+    val ipStart: BigDecimal? = null,
 
-    val ipEnd: Long? = null,
+    val ipEnd: BigDecimal? = null,
 
     val ipTypeDictCode: String? = null,
 
@@ -75,4 +77,18 @@ data class VSysAccessRuleWithIpRow(
 
     val updateTime: LocalDateTime? = null,
 
-)
+): IIpBigDecimalToStringSupport {
+
+    override fun getIpStartBigDecimal(): BigDecimal? {
+        return ipStart
+    }
+
+    override fun getIpEndBigDecimal(): BigDecimal? {
+        return ipEnd
+    }
+
+    override fun getIpTypeDictCodeStr(): String? {
+        return ipTypeDictCode
+    }
+
+}

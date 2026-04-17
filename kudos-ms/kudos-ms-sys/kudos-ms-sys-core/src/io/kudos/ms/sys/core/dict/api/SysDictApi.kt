@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.dict.api
+
 import io.kudos.ms.sys.common.dict.api.ISysDictApi
 import io.kudos.ms.sys.common.dict.vo.SysDictItemCacheEntry
 import io.kudos.ms.sys.core.dict.service.iservice.ISysDictService

@@ -1,4 +1,5 @@
 package io.kudos.ms.user.common.contact.enums
+
 import io.kudos.base.enums.ienums.IErrorCodeEnum
 
 /**

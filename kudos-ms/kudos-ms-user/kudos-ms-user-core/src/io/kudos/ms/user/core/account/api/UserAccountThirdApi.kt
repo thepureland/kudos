@@ -1,4 +1,5 @@
 package io.kudos.ms.user.core.account.api
+
 import io.kudos.ms.user.common.account.api.IUserAccountThirdApi
 import org.springframework.stereotype.Service
 

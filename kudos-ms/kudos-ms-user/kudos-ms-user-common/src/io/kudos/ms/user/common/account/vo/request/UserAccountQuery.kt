@@ -1,4 +1,5 @@
 package io.kudos.ms.user.common.account.vo.request
+
 import io.kudos.base.model.payload.ListSearchPayload
 import io.kudos.ms.user.common.account.vo.response.UserAccountRow
 

@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.dict.model.table
+
 import io.kudos.ability.data.rdb.ktorm.support.ManagedTable
 import io.kudos.ms.sys.core.dict.model.po.SysDict
 import org.ktorm.schema.varchar

@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.common.i18n.vo.request
+
 /**
  * 批量i18n信息的请求Vo
  *

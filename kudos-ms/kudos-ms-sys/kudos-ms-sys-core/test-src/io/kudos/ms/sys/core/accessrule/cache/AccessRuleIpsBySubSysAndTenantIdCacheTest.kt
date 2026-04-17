@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.accessrule.cache
+
 import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.ms.sys.common.accessrule.vo.SysAccessRuleIpCacheEntry
 import io.kudos.ms.sys.core.accessrule.dao.SysAccessRuleDao
@@ -7,6 +8,8 @@ import io.kudos.ms.sys.core.accessrule.model.po.SysAccessRuleIp
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
+import java.math.BigDecimal
+import java.math.BigInteger
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 import kotlin.test.Test
@@ -215,12 +218,14 @@ class AccessRuleIpsBySubSysAndTenantIdCacheTest : RdbAndRedisCacheTestBase() {
         assertFalse(cacheItems2.any { it.id == ipRuleId })
     }
     
+    /** 插入一条与现有测试数据风格一致的 IPv4 规则（非 ipv6，故止址两列为 null）。 */
     private fun insertNewRecordToDb(parentRuleIp: String): SysAccessRuleIp {
-        val ipRule = SysAccessRuleIp().apply {
-            this.parentRuleId = parentRuleIp
-            ipStart = 3232235650
-            ipEnd = 3232235650
+        val ipRule = SysAccessRuleIp {
+            parentRuleId = parentRuleIp
+            ipStart = BigDecimal(BigInteger.valueOf(3232235650L))
+            ipEnd = BigDecimal(BigInteger.valueOf(3232235650L))
             ipTypeDictCode = "1"
+            active = true
         }
         dao.insert(ipRule)
         return ipRule

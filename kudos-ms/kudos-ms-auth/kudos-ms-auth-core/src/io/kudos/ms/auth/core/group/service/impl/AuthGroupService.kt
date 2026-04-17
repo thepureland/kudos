@@ -1,4 +1,5 @@
 package io.kudos.ms.auth.core.group.service.impl
+
 import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.ms.auth.core.group.dao.AuthGroupDao
 import io.kudos.ms.auth.core.group.model.po.AuthGroup

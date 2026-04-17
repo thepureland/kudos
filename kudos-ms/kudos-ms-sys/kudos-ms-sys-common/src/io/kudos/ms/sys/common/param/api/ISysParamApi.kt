@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.common.param.api
+
 import io.kudos.ms.sys.common.param.vo.SysParamCacheEntry
 
 

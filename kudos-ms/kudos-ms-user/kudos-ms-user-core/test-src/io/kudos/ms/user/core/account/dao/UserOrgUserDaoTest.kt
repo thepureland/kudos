@@ -1,4 +1,5 @@
 package io.kudos.ms.user.core.account.dao
+
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbTestBase
 import jakarta.annotation.Resource

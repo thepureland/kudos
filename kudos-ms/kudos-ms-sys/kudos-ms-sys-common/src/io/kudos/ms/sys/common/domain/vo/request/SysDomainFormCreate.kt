@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.common.domain.vo.request
+
 /**
  * 域名表单新建请求VO
  *

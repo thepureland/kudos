@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.common.tenant.api
+
 import io.kudos.ms.sys.common.tenant.vo.SysTenantCacheEntry
 
 

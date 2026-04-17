@@ -1,4 +1,5 @@
 package io.kudos.ms.msg.core.receiver.dao
+
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.ms.msg.core.receiver.model.po.MsgReceiverGroup
 import io.kudos.ms.msg.core.receiver.model.table.MsgReceiverGroups

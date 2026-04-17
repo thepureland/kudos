@@ -1,4 +1,5 @@
 package io.kudos.ms.user.core.org.service
+
 import io.kudos.ms.user.core.org.dao.UserOrgDao
 import io.kudos.ms.user.core.org.service.iservice.IUserOrgService
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled

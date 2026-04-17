@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.microservice.api
+
 import io.kudos.ms.sys.common.microservice.api.ISysMicroServiceApi
 import io.kudos.ms.sys.common.microservice.vo.SysMicroServiceCacheEntry
 import io.kudos.ms.sys.core.microservice.service.iservice.ISysMicroServiceService

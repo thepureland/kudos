@@ -1,4 +1,5 @@
 package io.kudos.ms.msg.core.receiver.service.impl
+
 import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.ms.msg.core.receiver.dao.MsgReceiverGroupDao
 import io.kudos.ms.msg.core.receiver.model.po.MsgReceiverGroup

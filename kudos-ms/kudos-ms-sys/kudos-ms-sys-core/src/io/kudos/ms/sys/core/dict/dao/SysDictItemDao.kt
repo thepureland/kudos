@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.dict.dao
+
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.ms.sys.core.dict.model.po.SysDictItem
 import io.kudos.ms.sys.core.dict.model.table.SysDictItems

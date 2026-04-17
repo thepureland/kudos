@@ -1,4 +1,5 @@
 package io.kudos.ms.user.core.account.model.table
+
 import io.kudos.ability.data.rdb.ktorm.support.StringIdTable
 import io.kudos.ms.user.core.account.model.po.UserAccount
 import org.ktorm.schema.*

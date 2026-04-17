@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.common.resource.vo.request
+
 /**
  * 资源表单新建请求VO
  *

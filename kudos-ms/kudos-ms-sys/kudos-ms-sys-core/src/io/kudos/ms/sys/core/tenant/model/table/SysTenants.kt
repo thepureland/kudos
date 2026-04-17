@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.tenant.model.table
+
 import io.kudos.ability.data.rdb.ktorm.support.ManagedTable
 import io.kudos.ms.sys.core.tenant.model.po.SysTenant
 import org.ktorm.schema.varchar

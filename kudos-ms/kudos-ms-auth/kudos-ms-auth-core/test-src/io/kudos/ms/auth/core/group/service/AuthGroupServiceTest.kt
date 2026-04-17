@@ -1,4 +1,5 @@
 package io.kudos.ms.auth.core.group.service
+
 import io.kudos.ms.auth.core.group.service.iservice.IAuthGroupService
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbAndRedisCacheTestBase

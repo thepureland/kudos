@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.common.platform.consts
+
 /**
  * sys定义的全局常量
  *

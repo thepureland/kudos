@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.common.i18n.api
+
 import io.kudos.ms.sys.common.i18n.vo.request.SysI18nFormUpdate
 
 

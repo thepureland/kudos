@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.tenant.cache
+
 import io.kudos.ms.sys.core.tenant.dao.SysTenantSystemDao
 import io.kudos.ms.sys.core.tenant.model.po.SysTenantSystem
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled

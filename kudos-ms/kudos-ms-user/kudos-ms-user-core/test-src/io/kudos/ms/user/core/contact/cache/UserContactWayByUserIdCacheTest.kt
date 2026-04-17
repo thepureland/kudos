@@ -1,4 +1,5 @@
 package io.kudos.ms.user.core.contact.cache
+
 import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.ms.user.common.contact.vo.UserContactWayCacheEntry
 import io.kudos.ms.user.core.contact.dao.UserContactWayDao

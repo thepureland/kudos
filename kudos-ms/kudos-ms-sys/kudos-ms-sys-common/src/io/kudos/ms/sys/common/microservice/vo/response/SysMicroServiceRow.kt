@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.common.microservice.vo.response
+
 /**
  * 微服务列表查询结果响应VO
  *

@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.param.model.table
+
 import io.kudos.ability.data.rdb.ktorm.support.ManagedTable
 import io.kudos.ms.sys.core.param.model.po.SysParam
 import org.ktorm.schema.int

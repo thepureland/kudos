@@ -1,4 +1,5 @@
 package io.kudos.ms.auth.core.group.cache
+
 import io.kudos.ms.auth.core.group.dao.AuthGroupUserDao
 import io.kudos.ms.auth.core.group.model.po.AuthGroupUser
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled

@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.common.microservice.vo.request
+
 /**
  * 微服务表单新建请求VO
  *

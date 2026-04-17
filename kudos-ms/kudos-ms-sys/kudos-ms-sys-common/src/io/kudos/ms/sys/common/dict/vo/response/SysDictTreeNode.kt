@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.common.dict.vo.response
+
 import io.kudos.base.model.contract.result.IdJsonResult
 
 /**

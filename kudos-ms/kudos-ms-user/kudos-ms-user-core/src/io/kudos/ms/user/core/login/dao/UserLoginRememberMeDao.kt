@@ -1,4 +1,5 @@
 package io.kudos.ms.user.core.login.dao
+
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.ms.user.core.login.model.po.UserLoginRememberMe
 import io.kudos.ms.user.core.login.model.table.UserLoginRememberMes

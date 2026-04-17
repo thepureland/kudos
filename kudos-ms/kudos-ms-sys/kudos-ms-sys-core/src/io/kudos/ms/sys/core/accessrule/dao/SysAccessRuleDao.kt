@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.core.accessrule.dao
+
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.eq
@@ -48,16 +49,16 @@ open class SysAccessRuleDao : BaseCrudDao<String, SysAccessRule, SysAccessRules>
     }
 
     /**
-     * 按系统编码与租户维度加载缓存项；[tenantKey] 为空串时匹配 `tenant_id IS NULL`。
+     * 按系统编码与租户维度加载缓存项；[tenantId] 为空串时匹配 `tenant_id IS NULL`。
      *
      * @param systemCode 系统编码
-     * @param tenantKey 租户 id，空串表示平台级
+     * @param tenantId 租户 id，空串表示平台级
      * @return 最多一行，不存在时 `null`
      */
-    open fun fetchCacheEntryBySystemCodeAndTenantKey(systemCode: String, tenantKey: String): SysAccessRuleCacheEntry? {
+    open fun fetchCacheEntryBySystemCodeAndtenantId(systemCode: String, tenantId: String): SysAccessRuleCacheEntry? {
         val sc = systemCode.trim()
         if (sc.isEmpty()) return null
-        val tid = tenantKey.trim().takeIf { it.isNotEmpty() }
+        val tid = tenantId.trim().takeIf { it.isNotEmpty() }
         val criteria = if (tid == null) {
             Criteria.and(
                 SysAccessRule::systemCode eq sc,

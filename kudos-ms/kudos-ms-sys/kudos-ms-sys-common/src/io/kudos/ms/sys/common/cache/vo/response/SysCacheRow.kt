@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.common.cache.vo.response
+
 /**
  * 缓存列表查询结果响应VO
  *

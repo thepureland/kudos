@@ -1,4 +1,5 @@
 package io.kudos.ms.user.common.login.vo.request
+
 import io.kudos.base.model.payload.ListSearchPayload
 import io.kudos.ms.user.common.login.vo.response.UserLoginRememberMeRow
 

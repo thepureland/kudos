@@ -3,8 +3,8 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 dependencies {
     api(project(":kudos-context"))
-    
-
+    compileOnly(platform(libs.spring.boot.bom))
+    compileOnly("com.fasterxml.jackson.core:jackson-annotations")
 }
 
 tasks.withType<KotlinCompile>().configureEach {

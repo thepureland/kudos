@@ -579,6 +579,18 @@ internal open class BaseReadOnlyDaoTest {
         assert(result.first() is TestTableKtorm)
         assertEquals(-1, (result.first() as TestTableKtorm).id)
 
+        // 显式指定返回实体类型为 Ktorm 接口型 PO（与表实体一致，须走 Entity.create，而非反射构造器）
+        searchPayload1.returnEntityClassField = TestTableKtorm::class
+        searchPayload1.pageNo = null
+        searchPayload1.pageSize = null
+        searchPayload1.orders = emptyList()
+        searchPayload1.name = "name1"
+        searchPayload1.weight = 56.5
+        result = testTableDao.search(searchPayload1)
+        assertEquals(1, result.size)
+        assert(result.first() is TestTableKtorm)
+        assertEquals(-1, (result.first() as TestTableKtorm).id)
+
         // 分页 & 排序（TestTableKtorm 仅 name、height 带 @Sortable；按 name 升序合法）
         searchPayload1.name = null
         searchPayload1.weight = null

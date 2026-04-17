@@ -1,4 +1,5 @@
 package io.kudos.ms.sys.common.dict.api
+
 /**
  * 字典项 对外API
  *

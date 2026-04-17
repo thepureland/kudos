@@ -1,8 +1,8 @@
 package io.kudos.ms.sys.common.accessrule.vo.request
+
 import io.kudos.base.model.payload.ListSearchPayload
 import io.kudos.ms.sys.common.accessrule.vo.response.SysAccessRuleIpRow
 import java.time.LocalDateTime
-
 
 /**
  * IP访问规则列表查询条件请求VO
@@ -10,16 +10,16 @@ import java.time.LocalDateTime
  * @author K
  * @since 1.0.0
  */
-data class SysAccessRuleIpQuery (
+data class SysAccessRuleIpQuery(
 
     /** 主键 */
     val id: String? = null,
 
-    /** ip起 */
-    val ipStart: Long? = null,
+    /** ip 起（字符串表示） */
+    val ipStartStr: String? = null,
 
-    /** ip止 */
-    val ipEnd: Long? = null,
+    /** ip 止（字符串表示）*/
+    val ipEndStr: String? = null,
 
     /** ip类型字典代码 */
     val ipTypeDictCode: String? = null,
@@ -54,12 +54,22 @@ data class SysAccessRuleIpQuery (
      */
     val explicitNullProperties: List<String>? = null,
 
-) : ListSearchPayload() {
+) : ListSearchPayload(), IIpStringToBigDecimalSupport {
 
     override fun getReturnEntityClass() = SysAccessRuleIpRow::class
 
     override fun isUnpagedSearchAllowed(): Boolean = true
 
-    override fun getNullProperties(): List<String>? = explicitNullProperties
+    override fun getIpStartString(): String? {
+        return ipStartStr
+    }
+
+    override fun getIpEndString(): String? {
+        return ipEndStr
+    }
+
+    override fun getIpTypeDictCodeString(): String? {
+        return ipTypeDictCode
+    }
 
 }

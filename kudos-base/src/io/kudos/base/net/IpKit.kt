@@ -1,6 +1,8 @@
 package io.kudos.base.net
 
 import io.kudos.base.logger.LogFactory
+import java.math.BigDecimal
+import java.math.BigInteger
 import java.net.Inet6Address
 import java.net.InetAddress
 import java.net.UnknownHostException
@@ -11,6 +13,7 @@ import java.util.Locale
  * IP工具类，支持ipv4和ipv6
  *
  * @author K
+ * @author AI: Cursor
  * @since 1.0.0
  */
 object IpKit {
@@ -19,6 +22,29 @@ object IpKit {
 
     // 二进制32位为全1的整数值
     private const val ALL32ONE = 4294967295L
+
+    /** 128 位无符号最大值（含），与 `NUMERIC(39,0)` 存 IPv6 整值时一致。 */
+    private val UINT128_MAX: BigInteger = BigInteger.ONE.shiftLeft(128).subtract(BigInteger.ONE)
+
+    /**
+     * 与库表 `NUMERIC(39,0)` 存 IP 整值时的解析策略（查询条件、表单入库等共用）。
+     */
+    enum class IpStorageNumericMode {
+        /**
+         * 纯十进制串优先；否则合法 IPv4 点分；否则合法 IPv6；再否则按十进制串兜底。
+         */
+        AUTO,
+
+        /**
+         * 按 IPv4：纯十进制串，或经 [getNormalIpv4]/[getFixLengthIpv4] 与 [ipv4StringToLong] 转无符号 32 位；无法再解析时按十进制串兜底。
+         */
+        IPV4,
+
+        /**
+         * 按 IPv6：经 [toFullIpv6] 与 [fullIpv6ColonGroupsTextToBigInteger]；[toFullIpv6] 失败时按十进制串兜底。
+         */
+        IPV6,
+    }
 
     /**
      * 验证指定IP地址是否合法的ipv4
@@ -280,6 +306,116 @@ object IpKit {
             sb.append(String.format(Locale.ROOT, "%04X", value))
         }
         return sb.toString()
+    }
+
+    /**
+     * 将 [toFullIpv6] 输出的 8 段全大写十六进制文本转为 128 位**无符号**整数（大端组序），与 `NUMERIC(39,0)` 存值一致。
+     *
+     * @param full 形如 `0000:0000:0000:0000:0000:FFFF:C0A8:0001`
+     * @throws IllegalArgumentException 段数不是 8、段值越界或整体超过 2¹²⁸−1
+     */
+    fun fullIpv6ColonGroupsTextToBigInteger(full: String): BigInteger {
+        val parts = full.split(':')
+        require(parts.size == 8) { "IPv6 须为全格式 8 段" }
+        var acc = BigInteger.ZERO
+        for (p in parts) {
+            val n = p.toInt(16)
+            require(n in 0..0xffff)
+            acc = acc.shiftLeft(16).add(BigInteger.valueOf(n.toLong()))
+        }
+        require(acc.signum() >= 0 && acc <= UINT128_MAX) { "IPv6 数值越界" }
+        return acc
+    }
+
+    /** [fullIpv6ColonGroupsTextToBigInteger] 的 [BigDecimal] 形式，便于与 Ktorm/JDBC `NUMERIC` 列绑定。 */
+    fun fullIpv6ColonGroupsTextToUnsignedDecimal(full: String): BigDecimal =
+        BigDecimal(fullIpv6ColonGroupsTextToBigInteger(full))
+
+    /**
+     * 将库内 `NUMERIC(39,0)` / [fullIpv6ColonGroupsTextToUnsignedDecimal] 表示的无符号 128 位 IPv6 整值转为全格式 IPv6 文本（与 [toFullIpv6] 输出风格一致：8 段、每段 4 位大写十六进制）。
+     *
+     * @param value 无符号整数；非整数、为负或大于 2¹²⁸−1 时无法表示为 IPv6 存储值
+     * @return 形如 `0000:0000:0000:0000:0000:FFFF:C0A8:0001` 的字符串；[value] 为 null 或非法时返回空串
+     */
+    fun ipv6BigDecimalToFullString(value: BigDecimal?): String {
+        if (value == null) return ""
+        val bi = try {
+            value.toBigIntegerExact()
+        } catch (_: ArithmeticException) {
+            return ""
+        }
+        if (bi.signum() < 0 || bi > UINT128_MAX) return ""
+        val sb = StringBuilder(39)
+        for (i in 0 until 8) {
+            if (i > 0) sb.append(':')
+            val shift = 112 - 16 * i
+            val group = bi.shiftRight(shift).and(BigInteger.valueOf(0xffffL)).toInt()
+            sb.append(String.format(Locale.ROOT, "%04X", group))
+        }
+        return sb.toString()
+    }
+
+    /**
+     * 将用户输入的 IP 文本转为与库内 `ip_start`/`ip_end`（`NUMERIC(39,0)`）一致的**无符号** [BigDecimal]。
+     *
+     * @param ip 点分 IPv4、缩写/全格式 IPv6、或纯十进制整数字符串
+     * @param mode 见 [IpStorageNumericMode]
+     * @return 无法解析且无法按十进制兜底时返回 null；[ip] 仅空白时返回 null
+     */
+    fun ipTextToUnsignedStorageDecimal(
+        ip: String,
+        mode: IpStorageNumericMode = IpStorageNumericMode.AUTO,
+    ): BigDecimal? {
+        val s = ip.trim()
+        if (s.isEmpty()) return null
+        return when (mode) {
+            IpStorageNumericMode.IPV6 -> parseIpv6PreferToDecimal(s)
+            IpStorageNumericMode.IPV4 -> parseIpv4PreferToDecimal(s)
+            IpStorageNumericMode.AUTO -> parseAutoToDecimal(s)
+        }
+    }
+
+    private fun parseIpv6PreferToDecimal(s: String): BigDecimal? {
+        return runCatching {
+            val full = toFullIpv6(s)
+            fullIpv6ColonGroupsTextToUnsignedDecimal(full)
+        }.getOrElse {
+            runCatching { BigDecimal(s) }.getOrNull()
+        }
+    }
+
+    private fun parseIpv4PreferToDecimal(s: String): BigDecimal? {
+        return when {
+            s.all { it.isDigit() } -> runCatching { BigDecimal(s) }.getOrNull()
+            else -> ipv4DottedOrFixedToUnsignedDecimal(s)
+        }
+    }
+
+    private fun ipv4DottedOrFixedToUnsignedDecimal(s: String): BigDecimal? {
+        var normal = getNormalIpv4(s)
+        if (normal.isEmpty()) {
+            val fixed = getFixLengthIpv4(s)
+            normal = if (fixed.isEmpty()) "" else getNormalIpv4(fixed)
+        }
+        if (normal.isEmpty()) return runCatching { BigDecimal(s) }.getOrNull()
+        val l = ipv4StringToLong(normal)
+        return if (l < 0) null else BigDecimal(BigInteger.valueOf(l and 0xFFFFFFFFL))
+    }
+
+    private fun parseAutoToDecimal(s: String): BigDecimal? {
+        return when {
+            s.all { it.isDigit() } -> runCatching { BigDecimal(s) }.getOrNull()
+            isValidIpv4(s) -> {
+                val n = getNormalIpv4(s)
+                val l = ipv4StringToLong(n)
+                if (l < 0) runCatching { BigDecimal(s) }.getOrNull()
+                else BigDecimal(BigInteger.valueOf(l and 0xFFFFFFFFL))
+            }
+            isValidIpv6(s) -> runCatching {
+                fullIpv6ColonGroupsTextToUnsignedDecimal(toFullIpv6(s))
+            }.getOrNull()
+            else -> runCatching { BigDecimal(s) }.getOrNull()
+        }
     }
 
 }

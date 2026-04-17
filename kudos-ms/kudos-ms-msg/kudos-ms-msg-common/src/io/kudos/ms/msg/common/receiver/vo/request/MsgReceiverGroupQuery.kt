@@ -1,4 +1,5 @@
 package io.kudos.ms.msg.common.receiver.vo.request
+
 import io.kudos.base.model.payload.ListSearchPayload
 import io.kudos.ms.msg.common.receiver.vo.response.MsgReceiverGroupRow
 
