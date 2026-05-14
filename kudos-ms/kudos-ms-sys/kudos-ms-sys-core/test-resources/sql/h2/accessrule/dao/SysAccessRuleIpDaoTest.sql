@@ -13,6 +13,6 @@ merge into "sys_access_rule" ("id", "tenant_id", "system_code", "access_rule_typ
     ('40000000-0000-0000-0000-000000002667', '40000000-0000-0000-0000-000000002666', 'svc-system-arip-dao-test-2', 'RULE_TYPE_BLACKLIST', 'from SysAccessRuleIpDaoTest', false, false);
 
 merge into "sys_access_rule_ip" ("id", "ip_start", "ip_end", "ip_type_dict_code", "expiration_time", "parent_rule_id", "remark", "active", "built_in") values
-    ('40000000-0000-0000-0000-000000002666', 192168001001, 192168001001, 'IP_TYPE_IPV4', null, '40000000-0000-0000-0000-000000002666', 'from SysAccessRuleIpDaoTest', true, false),
-    ('40000000-0000-0000-0000-000000002667', 192168001002, 192168001002, 'IP_TYPE_IPV4', null, '40000000-0000-0000-0000-000000002666', 'from SysAccessRuleIpDaoTest', true, false),
-    ('40000000-0000-0000-0000-000000002668', 192168001003, 192168001003, 'IP_TYPE_IPV4', null, '40000000-0000-0000-0000-000000002666', 'from SysAccessRuleIpDaoTest', false, false);
+    ('40000000-0000-0000-0000-000000002666', 192168001001, 192168001001, 'ipv4', null, '40000000-0000-0000-0000-000000002666', 'from SysAccessRuleIpDaoTest', true, false),
+    ('40000000-0000-0000-0000-000000002667', 192168001002, 192168001002, 'ipv4', null, '40000000-0000-0000-0000-000000002666', 'from SysAccessRuleIpDaoTest', true, false),
+    ('40000000-0000-0000-0000-000000002668', 192168001003, 192168001003, 'ipv4', null, '40000000-0000-0000-0000-000000002666', 'from SysAccessRuleIpDaoTest', false, false);
