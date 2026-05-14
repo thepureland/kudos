@@ -17,8 +17,6 @@ import org.hibernate.validator.constraintvalidation.HibernateConstraintValidator
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 import java.lang.reflect.Proxy
-import java.util.Collections
-import java.util.WeakHashMap
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.full.declaredMemberProperties
 
@@ -69,7 +67,22 @@ class ConstraintsValidator : ConstraintValidator<Constraints, Any?> {
         private val isValidMethodCache = ConcurrentHashMap<Class<*>, Method>()
         private val annotationAttributeMethodsCache = ConcurrentHashMap<Class<out Annotation>, List<Method>>()
         private val annotationMessageMethodCache = ConcurrentHashMap<Class<out Annotation>, Method>()
-        private val constraintDescriptorCache = Collections.synchronizedMap(WeakHashMap<Annotation, ConstraintDescriptor<*>>())
+        // 用 ConcurrentHashMap 取代了原先 `Collections.synchronizedMap(WeakHashMap)`：
+        // - 原实现下所有 get/put 都串行在同一把锁上，是校验热路径上的真实争用点
+        // - 弱引用在典型 Spring 应用里没有实际收益（注解被宿主类元数据强引用，生命周期 = JVM）
+        // - 配合下面 proxyConstraintDescriptor 用 computeIfAbsent，构造 + 写入是原子的
+        private val constraintDescriptorCache = ConcurrentHashMap<Annotation, ConstraintDescriptor<*>>()
+
+        /**
+         * 记录哪些 validator 实例已完成 initialize，避免每次 isValid 都重做。
+         * 配合 ValidatorFactory 的实例缓存使用：同一个 (annotation, valueClass)
+         * 命中的 validator 是同一实例，第二次起跳过 init。
+         *
+         * 用 `computeIfAbsent` 保证"init 与对其它线程可见"的原子化——并发场景下
+         * 同一 key 上只有一个线程跑 init，其它线程等待结果。
+         */
+        private val initializedValidators: MutableMap<ConstraintValidator<*, *>, Boolean> =
+            ConcurrentHashMap()
         private val excludedConstraintPropertyNames = setOf("order", "andOr", "message", "groups", "payload")
         private val emptyComposingConstraints: Set<ConstraintDescriptor<*>> = emptySet()
         private val emptyValidatorClasses: List<Class<*>> = emptyList()
@@ -172,22 +185,28 @@ class ConstraintsValidator : ConstraintValidator<Constraints, Any?> {
         context: ConstraintValidatorContext
     ): Boolean {
         val validatorClass = constraintValidator.javaClass
-        if (constraintValidator is HibernateConstraintValidator<*, *>) {
-            val initCtx = ValidationContext.getHvInitCtx()
-            val descriptor = proxyConstraintDescriptor(annotation)
-            val initMethod = hvInitMethodCache.getOrPut(validatorClass) {
-                validatorClass.methods.firstOrNull {
-                    it.name == "initialize" && it.parameterCount == 2
-                } ?: error("无法找到HibernateConstraintValidator.initialize(descriptor, initCtx)方法")
+
+        // 同一 validator 实例只 initialize 一次。后续命中直接跳过。
+        // ValidatorFactory 的实例缓存保证了：相同 (annotation, valueClass) 拿到的是同一实例。
+        initializedValidators.computeIfAbsent(constraintValidator) {
+            if (constraintValidator is HibernateConstraintValidator<*, *>) {
+                val initCtx = ValidationContext.getHvInitCtx()
+                val descriptor = proxyConstraintDescriptor(annotation)
+                val initMethod = hvInitMethodCache.getOrPut(validatorClass) {
+                    validatorClass.methods.firstOrNull {
+                        it.name == "initialize" && it.parameterCount == 2
+                    } ?: error("无法找到HibernateConstraintValidator.initialize(descriptor, initCtx)方法")
+                }
+                initMethod.invoke(constraintValidator, descriptor, initCtx)
+            } else {
+                val initMethod = initMethodCache.getOrPut(validatorClass) {
+                    validatorClass.methods.firstOrNull {
+                        it.name == "initialize" && it.parameterCount == 1
+                    } ?: error("无法找到ConstraintValidator.initialize(annotation)方法")
+                }
+                initMethod.invoke(constraintValidator, annotation)
             }
-            initMethod.invoke(constraintValidator, descriptor, initCtx)
-        } else {
-            val initMethod = initMethodCache.getOrPut(validatorClass) {
-                validatorClass.methods.firstOrNull {
-                    it.name == "initialize" && it.parameterCount == 1
-                } ?: error("无法找到ConstraintValidator.initialize(annotation)方法")
-            }
-            initMethod.invoke(constraintValidator, annotation)
+            true
         }
 
         val isValidMethod = isValidMethodCache.getOrPut(validatorClass) {
@@ -234,11 +253,10 @@ class ConstraintsValidator : ConstraintValidator<Constraints, Any?> {
      * @author AI: ChatGPT
      * @since 1.0.0
      */
-    private fun proxyConstraintDescriptor(annotation: Annotation): ConstraintDescriptor<*> {
-        synchronized(constraintDescriptorCache) {
-            constraintDescriptorCache[annotation]?.let { return it }
-        }
+    private fun proxyConstraintDescriptor(annotation: Annotation): ConstraintDescriptor<*> =
+        constraintDescriptorCache.computeIfAbsent(annotation) { buildConstraintDescriptorProxy(it) }
 
+    private fun buildConstraintDescriptorProxy(annotation: Annotation): ConstraintDescriptor<*> {
         val attributeMethods = annotationAttributeMethodsCache.getOrPut(annotation.annotationClass.java) {
             annotation.annotationClass.java.declaredMethods
                 .filter { it.parameterCount == 0 && it.name != "annotationType" }
@@ -272,17 +290,8 @@ class ConstraintsValidator : ConstraintValidator<Constraints, Any?> {
             arrayOf(ConstraintDescriptor::class.java),
             handler
         )
-        if (proxy is ConstraintDescriptor<*>) {
-            synchronized(constraintDescriptorCache) {
-                val cached = constraintDescriptorCache[annotation]
-                if (cached != null) {
-                    return cached
-                }
-                constraintDescriptorCache[annotation] = proxy
-                return proxy
-            }
-        }
-        error("构造 ConstraintDescriptor 代理失败")
+        return proxy as? ConstraintDescriptor<*>
+            ?: error("构造 ConstraintDescriptor 代理失败")
     }
 
     private fun defaultReturn(type: Class<*>): Any? = when {

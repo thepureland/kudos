@@ -111,6 +111,35 @@ internal class ListToTreeConverterTest {
     }
 
     @Test
+    fun testConvertStrictModeThrowsOnOrphan() {
+        val nodes = listOf(
+            TestTreeNode("1", null, "Root"),
+            TestTreeNode("2", "999", "Orphan")
+        )
+        val outcome = runCatching { ListToTreeConverter.convert(nodes, strict = true) }
+        assertTrue(outcome.isFailure)
+        val ex = outcome.exceptionOrNull()
+        assertTrue(ex is IllegalArgumentException, "应抛 IllegalArgumentException，实际：$ex")
+        val msg = ex.message ?: ""
+        assertTrue(msg.contains("2"), "异常消息应包含孤儿结点 id：$msg")
+        assertTrue(msg.contains("999"), "异常消息应包含缺失父 id：$msg")
+    }
+
+    @Test
+    fun testConvertStrictModeAllowsCompleteTree() {
+        // strict=true 不影响数据完整的输入
+        val nodes = listOf(
+            TestTreeNode("1", null, "Root"),
+            TestTreeNode("2", "1", "Child"),
+            TestTreeNode("3", "2", "Grandchild")
+        )
+        val tree = ListToTreeConverter.convert(nodes, strict = true)
+        assertEquals(1, tree.size)
+        assertEquals(1, tree[0]._getChildren().size)
+        assertEquals(1, tree[0]._getChildren()[0]._getChildren().size)
+    }
+
+    @Test
     fun testConvertWithCallback() {
         val nodes = listOf(
             TestTreeNode("1", null, "Root1"),

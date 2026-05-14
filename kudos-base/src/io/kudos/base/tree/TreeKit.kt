@@ -19,16 +19,20 @@ object TreeKit {
      * @param treeNodeList 结点对象列表
      * @param direction 排序，指定排序时E必须实现Comparable接口，为null将不做排序，默认为null
      * @param callback 结点挂载后的回调
+     * @param strict 严格模式：true 时遇到孤儿结点（parentId 在列表里找不到）会抛
+     *               [IllegalArgumentException]；false（默认）按现有行为记 WARN 静默丢弃
      * @return List(树根结点)
+     * @throws IllegalArgumentException 当 strict=true 且存在孤儿结点时
      * @author K
      * @since 1.0.0
      */
     fun <T, E : ITreeNode<T>> convertListToTree(
         treeNodeList: List<E>,
         direction: DirectionEnum? = null,
-        callback: ICallback<E, Unit>? = null
+        callback: ICallback<E, Unit>? = null,
+        strict: Boolean = false
     ): List<E> {
-        return ListToTreeConverter.convert(treeNodeList, direction, callback)
+        return ListToTreeConverter.convert(treeNodeList, direction, callback, strict)
     }
 
     /**

@@ -2,6 +2,7 @@ package io.kudos.base.tree
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
  * test for TreeKit
@@ -52,6 +53,18 @@ internal class TreeKitTest {
             sb.append(it._getId()).append(",")
         }
         assertEquals("00,11,21,12,", sb.toString())
+    }
+
+    @Test
+    fun convertListToTreeStrictParameterIsPassedThrough() {
+        // TreeKit 只是 ListToTreeConverter 的薄包装；这里仅验证 strict 参数透传不会丢
+        val nodes = listOf(
+            TestTreeNode("1", null, "Root"),
+            TestTreeNode("2", "999", "Orphan")
+        )
+        val outcome = runCatching { TreeKit.convertListToTree(nodes, strict = true) }
+        assertTrue(outcome.isFailure)
+        assertTrue(outcome.exceptionOrNull() is IllegalArgumentException)
     }
 
     @Test
