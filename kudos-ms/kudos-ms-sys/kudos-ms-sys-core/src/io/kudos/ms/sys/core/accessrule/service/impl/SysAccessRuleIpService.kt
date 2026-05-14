@@ -51,15 +51,18 @@ open class SysAccessRuleIpService(
     @Resource
     private lateinit var sysAccessRuleHashCache: io.kudos.ms.sys.core.accessrule.cache.SysAccessRuleHashCache
 
+    @Transactional(readOnly = true)
     override fun getIpsByRuleId(ruleId: String): List<SysAccessRuleIpRow> =
         dao.pagingSearch(SysAccessRuleIpQuery(parentRuleId = ruleId))
 
+    @Transactional(readOnly = true)
     override fun getIpsBySystemAndTenant(systemCode: String, tenantId: String?): List<SysAccessRuleIpCacheEntry> =
         accessRuleIpsBySubSysAndTenantIdCache.getAccessRuleIps(systemCode, tenantId)
 
     /**
      * 判断给定整型 IP 是否落在当前系统与租户维度下任一未过期且区间包含该值的规则内。
      */
+    @Transactional(readOnly = true)
     override fun checkIpAccess(ip: BigDecimal, systemCode: String, tenantId: String?): Boolean {
         val ipRules = getIpsBySystemAndTenant(systemCode, tenantId)
         val now = java.time.LocalDateTime.now()
