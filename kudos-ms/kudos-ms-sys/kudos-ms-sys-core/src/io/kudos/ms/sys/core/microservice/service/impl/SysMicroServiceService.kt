@@ -44,21 +44,28 @@ open class SysMicroServiceService(
         }
     }
 
+    @Transactional(readOnly = true)
     override fun getMicroServiceFromCache(code: String): SysMicroServiceCacheEntry? = sysMicroServiceHashCache.getMicroServiceByCode(code)
 
+    @Transactional(readOnly = true)
     override fun getFullMicroServiceTree(): List<IdAndNameTreeNode<String>> =
         ListToTreeConverter.convert(getAllMicroServicesFromCache().map(::toTreeNode))
 
+    @Transactional(readOnly = true)
     override fun getAllMicroServicesFromCache(): List<SysMicroServiceCacheEntry> = sysMicroServiceHashCache.getAllMicroServices()
 
+    @Transactional(readOnly = true)
     override fun getMicroServicesExcludeAtomicFromCache(): List<SysMicroServiceCacheEntry> =
         sysMicroServiceHashCache.getMicroServicesByType(false)
 
+    @Transactional(readOnly = true)
     override fun getAtomicServicesFromCache(): List<SysMicroServiceCacheEntry> = sysMicroServiceHashCache.getMicroServicesByType(true)
 
+    @Transactional(readOnly = true)
     override fun getSubMicroServicesFromCache(parentCode: String): List<SysMicroServiceCacheEntry> =
         getAllMicroServicesFromCache().filter { it.parentCode == parentCode }
 
+    @Transactional(readOnly = true)
     override fun getAtomicServicesByParentCodeFromCache(parentCode: String): List<SysMicroServiceCacheEntry> =
         getAllMicroServicesFromCache().filter { it.parentCode == parentCode && it.atomicService }
 

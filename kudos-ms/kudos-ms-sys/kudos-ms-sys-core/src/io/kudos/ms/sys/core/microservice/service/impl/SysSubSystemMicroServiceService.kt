@@ -24,10 +24,12 @@ open class SysSubSystemMicroServiceService(
 
     private val log = LogFactory.getLog(this::class)
 
+    @Transactional(readOnly = true)
     override fun getMicroServiceCodesBySubSystemCode(subSystemCode: String): Set<String> {
         return dao.searchMicroServiceCodesBySubSystemCode(subSystemCode)
     }
 
+    @Transactional(readOnly = true)
     override fun getSubSystemCodesByMicroServiceCode(microServiceCode: String): Set<String> {
         return dao.fetchSubSystemCodesByMicroServiceCode(microServiceCode)
     }
@@ -64,6 +66,7 @@ open class SysSubSystemMicroServiceService(
         return success
     }
 
+    @Transactional(readOnly = true)
     override fun exists(subSystemCode: String, microServiceCode: String): Boolean {
         return dao.exists(subSystemCode, microServiceCode)
     }

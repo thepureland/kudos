@@ -54,20 +54,25 @@ open class SysTenantService(
         }
     }
 
+    @Transactional(readOnly = true)
     override fun pagingSearch(listSearchPayload: ListSearchPayload): PagingSearchResult<*> {
         val result = super.pagingSearch(listSearchPayload)
         result.data.filterIsInstance<SysTenantRow>().forEach(::enrichTenantRow)
         return result
     }
 
+    @Transactional(readOnly = true)
     override fun getTenantFromCache(id: String): SysTenantCacheEntry? = tenantByIdCache.getTenantById(id)
 
+    @Transactional(readOnly = true)
     override fun getTenantsFromCacheByIds(ids: Collection<String>): Map<String, SysTenantCacheEntry> =
         ids.takeIf { it.isNotEmpty() }?.let(tenantByIdCache::getTenantsByIds) ?: emptyMap()
 
+    @Transactional(readOnly = true)
     override fun getTenantsForSubSystemFromCache(subSystemCode: String): List<SysTenantCacheEntry> =
         tenantByIdCache.getTenantsByIds(sysTenantSystemHashCache.getTenantIdsBySubSystemCode(subSystemCode)).values.toList()
 
+    @Transactional(readOnly = true)
     override fun getAllTenantsFromCache(): List<SysTenantCacheEntry> = dao.searchAs()
 
     @Transactional
@@ -149,8 +154,10 @@ open class SysTenantService(
         return count
     }
 
+    @Transactional(readOnly = true)
     override fun getTenantRecord(id: String): SysTenantRow? = dao.get(id)?.let(::toSysTenantRow)
 
+    @Transactional(readOnly = true)
     override fun getTenantByName(name: String): SysTenantRow? =
         dao.search(Criteria(SysTenant::name eq name)).firstOrNull()?.let(::toSysTenantRow)
 
@@ -202,6 +209,7 @@ open class SysTenantService(
         builtIn = tenant.builtIn,
     )
 
+    @Transactional(readOnly = true)
     override fun getSubSystemCodesFromCache(tenantId: String): Set<String> =
         sysTenantSystemHashCache.getSubSystemCodesByTenantId(tenantId)
 

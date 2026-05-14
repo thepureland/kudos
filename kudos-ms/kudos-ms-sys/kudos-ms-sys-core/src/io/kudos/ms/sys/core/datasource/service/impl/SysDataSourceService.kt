@@ -41,17 +41,21 @@ open class SysDataSourceService(
 
     private val log = LogFactory.getLog(this::class)
 
+    @Transactional(readOnly = true)
     override fun getDataSourcesFromCache(
         tenantId: String,
         subSystemCode: String,
         microServiceCode: String?
     ): List<SysDataSourceCacheEntry> = sysDataSourceHashCache.getDataSources(tenantId, subSystemCode, microServiceCode)
 
+    @Transactional(readOnly = true)
     override fun getDataSourceFromCache(tenantId: String, atomicServiceCode: String?): SysDataSourceCacheEntry? =
         sysDataSourceHashCache.getDataSources(tenantId, null, atomicServiceCode).firstOrNull()
 
+    @Transactional(readOnly = true)
     override fun getDataSourceFromCache(id: String): SysDataSourceCacheEntry? = sysDataSourceHashCache.getDataSourceById(id)
 
+    @Transactional(readOnly = true)
     override fun pagingSearch(listSearchPayload: ListSearchPayload): PagingSearchResult<*> {
         val result = super.pagingSearch(listSearchPayload)
         enrichTenantNames(result.data.filterIsInstance<SysDataSourceRow>())
@@ -147,9 +151,11 @@ open class SysDataSourceService(
         return count
     }
 
+    @Transactional(readOnly = true)
     override fun getDataSourcesByTenantId(tenantId: String): List<SysDataSourceRow> =
         dao.searchAs(Criteria(SysDataSource::tenantId eq tenantId))
 
+    @Transactional(readOnly = true)
     override fun getDataSourcesBySubSystemCode(subSystemCode: String): List<SysDataSourceRow> =
         dao.searchAs(Criteria(SysDataSource::subSystemCode eq subSystemCode))
 

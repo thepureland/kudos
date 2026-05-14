@@ -53,6 +53,7 @@ open class SysDomainService(
         return result
     }
 
+    @Transactional(readOnly = true)
     override fun pagingSearch(listSearchPayload: ListSearchPayload): PagingSearchResult<*> {
         val result = super.pagingSearch(listSearchPayload)
         val rows = result.data
@@ -68,11 +69,14 @@ open class SysDomainService(
         return result
     }
 
+    @Transactional(readOnly = true)
     override fun getDomainFromCache(domainName: String): SysDomainCacheEntry? = domainByNameCache.getDomain(domainName)
 
+    @Transactional(readOnly = true)
     override fun getDomainsByTenantId(tenantId: String): List<SysDomainRow> =
         dao.search(SysDomainQuery(tenantId = tenantId), SysDomainRow::class)
 
+    @Transactional(readOnly = true)
     override fun getDomainsBySystemCode(systemCode: String): List<SysDomainRow> =
         dao.searchAs(Criteria(SysDomain::systemCode eq systemCode))
 

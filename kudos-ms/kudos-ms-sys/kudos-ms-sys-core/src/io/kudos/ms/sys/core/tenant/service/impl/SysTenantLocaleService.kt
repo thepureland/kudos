@@ -23,8 +23,10 @@ open class SysTenantLocaleService(
 
     private val log = LogFactory.getLog(this::class)
 
+    @Transactional(readOnly = true)
     override fun getLocaleCodesByTenantId(tenantId: String): Set<String> = dao.searchLocaleCodesByTenantId(tenantId)
 
+    @Transactional(readOnly = true)
     override fun getTenantIdsByLocaleCode(localeCode: String): Set<String> = dao.searchTenantIdsByLocaleCode(localeCode)
 
     @Transactional
@@ -58,5 +60,6 @@ open class SysTenantLocaleService(
         return success
     }
 
+    @Transactional(readOnly = true)
     override fun exists(tenantId: String, localeCode: String): Boolean = dao.exists(tenantId, localeCode)
 }
