@@ -61,18 +61,22 @@ open class AuthRoleService(
 
     private val log = LogFactory.getLog(this::class)
 
+    @Transactional(readOnly = true)
     override fun getRoleUserIds(roleId: String): List<String> {
         return userIdsByRoleIdCache.getUserIds(roleId)
     }
 
+    @Transactional(readOnly = true)
     override fun getRoleResourceIds(roleId: String): Set<String> {
         return resourceIdsByRoleIdCache.getResourceIds(roleId)
     }
 
+    @Transactional(readOnly = true)
     override fun getRoleIds(tenantId: String): List<String> {
         return dao.searchActiveRoleIdsByTenantId(tenantId)
     }
 
+    @Transactional(readOnly = true)
     override fun getRoleUsers(roleId: String): List<UserAccountCacheEntry> {
         val userIds = getRoleUserIds(roleId)
         if (userIds.isEmpty()) {
@@ -82,6 +86,7 @@ open class AuthRoleService(
         return userIds.mapNotNull { usersMap[it] }
     }
 
+    @Transactional(readOnly = true)
     override fun getRoleResources(roleId: String): List<SysResourceCacheEntry> {
         val resourceIds = getRoleResourceIds(roleId)
         if (resourceIds.isEmpty()) {
@@ -96,21 +101,25 @@ open class AuthRoleService(
         return resourceIds.contains(resourceId)
     }
 
+    @Transactional(readOnly = true)
     override fun getRoleByTenantIdAndCode(tenantId: String, roleCode: String): AuthRoleCacheEntry? {
         val roleId = authRoleHashCache.getRoleByTenantIdAndRoleCode(tenantId, roleCode)?.id
         return roleId?.let { authRoleHashCache.getRoleById(it) }
     }
 
+    @Transactional(readOnly = true)
     override fun getRoleRecord(id: String): AuthRoleRow? {
         return dao.getAs<AuthRoleRow>(id)
     }
 
+    @Transactional(readOnly = true)
     override fun getRolesByTenantId(tenantId: String): List<AuthRoleRow> {
         val searchPayload = AuthRoleQuery(tenantId = tenantId)
         @Suppress("UNCHECKED_CAST")
         return dao.search(searchPayload, AuthRoleRow::class)
     }
 
+    @Transactional(readOnly = true)
     override fun getRolesBySubsysCode(tenantId: String, subsysCode: String): List<AuthRoleRow> {
         val searchPayload = AuthRoleQuery(
             tenantId = tenantId,
@@ -196,6 +205,7 @@ open class AuthRoleService(
         return roleId != null && hasRole(userId, roleId)
     }
 
+    @Transactional(readOnly = true)
     override fun getUserRoles(userId: String): List<AuthRoleCacheEntry> {
         val roleIds = getUserRoleIds(userId)
         if (roleIds.isEmpty()) {
@@ -205,10 +215,12 @@ open class AuthRoleService(
         return roleIds.mapNotNull { rolesMap[it] }
     }
 
+    @Transactional(readOnly = true)
     override fun getUserRoleIds(userId: String): List<String> {
         return roleIdsByUserIdCache.getRoleIds(userId)
     }
 
+    @Transactional(readOnly = true)
     override fun getUsersByRoleCode(tenantId: String, roleCode: String): List<UserAccountCacheEntry> {
         val roleId = authRoleHashCache.getRoleByTenantIdAndRoleCode(tenantId, roleCode)?.id ?: return emptyList()
         val userIds = userIdsByRoleIdCache.getUserIds(roleId)
@@ -218,15 +230,18 @@ open class AuthRoleService(
         return userAccountHashCache.getUsersByIds(userIds).values.toList()
     }
 
+    @Transactional(readOnly = true)
     override fun isUserHasResource(userId: String, resourceId: String): Boolean {
         val resourceIds = getUserResourceIds(userId)
         return resourceIds.contains(resourceId)
     }
 
+    @Transactional(readOnly = true)
     override fun getUserResourceIds(userId: String): Set<String> {
         return resourceIdsByUserIdCache.getResourceIds(userId)
     }
 
+    @Transactional(readOnly = true)
     override fun getResources(userId: String): List<SysResourceCacheEntry> {
         // 通过用户ID获取资源ID列表
         val resourceIds = resourceIdsByUserIdCache.getResourceIds(userId)
