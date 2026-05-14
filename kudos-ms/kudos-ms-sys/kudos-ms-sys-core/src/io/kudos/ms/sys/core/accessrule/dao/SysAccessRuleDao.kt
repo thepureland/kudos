@@ -21,21 +21,19 @@ import org.springframework.stereotype.Repository
 open class SysAccessRuleDao : BaseCrudDao<String, SysAccessRule, SysAccessRules>() {
 
     /**
-     * 将单行实体转为 [SysAccessRuleCacheEntry]；库中 `tenant_id` 为空时 [SysAccessRuleCacheEntry.tenantId] 为 `""`。
+     * 将单行实体转为 [SysAccessRuleCacheEntry]；库中 `tenant_id` 为空（`null` / 空白）时 [SysAccessRuleCacheEntry.tenantId] 为 `""`，
+     * 与缓存层 `AccessRuleTenantKey.normalize` 约定一致。
      *
      * @param entity 库表实体，非 null
      * @return 缓存值对象
      */
-    private fun toCacheEntry(entity: SysAccessRule): SysAccessRuleCacheEntry {
-        val tid = entity.tenantId
-        val normalizedTenant = if (tid.isBlank()) "" else tid.trim()
-        return SysAccessRuleCacheEntry(
+    private fun toCacheEntry(entity: SysAccessRule): SysAccessRuleCacheEntry =
+        SysAccessRuleCacheEntry(
             id = entity.id,
-            tenantId = normalizedTenant,
+            tenantId = entity.tenantId.trim(),
             systemCode = entity.systemCode.trim(),
             accessRuleTypeDictCode = entity.accessRuleTypeDictCode.trim(),
         )
-    }
 
     /**
      * 按主键加载 [SysAccessRuleCacheEntry]。
@@ -49,16 +47,16 @@ open class SysAccessRuleDao : BaseCrudDao<String, SysAccessRule, SysAccessRules>
     }
 
     /**
-     * 按系统编码与租户维度加载缓存项；[tenantId] 为空串时匹配 `tenant_id IS NULL`。
+     * 按系统编码与租户维度加载缓存项；[tenantId] 为 `null` / 空白时匹配 `tenant_id IS NULL`（平台级）。
      *
      * @param systemCode 系统编码
-     * @param tenantId 租户 id，空串表示平台级
+     * @param tenantId 租户 id，`null` / 空白表示平台级
      * @return 最多一行，不存在时 `null`
      */
-    open fun fetchCacheEntryBySystemCodeAndtenantId(systemCode: String, tenantId: String): SysAccessRuleCacheEntry? {
+    open fun fetchCacheEntryBySystemCodeAndTenantId(systemCode: String, tenantId: String?): SysAccessRuleCacheEntry? {
         val sc = systemCode.trim()
         if (sc.isEmpty()) return null
-        val tid = tenantId.trim().takeIf { it.isNotEmpty() }
+        val tid = tenantId?.trim()?.takeIf { it.isNotEmpty() }
         val criteria = if (tid == null) {
             Criteria.and(
                 SysAccessRule::systemCode eq sc,

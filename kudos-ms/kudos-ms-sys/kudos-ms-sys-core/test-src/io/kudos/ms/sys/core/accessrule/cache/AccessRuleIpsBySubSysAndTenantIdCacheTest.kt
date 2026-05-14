@@ -4,6 +4,9 @@ import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.ms.sys.common.accessrule.vo.SysAccessRuleIpCacheEntry
 import io.kudos.ms.sys.core.accessrule.dao.SysAccessRuleDao
 import io.kudos.ms.sys.core.accessrule.dao.SysAccessRuleIpDao
+import io.kudos.ms.sys.core.accessrule.event.SysAccessRuleIpDeleted
+import io.kudos.ms.sys.core.accessrule.event.SysAccessRuleIpInserted
+import io.kudos.ms.sys.core.accessrule.event.SysAccessRuleIpUpdated
 import io.kudos.ms.sys.core.accessrule.model.po.SysAccessRuleIp
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbAndRedisCacheTestBase
@@ -119,8 +122,15 @@ class AccessRuleIpsBySubSysAndTenantIdCacheTest : RdbAndRedisCacheTestBase() {
 
         val accessRule = assertNotNull(sysAccessRuleDao.get(ipRule.parentRuleId))
 
-        // 同步缓存
-        cacheHandler.syncOnInsert(accessRule, ipRule.id)
+        // 同步缓存：模拟服务层发布的领域事件
+        cacheHandler.onIpInserted(
+            SysAccessRuleIpInserted(
+                id = ipRule.id,
+                parentSystemCode = accessRule.systemCode,
+                parentTenantId = accessRule.tenantId,
+                active = true,
+            )
+        )
 
         // 验证新记录是否在缓存中
         val key = cacheHandler.getKey(accessRule.systemCode, accessRule.tenantId)
@@ -142,8 +152,15 @@ class AccessRuleIpsBySubSysAndTenantIdCacheTest : RdbAndRedisCacheTestBase() {
         val ipRule = assertNotNull(dao.get(ipRuleId))
         val accessRule = assertNotNull(sysAccessRuleDao.get(ipRule.parentRuleId))
 
-        // 同步缓存
-        cacheHandler.syncOnUpdate(accessRule, ipRuleId)
+        // 同步缓存：模拟服务层发布的领域事件
+        cacheHandler.onIpUpdated(
+            SysAccessRuleIpUpdated(
+                id = ipRuleId,
+                parentSystemCode = accessRule.systemCode,
+                parentTenantId = accessRule.tenantId,
+                active = ipRule.active,
+            )
+        )
 
         // 验证缓存中的记录
         val key = cacheHandler.getKey(accessRule.systemCode, tenantId)
@@ -170,7 +187,14 @@ class AccessRuleIpsBySubSysAndTenantIdCacheTest : RdbAndRedisCacheTestBase() {
         assert(success)
         var ipRule = assertNotNull(dao.get(ipRuleId))
         var accessRule = assertNotNull(sysAccessRuleDao.get(ipRule.parentRuleId))
-        cacheHandler.syncOnUpdateActive(ipRuleId, false)
+        cacheHandler.onIpUpdated(
+            SysAccessRuleIpUpdated(
+                id = ipRuleId,
+                parentSystemCode = accessRule.systemCode,
+                parentTenantId = accessRule.tenantId,
+                active = false,
+            )
+        )
         var key = cacheHandler.getKey(accessRule.systemCode, accessRule.tenantId)
         @Suppress("UNCHECKED_CAST")
         var cacheItems1 = KeyValueCacheKit.getValue(cacheHandler.cacheName(), key) as List<SysAccessRuleIpCacheEntry>
@@ -184,7 +208,14 @@ class AccessRuleIpsBySubSysAndTenantIdCacheTest : RdbAndRedisCacheTestBase() {
         assert(success)
         ipRule = assertNotNull(dao.get(ipRuleId))
         accessRule = assertNotNull(sysAccessRuleDao.get(ipRule.parentRuleId))
-        cacheHandler.syncOnUpdateActive(ipRuleId, true)
+        cacheHandler.onIpUpdated(
+            SysAccessRuleIpUpdated(
+                id = ipRuleId,
+                parentSystemCode = accessRule.systemCode,
+                parentTenantId = accessRule.tenantId,
+                active = true,
+            )
+        )
         key = cacheHandler.getKey(accessRule.systemCode, accessRule.tenantId)
         @Suppress("UNCHECKED_CAST")
         cacheItems1 = KeyValueCacheKit.getValue(cacheHandler.cacheName(), key) as List<SysAccessRuleIpCacheEntry>
@@ -199,8 +230,14 @@ class AccessRuleIpsBySubSysAndTenantIdCacheTest : RdbAndRedisCacheTestBase() {
         val ipRule = assertNotNull(dao.get(ipRuleId))
         val accessRule = assertNotNull(sysAccessRuleDao.get(ipRule.parentRuleId))
 
-        // 先同步缓存（handler 需根据 ipRuleId 查库得到 parent，故需在删除前调用）
-        cacheHandler.syncOnDelete(ipRuleId)
+        // 先发布删除事件（携带维度键，订阅方无需反查父规则）
+        cacheHandler.onIpDeleted(
+            SysAccessRuleIpDeleted(
+                id = ipRuleId,
+                parentSystemCode = accessRule.systemCode,
+                parentTenantId = accessRule.tenantId,
+            )
+        )
 
         // 再删除数据库中的记录
         val deleteSuccess = dao.deleteById(ipRuleId)

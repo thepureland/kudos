@@ -1,7 +1,6 @@
 package io.kudos.ms.sys.core.accessrule.cache
 import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
 import io.kudos.ability.cache.common.kit.KeyValueCacheKit
-import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.context.support.Consts
 import io.kudos.ms.sys.common.accessrule.vo.SysAccessRuleIpCacheEntry
@@ -9,19 +8,30 @@ import io.kudos.ms.sys.common.accessrule.vo.request.SysAccessRuleIpQuery
 import io.kudos.ms.sys.common.accessrule.vo.response.SysAccessRuleIpRow
 import io.kudos.ms.sys.core.accessrule.dao.SysAccessRuleDao
 import io.kudos.ms.sys.core.accessrule.dao.SysAccessRuleIpDao
+import io.kudos.ms.sys.core.accessrule.event.SysAccessRuleBatchDeleted
+import io.kudos.ms.sys.core.accessrule.event.SysAccessRuleDeleted
+import io.kudos.ms.sys.core.accessrule.event.SysAccessRuleInserted
+import io.kudos.ms.sys.core.accessrule.event.SysAccessRuleIpBatchDeleted
+import io.kudos.ms.sys.core.accessrule.event.SysAccessRuleIpDeleted
+import io.kudos.ms.sys.core.accessrule.event.SysAccessRuleIpInserted
+import io.kudos.ms.sys.core.accessrule.event.SysAccessRuleIpUpdated
+import io.kudos.ms.sys.core.accessrule.event.SysAccessRuleUpdated
 import io.kudos.ms.sys.core.accessrule.model.po.SysAccessRule
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
+import org.springframework.transaction.event.TransactionPhase
+import org.springframework.transaction.event.TransactionalEventListener
 
 
 /**
- * ip访问规则缓存处理器
+ * ip 访问规则缓存处理器
  *
- * 1.数据来源表：sys_access_rule & sys_access_rule_ip
- * 2.仅缓存active=true的
- * 3.缓存key为：系统编码::租户id，租户id有可能为null
- * 4.缓存value为：SysAccessRuleIpCacheEntry对象
+ * - 数据来源表：`sys_access_rule` & `sys_access_rule_ip`
+ * - 仅缓存 `active=true` 的规则
+ * - 缓存 key 形式：`系统编码::归一化租户id`。「归一化」即由 [AccessRuleTenantKey.normalize] 把 `null` / 空白统一转为空串，
+ *   与 [SysAccessRuleHashCache] 中副属性索引取值保持一致。
+ * - 缓存 value：[SysAccessRuleIpCacheEntry] 列表
  *
  * @author K
  * @since 1.0.0
@@ -45,8 +55,9 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
         require(key.contains(Consts.CACHE_KEY_DEFAULT_DELIMITER)) {
             "缓存${CACHE_NAME}的key格式非法!"
         }
-        val parts = key.split(Consts.CACHE_KEY_DEFAULT_DELIMITER)
-        val tenantId = parts.getOrNull(1)?.takeIf { it != "null" }
+        val parts = key.split(Consts.CACHE_KEY_DEFAULT_DELIMITER, limit = 2)
+        // 已归一化：空串即平台级，对应库中 `tenant_id IS NULL`；查询层仍以 null 表达
+        val tenantId = parts.getOrNull(1)?.takeIf { it.isNotEmpty() }
         return getSelf<AccessRuleIpsBySubSysAndTenantIdCache>().getAccessRuleIps(parts[0], tenantId)
     }
 
@@ -71,7 +82,7 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
         // 缓存数据
         val ipRulesMap = results.mapNotNull { record ->
             val systemCode = record.systemCode ?: return@mapNotNull null
-            getKey(systemCode, record.tenantId) to record
+            AccessRuleTenantKey.compositeKey(systemCode, record.tenantId) to record
         }.groupBy({ it.first }, { it.second })
         ipRulesMap.forEach { (key, ipRules) ->
             val cacheItems = mapToCacheItems(ipRules)
@@ -81,17 +92,17 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
     }
 
     /**
-     * 从缓存中获取ip访问规则，如果缓存中没有，从数据库中加载，并写入缓存.
+     * 从缓存中获取 ip 访问规则，未命中则查库回填。
      *
-     * 缓存的key形式为：系统编码::租户id，租户id有可能为null
+     * 缓存 key 形式：`系统编码::归一化租户id`。`null` / 空白一律归一为空串（平台级），与库中 `tenant_id IS NULL` 对应。
      *
      * @param systemCode 系统编码
-     * @param tenantId 租户id，可以为null
-     * @return SysAccessRuleIpCacheEntry，不存在时返回null
+     * @param tenantId 租户 id，传 `null`（或空白）表示平台级规则
+     * @return IP 缓存项列表，未匹配时返回空列表
      */
     @Cacheable(
         cacheNames = [CACHE_NAME],
-        key = "#systemCode.concat('${Consts.CACHE_KEY_DEFAULT_DELIMITER}').concat(#tenantId ?: 'null')",
+        key = "#systemCode.concat('${Consts.CACHE_KEY_DEFAULT_DELIMITER}').concat((#tenantId ?: '').trim())",
         unless = "#result == null"
     )
     open fun getAccessRuleIps(systemCode: String, tenantId: String? = null): List<SysAccessRuleIpCacheEntry> {
@@ -122,117 +133,67 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
         }
     }
 
-    /**
-     * 数据库插入记录后同步缓存
-     *
-     * @param any 包含必要属性的对象
-     * @param ipRuleId ip访问规则id
-     */
-    open fun syncOnInsert(any: Any, ipRuleId: String) {
-        if (KeyValueCacheKit.isCacheActive(CACHE_NAME) && KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
-            log.debug("新增id为${ipRuleId}的ip访问规则后，同步${CACHE_NAME}缓存...")
+    // region 事件订阅：父规则（sys_access_rule）变更时联动 IP 缓存 ----------------------------------
 
-            val props = BeanKit.extract(any)
-            val systemCode = props[SysAccessRule::systemCode.name] as String
-            val tenantId = props[SysAccessRule::tenantId.name] as String?
+    /** 父规则新增：刷新对应维度（此时尚无 IP，相当于建空槽位）。 */
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun onParentInserted(event: SysAccessRuleInserted): Unit =
+        syncOnDeleteBySystemAndTenant(event.systemCode, event.tenantId)
 
-            // 踢除ip访问规则缓存
-            KeyValueCacheKit.evict(CACHE_NAME, getKey(systemCode, tenantId))
-
-            val active = props[SysAccessRule::active.name] as Boolean?
-            if (KeyValueCacheKit.isWriteInTime(CACHE_NAME) && (active == null || active)) {
-                // 缓存
-                getSelf<AccessRuleIpsBySubSysAndTenantIdCache>().getAccessRuleIps(systemCode, tenantId)
-                log.debug("${CACHE_NAME}缓存同步完成。")
-            } else {
-                log.debug("新增的ip访问规则的active为false，不需要同步${CACHE_NAME}缓存。")
-            }
+    /** 父规则更新：刷新新维度；若维度迁移则同时刷新旧维度。 */
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun onParentUpdated(event: SysAccessRuleUpdated) {
+        syncOnDeleteBySystemAndTenant(event.systemCode, event.tenantId)
+        if (event.dimensionChanged) {
+            syncOnDeleteBySystemAndTenant(event.beforeSystemCode!!, event.beforeTenantId)
         }
     }
 
-    /**
-     * 更新数据库记录后同步缓存
-     *
-     * @param any 包含必要属性的对象
-     * @param id ip访问规则id
-     */
-    open fun syncOnUpdate(any: Any, id: String) {
-        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("更新id为${id}的ip访问规则后，同步${CACHE_NAME}缓存...")
-            val props = BeanKit.extract(any)
-            val systemCode = props[SysAccessRule::systemCode.name] as String
-            val tenantId = props[SysAccessRule::tenantId.name] as String?
+    /** 父规则删除：刷新对应维度（清掉残留 IP 缓存）。 */
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun onParentDeleted(event: SysAccessRuleDeleted): Unit =
+        syncOnDeleteBySystemAndTenant(event.systemCode, event.tenantId)
 
-            // 踢除ip访问规则缓存
-            KeyValueCacheKit.evict(CACHE_NAME, getKey(systemCode, tenantId))
-
-            // 重新缓存
-            if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
-                val active = props[SysAccessRule::active.name] as Boolean?
-                if (active == null || active) {
-                    getSelf<AccessRuleIpsBySubSysAndTenantIdCache>().getAccessRuleIps(systemCode, tenantId)
-                }
-            }
-            log.debug("${CACHE_NAME}缓存同步完成。")
-        }
+    /** 父规则批量删除：按事件附带的所有维度键逐一刷新。 */
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun onParentBatchDeleted(event: SysAccessRuleBatchDeleted) {
+        event.dimensions.forEach { (sysCode, tid) -> syncOnDeleteBySystemAndTenant(sysCode, tid) }
     }
 
-    /**
-     * 更新启用状态后同步缓存
-     *
-     * @param ipRuleId ip访问规则id
-     * @param active 是否启用
-     */
-    open fun syncOnUpdateActive(ipRuleId: String, active: Boolean) {
-        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("更新id为${ipRuleId}的ip访问规则的启用状态后，同步${CACHE_NAME}缓存...")
-            val sysAccessRuleIp = sysAccessRuleIpDao.get(ipRuleId)
-            if (sysAccessRuleIp == null) {
-                log.error("数据库中找不到id为${ipRuleId}的ip访问规则！")
-                return
-            }
+    // endregion
 
-            val sysAccessRule = sysAccessRuleDao.get(sysAccessRuleIp.parentRuleId)
-            if (sysAccessRule == null) {
-                log.error("数据库中找不到id为${sysAccessRuleIp.parentRuleId}的访问规则！")
-                return
-            }
+    // region 事件订阅：IP 规则自身变更 -----------------------------------------------------------
 
-            // 踢除ip访问规则缓存
-            KeyValueCacheKit.evict(CACHE_NAME, getKey(sysAccessRule.systemCode, sysAccessRule.tenantId))
-
-            // 重新缓存
-            if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
-                getSelf<AccessRuleIpsBySubSysAndTenantIdCache>().getAccessRuleIps(
-                    sysAccessRule.systemCode, sysAccessRule.tenantId
-                )
-            }
-            log.debug("${CACHE_NAME}缓存同步完成。")
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun onIpInserted(event: SysAccessRuleIpInserted) {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
+        if (!event.active) {
+            log.debug("新增 IP 规则 ${event.id} active=false，跳过 ${CACHE_NAME} 同步。")
+            return
         }
+        refreshDimension(event.parentSystemCode, event.parentTenantId)
     }
 
-    /**
-     * 删除数据库记录后同步缓存
-     *
-     * @param ipRuleId ip访问规则id
-     */
-    open fun syncOnDelete(ipRuleId: String) {
-        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("删除id为${ipRuleId}的ip访问规则后，同步从${CACHE_NAME}缓存中踢除...")
-            val sysAccessRuleIp = sysAccessRuleIpDao.get(ipRuleId)
-            if (sysAccessRuleIp == null) {
-                log.warn("数据库中已找不到id为${ipRuleId}的ip访问规则，无法反查维度键；请优先使用 syncOnDeleteBySystemAndTenant。")
-                return
-            }
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun onIpUpdated(event: SysAccessRuleIpUpdated): Unit =
+        refreshDimension(event.parentSystemCode, event.parentTenantId)
 
-            val sysAccessRule = sysAccessRuleDao.get(sysAccessRuleIp.parentRuleId)
-            if (sysAccessRule == null) {
-                log.warn("数据库中已找不到id为${sysAccessRuleIp.parentRuleId}的访问规则，无法反查维度键；请优先使用 syncOnDeleteBySystemAndTenant。")
-                return
-            }
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun onIpDeleted(event: SysAccessRuleIpDeleted): Unit =
+        refreshDimension(event.parentSystemCode, event.parentTenantId)
 
-            syncOnDeleteBySystemAndTenant(sysAccessRule.systemCode, sysAccessRule.tenantId)
-            log.debug("${CACHE_NAME}缓存同步完成。")
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun onIpBatchDeleted(event: SysAccessRuleIpBatchDeleted) {
+        event.dimensions.forEach { (sysCode, tid) -> refreshDimension(sysCode, tid) }
+    }
+
+    // endregion
+
+    private fun refreshDimension(systemCode: String, tenantId: String?) {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
+        KeyValueCacheKit.evict(CACHE_NAME, getKey(systemCode, tenantId))
+        if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
+            getSelf<AccessRuleIpsBySubSysAndTenantIdCache>().getAccessRuleIps(systemCode, tenantId)
         }
     }
 
@@ -261,15 +222,14 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
     }
 
     /**
-     * 返回参数拼接后的key
+     * 返回参数拼接后的 key。`null` / 空白一律归一为空串（平台级），与 [@Cacheable] 中的 SpEL 表达式保持一致。
      *
      * @param systemCode 系统编码
-     * @param tenantId 租户id
-     * @return 缓存key
+     * @param tenantId 租户 id；`null` / 空白视为平台级
+     * @return 缓存 key
      */
-    open fun getKey(systemCode: String, tenantId: String? = null): String {
-        return "${systemCode}${Consts.CACHE_KEY_DEFAULT_DELIMITER}${tenantId}"
-    }
+    open fun getKey(systemCode: String, tenantId: String? = null): String =
+        AccessRuleTenantKey.compositeKey(systemCode, tenantId)
 
     private val log = LogFactory.getLog(this::class)
 
