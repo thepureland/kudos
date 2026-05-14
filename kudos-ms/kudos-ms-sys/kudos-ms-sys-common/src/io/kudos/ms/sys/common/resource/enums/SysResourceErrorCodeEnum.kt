@@ -17,7 +17,16 @@ enum class SysResourceErrorCodeEnum(
 ) : IErrorCodeEnum {
 
     /** 未定义错误 */
-    UNSPECIFIED("UNSPECIFIED", "未定义错误");
+    UNSPECIFIED("UNSPECIFIED", "未定义错误"),
+
+    /** 按主键查找资源失败 */
+    RESOURCE_NOT_FOUND("RESOURCE_NOT_FOUND", "资源不存在"),
+
+    /** (sub_system_code, url) 已存在对应资源 */
+    RESOURCE_URL_ALREADY_EXISTS("RESOURCE_URL_ALREADY_EXISTS", "该子系统下已存在相同 URL 的资源"),
+
+    /** 父资源不存在或被禁用，无法挂载子资源 */
+    PARENT_RESOURCE_NOT_FOUND("PARENT_RESOURCE_NOT_FOUND", "父资源不存在或已禁用");
 
     override val i18nKeyPrefix: String
         get() = "sys.error-msg.resource"
