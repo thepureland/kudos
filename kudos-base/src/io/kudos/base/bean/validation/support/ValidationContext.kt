@@ -6,7 +6,6 @@ import jakarta.validation.Validator
 import jakarta.validation.metadata.ConstraintDescriptor
 import jakarta.validation.metadata.PropertyDescriptor
 import org.hibernate.validator.constraintvalidation.HibernateConstraintValidatorInitializationContext
-import org.hibernate.validator.internal.engine.constraintvalidation.ConstraintValidatorContextImpl
 import java.lang.reflect.Field
 import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
@@ -28,6 +27,13 @@ object ValidationContext {
     private val scopedContextFieldCache = ConcurrentHashMap<Class<*>, Field>()
     private val initCtxMethodCache = ConcurrentHashMap<Class<*>, Method>()
     private val businessConstraintAnnotationCache = ConcurrentHashMap<Class<out Annotation>, Boolean>()
+
+    /**
+     * 把 ConstraintValidatorContext 的运行时类（HV 的 ConstraintValidatorContextImpl 等）映射到
+     * 一个能从中提取 ConstraintDescriptor 的函数。通过反射的方式做到不硬绑 HV internal class
+     * （之前直接 `as? ConstraintValidatorContextImpl`，HV 改名就编译失败）。
+     */
+    private val descriptorAccessorCache = ConcurrentHashMap<Class<*>, (Any) -> ConstraintDescriptor<*>?>()
 
     fun setFactory(factory: jakarta.validation.ValidatorFactory) {
         hvInitCtx = extractHvInitCtx(factory)
@@ -169,9 +175,42 @@ object ValidationContext {
      * @since 1.0.0
      */
     fun get(constraintValidatorContext: ConstraintValidatorContext): Any? {
-        val descriptor = (constraintValidatorContext as? ConstraintValidatorContextImpl)?.constraintDescriptor
-            ?: return null
+        val descriptor = extractConstraintDescriptor(constraintValidatorContext) ?: return null
         return beanMapThreadLocal.get().remove(descriptor.hashCode())
+    }
+
+    /**
+     * 从任意 [ConstraintValidatorContext] 运行时实现里反射提取 [ConstraintDescriptor]，
+     * 不依赖 HV 的具体实现类名（之前是 `as? ConstraintValidatorContextImpl`，HV 改包/改类名
+     * 会编译失败）。优先找 `getConstraintDescriptor()` 方法，兜底找 `constraintDescriptor` 字段。
+     *
+     * 每个具体 ctx 类的反射 accessor 只构建一次，缓存在 [descriptorAccessorCache] 里。
+     */
+    private fun extractConstraintDescriptor(ctx: ConstraintValidatorContext): ConstraintDescriptor<*>? {
+        val accessor = descriptorAccessorCache.getOrPut(ctx.javaClass) { buildDescriptorAccessor(ctx.javaClass) }
+        return accessor(ctx)
+    }
+
+    private fun buildDescriptorAccessor(clazz: Class<*>): (Any) -> ConstraintDescriptor<*>? {
+        findInHierarchy(clazz) { it.getDeclaredMethod("getConstraintDescriptor") }?.let { method ->
+            method.isAccessible = true
+            return { runCatching { method.invoke(it) as? ConstraintDescriptor<*> }.getOrNull() }
+        }
+        findInHierarchy(clazz) { it.getDeclaredField("constraintDescriptor") }?.let { field ->
+            field.isAccessible = true
+            return { runCatching { field.get(it) as? ConstraintDescriptor<*> }.getOrNull() }
+        }
+        // 走到这里通常是 mock 或非 HV 实现——返回 null 让 get() 走兜底
+        return { _ -> null }
+    }
+
+    private inline fun <R : Any> findInHierarchy(clazz: Class<*>, finder: (Class<*>) -> R): R? {
+        var current: Class<*>? = clazz
+        while (current != null) {
+            runCatching { return finder(current) }
+            current = current.superclass
+        }
+        return null
     }
 
     /**

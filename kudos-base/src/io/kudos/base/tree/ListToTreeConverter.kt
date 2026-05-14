@@ -94,12 +94,17 @@ object ListToTreeConverter {
      * @param treeNodeList 节点对象列表
      * @param direction 排序方向，如果指定则节点必须实现Comparable接口，为null则不排序
      * @param callback 节点挂载后的回调函数，可以为null
+     * @param strict 严格模式：true 时遇到 parentId 在列表里找不到的"孤儿"节点会抛
+     *               [IllegalArgumentException]；false（默认）则按现有行为记 WARN 后静默丢弃，
+     *               保持向后兼容。需要确保输入数据完整的场景应显式传 true。
      * @return 树根节点列表
+     * @throws IllegalArgumentException 当 strict=true 且存在孤儿节点时
      */
     fun <T, E : ITreeNode<T>> convert(
         treeNodeList: List<E>,
         direction: DirectionEnum? = null,
-        callback: ICallback<E, Unit>? = null
+        callback: ICallback<E, Unit>? = null,
+        strict: Boolean = false
     ): List<E> {
         val treeNodeMap = HashMap<T, E>(treeNodeList.size, 1f)
         for (obj in treeNodeList) {
@@ -117,6 +122,11 @@ object ListToTreeConverter {
                 if (pNode != null) { // 存在父结点
                     pNode._getChildren().add(node)
                 } else {
+                    if (strict) {
+                        throw IllegalArgumentException(
+                            "结点#${node._getId()}的父结点#${pId}不在输入列表中（strict 模式）"
+                        )
+                    }
                     LOG.warn("结点#${node._getId()}的父结点#${pId}不存在！")
                 }
             }
@@ -168,60 +178,29 @@ object ListToTreeConverter {
      * @throws IllegalStateException 如果节点类型未实现Comparable接口
      */
     private fun <T, E : ITreeNode<T>> sort(nodes: List<E>, direction: DirectionEnum): List<E> {
-        if (nodes.isEmpty()) {
-            return nodes
-        }
-        if (nodes.first() !is Comparable<*>) {
-            error("类${nodes.first()::class.simpleName}必须实现Comparable接口！")
-        }
-
-        val nodeList = nodes.sortedWith { o1, o2 ->
-            val result = compareNodes(o1, o2)
-            if (direction == DirectionEnum.ASC) result else 0 - result
-        }
-
-        nodeList.forEach {
-            val origChildren = it._getChildren()
-            if (origChildren.isNotEmpty()) {
-                val children = sortChildren(origChildren, direction)
-                origChildren.clear()
-                origChildren.addAll(children)
-            }
-        }
-
-        return nodeList
+        if (nodes.isEmpty()) return nodes
+        val sortedRoots = sortByComparable(nodes, direction)
+        sortedRoots.forEach { sortChildrenInPlace(it._getChildren(), direction) }
+        return sortedRoots
     }
 
-    private fun <T> sortChildren(nodes: List<ITreeNode<T>>, direction: DirectionEnum): List<ITreeNode<T>> {
-        if (nodes.isEmpty()) {
-            return nodes
-        }
-        if (nodes.first() !is Comparable<*>) {
-            error("类${nodes.first()::class.simpleName}必须实现Comparable接口！")
-        }
-
-        val sorted = nodes.sortedWith { o1, o2 ->
-            val result = compareNodes(o1, o2)
-            if (direction == DirectionEnum.ASC) result else 0 - result
-        }
-        sorted.forEach { child ->
-            val grandChildren = child._getChildren()
-            if (grandChildren.isNotEmpty()) {
-                val sortedGrandChildren = sortChildren(grandChildren, direction)
-                grandChildren.clear()
-                grandChildren.addAll(sortedGrandChildren)
-            }
-        }
-        return sorted
+    private fun <T> sortChildrenInPlace(children: MutableList<ITreeNode<T>>, direction: DirectionEnum) {
+        if (children.isEmpty()) return
+        val sorted = sortByComparable(children, direction)
+        children.clear()
+        children.addAll(sorted)
+        sorted.forEach { sortChildrenInPlace(it._getChildren(), direction) }
     }
 
-    private fun compareNodes(left: Any, right: Any): Int {
-        val compareMethod = left.javaClass.methods.firstOrNull {
-            it.name == "compareTo" && it.parameterCount == 1
-        } ?: error("类${left::class.simpleName}必须实现Comparable接口！")
-        val compareResult = compareMethod.invoke(left, right)
-        return compareResult as? Int
-            ?: error("compareTo返回值类型异常: ${left::class.simpleName}")
+    private fun <T : Any> sortByComparable(items: List<T>, direction: DirectionEnum): List<T> {
+        if (items.first() !is Comparable<*>) {
+            error("类${items.first()::class.simpleName}必须实现Comparable接口！")
+        }
+        // 通过 Comparable 的 JVM bridge 方法直接调用，避免反射；
+        // 上面已用 is Comparable<*> 守卫，cast 在运行时一定可用。
+        @Suppress("UNCHECKED_CAST")
+        val comparator = Comparator<T> { a, b -> (a as Comparable<Any>).compareTo(b) }
+        return items.sortedWith(if (direction == DirectionEnum.ASC) comparator else comparator.reversed())
     }
 
 }

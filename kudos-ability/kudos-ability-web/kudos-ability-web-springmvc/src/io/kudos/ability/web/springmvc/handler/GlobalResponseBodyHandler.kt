@@ -78,11 +78,16 @@ class GlobalResponseBodyHandler(
      */
     private fun <T> enrichTraceId(response: ApiResponse<T>): ApiResponse<T> {
         val traceId = KudosContextHolder.get().traceKey
-        return if (traceId.isNullOrBlank() || response.traceId == traceId) response else response.copy(traceId = traceId)
+        if (traceId.isNullOrBlank() || response.traceId == traceId) return response
+        return when (response) {
+            is ApiResponse.Success -> response.copy(traceId = traceId)
+            is ApiResponse.Failure -> response.copy(traceId = traceId)
+        }
     }
 
     private fun <T> clearUnresolvedSuccessPlaceholderMessage(response: ApiResponse<T>): ApiResponse<T> {
-        if (!response.success || response.code != CommonErrorCodeEnum.SUCCESS.code) {
+        // 占位 message 清理只针对成功响应；is Success 同时把 success 检查和子类型 narrow 一起做了
+        if (response !is ApiResponse.Success || response.code != CommonErrorCodeEnum.SUCCESS.code) {
             return response
         }
         val placeholder = CommonErrorCodeEnum.SUCCESS.displayText

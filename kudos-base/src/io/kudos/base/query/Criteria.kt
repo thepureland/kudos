@@ -2,6 +2,7 @@ package io.kudos.base.query
 
 import io.kudos.base.query.enums.OperatorEnum
 import java.io.Serializable
+import java.util.Collections
 
 /**
  * 查询条件封装类
@@ -322,8 +323,17 @@ class Criteria : Serializable {
         }
     }
 
+    /**
+     * 返回当前 Criteria 的内部条件组结构（只读视图）。
+     *
+     * 返回值是 `Collections.unmodifiableList` 包装的视图——指向同一份底层数据，
+     * 不会复制。可以遍历、index 访问，但任何 mutation（add/clear/set 等）会抛
+     * `UnsupportedOperationException`，避免调用方意外破坏 Criteria 内部状态。
+     *
+     * 元素类型可能是 [Criterion]（单条件）、[Criteria]（AND 嵌套）或 `Array<*>`（OR 组）。
+     */
     fun getCriterionGroups(): List<Any> {
-        return criterionGroups
+        return Collections.unmodifiableList(criterionGroups)
     }
 
     /**

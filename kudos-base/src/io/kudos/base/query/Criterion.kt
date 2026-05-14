@@ -34,38 +34,37 @@ data class Criterion(
     /**
      * 要查询的属性名
      */
-    var property: String,
+    val property: String,
     /**
      * 查询条件逻辑操作符枚举
      */
-    var operator: OperatorEnum,
+    val operator: OperatorEnum,
     /**
      * 要查询的属性名对应的值
      */
-    var value: Any? = null,
+    val value: Any? = null,
     /**
      * 别名，用于同一属性名多个条件时
      */
-    var alias: String? = null
+    val alias: String? = null,
+    /**
+     * 条件是否已经加密过了。
+     *
+     * 历史上这是个构造器外的 `var` 字段——因此既不在 [equals]/[hashCode] 内、也不会被 [copy] 复制，
+     * 是个隐蔽陷阱。现移入主构造器后语义对齐：两个 attribute 完全相同的 Criterion 才 equals；
+     * `copy()` 也正确保留 encrypt 状态。需要改值时用 `copy(encrypt = true)`。
+     */
+    val encrypt: Boolean = false
 ) : Serializable {
 
     /**
-     * 条件是否已经加密过了.
-     */
-    var encrypt = false
-
-    /**
-     * 封装查询条件
+     * 操作符的字符串代码。计算属性，由 [operator] 派生。
      *
-     * @param property 要查询的属性名
-     * @param operator 查询条件逻辑操作符枚举
-     * @param value 要查询的属性名对应的值
+     * 历史上这里曾有 setter（通过 [OperatorEnum.enumOf] 反向解析然后赋给 `operator`），
+     * 已随 [operator] 变为 `val` 一并移除。改变操作符请用 `criterion.copy(operator = ...)`。
      */
-    var operatorCode: String
+    val operatorCode: String
         get() = operator.code
-        set(operatorCode) {
-            operator = OperatorEnum.enumOf(operatorCode)
-        }
 
 //    fun getValue(): Any? {
 //        return if (value == null || "" == value) {
