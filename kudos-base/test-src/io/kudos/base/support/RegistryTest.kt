@@ -1,7 +1,11 @@
 package io.kudos.base.support
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import kotlin.test.Test
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 
@@ -77,6 +81,78 @@ internal class RegistryTest {
         // - index 3: obj2
         assertEquals(listOf(obj1, obj2, obj3, obj2), afterBulk2,
             "Bulk 注册后，列表顺序与传入顺序一致，且允许重复")
+    }
+
+    // ============================================================
+    // 注：Registry 是 object 单例，下面所有测试用唯一 key 前缀避免相互污染
+    // ============================================================
+
+    @Test
+    fun testLookup_returnsSnapshotNotLiveView() {
+        // KDoc 注明"返回列表是快照，不会暴露注册表内部可变状态"——这条要钉住
+        val key = "snapshot_test_key"
+        Registry.register(key, "x")
+        val snapshot = Registry.lookup(key)
+        // 即使强转 + 修改，也不应影响注册表内部
+        @Suppress("UNCHECKED_CAST")
+        val mutated = runCatching { (snapshot as MutableList<Any>).add("y") }
+        // snapshot 实现上是 .toList() 的 ImmutableList，写操作会抛
+        assertTrue(
+            mutated.isFailure || Registry.lookup(key).size == 1,
+            "lookup 返回的应是 snapshot：要么不可变要么不影响内部"
+        )
+        // 再次 lookup 应该还是只有 "x"
+        assertEquals(listOf<Any>("x"), Registry.lookup(key))
+    }
+
+    @Test
+    fun testDifferentKeysAreIsolated() {
+        val keyA = "isolation_test_A"
+        val keyB = "isolation_test_B"
+        Registry.register(keyA, "alpha")
+        Registry.register(keyB, "beta")
+        assertEquals(listOf<Any>("alpha"), Registry.lookup(keyA))
+        assertEquals(listOf<Any>("beta"), Registry.lookup(keyB))
+        // 跨 key 的 register 不影响另一个 key
+        Registry.register(keyA, "alpha2")
+        assertEquals(2, Registry.lookup(keyA).size)
+        assertEquals(1, Registry.lookup(keyB).size, "keyB 不受 keyA 改动影响")
+    }
+
+    @Test
+    fun testSingleRegisterDedupesByEqualsNotByIdentity() {
+        // String 的 equals 是内容相等。两个 new String("dup") 虽然引用不同但 equals true，
+        // 单点 register 应去重
+        val key = "equals_dedup_key"
+        val a = String(charArrayOf('d', 'u', 'p'))
+        val b = String(charArrayOf('d', 'u', 'p'))
+        assertFalse(a === b, "前置：a 与 b 引用不同")
+        assertEquals(a, b, "前置：a 与 b equals")
+        Registry.register(key, a)
+        Registry.register(key, b)
+        assertEquals(1, Registry.lookup(key).size, "single register 按 equals 去重")
+    }
+
+    @Test
+    fun testConcurrentRegisterIsSafe() {
+        // 烟测：8 线程 × 100 次注册不同对象，不应丢数据也不应抛异常
+        val key = "concurrent_register_key"
+        val threadCount = 8
+        val loops = 100
+        val pool = Executors.newFixedThreadPool(threadCount)
+        val latch = CountDownLatch(threadCount)
+        repeat(threadCount) { tid ->
+            pool.submit {
+                repeat(loops) { i ->
+                    Registry.register(key, "obj-$tid-$i")
+                }
+                latch.countDown()
+            }
+        }
+        assertTrue(latch.await(5, TimeUnit.SECONDS), "并发注册应在 5s 内完成")
+        pool.shutdown()
+        // 所有对象都是 unique，期望 size = threadCount * loops
+        assertEquals(threadCount * loops, Registry.lookup(key).size)
     }
 
     @Test
