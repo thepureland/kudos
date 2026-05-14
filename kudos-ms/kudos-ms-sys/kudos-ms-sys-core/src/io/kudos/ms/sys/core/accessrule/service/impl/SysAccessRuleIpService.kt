@@ -6,27 +6,32 @@ import io.kudos.base.model.contract.entity.IIdEntity
 import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.ms.sys.common.accessrule.enums.SysAccessRuleErrorCodeEnum
 import io.kudos.ms.sys.common.accessrule.vo.SysAccessRuleIpCacheEntry
-import io.kudos.ms.sys.common.accessrule.vo.request.SysAccessRuleFormCreate
 import io.kudos.ms.sys.common.accessrule.vo.request.SysAccessRuleIpFormCreate
 import io.kudos.ms.sys.common.accessrule.vo.request.SysAccessRuleIpQuery
 import io.kudos.ms.sys.common.accessrule.vo.response.SysAccessRuleIpRow
 import io.kudos.ms.sys.core.accessrule.cache.AccessRuleIpsBySubSysAndTenantIdCache
-import io.kudos.ms.sys.core.accessrule.cache.SysAccessRuleHashCache
 import io.kudos.ms.sys.core.accessrule.dao.SysAccessRuleDao
 import io.kudos.ms.sys.core.accessrule.dao.SysAccessRuleIpDao
+import io.kudos.ms.sys.core.accessrule.event.SysAccessRuleIpBatchDeleted
+import io.kudos.ms.sys.core.accessrule.event.SysAccessRuleIpDeleted
+import io.kudos.ms.sys.core.accessrule.event.SysAccessRuleIpInserted
+import io.kudos.ms.sys.core.accessrule.event.SysAccessRuleIpUpdated
+import io.kudos.ms.sys.core.accessrule.model.po.SysAccessRule
 import io.kudos.ms.sys.core.accessrule.model.po.SysAccessRuleIp
 import io.kudos.ms.sys.core.accessrule.service.iservice.ISysAccessRuleIpService
 import io.kudos.ms.sys.core.platform.service.impl.completeCrudInsert
 import io.kudos.ms.sys.core.platform.service.impl.completeCrudUpdate
 import jakarta.annotation.Resource
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
 
 
 /**
- * IP 访问规则（`sys_access_rule_ip`）的增删改查与缓存同步；并与父表 `sys_access_rule` 联动刷新
- * [AccessRuleIpsBySubSysAndTenantIdCache]。
+ * IP 访问规则（`sys_access_rule_ip`）的增删改查；写后发布
+ * [SysAccessRuleIpInserted] / [SysAccessRuleIpUpdated] / [SysAccessRuleIpDeleted] / [SysAccessRuleIpBatchDeleted]
+ * 领域事件，由缓存通过 `@TransactionalEventListener(AFTER_COMMIT)` 订阅刷新。
  *
  * @author K
  * @author AI: Cursor
@@ -38,12 +43,13 @@ open class SysAccessRuleIpService(
     dao: SysAccessRuleIpDao,
     private val accessRuleIpsBySubSysAndTenantIdCache: AccessRuleIpsBySubSysAndTenantIdCache,
     private val sysAccessRuleDao: SysAccessRuleDao,
+    private val eventPublisher: ApplicationEventPublisher,
 ) : BaseCrudService<String, SysAccessRuleIp, SysAccessRuleIpDao>(dao), ISysAccessRuleIpService {
 
     private val log = LogFactory.getLog(this::class)
 
     @Resource
-    private lateinit var sysAccessRuleHashCache: SysAccessRuleHashCache
+    private lateinit var sysAccessRuleHashCache: io.kudos.ms.sys.core.accessrule.cache.SysAccessRuleHashCache
 
     override fun getIpsByRuleId(ruleId: String): List<SysAccessRuleIpRow> =
         dao.pagingSearch(SysAccessRuleIpQuery(parentRuleId = ruleId))
@@ -57,23 +63,29 @@ open class SysAccessRuleIpService(
     override fun checkIpAccess(ip: BigDecimal, systemCode: String, tenantId: String?): Boolean {
         val ipRules = getIpsBySystemAndTenant(systemCode, tenantId)
         val now = java.time.LocalDateTime.now()
-        
+
         return ipRules.any { rule ->
-            // 检查是否过期
             val expirationTime = rule.expirationTime
             if (expirationTime != null && expirationTime.isBefore(now)) {
                 return@any false
             }
-            // 检查IP是否在范围内
             ip >= rule.ipStart && ip <= rule.ipEnd
         }
     }
 
     @Transactional
     override fun deleteByRuleId(ruleId: String): Int {
+        val parent = sysAccessRuleDao.get(ruleId)
         val count = dao.deleteByParentRuleId(ruleId)
         log.debug("删除规则${ruleId}的所有IP，共删除${count}条。")
-        syncParentRuleCache(ruleId)
+        if (parent != null && count > 0) {
+            eventPublisher.publishEvent(
+                SysAccessRuleIpBatchDeleted(
+                    ids = emptyList(), // ids 对此场景非必要，订阅方按 dimensions 重建
+                    dimensions = listOf(parent.systemCode to parent.tenantId as String?),
+                )
+            )
+        }
         return count
     }
 
@@ -86,9 +98,16 @@ open class SysAccessRuleIpService(
         } else any
         val id = super.insert(ruleIp)
         completeCrudInsert(log, "新增id为${id}的IP访问规则。") {
-            findParentAccessRuleByIpRuleId(id)?.let {
-                accessRuleIpsBySubSysAndTenantIdCache.syncOnInsert(it, id)
-            }
+            val ip = dao.get(id) ?: return@completeCrudInsert
+            val parent = sysAccessRuleDao.get(ip.parentRuleId) ?: return@completeCrudInsert
+            eventPublisher.publishEvent(
+                SysAccessRuleIpInserted(
+                    id = id,
+                    parentSystemCode = parent.systemCode,
+                    parentTenantId = parent.tenantId,
+                    active = ip.active,
+                )
+            )
         }
         return id
     }
@@ -102,9 +121,16 @@ open class SysAccessRuleIpService(
             successMessage = "更新id为${id}的IP访问规则。",
             failureMessage = "更新id为${id}的IP访问规则失败！",
         ) {
-            findParentAccessRuleByIpRuleId(id)?.let {
-                accessRuleIpsBySubSysAndTenantIdCache.syncOnUpdate(it, id)
-            }
+            val ip = dao.get(id) ?: return@completeCrudUpdate
+            val parent = sysAccessRuleDao.get(ip.parentRuleId) ?: return@completeCrudUpdate
+            eventPublisher.publishEvent(
+                SysAccessRuleIpUpdated(
+                    id = id,
+                    parentSystemCode = parent.systemCode,
+                    parentTenantId = parent.tenantId,
+                    active = ip.active,
+                )
+            )
         }
     }
 
@@ -124,28 +150,39 @@ open class SysAccessRuleIpService(
             successMessage = "更新id为${id}的IP访问规则的启用状态为${active}。",
             failureMessage = "更新id为${id}的IP访问规则的启用状态为${active}失败！",
         ) {
-            findParentAccessRuleByIpRuleId(id)?.let {
-                accessRuleIpsBySubSysAndTenantIdCache.syncOnUpdate(it, id)
-            }
+            val ip = dao.get(id) ?: return@completeCrudUpdate
+            val parent = sysAccessRuleDao.get(ip.parentRuleId) ?: return@completeCrudUpdate
+            eventPublisher.publishEvent(
+                SysAccessRuleIpUpdated(
+                    id = id,
+                    parentSystemCode = parent.systemCode,
+                    parentTenantId = parent.tenantId,
+                    active = ip.active,
+                )
+            )
         }
     }
 
     @Transactional
     override fun deleteById(id: String): Boolean {
-        val accessRule = findParentAccessRuleByIpRuleId(id)
+        val accessRuleIp = dao.get(id)
+        val parent = accessRuleIp?.let { sysAccessRuleDao.get(it.parentRuleId) }
         return completeCrudUpdate(
             success = super.deleteById(id),
             log = log,
             successMessage = "删除id为${id}的IP访问规则。",
             failureMessage = "删除id为${id}的IP访问规则失败！",
         ) {
-            if (accessRule != null) {
-                accessRuleIpsBySubSysAndTenantIdCache.syncOnDeleteBySystemAndTenant(
-                    accessRule.systemCode,
-                    accessRule.tenantId
+            if (parent != null) {
+                eventPublisher.publishEvent(
+                    SysAccessRuleIpDeleted(
+                        id = id,
+                        parentSystemCode = parent.systemCode,
+                        parentTenantId = parent.tenantId,
+                    )
                 )
             } else {
-                accessRuleIpsBySubSysAndTenantIdCache.syncOnDelete(id)
+                log.warn("删除id为${id}的IP访问规则后无法定位父规则，跳过事件发布；缓存仅能等下次 reloadAll 修正。")
             }
         }
     }
@@ -154,32 +191,20 @@ open class SysAccessRuleIpService(
         (any as? IIdEntity<*>)?.id as? String
             ?: error("更新IP访问规则时不支持的入参类型: ${any::class.qualifiedName}")
 
-    /** 根据 IP 规则主键加载其父访问规则（用于缓存维度）。 */
-    private fun findParentAccessRuleByIpRuleId(id: String) =
-        dao.get(id)?.let { sysAccessRuleDao.get(it.parentRuleId) }
-
-    /** 在批量变更某父规则下 IP 后，按父规则刷新对应维度的 IP 规则缓存。 */
-    private fun syncParentRuleCache(ruleId: String) {
-        val accessRule = sysAccessRuleDao.get(ruleId) ?: return
-        accessRuleIpsBySubSysAndTenantIdCache.syncOnUpdate(accessRule, ruleId)
-    }
-
     /**
-     * 批量删除 IP 规则；删除成功后对涉及父规则对应的「系统编码 + 租户」缓存维度分别执行 evict 与回填。
+     * 批量删除 IP 规则；删除成功后发布 [SysAccessRuleIpBatchDeleted]。
      */
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {
         if (ids.isEmpty()) return 0
-        val dimensionKeys = ids.mapNotNull { id ->
+        val dimensions = ids.mapNotNull { id ->
             dao.get(id)?.let { ip ->
-                sysAccessRuleDao.get(ip.parentRuleId)?.let { r -> r.systemCode to r.tenantId }
+                sysAccessRuleDao.get(ip.parentRuleId)?.let { r -> r.systemCode to r.tenantId as String? }
             }
         }.distinct()
         val count = super.batchDelete(ids)
         if (count > 0) {
-            dimensionKeys.forEach { (systemCode, tenantId) ->
-                accessRuleIpsBySubSysAndTenantIdCache.syncOnDeleteBySystemAndTenant(systemCode, tenantId)
-            }
+            eventPublisher.publishEvent(SysAccessRuleIpBatchDeleted(ids = ids, dimensions = dimensions))
         }
         return count
     }
