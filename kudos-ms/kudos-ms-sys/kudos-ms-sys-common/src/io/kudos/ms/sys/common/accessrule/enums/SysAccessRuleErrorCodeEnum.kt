@@ -48,6 +48,18 @@ enum class SysAccessRuleErrorCodeEnum(
     INVALID_IP_END_ADDRESS(
         "INVALID_IP_END_ADDRESS",
         "无效的IP结束地址",
+    ),
+
+    /** 按主键查找访问规则失败 */
+    ACCESS_RULE_NOT_FOUND(
+        "ACCESS_RULE_NOT_FOUND",
+        "访问规则不存在",
+    ),
+
+    /** 按主键查找 IP 访问规则失败 */
+    IP_RULE_NOT_FOUND(
+        "IP_RULE_NOT_FOUND",
+        "IP 访问规则不存在",
     );
 
     override val i18nKeyPrefix: String
