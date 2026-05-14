@@ -10,21 +10,27 @@ import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.ms.sys.common.accessrule.enums.SysAccessRuleErrorCodeEnum
 import io.kudos.ms.sys.common.accessrule.vo.request.SysAccessRuleFormCreate
 import io.kudos.ms.sys.common.accessrule.vo.response.SysAccessRuleRow
-import io.kudos.ms.sys.core.accessrule.cache.AccessRuleIpsBySubSysAndTenantIdCache
 import io.kudos.ms.sys.core.accessrule.cache.SysAccessRuleHashCache
 import io.kudos.ms.sys.core.accessrule.dao.SysAccessRuleDao
+import io.kudos.ms.sys.core.accessrule.event.SysAccessRuleBatchDeleted
+import io.kudos.ms.sys.core.accessrule.event.SysAccessRuleDeleted
+import io.kudos.ms.sys.core.accessrule.event.SysAccessRuleInserted
+import io.kudos.ms.sys.core.accessrule.event.SysAccessRuleUpdated
 import io.kudos.ms.sys.core.accessrule.model.po.SysAccessRule
 import io.kudos.ms.sys.core.accessrule.service.iservice.ISysAccessRuleService
 import io.kudos.ms.sys.core.platform.service.impl.completeCrudInsert
 import io.kudos.ms.sys.core.platform.service.impl.completeCrudUpdate
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 
 /**
- * 访问规则（`sys_access_rule`）的持久化与查询；写操作成功后刷新
- * [AccessRuleIpsBySubSysAndTenantIdCache] 中按「系统编码 + 租户」维度的 IP 规则缓存，以及
- * [SysAccessRuleHashCache] 中主表 Hash 缓存，保证父规则变更与缓存一致。
+ * 访问规则（`sys_access_rule`）的持久化与查询。写操作成功后发布领域事件
+ * （[SysAccessRuleInserted] / [SysAccessRuleUpdated] / [SysAccessRuleDeleted] / [SysAccessRuleBatchDeleted]），
+ * 由各缓存通过 `@TransactionalEventListener(AFTER_COMMIT)` 订阅并自行刷新。
+ *
+ * 这层不再直接持有任何 cache 句柄（除了写前唯一性预检需要的 [SysAccessRuleHashCache]）。
  *
  * @author K
  * @author AI: Cursor
@@ -34,8 +40,8 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional
 open class SysAccessRuleService(
     dao: SysAccessRuleDao,
-    private val accessRuleIpsBySubSysAndTenantIdCache: AccessRuleIpsBySubSysAndTenantIdCache,
     private val sysAccessRuleHashCache: SysAccessRuleHashCache,
+    private val eventPublisher: ApplicationEventPublisher,
 ) : BaseCrudService<String, SysAccessRule, SysAccessRuleDao>(dao), ISysAccessRuleService {
 
     private val log = LogFactory.getLog(this::class)
@@ -57,7 +63,7 @@ open class SysAccessRuleService(
         dao.searchAs(Criteria.and(SysAccessRule::systemCode eq systemCode))
 
     /**
-     * 仅更新启用标记；成功后按该规则原有系统编码、租户刷新 IP 规则缓存（父规则停用会影响缓存中 IP 列表是否生效）。
+     * 仅更新启用标记；成功后发布 [SysAccessRuleUpdated]（维度键即原维度，订阅方据此刷新 IP 缓存）。
      */
     @Transactional
     override fun updateActive(id: String, active: Boolean): Boolean {
@@ -76,11 +82,15 @@ open class SysAccessRuleService(
             successMessage = "更新id为${id}的访问规则的启用状态为${active}。",
             failureMessage = "更新id为${id}的访问规则的启用状态为${active}失败！",
         ) {
-            accessRuleIpsBySubSysAndTenantIdCache.syncOnDeleteBySystemAndTenant(
-                existing.systemCode,
-                existing.tenantId,
+            eventPublisher.publishEvent(
+                SysAccessRuleUpdated(
+                    id = id,
+                    systemCode = existing.systemCode,
+                    tenantId = existing.tenantId,
+                    beforeSystemCode = existing.systemCode,
+                    beforeTenantId = existing.tenantId,
+                )
             )
-            sysAccessRuleHashCache.syncOnUpdate(id)
         }
     }
 
@@ -97,14 +107,19 @@ open class SysAccessRuleService(
         val id = super.insert(any)
         completeCrudInsert(log, "新增id为${id}的访问规则。") {
             val rule = dao.get(id) ?: return@completeCrudInsert
-            accessRuleIpsBySubSysAndTenantIdCache.syncOnDeleteBySystemAndTenant(rule.systemCode, rule.tenantId)
-            sysAccessRuleHashCache.syncOnInsert(id)
+            eventPublisher.publishEvent(
+                SysAccessRuleInserted(
+                    id = id,
+                    systemCode = rule.systemCode,
+                    tenantId = rule.tenantId,
+                )
+            )
         }
         return id
     }
 
     /**
-     * 更新访问规则；成功后刷新当前维度缓存，若系统编码或租户发生变化则同时刷新旧维度。
+     * 更新访问规则；成功后发布 [SysAccessRuleUpdated]，订阅方据 `dimensionChanged` 自行处理旧维度刷新。
      */
     @Transactional
     override fun update(any: Any): Boolean {
@@ -117,21 +132,20 @@ open class SysAccessRuleService(
             failureMessage = "更新id为${id}的访问规则失败！",
         ) {
             val after = dao.get(id) ?: return@completeCrudUpdate
-            accessRuleIpsBySubSysAndTenantIdCache.syncOnDeleteBySystemAndTenant(after.systemCode, after.tenantId)
-            if (before != null &&
-                (before.systemCode != after.systemCode || before.tenantId != after.tenantId)
-            ) {
-                accessRuleIpsBySubSysAndTenantIdCache.syncOnDeleteBySystemAndTenant(
-                    before.systemCode,
-                    before.tenantId,
+            eventPublisher.publishEvent(
+                SysAccessRuleUpdated(
+                    id = id,
+                    systemCode = after.systemCode,
+                    tenantId = after.tenantId,
+                    beforeSystemCode = before?.systemCode,
+                    beforeTenantId = before?.tenantId,
                 )
-            }
-            sysAccessRuleHashCache.syncOnUpdate(id)
+            )
         }
     }
 
     /**
-     * 按主键删除访问规则；成功后刷新对应系统编码、租户下的 IP 规则缓存。
+     * 按主键删除访问规则；成功后发布 [SysAccessRuleDeleted]。
      */
     @Transactional
     override fun deleteById(id: String): Boolean {
@@ -146,29 +160,28 @@ open class SysAccessRuleService(
             successMessage = "删除id为${id}的访问规则。",
             failureMessage = "删除id为${id}的访问规则失败！",
         ) {
-            accessRuleIpsBySubSysAndTenantIdCache.syncOnDeleteBySystemAndTenant(
-                existing.systemCode,
-                existing.tenantId,
+            eventPublisher.publishEvent(
+                SysAccessRuleDeleted(
+                    id = id,
+                    systemCode = existing.systemCode,
+                    tenantId = existing.tenantId,
+                )
             )
-            sysAccessRuleHashCache.syncOnDelete(id)
         }
     }
 
     /**
-     * 批量删除访问规则；若有成功删除行，则对所涉及各「系统编码 + 租户」维度分别刷新 IP 规则缓存。
+     * 批量删除访问规则；若有成功删除行，则发布 [SysAccessRuleBatchDeleted] 携带所有受影响维度。
      */
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {
         if (ids.isEmpty()) return 0
         val existing = ids.mapNotNull { dao.get(it) }
         if (existing.isEmpty()) return 0
-        val keys = existing.map { it.systemCode to it.tenantId }.distinct()
+        val dimensions = existing.map { it.systemCode to it.tenantId as String? }.distinct()
         val count = super.batchDelete(ids)
         if (count > 0) {
-            keys.forEach { (systemCode, tenantId) ->
-                accessRuleIpsBySubSysAndTenantIdCache.syncOnDeleteBySystemAndTenant(systemCode, tenantId)
-            }
-            sysAccessRuleHashCache.syncOnBatchDelete(ids)
+            eventPublisher.publishEvent(SysAccessRuleBatchDeleted(ids = ids, dimensions = dimensions))
         }
         return count
     }
