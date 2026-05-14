@@ -43,13 +43,17 @@ open class SysSystemService(
         }
     }
 
+    @Transactional(readOnly = true)
     override fun getSystemFromCache(code: String): SysSystemCacheEntry? = sysSystemHashCache.getSystemByCode(code)
 
+    @Transactional(readOnly = true)
     override fun getFullSystemTree(): List<IdAndNameTreeNode<String>> =
         ListToTreeConverter.convert(getAllSystemsFromCache().map { IdAndNameTreeNode(it.code, it.name, it.parentCode) })
 
+    @Transactional(readOnly = true)
     override fun getAllSystemsFromCache(): List<SysSystemCacheEntry> = sysSystemHashCache.getAllSystems()
 
+    @Transactional(readOnly = true)
     override fun getSystemsExcludeSubSystemFromCache(): List<SysSystemCacheEntry> = sysSystemHashCache.getSystemsByType(false)
 
     @Transactional
@@ -68,6 +72,7 @@ open class SysSystemService(
         }
     }
 
+    @Transactional(readOnly = true)
     override fun getSubSystemsFromCache(systemCode: String): List<SysSystemCacheEntry> {
         val subSystems = sysSystemHashCache.getAllSystems()
             .filter { it.parentCode == systemCode }

@@ -57,23 +57,29 @@ open class SysResourceService(
         }
     }
 
+    @Transactional(readOnly = true)
     override fun getResourceFromCache(id: String): SysResourceCacheEntry? = sysResourceHashCache.getResourceById(id)
 
+    @Transactional(readOnly = true)
     override fun getResourceIdFromCacheBySubSystemAndUrl(subSystemCode: String, url: String): String? =
         sysResourceHashCache.getResourceBySubSystemCodeAndUrl(subSystemCode, url)?.id
 
+    @Transactional(readOnly = true)
     override fun getResourceIdsFromCacheBySubSystemAndType(
         subSystemCode: String,
         resourceTypeDictCode: String
     ): List<String> = sysResourceHashCache.getResourcesBySubSystemCodeAndType(subSystemCode, resourceTypeDictCode)
         .map { it.id }
 
+    @Transactional(readOnly = true)
     override fun getResourcesBySubSystemCode(subSystemCode: String): List<SysResourceRow> =
         dao.searchAs(Criteria(SysResource::subSystemCode eq subSystemCode))
 
+    @Transactional(readOnly = true)
     override fun getChildResources(parentId: String): List<SysResourceRow> =
         dao.searchAs(Criteria(SysResource::parentId eq parentId))
 
+    @Transactional(readOnly = true)
     override fun getResourceTree(subSystemCode: String, parentId: String?): List<SysResourceTreeRow> =
         buildResourceTree(getResourcesBySubSystemCode(subSystemCode), parentId)
 
@@ -161,16 +167,19 @@ open class SysResourceService(
         return count
     }
 
+    @Transactional(readOnly = true)
     override fun getResourcesFromCacheByIds(ids: Collection<String>): Map<String, SysResourceCacheEntry> =
         ids.takeIf { it.isNotEmpty() }
             ?.let { sysResourceHashCache.getResourcesByIds(it.toSet()) }
             ?: emptyMap()
 
+    @Transactional(readOnly = true)
     override fun getResourcesFromCacheBySubSystemAndType(
         resourceType: ResourceTypeEnum,
         subSystemCode: String,
     ): List<SysResourceCacheEntry> = getCachedResourcesByType(subSystemCode, resourceType)
 
+    @Transactional(readOnly = true)
     override fun getSimpleMenusFromCache(subSystemCode: String): List<BaseMenuTreeNode> {
         return buildMenuTree(getCachedResourcesByType(subSystemCode, ResourceTypeEnum.MENU)) { item ->
             BaseMenuTreeNode().apply {
@@ -182,6 +191,7 @@ open class SysResourceService(
         }.sortedBy { it.seqNo }
     }
 
+    @Transactional(readOnly = true)
     override fun getMenusFromCache(subSystemCode: String): List<MenuTreeNode> {
         return buildMenuTree(getCachedResourcesByType(subSystemCode, ResourceTypeEnum.MENU)) { item ->
             MenuTreeNode().apply {
@@ -195,9 +205,11 @@ open class SysResourceService(
         }.sortedBy { it.seqNo }
     }
 
+    @Transactional(readOnly = true)
     override fun getResourceIdFromCache(subSysDictCode: String, url: String): String? =
         getResourceIdFromCacheBySubSystemAndUrl(subSysDictCode, url)
 
+    @Transactional(readOnly = true)
     override fun getDirectChildrenResourcesFromCache(
         resourceType: ResourceTypeEnum,
         parentId: String?,
@@ -205,6 +217,7 @@ open class SysResourceService(
     ): List<SysResourceCacheEntry> = getCachedResourcesByType(subSystemCode, resourceType)
             .filter { it.parentId == parentId }
 
+    @Transactional(readOnly = true)
     override fun getChildrenResourcesFromCache(
         subSystemCode: String,
         resourceType: ResourceTypeEnum,

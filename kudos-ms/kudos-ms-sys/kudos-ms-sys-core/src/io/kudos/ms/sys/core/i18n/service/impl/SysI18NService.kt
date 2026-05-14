@@ -42,8 +42,10 @@ open class SysI18NService(
         }
     }
 
+    @Transactional(readOnly = true)
     override fun getI18nFromCache(id: String): SysI18nCacheEntry? = sysI18nHashCache.getI18nById(id)
 
+    @Transactional(readOnly = true)
     override fun getI18nValueFromCache(
         locale: String,
         i18nTypeDictCode: String,
@@ -52,6 +54,7 @@ open class SysI18NService(
         key: String
     ): String? = getI18nsFromCache(locale, i18nTypeDictCode, namespace, atomicServiceCode)[key]
 
+    @Transactional(readOnly = true)
     override fun getI18nsFromCache(
         locale: String,
         i18nTypeDictCode: String,

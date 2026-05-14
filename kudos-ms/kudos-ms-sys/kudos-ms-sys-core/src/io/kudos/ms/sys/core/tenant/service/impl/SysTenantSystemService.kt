@@ -27,9 +27,11 @@ open class SysTenantSystemService(
 
     private val log = LogFactory.getLog(this::class)
 
+    @Transactional(readOnly = true)
     override fun searchSystemCodesByTenantId(tenantId: String): Set<String> =
         dao.searchSystemCodesByTenantId(tenantId)
 
+    @Transactional(readOnly = true)
     override fun searchTenantIdsBySystemCode(systemCode: String): Set<String> =
         sysTenantSystemHashCache.getTenantIdsBySubSystemCode(systemCode).toSet()
 
@@ -108,6 +110,7 @@ open class SysTenantSystemService(
      * @author AI: Cursor
      * @since 1.0.0
      */
+    @Transactional(readOnly = true)
     override fun exists(tenantId: String, systemCode: String): Boolean = dao.exists(tenantId, systemCode)
 
     override fun deleteByTenantId(tenantId: String): Int {

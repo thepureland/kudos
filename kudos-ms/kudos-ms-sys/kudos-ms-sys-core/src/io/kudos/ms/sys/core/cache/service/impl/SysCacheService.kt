@@ -46,6 +46,7 @@ open class SysCacheService(
         }
     }
 
+    @Transactional(readOnly = true)
     override fun getCacheFromCache(id: String): SysCacheCacheEntry? = sysCacheHashCache.getCacheById(id)
 
     @Transactional
@@ -111,6 +112,7 @@ open class SysCacheService(
         return count
     }
 
+    @Transactional(readOnly = true)
     override fun getCachesFromCache(atomicServiceCode: String): List<SysCacheCacheEntry> = sysCacheHashCache.getCaches(atomicServiceCode)
 
     override fun reload(id: String, key: String) {
@@ -167,6 +169,7 @@ open class SysCacheService(
         }
     }
 
+    @Transactional(readOnly = true)
     override fun existsKey(id: String, key: String): Boolean {
         require(id.isNotBlank())
         require(key.isNotBlank())
@@ -175,6 +178,7 @@ open class SysCacheService(
         }
     }
 
+    @Transactional(readOnly = true)
     override fun getValueJson(id: String, key: String): String {
         require(id.isNotBlank())
         require(key.isNotBlank())

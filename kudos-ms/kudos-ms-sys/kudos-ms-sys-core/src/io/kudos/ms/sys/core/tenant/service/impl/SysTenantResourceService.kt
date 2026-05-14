@@ -23,8 +23,10 @@ open class SysTenantResourceService(
 
     private val log = LogFactory.getLog(this::class)
 
+    @Transactional(readOnly = true)
     override fun getResourceIdsByTenantId(tenantId: String): Set<String> = dao.searchResourceIdsByTenantId(tenantId)
 
+    @Transactional(readOnly = true)
     override fun getTenantIdsByResourceId(resourceId: String): Set<String> = dao.searchTenantIdsByResourceId(resourceId)
 
     @Transactional
@@ -58,5 +60,6 @@ open class SysTenantResourceService(
         return success
     }
 
+    @Transactional(readOnly = true)
     override fun exists(tenantId: String, resourceId: String): Boolean = dao.exists(tenantId, resourceId)
 }

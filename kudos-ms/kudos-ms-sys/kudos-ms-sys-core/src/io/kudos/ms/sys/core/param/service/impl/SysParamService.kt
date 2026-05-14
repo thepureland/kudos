@@ -44,9 +44,11 @@ open class SysParamService(
         }
     }
 
+    @Transactional(readOnly = true)
     override fun getParamFromCache(atomicServiceCode: String, paramName: String): SysParamCacheEntry? =
         paramByModuleAndNameCache.getParam(atomicServiceCode, paramName)
 
+    @Transactional(readOnly = true)
     override fun getParamsByAtomicServiceCode(atomicServiceCode: String): List<SysParamRow> =
         dao.searchAs(Criteria(SysParam::atomicServiceCode eq atomicServiceCode))
 
@@ -66,6 +68,7 @@ open class SysParamService(
         }
     }
 
+    @Transactional(readOnly = true)
     override fun getParamValueFromCache(atomicServiceCode: String, paramName: String, defaultValue: String?): String? {
         val param = getParamFromCache(atomicServiceCode, paramName)
         return param?.paramValue ?: param?.defaultValue ?: defaultValue

@@ -42,8 +42,10 @@ open class SysDictItemService(
         }
     }
 
+    @Transactional(readOnly = true)
     override fun getDictItemFromCache(id: String): SysDictItemCacheEntry? = sysDictItemHashCache.getDictItemById(id)
 
+    @Transactional(readOnly = true)
     override fun getDictItemsFromCache(dictType: String, atomicServiceCode: String): List<SysDictItemCacheEntry> =
         sysDictItemHashCache.getDictItems(atomicServiceCode, dictType)
 
@@ -57,6 +59,7 @@ open class SysDictItemService(
         }
     }
 
+    @Transactional(readOnly = true)
     override fun getDictItemMapFromCache(dictType: String, atomicServiceCode: String): LinkedHashMap<String, String> =
         sysDictItemHashCache.getDictItems(atomicServiceCode, dictType)
             .associateTo(LinkedHashMap()) { it.itemCode to it.itemName }
@@ -211,6 +214,7 @@ open class SysDictItemService(
         }
     }
 
+    @Transactional(readOnly = true)
     override fun getDirectChildrenOfDictFromCache(
         atomicServiceCode: String,
         dictType: String,
@@ -220,6 +224,7 @@ open class SysDictItemService(
             .let { items -> if (activeOnly) items.filter { it.active } else items }
             .filter { it.parentId == null }
 
+    @Transactional(readOnly = true)
     override fun getDirectChildrenOfItemFromCache(
         atomicServiceCode: String,
         dictType: String,
@@ -230,6 +235,7 @@ open class SysDictItemService(
             ?.let { getDirectChildrenOfItemFromCache(it.id, activeOnly) }
             ?: emptyList()
 
+    @Transactional(readOnly = true)
     override fun getDirectChildrenOfItemFromCache(parentId: String, activeOnly: Boolean): List<SysDictItemCacheEntry> =
         sysDictItemHashCache.getDictItems(parentId).let { items -> if (activeOnly) items.filter { it.active } else items }
 
