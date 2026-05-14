@@ -34,10 +34,12 @@ open class UserOrgUserService(
 
     private val log = LogFactory.getLog(this::class)
 
+    @Transactional(readOnly = true)
     override fun getUserIdsByOrgId(orgId: String): Set<String> {
         return userIdsByOrgIdCache.getUserIds(orgId).toSet()
     }
 
+    @Transactional(readOnly = true)
     override fun getOrgIdsByUserId(userId: String): Set<String> {
         return orgIdsByUserIdCache.getOrgIds(userId).toSet()
     }
@@ -83,6 +85,7 @@ open class UserOrgUserService(
         return success
     }
 
+    @Transactional(readOnly = true)
     override fun exists(orgId: String, userId: String): Boolean {
         return dao.exists(orgId, userId)
     }

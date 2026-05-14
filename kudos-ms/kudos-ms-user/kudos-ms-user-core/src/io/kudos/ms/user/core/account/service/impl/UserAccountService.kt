@@ -47,16 +47,19 @@ open class UserAccountService(
 
     private val log = LogFactory.getLog(this::class)
 
+    @Transactional(readOnly = true)
     override fun getUserOrgIds(userId: String): List<String> {
         return orgIdsByUserIdCache.getOrgIds(userId)
     }
 
 
+    @Transactional(readOnly = true)
     override fun getUserIds(tenantId: String): List<String> {
         return dao.searchActiveUserIdsByTenantId(tenantId)
     }
 
 
+    @Transactional(readOnly = true)
     override fun getUserOrgs(userId: String): List<UserOrgCacheEntry> {
         val orgIds = getUserOrgIds(userId)
         if (orgIds.isEmpty()) {
@@ -66,26 +69,31 @@ open class UserAccountService(
         return orgIds.mapNotNull { orgsMap[it] }
     }
 
+    @Transactional(readOnly = true)
     override fun isUserInOrg(userId: String, orgId: String): Boolean {
         val orgIds = getUserOrgIds(userId)
         return orgIds.contains(orgId)
     }
 
+    @Transactional(readOnly = true)
     override fun getUserByTenantIdAndUsername(tenantId: String, username: String): UserAccountCacheEntry? {
         val userId = userAccountHashCache.getUsersByTenantIdAndUsername(tenantId, username)?.id
         return userId?.let { userAccountHashCache.getUserById(it) }
     }
 
+    @Transactional(readOnly = true)
     override fun getUserRecord(id: String): UserAccountRow? {
         return dao.getAs<UserAccountRow>(id)
     }
 
+    @Transactional(readOnly = true)
     override fun getUsersByTenantId(tenantId: String): List<UserAccountRow> {
         val searchPayload = UserAccountQuery(tenantId = tenantId)
         @Suppress("UNCHECKED_CAST")
         return dao.search(searchPayload, UserAccountRow::class)
     }
 
+    @Transactional(readOnly = true)
     override fun getUsersByOrgId(orgId: String): List<UserAccountRow> {
         val searchPayload = UserAccountQuery(orgId = orgId)
         @Suppress("UNCHECKED_CAST")

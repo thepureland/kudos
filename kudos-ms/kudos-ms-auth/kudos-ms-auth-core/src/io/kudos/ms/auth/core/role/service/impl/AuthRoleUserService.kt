@@ -39,10 +39,12 @@ open class AuthRoleUserService(
 
     private val log = LogFactory.getLog(this::class)
 
+    @Transactional(readOnly = true)
     override fun getUserIdsByRoleId(roleId: String): Set<String> {
         return userIdsByRoleIdCache.getUserIds(roleId).toSet()
     }
 
+    @Transactional(readOnly = true)
     override fun getRoleIdsByUserId(userId: String): Set<String> {
         return roleIdsByUserIdCache.getRoleIds(userId).toSet()
     }
@@ -89,6 +91,7 @@ open class AuthRoleUserService(
         return success
     }
 
+    @Transactional(readOnly = true)
     override fun exists(roleId: String, userId: String): Boolean {
         return dao.exists(roleId, userId)
     }

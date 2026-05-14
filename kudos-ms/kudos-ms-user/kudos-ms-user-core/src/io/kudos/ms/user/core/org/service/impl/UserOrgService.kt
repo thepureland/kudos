@@ -47,6 +47,7 @@ open class UserOrgService(
 
     private val log = LogFactory.getLog(this::class)
 
+    @Transactional(readOnly = true)
     override fun getOrgAdmins(orgId: String): List<UserAccountCacheEntry> {
         val adminUserIds = userOrgUserDao.searchAdminUserIdsByOrgId(orgId)
         
@@ -62,14 +63,17 @@ open class UserOrgService(
         return adminUserIds.mapNotNull { usersMap[it] }
     }
 
+    @Transactional(readOnly = true)
     override fun getOrgUserIds(orgId: String): List<String> {
         return userIdsByOrgIdCache.getUserIds(orgId)
     }
 
+    @Transactional(readOnly = true)
     override fun getChildOrgIds(orgId: String): List<String> {
         return dao.searchActiveChildOrgIds(orgId)
     }
 
+    @Transactional(readOnly = true)
     override fun getOrgUsers(orgId: String): List<UserAccountCacheEntry> {
         val userIds = getOrgUserIds(orgId)
         if (userIds.isEmpty()) {
@@ -79,11 +83,13 @@ open class UserOrgService(
         return userIds.mapNotNull { usersMap[it] }
     }
 
+    @Transactional(readOnly = true)
     override fun isUserInOrg(userId: String, orgId: String): Boolean {
         val userIds = getOrgUserIds(orgId)
         return userIds.contains(userId)
     }
 
+    @Transactional(readOnly = true)
     override fun getChildOrgs(orgId: String): List<UserOrgCacheEntry> {
         val childOrgIds = getChildOrgIds(orgId)
         if (childOrgIds.isEmpty()) {
@@ -93,16 +99,19 @@ open class UserOrgService(
         return childOrgIds.mapNotNull { orgsMap[it] }
     }
 
+    @Transactional(readOnly = true)
     override fun getParentOrg(orgId: String): UserOrgCacheEntry? {
         val org = userOrgHashCache.getOrgById(orgId) ?: return null
         val parentId = org.parentId ?: return null
         return userOrgHashCache.getOrgById(parentId)
     }
 
+    @Transactional(readOnly = true)
     override fun getOrgRecord(id: String): UserOrgCacheEntry? {
         return userOrgHashCache.getOrgById(id)
     }
 
+    @Transactional(readOnly = true)
     override fun getOrgsByTenantId(tenantId: String): List<UserOrgCacheEntry> {
         val orgIds = userOrgHashCache.getOrgsByTenantId(tenantId).map { it.id }
         if (orgIds.isEmpty()) {
@@ -112,6 +121,7 @@ open class UserOrgService(
         return orgIds.mapNotNull { orgsMap[it] }
     }
 
+    @Transactional(readOnly = true)
     override fun getOrgTree(tenantId: String, parentId: String?): List<UserOrgTreeRow> {
         // 如果指定了parentId，只查询该父机构下的直接子机构；否则查询租户下全部启用机构
         val orgs = dao.searchActiveOrgsByTenantId(tenantId, parentId)
@@ -155,6 +165,7 @@ open class UserOrgService(
         return rootNodes
     }
 
+    @Transactional(readOnly = true)
     override fun getAllAncestorOrgIds(orgId: String): List<String> {
         val ancestors = mutableListOf<String>()
         var currentOrg = userOrgHashCache.getOrgById(orgId) ?: return emptyList()
@@ -168,6 +179,7 @@ open class UserOrgService(
         return ancestors
     }
 
+    @Transactional(readOnly = true)
     override fun getAllDescendantOrgIds(orgId: String): List<String> {
         val descendants = mutableListOf<String>()
         val queue = mutableListOf(orgId)

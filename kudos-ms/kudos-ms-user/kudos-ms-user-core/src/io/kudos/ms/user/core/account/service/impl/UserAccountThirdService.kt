@@ -22,10 +22,12 @@ open class UserAccountThirdService(
 ) : BaseCrudService<String, UserAccountThird, UserAccountThirdDao>(dao), IUserAccountThirdService {
 
 
+    @Transactional(readOnly = true)
     override fun getByUserAccountId(userId: String): List<UserAccountThird> {
         return dao.searchByUserId(userId)
     }
 
+    @Transactional(readOnly = true)
     override fun getByProviderSubject(
         tenantId: String,
         accountProviderDictCode: String,

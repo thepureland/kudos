@@ -26,10 +26,12 @@ open class AuthGroupRoleService(
 
     private val log = LogFactory.getLog(this::class)
 
+    @Transactional(readOnly = true)
     override fun getRoleIdsByGroupId(groupId: String): Set<String> {
         return dao.searchRoleIdsByGroupId(groupId)
     }
 
+    @Transactional(readOnly = true)
     override fun getGroupIdsByRoleId(roleId: String): Set<String> {
         return dao.searchGroupIdsByRoleId(roleId)
     }
@@ -66,6 +68,7 @@ open class AuthGroupRoleService(
         return success
     }
 
+    @Transactional(readOnly = true)
     override fun exists(groupId: String, roleId: String): Boolean {
         return dao.exists(groupId, roleId)
     }
