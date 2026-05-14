@@ -21,8 +21,8 @@ data class SysDomainCacheEntry (
     /** 系统编码 */
     val systemCode: String,
 
-    /** 租户id */
-    val tenantId: String,
+    /** 租户id；`null` 表示平台级（与库表 `tenant_id IS NULL` 对应） */
+    val tenantId: String?,
 
     /** 备注 */
     val remark: String?,

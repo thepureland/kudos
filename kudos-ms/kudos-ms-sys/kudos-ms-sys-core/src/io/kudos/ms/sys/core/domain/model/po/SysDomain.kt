@@ -21,7 +21,7 @@ interface SysDomain : IManagedDbEntity<String, SysDomain> {
     /** 系统编码 */
     var systemCode: String
 
-    /** 租户id */
-    var tenantId: String
+    /** 租户id；`null` 表示平台级（与 DB 中 `tenant_id IS NULL` 对应） */
+    var tenantId: String?
 
 }
