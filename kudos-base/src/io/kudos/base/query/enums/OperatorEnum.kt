@@ -317,7 +317,7 @@ enum class OperatorEnum(
                 }
                 if (v1 is Map<*, *>) {
                     v1.isNotEmpty()
-                } else v1.toString().isEmpty()
+                } else v1.toString().isNotEmpty()
             }
             IS_EMPTY -> {
                 if (v1 == null) {
@@ -351,7 +351,7 @@ enum class OperatorEnum(
                 } else {
                     val ltStart = compareComparableValues(v1, v2.start)?.let { it < 0 } ?: false
                     val gtEnd = compareComparableValues(v1, v2.endInclusive)?.let { it > 0 } ?: false
-                    ltStart && gtEnd
+                    ltStart || gtEnd
                 }
             }
             else -> false

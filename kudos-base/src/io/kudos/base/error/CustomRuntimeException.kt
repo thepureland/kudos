@@ -22,8 +22,8 @@ import kotlin.math.min
  * - 如果消息为空，直接使用原消息
  * 
  * 堆栈控制：
- * - 根据errorCode.printAllStackTrace决定是否输出完整堆栈
- * - 精简模式：只保留前5行堆栈信息
+ * - 根据 printAllStackTrace 参数决定是否输出完整堆栈
+ * - 精简模式：保留 JVM 自动捕获堆栈的前 20 帧（旧版为 5 帧，常切掉关键业务栈）
  * - 完整模式：输出所有堆栈信息
  * - 使用@Synchronized确保线程安全
  * 
@@ -41,7 +41,7 @@ import kotlin.math.min
  * 注意事项：
  * - 这是一个open类，可以被继承
  * - 消息格式化使用MessageFormat，注意参数顺序
- * - 堆栈精简可能丢失重要信息，需谨慎使用
+ * - 精简模式下若业务栈帧数超过 20 仍会丢失尾部信息，关键场景请使用完整模式
  * 
  * @since 1.0.0
  */
@@ -78,7 +78,7 @@ open class CustomRuntimeException : RuntimeException {
         vararg args: Any?
     ) {
         fillCustomStackTrace(errorCode, printAllStackTrace)
-        handleMessageWithoutLog(errorCode.displayText, args)
+        handleMessageWithoutLog(errorCode.displayText, *args)
         log.error(this)
     }
 
@@ -90,35 +90,19 @@ open class CustomRuntimeException : RuntimeException {
 
     /**
      * 填充自定义堆栈跟踪信息
-     * 
-     * 根据错误码配置决定是否输出完整的堆栈跟踪信息。
-     * 
-     * 工作流程：
-     * 1. 检查配置：如果errorCode.printAllStackTrace为true，填充完整堆栈
-     * 2. 精简模式：如果为false，只保留前5行堆栈信息
-     * 3. 设置堆栈：将处理后的堆栈信息设置到异常对象
-     * 
-     * 堆栈精简：
-     * - 只保留前5行堆栈信息（或实际堆栈大小，取较小值）
-     * - 减少日志输出量，提高可读性
-     * - 保留最关键的调用栈信息
-     * 
-     * 线程安全：
-     * - 使用@Synchronized确保多线程环境下的线程安全
-     * - 避免并发修改堆栈信息导致的问题
-     * 
-     * 使用场景：
-     * - 某些错误不需要完整的堆栈信息
-     * - 减少日志文件大小
-     * - 提高日志可读性
-     * 
-     * 注意事项：
-     * - 精简模式只保留前5行，可能丢失重要信息
-     * - 完整模式会输出所有堆栈信息，可能很长
-     * - 配置由errorCode决定，不能动态修改
-     * 
-     * @param errorCode 错误码枚举，包含堆栈输出配置
-     * @param printAllStackTrace 输出完整堆栈信息
+     *
+     * - printAllStackTrace=true：在当前位置重新调用 fillInStackTrace，保留完整堆栈
+     * - printAllStackTrace=false（精简模式）：保留 JVM 自动捕获的栈的前 [MAX_STACK_LINES] 帧
+     *
+     * 设计说明：
+     * - 旧实现固定截到前 5 帧。生产中如果业务调用链稍深（DAO → Service → Controller →
+     *   AOP 切面 → 网关过滤器…），关键的上层调用方常被切掉，难以定位。
+     * - 提升为 20 是经验值，覆盖典型 Spring MVC 全链路而仍避免日志爆炸。
+     *
+     * 线程安全：使用 @Synchronized 避免并发修改堆栈数组。
+     *
+     * @param errorCode 错误码枚举（保留供子类使用，本实现未读取）
+     * @param printAllStackTrace true 时不裁剪堆栈
      * @return 当前异常对象
      */
     @Synchronized
@@ -128,17 +112,13 @@ open class CustomRuntimeException : RuntimeException {
     ): Throwable? {
         if (printAllStackTrace) {
             return fillInStackTrace()
-        } else {
-            //精简输出日志，如果error定义不输出全部堆栈信息
-            val stackTrace = getStackTrace()
-            val maxLines = min(5, stackTrace.size)
-            val newStackTrace = arrayOfNulls<StackTraceElement>(maxLines)
-            for (i in 0..<maxLines) {
-                newStackTrace[i] = stackTrace[i]
-            }
-            setStackTrace(newStackTrace)
+        }
+        val stackTrace = getStackTrace()
+        if (stackTrace.size <= MAX_STACK_LINES) {
             return this
         }
+        setStackTrace(stackTrace.copyOfRange(0, MAX_STACK_LINES))
+        return this
     }
 
     protected fun resolveCauseException(cause: Throwable, message: String, vararg args: Any?) {
@@ -164,5 +144,10 @@ open class CustomRuntimeException : RuntimeException {
     }
 
     private val log = LogFactory.getLog(this::class)
+
+    companion object {
+        /** 精简堆栈模式下保留的栈帧数上限 */
+        private const val MAX_STACK_LINES = 20
+    }
 
 }
