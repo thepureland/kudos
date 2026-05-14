@@ -48,20 +48,24 @@ open class SysDictService(
         }
     }
 
+    @Transactional(readOnly = true)
     override fun getDictFromCache(dictId: String): SysDictCacheEntry? = sysDictHashCache.getDictById(dictId)
 
+    @Transactional(readOnly = true)
     override fun getRecord(id: String): SysDictRow? = dao.get(id)?.let(::toSysDictRow)
 
     @Transactional
     override fun delete(id: String, isDict: Boolean): Boolean =
         if (isDict) deleteDictWithItems(id) else sysDictItemService.cascadeDeleteChildren(id)
 
+    @Transactional(readOnly = true)
     override fun getDictsFromCacheByAtomicServiceCode(
         atomicServiceCode: String,
         activeOnly: Boolean
     ): List<SysDictCacheEntry> = sysDictHashCache.getDictsByAtomicServiceCode(atomicServiceCode)
         .let { dicts -> if (activeOnly) dicts.filter { it.active } else dicts }
 
+    @Transactional(readOnly = true)
     override fun getDictByAtomicServiceAndType(atomicServiceCode: String, dictType: String): SysDictRow? =
         dao.search(
             Criteria.and(
@@ -132,16 +136,19 @@ open class SysDictService(
         return count
     }
 
+    @Transactional(readOnly = true)
     override fun getActiveDictItemsFromCache(
         dictType: String,
         atomicServiceCode: String,
     ): List<SysDictItemCacheEntry> = getActiveDictItems(dictType, atomicServiceCode)
 
+    @Transactional(readOnly = true)
     override fun getActiveDictItemMapFromCache(
         dictType: String,
         atomicServiceCode: String,
     ): LinkedHashMap<String, String> = getActiveDictItemMap(dictType, atomicServiceCode)
 
+    @Transactional(readOnly = true)
     override fun batchGetActiveDictItemsFromCache(
         dictTypeAndASCodePairs: List<Pair<String, String>>
     ): Map<Pair<String, String>, List<SysDictItemCacheEntry>> =
@@ -149,6 +156,7 @@ open class SysDictService(
             dictCacheKey(dictType, atomicServiceCode) to getActiveDictItems(dictType, atomicServiceCode)
         }
 
+    @Transactional(readOnly = true)
     override fun batchGetActiveDictItemMapFromCache(
         dictTypeAndASCodePairs: List<Pair<String, String>>
     ): Map<Pair<String, String>, LinkedHashMap<String, String>> =

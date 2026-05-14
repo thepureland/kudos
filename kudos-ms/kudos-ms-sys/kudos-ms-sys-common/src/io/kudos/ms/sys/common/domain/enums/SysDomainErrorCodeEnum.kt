@@ -17,7 +17,13 @@ enum class SysDomainErrorCodeEnum(
 ) : IErrorCodeEnum {
 
     /** 未定义错误 */
-    UNSPECIFIED("UNSPECIFIED", "未定义错误");
+    UNSPECIFIED("UNSPECIFIED", "未定义错误"),
+
+    /** 按主键或域名查找失败 */
+    DOMAIN_NOT_FOUND("DOMAIN_NOT_FOUND", "域名不存在"),
+
+    /** 域名已被占用 */
+    DOMAIN_ALREADY_EXISTS("DOMAIN_ALREADY_EXISTS", "该域名已存在");
 
     override val i18nKeyPrefix: String
         get() = "sys.error-msg.domain"
