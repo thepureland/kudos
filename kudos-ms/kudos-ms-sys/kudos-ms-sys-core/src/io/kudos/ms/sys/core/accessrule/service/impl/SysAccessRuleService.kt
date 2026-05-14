@@ -46,6 +46,7 @@ open class SysAccessRuleService(
 
     private val log = LogFactory.getLog(this::class)
 
+    @Transactional(readOnly = true)
     override fun getAccessRuleByTenantAndSystem(
         systemCode: String,
         tenantId: String
@@ -56,9 +57,11 @@ open class SysAccessRuleService(
         )
     ).firstOrNull()
 
+    @Transactional(readOnly = true)
     override fun getAccessRulesByTenantId(tenantId: String): List<SysAccessRuleRow> =
         dao.searchAs(Criteria.and(SysAccessRule::tenantId eq tenantId))
 
+    @Transactional(readOnly = true)
     override fun getAccessRulesBySystemCode(systemCode: String): List<SysAccessRuleRow> =
         dao.searchAs(Criteria.and(SysAccessRule::systemCode eq systemCode))
 
