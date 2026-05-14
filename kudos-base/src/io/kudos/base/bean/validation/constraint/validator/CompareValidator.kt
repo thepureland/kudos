@@ -42,16 +42,23 @@ class CompareValidator : ConstraintValidator<Compare, Any?> {
             return false
         }
         if (value::class != anotherValue::class) {
-            error("【Compare】约束注解校验的两个属性类型必须相同！")
+            throw IllegalArgumentException(
+                "【Compare】约束注解校验的两个属性类型必须相同！" +
+                        "(${compare.anotherProperty}: ${anotherValue::class.qualifiedName}, " +
+                        "当前属性: ${value::class.qualifiedName})"
+            )
         }
         if (value is Array<*> && anotherValue is Array<*>) {
-            // 处理值是数组的情况
+            // 数组长度不一致属于运行时数据问题（如用户两次输入的密码组长度不同），
+            // 按校验失败处理，让上层得到正常的 ConstraintViolation 而非异常。
             if (value.size != anotherValue.size) {
-                error("【Compare】约束注解校验的两个数组的大小必须相等！")
+                return false
             }
             value.forEachIndexed { index, v ->
                 if (v !is Comparable<*> || anotherValue[index] !is Comparable<*>) {
-                    error("【Compare】约束注解校验的两个数组中的每个元素的类型必须都实现【Comparable】接口！")
+                    throw IllegalArgumentException(
+                        "【Compare】约束注解校验的两个数组中的每个元素的类型必须都实现【Comparable】接口！"
+                    )
                 }
                 val result = compare.logic.compare(v, anotherValue[index])
                 if (!result) { // 只要数组中一对元素校验不通过，就当整个校验不过
@@ -62,7 +69,10 @@ class CompareValidator : ConstraintValidator<Compare, Any?> {
         } else {
             // 处理值不是数组的情况
             if (value !is Comparable<*>) {
-                error("【Compare】约束注解校验的两个属性类型必须都实现【Comparable】接口！")
+                throw IllegalArgumentException(
+                    "【Compare】约束注解校验的两个属性类型必须都实现【Comparable】接口！" +
+                            "(实际类型: ${value::class.qualifiedName})"
+                )
             }
             return compare.logic.compare(value, anotherValue)
         }

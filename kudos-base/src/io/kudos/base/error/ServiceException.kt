@@ -68,12 +68,12 @@ class ServiceException : CustomRuntimeException {
 
     constructor(errorCode: IErrorCodeEnum, cause: Throwable, vararg args: Any?) {
         this.errorCode = errorCode
-        resolveCauseException(cause, errorCode.displayText, args)
+        resolveCauseException(cause, errorCode.displayText, *args)
     }
 
     constructor(errorCode: IErrorCodeEnum, cause: Throwable, log: Boolean, vararg args: Any?) {
         this.errorCode = errorCode
-        resolveCauseException(cause, log, errorCode.displayText, args)
+        resolveCauseException(cause, log, errorCode.displayText, *args)
     }
 
     constructor(errorCode: IErrorCodeEnum, ex: Throwable) {

@@ -56,9 +56,10 @@ internal class CompareTest {
         val violations = ValidationKit.validateBean(bean2)
         assertEquals("两组密码不同", violations.first().message)
 
-        // 数组长度不一致
+        // 数组长度不一致（用户数据问题，按校验失败处理）
         val bean3 = CompareValuesTestBean(arrayOf("1", "2"), arrayOf("1"))
-        assertFailsWith<ValidationException> { ValidationKit.validateBean(bean3) }
+        val bean3Violations = ValidationKit.validateBean(bean3)
+        assertEquals("两组密码不同", bean3Violations.first().message)
 
         // 数组元素不是Compare类型
         val bean4 = CompareValuesTestBean1(arrayOf("1", "2"), arrayOf(arrayOf("1")))
