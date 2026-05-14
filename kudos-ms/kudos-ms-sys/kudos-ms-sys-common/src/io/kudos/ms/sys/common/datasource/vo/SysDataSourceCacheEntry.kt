@@ -22,8 +22,8 @@ data class SysDataSourceCacheEntry (
     /** 子系统编码 */
     val subSystemCode: String,
 
-    /** 微服务编码 */
-    val microServiceCode: String,
+    /** 微服务编码；`null` 表示未指定（与库表 `micro_service_code` nullable 一致） */
+    val microServiceCode: String?,
 
     /** 租户id */
     val tenantId: String?,
