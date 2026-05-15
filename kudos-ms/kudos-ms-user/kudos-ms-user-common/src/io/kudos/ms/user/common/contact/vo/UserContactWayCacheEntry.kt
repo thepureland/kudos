@@ -27,8 +27,8 @@ data class UserContactWayCacheEntry (
     /** 联系方式状态字典码 */
     val contactWayStatusDictCode: String?,
 
-    /** 优先级 */
-    val priority: Short?,
+    /** 优先级（DB 列 `INT2`，但 Ktorm 绑定与 PO 均使用 Int；这里跟随 PO 类型，避免 Integer→Short 反射构造时的 ClassCastException） */
+    val priority: Int?,
 
     /** 备注 */
     val remark: String?,
