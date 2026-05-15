@@ -11,8 +11,14 @@ import io.kudos.ms.sys.common.resource.vo.SysResourceCacheEntry
 import io.kudos.ms.sys.core.resource.cache.SysResourceHashCache.Companion.CACHE_NAME
 import io.kudos.ms.sys.core.resource.cache.SysResourceHashCache.Companion.FILTERABLE_PROPERTIES
 import io.kudos.ms.sys.core.resource.dao.SysResourceDao
+import io.kudos.ms.sys.core.resource.event.SysResourceBatchDeleted
+import io.kudos.ms.sys.core.resource.event.SysResourceDeleted
+import io.kudos.ms.sys.core.resource.event.SysResourceInserted
+import io.kudos.ms.sys.core.resource.event.SysResourceUpdated
 import jakarta.annotation.Resource
 import org.springframework.stereotype.Component
+import org.springframework.transaction.event.TransactionPhase
+import org.springframework.transaction.event.TransactionalEventListener
 
 /**
  * 系统资源统一缓存处理器，基于 Hash 结构存储 [SysResourceCacheEntry]。
@@ -244,6 +250,25 @@ open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheEntry
         val cache = hashCache()
         ids.forEach { cache.deleteById(CACHE_NAME, it, SysResourceCacheEntry::class, FILTERABLE_PROPERTIES, emptySet()) }
     }
+
+    // region 事件订阅（由 SysResourceService 在事务提交后派发） ---------------------------
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: SysResourceInserted): Unit = syncOnInsert(event.id)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: SysResourceUpdated): Unit = syncOnUpdate(event.id)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: SysResourceDeleted) {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
+        hashCache().deleteById(CACHE_NAME, event.id, SysResourceCacheEntry::class, FILTERABLE_PROPERTIES, emptySet())
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: SysResourceBatchDeleted): Unit = syncOnBatchDelete(event.ids)
+
+    // endregion
 
     /**
      * 生成「子系统+URL」维度的组合 key，格式：子系统编码 + 分隔符 + URL。
