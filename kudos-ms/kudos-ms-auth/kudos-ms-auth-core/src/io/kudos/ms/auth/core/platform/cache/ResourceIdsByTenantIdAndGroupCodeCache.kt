@@ -20,14 +20,14 @@ import org.springframework.stereotype.Component
  * 1.数据来源表：auth_group + auth_group_role + auth_role_resource
  * 2.缓存各租户下指定用户组的资源ID集合
  * 3.缓存的key为：tenantId::groupCode
- * 4.缓存的value为：资源ID集合（Set<String>）
+ * 4.缓存的value为：资源ID集合（List<String>）
  *
  * @author K
  * @author AI: Codex
  * @since 1.0.0
  */
 @Component
-open class ResourceIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler<Set<String>>() {
+open class ResourceIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler<List<String>>() {
 
     @Autowired
     private lateinit var authGroupHashCache: AuthGroupHashCache
@@ -47,7 +47,7 @@ open class ResourceIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler
 
     override fun cacheName(): String = CACHE_NAME
 
-    override fun doReload(key: String): Set<String> {
+    override fun doReload(key: String): List<String> {
         require(key.contains(Consts.CACHE_KEY_DEFAULT_DELIMITER)) {
             "缓存${CACHE_NAME}的key格式必须是 租户ID${Consts.CACHE_KEY_DEFAULT_DELIMITER}用户组编码"
         }
@@ -97,7 +97,7 @@ open class ResourceIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler
         key = "#tenantId.concat('${Consts.CACHE_KEY_DEFAULT_DELIMITER}').concat(#groupCode)",
         unless = "#result == null || #result.isEmpty()"
     )
-    open fun getResourceIds(tenantId: String, groupCode: String): Set<String> {
+    open fun getResourceIds(tenantId: String, groupCode: String): List<String> {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("缓存中不存在租户${tenantId}用户组${groupCode}的资源ID，从数据库中加载...")
         }
@@ -106,18 +106,18 @@ open class ResourceIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler
         val groupId = authGroupHashCache.getGroupByTenantIdAndGroupCode(tenantId, groupCode)?.id
         if (groupId == null) {
             log.debug("找不到租户${tenantId}的用户组${groupCode}。")
-            return emptySet()
+            return emptyList()
         }
 
         // 2. 获取用户组对应的角色ID列表
         val roleIds = authGroupRoleDao.searchRoleIdsByGroupId(groupId)
         if (roleIds.isEmpty()) {
-            return emptySet()
+            return emptyList()
         }
 
         val resourceIds = authRoleResourceDao.searchResourceIdsByRoleIds(roleIds)
         log.debug("从数据库加载了租户${tenantId}用户组${groupCode}的${resourceIds.size}条资源ID。")
-        return resourceIds
+        return resourceIds.toList()
     }
 
     /**

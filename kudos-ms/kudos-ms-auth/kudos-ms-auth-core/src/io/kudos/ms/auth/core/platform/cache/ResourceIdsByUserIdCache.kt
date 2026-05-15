@@ -28,7 +28,7 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-open class ResourceIdsByUserIdCache : AbstractKeyValueCacheHandler<Set<String>>() {
+open class ResourceIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() {
 
     @Autowired
     private lateinit var authRoleUserDao: AuthRoleUserDao
@@ -45,7 +45,7 @@ open class ResourceIdsByUserIdCache : AbstractKeyValueCacheHandler<Set<String>>(
 
     override fun cacheName(): String = CACHE_NAME
 
-    override fun doReload(key: String): Set<String> = getSelf<ResourceIdsByUserIdCache>().getResourceIds(key)
+    override fun doReload(key: String): List<String> = getSelf<ResourceIdsByUserIdCache>().getResourceIds(key)
 
     override fun reloadAll(clear: Boolean) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
@@ -92,7 +92,7 @@ open class ResourceIdsByUserIdCache : AbstractKeyValueCacheHandler<Set<String>>(
         key = "#userId",
         unless = "#result == null || #result.isEmpty()"
     )
-    open fun getResourceIds(userId: String): Set<String> {
+    open fun getResourceIds(userId: String): List<String> {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("缓存中不存在用户${userId}的资源ID，从数据库中加载...")
         }
@@ -100,12 +100,12 @@ open class ResourceIdsByUserIdCache : AbstractKeyValueCacheHandler<Set<String>>(
         val roleIds = authRoleUserDao.searchRoleIdsByUserId(userId)
         if (roleIds.isEmpty()) {
             log.debug("用户${userId}没有分配任何角色。")
-            return emptySet()
+            return emptyList()
         }
 
         val resultList = authRoleResourceDao.searchResourceIdsByRoleIds(roleIds)
         log.debug("从数据库加载了用户${userId}的${roleIds.size}个角色，共${resultList.size}条资源ID（去重后）。")
-        return resultList
+        return resultList.toList()
     }
 
     /**

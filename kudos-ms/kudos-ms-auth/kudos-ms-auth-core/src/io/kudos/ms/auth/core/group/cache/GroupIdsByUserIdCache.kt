@@ -16,14 +16,14 @@ import org.springframework.stereotype.Component
  * 1.数据来源表：auth_group_user
  * 2.缓存各用户拥有的所有用户组ID列表
  * 3.缓存的key为：userId
- * 4.缓存的value为：用户组ID集合（Set<String>）
+ * 4.缓存的value为：用户组ID集合（List<String>）
  *
  * @author K
  * @author AI: Codex
  * @since 1.0.0
  */
 @Component
-open class GroupIdsByUserIdCache : AbstractKeyValueCacheHandler<Set<String>>() {
+open class GroupIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() {
 
     @Autowired
     private lateinit var authGroupUserDao: AuthGroupUserDao
@@ -37,7 +37,7 @@ open class GroupIdsByUserIdCache : AbstractKeyValueCacheHandler<Set<String>>() {
 
     override fun cacheName(): String = CACHE_NAME
 
-    override fun doReload(key: String): Set<String> = getSelf<GroupIdsByUserIdCache>().getGroupIds(key)
+    override fun doReload(key: String): List<String> = getSelf<GroupIdsByUserIdCache>().getGroupIds(key)
 
     override fun reloadAll(clear: Boolean) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
@@ -78,14 +78,14 @@ open class GroupIdsByUserIdCache : AbstractKeyValueCacheHandler<Set<String>>() {
         key = "#userId",
         unless = "#result == null || #result.isEmpty()"
     )
-    open fun getGroupIds(userId: String): Set<String> {
+    open fun getGroupIds(userId: String): List<String> {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("缓存中不存在用户${userId}的用户组ID，从数据库中加载...")
         }
 
         val groupIds = authGroupUserDao.searchGroupIdsByUserId(userId)
         log.debug("从数据库加载了用户${userId}的${groupIds.size}条用户组ID。")
-        return groupIds
+        return groupIds.toList()
     }
 
     /**
