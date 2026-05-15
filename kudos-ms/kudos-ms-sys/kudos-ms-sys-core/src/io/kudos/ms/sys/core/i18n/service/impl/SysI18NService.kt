@@ -10,8 +10,13 @@ import io.kudos.ms.sys.common.i18n.vo.SysI18nCacheEntry
 import io.kudos.ms.sys.common.i18n.vo.request.SysI18nFormUpdate
 import io.kudos.ms.sys.core.i18n.cache.SysI18nHashCache
 import io.kudos.ms.sys.core.i18n.dao.SysI18nDao
+import io.kudos.ms.sys.core.i18n.event.SysI18nBatchDeleted
+import io.kudos.ms.sys.core.i18n.event.SysI18nDeleted
+import io.kudos.ms.sys.core.i18n.event.SysI18nInserted
+import io.kudos.ms.sys.core.i18n.event.SysI18nUpdated
 import io.kudos.ms.sys.core.i18n.model.po.SysI18n
 import io.kudos.ms.sys.core.i18n.service.iservice.ISysI18nService
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import kotlin.reflect.KClass
@@ -29,6 +34,7 @@ import kotlin.reflect.KClass
 open class SysI18NService(
     dao: SysI18nDao,
     private val sysI18nHashCache: SysI18nHashCache,
+    private val eventPublisher: ApplicationEventPublisher,
 ) : BaseCrudService<String, SysI18n, SysI18nDao>(dao), ISysI18nService {
 
     private val log = LogFactory.getLog(this::class)
@@ -101,7 +107,7 @@ open class SysI18NService(
             successMessage = "更新id为${id}的国际化内容的启用状态为${active}。",
             failureMessage = "更新id为${id}的国际化内容的启用状态为${active}失败！",
         ) {
-            sysI18nHashCache.syncOnUpdate(id)
+            eventPublisher.publishEvent(SysI18nUpdated(id = id))
         }
     }
 
@@ -109,7 +115,7 @@ open class SysI18NService(
     override fun insert(any: Any): String {
         val id = super.insert(any)
         completeCrudInsert(log, "新增id为${id}的国际化内容。") {
-            sysI18nHashCache.syncOnInsert(any, id)
+            eventPublisher.publishEvent(SysI18nInserted(id = id))
         }
         return id
     }
@@ -123,7 +129,7 @@ open class SysI18NService(
             successMessage = "更新id为${id}的国际化内容。",
             failureMessage = "更新id为${id}的国际化内容失败！",
         ) {
-            sysI18nHashCache.syncOnUpdate(any, id)
+            eventPublisher.publishEvent(SysI18nUpdated(id = id))
         }
     }
 
@@ -139,7 +145,7 @@ open class SysI18NService(
             successMessage = "删除id为${id}的国际化内容。",
             failureMessage = "删除id为${id}的国际化内容失败！",
         ) {
-            sysI18nHashCache.syncOnDelete(id)
+            eventPublisher.publishEvent(SysI18nDeleted(id = id))
         }
     }
 
@@ -147,7 +153,9 @@ open class SysI18NService(
     override fun batchDelete(ids: Collection<String>): Int {
         val count = super.batchDelete(ids)
         log.debug("批量删除国际化内容，期望删除${ids.size}条，实际删除${count}条。")
-        sysI18nHashCache.syncOnBatchDelete(ids)
+        if (count > 0) {
+            eventPublisher.publishEvent(SysI18nBatchDeleted(ids = ids))
+        }
         return count
     }
 
@@ -162,13 +170,13 @@ open class SysI18NService(
         return if (form.id.isNullOrBlank()) {
             val i18n = toI18n(form, creating = true)
             val id = dao.insert(i18n)
-            sysI18nHashCache.syncOnInsert(i18n, id)
+            eventPublisher.publishEvent(SysI18nInserted(id = id))
             true
         } else {
             val i18n = toI18n(form, creating = false)
             dao.update(i18n).also { updated ->
                 if (updated) {
-                    sysI18nHashCache.syncOnUpdate(i18n, i18n.id)
+                    eventPublisher.publishEvent(SysI18nUpdated(id = i18n.id))
                 }
             }
         }

@@ -17,8 +17,13 @@ import io.kudos.ms.sys.common.datasource.vo.response.SysDataSourceDetail
 import io.kudos.ms.sys.common.datasource.vo.response.SysDataSourceRow
 import io.kudos.ms.sys.core.datasource.cache.SysDataSourceHashCache
 import io.kudos.ms.sys.core.datasource.dao.SysDataSourceDao
+import io.kudos.ms.sys.core.datasource.event.SysDataSourceBatchDeleted
+import io.kudos.ms.sys.core.datasource.event.SysDataSourceDeleted
+import io.kudos.ms.sys.core.datasource.event.SysDataSourceInserted
+import io.kudos.ms.sys.core.datasource.event.SysDataSourceUpdated
 import io.kudos.ms.sys.core.datasource.model.po.SysDataSource
 import io.kudos.ms.sys.core.datasource.service.iservice.ISysDataSourceService
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import kotlin.reflect.KClass
@@ -37,6 +42,7 @@ open class SysDataSourceService(
     dao: SysDataSourceDao,
     private val sysTenantApi: ISysTenantApi,
     private val sysDataSourceHashCache: SysDataSourceHashCache,
+    private val eventPublisher: ApplicationEventPublisher,
 ) : BaseCrudService<String, SysDataSource, SysDataSourceDao>(dao), ISysDataSourceService {
 
     private val log = LogFactory.getLog(this::class)
@@ -75,7 +81,7 @@ open class SysDataSourceService(
     override fun insert(any: Any): String {
         val id = super.insert(any)
         completeCrudInsert(log, "新增id为${id}的数据源。") {
-            sysDataSourceHashCache.syncOnInsert(any, id)
+            eventPublisher.publishEvent(SysDataSourceInserted(id = id))
         }
         return id
     }
@@ -89,7 +95,7 @@ open class SysDataSourceService(
             successMessage = "更新id为${id}的数据源。",
             failureMessage = "更新id为${id}的数据源失败！",
         ) {
-            sysDataSourceHashCache.syncOnUpdate(any, id)
+            eventPublisher.publishEvent(SysDataSourceUpdated(id = id))
         }
     }
 
@@ -105,7 +111,7 @@ open class SysDataSourceService(
             successMessage = "更新id为${id}的数据源的启用状态为${active}。",
             failureMessage = "更新id为${id}的数据源的启用状态为${active}失败！",
         ) {
-            sysDataSourceHashCache.syncOnUpdate(dataSource, id)
+            eventPublisher.publishEvent(SysDataSourceUpdated(id = id))
         }
     }
 
@@ -122,7 +128,7 @@ open class SysDataSourceService(
             successMessage = "重置id为${id}的数据源密码。",
             failureMessage = "重置id为${id}的数据源密码失败！",
         ) {
-            syncDataSourceUpdate(id)
+            eventPublisher.publishEvent(SysDataSourceUpdated(id = id))
         }
     }
 
@@ -139,7 +145,7 @@ open class SysDataSourceService(
             successMessage = "删除id为${id}的数据源成功！",
             failureMessage = "删除id为${id}的数据源失败！",
         ) {
-            sysDataSourceHashCache.syncOnDelete(id)
+            eventPublisher.publishEvent(SysDataSourceDeleted(id = id))
         }
     }
 
@@ -147,7 +153,9 @@ open class SysDataSourceService(
     override fun batchDelete(ids: Collection<String>): Int {
         val count = super.batchDelete(ids)
         log.debug("批量删除数据源，期望删除${ids.size}条，实际删除${count}条。")
-        sysDataSourceHashCache.syncOnBatchDelete(ids)
+        if (count > 0) {
+            eventPublisher.publishEvent(SysDataSourceBatchDeleted(ids = ids))
+        }
         return count
     }
 
@@ -174,11 +182,6 @@ open class SysDataSourceService(
                 ?.let { sysTenantApi.getTenantFromCache(it)?.name }
         }
         return result
-    }
-
-    private fun syncDataSourceUpdate(id: String) {
-        val dataSource = requireNotNull(get(id)) { "重置数据源密码后找不到id=${id}的数据源。" }
-        sysDataSourceHashCache.syncOnUpdate(dataSource, id)
     }
 
     private fun requireDataSourceId(any: Any): String =

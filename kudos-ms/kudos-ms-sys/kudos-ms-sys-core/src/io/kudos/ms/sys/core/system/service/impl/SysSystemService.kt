@@ -11,8 +11,13 @@ import io.kudos.base.tree.ListToTreeConverter
 import io.kudos.ms.sys.common.system.vo.SysSystemCacheEntry
 import io.kudos.ms.sys.core.system.cache.SysSystemHashCache
 import io.kudos.ms.sys.core.system.dao.SysSystemDao
+import io.kudos.ms.sys.core.system.event.SysSystemBatchDeleted
+import io.kudos.ms.sys.core.system.event.SysSystemDeleted
+import io.kudos.ms.sys.core.system.event.SysSystemInserted
+import io.kudos.ms.sys.core.system.event.SysSystemUpdated
 import io.kudos.ms.sys.core.system.model.po.SysSystem
 import io.kudos.ms.sys.core.system.service.iservice.ISysSystemService
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import kotlin.reflect.KClass
@@ -30,6 +35,7 @@ import kotlin.reflect.KClass
 open class SysSystemService(
     dao: SysSystemDao,
     private val sysSystemHashCache: SysSystemHashCache,
+    private val eventPublisher: ApplicationEventPublisher,
 ) : BaseCrudService<String, SysSystem, SysSystemDao>(dao), ISysSystemService {
 
     private val log = LogFactory.getLog(this::class)
@@ -68,7 +74,7 @@ open class SysSystemService(
             successMessage = "更新编码为${code}的系统的启用状态为${active}。",
             failureMessage = "更新编码为${code}的系统的启用状态为${active}失败！",
         ) {
-            sysSystemHashCache.syncOnUpdate(system, code)
+            eventPublisher.publishEvent(SysSystemUpdated(id = code))
         }
     }
 
@@ -88,7 +94,7 @@ open class SysSystemService(
     override fun insert(any: Any): String {
         val code = super.insert(any)
         completeCrudInsert(log, "新增编码为${code}的系统。") {
-            sysSystemHashCache.syncOnInsert(any, code)
+            eventPublisher.publishEvent(SysSystemInserted(id = code))
         }
         return code
     }
@@ -102,7 +108,7 @@ open class SysSystemService(
             successMessage = "更新编码为${code}的系统。",
             failureMessage = "更新编码为${code}的系统失败！",
         ) {
-            sysSystemHashCache.syncOnUpdate(any, code)
+            eventPublisher.publishEvent(SysSystemUpdated(id = code))
         }
     }
 
@@ -119,7 +125,7 @@ open class SysSystemService(
             successMessage = "删除编码为${id}的系统成功！",
             failureMessage = "删除编码为${id}的系统失败！",
         ) {
-            sysSystemHashCache.syncOnDelete(id)
+            eventPublisher.publishEvent(SysSystemDeleted(id = id))
         }
     }
 
@@ -127,7 +133,9 @@ open class SysSystemService(
     override fun batchDelete(ids: Collection<String>): Int {
         val count = super.batchDelete(ids)
         log.debug("批量删除系统，期望删除${ids.size}条，实际删除${count}条。")
-        sysSystemHashCache.syncOnBatchDelete(ids)
+        if (count > 0) {
+            eventPublisher.publishEvent(SysSystemBatchDeleted(ids = ids))
+        }
         return count
     }
 

@@ -11,8 +11,13 @@ import io.kudos.base.tree.ListToTreeConverter
 import io.kudos.ms.sys.common.microservice.vo.SysMicroServiceCacheEntry
 import io.kudos.ms.sys.core.microservice.cache.SysMicroServiceHashCache
 import io.kudos.ms.sys.core.microservice.dao.SysMicroServiceDao
+import io.kudos.ms.sys.core.microservice.event.SysMicroServiceBatchDeleted
+import io.kudos.ms.sys.core.microservice.event.SysMicroServiceDeleted
+import io.kudos.ms.sys.core.microservice.event.SysMicroServiceInserted
+import io.kudos.ms.sys.core.microservice.event.SysMicroServiceUpdated
 import io.kudos.ms.sys.core.microservice.model.po.SysMicroService
 import io.kudos.ms.sys.core.microservice.service.iservice.ISysMicroServiceService
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import kotlin.reflect.KClass
@@ -30,6 +35,7 @@ import kotlin.reflect.KClass
 open class SysMicroServiceService(
     dao: SysMicroServiceDao,
     private val sysMicroServiceHashCache: SysMicroServiceHashCache,
+    private val eventPublisher: ApplicationEventPublisher,
 ) : BaseCrudService<String, SysMicroService, SysMicroServiceDao>(dao),
     ISysMicroServiceService {
 
@@ -81,7 +87,7 @@ open class SysMicroServiceService(
             successMessage = "更新编码为${code}的微服务的启用状态为${active}。",
             failureMessage = "更新编码为${code}的微服务的启用状态为${active}失败！",
         ) {
-            sysMicroServiceHashCache.syncOnUpdate(microService, code)
+            eventPublisher.publishEvent(SysMicroServiceUpdated(id = code))
         }
     }
 
@@ -89,7 +95,7 @@ open class SysMicroServiceService(
     override fun insert(any: Any): String {
         val code = super.insert(any)
         completeCrudInsert(log, "新增编码为${code}的微服务。") {
-            sysMicroServiceHashCache.syncOnInsert(any, code)
+            eventPublisher.publishEvent(SysMicroServiceInserted(id = code))
         }
         return code
     }
@@ -103,7 +109,7 @@ open class SysMicroServiceService(
             successMessage = "更新编码为${code}的微服务。",
             failureMessage = "更新编码为${code}的微服务失败！",
         ) {
-            sysMicroServiceHashCache.syncOnUpdate(any, code)
+            eventPublisher.publishEvent(SysMicroServiceUpdated(id = code))
         }
     }
 
@@ -120,7 +126,7 @@ open class SysMicroServiceService(
             successMessage = "删除编码为${id}的微服务成功！",
             failureMessage = "删除编码为${id}的微服务失败！",
         ) {
-            sysMicroServiceHashCache.syncOnDelete(id)
+            eventPublisher.publishEvent(SysMicroServiceDeleted(id = id))
         }
     }
 
@@ -128,7 +134,9 @@ open class SysMicroServiceService(
     override fun batchDelete(ids: Collection<String>): Int {
         val count = super.batchDelete(ids)
         log.debug("批量删除微服务，期望删除${ids.size}条，实际删除${count}条。")
-        sysMicroServiceHashCache.syncOnBatchDelete(ids)
+        if (count > 0) {
+            eventPublisher.publishEvent(SysMicroServiceBatchDeleted(ids = ids))
+        }
         return count
     }
 
