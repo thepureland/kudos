@@ -1,6 +1,5 @@
 package io.kudos.context.lock
 
-import io.kudos.base.lang.ThreadKit
 import io.kudos.base.support.KeyLockRegistry
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.DelayQueue
@@ -115,26 +114,35 @@ class NormalLockService : ILockProvider<ReentrantLock> {
     override fun lock(key: String): ReentrantLock? = reentrantLockManager.tryLock(key)
 
     /**
-     * 释放锁
-     * 
-     * 释放通过lock方法获取的锁对象。
-     * 
-     * @param lock 锁对象
-     * @param key 锁的key
+     * 释放**可重入锁**（与 [lock] 配套）。
+     *
+     * 历史 bug：旧实现 `unLock(lock, key) = unLock(key)` 把它委托给租约锁释放路径，
+     * 但 [lock] 写入的是 [reentrantLockManager]、不是 [cacheKeyMap]——
+     * 走 [reentrantLockManager.unlock] 才是配对的释放方式。
      */
     override fun unLock(lock: Lock, key: String) {
-        unLock(key)
+        this.reentrantLockManager.unlock(key)
     }
 
     /**
-     * 释放锁
-     * 
-     * 释放指定key的锁。
-     * 
-     * @param key 锁的key
+     * 释放**租约锁**（与 [tryLock] 配套，对应 [lockExecute] 的 finally 释放路径）。
+     *
+     * 历史 bug：旧实现 `unLock(key) = reentrantLockManager.unlock(key)`，但 [tryLock]
+     * 写入的是 [cacheKeyMap]——`reentrantLockManager` 里压根没条目，必抛
+     * "No lock found"。这导致 [lockExecute] 自创建以来一直 broken。
+     *
+     * 现修复为：
+     * 1. 从 [cacheKeyMap] 移除 key
+     * 2. 显式从 [delayQueue] 撤掉对应条目，避免守护线程之后误清"同名 key 重新占用"
+     *    的新锁（依赖 [ExpiringKey.equals] 只比 key 不比 expireAtMillis 的设计）
      */
     override fun unLock(key: String) {
-        this.reentrantLockManager.unlock(key)
+        val previousExpire = cacheKeyMap.remove(key)
+        if (previousExpire != null) {
+            // 守护线程之后处理这个旧条目时会再 remove 一次 cacheKeyMap[key]，
+            // 那时如果 key 已被同名新锁重新占用，会把新锁误清——所以主动撤掉
+            delayQueue.remove(ExpiringKey(key, previousExpire))
+        }
     }
 
     /**
@@ -174,18 +182,18 @@ class NormalLockService : ILockProvider<ReentrantLock> {
      * @return true表示成功获取锁，false表示锁已被持有
      */
     override fun tryLock(lockKey: String, sec: Int): Boolean {
-        if (cacheKeyMap.containsKey(lockKey)) {
-            return false
-        }
         val expireTime = System.currentTimeMillis() + (sec * 1000)
-        //如果key不存在，则返回旧的值空，如果key存在，则不处理
+        // 旧实现先 containsKey 再 putIfAbsent——前面那次检查冗余：
+        // putIfAbsent 本身原子地完成"检查+插入"，并通过返回值告知是否成功。
+        // 删掉冗余检查让逻辑更紧凑、并发下少一次 map 访问。
         val old = cacheKeyMap.putIfAbsent(lockKey, expireTime)
-        if (old == null) {
-            // 第一个线程进来，key 还不存在，真正放入，并加入延迟队列
+        return if (old == null) {
+            // 本线程是首个成功插入者，加入延迟队列让守护线程到期清理
             delayQueue.put(ExpiringKey(lockKey, expireTime))
-            return true
+            true
+        } else {
+            false
         }
-        return false
     }
 
     /**
@@ -305,12 +313,4 @@ class NormalLockService : ILockProvider<ReentrantLock> {
         }
     }
 
-    companion object {
-        @JvmStatic
-        fun main(args: Array<String>) {
-            val lockService = NormalLockService()
-            lockService.tryLock("lock1", 3)
-            ThreadKit.sleep(15000)
-        }
-    }
 }

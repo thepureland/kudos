@@ -40,8 +40,6 @@ class KudosContext {
 
     var _datasourceTenantId: String? = null
 
-//    var userId: String? = null
-
     /** 用户 */
     var user: IIdEntity<String>? = null
 

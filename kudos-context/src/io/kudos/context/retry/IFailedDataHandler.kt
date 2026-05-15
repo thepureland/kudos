@@ -24,5 +24,15 @@ interface IFailedDataHandler<T> {
      */
     fun handleFailedData(file: File): Boolean
 
-    fun filePath(): String = "/var/data/failed/${KudosContextHolder.get().atomicServiceCode}"
+    /**
+     * 失败数据持久化根目录 + 原子服务子目录。
+     *
+     * 默认走 [RetryConfig.pathFor]：可通过系统属性 `kudos.retry.failed-data-path` 或
+     * 环境变量 `KUDOS_RETRY_FAILED_DATA_PATH` 配置，未配置时落到 `${java.io.tmpdir}/kudos-failed-data`，
+     * 跨 Windows / Linux / 容器都安全。
+     *
+     * 子目录走 [KudosContextHolder.getOrNull] 拿原子服务编码——用 `getOrNull` 而非 `get` 是为了
+     * 避免非 HTTP 请求线程（如定时任务）触发 [KudosContextHolder] 的隐式创建副作用。
+     */
+    fun filePath(): String = RetryConfig.pathFor(KudosContextHolder.getOrNull()?.atomicServiceCode)
 }

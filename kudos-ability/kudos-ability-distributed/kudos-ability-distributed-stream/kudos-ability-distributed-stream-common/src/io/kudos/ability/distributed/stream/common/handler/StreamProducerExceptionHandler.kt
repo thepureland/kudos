@@ -6,6 +6,7 @@ import io.kudos.ability.distributed.stream.common.support.StreamProducerHelper
 import io.kudos.base.data.json.JsonKit
 import io.kudos.context.core.KudosContextHolder
 import io.kudos.context.retry.AbstractFailedDataHandler
+import io.kudos.context.retry.RetryConfig
 import jakarta.annotation.Resource
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.messaging.MessageHeaders
@@ -40,8 +41,15 @@ import org.springframework.messaging.support.GenericMessage
  */
 class StreamProducerExceptionHandler : AbstractFailedDataHandler<StreamProducerMsgVo>(), IStreamFailHandler {
 
-    @Value($$"${kudos.ability.distributed.stream.produce-fail-path:/var/data/failed}")
-    private val filePath = "/var/data/failed"
+    /**
+     * 失败消息持久化根目录。优先级：
+     * 1. Spring 属性 `kudos.ability.distributed.stream.produce-fail-path`（Value 注入）
+     * 2. [RetryConfig.baseFailedDataPath]（系统属性 / 环境变量 / `${java.io.tmpdir}/kudos-failed-data`）
+     *
+     * 历史默认是硬编码的 `/var/data/failed`——Windows / 无 volume 容器直接挂掉，已替换。
+     */
+    @Value($$"${kudos.ability.distributed.stream.produce-fail-path:}")
+    private var configuredFilePath: String = ""
 
     @Resource
     private lateinit var streamProducerHelper: StreamProducerHelper
@@ -96,7 +104,10 @@ class StreamProducerExceptionHandler : AbstractFailedDataHandler<StreamProducerM
         get() = "0 0/1 * * * *"
 
     override fun filePath(): String {
-        return filePath + "/" + KudosContextHolder.get().atomicServiceCode
+        val serviceCode = KudosContextHolder.getOrNull()?.atomicServiceCode
+        val basePath = configuredFilePath.takeIf { it.isNotBlank() }
+            ?: RetryConfig.baseFailedDataPath
+        return basePath + "/" + (serviceCode ?: "default")
     }
 
     override fun bindName(): String {
