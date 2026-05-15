@@ -11,8 +11,14 @@ import io.kudos.ms.sys.common.dict.vo.SysDictCacheEntry
 import io.kudos.ms.sys.core.dict.cache.SysDictHashCache.Companion.CACHE_NAME
 import io.kudos.ms.sys.core.dict.cache.SysDictHashCache.Companion.FILTERABLE_PROPERTIES
 import io.kudos.ms.sys.core.dict.dao.SysDictDao
+import io.kudos.ms.sys.core.dict.event.SysDictBatchDeleted
+import io.kudos.ms.sys.core.dict.event.SysDictDeleted
+import io.kudos.ms.sys.core.dict.event.SysDictInserted
+import io.kudos.ms.sys.core.dict.event.SysDictUpdated
 import jakarta.annotation.Resource
 import org.springframework.stereotype.Component
+import org.springframework.transaction.event.TransactionPhase
+import org.springframework.transaction.event.TransactionalEventListener
 
 /**
  * 字典类型 Hash 缓存处理器，基于 Hash 结构存储 [SysDictCacheEntry]。
@@ -227,6 +233,22 @@ open class SysDictHashCache : AbstractHashCacheHandler<SysDictCacheEntry>() {
         val cache = hashCache()
         ids.forEach { cache.deleteById(CACHE_NAME, it, SysDictCacheEntry::class, FILTERABLE_PROPERTIES, emptySet()) }
     }
+
+    // region 事件订阅（由 SysDictService 在事务提交后派发） -----------------------------------
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: SysDictInserted): Unit = syncOnInsert(event.id)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: SysDictUpdated): Unit = syncOnUpdate(event.id)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: SysDictDeleted): Unit = syncOnDelete(event.id)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: SysDictBatchDeleted): Unit = syncOnBatchDelete(event.ids)
+
+    // endregion
 
     /**
      * 生成「原子服务编码+字典类型」维度的组合 key，格式：atomicServiceCode + 分隔符 + dictType。
