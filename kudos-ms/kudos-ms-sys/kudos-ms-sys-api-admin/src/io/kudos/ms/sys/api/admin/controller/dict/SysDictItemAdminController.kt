@@ -44,24 +44,14 @@ class SysDictItemAdminController :
     }
 
     /**
-     * 分页查询
+     * 分页查询；命中行的 `parentCode` 由 service 内部回填。
      *
      * @param sysDictItemQuery 查询参数载体
      * @return PagingSearchResult<SysDictItemRow>
      */
     @PostMapping("/pagingSearchDictItem")
-    @Suppress("UNCHECKED_CAST")
-    fun pagingSearchDict(@RequestBody sysDictItemQuery: SysDictItemQuery): PagingSearchResult<SysDictItemRow> {
-        val result = vSysDictItemService.pagingSearch(sysDictItemQuery)
-        val parentIds = (result.data as List<SysDictItemRow>).mapNotNull { it.parentId }
-        val map = vSysDictItemService.searchByIds(parentIds.toSet())
-        if (map.isNotEmpty()) {
-            (result.data as List<SysDictItemRow>).forEach { row ->
-                row.parentCode = row.parentId?.let { map[it]?.itemCode }
-            }
-        }
-        return result as PagingSearchResult<SysDictItemRow>
-    }
+    fun pagingSearchDict(@RequestBody sysDictItemQuery: SysDictItemQuery): PagingSearchResult<SysDictItemRow> =
+        vSysDictItemService.pagingSearchWithParentCode(sysDictItemQuery)
 
     /**
      * 返回指定字典类型的直接孩子(第一层字典项)

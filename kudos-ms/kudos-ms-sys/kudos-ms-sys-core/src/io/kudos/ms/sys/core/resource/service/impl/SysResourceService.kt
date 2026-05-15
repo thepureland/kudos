@@ -16,6 +16,7 @@ import io.kudos.ms.sys.common.resource.vo.SysResourceCacheEntry
 import io.kudos.ms.sys.common.resource.vo.request.SysResourceQuery
 import io.kudos.ms.sys.common.resource.vo.response.BaseMenuTreeNode
 import io.kudos.ms.sys.common.resource.vo.response.MenuTreeNode
+import io.kudos.ms.sys.common.resource.vo.response.SysResourceDetail
 import io.kudos.ms.sys.common.resource.vo.response.SysResourceRow
 import io.kudos.ms.sys.common.resource.vo.response.SysResourceTreeRow
 import io.kudos.ms.sys.core.dict.cache.SysDictItemHashCache
@@ -312,6 +313,18 @@ open class SysResourceService(
         collectParentIds(id, results)
         results.reverse()
         return results
+    }
+
+    @Transactional(readOnly = true)
+    override fun getDetailWithOptionalParents(
+        id: String,
+        includeParents: Boolean,
+    ): SysResourceDetail? {
+        val detail = get(id, SysResourceDetail::class) ?: return null
+        if (includeParents) {
+            detail.parentIds = fetchAllParentIds(id)
+        }
+        return detail
     }
 
     private fun getCachedResourcesByType(
