@@ -3,6 +3,7 @@ package io.kudos.context.retry
 import io.kudos.base.logger.LogFactory
 import io.kudos.context.core.KudosContextHolder
 import io.kudos.context.kit.SpringKit
+import io.kudos.context.lock.ILeaseLockProvider
 import io.kudos.context.lock.LockTool
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
@@ -19,6 +20,14 @@ class FailedDataRetryScanner {
     @Autowired
     @Qualifier("failDataTaskScheduler")
     private lateinit var taskScheduler: TaskScheduler
+
+    /**
+     * 锁提供者解析回调。默认走 [LockTool.lockProvider]（要求 Spring 上下文已就绪）。
+     *
+     * Visible-for-testing：单元测试时把它设为 `{ NormalLockService() }` 之类的本地实例，
+     * 即可在不启动 Spring 容器的前提下测 [retry] / [lockRetry]。
+     */
+    internal var lockProviderSupplier: () -> ILeaseLockProvider = { LockTool.lockProvider }
 
 
     /**
@@ -67,8 +76,8 @@ class FailedDataRetryScanner {
      * @param handler 失败数据处理器
      * @param appName 应用名称，用于生成锁键
      */
-    private fun lockRetry(handler: IFailedDataHandler<*>, appName: String?) {
-        val lockProvider = LockTool.lockProvider
+    internal fun lockRetry(handler: IFailedDataHandler<*>, appName: String?) {
+        val lockProvider = lockProviderSupplier()
         val key = "$FAILED_DATA_RETRY_LOCK_PREFIX${handler.businessType}_$appName"
         val lock = lockProvider.tryLock(key, 600)
         if (!lock) {
@@ -87,7 +96,7 @@ class FailedDataRetryScanner {
      *
      * @param handler 失败数据处理器，负责处理具体的失败数据
      */
-    private fun retry(handler: IFailedDataHandler<*>) {
+    internal fun retry(handler: IFailedDataHandler<*>) {
         val dir = Paths.get(handler.filePath(), handler.businessType)
         if (!Files.exists(dir)) {
             return
