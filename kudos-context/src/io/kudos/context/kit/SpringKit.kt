@@ -11,6 +11,15 @@ import kotlin.reflect.KClass
  */
 object SpringKit {
 
+    /**
+     * Spring 应用上下文。由 [io.kudos.context.spring.SpringContextInitializer] 在 Spring
+     * 启动期注入。
+     *
+     * 标 `@Volatile`：写发生在主线程（Spring 启动期），读可能来自任意业务线程。
+     * 不加 volatile 时跨线程读不保证看到写——尤其是某些 `object` 的 lazy init 在不同线程
+     * 第一次访问会出现"明明已 init 完成、却读到 null"的诡异现象。
+     */
+    @Volatile
     var applicationContext: ApplicationContext? = null
         get() = field ?: error("Spring applicationContext is not initialized yet!")
 
