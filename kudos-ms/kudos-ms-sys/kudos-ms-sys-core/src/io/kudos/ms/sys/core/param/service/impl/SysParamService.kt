@@ -12,8 +12,13 @@ import io.kudos.ms.sys.common.param.vo.SysParamCacheEntry
 import io.kudos.ms.sys.common.param.vo.response.SysParamRow
 import io.kudos.ms.sys.core.param.cache.ParamByModuleAndNameCache
 import io.kudos.ms.sys.core.param.dao.SysParamDao
+import io.kudos.ms.sys.core.param.event.SysParamBatchDeleted
+import io.kudos.ms.sys.core.param.event.SysParamDeleted
+import io.kudos.ms.sys.core.param.event.SysParamInserted
+import io.kudos.ms.sys.core.param.event.SysParamUpdated
 import io.kudos.ms.sys.core.param.model.po.SysParam
 import io.kudos.ms.sys.core.param.service.iservice.ISysParamService
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import kotlin.reflect.KClass
@@ -31,6 +36,7 @@ import kotlin.reflect.KClass
 open class SysParamService(
     dao: SysParamDao,
     private val paramByModuleAndNameCache: ParamByModuleAndNameCache,
+    private val eventPublisher: ApplicationEventPublisher,
 ) : BaseCrudService<String, SysParam, SysParamDao>(dao), ISysParamService {
 
     private val log = LogFactory.getLog(this::class)
@@ -64,7 +70,7 @@ open class SysParamService(
             successMessage = "更新id为${id}的参数的启用状态为${active}。",
             failureMessage = "更新id为${id}的参数的启用状态为${active}失败！",
         ) {
-            paramByModuleAndNameCache.syncOnUpdateActive(id, active)
+            eventPublisher.publishEvent(SysParamUpdated(id = id))
         }
     }
 
@@ -78,7 +84,7 @@ open class SysParamService(
     override fun insert(any: Any): String {
         val id = super.insert(any)
         completeCrudInsert(log, "新增id为${id}的参数。") {
-            paramByModuleAndNameCache.syncOnInsert(any, id)
+            eventPublisher.publishEvent(SysParamInserted(id = id))
         }
         return id
     }
@@ -92,7 +98,7 @@ open class SysParamService(
             successMessage = "更新id为${id}的参数。",
             failureMessage = "更新id为${id}的参数失败！",
         ) {
-            paramByModuleAndNameCache.syncOnUpdate(any, id)
+            eventPublisher.publishEvent(SysParamUpdated(id = id))
         }
     }
 
@@ -109,7 +115,9 @@ open class SysParamService(
             successMessage = "删除id为${id}的参数。",
             failureMessage = "删除id为${id}的参数失败！",
         ) {
-            paramByModuleAndNameCache.syncOnDelete(param, id)
+            eventPublisher.publishEvent(
+                SysParamDeleted(id = id, atomicServiceCode = param.atomicServiceCode, paramName = param.paramName)
+            )
         }
     }
 
@@ -119,7 +127,9 @@ open class SysParamService(
         val moduleAndNames = params.map { Pair(it.atomicServiceCode, it.paramName) }
         val count = super.batchDelete(ids)
         log.debug("批量删除参数，期望删除${ids.size}条，实际删除${count}条。")
-        paramByModuleAndNameCache.syncOnBatchDelete(ids, moduleAndNames)
+        if (count > 0) {
+            eventPublisher.publishEvent(SysParamBatchDeleted(ids = ids, moduleAndNames = moduleAndNames))
+        }
         return count
     }
 

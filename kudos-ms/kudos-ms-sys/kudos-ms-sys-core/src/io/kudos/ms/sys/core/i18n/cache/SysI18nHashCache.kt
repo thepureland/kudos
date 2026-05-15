@@ -10,8 +10,14 @@ import io.kudos.ms.sys.common.i18n.vo.SysI18nCacheEntry
 import io.kudos.ms.sys.core.i18n.cache.SysI18nHashCache.Companion.CACHE_NAME
 import io.kudos.ms.sys.core.i18n.cache.SysI18nHashCache.Companion.FILTERABLE_PROPERTIES
 import io.kudos.ms.sys.core.i18n.dao.SysI18nDao
+import io.kudos.ms.sys.core.i18n.event.SysI18nBatchDeleted
+import io.kudos.ms.sys.core.i18n.event.SysI18nDeleted
+import io.kudos.ms.sys.core.i18n.event.SysI18nInserted
+import io.kudos.ms.sys.core.i18n.event.SysI18nUpdated
 import jakarta.annotation.Resource
 import org.springframework.stereotype.Component
+import org.springframework.transaction.event.TransactionPhase
+import org.springframework.transaction.event.TransactionalEventListener
 
 /**
  * 国际化统一缓存处理器，基于 Hash 结构存储 [SysI18nCacheEntry]。
@@ -258,4 +264,16 @@ open class SysI18nHashCache : AbstractHashCacheHandler<SysI18nCacheEntry>() {
         }
         log.debug("${cacheName()} 缓存同步完成。")
     }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: SysI18nInserted): Unit = syncOnInsert(event.id)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: SysI18nUpdated): Unit = syncOnUpdate(event.id)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: SysI18nDeleted): Unit = syncOnDelete(event.id)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: SysI18nBatchDeleted): Unit = syncOnBatchDelete(event.ids)
 }
