@@ -17,7 +17,10 @@ enum class UserLogLoginErrorCodeEnum(
 ) : IErrorCodeEnum {
 
     /** 未定义错误 */
-    UNSPECIFIED("UNSPECIFIED", "未定义错误");
+    UNSPECIFIED("UNSPECIFIED", "未定义错误"),
+
+    /** 按主键查找登录日志失败 */
+    LOG_LOGIN_NOT_FOUND("LOG_LOGIN_NOT_FOUND", "登录日志不存在");
 
     override val i18nKeyPrefix: String
         get() = "user.error-msg.loglogin"

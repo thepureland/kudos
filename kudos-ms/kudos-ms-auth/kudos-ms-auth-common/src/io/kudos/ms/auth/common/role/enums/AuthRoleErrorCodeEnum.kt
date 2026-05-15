@@ -17,7 +17,13 @@ enum class AuthRoleErrorCodeEnum(
 ) : IErrorCodeEnum {
 
     /** 未定义错误 */
-    UNSPECIFIED("UNSPECIFIED", "未定义错误");
+    UNSPECIFIED("UNSPECIFIED", "未定义错误"),
+
+    /** 按主键或 (tenant_id, code) 维度查找角色失败 */
+    ROLE_NOT_FOUND("ROLE_NOT_FOUND", "角色不存在"),
+
+    /** (tenant_id, code) 已被占用 */
+    ROLE_CODE_ALREADY_EXISTS("ROLE_CODE_ALREADY_EXISTS", "该租户下角色编码已存在");
 
     override val i18nKeyPrefix: String
         get() = "auth.error-msg.role"
