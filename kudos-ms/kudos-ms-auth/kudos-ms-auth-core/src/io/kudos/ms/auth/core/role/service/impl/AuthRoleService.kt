@@ -68,7 +68,7 @@ open class AuthRoleService(
 
     @Transactional(readOnly = true)
     override fun getRoleResourceIds(roleId: String): Set<String> {
-        return resourceIdsByRoleIdCache.getResourceIds(roleId)
+        return resourceIdsByRoleIdCache.getResourceIds(roleId).toSet()
     }
 
     @Transactional(readOnly = true)
@@ -238,7 +238,7 @@ open class AuthRoleService(
 
     @Transactional(readOnly = true)
     override fun getUserResourceIds(userId: String): Set<String> {
-        return resourceIdsByUserIdCache.getResourceIds(userId)
+        return resourceIdsByUserIdCache.getResourceIds(userId).toSet()
     }
 
     @Transactional(readOnly = true)
@@ -251,8 +251,8 @@ open class AuthRoleService(
             return emptyList()
         }
 
-        // 批量获取资源缓存对象
-        val resourcesMap = sysResourceHashCache.getResourcesByIds(resourceIds)
+        // 批量获取资源缓存对象（sysResourceHashCache.getResourcesByIds 接收 Set，做一次去重转换）
+        val resourcesMap = sysResourceHashCache.getResourcesByIds(resourceIds.toSet())
 
         // 返回资源列表（按原始ID顺序）
         return resourceIds.mapNotNull { resourcesMap[it] }

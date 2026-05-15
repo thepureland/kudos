@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component
  * 1.数据来源表：user_account + auth_role_user + auth_role_resource
  * 2.缓存各租户下指定用户拥有的所有资源ID集合
  * 3.缓存的key为：tenantId::username
- * 4.缓存的value为：资源ID集合（Set<String>）
+ * 4.缓存的value为：资源ID集合（List<String>）
  * 5.查询流程：用户 → 角色 → 资源（三级关联）
  *
  * @author K
@@ -28,7 +28,7 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<Set<String>>() {
+open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<List<String>>() {
 
     @Resource
     private lateinit var userAccountHashCache: UserAccountHashCache
@@ -48,7 +48,7 @@ open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<
 
     override fun cacheName(): String = CACHE_NAME
 
-    override fun doReload(key: String): Set<String> {
+    override fun doReload(key: String): List<String> {
         require(key.contains(Consts.CACHE_KEY_DEFAULT_DELIMITER)) {
             "缓存${CACHE_NAME}的key格式必须是 租户ID${Consts.CACHE_KEY_DEFAULT_DELIMITER}用户名"
         }
@@ -105,7 +105,7 @@ open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<
         key = "#tenantId.concat('${Consts.CACHE_KEY_DEFAULT_DELIMITER}').concat(#username)",
         unless = "#result == null || #result.isEmpty()"
     )
-    open fun getResourceIds(tenantId: String, username: String): Set<String> {
+    open fun getResourceIds(tenantId: String, username: String): List<String> {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("缓存中不存在租户${tenantId}用户${username}的资源ID，从数据库中加载...")
         }
@@ -115,18 +115,18 @@ open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<
 
         if (userId == null) {
             log.debug("找不到租户${tenantId}的用户${username}。")
-            return emptySet()
+            return emptyList()
         }
 
         val roleIds = authRoleUserDao.searchRoleIdsByUserId(userId)
         if (roleIds.isEmpty()) {
             log.debug("用户${username}没有分配任何角色。")
-            return emptySet()
+            return emptyList()
         }
 
         val resultList = authRoleResourceDao.searchResourceIdsByRoleIds(roleIds)
         log.debug("从数据库加载了租户${tenantId}用户${username}的${roleIds.size}个角色，共${resultList.size}条资源ID（去重后）。")
-        return resultList
+        return resultList.toList()
     }
 
     /**

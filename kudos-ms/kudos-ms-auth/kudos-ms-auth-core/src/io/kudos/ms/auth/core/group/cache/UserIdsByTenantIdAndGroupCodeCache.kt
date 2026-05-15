@@ -17,14 +17,14 @@ import org.springframework.stereotype.Component
  * 1.数据来源表：auth_group + auth_group_user
  * 2.缓存各租户下指定用户组的用户ID集合
  * 3.缓存的key为：tenantId::groupCode
- * 4.缓存的value为：用户ID集合（Set<String>）
+ * 4.缓存的value为：用户ID集合（List<String>）
  *
  * @author K
  * @author AI: Codex
  * @since 1.0.0
  */
 @Component
-open class UserIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler<Set<String>>() {
+open class UserIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler<List<String>>() {
 
     @Autowired
     private lateinit var authGroupHashCache: AuthGroupHashCache
@@ -41,7 +41,7 @@ open class UserIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler<Set
 
     override fun cacheName(): String = CACHE_NAME
 
-    override fun doReload(key: String): Set<String> {
+    override fun doReload(key: String): List<String> {
         require(key.contains(Consts.CACHE_KEY_DEFAULT_DELIMITER)) {
             "缓存${CACHE_NAME}的key格式必须是 租户ID${Consts.CACHE_KEY_DEFAULT_DELIMITER}用户组编码"
         }
@@ -91,7 +91,7 @@ open class UserIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler<Set
         key = "#tenantId.concat('${Consts.CACHE_KEY_DEFAULT_DELIMITER}').concat(#groupCode)",
         unless = "#result == null || #result.isEmpty()"
     )
-    open fun getUserIds(tenantId: String, groupCode: String): Set<String> {
+    open fun getUserIds(tenantId: String, groupCode: String): List<String> {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("缓存中不存在租户${tenantId}用户组${groupCode}的用户ID，从数据库中加载...")
         }
@@ -101,12 +101,12 @@ open class UserIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler<Set
 
         if (groupId == null) {
             log.debug("找不到租户${tenantId}的用户组${groupCode}。")
-            return emptySet()
+            return emptyList()
         }
 
         val userIds = authGroupUserDao.searchUserIdsByGroupId(groupId)
         log.debug("从数据库加载了租户${tenantId}用户组${groupCode}的${userIds.size}条用户ID。")
-        return userIds
+        return userIds.toList()
     }
 
     /**

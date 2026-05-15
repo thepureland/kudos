@@ -16,14 +16,14 @@ import org.springframework.stereotype.Component
  * 1.数据来源表：auth_role_resource
  * 2.缓存各角色拥有的所有资源ID集合
  * 3.缓存的key为：roleId
- * 4.缓存的value为：资源ID集合（Set<String>）
+ * 4.缓存的value为：资源ID集合（List<String>）
  *
  * @author K
  * @author AI: Cursor
  * @since 1.0.0
  */
 @Component
-open class ResourceIdsByRoleIdCache : AbstractKeyValueCacheHandler<Set<String>>() {
+open class ResourceIdsByRoleIdCache : AbstractKeyValueCacheHandler<List<String>>() {
 
     @Autowired
     private lateinit var authRoleResourceDao: AuthRoleResourceDao
@@ -37,7 +37,7 @@ open class ResourceIdsByRoleIdCache : AbstractKeyValueCacheHandler<Set<String>>(
 
     override fun cacheName(): String = CACHE_NAME
 
-    override fun doReload(key: String): Set<String> = getSelf<ResourceIdsByRoleIdCache>().getResourceIds(key)
+    override fun doReload(key: String): List<String> = getSelf<ResourceIdsByRoleIdCache>().getResourceIds(key)
 
     override fun reloadAll(clear: Boolean) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
@@ -78,12 +78,12 @@ open class ResourceIdsByRoleIdCache : AbstractKeyValueCacheHandler<Set<String>>(
         key = "#roleId",
         unless = "#result == null || #result.isEmpty()"
     )
-    open fun getResourceIds(roleId: String): Set<String> {
+    open fun getResourceIds(roleId: String): List<String> {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("缓存中不存在角色${roleId}的资源ID，从数据库中加载...")
         }
 
-        val resourceIds = authRoleResourceDao.searchResourceIdsByRoleIds(setOf(roleId))
+        val resourceIds = authRoleResourceDao.searchResourceIdsByRoleIds(setOf(roleId)).toList()
         log.debug("从数据库加载了角色${roleId}的${resourceIds.size}条资源ID。")
         return resourceIds
     }
