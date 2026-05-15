@@ -21,12 +21,17 @@ import io.kudos.ms.sys.common.resource.vo.response.SysResourceRow
 import io.kudos.ms.sys.common.resource.vo.response.SysResourceTreeRow
 import io.kudos.ms.sys.core.dict.cache.SysDictItemHashCache
 import io.kudos.ms.sys.core.resource.cache.SysResourceHashCache
+import io.kudos.ms.sys.core.resource.event.SysResourceBatchDeleted
+import io.kudos.ms.sys.core.resource.event.SysResourceDeleted
+import io.kudos.ms.sys.core.resource.event.SysResourceInserted
+import io.kudos.ms.sys.core.resource.event.SysResourceUpdated
 import io.kudos.ms.sys.core.system.cache.SysSystemHashCache
 import io.kudos.ms.sys.core.resource.dao.SysResourceDao
 import io.kudos.ms.sys.core.resource.model.po.SysResource
 import io.kudos.ms.sys.core.resource.model.table.SysResources
 import io.kudos.ms.sys.core.resource.service.iservice.ISysResourceService
 import org.ktorm.dsl.isNull
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import kotlin.reflect.KClass
@@ -45,6 +50,7 @@ open class SysResourceService(
     private val sysResourceHashCache: SysResourceHashCache,
     private val sysDictItemHashCache: SysDictItemHashCache,
     private val sysSystemHashCache: SysSystemHashCache,
+    private val eventPublisher: ApplicationEventPublisher,
 ) : BaseCrudService<String, SysResource, SysResourceDao>(dao), ISysResourceService {
 
     private val log = LogFactory.getLog(this::class)
@@ -96,7 +102,7 @@ open class SysResourceService(
             successMessage = "更新id为${id}的资源的启用状态为${active}。",
             failureMessage = "更新id为${id}的资源的启用状态为${active}失败！",
         ) {
-            sysResourceHashCache.syncOnUpdateActive(id, active)
+            eventPublisher.publishEvent(SysResourceUpdated(id = id))
         }
     }
 
@@ -113,7 +119,7 @@ open class SysResourceService(
             successMessage = "移动资源${id}到父节点${newParentId}，排序号${newOrderNum}。",
             failureMessage = "移动资源${id}失败！",
         ) {
-            sysResourceHashCache.syncOnUpdate(id)
+            eventPublisher.publishEvent(SysResourceUpdated(id = id))
         }
     }
 
@@ -121,7 +127,7 @@ open class SysResourceService(
     override fun insert(any: Any): String {
         val id = super.insert(any)
         completeCrudInsert(log, "新增id为${id}的资源。") {
-            sysResourceHashCache.syncOnInsert(any, id)
+            eventPublisher.publishEvent(SysResourceInserted(id = id))
         }
         return id
     }
@@ -159,12 +165,11 @@ open class SysResourceService(
 
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {
-        @Suppress("UNCHECKED_CAST")
-        val resources = dao.inSearchById(ids)
         val count = super.batchDelete(ids)
         log.debug("批量删除资源，期望删除${ids.size}条，实际删除${count}条。")
-        sysResourceHashCache.syncOnBatchDelete(ids)
-        resources.forEach(::syncResourceDelete)
+        if (count > 0) {
+            eventPublisher.publishEvent(SysResourceBatchDeleted(ids = ids))
+        }
         return count
     }
 
@@ -371,16 +376,11 @@ open class SysResourceService(
     }
 
     private fun syncResourceUpdate(any: Any, id: String, oldResource: SysResource?) {
-        sysResourceHashCache.syncOnUpdate(id)
-        sysResourceHashCache.syncOnUpdate(any, id, oldResource?.url)
-        oldResource?.let {
-            sysResourceHashCache.syncOnUpdate(any, id, it.subSystemCode, it.resourceTypeDictCode)
-        }
+        eventPublisher.publishEvent(SysResourceUpdated(id = id))
     }
 
     private fun syncResourceDelete(resource: SysResource) {
-        sysResourceHashCache.syncOnDelete(resource.id, resource.subSystemCode, resource.url)
-        sysResourceHashCache.syncOnDelete(resource.id, resource.subSystemCode, resource.resourceTypeDictCode)
+        eventPublisher.publishEvent(SysResourceDeleted(id = resource.id))
     }
 
     private fun collectParentIds(itemId: String, results: MutableList<String>) {
