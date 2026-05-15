@@ -18,10 +18,15 @@ import io.kudos.ms.sys.common.tenant.vo.response.SysTenantRow
 import io.kudos.ms.sys.core.tenant.cache.SysTenantSystemHashCache
 import io.kudos.ms.sys.core.tenant.cache.TenantByIdCache
 import io.kudos.ms.sys.core.tenant.dao.SysTenantDao
+import io.kudos.ms.sys.core.tenant.event.SysTenantBatchDeleted
+import io.kudos.ms.sys.core.tenant.event.SysTenantDeleted
+import io.kudos.ms.sys.core.tenant.event.SysTenantInserted
+import io.kudos.ms.sys.core.tenant.event.SysTenantUpdated
 import io.kudos.ms.sys.core.tenant.model.po.SysTenant
 import io.kudos.ms.sys.core.tenant.model.po.SysTenantSystem
 import io.kudos.ms.sys.core.tenant.service.iservice.ISysTenantService
 import io.kudos.ms.sys.core.tenant.service.iservice.ISysTenantSystemService
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import kotlin.reflect.KClass
@@ -41,6 +46,7 @@ open class SysTenantService(
     private val tenantByIdCache: TenantByIdCache,
     private val sysTenantSystemHashCache: SysTenantSystemHashCache,
     private val sysTenantSystemService: ISysTenantSystemService,
+    private val eventPublisher: ApplicationEventPublisher,
 ) : BaseCrudService<String, SysTenant, SysTenantDao>(dao), ISysTenantService {
 
     private val log = LogFactory.getLog(this::class)
@@ -80,7 +86,9 @@ open class SysTenantService(
         val id = super.insert(any)
         completeCrudInsert(log, "新增id为${id}的租户。") {
             insertTenantSystemsOnCreate(any, id)
-            tenantByIdCache.syncOnInsert(any, id)
+            // TenantByIdCache 通过 @TransactionalEventListener 订阅；sys_tenant_system 缓存仍由
+            // 现有重载方法负责（待后续遗留拆分到独立 SysTenantSystemService 的 PoC）。
+            eventPublisher.publishEvent(SysTenantInserted(id = id))
             sysTenantSystemHashCache.syncOnInsert(any, id)
         }
         return id
@@ -106,7 +114,7 @@ open class SysTenantService(
             failureMessage = "更新id为${id}的租户失败！",
         ) {
             syncTenantSystemsOnUpdate(any)
-            tenantByIdCache.syncOnUpdate(any, id)
+            eventPublisher.publishEvent(SysTenantUpdated(id = id))
         }
     }
 
@@ -122,7 +130,7 @@ open class SysTenantService(
             successMessage = "更新id为${id}的租户的启用状态为${active}。",
             failureMessage = "更新id为${id}的租户的启用状态为${active}失败！",
         ) {
-            tenantByIdCache.syncOnUpdate(tenant, id)
+            eventPublisher.publishEvent(SysTenantUpdated(id = id))
         }
     }
 
@@ -141,7 +149,7 @@ open class SysTenantService(
             successMessage = "删除id为${id}的租户成功！",
             failureMessage = "删除id为${id}的租户失败！",
         ) {
-            tenantByIdCache.syncOnDelete(id)
+            eventPublisher.publishEvent(SysTenantDeleted(id = id))
         }
     }
 
@@ -150,7 +158,9 @@ open class SysTenantService(
         if (sysTenantSystemService.batchDeleteByTenantIds(ids) < 0) return 0
         val count = super.batchDelete(ids)
         log.debug("批量删除租户，期望删除${ids.size}条，实际删除${count}条。")
-        tenantByIdCache.syncOnBatchDelete(ids)
+        if (count > 0) {
+            eventPublisher.publishEvent(SysTenantBatchDeleted(ids = ids))
+        }
         return count
     }
 
