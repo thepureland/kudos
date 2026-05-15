@@ -1,12 +1,15 @@
 package io.kudos.ms.sys.core.tenant.service.impl
 
-import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.sys.core.tenant.cache.SysTenantSystemHashCache
 import io.kudos.ms.sys.core.tenant.dao.SysTenantSystemDao
+import io.kudos.ms.sys.core.tenant.event.SysTenantSystemBound
+import io.kudos.ms.sys.core.tenant.event.SysTenantSystemSystemsChanged
+import io.kudos.ms.sys.core.tenant.event.SysTenantSystemTenantsChanged
 import io.kudos.ms.sys.core.tenant.model.po.SysTenantSystem
 import io.kudos.ms.sys.core.tenant.service.iservice.ISysTenantSystemService
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -23,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional
 open class SysTenantSystemService(
     dao: SysTenantSystemDao,
     private val sysTenantSystemHashCache: SysTenantSystemHashCache,
+    private val eventPublisher: ApplicationEventPublisher,
 ) : BaseCrudService<String, SysTenantSystem, SysTenantSystemDao>(dao), ISysTenantSystemService {
 
     private val log = LogFactory.getLog(this::class)
@@ -68,12 +72,9 @@ open class SysTenantSystemService(
             }
         }
         log.debug("批量绑定租户${tenantId}与${systemCodes.size}个系统的关系，成功绑定${count}条。")
-        // 同步缓存
-        insertedSystemCodes.forEach { systemCode ->
-            sysTenantSystemHashCache.evict(systemCode)
-            if (KeyValueCacheKit.isWriteInTime(sysTenantSystemHashCache.cacheName())) {
-                sysTenantSystemHashCache.getTenantIdsBySubSystemCode(systemCode)
-            }
+        if (insertedSystemCodes.isNotEmpty()) {
+            // 影响这些 system 维度的缓存；tenant 维度的下次按需 reload
+            eventPublisher.publishEvent(SysTenantSystemSystemsChanged(systemCodes = insertedSystemCodes))
         }
         return count
     }
@@ -93,8 +94,7 @@ open class SysTenantSystemService(
         val success = count > 0
         if (success) {
             log.debug("解绑租户${tenantId}与系统${systemCode}的关系。")
-            // 同步缓存
-            sysTenantSystemHashCache.syncOnDelete(tenantId)
+            eventPublisher.publishEvent(SysTenantSystemTenantsChanged(tenantIds = listOf(tenantId)))
         } else {
             log.warn("解绑租户${tenantId}与系统${systemCode}的关系失败，关系不存在。")
         }
@@ -117,7 +117,7 @@ open class SysTenantSystemService(
         val systemCodes = searchSystemCodesByTenantId(tenantId)
         val count = dao.batchDeleteByTenantIds(listOf(tenantId))
         if (count > 0 && systemCodes.isNotEmpty()) {
-            sysTenantSystemHashCache.syncOnDelete(tenantId)
+            eventPublisher.publishEvent(SysTenantSystemTenantsChanged(tenantIds = listOf(tenantId)))
         }
         return count
     }
@@ -128,7 +128,7 @@ open class SysTenantSystemService(
         val systemCodes = tenantAndSystemCodes.values.flatten().toSet()
         val count = dao.batchDeleteByTenantIds(tenantIds)
         if (count > 0 && systemCodes.isNotEmpty()) {
-            sysTenantSystemHashCache.syncOnBatchDelete(tenantIds)
+            eventPublisher.publishEvent(SysTenantSystemTenantsChanged(tenantIds = tenantIds))
         }
         return count
     }
@@ -145,8 +145,12 @@ open class SysTenantSystemService(
     override fun insert(any: Any): String {
         val id = super.insert(any)
         log.debug("新增id为${id}的租户-系统关系。")
-        // 同步缓存
-        sysTenantSystemHashCache.syncOnInsert(any, id)
+        val relation = dao.get(id)
+        if (relation != null) {
+            eventPublisher.publishEvent(
+                SysTenantSystemBound(id = id, tenantId = relation.tenantId, systemCode = relation.systemCode)
+            )
+        }
         return id
     }
 
@@ -168,8 +172,7 @@ open class SysTenantSystemService(
         val success = super.deleteById(id)
         if (success) {
             log.debug("删除id为${id}的租户-系统关系。")
-            // 同步缓存
-            sysTenantSystemHashCache.syncOnDelete(relation.tenantId)
+            eventPublisher.publishEvent(SysTenantSystemTenantsChanged(tenantIds = listOf(relation.tenantId)))
         } else {
             log.error("删除id为${id}的租户-系统关系失败！")
         }
@@ -188,12 +191,11 @@ open class SysTenantSystemService(
     override fun batchDelete(ids: Collection<String>): Int {
         @Suppress("UNCHECKED_CAST")
         val relations = dao.inSearchById(ids)
-        val tenantSubSystemMap = relations.groupBy { it.tenantId }
+        val affectedTenantIds = relations.map { it.tenantId }.toSet()
         val count = super.batchDelete(ids)
         log.debug("批量删除租户-系统关系，期望删除${ids.size}条，实际删除${count}条。")
-        // 同步缓存
-        tenantSubSystemMap.forEach { (tenantId, _) ->
-            sysTenantSystemHashCache.syncOnDelete(tenantId)
+        if (count > 0 && affectedTenantIds.isNotEmpty()) {
+            eventPublisher.publishEvent(SysTenantSystemTenantsChanged(tenantIds = affectedTenantIds))
         }
         return count
     }

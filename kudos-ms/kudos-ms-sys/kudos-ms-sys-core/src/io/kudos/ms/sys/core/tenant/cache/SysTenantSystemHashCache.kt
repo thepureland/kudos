@@ -8,8 +8,13 @@ import io.kudos.ms.sys.common.tenant.vo.SysTenantSystemCacheEntry
 import io.kudos.ms.sys.core.tenant.cache.SysTenantSystemHashCache.Companion.CACHE_NAME
 import io.kudos.ms.sys.core.tenant.cache.SysTenantSystemHashCache.Companion.FILTERABLE_PROPERTIES
 import io.kudos.ms.sys.core.tenant.dao.SysTenantSystemDao
+import io.kudos.ms.sys.core.tenant.event.SysTenantSystemBound
+import io.kudos.ms.sys.core.tenant.event.SysTenantSystemSystemsChanged
+import io.kudos.ms.sys.core.tenant.event.SysTenantSystemTenantsChanged
 import jakarta.annotation.Resource
 import org.springframework.stereotype.Component
+import org.springframework.transaction.event.TransactionPhase
+import org.springframework.transaction.event.TransactionalEventListener
 
 /**
  * 租户-系统关系统一缓存处理器，基于 Hash 结构存储。
@@ -190,4 +195,25 @@ open class SysTenantSystemHashCache : AbstractHashCacheHandler<SysTenantSystemCa
         }
         log.debug("${cacheName()} 缓存同步完成。")
     }
+
+    // region 事件订阅 ------------------------------------------------------------------------
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: SysTenantSystemBound): Unit = syncOnInsert(event.id)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: SysTenantSystemTenantsChanged): Unit = syncOnBatchDelete(event.tenantIds)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: SysTenantSystemSystemsChanged) {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
+        event.systemCodes.forEach { systemCode ->
+            evict(systemCode)
+            if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
+                getTenantIdsBySubSystemCode(systemCode)
+            }
+        }
+    }
+
+    // endregion
 }
