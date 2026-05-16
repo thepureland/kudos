@@ -12,6 +12,10 @@ import io.kudos.ms.auth.core.role.cache.AuthRoleHashCache
 import io.kudos.ms.auth.core.role.cache.RoleIdsByUserIdCache
 import io.kudos.ms.auth.core.role.cache.UserIdsByRoleIdCache
 import io.kudos.ms.auth.core.role.dao.AuthRoleDao
+import io.kudos.ms.auth.core.role.event.AuthRoleBatchDeleted
+import io.kudos.ms.auth.core.role.event.AuthRoleDeleted
+import io.kudos.ms.auth.core.role.event.AuthRoleInserted
+import io.kudos.ms.auth.core.role.event.AuthRoleUpdated
 import io.kudos.ms.auth.core.role.model.po.AuthRole
 import io.kudos.ms.auth.core.role.service.iservice.IAuthRoleService
 import io.kudos.ms.sys.common.resource.vo.SysResourceCacheEntry
@@ -19,6 +23,7 @@ import io.kudos.ms.sys.core.resource.cache.SysResourceHashCache
 import io.kudos.ms.user.common.account.vo.UserAccountCacheEntry
 import io.kudos.ms.user.core.account.cache.UserAccountHashCache
 import jakarta.annotation.Resource
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -58,6 +63,9 @@ open class AuthRoleService(
 
     @Resource
     private lateinit var resourceIdsByUserIdCache: ResourceIdsByUserIdCache
+
+    @Resource
+    private lateinit var eventPublisher: ApplicationEventPublisher
 
     private val log = LogFactory.getLog(this::class)
 
@@ -138,11 +146,7 @@ open class AuthRoleService(
         val success = dao.update(role)
         if (success) {
             log.debug("更新id为${id}的角色的启用状态为${active}。")
-            authRoleHashCache.syncOnUpdate(id)
-//            val existingRole = dao.get(id)
-//            if (existingRole != null) {
-//                roleIdByTenantIdAndRoleCodeCache.syncOnUpdateActive(id, active)
-//            }
+            eventPublisher.publishEvent(AuthRoleUpdated(id))
         } else {
             log.error("更新id为${id}的角色的启用状态为${active}失败！")
         }
@@ -153,7 +157,7 @@ open class AuthRoleService(
     override fun insert(any: Any): String {
         val id = super.insert(any)
         log.debug("新增id为${id}的角色。")
-        authRoleHashCache.syncOnInsert(id)
+        eventPublisher.publishEvent(AuthRoleInserted(id))
         return id
     }
 
@@ -163,7 +167,7 @@ open class AuthRoleService(
         val id = BeanKit.getProperty(any, AuthRole::id.name) as String
         if (success) {
             log.debug("更新id为${id}的角色。")
-            authRoleHashCache.syncOnUpdate(id)
+            eventPublisher.publishEvent(AuthRoleUpdated(id))
         } else {
             log.error("更新id为${id}的角色失败！")
         }
@@ -180,7 +184,7 @@ open class AuthRoleService(
         val success = super.deleteById(id)
         if (success) {
             log.debug("删除id为${id}的角色。")
-            authRoleHashCache.syncOnDelete(id)
+            eventPublisher.publishEvent(AuthRoleDeleted(id))
         } else {
             log.error("删除id为${id}的角色失败！")
         }
@@ -191,7 +195,9 @@ open class AuthRoleService(
     override fun batchDelete(ids: Collection<String>): Int {
         val count = super.batchDelete(ids)
         log.debug("批量删除角色，期望删除${ids.size}条，实际删除${count}条。")
-        authRoleHashCache.syncOnBatchDelete(ids)
+        if (ids.isNotEmpty()) {
+            eventPublisher.publishEvent(AuthRoleBatchDeleted(ids))
+        }
         return count
     }
 

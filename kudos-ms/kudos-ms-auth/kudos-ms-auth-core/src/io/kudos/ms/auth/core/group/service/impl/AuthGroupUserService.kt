@@ -3,8 +3,11 @@ package io.kudos.ms.auth.core.group.service.impl
 import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.auth.core.group.dao.AuthGroupUserDao
+import io.kudos.ms.auth.core.group.event.AuthGroupUserRelationsChanged
 import io.kudos.ms.auth.core.group.model.po.AuthGroupUser
 import io.kudos.ms.auth.core.group.service.iservice.IAuthGroupUserService
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -24,6 +27,9 @@ open class AuthGroupUserService(
     IAuthGroupUserService {
 
 
+    @Autowired
+    private lateinit var eventPublisher: ApplicationEventPublisher
+
     private val log = LogFactory.getLog(this::class)
 
     @Transactional(readOnly = true)
@@ -42,6 +48,7 @@ open class AuthGroupUserService(
             return 0
         }
         var count = 0
+        val boundUserIds = mutableListOf<String>()
         userIds.forEach { userId ->
             if (!exists(groupId, userId)) {
                 val relation = AuthGroupUser.Companion {
@@ -49,10 +56,14 @@ open class AuthGroupUserService(
                     this.userId = userId
                 }
                 dao.insert(relation)
+                boundUserIds += userId
                 count++
             }
         }
         log.debug("批量绑定组${groupId}与${userIds.size}个用户的关系，成功绑定${count}条。")
+        if (boundUserIds.isNotEmpty()) {
+            eventPublisher.publishEvent(AuthGroupUserRelationsChanged(groupId, boundUserIds))
+        }
         return count
     }
 
@@ -62,6 +73,7 @@ open class AuthGroupUserService(
         val success = count > 0
         if (success) {
             log.debug("解绑组${groupId}与用户${userId}的关系。")
+            eventPublisher.publishEvent(AuthGroupUserRelationsChanged(groupId, listOf(userId)))
         } else {
             log.warn("解绑组${groupId}与用户${userId}的关系失败，关系不存在。")
         }
