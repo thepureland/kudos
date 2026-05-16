@@ -7,11 +7,15 @@ import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.ms.auth.core.role.dao.AuthRoleResourceDao
 import io.kudos.ms.auth.core.role.dao.AuthRoleUserDao
+import io.kudos.ms.auth.core.role.event.AuthRoleResourceRelationsChanged
+import io.kudos.ms.auth.core.role.event.AuthRoleUserRelationsChanged
 import io.kudos.ms.auth.core.role.model.po.AuthRoleUser
 import io.kudos.ms.user.core.account.dao.UserAccountDao
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
+import org.springframework.transaction.event.TransactionPhase
+import org.springframework.transaction.event.TransactionalEventListener
 
 
 /**
@@ -179,6 +183,12 @@ open class ResourceIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>
             log.debug("${CACHE_NAME}缓存同步完成，共影响${userIds.size}个用户。")
         }
     }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: AuthRoleUserRelationsChanged): Unit = syncOnBatchRoleUserChange(event.userIds)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: AuthRoleResourceRelationsChanged): Unit = syncOnRoleResourceChange(event.roleId)
 
     private val log = LogFactory.getLog(this::class)
 

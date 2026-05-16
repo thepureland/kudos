@@ -2,13 +2,15 @@ package io.kudos.ms.auth.core.role.service.impl
 
 import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.logger.LogFactory
+import io.kudos.ms.auth.core.role.dao.AuthRoleUserDao
+import io.kudos.ms.auth.core.role.event.AuthRoleUserRelationsChanged
+import io.kudos.ms.auth.core.role.model.po.AuthRoleUser
+import io.kudos.ms.auth.core.role.service.iservice.IAuthRoleUserService
 import io.kudos.ms.auth.core.platform.cache.ResourceIdsByUserIdCache
 import io.kudos.ms.auth.core.role.cache.RoleIdsByUserIdCache
 import io.kudos.ms.auth.core.role.cache.UserIdsByRoleIdCache
-import io.kudos.ms.auth.core.role.dao.AuthRoleUserDao
-import io.kudos.ms.auth.core.role.model.po.AuthRoleUser
-import io.kudos.ms.auth.core.role.service.iservice.IAuthRoleUserService
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -37,6 +39,9 @@ open class AuthRoleUserService(
     @Autowired
     private lateinit var resourceIdsByUserIdCache: ResourceIdsByUserIdCache
 
+    @Autowired
+    private lateinit var eventPublisher: ApplicationEventPublisher
+
     private val log = LogFactory.getLog(this::class)
 
     @Transactional(readOnly = true)
@@ -55,6 +60,7 @@ open class AuthRoleUserService(
             return 0
         }
         var count = 0
+        val boundUserIds = mutableListOf<String>()
         userIds.forEach { userId ->
             if (!exists(roleId, userId)) {
                 val relation = AuthRoleUser.Companion {
@@ -62,15 +68,13 @@ open class AuthRoleUserService(
                     this.userId = userId
                 }
                 dao.insert(relation)
+                boundUserIds += userId
                 count++
             }
         }
         log.debug("批量绑定角色${roleId}与${userIds.size}个用户的关系，成功绑定${count}条。")
-        // 同步缓存
-        userIdsByRoleIdCache.syncOnRoleUserChange(roleId)
-        userIds.forEach { userId ->
-            roleIdsByUserIdCache.syncOnRoleUserChange(userId)
-            resourceIdsByUserIdCache.syncOnRoleUserChange(userId)
+        if (boundUserIds.isNotEmpty()) {
+            eventPublisher.publishEvent(AuthRoleUserRelationsChanged(roleId, boundUserIds))
         }
         return count
     }
@@ -81,10 +85,7 @@ open class AuthRoleUserService(
         val success = count > 0
         if (success) {
             log.debug("解绑角色${roleId}与用户${userId}的关系。")
-            // 同步缓存
-            userIdsByRoleIdCache.syncOnRoleUserChange(roleId)
-            roleIdsByUserIdCache.syncOnRoleUserChange(userId)
-            resourceIdsByUserIdCache.syncOnRoleUserChange(userId)
+            eventPublisher.publishEvent(AuthRoleUserRelationsChanged(roleId, listOf(userId)))
         } else {
             log.warn("解绑角色${roleId}与用户${userId}的关系失败，关系不存在。")
         }

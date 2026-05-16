@@ -9,8 +9,14 @@ import io.kudos.base.logger.LogFactory
 import io.kudos.ms.auth.common.role.vo.AuthRoleCacheEntry
 import io.kudos.ms.auth.core.role.cache.AuthRoleHashCache.Companion.CACHE_NAME
 import io.kudos.ms.auth.core.role.dao.AuthRoleDao
+import io.kudos.ms.auth.core.role.event.AuthRoleBatchDeleted
+import io.kudos.ms.auth.core.role.event.AuthRoleDeleted
+import io.kudos.ms.auth.core.role.event.AuthRoleInserted
+import io.kudos.ms.auth.core.role.event.AuthRoleUpdated
 import jakarta.annotation.Resource
 import org.springframework.stereotype.Component
+import org.springframework.transaction.event.TransactionPhase
+import org.springframework.transaction.event.TransactionalEventListener
 
 /**
  * 角色 Hash 缓存处理器
@@ -149,4 +155,16 @@ open class AuthRoleHashCache : AbstractHashCacheHandler<AuthRoleCacheEntry>() {
         val cache = hashCache()
         ids.forEach { cache.deleteById(CACHE_NAME, it, AuthRoleCacheEntry::class, FILTERABLE_PROPERTIES, emptySet()) }
     }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: AuthRoleInserted): Unit = syncOnInsert(event.id)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: AuthRoleUpdated): Unit = syncOnUpdate(event.id)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: AuthRoleDeleted): Unit = syncOnDelete(event.id)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: AuthRoleBatchDeleted): Unit = syncOnBatchDelete(event.ids)
 }
