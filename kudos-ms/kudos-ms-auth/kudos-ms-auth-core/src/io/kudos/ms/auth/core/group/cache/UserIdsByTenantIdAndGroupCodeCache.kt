@@ -6,9 +6,13 @@ import io.kudos.base.logger.LogFactory
 import io.kudos.context.support.Consts
 import io.kudos.ms.auth.core.group.dao.AuthGroupDao
 import io.kudos.ms.auth.core.group.dao.AuthGroupUserDao
+import io.kudos.ms.auth.core.group.event.AuthGroupBatchDeleted
+import io.kudos.ms.auth.core.group.event.AuthGroupDeleted
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
+import org.springframework.transaction.event.TransactionPhase
+import org.springframework.transaction.event.TransactionalEventListener
 
 
 /**
@@ -193,6 +197,20 @@ open class UserIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler<Lis
      */
     fun getKey(tenantId: String, groupCode: String): String {
         return "${tenantId}${Consts.CACHE_KEY_DEFAULT_DELIMITER}${groupCode}"
+    }
+
+    /** 仅做本地 (tenantId, groupCode) 失效；AuthGroupHashCache 已独立订阅 AuthGroupDeleted。 */
+    private fun evictBy(tenantId: String, groupCode: String) {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
+        KeyValueCacheKit.evict(CACHE_NAME, getKey(tenantId, groupCode))
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: AuthGroupDeleted): Unit = evictBy(event.tenantId, event.code)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: AuthGroupBatchDeleted) {
+        event.items.forEach { evictBy(it.tenantId, it.code) }
     }
 
     private val log = LogFactory.getLog(this::class)

@@ -295,7 +295,7 @@ open class UserAccountService(
         val success = super.deleteById(id)
         if (success) {
             log.debug("删除id为${id}的用户。")
-            eventPublisher.publishEvent(UserAccountDeleted(id = id))
+            eventPublisher.publishEvent(UserAccountDeleted(id, user.tenantId, user.username))
         } else {
             log.error("删除id为${id}的用户失败！")
         }
@@ -304,10 +304,16 @@ open class UserAccountService(
 
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {
+        // 先 snapshot tenantId/username，AFTER_COMMIT 后下游 (tenantId, username) 缓存无法回查
+        val snapshots = if (ids.isNotEmpty()) {
+            dao.getByIds(ids).map {
+                UserAccountBatchDeleted.Item(it.id, it.tenantId, it.username)
+            }
+        } else emptyList()
         val count = super.batchDelete(ids)
         log.debug("批量删除用户，期望删除${ids.size}条，实际删除${count}条。")
-        if (count > 0) {
-            eventPublisher.publishEvent(UserAccountBatchDeleted(ids = ids))
+        if (snapshots.isNotEmpty()) {
+            eventPublisher.publishEvent(UserAccountBatchDeleted(snapshots))
         }
         return count
     }

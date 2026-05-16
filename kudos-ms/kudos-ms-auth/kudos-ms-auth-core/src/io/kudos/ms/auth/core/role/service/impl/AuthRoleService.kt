@@ -184,7 +184,7 @@ open class AuthRoleService(
         val success = super.deleteById(id)
         if (success) {
             log.debug("删除id为${id}的角色。")
-            eventPublisher.publishEvent(AuthRoleDeleted(id))
+            eventPublisher.publishEvent(AuthRoleDeleted(id, role.tenantId, role.code))
         } else {
             log.error("删除id为${id}的角色失败！")
         }
@@ -193,10 +193,17 @@ open class AuthRoleService(
 
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {
+        // 先 snapshot tenantId/code，AFTER_COMMIT 后行已删除，下游 (tenantId, code) 缓存
+        // 无法再回查
+        val snapshots = if (ids.isNotEmpty()) {
+            dao.getByIds(ids).map {
+                AuthRoleBatchDeleted.Item(it.id, it.tenantId, it.code)
+            }
+        } else emptyList()
         val count = super.batchDelete(ids)
         log.debug("批量删除角色，期望删除${ids.size}条，实际删除${count}条。")
-        if (ids.isNotEmpty()) {
-            eventPublisher.publishEvent(AuthRoleBatchDeleted(ids))
+        if (snapshots.isNotEmpty()) {
+            eventPublisher.publishEvent(AuthRoleBatchDeleted(snapshots))
         }
         return count
     }
