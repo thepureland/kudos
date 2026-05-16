@@ -58,10 +58,14 @@ open class AuthGroupService(
 
     @Transactional
     override fun deleteById(id: String): Boolean {
+        val group = dao.get(id) ?: return run {
+            log.warn("删除id为${id}的用户组时，发现其已不存在！")
+            false
+        }
         val success = super.deleteById(id)
         if (success) {
             log.debug("删除id为${id}的用户组。")
-            eventPublisher.publishEvent(AuthGroupDeleted(id))
+            eventPublisher.publishEvent(AuthGroupDeleted(id, group.tenantId, group.code))
         } else {
             log.warn("删除id为${id}的用户组失败！")
         }
@@ -70,10 +74,16 @@ open class AuthGroupService(
 
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {
+        // 先 snapshot tenantId/code，AFTER_COMMIT 后下游 (tenantId, code) 缓存无法回查
+        val snapshots = if (ids.isNotEmpty()) {
+            dao.getByIds(ids).map {
+                AuthGroupBatchDeleted.Item(it.id, it.tenantId, it.code)
+            }
+        } else emptyList()
         val count = super.batchDelete(ids)
         log.debug("批量删除用户组，期望删除${ids.size}条，实际删除${count}条。")
-        if (ids.isNotEmpty()) {
-            eventPublisher.publishEvent(AuthGroupBatchDeleted(ids))
+        if (snapshots.isNotEmpty()) {
+            eventPublisher.publishEvent(AuthGroupBatchDeleted(snapshots))
         }
         return count
     }

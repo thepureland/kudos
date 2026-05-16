@@ -9,9 +9,13 @@ import io.kudos.ms.auth.core.role.dao.AuthRoleUserDao
 import io.kudos.ms.user.common.account.vo.UserAccountCacheEntry
 import io.kudos.ms.user.core.account.cache.UserAccountHashCache
 import io.kudos.ms.user.core.account.dao.UserAccountDao
+import io.kudos.ms.user.core.account.event.UserAccountBatchDeleted
+import io.kudos.ms.user.core.account.event.UserAccountDeleted
 import jakarta.annotation.Resource
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
+import org.springframework.transaction.event.TransactionPhase
+import org.springframework.transaction.event.TransactionalEventListener
 
 
 /**
@@ -219,6 +223,20 @@ open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<
      */
     fun getKey(tenantId: String, username: String): String {
         return "${tenantId}${Consts.CACHE_KEY_DEFAULT_DELIMITER}${username}"
+    }
+
+    /** 仅做本地 (tenantId, username) 失效；UserAccountHashCache 已独立订阅 UserAccountDeleted。 */
+    private fun evictBy(tenantId: String, username: String) {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
+        KeyValueCacheKit.evict(CACHE_NAME, getKey(tenantId, username))
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: UserAccountDeleted): Unit = evictBy(event.tenantId, event.username)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: UserAccountBatchDeleted) {
+        event.items.forEach { evictBy(it.tenantId, it.username) }
     }
 
     private val log = LogFactory.getLog(this::class)
