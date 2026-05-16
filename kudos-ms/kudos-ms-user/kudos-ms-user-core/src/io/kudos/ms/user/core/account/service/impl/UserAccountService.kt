@@ -12,9 +12,14 @@ import io.kudos.ms.user.core.org.cache.OrgIdsByUserIdCache
 import io.kudos.ms.user.core.account.cache.UserAccountHashCache
 import io.kudos.ms.user.core.org.cache.UserOrgHashCache
 import io.kudos.ms.user.core.account.dao.UserAccountDao
+import io.kudos.ms.user.core.account.event.UserAccountBatchDeleted
+import io.kudos.ms.user.core.account.event.UserAccountDeleted
+import io.kudos.ms.user.core.account.event.UserAccountInserted
+import io.kudos.ms.user.core.account.event.UserAccountUpdated
 import io.kudos.ms.user.core.account.model.po.UserAccount
 import io.kudos.ms.user.core.account.service.iservice.IUserAccountService
 import jakarta.annotation.Resource
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
@@ -30,7 +35,8 @@ import java.time.LocalDateTime
 @Service
 @Transactional
 open class UserAccountService(
-    dao: UserAccountDao
+    dao: UserAccountDao,
+    private val eventPublisher: ApplicationEventPublisher,
 ) : BaseCrudService<String, UserAccount, UserAccountDao>(dao), IUserAccountService {
 
 
@@ -109,7 +115,7 @@ open class UserAccountService(
         val success = dao.update(user)
         if (success) {
             log.debug("更新id为${id}的用户的启用状态为${active}。")
-            userAccountHashCache.syncOnUpdate(id)
+            eventPublisher.publishEvent(UserAccountUpdated(id = id))
 //            val existingUser = dao.get(id)
 //            if (existingUser != null) {
 //                userIdByTenantIdAndUsernameCache.syncOnUpdateActive(id, active)
@@ -131,7 +137,7 @@ open class UserAccountService(
         val success = dao.update(user)
         if (success) {
             log.debug("重置id为${id}的用户的登录密码。")
-            userAccountHashCache.syncOnUpdate(id)
+            eventPublisher.publishEvent(UserAccountUpdated(id = id))
         } else {
             log.error("重置id为${id}的用户的登录密码失败！")
         }
@@ -149,7 +155,7 @@ open class UserAccountService(
         val success = dao.update(user)
         if (success) {
             log.debug("重置id为${id}的用户的安全密码。")
-            userAccountHashCache.syncOnUpdate(id)
+            eventPublisher.publishEvent(UserAccountUpdated(id = id))
         } else {
             log.error("重置id为${id}的用户的安全密码失败！")
         }
@@ -167,7 +173,7 @@ open class UserAccountService(
         val success = dao.update(user)
         if (success) {
             log.debug("更新id为${id}的用户的最后登录信息。")
-            userAccountHashCache.syncOnUpdate(id)
+            eventPublisher.publishEvent(UserAccountUpdated(id = id))
         } else {
             log.error("更新id为${id}的用户的最后登录信息失败！")
         }
@@ -183,7 +189,7 @@ open class UserAccountService(
         val success = dao.update(user)
         if (success) {
             log.debug("更新id为${id}的用户的最后登出信息。")
-            userAccountHashCache.syncOnUpdate(id)
+            eventPublisher.publishEvent(UserAccountUpdated(id = id))
         } else {
             log.error("更新id为${id}的用户的最后登出信息失败！")
         }
@@ -201,7 +207,7 @@ open class UserAccountService(
         val success = dao.update(user)
         if (success) {
             log.debug("增加id为${id}的用户的登录错误次数。")
-            userAccountHashCache.syncOnUpdate(id)
+            eventPublisher.publishEvent(UserAccountUpdated(id = id))
         } else {
             log.error("增加id为${id}的用户的登录错误次数失败！")
         }
@@ -217,7 +223,7 @@ open class UserAccountService(
         val success = dao.update(user)
         if (success) {
             log.debug("重置id为${id}的用户的登录错误次数。")
-            userAccountHashCache.syncOnUpdate(id)
+            eventPublisher.publishEvent(UserAccountUpdated(id = id))
         } else {
             log.error("重置id为${id}的用户的登录错误次数失败！")
         }
@@ -235,7 +241,7 @@ open class UserAccountService(
         val success = dao.update(user)
         if (success) {
             log.debug("增加id为${id}的用户的安全密码错误次数。")
-            userAccountHashCache.syncOnUpdate(id)
+            eventPublisher.publishEvent(UserAccountUpdated(id = id))
         } else {
             log.error("增加id为${id}的用户的安全密码错误次数失败！")
         }
@@ -251,7 +257,7 @@ open class UserAccountService(
         val success = dao.update(user)
         if (success) {
             log.debug("重置id为${id}的用户的安全密码错误次数。")
-            userAccountHashCache.syncOnUpdate(id)
+            eventPublisher.publishEvent(UserAccountUpdated(id = id))
         } else {
             log.error("重置id为${id}的用户的安全密码错误次数失败！")
         }
@@ -262,7 +268,7 @@ open class UserAccountService(
     override fun insert(any: Any): String {
         val id = super.insert(any)
         log.debug("新增id为${id}的用户。")
-        userAccountHashCache.syncOnInsert(id)
+        eventPublisher.publishEvent(UserAccountInserted(id = id))
         return id
     }
 
@@ -272,7 +278,7 @@ open class UserAccountService(
         val id = BeanKit.getProperty(any, UserAccount::id.name) as String
         if (success) {
             log.debug("更新id为${id}的用户。")
-            userAccountHashCache.syncOnUpdate(id)
+            eventPublisher.publishEvent(UserAccountUpdated(id = id))
         } else {
             log.error("更新id为${id}的用户失败！")
         }
@@ -289,7 +295,7 @@ open class UserAccountService(
         val success = super.deleteById(id)
         if (success) {
             log.debug("删除id为${id}的用户。")
-            userAccountHashCache.syncOnDelete(id)
+            eventPublisher.publishEvent(UserAccountDeleted(id = id))
         } else {
             log.error("删除id为${id}的用户失败！")
         }
@@ -300,7 +306,9 @@ open class UserAccountService(
     override fun batchDelete(ids: Collection<String>): Int {
         val count = super.batchDelete(ids)
         log.debug("批量删除用户，期望删除${ids.size}条，实际删除${count}条。")
-        userAccountHashCache.syncOnBatchDelete(ids)
+        if (count > 0) {
+            eventPublisher.publishEvent(UserAccountBatchDeleted(ids = ids))
+        }
         return count
     }
 

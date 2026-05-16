@@ -2,12 +2,15 @@ package io.kudos.ms.user.core.account.service.impl
 
 import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.logger.LogFactory
-import io.kudos.ms.user.core.org.cache.OrgIdsByUserIdCache
-import io.kudos.ms.user.core.org.cache.UserIdsByOrgIdCache
 import io.kudos.ms.user.core.account.dao.UserOrgUserDao
+import io.kudos.ms.user.core.account.event.UserOrgUserAdminUpdated
+import io.kudos.ms.user.core.account.event.UserOrgUserRelationsChanged
 import io.kudos.ms.user.core.account.model.po.UserOrgUser
 import io.kudos.ms.user.core.account.service.iservice.IUserOrgUserService
+import io.kudos.ms.user.core.org.cache.OrgIdsByUserIdCache
+import io.kudos.ms.user.core.org.cache.UserIdsByOrgIdCache
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -32,6 +35,9 @@ open class UserOrgUserService(
     @Autowired
     private lateinit var orgIdsByUserIdCache: OrgIdsByUserIdCache
 
+    @Autowired
+    private lateinit var eventPublisher: ApplicationEventPublisher
+
     private val log = LogFactory.getLog(this::class)
 
     @Transactional(readOnly = true)
@@ -50,6 +56,7 @@ open class UserOrgUserService(
             return 0
         }
         var count = 0
+        val boundUserIds = mutableListOf<String>()
         userIds.forEach { userId ->
             if (!exists(orgId, userId)) {
                 val relation = UserOrgUser {
@@ -58,14 +65,13 @@ open class UserOrgUserService(
                     this.orgAdmin = orgAdmin
                 }
                 dao.insert(relation)
+                boundUserIds += userId
                 count++
             }
         }
         log.debug("批量绑定机构${orgId}与${userIds.size}个用户的关系，成功绑定${count}条。")
-        // 同步缓存
-        userIdsByOrgIdCache.syncOnOrgUserChange(orgId)
-        userIds.forEach { userId ->
-            orgIdsByUserIdCache.syncOnOrgUserChange(userId)
+        if (boundUserIds.isNotEmpty()) {
+            eventPublisher.publishEvent(UserOrgUserRelationsChanged(orgId, boundUserIds))
         }
         return count
     }
@@ -76,9 +82,7 @@ open class UserOrgUserService(
         val success = count > 0
         if (success) {
             log.debug("解绑机构${orgId}与用户${userId}的关系。")
-            // 同步缓存
-            userIdsByOrgIdCache.syncOnOrgUserChange(orgId)
-            orgIdsByUserIdCache.syncOnOrgUserChange(userId)
+            eventPublisher.publishEvent(UserOrgUserRelationsChanged(orgId, listOf(userId)))
         } else {
             log.warn("解绑机构${orgId}与用户${userId}的关系失败，关系不存在。")
         }
@@ -107,8 +111,8 @@ open class UserOrgUserService(
         val success = dao.update(updated)
         if (success) {
             log.debug("设置机构${orgId}的用户${userId}为管理员：${isAdmin}。")
-            // 同步缓存（虽然缓存不包含orgAdmin字段，但为了保持一致性，仍然同步）
-            userIdsByOrgIdCache.syncOnUpdate(updated, relation.id)
+            // 虽然缓存不包含 orgAdmin 字段，但仍发布事件以保持下游一致性扩展点
+            eventPublisher.publishEvent(UserOrgUserAdminUpdated(relation.id, orgId))
         } else {
             log.error("设置机构${orgId}的用户${userId}为管理员失败！")
         }

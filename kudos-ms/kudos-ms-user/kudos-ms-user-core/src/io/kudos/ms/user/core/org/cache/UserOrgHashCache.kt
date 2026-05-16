@@ -9,8 +9,14 @@ import io.kudos.base.logger.LogFactory
 import io.kudos.ms.user.common.org.vo.UserOrgCacheEntry
 import io.kudos.ms.user.core.org.cache.UserOrgHashCache.Companion.CACHE_NAME
 import io.kudos.ms.user.core.org.dao.UserOrgDao
+import io.kudos.ms.user.core.org.event.UserOrgBatchDeleted
+import io.kudos.ms.user.core.org.event.UserOrgDeleted
+import io.kudos.ms.user.core.org.event.UserOrgInserted
+import io.kudos.ms.user.core.org.event.UserOrgUpdated
 import jakarta.annotation.Resource
 import org.springframework.stereotype.Component
+import org.springframework.transaction.event.TransactionPhase
+import org.springframework.transaction.event.TransactionalEventListener
 
 /**
  * 机构 Hash 缓存处理器
@@ -147,4 +153,16 @@ open class UserOrgHashCache : AbstractHashCacheHandler<UserOrgCacheEntry>() {
         val cache = hashCache()
         ids.forEach { cache.deleteById(CACHE_NAME, it, UserOrgCacheEntry::class, FILTERABLE_PROPERTIES, emptySet()) }
     }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: UserOrgInserted): Unit = syncOnInsert(event.id)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: UserOrgUpdated): Unit = syncOnUpdate(event.id)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: UserOrgDeleted): Unit = syncOnDelete(event.id)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: UserOrgBatchDeleted): Unit = syncOnBatchDelete(event.ids)
 }
