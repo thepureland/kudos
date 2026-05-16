@@ -11,10 +11,15 @@ import io.kudos.ms.user.core.org.cache.UserIdsByOrgIdCache
 import io.kudos.ms.user.core.org.cache.UserOrgHashCache
 import io.kudos.ms.user.core.org.dao.UserOrgDao
 import io.kudos.ms.user.core.account.dao.UserOrgUserDao
+import io.kudos.ms.user.core.org.event.UserOrgBatchDeleted
+import io.kudos.ms.user.core.org.event.UserOrgDeleted
+import io.kudos.ms.user.core.org.event.UserOrgInserted
+import io.kudos.ms.user.core.org.event.UserOrgUpdated
 import io.kudos.ms.user.core.org.model.po.UserOrg
 import io.kudos.ms.user.core.org.service.iservice.IUserOrgService
 import jakarta.annotation.Resource
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -44,6 +49,9 @@ open class UserOrgService(
 
     @Autowired
     private lateinit var userIdsByOrgIdCache: UserIdsByOrgIdCache
+
+    @Autowired
+    private lateinit var eventPublisher: ApplicationEventPublisher
 
     private val log = LogFactory.getLog(this::class)
 
@@ -199,11 +207,7 @@ open class UserOrgService(
         val success = dao.updateProperties(id, mapOf(UserOrg::active.name to active))
         if (success) {
             log.debug("更新id为${id}的机构的启用状态为${active}。")
-            userOrgHashCache.syncOnUpdate(id)
-//            val existingOrg = dao.get(id)
-//            if (existingOrg != null) {
-//                orgIdsByTenantIdCache.syncOnUpdateActive(id, active)
-//            }
+            eventPublisher.publishEvent(UserOrgUpdated(id))
         } else {
             log.error("更新id为${id}的机构的启用状态为${active}失败！")
         }
@@ -221,11 +225,7 @@ open class UserOrgService(
         val success = dao.updateProperties(id, props)
         if (success) {
             log.debug("移动id为${id}的机构到父机构${newParentId}，排序号${newSortNum}。")
-            userOrgHashCache.syncOnUpdate(id)
-//            val existingOrg = dao.get(id)
-//            if (existingOrg != null) {
-//                orgIdsByTenantIdCache.syncOnUpdate(existingOrg, id)
-//            }
+            eventPublisher.publishEvent(UserOrgUpdated(id))
         } else {
             log.error("移动id为${id}的机构失败！")
         }
@@ -236,7 +236,7 @@ open class UserOrgService(
     override fun insert(any: Any): String {
         val id = super.insert(any)
         log.debug("新增id为${id}的机构。")
-        userOrgHashCache.syncOnInsert(id)
+        eventPublisher.publishEvent(UserOrgInserted(id))
         return id
     }
 
@@ -246,7 +246,7 @@ open class UserOrgService(
         val id = BeanKit.getProperty(any, UserOrg::id.name) as String
         if (success) {
             log.debug("更新id为${id}的机构。")
-            userOrgHashCache.syncOnUpdate(id)
+            eventPublisher.publishEvent(UserOrgUpdated(id))
         } else {
             log.error("更新id为${id}的机构失败！")
         }
@@ -263,7 +263,7 @@ open class UserOrgService(
         val success = super.deleteById(id)
         if (success) {
             log.debug("删除id为${id}的机构。")
-            userOrgHashCache.syncOnDelete(id)
+            eventPublisher.publishEvent(UserOrgDeleted(id))
         } else {
             log.error("删除id为${id}的机构失败！")
         }
@@ -272,11 +272,11 @@ open class UserOrgService(
 
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {
-//        val orgs = dao.inSearchById(ids)
-//        orgs.map { it.tenantId }.toSet()
         val count = super.batchDelete(ids)
         log.debug("批量删除机构，期望删除${ids.size}条，实际删除${count}条。")
-        userOrgHashCache.syncOnBatchDelete(ids)
+        if (ids.isNotEmpty()) {
+            eventPublisher.publishEvent(UserOrgBatchDeleted(ids))
+        }
         return count
     }
 
