@@ -68,6 +68,7 @@ open class SysDataSourceService(
         return result
     }
 
+    @Transactional(readOnly = true)
     override fun <R : Any> get(id: String, returnType: KClass<R>): R? {
         return if (returnType == SysDataSourceCacheEntry::class) {
             @Suppress("UNCHECKED_CAST")

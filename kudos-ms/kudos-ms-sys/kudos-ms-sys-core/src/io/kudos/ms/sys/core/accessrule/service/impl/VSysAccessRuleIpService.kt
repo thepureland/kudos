@@ -6,6 +6,7 @@ import io.kudos.ms.sys.core.accessrule.dao.VSysAccessRuleWithIpDao
 import io.kudos.ms.sys.core.accessrule.model.po.VSysAccessRuleWithIp
 import io.kudos.ms.sys.core.accessrule.service.iservice.IVSysAccessRuleIpService
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 /**
  * 视图 `v_sys_access_rule_with_ip` 的只读服务实现，封装 [VSysAccessRuleWithIpDao] 的查询。
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service
  * @since 1.0.0
  */
 @Service
+@Transactional(readOnly = true)
 open class VSysAccessRuleIpService(
     dao: VSysAccessRuleWithIpDao,
 ) : BaseReadOnlyService<String, VSysAccessRuleWithIp, VSysAccessRuleWithIpDao>(dao),

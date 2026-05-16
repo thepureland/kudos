@@ -55,6 +55,7 @@ open class SysResourceService(
 
     private val log = LogFactory.getLog(this::class)
 
+    @Transactional(readOnly = true)
     override fun <R : Any> get(id: String, returnType: KClass<R>): R? {
         return if (returnType == SysResourceCacheEntry::class) {
             @Suppress("UNCHECKED_CAST")
@@ -273,6 +274,7 @@ open class SysResourceService(
         return roots
     }
 
+    @Transactional(readOnly = true)
     override fun loadDirectChildrenForTree(sysResourceQuery: SysResourceQuery): List<IdAndNameTreeNode<String>> {
         return when (if (sysResourceQuery.level == null) Int.MAX_VALUE else sysResourceQuery.level) {
             0 -> { // 资源类型
@@ -313,6 +315,7 @@ open class SysResourceService(
         }
     }
 
+    @Transactional(readOnly = true)
     override fun fetchAllParentIds(id: String): List<String> {
         val results = mutableListOf<String>()
         collectParentIds(id, results)

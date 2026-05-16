@@ -46,6 +46,7 @@ open class SysDomainService(
 
     private val log = LogFactory.getLog(this::class)
 
+    @Transactional(readOnly = true)
     override fun <R : Any> get(id: String, returnType: KClass<R>): R? {
         val result = if (returnType == SysDomainCacheEntry::class) {
             @Suppress("UNCHECKED_CAST")

@@ -39,6 +39,7 @@ open class SysI18NService(
 
     private val log = LogFactory.getLog(this::class)
 
+    @Transactional(readOnly = true)
     override fun <R : Any> get(id: String, returnType: KClass<R>): R? {
         return if (returnType == SysI18nCacheEntry::class) {
             @Suppress("UNCHECKED_CAST")
@@ -70,6 +71,7 @@ open class SysI18NService(
         return sysI18nHashCache.getI18nMap(locale, atomicServiceCode, i18nTypeDictCode, namespace)
     }
 
+    @Transactional(readOnly = true)
     override fun batchGetI18nsFromCache(
         locale: String,
         namespacesByI18nTypeDictCode: Map<String, Collection<String>>,

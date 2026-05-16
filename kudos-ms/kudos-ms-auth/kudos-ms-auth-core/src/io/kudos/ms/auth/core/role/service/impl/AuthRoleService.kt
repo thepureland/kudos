@@ -104,6 +104,7 @@ open class AuthRoleService(
         return resourceIds.mapNotNull { resourcesMap[it] }
     }
 
+    @Transactional(readOnly = true)
     override fun hasResource(roleId: String, resourceId: String): Boolean {
         val resourceIds = getRoleResourceIds(roleId)
         return resourceIds.contains(resourceId)
@@ -208,11 +209,13 @@ open class AuthRoleService(
         return count
     }
 
+    @Transactional(readOnly = true)
     override fun hasRole(userId: String, roleId: String): Boolean {
         val roleIds = getUserRoleIds(userId)
         return roleIds.contains(roleId)
     }
 
+    @Transactional(readOnly = true)
     override fun hasRoleByCode(userId: String, tenantId: String, roleCode: String): Boolean {
         val roleId = authRoleHashCache.getRoleByTenantIdAndRoleCode(tenantId, roleCode)?.id
         return roleId != null && hasRole(userId, roleId)

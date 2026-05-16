@@ -49,14 +49,17 @@ open class UserLogLoginService(
         return logins.sortedByDescending { it.loginTime }.take(limit)
     }
 
+    @Transactional(readOnly = true)
     override fun countLogins(tenantId: String?, userId: String?, startTime: LocalDateTime?, endTime: LocalDateTime?): Long {
         return dao.countByFilters(tenantId, userId, startTime, endTime).toLong()
     }
 
+    @Transactional(readOnly = true)
     override fun countSuccessLogins(tenantId: String?, userId: String?, startTime: LocalDateTime?, endTime: LocalDateTime?): Long {
         return dao.countByLoginSuccess(true, tenantId, userId, startTime, endTime).toLong()
     }
 
+    @Transactional(readOnly = true)
     override fun countFailureLogins(tenantId: String?, userId: String?, startTime: LocalDateTime?, endTime: LocalDateTime?): Long {
         return dao.countByLoginSuccess(false, tenantId, userId, startTime, endTime).toLong()
     }

@@ -37,6 +37,7 @@ open class SysCacheService(
 
     private val log = LogFactory.getLog(this::class)
 
+    @Transactional(readOnly = true)
     override fun <R : Any> get(id: String, returnType: KClass<R>): R? {
         return if (returnType == SysCacheCacheEntry::class) {
             @Suppress("UNCHECKED_CAST")
@@ -115,6 +116,7 @@ open class SysCacheService(
     @Transactional(readOnly = true)
     override fun getCachesFromCache(atomicServiceCode: String): List<SysCacheCacheEntry> = sysCacheHashCache.getCaches(atomicServiceCode)
 
+    @Transactional(readOnly = true)
     override fun reload(id: String, key: String) {
         require(id.isNotBlank())
         require(key.isNotBlank())
@@ -130,6 +132,7 @@ open class SysCacheService(
         }
     }
 
+    @Transactional(readOnly = true)
     override fun reloadAll(id: String) {
         require(id.isNotBlank())
         withCacheConfig(id) { cache ->
@@ -142,6 +145,7 @@ open class SysCacheService(
         }
     }
 
+    @Transactional(readOnly = true)
     override fun evict(id: String, key: String) {
         require(id.isNotBlank())
         require(key.isNotBlank())
@@ -157,6 +161,7 @@ open class SysCacheService(
         }
     }
 
+    @Transactional(readOnly = true)
     override fun evictAll(id: String) {
         require(id.isNotBlank())
         withCacheConfig(id) { cache ->

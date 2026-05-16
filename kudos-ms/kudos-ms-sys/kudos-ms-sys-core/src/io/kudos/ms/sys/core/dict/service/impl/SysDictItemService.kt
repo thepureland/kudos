@@ -39,6 +39,7 @@ open class SysDictItemService(
 
     private val log = LogFactory.getLog(this::class)
 
+    @Transactional(readOnly = true)
     override fun <R : Any> get(id: String, returnType: KClass<R>): R? {
         return if (returnType == SysDictItemCacheEntry::class) {
             @Suppress("UNCHECKED_CAST")
@@ -55,6 +56,7 @@ open class SysDictItemService(
     override fun getDictItemsFromCache(dictType: String, atomicServiceCode: String): List<SysDictItemCacheEntry> =
         sysDictItemHashCache.getDictItems(atomicServiceCode, dictType)
 
+    @Transactional(readOnly = true)
     override fun batchGetDictItemsFromCache(
         dictTypesByAtomicServiceCode: Map<String, Collection<String>>
     ): Map<String, Map<String, List<SysDictItemCacheEntry>>> {
@@ -70,6 +72,7 @@ open class SysDictItemService(
         sysDictItemHashCache.getDictItems(atomicServiceCode, dictType)
             .associateTo(LinkedHashMap()) { it.itemCode to it.itemName }
 
+    @Transactional(readOnly = true)
     override fun batchGetDictItemMapFromCache(
         dictTypesByAtomicServiceCode: Map<String, Collection<String>>,
     ): Map<String, Map<String, LinkedHashMap<String, String>>> {
@@ -81,6 +84,7 @@ open class SysDictItemService(
         }
     }
 
+    @Transactional(readOnly = true)
     override fun transDictItemNameFromCache(
         dictType: String,
         itemCode: String,
@@ -90,6 +94,7 @@ open class SysDictItemService(
         return items.firstOrNull { it.itemCode == itemCode }?.itemName
     }
 
+    @Transactional(readOnly = true)
     override fun fetchAllParentIds(itemId: String): List<String> {
         val results = mutableListOf<String>()
         recursionFindAllParentId(itemId, results)

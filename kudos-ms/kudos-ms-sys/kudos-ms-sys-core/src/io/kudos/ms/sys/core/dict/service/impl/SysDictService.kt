@@ -45,6 +45,7 @@ open class SysDictService(
 
     private val log = LogFactory.getLog(this::class)
 
+    @Transactional(readOnly = true)
     override fun <R : Any> get(id: String, returnType: KClass<R>): R? {
         return if (returnType == SysDictCacheEntry::class) {
             @Suppress("UNCHECKED_CAST")

@@ -39,9 +39,11 @@ open class SysTenantSystemService(
     override fun searchTenantIdsBySystemCode(systemCode: String): Set<String> =
         sysTenantSystemHashCache.getTenantIdsBySubSystemCode(systemCode).toSet()
 
+    @Transactional(readOnly = true)
     override fun groupingSystemCodesByTenantIds(tenantIds: Collection<String>?): Map<String, List<String>> =
         dao.groupingSystemCodesByTenantIds(tenantIds)
 
+    @Transactional(readOnly = true)
     override fun groupingTenantIdsBySystemCodes(systemCodes: Collection<String>?): Map<String, List<String>> =
         dao.groupingTenantIdsBySystemCodes(systemCodes)
 
@@ -113,6 +115,7 @@ open class SysTenantSystemService(
     @Transactional(readOnly = true)
     override fun exists(tenantId: String, systemCode: String): Boolean = dao.exists(tenantId, systemCode)
 
+    @Transactional
     override fun deleteByTenantId(tenantId: String): Int {
         val systemCodes = searchSystemCodesByTenantId(tenantId)
         val count = dao.batchDeleteByTenantIds(listOf(tenantId))
@@ -122,6 +125,7 @@ open class SysTenantSystemService(
         return count
     }
 
+    @Transactional
     override fun batchDeleteByTenantIds(tenantIds: Collection<String>): Int {
         if (tenantIds.isEmpty()) return 0
         val tenantAndSystemCodes = groupingSystemCodesByTenantIds(tenantIds)
