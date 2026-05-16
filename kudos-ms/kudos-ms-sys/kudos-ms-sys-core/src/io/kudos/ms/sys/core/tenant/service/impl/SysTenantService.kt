@@ -51,6 +51,7 @@ open class SysTenantService(
 
     private val log = LogFactory.getLog(this::class)
 
+    @Transactional(readOnly = true)
     override fun <R : Any> get(id: String, returnType: KClass<R>): R? {
         return if (returnType == SysTenantCacheEntry::class) {
             @Suppress("UNCHECKED_CAST")

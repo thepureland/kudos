@@ -41,6 +41,7 @@ open class SysMicroServiceService(
 
     private val log = LogFactory.getLog(this::class)
 
+    @Transactional(readOnly = true)
     override fun <R : Any> get(id: String, returnType: KClass<R>): R? {
         return if (returnType == SysMicroServiceCacheEntry::class) {
             @Suppress("UNCHECKED_CAST")

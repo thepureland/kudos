@@ -41,6 +41,7 @@ open class SysParamService(
 
     private val log = LogFactory.getLog(this::class)
 
+    @Transactional(readOnly = true)
     override fun <R : Any> get(id: String, returnType: KClass<R>): R? {
         return if (returnType == SysParamCacheEntry::class) {
             @Suppress("UNCHECKED_CAST")

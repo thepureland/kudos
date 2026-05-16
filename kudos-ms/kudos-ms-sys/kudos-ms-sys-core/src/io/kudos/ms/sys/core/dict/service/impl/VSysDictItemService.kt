@@ -10,6 +10,7 @@ import io.kudos.ms.sys.core.dict.dao.VSysDictItemDao
 import io.kudos.ms.sys.core.dict.model.po.VSysDictItem
 import io.kudos.ms.sys.core.dict.service.iservice.IVSysDictItemService
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 /**
  * 字典项视图（v_sys_dict_item）只读服务实现。
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Service
  * @since 1.0.0
  */
 @Service
+@Transactional(readOnly = true)
 open class VSysDictItemService(
     dao: VSysDictItemDao,
     private val sysDictItemHashCache: SysDictItemHashCache,
