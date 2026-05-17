@@ -130,8 +130,7 @@ class GlobalResponseBodyHandlerTest {
 
         @GetMapping("/api-success-placeholder")
         fun apiSuccessPlaceholder(): ApiResponse<Any> =
-            ApiResponse(
-                success = true,
+            ApiResponse.Success(
                 code = CommonErrorCodeEnum.SUCCESS.code,
                 message = CommonErrorCodeEnum.SUCCESS.displayText,
                 data = null
