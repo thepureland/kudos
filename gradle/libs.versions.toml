@@ -12,10 +12,7 @@ ktor-plugin = "3.4.1"
 ktorm = "4.2.0"
 spring-boot = "4.0.5"
 spring-cloud = "2025.1.1"
-jackson-module-kotlin = "3.1.1"
 alibaba-cloud = "2025.1.0.0"
-h2 = "2.4.240"
-postgres = "42.7.10"
 github-ben-manes-plugin = "0.53.0"
 
 # kudos-base
@@ -132,7 +129,7 @@ spring-cloud-stream = { module = "org.springframework.cloud:spring-cloud-stream"
 spring-cloud-starter-stream-kafka = { module = "org.springframework.cloud:spring-cloud-starter-stream-kafka"}
 spring-cloud-starter-stream-rabbit = { module = "org.springframework.cloud:spring-cloud-starter-stream-rabbit"}
 # Jackson 3 Kotlin 模块，供 Spring Cloud Function 等使用（与 Spring Boot 4 的 tools.jackson 一致）
-jackson-module-kotlin = { module = "tools.jackson.module:jackson-module-kotlin", version.ref = "jackson-module-kotlin" }
+jackson-module-kotlin = { module = "tools.jackson.module:jackson-module-kotlin" }
 # Jackson 3 databind，版本由 spring-boot-bom 管理
 jackson-databind = { module = "tools.jackson.core:jackson-databind" }
 alibaba-cloud-nacos-config = { module = "com.alibaba.cloud:spring-cloud-starter-alibaba-nacos-config"}
@@ -146,8 +143,8 @@ apache-commons-pool2 = { module = "org.apache.commons:commons-pool2", version.re
 github-caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "github-caffeine"}
 amazon-awssdk-sns = { module = "software.amazon.awssdk:sns", version.ref = "amazon-awssdk"}
 amazon-awssdk-apache-client = { module = "software.amazon.awssdk:apache-client", version.ref = "amazon-awssdk"}
-h2database-h2 = { module = "com.h2database:h2", version.ref = "h2" }
-postgresql = { module = "org.postgresql:postgresql", version.ref = "postgres"}
+h2database-h2 = { module = "com.h2database:h2" }
+postgresql = { module = "org.postgresql:postgresql" }
 ktorm-support-postgresql = { module = "org.ktorm:ktorm-support-postgresql", version.ref = "ktorm"}
 ktorm-core = { module = "org.ktorm:ktorm-core", version.ref = "ktorm"}
 ktorm-jackson = { module = "org.ktorm:ktorm-jackson", version.ref = "ktorm"}
