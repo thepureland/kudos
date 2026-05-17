@@ -7,6 +7,7 @@ import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.model.contract.entity.IIdEntity
 import io.kudos.ms.sys.common.dict.vo.SysDictItemCacheEntry
+import io.kudos.ms.sys.common.dict.vo.response.SysDictItemNode
 import io.kudos.ms.sys.core.dict.cache.SysDictItemHashCache
 import io.kudos.ms.sys.core.dict.dao.SysDictItemDao
 import io.kudos.ms.sys.core.dict.event.SysDictItemBatchDeleted
@@ -255,6 +256,25 @@ open class SysDictItemService(
     @Transactional(readOnly = true)
     override fun getDirectChildrenOfItemFromCache(parentId: String, activeOnly: Boolean): List<SysDictItemCacheEntry> =
         sysDictItemHashCache.getDictItems(parentId).let { items -> if (activeOnly) items.filter { it.active } else items }
+
+    @Transactional(readOnly = true)
+    override fun getDirectChildrenOfDictAsNodes(
+        atomicServiceCode: String,
+        dictType: String,
+        activeOnly: Boolean,
+    ): List<SysDictItemNode> =
+        getDirectChildrenOfDictFromCache(atomicServiceCode, dictType, activeOnly)
+            .map { SysDictItemNode(it.id, it.itemCode, it.itemName) }
+
+    @Transactional(readOnly = true)
+    override fun getDirectChildrenOfItemAsNodes(
+        atomicServiceCode: String,
+        dictType: String,
+        itemCode: String,
+        activeOnly: Boolean,
+    ): List<SysDictItemNode> =
+        getDirectChildrenOfItemFromCache(atomicServiceCode, dictType, itemCode, activeOnly)
+            .map { SysDictItemNode(it.id, it.itemCode, it.itemName) }
 
     private fun requireDictItemId(any: Any): String =
         (any as? IIdEntity<*>)?.id as? String

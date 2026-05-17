@@ -66,10 +66,8 @@ class SysDictItemAdminController :
         atomicServiceCode: String,
         dictType: String,
         activeOnly: Boolean = true
-    ): List<SysDictItemNode> {
-        val cacheEntries = sysDictItemService.getDirectChildrenOfDictFromCache(atomicServiceCode, dictType, activeOnly)
-        return cacheEntries.map { SysDictItemNode(it.id, it.itemCode, it.itemName) }
-    }
+    ): List<SysDictItemNode> =
+        sysDictItemService.getDirectChildrenOfDictAsNodes(atomicServiceCode, dictType, activeOnly)
 
     /**
      * 返回指定字典项的直接孩子
@@ -86,10 +84,8 @@ class SysDictItemAdminController :
         dictType: String,
         itemCode: String,
         activeOnly: Boolean = true
-    ): List<SysDictItemNode> {
-        val cacheEntries = sysDictItemService.getDirectChildrenOfItemFromCache(atomicServiceCode, dictType, itemCode, activeOnly)
-        return cacheEntries.map { SysDictItemNode(it.id, it.itemCode, it.itemName) }
-    }
+    ): List<SysDictItemNode> =
+        sysDictItemService.getDirectChildrenOfItemAsNodes(atomicServiceCode, dictType, itemCode, activeOnly)
 
     /**
      * 根据字典类型和原子服务编码取得对应的字典项

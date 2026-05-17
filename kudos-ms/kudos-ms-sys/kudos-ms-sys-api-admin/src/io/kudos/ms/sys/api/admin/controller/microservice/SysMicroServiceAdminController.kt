@@ -31,9 +31,7 @@ class SysMicroServiceAdminController :
      * @return List<原子服务编码>
      */
     @GetMapping("/getAllActiveAtomicServiceCodes")
-    fun getAllActiveAtomicServiceCodes(): List<String> {
-        return service.getAtomicServicesFromCache().filter { it.active }.map { it.code }
-    }
+    fun getAllActiveAtomicServiceCodes(): List<String> = service.getActiveAtomicServiceCodes()
 
     /**
      * 返回所有启用的微服务（不含原子服务）编码
@@ -41,9 +39,7 @@ class SysMicroServiceAdminController :
      * @return List<微服务编码>
      */
     @GetMapping("/getAllActiveMicroServiceCodes")
-    fun getAllActiveMicroServiceCodes(): List<String> {
-        return service.getMicroServicesExcludeAtomicFromCache().filter { it.active }.map { it.code }
-    }
+    fun getAllActiveMicroServiceCodes(): List<String> = service.getActiveMicroServiceCodes()
 
     /**
      * 返回整棵微服务树
