@@ -10,6 +10,7 @@ import io.kudos.ability.web.springmvc.interceptor.CorsHandlerInterceptor
 import io.kudos.context.config.YamlPropertySourceFactory
 import io.kudos.context.init.IComponentInitializer
 import jakarta.servlet.Filter
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.web.server.servlet.ServletWebServerFactory
 import org.springframework.boot.web.servlet.FilterRegistrationBean
@@ -19,6 +20,8 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.PropertySource
 import org.springframework.core.env.Environment
 import org.springframework.session.web.http.SessionRepositoryFilter
+import org.springframework.validation.Validator
+import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean
 import org.springframework.web.context.request.RequestContextListener
 import org.springframework.web.servlet.HandlerInterceptor
 import org.springframework.web.servlet.config.annotation.CorsRegistry
@@ -42,6 +45,16 @@ import java.util.EventListener
 )
 @EnableWebMvc
 open class SpringMvcAutoConfiguration : WebMvcConfigurer, IComponentInitializer {
+
+    /**
+     * 用项目级 Validator（来自 kudos-context 的 [io.kudos.context.init.ValidatorAutoConfiguration]）
+     * 替换 Spring MVC 默认 mvcValidator。required = false 是为了万一上层裁掉了 ValidatorAutoConfiguration
+     * 时仍能启动，回落到 Spring 默认 validator。
+     */
+    @Autowired(required = false)
+    private var kudosValidator: LocalValidatorFactoryBean? = null
+
+    override fun getValidator(): Validator? = kudosValidator
 
 //    @Bean
 //    open fun mutipartResolvet(): CommonsMultipartResolver {

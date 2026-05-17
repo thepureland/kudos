@@ -1,5 +1,6 @@
 package io.kudos.ability.web.springmvc.server
 
+import io.kudos.base.annotations.IgnoreApiResponseWrap
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/test")
 class HelloWorldController {
 
+    @IgnoreApiResponseWrap
     @GetMapping("/hello")
     fun getHelloWorld(): String {
         return "Hello World!"
