@@ -17,8 +17,6 @@ github-ben-manes-plugin = "0.53.0"
 
 # kudos-base
 apache-commons-beanutils = "1.11.0"
-apache-commons-codec = "1.21.0"
-apache-commons-lang3 = "3.20.0"
 apache-commons-text = "1.15.0"
 apache-commons-net = "3.12.0"
 hibernate-validator = "9.1.0.Final"
@@ -72,8 +70,8 @@ ktor-bom = { module = "io.ktor:ktor-bom", version.ref = "ktor" }
 kotlinReflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
 kotlinxCoroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
 apache-commons-beanutils = { module = "commons-beanutils:commons-beanutils", version.ref = "apache-commons-beanutils" }
-apache-commons-codec = { module = "commons-codec:commons-codec", version.ref = "apache-commons-codec" }
-apache-commons-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "apache-commons-lang3" }
+apache-commons-codec = { module = "commons-codec:commons-codec" }
+apache-commons-lang3 = { module = "org.apache.commons:commons-lang3" }
 apache-commons-text = { module = "org.apache.commons:commons-text", version.ref = "apache-commons-text" }
 apache-commons-net = { module = "commons-net:commons-net", version.ref = "apache-commons-net" }
 jakarta-validation-api = { module = "jakarta.validation:jakarta.validation-api" }
