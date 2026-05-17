@@ -60,25 +60,24 @@ open class SysTenantSystemService(
     override fun batchBind(tenantId: String, systemCodes: Collection<String>): Int {
         if (systemCodes.isEmpty()) return 0
 
-        var count = 0
-        val insertedSystemCodes = mutableSetOf<String>()
-        systemCodes.forEach { systemCode ->
-            if (!exists(tenantId, systemCode)) {
-                val relation = SysTenantSystem {
-                    this.tenantId = tenantId
-                    this.systemCode = systemCode
-                }
-                dao.insert(relation)
-                insertedSystemCodes.add(systemCode)
-                count++
+        // 一次 SELECT 已存在的关系，差集对新增 ID 一次 batchInsert，把原 N+1 折叠到 2 次 SQL。
+        val existing = dao.searchSystemCodesByTenantId(tenantId)
+        val insertedSystemCodes = (systemCodes.toSet() - existing)
+        if (insertedSystemCodes.isEmpty()) {
+            log.debug("批量绑定租户${tenantId}与${systemCodes.size}个系统的关系，全部已存在，无新增。")
+            return 0
+        }
+        val relations = insertedSystemCodes.map {
+            SysTenantSystem {
+                this.tenantId = tenantId
+                this.systemCode = it
             }
         }
-        log.debug("批量绑定租户${tenantId}与${systemCodes.size}个系统的关系，成功绑定${count}条。")
-        if (insertedSystemCodes.isNotEmpty()) {
-            // 影响这些 system 维度的缓存；tenant 维度的下次按需 reload
-            eventPublisher.publishEvent(SysTenantSystemSystemsChanged(systemCodes = insertedSystemCodes))
-        }
-        return count
+        dao.batchInsert(relations)
+        log.debug("批量绑定租户${tenantId}与${systemCodes.size}个系统的关系，成功绑定${insertedSystemCodes.size}条。")
+        // 影响这些 system 维度的缓存；tenant 维度的下次按需 reload
+        eventPublisher.publishEvent(SysTenantSystemSystemsChanged(systemCodes = insertedSystemCodes))
+        return insertedSystemCodes.size
     }
 
     /**

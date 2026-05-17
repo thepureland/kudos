@@ -33,19 +33,22 @@ open class SysTenantLocaleService(
     override fun batchBind(tenantId: String, localeCodes: Collection<String>): Int {
         if (localeCodes.isEmpty()) return 0
 
-        var count = 0
-        localeCodes.forEach { localeCode ->
-            if (!exists(tenantId, localeCode)) {
-                val relation = SysTenantLocale {
-                    this.tenantId = tenantId
-                    this.localeCode = localeCode
-                }
-                dao.insert(relation)
-                count++
+        // 一次 SELECT 已存在的关系，差集对新增 ID 一次 batchInsert，把原 N+1 折叠到 2 次 SQL。
+        val existing = dao.searchLocaleCodesByTenantId(tenantId)
+        val newLocaleCodes = localeCodes.toSet() - existing
+        if (newLocaleCodes.isEmpty()) {
+            log.debug("批量绑定租户${tenantId}与${localeCodes.size}种语言的关系，全部已存在，无新增。")
+            return 0
+        }
+        val relations = newLocaleCodes.map {
+            SysTenantLocale {
+                this.tenantId = tenantId
+                this.localeCode = it
             }
         }
-        log.debug("批量绑定租户${tenantId}与${localeCodes.size}种语言的关系，成功绑定${count}条。")
-        return count
+        dao.batchInsert(relations)
+        log.debug("批量绑定租户${tenantId}与${localeCodes.size}种语言的关系，成功绑定${newLocaleCodes.size}条。")
+        return newLocaleCodes.size
     }
 
     @Transactional
