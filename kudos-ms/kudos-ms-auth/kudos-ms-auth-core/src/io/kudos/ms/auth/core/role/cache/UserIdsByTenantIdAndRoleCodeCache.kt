@@ -172,23 +172,6 @@ open class UserIdsByTenantIdAndRoleCodeCache : AbstractKeyValueCacheHandler<List
     }
 
     /**
-     * 角色删除后同步缓存
-     *
-     * @param tenantId 租户ID
-     * @param roleCode 角色编码
-     */
-    open fun syncOnRoleDelete(tenantId: String, roleCode: String) {
-        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("删除租户${tenantId}角色${roleCode}后，同步从${CACHE_NAME}缓存中踢除...")
-            KeyValueCacheKit.evict(CACHE_NAME, getKey(tenantId, roleCode))
-            log.debug("${CACHE_NAME}缓存同步完成。")
-        }
-        // 同时清除角色ID缓存，确保后续查询时不会从缓存中获取到已删除的角色ID
-        val roleId = authRoleHashCache.getRoleByTenantIdAndRoleCode(tenantId, roleCode)?.id
-        roleId?.let { authRoleHashCache.syncOnDelete(it) }
-    }
-
-    /**
      * 返回参数拼接后的key
      *
      * @param tenantId 租户ID

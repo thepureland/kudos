@@ -178,19 +178,6 @@ open class ResourceIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler
         }
     }
 
-    /**
-     * 用户组删除后同步缓存
-     */
-    open fun syncOnGroupDelete(tenantId: String, groupCode: String) {
-        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("删除租户${tenantId}用户组${groupCode}后，同步从${CACHE_NAME}缓存中踢除...")
-            KeyValueCacheKit.evict(CACHE_NAME, getKey(tenantId, groupCode))
-            log.debug("${CACHE_NAME}缓存同步完成。")
-        }
-        val groupId = authGroupHashCache.getGroupByTenantIdAndGroupCode(tenantId, groupCode)?.id
-        groupId?.let { authGroupHashCache.syncOnDelete(it) }
-    }
-
     fun getKey(tenantId: String, groupCode: String): String {
         return "${tenantId}${Consts.CACHE_KEY_DEFAULT_DELIMITER}${groupCode}"
     }

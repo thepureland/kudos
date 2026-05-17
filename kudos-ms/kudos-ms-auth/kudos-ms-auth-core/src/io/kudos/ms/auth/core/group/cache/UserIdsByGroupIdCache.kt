@@ -5,6 +5,8 @@ import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.auth.core.group.dao.AuthGroupDao
 import io.kudos.ms.auth.core.group.dao.AuthGroupUserDao
+import io.kudos.ms.auth.core.group.event.AuthGroupBatchDeleted
+import io.kudos.ms.auth.core.group.event.AuthGroupDeleted
 import io.kudos.ms.auth.core.group.event.AuthGroupUserRelationsChanged
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable
@@ -125,21 +127,22 @@ open class UserIdsByGroupIdCache : AbstractKeyValueCacheHandler<List<String>>() 
         }
     }
 
-    /**
-     * 用户组删除后同步缓存
-     *
-     * @param groupId 用户组ID
-     */
-    open fun syncOnGroupDelete(groupId: String) {
-        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("删除用户组${groupId}后，同步从${CACHE_NAME}缓存中踢除...")
-            KeyValueCacheKit.evict(CACHE_NAME, groupId)
-            log.debug("${CACHE_NAME}缓存同步完成。")
-        }
+    /** 用户组删除后清掉该 groupId 下的 userId 列表。 */
+    private fun evictByGroupId(groupId: String) {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
+        KeyValueCacheKit.evict(CACHE_NAME, groupId)
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     open fun on(event: AuthGroupUserRelationsChanged): Unit = syncOnGroupUserChange(event.groupId)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: AuthGroupDeleted): Unit = evictByGroupId(event.id)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: AuthGroupBatchDeleted) {
+        event.ids.forEach(::evictByGroupId)
+    }
 
     private val log = LogFactory.getLog(this::class)
 

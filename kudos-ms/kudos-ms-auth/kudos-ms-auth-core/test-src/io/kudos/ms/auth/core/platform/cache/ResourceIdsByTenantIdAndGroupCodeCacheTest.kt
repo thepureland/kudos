@@ -2,8 +2,10 @@ package io.kudos.ms.auth.core.platform.cache
 
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
+import io.kudos.ms.auth.core.group.cache.AuthGroupHashCache
 import io.kudos.ms.auth.core.group.dao.AuthGroupDao
 import io.kudos.ms.auth.core.group.dao.AuthGroupRoleDao
+import io.kudos.ms.auth.core.group.event.AuthGroupDeleted
 import io.kudos.ms.auth.core.role.dao.AuthRoleDao
 import io.kudos.ms.auth.core.role.dao.AuthRoleResourceDao
 import io.kudos.ms.auth.core.group.model.po.AuthGroup
@@ -32,6 +34,9 @@ class ResourceIdsByTenantIdAndGroupCodeCacheTest : RdbAndRedisCacheTestBase() {
 
     @Resource
     private lateinit var cacheHandler: ResourceIdsByTenantIdAndGroupCodeCache
+
+    @Resource
+    private lateinit var authGroupHashCache: AuthGroupHashCache
 
     @Resource
     private lateinit var authGroupDao: AuthGroupDao
@@ -261,8 +266,11 @@ class ResourceIdsByTenantIdAndGroupCodeCacheTest : RdbAndRedisCacheTestBase() {
         val groupId = "274d0234-2222-2222-2222-222222222222" // GROUP_USER 的 ID
         authGroupDao.deleteById(groupId)
 
-        // 同步缓存（模拟用户组删除）
-        cacheHandler.syncOnGroupDelete(tenantId, groupCode)
+        // 直接驱动两个 listener（AFTER_COMMIT 在 @Transactional 测试中不会触发）：
+        // 生产中 AuthGroupDeleted 事件会同时触发本缓存 + AuthGroupHashCache 的 on(...)。
+        val event = AuthGroupDeleted(groupId, tenantId, groupCode)
+        cacheHandler.on(event)
+        authGroupHashCache.on(event)
 
         // 验证缓存已被清除，重新获取应该返回空列表（因为用户组已不存在）
         val resourceIdsAfter = cacheHandler.getResourceIds(tenantId, groupCode)

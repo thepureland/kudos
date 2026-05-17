@@ -172,23 +172,6 @@ open class UserIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler<Lis
     }
 
     /**
-     * 用户组删除后同步缓存
-     *
-     * @param tenantId 租户ID
-     * @param groupCode 用户组编码
-     */
-    open fun syncOnGroupDelete(tenantId: String, groupCode: String) {
-        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("删除租户${tenantId}用户组${groupCode}后，同步从${CACHE_NAME}缓存中踢除...")
-            KeyValueCacheKit.evict(CACHE_NAME, getKey(tenantId, groupCode))
-            log.debug("${CACHE_NAME}缓存同步完成。")
-        }
-        // 同时清除用户组ID缓存，确保后续查询时不会从缓存中获取到已删除的用户组ID
-        val groupId = authGroupHashCache.getGroupByTenantIdAndGroupCode(tenantId, groupCode)?.id
-        groupId?.let { authGroupHashCache.syncOnDelete(groupId) }
-    }
-
-    /**
      * 返回参数拼接后的key
      *
      * @param tenantId 租户ID

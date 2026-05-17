@@ -11,6 +11,8 @@ import io.kudos.ms.auth.core.role.event.AuthRoleResourceRelationsChanged
 import io.kudos.ms.auth.core.role.event.AuthRoleUserRelationsChanged
 import io.kudos.ms.auth.core.role.model.po.AuthRoleUser
 import io.kudos.ms.user.core.account.dao.UserAccountDao
+import io.kudos.ms.user.core.account.event.UserAccountBatchDeleted
+import io.kudos.ms.user.core.account.event.UserAccountDeleted
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
@@ -153,17 +155,10 @@ open class ResourceIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>
         }
     }
 
-    /**
-     * 用户删除后同步缓存
-     *
-     * @param userId 用户ID
-     */
-    open fun syncOnUserDelete(userId: String) {
-        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("删除用户${userId}后，同步从${CACHE_NAME}缓存中踢除...")
-            KeyValueCacheKit.evict(CACHE_NAME, userId)
-            log.debug("${CACHE_NAME}缓存同步完成。")
-        }
+    /** 用户删除后清掉该 userId 下的 resourceId 列表。 */
+    private fun evictByUserId(userId: String) {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
+        KeyValueCacheKit.evict(CACHE_NAME, userId)
     }
 
     /**
@@ -189,6 +184,14 @@ open class ResourceIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     open fun on(event: AuthRoleResourceRelationsChanged): Unit = syncOnRoleResourceChange(event.roleId)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: UserAccountDeleted): Unit = evictByUserId(event.id)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: UserAccountBatchDeleted) {
+        event.ids.forEach(::evictByUserId)
+    }
 
     private val log = LogFactory.getLog(this::class)
 
