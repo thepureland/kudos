@@ -9,11 +9,8 @@ import org.springframework.cache.annotation.CachePut
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.cache.interceptor.KeyGenerator
 import org.springframework.context.expression.MethodBasedEvaluationContext
-import org.springframework.core.DefaultParameterNameDiscoverer
 import org.springframework.core.ParameterNameDiscoverer
 import org.springframework.core.annotation.AnnotationUtils
-import org.springframework.expression.ExpressionParser
-import org.springframework.expression.spel.standard.SpelExpressionParser
 import org.springframework.expression.spel.support.StandardEvaluationContext
 import java.lang.reflect.Method
 
@@ -48,9 +45,7 @@ import java.lang.reflect.Method
  * - 使用SpEL表达式解析，支持复杂的key生成逻辑
  */
 class TenantCacheKeyGenerator : KeyGenerator {
-    private val parameterNameDiscoverer: ParameterNameDiscoverer = DefaultParameterNameDiscoverer()
-
-    private val parser: ExpressionParser = SpelExpressionParser()
+    private val parameterNameDiscoverer: ParameterNameDiscoverer = SpelExpressionCache.parameterNameDiscoverer
 
     /**
      * 生成普通key（带租户ID）
@@ -182,8 +177,7 @@ class TenantCacheKeyGenerator : KeyGenerator {
         context.setRootObject(target)
         context.setVariable("method", method)
         context.setVariable("tenantId", KudosContextHolder.get().tenantId)
-        val expression = parser.parseExpression(cacheKey)
-        return requireNotNull(expression.getValue(context, String::class.java)) {
+        return requireNotNull(SpelExpressionCache.get(cacheKey).getValue(context, String::class.java)) {
             "SpEL cache key must resolve to non-null String"
         }
     }

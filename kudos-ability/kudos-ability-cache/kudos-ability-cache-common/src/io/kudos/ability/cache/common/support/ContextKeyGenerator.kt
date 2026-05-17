@@ -3,10 +3,7 @@ package io.kudos.ability.cache.common.support
 import io.kudos.context.core.KudosContextHolder
 import org.springframework.cache.interceptor.KeyGenerator
 import org.springframework.context.expression.MethodBasedEvaluationContext
-import org.springframework.core.DefaultParameterNameDiscoverer
-import org.springframework.expression.ExpressionParser
 import org.springframework.expression.TypedValue
-import org.springframework.expression.spel.standard.SpelExpressionParser
 import org.springframework.expression.spel.support.StandardEvaluationContext
 import java.lang.reflect.Method
 
@@ -45,7 +42,7 @@ import java.lang.reflect.Method
  */
 class ContextKeyGenerator : KeyGenerator {
 
-    private val parameterNameDiscoverer = DefaultParameterNameDiscoverer()
+    private val parameterNameDiscoverer = SpelExpressionCache.parameterNameDiscoverer
 
     /**
      * 生成缓存key（实现KeyGenerator接口）
@@ -116,8 +113,6 @@ class ContextKeyGenerator : KeyGenerator {
         val kudosContext = KudosContextHolder.get()
 //        kudosContext.subSysCode = ApplicationInfo.getInstance().getSubSysCode()
         context.setVariable("_context", kudosContext)
-        val parser: ExpressionParser = SpelExpressionParser()
-        val expression = parser.parseExpression(cacheKey)
-        return expression.getValue(context, String::class.java)!!
+        return SpelExpressionCache.get(cacheKey).getValue(context, String::class.java)!!
     }
 }

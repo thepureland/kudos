@@ -43,7 +43,7 @@ import org.springframework.web.context.request.RequestContextHolder
  */
 @Aspect
 @Lazy(false)
-@Order(0)
+@Order(100) // 跨服务 HTTP 响应级缓存：应当最外层包裹，确保拿到所有内层缓存读写后的最终 result 再计算 UID。
 class ClientCacheableAspect {
     /**
      * 定义切入点

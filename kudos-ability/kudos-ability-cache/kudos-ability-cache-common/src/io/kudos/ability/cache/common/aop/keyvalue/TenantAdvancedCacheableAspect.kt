@@ -9,11 +9,13 @@ import org.aspectj.lang.annotation.Pointcut
 import org.aspectj.lang.reflect.MethodSignature
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Lazy
+import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
 
 @Aspect
 @Lazy(false)
 @Component
+@Order(0) // 单条 Cacheable 类切面，与其他 Cacheable 注解互斥，相对顺序不关键；显式标 0 避免与 Spring 默认 LOWEST_PRECEDENCE 混。
 class TenantAdvancedCacheableAspect {
 
     @Autowired(required = false)

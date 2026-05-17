@@ -80,16 +80,17 @@ class CacheNotifyListener : INotifyListener {
             return
         }
         log.info(
-            "收到清理缓存Notify：cacheName={0},type={1},key={2}",
+            "收到清理缓存Notify：cacheName={0},type={1},key={2},msgId={3},fromNode={4},ts={5}",
             cacheName,
             messageBody.type,
-            messageBody.key
+            messageBody.key,
+            messageBody.messageId,
+            messageBody.nodeId,
+            messageBody.timestamp
         )
-        val kvConfig = KeyValueCacheKit.getCacheConfig(cacheName)
-        val hashConfig = HashCacheKit.getCacheConfig(cacheName)
-        val strategy = kvConfig?.strategy ?: kvConfig?.strategyDictCode
-            ?: hashConfig?.strategy ?: hashConfig?.strategyDictCode
-        if (CacheStrategy.SINGLE_LOCAL.name == strategy) {
+        val resolvedStrategy = KeyValueCacheKit.getCacheConfig(cacheName)?.resolvedStrategy
+            ?: HashCacheKit.getCacheConfig(cacheName)?.resolvedStrategy
+        if (resolvedStrategy == CacheStrategy.SINGLE_LOCAL) {
             doClear(messageBody)
         }
     }

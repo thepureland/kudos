@@ -135,25 +135,37 @@ object TenantCacheTool {
     }
 
     /**
-     * 清空缓存通知发送消息通知
+     * 清空**当前租户**在指定缓存下的所有 key（通过 `{tenantId}::*` 模式清除）。
+     *
+     * 旧实现直接调 [KeyValueCacheKit.clear]，会清掉所有租户的数据——名字带 "Tenant" 但语义反而是
+     * 跨租户的全清，是真实事故源。当前方法收敛到只清当前租户；要做真正的全租户清除，请显式调
+     * [clearAllTenants]。
      *
      * @param cacheName 缓存名称
-     * @author K
-     * @since 1.0.0
      */
     fun clear(cacheName: String) {
-        KeyValueCacheKit.clear(cacheName)
+        if (!isCacheActive(cacheName)) return
+        KeyValueCacheKit.evictByPattern(cacheName, getTenantKey("*"))
     }
 
     /**
-     * 清空缓存
+     * 清空**当前租户**在指定缓存下的所有 key（不发通知）。语义与 [clear] 一致，仅"是否广播"维度不同。
      *
      * @param cacheName 缓存名称
-     * @author K
-     * @since 1.0.0
      */
     fun doClear(cacheName: String) {
-        KeyValueCacheKit.doClear(cacheName)
+        if (!isCacheActive(cacheName)) return
+        KeyValueCacheKit.evictByPattern(cacheName, getTenantKey("*"))
+    }
+
+    /**
+     * 清除该缓存下**所有租户**的全部数据。明确语义、避免 [clear] 被误用为全清。
+     * 仅当业务确实需要跨租户清空（如缓存结构升级、配置回滚等）时使用。
+     *
+     * @param cacheName 缓存名称
+     */
+    fun clearAllTenants(cacheName: String) {
+        KeyValueCacheKit.clear(cacheName)
     }
 
     /**

@@ -110,5 +110,25 @@ internal class LocalRemoteCacheTest {
         assertTrue(KeyValueCacheKit.existsKey(CACHE_NAME, keyRemoteOnly))
     }
 
+    /**
+     * 验证缓存的 null 值（防穿透标记）能在本地命中，不会被误判为 miss 再回源远端。
+     * 做法：往本地塞 null、往远端塞另一个值；mixCache.get 应返回本地的 null（包装器存在但值为 null）。
+     */
+    @Test
+    fun testCachedNullHitsLocal() {
+        val key = "cached_null_key"
+        val realName = versionConfig.getFinalCacheName(CACHE_NAME)
+        val localCache = localCacheManager.getCache(realName)!!
+        val remoteCache = remoteCacheManager.getCache(realName)!!
+
+        localCache.put(key, null)
+        remoteCache.put(key, "should_not_be_returned")
+
+        val mixCache = mixCacheManager.getCache(CACHE_NAME)!!
+        val wrapper = mixCache.get(key)
+        assertTrue(wrapper != null, "本地缓存了 null，wrapper 不应为 null（命中）")
+        assertTrue(wrapper.get() == null, "本地缓存的 null 应原样返回，不应被远端值覆盖")
+    }
+
 }
 

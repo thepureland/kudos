@@ -7,9 +7,27 @@ import io.kudos.base.logger.LogFactory
 
 
 /**
- * 缓存配置默认提供者：约定从cache-config.yml文件配置
+ * 缓存配置默认提供者：从 `kudos.cache.items` 这种字符串列表配置（item 形如 `name=xxx&strategy=REMOTE&...`）解析为 [CacheConfig]。
+ *
+ * 关键点：
+ * - 配置在 init 阶段一次性解析，运行期不变 → 所有查询都基于初始化后构建的扁平 map，O(1) 命中。
+ * - 旧实现把 cacheConfigs 放在 companion object 里（多实例会共享状态，跨测试上下文会"配置累积"），现在改成实例字段。
+ * - 旧实现的 [getCacheConfig] 和 [getAllCacheConfigs] 每次都重建扁平 map（O(策略数 × 缓存项数)），
+ *   而 Kit 在热路径上反复调它们；现在改成构建一次后只读，避免重复聚合开销。
  */
 class DefaultCacheConfigProvider(itemsProperties: CacheItemsProperties) : ICacheConfigProvider {
+
+    /** 按策略分组的配置（结构与旧实现一致，仅作为构造期数据组织）。 */
+    private val cacheConfigsByStrategy: MutableMap<String, MutableMap<String, CacheConfig>> = HashMap()
+
+    /** 扁平化的全量配置 cacheName -> config，初始化后冻结。 */
+    private val flatConfigs: Map<String, CacheConfig>
+
+    /** 按策略预切的不可变视图，避免每次查询再过滤。 */
+    private val localConfigs: Map<String, CacheConfig>
+    private val remoteConfigs: Map<String, CacheConfig>
+    private val localRemoteConfigs: Map<String, CacheConfig>
+    private val hashConfigs: Map<String, CacheConfig>
 
     init {
         val cacheItems = itemsProperties.cacheItems
@@ -17,6 +35,16 @@ class DefaultCacheConfigProvider(itemsProperties: CacheItemsProperties) : ICache
         if (cacheItems.isNotEmpty()) {
             initCacheConfig(cacheItems)
         }
+
+        flatConfigs = buildMap {
+            for ((_, byName) in cacheConfigsByStrategy) {
+                for ((name, cfg) in byName) put(name, cfg)
+            }
+        }
+        localConfigs = (cacheConfigsByStrategy[CacheStrategy.SINGLE_LOCAL.name] ?: emptyMap()).toMap()
+        remoteConfigs = (cacheConfigsByStrategy[CacheStrategy.REMOTE.name] ?: emptyMap()).toMap()
+        localRemoteConfigs = (cacheConfigsByStrategy[CacheStrategy.LOCAL_REMOTE.name] ?: emptyMap()).toMap()
+        hashConfigs = flatConfigs.filterValues { it.hash }
     }
 
     /**
@@ -28,10 +56,11 @@ class DefaultCacheConfigProvider(itemsProperties: CacheItemsProperties) : ICache
         for (cacheItemStr in cacheItems) {
             if (cacheItemStr.isNotBlank()) {
                 val cacheConfig = cacheItemToConfig(cacheItemStr)
-                if (!cacheConfigs.containsKey(cacheConfig.strategy)) {
-                    cacheConfigs[cacheConfig.strategy!!] = HashMap()
-                }
-                cacheConfigs[cacheConfig.strategy]!![cacheConfig.name!!] = cacheConfig
+                val strategy = cacheConfig.strategy
+                    ?: error("cache item 缺少 strategy: $cacheItemStr")
+                val name = cacheConfig.name
+                    ?: error("cache item 缺少 name: $cacheItemStr")
+                cacheConfigsByStrategy.getOrPut(strategy) { HashMap() }[name] = cacheConfig
             }
         }
     }
@@ -48,42 +77,19 @@ class DefaultCacheConfigProvider(itemsProperties: CacheItemsProperties) : ICache
         return config
     }
 
-    override fun getCacheConfig(name: String): CacheConfig? {
-        return getAllCacheConfigs().get(name)
-    }
+    override fun getCacheConfig(name: String): CacheConfig? = flatConfigs[name]
 
-    override fun getAllCacheConfigs(): Map<String, CacheConfig> {
-        val result = mutableMapOf<String, CacheConfig>()
-        for (entry in cacheConfigs.entries) {
-            for (entry1 in entry.value.entries) {
-                result[entry1.key] = entry1.value
-            }
-        }
-        return result
-    }
+    override fun getAllCacheConfigs(): Map<String, CacheConfig> = flatConfigs
 
-    override fun getLocalCacheConfigs(): Map<String, CacheConfig> {
-        return cacheConfigs[CacheStrategy.SINGLE_LOCAL.name] ?: emptyMap()
-    }
+    override fun getLocalCacheConfigs(): Map<String, CacheConfig> = localConfigs
 
-    override fun getRemoteCacheConfigs(): Map<String, CacheConfig> {
-       return cacheConfigs[CacheStrategy.REMOTE.name] ?: emptyMap()
-    }
+    override fun getRemoteCacheConfigs(): Map<String, CacheConfig> = remoteConfigs
 
-    override fun getLocalRemoteCacheConfigs(): Map<String, CacheConfig> {
-       return cacheConfigs[CacheStrategy.LOCAL_REMOTE.name] ?: emptyMap()
-    }
+    override fun getLocalRemoteCacheConfigs(): Map<String, CacheConfig> = localRemoteConfigs
 
-    override fun getHashCacheConfigs(): Map<String, CacheConfig> {
-        return getAllCacheConfigs().filter { (_, config) -> config.hash }
-    }
+    override fun getHashCacheConfigs(): Map<String, CacheConfig> = hashConfigs
 
     companion object {
         private val log = LogFactory.getLog(this::class)
-
-        /**
-         * Map<Strategy></Strategy>, Map<CacheName></CacheName>, CacheConfig>>
-         */
-        private val cacheConfigs: MutableMap<String, MutableMap<String, CacheConfig>> = HashMap()
     }
 }

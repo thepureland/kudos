@@ -8,6 +8,7 @@ import io.kudos.context.kit.SpringKit
 import org.springframework.beans.factory.NoSuchBeanDefinitionException
 import java.io.Serial
 import java.io.Serializable
+import java.util.UUID
 
 /**
  * 缓存操作值对象
@@ -52,6 +53,21 @@ class CacheOperatorVo(
 ) : Serializable {
 
     /**
+     * 消息唯一 id，用于跨节点日志追踪与（必要时）去重。
+     * 默认在对象构造时生成；旧节点反序列化时为 null（Java 序列化对新增字段的兼容行为），消费端需对 null 做兼容判断。
+     */
+    var messageId: String? = UUID.randomUUID().toString()
+
+    /**
+     * 发送节点 id；在 [doNotify] 中填充。便于消费端识别 loopback / 排查跨节点问题。
+     * 当前实现不基于 nodeId 做 loopback 过滤（SINGLE_LOCAL 流程依赖回环来清理 sender 的本地缓存），仅作日志维度。
+     */
+    var nodeId: String? = null
+
+    /** 发送时间戳（毫秒）。便于消费端在日志里排查"消息延迟到达"或乱序问题。 */
+    var timestamp: Long = System.currentTimeMillis()
+
+    /**
      * 发送缓存操作通知
      * 
      * 通过通知机制发送缓存操作消息，实现分布式缓存的同步失效和清除。
@@ -81,6 +97,10 @@ class CacheOperatorVo(
      * - 需要确保NotifyTool Bean存在，否则会降级为本地清理
      */
     fun doNotify() {
+        // 在发送时点把节点 id 填进消息，便于消费端排查；找不到 cacheNodeId bean 时降级为 null，不影响主流程。
+        if (nodeId == null) {
+            nodeId = runCatching { SpringKit.getBeanOrNull("cacheNodeId") as? String }.getOrNull()
+        }
         val messageVo: NotifyMessageVo<*> = NotifyMessageVo<CacheOperatorVo>(CacheNotifyListener.CACHE_OPERATOR, this)
         var notify = false
         try {

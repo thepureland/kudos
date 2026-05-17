@@ -258,18 +258,24 @@ class MixCacheManager : AbstractCacheManager() {
      * @param key
      */
     fun clearLocal(cacheName: String, key: Any?) {
-        // 调用方可能传逻辑名（如 test），也可能传已带版本前缀的名（如 MixCache.getName() / 分布式消息里的名）
-        val cache = getCache(cacheName) ?: super.getCache(cacheName) ?: return
+        // 调用方可能传逻辑名（如 test），也可能传已带版本前缀的名（如 MixCache.getName() / 分布式消息里的名）。
+        // 旧实现一次 `getCache` 自动加前缀，一次 `super.getCache` 不加，最后 `evictByPattern(cacheName,...)` 又用
+        // 没规范化的 cacheName。三处对前缀的处理不一致，导致：逻辑名入参时 evictByPattern 会查不到 Caffeine 内
+        // 按前缀注册的 cache，模式清除变成 no-op。这里统一一次规范化，下游全部用 realName。
+        val realName = requireVersionConfig().run {
+            getFinalCacheName(getRealCacheName(cacheName))
+        }
+        val cache = super.getCache(realName) ?: return
         val mixCache = cache as MixCache
         if (key is String
             && key.endsWith("*")
             && hasLocalCacheManager()
         ) {
-            (localCacheManager as IKeyValueCacheManager<*>).evictByPattern(cacheName, key)
+            (localCacheManager as IKeyValueCacheManager<*>).evictByPattern(realName, key)
         } else {
             mixCache.clearLocal(key)
         }
-        log.debug("清除本地缓存：{0}::{1}", cacheName, Objects.toString(key, ""))
+        log.debug("清除本地缓存：{0}::{1}", realName, Objects.toString(key, ""))
     }
 
     /**

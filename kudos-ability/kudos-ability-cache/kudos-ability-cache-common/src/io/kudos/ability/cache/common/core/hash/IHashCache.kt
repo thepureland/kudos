@@ -60,6 +60,22 @@ interface IHashCache {
         sortableProperties: Set<String> = emptySet()
     )
 
+    /**
+     * 批量按 id 删除。默认实现为循环 [deleteById]；
+     * 混合实现（MixHashCache）会覆盖此方法以合并为一条 Pub/Sub 通知，避免 N+1 风暴。
+     * 底层存储实现（Caffeine / Redis）保留默认循环实现即可，它们不负责广播。
+     * [filterableProperties]/[sortableProperties] 同 [deleteById]。
+     */
+    fun <PK, E : IIdEntity<PK>> deleteByIds(
+        cacheName: String,
+        ids: Collection<PK>,
+        entityClass: KClass<E>,
+        filterableProperties: Set<String> = emptySet(),
+        sortableProperties: Set<String> = emptySet()
+    ) {
+        ids.forEach { deleteById(cacheName, it, entityClass, filterableProperties, sortableProperties) }
+    }
+
     fun <E : IIdEntity<*>> findByIds(
         cacheName: String,
         ids: Collection<*>,
