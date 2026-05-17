@@ -93,11 +93,10 @@ open class SysTenantService(
     override fun insert(any: Any): String {
         val id = super.insert(any)
         completeCrudInsert(log, "新增id为${id}的租户。") {
+            // insertTenantSystemsOnCreate 经 sysTenantSystemService.batchInsert 创建关系；
+            // SysTenantSystemHashCache 由其按需 lazy load 触发回填，无需此处主动 sync。
             insertTenantSystemsOnCreate(any, id)
-            // TenantByIdCache 通过 @TransactionalEventListener 订阅；sys_tenant_system 缓存仍由
-            // 现有重载方法负责（待后续遗留拆分到独立 SysTenantSystemService 的 PoC）。
             eventPublisher.publishEvent(SysTenantInserted(id = id))
-            sysTenantSystemHashCache.syncOnInsert(any, id)
         }
         return id
     }
@@ -195,8 +194,9 @@ open class SysTenantService(
     }
 
     private fun deleteTenantSystems(tenantId: String) {
+        // sysTenantSystemService.deleteByTenantId 已发布 SysTenantSystemTenantsChanged，
+        // 由 SysTenantSystemHashCache.on(...) 订阅完成失效。
         sysTenantSystemService.deleteByTenantId(tenantId)
-        sysTenantSystemHashCache.syncOnDelete(tenantId)
     }
 
     private fun insertTenantSystemsOnCreate(any: Any, tenantId: String) {

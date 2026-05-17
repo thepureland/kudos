@@ -116,10 +116,6 @@ open class UserAccountService(
         if (success) {
             log.debug("更新id为${id}的用户的启用状态为${active}。")
             eventPublisher.publishEvent(UserAccountUpdated(id = id))
-//            val existingUser = dao.get(id)
-//            if (existingUser != null) {
-//                userIdByTenantIdAndUsernameCache.syncOnUpdateActive(id, active)
-//            }
         } else {
             log.error("更新id为${id}的用户的启用状态为${active}失败！")
         }

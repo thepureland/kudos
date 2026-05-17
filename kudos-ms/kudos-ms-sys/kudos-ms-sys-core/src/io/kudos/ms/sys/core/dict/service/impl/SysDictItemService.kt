@@ -228,7 +228,7 @@ open class SysDictItemService(
             successMessage = "移动字典项${id}到父节点${newParentId}，排序号${newOrderNum}。",
             failureMessage = "移动字典项${id}失败！",
         ) {
-            sysDictItemHashCache.syncOnUpdate(id)
+            eventPublisher.publishEvent(SysDictItemUpdated(id = id))
         }
     }
 
