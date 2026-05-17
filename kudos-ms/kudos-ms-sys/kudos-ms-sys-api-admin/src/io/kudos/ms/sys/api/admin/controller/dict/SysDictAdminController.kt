@@ -23,9 +23,6 @@ import org.springframework.web.bind.annotation.*
 class SysDictAdminController :
     BaseCrudController<String, ISysDictService, SysDictQuery, SysDictRow, SysDictDetail, SysDictEdit, ISysDictFormCreate, ISysDictFormUpdate>() {
 
-
-
-
     /**
      * 返回指定id的字典
      *

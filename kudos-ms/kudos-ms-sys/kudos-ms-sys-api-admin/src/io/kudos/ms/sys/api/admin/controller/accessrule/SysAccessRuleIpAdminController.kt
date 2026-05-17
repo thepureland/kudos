@@ -70,7 +70,7 @@ class SysAccessRuleIpAdminController :
      * @return 命中则返回一行；不存在则 `null`
      */
     @GetMapping("/getAccessRuleWithIp")
-    fun getAccessRuleWithIp(id: String): VSysAccessRuleWithIpRow? =
+    fun getAccessRuleWithIp(@RequestParam id: String): VSysAccessRuleWithIpRow? =
         vSysAccessRuleIpService.get(id, VSysAccessRuleWithIpRow::class)
 
     /**
@@ -108,11 +108,7 @@ class SysAccessRuleIpAdminController :
     fun searchBySystemCodeAndTenantId(
         @RequestParam systemCode: String,
         @RequestParam(required = false) tenantId: String?,
-    ): List<VSysAccessRuleWithIpRow> =
-        vSysAccessRuleIpService.searchBySystemCodeAndTenantId(
-            systemCode,
-            tenantId?.takeIf { it.isNotBlank() },
-        )
+    ): List<VSysAccessRuleWithIpRow> = vSysAccessRuleIpService.searchBySystemCodeAndTenantId(systemCode, tenantId)
 
     /**
      * 仅更新单条 IP 访问规则的启用状态（列表开关）。

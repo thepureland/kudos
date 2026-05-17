@@ -26,9 +26,10 @@ open class VSysAccessRuleIpService(
     override fun searchByParentId(parentId: String): List<VSysAccessRuleWithIpRow> =
         dao.searchByParentId(parentId)
 
-    /** 委托 [VSysAccessRuleWithIpDao.searchBySystemCodeAndTenantId]。 */
+    /** 委托 [VSysAccessRuleWithIpDao.searchBySystemCodeAndTenantId]；空串 tenantId 视同 null（平台级）。 */
     override fun searchBySystemCodeAndTenantId(
         systemCode: String,
         tenantId: String?,
-    ): List<VSysAccessRuleWithIpRow> = dao.searchBySystemCodeAndTenantId(systemCode, tenantId)
+    ): List<VSysAccessRuleWithIpRow> =
+        dao.searchBySystemCodeAndTenantId(systemCode, tenantId?.takeIf { it.isNotBlank() })
 }
