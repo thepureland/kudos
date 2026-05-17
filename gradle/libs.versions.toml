@@ -28,9 +28,6 @@ lingala-zip4j = "2.11.6"
 apache-xmlgraphics-batik = "1.19"
 github-classgraph = "4.8.184"
 
-# kudos-test
-testcontainers = "2.0.4"
-
 # kudos-tools
 freemarker = "2.3.34"
 javafx-plugin = "0.1.0"
@@ -99,9 +96,9 @@ spring-tx = { module = "org.springframework:spring-tx" }
 # kudos-test
 spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
 spring-boot-starter-webmvc-test = { module = "org.springframework.boot:spring-boot-starter-webmvc-test" }
-testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
-testcontainers-kafka = { module = "org.testcontainers:testcontainers-kafka", version.ref = "testcontainers" }
-testcontainers-junit-jupiter = { module = "org.testcontainers:testcontainers-junit-jupiter", version.ref = "testcontainers" }
+testcontainers = { module = "org.testcontainers:testcontainers" }
+testcontainers-kafka = { module = "org.testcontainers:testcontainers-kafka" }
+testcontainers-junit-jupiter = { module = "org.testcontainers:testcontainers-junit-jupiter" }
 
 # kudos-tools
 freemarker = { module = "org.freemarker:freemarker", version.ref = "freemarker" }
