@@ -134,14 +134,30 @@ open class UserOrgService(
         // 如果指定了parentId，只查询该父机构下的直接子机构；否则查询租户下全部启用机构
         val orgs = dao.searchActiveOrgsByTenantId(tenantId, parentId)
         
-        // 转换为树节点
-        val treeNodes = orgs.map { org ->
-            val cacheItem = userOrgHashCache.getOrgById(org.id) ?: return@map null
-            UserOrgTreeRow().apply {
-                BeanKit.copyProperties(cacheItem, this)
-                this.children = mutableListOf()
-            }
-        }.filterNotNull()
+        // 转换为树节点（UserOrgTreeRow 为不可变 data class，全部 val，用构造器传值；BeanKit.copyProperties 走 setter
+        // 在此处不可用，会留下空 row）
+        val treeNodes = orgs.mapNotNull { org ->
+            val cacheItem = userOrgHashCache.getOrgById(org.id) ?: return@mapNotNull null
+            UserOrgTreeRow(
+                id = cacheItem.id,
+                name = cacheItem.name,
+                shortName = cacheItem.shortName,
+                tenantId = cacheItem.tenantId,
+                parentId = cacheItem.parentId,
+                orgTypeDictCode = cacheItem.orgTypeDictCode,
+                sortNum = cacheItem.sortNum,
+                remark = cacheItem.remark,
+                active = cacheItem.active,
+                builtIn = cacheItem.builtIn,
+                createUserId = cacheItem.createUserId,
+                createUserName = cacheItem.createUserName,
+                createTime = cacheItem.createTime,
+                updateUserId = cacheItem.updateUserId,
+                updateUserName = cacheItem.updateUserName,
+                updateTime = cacheItem.updateTime,
+                children = mutableListOf(),
+            )
+        }
         
         // 如果指定了parentId，直接返回子机构列表（不构建树）
         if (parentId != null) {
