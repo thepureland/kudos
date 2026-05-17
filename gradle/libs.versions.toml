@@ -27,8 +27,6 @@ apache-commons-net = "3.12.0"
 hibernate-validator = "9.1.0.Final"
 jakarta-el-api = "6.0.1"
 glassfish-expressly = "6.0.0"
-slf4j = "2.0.17"
-logback = "1.5.32"
 sourceforge-jxl = "2.6.12"
 jakarta-xml-bind = "4.0.5"
 glassfish-jaxb-runtime = "4.0.7"
@@ -61,7 +59,6 @@ minio = "9.0.0"
 controlsfx = "11.2.3"
 commons-fileupload = "1.6.0"
 servlet-api = "6.1.0"
-lettuce = "7.4.0.RELEASE"
 
 
 [libraries]
@@ -89,9 +86,9 @@ hibernate-validator = { module = "org.hibernate.validator:hibernate-validator", 
 ktor-serialization-json = { module = "io.ktor:ktor-serialization-kotlinx-json-jvm", version.ref = "ktor" }
 jakarta-el-api = { module = "jakarta.el:jakarta.el-api", version.ref = "jakarta-el-api" }
 glassfish-jakarta-el = { module = "org.glassfish.expressly:expressly", version.ref = "glassfish-expressly" }
-jcl-over-slf4j = { module = "org.slf4j:jcl-over-slf4j", version.ref = "slf4j" }
-log4j-over-slf4j = { module = "org.slf4j:log4j-over-slf4j", version.ref = "slf4j" }
-logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+jcl-over-slf4j = { module = "org.slf4j:jcl-over-slf4j" }
+log4j-over-slf4j = { module = "org.slf4j:log4j-over-slf4j" }
+logback-classic = { module = "ch.qos.logback:logback-classic" }
 sourceforge-jxl = { module = "net.sourceforge.jexcelapi:jxl", version.ref = "sourceforge-jxl" }
 jakarta-xml-bind-api = { module = "jakarta.xml.bind:jakarta.xml.bind-api", version.ref = "jakarta-xml-bind" }
 glassfish-jaxb-runtime = { module = "org.glassfish.jaxb:jaxb-runtime", version.ref = "glassfish-jaxb-runtime" }
@@ -101,7 +98,6 @@ apache-xmlgraphics-batik-dom = { module = "org.apache.xmlgraphics:batik-dom", ve
 apache-xmlgraphics-batik-bridge = { module = "org.apache.xmlgraphics:batik-bridge", version.ref = "apache-xmlgraphics-batik" }
 github-classgraph = { module = "io.github.classgraph:classgraph", version.ref = "github-classgraph" }
 servlet-api = { module = "jakarta.servlet:jakarta.servlet-api", version.ref = "servlet-api" }
-lettuce-core = { module = "io.lettuce:lettuce-core", version.ref = "lettuce"}
 
 # kudos-context
 spring-boot-starter-aop = { module = "org.springframework.boot:spring-boot-starter-aspectj" }
