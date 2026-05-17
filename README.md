@@ -51,9 +51,9 @@
 
 ## 技术栈
 
-- **Kotlin** 2.x，target JVM 21
+- **Kotlin** 2.x，target JVM 25
 - **Gradle 9.x** + Version Catalog（`gradle/libs.versions.toml`）+ `buildSrc` 约定插件
-- 运行期依赖：Spring Boot 3.x（仅在 `kudos-context` 及以上）、kotlinx.serialization、Hibernate Validator 9.x、Apache Commons (BeanUtils/Codec/Lang3/Text/Net) 等
+- 运行期依赖：Spring Boot 4.x（仅在 `kudos-context` 及以上）、Jackson 3 (`tools.jackson`)、kotlinx.serialization、Hibernate Validator 9.x、Apache Commons (BeanUtils/Codec/Lang3/Text/Net) 等
 - 测试：JUnit 5、kotlin.test、TestContainers（Postgres 等）
 - 缓存配置、构建缓存：见 `gradle.properties`
 
