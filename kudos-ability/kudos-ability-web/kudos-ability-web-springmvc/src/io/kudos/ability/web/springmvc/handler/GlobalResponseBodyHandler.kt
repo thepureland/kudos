@@ -92,7 +92,7 @@ class GlobalResponseBodyHandler(
         }
         val placeholder = CommonErrorCodeEnum.SUCCESS.displayText
         if (response.message == placeholder) {
-            return response.copy(message = null)
+            return response.copy(message = "")
         }
         return response
     }
