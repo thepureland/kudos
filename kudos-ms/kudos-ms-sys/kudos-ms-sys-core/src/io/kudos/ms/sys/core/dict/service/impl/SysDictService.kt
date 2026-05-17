@@ -13,9 +13,14 @@ import io.kudos.ms.sys.common.dict.vo.response.SysDictRow
 import io.kudos.ms.sys.common.dict.vo.SysDictItemCacheEntry
 import io.kudos.ms.sys.core.dict.cache.SysDictHashCache
 import io.kudos.ms.sys.core.dict.dao.SysDictDao
+import io.kudos.ms.sys.core.dict.event.SysDictBatchDeleted
+import io.kudos.ms.sys.core.dict.event.SysDictDeleted
+import io.kudos.ms.sys.core.dict.event.SysDictInserted
+import io.kudos.ms.sys.core.dict.event.SysDictUpdated
 import io.kudos.ms.sys.core.dict.model.po.SysDict
 import io.kudos.ms.sys.core.dict.service.iservice.ISysDictItemService
 import io.kudos.ms.sys.core.dict.service.iservice.ISysDictService
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.LinkedHashMap
@@ -35,10 +40,12 @@ open class SysDictService(
     dao: SysDictDao,
     private val sysDictItemService: ISysDictItemService,
     private val sysDictHashCache: SysDictHashCache,
+    private val eventPublisher: ApplicationEventPublisher,
 ) : BaseCrudService<String, SysDict, SysDictDao>(dao), ISysDictService {
 
     private val log = LogFactory.getLog(this::class)
 
+    @Transactional(readOnly = true)
     override fun <R : Any> get(id: String, returnType: KClass<R>): R? {
         return if (returnType == SysDictCacheEntry::class) {
             @Suppress("UNCHECKED_CAST")
@@ -66,6 +73,13 @@ open class SysDictService(
         .let { dicts -> if (activeOnly) dicts.filter { it.active } else dicts }
 
     @Transactional(readOnly = true)
+    override fun getDictTypesByAtomicServiceCode(
+        atomicServiceCode: String,
+        activeOnly: Boolean
+    ): Map<String, String> =
+        getDictsFromCacheByAtomicServiceCode(atomicServiceCode, activeOnly).associate { it.id to it.dictType }
+
+    @Transactional(readOnly = true)
     override fun getDictByAtomicServiceAndType(atomicServiceCode: String, dictType: String): SysDictRow? =
         dao.search(
             Criteria.and(
@@ -86,7 +100,7 @@ open class SysDictService(
             successMessage = "更新id为${id}的字典的启用状态为${active}。",
             failureMessage = "更新id为${id}的字典的启用状态为${active}失败！",
         ) {
-            sysDictHashCache.syncOnUpdate(id)
+            eventPublisher.publishEvent(SysDictUpdated(id = id))
         }
     }
 
@@ -94,7 +108,7 @@ open class SysDictService(
     override fun insert(any: Any): String {
         val id = super.insert(any)
         completeCrudInsert(log, "新增id为${id}的字典。") {
-            sysDictHashCache.syncOnInsert(any, id)
+            eventPublisher.publishEvent(SysDictInserted(id = id))
         }
         return id
     }
@@ -108,7 +122,7 @@ open class SysDictService(
             successMessage = "更新id为${id}的字典。",
             failureMessage = "更新id为${id}的字典失败！",
         ) {
-            sysDictHashCache.syncOnUpdate(id)
+            eventPublisher.publishEvent(SysDictUpdated(id = id))
         }
     }
 
@@ -124,7 +138,7 @@ open class SysDictService(
             successMessage = "删除id为${id}的字典。",
             failureMessage = "删除id为${id}的字典失败！",
         ) {
-            sysDictHashCache.syncOnDelete(id)
+            eventPublisher.publishEvent(SysDictDeleted(id = id))
         }
     }
 
@@ -132,7 +146,9 @@ open class SysDictService(
     override fun batchDelete(ids: Collection<String>): Int {
         val count = super.batchDelete(ids)
         log.debug("批量删除字典，期望删除${ids.size}条，实际删除${count}条。")
-        sysDictHashCache.syncOnBatchDelete(ids)
+        if (count > 0) {
+            eventPublisher.publishEvent(SysDictBatchDeleted(ids = ids))
+        }
         return count
     }
 
@@ -172,7 +188,7 @@ open class SysDictService(
     private fun deleteDict(id: String): Boolean {
         val success = dao.deleteById(id)
         if (success) {
-            sysDictHashCache.syncOnDelete(id)
+            eventPublisher.publishEvent(SysDictDeleted(id = id))
         } else {
             log.error("删除id为${id}的字典失败！")
         }

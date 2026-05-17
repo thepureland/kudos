@@ -3,12 +3,12 @@ package io.kudos.ms.auth.core.role.service.impl
 import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.auth.core.platform.cache.ResourceIdsByRoleIdCache
-import io.kudos.ms.auth.core.platform.cache.ResourceIdsByUserIdCache
 import io.kudos.ms.auth.core.role.dao.AuthRoleResourceDao
-import io.kudos.ms.auth.core.role.dao.AuthRoleUserDao
+import io.kudos.ms.auth.core.role.event.AuthRoleResourceRelationsChanged
 import io.kudos.ms.auth.core.role.model.po.AuthRoleResource
 import io.kudos.ms.auth.core.role.service.iservice.IAuthRoleResourceService
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -32,17 +32,16 @@ open class AuthRoleResourceService(
     private lateinit var resourceIdsByRoleIdCache: ResourceIdsByRoleIdCache
 
     @Autowired
-    private lateinit var resourceIdsByUserIdCache: ResourceIdsByUserIdCache
-
-    @Autowired
-    private lateinit var authRoleUserDao: AuthRoleUserDao
+    private lateinit var eventPublisher: ApplicationEventPublisher
 
     private val log = LogFactory.getLog(this::class)
 
+    @Transactional(readOnly = true)
     override fun getResourceIdsByRoleId(roleId: String): Set<String> {
         return resourceIdsByRoleIdCache.getResourceIds(roleId).toSet()
     }
 
+    @Transactional(readOnly = true)
     override fun getRoleIdsByResourceId(resourceId: String): Set<String> {
         return dao.searchRoleIdsByResourceId(resourceId)
     }
@@ -52,45 +51,40 @@ open class AuthRoleResourceService(
         if (resourceIds.isEmpty()) {
             return 0
         }
-        var count = 0
-        resourceIds.forEach { resourceId ->
-            if (!exists(roleId, resourceId)) {
-                val relation = AuthRoleResource.Companion {
-                    this.roleId = roleId
-                    this.resourceId = resourceId.trim()
-                }
-                dao.insert(relation)
-                count++
+        // 一次 SELECT 已存在的关系（resource_id 为 character(N)，DB 返回的字符串可能带 padding，统一 trim）。
+        val existing = dao.searchResourceIdsByRoleIds(listOf(roleId)).map { it.trim() }.toSet()
+        val boundResourceIds = resourceIds.map { it.trim() }.toSet() - existing
+        if (boundResourceIds.isEmpty()) {
+            log.debug("批量绑定角色${roleId}与${resourceIds.size}个资源的关系，全部已存在，无新增。")
+            return 0
+        }
+        val relations = boundResourceIds.map { trimmed ->
+            AuthRoleResource.Companion {
+                this.roleId = roleId
+                this.resourceId = trimmed
             }
         }
-        log.debug("批量绑定角色${roleId}与${resourceIds.size}个资源的关系，成功绑定${count}条。")
-        // 同步缓存
-        resourceIdsByRoleIdCache.syncOnRoleResourceChange(roleId)
-        // 同步该角色下所有用户的资源缓存
-        authRoleUserDao.searchUserIdsByRoleId(roleId).distinct().forEach { _ ->
-            resourceIdsByUserIdCache.syncOnRoleResourceChange(roleId)
-        }
-        return count
+        dao.batchInsert(relations)
+        log.debug("批量绑定角色${roleId}与${resourceIds.size}个资源的关系，成功绑定${boundResourceIds.size}条。")
+        eventPublisher.publishEvent(AuthRoleResourceRelationsChanged(roleId, boundResourceIds.toList()))
+        return boundResourceIds.size
     }
 
     @Transactional
     override fun unbind(roleId: String, resourceId: String): Boolean {
-        val count = dao.deleteByRoleIdAndResourceId(roleId, resourceId.trim())
+        val trimmed = resourceId.trim()
+        val count = dao.deleteByRoleIdAndResourceId(roleId, trimmed)
         val success = count > 0
         if (success) {
             log.debug("解绑角色${roleId}与资源${resourceId}的关系。")
-            // 同步缓存
-            resourceIdsByRoleIdCache.syncOnRoleResourceChange(roleId)
-            // 同步该角色下所有用户的资源缓存
-            authRoleUserDao.searchUserIdsByRoleId(roleId).distinct().forEach { _ ->
-                resourceIdsByUserIdCache.syncOnRoleResourceChange(roleId)
-            }
+            eventPublisher.publishEvent(AuthRoleResourceRelationsChanged(roleId, listOf(trimmed)))
         } else {
             log.warn("解绑角色${roleId}与资源${resourceId}的关系失败，关系不存在。")
         }
         return success
     }
 
+    @Transactional(readOnly = true)
     override fun exists(roleId: String, resourceId: String): Boolean {
         return dao.exists(roleId, resourceId.trim())
     }

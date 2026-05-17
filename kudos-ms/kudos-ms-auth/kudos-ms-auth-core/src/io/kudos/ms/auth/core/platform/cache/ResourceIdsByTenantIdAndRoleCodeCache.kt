@@ -9,11 +9,15 @@ import io.kudos.context.support.Consts
 import io.kudos.ms.auth.core.role.cache.AuthRoleHashCache
 import io.kudos.ms.auth.core.role.dao.AuthRoleDao
 import io.kudos.ms.auth.core.role.dao.AuthRoleResourceDao
+import io.kudos.ms.auth.core.role.event.AuthRoleBatchDeleted
+import io.kudos.ms.auth.core.role.event.AuthRoleDeleted
 import io.kudos.ms.auth.core.role.model.po.AuthRole
 import io.kudos.ms.auth.core.role.model.po.AuthRoleResource
 import jakarta.annotation.Resource
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
+import org.springframework.transaction.event.TransactionPhase
+import org.springframework.transaction.event.TransactionalEventListener
 
 /**
  * 资源ID列表（by tenant & role code）缓存处理器
@@ -180,22 +184,6 @@ open class ResourceIdsByTenantIdAndRoleCodeCache : AbstractKeyValueCacheHandler<
         }
     }
 
-    /**
-     * 角色删除后同步缓存
-     *
-     * @param tenantId 租户ID
-     * @param roleCode 角色编码
-     */
-    open fun syncOnRoleDelete(tenantId: String, roleCode: String) {
-        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("删除租户${tenantId}角色${roleCode}后，同步从${CACHE_NAME}缓存中踢除...")
-            KeyValueCacheKit.evict(CACHE_NAME, getKey(tenantId, roleCode))
-            log.debug("${CACHE_NAME}缓存同步完成。")
-        }
-        // 同时清除角色ID缓存，确保后续查询时不会从缓存中获取到已删除的角色ID
-        val roleId = authRoleHashCache.getRoleByTenantIdAndRoleCode(tenantId, roleCode)?.id
-        roleId?.let { authRoleHashCache.syncOnDelete(it) }
-    }
 
     /**
      * 返回参数拼接后的key
@@ -206,6 +194,20 @@ open class ResourceIdsByTenantIdAndRoleCodeCache : AbstractKeyValueCacheHandler<
      */
     fun getKey(tenantId: String, roleCode: String): String {
         return "${tenantId}${Consts.CACHE_KEY_DEFAULT_DELIMITER}${roleCode}"
+    }
+
+    /** 仅做本地 (tenantId, roleCode) 失效；AuthRoleHashCache 已独立订阅 AuthRoleDeleted。 */
+    private fun evictBy(tenantId: String, roleCode: String) {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
+        KeyValueCacheKit.evict(CACHE_NAME, getKey(tenantId, roleCode))
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: AuthRoleDeleted): Unit = evictBy(event.tenantId, event.code)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: AuthRoleBatchDeleted) {
+        event.items.forEach { evictBy(it.tenantId, it.code) }
     }
 
     private val log = LogFactory.getLog(this::class)

@@ -4,7 +4,9 @@ import io.kudos.ms.auth.core.role.dao.AuthRoleResourceDao
 import io.kudos.ms.auth.core.role.dao.AuthRoleUserDao
 import io.kudos.ms.auth.core.role.model.po.AuthRoleResource
 import io.kudos.ms.auth.core.role.model.po.AuthRoleUser
+import io.kudos.ms.user.core.account.cache.UserAccountHashCache
 import io.kudos.ms.user.core.account.dao.UserAccountDao
+import io.kudos.ms.user.core.account.event.UserAccountDeleted
 import io.kudos.ms.user.core.account.model.po.UserAccount
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbAndRedisCacheTestBase
@@ -28,6 +30,9 @@ class ResourceIdsByTenantIdAndUsernameCacheTest : RdbAndRedisCacheTestBase() {
 
     @Resource
     private lateinit var cacheHandler: ResourceIdsByTenantIdAndUsernameCache
+
+    @Resource
+    private lateinit var userAccountHashCache: UserAccountHashCache
 
     @Resource
     private lateinit var userAccountDao: UserAccountDao
@@ -173,8 +178,11 @@ class ResourceIdsByTenantIdAndUsernameCacheTest : RdbAndRedisCacheTestBase() {
         val userId = "8e232124-2222-2222-2222-222222222222" // zhangsan 的 ID
         userAccountDao.deleteById(userId)
         
-        // 同步缓存（模拟用户删除）
-        cacheHandler.syncOnUserDelete(tenantId, username)
+        // 直接驱动两个 listener（AFTER_COMMIT 在 @Transactional 测试中不会触发）：
+        // 生产中 UserAccountDeleted 事件会同时触发本缓存 + UserAccountHashCache 的 on(...)。
+        val event = UserAccountDeleted(userId, tenantId, username)
+        cacheHandler.on(event)
+        userAccountHashCache.on(event)
         
         // 验证缓存已被清除，重新获取应该返回空列表（因为用户已不存在）
         val resourceIdsAfter = cacheHandler.getResourceIds(tenantId, username)

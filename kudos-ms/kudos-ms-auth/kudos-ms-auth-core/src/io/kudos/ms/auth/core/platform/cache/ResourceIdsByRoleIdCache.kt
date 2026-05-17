@@ -5,9 +5,14 @@ import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.auth.core.role.dao.AuthRoleDao
 import io.kudos.ms.auth.core.role.dao.AuthRoleResourceDao
+import io.kudos.ms.auth.core.role.event.AuthRoleBatchDeleted
+import io.kudos.ms.auth.core.role.event.AuthRoleDeleted
+import io.kudos.ms.auth.core.role.event.AuthRoleResourceRelationsChanged
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
+import org.springframework.transaction.event.TransactionPhase
+import org.springframework.transaction.event.TransactionalEventListener
 
 
 /**
@@ -16,14 +21,14 @@ import org.springframework.stereotype.Component
  * 1.数据来源表：auth_role_resource
  * 2.缓存各角色拥有的所有资源ID集合
  * 3.缓存的key为：roleId
- * 4.缓存的value为：资源ID集合（Set<String>）
+ * 4.缓存的value为：资源ID集合（List<String>）
  *
  * @author K
  * @author AI: Cursor
  * @since 1.0.0
  */
 @Component
-open class ResourceIdsByRoleIdCache : AbstractKeyValueCacheHandler<Set<String>>() {
+open class ResourceIdsByRoleIdCache : AbstractKeyValueCacheHandler<List<String>>() {
 
     @Autowired
     private lateinit var authRoleResourceDao: AuthRoleResourceDao
@@ -37,7 +42,7 @@ open class ResourceIdsByRoleIdCache : AbstractKeyValueCacheHandler<Set<String>>(
 
     override fun cacheName(): String = CACHE_NAME
 
-    override fun doReload(key: String): Set<String> = getSelf<ResourceIdsByRoleIdCache>().getResourceIds(key)
+    override fun doReload(key: String): List<String> = getSelf<ResourceIdsByRoleIdCache>().getResourceIds(key)
 
     override fun reloadAll(clear: Boolean) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
@@ -78,12 +83,12 @@ open class ResourceIdsByRoleIdCache : AbstractKeyValueCacheHandler<Set<String>>(
         key = "#roleId",
         unless = "#result == null || #result.isEmpty()"
     )
-    open fun getResourceIds(roleId: String): Set<String> {
+    open fun getResourceIds(roleId: String): List<String> {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("缓存中不存在角色${roleId}的资源ID，从数据库中加载...")
         }
 
-        val resourceIds = authRoleResourceDao.searchResourceIdsByRoleIds(setOf(roleId))
+        val resourceIds = authRoleResourceDao.searchResourceIdsByRoleIds(setOf(roleId)).toList()
         log.debug("从数据库加载了角色${roleId}的${resourceIds.size}条资源ID。")
         return resourceIds
     }
@@ -122,17 +127,21 @@ open class ResourceIdsByRoleIdCache : AbstractKeyValueCacheHandler<Set<String>>(
         }
     }
 
-    /**
-     * 角色删除后同步缓存
-     *
-     * @param roleId 角色ID
-     */
-    open fun syncOnRoleDelete(roleId: String) {
-        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("删除角色${roleId}后，同步从${CACHE_NAME}缓存中踢除...")
-            KeyValueCacheKit.evict(CACHE_NAME, roleId)
-            log.debug("${CACHE_NAME}缓存同步完成。")
-        }
+    /** 角色删除后清掉该 roleId 下的 resourceId 列表。 */
+    private fun evictByRoleId(roleId: String) {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
+        KeyValueCacheKit.evict(CACHE_NAME, roleId)
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: AuthRoleResourceRelationsChanged): Unit = syncOnRoleResourceChange(event.roleId)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: AuthRoleDeleted): Unit = evictByRoleId(event.id)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: AuthRoleBatchDeleted) {
+        event.ids.forEach(::evictByRoleId)
     }
 
     private val log = LogFactory.getLog(this::class)

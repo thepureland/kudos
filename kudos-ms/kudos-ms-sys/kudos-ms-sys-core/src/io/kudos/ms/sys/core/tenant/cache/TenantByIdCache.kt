@@ -4,8 +4,14 @@ import io.kudos.ability.cache.common.batch.keyvalue.BatchCacheable
 import io.kudos.ability.cache.common.core.keyvalue.AbstractByIdCacheHandler
 import io.kudos.ms.sys.common.tenant.vo.SysTenantCacheEntry
 import io.kudos.ms.sys.core.tenant.dao.SysTenantDao
+import io.kudos.ms.sys.core.tenant.event.SysTenantBatchDeleted
+import io.kudos.ms.sys.core.tenant.event.SysTenantDeleted
+import io.kudos.ms.sys.core.tenant.event.SysTenantInserted
+import io.kudos.ms.sys.core.tenant.event.SysTenantUpdated
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
+import org.springframework.transaction.event.TransactionPhase
+import org.springframework.transaction.event.TransactionalEventListener
 
 
 /**
@@ -77,6 +83,22 @@ open class TenantByIdCache : AbstractByIdCacheHandler<String, SysTenantCacheEntr
     open fun syncOnUpdate(any: Any, id: String) {
         syncOnUpdate(id)
     }
+
+    // region 事件订阅（由 SysTenantService 在事务提交后派发） ---------------------------------
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: SysTenantInserted): Unit = syncOnInsert(event.id)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: SysTenantUpdated): Unit = syncOnUpdate(event.id)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: SysTenantDeleted): Unit = syncOnDelete(event.id)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: SysTenantBatchDeleted): Unit = syncOnBatchDelete(event.ids)
+
+    // endregion
 
     override fun itemDesc() = "租户"
 

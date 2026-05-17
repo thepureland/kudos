@@ -25,34 +25,41 @@ open class UserLogLoginService(
 
     private val log = LogFactory.getLog(this::class)
 
+    @Transactional(readOnly = true)
     override fun getLoginsByUserId(userId: String, limit: Int): List<UserLogLogin> {
         val logins = dao.searchByUserId(userId)
         return logins.sortedByDescending { it.loginTime }.take(limit)
     }
 
+    @Transactional(readOnly = true)
     override fun getLoginsByTenantId(tenantId: String, limit: Int): List<UserLogLogin> {
         val logins = dao.searchByTenantId(tenantId)
         return logins.sortedByDescending { it.loginTime }.take(limit)
     }
 
+    @Transactional(readOnly = true)
     override fun getLoginsByTimeRange(tenantId: String?, userId: String?, startTime: LocalDateTime, endTime: LocalDateTime): List<UserLogLogin> {
         val logins = dao.searchByFilters(tenantId, userId, startTime, endTime)
         return logins.sortedByDescending { it.loginTime }
     }
 
+    @Transactional(readOnly = true)
     override fun getRecentLogins(tenantId: String?, userId: String?, limit: Int): List<UserLogLogin> {
         val logins = dao.searchByFilters(tenantId, userId, null, null)
         return logins.sortedByDescending { it.loginTime }.take(limit)
     }
 
+    @Transactional(readOnly = true)
     override fun countLogins(tenantId: String?, userId: String?, startTime: LocalDateTime?, endTime: LocalDateTime?): Long {
         return dao.countByFilters(tenantId, userId, startTime, endTime).toLong()
     }
 
+    @Transactional(readOnly = true)
     override fun countSuccessLogins(tenantId: String?, userId: String?, startTime: LocalDateTime?, endTime: LocalDateTime?): Long {
         return dao.countByLoginSuccess(true, tenantId, userId, startTime, endTime).toLong()
     }
 
+    @Transactional(readOnly = true)
     override fun countFailureLogins(tenantId: String?, userId: String?, startTime: LocalDateTime?, endTime: LocalDateTime?): Long {
         return dao.countByLoginSuccess(false, tenantId, userId, startTime, endTime).toLong()
     }

@@ -9,8 +9,14 @@ import io.kudos.base.logger.LogFactory
 import io.kudos.ms.sys.common.datasource.vo.SysDataSourceCacheEntry
 import io.kudos.ms.sys.core.datasource.cache.SysDataSourceHashCache.Companion.CACHE_NAME
 import io.kudos.ms.sys.core.datasource.dao.SysDataSourceDao
+import io.kudos.ms.sys.core.datasource.event.SysDataSourceBatchDeleted
+import io.kudos.ms.sys.core.datasource.event.SysDataSourceDeleted
+import io.kudos.ms.sys.core.datasource.event.SysDataSourceInserted
+import io.kudos.ms.sys.core.datasource.event.SysDataSourceUpdated
 import jakarta.annotation.Resource
 import org.springframework.stereotype.Component
+import org.springframework.transaction.event.TransactionPhase
+import org.springframework.transaction.event.TransactionalEventListener
 
 /**
  * 数据源统一 Hash 缓存处理器，整合按 id 与按「租户id+子系统编码+微服务编码」两类查询。
@@ -201,5 +207,17 @@ open class SysDataSourceHashCache : AbstractHashCacheHandler<SysDataSourceCacheE
         }
         log.debug("${cacheName()}缓存同步完成。")
     }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: SysDataSourceInserted): Unit = syncOnInsert(event, event.id)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: SysDataSourceUpdated): Unit = syncOnUpdate(event, event.id)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: SysDataSourceDeleted): Unit = syncOnDelete(event.id)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: SysDataSourceBatchDeleted): Unit = syncOnBatchDelete(event.ids)
 
 }

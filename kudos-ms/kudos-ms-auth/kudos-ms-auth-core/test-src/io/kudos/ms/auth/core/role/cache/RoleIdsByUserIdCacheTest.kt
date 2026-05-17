@@ -2,6 +2,7 @@ package io.kudos.ms.auth.core.role.cache
 
 import io.kudos.ms.auth.core.role.dao.AuthRoleUserDao
 import io.kudos.ms.auth.core.role.model.po.AuthRoleUser
+import io.kudos.ms.user.core.account.event.UserAccountDeleted
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
@@ -154,8 +155,8 @@ class RoleIdsByUserIdCacheTest : RdbAndRedisCacheTestBase() {
         val deleteSuccess = authRoleUserDao.deleteById(id)
         assertTrue(deleteSuccess, "删除应该成功")
         
-        // 同步缓存（模拟用户删除）
-        cacheHandler.syncOnUserDelete(userId)
+        // 直接驱动事件 listener（AFTER_COMMIT 在 @Transactional 测试中不会触发，故直接调用 on(...)）
+        cacheHandler.on(UserAccountDeleted(userId, tenantId = "tenant-x", username = "user-x"))
         
         // 验证缓存已被清除，重新获取应该不包含已删除的角色
         val roleIdsAfter = cacheHandler.getRoleIds(userId)

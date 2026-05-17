@@ -9,8 +9,14 @@ import io.kudos.base.logger.LogFactory
 import io.kudos.ms.user.common.account.vo.UserAccountCacheEntry
 import io.kudos.ms.user.core.account.cache.UserAccountHashCache.Companion.CACHE_NAME
 import io.kudos.ms.user.core.account.dao.UserAccountDao
+import io.kudos.ms.user.core.account.event.UserAccountBatchDeleted
+import io.kudos.ms.user.core.account.event.UserAccountDeleted
+import io.kudos.ms.user.core.account.event.UserAccountInserted
+import io.kudos.ms.user.core.account.event.UserAccountUpdated
 import jakarta.annotation.Resource
 import org.springframework.stereotype.Component
+import org.springframework.transaction.event.TransactionPhase
+import org.springframework.transaction.event.TransactionalEventListener
 
 /**
  * 用户 Hash 缓存处理器（整合原 UserByIdCache、UserIdByTenantIdAndUsernameCache 逻辑）
@@ -149,4 +155,16 @@ open class UserAccountHashCache : AbstractHashCacheHandler<UserAccountCacheEntry
         val cache = hashCache()
         ids.forEach { cache.deleteById(CACHE_NAME, it, UserAccountCacheEntry::class, FILTERABLE_PROPERTIES, emptySet()) }
     }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: UserAccountInserted): Unit = syncOnInsert(event.id)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: UserAccountUpdated): Unit = syncOnUpdate(event.id)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: UserAccountDeleted): Unit = syncOnDelete(event.id)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: UserAccountBatchDeleted): Unit = syncOnBatchDelete(event.ids)
 }

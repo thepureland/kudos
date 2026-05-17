@@ -64,5 +64,17 @@ interface IVSysDictItemService : IBaseReadOnlyService<String, VSysDictItem> {
      */
     fun searchByIds(ids: Set<String>): Map<String, SysDictItemCacheEntry>
 
+    /**
+     * 分页查询字典项；命中行中若 parentId 非空，在返回前回填其 parentCode。
+     *
+     * 把 controller 之前手工做的「查询 → 收集 parentId → 二次批量查 → 回填 parentCode」组装逻辑下沉到 service。
+     *
+     * @param payload 分页查询参数
+     * @return 命中的分页结果，每行的 `parentCode` 在父字典项存在时已被回填
+     */
+    fun pagingSearchWithParentCode(
+        payload: io.kudos.ms.sys.common.dict.vo.request.SysDictItemQuery
+    ): io.kudos.base.query.PagingSearchResult<io.kudos.ms.sys.common.dict.vo.response.SysDictItemRow>
+
 
 }

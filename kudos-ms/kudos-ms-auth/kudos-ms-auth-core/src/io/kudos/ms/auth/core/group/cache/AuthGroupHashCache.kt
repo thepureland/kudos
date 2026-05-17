@@ -9,8 +9,14 @@ import io.kudos.base.logger.LogFactory
 import io.kudos.ms.auth.common.group.vo.AuthGroupCacheEntry
 import io.kudos.ms.auth.core.group.cache.AuthGroupHashCache.Companion.CACHE_NAME
 import io.kudos.ms.auth.core.group.dao.AuthGroupDao
+import io.kudos.ms.auth.core.group.event.AuthGroupBatchDeleted
+import io.kudos.ms.auth.core.group.event.AuthGroupDeleted
+import io.kudos.ms.auth.core.group.event.AuthGroupInserted
+import io.kudos.ms.auth.core.group.event.AuthGroupUpdated
 import jakarta.annotation.Resource
 import org.springframework.stereotype.Component
+import org.springframework.transaction.event.TransactionPhase
+import org.springframework.transaction.event.TransactionalEventListener
 
 /**
  * 用户组 Hash 缓存处理器
@@ -149,4 +155,16 @@ open class AuthGroupHashCache : AbstractHashCacheHandler<AuthGroupCacheEntry>() 
         val cache = hashCache()
         ids.forEach { cache.deleteById(CACHE_NAME, it, AuthGroupCacheEntry::class, FILTERABLE_PROPERTIES, emptySet()) }
     }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: AuthGroupInserted): Unit = syncOnInsert(event.id)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: AuthGroupUpdated): Unit = syncOnUpdate(event.id)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: AuthGroupDeleted): Unit = syncOnDelete(event.id)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: AuthGroupBatchDeleted): Unit = syncOnBatchDelete(event.ids)
 }

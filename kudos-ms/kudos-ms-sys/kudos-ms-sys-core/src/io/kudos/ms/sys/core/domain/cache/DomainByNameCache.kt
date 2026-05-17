@@ -8,10 +8,16 @@ import io.kudos.base.query.Criteria
 import io.kudos.base.query.eq
 import io.kudos.ms.sys.common.domain.vo.SysDomainCacheEntry
 import io.kudos.ms.sys.core.domain.dao.SysDomainDao
+import io.kudos.ms.sys.core.domain.event.SysDomainBatchDeleted
+import io.kudos.ms.sys.core.domain.event.SysDomainDeleted
+import io.kudos.ms.sys.core.domain.event.SysDomainInserted
+import io.kudos.ms.sys.core.domain.event.SysDomainUpdated
 import io.kudos.ms.sys.core.domain.model.po.SysDomain
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
+import org.springframework.transaction.event.TransactionPhase
+import org.springframework.transaction.event.TransactionalEventListener
 
 
 /**
@@ -164,6 +170,25 @@ open class DomainByNameCache : AbstractKeyValueCacheHandler<SysDomainCacheEntry>
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
     }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: SysDomainInserted) {
+        // AFTER_COMMIT 后 DB 行已可见；通过 id 反查 domain name 用作 cache key
+        val domain = dao.get(event.id) ?: return
+        syncOnInsert(domain, event.id)
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: SysDomainUpdated): Unit = syncOnUpdate(null, event.id)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: SysDomainDeleted) {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
+        KeyValueCacheKit.evict(CACHE_NAME, event.domain)
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: SysDomainBatchDeleted): Unit = syncOnBatchDelete(event.ids, event.domains)
 
     private val log = LogFactory.getLog(this::class)
 

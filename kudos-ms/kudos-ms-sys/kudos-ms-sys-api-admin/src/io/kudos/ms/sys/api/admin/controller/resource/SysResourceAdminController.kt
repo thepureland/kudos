@@ -28,20 +28,15 @@ open class SysResourceAdminController :
     BaseCrudController<String, ISysResourceService, SysResourceQuery, SysResourceRow, SysResourceDetail, SysResourceEdit, SysResourceFormCreate, SysResourceFormUpdate>() {
 
     /**
-     * 根据id获取资源详情信息，可以指定是否要获取所有父结点的id
+     * 根据id获取资源详情；`fetchAllParentIds = true` 时由 service 一次性回填祖先 id 列表。
      *
      * @param id 主键
-     * @param fetchAllParentIds 是否要获取所有父结点的id
-     * @return SysResourceDetail
+     * @param fetchAllParentIds 是否要获取所有父结点的 id
+     * @return SysResourceDetail；当主键无对应记录时回退到 BaseCrudController.getDetail（保留旧行为）
      */
     @GetMapping("/getResourceDetail")
-    fun getResourceDetail(id: String, fetchAllParentIds: Boolean = false): SysResourceDetail {
-        val detail = super.getDetail(id)
-        if (fetchAllParentIds) {
-            detail.parentIds = service.fetchAllParentIds(id)
-        }
-        return detail
-    }
+    fun getResourceDetail(id: String, fetchAllParentIds: Boolean = false): SysResourceDetail =
+        service.getDetailWithOptionalParents(id, fetchAllParentIds) ?: super.getDetail(id)
 
     /**
      * 根据资源类型和子系统，返回对应的资源

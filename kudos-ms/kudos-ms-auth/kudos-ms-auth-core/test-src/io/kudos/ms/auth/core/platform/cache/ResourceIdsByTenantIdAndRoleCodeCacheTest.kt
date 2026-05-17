@@ -2,8 +2,10 @@ package io.kudos.ms.auth.core.platform.cache
 
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
+import io.kudos.ms.auth.core.role.cache.AuthRoleHashCache
 import io.kudos.ms.auth.core.role.dao.AuthRoleDao
 import io.kudos.ms.auth.core.role.dao.AuthRoleResourceDao
+import io.kudos.ms.auth.core.role.event.AuthRoleDeleted
 import io.kudos.ms.auth.core.role.model.po.AuthRole
 import io.kudos.ms.auth.core.role.model.po.AuthRoleResource
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
@@ -28,6 +30,9 @@ class ResourceIdsByTenantIdAndRoleCodeCacheTest : RdbAndRedisCacheTestBase() {
 
     @Resource
     private lateinit var cacheHandler: ResourceIdsByTenantIdAndRoleCodeCache
+
+    @Resource
+    private lateinit var authRoleHashCache: AuthRoleHashCache
 
     @Resource
     private lateinit var authRoleDao: AuthRoleDao
@@ -178,8 +183,11 @@ class ResourceIdsByTenantIdAndRoleCodeCacheTest : RdbAndRedisCacheTestBase() {
         val roleId = "174d0234-2222-2222-2222-222222222222" // ROLE_USER 的 ID
         authRoleDao.deleteById(roleId)
         
-        // 同步缓存（模拟角色删除）
-        cacheHandler.syncOnRoleDelete(tenantId, roleCode)
+        // 直接驱动两个 listener（AFTER_COMMIT 在 @Transactional 测试中不会触发）：
+        // 生产中 AuthRoleDeleted 事件会同时触发本缓存 + AuthRoleHashCache 的 on(...)。
+        val event = AuthRoleDeleted(roleId, tenantId, roleCode)
+        cacheHandler.on(event)
+        authRoleHashCache.on(event)
         
         // 验证缓存已被清除，重新获取应该返回空列表（因为角色已不存在）
         val resourceIdsAfter = cacheHandler.getResourceIds(tenantId, roleCode)

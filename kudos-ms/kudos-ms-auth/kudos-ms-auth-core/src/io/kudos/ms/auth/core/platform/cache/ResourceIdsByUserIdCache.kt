@@ -7,11 +7,17 @@ import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.ms.auth.core.role.dao.AuthRoleResourceDao
 import io.kudos.ms.auth.core.role.dao.AuthRoleUserDao
+import io.kudos.ms.auth.core.role.event.AuthRoleResourceRelationsChanged
+import io.kudos.ms.auth.core.role.event.AuthRoleUserRelationsChanged
 import io.kudos.ms.auth.core.role.model.po.AuthRoleUser
 import io.kudos.ms.user.core.account.dao.UserAccountDao
+import io.kudos.ms.user.core.account.event.UserAccountBatchDeleted
+import io.kudos.ms.user.core.account.event.UserAccountDeleted
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
+import org.springframework.transaction.event.TransactionPhase
+import org.springframework.transaction.event.TransactionalEventListener
 
 
 /**
@@ -28,7 +34,7 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-open class ResourceIdsByUserIdCache : AbstractKeyValueCacheHandler<Set<String>>() {
+open class ResourceIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() {
 
     @Autowired
     private lateinit var authRoleUserDao: AuthRoleUserDao
@@ -45,7 +51,7 @@ open class ResourceIdsByUserIdCache : AbstractKeyValueCacheHandler<Set<String>>(
 
     override fun cacheName(): String = CACHE_NAME
 
-    override fun doReload(key: String): Set<String> = getSelf<ResourceIdsByUserIdCache>().getResourceIds(key)
+    override fun doReload(key: String): List<String> = getSelf<ResourceIdsByUserIdCache>().getResourceIds(key)
 
     override fun reloadAll(clear: Boolean) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
@@ -92,7 +98,7 @@ open class ResourceIdsByUserIdCache : AbstractKeyValueCacheHandler<Set<String>>(
         key = "#userId",
         unless = "#result == null || #result.isEmpty()"
     )
-    open fun getResourceIds(userId: String): Set<String> {
+    open fun getResourceIds(userId: String): List<String> {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("缓存中不存在用户${userId}的资源ID，从数据库中加载...")
         }
@@ -100,12 +106,12 @@ open class ResourceIdsByUserIdCache : AbstractKeyValueCacheHandler<Set<String>>(
         val roleIds = authRoleUserDao.searchRoleIdsByUserId(userId)
         if (roleIds.isEmpty()) {
             log.debug("用户${userId}没有分配任何角色。")
-            return emptySet()
+            return emptyList()
         }
 
         val resultList = authRoleResourceDao.searchResourceIdsByRoleIds(roleIds)
         log.debug("从数据库加载了用户${userId}的${roleIds.size}个角色，共${resultList.size}条资源ID（去重后）。")
-        return resultList
+        return resultList.toList()
     }
 
     /**
@@ -149,17 +155,10 @@ open class ResourceIdsByUserIdCache : AbstractKeyValueCacheHandler<Set<String>>(
         }
     }
 
-    /**
-     * 用户删除后同步缓存
-     *
-     * @param userId 用户ID
-     */
-    open fun syncOnUserDelete(userId: String) {
-        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("删除用户${userId}后，同步从${CACHE_NAME}缓存中踢除...")
-            KeyValueCacheKit.evict(CACHE_NAME, userId)
-            log.debug("${CACHE_NAME}缓存同步完成。")
-        }
+    /** 用户删除后清掉该 userId 下的 resourceId 列表。 */
+    private fun evictByUserId(userId: String) {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
+        KeyValueCacheKit.evict(CACHE_NAME, userId)
     }
 
     /**
@@ -178,6 +177,20 @@ open class ResourceIdsByUserIdCache : AbstractKeyValueCacheHandler<Set<String>>(
             }
             log.debug("${CACHE_NAME}缓存同步完成，共影响${userIds.size}个用户。")
         }
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: AuthRoleUserRelationsChanged): Unit = syncOnBatchRoleUserChange(event.userIds)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: AuthRoleResourceRelationsChanged): Unit = syncOnRoleResourceChange(event.roleId)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: UserAccountDeleted): Unit = evictByUserId(event.id)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: UserAccountBatchDeleted) {
+        event.ids.forEach(::evictByUserId)
     }
 
     private val log = LogFactory.getLog(this::class)

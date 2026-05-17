@@ -2,13 +2,15 @@ package io.kudos.ms.auth.core.role.service.impl
 
 import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.logger.LogFactory
+import io.kudos.ms.auth.core.role.dao.AuthRoleUserDao
+import io.kudos.ms.auth.core.role.event.AuthRoleUserRelationsChanged
+import io.kudos.ms.auth.core.role.model.po.AuthRoleUser
+import io.kudos.ms.auth.core.role.service.iservice.IAuthRoleUserService
 import io.kudos.ms.auth.core.platform.cache.ResourceIdsByUserIdCache
 import io.kudos.ms.auth.core.role.cache.RoleIdsByUserIdCache
 import io.kudos.ms.auth.core.role.cache.UserIdsByRoleIdCache
-import io.kudos.ms.auth.core.role.dao.AuthRoleUserDao
-import io.kudos.ms.auth.core.role.model.po.AuthRoleUser
-import io.kudos.ms.auth.core.role.service.iservice.IAuthRoleUserService
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -37,12 +39,17 @@ open class AuthRoleUserService(
     @Autowired
     private lateinit var resourceIdsByUserIdCache: ResourceIdsByUserIdCache
 
+    @Autowired
+    private lateinit var eventPublisher: ApplicationEventPublisher
+
     private val log = LogFactory.getLog(this::class)
 
+    @Transactional(readOnly = true)
     override fun getUserIdsByRoleId(roleId: String): Set<String> {
         return userIdsByRoleIdCache.getUserIds(roleId).toSet()
     }
 
+    @Transactional(readOnly = true)
     override fun getRoleIdsByUserId(userId: String): Set<String> {
         return roleIdsByUserIdCache.getRoleIds(userId).toSet()
     }
@@ -52,25 +59,23 @@ open class AuthRoleUserService(
         if (userIds.isEmpty()) {
             return 0
         }
-        var count = 0
-        userIds.forEach { userId ->
-            if (!exists(roleId, userId)) {
-                val relation = AuthRoleUser.Companion {
-                    this.roleId = roleId
-                    this.userId = userId
-                }
-                dao.insert(relation)
-                count++
+        // 一次 SELECT 已存在的关系，差集对新增 ID 一次 batchInsert，把原 N+1 折叠到 2 次 SQL。
+        val existing = dao.searchUserIdsByRoleId(roleId).toSet()
+        val boundUserIds = userIds.toSet() - existing
+        if (boundUserIds.isEmpty()) {
+            log.debug("批量绑定角色${roleId}与${userIds.size}个用户的关系，全部已存在，无新增。")
+            return 0
+        }
+        val relations = boundUserIds.map { userId ->
+            AuthRoleUser.Companion {
+                this.roleId = roleId
+                this.userId = userId
             }
         }
-        log.debug("批量绑定角色${roleId}与${userIds.size}个用户的关系，成功绑定${count}条。")
-        // 同步缓存
-        userIdsByRoleIdCache.syncOnRoleUserChange(roleId)
-        userIds.forEach { userId ->
-            roleIdsByUserIdCache.syncOnRoleUserChange(userId)
-            resourceIdsByUserIdCache.syncOnRoleUserChange(userId)
-        }
-        return count
+        dao.batchInsert(relations)
+        log.debug("批量绑定角色${roleId}与${userIds.size}个用户的关系，成功绑定${boundUserIds.size}条。")
+        eventPublisher.publishEvent(AuthRoleUserRelationsChanged(roleId, boundUserIds.toList()))
+        return boundUserIds.size
     }
 
     @Transactional
@@ -79,16 +84,14 @@ open class AuthRoleUserService(
         val success = count > 0
         if (success) {
             log.debug("解绑角色${roleId}与用户${userId}的关系。")
-            // 同步缓存
-            userIdsByRoleIdCache.syncOnRoleUserChange(roleId)
-            roleIdsByUserIdCache.syncOnRoleUserChange(userId)
-            resourceIdsByUserIdCache.syncOnRoleUserChange(userId)
+            eventPublisher.publishEvent(AuthRoleUserRelationsChanged(roleId, listOf(userId)))
         } else {
             log.warn("解绑角色${roleId}与用户${userId}的关系失败，关系不存在。")
         }
         return success
     }
 
+    @Transactional(readOnly = true)
     override fun exists(roleId: String, userId: String): Boolean {
         return dao.exists(roleId, userId)
     }

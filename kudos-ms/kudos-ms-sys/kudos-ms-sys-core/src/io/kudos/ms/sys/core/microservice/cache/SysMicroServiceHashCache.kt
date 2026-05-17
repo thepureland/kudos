@@ -9,8 +9,14 @@ import io.kudos.base.logger.LogFactory
 import io.kudos.ms.sys.common.microservice.vo.SysMicroServiceCacheEntry
 import io.kudos.ms.sys.core.microservice.cache.SysMicroServiceHashCache.Companion.CACHE_NAME
 import io.kudos.ms.sys.core.microservice.dao.SysMicroServiceDao
+import io.kudos.ms.sys.core.microservice.event.SysMicroServiceBatchDeleted
+import io.kudos.ms.sys.core.microservice.event.SysMicroServiceDeleted
+import io.kudos.ms.sys.core.microservice.event.SysMicroServiceInserted
+import io.kudos.ms.sys.core.microservice.event.SysMicroServiceUpdated
 import jakarta.annotation.Resource
 import org.springframework.stereotype.Component
+import org.springframework.transaction.event.TransactionPhase
+import org.springframework.transaction.event.TransactionalEventListener
 
 /**
  * 微服务（按 code）Hash 缓存处理器
@@ -184,4 +190,16 @@ open class SysMicroServiceHashCache : AbstractHashCacheHandler<SysMicroServiceCa
         val cache = hashCache()
         codes.forEach { cache.deleteById(CACHE_NAME, it, SysMicroServiceCacheEntry::class, FILTERABLE_PROPERTIES, emptySet()) }
     }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: SysMicroServiceInserted): Unit = syncOnInsert(event.id)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: SysMicroServiceUpdated): Unit = syncOnUpdate(event.id)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: SysMicroServiceDeleted): Unit = syncOnDelete(event.id)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: SysMicroServiceBatchDeleted): Unit = syncOnBatchDelete(event.ids)
 }

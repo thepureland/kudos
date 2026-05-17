@@ -17,7 +17,13 @@ enum class UserAccountErrorCodeEnum(
 ) : IErrorCodeEnum {
 
     /** 未定义错误 */
-    UNSPECIFIED("UNSPECIFIED", "未定义错误");
+    UNSPECIFIED("UNSPECIFIED", "未定义错误"),
+
+    /** 按主键或 (tenant_id, username) 维度查找用户失败 */
+    USER_NOT_FOUND("USER_NOT_FOUND", "用户不存在"),
+
+    /** (tenant_id, username) 已被占用 */
+    USERNAME_ALREADY_EXISTS("USERNAME_ALREADY_EXISTS", "该租户下用户名已存在");
 
     override val i18nKeyPrefix: String
         get() = "user.error-msg.user"

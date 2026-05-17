@@ -6,9 +6,13 @@ import io.kudos.base.logger.LogFactory
 import io.kudos.context.support.Consts
 import io.kudos.ms.auth.core.group.dao.AuthGroupDao
 import io.kudos.ms.auth.core.group.dao.AuthGroupUserDao
+import io.kudos.ms.auth.core.group.event.AuthGroupBatchDeleted
+import io.kudos.ms.auth.core.group.event.AuthGroupDeleted
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
+import org.springframework.transaction.event.TransactionPhase
+import org.springframework.transaction.event.TransactionalEventListener
 
 
 /**
@@ -17,14 +21,14 @@ import org.springframework.stereotype.Component
  * 1.数据来源表：auth_group + auth_group_user
  * 2.缓存各租户下指定用户组的用户ID集合
  * 3.缓存的key为：tenantId::groupCode
- * 4.缓存的value为：用户ID集合（Set<String>）
+ * 4.缓存的value为：用户ID集合（List<String>）
  *
  * @author K
  * @author AI: Codex
  * @since 1.0.0
  */
 @Component
-open class UserIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler<Set<String>>() {
+open class UserIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler<List<String>>() {
 
     @Autowired
     private lateinit var authGroupHashCache: AuthGroupHashCache
@@ -41,7 +45,7 @@ open class UserIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler<Set
 
     override fun cacheName(): String = CACHE_NAME
 
-    override fun doReload(key: String): Set<String> {
+    override fun doReload(key: String): List<String> {
         require(key.contains(Consts.CACHE_KEY_DEFAULT_DELIMITER)) {
             "缓存${CACHE_NAME}的key格式必须是 租户ID${Consts.CACHE_KEY_DEFAULT_DELIMITER}用户组编码"
         }
@@ -91,7 +95,7 @@ open class UserIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler<Set
         key = "#tenantId.concat('${Consts.CACHE_KEY_DEFAULT_DELIMITER}').concat(#groupCode)",
         unless = "#result == null || #result.isEmpty()"
     )
-    open fun getUserIds(tenantId: String, groupCode: String): Set<String> {
+    open fun getUserIds(tenantId: String, groupCode: String): List<String> {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("缓存中不存在租户${tenantId}用户组${groupCode}的用户ID，从数据库中加载...")
         }
@@ -101,12 +105,12 @@ open class UserIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler<Set
 
         if (groupId == null) {
             log.debug("找不到租户${tenantId}的用户组${groupCode}。")
-            return emptySet()
+            return emptyList()
         }
 
         val userIds = authGroupUserDao.searchUserIdsByGroupId(groupId)
         log.debug("从数据库加载了租户${tenantId}用户组${groupCode}的${userIds.size}条用户ID。")
-        return userIds
+        return userIds.toList()
     }
 
     /**
@@ -168,23 +172,6 @@ open class UserIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler<Set
     }
 
     /**
-     * 用户组删除后同步缓存
-     *
-     * @param tenantId 租户ID
-     * @param groupCode 用户组编码
-     */
-    open fun syncOnGroupDelete(tenantId: String, groupCode: String) {
-        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("删除租户${tenantId}用户组${groupCode}后，同步从${CACHE_NAME}缓存中踢除...")
-            KeyValueCacheKit.evict(CACHE_NAME, getKey(tenantId, groupCode))
-            log.debug("${CACHE_NAME}缓存同步完成。")
-        }
-        // 同时清除用户组ID缓存，确保后续查询时不会从缓存中获取到已删除的用户组ID
-        val groupId = authGroupHashCache.getGroupByTenantIdAndGroupCode(tenantId, groupCode)?.id
-        groupId?.let { authGroupHashCache.syncOnDelete(groupId) }
-    }
-
-    /**
      * 返回参数拼接后的key
      *
      * @param tenantId 租户ID
@@ -193,6 +180,20 @@ open class UserIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler<Set
      */
     fun getKey(tenantId: String, groupCode: String): String {
         return "${tenantId}${Consts.CACHE_KEY_DEFAULT_DELIMITER}${groupCode}"
+    }
+
+    /** 仅做本地 (tenantId, groupCode) 失效；AuthGroupHashCache 已独立订阅 AuthGroupDeleted。 */
+    private fun evictBy(tenantId: String, groupCode: String) {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
+        KeyValueCacheKit.evict(CACHE_NAME, getKey(tenantId, groupCode))
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: AuthGroupDeleted): Unit = evictBy(event.tenantId, event.code)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: AuthGroupBatchDeleted) {
+        event.items.forEach { evictBy(it.tenantId, it.code) }
     }
 
     private val log = LogFactory.getLog(this::class)

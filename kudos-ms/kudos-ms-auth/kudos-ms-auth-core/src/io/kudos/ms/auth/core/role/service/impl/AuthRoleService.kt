@@ -12,6 +12,10 @@ import io.kudos.ms.auth.core.role.cache.AuthRoleHashCache
 import io.kudos.ms.auth.core.role.cache.RoleIdsByUserIdCache
 import io.kudos.ms.auth.core.role.cache.UserIdsByRoleIdCache
 import io.kudos.ms.auth.core.role.dao.AuthRoleDao
+import io.kudos.ms.auth.core.role.event.AuthRoleBatchDeleted
+import io.kudos.ms.auth.core.role.event.AuthRoleDeleted
+import io.kudos.ms.auth.core.role.event.AuthRoleInserted
+import io.kudos.ms.auth.core.role.event.AuthRoleUpdated
 import io.kudos.ms.auth.core.role.model.po.AuthRole
 import io.kudos.ms.auth.core.role.service.iservice.IAuthRoleService
 import io.kudos.ms.sys.common.resource.vo.SysResourceCacheEntry
@@ -19,6 +23,7 @@ import io.kudos.ms.sys.core.resource.cache.SysResourceHashCache
 import io.kudos.ms.user.common.account.vo.UserAccountCacheEntry
 import io.kudos.ms.user.core.account.cache.UserAccountHashCache
 import jakarta.annotation.Resource
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -59,20 +64,27 @@ open class AuthRoleService(
     @Resource
     private lateinit var resourceIdsByUserIdCache: ResourceIdsByUserIdCache
 
+    @Resource
+    private lateinit var eventPublisher: ApplicationEventPublisher
+
     private val log = LogFactory.getLog(this::class)
 
+    @Transactional(readOnly = true)
     override fun getRoleUserIds(roleId: String): List<String> {
         return userIdsByRoleIdCache.getUserIds(roleId)
     }
 
+    @Transactional(readOnly = true)
     override fun getRoleResourceIds(roleId: String): Set<String> {
-        return resourceIdsByRoleIdCache.getResourceIds(roleId)
+        return resourceIdsByRoleIdCache.getResourceIds(roleId).toSet()
     }
 
+    @Transactional(readOnly = true)
     override fun getRoleIds(tenantId: String): List<String> {
         return dao.searchActiveRoleIdsByTenantId(tenantId)
     }
 
+    @Transactional(readOnly = true)
     override fun getRoleUsers(roleId: String): List<UserAccountCacheEntry> {
         val userIds = getRoleUserIds(roleId)
         if (userIds.isEmpty()) {
@@ -82,6 +94,7 @@ open class AuthRoleService(
         return userIds.mapNotNull { usersMap[it] }
     }
 
+    @Transactional(readOnly = true)
     override fun getRoleResources(roleId: String): List<SysResourceCacheEntry> {
         val resourceIds = getRoleResourceIds(roleId)
         if (resourceIds.isEmpty()) {
@@ -91,26 +104,31 @@ open class AuthRoleService(
         return resourceIds.mapNotNull { resourcesMap[it] }
     }
 
+    @Transactional(readOnly = true)
     override fun hasResource(roleId: String, resourceId: String): Boolean {
         val resourceIds = getRoleResourceIds(roleId)
         return resourceIds.contains(resourceId)
     }
 
+    @Transactional(readOnly = true)
     override fun getRoleByTenantIdAndCode(tenantId: String, roleCode: String): AuthRoleCacheEntry? {
         val roleId = authRoleHashCache.getRoleByTenantIdAndRoleCode(tenantId, roleCode)?.id
         return roleId?.let { authRoleHashCache.getRoleById(it) }
     }
 
+    @Transactional(readOnly = true)
     override fun getRoleRecord(id: String): AuthRoleRow? {
         return dao.getAs<AuthRoleRow>(id)
     }
 
+    @Transactional(readOnly = true)
     override fun getRolesByTenantId(tenantId: String): List<AuthRoleRow> {
         val searchPayload = AuthRoleQuery(tenantId = tenantId)
         @Suppress("UNCHECKED_CAST")
         return dao.search(searchPayload, AuthRoleRow::class)
     }
 
+    @Transactional(readOnly = true)
     override fun getRolesBySubsysCode(tenantId: String, subsysCode: String): List<AuthRoleRow> {
         val searchPayload = AuthRoleQuery(
             tenantId = tenantId,
@@ -129,11 +147,7 @@ open class AuthRoleService(
         val success = dao.update(role)
         if (success) {
             log.debug("更新id为${id}的角色的启用状态为${active}。")
-            authRoleHashCache.syncOnUpdate(id)
-//            val existingRole = dao.get(id)
-//            if (existingRole != null) {
-//                roleIdByTenantIdAndRoleCodeCache.syncOnUpdateActive(id, active)
-//            }
+            eventPublisher.publishEvent(AuthRoleUpdated(id))
         } else {
             log.error("更新id为${id}的角色的启用状态为${active}失败！")
         }
@@ -144,7 +158,7 @@ open class AuthRoleService(
     override fun insert(any: Any): String {
         val id = super.insert(any)
         log.debug("新增id为${id}的角色。")
-        authRoleHashCache.syncOnInsert(id)
+        eventPublisher.publishEvent(AuthRoleInserted(id))
         return id
     }
 
@@ -154,7 +168,7 @@ open class AuthRoleService(
         val id = BeanKit.getProperty(any, AuthRole::id.name) as String
         if (success) {
             log.debug("更新id为${id}的角色。")
-            authRoleHashCache.syncOnUpdate(id)
+            eventPublisher.publishEvent(AuthRoleUpdated(id))
         } else {
             log.error("更新id为${id}的角色失败！")
         }
@@ -171,7 +185,7 @@ open class AuthRoleService(
         val success = super.deleteById(id)
         if (success) {
             log.debug("删除id为${id}的角色。")
-            authRoleHashCache.syncOnDelete(id)
+            eventPublisher.publishEvent(AuthRoleDeleted(id, role.tenantId, role.code))
         } else {
             log.error("删除id为${id}的角色失败！")
         }
@@ -180,22 +194,34 @@ open class AuthRoleService(
 
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {
+        // 先 snapshot tenantId/code，AFTER_COMMIT 后行已删除，下游 (tenantId, code) 缓存
+        // 无法再回查
+        val snapshots = if (ids.isNotEmpty()) {
+            dao.getByIds(ids).map {
+                AuthRoleBatchDeleted.Item(it.id, it.tenantId, it.code)
+            }
+        } else emptyList()
         val count = super.batchDelete(ids)
         log.debug("批量删除角色，期望删除${ids.size}条，实际删除${count}条。")
-        authRoleHashCache.syncOnBatchDelete(ids)
+        if (snapshots.isNotEmpty()) {
+            eventPublisher.publishEvent(AuthRoleBatchDeleted(snapshots))
+        }
         return count
     }
 
+    @Transactional(readOnly = true)
     override fun hasRole(userId: String, roleId: String): Boolean {
         val roleIds = getUserRoleIds(userId)
         return roleIds.contains(roleId)
     }
 
+    @Transactional(readOnly = true)
     override fun hasRoleByCode(userId: String, tenantId: String, roleCode: String): Boolean {
         val roleId = authRoleHashCache.getRoleByTenantIdAndRoleCode(tenantId, roleCode)?.id
         return roleId != null && hasRole(userId, roleId)
     }
 
+    @Transactional(readOnly = true)
     override fun getUserRoles(userId: String): List<AuthRoleCacheEntry> {
         val roleIds = getUserRoleIds(userId)
         if (roleIds.isEmpty()) {
@@ -205,10 +231,12 @@ open class AuthRoleService(
         return roleIds.mapNotNull { rolesMap[it] }
     }
 
+    @Transactional(readOnly = true)
     override fun getUserRoleIds(userId: String): List<String> {
         return roleIdsByUserIdCache.getRoleIds(userId)
     }
 
+    @Transactional(readOnly = true)
     override fun getUsersByRoleCode(tenantId: String, roleCode: String): List<UserAccountCacheEntry> {
         val roleId = authRoleHashCache.getRoleByTenantIdAndRoleCode(tenantId, roleCode)?.id ?: return emptyList()
         val userIds = userIdsByRoleIdCache.getUserIds(roleId)
@@ -218,15 +246,18 @@ open class AuthRoleService(
         return userAccountHashCache.getUsersByIds(userIds).values.toList()
     }
 
+    @Transactional(readOnly = true)
     override fun isUserHasResource(userId: String, resourceId: String): Boolean {
         val resourceIds = getUserResourceIds(userId)
         return resourceIds.contains(resourceId)
     }
 
+    @Transactional(readOnly = true)
     override fun getUserResourceIds(userId: String): Set<String> {
-        return resourceIdsByUserIdCache.getResourceIds(userId)
+        return resourceIdsByUserIdCache.getResourceIds(userId).toSet()
     }
 
+    @Transactional(readOnly = true)
     override fun getResources(userId: String): List<SysResourceCacheEntry> {
         // 通过用户ID获取资源ID列表
         val resourceIds = resourceIdsByUserIdCache.getResourceIds(userId)
@@ -236,8 +267,8 @@ open class AuthRoleService(
             return emptyList()
         }
 
-        // 批量获取资源缓存对象
-        val resourcesMap = sysResourceHashCache.getResourcesByIds(resourceIds)
+        // 批量获取资源缓存对象（sysResourceHashCache.getResourcesByIds 接收 Set，做一次去重转换）
+        val resourcesMap = sysResourceHashCache.getResourcesByIds(resourceIds.toSet())
 
         // 返回资源列表（按原始ID顺序）
         return resourceIds.mapNotNull { resourcesMap[it] }
