@@ -14,8 +14,13 @@ import io.kudos.ms.sys.common.cache.enums.SysCacheErrorCodeEnum
 import io.kudos.ms.sys.common.cache.vo.SysCacheCacheEntry
 import io.kudos.ms.sys.core.cache.cache.SysCacheHashCache
 import io.kudos.ms.sys.core.cache.dao.SysCacheDao
+import io.kudos.ms.sys.core.cache.event.SysCacheBatchDeleted
+import io.kudos.ms.sys.core.cache.event.SysCacheDeleted
+import io.kudos.ms.sys.core.cache.event.SysCacheInserted
+import io.kudos.ms.sys.core.cache.event.SysCacheUpdated
 import io.kudos.ms.sys.core.cache.model.po.SysCache
 import io.kudos.ms.sys.core.cache.service.iservice.ISysCacheService
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import kotlin.reflect.KClass
@@ -33,6 +38,7 @@ import kotlin.reflect.KClass
 open class SysCacheService(
     dao: SysCacheDao,
     private val sysCacheHashCache: SysCacheHashCache,
+    private val eventPublisher: ApplicationEventPublisher,
 ) : BaseCrudService<String, SysCache, SysCacheDao>(dao), ISysCacheService {
 
     private val log = LogFactory.getLog(this::class)
@@ -54,7 +60,7 @@ open class SysCacheService(
     override fun insert(any: Any): String {
         val id = super.insert(any)
         completeCrudInsert(log, "新增id为${id}的缓存配置。") {
-            sysCacheHashCache.syncOnInsert(any, id)
+            eventPublisher.publishEvent(SysCacheInserted(id))
         }
         return id
     }
@@ -68,7 +74,7 @@ open class SysCacheService(
             successMessage = "更新id为${id}的缓存配置。",
             failureMessage = "更新id为${id}的缓存配置失败！",
         ) {
-            sysCacheHashCache.syncOnUpdate(any, id)
+            eventPublisher.publishEvent(SysCacheUpdated(id))
         }
     }
 
@@ -84,7 +90,7 @@ open class SysCacheService(
             successMessage = "更新id为${id}的缓存配置的启用状态为${active}。",
             failureMessage = "更新id为${id}的缓存配置的启用状态为${active}失败！",
         ) {
-            sysCacheHashCache.syncOnUpdate(cache, id)
+            eventPublisher.publishEvent(SysCacheUpdated(id))
         }
     }
 
@@ -101,7 +107,7 @@ open class SysCacheService(
             successMessage = "删除id为${id}的缓存配置成功！",
             failureMessage = "删除id为${id}的缓存配置失败！",
         ) {
-            sysCacheHashCache.syncOnDelete(id)
+            eventPublisher.publishEvent(SysCacheDeleted(id))
         }
     }
 
@@ -109,7 +115,9 @@ open class SysCacheService(
     override fun batchDelete(ids: Collection<String>): Int {
         val count = super.batchDelete(ids)
         log.debug("批量删除缓存配置，期望删除${ids.size}条，实际删除${count}条。")
-        sysCacheHashCache.syncOnBatchDelete(ids)
+        if (count > 0 && ids.isNotEmpty()) {
+            eventPublisher.publishEvent(SysCacheBatchDeleted(ids))
+        }
         return count
     }
 

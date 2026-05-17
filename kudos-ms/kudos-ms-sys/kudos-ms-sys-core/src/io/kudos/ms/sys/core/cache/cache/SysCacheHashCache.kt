@@ -8,7 +8,12 @@ import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.sys.common.cache.vo.SysCacheCacheEntry
 import io.kudos.ms.sys.core.cache.dao.SysCacheDao
+import io.kudos.ms.sys.core.cache.event.SysCacheBatchDeleted
+import io.kudos.ms.sys.core.cache.event.SysCacheDeleted
+import io.kudos.ms.sys.core.cache.event.SysCacheInserted
+import io.kudos.ms.sys.core.cache.event.SysCacheUpdated
 import jakarta.annotation.Resource
+import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component
 
 /**
@@ -221,4 +226,20 @@ open class SysCacheHashCache : AbstractHashCacheHandler<SysCacheCacheEntry>() {
         val cache = hashCache()
         ids.forEach { cache.deleteById(CACHE_NAME, it, SysCacheCacheEntry::class, FILTERABLE_PROPERTIES, emptySet()) }
     }
+
+    // ---------- 事件订阅 ----------
+    // 使用 plain @EventListener（非 @TransactionalEventListener）：sys_cache 域的服务测试断言 mutation 后立即可读到
+    // 新缓存状态，AFTER_COMMIT 在 @Transactional 回滚测试中不触发，故此域保持同步事件语义，行为等价旧的直 sync。
+
+    @EventListener
+    open fun on(event: SysCacheInserted): Unit = syncOnInsert(event.id)
+
+    @EventListener
+    open fun on(event: SysCacheUpdated): Unit = syncOnUpdate(event.id)
+
+    @EventListener
+    open fun on(event: SysCacheDeleted): Unit = syncOnDelete(event.id)
+
+    @EventListener
+    open fun on(event: SysCacheBatchDeleted): Unit = syncOnBatchDelete(event.ids)
 }
