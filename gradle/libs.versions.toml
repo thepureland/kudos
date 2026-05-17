@@ -24,7 +24,6 @@ apache-commons-codec = "1.21.0"
 apache-commons-lang3 = "3.20.0"
 apache-commons-text = "1.15.0"
 apache-commons-net = "3.12.0"
-jakarta-validation-api = "4.0.0-M1"
 hibernate-validator = "9.1.0.Final"
 jakarta-el-api = "6.0.1"
 glassfish-jakarta-el = "5.0.0-M1"
@@ -85,7 +84,7 @@ apache-commons-codec = { module = "commons-codec:commons-codec", version.ref = "
 apache-commons-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "apache-commons-lang3" }
 apache-commons-text = { module = "org.apache.commons:commons-text", version.ref = "apache-commons-text" }
 apache-commons-net = { module = "commons-net:commons-net", version.ref = "apache-commons-net" }
-jakarta-validation-api = { module = "jakarta.validation:jakarta.validation-api", version.ref = "jakarta-validation-api" }
+jakarta-validation-api = { module = "jakarta.validation:jakarta.validation-api" }
 hibernate-validator = { module = "org.hibernate.validator:hibernate-validator", version.ref = "hibernate-validator" }
 ktor-serialization-json = { module = "io.ktor:ktor-serialization-kotlinx-json-jvm", version.ref = "ktor" }
 jakarta-el-api = { module = "jakarta.el:jakarta.el-api", version.ref = "jakarta-el-api" }
