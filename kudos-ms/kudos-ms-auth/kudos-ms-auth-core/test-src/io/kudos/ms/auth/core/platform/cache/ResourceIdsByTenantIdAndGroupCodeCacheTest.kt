@@ -179,23 +179,25 @@ class ResourceIdsByTenantIdAndGroupCodeCacheTest : RdbAndRedisCacheTestBase() {
     }
 
     /**
-     * 测试在 `@Transactional` 自动回滚的测试基础上，验证缓存失效语义的难度过高且不稳定：
+     * @Disabled — 该 test 在 `@Transactional` 自动回滚环境下不可靠地验证此缓存的 `clear()` 失效语义。深入诊断后
+     * 两层原因：
      *
-     * - 生产路径走 `@TransactionalEventListener(AFTER_COMMIT)` 触发 `syncOnRoleResourceChange.clear()`，
-     *   `clear()` 是基于 Spring `Cache.clear()` 的 best-effort 操作；在 commit 后才被订阅器触发，配合
-     *   Caffeine 内部 drainage 周期生效，不存在竞态。
-     * - 测试中我们只能用 `cacheHandler.on(event)` 在事务内同步驱动 listener，此时 `Cache.clear()` 与紧随的
-     *   `cache.get(key)` 之间无 commit 触发的 drainage barrier，被 invalidate 的 entry 可能仍被命中；
-     *   尝试用 `KeyValueCacheKit.existsKey(...)` 作 drainage barrier 只在隔离运行通过，跨类全套依然失败
-     *   （commits 0f645e8e 一系列尝试均无法稳定）。
+     * 1. **Caffeine drainage**：本地 Caffeine 的 `invalidateAll()` 是 queued-for-async-maintenance；commit
+     *    `DrainingCaffeineCache`（kudos-ability-cache-local-caffeine）已在 `evict/clear` 后同步调用
+     *    `nativeCache.cleanUp()` 修复本地侧。
+     * 2. **Redis pub/sub 异步**：`MixCache.evict/clear` 在本地清完之后 `pushMsgRedis`；消息在另一线程
+     *    （`erContainer-*`）异步回到本节点跑 `RedisCacheMessageHandler.receiveMessage`，与测试线程后续的
+     *    `@Cacheable.get` 之间存在竞态。一次 `Thread.sleep(50)` 或一次 `KeyValueCacheKit.existsKey` 调用
+     *    （后者经 Caffeine `asMap` 路径触发额外 drainage）都可让测试稳定通过；但这两种方式都是 test-only 的
+     *    时序补偿，没有体现生产正确性，反而掩盖问题。
      *
-     * 该 cache 的 production 行为已由 `ResourceIdsByTenantIdAndGroupCodeCache.on(AuthRoleResourceRelationsChanged)`
-     * 实现，并由发布事件的 `AuthRoleResourceService.batchBind/unbind` 测试间接验证。这里保留 `@Disabled` 占位以避免
-     * 误以为该路径未测；其余 5 个测试覆盖了 getResourceIds、syncOnGroupRoleInsert/Delete、syncOnGroupUpdate、
-     * syncOnGroupDelete 的正常路径。
+     * 生产路径走 `@TransactionalEventListener(AFTER_COMMIT)`，commit 完成后才触发清理 + 紧随的查询天然
+     * 间隔较远，此竞态不会暴露。生产代码逻辑由 `ResourceIdsByTenantIdAndGroupCodeCache.on
+     * (AuthRoleResourceRelationsChanged)` 实现，并通过 `AuthRoleResourceServiceTest.batchBind/unbind` 间接覆盖。
+     * 同 class 的其余 5 个测试覆盖了 cache 的其它路径。
      */
     @Test
-    @Disabled("Unstable in @Transactional rollback context — @Cacheable.get-after-clear race; see KDoc.")
+    @Disabled("Async Redis pub/sub timing race in @Transactional rollback tests — see KDoc.")
     fun syncOnRoleResourceChange() {
         val roleId = "274d0234-1111-1111-1111-111111111111"
         val tenantId = "tenant-001-7h2QGcPi"
