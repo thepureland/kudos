@@ -10,6 +10,7 @@ import io.kudos.ms.auth.core.group.dao.AuthGroupRoleDao
 import io.kudos.ms.auth.core.group.event.AuthGroupBatchDeleted
 import io.kudos.ms.auth.core.group.event.AuthGroupDeleted
 import io.kudos.ms.auth.core.role.dao.AuthRoleResourceDao
+import io.kudos.ms.auth.core.role.event.AuthRoleResourceRelationsChanged
 import jakarta.annotation.Resource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable
@@ -195,6 +196,12 @@ open class ResourceIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler
     open fun on(event: AuthGroupBatchDeleted) {
         event.items.forEach { evictBy(it.tenantId, it.code) }
     }
+
+    /**
+     * 角色-资源关系变更影响 group -> role -> resource 三级聚合视图：保守清整缓存。
+     */
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: AuthRoleResourceRelationsChanged): Unit = syncOnRoleResourceChange(event.roleId)
 
     private val log = LogFactory.getLog(this::class)
 

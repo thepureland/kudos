@@ -8,6 +8,7 @@ import io.kudos.ms.auth.core.group.dao.AuthGroupRoleDao
 import io.kudos.ms.auth.core.group.event.AuthGroupDeleted
 import io.kudos.ms.auth.core.role.dao.AuthRoleDao
 import io.kudos.ms.auth.core.role.dao.AuthRoleResourceDao
+import io.kudos.ms.auth.core.role.event.AuthRoleResourceRelationsChanged
 import io.kudos.ms.auth.core.group.model.po.AuthGroup
 import io.kudos.ms.auth.core.group.model.po.AuthGroupRole
 import io.kudos.ms.auth.core.role.model.po.AuthRole
@@ -204,11 +205,17 @@ class ResourceIdsByTenantIdAndGroupCodeCacheTest : RdbAndRedisCacheTestBase() {
         }
         val id = authRoleResourceDao.insert(authRoleResource)
 
-        // 同步缓存（模拟角色-资源关系变更，会影响包含该角色的用户组）
-        cacheHandler.syncOnRoleResourceChange(roleId)
+        // 直接驱动事件 listener（AFTER_COMMIT 在 @Transactional 测试中不会触发，故直接调用 on(...)）
+        cacheHandler.on(AuthRoleResourceRelationsChanged(roleId, listOf(resourceId)))
 
         // 再次清除缓存，确保从数据库重新加载
         cacheHandler.evict(cacheHandler.getKey(tenantId, groupCode))
+        // Caffeine drainage barrier：existsKey 经 nativeCache.asMap().containsKey 触发待处理 invalidate 立即生效，
+        // 否则后续 @Cacheable 查询可能仍命中刚被 evict 的本地副本。
+        io.kudos.ability.cache.common.kit.KeyValueCacheKit.existsKey(
+            "AUTH_RESOURCE_IDS_BY_TENANT_ID_AND_GROUP_CODE",
+            cacheHandler.getKey(tenantId, groupCode),
+        )
 
         // 验证缓存已被清除并重新加载，应该包含新插入的资源
         val resourceIdsAfter = cacheHandler.getResourceIds(tenantId, groupCode).map { it.trim() }
@@ -219,7 +226,7 @@ class ResourceIdsByTenantIdAndGroupCodeCacheTest : RdbAndRedisCacheTestBase() {
         authRoleResourceDao.deleteById(id)
         // 清理缓存，避免影响其他测试
         cacheHandler.evict(cacheHandler.getKey(tenantId, groupCode))
-        cacheHandler.syncOnRoleResourceChange(roleId)
+        cacheHandler.on(AuthRoleResourceRelationsChanged(roleId, listOf(resourceId)))
     }
 
     @Test
