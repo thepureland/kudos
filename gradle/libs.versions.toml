@@ -139,6 +139,8 @@ spring-cloud-starter-stream-kafka = { module = "org.springframework.cloud:spring
 spring-cloud-starter-stream-rabbit = { module = "org.springframework.cloud:spring-cloud-starter-stream-rabbit"}
 # Jackson 3 Kotlin 模块，供 Spring Cloud Function 等使用（与 Spring Boot 4 的 tools.jackson 一致）
 jackson-module-kotlin = { module = "tools.jackson.module:jackson-module-kotlin", version.ref = "jackson-module-kotlin" }
+# Jackson 3 databind，版本由 spring-boot-bom 管理
+jackson-databind = { module = "tools.jackson.core:jackson-databind" }
 alibaba-cloud-nacos-config = { module = "com.alibaba.cloud:spring-cloud-starter-alibaba-nacos-config"}
 alibaba-cloud-nacos-discovery = { module = "com.alibaba.cloud:spring-cloud-starter-alibaba-nacos-discovery"}
 alibaba-cloud-starter-stream-rocketmq = { module = "com.alibaba.cloud:spring-cloud-starter-stream-rocketmq"}

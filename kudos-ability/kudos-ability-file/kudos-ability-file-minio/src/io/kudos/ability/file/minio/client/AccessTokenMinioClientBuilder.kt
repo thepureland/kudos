@@ -1,9 +1,8 @@
 package io.kudos.ability.file.minio.client
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.introspect.VisibilityChecker
+import tools.jackson.databind.DeserializationFeature
+import tools.jackson.databind.json.JsonMapper
 import io.kudos.ability.file.common.auth.AccessTokenServerParam
 import io.kudos.ability.file.minio.init.properties.AccessTokenServerProperties
 import io.kudos.ability.file.minio.init.properties.MinioProperties
@@ -76,11 +75,10 @@ open class AccessTokenMinioClientBuilder : MinioClientBuilder<AccessTokenServerP
         val client = OkHttpClient()
         try {
             client.newCall(request).execute().use { response ->
-                val mapper = ObjectMapper()
-                mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-                mapper.setVisibility(
-                    VisibilityChecker.Std.defaultInstance().withFieldVisibility(JsonAutoDetect.Visibility.ANY)
-                )
+                val mapper = JsonMapper.builder()
+                    .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+                    .changeDefaultVisibility { it.withFieldVisibility(JsonAutoDetect.Visibility.ANY) }
+                    .build()
                 val rs = String(response.body.bytes())
                 val jwt = mapper.readValue(rs, Jwt::class.java)
                 if (jwt != null) {
