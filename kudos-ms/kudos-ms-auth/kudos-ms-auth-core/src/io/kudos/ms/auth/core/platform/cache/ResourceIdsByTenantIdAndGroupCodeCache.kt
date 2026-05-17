@@ -7,11 +7,16 @@ import io.kudos.context.support.Consts
 import io.kudos.ms.auth.core.group.cache.AuthGroupHashCache
 import io.kudos.ms.auth.core.group.dao.AuthGroupDao
 import io.kudos.ms.auth.core.group.dao.AuthGroupRoleDao
+import io.kudos.ms.auth.core.group.event.AuthGroupBatchDeleted
+import io.kudos.ms.auth.core.group.event.AuthGroupDeleted
 import io.kudos.ms.auth.core.role.dao.AuthRoleResourceDao
+import io.kudos.ms.auth.core.role.event.AuthRoleResourceRelationsChanged
 import jakarta.annotation.Resource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
+import org.springframework.transaction.event.TransactionPhase
+import org.springframework.transaction.event.TransactionalEventListener
 
 
 /**
@@ -20,14 +25,14 @@ import org.springframework.stereotype.Component
  * 1.数据来源表：auth_group + auth_group_role + auth_role_resource
  * 2.缓存各租户下指定用户组的资源ID集合
  * 3.缓存的key为：tenantId::groupCode
- * 4.缓存的value为：资源ID集合（Set<String>）
+ * 4.缓存的value为：资源ID集合（List<String>）
  *
  * @author K
  * @author AI: Codex
  * @since 1.0.0
  */
 @Component
-open class ResourceIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler<Set<String>>() {
+open class ResourceIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler<List<String>>() {
 
     @Autowired
     private lateinit var authGroupHashCache: AuthGroupHashCache
@@ -47,7 +52,7 @@ open class ResourceIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler
 
     override fun cacheName(): String = CACHE_NAME
 
-    override fun doReload(key: String): Set<String> {
+    override fun doReload(key: String): List<String> {
         require(key.contains(Consts.CACHE_KEY_DEFAULT_DELIMITER)) {
             "缓存${CACHE_NAME}的key格式必须是 租户ID${Consts.CACHE_KEY_DEFAULT_DELIMITER}用户组编码"
         }
@@ -97,7 +102,7 @@ open class ResourceIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler
         key = "#tenantId.concat('${Consts.CACHE_KEY_DEFAULT_DELIMITER}').concat(#groupCode)",
         unless = "#result == null || #result.isEmpty()"
     )
-    open fun getResourceIds(tenantId: String, groupCode: String): Set<String> {
+    open fun getResourceIds(tenantId: String, groupCode: String): List<String> {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("缓存中不存在租户${tenantId}用户组${groupCode}的资源ID，从数据库中加载...")
         }
@@ -106,18 +111,18 @@ open class ResourceIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler
         val groupId = authGroupHashCache.getGroupByTenantIdAndGroupCode(tenantId, groupCode)?.id
         if (groupId == null) {
             log.debug("找不到租户${tenantId}的用户组${groupCode}。")
-            return emptySet()
+            return emptyList()
         }
 
         // 2. 获取用户组对应的角色ID列表
         val roleIds = authGroupRoleDao.searchRoleIdsByGroupId(groupId)
         if (roleIds.isEmpty()) {
-            return emptySet()
+            return emptyList()
         }
 
         val resourceIds = authRoleResourceDao.searchResourceIdsByRoleIds(roleIds)
         log.debug("从数据库加载了租户${tenantId}用户组${groupCode}的${resourceIds.size}条资源ID。")
-        return resourceIds
+        return resourceIds.toList()
     }
 
     /**
@@ -174,22 +179,29 @@ open class ResourceIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler
         }
     }
 
-    /**
-     * 用户组删除后同步缓存
-     */
-    open fun syncOnGroupDelete(tenantId: String, groupCode: String) {
-        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("删除租户${tenantId}用户组${groupCode}后，同步从${CACHE_NAME}缓存中踢除...")
-            KeyValueCacheKit.evict(CACHE_NAME, getKey(tenantId, groupCode))
-            log.debug("${CACHE_NAME}缓存同步完成。")
-        }
-        val groupId = authGroupHashCache.getGroupByTenantIdAndGroupCode(tenantId, groupCode)?.id
-        groupId?.let { authGroupHashCache.syncOnDelete(it) }
-    }
-
     fun getKey(tenantId: String, groupCode: String): String {
         return "${tenantId}${Consts.CACHE_KEY_DEFAULT_DELIMITER}${groupCode}"
     }
+
+    /** 仅做本地 (tenantId, groupCode) 失效；AuthGroupHashCache 已独立订阅 AuthGroupDeleted。 */
+    private fun evictBy(tenantId: String, groupCode: String) {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
+        KeyValueCacheKit.evict(CACHE_NAME, getKey(tenantId, groupCode))
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: AuthGroupDeleted): Unit = evictBy(event.tenantId, event.code)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: AuthGroupBatchDeleted) {
+        event.items.forEach { evictBy(it.tenantId, it.code) }
+    }
+
+    /**
+     * 角色-资源关系变更影响 group -> role -> resource 三级聚合视图：保守清整缓存。
+     */
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: AuthRoleResourceRelationsChanged): Unit = syncOnRoleResourceChange(event.roleId)
 
     private val log = LogFactory.getLog(this::class)
 

@@ -23,9 +23,6 @@ import org.springframework.web.bind.annotation.*
 class SysDictAdminController :
     BaseCrudController<String, ISysDictService, SysDictQuery, SysDictRow, SysDictDetail, SysDictEdit, ISysDictFormCreate, ISysDictFormUpdate>() {
 
-
-
-
     /**
      * 返回指定id的字典
      *
@@ -57,10 +54,8 @@ class SysDictAdminController :
      * @return Map<主键，字典类型>
      */
     @GetMapping("/getDictTypesByAtomicServiceCode")
-    fun getDictTypesByAtomicServiceCode(atomicServiceCode: String, activeOnly: Boolean = true): Map<String, String> {
-        val dictTypes = service.getDictsFromCacheByAtomicServiceCode(atomicServiceCode, activeOnly)
-        return dictTypes.associate { it.id to it.dictType }
-    }
+    fun getDictTypesByAtomicServiceCode(atomicServiceCode: String, activeOnly: Boolean = true): Map<String, String> =
+        service.getDictTypesByAtomicServiceCode(atomicServiceCode, activeOnly)
 
     /**
      * 更新active状态

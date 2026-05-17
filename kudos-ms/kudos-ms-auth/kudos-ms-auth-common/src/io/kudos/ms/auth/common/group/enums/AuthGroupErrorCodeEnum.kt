@@ -17,7 +17,13 @@ enum class AuthGroupErrorCodeEnum(
 ) : IErrorCodeEnum {
 
     /** 未定义错误 */
-    UNSPECIFIED("UNSPECIFIED", "未定义错误");
+    UNSPECIFIED("UNSPECIFIED", "未定义错误"),
+
+    /** 按主键或 (tenant_id, code) 维度查找用户组失败 */
+    GROUP_NOT_FOUND("GROUP_NOT_FOUND", "用户组不存在"),
+
+    /** (tenant_id, code) 已被占用 */
+    GROUP_CODE_ALREADY_EXISTS("GROUP_CODE_ALREADY_EXISTS", "该租户下用户组编码已存在");
 
     override val i18nKeyPrefix: String
         get() = "auth.error-msg.group"

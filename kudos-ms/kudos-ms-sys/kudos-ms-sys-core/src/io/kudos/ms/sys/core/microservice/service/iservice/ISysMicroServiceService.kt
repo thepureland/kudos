@@ -76,5 +76,19 @@ interface ISysMicroServiceService : IBaseCrudService<String, SysMicroService> {
      */
     fun updateActive(code: String, active: Boolean): Boolean
 
+    /**
+     * 从缓存获取所有启用的原子服务编码（`atomicService=true` 且 `active=true`）。
+     *
+     * @return 原子服务编码列表
+     */
+    fun getActiveAtomicServiceCodes(): List<String>
+
+    /**
+     * 从缓存获取所有启用的非原子微服务编码（`atomicService=false` 且 `active=true`）。
+     *
+     * @return 微服务编码列表
+     */
+    fun getActiveMicroServiceCodes(): List<String>
+
 
 }

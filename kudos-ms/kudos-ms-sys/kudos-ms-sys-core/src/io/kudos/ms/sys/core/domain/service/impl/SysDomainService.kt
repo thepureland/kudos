@@ -15,10 +15,15 @@ import io.kudos.ms.sys.common.domain.vo.request.SysDomainQuery
 import io.kudos.ms.sys.common.domain.vo.response.SysDomainDetail
 import io.kudos.ms.sys.common.domain.vo.response.SysDomainRow
 import io.kudos.ms.sys.core.domain.cache.DomainByNameCache
+import io.kudos.ms.sys.core.domain.event.SysDomainBatchDeleted
+import io.kudos.ms.sys.core.domain.event.SysDomainDeleted
+import io.kudos.ms.sys.core.domain.event.SysDomainInserted
+import io.kudos.ms.sys.core.domain.event.SysDomainUpdated
 import io.kudos.ms.sys.core.tenant.cache.TenantByIdCache
 import io.kudos.ms.sys.core.domain.dao.SysDomainDao
 import io.kudos.ms.sys.core.domain.model.po.SysDomain
 import io.kudos.ms.sys.core.domain.service.iservice.ISysDomainService
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import kotlin.reflect.KClass
@@ -36,10 +41,12 @@ open class SysDomainService(
     dao: SysDomainDao,
     private val domainByNameCache: DomainByNameCache,
     private val tenantByIdCache: TenantByIdCache,
+    private val eventPublisher: ApplicationEventPublisher,
 ) : BaseCrudService<String, SysDomain, SysDomainDao>(dao), ISysDomainService {
 
     private val log = LogFactory.getLog(this::class)
 
+    @Transactional(readOnly = true)
     override fun <R : Any> get(id: String, returnType: KClass<R>): R? {
         val result = if (returnType == SysDomainCacheEntry::class) {
             @Suppress("UNCHECKED_CAST")
@@ -53,6 +60,7 @@ open class SysDomainService(
         return result
     }
 
+    @Transactional(readOnly = true)
     override fun pagingSearch(listSearchPayload: ListSearchPayload): PagingSearchResult<*> {
         val result = super.pagingSearch(listSearchPayload)
         val rows = result.data
@@ -68,11 +76,14 @@ open class SysDomainService(
         return result
     }
 
+    @Transactional(readOnly = true)
     override fun getDomainFromCache(domainName: String): SysDomainCacheEntry? = domainByNameCache.getDomain(domainName)
 
+    @Transactional(readOnly = true)
     override fun getDomainsByTenantId(tenantId: String): List<SysDomainRow> =
         dao.search(SysDomainQuery(tenantId = tenantId), SysDomainRow::class)
 
+    @Transactional(readOnly = true)
     override fun getDomainsBySystemCode(systemCode: String): List<SysDomainRow> =
         dao.searchAs(Criteria(SysDomain::systemCode eq systemCode))
 
@@ -88,7 +99,7 @@ open class SysDomainService(
             successMessage = "更新id为${id}的域名的启用状态为${active}。",
             failureMessage = "更新id为${id}的域名的启用状态为${active}失败！",
         ) {
-            domainByNameCache.syncOnUpdate(null, id)
+            eventPublisher.publishEvent(SysDomainUpdated(id = id))
         }
     }
 
@@ -96,7 +107,7 @@ open class SysDomainService(
     override fun insert(any: Any): String {
         val id = super.insert(any)
         completeCrudInsert(log, "新增id为${id}的域名。") {
-            domainByNameCache.syncOnInsert(any, id)
+            eventPublisher.publishEvent(SysDomainInserted(id = id))
         }
         return id
     }
@@ -110,7 +121,7 @@ open class SysDomainService(
             successMessage = "更新id为${id}的域名。",
             failureMessage = "更新id为${id}的域名失败！",
         ) {
-            domainByNameCache.syncOnUpdate(any, id)
+            eventPublisher.publishEvent(SysDomainUpdated(id = id))
         }
     }
 
@@ -127,7 +138,7 @@ open class SysDomainService(
             successMessage = "删除id为${id}的域名。",
             failureMessage = "删除id为${id}的域名失败！",
         ) {
-            domainByNameCache.syncOnDelete(domain, id)
+            eventPublisher.publishEvent(SysDomainDeleted(id = id, domain = domain.domain))
         }
     }
 
@@ -138,7 +149,9 @@ open class SysDomainService(
         val domainNames = domains.map { it.domain }.toSet()
         val count = super.batchDelete(ids)
         log.debug("批量删除域名，期望删除${ids.size}条，实际删除${count}条。")
-        domainByNameCache.syncOnBatchDelete(ids, domainNames)
+        if (count > 0) {
+            eventPublisher.publishEvent(SysDomainBatchDeleted(ids = ids, domains = domainNames))
+        }
         return count
     }
 

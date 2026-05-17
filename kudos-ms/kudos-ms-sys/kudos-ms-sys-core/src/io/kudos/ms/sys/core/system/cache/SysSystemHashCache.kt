@@ -8,8 +8,14 @@ import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.sys.common.system.vo.SysSystemCacheEntry
 import io.kudos.ms.sys.core.system.dao.SysSystemDao
+import io.kudos.ms.sys.core.system.event.SysSystemBatchDeleted
+import io.kudos.ms.sys.core.system.event.SysSystemDeleted
+import io.kudos.ms.sys.core.system.event.SysSystemInserted
+import io.kudos.ms.sys.core.system.event.SysSystemUpdated
 import jakarta.annotation.Resource
 import org.springframework.stereotype.Component
+import org.springframework.transaction.event.TransactionPhase
+import org.springframework.transaction.event.TransactionalEventListener
 
 /**
  * 系统（按 code）Hash 缓存处理器。
@@ -180,4 +186,16 @@ open class SysSystemHashCache : AbstractHashCacheHandler<SysSystemCacheEntry>() 
         val cache = hashCache()
         codes.forEach { cache.deleteById(CACHE_NAME, it, SysSystemCacheEntry::class, FILTERABLE_PROPERTIES, emptySet()) }
     }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: SysSystemInserted): Unit = syncOnInsert(event.id)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: SysSystemUpdated): Unit = syncOnUpdate(event.id)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: SysSystemDeleted): Unit = syncOnDelete(event.id)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: SysSystemBatchDeleted): Unit = syncOnBatchDelete(event.ids)
 }

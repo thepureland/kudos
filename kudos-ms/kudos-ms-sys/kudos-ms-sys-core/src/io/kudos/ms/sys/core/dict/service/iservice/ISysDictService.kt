@@ -29,6 +29,15 @@ interface ISysDictService : IBaseCrudService<String, SysDict> {
     fun getDictsFromCacheByAtomicServiceCode(atomicServiceCode: String, activeOnly: Boolean = true): List<SysDictCacheEntry>
 
     /**
+     * 按原子服务编码取得字典 id 到字典类型的映射。
+     *
+     * @param atomicServiceCode 原子服务编码
+     * @param activeOnly true 时仅返回启用项
+     * @return Map<字典 id, 字典类型>
+     */
+    fun getDictTypesByAtomicServiceCode(atomicServiceCode: String, activeOnly: Boolean = true): Map<String, String>
+
+    /**
      * 根据原子服务编码和字典类型直查库得到列表行
      */
     fun getDictByAtomicServiceAndType(atomicServiceCode: String, dictType: String): SysDictRow?

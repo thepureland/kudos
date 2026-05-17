@@ -23,27 +23,33 @@ open class SysTenantResourceService(
 
     private val log = LogFactory.getLog(this::class)
 
+    @Transactional(readOnly = true)
     override fun getResourceIdsByTenantId(tenantId: String): Set<String> = dao.searchResourceIdsByTenantId(tenantId)
 
+    @Transactional(readOnly = true)
     override fun getTenantIdsByResourceId(resourceId: String): Set<String> = dao.searchTenantIdsByResourceId(resourceId)
 
     @Transactional
     override fun batchBind(tenantId: String, resourceIds: Collection<String>): Int {
         if (resourceIds.isEmpty()) return 0
 
-        var count = 0
-        resourceIds.forEach { resourceId ->
-            if (!exists(tenantId, resourceId)) {
-                val relation = SysTenantResource {
-                    this.tenantId = tenantId
-                    this.resourceId = resourceId
-                }
-                dao.insert(relation)
-                count++
+        // 一次 SELECT 把已存在的关系拿全，差集只对新增 ID 做一次 batchInsert，把原 N+1 (1 exists + 1 insert per id)
+        // 折叠到 2 次 SQL。
+        val existing = dao.searchResourceIdsByTenantId(tenantId)
+        val newResourceIds = resourceIds.toSet() - existing
+        if (newResourceIds.isEmpty()) {
+            log.debug("批量绑定租户${tenantId}与${resourceIds.size}个资源的关系，全部已存在，无新增。")
+            return 0
+        }
+        val relations = newResourceIds.map {
+            SysTenantResource {
+                this.tenantId = tenantId
+                this.resourceId = it
             }
         }
-        log.debug("批量绑定租户${tenantId}与${resourceIds.size}个资源的关系，成功绑定${count}条。")
-        return count
+        dao.batchInsert(relations)
+        log.debug("批量绑定租户${tenantId}与${resourceIds.size}个资源的关系，成功绑定${newResourceIds.size}条。")
+        return newResourceIds.size
     }
 
     @Transactional
@@ -58,5 +64,6 @@ open class SysTenantResourceService(
         return success
     }
 
+    @Transactional(readOnly = true)
     override fun exists(tenantId: String, resourceId: String): Boolean = dao.exists(tenantId, resourceId)
 }

@@ -11,10 +11,15 @@ import io.kudos.ms.user.core.org.cache.UserIdsByOrgIdCache
 import io.kudos.ms.user.core.org.cache.UserOrgHashCache
 import io.kudos.ms.user.core.org.dao.UserOrgDao
 import io.kudos.ms.user.core.account.dao.UserOrgUserDao
+import io.kudos.ms.user.core.org.event.UserOrgBatchDeleted
+import io.kudos.ms.user.core.org.event.UserOrgDeleted
+import io.kudos.ms.user.core.org.event.UserOrgInserted
+import io.kudos.ms.user.core.org.event.UserOrgUpdated
 import io.kudos.ms.user.core.org.model.po.UserOrg
 import io.kudos.ms.user.core.org.service.iservice.IUserOrgService
 import jakarta.annotation.Resource
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -45,8 +50,12 @@ open class UserOrgService(
     @Autowired
     private lateinit var userIdsByOrgIdCache: UserIdsByOrgIdCache
 
+    @Autowired
+    private lateinit var eventPublisher: ApplicationEventPublisher
+
     private val log = LogFactory.getLog(this::class)
 
+    @Transactional(readOnly = true)
     override fun getOrgAdmins(orgId: String): List<UserAccountCacheEntry> {
         val adminUserIds = userOrgUserDao.searchAdminUserIdsByOrgId(orgId)
         
@@ -62,14 +71,17 @@ open class UserOrgService(
         return adminUserIds.mapNotNull { usersMap[it] }
     }
 
+    @Transactional(readOnly = true)
     override fun getOrgUserIds(orgId: String): List<String> {
         return userIdsByOrgIdCache.getUserIds(orgId)
     }
 
+    @Transactional(readOnly = true)
     override fun getChildOrgIds(orgId: String): List<String> {
         return dao.searchActiveChildOrgIds(orgId)
     }
 
+    @Transactional(readOnly = true)
     override fun getOrgUsers(orgId: String): List<UserAccountCacheEntry> {
         val userIds = getOrgUserIds(orgId)
         if (userIds.isEmpty()) {
@@ -79,11 +91,13 @@ open class UserOrgService(
         return userIds.mapNotNull { usersMap[it] }
     }
 
+    @Transactional(readOnly = true)
     override fun isUserInOrg(userId: String, orgId: String): Boolean {
         val userIds = getOrgUserIds(orgId)
         return userIds.contains(userId)
     }
 
+    @Transactional(readOnly = true)
     override fun getChildOrgs(orgId: String): List<UserOrgCacheEntry> {
         val childOrgIds = getChildOrgIds(orgId)
         if (childOrgIds.isEmpty()) {
@@ -93,16 +107,19 @@ open class UserOrgService(
         return childOrgIds.mapNotNull { orgsMap[it] }
     }
 
+    @Transactional(readOnly = true)
     override fun getParentOrg(orgId: String): UserOrgCacheEntry? {
         val org = userOrgHashCache.getOrgById(orgId) ?: return null
         val parentId = org.parentId ?: return null
         return userOrgHashCache.getOrgById(parentId)
     }
 
+    @Transactional(readOnly = true)
     override fun getOrgRecord(id: String): UserOrgCacheEntry? {
         return userOrgHashCache.getOrgById(id)
     }
 
+    @Transactional(readOnly = true)
     override fun getOrgsByTenantId(tenantId: String): List<UserOrgCacheEntry> {
         val orgIds = userOrgHashCache.getOrgsByTenantId(tenantId).map { it.id }
         if (orgIds.isEmpty()) {
@@ -112,18 +129,35 @@ open class UserOrgService(
         return orgIds.mapNotNull { orgsMap[it] }
     }
 
+    @Transactional(readOnly = true)
     override fun getOrgTree(tenantId: String, parentId: String?): List<UserOrgTreeRow> {
         // 如果指定了parentId，只查询该父机构下的直接子机构；否则查询租户下全部启用机构
         val orgs = dao.searchActiveOrgsByTenantId(tenantId, parentId)
         
-        // 转换为树节点
-        val treeNodes = orgs.map { org ->
-            val cacheItem = userOrgHashCache.getOrgById(org.id) ?: return@map null
-            UserOrgTreeRow().apply {
-                BeanKit.copyProperties(cacheItem, this)
-                this.children = mutableListOf()
-            }
-        }.filterNotNull()
+        // 转换为树节点（UserOrgTreeRow 为不可变 data class，全部 val，用构造器传值；BeanKit.copyProperties 走 setter
+        // 在此处不可用，会留下空 row）
+        val treeNodes = orgs.mapNotNull { org ->
+            val cacheItem = userOrgHashCache.getOrgById(org.id) ?: return@mapNotNull null
+            UserOrgTreeRow(
+                id = cacheItem.id,
+                name = cacheItem.name,
+                shortName = cacheItem.shortName,
+                tenantId = cacheItem.tenantId,
+                parentId = cacheItem.parentId,
+                orgTypeDictCode = cacheItem.orgTypeDictCode,
+                sortNum = cacheItem.sortNum,
+                remark = cacheItem.remark,
+                active = cacheItem.active,
+                builtIn = cacheItem.builtIn,
+                createUserId = cacheItem.createUserId,
+                createUserName = cacheItem.createUserName,
+                createTime = cacheItem.createTime,
+                updateUserId = cacheItem.updateUserId,
+                updateUserName = cacheItem.updateUserName,
+                updateTime = cacheItem.updateTime,
+                children = mutableListOf(),
+            )
+        }
         
         // 如果指定了parentId，直接返回子机构列表（不构建树）
         if (parentId != null) {
@@ -155,6 +189,7 @@ open class UserOrgService(
         return rootNodes
     }
 
+    @Transactional(readOnly = true)
     override fun getAllAncestorOrgIds(orgId: String): List<String> {
         val ancestors = mutableListOf<String>()
         var currentOrg = userOrgHashCache.getOrgById(orgId) ?: return emptyList()
@@ -168,6 +203,7 @@ open class UserOrgService(
         return ancestors
     }
 
+    @Transactional(readOnly = true)
     override fun getAllDescendantOrgIds(orgId: String): List<String> {
         val descendants = mutableListOf<String>()
         val queue = mutableListOf(orgId)
@@ -187,11 +223,7 @@ open class UserOrgService(
         val success = dao.updateProperties(id, mapOf(UserOrg::active.name to active))
         if (success) {
             log.debug("更新id为${id}的机构的启用状态为${active}。")
-            userOrgHashCache.syncOnUpdate(id)
-//            val existingOrg = dao.get(id)
-//            if (existingOrg != null) {
-//                orgIdsByTenantIdCache.syncOnUpdateActive(id, active)
-//            }
+            eventPublisher.publishEvent(UserOrgUpdated(id))
         } else {
             log.error("更新id为${id}的机构的启用状态为${active}失败！")
         }
@@ -209,11 +241,7 @@ open class UserOrgService(
         val success = dao.updateProperties(id, props)
         if (success) {
             log.debug("移动id为${id}的机构到父机构${newParentId}，排序号${newSortNum}。")
-            userOrgHashCache.syncOnUpdate(id)
-//            val existingOrg = dao.get(id)
-//            if (existingOrg != null) {
-//                orgIdsByTenantIdCache.syncOnUpdate(existingOrg, id)
-//            }
+            eventPublisher.publishEvent(UserOrgUpdated(id))
         } else {
             log.error("移动id为${id}的机构失败！")
         }
@@ -224,7 +252,7 @@ open class UserOrgService(
     override fun insert(any: Any): String {
         val id = super.insert(any)
         log.debug("新增id为${id}的机构。")
-        userOrgHashCache.syncOnInsert(id)
+        eventPublisher.publishEvent(UserOrgInserted(id))
         return id
     }
 
@@ -234,7 +262,7 @@ open class UserOrgService(
         val id = BeanKit.getProperty(any, UserOrg::id.name) as String
         if (success) {
             log.debug("更新id为${id}的机构。")
-            userOrgHashCache.syncOnUpdate(id)
+            eventPublisher.publishEvent(UserOrgUpdated(id))
         } else {
             log.error("更新id为${id}的机构失败！")
         }
@@ -251,7 +279,7 @@ open class UserOrgService(
         val success = super.deleteById(id)
         if (success) {
             log.debug("删除id为${id}的机构。")
-            userOrgHashCache.syncOnDelete(id)
+            eventPublisher.publishEvent(UserOrgDeleted(id))
         } else {
             log.error("删除id为${id}的机构失败！")
         }
@@ -260,11 +288,11 @@ open class UserOrgService(
 
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {
-//        val orgs = dao.inSearchById(ids)
-//        orgs.map { it.tenantId }.toSet()
         val count = super.batchDelete(ids)
         log.debug("批量删除机构，期望删除${ids.size}条，实际删除${count}条。")
-        userOrgHashCache.syncOnBatchDelete(ids)
+        if (ids.isNotEmpty()) {
+            eventPublisher.publishEvent(UserOrgBatchDeleted(ids))
+        }
         return count
     }
 

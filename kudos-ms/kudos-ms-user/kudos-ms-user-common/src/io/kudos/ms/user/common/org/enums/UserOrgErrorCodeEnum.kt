@@ -17,7 +17,16 @@ enum class UserOrgErrorCodeEnum(
 ) : IErrorCodeEnum {
 
     /** 未定义错误 */
-    UNSPECIFIED("UNSPECIFIED", "未定义错误");
+    UNSPECIFIED("UNSPECIFIED", "未定义错误"),
+
+    /** 按主键查找机构失败 */
+    ORG_NOT_FOUND("ORG_NOT_FOUND", "机构不存在"),
+
+    /** (tenant_id, code) 已被占用 */
+    ORG_CODE_ALREADY_EXISTS("ORG_CODE_ALREADY_EXISTS", "该租户下机构编码已存在"),
+
+    /** 父机构不存在或已禁用 */
+    PARENT_ORG_NOT_FOUND("PARENT_ORG_NOT_FOUND", "父机构不存在或已禁用");
 
     override val i18nKeyPrefix: String
         get() = "user.error-msg.org"

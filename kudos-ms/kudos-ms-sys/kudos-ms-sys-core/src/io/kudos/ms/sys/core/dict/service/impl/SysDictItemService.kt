@@ -7,10 +7,16 @@ import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.model.contract.entity.IIdEntity
 import io.kudos.ms.sys.common.dict.vo.SysDictItemCacheEntry
+import io.kudos.ms.sys.common.dict.vo.response.SysDictItemNode
 import io.kudos.ms.sys.core.dict.cache.SysDictItemHashCache
 import io.kudos.ms.sys.core.dict.dao.SysDictItemDao
+import io.kudos.ms.sys.core.dict.event.SysDictItemBatchDeleted
+import io.kudos.ms.sys.core.dict.event.SysDictItemDeleted
+import io.kudos.ms.sys.core.dict.event.SysDictItemInserted
+import io.kudos.ms.sys.core.dict.event.SysDictItemUpdated
 import io.kudos.ms.sys.core.dict.model.po.SysDictItem
 import io.kudos.ms.sys.core.dict.service.iservice.ISysDictItemService
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.LinkedHashMap
@@ -29,10 +35,12 @@ import kotlin.reflect.KClass
 open class SysDictItemService(
     dao: SysDictItemDao,
     private val sysDictItemHashCache: SysDictItemHashCache,
+    private val eventPublisher: ApplicationEventPublisher,
 ) : BaseCrudService<String, SysDictItem, SysDictItemDao>(dao), ISysDictItemService {
 
     private val log = LogFactory.getLog(this::class)
 
+    @Transactional(readOnly = true)
     override fun <R : Any> get(id: String, returnType: KClass<R>): R? {
         return if (returnType == SysDictItemCacheEntry::class) {
             @Suppress("UNCHECKED_CAST")
@@ -42,11 +50,14 @@ open class SysDictItemService(
         }
     }
 
+    @Transactional(readOnly = true)
     override fun getDictItemFromCache(id: String): SysDictItemCacheEntry? = sysDictItemHashCache.getDictItemById(id)
 
+    @Transactional(readOnly = true)
     override fun getDictItemsFromCache(dictType: String, atomicServiceCode: String): List<SysDictItemCacheEntry> =
         sysDictItemHashCache.getDictItems(atomicServiceCode, dictType)
 
+    @Transactional(readOnly = true)
     override fun batchGetDictItemsFromCache(
         dictTypesByAtomicServiceCode: Map<String, Collection<String>>
     ): Map<String, Map<String, List<SysDictItemCacheEntry>>> {
@@ -57,10 +68,12 @@ open class SysDictItemService(
         }
     }
 
+    @Transactional(readOnly = true)
     override fun getDictItemMapFromCache(dictType: String, atomicServiceCode: String): LinkedHashMap<String, String> =
         sysDictItemHashCache.getDictItems(atomicServiceCode, dictType)
             .associateTo(LinkedHashMap()) { it.itemCode to it.itemName }
 
+    @Transactional(readOnly = true)
     override fun batchGetDictItemMapFromCache(
         dictTypesByAtomicServiceCode: Map<String, Collection<String>>,
     ): Map<String, Map<String, LinkedHashMap<String, String>>> {
@@ -72,6 +85,7 @@ open class SysDictItemService(
         }
     }
 
+    @Transactional(readOnly = true)
     override fun transDictItemNameFromCache(
         dictType: String,
         itemCode: String,
@@ -81,6 +95,7 @@ open class SysDictItemService(
         return items.firstOrNull { it.itemCode == itemCode }?.itemName
     }
 
+    @Transactional(readOnly = true)
     override fun fetchAllParentIds(itemId: String): List<String> {
         val results = mutableListOf<String>()
         recursionFindAllParentId(itemId, results)
@@ -95,15 +110,17 @@ open class SysDictItemService(
         recursionFindAllChildId(id, childItemIds)
         if (childItemIds.isNotEmpty()) {
             dao.batchDelete(childItemIds)
-            sysDictItemHashCache.syncOnBatchDelete(childItemIds)
+            eventPublisher.publishEvent(SysDictItemBatchDeleted(ids = childItemIds))
         }
         val success = dao.deleteById(id)
         if (success) {
-            sysDictItemHashCache.syncOnDelete(
-                id,
-                cacheEntry?.atomicServiceCode ?: "",
-                cacheEntry?.dictType,
-                cacheEntry?.itemCode
+            eventPublisher.publishEvent(
+                SysDictItemDeleted(
+                    id = id,
+                    atomicServiceCode = cacheEntry?.atomicServiceCode ?: "",
+                    dictType = cacheEntry?.dictType,
+                    itemCode = cacheEntry?.itemCode,
+                )
             )
         } else {
             log.error("删除id为${id}的字典项失败！")
@@ -123,7 +140,7 @@ open class SysDictItemService(
             successMessage = "更新id为${dictItemId}的字典项的启用状态为${active}。",
             failureMessage = "更新id为${dictItemId}的字典项的启用状态为${active}失败！",
         ) {
-            sysDictItemHashCache.syncOnUpdate(dictItemId)
+            eventPublisher.publishEvent(SysDictItemUpdated(id = dictItemId))
         }
     }
 
@@ -131,7 +148,7 @@ open class SysDictItemService(
     override fun insert(any: Any): String {
         val id = super.insert(any)
         completeCrudInsert(log, "新增id为${id}的字典项。") {
-            sysDictItemHashCache.syncOnInsert(any, id)
+            eventPublisher.publishEvent(SysDictItemInserted(id = id))
         }
         return id
     }
@@ -145,7 +162,7 @@ open class SysDictItemService(
             successMessage = "更新id为${id}的字典项。",
             failureMessage = "更新id为${id}的字典项失败！",
         ) {
-            sysDictItemHashCache.syncOnUpdate(id)
+            eventPublisher.publishEvent(SysDictItemUpdated(id = id))
         }
     }
 
@@ -162,11 +179,13 @@ open class SysDictItemService(
             successMessage = "删除id为${id}的字典项。",
             failureMessage = "删除id为${id}的字典项失败！",
         ) {
-            sysDictItemHashCache.syncOnDelete(
-                id,
-                entry?.atomicServiceCode ?: "",
-                entry?.dictType,
-                entry?.itemCode
+            eventPublisher.publishEvent(
+                SysDictItemDeleted(
+                    id = id,
+                    atomicServiceCode = entry?.atomicServiceCode ?: "",
+                    dictType = entry?.dictType,
+                    itemCode = entry?.itemCode,
+                )
             )
         }
     }
@@ -175,7 +194,9 @@ open class SysDictItemService(
     override fun batchDelete(ids: Collection<String>): Int {
         val count = super.batchDelete(ids)
         log.debug("批量删除字典项，期望删除${ids.size}条，实际删除${count}条。")
-        sysDictItemHashCache.syncOnBatchDelete(ids)
+        if (count > 0) {
+            eventPublisher.publishEvent(SysDictItemBatchDeleted(ids = ids))
+        }
         return count
     }
 
@@ -207,10 +228,11 @@ open class SysDictItemService(
             successMessage = "移动字典项${id}到父节点${newParentId}，排序号${newOrderNum}。",
             failureMessage = "移动字典项${id}失败！",
         ) {
-            sysDictItemHashCache.syncOnUpdate(id)
+            eventPublisher.publishEvent(SysDictItemUpdated(id = id))
         }
     }
 
+    @Transactional(readOnly = true)
     override fun getDirectChildrenOfDictFromCache(
         atomicServiceCode: String,
         dictType: String,
@@ -220,6 +242,7 @@ open class SysDictItemService(
             .let { items -> if (activeOnly) items.filter { it.active } else items }
             .filter { it.parentId == null }
 
+    @Transactional(readOnly = true)
     override fun getDirectChildrenOfItemFromCache(
         atomicServiceCode: String,
         dictType: String,
@@ -230,8 +253,28 @@ open class SysDictItemService(
             ?.let { getDirectChildrenOfItemFromCache(it.id, activeOnly) }
             ?: emptyList()
 
+    @Transactional(readOnly = true)
     override fun getDirectChildrenOfItemFromCache(parentId: String, activeOnly: Boolean): List<SysDictItemCacheEntry> =
         sysDictItemHashCache.getDictItems(parentId).let { items -> if (activeOnly) items.filter { it.active } else items }
+
+    @Transactional(readOnly = true)
+    override fun getDirectChildrenOfDictAsNodes(
+        atomicServiceCode: String,
+        dictType: String,
+        activeOnly: Boolean,
+    ): List<SysDictItemNode> =
+        getDirectChildrenOfDictFromCache(atomicServiceCode, dictType, activeOnly)
+            .map { SysDictItemNode(it.id, it.itemCode, it.itemName) }
+
+    @Transactional(readOnly = true)
+    override fun getDirectChildrenOfItemAsNodes(
+        atomicServiceCode: String,
+        dictType: String,
+        itemCode: String,
+        activeOnly: Boolean,
+    ): List<SysDictItemNode> =
+        getDirectChildrenOfItemFromCache(atomicServiceCode, dictType, itemCode, activeOnly)
+            .map { SysDictItemNode(it.id, it.itemCode, it.itemName) }
 
     private fun requireDictItemId(any: Any): String =
         (any as? IIdEntity<*>)?.id as? String

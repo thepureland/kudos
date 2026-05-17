@@ -9,9 +9,13 @@ import io.kudos.ms.auth.core.role.dao.AuthRoleUserDao
 import io.kudos.ms.user.common.account.vo.UserAccountCacheEntry
 import io.kudos.ms.user.core.account.cache.UserAccountHashCache
 import io.kudos.ms.user.core.account.dao.UserAccountDao
+import io.kudos.ms.user.core.account.event.UserAccountBatchDeleted
+import io.kudos.ms.user.core.account.event.UserAccountDeleted
 import jakarta.annotation.Resource
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
+import org.springframework.transaction.event.TransactionPhase
+import org.springframework.transaction.event.TransactionalEventListener
 
 
 /**
@@ -20,7 +24,7 @@ import org.springframework.stereotype.Component
  * 1.数据来源表：user_account + auth_role_user + auth_role_resource
  * 2.缓存各租户下指定用户拥有的所有资源ID集合
  * 3.缓存的key为：tenantId::username
- * 4.缓存的value为：资源ID集合（Set<String>）
+ * 4.缓存的value为：资源ID集合（List<String>）
  * 5.查询流程：用户 → 角色 → 资源（三级关联）
  *
  * @author K
@@ -28,7 +32,7 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<Set<String>>() {
+open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<List<String>>() {
 
     @Resource
     private lateinit var userAccountHashCache: UserAccountHashCache
@@ -48,7 +52,7 @@ open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<
 
     override fun cacheName(): String = CACHE_NAME
 
-    override fun doReload(key: String): Set<String> {
+    override fun doReload(key: String): List<String> {
         require(key.contains(Consts.CACHE_KEY_DEFAULT_DELIMITER)) {
             "缓存${CACHE_NAME}的key格式必须是 租户ID${Consts.CACHE_KEY_DEFAULT_DELIMITER}用户名"
         }
@@ -105,7 +109,7 @@ open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<
         key = "#tenantId.concat('${Consts.CACHE_KEY_DEFAULT_DELIMITER}').concat(#username)",
         unless = "#result == null || #result.isEmpty()"
     )
-    open fun getResourceIds(tenantId: String, username: String): Set<String> {
+    open fun getResourceIds(tenantId: String, username: String): List<String> {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("缓存中不存在租户${tenantId}用户${username}的资源ID，从数据库中加载...")
         }
@@ -115,18 +119,18 @@ open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<
 
         if (userId == null) {
             log.debug("找不到租户${tenantId}的用户${username}。")
-            return emptySet()
+            return emptyList()
         }
 
         val roleIds = authRoleUserDao.searchRoleIdsByUserId(userId)
         if (roleIds.isEmpty()) {
             log.debug("用户${username}没有分配任何角色。")
-            return emptySet()
+            return emptyList()
         }
 
         val resultList = authRoleResourceDao.searchResourceIdsByRoleIds(roleIds)
         log.debug("从数据库加载了租户${tenantId}用户${username}的${roleIds.size}个角色，共${resultList.size}条资源ID（去重后）。")
-        return resultList
+        return resultList.toList()
     }
 
     /**
@@ -194,23 +198,6 @@ open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<
     }
 
     /**
-     * 用户删除后同步缓存
-     *
-     * @param tenantId 租户ID
-     * @param username 用户名
-     */
-    open fun syncOnUserDelete(tenantId: String, username: String) {
-        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("删除租户${tenantId}用户${username}后，同步从${CACHE_NAME}缓存中踢除...")
-            KeyValueCacheKit.evict(CACHE_NAME, getKey(tenantId, username))
-            log.debug("${CACHE_NAME}缓存同步完成。")
-        }
-        // 同时从用户 Hash 缓存中移除该用户，确保后续 getResourceIds 时按 tenantId+username 查不到已删除用户，返回空列表
-        val userId = userAccountHashCache.getUsersByTenantIdAndUsername(tenantId, username)?.id
-        userId?.let { userAccountHashCache.syncOnDelete(it) }
-    }
-
-    /**
      * 返回参数拼接后的key
      *
      * @param tenantId 租户ID
@@ -219,6 +206,20 @@ open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<
      */
     fun getKey(tenantId: String, username: String): String {
         return "${tenantId}${Consts.CACHE_KEY_DEFAULT_DELIMITER}${username}"
+    }
+
+    /** 仅做本地 (tenantId, username) 失效；UserAccountHashCache 已独立订阅 UserAccountDeleted。 */
+    private fun evictBy(tenantId: String, username: String) {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
+        KeyValueCacheKit.evict(CACHE_NAME, getKey(tenantId, username))
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: UserAccountDeleted): Unit = evictBy(event.tenantId, event.username)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: UserAccountBatchDeleted) {
+        event.items.forEach { evictBy(it.tenantId, it.username) }
     }
 
     private val log = LogFactory.getLog(this::class)

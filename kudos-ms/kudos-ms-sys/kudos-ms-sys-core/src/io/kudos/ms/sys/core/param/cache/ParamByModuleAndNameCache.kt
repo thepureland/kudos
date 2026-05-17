@@ -9,10 +9,16 @@ import io.kudos.base.query.eq
 import io.kudos.context.support.Consts
 import io.kudos.ms.sys.common.param.vo.SysParamCacheEntry
 import io.kudos.ms.sys.core.param.dao.SysParamDao
+import io.kudos.ms.sys.core.param.event.SysParamBatchDeleted
+import io.kudos.ms.sys.core.param.event.SysParamDeleted
+import io.kudos.ms.sys.core.param.event.SysParamInserted
+import io.kudos.ms.sys.core.param.event.SysParamUpdated
 import io.kudos.ms.sys.core.param.model.po.SysParam
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
+import org.springframework.transaction.event.TransactionPhase
+import org.springframework.transaction.event.TransactionalEventListener
 
 
 /**
@@ -196,6 +202,29 @@ open class ParamByModuleAndNameCache : AbstractKeyValueCacheHandler<SysParamCach
     fun getKey(atomicServiceCode: String, paramName: String): String {
         return "${atomicServiceCode}${Consts.CACHE_KEY_DEFAULT_DELIMITER}${paramName}"
     }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: SysParamInserted) {
+        // AFTER_COMMIT 后 DB 行已可见，直接按 id 取 dims；避免事件需要携带模块+参数名
+        val param = sysParamDao.get(event.id) ?: return
+        syncOnInsert(param, event.id)
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: SysParamUpdated) {
+        val param = sysParamDao.get(event.id) ?: return
+        syncOnUpdate(param, event.id)
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: SysParamDeleted) {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
+        KeyValueCacheKit.evict(CACHE_NAME, getKey(event.atomicServiceCode, event.paramName))
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: SysParamBatchDeleted): Unit =
+        syncOnBatchDelete(event.ids, event.moduleAndNames)
 
     private val log = LogFactory.getLog(this::class)
 

@@ -61,5 +61,19 @@ interface ISysSystemService : IBaseCrudService<String, SysSystem> {
      */
     fun getFullSystemTree(): List<IdAndNameTreeNode<String>>
 
+    /**
+     * 从缓存获取所有启用的子系统编码（active=true 且 subSystem=true）。
+     *
+     * @return 子系统编码列表
+     */
+    fun getActiveSubSystemCodes(): List<String>
+
+    /**
+     * 从缓存获取所有启用的顶级系统编码（active=true 且 subSystem=false）。
+     *
+     * @return 顶级系统编码列表
+     */
+    fun getActiveSystemCodes(): List<String>
+
 
 }

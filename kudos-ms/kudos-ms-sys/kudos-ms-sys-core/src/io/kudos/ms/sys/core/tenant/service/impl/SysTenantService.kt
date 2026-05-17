@@ -6,6 +6,7 @@ import io.kudos.ms.sys.core.platform.service.impl.completeCrudUpdate
 import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.model.contract.entity.IIdEntity
+import io.kudos.base.model.vo.IdAndName
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.PagingSearchResult
 import io.kudos.base.query.eq
@@ -18,10 +19,15 @@ import io.kudos.ms.sys.common.tenant.vo.response.SysTenantRow
 import io.kudos.ms.sys.core.tenant.cache.SysTenantSystemHashCache
 import io.kudos.ms.sys.core.tenant.cache.TenantByIdCache
 import io.kudos.ms.sys.core.tenant.dao.SysTenantDao
+import io.kudos.ms.sys.core.tenant.event.SysTenantBatchDeleted
+import io.kudos.ms.sys.core.tenant.event.SysTenantDeleted
+import io.kudos.ms.sys.core.tenant.event.SysTenantInserted
+import io.kudos.ms.sys.core.tenant.event.SysTenantUpdated
 import io.kudos.ms.sys.core.tenant.model.po.SysTenant
 import io.kudos.ms.sys.core.tenant.model.po.SysTenantSystem
 import io.kudos.ms.sys.core.tenant.service.iservice.ISysTenantService
 import io.kudos.ms.sys.core.tenant.service.iservice.ISysTenantSystemService
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import kotlin.reflect.KClass
@@ -41,10 +47,12 @@ open class SysTenantService(
     private val tenantByIdCache: TenantByIdCache,
     private val sysTenantSystemHashCache: SysTenantSystemHashCache,
     private val sysTenantSystemService: ISysTenantSystemService,
+    private val eventPublisher: ApplicationEventPublisher,
 ) : BaseCrudService<String, SysTenant, SysTenantDao>(dao), ISysTenantService {
 
     private val log = LogFactory.getLog(this::class)
 
+    @Transactional(readOnly = true)
     override fun <R : Any> get(id: String, returnType: KClass<R>): R? {
         return if (returnType == SysTenantCacheEntry::class) {
             @Suppress("UNCHECKED_CAST")
@@ -54,29 +62,41 @@ open class SysTenantService(
         }
     }
 
+    @Transactional(readOnly = true)
     override fun pagingSearch(listSearchPayload: ListSearchPayload): PagingSearchResult<*> {
         val result = super.pagingSearch(listSearchPayload)
         result.data.filterIsInstance<SysTenantRow>().forEach(::enrichTenantRow)
         return result
     }
 
+    @Transactional(readOnly = true)
     override fun getTenantFromCache(id: String): SysTenantCacheEntry? = tenantByIdCache.getTenantById(id)
 
+    @Transactional(readOnly = true)
     override fun getTenantsFromCacheByIds(ids: Collection<String>): Map<String, SysTenantCacheEntry> =
         ids.takeIf { it.isNotEmpty() }?.let(tenantByIdCache::getTenantsByIds) ?: emptyMap()
 
+    @Transactional(readOnly = true)
     override fun getTenantsForSubSystemFromCache(subSystemCode: String): List<SysTenantCacheEntry> =
         tenantByIdCache.getTenantsByIds(sysTenantSystemHashCache.getTenantIdsBySubSystemCode(subSystemCode)).values.toList()
 
+    @Transactional(readOnly = true)
+    override fun getActiveTenantIdAndNamesForSubSystem(subSystemCode: String): List<IdAndName<String>> =
+        getTenantsForSubSystemFromCache(subSystemCode)
+            .filter { it.active }
+            .map { IdAndName(it.id, it.name) }
+
+    @Transactional(readOnly = true)
     override fun getAllTenantsFromCache(): List<SysTenantCacheEntry> = dao.searchAs()
 
     @Transactional
     override fun insert(any: Any): String {
         val id = super.insert(any)
         completeCrudInsert(log, "新增id为${id}的租户。") {
+            // insertTenantSystemsOnCreate 经 sysTenantSystemService.batchInsert 创建关系；
+            // SysTenantSystemHashCache 由其按需 lazy load 触发回填，无需此处主动 sync。
             insertTenantSystemsOnCreate(any, id)
-            tenantByIdCache.syncOnInsert(any, id)
-            sysTenantSystemHashCache.syncOnInsert(any, id)
+            eventPublisher.publishEvent(SysTenantInserted(id = id))
         }
         return id
     }
@@ -101,7 +121,7 @@ open class SysTenantService(
             failureMessage = "更新id为${id}的租户失败！",
         ) {
             syncTenantSystemsOnUpdate(any)
-            tenantByIdCache.syncOnUpdate(any, id)
+            eventPublisher.publishEvent(SysTenantUpdated(id = id))
         }
     }
 
@@ -117,7 +137,7 @@ open class SysTenantService(
             successMessage = "更新id为${id}的租户的启用状态为${active}。",
             failureMessage = "更新id为${id}的租户的启用状态为${active}失败！",
         ) {
-            tenantByIdCache.syncOnUpdate(tenant, id)
+            eventPublisher.publishEvent(SysTenantUpdated(id = id))
         }
     }
 
@@ -136,7 +156,7 @@ open class SysTenantService(
             successMessage = "删除id为${id}的租户成功！",
             failureMessage = "删除id为${id}的租户失败！",
         ) {
-            tenantByIdCache.syncOnDelete(id)
+            eventPublisher.publishEvent(SysTenantDeleted(id = id))
         }
     }
 
@@ -145,12 +165,16 @@ open class SysTenantService(
         if (sysTenantSystemService.batchDeleteByTenantIds(ids) < 0) return 0
         val count = super.batchDelete(ids)
         log.debug("批量删除租户，期望删除${ids.size}条，实际删除${count}条。")
-        tenantByIdCache.syncOnBatchDelete(ids)
+        if (count > 0) {
+            eventPublisher.publishEvent(SysTenantBatchDeleted(ids = ids))
+        }
         return count
     }
 
+    @Transactional(readOnly = true)
     override fun getTenantRecord(id: String): SysTenantRow? = dao.get(id)?.let(::toSysTenantRow)
 
+    @Transactional(readOnly = true)
     override fun getTenantByName(name: String): SysTenantRow? =
         dao.search(Criteria(SysTenant::name eq name)).firstOrNull()?.let(::toSysTenantRow)
 
@@ -170,8 +194,9 @@ open class SysTenantService(
     }
 
     private fun deleteTenantSystems(tenantId: String) {
+        // sysTenantSystemService.deleteByTenantId 已发布 SysTenantSystemTenantsChanged，
+        // 由 SysTenantSystemHashCache.on(...) 订阅完成失效。
         sysTenantSystemService.deleteByTenantId(tenantId)
-        sysTenantSystemHashCache.syncOnDelete(tenantId)
     }
 
     private fun insertTenantSystemsOnCreate(any: Any, tenantId: String) {
@@ -202,6 +227,7 @@ open class SysTenantService(
         builtIn = tenant.builtIn,
     )
 
+    @Transactional(readOnly = true)
     override fun getSubSystemCodesFromCache(tenantId: String): Set<String> =
         sysTenantSystemHashCache.getSubSystemCodesByTenantId(tenantId)
 

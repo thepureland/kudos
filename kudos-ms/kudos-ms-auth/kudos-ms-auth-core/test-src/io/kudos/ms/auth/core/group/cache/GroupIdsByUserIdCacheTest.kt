@@ -2,6 +2,7 @@ package io.kudos.ms.auth.core.group.cache
 
 import io.kudos.ms.auth.core.group.dao.AuthGroupUserDao
 import io.kudos.ms.auth.core.group.model.po.AuthGroupUser
+import io.kudos.ms.user.core.account.event.UserAccountDeleted
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
@@ -155,7 +156,7 @@ class GroupIdsByUserIdCacheTest : RdbAndRedisCacheTestBase() {
         assertTrue(deleteSuccess, "删除应该成功")
 
         // 同步缓存（模拟用户删除）
-        cacheHandler.syncOnUserDelete(userId)
+        cacheHandler.on(UserAccountDeleted(userId, tenantId = "tenant-x", username = "user-x"))
 
         // 验证缓存已被清除，重新获取应该不包含已删除的用户组
         val groupIdsAfter = cacheHandler.getGroupIds(userId)

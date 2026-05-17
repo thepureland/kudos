@@ -23,7 +23,7 @@ class CaffeineKeyValueCacheManager : AbstractKeyValueCacheManager<CaffeineCache>
         if (ignoreVersion == null || !ignoreVersion) {
             name = versionConfig.getFinalCacheName(name)
         }
-        val caffeineCache = CaffeineCache(name, cacheBuilder.build())
+        val caffeineCache = DrainingCaffeineCache(name, cacheBuilder.build())
         log.debug("初始化本地缓存【{0}】成功！", name)
         return caffeineCache
     }

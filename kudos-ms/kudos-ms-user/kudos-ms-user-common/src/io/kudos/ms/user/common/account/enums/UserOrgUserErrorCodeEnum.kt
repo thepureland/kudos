@@ -17,7 +17,13 @@ enum class UserOrgUserErrorCodeEnum(
 ) : IErrorCodeEnum {
 
     /** 未定义错误 */
-    UNSPECIFIED("UNSPECIFIED", "未定义错误");
+    UNSPECIFIED("UNSPECIFIED", "未定义错误"),
+
+    /** 按 (user_id, org_id) 查找机构-用户关系失败 */
+    ORG_USER_NOT_FOUND("ORG_USER_NOT_FOUND", "机构-用户关系不存在"),
+
+    /** (user_id, org_id) 已存在绑定 */
+    ORG_USER_ALREADY_EXISTS("ORG_USER_ALREADY_EXISTS", "该用户已绑定到该机构");
 
     override val i18nKeyPrefix: String
         get() = "user.error-msg.orguser"

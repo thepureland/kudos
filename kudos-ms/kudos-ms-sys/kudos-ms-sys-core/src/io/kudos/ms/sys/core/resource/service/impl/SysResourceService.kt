@@ -16,16 +16,22 @@ import io.kudos.ms.sys.common.resource.vo.SysResourceCacheEntry
 import io.kudos.ms.sys.common.resource.vo.request.SysResourceQuery
 import io.kudos.ms.sys.common.resource.vo.response.BaseMenuTreeNode
 import io.kudos.ms.sys.common.resource.vo.response.MenuTreeNode
+import io.kudos.ms.sys.common.resource.vo.response.SysResourceDetail
 import io.kudos.ms.sys.common.resource.vo.response.SysResourceRow
 import io.kudos.ms.sys.common.resource.vo.response.SysResourceTreeRow
 import io.kudos.ms.sys.core.dict.cache.SysDictItemHashCache
 import io.kudos.ms.sys.core.resource.cache.SysResourceHashCache
+import io.kudos.ms.sys.core.resource.event.SysResourceBatchDeleted
+import io.kudos.ms.sys.core.resource.event.SysResourceDeleted
+import io.kudos.ms.sys.core.resource.event.SysResourceInserted
+import io.kudos.ms.sys.core.resource.event.SysResourceUpdated
 import io.kudos.ms.sys.core.system.cache.SysSystemHashCache
 import io.kudos.ms.sys.core.resource.dao.SysResourceDao
 import io.kudos.ms.sys.core.resource.model.po.SysResource
 import io.kudos.ms.sys.core.resource.model.table.SysResources
 import io.kudos.ms.sys.core.resource.service.iservice.ISysResourceService
 import org.ktorm.dsl.isNull
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import kotlin.reflect.KClass
@@ -44,10 +50,12 @@ open class SysResourceService(
     private val sysResourceHashCache: SysResourceHashCache,
     private val sysDictItemHashCache: SysDictItemHashCache,
     private val sysSystemHashCache: SysSystemHashCache,
+    private val eventPublisher: ApplicationEventPublisher,
 ) : BaseCrudService<String, SysResource, SysResourceDao>(dao), ISysResourceService {
 
     private val log = LogFactory.getLog(this::class)
 
+    @Transactional(readOnly = true)
     override fun <R : Any> get(id: String, returnType: KClass<R>): R? {
         return if (returnType == SysResourceCacheEntry::class) {
             @Suppress("UNCHECKED_CAST")
@@ -57,23 +65,29 @@ open class SysResourceService(
         }
     }
 
+    @Transactional(readOnly = true)
     override fun getResourceFromCache(id: String): SysResourceCacheEntry? = sysResourceHashCache.getResourceById(id)
 
+    @Transactional(readOnly = true)
     override fun getResourceIdFromCacheBySubSystemAndUrl(subSystemCode: String, url: String): String? =
         sysResourceHashCache.getResourceBySubSystemCodeAndUrl(subSystemCode, url)?.id
 
+    @Transactional(readOnly = true)
     override fun getResourceIdsFromCacheBySubSystemAndType(
         subSystemCode: String,
         resourceTypeDictCode: String
     ): List<String> = sysResourceHashCache.getResourcesBySubSystemCodeAndType(subSystemCode, resourceTypeDictCode)
         .map { it.id }
 
+    @Transactional(readOnly = true)
     override fun getResourcesBySubSystemCode(subSystemCode: String): List<SysResourceRow> =
         dao.searchAs(Criteria(SysResource::subSystemCode eq subSystemCode))
 
+    @Transactional(readOnly = true)
     override fun getChildResources(parentId: String): List<SysResourceRow> =
         dao.searchAs(Criteria(SysResource::parentId eq parentId))
 
+    @Transactional(readOnly = true)
     override fun getResourceTree(subSystemCode: String, parentId: String?): List<SysResourceTreeRow> =
         buildResourceTree(getResourcesBySubSystemCode(subSystemCode), parentId)
 
@@ -89,7 +103,7 @@ open class SysResourceService(
             successMessage = "更新id为${id}的资源的启用状态为${active}。",
             failureMessage = "更新id为${id}的资源的启用状态为${active}失败！",
         ) {
-            sysResourceHashCache.syncOnUpdateActive(id, active)
+            eventPublisher.publishEvent(SysResourceUpdated(id = id))
         }
     }
 
@@ -106,7 +120,7 @@ open class SysResourceService(
             successMessage = "移动资源${id}到父节点${newParentId}，排序号${newOrderNum}。",
             failureMessage = "移动资源${id}失败！",
         ) {
-            sysResourceHashCache.syncOnUpdate(id)
+            eventPublisher.publishEvent(SysResourceUpdated(id = id))
         }
     }
 
@@ -114,7 +128,7 @@ open class SysResourceService(
     override fun insert(any: Any): String {
         val id = super.insert(any)
         completeCrudInsert(log, "新增id为${id}的资源。") {
-            sysResourceHashCache.syncOnInsert(any, id)
+            eventPublisher.publishEvent(SysResourceInserted(id = id))
         }
         return id
     }
@@ -152,25 +166,27 @@ open class SysResourceService(
 
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {
-        @Suppress("UNCHECKED_CAST")
-        val resources = dao.inSearchById(ids)
         val count = super.batchDelete(ids)
         log.debug("批量删除资源，期望删除${ids.size}条，实际删除${count}条。")
-        sysResourceHashCache.syncOnBatchDelete(ids)
-        resources.forEach(::syncResourceDelete)
+        if (count > 0) {
+            eventPublisher.publishEvent(SysResourceBatchDeleted(ids = ids))
+        }
         return count
     }
 
+    @Transactional(readOnly = true)
     override fun getResourcesFromCacheByIds(ids: Collection<String>): Map<String, SysResourceCacheEntry> =
         ids.takeIf { it.isNotEmpty() }
             ?.let { sysResourceHashCache.getResourcesByIds(it.toSet()) }
             ?: emptyMap()
 
+    @Transactional(readOnly = true)
     override fun getResourcesFromCacheBySubSystemAndType(
         resourceType: ResourceTypeEnum,
         subSystemCode: String,
     ): List<SysResourceCacheEntry> = getCachedResourcesByType(subSystemCode, resourceType)
 
+    @Transactional(readOnly = true)
     override fun getSimpleMenusFromCache(subSystemCode: String): List<BaseMenuTreeNode> {
         return buildMenuTree(getCachedResourcesByType(subSystemCode, ResourceTypeEnum.MENU)) { item ->
             BaseMenuTreeNode().apply {
@@ -182,6 +198,7 @@ open class SysResourceService(
         }.sortedBy { it.seqNo }
     }
 
+    @Transactional(readOnly = true)
     override fun getMenusFromCache(subSystemCode: String): List<MenuTreeNode> {
         return buildMenuTree(getCachedResourcesByType(subSystemCode, ResourceTypeEnum.MENU)) { item ->
             MenuTreeNode().apply {
@@ -195,9 +212,11 @@ open class SysResourceService(
         }.sortedBy { it.seqNo }
     }
 
+    @Transactional(readOnly = true)
     override fun getResourceIdFromCache(subSysDictCode: String, url: String): String? =
         getResourceIdFromCacheBySubSystemAndUrl(subSysDictCode, url)
 
+    @Transactional(readOnly = true)
     override fun getDirectChildrenResourcesFromCache(
         resourceType: ResourceTypeEnum,
         parentId: String?,
@@ -205,6 +224,7 @@ open class SysResourceService(
     ): List<SysResourceCacheEntry> = getCachedResourcesByType(subSystemCode, resourceType)
             .filter { it.parentId == parentId }
 
+    @Transactional(readOnly = true)
     override fun getChildrenResourcesFromCache(
         subSystemCode: String,
         resourceType: ResourceTypeEnum,
@@ -254,6 +274,7 @@ open class SysResourceService(
         return roots
     }
 
+    @Transactional(readOnly = true)
     override fun loadDirectChildrenForTree(sysResourceQuery: SysResourceQuery): List<IdAndNameTreeNode<String>> {
         return when (if (sysResourceQuery.level == null) Int.MAX_VALUE else sysResourceQuery.level) {
             0 -> { // 资源类型
@@ -294,11 +315,24 @@ open class SysResourceService(
         }
     }
 
+    @Transactional(readOnly = true)
     override fun fetchAllParentIds(id: String): List<String> {
         val results = mutableListOf<String>()
         collectParentIds(id, results)
         results.reverse()
         return results
+    }
+
+    @Transactional(readOnly = true)
+    override fun getDetailWithOptionalParents(
+        id: String,
+        includeParents: Boolean,
+    ): SysResourceDetail? {
+        val detail = get(id, SysResourceDetail::class) ?: return null
+        if (includeParents) {
+            detail.parentIds = fetchAllParentIds(id)
+        }
+        return detail
     }
 
     private fun getCachedResourcesByType(
@@ -345,16 +379,11 @@ open class SysResourceService(
     }
 
     private fun syncResourceUpdate(any: Any, id: String, oldResource: SysResource?) {
-        sysResourceHashCache.syncOnUpdate(id)
-        sysResourceHashCache.syncOnUpdate(any, id, oldResource?.url)
-        oldResource?.let {
-            sysResourceHashCache.syncOnUpdate(any, id, it.subSystemCode, it.resourceTypeDictCode)
-        }
+        eventPublisher.publishEvent(SysResourceUpdated(id = id))
     }
 
     private fun syncResourceDelete(resource: SysResource) {
-        sysResourceHashCache.syncOnDelete(resource.id, resource.subSystemCode, resource.url)
-        sysResourceHashCache.syncOnDelete(resource.id, resource.subSystemCode, resource.resourceTypeDictCode)
+        eventPublisher.publishEvent(SysResourceDeleted(id = resource.id))
     }
 
     private fun collectParentIds(itemId: String, results: MutableList<String>) {

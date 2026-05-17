@@ -1,7 +1,7 @@
 --region DDL
 create table if not exists "user_login_remember_me"
 (
-    "id"        CHAR(36)    not null primary key,
+    "id"        CHAR(36)    default RANDOM_UUID() not null primary key,
     "user_id"   CHAR(36)    not null,
     "username"  VARCHAR(32) not null,
     "tenant_id" CHAR(36) not null,

@@ -17,7 +17,13 @@ enum class AuthRoleResourceErrorCodeEnum(
 ) : IErrorCodeEnum {
 
     /** 未定义错误 */
-    UNSPECIFIED("UNSPECIFIED", "未定义错误");
+    UNSPECIFIED("UNSPECIFIED", "未定义错误"),
+
+    /** 按 (role_id, resource_id) 查找角色-资源关系失败 */
+    ROLE_RESOURCE_NOT_FOUND("ROLE_RESOURCE_NOT_FOUND", "角色-资源关系不存在"),
+
+    /** (role_id, resource_id) 已存在绑定 */
+    ROLE_RESOURCE_ALREADY_EXISTS("ROLE_RESOURCE_ALREADY_EXISTS", "该角色已拥有该资源");
 
     override val i18nKeyPrefix: String
         get() = "auth.error-msg.roleresource"

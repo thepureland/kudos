@@ -40,9 +40,7 @@ class SysSystemAdminController:
      * @return List<子系统编码>
      */
     @GetMapping("/getAllActiveSubSystemCodes")
-    fun getAllActiveSubSystemCodes(): List<String> {
-        return service.getAllSystemsFromCache().filter { it.subSystem && it.active }.map { it.code }
-    }
+    fun getAllActiveSubSystemCodes(): List<String> = service.getActiveSubSystemCodes()
 
     /**
      * 返回所有启用的系统（不含子系统）编码
@@ -50,9 +48,7 @@ class SysSystemAdminController:
      * @return List<系统编码>
      */
     @GetMapping("/getAllActiveSystemCodes")
-    fun getAllActiveSystemCodes(): List<String> {
-        return service.getSystemsExcludeSubSystemFromCache().filter { it.active }.map { it.code }
-    }
+    fun getAllActiveSystemCodes(): List<String> = service.getActiveSystemCodes()
 
     /**
      * 返回整棵系统树

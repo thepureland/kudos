@@ -5,10 +5,14 @@ import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.user.core.account.dao.UserOrgUserDao
+import io.kudos.ms.user.core.account.event.UserOrgUserAdminUpdated
+import io.kudos.ms.user.core.account.event.UserOrgUserRelationsChanged
 import io.kudos.ms.user.core.account.model.po.UserOrgUser
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
+import org.springframework.transaction.event.TransactionPhase
+import org.springframework.transaction.event.TransactionalEventListener
 
 /**
  * 用户ID列表（by org）缓存处理器
@@ -170,6 +174,12 @@ open class UserIdsByOrgIdCache : AbstractKeyValueCacheHandler<List<String>>() {
             log.debug("${CACHE_NAME}缓存同步完成。")
         }
     }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: UserOrgUserRelationsChanged): Unit = syncOnOrgUserChange(event.orgId)
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: UserOrgUserAdminUpdated): Unit = syncOnOrgUserChange(event.orgId)
 
     private val log = LogFactory.getLog(this::class)
 

@@ -117,4 +117,15 @@ interface ISysResourceService : IBaseCrudService<String, SysResource> {
      */
     fun fetchAllParentIds(id: String): List<String>
 
+    /**
+     * 获取资源详情；可选地在 `includeParents = true` 时回填 `parentIds`。
+     *
+     * 把 admin controller 之前的「getDetail → if includeParents → 二次调用 fetchAllParentIds」
+     * 组装逻辑下沉到 service，让 controller 只需一次调用。
+     */
+    fun getDetailWithOptionalParents(
+        id: String,
+        includeParents: Boolean,
+    ): io.kudos.ms.sys.common.resource.vo.response.SysResourceDetail?
+
 }
