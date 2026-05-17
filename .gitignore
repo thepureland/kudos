@@ -55,3 +55,4 @@ pom.xml
 
 __pycache__
 .ai/
+.claude/
