@@ -114,6 +114,12 @@ open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentIni
         container.setConnectionFactory(redisCacheMessageHandler.redisTemplate.connectionFactory!!)
         container.addMessageListener(redisCacheMessageHandler, ChannelTopic(versionConfig.realMsgChannel))
 
+        // 缺省 ErrorHandler 走 java.util.logging 且 silent，连接抖动/订阅恢复异常会消失在日志里。
+        // 这里挂一个把异常抬到 error 级别的 handler，便于运维感知 pub/sub 通道断连或重订阅失败。
+        container.setErrorHandler { t ->
+            log.error(t, "Redis 缓存通知监听异常 (channel={0})", versionConfig.realMsgChannel)
+        }
+
         if (Threading.VIRTUAL.isActive(environment)) {
             // support virtual
             val executor = SimpleAsyncTaskExecutor("redis-msg-")
@@ -143,15 +149,13 @@ open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentIni
 
     @Bean("redisIdEntitiesHashCache")
     @ConditionalOnMissingBean(name = ["redisIdEntitiesHashCache"])
-    @DependsOn("redisCacheMessageHandler")
     @Suppress("SpringJavaInjectionPointsAutowiringInspection")
     open fun redisIdEntitiesHashCache(
         redisTemplates: RedisTemplates,
-        versionConfig: CacheVersionConfig,
-        redisCacheMessageHandler: ICacheMessageHandler,
-        @Qualifier("cacheNodeId") cacheNodeId: String
+        versionConfig: CacheVersionConfig
     ): RedisHashCache {
-        return RedisHashCache(redisTemplates, versionConfig, redisCacheMessageHandler, cacheNodeId)
+        // RedisHashCache 现在只负责存储；广播由上层 MixHashCache 统一处理，去掉了对 messageHandler/cacheNodeId 的依赖。
+        return RedisHashCache(redisTemplates, versionConfig)
     }
 
     override fun getComponentName() = "kudos-ability-cache-remote-redis"

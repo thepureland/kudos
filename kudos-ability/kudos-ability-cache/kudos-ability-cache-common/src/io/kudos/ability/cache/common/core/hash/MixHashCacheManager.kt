@@ -74,14 +74,7 @@ class MixHashCacheManager {
         }
     }
 
-    private fun parseStrategy(config: CacheConfig): CacheStrategy {
-        val s = config.strategy ?: config.strategyDictCode ?: return CacheStrategy.REMOTE
-        return try {
-            CacheStrategy.valueOf(s)
-        } catch (_: Exception) {
-            CacheStrategy.REMOTE
-        }
-    }
+    private fun parseStrategy(config: CacheConfig): CacheStrategy = config.resolvedStrategy ?: CacheStrategy.REMOTE
 
     fun getHashCache(cacheName: String): IHashCache? {
         val realName = versionConfig?.getFinalCacheName(cacheName) ?: cacheName

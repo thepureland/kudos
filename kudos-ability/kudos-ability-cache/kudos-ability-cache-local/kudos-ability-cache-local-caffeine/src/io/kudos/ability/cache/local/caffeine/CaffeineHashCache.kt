@@ -16,6 +16,11 @@ import kotlin.reflect.KClass
  * Hash 缓存的 Caffeine 本地实现，内存结构模拟 Redis Hash + Set + ZSet；
  * 同时实现 [IHashCacheSync] 供收到 Redis 通知后清理本地。
  *
+ * 已知限制（待后续单独迭代）：mainData / setIndex / zsetIndex 是裸的 [ConcurrentHashMap]，
+ * 没有像 KV 端那样的 Caffeine maximumSize 兜底。同一 cacheName 下条目数受限于业务数据规模，
+ * 跑长之后存在被业务无界化的风险（典型场景：用户量大且全量缓存）。
+ * 若要彻底治理，需要把 [mainData] 改成 Caffeine LoadingCache 并同步驱逐两个索引；本轮范围之外。
+ *
  * @author K
  * @author AI: Cursor
  * @since 1.0.0

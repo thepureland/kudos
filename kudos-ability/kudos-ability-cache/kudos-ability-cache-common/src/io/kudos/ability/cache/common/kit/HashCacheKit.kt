@@ -36,9 +36,9 @@ object HashCacheKit {
      * @return true: 开启缓存，false：未开启缓存
      */
     fun isCacheActive(cacheName: String): Boolean {
-        val configProvider = SpringKit.getBeanOrNull(ICacheConfigProvider::class) ?: return false
+        val configProvider = getConfigProvider() ?: return false
         val config = configProvider.getHashCacheConfigs()[cacheName] ?: return false
-        return config.active == true
+        return config.isActive
     }
 
     /**
@@ -48,7 +48,7 @@ object HashCacheKit {
      * @return 缓存配置信息。找不到返回 null
      */
     fun getCacheConfig(cacheName: String): CacheConfig? {
-        val configProvider = SpringKit.getBeanOrNull(ICacheConfigProvider::class) ?: return null
+        val configProvider = getConfigProvider() ?: return null
         val config = configProvider.getHashCacheConfigs()[cacheName]
         if (config == null) {
             log.warn("Hash 缓存【$cacheName】不存在！")
@@ -67,7 +67,7 @@ object HashCacheKit {
             return false
         }
         val cacheConfig = getCacheConfig(cacheName) ?: return false
-        return cacheConfig.writeInTime == true
+        return cacheConfig.isWriteInTime
     }
 
     /**
@@ -79,8 +79,7 @@ object HashCacheKit {
     fun evict(cacheName: String, id: Any) {
         if (!isCacheActive(cacheName)) return
         val config = getCacheConfig(cacheName) ?: return
-        val strategy = config.strategy ?: config.strategyDictCode
-        if (strategy == CacheStrategy.SINGLE_LOCAL.name) {
+        if (config.resolvedStrategy == CacheStrategy.SINGLE_LOCAL) {
             CacheOperatorVo(CacheOperatorVo.TYPE_EVICT, cacheName, id).doNotify()
         } else {
             doEvict(cacheName, id)
@@ -111,8 +110,7 @@ object HashCacheKit {
     fun clear(cacheName: String) {
         if (!isCacheActive(cacheName)) return
         val config = getCacheConfig(cacheName) ?: return
-        val strategy = config.strategy ?: config.strategyDictCode
-        if (strategy == CacheStrategy.SINGLE_LOCAL.name) {
+        if (config.resolvedStrategy == CacheStrategy.SINGLE_LOCAL) {
             CacheOperatorVo(CacheOperatorVo.TYPE_CLEAR, cacheName, null).doNotify()
         } else {
             doClear(cacheName)
@@ -156,7 +154,7 @@ object HashCacheKit {
             return
         }
         val cacheConfig = getCacheConfig(cacheName) ?: return
-        if (cacheConfig.writeOnBoot == true) {
+        if (cacheConfig.isWriteOnBoot) {
             val beansOfType = SpringKit.getBeansOfType<AbstractHashCacheHandler<*>>()
             beansOfType.values.forEach {
                 if (it.cacheName() == cacheName) {
@@ -220,7 +218,7 @@ object HashCacheKit {
      * @throws IllegalStateException 当 MixHashCacheManager 不可用或该 cacheName 未配置（需在配置中增加名为 cacheName 的项）时
      */
     fun getHashCache(cacheName: String): IHashCache {
-        val manager = SpringKit.getBeanOrNull("mixHashCacheManager") as MixHashCacheManager?
+        val manager = getManager()
             ?: throw IllegalStateException(
                 "MixHashCacheManager 不可用（缓存未启用或测试未继承 RdbAndRedisCacheTestBase 等启用缓存的基类）。" +
                     " 请检查 kudos.ability.cache.enabled 或测试上下文。"
@@ -238,14 +236,44 @@ object HashCacheKit {
      * @return 若未配置或非 LOCAL_REMOTE/SINGLE_LOCAL 则 false
      */
     fun isLocalCacheEnabled(cacheName: String): Boolean {
-        val configProvider = SpringKit.getBeanOrNull(ICacheConfigProvider::class) ?: return false
+        val configProvider = getConfigProvider() ?: return false
         val config = configProvider.getHashCacheConfigs()[cacheName] ?: return false
-        val s = config.strategy ?: config.strategyDictCode ?: return false
-        val strategy = try {
-            CacheStrategy.valueOf(s)
-        } catch (_: Exception) {
-            return false
-        }
+        val strategy = config.resolvedStrategy ?: return false
         return strategy == CacheStrategy.LOCAL_REMOTE || strategy == CacheStrategy.SINGLE_LOCAL
+    }
+
+    // ---- 测试注入钩子 ----------------------------------------------------------
+    // 与 [KeyValueCacheKit] 同样的模式：默认走 SpringKit 查找，测试可通过 override 注入 mock。
+    // 注意：基于类型遍历的 Handler 查找（reload / reloadAll / getValue(no type)）仍走 Spring，
+    //      因为按 cacheName 匹配 handler 的语义只在真实 bean 容器中清晰；要测这些路径建议起 Spring。
+
+    @Volatile private var managerOverride: MixHashCacheManager? = null
+    @Volatile private var configProviderOverride: ICacheConfigProvider? = null
+
+    private fun getManager(): MixHashCacheManager? =
+        managerOverride ?: SpringKit.getBeanOrNull("mixHashCacheManager") as MixHashCacheManager?
+
+    private fun getConfigProvider(): ICacheConfigProvider? =
+        configProviderOverride ?: SpringKit.getBeanOrNull(ICacheConfigProvider::class)
+
+    /**
+     * 测试专用：临时注入依赖，避免单测启动完整 Spring 上下文。
+     * 任一参数为 null 表示该依赖回退到默认的 [SpringKit] 查找路径。
+     * 测试结束必须调用 [resetForTesting] 还原。
+     */
+    fun overrideForTesting(
+        manager: MixHashCacheManager? = null,
+        configProvider: ICacheConfigProvider? = null,
+    ) {
+        managerOverride = manager
+        configProviderOverride = configProvider
+    }
+
+    /**
+     * 测试专用：清掉 [overrideForTesting] 注入的 mock，回到 Spring 查找。
+     */
+    fun resetForTesting() {
+        managerOverride = null
+        configProviderOverride = null
     }
 }

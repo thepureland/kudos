@@ -15,6 +15,7 @@ import org.aspectj.lang.reflect.MethodSignature
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.context.annotation.Lazy
+import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
 import java.math.BigInteger
@@ -35,6 +36,7 @@ import kotlin.reflect.jvm.kotlinFunction
 @Component
 @Lazy(false)
 @ConditionalOnBean(MixHashCacheManager::class)
+@Order(10) // 与 [BatchCacheableAspect] 同序：批量 Cacheable 类切面统一标 10。
 class HashBatchCacheableByPrimaryAspect {
 
     @Pointcut("@annotation(io.kudos.ability.cache.common.batch.hash.HashBatchCacheableByPrimary)")
@@ -108,20 +110,25 @@ class HashBatchCacheableByPrimaryAspect {
         return DefaultHashBatchKeysGenerator()
     }
 
-    private fun proceedAsStringAnyMap(joinPoint: ProceedingJoinPoint): Map<String, Any?> {
-        val result = joinPoint.proceed()
-        if (result !is Map<*, *>) {
-            error("HashBatchCacheableByPrimary 期望方法返回 Map<String, Any?>，实际返回: ${result?.let { it::class.qualifiedName } ?: "null"}")
+    private fun proceedAsStringAnyMap(joinPoint: ProceedingJoinPoint): Map<String, Any?> =
+        validatedMap(joinPoint.proceed())
+
+    /**
+     * 校验 proceed 的返回值符合 `Map<String, Any?>`：返回类型擦除后任何 Map 都能通过强转，
+     * 实际 key 类型不对会在下游"按字符串 key 取值"时静默 miss。这里把校验集中起来。
+     */
+    private fun validatedMap(proceeded: Any?): Map<String, Any?> {
+        if (proceeded !is Map<*, *>) {
+            error("HashBatchCacheableByPrimary 期望方法返回 Map<String, Any?>，实际返回: ${proceeded?.let { it::class.qualifiedName } ?: "null"}")
         }
-        require(result.keys.all { it is String }) {
+        require(proceeded.keys.all { it == null || it is String }) {
             "HashBatchCacheableByPrimary 期望方法返回 Map<String, Any?>，但检测到非 String key。"
         }
-        return result.entries.associate { it.key as String to it.value }
+        @Suppress("UNCHECKED_CAST")
+        return proceeded as Map<String, Any?>
     }
 
-    @Suppress("UNCHECKED_CAST")
     private fun readUncachedData(
-//        result: MutableMap<String, Any?>,
         noExistKeys: List<String>,
         joinPoint: ProceedingJoinPoint,
         function: KFunction<*>,
@@ -146,6 +153,8 @@ class HashBatchCacheableByPrimaryAspect {
                     segStr.toType(sample::class)
                 }
                 val clazz = parameterTypes[paramIndex].kotlin
+                // 下面 `as List<X>` 是确定安全的：elemValues 来自 `toType(sample::class)`，元素类型已对齐。
+                @Suppress("UNCHECKED_CAST")
                 args[paramIndex] = when (clazz) {
                     List::class, Collection::class -> elemValues
                     Set::class -> elemValues.toSet()
@@ -165,6 +174,7 @@ class HashBatchCacheableByPrimaryAspect {
             }
         }
 
-        return joinPoint.proceed(args) as? Map<String, Any?>
+        // 走与 [proceedAsStringAnyMap] 一样的强校验路径，避免 `as? Map<String, Any?>` 在 key 类型错时静默返回错误结构。
+        return validatedMap(joinPoint.proceed(args))
     }
 }

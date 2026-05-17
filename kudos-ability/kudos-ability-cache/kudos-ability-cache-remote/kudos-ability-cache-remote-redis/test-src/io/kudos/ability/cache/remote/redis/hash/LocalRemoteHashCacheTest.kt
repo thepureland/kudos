@@ -1,6 +1,8 @@
 package io.kudos.ability.cache.remote.redis.hash
 
+import io.kudos.ability.cache.common.core.hash.IHashCache
 import io.kudos.ability.cache.common.enums.CacheStrategy
+import io.kudos.ability.cache.common.init.properties.CacheVersionConfig
 import io.kudos.ability.cache.common.kit.HashCacheKit
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
@@ -10,6 +12,7 @@ import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.container.containers.RedisTestContainer
 import org.junit.jupiter.api.BeforeEach
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
@@ -30,6 +33,13 @@ internal class LocalRemoteHashCacheTest {
 
     @Autowired
     private lateinit var hashCacheableTestService: HashCacheableTestService
+
+    @Autowired
+    @Qualifier("caffeineIdEntitiesHashCache")
+    private lateinit var caffeineHashCache: IHashCache
+
+    @Autowired
+    private lateinit var versionConfig: CacheVersionConfig
 
     private val cacheName = "testHash"
     /** 专用于 TestRowWithTime，与 testHash 分离避免与 TestRow 混存导致 ClassCastException */
@@ -138,6 +148,30 @@ internal class LocalRemoteHashCacheTest {
         val actual = cache.listPageByZSetIndex(cacheNameWithTime, TestRowWithTime::class, "sortScore", 0, 2, desc = true).map { it.id }
         assertEquals(expected, actual)
         assertEquals(listOf("z3", "z2"), actual)
+    }
+
+    /**
+     * 验证从远端回填本地时副属性索引不丢失。
+     * 旧逻辑：所有读路径回填都传 emptySet()，本地永远没有 Set/ZSet 索引，按副属性查询永远 miss 本地、反复打远端。
+     */
+    @Test
+    fun backfillFromRemoteRebuildsSecondaryIndex() {
+        val cache = HashCacheKit.getHashCache(cacheName)
+        // 1. 通过 mixCache 写入带索引的数据；MixHashCache 会记录 filterable=["type"]
+        cache.save(cacheName, TestRow(id = "br1", name = "BR1", type = 7), setOf("type"), emptySet())
+        cache.save(cacheName, TestRow(id = "br2", name = "BR2", type = 7), setOf("type"), emptySet())
+
+        // 2. 直接清空本地 caffeine（模拟本地缓存被驱逐或本节点冷启动），远程仍然有数据与索引
+        val realName = versionConfig.getFinalCacheName(cacheName)
+        caffeineHashCache.clear(realName)
+
+        // 3. mixCache.getById 触发回填本地（用 indexedFilterable=["type"] 重建索引）
+        val backfilled = cache.getById(cacheName, "br1", TestRow::class)
+        assertNotNull(backfilled)
+
+        // 4. 直接走本地 caffeine 按副属性查询：旧 bug 下本地没有索引应当返回空；修复后能查到回填的 br1
+        val byTypeLocal = caffeineHashCache.listBySetIndex(realName, TestRow::class, "type", 7)
+        assertTrue(byTypeLocal.any { it.id == "br1" }, "回填后本地应能按 type 索引找到 br1")
     }
 
     @Test

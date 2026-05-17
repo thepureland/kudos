@@ -4,7 +4,7 @@ import io.kudos.ability.cache.common.aop.hash.HashCacheableByPrimary
 import io.kudos.ability.cache.common.aop.hash.HashCacheableBySecondary
 import io.kudos.ability.cache.common.batch.hash.HashBatchCacheableByPrimary
 import io.kudos.ability.cache.common.core.hash.AbstractHashCacheHandler
-import io.kudos.ability.cache.common.kit.KeyValueCacheKit
+import io.kudos.ability.cache.common.kit.HashCacheKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.auth.common.group.vo.AuthGroupCacheEntry
 import io.kudos.ms.auth.core.group.cache.AuthGroupHashCache.Companion.CACHE_NAME
@@ -116,7 +116,7 @@ open class AuthGroupHashCache : AbstractHashCacheHandler<AuthGroupCacheEntry>() 
      * @param clear 为 true 时先清空再写入；为 false 时覆盖写入
      */
     override fun reloadAll(clear: Boolean) {
-        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
+        if (!HashCacheKit.isCacheActive(CACHE_NAME)) {
             log.info("缓存未开启，不加载用户组 Hash 缓存")
             return
         }
@@ -129,31 +129,30 @@ open class AuthGroupHashCache : AbstractHashCacheHandler<AuthGroupCacheEntry>() 
 
     /** 新增用户组后同步：将指定 id 的实体从库加载并写入缓存。 */
     open fun syncOnInsert(id: String) {
-        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME) || !KeyValueCacheKit.isWriteInTime(CACHE_NAME)) return
+        if (!HashCacheKit.isCacheActive(CACHE_NAME) || !HashCacheKit.isWriteInTime(CACHE_NAME)) return
         val item = authGroupDao.getAs<AuthGroupCacheEntry>(id) ?: return
         hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
     }
 
     /** 更新用户组后同步：从库重新加载并写入缓存。 */
     open fun syncOnUpdate(id: String) {
-        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
+        if (!HashCacheKit.isCacheActive(CACHE_NAME)) return
         val item = authGroupDao.getAs<AuthGroupCacheEntry>(id) ?: return
-        if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
+        if (HashCacheKit.isWriteInTime(CACHE_NAME)) {
             hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
         }
     }
 
     /** 删除用户组后同步：从缓存中移除该 id。 */
     open fun syncOnDelete(id: String) {
-        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
+        if (!HashCacheKit.isCacheActive(CACHE_NAME)) return
         hashCache().deleteById(CACHE_NAME, id, AuthGroupCacheEntry::class, FILTERABLE_PROPERTIES, emptySet())
     }
 
-    /** 批量删除用户组后同步：从缓存中移除这些 id。 */
+    /** 批量删除用户组后同步：从缓存中移除这些 id（单条 Pub/Sub 通知，避免 N+1 风暴）。 */
     open fun syncOnBatchDelete(ids: Collection<String>) {
-        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
-        val cache = hashCache()
-        ids.forEach { cache.deleteById(CACHE_NAME, it, AuthGroupCacheEntry::class, FILTERABLE_PROPERTIES, emptySet()) }
+        if (!HashCacheKit.isCacheActive(CACHE_NAME) || ids.isEmpty()) return
+        hashCache().deleteByIds(CACHE_NAME, ids, AuthGroupCacheEntry::class, FILTERABLE_PROPERTIES, emptySet())
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)

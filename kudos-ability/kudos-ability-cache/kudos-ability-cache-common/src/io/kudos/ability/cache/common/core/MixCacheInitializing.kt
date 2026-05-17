@@ -23,17 +23,23 @@ import org.springframework.stereotype.Component
 @Component
 class MixCacheInitializing : SmartInitializingSingleton {
 
+    // mixCacheManager 必需。用 lateinit 让 Spring 注入失败时报清晰的"未初始化"错误，而不是 NPE。
     @Autowired
     @Qualifier("mixCacheManager")
-    private val cacheManager: MixCacheManager? = null
+    private lateinit var cacheManager: MixCacheManager
 
+    // mixHashCacheManager 可选：用户可能没启用 Hash 缓存。
     @Autowired(required = false)
     @Qualifier("mixHashCacheManager")
-    private val hashCacheManager: MixHashCacheManager? = null
+    private var hashCacheManager: MixHashCacheManager? = null
 
     override fun afterSingletonsInstantiated() {
         log.info("缓存项初始化...")
-        cacheManager!!.initCacheAfterSystemInit()
+        if (!::cacheManager.isInitialized) {
+            log.error("MixCacheManager 未注入，缓存项初始化跳过；请检查 mixCacheManager bean 是否被声明")
+            return
+        }
+        cacheManager.initCacheAfterSystemInit()
         hashCacheManager?.initHashCacheAfterSystemInit()
     }
 

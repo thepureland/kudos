@@ -4,6 +4,7 @@ import io.kudos.ability.cache.common.core.hash.IHashCache
 import io.kudos.ability.cache.common.core.hash.MixHashCacheManager
 import io.kudos.ability.cache.common.kit.HashCacheKit
 import io.kudos.ability.cache.common.kit.KeyValueCacheKit
+import io.kudos.ability.cache.common.support.SpelExpressionCache
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.model.contract.entity.IIdEntity
 import org.aspectj.lang.ProceedingJoinPoint
@@ -15,9 +16,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.context.annotation.Lazy
 import org.springframework.context.expression.MethodBasedEvaluationContext
-import org.springframework.core.DefaultParameterNameDiscoverer
-import org.springframework.expression.ExpressionParser
-import org.springframework.expression.spel.standard.SpelExpressionParser
+import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
 import java.lang.reflect.ParameterizedType
 import kotlin.reflect.KClass
@@ -41,10 +40,10 @@ import kotlin.reflect.jvm.kotlinFunction
 @Component
 @Lazy(false)
 @ConditionalOnBean(MixHashCacheManager::class)
+@Order(0) // 同 [HashCacheableByPrimaryAspect]。Cacheable 类切面一律标 0。
 class HashCacheableBySecondaryAspect {
 
-    private val parser: ExpressionParser = SpelExpressionParser()
-    private val nameDiscoverer = DefaultParameterNameDiscoverer()
+    private val nameDiscoverer = SpelExpressionCache.parameterNameDiscoverer
 
     @Pointcut("@annotation(io.kudos.ability.cache.common.aop.hash.HashCacheableBySecondary)")
     fun cut() {}
@@ -60,7 +59,7 @@ class HashCacheableBySecondaryAspect {
         val context = MethodBasedEvaluationContext(null, method, joinPoint.args, nameDiscoverer)
 
         if (ann.condition.isNotBlank()) {
-            val conditionResult = parser.parseExpression(ann.condition).getValue(context, Boolean::class.java)
+            val conditionResult = SpelExpressionCache.get(ann.condition).getValue(context, Boolean::class.java)
             if (conditionResult != true) return joinPoint.proceed()
         }
 
@@ -69,7 +68,7 @@ class HashCacheableBySecondaryAspect {
         val propertyValues = keyExpressions.map { expr ->
             val prop = derivePropertyFromKey(expr.trim())
                 ?: throw IllegalArgumentException("HashCacheableBySecondary: filterExpressions 每项须为单参数 SpEL（如 #type），当前: $expr")
-            val value = parser.parseExpression(expr.trim()).getValue(context) ?: return joinPoint.proceed()
+            val value = SpelExpressionCache.get(expr.trim()).getValue(context) ?: return joinPoint.proceed()
             prop to value
         }
         val entityClass = resolveEntityClass(ann.entityClass)
@@ -77,7 +76,6 @@ class HashCacheableBySecondaryAspect {
 
         val hashCache = HashCacheKit.getHashCache(cacheName)
         if (KeyValueCacheKit.isCacheActive(cacheName)) {
-            @Suppress("UNCHECKED_CAST")
             val cached = queryByKeys(hashCache, cacheName, entityClass, propertyValues)
             if (cached.isNotEmpty()) {
                 val returnProperty = ann.returnProperty
@@ -103,7 +101,7 @@ class HashCacheableBySecondaryAspect {
         if (ann.unless.isNotBlank()) {
             val unlessContext = MethodBasedEvaluationContext(result, method, joinPoint.args, nameDiscoverer)
             unlessContext.setVariable("result", result)
-            val unlessResult = parser.parseExpression(ann.unless).getValue(unlessContext, Boolean::class.java)
+            val unlessResult = SpelExpressionCache.get(ann.unless).getValue(unlessContext, Boolean::class.java)
             if (unlessResult == true) return result
         }
 
@@ -169,7 +167,6 @@ class HashCacheableBySecondaryAspect {
      * 单 key：一次 listBySetIndex；多 key：多次 listBySetIndex 后按 id 取交集，再按 id 从缓存 getById 取实体。
      * 多 key 时用 getById 保证 LOCAL_REMOTE 下返回本地同一引用（避免第二次 listBySetIndex 回写远程实例覆盖本地后与 firstList 引用不一致）。
      */
-    @Suppress("UNCHECKED_CAST")
     private fun queryByKeys(
         hashCache: IHashCache,
         cacheName: String,

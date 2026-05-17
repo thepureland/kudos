@@ -105,18 +105,22 @@ open class RedisCacheMessageHandler(
      */
     override fun onMessage(message: Message, pattern: ByteArray?) {
         logger.debug("收到redis消息通知：清除本地缓存")
-        var cacheMessage: CacheMessage? = null
-        try {
-            cacheMessage = redisTemplates.getRedisTemplate(remoteStore)!!.valueSerializer
+        val deserialized: CacheMessage? = try {
+            redisTemplates.getRedisTemplate(remoteStore)!!.valueSerializer
                 .deserialize(message.body) as CacheMessage?
         } catch (e: Exception) {
-            logger.warn(
-                "清理缓存序列化失败！缓存key没指定，用了方法参数的类型而找不到。请调整为key，如：key='ALL'！ERROR = {0}",
-                e.message
-            )
+            // 反序列化失败是分布式缓存一致性事故：本节点不会收到这条失效通知 → 本地缓存可能长期持有脏数据。
+            // 这里抬到 error 级别并带堆栈，便于运维捕获；同时不向上抛，避免破坏 listener 线程。
+            // 常见原因：发送方与接收方的 CacheMessage 类签名不一致（serialVersionUID）、key 类型 classpath 缺失。
+            logger.error(e, "Redis 缓存失效通知反序列化失败，本节点本地缓存可能不一致；请检查发送/接收方的 CacheMessage 与 key 类是否兼容")
+            null
         }
-        if (cacheMessage != null) {
+        val cacheMessage = deserialized ?: return
+        try {
             receiveMessage(cacheMessage)
+        } catch (e: Exception) {
+            // listener 由 Spring 单线程串行投递，处理异常若抛出会被容器吞掉但中断对该条的处理。显式 catch + log，避免后续消息被误以为"全部失败"。
+            logger.error(e, "处理 Redis 缓存失效通知时异常：cacheName={0}, key={1}", cacheMessage.cacheName, cacheMessage.key)
         }
     }
 
@@ -150,8 +154,14 @@ open class RedisCacheMessageHandler(
             if (message.cacheType == "hash") {
                 val sync = SpringKit.getBeansOfType<IHashCacheSync>().values.firstOrNull()
                 sync?.let {
-                    if (message.key == null) it.clearLocal(message.cacheName!!)
-                    else it.evictLocal(message.cacheName!!, message.key!!)
+                    when (val k = message.key) {
+                        null -> it.clearLocal(message.cacheName!!)
+                        // 批量操作打包成一条消息携带 id 列表（saveBatch 等场景），避免 N+1 publish 风暴。
+                        is Collection<*> -> k.forEach { id ->
+                            if (id != null) it.evictLocal(message.cacheName!!, id)
+                        }
+                        else -> it.evictLocal(message.cacheName!!, k)
+                    }
                 }
             } else {
                 mixCacheManager.clearLocal(message.cacheName!!, message.key)

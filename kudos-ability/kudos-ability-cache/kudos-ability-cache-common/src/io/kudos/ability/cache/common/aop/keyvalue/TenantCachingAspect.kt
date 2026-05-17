@@ -2,6 +2,7 @@ package io.kudos.ability.cache.common.aop.keyvalue
 
 import io.kudos.ability.cache.common.core.keyvalue.MixCacheManager
 import io.kudos.ability.cache.common.support.TenantCacheKeyGenerator
+import io.kudos.base.logger.LogFactory
 import io.kudos.context.kit.TransactionTool
 import org.aspectj.lang.ProceedingJoinPoint
 import org.aspectj.lang.annotation.Around
@@ -9,7 +10,9 @@ import org.aspectj.lang.annotation.Aspect
 import org.aspectj.lang.annotation.Pointcut
 import org.aspectj.lang.reflect.MethodSignature
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Lazy
+import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
 import java.lang.reflect.Method
 
@@ -47,6 +50,9 @@ import java.lang.reflect.Method
 @Aspect
 @Lazy(false)
 @Component
+// 写方法上的 evict 切面，在 cache 读注解（@TenantCacheable / @Cacheable 等）之前生效；
+// 优先级介于 DistributedCacheGuard(-999) 与单条 Cacheable(0) 之间。
+@Order(-100)
 class TenantCachingAspect {
 
     @Autowired
@@ -54,6 +60,14 @@ class TenantCachingAspect {
 
     @Autowired
     private val tenantCacheKeyGenerator: TenantCacheKeyGenerator? = null
+
+    /**
+     * 事务后清缓存失败时是否向调用方抛错。
+     * - false（默认）：仅 error 日志 + 计数；事务已提交、调用方已返回，硬抛在事务后回调里只是噪音，且无法挽回。
+     * - true：抛出原异常（不包装），便于事务监听器拦截做告警/降级 —— 业务侧需自行接住。
+     */
+    @Value($$"${kudos.ability.cache.evict.throwOnAfterCommitFailure:false}")
+    private var throwOnAfterCommitFailure: Boolean = false
 
     @Pointcut("@annotation(io.kudos.ability.cache.common.aop.keyvalue.TenantCaching)")
     fun cut() {
@@ -97,10 +111,23 @@ class TenantCachingAspect {
             try {
                 doAfterEvict(pjp, multicast, target, method, args)
             } catch (e: Throwable) {
-                throw RuntimeException(e)
+                // 这里是事务提交后的回调，业务线程已经返回了 result，向上抛 RuntimeException 调用方根本看不到 →
+                // 缓存清失败被完全吞掉，下游观测不到、脏缓存沉默存在。改成显式 error 日志 + 堆栈，必要时配合配置抛出。
+                log.error(
+                    e,
+                    "事务提交后清缓存失败 — 可能产生脏缓存。class={0} method={1} caches={2}",
+                    target::class.java.name,
+                    method.name,
+                    multicast.evicts.flatMap { it.cacheNames.toList() }.joinToString(",")
+                )
+                if (throwOnAfterCommitFailure) throw e
             }
         }
         return result
+    }
+
+    companion object {
+        private val log = LogFactory.getLog(TenantCachingAspect::class)
     }
 
     /**

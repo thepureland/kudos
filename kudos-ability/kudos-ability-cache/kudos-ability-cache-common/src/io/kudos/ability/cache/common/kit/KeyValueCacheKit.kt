@@ -37,7 +37,7 @@ object KeyValueCacheKit {
         val cacheConfigProvider = getCacheConfigProvider()
         val cacheConfig = cacheConfigProvider.getCacheConfig(cacheName)
         if (cacheConfig != null) {
-            return cacheConfig.active == true
+            return cacheConfig.isActive
         }
         return false
     }
@@ -210,7 +210,7 @@ object KeyValueCacheKit {
             return false
         }
         val cacheConfig = getCacheConfig(cacheName) ?: return false
-        return cacheConfig.writeInTime == true
+        return cacheConfig.isWriteInTime
     }
 
     /**
@@ -244,7 +244,7 @@ object KeyValueCacheKit {
             return
         }
         val cacheConfig = getCacheConfig(cacheName) ?: return
-        if (cacheConfig.writeOnBoot == true) {
+        if (cacheConfig.isWriteOnBoot) {
             val beansOfType = SpringKit.getBeansOfType<AbstractKeyValueCacheHandler<*>>()
             beansOfType.values.forEach {
                 if (it.cacheName() == cacheName) {
@@ -266,7 +266,7 @@ object KeyValueCacheKit {
             return
         }
         val cacheConfig = getCacheConfig(cacheName) ?: return
-        if (cacheConfig.writeOnBoot == true) {
+        if (cacheConfig.isWriteOnBoot) {
             val beansOfType = SpringKit.getBeansOfType<AbstractKeyValueCacheHandler<*>>()
             beansOfType.values.forEach {
                 if (it.cacheName() == cacheName) {
@@ -308,23 +308,49 @@ object KeyValueCacheKit {
 
     /**
      * 获取缓存管理器
-     * 
+     *
      * 如果缓存未启用（kudos.ability.cache.enabled=false），mixCacheManager Bean 不会被创建，
      * 此时返回 null，调用方需要处理 null 的情况。
      *
      * @return MixCacheManager，如果缓存未启用则返回 null
      */
-    private fun getCacheManager(): MixCacheManager? {
-        return SpringKit.getBeanOrNull("mixCacheManager") as? MixCacheManager
-    }
+    private fun getCacheManager(): MixCacheManager? =
+        cacheManagerOverride ?: (SpringKit.getBeanOrNull("mixCacheManager") as? MixCacheManager)
 
     /**
      * 获取缓存配置服务
      *
      * @return ICacheConfigProvider
      */
-    private fun getCacheConfigProvider(): ICacheConfigProvider {
-        return SpringKit.getBean<ICacheConfigProvider>()
+    private fun getCacheConfigProvider(): ICacheConfigProvider =
+        configProviderOverride ?: SpringKit.getBean<ICacheConfigProvider>()
+
+    // ---- 测试注入钩子 ----------------------------------------------------------
+    // Kit 是 `object` 单例，生产路径仍走 SpringKit.getBean 查找，行为完全不变。
+    // 单元测试若不想拉起 Spring 上下文，可通过下面的 override 注入 mock，再用 resetForTesting 还原。
+
+    @Volatile private var cacheManagerOverride: MixCacheManager? = null
+    @Volatile private var configProviderOverride: ICacheConfigProvider? = null
+
+    /**
+     * 测试专用：临时注入依赖，避免单测启动完整 Spring 上下文。
+     * 任一参数为 null 表示该依赖回退到默认的 [SpringKit] 查找路径。
+     * 测试结束必须调用 [resetForTesting] 还原，否则会污染同 JVM 后续测试。
+     */
+    fun overrideForTesting(
+        cacheManager: MixCacheManager? = null,
+        configProvider: ICacheConfigProvider? = null,
+    ) {
+        cacheManagerOverride = cacheManager
+        configProviderOverride = configProvider
+    }
+
+    /**
+     * 测试专用：清掉 [overrideForTesting] 注入的 mock，回到 Spring 查找。
+     */
+    fun resetForTesting() {
+        cacheManagerOverride = null
+        configProviderOverride = null
     }
 
 }

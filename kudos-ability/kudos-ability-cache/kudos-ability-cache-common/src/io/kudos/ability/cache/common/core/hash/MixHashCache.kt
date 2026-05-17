@@ -36,6 +36,19 @@ internal class MixHashCache(
 
     private val name: String = cacheName
 
+    /**
+     * 记录最近一次写操作传入的 filterable/sortable 副属性集合，供读路径从远端回填本地时重建二级索引。
+     * 如果不记录这些信息，远端回填本地永远只写主数据、副属性索引为空，后续按副属性的查询永远 miss 本地。
+     */
+    @Volatile private var indexedFilterable: Set<String> = emptySet()
+    @Volatile private var indexedSortable: Set<String> = emptySet()
+
+    private fun captureIndexProps(filterable: Set<String>, sortable: Set<String>) {
+        // 非空才更新（"replace if non-empty"）：避免某次写操作误传空集合时把记录抹掉。
+        if (filterable.isNotEmpty()) indexedFilterable = filterable
+        if (sortable.isNotEmpty()) indexedSortable = sortable
+    }
+
     private fun <T> readFromLocalFirst(block: (IHashCache) -> T): T? {
         if (local == null) return null
         return block(local)
@@ -55,10 +68,33 @@ internal class MixHashCache(
         if (strategy == CacheStrategy.LOCAL_REMOTE) {
             readFromLocalFirst { it.getById(name, id, entityClass) }?.let { return it }
             val fromRemote = remote?.getById(name, id, entityClass) ?: return null
-            local?.save(name, fromRemote, emptySet(), emptySet())
+            saveOneLocal(fromRemote)
             return fromRemote
         }
         return remoteOrLocal().getById(name, id, entityClass)
+    }
+
+    /** 回填一条到本地，使用已记录的副属性集合重建索引（保持与远端一致）。 */
+    @Suppress("UNCHECKED_CAST")
+    private fun saveOneLocal(entity: IIdEntity<*>) {
+        local?.save(
+            name,
+            entity as IIdEntity<Any?>,
+            indexedFilterable,
+            indexedSortable
+        )
+    }
+
+    /** 回填多条到本地。优先用 saveBatch 减少 N 次单条调用的开销。 */
+    @Suppress("UNCHECKED_CAST")
+    private fun saveManyLocal(entities: List<IIdEntity<*>>) {
+        if (local == null || entities.isEmpty()) return
+        local.saveBatch(
+            name,
+            entities as List<IIdEntity<Any?>>,
+            indexedFilterable,
+            indexedSortable
+        )
     }
 
     override fun existsById(cacheName: String, id: Any): Boolean {
@@ -75,6 +111,7 @@ internal class MixHashCache(
         filterableProperties: Set<String>,
         sortableProperties: Set<String>
     ) {
+        captureIndexProps(filterableProperties, sortableProperties)
         when (strategy) {
             CacheStrategy.SINGLE_LOCAL -> requireNotNull(local) { "local hash cache is null" }.save(name, entity, filterableProperties, sortableProperties)
             CacheStrategy.REMOTE -> requireNotNull(remote) { "remote hash cache is null" }.save(name, entity, filterableProperties, sortableProperties)
@@ -92,13 +129,17 @@ internal class MixHashCache(
         filterableProperties: Set<String>,
         sortableProperties: Set<String>
     ) {
+        captureIndexProps(filterableProperties, sortableProperties)
         when (strategy) {
             CacheStrategy.SINGLE_LOCAL -> requireNotNull(local) { "local hash cache is null" }.saveBatch(name, entities, filterableProperties, sortableProperties)
             CacheStrategy.REMOTE -> requireNotNull(remote) { "remote hash cache is null" }.saveBatch(name, entities, filterableProperties, sortableProperties)
             CacheStrategy.LOCAL_REMOTE -> {
                 requireNotNull(remote) { "remote hash cache is null" }.saveBatch(name, entities, filterableProperties, sortableProperties)
                 local?.saveBatch(name, entities, filterableProperties, sortableProperties)
-                entities.forEach { pushHashNotify(it.id) }
+                // 旧实现 entities.forEach { pushHashNotify(it.id) }：N 条 publish 风暴。
+                // 改为一条消息携带 id 列表，接收方在 RedisCacheMessageHandler 里按 Collection 展开 evictLocal。
+                val ids = entities.mapNotNull { it.id as Any? }
+                if (ids.isNotEmpty()) pushHashNotify(ids)
             }
         }
     }
@@ -110,6 +151,7 @@ internal class MixHashCache(
         filterableProperties: Set<String>,
         sortableProperties: Set<String>
     ) {
+        captureIndexProps(filterableProperties, sortableProperties)
         when (strategy) {
             CacheStrategy.SINGLE_LOCAL -> requireNotNull(local) { "local hash cache is null" }.deleteById(name, id, entityClass, filterableProperties, sortableProperties)
             CacheStrategy.REMOTE -> requireNotNull(remote) { "remote hash cache is null" }.deleteById(name, id, entityClass, filterableProperties, sortableProperties)
@@ -121,19 +163,33 @@ internal class MixHashCache(
         }
     }
 
+    override fun <PK, E : IIdEntity<PK>> deleteByIds(
+        cacheName: String,
+        ids: Collection<PK>,
+        entityClass: KClass<E>,
+        filterableProperties: Set<String>,
+        sortableProperties: Set<String>
+    ) {
+        if (ids.isEmpty()) return
+        captureIndexProps(filterableProperties, sortableProperties)
+        when (strategy) {
+            CacheStrategy.SINGLE_LOCAL -> requireNotNull(local) { "local hash cache is null" }.deleteByIds(name, ids, entityClass, filterableProperties, sortableProperties)
+            CacheStrategy.REMOTE -> requireNotNull(remote) { "remote hash cache is null" }.deleteByIds(name, ids, entityClass, filterableProperties, sortableProperties)
+            CacheStrategy.LOCAL_REMOTE -> {
+                requireNotNull(remote) { "remote hash cache is null" }.deleteByIds(name, ids, entityClass, filterableProperties, sortableProperties)
+                local?.deleteByIds(name, ids, entityClass, filterableProperties, sortableProperties)
+                // 与 saveBatch 一致：单条通知带 id 列表，避免 N 条 Pub/Sub 风暴。
+                pushHashNotify(ids.mapNotNull { it as Any? })
+            }
+        }
+    }
+
     override fun <E : IIdEntity<*>> findByIds(cacheName: String, ids: Collection<*>, entityClass: KClass<E>): List<E> {
         if (strategy == CacheStrategy.LOCAL_REMOTE) {
             val fromLocal = readFromLocalFirst { it.findByIds(name, ids, entityClass) }
             if (fromLocal != null && fromLocal.size == ids.size) return fromLocal
             val fromRemote = remote?.findByIds(name, ids, entityClass) ?: return emptyList()
-            fromRemote.forEach { e ->
-                @Suppress("UNCHECKED_CAST")
-                fun writeOne(entity: IIdEntity<Any?>) {
-                    local?.save(name, entity, emptySet(), emptySet())
-                }
-                @Suppress("UNCHECKED_CAST")
-                writeOne(e as IIdEntity<Any?>)
-            }
+            saveManyLocal(fromRemote)
             return local?.findByIds(name, ids, entityClass) ?: fromRemote
         }
         return remoteOrLocal().findByIds(name, ids, entityClass)
@@ -144,7 +200,7 @@ internal class MixHashCache(
             val fromLocal = readFromLocalFirst { it.listAll(name, entityClass) }
             if (!fromLocal.isNullOrEmpty()) return fromLocal
             val fromRemote = remote?.listAll(name, entityClass) ?: return emptyList()
-            fromRemote.forEach { e -> local?.save(name, e, emptySet(), emptySet()) }
+            saveManyLocal(fromRemote)
             return local?.listAll(name, entityClass) ?: fromRemote
         }
         return remoteOrLocal().listAll(name, entityClass)
@@ -160,7 +216,11 @@ internal class MixHashCache(
             val fromLocal = readFromLocalFirst { it.listBySetIndex(name, entityClass, property, value) }
             if (!fromLocal.isNullOrEmpty()) return fromLocal
             val fromRemote = remote?.listBySetIndex(name, entityClass, property, value) ?: return emptyList()
-            fromRemote.forEach { e -> local?.save(name, e, setOf(property), emptySet()) }
+            // 确保被查询的 property 一定在 filterable 索引集合中，否则本地永远无法按此属性命中。
+            if (property !in indexedFilterable) {
+                indexedFilterable = indexedFilterable + property
+            }
+            saveManyLocal(fromRemote)
             return local?.listBySetIndex(name, entityClass, property, value) ?: fromRemote
         }
         return remoteOrLocal().listBySetIndex(name, entityClass, property, value)
@@ -178,7 +238,10 @@ internal class MixHashCache(
             val fromLocal = readFromLocalFirst { it.listPageByZSetIndex(name, entityClass, zsetIndexName, offset, limit, desc) }
             if (!fromLocal.isNullOrEmpty()) return fromLocal
             val fromRemote = remote?.listPageByZSetIndex(name, entityClass, zsetIndexName, offset, limit, desc) ?: return emptyList()
-            fromRemote.forEach { e -> local?.save(name, e, emptySet(), setOf(zsetIndexName)) }
+            if (zsetIndexName !in indexedSortable) {
+                indexedSortable = indexedSortable + zsetIndexName
+            }
+            saveManyLocal(fromRemote)
             return local?.listPageByZSetIndex(name, entityClass, zsetIndexName, offset, limit, desc) ?: fromRemote
         }
         return remoteOrLocal().listPageByZSetIndex(name, entityClass, zsetIndexName, offset, limit, desc)
@@ -196,7 +259,7 @@ internal class MixHashCache(
             val fromLocal = readFromLocalFirst { it.list(name, entityClass, criteria, pageNo, pageSize, *orders) }
             if (!fromLocal.isNullOrEmpty()) return fromLocal
             val fromRemote = remote?.list(name, entityClass, criteria, pageNo, pageSize, *orders) ?: return emptyList()
-            fromRemote.forEach { e -> local?.save(name, e, emptySet(), emptySet()) }
+            saveManyLocal(fromRemote)
             return local?.list(name, entityClass, criteria, pageNo, pageSize, *orders) ?: fromRemote
         }
         return remoteOrLocal().list(name, entityClass, criteria, pageNo, pageSize, *orders)
@@ -208,6 +271,7 @@ internal class MixHashCache(
         filterableProperties: Set<String>,
         sortableProperties: Set<String>
     ) {
+        captureIndexProps(filterableProperties, sortableProperties)
         when (strategy) {
             CacheStrategy.SINGLE_LOCAL -> requireNotNull(local) { "local hash cache is null" }.refreshAll(name, entities, filterableProperties, sortableProperties)
             CacheStrategy.REMOTE -> requireNotNull(remote) { "remote hash cache is null" }.refreshAll(name, entities, filterableProperties, sortableProperties)

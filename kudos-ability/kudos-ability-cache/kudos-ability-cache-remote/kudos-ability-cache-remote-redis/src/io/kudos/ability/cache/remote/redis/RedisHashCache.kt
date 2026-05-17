@@ -2,21 +2,29 @@ package io.kudos.ability.cache.remote.redis
 
 import io.kudos.ability.cache.common.core.hash.IHashCache
 import io.kudos.ability.cache.common.init.properties.CacheVersionConfig
-import io.kudos.ability.cache.common.notify.CacheMessage
-import io.kudos.ability.cache.common.notify.ICacheMessageHandler
 import io.kudos.ability.data.memdb.redis.RedisTemplates
 import io.kudos.ability.data.memdb.redis.dao.IdEntitiesRedisHashDao
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.sort.Order
 import io.kudos.base.model.contract.entity.IIdEntity
-import io.kudos.context.kit.SpringKit
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Qualifier
 import kotlin.reflect.KClass
 
 /**
- * Hash 缓存的 Redis 底层实现，委托 [IdEntitiesRedisHashDao]；
- * 写操作后发 Redis 通知（cacheType=hash）供各节点清理本地。
+ * Hash 缓存的 Redis 底层存储实现，委托 [IdEntitiesRedisHashDao]。
+ *
+ * 设计原则：**只负责存储**，不负责跨节点广播。
+ *
+ * 历史问题（已修）：
+ * 之前在每个写方法里 push 一条 Pub/Sub 通知，存在两个 bug：
+ * 1) cacheName 传的是 `versionConfig.getFinalCacheName(...)`（带版本前缀），但 [io.kudos.ability.cache.local.caffeine.CaffeineHashCache]
+ *    的 mainData / setIndex / zsetIndex 都以"逻辑名"为 key 存（因为 MixHashCache 调 local.save 时传的是逻辑名）。
+ *    接收端用前缀名查 mainData 取不到 → 这条通知实际是无效的 no-op。
+ * 2) LOCAL_REMOTE 模式下 MixHashCache 也会发一条（用逻辑名），所以一次写操作发了两条 Pub/Sub，
+ *    一条有效一条 no-op，纯属浪费。
+ *
+ * 现在的责任划分：广播由 [io.kudos.ability.cache.common.core.hash.MixHashCache] 统一负责（用逻辑名）。
+ * 业务侧总是通过 [io.kudos.ability.cache.common.kit.HashCacheKit] 拿到 MixHashCache，不直接持有此类。
  *
  * @author K
  * @since 1.0.0
@@ -24,23 +32,12 @@ import kotlin.reflect.KClass
 class RedisHashCache(
     @Autowired
     private val redisTemplates: RedisTemplates,
-    private val versionConfig: CacheVersionConfig,
-    @Autowired(required = false) @Qualifier("redisCacheMessageHandler") private val messageHandler: ICacheMessageHandler? = null,
-    @Autowired(required = false) @Qualifier("cacheNodeId") private val nodeId: String? = null
+    private val versionConfig: CacheVersionConfig
 ) : IHashCache {
 
     private val dao = IdEntitiesRedisHashDao(redisTemplates)
 
     private fun dataKeyPrefix(cacheName: String): String = versionConfig.getFinalCacheName(cacheName)
-
-    private fun pushHashNotify(cacheName: String, key: Any?) {
-        val handler = messageHandler ?: SpringKit.getBeansOfType<ICacheMessageHandler>().values.firstOrNull() ?: return
-        val msg = CacheMessage(versionConfig.getFinalCacheName(cacheName), key).apply {
-            cacheType = "hash"
-            this.nodeId = this@RedisHashCache.nodeId
-        }
-        handler.sendMessage(msg)
-    }
 
     override fun <PK, E : IIdEntity<PK>> getById(cacheName: String, id: PK, entityClass: KClass<E>): E? =
         dao.getById(dataKeyPrefix(cacheName), id, entityClass)
@@ -55,7 +52,6 @@ class RedisHashCache(
         sortableProperties: Set<String>
     ) {
         dao.save(dataKeyPrefix(cacheName), entity, filterableProperties, sortableProperties)
-        pushHashNotify(cacheName, entity.id)
     }
 
     override fun <PK, E : IIdEntity<PK>> saveBatch(
@@ -65,7 +61,6 @@ class RedisHashCache(
         sortableProperties: Set<String>
     ) {
         dao.saveBatch(dataKeyPrefix(cacheName), entities, filterableProperties, sortableProperties)
-        entities.forEach { pushHashNotify(cacheName, it.id) }
     }
 
     override fun <PK, E : IIdEntity<PK>> deleteById(
@@ -76,7 +71,17 @@ class RedisHashCache(
         sortableProperties: Set<String>
     ) {
         dao.deleteById(dataKeyPrefix(cacheName), id, entityClass, filterableProperties, sortableProperties)
-        pushHashNotify(cacheName, id)
+    }
+
+    override fun <PK, E : IIdEntity<PK>> deleteByIds(
+        cacheName: String,
+        ids: Collection<PK>,
+        entityClass: KClass<E>,
+        filterableProperties: Set<String>,
+        sortableProperties: Set<String>
+    ) {
+        if (ids.isEmpty()) return
+        ids.forEach { dao.deleteById(dataKeyPrefix(cacheName), it, entityClass, filterableProperties, sortableProperties) }
     }
 
     override fun <E : IIdEntity<*>> findByIds(cacheName: String, ids: Collection<*>, entityClass: KClass<E>): List<E> =
@@ -117,11 +122,9 @@ class RedisHashCache(
         sortableProperties: Set<String>
     ) {
         dao.refreshAll(dataKeyPrefix(cacheName), entities, filterableProperties, sortableProperties)
-        pushHashNotify(cacheName, null)
     }
 
     override fun clear(cacheName: String) {
         dao.clear(dataKeyPrefix(cacheName))
-        pushHashNotify(cacheName, null)
     }
 }

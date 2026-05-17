@@ -3,6 +3,7 @@ package io.kudos.ability.cache.common.aop.hash
 import io.kudos.ability.cache.common.core.hash.MixHashCacheManager
 import io.kudos.ability.cache.common.kit.HashCacheKit
 import io.kudos.ability.cache.common.kit.KeyValueCacheKit
+import io.kudos.ability.cache.common.support.SpelExpressionCache
 import io.kudos.base.model.contract.entity.IIdEntity
 import org.aspectj.lang.ProceedingJoinPoint
 import org.aspectj.lang.annotation.Around
@@ -13,9 +14,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.context.annotation.Lazy
 import org.springframework.context.expression.MethodBasedEvaluationContext
-import org.springframework.core.DefaultParameterNameDiscoverer
-import org.springframework.expression.ExpressionParser
-import org.springframework.expression.spel.standard.SpelExpressionParser
+import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
 import kotlin.reflect.KClass
 import kotlin.reflect.full.findAnnotation
@@ -32,10 +31,10 @@ import kotlin.reflect.jvm.kotlinFunction
 @Component
 @Lazy(false)
 @ConditionalOnBean(MixHashCacheManager::class)
+@Order(0) // 与其他单条 Cacheable 切面同序；这些注解互斥，相对顺序不影响行为，标注主要是避免默认 LOWEST_PRECEDENCE 带来的不确定。
 class HashCacheableByPrimaryAspect {
 
-    private val parser: ExpressionParser = SpelExpressionParser()
-    private val nameDiscoverer = DefaultParameterNameDiscoverer()
+    private val nameDiscoverer = SpelExpressionCache.parameterNameDiscoverer
 
     @Pointcut("@annotation(io.kudos.ability.cache.common.aop.hash.HashCacheableByPrimary)")
     fun cut() {}
@@ -51,16 +50,15 @@ class HashCacheableByPrimaryAspect {
         val context = MethodBasedEvaluationContext(null, method, joinPoint.args, nameDiscoverer)
 
         if (ann.condition.isNotBlank()) {
-            val conditionResult = parser.parseExpression(ann.condition).getValue(context, Boolean::class.java)
+            val conditionResult = SpelExpressionCache.get(ann.condition).getValue(context, Boolean::class.java)
             if (conditionResult != true) return joinPoint.proceed()
         }
 
-        val keyValue = parser.parseExpression(ann.key).getValue(context) ?: return joinPoint.proceed()
+        val keyValue = SpelExpressionCache.get(ann.key).getValue(context) ?: return joinPoint.proceed()
         val entityClass = resolveEntityClass(ann.entityClass)
 
         val hashCache = HashCacheKit.getHashCache(cacheName)
         if (KeyValueCacheKit.isCacheActive(cacheName)) {
-            @Suppress("UNCHECKED_CAST")
             val cached = hashCache.getById(cacheName, keyValue, entityClass)
             if (cached != null) return cached
         }
@@ -71,7 +69,7 @@ class HashCacheableByPrimaryAspect {
         if (ann.unless.isNotBlank()) {
             val unlessContext = MethodBasedEvaluationContext(result, method, joinPoint.args, nameDiscoverer)
             unlessContext.setVariable("result", result)
-            val unlessResult = parser.parseExpression(ann.unless).getValue(unlessContext, Boolean::class.java)
+            val unlessResult = SpelExpressionCache.get(ann.unless).getValue(unlessContext, Boolean::class.java)
             if (unlessResult == true) return result
         }
 

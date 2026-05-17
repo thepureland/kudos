@@ -86,7 +86,7 @@ class CacheDataInitializer : BeanPostProcessor, SmartInitializingSingleton {
     override fun afterSingletonsInstantiated() {
         cacheHandlers.forEach {
             val cacheConfig = KeyValueCacheKit.getCacheConfig(it.cacheName())
-            if (cacheConfig != null && cacheConfig.writeOnBoot == true) {
+            if (cacheConfig?.isWriteOnBoot == true) {
                 it.reloadAll(false)
             }
         }
