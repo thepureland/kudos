@@ -41,19 +41,22 @@ open class AuthGroupRoleService(
         if (roleIds.isEmpty()) {
             return 0
         }
-        var count = 0
-        roleIds.forEach { roleId ->
-            if (!exists(groupId, roleId)) {
-                val relation = AuthGroupRole.Companion {
-                    this.groupId = groupId
-                    this.roleId = roleId
-                }
-                dao.insert(relation)
-                count++
+        // 一次 SELECT 已存在的关系，差集对新增 ID 一次 batchInsert，把原 N+1 折叠到 2 次 SQL。
+        val existing = dao.searchRoleIdsByGroupId(groupId)
+        val newRoleIds = roleIds.toSet() - existing
+        if (newRoleIds.isEmpty()) {
+            log.debug("批量绑定组${groupId}与${roleIds.size}个角色的关系，全部已存在，无新增。")
+            return 0
+        }
+        val relations = newRoleIds.map { roleId ->
+            AuthGroupRole.Companion {
+                this.groupId = groupId
+                this.roleId = roleId
             }
         }
-        log.debug("批量绑定组${groupId}与${roleIds.size}个角色的关系，成功绑定${count}条。")
-        return count
+        dao.batchInsert(relations)
+        log.debug("批量绑定组${groupId}与${roleIds.size}个角色的关系，成功绑定${newRoleIds.size}条。")
+        return newRoleIds.size
     }
 
     @Transactional

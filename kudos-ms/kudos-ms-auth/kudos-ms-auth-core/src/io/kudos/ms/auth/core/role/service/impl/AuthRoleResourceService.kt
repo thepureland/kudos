@@ -51,25 +51,23 @@ open class AuthRoleResourceService(
         if (resourceIds.isEmpty()) {
             return 0
         }
-        var count = 0
-        val boundResourceIds = mutableListOf<String>()
-        resourceIds.forEach { resourceId ->
-            val trimmed = resourceId.trim()
-            if (!exists(roleId, trimmed)) {
-                val relation = AuthRoleResource.Companion {
-                    this.roleId = roleId
-                    this.resourceId = trimmed
-                }
-                dao.insert(relation)
-                boundResourceIds += trimmed
-                count++
+        // 一次 SELECT 已存在的关系（resource_id 为 character(N)，DB 返回的字符串可能带 padding，统一 trim）。
+        val existing = dao.searchResourceIdsByRoleIds(listOf(roleId)).map { it.trim() }.toSet()
+        val boundResourceIds = resourceIds.map { it.trim() }.toSet() - existing
+        if (boundResourceIds.isEmpty()) {
+            log.debug("批量绑定角色${roleId}与${resourceIds.size}个资源的关系，全部已存在，无新增。")
+            return 0
+        }
+        val relations = boundResourceIds.map { trimmed ->
+            AuthRoleResource.Companion {
+                this.roleId = roleId
+                this.resourceId = trimmed
             }
         }
-        log.debug("批量绑定角色${roleId}与${resourceIds.size}个资源的关系，成功绑定${count}条。")
-        if (boundResourceIds.isNotEmpty()) {
-            eventPublisher.publishEvent(AuthRoleResourceRelationsChanged(roleId, boundResourceIds))
-        }
-        return count
+        dao.batchInsert(relations)
+        log.debug("批量绑定角色${roleId}与${resourceIds.size}个资源的关系，成功绑定${boundResourceIds.size}条。")
+        eventPublisher.publishEvent(AuthRoleResourceRelationsChanged(roleId, boundResourceIds.toList()))
+        return boundResourceIds.size
     }
 
     @Transactional

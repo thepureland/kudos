@@ -59,24 +59,23 @@ open class AuthRoleUserService(
         if (userIds.isEmpty()) {
             return 0
         }
-        var count = 0
-        val boundUserIds = mutableListOf<String>()
-        userIds.forEach { userId ->
-            if (!exists(roleId, userId)) {
-                val relation = AuthRoleUser.Companion {
-                    this.roleId = roleId
-                    this.userId = userId
-                }
-                dao.insert(relation)
-                boundUserIds += userId
-                count++
+        // 一次 SELECT 已存在的关系，差集对新增 ID 一次 batchInsert，把原 N+1 折叠到 2 次 SQL。
+        val existing = dao.searchUserIdsByRoleId(roleId).toSet()
+        val boundUserIds = userIds.toSet() - existing
+        if (boundUserIds.isEmpty()) {
+            log.debug("批量绑定角色${roleId}与${userIds.size}个用户的关系，全部已存在，无新增。")
+            return 0
+        }
+        val relations = boundUserIds.map { userId ->
+            AuthRoleUser.Companion {
+                this.roleId = roleId
+                this.userId = userId
             }
         }
-        log.debug("批量绑定角色${roleId}与${userIds.size}个用户的关系，成功绑定${count}条。")
-        if (boundUserIds.isNotEmpty()) {
-            eventPublisher.publishEvent(AuthRoleUserRelationsChanged(roleId, boundUserIds))
-        }
-        return count
+        dao.batchInsert(relations)
+        log.debug("批量绑定角色${roleId}与${userIds.size}个用户的关系，成功绑定${boundUserIds.size}条。")
+        eventPublisher.publishEvent(AuthRoleUserRelationsChanged(roleId, boundUserIds.toList()))
+        return boundUserIds.size
     }
 
     @Transactional

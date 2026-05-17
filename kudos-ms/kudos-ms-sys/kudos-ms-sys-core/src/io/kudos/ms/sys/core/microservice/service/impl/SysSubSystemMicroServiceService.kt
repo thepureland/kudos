@@ -39,19 +39,22 @@ open class SysSubSystemMicroServiceService(
         if (microServiceCodes.isEmpty()) {
             return 0
         }
-        var count = 0
-        microServiceCodes.forEach { microServiceCode ->
-            if (!exists(subSystemCode, microServiceCode)) {
-                val relation = SysSubSystemMicroService {
-                    this.subSystemCode = subSystemCode
-                    this.microServiceCode = microServiceCode
-                }
-                dao.insert(relation)
-                count++
+        // 一次 SELECT 已存在的关系，差集对新增 ID 一次 batchInsert，把原 N+1 折叠到 2 次 SQL。
+        val existing = dao.searchMicroServiceCodesBySubSystemCode(subSystemCode)
+        val newMicroServiceCodes = microServiceCodes.toSet() - existing
+        if (newMicroServiceCodes.isEmpty()) {
+            log.debug("批量绑定子系统${subSystemCode}与${microServiceCodes.size}个微服务的关系，全部已存在，无新增。")
+            return 0
+        }
+        val relations = newMicroServiceCodes.map {
+            SysSubSystemMicroService {
+                this.subSystemCode = subSystemCode
+                this.microServiceCode = it
             }
         }
-        log.debug("批量绑定子系统${subSystemCode}与${microServiceCodes.size}个微服务的关系，成功绑定${count}条。")
-        return count
+        dao.batchInsert(relations)
+        log.debug("批量绑定子系统${subSystemCode}与${microServiceCodes.size}个微服务的关系，成功绑定${newMicroServiceCodes.size}条。")
+        return newMicroServiceCodes.size
     }
 
     @Transactional

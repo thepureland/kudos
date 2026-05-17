@@ -47,24 +47,23 @@ open class AuthGroupUserService(
         if (userIds.isEmpty()) {
             return 0
         }
-        var count = 0
-        val boundUserIds = mutableListOf<String>()
-        userIds.forEach { userId ->
-            if (!exists(groupId, userId)) {
-                val relation = AuthGroupUser.Companion {
-                    this.groupId = groupId
-                    this.userId = userId
-                }
-                dao.insert(relation)
-                boundUserIds += userId
-                count++
+        // 一次 SELECT 已存在的关系，差集对新增 ID 一次 batchInsert，把原 N+1 折叠到 2 次 SQL。
+        val existing = dao.searchUserIdsByGroupId(groupId)
+        val boundUserIds = userIds.toSet() - existing
+        if (boundUserIds.isEmpty()) {
+            log.debug("批量绑定组${groupId}与${userIds.size}个用户的关系，全部已存在，无新增。")
+            return 0
+        }
+        val relations = boundUserIds.map { userId ->
+            AuthGroupUser.Companion {
+                this.groupId = groupId
+                this.userId = userId
             }
         }
-        log.debug("批量绑定组${groupId}与${userIds.size}个用户的关系，成功绑定${count}条。")
-        if (boundUserIds.isNotEmpty()) {
-            eventPublisher.publishEvent(AuthGroupUserRelationsChanged(groupId, boundUserIds))
-        }
-        return count
+        dao.batchInsert(relations)
+        log.debug("批量绑定组${groupId}与${userIds.size}个用户的关系，成功绑定${boundUserIds.size}条。")
+        eventPublisher.publishEvent(AuthGroupUserRelationsChanged(groupId, boundUserIds.toList()))
+        return boundUserIds.size
     }
 
     @Transactional
