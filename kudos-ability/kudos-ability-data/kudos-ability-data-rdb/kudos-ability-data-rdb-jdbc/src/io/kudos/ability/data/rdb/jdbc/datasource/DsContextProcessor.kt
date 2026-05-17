@@ -44,10 +44,7 @@ open class DsContextProcessor {
     private val keyLockRegistry = KeyLockRegistry<String>()
 
     fun doDetermineDatasource(dsKey: String, dsKeyConfig: String?): String? {
-        if (KudosContextHolder.get() == null) {
-            return null
-        }
-        val context = KudosContextHolder.get()
+        val context = KudosContextHolder.getOrNull() ?: return null
         if (context._datasourceTenantId == DatasourceConst.CONSOLE_TENANT_ID) {
             return null
         }
