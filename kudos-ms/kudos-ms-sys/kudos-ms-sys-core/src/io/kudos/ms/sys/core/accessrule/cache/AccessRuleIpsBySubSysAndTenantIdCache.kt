@@ -103,7 +103,7 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
     @Cacheable(
         cacheNames = [CACHE_NAME],
         key = "#systemCode.concat('${Consts.CACHE_KEY_DEFAULT_DELIMITER}').concat((#tenantId ?: '').trim())",
-        unless = "#result == null"
+        unless = "#result == null || #result.isEmpty()"
     )
     open fun getAccessRuleIps(systemCode: String, tenantId: String? = null): List<SysAccessRuleIpCacheEntry> {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
