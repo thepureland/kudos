@@ -25,8 +25,6 @@ hibernate-validator = "9.1.0.Final"
 jakarta-el-api = "6.0.1"
 glassfish-expressly = "6.0.0"
 sourceforge-jxl = "2.6.12"
-jakarta-xml-bind = "4.0.5"
-glassfish-jaxb-runtime = "4.0.7"
 google-zxing = "3.5.4"
 lingala-zip4j = "2.11.6"
 apache-xmlgraphics-batik = "1.19"
@@ -87,8 +85,8 @@ jcl-over-slf4j = { module = "org.slf4j:jcl-over-slf4j" }
 log4j-over-slf4j = { module = "org.slf4j:log4j-over-slf4j" }
 logback-classic = { module = "ch.qos.logback:logback-classic" }
 sourceforge-jxl = { module = "net.sourceforge.jexcelapi:jxl", version.ref = "sourceforge-jxl" }
-jakarta-xml-bind-api = { module = "jakarta.xml.bind:jakarta.xml.bind-api", version.ref = "jakarta-xml-bind" }
-glassfish-jaxb-runtime = { module = "org.glassfish.jaxb:jaxb-runtime", version.ref = "glassfish-jaxb-runtime" }
+jakarta-xml-bind-api = { module = "jakarta.xml.bind:jakarta.xml.bind-api" }
+glassfish-jaxb-runtime = { module = "org.glassfish.jaxb:jaxb-runtime" }
 google-zxing-core = { module = "com.google.zxing:core", version.ref = "google-zxing" }
 lingala-zip4j = { module = "net.lingala.zip4j:zip4j", version.ref = "lingala-zip4j" }
 apache-xmlgraphics-batik-dom = { module = "org.apache.xmlgraphics:batik-dom", version.ref = "apache-xmlgraphics-batik" }
