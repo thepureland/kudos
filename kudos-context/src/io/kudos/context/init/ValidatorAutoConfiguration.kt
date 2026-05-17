@@ -20,16 +20,18 @@ import org.springframework.validation.beanvalidation.MethodValidationPostProcess
 open class ValidatorAutoConfiguration : IComponentInitializer {
 
     /**
-     * 注册 [Spring MVC 命名约定](https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-config/validation.html)
-     * 的 "mvcValidator" Bean，并 `@Primary` 让所有按 `Validator` / `LocalValidatorFactoryBean`
-     * 类型注入的地方都拿到我们的 [CustomConstraintValidatorFactory]。
+     * 项目级默认 Validator，使用 HibernateValidator 实现 + 自定义 [CustomConstraintValidatorFactory]。
      *
-     * 之前同时标了 `@Primary` + `@Qualifier("mvcValidator")`，Spring 推荐二选一：
-     * - `@Primary` 表达"按类型注入时我是首选"
-     * - `@Qualifier` 表达"我有特定名字"
-     * 两者同用语义冲突。用 `@Bean("mvcValidator") + @Primary` 既给名字又设为 primary，更清晰。
+     * 通过 `@Primary` 让所有按 `Validator` / `LocalValidatorFactoryBean` 类型注入的地方都拿到此 Bean。
+     *
+     * 注意：不再用 `@Bean("mvcValidator")` 占名。Spring Boot 4 默认禁止 Bean 定义覆盖
+     * (`spring.main.allow-bean-definition-overriding=false`)，而 `WebMvcAutoConfiguration$EnableWebMvcConfiguration`
+     * 自身也会注册一个名为 `mvcValidator` 的 Bean，硬要同名会启动失败。
+     *
+     * Spring MVC 的 `mvcValidator` 槽位由 `kudos-ability-web-springmvc` 模块的
+     * `SpringMvcAutoConfiguration.getValidator()` 钩入此 Bean —— 那是 Spring 官方推荐的替换方式。
      */
-    @Bean("mvcValidator")
+    @Bean
     @Primary
     open fun defaultValidator(): LocalValidatorFactoryBean {
         val validator = CustomConstraintValidatorFactory()
