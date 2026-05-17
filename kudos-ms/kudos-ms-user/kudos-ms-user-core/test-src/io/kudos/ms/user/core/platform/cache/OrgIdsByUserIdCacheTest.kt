@@ -1,6 +1,7 @@
 package io.kudos.ms.user.core.platform.cache
 
 import io.kudos.ms.user.core.account.dao.UserOrgUserDao
+import io.kudos.ms.user.core.account.event.UserAccountDeleted
 import io.kudos.ms.user.core.account.model.po.UserOrgUser
 import io.kudos.ms.user.core.org.cache.OrgIdsByUserIdCache
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
@@ -161,8 +162,8 @@ class OrgIdsByUserIdCacheTest : RdbAndRedisCacheTestBase() {
         val deleteSuccess = userOrgUserDao.deleteById(id)
         assertTrue(deleteSuccess, "删除应该成功")
         
-        // 同步缓存（模拟用户删除）
-        cacheHandler.syncOnUserDelete(userId)
+        // 直接驱动事件 listener（AFTER_COMMIT 在 @Transactional 测试中不会触发，故直接调用 on(...)）
+        cacheHandler.on(UserAccountDeleted(userId, tenantId = "tenant-x", username = "user-x"))
         
         // 验证缓存已被清除，重新获取应该不包含已删除的机构
         val orgIdsAfter = cacheHandler.getOrgIds(userId)

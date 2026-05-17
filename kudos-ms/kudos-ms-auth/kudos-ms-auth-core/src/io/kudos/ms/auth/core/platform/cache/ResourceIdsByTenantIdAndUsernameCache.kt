@@ -198,23 +198,6 @@ open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<
     }
 
     /**
-     * 用户删除后同步缓存
-     *
-     * @param tenantId 租户ID
-     * @param username 用户名
-     */
-    open fun syncOnUserDelete(tenantId: String, username: String) {
-        if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("删除租户${tenantId}用户${username}后，同步从${CACHE_NAME}缓存中踢除...")
-            KeyValueCacheKit.evict(CACHE_NAME, getKey(tenantId, username))
-            log.debug("${CACHE_NAME}缓存同步完成。")
-        }
-        // 同时从用户 Hash 缓存中移除该用户，确保后续 getResourceIds 时按 tenantId+username 查不到已删除用户，返回空列表
-        val userId = userAccountHashCache.getUsersByTenantIdAndUsername(tenantId, username)?.id
-        userId?.let { userAccountHashCache.syncOnDelete(it) }
-    }
-
-    /**
      * 返回参数拼接后的key
      *
      * @param tenantId 租户ID
