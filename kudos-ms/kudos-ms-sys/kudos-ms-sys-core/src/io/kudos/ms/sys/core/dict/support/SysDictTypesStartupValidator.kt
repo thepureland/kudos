@@ -30,8 +30,8 @@ import java.lang.reflect.Modifier
 @Component
 open class SysDictTypesStartupValidator(
     private val sysDictDao: SysDictDao,
-    @Value("\${kudos.ms.sys.startup.dict-types-validation.enabled:true}") private val enabled: Boolean,
-    @Value("\${kudos.ms.sys.startup.dict-types-validation.fail-on-missing:false}") private val failOnMissing: Boolean,
+    @param:Value("\${kudos.ms.sys.startup.dict-types-validation.enabled:true}") private val enabled: Boolean,
+    @param:Value("\${kudos.ms.sys.startup.dict-types-validation.fail-on-missing:false}") private val failOnMissing: Boolean,
 ) {
 
     private val log = LogFactory.getLog(this::class)

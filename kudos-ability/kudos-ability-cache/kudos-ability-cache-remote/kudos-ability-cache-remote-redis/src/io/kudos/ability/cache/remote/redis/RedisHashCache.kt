@@ -7,7 +7,6 @@ import io.kudos.ability.data.memdb.redis.dao.IdEntitiesRedisHashDao
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.sort.Order
 import io.kudos.base.model.contract.entity.IIdEntity
-import org.springframework.beans.factory.annotation.Autowired
 import kotlin.reflect.KClass
 
 /**
@@ -30,7 +29,6 @@ import kotlin.reflect.KClass
  * @since 1.0.0
  */
 class RedisHashCache(
-    @Autowired
     private val redisTemplates: RedisTemplates,
     private val versionConfig: CacheVersionConfig
 ) : IHashCache {

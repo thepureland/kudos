@@ -27,7 +27,7 @@ internal class SortableTest {
     }
 
     private data class DataClassPo(
-        @Sortable val tagged: String = "",
+        @param:Sortable val tagged: String = "",
         val plain: String = "",
     )
 
