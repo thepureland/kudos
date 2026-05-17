@@ -6,6 +6,7 @@ import io.kudos.ms.sys.core.platform.service.impl.completeCrudUpdate
 import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.model.contract.entity.IIdEntity
+import io.kudos.base.model.vo.IdAndName
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.PagingSearchResult
 import io.kudos.base.query.eq
@@ -78,6 +79,12 @@ open class SysTenantService(
     @Transactional(readOnly = true)
     override fun getTenantsForSubSystemFromCache(subSystemCode: String): List<SysTenantCacheEntry> =
         tenantByIdCache.getTenantsByIds(sysTenantSystemHashCache.getTenantIdsBySubSystemCode(subSystemCode)).values.toList()
+
+    @Transactional(readOnly = true)
+    override fun getActiveTenantIdAndNamesForSubSystem(subSystemCode: String): List<IdAndName<String>> =
+        getTenantsForSubSystemFromCache(subSystemCode)
+            .filter { it.active }
+            .map { IdAndName(it.id, it.name) }
 
     @Transactional(readOnly = true)
     override fun getAllTenantsFromCache(): List<SysTenantCacheEntry> = dao.searchAs()

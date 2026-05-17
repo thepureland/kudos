@@ -76,6 +76,14 @@ open class SysMicroServiceService(
     override fun getAtomicServicesByParentCodeFromCache(parentCode: String): List<SysMicroServiceCacheEntry> =
         getAllMicroServicesFromCache().filter { it.parentCode == parentCode && it.atomicService }
 
+    @Transactional(readOnly = true)
+    override fun getActiveAtomicServiceCodes(): List<String> =
+        getAtomicServicesFromCache().filter { it.active }.map { it.code }
+
+    @Transactional(readOnly = true)
+    override fun getActiveMicroServiceCodes(): List<String> =
+        getMicroServicesExcludeAtomicFromCache().filter { it.active }.map { it.code }
+
     @Transactional
     override fun updateActive(code: String, active: Boolean): Boolean {
         val microService = SysMicroService {

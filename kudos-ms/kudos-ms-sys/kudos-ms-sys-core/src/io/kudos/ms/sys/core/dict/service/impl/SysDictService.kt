@@ -73,6 +73,13 @@ open class SysDictService(
         .let { dicts -> if (activeOnly) dicts.filter { it.active } else dicts }
 
     @Transactional(readOnly = true)
+    override fun getDictTypesByAtomicServiceCode(
+        atomicServiceCode: String,
+        activeOnly: Boolean
+    ): Map<String, String> =
+        getDictsFromCacheByAtomicServiceCode(atomicServiceCode, activeOnly).associate { it.id to it.dictType }
+
+    @Transactional(readOnly = true)
     override fun getDictByAtomicServiceAndType(atomicServiceCode: String, dictType: String): SysDictRow? =
         dao.search(
             Criteria.and(

@@ -1,5 +1,6 @@
 package io.kudos.ms.sys.core.tenant.service.iservice
 
+import io.kudos.base.model.vo.IdAndName
 import io.kudos.base.support.service.iservice.IBaseCrudService
 import io.kudos.ms.sys.common.tenant.vo.SysTenantCacheEntry
 import io.kudos.ms.sys.common.tenant.vo.response.SysTenantRow
@@ -54,6 +55,14 @@ interface ISysTenantService : IBaseCrudService<String, SysTenant> {
      * 从缓存获取租户已绑定的子系统编码集合
      */
     fun getSubSystemCodesFromCache(tenantId: String): Set<String>
+
+    /**
+     * 从缓存获取指定子系统下所有启用租户的 id/name 投影。
+     *
+     * @param subSystemCode 子系统编码
+     * @return id 与 name 列表（仅 active=true）
+     */
+    fun getActiveTenantIdAndNamesForSubSystem(subSystemCode: String): List<IdAndName<String>>
 
 
 }

@@ -63,6 +63,14 @@ open class SysSystemService(
     @Transactional(readOnly = true)
     override fun getSystemsExcludeSubSystemFromCache(): List<SysSystemCacheEntry> = sysSystemHashCache.getSystemsByType(false)
 
+    @Transactional(readOnly = true)
+    override fun getActiveSubSystemCodes(): List<String> =
+        getAllSystemsFromCache().filter { it.subSystem && it.active }.map { it.code }
+
+    @Transactional(readOnly = true)
+    override fun getActiveSystemCodes(): List<String> =
+        getSystemsExcludeSubSystemFromCache().filter { it.active }.map { it.code }
+
     @Transactional
     override fun updateActive(code: String, active: Boolean): Boolean {
         val system = SysSystem {

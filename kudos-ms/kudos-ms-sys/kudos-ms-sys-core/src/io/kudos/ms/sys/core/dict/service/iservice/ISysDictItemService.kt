@@ -4,6 +4,7 @@ import java.util.LinkedHashMap
 
 import io.kudos.base.support.service.iservice.IBaseCrudService
 import io.kudos.ms.sys.common.dict.vo.SysDictItemCacheEntry
+import io.kudos.ms.sys.common.dict.vo.response.SysDictItemNode
 import io.kudos.ms.sys.core.dict.model.po.SysDictItem
 
 
@@ -93,5 +94,24 @@ interface ISysDictItemService : IBaseCrudService<String, SysDictItem> {
      * 指定父字典项 id 下的直接子项
      */
     fun getDirectChildrenOfItemFromCache(parentId: String, activeOnly: Boolean = true): List<SysDictItemCacheEntry>
+
+    /**
+     * 指定字典类型下第一层字典项的 id/code/name 投影。
+     */
+    fun getDirectChildrenOfDictAsNodes(
+        atomicServiceCode: String,
+        dictType: String,
+        activeOnly: Boolean = true,
+    ): List<SysDictItemNode>
+
+    /**
+     * 指定字典项编码下直接子项的 id/code/name 投影。
+     */
+    fun getDirectChildrenOfItemAsNodes(
+        atomicServiceCode: String,
+        dictType: String,
+        itemCode: String,
+        activeOnly: Boolean = true,
+    ): List<SysDictItemNode>
 
 }
