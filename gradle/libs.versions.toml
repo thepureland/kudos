@@ -26,7 +26,7 @@ apache-commons-text = "1.15.0"
 apache-commons-net = "3.12.0"
 hibernate-validator = "9.1.0.Final"
 jakarta-el-api = "6.0.1"
-glassfish-jakarta-el = "5.0.0-M1"
+glassfish-expressly = "6.0.0"
 slf4j = "2.0.17"
 logback = "1.5.32"
 sourceforge-jxl = "2.6.12"
@@ -88,7 +88,7 @@ jakarta-validation-api = { module = "jakarta.validation:jakarta.validation-api" 
 hibernate-validator = { module = "org.hibernate.validator:hibernate-validator", version.ref = "hibernate-validator" }
 ktor-serialization-json = { module = "io.ktor:ktor-serialization-kotlinx-json-jvm", version.ref = "ktor" }
 jakarta-el-api = { module = "jakarta.el:jakarta.el-api", version.ref = "jakarta-el-api" }
-glassfish-jakarta-el = { module = "org.glassfish:jakarta.el", version.ref = "glassfish-jakarta-el" }
+glassfish-jakarta-el = { module = "org.glassfish.expressly:expressly", version.ref = "glassfish-expressly" }
 jcl-over-slf4j = { module = "org.slf4j:jcl-over-slf4j", version.ref = "slf4j" }
 log4j-over-slf4j = { module = "org.slf4j:log4j-over-slf4j", version.ref = "slf4j" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
