@@ -4,6 +4,6 @@ dependencies {
     api(project(":kudos-ability:kudos-ability-distributed:kudos-ability-distributed-discovery:kudos-ability-distributed-discovery-nacos"))
     api(project(":kudos-ability:kudos-ability-distributed:kudos-ability-distributed-config:kudos-ability-distributed-config-nacos"))
     api(project(":kudos-ability:kudos-ability-web:kudos-ability-web-springmvc"))
-    
+
     testImplementation(project(":kudos-test:kudos-test-container"))
 }

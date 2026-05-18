@@ -167,11 +167,146 @@ class UserAccountServiceTest : RdbAndRedisCacheTestBase() {
         val id = "a970f8c0-0000-0000-0000-000000000017"
         // 先增加错误次数
         userAccountService.incrementSecurityPasswordErrorTimes(id)
-        
+
         // 然后重置
         assertTrue(userAccountService.resetSecurityPasswordErrorTimes(id))
         val user = userAccountService.getUserRecord(id)
         assertNotNull(user)
         assertTrue(user.securityPasswordErrorTimes == 0)
+    }
+
+    /** resetAuthKey 生成新 secret 并落库；返回的 otpauth URL 形态合法。 */
+    @Test
+    fun resetAuthKey_storesSecretAndReturnsOtpauthUrl() {
+        val id = "a970f8c0-0000-0000-0000-000000000017"
+        val setup = userAccountService.resetAuthKey(id, "alice", "kudos")
+        assertNotNull(setup)
+        assertTrue(setup.secret.isNotBlank())
+        assertTrue(setup.otpauthUrl.startsWith("otpauth://totp/"))
+        assertTrue(setup.otpauthUrl.contains("secret=${setup.secret}"))
+        assertTrue(setup.otpauthUrl.contains("issuer=kudos"))
+        // 数据库里应该存了 secret
+        val user = userAccountService.get(id)
+        assertNotNull(user)
+        assertEquals(setup.secret, user.authenticationKey)
+    }
+
+    /** resetAuthKey 对不存在的用户应当返回 null（dao.update 失败）。 */
+    @Test
+    fun resetAuthKey_unknownUser_returnsNull() {
+        val res = userAccountService.resetAuthKey(
+            "00000000-0000-0000-0000-000000000000", "alice", "kudos"
+        )
+        assertNull(res)
+    }
+
+    /** cleanAuthKey 清掉已有 secret。 */
+    @Test
+    fun cleanAuthKey_clearsExistingSecret() {
+        val id = "a970f8c0-0000-0000-0000-000000000017"
+        // 先种一个 secret
+        userAccountService.resetAuthKey(id, "alice", "kudos")
+        assertNotNull(userAccountService.get(id)?.authenticationKey)
+
+        assertTrue(userAccountService.cleanAuthKey(id))
+        assertNull(userAccountService.get(id)?.authenticationKey)
+    }
+
+    /** verifyAuthCode 在未启用 OTP（authenticationKey=null）时返回 false。 */
+    @Test
+    fun verifyAuthCode_noKey_returnsFalse() {
+        val id = "a970f8c0-0000-0000-0000-000000000017"
+        userAccountService.cleanAuthKey(id)
+        assertFalse(userAccountService.verifyAuthCode(id, 123456L))
+    }
+
+    /** verifyAuthCode 对一个明显错误的验证码返回 false（不抛异常）。 */
+    @Test
+    fun verifyAuthCode_wrongCode_returnsFalse() {
+        val id = "a970f8c0-0000-0000-0000-000000000017"
+        userAccountService.resetAuthKey(id, "alice", "kudos")
+        // 0 几乎不可能匹配当前时间窗的 TOTP
+        assertFalse(userAccountService.verifyAuthCode(id, 0L))
+    }
+
+    /** freezeAccount 写入 6 列。 */
+    @Test
+    fun freezeAccount_writesAllSixFields() {
+        val id = "a970f8c0-0000-0000-0000-000000000017"
+        val start = LocalDateTime.now().minusMinutes(1)
+        val end = LocalDateTime.now().plusHours(1)
+        val ok = userAccountService.freezeAccount(
+            id = id,
+            freezeType = "manual",
+            freezeTitle = "test-freeze",
+            freezeContent = "from UserAccountServiceTest",
+            freezeStartTime = start,
+            freezeEndTime = end,
+        )
+        assertTrue(ok)
+        val po = assertNotNull(userAccountService.get(id))
+        assertEquals("manual", po.freezeType)
+        assertEquals("test-freeze", po.freezeTitle)
+        assertEquals("from UserAccountServiceTest", po.freezeContent)
+        assertEquals(start, po.freezeStartTime)
+        assertEquals(end, po.freezeEndTime)
+        assertNotNull(po.freezeTime)
+    }
+
+    /** unfreezeAccount 清空全部 6 列。 */
+    @Test
+    fun unfreezeAccount_clearsAllSixFields() {
+        val id = "a970f8c0-0000-0000-0000-000000000017"
+        userAccountService.freezeAccount(id, "manual", "t", "c", null, null)
+        assertNotNull(userAccountService.get(id)?.freezeType)
+
+        assertTrue(userAccountService.unfreezeAccount(id))
+        val po = assertNotNull(userAccountService.get(id))
+        assertNull(po.freezeType)
+        assertNull(po.freezeTime)
+        assertNull(po.freezeStartTime)
+        assertNull(po.freezeEndTime)
+        assertNull(po.freezeTitle)
+        assertNull(po.freezeContent)
+    }
+
+    /** cleanExpiredFreezes 只清理 freeze_end_time < now 的记录；永久冻结和未来生效的保留。 */
+    @Test
+    fun cleanExpiredFreezes_clearsExpiredOnly_keepsPermanentAndFuture() {
+        val expiredId = "a970f8c0-0000-0000-0000-000000000017"
+        val permanentId = "a970f8c0-0000-0000-0000-000000000018"
+        val futureId = "a970f8c0-0000-0000-0000-000000000016"
+
+        userAccountService.freezeAccount(
+            expiredId, "manual", "expired", "c",
+            freezeStartTime = LocalDateTime.now().minusDays(2),
+            freezeEndTime = LocalDateTime.now().minusDays(1),
+        )
+        userAccountService.freezeAccount(
+            permanentId, "admin", "permanent", "c",
+            freezeStartTime = null, freezeEndTime = null,
+        )
+        userAccountService.freezeAccount(
+            futureId, "scheduled", "future", "c",
+            freezeStartTime = LocalDateTime.now().plusDays(1),
+            freezeEndTime = LocalDateTime.now().plusDays(2),
+        )
+
+        val cleared = userAccountService.cleanExpiredFreezes()
+        assertTrue(cleared >= 1, "至少清掉过期的那一条")
+
+        // 过期的被清掉
+        assertNull(userAccountService.get(expiredId)?.freezeType)
+        // 永久冻结保留
+        assertEquals("admin", userAccountService.get(permanentId)?.freezeType)
+        // 未来才生效的也保留（freezeEndTime 在未来）
+        assertEquals("scheduled", userAccountService.get(futureId)?.freezeType)
+    }
+
+    /** cleanExpiredFreezes 在没有过期记录时返回 0、不抛异常。 */
+    @Test
+    fun cleanExpiredFreezes_noExpired_returnsZero() {
+        val cleared = userAccountService.cleanExpiredFreezes()
+        assertEquals(0, cleared)
     }
 }

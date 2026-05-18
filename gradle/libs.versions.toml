@@ -89,6 +89,9 @@ apache-xmlgraphics-batik-bridge = { module = "org.apache.xmlgraphics:batik-bridg
 github-classgraph = { module = "io.github.classgraph:classgraph", version.ref = "github-classgraph" }
 servlet-api = { module = "jakarta.servlet:jakarta.servlet-api", version.ref = "servlet-api" }
 
+# kudos-base: BCrypt 等密码哈希工具（spring-security-crypto 单独打包，体积小，不拖入 spring-security 上下文）
+spring-security-crypto = { module = "org.springframework.security:spring-security-crypto" }
+
 # kudos-context
 spring-boot-starter-aop = { module = "org.springframework.boot:spring-boot-starter-aspectj" }
 spring-tx = { module = "org.springframework:spring-tx" }

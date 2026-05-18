@@ -71,6 +71,24 @@ object UserAccounts : StringIdTable<UserAccount>("user_account") {
     /** 备注 */
     var remark = varchar("remark").bindTo { it.remark }
 
+    /** 冻结类型字典码 */
+    var freezeType = varchar("freeze_type").bindTo { it.freezeType }
+
+    /** 冻结记录创建时刻 */
+    var freezeTime = datetime("freeze_time").bindTo { it.freezeTime }
+
+    /** 冻结生效起点 */
+    var freezeStartTime = datetime("freeze_start_time").bindTo { it.freezeStartTime }
+
+    /** 冻结失效时刻 */
+    var freezeEndTime = datetime("freeze_end_time").bindTo { it.freezeEndTime }
+
+    /** 冻结原因标题 */
+    var freezeTitle = varchar("freeze_title").bindTo { it.freezeTitle }
+
+    /** 冻结详细说明 */
+    var freezeContent = varchar("freeze_content").bindTo { it.freezeContent }
+
     /** 是否激活 */
     var active = boolean("active").bindTo { it.active }
 

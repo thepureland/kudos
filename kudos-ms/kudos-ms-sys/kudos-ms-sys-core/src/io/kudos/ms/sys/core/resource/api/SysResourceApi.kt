@@ -6,6 +6,7 @@ import io.kudos.ms.sys.common.resource.vo.SysResourceCacheEntry
 import io.kudos.ms.sys.common.resource.vo.response.BaseMenuTreeNode
 import io.kudos.ms.sys.common.resource.vo.response.MenuTreeNode
 import io.kudos.ms.sys.core.resource.service.iservice.ISysResourceService
+import org.springframework.context.annotation.Primary
 import org.springframework.stereotype.Component
 
 
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Component
  * @author K
  * @since 1.0.0
  */
+@Primary
 @Component
 open class SysResourceApi(
     private val sysResourceService: ISysResourceService,

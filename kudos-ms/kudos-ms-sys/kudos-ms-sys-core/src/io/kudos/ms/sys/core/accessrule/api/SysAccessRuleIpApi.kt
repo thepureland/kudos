@@ -4,6 +4,7 @@ import io.kudos.ms.sys.common.accessrule.api.ISysAccessRuleIpApi
 import io.kudos.ms.sys.common.accessrule.vo.SysAccessRuleIpCacheEntry
 import io.kudos.ms.sys.common.accessrule.vo.response.SysAccessRuleIpRow
 import io.kudos.ms.sys.core.accessrule.service.iservice.ISysAccessRuleIpService
+import org.springframework.context.annotation.Primary
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 
@@ -14,6 +15,7 @@ import java.math.BigDecimal
  * @author K
  * @since 1.0.0
  */
+@Primary
 @Service
 open class SysAccessRuleIpApi(
     private val sysAccessRuleIpService: ISysAccessRuleIpService,

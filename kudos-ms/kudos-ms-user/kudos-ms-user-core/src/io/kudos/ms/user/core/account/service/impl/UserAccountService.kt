@@ -3,7 +3,11 @@ package io.kudos.ms.user.core.account.service.impl
 import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.security.CryptoKit
+import io.kudos.base.query.Criteria
+import io.kudos.base.query.lt
+import io.kudos.base.security.GoogleAuthenticator
+import io.kudos.base.security.PasswordKit
+import io.kudos.ms.user.common.account.vo.response.AuthKeySetup
 import io.kudos.ms.user.common.org.vo.UserOrgCacheEntry
 import io.kudos.ms.user.common.account.vo.UserAccountCacheEntry
 import io.kudos.ms.user.common.account.vo.request.UserAccountQuery
@@ -124,7 +128,7 @@ open class UserAccountService(
 
     @Transactional
     override fun resetPassword(id: String, newPassword: String): Boolean {
-        val encryptedPassword = CryptoKit.aesEncrypt(newPassword)
+        val encryptedPassword = PasswordKit.hash(newPassword)
         val user = UserAccount {
             this.id = id
             this.loginPassword = encryptedPassword
@@ -142,7 +146,7 @@ open class UserAccountService(
 
     @Transactional
     override fun resetSecurityPassword(id: String, newPassword: String): Boolean {
-        val encryptedPassword = CryptoKit.aesEncrypt(newPassword)
+        val encryptedPassword = PasswordKit.hash(newPassword)
         val user = UserAccount {
             this.id = id
             this.securityPassword = encryptedPassword
@@ -296,6 +300,125 @@ open class UserAccountService(
             log.error("删除id为${id}的用户失败！")
         }
         return success
+    }
+
+    @Transactional
+    override fun resetAuthKey(id: String, accountName: String, issuer: String): AuthKeySetup? {
+        val secret = GoogleAuthenticator.generateSecretKey()
+            ?: run {
+                log.error("生成 TOTP secret 失败: userId=${id}")
+                return null
+            }
+        val user = UserAccount {
+            this.id = id
+            this.authenticationKey = secret
+        }
+        if (!dao.update(user)) {
+            log.error("重置 TOTP secret 失败（用户不存在？）: userId=${id}")
+            return null
+        }
+        // 标准 otpauth URL，前端可直接渲染为二维码（zxing/qrcode.js 等）
+        val otpauthUrl = "otpauth://totp/${encodeOtpAuthLabel(issuer, accountName)}" +
+            "?secret=${secret}&issuer=${java.net.URLEncoder.encode(issuer, Charsets.UTF_8)}"
+        log.debug("重置 id 为 ${id} 的用户的 TOTP secret。")
+        eventPublisher.publishEvent(UserAccountUpdated(id = id))
+        return AuthKeySetup(secret = secret, otpauthUrl = otpauthUrl)
+    }
+
+    @Transactional
+    override fun cleanAuthKey(id: String): Boolean {
+        // ktorm 的 update 对于 null 字段：直接 set null 需要用 dao.updateProperties
+        val success = dao.updateProperties(id, mapOf(UserAccount::authenticationKey.name to null))
+        if (success) {
+            log.debug("清除 id 为 ${id} 的用户的 TOTP secret。")
+            eventPublisher.publishEvent(UserAccountUpdated(id = id))
+        } else {
+            log.warn("清除 TOTP secret 失败（用户不存在？）: userId=${id}")
+        }
+        return success
+    }
+
+    @Transactional(readOnly = true)
+    override fun verifyAuthCode(id: String, code: Long): Boolean {
+        val key = dao.get(id)?.authenticationKey ?: return false
+        return GoogleAuthenticator().checkCode(key, code, System.currentTimeMillis())
+    }
+
+    private fun encodeOtpAuthLabel(issuer: String, accountName: String): String {
+        // RFC 6238 / Google Authenticator 标签格式：`issuer:account`（整体再 URL 编码）
+        val label = "${issuer}:${accountName}"
+        return java.net.URLEncoder.encode(label, Charsets.UTF_8)
+    }
+
+    @Transactional
+    override fun freezeAccount(
+        id: String,
+        freezeType: String,
+        freezeTitle: String?,
+        freezeContent: String?,
+        freezeStartTime: LocalDateTime?,
+        freezeEndTime: LocalDateTime?,
+    ): Boolean {
+        require(freezeType.isNotBlank()) { "freezeType 不能为空" }
+        // 用 updateProperties 显式更新（包括 null）。ktorm 普通 update 对 null 字段不生效，
+        // 这里需要明确把 start/end 在 caller 没传时清零。
+        val success = dao.updateProperties(
+            id, mapOf(
+                UserAccount::freezeType.name to freezeType,
+                UserAccount::freezeTime.name to LocalDateTime.now(),
+                UserAccount::freezeStartTime.name to freezeStartTime,
+                UserAccount::freezeEndTime.name to freezeEndTime,
+                UserAccount::freezeTitle.name to freezeTitle,
+                UserAccount::freezeContent.name to freezeContent,
+            )
+        )
+        if (success) {
+            log.debug("冻结 id 为 ${id} 的账号，type=${freezeType}")
+            eventPublisher.publishEvent(UserAccountUpdated(id = id))
+        } else {
+            log.warn("冻结账号失败（用户不存在？）: userId=${id}")
+        }
+        return success
+    }
+
+    @Transactional
+    override fun unfreezeAccount(id: String): Boolean {
+        // 清掉 6 列。freezeTime 也清掉，避免"曾被冻结过"残留误导。
+        val success = dao.updateProperties(
+            id, mapOf(
+                UserAccount::freezeType.name to null,
+                UserAccount::freezeTime.name to null,
+                UserAccount::freezeStartTime.name to null,
+                UserAccount::freezeEndTime.name to null,
+                UserAccount::freezeTitle.name to null,
+                UserAccount::freezeContent.name to null,
+            )
+        )
+        if (success) {
+            log.debug("解除 id 为 ${id} 的账号冻结。")
+            eventPublisher.publishEvent(UserAccountUpdated(id = id))
+        } else {
+            log.warn("解除冻结失败（用户不存在？）: userId=${id}")
+        }
+        return success
+    }
+
+    @Transactional
+    override fun cleanExpiredFreezes(): Int {
+        val now = LocalDateTime.now()
+        // freeze_end_time IS NOT NULL AND freeze_end_time < now()
+        // lt 操作符在底层是 SQL `<`，对 NULL 自然不匹配——永久冻结(freeze_end_time=null)不会被清。
+        val criteria = Criteria(UserAccount::freezeEndTime lt now)
+        val expired = dao.searchAs<UserAccount>(criteria)
+        if (expired.isEmpty()) return 0
+        var cleared = 0
+        for (po in expired) {
+            if (unfreezeAccount(po.id)) cleared++
+        }
+        if (cleared > 0) {
+            log.info("auto-unfreeze: 共清理 ${cleared} 条已过期的冻结记录")
+        }
+        return cleared
     }
 
     @Transactional

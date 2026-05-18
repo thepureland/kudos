@@ -3,6 +3,7 @@ package io.kudos.ms.sys.core.system.api
 import io.kudos.ms.sys.common.system.api.ISysSystemApi
 import io.kudos.ms.sys.common.system.vo.SysSystemCacheEntry
 import io.kudos.ms.sys.core.system.service.iservice.ISysSystemService
+import org.springframework.context.annotation.Primary
 import org.springframework.stereotype.Service
 
 
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service
  * @author AI: Cursor
  * @since 1.0.0
  */
+@Primary
 @Service
 open class SysSystemApi(
     private val sysSystemService: ISysSystemService,

@@ -13,6 +13,10 @@ dependencies {
     // codec
     api(libs.apache.commons.codec)
 
+    // BCrypt 密码哈希（PasswordKit 使用）；只引 spring-security-crypto 一个 jar，不引入 spring-security 全套
+    api(platform(libs.spring.boot.bom))
+    api(libs.spring.security.crypto)
+
     // lang3
     api(libs.apache.commons.lang3)
 

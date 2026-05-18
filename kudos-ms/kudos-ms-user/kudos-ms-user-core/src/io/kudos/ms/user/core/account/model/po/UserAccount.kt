@@ -72,6 +72,24 @@ interface UserAccount : IDbEntity<String, UserAccount> {
     /** 备注 */
     var remark: String?
 
+    /** 冻结类型字典码；非空表示存在一条冻结记录 */
+    var freezeType: String?
+
+    /** 冻结记录创建时刻 */
+    var freezeTime: LocalDateTime?
+
+    /** 冻结生效起点；null 视为立即生效 */
+    var freezeStartTime: LocalDateTime?
+
+    /** 冻结失效时刻；null 视为永久冻结 */
+    var freezeEndTime: LocalDateTime?
+
+    /** 冻结原因标题 */
+    var freezeTitle: String?
+
+    /** 冻结详细说明 */
+    var freezeContent: String?
+
     /** 是否激活 */
     var active: Boolean
 

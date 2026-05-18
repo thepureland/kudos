@@ -1,5 +1,11 @@
 package io.kudos.ms.sys.common.tenant.api
 
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestParam
+
+
 /**
  * 租户-资源关系 对外API
  *
@@ -9,15 +15,20 @@ package io.kudos.ms.sys.common.tenant.api
 interface ISysTenantResourceApi {
 
 
-    fun getResourceIdsByTenantId(tenantId: String): Set<String>
+    @GetMapping("/api/internal/sys/tenantResource/getResourceIdsByTenantId")
+    fun getResourceIdsByTenantId(@RequestParam tenantId: String): Set<String>
 
-    fun getTenantIdsByResourceId(resourceId: String): Set<String>
+    @GetMapping("/api/internal/sys/tenantResource/getTenantIdsByResourceId")
+    fun getTenantIdsByResourceId(@RequestParam resourceId: String): Set<String>
 
-    fun batchBind(tenantId: String, resourceIds: Collection<String>): Int
+    @PostMapping("/api/internal/sys/tenantResource/batchBind")
+    fun batchBind(@RequestParam tenantId: String, @RequestBody resourceIds: Collection<String>): Int
 
-    fun unbind(tenantId: String, resourceId: String): Boolean
+    @PostMapping("/api/internal/sys/tenantResource/unbind")
+    fun unbind(@RequestParam tenantId: String, @RequestParam resourceId: String): Boolean
 
-    fun exists(tenantId: String, resourceId: String): Boolean
+    @GetMapping("/api/internal/sys/tenantResource/exists")
+    fun exists(@RequestParam tenantId: String, @RequestParam resourceId: String): Boolean
 
 
 }
