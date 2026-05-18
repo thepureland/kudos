@@ -9,7 +9,16 @@ import java.util.UUID
 import kotlin.reflect.KClass
 
 /**
- * jdbc类型和kotlin类型的映射
+ * JDBC 类型 → Kotlin 类型 的映射表（按数据库分支细化）。
+ *
+ * 设计思路：单一的 JDBC Types.* 数字到 KClass 的映射不够 —— 不同数据库对同一 JDBC type code
+ * 习惯返回的 typeName 各异（"INT2" / "SMALLINT" / "TINYINT"），且不同数据库的 numeric 精度
+ * 范围语义不同（Oracle NUMBER(n) 必须按 n 进一步切分），因此分两层：
+ *  1. [defaultMapping]：纯 JDBC Types.* 数字到 KClass 的默认映射，作为 fallback
+ *  2. [getKotlinType]：按 [RdbTypeEnum] 分支，用 typeName 字符串匹配做更精细的判断；分支里没有
+ *     列出来的 jdbcType 一律落到 `Any::class`（"我不知道，让上层自己处理")
+ *
+ * 主要用于代码生成器（POJO 字段类型推断）和 ORM 映射（Ktorm column 适配）。
  *
  * @author K
  * @since 1.0.0

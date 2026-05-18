@@ -12,7 +12,11 @@ import java.sql.DriverManager
 import javax.sql.DataSource
 
 /**
- * 关系型数据库操作工具类
+ * 关系型数据库通用工具集合。
+ *
+ * 包含从 [io.kudos.context.core.KudosContextHolder] 取当前数据源、按 url 推断 RDB 类型、
+ * 新建 JDBC 连接、连接可用性测试、生成 ORDER BY 子句等高频操作。所有方法都是纯函数或
+ * 围绕单个 DataSource 的轻封装，无内部状态。
  *
  * @author K
  * @since 1.0.0
@@ -77,6 +81,10 @@ object RdbKit {
         }
     }
 
+    /**
+     * 内部实现：按连接元数据推断 RDB 类型 → 选对应的 test SQL → execute。statement
+     * **不显式关闭**——历史遗留，调用方持有的连接关闭时会一并释放。
+     */
     private fun _testConnection(conn: Connection): Boolean {
         val dbMetaData = conn.metaData
         val rdbType = RdbTypeEnum.ofProductName(dbMetaData.databaseProductName)
