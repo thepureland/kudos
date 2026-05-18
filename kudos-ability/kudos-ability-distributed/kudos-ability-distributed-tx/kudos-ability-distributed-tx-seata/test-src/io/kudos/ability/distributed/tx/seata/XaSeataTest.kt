@@ -17,7 +17,7 @@ import kotlin.test.Test
  */
 @EnableKudosTest
 @EnabledIfDockerInstalled
-@Import(Service::class, io.kudos.ability.distributed.tx.seata.feign.SeataFeignXidConfig::class)
+@Import(Service::class)
 @Disabled(
     "Seata XA 模式需要底层使用 XA-aware 驱动（org.postgresql.xa.PGXADataSource），" +
             "当前测试栈用 HikariCP 包装的普通 PgDataSource — DataSourceProxyXA 无法走完两阶段 commit/rollback，" +

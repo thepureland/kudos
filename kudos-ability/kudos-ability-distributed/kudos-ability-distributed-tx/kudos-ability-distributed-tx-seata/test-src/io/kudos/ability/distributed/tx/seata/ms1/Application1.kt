@@ -20,5 +20,5 @@ import org.springframework.context.annotation.PropertySource
     factory = YamlPropertySourceFactory::class
 )
 @EnableKudos
-@Import(Controller1::class, Service1::class, TestTableDao::class, io.kudos.ability.distributed.tx.seata.feign.SeataFeignXidConfig::class)
+@Import(Controller1::class, Service1::class, TestTableDao::class)
 open class Application1
