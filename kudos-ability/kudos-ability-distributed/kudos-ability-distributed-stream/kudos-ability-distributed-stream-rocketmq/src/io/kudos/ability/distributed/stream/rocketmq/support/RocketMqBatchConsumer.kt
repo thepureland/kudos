@@ -242,6 +242,14 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
             daemonThread?.join()
         } catch (e: InterruptedException) {
             log.error(e, "停止 mq 消费失败")
+            Thread.currentThread().interrupt()
+        }
+        // 关 RocketMQ 客户端释放 netty / 消费位点资源。旧实现只置 isRunning=false 让循环退出，
+        // consumer 本身的连接 / 线程池会一直挂到 JVM 退出。
+        try {
+            consumer.shutdown()
+        } catch (e: Exception) {
+            log.warn("RocketMQ consumer shutdown 异常: {0}", e.message)
         }
     }
 
