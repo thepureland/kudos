@@ -38,30 +38,51 @@ abstract class SeataTestBase {
     @Autowired
     private lateinit var service: IService
 
+    /**
+     * AT 模式必须 autoCommit=true（让 Seata ConnectionProxy 拦截每条 SQL 的自动 commit
+     * 来写 undo log / register branch / 真正提交业务数据）；XA 模式必须 autoCommit=false
+     * （XA 协议要求整段 SQL 在同一 XA 事务里，autoCommit=true 会把 XA 状态打散）。
+     * yml 里的 `is-auto-commit` 是默认值，这里按测试 mode 通过 CLI arg 显式覆盖到 sub-app，
+     * 主侧通过各测试类的 `@DynamicPropertySource` 同步覆盖。
+     */
+    protected open fun autoCommitForMode(): Boolean = dataSourceProxyMode() == "AT"
+
     @BeforeAll
     fun setUp() {
         val url = "jdbc:postgresql://localhost:${PostgresTestContainer.PORT}/${PostgresTestContainer.DATABASE}"
-        val args1 = arrayOf(
-            "--seata.service.vgroup-mapping.default_tx_group=default",
-            "--seata.service.vgroup-mapping.other_tx_group=default",
-            "--seata.tx-service-group=${txServiceGroup()}",
-            "--seata.data-source-proxy-mode=${dataSourceProxyMode()}",
-            "--spring.datasource.dynamic.datasource.postgres.url=$url",
-            "--spring.application.name=${app1Name()}",
-            "--server.port=${app1Port()}"
-        )
-        SpringApplication.run(Application1::class.java, *args1)
+        val sharedArgs = buildList {
+            add("--seata.service.vgroup-mapping.default_tx_group=default")
+            add("--seata.service.vgroup-mapping.other_tx_group=default")
+            add("--seata.tx-service-group=${txServiceGroup()}")
+            add("--seata.data-source-proxy-mode=${dataSourceProxyMode()}")
+            add("--spring.datasource.dynamic.datasource.postgres.url=$url")
+            add("--spring.datasource.dynamic.hikari.is-auto-commit=${autoCommitForMode()}")
+            add("--spring.datasource.dynamic.datasource.postgres.hikari.is-auto-commit=${autoCommitForMode()}")
+            // Seata auto-proxy 是 AT 模式拿到 ConnectionProxy 拦截链的关键，AT 下必须开 (true)。
+            // XA 下 baomidou dynamic.seata=true 已经包装了 DataSourceProxyXA，再让 Seata 自动包一次
+            // 会让 ConnectionProxyXA.init ↔ DataSourceProxyXA.getConnection 互调到 StackOverflowError，
+            // 所以 XA 必须关 (false)。
+            add("--seata.enable-auto-data-source-proxy=${dataSourceProxyMode() != "XA"}")
+            // XA 模式下还要告诉 baomidou：用 XA 代理而不是默认的 AT。AT 模式下保持默认行为
+            // —— 显式设 AT 反而会让 baomidou 走与默认不同的代码路径，把 AT 拆掉（实测过）。
+            if (dataSourceProxyMode() == "XA") {
+                add("--spring.datasource.dynamic.seata-mode=XA")
+            }
+        }.toTypedArray()
 
-        val args2 = arrayOf(
-            "--seata.service.vgroup-mapping.default_tx_group=default",
-            "--seata.service.vgroup-mapping.other_tx_group=default",
-            "--seata.tx-service-group=${txServiceGroup()}",
-            "--seata.data-source-proxy-mode=${dataSourceProxyMode()}",
-            "--spring.datasource.dynamic.datasource.postgres.url=$url",
-            "--spring.application.name=${app2Name()}",
-            "--server.port=${app2Port()}"
+        SpringApplication.run(
+            Application1::class.java,
+            *sharedArgs,
+            "--spring.application.name=${app1Name()}",
+            "--server.port=${app1Port()}",
         )
-        SpringApplication.run(Application2::class.java, *args2)
+
+        SpringApplication.run(
+            Application2::class.java,
+            *sharedArgs,
+            "--spring.application.name=${app2Name()}",
+            "--server.port=${app2Port()}",
+        )
     }
 
     @Test
