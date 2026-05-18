@@ -30,8 +30,11 @@ class SwitchingServletWebServerFactory(
     private val env: Environment
 ) : ServletWebServerFactory {
 
+    /**
+     * 按 yml 配置选择具体的容器工厂；未识别值回落 Tomcat。流程：读配置 → 建工厂 →
+     * 反射设置 contextPath（不同工厂签名不同）→ 委托真正的 [WebServer] 构建。
+     */
     override fun getWebServer(vararg initializers: ServletContextInitializer): WebServer {
-        // 1. 读取配置
         val serverTypeStr = env.getProperty("kudos.ability.web.springmvc.server", "TOMCAT")
         val serverType = try {
             ServletServerEnum.valueOf(serverTypeStr.uppercase())
@@ -41,30 +44,30 @@ class SwitchingServletWebServerFactory(
         val port = env.getProperty<Int>("server.port", 8080)
         val contextPath = env.getProperty("server.servlet.context-path", "")
 
-        // 2. 创建具体工厂
         val serverFactory = when (serverType) {
             ServletServerEnum.JETTY ->  createJettyFactory(port)
             else -> createTomcatFactory(port)
         }
 
-        // 3. 设置 contextPath
         if (contextPath.isNotBlank()) {
             try {
                 val method = serverFactory.javaClass.getMethod("setContextPath", String::class.java)
                 method.invoke(serverFactory, contextPath)
             } catch (_: NoSuchMethodException) {
-                // 有的实现可能没有这个方法，忽略即可
+                // 部分工厂实现无此方法，忽略即可
             }
         }
 
-        // 4. 返回真正的 WebServer
         return serverFactory.getWebServer(*initializers)
     }
 
+    /**
+     * 构造 [TomcatServletWebServerFactory]，并放宽 Connector 的 relaxedPathChars /
+     * relaxedQueryChars，避免 GET 请求带 `"<>[]\^` `{|}` 等字符时 Tomcat 直接 400。
+     */
     private fun createTomcatFactory(port: Int): ServletWebServerFactory {
         val serverFactory = TomcatServletWebServerFactory(port)
         serverFactory.addConnectorCustomizers({ connector: Connector? ->
-            // 解决用 tomcat 时，get 请求传入特殊字符报 400 的问题
             val c = requireNotNull(connector) { "connector is null" }
             c.setProperty("relaxedPathChars", "\"<>[\\]^`{|}")
             c.setProperty("relaxedQueryChars", "\"<>[\\]^`{|}")
@@ -72,6 +75,10 @@ class SwitchingServletWebServerFactory(
         return serverFactory
     }
 
+    /**
+     * 反射加载 Jetty 工厂——本模块依赖里只 testImplementation 了 spring-boot-starter-jetty，
+     * 直接 import 会让生产侧没有 Jetty 时编译/启动失败。改用 `Class.forName` 走运行期解析。
+     */
     private fun createJettyFactory(port: Int): ServletWebServerFactory {
         val fqcn = "org.springframework.boot.jetty.servlet.JettyServletWebServerFactory"
         val clazz = Class.forName(fqcn)
