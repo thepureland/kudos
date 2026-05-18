@@ -9,7 +9,9 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 /**
- * Flyway test
+ * [FlywayMultiDataSourceMigrator] 的集成测试。覆盖：
+ * - happy path：全量迁移 → 表存在且初始数据已插入；同一进程内重复调用 migrate() 是幂等的
+ * - 数据源 key 不存在的失败分支
  *
  * @author K
  * @since 1.0.0
@@ -25,7 +27,8 @@ class FlywayTest {
 
 
     /**
-     * 测试完整流程
+     * 跑完整迁移流程：调用两次 [FlywayMultiDataSourceMigrator.migrate] 验证幂等性，
+     * 再用原生 JDBC 查目标表确认行数符合 data.sql 预置内容。
      */
     @Test
     fun migrate() {
@@ -42,7 +45,7 @@ class FlywayTest {
     }
 
     /**
-     * 只测试migrateByModule方法
+     * 单模块入口的错误路径：传一个不存在的数据源 key 必须抛异常打断迁移。
      */
     @Test
     fun migrateByModule() {
