@@ -73,30 +73,44 @@ object SqlWhereExpressionFactory {
         }
     }
 
-    // 为了解决 <T : Any> ColumnDeclaring<T>.eq(expr: ColumnDeclaring<T>) 的泛型问题
+    /**
+     * 列 vs 列等值。
+     *
+     * 本方法存在的唯一目的：用一个本地具化的泛型参数 [T] 套住
+     * `<T : Any> ColumnDeclaring<T>.eq(expr: ColumnDeclaring<T>)`，
+     * 让上层用 `Column<Any>` 调用时不被泛型擦除拒绝。
+     */
     @Suppress("UNCHECKED_CAST")
     private fun <T : Any> columnEq(
         column: ColumnDeclaring<T>, anotherColumn: Column<Any>
     ): ColumnDeclaring<Boolean> =
         column.eq(anotherColumn as Column<T>)
 
-    // 为了解决 <T : Any> ColumnDeclaring<T>.notEq(expr: ColumnDeclaring<T>) 的泛型问题
+    /** 列 vs 列不等。原因同 [columnEq]：绕过 Ktorm `notEq` 的同型约束。 */
     @Suppress("UNCHECKED_CAST")
     private fun <T : Any> columnNotEq(
         column: ColumnDeclaring<T>, anotherColumn: Column<*>
     ): ColumnDeclaring<Boolean> =
         column.notEq(anotherColumn as Column<T>)
 
-    // 为了解决 <T : Any> ColumnDeclaring<T>.inList(list: Collection<T>) 的泛型问题
+    /** 列 IN 集合。原因同 [columnEq]：绕过 Ktorm `inList` 的同型约束。 */
     @Suppress("UNCHECKED_CAST")
     private fun <T : Any> columnIn(column: ColumnDeclaring<T>, values: Collection<T>): ColumnDeclaring<Boolean> =
         column.inList(values)
 
-    // 为了解决 <T : Any> ColumnDeclaring<T>.notInList(list: Collection<T>) 的泛型问题
+    /** 列 NOT IN 集合。原因同 [columnEq]：绕过 Ktorm `notInList` 的同型约束。 */
     @Suppress("UNCHECKED_CAST")
     private fun <T : Any> columnNotIn(column: ColumnDeclaring<T>, values: Collection<T>): ColumnDeclaring<Boolean> =
         column.notInList(values)
 
+    /**
+     * 把 IN / NOT IN 的"参数"归一化成 [Collection]：
+     *  - 单个非集合 / 非数组值 → 包成单元素列表
+     *  - 数组 → toList
+     *  - 集合 → 原样使用
+     *
+     * 然后委托给 [columnIn] / [columnNotIn]。
+     */
     @Suppress("UNCHECKED_CAST")
     private fun handleIn(isIn: Boolean, value: Any, column: ColumnDeclaring<Any>): ColumnDeclaring<Boolean> {
         var values = value

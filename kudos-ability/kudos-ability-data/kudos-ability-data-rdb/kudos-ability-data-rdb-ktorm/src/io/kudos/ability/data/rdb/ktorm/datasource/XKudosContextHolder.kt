@@ -45,7 +45,6 @@ fun KudosContextHolder.currentDatabase(): Database {
     var database = this.get().otherInfos?.get(KudosContext.OTHER_INFO_KEY_DATABASE)
     if (database == null) {
         database = Database.connectWithSpringSupport(currentDataSource(), alwaysQuoteIdentifiers = true)
-//        setCurrentDatabase(database)
         this.get().addOtherInfos(KudosContext.OTHER_INFO_KEY_DATABASE to database)
     }
     return database as Database
