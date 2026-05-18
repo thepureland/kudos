@@ -7,7 +7,15 @@ import io.kudos.base.enums.impl.YesNotEnum
 import kotlin.reflect.KClass
 
 /**
- * Create by (admin) on 1/27/15.
+ * Web controller 方法上的审计注解。
+ *
+ * 与 [Audit] 的区别：[WebAudit] 由
+ * [io.kudos.ability.log.audit.common.annotation.WebLogAuditAspect] 处理，
+ * 会从 [org.springframework.web.context.request.RequestContextHolder] 拿 HTTP 请求；
+ * [Audit] 处理通用方法，从方法参数取业务对象。Multipart 请求会被 WebAudit 切面跳过。
+ *
+ * @author K
+ * @since 1.0.0
  */
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY_GETTER, AnnotationTarget.PROPERTY_SETTER)
 @Retention(AnnotationRetention.RUNTIME)

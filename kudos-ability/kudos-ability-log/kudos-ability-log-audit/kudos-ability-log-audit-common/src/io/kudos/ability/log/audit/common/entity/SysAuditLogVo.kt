@@ -5,17 +5,16 @@ import java.io.Serializable
 import java.util.Date
 
 /**
- * 系统审计日志表实体
+ * 系统审计日志表实体——对应 audit 落地存储（DB / MQ / 其他后端）的"主表"投影。
  *
- * @author admin
- * @tableAuthor admin
- * @time 2016-9-3 16:07:08
+ * 配合 [SysAuditDetailLogVo]：本类一条记录关联一条详情记录（一对一通过 [SysAuditDetailLogVo.auditId]
+ * 指向 [SysAuditLogVo.id]）。具体存储由下游模块负责
+ * （`kudos-ability-log-audit-rdb-ktorm` / `kudos-ability-log-audit-mq` 等）。
+ *
+ * @author K
+ * @since 1.0.0
  */
-class SysAuditLogVo  //endregion
-//region constuctors
-    : Serializable {
-    //region properties
-    //endregion
+class SysAuditLogVo : Serializable {
     /**
      * 主键
      */

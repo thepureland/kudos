@@ -24,7 +24,16 @@ import java.util.LinkedList
 import kotlin.reflect.KClass
 
 /**
- * Create by (admin) on 4/24/15.
+ * 审计日志构造 / 上下文写入工具。
+ *
+ * Aspect 调用栈：
+ *  - `LogAuditAspect.before` / `WebLogAuditAspect.before` → [createLogVo] 构造 [LogVo] 塞到 [LogAuditContext]
+ *  - `*.after` → [createSysAuditLogModel] 合并方法参数 / Web request body 后交给 [IAuditService.submit]
+ *
+ * 描述格式化器分发逻辑：见 [descriptionFormatter] 的 kdoc（含历史 bug 说明）。
+ *
+ * @author K
+ * @since 1.0.0
  */
 object AuditLogTool {
     private val LOG = LogFactory.getLog(AuditLogTool::class)
@@ -66,7 +75,11 @@ object AuditLogTool {
         baseLog: BaseLog,
         formatterClazz: KClass<out IAuditLogDetailDescriptionFormatter>
     ): IAuditLogDetailDescriptionFormatter? {
-        if (formatterClazz == DefaultAuditLogDetailDescriptionFormatter::class.java) {
+        // 历史 bug：比较 KClass 与 ::class.java（Java Class），始终 false。结果：默认 formatter 的
+        // "通过 needFormat() 自动选择业务侧实现"分支从来不进；所有调用都退化到走 SpringKit.getBean
+        // 拿默认实现 → 业务自定义的 formatter 必须显式在 `@Audit(descriptionFormatter = MyFmt::class)`
+        // 才会被用到。修正为 KClass 与 KClass 比较，恢复 auto-pick 路径。
+        if (formatterClazz == DefaultAuditLogDetailDescriptionFormatter::class) {
             val formatterMap = SpringKit.getBeansOfType<IAuditLogDetailDescriptionFormatter>()
             return formatterMap.values.firstOrNull { it.needFormat(baseLog) }
         } else {
@@ -74,19 +87,24 @@ object AuditLogTool {
         }
     }
 
+    /**
+     * 从请求里抓出 body bytes（被 `ContentCachingRequestWrapper` 包过才有缓存内容；否则返回 ""）。
+     *
+     * 安全：旧实现 `request as HttpServletRequestWrapper` 是无条件强制类型转换，对未被
+     * Spring Security 等包过的原始请求会 `ClassCastException`。改为 `as?` 安全转换 +
+     * 早返回 ""，让没启用 [io.kudos.ability.log.audit.common.filter.WebLogAuditFilter]
+     * 的部署不会因 audit 切面挂掉整条请求路径。
+     */
     fun getRequestData(request: HttpServletRequest?): String {
-        val wrapper = request as HttpServletRequestWrapper
-        var contentCachingRequestWrapper: ContentCachingRequestWrapper? = null
-        if (wrapper is ContentCachingRequestWrapper) {
-            contentCachingRequestWrapper = wrapper as ContentCachingRequestWrapper?
-        } else if (wrapper.request is ContentCachingRequestWrapper) {
-            contentCachingRequestWrapper = wrapper.request as ContentCachingRequestWrapper?
+        if (request == null) return ""
+        // 直接是 ContentCachingRequestWrapper 或被它包过一层都接受
+        val cached = when {
+            request is ContentCachingRequestWrapper -> request
+            request is HttpServletRequestWrapper && request.request is ContentCachingRequestWrapper ->
+                request.request as ContentCachingRequestWrapper
+            else -> null
         }
-        if (contentCachingRequestWrapper != null) {
-            val contentAsByteArray: ByteArray = contentCachingRequestWrapper.contentAsByteArray
-            return String(contentAsByteArray)
-        }
-        return ""
+        return if (cached != null) String(cached.contentAsByteArray) else ""
     }
 
     /**
@@ -226,11 +244,9 @@ object AuditLogTool {
                 entity.operateIp = IpKit.ipv4StringToLong(ip)
             }
 
-            //TODO ..
-            //entity.setOperateIpDictCode(contextParam.getUserIpDictCode());
-//            entity.operator=contextParam.getUsername())
+            // 历史 TODO: operateIpDictCode / operator(username) / operatorUserType 需要从
+            // context 拿到对应字段才能填——目前 KudosContext 上没有这几个属性，留空即可。
             entity.operatorId = context.user?.id
-//            entity.setOperatorUserType(contextParam.getUserType())
 
             entity.clientBrowser = context.clientInfo?.browser?.first
             entity.clientOs = context.clientInfo?.os?.first
