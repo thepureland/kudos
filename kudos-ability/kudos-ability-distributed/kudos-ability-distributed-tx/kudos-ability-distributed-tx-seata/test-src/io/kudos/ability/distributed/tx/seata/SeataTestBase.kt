@@ -71,8 +71,17 @@ abstract class SeataTestBase {
 
     @Test
     fun autoCommit() {
+        // AT 模式：autoCommit 必须为 true —— Seata ConnectionProxy 是靠每条 SQL 自动 commit 时的
+        //          拦截链来"写 undo log + register branch + 真正 commit"。autoCommit=false 时
+        //          每条 SQL 进入隐式开放事务永不显式 commit，最后被 Hikari 还池时回滚，数据丢失。
+        // XA 模式：autoCommit 必须为 false —— XA 协议要求整段 SQL 在同一 XA 事务内，autoCommit=true
+        //          会把 XA 状态打散。
+        val expectedAutoCommit = dataSourceProxyMode() == "AT"
         RdbKit.getDatabase().useConnection { conn ->
-            assertFalse(conn.autoCommit)
+            kotlin.test.assertEquals(
+                expectedAutoCommit, conn.autoCommit,
+                "${dataSourceProxyMode()} mode requires conn.autoCommit=$expectedAutoCommit"
+            )
         }
     }
 

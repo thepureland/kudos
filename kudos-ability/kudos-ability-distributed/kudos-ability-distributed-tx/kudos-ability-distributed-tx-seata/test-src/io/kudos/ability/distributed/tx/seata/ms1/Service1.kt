@@ -31,14 +31,7 @@ open class Service1 : IService1 {
     override fun decrease(id: Int, money: Double) {
         val ds = KudosContextHolder.currentDataSource()
         ds.connection.use { conn ->
-            println("conn.class = ${conn.javaClass.name}")                   // 你现在看到的是 HikariProxyConnection
-            // 试图从外层unwrap到 Seata 的连接代理 —— 成功则一定已生效
-//            val seataConn = try {
-//                conn.unwrap(io.seata.rm.datasource.ConnectionProxy::class.java)
-//            } catch (e: Throwable) {
-//                null
-//            }
-//            println("seataConn? = ${seataConn != null}")
+            println("conn.class = ${conn.javaClass.name}")
         }
         log.info("seata全局事务id【${RootContext.getXID()}】")
         val entity = requireNotNull(testTableDao.get(id)) { "TestTable not found: $id" }
