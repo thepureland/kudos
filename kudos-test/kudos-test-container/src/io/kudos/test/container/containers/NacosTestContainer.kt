@@ -59,7 +59,10 @@ object NacosTestContainer {
         withNetworkAliases("nacos")
         exposedPorts = listOf(8848, 9848, 9849)
         bindingPort(Pair(38848, 8848), Pair(39848, 9848), Pair(39849, 9849))
-        waitingFor(Wait.forHttp("/nacos").forPort(8848))
+        // Nacos 8848 早早就会回 200 给 `/nacos`，但内部 naming registry 还要再几秒才能接收注册写入。
+        // 这里直接 probe v1 实例查询 API：响应到 200 才视为真正可用，避免 Seata server 起来就被
+        // "server is DOWNnow, please try again later" 拒掉并整体启动失败。
+        waitingFor(Wait.forHttp("/nacos/v1/ns/instance/list?serviceName=__readiness").forPort(8848))
         withLabel(TestContainerKit.LABEL_KEY, LABEL_NACOS_FOR_SEATA)
     }
 
