@@ -12,16 +12,24 @@ import org.springframework.beans.factory.annotation.Autowired
 import java.io.File
 
 
+/**
+ * 本地磁盘文件上传服务。把上传的 InputStream 写到 `{basePath}/{bucket}/{fileDir}/{name}` 下，
+ * 中间目录按需自动创建。`fileDir` 来自 [AbstractUploadService.dispatchFileDir]（含租户 / 分类 / 日期）。
+ *
+ * @author K
+ * @since 1.0.0
+ */
 open class LocalUploadService : AbstractUploadService() {
-    
+
     @Autowired
     private lateinit var properties: LocalProperties
-    
+
+    /** 按 [UploadFileModel.bucketName] 创建桶目录（已存在则无操作）。 */
     protected fun createBucket(model: UploadFileModel<*>) {
         val bucketPath = properties.basePath + File.separator + model.bucketName
         val bucketDir = File(bucketPath)
         if (!bucketDir.exists()) {
-            log.debug("创建文件目录：{0}$bucketPath")
+            log.debug("创建文件目录：{0}", bucketPath)
             bucketDir.mkdirs()
         }
     }
@@ -51,14 +59,14 @@ open class LocalUploadService : AbstractUploadService() {
     }
 
     /**
-     * 创建目录
+     * 创建目录（含中间路径，已存在则无操作）。
      *
      * @param dirPath
      */
     private fun createFileDir(dirPath: String) {
         val fileDir = File(dirPath)
         if (!fileDir.exists()) {
-            log.debug("创建文件目录：{0}$dirPath")
+            log.debug("创建文件目录：{0}", dirPath)
             fileDir.mkdirs()
         }
     }
