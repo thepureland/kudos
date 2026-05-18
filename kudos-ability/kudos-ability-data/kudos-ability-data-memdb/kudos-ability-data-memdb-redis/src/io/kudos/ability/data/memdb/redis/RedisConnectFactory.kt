@@ -18,72 +18,70 @@ import org.springframework.data.redis.connection.lettuce.LettucePoolingClientCon
 import java.time.Duration
 
 /**
- * redis的链接工厂
+ * Redis 连接工厂。负责构造 Spring Data Redis 的 [LettuceConnectionFactory]，
+ * 内部根据 [RedisExtProperties.cluster] 是否配置自动决定走集群 vs 单机模式。
+ *
+ * 区别于 Spring Boot 默认 `RedisAutoConfiguration`：
+ *  - 直接读取 kudos 自定义的 [RedisExtProperties]，支持每个 redis 实例独立的连接池参数
+ *  - 默认开启 keepAlive、autoReconnect，集群模式下额外开启周期性 topology 刷新
+ *  - 默认 [ReadFrom.REPLICA_PREFERRED]，读请求优先打从节点
+ *
+ * SSL 暂未接入——`DataRedisProperties` 上有 ssl 配置，需要时在此处装 `.useSsl()`。
+ *
+ * @author K
+ * @since 1.0.0
  */
 object RedisConnectFactory {
     /**
-     * Lettuce链接工厂
+     * 根据配置创建 [LettuceConnectionFactory]；集群 vs 单机由 `cluster.nodes` 是否非空决定。
      *
-     * @param redisProperties redisProperties
-     * @return LettuceConnectionFactory
+     * @param redisProperties Redis 扩展配置
+     * @return 已经 `afterPropertiesSet()` 过、可直接交给 RedisTemplate 的连接工厂
      */
     fun newLettuceConnectionFactory(redisProperties: RedisExtProperties): LettuceConnectionFactory {
-        var clientOptions: ClientOptions? = null
-        var redisConfiguration: RedisConfiguration? = null
-        //集群模式下的lettuce配置
-        if (!redisProperties.cluster?.nodes.isNullOrEmpty()) {
-            val clusterTopologyRefreshOptions: ClusterTopologyRefreshOptions? = ClusterTopologyRefreshOptions.builder()
+        val isCluster = !redisProperties.cluster?.nodes.isNullOrEmpty()
+        val clientOptions: ClientOptions = if (isCluster) {
+            val refreshOptions = ClusterTopologyRefreshOptions.builder()
                 .enablePeriodicRefresh(Duration.ofSeconds(60L))
                 .enableAdaptiveRefreshTrigger(
-                    *arrayOf(
-                        ClusterTopologyRefreshOptions.RefreshTrigger.ASK_REDIRECT,
-                        ClusterTopologyRefreshOptions.RefreshTrigger.UNKNOWN_NODE
-                    )
+                    ClusterTopologyRefreshOptions.RefreshTrigger.ASK_REDIRECT,
+                    ClusterTopologyRefreshOptions.RefreshTrigger.UNKNOWN_NODE
                 )
                 .build()
-
-            clientOptions = ClusterClientOptions.builder()
-                .topologyRefreshOptions(clusterTopologyRefreshOptions)
+            ClusterClientOptions.builder()
+                .topologyRefreshOptions(refreshOptions)
                 .disconnectedBehavior(ClientOptions.DisconnectedBehavior.REJECT_COMMANDS)
                 .autoReconnect(true)
                 .socketOptions(SocketOptions.builder().keepAlive(true).build())
                 .validateClusterNodeMembership(false)
                 .build()
-
-            redisConfiguration = getClusterRedisConfiguration(redisProperties)
         } else {
-            //单机下的lettuce配置
-            clientOptions = ClientOptions.builder()
+            ClientOptions.builder()
                 .disconnectedBehavior(ClientOptions.DisconnectedBehavior.REJECT_COMMANDS)
                 .autoReconnect(true)
                 .socketOptions(SocketOptions.builder().keepAlive(true).build())
                 .build()
-            redisConfiguration = getRedisConfiguration(redisProperties)
         }
-        //连接池配置
-        val poolConfig = GenericObjectPoolConfig<StatefulConnection<*, *>>()
-        poolConfig.maxIdle = redisProperties.maxIdle
-        poolConfig.minIdle = redisProperties.minIdle
-        poolConfig.setMaxWait(redisProperties.maxWait)
-        val maxActive = if (redisProperties.maxActive > 0) redisProperties.maxActive else 200
-        poolConfig.maxTotal = maxActive
-        //链接配置
-        val lettucePoolingClientConfigurationBuilder: LettucePoolingClientConfiguration.LettucePoolingClientConfigurationBuilder =
-            LettucePoolingClientConfiguration
-                .builder()
-                .poolConfig(poolConfig)
-                .clientOptions(clientOptions)
-                .readFrom(ReadFrom.REPLICA_PREFERRED)
+        val redisConfiguration: RedisConfiguration =
+            if (isCluster) getClusterRedisConfiguration(redisProperties)
+            else getRedisConfiguration(redisProperties)
 
-        //note-upgrade-to-spring-3.0-position
-        //是否开启ssl
-        //if (redisProperties.isSsl()) {
-        //    lettucePoolingClientConfigurationBuilder.useSsl();
-        //}
-        val poolClientConfig = lettucePoolingClientConfigurationBuilder.build()
-        val lettuceConnectionFactory = LettuceConnectionFactory(redisConfiguration, poolClientConfig)
-        lettuceConnectionFactory.afterPropertiesSet()
-        return lettuceConnectionFactory
+        val poolConfig = GenericObjectPoolConfig<StatefulConnection<*, *>>().apply {
+            maxIdle = redisProperties.maxIdle
+            minIdle = redisProperties.minIdle
+            setMaxWait(redisProperties.maxWait)
+            maxTotal = if (redisProperties.maxActive > 0) redisProperties.maxActive else 200
+        }
+
+        val poolClientConfig = LettucePoolingClientConfiguration.builder()
+            .poolConfig(poolConfig)
+            .clientOptions(clientOptions)
+            .readFrom(ReadFrom.REPLICA_PREFERRED)
+            .build()
+
+        return LettuceConnectionFactory(redisConfiguration, poolClientConfig).apply {
+            afterPropertiesSet()
+        }
     }
 
     /**

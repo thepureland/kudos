@@ -12,7 +12,8 @@ import org.springframework.data.redis.core.RedisTemplate
  * - 其他：用 Set 索引（set:property:value）
  * 逻辑关系：组间 AND，组内数组为 OR。
  *
- * @param indexKeyPrefix 二级索引 key 前缀的返回值）
+ * @param indexKeyPrefix 二级索引 key 前缀
+ * @param redisTemplate Redis 操作模板
  * @author K
  * @author AI: Cursor
  * @since 1.0.0
@@ -21,6 +22,18 @@ internal class CriteriaRedisResolver(
     private val indexKeyPrefix: String,
     private val redisTemplate: RedisTemplate<Any, Any?>
 ) {
+
+    private companion object {
+        /**
+         * ZSet 分数下界。**不要写 [Double.MIN_VALUE]**——Java/Kotlin 里它是最小**正**double，
+         * 用作下界会让所有负 score 的成员被排除。`-Double.MAX_VALUE` 才是负方向最远。
+         */
+        private const val SCORE_MIN: Double = -Double.MAX_VALUE
+        private const val SCORE_MAX: Double = Double.MAX_VALUE
+
+        /** ZSet score 的等值匹配偏移，规避浮点近似导致的等值匹配漏命中。 */
+        private const val SCORE_EPSILON: Double = 1e-10
+    }
 
     /**
      * 解析 Criteria，返回满足条件的 id 集合。
@@ -78,8 +91,8 @@ internal class CriteriaRedisResolver(
 
     private fun toDouble(value: Any): Double = when (value) {
         is Number -> value.toDouble()
-        is String -> value.toDoubleOrNull() ?: Double.MIN_VALUE
-        else -> Double.MIN_VALUE
+        is String -> value.toDoubleOrNull() ?: SCORE_MIN
+        else -> SCORE_MIN
     }
 
     private fun idsFromSet(property: String, operator: OperatorEnum, value: Any): Set<String>? {
@@ -127,19 +140,19 @@ internal class CriteriaRedisResolver(
             }
             OperatorEnum.GT -> {
                 val v = toDouble(value)
-                return redisTemplate.opsForZSet().rangeByScore(key, v + 1e-10, Double.MAX_VALUE)?.mapNotNull { it?.toString() }?.toSet() ?: emptySet()
+                return redisTemplate.opsForZSet().rangeByScore(key, v + SCORE_EPSILON, SCORE_MAX)?.mapNotNull { it?.toString() }?.toSet() ?: emptySet()
             }
             OperatorEnum.GE -> {
                 val v = toDouble(value)
-                return redisTemplate.opsForZSet().rangeByScore(key, v, Double.MAX_VALUE)?.mapNotNull { it?.toString() }?.toSet() ?: emptySet()
+                return redisTemplate.opsForZSet().rangeByScore(key, v, SCORE_MAX)?.mapNotNull { it?.toString() }?.toSet() ?: emptySet()
             }
             OperatorEnum.LT -> {
                 val v = toDouble(value)
-                return redisTemplate.opsForZSet().rangeByScore(key, Double.MIN_VALUE, v - 1e-10)?.mapNotNull { it?.toString() }?.toSet() ?: emptySet()
+                return redisTemplate.opsForZSet().rangeByScore(key, SCORE_MIN, v - SCORE_EPSILON)?.mapNotNull { it?.toString() }?.toSet() ?: emptySet()
             }
             OperatorEnum.LE -> {
                 val v = toDouble(value)
-                return redisTemplate.opsForZSet().rangeByScore(key, Double.MIN_VALUE, v)?.mapNotNull { it?.toString() }?.toSet() ?: emptySet()
+                return redisTemplate.opsForZSet().rangeByScore(key, SCORE_MIN, v)?.mapNotNull { it?.toString() }?.toSet() ?: emptySet()
             }
             OperatorEnum.BETWEEN -> {
                 val (min, max) = rangeMinMax(value) ?: return emptySet()
@@ -147,8 +160,8 @@ internal class CriteriaRedisResolver(
             }
             OperatorEnum.NOT_BETWEEN -> {
                 val (min, max) = rangeMinMax(value) ?: return emptySet()
-                val below = redisTemplate.opsForZSet().rangeByScore(key, Double.MIN_VALUE, min - 1e-10)?.mapNotNull { it?.toString() }?.toSet() ?: emptySet()
-                val above = redisTemplate.opsForZSet().rangeByScore(key, max + 1e-10, Double.MAX_VALUE)?.mapNotNull { it?.toString() }?.toSet() ?: emptySet()
+                val below = redisTemplate.opsForZSet().rangeByScore(key, SCORE_MIN, min - SCORE_EPSILON)?.mapNotNull { it?.toString() }?.toSet() ?: emptySet()
+                val above = redisTemplate.opsForZSet().rangeByScore(key, max + SCORE_EPSILON, SCORE_MAX)?.mapNotNull { it?.toString() }?.toSet() ?: emptySet()
                 return below.union(above)
             }
             else -> return null
