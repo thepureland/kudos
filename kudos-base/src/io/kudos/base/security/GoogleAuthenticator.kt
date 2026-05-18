@@ -119,17 +119,18 @@ class GoogleAuthenticator {
             mac.init(signKey)
             val hash = mac.doFinal(data)
             val offset: Int = hash[20 - 1].and(0xF).toInt()
-            // We're using a long because Java hasn't got unsigned int.
-            var truncatedHash: Long = 0
-            for (i in 0..3) {
-                truncatedHash = truncatedHash shl 8
-                // We are dealing with signed bytes:
-                // we just keep the first byte.
-                truncatedHash = truncatedHash or (hash[offset + i].and(0xFF.toByte()).toLong() )
-            }
-            truncatedHash = truncatedHash and 0x7FFFFFFF
-            truncatedHash %= 1000000
-            return truncatedHash.toInt()
+            // RFC 6238 dynamic truncation：取 offset 起 4 字节作为 31-bit 无符号整数。
+            // 注意：`hash[i].toLong()` 会做符号扩展，必须先 `.toInt() and 0xFF` 转成无符号字节再拼。
+            // 之前的写法 `hash[i].and(0xFF.toByte()).toLong()` 中 `0xFF.toByte()` 是 -1（仍是有符号字节），
+            // byte AND 等于 byte 本身，再 toLong 仍然 sign-extend——导致 byte ≥ 0x80 时上位被污染、
+            // 与所有标准 TOTP App（Google Authenticator / Authy / 1Password 等）算出的码不一致。
+            // bug 详见 PassportServiceTest.currentTotpCode 注释。
+            val truncatedHash: Long =
+                ((hash[offset].toInt() and 0x7F).toLong() shl 24) or
+                ((hash[offset + 1].toInt() and 0xFF).toLong() shl 16) or
+                ((hash[offset + 2].toInt() and 0xFF).toLong() shl 8) or
+                (hash[offset + 3].toInt() and 0xFF).toLong()
+            return (truncatedHash % 1000000L).toInt()
         }
     }
 }

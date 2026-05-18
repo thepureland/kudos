@@ -318,15 +318,10 @@ class PassportServiceTest : RdbAndRedisCacheTestBase() {
     }
 
     /**
-     * 计算当前 30s 窗口的 TOTP 验证码。
+     * 计算当前 30s 窗口的 6 位 TOTP 验证码（RFC 6238 dynamic truncation）。
      *
-     * **注意**：刻意复刻 [io.kudos.base.security.GoogleAuthenticator.verifyCode] 的实现，
-     * 包括其偏离 RFC 6238 的部分——后者在 dynamic truncation 阶段没有对每个字节做 `& 0xFF` 屏蔽，
-     * 而是依赖最后的 `& 0x7FFFFFFF`。Kotlin `Byte.toLong()` 会做符号扩展，导致 byte[offset+1..3]
-     * 的高位为 1 时,产生的 hash 与 RFC 标准结果不一致。要让服务端 checkCode 通过,这里必须按
-     * 服务端的实际算法计算。`verifyCode` 是 `internal` 跨模块拿不到,于是手抄一份。
-     *
-     * 上游若修复了这个偏差,这个 helper 也要相应地改回标准 RFC 实现。
+     * 与 [io.kudos.base.security.GoogleAuthenticator.verifyCode] 同算法，后者是 `internal` 跨
+     * 模块拿不到，于是这里复刻一份。
      */
     private fun currentTotpCode(base32Secret: String): Long {
         val key = Base32().decode(base32Secret)
@@ -341,13 +336,11 @@ class PassportServiceTest : RdbAndRedisCacheTestBase() {
         mac.init(SecretKeySpec(key, "HmacSHA1"))
         val hash = mac.doFinal(data)
         val offset = (hash[hash.size - 1].toInt() and 0xF)
-        // 镜像 GoogleAuthenticator.verifyCode：刻意不做 `& 0xFF`，让 sign-extension 发生
-        var truncated: Long = 0L
-        for (j in 0..3) {
-            truncated = truncated shl 8
-            truncated = truncated or hash[offset + j].toLong()
-        }
-        truncated = truncated and 0x7FFFFFFFL
+        val truncated =
+            ((hash[offset].toInt() and 0x7F).toLong() shl 24) or
+                ((hash[offset + 1].toInt() and 0xFF).toLong() shl 16) or
+                ((hash[offset + 2].toInt() and 0xFF).toLong() shl 8) or
+                (hash[offset + 3].toInt() and 0xFF).toLong()
         return truncated % 1_000_000L
     }
 
