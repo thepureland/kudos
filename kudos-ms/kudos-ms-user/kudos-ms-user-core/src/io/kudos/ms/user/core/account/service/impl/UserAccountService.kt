@@ -349,6 +349,59 @@ open class UserAccountService(
     }
 
     @Transactional
+    override fun freezeAccount(
+        id: String,
+        freezeType: String,
+        freezeTitle: String?,
+        freezeContent: String?,
+        freezeStartTime: LocalDateTime?,
+        freezeEndTime: LocalDateTime?,
+    ): Boolean {
+        require(freezeType.isNotBlank()) { "freezeType 不能为空" }
+        // 用 updateProperties 显式更新（包括 null）。ktorm 普通 update 对 null 字段不生效，
+        // 这里需要明确把 start/end 在 caller 没传时清零。
+        val success = dao.updateProperties(
+            id, mapOf(
+                UserAccount::freezeType.name to freezeType,
+                UserAccount::freezeTime.name to LocalDateTime.now(),
+                UserAccount::freezeStartTime.name to freezeStartTime,
+                UserAccount::freezeEndTime.name to freezeEndTime,
+                UserAccount::freezeTitle.name to freezeTitle,
+                UserAccount::freezeContent.name to freezeContent,
+            )
+        )
+        if (success) {
+            log.debug("冻结 id 为 ${id} 的账号，type=${freezeType}")
+            eventPublisher.publishEvent(UserAccountUpdated(id = id))
+        } else {
+            log.warn("冻结账号失败（用户不存在？）: userId=${id}")
+        }
+        return success
+    }
+
+    @Transactional
+    override fun unfreezeAccount(id: String): Boolean {
+        // 清掉 6 列。freezeTime 也清掉，避免"曾被冻结过"残留误导。
+        val success = dao.updateProperties(
+            id, mapOf(
+                UserAccount::freezeType.name to null,
+                UserAccount::freezeTime.name to null,
+                UserAccount::freezeStartTime.name to null,
+                UserAccount::freezeEndTime.name to null,
+                UserAccount::freezeTitle.name to null,
+                UserAccount::freezeContent.name to null,
+            )
+        )
+        if (success) {
+            log.debug("解除 id 为 ${id} 的账号冻结。")
+            eventPublisher.publishEvent(UserAccountUpdated(id = id))
+        } else {
+            log.warn("解除冻结失败（用户不存在？）: userId=${id}")
+        }
+        return success
+    }
+
+    @Transactional
     override fun batchDelete(ids: Collection<String>): Int {
         // 先 snapshot tenantId/username，AFTER_COMMIT 后下游 (tenantId, username) 缓存无法回查
         val snapshots = if (ids.isNotEmpty()) {

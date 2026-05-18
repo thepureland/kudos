@@ -73,6 +73,24 @@ data class UserAccountCacheEntry (
     /** 备注 */
     val remark: String?,
 
+    /** 冻结类型字典码；非 null 表示存在冻结记录 */
+    val freezeType: String? = null,
+
+    /** 冻结记录创建时刻 */
+    val freezeTime: LocalDateTime? = null,
+
+    /** 冻结生效起点；null 视为立即生效 */
+    val freezeStartTime: LocalDateTime? = null,
+
+    /** 冻结失效时刻；null 视为永久冻结 */
+    val freezeEndTime: LocalDateTime? = null,
+
+    /** 冻结原因标题 */
+    val freezeTitle: String? = null,
+
+    /** 冻结详细说明 */
+    val freezeContent: String? = null,
+
     /** 是否激活 */
     val active: Boolean?,
 

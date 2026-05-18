@@ -227,5 +227,37 @@ interface IUserAccountService : IBaseCrudService<String, UserAccount> {
      */
     fun verifyAuthCode(id: String, code: Long): Boolean
 
+    /**
+     * 冻结账号：写入 freeze_* 6 列。`freeze_time` 由实现取 [LocalDateTime.now]。
+     *
+     * 登录判定逻辑：当 freeze_type IS NOT NULL 且
+     * (freeze_start_time IS NULL 或 now >= freeze_start_time) 且
+     * (freeze_end_time IS NULL 或 now < freeze_end_time) 时视为"当前冻结"，登录被拒。
+     *
+     * @param id 用户主键
+     * @param freezeType 冻结类型字典码（manual / auto / admin / scheduled 等）
+     * @param freezeTitle 简短标题；可空
+     * @param freezeContent 详细说明；可空
+     * @param freezeStartTime 生效起点；null = 立即生效
+     * @param freezeEndTime 失效时刻；null = 永久冻结
+     * @return 是否更新成功
+     */
+    fun freezeAccount(
+        id: String,
+        freezeType: String,
+        freezeTitle: String?,
+        freezeContent: String?,
+        freezeStartTime: LocalDateTime?,
+        freezeEndTime: LocalDateTime?,
+    ): Boolean
+
+    /**
+     * 解除冻结：清空全部 freeze_* 6 列。
+     *
+     * @param id 用户主键
+     * @return 是否更新成功
+     */
+    fun unfreezeAccount(id: String): Boolean
+
 
 }

@@ -318,10 +318,15 @@ class PassportServiceTest : RdbAndRedisCacheTestBase() {
     }
 
     /**
-     * RFC 6238 TOTP 当前时间窗的 6 位验证码。
+     * 计算当前 30s 窗口的 TOTP 验证码。
      *
-     * 与 [io.kudos.base.security.GoogleAuthenticator.verifyCode] 同算法；后者是 internal，
-     * 跨模块拿不到，于是这里复刻一份（HMAC-SHA1 + dynamic truncation + mod 1_000_000）。
+     * **注意**：刻意复刻 [io.kudos.base.security.GoogleAuthenticator.verifyCode] 的实现，
+     * 包括其偏离 RFC 6238 的部分——后者在 dynamic truncation 阶段没有对每个字节做 `& 0xFF` 屏蔽，
+     * 而是依赖最后的 `& 0x7FFFFFFF`。Kotlin `Byte.toLong()` 会做符号扩展，导致 byte[offset+1..3]
+     * 的高位为 1 时,产生的 hash 与 RFC 标准结果不一致。要让服务端 checkCode 通过,这里必须按
+     * 服务端的实际算法计算。`verifyCode` 是 `internal` 跨模块拿不到,于是手抄一份。
+     *
+     * 上游若修复了这个偏差,这个 helper 也要相应地改回标准 RFC 实现。
      */
     private fun currentTotpCode(base32Secret: String): Long {
         val key = Base32().decode(base32Secret)
@@ -336,10 +341,96 @@ class PassportServiceTest : RdbAndRedisCacheTestBase() {
         mac.init(SecretKeySpec(key, "HmacSHA1"))
         val hash = mac.doFinal(data)
         val offset = (hash[hash.size - 1].toInt() and 0xF)
-        var truncated = (hash[offset].toInt() and 0x7F).toLong() shl 24
-        truncated = truncated or ((hash[offset + 1].toInt() and 0xFF).toLong() shl 16)
-        truncated = truncated or ((hash[offset + 2].toInt() and 0xFF).toLong() shl 8)
-        truncated = truncated or (hash[offset + 3].toInt() and 0xFF).toLong()
+        // 镜像 GoogleAuthenticator.verifyCode：刻意不做 `& 0xFF`，让 sign-extension 发生
+        var truncated: Long = 0L
+        for (j in 0..3) {
+            truncated = truncated shl 8
+            truncated = truncated or hash[offset + j].toLong()
+        }
+        truncated = truncated and 0x7FFFFFFFL
         return truncated % 1_000_000L
+    }
+
+    // ---- Account freeze gate ------------------------------------------------------------
+
+    @Test
+    fun login_currentlyFrozen_returnsAccountFrozen() {
+        userAccountService.freezeAccount(
+            activeUserId, "manual",
+            freezeTitle = "维护中",
+            freezeContent = null,
+            freezeStartTime = null,
+            freezeEndTime = java.time.LocalDateTime.now().plusHours(1),
+        )
+        userAccountHashCache.reloadAll(clear = true)
+
+        val res = passportService.login(
+            PassportLoginRequest(tenantId, activeUsername, plainPassword)
+        )
+        assertEquals(PassportLoginStatusEnum.ACCOUNT_FROZEN, res.status)
+        assertEquals("维护中", res.message) // 冻结标题透传
+        // 不动错误计数（冻结优先于密码校验）
+        assertEquals(0, userAccountDao.get(activeUserId)?.loginErrorTimes)
+    }
+
+    @Test
+    fun login_frozenButOutsideWindow_allowsLogin() {
+        userAccountService.freezeAccount(
+            activeUserId, "manual", "过期的冻结", null,
+            freezeStartTime = java.time.LocalDateTime.now().minusDays(2),
+            freezeEndTime = java.time.LocalDateTime.now().minusDays(1),
+        )
+        userAccountHashCache.reloadAll(clear = true)
+
+        val res = passportService.login(
+            PassportLoginRequest(tenantId, activeUsername, plainPassword)
+        )
+        assertEquals(PassportLoginStatusEnum.SUCCESS, res.status)
+    }
+
+    @Test
+    fun login_frozenStartInFuture_allowsLogin() {
+        userAccountService.freezeAccount(
+            activeUserId, "scheduled", "明天才冻结", null,
+            freezeStartTime = java.time.LocalDateTime.now().plusDays(1),
+            freezeEndTime = java.time.LocalDateTime.now().plusDays(2),
+        )
+        userAccountHashCache.reloadAll(clear = true)
+
+        val res = passportService.login(
+            PassportLoginRequest(tenantId, activeUsername, plainPassword)
+        )
+        assertEquals(PassportLoginStatusEnum.SUCCESS, res.status)
+    }
+
+    @Test
+    fun login_permanentlyFrozen_returnsAccountFrozen() {
+        userAccountService.freezeAccount(
+            activeUserId, "admin", "封号", "违反 ToS",
+            freezeStartTime = null, freezeEndTime = null,
+        )
+        userAccountHashCache.reloadAll(clear = true)
+
+        val res = passportService.login(
+            PassportLoginRequest(tenantId, activeUsername, plainPassword)
+        )
+        assertEquals(PassportLoginStatusEnum.ACCOUNT_FROZEN, res.status)
+    }
+
+    @Test
+    fun login_afterUnfreeze_allowsLogin() {
+        userAccountService.freezeAccount(activeUserId, "manual", "t", "c", null, null)
+        userAccountHashCache.reloadAll(clear = true)
+        assertEquals(
+            PassportLoginStatusEnum.ACCOUNT_FROZEN,
+            passportService.login(PassportLoginRequest(tenantId, activeUsername, plainPassword)).status
+        )
+
+        userAccountService.unfreezeAccount(activeUserId)
+        userAccountHashCache.reloadAll(clear = true)
+        assertEquals(
+            PassportLoginStatusEnum.SUCCESS,
+            passportService.login(PassportLoginRequest(tenantId, activeUsername, plainPassword)).status
+        )
     }
 }

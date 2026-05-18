@@ -228,4 +228,45 @@ class UserAccountServiceTest : RdbAndRedisCacheTestBase() {
         // 0 几乎不可能匹配当前时间窗的 TOTP
         assertFalse(userAccountService.verifyAuthCode(id, 0L))
     }
+
+    /** freezeAccount 写入 6 列。 */
+    @Test
+    fun freezeAccount_writesAllSixFields() {
+        val id = "a970f8c0-0000-0000-0000-000000000017"
+        val start = LocalDateTime.now().minusMinutes(1)
+        val end = LocalDateTime.now().plusHours(1)
+        val ok = userAccountService.freezeAccount(
+            id = id,
+            freezeType = "manual",
+            freezeTitle = "test-freeze",
+            freezeContent = "from UserAccountServiceTest",
+            freezeStartTime = start,
+            freezeEndTime = end,
+        )
+        assertTrue(ok)
+        val po = assertNotNull(userAccountService.get(id))
+        assertEquals("manual", po.freezeType)
+        assertEquals("test-freeze", po.freezeTitle)
+        assertEquals("from UserAccountServiceTest", po.freezeContent)
+        assertEquals(start, po.freezeStartTime)
+        assertEquals(end, po.freezeEndTime)
+        assertNotNull(po.freezeTime)
+    }
+
+    /** unfreezeAccount 清空全部 6 列。 */
+    @Test
+    fun unfreezeAccount_clearsAllSixFields() {
+        val id = "a970f8c0-0000-0000-0000-000000000017"
+        userAccountService.freezeAccount(id, "manual", "t", "c", null, null)
+        assertNotNull(userAccountService.get(id)?.freezeType)
+
+        assertTrue(userAccountService.unfreezeAccount(id))
+        val po = assertNotNull(userAccountService.get(id))
+        assertNull(po.freezeType)
+        assertNull(po.freezeTime)
+        assertNull(po.freezeStartTime)
+        assertNull(po.freezeEndTime)
+        assertNull(po.freezeTitle)
+        assertNull(po.freezeContent)
+    }
 }
