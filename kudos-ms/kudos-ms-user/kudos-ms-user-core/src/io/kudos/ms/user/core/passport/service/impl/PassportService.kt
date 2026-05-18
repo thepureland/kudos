@@ -2,9 +2,13 @@ package io.kudos.ms.user.core.passport.service.impl
 
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.security.PasswordKit
+import io.kudos.ms.user.common.passport.enums.ChangePasswordResultEnum
+import io.kudos.ms.user.common.passport.vo.request.ChangePasswordRequest
 import io.kudos.ms.user.common.passport.vo.request.PassportLoginRequest
+import io.kudos.ms.user.common.passport.vo.request.VerifyPasswordRequest
 import io.kudos.ms.user.common.passport.vo.response.PassportLoginResult
 import io.kudos.ms.user.common.passport.vo.response.UserInfoModel
+import io.kudos.ms.user.core.account.dao.UserAccountDao
 import io.kudos.ms.user.core.account.service.iservice.IUserAccountService
 import io.kudos.ms.user.core.passport.service.iservice.IPassportService
 import org.springframework.stereotype.Service
@@ -30,6 +34,7 @@ import java.time.LocalDateTime
 @Transactional
 open class PassportService(
     private val userAccountService: IUserAccountService,
+    private val userAccountDao: UserAccountDao,
 ) : IPassportService {
 
     private val log = LogFactory.getLog(this::class)
@@ -84,5 +89,39 @@ open class PassportService(
         if (success) log.debug("登出成功: userId=${userId}")
         else log.debug("登出失败（用户不存在？）: userId=${userId}")
         return success
+    }
+
+    @Transactional(readOnly = true)
+    override fun verifyPassword(req: VerifyPasswordRequest): Boolean {
+        // 直查 DAO：拿到最新的 loginPassword 哈希（不走缓存，避免落后于 changePassword 写操作）
+        val storedHash = userAccountDao.get(req.userId)?.loginPassword ?: return false
+        return PasswordKit.matches(req.plainPassword, storedHash)
+    }
+
+    @Transactional(readOnly = true)
+    override fun verifySecurityPassword(req: VerifyPasswordRequest): Boolean {
+        val storedHash = userAccountDao.get(req.userId)?.securityPassword ?: return false
+        return PasswordKit.matches(req.plainPassword, storedHash)
+    }
+
+    override fun changePassword(req: ChangePasswordRequest): ChangePasswordResultEnum {
+        val po = userAccountDao.get(req.userId)
+            ?: return ChangePasswordResultEnum.USER_NOT_FOUND
+        if (!PasswordKit.matches(req.oldPlainPassword, po.loginPassword)) {
+            return ChangePasswordResultEnum.OLD_PASSWORD_WRONG
+        }
+        // 旧密码正确——直接调既有的 resetPassword（它会 hash 新密码并清错误计数）
+        userAccountService.resetPassword(req.userId, req.newPlainPassword)
+        return ChangePasswordResultEnum.SUCCESS
+    }
+
+    override fun changeSecurityPassword(req: ChangePasswordRequest): ChangePasswordResultEnum {
+        val po = userAccountDao.get(req.userId)
+            ?: return ChangePasswordResultEnum.USER_NOT_FOUND
+        if (!PasswordKit.matches(req.oldPlainPassword, po.securityPassword)) {
+            return ChangePasswordResultEnum.OLD_PASSWORD_WRONG
+        }
+        userAccountService.resetSecurityPassword(req.userId, req.newPlainPassword)
+        return ChangePasswordResultEnum.SUCCESS
     }
 }
