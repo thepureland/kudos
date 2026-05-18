@@ -55,6 +55,15 @@ open class PassportService(
             return PassportLoginResult.inactive()
         }
 
+        // 冻结判定：freeze_type 非空 + 当前在生效窗口内
+        if (isCurrentlyFrozen(user.freezeType, user.freezeStartTime, user.freezeEndTime)) {
+            log.debug(
+                "登录失败 - 账号已冻结: userId=${user.id} type=${user.freezeType} " +
+                    "window=[${user.freezeStartTime}, ${user.freezeEndTime})"
+            )
+            return PassportLoginResult.accountFrozen(user.freezeTitle)
+        }
+
         val passwordMatches = PasswordKit.matches(req.plainPassword, user.loginPassword)
         if (!passwordMatches) {
             userAccountService.incrementLoginErrorTimes(user.id)
@@ -145,5 +154,24 @@ open class PassportService(
         }
         userAccountService.resetSecurityPassword(req.userId, req.newPlainPassword)
         return ChangePasswordResultEnum.SUCCESS
+    }
+
+    /**
+     * 当前时刻是否落在冻结生效窗口内。
+     *
+     * - freezeType 为 null/空 → 没有冻结记录，永远 false
+     * - freezeStartTime 为 null → 视为"立即生效"，下界永远满足
+     * - freezeEndTime 为 null → 视为"永久冻结"，上界永远满足
+     */
+    private fun isCurrentlyFrozen(
+        freezeType: String?,
+        freezeStartTime: LocalDateTime?,
+        freezeEndTime: LocalDateTime?,
+    ): Boolean {
+        if (freezeType.isNullOrBlank()) return false
+        val now = LocalDateTime.now()
+        val afterStart = freezeStartTime == null || !now.isBefore(freezeStartTime)
+        val beforeEnd = freezeEndTime == null || now.isBefore(freezeEndTime)
+        return afterStart && beforeEnd
     }
 }

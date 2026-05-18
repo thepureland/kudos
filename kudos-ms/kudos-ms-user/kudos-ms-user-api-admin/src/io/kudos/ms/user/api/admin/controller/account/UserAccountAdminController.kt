@@ -9,11 +9,13 @@ import io.kudos.ms.user.common.account.vo.response.UserAccountDetail
 import io.kudos.ms.user.common.account.vo.response.UserAccountEdit
 import io.kudos.ms.user.common.account.vo.response.UserAccountRow
 import io.kudos.ms.user.core.account.service.iservice.IUserAccountService
+import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import java.time.LocalDateTime
 
 
 /**
@@ -66,5 +68,30 @@ class UserAccountAdminController :
     @PostMapping("/verifyAuthCode")
     fun verifyAuthCode(@RequestParam id: String, @RequestParam code: Long): Boolean =
         service.verifyAuthCode(id, code)
+
+    /**
+     * 冻结账号。在生效窗口内的登录尝试会被拒绝返回 ACCOUNT_FROZEN。
+     *
+     * @param id 用户主键
+     * @param freezeType 冻结类型字典码（manual / auto / admin / scheduled 等）
+     * @param freezeTitle 简短标题（可空）
+     * @param freezeContent 详细说明（可空）
+     * @param freezeStartTime ISO-8601 日期时间；不传 = 立即生效
+     * @param freezeEndTime   ISO-8601 日期时间；不传 = 永久冻结
+     */
+    @PostMapping("/freezeAccount")
+    fun freezeAccount(
+        @RequestParam id: String,
+        @RequestParam freezeType: String,
+        @RequestParam(required = false) freezeTitle: String?,
+        @RequestParam(required = false) freezeContent: String?,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) freezeStartTime: LocalDateTime?,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) freezeEndTime: LocalDateTime?,
+    ): Boolean = service.freezeAccount(id, freezeType, freezeTitle, freezeContent, freezeStartTime, freezeEndTime)
+
+    /** 解除冻结：清空全部 freeze_* 字段。 */
+    @PostMapping("/unfreezeAccount")
+    fun unfreezeAccount(@RequestParam id: String): Boolean =
+        service.unfreezeAccount(id)
 
 }

@@ -33,5 +33,11 @@ enum class PassportLoginStatusEnum {
 
     /** 密码正确，但 OTP 验证码错误（视为密码错的同等失败，错误计数已 +1） */
     OTP_WRONG,
+
+    /**
+     * 账号被冻结（freeze_type 非空且当前时刻处于 [freeze_start_time, freeze_end_time) 内）。
+     * [PassportLoginResult.message] 携带冻结原因标题。
+     */
+    ACCOUNT_FROZEN,
 }
 

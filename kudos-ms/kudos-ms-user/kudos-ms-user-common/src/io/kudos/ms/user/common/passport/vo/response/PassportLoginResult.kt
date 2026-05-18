@@ -57,5 +57,16 @@ data class PassportLoginResult(
                 loginErrorTimes = loginErrorTimes,
                 message = "动态验证码错误",
             )
+
+        /**
+         * 账号被冻结。
+         *
+         * @param freezeTitle 来自 user_account.freeze_title，透传给前端展示；空时给默认文案
+         */
+        fun accountFrozen(freezeTitle: String?): PassportLoginResult =
+            PassportLoginResult(
+                status = PassportLoginStatusEnum.ACCOUNT_FROZEN,
+                message = freezeTitle?.takeIf { it.isNotBlank() } ?: "账号已被冻结",
+            )
     }
 }
