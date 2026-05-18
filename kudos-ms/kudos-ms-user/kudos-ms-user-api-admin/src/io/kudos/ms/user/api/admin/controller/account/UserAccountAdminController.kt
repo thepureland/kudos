@@ -94,4 +94,14 @@ class UserAccountAdminController :
     fun unfreezeAccount(@RequestParam id: String): Boolean =
         service.unfreezeAccount(id)
 
+    /**
+     * 手动触发"清理已过期冻结"。通常由 `AutoUnfreezeScheduler` 自动跑——前提是部署方
+     * 启用了 `@EnableScheduling`。此端点为应急/调试通道。
+     *
+     * @return 本次清理掉的账号数
+     */
+    @PostMapping("/cleanExpiredFreezes")
+    fun cleanExpiredFreezes(): Int =
+        service.cleanExpiredFreezes()
+
 }

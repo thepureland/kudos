@@ -3,6 +3,8 @@ package io.kudos.ms.user.core.account.service.impl
 import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
+import io.kudos.base.query.Criteria
+import io.kudos.base.query.lt
 import io.kudos.base.security.GoogleAuthenticator
 import io.kudos.base.security.PasswordKit
 import io.kudos.ms.user.common.account.vo.response.AuthKeySetup
@@ -399,6 +401,24 @@ open class UserAccountService(
             log.warn("解除冻结失败（用户不存在？）: userId=${id}")
         }
         return success
+    }
+
+    @Transactional
+    override fun cleanExpiredFreezes(): Int {
+        val now = LocalDateTime.now()
+        // freeze_end_time IS NOT NULL AND freeze_end_time < now()
+        // lt 操作符在底层是 SQL `<`，对 NULL 自然不匹配——永久冻结(freeze_end_time=null)不会被清。
+        val criteria = Criteria(UserAccount::freezeEndTime lt now)
+        val expired = dao.searchAs<UserAccount>(criteria)
+        if (expired.isEmpty()) return 0
+        var cleared = 0
+        for (po in expired) {
+            if (unfreezeAccount(po.id)) cleared++
+        }
+        if (cleared > 0) {
+            log.info("auto-unfreeze: 共清理 ${cleared} 条已过期的冻结记录")
+        }
+        return cleared
     }
 
     @Transactional
