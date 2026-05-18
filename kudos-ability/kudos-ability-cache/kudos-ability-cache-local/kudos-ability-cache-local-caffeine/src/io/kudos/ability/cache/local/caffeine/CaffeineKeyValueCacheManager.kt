@@ -9,10 +9,24 @@ import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 
 /**
- * 本地缓存管理器的Caffeine实现
+ * K-V 本地缓存管理器的 Caffeine 实现。
+ *
+ * 把 [CacheConfig] 翻译成 Caffeine spec + 单缓存级别的 `expireAfterWrite(ttl)`，
+ * 包装成 [DrainingCaffeineCache] 以解决 `invalidateAll()` 异步生效引起的"清完还能读到"问题。
+ *
+ * 通过 [ensureSizeBound] 给 caffeine spec 兜底 `maximumSize`，避免业务漏配上限导致
+ * 长跑 OOM——这是产线遇到过的真实问题，看到 warn 日志请补全 spec。
+ *
+ * @author K
+ * @since 1.0.0
  */
 class CaffeineKeyValueCacheManager : AbstractKeyValueCacheManager<CaffeineCache>() {
 
+    /**
+     * 按 [cacheConfig] 构造单个 [CaffeineCache]：合并全局 spec、覆盖 ttl、按版本配置加前缀。
+     * 失败的前置条件用 `requireNotNull` 立刻抛——典型是 yml 缺 `spring.cache.caffeine.spec`
+     * 或 cache item 缺 `ttl`，启动期失败优于运行期发现缓存配错。
+     */
     override fun createCache(cacheConfig: CacheConfig): CaffeineCache {
         val spec = requireNotNull(properties.caffeine.spec) { "caffeine spec is required" }
         val effectiveSpec = ensureSizeBound(spec)
@@ -45,11 +59,18 @@ class CaffeineKeyValueCacheManager : AbstractKeyValueCacheManager<CaffeineCache>
         return if (spec.isBlank()) "maximumSize=$DEFAULT_MAX_SIZE" else "$spec,maximumSize=$DEFAULT_MAX_SIZE"
     }
 
+    /**
+     * 按通配符 `*` 模式清除缓存项。
+     *
+     * 入参可能是逻辑模式（`user:*`）或已带版本前缀的实际模式（`v2:user:*`）——
+     * 统一先剥版本再加回版本，避免重复前缀。把 `*` 转为正则 `.*` 后扫整张 nativeMap，
+     * 命中的 key 走 `cache.evict(key)` 立即生效（[DrainingCaffeineCache] 会同步 cleanUp）。
+     *
+     * **性能注意**：全表扫描 + 单 key evict；缓存条目数大时不便宜。生产使用前评估热点。
+     */
     override fun evictByPattern(cacheName: String, pattern: String) {
         val cache = getCache(cacheName) ?: return
-        // 入参可能是逻辑模式（如 user:*）或已带版本前缀的实际模式，先去版本再统一加版本，避免重复前缀。
         val realPattern: String = versionConfig.getFinalCacheName(versionConfig.getRealCacheName(pattern))
-        // 拿到底层 ConcurrentMap
         val nativeCache = (cache as CaffeineCache).nativeCache.asMap()
         val regex = "^" + realPattern.replace("*", ".*") + "$"
         val p = Pattern.compile(regex)
@@ -60,6 +81,10 @@ class CaffeineKeyValueCacheManager : AbstractKeyValueCacheManager<CaffeineCache>
         }
     }
 
+    /**
+     * 是否存在指定 key——通过 `nativeCache.asMap().containsKey` 直接判断，
+     * 不触发 Caffeine 的 LoadingCache 加载逻辑（与 [CaffeineCache.get] 的语义区分开）。
+     */
     override fun existsKey(cacheName: String, key: Any): Boolean {
         val cache = getCache(cacheName) ?: return false
         return (cache as CaffeineCache).nativeCache.asMap().containsKey(key)
