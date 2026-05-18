@@ -33,11 +33,21 @@ open class KtorAutoConfiguration : IComponentInitializer {
     @Autowired(required = false)
     private var routeRegistrar: List<IKtorRouteRegistrar> = emptyList()
 
+    /** 绑定 `kudos.ability.web.ktor.*` 到 [KtorProperties]。 */
     @Bean
     @ConditionalOnMissingBean
     @ConfigurationProperties(prefix = "kudos.ability.web.ktor")
     open fun ktorProperties() = KtorProperties()
 
+    /**
+     * 启动 Ktor 内嵌引擎。流程：
+     *  1. 把配置塞到 [KtorContext.properties]，供下游引用
+     *  2. `engine.name = test` 时直接返回 null（由测试自行装配 testApplication）
+     *  3. 否则反射加载对应引擎工厂的 `INSTANCE`（避免编译期把 4 套引擎都拉进 classpath）
+     *  4. `embeddedServer { installPlugins(...); routing { routeRegistrar.forEach(register) } }`
+     *  5. `monitor.subscribe(ApplicationStarted)` 配合 [CompletableFuture] 同步等启动完成，
+     *     避免 Spring 容器初始化阶段就返回但 Ktor 还没真正就绪
+     */
     @Bean
     open fun ktorEngine(ktorProperties: KtorProperties): EmbeddedServer<*, *>? {
         logger.info("初始化 ktorEngine ...")
