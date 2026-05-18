@@ -24,7 +24,8 @@ object SeataTestContainer {
 
     private const val IMAGE_NAME = "apache/seata-server:2.5.0"
 
-    const val WEB_PORT = 27091
+    /** Seata 2.5 容器内 service-port 默认是 8091（不是 28091）；外部宿主机映射端口仍叫 SERVICE_PORT。 */
+    private const val CONTAINER_SERVICE_PORT = 8091
 
     const val SERVICE_PORT = 28091
 
@@ -42,8 +43,8 @@ object SeataTestContainer {
     private lateinit var runningNacosContainer : Container
 
     private val CONTAINER = GenericContainer(IMAGE_NAME).apply {
-        withExposedPorts(7091, 28091)
-        bindingPort(Pair(WEB_PORT, 7091), Pair(SERVICE_PORT, 28091))
+        withExposedPorts(CONTAINER_SERVICE_PORT)
+        bindingPort(Pair(SERVICE_PORT, CONTAINER_SERVICE_PORT))
         withEnv("SEATA_IP", IpKit.getLocalIp())
         withNetwork(TestContainerKit.DEFAULT_DOCKER_NETWORK)
         withClasspathResourceMapping(
@@ -51,8 +52,9 @@ object SeataTestContainer {
             "/seata-server/resources/application.yml",
             BindMode.READ_ONLY
         )
-//        waitingFor(Wait.forHttp("/").forPort(7091))
-        waitingFor(Wait.forListeningPort())
+        // Seata 2.5 镜像里没装 netcat 也没有 HTTP web 端点（console 拆成独立 namingserver 模块）→
+        // forListeningPort() 与 forHttp() 都不可靠。改用日志匹配：等 Seata 自己打印 "service listen port" 即视为就绪。
+        waitingFor(Wait.forLogMessage(".*Server started, service listen port.*\\n", 1))
         withLabel(TestContainerKit.LABEL_KEY, LABEL)
     }
 
@@ -126,7 +128,7 @@ object SeataTestContainer {
     fun main(args: Array<String>?) {
         startIfNeeded(null)
         println("nacos localhost web-port: ${runningNacosContainer.ports.first().publicPort}")
-        println("seata localhost web-port: $WEB_PORT, service-port：$SERVICE_PORT")
+        println("seata localhost service-port：$SERVICE_PORT")
         Thread.sleep(Long.MAX_VALUE)
     }
 
