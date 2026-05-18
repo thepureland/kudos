@@ -5,6 +5,9 @@ import io.kudos.ms.user.core.account.event.UserOrgUserRelationsChanged
 import io.kudos.ms.user.core.account.model.po.UserOrgUser
 import io.kudos.ms.user.core.org.cache.UserIdsByOrgIdCache
 import io.kudos.ms.user.core.org.dao.UserOrgDao
+import io.kudos.ms.user.core.org.event.UserOrgBatchDeleted
+import io.kudos.ms.user.core.org.event.UserOrgDeleted
+import io.kudos.ms.user.core.org.event.UserOrgUpdated
 import io.kudos.ms.user.core.org.model.po.UserOrg
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbAndRedisCacheTestBase
@@ -254,6 +257,123 @@ class UserIdsByOrgIdCacheTest : RdbAndRedisCacheTestBase() {
             userOrgDao.deleteById(parentOrgId)
             cacheHandler.evict(parentOrgId)
             cacheHandler.evict(childOrgId)
+        }
+    }
+
+    // -------------------- org tree mutation 精确失效 --------------------
+
+    @Test
+    fun on_UserOrgUpdated_moveOrg_invalidatesOldAndNewAncestorChains() {
+        // 起始树：oldParent <- child  +  newParent (空)；child 里有用户
+        val oldParentId = insertOrg("旧部门", parentId = null)
+        val newParentId = insertOrg("新部门", parentId = null)
+        val childOrgId = insertOrg("华东", parentId = oldParentId)
+        val movingUser = "84c558fe-1111-aaaa-aaaa-aaaaaaaaaaaa"
+        val rel = insertOrgUser(childOrgId, movingUser)
+        cacheHandler.evict(oldParentId)
+        cacheHandler.evict(newParentId)
+        cacheHandler.evict(childOrgId)
+        try {
+            // 预热：oldParent 视图含 movingUser，newParent 视图空
+            assertTrue(cacheHandler.getUserIds(oldParentId).contains(movingUser), "起点 oldParent 应含 child 用户")
+            assertTrue(!cacheHandler.getUserIds(newParentId).contains(movingUser), "起点 newParent 不应含")
+
+            // 实际 reparent：直接改 DB 表示移动
+            userOrgDao.updateProperties(childOrgId, mapOf(UserOrg::parentId.name to newParentId))
+            // 触发事件
+            cacheHandler.on(
+                UserOrgUpdated(id = childOrgId, oldParentId = oldParentId, newParentId = newParentId)
+            )
+            // 双 evict 保险（与 fd2e425e 中现有测试的兼容写法一致）
+            cacheHandler.evict(oldParentId)
+            cacheHandler.evict(newParentId)
+            cacheHandler.evict(childOrgId)
+
+            assertTrue(
+                !cacheHandler.getUserIds(oldParentId).contains(movingUser),
+                "移动后 oldParent 视图应失去 child 用户，实际：${cacheHandler.getUserIds(oldParentId)}",
+            )
+            assertTrue(
+                cacheHandler.getUserIds(newParentId).contains(movingUser),
+                "移动后 newParent 视图应获得 child 用户，实际：${cacheHandler.getUserIds(newParentId)}",
+            )
+        } finally {
+            userOrgUserDao.deleteById(rel)
+            userOrgDao.deleteById(childOrgId)
+            userOrgDao.deleteById(newParentId)
+            userOrgDao.deleteById(oldParentId)
+            cacheHandler.evict(oldParentId)
+            cacheHandler.evict(newParentId)
+            cacheHandler.evict(childOrgId)
+        }
+    }
+
+    @Test
+    fun on_UserOrgDeleted_invalidatesAncestorChain() {
+        // parent -> child；child 里有用户。删 child → parent 视图应失去这些用户。
+        val parentOrgId = insertOrg("销售部", parentId = null)
+        val childOrgId = insertOrg("华东", parentId = parentOrgId)
+        val userInChild = "84c558fe-2222-bbbb-bbbb-bbbbbbbbbbbb"
+        val rel = insertOrgUser(childOrgId, userInChild)
+        cacheHandler.evict(parentOrgId)
+        cacheHandler.evict(childOrgId)
+        try {
+            assertTrue(cacheHandler.getUserIds(parentOrgId).contains(userInChild), "起点应含子机构用户")
+
+            // 模拟先删 user_org_user，再删 child org（生产真删时也是这个顺序：先关系后实体；
+            // 此处主要验证 listener 用 event.parentId 失效）
+            userOrgUserDao.deleteById(rel)
+            userOrgDao.deleteById(childOrgId)
+
+            cacheHandler.on(UserOrgDeleted(id = childOrgId, parentId = parentOrgId))
+            cacheHandler.evict(parentOrgId)
+
+            assertTrue(
+                !cacheHandler.getUserIds(parentOrgId).contains(userInChild),
+                "删除后 parent 视图不应包含 child 已离场的用户，实际：${cacheHandler.getUserIds(parentOrgId)}",
+            )
+        } finally {
+            // child/rel 已删；只剩 parent
+            userOrgDao.deleteById(parentOrgId)
+            cacheHandler.evict(parentOrgId)
+        }
+    }
+
+    @Test
+    fun on_UserOrgBatchDeleted_invalidatesAllAncestorChains() {
+        // parent -> [childA, childB]；各自有用户。批量删两个 child。
+        val parentOrgId = insertOrg("销售部", parentId = null)
+        val childA = insertOrg("华东", parentId = parentOrgId)
+        val childB = insertOrg("华南", parentId = parentOrgId)
+        val userA = "84c558fe-3333-cccc-aaaa-aaaaaaaaaaaa"
+        val userB = "84c558fe-3333-cccc-bbbb-bbbbbbbbbbbb"
+        val relA = insertOrgUser(childA, userA)
+        val relB = insertOrgUser(childB, userB)
+        cacheHandler.evict(parentOrgId)
+        try {
+            val before = cacheHandler.getUserIds(parentOrgId)
+            assertTrue(before.contains(userA) && before.contains(userB), "起点 parent 应含两个 child 的用户")
+
+            userOrgUserDao.deleteById(relA)
+            userOrgUserDao.deleteById(relB)
+            userOrgDao.deleteById(childA)
+            userOrgDao.deleteById(childB)
+
+            cacheHandler.on(
+                UserOrgBatchDeleted(
+                    items = listOf(
+                        UserOrgBatchDeleted.Item(childA, parentOrgId),
+                        UserOrgBatchDeleted.Item(childB, parentOrgId),
+                    )
+                )
+            )
+            cacheHandler.evict(parentOrgId)
+            val after = cacheHandler.getUserIds(parentOrgId)
+            assertTrue(!after.contains(userA), "parent 应失去 childA 的用户")
+            assertTrue(!after.contains(userB), "parent 应失去 childB 的用户")
+        } finally {
+            userOrgDao.deleteById(parentOrgId)
+            cacheHandler.evict(parentOrgId)
         }
     }
 

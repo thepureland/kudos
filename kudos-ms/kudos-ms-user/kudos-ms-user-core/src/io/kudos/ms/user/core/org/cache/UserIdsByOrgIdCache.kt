@@ -9,6 +9,9 @@ import io.kudos.ms.user.core.account.event.UserOrgUserAdminUpdated
 import io.kudos.ms.user.core.account.event.UserOrgUserRelationsChanged
 import io.kudos.ms.user.core.account.model.po.UserOrgUser
 import io.kudos.ms.user.core.org.dao.UserOrgDao
+import io.kudos.ms.user.core.org.event.UserOrgBatchDeleted
+import io.kudos.ms.user.core.org.event.UserOrgDeleted
+import io.kudos.ms.user.core.org.event.UserOrgUpdated
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
@@ -30,9 +33,11 @@ import org.springframework.transaction.event.TransactionalEventListener
  * **缓存失效**：
  * - 关系变更 ([UserOrgUserRelationsChanged] / [UserOrgUserAdminUpdated]) 影响 orgId 及其
  *   所有祖先的视图，因此监听器会沿 parent_id 向上失效一整条链。
- * - 机构树本身的变更（parent 改、删除）目前未在 listener 里精细处理 —— 那种场景频率低，
- *   依赖下次读取时按当前结构重算 / 全量 reload；如需严格，可叠加 UserOrgDeleted /
- *   UserOrgUpdated 监听并在 service 层先 snapshot 旧 parentId 以保失效精度。
+ * - 机构树自身变更：
+ *   - [UserOrgUpdated] 携带 oldParentId / newParentId 快照。非移动类（active 改、name 改等）
+ *     两者相等，沿单条祖先链失效。移动类（moveOrg）两者不等，分别失效旧链 + 新链。
+ *   - [UserOrgDeleted] / [UserOrgBatchDeleted] 携带删除前的 parentId 快照，沿祖先链失效；
+ *     同时失效 orgId 自身（哪怕已删除，缓存条目可能还在）。
  *
  * @author K
  * @author AI: Cursor
@@ -172,6 +177,48 @@ open class UserIdsByOrgIdCache : AbstractKeyValueCacheHandler<List<String>>() {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     open fun on(event: UserOrgUserAdminUpdated): Unit = syncByOrgAndAncestors(event.orgId)
+
+    /**
+     * 机构本身被改动（active 切换 / moveOrg / 通用 update）。失效策略：
+     * - 自己：缓存条目可能含子树聚合，必须重算 → evict
+     * - oldParentId 祖先链：移动后旧链的"含子树成员"视图不再含本 org，evict
+     * - newParentId 祖先链：移动后新链多了本 org 子树，evict
+     *   非移动类 update 时 oldParentId == newParentId，两条链合一，evict 一次
+     */
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: UserOrgUpdated) {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
+        evictAndReload(event.id)
+        // 旧的没传时 fallback 走 now-DB-lookup（旧 publisher 不会这么做，但稳健）。null 表示已是根。
+        listOfNotNull(event.oldParentId, event.newParentId).distinct().forEach { syncByOrgAndAncestors(it) }
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: UserOrgDeleted) {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
+        // 删了的 org 本身的缓存条目也要清；它的祖先链失去这棵子树成员
+        evictAndReload(event.id)
+        event.parentId?.let { syncByOrgAndAncestors(it) }
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: UserOrgBatchDeleted) {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
+        // 每条单独失效自己 + 祖先链。祖先链 IDs 可能重复 —— 用 set 去重少几次 DB walk。
+        event.items.forEach { evictAndReload(it.id) }
+        val parentIds = event.items.mapNotNullTo(mutableSetOf()) { it.parentId }
+        parentIds.forEach { syncByOrgAndAncestors(it) }
+    }
+
+    /** 单一 key 的 evict + 按需 write-in-time 重算。给 org 自身条目使用（不走父链）。 */
+    private fun evictAndReload(orgId: String) {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
+        KeyValueCacheKit.evict(CACHE_NAME, orgId)
+        if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
+            // 重算可能在 org 已被删除的场景下查不到 → 返回空，@Cacheable unless=isEmpty 不会写回，OK
+            getSelf<UserIdsByOrgIdCache>().getUserIds(orgId)
+        }
+    }
 
     private val log = LogFactory.getLog(this::class)
 
