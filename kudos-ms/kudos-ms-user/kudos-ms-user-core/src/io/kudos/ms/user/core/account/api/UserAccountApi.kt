@@ -6,6 +6,7 @@ import io.kudos.ms.user.common.account.vo.UserAccountCacheEntry
 import io.kudos.ms.user.core.account.cache.UserAccountHashCache
 import io.kudos.ms.user.core.account.service.iservice.IUserAccountService
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.annotation.Primary
 import org.springframework.stereotype.Service
 
 
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service
  * @author AI: Cursor
  * @since 1.0.0
  */
+@Primary
 @Service
 open class UserAccountApi : IUserAccountApi {
 
