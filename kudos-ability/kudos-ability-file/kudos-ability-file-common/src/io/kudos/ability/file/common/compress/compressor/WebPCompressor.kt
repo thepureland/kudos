@@ -4,7 +4,6 @@ import com.luciad.imageio.webp.WebPWriteParam
 import io.kudos.ability.file.common.compress.support.CompressionConfig
 import io.kudos.ability.file.common.compress.support.CompressionResult
 import java.io.ByteArrayOutputStream
-import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import javax.imageio.IIOImage
@@ -42,14 +41,6 @@ class WebPCompressor : ImageCompressor {
         return CompressionResult(byteArrayOutputStream, rename(destination), "image/webp")
     }
 
-    private fun rename(destination: String): String {
-        var destination = destination
-        destination = "$destination.webp"
-        return destination
-    }
-
-    private fun rename(originalFile: File): File {
-        return File(originalFile.getParent(), originalFile.getName() + ".webp")
-    }
+    private fun rename(destination: String): String = "$destination.webp"
 
 }
