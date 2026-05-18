@@ -11,6 +11,16 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.PropertySource
 
 
+/**
+ * 本地磁盘文件存储装配入口。注册三个 SPI 实现（[LocalUploadService] /
+ * [LocalDownLoadService] / [LocalDeleteService]）和配置 bean [LocalProperties]。
+ *
+ * 默认 `base-path = ${user.home}/fserver/upload`（见 `kudos-ability-file-local.yml`）；
+ * 生产部署务必通过 yml 覆盖到独立的存储挂载点，否则与系统其他文件混在一起。
+ *
+ * @author K
+ * @since 1.0.0
+ */
 @Configuration
 @AutoConfigureAfter(ContextAutoConfiguration::class)
 @PropertySource(
