@@ -20,4 +20,6 @@ class PassportInternalController(
 
     override fun login(req: PassportLoginRequest): PassportLoginResult = passportApi.login(req)
 
+    override fun logout(userId: String): Boolean = passportApi.logout(userId)
+
 }

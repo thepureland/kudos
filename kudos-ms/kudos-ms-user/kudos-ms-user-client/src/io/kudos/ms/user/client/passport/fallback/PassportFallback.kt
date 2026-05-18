@@ -28,4 +28,9 @@ open class PassportFallback : AbstractFeignFallbackSupport("PassportFallback"), 
             message = "登录服务不可达，请稍后重试",
         )
     }
+
+    override fun logout(userId: String): Boolean {
+        errorWrite("logout", userId)
+        return false
+    }
 }

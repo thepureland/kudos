@@ -13,6 +13,7 @@ import jakarta.annotation.Resource
 import org.junit.jupiter.api.BeforeEach
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -170,5 +171,22 @@ class PassportServiceTest : RdbAndRedisCacheTestBase() {
         val after = userAccountDao.get(activeUserId)?.lastLoginIp
         assertEquals(before, after)
         assertTrue(after == null)
+    }
+
+    @Test
+    fun logout_writesLastLogoutTime() {
+        // fixture 里 last_logout_time 为 null
+        assertNull(userAccountDao.get(activeUserId)?.lastLogoutTime)
+
+        val ok = passportService.logout(activeUserId)
+        assertTrue(ok)
+        val after = userAccountDao.get(activeUserId)
+        assertNotNull(after?.lastLogoutTime)
+    }
+
+    @Test
+    fun logout_unknownUser_returnsFalse() {
+        val ok = passportService.logout("00000000-0000-0000-0000-000000000000")
+        assertFalse(ok)
     }
 }
