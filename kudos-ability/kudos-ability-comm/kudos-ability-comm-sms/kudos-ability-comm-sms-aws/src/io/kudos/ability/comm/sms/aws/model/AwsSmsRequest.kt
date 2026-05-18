@@ -5,9 +5,14 @@ import java.io.Serial
 import java.io.Serializable
 
 /**
- * @Description AWS发送短信的请求体
- * @Author paul
- * @Date 2023/2/10 16:41
+ * AWS SNS 短信发送请求体。字段对应 AWS SDK `PublishRequest`；同时携带本次调用使用的 IAM 凭证
+ * ([accessKeyId] / [accessKeySecret]) —— 支持"多租户各自一套 AWS IAM"的场景。
+ *
+ * **不要把本类实例输出到日志** —— [accessKeySecret] 是明文 + [Serializable]，可能被日志 / 缓存序列化时外泄。
+ *
+ * @author paul
+ * @author K
+ * @since 1.0.0
  */
 class AwsSmsRequest : Serializable {
     /**

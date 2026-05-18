@@ -27,10 +27,15 @@ import org.springframework.context.annotation.PropertySource
 )
 open class AwsSmsAutoConfiguration : IComponentInitializer {
 
+    /**
+     * AWS SNS 短信发送 handler。Endpoint 默认空（走 SDK 内置 region 域名）；测试场景
+     * 通过 `kudos.ability.comm.sms.aws.endpoint` 覆盖为 WireMock 等地址。
+     */
     @Bean
     @ConditionalOnMissingBean
     open fun awsSmsHandler() = AwsSmsHandler()
 
+    /** AWS SDK 正向代理配置；`enable=false` 时不构造共享 HTTP 客户端，SDK 自带网络默认。 */
     @Bean
     @ConditionalOnMissingBean
     @ConfigurationProperties(prefix = "kudos.ability.comm.sms.aws.proxy")
