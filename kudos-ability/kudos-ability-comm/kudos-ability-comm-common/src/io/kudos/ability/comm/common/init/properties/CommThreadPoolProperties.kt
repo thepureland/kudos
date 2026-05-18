@@ -1,5 +1,14 @@
 package io.kudos.ability.comm.common.init.properties
 
+/**
+ * 通信类（邮件 / 短信 / 推送 / WebSocket）共享线程池配置。
+ *
+ * **注：当前**没有具体模块装这个配置（comm-email / comm-sms-* 都各自走虚拟线程）。
+ * 保留是为未来需要"共享同步发送线程池"的场景预留。如果一直没用到，应当评估删除本模块。
+ *
+ * @author K
+ * @since 1.0.0
+ */
 class CommThreadPoolProperties {
     /**
      * 线程名称前缀,默认comm-pool
