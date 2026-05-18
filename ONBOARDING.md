@@ -162,12 +162,59 @@ Role/group with relation tables (role-resource, role-user, group-role,
 group-user). The relation endpoints don't extend BaseCrudController because
 "batch bind / unbind" is the natural verb, not single-row CRUD.
 
+**Effective-permission rule (b64ee942, fd2e425e).** A user's permissions
+come from two paths, unioned:
+
+```
+direct:        auth_role_user(user) ──────────────────────→ role
+via group:     auth_group_user(user) ─→ auth_group_role ─→ role
+                              ↓
+                        auth_role_resource → resource
+```
+
+Every cache that answers "what roles / resources / users does X have?"
+applies the union:
+
+- `RoleIdsByUserIdCache.getRoleIds(userId)` → direct ∪ group-inherited roles
+- `ResourceIdsByUserIdCache.getResourceIds(userId)` → resources of the
+  effective role set
+- `UserIdsByRoleIdCache.getUserIds(roleId)` → direct binds ∪ users in any
+  group bound to this role
+- `UserIdsByTenantIdAndRoleCodeCache.getUserIds(tenantId, roleCode)` — same,
+  keyed by (tenant, code)
+- `ResourceIdsByTenantIdAndUsernameCache.getResourceIds(tenantId, username)` —
+  parallel to ResourceIdsByUserIdCache, key-shape only difference
+
+Cache invalidation listens to three events: `AuthRoleUserRelationsChanged`
+(direct path), `AuthGroupUserRelationsChanged` (user moved in/out of a
+group), `AuthGroupRoleRelationsChanged` (group's role set changed). The
+group-role one was added in b64ee942 — `AuthGroupRoleService.batchBind`/
+`unbind` now publishes it. Resource-side caches further expand
+`AuthRoleResourceRelationsChanged` to include "users who inherited the
+role through a group" when computing which cache keys to invalidate.
+
+Caller note: methods named `getUserRoleIds` / `getUserRoles` / `hasRole`
+return the **effective** set (direct + group-inherited), since callers
+asking those questions are doing permission judgments. If you need
+literally "what auth_role_user rows reference this user", go through
+`AuthRoleUserDao.searchRoleIdsByUserId` directly — that's the
+direct-only escape hatch.
+
 **`PermittedResourceApi.getMenusForCurrentUser`** — lives in
 `api-public/...`, reads `CurrentUserKit` for the user id, fetches their
-permitted resource ids via `authRoleService.getResources(userId)`, filters
-to `ResourceTypeEnum.MENU`, builds a tree. **Orphan menus get promoted to
-roots** (i.e. permitted child whose parent the user can't access) — that
-avoids "ghost ancestor" hidden levels.
+permitted resource ids via `authRoleService.getResources(userId)` (which
+walks the union above), filters to `ResourceTypeEnum.MENU`, builds a
+tree. **Orphan menus get promoted to roots** (i.e. permitted child whose
+parent the user can't access) — that avoids "ghost ancestor" hidden
+levels.
+
+**Test fixture gotcha.** `BaseCrudDao.insert(entity)` excludes the id
+column and lets the DB generate a fresh UUID — any `entity.id = "..."`
+preset is silently ignored. Tests creating group/role/etc. rows must
+use the returned id (`val gId = dao.insert(...)`) for downstream writes
+and event payloads, not the pre-set string literal. Cache tests at
+`kudos-ms-auth-core/test-src/.../cache/*Test.kt` follow this pattern
+consistently after fd2e425e — copy from there when adding new ones.
 
 ### msg
 The previously-empty `IMsg*Api` interfaces are now load-bearing.
