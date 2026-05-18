@@ -74,7 +74,7 @@ internal class RdbKitTest {
     @Test
     fun determineRdbTypeByDataSourceWithPostgreSQL() {
         PostgresTestContainer.startIfNeeded(null)
-        val postgresUrl = "jdbc:postgresql://localhost:25432/test"
+        val postgresUrl = "jdbc:postgresql://localhost:${PostgresTestContainer.PORT}/${PostgresTestContainer.DATABASE}"
         val dataSource = DataSourceKit.createDataSource(postgresUrl, "pg", "postgres")
         val rdbType = RdbKit.determineRdbTypeByDataSource(dataSource)
         assertEquals(RdbTypeEnum.POSTGRESQL, rdbType, "应该识别为PostgreSQL数据库")

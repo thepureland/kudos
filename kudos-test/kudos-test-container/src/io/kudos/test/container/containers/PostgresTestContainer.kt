@@ -46,7 +46,21 @@ object PostgresTestContainer {
 
     const val DATABASE = "test"
 
-    const val PORT = 25432
+    /**
+     * 容器在宿主机上的 postgres 映射端口。**仅在容器启动后可用** —— 之前的调用会抛错。
+     *
+     * 不再固定为 25432：testcontainers 由 docker 动态分配端口，避免本机其它进程
+     * （例如别的项目残留的 postgres 容器）占住固定端口让测试启动失败。所有外部
+     * 调用通过这个 getter 拿端口；yml/CLI arg 里写的端口仅作为 fallback，运行时
+     * 会被 [registerProperties] / CLI `--spring.datasource...url` 覆盖。
+     */
+    val PORT: Int
+        get() {
+            val running = TestContainerKit.getRunningContainer(LABEL)
+                ?: error("PostgresTestContainer.PORT requested before container start; call startIfNeeded(...) first.")
+            return running.ports.firstOrNull()?.publicPort
+                ?: error("Postgres container is up but exposes no public port mapping.")
+        }
 
     const val CONTAINER_PORT = 5432
 
@@ -96,8 +110,10 @@ object PostgresTestContainer {
     private fun getOrCreateContainer(): GenericContainer<*> {
         if (container == null) {
             container = GenericContainer(IMAGE_NAME).apply {
+                // 不调 bindingPort —— 让 testcontainers 自动分配宿主机端口。固定 25432 时
+                // 一旦本机有别的 postgres 占着该端口（例如其它项目残留的 container），整个
+                // 测试就会因为 "port is already allocated" 启动失败。
                 withExposedPorts(CONTAINER_PORT)
-                bindingPort(Pair(PORT, CONTAINER_PORT))
                 withEnv("POSTGRES_DB", DATABASE)
                 withEnv("POSTGRES_USER", USERNAME)
                 withEnv("POSTGRES_PASSWORD", PASSWORD)
@@ -162,7 +178,8 @@ object PostgresTestContainer {
      * @return 指向 postgres 管理库的 JDBC URL
      */
     private fun buildAdminJdbcUrl(runningContainer: Container): String {
-        val port = runningContainer.ports.firstOrNull()?.publicPort ?: PORT
+        val port = runningContainer.ports.firstOrNull()?.publicPort
+            ?: error("Postgres container has no public port mapping; cannot connect to admin DB.")
         return "jdbc:postgresql://$LOCALHOST:$port/postgres?sslmode=disable"
     }
 
