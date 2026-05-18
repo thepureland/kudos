@@ -1,6 +1,7 @@
 package io.kudos.ms.msg.core.instance.service.impl
 
 import io.kudos.base.support.service.impl.BaseCrudService
+import io.kudos.ms.msg.common.instance.vo.MsgInstanceCacheEntry
 import io.kudos.ms.msg.core.instance.dao.MsgInstanceDao
 import io.kudos.ms.msg.core.instance.model.po.MsgInstance
 import io.kudos.ms.msg.core.instance.service.iservice.IMsgInstanceService
@@ -21,6 +22,8 @@ open class MsgInstanceService(
     dao: MsgInstanceDao
 ) : BaseCrudService<String, MsgInstance, MsgInstanceDao>(dao), IMsgInstanceService {
 
-
+    @Transactional(readOnly = true)
+    override fun getInstanceById(id: String): MsgInstanceCacheEntry? =
+        dao.getAs<MsgInstanceCacheEntry>(id)
 
 }
