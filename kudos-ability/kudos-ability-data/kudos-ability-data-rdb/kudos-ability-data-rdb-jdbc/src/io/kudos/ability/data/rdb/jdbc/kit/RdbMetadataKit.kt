@@ -70,6 +70,10 @@ object RdbMetadataKit {
         }
     }
 
+    /**
+     * 内部实现：用 JDBC [DatabaseMetaData.getTables] 拉所有匹配类型的表，组装成 [Table] 列表。
+     * 把 `"BASE TABLE"`（部分 JDBC 驱动返回此字符串）映射回标准的 `TABLE`。
+     */
     private fun _getTablesByType(conn: Connection, vararg tableTypes: TableTypeEnum?): List<Table> {
         val dbMetaData = conn.metaData
         val types = tableTypes.map { checkNotNull(it) { "table type must not be null" }.name }.toTypedArray()
@@ -93,6 +97,9 @@ object RdbMetadataKit {
         return talbes
     }
 
+    /**
+     * 内部实现：JDBC [DatabaseMetaData.getTables] 按表名精确查；返回首条或 null。
+     */
     private fun _getTableByName(conn: Connection, tableName: String): Table? {
         val dbMetaData = conn.metaData
         val rs = dbMetaData.getTables(conn.catalog, conn.schema, tableName, null)
@@ -114,6 +121,14 @@ object RdbMetadataKit {
         }
     }
 
+    /**
+     * 内部实现：用 JDBC `DatabaseMetaData` 拉列、主键、外键、索引、唯一约束 5 个查询，
+     * 按列名为 key 汇总到 [linkedMapOf]（保留 DB 返回顺序）。约定：列名以 `__CODE` 结尾的
+     * 被标 `dictCode=true`（kudos 字典编码列约定）。
+     *
+     * 注意：5 个 `ResultSet.use{}` 块连续打开，对部分 JDBC 驱动 / 大表可能开销不小；
+     * 代码生成场景一次性调用尚可，热路径请缓存结果。
+     */
     private fun _getColumnsByTableName(conn: Connection, tableName: String): Map<String, Column> {
         val dbMetaData = conn.metaData
         val rdbType = RdbTypeEnum.ofProductName(dbMetaData.databaseProductName)

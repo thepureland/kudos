@@ -58,12 +58,13 @@ class Column {
     var autoIncrement: String? = null
 
     /**
-     * 返回kotlin类型的简短名称
+     * 返回 [kotlinType] 的 simpleName。匿名 / 局部类的 simpleName 为 null，这里直接抛错。
+     * 代码生成场景常用此值拼 Kotlin 源码字符串。
      */
     fun getKotlinTypeName(): String = requireNotNull(kotlinType.simpleName) { "kotlinType.simpleName is null" }
 
     /**
-     * 返回列名的驼峰写法表示
+     * 把 snake_case 的 [name] 转成 camelCase。代码生成场景常用此值拼 Kotlin 字段 / 属性名。
      */
     fun getColumnHumpName(): String = name.underscoreToHump()
 

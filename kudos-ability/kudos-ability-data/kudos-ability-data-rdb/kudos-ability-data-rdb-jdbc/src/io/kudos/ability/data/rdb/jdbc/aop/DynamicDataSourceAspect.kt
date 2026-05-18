@@ -19,7 +19,19 @@ import java.util.concurrent.locks.ReadWriteLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
 /**
- * 动态数据源切面
+ * 动态数据源路由切面：拦截 `*..biz..*` 包路径下所有方法，根据 [DbContext] 里的
+ * forcedDs / [KudosContextHolder] 的租户上下文 / [MultipleDataSourceProperties]
+ * 配置的包路径映射，决定本次方法走哪个数据源。
+ *
+ * 决策优先级：
+ *  1. `DbContext.forcedDs` 非空且不是只读、不是 `_context` 前缀 → 直接切到 forcedDs
+ *  2. 切面命中的 service 类的包路径在 `dataSourceProperties.lookDataSourceKey` 里有配置
+ *     a. 配置以 `_context` 开头 → 走"租户 + 服务 + 模式"动态解析（见 [DsContextProcessor]）
+ *     b. 否则配置即数据源 key
+ *  3. 都不匹配 → 不切换，沿用上层调用栈已经设的数据源
+ *
+ * 已知限制：pointcut `within(*..biz..*)` 写死要求业务代码必须在 `biz` 子包下；非该
+ * 结构的项目此切面不会生效（不可配置）。
  *
  * @author hanson
  * @author K
@@ -36,21 +48,22 @@ class DynamicDataSourceAspect {
     private lateinit var dsContextProcessor: DsContextProcessor
 
     /**
-     * 拦截所有service包路径下的service
+     * pointcut：所有 `*..biz..*` 包路径下的类的方法。
      */
     @Pointcut("within(*..biz..*)")
     fun aspService() {
     }
 
+    /**
+     * 环绕通知。根据上下文计算是否需要 push 数据源到 baomidou 的
+     * [DynamicDataSourceContextHolder]，proceed 后 finally 阶段 pop 回去；不抛额外异常，
+     * 原始异常直接向上传播。
+     */
     @Around("aspService()")
     fun around(joinPoint: ProceedingJoinPoint): Any? {
         val changeDatasource = changeDatasource(joinPoint.target.javaClass)
         try {
             return joinPoint.proceed()
-        } catch (e: Exception) {
-            throw e
-        } catch (e: Throwable) {
-            throw RuntimeException("方法执行报错！", e)
         } finally {
             if (changeDatasource) {
                 DynamicDataSourceContextHolder.poll()
@@ -59,6 +72,10 @@ class DynamicDataSourceAspect {
         }
     }
 
+    /**
+     * 决定本次调用是否切换数据源，并把决定写入 baomidou 的 ThreadLocal 栈。
+     * 返回值：true 表示已 push，本切面 finally 需要 pop；false 表示没动栈。
+     */
     private fun changeDatasource(serviceClazz: Class<*>): Boolean {
         if (forceChangeMain()) {
             return true
@@ -100,9 +117,13 @@ class DynamicDataSourceAspect {
     }
 
     /**
-     * 强制指定yml文件配置的数据源
+     * 处理 `DbContext.forcedDs` 这一类"显式强制切换"的快速路径。返回 true 表示已切换
+     * 并完成 push，调用方不需要再走包路径匹配；false 表示这条路径不适用，继续后续路由。
      *
-     * @return
+     * 跳过条件：
+     *  - forcedDs 为空 → 没有强制意图
+     *  - 是 readonly 或 `_context` 前缀 → 这类语义不在本快速路径里处理，留给后续动态解析
+     *  - forcedDs 指向的数据源在路由表里不存在 → 跳过，避免 push 不可达 key
      */
     private fun forceChangeMain(): Boolean {
         val forcedDs = DbContext.get().forcedDs
@@ -124,6 +145,13 @@ class DynamicDataSourceAspect {
     }
 
 
+    /**
+     * 把 `_context` 前缀的数据源配置 + 当前 `DbParam` 拆成一个 (key, suffix) 二元组，
+     * 供 [DatasourceKeyTool.convertCacheMapKey] 生成最终的缓存 key。
+     * - readonly 强制时：suffix = MODE_READONLY，key 仍是原配置
+     * - 非 readonly 但有 forcedDs：把 forcedDs 当 key 用（适配 TenantDsChange）
+     * - 都没有：默认走 master
+     */
     private fun convertDatasourceConfig(dsKeyConfig: String?): Pair<String?, String?> {
         val mapKeySuffix = DatasourceConst.MODE_MASTER
         val forceDs = DbContext.get().forcedDs
@@ -149,6 +177,12 @@ class DynamicDataSourceAspect {
 
         private val READ_WRITE_LOCK: ReadWriteLock = ReentrantReadWriteLock()
 
+        /**
+         * 清空"包路径 → 真实数据源 key"的解析缓存。在租户数据源动态变更（增 / 改）后调用，
+         * 让下次调用重新跑 [DsContextProcessor.doDetermineDatasource]。
+         * `@Synchronized` + writeLock 双重保护是历史遗留，writeLock 已经够；
+         * synchronized 是冗余的，留着不删避免对外行为变。
+         */
         @Synchronized
         fun cacheDsCache() {
             READ_WRITE_LOCK.writeLock().lock()
