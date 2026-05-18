@@ -59,11 +59,20 @@ class RedisKeyValueCacheManager(
         afterPropertiesSet()
     }
 
+    /**
+     * 把单个 cache 实例追加到内部缓存表。`@Synchronized` 是为了应对未来"运行期动态加 cache"
+     * 的可能；当前调用方仅 `initCacheAfterSystemInit`（启动单线程），实际无并发竞争。
+     */
     @Synchronized
     fun addCache(cache: RedisCache) {
         this.caches.add(cache)
     }
 
+    /**
+     * Spring `AbstractCacheManager` 模板方法，返回所有要被注册的缓存。
+     * 注意返回的是内部 [caches] 的直接引用——`afterPropertiesSet()` 调用一次后会做内部拷贝，
+     * 此后再 `addCache` 加进来的不会自动被识别。
+     */
     override fun loadCaches(): MutableCollection<RedisCache> {
         return caches
     }
@@ -145,10 +154,15 @@ class RedisKeyValueCacheManager(
         cacheWriter.clear(realKey, patternBytes)
     }
 
+    /**
+     * 是否存在指定 key——通过公开 `Cache.get(key)` 判断（非反射）。
+     *
+     * 历史：旧实现反射调 `RedisCache.createAndConvertCacheKey`，在 JPMS 模块系统下会失败。
+     * 改走公开 API 后简单可靠，且当前 `disableCachingNullValues()` 配置保证不存 null value，
+     * 所以"`get` 返回非 null 的 ValueWrapper" 等价于"key 存在"。
+     */
     override fun existsKey(cacheName: String, key: Any): Boolean {
         val redisCache = getCache(cacheName) as? RedisCache ?: return false
-        // 使用公开 Cache API，避免反射调用包可见的 createAndConvertCacheKey（在模块系统下可能失败）。
-        // 当前配置 disableCachingNullValues()，无“存 null”语义冲突；key 存在即返回非 null 的 ValueWrapper。
         return redisCache.get(key) != null
     }
 

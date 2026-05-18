@@ -63,6 +63,14 @@ open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentIni
     private lateinit var environment: Environment
 
 
+    /**
+     * 装配远程 K-V 缓存管理器：从 [RedisTemplates] 里挑出 `remoteStore` 配置指向的 redis 实例，
+     * 用对应 redis 的 key / value 序列化器构造默认 `RedisCacheConfiguration`，最终包成
+     * [RedisKeyValueCacheManager] 给 `MixCacheManager` 取作 `remoteCacheManager`。
+     *
+     * `remoteStore` 与 `defaultRedis` 都没配时启动期抛错——缓存配错应启动失败，而不是
+     * 跑起来后才发现"缓存其实是 no-op"。
+     */
     @Bean(name = ["remoteCacheManager"])
     @Suppress("SpringJavaInjectionPointsAutowiringInspection")
     open fun remoteCacheManager(
@@ -103,6 +111,16 @@ open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentIni
         return RedisKeyValueCacheManager(redisCacheWriter, defaultRedisCacheConfiguration)
     }
 
+    /**
+     * Redis pub/sub 监听容器，订阅 [CacheVersionConfig.realMsgChannel] 通道，
+     * 把消息转发给 [RedisCacheMessageHandler]。
+     *
+     * 自定义 ErrorHandler 把异常抬到 error 级别——Spring 默认 ErrorHandler 走
+     * `java.util.logging` 且 silent，连接抖动 / 重订阅失败的事故信号会被吞掉。
+     *
+     * 虚拟线程：当 `spring.threads.virtual.enabled=true` 时改用虚拟线程执行器，
+     * pub/sub 监听不再独占平台线程。
+     */
     @Bean
     @DependsOn("redisCacheMessageHandler")
     @Suppress("SpringJavaInjectionPointsAutowiringInspection")
@@ -129,6 +147,10 @@ open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentIni
         return container
     }
 
+    /**
+     * 远程缓存读写处理器（Hash 结构）。被 `TenantAdvancedCacheableAspect` 等用作"租户级 hash 缓存"
+     * 的存储后端，区别于 [RedisHashCache] 的"带 id 实体集合 hash 缓存"。
+     */
     @Bean(name = ["remoteCacheProcessor"])
     @DependsOn("kudosRedisTemplate")
     @ConditionalOnMissingBean
@@ -137,16 +159,25 @@ open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentIni
         return RedisRemoteCacheProcessor(redisTemplates)
     }
 
+    /**
+     * 节点身份标识：进程启动时生成的 UUID，仅在内存中存在，重启会变。
+     * 用于 [RedisCacheMessageHandler] 判断 pub/sub 消息是不是本节点自发的（避免回环清理）。
+     */
     @Bean("cacheNodeId")
     @ConditionalOnMissingBean(name = ["cacheNodeId"])
     open fun cacheNodeId(): String = UUID.randomUUID().toString()
 
+    /** 缓存消息 SPI 实现（发送 + 接收回环 + 反序列化失败的 error 日志）。 */
     @Bean
     @ConditionalOnMissingBean
     open fun redisCacheMessageHandler(
         @Qualifier("cacheNodeId") cacheNodeId: String
     ): ICacheMessageHandler = RedisCacheMessageHandler(cacheNodeId)
 
+    /**
+     * Hash 缓存的 Redis 存储后端。**不带广播**——广播由 [io.kudos.ability.cache.common.core.hash.MixHashCache]
+     * 统一处理，避免出现"远程 + 上层各发一条"的双倍 pub/sub 流量。
+     */
     @Bean("redisIdEntitiesHashCache")
     @ConditionalOnMissingBean(name = ["redisIdEntitiesHashCache"])
     @Suppress("SpringJavaInjectionPointsAutowiringInspection")
@@ -154,7 +185,6 @@ open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentIni
         redisTemplates: RedisTemplates,
         versionConfig: CacheVersionConfig
     ): RedisHashCache {
-        // RedisHashCache 现在只负责存储；广播由上层 MixHashCache 统一处理，去掉了对 messageHandler/cacheNodeId 的依赖。
         return RedisHashCache(redisTemplates, versionConfig)
     }
 
