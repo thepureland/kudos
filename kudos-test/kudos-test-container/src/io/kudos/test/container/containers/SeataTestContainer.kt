@@ -5,8 +5,10 @@ import io.kudos.base.net.IpKit
 import io.kudos.test.container.kit.TestContainerKit
 import io.kudos.test.container.kit.bindingPort
 import org.springframework.test.context.DynamicPropertyRegistry
+import org.slf4j.LoggerFactory
 import org.testcontainers.containers.BindMode
 import org.testcontainers.containers.GenericContainer
+import org.testcontainers.containers.output.Slf4jLogConsumer
 import org.testcontainers.containers.wait.strategy.Wait
 import java.net.URI
 import java.net.http.HttpClient
@@ -55,6 +57,9 @@ object SeataTestContainer {
         // Seata 2.5 镜像里没装 netcat 也没有 HTTP web 端点（console 拆成独立 namingserver 模块）→
         // forListeningPort() 与 forHttp() 都不可靠。改用日志匹配：等 Seata 自己打印 "service listen port" 即视为就绪。
         waitingFor(Wait.forLogMessage(".*Server started, service listen port.*\\n", 1))
+        // 把容器内 stdout/stderr 喷到测试日志（前缀 "seata-server"）— 容器一旦被 Ryuk 回收日志就没了，
+        // 测试集成失败的根因（Spring 启动栈、注册失败原因）只有走 log consumer 才看得到。
+        withLogConsumer(Slf4jLogConsumer(LoggerFactory.getLogger("seata-server")).withSeparateOutputStreams())
         withLabel(TestContainerKit.LABEL_KEY, LABEL)
     }
 
