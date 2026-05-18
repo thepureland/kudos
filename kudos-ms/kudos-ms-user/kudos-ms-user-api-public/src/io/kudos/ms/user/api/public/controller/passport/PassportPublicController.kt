@@ -1,5 +1,6 @@
 package io.kudos.ms.user.api.public.controller.passport
 
+import io.kudos.base.security.BarcodeKit
 import io.kudos.ms.user.common.passport.enums.ChangePasswordResultEnum
 import io.kudos.ms.user.common.passport.vo.request.ChangePasswordRequest
 import io.kudos.ms.user.common.passport.vo.request.PassportLoginRequest
@@ -7,6 +8,8 @@ import io.kudos.ms.user.common.passport.vo.request.VerifyPasswordRequest
 import io.kudos.ms.user.common.passport.vo.response.PassportLoginResult
 import io.kudos.ms.user.core.passport.service.iservice.IPassportService
 import jakarta.validation.Valid
+import org.springframework.http.MediaType
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -59,5 +62,21 @@ class PassportPublicController(
     @PostMapping("/changeSecurityPassword")
     fun changeSecurityPassword(@RequestBody @Valid req: ChangePasswordRequest): ChangePasswordResultEnum =
         passportService.changeSecurityPassword(req)
+
+    /**
+     * 把任意短文本（典型如 `otpauth://...`）渲染为 PNG 二维码。
+     *
+     * 一般搭配 [io.kudos.ms.user.common.account.vo.response.AuthKeySetup.otpauthUrl] 使用：
+     * 前端拿到 otpauth URL 后 GET 本接口、把响应当 `<img>` 显示即可。
+     *
+     * @param text 二维码承载文本（URL-encoded 由 Spring 自动解码）
+     * @param size 像素边长，默认 200
+     * @return PNG 字节流
+     */
+    @GetMapping("/qrCode", produces = [MediaType.IMAGE_PNG_VALUE])
+    fun qrCode(
+        @RequestParam text: String,
+        @RequestParam(required = false, defaultValue = "200") size: Int,
+    ): ByteArray = BarcodeKit.qrcodePng(text, size = size)
 
 }
