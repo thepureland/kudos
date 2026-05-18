@@ -25,10 +25,16 @@ class DownloadFileModel<S : InputStreamSource> : Serializable {
         @Serial
         private val serialVersionUID = -8498350660950356072L
 
+        /**
+         * 从形如 `/<bucket>/<file/path>` 的完整路径拆出 [bucketName] / [filePath]。
+         *
+         * **要求 `fullPath` 以 `/` 开头**——见 [DeleteFileModel.from] 同款约束。
+         */
         fun from(fullPath: String): DownloadFileModel<*> {
             require(fullPath.isNotBlank()) { "fullPath must not be blank" }
+            require(fullPath.startsWith("/")) { "fullPath must start with '/': $fullPath" }
             val segments = fullPath.split('/').dropLastWhile { it.isEmpty() }
-            val bucketName = segments.getOrNull(1)
+            val bucketName = segments.getOrNull(1)?.takeIf { it.isNotBlank() }
                 ?: throw IllegalArgumentException("fullPath must contain bucket segment: $fullPath")
             val filePath = fullPath.removePrefix("/$bucketName")
             return DownloadFileModel<InputStreamSource>().apply {

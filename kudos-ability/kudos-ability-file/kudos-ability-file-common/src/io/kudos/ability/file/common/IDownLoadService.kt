@@ -3,6 +3,12 @@ package io.kudos.ability.file.common
 import io.kudos.ability.file.common.entity.DownloadFileModel
 import java.io.InputStream
 
+/**
+ * 文件下载服务 SPI。具体存储后端（本地磁盘 / MinIO / OSS）各自实现。
+ *
+ * @author K
+ * @since 1.0.0
+ */
 interface IDownLoadService {
     /**
      * 根据参数 获取文件字节流
