@@ -1,8 +1,11 @@
 package io.kudos.ms.user.core.platform.cache
 
-import io.kudos.ms.user.core.org.cache.UserIdsByOrgIdCache
 import io.kudos.ms.user.core.account.dao.UserOrgUserDao
+import io.kudos.ms.user.core.account.event.UserOrgUserRelationsChanged
 import io.kudos.ms.user.core.account.model.po.UserOrgUser
+import io.kudos.ms.user.core.org.cache.UserIdsByOrgIdCache
+import io.kudos.ms.user.core.org.dao.UserOrgDao
+import io.kudos.ms.user.core.org.model.po.UserOrg
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
@@ -28,6 +31,9 @@ class UserIdsByOrgIdCacheTest : RdbAndRedisCacheTestBase() {
 
     @Resource
     private lateinit var userOrgUserDao: UserOrgUserDao
+
+    @Resource
+    private lateinit var userOrgDao: UserOrgDao
 
     @Test
     fun getUserIds() {
@@ -163,6 +169,117 @@ class UserIdsByOrgIdCacheTest : RdbAndRedisCacheTestBase() {
         val userIdsAfter = cacheHandler.getUserIds(orgId)
         assertTrue(!userIdsAfter.contains(orgUser1.userId), "删除后的用户1不应该包含在缓存中")
         assertTrue(!userIdsAfter.contains(orgUser2.userId), "删除后的用户2不应该包含在缓存中")
+    }
+
+    // -------------------- 子机构成员展开（含父→子树）的覆盖 --------------------
+
+    @Test
+    fun getUserIds_includesUsersInDescendantOrgs() {
+        // 建一棵：parent → child；分别给两层挂用户。问 parent 应当含两层用户。
+        val parentOrgId = insertOrg(name = "销售部", parentId = null)
+        val childOrgId = insertOrg(name = "华东销售", parentId = parentOrgId)
+        val parentUserId = "84c558fe-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+        val childUserId = "84c558fe-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+        val rel1 = insertOrgUser(parentOrgId, parentUserId)
+        val rel2 = insertOrgUser(childOrgId, childUserId)
+        try {
+            cacheHandler.evict(parentOrgId)
+            val users = cacheHandler.getUserIds(parentOrgId)
+            assertTrue(users.contains(parentUserId), "应含父机构直接用户，实际：${users}")
+            assertTrue(users.contains(childUserId), "应含子机构用户，实际：${users}")
+
+            // 子机构单独查时应当只看到自己的用户
+            cacheHandler.evict(childOrgId)
+            val childUsers = cacheHandler.getUserIds(childOrgId)
+            assertTrue(childUsers.contains(childUserId))
+            assertTrue(!childUsers.contains(parentUserId), "子机构不应反向包含父机构用户")
+        } finally {
+            userOrgUserDao.deleteById(rel1)
+            userOrgUserDao.deleteById(rel2)
+            userOrgDao.deleteById(childOrgId)
+            userOrgDao.deleteById(parentOrgId)
+            cacheHandler.evict(parentOrgId)
+            cacheHandler.evict(childOrgId)
+        }
+    }
+
+    @Test
+    fun getUserIds_excludesUsersInInactiveDescendants() {
+        // 子机构 active=false → 不算在子树范围内。
+        val parentOrgId = insertOrg(name = "销售部", parentId = null)
+        val childOrgId = insertOrg(name = "华东(停)", parentId = parentOrgId, active = false)
+        val userInActive = "84c558fe-cccc-cccc-cccc-cccccccccccc"
+        val rel = insertOrgUser(childOrgId, userInActive)
+        try {
+            cacheHandler.evict(parentOrgId)
+            val users = cacheHandler.getUserIds(parentOrgId)
+            assertTrue(!users.contains(userInActive), "禁用子机构的用户不应出现在父机构视图，实际：${users}")
+        } finally {
+            userOrgUserDao.deleteById(rel)
+            userOrgDao.deleteById(childOrgId)
+            userOrgDao.deleteById(parentOrgId)
+            cacheHandler.evict(parentOrgId)
+        }
+    }
+
+    @Test
+    fun on_UserOrgUserRelationsChanged_invalidatesAncestorChain() {
+        // 给子机构加新用户 + fire 事件 → 父机构缓存也应被失效。
+        val parentOrgId = insertOrg(name = "销售部", parentId = null)
+        val childOrgId = insertOrg(name = "华东销售", parentId = parentOrgId)
+        val initialUser = "84c558fe-dddd-dddd-dddd-dddddddddddd"
+        val initialRel = insertOrgUser(childOrgId, initialUser)
+        cacheHandler.evict(parentOrgId)
+        cacheHandler.evict(childOrgId)
+        try {
+            // 预热父机构缓存
+            val before = cacheHandler.getUserIds(parentOrgId)
+            assertTrue(before.contains(initialUser))
+
+            // 给子机构加新用户
+            val newUserId = "84c558fe-eeee-eeee-eeee-eeeeeeeeeeee"
+            val newRel = insertOrgUser(childOrgId, newUserId)
+            try {
+                cacheHandler.on(UserOrgUserRelationsChanged(orgId = childOrgId, userIds = listOf(newUserId)))
+                cacheHandler.evict(parentOrgId)
+                val after = cacheHandler.getUserIds(parentOrgId)
+                assertTrue(after.contains(initialUser), "失效重算后原用户仍应在")
+                assertTrue(after.contains(newUserId), "新用户应通过子树传播到父机构视图，实际：${after}")
+            } finally {
+                userOrgUserDao.deleteById(newRel)
+            }
+        } finally {
+            userOrgUserDao.deleteById(initialRel)
+            userOrgDao.deleteById(childOrgId)
+            userOrgDao.deleteById(parentOrgId)
+            cacheHandler.evict(parentOrgId)
+            cacheHandler.evict(childOrgId)
+        }
+    }
+
+    private fun insertOrg(
+        name: String,
+        parentId: String?,
+        active: Boolean = true,
+    ): String {
+        val org = UserOrg.Companion().apply {
+            this.name = name
+            this.tenantId = "tenant-test-org-hierarchy"
+            this.parentId = parentId
+            this.orgTypeDictCode = "dept"
+            this.active = active
+            this.builtIn = false
+        }
+        return userOrgDao.insert(org)
+    }
+
+    private fun insertOrgUser(orgId: String, userId: String, admin: Boolean = false): String {
+        val rel = UserOrgUser().apply {
+            this.orgId = orgId
+            this.userId = userId
+            this.orgAdmin = admin
+        }
+        return userOrgUserDao.insert(rel)
     }
 
 }
