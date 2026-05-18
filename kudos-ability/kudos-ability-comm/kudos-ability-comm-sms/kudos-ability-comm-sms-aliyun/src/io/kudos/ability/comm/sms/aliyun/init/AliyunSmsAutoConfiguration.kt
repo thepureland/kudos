@@ -25,6 +25,10 @@ import org.springframework.context.annotation.PropertySource
 )
 open class AliyunSmsAutoConfiguration : IComponentInitializer {
 
+    /**
+     * 阿里云短信发送 handler。Endpoint 默认空（走 SDK 内置 region 域名）；测试 / Mock 场景
+     * 通过 `kudos.ability.comm.sms.aliyun.endpoint` 覆盖（见 [AliyunSmsHandler] 的字段注解）。
+     */
     @Bean
     @ConditionalOnMissingBean
     open fun aliyunSmsHandler() = AliyunSmsHandler()
