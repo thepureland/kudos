@@ -11,7 +11,19 @@ import org.springframework.util.StringUtils
 import reactor.core.publisher.Flux
 
 /**
- * 服务实例列表提示者,通过Request Header Hint 选择分区
+ * 按 Request Header Hint 选择服务实例 zone 的 `ServiceInstanceListSupplier`。
+ *
+ * 规则（[filteredByHint]）：
+ *  - 请求 hint header 有值 → 只选 metadata.zone 与 hint 一致的实例；命中为空时降级返回全部
+ *  - 请求 hint header 为空 + 配置了默认 `LoadBalancerZoneConfig.zone` →
+ *    选 metadata.zone 与默认 zone 一致或未设 zone 的实例
+ *  - 请求 hint header 为空 + 未配置默认 zone → 返回全部
+ *
+ * hint header 名通过 spring-cloud-loadbalancer 标准属性
+ * `spring.cloud.loadbalancer.{serviceId}.hint-header-name` 配置（默认 `X-SC-LB-Hint`）。
+ *
+ * @author K
+ * @since 1.0.0
  */
 class HintZoneServiceInstanceListSupplier(
     delegate: ServiceInstanceListSupplier,

@@ -21,8 +21,14 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
 
 /**
- * 自定义负载策略
+ * 自定义负载策略：当 `spring.cloud.loadbalancer.configurations=zone-preference` 时启用
+ * [HintZoneServiceInstanceListSupplier]——按客户端请求的 `hint header` 选目标实例 zone。
+ *
+ * 同时支持 blocking 和 reactive 两种 discovery 客户端；通过条件注解按需装配。
+ *
  * @see com.alibaba.cloud.nacos.loadbalancer.NacosLoadBalancerClientConfiguration
+ * @author K
+ * @since 1.0.0
  */
 @Configuration
 @LoadBalancerClients(defaultConfiguration = [DiscoveryLoadbalancerConfiguration::class])
@@ -30,6 +36,11 @@ open class DiscoveryLoadbalancerConfiguration {
 
 
     companion object {
+        /**
+         * Spring Cloud 内部 `ServiceInstanceListSupplier` 的 Order 常量约定值——必须比
+         * Spring Cloud 默认实现优先级低一点，让 Spring Cloud 内置 supplier 先注册再被本类覆盖。
+         * 选这个具体数字是历史遗留（保持与原 `NacosLoadBalancerClientConfiguration` 一致）。
+         */
         private const val REACTIVE_SERVICE_INSTANCE_SUPPLIER_ORDER = 183827465
 
         private fun hintZone(): ServiceInstanceListSupplierBuilder.DelegateCreator {

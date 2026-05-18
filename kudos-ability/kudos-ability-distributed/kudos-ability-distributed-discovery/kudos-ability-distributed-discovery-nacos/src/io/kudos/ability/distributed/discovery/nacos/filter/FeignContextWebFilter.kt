@@ -14,10 +14,18 @@ import jakarta.servlet.http.HttpServletRequest
 import java.util.Locale
 
 /**
- * Feign上下文Web过滤器
- * 
+ * Feign 上下文 Web 过滤器——provider 端的"反向适配器"。
+ *
+ * 配套关系：`kudos-ability-distributed-client-feign` 的 `GlobalHeaderRequestInterceptor` 在 client
+ * 端把当前线程的 [io.kudos.context.core.KudosContext] 写到出站请求头；本 filter 在 provider
+ * 端把这些 header **写回到** provider 进程的 KudosContext，让被调用方业务代码"感觉自己在
+ * 一条连续的调用链上"。
+ *
+ * **当前未注册 / dormant**：见 [io.kudos.ability.distributed.discovery.nacos.init.NacosDiscoveryAutoConfiguration]
+ * 的 kdoc。没有这个 filter 运行，client → provider 的上下文透传到 provider 侧就丢失。
+ *
  * 从HTTP请求头中提取Feign调用传递的上下文信息，并设置到KudosContext中。
- * 
+ *
  * 核心功能：
  * 1. 上下文提取：从HTTP请求头中提取租户ID、子系统代码、追踪键、数据源ID、语言环境等信息
  * 2. 上下文设置：将提取的信息设置到当前线程的KudosContext中，供后续业务逻辑使用
@@ -79,7 +87,11 @@ class FeignContextWebFilter : Filter {
         servletResponse: ServletResponse?,
         filterChain: FilterChain
     ) {
-        val request: HttpServletRequest = servletRequest as HttpServletRequest
+        // 非 HTTP 请求（极少见，但 Filter 契约允许）直接放行——避免 ClassCastException 中断链路
+        val request = servletRequest as? HttpServletRequest ?: run {
+            filterChain.doFilter(servletRequest, servletResponse)
+            return
+        }
         val isFeign = !request.getHeader(Consts.RequestHeader.FEIGN_REQUEST).isNullOrBlank()
         val isNotify = !request.getHeader(Consts.RequestHeader.NOTIFY_REQUEST).isNullOrBlank()
         if (!isFeign && !isNotify) {
