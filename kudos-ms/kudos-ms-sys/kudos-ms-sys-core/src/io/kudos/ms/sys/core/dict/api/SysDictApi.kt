@@ -3,6 +3,7 @@ package io.kudos.ms.sys.core.dict.api
 import io.kudos.ms.sys.common.dict.api.ISysDictApi
 import io.kudos.ms.sys.common.dict.vo.SysDictItemCacheEntry
 import io.kudos.ms.sys.core.dict.service.iservice.ISysDictService
+import org.springframework.context.annotation.Primary
 import org.springframework.stereotype.Component
 
 
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Component
  * @author K
  * @since 1.0.0
  */
+@Primary
 @Component
 open class SysDictApi(
     private val sysDictService: ISysDictService,

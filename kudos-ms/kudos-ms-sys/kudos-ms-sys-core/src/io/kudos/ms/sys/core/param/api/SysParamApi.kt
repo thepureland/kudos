@@ -3,6 +3,7 @@ package io.kudos.ms.sys.core.param.api
 import io.kudos.ms.sys.common.param.api.ISysParamApi
 import io.kudos.ms.sys.common.param.vo.SysParamCacheEntry
 import io.kudos.ms.sys.core.param.service.iservice.ISysParamService
+import org.springframework.context.annotation.Primary
 import org.springframework.stereotype.Component
 
 
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Component
  * @author K
  * @since 1.0.0
  */
+@Primary
 @Component
 open class SysParamApi(
     private val sysParamService: ISysParamService,

@@ -2,6 +2,7 @@ package io.kudos.ms.sys.core.tenant.api
 
 import io.kudos.ms.sys.common.tenant.api.ISysTenantLocaleApi
 import io.kudos.ms.sys.core.tenant.service.iservice.ISysTenantLocaleService
+import org.springframework.context.annotation.Primary
 import org.springframework.stereotype.Service
 
 
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service
  * @author K
  * @since 1.0.0
  */
+@Primary
 @Service
 open class SysTenantLocaleApi(
     private val sysTenantLocaleService: ISysTenantLocaleService,

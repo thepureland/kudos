@@ -1,6 +1,8 @@
 package io.kudos.ms.sys.common.datasource.api
 
 import io.kudos.ms.sys.common.datasource.vo.SysDataSourceCacheEntry
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.RequestParam
 
 
 /**
@@ -19,9 +21,10 @@ interface ISysDataSourceApi {
      * @param atomicServiceCode 原子服务编码，缺省为 null；为空时请自行确保 tenantId 对应数据源的惟一性，否则将随机返回一条
      * @return SysDataSourceCacheEntry，找不到时返回 null
      */
+    @GetMapping("/api/internal/sys/dataSource/getDataSource")
     fun getDataSourceFromCache(
-        tenantId: String,
-        atomicServiceCode: String? = null
+        @RequestParam tenantId: String,
+        @RequestParam(required = false) atomicServiceCode: String? = null
     ): SysDataSourceCacheEntry?
 
 

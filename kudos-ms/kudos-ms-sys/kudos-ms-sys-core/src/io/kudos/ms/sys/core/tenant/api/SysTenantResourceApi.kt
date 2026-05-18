@@ -2,6 +2,7 @@ package io.kudos.ms.sys.core.tenant.api
 
 import io.kudos.ms.sys.common.tenant.api.ISysTenantResourceApi
 import io.kudos.ms.sys.core.tenant.service.iservice.ISysTenantResourceService
+import org.springframework.context.annotation.Primary
 import org.springframework.stereotype.Service
 
 
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service
  * @author K
  * @since 1.0.0
  */
+@Primary
 @Service
 open class SysTenantResourceApi(
     private val sysTenantResourceService: ISysTenantResourceService,
