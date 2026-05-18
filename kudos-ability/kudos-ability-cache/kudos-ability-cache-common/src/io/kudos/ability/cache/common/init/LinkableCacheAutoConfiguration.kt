@@ -48,12 +48,6 @@ import org.springframework.context.annotation.PropertySource
 @EnableCaching(proxyTargetClass = true)
 open class LinkableCacheAutoConfiguration : IComponentInitializer {
 
-//    @Primary
-//    @Bean("cacheManager")
-//    open fun cacheManager(@Qualifier("mixCacheManager") mixCacheManager: MixCacheManager): CacheManager {
-//        return TransactionAwareCacheManagerProxy(mixCacheManager)
-//    }
-
     @Primary
     @Bean("cacheManager", "mixCacheManager")
     open fun mixCacheManager(): MixCacheManager = MixCacheManager()

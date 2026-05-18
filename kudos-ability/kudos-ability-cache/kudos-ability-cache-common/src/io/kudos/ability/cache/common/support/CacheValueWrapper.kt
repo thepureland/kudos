@@ -5,7 +5,17 @@ import java.io.Serializable
 import java.util.function.Supplier
 
 /**
- * 缓存值包装器
+ * 缓存值包装器——表达"已查询但值为 null"与"未查询"的区别。
+ *
+ * Spring `Cache.ValueWrapper` 在 cache API 内部使用类似语义，但本类是 cache **业务侧**的
+ * 表达：业务调用 `KeyValueCacheKit.get(...)` 时若希望区分"key 不在缓存"和"key 在但 value 是 null"，
+ * 用本包装器比直接返回 `T?` 更明确。
+ *
+ * 实现采用 [Optional] 风格的 [orElse] / [orElseGet] / [orElseThrow] API；
+ * 通过工厂 [of] / [empty] 构造，构造器私有。
+ *
+ * @author K
+ * @since 1.0.0
  */
 class CacheValueWrapper<T> private constructor(
     /**
