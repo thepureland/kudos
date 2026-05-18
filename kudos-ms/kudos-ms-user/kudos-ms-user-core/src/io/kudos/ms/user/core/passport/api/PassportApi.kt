@@ -21,4 +21,6 @@ open class PassportApi(
 ) : IPassportApi {
 
     override fun login(req: PassportLoginRequest): PassportLoginResult = passportService.login(req)
+
+    override fun logout(userId: String): Boolean = passportService.logout(userId)
 }

@@ -4,6 +4,7 @@ import io.kudos.ms.user.common.passport.vo.request.PassportLoginRequest
 import io.kudos.ms.user.common.passport.vo.response.PassportLoginResult
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestParam
 
 
 /**
@@ -24,5 +25,14 @@ interface IPassportApi {
      */
     @PostMapping("/api/internal/user/passport/login")
     fun login(@RequestBody req: PassportLoginRequest): PassportLoginResult
+
+    /**
+     * 登出：写入最后登出时间。仅负责落库审计，不做会话/JWT 撤销。
+     *
+     * @param userId 用户主键
+     * @return true 写库成功；false 用户不存在或写库失败
+     */
+    @PostMapping("/api/internal/user/passport/logout")
+    fun logout(@RequestParam userId: String): Boolean
 
 }

@@ -78,4 +78,11 @@ open class PassportService(
             )
         )
     }
+
+    override fun logout(userId: String): Boolean {
+        val success = userAccountService.updateLastLogoutInfo(userId, LocalDateTime.now())
+        if (success) log.debug("登出成功: userId=${userId}")
+        else log.debug("登出失败（用户不存在？）: userId=${userId}")
+        return success
+    }
 }

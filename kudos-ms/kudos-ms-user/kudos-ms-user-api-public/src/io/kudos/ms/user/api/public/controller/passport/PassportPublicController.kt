@@ -7,6 +7,7 @@ import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 
@@ -28,5 +29,14 @@ class PassportPublicController(
     @PostMapping("/login")
     fun login(@RequestBody @Valid req: PassportLoginRequest): PassportLoginResult =
         passportService.login(req)
+
+    /**
+     * 登出：写最后登出时间用作审计。前端在调用本接口之外仍需自行清理 cookie / 本地 token。
+     *
+     * @param userId 当前用户主键（由前端从已登录上下文带入）
+     * @return true 写库成功
+     */
+    @PostMapping("/logout")
+    fun logout(@RequestParam userId: String): Boolean = passportService.logout(userId)
 
 }
