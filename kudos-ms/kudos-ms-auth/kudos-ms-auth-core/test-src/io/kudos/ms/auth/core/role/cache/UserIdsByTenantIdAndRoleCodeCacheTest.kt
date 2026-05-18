@@ -1,5 +1,13 @@
 package io.kudos.ms.auth.core.role.cache
 
+import io.kudos.ms.auth.core.group.dao.AuthGroupDao
+import io.kudos.ms.auth.core.group.dao.AuthGroupRoleDao
+import io.kudos.ms.auth.core.group.dao.AuthGroupUserDao
+import io.kudos.ms.auth.core.group.event.AuthGroupRoleRelationsChanged
+import io.kudos.ms.auth.core.group.event.AuthGroupUserRelationsChanged
+import io.kudos.ms.auth.core.group.model.po.AuthGroup
+import io.kudos.ms.auth.core.group.model.po.AuthGroupRole
+import io.kudos.ms.auth.core.group.model.po.AuthGroupUser
 import io.kudos.ms.auth.core.role.dao.AuthRoleDao
 import io.kudos.ms.auth.core.role.dao.AuthRoleUserDao
 import io.kudos.ms.auth.core.role.event.AuthRoleDeleted
@@ -36,6 +44,15 @@ class UserIdsByTenantIdAndRoleCodeCacheTest : RdbAndRedisCacheTestBase() {
 
     @Resource
     private lateinit var authRoleUserDao: AuthRoleUserDao
+
+    @Resource
+    private lateinit var authGroupDao: AuthGroupDao
+
+    @Resource
+    private lateinit var authGroupUserDao: AuthGroupUserDao
+
+    @Resource
+    private lateinit var authGroupRoleDao: AuthGroupRoleDao
 
     @Test
     fun getUserIds() {
@@ -176,6 +193,129 @@ class UserIdsByTenantIdAndRoleCodeCacheTest : RdbAndRedisCacheTestBase() {
         // 验证缓存已被清除，重新获取应该返回空列表（因为角色已不存在）
         val userIdsAfter = cacheHandler.getUserIds(tenantId, roleCode)
         assertTrue(userIdsAfter.isEmpty(), "删除角色后，缓存应该被清除，重新获取应该返回空列表")
+    }
+
+    // -------------------- group 路径（(tenantId, roleCode) ← group ← user）的覆盖 --------------------
+
+    @Test
+    fun getUserIds_includesUsersFromGroupBoundToRole() {
+        // ROLE_USER (2222) 起点只有 user 2222 直接绑定。建一个组绑定 ROLE_USER，把 user 1111 (admin) 加进去。
+        // 期望：getUserIds(tenant, ROLE_USER) 同时返回 2222 (direct) 和 1111 (group).
+        val tenantId = "tenant-001-58TWQx6c"
+        val roleCode = "ROLE_USER"
+        val roleId = "10796e8c-2222-2222-2222-222222222222"
+        val viaGroupUserId = "10796e8c-1111-1111-1111-111111111111"
+        val groupId = "10796e8c-grp1-aaaa-aaaa-aaaaaaaaaaaa"
+        cacheHandler.evict(cacheHandler.getKey(tenantId, roleCode))
+
+        val gId = insertGroup(groupId, tenantId)
+        val grId = insertGroupRole(gId, roleId)
+        val guId = insertGroupUser(gId, viaGroupUserId)
+        try {
+            cacheHandler.evict(cacheHandler.getKey(tenantId, roleCode))
+            val users = cacheHandler.getUserIds(tenantId, roleCode)
+            assertTrue(users.contains(viaGroupUserId), "应通过组继承包含 admin，实际：${users}")
+        } finally {
+            authGroupUserDao.deleteById(guId)
+            authGroupRoleDao.deleteById(grId)
+            authGroupDao.deleteById(gId)
+            cacheHandler.evict(cacheHandler.getKey(tenantId, roleCode))
+        }
+    }
+
+    @Test
+    fun on_AuthGroupUserRelationsChanged_invalidatesCache() {
+        val tenantId = "tenant-001-58TWQx6c"
+        val roleCode = "ROLE_USER"
+        val roleId = "10796e8c-2222-2222-2222-222222222222"
+        val newUserId = "10796e8c-1111-1111-1111-111111111111"
+        val groupId = "10796e8c-grp2-bbbb-bbbb-bbbbbbbbbbbb"
+        cacheHandler.evict(cacheHandler.getKey(tenantId, roleCode))
+
+        val gId = insertGroup(groupId, tenantId)
+        val grId = insertGroupRole(gId, roleId)
+        try {
+            // 预热缓存：组里没人，所以查不到 newUserId
+            val before = cacheHandler.getUserIds(tenantId, roleCode)
+            assertTrue(!before.contains(newUserId), "用户尚未入组")
+
+            val guId = insertGroupUser(gId, newUserId)
+            try {
+                cacheHandler.on(AuthGroupUserRelationsChanged(gId, listOf(newUserId)))
+                // existing tests 已知 @Cacheable 可能持有 on() 之前的旧值，需要显式 evict
+                cacheHandler.evict(cacheHandler.getKey(tenantId, roleCode))
+                val after = cacheHandler.getUserIds(tenantId, roleCode)
+                assertTrue(after.contains(newUserId), "入组后 (${tenantId},${roleCode}) 应包含该用户，实际：${after}")
+            } finally {
+                authGroupUserDao.deleteById(guId)
+            }
+        } finally {
+            authGroupRoleDao.deleteById(grId)
+            authGroupDao.deleteById(gId)
+            cacheHandler.evict(cacheHandler.getKey(tenantId, roleCode))
+        }
+    }
+
+    @Test
+    fun on_AuthGroupRoleRelationsChanged_invalidatesCache() {
+        // 组里有 user。组初始未绑定 ROLE_USER。绑定后失效 → 用户进入 (tenant, ROLE_USER) 集合。
+        val tenantId = "tenant-001-58TWQx6c"
+        val roleCode = "ROLE_USER"
+        val roleId = "10796e8c-2222-2222-2222-222222222222"
+        val userId = "10796e8c-1111-1111-1111-111111111111"
+        val groupId = "10796e8c-grp3-cccc-cccc-cccccccccccc"
+        cacheHandler.evict(cacheHandler.getKey(tenantId, roleCode))
+
+        val gId = insertGroup(groupId, tenantId)
+        val guId = insertGroupUser(gId, userId)
+        try {
+            val before = cacheHandler.getUserIds(tenantId, roleCode)
+            assertTrue(!before.contains(userId), "组尚未绑定 ROLE_USER")
+
+            val grId = insertGroupRole(gId, roleId)
+            try {
+                cacheHandler.on(AuthGroupRoleRelationsChanged(gId, listOf(roleId)))
+                // existing tests 已知 @Cacheable 可能持有 on() 之前的旧值，需要显式 evict
+                cacheHandler.evict(cacheHandler.getKey(tenantId, roleCode))
+                val after = cacheHandler.getUserIds(tenantId, roleCode)
+                assertTrue(after.contains(userId), "组绑角色后 (${tenantId},${roleCode}) 应包含 admin，实际：${after}")
+            } finally {
+                authGroupRoleDao.deleteById(grId)
+            }
+        } finally {
+            authGroupUserDao.deleteById(guId)
+            authGroupDao.deleteById(gId)
+            cacheHandler.evict(cacheHandler.getKey(tenantId, roleCode))
+        }
+    }
+
+    private fun insertGroup(groupId: String, tenantId: String): String {
+        val group = AuthGroup.Companion().apply {
+            this.id = groupId
+            this.code = "GRP_${groupId.takeLast(4)}"
+            this.name = "test group ${groupId.takeLast(4)}"
+            this.tenantId = tenantId
+            this.subsysCode = "ams"
+            this.active = true
+            this.builtIn = false
+        }
+        return authGroupDao.insert(group)
+    }
+
+    private fun insertGroupUser(groupId: String, userId: String): String {
+        val gu = AuthGroupUser.Companion().apply {
+            this.groupId = groupId
+            this.userId = userId
+        }
+        return authGroupUserDao.insert(gu)
+    }
+
+    private fun insertGroupRole(groupId: String, roleId: String): String {
+        val gr = AuthGroupRole.Companion().apply {
+            this.groupId = groupId
+            this.roleId = roleId
+        }
+        return authGroupRoleDao.insert(gr)
     }
 
 }

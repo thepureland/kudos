@@ -220,10 +220,13 @@ open class UserOrgService(
 
     @Transactional
     override fun updateActive(id: String, active: Boolean): Boolean {
+        // active 改了会影响"父机构含子树成员"视图（子机构禁用 → 父级视图里这棵子树就该没人了）。
+        // 因此即使 parentId 没动，也要把 parentId 快照塞进事件，让 listener 沿祖先链清缓存。
+        val parentId = dao.get(id)?.parentId
         val success = dao.updateProperties(id, mapOf(UserOrg::active.name to active))
         if (success) {
             log.debug("更新id为${id}的机构的启用状态为${active}。")
-            eventPublisher.publishEvent(UserOrgUpdated(id))
+            eventPublisher.publishEvent(UserOrgUpdated(id, oldParentId = parentId, newParentId = parentId))
         } else {
             log.error("更新id为${id}的机构的启用状态为${active}失败！")
         }
@@ -232,6 +235,8 @@ open class UserOrgService(
 
     @Transactional
     override fun moveOrg(id: String, newParentId: String?, newSortNum: Int?): Boolean {
+        // 移动前先 snapshot oldParentId —— 事务提交后 dao 看不到旧值。
+        val oldParentId = dao.get(id)?.parentId
         val props = mutableMapOf<String, Any?>(
             UserOrg::parentId.name to newParentId
         )
@@ -241,7 +246,7 @@ open class UserOrgService(
         val success = dao.updateProperties(id, props)
         if (success) {
             log.debug("移动id为${id}的机构到父机构${newParentId}，排序号${newSortNum}。")
-            eventPublisher.publishEvent(UserOrgUpdated(id))
+            eventPublisher.publishEvent(UserOrgUpdated(id, oldParentId = oldParentId, newParentId = newParentId))
         } else {
             log.error("移动id为${id}的机构失败！")
         }
@@ -258,11 +263,14 @@ open class UserOrgService(
 
     @Transactional
     override fun update(any: Any): Boolean {
-        val success = super.update(any)
+        // 通用 update：snapshot 事前 parentId，update 之后再读事后 parentId
         val id = BeanKit.getProperty(any, UserOrg::id.name) as String
+        val oldParentId = dao.get(id)?.parentId
+        val success = super.update(any)
         if (success) {
+            val newParentId = dao.get(id)?.parentId
             log.debug("更新id为${id}的机构。")
-            eventPublisher.publishEvent(UserOrgUpdated(id))
+            eventPublisher.publishEvent(UserOrgUpdated(id, oldParentId = oldParentId, newParentId = newParentId))
         } else {
             log.error("更新id为${id}的机构失败！")
         }
@@ -276,10 +284,11 @@ open class UserOrgService(
             log.warn("删除id为${id}的机构时，发现其已不存在！")
             return false
         }
+        val parentIdSnapshot = org.parentId
         val success = super.deleteById(id)
         if (success) {
             log.debug("删除id为${id}的机构。")
-            eventPublisher.publishEvent(UserOrgDeleted(id))
+            eventPublisher.publishEvent(UserOrgDeleted(id, parentId = parentIdSnapshot))
         } else {
             log.error("删除id为${id}的机构失败！")
         }
@@ -288,10 +297,14 @@ open class UserOrgService(
 
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {
+        // 先 snapshot (id, parentId)，AFTER_COMMIT 时行已删除，listener 无法回查
+        val snapshots = if (ids.isNotEmpty()) {
+            dao.getByIds(ids).map { UserOrgBatchDeleted.Item(it.id, it.parentId) }
+        } else emptyList()
         val count = super.batchDelete(ids)
         log.debug("批量删除机构，期望删除${ids.size}条，实际删除${count}条。")
-        if (ids.isNotEmpty()) {
-            eventPublisher.publishEvent(UserOrgBatchDeleted(ids))
+        if (snapshots.isNotEmpty()) {
+            eventPublisher.publishEvent(UserOrgBatchDeleted(snapshots))
         }
         return count
     }

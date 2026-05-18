@@ -3,8 +3,11 @@ package io.kudos.ms.auth.core.group.service.impl
 import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.auth.core.group.dao.AuthGroupRoleDao
+import io.kudos.ms.auth.core.group.event.AuthGroupRoleRelationsChanged
 import io.kudos.ms.auth.core.group.model.po.AuthGroupRole
 import io.kudos.ms.auth.core.group.service.iservice.IAuthGroupRoleService
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -23,6 +26,9 @@ open class AuthGroupRoleService(
 ) : BaseCrudService<String, AuthGroupRole, AuthGroupRoleDao>(dao),
     IAuthGroupRoleService {
 
+
+    @Autowired
+    private lateinit var eventPublisher: ApplicationEventPublisher
 
     private val log = LogFactory.getLog(this::class)
 
@@ -56,6 +62,7 @@ open class AuthGroupRoleService(
         }
         dao.batchInsert(relations)
         log.debug("批量绑定组${groupId}与${roleIds.size}个角色的关系，成功绑定${newRoleIds.size}条。")
+        eventPublisher.publishEvent(AuthGroupRoleRelationsChanged(groupId, newRoleIds.toList()))
         return newRoleIds.size
     }
 
@@ -65,6 +72,7 @@ open class AuthGroupRoleService(
         val success = count > 0
         if (success) {
             log.debug("解绑组${groupId}与角色${roleId}的关系。")
+            eventPublisher.publishEvent(AuthGroupRoleRelationsChanged(groupId, listOf(roleId)))
         } else {
             log.warn("解绑组${groupId}与角色${roleId}的关系失败，关系不存在。")
         }

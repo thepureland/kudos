@@ -3,6 +3,7 @@ package io.kudos.ms.user.core.account.dao
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.eq
+import io.kudos.base.query.inList
 import io.kudos.ms.user.core.account.model.po.UserOrgUser
 import io.kudos.ms.user.core.account.model.table.UserOrgUsers
 import org.springframework.stereotype.Repository
@@ -49,6 +50,16 @@ open class UserOrgUserDao : BaseCrudDao<String, UserOrgUser, UserOrgUsers>() {
      */
     fun searchUserIdsByOrgId(orgId: String): List<String> {
         val criteria = Criteria(UserOrgUser::orgId eq orgId)
+        return searchProperty(criteria, UserOrgUser::userId)
+    }
+
+    /**
+     * 按多个机构ID批量查询其下用户ID列表（不去重；调用方按需 distinct）。
+     * 给"父机构含子机构成员"类查询的 IN-list 展开用。
+     */
+    fun searchUserIdsByOrgIds(orgIds: Collection<String>): List<String> {
+        if (orgIds.isEmpty()) return emptyList()
+        val criteria = Criteria(UserOrgUser::orgId inList orgIds.toList())
         return searchProperty(criteria, UserOrgUser::userId)
     }
 
