@@ -12,7 +12,7 @@ spring:
         max-pool-size: 10
         min-idle: 10
         initialization-fail-timeout: 1
-        is-auto-commit: false
+        is-auto-commit: true   # 见 application-main.yml 同名 key 注释
         is-read-only: false
         is-isolate-internal-queries: false
         is-register-mbeans: false
@@ -21,7 +21,7 @@ spring:
         postgres:
           type: com.zaxxer.hikari.HikariDataSource
           hikari:
-            is-auto-commit: false
+            is-auto-commit: true   # 见 application-main.yml 同名 key 注释
           driver-class-name: org.postgresql.Driver
           url: jdbc:postgresql://localhost:25432/test
           username: pg

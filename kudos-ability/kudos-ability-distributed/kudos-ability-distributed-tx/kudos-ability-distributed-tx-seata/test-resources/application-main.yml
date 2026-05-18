@@ -24,7 +24,7 @@ spring:
         max-pool-size: 10
         min-idle: 10
         initialization-fail-timeout: 1
-        is-auto-commit: false
+        is-auto-commit: true   # Seata AT 模式要求业务数据源 autoCommit=true，否则 ConnectionProxy 的 commit 拦截链根本不会被触发，分支注册永远不发生，写最后被 Hikari 还池时回滚
         is-read-only: false
         is-isolate-internal-queries: false
         is-register-mbeans: false
@@ -33,7 +33,7 @@ spring:
         postgres:
           type: com.zaxxer.hikari.HikariDataSource
           hikari:
-            is-auto-commit: false
+            is-auto-commit: true   # Seata AT 模式要求业务数据源 autoCommit=true，否则 ConnectionProxy 的 commit 拦截链根本不会被触发，分支注册永远不发生，写最后被 Hikari 还池时回滚
           driver-class-name: org.postgresql.Driver
           url: jdbc:postgresql://localhost:25432/test
           username: pg
@@ -44,7 +44,7 @@ spring:
 #        mysql:
 #          type: com.zaxxer.hikari.HikariDataSource
 #          hikari:
-#            is-auto-commit: false
+#            is-auto-commit: true   # Seata AT 模式要求业务数据源 autoCommit=true，否则 ConnectionProxy 的 commit 拦截链根本不会被触发，分支注册永远不发生，写最后被 Hikari 还池时回滚
 #          driver-class-name: com.mysql.cj.jdbc.Driver
 #          url: jdbc:mysql://mysql:3306/test
 #          username: root
