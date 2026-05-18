@@ -70,5 +70,16 @@ interface ISysDataSourceService : IBaseCrudService<String, SysDataSource> {
      */
     fun getDataSourcesBySubSystemCode(subSystemCode: String): List<SysDataSourceRow>
 
+    /**
+     * 测试 JDBC 连通性：用给定的 url/username/password 临时建一条连接并执行 ping 语句。
+     * 连接在方法返回前关闭；不会持久化任何状态。
+     *
+     * @param url JDBC URL
+     * @param username 用户名
+     * @param password 密码；可为 null（部分驱动允许）
+     * @return true 表示连接 + ping 成功；false 表示任意环节失败（异常被吞掉转化为 false）
+     */
+    fun testConnection(url: String, username: String, password: String?): Boolean
+
 
 }

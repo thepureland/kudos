@@ -2,6 +2,7 @@ package io.kudos.ms.sys.core.microservice.api
 
 import io.kudos.ms.sys.common.microservice.api.ISysSubSystemMicroServiceApi
 import io.kudos.ms.sys.core.microservice.service.iservice.ISysSubSystemMicroServiceService
+import org.springframework.context.annotation.Primary
 import org.springframework.stereotype.Service
 
 
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service
  * @author K
  * @since 1.0.0
  */
+@Primary
 @Service
 open class SysSubSystemMicroServiceApi(
     private val sysSubSystemMicroServiceService: ISysSubSystemMicroServiceService,

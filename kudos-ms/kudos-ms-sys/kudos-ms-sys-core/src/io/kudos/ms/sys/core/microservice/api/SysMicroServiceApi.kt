@@ -3,6 +3,7 @@ package io.kudos.ms.sys.core.microservice.api
 import io.kudos.ms.sys.common.microservice.api.ISysMicroServiceApi
 import io.kudos.ms.sys.common.microservice.vo.SysMicroServiceCacheEntry
 import io.kudos.ms.sys.core.microservice.service.iservice.ISysMicroServiceService
+import org.springframework.context.annotation.Primary
 import org.springframework.stereotype.Component
 
 
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Component
  * @author AI: Cursor
  * @since 1.0.0
  */
+@Primary
 @Component
 open class SysMicroServiceApi(
     private val sysMicroServiceService: ISysMicroServiceService,
