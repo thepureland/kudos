@@ -1,7 +1,7 @@
 spring:
   datasource:
     dynamic:
-#      seata: true
+      seata: true   # 见 application-main.yml 的同名 key 注释，保持主 / sub-app 一致
       primary: postgres
       hikari:
         connection-timeout: 30000
