@@ -123,9 +123,8 @@ open class RedissonLockAutoConfiguration : IComponentInitializer {
             timeout = baseConfigProperties.timeout
             retryAttempts = baseConfigProperties.retryAttempts
             retryDelay = ConstantDelay(Duration.of(baseConfigProperties.retryInterval.toLong(), ChronoUnit.MILLIS))
-//            if (!baseConfigProperties.password.isNullOrBlank()) {
-//                setPassword(baseConfigProperties.password)
-//            }
+            // 注：Redisson 4.0+ 起 password 移到 Config 对象上设置（见 initRedissonConfig 顶部），
+            // BaseConfig 上的 password setter 在升级中被移除，因此此处不再设。
             subscriptionsPerConnection = baseConfigProperties.subscriptionsPerConnection
             clientName = baseConfigProperties.clientName
         }

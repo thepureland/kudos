@@ -72,12 +72,15 @@ object RedissonLockKit {
     }
 
     /**
-     * 解除分布式锁
+     * 解除分布式锁。
      *
-     * @param lock lock
+     * 与 [unlock] 字符串版的差异：直接释放传入的 [RLock] 对象，少一次按 key 查锁的 RTT；
+     * **但必须确认本线程持有该锁**，否则 Redisson 会抛 `IllegalMonitorStateException`。
+     * 旧实现只检查 `isLocked`，对"别的线程持有这把锁"的场景会报错。已加上
+     * `isHeldByCurrentThread` 双重检查与 [RedissonLocker.unlock] 行为对齐。
      */
     fun unlock(lock: RLock) {
-        if (lock.isLocked) {
+        if (lock.isLocked && lock.isHeldByCurrentThread) {
             lock.unlock()
         }
     }
