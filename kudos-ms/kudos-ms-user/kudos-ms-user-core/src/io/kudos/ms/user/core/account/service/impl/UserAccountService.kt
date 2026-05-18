@@ -3,7 +3,7 @@ package io.kudos.ms.user.core.account.service.impl
 import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.security.CryptoKit
+import io.kudos.base.security.PasswordKit
 import io.kudos.ms.user.common.org.vo.UserOrgCacheEntry
 import io.kudos.ms.user.common.account.vo.UserAccountCacheEntry
 import io.kudos.ms.user.common.account.vo.request.UserAccountQuery
@@ -124,7 +124,7 @@ open class UserAccountService(
 
     @Transactional
     override fun resetPassword(id: String, newPassword: String): Boolean {
-        val encryptedPassword = CryptoKit.aesEncrypt(newPassword)
+        val encryptedPassword = PasswordKit.hash(newPassword)
         val user = UserAccount {
             this.id = id
             this.loginPassword = encryptedPassword
@@ -142,7 +142,7 @@ open class UserAccountService(
 
     @Transactional
     override fun resetSecurityPassword(id: String, newPassword: String): Boolean {
-        val encryptedPassword = CryptoKit.aesEncrypt(newPassword)
+        val encryptedPassword = PasswordKit.hash(newPassword)
         val user = UserAccount {
             this.id = id
             this.securityPassword = encryptedPassword
