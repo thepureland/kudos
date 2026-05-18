@@ -56,18 +56,16 @@ open class SpringMvcAutoConfiguration : WebMvcConfigurer, IComponentInitializer 
 
     override fun getValidator(): Validator? = kudosValidator
 
-//    @Bean
-//    open fun mutipartResolvet(): CommonsMultipartResolver {
-//        return CommonsMultipartResolver()
-//    }
-
+    /** 内嵌容器工厂——按 `kudos.ability.web.springmvc.server` 决定走 Tomcat / Jetty。 */
     @Bean
     @ConditionalOnMissingBean
     open fun webServerFactory(env: Environment): ServletWebServerFactory = SwitchingServletWebServerFactory(env)
 
+    /** 提供 `RequestContextHolder` 在 ServletRequestListener 触发时所需的 listener。 */
     @Bean
     open fun requestContextListener(): RequestContextListener = RequestContextListener()
 
+    /** 把 [RequestContextListener] 显式注册到 servlet 容器（顺序 1，紧跟容器初始化之后）。 */
     @Bean
     open fun servletListenerRegistration(requestContextListener: RequestContextListener): ServletListenerRegistrationBean<EventListener> {
         val registrationBean = ServletListenerRegistrationBean<EventListener>()
@@ -76,10 +74,15 @@ open class SpringMvcAutoConfiguration : WebMvcConfigurer, IComponentInitializer 
         return registrationBean
     }
 
+    /** kudos 上下文初始化过滤器（业务方可通过自定义 [IWebContextInitFilter] bean 覆盖）。 */
     @Bean
     @ConditionalOnMissingBean
     open fun webContextInitFilter(): IWebContextInitFilter = WebContextInitFilter()
 
+    /**
+     * 注册 [IWebContextInitFilter]：order 比 [SessionRepositoryFilter.DEFAULT_ORDER] 大 1，
+     * 即 session 已加载后才让 kudos 上下文 filter 抓 sessionAttributes。
+     */
     @Bean
     @ConditionalOnMissingBean
     open fun registerAuthFilter(contextInitFilter: IWebContextInitFilter): FilterRegistrationBean<*> {
@@ -91,27 +94,33 @@ open class SpringMvcAutoConfiguration : WebMvcConfigurer, IComponentInitializer 
         return registration
     }
 
+    /** CORS 头注入拦截器（与下方 [addCorsMappings] 提供的 Spring CORS 支持互补）。 */
     @Bean
     @ConditionalOnMissingBean
     open fun corsHandlerInterceptor(): HandlerInterceptor = CorsHandlerInterceptor()
 
+    /** Jackson 3 默认 [ObjectMapper]，业务可自定义 bean 覆盖以接入自定义 module / 时区策略。 */
     @Bean
     @ConditionalOnMissingBean
     open fun objectMapper(): ObjectMapper = ObjectMapper()
 
+    /** Bad request（参数 / 绑定 / Bean Validation 错误）统一响应处理器。 */
     @Bean
     @ConditionalOnMissingBean
     open fun badRequestExceptionHandler(): BadRequestExceptionHandler = BadRequestExceptionHandler()
 
+    /** 业务异常 / 未捕获异常统一响应处理器（与 [badRequestExceptionHandler] 互补，覆盖余下场景）。 */
     @Bean
     @ConditionalOnMissingBean
     open fun globalExceptionHandler(): GlobalExceptionHandler = GlobalExceptionHandler()
 
+    /** 把控制器返回值统一包装为 `ApiResponse` 的 ResponseBodyAdvice。 */
     @Bean
     @ConditionalOnMissingBean
     open fun globalResponseBodyHandler(objectMapper: ObjectMapper): GlobalResponseBodyHandler =
         GlobalResponseBodyHandler(objectMapper)
 
+    /** 拒绝以 [io.kudos.base.model.payload.MutableListSearchPayload] 作为请求体的安全护栏。 */
     @Bean
     @ConditionalOnMissingBean
     open fun mutableListSearchPayloadGuardAdvice(): MutableListSearchPayloadGuardAdvice =
@@ -121,6 +130,13 @@ open class SpringMvcAutoConfiguration : WebMvcConfigurer, IComponentInitializer 
         registry.addInterceptor(corsHandlerInterceptor()).addPathPatterns("/**")
     }
 
+    /**
+     * 默认开放 CORS：所有 origin pattern + 凭证。
+     *
+     * **生产部署应通过自定义 [WebMvcConfigurer] 覆盖**——`allowedOriginPatterns("*") +
+     * allowCredentials(true)` 在 Spring 中虽合法，但等同于"反射任意来源 + 携带 Cookie"，
+     * 实际上是个开放门户。框架默认放宽是为了让开发期不被 CORS 卡住；生产收紧为具体域名。
+     */
     override fun addCorsMappings(registry: CorsRegistry) {
         registry.addMapping("/**")
             .allowedOriginPatterns("*")

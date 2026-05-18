@@ -15,7 +15,16 @@ import java.util.UUID
 
 
 /**
- * Web上下文初始化过滤器接口
+ * Web 上下文初始化过滤器默认实现。
+ *
+ * 在每个请求进入业务逻辑前：
+ *  1. 把 session / cookie / header 全量塞进 [KudosContext]，便于业务侧通过 [KudosContextHolder] 读
+ *  2. 解析 `traceKey` 请求头（缺失则生成新 UUID）
+ *  3. 解析客户端 IP / 浏览器 / OS / Referer / Locale，组装 [ClientInfo]
+ *  4. 请求结束的 finally 里 `KudosContextHolder.clear()`，避免线程池里的线程被复用时串台
+ *
+ * 实现侧重业务可读性而非性能：会把整个 session 拷一份到 context，session 大时不友好；
+ * 业务方有需要可继承本类覆盖 [doFilter] 或自实现 [IWebContextInitFilter] 取代。
  *
  * @author K
  * @since 1.0.0

@@ -4,6 +4,21 @@ import io.kudos.base.net.IpKit
 import jakarta.servlet.http.HttpServletRequest
 import java.net.InetAddress
 import java.net.UnknownHostException
+
+/**
+ * [HttpServletRequest] 上的常用扩展函数集合。
+ *
+ * 包含客户端 IP 解析（含 X-Forwarded-For 多级反向代理处理）、User-Agent → (浏览器 / OS / 终端)
+ * 启发式解析、根 URL 拼装等。所有方法均为纯函数。
+ *
+ * **IP 解析安全提示**：[getRemoteIp] 信任客户端的 `x-forwarded-for` 等代理头——只能在
+ * 应用已被可信反向代理（Nginx / ALB / Cloudflare）兜底过滤后使用。直接对外暴露的服务
+ * 用本方法会被攻击者通过伪造头任意"修改"自身 IP。
+ *
+ * @author K
+ * @since 1.0.0
+ */
+
 /**
  * 获取请求的真实ip地址，支持多级反向代理
  *
@@ -160,8 +175,13 @@ fun HttpServletRequest.getDomainPath(): String {
     return requestURL.substring(0, requestURL.length - requestURI.length)
 }
 
+/**
+ * 多级反向代理场景下，从 `x-forwarded-for` 之类的逗号分隔列表中挑出第一个**非私网**地址；
+ * IPv6 loopback `0:0:0:0:0:0:0:1` 翻译为本机 IPv4 hostAddress。
+ *
+ * 私网段判定见 [isLocalA] / [isLocalB] / [isLocalC] / [isLocal0]。
+ */
 private fun getIP(ip: String): String {
-    // 处理多级反向代理
     var ipAddress = ip
     for (part in ip.split(',')) {
         ipAddress = part.trim { it <= ' ' }
@@ -170,26 +190,35 @@ private fun getIP(ip: String): String {
             break
         }
     }
-    // 表示通过远程登陆访问页面
+    // IPv6 本机回环：翻成 IPv4 主机地址，便于审计 / 日志展示
     if ("0:0:0:0:0:0:0:1" == ipAddress) {
-        try {
-            ipAddress = InetAddress.getLocalHost().hostAddress
+        ipAddress = try {
+            InetAddress.getLocalHost().hostAddress
         } catch (e: UnknownHostException) {
-            error(e)
+            throw IllegalStateException("无法解析本机 IP（IPv6 loopback 翻译失败）", e)
         }
     }
     return ipAddress
 }
 
+// 私网段边界值预先转 Long 缓存，避免每个请求做 4 段字符串→long 计算
+private val LOCAL_A_START = IpKit.ipv4StringToLong("10.0.0.0")
+private val LOCAL_A_END = IpKit.ipv4StringToLong("10.255.255.255")
+private val LOCAL_B_START = IpKit.ipv4StringToLong("172.16.0.0")
+private val LOCAL_B_END = IpKit.ipv4StringToLong("172.31.255.255")
+private val LOCAL_C_START = IpKit.ipv4StringToLong("192.168.0.0")
+private val LOCAL_C_END = IpKit.ipv4StringToLong("192.168.255.255")
+private val LOCAL_LOOPBACK = IpKit.ipv4StringToLong("127.0.0.1")
+private val LOCAL_ZERO = IpKit.ipv4StringToLong("0.0.0.0")
 
-private fun isLocalC(ip: Long): Boolean =
-    ip in IpKit.ipv4StringToLong("192.168.0.0")..IpKit.ipv4StringToLong("192.168.255.255")
+/** 192.168.0.0/16 C 类私网段。 */
+private fun isLocalC(ip: Long): Boolean = ip in LOCAL_C_START..LOCAL_C_END
 
-private fun isLocalB(ip: Long): Boolean =
-    ip in IpKit.ipv4StringToLong("172.16.0.0")..IpKit.ipv4StringToLong("172.31.255.255")
+/** 172.16.0.0/12 B 类私网段。 */
+private fun isLocalB(ip: Long): Boolean = ip in LOCAL_B_START..LOCAL_B_END
 
-private fun isLocalA(ip: Long): Boolean =
-    ip in IpKit.ipv4StringToLong("10.0.0.0")..IpKit.ipv4StringToLong("10.255.255.255")
+/** 10.0.0.0/8 A 类私网段。 */
+private fun isLocalA(ip: Long): Boolean = ip in LOCAL_A_START..LOCAL_A_END
 
-private fun isLocal0(ip: Long): Boolean =
-    ip == IpKit.ipv4StringToLong("127.0.0.1") || ip == IpKit.ipv4StringToLong("0.0.0.0")
+/** 本机回环 / 占位地址（127.0.0.1 或 0.0.0.0）。 */
+private fun isLocal0(ip: Long): Boolean = ip == LOCAL_LOOPBACK || ip == LOCAL_ZERO
