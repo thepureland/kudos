@@ -8,11 +8,13 @@ import io.kudos.ability.distributed.notify.common.api.INotifyListener
 import io.kudos.ability.distributed.notify.common.model.NotifyMessageVo
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.msg.common.receiver.enums.MsgReceiveStatusEnum
+import io.kudos.ms.msg.common.receiver.enums.MsgUnreceivedReasonEnum
 import io.kudos.ms.msg.common.send.enums.MsgPublishMethodEnum
 import io.kudos.ms.msg.common.send.enums.MsgSendStatusEnum
 import io.kudos.ms.msg.common.send.vo.MsgDispatchEvent
 import io.kudos.ms.msg.core.receiver.model.po.MsgReceive
 import io.kudos.ms.msg.core.receiver.service.iservice.IMsgReceiveService
+import io.kudos.ms.msg.core.receiver.service.iservice.IMsgUnreceivedService
 import io.kudos.ms.msg.core.send.service.iservice.IMsgSendService
 import io.kudos.ms.user.core.contact.service.iservice.IUserContactWayService
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -54,6 +56,7 @@ open class MsgEmailDispatchListener(
     private val userContactWayService: IUserContactWayService,
     private val msgSendService: IMsgSendService,
     private val msgReceiveService: IMsgReceiveService,
+    private val msgUnreceivedService: IMsgUnreceivedService,
 ) : INotifyListener {
 
     private val log = LogFactory.getLog(this::class)
@@ -79,6 +82,14 @@ open class MsgEmailDispatchListener(
         val noEmailUserIds = event.receiverIds - emailByUserId.keys
         if (noEmailUserIds.isNotEmpty()) {
             log.warn("event {0} 有 {1} 个接收者无 email 联系方式，跳过", event.sendId, noEmailUserIds.size)
+            // 失败追踪：没邮箱的接收者直接登记成未送达
+            msgUnreceivedService.recordFailures(
+                sendId = event.sendId,
+                receiverIds = noEmailUserIds,
+                publishMethodDictCode = MsgPublishMethodEnum.EMAIL.dictCode,
+                reason = MsgUnreceivedReasonEnum.NO_CONTACT,
+                tenantId = event.tenantId,
+            )
         }
         if (emailByUserId.isEmpty()) {
             msgSendService.finishSend(event.sendId, 0, event.receiverIds.size, MsgSendStatusEnum.FAILED_FINAL.dictCode)
@@ -118,6 +129,17 @@ open class MsgEmailDispatchListener(
             }
             runCatching { msgReceiveService.insert(r) }
                 .onFailure { log.error(it, "落库 MsgReceive 失败：userId={0}, sendId={1}", userId, event.sendId) }
+        }
+
+        // SMTP 拒收的接收者也登记成未送达（不与 NO_CONTACT 那批重复 —— 那批已经在 notifyProcess 写过）
+        if (failUserIds.isNotEmpty()) {
+            msgUnreceivedService.recordFailures(
+                sendId = event.sendId,
+                receiverIds = failUserIds,
+                publishMethodDictCode = MsgPublishMethodEnum.EMAIL.dictCode,
+                reason = MsgUnreceivedReasonEnum.CHANNEL_REJECT,
+                tenantId = event.tenantId,
+            )
         }
 
         val successCount = successUserIds.size
