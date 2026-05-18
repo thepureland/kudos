@@ -1,6 +1,7 @@
 package io.kudos.ms.user.core.passport.service.impl
 
 import io.kudos.base.logger.LogFactory
+import io.kudos.base.security.GoogleAuthenticator
 import io.kudos.base.security.PasswordKit
 import io.kudos.ms.user.common.passport.enums.ChangePasswordResultEnum
 import io.kudos.ms.user.common.passport.vo.request.ChangePasswordRequest
@@ -25,7 +26,10 @@ import java.time.LocalDateTime
  *   3) active != true → INACTIVE
  *   4) BCrypt 校验明文密码
  *      - 失败 → incrementLoginErrorTimes，返回 WRONG_PASSWORD + 当前错误次数
- *      - 成功 → resetLoginErrorTimes + updateLastLoginInfo（若有 IP），返回 SUCCESS + UserInfoModel
+ *   5) 若 authentication_key 非空（已启用 OTP）：
+ *      - 请求未带 authCode → 返回 OTP_REQUIRED（不动错误计数）
+ *      - authCode 不通过 GoogleAuthenticator 校验 → incrementLoginErrorTimes，返回 OTP_WRONG
+ *   6) 全部通过 → resetLoginErrorTimes + updateLastLoginInfo（若有 IP），返回 SUCCESS + UserInfoModel
  *
  * @author K
  * @since 1.0.0
@@ -60,7 +64,25 @@ open class PassportService(
             return PassportLoginResult.wrongPassword(accumulated)
         }
 
-        // 密码正确：清零错误计数 + 记录最后登录信息
+        // 密码正确，检查是否启用 OTP 二次验证
+        val authKey = user.authenticationKey
+        if (!authKey.isNullOrBlank()) {
+            val authCode = req.authCode
+            if (authCode == null) {
+                log.debug("登录待定 - 需要 OTP: userId=${user.id}")
+                return PassportLoginResult.otpRequired()
+            }
+            val otpOk = GoogleAuthenticator().checkCode(authKey, authCode, System.currentTimeMillis())
+            if (!otpOk) {
+                userAccountService.incrementLoginErrorTimes(user.id)
+                val accumulated = userAccountService.getUserRecord(user.id)?.loginErrorTimes
+                    ?: ((user.loginErrorTimes ?: 0) + 1)
+                log.debug("登录失败 - OTP 错误: userId=${user.id} 累计错误次数=${accumulated}")
+                return PassportLoginResult.otpWrong(accumulated)
+            }
+        }
+
+        // 验证全部通过：清零错误计数 + 记录最后登录信息
         userAccountService.resetLoginErrorTimes(user.id)
         val now = LocalDateTime.now()
         val loginIp = req.loginIp

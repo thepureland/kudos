@@ -24,4 +24,14 @@ enum class PassportLoginStatusEnum {
 
     /** 账号已被锁定（错误次数超限）—— 当前实现下尚未细分，保留枚举位 */
     LOCKED,
+
+    /**
+     * 密码正确但用户已启用 OTP，请求中未携带 [PassportLoginRequest.authCode]。
+     * 前端拿到此状态后应弹出 OTP 输入界面，再带 authCode 二次提交。
+     */
+    OTP_REQUIRED,
+
+    /** 密码正确，但 OTP 验证码错误（视为密码错的同等失败，错误计数已 +1） */
+    OTP_WRONG,
 }
+

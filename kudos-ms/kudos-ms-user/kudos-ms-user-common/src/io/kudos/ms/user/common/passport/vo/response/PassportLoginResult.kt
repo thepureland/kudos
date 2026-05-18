@@ -45,5 +45,17 @@ data class PassportLoginResult(
 
         fun inactive(): PassportLoginResult =
             PassportLoginResult(status = PassportLoginStatusEnum.INACTIVE, message = "账号已禁用")
+
+        /** 用户已启用 OTP 但未提供 authCode；客户端应弹出 OTP 输入框后重试。 */
+        fun otpRequired(): PassportLoginResult =
+            PassportLoginResult(status = PassportLoginStatusEnum.OTP_REQUIRED, message = "请输入动态验证码")
+
+        /** OTP 验证码错误；服务端已累加 login_error_times。 */
+        fun otpWrong(loginErrorTimes: Int): PassportLoginResult =
+            PassportLoginResult(
+                status = PassportLoginStatusEnum.OTP_WRONG,
+                loginErrorTimes = loginErrorTimes,
+                message = "动态验证码错误",
+            )
     }
 }
