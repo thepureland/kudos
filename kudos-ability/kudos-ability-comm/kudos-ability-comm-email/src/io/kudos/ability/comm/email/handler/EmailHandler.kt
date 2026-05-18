@@ -16,17 +16,29 @@ import java.util.Properties
 
 
 /**
- * @Description 邮件发送处理器
- * @Author paul
- * @Date 2023/2/9 11:09
+ * 邮件发送处理器。
+ *
+ * 单一职责：把 [EmailRequest] 翻译成 JavaMail 的 `MimeMessage` + `JavaMailSenderImpl` 并执行发送，
+ * 不论成功 / 部分成功 / 失败都通过 [callback] 异步通知调用方（业务侧典型用法是写"邮件发送记录"表）。
+ *
+ * 发送在虚拟线程上跑——避免阻塞调用线程；要求 JDK 21+。
+ *
+ * **已知限制**：每次发送都现建 `JavaMailSenderImpl`，SMTP 连接不复用；高并发场景需要业务方
+ * 自行 pool 化或换专业邮件队列。
+ *
+ * @author paul
+ * @author K
+ * @since 1.0.0
  */
 @Component
 class EmailHandler {
     /**
-     * 执行发送邮件，并处理回调
+     * 异步发送邮件——立即在虚拟线程上启动 [doSend]，本方法不阻塞。
      *
-     * @param emailRequest
-     * @param callback
+     * @param emailRequest 邮件请求；缺关键字段（账号 / 密码 / 服务器 / 收件人）会在内部
+     *   `checkParams` 拦截，回调拿到 [EmailStatusEnum.FAIL]
+     * @param callback 发送结束后的回调（成功 / 部分成功 / 失败都会调），在虚拟线程上执行，
+     *   业务侧 callback 中**不要做长耗时同步操作**，会拖住虚拟线程的复用
      */
     fun send(emailRequest: EmailRequest, callback: (EmailCallBackParam) -> Unit) {
         Thread.ofVirtual().start { doSend(emailRequest, callback) }
@@ -60,9 +72,19 @@ class EmailHandler {
                 extra["mail.smtp.starttls.enable"] = "true"
             }
             extra["mail.user"] = emailRequest.senderAccount
-            extra["mail.password"] = emailRequest.senderPassword
+            // 注：不再把 senderPassword 塞到 mail.password —— sender.password 已经设了，
+            // 重复一份会让密码长期留在 javaMailProperties 里，被 toString / actuator 等意外泄漏。
             extra["mail.smtp.host"] = emailRequest.serverHost
             extra["mail.smtp.sendpartial"] = emailRequest.sendpartial.toString()
+            // SMTP 三个超时：缺省 JavaMail 无限等待。这里给保守默认（10s / 30s / 30s），
+            // 避免 SMTP 服务器吊死虚拟线程；业务侧可通过 emailRequest.extra 覆盖。
+            extra["mail.smtp.connectiontimeout"] = DEFAULT_CONNECT_TIMEOUT_MS.toString()
+            extra["mail.smtp.timeout"] = DEFAULT_READ_TIMEOUT_MS.toString()
+            extra["mail.smtp.writetimeout"] = DEFAULT_WRITE_TIMEOUT_MS.toString()
+            // SSL 通道对应的 socket 属性别名（不同 JavaMail 版本对哪个键有效不一致，两边都设）
+            extra["mail.smtps.connectiontimeout"] = DEFAULT_CONNECT_TIMEOUT_MS.toString()
+            extra["mail.smtps.timeout"] = DEFAULT_READ_TIMEOUT_MS.toString()
+            extra["mail.smtps.writetimeout"] = DEFAULT_WRITE_TIMEOUT_MS.toString()
             emailRequest.extra?.takeIf { it.isNotEmpty() }?.let { extra.putAll(it) }
             val properties = Properties()
             properties.putAll(extra)
@@ -158,5 +180,16 @@ class EmailHandler {
     }
 
     private val log = LogFactory.getLog(this::class)
+
+    companion object {
+        /** SMTP 建连超时（毫秒）。JavaMail 默认无限等待，必须显式设上限避免吊死虚拟线程。 */
+        private const val DEFAULT_CONNECT_TIMEOUT_MS = 10_000L
+
+        /** SMTP 读超时（毫秒）。 */
+        private const val DEFAULT_READ_TIMEOUT_MS = 30_000L
+
+        /** SMTP 写超时（毫秒）；大附件场景可适当调大。 */
+        private const val DEFAULT_WRITE_TIMEOUT_MS = 30_000L
+    }
 
 }
