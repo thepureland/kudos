@@ -45,8 +45,10 @@ class CaffeineHashCache : IHashCache, IHashCacheSync {
 
     private fun toDouble(value: Any): Double = when (value) {
         is Number -> value.toDouble()
-        is String -> value.toDoubleOrNull() ?: Double.MIN_VALUE
-        else -> Double.MIN_VALUE
+        // -Double.MAX_VALUE 是负方向最远；Double.MIN_VALUE 实为最小**正**数，
+        // 作为下界回退会让所有负 score 成员排在更前面（错误顺序）。
+        is String -> value.toDoubleOrNull() ?: -Double.MAX_VALUE
+        else -> -Double.MAX_VALUE
     }
 
     private fun getPropertyValue(entity: Any, propertyName: String): Any? {
@@ -194,8 +196,10 @@ class CaffeineHashCache : IHashCache, IHashCacheSync {
             val first = orders.first()
             val prop = first.property
             val desc = first.direction == DirectionEnum.DESC
-            entities = if (desc) entities.sortedByDescending { getPropertyValue(it, prop)?.let { v -> toDouble(v) } ?: Double.MIN_VALUE }
-            else entities.sortedBy { getPropertyValue(it, prop)?.let { v -> toDouble(v) } ?: Double.MIN_VALUE }
+            // 同 toDouble：用 -Double.MAX_VALUE 作下界回退，避免负值被排错位置
+            val fallback = -Double.MAX_VALUE
+            entities = if (desc) entities.sortedByDescending { getPropertyValue(it, prop)?.let { v -> toDouble(v) } ?: fallback }
+            else entities.sortedBy { getPropertyValue(it, prop)?.let { v -> toDouble(v) } ?: fallback }
         }
         val pNo = if (pageNo < 1) 1 else pageNo
         val pSize = if (pageSize < 1) 1 else pageSize
