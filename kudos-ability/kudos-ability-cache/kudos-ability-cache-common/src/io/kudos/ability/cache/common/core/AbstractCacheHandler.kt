@@ -3,6 +3,18 @@ package io.kudos.ability.cache.common.core
 import io.kudos.context.kit.SpringKit
 
 
+/**
+ * 业务侧自定义 cache handler 的基类——实现 [cacheName] / [reloadAll] 即可接入框架。
+ *
+ * 解决两个共性问题：
+ *  - **方法间自调用 AOP 失效**：直接 `this.fooCached()` 调用本类的 `@Cacheable` 方法时 AOP 不生效。
+ *    [getSelf] 通过 Spring 容器拿到本类的代理实例，调用方写 `getSelf<MyHandler>().fooCached(...)`
+ *    就能保证经过代理。
+ *  - **重载语义统一**：[reloadAll] 由子类实现，框架在启动期 / 手动失效后统一调它，子类只关心怎么重新装载数据。
+ *
+ * @author K
+ * @since 1.0.0
+ */
 abstract class AbstractCacheHandler<T> {
 
     /**
