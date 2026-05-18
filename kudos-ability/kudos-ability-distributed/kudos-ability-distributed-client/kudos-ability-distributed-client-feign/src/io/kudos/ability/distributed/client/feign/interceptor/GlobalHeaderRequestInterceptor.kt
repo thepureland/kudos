@@ -16,7 +16,11 @@ import java.util.UUID
  * 核心功能：
  * 1. 上下文传递：将当前线程的KudosContext信息传递到Feign请求头，实现跨服务上下文传递
  * 2. 追踪键生成：如果上下文中没有追踪键，会自动生成UUID作为追踪键
- * 3. 扩展支持：支持通过IFeignRequestContextProcess接口扩展请求头处理逻辑
+ * 3. 扩展支持：通过 [IFeignRequestContextProcess] SPI 扩展请求头处理逻辑 ——
+ *    适用于"跨服务必须传，但状态不在 KudosContext 里"的数据。当前有一个生产中实现：
+ *    `SeataFeignXidProcessor`（在 `kudos-ability-distributed-tx-seata` 模块）把 Seata 的
+ *    `RootContext.getXID()` 写入 `TX_XID` 请求头，让被调用方能 bind 回同一个全局事务
+ *    上下文。这两端配合，分布式事务的 `@GlobalTransactional` 才能正确发起分支注册和回滚。
  * 
  * 添加的请求头：
  * - TENANT_ID：租户ID
@@ -61,8 +65,12 @@ class GlobalHeaderRequestInterceptor : RequestInterceptor {
      * - FEIGN_REQUEST：标识为Feign请求，值为"true"
      * 
      * 扩展机制：
-     * - 支持通过IFeignRequestContextProcess接口扩展请求头处理逻辑
+     * - 通过 [IFeignRequestContextProcess] SPI 扩展请求头处理逻辑
      * - 所有实现类都会被调用，可以添加额外的请求头信息
+     * - 主要使用场景：跨服务需要传递的状态不在 [io.kudos.context.core.KudosContext] 内部，
+     *   而是放在别的线程局部变量里（例如 Seata 的 `RootContext` 持有全局事务 XID）。
+     *   现有实现：`SeataFeignXidProcessor`（`kudos-ability-distributed-tx-seata` 模块）
+     *   注入 `TX_XID` 头，配套服务端 `SeataXidServletFilter` 把它 bind 回 RootContext。
      * 
      * 注意事项：
      * - 该拦截器会应用到所有Feign请求
