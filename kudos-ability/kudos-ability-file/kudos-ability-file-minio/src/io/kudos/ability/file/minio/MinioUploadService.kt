@@ -15,24 +15,36 @@ import org.springframework.beans.factory.annotation.Qualifier
 import java.io.ByteArrayInputStream
 
 
+/**
+ * MinIO（S3 兼容）文件上传服务。
+ *
+ * 客户端选取策略：[UploadFileModel.authServerParam] 为空时复用配置文件装的静态 `minioClient` bean；
+ * 非空时通过 [MinioClientBuilderFactory] 按认证类型（AK/SK 或 OAuth token）现场构造客户端。
+ *
+ * 上传前会调用 [createBucket] 自动建桶——仅在静态客户端模式下；动态认证模式下假定 bucket 已存在
+ * （动态权限多半没有 `s3:CreateBucket` 权限，访问 `bucketExists` 也可能 403）。
+ *
+ * @author K
+ * @since 1.0.0
+ */
 open class MinioUploadService : AbstractUploadService() {
-    
+
     @Autowired
     private lateinit var properties: MinioProperties
 
     @Autowired
     private lateinit var minioClientBuilderFactory: MinioClientBuilderFactory
 
-    //静态客户端: 基于配置文件
+    /** 静态客户端：来自 `kudos.ability.file.minio.{endpoint,accessKey,secretKey}` 装配。 */
     @Autowired
     @Qualifier("minioClient")
     private lateinit var minioClientDefault: MinioClient
 
     /**
-     * 动态客户端: 基于认证参数
+     * 按 [UploadFileModel.authServerParam] 决定使用静态 / 动态客户端。
      *
-     * @param model
-     * @throws Exception
+     * @param model 上传请求；`authServerParam` 为空时用默认静态客户端
+     * @throws IllegalArgumentException 找不到对应认证类型的 builder
      */
     protected fun getMinioClient(model: UploadFileModel<*>): MinioClient {
         val auth = model.authServerParam ?: return minioClientDefault
@@ -40,10 +52,20 @@ open class MinioUploadService : AbstractUploadService() {
         return requireNotNull(minioClientBuilderFactory.getInstance(auth)) { "MinioClient builder not found" }.build()
     }
 
+    /**
+     * 桶不存在则创建（仅静态客户端模式）。
+     *
+     * 动态认证场景下直接返回——动态颁发的 token 通常没有 `s3:CreateBucket` 权限，连
+     * `bucketExists` 都可能 403。**这要求业务侧提前在 MinIO 控制台预创建所有用到的 bucket**，
+     * 否则后续 `putObject` 会拿到 `NoSuchBucket` 错误。
+     *
+     * 注：旧实现这里有一段 `setPolicy(...)` 配置匿名读策略的代码，但其 `Version` 字段写成了
+     * `"2025-07-02"`（标准应当是 AWS IAM 的 `"2012-10-17"`），MinIO / S3 会拒收；另外开匿名
+     * 读不是所有部署都接受。该死代码已移除——bucket policy 应通过 MinIO 控制台 / mc 命令
+     * 显式配置，避免应用层悄悄开放公网读。
+     */
     protected fun createBucket(minioClient: MinioClient, model: UploadFileModel<*>) {
         if (model.authServerParam != null) {
-            // warning: 动态权限时,默认bucket需要手工创建.
-            // todo:  minioClient.bucketExists 的需要哪个policy?
             return
         }
         val bucketArg = BucketExistsArgs.builder().bucket(model.bucketName).build()
@@ -52,36 +74,7 @@ open class MinioUploadService : AbstractUploadService() {
                 .bucket(model.bucketName)
                 .build()
             minioClient.makeBucket(makeBucketArgs)
-            //设置匿名访问
-            //setPolicy(minioClient, model.getBucketName());
         }
-    }
-
-    private fun setPolicy(minioClient: MinioClient, bucketName: String?) {
-        // 下发匿名读策略
-        val policyJson = "{\n" +
-                "  \"Version\": \"2025-07-02\",\n" +
-                "  \"Statement\": [\n" +
-                "    {\n" +
-                "      \"Effect\": \"Allow\",\n" +
-                "      \"Principal\": { \"AWS\": [\"*\"] },\n" +
-                "      \"Action\": [\"s3:GetBucketLocation\",\"s3:ListBucket\"],\n" +
-                "      \"Resource\": [\"arn:aws:s3:::" + bucketName + "\"]\n" +
-                "    },\n" +
-                "    {\n" +
-                "      \"Effect\": \"Allow\",\n" +
-                "      \"Principal\": { \"AWS\": [\"*\"] },\n" +
-                "      \"Action\": [\"s3:GetObject\"],\n" +
-                "      \"Resource\": [\"arn:aws:s3:::" + bucketName + "/*\"]\n" +
-                "    }\n" +
-                "  ]\n" +
-                "}"
-        minioClient.setBucketPolicy(
-            SetBucketPolicyArgs.builder()
-                .bucket(bucketName)
-                .config(policyJson)
-                .build()
-        )
     }
 
     override fun saveFile(model: UploadFileModel<*>, fileDir: String): String {
