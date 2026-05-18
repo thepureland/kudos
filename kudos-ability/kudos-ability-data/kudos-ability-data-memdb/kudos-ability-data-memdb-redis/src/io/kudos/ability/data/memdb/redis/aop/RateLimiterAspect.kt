@@ -19,6 +19,16 @@ import org.springframework.scripting.support.ResourceScriptSource
 import org.springframework.stereotype.Component
 
 
+/**
+ * [RateLimiter] 注解的实现切面。在被注解方法执行前调用一次 `limit.lua` 脚本：
+ *  - 脚本对 `combineKey` 做 `INCR`；首次设置 `EXPIRE time`
+ *  - 返回 0 表示已超阈值，本切面将其翻译为 `ServiceException(SC_REQUEST_FREQUENTLY)`
+ *
+ * 注：所有限流都走 [RedisTemplates.defaultRedisTemplate]，目前不支持多 redis 实例分别限流。
+ *
+ * @author K
+ * @since 1.0.0
+ */
 @Component
 @Aspect
 @Lazy
@@ -28,6 +38,10 @@ class RateLimiterAspect {
     @Lazy
     private lateinit var redisTemplates: RedisTemplates
 
+    /**
+     * 进方法前调用一次 lua 计数脚本；超阈值抛 `ServiceException(SC_REQUEST_FREQUENTLY)`。
+     * 非业务异常（Redis 故障等）统一包成 `RuntimeException` 透出，避免吞掉问题。
+     */
     @Before("@annotation(rateLimiter)")
     fun doBefore(point: JoinPoint, rateLimiter: RateLimiter) {
         val time: Int = rateLimiter.time
@@ -59,6 +73,10 @@ class RateLimiterAspect {
         }
     }
 
+    /**
+     * 拼接 Redis 限流计数 key。结构 `rate.limit[<id>-]<class>-<method>`，其中 `<id>` 仅在
+     * [LimitType.IP] / [LimitType.USER] 时存在；[LimitType.DEFAULT] 整个进程共享 key。
+     */
     fun getCombineKey(rateLimiter: RateLimiter, point: JoinPoint): String {
         val signature = point.signature as MethodSignature
         val method = signature.method
@@ -83,13 +101,16 @@ class RateLimiterAspect {
         private val argSerializer = argSerializer()
         private val resultSerializer: RedisSerializer<Long> = resultSerializer()
 
+        /**
+         * 从 classpath 加载 `limit.lua` 并构造 `RedisScript<Long>`。
+         * 加载失败立即抛错（启动期失败优于运行期才发现 lua 缺失）。
+         */
         fun buildLuaScript(): RedisScript<Long> {
             val classPathResource = org.springframework.core.io.ClassPathResource("limit.lua")
             try {
                 val redisScript: DefaultRedisScript<Long> = DefaultRedisScript()
-                @Suppress("UNCHECKED_CAST")
                 redisScript.resultType = Long::class.java
-                classPathResource.inputStream //探测资源是否存在
+                classPathResource.inputStream.use { /* 仅探测资源存在 */ }
                 redisScript.setScriptSource(ResourceScriptSource(classPathResource))
                 return redisScript
             } catch (e: Exception) {
@@ -97,15 +118,14 @@ class RateLimiterAspect {
             }
         }
 
-        /**
-         * 參數序列化
-         */
+        /** lua 脚本入参序列化器（key / arg 均为字符串）。 */
         private fun argSerializer() = StringRedisSerializer()
 
         /**
-         * 結果序列化
+         * lua 脚本返回值序列化器：Long ↔ ASCII 字符串。
+         * 注：不能用 [org.springframework.data.redis.serializer.GenericToStringSerializer]，
+         * 因为 RedisScript 的结果类型由本序列化器单独控制，需精确解码为 Long。
          */
-        @Suppress("UNCHECKED_CAST")
         private fun resultSerializer(): RedisSerializer<Long> {
             return object : RedisSerializer<Long> {
                 override fun serialize(aLong: Long?): ByteArray {
@@ -116,7 +136,7 @@ class RateLimiterAspect {
                     if (bytes == null) return null
                     return String(bytes).toLong()
                 }
-            } as RedisSerializer<Long>
+            }
         }
     }
 

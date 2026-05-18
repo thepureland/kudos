@@ -4,6 +4,7 @@ import com.alibaba.fastjson2.JSON
 import io.kudos.ability.data.memdb.redis.RedisTemplates
 import io.kudos.ability.data.memdb.redis.consts.CacheKey
 import io.kudos.ability.data.memdb.redis.dao.support.CriteriaRedisResolver
+import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.sort.DirectionEnum
 import io.kudos.base.query.sort.Order
@@ -211,8 +212,9 @@ open class IdEntitiesRedisHashDao(
 
     private fun toDouble(value: Any): Double = when (value) {
         is Number -> value.toDouble()
-        is String -> value.toDoubleOrNull() ?: Double.MIN_VALUE
-        else -> Double.MIN_VALUE
+        // -Double.MAX_VALUE 是负方向最远；Double.MIN_VALUE 实为最小**正**数，绝不能当做下界 fallback
+        is String -> value.toDoubleOrNull() ?: -Double.MAX_VALUE
+        else -> -Double.MAX_VALUE
     }
 
     /**
@@ -238,10 +240,8 @@ open class IdEntitiesRedisHashDao(
         val template = getRedisTemplate()
         val indexKeyPrefix = getIndexKeyPrefix(dataKeyPrefix)
         val resolver = CriteriaRedisResolver(indexKeyPrefix, template)
-        val ids: Set<String> = resolver.resolveToIds(criteria) ?: run {
-            val keys = template.opsForHash<String, Any>().keys(dataKeyPrefix) ?: emptySet()
-            keys.map { it }.toSet()
-        }
+        val ids: Set<String> = resolver.resolveToIds(criteria)
+            ?: (template.opsForHash<String, Any>().keys(dataKeyPrefix) ?: emptySet())
         if (ids.isEmpty()) return emptyList()
         val pNo = if (pageNo < 1) 1 else pageNo
         val pSize = if (pageSize < 1) 1 else pageSize
@@ -388,13 +388,17 @@ open class IdEntitiesRedisHashDao(
         return null
     }
 
-    @Suppress("UNCHECKED_CAST")
+    /**
+     * 把 Redis 取出的原始值（可能已被 Spring Data Redis 反序列化为对象，也可能仍是 JSON 字符串）
+     * 统一转成目标实体。解析失败返回 null 并打 warn，避免一行脏数据拖垮整个列表查询。
+     */
     private fun <E : IIdEntity<*>> parseToEntity(raw: Any, entityClass: KClass<E>): E? = try {
         when (raw) {
             is String -> JSON.parseObject(raw, entityClass.java)
             else -> JSON.parseObject(JSON.toJSONString(raw), entityClass.java)
         }
-    } catch (_: Exception) {
+    } catch (e: Exception) {
+        log.warn("redis hash 值反序列化失败，已跳过此条记录: type={0}, error={1}", entityClass.simpleName, e.message)
         null
     }
 
@@ -403,4 +407,8 @@ open class IdEntitiesRedisHashDao(
     /** 二级索引 key 前缀 */
     protected fun getIndexKeyPrefix(dataKeyPrefix: String): String =
         CacheKey.getCacheKey(dataKeyPrefix, "idx")
+
+    companion object {
+        private val log = LogFactory.getLog(IdEntitiesRedisHashDao::class)
+    }
 }
