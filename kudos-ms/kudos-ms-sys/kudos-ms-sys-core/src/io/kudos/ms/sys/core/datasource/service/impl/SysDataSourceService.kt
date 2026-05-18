@@ -168,6 +168,17 @@ open class SysDataSourceService(
     override fun getDataSourcesBySubSystemCode(subSystemCode: String): List<SysDataSourceRow> =
         dao.searchAs(Criteria(SysDataSource::subSystemCode eq subSystemCode))
 
+    override fun testConnection(url: String, username: String, password: String?): Boolean {
+        return try {
+            io.kudos.ability.data.rdb.jdbc.kit.RdbKit.newConnection(url, username, password).use { conn ->
+                io.kudos.ability.data.rdb.jdbc.kit.RdbKit.testConnection(conn)
+            }
+        } catch (e: Exception) {
+            log.warn("测试数据源连通性失败 url=${url} username=${username}: ${e.message}")
+            false
+        }
+    }
+
     private fun enrichTenantNames(records: List<SysDataSourceRow>) {
         if (records.isEmpty()) return
         val tenants = sysTenantApi.getTenantsFromCacheByIds(records.mapNotNull { it.tenantId })

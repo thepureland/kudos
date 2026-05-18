@@ -1,6 +1,9 @@
 package io.kudos.ms.sys.common.accessrule.api
 
 import io.kudos.ms.sys.common.accessrule.vo.response.SysAccessRuleRow
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PutMapping
+import org.springframework.web.bind.annotation.RequestParam
 
 
 /**
@@ -18,12 +21,11 @@ interface ISysAccessRuleApi {
      * @param systemCode 系统编码，缺省为"default"
      * @param tenantId 租户id，缺省为"default"
      * @return 访问规则记录，找不到返回null
-     * @author K
-     * @since 1.0.0
      */
+    @GetMapping("/api/internal/sys/accessRule/getAccessRule")
     fun getAccessRuleByTenantAndSystem(
-        systemCode: String = "default",
-        tenantId: String = "default"
+        @RequestParam(required = false, defaultValue = "default") systemCode: String = "default",
+        @RequestParam(required = false, defaultValue = "default") tenantId: String = "default"
     ): SysAccessRuleRow?
 
     /**
@@ -33,7 +35,8 @@ interface ISysAccessRuleApi {
      * @param active 是否启用
      * @return 是否更新成功
      */
-    fun updateActive(id: String, active: Boolean): Boolean
+    @PutMapping("/api/internal/sys/accessRule/updateActive")
+    fun updateActive(@RequestParam id: String, @RequestParam active: Boolean): Boolean
 
 
 }

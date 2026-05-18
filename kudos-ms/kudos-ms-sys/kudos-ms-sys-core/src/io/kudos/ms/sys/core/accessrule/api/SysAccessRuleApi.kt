@@ -3,6 +3,7 @@ package io.kudos.ms.sys.core.accessrule.api
 import io.kudos.ms.sys.common.accessrule.api.ISysAccessRuleApi
 import io.kudos.ms.sys.common.accessrule.vo.response.SysAccessRuleRow
 import io.kudos.ms.sys.core.accessrule.service.iservice.ISysAccessRuleService
+import org.springframework.context.annotation.Primary
 import org.springframework.stereotype.Service
 
 
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service
  * @author K
  * @since 1.0.0
  */
+@Primary
 @Service
 open class SysAccessRuleApi(
     private val sysAccessRuleService: ISysAccessRuleService,

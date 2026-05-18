@@ -3,6 +3,7 @@ package io.kudos.ms.sys.core.i18n.api
 import io.kudos.ms.sys.common.i18n.api.ISysI18nApi
 import io.kudos.ms.sys.common.i18n.vo.request.SysI18nFormUpdate
 import io.kudos.ms.sys.core.i18n.service.iservice.ISysI18nService
+import org.springframework.context.annotation.Primary
 import org.springframework.stereotype.Service
 
 
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service
  * @author K
  * @since 1.0.0
  */
+@Primary
 @Service
 open class SysI18nApi(
     private val sysI18nService: ISysI18nService,
