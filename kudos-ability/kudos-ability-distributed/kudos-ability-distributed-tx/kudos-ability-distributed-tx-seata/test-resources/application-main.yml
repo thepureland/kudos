@@ -10,7 +10,10 @@ spring:
     name: main-at
   datasource:
     dynamic:
-#      seata: true
+      seata: true   # 让 baomidou dynamic-datasource 在 Bean 装配时就用 SeataDataSourceProxy 包装 DS，
+                    # 确保 Spring @Transactional 走的连接与 Ktorm 走的连接是同一个 Seata-proxied 连接。
+                    # 否则 Ktorm 通过 currentDataSource() 拿代理、Spring TX 拿裸 Hikari —— 写发生在
+                    # Spring TX 之外的孤儿连接上，is-auto-commit=false 让 Hikari 还池时回滚了它。
       primary: postgres
       hikari:
         connection-timeout: 30000
