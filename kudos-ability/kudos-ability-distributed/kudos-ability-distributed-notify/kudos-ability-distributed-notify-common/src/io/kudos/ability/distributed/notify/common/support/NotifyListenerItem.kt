@@ -4,12 +4,19 @@ import io.kudos.ability.distributed.notify.common.api.INotifyListener
 
 
 /**
- * 创建人： Younger
- * 日期： 2022/11/14 16:31
- * 描述：
+ * [INotifyListener] bean 注册表——按 `(namespace, type)` 索引。
+ *
+ * 并发约定：写入仅在 Spring `BeanPostProcessor` 阶段（单线程）；读取在 MQ 派发阶段
+ * （多线程）。`mutableMapOf` 没有显式同步——依赖 Spring 装配完成后才有 MQ 流量到达
+ * 的隐式 happens-before。如果业务侧在 runtime 动态注册 listener，需要自行 sync。
+ *
+ * @author Younger
+ * @author K
+ * @since 1.0.0
  */
 object NotifyListenerItem {
 
+    /** 当 listener 没指定 namespace 时回落的默认值。 */
     const val DEFAULT_NAMESPACE: String = "default"
 
     private val notifyListenerMap = mutableMapOf<String, MutableMap<String, INotifyListener>>()
