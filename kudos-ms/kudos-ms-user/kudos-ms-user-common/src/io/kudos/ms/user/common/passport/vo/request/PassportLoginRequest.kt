@@ -28,4 +28,15 @@ data class PassportLoginRequest(
     /** 登录方 IP（已转 BigInt 形式存储）；可为 null 不写日志 */
     val loginIp: Long? = null,
 
+    /**
+     * OTP 验证码（6 位数字）。
+     *
+     * - 用户**未启用 OTP**时（即 `authentication_key` 为空）：本字段被忽略
+     * - 用户**已启用 OTP**时：
+     *     - 不传 → 后端返回 OTP_REQUIRED，前端再弹 OTP 输入框
+     *     - 传错 → 返回 OTP_WRONG，等同于密码错（错误计数已累加）
+     *     - 传对 → 与密码正确同等，登录成功
+     */
+    val authCode: Long? = null,
+
 )
