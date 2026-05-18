@@ -1,8 +1,11 @@
 package io.kudos.ms.user.core.passport.service
 
 import io.kudos.base.security.PasswordKit
+import io.kudos.ms.user.common.passport.enums.ChangePasswordResultEnum
 import io.kudos.ms.user.common.passport.enums.PassportLoginStatusEnum
+import io.kudos.ms.user.common.passport.vo.request.ChangePasswordRequest
 import io.kudos.ms.user.common.passport.vo.request.PassportLoginRequest
+import io.kudos.ms.user.common.passport.vo.request.VerifyPasswordRequest
 import io.kudos.ms.user.core.account.cache.UserAccountHashCache
 import io.kudos.ms.user.core.account.dao.UserAccountDao
 import io.kudos.ms.user.core.account.model.po.UserAccount
@@ -188,5 +191,70 @@ class PassportServiceTest : RdbAndRedisCacheTestBase() {
     fun logout_unknownUser_returnsFalse() {
         val ok = passportService.logout("00000000-0000-0000-0000-000000000000")
         assertFalse(ok)
+    }
+
+    // ---- verifyPassword ------------------------------------------------------------------
+
+    @Test
+    fun verifyPassword_correct_returnsTrue() {
+        val ok = passportService.verifyPassword(VerifyPasswordRequest(activeUserId, plainPassword))
+        assertTrue(ok)
+        // 不消耗错误次数
+        assertEquals(0, userAccountDao.get(activeUserId)?.loginErrorTimes)
+    }
+
+    @Test
+    fun verifyPassword_wrong_returnsFalseAndDoesNotIncrementCounter() {
+        val ok = passportService.verifyPassword(VerifyPasswordRequest(activeUserId, "wrong"))
+        assertFalse(ok)
+        // 关键：不消耗错误次数（与 login 不同）
+        assertEquals(0, userAccountDao.get(activeUserId)?.loginErrorTimes)
+    }
+
+    @Test
+    fun verifyPassword_unknownUser_returnsFalse() {
+        val ok = passportService.verifyPassword(
+            VerifyPasswordRequest("00000000-0000-0000-0000-000000000000", plainPassword)
+        )
+        assertFalse(ok)
+    }
+
+    // ---- changePassword ------------------------------------------------------------------
+
+    @Test
+    fun changePassword_success_updatesAndIsImmediatelyUsable() {
+        val newPlain = "brand-new-password-456"
+        val res = passportService.changePassword(
+            ChangePasswordRequest(activeUserId, plainPassword, newPlain)
+        )
+        assertEquals(ChangePasswordResultEnum.SUCCESS, res)
+
+        // 旧密码不再有效
+        assertFalse(passportService.verifyPassword(VerifyPasswordRequest(activeUserId, plainPassword)))
+        // 新密码有效
+        assertTrue(passportService.verifyPassword(VerifyPasswordRequest(activeUserId, newPlain)))
+    }
+
+    @Test
+    fun changePassword_wrongOldPassword_returnsErrorAndDoesNotWrite() {
+        val originalHash = userAccountDao.get(activeUserId)?.loginPassword
+        val res = passportService.changePassword(
+            ChangePasswordRequest(activeUserId, "wrong-old", "doesnt-matter")
+        )
+        assertEquals(ChangePasswordResultEnum.OLD_PASSWORD_WRONG, res)
+        // 数据库里 hash 没动
+        assertEquals(originalHash, userAccountDao.get(activeUserId)?.loginPassword)
+    }
+
+    @Test
+    fun changePassword_unknownUser_returnsUserNotFound() {
+        val res = passportService.changePassword(
+            ChangePasswordRequest(
+                userId = "00000000-0000-0000-0000-000000000000",
+                oldPlainPassword = "anything",
+                newPlainPassword = "anything-new",
+            )
+        )
+        assertEquals(ChangePasswordResultEnum.USER_NOT_FOUND, res)
     }
 }
