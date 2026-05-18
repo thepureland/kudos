@@ -26,10 +26,13 @@ interface IUserOrgService : IBaseCrudService<String, UserOrg> {
     fun getOrgAdmins(orgId: String): List<UserAccountCacheEntry>
 
     /**
-     * 根据机构ID获取该机构下的所有用户ID列表（包括管理员和普通用户）
+     * 根据机构ID获取该机构及其所有启用子孙机构下的用户ID列表（含管理员和普通用户，去重）。
+     *
+     * 业务场景："销售总监" 查 "销售部" → 应包含 "销售部/华东" 等子机构的成员。
+     * 如果只要直接挂载在该机构的成员，请直接走 [io.kudos.ms.user.core.account.dao.UserOrgUserDao.searchUserIdsByOrgId]。
      *
      * @param orgId 机构ID
-     * @return List<String> 用户ID列表，如果机构不存在或没有用户则返回空列表
+     * @return List<String> 用户ID列表，机构不存在或子树为空时返回空列表
      */
     fun getOrgUserIds(orgId: String): List<String>
 
@@ -42,19 +45,23 @@ interface IUserOrgService : IBaseCrudService<String, UserOrg> {
     fun getChildOrgIds(orgId: String): List<String>
 
     /**
-     * 根据机构ID获取该机构下的所有用户列表（包括管理员和普通用户）
+     * 根据机构ID获取该机构及其所有启用子孙机构下的用户列表（含管理员和普通用户，去重）。
+     * 语义等价于 [getOrgUserIds] 转 [UserAccountCacheEntry]。
      *
      * @param orgId 机构ID
-     * @return List<UserAccountCacheEntry> 用户列表，如果机构不存在或没有用户则返回空列表
+     * @return List<UserAccountCacheEntry> 用户列表
      */
     fun getOrgUsers(orgId: String): List<UserAccountCacheEntry>
 
     /**
-     * 检查用户是否属于指定机构
+     * 检查用户是否属于指定机构或其任意启用子孙机构。
+     *
+     * 即"用户处于 orgId 子树之内"。如果只要判断"用户直接挂载在 orgId"，
+     * 走 [io.kudos.ms.user.core.account.dao.UserOrgUserDao.exists]。
      *
      * @param userId 用户ID
      * @param orgId 机构ID
-     * @return true表示用户属于该机构，false表示不属于
+     * @return true 表示在子树内
      */
     fun isUserInOrg(userId: String, orgId: String): Boolean
 
