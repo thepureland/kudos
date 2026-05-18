@@ -259,5 +259,20 @@ interface IUserAccountService : IBaseCrudService<String, UserAccount> {
      */
     fun unfreezeAccount(id: String): Boolean
 
+    /**
+     * 扫描并清理已过期的冻结记录：`freeze_end_time IS NOT NULL AND freeze_end_time < now()`。
+     *
+     * 注意：登录判定本身已经能识别"过期窗口外的冻结"放行（参见 `PassportService.isCurrentlyFrozen`），
+     * 所以此方法**仅作清理**，不影响功能正确性。意义在于：
+     *   - 让 admin 列表展示干净（不再看到"已过期但仍标记冻结"的脏数据）
+     *   - 避免缓存里的 freeze_* 字段长期持有无意义数据
+     *
+     * 调度策略由调用方决定——可由 `AutoUnfreezeScheduler` 自动跑（前提：消费方启用
+     * `@EnableScheduling`），也可由管理端手动触发。
+     *
+     * @return 清理掉的账号数量
+     */
+    fun cleanExpiredFreezes(): Int
+
 
 }

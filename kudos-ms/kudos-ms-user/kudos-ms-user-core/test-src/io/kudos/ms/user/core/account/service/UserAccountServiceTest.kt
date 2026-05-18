@@ -269,4 +269,44 @@ class UserAccountServiceTest : RdbAndRedisCacheTestBase() {
         assertNull(po.freezeTitle)
         assertNull(po.freezeContent)
     }
+
+    /** cleanExpiredFreezes 只清理 freeze_end_time < now 的记录；永久冻结和未来生效的保留。 */
+    @Test
+    fun cleanExpiredFreezes_clearsExpiredOnly_keepsPermanentAndFuture() {
+        val expiredId = "a970f8c0-0000-0000-0000-000000000017"
+        val permanentId = "a970f8c0-0000-0000-0000-000000000018"
+        val futureId = "a970f8c0-0000-0000-0000-000000000016"
+
+        userAccountService.freezeAccount(
+            expiredId, "manual", "expired", "c",
+            freezeStartTime = LocalDateTime.now().minusDays(2),
+            freezeEndTime = LocalDateTime.now().minusDays(1),
+        )
+        userAccountService.freezeAccount(
+            permanentId, "admin", "permanent", "c",
+            freezeStartTime = null, freezeEndTime = null,
+        )
+        userAccountService.freezeAccount(
+            futureId, "scheduled", "future", "c",
+            freezeStartTime = LocalDateTime.now().plusDays(1),
+            freezeEndTime = LocalDateTime.now().plusDays(2),
+        )
+
+        val cleared = userAccountService.cleanExpiredFreezes()
+        assertTrue(cleared >= 1, "至少清掉过期的那一条")
+
+        // 过期的被清掉
+        assertNull(userAccountService.get(expiredId)?.freezeType)
+        // 永久冻结保留
+        assertEquals("admin", userAccountService.get(permanentId)?.freezeType)
+        // 未来才生效的也保留（freezeEndTime 在未来）
+        assertEquals("scheduled", userAccountService.get(futureId)?.freezeType)
+    }
+
+    /** cleanExpiredFreezes 在没有过期记录时返回 0、不抛异常。 */
+    @Test
+    fun cleanExpiredFreezes_noExpired_returnsZero() {
+        val cleared = userAccountService.cleanExpiredFreezes()
+        assertEquals(0, cleared)
+    }
 }
