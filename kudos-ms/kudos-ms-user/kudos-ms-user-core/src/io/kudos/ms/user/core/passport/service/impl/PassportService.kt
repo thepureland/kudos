@@ -49,7 +49,8 @@ open class PassportService(
         val passwordMatches = PasswordKit.matches(req.plainPassword, user.loginPassword)
         if (!passwordMatches) {
             userAccountService.incrementLoginErrorTimes(user.id)
-            val accumulated = (user.loginErrorTimes ?: 0) + 1
+            // 用 DAO 直查的 Row 拿到刚自增后的真实计数；不依赖缓存（缓存可能因事件未提交而滞后）
+            val accumulated = userAccountService.getUserRecord(user.id)?.loginErrorTimes ?: ((user.loginErrorTimes ?: 0) + 1)
             log.debug("登录失败 - 密码错误: userId=${user.id} 累计错误次数=${accumulated}")
             return PassportLoginResult.wrongPassword(accumulated)
         }
