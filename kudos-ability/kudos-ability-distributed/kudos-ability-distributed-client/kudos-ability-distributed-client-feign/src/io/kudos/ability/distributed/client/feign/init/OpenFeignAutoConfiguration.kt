@@ -21,24 +21,19 @@ import org.springframework.context.annotation.Configuration
 @AutoConfigureAfter(ContextAutoConfiguration::class)
 open class OpenFeignAutoConfiguration : IComponentInitializer {
 
-//    @Autowired
-//    lateinit var objectMapper: ObjectMapper
-
+    /**
+     * 全局 Feign 请求拦截器——把 kudos 上下文（tenantId / subSysCode / traceKey 等）
+     * 自动塞进每个 Feign 请求头。详细行为见 [GlobalHeaderRequestInterceptor]。
+     */
     @Bean("globalHeaderRequestInterceptor")
     open fun feignCacheRequestInterceptor(): RequestInterceptor = GlobalHeaderRequestInterceptor()
 
+    /**
+     * 全局 Feign 降级工厂：按异常类型映射 HTTP 状态码，配合 `@FeignClient(fallbackFactory = ...)` 使用。
+     */
     @Bean
     @ConditionalOnMissingBean
     open fun globalFeignFallBackFactory() = GlobalFeignFallBackFactory()
-
-//    @Bean
-//    open fun mappingJsonpHttpMessageConverter(): MappingJackson2HttpMessageConverter {
-//        val mapper = jackson2ObjectMapperBuilder.build<ObjectMapper?>()
-//        mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, true)
-//        //mapper.setDateFormat(new DateFormattor());
-//        val mappingJsonpHttpMessageConverter = MappingJackson2HttpMessageConverter(mapper)
-//        return mappingJsonpHttpMessageConverter
-//    }
 
     override fun getComponentName() = "kudos-ability-distributed-client-feign"
 
