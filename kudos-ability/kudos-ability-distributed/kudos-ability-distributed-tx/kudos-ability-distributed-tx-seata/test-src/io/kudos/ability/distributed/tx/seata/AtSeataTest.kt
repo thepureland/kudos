@@ -18,7 +18,7 @@ import kotlin.test.Test
  */
 @EnableKudosTest
 @EnabledIfDockerInstalled
-@Import(Service::class, io.kudos.ability.distributed.tx.seata.feign.SeataFeignXidConfig::class)
+@Import(Service::class)
 open class AtSeataTest : SeataTestBase() {
 
     override fun txServiceGroup() = "other_tx_group"
