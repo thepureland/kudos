@@ -4,9 +4,15 @@ import java.io.Serial
 import java.io.Serializable
 
 /**
- * @Description 发送邮件的请求体
- * @Author paul
- * @Date 2023/2/9 11:15
+ * 邮件发送请求体。
+ *
+ * 字段语义参见各 var 的内联 kdoc；典型用法是业务层填好后交给 [io.kudos.ability.comm.email.handler.EmailHandler.send]。
+ *
+ * **不要把本类的实例输出到日志** —— `senderPassword` 是明文，序列化后会带出去。
+ *
+ * @author paul
+ * @author K
+ * @since 1.0.0
  */
 class EmailRequest : Serializable {
     /**

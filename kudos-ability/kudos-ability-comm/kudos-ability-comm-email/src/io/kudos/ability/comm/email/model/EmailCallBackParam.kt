@@ -5,9 +5,16 @@ import java.io.Serial
 import java.io.Serializable
 
 /**
- * @Description 发送邮件的回调响应体
- * @Author paul
- * @Date 2023/2/9 11:15
+ * 邮件发送回调载体。`EmailHandler.send(...)` 的 callback 收到本对象——业务侧据此
+ * 写"邮件发送记录"或触发重发。
+ *
+ * - [status] `SUCCESS` —— 全部收件人都发出
+ * - [status] `SUCCESS_PART` —— 部分收件人发出，[successEmails] / [failEmails] 各非空
+ * - [status] `FAIL` —— 全部失败（[failEmails] 即为原 receivers）
+ *
+ * @author paul
+ * @author K
+ * @since 1.0.0
  */
 class EmailCallBackParam : Serializable {
     /**
