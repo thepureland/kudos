@@ -167,11 +167,65 @@ class UserAccountServiceTest : RdbAndRedisCacheTestBase() {
         val id = "a970f8c0-0000-0000-0000-000000000017"
         // 先增加错误次数
         userAccountService.incrementSecurityPasswordErrorTimes(id)
-        
+
         // 然后重置
         assertTrue(userAccountService.resetSecurityPasswordErrorTimes(id))
         val user = userAccountService.getUserRecord(id)
         assertNotNull(user)
         assertTrue(user.securityPasswordErrorTimes == 0)
+    }
+
+    /** resetAuthKey 生成新 secret 并落库；返回的 otpauth URL 形态合法。 */
+    @Test
+    fun resetAuthKey_storesSecretAndReturnsOtpauthUrl() {
+        val id = "a970f8c0-0000-0000-0000-000000000017"
+        val setup = userAccountService.resetAuthKey(id, "alice", "kudos")
+        assertNotNull(setup)
+        assertTrue(setup.secret.isNotBlank())
+        assertTrue(setup.otpauthUrl.startsWith("otpauth://totp/"))
+        assertTrue(setup.otpauthUrl.contains("secret=${setup.secret}"))
+        assertTrue(setup.otpauthUrl.contains("issuer=kudos"))
+        // 数据库里应该存了 secret
+        val user = userAccountService.get(id)
+        assertNotNull(user)
+        assertEquals(setup.secret, user.authenticationKey)
+    }
+
+    /** resetAuthKey 对不存在的用户应当返回 null（dao.update 失败）。 */
+    @Test
+    fun resetAuthKey_unknownUser_returnsNull() {
+        val res = userAccountService.resetAuthKey(
+            "00000000-0000-0000-0000-000000000000", "alice", "kudos"
+        )
+        assertNull(res)
+    }
+
+    /** cleanAuthKey 清掉已有 secret。 */
+    @Test
+    fun cleanAuthKey_clearsExistingSecret() {
+        val id = "a970f8c0-0000-0000-0000-000000000017"
+        // 先种一个 secret
+        userAccountService.resetAuthKey(id, "alice", "kudos")
+        assertNotNull(userAccountService.get(id)?.authenticationKey)
+
+        assertTrue(userAccountService.cleanAuthKey(id))
+        assertNull(userAccountService.get(id)?.authenticationKey)
+    }
+
+    /** verifyAuthCode 在未启用 OTP（authenticationKey=null）时返回 false。 */
+    @Test
+    fun verifyAuthCode_noKey_returnsFalse() {
+        val id = "a970f8c0-0000-0000-0000-000000000017"
+        userAccountService.cleanAuthKey(id)
+        assertFalse(userAccountService.verifyAuthCode(id, 123456L))
+    }
+
+    /** verifyAuthCode 对一个明显错误的验证码返回 false（不抛异常）。 */
+    @Test
+    fun verifyAuthCode_wrongCode_returnsFalse() {
+        val id = "a970f8c0-0000-0000-0000-000000000017"
+        userAccountService.resetAuthKey(id, "alice", "kudos")
+        // 0 几乎不可能匹配当前时间窗的 TOTP
+        assertFalse(userAccountService.verifyAuthCode(id, 0L))
     }
 }

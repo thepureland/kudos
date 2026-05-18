@@ -3,7 +3,9 @@ package io.kudos.ms.user.core.account.service.impl
 import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
+import io.kudos.base.security.GoogleAuthenticator
 import io.kudos.base.security.PasswordKit
+import io.kudos.ms.user.common.account.vo.response.AuthKeySetup
 import io.kudos.ms.user.common.org.vo.UserOrgCacheEntry
 import io.kudos.ms.user.common.account.vo.UserAccountCacheEntry
 import io.kudos.ms.user.common.account.vo.request.UserAccountQuery
@@ -296,6 +298,54 @@ open class UserAccountService(
             log.error("删除id为${id}的用户失败！")
         }
         return success
+    }
+
+    @Transactional
+    override fun resetAuthKey(id: String, accountName: String, issuer: String): AuthKeySetup? {
+        val secret = GoogleAuthenticator.generateSecretKey()
+            ?: run {
+                log.error("生成 TOTP secret 失败: userId=${id}")
+                return null
+            }
+        val user = UserAccount {
+            this.id = id
+            this.authenticationKey = secret
+        }
+        if (!dao.update(user)) {
+            log.error("重置 TOTP secret 失败（用户不存在？）: userId=${id}")
+            return null
+        }
+        // 标准 otpauth URL，前端可直接渲染为二维码（zxing/qrcode.js 等）
+        val otpauthUrl = "otpauth://totp/${encodeOtpAuthLabel(issuer, accountName)}" +
+            "?secret=${secret}&issuer=${java.net.URLEncoder.encode(issuer, Charsets.UTF_8)}"
+        log.debug("重置 id 为 ${id} 的用户的 TOTP secret。")
+        eventPublisher.publishEvent(UserAccountUpdated(id = id))
+        return AuthKeySetup(secret = secret, otpauthUrl = otpauthUrl)
+    }
+
+    @Transactional
+    override fun cleanAuthKey(id: String): Boolean {
+        // ktorm 的 update 对于 null 字段：直接 set null 需要用 dao.updateProperties
+        val success = dao.updateProperties(id, mapOf(UserAccount::authenticationKey.name to null))
+        if (success) {
+            log.debug("清除 id 为 ${id} 的用户的 TOTP secret。")
+            eventPublisher.publishEvent(UserAccountUpdated(id = id))
+        } else {
+            log.warn("清除 TOTP secret 失败（用户不存在？）: userId=${id}")
+        }
+        return success
+    }
+
+    @Transactional(readOnly = true)
+    override fun verifyAuthCode(id: String, code: Long): Boolean {
+        val key = dao.get(id)?.authenticationKey ?: return false
+        return GoogleAuthenticator().checkCode(key, code, System.currentTimeMillis())
+    }
+
+    private fun encodeOtpAuthLabel(issuer: String, accountName: String): String {
+        // RFC 6238 / Google Authenticator 标签格式：`issuer:account`（整体再 URL 编码）
+        val label = "${issuer}:${accountName}"
+        return java.net.URLEncoder.encode(label, Charsets.UTF_8)
     }
 
     @Transactional

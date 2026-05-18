@@ -4,6 +4,7 @@ import io.kudos.ability.web.springmvc.controller.BaseCrudController
 import io.kudos.ms.user.common.account.vo.request.UserAccountFormCreate
 import io.kudos.ms.user.common.account.vo.request.UserAccountFormUpdate
 import io.kudos.ms.user.common.account.vo.request.UserAccountQuery
+import io.kudos.ms.user.common.account.vo.response.AuthKeySetup
 import io.kudos.ms.user.common.account.vo.response.UserAccountDetail
 import io.kudos.ms.user.common.account.vo.response.UserAccountEdit
 import io.kudos.ms.user.common.account.vo.response.UserAccountRow
@@ -40,5 +41,30 @@ class UserAccountAdminController :
     @PostMapping("/resetSecurityPassword")
     fun resetSecurityPassword(@RequestParam id: String, @RequestParam newPassword: String): Boolean =
         service.resetSecurityPassword(id, newPassword)
+
+    /**
+     * 重置/生成用户的 TOTP secret。
+     *
+     * @param id 用户主键
+     * @param accountName OTP App 里显示的账号名（一般传 username）
+     * @param issuer OTP App 里显示的发行方名（一般传应用名）
+     * @return secret + otpauth URL；用户不存在或写库失败返回 null
+     */
+    @PostMapping("/resetAuthKey")
+    fun resetAuthKey(
+        @RequestParam id: String,
+        @RequestParam accountName: String,
+        @RequestParam(required = false, defaultValue = "kudos") issuer: String,
+    ): AuthKeySetup? = service.resetAuthKey(id, accountName, issuer)
+
+    /** 清除 TOTP secret（关闭二次验证） */
+    @PostMapping("/cleanAuthKey")
+    fun cleanAuthKey(@RequestParam id: String): Boolean =
+        service.cleanAuthKey(id)
+
+    /** 校验用户提供的 6 位 TOTP 验证码 */
+    @PostMapping("/verifyAuthCode")
+    fun verifyAuthCode(@RequestParam id: String, @RequestParam code: Long): Boolean =
+        service.verifyAuthCode(id, code)
 
 }
