@@ -8,9 +8,18 @@ import java.io.Serializable
 
 
 /**
- * 创建人： Younger
- * 日期： 2022/11/14 15:11
- * 描述：
+ * MQ 投递的 [INotifyProducer] 实现。
+ *
+ * **关键设计**：与 `kudos-ability-log-audit-mq.MqAuditService` 同款"AOP 占位"模式 ——
+ * 方法体里 `return true` 是占位；真正的发送由 `@MqProducer` 切面（在 stream-common 模块）
+ * 拦截 messageVo 参数完成，路由到 spring-cloud-stream 的 `mqNotify-out-0` binding。
+ *
+ * **如果应用没引入 `kudos-ability-distributed-stream-*` 的 MQ producer 切面，本方法实际是
+ * no-op**——通知静默丢失。
+ *
+ * @author Younger
+ * @author K
+ * @since 1.0.0
  */
 open class NotifyMqProducer : INotifyProducer {
 
