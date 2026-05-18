@@ -25,8 +25,15 @@ import org.springframework.context.annotation.PropertySource
 )
 open class LogAuditMqAutoConfiguration : IComponentInitializer {
 
+    /**
+     * MQ 投递的 [IAuditService] 实现。
+     *
+     * `@Primary` 让本 bean 在多个 `IAuditService` 实现（MQ + RDB 同时引入）的情况下胜出——
+     * 业务侧的 LogAuditAspect 通过 `@Autowired(required=false)` 拿到的就是这个 MQ 版本。
+     * 想反过来（RDB 优先）的话需要业务方自己覆盖 bean。
+     */
     @Bean
-    @Primary // LogAudit如果同时引入mq，则优先使用mq发送日志
+    @Primary
     open fun mqAuditService(): IAuditService = MqAuditService()
 
     override fun getComponentName() = "kudos-ability-log-audit-mq"
