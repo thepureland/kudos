@@ -8,16 +8,21 @@ import io.kudos.ms.auth.core.role.service.iservice.IAuthRoleService
 import io.kudos.ms.sys.common.resource.vo.SysResourceCacheEntry
 import io.kudos.ms.user.common.account.vo.UserAccountCacheEntry
 import jakarta.annotation.Resource
+import org.springframework.context.annotation.Primary
 import org.springframework.stereotype.Service
 
 
 /**
  * 角色 API本地实现
  *
+ * 标 [Primary]：当 [io.kudos.ms.auth.api.internal.controller.role.AuthRoleInternalController]
+ * 也实现 [IAuthRoleApi] 时，Spring 注入歧义由本 bean 兜底；controller 仅做 HTTP 入口转发。
+ *
  * @author K
  * @author AI: Cursor
  * @since 1.0.0
  */
+@Primary
 @Service
 open class AuthRoleApi : IAuthRoleApi {
 

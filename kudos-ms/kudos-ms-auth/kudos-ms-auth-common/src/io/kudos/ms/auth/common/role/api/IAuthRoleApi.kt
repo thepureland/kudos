@@ -3,6 +3,10 @@ package io.kudos.ms.auth.common.role.api
 import io.kudos.ms.auth.common.role.vo.AuthRoleCacheEntry
 import io.kudos.ms.sys.common.resource.vo.SysResourceCacheEntry
 import io.kudos.ms.user.common.account.vo.UserAccountCacheEntry
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestParam
 
 
 /**
@@ -23,7 +27,8 @@ interface IAuthRoleApi {
      * @author K
      * @since 1.0.0
      */
-    fun getRoleById(id: String): AuthRoleCacheEntry?
+    @GetMapping("/api/internal/auth/role/getRoleById")
+    fun getRoleById(@RequestParam id: String): AuthRoleCacheEntry?
 
     /**
      * 根据多个id从缓存中批量获取角色信息，缓存中不存在的，从数据库中加载，并回写缓存
@@ -33,7 +38,8 @@ interface IAuthRoleApi {
      * @author K
      * @since 1.0.0
      */
-    fun getRolesByIds(ids: Collection<String>): Map<String, AuthRoleCacheEntry>
+    @PostMapping("/api/internal/auth/role/getRolesByIds")
+    fun getRolesByIds(@RequestBody ids: Collection<String>): Map<String, AuthRoleCacheEntry>
 
     /**
      * 根据租户ID和角色编码从缓存获取对应的角色ID，如果缓存中不存在，则从数据库中加载，并写回缓存
@@ -45,7 +51,8 @@ interface IAuthRoleApi {
      * @author K
      * @since 1.0.0
      */
-    fun getRoleId(tenantId: String, code: String): String?
+    @GetMapping("/api/internal/auth/role/getRoleId")
+    fun getRoleId(@RequestParam tenantId: String, @RequestParam code: String): String?
 
     /**
      * 根据角色ID获取拥有该角色的所有用户列表
@@ -55,7 +62,8 @@ interface IAuthRoleApi {
      * @author K
      * @since 1.0.0
      */
-    fun getRoleUsers(roleId: String): List<UserAccountCacheEntry>
+    @GetMapping("/api/internal/auth/role/getRoleUsers")
+    fun getRoleUsers(@RequestParam roleId: String): List<UserAccountCacheEntry>
 
     /**
      * 根据租户ID和角色编码获取拥有该角色的所有用户ID列表
@@ -66,7 +74,8 @@ interface IAuthRoleApi {
      * @author K
      * @since 1.0.0
      */
-    fun getUserIdsByRoleCode(tenantId: String, roleCode: String): List<String>
+    @GetMapping("/api/internal/auth/role/getUserIdsByRoleCode")
+    fun getUserIdsByRoleCode(@RequestParam tenantId: String, @RequestParam roleCode: String): List<String>
 
     /**
      * 根据角色ID获取该角色拥有的所有资源列表
@@ -76,7 +85,8 @@ interface IAuthRoleApi {
      * @author K
      * @since 1.0.0
      */
-    fun getRoleResources(roleId: String): List<SysResourceCacheEntry>
+    @GetMapping("/api/internal/auth/role/getRoleResources")
+    fun getRoleResources(@RequestParam roleId: String): List<SysResourceCacheEntry>
 
     /**
      * 检查角色是否拥有指定资源
@@ -87,7 +97,8 @@ interface IAuthRoleApi {
      * @author K
      * @since 1.0.0
      */
-    fun hasResource(roleId: String, resourceId: String): Boolean
+    @GetMapping("/api/internal/auth/role/hasResource")
+    fun hasResource(@RequestParam roleId: String, @RequestParam resourceId: String): Boolean
 
     /**
      * 根据租户ID获取该租户下所有激活角色的ID列表
@@ -98,7 +109,8 @@ interface IAuthRoleApi {
      * @author K
      * @since 1.0.0
      */
-    fun getRoleIds(tenantId: String): List<String>
+    @GetMapping("/api/internal/auth/role/getRoleIds")
+    fun getRoleIds(@RequestParam tenantId: String): List<String>
 
     /**
      * 根据用户ID获取该用户有权限访问的资源缓存对象列表
@@ -109,7 +121,8 @@ interface IAuthRoleApi {
      * @author K
      * @since 1.0.0
      */
-    fun getResources(userId: String): List<SysResourceCacheEntry>
+    @GetMapping("/api/internal/auth/role/getResources")
+    fun getResources(@RequestParam userId: String): List<SysResourceCacheEntry>
 
     /**
      * 根据用户ID获取该用户拥有的所有角色列表
@@ -119,7 +132,8 @@ interface IAuthRoleApi {
      * @author K
      * @since 1.0.0
      */
-    fun getUserRoles(userId: String): List<AuthRoleCacheEntry>
+    @GetMapping("/api/internal/auth/role/getUserRoles")
+    fun getUserRoles(@RequestParam userId: String): List<AuthRoleCacheEntry>
 
     /**
      * 检查用户是否拥有指定角色
@@ -130,7 +144,8 @@ interface IAuthRoleApi {
      * @author K
      * @since 1.0.0
      */
-    fun hasRole(userId: String, roleId: String): Boolean
+    @GetMapping("/api/internal/auth/role/hasRole")
+    fun hasRole(@RequestParam userId: String, @RequestParam roleId: String): Boolean
 
     /**
      * 检查用户是否拥有指定角色编码的角色
@@ -142,7 +157,12 @@ interface IAuthRoleApi {
      * @author K
      * @since 1.0.0
      */
-    fun hasRoleByCode(userId: String, tenantId: String, roleCode: String): Boolean
+    @GetMapping("/api/internal/auth/role/hasRoleByCode")
+    fun hasRoleByCode(
+        @RequestParam userId: String,
+        @RequestParam tenantId: String,
+        @RequestParam roleCode: String,
+    ): Boolean
 
     /**
      * 检查用户是否有指定资源的访问权限
@@ -153,7 +173,8 @@ interface IAuthRoleApi {
      * @author K
      * @since 1.0.0
      */
-    fun isUserHasResource(userId: String, resourceId: String): Boolean
+    @GetMapping("/api/internal/auth/role/isUserHasResource")
+    fun isUserHasResource(@RequestParam userId: String, @RequestParam resourceId: String): Boolean
 
 
 
