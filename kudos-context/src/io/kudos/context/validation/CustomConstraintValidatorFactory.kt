@@ -19,10 +19,29 @@ import java.time.Clock
  */
 open class CustomConstraintValidatorFactory: LocalValidatorFactoryBean(), ApplicationContextAware {
 
+    /** Spring 上下文，由 [setApplicationContext] 注入；用于解析所有 [IConstraintValidatorProviderBean] */
     private lateinit var applicationContext: ApplicationContext
 
+    /**
+     * 覆盖默认 [ClockProvider]，让 `@Future` / `@Past` 等时间相关约束使用系统默认时区时钟。
+     *
+     * @return 始终返回系统默认时区的 [Clock]
+     * @author K
+     * @since 1.0.0
+     */
     override fun getClockProvider(): ClockProvider = ClockProvider { Clock.systemDefaultZone() }
 
+    /**
+     * Hibernate Validator 配置后处理：收集容器里所有 [IConstraintValidatorProviderBean]，
+     * 把它们声明的「约束注解 → 校验器」关系注册到 [HibernateValidatorConfiguration.createConstraintMapping]。
+     *
+     * `includeExistingValidators(false)` 是为了完全替换默认实现——业务侧通过 provider 显式声明的
+     * 校验器会胜过 jakarta 自带的同名约束实现，方便对内置注解做定制（如改 @Pattern 报错语义等）。
+     *
+     * @param configuration HV 注入的可配置项
+     * @author K
+     * @since 1.0.0
+     */
     override fun postProcessConfiguration(configuration: Configuration<*>) {
         val hibernateConfiguration = configuration as HibernateValidatorConfiguration
         val constraintMapping = hibernateConfiguration.createConstraintMapping()
@@ -39,6 +58,14 @@ open class CustomConstraintValidatorFactory: LocalValidatorFactoryBean(), Applic
         hibernateConfiguration.addMapping(constraintMapping)
     }
 
+    /**
+     * 由 Spring 通过 [ApplicationContextAware] 注入上下文。
+     * 先调父类逻辑（让 LocalValidatorFactoryBean 也能用到 context），再缓存一份到本类供 [postProcessConfiguration] 使用。
+     *
+     * @param applicationContext Spring 上下文
+     * @author K
+     * @since 1.0.0
+     */
     override fun setApplicationContext(applicationContext: ApplicationContext) {
         super.setApplicationContext(applicationContext)
         this.applicationContext = applicationContext

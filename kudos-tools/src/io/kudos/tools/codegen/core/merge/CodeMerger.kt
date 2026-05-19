@@ -12,8 +12,11 @@ import java.util.regex.Matcher
  */
 class CodeMerger(private val file: File) {
 
+    /** 被覆盖前的旧文件内容，用作"已生成代码"基线，从中提取用户自填代码与历史 import */
     private val oldFileContent: String = FileKit.readFileToString(file)
+    /** 合并过程中持续累积的新文件内容；写盘前由 [merge] 最后调用 [FileKit.write] 落盘 */
     private var newFileContent: CharSequence? = null
+    /** 用户自填代码（`//region your codes XXX` 区块内）的解析器 */
     private val retriever: UserCodesRetriever = UserCodesRetriever(oldFileContent)
 
     /**
@@ -25,6 +28,18 @@ class CodeMerger(private val file: File) {
         FileKit.write(file, requireNotNull(newFileContent) { "newFileContent is null after merge" })
     }
 
+    /**
+     * 合并 `//region your codes N` ... `//endregion your codes N` 之间的用户自填代码。
+     *
+     * 流程：
+     * 1. 从旧文件提取每个 region 内的用户代码（key = region 序号）；
+     * 2. 读取新生成的文件作为初稿；
+     * 3. 如果模板里通过 `AppendCodesRetriever` 声明了"要追加到该 region 的代码"，按 [AppendCodeType] 决定是整段追加还是按行追加（PARTIBLE 模式下逐行去重）；
+     * 4. 用正则把每段 region 内容替换为「用户代码 + 追加代码」；正则兼容 HTML/JSP 注释 `<!--//region-->` 风格。
+     *
+     * @author K
+     * @since 1.0.0
+     */
     private fun handleRegion() {
         val customCodes = retriever.retrieve()
         newFileContent = FileKit.readFileToString(file)
@@ -56,6 +71,15 @@ class CodeMerger(private val file: File) {
         }
     }
 
+    /**
+     * 合并 import 语句（仅对 `.kt` 文件生效）。
+     *
+     * 旧 import 减去与新 import 的交集 = 用户自己加的 import。把这部分插回新文件第一个 `import` 之前，
+     * 既能保留用户引入的额外依赖，又不会重复模板中已有的 import。
+     *
+     * @author K
+     * @since 1.0.0
+     */
     private fun handleImport() {
         if (file.name.endsWith(".kt")) {
             val oldImports = ImportStmtRetriever(oldFileContent).retrieveImports()
