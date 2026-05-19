@@ -38,18 +38,14 @@ class TenantAdvancedCacheableAspect {
         }
         val signature = joinPoint.signature as MethodSignature
         val cacheable = signature.method.getAnnotation(TenantAdvancedCacheable::class.java)
-        var tenantId = KudosContextHolder.get().tenantId
+        val tenantId = KudosContextHolder.get().tenantId
         val cacheKey = "${cacheable.cacheKey}::$tenantId"
         val dataKey = cacheable.dataKey
         val timeOut = cacheable.timeOut
-        var o = remoteCacheProcess.getCacheData(cacheKey, dataKey)
-        if (o == null) {
-            //加载数据，并存入到hash里
-            o = joinPoint.proceed()
-            if (o != null) {
-                remoteCacheProcess.writeCacheData(cacheKey, dataKey, o, timeOut)
-            }
+        remoteCacheProcess.getCacheData(cacheKey, dataKey)?.let { return it }
+        //加载数据，并存入到hash里
+        return joinPoint.proceed()?.also {
+            remoteCacheProcess.writeCacheData(cacheKey, dataKey, it, timeOut)
         }
-        return o
     }
 }

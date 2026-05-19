@@ -168,27 +168,27 @@ open class TemplateModelCreator {
         // 查询载体类中
         val searchItemColumns = templateModel["searchItemColumns"] as List<Column>
         for ((key, value) in kotlinTypeMap)
-            templateModel[key + "InSearchItems"] = searchItemColumns.any { it.kotlinType == value }
+            templateModel["${key}InSearchItems"] = searchItemColumns.any { it.kotlinType == value }
 
         // 列表记录类中
         val listItemColumns = templateModel["listItemColumns"] as List<Column>
         for ((key, value) in kotlinTypeMap)
-            templateModel[key + "InListItems"] = listItemColumns.any { it.kotlinType == value }
+            templateModel["${key}InListItems"] = listItemColumns.any { it.kotlinType == value }
 
         // 编辑载体类中
         val editItemColumns = templateModel["editItemColumns"] as List<Column>
         for ((key, value) in kotlinTypeMap)
-            templateModel[key + "InEditItems"] = editItemColumns.any { it.kotlinType == value }
+            templateModel["${key}InEditItems"] = editItemColumns.any { it.kotlinType == value }
 
         // 详情类中
         val detailItemColumns = templateModel["detailItemColumns"] as List<Column>
         for ((key, value) in kotlinTypeMap)
-            templateModel[key + "InDetailItems"] = detailItemColumns.any { it.kotlinType == value }
+            templateModel["${key}InDetailItems"] = detailItemColumns.any { it.kotlinType == value }
 
         // 缓存项类中
         val cacheItemColumns = templateModel["cacheItemColumns"] as List<Column>
         for ((key, value) in kotlinTypeMap)
-            templateModel[key + "InCacheItems"] = cacheItemColumns.any { it.kotlinType == value }
+            templateModel["${key}InCacheItems"] = cacheItemColumns.any { it.kotlinType == value }
 
         // 缓存项中是否包含id
         templateModel["containsIdColumnInCacheItems"] = cacheItemColumns.any { it.name.equals("id", true) }
