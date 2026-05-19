@@ -81,15 +81,10 @@ object EnumKit {
      * @since 1.0.0
      */
 
-    fun getCodeMap(enumClass: KClass<out IDictEnum>): Map<String, String> {
-        val codeMap = mutableMapOf<String, String>()
-        for (constant in enumClass.java.enumConstants) {
-            if (constant is IDictEnum) {
-                codeMap[constant.code] = constant.displayText
-            }
-        }
-        return codeMap
-    }
+    fun getCodeMap(enumClass: KClass<out IDictEnum>): Map<String, String> =
+        enumClass.java.enumConstants
+            .filterIsInstance<IDictEnum>()
+            .associate { it.code to it.displayText }
 
     /**
      * 取得字典枚举的所有代码及其翻译信息
@@ -116,13 +111,12 @@ object EnumKit {
      */
     fun getCodeEnumClass(enumClassStr: String): KClass<out IDictEnum> {
         require(enumClassStr.isNotBlank()) { "字典枚举全类名参数不能为空" }
-        val enumClazz = try {
-            Class.forName(enumClassStr)
-        } catch (_: ClassNotFoundException) {
-            throw IllegalArgumentException("类【${enumClassStr}】不存在！")
+        val enumClazz = runCatching { Class.forName(enumClassStr) }
+            .getOrElse { throw IllegalArgumentException("类【$enumClassStr】不存在！") }
+        require(enumClazz.isEnum) { "类【$enumClassStr】不是枚举！" }
+        require(IDictEnum::class.java.isAssignableFrom(enumClazz)) {
+            "类【$enumClassStr】没有实现【${IDictEnum::class}】接口！"
         }
-        require(enumClazz.isEnum) { "类【${enumClassStr}】不是枚举！" }
-        require(IDictEnum::class.java.isAssignableFrom(enumClazz)) { "类【${enumClassStr}】没有实现【${IDictEnum::class}】接口！" }
         return enumClazz.asSubclass(IDictEnum::class.java).kotlin
     }
 

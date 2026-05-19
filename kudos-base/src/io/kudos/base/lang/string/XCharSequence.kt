@@ -120,11 +120,9 @@ fun <T : Any> CharSequence.toType(returnType: KClass<out T>): T {
  * @param map 替换规则Map，key为要查找的字符串，value为用来替换的字符串
  * @return 替换后的字符串
  */
-fun CharSequence.replaceEach(map: Map<String?, String?>): String {
-    return if (map.isNotEmpty()) {
-        this.replaceEach(map.keys.toTypedArray(), map.values.toTypedArray())
-    } else this.toString()
-}
+fun CharSequence.replaceEach(map: Map<String?, String?>): String =
+    if (map.isEmpty()) toString()
+    else replaceEach(map.keys.toTypedArray(), map.values.toTypedArray())
 
 /**
  * 将字符串转换为十六进制表示的值
@@ -225,19 +223,15 @@ fun CharSequence.divideAverage(groupLen: Int): Array<String?> {
  * @since 1.0.0
  */
 fun CharSequence.humpToUnderscore(upperCase: Boolean = true): String {
-    if (this.isEmpty()) return ""
-    val sb = StringBuilder()
-    sb.append(this[0])
-    for (i in 1 until this.length) {
-        if (Character.isUpperCase(this[i])) {
-            sb.append("_")
+    if (isEmpty()) return ""
+    val result = buildString {
+        append(this@humpToUnderscore[0])
+        (1 until this@humpToUnderscore.length).forEach { i ->
+            if (Character.isUpperCase(this@humpToUnderscore[i])) append('_')
+            append(this@humpToUnderscore[i])
         }
-        sb.append(this[i])
     }
-    val result = sb.toString()
-    return if (upperCase) {
-        result.uppercase()
-    } else result.lowercase()
+    return if (upperCase) result.uppercase() else result.lowercase()
 }
 
 /**
@@ -254,14 +248,11 @@ fun CharSequence.humpToUnderscore(upperCase: Boolean = true): String {
  * @since 1.0.0
  */
 fun CharSequence.underscoreToHump(): String {
-    if (this.isBlank()) return this.toString()
-    val sb = StringBuilder()
-    val words = this.split("_")
-    for (word in words) {
-        sb.append(word.lowercase()
-            .replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() })
+    if (isBlank()) return toString()
+    val merged = split("_").joinToString(separator = "") { word ->
+        word.lowercase().replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
     }
-    return sb.first().lowercaseChar() + sb.substring(1)
+    return merged.first().lowercaseChar() + merged.substring(1)
 }
 
 /**
@@ -272,15 +263,10 @@ fun CharSequence.underscoreToHump(): String {
  * @author K
  * @since 1.0.0
  */
-fun CharSequence.fillTemplateByObjectMap(paramMap: Map<String, Any>): CharSequence {
-    var templateStr = this.toString()
-    for ((paramName, value) in paramMap) {
-        templateStr = templateStr.replace(
-            ("\\$\\{$paramName\\}").toRegex(), Matcher.quoteReplacement(value.toString())
-        )
+fun CharSequence.fillTemplateByObjectMap(paramMap: Map<String, Any>): CharSequence =
+    paramMap.entries.fold(toString()) { acc, (paramName, value) ->
+        acc.replace(Regex("\\$\\{$paramName\\}"), Matcher.quoteReplacement(value.toString()))
     }
-    return templateStr
-}
 
 /**
  * 如果缺失指定的后缀，则拼接上
@@ -291,12 +277,8 @@ fun CharSequence.fillTemplateByObjectMap(paramMap: Map<String, Any>): CharSequen
  * @author K
  * @since 1.0.0
  */
-fun CharSequence.appendIfMissing(suffix: String, ignoreCase: Boolean = false): String {
-    if (!this.endsWith(suffix, ignoreCase)) {
-        return this.toString() + suffix
-    }
-    return this.toString()
-}
+fun CharSequence.appendIfMissing(suffix: String, ignoreCase: Boolean = false): String =
+    if (endsWith(suffix, ignoreCase)) toString() else "$this$suffix"
 
 
 // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv

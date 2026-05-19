@@ -64,18 +64,8 @@ object PackageKit {
      * @author K
      * @since 1.0.0
      */
-    private fun getPackagePrefix(pkgPattern: String): String {
-        val pkgPrefix = StringBuilder()
-        val pkgElems = pkgPattern.split(".").toTypedArray()
-        for (pkgElem in pkgElems) {
-            if (pkgElem.contains("*")) {
-                break
-            } else {
-                pkgPrefix.append(pkgElem).append(".")
-            }
-        }
-        return pkgPrefix.deleteCharAt(pkgPrefix.length - 1).toString()
-    }
+    private fun getPackagePrefix(pkgPattern: String): String =
+        pkgPattern.split(".").takeWhile { !it.contains("*") }.joinToString(".")
 
     /**
      * 包扫描的统一入口：对当前线程的 classloader 拿到所有匹配资源，
@@ -209,27 +199,20 @@ object PackageKit {
             recursive && file.isDirectory || file.name.endsWith(".class")
         }
         // 循环所有文件
-        for (file in dirFiles) {
-            // 如果是目录 则继续扫描
+        dirFiles.orEmpty().forEach { file ->
             if (file.isDirectory) {
-                findAndAddClassesInPackageByFile(
-                    packageName + "." + file.name,
-                    file.absolutePath,
-                    recursive,
-                    action
-                )
-            } else {
-                if (action.isRetrieveClass) {
-                    // 如果是java类文件 去掉后面的.class 只留下类名
-                    val className = file.name.substring(0, file.name.length - 6)
-                    try {
-                        // 添加到集合中去
-                        action.addClass(
-                            Thread.currentThread().contextClassLoader.loadClass("$packageName.$className").kotlin
-                        )
-                    } catch (e: ClassNotFoundException) {
-                        LOG.error(e)
-                    }
+                // 如果是目录 则继续扫描
+                findAndAddClassesInPackageByFile("$packageName.${file.name}", file.absolutePath, recursive, action)
+            } else if (action.isRetrieveClass) {
+                // 如果是java类文件 去掉后面的.class 只留下类名
+                val className = file.name.removeSuffix(".class")
+                try {
+                    // 添加到集合中去
+                    action.addClass(
+                        Thread.currentThread().contextClassLoader.loadClass("$packageName.$className").kotlin
+                    )
+                } catch (e: ClassNotFoundException) {
+                    LOG.error(e)
                 }
             }
         }

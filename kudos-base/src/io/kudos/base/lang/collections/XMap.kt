@@ -19,14 +19,8 @@ import java.util.ResourceBundle
  * @since 1.0.0
  */
 fun Map<*, *>.toArrOfArr(): Array<Array<Any?>> =
-    if (this.isEmpty()) {
-        emptyArray()
-    } else {
-        // entries.toList() 保证 Map 顺序，mapIndexed 构建二维 Array
-        this.entries
-            .map { (k, v) -> arrayOf(k, v) }
-            .toTypedArray()
-    }
+    // entries 保留 Map 顺序；空 Map 直接得到空二维数组
+    entries.map { (k, v) -> arrayOf(k, v) }.toTypedArray()
 
 
 
@@ -41,15 +35,8 @@ fun Map<*, *>.toArrOfArr(): Array<Array<Any?>> =
  * @since 1.0.0
  */
 fun <K, V> Map<*, *>.containsAll(subMap: Map<K, V>): Boolean {
-    if (this.isEmpty() || subMap.isEmpty()) return false
-    for ((k, v) in subMap) {
-        if (!this.containsKey(k)
-            || (v == null && this[k] != null)
-            || (v != null && this[k] != v)) {
-            return false
-        }
-    }
-    return true
+    if (isEmpty() || subMap.isEmpty()) return false
+    return subMap.all { (k, v) -> containsKey(k) && this[k] == v }
 }
 
 
@@ -63,13 +50,8 @@ fun <K, V> Map<*, *>.containsAll(subMap: Map<K, V>): Boolean {
  * @author K
  * @since 1.0.0
  */
-fun ResourceBundle.toMap(): MutableMap<String, Any?> {
-    val result = mutableMapOf<String, Any?>()
-    for (key in this.keySet()) {
-        result[key] = this.getObject(key)
-    }
-    return result
-}
+fun ResourceBundle.toMap(): MutableMap<String, Any?> =
+    keySet().associateWithTo(mutableMapOf()) { getObject(it) }
 
 
 //region Printing
@@ -116,13 +98,8 @@ fun Map<*, *>.debugPrint(out: PrintStream, label: Any?)
  * @author K
  * @since 1.0.0
  */
-fun <K, V> Map<K, V>.invertMap(): Map<V, K> {
-    val result = mutableMapOf<V, K>()
-    for ((k, v) in this) {
-        result[v] = k
-    }
-    return result
-}
+fun <K, V> Map<K, V>.invertMap(): Map<V, K> =
+    entries.associate { (k, v) -> v to k }
 
 
 /**
@@ -263,7 +240,7 @@ private fun verbosePrintInternal(
     }
 
     // 6. 当前 Map 的所有 entries 打印完毕，从 lineage 中移除
-    lineage.removeAt(lineage.lastIndex)
+    lineage.removeLast()
 
     // 7. 缩进并打印右括号，结束本层
     printIndent(lineage.size)
