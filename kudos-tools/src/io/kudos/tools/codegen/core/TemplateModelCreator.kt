@@ -18,6 +18,14 @@ import io.kudos.tools.codegen.model.vo.Config
  */
 open class TemplateModelCreator {
 
+    /**
+     * 构造与具体表无关的"基础模型"：包前缀、模块名、作者、版本等模板通用占位符。
+     * 这部分内容在批量生成多张表时可以复用。
+     *
+     * @return 可继续追加 key 的模型 Map
+     * @author K
+     * @since 1.0.0
+     */
     fun createBaseModel(): MutableMap<String, Any?> {
         val templateModel = mutableMapOf<String, Any?>()
         val config = CodeGeneratorContext.config
@@ -30,12 +38,30 @@ open class TemplateModelCreator {
         return templateModel
     }
 
+    /**
+     * 模板填充模型的对外入口：基础模型 + 表相关模型合并。
+     *
+     * @return 渲染模板需要的完整 Map
+     * @author K
+     * @since 1.0.0
+     */
     fun create(): Map<String, Any?> {
         val templateBaseModel = createBaseModel()
         val entityRelativeModel = createEntityRelativeModel()
         return templateBaseModel + entityRelativeModel
     }
 
+    /**
+     * 构造与具体表相关的模型：
+     * - 实体名（驼峰）、短名（去掉模块前缀）、表结构、所有列
+     * - 按 UI 勾选项把列拆分到 search/list/edit/detail/cache 五组
+     * - 调 [determinePoDaoSuperClass] 决定 PO/DAO 的父类
+     * - 调 [initOtherParameters] 计算各列类型的 import 标志位与 `serialVersionUID`
+     *
+     * @return 实体相关的模型片段
+     * @author K
+     * @since 1.0.0
+     */
     @Suppress("UNCHECKED_CAST")
     fun createEntityRelativeModel(): MutableMap<String, Any?> {
         val templateModel = mutableMapOf<String, Any?>()
@@ -101,6 +127,19 @@ open class TemplateModelCreator {
         return templateModel
     }
 
+    /**
+     * 按主键 Kotlin 类型选择 PO 与 DAO（Ktorm Table）的父类。
+     *
+     * - 主键 String 且含全部维护字段（createTime/updateTime/active/builtIn 等）→ `IManagedDbEntity` + `ManagedTable`，并把维护字段从模板 columns 中过滤掉（父类已声明）。
+     * - 主键 String 不带维护字段 → `StringIdTable`，过滤 id 列。
+     * - 主键 Int / Long → 对应的 `IntIdTable` / `LongIdTable`，过滤 id 列。
+     * - 其它类型 → 朴素 `Table`，不做列过滤。
+     *
+     * @param templateModel 上层模板模型；本方法会向其中写 `poSuperClass`/`daoSuperClass`，并可能改写 `columns`
+     * @param origColumns 原始数据库列集合（含 id/维护字段）
+     * @author K
+     * @since 1.0.0
+     */
     open fun determinePoDaoSuperClass(templateModel: MutableMap<String, Any?>, origColumns: Collection<Column>) {
         val pkKotlinType = origColumns.first { it.primaryKey }.kotlinType
         var poSuperClass = IDbEntity::class.simpleName
@@ -146,6 +185,18 @@ open class TemplateModelCreator {
         templateModel["daoSuperClass"] = daoSuperClass
     }
 
+    /**
+     * 计算各组列中是否包含特定 Kotlin 类型，供模板做条件式 import：
+     * 例如 `containsLocalDateTimeColumn` / `containsLocalDateTimeColumnInListItems` 等。
+     *
+     * 模板里据此决定 `import java.time.LocalDateTime` 是否真的需要写出，避免无脑 import 导致 lint 警告。
+     * 末尾再生成一个 `serialVersionUID`，让 PO 类拿到稳定可识别的版本号。
+     *
+     * @param templateModel 上层模板模型，本方法只向其中写 key
+     * @param origColumns 原始列集合，用于 PO 自身的 import 判定
+     * @author K
+     * @since 1.0.0
+     */
     @Suppress("UNCHECKED_CAST")
     open fun initOtherParameters(templateModel: MutableMap<String, Any?>, origColumns: Collection<Column>) {
         // 为了模板中，非kotlin类型的import

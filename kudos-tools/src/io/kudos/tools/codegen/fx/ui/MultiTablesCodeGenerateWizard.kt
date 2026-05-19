@@ -30,6 +30,16 @@ open class MultiTablesCodeGenerateWizard : Application() {
         return TemplateModelCreator()
     }
 
+    /**
+     * JavaFX 应用入口；构建"配置 → 选表批量生成"的两步向导。
+     *
+     * 与 [SingleTableCodeGenerateWizard] 的主要区别是 page2 用 [BatchGenerationController]
+     * 一次性勾选多表生成，没有 page3 的"按文件勾选"环节——批量场景下逐文件勾选不现实。
+     *
+     * @param stage JavaFX 主舞台
+     * @author K
+     * @since 1.0.0
+     */
     override fun start(stage: Stage) {
         val wizard = Wizard("多表代码生成器")
         CodeGeneratorContext.templateModelCreator = getTemplateModelCreator()

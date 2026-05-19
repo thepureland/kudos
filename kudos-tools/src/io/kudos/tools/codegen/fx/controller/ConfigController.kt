@@ -34,42 +34,65 @@ import javax.sql.DataSource
  */
 class ConfigController : Initializable {
 
+    /** 数据库 JDBC URL 输入框，与 [Config.dbUrl] 双向绑定 */
     @FXML
     lateinit var urlTextField: TextField
 
+    /** 数据库用户名输入框 */
     @FXML
     lateinit var userTextField: TextField
 
+    /** 数据库密码输入框（掩码显示） */
     @FXML
     lateinit var passwordField: PasswordField
 
+    /** 模板下拉框，展示 templates/ 下的所有模板目录 */
     @FXML
     lateinit var templateChoiceBox: ComboBox<Config.TemplateNameAndRootDir>
 
+    /** 生成代码的包前缀输入框 */
     @FXML
     lateinit var packagePrefixTextField: TextField
 
+    /** 模块名输入框 */
     @FXML
     lateinit var moduleTextField: TextField
 
+    /** 代码输出目录显示框（由目录选择器写入） */
     @FXML
     lateinit var locationTextField: TextField
 
+    /** "选择目录"按钮，触发 [openFileChooser] */
     @FXML
     lateinit var openButton: Button
 
+    /** 作者输入框，对应模板内 `@author` 占位符 */
     @FXML
     lateinit var authorTextField: TextField
 
+    /** 版本输入框，对应模板内 `@since` 占位符 */
     @FXML
     lateinit var versionTextField: TextField
 
+    /** 与 UI 双向绑定的配置 VO */
     val config = Config()
+    /** 当前用户的 home 目录，用于定位 properties 文件 */
     private val userHome = System.getProperty("user.home")
+    /** 持久化配置文件路径：`~/.kudos/CodeGenerator.properties` */
     private val propertiesFile = File("$userHome/.kudos/CodeGenerator.properties")
+    /** 读写 [propertiesFile] 的封装器 */
     private lateinit var propertiesLoader: PropertiesLoader
+    /** 模块名候选建议集合，用于将来做自动补全 */
     private var moduleSuggestions: Set<String?>? = null
 
+    /**
+     * JavaFX 在加载 FXML 后回调；按"读配置 → 双向绑定 → 初始化下拉框 → 初始化补全"顺序完成界面准备。
+     *
+     * @param location FXML 文件位置（未使用）
+     * @param resources i18n 资源（未使用）
+     * @author K
+     * @since 1.0.0
+     */
     override fun initialize(location: URL?, resources: ResourceBundle?) {
         initConfig()
         bindProperties()
@@ -77,11 +100,25 @@ class ConfigController : Initializable {
         initAutoCompletion()
     }
 
+    /**
+     * 读取 properties 中的"模块名候选建议"列表，按逗号切分供后续自动补全使用。
+     *
+     * @author K
+     * @since 1.0.0
+     */
     private fun initAutoCompletion() {
         var moduleSuggestionsStr = propertiesLoader.getProperty(Config.PROP_KEY_MODULE_SUGGESTIONS, "")
         moduleSuggestions = HashSet(listOf(*moduleSuggestionsStr.split(",".toRegex()).toTypedArray()))
     }
 
+    /**
+     * 从 [propertiesFile] 加载所有配置项填入 [config]。
+     * 模板信息独立处理：[Config.TemplateNameAndRootDir] 的 name/rootDir 在这里都取自 ROOT_DIR 字段，
+     * 因为旧版配置文件没有单独存模板名。
+     *
+     * @author K
+     * @since 1.0.0
+     */
     private fun initConfig() {
         val properties = properties
         propertiesLoader = PropertiesLoader(properties)
@@ -102,6 +139,13 @@ class ConfigController : Initializable {
         }
     }
 
+    /**
+     * 把每个 FXML 输入控件的 `textProperty` 与 [config] 的对应 JavaFX 属性做双向绑定。
+     * 这样 UI 修改即时反映到 [config]，反之亦然，省去手动同步代码。
+     *
+     * @author K
+     * @since 1.0.0
+     */
     private fun bindProperties() {
         with(config) {
             urlTextField.textProperty().bindBidirectional(dbUrlProperty())
@@ -118,6 +162,13 @@ class ConfigController : Initializable {
         }
     }
 
+    /**
+     * 扫描 `resources/main/templates/` 下的所有子目录作为模板候选填入下拉框。
+     * 默认选中第一项，避免下拉框初始为空导致用户卡在"未选模板"的校验上。
+     *
+     * @author K
+     * @since 1.0.0
+     */
     private fun initTempleComboBox() {
         val templatesPath = "${PathKit.getRuntimePath()}/../../../resources/main/templates/"
         val files = File(templatesPath).normalize().listFiles()
@@ -140,6 +191,17 @@ class ConfigController : Initializable {
         templateChoiceBox.selectionModel.select(0)
     }
 
+    /**
+     * "下一步"按钮前置校验：连接数据库、跑 Flyway、检查所有必填字段。
+     * 任一项失败都抛 [Exception]，由上层 UI 捕获后用 Alert 提示用户。
+     *
+     * 副作用：成功调用一次会真实建库 / 跑 migration，并把 DataSource 写入 [KudosContextHolder]，
+     * 让后续步骤可以直接读元数据。
+     *
+     * @throws Exception 任一校验项失败时
+     * @author K
+     * @since 1.0.0
+     */
     fun canGoOn() {
         // test connection
         val dataSource = DataSourceKit.createDataSource(
@@ -187,7 +249,15 @@ class ConfigController : Initializable {
     }
 
     /**
-     * 执行脚本升级
+     * 执行 Flyway 脚本升级（codegen 自己的元数据表）。
+     *
+     * - `isBaselineOnMigrate = true`：新库自动 baseline，避免空库报错
+     * - `isValidateOnMigrate = false`：校验阶段宽容，允许历史脚本在本地被改动
+     * - `isPlaceholderReplacement = false`：本工具的脚本不含占位符，关闭以避免 `${}` 误解析
+     *
+     * @param dataSource 上一步建立好的数据源
+     * @author K
+     * @since 1.0.0
      */
     private fun migrateDb(dataSource: DataSource) {
         val flywayProperties = FlywayProperties().apply {
@@ -201,6 +271,14 @@ class ConfigController : Initializable {
         FlywayKit.migrate("codegen", dataSource, flywayProperties)
     }
 
+    /**
+     * 内部数据库连接测试：成功立即关闭连接；失败弹一次 Alert 并抛 [Exception]。
+     * 私有版本不弹"连接成功"，避免在 [canGoOn] 流程里多余的弹窗。
+     *
+     * @throws Exception 当 JDBC 连接抛错时
+     * @author K
+     * @since 1.0.0
+     */
     private fun _testDbConnection() {
         try {
             RdbKit.newConnection(config.getDbUrl(), config.getDbUser(), config.getDbPassword()).use {
@@ -212,12 +290,25 @@ class ConfigController : Initializable {
         }
     }
 
+    /**
+     * "测试连接"按钮回调；与 [_testDbConnection] 的区别是连接成功也弹 Alert 反馈用户。
+     *
+     * @author K
+     * @since 1.0.0
+     */
     @FXML
     private fun testDbConnection() {
         _testDbConnection()
         Alert(Alert.AlertType.INFORMATION, "连接成功！").show()
     }
 
+    /**
+     * "选择目录"按钮回调：用 [DirectoryChooser] 选一个目录，写回 [locationTextField]。
+     * 若上次保存的目录仍存在，作为对话框的默认起点。
+     *
+     * @author K
+     * @since 1.0.0
+     */
     @FXML
     private fun openFileChooser() {
         val directoryChooser = DirectoryChooser()
@@ -235,6 +326,13 @@ class ConfigController : Initializable {
         }
     }
 
+    /**
+     * 把当前 [config] 的内容回写到 [propertiesFile]，供下次启动时恢复。
+     * 写文件失败仅打印堆栈，不抛异常——配置写不进去不应阻塞代码生成流程。
+     *
+     * @author K
+     * @since 1.0.0
+     */
     fun storeConfig() {
         val properties = propertiesLoader.properties
         with(properties) {
@@ -257,6 +355,11 @@ class ConfigController : Initializable {
         }
     }
 
+    /**
+     * 读取或初始化 [propertiesFile]。
+     * 文件不存在时创建父目录并塞入一组合理默认值（默认指向本地 H2、当前用户、版本 1.0.0），
+     * 让"首次使用"无需先编辑配置文件就能跑通主流程。
+     */
     private val properties: Properties
         get() {
             val properties = Properties()
