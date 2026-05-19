@@ -283,6 +283,16 @@ object BeanKit {
 
     /**
      * 通过反射直接设置字段值，用于无 setter 的只读属性（如 Kotlin data class 的 val）。
+     *
+     * 字段查找会尝试两种命名：原始属性名；以及 JavaBean 风格 `isXxx` -> `xxx` 的回退。
+     * 沿继承链向上查找；命中后必要时通过 [ConvertUtils] 做一次类型转换再赋值。
+     *
+     * @param bean 目标对象
+     * @param name 属性名
+     * @param value 待写入值，null 直接写入
+     * @throws NoSuchFieldException 当继承链上都找不到该字段时
+     * @author K
+     * @since 1.0.0
      */
     private fun setPropertyByField(bean: Any, name: String, value: Any?) {
         val fieldNamesToTry = sequence {

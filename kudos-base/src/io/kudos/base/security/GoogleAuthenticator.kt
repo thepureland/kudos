@@ -15,6 +15,10 @@ import kotlin.experimental.and
  * @since 1.0.0
  */
 class GoogleAuthenticator {
+    /**
+     * TOTP 验证时允许的“时间窗口”半径（每个窗口 30 秒）。
+     * 默认 3 表示前后各允许 3 个窗口的时钟漂移；Google 文档建议最大值 17。
+     */
     var windowSize = 3 // default 3 - max 17 (from google docs)最多可偏移的时间
 
         /**
@@ -62,8 +66,11 @@ class GoogleAuthenticator {
 
     companion object {
         // taken from Google pam docs - we probably don't need to mess with these
+        /** 共享密钥的字节长度（来自 Google pam 推荐值），Base32 编码后约 16 字符 */
         const val SECRET_SIZE = 10
+        /** SecureRandom 的初始化种子（Base64 编码），用于派生密钥生成器 */
         const val SEED = "g8GjEvTbW5oVSV7avLBdwIHqGlUYNzKFI7izOF8GwLDVKs2m0QN7vxRs2im5MDaNCWGmcD2rvcZx"
+        /** 随机数发生器算法名 */
         const val RANDOM_NUMBER_ALGORITHM = "SHA1PRNG"
 
         /**
@@ -103,6 +110,19 @@ class GoogleAuthenticator {
             return String.format(format, user, host, secret)
         }
 
+        /**
+         * 按 RFC 6238 (TOTP) / RFC 4226 (HOTP) 计算指定时间窗口的 6 位动态码。
+         *
+         * 关键细节：`hash[i]` 直接 `toLong()` 会做符号扩展，必须先 `toInt() and 0xFF`
+         * 拼成无符号字节，否则当某个字节 ≥ 0x80 时上位会被污染，最终得出的数字
+         * 会与 Google Authenticator / Authy / 1Password 等标准客户端不一致。
+         *
+         * @param key 已经解码的共享密钥
+         * @param t 当前时间窗口序号（毫秒 / 1000 / 30）
+         * @return 6 位整数动态码（0..999999）
+         * @throws NoSuchAlgorithmException 当前 JDK 不支持 HmacSHA1 时
+         * @throws InvalidKeyException 密钥不可用于 HmacSHA1 初始化时
+         */
         @Throws(NoSuchAlgorithmException::class, InvalidKeyException::class)
         internal fun verifyCode(key: ByteArray, t: Long): Int {
             val data = ByteArray(8)

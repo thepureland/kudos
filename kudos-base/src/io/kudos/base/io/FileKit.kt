@@ -31,6 +31,7 @@ object FileKit {
      */
     const val PREFIX_TEMP_FILE: String = "FileKit_"
 
+    /** 日志器 */
     private val log = LogFactory.getLog(this::class)
 
     /**

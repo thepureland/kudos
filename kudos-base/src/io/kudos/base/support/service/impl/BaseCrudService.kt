@@ -127,9 +127,11 @@ open class BaseCrudService<PK : Any, E : IIdEntity<PK>, DAO : IBaseCrudDao<PK, E
         entityClass.memberProperties.first { it.name == IHasBuiltIn::builtIn.name } as KProperty1<E, Boolean?>
     }
 
+    /** 实体主键属性名（取自 [IIdEntity.id]，避免在条件构造中硬编码字符串） */
     private val idPropertyName: String
         get() = IIdEntity<PK>::id.name
 
+    /** 内置标记属性名（取自 [IHasBuiltIn.builtIn]，避免在条件构造中硬编码字符串） */
     private val builtInPropertyName: String
         get() = IHasBuiltIn::builtIn.name
 
@@ -141,6 +143,14 @@ open class BaseCrudService<PK : Any, E : IIdEntity<PK>, DAO : IBaseCrudDao<PK, E
     private fun builtInTrueCriteria(): Criteria =
         Criteria.of(builtInPropertyName, OperatorEnum.EQ, true)
 
+    /**
+     * 统一抛出“内置行不可删除”的业务异常。
+     * 写成 [Nothing] 返回类型让调用处的类型推断保留 if/else 中另一分支的具体类型。
+     *
+     * @throws ServiceException 总是抛出，errorCode 为 [CommonErrorCodeEnum.BUILTIN_NOT_DELETABLE]
+     * @author K
+     * @since 1.0.0
+     */
     private fun throwBuiltInNotDeletable(): Nothing =
         throw ServiceException(CommonErrorCodeEnum.BUILTIN_NOT_DELETABLE)
 

@@ -253,6 +253,15 @@ object IdCardNoKit {
         return !str.isBlank() && str.matches("^[1|57][0-9]{6}\\(?[0-9A-Z]\\)?$".toRegex())
     }
 
+    /**
+     * 将字符数组按 ASCII 偏移转换为数字数组（'0'..'9' -> 0..9）。
+     * 入参未做数字字符校验，调用方需先保证输入仅含数字字符。
+     *
+     * @param ca 待转换的字符数组
+     * @return 与入参等长的整型数组
+     * @author K
+     * @since 1.0.0
+     */
     private fun convertCharToInt(ca: CharArray): IntArray {
         val len = ca.size
         val iArr = IntArray(len)
