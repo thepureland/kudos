@@ -114,3 +114,45 @@
 
 - 新增业务表：先在 **sql** 模块增加迁移，再在 **model → dao → service → api** 逐层补齐。
 - 对外暴露的新能力：先在 **common** 扩展 `ISys*Api` 与 VO，再在 **core** 实现并编写测试。
+
+---
+
+## 缓存一致性模型
+
+本模块缓存全部走"`@TransactionalEventListener(AFTER_COMMIT)` 订阅业务事件"模式：
+
+- 单条变更 → `Sys*Inserted/Updated/Deleted` 事件
+- 批量删除 → `Sys*BatchDeleted`，**附 (id + 维度键) snapshot**：AFTER_COMMIT 时行已删，
+  cache key 必须提前 snapshot
+- 维度变更 → `Sys*Updated.dimensionChanged + beforeSystemCode/beforeTenantId`：同时刷新
+  新旧两个缓存槽位（如 [AccessRuleIpsBySubSysAndTenantIdCache.onParentUpdated]）
+
+**租户键归一化**：`tenantId` 可为 null（平台级）/空白/具体值。统一由
+`AccessRuleTenantKey.compositeKey(systemCode, tenantId)` 归一为 `systemCode::tenantId`，
+null/空白都映射到空串 —— `@Cacheable` SpEL 和 `doReload` 必须保持一致。
+
+## 已知限制 / 安全考量
+
+- ❗ **零 `@PreAuthorize`**：admin / internal 控制器全部依赖网关 / 外部鉴权过滤器做访问
+  控制。`sys-api-admin` 下的 tenant / system / accessrule / dict / param 写入端点若网关
+  挂了，可被未授权用户直接调用
+- ❗ **`SysParam` 是否敏感无标志位**：参数表既存普通配置也可能存敏感数据（密钥 / 凭证），
+  当前没有 `secret=true` 字段或加密标志——调用方需自行甄别
+- ❗ **`SysAccessRuleIp` IP 段格式不强校验**：`ip_start` / `ip_end` 是文本，无 CIDR / IPv4
+  范围校验。错误配置（如 ipStart > ipEnd / 非法 IP 字符）会在运行时让所有匹配失败
+- ❗ **字典 / 资源 / 菜单树深度不限**：`SysResource` / `SysDict` 都是树，递归展开未做深度
+  上限。异常配置（自引用 / 极深嵌套）会让 cache reload 跑很久
+- ❗ **跨服务调用未做并发限流**：sys-core 自身不是 client 消费方，但其暴露的 batch endpoint
+  （`getResourcesByIds` 等）若被 client 滥用没有限流
+- ❗ **`SysI18N` 多语言文案大小无上限**：单条文案过大会撑爆 redis hash entry。建议在
+  form 校验加 maxLength
+- ❗ **审计日志接入不一致**：部分 Service 调用 `AuditLogTool`，部分没接。租户 / 子系统等
+  关键变更建议统一审计
+
+## Kotlin 风格
+
+- 一律 `open class` + Spring CGLIB 代理——`@Transactional` / `@Cacheable` 切面要求方法 `open`
+- DAO 通过 ctor 注入；Service 大部分通过 `@Resource` 注入避免循环依赖
+  （Cache 之间 / Service 之间互引时常见）
+- Cache 类用 `getSelf<XxxCache>()` 拿 Spring 代理对象——让 `@Cacheable` 在同类内部调用
+  也能生效（绕过 self-invocation 不走代理的问题）
