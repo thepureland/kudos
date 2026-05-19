@@ -28,14 +28,31 @@ spring:
 实际 producer / consumer 装配走 `StreamCommonConfiguration` 父类的所有 bean——含
 `@MqProducer` 切面、`StreamProducerHelper`、失败消息持久化、binding 启动校验。
 
+## 测试覆盖
+
+`test-src/.../RabbitMqTest.kt` 用 Testcontainers 起 RabbitMQ broker（`@EnabledIfDockerInstalled`），
+跑两个集成测试：
+- `sendAndReceiveMessageTest` —— send + 等待 consumer 收到，5s 超时报错
+- `streamExceptionTest` —— 异常消息流程
+
+```kotlin
+SpringApplication.run(RabbitMqProducerApplication::class.java, ...)
+RabbitMqTestContainer.startIfNeeded(registry)
+```
+
+无 docker 环境时整个测试类被跳过。
+
 ## 已知限制
 
 - ❗ 模块自身仅装配类一个文件——本质上是 spring-cloud-starter-stream-rabbit 的 thin
   re-package + kudos yml 命名空间约定
 - ❗ build.gradle.kts 有一行 commented-out 注释依赖（flyway-database-postgresql）；与本模块
   实际无关，可移除
-- ❗ `@Import(StreamConsumerEnvironRegistrar::class)` 注释停用了——意味着该模块下的
-  function.definition 不会被自动聚合。要启用 multi-consumer aggregation 需取消注释
+- ❗ `@Import(StreamConsumerEnvironRegistrar::class)` 注释停用了——三个 broker 模块（rabbit /
+  kafka / rocketmq）都注释着，等于 kudos.* yml function.definition 自动聚合特性**全局未启用**。
+  要启用 multi-consumer aggregation 需在对应 broker 模块取消注释
+- ❗ 默认 yml 把 `password: guest` 明文写在 resources 下——生产部署务必通过环境变量 /
+  外部化配置覆盖，否则 mvnrepository 抓取到默认配置等于裸奔
 
 ## 依赖
 
