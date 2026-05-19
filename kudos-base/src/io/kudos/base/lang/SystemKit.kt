@@ -21,6 +21,7 @@ import java.util.regex.Pattern
  */
 object SystemKit {
 
+    /** 日志器 */
     private val log = LogFactory.getLog(this::class)
 
     /**
@@ -74,6 +75,18 @@ object SystemKit {
         }
     }
 
+    /**
+     * 通过反射往 `MutableMap<String, String>` 中写入新的键值。
+     * 与 [setEnvVars] 配合：先 [clearFirst] 清空再 putAll，或保留原值后增量 putAll。
+     * 任何反射失败、键值类型不匹配或方法签名不符都返回 false，由上层兜底。
+     *
+     * @param target 反射拿到的 map 引用，可能为 null
+     * @param vars 待写入的键值
+     * @param clearFirst 是否在写入前先调用 map.clear()
+     * @return 写入成功返回 true，否则 false
+     * @author K
+     * @since 1.0.0
+     */
     private fun updateMutableStringMap(target: Any?, vars: Map<String, String>, clearFirst: Boolean): Boolean {
         val map = target as? MutableMap<*, *> ?: return false
         if (!map.keys.all { it is String } || !map.values.all { it is String }) {
@@ -137,6 +150,15 @@ object SystemKit {
         return success to message
     }
 
+    /**
+     * 把 [Process] 的输出流按 UTF-8 默认字符集读到一个字符串。
+     * 读取完成后自动关闭流，非空字符串会追加一个换行符以贴近终端输出习惯。
+     *
+     * @param inputStream 进程标准输出或标准错误流
+     * @return 读取到的文本；流为空时返回空串
+     * @author K
+     * @since 1.0.0
+     */
     private fun loadStream(inputStream: InputStream): String {
         inputStream.use { stream ->
             BufferedReader(InputStreamReader(stream)).use { reader ->
@@ -188,6 +210,7 @@ object SystemKit {
      */
     val LINE_SEPARATOR: String = System.lineSeparator()
 
+    /** 用于在 JVM 启动参数中识别调试模式（`-Xdebug` 或 `jdwp`）的正则 */
     private val debugPattern = Pattern.compile("-Xdebug|jdwp")
 
     /**

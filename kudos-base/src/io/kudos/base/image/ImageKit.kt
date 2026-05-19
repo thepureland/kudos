@@ -286,6 +286,21 @@ object ImageKit {
         return renderSvgToImage(xmlContent, width, height, false, null, null)
     }
 
+    /**
+     * SVG 渲染的内部实现，支持在渲染前按 id 正则替换颜色填充。
+     * 指定一个临时 URI 是 Batik 解析 SVG 片段引用（如 `#linearGradient1`）的前置条件，
+     * 否则带 URI fragment 的引用会解析失败。
+     *
+     * @param xmlContent SVG 文本
+     * @param width 目标宽度
+     * @param height 目标高度
+     * @param stretch true 时按 X/Y 独立缩放充满，false 时保持比例
+     * @param idRegex 要替换填充色的元素 id 正则，可为 null
+     * @param replacementColor 新的填充色，可为 null
+     * @return 渲染后的位图
+     * @author K
+     * @since 1.0.0
+     */
     private fun renderSvgToImage(
         xmlContent: String,
         width: Int,
@@ -305,6 +320,18 @@ object ImageKit {
         return renderToImage(document, width, height, stretch)
     }
 
+    /**
+     * 用 Batik 把已解析的 [SVGDocument] 渲染为 [BufferedImage]。
+     * 计算 X/Y 缩放比例并按 [stretch] 决定是否保持长宽比；非拉伸时居中输出。
+     *
+     * @param document 已解析的 SVG 文档
+     * @param width 目标位图宽度
+     * @param height 目标位图高度
+     * @param stretch true 时按 X/Y 独立缩放充满，false 时保持比例并居中
+     * @return 渲染后的位图
+     * @author K
+     * @since 1.0.0
+     */
     private fun renderToImage(document: SVGDocument?, width: Int, height: Int, stretch: Boolean): BufferedImage {
         val rendererFactory = ConcreteImageRendererFactory()
         val renderer = rendererFactory.createStaticImageRenderer()
@@ -335,6 +362,17 @@ object ImageKit {
         return renderer.offScreen
     }
 
+    /**
+     * 遍历文档中所有 SVG 元素，对 id 匹配 [idRegex] 的元素，
+     * 将其 `style` 属性中的 `fill:#XXXXXX` 替换为指定颜色。
+     * 仅修改 style 内联属性，不处理 CSS 类或外部样式表。
+     *
+     * @param document SVG 文档
+     * @param idRegex 目标元素 id 的正则
+     * @param color 新的填充色
+     * @author K
+     * @since 1.0.0
+     */
     private fun replaceFill(document: SVGDocument, idRegex: String, color: Color) {
         val colorCode = String.format("#%02x%02x%02x", color.red, color.green, color.blue)
         val children = document.getElementsByTagName("*")

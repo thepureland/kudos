@@ -15,9 +15,12 @@ import java.security.SecureRandom
  */
 object DigestKit {
 
+    /** SHA-1 算法名 */
     const val SHA1 = "SHA-1"
+    /** MD5 算法名 */
     const val MD5 = "MD5"
 
+    /** 强随机源，用于生成 salt */
     private val random = SecureRandom()
 
     //region MD5
@@ -131,6 +134,16 @@ object DigestKit {
 
     //endregion
 
+    /**
+     * 对流式输入做摘要，按 8KB 分块读取，避免一次性加载大文件到内存。
+     * 不会关闭传入的流，关闭责任由调用方承担。
+     *
+     * @param input 输入流
+     * @param algorithm 算法名（[SHA1] 或 [MD5]）
+     * @return 摘要字节数组
+     * @author K
+     * @since 1.0.0
+     */
     private fun digest(input: InputStream, algorithm: String): ByteArray {
         val messageDigest = MessageDigest.getInstance(algorithm)
         val bufferLength = 8 * 1024

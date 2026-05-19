@@ -70,6 +70,7 @@ import kotlin.reflect.KClass
  */
 object ClassPathScanner {
     
+    /** 日志器；扫描失败仅记日志、不抛出 */
     private val logger = LogFactory.getLog(this::class)
 
     /**

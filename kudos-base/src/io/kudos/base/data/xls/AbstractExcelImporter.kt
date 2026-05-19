@@ -34,6 +34,7 @@ import kotlin.reflect.full.primaryConstructor
  */
 abstract class AbstractExcelImporter<T : Any> : IExcelImporter<T> {
 
+    /** 日志器 */
     private val log = LogFactory.getLog(AbstractExcelImporter::class)
 
     /**
@@ -46,8 +47,10 @@ abstract class AbstractExcelImporter<T : Any> : IExcelImporter<T> {
      */
     private lateinit var sheet: Sheet
 
+    /** 属性反射缓存：按属性名缓存 [KProperty1]，避免每行重新反射 */
     private val propertyMap = mutableMapOf<String, KProperty1<T, Any?>>()
 
+    /** 按 Excel 列顺序排列的属性名列表（由 [getPropertyNames] 提供） */
     private lateinit var propertyNames: List<String>
 
     /**
@@ -318,6 +321,15 @@ abstract class AbstractExcelImporter<T : Any> : IExcelImporter<T> {
         return value
     }
 
+    /**
+     * 通过反射解析子类声明的泛型实参 [T]，得到行对象的实际类。
+     * 当子类擦除了泛型实参（解析为 [Nothing]）时立即抛错，避免后续按反射构造对象时静默失败。
+     *
+     * @return 行对象的 [KClass]
+     * @throws IllegalArgumentException 当无法解析泛型实参时
+     * @author K
+     * @since 1.0.0
+     */
     @Suppress("UNCHECKED_CAST")
     private fun resolveRowObjectClass(): KClass<T> {
         val rowObjectClass = GenericKit.getSuperClassGenricClass(this::class)
