@@ -16,13 +16,13 @@ import org.springframework.stereotype.Component
  * Feign缓存辅助器
  */
 @Component
-class ClientCacheHelper : InitializingBean {
+open class ClientCacheHelper : InitializingBean {
 
     @Autowired(required = false)
     @Qualifier("localCacheManager")
     private val cacheManager: IKeyValueCacheManager<*>? = null
 
-    fun hasLocalCache(): Boolean {
+    open fun hasLocalCache(): Boolean {
         return cacheManager != null
     }
 
@@ -56,7 +56,7 @@ class ClientCacheHelper : InitializingBean {
      * @param cacheKey cacheKey
      * @return Object
      */
-    fun loadFromLocalCache(cacheKey: String): ClientCacheItem? {
+    open fun loadFromLocalCache(cacheKey: String): ClientCacheItem? {
         //可以考虑换成CacheKit
         return feignCache().get<ClientCacheItem>(cacheKey)
     }
@@ -67,7 +67,7 @@ class ClientCacheHelper : InitializingBean {
      * @param cacheKey 本地缓存key值
      * @param data     缓存数据
      */
-    fun writeToLocalCache(cacheKey: String, data: ClientCacheItem?) {
+    open fun writeToLocalCache(cacheKey: String, data: ClientCacheItem?) {
         //可以考虑换成CacheKit
         feignCache().put(cacheKey, data)
     }
