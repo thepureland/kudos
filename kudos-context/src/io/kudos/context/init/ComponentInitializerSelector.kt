@@ -29,15 +29,12 @@ open class ComponentInitializerSelector : ImportSelector {
      * @since 1.0.0
      */
     override fun selectImports(importingClassMetadata: AnnotationMetadata): Array<String> {
-        val exclusionComponentInitializer = getExclusionComponentInitializer(importingClassMetadata)
-        val classNames = mutableListOf<String>()
-        val locations = listOf("io.kudos.context", "io.kudos.ability", "io.kudos.ms")
-        locations.forEach { location ->
-            val classes = ScanKit.findImplementations(location, IComponentInitializer::class)
-            val toImport = classes.filterNot { it in exclusionComponentInitializer }
-            classNames += toImport.map { it.qualifiedName ?: it.simpleName ?: "Unknown" }
-        }
-        return classNames.toTypedArray()
+        val exclusions = getExclusionComponentInitializer(importingClassMetadata)
+        return listOf("io.kudos.context", "io.kudos.ability", "io.kudos.ms")
+            .flatMap { location -> ScanKit.findImplementations(location, IComponentInitializer::class) }
+            .filterNot { it in exclusions }
+            .map { it.qualifiedName ?: it.simpleName ?: "Unknown" }
+            .toTypedArray()
     }
 
     /**

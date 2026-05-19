@@ -33,19 +33,13 @@ open class ValidatorAutoConfiguration : IComponentInitializer {
      */
     @Bean
     @Primary
-    open fun defaultValidator(): LocalValidatorFactoryBean {
-        val validator = CustomConstraintValidatorFactory()
-        validator.setProviderClass(HibernateValidator::class.java)
-        return validator
-    }
+    open fun defaultValidator(): LocalValidatorFactoryBean =
+        CustomConstraintValidatorFactory().apply { setProviderClass(HibernateValidator::class.java) }
 
     @Bean
     @Primary
-    open fun methodValidationPostProcessor(validator: LocalValidatorFactoryBean): MethodValidationPostProcessor? {
-        val processor = MethodValidationPostProcessor()
-        processor.setValidator(validator)
-        return processor
-    }
+    open fun methodValidationPostProcessor(validator: LocalValidatorFactoryBean): MethodValidationPostProcessor =
+        MethodValidationPostProcessor().apply { setValidator(validator) }
 
     /**
      * 将 Spring 容器内创建的 validator 桥接给 [ValidationContext]，让 kudos-base 的
