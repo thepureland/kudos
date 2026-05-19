@@ -18,15 +18,18 @@ class GenFile(
 
     directory: String,
 
-    // 参数化后的文件相对路径
+    /** 参数化（Freemarker 处理 `${entityName}` 等占位符后）的文件相对路径 */
     var finalFileRelativePath: String,
 
-    // 模板文件相对路径，为了生成时能找得到模板文件
+    /** 模板文件相对路径，生成时据此从模板根目录读取对应模板 */
     var templateFileRelativePath: String
 ) : Comparable<GenFile> {
 
+    /** 是否生成此文件，绑定到 UI 的复选框 */
     private val generate = SimpleBooleanProperty()
+    /** 目标文件名（已替换占位符） */
     private val filename = SimpleStringProperty()
+    /** 目标文件所在目录的绝对路径（已替换占位符） */
     private val directory = SimpleStringProperty()
 
     init {
@@ -53,5 +56,8 @@ class GenFile(
 
     fun directoryProperty(): StringProperty = directory
 
+    /**
+     * 按目录路径排序，让生成列表在 UI 上按目录归组展示。
+     */
     override fun compareTo(other: GenFile): Int = getDirectory().compareTo(other.getDirectory())
 }

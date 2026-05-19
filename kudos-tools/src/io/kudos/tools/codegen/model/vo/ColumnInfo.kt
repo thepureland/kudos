@@ -41,13 +41,25 @@ import javafx.beans.property.StringProperty
  */
 class ColumnInfo {
 
+    /**
+     * 列名（数据库列名）；不走 JavaFX 属性是因为列名在代码生成期不需要绑定 UI。
+     */
     private var name: String? = null
+    /**
+     * 数据库原始列注释，从元数据读取，仅作只读展示。
+     */
     private var origComment: String? = null
+    /** 用户在 UI 中输入的自定义注释；优先级高于 [origComment]，可作为代码注释最终值 */
     private val customComment = SimpleStringProperty()
+    /** 是否在搜索表单中生成该字段；对应 UI 中的复选框 */
     private val searchItem = SimpleBooleanProperty()
+    /** 是否在列表页面中显示该字段 */
     private val listItem = SimpleBooleanProperty()
+    /** 是否在编辑表单中生成该字段 */
     private val editItem = SimpleBooleanProperty()
+    /** 是否在详情页面中显示该字段 */
     private val detailItem = SimpleBooleanProperty()
+    /** 是否在缓存对象中包含该字段 */
     private val cacheItem = SimpleBooleanProperty()
 
     fun getName(): String? = name
@@ -98,8 +110,22 @@ class ColumnInfo {
         this.origComment = origComment
     }
 
+    /**
+     * 取最终用于代码生成的列注释：自定义注释非空则用之，否则回退到数据库原始注释。
+     *
+     * @return 自定义或原始列注释；都为空时返回 null
+     * @author K
+     * @since 1.0.0
+     */
     fun getComment(): String? =
         if (!getCustomComment().isNullOrBlank()) getCustomComment() else origComment
 
+    /**
+     * 返回列名。语义上与 [getName] 一致，只是命名上更贴近"数据库列"。
+     *
+     * @return 列名
+     * @author K
+     * @since 1.0.0
+     */
     fun getColumn(): String? = name
 }

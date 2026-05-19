@@ -40,8 +40,11 @@ class DbTable(
     tableComment: String?,
 ): Comparable<DbTable> {
 
+    /** 是否生成代码标识，绑定到 UI 中"是否生成"的复选框 */
     private val generate = SimpleBooleanProperty()
+    /** 数据库表名 */
     private val tableName = SimpleStringProperty()
+    /** 数据库表注释，可为空（部分数据库不强制要求注释） */
     private val tableComment = SimpleStringProperty()
 
     init {
@@ -68,6 +71,7 @@ class DbTable(
 
     fun tableCommentProperty(): StringProperty = tableComment
 
+    /** 按表名字典序排序，让 UI 列表稳定展示 */
     override fun compareTo(other: DbTable): Int = getTableName().compareTo(other.getTableName())
 
 }
