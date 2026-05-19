@@ -21,8 +21,9 @@ import java.util.Locale
  * 端把这些 header **写回到** provider 进程的 KudosContext，让被调用方业务代码"感觉自己在
  * 一条连续的调用链上"。
  *
- * **当前未注册 / dormant**：见 [io.kudos.ability.distributed.discovery.nacos.init.NacosDiscoveryAutoConfiguration]
- * 的 kdoc。没有这个 filter 运行，client → provider 的上下文透传到 provider 侧就丢失。
+ * **已通过 [io.kudos.ability.distributed.discovery.nacos.init.NacosDiscoveryAutoConfiguration]
+ * 装配为 `FilterRegistrationBean<FeignContextWebFilter>`**——默认开启，可用配置
+ * `kudos.ability.distributed.discovery.nacos.feign-context-filter.enabled=false` 关闭。
  *
  * 从HTTP请求头中提取Feign调用传递的上下文信息，并设置到KudosContext中。
  *
