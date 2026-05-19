@@ -1,71 +1,170 @@
 # kudos-ability-comm-websocket-ktor
 
-WebSocket 通信封装（Ktor 端）。**当前为占位模块**——无任何源码，仅 `build.gradle.kts`
-声明了 Ktor `WebSockets` 服务端依赖。
+业务层 WebSocket 抽象（Ktor 端）。在 `kudos-ability-web-ktor` 已经 `install(WebSockets)`
+的基础上，封装：
 
-## 设计意图
+1. **会话包装**（`KudosWebSocketSession`）：原生 `DefaultWebSocketServerSession` 加上
+   `sessionId` / `userId` / `tenantId` / `attributes` 元数据
+2. **进程级会话注册中心**（`KudosWebSocketRegistry`）：按 sessionId / userId / tenantId
+   三套索引并发安全维护
+3. **业务回调 SPI**（`IKudosWebSocketHandler`）：`onConnect` / `onText` / `onBinary` /
+   `onDisconnect` 四个钩子，默认 no-op
+4. **广播 / 单播工具**（`WebSocketBroadcaster`）：按用户 / 租户 / 全部 / sessionId
+   分发，单 session 失败不影响其余
+5. **消息编解码 SPI**（`IWebSocketMessageEncoder`）：业务对象 ↔ 文本 frame 抽象
+6. **路由扩展**（`Route.kudosWebSocket`）：`register → loop → unregister` 的完整模板
 
-预留给"业务层 WebSocket 抽象"，区别于 `kudos-ability-web-ktor`：
-- `kudos-ability-web-ktor` 提供的是 **Ktor 服务端整合**（含 WebSockets 插件装配），属于"基础设施层"
-- 本模块面向 **业务层语义**：连接生命周期管理、按用户/租户的会话索引、广播 / 单播抽象、
-  心跳策略、消息编解码协议契约……让业务方不必每个服务都重写一套这些通用代码
+## 与 `kudos-ability-web-ktor` 的边界
 
-目前以上抽象都未实现。
+| 模块 | 职责 | 文件 |
+|---|---|---|
+| `kudos-ability-web-ktor` | 装上 Ktor `WebSockets` 插件（`pingPeriod` / `maxFrameSize` 等） | `KtorPlugins.installPlugins` |
+| 本模块 | 业务层会话管理 / 广播 / 编解码契约 | 本目录 |
 
-## 当前文件
+业务侧只用 web-ktor 也能写 `webSocket("/echo") { ... }` 收发原生 frame；引入本模块的收益
+是不用每个服务都重写"按 user 维护 session 列表 / 广播给一组用户"等通用代码。
 
-```
-build.gradle.kts
-```
+## 设计要点
 
-无源码。
-
-## build.gradle.kts 的问题
+### 注册中心**不**跨进程同步
 
 ```kotlin
-dependencies {
-    api(project(":kudos-context"))
-    api("io.ktor:ktor-server-websockets-jvm")   // ⚠ 见下方
+class KudosWebSocketRegistry {
+    private val byId = ConcurrentHashMap<String, KudosWebSocketSession>()
+    private val byUserId = ConcurrentHashMap<String, MutableSet<String>>()
+    private val byTenantId = ConcurrentHashMap<String, MutableSet<String>>()
+    // ...
 }
 ```
 
-❗ **直接写 Maven coordinate 字符串而非走 `libs.versions.toml` 目录**——与项目里其他
-所有模块的依赖声明风格不一致。后果：
+单实例部署够用。多实例部署的"全局广播"留给业务侧自己做——典型方案是每条业务消息走
+Redis pub/sub，每个进程的本类各自再广播给本进程内 session（参考 `kudos-ability-cache-common`
+的 `ICacheMessageHandler` 同款思路）。
 
-1. 没有显式版本——依赖某个传递依赖（Ktor BOM）提供版本，BOM 不可用时构建会拿到不可预期
-   的版本甚至失败。
-2. 升级 Ktor 时这条依赖不会被 catalog 集中升级，容易遗漏。
-3. 与 `kudos-ability-web-ktor/build.gradle.kts` 里 `api(libs.ktor.server.websockets)` 不一致。
+### `Route.kudosWebSocket` 的 `register → loop → unregister` 模板
 
-补正建议（开始写代码时一并做）：把这条依赖移到 `libs.versions.toml`，引用 `libs.ktor.server.websockets`。
+```kotlin
+webSocket(path) {
+    val session = sessionFactory(this)
+    registry.register(session)
+    var cause: Throwable? = null
+    try {
+        handler.onConnect(session)
+        for (frame in incoming) { /* 按 frame 类型派发 */ }
+    } catch (t: Throwable) {
+        cause = t
+        log.warn(...)
+    } finally {
+        handler.onDisconnect(session, cause)
+        registry.unregister(session.sessionId)
+        close(CloseReason(CloseReason.Codes.NORMAL, ""))
+    }
+}
+```
 
-## 与 `kudos-ability-web-ktor` 的关系
+无论正常退出还是抛异常，都会进入 `finally` 解绑——避免注册中心被关闭已久的 session 充满。
+`onDisconnect` 的 `cause` 参数告诉业务侧本次是否异常关闭。
 
-`kudos-ability-web-ktor.installPlugins` 已经在装配阶段 `install(WebSockets)`（按
-`kudos.ability.web.ktor.plugins.web-socket.enabled` 开关）。所以业务侧目前完全可以在
-**只依赖 web-ktor 的情况下**写 `routing { webSocket("/echo") { ... } }`，不需要本模块。
+### `sessionFactory` 让业务侧填鉴权信息
 
-本模块**未来**的价值是：在 Ktor 原生 `webSocket { ... }` 之上封装连接管理 / 业务消息
-协议层，而不是重复 Ktor 已经做了的"装上 WebSocket 插件"那一步。
+```kotlin
+routing {
+    kudosWebSocket("/chat", registry, ChatHandler()) { rawSession ->
+        KudosWebSocketSession(
+            raw = rawSession,
+            userId = rawSession.call.principal<JWTPrincipal>()?.payload?.subject,
+            tenantId = rawSession.call.request.headers["X-Tenant-Id"],
+        )
+    }
+}
+```
+
+工厂函数在 `register` 之前调用，返回的 session 立刻被加入注册中心——按 userId / tenantId
+广播因此可工作。**鉴权失败时**业务侧可以选择：(a) 用工厂函数返回 anonymous session 再
+靠 `onConnect` 早关闭，(b) 在工厂函数外面提前 `call.respond(401)` 后 `return`
+（但那样 webSocket DSL 已经握手了，需要立刻 close）。前者更易写。
+
+### 广播失败语义
+
+`WebSocketBroadcaster` 用 `coroutineScope { sessions.map { async { ... } }.awaitAll() }`——
+所有 session 并发发送，单个失败 catch + WARN，返回成功条数。**不重试**——重试策略是
+业务关注点，本模块只确保"一个慢 / 坏 session 不会拖累其他"。
 
 ## 模块入口
 
-无源码。仅 `build.gradle.kts` 透传依赖。
+| 路径 | 角色 |
+|---|---|
+| `session/KudosWebSocketSession` | 业务层会话包装，带 sessionId / userId / tenantId / attributes |
+| `session/KudosWebSocketRegistry` | 三套索引的进程级注册中心 |
+| `handler/IKudosWebSocketHandler` | onConnect / onText / onBinary / onDisconnect SPI |
+| `routing/KudosWebSocketRouting` | `Route.kudosWebSocket(path, registry, handler)` 路由扩展函数 |
+| `broadcast/WebSocketBroadcaster` | 单播 / 按 user / 按 tenant / 全部广播 |
+| `codec/IWebSocketMessageEncoder` | 业务对象 ↔ 文本 frame 编 / 解码 SPI |
 
-## 已知限制 / 后续工作
+## 配置示例
 
-- ❗ 主源码空白；模块仅在依赖图里占位
-- ❗ build.gradle.kts 的 Ktor 依赖应改走 `libs.versions.toml` catalog，与项目其他模块统一
-- ❗ 设计意图与 `kudos-ability-web-ktor` 的边界目前不清晰——开始写代码前需要先定义本模块
-  的具体抽象层（连接管理 / 业务协议 / 广播 SPI 等），否则容易和 web-ktor 重复
-- ❗ 没有"WebSocket netty 实现"等并行选项；如果未来想支持非 Ktor 引擎，需要先抽象出
-  `comm-websocket-common`（类似 cache / file 的 common 模块），目前只有 ktor 一条路
+业务侧 `Application` 装配：
+
+```kotlin
+val registry = KudosWebSocketRegistry()
+val broadcaster = WebSocketBroadcaster(registry)
+val handler = object : IKudosWebSocketHandler {
+    override suspend fun onText(session: KudosWebSocketSession, text: String) {
+        broadcaster.broadcastToTenant(session.tenantId ?: "default", text)
+    }
+}
+
+routing {
+    kudosWebSocket("/ws/chat", registry, handler) { raw ->
+        KudosWebSocketSession(
+            raw = raw,
+            userId = raw.call.request.headers["X-User-Id"],
+            tenantId = raw.call.request.headers["X-Tenant-Id"],
+        )
+    }
+}
+```
+
+启用 Ktor WebSockets 插件（默认开）：
+
+```yaml
+kudos:
+  ability:
+    web:
+      ktor:
+        plugins:
+          web-socket:
+            enabled: true
+```
+
+## 测试覆盖
+
+**当前无单元测试**——Ktor WebSocket 测试需要 `ktor-server-test-host`，本模块作为最小
+可用抽象先发布。建议端到端测试在业务侧通过 `testApplication { ... }` 模式覆盖：
+- 启用 `WebSockets` 插件
+- 装上本模块的 `kudosWebSocket` 路由
+- 用 `client.webSocket(...)` 客户端发送 frame，断言 registry / broadcaster 的行为
 
 ## 依赖
 
 ```kotlin
-dependencies {
-    api(project(":kudos-context"))
-    api("io.ktor:ktor-server-websockets-jvm")
-}
+api(project(":kudos-context"))
+api(libs.ktor.server.websockets)
+
+testImplementation(project(":kudos-test:kudos-test-common"))
 ```
+
+`kudos-ability-web-ktor` 装上的 `WebSockets` 插件由业务方的 `Application` 共享——本模块
+**不**做插件装配，避免与 web-ktor 重复。
+
+## 已知限制 / 后续工作
+
+- ❗ 单进程注册中心；多实例部署的全局广播由业务侧自己用 Redis pub/sub 桥接
+- ❗ 没有 backpressure 机制——单个慢 session 不会拖累并发广播（每个 send 在自己的 coroutine
+  里），但**会无限堆积它自己的发送队列**直到 OOM。业务侧需要时可在 handler 里加 send
+  超时 / 队列容量限制
+- ❗ 编解码 SPI 是接口而没有默认实现——业务侧需要按 Jackson / kotlinx.serialization 等
+  自己注入。等 kudos 主体确定默认 JSON 库后再补默认实现
+- ❗ 没有路由级中间件（鉴权 / 限流 / 链路追踪）支持——只能在业务 handler 的 `onConnect`
+  里手动做。未来抽出 `WebSocketInterceptor` 类似 Spring HandlerInterceptor 的 chain
+- ❗ 缺单元测试——见"测试覆盖"段

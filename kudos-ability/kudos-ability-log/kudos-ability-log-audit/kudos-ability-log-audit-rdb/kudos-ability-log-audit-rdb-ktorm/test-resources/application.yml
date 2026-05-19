@@ -1,0 +1,24 @@
+spring:
+  flyway:
+    enabled: false       # 测试侧用 init.schema 直接加 DDL，不走 flyway 校验
+  datasource:
+    dynamic:
+      primary: ds1
+      hikari:
+        connection-timeout: 30000
+        max-pool-size: 5
+        min-idle: 2
+        is-auto-commit: false
+      datasource:
+        ds1:
+          driver-class-name: org.h2.Driver
+          url: jdbc:h2:mem:audit-test;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE;MODE=PostgreSQL
+          username: sa
+          password: sa
+          init:
+            schema: sql/audit-schema.sql
+
+kudos:
+  ability:
+    cache:
+      enabled: false

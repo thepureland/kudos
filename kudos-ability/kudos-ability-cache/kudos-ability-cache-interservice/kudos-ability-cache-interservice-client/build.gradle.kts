@@ -3,5 +3,7 @@ dependencies {
     api(libs.spring.boot.starter.web)
     compileOnly(project(":kudos-ability:kudos-ability-distributed:kudos-ability-distributed-client:kudos-ability-distributed-client-feign"))
 
+    testImplementation(project(":kudos-test:kudos-test-common"))
     testImplementation(project(":kudos-test:kudos-test-container"))
+    testImplementation(project(":kudos-ability:kudos-ability-distributed:kudos-ability-distributed-client:kudos-ability-distributed-client-feign"))
 }
