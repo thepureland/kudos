@@ -47,7 +47,7 @@ object RetryConfig {
         System.getProperty(SYS_PROP_BASE_PATH)?.takeIf { it.isNotBlank() }?.let { return it }
         System.getenv(ENV_VAR_BASE_PATH)?.takeIf { it.isNotBlank() }?.let { return it }
         val tmp = System.getProperty("java.io.tmpdir").trimEnd('/', '\\')
-        return tmp + File.separator + DEFAULT_DIR_NAME
+        return "$tmp${File.separator}$DEFAULT_DIR_NAME"
     }
 
     /**
@@ -58,6 +58,6 @@ object RetryConfig {
      */
     fun pathFor(atomicServiceCode: String?): String {
         val service = atomicServiceCode?.takeIf { it.isNotBlank() } ?: "default"
-        return baseFailedDataPath + File.separator + service
+        return "$baseFailedDataPath${File.separator}$service"
     }
 }

@@ -204,10 +204,8 @@ open class ComponentInitializationDispatcher :
      * 
      * @return Ordered.HIGHEST_PRECEDENCE
      */
-    override fun getOrder(): Int {
-        // 最早执行，确保在任何 Bean 实例化之前修改所有 BeanDefinition
-        return Ordered.HIGHEST_PRECEDENCE
-    }
+    // 最早执行，确保在任何 Bean 实例化之前修改所有 BeanDefinition
+    override fun getOrder(): Int = Ordered.HIGHEST_PRECEDENCE
 
     /**
      * 处理Bean定义注册表
@@ -242,81 +240,53 @@ open class ComponentInitializationDispatcher :
      */
     override fun postProcessBeanDefinitionRegistry(registry: BeanDefinitionRegistry) {
         // 1. 收集所有带 @Configuration 且实现 IComponentInitializer 接口的配置类
-        val configCandidates = linkedMapOf<String, String>()
-        for (beanName in registry.beanDefinitionNames) {
-            val bd: BeanDefinition = registry.getBeanDefinition(beanName)
-            val className: String? = bd.beanClassName
-            if (className == null) continue
-            try {
-                val clazz = Class.forName(className)
+        val configCandidates = registry.beanDefinitionNames
+            .mapNotNull { beanName ->
+                val className = registry.getBeanDefinition(beanName).beanClassName ?: return@mapNotNull null
+                val clazz = runCatching { Class.forName(className) }.getOrNull() ?: return@mapNotNull null
                 if (AnnotationUtils.findAnnotation(clazz, Configuration::class.java) != null
                     && IComponentInitializer::class.java.isAssignableFrom(clazz)
-                ) {
-                    configCandidates[beanName] = className
-                }
-            } catch (_: ClassNotFoundException) {
-                // 忽略无法加载的类
+                ) beanName to className else null
             }
-        }
+            .toMap(linkedMapOf())
         if (configCandidates.isEmpty()) return
 
         // 2. 遍历每个配置类，处理 @AutoConfigureAfter 和 @AutoConfigureBefore
         for ((currentBeanName, currentClassName) in configCandidates) {
-            try {
-                val currentClass = Class.forName(currentClassName)
+            val currentClass = runCatching { Class.forName(currentClassName) }.getOrNull() ?: continue
 
-                // 2a. 处理 @AutoConfigureAfter：当前 Bean 要依赖 afterClasses 所在配置类的 Bean
-                AnnotationUtils.findAnnotation(currentClass, AutoConfigureAfter::class.java)
-                    ?.let { afterAnno ->
-                        val afterClasses = afterAnno.value
-                        val dependsOnAfter = mutableSetOf<String>()
-                        for (depClass in afterClasses) {
-                            for ((candidateBeanName, candidateClassName) in configCandidates) {
-                                if (candidateClassName == depClass.qualifiedName) {
-                                    dependsOnAfter.add(candidateBeanName)
-                                }
-                            }
-                        }
-                        if (dependsOnAfter.isNotEmpty()) {
-                            val bd: BeanDefinition = registry.getBeanDefinition(currentBeanName)
-                            val oldDepends = bd.dependsOn
-                            if (!oldDepends.isNullOrEmpty()) {
-                                val merged = LinkedHashSet<String>()
-                                merged.addAll(oldDepends.asList())
-                                merged.addAll(dependsOnAfter)
-                                bd.setDependsOn(*merged.toTypedArray())
-                            } else {
-                                bd.setDependsOn(*dependsOnAfter.toTypedArray())
-                            }
-                        }
-                    }
+            // 2a. 处理 @AutoConfigureAfter：当前 Bean 要依赖 afterClasses 所在配置类的 Bean
+            AnnotationUtils.findAnnotation(currentClass, AutoConfigureAfter::class.java)?.let { afterAnno ->
+                val dependsOnAfter = afterAnno.value.flatMap { depClass ->
+                    configCandidates.filterValues { it == depClass.qualifiedName }.keys
+                }.toSet()
+                if (dependsOnAfter.isNotEmpty()) {
+                    appendDependsOn(registry.getBeanDefinition(currentBeanName), dependsOnAfter)
+                }
+            }
 
-                // 2b. 处理 @AutoConfigureBefore：beforeClasses 的 Bean 要依赖当前 Bean
-                AnnotationUtils.findAnnotation(currentClass, AutoConfigureBefore::class.java)
-                    ?.let { beforeAnno ->
-                        val beforeClasses = beforeAnno.value
-                        for (depClass in beforeClasses) {
-                            for ((candidateBeanName, candidateClassName) in configCandidates) {
-                                if (candidateClassName == depClass.qualifiedName) {
-                                    // 将 currentBeanName 加到 candidateBeanName 的 dependsOn 列表
-                                    val bd: BeanDefinition = registry.getBeanDefinition(candidateBeanName)
-                                    val oldDepends = bd.dependsOn
-                                    if (!oldDepends.isNullOrEmpty()) {
-                                        val merged = LinkedHashSet<String>()
-                                        merged.addAll(oldDepends.asList())
-                                        merged.add(currentBeanName)
-                                        bd.setDependsOn(*merged.toTypedArray())
-                                    } else {
-                                        bd.setDependsOn(currentBeanName)
-                                    }
-                                }
-                            }
+            // 2b. 处理 @AutoConfigureBefore：beforeClasses 的 Bean 要依赖当前 Bean
+            AnnotationUtils.findAnnotation(currentClass, AutoConfigureBefore::class.java)?.let { beforeAnno ->
+                beforeAnno.value.forEach { depClass ->
+                    configCandidates
+                        .filterValues { it == depClass.qualifiedName }
+                        .keys
+                        .forEach { candidateBeanName ->
+                            // 将 currentBeanName 加到 candidateBeanName 的 dependsOn 列表
+                            appendDependsOn(registry.getBeanDefinition(candidateBeanName), setOf(currentBeanName))
                         }
-                    }
-            } catch (_: ClassNotFoundException) {
-                // 忽略无法加载的类
+                }
             }
         }
+    }
+
+    /** 把 [newDepends] 并入 [bd] 已有的 `dependsOn`，保持顺序且去重。 */
+    private fun appendDependsOn(bd: BeanDefinition, newDepends: Set<String>) {
+        val merged = LinkedHashSet<String>().apply {
+            bd.dependsOn?.let { addAll(it.asList()) }
+            addAll(newDepends)
+        }
+        bd.setDependsOn(*merged.toTypedArray())
     }
 
 }
