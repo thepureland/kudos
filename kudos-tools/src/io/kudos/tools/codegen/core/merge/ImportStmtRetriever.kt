@@ -1,7 +1,5 @@
 package io.kudos.tools.codegen.core.merge
 
-import java.util.regex.Pattern
-
 /**
  * import语句抓取器
  *
@@ -9,14 +7,10 @@ import java.util.regex.Pattern
  * @since 1.0.0
  */
 class ImportStmtRetriever(private val fileContent: CharSequence) {
-    fun retrieveImports(): List<String> {
-        val imports: MutableList<String> = ArrayList()
-        val p = Pattern.compile("import .+")
-        val m = p.matcher(fileContent)
-        while (m.find()) {
-            imports.add(m.group(0))
-        }
-        return imports
-    }
+    fun retrieveImports(): List<String> =
+        IMPORT_REGEX.findAll(fileContent).map { it.value }.toList()
 
+    private companion object {
+        private val IMPORT_REGEX = Regex("import .+")
+    }
 }

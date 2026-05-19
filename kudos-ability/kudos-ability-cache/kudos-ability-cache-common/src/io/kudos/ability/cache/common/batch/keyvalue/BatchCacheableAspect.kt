@@ -112,38 +112,21 @@ class BatchCacheableAspect {
      * @since 1.0.0
      */
     private fun validate(joinPoint: ProceedingJoinPoint, function: KFunction<*>, batchCacheable: BatchCacheable): String {
-        var cacheName: String? = null
         val clazz = joinPoint.target::class
+        val cacheConfig = clazz.findAnnotation<CacheConfig>()
+        val cacheName = batchCacheable.cacheNames.firstOrNull()
+            ?: cacheConfig?.cacheNames?.firstOrNull()
+            ?: error("cacheNames未设置！请在类${clazz}上通过@CacheConfig指定，或在方法${function}上通过@BatchCacheable指定！")
 
-        // 校验缓存名称是否配置
-        val cacheConfig = clazz.findAnnotation<CacheConfig>() // 读取类注解
-        if (batchCacheable.cacheNames.isNotEmpty()) {
-            cacheName = batchCacheable.cacheNames.first()
-        } else if (cacheConfig != null && cacheConfig.cacheNames.isNotEmpty()) {
-            cacheName = cacheConfig.cacheNames.first()
+        check(Map::class.isSuperclassOf(function.returnType.classifier as KClass<*>)) {
+            "类${clazz}中，@BatchCacheable标注的方法【${function}】，其返回值类型必须是Map！"
         }
-        if (cacheName == null) {
-            error("cacheNames未设置！请在类${clazz}上通过@CacheConfig指定，或在方法${function}上通过@BatchCacheable指定！")
-        }
-
-        // 验证方法返回值类型
-        if (!Map::class.isSuperclassOf(function.returnType.classifier as KClass<*>)) {
-            error("类${clazz}中，@BatchCacheable标注的方法【${function}】，其返回值类型必须是Map！")
-        }
-
         return cacheName
     }
 
-    private fun getKeysGenerator(batchCacheable: BatchCacheable): IKeysGenerator {
-        // 先尝试从 Spring 容器中获取 bean
-        val bean = SpringKit.getBeanOrNull(batchCacheable.keysGenerator)
-        if (bean != null) {
-            return bean as IKeysGenerator
-        }
-        // 如果 bean 不存在（可能因为缓存被禁用或配置类未加载），使用默认实现
-        // 这在批量测试时可能会发生，因为某些测试类可能禁用了缓存
-        return DefaultKeysGenerator()
-    }
+    private fun getKeysGenerator(batchCacheable: BatchCacheable): IKeysGenerator =
+        (SpringKit.getBeanOrNull(batchCacheable.keysGenerator) as? IKeysGenerator)
+            ?: DefaultKeysGenerator()
 
     /**
      * 得到所有缓存key
@@ -174,11 +157,10 @@ class BatchCacheableAspect {
     private fun readCachedData(
         keys: List<String>, cacheName: String, batchCacheable: BatchCacheable, result: MutableMap<String, Any?>
     ) {
-        keys.forEach {
-            val value = KeyValueCacheKit.getValue(cacheName, it, batchCacheable.valueClass) //TODO 缓存不存在时，怎么防止缓存击穿
-            if (value != null) {
-                result[it] = value
-            }
+        keys.forEach { key ->
+            //TODO 缓存不存在时，怎么防止缓存击穿
+            KeyValueCacheKit.getValue(cacheName, key, batchCacheable.valueClass)
+                ?.let { result[key] = it }
         }
     }
 

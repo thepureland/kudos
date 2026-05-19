@@ -137,6 +137,12 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
      */
     protected fun entitySequence(): EntitySequence<E, T> = database().sequenceOf(table())
 
+    private fun filteredSequence(criteria: Criteria?): EntitySequence<E, T> {
+        val seq = entitySequence()
+        return if (criteria == null) seq
+        else seq.filter { CriteriaConverter.convert(criteria, table()) }
+    }
+
     /**
      * 返回主键的列(kudos数据库表规范，一个表有且仅有一个列名为id的主键)
      *
@@ -735,24 +741,19 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         val returnProps = objects[1] as Set<String>
         val returnColumnMap = objects[2] as Map<String, Column<Any>>
 
-        // order（仅白名单内字段参与排序）
-        if (listSearchPayload != null) {
-            val whitelist = sortWhitelistFromPo()
-            val allowedOrders = filterOrdersBySortWhitelist(listSearchPayload.orders, whitelist)
+        listSearchPayload?.let { payload ->
+            // order（仅白名单内字段参与排序）
+            val allowedOrders = filterOrdersBySortWhitelist(payload.orders, sortWhitelistFromPo())
             if (allowedOrders.isNotEmpty()) {
-                val orderExps = sortOf(*allowedOrders.toTypedArray())
-                query = query.orderBy(orderExps)
+                query = query.orderBy(sortOf(*allowedOrders.toTypedArray()))
             }
-        }
-
-        // paging（pageNo 为 null 且不允许查全量时按第 1 页分页）
-        if (listSearchPayload != null) {
-            val pageNo = listSearchPayload.pageNo?.let { maxOf(1, it) }
-                ?: if (listSearchPayload.isUnpagedSearchAllowed()) null else 1
-            if (pageNo != null) {
-                val rawSize = listSearchPayload.pageSize ?: 10
-                val pageSize = minOf(rawSize, listSearchPayload.getMaxPageSize())
-                query = query.limit((pageNo - 1) * pageSize, pageSize)
+            // paging（pageNo 为 null 且不允许查全量时按第 1 页分页）
+            val pageNo = payload.pageNo?.let { maxOf(1, it) }
+                ?: if (payload.isUnpagedSearchAllowed()) null else 1
+            pageNo?.let {
+                val rawSize = payload.pageSize ?: 10
+                val pageSize = minOf(rawSize, payload.getMaxPageSize())
+                query = query.limit((it - 1) * pageSize, pageSize)
             }
         }
 
@@ -798,15 +799,9 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
      * @param criteria 查询条件，可为 null
      * @return 记录数
      */
-    protected fun countByCriteria(criteria: Criteria?): Int {
-        return if (criteria == null) {
-            entitySequence().count()
-        } else {
-            entitySequence()
-                .filter { CriteriaConverter.convert(criteria, table()) }
-                .aggregateColumns { count(getPkColumn()) } ?: 0
-        }
-    }
+    protected fun countByCriteria(criteria: Criteria?): Int =
+        if (criteria == null) entitySequence().count()
+        else filteredSequence(criteria).aggregateColumns { count(getPkColumn()) } ?: 0
 
     override fun count(searchPayload: ISearchPayload?): Int {
         return count(searchPayload, null)
@@ -839,15 +834,10 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
      * @return 求和结果
      */
     @Suppress("UNCHECKED_CAST")
-    private fun sum(property: String, criteria: Criteria?): Number {
-        var entitySequence = entitySequence()
-        if (criteria != null) {
-            entitySequence = entitySequence.filter { CriteriaConverter.convert(criteria, table()) }
-        }
-        return entitySequence.aggregateColumns {
+    private fun sum(property: String, criteria: Criteria?): Number =
+        filteredSequence(criteria).aggregateColumns {
             sum(ColumnHelper.columnOf(table(), property)[property] as Column<Number>)
         } as Number
-    }
 
     /**
      * 按属性求平均值（字符串属性名版本）。
@@ -857,15 +847,10 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
      * @return 平均值结果
      */
     @Suppress("UNCHECKED_CAST")
-    private fun avg(property: String, criteria: Criteria?): Number {
-        var entitySequence = entitySequence()
-        if (criteria != null) {
-            entitySequence = entitySequence.filter { CriteriaConverter.convert(criteria, table()) }
-        }
-        return entitySequence.aggregateColumns {
+    private fun avg(property: String, criteria: Criteria?): Number =
+        filteredSequence(criteria).aggregateColumns {
             avg(ColumnHelper.columnOf(table(), property)[property] as Column<Number>)
         } as Number
-    }
 
     /**
      * 按属性求最大值（字符串属性名版本）。
@@ -875,15 +860,10 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
      * @return 最大值；无数据返回 null
      */
     @Suppress("UNCHECKED_CAST")
-    private fun <R : Comparable<R>> max(property: String, criteria: Criteria?): R? {
-        var entitySequence = entitySequence()
-        if (criteria != null) {
-            entitySequence = entitySequence.filter { CriteriaConverter.convert(criteria, table()) }
-        }
-        return entitySequence.aggregateColumns {
+    private fun <R : Comparable<R>> max(property: String, criteria: Criteria?): R? =
+        filteredSequence(criteria).aggregateColumns {
             max(ColumnHelper.columnOf(table(), property)[property] as Column<Comparable<Any>>)
         } as R?
-    }
 
     /**
      * 按属性求最小值（字符串属性名版本）。
@@ -893,15 +873,10 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
      * @return 最小值；无数据返回 null
      */
     @Suppress("UNCHECKED_CAST")
-    private fun <R : Comparable<R>> min(property: String, criteria: Criteria?): R? {
-        var entitySequence = entitySequence()
-        if (criteria != null) {
-            entitySequence = entitySequence.filter { CriteriaConverter.convert(criteria, table()) }
-        }
-        return entitySequence.aggregateColumns {
+    private fun <R : Comparable<R>> min(property: String, criteria: Criteria?): R? =
+        filteredSequence(criteria).aggregateColumns {
             min(ColumnHelper.columnOf(table(), property)[property] as Column<Comparable<Any>>)
         } as R?
-    }
 
     override fun sum(property: KProperty1<E, *>, criteria: Criteria?): Number = sum(property.name, criteria)
     override fun avg(property: KProperty1<E, *>, criteria: Criteria?): Number = avg(property.name, criteria)
@@ -945,61 +920,29 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         ignoreNull: Boolean = false,
         whereConditionFactory: ((Column<Any>, Any?) -> ColumnDeclaring<Boolean>?)? = null
     ): ColumnDeclaring<Boolean>? {
-        val properties = propertyMap.keys.toTypedArray()
-        val columns = ColumnHelper.columnOf(table(), *properties)
-        val expressions = mutableListOf<ColumnDeclaring<Boolean>>()
-        columns.forEach { (property, column) ->
-            val operatorAndValue = requireNotNull(propertyMap[property]) { "属性[$property]缺少查询操作符和值。" }
-            val operator = operatorAndValue.first
-            val value = operatorAndValue.second
-            val expression = if (operator == OperatorEnum.IS_NULL) {
-                column.isNull()
-            } else if (operator == OperatorEnum.IS_NOT_NULL) {
-                column.isNotNull()
-            } else if (value == null || value == "") {
-                if (ignoreNull) {
-                    whereConditionFactory?.let { it(column, value) }
-                } else {
-                    column.isNull()
-                }
-            } else {
-                if (whereConditionFactory == null) {
-                    SqlWhereExpressionFactory.create(column, operator, value)
-                } else {
-                    whereConditionFactory(column, value) ?: (column eq value)
-                }
+        val columns = ColumnHelper.columnOf(table(), *propertyMap.keys.toTypedArray())
+        val expressions = columns.mapNotNull { (property, column) ->
+            val (operator, value) = requireNotNull(propertyMap[property]) {
+                "属性[$property]缺少查询操作符和值。"
             }
-            if (expression != null) {
-                expressions.add(expression)
+            when {
+                operator == OperatorEnum.IS_NULL -> column.isNull()
+                operator == OperatorEnum.IS_NOT_NULL -> column.isNotNull()
+                value == null || value == "" ->
+                    if (ignoreNull) whereConditionFactory?.invoke(column, value) else column.isNull()
+                whereConditionFactory == null -> SqlWhereExpressionFactory.create(column, operator, value)
+                else -> whereConditionFactory(column, value) ?: (column eq value)
             }
+        }.toMutableList()
+
+        if (expressions.isEmpty() && whereConditionFactory != null) {
+            table().columns.mapNotNullTo(expressions) { whereConditionFactory(it as Column<Any>, null) }
         }
 
-        if (expressions.isEmpty()) {
-            if (whereConditionFactory != null) {
-                table().columns.forEach { column ->
-                    val expression = whereConditionFactory(column as Column<Any>, null)
-                    if (expression != null) {
-                        expressions.add(expression)
-                    }
-                }
-            }
-        }
-
-        return if (expressions.isEmpty()) {
-            null
-        } else {
-            var fullExpression = expressions[0]
-            expressions.forEachIndexed { index, expression ->
-                if (index != 0) {
-                    fullExpression = if (andOr == AndOrEnum.AND) {
-                        fullExpression.and(expression)
-                    } else {
-                        fullExpression.or(expression)
-                    }
-                }
-            }
-            fullExpression
-        }
+        if (expressions.isEmpty()) return null
+        val combine: (ColumnDeclaring<Boolean>, ColumnDeclaring<Boolean>) -> ColumnDeclaring<Boolean> =
+            if (andOr == AndOrEnum.AND) ColumnDeclaring<Boolean>::and else ColumnDeclaring<Boolean>::or
+        return expressions.reduce(combine)
     }
 
     private fun doSearchEntity(
@@ -1009,15 +952,13 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         vararg orders: Order
     ): List<E> {
         var entitySequence = entitySequence()
-        if (propertyMap != null) {
-            val propMap = propertyMap.map { (prop, value) -> prop to Pair(OperatorEnum.EQ, value) }.toMap()
-            val fullExpression = processWhere(propMap, logic, false, whereConditionFactory)
-            if (fullExpression != null) {
-                entitySequence = entitySequence.filter { fullExpression }
+        propertyMap?.let { map ->
+            val propMap = map.mapValues { (_, value) -> OperatorEnum.EQ to value }
+            processWhere(propMap, logic, false, whereConditionFactory)?.let { expr ->
+                entitySequence = entitySequence.filter { expr }
             }
         }
-        entitySequence = entitySequence.sortedBy(*sortBy(*orders))
-        return entitySequence.toList()
+        return entitySequence.sortedBy(*sortBy(*orders)).toList()
     }
 
     private fun doSearchProperties(
@@ -1032,11 +973,10 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         var query = querySource().select(returnColumnMap.values)
 
         // where
-        if (propertyMap != null) {
-            val propMap = propertyMap.map { (prop, value) -> prop to Pair(OperatorEnum.EQ, value) }.toMap()
-            val fullExpression = processWhere(propMap, logic, false, whereConditionFactory)
-            if (fullExpression != null) {
-                query = query.where { fullExpression }
+        propertyMap?.let { map ->
+            val propMap = map.mapValues { (_, value) -> OperatorEnum.EQ to value }
+            processWhere(propMap, logic, false, whereConditionFactory)?.let { expr ->
+                query = query.where { expr }
             }
         }
 
@@ -1086,21 +1026,10 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
     private fun searchEntityCriteria(
         criteria: Criteria?, pageNo: Int = 0, pageSize: Int = 0, vararg orders: Order
     ): List<E> {
-        var entitySequence = entitySequence()
-
-        // where
-        if (criteria != null) {
-            entitySequence = entitySequence.filter { CriteriaConverter.convert(criteria, table()) }
-        }
-
-        // sort
-        entitySequence = entitySequence.sortedBy(*sortBy(*orders))
-
-        // paging
+        var entitySequence = filteredSequence(criteria).sortedBy(*sortBy(*orders))
         if (pageNo != 0 && pageSize != 0) {
             entitySequence = entitySequence.drop((pageNo - 1) * pageSize).take(pageSize)
         }
-
         return entitySequence.toList()
     }
 
@@ -1182,9 +1111,8 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
             getWherePropertyMap(searchPayload, entityProperties)
         }
         val andOr = searchPayload?.getAndOr() ?: AndOrEnum.AND
-        val fullExpression = processWhere(propMap, andOr, true, whereConditionFactory)
-        if (fullExpression != null) {
-            query = query.where { fullExpression }
+        processWhere(propMap, andOr, true, whereConditionFactory)?.let { expr ->
+            query = query.where { expr }
         }
 
         return listOf(query, returnProps, returnColumnMap)
@@ -1273,9 +1201,8 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         }
 
         // 兼容传统 JavaBean/普通 Kotlin 类：优先走无参构造 + 属性回填。
-        val emptyConstructor = destClass.constructors.firstOrNull { it.parameters.isEmpty() }
-        if (emptyConstructor != null) {
-            return emptyConstructor.call().also { populateResultItem(it, propertyValues) }
+        destClass.constructors.firstOrNull { it.parameters.isEmpty() }?.let {
+            return it.call().also { obj -> populateResultItem(obj, propertyValues) }
         }
 
         // 兼容 data class 等不可变对象：通过主构造器按参数名装配。

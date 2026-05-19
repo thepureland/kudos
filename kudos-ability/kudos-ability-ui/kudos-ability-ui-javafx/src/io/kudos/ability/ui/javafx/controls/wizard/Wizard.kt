@@ -141,7 +141,7 @@ class Wizard(title: String = "") {
      */
     fun getProperties(): ObservableMap<Any, Any>? {
         if (properties == null) {
-            properties = FXCollections.observableMap(HashMap())
+            properties = FXCollections.observableMap(mutableMapOf())
         }
         return properties
     }

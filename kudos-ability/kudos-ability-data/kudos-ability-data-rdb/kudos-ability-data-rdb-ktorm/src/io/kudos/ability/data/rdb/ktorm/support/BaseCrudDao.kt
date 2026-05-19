@@ -385,9 +385,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
             }
             where {
                 var whereExpression = getPkColumn() eq id
-                if (criteria != null) {
-                    whereExpression = whereExpression.and(CriteriaConverter.convert(criteria, table()))
-                }
+                criteria?.let { whereExpression = whereExpression.and(CriteriaConverter.convert(it, table())) }
                 whereExpression
             }
         } == 1
@@ -411,7 +409,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
                 columnMap.filter { it.key in propertyNames }
             }
         }
-        val criteriaExpression = if (criteria != null) CriteriaConverter.convert(criteria, table()) else null
+        val criteriaExpression = criteria?.let { CriteriaConverter.convert(it, table()) }
         GroupExecutor(entities, countOfEachBatch) { it ->
             val counts = database().batchUpdate(table()) {
                 for (entity in it) {
@@ -424,9 +422,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
                         }
                         where {
                             var whereExpression = getPkColumn() eq entity.id
-                            if (criteriaExpression != null) {
-                                whereExpression = whereExpression.and(criteriaExpression)
-                            }
+                            criteriaExpression?.let { whereExpression = whereExpression.and(it) }
                             whereExpression
                         }
                     }

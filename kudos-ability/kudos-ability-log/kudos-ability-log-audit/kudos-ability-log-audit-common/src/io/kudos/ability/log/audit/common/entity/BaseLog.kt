@@ -139,13 +139,8 @@ class BaseLog : Serializable {
      * 与历史数据的兼容：解析侧的 [splitStringParams] 同样按转义规则解；老数据（未转义）
      * 在分隔符不出现于参数内容时**与新规则等价**，无破坏。
      */
-    fun getStringParams(): String? {
-        if (stringParams.isNullOrEmpty()) {
-            return null
-        }
-        val params = requireNotNull(stringParams) { "stringParams is null" }
-        return params.joinToString(SEPERATOR) { escapeSegment(it) }
-    }
+    fun getStringParams(): String? =
+        stringParams?.takeIf { it.isNotEmpty() }?.joinToString(SEPERATOR) { escapeSegment(it) }
 
     /**
      * 返回JSON对象字符串
@@ -162,12 +157,9 @@ class BaseLog : Serializable {
      *
      * @param param
      */
-    fun addParam(param: String?): BaseLog {
-        if (this.stringParams == null) {
-            this.stringParams = ArrayList()
-        }
-        (this.stringParams ?: ArrayList<String?>().also { this.stringParams = it }).add(param)
-        return this
+    fun addParam(param: String?): BaseLog = apply {
+        val list = stringParams ?: mutableListOf<String?>().also { stringParams = it }
+        list.add(param)
     }
 
     /**
