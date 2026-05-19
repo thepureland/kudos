@@ -75,8 +75,9 @@ UNREAD ── markRead ──► READ
   定时任务从 `msg_unreceived` 拉数据走 re-send 路径
 - ❗ **控制器无 `@PreAuthorize`**：admin 控制器靠网关 / 外部鉴权过滤器做访问控制；漏
   配置时 `bulkSend` 等敏感 endpoint 直接暴露
-- ❗ **模板内容大小无上限**：`msg_template.content` 通常是 TEXT 列；恶意大模板可导致
-  渲染 OOM。建议在 form 校验加 maxLength
+- ❗ **模板内容大小无上限**：`msg_template.content` 在 h2 是 `varchar`（无界，等价 CLOB），
+  跨方言移植到 mysql / pg 时也建议给上限；当前 form 校验未限 maxLength，恶意大模板可
+  导致渲染 OOM
 - ❗ **没有审计日志**：模板创建 / 修改 / 删除关键操作不写 AuditLog——合规审计场景需自接入
 
 ## 依赖
