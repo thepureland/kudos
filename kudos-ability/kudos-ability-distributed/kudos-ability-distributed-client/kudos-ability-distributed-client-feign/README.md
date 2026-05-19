@@ -100,15 +100,14 @@ class UserClientFallback(...) : UserClient, AbstractFeignFallbackSupport("UserCl
 
 ## 已知限制 / 后续工作
 
-- ❗ `GlobalHeaderRequestInterceptor` 每个请求都调 `SpringKit.getBeansOfType` —— bean 数量
-  少时开销忽略不计，但同步遍历 + 反射。Feign 客户端在热路径时考虑把"已发现的 processor 列表"
-  缓存到字段
+- ✅ `GlobalHeaderRequestInterceptor` 已把 `IFeignRequestContextProcess` 缓存到 `by lazy`
+  字段——首次请求触发解析，后续直接复用，热路径不再走 `SpringKit.getBeansOfType` 反射
 - ❗ 上下文头透传**不做加密 / 签名**——`TENANT_ID` / `TRACE_KEY` 等都是明文，由调用方
   对端身份保证安全（典型部署：mTLS / 服务网格）。直接对外暴露 Feign 接口的场景需要业务
   侧自行加签名
-- ❗ `traceKey` 缺失时生成 UUID 是被动行为——不会在 `KudosContext` 里反写回去，所以下次
-  调用又会重新生成。如果业务侧希望"一次请求 traceKey 在所有出站调用中相同"，需要在最
-  外层 Filter / Aspect 主动设上
+- ✅ `traceKey` 缺失时生成的 UUID 已**反写回 `KudosContext`**——同一逻辑请求里后续所有
+  出站 Feign 调用复用同一 traceKey，链路能在 APM 上 stitch 成完整 trace。要让 traceKey
+  跨服务统一传递仍需要服务端的 `FeignContextWebFilter` 配合（默认已注册）
 - ❗ `GlobalFeignFallBackFactory` 用 `HttpResult(status, message)` 作为唯一返回类型——
   适合简单"成功 / 失败" Feign 接口；返回业务对象的接口需要业务方自己写 `@FeignClient.fallback`
 - ❗ `IFeignRequestContextProcess` 的扩展顺序未指定（Spring 容器返回顺序）。多个实现互相
