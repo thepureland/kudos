@@ -107,3 +107,14 @@ io.kudos.ms.auth.core
 - `kudos-ability-data-rdb-ktorm` / `kudos-ability-cache-common`
 - `kudos-ms-sys-client` / `kudos-ms-user-client`（跨服务查询）
 - `kudos-ability-data-audit`（事件机制基座）
+
+## Kotlin 风格
+
+- **一律 `open class` + Spring CGLIB 代理**——`@Transactional` / `@Cacheable` / `@TransactionalEventListener`
+  切面都要求方法 `open`。`AuthRoleService` / `AuthGroupService` / `*RelationsService` 全部 `open class`。
+- **DAO 通过 ctor 注入；Service 大部分通过 `@Resource` 注入**避免循环依赖——`AuthRoleService` 单类
+  就 7+ 个 `@Resource` 字段（cache / 同域 service / 跨服务 client / 事件发布器互引时很常见）。
+- **Cache 类用 `getSelf<XxxCache>()` 拿 Spring 代理对象**——让 `@Cacheable` 在 `doReload` 等同类内部
+  调用也能生效（绕开 self-invocation 不走代理的 Spring 限制）。本模块所有"key/value 聚合缓存"
+  （`RoleIdsByUserIdCache` / `UserIdsByRoleIdCache` / `UserIdsByTenantIdAndRoleCodeCache` /
+  `UserIdsByGroupIdCache` / `GroupIdsByUserIdCache` 等）都遵循该模式。
