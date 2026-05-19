@@ -30,6 +30,7 @@ import java.util.concurrent.CompletableFuture
 @AutoConfigureAfter(ContextAutoConfiguration::class)
 open class KtorAutoConfiguration : IComponentInitializer {
 
+    /** 由 Spring 收集的所有 [IKtorRouteRegistrar] 实现，用于在 Ktor 启动时统一注册路由 */
     @Autowired(required = false)
     private var routeRegistrar: List<IKtorRouteRegistrar> = emptyList()
 
@@ -92,8 +93,13 @@ open class KtorAutoConfiguration : IComponentInitializer {
     }
 
     /**
-     * Spring 容器关闭前会调用带 @PreDestroy 的方法，
-     * 此时调用 Ktor 引擎的 stop 方法优雅关闭。
+     * Spring 容器关闭前 `@PreDestroy` 钩子：优雅关闭 Ktor 引擎。
+     *
+     * `stop(2000L, 3000L)` 含义：先给在途请求 2 秒处理完，再强制等 3 秒后彻底关；
+     * 未初始化 application（如 engine.name=test 时直接返回 null）就直接跳过，避免空指针。
+     *
+     * @author K
+     * @since 1.0.0
      */
     @PreDestroy
     open fun shutDownKtor() {
@@ -107,8 +113,16 @@ open class KtorAutoConfiguration : IComponentInitializer {
         logger.info(">>> $engineName 引擎已停止.")
     }
 
+    /**
+     * 实现 [IComponentInitializer] 契约：返回当前组件的名字，供 ComponentInitializationDispatcher 排序与日志识别。
+     *
+     * @return 组件名常量
+     * @author K
+     * @since 1.0.0
+     */
     override fun getComponentName() = "kudos-ability-web-ktor-base"
 
+    /** 日志器 */
     private val logger = LogFactory.getLog(this::class)
 
 }
