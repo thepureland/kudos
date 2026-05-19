@@ -118,36 +118,21 @@ object SystemKit {
      * @since 1.0.0
      */
     fun executeCommand(vararg command: String): Pair<Boolean, String?> {
-        var process: Process? = null // 也可用ProcessBuilder构建
-        var message: String? = null
-        val success = try {
-            process = Runtime.getRuntime().exec(command)
-            true
+        // 也可用ProcessBuilder构建
+        val process = try {
+            Runtime.getRuntime().exec(command)
         } catch (e: Throwable) {
-            message = e.message
             log.error(e, "执行系统命令【${command.joinToString(" ")}】出错！")
-            false
+            return false to e.message
         }
-
-//        if (wait) {
-//            try {
-//                process.waitFor()
-//            } catch (e: InterruptedException) {
-//                e.printStackTrace()
-//            }
-//        }
-
-
-        if (process != null) {
-            message = loadStream(process.inputStream)
+        return try {
+            // 两路 stream 都必须 drain，避免子进程阻塞写
+            val stdout = loadStream(process.inputStream)
             val errorMsg = loadStream(process.errorStream)
-            if (errorMsg.isNotEmpty()) {
-                message = errorMsg
-            }
+            true to errorMsg.ifEmpty { stdout }
+        } finally {
             process.destroy()
         }
-
-        return success to message
     }
 
     /**
@@ -287,14 +272,8 @@ object SystemKit {
      * @author K
      * @since 1.0.0
      */
-    fun isDebug(): Boolean {
-        for (arg in ManagementFactory.getRuntimeMXBean().inputArguments) {
-            if (debugPattern.matcher(arg).find()) {
-                return true
-            }
-        }
-        return false
-    }
+    fun isDebug(): Boolean =
+        ManagementFactory.getRuntimeMXBean().inputArguments.any { debugPattern.matcher(it).find() }
 
 
     /**

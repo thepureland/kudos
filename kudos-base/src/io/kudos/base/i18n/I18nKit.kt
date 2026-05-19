@@ -268,25 +268,11 @@ object I18nKit {
      * @param resourceGroup
      */
     private fun initOneLocale(locale: String, type: String, resourceGroup: List<Resource>) {
-        val moduleSet = HashSet<String>()
         for (resource in resourceGroup) {
-            var typeMap = i18nMap[locale]
-            if (typeMap == null) {
-                typeMap = HashMap()
-                typeMap[type] = mutableMapOf()
-                i18nMap[locale] = typeMap
-            }
-            val moduleAndLocale = getModuleAndLocale(resource)
-            val moduleName = moduleAndLocale.first
-            moduleSet.add(moduleName)
-            var moduleMap = typeMap[type]
-            if (moduleMap == null) {
-                moduleMap = HashMap()
-                typeMap[type] = moduleMap
-            }
-            if (!moduleMap.containsKey(moduleName)) {
-                moduleMap[moduleName] = LinkedHashMap()
-            }
+            val typeMap = i18nMap.getOrPut(locale) { mutableMapOf() }
+            val moduleMap = typeMap.getOrPut(type) { mutableMapOf() }
+            val (moduleName, _) = getModuleAndLocale(resource)
+            moduleMap.getOrPut(moduleName) { LinkedHashMap() }
             initLocaleByResourceType(moduleMap, resource, type)
         }
     }
@@ -301,26 +287,16 @@ object I18nKit {
     private fun compareToSetDefaultLocale(defaultLocale: String, type: String, locale: String) {
         val moduleMapDef = i18nMap[defaultLocale]?.get(type) ?: return
         val localeTypeMap = i18nMap.getOrPut(locale) { mutableMapOf() }
-        var moduleMap = localeTypeMap[type]
-        if (moduleMap == null) {
-            moduleMap = LinkedHashMap()
-            localeTypeMap[type] = moduleMap
-        }
+        val moduleMap = localeTypeMap.getOrPut(type) { LinkedHashMap() }
         for ((module, keyValueMapDef) in moduleMapDef) {
-            if (!moduleMap.containsKey(module)) {
+            val keyValueMap = moduleMap[module]
+            if (keyValueMap == null) {
                 moduleMap[module] = keyValueMapDef //use default locale
-                //                LOG.debug("i18n:缺失语言:{0},类型:{1},模块:{2}",locale,type,module);
                 continue
             }
-            val keyValueMap = moduleMap[module]
             for ((key, value) in keyValueMapDef) {
-                if (keyValueMap == null || !keyValueMap.containsKey(key) || keyValueMap[key].isNullOrBlank()) {
-                    if (keyValueMap == null) {
-                        moduleMap[module] = linkedMapOf(key to value)
-                        continue
-                    }
+                if (!keyValueMap.containsKey(key) || keyValueMap[key].isNullOrBlank()) {
                     keyValueMap[key] = value
-                    //                    LOG.debug("i18n:缺失语言:{0},类型:{1},模块:{2},键:{3}",locale,type,module,key);
                 }
             }
         }
@@ -379,7 +355,7 @@ object I18nKit {
      */
     private fun createMapByModule(
         moduleMap: MutableMap<String, MutableMap<String, String>>, module: String
-    ): MutableMap<String, String> = moduleMap.getOrPut(module) { HashMap() }
+    ): MutableMap<String, String> = moduleMap.getOrPut(module) { mutableMapOf() }
 
     /**
      * 将i18nMap里的字典,组织成字典专用的i18nMapDict
@@ -394,15 +370,13 @@ object I18nKit {
                 val allDictType: Set<String> = moduleDictMap.keys
                 for (oneType in allDictType) {
                     try {
-                        val dictTypeAndKey = oneType.split("\\.").toTypedArray()
-                        val dictType = dictTypeAndKey[0]
-                        val realKey = dictTypeAndKey[1]
+                        val (dictType, realKey) = oneType.split(".", limit = 2)
                         val dictTypeMap = moduleMap.getOrPut(dictType) { LinkedHashMap() }
                         if (moduleDictMap[oneType] != null) {
                             val realValue = moduleDictMap[oneType]
                             dictTypeMap[realKey] = realValue
                         } else {
-                            dictTypeMap[dictType] = module + "_" + oneType
+                            dictTypeMap[dictType] = "${module}_$oneType"
                             log.error("i18n:字典国际化模块:{0},类型:{1},缺少Code！", module, oneType)
                         }
                     } catch (_: IndexOutOfBoundsException) {

@@ -109,21 +109,15 @@ class Sort : Iterable<Order>, Serializable {
 
         private const val serialVersionUID = 5737186511679863905L
 
-        fun add(property: String, direction: DirectionEnum): Sort {
-            return Sort(Order(property, direction))
-        }
+        fun add(property: String, direction: DirectionEnum): Sort = Sort(Order(property, direction))
 
         fun toSql(orders: Array<Order>, columnMap: Map<String, String>?): String {
-            val orderSb = StringBuilder("ORDER BY ")
-            for (order in orders) {
-                val property = order.property
+            if (orders.isEmpty()) return ""
+            return orders.joinToString(separator = ",", prefix = "ORDER BY ") { order ->
                 val direction = order.direction.name.lowercase()
-                val columnName = (columnMap?.get(property) ?: property.humpToUnderscore()).lowercase()
-                orderSb.append(columnName).append(" ").append(direction).append(",")
+                val columnName = (columnMap?.get(order.property) ?: order.property.humpToUnderscore()).lowercase()
+                "$columnName $direction"
             }
-            return if (orderSb.length == 9) { // 所有指定的属性都不支持排序
-                ""
-            } else orderSb.substring(0, orderSb.length - 1)
         }
     }
 

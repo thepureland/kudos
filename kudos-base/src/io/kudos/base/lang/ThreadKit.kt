@@ -111,21 +111,12 @@ object ThreadKit {
      * @since 1.0.0
      */
     fun printStackTraceOnNotCallByClass(clazz: KClass<*>) {
-        if (LOG.isDebugEnabled()) {
-            var find = false
-            val stackTrace = getStackTrace()
-            for (elem in stackTrace) {
-                if (elem.className == clazz.java.name) {
-                    find = true
-                    break
-                }
-            }
-            if (!find) {
-                LOG.warn("方法栈里不含指定类: $clazz")
-                for (elem in stackTrace) {
-                    LOG.warn(elem.toString())
-                }
-            }
+        if (!LOG.isDebugEnabled()) return
+        val stackTrace = getStackTrace()
+        val found = stackTrace.any { it.className == clazz.java.name }
+        if (!found) {
+            LOG.warn("方法栈里不含指定类: $clazz")
+            stackTrace.forEach { LOG.warn(it.toString()) }
         }
     }
 
@@ -137,11 +128,8 @@ object ThreadKit {
      * @since 1.0.0
      */
     fun printStackTrace() {
-        if (LOG.isDebugEnabled()) {
-            for (elem in getStackTrace()) {
-                LOG.debug(elem.toString())
-            }
-        }
+        if (!LOG.isDebugEnabled()) return
+        getStackTrace().forEach { LOG.debug(it.toString()) }
     }
 
     /**

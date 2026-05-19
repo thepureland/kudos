@@ -68,13 +68,10 @@ object DigestKit {
      * @author K
      * @since 1.0.0
      */
-    fun isMatchMD5(str: String, salt: String, md5Str: String): Boolean {
-        var match = getMD5(str, salt) == md5Str
-        if (!match && salt.isNotBlank()) {
-            match = getMD5(str, "") == md5Str // 处理以前未加盐的历史数据
-        }
-        return match
-    }
+    fun isMatchMD5(str: String, salt: String, md5Str: String): Boolean =
+        getMD5(str, salt) == md5Str
+            // 处理以前未加盐的历史数据
+            || (salt.isNotBlank() && getMD5(str, "") == md5Str)
 
     /**
      * 对文件进行md5散列.
@@ -169,11 +166,9 @@ object DigestKit {
      */
     fun digest(input: ByteArray, algorithm: String, salt: ByteArray?, iterations: Int): ByteArray {
         val digest = MessageDigest.getInstance(algorithm)
-        if (salt != null) {
-            digest.update(salt)
-        }
+        salt?.let(digest::update)
         var result = digest.digest(input)
-        (1 until iterations).forEach { _ ->
+        repeat(iterations - 1) {
             digest.reset()
             result = digest.digest(result)
         }

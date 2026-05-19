@@ -1,7 +1,5 @@
 package io.kudos.tools.codegen.core.merge
 
-import java.util.regex.Pattern
-
 /**
  * 用户自定义代码抓取器
  *
@@ -9,15 +7,13 @@ import java.util.regex.Pattern
  * @since 1.0.0
  */
 class UserCodesRetriever(private val fileContent: String) {
-    fun retrieve(): Map<Int, String> {
-        val map: MutableMap<Int, String> = HashMap()
-        val p =
-            Pattern.compile("(?<=(<!--)?#?//region your codes (\\d)(-->)?\\r?\\n)[\\s\\S]*?(?=(<!--)?#?//endregion your codes \\d(-->)?)")
-        val m = p.matcher(fileContent)
-        while (m.find()) {
-            map[Integer.valueOf(m.group(2))] = m.group(0)
+    fun retrieve(): Map<Int, String> =
+        USER_CODES_REGEX.findAll(fileContent).associate { match ->
+            match.groupValues[2].toInt() to match.value
         }
-        return map
-    }
 
+    private companion object {
+        private val USER_CODES_REGEX =
+            Regex("(?<=(<!--)?#?//region your codes (\\d)(-->)?\\r?\\n)[\\s\\S]*?(?=(<!--)?#?//endregion your codes \\d(-->)?)")
+    }
 }

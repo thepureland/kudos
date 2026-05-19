@@ -104,11 +104,9 @@ class HashBatchCacheableByPrimaryAspect {
         }
     }
 
-    private fun getKeysGenerator(ann: HashBatchCacheableByPrimary): IKeysGenerator {
-        val bean = SpringKit.getBeanOrNull(ann.keysGenerator)
-        if (bean != null) return bean as IKeysGenerator
-        return DefaultHashBatchKeysGenerator()
-    }
+    private fun getKeysGenerator(ann: HashBatchCacheableByPrimary): IKeysGenerator =
+        (SpringKit.getBeanOrNull(ann.keysGenerator) as? IKeysGenerator)
+            ?: DefaultHashBatchKeysGenerator()
 
     private fun proceedAsStringAnyMap(joinPoint: ProceedingJoinPoint): Map<String, Any?> =
         validatedMap(joinPoint.proceed())

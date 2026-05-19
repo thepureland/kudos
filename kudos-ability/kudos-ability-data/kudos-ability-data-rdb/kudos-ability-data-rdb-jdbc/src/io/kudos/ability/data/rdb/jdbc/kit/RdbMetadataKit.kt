@@ -22,15 +22,8 @@ object RdbMetadataKit {
      * @author K
      * @since 1.0.0
      */
-    fun getTablesByType(vararg tableTypes: TableTypeEnum?, conn: Connection? = null): List<Table> {
-        return if (conn != null) {
-            _getTablesByType(conn, *tableTypes)
-        } else {
-            RdbKit.getDataSource().connection.use {
-                _getTablesByType(it, *tableTypes)
-            }
-        }
-    }
+    fun getTablesByType(vararg tableTypes: TableTypeEnum?, conn: Connection? = null): List<Table> =
+        withConn(conn) { _getTablesByType(it, *tableTypes) }
 
     /**
      * 根据表名取得对应表信息
@@ -41,15 +34,8 @@ object RdbMetadataKit {
      * @author K
      * @since 1.0.0
      */
-    fun getTableByName(tableName: String, conn: Connection? = null): Table? {
-        return if (conn != null) {
-            _getTableByName(conn, tableName)
-        } else {
-            RdbKit.getDataSource().connection.use {
-                _getTableByName(it, tableName)
-            }
-        }
-    }
+    fun getTableByName(tableName: String, conn: Connection? = null): Table? =
+        withConn(conn) { _getTableByName(it, tableName) }
 
     /**
      * 根据表名取得对应表的所有列信息
@@ -60,15 +46,11 @@ object RdbMetadataKit {
      * @author K
      * @since 1.0.0
      */
-    fun getColumnsByTableName(tableName: String, conn: Connection? = null): Map<String, Column> {
-        return if (conn != null) {
-            _getColumnsByTableName(conn, tableName)
-        } else {
-            RdbKit.getDataSource().connection.use {
-                _getColumnsByTableName(it, tableName)
-            }
-        }
-    }
+    fun getColumnsByTableName(tableName: String, conn: Connection? = null): Map<String, Column> =
+        withConn(conn) { _getColumnsByTableName(it, tableName) }
+
+    private inline fun <T> withConn(conn: Connection?, action: (Connection) -> T): T =
+        if (conn != null) action(conn) else RdbKit.getDataSource().connection.use(action)
 
     /**
      * 内部实现：用 JDBC [DatabaseMetaData.getTables] 拉所有匹配类型的表，组装成 [Table] 列表。
@@ -81,10 +63,8 @@ object RdbMetadataKit {
         val tableRs = dbMetaData.getTables(conn.catalog, conn.schema, "%", types)
         tableRs.use {
             while (tableRs.next()) {
-                var tableTypeStr = tableRs.getString("TABLE_TYPE")
-                if (tableTypeStr == "BASE TABLE") {
-                    tableTypeStr = "TABLE"
-                }
+                val rawType = tableRs.getString("TABLE_TYPE")
+                val tableTypeStr = if (rawType == "BASE TABLE") "TABLE" else rawType
                 talbes.add(Table().apply {
                     name = tableRs.getString("TABLE_NAME")
                     catalog = tableRs.getString("TABLE_CAT")
@@ -104,20 +84,16 @@ object RdbMetadataKit {
         val dbMetaData = conn.metaData
         val rs = dbMetaData.getTables(conn.catalog, conn.schema, tableName, null)
         rs.use {
-            if (rs.next()) {
-                var tableTypeStr = rs.getString("TABLE_TYPE")
-                if (tableTypeStr == "BASE TABLE") {
-                    tableTypeStr = "TABLE"
-                }
-                return Table().apply {
-                    name = tableName
-                    catalog = rs.getString("TABLE_CAT")
-                    schema = rs.getString("TABLE_SCHEM")
-                    comment = rs.getString("REMARKS") ?: ""
-                    type = TableTypeEnum.valueOf(tableTypeStr)
-                }
+            if (!rs.next()) return null
+            val rawType = rs.getString("TABLE_TYPE")
+            val tableTypeStr = if (rawType == "BASE TABLE") "TABLE" else rawType
+            return Table().apply {
+                name = tableName
+                catalog = rs.getString("TABLE_CAT")
+                schema = rs.getString("TABLE_SCHEM")
+                comment = rs.getString("REMARKS") ?: ""
+                type = TableTypeEnum.valueOf(tableTypeStr)
             }
-            return null
         }
     }
 

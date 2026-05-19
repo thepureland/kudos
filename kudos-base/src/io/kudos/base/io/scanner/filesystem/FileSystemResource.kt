@@ -55,14 +55,12 @@ class FileSystemResource(location: String) : Resource, Comparable<FileSystemReso
      * @param encoding The encoding to use.
      * @return The string contents of the resource.
      */
-    override fun loadAsString(encoding: String): String? {
-        return try {
-            val inputStream: InputStream = FileInputStream(loc)
-            val reader: Reader = InputStreamReader(inputStream, Charset.forName(encoding))
-            IoKit.toString(reader)
-        } catch (e: IOException) {
-            throw Exception("Unable to load filesystem resource: " + loc.path + " (encoding: " + encoding + ")", e)
-        }
+    override fun loadAsString(encoding: String): String? = try {
+        val inputStream: InputStream = FileInputStream(loc)
+        val reader: Reader = InputStreamReader(inputStream, Charset.forName(encoding))
+        IoKit.toString(reader)
+    } catch (e: IOException) {
+        throw Exception("Unable to load filesystem resource: ${loc.path} (encoding: $encoding)", e)
     }
 
     /**
@@ -70,13 +68,11 @@ class FileSystemResource(location: String) : Resource, Comparable<FileSystemReso
      *
      * @return The contents of the resource.
      */
-    override fun loadAsBytes(): ByteArray? {
-        return try {
-            val inputStream: InputStream = FileInputStream(loc)
-            IoKit.toByteArray(inputStream)
-        } catch (e: IOException) {
-            throw Exception("Unable to load filesystem resource: " + loc.path, e)
-        }
+    override fun loadAsBytes(): ByteArray? = try {
+        val inputStream: InputStream = FileInputStream(loc)
+        IoKit.toByteArray(inputStream)
+    } catch (e: IOException) {
+        throw Exception("Unable to load filesystem resource: ${loc.path}", e)
     }
 
     /**

@@ -23,5 +23,5 @@ package io.kudos.ability.cache.common.init.properties
  * @since 1.0.0
  */
 class CacheItemsProperties {
-    var cacheItems: MutableList<String> = ArrayList()
+    var cacheItems: MutableList<String> = mutableListOf()
 }

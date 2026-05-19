@@ -80,10 +80,7 @@ class MixCache(
      */
     private fun mixGet(key: Any): Cache.ValueWrapper? {
         val local = requireLocal()
-        val localWrapper = local.get(key)
-        if (localWrapper != null) {
-            return localWrapper
-        }
+        local.get(key)?.let { return it }
         val remoteWrapper = remoteCache?.get(key) ?: return null
         local.put(key, remoteWrapper.get())
         return remoteWrapper
@@ -93,18 +90,13 @@ class MixCache(
      * 两级缓存读 + 缺失加载：与 [mixGet] 同语义；两级都未命中时调用 valueLoader 一次，
      * 写入两级（不广播 evict —— 与 mixGet 的回填行为对齐，避免把读路径变成写路径）。
      */
+    @Suppress("UNCHECKED_CAST")
     private fun <T : Any> mixGetOrLoad(key: Any, valueLoader: Callable<T>): T? {
         val local = requireLocal()
-        val localWrapper = local.get(key)
-        if (localWrapper != null) {
-            @Suppress("UNCHECKED_CAST")
-            return localWrapper.get() as T?
-        }
-        val remoteWrapper = remoteCache?.get(key)
-        if (remoteWrapper != null) {
-            local.put(key, remoteWrapper.get())
-            @Suppress("UNCHECKED_CAST")
-            return remoteWrapper.get() as T?
+        local.get(key)?.let { return it.get() as T? }
+        remoteCache?.get(key)?.let { wrapper ->
+            local.put(key, wrapper.get())
+            return wrapper.get() as T?
         }
         val loaded: T? = valueLoader.call()
         remoteCache?.put(key, loaded)
