@@ -106,38 +106,26 @@ object ListToTreeConverter {
         callback: ICallback<E, Unit>? = null,
         strict: Boolean = false
     ): List<E> {
-        val treeNodeMap = HashMap<T, E>(treeNodeList.size, 1f)
-        for (obj in treeNodeList) {
-            treeNodeMap[obj._getId()] = obj
-        }
-        val nodeList = ArrayList<E>()
-        for (obj in treeNodeList) {
-            val node = obj
-            val pId = obj._getParentId()
+        val treeNodeMap = treeNodeList.associateByTo(HashMap(treeNodeList.size, 1f)) { it._getId() }
+        val nodeList = mutableListOf<E>()
+        for (node in treeNodeList) {
+            val pId = node._getParentId()
             if (pId == null || (pId is CharSequence && pId.isEmpty())) { // 根
                 nodeList.add(node)
                 callback?.execute(node)
+                continue
+            }
+            val pNode = treeNodeMap[pId]
+            if (pNode != null) {
+                pNode._getChildren().add(node)
             } else {
-                val pNode = treeNodeMap[pId]
-                if (pNode != null) { // 存在父结点
-                    pNode._getChildren().add(node)
-                } else {
-                    if (strict) {
-                        throw IllegalArgumentException(
-                            "结点#${node._getId()}的父结点#${pId}不在输入列表中（strict 模式）"
-                        )
-                    }
-                    LOG.warn("结点#${node._getId()}的父结点#${pId}不存在！")
-                }
+                require(!strict) { "结点#${node._getId()}的父结点#${pId}不在输入列表中（strict 模式）" }
+                LOG.warn("结点#${node._getId()}的父结点#${pId}不存在！")
             }
         }
 
         // 排序
-        if (direction != null && treeNodeList.isNotEmpty()) {
-            return sort(nodeList, direction)
-        }
-
-        return nodeList
+        return if (direction != null && treeNodeList.isNotEmpty()) sort(nodeList, direction) else nodeList
     }
 
     /**

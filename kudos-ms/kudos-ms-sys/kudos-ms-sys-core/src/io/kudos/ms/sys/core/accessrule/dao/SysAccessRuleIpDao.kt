@@ -119,10 +119,7 @@ open class SysAccessRuleIpDao : BaseCrudDao<String, SysAccessRuleIp, SysAccessRu
      */
     fun leftJoinSearch(searchPayload: SysAccessRuleIpQuery): Query {
         var onExpr = SysAccessRuleIps.parentRuleId.eq(SysAccessRules.id)
-        val active = searchPayload.active
-        if (active != null) {
-            onExpr = onExpr and SysAccessRuleIps.active.eq(active)
-        }
+        searchPayload.active?.let { onExpr = onExpr and SysAccessRuleIps.active.eq(it) }
 
         val querySource = database()
             .from(SysAccessRuleIps)
@@ -137,10 +134,7 @@ open class SysAccessRuleIpDao : BaseCrudDao<String, SysAccessRuleIp, SysAccessRu
             if (!parentRuleId.isNullOrBlank()) {
                 it += SysAccessRuleIps.parentRuleId.eq(parentRuleId)
             }
-            val parentRuleActive = searchPayload.parentRuleActive
-            if (parentRuleActive != null) {
-                it += SysAccessRules.active.eq(parentRuleActive)
-            }
+            searchPayload.parentRuleActive?.let { active -> it += SysAccessRules.active.eq(active) }
             val tenantId = searchPayload.tenantId
             if (tenantId == null && searchPayload.getNullProperties()?.contains(SysAccessRule::tenantId.name) == true) {
                 it += SysAccessRules.tenantId.isNull()

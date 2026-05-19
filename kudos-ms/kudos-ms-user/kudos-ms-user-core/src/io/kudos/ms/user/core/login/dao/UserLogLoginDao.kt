@@ -98,21 +98,11 @@ open class UserLogLoginDao : BaseCrudDao<String, UserLogLogin, UserLogLogins>() 
         userId: String?,
         startTime: LocalDateTime?,
         endTime: LocalDateTime?
-    ): Criteria {
-        val criteria = Criteria()
-        if (tenantId != null) {
-            criteria.addAnd(UserLogLogin::tenantId eq tenantId)
-        }
-        if (userId != null) {
-            criteria.addAnd(UserLogLogin::userId eq userId)
-        }
-        if (startTime != null) {
-            criteria.addAnd(UserLogLogin::loginTime ge startTime)
-        }
-        if (endTime != null) {
-            criteria.addAnd(UserLogLogin::loginTime le endTime)
-        }
-        return criteria
+    ): Criteria = Criteria().apply {
+        tenantId?.let { addAnd(UserLogLogin::tenantId eq it) }
+        userId?.let { addAnd(UserLogLogin::userId eq it) }
+        startTime?.let { addAnd(UserLogLogin::loginTime ge it) }
+        endTime?.let { addAnd(UserLogLogin::loginTime le it) }
     }
 
 

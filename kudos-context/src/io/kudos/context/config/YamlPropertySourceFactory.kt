@@ -27,23 +27,19 @@ class YamlPropertySourceFactory : PropertySourceFactory {
         val sourceName = name ?: encodedResource.resource.filename ?: "application"
         initConfigJarMap(sourceName, encodedResource)
         val propertySource = loadFromConfigCenter(sourceName)
-        var map = mutableMapOf<Any?, Any?>()
-        if (propertySource != null) {
-            val source = propertySource.getSource()
-            if (source is MutableMap<*, *>) {
+        @Suppress("UNCHECKED_CAST")
+        val map: MutableMap<Any?, Any?> = when (val source = propertySource?.getSource()) {
+            null -> mutableMapOf()
+            is MutableMap<*, *> -> (source as MutableMap<Any?, Any?>).also {
                 //nacos与本地文件合并，如果nacos不包含所有配置的场景
-                @Suppress("UNCHECKED_CAST")
-                map = source as MutableMap<Any?, Any?>
-                log.info("加载配置文件:{0},size={1}", propertySource, map.size)
-            } else {
+                log.info("加载配置文件:{0},size={1}", propertySource, it.size)
+            }
+            else -> {
                 log.info("加载配置文件:{0}", propertySource)
                 return propertySource
             }
         }
-        val properties = loadYamlProperties(encodedResource)
-        for (e in map.entries) {
-            properties[e.key] = e.value
-        }
+        val properties = loadYamlProperties(encodedResource).apply { putAll(map) }
         return PropertiesPropertySource(sourceName, properties)
     }
 
@@ -75,7 +71,7 @@ class YamlPropertySourceFactory : PropertySourceFactory {
 
 
     companion object {
-        private val SOURCE_MAP: MutableMap<String?, String?> = HashMap()
+        private val SOURCE_MAP: MutableMap<String?, String?> = mutableMapOf()
 
         /** 返回只读视图，避免外部篡改内部映射。 */
         fun getSourceMap(): Map<String?, String?> = Collections.unmodifiableMap(SOURCE_MAP)

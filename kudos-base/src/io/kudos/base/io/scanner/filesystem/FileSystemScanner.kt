@@ -44,16 +44,13 @@ object FileSystemScanner {
      */
     fun scanForResources(path: String, prefix: String, suffix: String): Array<Resource> {
         log.debug("Scanning for filesystem resources at '$path' (Prefix: '$prefix', Suffix: '$suffix')")
-        if (!File(path).isDirectory) {
-            throw Exception("Invalid filesystem path: $path")
-        }
-        val resources: MutableSet<Resource> = TreeSet()
-        val resourceNames = findResourceNames(path, prefix, suffix)
-        for (resourceName in resourceNames) {
-            resources.add(FileSystemResource(resourceName))
-            log.debug("Found filesystem resource: $resourceName")
-        }
-        return resources.toTypedArray()
+        check(File(path).isDirectory) { "Invalid filesystem path: $path" }
+        return findResourceNames(path, prefix, suffix)
+            .mapTo(TreeSet<Resource>()) {
+                log.debug("Found filesystem resource: $it")
+                FileSystemResource(it)
+            }
+            .toTypedArray()
     }
 
     /**
@@ -80,18 +77,13 @@ object FileSystemScanner {
      * @throws IOException when the folder could not be read.
      */
     private fun findResourceNamesFromFileSystem(scanRootLocation: String, folder: File): Set<String> {
-        log.debug("Scanning for resources in path: " + folder.path + " (" + scanRootLocation + ")")
+        log.debug("Scanning for resources in path: ${folder.path} ($scanRootLocation)")
         val resourceNames: MutableSet<String> = TreeSet()
-        val files = folder.listFiles()
-        if (files != null) {
-            for (file in files) {
-                if (file.canRead()) {
-                    if (file.isDirectory) {
-                        resourceNames.addAll(findResourceNamesFromFileSystem(scanRootLocation, file))
-                    } else {
-                        resourceNames.add(file.path)
-                    }
-                }
+        folder.listFiles().orEmpty().filter { it.canRead() }.forEach { file ->
+            if (file.isDirectory) {
+                resourceNames.addAll(findResourceNamesFromFileSystem(scanRootLocation, file))
+            } else {
+                resourceNames.add(file.path)
             }
         }
         return resourceNames
@@ -107,17 +99,13 @@ object FileSystemScanner {
      * @return The filtered names set.
      */
     private fun filterResourceNames(resourceNames: Set<String>, prefix: String, suffix: String): Set<String> {
-        val filteredResourceNames: MutableSet<String> = TreeSet()
-        for (resourceName in resourceNames) {
-            val fileName = resourceName.substring(resourceName.lastIndexOf(File.separator) + 1)
-            if (fileName.startsWith(prefix) && fileName.endsWith(suffix)
-                    && fileName.length >= (prefix + suffix).length) {
-                filteredResourceNames.add(resourceName)
-            } else {
-                log.debug("Filtering out resource: $resourceName (filename: $fileName)")
-            }
+        val minLen = prefix.length + suffix.length
+        return resourceNames.filterTo(TreeSet()) { name ->
+            val fileName = name.substringAfterLast(File.separator)
+            val matches = fileName.startsWith(prefix) && fileName.endsWith(suffix) && fileName.length >= minLen
+            if (!matches) log.debug("Filtering out resource: $name (filename: $fileName)")
+            matches
         }
-        return filteredResourceNames
     }
 
 }
