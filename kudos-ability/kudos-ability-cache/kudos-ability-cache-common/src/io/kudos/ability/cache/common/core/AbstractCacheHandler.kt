@@ -32,12 +32,34 @@ abstract class AbstractCacheHandler<T> {
     abstract fun reloadAll(clear: Boolean = true)
 
     /**
-     * 自身代理实例，通过 [lazy] 委托做线程安全的首次解析。
-     * 旧实现是 `var self = null` + `self as S ?: getBean(...)` 的"伪 DCL"：字段从未被赋值，每次调用都反射查 bean；
-     * 同时缺 `@Volatile`，并发下也不安全。改成 lazy 后只解析一次，且 JVM 保证发布安全。
-     * 命名为 selfProxy 避免与 [getSelf] 函数的 JVM 签名冲突（属性 getter 默认会生成 getSelf()）。
+     * 当业务侧把同一个 handler 类注册成多个 bean（不同 qualifier）时，子类**必须** override
+     * 本方法返回当前实例应当解析的 bean 名——否则 [selfProxy] 按类型查会撞
+     * `NoUniqueBeanDefinitionException`。
+     *
+     * 默认返回 `null` 表示"按类型唯一查"，覆盖典型场景（一个 handler 类只注册一个 bean）。
      */
-    private val selfProxy: AbstractCacheHandler<*> by lazy { SpringKit.getBean(this::class) }
+    protected open fun selfBeanName(): String? = null
+
+    /**
+     * 自身代理实例，[lazy] 委托做线程安全的首次解析。
+     *
+     * 解析顺序：
+     *  1. 若 [selfBeanName] 返回非空 → 按名解析（业务侧多 bean 场景显式指定）
+     *  2. 否则按类型解析：[org.springframework.context.ApplicationContext.getBean] 时若同类型仅 1 个 bean 则直接返回；
+     *     多个时 [io.kudos.context.kit.SpringKit.getBean] 会按 `@Primary` / 同名匹配规则裁决；都不行就抛
+     *     `NoUniqueBeanDefinitionException`——此时业务侧应当 override [selfBeanName]
+     *
+     * 命名为 `selfProxy` 避免与 [getSelf] 函数的 JVM 签名冲突（属性 getter 默认生成 `getSelf()`）。
+     */
+    private val selfProxy: AbstractCacheHandler<*> by lazy {
+        val name = selfBeanName()
+        if (name != null) {
+            @Suppress("UNCHECKED_CAST")
+            SpringKit.getBean(name) as AbstractCacheHandler<*>
+        } else {
+            SpringKit.getBean(this::class)
+        }
+    }
 
     /**
      * 返回自身实例，为了解决基于spring aop特性（这里为@Cacheable和@BatchCacheable）的方法在当前类直接调用造成aop失效的问题

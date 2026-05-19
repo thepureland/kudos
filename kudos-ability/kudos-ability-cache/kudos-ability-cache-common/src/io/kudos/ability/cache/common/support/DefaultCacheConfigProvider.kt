@@ -56,7 +56,10 @@ class DefaultCacheConfigProvider(itemsProperties: CacheItemsProperties) : ICache
         for (cacheItemStr in cacheItems) {
             if (cacheItemStr.isNotBlank()) {
                 val cacheConfig = cacheItemToConfig(cacheItemStr)
-                val strategy = cacheConfig.strategy
+                // 用派生属性 resolvedStrategyCode 而非裸 `.strategy`——README "新代码必须用派生属性"
+                // 契约的最后一处遗留 reader 收口。yml 解析路径只会设 `.strategy`，DB 字典码路径
+                // 只会设 `.strategyDictCode`；resolvedStrategyCode 把两条来源兜底集中到一处。
+                val strategy = cacheConfig.resolvedStrategyCode
                     ?: error("cache item 缺少 strategy: $cacheItemStr")
                 val name = cacheConfig.name
                     ?: error("cache item 缺少 name: $cacheItemStr")

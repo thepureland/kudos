@@ -85,8 +85,11 @@ class GlobalHeaderRequestInterceptor : RequestInterceptor {
         val context = KudosContextHolder.get()
         val tenantId = context.tenantId
         val subSysCode = context.subSystemCode
+        // traceKey 缺失时主动生成并**反写回 context**——同一逻辑请求里后续的所有出站 Feign
+        // 调用共享同一个 traceKey，下游链路追踪能 stitch 成一棵完整 trace。旧实现只生成不反写，
+        // 每次出站都会拿到新的 UUID，链路被切碎。
         val traceKey = context.traceKey?.takeIf { it.isNotBlank() }
-            ?: UUID.randomUUID().toString()
+            ?: UUID.randomUUID().toString().also { context.traceKey = it }
         val dataSourceId = context.dataSourceId
         requestTemplate.header(Consts.RequestHeader.TENANT_ID, tenantId.toString())
         requestTemplate.header(Consts.RequestHeader.SUB_SYS_CODE, subSysCode)
@@ -97,9 +100,16 @@ class GlobalHeaderRequestInterceptor : RequestInterceptor {
             requestTemplate.header(Consts.RequestHeader.DATASOURCE_ID, dataSourceId)
         }
         requestTemplate.header(Consts.RequestHeader.FEIGN_REQUEST, "true")
-        SpringKit.getBeansOfType<IFeignRequestContextProcess>().values.forEach { processor ->
-            processor.processContext(requestTemplate, context)
-        }
+        // 旧实现每个请求 `SpringKit.getBeansOfType` 调一次——bean 数量少时开销有限但 Feign 在热
+        // 路径上反复触发，反射 + map 构造仍可见。Spring bean 在启动后不变，缓存到 lazy 字段
+        // 一次即可。`@Volatile` 是 Kotlin lazy 的默认线程安全保证；首次访问期间 SpringKit
+        // 必须已就绪（与 LockTool 同款约束）。
+        processors.forEach { it.processContext(requestTemplate, context) }
+    }
+
+    /** 启动期一次性解析的 processor 列表——`by lazy` 确保首次访问时 Spring 已就绪。 */
+    private val processors: Collection<IFeignRequestContextProcess> by lazy {
+        SpringKit.getBeansOfType<IFeignRequestContextProcess>().values
     }
 
 }

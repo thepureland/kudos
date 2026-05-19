@@ -38,18 +38,29 @@ import kotlin.reflect.KClass
 object AuditLogTool {
     private val LOG = LogFactory.getLog(AuditLogTool::class)
     private val parameterNameDiscoverer: ParameterNameDiscoverer = DefaultParameterNameDiscoverer()
-    private var tenantProvider: ILogSourceTenantProvider? = null
 
-    init {
-        initSourceTenantProvider()
-    }
+    @Volatile
+    private var cachedTenantProvider: ILogSourceTenantProvider? = null
 
-    private fun initSourceTenantProvider() {
-        tenantProvider = try {
-            SpringKit.getBean<ILogSourceTenantProvider>()
-        } catch (_: Exception) {
-            null
+    /**
+     * 懒加载 + 缓存的 [ILogSourceTenantProvider] 查找。
+     *
+     * 旧实现在 `object` 的 `init` 块里一次性查 Spring bean——但 [AuditLogTool] 是 Kotlin
+     * `object`，其 init 在**首次访问**时执行；这个时间点通常是 Spring 上下文还没装好（切面
+     * 注册阶段就被引用），所以查 bean 失败、`tenantProvider` 永远为 null、且无重试。
+     *
+     * 改成每次按需查 + 拿到后缓存：bean 还没就绪时返回 null（按现有契约用 `entity.tenantId`
+     * 作为 sourceTenantId 兜底）；bean 就绪后第一次成功查到立即缓存，后续不再走 Spring 反射。
+     */
+    private fun tenantProvider(): ILogSourceTenantProvider? {
+        cachedTenantProvider?.let { return it }
+        val resolved = runCatching { SpringKit.getBeanOrNull(ILogSourceTenantProvider::class) }
+            .onFailure { LOG.debug("查找 ILogSourceTenantProvider 失败：{0}", it.message) }
+            .getOrNull()
+        if (resolved != null) {
+            cachedTenantProvider = resolved
         }
+        return resolved
     }
 
     /**
@@ -144,8 +155,9 @@ object AuditLogTool {
             val body: String = getRequestData(request)
             KudosContextHolder.get().clientInfo?.requestContentString = body
         }
-        val entityId = request.getParameter("id")
-        if (entityId.isNotBlank()) {
+        // request.getParameter 在缺该参数时返回 null（Java API），用 isNullOrBlank 守住 NPE
+        val entityId: String? = request.getParameter("id")
+        if (!entityId.isNullOrBlank()) {
             baseLog.entityId = entityId
         }
         processBizData(baseLog, audit.descriptionFormatter, joinPoint)
@@ -253,10 +265,11 @@ object AuditLogTool {
             entity.requestType = context.clientInfo?.requestType
             entity.subSysCode = subSysCode
             entity.tenantId = context.tenantId
-            if (tenantProvider != null) {
-                entity.sourceTenantId = requireNotNull(tenantProvider) { "tenantProvider is null" }.getSourceTenant(entity.tenantId, entity.operatorId)
+            val provider = tenantProvider()
+            entity.sourceTenantId = if (provider != null) {
+                provider.getSourceTenant(entity.tenantId, entity.operatorId)
             } else {
-                entity.sourceTenantId = entity.tenantId
+                entity.tenantId
             }
         }
 
