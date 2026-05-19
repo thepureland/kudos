@@ -14,9 +14,20 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+/**
+ * 失败数据重试扫描器。
+ *
+ * 在应用启动后为每个 [IFailedDataHandler] 创建一条独立的 CRON 定时任务。
+ * 任务触发时先抢分布式锁（多实例部署只让一个节点执行），
+ * 再扫描该 handler 对应目录下的失败数据文件，依次交还 handler 重试，成功则删除文件。
+ *
+ * @author K
+ * @since 1.0.0
+ */
 @Component
 class FailedDataRetryScanner {
 
+    /** 失败数据重试专用的 [TaskScheduler]；由配置类提供独立线程池，避免占用业务调度池 */
     @Autowired
     @Qualifier("failDataTaskScheduler")
     private lateinit var taskScheduler: TaskScheduler
@@ -139,12 +150,17 @@ class FailedDataRetryScanner {
         }
     }
 
+    /** 日志器 */
     private val logger = LogFactory.getLog(this::class)
 
     companion object {
         /** 失败数据重试锁键前缀（已修正历史拼写 faile-data-retry） */
         private const val FAILED_DATA_RETRY_LOCK_PREFIX = "failed-data-retry-"
 
+        /**
+         * 合法失败数据文件名的正则：`{时间戳}-{UUID}.json`。
+         * 用于过滤目录内的非数据文件（如 IDE 的 `.DS_Store`、临时 swap 文件）。
+         */
         private val FAILED_DATA_FILE_PATTERN = Regex("""\d+-[0-9a-fA-F\-]+\.json""")
     }
 }
