@@ -32,6 +32,19 @@ open class SingleTableCodeGenerateWizard : Application() {
         return TemplateModelCreator()
     }
 
+    /**
+     * JavaFX 应用入口；构建"配置 → 选列 → 选文件"的三步向导并显示。
+     *
+     * 三页之间状态在 [CodeGeneratorContext] 单例上传递：page1 写入 config / dataSource，
+     * page2 把表名 + 列 + config 落到 context，page3 读 context 准备文件列表。
+     *
+     * 注：注释里保留的 `bug: 从 page3 回到 page2 会执行 onExitingPage` 是历史 Wizard 控件
+     * 的已知问题，相关 try/catch 是 workaround，删除会导致后退操作弹错。
+     *
+     * @param stage JavaFX 主舞台
+     * @author K
+     * @since 1.0.0
+     */
     override fun start(stage: Stage) {
         val wizard = Wizard("单表代码生成器")
         CodeGeneratorContext.templateModelCreator = getTemplateModelCreator()

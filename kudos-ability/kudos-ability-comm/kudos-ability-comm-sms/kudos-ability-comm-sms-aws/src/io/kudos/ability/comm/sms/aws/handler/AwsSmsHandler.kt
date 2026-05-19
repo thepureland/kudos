@@ -29,6 +29,7 @@ import java.net.URI
  */
 class AwsSmsHandler {
 
+    /** 代理配置，由 Spring 注入；启用时影响进程级共享的 [HTTP_CLIENT] */
     @Resource
     private lateinit var proxyProperties: SmsAwsProxyProperties
 
@@ -37,19 +38,49 @@ class AwsSmsHandler {
     private lateinit var endpointOverride: String
 
     /**
-     * AWS 发送短信（无回调）
+     * AWS 发送短信（无回调）。等价于 `send(smsRequest, null)`，用于"发完不关心结果"的场景。
+     *
+     * @param smsRequest 短信请求（含 region/credential/手机号/正文）
+     * @author K
+     * @since 1.0.0
      */
     fun send(smsRequest: AwsSmsRequest) {
         send(smsRequest, null)
     }
 
     /**
-     * AWS 发送短信（异步，虚拟线程），完成后回调
+     * AWS 发送短信（异步，虚拟线程），完成后回调。
+     *
+     * 使用 `Thread.ofVirtual()` 而非 `CoroutineScope.launch` 是因为本模块下游可能尚未引入协程；
+     * 同时虚拟线程在阻塞 IO 上几乎零开销，对短信这种"调一次就完"的场景足够。
+     *
+     * @param smsRequest 短信请求
+     * @param callback 完成回调；不管成功失败都会被调用一次（含降级的 `599 client error`）
+     * @author K
+     * @since 1.0.0
      */
     fun send(smsRequest: AwsSmsRequest, callback: ((AwsSmsCallBackParam) -> Unit)? = null) {
         Thread.ofVirtual().start { doSend(smsRequest, callback) }
     }
 
+    /**
+     * 实际发送逻辑（在虚拟线程上执行）。
+     *
+     * 流程：构建带代理/可覆盖 endpoint 的 [SnsClient] → 组装 [PublishRequest]（messageAttributes 过滤掉 null kv）
+     *      → 调用 publish 并把 sdk 响应封装成 [AwsSmsCallBackParam] → finally 关闭 client 并兜底回调。
+     *
+     * 异常分三类各自归并状态码：
+     * - [AwsServiceException]：AWS 业务异常（如鉴权失败、限流），取 `statusCode`/`errorMessage`
+     * - [SdkServiceException]：底层 SDK 服务异常（非 2xx），同上
+     * - 其它：本地错误（DNS 解析、序列化）—— 不带 statusCode，仅日志
+     *
+     * 任何路径都保证 callback 至少被调用一次，避免上层悬挂。
+     *
+     * @param smsRequest 短信请求
+     * @param callback 可选回调
+     * @author K
+     * @since 1.0.0
+     */
     private fun doSend(
         smsRequest: AwsSmsRequest,
         callback: ((AwsSmsCallBackParam) -> Unit)? = null
@@ -132,6 +163,13 @@ class AwsSmsHandler {
         }
     }
 
+    /**
+     * `@PostConstruct` 初始化：若代理启用则构建一个进程级 [ApacheHttpClient] 复用。
+     * 不启用代理时不构造 client——让 SDK 走默认 client，避免无端引入额外的连接池。
+     *
+     * @author K
+     * @since 1.0.0
+     */
     @PostConstruct
     private fun initApacheHttpClient() {
         if (proxyProperties.enable) {
@@ -153,7 +191,9 @@ class AwsSmsHandler {
      * 代理配置变更需重启进程；多租户若需不同代理应另行设计客户端工厂。
      */
     companion object {
+        /** 日志器 */
         private val LOG = LogFactory.getLog(this::class)
+        /** 进程级共享的 SDK HTTP 客户端；仅在代理启用时由 [initApacheHttpClient] 赋值 */
         private var HTTP_CLIENT: SdkHttpClient? = null
     }
 }

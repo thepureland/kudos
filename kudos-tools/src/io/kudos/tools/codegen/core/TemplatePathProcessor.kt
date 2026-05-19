@@ -8,8 +8,29 @@ import io.kudos.tools.codegen.model.vo.GenFile
 import org.apache.commons.io.filefilter.IOFileFilter
 import java.io.File
 
+/**
+ * 模板路径处理器。
+ *
+ * 负责：
+ * 1. 扫描模板根目录（文件系统 / JAR 两种来源）下的所有模板文件，剔除 `macro.include` 这类辅助文件；
+ * 2. 用 Freemarker 处理路径中的占位符（`${entityName}` 等），把模板路径映射成目标输出路径；
+ * 3. 根据"是否需要实体相关模板"过滤，让单表/多表场景共用同一份扫描逻辑。
+ *
+ * @author K
+ * @since 1.0.0
+ */
 object TemplatePathProcessor {
 
+    /**
+     * 扫描模板根目录并把每个模板映射成 [GenFile]。
+     * 模板根目录里若包含 `.jar` 路径片段，认为模板打在 JAR 包里，转走 [jarFiles] 用 classpath 扫描；
+     * 否则视为本地目录，直接 [FileKit.listFiles] 递归。
+     *
+     * @param includeEntityRelativeFile true 时连同实体相关模板一起返回；false 时跳过任何含 `${entityName}` 的模板
+     * @return 排序后的待生成文件列表
+     * @author K
+     * @since 1.0.0
+     */
     fun readPaths(includeEntityRelativeFile: Boolean): List<GenFile> {
         val templateRootDir = CodeGeneratorContext.config.getTemplateInfo().rootDir
         val fileFilter: IOFileFilter = object : IOFileFilter {
@@ -76,6 +97,15 @@ object TemplatePathProcessor {
             return files
         }
 
+    /**
+     * 判断内容（路径或模板正文）是否引用了 `${entityName}` 占位符。
+     * 用作"实体相关 vs 通用"模板的判别条件。
+     *
+     * @param content 待检测字符串
+     * @return true 表示是实体相关模板
+     * @author K
+     * @since 1.0.0
+     */
     private fun isEntityRelative(content: String): Boolean = content.contains($$"${entityName}")
 
 }

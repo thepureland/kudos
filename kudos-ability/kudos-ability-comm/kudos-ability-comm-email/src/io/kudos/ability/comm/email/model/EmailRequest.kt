@@ -85,9 +85,15 @@ class EmailRequest : Serializable {
      */
     var extra: MutableMap<String, String>? = null
 
+    /**
+     * 显示在邮件头 `From` 中的发件人邮箱地址。
+     * 与 [senderAccount] 区分：[senderAccount] 是用于鉴权登录 SMTP 的账号，[fromMailAddress] 是收件方实际看到的来源地址。
+     * 留空时大多数 SMTP 服务器会回退到 [senderAccount]。
+     */
     var fromMailAddress: String? = null
 
     companion object {
+        /** Serializable 版本号 */
         @Serial
         private val serialVersionUID = -6829180589038163995L
     }

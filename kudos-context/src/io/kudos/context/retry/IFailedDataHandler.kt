@@ -3,9 +3,20 @@ package io.kudos.context.retry
 import io.kudos.context.core.KudosContextHolder
 import java.io.File
 
+/**
+ * 失败数据重试处理器协议。
+ *
+ * 用于把 MQ 投递、RPC 调用等可能失败的副作用落盘成文件，由 [FailedDataRetryScanner]
+ * 按 [cronExpression] 周期扫描并交还本处理器再次执行。本接口只规定"业务类型 + 持久化 + 重试"
+ * 三个抽象点，文件路径与原子操作交给 [AbstractFailedDataHandler] / [RetryConfig] 兜底。
+ *
+ * @param T 失败数据的载体类型
+ * @author K
+ * @since 1.0.0
+ */
 interface IFailedDataHandler<T> {
     /**
-     * 定义业务类型，用于文件目录区分
+     * 定义业务类型，用于文件目录区分（同一进程内多种失败数据互不干扰）
      */
     val businessType: String
 
@@ -15,12 +26,23 @@ interface IFailedDataHandler<T> {
     val cronExpression: String
 
     /**
-     * 接收失败数据并持久化到本地
+     * 把失败数据持久化到本地，返回写入的文件路径；持久化失败返回 null。
+     *
+     * @param data 待保存的失败数据
+     * @return 落盘后的文件路径；持久化失败返回 null
+     * @author K
+     * @since 1.0.0
      */
     fun persistFailedData(data: T): String?
 
     /**
-     * 定时任务触发时，处理持久化的文件
+     * 定时任务触发时，处理单个持久化文件。
+     * 实现需保证重试成功后清理文件、失败时保留供下轮再试。
+     *
+     * @param file 持久化下来的失败数据文件
+     * @return true 表示已成功处理并清理；false 表示仍需后续重试
+     * @author K
+     * @since 1.0.0
      */
     fun handleFailedData(file: File): Boolean
 

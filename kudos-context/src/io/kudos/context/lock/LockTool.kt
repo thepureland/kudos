@@ -5,6 +5,16 @@ import io.kudos.context.kit.SpringKit
 import java.util.concurrent.locks.Lock
 import java.util.function.Supplier
 
+/**
+ * 分布式锁的门面工具。
+ *
+ * 从 Spring 容器拿到优先级最高的 [ILockProvider] 实现（无实现时回退到进程内 [NormalLockService]），
+ * 并对常见的"带锁执行一段代码"模式提供同步与 Supplier 两种重载，避免每个调用方都写一遍
+ * tryLock/finally/unlock 模板。
+ *
+ * @author K
+ * @since 1.0.0
+ */
 object LockTool {
 
     /**
@@ -36,24 +46,67 @@ object LockTool {
     )
     fun hasKeyLock(lockKey: String, second: Int): Boolean = !LOCK_SERVICE.tryLock(lockKey, second)
 
+    /**
+     * 在 [lockKey] 上加锁后执行 [supplier]，默认租约 90 秒（防止崩溃后死锁）。
+     *
+     * @param T 返回类型
+     * @param lockKey 锁的业务 key
+     * @param supplier 实际要执行的逻辑
+     * @param errorCode 抢锁失败时抛出的错误码
+     * @return [supplier] 的返回值
+     * @author K
+     * @since 1.0.0
+     */
     fun <T> lockExecute(lockKey: String, supplier: Supplier<T?>, errorCode: IErrorCodeEnum): T? {
         //如果90秒内没释放，则自动释放
         return lockExecute<T?>(lockKey, supplier, 90, errorCode)
     }
 
+    /**
+     * 在 [lockKey] 上加锁后执行 [supplier]，租约 [second] 秒。
+     *
+     * @param T 返回类型
+     * @param lockKey 锁的业务 key
+     * @param supplier 实际要执行的逻辑
+     * @param second 租约秒数；超时自动释放，避免崩溃后死锁
+     * @param errorCode 抢锁失败时抛出的错误码
+     * @return [supplier] 的返回值
+     * @author K
+     * @since 1.0.0
+     */
     fun <T> lockExecute(lockKey: String, supplier: Supplier<T?>, second: Int, errorCode: IErrorCodeEnum): T? {
         return lockProvider.lockExecute(lockKey, supplier, second, errorCode)
     }
 
+    /**
+     * 在 [lockKey] 上加锁后执行 [runnable]，默认租约 90 秒。
+     *
+     * @param lockKey 锁的业务 key
+     * @param runnable 实际要执行的逻辑
+     * @param errorCode 抢锁失败时抛出的错误码
+     * @author K
+     * @since 1.0.0
+     */
     fun lockExecute(lockKey: String, runnable: Runnable, errorCode: IErrorCodeEnum) {
         //如果90秒内没释放，则自动释放
         lockExecute(lockKey, runnable, 90, errorCode)
     }
 
+    /**
+     * 在 [lockKey] 上加锁后执行 [runnable]，租约 [second] 秒。
+     *
+     * @param lockKey 锁的业务 key
+     * @param runnable 实际要执行的逻辑
+     * @param second 租约秒数；超时自动释放，避免崩溃后死锁
+     * @param errorCode 抢锁失败时抛出的错误码
+     * @author K
+     * @since 1.0.0
+     */
     fun lockExecute(lockKey: String, runnable: Runnable, second: Int, errorCode: IErrorCodeEnum) {
         lockProvider.lockExecute(lockKey, runnable, second, errorCode)
     }
 
+    /** 当前生效的锁提供者，等价于 [LOCK_SERVICE]；暴露给业务代码做更细粒度的锁操作 */
     val lockProvider: ILockProvider<out Lock>
         get() = LOCK_SERVICE
 }

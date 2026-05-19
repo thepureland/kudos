@@ -17,12 +17,31 @@ import java.net.URL
  */
 class TemplateReader {
 
+    /**
+     * 读取模板根目录下的指定模板文件并返回 Freemarker [Template]，输出编码强制 UTF-8。
+     *
+     * @param templateFileRelativePath 模板文件相对路径（相对于模板根目录）
+     * @return 加载好的 Freemarker [Template]
+     * @author K
+     * @since 1.0.0
+     */
     fun read(templateFileRelativePath: String) : Template {
         val template = newFreeMarkerConfiguration().getTemplate(templateFileRelativePath)
         template.outputEncoding = "UTF-8"
         return template
     }
 
+    /**
+     * 构造一个 Freemarker [Configuration]，同时支持"文件系统模板"与"classpath 模板"两种来源：
+     * - [URLTemplateLoader]：让用户能在外部目录改模板而无需重新打包；
+     * - `setClassForTemplateLoading`：兜底加载打包进 jar 的内置模板。
+     *
+     * 另外把 `macro.include`（若存在）注册为 auto-include，让模板里无需手动 `<#include>` 公共宏。
+     *
+     * @return 初始化好的 Freemarker 配置实例
+     * @author K
+     * @since 1.0.0
+     */
     private fun newFreeMarkerConfiguration(): Configuration {
         val templateRootDir = CodeGeneratorContext.config.getTemplateInfo().rootDir
         val root = URI("file:$templateRootDir").toURL()
@@ -47,6 +66,7 @@ class TemplateReader {
         return conf
     }
 
+    /** 日志器，仅用于打印 auto-include 解析结果 */
     private val log = LogFactory.getLog(this::class)
 
 }
