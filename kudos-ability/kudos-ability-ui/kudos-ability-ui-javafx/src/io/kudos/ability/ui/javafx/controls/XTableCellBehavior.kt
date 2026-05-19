@@ -3,7 +3,6 @@ package io.kudos.ability.ui.javafx.controls
 import com.sun.javafx.scene.control.behavior.TableCellBehavior
 import javafx.scene.control.TableCell
 import javafx.scene.input.MouseButton
-import java.util.logging.Logger
 
 /**
  * Trying to intercept the selection process to not cancel an edit.
@@ -78,10 +77,4 @@ open class XTableCellBehavior<S, T>
         super.handleClicks(button, clickCount, isAlreadySelected)
     }
 
-    companion object {
-        private val LOG = Logger.getLogger(
-            XTableCellBehavior::class.java
-                .name
-        )
-    }
 }
