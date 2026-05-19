@@ -17,9 +17,17 @@ import java.net.URI
  * 配置项（优先 `kudos.ability.comm.sms.aliyun.endpoint`，兼容旧键 `kudos.ability.comm.sms.aliyun`）：
  * - 生产可留空（SDK 按 region 使用官方域名）
  * - 测试填完整 URI，例如 `http://<wiremock-host>:<port>`（勿省略 scheme，本地 Mock 需显式 `http`）
+ *
+ * @author K
+ * @since 1.0.0
  */
 class AliyunSmsHandler {
 
+    /**
+     * 自定义 SDK endpoint，仅供测试/特殊网络环境使用。
+     * 配置语法：`${kudos.ability.comm.sms.aliyun.endpoint}` 优先，缺失时回退到旧键 `${kudos.ability.comm.sms.aliyun}` 以兼容历史配置；
+     * 都未配置则空串，SDK 按 region 走官方域名。
+     */
     @Value("\${kudos.ability.comm.sms.aliyun.endpoint:\${kudos.ability.comm.sms.aliyun:}}")
     private lateinit var endpointOverrideStr: String
 
@@ -206,5 +214,6 @@ class AliyunSmsHandler {
         return builder.build()
     }
 
+    /** 日志器 */
     private val LOG = LogFactory.getLog(this::class)
 }
