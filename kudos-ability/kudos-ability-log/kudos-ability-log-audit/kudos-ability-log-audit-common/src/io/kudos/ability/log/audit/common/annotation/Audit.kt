@@ -44,5 +44,14 @@ annotation class Audit(
      *
      * @return
      */
-    val descriptionFormatter: KClass<out IAuditLogDetailDescriptionFormatter> = DefaultAuditLogDetailDescriptionFormatter::class
+    val descriptionFormatter: KClass<out IAuditLogDetailDescriptionFormatter> = DefaultAuditLogDetailDescriptionFormatter::class,
+
+    /**
+     * 业务模型参数在方法签名中的索引。默认 `0`（兼容旧行为：取第一个参数作为 model）。
+     *
+     * 旧实现 `joinPoint.args[0]` 硬编码——业务方法如果是 `(String tenantId, User user)`，
+     * 切面会拿到 tenantId 而非 user，oldBizData 加载和 entityId 提取都会错。
+     * 业务侧可以通过 `@Audit(..., modelArgIndex = 1)` 指明 user 是第 1 个位置。
+     */
+    val modelArgIndex: Int = 0,
 )

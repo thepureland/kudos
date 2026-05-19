@@ -105,13 +105,20 @@ class BaseLog : Serializable {
 
     private fun initModule(subsysCode: String) {
         val beansOfType = SpringKit.getBeansOfType<ISysAuditModule>()
-        if (beansOfType.isNotEmpty()) {
-            val auditModule = beansOfType.values.first()
-            val sysCode = subsysCode.ifBlank { KudosContextHolder.get().subSystemCode }
-            val module = auditModule.module(sysCode, moduleCode)
-            this.moduleId = module.first
-            this.moduleName = module.second
+        if (beansOfType.isEmpty()) return
+        val sysCode = subsysCode.ifBlank { KudosContextHolder.get().subSystemCode }
+        // 多 ISysAuditModule 实现按"链式"解析：第一个返回非空 id 或非空 name 的实现胜出。
+        // 既兼容"只有一个实现"的旧场景（first 直接命中），又支持业务侧按子系统拆分注册多个 module 解析器。
+        var resolvedId: Int? = null
+        var resolvedName: String? = null
+        for ((_, module) in beansOfType) {
+            val (id, name) = module.module(sysCode, moduleCode)
+            if (resolvedId == null) resolvedId = id
+            if (resolvedName == null) resolvedName = name
+            if (resolvedId != null && resolvedName != null) break
         }
+        this.moduleId = resolvedId
+        this.moduleName = resolvedName
     }
 
     fun getOpType(): OperationTypeEnum? {
@@ -122,21 +129,22 @@ class BaseLog : Serializable {
         this.opType = opType
     }
 
+    /**
+     * 把 stringParams 列表拼成单字符串。
+     *
+     * **历史 bug**：旧实现直接 `sb.append(s)` + `sb.append(SEPERATOR)`，业务参数自身含
+     * `┼` 时反向解析（参考 [splitStringParams]）会错位。本次修复在拼接前对每个 segment
+     * 转义 `\\` 和 `┼`，使分隔符语义明确。
+     *
+     * 与历史数据的兼容：解析侧的 [splitStringParams] 同样按转义规则解；老数据（未转义）
+     * 在分隔符不出现于参数内容时**与新规则等价**，无破坏。
+     */
     fun getStringParams(): String? {
         if (stringParams.isNullOrEmpty()) {
             return null
         }
-        val sb = StringBuffer()
         val params = requireNotNull(stringParams) { "stringParams is null" }
-        val size: Int = params.size
-        for (i in 0..<size) {
-            val s: String? = params.get(i)
-            sb.append(s)
-            if (i + 1 < size) {
-                sb.append(SEPERATOR)
-            }
-        }
-        return sb.toString()
+        return params.joinToString(SEPERATOR) { escapeSegment(it) }
     }
 
     /**
@@ -214,8 +222,54 @@ class BaseLog : Serializable {
         private val LOG = LogFactory.getLog(BaseLog::class)
 
         /**
-         * 作为字符串参数stringParams中的分隔符
+         * 作为字符串参数stringParams中的分隔符。**业务参数自身含此字符时必须先转义**——
+         * 拼接走 [escapeSegment]，反向解析走 [splitStringParams]，二者配合保证 round-trip。
          */
         const val SEPERATOR: String = "┼"
+
+        /** 转义字符——保留给 SEPERATOR 自身在参数内容中出现的场景。 */
+        private const val ESCAPE: String = "\\"
+
+        /**
+         * 转义单条 segment。规则：
+         *  - `\` → `\\`（必须先于下面，否则 `\┼` 会被先替换成 `\\\┼`）
+         *  - `┼` → `\┼`
+         *
+         * 把转义信息嵌进内容里，让 [splitStringParams] 可以按"非转义的 `┼`"切分。
+         */
+        @JvmStatic
+        fun escapeSegment(s: String?): String {
+            if (s.isNullOrEmpty()) return ""
+            return s.replace(ESCAPE, "$ESCAPE$ESCAPE").replace(SEPERATOR, "$ESCAPE$SEPERATOR")
+        }
+
+        /**
+         * 反向解析 [getStringParams] 拼出来的字符串。按**未转义的** `┼` 切分，再对每段
+         * 还原转义。空字符串返回空列表。
+         */
+        @JvmStatic
+        fun splitStringParams(joined: String?): List<String> {
+            if (joined.isNullOrEmpty()) return emptyList()
+            val out = mutableListOf<String>()
+            val current = StringBuilder()
+            var i = 0
+            while (i < joined.length) {
+                val c = joined[i]
+                if (c == '\\' && i + 1 < joined.length) {
+                    // 转义序列：原样取下一个字符（无论是 `\` 还是 `┼`）
+                    current.append(joined[i + 1])
+                    i += 2
+                } else if (joined.startsWith(SEPERATOR, i)) {
+                    out.add(current.toString())
+                    current.setLength(0)
+                    i += SEPERATOR.length
+                } else {
+                    current.append(c)
+                    i++
+                }
+            }
+            out.add(current.toString())
+            return out
+        }
     }
 }
