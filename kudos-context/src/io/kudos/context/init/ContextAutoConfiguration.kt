@@ -33,15 +33,13 @@ open class ContextAutoConfiguration : IComponentInitializer {
      */
     @Bean("failDataTaskScheduler")
     @ConditionalOnMissingBean(name = ["failDataTaskScheduler"])
-    open fun failDataTaskScheduler(): TaskScheduler {
-        return ThreadPoolTaskScheduler().apply {
-            poolSize = 1
-            setThreadNamePrefix("kudos-failed-data-retry-")
-            // daemon=true：JVM 关闭不被该线程池阻塞
-            setDaemon(true)
-            setWaitForTasksToCompleteOnShutdown(false)
-            initialize()
-        }
+    open fun failDataTaskScheduler(): TaskScheduler = ThreadPoolTaskScheduler().apply {
+        poolSize = 1
+        setThreadNamePrefix("kudos-failed-data-retry-")
+        // daemon=true：JVM 关闭不被该线程池阻塞
+        setDaemon(true)
+        setWaitForTasksToCompleteOnShutdown(false)
+        initialize()
     }
 
     override fun getComponentName() = "kudos-context"

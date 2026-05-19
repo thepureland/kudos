@@ -137,8 +137,7 @@ class NormalLockService : ILockProvider<ReentrantLock> {
      *    的新锁（依赖 [ExpiringKey.equals] 只比 key 不比 expireAtMillis 的设计）
      */
     override fun unLock(key: String) {
-        val previousExpire = cacheKeyMap.remove(key)
-        if (previousExpire != null) {
+        cacheKeyMap.remove(key)?.let { previousExpire ->
             // 守护线程之后处理这个旧条目时会再 remove 一次 cacheKeyMap[key]，
             // 那时如果 key 已被同名新锁重新占用，会把新锁误清——所以主动撤掉
             delayQueue.remove(ExpiringKey(key, previousExpire))
@@ -308,9 +307,7 @@ class NormalLockService : ILockProvider<ReentrantLock> {
          * 
          * @return key的哈希码
          */
-        override fun hashCode(): Int {
-            return key.hashCode()
-        }
+        override fun hashCode(): Int = key.hashCode()
     }
 
 }
