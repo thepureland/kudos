@@ -27,8 +27,8 @@ import javax.sql.DataSource
  *
  * ## 核心流程
  * 1. 子类通过getTestDataSqlPath()方法指定测试数据SQL文件路径
- * 2. 在@BeforeEach中加载并执行指定的SQL文件
- * 3. 测试执行完成后，通过@Transactional自动回滚所有数据变更
+ * 2. 在@BeforeTransaction中加载并执行指定的SQL文件（数据在事务外提交，不回滚）
+ * 3. 测试方法本身的写入由@Transactional自动回滚；fixture 数据保留并在下次测试前 reload
  * 4. 通过@Execution(ExecutionMode.SAME_THREAD)确保测试串行执行
  *
  * ## 依赖与外部交互
@@ -42,8 +42,8 @@ import javax.sql.DataSource
  * - 错误：如果SQL文件不存在或执行失败，会抛出异常
  *
  * ## 交易与一致性
- * - 事务：使用@Transactional，测试完成后自动回滚
- * - 一致性：每个测试方法在独立事务中执行，互不影响
+ * - 事务：使用@Transactional 回滚**测试方法本身**的写入；fixture 数据在 @BeforeTransaction 中事务外提交（不回滚）
+ * - 一致性：每个测试方法跑前都重新 execute 整个 fixture SQL，保证起点一致
  *
  * ## 并发与线程安全
  * - 通过@Execution(ExecutionMode.SAME_THREAD)确保测试串行执行
