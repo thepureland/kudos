@@ -20,9 +20,23 @@ import java.time.LocalDateTime
 import java.util.Locale
 
 /**
- * @Description Stream消费异常全局处理类
- * @Author paul
- * @Date 2022/9/21 18:23
+ * Stream 全局异常处理——监听 spring-integration error channel + 自定义 producer error channel。
+ *
+ * **多个 @ServiceActivator 在同一 ERROR_CHANNEL 上是有意为之**：
+ *  - [globalHandleError] 负责 **consumer 端**异常（通过 `isFromConsumer` 识别 kafka_/amqp_/rocket_
+ *    前缀的 headers）→ 持久化到 `sys_mq_fail_msg` 表
+ *  - [handleProducerError] 负责 **producer 端**异常 → 调 `IStreamFailHandler.persistFailedData`
+ *    走文件持久化（典型实现 [StreamProducerExceptionHandler]）
+ *  - [handSyncChannelError] 监听自定义的 [IStreamFailHandler.CHANNEL_BEN_NAME]
+ *    （`mqProducerChannel`）—— 同步发送失败时由 `StreamProducerHelper.doRealSend` 主动塞
+ *    错误消息到这个通道
+ *
+ * 两条 ERROR_CHANNEL 上的 listener 不是 bug——各自的 `isFromConsumer` / `containsKey(SCST_BIND_NAME)`
+ * 守卫做了分流。
+ *
+ * @author paul
+ * @author K
+ * @since 1.0.0
  */
 class StreamGlobalExceptionHandler {
 
@@ -85,9 +99,10 @@ class StreamGlobalExceptionHandler {
     }
 
     private fun isFromConsumer(headers: MessageHeaders): Boolean {
-        val locale = Locale.getDefault()
+        // Locale.ROOT 而非 Locale.getDefault()——header key 用 ASCII 前缀对比，Turkish locale
+        // 的 i→İ 大小写映射会让 "kafka_..." 误判
         return headers.keys.any { key ->
-            val k = key.lowercase(locale)
+            val k = key.lowercase(Locale.ROOT)
             k.startsWith("kafka_") || k.startsWith("amqp_") || k.startsWith("rocket_")
         }
     }
