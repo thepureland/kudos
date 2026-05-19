@@ -130,7 +130,8 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
             val batchData = mutableListOf<MessageExt?>()
             while (isRunning) {
                 val poll = consumer.poll()
-                if (poll != null && poll.isNotEmpty()) {
+                val polledAny = poll != null && poll.isNotEmpty()
+                if (polledAny) {
                     log.debug("本次拉到数据：${poll.size}")
                     batchData.addAll(poll)
                 }
@@ -140,6 +141,16 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
                     toProcessBizData(batchData)
                     lastCommitTime = System.currentTimeMillis()
                     batchData.clear()
+                } else if (!polledAny) {
+                    // 空轮询 idle backoff——避免 CPU busy-loop。consumer.poll() 内部已有阻塞超时
+                    // (consumerPullTimeoutMillis = 5s)，但低负载场景下 broker 端可能立即返回空集合
+                    // 而非阻塞，此处兜底让线程让出 CPU
+                    try {
+                        Thread.sleep(IDLE_POLL_SLEEP_MS)
+                    } catch (e: InterruptedException) {
+                        Thread.currentThread().interrupt()
+                        break
+                    }
                 }
             }
             toProcessBizData(batchData)
@@ -258,6 +269,9 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
 
     companion object {
         private val log = LogFactory.getLog(this::class)
+
+        /** 空轮询时 daemon 线程的休眠时长（ms），避免 CPU 100% 空转。 */
+        private const val IDLE_POLL_SLEEP_MS = 100L
     }
 
 }
