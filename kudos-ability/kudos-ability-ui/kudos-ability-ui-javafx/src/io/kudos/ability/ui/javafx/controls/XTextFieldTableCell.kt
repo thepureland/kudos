@@ -63,8 +63,6 @@ open class XTextFieldTableCell<S, T> @JvmOverloads constructor(converter: String
             tf.focusedProperty().addListener { _, _, nvalue ->
                 if (!nvalue) {
                     commitEdit(converter.fromString(tf.text))
-                    System.out.println(tf.text)
-                    println("commit")
                 }
             }
         }
