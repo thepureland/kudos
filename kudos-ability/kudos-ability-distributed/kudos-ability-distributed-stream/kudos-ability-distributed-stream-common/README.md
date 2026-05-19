@@ -93,7 +93,7 @@ kudos:
 | `support/StreamProducerFailHandlerProcessor` | 错误通道入口 → 失败消息持久化 |
 | `handler/StreamGlobalExceptionHandler` | spring-cloud-stream 全局异常入口 |
 | `handler/StreamProducerExceptionHandler` | producer 端异常处理 |
-| `handler/IStreamFailHandler` / `StreamFailHandlerItem` / `IHeaderTopic` | 失败处理 SPI + 注册表 |
+| `handler/IStreamFailHandler` / `StreamFailHandlerItem` | 失败处理 SPI + 注册表 |
 | `biz/SysMqFailMsgService` + `ISysMqFailMsgService` | 失败消息业务 service |
 | `dao/StreamExceptionMsgDao` | `sys_mq_fail_msg` 表 DAO |
 | `model/po/SysMqFailMsg` + `model/table/SysMqFailMsgs` | 失败消息表实体 + Ktorm 表 |
@@ -103,6 +103,17 @@ kudos:
 | `init/properties/StreamAsyncSendExecutorProperties` | 异步发送线程池配置 |
 | `init/properties/StreamBindingVerifyProperties` | binding 启动校验配置 |
 
+## 已修复（本轮 8 维度审计）
+
+- ✅ `StreamHeader.toContextParam` 把 `headers[USER_ID_KEY]` 错赋给 `tenantId`，`dataSourceId`
+  类型转换不一致——属于"零 callsite 的预埋 bug"，已修
+- ✅ `StreamGlobalExceptionHandler.isFromConsumer` 用 `Locale.getDefault()` 做 `lowercase`——
+  Turkish locale 下 `"kafka_..."` 大小写映射会误判，改为 `Locale.ROOT`
+- ✅ `IHeaderTopic.kt` 全仓零实现，删除（旧版 README 还列在模块入口里）
+- ✅ `StreamHeader._datasourceTenantId` 的 Java 风格 getter / setter 包装移除（Kotlin property
+  足够）；下划线 property name **保留**——`BeanKit.extract` 按 property name 投到 header，
+  改名会断 wire 兼容
+
 ## 已知限制
 
 - ❗ `@MqProducer` 方法返回值"`false` = 取消发送"的隐式约定不直观——切面层 warn 但业务侧
@@ -111,11 +122,16 @@ kudos:
   发送成功会被误导。真正的失败信号在 error channel 异步触发
 - ❗ `MqProducerAspect.afterReturning` 只取 `joinPoint.args[0]` 作消息体——多参数业务方法
   只有第一个参数会被发送，其余被忽略且无 warn
+- ❗ `StreamProducerExceptionHandler.processFailedData` 因泛型擦除会得到 `LinkedHashMap`
+  而非原始业务类——消费端拿到的是 Map，不再是发送方的类型。强类型场景需自定义
+  handler 把 className 一起持久化
 - ❗ `SysMqFailMsg` 表用 Ktorm 写——本模块直接依赖 `kudos-ability-data-rdb-ktorm` 的隐式假设；
   非 RDB 后端的部署需自行覆盖 DAO
 - ❗ `StreamConsumerEnvironRegistrar` 扫描所有 kudos yml——业务方自有 yml 不在 `kudos.*` 命名
   下的 function.definition 不会被合并，需 spring 默认机制读取
 - ❗ 没有 producer-side 限流；高 QPS 业务可能把 StreamBridge 队列打爆
+- ❗ **零测试**——`@MqProducer` 切面 / `StreamGlobalExceptionHandler` 三入口 / 失败重试
+  / function.definition 聚合都靠手工 + 集成验证
 
 ## 依赖
 

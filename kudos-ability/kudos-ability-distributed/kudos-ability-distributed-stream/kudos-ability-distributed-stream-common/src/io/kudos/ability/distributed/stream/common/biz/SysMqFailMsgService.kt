@@ -12,9 +12,14 @@ import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 
 /**
- * @Description stream异常消息处理
- * @Author paul
- * @Date 2022/10/19 16:06
+ * [ISysMqFailMsgService] 的默认 Ktorm 实现。
+ *
+ * `@Transactional(REQUIRES_NEW)` 让 [save] 即使在外部事务回滚的场景下也能独立提交——
+ * 异常日志不能因为业务失败而一起丢失。
+ *
+ * @author paul
+ * @author K
+ * @since 1.0.0
  */
 @Transactional
 open class SysMqFailMsgService(

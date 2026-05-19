@@ -87,6 +87,10 @@ class StreamProducerExceptionHandler : AbstractFailedDataHandler<StreamProducerM
         val bindName = requireNotNull(data.bindName) { "bindName 不能为空" }
         val msgBodyJson = requireNotNull(data.msgBodyJson) { "msgBodyJson 不能为空" }
         val msgHeaderJson = requireNotNull(data.msgHeaderJson) { "msgHeaderJson 不能为空" }
+        // 已知限制：`JsonKit.fromJson<Any>` 因泛型擦除会得到 LinkedHashMap 而非原始业务类——
+        // consumer 侧收到的是 Map<String, Any?>，不再是发送方的具体类。要恢复类型保真度需要
+        // 在 StreamProducerMsgVo 里额外持久化 className 并按它反序列化。当前用法适合"消息只用
+        // 来透传 JSON 数据"的场景；强类型业务对象重试场景请绕开本 handler 自定义实现
         val obj = requireNotNull(JsonKit.fromJson<Any>(msgBodyJson)) { "msgBodyJson 反序列化失败" }
         val streamMessageVo: StreamMessageVo<Any?> = StreamMessageVo(obj)
         val headMap = requireNotNull(JsonKit.fromJson<MutableMap<String, Any>>(msgHeaderJson)) { "msgHeaderJson 反序列化失败" }
