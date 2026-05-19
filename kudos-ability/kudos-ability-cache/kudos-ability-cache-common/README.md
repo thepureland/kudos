@@ -121,18 +121,22 @@ kudos:
 
 - ❗ **测试覆盖率极低**：60 个源文件仅 1 个单测（本次补的）。Aspect 层 / Manager 层均
   无单测，依赖下游模块的集成测试间接覆盖
-- ❗ `MixCache.pushMsgRedis` 在写路径上同步调用所有 `ICacheMessageHandler.sendMessage`；
-  广播如果阻塞会拖累写延迟。源码里已用 `//TODO 异步?` 标过。需要改成 fire-and-forget 时
-  应慎重处理失败补偿
-- ❗ `CacheConfig.strategy` / `.strategyDictCode` 双字段并存是历史遗留，已用 `resolvedStrategy`
-  派生属性集中，但两个原始字段仍可被代码直接读到。未来收口需要先排查所有调用方
+- ✅ `MixCache.pushMsgRedis` 已改为 fire-and-forget——每个 handler 的 `sendMessage`
+  入队到模块级共享的 daemon 线程池（core=1 / max=cpu / queue=1024 / `CallerRunsPolicy`），
+  发送失败仅 WARN 日志、不重试（重复广播比偶发丢一条更危险，下游收到则只是丢本地副本）。
+  队列爆满会回退到 caller-runs 同步，宁可拖慢写也不丢消息
+- ✅ `CacheConfig.strategy` / `.strategyDictCode` 双字段——所有读侧已收口到 `resolvedStrategy`/
+  `resolvedStrategyCode` 派生属性（`DefaultCacheConfigProvider.initCacheConfig` 是最后一处
+  raw reader，已迁移）。两个原始字段保留以支持 DB 反序列化 + yml 绑定两条写入路径
 - ❗ `cache-items` 用字符串列表 + 反射 setProperty 解析——失去 IDE 提示和编译期校验，
   错配字段名要等到启动时才发现
-- ❗ `LOCAL_REMOTE` 策略下"写入失败但广播成功"的语义未定义；当前实现是"先 remote 后 local"，
-  remote 失败时不会广播，local 失败时会继续广播——可能导致其他节点剔除本地但本节点
-  仍有旧值
-- ❗ `AbstractCacheHandler.selfProxy` 用 `SpringKit.getBean(this::class)`——子类如果有多个
-  bean 实例（同型多 bean）会爆 NoUniqueBeanDefinitionException
+- ✅ `LOCAL_REMOTE` 写失败语义已显式定义并测试：
+  - **远端失败** → 异常上抛 / 不写本地 / 不广播（整网保持原值，一致）
+  - **本地失败** → catch + WARN 日志 / 广播仍发出（远端是真相源；其他节点 invalidate
+    本地副本会从远端读到新值；本节点本地降级，待下次 miss / TTL 自愈）
+  - **广播失败** → fire-and-forget 异步，单 handler 失败不影响整体（同 [#1]）
+- ✅ `AbstractCacheHandler.selfProxy` 支持 `selfBeanName()` override——多 bean 场景子类
+  override 该方法返回显式 bean 名即可避开 `NoUniqueBeanDefinitionException`，默认仍按类型唯一查
 - ❗ 文档大量集中在源码 kdoc 中（一些类的 kdoc 长达 50+ 行），适合配 KDoc 渲染工具
   生成静态站点；README 仅做导航
 
