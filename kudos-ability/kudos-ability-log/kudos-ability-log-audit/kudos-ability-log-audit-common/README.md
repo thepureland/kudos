@@ -129,22 +129,25 @@ class WebLogAuditFilter : OncePerRequestFilter() {
 
 - ❗ **无单元测试**——核心切面 / context / tool 没有专门测试，回归风险靠下游模块的集成测试间接
   兜底。`AuditLogTool.descriptionFormatter` 比较 bug 能潜伏这么久就是缺测的反映
-- ❗ `AuditLogTool` 是 `object`，`tenantProvider` 在静态 `init` 块里调 `SpringKit.getBean()`
-  ——如果 SpringKit 在类加载时还没初始化，`tenantProvider` 永远为 null（无 retry）。
-  当前实现 `try { ... } catch (_: Exception) { null }`，吞 exception 后无重试机制
+- ✅ `AuditLogTool.tenantProvider()` 已改为懒加载 + 缓存——首次访问时（通常 Spring 上下文
+  未就绪）查不到就返回 null 走 `entity.tenantId` 兜底；上下文就绪后第一次成功查到立即
+  缓存，后续不再反射查
 - ❗ `LogAuditContext.get()` 的"没有时自动创建"语义对线程池场景不友好——业务侧必须配合
-  `clear()`。已有 `getOrNull()` 作为只读侦测的替代品
-- ❗ `LogAuditAspect.before` 只看 `joinPoint.args[0]`——多参数业务方法只能从第一个参数取
-  entityId，其余参数的修改不会触发 oldBizData 加载
-- ❗ `LogAuditAspect.after` 在 service 方法**抛异常时也会走**（`@After` 而非 `@AfterReturning`），
-  失败操作也会留下审计记录。需要区分时应换 `@AfterReturning` + `@AfterThrowing`
-- ❗ `LogAuditCommonConfiguration` 类没标 `@Configuration`——靠下游 `@ComponentScan` 包到。
-  本模块自身没有 auto-configuration entry，集成方需要自己 import 这个 class 或开启
-  对应 package 的 component scan
-- ❗ `BaseLog.SEPERATOR = "┼"` 在 stringParams 拼接时使用——如果业务参数内容本身含 `┼`
-  反向解析会错；目前没有转义机制
-- ❗ `BaseLog.initModule` 用 `SpringKit.getBeansOfType<ISysAuditModule>()` 然后 `values.first()`
-  ——多个 ISysAuditModule 实现时**只用第一个**，没有合并 / 优先级机制
+  `clear()`。已有 `getOrNull()` 作为只读侦测的替代品；切面 `afterReturning` /
+  `afterThrowing` 已在 finally 显式 clear
+- ✅ `LogAuditAspect.before` 通过 `@Audit(modelArgIndex = N)` 支持非首参数 model——
+  默认 `0`（兼容旧行为）；越界 / null 时回退到 `args[0]`，不抛
+- ✅ `LogAuditAspect` / `WebLogAuditAspect` 已改为 `@AfterReturning` + `@AfterThrowing`
+  分支：成功路径原样写审计；失败路径把异常类名 + message 标记到 `BaseLog.description`
+  前缀（`[FAILED:ClassName:msg]`），下游可据此过滤；二者都在 finally clear 上下文
+- ✅ `LogAuditCommonConfiguration` 已加 `@Configuration` + `IComponentInitializer`——
+  kudos 自有的 `ComponentInitializerSelector` 调度器会自动 import 本类，业务侧不再需要
+  手动 `@ComponentScan`
+- ✅ `BaseLog.SEPERATOR = "┼"` 已加转义机制——`escapeSegment` 把内容里的 `\` / `┼`
+  双写转义，反向解析 `splitStringParams` 按"非转义的 `┼`"切分。老数据（参数内容不含
+  `┼`）的解析结果与新规则等价，无破坏
+- ✅ `BaseLog.initModule` 改为链式解析——多个 `ISysAuditModule` 实现按 Spring bean
+  注册顺序遍历，第一个返回非空 id / name 的胜出；保留旧"单实现"路径的语义
 - ❗ Web controller 的 multipart 请求被 WebLogAuditAspect 直接跳过——文件上传场景没有
   审计记录。需要时可自定义 Aspect 用 `request.getParameter` 抓 metadata 但跳过 body
 
