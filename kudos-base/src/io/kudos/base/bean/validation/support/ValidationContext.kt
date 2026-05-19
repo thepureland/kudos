@@ -21,11 +21,17 @@ object ValidationContext {
 
     /** 缓存 HV 的 initializationContext */
     private var hvInitCtx: HibernateConstraintValidatorInitializationContext? = null
+    /** Jakarta 标准约束注解的包名前缀，用于剔除非业务注解 */
     private const val jakartaAnnotationPrefix = "jakarta"
+    /** Hibernate Validator 内置约束注解的包名前缀，用于剔除非业务注解 */
     private const val hibernateAnnotationPrefix = "org.hibernate"
+    /** 反射查 `getValidatorFactoryScopedContext` 方法的缓存 */
     private val scopedContextMethodCache = ConcurrentHashMap<Class<*>, Method>()
+    /** 反射查 `validatorFactoryScopedContext` 字段的缓存（方法路径失败时退回字段） */
     private val scopedContextFieldCache = ConcurrentHashMap<Class<*>, Field>()
+    /** 反射查 `getConstraintValidatorInitializationContext` 方法的缓存 */
     private val initCtxMethodCache = ConcurrentHashMap<Class<*>, Method>()
+    /** 注解类是否“业务自定义约束”的判定缓存：包名既不属 jakarta 也不属 org.hibernate */
     private val businessConstraintAnnotationCache = ConcurrentHashMap<Class<out Annotation>, Boolean>()
 
     /**
@@ -35,10 +41,27 @@ object ValidationContext {
      */
     private val descriptorAccessorCache = ConcurrentHashMap<Class<*>, (Any) -> ConstraintDescriptor<*>?>()
 
+    /**
+     * 注入构建好的 [jakarta.validation.ValidatorFactory]，
+     * 立即从中提取 Hibernate Validator 的初始化上下文并缓存。
+     * 应用启动时调用一次。
+     *
+     * @param factory 已经构建好的 ValidatorFactory
+     * @author K
+     * @since 1.0.0
+     */
     fun setFactory(factory: jakarta.validation.ValidatorFactory) {
         hvInitCtx = extractHvInitCtx(factory)
     }
 
+    /**
+     * 获取已缓存的 [HibernateConstraintValidatorInitializationContext]。
+     *
+     * @return HV 初始化上下文
+     * @throws IllegalStateException 未先调用 [setFactory] 注入 ValidatorFactory 时
+     * @author K
+     * @since 1.0.0
+     */
     fun getHvInitCtx(): HibernateConstraintValidatorInitializationContext {
         return hvInitCtx ?: error("HibernateConstraintValidatorInitializationContext 尚未初始化：请确保先调用 ValidationKit.getValidator() 构建 ValidatorFactory")
     }
@@ -113,6 +136,19 @@ object ValidationContext {
         set(validator, bean, null, beanMapThreadLocal.get())
     }
 
+    /**
+     * 递归遍历 bean 的所有约束属性，把每个非 Jakarta/HV 约束的 [ConstraintDescriptor] hashcode
+     * 与 bean 自身关联存入 [beanStore]，使自定义约束校验器后续能取回 bean。
+     *
+     * 嵌套 `@Valid` 属性也会递归处理；List 元素会按 `[i]` 拼接路径。
+     *
+     * @param validator 当前使用的 [Validator]
+     * @param bean 待存入上下文的 bean
+     * @param parentPath 父级路径（用于嵌套属性的展示，目前未对外暴露）
+     * @param beanStore 线程局部存储
+     * @author K
+     * @since 1.0.0
+     */
     private fun set(
         validator: Validator,
         bean: Any,
@@ -191,6 +227,16 @@ object ValidationContext {
         return accessor(ctx)
     }
 
+    /**
+     * 为指定的 ConstraintValidatorContext 运行时类构造一个 descriptor 读取闭包。
+     * 优先使用 `getConstraintDescriptor()` 方法，方法找不到时退回 `constraintDescriptor` 字段，
+     * 兜底返回常量 null 闭包（适用 mock 或非 HV 实现）。
+     *
+     * @param clazz ConstraintValidatorContext 的具体运行时类
+     * @return 把 ctx 实例映射到 [ConstraintDescriptor] 的闭包
+     * @author K
+     * @since 1.0.0
+     */
     private fun buildDescriptorAccessor(clazz: Class<*>): (Any) -> ConstraintDescriptor<*>? {
         findInHierarchy(clazz) { it.getDeclaredMethod("getConstraintDescriptor") }?.let { method ->
             method.isAccessible = true
@@ -204,6 +250,17 @@ object ValidationContext {
         return { _ -> null }
     }
 
+    /**
+     * 沿继承链向上查找，把 [finder] 应用到每一层。
+     * 任意一层返回非 null 即停止；finder 抛异常视为该层不命中。
+     *
+     * @param R 查找目标类型（[Method] 或 [Field]）
+     * @param clazz 起始类
+     * @param finder 在单个类上执行查找的闭包
+     * @return 首个命中的结果；都查不到返回 null
+     * @author K
+     * @since 1.0.0
+     */
     private inline fun <R : Any> findInHierarchy(clazz: Class<*>, finder: (Class<*>) -> R): R? {
         var current: Class<*>? = clazz
         while (current != null) {

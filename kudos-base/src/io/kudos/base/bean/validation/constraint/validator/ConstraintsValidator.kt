@@ -28,6 +28,7 @@ import kotlin.reflect.full.declaredMemberProperties
  */
 class ConstraintsValidator : ConstraintValidator<Constraints, Any?> {
 
+    /** 当前实例处理的 [Constraints] 组合约束注解，由 [initialize] 注入 */
     private lateinit var constraints: Constraints
 
     override fun initialize(constraints: Constraints) {
@@ -62,10 +63,15 @@ class ConstraintsValidator : ConstraintValidator<Constraints, Any?> {
     }
 
     companion object {
+        /** Hibernate Validator 初始化方法（双参签名）的反射缓存 */
         private val hvInitMethodCache = ConcurrentHashMap<Class<*>, Method>()
+        /** 标准 [ConstraintValidator.initialize] 方法的反射缓存 */
         private val initMethodCache = ConcurrentHashMap<Class<*>, Method>()
+        /** [ConstraintValidator.isValid] 方法的反射缓存 */
         private val isValidMethodCache = ConcurrentHashMap<Class<*>, Method>()
+        /** 注解属性方法列表缓存：避免每次都遍历 declaredMethods */
         private val annotationAttributeMethodsCache = ConcurrentHashMap<Class<out Annotation>, List<Method>>()
+        /** 注解 `message` 属性方法的反射缓存 */
         private val annotationMessageMethodCache = ConcurrentHashMap<Class<out Annotation>, Method>()
         // 用 ConcurrentHashMap 取代了原先 `Collections.synchronizedMap(WeakHashMap)`：
         // - 原实现下所有 get/put 都串行在同一把锁上，是校验热路径上的真实争用点
@@ -83,9 +89,13 @@ class ConstraintsValidator : ConstraintValidator<Constraints, Any?> {
          */
         private val initializedValidators: MutableMap<ConstraintValidator<*, *>, Boolean> =
             ConcurrentHashMap()
+        /** [Constraints] 自身的元属性名，遍历子约束时需要排除 */
         private val excludedConstraintPropertyNames = setOf("order", "andOr", "message", "groups", "payload")
+        /** 复用的“空 composing constraints”集合，避免每次构造代理都新建 */
         private val emptyComposingConstraints: Set<ConstraintDescriptor<*>> = emptySet()
+        /** 复用的“空 validator classes”列表，避免每次构造代理都新建 */
         private val emptyValidatorClasses: List<Class<*>> = emptyList()
+        /** 强制优先校验的约束类型集合：null/blank/empty 一类必须先短路，提升错误信息可读性 */
         private val priorityConstraintTypes = setOf(
             NotBlank::class,
             NotEmpty::class,
@@ -93,6 +103,20 @@ class ConstraintsValidator : ConstraintValidator<Constraints, Any?> {
             Null::class
         )
 
+        /**
+         * 提取 [Constraints] 中所有实际启用的子约束，并按以下规则排序：
+         * 1) 显式 [Constraints.order] 中列出的约束优先按用户指定顺序；
+         * 2) 其余约束按反射遍历顺序追加；
+         * 3) 如果其中存在 NotBlank/NotEmpty/NotNull/Null，强制把它提到最前。
+         *
+         * 通过 `message != [Constraints.MESSAGE]` 判断用户是否真的启用了该子约束。
+         *
+         * @param constraints 组合约束注解
+         * @return 排好序的子约束列表
+         * @throws IllegalStateException 当 order 中引用了未启用的约束类，或反射出非注解属性时
+         * @author K
+         * @since 1.0.0
+         */
         fun getAnnotations(constraints: Constraints): List<Annotation> {
             // 获取定义的子约束
             val annotations = mutableListOf<Annotation>()
@@ -139,6 +163,16 @@ class ConstraintsValidator : ConstraintValidator<Constraints, Any?> {
             }
         }
 
+        /**
+         * 通过反射读取注解的 `message` 属性值。
+         * 方法本身按注解类缓存，第二次读取同一类注解时不再走 [Class.getDeclaredMethod]。
+         *
+         * @param annotation 任意约束注解
+         * @return 注解的 message 值
+         * @throws IllegalStateException 当注解的 `message` 返回值不是 String 时
+         * @author K
+         * @since 1.0.0
+         */
         private fun getAnnotationMessage(annotation: Annotation): String {
             val annotationClass = annotation.annotationClass.java
             val method = annotationMessageMethodCache.getOrPut(annotationClass) {
@@ -149,6 +183,21 @@ class ConstraintsValidator : ConstraintValidator<Constraints, Any?> {
         }
     }
 
+    /**
+     * 单个子约束的校验入口：
+     * - null 值除 NotNull/NotEmpty/NotBlank 外一律视为通过；
+     * - [AtLeast] 子约束语义上作用在 bean 本身而非属性值，从 [ValidationContext] 取出 bean；
+     * - 通过 [ValidatorFactory] 拿到该注解对应的所有 [ConstraintValidator] 并依次执行，全通过才算通过。
+     *
+     * @param annotation 待执行的子约束
+     * @param value 被校验的属性值
+     * @param bean 当前正在校验的目标对象（[AtLeast] 等需要）
+     * @param context Bean Validation 上下文
+     * @return 该子约束是否通过
+     * @throws IllegalStateException 当找不到对应的 ConstraintValidator 时
+     * @author K
+     * @since 1.0.0
+     */
     private fun validate(
         annotation: Annotation,
         value: Any?,
@@ -178,6 +227,21 @@ class ConstraintsValidator : ConstraintValidator<Constraints, Any?> {
     }
 
 
+    /**
+     * 反射调用单个 [ConstraintValidator] 的 initialize + isValid。
+     *
+     * 对实现了 [HibernateConstraintValidator] 的校验器走双参 initialize（descriptor + initCtx），
+     * 否则走标准 initialize(annotation)。同一 validator 实例只初始化一次，由 [initializedValidators] 兜底。
+     *
+     * @param constraintValidator 已实例化的校验器
+     * @param annotation 当前子约束
+     * @param value 被校验的值
+     * @param context Bean Validation 上下文
+     * @return [ConstraintValidator.isValid] 返回值
+     * @throws IllegalStateException 反射查不到 initialize/isValid，或 isValid 返回值不是 Boolean 时
+     * @author K
+     * @since 1.0.0
+     */
     private fun doValidate(
         constraintValidator: ConstraintValidator<*, *>,
         annotation: Annotation,
@@ -219,6 +283,15 @@ class ConstraintsValidator : ConstraintValidator<Constraints, Any?> {
             ?: error("ConstraintValidator.isValid必须返回Boolean")
     }
 
+    /**
+     * 用子约束自身的 message 追加一条 violation，并禁用默认 violation。
+     * 关闭默认 violation 是为了避免组合约束之外又额外冒出 Constraints 自己的默认错误信息。
+     *
+     * @param context Bean Validation 上下文
+     * @param annotation 失败的子约束
+     * @author K
+     * @since 1.0.0
+     */
     private fun addViolation(context: ConstraintValidatorContext, annotation: Annotation) {
         context.disableDefaultConstraintViolation()
         val message = getAnnotationMessage(annotation)
@@ -256,6 +329,17 @@ class ConstraintsValidator : ConstraintValidator<Constraints, Any?> {
     private fun proxyConstraintDescriptor(annotation: Annotation): ConstraintDescriptor<*> =
         constraintDescriptorCache.computeIfAbsent(annotation) { buildConstraintDescriptorProxy(it) }
 
+    /**
+     * 实际构造 [ConstraintDescriptor] 代理对象的实现。
+     * 反射读取注解的所有属性方法（按注解类缓存），用 JDK [Proxy] 暴露最小集合的接口方法：
+     * getAnnotation / getAttributes / getMessageTemplate / getGroups / getPayload 等。
+     *
+     * @param annotation 当前子约束
+     * @return ConstraintDescriptor 代理实例
+     * @throws IllegalStateException Proxy 实例化失败时
+     * @author K
+     * @since 1.0.0
+     */
     private fun buildConstraintDescriptorProxy(annotation: Annotation): ConstraintDescriptor<*> {
         val attributeMethods = annotationAttributeMethodsCache.getOrPut(annotation.annotationClass.java) {
             annotation.annotationClass.java.declaredMethods
@@ -294,6 +378,15 @@ class ConstraintsValidator : ConstraintValidator<Constraints, Any?> {
             ?: error("构造 ConstraintDescriptor 代理失败")
     }
 
+    /**
+     * 给 ConstraintDescriptor 代理上未列出的方法返回类型安全的零值。
+     * 基本类型按规范返回 0/false/' '；Set / List 返回空集合；其它对象返回 null。
+     *
+     * @param type 方法返回类型
+     * @return 类型安全的“默认值”
+     * @author K
+     * @since 1.0.0
+     */
     private fun defaultReturn(type: Class<*>): Any? = when {
         type == java.lang.Boolean.TYPE -> false
         type == Integer.TYPE -> 0

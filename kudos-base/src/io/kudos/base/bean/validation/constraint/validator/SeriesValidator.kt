@@ -14,6 +14,7 @@ import java.math.BigDecimal
  */
 class SeriesValidator : ConstraintValidator<Series, Any?> {
 
+    /** 当前实例处理的 [Series] 注解，由 [initialize] 注入 */
     private lateinit var series: Series
 
     override fun initialize(series: Series) {
@@ -80,6 +81,16 @@ class SeriesValidator : ConstraintValidator<Series, Any?> {
         }
     }
 
+    /**
+     * 用自定义 message 替换默认 violation 并返回 false。
+     * 用在“值非法到根本无法继续校验”的早退路径（如类型不对、含 null 元素）。
+     *
+     * @param context Bean Validation 上下文
+     * @param message 自定义错误信息模板
+     * @return 永远返回 false
+     * @author K
+     * @since 1.0.0
+     */
     private fun fail(context: ConstraintValidatorContext, message: String): Boolean {
         context.disableDefaultConstraintViolation()
         context.buildConstraintViolationWithTemplate(message).addConstraintViolation()

@@ -20,7 +20,7 @@ import javax.imageio.ImageIO
  */
 object QrCodeKit {
 
-    // 二维码写码器
+    /** ZXing 二维码写码器，[MultiFormatWriter] 线程安全可单例复用 */
     private val mutiWriter = MultiFormatWriter()
 
     /**

@@ -27,6 +27,7 @@ import java.util.Locale
  */
 object Base36Kit {
 
+    /** 默认加密 Key（18 位正整数），未显式传入 key 时使用 */
     const val KEY = 999966699996669999L
 
     /**
@@ -138,6 +139,20 @@ object Base36Kit {
         return deOutOrder(srcString, key)
     }
 
+    /**
+     * 按 key 对源字符串做“乱序”：
+     * 1. 先按 (key % 100 % len) 做循环左移；
+     * 2. 用 key 的每一位生成排序权重，对前 min(srcLen, keyLen) 个字符按权重重排；
+     * 3. 超出 key 长度的尾部字符保持移位后的相对顺序。
+     *
+     * 与 [deOutOrder] 严格互逆。
+     *
+     * @param src 待乱序的字符串
+     * @param key 加密 Key
+     * @return 乱序后的字符串
+     * @author K
+     * @since 1.0.0
+     */
     private fun outOrder(src: String, key: Long): String {
         var srcString = src
         val keyStr = key.toString()
@@ -170,6 +185,16 @@ object Base36Kit {
         return targStr
     }
 
+    /**
+     * [outOrder] 的逆运算：先按 key 权重排序得到位置映射，
+     * 再把密文字符放回原位置，最后做反向循环移位，恢复原始字符串。
+     *
+     * @param srcString 已乱序的字符串
+     * @param key 加密 Key（须与加密时相同）
+     * @return 恢复原顺序后的字符串
+     * @author K
+     * @since 1.0.0
+     */
     private fun deOutOrder(srcString: String, key: Long): String {
         val keyStr = key.toString()
         //String[] keyArr = keyStr.split("");
@@ -207,7 +232,16 @@ object Base36Kit {
         return targStr
     }
 
-    //数组排序
+    /**
+     * 对二维字符串数组按指定列做升序冒泡排序（原地修改）。
+     * 排序键为字符串解析后的整型，列值为空会触发 [IllegalArgumentException]。
+     *
+     * @param arr 待排序数组，行表示元素，列表示属性
+     * @param col 用于比较大小的列下标
+     * @return 排序完成的数组（与入参为同一引用）
+     * @author K
+     * @since 1.0.0
+     */
     private fun sortArr(arr: Array<Array<String?>>, col: Int): Array<Array<String?>> {
         var temp: Array<String?>
         for (i in 0 until arr.size - 1) {
@@ -224,7 +258,19 @@ object Base36Kit {
         return arr
     }
 
-    //字符串转换
+    /**
+     * 在自定义编码（36 进制或 62 进制）空间内对字符串前缀做加法/减法位移。
+     * 流程：ASCII -> 自定义编码 -> 加或减 key 的对应位 -> 回到 ASCII。
+     * band36=true 时小写字母按大写处理，保证“纯大写+数字”输入输出仍为纯大写+数字。
+     *
+     * @param inStr 待转换的字符串
+     * @param transNum 用于位移的数字（即加密 Key）
+     * @param plusMinus true 代表加密（加法），false 代表解密（减法）
+     * @param band36 true 走 36 进制（仅大写+数字），false 走 62 进制（含小写）
+     * @return 转换后的字符串
+     * @author K
+     * @since 1.0.0
+     */
     private fun transStr(inStr: String, transNum: Long, plusMinus: Boolean, band36: Boolean): String {
         var s = inStr
         var band = 62
@@ -256,7 +302,16 @@ object Base36Kit {
         return String(ch)
     }
 
-    //按自定义的36位或/62位编码重新编码，0~9为数字，10~35为大写字母，36~51位为小写字母
+    /**
+     * 把 ASCII 编码映射到自定义紧凑编码：
+     * 数字 `0-9` -> 0..9，大写字母 `A-Z` -> 10..35，小写字母 `a-z` -> 36..61，
+     * 其余字符保持原值不变。
+     *
+     * @param codeNum 输入字符的 ASCII 码
+     * @return 自定义编码值
+     * @author K
+     * @since 1.0.0
+     */
     private fun asciiToDiy(codeNum: Int): Int { //如果n的ASCII码在48~57，则n是数字, 65~90则是大写字母
         return when(codeNum) {
             in 48..57 -> codeNum - 48
@@ -266,7 +321,16 @@ object Base36Kit {
         }
     }
 
-    //把自定义的36位或/62位编码重新转为ASCII码，0~9为数字，10~35为大写字母，36~51位为小写字母
+    /**
+     * [asciiToDiy] 的逆映射：把自定义紧凑编码映射回 ASCII。
+     * 注意：减法位运算可能让 codeNum 临时为 -1（band 取模溢出），
+     * 此时落入 `-1..9` 分支映射为数字 `0-9` 区段，保持互逆。
+     *
+     * @param codeNum 自定义编码值
+     * @return 对应的 ASCII 码
+     * @author K
+     * @since 1.0.0
+     */
     private fun diyToAscii(codeNum: Int): Int { //把自定义编码转回ASCII码
         return when(codeNum) {
             in -1..9 -> codeNum + 48
@@ -276,6 +340,15 @@ object Base36Kit {
         }
     }
 
+    /**
+     * 计算字符串的 MD5 摘要并返回大写十六进制字符串。
+     * 仅用于在加密结果头部生成 1 位校验位，不作通用安全用途。
+     *
+     * @param s 待摘要的字符串
+     * @return 32 位大写十六进制 MD5；JDK 不支持 MD5 算法时返回 null
+     * @author K
+     * @since 1.0.0
+     */
     private fun getMD5(s: String): String? {
         val hexDigits =
             charArrayOf('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F')

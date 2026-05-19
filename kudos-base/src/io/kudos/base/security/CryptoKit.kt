@@ -24,32 +24,45 @@ import javax.crypto.spec.SecretKeySpec
  */
 object CryptoKit {
 
+    /** 日志器，用于在兼容路径上记录降级解密失败等告警信息 */
     private val logger = LogFactory.getLog(this::class)
 
+    /** AES 算法名 */
     private const val AES_ALGORITHM = "AES"
     /** 与历史 `Cipher.getInstance("AES")` 行为一致，显式写出便于审阅。 */
     private const val AES_ECB_TRANSFORM = "AES/ECB/PKCS5Padding"
+    /** AES-GCM 认证加密变换名，无填充 */
     private const val AES_GCM_TRANSFORM = "AES/GCM/NoPadding"
+    /** HMAC-SHA1 算法名 */
     private const val HMACSHA1 = "HmacSHA1"
+    /** 触发“密文大小写翻转”的密钥前缀（向后兼容老约定） */
     private const val HTB = "_HTB"
 
+    /** [aesEncrypt]/[aesDecrypt] 无参形式使用的密文标记前缀，用于区分历史明文与加密内容 */
     private const val PREFIX = "┼"
+    /** 字符串与字节互转使用的字符集 */
     private const val CHARSET = "UTF-8"
 
+    /** HMAC-SHA1 默认密钥长度（RFC2401 建议值） */
     private const val DEFAULT_HMACSHA1_KEYSIZE = 160 // RFC2401
 
+    /** [generateIV] 生成的随机 IV 默认字节数（与 AES 块大小一致） */
     private const val DEFAULT_IVSIZE = 16
 
     /** 新格式密文前缀：ASCII 「GCM」+ 版本字节 0x01。 */
     private val AES_GCM_MAGIC = byteArrayOf(0x47, 0x43, 0x4D, 0x01)
 
+    /** GCM 模式 IV 长度（NIST 推荐 12 字节） */
     private const val GCM_IV_LENGTH = 12
+    /** GCM 认证标签长度（比特），128 位为标准长度 */
     private const val GCM_TAG_LENGTH_BITS = 128
 
+    /** Hex 编码使用的小写字符表 */
     private val DIGITS = charArrayOf(
         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
     )
 
+    /** 强随机源，用于 IV 与密钥生成 */
     private val random = SecureRandom()
 
     //-- HMAC-SHA1 function --//
@@ -140,6 +153,16 @@ object CryptoKit {
         }
     }
 
+    /**
+     * 使用 AES-128-GCM 对明文加密。
+     * 每次随机生成 12 字节 IV，输出格式为 `AES_GCM_MAGIC || IV || ciphertext+tag`。
+     *
+     * @param plain 待加密明文字节
+     * @param password 密码字节，将通过 [buildAesKey] 派生为 128 位密钥
+     * @return 带魔数前缀与 IV 的密文字节数组
+     * @author K
+     * @since 1.0.0
+     */
     private fun aesGcmEncrypt(plain: ByteArray, password: ByteArray): ByteArray {
         val iv = ByteArray(GCM_IV_LENGTH)
         random.nextBytes(iv)
@@ -149,6 +172,17 @@ object CryptoKit {
         return AES_GCM_MAGIC + iv + ct
     }
 
+    /**
+     * 解密由 [aesGcmEncrypt] 产生的 GCM 密文。
+     * 期望输入开头匹配 [AES_GCM_MAGIC]，紧随 12 字节 IV，再是密文与认证标签。
+     *
+     * @param input 含魔数与 IV 的 GCM 密文
+     * @param password 密码字节，须与加密时相同
+     * @return 解密后的明文字节数组
+     * @throws IllegalArgumentException 当输入长度不足以包含魔数与 IV 时
+     * @author K
+     * @since 1.0.0
+     */
     private fun aesGcmDecrypt(input: ByteArray, password: ByteArray): ByteArray {
         val headerLen = AES_GCM_MAGIC.size + GCM_IV_LENGTH
         require(input.size > headerLen) { "Invalid AES-GCM payload length" }
@@ -159,12 +193,34 @@ object CryptoKit {
         return cipher.doFinal(ct)
     }
 
+    /**
+     * AES/ECB/PKCS5Padding 的加解密（旧格式兼容路径）。
+     * 仅用于读取历史数据，不应再用于新数据加密。
+     *
+     * @param input 待处理数据
+     * @param password 密码字节，将通过 [buildAesKey] 派生为 128 位密钥
+     * @param mode [Cipher.ENCRYPT_MODE] 或 [Cipher.DECRYPT_MODE]
+     * @return 处理后的字节数组
+     * @author K
+     * @since 1.0.0
+     */
     private fun aesEcb(input: ByteArray, password: ByteArray, mode: Int): ByteArray {
         val cipher = Cipher.getInstance(AES_ECB_TRANSFORM)
         cipher.init(mode, buildAesKey(password))
         return cipher.doFinal(input)
     }
 
+    /**
+     * 最旧版本派生密钥路径：通过 SHA1PRNG 以 password 作种子生成 128 位密钥。
+     * 仅在 [aesEcb] 直接解密失败时降级使用，用于读取最早的存量密文。
+     *
+     * @param input 待解密数据
+     * @param password 密码字节，作为 SHA1PRNG 的种子
+     * @param mode [Cipher.ENCRYPT_MODE] 或 [Cipher.DECRYPT_MODE]
+     * @return 处理后的字节数组
+     * @author K
+     * @since 1.0.0
+     */
     private fun aesLegacy(input: ByteArray, password: ByteArray, mode: Int): ByteArray {
         val generator = KeyGenerator.getInstance(AES_ALGORITHM)
         val secureRandom = SecureRandom.getInstance("SHA1PRNG")
@@ -175,6 +231,15 @@ object CryptoKit {
         return cipher.doFinal(input)
     }
 
+    /**
+     * 通过 SHA-256 对密码做一次摘要并截取前 16 字节作为 AES-128 密钥。
+     * 既保证密钥长度合法，也避免直接暴露密码字节。
+     *
+     * @param password 原始密码字节
+     * @return 可直接喂给 [Cipher.init] 的 AES 密钥
+     * @author K
+     * @since 1.0.0
+     */
     private fun buildAesKey(password: ByteArray): SecretKeySpec {
         val digest = MessageDigest.getInstance("SHA-256").digest(password)
         val key = digest.copyOf(16) // AES-128
@@ -302,6 +367,15 @@ object CryptoKit {
         return arrOut
     }
 
+    /**
+     * 把单字节 ASCII 十六进制字符（`0-9` `a-f` `A-F`）转为 0..15 的整数。
+     *
+     * @param b ASCII 十六进制字符的字节表示
+     * @return 该字符对应的十进制值
+     * @throws NumberFormatException 当字节不是合法的十六进制字符时
+     * @author K
+     * @since 1.0.0
+     */
     private fun hexNibble(b: Byte): Int {
         val c = b.toInt() and 0xFF
         return when {

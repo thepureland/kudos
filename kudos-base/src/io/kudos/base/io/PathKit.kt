@@ -168,6 +168,19 @@ object PathKit {
      */
     fun getUserDirectory(): File = FileUtils.getUserDirectory()
 
+    /**
+     * 把非 `file:` 协议下的资源（如 `jar:`、`jrt:`）抽取到一个新建的临时目录中，
+     * 让上层调用方可以拿到一个可读的本地路径。临时目录与文件都注册 [File.deleteOnExit]。
+     *
+     * 单独创建专用子目录而不是直接复制到系统 temp 根目录，是为了避免与其他工具
+     * 在 temp 根目录扫描时踩权限/竞态问题。
+     *
+     * @param url 资源 URL
+     * @param name 资源原始名（仅用于命名临时文件，空白名会回退到 `resource.bin`）
+     * @return 抽取后的临时文件路径
+     * @author K
+     * @since 1.0.0
+     */
     private fun extractToTempDir(url: URL, name: String): Path {
         // 关键：用“专用临时目录”，避免把系统 temp 根目录整个复制/扫描时踩权限坑
         val dir = Files.createTempDirectory("resource-").toFile().apply { deleteOnExit() }

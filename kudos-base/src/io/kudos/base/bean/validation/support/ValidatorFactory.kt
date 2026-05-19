@@ -56,6 +56,7 @@ private typealias ValidatorBuilder = (annotation: Annotation, value: Any) -> Lis
  */
 object ValidatorFactory {
 
+    /** validator 实例缓存：按 (annotation, value 的运行时 class) 命中，避免重复构造与 initialize */
     private val CACHE: MutableMap<CacheKey, List<ConstraintValidator<*, *>>> = ConcurrentHashMap()
 
     /**
@@ -77,15 +78,41 @@ object ValidatorFactory {
         CACHE.clear()
     }
 
+    /**
+     * 缓存未命中时的实际构造路径：在 [BUILDERS] 注册表里查 annotation 对应的工厂闭包并执行。
+     *
+     * @param annotation 当前注解
+     * @param value 被校验的值（用于按运行时类型分发）
+     * @return 该注解对应的 validator 列表，未注册的注解返回空列表
+     * @author K
+     * @since 1.0.0
+     */
     private fun build(annotation: Annotation, value: Any): List<ConstraintValidator<*, *>> {
         val builder = BUILDERS[annotation.annotationClass] ?: return emptyList()
         return builder(annotation, value)
     }
 
+    /**
+     * validator 缓存的复合键。
+     * annotation 本身参与 hashCode/equals 依赖 JDK Annotation 的“同 attribute 即相等”契约。
+     *
+     * @property annotation 当前注解实例
+     * @property valueClass 被校验值的运行时类，用于不同类型分发的 validator 各自缓存
+     */
     private data class CacheKey(val annotation: Annotation, val valueClass: Class<*>)
 
     // ----------------------------- helpers -----------------------------
 
+    /**
+     * 抹掉 ConstraintValidator 的泛型实参，统一调用 [ConstraintValidator.initialize] 并返回自身，
+     * 便于在工厂闭包里以链式风格构造列表。
+     *
+     * @param validator 已实例化的校验器
+     * @param annotation 用来初始化的注解
+     * @return 同一个 validator 实例
+     * @author K
+     * @since 1.0.0
+     */
     private fun initialize(
         validator: ConstraintValidator<*, *>,
         annotation: Annotation
@@ -212,6 +239,18 @@ object ValidatorFactory {
         listOf(initialize(factory(), annotation))
     }
 
+    /**
+     * 反射构造注解实例：按形参名匹配 [namedArgs]，没匹配上的参数使用默认值。
+     * 用于把复合约束（Range、CreditCardNumber）拆解成内部更小的约束（Min/Max、LuhnCheck）后转交对应 validator。
+     *
+     * @param A 目标注解类型
+     * @param annotationClass 目标注解的 KClass
+     * @param namedArgs 形参名到实参值的映射
+     * @return 实例化好的注解
+     * @throws IllegalStateException 找不到注解构造器时
+     * @author K
+     * @since 1.0.0
+     */
     private fun <A : Annotation> createAnnotationByNamedArgs(
         annotationClass: KClass<A>,
         namedArgs: Map<String, Any>
@@ -233,6 +272,11 @@ object ValidatorFactory {
 
     // ----------------------------- registry -----------------------------
 
+    /**
+     * 注解类型到 validator 构造闭包的注册表。
+     * 新增一种注解仅需在此表追加一项；按值类型分发的注解走 [numericBound] / [dateBound] / [sizeBound] 模板，
+     * 复合注解（Range = Min+Max、CreditCardNumber → LuhnCheck）使用就地 lambda 拆解。
+     */
     private val BUILDERS: Map<KClass<out Annotation>, ValidatorBuilder> = buildMap {
         // ---- jakarta.validation ----
         this[AssertFalse::class] = raw { AssertFalseValidator() }

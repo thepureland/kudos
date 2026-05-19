@@ -11,6 +11,13 @@ package io.kudos.base.bean.validation.support
  */
 object RegExps {
 
+    /**
+     * 通信与联系方式相关正则。
+     * 包含手机号、固定电话、QQ、邮箱、微信号等场景。
+     *
+     * @author K
+     * @since 1.0.0
+     */
     object Communication {
 
         /**
@@ -121,6 +128,13 @@ object RegExps {
         const val WECHAT_ID = "^[a-zA-Z0-9]{1}[-_a-zA-Z0-9]{5,19}$"
     }
 
+    /**
+     * 人名 / 显示名相关正则。
+     * 包含真实姓名、银行账户户名、昵称等限制更严格的姓名字段。
+     *
+     * @author K
+     * @since 1.0.0
+     */
     object Name {
 
         /**
@@ -195,6 +209,13 @@ object RegExps {
         const val NICK_NAME = "^[a-zA-Z0-9\\u4E00-\\u9FA5\\u0800-\\u4e00]{3,15}$"
     }
 
+    /**
+     * 通用文本相关正则。
+     * 主要约束字符集、长度与首字符等，不针对具体业务字段。
+     *
+     * @author K
+     * @since 1.0.0
+     */
     object Text {
 
         /**
@@ -279,6 +300,13 @@ object RegExps {
         const val CONTEXT = "^/(?:[a-z0-9]+(?:-[a-z0-9]+)*/?)*$"
     }
 
+    /**
+     * 字符集合相关正则。
+     * 用于校验字符串只包含特定字符种类（字母、数字、连字符、下划线等）。
+     *
+     * @author K
+     * @since 1.0.0
+     */
     object CharacterSet {
 
         /**
@@ -421,6 +449,13 @@ object RegExps {
         const val SLUG_KEBAB_LOWERCASE = "^[a-z0-9]+(?:-[a-z0-9]+)*$"
     }
 
+    /**
+     * 安全相关正则。
+     * 包含登录密码、PIN 码、以及密码强度判定使用的规则集。
+     *
+     * @author K
+     * @since 1.0.0
+     */
     object Security {
 
         /**
@@ -500,6 +535,13 @@ object RegExps {
             "^[A-Za-z0-9~!@#$%^&*()_+\\\\{\\\\}\\\\[\\\\]|\\\\:;\\'\\\"<>,./?]+$"
     }
 
+    /**
+     * 数值文本相关正则。
+     * 包含整数、正数、金额、百分比、比分等以字符串形式表达的数字格式。
+     *
+     * @author K
+     * @since 1.0.0
+     */
     object Numeric {
 
         /**
@@ -649,6 +691,13 @@ object RegExps {
         const val PERCENT_INTEGER_0_100 = "^(?:100|[1-9]\\d?|0)$"
     }
 
+    /**
+     * 网络与协议相关正则。
+     * 包含 IPv4、IPv6、URL、JDBC、MAC、端口、域名、CIDR 等表达。
+     *
+     * @author K
+     * @since 1.0.0
+     */
     object Network {
 
         /**
@@ -823,6 +872,13 @@ object RegExps {
         const val DOMAIN = "^(localhost|(?=.{1,253}$)(?!-)(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.)+[A-Za-z]{2,63})$"
     }
 
+    /**
+     * 业务专用正则。
+     * 含银行卡号、玩家账号、站点 ID 列表等明显与领域绑定的字段。
+     *
+     * @author K
+     * @since 1.0.0
+     */
     object Business {
 
         /**
@@ -867,6 +923,13 @@ object RegExps {
         const val GAME_PLAYER_ACCOUNT = "^[a-zA-Z0-9_\\$][a-zA-Z0-9_]{3,14}$"
     }
 
+    /**
+     * 通用格式相关正则。
+     * 含 UUID、日期、时间、邮编、十六进制颜色等可复用的标准化格式。
+     *
+     * @author K
+     * @since 1.0.0
+     */
     object Format {
 
         /**

@@ -18,9 +18,10 @@ import java.util.Locale
  */
 object IpKit {
 
+    /** 日志器 */
     private val LOG = LogFactory.getLog(this::class)
 
-    // 二进制32位为全1的整数值
+    /** 32 位无符号最大值（即 2³²-1），用于 IPv4 长整型范围校验 */
     private const val ALL32ONE = 4294967295L
 
     /** 128 位无符号最大值（含），与 `NUMERIC(39,0)` 存 IPv6 整值时一致。 */
@@ -375,6 +376,15 @@ object IpKit {
         }
     }
 
+    /**
+     * 以 IPv6 优先的策略将文本解析为存储用 `BigDecimal`：
+     * 先尝试 [toFullIpv6] + [fullIpv6ColonGroupsTextToUnsignedDecimal]；失败时按十进制串兜底。
+     *
+     * @param s 已 trim 的输入文本
+     * @return 解析结果，无法解析时返回 null
+     * @author K
+     * @since 1.0.0
+     */
     private fun parseIpv6PreferToDecimal(s: String): BigDecimal? {
         return runCatching {
             val full = toFullIpv6(s)
@@ -384,6 +394,15 @@ object IpKit {
         }
     }
 
+    /**
+     * 以 IPv4 优先的策略将文本解析为存储用 `BigDecimal`：
+     * 纯数字串直接当十进制处理；否则按点分/定长 IPv4 经 [ipv4DottedOrFixedToUnsignedDecimal] 转换。
+     *
+     * @param s 已 trim 的输入文本
+     * @return 解析结果，无法解析时返回 null
+     * @author K
+     * @since 1.0.0
+     */
     private fun parseIpv4PreferToDecimal(s: String): BigDecimal? {
         return when {
             s.all { it.isDigit() } -> runCatching { BigDecimal(s) }.getOrNull()
@@ -391,6 +410,15 @@ object IpKit {
         }
     }
 
+    /**
+     * 把点分（含定长零补齐）形式 IPv4 转为存储用 `BigDecimal`：
+     * 先归一为非定长 IPv4 文本；归一失败时按十进制串兜底；归一成功后将无符号 32 位整数包成 `BigDecimal` 返回。
+     *
+     * @param s 输入文本
+     * @return 转换结果，[ipv4StringToLong] 返回 -1 时返回 null
+     * @author K
+     * @since 1.0.0
+     */
     private fun ipv4DottedOrFixedToUnsignedDecimal(s: String): BigDecimal? {
         var normal = getNormalIpv4(s)
         if (normal.isEmpty()) {
@@ -402,6 +430,15 @@ object IpKit {
         return if (l < 0) null else BigDecimal(BigInteger.valueOf(l and 0xFFFFFFFFL))
     }
 
+    /**
+     * 自动判定输入类型并解析为存储用 `BigDecimal`：
+     * 优先级 — 纯十进制串 > 合法 IPv4 > 合法 IPv6 > 兜底按十进制串。
+     *
+     * @param s 已 trim 的输入文本
+     * @return 解析结果，全部尝试失败时返回 null
+     * @author K
+     * @since 1.0.0
+     */
     private fun parseAutoToDecimal(s: String): BigDecimal? {
         return when {
             s.all { it.isDigit() } -> runCatching { BigDecimal(s) }.getOrNull()

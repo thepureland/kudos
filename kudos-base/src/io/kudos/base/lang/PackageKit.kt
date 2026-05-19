@@ -18,6 +18,7 @@ import kotlin.reflect.KClass
  */
 object PackageKit {
 
+    /** 日志器 */
     private val LOG = LogFactory.getLog(PackageKit::class)
 
     /**
@@ -54,6 +55,15 @@ object PackageKit {
         return pkgs.filter { it.matches(Regex(regExp)) }.toSet()
     }
 
+    /**
+     * 从含通配符的包正则中提取“可枚举的固定前缀”。
+     * 把 `io.kudos.*.bean` 这样的输入截取到第一个含 `*` 段之前，得到 `io.kudos`。
+     *
+     * @param pkgPattern 含 `*` 的包匹配表达式
+     * @return 去掉末尾点号的固定前缀
+     * @author K
+     * @since 1.0.0
+     */
     private fun getPackagePrefix(pkgPattern: String): String {
         val pkgPrefix = StringBuilder()
         val pkgElems = pkgPattern.split(".").toTypedArray()
@@ -67,6 +77,16 @@ object PackageKit {
         return pkgPrefix.deleteCharAt(pkgPrefix.length - 1).toString()
     }
 
+    /**
+     * 包扫描的统一入口：对当前线程的 classloader 拿到所有匹配资源，
+     * 按协议分发到“文件目录扫描”或“JAR 扫描”。结果写入 [action]。
+     *
+     * @param packagePrefix 固定包前缀（点号分隔），不能含通配符
+     * @param recursive 是否递归扫描子目录
+     * @param action 扫描结果收集器
+     * @author K
+     * @since 1.0.0
+     */
     private fun find(packagePrefix: String, recursive: Boolean, action: Action) {
         // 获取包的名字 并进行替换
         val packageDirName = packagePrefix.replace('.', '/')
@@ -97,6 +117,19 @@ object PackageKit {
         }
     }
 
+    /**
+     * 以 JAR 形式扫描指定包前缀，把命中的类或子包收集到 [action]。
+     * 根据 [Action.isRetrieveClass] 切换“收类”或“收包”行为；
+     * recursive=false 时只收顶层包/类。
+     *
+     * @param packageName 入参与递归过程中维护的当前包名
+     * @param packageDirName 包前缀的目录形式（点号转斜杠）
+     * @param url JAR 对应的资源 URL
+     * @param recursive 是否递归扫描
+     * @param action 扫描结果收集器
+     * @author K
+     * @since 1.0.0
+     */
     private fun findAndAddClassesInPackageByJar(
         packageName: String, packageDirName: String, url: URL, recursive: Boolean, action: Action
     ) {
@@ -202,15 +235,34 @@ object PackageKit {
         }
     }
 
+    /**
+     * 包扫描内部收集器。
+     * true 时把命中的类放入 [classes]；false 时把命中的子包放入 [pkgs]，
+     * 通过同一套扫描代码服务于 [getClassesInPackage] 与 [getPackages] 两个公开入口。
+     *
+     * @author K
+     * @since 1.0.0
+     */
     private class Action(retrieveClass: Boolean) {
+        /** true: 当前扫描在收集类；false: 当前扫描在收集子包 */
         var isRetrieveClass = true
+        /** 命中的类，使用 [LinkedHashSet] 保证发现顺序 */
         val classes = LinkedHashSet<KClass<*>>()
+        /** 命中的子包名，使用 [LinkedHashSet] 保证发现顺序 */
         val pkgs = LinkedHashSet<String>()
 
+        /**
+         * 收集一个类。
+         * @param clazz 命中的类
+         */
         fun addClass(clazz: KClass<*>) {
             classes.add(clazz)
         }
 
+        /**
+         * 收集一个子包名。
+         * @param pkg 命中的包名
+         */
         fun addPackage(pkg: String) {
             pkgs.add(pkg)
         }

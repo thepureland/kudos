@@ -219,10 +219,28 @@ object HttpClientKit {
         return response.await()
     }
 
+    /**
+     * 将 [HttpRequest.Builder] 转为不可变 [HttpRequest]。
+     * 独立成一个函数主要便于后续插入埋点、追加默认 header 等扩展，目前为薄包装。
+     *
+     * @param httpRequestBuilder 请求构建器
+     * @return 构建完成的请求
+     * @author K
+     * @since 1.0.0
+     */
     private fun createHttpRequest(httpRequestBuilder: HttpRequest.Builder): HttpRequest {
         return httpRequestBuilder.build()
     }
 
+    /**
+     * 将 [HttpClient.Builder] 转为 [HttpClient]。
+     * 独立成一个函数便于后续替换为注入式的客户端工厂（例如统一注入连接池、证书校验策略）。
+     *
+     * @param httpClientBuilder 客户端构建器
+     * @return 构建完成的客户端
+     * @author K
+     * @since 1.0.0
+     */
     private fun createHttpClient(httpClientBuilder: HttpClient.Builder): HttpClient {
         return httpClientBuilder.build()
     }
@@ -531,8 +549,11 @@ object HttpClientKit {
      * 一个轻量的 HttpResponse 包装，让我们能够“更改 body 为 Path”并沿用原响应的状态码/头（若有）。
      */
     private class FakeHttpResponse(
+        /** body 替换为最终落盘路径 */
         private val path: Path,
+        /** 自定义状态码，如本地命中已存在文件时用 200 */
         private val code: Int,
+        /** 原始响应；用于代理 headers/uri/version 等元信息，可为 null（构造伪响应时） */
         private val delegate: HttpResponse<*>? = null
     ) : HttpResponse<Path> {
 

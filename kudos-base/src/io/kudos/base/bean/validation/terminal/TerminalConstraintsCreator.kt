@@ -190,6 +190,15 @@ object TerminalConstraintsCreator {
     /**
      * 递归获取 Getter 上的约束注解。
      * 当子类 override 属性但未重新声明约束时，继续向父接口和父类上查找。
+     *
+     * 使用 [visited] 集合防御接口多继承造成的菱形重复访问；遇到 [Any] 时立即停止。
+     *
+     * @param clazz 当前要扫描的类
+     * @param property 属性名
+     * @param visited 已访问过的类集合（防重）
+     * @return 命中的约束注解列表（可能为空）
+     * @author K
+     * @since 1.0.0
      */
     private fun collectAnnotationsOnGetter(
         clazz: KClass<*>,
