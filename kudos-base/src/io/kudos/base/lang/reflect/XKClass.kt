@@ -33,50 +33,21 @@ fun <T : Any> KClass<T>.getEmptyConstructor(): KFunction<T>? = constructors.firs
  * @since 1.0.0
  */
 fun <T : Any> KClass<T>.newInstance(vararg args: Any?): T {
-    // 1. 不能实例化抽象类
-    if (this.isAbstract) {
-        throw IllegalArgumentException("抽象类 $simpleName 无法被实例化")
-    }
-    // 2. 不能实例化 Companion 对象
-    if (this.isCompanion) {
-        throw IllegalArgumentException("Companion 对象 $simpleName 无法被实例化")
-    }
-    // 3. 遍历所有构造函数，寻找参数数量和类型都匹配的那个
-    constructors.forEach { ctor: KFunction<T> ->
-        val params = ctor.parameters
-        if (params.size != args.size) return@forEach
-
-        var match = true
-        for (i in params.indices) {
-            val param = params[i]
-            val arg = args[i]
-
-            val paramType = param.type.jvmErasure
-            if (arg == null) {
-                // 如果参数为 null，必须对应的形参类型可空
-                if (!param.type.isMarkedNullable) {
-                    match = false
-                    break
-                }
-            } else {
-                // arg 非空时，检查 arg::class 是否可以赋值给 paramType
-                val argClass = arg::class
-                // 允许实际类型是 paramType 的子类
-                if (!argClass.isSubclassOf(paramType)) {
-                    match = false
-                    break
+    require(!isAbstract) { "抽象类 $simpleName 无法被实例化" }
+    require(!isCompanion) { "Companion 对象 $simpleName 无法被实例化" }
+    // 寻找参数数量和类型都匹配的构造函数
+    val ctor = constructors.firstOrNull { ctor ->
+        ctor.parameters.size == args.size &&
+            ctor.parameters.zip(args.toList()).all { (param, arg) ->
+                when (arg) {
+                    null -> param.type.isMarkedNullable
+                    else -> arg::class.isSubclassOf(param.type.jvmErasure)
                 }
             }
-        }
-        if (match) {
-            // 找到匹配的构造函数，直接调用
-            return ctor.call(*args)
-        }
-    }
-    // 4. 如果遍历完都没返回，说明没找到匹配的构造函数
-    throw IllegalArgumentException(
-        "无法实例化 $simpleName：未找到参数类型与 ${args.map { it?.let { it::class.simpleName } ?: "null" }} 匹配的构造函数"
+    } ?: throw IllegalArgumentException(
+        "无法实例化 $simpleName：未找到参数类型与 ${args.map { it?.let { a -> a::class.simpleName } ?: "null" }} 匹配的构造函数"
     )
+    return ctor.call(*args)
 }
 
 /**
@@ -165,25 +136,13 @@ fun KClass<*>.getMemberPropertyValue(target: Any, propertyName: String): Any? =
  * @since 1.0.0
  */
 fun KClass<*>.getMemberFunction(functionName: String, vararg parameters: KParameter): KFunction<*> {
-    val functions = this.memberFunctions.filter { it.name == functionName }
-    if (functions.isEmpty()) {
-        throw NoSuchElementException("类【${this}】中找不到命名为【${functionName}】的方法！")
-    } else if (functions.size == 1) {
-        return functions.first()
-    } else {
-        functions.forEach {
-            var match = true
-            for (index in it.parameters.indices) {
-                if (it.parameters[index].type != parameters[index].type) {
-                    match = false
-                    break
-                }
-            }
-            if (match) {
-                return it
-            }
-        }
-        throw NoSuchElementException("类【${this}】中找不到命名为【${functionName}】且匹配参数类型的方法！")
+    val functions = memberFunctions.filter { it.name == functionName }
+    return when (functions.size) {
+        0 -> throw NoSuchElementException("类【${this}】中找不到命名为【${functionName}】的方法！")
+        1 -> functions.first()
+        else -> functions.firstOrNull { fn ->
+            fn.parameters.indices.all { i -> fn.parameters[i].type == parameters[i].type }
+        } ?: throw NoSuchElementException("类【${this}】中找不到命名为【${functionName}】且匹配参数类型的方法！")
     }
 }
 

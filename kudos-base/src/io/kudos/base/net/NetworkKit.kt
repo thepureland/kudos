@@ -61,14 +61,11 @@ object NetworkKit {
 
     private fun collectMacs(delimiter: String): List<String> {
         val ifaces = NetworkInterface.getNetworkInterfaces() ?: return emptyList()
-        val macs = mutableListOf<String>()
-        for (nif in ifaces.toList()) {
-            if (!nif.isUp || nif.isLoopback || nif.isVirtual) continue
-            val hw = nif.hardwareAddress ?: continue
-            if (hw.isEmpty()) continue
-            macs += hw.joinToString(delimiter) { "%02X".format(it) }
-        }
-        return macs.distinct()
+        return ifaces.toList()
+            .filter { it.isUp && !it.isLoopback && !it.isVirtual }
+            .mapNotNull { it.hardwareAddress?.takeIf { hw -> hw.isNotEmpty() } }
+            .map { hw -> hw.joinToString(delimiter) { "%02X".format(it) } }
+            .distinct()
     }
 
     private enum class Os { WINDOWS, LINUX, MAC, OTHER }

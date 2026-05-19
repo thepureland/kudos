@@ -33,19 +33,14 @@ class FileSystemClassPathLocationScanner : IClassPathLocationScanner {
 
     @Throws(IOException::class)
     override fun findResourceNames(location: String, locationUrl: URL): Set<String> {
-        val filePath = FileKit.toFile(locationUrl)?.path
-        if (filePath == null) {
-            return TreeSet()
-        }
+        val filePath = FileKit.toFile(locationUrl)?.path ?: return TreeSet()
         val folder = File(filePath)
         if (!folder.isDirectory) {
             logger.debug("Skipping path as it is not a directory: $filePath")
             return TreeSet()
         }
-        var classPathRootOnDisk = filePath.substring(0, filePath.length - location.length)
-        if (!classPathRootOnDisk.endsWith("/")) {
-            classPathRootOnDisk = "$classPathRootOnDisk/"
-        }
+        val rawRoot = filePath.substring(0, filePath.length - location.length)
+        val classPathRootOnDisk = if (rawRoot.endsWith("/")) rawRoot else "$rawRoot/"
         logger.debug("Scanning starting at classpath root in filesystem: $classPathRootOnDisk")
         return findResourceNamesFromFileSystem(classPathRootOnDisk, location, folder)
     }
@@ -64,18 +59,13 @@ class FileSystemClassPathLocationScanner : IClassPathLocationScanner {
     /* private -> for testing */
     @Throws(IOException::class)
     fun findResourceNamesFromFileSystem(classPathRootOnDisk: String?, scanRootLocation: String, folder: File): Set<String> {
-        logger.debug("Scanning for resources in path: " + folder.path + " (" + scanRootLocation + ")")
+        logger.debug("Scanning for resources in path: ${folder.path} ($scanRootLocation)")
         val resourceNames: MutableSet<String> = TreeSet()
-        val files = folder.listFiles()
-        if (files != null) {
-            for (file in files) {
-                if (file.canRead()) {
-                    if (file.isDirectory) {
-                        resourceNames.addAll(findResourceNamesFromFileSystem(classPathRootOnDisk, scanRootLocation, file))
-                    } else {
-                        resourceNames.add(toResourceNameOnClasspath(classPathRootOnDisk, file))
-                    }
-                }
+        folder.listFiles().orEmpty().filter { it.canRead() }.forEach { file ->
+            if (file.isDirectory) {
+                resourceNames.addAll(findResourceNamesFromFileSystem(classPathRootOnDisk, scanRootLocation, file))
+            } else {
+                resourceNames.add(toResourceNameOnClasspath(classPathRootOnDisk, file))
             }
         }
         return resourceNames
