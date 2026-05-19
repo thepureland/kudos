@@ -43,11 +43,18 @@ open class DiscoveryLoadbalancerConfiguration {
          */
         private const val REACTIVE_SERVICE_INSTANCE_SUPPLIER_ORDER = 183827465
 
+        private const val ZONE_METADATA_KEY_PROPERTY = "kudos.ability.distributed.discovery.nacos.zone-metadata-key"
+
         private fun hintZone(): ServiceInstanceListSupplierBuilder.DelegateCreator {
             return ServiceInstanceListSupplierBuilder.DelegateCreator { context: ConfigurableApplicationContext, delegate: ServiceInstanceListSupplier ->
                 val loadBalancerClientFactory: LoadBalancerClientFactory = context.getBean<LoadBalancerClientFactory>()
                 val zoneConfig: LoadBalancerZoneConfig = context.getBean(LoadBalancerZoneConfig::class.java)
-                HintZoneServiceInstanceListSupplier(delegate, zoneConfig, loadBalancerClientFactory)
+                // 可配置 metadata 字段名——nacos 实例上挂的是 region / cluster-zone 等场景；
+                // 缺省回退到 spring-cloud-loadbalancer 的标准 "zone"
+                val zoneMetadataKey = context.environment.getProperty(ZONE_METADATA_KEY_PROPERTY)
+                    ?.takeIf { it.isNotBlank() }
+                    ?: HintZoneServiceInstanceListSupplier.DEFAULT_ZONE_METADATA_KEY
+                HintZoneServiceInstanceListSupplier(delegate, zoneConfig, loadBalancerClientFactory, zoneMetadataKey)
             }
         }
     }
