@@ -53,7 +53,5 @@ object TransactionTool {
      * @author K
      * @since 1.0.0
      */
-    fun hasTransaction(): Boolean {
-        return TransactionSynchronizationManager.isActualTransactionActive()
-    }
+    fun hasTransaction(): Boolean = TransactionSynchronizationManager.isActualTransactionActive()
 }
