@@ -21,21 +21,27 @@
 
 ## 控制器一览
 
-| 控制器 | 基础路径（示例） | 职责概要 |
-|--------|------------------|----------|
+| 控制器 | 基础路径 | 职责概要 |
+|--------|----------|----------|
 | `SysTenantAdminController` | `/api/admin/sys/tenant` | 租户 CRUD、按子系统查租户、启用状态等 |
 | `SysSystemAdminController` | `/api/admin/sys/system` | 子系统 |
 | `SysMicroServiceAdminController` | `/api/admin/sys/microService` | 微服务 |
 | `SysResourceAdminController` | `/api/admin/sys/resource` | 资源、菜单树等 |
-| `SysDictAdminController` / `SysDictItemAdminController` | `/api/admin/sys/dict` 等 | 字典与字典项 |
+| `SysDictAdminController` | `/api/admin/sys/dict` | 字典头 |
+| `SysDictItemAdminController` | `/api/admin/sys/dictItem` | 字典项（独立路径，与字典头分开） |
 | `SysParamAdminController` | `/api/admin/sys/param` | 系统参数 |
 | `SysI18NAdminController` | `/api/admin/sys/i18n` | 国际化 |
+| `SysLocaleAdminController` | `/api/admin/sys/locale` | 语言/区域全局字典 |
 | `SysDomainAdminController` | `/api/admin/sys/domain` | 业务域 |
 | `SysDataSourceAdminController` | `/api/admin/sys/dataSource` | 数据源 |
-| `SysCacheAdminController` | `/api/admin/sys/cache` | 缓存配置 |
-| `SysAccessRuleAdminController` / `SysAccessRuleIpAdminController` | `/api/admin/sys/accessRule` 等 | 访问规则及 IP |
+| `SysCacheAdminController` | `/api/admin/sys/cache` | 缓存配置元数据 |
+| `SysOutLineAdminController` | `/api/admin/sys/outLine` | 大纲数据 |
+| `SysAccessRuleAdminController` | `/api/admin/sys/accessRule` | 访问规则 |
+| `SysAccessRuleIpAdminController` | `/api/admin/sys/accessRuleIp` | 访问规则 IP（独立路径） |
 
-具体路径以各 `@RequestMapping` 为准；部分 Controller 在基类路由上还有子路径（如 `getTenantsBySubSystemCode`）。
+路径首段为 `camelCase`（如 `microService`、`dataSource`、`outLine`、`accessRule` / `accessRuleIp`、`dictItem`），与 `api-internal` 的 `/api/internal/sys/<module>` 命名一致。
+
+控制器统一继承自 `kudos-ability-web-springmvc` 中的 `BaseCrudController`（或其变体），开箱获得列表 / 详情 / 新增 / 修改 / 删除 / 批删等通用端点；模块特有动作（如租户的 `getTenantsBySubSystemCode`）以子路径附加。
 
 ---
 
@@ -52,14 +58,18 @@ kudos-ms-sys-api-admin
 
 ## 与 api-public / api-internal 的配合
 
-- **api-admin**：承载 **管理 REST**。
-- **api-public**：通常提供 **对外 Web 进程** 的 `main` 与极薄扫描包；可执行应用往往 **同时依赖 admin + core + public**，从而在网关后对外暴露 `/api/admin/sys/**`。
-- **api-internal**：提供 **对内 Provider** 形态与 Nacos 等栈；是否挂载同一套 Controller 取决于上层聚合模块的依赖组合。
+| 模块 | 路径前缀 | 用途 |
+|------|----------|------|
+| **api-admin** | `/api/admin/sys/**` | 管理端 REST，控制台 / 管理网关使用 |
+| **api-internal** | `/api/internal/sys/**` | 内部 RPC，**Feign 客户端** 与服务网格内部使用；控制器实现 `common.ISys*Api` 接口，复用方法级 `@*Mapping` |
+| **api-public** | （无业务路径） | 仅提供启动入口与 Web 栈装配；本身不挂控制器 |
 
-部署拓扑以实际可执行模块（如 gateway、ams-*-api-web）的 `build.gradle.kts` 为准。
+可执行应用通常 **同时依赖 `api-public` + `api-admin` + `api-internal` + `core`**，从而既对外暴露 `/api/admin/sys/**`，又对内暴露 `/api/internal/sys/**`。部署拓扑（哪个进程挂哪些路径）由具体可执行模块的 `build.gradle.kts` 决定。
 
 ---
 
 ## 扩展建议
 
 - 新增管理接口：优先在 **core** 完成 `ISys*Service` 能力，再在本模块新增 `*AdminController`，保持 VO 仅来自 **common**。
+- **不要**把 `/api/admin/**` 端点放到 `common.ISys*Api` 接口里。`common` 中接口的 `@*Mapping` 仅用于 `/api/internal/**` 路径，是 admin / internal 双轨制的契约边界。
+- 管理路径首段使用 `camelCase`（与现有保持一致），不要混用 `kebab-case` 或 `snake_case`。
