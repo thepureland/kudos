@@ -9,7 +9,11 @@ import org.springframework.beans.factory.annotation.Value
 import javax.sql.DataSource
 
 /**
- * Seata数据源代理,支持AT/XA
+ * Seata 数据源代理实现——按 `seata.data-source-proxy-mode` 把上游 DataSource 包成
+ * Seata `DataSourceProxy`(AT) 或 `DataSourceProxyXA`(XA)。
+ *
+ * AT 与 XA 二选一，与 yaml 配置一一对应。`enable-auto-data-source-proxy=false` 时
+ * 直接返回原 DataSource，方便联调时绕过 Seata。
  *
  * @author hanson
  * @author K
@@ -29,7 +33,9 @@ class SeataDataSourceProxy : IDataSourceProxy {
             when {
                 proxyMode.equals(BranchType.AT.name, ignoreCase = true) -> DataSourceProxy(dataSource)
                 proxyMode.equals(BranchType.XA.name, ignoreCase = true) -> DataSourceProxyXA(dataSource)
-                else -> throw IllegalArgumentException("Unknown dataSourceProxyMode: $proxyMode")
+                else -> throw IllegalArgumentException(
+                    "未识别的 seata.data-source-proxy-mode: '$proxyMode'。合法值: ${BranchType.AT.name} | ${BranchType.XA.name}（不区分大小写）"
+                )
             }
         } catch (e: IllegalArgumentException) {
             throw e
