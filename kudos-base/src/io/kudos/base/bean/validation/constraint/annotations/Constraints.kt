@@ -211,6 +211,11 @@ annotation class Constraints(
 ) {
 
     companion object {
+        /**
+         * 子约束 `message` 字段的占位默认值。
+         * 校验器通过 `message == MESSAGE` 判断用户是否实际启用了该子约束，
+         * 因此各子约束未被显式声明时都共享此占位值。
+         */
         const val MESSAGE = "TEMP_MSG" // 利用该值来确定用户定义了哪些子约束
     }
 

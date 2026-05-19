@@ -54,6 +54,7 @@ import kotlin.reflect.KClass
  */
 object XmlKit {
 
+    /** [JAXBContext] 缓存：按目标 [KClass] 复用，避免重复构建（[JAXBContext] 本身线程安全） */
     private val jaxbContexts = ConcurrentHashMap<KClass<*>, JAXBContext>()
 
     /**
@@ -143,6 +144,19 @@ object XmlKit {
      */
     private fun createUnmarshaller(clazz: KClass<*>): Unmarshaller = getJaxbContext(clazz).createUnmarshaller()
 
+    /**
+     * 获取或创建指定类的 [JAXBContext]。
+     * 同时注册 [CollectionWrapper]，以便处理 Collection 作根元素的情况。
+     *
+     * 注意：当前实现每次都新建 context，再 `putIfAbsent` 写入缓存，
+     * 等于缓存只保留首次构建的实例但仍每次构建一份；后续如需进一步降低开销，
+     * 可改为先查缓存、缺失时再构建。
+     *
+     * @param clazz 目标类
+     * @return 对应的 [JAXBContext]
+     * @author K
+     * @since 1.0.0
+     */
     private fun getJaxbContext(clazz: KClass<*>): JAXBContext {
         val jaxbContext = JAXBContext.newInstance(clazz.java, CollectionWrapper::class.java)
         jaxbContexts.putIfAbsent(clazz, jaxbContext)
@@ -156,6 +170,7 @@ object XmlKit {
      * @since 1.0.0
      */
     class CollectionWrapper(
+        /** 被包装的集合内容；JAXB 通过 `@XmlAnyElement` 自动按元素类型展开输出 */
         @set:XmlAnyElement
         var item: Collection<*>
     )

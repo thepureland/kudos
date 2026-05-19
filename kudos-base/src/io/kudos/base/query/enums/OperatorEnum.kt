@@ -358,6 +358,16 @@ enum class OperatorEnum(
         }
     }
 
+    /**
+     * 通用比较：对常见基础类型（Number、String、Char、Boolean）走专用路径，
+     * 其余按反射查找目标类型可接受 right 的 `compareTo` 方法。
+     *
+     * @param left 左值，null 时直接返回 null
+     * @param right 右值，null 时直接返回 null
+     * @return 标准比较结果（负数/0/正数），无法比较返回 null
+     * @author K
+     * @since 1.0.0
+     */
     private fun compareComparableValues(left: Any?, right: Any?): Int? {
         if (left == null || right == null) {
             return null
@@ -378,6 +388,16 @@ enum class OperatorEnum(
         return runCatching { compareToMethod.invoke(left, right) as? Int }.getOrNull()
     }
 
+    /**
+     * 反射查找 `leftClass` 上能接受 `rightClass` 作为参数的 `compareTo` 方法。
+     * 结果按 (leftClass, rightClass) 进缓存，避免每次比较都遍历方法表。
+     *
+     * @param leftClass 左值类型
+     * @param rightClass 右值类型
+     * @return 找到的方法；找不到返回 null
+     * @author K
+     * @since 1.0.0
+     */
     private fun getCompareToMethod(leftClass: Class<*>, rightClass: Class<*>): Method? {
         val cacheKey = MethodCacheKey(leftClass, rightClass)
         compareToMethodCache[cacheKey]?.let { return it }
@@ -390,6 +410,15 @@ enum class OperatorEnum(
         return method
     }
 
+    /**
+     * 数值比较：同类型直接走原生 compareTo，异类型统一升到 [BigDecimal] 比较以避免精度丢失。
+     *
+     * @param left 左数
+     * @param right 右数
+     * @return 标准比较结果；[BigDecimal] 解析失败时返回 null
+     * @author K
+     * @since 1.0.0
+     */
     private fun compareNumbers(left: Number, right: Number): Int? {
         return when {
             left is Int && right is Int -> left.compareTo(right)
@@ -473,9 +502,20 @@ enum class OperatorEnum(
     }
 
     companion object Companion {
+        /** 缓存 `compareTo` 方法时使用的 (leftClass, rightClass) 复合键 */
         private data class MethodCacheKey(val leftClass: Class<*>, val rightClass: Class<*>)
+        /** 反射查找到的 `compareTo` 方法缓存 */
         private val compareToMethodCache = ConcurrentHashMap<MethodCacheKey, Method>()
 
+        /**
+         * 按操作符 code 解析为枚举（大小写不敏感）。
+         *
+         * @param code 操作符 code，如 `=`、`>=`、`LIKE`
+         * @return 匹配的枚举
+         * @throws IllegalStateException 当 code 不合法时
+         * @author K
+         * @since 1.0.0
+         */
         fun enumOf(code: String): OperatorEnum {
             var operatorCode = code
             if (operatorCode.isNotBlank()) {

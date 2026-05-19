@@ -77,6 +77,18 @@ object I18nKit {
         initAll(defaultLocale)
     }
 
+    /**
+     * 按单一类型增量加载国际化资源。
+     * 调用前必须先调用 [initI18n] 完成基础初始化（语言列表、类型列表、默认语言）。
+     *
+     * 加载策略：先加载默认语言，再加载其它语言，最后用默认语言补齐缺失键。
+     *
+     * @param args 可变参数：第 1 个为 type（i18n 子目录名），第 2 个可选为文件名前缀
+     * @return 调用成功固定返回 true，主要表达“已执行”而非校验结果
+     * @throws IllegalStateException 当未先调用 [initI18n] 时
+     * @author K
+     * @since 1.0.0
+     */
     fun initI18nByType(vararg args: String): Boolean {
         if (!::supportLocales.isInitialized || !::types.isInitialized) {
             error("请先调用 initI18n 初始化 I18nKit")
@@ -145,14 +157,17 @@ object I18nKit {
     fun isSupport(locale: String): Boolean = supportLocales.contains(locale)
 
 
+    /** 日志器 */
     private val log = LogFactory.getLog(I18nKit::class)
+    /** 国际化资源根目录（classpath 下） */
     private const val DEFAULT_BASE_PATH = "i18n/"
+    /** 字典国际化的固定类型 key（对应 i18n/dicts/ 子目录） */
     const val DICT_I18N_KEY = "dicts"
 
-    //总的国际化容器: MutableMap<locale, MutableMap<type, MutableMap<module, MutableMap<i18n-key, i18n-value>>>>
+    /** 主国际化容器：locale -> type -> module -> i18nKey -> i18nValue */
     private val i18nMap = mutableMapOf<String, MutableMap<String, MutableMap<String, MutableMap<String, String>>>>()
 
-    //字典国际化容器: MutableMap<locale, MutableMap<type, MutableMap<module, MutableMap<i18n-key, i18n-value>>>>
+    /** 字典专用容器：locale -> module -> dictType -> dictKey -> dictValue */
     private val i18nMapDict =
         mutableMapOf<String, MutableMap<String, MutableMap<String, MutableMap<String, String?>>>>()
 
@@ -161,15 +176,32 @@ object I18nKit {
      */
     private var defaultLocale: String = "zh_CN"
 
+    /** 支持的 locale 集合，由 [initI18n] 注入 */
     private lateinit var supportLocales: Set<String>
 
+    /** 支持的国际化类型集合（i18n 下的子目录名），由 [initI18n] 注入 */
     private lateinit var types: Set<String>
 
+    /**
+     * 入口式初始化：当前仅触发 [initI18n] 完成普通国际化加载。
+     * 字典初始化（[initDictByLocale]）保留为可选扩展点，默认未启用。
+     *
+     * @param defaultLocale 默认语言
+     * @author K
+     * @since 1.0.0
+     */
     private fun initAll(defaultLocale: String) {
         initI18n(defaultLocale)
 //        initDictByLocale(defaultLocale)
     }
 
+    /**
+     * 遍历所有 [types]，按类型分别加载资源；types 为空时只做一次无类型加载。
+     *
+     * @param defaultLocale 默认语言；其余语言会用它补齐缺失键
+     * @author K
+     * @since 1.0.0
+     */
     private fun initI18n(defaultLocale: String) {
         val otherLocales = ArrayList(supportLocales)
         //去除默认语言
@@ -204,6 +236,17 @@ object I18nKit {
         return null
     }
 
+    /**
+     * 加载单一类型下所有语言资源的核心实现。
+     * 先按默认语言完整建立基线，再对其他语言加载并以默认语言补齐缺失键。
+     *
+     * @param type 国际化类型（i18n 子目录名）
+     * @param defaultLocale 默认语言
+     * @param otherLocales 除默认语言之外需要加载的语言列表
+     * @param prefix 资源文件名前缀过滤
+     * @author K
+     * @since 1.0.0
+     */
     private fun initI18nByType(type: String, defaultLocale: String, otherLocales: List<String>, prefix: String) {
         val resources = ClassPathScanner.scanForResources(DEFAULT_BASE_PATH + type, prefix, ".properties")
         val resourceGroup = resourceGroup(resources)
@@ -308,6 +351,16 @@ object I18nKit {
         bundle?.keySet()?.forEach { map[it] = bundle.getString(it) }
     }
 
+    /**
+     * 从资源文件名中解析出模块名与 locale。
+     * 文件名约定：`模块名_两位小写语言代码_两位大写国家代码.properties`。
+     *
+     * @param resource 类路径下的资源
+     * @return Pair(模块名, locale 字符串)
+     * @throws IllegalArgumentException 当文件名不符合命名约定时
+     * @author K
+     * @since 1.0.0
+     */
     private fun getModuleAndLocale(resource: Resource): Pair<String, String> {
         val baseName = resource.filename.substringBefore(".")
         val moduleName = baseName.substring(0, baseName.length - 6)
@@ -315,6 +368,15 @@ object I18nKit {
         return Pair(moduleName, locale)
     }
 
+    /**
+     * 获取或惰性创建指定模块的键值映射。
+     *
+     * @param moduleMap 类型层映射
+     * @param module 模块名
+     * @return 该模块对应的 key->value 映射
+     * @author K
+     * @since 1.0.0
+     */
     private fun createMapByModule(
         moduleMap: MutableMap<String, MutableMap<String, String>>, module: String
     ): MutableMap<String, String> = moduleMap.getOrPut(module) { HashMap() }
