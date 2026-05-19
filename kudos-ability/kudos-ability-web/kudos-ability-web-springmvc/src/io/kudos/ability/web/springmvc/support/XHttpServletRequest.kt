@@ -180,6 +180,12 @@ fun HttpServletRequest.getDomainPath(): String {
  * IPv6 loopback `0:0:0:0:0:0:0:1` 翻译为本机 IPv4 hostAddress。
  *
  * 私网段判定见 [isLocalA] / [isLocalB] / [isLocalC] / [isLocal0]。
+ *
+ * @param ip 可能含多个 IP（逗号分隔）的字符串
+ * @return 第一个公网 IPv4；全为私网时返回最后一个非空段；IPv6 loopback 转为本机 hostAddress
+ * @throws IllegalStateException IPv6 loopback 翻译失败时
+ * @author K
+ * @since 1.0.0
  */
 private fun getIP(ip: String): String {
     var ipAddress = ip
@@ -202,23 +208,55 @@ private fun getIP(ip: String): String {
 }
 
 // 私网段边界值预先转 Long 缓存，避免每个请求做 4 段字符串→long 计算
+/** A 类私网段起始：10.0.0.0 */
 private val LOCAL_A_START = IpKit.ipv4StringToLong("10.0.0.0")
+/** A 类私网段结束：10.255.255.255 */
 private val LOCAL_A_END = IpKit.ipv4StringToLong("10.255.255.255")
+/** B 类私网段起始：172.16.0.0 */
 private val LOCAL_B_START = IpKit.ipv4StringToLong("172.16.0.0")
+/** B 类私网段结束：172.31.255.255 */
 private val LOCAL_B_END = IpKit.ipv4StringToLong("172.31.255.255")
+/** C 类私网段起始：192.168.0.0 */
 private val LOCAL_C_START = IpKit.ipv4StringToLong("192.168.0.0")
+/** C 类私网段结束：192.168.255.255 */
 private val LOCAL_C_END = IpKit.ipv4StringToLong("192.168.255.255")
+/** 本机回环地址：127.0.0.1 */
 private val LOCAL_LOOPBACK = IpKit.ipv4StringToLong("127.0.0.1")
+/** 占位地址：0.0.0.0 */
 private val LOCAL_ZERO = IpKit.ipv4StringToLong("0.0.0.0")
 
-/** 192.168.0.0/16 C 类私网段。 */
+/**
+ * 192.168.0.0/16 C 类私网段判定。
+ * @param ip 待判定 IP 的 Long 表示
+ * @return true 表示属于 C 类私网
+ * @author K
+ * @since 1.0.0
+ */
 private fun isLocalC(ip: Long): Boolean = ip in LOCAL_C_START..LOCAL_C_END
 
-/** 172.16.0.0/12 B 类私网段。 */
+/**
+ * 172.16.0.0/12 B 类私网段判定。
+ * @param ip 待判定 IP 的 Long 表示
+ * @return true 表示属于 B 类私网
+ * @author K
+ * @since 1.0.0
+ */
 private fun isLocalB(ip: Long): Boolean = ip in LOCAL_B_START..LOCAL_B_END
 
-/** 10.0.0.0/8 A 类私网段。 */
+/**
+ * 10.0.0.0/8 A 类私网段判定。
+ * @param ip 待判定 IP 的 Long 表示
+ * @return true 表示属于 A 类私网
+ * @author K
+ * @since 1.0.0
+ */
 private fun isLocalA(ip: Long): Boolean = ip in LOCAL_A_START..LOCAL_A_END
 
-/** 本机回环 / 占位地址（127.0.0.1 或 0.0.0.0）。 */
+/**
+ * 本机回环 / 占位地址判定（127.0.0.1 或 0.0.0.0）。
+ * @param ip 待判定 IP 的 Long 表示
+ * @return true 表示属于本机或占位地址
+ * @author K
+ * @since 1.0.0
+ */
 private fun isLocal0(ip: Long): Boolean = ip == LOCAL_LOOPBACK || ip == LOCAL_ZERO

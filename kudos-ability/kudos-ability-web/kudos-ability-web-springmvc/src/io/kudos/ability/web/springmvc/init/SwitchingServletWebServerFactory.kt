@@ -64,6 +64,11 @@ class SwitchingServletWebServerFactory(
     /**
      * 构造 [TomcatServletWebServerFactory]，并放宽 Connector 的 relaxedPathChars /
      * relaxedQueryChars，避免 GET 请求带 `"<>[]\^` `{|}` 等字符时 Tomcat 直接 400。
+     *
+     * @param port 监听端口
+     * @return 配置完的 Tomcat 工厂
+     * @author K
+     * @since 1.0.0
      */
     private fun createTomcatFactory(port: Int): ServletWebServerFactory {
         val serverFactory = TomcatServletWebServerFactory(port)
@@ -78,6 +83,12 @@ class SwitchingServletWebServerFactory(
     /**
      * 反射加载 Jetty 工厂——本模块依赖里只 testImplementation 了 spring-boot-starter-jetty，
      * 直接 import 会让生产侧没有 Jetty 时编译/启动失败。改用 `Class.forName` 走运行期解析。
+     *
+     * @param port 监听端口
+     * @return 配置完的 Jetty 工厂
+     * @throws ClassNotFoundException 类路径下没有 Jetty 时（仅当配置选择 JETTY 时才会触发）
+     * @author K
+     * @since 1.0.0
      */
     private fun createJettyFactory(port: Int): ServletWebServerFactory {
         val fqcn = "org.springframework.boot.jetty.servlet.JettyServletWebServerFactory"
