@@ -48,6 +48,16 @@ fun sortablePropertyNamesForEntity(entityClass: KClass<*>): Set<String> {
     return names
 }
 
+/**
+ * 在 KProperty 上三处可能位置查找 [Sortable]：getter → property 本体 → java field。
+ *
+ * Kotlin 注解位置敏感（FIELD vs PROPERTY vs GETTER 各自独立），定义方可能写在任意位置——
+ * 全部尝试一遍取首个非 null 即可，三者语义都视为"该属性可排序"。
+ *
+ * @return 找到的注解实例；都没有时返回 null
+ * @author K
+ * @since 1.0.0
+ */
 private fun KProperty<*>.findSortable(): Sortable? =
     getter.findAnnotation<Sortable>()
         ?: findAnnotation<Sortable>()

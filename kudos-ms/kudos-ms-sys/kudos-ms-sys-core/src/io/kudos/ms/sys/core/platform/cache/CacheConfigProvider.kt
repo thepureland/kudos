@@ -27,6 +27,16 @@ open class CacheConfigProvider : ICacheConfigProvider {
 
     private var cacheConfigs: List<CacheConfig>? = null
 
+    /**
+     * 懒加载并内存缓存当前生效（`active=true`）的缓存配置列表。
+     *
+     * **不是线程安全的 double-check**——首次并发时可能多次跑 DB，但结果幂等，可接受。
+     * 设计上只在启动阶段被调用，运行期不会高频触发，所以未做 synchronized。
+     *
+     * @return 生效的 [CacheConfig] 列表（永远非 null，DB 无记录时返回空 list）
+     * @author K
+     * @since 1.0.0
+     */
     private fun getCacheConfigs(): List<CacheConfig> {
         if (cacheConfigs == null) {
             val criteria = Criteria(SysCache::active eq true)

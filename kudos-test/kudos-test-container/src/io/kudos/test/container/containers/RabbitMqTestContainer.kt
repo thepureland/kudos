@@ -51,6 +51,15 @@ object RabbitMqTestContainer {
         }
     }
 
+    /**
+     * 把运行中容器的 host/port 注册到 Spring AMQP 属性（默认 guest/guest 凭证 + 根 vhost）。
+     * `requireNotNull` 防止 Docker API 偶尔返回空字段时配置静默错位，宁可早抛错好定位。
+     *
+     * @param registry Spring 动态属性注册表
+     * @param runningContainer 运行中的容器
+     * @author K
+     * @since 1.0.0
+     */
     private fun registerProperties(registry: DynamicPropertyRegistry, runningContainer : Container) {
         val firstPort = runningContainer.ports.first()
         val host = requireNotNull(firstPort.ip) { "container port ip is null" }

@@ -50,6 +50,16 @@ object SmtpTestContainer {
         }
     }
 
+    /**
+     * SMTP 容器目前不向 Spring 注册任何属性——保留方法只为和其他 TestContainer 形态对齐，
+     * 让 [startIfNeeded] 调用模板保持统一。后续如要透传 host/port 给业务配置（如 spring.mail.host），
+     * 在此处补 `registry.add(...)` 即可。
+     *
+     * @param registry Spring 动态属性注册表（允许 null）
+     * @param runningContainer 运行中的容器
+     * @author K
+     * @since 1.0.0
+     */
     private fun registerProperties(registry: DynamicPropertyRegistry?, runningContainer: Container) {
     }
 

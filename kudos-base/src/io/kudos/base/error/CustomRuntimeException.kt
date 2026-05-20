@@ -66,12 +66,29 @@ open class CustomRuntimeException : RuntimeException {
         resolveCauseException(cause, log, message, *args)
     }
 
+    /**
+     * 基于错误码的最简异常处理：精简栈 + 用 errorCode.displayText 作消息 + ERROR 日志。
+     *
+     * @param errorCode 错误码枚举
+     * @author K
+     * @since 1.0.0
+     */
     protected fun resolveException(errorCode: IErrorCodeEnum) {
         fillCustomStackTrace(errorCode)
         handleMessageWithoutLog(errorCode.displayText)
         log.error(this)
     }
 
+    /**
+     * 错误码 + 可控堆栈深度版本：[printAllStackTrace]=true 时保留完整栈，
+     * false 时按 [MAX_STACK_LINES] 截断（参考 [fillCustomStackTrace] 的设计说明）。
+     *
+     * @param errorCode 错误码枚举
+     * @param printAllStackTrace 是否完整堆栈
+     * @param args MessageFormat 用的格式化参数
+     * @author K
+     * @since 1.0.0
+     */
     protected fun resolveException(
         errorCode: IErrorCodeEnum,
         printAllStackTrace: Boolean,
@@ -82,6 +99,14 @@ open class CustomRuntimeException : RuntimeException {
         log.error(this)
     }
 
+    /**
+     * 自定义消息版本（不走错误码）：保留完整栈 + 格式化消息 + ERROR 日志。
+     *
+     * @param message MessageFormat 模板
+     * @param args 模板参数
+     * @author K
+     * @since 1.0.0
+     */
     protected fun resolveException(message: String, vararg args: Any?) {
         fillInStackTrace()
         handleMessageWithoutLog(message, *args)
@@ -121,12 +146,32 @@ open class CustomRuntimeException : RuntimeException {
         return this
     }
 
+    /**
+     * 包装外部异常作为 cause：日志带原 cause + 自身格式化消息，便于排错时还原原始堆栈。
+     *
+     * @param cause 底层异常
+     * @param message MessageFormat 模板
+     * @param args 模板参数
+     * @author K
+     * @since 1.0.0
+     */
     protected fun resolveCauseException(cause: Throwable, message: String, vararg args: Any?) {
         fillInStackTrace()
         handleMessageWithoutLog(message, *args)
         log.error(cause, this.message)
     }
 
+    /**
+     * 包装外部异常并可选择是否打日志——`shouldLog=false` 用于"业务上能处理的可预期异常"，
+     * 避免日志噪声把真正的 ERROR 淹没。
+     *
+     * @param cause 底层异常
+     * @param shouldLog 是否真的写日志
+     * @param message MessageFormat 模板
+     * @param args 模板参数
+     * @author K
+     * @since 1.0.0
+     */
     protected fun resolveCauseException(cause: Throwable, shouldLog: Boolean, message: String, vararg args: Any?) {
         fillInStackTrace()
         handleMessageWithoutLog(message, *args)
@@ -135,6 +180,17 @@ open class CustomRuntimeException : RuntimeException {
         }
     }
 
+    /**
+     * 只填 message，不写日志——日志的事交给外层 [resolveException] / [resolveCauseException]
+     * 决定，避免重复打。
+     *
+     * 空 pattern 直接当 message（不走 MessageFormat 避免 `{0}` 之类的特殊字符意外破坏）。
+     *
+     * @param pattern MessageFormat 模板；空白时按字面 message 处理
+     * @param args 模板参数
+     * @author K
+     * @since 1.0.0
+     */
     protected fun handleMessageWithoutLog(pattern: String, vararg args: Any?) {
         if (pattern.isNotBlank()) {
             this.message = MessageFormat.format(pattern, *args)

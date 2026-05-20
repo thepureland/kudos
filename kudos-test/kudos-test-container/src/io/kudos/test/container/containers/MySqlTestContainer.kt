@@ -56,6 +56,17 @@ object MySqlTestContainer {
         }
     }
 
+    /**
+     * 把运行中容器的实际 host/port 拼成 JDBC URL 并注册到 Spring 动态属性。
+     *
+     * 走 `DynamicPropertyRegistry.add` 而不是直接 set，是为了在 SpringBoot
+     * 配置解析时再求值——避免容器还没起来就读到陈旧地址。
+     *
+     * @param registry Spring 动态属性注册表
+     * @param runningContainer docker 中运行的容器实例
+     * @author K
+     * @since 1.0.0
+     */
     private fun registerProperties(registry: DynamicPropertyRegistry, runningContainer : Container) {
         val host = runningContainer.ports.first().ip
         val port = runningContainer.ports.first().publicPort

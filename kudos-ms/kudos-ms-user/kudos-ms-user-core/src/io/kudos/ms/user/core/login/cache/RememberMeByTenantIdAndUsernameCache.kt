@@ -205,6 +205,21 @@ open class RememberMeByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<U
         )
     }
 
+    /**
+     * 拿到 `(tenantId, username)` 二元组用于缓存 key 重建。
+     *
+     * 双路径策略：
+     * 1. 优先从 `any`（通常是事件 payload / PO）反射读字段——无 DB 往返、最快
+     * 2. 缺字段时按 id 回查 DB 补；查不到记 WARN 后返回 null（调用方按 null 跳过 sync 即可）
+     *
+     * 反射前 trim 字符串：DB 里可能存在带尾空格的脏数据，避免脏数据漂入缓存 key 段。
+     *
+     * @param any 事件 payload 或 PO
+     * @param id  记录 id（兜底查 DB 用）
+     * @return `(tenantId, username)`；记录不存在返回 null
+     * @author K
+     * @since 1.0.0
+     */
     private fun resolveKeyParts(any: Any, id: String): Pair<String, String>? {
         val tenantId = (BeanKit.getProperty(any, UserLoginRememberMe::tenantId.name) as String?)?.trim()
         val username = (BeanKit.getProperty(any, UserLoginRememberMe::username.name) as String?)?.trim()

@@ -648,6 +648,20 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         vararg orders: Order
     ): List<T> = pagingSearch(criteria, T::class, pageNo, pageSize, *orders)
 
+    /**
+     * 分页查询并仅返回单列。借用 [searchPropertiesCriteria] 复用查询逻辑，再 `flatMap` 把
+     * `List<Map<String, *>>` 拍扁为列值列表。
+     *
+     * @param R 列值类型（由调用方在公开 API 处保证类型安全）
+     * @param criteria 查询条件
+     * @param returnProperty 待查的列名
+     * @param pageNo 页码（1 基）
+     * @param pageSize 每页条数
+     * @param orders 排序
+     * @return 当前页该列的值列表
+     * @author K
+     * @since 1.0.0
+     */
     @Suppress("UNCHECKED_CAST")
     private fun <R> pagingReturnProperty(
         criteria: Criteria, returnProperty: String, pageNo: Int, pageSize: Int, vararg orders: Order
@@ -888,6 +902,18 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
 
     //endregion aggregate
 
+    /**
+     * 把业务侧的 [Order] 数组翻译成 ktorm 的 `OrderByExpression` 列表，喂给 `query.orderBy(...)`。
+     *
+     * 列名 → 列对象走 [ColumnHelper.columnOf]，找不到列直接 `requireNotNull` 抛异常——
+     * 这种情况通常是属性名拼错或对应字段未在 [io.kudos.ability.data.rdb.ktorm.support.ITable] 暴露，
+     * 早抛错好定位。
+     *
+     * @param orders 排序规则数组；为空时返回空列表（query 不会追加 order by）
+     * @return ktorm 排序表达式列表
+     * @author K
+     * @since 1.0.0
+     */
     private fun sortOf(vararg orders: Order): List<OrderByExpression> {
         return if (orders.isNotEmpty()) {
             val orderExpressions = mutableListOf<OrderByExpression>()
@@ -906,6 +932,17 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         }
     }
 
+    /**
+     * 把 [sortOf] 的 [OrderByExpression] 列表再包成 `EntitySequence.sortedBy(...)` 所需的
+     * `Array<(T) -> OrderByExpression>` 形态——闭包忽略入参直接返回静态表达式（ktorm 实体序列签名要求）。
+     *
+     * 给 `EntitySequence` 路径（[searchEntityCriteria]）用，与 `Query` 路径走 [sortOf] 区分开。
+     *
+     * @param orders 排序规则
+     * @return ktorm 实体序列的排序函数数组
+     * @author K
+     * @since 1.0.0
+     */
     private fun sortBy(vararg orders: Order): Array<(T) -> OrderByExpression> {
         val orderByExps = sortOf(*orders)
         val orderExpressions = mutableListOf<(T) -> OrderByExpression>()
@@ -913,6 +950,26 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         return orderExpressions.toTypedArray()
     }
 
+    /**
+     * 把"属性名 → (操作符, 值)"映射翻译成 ktorm 的 where 条件表达式（AND / OR 复合）。
+     *
+     * 分支语义：
+     * - `IS_NULL` / `IS_NOT_NULL`：直接走列的 null 检查
+     * - 值为 null 或 ""：默认走 `column IS NULL`；`ignoreNull=true` 时把决定权交给 `whereConditionFactory`
+     * - 否则走 [SqlWhereExpressionFactory] 按操作符生成表达式
+     * - 显式 `whereConditionFactory` 可覆盖默认行为（用于子类做自定义条件）
+     *
+     * 兜底：所有属性都没产生表达式且有自定义工厂时，遍历所有列让工厂"为每一列再尝试一次"，
+     * 允许工厂基于列名给出条件（典型用途：列名后缀约定）。
+     *
+     * @param propertyMap 属性 → (操作符, 值)
+     * @param andOr 多条件之间的拼接逻辑，null 默认按 AND
+     * @param ignoreNull 是否在值为 null/"" 时跳过该列（true：让 factory 决定）
+     * @param whereConditionFactory 自定义条件生成器，null 时走默认
+     * @return 合并后的条件表达式；无任何条件时返回 null（调用方据此跳过 where）
+     * @author K
+     * @since 1.0.0
+     */
     @Suppress("UNCHECKED_CAST")
     protected fun processWhere(
         propertyMap: Map<String, Pair<OperatorEnum, *>>,
@@ -945,6 +1002,18 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         return expressions.reduce(combine)
     }
 
+    /**
+     * 走 EntitySequence 路径按"属性 = 值"map 查整实体；操作符固定为 EQ，逻辑由 [logic] 决定。
+     * 与 [searchEntityCriteria] 区别：入参是属性值 map（非 Criteria DSL），由 [processWhere] 翻译。
+     *
+     * @param propertyMap 属性 → 值；null 表示无 where
+     * @param logic AND / OR 拼接逻辑
+     * @param whereConditionFactory 自定义条件生成器
+     * @param orders 排序
+     * @return 实体列表
+     * @author K
+     * @since 1.0.0
+     */
     private fun doSearchEntity(
         propertyMap: Map<String, *>?,
         logic: AndOrEnum?,
@@ -961,6 +1030,19 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         return entitySequence.sortedBy(*sortBy(*orders)).toList()
     }
 
+    /**
+     * 走 Query 路径按"属性 = 值"map 查多列；操作符固定为 EQ，逻辑由 [logic] 决定。
+     * 与 [doSearchEntity] 区别：返回列由 [returnProperties] 指定，而非全实体字段。
+     *
+     * @param propertyMap 属性 → 值；null 表示无 where
+     * @param logic AND / OR 拼接逻辑
+     * @param returnProperties 待返回的列名集合
+     * @param whereConditionFactory 自定义条件生成器
+     * @param orders 排序
+     * @return 列名 → 列值 的 list-of-map
+     * @author K
+     * @since 1.0.0
+     */
     private fun doSearchProperties(
         propertyMap: Map<String, *>?,
         logic: AndOrEnum?,
@@ -987,6 +1069,18 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         return processResult(query, returnColumnMap)
     }
 
+    /**
+     * 把 ktorm [Query] 结果按 `returnColumnMap` 重新组装成业务类 [T] 的实例列表。
+     * 实例化委托给 [instantiateResultItem]——支持 data class / Entity / Map 多种目标类型。
+     *
+     * @param T 目标类型
+     * @param query 已构建的 ktorm 查询
+     * @param returnItemClass 目标类 KClass
+     * @param returnColumnMap 属性名 → 列 映射（由 [getColumns] 算出）
+     * @return 反序列化后的对象列表
+     * @author K
+     * @since 1.0.0
+     */
     private fun <T : Any> processResult(
         query: Query,
         returnItemClass: KClass<T>,
@@ -1001,6 +1095,16 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         return resultList
     }
 
+    /**
+     * 把 ktorm [Query] 结果直接拍成 `List<Map<String, *>>`（属性名 → 列值）。
+     * 走"只查多列、不需要业务类型"的路径，避免反射开销。
+     *
+     * @param query 已构建的 ktorm 查询
+     * @param returnColumnMap 属性名 → 列 映射
+     * @return 每行一个 map
+     * @author K
+     * @since 1.0.0
+     */
     private fun processResult(query: Query, returnColumnMap: Map<String, Column<Any>>): List<Map<String, *>> {
         val returnValues = mutableListOf<Map<String, Any?>>()
         query.forEach { row ->
@@ -1010,6 +1114,17 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         return returnValues
     }
 
+    /**
+     * `IN (...)` 查询的属性多列版本：按 `property` 的列 IN values，返回 `returnProperties` 多列结果。
+     *
+     * @param property 用于 IN 查询的列名
+     * @param values IN 候选值集合
+     * @param returnProperties 待返回的列名集合
+     * @param orders 排序
+     * @return 列名 → 列值 的 list-of-map
+     * @author K
+     * @since 1.0.0
+     */
     private fun doInSearchProperties(
         property: String, values: Collection<*>, returnProperties: Collection<String>, vararg orders: Order
     ): List<Map<String, *>> {
@@ -1023,6 +1138,20 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         return processResult(query, returnColumnMap)
     }
 
+    /**
+     * 走 ktorm EntitySequence 路径的查询：把 criteria 转为 sequence filter 后排序 + 分页。
+     * 返回完整实体 [E]，与 [searchByCriteria] 的 Query 路径互补——sequence 适合"按 entity 取出全部字段"。
+     *
+     * 分页阈值：`pageNo=0 || pageSize=0` 视为"不分页"，全量返回（drop/take 都跳过）。
+     *
+     * @param criteria 查询条件，null 表示不加 where
+     * @param pageNo 页码（1 基；0 表示不分页）
+     * @param pageSize 每页条数（0 表示不分页）
+     * @param orders 排序
+     * @return 实体列表
+     * @author K
+     * @since 1.0.0
+     */
     private fun searchEntityCriteria(
         criteria: Criteria?, pageNo: Int = 0, pageSize: Int = 0, vararg orders: Order
     ): List<E> {
@@ -1033,6 +1162,19 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         return entitySequence.toList()
     }
 
+    /**
+     * 走 ktorm Query 路径的多列投影查询：仅查 `returnProperties` 指定的列，返回 list-of-map。
+     * 性能优于 [searchEntityCriteria]——只读所需列，避免全量行 → 实体的反序列化开销。
+     *
+     * @param criteria 查询条件
+     * @param returnProperties 待查列名集合
+     * @param pageNo 页码（1 基；0 表示不分页）
+     * @param pageSize 每页条数
+     * @param orders 排序
+     * @return 列名 → 列值的 list-of-map
+     * @author K
+     * @since 1.0.0
+     */
     private fun searchPropertiesCriteria(
         criteria: Criteria, returnProperties: Collection<String>,
         pageNo: Int = 0, pageSize: Int = 0, vararg orders: Order
@@ -1046,6 +1188,21 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         return processResult(query, returnColumnMap)
     }
 
+    /**
+     * 按 [returnItemClass] 选列 + criteria 查 + 分页 + 反序列化为指定类型 list。
+     * 与 [searchPropertiesCriteria] 相比多了反序列化步骤（→ T），与 [searchEntityCriteria] 相比
+     * 列由 returnItemClass 决定（典型用法：业务 VO/DTO 与表实体不一致）。
+     *
+     * @param T 目标返回类型
+     * @param criteria 查询条件
+     * @param returnItemClass 目标类型 KClass
+     * @param pageNo 页码（1 基；0 表示不分页）
+     * @param pageSize 每页条数
+     * @param orders 排序
+     * @return 目标类型对象列表
+     * @author K
+     * @since 1.0.0
+     */
     private fun <T : Any> searchByCriteria(
         criteria: Criteria?,
         returnItemClass: KClass<T>,
@@ -1062,6 +1219,19 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         return processResult(query, returnItemClass, returnColumnMap)
     }
 
+    /**
+     * 构建 ktorm Query 的统一模板：select 指定列 → where (criteria 非空时) → orderBy → limit。
+     * 给 [searchPropertiesCriteria] / [searchByCriteria] / [searchByPayload] 复用，避免重复模板代码。
+     *
+     * @param criteria 查询条件，null 时跳过 where
+     * @param returnColumnMap 属性名 → 列
+     * @param pageNo 页码（1 基；0 表示不分页）
+     * @param pageSize 每页条数
+     * @param orders 排序
+     * @return 构建好的 ktorm [Query]
+     * @author K
+     * @since 1.0.0
+     */
     private fun prepareQuery(
         criteria: Criteria?,
         returnColumnMap: Map<String, Column<Any>>,
@@ -1087,6 +1257,21 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         return query
     }
 
+    /**
+     * 基于 [ISearchPayload] 的全功能查询入口：支持
+     * - select 列：payload.returnProperties / payload.returnEntityClass / override 三级回退
+     * - where：payload 的 property 值 + nullProperties + criterions 三段拼装（详见 [getWherePropertyMap]）
+     * - order + paging：payload 自带的 orders / pageNo / pageSize
+     *
+     * 是 ms-* 中 service 层最常用的查询入口；其它私有 search* 系列方法是它针对 Criteria 的简化版本。
+     *
+     * @param searchPayload 业务查询载荷；null 时退化为"全表查 + 默认排序"
+     * @param whereConditionFactory 业务自定义 where 生成器
+     * @param returnItemClassOverride 显式指定返回类型，优先级高于 payload.returnEntityClass
+     * @return 反序列化后的对象列表（类型由 effectiveReturnClass 决定）
+     * @author K
+     * @since 1.0.0
+     */
     private fun searchByPayload(
         searchPayload: ISearchPayload? = null,
         whereConditionFactory: ((Column<Any>, Any?) -> ColumnDeclaring<Boolean>?)? = null,
@@ -1118,6 +1303,15 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         return listOf(query, returnProps, returnColumnMap)
     }
 
+    /**
+     * 反射拿到表绑定的实体类的属性名列表；过滤掉 ktorm Entity 接口自带的 3 个 meta 属性
+     * （`entityClass` / `properties` / `changedProperties`）避免把它们当业务字段查询。
+     *
+     * @return 实体业务属性名列表
+     * @throws IllegalArgumentException 表未绑定实体类型
+     * @author K
+     * @since 1.0.0
+     */
     protected fun getEntityProperties(): List<String> {
         val tableEntityClass = requireNotNull(table().entityClass) { "表未绑定实体类型，无法提取实体属性。" }
         return tableEntityClass.memberProperties
@@ -1125,6 +1319,20 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
             .map { it.name }
     }
 
+    /**
+     * 把 [ISearchPayload] 拆成"列名 → (操作符, 值)" map，准备喂给 [processWhere]。
+     *
+     * 三段拼装：
+     * 1. payload 的 bean 属性 + 显式 operator 映射 → 默认 EQ
+     * 2. nullProperties 标记的列：仅在值未在 bean 中出现时才补 `IS_NULL`（避免与"值存在但为 null"语义冲突）
+     * 3. payload 自带的 criterions（OR/复合）追加并覆盖：业务方手写的优先级最高
+     *
+     * @param searchPayload 业务侧传入的查询载荷
+     * @param entityProperties 当前表实体的合法属性列表（用作白名单过滤）
+     * @return 列名 → (操作符, 值) 的 map
+     * @author K
+     * @since 1.0.0
+     */
     protected fun getWherePropertyMap(
         searchPayload: ISearchPayload, entityProperties: List<String>
     ): Map<String, Pair<OperatorEnum, *>> {
@@ -1160,6 +1368,17 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         return resultMap
     }
 
+    /**
+     * 按 returnType 反射出的属性 ∩ 表实体属性，生成 ktorm Column 映射，供后续 select 用。
+     *
+     * 取交集是防御性设计——returnType 可能是 VO/DTO 多含/少含字段，硬塞列会让 ktorm 报错；
+     * 交集保证查的列在表上一定存在，多余字段调用方在 mapTo 阶段会被忽略或留空。
+     *
+     * @param returnType 目标返回类型
+     * @return 属性名 → 列 的 map
+     * @author K
+     * @since 1.0.0
+     */
     protected fun getColumns(returnType: KClass<*>): Map<String, Column<Any>> {
         val entityProperties = getEntityProperties()
         val properties = returnType.memberProperties.map { it.name }
@@ -1187,6 +1406,24 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         return instantiateResultItem(destClass, values, defaultValues ?: emptyMap())
     }
 
+    /**
+     * 把 Query 行的列值反序列化成 [destClass] 实例。
+     *
+     * 三档策略：
+     * 1. **Ktorm Entity 接口型** (`destClass.isSubclassOf(Entity::class)`)：走 `Entity.create` +
+     *    [populateResultItem]——Ktorm Entity 接口 PO 无 Kotlin 构造器，必须走代理工厂
+     * 2. **传统 JavaBean / 普通 Kotlin 类**：找无参构造 + 属性回填
+     * 3. **data class / 仅主构造**：[callBy] 注入参数，缺失的必填非空字段会抛异常
+     *
+     * @param R 目标类型
+     * @param destClass 目标类
+     * @param propertyValues 列名 → 列值
+     * @param defaultValues 列名 → 默认值（如 id 用 ""）；优先级低于 propertyValues
+     * @return 反序列化好的实例
+     * @throws IllegalArgumentException 缺少必填字段时
+     * @author K
+     * @since 1.0.0
+     */
     private fun <R : Any> instantiateResultItem(
         destClass: KClass<R>,
         propertyValues: Map<String, Any?>,
@@ -1240,6 +1477,18 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         return constructor.callBy(args)
     }
 
+    /**
+     * 把列值反向写到已实例化的对象。
+     *
+     * - **Ktorm Entity**：走 `target[property] = value` 由代理维护 changed 标记，绕过代理直接反射会
+     *   破坏脏字段追踪，导致后续 `update` 漏字段
+     * - **普通对象**：走 [BeanKit.setProperty] 走 setter
+     *
+     * @param target 目标对象
+     * @param propertyValues 列名 → 列值
+     * @author K
+     * @since 1.0.0
+     */
     private fun populateResultItem(target: Any, propertyValues: Map<String, Any?>) {
         if (target is Entity<*>) {
             // Ktorm Entity 通过代理维护属性值，直接走其下标写入，避免绕过代理状态。

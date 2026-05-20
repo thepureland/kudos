@@ -58,6 +58,15 @@ object H2TestContainer {
         }
     }
 
+    /**
+     * 拼 H2 远程 in-memory JDBC URL（`DB_CLOSE_DELAY=-1` 防止最后一个连接断开就把内存库释放掉）
+     * 并注册到 Spring 动态属性；用 `add` 让配置解析时再求值，避免容器未起就读到陈旧值。
+     *
+     * @param registry Spring 动态属性注册表
+     * @param runningContainer 运行中的容器
+     * @author K
+     * @since 1.0.0
+     */
     private fun registerProperties(registry: DynamicPropertyRegistry, runningContainer : Container) {
         val host = runningContainer.ports.first().ip
         val port = runningContainer.ports.first().publicPort

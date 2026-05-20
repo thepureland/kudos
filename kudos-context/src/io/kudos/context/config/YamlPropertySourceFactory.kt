@@ -58,6 +58,16 @@ class YamlPropertySourceFactory : PropertySourceFactory {
         return requireNotNull(factory.getObject()) { "YAML properties could not be loaded" }
     }
 
+    /**
+     * 把"配置文件 sourceName → 所在 jar URI"对应关系记到 [SOURCE_MAP]，
+     * 便于后续诊断"配置来自哪个 jar"（典型用途：多模块 yml 冲突排查）。
+     * URI 获取失败时只 WARN 不抛异常——记录失败不应阻断配置加载本身。
+     *
+     * @param sourceName 配置源名（通常是 yml 路径）
+     * @param encodedRes 包装好的资源
+     * @author K
+     * @since 1.0.0
+     */
     private fun initConfigJarMap(sourceName: String?, encodedRes: EncodedResource) {
         val url = runCatching {
             // 例如 "jar:file:/…/libs/soul-foo.jar!/application.yml"

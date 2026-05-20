@@ -104,6 +104,23 @@ open class MsgEmailDispatchListener(
         }
     }
 
+    /**
+     * 邮件发送回调处理：把 SMTP 层的"成功/失败邮箱列表"翻成 userId 维度的统计 + 落库。
+     *
+     * 三段：
+     * 1. 成功 userId → `MsgReceive` 行（每条 runCatching 避免单条失败拖崩整批）
+     * 2. 失败 userId → `MsgUnreceived.recordFailures` （和 `notifyProcess` 里写的 NO_CONTACT 那批不重复）
+     * 3. 汇总 status：全失败 → FAILED_FINAL；全成功 → SUCCESS；混合 → SUCCESS_PARTIAL
+     *
+     * `unreachableCount` 计入 failCount 但**不**回写 MsgUnreceived（上游 notifyProcess 已写过）。
+     *
+     * @param event 调度事件（含 sendId / tenantId / 模板渲染结果）
+     * @param cb SMTP 层回调（成功/失败邮箱列表）
+     * @param emailToUserId 邮箱 → userId 的反查表（用于把 SMTP 邮箱粒度的成败映回业务用户）
+     * @param unreachableCount NO_CONTACT 的接收者数（上游已写 MsgUnreceived，只参与 failCount 统计）
+     * @author K
+     * @since 1.0.0
+     */
     private fun handleCallback(
         event: MsgDispatchEvent,
         cb: EmailCallBackParam,
@@ -156,6 +173,16 @@ open class MsgEmailDispatchListener(
         )
     }
 
+    /**
+     * 把模板渲染结果 + SMTP 服务器配置拼成 [EmailRequest]。
+     * `receivers` 用 toMutableSet 拷贝，避免下游 [EmailHandler] 直接持有调用方的不可变集合后再尝试修改。
+     *
+     * @param toAddresses 收件邮箱集合
+     * @param event 调度事件（含渲染后的 subject/body/tenantId）
+     * @return 可直接交给 [EmailHandler.send] 的请求对象
+     * @author K
+     * @since 1.0.0
+     */
     private fun buildRequest(toAddresses: Set<String>, event: MsgDispatchEvent): EmailRequest =
         EmailRequest().apply {
             subject = event.renderedTitle

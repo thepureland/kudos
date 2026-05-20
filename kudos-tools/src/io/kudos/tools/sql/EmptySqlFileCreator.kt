@@ -5,6 +5,13 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 
+/**
+ * 占位类：仅用于让本文件能被打成 jar（Kotlin 需要至少一个顶层声明），
+ * 配套真正逻辑在文件下方的 [main] 函数。
+ *
+ * @author K
+ * @since 1.0.0
+ */
 class EmptySqlFileCreator
 
 /**
