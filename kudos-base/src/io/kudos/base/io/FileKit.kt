@@ -94,35 +94,23 @@ object FileKit {
     fun zip(file: File, fileName: String?, password: String?): File? {
         // 临时生成 zip 文件
         val zipFile = File.createTempFile("zip_temp_", ".zip")
-        val nameInZip = fileName.takeUnless { it.isNullOrBlank() } ?: file.name
-        return try {
-            if (!password.isNullOrBlank()) {
-                // 使用 AES-256 加密
-                val zip = ZipFile(zipFile, password.toCharArray())
-                val params = ZipParameters().apply {
-                    isEncryptFiles = true
-                    encryptionMethod = EncryptionMethod.AES
-                    aesKeyStrength = AesKeyStrength.KEY_STRENGTH_256
-                    fileNameInZip = nameInZip
-                }
-                zip.addFile(file, params)
-            } else {
-                // 无加密，直接打包
-                val zip = ZipFile(zipFile)
-                val params = ZipParameters().apply {
-                    fileNameInZip = nameInZip
-                }
-                zip.addFile(file, params)
+        val nameInZip = fileName?.takeIf { it.isNotBlank() } ?: file.name
+        val encrypted = !password.isNullOrBlank()
+        val params = ZipParameters().apply {
+            fileNameInZip = nameInZip
+            if (encrypted) {
+                isEncryptFiles = true
+                encryptionMethod = EncryptionMethod.AES
+                aesKeyStrength = AesKeyStrength.KEY_STRENGTH_256
             }
+        }
+        return runCatching {
+            val zip = if (encrypted) ZipFile(zipFile, password.toCharArray()) else ZipFile(zipFile)
+            zip.addFile(file, params)
             zipFile
-        } catch (e: IOException) {
-            // 发生错误时删除临时文件
-            log.error(e)
-            zipFile.delete()
-            null
-        } catch (e: RuntimeException) {
-            // 发生错误时删除临时文件
-            log.error(e)
+        }.getOrElse {
+            // IOException / RuntimeException 之前各 catch 一次做相同事情，统一到 runCatching
+            log.error(it)
             zipFile.delete()
             null
         }

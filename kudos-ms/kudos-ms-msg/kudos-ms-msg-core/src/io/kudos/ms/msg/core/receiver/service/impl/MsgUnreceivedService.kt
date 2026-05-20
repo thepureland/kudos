@@ -33,9 +33,8 @@ open class MsgUnreceivedService(
     ): Int {
         if (receiverIds.isEmpty()) return 0
         val now = LocalDateTime.now()
-        var count = 0
         receiverIds.forEach { receiverId ->
-            val po = MsgUnreceived().apply {
+            dao.insert(MsgUnreceived().apply {
                 this.receiverId = receiverId
                 this.sendId = sendId
                 this.publishMethodDictCode = publishMethodDictCode
@@ -46,39 +45,34 @@ open class MsgUnreceivedService(
                 this.createTime = now
                 this.updateTime = null
                 this.tenantId = tenantId
-            }
-            dao.insert(po)
-            count++
+            })
         }
-        return count
+        return receiverIds.size
     }
 
     @Transactional(readOnly = true)
-    override fun findUnresolvedBySend(sendId: String): List<MsgUnreceived> {
-        val criteria = Criteria(MsgUnreceived::sendId eq sendId)
-            .addAnd(MsgUnreceived::resolved eq false)
-        return dao.search(criteria)
-    }
+    override fun findUnresolvedBySend(sendId: String): List<MsgUnreceived> = dao.search(
+        Criteria(MsgUnreceived::sendId eq sendId).addAnd(MsgUnreceived::resolved eq false)
+    )
 
-    override fun resolve(id: String): Boolean {
-        return dao.updateProperties(
-            id,
-            mapOf(
-                MsgUnreceived::resolved.name to true,
-                MsgUnreceived::updateTime.name to LocalDateTime.now(),
-            )
-        )
-    }
+    override fun resolve(id: String): Boolean = dao.updateProperties(
+        id,
+        mapOf(
+            MsgUnreceived::resolved.name to true,
+            MsgUnreceived::updateTime.name to LocalDateTime.now(),
+        ),
+    )
 
     override fun bumpRetry(id: String): Boolean {
         val current = dao.get(id) ?: return false
+        val now = LocalDateTime.now()
         return dao.updateProperties(
             id,
             mapOf(
                 MsgUnreceived::retryCount.name to (current.retryCount + 1),
-                MsgUnreceived::lastRetryTime.name to LocalDateTime.now(),
-                MsgUnreceived::updateTime.name to LocalDateTime.now(),
-            )
+                MsgUnreceived::lastRetryTime.name to now,
+                MsgUnreceived::updateTime.name to now,
+            ),
         )
     }
 }
