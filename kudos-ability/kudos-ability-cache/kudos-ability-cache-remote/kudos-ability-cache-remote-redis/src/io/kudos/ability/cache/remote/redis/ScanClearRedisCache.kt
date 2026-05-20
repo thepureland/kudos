@@ -7,6 +7,19 @@ import org.springframework.data.redis.cache.RedisCacheWriter
 import org.springframework.data.redis.core.RedisTemplate
 
 /**
+ * 从 Spring 容器中取一个可用的 [RedisTemplate]，给 [ScanClearRedisCache] 和
+ * [RedisKeyValueCacheManager.evictByPattern] 共用——两者都需要绕过 Spring `cacheWriter.clear`
+ * 不删 key 的 bug，直接走 `keys + delete`。优先取 `stringRedisTemplate`，其次任意一个。
+ *
+ * 返回 null 仅当容器里没有任何 [RedisTemplate] bean（纯单测 mock 等极少场景）。
+ */
+@Suppress("UNCHECKED_CAST")
+internal fun findRedisTemplate(): RedisTemplate<String, Any>? =
+    SpringKit.getBeansOfType<RedisTemplate<*, *>>()
+        .let { it["stringRedisTemplate"] ?: it.values.firstOrNull() }
+        as? RedisTemplate<String, Any>
+
+/**
  * [RedisCache] 的 fix 子类：override [clear] 用 `RedisTemplate.keys(pattern) + delete(keys)` 直删，
  * 绕开 Spring Boot 4.0.6 自带 `RedisCache.clear()` 的 bug。
  *
@@ -48,7 +61,7 @@ internal class ScanClearRedisCache(
 ) : RedisCache(name, cacheWriter, cacheConfiguration) {
 
     override fun clear() {
-        val template = redisTemplate() ?: run {
+        val template = findRedisTemplate() ?: run {
             // 容器里没有 RedisTemplate（极少见，比如纯单元测试 mock）—— fallback 到 Spring 默认逻辑
             super.clear()
             return
@@ -58,12 +71,5 @@ internal class ScanClearRedisCache(
         if (matched.isNotEmpty()) {
             template.delete(matched)
         }
-    }
-
-    private fun redisTemplate(): RedisTemplate<String, Any>? {
-        @Suppress("UNCHECKED_CAST")
-        return SpringKit.getBeansOfType<RedisTemplate<*, *>>()
-            .let { it["stringRedisTemplate"] ?: it.values.firstOrNull() }
-            as? RedisTemplate<String, Any>
     }
 }
