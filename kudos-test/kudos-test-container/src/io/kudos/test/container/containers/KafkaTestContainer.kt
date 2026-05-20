@@ -47,6 +47,14 @@ object KafkaTestContainer {
         }
     }
 
+    /**
+     * 把容器实际 host:port 拼成 Kafka broker 地址，注册到 Spring Cloud Stream Kafka binder 配置。
+     *
+     * @param registry Spring 动态属性注册表
+     * @param runningContainer 运行中的容器
+     * @author K
+     * @since 1.0.0
+     */
     private fun registerProperties(registry: DynamicPropertyRegistry, runningContainer : Container) {
         val host = runningContainer.ports.first().ip
         val port = runningContainer.ports.first().publicPort

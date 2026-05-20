@@ -62,6 +62,19 @@ object DockerKit {
         val hints: List<String> = emptyList()
     )
 
+    /**
+     * 按当前操作系统嗅探 Docker 安装情况。
+     *
+     * 判定规则按平台差异：
+     * - **macOS/Windows**：CLI 可用 **或** Desktop 应用存在即视为已安装（Desktop 常被 IDE 启动）
+     * - **Linux**：仅看 CLI 是否能 exec（Linux 无 Desktop 概念，dockerd 是后台服务）
+     *
+     * 同时按平台给出 `hints` 修复建议，让 [buildNotInstalledMessage] 直接拼出运维 actionable 的错误。
+     *
+     * @return [InstallInfo] 含 installed / cliAvailable / desktopAppFound / hints
+     * @author K
+     * @since 1.0.0
+     */
     private fun detectDockerInstall(): InstallInfo {
         val os = SystemKit.currentOs()
 
@@ -103,6 +116,15 @@ object DockerKit {
         )
     }
 
+    /**
+     * 把 [detectDockerInstall] 的结果拼成给运维/开发者看的提示消息：
+     * 包含检测细节 + 平台修复 hints + IDE PATH 提醒（最常踩坑：终端能跑测试不行）。
+     *
+     * @param info 安装检测结果
+     * @return 多行可读消息
+     * @author K
+     * @since 1.0.0
+     */
     private fun buildNotInstalledMessage(info: InstallInfo): String {
         return buildString {
             appendLine("未检测到 Docker 已安装，因此无法自动启动。")
@@ -119,11 +141,26 @@ object DockerKit {
 
     // ---------- 运行检测 ----------
 
+    /**
+     * 用 `docker info` 探测 daemon 是否真的就绪。
+     * `--version` 只验 CLI 二进制存在，而 `info` 会真的连 daemon，能识别"CLI 装了但 dockerd 没起来"的情况。
+     *
+     * @return true 表示 daemon 可用
+     * @author K
+     * @since 1.0.0
+     */
     private fun isDockerRunning(): Boolean {
         val r = runCommand(listOf("docker", "info"), timeoutMillis = 12_000)
         return r.exitCode == 0
     }
 
+    /**
+     * 探测 docker CLI 是否在 PATH 中可用（不验 daemon）。
+     *
+     * @return true 表示 `docker --version` 能执行成功
+     * @author K
+     * @since 1.0.0
+     */
     private fun isDockerCliAvailable(): Boolean {
         val r = runCommand(listOf("docker", "--version"), timeoutMillis = 6_000)
         return r.exitCode == 0
@@ -131,6 +168,14 @@ object DockerKit {
 
     // ---------- 启动逻辑 ----------
 
+    /**
+     * 按当前 OS dispatch 到对应的启动实现：mac/windows/linux 各走各的路径，其他 OS 不支持。
+     *
+     * @param install 检测信息，传给子例程做"Desktop 路径"等判定
+     * @throws IllegalStateException 当前 OS 不在支持列表中
+     * @author K
+     * @since 1.0.0
+     */
     private fun startDockerForCurrentOs(install: InstallInfo) {
         when (SystemKit.currentOs()) {
             OsEnum.MAC -> startDockerOnMac(install)
@@ -140,6 +185,14 @@ object DockerKit {
         }
     }
 
+    /**
+     * macOS：用 `open -g -a Docker` 后台启动 Docker.app；少数机器 bundle 名是 "Docker Desktop"，做一次兜底。
+     * `-g` 避免抢前台焦点，跑 CI 时体验更好。
+     *
+     * @param install 检测信息（虽然分支差异不大，保留参数以备后续扩展）
+     * @author K
+     * @since 1.0.0
+     */
     private fun startDockerOnMac(install: InstallInfo) {
         // 如果 Desktop 存在，直接 open
         if (install.desktopAppFound) {
@@ -155,6 +208,19 @@ object DockerKit {
         }
     }
 
+    /**
+     * Windows：两段式启动
+     * 1. `sc start com.docker.service` 尝试启动服务（Docker Desktop 安装时注册的）
+     * 2. 服务不在/不可启则用 PowerShell `Start-Process` 直接拉 Desktop exe
+     *
+     * exe 路径里可能含空格，所以走 PowerShell + `-FilePath` 比 cmd.exe 更稳；
+     * 单引号转义 `'` → `''` 防止用户名带单引号时命令解析失败。
+     *
+     * @param install 检测信息（用于复用 [windowsDockerDesktopExeCandidates]）
+     * @throws IllegalStateException 服务起不来又找不到 exe 时
+     * @author K
+     * @since 1.0.0
+     */
     private fun startDockerOnWindows(install: InstallInfo) {
         // 1) 先尝试启动服务（若存在）
         val sc = runCommand(listOf("sc", "start", "com.docker.service"), timeoutMillis = 15_000)
@@ -178,6 +244,15 @@ object DockerKit {
         }
     }
 
+    /**
+     * Linux：三级降级启动
+     * 1. `systemctl start docker`（systemd 主流发行版）
+     * 2. `service docker start`（SysV / 老发行版）
+     * 3. 直接 nohup 启 dockerd（极端兜底，把日志重定向到 /tmp 便于事后排错）
+     *
+     * @author K
+     * @since 1.0.0
+     */
     private fun startDockerOnLinux() {
         // Linux 主要是启动服务
         val systemctl = runCommand(listOf("systemctl", "start", "docker"), timeoutMillis = 15_000)
@@ -190,6 +265,13 @@ object DockerKit {
         runCommand(listOf("sh", "-lc", "nohup dockerd >/tmp/dockerd.log 2>&1 &"), timeoutMillis = 8_000)
     }
 
+    /**
+     * Windows 下 Docker Desktop 常见安装路径候选；64-bit / 32-bit Program Files 都覆盖。
+     *
+     * @return 完整路径字符串列表（按"更可能存在"优先排序）
+     * @author K
+     * @since 1.0.0
+     */
     private fun windowsDockerDesktopExeCandidates(): List<String> = listOf(
         """C:\Program Files\Docker\Docker\Docker Desktop.exe""",
         """C:\Program Files (x86)\Docker\Docker\Docker Desktop.exe"""
@@ -197,6 +279,20 @@ object DockerKit {
 
     private data class CmdResult(val exitCode: Int, val stdout: String, val stderr: String)
 
+    /**
+     * 通用外部命令执行：异步收 stdout/stderr，带超时强杀，捕获所有异常。
+     *
+     * 关键设计：
+     * - 用 daemon 线程读流，避免主线程被 4K pipe buffer 阻塞
+     * - 超时后 `destroyForcibly` 防止僵尸子进程
+     * - 异常路径返回 exitCode=127（约定"命令不存在"），便于上游统一判定
+     *
+     * @param cmd 命令 + 参数列表
+     * @param timeoutMillis 超时（毫秒）
+     * @return 结果含 exitCode / stdout / stderr
+     * @author K
+     * @since 1.0.0
+     */
     private fun runCommand(cmd: List<String>, timeoutMillis: Long): CmdResult {
         return try {
             val p = ProcessBuilder(cmd).start()
