@@ -149,31 +149,25 @@ open class RedisCacheMessageHandler(
      * @param message 缓存操作消息对象，包含缓存名称、key、节点ID等信息
      */
     override fun receiveMessage(message: CacheMessage) {
+        val cacheName = message.cacheName!!
         // 只有非当前节点的清理才需要删除本地缓存，本节点自己已经删除过了
         if (message.nodeId != nodeId) {
             if (message.cacheType == "hash") {
-                val sync = SpringKit.getBeansOfType<IHashCacheSync>().values.firstOrNull()
-                sync?.let {
+                SpringKit.getBeansOfType<IHashCacheSync>().values.firstOrNull()?.let { sync ->
                     when (val k = message.key) {
-                        null -> it.clearLocal(message.cacheName!!)
+                        null -> sync.clearLocal(cacheName)
                         // 批量操作打包成一条消息携带 id 列表（saveBatch 等场景），避免 N+1 publish 风暴。
-                        is Collection<*> -> k.forEach { id ->
-                            if (id != null) it.evictLocal(message.cacheName!!, id)
-                        }
-                        else -> it.evictLocal(message.cacheName!!, k)
+                        is Collection<*> -> k.filterNotNull().forEach { sync.evictLocal(cacheName, it) }
+                        else -> sync.evictLocal(cacheName, k)
                     }
                 }
             } else {
-                mixCacheManager.clearLocal(message.cacheName!!, message.key)
+                mixCacheManager.clearLocal(cacheName, message.key)
             }
         }
-        val realCacheKey = versionConfig.getRealCacheName(message.cacheName!!)
-        val cleanListeners = CacheCleanRegister.getCleanListener(realCacheKey)
-        if (!cleanListeners.isNullOrEmpty()) {
-            for (cleanListener in cleanListeners) {
-                cleanListener.cleanCache(realCacheKey, message.key)
-            }
-        }
+        val realCacheKey = versionConfig.getRealCacheName(cacheName)
+        CacheCleanRegister.getCleanListener(realCacheKey)
+            ?.forEach { it.cleanCache(realCacheKey, message.key) }
     }
 
     val redisTemplate: RedisTemplate<*, *>
