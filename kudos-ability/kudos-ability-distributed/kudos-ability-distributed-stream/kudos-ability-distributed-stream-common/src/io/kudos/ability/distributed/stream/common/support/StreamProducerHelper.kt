@@ -136,17 +136,15 @@ class StreamProducerHelper {
         }
     }
 
+    @Suppress("UNCHECKED_CAST")
     private fun <T> createMessage(bindingName: String, data: T): Message<StreamMessageVo<T>> {
         val destination = requireNotNull(properties.bindings[bindingName]) { "未配置 stream binding: $bindingName" }.destination
-        val header = StreamHeader.initHeader(destination)
-        val headerMap = BeanKit.extract(header)
-        val map = mutableMapOf<String, Any>()
-        @Suppress("UNCHECKED_CAST")
-        map.putAll(headerMap as Map<out String, Any>)
-        map[StreamHeader.SCST_BIND_NAME] = bindingName
-        val headers = org.springframework.messaging.MessageHeaders(map)
-        val streamMessageVo = StreamMessageVo(data)
-        return GenericMessage<StreamMessageVo<T>>(streamMessageVo, headers)
+        val headerMap = BeanKit.extract(StreamHeader.initHeader(destination))
+        val map = mutableMapOf<String, Any>().apply {
+            putAll(headerMap as Map<out String, Any>)
+            put(StreamHeader.SCST_BIND_NAME, bindingName)
+        }
+        return GenericMessage(StreamMessageVo(data), org.springframework.messaging.MessageHeaders(map))
     }
 
     private val LOG = LogFactory.getLog(this::class)

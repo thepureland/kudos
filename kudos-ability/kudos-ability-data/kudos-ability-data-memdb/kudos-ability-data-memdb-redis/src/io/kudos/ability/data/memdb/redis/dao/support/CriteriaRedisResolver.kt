@@ -95,78 +95,55 @@ internal class CriteriaRedisResolver(
         else -> SCORE_MIN
     }
 
-    private fun idsFromSet(property: String, operator: OperatorEnum, value: Any): Set<String>? {
-        when (operator) {
-            OperatorEnum.EQ, OperatorEnum.IEQ -> {
-                val key = setKey(property, value.toString())
-                return redisTemplate.opsForSet().members(key)?.mapNotNull { it.toString() }?.toSet() ?: emptySet()
+    private fun idsFromSet(property: String, operator: OperatorEnum, value: Any): Set<String>? = when (operator) {
+        OperatorEnum.EQ, OperatorEnum.IEQ -> setMembers(setKey(property, value.toString()))
+        OperatorEnum.IN -> {
+            val values = when (value) {
+                is Collection<*> -> value.map { it.toString() }
+                is Array<*> -> value.map { it.toString() }
+                is String -> value.split(",").map { it.trim() }
+                else -> listOf(value.toString())
             }
-            OperatorEnum.IN -> {
-                val values = when (value) {
-                    is Collection<*> -> value.map { it.toString() }
-                    is Array<*> -> value.map { it.toString() }
-                    is String -> value.split(",").map { it.trim() }
-                    else -> listOf(value.toString())
-                }
-                if (values.isEmpty()) return emptySet()
+            if (values.isEmpty()) emptySet()
+            else {
                 val keys = values.map { setKey(property, it) }
-                val union = redisTemplate.opsForSet().union(keys[0], keys.drop(1))
-                return union?.mapNotNull { it.toString() }?.toSet() ?: emptySet()
+                redisTemplate.opsForSet().union(keys[0], keys.drop(1))
+                    ?.mapNotNullTo(mutableSetOf()) { it.toString() } ?: emptySet()
             }
-            else -> return null
         }
+        else -> null
     }
 
     private fun idsFromZSet(property: String, operator: OperatorEnum, value: Any): Set<String>? {
         val key = zsetKey(property)
-        when (operator) {
-            OperatorEnum.EQ -> {
-                val v = toDouble(value)
-                val ids = redisTemplate.opsForZSet().rangeByScore(key, v, v)
-                return ids?.mapNotNull { it?.toString() }?.toSet() ?: emptySet()
-            }
+        return when (operator) {
+            OperatorEnum.EQ -> toDouble(value).let { zsetRange(key, it, it) }
             OperatorEnum.IN -> {
                 val values = when (value) {
                     is Collection<*> -> value.mapNotNull { it?.let(::toDouble) }
                     is Array<*> -> value.mapNotNull { it?.let(::toDouble) }
                     else -> listOf(toDouble(value))
                 }
-                var union = emptySet<String>()
-                for (v in values) {
-                    val ids = redisTemplate.opsForZSet().rangeByScore(key, v, v)?.mapNotNull { it?.toString() }?.toSet() ?: emptySet()
-                    union = union.union(ids)
-                }
-                return union
+                values.fold(emptySet()) { acc, v -> acc.union(zsetRange(key, v, v)) }
             }
-            OperatorEnum.GT -> {
-                val v = toDouble(value)
-                return redisTemplate.opsForZSet().rangeByScore(key, v + SCORE_EPSILON, SCORE_MAX)?.mapNotNull { it?.toString() }?.toSet() ?: emptySet()
-            }
-            OperatorEnum.GE -> {
-                val v = toDouble(value)
-                return redisTemplate.opsForZSet().rangeByScore(key, v, SCORE_MAX)?.mapNotNull { it?.toString() }?.toSet() ?: emptySet()
-            }
-            OperatorEnum.LT -> {
-                val v = toDouble(value)
-                return redisTemplate.opsForZSet().rangeByScore(key, SCORE_MIN, v - SCORE_EPSILON)?.mapNotNull { it?.toString() }?.toSet() ?: emptySet()
-            }
-            OperatorEnum.LE -> {
-                val v = toDouble(value)
-                return redisTemplate.opsForZSet().rangeByScore(key, SCORE_MIN, v)?.mapNotNull { it?.toString() }?.toSet() ?: emptySet()
-            }
-            OperatorEnum.BETWEEN -> {
-                val (min, max) = rangeMinMax(value) ?: return emptySet()
-                return redisTemplate.opsForZSet().rangeByScore(key, min, max)?.mapNotNull { it?.toString() }?.toSet() ?: emptySet()
-            }
-            OperatorEnum.NOT_BETWEEN -> {
-                val (min, max) = rangeMinMax(value) ?: return emptySet()
-                val below = redisTemplate.opsForZSet().rangeByScore(key, SCORE_MIN, min - SCORE_EPSILON)?.mapNotNull { it?.toString() }?.toSet() ?: emptySet()
-                val above = redisTemplate.opsForZSet().rangeByScore(key, max + SCORE_EPSILON, SCORE_MAX)?.mapNotNull { it?.toString() }?.toSet() ?: emptySet()
-                return below.union(above)
-            }
-            else -> return null
+            OperatorEnum.GT -> zsetRange(key, toDouble(value) + SCORE_EPSILON, SCORE_MAX)
+            OperatorEnum.GE -> zsetRange(key, toDouble(value), SCORE_MAX)
+            OperatorEnum.LT -> zsetRange(key, SCORE_MIN, toDouble(value) - SCORE_EPSILON)
+            OperatorEnum.LE -> zsetRange(key, SCORE_MIN, toDouble(value))
+            OperatorEnum.BETWEEN -> rangeMinMax(value)?.let { (min, max) -> zsetRange(key, min, max) } ?: emptySet()
+            OperatorEnum.NOT_BETWEEN -> rangeMinMax(value)?.let { (min, max) ->
+                zsetRange(key, SCORE_MIN, min - SCORE_EPSILON).union(zsetRange(key, max + SCORE_EPSILON, SCORE_MAX))
+            } ?: emptySet()
+            else -> null
         }
     }
+
+    private fun setMembers(key: String): Set<String> =
+        redisTemplate.opsForSet().members(key)?.mapNotNullTo(mutableSetOf()) { it.toString() } ?: emptySet()
+
+    private fun zsetRange(key: String, min: Double, max: Double): Set<String> =
+        redisTemplate.opsForZSet().rangeByScore(key, min, max)
+            ?.mapNotNullTo(mutableSetOf()) { it?.toString() } ?: emptySet()
 
     private fun setKey(property: String, value: String): String =
         CacheKey.getCacheKey(indexKeyPrefix, "set", property, value)

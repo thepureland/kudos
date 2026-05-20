@@ -30,10 +30,9 @@ object RdbKit {
      * @author K
      * @since 1.0.0
      */
-    fun getDataSource(): DataSource {
-        val dataSource = KudosContextHolder.get().otherInfos?.get(KudosContext.OTHER_INFO_KEY_DATA_SOURCE) as DataSource?
-        return dataSource ?: SpringKit.getBean("dataSource") as DataSource
-    }
+    fun getDataSource(): DataSource =
+        (KudosContextHolder.get().otherInfos?.get(KudosContext.OTHER_INFO_KEY_DATA_SOURCE) as DataSource?)
+            ?: (SpringKit.getBean("dataSource") as DataSource)
 
     /**
      * 取得当前上下文的数据库对象
@@ -71,15 +70,9 @@ object RdbKit {
      * @author K
      * @since 1.0.0
      */
-    fun testConnection(conn: Connection? = null): Boolean {
-        return if (conn != null) {
-            _testConnection(conn)
-        } else {
-            getDataSource().connection.use {
-                _testConnection(it)
-            }
-        }
-    }
+    fun testConnection(conn: Connection? = null): Boolean =
+        if (conn != null) _testConnection(conn)
+        else getDataSource().connection.use { _testConnection(it) }
 
     /**
      * 内部实现：按连接元数据推断 RDB 类型 → 选对应的 test SQL → execute。statement
@@ -101,11 +94,8 @@ object RdbKit {
      * @since 1.0.0
      */
     fun determinRdbTypeByUrl(url: String): RdbTypeEnum {
-        val urlStr = url.deleteWhitespace().lowercase()
-        if (urlStr.contains(":sqlserver:"))
-            return RdbTypeEnum.SQLSERVER
-        val type = url.substringBetween("jdbc:", ":")
-        return RdbTypeEnum.valueOf(type.uppercase())
+        if (":sqlserver:" in url.deleteWhitespace().lowercase()) return RdbTypeEnum.SQLSERVER
+        return RdbTypeEnum.valueOf(url.substringBetween("jdbc:", ":").uppercase())
     }
 
     /**
@@ -138,13 +128,8 @@ object RdbKit {
      * @author K
      * @since 1.0.0
      */
-    fun determineRdbTypeByDataSource(dataSource: DataSource?): RdbTypeEnum {
-        val ds = dataSource ?: getDataSource()
-        return ds.connection.use { conn ->
-            val url = conn.metaData.url
-            determinRdbTypeByUrl(url)
-        }
-    }
+    fun determineRdbTypeByDataSource(dataSource: DataSource?): RdbTypeEnum =
+        (dataSource ?: getDataSource()).connection.use { determinRdbTypeByUrl(it.metaData.url) }
 
     /**
      * 根据关系型数据库类型得到连接测试sql语句
@@ -169,11 +154,9 @@ object RdbKit {
      * @author K
      * @since 1.0.0
      */
-    fun getOrderSql(vararg orders: Order): String {
-        val parts = orders.mapNotNull { o ->
-            if (o.property.isNotBlank() && !o.property.contains("'")) "${o.property} ${o.direction.name}" else null
-        }
-        return if (parts.isEmpty()) "" else "ORDER BY ${parts.joinToString(",")}"
-    }
+    fun getOrderSql(vararg orders: Order): String =
+        orders.filter { it.property.isNotBlank() && '\'' !in it.property }
+            .joinToString(",", prefix = "ORDER BY ") { "${it.property} ${it.direction.name}" }
+            .takeIf { it != "ORDER BY " } ?: ""
 
 }

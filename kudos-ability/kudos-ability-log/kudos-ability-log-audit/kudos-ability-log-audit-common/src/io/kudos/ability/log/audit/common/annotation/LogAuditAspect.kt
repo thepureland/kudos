@@ -84,20 +84,14 @@ class LogAuditAspect {
             val audit = signature.method.getAnnotation(Audit::class.java)
             val model = resolveModelArg(joinPoint, audit) ?: return
             // 失败操作：把 exception 类名 + message 拼到 BaseLog.description，便于下游区分
-            if (error != null) {
-                val tag = "[FAILED:${error::class.java.simpleName}:${error.message ?: ""}] "
-                logVo.logs.forEach { base ->
-                    base.description = tag + (base.description ?: "")
-                }
+            error?.let { ex ->
+                val tag = "[FAILED:${ex::class.java.simpleName}:${ex.message.orEmpty()}] "
+                logVo.logs.forEach { it.description = tag + it.description.orEmpty() }
             }
-            try {
-                val modelAudit = AuditLogTool.createSysAuditLogModel(logVo, JsonKit.toJson<Any>(model))
-                if (auditService != null && modelAudit != null) {
-                    auditService.submit(modelAudit)
-                }
-            } catch (e: Exception) {
-                LOG.error(e, "审计日志组件,拦截器异常!")
-            }
+            runCatching {
+                AuditLogTool.createSysAuditLogModel(logVo, JsonKit.toJson<Any>(model))
+                    ?.let { auditService?.submit(it) }
+            }.onFailure { LOG.error(it, "审计日志组件,拦截器异常!") }
         } finally {
             LogAuditContext.clear()
         }

@@ -46,16 +46,11 @@ class CodeGenerator(
      * @since 1.0.0
      */
     private fun persistence(): Boolean {
-        var success = CodeGenObjectService.saveOrUpdate()
-        if (success) {
-            success = io.kudos.tools.codegen.service.CodeGenColumnService.saveColumns(
-                CodeGeneratorContext.tableName, CodeGeneratorContext.columns)
-            if (success) {
-                val filenames = genFiles.filter { it.getGenerate() }.map { it.getFilename() }
-                success = CodeGenFileService.save(filenames)
-            }
-        }
-        return success
+        if (!CodeGenObjectService.saveOrUpdate()) return false
+        if (!io.kudos.tools.codegen.service.CodeGenColumnService.saveColumns(
+                CodeGeneratorContext.tableName, CodeGeneratorContext.columns)) return false
+        val filenames = genFiles.filter { it.getGenerate() }.map { it.getFilename() }
+        return CodeGenFileService.save(filenames)
     }
 
     /**
@@ -76,19 +71,15 @@ class CodeGenerator(
         val template = TemplateReader().read(genFile.templateFileRelativePath)
         val absoluteOutputFilePath =
             File("${CodeGeneratorContext.config.getCodeLoaction()}/${genFile.finalFileRelativePath}")
-        val exists = absoluteOutputFilePath.exists()
-        var codeMerger: CodeMerger? = null
-        if (exists) {
-            codeMerger = CodeMerger(absoluteOutputFilePath)
+        // 已存在的目标文件先抓取用户自填内容（用于稍后合并）；不存在则 touch 出空文件
+        val codeMerger = if (absoluteOutputFilePath.exists()) {
+            CodeMerger(absoluteOutputFilePath)
         } else {
             FileKit.touch(absoluteOutputFilePath)
+            null
         }
         FreemarkerKit.processTemplate(template, templateModel, absoluteOutputFilePath, "UTF-8")
-        if (codeMerger != null) {
-            codeMerger.merge()
-        } else {
-            PrivateContentEraser.erase(absoluteOutputFilePath)
-        }
+        codeMerger?.merge() ?: PrivateContentEraser.erase(absoluteOutputFilePath)
     }
 
 }

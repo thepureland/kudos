@@ -64,15 +64,9 @@ open class SysAccessRuleIpService(
      */
     @Transactional(readOnly = true)
     override fun checkIpAccess(ip: BigDecimal, systemCode: String, tenantId: String?): Boolean {
-        val ipRules = getIpsBySystemAndTenant(systemCode, tenantId)
         val now = java.time.LocalDateTime.now()
-
-        return ipRules.any { rule ->
-            val expirationTime = rule.expirationTime
-            if (expirationTime != null && expirationTime.isBefore(now)) {
-                return@any false
-            }
-            ip >= rule.ipStart && ip <= rule.ipEnd
+        return getIpsBySystemAndTenant(systemCode, tenantId).any { rule ->
+            rule.expirationTime?.isBefore(now) != true && ip in rule.ipStart..rule.ipEnd
         }
     }
 

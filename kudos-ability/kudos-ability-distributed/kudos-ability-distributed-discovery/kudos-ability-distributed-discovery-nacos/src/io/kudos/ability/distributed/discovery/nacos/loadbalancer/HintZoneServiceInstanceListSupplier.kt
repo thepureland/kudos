@@ -38,30 +38,18 @@ class HintZoneServiceInstanceListSupplier(
 
     private val properties = checkNotNull(factory.getProperties(serviceId)) { "load balancer properties for $serviceId" }
 
-    override fun get(): Flux<MutableList<ServiceInstance>> {
-        return delegate.get()
-    }
+    override fun get(): Flux<MutableList<ServiceInstance>> = delegate.get()
 
     override fun get(request: Request<*>): Flux<MutableList<ServiceInstance>> =
         delegate.get(request).map { instances ->
             filteredByHint(instances, getHint(request.getContext()), zoneConfig.zone, zoneMetadataKey)
         }
 
-    private fun getHint(requestContext: Any?): String? {
-        if (requestContext == null) {
-            return null
-        }
-        var hint: String? = null
-        if (requestContext is RequestDataContext) {
-            hint = getHintFromHeader(requestContext)
-        }
-        return hint
-    }
+    private fun getHint(requestContext: Any?): String? =
+        (requestContext as? RequestDataContext)?.let(::getHintFromHeader)
 
-    private fun getHintFromHeader(context: RequestDataContext): String? {
-        val headers = context.clientRequest?.headers
-        return headers?.getFirst(properties.hintHeaderName)
-    }
+    private fun getHintFromHeader(context: RequestDataContext): String? =
+        context.clientRequest?.headers?.getFirst(properties.hintHeaderName)
 
     companion object {
         /** 与 spring-cloud-loadbalancer 内部 `ZONE` 常量一致的默认字段名。 */
@@ -82,33 +70,19 @@ class HintZoneServiceInstanceListSupplier(
             zoneMetadataKey: String,
         ): MutableList<ServiceInstance> {
             if (!StringUtils.hasText(hint)) {
-                if (defaultZone.isNullOrBlank()) {
-                    return instances
-                }
-
-                val filteredInstances = mutableListOf<ServiceInstance>()
-                for (serviceInstance in instances) {
-                    val serviceZone = serviceInstance.metadata?.getOrDefault(zoneMetadataKey, "")
-                    if (serviceZone.isNullOrBlank() || serviceZone == defaultZone) {
-                        // 只取服务实际发布时,未配置zone || 与默认配置一致
-                        filteredInstances.add(serviceInstance)
-                    }
-                }
-                return filteredInstances
-            }
-
-            val filteredInstances = mutableListOf<ServiceInstance>()
-            for (serviceInstance in instances) {
-                if (serviceInstance.metadata?.getOrDefault(zoneMetadataKey, "") == hint) {
-                    filteredInstances.add(serviceInstance)
+                if (defaultZone.isNullOrBlank()) return instances
+                // 只取服务实际发布时未配置 zone 或与默认配置一致的实例
+                return instances.filterTo(mutableListOf()) { instance ->
+                    val zone = instance.metadata?.getOrDefault(zoneMetadataKey, "")
+                    zone.isNullOrBlank() || zone == defaultZone
                 }
             }
-            if (filteredInstances.isNotEmpty()) {
-                return filteredInstances
-            }
 
-            // If instances cannot be found based on hint, return all instances for given service id.
-            return instances
+            val matched = instances.filterTo(mutableListOf()) {
+                it.metadata?.getOrDefault(zoneMetadataKey, "") == hint
+            }
+            // 找不到匹配 hint 的实例时降级返回全部，避免业务请求被完全拒绝
+            return if (matched.isNotEmpty()) matched else instances
         }
     }
 }

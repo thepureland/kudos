@@ -23,9 +23,8 @@ open class UserAccountThirdService(
 
 
     @Transactional(readOnly = true)
-    override fun getByUserAccountId(userId: String): List<UserAccountThird> {
-        return dao.searchByUserId(userId)
-    }
+    override fun getByUserAccountId(userId: String): List<UserAccountThird> =
+        dao.searchByUserId(userId)
 
     @Transactional(readOnly = true)
     override fun getByProviderSubject(
@@ -33,9 +32,8 @@ open class UserAccountThirdService(
         accountProviderDictCode: String,
         accountProviderIssuer: String?,
         subject: String
-    ): UserAccountThird? {
-        return dao.fetchByProviderSubject(tenantId, accountProviderDictCode, accountProviderIssuer, subject)
-    }
+    ): UserAccountThird? =
+        dao.fetchByProviderSubject(tenantId, accountProviderDictCode, accountProviderIssuer, subject)
 
 
 }

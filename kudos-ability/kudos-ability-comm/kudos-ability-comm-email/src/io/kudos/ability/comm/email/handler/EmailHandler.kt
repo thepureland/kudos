@@ -161,22 +161,14 @@ class EmailHandler {
      * @param mail
      */
     private fun checkParams(mail: EmailRequest): Boolean {
-        if (mail.senderAccount.isNullOrBlank() || mail.senderPassword.isNullOrBlank() ||
-            mail.serverHost.isNullOrBlank() || mail.receivers.isEmpty()
-        ) {
-            log.error("发送者邮箱账号、发送者邮箱密码、发件人邮箱服务器地址、接收者邮箱账号之一为空！")
-            return false
-        }
-        return true
+        val valid = !mail.senderAccount.isNullOrBlank() && !mail.senderPassword.isNullOrBlank() &&
+            !mail.serverHost.isNullOrBlank() && mail.receivers.isNotEmpty()
+        if (!valid) log.error("发送者邮箱账号、发送者邮箱密码、发件人邮箱服务器地址、接收者邮箱账号之一为空！")
+        return valid
     }
 
     private fun putAddressToSet(set: MutableSet<String>, addresses: Array<Address>) {
-        if (addresses.isNotEmpty()) {
-            for (add in addresses) {
-                val address = (add as InternetAddress).address
-                set.add(address)
-            }
-        }
+        addresses.mapTo(set) { (it as InternetAddress).address }
     }
 
     private val log = LogFactory.getLog(this::class)

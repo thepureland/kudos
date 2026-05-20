@@ -4,7 +4,7 @@ import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.tools.codegen.model.po.CodeGenFile
 import io.kudos.tools.codegen.model.table.CodeGenFiles
 import org.ktorm.dsl.eq
-import org.ktorm.dsl.forEach
+import org.ktorm.dsl.map
 import org.ktorm.dsl.select
 import org.ktorm.dsl.where
 import org.springframework.stereotype.Repository
@@ -22,14 +22,12 @@ object CodeGenFileDao : BaseCrudDao<String, CodeGenFile, CodeGenFiles>() {
 
     //region your codes 2
 
-    fun searchCodeGenFileNames(objectName: String): List<String> {
-        val results = mutableListOf<String>()
+    fun searchCodeGenFileNames(objectName: String): List<String> =
         querySource()
             .select(CodeGenFiles.filename)
             .where { CodeGenFiles.objectName eq objectName }
-            .forEach { it[CodeGenFiles.filename]?.let { results.add(it) } }
-        return results
-    }
+            .map { it[CodeGenFiles.filename] }
+            .filterNotNull()
 
     //endregion your codes 2
 

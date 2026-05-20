@@ -75,11 +75,8 @@ open class AuthGroupService(
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {
         // 先 snapshot tenantId/code，AFTER_COMMIT 后下游 (tenantId, code) 缓存无法回查
-        val snapshots = if (ids.isNotEmpty()) {
-            dao.getByIds(ids).map {
-                AuthGroupBatchDeleted.Item(it.id, it.tenantId, it.code)
-            }
-        } else emptyList()
+        val snapshots = if (ids.isEmpty()) emptyList()
+            else dao.getByIds(ids).map { AuthGroupBatchDeleted.Item(it.id, it.tenantId, it.code) }
         val count = super.batchDelete(ids)
         log.debug("批量删除用户组，期望删除${ids.size}条，实际删除${count}条。")
         if (snapshots.isNotEmpty()) {

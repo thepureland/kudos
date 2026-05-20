@@ -60,39 +60,30 @@ class WebLogAuditAspect {
     }
 
     private fun doSubmit(error: Throwable?) {
-        val request = currentRequest()
         try {
-            if (request == null || isMultipartContent(request)) return
+            val request = currentRequest() ?: return
+            if (isMultipartContent(request)) return
             val logVo = LogAuditContext.getOrNull() ?: return
-            if (error != null) {
-                val tag = "[FAILED:${error::class.java.simpleName}:${error.message ?: ""}] "
-                logVo.logs.forEach { base ->
-                    base.description = tag + (base.description ?: "")
-                }
+            error?.let { ex ->
+                val tag = "[FAILED:${ex::class.java.simpleName}:${ex.message.orEmpty()}] "
+                logVo.logs.forEach { it.description = tag + it.description.orEmpty() }
             }
-            try {
+            runCatching {
                 val requestBody = AuditLogTool.getRequestData(request)
-                val modelAudit = AuditLogTool.createSysAuditLogModel(logVo, requestBody)
-                if (auditService != null && modelAudit != null) {
-                    auditService.submit(modelAudit)
-                }
-            } catch (e: Exception) {
-                log.error(e, "审计日志组件,拦截器异常!")
-            }
+                AuditLogTool.createSysAuditLogModel(logVo, requestBody)
+                    ?.let { auditService?.submit(it) }
+            }.onFailure { log.error(it, "审计日志组件,拦截器异常!") }
         } finally {
             LogAuditContext.clear()
         }
     }
 
-    private fun currentRequest(): HttpServletRequest? {
-        val attrs = RequestContextHolder.getRequestAttributes() ?: return null
-        return attrs.resolveReference(RequestAttributes.REFERENCE_REQUEST) as? HttpServletRequest
-    }
+    private fun currentRequest(): HttpServletRequest? =
+        RequestContextHolder.getRequestAttributes()
+            ?.resolveReference(RequestAttributes.REFERENCE_REQUEST) as? HttpServletRequest
 
-    private fun isMultipartContent(request: HttpServletRequest): Boolean {
-        val contentType = request.contentType ?: return false
-        return contentType.lowercase().startsWith("multipart/")
-    }
+    private fun isMultipartContent(request: HttpServletRequest): Boolean =
+        request.contentType?.lowercase()?.startsWith("multipart/") == true
 
     private val log = LogFactory.getLog(this::class)
 }

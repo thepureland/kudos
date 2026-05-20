@@ -26,9 +26,7 @@ open class MultiTablesCodeGenerateWizard : Application() {
      * 开发者可通过继承CodeGenerateWizard并重写该方法来提供自定义的TemplateModelCreator,
      * 以些来达到模板和填充模板的数据可完全自定义的目的
      */
-    open fun getTemplateModelCreator(): TemplateModelCreator {
-        return TemplateModelCreator()
-    }
+    open fun getTemplateModelCreator(): TemplateModelCreator = TemplateModelCreator()
 
     /**
      * JavaFX 应用入口；构建"配置 → 选表批量生成"的两步向导。
