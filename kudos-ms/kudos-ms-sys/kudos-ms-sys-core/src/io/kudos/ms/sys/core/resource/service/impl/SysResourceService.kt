@@ -55,15 +55,11 @@ open class SysResourceService(
 
     private val log = LogFactory.getLog(this::class)
 
+    @Suppress("UNCHECKED_CAST")
     @Transactional(readOnly = true)
-    override fun <R : Any> get(id: String, returnType: KClass<R>): R? {
-        return if (returnType == SysResourceCacheEntry::class) {
-            @Suppress("UNCHECKED_CAST")
-            sysResourceHashCache.getResourceById(id) as R?
-        } else {
-            super.get(id, returnType)
-        }
-    }
+    override fun <R : Any> get(id: String, returnType: KClass<R>): R? =
+        if (returnType == SysResourceCacheEntry::class) sysResourceHashCache.getResourceById(id) as R?
+        else super.get(id, returnType)
 
     @Transactional(readOnly = true)
     override fun getResourceFromCache(id: String): SysResourceCacheEntry? = sysResourceHashCache.getResourceById(id)

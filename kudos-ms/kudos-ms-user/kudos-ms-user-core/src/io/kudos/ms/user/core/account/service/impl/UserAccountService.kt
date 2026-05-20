@@ -58,15 +58,11 @@ open class UserAccountService(
     private val log = LogFactory.getLog(this::class)
 
     @Transactional(readOnly = true)
-    override fun getUserOrgIds(userId: String): List<String> {
-        return orgIdsByUserIdCache.getOrgIds(userId)
-    }
+    override fun getUserOrgIds(userId: String): List<String> = orgIdsByUserIdCache.getOrgIds(userId)
 
 
     @Transactional(readOnly = true)
-    override fun getUserIds(tenantId: String): List<String> {
-        return dao.searchActiveUserIdsByTenantId(tenantId)
-    }
+    override fun getUserIds(tenantId: String): List<String> = dao.searchActiveUserIdsByTenantId(tenantId)
 
 
     @Transactional(readOnly = true)
@@ -80,10 +76,7 @@ open class UserAccountService(
     }
 
     @Transactional(readOnly = true)
-    override fun isUserInOrg(userId: String, orgId: String): Boolean {
-        val orgIds = getUserOrgIds(userId)
-        return orgIds.contains(orgId)
-    }
+    override fun isUserInOrg(userId: String, orgId: String): Boolean = orgId in getUserOrgIds(userId)
 
     @Transactional(readOnly = true)
     override fun getUserByTenantIdAndUsername(tenantId: String, username: String): UserAccountCacheEntry? {
@@ -92,9 +85,7 @@ open class UserAccountService(
     }
 
     @Transactional(readOnly = true)
-    override fun getUserRecord(id: String): UserAccountRow? {
-        return dao.getAs<UserAccountRow>(id)
-    }
+    override fun getUserRecord(id: String): UserAccountRow? = dao.getAs<UserAccountRow>(id)
 
     @Transactional(readOnly = true)
     override fun getUsersByTenantId(tenantId: String): List<UserAccountRow> {
@@ -344,11 +335,9 @@ open class UserAccountService(
         return GoogleAuthenticator().checkCode(key, code, System.currentTimeMillis())
     }
 
-    private fun encodeOtpAuthLabel(issuer: String, accountName: String): String {
-        // RFC 6238 / Google Authenticator 标签格式：`issuer:account`（整体再 URL 编码）
-        val label = "${issuer}:${accountName}"
-        return java.net.URLEncoder.encode(label, Charsets.UTF_8)
-    }
+    // RFC 6238 / Google Authenticator 标签格式：`issuer:account`（整体再 URL 编码）
+    private fun encodeOtpAuthLabel(issuer: String, accountName: String): String =
+        java.net.URLEncoder.encode("$issuer:$accountName", Charsets.UTF_8)
 
     @Transactional
     override fun freezeAccount(
@@ -405,19 +394,11 @@ open class UserAccountService(
 
     @Transactional
     override fun cleanExpiredFreezes(): Int {
-        val now = LocalDateTime.now()
         // freeze_end_time IS NOT NULL AND freeze_end_time < now()
         // lt 操作符在底层是 SQL `<`，对 NULL 自然不匹配——永久冻结(freeze_end_time=null)不会被清。
-        val criteria = Criteria(UserAccount::freezeEndTime lt now)
-        val expired = dao.searchAs<UserAccount>(criteria)
-        if (expired.isEmpty()) return 0
-        var cleared = 0
-        for (po in expired) {
-            if (unfreezeAccount(po.id)) cleared++
-        }
-        if (cleared > 0) {
-            log.info("auto-unfreeze: 共清理 ${cleared} 条已过期的冻结记录")
-        }
+        val expired = dao.searchAs<UserAccount>(Criteria(UserAccount::freezeEndTime lt LocalDateTime.now()))
+        val cleared = expired.count { unfreezeAccount(it.id) }
+        if (cleared > 0) log.info("auto-unfreeze: 共清理 $cleared 条已过期的冻结记录")
         return cleared
     }
 

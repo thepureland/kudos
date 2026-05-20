@@ -72,14 +72,10 @@ open class UserOrgService(
     }
 
     @Transactional(readOnly = true)
-    override fun getOrgUserIds(orgId: String): List<String> {
-        return userIdsByOrgIdCache.getUserIds(orgId)
-    }
+    override fun getOrgUserIds(orgId: String): List<String> = userIdsByOrgIdCache.getUserIds(orgId)
 
     @Transactional(readOnly = true)
-    override fun getChildOrgIds(orgId: String): List<String> {
-        return dao.searchActiveChildOrgIds(orgId)
-    }
+    override fun getChildOrgIds(orgId: String): List<String> = dao.searchActiveChildOrgIds(orgId)
 
     @Transactional(readOnly = true)
     override fun getOrgUsers(orgId: String): List<UserAccountCacheEntry> {
@@ -92,10 +88,7 @@ open class UserOrgService(
     }
 
     @Transactional(readOnly = true)
-    override fun isUserInOrg(userId: String, orgId: String): Boolean {
-        val userIds = getOrgUserIds(orgId)
-        return userIds.contains(userId)
-    }
+    override fun isUserInOrg(userId: String, orgId: String): Boolean = userId in getOrgUserIds(orgId)
 
     @Transactional(readOnly = true)
     override fun getChildOrgs(orgId: String): List<UserOrgCacheEntry> {
@@ -115,9 +108,7 @@ open class UserOrgService(
     }
 
     @Transactional(readOnly = true)
-    override fun getOrgRecord(id: String): UserOrgCacheEntry? {
-        return userOrgHashCache.getOrgById(id)
-    }
+    override fun getOrgRecord(id: String): UserOrgCacheEntry? = userOrgHashCache.getOrgById(id)
 
     @Transactional(readOnly = true)
     override fun getOrgsByTenantId(tenantId: String): List<UserOrgCacheEntry> {
@@ -206,15 +197,13 @@ open class UserOrgService(
     @Transactional(readOnly = true)
     override fun getAllDescendantOrgIds(orgId: String): List<String> {
         val descendants = mutableListOf<String>()
-        val queue = mutableListOf(orgId)
-        
+        // ArrayDeque.removeFirst 是 O(1)，避免 MutableList.removeAt(0) 每次 O(n) 搬移
+        val queue = ArrayDeque(listOf(orgId))
         while (queue.isNotEmpty()) {
-            val currentId = queue.removeAt(0)
-            val childIds = getChildOrgIds(currentId)
+            val childIds = getChildOrgIds(queue.removeFirst())
             descendants.addAll(childIds)
             queue.addAll(childIds)
         }
-        
         return descendants
     }
 
@@ -237,12 +226,8 @@ open class UserOrgService(
     override fun moveOrg(id: String, newParentId: String?, newSortNum: Int?): Boolean {
         // 移动前先 snapshot oldParentId —— 事务提交后 dao 看不到旧值。
         val oldParentId = dao.get(id)?.parentId
-        val props = mutableMapOf<String, Any?>(
-            UserOrg::parentId.name to newParentId
-        )
-        if (newSortNum != null) {
-            props[UserOrg::sortNum.name] = newSortNum
-        }
+        val props = mutableMapOf<String, Any?>(UserOrg::parentId.name to newParentId)
+        newSortNum?.let { props[UserOrg::sortNum.name] = it }
         val success = dao.updateProperties(id, props)
         if (success) {
             log.debug("移动id为${id}的机构到父机构${newParentId}，排序号${newSortNum}。")
