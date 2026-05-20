@@ -41,9 +41,7 @@ object TenantCacheTool {
      * @author K
      * @since 1.0.0
      */
-    fun isCacheActive(cacheName: String): Boolean {
-        return KeyValueCacheKit.isCacheActive(cacheName)
-    }
+    fun isCacheActive(cacheName: String): Boolean = KeyValueCacheKit.isCacheActive(cacheName)
 
     /**
      * 根据名称获取缓存
@@ -53,9 +51,7 @@ object TenantCacheTool {
      * @author K
      * @since 1.0.0
      */
-    fun getCache(name: String): Cache? {
-        return KeyValueCacheKit.getCache(name)
-    }
+    fun getCache(name: String): Cache? = KeyValueCacheKit.getCache(name)
 
     /**
      * 获取缓存中指定key的值
@@ -67,9 +63,8 @@ object TenantCacheTool {
      * @author K
      * @since 1.0.0
      */
-    fun <T: Any> getValue(cacheName: String, key: Any, valueClass: KClass<T>): T? {
-        return KeyValueCacheKit.getValue(cacheName, getTenantKey(key), valueClass)
-    }
+    fun <T: Any> getValue(cacheName: String, key: Any, valueClass: KClass<T>): T? =
+        KeyValueCacheKit.getValue(cacheName, getTenantKey(key), valueClass)
 
     /**
      * 获取缓存中指定key的值
@@ -80,9 +75,8 @@ object TenantCacheTool {
      * @author K
      * @since 1.0.0
      */
-    fun getValue(cacheName: String, key: Any): Any? {
-        return KeyValueCacheKit.getValue(cacheName, getTenantKey(key))
-    }
+    fun getValue(cacheName: String, key: Any): Any? =
+        KeyValueCacheKit.getValue(cacheName, getTenantKey(key))
 
     /**
      * 写入缓存
@@ -176,9 +170,7 @@ object TenantCacheTool {
      * @author K
      * @since 1.0.0
      */
-    fun isWriteInTime(cacheName: String): Boolean {
-        return KeyValueCacheKit.isWriteInTime(cacheName)
-    }
+    fun isWriteInTime(cacheName: String): Boolean = KeyValueCacheKit.isWriteInTime(cacheName)
 
     /**
      * 返回指定名称的缓存配置信息
@@ -188,9 +180,7 @@ object TenantCacheTool {
      * @author K
      * @since 1.0.0
      */
-    fun getCacheConfig(cacheName: String): CacheConfig? {
-        return KeyValueCacheKit.getCacheConfig(cacheName)
-    }
+    fun getCacheConfig(cacheName: String): CacheConfig? = KeyValueCacheKit.getCacheConfig(cacheName)
 
     /**
      * 重新加载缓存
@@ -208,11 +198,8 @@ object TenantCacheTool {
      * @param keyPattern key开头
      */
     fun evictByPattern(cacheName: String, keyPattern: String) {
-        if (!isCacheActive(cacheName)) {
-            return
-        }
-        val realKeyPattern = getTenantKey(keyPattern)
-        KeyValueCacheKit.evictByPattern(cacheName, realKeyPattern)
+        if (!isCacheActive(cacheName)) return
+        KeyValueCacheKit.evictByPattern(cacheName, getTenantKey(keyPattern))
     }
 
     /**
