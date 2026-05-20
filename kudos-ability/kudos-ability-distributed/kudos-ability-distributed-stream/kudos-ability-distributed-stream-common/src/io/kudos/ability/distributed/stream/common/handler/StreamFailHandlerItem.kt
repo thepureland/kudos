@@ -1,12 +1,18 @@
 package io.kudos.ability.distributed.stream.common.handler
 
+import java.util.concurrent.ConcurrentHashMap
+
 /**
  * 流式消息失败处理器注册表
  * 用于管理和查找不同绑定名称对应的失败处理器
+ *
+ * 并发约定：写入主要在 Spring 装配期（单线程），读在消息处理期（多线程）。改用
+ * [ConcurrentHashMap] 把约束变成显式安全——即便业务侧 runtime 动态注册 handler 也不会触发
+ * ConcurrentModificationException 或可见性问题。（与 NotifyListenerItem 同款修复。）
  */
 object StreamFailHandlerItem {
-    /** bindName → IStreamFailHandler 注册表；写入在 Spring 装配期，读在消息处理期 */
-    private val STREAM_HANDLER = mutableMapOf<String, IStreamFailHandler>()
+    /** bindName → IStreamFailHandler 注册表；用 [ConcurrentHashMap] 保证读路径无锁安全。 */
+    private val STREAM_HANDLER = ConcurrentHashMap<String, IStreamFailHandler>()
 
     /**
      * 注册一个 bindName 对应的失败处理器。
