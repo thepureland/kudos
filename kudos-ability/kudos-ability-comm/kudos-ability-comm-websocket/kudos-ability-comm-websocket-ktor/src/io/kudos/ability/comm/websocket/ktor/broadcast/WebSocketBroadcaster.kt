@@ -37,13 +37,9 @@ class WebSocketBroadcaster(private val registry: KudosWebSocketRegistry) {
     /** 单播到指定 sessionId。返回发送是否成功。 */
     suspend fun unicast(sessionId: String, text: String): Boolean {
         val session = registry.findById(sessionId) ?: return false
-        return runCatching {
-            session.sendText(text)
-            true
-        }.getOrElse { t ->
-            log.warn("单播失败 sessionId={0} cause={1}", sessionId, t.message)
-            false
-        }
+        return runCatching { session.sendText(text) }
+            .onFailure { log.warn("单播失败 sessionId={0} cause={1}", sessionId, it.message) }
+            .isSuccess
     }
 
     private suspend fun sendTo(sessions: List<KudosWebSocketSessionRef>, text: String): Int {
