@@ -85,6 +85,14 @@ object RedissonLockKit {
         }
     }
 
+    /**
+     * 惰性初始化 [lockBean]。
+     * 加 `@Synchronized` 是因为 object 静态字段在多线程环境下首次访问可能并发命中——
+     * Spring 容器初始化前后切换的窗口期，单纯的 `?.let` 不够安全。
+     *
+     * @author K
+     * @since 1.0.0
+     */
     @Synchronized
     private fun initLockBean() {
         if (lockBean == null) {
@@ -92,15 +100,41 @@ object RedissonLockKit {
         }
     }
 
+    /**
+     * 取已初始化的 [RedissonLocker]；未就绪时立即报错（说明 Spring 容器还没装好就被调用）。
+     *
+     * @return [RedissonLocker] 单例
+     * @throws IllegalArgumentException Spring 容器尚未注入 [RedissonLocker] 时
+     * @author K
+     * @since 1.0.0
+     */
     private fun locker(): RedissonLocker {
         initLockBean()
         return requireNotNull(lockBean) { "RedissonLocker 未就绪" }
     }
 
+    /** Spring 容器中 Redisson 客户端 bean 名 */
     const val REDISSON_CLIENT_BEAN_NAME: String = "redissonClient"
 
+    /**
+     * 从 Spring 容器拿 [RedissonClient] bean。
+     * 业务侧需要原生 Redisson API（如 `RBucket` / `RBlockingQueue`）时使用。
+     *
+     * @return Redisson 客户端
+     * @author K
+     * @since 1.0.0
+     */
     fun redissonClient(): RedissonClient =
         SpringKit.getBean(REDISSON_CLIENT_BEAN_NAME) as RedissonClient
 
+    /**
+     * 把业务 key 拼上 [LOCK_KEY_PREFIX] 形成 Redis 中的完整锁 key。
+     * 集中前缀让运维通过 key 模式就能识别 redisson 锁。
+     *
+     * @param key 业务 key
+     * @return 带 `REDISSON::` 前缀的最终 key
+     * @author K
+     * @since 1.0.0
+     */
     fun getLockKey(key: String): String = LOCK_KEY_PREFIX + key
 }

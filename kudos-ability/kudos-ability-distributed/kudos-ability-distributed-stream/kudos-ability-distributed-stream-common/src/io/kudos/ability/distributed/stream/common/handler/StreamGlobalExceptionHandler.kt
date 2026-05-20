@@ -88,16 +88,49 @@ class StreamGlobalExceptionHandler {
         }
     }
 
+    /**
+     * Producer 端异常分支：消费者端异常被 [globalHandleError] 拦下，剩余的 producer 端
+     * 异常被本方法捕获后委托给 [doRealChannelErrorHandle]。
+     *
+     * 两个 listener 同绑 ERROR_CHANNEL 看起来重复，但由各自的 [isFromConsumer]
+     * / `containsKey(SCST_BIND_NAME)` 守卫做了路由——重复挂监听是为了让 producer
+     * 异常也能进入持久化路径，否则只会 print stack 然后丢失。
+     *
+     * @param errorMessage spring-integration 派发过来的 [ErrorMessage]
+     * @author K
+     * @since 1.0.0
+     */
     @ServiceActivator(inputChannel = IntegrationContextUtils.ERROR_CHANNEL_BEAN_NAME)
     fun handleProducerError(errorMessage: ErrorMessage) {
         doRealChannelErrorHandle(errorMessage)
     }
 
+    /**
+     * 同步发送失败的 producer 异常分支：[IStreamFailHandler.CHANNEL_BEN_NAME]
+     * （即 `mqProducerChannel`）专门给 `StreamProducerHelper.doRealSend` 同步发送失败时
+     * 主动 push 的错误消息使用。
+     *
+     * @param errorMessage 主动塞过来的 [ErrorMessage]
+     * @author K
+     * @since 1.0.0
+     */
     @ServiceActivator(inputChannel = IStreamFailHandler.CHANNEL_BEN_NAME)
     fun handSyncChannelError(errorMessage: ErrorMessage) {
         doRealChannelErrorHandle(errorMessage)
     }
 
+    /**
+     * 通过 header 前缀判定该消息是否来自 consumer 端。
+     *
+     * Spring Cloud Stream 各 binder 都会把内置元数据写到 `kafka_*` / `amqp_*` / `rocket_*` 头里，
+     * 只要消息含其一就视为消费侧异常。比对前显式 `Locale.ROOT` 是为了避免 Turkish locale
+     * `i → İ` 大小写映射把 `"kafka_*"` 误判为不匹配。
+     *
+     * @param headers 待检查的消息头
+     * @return true 表示来自 consumer
+     * @author K
+     * @since 1.0.0
+     */
     private fun isFromConsumer(headers: MessageHeaders): Boolean {
         // Locale.ROOT 而非 Locale.getDefault()——header key 用 ASCII 前缀对比，Turkish locale
         // 的 i→İ 大小写映射会让 "kafka_..." 误判
@@ -107,6 +140,15 @@ class StreamGlobalExceptionHandler {
         }
     }
 
+    /**
+     * 实际处理 producer 异常：尽量取出失败前的原始 Message 再交给 [processProducerError]。
+     * 优先取 [MessageHandlingException.failedMessage]；它为空时退回 `errorMessage.originalMessage`，
+     * 兼容不同 binder 在异常路径上传递消息的差异。
+     *
+     * @param errorMessage 进入 error channel 的错误消息
+     * @author K
+     * @since 1.0.0
+     */
     private fun doRealChannelErrorHandle(errorMessage: ErrorMessage) {
         try {
             val messageHandlingException = errorMessage.payload
@@ -123,6 +165,17 @@ class StreamGlobalExceptionHandler {
         }
     }
 
+    /**
+     * 真正处理 producer 端失败：
+     * 1. 再次 `isFromConsumer` 防御，避免兼容历史路由时把消费端异常误进 producer 分支；
+     * 2. 没有 `SCST_BIND_NAME` 头就忽略——没绑定信息无法定位到具体 fail handler；
+     * 3. 反序列化 payload 为 [StreamMessageVo] 后构造 [StreamProducerMsgVo]，
+     *    交给 [StreamFailHandlerItem] 注册的对应 handler 持久化。
+     *
+     * @param message 失败消息
+     * @author K
+     * @since 1.0.0
+     */
     private fun processProducerError(message: Message<*>) {
         if (isFromConsumer(message.headers)) {
             //比较恶心的兼容全局异常问题。
@@ -152,6 +205,7 @@ class StreamGlobalExceptionHandler {
         }
     }
 
+    /** 日志器 */
     private val LOG = LogFactory.getLog(this::class)
 
 }

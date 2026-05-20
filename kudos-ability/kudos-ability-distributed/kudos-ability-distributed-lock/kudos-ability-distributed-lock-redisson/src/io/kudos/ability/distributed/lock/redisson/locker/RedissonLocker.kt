@@ -15,6 +15,14 @@ class RedissonLocker : ILocker<RLock> {
     @Autowired(required = false)
     private var redissonClient: RedissonClient? = null
 
+    /**
+     * 取已注入的 [RedissonClient]；缺失时抛错而非静默使用 null，避免业务侧后续看到 NullPointerException 难以定位。
+     *
+     * @return Redisson 客户端
+     * @throws IllegalArgumentException 当 [redissonClient] 未注入时
+     * @author K
+     * @since 1.0.0
+     */
     private fun client(): RedissonClient =
         requireNotNull(redissonClient) { "RedissonClient未初始化，请检查redisson配置是否启用并注入成功" }
 

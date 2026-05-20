@@ -43,6 +43,15 @@ class HintZoneServiceInstanceListSupplier(
             filteredByHint(instances, getHint(request.getContext()))
         }
 
+    /**
+     * 从负载均衡请求上下文中提取 hint 字符串。
+     * 上下文为 null 或非 [RequestDataContext]（如直接 RPC 调用未带 HTTP 头）时返回 null。
+     *
+     * @param requestContext spring-cloud-loadbalancer 给的 Request 上下文
+     * @return hint 字符串；不可用时 null
+     * @author K
+     * @since 1.0.0
+     */
     private fun getHint(requestContext: Any?): String? {
         if (requestContext == null) {
             return null
@@ -54,11 +63,33 @@ class HintZoneServiceInstanceListSupplier(
         return hint
     }
 
+    /**
+     * 从 HTTP 客户端请求头里取 hint，header 名由 `spring.cloud.loadbalancer.{serviceId}.hint-header-name` 配置。
+     *
+     * @param context HTTP 请求上下文
+     * @return header 中的 hint 值；缺失返回 null
+     * @author K
+     * @since 1.0.0
+     */
     private fun getHintFromHeader(context: RequestDataContext): String? {
         val headers = context.clientRequest?.headers
         return headers?.getFirst(properties.hintHeaderName)
     }
 
+    /**
+     * 按 hint / 默认 zone 过滤实例。
+     *
+     * 三条规则：
+     * - hint 有值：选 metadata.zone == hint 的实例；命中为空时降级返回全部（避免空选 → 服务调不通）
+     * - hint 为空 + 配了默认 zone：选 zone 一致或未设 zone 的实例
+     * - hint 为空 + 没默认 zone：全部返回
+     *
+     * @param instances 候选实例列表
+     * @param hint 请求 hint，可为 null/空
+     * @return 过滤后的实例列表
+     * @author K
+     * @since 1.0.0
+     */
     private fun filteredByHint(instances: MutableList<ServiceInstance>, hint: String?): MutableList<ServiceInstance> {
         if (!StringUtils.hasText(hint)) {
             val defaultZone = zoneConfig.zone

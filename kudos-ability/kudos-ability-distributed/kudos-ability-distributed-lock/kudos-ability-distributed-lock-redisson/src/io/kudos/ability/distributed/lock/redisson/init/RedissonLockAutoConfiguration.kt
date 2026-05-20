@@ -115,6 +115,17 @@ open class RedissonLockAutoConfiguration : IComponentInitializer {
         }
     }
 
+    /**
+     * 把通用连接参数（ping/timeout/retry/connection 计数等）从 properties 拷到 Redisson [BaseConfig]。
+     *
+     * 注：Redisson 4.0+ 起 password 已移到顶层 [Config]，不再属于 [BaseConfig]，
+     * 因此本方法**不再设置 password**——具体在 [initRedissonConfig] 顶部统一处理。
+     *
+     * @param baseConfig 单/集群/哨兵任一种配置对象（[BaseConfig] 是它们的公共基类）
+     * @param baseConfigProperties 业务侧配置
+     * @author K
+     * @since 1.0.0
+     */
     private fun initBaseConfig(baseConfig: BaseConfig<*>, baseConfigProperties: RedissonBaseConfigProperties) {
         baseConfig.apply {
             pingConnectionInterval = baseConfigProperties.pingConnectionInterval
