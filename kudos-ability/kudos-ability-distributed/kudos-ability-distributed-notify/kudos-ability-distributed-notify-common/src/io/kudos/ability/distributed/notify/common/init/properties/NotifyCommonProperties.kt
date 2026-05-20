@@ -17,5 +17,11 @@ open class NotifyCommonProperties {
      * listener 命名空间。为空时，默认使用 `spring.application.name`。
      */
     var listenerNamespace: String? = null
-}
 
+    /**
+     * listener 未命中当前命名空间时，是否继续回落到 default 命名空间。
+     *
+     * 默认关闭，避免多应用共享同一 MQ topic 且注册相同 notifyType 时误投到 default listener。
+     */
+    var fallbackToDefaultNamespace: Boolean = false
+}
