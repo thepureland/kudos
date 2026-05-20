@@ -36,7 +36,6 @@ import javafx.scene.control.ButtonBar.ButtonData
 import javafx.scene.control.ButtonType
 import javafx.scene.control.Dialog
 import javafx.scene.control.DialogPane
-import java.util.HashMap
 import java.util.Optional
 import java.util.Stack
 
@@ -63,13 +62,13 @@ class Wizard(title: String = "") {
     private val BUTTON_PREVIOUS = ButtonType("上一步", ButtonData.BACK_PREVIOUS)
     private val BUTTON_PREVIOUS_ACTION_HANDLER = EventHandler { actionEvent: ActionEvent ->
         actionEvent.consume()
-        currentPage = Optional.ofNullable(if (pageHistory.isEmpty()) null else pageHistory.pop())
+        currentPage = Optional.ofNullable(pageHistory.takeUnless { it.isEmpty() }?.pop())
         updatePage(dialog, false)
     }
     private val BUTTON_NEXT = ButtonType("下一步", ButtonData.NEXT_FORWARD)
     private val BUTTON_NEXT_ACTION_HANDLER = EventHandler { actionEvent: ActionEvent ->
         actionEvent.consume()
-        currentPage.ifPresent { page: WizardPane -> pageHistory.push(page) }
+        currentPage.ifPresent { pageHistory.push(it) }
         currentPage = getFlow().advance(currentPage.orElse(null))
         updatePage(dialog, true)
     }
@@ -89,12 +88,12 @@ class Wizard(title: String = "") {
      *
      */
     fun show() {
-        requireNotNull(dialog) { "dialog is null" }.show()
+        requireDialog().show()
     }
 
-    fun showAndWait(): Optional<ButtonType?> {
-        return requireNotNull(dialog) { "dialog is null" }.showAndWait()
-    }
+    fun showAndWait(): Optional<ButtonType?> = requireDialog().showAndWait()
+
+    private fun requireDialog(): Dialog<ButtonType?> = requireNotNull(dialog) { "dialog is null" }
 
     /**************************************************************************
      *
@@ -117,13 +116,9 @@ class Wizard(title: String = "") {
         }
     }
 
-    fun flowProperty(): ObjectProperty<Flow> {
-        return flow
-    }
+    fun flowProperty(): ObjectProperty<Flow> = flow
 
-    fun getFlow(): Flow {
-        return flow.get()
-    }
+    fun getFlow(): Flow = flow.get()
 
     fun setFlow(flow: Flow) {
         this.flow.set(flow)
@@ -140,10 +135,7 @@ class Wizard(title: String = "") {
      * by application developers
      */
     fun getProperties(): ObservableMap<Any, Any>? {
-        if (properties == null) {
-            properties = FXCollections.observableMap(mutableMapOf())
-        }
-        return properties
+        return properties ?: FXCollections.observableMap(mutableMapOf<Any, Any>()).also { properties = it }
     }
 
     /**
@@ -184,47 +176,44 @@ class Wizard(title: String = "") {
      *
      */
     private fun updatePage(dialog: Dialog<ButtonType?>?, advancing: Boolean) {
-//        val flow = getFlow()
-        val prevPage = Optional.ofNullable(if (pageHistory.isEmpty()) null else pageHistory.peek())
-        prevPage.ifPresent { page: WizardPane ->
+        pageHistory.takeUnless { it.isEmpty() }?.peek()?.let { page ->
             // if we are going forward in the wizard, we read in the settings
             // from the page and store them in the settings map.
             // If we are going backwards, we do nothing
-            if (advancing) {
-                readSettings(page)
-            }
+            if (advancing) readSettings(page)
 
             // give the previous wizard page a chance to update the pages list
             // based on the settings it has received
             page.onExitingPage(this)
         }
-        currentPage.ifPresent { currentPage: WizardPane? ->
+        currentPage.ifPresent { page ->
             // put in default actions
-            val buttons: MutableList<ButtonType> = requireNotNull(currentPage) { "currentPage is null" }.buttonTypes
+            val buttons = page.buttonTypes
             if (!buttons.contains(BUTTON_PREVIOUS)) {
                 buttons.add(BUTTON_PREVIOUS)
-                val button = currentPage.lookupButton(BUTTON_PREVIOUS) as Button
-                button.addEventFilter(ActionEvent.ACTION, BUTTON_PREVIOUS_ACTION_HANDLER)
+                (page.lookupButton(BUTTON_PREVIOUS) as Button)
+                    .addEventFilter(ActionEvent.ACTION, BUTTON_PREVIOUS_ACTION_HANDLER)
             }
             if (!buttons.contains(BUTTON_NEXT)) {
                 buttons.add(BUTTON_NEXT)
-                val button = currentPage.lookupButton(BUTTON_NEXT) as Button
-                button.addEventFilter(ActionEvent.ACTION, BUTTON_NEXT_ACTION_HANDLER)
+                (page.lookupButton(BUTTON_NEXT) as Button)
+                    .addEventFilter(ActionEvent.ACTION, BUTTON_NEXT_ACTION_HANDLER)
             }
             if (!buttons.contains(ButtonType.FINISH)) buttons.add(ButtonType.FINISH)
             if (!buttons.contains(ButtonType.CANCEL)) buttons.add(ButtonType.CANCEL)
 
             // then give user a chance to modify the default actions
-            currentPage.onEnteringPage(this)
+            page.onEnteringPage(this)
 
             // and then switch to the new pane
-            requireNotNull(dialog) { "dialog is null" }.setDialogPane(currentPage)
+            requireNotNull(dialog) { "dialog is null" }.dialogPane = page
         }
         validateActionState()
     }
 
     private fun validateActionState() {
-        val currentPaneButtons: MutableList<ButtonType> = requireNotNull(dialog) { "dialog is null" }.dialogPane.buttonTypes
+        val pane = requireDialog().dialogPane
+        val currentPaneButtons = pane.buttonTypes
 
         // TODO can't set a DialogButton to be disabled at present
 //        BUTTON_PREVIOUS.setDisabled(pageHistory.isEmpty());
@@ -235,18 +224,14 @@ class Wizard(title: String = "") {
         // future...
         if (!getFlow().canAdvance(currentPage.orElse(null))) {
             currentPaneButtons.remove(BUTTON_NEXT)
-
-//            currentPaneActions.add(0, ACTION_FINISH);
-//            ACTION_FINISH.setDisabled( validationSupport.isInvalid());
         } else {
             if (currentPaneButtons.contains(BUTTON_NEXT)) {
                 currentPaneButtons.remove(BUTTON_NEXT)
                 currentPaneButtons.add(0, BUTTON_NEXT)
-                val button = requireNotNull(dialog) { "dialog is null" }.dialogPane.lookupButton(BUTTON_NEXT) as Button
-                button.addEventFilter(ActionEvent.ACTION, BUTTON_NEXT_ACTION_HANDLER)
+                (pane.lookupButton(BUTTON_NEXT) as Button)
+                    .addEventFilter(ActionEvent.ACTION, BUTTON_NEXT_ACTION_HANDLER)
             }
             currentPaneButtons.remove(ButtonType.FINISH)
-            //            ACTION_NEXT.setDisabled( validationSupport.isInvalid());
         }
     }
 
@@ -262,43 +247,22 @@ class Wizard(title: String = "") {
     }
 
     private fun checkNode(n: Node?): Boolean {
-        val success = readSetting(n)
-        return if (success) {
-            // we've added the setting to the settings map, and we should stop drilling deeper
-            true
-        } else {
-            // go into children of this node (if possible) and see if we can get
-            // a value from them (recursively)
-            val children = ImplUtils.getChildren(n)
-
-            // we're doing a depth-first search, where we stop drilling down
-            // once we hit a successful read
-            var childSuccess = false
-            for (child in children) {
-                childSuccess = childSuccess or checkNode(child)
-            }
-            childSuccess
-        }
+        if (readSetting(n)) return true
+        // we're doing a depth-first search; visit every child so that all
+        // value-bearing nodes get recorded (don't short-circuit on first hit)
+        return ImplUtils.getChildren(n).fold(false) { acc, child -> checkNode(child) || acc }
     }
 
     private fun readSetting(n: Node?): Boolean {
-        if (n == null) {
-            return false
-        }
-        val setting = ValueExtractor.getValue(n)
-        if (setting != null) {
-            // save it into the settings map.
-            // if the node has an id set, we will use that as the setting name
-            var settingName = n.id
-
-            // but if the id is not set, we will use a generic naming scheme
-            if (settingName.isNullOrEmpty()) {
-                settingName = "page_.setting_$settingCounter"
-            }
-            settings[settingName] = setting
-            settingCounter++
-        }
-        return setting != null
+        if (n == null) return false
+        val setting = ValueExtractor.getValue(n) ?: return false
+        // save it into the settings map.
+        // if the node has an id set, we will use that as the setting name, otherwise
+        // fall back to a generic name based on the setting counter
+        val settingName = n.id?.takeUnless { it.isEmpty() } ?: "page_.setting_$settingCounter"
+        settings[settingName] = setting
+        settingCounter++
+        return true
     }
     /**************************************************************************
      *
@@ -336,12 +300,8 @@ class Wizard(title: String = "") {
      * @param owner
      */
     init {
-//        this.owner = owner;
-//        this.title = title;
-
 //        validationSupport.validationResultProperty().addListener( (o, ov, nv) -> validateActionState());
-        dialog = Dialog()
-        requireNotNull(dialog) { "dialog is null" }.title = title
+        dialog = Dialog<ButtonType?>().also { it.title = title }
         //        hello.dialog.initOwner(owner); // TODO add initOwner API
     }
 }
