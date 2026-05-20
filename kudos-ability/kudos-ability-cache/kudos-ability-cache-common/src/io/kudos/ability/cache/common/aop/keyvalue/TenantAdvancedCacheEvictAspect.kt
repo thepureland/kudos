@@ -12,6 +12,15 @@ import org.springframework.context.annotation.Lazy
 import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
 
+/**
+ * [TenantAdvancedCacheEvict] 的切面：方法返回后按 `cacheKey::tenantId` 拼装远端 key
+ * 调 [IRemoteCacheProcessor.clearCache] 清缓存。
+ *
+ * 没注入 `remoteCacheProcess` 实现时（`required=false`）直接 no-op——支持单元测试 / 本地模式跑通流程。
+ *
+ * @author K
+ * @since 1.0.0
+ */
 @Aspect
 @Lazy(false)
 @Component
