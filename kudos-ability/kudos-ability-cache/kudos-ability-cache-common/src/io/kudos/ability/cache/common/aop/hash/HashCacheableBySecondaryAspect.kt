@@ -130,8 +130,26 @@ class HashCacheableBySecondaryAspect {
         }
     }
 
+    /**
+     * 标注方法返回值的形态，决定切面如何与 hash 缓存交互（取/存）。
+     */
     private enum class ReturnMode { SINGLE_ID, LIST_IDS, LIST_ENTITIES, SINGLE_ENTITY }
 
+    /**
+     * 按反射出来的 Java 返回类型判定 [ReturnMode]。
+     *
+     * - `String` → SINGLE_ID
+     * - `Set<String>` / `List<String>` → LIST_IDS
+     * - `List<...其它>` → LIST_ENTITIES
+     * - 其它 → SINGLE_ENTITY
+     *
+     * 走泛型类型擦除后能拿到 `ParameterizedType`，因此通过反射访问 `genericReturnType`。
+     *
+     * @param method 目标方法
+     * @return 推断出的返回形态
+     * @author K
+     * @since 1.0.0
+     */
     private fun resolveReturnMode(method: java.lang.reflect.Method): ReturnMode {
         val returnType = method.returnType
         if (returnType == String::class.java) return ReturnMode.SINGLE_ID
@@ -152,6 +170,15 @@ class HashCacheableBySecondaryAspect {
         return ReturnMode.SINGLE_ENTITY
     }
 
+    /**
+     * 解析 cache 名：注解 cacheNames > 类上 `@CacheConfig.cacheNames` > null。
+     *
+     * @param joinPoint AOP 切入点
+     * @param ann 注解实例
+     * @return cache 名；都未配置返回 null
+     * @author K
+     * @since 1.0.0
+     */
     private fun resolveCacheName(joinPoint: ProceedingJoinPoint, ann: HashCacheableBySecondary): String? {
         if (ann.cacheNames.isNotEmpty()) return ann.cacheNames.first()
         val cacheConfig = joinPoint.target::class.findAnnotation<CacheConfig>()
@@ -188,6 +215,14 @@ class HashCacheableBySecondaryAspect {
         }
     }
 
+    /**
+     * 把通配的 `KClass<out IIdEntity<*>>` 强转为 `KClass<out IIdEntity<Any?>>`，集中放置 unchecked cast 警告。
+     *
+     * @param entityClass 通配实体类型
+     * @return 已收窄的实体类型
+     * @author K
+     * @since 1.0.0
+     */
     @Suppress("UNCHECKED_CAST")
     private fun resolveEntityClass(entityClass: KClass<out IIdEntity<*>>): KClass<out IIdEntity<Any?>> {
         return entityClass as KClass<out IIdEntity<Any?>>

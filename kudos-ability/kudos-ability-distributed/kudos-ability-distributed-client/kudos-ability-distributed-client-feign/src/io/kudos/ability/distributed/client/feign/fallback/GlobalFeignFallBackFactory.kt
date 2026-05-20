@@ -22,6 +22,19 @@ class GlobalFeignFallBackFactory : FallbackFactory<HttpResult> {
         return HttpResult(status, msg)
     }
 
+    /**
+     * 把 Feign 异常映射为 HTTP 状态码用于 fallback。
+     *
+     * 沿 cause 链向上找首个携合法状态码 (100..599) 的 [FeignException]；找不到则按类型粗分：
+     * - [SocketTimeoutException]/[TimeoutException] → 504（网关超时）
+     * - [ConnectException] → 503（连不上下游）
+     * - 其它 → 503
+     *
+     * @param cause Feign 抛出的根因
+     * @return 对应的 HTTP 状态码
+     * @author K
+     * @since 1.0.0
+     */
     private fun resolveHttpStatus(cause: Throwable): Int {
         generateSequence(cause as Throwable?) { it.cause }
             .filterIsInstance<FeignException>()

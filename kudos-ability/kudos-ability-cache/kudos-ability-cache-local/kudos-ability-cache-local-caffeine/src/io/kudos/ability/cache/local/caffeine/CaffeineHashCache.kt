@@ -27,15 +27,23 @@ import kotlin.reflect.KClass
  */
 class CaffeineHashCache : IHashCache, IHashCacheSync {
 
+    /** 主数据：cacheName → (id → entity)；模拟 Redis hash */
     private val mainData = ConcurrentHashMap<String, ConcurrentHashMap<String, Any>>()
+    /** Set 二级索引：cacheName → (propertyKey → ids)；模拟 Redis set，用于按属性等值查询 */
     private val setIndex = ConcurrentHashMap<String, ConcurrentHashMap<String, MutableSet<String>>>()
+    /** ZSet 二级索引：cacheName → (propertyKey → (id → score))；模拟 Redis zset，用于按属性排序/范围 */
     private val zsetIndex = ConcurrentHashMap<String, ConcurrentHashMap<String, MutableMap<String, Double>>>()
 
+    /** 取/惰性创建主数据空间 */
     private fun main(cacheName: String) = mainData.getOrPut(cacheName) { ConcurrentHashMap() }
+    /** 取/惰性创建 Set 索引空间 */
     private fun setIdx(cacheName: String) = setIndex.getOrPut(cacheName) { ConcurrentHashMap() }
+    /** 取/惰性创建 ZSet 索引空间 */
     private fun zsetIdx(cacheName: String) = zsetIndex.getOrPut(cacheName) { ConcurrentHashMap() }
 
+    /** Set 索引的复合 key：避免不同属性间命名冲突 */
     private fun setKey(property: String, value: String) = "set:$property:$value"
+    /** ZSet 索引的复合 key：同上，单层 zset 按属性独立 */
     private fun zsetKey(property: String) = "zset:$property"
 
     /**
@@ -43,6 +51,15 @@ class CaffeineHashCache : IHashCache, IHashCacheSync {
      */
     private fun normalizePkField(id: Any?): String = (id ?: "").toString().trim()
 
+    /**
+     * 把任意值转 Double 作为 zset 的 score。
+     * 非数值字符串或其它类型回落到 `-Double.MAX_VALUE`——不是 `Double.MIN_VALUE`，那是最小正数会让负分排错位置。
+     *
+     * @param value 任意值
+     * @return Double score
+     * @author K
+     * @since 1.0.0
+     */
     private fun toDouble(value: Any): Double = when (value) {
         is Number -> value.toDouble()
         // -Double.MAX_VALUE 是负方向最远；Double.MIN_VALUE 实为最小**正**数，
@@ -51,6 +68,17 @@ class CaffeineHashCache : IHashCache, IHashCacheSync {
         else -> -Double.MAX_VALUE
     }
 
+    /**
+     * 反射取实体上指定属性的值。
+     * 顺序：字段 (setAccessible) → `getXxx` → `isXxx`；都没有返回 null。
+     * 失败仅 try-catch 吃掉异常，调用方对 null 已有降级。
+     *
+     * @param entity 目标对象
+     * @param propertyName 属性名
+     * @return 属性值；查不到返回 null
+     * @author K
+     * @since 1.0.0
+     */
     private fun getPropertyValue(entity: Any, propertyName: String): Any? {
         val clazz = entity.javaClass
         try {

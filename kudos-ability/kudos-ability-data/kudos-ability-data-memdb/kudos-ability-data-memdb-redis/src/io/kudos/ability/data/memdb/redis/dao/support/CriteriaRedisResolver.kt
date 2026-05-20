@@ -58,6 +58,14 @@ internal class CriteriaRedisResolver(
         return result ?: emptySet()
     }
 
+    /**
+     * 处理"组内 OR"语义：数组中每个元素的 id 集合做并集。
+     *
+     * @param array 同组的 [Criterion] 或嵌套 [Criteria] 数组
+     * @return 并集；空并集返回 null（让上层视作"无约束"）
+     * @author K
+     * @since 1.0.0
+     */
     private fun idsForOrGroup(array: Array<*>): Set<String>? {
         var union = emptySet<String>()
         for (elem in array) {
@@ -71,6 +79,16 @@ internal class CriteriaRedisResolver(
         return union.ifEmpty { null }
     }
 
+    /**
+     * 把单个 [Criterion] 解析为 id 集合。
+     * value 为 null 时按 operator 是否接受 null 决定结果（不接受 → 空集；接受 → null 表示"无约束"）。
+     * 是否走 ZSet 索引：数值型 value 或范围类操作符。
+     *
+     * @param c 单条条件
+     * @return 该条件命中的 id 集合
+     * @author K
+     * @since 1.0.0
+     */
     private fun idsForCriterion(c: Criterion): Set<String>? {
         val value = c.value ?: run {
             if (c.operator.acceptNull) return null
@@ -80,21 +98,56 @@ internal class CriteriaRedisResolver(
         return if (useZSet) idsFromZSet(c.property, c.operator, value) else idsFromSet(c.property, c.operator, value)
     }
 
+    /**
+     * 判定 value 是否能作为 ZSet score（数值或可解析为数值的字符串）。
+     *
+     * @param value 待判定值
+     * @return true 表示可走 ZSet 索引
+     * @author K
+     * @since 1.0.0
+     */
     private fun isNumericValue(value: Any): Boolean {
         if (value is Number) return true
         if (value is String) return value.toDoubleOrNull() != null
         return false
     }
 
+    /**
+     * 是否为范围类操作符（必须走 ZSet 才能 range 查询）。
+     *
+     * @param op 操作符
+     * @return true 表示属于 GT/GE/LT/LE/BETWEEN/NOT_BETWEEN
+     * @author K
+     * @since 1.0.0
+     */
     private fun isRangeOperator(op: OperatorEnum): Boolean =
         op in setOf(OperatorEnum.GT, OperatorEnum.GE, OperatorEnum.LT, OperatorEnum.LE, OperatorEnum.BETWEEN, OperatorEnum.NOT_BETWEEN)
 
+    /**
+     * 把值转为 Double 作为 ZSet score；非数值字符串和其它类型回落到 [SCORE_MIN]（负方向最远）。
+     *
+     * @param value 任意值
+     * @return Double score
+     * @author K
+     * @since 1.0.0
+     */
     private fun toDouble(value: Any): Double = when (value) {
         is Number -> value.toDouble()
         is String -> value.toDoubleOrNull() ?: SCORE_MIN
         else -> SCORE_MIN
     }
 
+    /**
+     * 通过 Set 索引按等值/IN 操作符查询 id。
+     * EQ/IEQ：直接读 set 成员；IN：把 value 拆分后多 set 做 union。
+     *
+     * @param property 属性名
+     * @param operator 操作符（仅支持 EQ/IEQ/IN）
+     * @param value 查询值
+     * @return id 集合；不支持的操作符返回 null
+     * @author K
+     * @since 1.0.0
+     */
     private fun idsFromSet(property: String, operator: OperatorEnum, value: Any): Set<String>? = when (operator) {
         OperatorEnum.EQ, OperatorEnum.IEQ -> setMembers(setKey(property, value.toString()))
         OperatorEnum.IN -> {
@@ -114,6 +167,19 @@ internal class CriteriaRedisResolver(
         else -> null
     }
 
+    /**
+     * 通过 ZSet 索引按数值或范围操作符查询 id。
+     *
+     * 范围端点用 [SCORE_EPSILON] 处理"严格大于/小于"——浮点等值匹配不可靠，
+     * 用一个极小偏移把开区间转闭区间，再让 `rangeByScore` 处理。
+     *
+     * @param property 属性名
+     * @param operator 操作符
+     * @param value 查询值（数值或范围）
+     * @return id 集合；不支持的操作符返回 null
+     * @author K
+     * @since 1.0.0
+     */
     private fun idsFromZSet(property: String, operator: OperatorEnum, value: Any): Set<String>? {
         val key = zsetKey(property)
         return when (operator) {
@@ -138,19 +204,33 @@ internal class CriteriaRedisResolver(
         }
     }
 
+    /** 取 Set 成员的小辅助：转换为 String 集合，空时返回空集 */
     private fun setMembers(key: String): Set<String> =
         redisTemplate.opsForSet().members(key)?.mapNotNullTo(mutableSetOf()) { it.toString() } ?: emptySet()
 
+    /** 取 ZSet score 范围内成员的小辅助：转换为 String 集合，空时返回空集 */
     private fun zsetRange(key: String, min: Double, max: Double): Set<String> =
         redisTemplate.opsForZSet().rangeByScore(key, min, max)
             ?.mapNotNullTo(mutableSetOf()) { it?.toString() } ?: emptySet()
 
+    /** 构造 Set 索引的完整 Redis key */
     private fun setKey(property: String, value: String): String =
         CacheKey.getCacheKey(indexKeyPrefix, "set", property, value)
 
+    /** 构造 ZSet 索引的完整 Redis key */
     private fun zsetKey(property: String): String =
         CacheKey.getCacheKey(indexKeyPrefix, "zset", property)
 
+    /**
+     * 从 BETWEEN/NOT_BETWEEN 的 value 中解析 (min, max)。
+     * 支持 [ClosedFloatingPointRange] / [Array] 双元素 / [List] 双元素三种形态；
+     * 长度不足或含 null 返回 null（调用方按"空结果"处理）。
+     *
+     * @param value 范围值
+     * @return (min, max)，无法解析时 null
+     * @author K
+     * @since 1.0.0
+     */
     private fun rangeMinMax(value: Any): Pair<Double, Double>? = when (value) {
         is ClosedFloatingPointRange<*> -> (value.start as Number).toDouble() to (value.endInclusive as Number).toDouble()
         is Array<*> -> value.takeIf { it.size >= 2 }?.let { arr ->

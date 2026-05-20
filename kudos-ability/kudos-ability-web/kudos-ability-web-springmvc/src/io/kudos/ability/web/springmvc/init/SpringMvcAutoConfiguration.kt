@@ -54,6 +54,14 @@ open class SpringMvcAutoConfiguration : WebMvcConfigurer, IComponentInitializer 
     @Autowired(required = false)
     private var kudosValidator: LocalValidatorFactoryBean? = null
 
+    /**
+     * 覆盖 [WebMvcConfigurer.getValidator]，把 MVC 默认 validator 替换为 [kudosValidator]。
+     * 返回 null 等价于"沿用 Spring 默认"，因此与 [kudosValidator] 的 `required = false` 配合得当。
+     *
+     * @return 项目级 validator；未配置时为 null（Spring MVC 自行兜底）
+     * @author K
+     * @since 1.0.0
+     */
     override fun getValidator(): Validator? = kudosValidator
 
     /** 内嵌容器工厂——按 `kudos.ability.web.springmvc.server` 决定走 Tomcat / Jetty。 */

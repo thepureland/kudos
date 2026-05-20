@@ -18,14 +18,19 @@ package io.kudos.ability.file.minio.init.properties
  * @since 1.0.0
  */
 class AccessTokenServerProperties : AuthServerProperties() {
+    /** 是否启用 OAuth2 STS 模式；null 视为禁用 */
     var enabled: Boolean? = null
 
+    /** OAuth2 客户端 id（用于 Basic Authorization 头） */
     var clientId: String? = null
 
+    /** OAuth2 客户端密码；**不要写入日志** */
     var clientSecret: String? = null
 
+    /** OAuth2 授权类型，典型 `client_credentials` */
     var authorizationGrantType: String? = null
 
+    /** 客户端认证方式（保留字段，当前实现总是用 Basic Authorization） */
     var clientAuthenticationMethod: String? = null
 
     /**

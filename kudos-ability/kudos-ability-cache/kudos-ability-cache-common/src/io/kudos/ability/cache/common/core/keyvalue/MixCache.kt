@@ -104,9 +104,25 @@ class MixCache(
         return loaded
     }
 
+    /**
+     * 取 [localCache]；按策略推断必应非空，缺失时报含 strategy 信息的错以便定位。
+     *
+     * @return 本地 cache
+     * @throws IllegalArgumentException [localCache] 为 null 时
+     * @author K
+     * @since 1.0.0
+     */
     private fun requireLocal(): Cache =
         requireNotNull(localCache) { "localCache is null for strategy $strategy" }
 
+    /**
+     * 取 [remoteCache]；按策略推断必应非空，缺失时报含 strategy 信息的错以便定位。
+     *
+     * @return 远端 cache
+     * @throws IllegalArgumentException [remoteCache] 为 null 时
+     * @author K
+     * @since 1.0.0
+     */
     private fun requireRemote(): Cache =
         requireNotNull(remoteCache) { "remoteCache is null for strategy $strategy" }
 
@@ -212,15 +228,23 @@ class MixCache(
     }
 
     /**
-     * Fire-and-forget 广播：把失效消息异步派发给所有 [ICacheMessageHandler]。
+     * 把 cache 失效消息广播给所有节点（fire-and-forget 异步）。
      *
-     * 同步走广播会让 Redis pub/sub 等传输的 RTT 落到写路径上（一次 put → 一次跨节点广播 →
-     * 至少一次网络往返）。这里改成异步：写路径只负责把消息塞进 [broadcastExecutor] 的队列，
-     * 实际发送在 daemon 线程里完成。
+     * 从 Spring 容器拿所有 [ICacheMessageHandler]（通常是 Redis pub/sub 实现），
+     * 让其他节点收到通知后清掉对应本地缓存。`key` 为 null 表示整库清空。
+     *
+     * 异步派发原因：同步广播会让 Redis pub/sub 等传输的 RTT 落到写路径上（一次 put →
+     * 一次跨节点广播 → 至少一次网络往返）。改成异步后写路径只负责把消息塞进
+     * [broadcastExecutor] 的队列，实际发送在 daemon 线程里完成。
      *
      * 失败语义：每个 handler 的发送失败被单独捕获并 WARN 日志（**不会重试**——重复广播比
      * 偶发丢一条危险得多；下游 `MixCache.clearLocal` 只是丢本地副本，下次回源会再生）。
      * 队列满时退化为 caller-runs，等价于回到同步语义，宁可拖慢写也不丢消息。
+     *
+     * @param name 缓存名（带版本前缀）
+     * @param key 要清除的 key；null 表示整库
+     * @author K
+     * @since 1.0.0
      */
     fun pushMsgRedis(name: String, key: Any?) {
         val handlers = SpringKit.getBeansOfType<ICacheMessageHandler>()
@@ -242,8 +266,10 @@ class MixCache(
     }
 
     companion object {
+        /** 日志器 */
         private val log = LogFactory.getLog(this::class)
 
+        /** 保留字段：未来用于跨版本失效通知；当前实现不依赖 */
         private val cacheVersion: String? = null
 
         /**

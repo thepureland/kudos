@@ -87,6 +87,10 @@ class StreamConsumerEnvironRegistrar : ImportBeanDefinitionRegistrar, Environmen
         val allDefs = LinkedHashSet<String>()
         val defSplitter = Regex("[;,\\s]+")
 
+        /**
+         * 本地辅助函数：按分隔符 (`;` `,` 或空白) 切分原始字符串，去空白后加入 [allDefs] 去重集合。
+         * 提到顶层只为复用——下面 yaml 路径循环也需要再次调用同样的切分逻辑。
+         */
         fun addDefinitions(raw: String) {
             defSplitter.split(raw).map { it.trim() }.filter { it.isNotEmpty() }.forEach { allDefs.add(it) }
         }

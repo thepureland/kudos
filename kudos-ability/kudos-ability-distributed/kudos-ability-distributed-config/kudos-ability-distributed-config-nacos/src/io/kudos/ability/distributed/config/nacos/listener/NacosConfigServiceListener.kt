@@ -38,24 +38,68 @@ class NacosConfigServiceListener {
         configService = obtainConfigService(propertiesBuilder.get())
     }
 
+    /**
+     * 注册一个 dataId + group 的配置变更监听器。
+     *
+     * @param dataId Nacos dataId
+     * @param group Nacos group
+     * @param listener Nacos 提供的抽象监听器（业务侧实现 onChange 即可）
+     * @throws NacosException Nacos SDK 抛出
+     * @throws IllegalArgumentException 当 [configService] 尚未初始化时
+     * @author K
+     * @since 1.0.0
+     */
     @Throws(NacosException::class)
     fun addListener(dataId: String?, group: String?, listener: AbstractConfigChangeListener?) {
         configService.addListener(dataId, group, listener)
     }
 
+    /**
+     * 注销之前 [addListener] 注册的监听器。
+     *
+     * @param dataId Nacos dataId
+     * @param group Nacos group
+     * @param listener 要移除的监听器实例（必须与注册时同一引用）
+     * @throws IllegalArgumentException 当 [configService] 尚未初始化时
+     * @author K
+     * @since 1.0.0
+     */
     fun removeListener(dataId: String?, group: String?, listener: AbstractConfigChangeListener?) {
         configService.removeListener(dataId, group, listener)
     }
 
+    /**
+     * Nacos 启动所需 [Properties] 的链式构建器。
+     * 单独抽出来是为了让构造调用方避免直接操作可变 [Properties] —— 一次性 put 多个键比传 raw map 更可读。
+     *
+     * @author K
+     * @since 1.0.0
+     */
     class PropertiesBuilder {
+        /** 累积的属性集合 */
         private val properties = Properties()
 
+        /**
+         * 写入一对配置。
+         *
+         * @param key 属性名（一般是 Nacos SDK 已定义的常量）
+         * @param value 属性值
+         * @return 当前 builder 自身，便于链式调用
+         * @author K
+         * @since 1.0.0
+         */
         fun put(key: Any?, value: Any?): PropertiesBuilder = apply { properties[key] = value }
 
+        /**
+         * @return 累积好的 [Properties]
+         * @author K
+         * @since 1.0.0
+         */
         fun get(): Properties = properties
     }
 
     companion object {
+        /** Nacos server 地址属性名 */
         const val PRO_SERVER_ADDR_KEY: String = "serverAddr"
 
         /**
@@ -67,6 +111,17 @@ class NacosConfigServiceListener {
          */
         private val SERVICE_CACHE = ConcurrentHashMap<CacheKey, ConfigService>()
 
+        /**
+         * 按 properties 派生的缓存 key 取或创建 [ConfigService]。
+         *
+         * `computeIfAbsent` + 包装 [NacosException] 为 RuntimeException 让初始化期失败
+         * 直接打断启动而非静默吞掉。
+         *
+         * @param properties Nacos SDK 启动参数
+         * @return 已缓存或新建的 [ConfigService]
+         * @author K
+         * @since 1.0.0
+         */
         private fun obtainConfigService(properties: Properties): ConfigService {
             val key = CacheKey.of(properties)
             // computeIfAbsent + putIfAbsent 都行；前者更直观，且 NacosFactory.createConfigService
@@ -86,6 +141,14 @@ class NacosConfigServiceListener {
          */
         private data class CacheKey(val serverAddr: String, val namespace: String) {
             companion object {
+                /**
+                 * 从 [Properties] 提取 serverAddr + namespace 构造 [CacheKey]。
+                 *
+                 * @param properties Nacos SDK 配置
+                 * @return key 实例
+                 * @author K
+                 * @since 1.0.0
+                 */
                 fun of(properties: Properties): CacheKey = CacheKey(
                     serverAddr = properties.getProperty(PRO_SERVER_ADDR_KEY).orEmpty(),
                     namespace = properties.getProperty(PropertyKeyConst.NAMESPACE).orEmpty(),
