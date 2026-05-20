@@ -37,29 +37,25 @@ open class AuthRoleResourceService(
     private val log = LogFactory.getLog(this::class)
 
     @Transactional(readOnly = true)
-    override fun getResourceIdsByRoleId(roleId: String): Set<String> {
-        return resourceIdsByRoleIdCache.getResourceIds(roleId).toSet()
-    }
+    override fun getResourceIdsByRoleId(roleId: String): Set<String> =
+        resourceIdsByRoleIdCache.getResourceIds(roleId).toSet()
 
     @Transactional(readOnly = true)
-    override fun getRoleIdsByResourceId(resourceId: String): Set<String> {
-        return dao.searchRoleIdsByResourceId(resourceId)
-    }
+    override fun getRoleIdsByResourceId(resourceId: String): Set<String> =
+        dao.searchRoleIdsByResourceId(resourceId)
 
     @Transactional
     override fun batchBind(roleId: String, resourceIds: Collection<String>): Int {
-        if (resourceIds.isEmpty()) {
-            return 0
-        }
+        if (resourceIds.isEmpty()) return 0
         // 一次 SELECT 已存在的关系（resource_id 为 character(N)，DB 返回的字符串可能带 padding，统一 trim）。
-        val existing = dao.searchResourceIdsByRoleIds(listOf(roleId)).map { it.trim() }.toSet()
-        val boundResourceIds = resourceIds.map { it.trim() }.toSet() - existing
+        val existing = dao.searchResourceIdsByRoleIds(listOf(roleId)).mapTo(mutableSetOf()) { it.trim() }
+        val boundResourceIds = resourceIds.mapTo(mutableSetOf()) { it.trim() } - existing
         if (boundResourceIds.isEmpty()) {
             log.debug("批量绑定角色${roleId}与${resourceIds.size}个资源的关系，全部已存在，无新增。")
             return 0
         }
         val relations = boundResourceIds.map { trimmed ->
-            AuthRoleResource.Companion {
+            AuthRoleResource {
                 this.roleId = roleId
                 this.resourceId = trimmed
             }
@@ -85,9 +81,8 @@ open class AuthRoleResourceService(
     }
 
     @Transactional(readOnly = true)
-    override fun exists(roleId: String, resourceId: String): Boolean {
-        return dao.exists(roleId, resourceId.trim())
-    }
+    override fun exists(roleId: String, resourceId: String): Boolean =
+        dao.exists(roleId, resourceId.trim())
 
 
 }
