@@ -75,16 +75,19 @@ if (!resolved.startsWith(baseDir)) {
 ## 测试覆盖
 
 - `LocalUploadServiceTest`（2 case）—— 带分类目录上传 + 不带分类按日期上传
-- `LocalDeleteServiceTest`（4 case）—— `..` 路径拒绝、目录拒绝、不存在抛错、正常删除
+- `LocalDeleteServiceTest`（4 case）—— `..` 路径拒绝、目录拒绝、不存在抛错、正常删除；
+  每个用例使用独立 `@TempDir` 作为 `basePath`
+- `LocalUploadServiceTest`（3 case）—— 分类 / 按日期目录写入、拒绝 `../` 形式的文件名穿越；
+  每个用例使用独立 `@TempDir` 作为 `basePath`
 
 依赖 kudos-test-common；不需要 Docker。
 
 ## 已知限制 / 后续工作
 
-- ❗ `LocalUploadService` 自身不做路径穿越检查——假设 `fileName` 来自框架内部 uuid。
-  如果业务侧用用户输入做 `model.fileName`，需自行加白名单
-- ❗ 测试在 `${user.home}/fserver/upload/__/__*` 创建数据但**不清理**；连续跑测试会
-  累积，且与生产 `base-path` 共享根目录时风险更大。建议测试用 `@TempDir`
+- ✅ `LocalUploadService` 已对显式 `model.fileName` 做 basename 校验，拒绝 `..`、`/`、
+  `\`，并对最终路径做 `normalize + startsWith(basePath)` 校验
+- ✅ local 模块测试已改用 `@TempDir` 覆盖 `LocalProperties.basePath`，不再写入
+  `${user.home}/fserver/upload`
 - ❗ `pathPrefix()` 返回空串，业务侧无法直接通过 HTTP URL 访问上传后的文件——需要
   Web 层挂载静态资源 mapping。本模块不提供（与 file-minio 直接返回 URL 的设计不一致）
 - ❗ `LocalUploadService.createBucket` 是冗余调用——`createFileDir` 会一并创建中间目录
