@@ -9,6 +9,7 @@ import io.kudos.base.lang.reflect.getSuperClass
 import io.kudos.base.lang.reflect.getSuperInterfaces
 import jakarta.validation.Constraint
 import jakarta.validation.Valid
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.full.*
@@ -23,8 +24,14 @@ object TerminalConstraintsCreator {
 
     /**
      * Map(Bean类名-属性名前缀，Map(属性名， LinkedHashMap(约束名，Array(Map(约束注解的属性名，约束注解的属性值)))))
+     *
+     * 这是请求级校验热路径上的 cache（[create] 被 Controller / Service 入参校验调用），
+     * 多线程并发读写。早先用 [mutableMapOf]（HashMap），并发 put 触发 rehash 时存在内部
+     * 链表/树结构损坏的风险（JVM 经典坑）。改成 [ConcurrentHashMap]，读路径无锁，写路径
+     * 也线程安全；[create] 里"读 → miss 时算 → 写"换成 `computeIfAbsent` 还能去掉冗余计算。
      */
-    private val constrainCacheMap = mutableMapOf<String, Map<String, LinkedHashMap<String, Array<Map<String, Any>>>>>()
+    private val constrainCacheMap =
+        ConcurrentHashMap<String, Map<String, LinkedHashMap<String, Array<Map<String, Any>>>>>()
 
     /**
      * 生成Bean类对应的终端验证规则
@@ -40,11 +47,16 @@ object TerminalConstraintsCreator {
         propertyPrefix: String = ""
     ): Map<String, LinkedHashMap<String, Array<Map<String, Any>>>> {
         val cacheKey = "${beanClass.qualifiedName}-$propertyPrefix"
-        constrainCacheMap[cacheKey]?.takeUnless { SystemKit.isDebug() }?.let { return it }
-        val annotations = mutableMapOf<String, MutableList<Annotation>>()
-        parseAnnotations(annotations, beanClass, null)
-        return genRule(annotations, propertyPrefix, beanClass).also {
-            constrainCacheMap[cacheKey] = it
+        // Debug 模式跳缓存（保留原行为：调试期总走重算，便于改注解后立即生效）
+        if (SystemKit.isDebug()) {
+            val annotations = mutableMapOf<String, MutableList<Annotation>>()
+            parseAnnotations(annotations, beanClass, null)
+            return genRule(annotations, propertyPrefix, beanClass).also { constrainCacheMap[cacheKey] = it }
+        }
+        return constrainCacheMap.computeIfAbsent(cacheKey) {
+            val annotations = mutableMapOf<String, MutableList<Annotation>>()
+            parseAnnotations(annotations, beanClass, null)
+            genRule(annotations, propertyPrefix, beanClass)
         }
     }
 
