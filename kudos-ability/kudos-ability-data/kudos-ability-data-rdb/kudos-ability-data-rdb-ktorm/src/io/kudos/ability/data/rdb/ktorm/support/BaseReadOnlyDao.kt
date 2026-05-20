@@ -913,6 +913,26 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         return orderExpressions.toTypedArray()
     }
 
+    /**
+     * 把"属性名 → (操作符, 值)"映射翻译成 ktorm 的 where 条件表达式（AND / OR 复合）。
+     *
+     * 分支语义：
+     * - `IS_NULL` / `IS_NOT_NULL`：直接走列的 null 检查
+     * - 值为 null 或 ""：默认走 `column IS NULL`；`ignoreNull=true` 时把决定权交给 `whereConditionFactory`
+     * - 否则走 [SqlWhereExpressionFactory] 按操作符生成表达式
+     * - 显式 `whereConditionFactory` 可覆盖默认行为（用于子类做自定义条件）
+     *
+     * 兜底：所有属性都没产生表达式且有自定义工厂时，遍历所有列让工厂"为每一列再尝试一次"，
+     * 允许工厂基于列名给出条件（典型用途：列名后缀约定）。
+     *
+     * @param propertyMap 属性 → (操作符, 值)
+     * @param andOr 多条件之间的拼接逻辑，null 默认按 AND
+     * @param ignoreNull 是否在值为 null/"" 时跳过该列（true：让 factory 决定）
+     * @param whereConditionFactory 自定义条件生成器，null 时走默认
+     * @return 合并后的条件表达式；无任何条件时返回 null（调用方据此跳过 where）
+     * @author K
+     * @since 1.0.0
+     */
     @Suppress("UNCHECKED_CAST")
     protected fun processWhere(
         propertyMap: Map<String, Pair<OperatorEnum, *>>,
@@ -1118,6 +1138,15 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         return listOf(query, returnProps, returnColumnMap)
     }
 
+    /**
+     * 反射拿到表绑定的实体类的属性名列表；过滤掉 ktorm Entity 接口自带的 3 个 meta 属性
+     * （`entityClass` / `properties` / `changedProperties`）避免把它们当业务字段查询。
+     *
+     * @return 实体业务属性名列表
+     * @throws IllegalArgumentException 表未绑定实体类型
+     * @author K
+     * @since 1.0.0
+     */
     protected fun getEntityProperties(): List<String> {
         val tableEntityClass = requireNotNull(table().entityClass) { "表未绑定实体类型，无法提取实体属性。" }
         return tableEntityClass.memberProperties
@@ -1125,6 +1154,20 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
             .map { it.name }
     }
 
+    /**
+     * 把 [ISearchPayload] 拆成"列名 → (操作符, 值)" map，准备喂给 [processWhere]。
+     *
+     * 三段拼装：
+     * 1. payload 的 bean 属性 + 显式 operator 映射 → 默认 EQ
+     * 2. nullProperties 标记的列：仅在值未在 bean 中出现时才补 `IS_NULL`（避免与"值存在但为 null"语义冲突）
+     * 3. payload 自带的 criterions（OR/复合）追加并覆盖：业务方手写的优先级最高
+     *
+     * @param searchPayload 业务侧传入的查询载荷
+     * @param entityProperties 当前表实体的合法属性列表（用作白名单过滤）
+     * @return 列名 → (操作符, 值) 的 map
+     * @author K
+     * @since 1.0.0
+     */
     protected fun getWherePropertyMap(
         searchPayload: ISearchPayload, entityProperties: List<String>
     ): Map<String, Pair<OperatorEnum, *>> {
@@ -1160,6 +1203,17 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         return resultMap
     }
 
+    /**
+     * 按 returnType 反射出的属性 ∩ 表实体属性，生成 ktorm Column 映射，供后续 select 用。
+     *
+     * 取交集是防御性设计——returnType 可能是 VO/DTO 多含/少含字段，硬塞列会让 ktorm 报错；
+     * 交集保证查的列在表上一定存在，多余字段调用方在 mapTo 阶段会被忽略或留空。
+     *
+     * @param returnType 目标返回类型
+     * @return 属性名 → 列 的 map
+     * @author K
+     * @since 1.0.0
+     */
     protected fun getColumns(returnType: KClass<*>): Map<String, Column<Any>> {
         val entityProperties = getEntityProperties()
         val properties = returnType.memberProperties.map { it.name }
