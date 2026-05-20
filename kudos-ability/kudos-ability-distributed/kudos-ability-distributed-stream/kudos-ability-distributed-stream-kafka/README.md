@@ -47,8 +47,8 @@ SpringApplication.run(KafkaProducerApplication::class.java,
 
 - ❗ 同 stream-rabbit：模块自身仅装配类——是 spring-cloud-starter-stream-kafka 的 thin
   re-package
-- ❗ `@Import(StreamConsumerEnvironRegistrar::class)` 注释停用了；启用后才能自动聚合 multi-binding
-  的 function.definition
+- ✅ 已启用 `@Import(StreamConsumerEnvironRegistrar::class)`，Kafka 模块会参与 kudos yml
+  function.definition 自动聚合
 - ❗ 没有自定义 Kafka header 透传策略——业务侧透传非标准 header 需自行配置
   `spring.cloud.stream.kafka.binder.headers`
 - ❗ 默认 yml `brokers: localhost:9092` 仅本地开发可用；生产部署必须通过外部化配置覆盖
