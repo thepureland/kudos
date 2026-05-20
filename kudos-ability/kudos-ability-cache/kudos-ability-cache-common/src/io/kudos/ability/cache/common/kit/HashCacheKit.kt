@@ -35,11 +35,8 @@ object HashCacheKit {
      * @param cacheName 缓存名称
      * @return true: 开启缓存，false：未开启缓存
      */
-    fun isCacheActive(cacheName: String): Boolean {
-        val configProvider = getConfigProvider() ?: return false
-        val config = configProvider.getHashCacheConfigs()[cacheName] ?: return false
-        return config.isActive
-    }
+    fun isCacheActive(cacheName: String): Boolean =
+        getConfigProvider()?.getHashCacheConfigs()?.get(cacheName)?.isActive == true
 
     /**
      * 返回指定名称的 Hash 缓存配置信息。
@@ -63,11 +60,8 @@ object HashCacheKit {
      * @return true: 立即回写缓存, 反之为 false。缓存不存在也返回 false
      */
     fun isWriteInTime(cacheName: String): Boolean {
-        if (!isCacheActive(cacheName)) {
-            return false
-        }
-        val cacheConfig = getCacheConfig(cacheName) ?: return false
-        return cacheConfig.isWriteInTime
+        if (!isCacheActive(cacheName)) return false
+        return getCacheConfig(cacheName)?.isWriteInTime == true
     }
 
     /**
@@ -94,12 +88,7 @@ object HashCacheKit {
      */
     fun doEvict(cacheName: String, id: Any) {
         if (!isCacheActive(cacheName)) return
-        val beansOfType = SpringKit.getBeansOfType<AbstractHashCacheHandler<*>>()
-        beansOfType.values.forEach {
-            if (it.cacheName() == cacheName) {
-                it.evict(id)
-            }
-        }
+        handlersFor(cacheName).forEach { it.evict(id) }
     }
 
     /**
@@ -136,12 +125,7 @@ object HashCacheKit {
      */
     fun reload(cacheName: String, id: Any) {
         if (!isCacheActive(cacheName)) return
-        val beansOfType = SpringKit.getBeansOfType<AbstractHashCacheHandler<*>>()
-        beansOfType.values.forEach {
-            if (it.cacheName() == cacheName) {
-                it.reload(id)
-            }
-        }
+        handlersFor(cacheName).forEach { it.reload(id) }
     }
 
     /**
@@ -150,17 +134,10 @@ object HashCacheKit {
      * @param cacheName 缓存名
      */
     fun reloadAll(cacheName: String) {
-        if (!isCacheActive(cacheName)) {
-            return
-        }
+        if (!isCacheActive(cacheName)) return
         val cacheConfig = getCacheConfig(cacheName) ?: return
         if (cacheConfig.isWriteOnBoot) {
-            val beansOfType = SpringKit.getBeansOfType<AbstractHashCacheHandler<*>>()
-            beansOfType.values.forEach {
-                if (it.cacheName() == cacheName) {
-                    it.reloadAll(true)
-                }
-            }
+            handlersFor(cacheName).forEach { it.reloadAll(true) }
         } else {
             getHashCache(cacheName).clear(cacheName)
         }
@@ -174,9 +151,7 @@ object HashCacheKit {
      * @return true：存在，false：不存在
      */
     fun existsById(cacheName: String, id: Any): Boolean {
-        if (!isCacheActive(cacheName)) {
-            return false
-        }
+        if (!isCacheActive(cacheName)) return false
         return getHashCache(cacheName).existsById(cacheName, id)
     }
 
@@ -203,12 +178,20 @@ object HashCacheKit {
      */
     fun getValue(cacheName: String, id: Any): Any? {
         if (!isCacheActive(cacheName)) return null
-        val handler = SpringKit.getBeansOfType<AbstractHashCacheHandler<*>>().values
-            .firstOrNull { it.cacheName() == cacheName } ?: return null
+        val handler = handlersFor(cacheName).firstOrNull() ?: return null
         @Suppress("UNCHECKED_CAST")
         val entityClass = handler.exposedEntityClass() as KClass<IIdEntity<Any?>>
         return getHashCache(cacheName).getById(cacheName, id, entityClass)
     }
+
+    /**
+     * 收口「按 cacheName 找 Handler」的样板：扫 [AbstractHashCacheHandler] 类型的全部 bean，
+     * 取 `cacheName()` 匹配的子集。N 个调用点之前各自手写 `forEach { if (...) ... }`，
+     * 现在统一走这里——新增 handler 类型时只此一处需要改。
+     */
+    private fun handlersFor(cacheName: String): List<AbstractHashCacheHandler<*>> =
+        SpringKit.getBeansOfType<AbstractHashCacheHandler<*>>().values
+            .filter { it.cacheName() == cacheName }
 
     /**
      * 根据名称获取 Hash 缓存（带 id 对象集合）。
@@ -236,9 +219,7 @@ object HashCacheKit {
      * @return 若未配置或非 LOCAL_REMOTE/SINGLE_LOCAL 则 false
      */
     fun isLocalCacheEnabled(cacheName: String): Boolean {
-        val configProvider = getConfigProvider() ?: return false
-        val config = configProvider.getHashCacheConfigs()[cacheName] ?: return false
-        val strategy = config.resolvedStrategy ?: return false
+        val strategy = getConfigProvider()?.getHashCacheConfigs()?.get(cacheName)?.resolvedStrategy ?: return false
         return strategy == CacheStrategy.LOCAL_REMOTE || strategy == CacheStrategy.SINGLE_LOCAL
     }
 

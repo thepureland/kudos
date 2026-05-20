@@ -75,11 +75,7 @@ object KeyValueCacheKit {
      * @author K
      * @since 1.0.0
      */
-    fun getValue(cacheName: String, key: Any): Any? {
-        val cache = getCache(cacheName) ?: return null
-        val value = cache.get(key)
-        return value?.get()
-    }
+    fun getValue(cacheName: String, key: Any): Any? = getCache(cacheName)?.get(key)?.get()
 
     /**
      * 写入缓存
@@ -92,8 +88,7 @@ object KeyValueCacheKit {
      */
     fun put(cacheName: String, key: Any, value: Any?) {
         if (!isCacheActive(cacheName)) return
-        val cache = getCache(cacheName)
-        cache?.put(key, value)
+        getCache(cacheName)?.put(key, value)
     }
 
     /**
@@ -107,8 +102,7 @@ object KeyValueCacheKit {
      */
     fun putIfAbsent(cacheName: String, key: Any, value: Any?) {
         if (!isCacheActive(cacheName)) return
-        val cache = getCache(cacheName)
-        cache?.putIfAbsent(key, value)
+        getCache(cacheName)?.putIfAbsent(key, value)
     }
 
     /**
@@ -121,11 +115,10 @@ object KeyValueCacheKit {
      */
     fun evict(cacheName: String, key: Any) {
         if (!isCacheActive(cacheName)) return
-        val cache = getCache(cacheName) as? MixCache? ?: return
-        //如果是本地缓存，则需要依赖通知发布删除
-        if (CacheStrategy.SINGLE_LOCAL == cache.strategy) {
-            val coVo = CacheOperatorVo(CacheOperatorVo.TYPE_EVICT, cacheName, key)
-            coVo.doNotify()
+        val cache = getCache(cacheName) as? MixCache ?: return
+        // 单机本地缓存（SINGLE_LOCAL）跨进程不可达，发通知让各节点自行 evict；其他策略远端权威，直接 evict
+        if (cache.strategy == CacheStrategy.SINGLE_LOCAL) {
+            CacheOperatorVo(CacheOperatorVo.TYPE_EVICT, cacheName, key).doNotify()
         } else {
             doEvict(cacheName, key)
         }
@@ -141,8 +134,7 @@ object KeyValueCacheKit {
      */
     fun doEvict(cacheName: String, key: Any) {
         if (!isCacheActive(cacheName)) return
-        val cache = getCache(cacheName)
-        cache?.evict(key)
+        getCache(cacheName)?.evict(key)
     }
 
     /**
@@ -154,11 +146,9 @@ object KeyValueCacheKit {
      */
     fun clear(cacheName: String) {
         if (!isCacheActive(cacheName)) return
-        val cache = getCache(cacheName) as? MixCache? ?: return
-        //如果是本地缓存，则需要依赖通知发布删除
-        if (CacheStrategy.SINGLE_LOCAL == cache.strategy) {
-            val coVo = CacheOperatorVo(CacheOperatorVo.TYPE_CLEAR, cacheName, null)
-            coVo.doNotify()
+        val cache = getCache(cacheName) as? MixCache ?: return
+        if (cache.strategy == CacheStrategy.SINGLE_LOCAL) {
+            CacheOperatorVo(CacheOperatorVo.TYPE_CLEAR, cacheName, null).doNotify()
         } else {
             doClear(cacheName)
         }
@@ -173,8 +163,7 @@ object KeyValueCacheKit {
      */
     fun doClear(cacheName: String) {
         if (!isCacheActive(cacheName)) return
-        val cache = getCache(cacheName)
-        cache?.clear()
+        getCache(cacheName)?.clear()
     }
 
     /**
@@ -215,9 +204,7 @@ object KeyValueCacheKit {
         if (!isCacheActive(cacheName)) return
         val cacheConfig = getCacheConfig(cacheName) ?: return
         if (cacheConfig.isWriteOnBoot) {
-            SpringKit.getBeansOfType<AbstractKeyValueCacheHandler<*>>().values
-                .filter { it.cacheName() == cacheName }
-                .forEach { it.reload(key) }
+            handlersFor(cacheName).forEach { it.reload(key) }
         } else {
             evict(cacheName, key)
         }
@@ -232,13 +219,16 @@ object KeyValueCacheKit {
         if (!isCacheActive(cacheName)) return
         val cacheConfig = getCacheConfig(cacheName) ?: return
         if (cacheConfig.isWriteOnBoot) {
-            SpringKit.getBeansOfType<AbstractKeyValueCacheHandler<*>>().values
-                .filter { it.cacheName() == cacheName }
-                .forEach { it.reloadAll(true) }
+            handlersFor(cacheName).forEach { it.reloadAll(true) }
         } else {
             clear(cacheName)
         }
     }
+
+    /** 收口「按 cacheName 找 Handler」的样板（与 [HashCacheKit.handlersFor] 同思路）。 */
+    private fun handlersFor(cacheName: String): List<AbstractKeyValueCacheHandler<*>> =
+        SpringKit.getBeansOfType<AbstractKeyValueCacheHandler<*>>().values
+            .filter { it.cacheName() == cacheName }
 
     /**
      * 清理缓存开头的key
