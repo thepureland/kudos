@@ -9,7 +9,6 @@ import org.springframework.data.redis.cache.RedisCache
 import org.springframework.data.redis.cache.RedisCacheConfiguration
 import org.springframework.data.redis.cache.RedisCacheManager
 import org.springframework.data.redis.cache.RedisCacheWriter
-import java.nio.charset.StandardCharsets
 import java.time.Duration
 
 /**
@@ -148,12 +147,19 @@ class RedisKeyValueCacheManager(
      * @param pattern 业务key模式，支持通配符，例如"user:*"
      */
     override fun evictByPattern(cacheName: String, pattern: String) {
+        // 与 [ScanClearRedisCache.clear] 同样的原因：Spring Boot 4.0.6 的
+        // `cacheWriter.clear(name, pattern)` 在我们的 Redis 配置下并不真的删 key
+        // （见 ScanClearRedisCache KDoc 的根因分析）。这里改用 RedisTemplate.keys + delete
+        // 走标准 API。
         val prefixProvider = defaultCacheConfiguration.keyPrefix
         val keyPrefix = prefixProvider.compute(cacheName)
         val realKey: String = versionConfig.getFinalCacheName(keyPrefix)
         val fullPattern = realKey + pattern
-        val patternBytes = fullPattern.toByteArray(StandardCharsets.UTF_8)
-        cacheWriter.clear(realKey, patternBytes)
+        val template = findRedisTemplate() ?: return
+        val matched = template.keys(fullPattern)
+        if (matched.isNotEmpty()) {
+            template.delete(matched)
+        }
     }
 
     /**
