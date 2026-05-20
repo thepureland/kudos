@@ -49,9 +49,16 @@ infix fun KProperty1<*, *>.inArray(values: Array<*>): Criterion = op(OperatorEnu
 infix fun KProperty1<*, *>.notInList(values: Collection<*>): Criterion = op(OperatorEnum.NOT_IN, values)
 infix fun KProperty1<*, *>.notInArray(values: Array<*>): Criterion = op(OperatorEnum.NOT_IN, values)
 
+/** SQL `IS NULL`：例 `User::name.isNull()`。无需值参数，故非 infix。 */
 fun KProperty1<*, *>.isNull(): Criterion = op(OperatorEnum.IS_NULL)
+
+/** SQL `IS NOT NULL`：例 `User::name.isNotNull()`。 */
 fun KProperty1<*, *>.isNotNull(): Criterion = op(OperatorEnum.IS_NOT_NULL)
+
+/** SQL "字段为空字符串"：例 `User::name.isEmpty()`。和 [isNull] 语义不同，请按需选用。 */
 fun KProperty1<*, *>.isEmpty(): Criterion = op(OperatorEnum.IS_EMPTY, "")
+
+/** SQL "字段非空字符串"：例 `User::name.isNotEmpty()`。 */
 fun KProperty1<*, *>.isNotEmpty(): Criterion = op(OperatorEnum.IS_NOT_EMPTY, "")
 
 infix fun KProperty1<*, *>.between(range: ClosedRange<*>): Criterion = op(OperatorEnum.BETWEEN, range)
