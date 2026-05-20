@@ -47,6 +47,16 @@ object WireMockTestContainer {
         }
     }
 
+    /**
+     * WireMock 容器目前不注册任何 Spring 属性——测试代码会直接拿
+     * [getRunningContainer] 拼出 baseUrl 自用，不需要透传到 Bean 配置层。
+     * 保留方法是为了和其他 TestContainer 形态对齐 [startIfNeeded] 调用模板。
+     *
+     * @param registry Spring 动态属性注册表（允许 null）
+     * @param runningContainer 运行中的容器
+     * @author K
+     * @since 1.0.0
+     */
     private fun registerProperties(registry: DynamicPropertyRegistry?, runningContainer: Container) {
     }
 

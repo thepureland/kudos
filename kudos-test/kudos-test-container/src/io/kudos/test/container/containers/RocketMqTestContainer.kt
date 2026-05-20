@@ -86,6 +86,16 @@ object RocketMqTestContainer {
         }
     }
 
+    /**
+     * 把 RocketMQ name-server 地址注册到 Spring Cloud Stream 配置。
+     * 直接用常量 `NAMESRV_ADDR` 而非从 `runningNameServerContainer` 算端口——
+     * 容器侧已用 `bindingPort` 把固定 PORT 映射到容器，避免每次启动端口漂移。
+     *
+     * @param registry Spring 动态属性注册表
+     * @param runningNameServerContainer name-server 容器（保留参数以便后续扩展用动态端口）
+     * @author K
+     * @since 1.0.0
+     */
     private fun registerProperties(registry: DynamicPropertyRegistry, runningNameServerContainer: Container) {
         registry.add("spring.cloud.stream.rocketmq.binder.name-server") { NAMESRV_ADDR }
     }

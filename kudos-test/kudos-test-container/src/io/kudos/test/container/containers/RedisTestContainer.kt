@@ -44,6 +44,18 @@ object RedisTestContainer {
         }
     }
 
+    /**
+     * 把 Redis 容器实际 host/port 注册到两组属性：
+     * 1. `kudos.ability.data.redis.redis-map.*` —— kudos 自家 Redis 抽象层走的配置
+     * 2. `spring.data.redis.*` —— Spring Data Redis（被 NettyWebSocketDistributedTest 这类底层组件直接读）
+     *
+     * 两组都要写——只写 (1) 会导致 NettyWebSocketDistributedTest 走原始 spring 配置读到错误地址。
+     *
+     * @param registry Spring 动态属性注册表
+     * @param runningContainer 运行中的容器
+     * @author K
+     * @since 1.0.0
+     */
     private fun registerProperties(registry: DynamicPropertyRegistry, runningContainer : Container) {
         val firstPort = runningContainer.ports.first()
         val host = requireNotNull(firstPort.ip) { "container port ip is null" }

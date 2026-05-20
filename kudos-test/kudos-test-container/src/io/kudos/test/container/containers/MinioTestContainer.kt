@@ -64,6 +64,15 @@ object MinioTestContainer {
         }
     }
 
+    /**
+     * 注册 MinIO endpoint 到 Spring 动态属性。内/外部 endpoint 都指向同一 URL——
+     * 测试环境下 Docker host 可达，不需要区分公网/内网。
+     *
+     * @param registry Spring 动态属性注册表
+     * @param runningContainer 运行中的容器
+     * @author K
+     * @since 1.0.0
+     */
     private fun registerProperties(registry: DynamicPropertyRegistry, runningContainer : Container) {
         val host = runningContainer.ports.first().ip
         val port = runningContainer.ports.first().publicPort
