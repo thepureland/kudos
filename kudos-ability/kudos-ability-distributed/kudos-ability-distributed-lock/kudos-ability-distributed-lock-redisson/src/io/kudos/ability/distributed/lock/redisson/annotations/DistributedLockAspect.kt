@@ -49,6 +49,13 @@ class DistributedLockAspect {
     private val log = LogFactory.getLog(this::class)
     private val parameterNameDiscoverer = DefaultParameterNameDiscoverer()
 
+    /**
+     * 切点：匹配标注了 [io.kudos.ability.distributed.lock.common.annotations.DistributedLock] 的方法。
+     * 方法体保持 `Unit`，仅作为切点占位。
+     *
+     * @author K
+     * @since 1.0.0
+     */
     @Pointcut("@annotation(io.kudos.ability.distributed.lock.common.annotations.DistributedLock)")
     fun cut() = Unit
 
