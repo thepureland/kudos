@@ -331,12 +331,34 @@ open class SysResourceService(
         return detail
     }
 
+    /**
+     * 走资源 hash 缓存按子系统编码 + 资源类型取列表。
+     * 给多个 `*FromCache` overrides 复用，避免在每处重复"枚举 → code"的转换。
+     *
+     * @param subSystemCode 子系统编码
+     * @param resourceType 资源类型枚举
+     * @return 资源缓存条目列表
+     * @author K
+     * @since 1.0.0
+     */
     private fun getCachedResourcesByType(
         subSystemCode: String,
         resourceType: ResourceTypeEnum,
     ): List<SysResourceCacheEntry> =
         sysResourceHashCache.getResourcesBySubSystemCodeAndType(subSystemCode, resourceType.code)
 
+    /**
+     * 把扁平的 [SysResourceRow] 列表按 parentId 装配成树。
+     *
+     * 算法：先把每行映射为 [SysResourceTreeRow] 并按 id 做 map → 再遍历挂到父节点的 children；
+     * 父节点不在列表里则视为根。最后按 orderNum 递归排序。
+     *
+     * @param records 待装配的扁平资源列表
+     * @param parentId 指定根：非空时只返回该节点的子树
+     * @return 根节点列表（或指定 parentId 的子节点）
+     * @author K
+     * @since 1.0.0
+     */
     private fun buildResourceTree(
         records: List<SysResourceRow>,
         parentId: String?,
@@ -351,6 +373,14 @@ open class SysResourceService(
         return parentId?.let { nodeMap[it]?.children.orEmpty() } ?: rootNodes
     }
 
+    /**
+     * 把 [SysResourceRow] 浅拷贝成 [SysResourceTreeRow]，初始 children 为空容器以备后续挂载。
+     *
+     * @param record 单条资源记录
+     * @return 树节点
+     * @author K
+     * @since 1.0.0
+     */
     private fun toTreeRow(record: SysResourceRow): SysResourceTreeRow =
         SysResourceTreeRow(
             id = record.id,
@@ -367,6 +397,13 @@ open class SysResourceService(
             children = mutableListOf(),
         )
 
+    /**
+     * 递归按 orderNum 升序排序节点列表及其子树；null orderNum 排到最末（按 Int.MAX_VALUE 处理）。
+     *
+     * @param nodes 待排序节点列表（in-place 排序）
+     * @author K
+     * @since 1.0.0
+     */
     private fun sortResourceTree(nodes: MutableList<SysResourceTreeRow>) {
         nodes.sortBy { it.orderNum ?: Int.MAX_VALUE }
         nodes.forEach { node ->
@@ -374,14 +411,43 @@ open class SysResourceService(
         }
     }
 
+    /**
+     * 资源更新后的同步动作：当前只发 [SysResourceUpdated] 事件，由各级缓存订阅者自行刷新。
+     *
+     * 入参 `any` / `oldResource` 暂未使用——保留参数是为给后续做"差量缓存清理"留扩展点
+     * （例如旧 parentId 变化时需要同时清新旧父节点的子树缓存）。
+     *
+     * @param any 更新入参（含新字段值）
+     * @param id 资源 id
+     * @param oldResource 更新前的资源快照，可为 null
+     * @author K
+     * @since 1.0.0
+     */
     private fun syncResourceUpdate(any: Any, id: String, oldResource: SysResource?) {
         eventPublisher.publishEvent(SysResourceUpdated(id = id))
     }
 
+    /**
+     * 资源删除后的同步动作：发 [SysResourceDeleted] 事件由订阅者清理缓存/外链。
+     *
+     * @param resource 已被删除的资源对象（带 id）
+     * @author K
+     * @since 1.0.0
+     */
     private fun syncResourceDelete(resource: SysResource) {
         eventPublisher.publishEvent(SysResourceDeleted(id = resource.id))
     }
 
+    /**
+     * 自底向上沿 parentId 链收集所有祖先 id；链上某节点不存在或 parentId 为空即终止。
+     *
+     * 注意：调用方 [fetchAllParentIds] 会再 `reverse()`，所以结果是"从近到远"。
+     *
+     * @param itemId 起点节点 id
+     * @param results 累积容器（追加）
+     * @author K
+     * @since 1.0.0
+     */
     private fun collectParentIds(itemId: String, results: MutableList<String>) {
         var currentId: String? = itemId
         while (currentId != null) {
@@ -391,6 +457,16 @@ open class SysResourceService(
         }
     }
 
+    /**
+     * 从 update 入参中抽 id：限定入参实现 [IIdEntity] 且 id 是 String。
+     * 不满足契约直接 [error]——属于编程错误，不该静默失败。
+     *
+     * @param any 更新入参
+     * @return 资源 id
+     * @throws IllegalStateException 入参类型不被支持
+     * @author K
+     * @since 1.0.0
+     */
     private fun requireResourceId(any: Any): String =
         (any as? IIdEntity<*>)?.id as? String
             ?: error("更新资源时不支持的入参类型: ${any::class.qualifiedName}")

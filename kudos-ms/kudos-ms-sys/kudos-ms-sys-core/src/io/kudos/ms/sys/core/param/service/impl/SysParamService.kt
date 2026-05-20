@@ -132,6 +132,15 @@ open class SysParamService(
         return count
     }
 
+    /**
+     * 从 update 入参抽 id；要求实现 [IIdEntity] 且 id 是 String。
+     *
+     * @param any 更新入参
+     * @return 参数 id
+     * @throws IllegalStateException 入参类型不被支持
+     * @author K
+     * @since 1.0.0
+     */
     private fun requireParamId(any: Any): String =
         (any as? IIdEntity<*>)?.id as? String
             ?: error("更新参数时不支持的入参类型: ${any::class.qualifiedName}")

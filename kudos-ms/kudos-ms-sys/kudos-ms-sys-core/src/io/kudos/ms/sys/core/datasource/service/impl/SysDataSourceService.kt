@@ -172,6 +172,14 @@ open class SysDataSourceService(
         }.onFailure { log.warn("测试数据源连通性失败 url=$url username=$username: ${it.message}") }
             .getOrDefault(false)
 
+    /**
+     * 列表增强：批量从租户缓存补 tenantName 字段，避免逐行查询。
+     * 空列表直接返回，避免向缓存层传空集合。
+     *
+     * @param records 待增强的数据源行列表（in-place 修改）
+     * @author K
+     * @since 1.0.0
+     */
     private fun enrichTenantNames(records: List<SysDataSourceRow>) {
         if (records.isEmpty()) return
         val tenants = sysTenantApi.getTenantsFromCacheByIds(records.mapNotNull { it.tenantId })
@@ -180,6 +188,17 @@ open class SysDataSourceService(
         }
     }
 
+    /**
+     * 详情增强：仅当 returnType 是 [SysDataSourceDetail] 时填充 `tenantName`；
+     * 其他返回类型保持原样，不引入无关字段。
+     *
+     * @param R 返回类型
+     * @param result 待增强对象
+     * @param returnType 期望返回类型
+     * @return 增强后的对象（类型不匹配时未被修改）
+     * @author K
+     * @since 1.0.0
+     */
     private fun <R : Any> enrichDataSourceDetail(result: R?, returnType: KClass<R>): R? {
         if (returnType == SysDataSourceDetail::class && result is SysDataSourceDetail) {
             result.tenantName = result.tenantId
@@ -189,6 +208,15 @@ open class SysDataSourceService(
         return result
     }
 
+    /**
+     * 从 update 入参抽 id；要求实现 [IIdEntity] 且 id 是 String。
+     *
+     * @param any 更新入参
+     * @return 数据源 id
+     * @throws IllegalStateException 入参类型不被支持
+     * @author K
+     * @since 1.0.0
+     */
     private fun requireDataSourceId(any: Any): String =
         (any as? IIdEntity<*>)?.id as? String
             ?: error("更新数据源时不支持的入参类型: ${any::class.qualifiedName}")
