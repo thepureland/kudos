@@ -3,7 +3,7 @@ package io.kudos.ms.sys.core.accessrule.service.impl
 import io.kudos.base.enums.impl.CommonErrorCodeEnum
 import io.kudos.base.error.ServiceException
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.model.contract.entity.IIdEntity
+import io.kudos.ms.sys.core.platform.service.impl.requireStringId
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.eq
 import io.kudos.base.support.service.impl.BaseCrudService
@@ -125,7 +125,7 @@ open class SysAccessRuleService(
      */
     @Transactional
     override fun update(any: Any): Boolean {
-        val id = requireAccessRuleId(any)
+        val id = requireStringId(any, "访问规则")
         val before = dao.get(id)
         return completeCrudUpdate(
             success = super.update(any),
@@ -187,8 +187,4 @@ open class SysAccessRuleService(
         return count
     }
 
-    /** 从更新入参中解析主键，非 [IIdEntity] 时抛出异常。 */
-    private fun requireAccessRuleId(any: Any): String =
-        (any as? IIdEntity<*>)?.id as? String
-            ?: error("更新访问规则时不支持的入参类型: ${any::class.qualifiedName}")
 }

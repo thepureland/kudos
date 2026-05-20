@@ -9,7 +9,7 @@ import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.data.json.JsonKit
 import io.kudos.base.error.ServiceException
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.model.contract.entity.IIdEntity
+import io.kudos.ms.sys.core.platform.service.impl.requireStringId
 import io.kudos.ms.sys.common.cache.enums.SysCacheErrorCodeEnum
 import io.kudos.ms.sys.common.cache.vo.SysCacheCacheEntry
 import io.kudos.ms.sys.core.cache.cache.SysCacheHashCache
@@ -63,7 +63,7 @@ open class SysCacheService(
 
     @Transactional
     override fun update(any: Any): Boolean {
-        val id = requireCacheId(any)
+        val id = requireStringId(any, "缓存配置")
         return completeCrudUpdate(
             success = super.update(any),
             log = log,
@@ -208,6 +208,19 @@ open class SysCacheService(
     private fun getCacheConfigById(id: String): SysCacheCacheEntry =
         sysCacheHashCache.getCacheById(id) ?: throw ServiceException(SysCacheErrorCodeEnum.CACHE_CONFIG_NOT_FOUND)
 
+    /**
+     * 取 id 对应的缓存配置后执行 [block]：上层 reload / evict / getValue 等 6 处用它做
+     * "拿 config → 分流 keyValue/hash" 的样板；曾被 docs commit 误删，导致 main 编译挂。
+     *
+     * @param T block 返回类型
+     * @param id 缓存配置 id
+     * @param block 执行块，参数为命中的 [SysCacheCacheEntry]
+     * @return [block] 的返回值
+     * @throws ServiceException 缓存配置不存在
+     */
+    private inline fun <T> withCacheConfig(id: String, block: (SysCacheCacheEntry) -> T): T =
+        block(getCacheConfigById(id))
+
     private fun requireKeyExists(name: String, key: String, keyValueCache: Boolean) {
         if (!existsKey(name, key, keyValueCache)) throw ServiceException(SysCacheErrorCodeEnum.CACHE_KEY_NOT_FOUND)
     }
@@ -224,19 +237,6 @@ open class SysCacheService(
      */
     private fun existsKey(name: String, key: String, keyValueCache: Boolean): Boolean =
         if (keyValueCache) KeyValueCacheKit.existsKey(name, key) else HashCacheKit.existsById(name, key)
-
-    /**
-     * 从 update 入参抽 id；要求实现 [IIdEntity] 且 id 是 String。
-     *
-     * @param any 更新入参
-     * @return 缓存配置 id
-     * @throws IllegalStateException 入参类型不被支持
-     * @author K
-     * @since 1.0.0
-     */
-    private fun requireCacheId(any: Any): String =
-        (any as? IIdEntity<*>)?.id as? String
-            ?: error("更新缓存配置时不支持的入参类型: ${any::class.qualifiedName}")
 
     /**
      * 判定缓存形态：`hash=false` 即视为 KeyValue 缓存。

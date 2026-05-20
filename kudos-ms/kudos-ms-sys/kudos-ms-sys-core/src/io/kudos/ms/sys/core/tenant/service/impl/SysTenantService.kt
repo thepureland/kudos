@@ -2,10 +2,10 @@ package io.kudos.ms.sys.core.tenant.service.impl
 
 import io.kudos.ms.sys.core.platform.service.impl.completeCrudInsert
 import io.kudos.ms.sys.core.platform.service.impl.completeCrudUpdate
+import io.kudos.ms.sys.core.platform.service.impl.requireStringId
 
 import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.model.contract.entity.IIdEntity
 import io.kudos.base.model.vo.IdAndName
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.PagingSearchResult
@@ -123,7 +123,7 @@ open class SysTenantService(
 
     @Transactional
     override fun update(any: Any): Boolean {
-        val id = requireTenantId(any)
+        val id = requireStringId(any, "租户")
         return completeCrudUpdate(
             success = super.update(any),
             log = log,
@@ -310,17 +310,4 @@ open class SysTenantService(
      */
     private fun getSubSystemCodesString(tenantId: String): String =
         sysTenantSystemHashCache.getSubSystemCodesByTenantId(tenantId).joinToString(", ")
-
-    /**
-     * 从 update 入参抽 id；要求实现 [IIdEntity] 且 id 是 String。不满足直接 [error]。
-     *
-     * @param any 更新入参
-     * @return 租户 id
-     * @throws IllegalStateException 入参类型不被支持
-     * @author K
-     * @since 1.0.0
-     */
-    private fun requireTenantId(any: Any): String =
-        (any as? IIdEntity<*>)?.id as? String
-            ?: error("更新租户时不支持的入参类型: ${any::class.qualifiedName}")
 }

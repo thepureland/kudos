@@ -186,12 +186,24 @@ object HashCacheKit {
 
     /**
      * 收口「按 cacheName 找 Handler」的样板：扫 [AbstractHashCacheHandler] 类型的全部 bean，
-     * 取 `cacheName()` 匹配的子集。N 个调用点之前各自手写 `forEach { if (...) ... }`，
-     * 现在统一走这里——新增 handler 类型时只此一处需要改。
+     * 按 `cacheName()` 建索引。N 个调用点（evict / reload / reloadAll / getValue）之前各自
+     * 重复 `SpringKit.getBeansOfType<...>().values.filter { ... }` —— 每次缓存读写都遍历所有
+     * bean 不划算。
+     *
+     * 索引使用 double-checked locking 懒建：首次调用扫一次 + groupBy 落到 [handlerIndex]，
+     * 后续调用直接 map 查；新增 handler bean 不会被自动感知，由 [resetForTesting]
+     * 或重启上下文触发重建。
      */
-    private fun handlersFor(cacheName: String): List<AbstractHashCacheHandler<*>> =
-        SpringKit.getBeansOfType<AbstractHashCacheHandler<*>>().values
-            .filter { it.cacheName() == cacheName }
+    @Volatile private var handlerIndex: Map<String, List<AbstractHashCacheHandler<*>>>? = null
+
+    private fun handlersFor(cacheName: String): List<AbstractHashCacheHandler<*>> {
+        val index = handlerIndex ?: synchronized(this) {
+            handlerIndex ?: SpringKit.getBeansOfType<AbstractHashCacheHandler<*>>().values
+                .groupBy { it.cacheName() }
+                .also { handlerIndex = it }
+        }
+        return index[cacheName].orEmpty()
+    }
 
     /**
      * 根据名称获取 Hash 缓存（带 id 对象集合）。
@@ -256,5 +268,6 @@ object HashCacheKit {
     fun resetForTesting() {
         managerOverride = null
         configProviderOverride = null
+        handlerIndex = null
     }
 }

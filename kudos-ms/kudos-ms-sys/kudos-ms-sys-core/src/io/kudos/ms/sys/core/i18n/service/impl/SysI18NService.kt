@@ -5,7 +5,7 @@ import io.kudos.ms.sys.core.platform.service.impl.completeCrudUpdate
 
 import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.model.contract.entity.IIdEntity
+import io.kudos.ms.sys.core.platform.service.impl.requireStringId
 import io.kudos.ms.sys.common.i18n.vo.SysI18nCacheEntry
 import io.kudos.ms.sys.common.i18n.vo.request.SysI18nFormUpdate
 import io.kudos.ms.sys.core.i18n.cache.SysI18nHashCache
@@ -113,7 +113,7 @@ open class SysI18NService(
 
     @Transactional
     override fun update(any: Any): Boolean {
-        val id = requireI18nId(any)
+        val id = requireStringId(any, "国际化内容")
         return completeCrudUpdate(
             success = super.update(any),
             log = log,
@@ -219,16 +219,4 @@ open class SysI18NService(
         }
     }
 
-    /**
-     * 从 update 入参抽 id；要求实现 [IIdEntity] 且 id 是 String。
-     *
-     * @param any 更新入参
-     * @return 国际化记录 id
-     * @throws IllegalStateException 入参类型不被支持
-     * @author K
-     * @since 1.0.0
-     */
-    private fun requireI18nId(any: Any): String =
-        (any as? IIdEntity<*>)?.id as? String
-            ?: error("更新国际化内容时不支持的入参类型: ${any::class.qualifiedName}")
 }

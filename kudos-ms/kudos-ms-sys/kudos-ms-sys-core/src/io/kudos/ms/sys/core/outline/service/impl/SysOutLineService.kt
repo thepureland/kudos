@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.core.outline.service.impl
 
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.model.contract.entity.IIdEntity
+import io.kudos.ms.sys.core.platform.service.impl.requireStringId
 import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.ms.sys.common.outline.vo.SysOutLineCacheEntry
 import io.kudos.ms.sys.core.outline.cache.OutLineBySystemAndTenantCache
@@ -66,7 +66,7 @@ open class SysOutLineService(
 
     @Transactional
     override fun update(any: Any): Boolean {
-        val id = requireOutLineId(any)
+        val id = requireStringId(any, "出网白名单")
         return completeCrudUpdate(
             success = super.update(any),
             log = log,
@@ -108,16 +108,4 @@ open class SysOutLineService(
         return count
     }
 
-    /**
-     * 从 update 入参抽 id；要求实现 [IIdEntity] 且 id 是 String。
-     *
-     * @param any 更新入参
-     * @return 出网白名单 id
-     * @throws IllegalStateException 入参类型不被支持
-     * @author K
-     * @since 1.0.0
-     */
-    private fun requireOutLineId(any: Any): String =
-        (any as? IIdEntity<*>)?.id as? String
-            ?: error("更新出网白名单时不支持的入参类型: ${any::class.qualifiedName}")
 }
