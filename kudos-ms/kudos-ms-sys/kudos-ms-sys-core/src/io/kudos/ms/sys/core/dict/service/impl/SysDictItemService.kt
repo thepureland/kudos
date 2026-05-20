@@ -192,6 +192,17 @@ open class SysDictItemService(
         return count
     }
 
+    /**
+     * 沿 parentId 自下而上递归收集所有祖先 id；链上某节点 parentId 为空/blank 即终止。
+     *
+     * **N+1 警告**：每层都走一次 DB 查询；当前业务字典树通常很浅 (<5 层)，可接受。
+     * 若后续遇到深树，应一次性 load 整张字典再在内存里构图。
+     *
+     * @param itemId 起点字典项 id
+     * @param results 累积容器（追加 parentId）
+     * @author K
+     * @since 1.0.0
+     */
     private fun recursionFindAllParentId(itemId: String, results: MutableList<String>) {
         val list = dao.oneSearchProperty(SysDictItem::id, itemId, SysDictItem::parentId)
         val parentId = list.firstOrNull()?.takeIf { it.isNotBlank() } ?: return
@@ -199,6 +210,14 @@ open class SysDictItemService(
         recursionFindAllParentId(parentId, results)
     }
 
+    /**
+     * 沿 parentId 自上而下递归收集所有后代 id；同样有 N+1 风险，详见 [recursionFindAllParentId]。
+     *
+     * @param itemId 起点字典项 id
+     * @param results 累积容器（追加 childId）
+     * @author K
+     * @since 1.0.0
+     */
     private fun recursionFindAllChildId(itemId: String, results: MutableList<String>) {
         val itemIds = dao.oneSearchProperty(SysDictItem::parentId, itemId, SysDictItem::id)
         itemIds.forEach { childId ->
@@ -268,6 +287,15 @@ open class SysDictItemService(
         getDirectChildrenOfItemFromCache(atomicServiceCode, dictType, itemCode, activeOnly)
             .map { SysDictItemNode(it.id, it.itemCode, it.itemName) }
 
+    /**
+     * 从 update 入参抽 id；要求实现 [IIdEntity] 且 id 是 String。
+     *
+     * @param any 更新入参
+     * @return 字典项 id
+     * @throws IllegalStateException 入参类型不被支持
+     * @author K
+     * @since 1.0.0
+     */
     private fun requireDictItemId(any: Any): String =
         (any as? IIdEntity<*>)?.id as? String
             ?: error("更新字典项时不支持的入参类型: ${any::class.qualifiedName}")

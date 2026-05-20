@@ -176,11 +176,28 @@ open class SysDictService(
             dictCacheKey(dictType, atomicServiceCode) to getActiveDictItemMap(dictType, atomicServiceCode)
         }
 
+    /**
+     * 级联删除：先清字典项再删字典本身。
+     * 顺序不可换——先删字典会触发外键约束错误（字典项 FK 引用字典 id）。
+     *
+     * @param id 字典 id
+     * @return 字典本身删除是否成功（字典项删除不计入返回值，但失败会因为约束反向阻断）
+     * @author K
+     * @since 1.0.0
+     */
     private fun deleteDictWithItems(id: String): Boolean {
         dao.deleteDictItemsByDictId(id)
         return deleteDict(id)
     }
 
+    /**
+     * 单字典删除：DAO 删行 → 成功则发 [SysDictDeleted] 事件供下游清缓存；失败仅 ERROR 日志。
+     *
+     * @param id 字典 id
+     * @return 是否真的删到行
+     * @author K
+     * @since 1.0.0
+     */
     private fun deleteDict(id: String): Boolean {
         val success = dao.deleteById(id)
         if (success) {
@@ -191,15 +208,52 @@ open class SysDictService(
         return success
     }
 
+    /**
+     * 取生效字典项缓存（active=true 已由 `SysDictItemService` 缓存侧筛过）。
+     *
+     * @param dictType 字典类型
+     * @param atomicServiceCode 原子服务编码（多租户/多服务隔离 key）
+     * @return 字典项缓存条目列表
+     * @author K
+     * @since 1.0.0
+     */
     private fun getActiveDictItems(dictType: String, atomicServiceCode: String): List<SysDictItemCacheEntry> =
         sysDictItemService.getDictItemsFromCache(dictType, atomicServiceCode)
 
+    /**
+     * 生效字典项的 itemCode → itemName 映射；用 [LinkedHashMap] 保留插入顺序以维持业务排序。
+     *
+     * @param dictType 字典类型
+     * @param atomicServiceCode 原子服务编码
+     * @return itemCode → itemName 的有序映射
+     * @author K
+     * @since 1.0.0
+     */
     private fun getActiveDictItemMap(dictType: String, atomicServiceCode: String): LinkedHashMap<String, String> =
         getActiveDictItems(dictType, atomicServiceCode).associateTo(LinkedHashMap()) { it.itemCode to it.itemName }
 
+    /**
+     * 构造字典批量缓存命中的 key 对：`(atomicServiceCode, dictType)`。
+     * **注意顺序**——批量入参是 `(dictType, atomicServiceCode)`，这里特意翻转，
+     * 与下游 `batchGetActiveDictItemMapFromCache` 返回值的 key 顺序保持一致，避免调用方对错位置。
+     *
+     * @param dictType 字典类型
+     * @param atomicServiceCode 原子服务编码
+     * @return `(atomicServiceCode, dictType)` 顺序的 Pair
+     * @author K
+     * @since 1.0.0
+     */
     private fun dictCacheKey(dictType: String, atomicServiceCode: String): Pair<String, String> =
         Pair(atomicServiceCode, dictType)
 
+    /**
+     * 把 PO [SysDict] 拷成扁平的 VO [SysDictRow]，用于 list 接口（避免暴露 ORM Entity 字段）。
+     *
+     * @param dict 字典 PO
+     * @return 字典 VO
+     * @author K
+     * @since 1.0.0
+     */
     private fun toSysDictRow(dict: SysDict): SysDictRow = SysDictRow(
         id = dict.id,
         dictType = dict.dictType,
@@ -210,6 +264,15 @@ open class SysDictService(
         builtIn = dict.builtIn,
     )
 
+    /**
+     * 从 update 入参抽 id；要求入参实现 [IIdEntity] 且 id 是 String。
+     *
+     * @param any 更新入参
+     * @return 字典 id
+     * @throws IllegalStateException 入参类型不被支持
+     * @author K
+     * @since 1.0.0
+     */
     private fun requireDictId(any: Any): String =
         (any as? IIdEntity<*>)?.id as? String
             ?: error("更新字典时不支持的入参类型: ${any::class.qualifiedName}")

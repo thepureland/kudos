@@ -212,15 +212,39 @@ open class SysCacheService(
         if (!existsKey(name, key, keyValueCache)) throw ServiceException(SysCacheErrorCodeEnum.CACHE_KEY_NOT_FOUND)
     }
 
+    /**
+     * 按缓存形态分流 existsKey 调用：keyValue 走 [KeyValueCacheKit.existsKey]，hash 走 [HashCacheKit.existsById]。
+     *
+     * @param name 缓存区名
+     * @param key 缓存 key（或 hash 的字段名）
+     * @param keyValueCache true 表示 KV 缓存，false 表示 Hash 缓存
+     * @return 是否存在
+     * @author K
+     * @since 1.0.0
+     */
     private fun existsKey(name: String, key: String, keyValueCache: Boolean): Boolean =
         if (keyValueCache) KeyValueCacheKit.existsKey(name, key) else HashCacheKit.existsById(name, key)
 
-    private inline fun <T> withCacheConfig(id: String, block: (SysCacheCacheEntry) -> T): T =
-        block(getCacheConfigById(id))
-
+    /**
+     * 从 update 入参抽 id；要求实现 [IIdEntity] 且 id 是 String。
+     *
+     * @param any 更新入参
+     * @return 缓存配置 id
+     * @throws IllegalStateException 入参类型不被支持
+     * @author K
+     * @since 1.0.0
+     */
     private fun requireCacheId(any: Any): String =
         (any as? IIdEntity<*>)?.id as? String
             ?: error("更新缓存配置时不支持的入参类型: ${any::class.qualifiedName}")
 
+    /**
+     * 判定缓存形态：`hash=false` 即视为 KeyValue 缓存。
+     *
+     * @param cache 缓存配置缓存条目
+     * @return true 表示 KV 缓存
+     * @author K
+     * @since 1.0.0
+     */
     private fun isKeyValueCache(cache: SysCacheCacheEntry): Boolean = !cache.hash
 }
