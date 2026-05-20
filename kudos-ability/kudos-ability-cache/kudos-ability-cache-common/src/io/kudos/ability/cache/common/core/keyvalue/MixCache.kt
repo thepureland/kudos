@@ -106,9 +106,25 @@ class MixCache(
         return loaded
     }
 
+    /**
+     * 取 [localCache]；按策略推断必应非空，缺失时报含 strategy 信息的错以便定位。
+     *
+     * @return 本地 cache
+     * @throws IllegalArgumentException [localCache] 为 null 时
+     * @author K
+     * @since 1.0.0
+     */
     private fun requireLocal(): Cache =
         requireNotNull(localCache) { "localCache is null for strategy $strategy" }
 
+    /**
+     * 取 [remoteCache]；按策略推断必应非空，缺失时报含 strategy 信息的错以便定位。
+     *
+     * @return 远端 cache
+     * @throws IllegalArgumentException [remoteCache] 为 null 时
+     * @author K
+     * @since 1.0.0
+     */
     private fun requireRemote(): Cache =
         requireNotNull(remoteCache) { "remoteCache is null for strategy $strategy" }
 
@@ -182,6 +198,17 @@ class MixCache(
         }
     }
 
+    /**
+     * 把 cache 失效消息广播给所有节点。
+     *
+     * 从 Spring 容器拿所有 [ICacheMessageHandler]（通常是 Redis pub/sub 实现），
+     * 让其他节点收到通知后清掉对应本地缓存。`key` 为 null 表示整库清空。
+     *
+     * @param name 缓存名（带版本前缀）
+     * @param key 要清除的 key；null 表示整库
+     * @author K
+     * @since 1.0.0
+     */
     fun pushMsgRedis(name: String, key: Any?) {
         val cacheMessageHandlers = SpringKit.getBeansOfType<ICacheMessageHandler>()
         if (cacheMessageHandlers.isNotEmpty()) {
@@ -193,8 +220,10 @@ class MixCache(
     }
 
     companion object {
+        /** 日志器 */
         private val log = LogFactory.getLog(this::class)
 
+        /** 保留字段：未来用于跨版本失效通知；当前实现不依赖 */
         private val cacheVersion: String? = null
     }
 }

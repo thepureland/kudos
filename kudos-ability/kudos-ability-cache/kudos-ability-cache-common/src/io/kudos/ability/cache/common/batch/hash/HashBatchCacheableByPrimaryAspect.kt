@@ -91,6 +91,11 @@ class HashBatchCacheableByPrimaryAspect {
         return cachedData.filterValues { it != null }
     }
 
+    /**
+     * 解析 cache 名：注解 cacheNames > 类上 `@CacheConfig.cacheNames` > null。
+     * @author K
+     * @since 1.0.0
+     */
     private fun resolveCacheName(joinPoint: ProceedingJoinPoint, ann: HashBatchCacheableByPrimary): String? {
         if (ann.cacheNames.isNotEmpty()) return ann.cacheNames.first()
         val cacheConfig = joinPoint.target::class.findAnnotation<CacheConfig>()
@@ -98,18 +103,37 @@ class HashBatchCacheableByPrimaryAspect {
         return null
     }
 
+    /**
+     * 校验目标方法返回值必须是 [Map]，否则切面拼装"批量结果"会出错。
+     * 不合规直接抛错让开发期立即发现。
+     *
+     * @throws IllegalStateException 返回值不是 Map 时
+     * @author K
+     * @since 1.0.0
+     */
     private fun validateReturnType(function: KFunction<*>, ann: HashBatchCacheableByPrimary) {
         if (!Map::class.isSuperclassOf(function.returnType.classifier as KClass<*>)) {
             error("@HashBatchCacheableByPrimary 标注的方法【${function}】返回值类型必须是 Map！")
         }
     }
 
+    /**
+     * 解析 [HashBatchCacheableByPrimary.keysGenerator] 指定的 keys 生成器；缺失时降级到 [DefaultHashBatchKeysGenerator]。
+     * @author K
+     * @since 1.0.0
+     */
     private fun getKeysGenerator(ann: HashBatchCacheableByPrimary): IKeysGenerator {
         val bean = SpringKit.getBeanOrNull(ann.keysGenerator)
         if (bean != null) return bean as IKeysGenerator
         return DefaultHashBatchKeysGenerator()
     }
 
+    /**
+     * `joinPoint.proceed()` 后调 [validatedMap] 强校验返回值为 `Map<String, Any?>`。
+     * 抽出来是为了让 around 主流程更紧凑。
+     * @author K
+     * @since 1.0.0
+     */
     private fun proceedAsStringAnyMap(joinPoint: ProceedingJoinPoint): Map<String, Any?> =
         validatedMap(joinPoint.proceed())
 

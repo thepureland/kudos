@@ -17,19 +17,40 @@ import org.springframework.context.expression.MethodBasedEvaluationContext
 import org.springframework.core.annotation.Order
 
 /**
- * 优先于cacheable执行
+ * 分布式缓存防穿透守卫切面。
+ *
+ * 与 `@Cacheable`/`@TenantCacheable` 配合：在缓存 miss 时通过分布式租约锁串行化回源，避免击穿。
+ * 排在 `@Cacheable` 之前（`@Order(-999)`，比 Spring 默认 `0` 优先级高）。
+ *
+ * @author K
+ * @since 1.0.0
  */
 @Aspect
 @Lazy(false)
 @Order(-999)
 class DistributedCacheGuardAspect {
 
+    /** SpEL 表达式求值用的参数名发现器 */
     private val nameDiscoverer = SpelExpressionCache.parameterNameDiscoverer
 
+    /** 切点：匹配标注 [DistributedCacheGuard] 的方法 */
     @Pointcut("@annotation(io.kudos.ability.cache.common.aop.keyvalue.DistributedCacheGuard)")
     fun cut() {
     }
 
+    /**
+     * 防穿透主流程：
+     *
+     * 1. 无锁查缓存命中即返回；
+     * 2. miss 时用租约 [tryLock] 抢分布式锁——租约式而非阻塞 lock，避免进程崩溃后死锁；
+     * 3. 抢锁失败：短退避后再查一次缓存（命中复用别人加载结果），仍 miss 时放行 proceed；
+     * 4. 抢锁成功：锁内双重检查后 proceed，finally 释放锁；锁释放失败仅 WARN，靠租约过期兜底。
+     *
+     * @param pjp AOP 切入点
+     * @return 缓存值或方法执行结果
+     * @author K
+     * @since 1.0.0
+     */
     @Around("cut()")
     fun around(pjp: ProceedingJoinPoint): Any? {
         val cachePair = getCachePair(pjp)
@@ -75,6 +96,18 @@ class DistributedCacheGuardAspect {
         }
     }
 
+    /**
+     * 从方法的 `@Cacheable` / `@TenantCacheable` 注解中解析出 (cacheName, cacheKey)。
+     *
+     * 两种注解互斥但语义类似——`@Cacheable` 走 SpEL；`@TenantCacheable` 走 [TenantCacheKeyGenerator]
+     * 自动加租户前缀。本方法把两者归一化为 `Pair<cacheName, cacheKey>`，让 [around] 只关心防穿透逻辑。
+     *
+     * @param pjp 切入点
+     * @return (cacheName, cacheKey)
+     * @throws IllegalStateException 未带任何注解时
+     * @author K
+     * @since 1.0.0
+     */
     private fun getCachePair(pjp: ProceedingJoinPoint): Pair<String, Any> {
         // 1. 获取目标方法和参数
         val signature = pjp.signature as MethodSignature
@@ -119,7 +152,9 @@ class DistributedCacheGuardAspect {
     }
 
     companion object {
+        /** 复用全局 [LockTool.lockProvider]，避免每次切入都从容器拿 bean */
         private val lockProvider = LockTool.lockProvider
+        /** 日志器 */
         private val log = LogFactory.getLog(DistributedCacheGuardAspect::class)
 
         /**

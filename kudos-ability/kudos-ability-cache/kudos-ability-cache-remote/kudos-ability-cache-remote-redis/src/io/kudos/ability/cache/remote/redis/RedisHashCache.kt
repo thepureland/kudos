@@ -33,8 +33,18 @@ class RedisHashCache(
     private val versionConfig: CacheVersionConfig
 ) : IHashCache {
 
+    /** 委托给 Redis hash DAO，所有读写操作都经它走 RedisTemplate */
     private val dao = IdEntitiesRedisHashDao(redisTemplates)
 
+    /**
+     * 把业务逻辑 cacheName 拼上版本前缀，作为 Redis key 前缀。
+     * 集中放置一次让所有方法走同一规则，避免多处计算的不一致。
+     *
+     * @param cacheName 业务逻辑 cache 名
+     * @return 加上版本前缀的最终 Redis key 前缀
+     * @author K
+     * @since 1.0.0
+     */
     private fun dataKeyPrefix(cacheName: String): String = versionConfig.getFinalCacheName(cacheName)
 
     override fun <PK, E : IIdEntity<PK>> getById(cacheName: String, id: PK, entityClass: KClass<E>): E? =

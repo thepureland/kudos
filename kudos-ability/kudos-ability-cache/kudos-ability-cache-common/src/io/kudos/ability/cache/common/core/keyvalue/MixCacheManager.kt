@@ -70,8 +70,25 @@ class MixCacheManager : AbstractCacheManager() {
 
     private val caches: MutableList<Cache> = mutableListOf()
 
+    /**
+     * 判断 `localCacheManager` 是否真的被注入。
+     * 用 `lateinit isInitialized` 而非 null 判断是因为它是 `@Resource(name = "localCacheManager")` 注入，
+     * 缺失时 Spring 不会写 null 进字段而是字段保持未初始化态。
+     *
+     * @return true 表示本地缓存管理器存在
+     * @author K
+     * @since 1.0.0
+     */
     private fun hasLocalCacheManager(): Boolean = this::localCacheManager.isInitialized
 
+    /**
+     * Spring `AbstractCacheManager` 模板方法：返回所有已加载的 cache 实例。
+     * [initCacheAfterSystemInit] 会预先把 cache 填到 [caches]，本方法直接返回。
+     *
+     * @return cache 集合
+     * @author K
+     * @since 1.0.0
+     */
     override fun loadCaches(): Collection<Cache> {
         return caches
     }
@@ -142,6 +159,15 @@ class MixCacheManager : AbstractCacheManager() {
         afterPropertiesSet()
     }
 
+    /**
+     * 覆盖 super 的 `getCache`，在查找前给名字加上版本前缀 ([CacheVersionConfig.getFinalCacheName])。
+     * 这样调用方传入逻辑名（不带前缀）即可，无需自行处理版本。
+     *
+     * @param name 缓存逻辑名
+     * @return 加上版本前缀后命中的 cache；缺失返回 null
+     * @author K
+     * @since 1.0.0
+     */
     override fun getCache(name: String): Cache? {
         val realName = requireVersionConfig().getFinalCacheName(name)
         return super.getCache(realName)
@@ -247,6 +273,14 @@ class MixCacheManager : AbstractCacheManager() {
         return mixCacheConfig
     }
 
+    /**
+     * 取 [versionConfig]；未注入时立即抛错给出可定位的错误信息。
+     *
+     * @return 缓存版本配置
+     * @throws IllegalArgumentException 配置未注入时
+     * @author K
+     * @since 1.0.0
+     */
     private fun requireVersionConfig(): CacheVersionConfig {
         return requireNotNull(versionConfig) { "缓存版本配置未注入，无法生成缓存名。" }
     }
@@ -347,6 +381,7 @@ class MixCacheManager : AbstractCacheManager() {
         }
     }
 
+    /** 日志器 */
     private val log = LogFactory.getLog(this::class)
 
 }
