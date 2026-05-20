@@ -29,17 +29,17 @@ open class MsgReceiveService(
 ) : BaseCrudService<String, MsgReceive, MsgReceiveDao>(dao), IMsgReceiveService {
 
     @Transactional(readOnly = true)
-    override fun getReceivesByUserId(receiverId: String): List<MsgReceiveCacheEntry> {
-        val criteria = Criteria(MsgReceive::receiverId eq receiverId)
-        return dao.searchAs<MsgReceiveCacheEntry>(criteria, Order.desc(MsgReceive::createTime.name))
-    }
+    override fun getReceivesByUserId(receiverId: String): List<MsgReceiveCacheEntry> =
+        dao.searchAs<MsgReceiveCacheEntry>(
+            Criteria(MsgReceive::receiverId eq receiverId),
+            Order.desc(MsgReceive::createTime.name),
+        )
 
     @Transactional(readOnly = true)
-    override fun getUnreadCountByUserId(receiverId: String): Int {
-        val criteria = Criteria(MsgReceive::receiverId eq receiverId)
+    override fun getUnreadCountByUserId(receiverId: String): Int = dao.count(
+        Criteria(MsgReceive::receiverId eq receiverId)
             .addAnd(MsgReceive::receiveStatusDictCode inList MsgReceiveStatusEnum.UNREAD_CODES.toList())
-        return dao.count(criteria)
-    }
+    )
 
     override fun markRead(id: String): Boolean {
         val current = dao.get(id) ?: return false

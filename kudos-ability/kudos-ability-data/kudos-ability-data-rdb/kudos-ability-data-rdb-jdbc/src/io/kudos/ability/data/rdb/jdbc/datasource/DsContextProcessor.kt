@@ -68,27 +68,18 @@ open class DsContextProcessor {
      */
     fun doDetermineDatasource(dsKey: String, dsKeyConfig: String?): String? {
         val context = KudosContextHolder.getOrNull() ?: return null
-        if (context._datasourceTenantId == DatasourceConst.CONSOLE_TENANT_ID) {
-            return null
-        }
-        //获取域名指定的默认数据源id
-        var defaultDsId = context.dataSourceId
-        var mode = DatasourceConst.MODE_MASTER
-        //如果是备库
-        if (DatasourceKeyTool.isReadOnly(dsKey) && context.readOnlyDataSourceId != null) {
-            defaultDsId = context.readOnlyDataSourceId
-            mode = DatasourceConst.MODE_READONLY
+        if (context._datasourceTenantId == DatasourceConst.CONSOLE_TENANT_ID) return null
+        // 备库 dsKey 后缀触发切到 readOnlyDataSourceId / readonly 模式；否则用上下文的主库 id + master
+        val (defaultDsId, mode) = if (DatasourceKeyTool.isReadOnly(dsKey) && context.readOnlyDataSourceId != null) {
+            context.readOnlyDataSourceId to DatasourceConst.MODE_READONLY
+        } else {
+            context.dataSourceId to DatasourceConst.MODE_MASTER
         }
         keyLockRegistry.tryLock(dsKey)
         try {
-            var realDsId: String? = null
-            if (dataSourceFinder != null) {
-                val serverCode: String? = DatasourceKeyTool.getServerCode(dsKey)
-                realDsId = dataSourceFinder.findDataSourceId(context._datasourceTenantId, serverCode, mode)
-            }
-            if (realDsId == null) {
-                realDsId = defaultDsId
-            }
+            val realDsId = dataSourceFinder
+                ?.findDataSourceId(context._datasourceTenantId, DatasourceKeyTool.getServerCode(dsKey), mode)
+                ?: defaultDsId
             return getDatasourceKey(realDsId)
         } finally {
             keyLockRegistry.unlock(dsKey)
@@ -103,47 +94,35 @@ open class DsContextProcessor {
      * `protected` —— 留给子类覆盖（例如想用别的方式从路由表里获取/注册）；外部不直接调用。
      */
     protected fun getDatasourceKey(dsId: String?): String? { //TODO
-        val dataSourceKey = dsId
-        val ds: DynamicRoutingDataSource = dataSource as DynamicRoutingDataSource
-        if (!ds.dataSources.containsKey(dataSourceKey)) {
+        val ds = dataSource as DynamicRoutingDataSource
+        if (!ds.dataSources.containsKey(dsId)) {
             // 该dsKey数据源未初始化，加载配置并初始化
-            val dsProperty: DataSourceProperty? = dynamicDataSourceLoad.getPropertyById(dsId)
-            if (dsProperty == null) {
-                log.warn("动态数据源id未配置:{0}", dsId)
-                throw RuntimeException("动态数据源id未配置!dsId=$dsId")
-            }
+            val dsProperty = dynamicDataSourceLoad.getPropertyById(dsId)
+                ?: run {
+                    log.warn("动态数据源id未配置:{0}", dsId)
+                    throw RuntimeException("动态数据源id未配置!dsId=$dsId")
+                }
             log.warn("開始創建並載數據源id={0}...", dsId)
-            val dataSource = dataSourceCreator.createDataSource(dsProperty)
-            if (dataSourceProxy != null) {
-                ds.addDataSource(dataSourceKey, dataSourceProxy.proxyDatasource(dataSource))
-            } else {
-                ds.addDataSource(dataSourceKey, dataSource)
-            }
+            val created = dataSourceCreator.createDataSource(dsProperty)
+            val toRegister = dataSourceProxy?.proxyDatasource(created) ?: created
+            ds.addDataSource(dsId, toRegister)
         }
-        return dataSourceKey
+        return dsId
     }
 
     /**
      * 按 dsKey 取真实数据源。路由表是 baomidou 的 [DynamicRoutingDataSource]，单数据源
      * 场景下 `dataSource` 不是这个类型，退化成"无视 key 直接返回唯一数据源"。
      */
-    fun getDataSource(dsKey: String?): DataSource? {
-        return when (dataSource) {
-            is DynamicRoutingDataSource -> (dataSource as DynamicRoutingDataSource).getDataSource(dsKey)
-            else -> dataSource // 单数据源：走单库逻辑
-        }
-    }
+    fun getDataSource(dsKey: String?): DataSource? =
+        (dataSource as? DynamicRoutingDataSource)?.getDataSource(dsKey) ?: dataSource
 
     /**
      * 路由表里是否存在某 dsKey。单数据源场景始终返回 true（"只有这一个数据源"），多数据源
      * 场景查路由表内部 map。
      */
-    fun haveDataSource(dsKey: String?): Boolean {
-        return when (dataSource) {
-            is DynamicRoutingDataSource -> (dataSource as DynamicRoutingDataSource).dataSources.containsKey(dsKey)
-            else -> true // 单数据源：直接认为存在即可，或走单库逻辑
-        }
-    }
+    fun haveDataSource(dsKey: String?): Boolean =
+        (dataSource as? DynamicRoutingDataSource)?.dataSources?.containsKey(dsKey) ?: true
 
     /**
      * 刷新路由表里某 dsId 对应的数据源条目；`dsId == null` 表示"刷新所有除 primary 之外
@@ -154,31 +133,21 @@ open class DsContextProcessor {
      */
     fun refreshDatasource(dsId: Int?) {
         log.warn("收到刷新數據源id為：{0} 的請求", dsId)
+        val ds = dataSource as DynamicRoutingDataSource
         if (dsId == null) {
-            val ds = dataSource as DynamicRoutingDataSource
-            val strings = (dataSource as DynamicRoutingDataSource).dataSources.keys
-            for (dsKey in strings) {
-                if (primary != dsKey) {
-                    ds.removeDataSource(dsKey)
-                }
-            }
+            // 全量刷新：清掉 primary 以外的所有路由，再 afterPropertiesSet() 重建
+            ds.dataSources.keys.filter { it != primary }.forEach(ds::removeDataSource)
             ds.afterPropertiesSet()
         } else {
-            val dataSourceKey: String = dsId.toString()
-            val ds: DynamicRoutingDataSource = dataSource as DynamicRoutingDataSource
-            ds.removeDataSource(dataSourceKey)
+            ds.removeDataSource(dsId.toString())
         }
         DynamicDataSourceAspect.cacheDsCache()
         log.warn("數據源刷新成功...")
     }
 
     /** 当前线程的"逻辑当前数据源"。多数据源场景委托给 baomidou 的 determineDataSource。 */
-    fun currentDataSource(): DataSource? {
-        return when (dataSource) {
-            is DynamicRoutingDataSource -> (dataSource as DynamicRoutingDataSource).determineDataSource()
-            else -> dataSource // 单数据源：走单库逻辑
-        }
-    }
+    fun currentDataSource(): DataSource? =
+        (dataSource as? DynamicRoutingDataSource)?.determineDataSource() ?: dataSource
 
     private val log = LogFactory.getLog(this::class)
 

@@ -63,14 +63,12 @@ open class SysDomainService(
     @Transactional(readOnly = true)
     override fun pagingSearch(listSearchPayload: ListSearchPayload): PagingSearchResult<*> {
         val result = super.pagingSearch(listSearchPayload)
-        val rows = result.data
-        if (rows.isNotEmpty() && rows.first() is SysDomainRow) {
-            val tenantIds = rows.map { (it as SysDomainRow).tenantId }
-            val tenants = tenantByIdCache.getTenantsByIds(tenantIds)
-            val idAndNameMap = tenants.mapValues { entry -> entry.value.name }
-            rows.forEach { row ->
-                val r = row as SysDomainRow
-                r.tenantName = requireNotNull(idAndNameMap[r.tenantId]) { "tenantId=${r.tenantId} 未在缓存中" }
+        val sysDomainRows = result.data.filterIsInstance<SysDomainRow>()
+        if (sysDomainRows.isNotEmpty()) {
+            val tenantIds = sysDomainRows.map { it.tenantId }
+            val idAndNameMap = tenantByIdCache.getTenantsByIds(tenantIds).mapValues { it.value.name }
+            sysDomainRows.forEach { row ->
+                row.tenantName = requireNotNull(idAndNameMap[row.tenantId]) { "tenantId=${row.tenantId} 未在缓存中" }
             }
         }
         return result
@@ -127,8 +125,7 @@ open class SysDomainService(
 
     @Transactional
     override fun deleteById(id: String): Boolean {
-        val domain = dao.get(id)
-        if (domain == null) {
+        val domain = dao.get(id) ?: run {
             log.warn("删除id为${id}的域名时，发现其已不存在！")
             return false
         }

@@ -6,7 +6,6 @@ import java.math.BigInteger
 import java.net.Inet6Address
 import java.net.InetAddress
 import java.net.UnknownHostException
-import java.util.ArrayList
 import java.util.Locale
 
 /**
@@ -89,19 +88,9 @@ object IpKit {
      * @since 1.0.0
      */
     fun ipv4LongToString(ipv4Long: Long): String {
-        var ipLong = ipv4Long
-        if (ipLong !in 0..ALL32ONE) {
-            return ""
-        }
-        val mask = 255L
-        var result = ipLong and mask
-        var temp = result.toString()
-        (0..2).forEach { _ ->
-            ipLong = ipLong shr 8
-            result = ipLong and mask
-            temp = "$result.$temp"
-        }
-        return temp
+        if (ipv4Long !in 0..ALL32ONE) return ""
+        // 高字节在前：byte 0 = 第一个 octet，byte 3 = 最末 octet
+        return (3 downTo 0).joinToString(".") { i -> ((ipv4Long shr (i * 8)) and 0xFFL).toString() }
     }
 
     /**
@@ -113,11 +102,8 @@ object IpKit {
      * @since 1.0.0
      */
     fun getFixLengthIpv4(ipv4: String): String {
-        if (!isValidIpv4(ipv4)) {
-            return ""
-        }
-        val parts = ipv4.split(".")
-        return parts.joinToString(".") { it.padStart(3, '0') }
+        if (!isValidIpv4(ipv4)) return ""
+        return ipv4.split(".").joinToString(".") { it.padStart(3, '0') }
     }
 
     /**
@@ -129,11 +115,8 @@ object IpKit {
      * @since 1.0.0
      */
     fun getNormalIpv4(ipv4: String): String {
-        if (!isValidIpv4(ipv4)) {
-            return ""
-        }
-        val parts = ipv4.split(".")
-        return parts.joinToString(".") { it.toInt().toString() }
+        if (!isValidIpv4(ipv4)) return ""
+        return ipv4.split(".").joinToString(".") { it.toInt().toString() }
     }
 
     /**
@@ -170,43 +153,16 @@ object IpKit {
      * @since 1.0.0
      */
     fun getIpv4sBetween(beginIp: String, endIp: String): List<String> {
-        var beginIpStr = beginIp
-        var endIpStr = endIp
-        if (beginIpStr.isEmpty() && endIpStr.isEmpty()) {
-            return emptyList()
-        }
-        if (beginIpStr.isEmpty()) {
-            beginIpStr = "0.0.0.0"
-        }
-        var longBeginIp = ipv4StringToLong(beginIpStr)
-        if (longBeginIp == -1L) {
-            return emptyList()
-        }
-        if (endIpStr.isEmpty()) {
-            endIpStr = "255.255.255.255"
-        }
-        var longEndIp = ipv4StringToLong(endIpStr)
-        if (longEndIp == -1L) {
-            return emptyList()
-        }
-        if (longBeginIp > longEndIp) {
-            val temp = longBeginIp
-            longBeginIp = longEndIp
-            longEndIp = temp
-        }
-        // 求解范围之内的IP地址
-        val size = (longEndIp - longBeginIp).toInt() + 1
-        if (size !in 0..65536) {
-            return emptyList()
-        } else if (size == 1) {
-            return listOf(beginIpStr)
-        }
-        val ipList = ArrayList<String>(size)
-        for (offset in 0 until size) {
-            val longIp = longBeginIp + offset.toLong()
-            ipList.add(ipv4LongToString(longIp))
-        }
-        return ipList
+        if (beginIp.isEmpty() && endIp.isEmpty()) return emptyList()
+        val rawBegin = ipv4StringToLong(beginIp.ifEmpty { "0.0.0.0" })
+        if (rawBegin == -1L) return emptyList()
+        val rawEnd = ipv4StringToLong(endIp.ifEmpty { "255.255.255.255" })
+        if (rawEnd == -1L) return emptyList()
+        // 不管谁大谁小，对外约定按"从小到大"返回
+        val (lo, hi) = if (rawBegin <= rawEnd) rawBegin to rawEnd else rawEnd to rawBegin
+        val size = (hi - lo).toInt() + 1
+        if (size !in 0..65536) return emptyList()
+        return (0 until size).map { offset -> ipv4LongToString(lo + offset) }
     }
 
     /**
@@ -218,13 +174,10 @@ object IpKit {
      * @since 1.0.0
      */
     fun isLocalIpv4(ipv4: String): Boolean {
-        if ("127.0.0.1" == ipv4) {
-            return true
-        }
+        if (ipv4 == "127.0.0.1") return true
         val l = ipv4StringToLong(ipv4)
-        return if (l >= 3232235520L) {
-            l <= 3232301055L
-        } else l in 167772160L..184549375L
+        // 192.168.0.0–192.168.255.255 或 10.0.0.0–10.255.255.255
+        return l in 3232235520L..3232301055L || l in 167772160L..184549375L
     }
 
     /**
@@ -234,14 +187,11 @@ object IpKit {
      * @author K
      * @since 1.0.0
      */
-    fun getLocalIp(): String {
-        return try {
-            InetAddress.getLocalHost().hostAddress
-        } catch (e: UnknownHostException) {
-            LOG.error(e)
+    fun getLocalIp(): String = runCatching { InetAddress.getLocalHost().hostAddress }
+        .getOrElse {
+            if (it is UnknownHostException) LOG.error(it) else throw it
             ""
         }
-    }
 
     /**
      * 判断给定的字符串是否为有效的ipv6(包含冒分十六进制表示法、0位压缩表示法、内嵌IPv4地址表示法)
@@ -276,37 +226,26 @@ object IpKit {
      * @since 1.0.0
      */
     fun toFullIpv6(ip: String): String {
-        if (ip.isBlank()) throw IllegalArgumentException("ip is blank")
-
+        require(ip.isNotBlank()) { "ip is blank" }
         // 去掉可能存在的 zone-id（如 fe80::1%eth0）
         val pure = ip.substringBefore('%')
-
-        val addr = try {
-            InetAddress.getByName(pure)
-        } catch (e: UnknownHostException) {
-            throw IllegalArgumentException("invalid IP: $ip", e)
-        }
-
-        var bytes = addr.address
-        if (bytes.size == 4) {
+        val addr = runCatching { InetAddress.getByName(pure) }
+            .getOrElse { throw IllegalArgumentException("invalid IP: $ip", it) }
+        val bytes = when (addr.address.size) {
             // IPv4 -> 统一映射为 IPv6 的 16 字节
-            val v6 = ByteArray(16)
-            v6[10] = 0xFF.toByte()
-            v6[11] = 0xFF.toByte()
-            System.arraycopy(bytes, 0, v6, 12, 4)
-            bytes = v6
-        } else if (bytes.size != 16) {
-            throw IllegalArgumentException("unexpected address length")
+            4 -> ByteArray(16).also {
+                it[10] = 0xFF.toByte()
+                it[11] = 0xFF.toByte()
+                System.arraycopy(addr.address, 0, it, 12, 4)
+            }
+            16 -> addr.address
+            else -> throw IllegalArgumentException("unexpected address length")
         }
-
         // 16 字节 -> 8 组，每组 16 位；统一大写、每组补满 4 位
-        val sb = StringBuilder(39)
-        for (i in 0 until 16 step 2) {
+        return (0 until 16 step 2).joinToString(":") { i ->
             val value = ((bytes[i].toInt() and 0xFF) shl 8) or (bytes[i + 1].toInt() and 0xFF)
-            if (i > 0) sb.append(':')
-            sb.append(String.format(Locale.ROOT, "%04X", value))
+            String.format(Locale.ROOT, "%04X", value)
         }
-        return sb.toString()
     }
 
     /**
@@ -318,11 +257,10 @@ object IpKit {
     fun fullIpv6ColonGroupsTextToBigInteger(full: String): BigInteger {
         val parts = full.split(':')
         require(parts.size == 8) { "IPv6 须为全格式 8 段" }
-        var acc = BigInteger.ZERO
-        for (p in parts) {
+        val acc = parts.fold(BigInteger.ZERO) { acc, p ->
             val n = p.toInt(16)
             require(n in 0..0xffff)
-            acc = acc.shiftLeft(16).add(BigInteger.valueOf(n.toLong()))
+            acc.shiftLeft(16).add(BigInteger.valueOf(n.toLong()))
         }
         require(acc.signum() >= 0 && acc <= UINT128_MAX) { "IPv6 数值越界" }
         return acc
@@ -340,20 +278,13 @@ object IpKit {
      */
     fun ipv6BigDecimalToFullString(value: BigDecimal?): String {
         if (value == null) return ""
-        val bi = try {
-            value.toBigIntegerExact()
-        } catch (_: ArithmeticException) {
-            return ""
-        }
+        val bi = runCatching { value.toBigIntegerExact() }.getOrElse { return "" }
         if (bi.signum() < 0 || bi > UINT128_MAX) return ""
-        val sb = StringBuilder(39)
-        for (i in 0 until 8) {
-            if (i > 0) sb.append(':')
+        return (0 until 8).joinToString(":") { i ->
             val shift = 112 - 16 * i
             val group = bi.shiftRight(shift).and(BigInteger.valueOf(0xffffL)).toInt()
-            sb.append(String.format(Locale.ROOT, "%04X", group))
+            String.format(Locale.ROOT, "%04X", group)
         }
-        return sb.toString()
     }
 
     /**
@@ -367,8 +298,7 @@ object IpKit {
         ip: String,
         mode: IpStorageNumericMode = IpStorageNumericMode.AUTO,
     ): BigDecimal? {
-        val s = ip.trim()
-        if (s.isEmpty()) return null
+        val s = ip.trim().ifEmpty { return null }
         return when (mode) {
             IpStorageNumericMode.IPV6 -> parseIpv6PreferToDecimal(s)
             IpStorageNumericMode.IPV4 -> parseIpv4PreferToDecimal(s)
@@ -385,14 +315,9 @@ object IpKit {
      * @author K
      * @since 1.0.0
      */
-    private fun parseIpv6PreferToDecimal(s: String): BigDecimal? {
-        return runCatching {
-            val full = toFullIpv6(s)
-            fullIpv6ColonGroupsTextToUnsignedDecimal(full)
-        }.getOrElse {
-            runCatching { BigDecimal(s) }.getOrNull()
-        }
-    }
+    private fun parseIpv6PreferToDecimal(s: String): BigDecimal? =
+        runCatching { fullIpv6ColonGroupsTextToUnsignedDecimal(toFullIpv6(s)) }
+            .getOrElse { runCatching { BigDecimal(s) }.getOrNull() }
 
     /**
      * 以 IPv4 优先的策略将文本解析为存储用 `BigDecimal`：
@@ -403,12 +328,9 @@ object IpKit {
      * @author K
      * @since 1.0.0
      */
-    private fun parseIpv4PreferToDecimal(s: String): BigDecimal? {
-        return when {
-            s.all { it.isDigit() } -> runCatching { BigDecimal(s) }.getOrNull()
-            else -> ipv4DottedOrFixedToUnsignedDecimal(s)
-        }
-    }
+    private fun parseIpv4PreferToDecimal(s: String): BigDecimal? =
+        if (s.all(Char::isDigit)) runCatching { BigDecimal(s) }.getOrNull()
+        else ipv4DottedOrFixedToUnsignedDecimal(s)
 
     /**
      * 把点分（含定长零补齐）形式 IPv4 转为存储用 `BigDecimal`：
@@ -439,20 +361,15 @@ object IpKit {
      * @author K
      * @since 1.0.0
      */
-    private fun parseAutoToDecimal(s: String): BigDecimal? {
-        return when {
-            s.all { it.isDigit() } -> runCatching { BigDecimal(s) }.getOrNull()
-            isValidIpv4(s) -> {
-                val n = getNormalIpv4(s)
-                val l = ipv4StringToLong(n)
-                if (l < 0) runCatching { BigDecimal(s) }.getOrNull()
-                else BigDecimal(BigInteger.valueOf(l and 0xFFFFFFFFL))
-            }
-            isValidIpv6(s) -> runCatching {
-                fullIpv6ColonGroupsTextToUnsignedDecimal(toFullIpv6(s))
-            }.getOrNull()
-            else -> runCatching { BigDecimal(s) }.getOrNull()
+    private fun parseAutoToDecimal(s: String): BigDecimal? = when {
+        s.all(Char::isDigit) -> runCatching { BigDecimal(s) }.getOrNull()
+        isValidIpv4(s) -> {
+            val l = ipv4StringToLong(getNormalIpv4(s))
+            if (l < 0) runCatching { BigDecimal(s) }.getOrNull()
+            else BigDecimal(BigInteger.valueOf(l and 0xFFFFFFFFL))
         }
+        isValidIpv6(s) -> runCatching { fullIpv6ColonGroupsTextToUnsignedDecimal(toFullIpv6(s)) }.getOrNull()
+        else -> runCatching { BigDecimal(s) }.getOrNull()
     }
 
 }

@@ -86,8 +86,7 @@ open class SysLocaleService(
 
     @Transactional
     override fun deleteById(id: String): Boolean {
-        val po = dao.get(id)
-        if (po == null) {
+        val po = dao.get(id) ?: run {
             log.warn("删除id为${id}的语言时，发现其已不存在！")
             return false
         }
