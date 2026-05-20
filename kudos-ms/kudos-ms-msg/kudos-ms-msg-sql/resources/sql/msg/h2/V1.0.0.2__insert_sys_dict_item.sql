@@ -5,7 +5,7 @@ merge into "sys_dict_item" ("id", "dict_id", "item_code", "item_name", "order_nu
     ('863b4bde-306c-4ca8-978b-c3669c5bc044', '181c57ec-df00-4844-a79b-5b1019ec25ec', 'email', 'publish_method.email', 1, '电子邮件', true),
     ('b7fe6cdc-39b4-40fb-837d-4eb4984d2d71', '181c57ec-df00-4844-a79b-5b1019ec25ec', 'sms', 'publish_method.sms', 2, '手机短信', true),
     ('cfb5937d-87da-4aa4-a553-4e47a03cd824', '181c57ec-df00-4844-a79b-5b1019ec25ec', 'siteMsg', 'publish_method.siteMsg', 3, '站内信', true),
-    ('a6f7e749-3a2a-4848-8d5d-d6bd8d4a9e0e', '0739cfe7-1c78-45c1-a50a-91f415c66c7c', 'all_user', 'publish_method.all_user', 1, '所有用户', true);
+    ('a6f7e749-3a2a-4848-8d5d-d6bd8d4a9e0e', '181c57ec-df00-4844-a79b-5b1019ec25ec', 'all_user', 'publish_method.all_user', 4, '所有用户', true);
 
 -- receiver_group_type
 merge into "sys_dict_item" ("id", "dict_id", "item_code", "item_name", "order_num", "remark", "built_in") values

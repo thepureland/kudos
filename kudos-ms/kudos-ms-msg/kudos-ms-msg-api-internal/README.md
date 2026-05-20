@@ -90,8 +90,7 @@ ComponentInitializationDispatcher 扫到所有 classpath 上的 IComponentInitia
   的路径前缀 `/api/internal/...` 是契约（来自 common 接口注解），如果运维把 internal
   jar 部署到公网端口、没靠网关 ACL 拦截，外部就能直接调 `publish`。建议在 yml 里
   配 servlet path-based filter 或加 spring-security 全局拦截
-- ❗ **缺 `IMsgReceiverGroupInternalController`**——等 common 的 `IMsgReceiverGroupApi`
-  补完方法后同步补
+- ✅ 已补 `MsgReceiverGroupInternalController`，对齐 common 的 `IMsgReceiverGroupApi`
 - ❗ **rate limit / circuit breaker 全靠基础设施**——controller 层无任何 Resilience4j
   / Sentinel 装配；远端 burst 流量直冲 core service，要靠 ability-distributed-* 兜底
 - ❗ **无 trace id propagation 显式装配**——指望 `@EnableKudos` 拉的 starter 处理；

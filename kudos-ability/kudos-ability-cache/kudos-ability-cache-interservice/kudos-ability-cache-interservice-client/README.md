@@ -123,14 +123,12 @@ testImplementation(project(":kudos-test:kudos-test-container"))
 
 - ✅ `InterServiceCacheClientAutoConfiguration` 已标 `@Configuration`——CGLIB 代理 + bean
   方法互调保持同一实例语义
-- ❗ `FeignCacheRequestInterceptor` 用 `@Autowired` 字段注入而非构造器注入——和模块其他
-  类不一致。可考虑统一为构造器注入
+- ✅ `FeignCacheRequestInterceptor` 已改为构造器注入，由 auto-configuration 显式创建
 - ❗ Feign 本地缓存 TTL = 600s 硬编码在 `ClientCacheHelper.afterPropertiesSet`；要可配
   需要走 `@ConfigurationProperties` 暴露
 - ❗ `@Primary` 强行覆盖默认 Feign Decoder——同进程内业务方如果手动装了 `feignDecoder`
   会被本模块抢占，需要在 README 中显式提醒
-- ❗ `@ConditionalOnClass(feign.RequestInterceptor::class)` 缺失——非 Feign 应用引入
-  本模块会触发 bean 装配失败。补完后非 Feign 应用引用本模块只是依赖图占位
+- ✅ `InterServiceCacheClientAutoConfiguration` 已加 `@ConditionalOnClass(feign.RequestInterceptor::class)`
 - ❗ `feignCache().get<ClientCacheItem>(cacheKey)` 用扩展函数依赖响应对象类型与 cache 实现一致；
   Caffeine cache 当前能命中，但 Redis 反序列化路径上 `ClientCacheItem` 是 JDK Serializable，
   与 RedisTemplate 默认 GenericJackson2 配置不兼容——只在 local cache 路径有验证

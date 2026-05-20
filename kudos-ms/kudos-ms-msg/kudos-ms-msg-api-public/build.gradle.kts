@@ -1,5 +1,6 @@
 dependencies {
     api(project(":kudos-ms:kudos-ms-msg:kudos-ms-msg-core"))
+    api(project(":kudos-ms:kudos-ms-msg:kudos-ms-msg-api-admin"))
     api(project(":kudos-ability:kudos-ability-web:kudos-ability-web-springmvc"))
 
 

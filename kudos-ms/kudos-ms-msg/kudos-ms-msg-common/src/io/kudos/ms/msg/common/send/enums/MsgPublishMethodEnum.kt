@@ -25,7 +25,10 @@ enum class MsgPublishMethodEnum(val dictCode: String) {
     SMS("sms"),
 
     /** 站内信 */
-    SITE_MSG("siteMsg");
+    SITE_MSG("siteMsg"),
+
+    /** 所有用户 */
+    ALL_USER("all_user");
 
     /** 用于 [io.kudos.ability.distributed.notify.common.api.INotifyListener.notifyType] 的 key */
     val listenerType: String get() = "msg.dispatch.$dictCode"
