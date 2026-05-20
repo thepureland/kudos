@@ -7,7 +7,10 @@ import io.kudos.base.error.ServiceException
 import io.kudos.base.io.FileKit
 import io.kudos.test.common.init.EnableKudosTest
 import jakarta.annotation.Resource
+import org.junit.jupiter.api.io.TempDir
 import java.io.File
+import java.nio.file.Path
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
@@ -28,6 +31,14 @@ internal class LocalDeleteServiceTest {
 
     @Resource
     private lateinit var localProperties: LocalProperties
+
+    @TempDir
+    private lateinit var tempDir: Path
+
+    @BeforeTest
+    fun setTempBasePath() {
+        localProperties.basePath = tempDir.toString()
+    }
 
     @Test
     fun delete_path_invalid() {

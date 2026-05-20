@@ -10,6 +10,7 @@ import io.kudos.base.lang.string.RandomStringKit
 import io.kudos.base.logger.LogFactory
 import org.springframework.beans.factory.annotation.Autowired
 import java.io.File
+import java.nio.file.Path
 
 
 /**
@@ -27,8 +28,8 @@ open class LocalUploadService : AbstractUploadService() {
 
     /** 按 [UploadFileModel.bucketName] 创建桶目录（已存在则无操作）。 */
     protected fun createBucket(model: UploadFileModel<*>) {
-        val bucketPath = properties.basePath + File.separator + model.bucketName
-        val bucketDir = File(bucketPath)
+        val bucketPath = basePath().resolve(model.bucketName ?: "").normalize()
+        val bucketDir = bucketPath.toFile()
         if (!bucketDir.exists()) {
             log.debug("创建文件目录：{0}", bucketPath)
             bucketDir.mkdirs()
@@ -56,14 +57,23 @@ open class LocalUploadService : AbstractUploadService() {
         val relativeDir = model.bucketName?.takeIf { it.isNotBlank() }
             ?.let { "$it${File.separator}$fileDir" }
             ?: fileDir
-        val rDir = "${properties.basePath}${File.separator}$relativeDir"
-        createFileDir(rDir)
-        val fName = model.fileName?.takeUnless { it.isBlank() }
-            ?: "${RandomStringKit.uuid()}.${model.fileSuffix}"
-        val fullFilePath = "$rDir${File.separator}$fName"
+        val baseDir = basePath().toAbsolutePath().normalize()
+        val targetDir = baseDir.resolve(relativeDir).normalize()
+        if (!targetDir.startsWith(baseDir)) {
+            throw ServiceException(
+                FileErrorCode.FILE_UPLOAD_FAIL,
+                IllegalArgumentException("invalid upload directory: $relativeDir")
+            )
+        }
+        createFileDir(targetDir.toString())
+        val fName = resolveFileName(model)
+        val targetFile = targetDir.resolve(fName).normalize()
+        if (!targetFile.startsWith(baseDir)) {
+            throw ServiceException(FileErrorCode.FILE_UPLOAD_FAIL, IllegalArgumentException("invalid fileName: $fName"))
+        }
         try {
             requireNotNull(model.inputStreamSource) { "inputStreamSource is null" }.getInputStream().use { inputStream ->
-                CompressionPipeline.compressAndOutputFile(inputStream, fullFilePath, model.compressionConfig)
+                CompressionPipeline.compressAndOutputFile(inputStream, targetFile.toString(), model.compressionConfig)
             }
         } catch (e: Exception) {
             throw ServiceException(FileErrorCode.FILE_UPLOAD_FAIL, e)
@@ -71,6 +81,18 @@ open class LocalUploadService : AbstractUploadService() {
         //隐藏basePath
         val filePath = "$relativeDir${File.separator}$fName".replace('\\', '/')
         return "/$filePath"
+    }
+
+    private fun basePath(): Path =
+        File(requireNotNull(properties.basePath) { "kudos.ability.file.local.base-path is not set" }).toPath()
+
+    private fun resolveFileName(model: UploadFileModel<*>): String {
+        val fileName = model.fileName?.takeUnless { it.isBlank() }
+            ?: "${RandomStringKit.uuid()}.${model.fileSuffix}"
+        if (fileName.contains("..") || fileName.contains('/') || fileName.contains('\\')) {
+            throw ServiceException(FileErrorCode.FILE_UPLOAD_FAIL, IllegalArgumentException("invalid fileName: $fileName"))
+        }
+        return fileName
     }
 
     /**
