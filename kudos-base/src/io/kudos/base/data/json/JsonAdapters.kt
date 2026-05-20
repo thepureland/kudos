@@ -93,6 +93,15 @@ internal object JsonAdapters {
         }
     }
 
+    /**
+     * 把内建 java.time module 与用户注册的所有自定义 module 合并后构造 [Json] 实例。
+     * `explicitNulls` 控制 "JSON 中显式 null 时是否退回属性默认值"，由两个缓存路径（default / preserve）共用本方法。
+     *
+     * @param explicitNulls true 保留显式 null；false 退回默认值
+     * @return 配置完毕的 [Json]
+     * @author K
+     * @since 1.0.0
+     */
     private fun buildJson(explicitNulls: Boolean): Json {
         // 把内建的 java.time module 和用户注册的所有 module 合并起来
         val combinedModule = SerializersModule {

@@ -180,6 +180,20 @@ object ListToTreeConverter {
         sorted.forEach { sortChildrenInPlace(it._getChildren(), direction) }
     }
 
+    /**
+     * 用元素自身的 [Comparable] 实现做排序，避免反射调用 compareTo。
+     *
+     * 要求**所有元素都实现 Comparable**（用首元素做守卫检查就够——如果首元素都不是 Comparable，
+     * 整批必然异构，直接 [error] 早抛错；同质保证后续 cast 安全）。
+     *
+     * @param T 元素类型
+     * @param items 待排序集合
+     * @param direction ASC / DESC
+     * @return 已排序列表
+     * @throws IllegalStateException 元素未实现 Comparable
+     * @author K
+     * @since 1.0.0
+     */
     private fun <T : Any> sortByComparable(items: List<T>, direction: DirectionEnum): List<T> {
         if (items.first() !is Comparable<*>) {
             error("类${items.first()::class.simpleName}必须实现Comparable接口！")

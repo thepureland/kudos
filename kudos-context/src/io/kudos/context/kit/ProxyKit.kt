@@ -45,6 +45,18 @@ object ProxyKit {
         return null
     }
 
+    /**
+     * 从 CGLIB 生成的代理对象中反射拿到真实 target。
+     *
+     * 字段链：`CGLIB$CALLBACK_0` → DynamicAdvisedInterceptor → `advised` ([AdvisedSupport]) → `targetSource.target`。
+     * 反射依赖 CGLIB 内部布局，Spring 升级时可能失效——届时按新版字段名调整即可。
+     *
+     * @param proxy CGLIB 代理对象
+     * @return 被代理的真实对象
+     * @throws IllegalArgumentException target 为 null（极少见，表示代理状态异常）
+     * @author K
+     * @since 1.0.0
+     */
     private fun getCglibProxyTargetObject(proxy: Any): Any {
         val h = proxy.javaClass.getDeclaredField($$"CGLIB$CALLBACK_0")
         h.isAccessible = true
@@ -56,6 +68,17 @@ object ProxyKit {
         }
     }
 
+    /**
+     * 从 JDK 动态代理对象中反射拿到真实 target。
+     *
+     * 字段链：父类 `h` 字段 ([AopProxy]) → `advised` ([AdvisedSupport]) → `targetSource.target`。
+     *
+     * @param proxy JDK 动态代理对象
+     * @return 被代理的真实对象
+     * @throws IllegalArgumentException target 为 null
+     * @author K
+     * @since 1.0.0
+     */
     private fun getJdkDynamicProxyTargetObject(proxy: Any): Any {
         val h = proxy.javaClass.superclass.getDeclaredField("h")
         h.isAccessible = true

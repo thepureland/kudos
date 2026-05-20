@@ -20,6 +20,17 @@ class DictCodeConstraintConvertor(annotation: Annotation) : DefaultConstraintCon
         return map
     }
 
+    /**
+     * 通过 [ServiceLoader] SPI 加载 [IDictItemCodeFinder] 取首个实现的字典 code 集合。
+     * 与 [DictItemCodeValidator.dictCodeConvertor] 同理走 SPI 而非 Spring bean——
+     * 本类作为 bean validation 的 constraint converter，由框架反射 new 出来。
+     *
+     * @param module 原子服务编码
+     * @param dictType 字典类型
+     * @return 字典 code 集合；无实现时返回空集
+     * @author K
+     * @since 1.0.0
+     */
     private fun dictCodeConvertor(module: String, dictType: String): Set<String> =
         ServiceLoader.load(IDictItemCodeFinder::class.java).firstOrNull()
             ?.getDictItemCodes(module, dictType) ?: emptySet()
