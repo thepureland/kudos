@@ -103,8 +103,8 @@ PgDataSource）。详见测试代码注释。
 ## 已知限制
 
 - ❗ XA mode 在 testcontainer 环境下未端到端验证——生产 XA 用法需自行用 PGXADataSource 等
-- ❗ `data-source-proxy-mode` 拼写错误时（如 `aT` 之外的字符）会抛 `IllegalArgumentException`
-  —— 但错误信息只说"Unknown dataSourceProxyMode"，没列出合法值
+- ✅ `data-source-proxy-mode` 拼写错误时会抛 `IllegalArgumentException`，错误信息已列出
+  合法值 `AT | XA`，并补单测锁住提示内容
 - ❗ `SeataXidServletFilter` 只处理 servlet web；reactive web (WebFlux) 没有对应实现
 - ❗ Feign XID 透传依赖 `kudos-ability-distributed-client-feign` 装好
   `GlobalHeaderRequestInterceptor`——没装就走不通；测试套件不专门测这套联调
