@@ -24,7 +24,10 @@ import javafx.util.StringConverter
  * property matches this cell's position (requires the table to be
  * of type XTableView)
  *
+ * @param S 行数据类型
+ * @param T 列值类型
  * @author K
+ * @since 1.0.0
  */
 open class XTextFieldTableCell<S, T> @JvmOverloads constructor(converter: StringConverter<T?>? = null) :
     TextFieldTableCell<S?, T?>(converter) {
@@ -43,12 +46,14 @@ open class XTextFieldTableCell<S, T> @JvmOverloads constructor(converter: String
     /**
      * {@inheritDoc}
      *
-     *
-     *
-     * Overridden to lookup the textField created by super and register a listener
-     * with its focusedProperty.
+     * 覆盖 super 之外额外做的事：把 super 安装好的 [TextField] 反查出来（[findTextField]），
+     * 监听其焦点丢失事件，离开焦点时直接 commitEdit——这是为了让"点别处"也能触发提交，
+     * 而不是仅靠 Enter 键。
      *
      * TBD: cleanup, probably needs WeakListener
+     *
+     * @author K
+     * @since 1.0.0
      */
     override fun startEdit() {
         super.startEdit()
@@ -69,33 +74,55 @@ open class XTextFieldTableCell<S, T> @JvmOverloads constructor(converter: String
     }
 
     /**
-     * @param newPosition
-     * @return
+     * 监听 [XTableView.terminatingCellProperty] 的回调：当新位置正好匹配本 cell 时提交编辑。
+     *
+     * @param newPosition 表上新的终止位置
+     * @author K
+     * @since 1.0.0
      */
     protected fun terminateEdit(newPosition: TablePosition<S?, *>?) {
         if (!isEditing || !match(newPosition)) return
         commitEdit()
     }
 
+    /**
+     * 把当前 [myTextField] 的文本通过 converter 转回 T 再 commitEdit。
+     * super 的 commitEdit 默认需要传 T，这里封装一层，避免每个调用点都重复 converter 调用。
+     *
+     * @author K
+     * @since 1.0.0
+     */
     protected fun commitEdit() {
         val edited: T? = myTextField?.let { converter.fromString(it.text) }
         commitEdit(edited)
     }
 
     /**
-     * c&p of super (WTF is that method private?)
+     * 判断给定 [TablePosition] 是否就是本 cell 所在的位置。
+     * super 类把同名方法标成了 private（"WTF is that method private?"），不得不在此 c&p 一份。
      *
      * @param pos a TablePosition to check for matching
      * @return true if the given position matches this cell, false otherwise.
+     * @author K
+     * @since 1.0.0
      */
     protected fun match(pos: TablePosition<S?, *>?): Boolean {
         return pos != null && pos.row == index && pos.tableColumn === tableColumn
     }
 
     /**
-     * Lookup and returns the textField installed by super.
+     * 反查 super 已安装的内部 [TextField]。
      *
-     * @return
+     * 三种命中路径：
+     * 1. cell.graphic 就是 TextField（无装饰场景）；
+     * 2. `.text-field` 选择器只命中一个节点；
+     * 3. graphic 是含多个 TextField 的容器，按当前 item 的字符串值匹配。
+     *
+     * 第三种是边角情况，源代码注释标了 "TBD: untested!"，慎依赖。
+     *
+     * @return 找到的 [TextField]；都未命中返回 null
+     * @author K
+     * @since 1.0.0
      */
     protected fun findTextField(): TextField? {
         if (graphic is TextField) {
