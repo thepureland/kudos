@@ -225,10 +225,23 @@ object KeyValueCacheKit {
         }
     }
 
-    /** 收口「按 cacheName 找 Handler」的样板（与 [HashCacheKit.handlersFor] 同思路）。 */
-    private fun handlersFor(cacheName: String): List<AbstractKeyValueCacheHandler<*>> =
-        SpringKit.getBeansOfType<AbstractKeyValueCacheHandler<*>>().values
-            .filter { it.cacheName() == cacheName }
+    /**
+     * 收口「按 cacheName 找 Handler」的样板（与 [HashCacheKit.handlersFor] 同思路）。
+     *
+     * 索引使用 double-checked locking 懒建：首次调用扫一次 + groupBy 落到 [handlerIndex]，
+     * 后续调用直接 map 查；新增 handler bean 不会被自动感知，由 [resetForTesting]
+     * 或重启上下文触发重建。避免每次 reload / reloadAll 都走 Spring bean 扫描。
+     */
+    @Volatile private var handlerIndex: Map<String, List<AbstractKeyValueCacheHandler<*>>>? = null
+
+    private fun handlersFor(cacheName: String): List<AbstractKeyValueCacheHandler<*>> {
+        val index = handlerIndex ?: synchronized(this) {
+            handlerIndex ?: SpringKit.getBeansOfType<AbstractKeyValueCacheHandler<*>>().values
+                .groupBy { it.cacheName() }
+                .also { handlerIndex = it }
+        }
+        return index[cacheName].orEmpty()
+    }
 
     /**
      * 清理缓存开头的key
@@ -298,6 +311,7 @@ object KeyValueCacheKit {
     fun resetForTesting() {
         cacheManagerOverride = null
         configProviderOverride = null
+        handlerIndex = null
     }
 
 }

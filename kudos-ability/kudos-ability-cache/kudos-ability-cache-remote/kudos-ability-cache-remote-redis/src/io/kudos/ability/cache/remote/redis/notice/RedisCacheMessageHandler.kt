@@ -8,7 +8,6 @@ import io.kudos.ability.cache.common.support.CacheCleanRegister
 import io.kudos.ability.cache.common.support.IHashCacheSync
 import io.kudos.ability.data.memdb.redis.RedisTemplates
 import io.kudos.base.logger.LogFactory
-import io.kudos.context.kit.SpringKit
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
@@ -62,6 +61,14 @@ open class RedisCacheMessageHandler(
 
     @Autowired
     protected lateinit var versionConfig: CacheVersionConfig
+
+    /**
+     * Hash 缓存的本地同步钩子；可选——无 hash 缓存模块时不会有这个 bean。每条 Redis 通知都要
+     * 找它，旧实现走 `SpringKit.getBeansOfType<IHashCacheSync>().values.firstOrNull()`，每次都
+     * 触发一次全量 bean 扫描，热路径开销不划算；改为 Spring 注入一次（`required = false`）。
+     */
+    @Autowired(required = false)
+    private var hashCacheSync: IHashCacheSync? = null
 
     /**
      * 发送缓存操作消息
@@ -153,7 +160,7 @@ open class RedisCacheMessageHandler(
         // 只有非当前节点的清理才需要删除本地缓存，本节点自己已经删除过了
         if (message.nodeId != nodeId) {
             if (message.cacheType == "hash") {
-                SpringKit.getBeansOfType<IHashCacheSync>().values.firstOrNull()?.let { sync ->
+                hashCacheSync?.let { sync ->
                     when (val k = message.key) {
                         null -> sync.clearLocal(cacheName)
                         // 批量操作打包成一条消息携带 id 列表（saveBatch 等场景），避免 N+1 publish 风暴。
