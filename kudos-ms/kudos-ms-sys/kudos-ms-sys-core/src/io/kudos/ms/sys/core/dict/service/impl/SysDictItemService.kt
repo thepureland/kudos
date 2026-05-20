@@ -5,7 +5,7 @@ import io.kudos.ms.sys.core.platform.service.impl.completeCrudUpdate
 
 import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.model.contract.entity.IIdEntity
+import io.kudos.ms.sys.core.platform.service.impl.requireStringId
 import io.kudos.ms.sys.common.dict.vo.SysDictItemCacheEntry
 import io.kudos.ms.sys.common.dict.vo.response.SysDictItemNode
 import io.kudos.ms.sys.core.dict.cache.SysDictItemHashCache
@@ -147,7 +147,7 @@ open class SysDictItemService(
 
     @Transactional
     override fun update(any: Any): Boolean {
-        val id = requireDictItemId(any)
+        val id = requireStringId(any, "字典项")
         return completeCrudUpdate(
             success = super.update(any),
             log = log,
@@ -287,16 +287,4 @@ open class SysDictItemService(
         getDirectChildrenOfItemFromCache(atomicServiceCode, dictType, itemCode, activeOnly)
             .map { SysDictItemNode(it.id, it.itemCode, it.itemName) }
 
-    /**
-     * 从 update 入参抽 id；要求实现 [IIdEntity] 且 id 是 String。
-     *
-     * @param any 更新入参
-     * @return 字典项 id
-     * @throws IllegalStateException 入参类型不被支持
-     * @author K
-     * @since 1.0.0
-     */
-    private fun requireDictItemId(any: Any): String =
-        (any as? IIdEntity<*>)?.id as? String
-            ?: error("更新字典项时不支持的入参类型: ${any::class.qualifiedName}")
 }

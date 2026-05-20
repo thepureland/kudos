@@ -2,7 +2,7 @@ package io.kudos.ms.sys.core.accessrule.service.impl
 
 import io.kudos.base.error.ServiceException
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.model.contract.entity.IIdEntity
+import io.kudos.ms.sys.core.platform.service.impl.requireStringId
 import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.ms.sys.common.accessrule.enums.SysAccessRuleErrorCodeEnum
 import io.kudos.ms.sys.common.accessrule.vo.SysAccessRuleIpCacheEntry
@@ -111,7 +111,7 @@ open class SysAccessRuleIpService(
 
     @Transactional
     override fun update(any: Any): Boolean {
-        val id = requireIpRuleId(any)
+        val id = requireStringId(any, "IP访问规则")
         return completeCrudUpdate(
             success = super.update(any),
             log = log,
@@ -183,19 +183,6 @@ open class SysAccessRuleIpService(
             }
         }
     }
-
-    /**
-     * 从 update 入参抽 id；要求实现 [IIdEntity] 且 id 是 String。
-     *
-     * @param any 更新入参
-     * @return IP 访问规则 id
-     * @throws IllegalStateException 入参类型不被支持
-     * @author K
-     * @since 1.0.0
-     */
-    private fun requireIpRuleId(any: Any): String =
-        (any as? IIdEntity<*>)?.id as? String
-            ?: error("更新IP访问规则时不支持的入参类型: ${any::class.qualifiedName}")
 
     /**
      * 批量删除 IP 规则；删除成功后发布 [SysAccessRuleIpBatchDeleted]。

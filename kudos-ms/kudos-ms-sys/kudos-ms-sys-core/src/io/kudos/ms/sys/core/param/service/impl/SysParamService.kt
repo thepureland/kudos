@@ -5,7 +5,7 @@ import io.kudos.ms.sys.core.platform.service.impl.completeCrudUpdate
 
 import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.model.contract.entity.IIdEntity
+import io.kudos.ms.sys.core.platform.service.impl.requireStringId
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.eq
 import io.kudos.ms.sys.common.param.vo.SysParamCacheEntry
@@ -91,7 +91,7 @@ open class SysParamService(
 
     @Transactional
     override fun update(any: Any): Boolean {
-        val id = requireParamId(any)
+        val id = requireStringId(any, "参数")
         return completeCrudUpdate(
             success = super.update(any),
             log = log,
@@ -132,16 +132,4 @@ open class SysParamService(
         return count
     }
 
-    /**
-     * 从 update 入参抽 id；要求实现 [IIdEntity] 且 id 是 String。
-     *
-     * @param any 更新入参
-     * @return 参数 id
-     * @throws IllegalStateException 入参类型不被支持
-     * @author K
-     * @since 1.0.0
-     */
-    private fun requireParamId(any: Any): String =
-        (any as? IIdEntity<*>)?.id as? String
-            ?: error("更新参数时不支持的入参类型: ${any::class.qualifiedName}")
 }
