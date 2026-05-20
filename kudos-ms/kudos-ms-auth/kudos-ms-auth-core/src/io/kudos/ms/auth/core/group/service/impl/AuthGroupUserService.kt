@@ -33,20 +33,16 @@ open class AuthGroupUserService(
     private val log = LogFactory.getLog(this::class)
 
     @Transactional(readOnly = true)
-    override fun getUserIdsByGroupId(groupId: String): Set<String> {
-        return dao.searchUserIdsByGroupId(groupId)
-    }
+    override fun getUserIdsByGroupId(groupId: String): Set<String> =
+        dao.searchUserIdsByGroupId(groupId)
 
     @Transactional(readOnly = true)
-    override fun getGroupIdsByUserId(userId: String): Set<String> {
-        return dao.searchGroupIdsByUserId(userId)
-    }
+    override fun getGroupIdsByUserId(userId: String): Set<String> =
+        dao.searchGroupIdsByUserId(userId)
 
     @Transactional
     override fun batchBind(groupId: String, userIds: Collection<String>): Int {
-        if (userIds.isEmpty()) {
-            return 0
-        }
+        if (userIds.isEmpty()) return 0
         // 一次 SELECT 已存在的关系，差集对新增 ID 一次 batchInsert，把原 N+1 折叠到 2 次 SQL。
         val existing = dao.searchUserIdsByGroupId(groupId)
         val boundUserIds = userIds.toSet() - existing
@@ -55,7 +51,7 @@ open class AuthGroupUserService(
             return 0
         }
         val relations = boundUserIds.map { userId ->
-            AuthGroupUser.Companion {
+            AuthGroupUser {
                 this.groupId = groupId
                 this.userId = userId
             }
@@ -80,9 +76,7 @@ open class AuthGroupUserService(
     }
 
     @Transactional(readOnly = true)
-    override fun exists(groupId: String, userId: String): Boolean {
-        return dao.exists(groupId, userId)
-    }
+    override fun exists(groupId: String, userId: String): Boolean = dao.exists(groupId, userId)
 
 
 }

@@ -116,13 +116,7 @@ class FilesController : Initializable {
      * @author K
      * @since 1.0.0
      */
-    private fun createFilePathModel(): List<GenFile> {
-        val genFiles = mutableListOf<GenFile>()
-        fileTable.items.filter { it.getGenerate() }.forEach {
-            genFiles.add(it)
-        }
-        return genFiles
-    }
+    private fun createFilePathModel(): List<GenFile> = fileTable.items.filter { it.getGenerate() }
 
     /**
      * 表头"全选/全不选"复选框回调；批量同步所有 [GenFile.setGenerate]。

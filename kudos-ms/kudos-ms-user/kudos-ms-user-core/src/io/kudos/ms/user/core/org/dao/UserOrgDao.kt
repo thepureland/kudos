@@ -26,10 +26,8 @@ open class UserOrgDao : BaseCrudDao<String, UserOrg, UserOrgs>() {
      * @param tenantId 租户ID
      * @return List<UserOrgCacheEntry>
      */
-    open fun searchOrgsByTenantIdForCache(tenantId: String): List<UserOrgCacheEntry> {
-        val criteria = Criteria(UserOrg::tenantId eq tenantId)
-        return searchAs<UserOrgCacheEntry>(criteria)
-    }
+    open fun searchOrgsByTenantIdForCache(tenantId: String): List<UserOrgCacheEntry> =
+        searchAs<UserOrgCacheEntry>(Criteria(UserOrg::tenantId eq tenantId))
 
     /**
      * 查询启用状态下，指定父机构的直接子机构ID列表
@@ -51,11 +49,8 @@ open class UserOrgDao : BaseCrudDao<String, UserOrg, UserOrgs>() {
      * @return 机构列表
      */
     fun searchActiveOrgsByTenantId(tenantId: String, parentId: String? = null): List<UserOrg> {
-        val criteria = Criteria(UserOrg::tenantId eq tenantId)
-            .addAnd(UserOrg::active eq true)
-        if (parentId != null) {
-            criteria.addAnd(UserOrg::parentId eq parentId)
-        }
+        val criteria = Criteria(UserOrg::tenantId eq tenantId).addAnd(UserOrg::active eq true)
+        parentId?.let { criteria.addAnd(UserOrg::parentId eq it) }
         return search(criteria)
     }
 
@@ -101,9 +96,8 @@ open class UserOrgDao : BaseCrudDao<String, UserOrg, UserOrgs>() {
      * 全量机构的 orgId → parentId 映射，给缓存批量预热构造父子索引用。
      * value 为 null 表示根机构。
      */
-    fun searchAllOrgIdToParentId(): Map<String, String?> {
-        return allSearch().associate { it.id to it.parentId }
-    }
+    fun searchAllOrgIdToParentId(): Map<String, String?> =
+        allSearch().associate { it.id to it.parentId }
 
 
 }

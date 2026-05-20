@@ -45,20 +45,16 @@ open class AuthRoleUserService(
     private val log = LogFactory.getLog(this::class)
 
     @Transactional(readOnly = true)
-    override fun getUserIdsByRoleId(roleId: String): Set<String> {
-        return userIdsByRoleIdCache.getUserIds(roleId).toSet()
-    }
+    override fun getUserIdsByRoleId(roleId: String): Set<String> =
+        userIdsByRoleIdCache.getUserIds(roleId).toSet()
 
     @Transactional(readOnly = true)
-    override fun getRoleIdsByUserId(userId: String): Set<String> {
-        return roleIdsByUserIdCache.getRoleIds(userId).toSet()
-    }
+    override fun getRoleIdsByUserId(userId: String): Set<String> =
+        roleIdsByUserIdCache.getRoleIds(userId).toSet()
 
     @Transactional
     override fun batchBind(roleId: String, userIds: Collection<String>): Int {
-        if (userIds.isEmpty()) {
-            return 0
-        }
+        if (userIds.isEmpty()) return 0
         // 一次 SELECT 已存在的关系，差集对新增 ID 一次 batchInsert，把原 N+1 折叠到 2 次 SQL。
         val existing = dao.searchUserIdsByRoleId(roleId).toSet()
         val boundUserIds = userIds.toSet() - existing
@@ -67,7 +63,7 @@ open class AuthRoleUserService(
             return 0
         }
         val relations = boundUserIds.map { userId ->
-            AuthRoleUser.Companion {
+            AuthRoleUser {
                 this.roleId = roleId
                 this.userId = userId
             }
@@ -92,9 +88,7 @@ open class AuthRoleUserService(
     }
 
     @Transactional(readOnly = true)
-    override fun exists(roleId: String, userId: String): Boolean {
-        return dao.exists(roleId, userId)
-    }
+    override fun exists(roleId: String, userId: String): Boolean = dao.exists(roleId, userId)
 
 
 }

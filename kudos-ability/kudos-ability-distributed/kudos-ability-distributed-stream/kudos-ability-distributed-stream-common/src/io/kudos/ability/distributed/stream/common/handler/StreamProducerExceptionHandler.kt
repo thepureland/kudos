@@ -108,14 +108,11 @@ class StreamProducerExceptionHandler : AbstractFailedDataHandler<StreamProducerM
         get() = "0 0/1 * * * *"
 
     override fun filePath(): String {
-        val serviceCode = KudosContextHolder.getOrNull()?.atomicServiceCode
-        val basePath = configuredFilePath.takeIf { it.isNotBlank() }
-            ?: RetryConfig.baseFailedDataPath
-        return basePath + "/" + (serviceCode ?: "default")
+        val basePath = configuredFilePath.takeIf { it.isNotBlank() } ?: RetryConfig.baseFailedDataPath
+        val serviceCode = KudosContextHolder.getOrNull()?.atomicServiceCode ?: "default"
+        return "$basePath/$serviceCode"
     }
 
-    override fun bindName(): String {
-        return IStreamFailHandler.DEFAULT_BIND_NAME
-    }
+    override fun bindName(): String = IStreamFailHandler.DEFAULT_BIND_NAME
 
 }

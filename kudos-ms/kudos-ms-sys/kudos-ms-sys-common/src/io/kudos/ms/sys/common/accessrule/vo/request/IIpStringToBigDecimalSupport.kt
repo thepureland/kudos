@@ -28,9 +28,8 @@ interface IIpStringToBigDecimalSupport {
      * 返回ip起始值的BigDecimal表示，兼容ipv4和ipv6
      */
     fun getIpStart(): BigDecimal? {
-        if (getIpStartString().isNullOrBlank())
-            return null
-        return IpKit.ipTextToUnsignedStorageDecimal(getIpStartString()!!, getIpStorageNumericMode())
+        val ip = getIpStartString()?.takeIf { it.isNotBlank() } ?: return null
+        return IpKit.ipTextToUnsignedStorageDecimal(ip, getIpStorageNumericMode())
             ?: throw ServiceException(SysAccessRuleErrorCodeEnum.INVALID_IP_START_ADDRESS)
     }
 
@@ -38,20 +37,14 @@ interface IIpStringToBigDecimalSupport {
      * 返回ip结束值的BigDecimal表示，兼容ipv4和ipv6
      */
     fun getIpEnd(): BigDecimal? {
-        if (getIpEndString().isNullOrBlank())
-            return null
-        return IpKit.ipTextToUnsignedStorageDecimal(getIpEndString()!!, getIpStorageNumericMode())
+        val ip = getIpEndString()?.takeIf { it.isNotBlank() } ?: return null
+        return IpKit.ipTextToUnsignedStorageDecimal(ip, getIpStorageNumericMode())
             ?: throw ServiceException(SysAccessRuleErrorCodeEnum.INVALID_IP_END_ADDRESS)
     }
 
     private fun getIpStorageNumericMode(): IpStorageNumericMode {
-        if (getIpTypeDictCodeString().isNullOrBlank())
-            return IpStorageNumericMode.AUTO
-        return if (IpTypeEnum.IPV4.code == getIpTypeDictCodeString()) {
-            IpStorageNumericMode.IPV4
-        } else {
-            IpStorageNumericMode.IPV6
-        }
+        val typeCode = getIpTypeDictCodeString()?.takeIf { it.isNotBlank() } ?: return IpStorageNumericMode.AUTO
+        return if (IpTypeEnum.IPV4.code == typeCode) IpStorageNumericMode.IPV4 else IpStorageNumericMode.IPV6
     }
 
 }

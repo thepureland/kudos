@@ -200,37 +200,33 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
      * 
      * @param batchData 批量消息列表，包含从MQ拉取的消息
      */
+    @Suppress("UNCHECKED_CAST")
     private fun toProcessBizData(batchData: MutableList<MessageExt?>) {
         val list = batchData.filterNotNull().map { s ->
             try {
-                val properties = s.properties
-                val data = ObjectInputStream(ByteArrayInputStream(s.body)).use { ois ->
-                    @Suppress("UNCHECKED_CAST")
-                    ois.readObject() as T?
-                }
-                BatchConsumerItem(data, properties)
+                val data = ObjectInputStream(ByteArrayInputStream(s.body)).use { it.readObject() as T? }
+                BatchConsumerItem(data, s.properties)
             } catch (e: Exception) {
                 throw RuntimeException(e)
             }
         }.toMutableList()
+        val processor = bizBatchProcess
+        if (processor == null) {
+            log.warn("业务消费处理器为空，跳过本批次消费。topic=$topic")
+            return
+        }
         try {
-            val processor = bizBatchProcess
-            if (processor == null) {
-                log.warn("业务消费处理器为空，跳过本批次消费。topic=$topic")
-                return
-            }
-            @Suppress("UNCHECKED_CAST")
             processor.invoke(list as MutableList<BatchConsumerItem<T?>?>?)
             consumer.commit()
         } catch (e: Exception) {
-            if (saveException) {
-                log.error(e, "业务数据消费失败！" + e.message)
-                saveErrorData(batchData)
-                //出现异常，但是保存了日志，所以确认消费
-                consumer.commit()
-            } else {
+            if (!saveException) {
                 log.error(e, "业务消费失败，重新拉数据...")
+                return
             }
+            log.error(e, "业务数据消费失败！${e.message}")
+            saveErrorData(batchData)
+            //出现异常，但是保存了日志，所以确认消费
+            consumer.commit()
         }
     }
 
@@ -240,10 +236,11 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
             return
         }
         log.warn("保存异常消费日志，避免mq堵塞")
-        val exceptionMsg = SysMqFailMsg()
-        exceptionMsg.topic = requireNotNull(topic) { "topic is null" }
-        exceptionMsg.msgBodyJson = JSONObject.toJSONString(data)
-        exceptionMsg.createTime = LocalDateTime.now()
+        val exceptionMsg = SysMqFailMsg().apply {
+            topic = requireNotNull(this@RocketMqBatchConsumer.topic) { "topic is null" }
+            msgBodyJson = JSONObject.toJSONString(data)
+            createTime = LocalDateTime.now()
+        }
         SpringKit.getBean<ISysMqFailMsgService>().save(exceptionMsg)
     }
 

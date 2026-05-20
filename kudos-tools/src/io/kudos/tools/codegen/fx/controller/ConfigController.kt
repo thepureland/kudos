@@ -107,8 +107,8 @@ class ConfigController : Initializable {
      * @since 1.0.0
      */
     private fun initAutoCompletion() {
-        var moduleSuggestionsStr = propertiesLoader.getProperty(Config.PROP_KEY_MODULE_SUGGESTIONS, "")
-        moduleSuggestions = HashSet(listOf(*moduleSuggestionsStr.split(",".toRegex()).toTypedArray()))
+        val moduleSuggestionsStr = propertiesLoader.getProperty(Config.PROP_KEY_MODULE_SUGGESTIONS, "")
+        moduleSuggestions = moduleSuggestionsStr.split(",").toHashSet()
     }
 
     /**
@@ -171,22 +171,13 @@ class ConfigController : Initializable {
      */
     private fun initTempleComboBox() {
         val templatesPath = "${PathKit.getRuntimePath()}/../../../resources/main/templates/"
-        val files = File(templatesPath).normalize().listFiles()
-        val templateNameAndPaths = mutableListOf<Config.TemplateNameAndRootDir>()
-        files.forEach {
-            templateNameAndPaths.add(
-                Config.TemplateNameAndRootDir(it.name, FilenameKit.normalize(it.absolutePath, true))
-            )
+        val templateNameAndPaths = File(templatesPath).normalize().listFiles().orEmpty().map {
+            Config.TemplateNameAndRootDir(it.name, FilenameKit.normalize(it.absolutePath, true))
         }
-        templateChoiceBox.items = FXCollections.observableArrayList(*templateNameAndPaths.toTypedArray())
+        templateChoiceBox.items = FXCollections.observableArrayList(templateNameAndPaths)
         templateChoiceBox.selectionModel = object : SingleSelectionModel<Config.TemplateNameAndRootDir>() {
-            override fun getItemCount(): Int {
-                return templateNameAndPaths.size
-            }
-
-            override fun getModelItem(index: Int): Config.TemplateNameAndRootDir {
-                return templateNameAndPaths[index]
-            }
+            override fun getItemCount(): Int = templateNameAndPaths.size
+            override fun getModelItem(index: Int): Config.TemplateNameAndRootDir = templateNameAndPaths[index]
         }
         templateChoiceBox.selectionModel.select(0)
     }
@@ -311,18 +302,15 @@ class ConfigController : Initializable {
      */
     @FXML
     private fun openFileChooser() {
-        val directoryChooser = DirectoryChooser()
-        val codeLoaction = config.getCodeLoaction()
-        if (codeLoaction.isNotBlank()) {
-            val file = File(codeLoaction)
-            if (file.exists() && file.isDirectory) {
-                directoryChooser.initialDirectory = file
-            }
+        val directoryChooser = DirectoryChooser().apply {
+            title = "选择生成目录"
+            config.getCodeLoaction().takeIf { it.isNotBlank() }
+                ?.let(::File)
+                ?.takeIf { it.exists() && it.isDirectory }
+                ?.let { initialDirectory = it }
         }
-        directoryChooser.title = "选择生成目录"
-        val selectedFolder = directoryChooser.showDialog(openButton.scene.window)
-        if (selectedFolder != null) {
-            locationTextField.text = selectedFolder.absolutePath
+        directoryChooser.showDialog(openButton.scene.window)?.let {
+            locationTextField.text = it.absolutePath
         }
     }
 

@@ -1,7 +1,5 @@
 package io.kudos.tools.codegen.core.merge
 
-import java.util.regex.Pattern
-
 /**
  * 拼接代码抓取器
  *
@@ -10,15 +8,13 @@ import java.util.regex.Pattern
  */
 class AppendCodesRetriever(private val fileContent: CharSequence) {
 
-    fun retrieve(): Map<Int, Pair<AppendCodeType, String>> {
-        val map = hashMapOf<Int, Pair<AppendCodeType, String>>()
-        val p =
-            Pattern.compile("(?<=(<!--)?#?//region append (\\w{1,10}) codes (\\d)(-->)?\\r?\\n)[\\s\\S]*?(?=(<!--)?#?//endregion append \\w+ codes \\d(-->)?)")
-        val m = p.matcher(fileContent)
-        while (m.find()) {
-            map[m.group(3).toInt()] = Pair(AppendCodeType.valueOf(m.group(2)), m.group(0))
+    fun retrieve(): Map<Int, Pair<AppendCodeType, String>> =
+        APPEND_REGEX.findAll(fileContent).associate { match ->
+            match.groupValues[3].toInt() to (AppendCodeType.valueOf(match.groupValues[2]) to match.value)
         }
-        return map
-    }
 
+    private companion object {
+        private val APPEND_REGEX =
+            Regex("(?<=(<!--)?#?//region append (\\w{1,10}) codes (\\d)(-->)?\\r?\\n)[\\s\\S]*?(?=(<!--)?#?//endregion append \\w+ codes \\d(-->)?)")
+    }
 }
