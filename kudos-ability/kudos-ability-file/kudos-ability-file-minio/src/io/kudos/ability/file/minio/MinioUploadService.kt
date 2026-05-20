@@ -81,23 +81,18 @@ open class MinioUploadService : AbstractUploadService() {
         try {
             val minioClient: MinioClient = getMinioClient(model)
             createBucket(minioClient, model)
-            var fName = model.fileName
-            if (fName.isNullOrBlank()) {
-                fName = RandomStringKit.uuid() + "." + model.fileSuffix
-            }
+            val fName = model.fileName?.takeUnless { it.isBlank() }
+                ?: "${RandomStringKit.uuid()}.${model.fileSuffix}"
             val fullFilePath = "$fileDir/$fName"
 
             val inputStream = requireNotNull(model.inputStreamSource) { "inputStreamSource is null" }.inputStream
             val result = CompressionPipeline.compress(inputStream, fullFilePath, model.compressionConfig)
 
+            val uploadStream = result.outputStream?.let { ByteArrayInputStream(it.toByteArray()) } ?: inputStream
             val putArgs = PutObjectArgs.builder()
                 .bucket(model.bucketName)
                 .`object`(result.getOutputFilePath())
-                .stream(
-                    if (result.outputStream == null) inputStream else ByteArrayInputStream(
-                        requireNotNull(result.outputStream) { "outputStream is null" }.toByteArray()
-                    ), -1, 10485760
-                )
+                .stream(uploadStream, -1, 10485760)
                 .contentType(result.mimeType).build()
 
             val rs = minioClient.putObject(putArgs)
@@ -110,9 +105,8 @@ open class MinioUploadService : AbstractUploadService() {
         }
     }
 
-    override fun pathPrefix(): String {
-        return requireNotNull(properties.publicEndpoint) { "publicEndpoint is null" }
-    }
+    override fun pathPrefix(): String =
+        requireNotNull(properties.publicEndpoint) { "publicEndpoint is null" }
 
     private val LOG = LogFactory.getLog(this::class)
 
