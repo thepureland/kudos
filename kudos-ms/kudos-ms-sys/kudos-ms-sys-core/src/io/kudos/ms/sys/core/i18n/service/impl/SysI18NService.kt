@@ -39,15 +39,11 @@ open class SysI18NService(
 
     private val log = LogFactory.getLog(this::class)
 
+    @Suppress("UNCHECKED_CAST")
     @Transactional(readOnly = true)
-    override fun <R : Any> get(id: String, returnType: KClass<R>): R? {
-        return if (returnType == SysI18nCacheEntry::class) {
-            @Suppress("UNCHECKED_CAST")
-            sysI18nHashCache.getI18nById(id) as R?
-        } else {
-            super.get(id, returnType)
-        }
-    }
+    override fun <R : Any> get(id: String, returnType: KClass<R>): R? =
+        if (returnType == SysI18nCacheEntry::class) sysI18nHashCache.getI18nById(id) as R?
+        else super.get(id, returnType)
 
     @Transactional(readOnly = true)
     override fun getI18nFromCache(id: String): SysI18nCacheEntry? = sysI18nHashCache.getI18nById(id)
@@ -67,28 +63,21 @@ open class SysI18NService(
         i18nTypeDictCode: String,
         namespace: String,
         atomicServiceCode: String
-    ): Map<String, String> {
-        return sysI18nHashCache.getI18nMap(locale, atomicServiceCode, i18nTypeDictCode, namespace)
-    }
+    ): Map<String, String> = sysI18nHashCache.getI18nMap(locale, atomicServiceCode, i18nTypeDictCode, namespace)
 
     @Transactional(readOnly = true)
     override fun batchGetI18nsFromCache(
         locale: String,
         namespacesByI18nTypeDictCode: Map<String, Collection<String>>,
         atomicServiceCodes: Collection<String>
-    ): Map<String, Map<String, Map<String, String>>> {
-        return namespacesByI18nTypeDictCode.mapValues { (i18nTypeDictCode, namespaces) ->
+    ): Map<String, Map<String, Map<String, String>>> =
+        namespacesByI18nTypeDictCode.mapValues { (i18nTypeDictCode, namespaces) ->
             namespaces.associateWith { namespace ->
-                val map = mutableMapOf<String, String>()
-                atomicServiceCodes.forEach { atomicServiceCode ->
-                    map.putAll(
-                        sysI18nHashCache.getI18nMap(locale, atomicServiceCode, i18nTypeDictCode, namespace)
-                    )
+                atomicServiceCodes.fold(mutableMapOf<String, String>()) { acc, atomicServiceCode ->
+                    acc.apply { putAll(sysI18nHashCache.getI18nMap(locale, atomicServiceCode, i18nTypeDictCode, namespace)) }
                 }
-                map
             }
         }
-    }
 
     @Transactional
     override fun batchSaveOrUpdate(i18ns: List<SysI18nFormUpdate>): Int {
@@ -168,21 +157,15 @@ open class SysI18NService(
         return namespace to key
     }
 
-    private fun saveOrUpdateI18n(form: SysI18nFormUpdate): Boolean {
-        return if (form.id.isNullOrBlank()) {
-            val i18n = toI18n(form, creating = true)
-            val id = dao.insert(i18n)
+    private fun saveOrUpdateI18n(form: SysI18nFormUpdate): Boolean =
+        if (form.id.isNullOrBlank()) {
+            val id = dao.insert(toI18n(form, creating = true))
             eventPublisher.publishEvent(SysI18nInserted(id = id))
             true
         } else {
             val i18n = toI18n(form, creating = false)
-            dao.update(i18n).also { updated ->
-                if (updated) {
-                    eventPublisher.publishEvent(SysI18nUpdated(id = i18n.id))
-                }
-            }
+            dao.update(i18n).also { if (it) eventPublisher.publishEvent(SysI18nUpdated(id = i18n.id)) }
         }
-    }
 
     private fun toI18n(form: SysI18nFormUpdate, creating: Boolean): SysI18n {
         val operation = if (creating) "新增" else "更新"

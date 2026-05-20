@@ -45,15 +45,11 @@ open class SysDictService(
 
     private val log = LogFactory.getLog(this::class)
 
+    @Suppress("UNCHECKED_CAST")
     @Transactional(readOnly = true)
-    override fun <R : Any> get(id: String, returnType: KClass<R>): R? {
-        return if (returnType == SysDictCacheEntry::class) {
-            @Suppress("UNCHECKED_CAST")
-            sysDictHashCache.getDictById(id) as R?
-        } else {
-            super.get(id, returnType)
-        }
-    }
+    override fun <R : Any> get(id: String, returnType: KClass<R>): R? =
+        if (returnType == SysDictCacheEntry::class) sysDictHashCache.getDictById(id) as R?
+        else super.get(id, returnType)
 
     @Transactional(readOnly = true)
     override fun getDictFromCache(dictId: String): SysDictCacheEntry? = sysDictHashCache.getDictById(dictId)
