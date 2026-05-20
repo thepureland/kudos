@@ -441,6 +441,13 @@ open class IdEntitiesRedisHashDao(
         null
     }
 
+    /**
+     * 取默认 RedisTemplate；子类需自定义序列化或库选择时可重写本方法返回不同实例。
+     *
+     * @return 默认 RedisTemplate
+     * @author K
+     * @since 1.0.0
+     */
     protected fun getRedisTemplate(): RedisTemplate<Any, Any?> = redisTemplates.defaultRedisTemplate
 
     /** 二级索引 key 前缀 */
