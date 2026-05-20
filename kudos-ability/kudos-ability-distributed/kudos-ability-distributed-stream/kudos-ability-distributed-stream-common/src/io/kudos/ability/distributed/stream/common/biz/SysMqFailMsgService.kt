@@ -44,11 +44,10 @@ open class SysMqFailMsgService(
      * @param topic     主题
      * @param startTime 查询开始时间
      */
-    override fun query(topic: String, startTime: LocalDateTime): List<SysMqFailMsg> {
-        val criteria = Criteria(SysMqFailMsgs.topic.name, OperatorEnum.EQ, topic)
+    override fun query(topic: String, startTime: LocalDateTime): List<SysMqFailMsg> = dao.search(
+        Criteria(SysMqFailMsgs.topic.name, OperatorEnum.EQ, topic)
             .addAnd(SysMqFailMsgs.createTime.name, OperatorEnum.GE, startTime)
-        return dao.search(criteria)
-    }
+    )
 
     /**
      * 删除异常消息
