@@ -42,6 +42,7 @@ import java.lang.reflect.Method
  */
 class ContextKeyGenerator : KeyGenerator {
 
+    /** SpEL 参数名发现器，让表达式能用 `#paramName` 引用方法形参 */
     private val parameterNameDiscoverer = SpelExpressionCache.parameterNameDiscoverer
 
     /**

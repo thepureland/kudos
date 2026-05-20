@@ -45,6 +45,7 @@ import java.lang.reflect.Method
  * - 使用SpEL表达式解析，支持复杂的key生成逻辑
  */
 class TenantCacheKeyGenerator : KeyGenerator {
+    /** SpEL 参数名发现器，让表达式能用 `#paramName` 引用方法形参 */
     private val parameterNameDiscoverer: ParameterNameDiscoverer = SpelExpressionCache.parameterNameDiscoverer
 
     /**
@@ -183,6 +184,10 @@ class TenantCacheKeyGenerator : KeyGenerator {
     }
 
     companion object {
+        /**
+         * 注解查找顺序：先 Tenant* 自定义，再 Spring 标准 [CachePut]/[Cacheable]/[CacheEvict]。
+         * 自定义优先是因为业务侧通常会用更高语义的注解，标准注解作为兼容兜底。
+         */
         private val KEY_ANNOTATIONS = listOf(
             TenantCacheable::class.java,
             TenantCacheEvict::class.java,
