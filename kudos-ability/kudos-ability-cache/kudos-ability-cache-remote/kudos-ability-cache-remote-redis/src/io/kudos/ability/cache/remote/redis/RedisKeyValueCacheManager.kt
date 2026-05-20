@@ -112,7 +112,9 @@ class RedisKeyValueCacheManager(
             redisCacheConfiguration = redisCacheConfiguration.entryTtl(Duration.ofSeconds(ttl.toLong()))
         }
         val realKey: String = versionConfig.getFinalCacheName(requireNotNull(cacheConfig.name) { "cache name required" })
-        return createRedisCache(realKey, redisCacheConfiguration)
+        // 修复 Spring Boot 4.0.6 中 [RedisCache.clear] 不真正删 Redis key 的 bug：override 自己用
+        // `RedisTemplate.keys(pattern) + delete(keys)` 直删，覆盖所有 RedisCache 实例
+        return ScanClearRedisCache(realKey, cacheWriter, redisCacheConfiguration)
     }
 
     /**
