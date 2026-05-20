@@ -39,6 +39,17 @@ object CodeGenColumnService {
         return results
     }
 
+    /**
+     * 给新建列设默认开关：详情/缓存默认开；查询/列表/编辑按 SKIP_* 白名单"反向选择"开关。
+     *
+     * 之所以走"白名单"模式（默认开 + 列在 skip 集合就关）是因为多数业务列都希望出现在查询/列表/编辑上，
+     * 仅审计字段（create_*, update_*）和不可改字段（id, built_in）应该排除。
+     *
+     * @param it 列信息（in-place 修改其 setter）
+     * @throws IllegalArgumentException 列名为空时
+     * @author K
+     * @since 1.0.0
+     */
     private fun applyDefaults(it: ColumnInfo) {
         // 默认都为详情项 / 缓存项
         it.setDetailItem(true)

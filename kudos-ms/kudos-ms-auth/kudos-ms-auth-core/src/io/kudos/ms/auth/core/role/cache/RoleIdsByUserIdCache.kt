@@ -122,6 +122,18 @@ open class RoleIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() {
         return effective
     }
 
+    /**
+     * 合并"直接绑定的角色"与"通过组继承的角色"为去重后的有效角色列表。
+     *
+     * 早返路径：两边都空时立刻返回空列表，避免无谓的 flatMap/distinct 开销。
+     *
+     * @param directRoleIds 用户直接持有的角色 id 集合
+     * @param groupIds 用户所属组 id 集合
+     * @param groupIdToRoleIds 组 id → 该组持有的角色 id 列表（批量预 load 出来，避免在 flatMap 里 N+1）
+     * @return 去重后的有效角色 id 列表
+     * @author K
+     * @since 1.0.0
+     */
     private fun computeEffectiveRoleIds(
         directRoleIds: Collection<String>,
         groupIds: Collection<String>,

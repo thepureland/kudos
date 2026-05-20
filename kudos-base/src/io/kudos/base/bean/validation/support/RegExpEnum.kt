@@ -1,7 +1,17 @@
 package io.kudos.base.bean.validation.support
 
+/** 校验失败默认提示文案 i18n key 的统一前缀。 */
 private const val REG_EXP_DEFAULT_MSG_PREFIX = "sys.valid-msg.default.Pattern::"
 
+/**
+ * 把短后缀（如 `cn-mainland-mobile`）拼成完整 i18n key（`sys.valid-msg.default.Pattern::cn-mainland-mobile`）。
+ * 给每个枚举条目的 `defaultMessageKey` 字段使用，避免在每行重复前缀。
+ *
+ * @param suffix 由各条目自定义的短后缀
+ * @return 完整 i18n key
+ * @author K
+ * @since 1.0.0
+ */
 private fun regExpMsg(suffix: String) = REG_EXP_DEFAULT_MSG_PREFIX + suffix
 
 /**

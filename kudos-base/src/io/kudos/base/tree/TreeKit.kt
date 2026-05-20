@@ -71,6 +71,17 @@ object TreeKit {
         }
     }
 
+    /**
+     * 深度优先递归：先对当前节点执行 callback，再 DFS 进入每个孩子。
+     * 与广度优先版本（[breadth]）相对——树形 print / 拷贝场景用 DFS 更直观。
+     *
+     * @param T 树节点的载荷类型
+     * @param R callback 的返回类型（被忽略，仅作签名占位）
+     * @param node 当前节点
+     * @param callback 每个节点上的回调
+     * @author K
+     * @since 1.0.0
+     */
     private fun <T, R> depth(node: ITreeNode<T>, callback: ICallback<ITreeNode<T>, R>) {
         callback.execute(node)
         node._getChildren().forEach { depth(it, callback) }

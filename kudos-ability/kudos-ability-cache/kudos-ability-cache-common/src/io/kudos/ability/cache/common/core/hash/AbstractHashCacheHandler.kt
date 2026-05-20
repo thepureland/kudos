@@ -86,5 +86,13 @@ abstract class AbstractHashCacheHandler<T : IIdEntity<*>> : AbstractCacheHandler
         )
     }
 
+    /**
+     * 取当前 handler 对应的 hash 缓存区（按 [cacheName] 子类自报）。
+     * 子类的批量/单条访问方法都基于这个 cache 实例工作；分离出来便于子类需要时直接拿到底层缓存对象。
+     *
+     * @return 当前 cacheName 绑定的 hash cache
+     * @author K
+     * @since 1.0.0
+     */
     protected fun hashCache() = HashCacheKit.getHashCache(cacheName())
 }

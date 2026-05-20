@@ -189,6 +189,20 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
 
     // endregion
 
+    /**
+     * 单个 `(systemCode, tenantId)` 维度的缓存失效 + 可选回填。
+     *
+     * 流程：
+     * 1. 失效该维度缓存（evict）
+     * 2. 若缓存策略要求"写时即刻回填"（[KeyValueCacheKit.isWriteInTime]），通过自代理 `getSelf` 触发
+     *    Spring AOP 重新走 `@Cacheable` 路径回填——直接调 this.getAccessRuleIps 不行，
+     *    那是 self-invocation，会绕过代理拿不到 cache 拦截。
+     *
+     * @param systemCode 系统编码
+     * @param tenantId 租户 id；null = 平台级
+     * @author K
+     * @since 1.0.0
+     */
     private fun refreshDimension(systemCode: String, tenantId: String?) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
         KeyValueCacheKit.evict(CACHE_NAME, getKey(systemCode, tenantId))
@@ -209,6 +223,15 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
         }
     }
 
+    /**
+     * 把 DB 行 [SysAccessRuleIpRow] 拍扁成缓存 entry [SysAccessRuleIpCacheEntry]。
+     * 只保留鉴权时真正用到的字段（ip 范围 / 类型 / 失效时间），其它列不进入缓存以减小内存占用。
+     *
+     * @param ruleIpRecords DB 列表
+     * @return 缓存 entry 列表
+     * @author K
+     * @since 1.0.0
+     */
     private fun mapToCacheItems(ruleIpRecords: List<SysAccessRuleIpRow>): List<SysAccessRuleIpCacheEntry> {
         return ruleIpRecords.map {
             SysAccessRuleIpCacheEntry(
