@@ -12,10 +12,13 @@ import java.io.File
 object PrivateContentEraser {
 
     fun erase(file: File) {
-        var content = FileKit.readFileToString(file)
-        content = content.replace("(<!--)?#?//region append \\w+ codes (\\d)(-->)?\\r\\n".toRegex(), "")
-            .replace("(<!--)?#?//endregion append \\w+ codes \\d(-->)?".toRegex(), "")
+        val content = FileKit.readFileToString(file)
+            .replace(REGION_BEGIN, "")
+            .replace(REGION_END, "")
         FileKit.write(file, content)
     }
+
+    private val REGION_BEGIN = Regex("(<!--)?#?//region append \\w+ codes (\\d)(-->)?\\r\\n")
+    private val REGION_END = Regex("(<!--)?#?//endregion append \\w+ codes \\d(-->)?")
 
 }

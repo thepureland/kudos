@@ -12,16 +12,13 @@ import java.io.*
  */
 object FreemarkerKit {
 
-    fun getAvailableAutoInclude(conf: Configuration, autoIncludes: List<String>): List<String?> {
-        val results = mutableListOf<String?>()
-        autoIncludes.forEach {
+    fun getAvailableAutoInclude(conf: Configuration, autoIncludes: List<String>): List<String?> =
+        autoIncludes.map { include ->
             val t = Template("__auto_include_test__", StringReader("1"), conf)
-            conf.setAutoIncludes(listOf(it))
+            conf.setAutoIncludes(listOf(include))
             t.process(HashMap<Any?, Any?>(), StringWriter())
-            results.add(it)
+            include
         }
-        return results
-    }
 
     fun processTemplate(template: Template, model: Map<String, *>, outputFile: File, encoding: String) {
         BufferedWriter(OutputStreamWriter(FileOutputStream(outputFile), encoding)).use {
@@ -29,16 +26,14 @@ object FreemarkerKit {
         }
     }
 
-    fun processTemplateString(templateString: String, model: Map<String, *>, conf: Configuration): String {
-        StringWriter().use {
+    fun processTemplateString(templateString: String, model: Map<String, *>, conf: Configuration): String =
+        StringWriter().use { writer ->
             try {
-                val template = Template("templateString...", StringReader(templateString), conf)
-                template.process(model, it)
-                return it.toString()
+                Template("templateString...", StringReader(templateString), conf).process(model, writer)
+                writer.toString()
             } catch (_: Exception) {
                 error("解析模板串失败：$templateString")
             }
         }
-    }
 
 }
