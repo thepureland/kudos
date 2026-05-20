@@ -33,27 +33,18 @@ class CacheValueWrapper<T> private constructor(
     /**
      * 获取包装的值，如果值不存在则返回指定的默认值
      */
-    fun orElse(defaultValue: T?): T? {
-        return value ?: defaultValue
-    }
+    fun orElse(defaultValue: T?): T? = value ?: defaultValue
 
     /**
      * 获取包装的值，如果值不存在则从提供的 Supplier 获取默认值
      */
-    fun orElseGet(supplier: Supplier<out T?>): T? {
-        return value ?: supplier.get()
-    }
+    fun orElseGet(supplier: Supplier<out T?>): T? = value ?: supplier.get()
 
     /**
      * 获取包装的值，如果值不存在则抛出指定的异常
      */
-    fun <X : Throwable?> orElseThrow(exceptionSupplier: Supplier<out X?>): T {
-        if (value != null) {
-            return value
-        } else {
-            throw exceptionSupplier.get()
-        }
-    }
+    fun <X : Throwable?> orElseThrow(exceptionSupplier: Supplier<out X?>): T =
+        value ?: throw exceptionSupplier.get()!!
 
     companion object {
         @Serial
@@ -62,16 +53,12 @@ class CacheValueWrapper<T> private constructor(
         /**
          * 静态方法创建包装器，支持空值
          */
-        fun <T> of(value: T?): CacheValueWrapper<T?> {
-            return CacheValueWrapper(value)
-        }
+        fun <T> of(value: T?): CacheValueWrapper<T?> = CacheValueWrapper(value)
 
         /**
          * 静态方法创建空包装器
          */
-        fun <T> empty(): CacheValueWrapper<T?> {
-            return CacheValueWrapper(null)
-        }
+        fun <T> empty(): CacheValueWrapper<T?> = CacheValueWrapper(null)
     }
 }
 

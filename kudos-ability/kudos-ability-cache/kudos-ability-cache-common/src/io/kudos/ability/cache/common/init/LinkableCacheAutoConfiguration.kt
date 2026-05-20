@@ -2,6 +2,7 @@ package io.kudos.ability.cache.common.init
 
 import io.kudos.ability.cache.common.aop.hash.HashCacheableByPrimaryAspect
 import io.kudos.ability.cache.common.aop.hash.HashCacheableBySecondaryAspect
+import io.kudos.ability.cache.common.aop.keyvalue.DistributedCacheGuardAspect
 import io.kudos.ability.cache.common.batch.hash.DefaultHashBatchKeysGenerator
 import io.kudos.ability.cache.common.batch.hash.HashBatchCacheableByPrimaryAspect
 import io.kudos.ability.cache.common.batch.keyvalue.BatchCacheableAspect
@@ -81,6 +82,15 @@ open class LinkableCacheAutoConfiguration : IComponentInitializer {
     @Bean
     @ConditionalOnMissingBean
     open fun batchCacheableAspect(): BatchCacheableAspect = BatchCacheableAspect()
+
+    /**
+     * `@DistributedCacheGuard` 切面。原本类只 `@Aspect` 标注却没有 @Bean 注册，
+     * 导致注解在运行时是 no-op；本注册修复该疏漏。受 [ConditionalOnMissingBean] 保护，
+     * 业务侧覆盖时不冲突。
+     */
+    @Bean
+    @ConditionalOnMissingBean
+    open fun distributedCacheGuardAspect(): DistributedCacheGuardAspect = DistributedCacheGuardAspect()
 
     @Bean
     @ConditionalOnMissingBean

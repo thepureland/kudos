@@ -366,7 +366,7 @@ object HttpClientKit {
         val tmp = target.resolveSibling(target.fileName.toString() + ".part")
 
         val clientBuilder = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL)
-        if (connectTimeout != null) clientBuilder.connectTimeout(connectTimeout)
+        connectTimeout?.let { clientBuilder.connectTimeout(it) }
 
         val requestBuilder = HttpRequest.newBuilder().apply {
             uri(URI.create(url))
@@ -378,8 +378,8 @@ object HttpClientKit {
                 resume && Files.exists(target) -> target
                 else -> null
             }
-            if (resumeFile != null) {
-                val size = Files.size(resumeFile)
+            resumeFile?.let {
+                val size = Files.size(it)
                 if (size > 0L) header("Range", "bytes=$size-")
             }
 
@@ -444,7 +444,7 @@ object HttpClientKit {
         val tmp = target.resolveSibling(target.fileName.toString() + ".part")
 
         val clientBuilder = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL)
-        if (connectTimeout != null) clientBuilder.connectTimeout(connectTimeout)
+        connectTimeout?.let { clientBuilder.connectTimeout(it) }
 
         val requestBuilder = HttpRequest.newBuilder().apply {
             uri(URI.create(url))
@@ -455,8 +455,8 @@ object HttpClientKit {
                 resume && Files.exists(target) -> target
                 else -> null
             }
-            if (resumeFile != null) {
-                val size = Files.size(resumeFile)
+            resumeFile?.let {
+                val size = Files.size(it)
                 if (size > 0L) header("Range", "bytes=$size-")
             }
 

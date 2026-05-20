@@ -43,7 +43,7 @@ interface ILeaseLockProvider {
         errorCode: IErrorCodeEnum?
     ): T? {
         if (!tryLock(lockKey, sec)) {
-            if (errorCode != null) throw ServiceException(errorCode)
+            errorCode?.let { throw ServiceException(it) }
             return null
         }
         return try {
@@ -56,7 +56,7 @@ interface ILeaseLockProvider {
     /** Runnable 重载，无返回值。语义与上面相同。 */
     fun lockExecute(lockKey: String, runnable: Runnable, sec: Int, errorCode: IErrorCodeEnum?) {
         if (!tryLock(lockKey, sec)) {
-            if (errorCode != null) throw ServiceException(errorCode)
+            errorCode?.let { throw ServiceException(it) }
             return
         }
         try {

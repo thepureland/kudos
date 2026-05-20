@@ -28,9 +28,7 @@ object StreamFailHandlerItem {
      * @author K
      * @since 1.0.0
      */
-    fun hasFailedHandler(bindName: String?): Boolean {
-        return STREAM_HANDLER.containsKey(bindName)
-    }
+    fun hasFailedHandler(bindName: String?): Boolean = STREAM_HANDLER.containsKey(bindName)
 
     /**
      * 取 bindName 对应的失败处理器；未注册时回落到 [IStreamFailHandler.DEFAULT_BIND_NAME] 对应的默认实现。
@@ -41,11 +39,7 @@ object StreamFailHandlerItem {
      * @author K
      * @since 1.0.0
      */
-    fun get(bindName: String): IStreamFailHandler? {
+    fun get(bindName: String): IStreamFailHandler? =
         //没有设置，则用默认的实现
-        if (!STREAM_HANDLER.containsKey(bindName)) {
-            return STREAM_HANDLER.get(IStreamFailHandler.DEFAULT_BIND_NAME)
-        }
-        return STREAM_HANDLER.get(bindName)
-    }
+        STREAM_HANDLER[bindName] ?: STREAM_HANDLER[IStreamFailHandler.DEFAULT_BIND_NAME]
 }

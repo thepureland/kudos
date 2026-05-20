@@ -304,14 +304,9 @@ object BeanKit {
         }
         var clazz: Class<*>? = bean.javaClass
         while (clazz != null) {
-            var field: Field? = null
-            for (fieldName in fieldNamesToTry) {
-                field = try {
-                    clazz.getDeclaredField(fieldName)
-                } catch (_: NoSuchFieldException) {
-                    null
-                }
-                if (field != null) break
+            val currentClazz: Class<*> = clazz
+            val field = fieldNamesToTry.firstNotNullOfOrNull { fieldName ->
+                runCatching { currentClazz.getDeclaredField(fieldName) }.getOrNull()
             }
             if (field == null) {
                 clazz = clazz.superclass

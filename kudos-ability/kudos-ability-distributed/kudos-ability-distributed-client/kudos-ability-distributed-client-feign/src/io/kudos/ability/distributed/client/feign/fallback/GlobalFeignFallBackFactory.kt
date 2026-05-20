@@ -36,16 +36,11 @@ class GlobalFeignFallBackFactory : FallbackFactory<HttpResult> {
      * @since 1.0.0
      */
     private fun resolveHttpStatus(cause: Throwable): Int {
-        var t: Throwable? = cause
-        while (t != null) {
-            if (t is FeignException) {
-                val s = t.status()
-                if (s in 100..599) {
-                    return s
-                }
-            }
-            t = t.cause
-        }
+        generateSequence(cause as Throwable?) { it.cause }
+            .filterIsInstance<FeignException>()
+            .map { it.status() }
+            .firstOrNull { it in 100..599 }
+            ?.let { return it }
         return when (cause) {
             is SocketTimeoutException, is TimeoutException -> 504
             is ConnectException -> 503

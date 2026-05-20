@@ -53,16 +53,14 @@ open class LocalUploadService : AbstractUploadService() {
      */
     override fun saveFile(model: UploadFileModel<*>, fileDir: String): String {
         createBucket(model)
-        val relativeDir = model.bucketName?.takeIf { it.isNotBlank() }?.let { bucket ->
-            bucket + File.separator + fileDir
-        } ?: fileDir
-        val rDir = properties.basePath + File.separator + relativeDir
+        val relativeDir = model.bucketName?.takeIf { it.isNotBlank() }
+            ?.let { "$it${File.separator}$fileDir" }
+            ?: fileDir
+        val rDir = "${properties.basePath}${File.separator}$relativeDir"
         createFileDir(rDir)
-        var fName = model.fileName
-        if (fName.isNullOrBlank()) {
-            fName = RandomStringKit.uuid() + "." + model.fileSuffix
-        }
-        val fullFilePath = rDir + File.separator + fName
+        val fName = model.fileName?.takeUnless { it.isBlank() }
+            ?: "${RandomStringKit.uuid()}.${model.fileSuffix}"
+        val fullFilePath = "$rDir${File.separator}$fName"
         try {
             requireNotNull(model.inputStreamSource) { "inputStreamSource is null" }.getInputStream().use { inputStream ->
                 CompressionPipeline.compressAndOutputFile(inputStream, fullFilePath, model.compressionConfig)
@@ -71,7 +69,7 @@ open class LocalUploadService : AbstractUploadService() {
             throw ServiceException(FileErrorCode.FILE_UPLOAD_FAIL, e)
         }
         //隐藏basePath
-        val filePath = (relativeDir + File.separator + fName).replace('\\', '/')
+        val filePath = "$relativeDir${File.separator}$fName".replace('\\', '/')
         return "/$filePath"
     }
 

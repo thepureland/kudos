@@ -33,14 +33,8 @@ object KeyValueCacheKit {
      * @author K
      * @since 1.0.0
      */
-    fun isCacheActive(cacheName: String): Boolean {
-        val cacheConfigProvider = getCacheConfigProvider()
-        val cacheConfig = cacheConfigProvider.getCacheConfig(cacheName)
-        if (cacheConfig != null) {
-            return cacheConfig.isActive
-        }
-        return false
-    }
+    fun isCacheActive(cacheName: String): Boolean =
+        getCacheConfigProvider().getCacheConfig(cacheName)?.isActive ?: false
 
     /**
      * 根据名称获取缓存
@@ -52,11 +46,9 @@ object KeyValueCacheKit {
      */
     fun getCache(name: String): Cache? {
         val cacheManager = getCacheManager() ?: return null
-        val cache: Cache? = cacheManager.getCache(name)
-        if (cache == null) {
-            log.error("缓存【$name】不存在！")
+        return cacheManager.getCache(name).also {
+            if (it == null) log.error("缓存【$name】不存在！")
         }
-        return cache
     }
 
     /**
@@ -99,9 +91,7 @@ object KeyValueCacheKit {
      * @since 1.0.0
      */
     fun put(cacheName: String, key: Any, value: Any?) {
-        if (!isCacheActive(cacheName)) {
-            return
-        }
+        if (!isCacheActive(cacheName)) return
         val cache = getCache(cacheName)
         cache?.put(key, value)
     }
@@ -116,9 +106,7 @@ object KeyValueCacheKit {
      * @since 1.0.0
      */
     fun putIfAbsent(cacheName: String, key: Any, value: Any?) {
-        if (!isCacheActive(cacheName)) {
-            return
-        }
+        if (!isCacheActive(cacheName)) return
         val cache = getCache(cacheName)
         cache?.putIfAbsent(key, value)
     }
@@ -132,9 +120,7 @@ object KeyValueCacheKit {
      * @since 1.0.0
      */
     fun evict(cacheName: String, key: Any) {
-        if (!isCacheActive(cacheName)) {
-            return
-        }
+        if (!isCacheActive(cacheName)) return
         val cache = getCache(cacheName) as? MixCache? ?: return
         //如果是本地缓存，则需要依赖通知发布删除
         if (CacheStrategy.SINGLE_LOCAL == cache.strategy) {
@@ -154,9 +140,7 @@ object KeyValueCacheKit {
      * @since 1.0.0
      */
     fun doEvict(cacheName: String, key: Any) {
-        if (!isCacheActive(cacheName)) {
-            return
-        }
+        if (!isCacheActive(cacheName)) return
         val cache = getCache(cacheName)
         cache?.evict(key)
     }
@@ -169,9 +153,7 @@ object KeyValueCacheKit {
      * @since 1.0.0
      */
     fun clear(cacheName: String) {
-        if (!isCacheActive(cacheName)) {
-            return
-        }
+        if (!isCacheActive(cacheName)) return
         val cache = getCache(cacheName) as? MixCache? ?: return
         //如果是本地缓存，则需要依赖通知发布删除
         if (CacheStrategy.SINGLE_LOCAL == cache.strategy) {
@@ -190,9 +172,7 @@ object KeyValueCacheKit {
      * @since 1.0.0
      */
     fun doClear(cacheName: String) {
-        if (!isCacheActive(cacheName)) {
-            return
-        }
+        if (!isCacheActive(cacheName)) return
         val cache = getCache(cacheName)
         cache?.clear()
     }
@@ -206,11 +186,8 @@ object KeyValueCacheKit {
      * @since 1.0.0
      */
     fun isWriteInTime(cacheName: String): Boolean {
-        if (!isCacheActive(cacheName)) {
-            return false
-        }
-        val cacheConfig = getCacheConfig(cacheName) ?: return false
-        return cacheConfig.isWriteInTime
+        if (!isCacheActive(cacheName)) return false
+        return getCacheConfig(cacheName)?.isWriteInTime ?: false
     }
 
     /**
@@ -222,15 +199,10 @@ object KeyValueCacheKit {
      * @since 1.0.0
      */
     fun getCacheConfig(cacheName: String): CacheConfig? {
-        if (!isCacheActive(cacheName)) {
-            return null
+        if (!isCacheActive(cacheName)) return null
+        return getCacheConfigProvider().getCacheConfig(cacheName).also {
+            if (it == null) log.warn("缓存【$cacheName】不存在！")
         }
-        val cacheConfigProvider = getCacheConfigProvider()
-        val cacheConfig = cacheConfigProvider.getCacheConfig(cacheName)
-        if (cacheConfig == null) {
-            log.warn("缓存【$cacheName】不存在！")
-        }
-        return cacheConfig
     }
 
     /**
@@ -240,17 +212,12 @@ object KeyValueCacheKit {
      * @param key       key
      */
     fun reload(cacheName: String, key: String) {
-        if (!isCacheActive(cacheName)) {
-            return
-        }
+        if (!isCacheActive(cacheName)) return
         val cacheConfig = getCacheConfig(cacheName) ?: return
         if (cacheConfig.isWriteOnBoot) {
-            val beansOfType = SpringKit.getBeansOfType<AbstractKeyValueCacheHandler<*>>()
-            beansOfType.values.forEach {
-                if (it.cacheName() == cacheName) {
-                    it.reload(key)
-                }
-            }
+            SpringKit.getBeansOfType<AbstractKeyValueCacheHandler<*>>().values
+                .filter { it.cacheName() == cacheName }
+                .forEach { it.reload(key) }
         } else {
             evict(cacheName, key)
         }
@@ -262,17 +229,12 @@ object KeyValueCacheKit {
      * @param cacheName 缓存名
      */
     fun reloadAll(cacheName: String) {
-        if (!isCacheActive(cacheName)) {
-            return
-        }
+        if (!isCacheActive(cacheName)) return
         val cacheConfig = getCacheConfig(cacheName) ?: return
         if (cacheConfig.isWriteOnBoot) {
-            val beansOfType = SpringKit.getBeansOfType<AbstractKeyValueCacheHandler<*>>()
-            beansOfType.values.forEach {
-                if (it.cacheName() == cacheName) {
-                    it.reloadAll(true)
-                }
-            }
+            SpringKit.getBeansOfType<AbstractKeyValueCacheHandler<*>>().values
+                .filter { it.cacheName() == cacheName }
+                .forEach { it.reloadAll(true) }
         } else {
             clear(cacheName)
         }
@@ -284,9 +246,7 @@ object KeyValueCacheKit {
      * @param keyPattern key开头
      */
     fun evictByPattern(cacheName: String, keyPattern: String) {
-        if (!isCacheActive(cacheName)) {
-            return
-        }
+        if (!isCacheActive(cacheName)) return
         val cacheManager = getCacheManager() ?: return
         cacheManager.evictByPattern(cacheName, keyPattern)
     }
@@ -299,11 +259,8 @@ object KeyValueCacheKit {
      * @return true：存在， false: 不存在
      */
     fun existsKey(cacheName: String, key: String): Boolean {
-        if (!isCacheActive(cacheName)) {
-            return false
-        }
-        val cacheManager = getCacheManager() ?: return false
-        return cacheManager.existsKey(cacheName, key)
+        if (!isCacheActive(cacheName)) return false
+        return getCacheManager()?.existsKey(cacheName, key) ?: false
     }
 
     /**

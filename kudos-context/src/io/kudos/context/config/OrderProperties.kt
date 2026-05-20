@@ -57,32 +57,20 @@ class OrderProperties : Properties {
     override fun stringPropertyNames(): MutableSet<String?> {
         val set = LinkedHashSet<String?>()
         keyList.mapTo(set) { it.toString() }
-        // include defaults if any
-        if (defaults != null) {
-            for (dk in defaults.stringPropertyNames()) {
-                if (!set.contains(dk)) {
-                    set.add(dk)
-                }
-            }
-        }
+        defaults?.stringPropertyNames()?.let(set::addAll)
         return set
     }
 
     override val entries: MutableSet<MutableMap.MutableEntry<Any, Any?>>
         get() {
-        val entries = LinkedHashSet<MutableMap.MutableEntry<Any, Any?>>()
-        for (key in keyList) {
-            entries.add(AbstractMap.SimpleEntry<Any, Any?>(key, super.get(key)))
-        }
-        // include defaults entries
-        if (defaults != null) {
-            for (e in defaults.entries) {
+            val entries = LinkedHashSet<MutableMap.MutableEntry<Any, Any?>>()
+            keyList.mapTo(entries) { AbstractMap.SimpleEntry<Any, Any?>(it, super.get(it)) }
+            defaults?.entries?.forEach { e ->
                 if (!containsKey(e.key)) {
                     entries.add(AbstractMap.SimpleEntry<Any, Any?>(e.key, e.value))
                 }
             }
+            return entries
         }
-        return entries
-    }
 
 }

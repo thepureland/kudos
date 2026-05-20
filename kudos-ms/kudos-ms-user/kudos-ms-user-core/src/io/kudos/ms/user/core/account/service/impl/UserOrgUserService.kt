@@ -41,20 +41,16 @@ open class UserOrgUserService(
     private val log = LogFactory.getLog(this::class)
 
     @Transactional(readOnly = true)
-    override fun getUserIdsByOrgId(orgId: String): Set<String> {
-        return userIdsByOrgIdCache.getUserIds(orgId).toSet()
-    }
+    override fun getUserIdsByOrgId(orgId: String): Set<String> =
+        userIdsByOrgIdCache.getUserIds(orgId).toSet()
 
     @Transactional(readOnly = true)
-    override fun getOrgIdsByUserId(userId: String): Set<String> {
-        return orgIdsByUserIdCache.getOrgIds(userId).toSet()
-    }
+    override fun getOrgIdsByUserId(userId: String): Set<String> =
+        orgIdsByUserIdCache.getOrgIds(userId).toSet()
 
     @Transactional
     override fun batchBind(orgId: String, userIds: Collection<String>, orgAdmin: Boolean): Int {
-        if (userIds.isEmpty()) {
-            return 0
-        }
+        if (userIds.isEmpty()) return 0
         // 一次 SELECT 已存在的关系，差集对新增 ID 一次 batchInsert，把原 N+1 折叠到 2 次 SQL。
         val existing = dao.searchUserIdsByOrgId(orgId).toSet()
         val boundUserIds = userIds.toSet() - existing
@@ -89,18 +85,14 @@ open class UserOrgUserService(
     }
 
     @Transactional(readOnly = true)
-    override fun exists(orgId: String, userId: String): Boolean {
-        return dao.exists(orgId, userId)
-    }
+    override fun exists(orgId: String, userId: String): Boolean = dao.exists(orgId, userId)
 
     @Transactional
     override fun setOrgAdmin(orgId: String, userId: String, isAdmin: Boolean): Boolean {
-        val relations = dao.searchByOrgIdAndUserId(orgId, userId)
-        if (relations.isEmpty()) {
+        val relation = dao.searchByOrgIdAndUserId(orgId, userId).firstOrNull() ?: run {
             log.warn("设置机构${orgId}的用户${userId}为管理员失败，关系不存在。")
             return false
         }
-        val relation = relations.first()
         val updated = UserOrgUser {
             this.id = relation.id
             this.orgId = orgId

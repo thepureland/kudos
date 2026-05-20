@@ -188,16 +188,15 @@ internal object JsonFallbackEncoder {
                 valueOf = { it.read(value) }
             )
         }
-        val beanElem = runCatching { javaBeanToJsonElement(json, value) }.getOrNull()
-        if (beanElem != null) return beanElem
-        throw SerializationException(
-            "无法序列化 ${k.qualifiedName}：请添加 @Serializable，或改为 data class，" +
-                "或在外层改用可序列化的 DTO/JsonElement/基础类型集合"
-        )
+        return runCatching { javaBeanToJsonElement(json, value) }.getOrNull()
+            ?: throw SerializationException(
+                "无法序列化 ${k.qualifiedName}：请添加 @Serializable，或改为 data class，" +
+                    "或在外层改用可序列化的 DTO/JsonElement/基础类型集合"
+            )
     }
 
     /**
-     * 把任意 [Iterable] 递归编码为 [JsonArray]，并尽量为 [Collection] 预分配容量。
+     * 把任意 [Iterable] 递归编码为 [JsonArray]。
      *
      * @param json 配置好的 Json 引擎
      * @param value 待编码集合
@@ -205,15 +204,8 @@ internal object JsonFallbackEncoder {
      * @author K
      * @since 1.0.0
      */
-    private fun encodeIterable(json: Json, value: Iterable<*>): JsonArray {
-        val items = if (value is Collection<*>) {
-            ArrayList<JsonElement>(value.size)
-        } else {
-            ArrayList<JsonElement>()
-        }
-        value.forEach { items.add(encodeAnyToJsonElement(json, it)) }
-        return JsonArray(items)
-    }
+    private fun encodeIterable(json: Json, value: Iterable<*>): JsonArray =
+        JsonArray(value.map { encodeAnyToJsonElement(json, it) })
 
     /**
      * 把对象数组递归编码为 [JsonArray]。
@@ -224,11 +216,8 @@ internal object JsonFallbackEncoder {
      * @author K
      * @since 1.0.0
      */
-    private fun encodeObjectArray(json: Json, value: Array<*>): JsonArray {
-        val items = ArrayList<JsonElement>(value.size)
-        value.forEach { items.add(encodeAnyToJsonElement(json, it)) }
-        return JsonArray(items)
-    }
+    private fun encodeObjectArray(json: Json, value: Array<*>): JsonArray =
+        JsonArray(value.map { encodeAnyToJsonElement(json, it) })
 
     /**
      * 原始类型数组的统一编码模板：按下标读取并通过 [producer] 转为 [JsonElement]。
@@ -240,13 +229,8 @@ internal object JsonFallbackEncoder {
      * @author K
      * @since 1.0.0
      */
-    private inline fun encodePrimitiveArray(size: Int, producer: (Int) -> JsonElement): JsonArray {
-        val items = ArrayList<JsonElement>(size)
-        for (i in 0 until size) {
-            items.add(producer(i))
-        }
-        return JsonArray(items)
-    }
+    private inline fun encodePrimitiveArray(size: Int, producer: (Int) -> JsonElement): JsonArray =
+        JsonArray(List(size, producer))
 
     /**
      * 把 [Map] 编码为 [JsonObject]：null key 转 `"null"`，非字符串 key 走 [Any.toString]。
@@ -289,7 +273,7 @@ internal object JsonFallbackEncoder {
             Introspector.getBeanInfo(bean.javaClass, Any::class.java).propertyDescriptors.mapNotNull { pd ->
                 val read = pd.readMethod ?: return@mapNotNull null
                 val name = pd.name ?: return@mapNotNull null
-                try { read.isAccessible = true } catch (_: Throwable) {}
+                runCatching { read.isAccessible = true }
                 name to read
             }
         }
@@ -374,7 +358,7 @@ internal object JsonFallbackEncoder {
         name: String,
         prop: KProperty1<out Any, *>
     ): DataClassPropertyAccessor {
-        try { prop.isAccessible = true } catch (_: Throwable) {}
+        runCatching { prop.isAccessible = true }
         val javaGetter = runCatching { prop.getter.javaMethod }.getOrNull()?.also { method ->
             runCatching { method.isAccessible = true }
         }

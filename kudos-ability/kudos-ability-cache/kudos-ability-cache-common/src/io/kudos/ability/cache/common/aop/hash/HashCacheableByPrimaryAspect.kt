@@ -73,8 +73,7 @@ class HashCacheableByPrimaryAspect {
 
         val hashCache = HashCacheKit.getHashCache(cacheName)
         if (KeyValueCacheKit.isCacheActive(cacheName)) {
-            val cached = hashCache.getById(cacheName, keyValue, entityClass)
-            if (cached != null) return cached
+            hashCache.getById(cacheName, keyValue, entityClass)?.let { return it }
         }
 
         val result = joinPoint.proceed()

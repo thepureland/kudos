@@ -4,7 +4,7 @@ import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.tools.codegen.model.po.CodeGenObject
 import io.kudos.tools.codegen.model.table.CodeGenObjects
 import org.ktorm.dsl.eq
-import org.ktorm.entity.first
+import org.ktorm.entity.firstOrNull
 import org.springframework.stereotype.Repository
 
 /**
@@ -20,13 +20,8 @@ object CodeGenObjectDao: BaseCrudDao<String, CodeGenObject, CodeGenObjects>() {
 
     //region your codes 2
 
-    fun searchByName(name: String): CodeGenObject? {
-        return try {
-            entitySequence().first { it.name eq name }
-        } catch (_: NoSuchElementException) {
-            null
-        }
-    }
+    fun searchByName(name: String): CodeGenObject? =
+        entitySequence().firstOrNull { it.name eq name }
 
     //endregion your codes 2
 

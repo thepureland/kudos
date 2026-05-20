@@ -1,46 +1,136 @@
 # kudos-ability-log-audit-rdb-ktorm
 
-审计日志的 **Ktorm + RDB 落地实现**。**当前为占位模块**——无源码，`build.gradle.kts` 仅
-`dependencies {}` 空块。
+审计日志的 **Ktorm + RDB 落地实现**。把 `kudos-ability-log-audit-common` 的
+`SysAuditLogModel` 同步落库到 `sys_audit_log` / `sys_audit_detail_log` 两张表。
 
-## 当前状态
+## 设计要点
 
+### 事务边界：`REQUIRES_NEW`
+
+```kotlin
+@Transactional(propagation = Propagation.REQUIRES_NEW)
+override fun submit(sysAuditLogVo: SysAuditLogModel): Boolean { ... }
 ```
-build.gradle.kts  (3 行，dependencies 块为空)
+
+审计动作不能挂在业务事务里：
+- **业务事务回滚不应该带走审计记录**——"业务失败了"恰恰是最需要保留的审计信息
+- **审计落库失败不应该撞翻业务事务**——`submit` 内部 catch 所有异常返回 `false`，
+  上游切面看到 `false` 后可以决定是否兜底（降级写本地文件 / 重试 / 忽略）
+
+`REQUIRES_NEW` 在 Hibernate / JPA 场景下要求 datasource 支持 `getConnection()` 新建连接；
+通过 `KudosContextHolder.currentDatabase()` 拿到的 Ktorm `Database` 已经走过
+`Database.connectWithSpringSupport`，理论上沿用 Spring 事务管理器的传播能力。
+
+### 双表批量插入
+
+`SysAuditLogModel` 顶层有 `entities: List<SysAuditLogVo>` + `sysAuditDetailLogs: List<SysAuditDetailLogVo>`
+两段。本类对两段各跑一次 `Database.batchInsert(...)`，不做一对一 join——业务侧的
+`AuditLogTool.createSysAuditLogModel` 已经按一对一关系准备好 id 引用。
+
+### 顶层 `tenantId` / `subSysCode` 兜底
+
+```kotlin
+item.set(tenantId, entity.tenantId ?: model.tenantId)
+item.set(subSysCode, entity.subSysCode ?: model.subSysCode)
 ```
 
-- 在 `settings.gradle.kts` 中已注册
-- 但**没有任何模块依赖它**——业务侧没办法注入这里的 `IAuditService` 实现
-- 也没声明依赖 `log-audit-common` / `data-rdb-ktorm` 等明显需要的模块
+`SysAuditLogModel` 与单条 entity 都可能携带 tenantId / subSysCode——切面有时只在
+model 顶层填，有时也填到 entity 里。优先 entity，缺失时用 model 兜底。
 
-## 设计意图
+### Table 用 `Table<Nothing>` 不绑 Entity
 
-未来要实现的：把 `SysAuditLogModel` / `SysAuditLogVo` / `SysAuditDetailLogVo` 通过 Ktorm
-落到 RDB 表（典型表名 `sys_audit_log` / `sys_audit_detail_log`）。装配为 `IAuditService` bean，
-让没接 MQ 的部署也能持久化审计记录。
+`log-audit-common` 的 `SysAuditLogVo` 是普通 POJO（非 Ktorm Entity），所以本模块的
+`SysAuditLogTable` / `SysAuditDetailLogTable` 不绑实体：
 
-实现时至少需要：
-1. `IAuditService` 的 Ktorm 实现类（事务边界 + 批量插入）
-2. `SysAuditLogTable` / `SysAuditDetailLogTable` Ktorm `Table` 定义
-3. `LogAuditRdbKtormAutoConfiguration` 装 bean（注意与 `kudos-ability-log-audit-mq`
-   的 `@Primary` 冲突——非 MQ 优先时 `@Primary` 应给本模块）
-4. flyway 迁移脚本（建表 DDL）
+```kotlin
+object SysAuditLogTable : Table<Nothing>(AuditLogSchema.TABLE_AUDIT_LOG) {
+    val id = varchar(AuditLogColumn.ID).primaryKey()
+    // ...
+}
+```
 
-## 与已实现的 MQ 路径对照
+`Table<Nothing>` 是 Ktorm 表示"只读取列引用、不要 ktorm 自动绑 Entity proxy"的标准
+写法。`batchInsert(SysAuditLogTable) { item { set(column, value) } }` 走纯 DSL 写入，
+不经过 `IDbEntity` 抽象——和 `kudos-ability-data-rdb-ktorm` 的 `BaseCrudDao` 路径互不
+冲突。
 
-| 维度 | log-audit-mq | log-audit-rdb-ktorm（待实现） |
+### 不用 `@Primary`
+
+```kotlin
+@Bean("rdbKtormAuditService")
+@ConditionalOnMissingBean(name = ["rdbKtormAuditService"])
+open fun rdbKtormAuditService(): IAuditService = RdbKtormAuditService()
+```
+
+`kudos-ability-log-audit-mq.LogAuditMqAutoConfiguration` 的 MQ 版本带了 `@Primary`，
+所以同进程内同时引入两个模块时 MQ 版本胜出。本模块的 RDB bean 仍然被注册，业务侧
+可以通过 `@Qualifier("rdbKtormAuditService")` 显式取——双写场景（既 MQ 又 DB）需要
+业务方在切面外自己组合调用。
+
+## 与 MQ 路径对照
+
+| 维度 | log-audit-mq | log-audit-rdb-ktorm |
 |---|---|---|
-| `IAuditService` 实现 | `MqAuditService`（AOP 占位 + `@MqProducer`） | 缺 |
-| `@Primary` | ✅ MQ 优先 | 缺，需协调 |
-| 异步 / 同步 | 异步投递 | 同步 SQL（建议异步化） |
-| 失败语义 | 取决于切面 + broker | 抛 SQLException 直接传到业务方法 |
-| 测试 | 1 case（不验证投递） | 缺 |
+| `IAuditService` 实现 | `MqAuditService`（AOP 占位 + `@MqProducer`） | `RdbKtormAuditService`（`@Transactional` + `batchInsert`） |
+| `@Primary` | ✅ MQ 优先 | ❌（被注册但非 primary） |
+| 异步 / 同步 | 异步投递（取决于 MQ producer 切面） | 同步 SQL |
+| 失败语义 | 返回 `true` 占位，真实结果取决于 MQ broker | 抓异常返回 `false`，业务可据此降级 |
+| 数据可观测性 | 取决于 broker 落地 | 直接 SQL 可查 |
+| 部署复杂度 | 需要 stream + broker | 仅需 RDB |
+
+## 模块入口
+
+| 路径 | 角色 |
+|---|---|
+| `init/LogAuditRdbKtormAutoConfiguration` | 装配入口：注册 `rdbKtormAuditService` bean，受 `kudos.ability.log.audit.rdb.ktorm.enabled` 开关控制 |
+| `service/RdbKtormAuditService` | `IAuditService` 的 Ktorm 实现，事务边界 + 失败语义 |
+| `table/SysAuditLogTable` | `sys_audit_log` 表的 Ktorm 列引用对象 |
+| `table/SysAuditDetailLogTable` | `sys_audit_detail_log` 表的 Ktorm 列引用对象 |
+
+## 配置示例
+
+```yaml
+kudos:
+  ability:
+    log:
+      audit:
+        rdb:
+          ktorm:
+            enabled: true     # 默认 true，可关闭
+spring:
+  flyway:
+    enabled: true             # 让 DDL 自动执行（DDL 在 rdb-common 模块）
+    locations: classpath:db/migration
+```
+
+## 测试覆盖
+
+**当前无单元测试**——审计落库走 `KudosContextHolder.currentDatabase()` 依赖 Spring 上下文，
+单测成本高。建议端到端测试在业务侧或 `kudos-ms-*` 集成测试里覆盖：
+- 启 H2 内存库
+- 通过 `kudos-ability-data-rdb-flyway` 自动建表
+- 触发一次带 `@Audit` 注解的方法，断言 `sys_audit_log` 行数 +1
+
+## 依赖
+
+```kotlin
+api(project(":kudos-ability:kudos-ability-log:kudos-ability-log-audit:kudos-ability-log-audit-rdb:kudos-ability-log-audit-rdb-common"))
+api(project(":kudos-ability:kudos-ability-data:kudos-ability-data-rdb:kudos-ability-data-rdb-ktorm"))
+
+testImplementation(project(":kudos-test:kudos-test-common"))
+```
+
+`rdb-common` 提供表名 / 列名常量与 DDL；`data-rdb-ktorm` 提供 Ktorm DSL + 数据源上下文。
 
 ## 已知限制 / 后续工作
 
-- ❗ 完全占位。要实现，需要先决定：
-  - DDL 是否走 flyway（与 `kudos-ability-data-rdb-flyway` 协同）
-  - 是否单独的 audit 数据源（避免审计写挂掉业务交易）
-  - 失败语义：阻塞业务、还是 fire-and-forget 入内存队列
-- ❗ 与 `kudos-ability-log-audit-rdb-common` 一样，属于"按命名约定预留"的占位模块；批量
-  决策保留 / 删除时一起处理
+- ❗ 同步 SQL 写入——高 TPS 业务的审计落库会成为业务请求路径上的瓶颈。可考虑：(a)
+  本模块加一层 fire-and-forget executor（参考 `MixCache.pushMsgRedis` 的方案），(b)
+  改用 `MqAuditService` 通过 MQ 异步落库
+- ❗ 没有审计专用数据源——共用业务数据源时，DBA 视角下"审计写"与"业务交易写"混在一起，
+  分库时不便。需要时可在 `KudosContextHolder.currentDataSource()` 通过 thread-local
+  切换 `audit` 数据源
+- ❗ `RdbKtormAuditService` 没有单测覆盖。Aspect → context → batchInsert 整条链都依赖
+  Spring 上下文初始化；考虑用 testcontainers + H2 写端到端测试
+- ❗ DDL 写在 `rdb-common` 模块的 `resources/db/migration/`——表 schema 演进时务必新增
+  `V<date>N__*.sql`，不要改老版本，否则 flyway checksum 失败

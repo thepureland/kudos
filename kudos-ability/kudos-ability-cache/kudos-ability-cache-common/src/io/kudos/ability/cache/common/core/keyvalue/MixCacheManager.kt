@@ -48,7 +48,7 @@ import java.util.Objects
  * - 缓存名称会自动添加版本前缀
  * - 模式清除可能影响性能，需谨慎使用
  */
-class MixCacheManager : AbstractCacheManager() {
+open class MixCacheManager : AbstractCacheManager() {
 
     @Value($$"${kudos.ability.cache.enabled}")
     val isCacheEnabled: Boolean? = null
@@ -168,7 +168,7 @@ class MixCacheManager : AbstractCacheManager() {
      * @author K
      * @since 1.0.0
      */
-    override fun getCache(name: String): Cache? {
+    open override fun getCache(name: String): Cache? {
         val realName = requireVersionConfig().getFinalCacheName(name)
         return super.getCache(realName)
     }

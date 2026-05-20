@@ -62,12 +62,10 @@ class StreamHeader {
          * 当前无任何 callsite——属于"未被使用、但被使用时会出错"的预埋 bug。修复并保留以备
          * consumer 侧需要还原 context 时使用。
          */
-        fun toContextParam(headers: MessageHeaders): KudosContext {
-            return KudosContext().apply {
-                tenantId = headers[TENANT_ID_KEY] as String?
-                dataSourceId = headers[DATA_SOURCE_ID_KEY] as String?
-                _datasourceTenantId = headers[DATASOURCE_TENANT_ID] as String?
-            }
+        fun toContextParam(headers: MessageHeaders): KudosContext = KudosContext().apply {
+            tenantId = headers[TENANT_ID_KEY] as String?
+            dataSourceId = headers[DATA_SOURCE_ID_KEY] as String?
+            _datasourceTenantId = headers[DATASOURCE_TENANT_ID] as String?
         }
     }
 }

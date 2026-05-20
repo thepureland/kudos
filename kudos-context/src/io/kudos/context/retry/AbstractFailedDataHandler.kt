@@ -61,21 +61,14 @@ abstract class AbstractFailedDataHandler<T> : IFailedDataHandler<T> {
      * @return 保存文件的绝对路径
      * @throws RuntimeException 如果文件操作失败
      */
-    override fun persistFailedData(data: T): String {
-        val rootPath = Paths.get(filePath())
-        try {
-            val dir = rootPath.resolve(businessType)
-            if (Files.notExists(dir)) {
-                Files.createDirectories(dir)
-            }
-            val fileName = "${System.currentTimeMillis()}-${UUID.randomUUID()}.json"
-            val file = dir.resolve(fileName)
-            val bytes: ByteArray = JsonKit.writeAnyAsBytes(data)
-            Files.write(file, bytes)
-            return file.toAbsolutePath().toString()
-        } catch (e: IOException) {
-            throw RuntimeException("Persist failed data error", e)
-        }
+    override fun persistFailedData(data: T): String = try {
+        val dir = Paths.get(filePath()).resolve(businessType)
+        if (Files.notExists(dir)) Files.createDirectories(dir)
+        val file = dir.resolve("${System.currentTimeMillis()}-${UUID.randomUUID()}.json")
+        Files.write(file, JsonKit.writeAnyAsBytes(data))
+        file.toAbsolutePath().toString()
+    } catch (e: IOException) {
+        throw RuntimeException("Persist failed data error", e)
     }
 
     /**
@@ -95,10 +88,7 @@ abstract class AbstractFailedDataHandler<T> : IFailedDataHandler<T> {
      * @param file 失败数据文件
      * @return true表示处理成功，false表示处理失败
      */
-    override fun handleFailedData(file: File): Boolean {
-        val t = readDataFromFile(file)
-        return processFailedData(t)
-    }
+    override fun handleFailedData(file: File): Boolean = processFailedData(readDataFromFile(file))
 
     /**
      * 处理从文件读取的业务数据
@@ -138,15 +128,13 @@ abstract class AbstractFailedDataHandler<T> : IFailedDataHandler<T> {
      * @return 反序列化后的数据对象
      * @throws RuntimeException 如果文件读取或反序列化失败
      */
-    protected fun readDataFromFile(file: File): T {
-        try {
-            val bytes = Files.readAllBytes(file.toPath())
-            val dataType = GenericKit.getSuperClassGenricClass(this::class)
-            @Suppress("UNCHECKED_CAST")
-            return JsonKit.readValue(bytes, dataType) as T
-        } catch (e: IOException) {
-            throw RuntimeException("Read failed data error", e)
-        }
+    @Suppress("UNCHECKED_CAST")
+    protected fun readDataFromFile(file: File): T = try {
+        val bytes = Files.readAllBytes(file.toPath())
+        val dataType = GenericKit.getSuperClassGenricClass(this::class)
+        JsonKit.readValue(bytes, dataType) as T
+    } catch (e: IOException) {
+        throw RuntimeException("Read failed data error", e)
     }
 
 }

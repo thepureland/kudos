@@ -62,9 +62,8 @@ object ValidationContext {
      * @author K
      * @since 1.0.0
      */
-    fun getHvInitCtx(): HibernateConstraintValidatorInitializationContext {
-        return hvInitCtx ?: error("HibernateConstraintValidatorInitializationContext 尚未初始化：请确保先调用 ValidationKit.getValidator() 构建 ValidatorFactory")
-    }
+    fun getHvInitCtx(): HibernateConstraintValidatorInitializationContext =
+        hvInitCtx ?: error("HibernateConstraintValidatorInitializationContext 尚未初始化：请确保先调用 ValidationKit.getValidator() 构建 ValidatorFactory")
 
     /**
      * 从 Hibernate Validator 的 ValidatorFactory 中提取 HibernateConstraintValidatorInitializationContext。
@@ -181,22 +180,13 @@ object ValidationContext {
 
             // 判断是否为嵌套对象，即该属性是否有其他受约束的属性（嵌套校验）
             if (descriptor.isCascaded) {
-                // 通过 bean 描述符获取嵌套对象的类型
-                val nestedBean = BeanKit.getProperty(bean, propertyName)
-                // 处理列表对象的情况
-                if (nestedBean is MutableList<*>) {
-                    for (i in nestedBean.indices) {
-                        val listElement: Any? = nestedBean[i]
-                        if (listElement != null) {
-                            // 针对每个列表元素，递归校验并拼接索引到路径中
-                            set(validator, listElement, "$fullPath[$i]", beanStore)
-                        }
+                when (val nestedBean = BeanKit.getProperty(bean, propertyName)) {
+                    null -> {}
+                    is MutableList<*> -> nestedBean.forEachIndexed { i, el ->
+                        // 针对每个列表元素，递归校验并拼接索引到路径中
+                        el?.let { set(validator, it, "$fullPath[$i]", beanStore) }
                     }
-                } else {
-                    // 处理普通嵌套对象
-                    if (nestedBean != null) {
-                        set(validator, nestedBean, fullPath, beanStore)
-                    }
+                    else -> set(validator, nestedBean, fullPath, beanStore)
                 }
             }
         }

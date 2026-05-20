@@ -23,6 +23,8 @@ object SpringKit {
     var applicationContext: ApplicationContext? = null
         get() = field ?: error("Spring applicationContext is not initialized yet!")
 
+    // 走 [applicationContext] 的 getter（其会在 null 时抛错），把 `!!` 收口到一处
+    private val ctx: ApplicationContext get() = applicationContext!!
 
     /**
      * 返回指定名称的Spring Bean对象，不存在会抛BeansException异常
@@ -32,7 +34,7 @@ object SpringKit {
      * @author K
      * @since 1.0.0
      */
-    fun getBean(beanName: String): Any = requireNotNull(applicationContext) { "applicationContext is not initialized" }.getBean(beanName)
+    fun getBean(beanName: String): Any = ctx.getBean(beanName)
 
     /**
      * 返回指定名称的Spring Bean对象，不存在返回null
@@ -42,11 +44,7 @@ object SpringKit {
      * @author K
      * @since 1.0.0
      */
-    fun getBeanOrNull(beanName: String): Any? {
-        val ctx = requireNotNull(applicationContext) { "applicationContext is not initialized" }
-        val exists = ctx.containsBean(beanName)
-        return if (exists) ctx.getBean(beanName) else null
-    }
+    fun getBeanOrNull(beanName: String): Any? = if (ctx.containsBean(beanName)) ctx.getBean(beanName) else null
 
     /**
      * 返回指定类的Spring Bean对象，不存在会抛BeansException异常
@@ -57,7 +55,7 @@ object SpringKit {
      * @author K
      * @since 1.0.0
      */
-    fun <T : Any> getBean(beanClass: KClass<T>): T = requireNotNull(applicationContext) { "applicationContext is not initialized" }.getBean(beanClass.java)
+    fun <T : Any> getBean(beanClass: KClass<T>): T = ctx.getBean(beanClass.java)
 
     /**
      * 返回指定泛型类型的Spring Bean对象，不存在会抛BeansException异常
@@ -78,11 +76,9 @@ object SpringKit {
      * @author K
      * @since 1.0.0
      */
-    fun <T : Any> getBeanOrNull(beanClass: KClass<T>): T? {
-        val ctx = requireNotNull(applicationContext) { "applicationContext is not initialized" }
-        val exists = ctx.getBeanNamesForType(beanClass.java).isNotEmpty()
-        return if (exists) ctx.getBean(beanClass.java) else null
-    }
+    fun <T : Any> getBeanOrNull(beanClass: KClass<T>): T? =
+        if (ctx.getBeanNamesForType(beanClass.java).isNotEmpty()) ctx.getBean(beanClass.java) else null
+
     /**
      * 返回指定名称的属性值
      *
@@ -91,7 +87,7 @@ object SpringKit {
      * @author K
      * @since 1.0.0
      */
-    fun getProperty(propertyName: String): String? = requireNotNull(applicationContext) { "applicationContext is not initialized" }.environment.getProperty(propertyName)
+    fun getProperty(propertyName: String): String? = ctx.environment.getProperty(propertyName)
 
     /**
      * 返回指定类型的所有实现bean实例（包括子类）
@@ -101,7 +97,7 @@ object SpringKit {
      * @author K
      * @since 1.0.0
      */
-    fun <T : Any> getBeansOfType(clazz: KClass<T>): Map<String, T> = requireNotNull(applicationContext) { "applicationContext is not initialized" }.getBeansOfType(clazz.java)
+    fun <T : Any> getBeansOfType(clazz: KClass<T>): Map<String, T> = ctx.getBeansOfType(clazz.java)
 
     /**
      * 返回指定类型的所有实现bean实例（包括子类）

@@ -6,7 +6,8 @@ import io.kudos.ability.log.audit.common.support.LogAuditContext
 import io.kudos.base.logger.LogFactory
 import jakarta.servlet.http.HttpServletRequest
 import org.aspectj.lang.JoinPoint
-import org.aspectj.lang.annotation.After
+import org.aspectj.lang.annotation.AfterReturning
+import org.aspectj.lang.annotation.AfterThrowing
 import org.aspectj.lang.annotation.Aspect
 import org.aspectj.lang.annotation.Before
 import org.aspectj.lang.annotation.Pointcut
@@ -19,9 +20,13 @@ import org.springframework.web.context.request.RequestContextHolder
 /**
  * Web 审计切面（HTTP 调用路径）。
  *
- * 拦截标注 [WebAudit] 的 Controller 方法，从 [RequestContextHolder] 抓 [HttpServletRequest]，
- * 提取请求元信息（URL、IP、UA 等）写入 [LogAuditContext]，后置阶段把请求体作为模型 JSON 落审计库。
- * `multipart/form-data` 上传请求直接放过——文件流写入审计库既臃肿又意义不大。
+ * 拦截标注 [WebAudit] 的 Controller 方法，[before] 阶段从 [RequestContextHolder] 抓 [HttpServletRequest]，
+ * 提取请求元信息（URL、IP、UA 等）写入 [LogAuditContext]。语义同 [LogAuditAspect]：
+ *  - 成功 → [afterReturning]
+ *  - 失败 → [afterThrowing]，把异常类名 + message 标记到 BaseLog.description
+ *
+ * 二者都在 finally 调 [LogAuditContext.clear]，避免线程池场景下的 ThreadLocal 污染。
+ * `multipart/form-data` 上传请求整体跳过——文件流写入审计库既臃肿又无成本-收益意义。
  *
  * @author K
  * @since 1.0.0
@@ -54,17 +59,8 @@ class WebLogAuditAspect {
      */
     @Before("pointCut()")
     fun before(joinPoint: JoinPoint) {
-        val requestAttributes = RequestContextHolder.getRequestAttributes()
-        val request =
-            requireNotNull(requestAttributes) { "requestAttributes is null" }.resolveReference(RequestAttributes.REFERENCE_REQUEST) as HttpServletRequest?
-
-        //note-upgrade-to-spring-3.0-position
-        //if (ServletFileUpload.isMultipartContent(request)) {
-        //    return;
-        //}
-        if (request == null || isMultipartContent(request)) {
-            return
-        }
+        val request = currentRequest() ?: return
+        if (isMultipartContent(request)) return
         val signature = joinPoint.signature as org.aspectj.lang.reflect.MethodSignature
         val audit = signature.method.getAnnotation(WebAudit::class.java)
         val logVo = AuditLogTool.createLogVo(audit, request, joinPoint)
@@ -72,39 +68,68 @@ class WebLogAuditAspect {
     }
 
     /**
-     * 后置增强：再次取 request 与 [LogAuditContext] 中前置阶段写入的 LogVo，
-     * 把请求体（[AuditLogTool.getRequestData]）作为模型 JSON 提交给审计服务。
-     * 与 [before] 相同的 multipart 防御保证两端对称，避免请求体被提交但 LogVo 没建立时的脏数据。
+     * 成功路径：方法正常返回后，把 LogVo 提交给审计服务。
      *
-     * @param point 切入点
+     * @param joinPoint 切入点
      * @author K
      * @since 1.0.0
      */
-    @After("pointCut()")
-    fun after(point: JoinPoint?) {
-        val requestAttributes = RequestContextHolder.getRequestAttributes()
-        val request =
-            requireNotNull(requestAttributes) { "requestAttributes is null" }.resolveReference(RequestAttributes.REFERENCE_REQUEST) as HttpServletRequest?
-        //note-upgrade-to-spring-3.0-position
-        //if (ServletFileUpload.isMultipartContent(request)) {
-        //    return;
-        //}
-        if (request == null || isMultipartContent(request)) {
-            return
-        }
-        val logVo = LogAuditContext.get()
-        if (logVo != null) {
-            try {
-                val requestBody = AuditLogTool.getRequestData(request)
-                val modelAudit = AuditLogTool.createSysAuditLogModel(logVo, requestBody)
-                if (auditService != null && modelAudit != null) {
-                    auditService.submit(modelAudit)
-                }
-            } catch (e: Exception) {
-                log.error(e, "审计日志组件,拦截器异常!")
+    @AfterReturning(pointcut = "pointCut()")
+    fun afterReturning(joinPoint: JoinPoint) {
+        doSubmit(error = null)
+    }
+
+    /**
+     * 失败路径：方法抛异常后，把异常信息拼到 LogVo.description 再提交审计。
+     *
+     * @param joinPoint 切入点
+     * @param ex 抛出的异常
+     * @author K
+     * @since 1.0.0
+     */
+    @AfterThrowing(pointcut = "pointCut()", throwing = "ex")
+    fun afterThrowing(joinPoint: JoinPoint, ex: Throwable) {
+        doSubmit(error = ex)
+    }
+
+    /**
+     * 实际提交审计：取 request → 跳过 multipart → 取 LogVo → 失败时打 FAILED tag → 提交。
+     * 异常仅 ERROR 日志，finally 调 [LogAuditContext.clear] 避免线程池下的 ThreadLocal 泄漏。
+     *
+     * @param error 异常对象，null 表示成功路径
+     * @author K
+     * @since 1.0.0
+     */
+    private fun doSubmit(error: Throwable?) {
+        try {
+            val request = currentRequest() ?: return
+            if (isMultipartContent(request)) return
+            val logVo = LogAuditContext.getOrNull() ?: return
+            error?.let { ex ->
+                val tag = "[FAILED:${ex::class.java.simpleName}:${ex.message.orEmpty()}] "
+                logVo.logs.forEach { it.description = tag + it.description.orEmpty() }
             }
+            runCatching {
+                val requestBody = AuditLogTool.getRequestData(request)
+                AuditLogTool.createSysAuditLogModel(logVo, requestBody)
+                    ?.let { auditService?.submit(it) }
+            }.onFailure { log.error(it, "审计日志组件,拦截器异常!") }
+        } finally {
+            LogAuditContext.clear()
         }
     }
+
+    /**
+     * 从 Spring 的 [RequestContextHolder] 取当前 HTTP 请求。
+     * 非 HTTP 上下文（如内部调度任务）返回 null，让调用方静默跳过。
+     *
+     * @return 当前 [HttpServletRequest]；非 HTTP 上下文返回 null
+     * @author K
+     * @since 1.0.0
+     */
+    private fun currentRequest(): HttpServletRequest? =
+        RequestContextHolder.getRequestAttributes()
+            ?.resolveReference(RequestAttributes.REFERENCE_REQUEST) as? HttpServletRequest
 
     /**
      * 判断请求是否为 `multipart/...` 上传请求。
@@ -115,15 +140,8 @@ class WebLogAuditAspect {
      * @author K
      * @since 1.0.0
      */
-    private fun isMultipartContent(request: HttpServletRequest): Boolean {
-        val contentType = request.contentType
-        if (contentType != null) {
-            if (contentType.lowercase().startsWith("multipart/")) {
-                return true
-            }
-        }
-        return false
-    }
+    private fun isMultipartContent(request: HttpServletRequest): Boolean =
+        request.contentType?.lowercase()?.startsWith("multipart/") == true
 
     /** 日志器 */
     private val log = LogFactory.getLog(this::class)

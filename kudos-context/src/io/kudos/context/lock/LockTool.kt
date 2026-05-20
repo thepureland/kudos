@@ -28,12 +28,7 @@ object LockTool {
      * - Spring 上下文必须先就绪、再有第一个 `lockExecute` 调用
      */
     private val LOCK_SERVICE: ILockProvider<out Lock> by lazy {
-        val beansOfType = SpringKit.getBeansOfType<ILockProvider<*>>()
-        if (beansOfType.isEmpty()) {
-            NormalLockService()
-        } else {
-            beansOfType.values.minBy { it.order() }
-        }
+        SpringKit.getBeansOfType<ILockProvider<*>>().values.minByOrNull { it.order() } ?: NormalLockService()
     }
 
     /**
@@ -57,10 +52,8 @@ object LockTool {
      * @author K
      * @since 1.0.0
      */
-    fun <T> lockExecute(lockKey: String, supplier: Supplier<T?>, errorCode: IErrorCodeEnum): T? {
-        //如果90秒内没释放，则自动释放
-        return lockExecute<T?>(lockKey, supplier, 90, errorCode)
-    }
+    fun <T> lockExecute(lockKey: String, supplier: Supplier<T?>, errorCode: IErrorCodeEnum): T? =
+        lockExecute<T?>(lockKey, supplier, 90, errorCode)
 
     /**
      * 在 [lockKey] 上加锁后执行 [supplier]，租约 [second] 秒。
@@ -74,9 +67,8 @@ object LockTool {
      * @author K
      * @since 1.0.0
      */
-    fun <T> lockExecute(lockKey: String, supplier: Supplier<T?>, second: Int, errorCode: IErrorCodeEnum): T? {
-        return lockProvider.lockExecute(lockKey, supplier, second, errorCode)
-    }
+    fun <T> lockExecute(lockKey: String, supplier: Supplier<T?>, second: Int, errorCode: IErrorCodeEnum): T? =
+        lockProvider.lockExecute(lockKey, supplier, second, errorCode)
 
     /**
      * 在 [lockKey] 上加锁后执行 [runnable]，默认租约 90 秒。
@@ -88,7 +80,6 @@ object LockTool {
      * @since 1.0.0
      */
     fun lockExecute(lockKey: String, runnable: Runnable, errorCode: IErrorCodeEnum) {
-        //如果90秒内没释放，则自动释放
         lockExecute(lockKey, runnable, 90, errorCode)
     }
 

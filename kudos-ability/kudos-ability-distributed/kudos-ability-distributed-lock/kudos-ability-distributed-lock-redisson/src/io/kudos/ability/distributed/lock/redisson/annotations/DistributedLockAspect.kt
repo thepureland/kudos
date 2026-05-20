@@ -94,32 +94,24 @@ class DistributedLockAspect {
             "@DistributedLock 未出现在 ${joinPoint.target.javaClass.name}.${signature.method.name}"
         }
         val lockKey = genLockKey(joinPoint, signature, annotation)
-        var res = false
-        var obj: Any? = null
-        try {
-            log.debug("尝试获取分布式锁：key=$lockKey")
-            res = RedissonLockKit.tryLock(lockKey, TimeUnit.SECONDS, annotation.waitTime, annotation.leaseTime)
-        } catch (e: Throwable) {
-            log.warn("无法取得分布式锁，可能有任务还未完成：${e.message}")
-        }
-        lockCallback(res, lockKey)
-        if (!res) {
+        log.debug("尝试获取分布式锁：key=$lockKey")
+        val acquired = runCatching {
+            RedissonLockKit.tryLock(lockKey, TimeUnit.SECONDS, annotation.waitTime, annotation.leaseTime)
+        }.onFailure { log.warn("无法取得分布式锁，可能有任务还未完成：${it.message}") }.getOrDefault(false)
+        lockCallback(acquired, lockKey)
+        if (!acquired) {
             log.warn("无法取得分布式锁，可能有任务还未完成。key=$lockKey")
-        } else {
-            try {
-                obj = joinPoint.proceed()
-            } catch (e: Throwable) {
-                throw RuntimeException(e)
-            } finally {
-                log.debug("释放锁：key=$lockKey")
-                try {
-                    RedissonLockKit.unlock(lockKey)
-                } catch (e: Exception) {
-                    log.warn("释放锁异常，可能超时被自动释放。message={0}", e.message)
-                }
-            }
+            return null
         }
-        return obj
+        return try {
+            joinPoint.proceed()
+        } catch (e: Throwable) {
+            throw RuntimeException(e)
+        } finally {
+            log.debug("释放锁：key=$lockKey")
+            runCatching { RedissonLockKit.unlock(lockKey) }
+                .onFailure { log.warn("释放锁异常，可能超时被自动释放。message={0}", it.message) }
+        }
     }
 
     /**

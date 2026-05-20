@@ -59,8 +59,7 @@ class DistributedCacheGuardAspect {
         val lockKey = "lock:$cacheName:$cacheKey"
 
         // 1. 先无锁查一次缓存，命中就走人。
-        var cached = KeyValueCacheKit.getValue(cacheName, cacheKey)
-        if (cached != null) return cached
+        KeyValueCacheKit.getValue(cacheName, cacheKey)?.let { return it }
 
         // 2. 缺失，竞争分布式锁。改用租约式 tryLock：
         //    旧实现走 lockProvider.lock(key)，Redisson 路径下是 `RLock.lock()` 无 TTL 的阻塞调用 →
@@ -78,14 +77,11 @@ class DistributedCacheGuardAspect {
                 Thread.currentThread().interrupt()
                 log.debug("等待分布式缓存锁时被中断 lockKey={0}", lockKey)
             }
-            cached = KeyValueCacheKit.getValue(cacheName, cacheKey)
-            if (cached != null) return cached
-            return pjp.proceed()
+            return KeyValueCacheKit.getValue(cacheName, cacheKey) ?: pjp.proceed()
         }
         return try {
             // 锁内双重检查
-            cached = KeyValueCacheKit.getValue(cacheName, cacheKey)
-            if (cached != null) cached else pjp.proceed()
+            KeyValueCacheKit.getValue(cacheName, cacheKey) ?: pjp.proceed()
         } finally {
             try {
                 lockProvider.unLock(lockKey)
@@ -115,40 +111,24 @@ class DistributedCacheGuardAspect {
         // 2. 获取方法上的 @Cacheable 注解
         val cacheable = method.getAnnotation(Cacheable::class.java)
         val tenantCacheable = method.getAnnotation(TenantCacheable::class.java)
-        check(!(cacheable == null && tenantCacheable == null)) { "@DistributedCacheGuard 只能和 @Cacheable或@TenantCacheable 一起用！" }
         if (cacheable != null) {
-            // 3. 解析 cacheName 和 key
-            val cacheName: String =
-                (if (cacheable.value.isNotEmpty()) {
-                    cacheable.value[0]
-                } else (
-                        if (cacheable.cacheNames.isNotEmpty()) {
-                            cacheable.cacheNames[0]
-                        } else {
-                            null
-                        }
-                ))!!
-
+            val cacheName = cacheable.value.firstOrNull()
+                ?: cacheable.cacheNames.firstOrNull()
+                ?: error("@Cacheable 必须指定 value 或 cacheNames")
             val keySpel = cacheable.key
-            require(!(keySpel.isEmpty())) { "@Cacheable.key 必须指定" }
-            // 4. 解析 SpEL key
-            val context = MethodBasedEvaluationContext(
-                null, method, pjp.args, nameDiscoverer
-            )
+            require(keySpel.isNotEmpty()) { "@Cacheable.key 必须指定" }
+            val context = MethodBasedEvaluationContext(null, method, pjp.args, nameDiscoverer)
             val cacheKey = SpelExpressionCache.get(keySpel).getValue(context, String::class.java)
-            return Pair<String, Any>(cacheName, cacheKey!!)
-        } else {
-            // 3. 解析 cacheName 和 key
-            val cacheName =
-                if (tenantCacheable.value.isNotEmpty()) {
-                    tenantCacheable.value[0]
-                } else (if (tenantCacheable.cacheNames.isNotEmpty()) {
-                    tenantCacheable.cacheNames[0]
-                } else null)
-            val cacheKey = SpringKit.getBean<TenantCacheKeyGenerator>()
-                .generalNormalKey(pjp.target, method, tenantCacheable.suffix, *pjp.args)
-            return Pair(cacheName!!, cacheKey)
+                ?: error("@Cacheable.key 解析为空: $keySpel")
+            return cacheName to cacheKey
         }
+        checkNotNull(tenantCacheable) { "@DistributedCacheGuard 只能和 @Cacheable或@TenantCacheable 一起用！" }
+        val cacheName = tenantCacheable.value.firstOrNull()
+            ?: tenantCacheable.cacheNames.firstOrNull()
+            ?: error("@TenantCacheable 必须指定 value 或 cacheNames")
+        val cacheKey = SpringKit.getBean<TenantCacheKeyGenerator>()
+            .generalNormalKey(pjp.target, method, tenantCacheable.suffix, *pjp.args)
+        return cacheName to cacheKey
     }
 
     companion object {

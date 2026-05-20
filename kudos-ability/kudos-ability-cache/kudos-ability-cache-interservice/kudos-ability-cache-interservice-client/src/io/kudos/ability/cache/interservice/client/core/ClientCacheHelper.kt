@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-class ClientCacheHelper : InitializingBean {
+open class ClientCacheHelper : InitializingBean {
 
     /** 本地缓存管理器；required=false 让缓存模块缺失时整个 helper 退化为 no-op */
     @Autowired(required = false)
@@ -35,7 +35,7 @@ class ClientCacheHelper : InitializingBean {
      * @author K
      * @since 1.0.0
      */
-    fun hasLocalCache(): Boolean {
+    open fun hasLocalCache(): Boolean {
         return cacheManager != null
     }
 
@@ -81,7 +81,7 @@ class ClientCacheHelper : InitializingBean {
      * @param cacheKey cacheKey
      * @return Object
      */
-    fun loadFromLocalCache(cacheKey: String): ClientCacheItem? {
+    open fun loadFromLocalCache(cacheKey: String): ClientCacheItem? {
         //可以考虑换成CacheKit
         return feignCache().get<ClientCacheItem>(cacheKey)
     }
@@ -92,7 +92,7 @@ class ClientCacheHelper : InitializingBean {
      * @param cacheKey 本地缓存key值
      * @param data     缓存数据
      */
-    fun writeToLocalCache(cacheKey: String, data: ClientCacheItem?) {
+    open fun writeToLocalCache(cacheKey: String, data: ClientCacheItem?) {
         //可以考虑换成CacheKit
         feignCache().put(cacheKey, data)
     }

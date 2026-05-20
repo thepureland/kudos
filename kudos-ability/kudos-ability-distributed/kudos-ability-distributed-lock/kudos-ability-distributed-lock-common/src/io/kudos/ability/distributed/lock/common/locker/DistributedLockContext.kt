@@ -13,10 +13,8 @@ package io.kudos.ability.distributed.lock.common.locker
 class DistributedLockContext {
     private val contextParam: ThreadLocal<IDistributedLockCallback?> =
         object : InheritableThreadLocal<IDistributedLockCallback?>() {
-            override fun childValue(parentValue: IDistributedLockCallback?): IDistributedLockCallback? {
-                // 返回 null 表示子线程不继承父线程的值
-                return null
-            }
+            // 返回 null 表示子线程不继承父线程的值
+            override fun childValue(parentValue: IDistributedLockCallback?): IDistributedLockCallback? = null
         }
 
     companion object {
@@ -40,9 +38,7 @@ class DistributedLockContext {
          * @author K
          * @since 1.0.0
          */
-        fun get(): IDistributedLockCallback? {
-            return self.contextParam.get()
-        }
+        fun get(): IDistributedLockCallback? = self.contextParam.get()
 
         /**
          * 清除当前线程的分布式锁上下文
