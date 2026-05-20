@@ -210,6 +210,15 @@ open class IdEntitiesRedisHashDao(
         return findByIds(dataKeyPrefix, ids, entityClass)
     }
 
+    /**
+     * 把任意值转 Double 用作 ZSet score。
+     * 非数值字符串回落到 `-Double.MAX_VALUE`——不是 `Double.MIN_VALUE`，后者是最小**正**数。
+     *
+     * @param value 任意值
+     * @return Double score
+     * @author K
+     * @since 1.0.0
+     */
     private fun toDouble(value: Any): Double = when (value) {
         is Number -> value.toDouble()
         // -Double.MAX_VALUE 是负方向最远；Double.MIN_VALUE 实为最小**正**数，绝不能当做下界 fallback
@@ -340,6 +349,24 @@ open class IdEntitiesRedisHashDao(
 
     // ---------- 内部 ----------
 
+    /**
+     * 增量维护实体上的二级索引（Set + ZSet）。
+     *
+     * - filterableProperties → Set 索引（等值查询）
+     * - sortableProperties → ZSet 索引（排序/范围查询）
+     * - add=true 写入索引，add=false 从索引删除
+     *
+     * 同一实体的两类索引"逐属性 + 双类型"写入，因此写性能与属性集大小成正比。
+     *
+     * @param dataKeyPrefix 主数据 key 前缀（用于推导索引 key 前缀）
+     * @param id 实体主键
+     * @param entity 实体对象
+     * @param filterableProperties 参与等值查询的属性集
+     * @param sortableProperties 参与排序/范围查询的属性集
+     * @param add true 写入索引，false 移除索引
+     * @author K
+     * @since 1.0.0
+     */
     private fun <PK, E : IIdEntity<PK>> updateIndexForEntity(
         dataKeyPrefix: String,
         id: PK,
@@ -367,6 +394,18 @@ open class IdEntitiesRedisHashDao(
         }
     }
 
+    /**
+     * 反射取实体上指定属性的值。
+     * 顺序：字段 → `getXxx` → `isXxx`；都查不到返回 null。
+     *
+     * TODO 后续考虑用属性元数据缓存替代每次反射。
+     *
+     * @param entity 目标对象
+     * @param propertyName 属性名
+     * @return 属性值；查不到返回 null
+     * @author K
+     * @since 1.0.0
+     */
     //TODO 性能提升
     private fun getPropertyValue(entity: Any, propertyName: String): Any? {
         val clazz = entity.javaClass
@@ -409,6 +448,7 @@ open class IdEntitiesRedisHashDao(
         CacheKey.getCacheKey(dataKeyPrefix, "idx")
 
     companion object {
+        /** 日志器；反序列化失败仅记 WARN 并跳过此条，避免单条脏数据拖垮整批查询 */
         private val log = LogFactory.getLog(IdEntitiesRedisHashDao::class)
     }
 }
