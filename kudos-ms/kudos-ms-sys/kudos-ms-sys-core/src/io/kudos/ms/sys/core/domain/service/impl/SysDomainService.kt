@@ -5,7 +5,7 @@ import io.kudos.ms.sys.core.platform.service.impl.completeCrudUpdate
 
 import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.model.contract.entity.IIdEntity
+import io.kudos.ms.sys.core.platform.service.impl.requireStringId
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.PagingSearchResult
 import io.kudos.base.query.eq
@@ -112,7 +112,7 @@ open class SysDomainService(
 
     @Transactional
     override fun update(any: Any): Boolean {
-        val id = requireDomainId(any)
+        val id = requireStringId(any, "域名")
         return completeCrudUpdate(
             success = super.update(any),
             log = log,
@@ -152,16 +152,4 @@ open class SysDomainService(
         return count
     }
 
-    /**
-     * 从 update 入参抽 id；要求实现 [IIdEntity] 且 id 是 String。
-     *
-     * @param any 更新入参
-     * @return 域名 id
-     * @throws IllegalStateException 入参类型不被支持
-     * @author K
-     * @since 1.0.0
-     */
-    private fun requireDomainId(any: Any): String =
-        (any as? IIdEntity<*>)?.id as? String
-            ?: error("更新域名时不支持的入参类型: ${any::class.qualifiedName}")
 }

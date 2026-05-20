@@ -5,7 +5,7 @@ import io.kudos.ms.sys.core.platform.service.impl.completeCrudUpdate
 
 import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.model.contract.entity.IIdEntity
+import io.kudos.ms.sys.core.platform.service.impl.requireStringId
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.eq
 import io.kudos.base.tree.IdAndNameTreeNode
@@ -131,7 +131,7 @@ open class SysResourceService(
 
     @Transactional
     override fun update(any: Any): Boolean {
-        val id = requireResourceId(any)
+        val id = requireStringId(any, "资源")
         val oldResource = dao.get(id)
         return completeCrudUpdate(
             success = super.update(any),
@@ -457,17 +457,4 @@ open class SysResourceService(
         }
     }
 
-    /**
-     * 从 update 入参中抽 id：限定入参实现 [IIdEntity] 且 id 是 String。
-     * 不满足契约直接 [error]——属于编程错误，不该静默失败。
-     *
-     * @param any 更新入参
-     * @return 资源 id
-     * @throws IllegalStateException 入参类型不被支持
-     * @author K
-     * @since 1.0.0
-     */
-    private fun requireResourceId(any: Any): String =
-        (any as? IIdEntity<*>)?.id as? String
-            ?: error("更新资源时不支持的入参类型: ${any::class.qualifiedName}")
 }
