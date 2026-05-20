@@ -115,15 +115,17 @@ class BatchGenerationController : Initializable {
                 CodeGenerator(templateBaseModel, nonEntityRelativeFilePaths).generate(false)
             }
 
+            // 预计算一次：表无关模板路径，作为 Set 给后面循环内做 O(1) 差集
+            val nonEntityRelativeFilePathnames = nonEntityRelativeFilePaths.mapTo(mutableSetOf()) { it.templateFileRelativePath }
+
             // 再生成表相关的文件
             selectTables.forEach {
                 CodeGeneratorContext.tableName = it.getTableName()
                 CodeGeneratorContext.tableComment = it.getTableComment() ?: ""
                 CodeGeneratorContext.columns = CodeGenColumnService.readColumns(it.getTableName())
                 val templateModel = CodeGeneratorContext.templateModelCreator.create()
-                val allFilePaths = TemplatePathProcessor.readPaths(true)
-                val nonEntityRelativeFilePathnames = nonEntityRelativeFilePaths.map { f -> f.templateFileRelativePath }
-                val entityRelativeFilePaths = allFilePaths.filter { p -> p.templateFileRelativePath !in nonEntityRelativeFilePathnames }
+                val entityRelativeFilePaths = TemplatePathProcessor.readPaths(true)
+                    .filter { p -> p.templateFileRelativePath !in nonEntityRelativeFilePathnames }
                 CodeGenerator(templateModel, entityRelativeFilePaths).generate()
             }
 

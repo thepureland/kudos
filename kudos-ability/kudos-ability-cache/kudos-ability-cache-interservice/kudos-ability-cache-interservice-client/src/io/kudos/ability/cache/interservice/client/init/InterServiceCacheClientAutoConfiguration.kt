@@ -12,12 +12,18 @@ import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.cloud.openfeign.support.ResponseEntityDecoder
 import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Primary
 import tools.jackson.databind.ObjectMapper
 
 /**
- * 服务间缓存客户端自动配置
+ * 服务间缓存客户端自动配置。
+ *
+ * `@Configuration` 让 Spring 把本类按完整的配置类处理（CGLIB 代理 + bean 方法间互调保持
+ * 同一实例语义）。即使当前类内 bean 方法之间没有互调，加上 @Configuration 是更稳的形式，
+ * 避免后续重构时踩坑。
  */
+@Configuration
 @AutoConfigureAfter(LinkableCacheAutoConfiguration::class)
 open class InterServiceCacheClientAutoConfiguration : IComponentInitializer {
 

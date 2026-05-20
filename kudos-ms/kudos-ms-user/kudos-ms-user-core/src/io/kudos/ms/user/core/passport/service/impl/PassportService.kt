@@ -94,10 +94,7 @@ open class PassportService(
         // 验证全部通过：清零错误计数 + 记录最后登录信息
         userAccountService.resetLoginErrorTimes(user.id)
         val now = LocalDateTime.now()
-        val loginIp = req.loginIp
-        if (loginIp != null) {
-            userAccountService.updateLastLoginInfo(user.id, loginIp, now)
-        }
+        req.loginIp?.let { userAccountService.updateLastLoginInfo(user.id, it, now) }
 
         log.debug("登录成功: userId=${user.id} username=${user.username}")
         return PassportLoginResult.success(

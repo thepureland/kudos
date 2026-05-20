@@ -1,38 +1,56 @@
 # kudos-ability-cache-interservice-common
 
-跨服务缓存协作的"共享基"模块。**当前为占位**——无独立代码，仅作为
-`kudos-ability-cache-interservice-provider` 与 `kudos-ability-cache-interservice-client`
-共同依赖的入口，间接传递 `kudos-ability-cache-common`。
+跨服务缓存协作三件套（common / provider / client）的**共享基**模块。承载 provider
+与 client 双端共用的 DTO、缓存键 / 头协议常量。
 
-## 设计意图
+## 解决的问题
 
-cache-interservice 三件套（common / provider / client）解决的问题：
-- **provider 应用** 内部缓存了一份数据，被 **client 应用** 通过 Feign 调过来读
-- provider 端写入更新缓存后，client 端怎么得到失效通知
+> provider 应用内部缓存了一份数据，client 应用通过 Feign 调过来读；同一份数据被反复
+> 序列化 / 网络传输。能不能在 HTTP 层面引入"协商缓存"，让 client 端用 UID 指纹判断本地
+> 副本是否仍然有效？
 
-预留给未来的共享抽象：
-- 跨服务缓存协议的请求 / 响应 DTO
-- provider 与 client 共用的常量（HTTP header 名、broadcast channel 命名约定）
-- 公共 SPI 接口（`IInterServiceCacheBroadcaster` 之类）
-
-目前这些抽象散落在 `cache-common` / `cache-remote-redis` 里，待出现"两端共用"需求时再
-上移到本模块。
+整体类似 HTTP ETag / If-None-Match 的"双方缓存共识"——但是把指纹计算下沉到应用层
+（基于响应对象 JSON），不依赖 HTTP 缓存控制头。
 
 ## 模块入口
 
-无源码。仅 `build.gradle.kts` 透传依赖。
+| 路径 | 角色 |
+|---|---|
+| `common/ClientCacheItem` | 缓存条目 DTO：`uuid`（响应对象的内容指纹）+ `cacheData`（响应内容本体）。`genUid(obj)` 静态方法基于 `<FQN>#<JSON>` 算 MD5 |
+| `common/ClientCacheKey` | 缓存键 DTO + 协议常量（`HEADER_KEY_CACHE_UID` / `HEADER_KEY_CACHE_KEY` / `HEADER_KEY_CACHE_STATUS` / `STATUS_USE_CACHE=304` / `STATUS_DO_CACHE=200`）。`toString()` 拼接 `url::method::body` 形成签名段 |
+
+## 协议契约（client ↔ provider）
+
+```
+请求阶段（client → provider）:
+  cache-key:    md5(":: + tenantId + :: + appName + url::method::body")
+  cache-uid:    本地缓存项的 uuid（若有）
+
+响应阶段（provider → client）:
+  cache-uid:    服务端生成的 uuid（基于 FQN+JSON 的 MD5）
+  cache-status: 304（client 直接用本地缓存）/ 200（client 用 body 并写本地缓存）
+```
+
+## 指纹稳定性约定
+
+`ClientCacheItem.genUid(obj)` 把 FQN 与 JSON 用 `#` 分隔后再算 MD5，避免"类名 + JSON
+直接拼接产生同字符串"的边角碰撞。MD5 在这里**仅作内容指纹**，与加密无关。
+
+**已知风险**：DTO 中带 `Map<*, *>` 且非 `LinkedHashMap` 时迭代顺序不稳定，会导致 JSON
+不稳 → UID 抖动。接口层应避免直接返回原始 `Map`，或显式用 `LinkedHashMap` / 排序后返回。
 
 ## 依赖
 
 ```kotlin
-dependencies {
-    api(project(":kudos-ability:kudos-ability-cache:kudos-ability-cache-common"))
-}
+api(project(":kudos-ability:kudos-ability-cache:kudos-ability-cache-common"))
 ```
 
-## 已知限制 / 后续工作
+`cache-common` 提供 `IKeyValueCacheManager`——client 端的 `ClientCacheHelper` 用它作为
+本地 KV 存储。
 
-- ❗ 空壳模块；可考虑：(a) 等到真有共享代码再保留，(b) 暂时删除并让 provider / client
-  直接依赖 cache-common。保留是为给后续提取留位
-- ❗ 模块名 `interservice` 在英文文档中已用，但中文术语未统一——
-  "服务间缓存" / "跨服务缓存" / "跨应用缓存" 三种叫法并存，未来收敛到一种为好
+## 已知限制
+
+- ❗ 模块名 `interservice` 中文术语未统一——"服务间缓存" / "跨服务缓存" / "跨应用缓存"
+  三种叫法并存，未来收敛到一种为好
+- ❗ `ClientCacheItem` 用 `Serializable` + 默认 JVM 序列化——若以后跨节点广播缓存项
+  需要切换到 JSON 序列化的话要同时调整 `serialVersionUID` 兼容策略

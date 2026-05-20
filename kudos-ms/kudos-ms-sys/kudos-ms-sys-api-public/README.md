@@ -32,12 +32,16 @@ kudos-ms-sys-api-public
 
 ---
 
-## 典型使用方式
+## 典型组合
 
-- **单独依赖 public**：得到入口与 `core` 全量 Bean，但 **没有** `/api/admin/sys/**` 控制器，除非 classpath 上另有 `api-admin`。
-- **public + admin**：常见组合，用于对外提供完整系统管理 API。
+| 组合 | 入口主类 | 暴露的路径 | 适用场景 |
+|------|----------|------------|----------|
+| **仅 public** | `SysApiWebApplication` | （无业务路径，只剩 `kudos-ability-web-springmvc` 装配的健康检查等） | 验证 Web 装配；通常不直接用于生产 |
+| **public + admin** | `SysApiWebApplication` | `/api/admin/sys/**` | 对外管理 API（控制台后端） |
+| **public + admin + internal** | 任选一个 application 主类（最终扫描三个模块） | `/api/admin/sys/**` + `/api/internal/sys/**` | 单进程同时承载控制台与 Feign 提供方；不需 Nacos 的本地开发可缺省 internal 中的分布式 ability |
+| **internal 单独** | `SysApiProviderApplication` | `/api/internal/sys/**` | 纯 Provider 节点（生产中通常如此分离） |
 
-具体以团队内 **聚合启动模块**（例如 `*-api-web`）的依赖列表为准。
+> 由于本模块的 `SysApiWebAutoConfiguration` 仅扫描 `io.kudos.ms.sys.api.public`（包内只有 `init`），实际"加载哪些控制器"完全由 classpath 上是否含 `api-admin` / `api-internal` 决定——`core` 的 `SysAutoConfiguration` 在 `IComponentInitializer` 编排下会一并启动。
 
 ---
 
@@ -46,11 +50,14 @@ kudos-ms-sys-api-public
 | 维度 | api-public | api-admin | api-internal |
 |------|------------|-----------|--------------|
 | 主类命名 | `SysApiWebApplication` | `SysApiAdminApplication` | `SysApiProviderApplication` |
-| 是否含 Controller | 否（本仓库现状） | 是 | 否（本仓库现状） |
-| 额外分布式能力 | 无（仅 core + MVC） | 无 | Nacos、interservice 缓存等 |
+| 是否含 Controller | **否** | 是（管理端 REST） | 是（**对内 RPC**，路径继承 `common.ISys*Api` 的方法注解） |
+| 路径前缀 | （无） | `/api/admin/sys/**` | `/api/internal/sys/**` |
+| 额外分布式能力 | 无（仅 core + MVC） | 无 | Nacos discovery / config + interservice 缓存 provider |
+| 典型部署 | 与 admin 同进程作为对外 Web | 单独可执行 | 单独可执行（注册到 Nacos） |
 
 ---
 
 ## 扩展建议
 
-- 若需「纯 Web 网关入口」专用配置，可放在 `io.kudos.ms.sys.api.public` 下并由本模块扫描；**业务接口仍建议放在 api-admin**，便于权限与路由前缀统一。
+- 若需「纯 Web 网关入口」专用配置（如 CORS、全局 filter、统一异常处理装配），可放在 `io.kudos.ms.sys.api.public` 下并由本模块扫描；**业务接口仍建议放在 api-admin / api-internal**，便于权限与路由前缀统一。
+- **不要在本模块加业务 Controller**——一旦 public 自带控制器，"public + admin" 与 "public + internal" 的组合就会暴露不一致的端点集，破坏路径双轨制（`/api/admin/**` vs `/api/internal/**`）的清晰边界。

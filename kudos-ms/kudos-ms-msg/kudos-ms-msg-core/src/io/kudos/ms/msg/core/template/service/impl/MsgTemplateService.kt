@@ -38,9 +38,7 @@ open class MsgTemplateService(
         val criteria = Criteria(MsgTemplate::tenantId eq tenantId)
             .addAnd(MsgTemplate::eventTypeDictCode eq eventTypeDictCode)
             .addAnd(MsgTemplate::msgTypeDictCode eq msgTypeDictCode)
-        if (localeDictCode != null) {
-            criteria.addAnd(MsgTemplate::localeDictCode eq localeDictCode)
-        }
+        localeDictCode?.let { criteria.addAnd(MsgTemplate::localeDictCode eq it) }
         return dao.searchAs<MsgTemplateCacheEntry>(criteria).firstOrNull()
     }
 

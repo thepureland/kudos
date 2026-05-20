@@ -3,23 +3,11 @@
 阿里云短信发送封装（基于阿里云 dysmsapi 异步 SDK）。给业务侧一个 `send(request, callback)`
 最小化接口，内部走虚拟线程异步执行。
 
-## ⚠ 当前状态：模块在 `settings.gradle.kts` 中已注释停用
+## 当前状态：已启用
 
-```kotlin
-// settings.gradle.kts
-//include("kudos-ability:kudos-ability-comm:kudos-ability-comm-sms:kudos-ability-comm-sms-aliyun")
-include("kudos-ability:kudos-ability-comm:kudos-ability-comm-sms:kudos-ability-comm-sms-aws")
-```
-
-被注释的具体原因 git 历史没记录（被注释的那次 commit 是 `e0bf5e39 feat: add kudos-ams-user module`，
-看起来与本模块无关；推测是当时 aliyun 依赖导致构建问题或下游 ams-user 不需要 aliyun 的传递依赖）。
-
-**当前模块状态**：
-- 源码完整，包含 handler + auto-configuration + request 模型 + 2 个 WireMock 集成测试
-- 不参与多模块 build，本仓库其他模块也不依赖它
-- 业务侧如要启用：(a) 取消 settings.gradle.kts 中的注释，(b) 在使用方 build.gradle.kts 添加 `api(project(":...sms-aliyun"))`
-
-下方仍按"已启用"描述设计，方便启用时直接参考。
+模块在 `settings.gradle.kts` 中参与构建。源码完整，包含 handler + auto-configuration +
+request 模型 + 2 个 WireMock 集成测试（需要 Docker 可用）。业务侧需要时直接添加
+`api(project(":kudos-ability:kudos-ability-comm:kudos-ability-comm-sms:kudos-ability-comm-sms-aliyun"))`。
 
 ## 设计要点
 
@@ -130,12 +118,8 @@ aliyunSmsHandler.send(req) { resp ->
 
 两个测试都基于 `WireMockTestContainer`，需要 Docker。
 
-**测试只在模块启用后跑得起来**——module 当前未启用，CI 不会跑。
-
 ## 已知限制 / 后续工作
 
-- ❗ **模块未在 settings.gradle.kts 启用**——见顶部说明。理论上应当：(a) 调研启用的真实
-  阻塞是什么，(b) 修复后重新启用，(c) 或者明确决定弃用并删除整个目录
 - ❗ 每次 `send` 都现 new `AsyncClient` + 关闭——内部含 HTTP 客户端 / 线程池，单次开销
   不小。高频发送场景应当按 (region, accessKey) 缓存客户端
 - ❗ 没有显式 SDK 调用超时——依赖阿里云 SDK 默认值（通常 30s+），慢调用会拖住虚拟线程。

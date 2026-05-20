@@ -1,60 +1,105 @@
 # kudos-ability-cache-interservice-provider
 
-跨服务缓存协作的 **provider 端**（被调用方）模块。**当前为占位**——主源码尚未补齐，仅
-`test-resources` 下有两个 yml 模板用于配套测试。
+跨服务缓存协作的 **provider 端**（被调用方）模块。被 `kudos-ability-cache-interservice-client`
+通过 Feign 调用时，告诉 client 端"本次响应是否与你本地缓存的 UID 一致"，从而决定 client
+端用本地副本还是用 body。
 
-## 设计意图
+## 设计要点
 
-provider 角色：在微服务架构里持有"权威数据 + 缓存"，被 client 端通过 Feign 调用。
-本模块预留给未来 provider 端特有的能力：
-- 接收 client 端的缓存失效请求并触发本地清理
-- 暴露缓存状态查询接口（`/cache/keys` / `/cache/stats` 等）
-- 通过 Feign / HTTP 主动通知 client 端缓存更新
+### 协议契约（与 client 的 Feign Interceptor 配合）
 
-`build.gradle.kts` 中 `compileOnly(libs.spring.boot.starter.web)` 表明：本模块未来会
-注册 Web Controller，但当前没有任何代码。该依赖现在是 dead-weight，等真的开始写代码时
-再调整为 `api` 或 `implementation`。
+| 步骤 | 模块 | 类 |
+|---|---|---|
+| ① client 把本地缓存 UID 写入 `cache-uid` 请求头 | `kudos-ability-cache-interservice-client` | `FeignCacheRequestInterceptor` |
+| ② provider 端 servlet filter 把请求包成 `CacheClientRequest`（携带 response 引用） | 本模块 | `ClientCacheWebFilter` |
+| ③ provider Controller 方法标了 `@ClientCacheable`，Aspect 拦下 | 本模块 | `ClientCacheableAspect` |
+| ④ Aspect 算响应 UID = `MD5(<FQN>#<JSON>)`、写回响应头 `cache-uid` / `cache-status` | 本模块 | `ClientCacheableAspect` |
+| ⑤ client 端 Feign Decoder 看 `cache-status`：`304` → 用本地缓存；`200` → decode + 写本地缓存 | `kudos-ability-cache-interservice-client` | `FeignCacheResponseInterceptor` |
 
-`kudos-tools` 的脚手架模板 `${project}-ams-${module}-api-provider/build.gradle.kts` 引用本模块作为
-"ams 微服务 API-provider 子项目"的标准依赖——这是它存在的现实理由（生成出的项目工程
-需要这个模块名）。
+### `ClientCacheableAspect` 的两条短路
 
-## 测试资源
+- **目标类不是 `@RestController` / `@Controller`** → 直接 `IllegalArgumentException`，**编译期**
+  没法强制，所以放运行时校验
+- **当前请求不是 `CacheClientRequest`**（即非 Feign 调用、普通浏览器 / curl）→ 直接返回原结果，
+  不写响应头——避免给 ETag-like 头污染外部直接调用 provider 接口的场景
 
-| 文件 | 用途 |
-|---|---|
-| `test-resources/application-ms.yml` | provider 端应用配置（`server.port: 13578` + spring app name `inter-service-test`） |
-| `test-resources/application-client.yml` | client 端配置（同 spring app name，复用 provider 的 testcontainer 启动一对 jvm） |
+### Aspect 顺序：`@Order(100)`
 
-未来 provider 实测需要 client 应用同时启动调用（如端到端缓存失效广播），这两个 yml 文件
-是配套环境。
+`ClientCacheable` 是 HTTP 响应级缓存，必须**最外层**——任何内层 `@Cacheable` /
+`@Transactional` 算完之后才能拿到最终的 result 计算 UID。顺序数字越小越外层（Spring AOP 约定），
+100 给业务自定义 Aspect 留了较大的余量。
+
+### `ClientCacheWebFilter` 的存在理由
+
+Aspect 在 `@Around` 里需要拿到 `HttpServletResponse` 来 setHeader——但 Spring AOP 默认
+只能拿到 `HttpServletRequest`。Filter 把请求包成 `CacheClientRequest`，把 response 引用
+存到 wrapper 里，Aspect 就能反向取出。
 
 ## 模块入口
 
-无主源码。
+| 路径 | 角色 |
+|---|---|
+| `provider/init/InterServiceCacheProviderAutoConfiguration` | 装配入口：注册 `ClientCacheWebFilter` + `ClientCacheableAspect` |
+| `provider/web/ClientCacheWebFilter` | 把 `HttpServletRequest` 包成 `CacheClientRequest` |
+| `provider/web/CacheClientRequest` | `HttpServletRequestWrapper` 子类，额外携带 response 引用 |
+| `aop/ClientCacheable` | 注解，标记需要走"双方缓存协商"的 Controller 方法 |
+| `aop/ClientCacheableAspect` | `@Around` 实现：算 UID、写响应头、命中时返回 null |
+
+## 配置示例
+
+provider 端应用只需引入本模块依赖；自动配置会自动注册 filter 与 aspect，无 yml 开关。
+
+```kotlin
+implementation(project(":kudos-ability:kudos-ability-cache:kudos-ability-cache-interservice:kudos-ability-cache-interservice-provider"))
+```
+
+Controller 用法：
+
+```kotlin
+@RestController
+class UserController {
+    @ClientCacheable
+    @GetMapping("/user/{id}")
+    fun getUser(@PathVariable id: String): UserDto { /* ... */ }
+}
+```
+
+## 测试覆盖
+
+`InterServiceCacheTest` 在 provider test-src 启动一对 SpringApplication：
+- `MockMsApplication`（profile `ms`）暴露 `/same` / `/different1` / `/different2` 三条 endpoint
+- 主测试进程（profile `client`）持 Feign client `IMockProxy` 调用前者
+
+| 用例 | 校验 |
+|---|---|
+| `same()` | 同一调用两次，返回 `===`（同对象）——验证 304 走的是本地缓存对象 |
+| `different1()` | `/different1` **没标 @ClientCacheable**，两次返回 `!==`——验证不进缓存协商时按普通调用走 |
+| `different2()` | `/different2` 加了 @ClientCacheable，但服务端每次返回随机内容（UID 不一致）——两次返回 `!==`，验证 UID 不匹配时按 200 重新 decode |
 
 ## 依赖
 
 ```kotlin
-dependencies {
-    api(project(":kudos-ability:kudos-ability-cache:kudos-ability-cache-interservice:kudos-ability-cache-interservice-common"))
-    api(libs.spring.boot.starter.web)
-    compileOnly(project(":kudos-ability:kudos-ability-distributed:kudos-ability-distributed-client:kudos-ability-distributed-client-feign"))
+api(project(":kudos-ability:kudos-ability-cache:kudos-ability-cache-interservice:kudos-ability-cache-interservice-common"))
+compileOnly(libs.spring.boot.starter.web)
 
-    testImplementation(project(":kudos-test:kudos-test-container"))
-}
+testImplementation(project(":kudos-ability:kudos-ability-cache:kudos-ability-cache-interservice:kudos-ability-cache-interservice-client"))
+testImplementation(project(":kudos-ability:kudos-ability-distributed:kudos-ability-distributed-client:kudos-ability-distributed-client-feign"))
+testImplementation(project(":kudos-ability:kudos-ability-cache:kudos-ability-cache-local:kudos-ability-cache-local-caffeine"))
+testImplementation(project(":kudos-test:kudos-test-container"))
+testImplementation(libs.spring.boot.starter.web)
 ```
 
-`spring.boot.starter.web` 当前未被任何代码使用，但脚手架模板里 provider 应用预期是 Web
-应用，所以保留 `api` 透传给下游。
+`spring-boot-starter-web` 是 `compileOnly`——provider 端必然是 Web 应用，业务侧已经
+直接依赖，本模块不重复传递。
+
+`kudos-tools` 的脚手架模板 `${project}-ams-${module}-api-provider/build.gradle.kts`
+默认引用本模块——这是它出现在依赖图的现实理由。
 
 ## 已知限制 / 后续工作
 
-- ❗ 主源码空白。当前的"价值"仅在于：(a) 给脚手架模板提供稳定的依赖坐标，(b) yml 模板
-  给跨服务测试占位
-- ❗ `spring-boot-starter-web` 与 `distributed-client-feign` 两个依赖都没有代码引用——
-  `web` 是 api 透传暂留，`feign` 是 compileOnly 也暂留；真的开始写代码后需要重新评估
-- ❗ 一旦补 provider 实际能力（缓存失效接收端点等），应当：
-  1. 把控制器 / endpoint 放在 `src/io/kudos/ability/cache/interservice/provider/`
-  2. 复用 cache-common 的 `ICacheMessageHandler` SPI，避免重新发明
-  3. 给 yml 模板加 README 说明启动方式
+- ❗ `ClientCacheableAspect.doProceed` 把任意异常封成 `RuntimeException` 上抛——堆栈被
+  二次包装，定位时需要看 `cause`。考虑改为直接 rethrow（`AspectJ` 允许 `throws Throwable`）
+- ❗ 响应 UID 用 MD5；同进程内热点接口的 JSON 序列化开销可能成为瓶颈。极端场景可缓存
+  `<result identity, uid>` 映射，但要小心 GC
+- ❗ filter 的 `urlPatterns("/*")` 对所有路径都包 `CacheClientRequest`——非 Feign 请求虽然
+  被短路了，但仍多一层 wrapper。未来可按 `application/feign+json` 之类的 header 提前剔除

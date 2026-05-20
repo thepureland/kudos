@@ -75,24 +75,12 @@ class AutoCompleteComboBoxListener<T>(private val comboBox: ComboBox<Any>) : Eve
             }
             else -> {}
         }
-        if (event.code == KeyCode.RIGHT
-            || event.code == KeyCode.LEFT
-            || event.isControlDown
-            || event.code == KeyCode.HOME
-            || event.code == KeyCode.END
-            || event.code == KeyCode.TAB
-        ) {
-            return
-        }
-        val list = FXCollections.observableArrayList<Any>()
+        if (event.isControlDown || event.code in SKIP_CODES) return
         val prefix = comboBox.editor.text.lowercase()
-        for (i in data.indices) {
-            // .lowercase() 不带 Locale 参数走 Locale.ROOT (Kotlin 1.5+)——避免 Turkish locale 的
-            // i→İ 误判，桌面 UI 输入比对依赖这一点
-            if (data[i].toString().lowercase().startsWith(prefix)) {
-                list.add(data[i])
-            }
-        }
+        // .lowercase() 不带 Locale 参数走 Locale.ROOT (Kotlin 1.5+)——避免 Turkish locale 的
+        // i→İ 误判，桌面 UI 输入比对依赖这一点
+        val matched = data.filter { it.toString().lowercase().startsWith(prefix) }
+        val list: ObservableList<Any> = FXCollections.observableArrayList<Any>().apply { addAll(matched) }
         val t = comboBox.editor.text
         comboBox.items = list
         comboBox.editor.text = t
@@ -110,12 +98,12 @@ class AutoCompleteComboBoxListener<T>(private val comboBox: ComboBox<Any>) : Eve
      * @since 1.0.0
      */
     private fun moveCaret(textLength: Int) {
-        if (caretPos == -1) {
-            comboBox.editor.positionCaret(textLength)
-        } else {
-            comboBox.editor.positionCaret(caretPos)
-        }
+        comboBox.editor.positionCaret(if (caretPos == -1) textLength else caretPos)
         moveCaretToPos = false
+    }
+
+    private companion object {
+        private val SKIP_CODES = setOf(KeyCode.RIGHT, KeyCode.LEFT, KeyCode.HOME, KeyCode.END, KeyCode.TAB)
     }
 
 }

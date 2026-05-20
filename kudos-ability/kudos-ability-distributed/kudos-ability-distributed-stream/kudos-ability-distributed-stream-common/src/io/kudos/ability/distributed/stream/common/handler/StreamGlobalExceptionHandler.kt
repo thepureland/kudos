@@ -53,36 +53,23 @@ class StreamGlobalExceptionHandler {
      */
     @ServiceActivator(inputChannel = IntegrationContextUtils.ERROR_CHANNEL_BEAN_NAME)
     fun globalHandleError(errorMessage: ErrorMessage) {
-        if (!saveException) {
-            return
-        }
+        if (!saveException) return
         try {
-            val messageHandlingException = errorMessage.payload
-            if (messageHandlingException is MessageHandlingException) {
-                val message = messageHandlingException.failedMessage ?: return
-                val headers = message.headers
-                if (!isFromConsumer(headers)) {
-                    return
-                }
-                LOG.warn("收到stream异常消息,开始持久化...")
-                val body = SerializationKit.deserialize(message.getPayload() as ByteArray)
+            val handlingException = errorMessage.payload as? MessageHandlingException ?: return
+            val message = handlingException.failedMessage ?: return
+            val headers = message.headers
+            if (!isFromConsumer(headers)) return
+            LOG.warn("收到stream异常消息,开始持久化...")
+            val body = SerializationKit.deserialize(message.getPayload() as ByteArray)
 
-                val topic = headers.get(StreamHeader.TOPIC_KEY).toString()
-                var msgHeaderJson = JsonKit.toJson(headers)
-                if (msgHeaderJson.isEmpty()) {
-                    msgHeaderJson = headers.toString()
-                }
-                val msgBodyJson = JsonKit.toJson(body)
-
-                //保存异常消息
-                val exceptionMsg = SysMqFailMsg()
-                exceptionMsg.topic = topic
-                exceptionMsg.msgHeaderJson = msgHeaderJson
-                exceptionMsg.msgBodyJson = msgBodyJson
-                exceptionMsg.createTime = LocalDateTime.now()
-                val success = streamExceptionService.save(exceptionMsg)
-                LOG.info("stream异常消息持久化结果:{0},id:{1}", success, headers.id)
+            val exceptionMsg = SysMqFailMsg().apply {
+                topic = headers.get(StreamHeader.TOPIC_KEY).toString()
+                msgHeaderJson = JsonKit.toJson(headers).ifEmpty { headers.toString() }
+                msgBodyJson = JsonKit.toJson(body)
+                createTime = LocalDateTime.now()
             }
+            val success = streamExceptionService.save(exceptionMsg)
+            LOG.info("stream异常消息持久化结果:{0},id:{1}", success, headers.id)
         } catch (e: Exception) {
             LOG.error(e, "stream异常消息持久化失败")
         }
@@ -131,14 +118,11 @@ class StreamGlobalExceptionHandler {
      * @author K
      * @since 1.0.0
      */
-    private fun isFromConsumer(headers: MessageHeaders): Boolean {
-        // Locale.ROOT 而非 Locale.getDefault()——header key 用 ASCII 前缀对比，Turkish locale
-        // 的 i→İ 大小写映射会让 "kafka_..." 误判
-        return headers.keys.any { key ->
+    private fun isFromConsumer(headers: MessageHeaders): Boolean =
+        headers.keys.any { key ->
             val k = key.lowercase(Locale.ROOT)
             k.startsWith("kafka_") || k.startsWith("amqp_") || k.startsWith("rocket_")
         }
-    }
 
     /**
      * 实际处理 producer 异常：尽量取出失败前的原始 Message 再交给 [processProducerError]。
@@ -151,15 +135,10 @@ class StreamGlobalExceptionHandler {
      */
     private fun doRealChannelErrorHandle(errorMessage: ErrorMessage) {
         try {
-            val messageHandlingException = errorMessage.payload
-            if (messageHandlingException is MessageHandlingException) {
-                // 取出 MessagingException 和原始消息
-                val message = messageHandlingException.failedMessage ?: return
-                processProducerError(message)
-            } else if (errorMessage.originalMessage != null) {
-                val message = errorMessage.originalMessage ?: return
-                processProducerError(message)
-            }
+            val message = (errorMessage.payload as? MessageHandlingException)?.failedMessage
+                ?: errorMessage.originalMessage
+                ?: return
+            processProducerError(message)
         } catch (e: Exception) {
             LOG.error(e, "文件持久化失败！")
         }
@@ -177,32 +156,23 @@ class StreamGlobalExceptionHandler {
      * @since 1.0.0
      */
     private fun processProducerError(message: Message<*>) {
-        if (isFromConsumer(message.headers)) {
-            //比较恶心的兼容全局异常问题。
-            return
-        }
-        val haveProducerBindName = message.headers.containsKey(StreamHeader.SCST_BIND_NAME)
-        if (!haveProducerBindName) {
+        //比较恶心的兼容全局异常问题。
+        if (isFromConsumer(message.headers)) return
+        if (!message.headers.containsKey(StreamHeader.SCST_BIND_NAME)) {
             LOG.debug("找不到异常的绑定信息，忽略...")
             return
         }
         LOG.warn("收到stream异常消息,开始持久化...")
         val headers = message.headers
-        val body: Any? = SerializationKit.deserialize(message.getPayload() as ByteArray)
-        if (body is StreamMessageVo<*>) {
-            val bindName = headers.get(StreamHeader.SCST_BIND_NAME).toString()
-            var msgHeaderJson = JsonKit.toJson(headers)
-            if (msgHeaderJson.isEmpty()) {
-                msgHeaderJson = headers.toString()
-            }
-            val msgBodyJson = JsonKit.toJson(body.data)
-            val producerMsgVo = StreamProducerMsgVo()
-            producerMsgVo.bindName = bindName
-            producerMsgVo.msgHeaderJson = msgHeaderJson
-            producerMsgVo.msgBodyJson = msgBodyJson
-            val handler = StreamFailHandlerItem.get(bindName)
-            handler?.persistFailedData(producerMsgVo)
+        val body = SerializationKit.deserialize(message.getPayload() as ByteArray) as? StreamMessageVo<*>
+            ?: return
+        val bindName = headers.get(StreamHeader.SCST_BIND_NAME).toString()
+        val producerMsgVo = StreamProducerMsgVo().apply {
+            this.bindName = bindName
+            msgHeaderJson = JsonKit.toJson(headers).ifEmpty { headers.toString() }
+            msgBodyJson = JsonKit.toJson(body.data)
         }
+        StreamFailHandlerItem.get(bindName)?.persistFailedData(producerMsgVo)
     }
 
     /** 日志器 */

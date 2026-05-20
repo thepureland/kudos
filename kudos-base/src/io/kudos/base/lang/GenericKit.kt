@@ -47,8 +47,8 @@ object GenericKit {
             return getSuperClassGenricClass(directSuperClass, index) // 往父类取
         }
 
-        if (index < 0 || index >= args.size) {
-            throw IllegalArgumentException("输入的索引" + if (index < 0) "不能小于0" else "超出了参数的总数")
+        require(index in args.indices) {
+            "输入的索引${if (index < 0) "不能小于0" else "超出了参数的总数"}"
         }
         val type = args[index].type
         return type?.jvmErasure ?: Any::class // 泛型参数为*时返回Any::class
@@ -65,11 +65,10 @@ object GenericKit {
      * @since 1.0.0
      */
     fun getParameterTypeGenericClass(callable: KCallable<*>, index: Int = 1): List<KClass<*>> {
-        if (index < 0 || index >= callable.parameters.size) {
-            throw IllegalArgumentException("输入的索引" + if (index < 0) "不能小于0" else "超出了参数的总数")
+        require(index in callable.parameters.indices) {
+            "输入的索引${if (index < 0) "不能小于0" else "超出了参数的总数"}"
         }
-        val param = callable.parameters[index]
-        val args = param.type.arguments
+        val args = callable.parameters[index].type.arguments
         if (args.isEmpty()) return listOf(Nothing::class)
         return args.map { it.type?.jvmErasure ?: Any::class }
     }
@@ -88,8 +87,8 @@ object GenericKit {
         if (args.isEmpty()) {
             return Nothing::class
         }
-        if (index < 0 || index >= args.size) {
-            throw IllegalArgumentException("输入的索引" + if (index < 0) "不能小于0" else "超出了泛型参数的总数")
+        require(index in args.indices) {
+            "输入的索引${if (index < 0) "不能小于0" else "超出了泛型参数的总数"}"
         }
         val type = args[index].type
         return type?.jvmErasure ?: Any::class // 泛型参数为*时返回Any::class

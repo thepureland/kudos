@@ -40,15 +40,11 @@ open class SysDictItemService(
 
     private val log = LogFactory.getLog(this::class)
 
+    @Suppress("UNCHECKED_CAST")
     @Transactional(readOnly = true)
-    override fun <R : Any> get(id: String, returnType: KClass<R>): R? {
-        return if (returnType == SysDictItemCacheEntry::class) {
-            @Suppress("UNCHECKED_CAST")
-            sysDictItemHashCache.getDictItemById(id) as R?
-        } else {
-            super.get(id, returnType)
-        }
-    }
+    override fun <R : Any> get(id: String, returnType: KClass<R>): R? =
+        if (returnType == SysDictItemCacheEntry::class) sysDictItemHashCache.getDictItemById(id) as R?
+        else super.get(id, returnType)
 
     @Transactional(readOnly = true)
     override fun getDictItemFromCache(id: String): SysDictItemCacheEntry? = sysDictItemHashCache.getDictItemById(id)
@@ -60,13 +56,12 @@ open class SysDictItemService(
     @Transactional(readOnly = true)
     override fun batchGetDictItemsFromCache(
         dictTypesByAtomicServiceCode: Map<String, Collection<String>>
-    ): Map<String, Map<String, List<SysDictItemCacheEntry>>> {
-        return dictTypesByAtomicServiceCode.mapValues { (atomicServiceCode, dictTypes) ->
+    ): Map<String, Map<String, List<SysDictItemCacheEntry>>> =
+        dictTypesByAtomicServiceCode.mapValues { (atomicServiceCode, dictTypes) ->
             dictTypes.associateWith { dictType ->
                 sysDictItemHashCache.getDictItems(atomicServiceCode, dictType)
             }
         }
-    }
 
     @Transactional(readOnly = true)
     override fun getDictItemMapFromCache(dictType: String, atomicServiceCode: String): LinkedHashMap<String, String> =
@@ -76,31 +71,28 @@ open class SysDictItemService(
     @Transactional(readOnly = true)
     override fun batchGetDictItemMapFromCache(
         dictTypesByAtomicServiceCode: Map<String, Collection<String>>,
-    ): Map<String, Map<String, LinkedHashMap<String, String>>> {
-        return dictTypesByAtomicServiceCode.mapValues { (atomicServiceCode, dictTypes) ->
+    ): Map<String, Map<String, LinkedHashMap<String, String>>> =
+        dictTypesByAtomicServiceCode.mapValues { (atomicServiceCode, dictTypes) ->
             dictTypes.associateWith { dictType ->
                 sysDictItemHashCache.getDictItems(atomicServiceCode, dictType)
                     .associateTo(LinkedHashMap()) { it.itemCode to it.itemName }
             }
         }
-    }
 
     @Transactional(readOnly = true)
     override fun transDictItemNameFromCache(
         dictType: String,
         itemCode: String,
         atomicServiceCode: String
-    ): String? {
-        val items = sysDictItemHashCache.getDictItems(atomicServiceCode, dictType)
-        return items.firstOrNull { it.itemCode == itemCode }?.itemName
-    }
+    ): String? =
+        sysDictItemHashCache.getDictItems(atomicServiceCode, dictType)
+            .firstOrNull { it.itemCode == itemCode }?.itemName
 
     @Transactional(readOnly = true)
     override fun fetchAllParentIds(itemId: String): List<String> {
         val results = mutableListOf<String>()
         recursionFindAllParentId(itemId, results)
-        results.reverse()
-        return results
+        return results.apply { reverse() }
     }
 
     @Transactional

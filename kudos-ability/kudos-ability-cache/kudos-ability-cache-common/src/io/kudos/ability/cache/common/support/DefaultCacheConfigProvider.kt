@@ -18,7 +18,7 @@ import io.kudos.base.logger.LogFactory
 class DefaultCacheConfigProvider(itemsProperties: CacheItemsProperties) : ICacheConfigProvider {
 
     /** 按策略分组的配置（结构与旧实现一致，仅作为构造期数据组织）。 */
-    private val cacheConfigsByStrategy: MutableMap<String, MutableMap<String, CacheConfig>> = HashMap()
+    private val cacheConfigsByStrategy: MutableMap<String, MutableMap<String, CacheConfig>> = mutableMapOf()
 
     /** 扁平化的全量配置 cacheName -> config，初始化后冻结。 */
     private val flatConfigs: Map<String, CacheConfig>
@@ -31,16 +31,13 @@ class DefaultCacheConfigProvider(itemsProperties: CacheItemsProperties) : ICache
 
     init {
         val cacheItems = itemsProperties.cacheItems
-        log.info("加载到cache-items配置：size=" + cacheItems.size)
+        log.info("加载到cache-items配置：size=${cacheItems.size}")
         if (cacheItems.isNotEmpty()) {
             initCacheConfig(cacheItems)
         }
 
-        flatConfigs = buildMap {
-            for ((_, byName) in cacheConfigsByStrategy) {
-                for ((name, cfg) in byName) put(name, cfg)
-            }
-        }
+        flatConfigs = cacheConfigsByStrategy.values.flatMap { it.entries }
+            .associate { it.key to it.value }
         localConfigs = (cacheConfigsByStrategy[CacheStrategy.SINGLE_LOCAL.name] ?: emptyMap()).toMap()
         remoteConfigs = (cacheConfigsByStrategy[CacheStrategy.REMOTE.name] ?: emptyMap()).toMap()
         localRemoteConfigs = (cacheConfigsByStrategy[CacheStrategy.LOCAL_REMOTE.name] ?: emptyMap()).toMap()
@@ -53,26 +50,26 @@ class DefaultCacheConfigProvider(itemsProperties: CacheItemsProperties) : ICache
      * @param cacheItems
      */
     private fun initCacheConfig(cacheItems: MutableList<String>) {
-        for (cacheItemStr in cacheItems) {
-            if (cacheItemStr.isNotBlank()) {
-                val cacheConfig = cacheItemToConfig(cacheItemStr)
-                val strategy = cacheConfig.strategy
-                    ?: error("cache item 缺少 strategy: $cacheItemStr")
-                val name = cacheConfig.name
-                    ?: error("cache item 缺少 name: $cacheItemStr")
-                cacheConfigsByStrategy.getOrPut(strategy) { HashMap() }[name] = cacheConfig
-            }
+        cacheItems.filter { it.isNotBlank() }.forEach { cacheItemStr ->
+            val cacheConfig = cacheItemToConfig(cacheItemStr)
+            // 用派生属性 resolvedStrategyCode 而非裸 `.strategy`——README "新代码必须用派生属性"
+            // 契约的最后一处遗留 reader 收口。yml 解析路径只会设 `.strategy`，DB 字典码路径
+            // 只会设 `.strategyDictCode`；resolvedStrategyCode 把两条来源兜底集中到一处。
+            val strategy = cacheConfig.resolvedStrategyCode
+                ?: error("cache item 缺少 strategy: $cacheItemStr")
+            val name = cacheConfig.name ?: error("cache item 缺少 name: $cacheItemStr")
+            cacheConfigsByStrategy.getOrPut(strategy) { mutableMapOf() }[name] = cacheConfig
         }
     }
 
     private fun cacheItemToConfig(cacheItem: String): CacheConfig {
-        val config = CacheConfig()
-        config.writeOnBoot = false
-        config.active = true
-        val params = cacheItem.split("&".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-        for (param in params) {
-            val item = param.split("=".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-            BeanKit.setProperty<CacheConfig?>(config, item[0], item[1])
+        val config = CacheConfig().apply {
+            writeOnBoot = false
+            active = true
+        }
+        cacheItem.split("&").forEach { param ->
+            val (key, value) = param.split("=", limit = 2)
+            BeanKit.setProperty<CacheConfig?>(config, key, value)
         }
         return config
     }

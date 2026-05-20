@@ -80,13 +80,8 @@ object EncodeKit {
      * @author K
      * @since 1.0.0
      */
-    fun encodeBase62(input: ByteArray): String {
-        val chars = CharArray(input.size)
-        for (i in input.indices) {
-            chars[i] = BASE62[(input[i].toInt() and 0xFF) % BASE62.size]
-        }
-        return String(chars)
-    }
+    fun encodeBase62(input: ByteArray): String =
+        String(CharArray(input.size) { BASE62[(input[it].toInt() and 0xFF) % BASE62.size] })
 
     /**
      * URL 编码, Encode默认为UTF-8.

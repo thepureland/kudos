@@ -137,14 +137,12 @@ class ConstraintsValidator : ConstraintValidator<Constraints, Any?> {
 
             // 根据指定的顺序排序子约束
             val result = if (constraints.order.isNotEmpty()) {
-                val sequenceAnnotations = linkedSetOf<Annotation>() // 有指定顺序的子约束
+                // 有指定顺序的子约束
+                val sequenceAnnotations = linkedSetOf<Annotation>()
                 constraints.order.forEach { clazz ->
                     val annotation = annotations.firstOrNull { it.annotationClass == clazz }
-                    if (annotation == null) {
-                        error("Constraints约束sequence中指定的【$clazz】子约束未定义规则！")
-                    } else {
-                        sequenceAnnotations.add(annotation)
-                    }
+                        ?: error("Constraints约束sequence中指定的【$clazz】子约束未定义规则！")
+                    sequenceAnnotations.add(annotation)
                 }
                 sequenceAnnotations.addAll(annotations) // 合并未指定顺序的子约束
                 sequenceAnnotations.toList()
@@ -153,14 +151,7 @@ class ConstraintsValidator : ConstraintValidator<Constraints, Any?> {
             }
 
             // 强制优先NotBlank、NotEmpty、NotNull、Null
-            return if (priorityAnnotation != null) {
-                val sequenceAnnotations = linkedSetOf<Annotation>()
-                sequenceAnnotations.add(priorityAnnotation)
-                sequenceAnnotations.addAll(result)
-                sequenceAnnotations.toList()
-            } else {
-                result
-            }
+            return priorityAnnotation?.let { listOf(it) + result.filter { a -> a != it } } ?: result
         }
 
         /**

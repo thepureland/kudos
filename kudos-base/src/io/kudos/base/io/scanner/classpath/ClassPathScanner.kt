@@ -113,8 +113,8 @@ object ClassPathScanner {
      * @since 1.0.0
      */
     fun scanForClasses(location: String, implementedInterface: KClass<*>): Array<Class<*>> {
-        logger.debug("Scanning for classes at '" + location + "' (Implementing: '" + implementedInterface.qualifiedName + "')")
-        val classes: MutableList<Class<*>> = ArrayList()
+        logger.debug("Scanning for classes at '$location' (Implementing: '${implementedInterface.qualifiedName}')")
+        val classes = mutableListOf<Class<*>>()
         try {
             val resourceNames = findResourceNames(location, "", ".class")
             for (resourceName in resourceNames) {
@@ -151,17 +151,8 @@ object ClassPathScanner {
      * @return The underlying physical URLs.
      * @throws IOException when the lookup fails.
      */
-    fun getLocationUrlsForPath(path: String): List<URL> {
-        val locationUrls: MutableList<URL> = ArrayList()
-        val urls = classLoader.getResources(path)
-        /*if (!urls.hasMoreElements()) {
-			throw new SystemException("Unable to determine URL for classpath location: " + path + " (ClassLoader: "
-					+ getClassLoader() + ")");
-		}*/while (urls.hasMoreElements()) {
-            locationUrls.add(urls.nextElement())
-        }
-        return locationUrls
-    }
+    fun getLocationUrlsForPath(path: String): List<URL> =
+        classLoader.getResources(path).toList()
 
     /**
      * Converts this resource name to a fully qualified class name.
@@ -188,7 +179,7 @@ object ClassPathScanner {
         val resourceNames: MutableSet<String> = TreeSet()
         val locationsUrls = getLocationUrlsForPath(path)
         for (locationUrl in locationsUrls) {
-            logger.debug("Scanning URL: " + locationUrl.toExternalForm())
+            logger.debug("Scanning URL: ${locationUrl.toExternalForm()}")
             val protocol = locationUrl.protocol
             val classPathLocationScanner = createLocationScanner(protocol)
             if (classPathLocationScanner == null) {

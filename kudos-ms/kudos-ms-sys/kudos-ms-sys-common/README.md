@@ -10,9 +10,9 @@
 
 **第一层按业务模块划分**，模块名与历史 `vo` 下的一级目录一致：
 
-`accessrule`、`cache`、`datasource`、`dict`、`domain`、`i18n`、`microservice`、`param`、`resource`、`system`、`tenant`
+`accessrule`、`cache`、`datasource`、`dict`、`domain`、`i18n`、`locale`、`microservice`、`outline`、`param`、`resource`、`system`、`tenant`
 
-**字典头** 与 **字典项** 同属 **`dict`**：`ISysDictApi` / `ISysDictItemApi` 均在 **`dict.api`**；相关 VO 在 **`dict.vo`**（含 `SysDictItem*` 等），**无** `dictitem` 子包。**访问规则 IP** 与主规则同属 **`accessrule`**（`accessrule.api` / `accessrule.vo`），**无** `accessruleip` 子包。
+**字典头** 与 **字典项** 同属 **`dict`**：`ISysDictApi` / `ISysDictItemApi` 均在 **`dict.api`**；相关 VO 在 **`dict.vo`**（含 `SysDictItem*` 等），**无** `dictitem` 子包。**访问规则 IP** 与主规则同属 **`accessrule`**（`accessrule.api` / `accessrule.vo`），**无** `accessruleip` 子包。**租户语言**（`SysTenantLocaleApi`）和**语言/区域主数据**（`SysLocaleApi`）是 **两个独立模块**：前者属 `tenant`（租户与语言的绑定），后者属 `locale`（全局语言字典）。
 
 **第二层**在各模块下按类型分为四类子包（若该模块暂无某类内容可省略目录）：
 
@@ -23,12 +23,13 @@
 | **`enums`** | 错误码枚举 `*ErrorCodeEnum`、领域枚举（如 `ResourceTypeEnum`）等 |
 | **`vo`** | 值对象：`vo/request`、`vo/response` 及根下的 `*CacheEntry` 等 |
 
-**跨模块、不属于单一业务域**的契约放在 **`io.kudos.ms.sys.common.platform`** 下，同样按类型分子包：
+**跨模块、不属于单一业务域**的契约放在 **`io.kudos.ms.sys.common.platform`** 下：
 
 | 子包 | 说明 |
 |------|------|
-| **`platform.consts`** | 全局常量，如 **`SysConsts`**、**`SysDictTypes`** |
-| **`platform.validation`** | 跨模块校验器，如 **`DictCodeValidator`** 及 **`DictCodeConstraintValidatorProvider`** |
+| **`platform.consts`** | 全局常量，如 **`SysConsts`**（含 `ATOMIC_SERVICE_NAME = "sys"`、`DEFAULT_SUB_SYSTEM_CODE`）、**`SysDictTypes`**（启动期由 `core.dict.support.SysDictTypesStartupValidator` 校验真实存在） |
+
+> 早期版本另含 `platform.validation`（`DictCodeValidator` 等）。当前实现将字典编码校验下沉到 `core.dict.support`，`common` 不再承载校验逻辑，仅保留常量契约。
 
 示例（租户模块）：
 
@@ -46,17 +47,26 @@
 
 | 接口 | 模块包 | 职责概要 |
 |------|--------|----------|
-| `ISysTenantApi` 等 | `tenant.api` | 租户及租户-子系统/资源/语言 |
+| `ISysTenantApi`、`ISysTenantSystemApi`、`ISysTenantResourceApi`、`ISysTenantLocaleApi` | `tenant.api` | 租户及租户-子系统 / 资源 / 语言绑定 |
 | `ISysSystemApi` | `system.api` | 子系统 |
 | `ISysMicroServiceApi`、`ISysSubSystemMicroServiceApi` | `microservice.api` | 微服务及子系统-微服务绑定 |
-| `ISysResourceApi` | `resource.api` | 资源/菜单树 |
+| `ISysResourceApi` | `resource.api` | 资源 / 菜单树 |
 | `ISysDictApi` / `ISysDictItemApi` | `dict.api`（并列两个接口） | 字典与字典项 |
 | `ISysParamApi` | `param.api` | 系统参数 |
-| `ISysI18nApi` | `i18n.api` | 国际化 |
+| `ISysI18nApi` | `i18n.api` | 国际化（实现侧类名为 `SysI18NService` 的历史命名仍保留） |
 | `ISysDomainApi` | `domain.api` | 业务域 |
 | `ISysDataSourceApi` | `datasource.api` | 数据源 |
-| `ISysCacheApi` | `cache.api` | 缓存配置元数据 |
+| `ISysCacheApi` | `cache.api` | 缓存配置元数据（**当前空接口**：保留作为契约占位，运维 / 控制台读写走 `api-admin` 下的 `/api/admin/sys/cache`，没有 internal RPC 端点；新增 RPC 方法前对应的 `Sys*InternalController` 也未生成） |
 | `ISysAccessRuleApi` / `ISysAccessRuleIpApi` | `accessrule.api`（并列两个接口） | 访问规则及 IP |
+| `ISysLocaleApi` | `locale.api` | 语言/区域全局字典（与 `tenant.SysTenantLocaleApi` 配合使用） |
+| `ISysOutLineApi` | `outline.api` | 大纲数据，按 (子系统, 租户) 缓存 |
+
+每个 `ISys*Api` 方法上以 `@GetMapping` / `@PostMapping` 标注 **`/api/internal/sys/...`** 路径——同一个接口同时承担：
+1. **同进程注入**：`core` 中 `Sys*Api`（`@Component`）实现该接口；
+2. **Feign 远程调用**：`client` 中 `ISys*Proxy : ISys*Api` 沿用方法签名与路径；
+3. **HTTP 暴露**：`api-internal` 中 `Sys*InternalController` 实现该接口，由 Spring MVC 根据方法级注解暴露同一 `/api/internal/sys/...` 路径。
+
+三者共享同一份方法签名，是 sys 服务"本地 / 远程 / HTTP 一致性"的关键。
 
 ---
 
@@ -89,4 +99,5 @@
 ## 扩展建议
 
 - 新增契约：在对应业务模块下增加或扩展 **`api` / `vo` / `enums`**；若确属横切能力，再考虑放入 **`platform`**。
-- 保持本模块**无数据库类型**；与校验、Spring 相关的少数类以现有 `platform` 为准。
+- 保持本模块**无数据库类型**、无 ORM / Ktorm 依赖。`api` 接口仅依赖 `kudos-context`、Spring Web 注解与少量基础类型。
+- 新增 `ISys*Api` 方法时，**必须** 标注 `@GetMapping` / `@PostMapping("/api/internal/sys/<module>/<methodName>")` —— `api-internal` 控制器仅依靠这些注解暴露 HTTP，Feign 客户端也依靠它们路由。漏标的方法在 `client` 一侧会直接 404。

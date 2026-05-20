@@ -122,11 +122,9 @@ class HashBatchCacheableByPrimaryAspect {
      * @author K
      * @since 1.0.0
      */
-    private fun getKeysGenerator(ann: HashBatchCacheableByPrimary): IKeysGenerator {
-        val bean = SpringKit.getBeanOrNull(ann.keysGenerator)
-        if (bean != null) return bean as IKeysGenerator
-        return DefaultHashBatchKeysGenerator()
-    }
+    private fun getKeysGenerator(ann: HashBatchCacheableByPrimary): IKeysGenerator =
+        (SpringKit.getBeanOrNull(ann.keysGenerator) as? IKeysGenerator)
+            ?: DefaultHashBatchKeysGenerator()
 
     /**
      * `joinPoint.proceed()` 后调 [validatedMap] 强校验返回值为 `Map<String, Any?>`。

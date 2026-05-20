@@ -3,7 +3,18 @@
 **定位**：**用户（`user`）原子服务**的 Gradle 聚合模块——承载用户账号、第三方登录、账号保护、
 登录日志、组织 / 组织用户、记住登录等领域能力。
 
-**在工程中的角色**：`SysConsts.ATOMIC_SERVICE_NAME = "user"`；管理端 HTTP + 服务间 Feign。
+**在工程中的角色**：`SysConsts.ATOMIC_SERVICE_NAME = "user"`。
+
+**启动入口（3 个对等的 Spring Boot 进程）**：
+
+| 模块 | Application 类 | 暴露面 | 端点示例 |
+|---|---|---|---|
+| `api-public` | `UserApiWebApplication` | 终端用户态 HTTP + `UserContextWebFilter`（session → KudosContext） | `/api/public/user/passport/*` |
+| `api-admin` | `UserApiAdminApplication` | 管理端 HTTP | `/api/admin/user/*` |
+| `api-internal` | `UserApiProviderApplication` | 服务间 Feign provider；带 Nacos 发现 / 配置 | `IUser*Api` 接口注解路径 |
+
+> 三者**互不依赖**——各自单独 bootRun，端口 / 注册中心 / 暴露面通过 yml 区分。
+> `kudos-ms-user-client` 的 Feign proxy 默认调的是 `api-internal` 进程。
 
 ---
 
@@ -11,55 +22,68 @@
 
 | 子模块 | 说明 |
 |--------|------|
-| [kudos-ms-user-common](kudos-ms-user-common/README.md) | 跨模块共享契约 |
-| kudos-ms-user-sql | Flyway 迁移脚本（user 库表） |
-| kudos-ms-user-core | DAO / Service / 缓存 / API 实现 |
-| kudos-ms-user-api-admin | 管理端 REST 控制器 |
-| kudos-ms-user-api-public | 对外 Web 启动入口 |
-| kudos-ms-user-api-internal | 对内 Provider 启动入口 |
-| kudos-ms-user-client | Feign 代理 + 降级 |
+| [kudos-ms-user-common](kudos-ms-user-common/README.md) | 跨模块共享契约（VO / 枚举 / API 接口） |
+| [kudos-ms-user-sql](kudos-ms-user-sql/README.md) | Flyway 迁移脚本（user 库表，`user_*` 前缀） |
+| [kudos-ms-user-core](kudos-ms-user-core/README.md) | DAO / Service / 缓存 / API 实现 + 通行证（登录鉴权） |
+| [kudos-ms-user-api-admin](kudos-ms-user-api-admin/README.md) | 管理端 REST 控制器（`/api/admin/user/...`） |
+| [kudos-ms-user-api-public](kudos-ms-user-api-public/README.md) | 对外 Web 启动入口 |
+| [kudos-ms-user-api-internal](kudos-ms-user-api-internal/README.md) | 对内 Provider 启动入口（服务间 Feign 调用面） |
+| [kudos-ms-user-client](kudos-ms-user-client/README.md) | Feign 代理 + 降级 |
 
 ---
 
 ## 依赖关系（概念）
 
 ```
-                    ┌──────────────────┐
-                    │ kudos-ms-user-   │
-                    │ common           │
-                    └────────┬─────────┘
-                             │
-         ┌───────────────────┼───────────────────┐
-         ▼                   ▼                   │
-┌─────────────────┐  ┌─────────────────┐         │
-│ kudos-ms-user-  │  │ kudos-ms-user-  │         │
-│ sql             │  │ client          │         │
-└────────┬────────┘  └────────┬────────┘         │
-         │                    │ only common      │
-         └──────────┬─────────┘                  │
-                    ▼                            │
-            ┌───────────────┐                    │
-            │ kudos-ms-user-│                    │
-            │ core          │◄───────────────────┘
-            └───────┬───────┘
-                    │
-    ┌───────────────┼───────────────┐
-    ▼               ▼               ▼
-┌────────┐   ┌────────────┐   ┌────────────┐
-│ api-   │   │ api-       │   │ api-       │
-│ admin  │   │ public     │   │ internal   │
-└────────┘   └────────────┘   └────────────┘
+                              ┌──────────────┐
+                              │ user-common  │  (契约 / VO / 枚举)
+                              └──────┬───────┘
+                                     │
+                ┌────────────────────┼──────────────────────┐
+                │                    │                      │
+                ▼                    ▼                      ▼
+        ┌──────────────┐     ┌──────────────┐       ┌──────────────┐
+        │ user-sql     │     │ user-client  │       │   user-core  │
+        │ (空依赖,     │     │ (only common │       │ deps:        │
+        │  纯 SQL 资源)│     │  + feign)    │       │  user-common │
+        └──────┬───────┘     └──────────────┘       │  user-sql    │
+               │                                    │  sys-core    │
+               └───────── 被 core 依赖 ──────────►  │  …ktorm/flyway│
+                                                    │  …caffeine/redis
+                                                    └──────┬───────┘
+                                                           │
+                                ┌──────────────────────────┼──────────────────────────┐
+                                ▼                          ▼                          ▼
+                       ┌────────────────┐         ┌────────────────┐         ┌────────────────┐
+                       │ user-api-admin │         │ user-api-public│         │ user-api-internal│
+                       │ + own boot main│         │ + own boot main│         │ + own boot main │
+                       └────────────────┘         └────────────────┘         └────────────────┘
+                              （3 个独立进程，互不依赖；都各自只 `api(user-core)`）
 ```
+
+> 注意：
+> - `user-sql` **不依赖** `user-common`（纯空依赖资源模块）
+> - `user-client` **只**依赖 `user-common`（保持 client 端轻量，不拉持久层）
+> - 三个 `api-*` 模块**不互相依赖**——是 3 个对等的独立 boot 进程
+> - **`kudos-ms-user-api-admin` 当前没有任何上游依赖**（除了 settings.gradle.kts 注册）
 
 ---
 
 ## 关键概念
 
-- **账号（`sys_user`）**：用户主数据
-- **第三方账号（`sys_user_third`）**：OAuth / SSO 登录的第三方身份绑定
-- **账号保护**：密码策略 / 风控登录限制
-- **登录日志**：每次登录的审计记录
-- **组织（`sys_org`） + 组织用户（`sys_org_user`）**：树形组织结构 + 用户归属
-  - 与 auth_group 配合：组织树是物理隶属，auth_group 是权限分组，二者独立
-- **记住登录**：长效 token 持久化
-- 与 `kudos-ms-auth` 的关系：auth 引用本服务的 `sys_user.id` 做角色 / 组的归属
+- **账号（`user_account`）**：用户主数据（含 `login_password` / `security_password` / `authentication_key` / freeze* 等敏感字段）
+- **第三方账号（`user_account_third`）**：OAuth / SSO 登录的第三方身份绑定；按 `(user_id, provider_code)` 唯一
+- **账号保护（`user_account_protection`）**：登录错误次数 / 冻结策略等保护字段
+- **联系方式（`user_contact_way`）**：手机 / 邮箱，可多条
+- **登录日志（`user_log_login`）**：每次登录的审计记录
+- **记住登录（`user_login_remember_me`）**：长效 token 持久化（区别于 passport 的瞬时鉴权）
+- **通行证（passport）**：登录鉴权状态机——`PassportService` 跑 user_account 校验 + 冻结判定 + OTP 校验
+- **组织（`user_org`） + 组织用户（`user_org_user`）**：树形组织结构 + 用户归属
+  - `user_org.path` 列做祖先链，方便查"某组织及全部后代"
+  - 与 `auth_group` 配合：组织树是物理隶属，`auth_group` 是权限分组，二者独立
+
+## 与其他服务的关系
+
+- **`kudos-ms-auth`**：auth 引用本服务的 `user_account.id` 做角色 / 组的归属
+- **`kudos-ms-sys`**：user-core **同进程**依赖 `kudos-ms-sys-core`（不是 Feign 远调），
+  拿子系统 / 租户元数据（active / accountTypeDictCode 等枚举）

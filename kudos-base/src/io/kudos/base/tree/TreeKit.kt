@@ -31,9 +31,7 @@ object TreeKit {
         direction: DirectionEnum? = null,
         callback: ICallback<E, Unit>? = null,
         strict: Boolean = false
-    ): List<E> {
-        return ListToTreeConverter.convert(treeNodeList, direction, callback, strict)
-    }
+    ): List<E> = ListToTreeConverter.convert(treeNodeList, direction, callback, strict)
 
     /**
      * 深度优先遍历树，并执行回调
@@ -61,33 +59,21 @@ object TreeKit {
      * @since 1.0.0
      */
     fun <T, R> breadthTraverse(rootNode: ITreeNode<T>, callback: ICallback<ITreeNode<T>, R>) {
-        val queue: ArrayDeque<ITreeNode<T>> = ArrayDeque()
-        val visited = HashSet<T>() // 防御“伪树”里可能出现的环
-        queue.addLast(rootNode)
-
+        val queue = ArrayDeque<ITreeNode<T>>().apply { addLast(rootNode) }
+        val visited = mutableSetOf<T>() // 防御“伪树”里可能出现的环
         while (queue.isNotEmpty()) {
             val node = queue.removeFirst()
             if (!visited.add(node._getId())) continue
-
             // 执行回调；忽略其返回值
             callback.execute(node)
-
             // 按当前顺序把孩子入队，保证同层从左到右
-            val children = node._getChildren()
-            if (children.isNotEmpty()) {
-                for (child in children) queue.addLast(child)
-            }
+            queue.addAll(node._getChildren())
         }
     }
 
     private fun <T, R> depth(node: ITreeNode<T>, callback: ICallback<ITreeNode<T>, R>) {
         callback.execute(node)
-        val children = node._getChildren()
-        if (children.isNotEmpty()) {
-            for (subNode in children) {
-                depth(subNode, callback)
-            }
-        }
+        node._getChildren().forEach { depth(it, callback) }
     }
 
 }

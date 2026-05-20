@@ -230,15 +230,8 @@ class Criteria : Serializable {
      * @return 添加条件后的列表
      */
     private fun addCriterion(list: MutableList<Any>?, vararg criterions: Criterion): MutableList<Any> {
-        var resultList = list
-        if (resultList == null) {
-            resultList = ArrayList(criterions.size)
-        }
-        for (criterion in criterions) {
-            if (shouldAddCriterion(criterion)) {
-                resultList.add(criterion)
-            }
-        }
+        val resultList = list ?: ArrayList(criterions.size)
+        criterions.filterTo(resultList, ::shouldAddCriterion)
         return resultList
     }
 
@@ -282,15 +275,8 @@ class Criteria : Serializable {
      * @return 添加查询对象后的列表
      */
     private fun addCriteria(list: MutableList<Any>?, vararg criterias: Criteria): MutableList<Any> {
-        var resultList = list
-        if (resultList == null) {
-            resultList = ArrayList(criterias.size)
-        }
-        for (criteria in criterias) {
-            if (!criteria.isEmpty()) {
-                resultList.add(criteria)
-            }
-        }
+        val resultList = list ?: ArrayList(criterias.size)
+        criterias.filterNotTo(resultList) { it.isEmpty() }
         return resultList
     }
 

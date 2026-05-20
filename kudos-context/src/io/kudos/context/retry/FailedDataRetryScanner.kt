@@ -121,20 +121,14 @@ class FailedDataRetryScanner {
                     }
                     .sorted()
                     .forEach { path: Path ->
-                        val file = path.toFile()
-                        var success = false
-                        try {
-                            success = handler.handleFailedData(file)
-                        } catch (e: Exception) {
-                            logger.error(e, "Error handling file $path")
-                        }
+                        val success = runCatching { handler.handleFailedData(path.toFile()) }
+                            .onFailure { logger.error(it, "Error handling file $path") }
+                            .getOrDefault(false)
                         if (success) {
-                            try {
+                            runCatching {
                                 Files.delete(path)
                                 logger.info("Deleted file $path")
-                            } catch (ioe: IOException) {
-                                logger.error(ioe, "Failed to delete file $path")
-                            }
+                            }.onFailure { logger.error(it, "Failed to delete file $path") }
                         }
                     }
             }

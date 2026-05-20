@@ -47,7 +47,13 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
             entity
         } as E
         val idPropName = getPkColumn().name.underscoreToHump()
-        val id = insertExclude(entity, "id")
+        // 用户在实体里显式设过 id 时按用户值插入（兼容非自增主键，如 string/uuid 或预先生成的 int）；
+        // 未设时则排除 id 让 DB 自增。Ktorm Entity.properties 只在 setter 被调用过时收录该 key。
+        val id = if (entity.properties.containsKey(idPropName)) {
+            insertOnly(entity, *entity.properties.keys.toTypedArray())
+        } else {
+            insertExclude(entity, idPropName)
+        }
         // 按主键列对应的实体属性名回写，避免 Ktorm 代理下通过 entity.id 触发 interface 的 default setId 导致 IllegalStateException（如 SysSystem.id 委托给 code）
         BeanKit.setProperty(entity, idPropName, id)
         return id
@@ -318,6 +324,9 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
     //region Delete
 
     override fun deleteById(id: PK): Boolean {
+        // Ktorm 实体未给 id 赋值时，其代理在非空主键属性上返回 `java.lang.Object` 占位符
+        // 而非抛错；这里先按支持的主键类型守住，避免下游绑参时降级为 ClassCastException。
+        check(id is String || id is Int || id is Long) { "不支持的主键类型【${id::class}】" }
         val count = entitySequence().removeIf { getPkColumn() eq id }
         return count == 1
     }
@@ -385,9 +394,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
             }
             where {
                 var whereExpression = getPkColumn() eq id
-                if (criteria != null) {
-                    whereExpression = whereExpression.and(CriteriaConverter.convert(criteria, table()))
-                }
+                criteria?.let { whereExpression = whereExpression.and(CriteriaConverter.convert(it, table())) }
                 whereExpression
             }
         } == 1
@@ -411,7 +418,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
                 columnMap.filter { it.key in propertyNames }
             }
         }
-        val criteriaExpression = if (criteria != null) CriteriaConverter.convert(criteria, table()) else null
+        val criteriaExpression = criteria?.let { CriteriaConverter.convert(it, table()) }
         GroupExecutor(entities, countOfEachBatch) { it ->
             val counts = database().batchUpdate(table()) {
                 for (entity in it) {
@@ -424,9 +431,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
                         }
                         where {
                             var whereExpression = getPkColumn() eq entity.id
-                            if (criteriaExpression != null) {
-                                whereExpression = whereExpression.and(criteriaExpression)
-                            }
+                            criteriaExpression?.let { whereExpression = whereExpression.and(it) }
                             whereExpression
                         }
                     }

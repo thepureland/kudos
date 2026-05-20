@@ -43,15 +43,11 @@ open class SysCacheService(
 
     private val log = LogFactory.getLog(this::class)
 
+    @Suppress("UNCHECKED_CAST")
     @Transactional(readOnly = true)
-    override fun <R : Any> get(id: String, returnType: KClass<R>): R? {
-        return if (returnType == SysCacheCacheEntry::class) {
-            @Suppress("UNCHECKED_CAST")
-            sysCacheHashCache.getCacheById(id) as R?
-        } else {
-            super.get(id, returnType)
-        }
-    }
+    override fun <R : Any> get(id: String, returnType: KClass<R>): R? =
+        if (returnType == SysCacheCacheEntry::class) sysCacheHashCache.getCacheById(id) as R?
+        else super.get(id, returnType)
 
     @Transactional(readOnly = true)
     override fun getCacheFromCache(id: String): SysCacheCacheEntry? = sysCacheHashCache.getCacheById(id)
@@ -209,24 +205,15 @@ open class SysCacheService(
     }
 
     /** 按 id 获取缓存配置，不存在则抛异常 */
-    private fun getCacheConfigById(id: String): SysCacheCacheEntry {
-        return sysCacheHashCache.getCacheById(id)
-            ?: throw ServiceException(SysCacheErrorCodeEnum.CACHE_CONFIG_NOT_FOUND)
-    }
+    private fun getCacheConfigById(id: String): SysCacheCacheEntry =
+        sysCacheHashCache.getCacheById(id) ?: throw ServiceException(SysCacheErrorCodeEnum.CACHE_CONFIG_NOT_FOUND)
 
     private fun requireKeyExists(name: String, key: String, keyValueCache: Boolean) {
-        if (!existsKey(name, key, keyValueCache)) {
-            throw ServiceException(SysCacheErrorCodeEnum.CACHE_KEY_NOT_FOUND)
-        }
+        if (!existsKey(name, key, keyValueCache)) throw ServiceException(SysCacheErrorCodeEnum.CACHE_KEY_NOT_FOUND)
     }
 
-    private fun existsKey(name: String, key: String, keyValueCache: Boolean): Boolean {
-        return if (keyValueCache) {
-            KeyValueCacheKit.existsKey(name, key)
-        } else {
-            HashCacheKit.existsById(name, key)
-        }
-    }
+    private fun existsKey(name: String, key: String, keyValueCache: Boolean): Boolean =
+        if (keyValueCache) KeyValueCacheKit.existsKey(name, key) else HashCacheKit.existsById(name, key)
 
     private inline fun <T> withCacheConfig(id: String, block: (SysCacheCacheEntry) -> T): T =
         block(getCacheConfigById(id))

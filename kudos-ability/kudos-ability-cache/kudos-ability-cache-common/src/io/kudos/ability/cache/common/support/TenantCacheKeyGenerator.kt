@@ -127,14 +127,11 @@ class TenantCacheKeyGenerator : KeyGenerator {
      * @param method 目标方法
      * @return 从注解中提取的key配置（suffix值），如果不存在则返回空字符串
      */
-    private fun getAnnotationKey(method: Method): String {
-        for (type in KEY_ANNOTATIONS) {
-            val ann = AnnotationUtils.findAnnotation(method, type) ?: continue
-            val suffix = AnnotationUtils.getValue(ann, "suffix") as? String?
-            if (suffix != null) return suffix
-        }
-        return ""
-    }
+    private fun getAnnotationKey(method: Method): String =
+        KEY_ANNOTATIONS.firstNotNullOfOrNull { type ->
+            AnnotationUtils.findAnnotation(method, type)
+                ?.let { AnnotationUtils.getValue(it, "suffix") as? String }
+        } ?: ""
 
     /**
      * 使用SpEL表达式生成缓存key

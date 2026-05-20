@@ -58,73 +58,48 @@ open class UserOrgService(
     @Transactional(readOnly = true)
     override fun getOrgAdmins(orgId: String): List<UserAccountCacheEntry> {
         val adminUserIds = userOrgUserDao.searchAdminUserIdsByOrgId(orgId)
-        
-        // 如果没有管理员，直接返回空列表
-        if (adminUserIds.isEmpty()) {
-            return emptyList()
-        }
-        
-        // 批量获取用户信息
+        if (adminUserIds.isEmpty()) return emptyList()
+        // 批量获取用户信息，按原始 ID 顺序返回
         val usersMap = userAccountHashCache.getUsersByIds(adminUserIds)
-        
-        // 返回用户列表（按原始ID顺序）
         return adminUserIds.mapNotNull { usersMap[it] }
     }
 
     @Transactional(readOnly = true)
-    override fun getOrgUserIds(orgId: String): List<String> {
-        return userIdsByOrgIdCache.getUserIds(orgId)
-    }
+    override fun getOrgUserIds(orgId: String): List<String> = userIdsByOrgIdCache.getUserIds(orgId)
 
     @Transactional(readOnly = true)
-    override fun getChildOrgIds(orgId: String): List<String> {
-        return dao.searchActiveChildOrgIds(orgId)
-    }
+    override fun getChildOrgIds(orgId: String): List<String> = dao.searchActiveChildOrgIds(orgId)
 
     @Transactional(readOnly = true)
     override fun getOrgUsers(orgId: String): List<UserAccountCacheEntry> {
         val userIds = getOrgUserIds(orgId)
-        if (userIds.isEmpty()) {
-            return emptyList()
-        }
+        if (userIds.isEmpty()) return emptyList()
         val usersMap = userAccountHashCache.getUsersByIds(userIds)
         return userIds.mapNotNull { usersMap[it] }
     }
 
     @Transactional(readOnly = true)
-    override fun isUserInOrg(userId: String, orgId: String): Boolean {
-        val userIds = getOrgUserIds(orgId)
-        return userIds.contains(userId)
-    }
+    override fun isUserInOrg(userId: String, orgId: String): Boolean = userId in getOrgUserIds(orgId)
 
     @Transactional(readOnly = true)
     override fun getChildOrgs(orgId: String): List<UserOrgCacheEntry> {
         val childOrgIds = getChildOrgIds(orgId)
-        if (childOrgIds.isEmpty()) {
-            return emptyList()
-        }
+        if (childOrgIds.isEmpty()) return emptyList()
         val orgsMap = userOrgHashCache.getOrgsByIds(childOrgIds)
         return childOrgIds.mapNotNull { orgsMap[it] }
     }
 
     @Transactional(readOnly = true)
-    override fun getParentOrg(orgId: String): UserOrgCacheEntry? {
-        val org = userOrgHashCache.getOrgById(orgId) ?: return null
-        val parentId = org.parentId ?: return null
-        return userOrgHashCache.getOrgById(parentId)
-    }
+    override fun getParentOrg(orgId: String): UserOrgCacheEntry? =
+        userOrgHashCache.getOrgById(orgId)?.parentId?.let { userOrgHashCache.getOrgById(it) }
 
     @Transactional(readOnly = true)
-    override fun getOrgRecord(id: String): UserOrgCacheEntry? {
-        return userOrgHashCache.getOrgById(id)
-    }
+    override fun getOrgRecord(id: String): UserOrgCacheEntry? = userOrgHashCache.getOrgById(id)
 
     @Transactional(readOnly = true)
     override fun getOrgsByTenantId(tenantId: String): List<UserOrgCacheEntry> {
         val orgIds = userOrgHashCache.getOrgsByTenantId(tenantId).map { it.id }
-        if (orgIds.isEmpty()) {
-            return emptyList()
-        }
+        if (orgIds.isEmpty()) return emptyList()
         val orgsMap = userOrgHashCache.getOrgsByIds(orgIds)
         return orgIds.mapNotNull { orgsMap[it] }
     }
@@ -193,28 +168,25 @@ open class UserOrgService(
     override fun getAllAncestorOrgIds(orgId: String): List<String> {
         val ancestors = mutableListOf<String>()
         var currentOrg = userOrgHashCache.getOrgById(orgId) ?: return emptyList()
-        
         while (true) {
             val parentId = currentOrg.parentId ?: break
             ancestors.add(parentId)
+            // 缓存命中失败时仍保留刚加进去的 parentId（祖先链可能跨越缓存边界，不能整段截掉）
             currentOrg = userOrgHashCache.getOrgById(parentId) ?: break
         }
-        
         return ancestors
     }
 
     @Transactional(readOnly = true)
     override fun getAllDescendantOrgIds(orgId: String): List<String> {
         val descendants = mutableListOf<String>()
-        val queue = mutableListOf(orgId)
-        
+        // ArrayDeque.removeFirst 是 O(1)，避免 MutableList.removeAt(0) 每次 O(n) 搬移
+        val queue = ArrayDeque(listOf(orgId))
         while (queue.isNotEmpty()) {
-            val currentId = queue.removeAt(0)
-            val childIds = getChildOrgIds(currentId)
+            val childIds = getChildOrgIds(queue.removeFirst())
             descendants.addAll(childIds)
             queue.addAll(childIds)
         }
-        
         return descendants
     }
 
@@ -237,12 +209,8 @@ open class UserOrgService(
     override fun moveOrg(id: String, newParentId: String?, newSortNum: Int?): Boolean {
         // 移动前先 snapshot oldParentId —— 事务提交后 dao 看不到旧值。
         val oldParentId = dao.get(id)?.parentId
-        val props = mutableMapOf<String, Any?>(
-            UserOrg::parentId.name to newParentId
-        )
-        if (newSortNum != null) {
-            props[UserOrg::sortNum.name] = newSortNum
-        }
+        val props = mutableMapOf<String, Any?>(UserOrg::parentId.name to newParentId)
+        newSortNum?.let { props[UserOrg::sortNum.name] = it }
         val success = dao.updateProperties(id, props)
         if (success) {
             log.debug("移动id为${id}的机构到父机构${newParentId}，排序号${newSortNum}。")
@@ -279,8 +247,7 @@ open class UserOrgService(
 
     @Transactional
     override fun deleteById(id: String): Boolean {
-        val org = dao.get(id)
-        if (org == null) {
+        val org = dao.get(id) ?: run {
             log.warn("删除id为${id}的机构时，发现其已不存在！")
             return false
         }
@@ -298,9 +265,8 @@ open class UserOrgService(
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {
         // 先 snapshot (id, parentId)，AFTER_COMMIT 时行已删除，listener 无法回查
-        val snapshots = if (ids.isNotEmpty()) {
-            dao.getByIds(ids).map { UserOrgBatchDeleted.Item(it.id, it.parentId) }
-        } else emptyList()
+        val snapshots = if (ids.isEmpty()) emptyList()
+            else dao.getByIds(ids).map { UserOrgBatchDeleted.Item(it.id, it.parentId) }
         val count = super.batchDelete(ids)
         log.debug("批量删除机构，期望删除${ids.size}条，实际删除${count}条。")
         if (snapshots.isNotEmpty()) {

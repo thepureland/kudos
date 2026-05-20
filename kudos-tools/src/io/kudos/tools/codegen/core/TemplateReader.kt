@@ -25,11 +25,10 @@ class TemplateReader {
      * @author K
      * @since 1.0.0
      */
-    fun read(templateFileRelativePath: String) : Template {
-        val template = newFreeMarkerConfiguration().getTemplate(templateFileRelativePath)
-        template.outputEncoding = "UTF-8"
-        return template
-    }
+    fun read(templateFileRelativePath: String): Template =
+        newFreeMarkerConfiguration().getTemplate(templateFileRelativePath).apply {
+            outputEncoding = "UTF-8"
+        }
 
     /**
      * 构造一个 Freemarker [Configuration]，同时支持"文件系统模板"与"classpath 模板"两种来源：
@@ -45,25 +44,25 @@ class TemplateReader {
     private fun newFreeMarkerConfiguration(): Configuration {
         val templateRootDir = CodeGeneratorContext.config.getTemplateInfo().rootDir
         val root = URI("file:$templateRootDir").toURL()
-        val multiTemplateLoader = MultiTemplateLoader(arrayOf(
+        val loader = MultiTemplateLoader(arrayOf(
             object : URLTemplateLoader() {
                 override fun getURL(template: String): URL = root.toURI().resolve(template).toURL()
             }
         ))
-        val conf = Configuration(Configuration.VERSION_2_3_30)
-        conf.templateLoader = multiTemplateLoader
-        conf.numberFormat = "###############"
-        conf.booleanFormat = "true,false"
-        conf.defaultEncoding = "UTF-8"
-        conf.setClassForTemplateLoading(
-            CodeGenerator::class.java,
-            "/templates/${CodeGeneratorContext.config.getTemplateInfo().name}"
-        )
-        val autoIncludes = listOf("macro.include")
-        val availableAutoInclude = FreemarkerKit.getAvailableAutoInclude(conf, autoIncludes)
-        conf.setAutoIncludes(availableAutoInclude)
-        log.debug("set Freemarker.autoIncludes:$availableAutoInclude for templateName:$templateRootDir autoIncludes:$autoIncludes")
-        return conf
+        return Configuration(Configuration.VERSION_2_3_30).apply {
+            templateLoader = loader
+            numberFormat = "###############"
+            booleanFormat = "true,false"
+            defaultEncoding = "UTF-8"
+            setClassForTemplateLoading(
+                CodeGenerator::class.java,
+                "/templates/${CodeGeneratorContext.config.getTemplateInfo().name}"
+            )
+            val autoIncludes = listOf("macro.include")
+            val available = FreemarkerKit.getAvailableAutoInclude(this, autoIncludes)
+            setAutoIncludes(available)
+            log.debug("set Freemarker.autoIncludes:$available for templateName:$templateRootDir autoIncludes:$autoIncludes")
+        }
     }
 
     /** 日志器，仅用于打印 auto-include 解析结果 */

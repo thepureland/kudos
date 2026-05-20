@@ -105,9 +105,7 @@ open class AccessTokenMinioClientBuilder : MinioClientBuilder<AccessTokenServerP
                 val jwt = mapper.readValue(rs, Jwt::class.java)
                 // 历史问题：旧实现在这里 log.info 输出 jwt.token() —— 把可重放的 access_token
                 // 写进进程日志 / 日志聚合，是真实泄漏面。这里只 debug 记录 expiry 不打 token 字符串。
-                if (jwt != null) {
-                    log.debug("Minio oauth2 server token acquired, expires_in={0}s", jwt.expiry())
-                }
+                jwt?.let { log.debug("Minio oauth2 server token acquired, expires_in={0}s", it.expiry()) }
                 return jwt
             }
         } catch (e: IOException) {

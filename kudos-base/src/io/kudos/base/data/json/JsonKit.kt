@@ -220,10 +220,9 @@ object JsonKit {
 
         if (data == null) return "null".toByteArray(StandardCharsets.UTF_8)
 
-        val ser = JsonFallbackEncoder.findKSerializer(engine, data)
-        val jsonString = if (ser != null) {
+        val jsonString = JsonFallbackEncoder.findKSerializer(engine, data)?.let { ser ->
             JsonFallbackEncoder.encodeWithSerializer(engine, ser, data)
-        } else {
+        } ?: run {
             val elem = JsonFallbackEncoder.encodeAnyToJsonElement(engine, data)
             engine.encodeToString(JsonElement.serializer(), elem)
         }

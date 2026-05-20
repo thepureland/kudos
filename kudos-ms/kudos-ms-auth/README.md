@@ -13,13 +13,13 @@
 
 | 子模块 | 说明 |
 |--------|------|
-| [kudos-ms-auth-common](kudos-ms-auth-common/README.md) | 跨模块共享契约 |
-| kudos-ms-auth-sql | Flyway 迁移脚本（auth 库表） |
-| kudos-ms-auth-core | DAO / Service / 缓存 / API 实现 |
-| kudos-ms-auth-api-admin | 管理端 REST（`/api/admin/auth/...`） |
-| kudos-ms-auth-api-public | 对外 Web 启动入口 |
-| kudos-ms-auth-api-internal | 对内 Provider 启动入口 |
-| kudos-ms-auth-client | Feign 代理 + 降级 |
+| [kudos-ms-auth-common](kudos-ms-auth-common/README.md) | 跨模块共享契约（`IAuthRoleApi` / `IPermittedResource` / VO / 错误码） |
+| [kudos-ms-auth-sql](kudos-ms-auth-sql/README.md) | Flyway 迁移脚本（`V1.0.0.20+` 为 `auth_*` 表 DDL；前段为 `sys_*` 种子） |
+| [kudos-ms-auth-core](kudos-ms-auth-core/README.md) | DAO / Service / 多级缓存 / 事件订阅 / `IAuth*Api` 实现 |
+| [kudos-ms-auth-api-admin](kudos-ms-auth-api-admin/README.md) | 管理端 REST：`/api/admin/auth/role/**`、`/api/admin/auth/group/**` |
+| [kudos-ms-auth-api-public](kudos-ms-auth-api-public/README.md) | 对外 Web 启动入口 + `PermittedResourceController`（当前用户视图） |
+| [kudos-ms-auth-api-internal](kudos-ms-auth-api-internal/README.md) | 对内 Provider 启动入口 + `AuthRoleInternalController`（Nacos / interservice 缓存） |
+| [kudos-ms-auth-client](kudos-ms-auth-client/README.md) | `IAuthRoleProxy` Feign 代理 + `AuthRoleFallback` 降级 |
 
 ---
 
@@ -65,3 +65,23 @@
   （详见 `auth_group` 的层级 path 字段）
 - 与 `kudos-ms-sys` 的关系：`sys.sys_resource` 是资源主数据，本模块只持有"哪个角色绑了哪些资源 id"
 - 与 `kudos-ms-user` 的关系：`user.sys_user` 是用户主数据，本模块只持有"哪个用户属于哪些组 / 哪些角色"
+
+---
+
+## 命名与约定（跨模块）
+
+- **原子服务名**：`SysConsts.ATOMIC_SERVICE_NAME = "auth"`——所有 Feign 服务名、缓存 namespace、
+  Flyway 表前缀、日志 `service` 字段都以此为锚点。
+- **领域 API**：`common` 中 `IAuth*Api` 由 `core` 中 `Auth*Api` 实现；`client` 中 `IAuth*Proxy`
+  继承同一接口并通过 Feign 调用远程服务。**目前仅 `role` 对外**——`group` 域只通过 admin HTTP
+  暴露，无 Feign 接口。
+- **方法级 Feign 路由**：所有 `IAuth*Api` 的方法上挂 `@GetMapping("/api/internal/auth/...")`
+  / `@PostMapping`，接口类型上**不**放 `@RequestMapping`；`auth-api-internal` 的 Controller 直接
+  `implements IAuth*Api`，路径自动继承——签名漂移可在编译期暴露。
+- **管理端 vs 内部**：`/api/admin/auth/**` 仅由 `api-admin` 承载，`/api/internal/auth/**` 仅由
+  `api-internal` 与 `api-public` 内的 `PermittedResourceController` 承载；两套前缀在网关层应
+  分别路由。
+- **跨服务种子数据**：`auth-sql` 的 `V1.0.0.0–V1.0.0.6` 是写入 `sys_*` 表的菜单 / 字典 / 缓存
+  登记 / 参数 / i18n 文案——遵循"被写入方负责 DDL，写入方负责 INSERT"。
+
+具体类名与边界以各子模块源码为准。

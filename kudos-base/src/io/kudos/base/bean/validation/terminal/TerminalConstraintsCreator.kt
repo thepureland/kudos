@@ -40,14 +40,12 @@ object TerminalConstraintsCreator {
         propertyPrefix: String = ""
     ): Map<String, LinkedHashMap<String, Array<Map<String, Any>>>> {
         val cacheKey = "${beanClass.qualifiedName}-$propertyPrefix"
-        var rules = constrainCacheMap[cacheKey]
-        if (rules == null || SystemKit.isDebug()) {
-            val annotations = mutableMapOf<String, MutableList<Annotation>>()
-            parseAnnotations(annotations, beanClass, null)
-            rules = genRule(annotations, propertyPrefix, beanClass)
-            constrainCacheMap[cacheKey] = rules
+        constrainCacheMap[cacheKey]?.takeUnless { SystemKit.isDebug() }?.let { return it }
+        val annotations = mutableMapOf<String, MutableList<Annotation>>()
+        parseAnnotations(annotations, beanClass, null)
+        return genRule(annotations, propertyPrefix, beanClass).also {
+            constrainCacheMap[cacheKey] = it
         }
-        return rules
     }
 
     /**
@@ -92,19 +90,10 @@ object TerminalConstraintsCreator {
                     clazz = parentClazz
                     parentProp = null
                 } else {
-                    val propName = if (parentProp == null) {
-                        prop.name
-                    } else {
-                        "'${parentProp.name}.${prop.name}'"
-                    }
-                    if (propName.split("\\.").toTypedArray().size > 2) {
-                        error("属性嵌套层次超过1层：$propName")
-                    }
+                    val propName = parentProp?.let { "'${it.name}.${prop.name}'" } ?: prop.name
+                    check(propName.count { it == '.' } <= 1) { "属性嵌套层次超过1层：$propName" }
                     val annoList = getAnnotationsOnGetter(clazz, prop.name)
-                    val classAnnoList = annotations[propName]
-                    if (classAnnoList != null) {
-                        annoList.addAll(classAnnoList)
-                    }
+                    annotations[propName]?.let(annoList::addAll)
                     if (annoList.isNotEmpty()) {
                         annotations[propName] = annoList
                     }
@@ -135,14 +124,11 @@ object TerminalConstraintsCreator {
         for ((originalProperty, annotations) in annotationsMap) {
             val property = PropertyResolver.toPotQuote(originalProperty, propertyPrefix)
             val context = ConstraintConvertContext(originalProperty, property, propertyPrefix, beanClass)
-            annotations.forEach {
-                val converter = ConstraintConvertorFactory.getInstance(it)
+            annotations.forEach { annotation ->
                 // 为null不需要返回给终端
-                if (converter != null) {
+                ConstraintConvertorFactory.getInstance(annotation)?.let { converter ->
                     val terminalConstraint = converter.convert(context)
-                    val map = ruleMap[property] ?: linkedMapOf()
-                    map[terminalConstraint.constraint] = terminalConstraint.rule
-                    ruleMap[property] = map
+                    ruleMap.getOrPut(property) { linkedMapOf() }[terminalConstraint.constraint] = terminalConstraint.rule
                 }
             }
         }
@@ -160,16 +146,14 @@ object TerminalConstraintsCreator {
     private fun getAnnotationsOnClass(clazz: KClass<*>): Map<String, MutableList<Annotation>> {
         val annotationMap = mutableMapOf<String, MutableList<Annotation>>()
         for (annotation in clazz.annotations) {
-            val prop = annotation::class.getMemberProperty("properties") // 自定义的类级别约束注解中, 代表类属性数组的属性名定义统一用properties
+            // 自定义的类级别约束注解中, 代表类属性数组的属性名定义统一用 properties
+            val prop = annotation::class.getMemberProperty("properties")
             val propertyNames = (prop.call(annotation) as? Array<*>)?.filterIsInstance<String>() ?: emptyList()
+            val isConstraint = annotation.annotationClass.hasAnnotation<Constraint>()
+                || annotation.annotationClass.qualifiedName?.endsWith(".List") == true
             propertyNames.forEach { propertyName ->
-                val annoList = annotationMap[propertyName] ?: mutableListOf()
-                annotationMap[propertyName] = annoList
-                if (annotation.annotationClass.hasAnnotation<Constraint>()
-                    || annotation.annotationClass.qualifiedName?.endsWith(".List") == true
-                ) { // 是约束注解
-                    annoList.add(annotation)
-                }
+                val annoList = annotationMap.getOrPut(propertyName) { mutableListOf() }
+                if (isConstraint) annoList.add(annotation)
             }
         }
         return annotationMap

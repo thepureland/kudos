@@ -38,18 +38,29 @@ import kotlin.reflect.KClass
 object AuditLogTool {
     private val LOG = LogFactory.getLog(AuditLogTool::class)
     private val parameterNameDiscoverer: ParameterNameDiscoverer = DefaultParameterNameDiscoverer()
-    private var tenantProvider: ILogSourceTenantProvider? = null
 
-    init {
-        initSourceTenantProvider()
-    }
+    @Volatile
+    private var cachedTenantProvider: ILogSourceTenantProvider? = null
 
-    private fun initSourceTenantProvider() {
-        tenantProvider = try {
-            SpringKit.getBean<ILogSourceTenantProvider>()
-        } catch (_: Exception) {
-            null
+    /**
+     * 懒加载 + 缓存的 [ILogSourceTenantProvider] 查找。
+     *
+     * 旧实现在 `object` 的 `init` 块里一次性查 Spring bean——但 [AuditLogTool] 是 Kotlin
+     * `object`，其 init 在**首次访问**时执行；这个时间点通常是 Spring 上下文还没装好（切面
+     * 注册阶段就被引用），所以查 bean 失败、`tenantProvider` 永远为 null、且无重试。
+     *
+     * 改成每次按需查 + 拿到后缓存：bean 还没就绪时返回 null（按现有契约用 `entity.tenantId`
+     * 作为 sourceTenantId 兜底）；bean 就绪后第一次成功查到立即缓存，后续不再走 Spring 反射。
+     */
+    private fun tenantProvider(): ILogSourceTenantProvider? {
+        cachedTenantProvider?.let { return it }
+        val resolved = runCatching { SpringKit.getBeanOrNull(ILogSourceTenantProvider::class) }
+            .onFailure { LOG.debug("查找 ILogSourceTenantProvider 失败：{0}", it.message) }
+            .getOrNull()
+        if (resolved != null) {
+            cachedTenantProvider = resolved
         }
+        return resolved
     }
 
     /**
@@ -63,10 +74,8 @@ object AuditLogTool {
         formatterClazz: KClass<out IAuditLogDetailDescriptionFormatter>,
         joinPoint: JoinPoint
     ) {
-        val iAuditLogDetailDescriptionFormatter = descriptionFormatter(baseLog, formatterClazz)
-        if (iAuditLogDetailDescriptionFormatter != null) {
-            val oldData = iAuditLogDetailDescriptionFormatter.loadOldBizData(baseLog, joinPoint.args)
-            baseLog.oldBizData = oldData
+        descriptionFormatter(baseLog, formatterClazz)?.let { formatter ->
+            baseLog.oldBizData = formatter.loadOldBizData(baseLog, joinPoint.args)
         }
         baseLog.paramArgs = joinPoint.args
     }
@@ -104,7 +113,7 @@ object AuditLogTool {
                 request.request as ContentCachingRequestWrapper
             else -> null
         }
-        return if (cached != null) String(cached.contentAsByteArray) else ""
+        return cached?.let { String(it.contentAsByteArray) } ?: ""
     }
 
     /**
@@ -144,8 +153,9 @@ object AuditLogTool {
             val body: String = getRequestData(request)
             KudosContextHolder.get().clientInfo?.requestContentString = body
         }
-        val entityId = request.getParameter("id")
-        if (entityId.isNotBlank()) {
+        // request.getParameter 在缺该参数时返回 null（Java API），用 isNullOrBlank 守住 NPE
+        val entityId: String? = request.getParameter("id")
+        if (!entityId.isNullOrBlank()) {
             baseLog.entityId = entityId
         }
         processBizData(baseLog, audit.descriptionFormatter, joinPoint)
@@ -159,42 +169,33 @@ object AuditLogTool {
      * @param argString
      */
     fun createSysAuditLogModel(logVo: LogVo, argString: String): SysAuditLogModel? {
-        var modelAudit: SysAuditLogModel? = null
-        val vos = logVo.logs
-        if (!vos.isNullOrEmpty()) {
-            modelAudit = SysAuditLogModel()
-            modelAudit.entities = ArrayList()
-            modelAudit.sysAuditDetailLogs = LinkedList()
-            var entityId: String? = null
-            try {
-                val body = JsonKit.fromJson<Map<*, *>>(argString)
-                if (body != null && body["id"] != null) {
-                    if (NumberKit.isNumber(body["id"].toString())) {
-                        entityId = body["id"].toString()
-                    }
-                }
-            } catch (e: Exception) {
-                LOG.debug("转换参数失败，不设置实体ID.")
-            }
-            for (vo in vos) {
-                val sysAuditLogVo = requireNotNull(vo) { "vo is null" }.toSysLogVo()
-                val sysAuditDetailLog = getAuditDetail(sysAuditLogVo)
-                sysAuditDetailLog.objectParams = vo.getObjectParams()
-                sysAuditDetailLog.stringParams = vo.getStringParams()
-                sysAuditDetailLog.requestFormData = argString
-                if (vo.ignoreForm == YesNotEnum.YES.bool) {
-                    sysAuditDetailLog.requestFormData = ""
-                }
-                if (entityId != null) {
-                    sysAuditLogVo.entityId = entityId
-                }
-                sysAuditDetailLog.description = detailDescription(vo)
-                requireNotNull(modelAudit.entities) { "entities is null" }.add(sysAuditLogVo)
-                requireNotNull(modelAudit.sysAuditDetailLogs) { "sysAuditDetailLogs is null" }.add(sysAuditDetailLog)
-            }
-
-            setOperator(modelAudit)
+        val vos = logVo.logs.takeIf { it.isNotEmpty() } ?: return null
+        val entities = mutableListOf<SysAuditLogVo>()
+        val detailLogs = LinkedList<SysAuditDetailLogVo?>()
+        val modelAudit = SysAuditLogModel().apply {
+            this.entities = entities
+            sysAuditDetailLogs = detailLogs
         }
+        val entityId = try {
+            JsonKit.fromJson<Map<*, *>>(argString)
+                ?.get("id")?.toString()
+                ?.takeIf { NumberKit.isNumber(it) }
+        } catch (_: Exception) {
+            LOG.debug("转换参数失败，不设置实体ID.")
+            null
+        }
+        for (vo in vos) {
+            val sysAuditLogVo = vo.toSysLogVo()
+            val sysAuditDetailLog = getAuditDetail(sysAuditLogVo)
+            sysAuditDetailLog.objectParams = vo.getObjectParams()
+            sysAuditDetailLog.stringParams = vo.getStringParams()
+            sysAuditDetailLog.requestFormData = if (vo.ignoreForm == YesNotEnum.YES.bool) "" else argString
+            entityId?.let { sysAuditLogVo.entityId = it }
+            sysAuditDetailLog.description = detailDescription(vo)
+            entities.add(sysAuditLogVo)
+            detailLogs.add(sysAuditDetailLog)
+        }
+        setOperator(modelAudit)
         return modelAudit
     }
 
@@ -217,16 +218,9 @@ object AuditLogTool {
         }
 
     private fun detailDescription(vo: BaseLog): String? {
-        val detailDescription = detailDescription
-        if (!detailDescription.isNullOrBlank()) {
-            return detailDescription
-        }
-        var result: String? = ""
-        val descriptionFormatter = descriptionFormatter(vo, requireNotNull(vo.descriptionFormatterClass) { "descriptionFormatterClass is null" })
-        if (descriptionFormatter != null) {
-            result = descriptionFormatter.descriptionFormat(vo)
-        }
-        return result
+        detailDescription?.takeIf { it.isNotBlank() }?.let { return it }
+        val formatterClass = requireNotNull(vo.descriptionFormatterClass) { "descriptionFormatterClass is null" }
+        return descriptionFormatter(vo, formatterClass)?.descriptionFormat(vo) ?: ""
     }
 
     /**
@@ -237,27 +231,22 @@ object AuditLogTool {
      */
     fun setOperator(modelAudit: SysAuditLogModel) {
         val context = KudosContextHolder.get()
+        val clientInfo = context.clientInfo
         for (entity in requireNotNull(modelAudit.entities) { "entities is null" }) {
             entity.operateTime = Date()
-            val ip = context.clientInfo?.ip
-            if (ip != null) {
-                entity.operateIp = IpKit.ipv4StringToLong(ip)
-            }
+            clientInfo?.ip?.let { entity.operateIp = IpKit.ipv4StringToLong(it) }
 
             // 历史 TODO: operateIpDictCode / operator(username) / operatorUserType 需要从
             // context 拿到对应字段才能填——目前 KudosContext 上没有这几个属性，留空即可。
             entity.operatorId = context.user?.id
 
-            entity.clientBrowser = context.clientInfo?.browser?.first
-            entity.clientOs = context.clientInfo?.os?.first
-            entity.requestType = context.clientInfo?.requestType
+            entity.clientBrowser = clientInfo?.browser?.first
+            entity.clientOs = clientInfo?.os?.first
+            entity.requestType = clientInfo?.requestType
             entity.subSysCode = subSysCode
             entity.tenantId = context.tenantId
-            if (tenantProvider != null) {
-                entity.sourceTenantId = requireNotNull(tenantProvider) { "tenantProvider is null" }.getSourceTenant(entity.tenantId, entity.operatorId)
-            } else {
-                entity.sourceTenantId = entity.tenantId
-            }
+            entity.sourceTenantId = tenantProvider()?.getSourceTenant(entity.tenantId, entity.operatorId)
+                ?: entity.tenantId
         }
 
         modelAudit.subSysCode = subSysCode
@@ -267,16 +256,14 @@ object AuditLogTool {
     private val subSysCode: String?
         get() = KudosContextHolder.get().subSystemCode
 
-    private fun getAuditDetail(sysAuditLog: SysAuditLogVo): SysAuditDetailLogVo {
-        val sysAuditDetailLog = SysAuditDetailLogVo()
-        sysAuditDetailLog.id = RandomStringKit.uuid()
-        sysAuditDetailLog.auditId = sysAuditLog.id
-        val clientInfo = KudosContextHolder.get().clientInfo
-        if (clientInfo != null) {
-            sysAuditDetailLog.operateUrl = clientInfo.url
-            sysAuditDetailLog.requestReferer = clientInfo.requestReferer
-            sysAuditDetailLog.requestFormData = clientInfo.requestContentString
+    private fun getAuditDetail(sysAuditLog: SysAuditLogVo): SysAuditDetailLogVo =
+        SysAuditDetailLogVo().apply {
+            id = RandomStringKit.uuid()
+            auditId = sysAuditLog.id
+            KudosContextHolder.get().clientInfo?.let { info ->
+                operateUrl = info.url
+                requestReferer = info.requestReferer
+                requestFormData = info.requestContentString
+            }
         }
-        return sysAuditDetailLog
-    }
 }

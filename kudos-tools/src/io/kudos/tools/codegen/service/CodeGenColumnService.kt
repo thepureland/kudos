@@ -15,78 +15,59 @@ import io.kudos.tools.codegen.model.vo.ColumnInfo
  */
 object CodeGenColumnService {
 
-    fun readColumns(tableName : String): List<ColumnInfo> {
+    fun readColumns(tableName: String): List<ColumnInfo> {
         // from meta data
         val columns = RdbMetadataKit.getColumnsByTableName(tableName)
-
         // from code_gen_column table
         val columnMap = CodeGenColumnDao.searchCodeGenColumnMap(tableName)
 
         // merge
-        val results = mutableListOf<ColumnInfo>()
-        for (column in columns.values) {
-            val codeGenColumn = columnMap[column.name]
+        val results = columns.values.map { column ->
             val columnInfo = ColumnInfo()
-            results.add(columnInfo)
-            if (codeGenColumn != null) { // old column
+            val codeGenColumn = columnMap[column.name]
+            if (codeGenColumn != null) {
                 BeanKit.copyProperties(codeGenColumn, columnInfo)
                 columnInfo.setCustomComment(codeGenColumn.comment)
                 columnInfo.setOrigComment(column.comment)
             } else {
-                with(columnInfo) {
-                    setName(column.name)
-                    setOrigComment(column.comment)
-                }
+                columnInfo.setName(column.name)
+                columnInfo.setOrigComment(column.comment)
             }
+            columnInfo
         }
-        if (columnMap.isEmpty()) {
-            results.map {
-                // 默认都为详情项
-                it.setDetailItem(true)
-
-                // 默认都为缓存项
-                it.setCacheItem(true)
-
-                val columnName = requireNotNull(it.getName()) { "column name is null" }.lowercase()
-
-                // 设置默认的检索条件字段
-                if (columnName !in setOf("id", "built_in", "create_user", "create_time", "update_user", "update_time")) {
-                    it.setSearchItem(true)
-                }
-
-                // 设置默认的列表项字段
-                if (columnName !in setOf("id", "create_user", "create_time", "update_user", "update_time")) {
-                    it.setListItem(true)
-                }
-
-                // 设置默认的编辑项字段
-                if (columnName !in setOf("id", "built_in", "create_user", "create_time", "update_user", "update_time")) {
-                    it.setEditItem(true)
-                }
-            }
-        }
+        if (columnMap.isEmpty()) results.forEach(::applyDefaults)
         return results
     }
 
-    fun saveColumns(tableName : String, columnInfos: List<ColumnInfo>): Boolean {
+    private fun applyDefaults(it: ColumnInfo) {
+        // 默认都为详情项 / 缓存项
+        it.setDetailItem(true)
+        it.setCacheItem(true)
+        val columnName = requireNotNull(it.getName()) { "column name is null" }.lowercase()
+        if (columnName !in SKIP_SEARCH) it.setSearchItem(true)
+        if (columnName !in SKIP_LIST) it.setListItem(true)
+        if (columnName !in SKIP_EDIT) it.setEditItem(true)
+    }
+
+    private val SKIP_SEARCH = setOf("id", "built_in", "create_user", "create_time", "update_user", "update_time")
+    private val SKIP_LIST = setOf("id", "create_user", "create_time", "update_user", "update_time")
+    private val SKIP_EDIT = setOf("id", "built_in", "create_user", "create_time", "update_user", "update_time")
+
+    fun saveColumns(tableName: String, columnInfos: List<ColumnInfo>): Boolean {
         // delete old columns first
         CodeGenColumnDao.deleteCodeGenColumn(tableName)
-
         // insert new columns
-        val codeGenColumns = mutableListOf<CodeGenColumn>()
-        for (column in columnInfos) {
-            codeGenColumns.add(
-                CodeGenColumn {
-                    name = requireNotNull(column.getName()) { "column name is null" }
-                    objectName = tableName
-                    comment = column.getCustomComment()
-                    searchItem = column.getSearchItem()
-                    listItem = column.getListItem()
-                    editItem = column.getEditItem()
-                    detailItem = column.getDetailItem()
-                    cacheItem = column.getCacheItem()
-                }
-            )
+        val codeGenColumns = columnInfos.map { column ->
+            CodeGenColumn {
+                name = requireNotNull(column.getName()) { "column name is null" }
+                objectName = tableName
+                comment = column.getCustomComment()
+                searchItem = column.getSearchItem()
+                listItem = column.getListItem()
+                editItem = column.getEditItem()
+                detailItem = column.getDetailItem()
+                cacheItem = column.getCacheItem()
+            }
         }
         return CodeGenColumnDao.batchInsert(codeGenColumns) == codeGenColumns.size
     }

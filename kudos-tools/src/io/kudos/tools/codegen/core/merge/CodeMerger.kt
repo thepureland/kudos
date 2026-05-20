@@ -15,7 +15,7 @@ class CodeMerger(private val file: File) {
     /** 被覆盖前的旧文件内容，用作"已生成代码"基线，从中提取用户自填代码与历史 import */
     private val oldFileContent: String = FileKit.readFileToString(file)
     /** 合并过程中持续累积的新文件内容；写盘前由 [merge] 最后调用 [FileKit.write] 落盘 */
-    private var newFileContent: CharSequence? = null
+    private lateinit var newFileContent: CharSequence
     /** 用户自填代码（`//region your codes XXX` 区块内）的解析器 */
     private val retriever: UserCodesRetriever = UserCodesRetriever(oldFileContent)
 
@@ -25,7 +25,7 @@ class CodeMerger(private val file: File) {
     fun merge() {
         handleRegion()
         handleImport()
-        FileKit.write(file, requireNotNull(newFileContent) { "newFileContent is null after merge" })
+        FileKit.write(file, newFileContent)
     }
 
     /**
@@ -43,31 +43,22 @@ class CodeMerger(private val file: File) {
     private fun handleRegion() {
         val customCodes = retriever.retrieve()
         newFileContent = FileKit.readFileToString(file)
-        val appendCodesRetriever = AppendCodesRetriever(requireNotNull(newFileContent) { "newFileContent is null" })
-        val appendCodesMap = appendCodesRetriever.retrieve()
+        val appendCodesMap = AppendCodesRetriever(newFileContent).retrieve()
         for ((index, value) in customCodes) {
             val codes = StringBuilder(value)
-            val pair = appendCodesMap[index]
-            if (pair != null) {
-                val type = pair.first
-                val appendCodes = pair.second
+            appendCodesMap[index]?.let { (type, appendCodes) ->
                 if (type == AppendCodeType.PARTIBLE) {
-                    val parts = appendCodes.split("\n".toRegex()).toTypedArray()
-                    for (lineCode in parts) {
-                        if (codes.indexOf(lineCode) == -1) {
-                            codes.append(lineCode).append("\n")
-                        }
-                    }
+                    appendCodes.split("\n")
+                        .filter { codes.indexOf(it) == -1 }
+                        .forEach { codes.append(it).append("\n") }
                     codes.append("\n")
-                } else {
-                    if (codes.indexOf(appendCodes) == -1) {
-                        codes.append(appendCodes).append("\n")
-                    }
+                } else if (codes.indexOf(appendCodes) == -1) {
+                    codes.append(appendCodes).append("\n")
                 }
             }
             val regexp =
                 "(?<=(<!--)?#?//region your codes $index(-->)?\\r?\\n)[\\s\\S]*?(?=(<!--)?#?//endregion your codes $index(-->)?)"
-            newFileContent = requireNotNull(newFileContent) { "newFileContent is null" }.replaceFirst(regexp.toRegex(), Matcher.quoteReplacement(codes.toString()))
+            newFileContent = newFileContent.replaceFirst(regexp.toRegex(), Matcher.quoteReplacement(codes.toString()))
         }
     }
 
@@ -81,21 +72,14 @@ class CodeMerger(private val file: File) {
      * @since 1.0.0
      */
     private fun handleImport() {
-        if (file.name.endsWith(".kt")) {
-            val oldImports = ImportStmtRetriever(oldFileContent).retrieveImports()
-            val newImports = ImportStmtRetriever(requireNotNull(newFileContent) { "newFileContent is null" }).retrieveImports()
-            val commonImports = oldImports.intersect(newImports.toSet()) // 交集
-            val customImport = oldImports.subtract(commonImports) // 差集，用户自己导入的import
-            val imports = StringBuilder()
-            for (importStmt in customImport) {
-                imports.append(importStmt).append("\n")
-            }
-            if (imports.isNotEmpty()) {
-                val index = requireNotNull(newFileContent) { "newFileContent is null" }.indexOf("import")
-                val sb = StringBuilder(newFileContent)
-                sb.insert(index, imports)
-                newFileContent = sb.toString()
-            }
-        }
+        if (!file.name.endsWith(".kt")) return
+        val oldImports = ImportStmtRetriever(oldFileContent).retrieveImports()
+        val newImports = ImportStmtRetriever(newFileContent).retrieveImports()
+        // 差集即用户自己导入的 import
+        val customImport = oldImports.subtract(newImports.toSet())
+        if (customImport.isEmpty()) return
+        val imports = customImport.joinToString(separator = "", postfix = "") { "$it\n" }
+        val index = newFileContent.indexOf("import")
+        newFileContent = StringBuilder(newFileContent).insert(index, imports).toString()
     }
 }

@@ -131,23 +131,8 @@ class SeriesValidator : ConstraintValidator<Series, Any?> {
      */
     private fun validate(type: SeriesTypeEnum, step: Double, vararg values: BigDecimal): Boolean {
         return when (type) {
-            SeriesTypeEnum.INC_DIFF -> {
-                var preValue: BigDecimal? = null
-                for (value in values) {
-                    if (preValue != null) {
-                        if (step == 0.0) { // 不应用步进
-                            if (preValue >= value) {
-                                return false
-                            }
-                        } else {
-                            if (preValue + BigDecimal(step) != value) {
-                                return false
-                            }
-                        }
-                    }
-                    preValue = value
-                }
-                true
+            SeriesTypeEnum.INC_DIFF -> values.toList().zipWithNext().all { (prev, curr) ->
+                if (step == 0.0) prev < curr else prev + BigDecimal(step) == curr
             }
             SeriesTypeEnum.DESC_DIFF -> {
                 validate(SeriesTypeEnum.INC_DIFF, step, *values.reversed().toTypedArray())
@@ -180,40 +165,16 @@ class SeriesValidator : ConstraintValidator<Series, Any?> {
                     false
                 }
             }
-            SeriesTypeEnum.DIFF -> {
-                val diff = values.toSet().size == values.size
-                if (!diff) {
-                    return false
-                } else if (step != 0.0) {
-                    var preValue: BigDecimal? = null
-                    for (value in values) {
-                        if (preValue != null) {
-                            if ((preValue - value).abs() != BigDecimal(step)) {
-                                return false
-                            }
-                        }
-                        preValue = value
-                    }
+            SeriesTypeEnum.DIFF -> when {
+                values.toSet().size != values.size -> false
+                step == 0.0 -> true
+                else -> values.toList().zipWithNext().all { (prev, curr) ->
+                    (prev - curr).abs() == BigDecimal(step)
                 }
-                true
             }
-            SeriesTypeEnum.INC_EQ -> {
-                var preValue: BigDecimal? = null
-                for (value in values) {
-                    if (preValue != null) {
-                        if (step == 0.0) { // 不应用步进
-                            if (preValue > value) {
-                                return false
-                            }
-                        } else {
-                            if (preValue != value && preValue + BigDecimal(step) != value) {
-                                return false
-                            }
-                        }
-                    }
-                    preValue = value
-                }
-                true
+            SeriesTypeEnum.INC_EQ -> values.toList().zipWithNext().all { (prev, curr) ->
+                if (step == 0.0) prev <= curr
+                else prev == curr || prev + BigDecimal(step) == curr
             }
             SeriesTypeEnum.DESC_EQ -> {
                 validate(SeriesTypeEnum.INC_EQ, step, *values.reversed().toTypedArray())

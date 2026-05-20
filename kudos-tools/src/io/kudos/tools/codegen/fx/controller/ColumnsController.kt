@@ -18,6 +18,7 @@ import javafx.scene.control.TableView
 import javafx.scene.control.TextField
 import java.net.URL
 import java.util.ResourceBundle
+import kotlin.concurrent.thread
 
 /**
  * 数据库表的列信息界面JavaFx控制器
@@ -76,29 +77,24 @@ class ColumnsController : Initializable {
         //解决wizard的bug: 从page3回到page2会执行page1的onExitingPage方法
         val columnList = columns
         val tableComment = tableComment
-        val items = tableComboBox.items
+        val firstInit = tableComboBox.items.isEmpty()
         tableMap = CodeGenObjectService.readTables()
-        val map = tableMap
-        tableComboBox.items = FXCollections.observableArrayList(requireNotNull(map) { "tableMap is null" }.keys.toSortedSet())
+        tableComboBox.items = FXCollections.observableArrayList(requireNotNull(tableMap) { "tableMap is null" }.keys.toSortedSet())
         AutoCompleteComboBoxListener<Any>(tableComboBox)
-        if (items.isEmpty()) {
+        if (firstInit) {
             tableComboBox.editor.textProperty()
                 .addListener { _: ObservableValue<out String?>?, _: String?, newValue: String? ->
                     tableCommentTextField.clear()
-                    if (newValue != null) {
-                        val tblMap = tableMap
-                        if (tblMap != null && tblMap.containsKey(newValue)) {
-                            tableCommentTextField.text = tblMap[newValue]
-                            CodeGeneratorContext.tableName = newValue
-                            object : Thread() {
-                                override fun run() {
-                                    val columns = CodeGenColumnService.readColumns(CodeGeneratorContext.tableName)
-                                    Platform.runLater { columnTable.items = FXCollections.observableArrayList(columns) }
-                                    if(columnTable.items.all { it.getDetailItem() }) {
-                                        detailCheckBox.selectedProperty().value = true
-                                    }
-                                }
-                            }.start()
+                    val tblMap = tableMap
+                    if (newValue != null && tblMap?.containsKey(newValue) == true) {
+                        tableCommentTextField.text = tblMap[newValue]
+                        CodeGeneratorContext.tableName = newValue
+                        thread {
+                            val columns = CodeGenColumnService.readColumns(CodeGeneratorContext.tableName)
+                            Platform.runLater { columnTable.items = FXCollections.observableArrayList(columns) }
+                            if (columnTable.items.all { it.getDetailItem() }) {
+                                detailCheckBox.selectedProperty().value = true
+                            }
                         }
                     }
                 }
@@ -141,9 +137,7 @@ class ColumnsController : Initializable {
     }
 
     /** @return 当前持有的 [Config] */
-    fun getConfig(): Config {
-        return config
-    }
+    fun getConfig(): Config = config
 
     /** 当前选中的表名；未选时返回 null */
     val table: String?
