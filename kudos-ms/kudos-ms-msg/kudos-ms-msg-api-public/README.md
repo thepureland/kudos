@@ -20,11 +20,12 @@ Msg 服务 **对外 Web 进程**的启动入口与自动配置。生产部署 ms
 
 ```
 api(project(":kudos-ms:kudos-ms-msg:kudos-ms-msg-core"))
+api(project(":kudos-ms:kudos-ms-msg:kudos-ms-msg-api-admin"))
 api(project(":kudos-ability:kudos-ability-web:kudos-ability-web-springmvc"))
 ```
 
-只有 `msg-core` + `web-springmvc`。**没有** `msg-api-admin` / `msg-api-internal` 的依赖
-——所有控制器都不在 classpath 上。
+包含 `msg-core` + `msg-api-admin` + `web-springmvc`。public 进程会挂管理端
+`/api/admin/msg/**` 控制器；不依赖 `msg-api-internal`，内部 RPC 仍由 provider 进程承载。
 
 ## 与 api-internal 的区别
 
@@ -33,7 +34,7 @@ api(project(":kudos-ability:kudos-ability-web:kudos-ability-web-springmvc"))
 | 启动类 | `MsgApiWebApplication` | `MsgApiProviderApplication` |
 | 包路径 | `io.kudos.ms.msg.api.public` | `io.kudos.ms.msg.api.internal` |
 | 路径规约 | `/api/admin/msg/...`（管理端） | `/api/internal/msg/...`（Feign provider） |
-| 额外依赖 | 无 | `discovery-nacos` / `config-nacos` / `cache-interservice-provider` |
+| 额外依赖 | `msg-api-admin` | `discovery-nacos` / `config-nacos` / `cache-interservice-provider` |
 | 受众 | 浏览器 / 控制台 | 其他微服务（通过 msg-client 的 Feign proxy） |
 
 代码层差异极小——主要靠运行期 yml（端口 / actuator / 网络可见性）分离。所以同一份
@@ -41,13 +42,7 @@ api(project(":kudos-ability:kudos-ability-web:kudos-ability-web-springmvc"))
 
 ## 已知限制 / 后续工作
 
-- ❗ **`build.gradle.kts` 没有 `msg-api-admin` 依赖**，但 README 历来说"装配
-  msg-core + msg-api-admin + 完整 web 栈"——**配置与文档对不上**。两种解释：
-  (a) 漏配 admin 依赖，导致 public 进程实际上没有任何 `/api/admin/msg/...` 控制器
-  注册（boot 起来但没业务路由）；
-  (b) 设计意图就是把 admin 单独部署，public 只是 core + web 的 boot shell——但那样
-  又解释不通为什么会拉 `web-springmvc`。
-  **需要决定**：要么把 admin 加进依赖，要么把 README 改成"纯 core boot shell"并解释清楚
+- ✅ `build.gradle.kts` 已补 `msg-api-admin` 依赖，public 进程会装配管理端控制器
 - ❗ **缺 `application.yml`**——repo 内没有任何 `application*.yml` / `application*.properties`，
   配置完全靠运行环境注入（容器 env、Spring Cloud Config）。CI 集成测试 / 本地调试
   缺示例文件，需要先翻 sibling 服务的 yml 模板

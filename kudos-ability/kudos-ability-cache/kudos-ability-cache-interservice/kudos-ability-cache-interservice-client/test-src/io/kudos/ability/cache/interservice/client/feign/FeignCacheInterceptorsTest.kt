@@ -203,15 +203,7 @@ internal class FeignCacheInterceptorsTest {
     // region helpers
 
     private fun newRequestInterceptor(appName: String): FeignCacheRequestInterceptor {
-        val interceptor = FeignCacheRequestInterceptor()
-        // 通过反射注入 @Autowired / @Value 字段——避免拉起 Spring
-        FeignCacheRequestInterceptor::class.java.getDeclaredField("cacheHelper")
-            .apply { isAccessible = true }
-            .set(interceptor, helper)
-        FeignCacheRequestInterceptor::class.java.getDeclaredField("applicationName")
-            .apply { isAccessible = true }
-            .set(interceptor, appName)
-        return interceptor
+        return FeignCacheRequestInterceptor(helper, appName)
     }
 
     private fun newRequestTemplate(method: String, url: String, body: ByteArray? = null): RequestTemplate {

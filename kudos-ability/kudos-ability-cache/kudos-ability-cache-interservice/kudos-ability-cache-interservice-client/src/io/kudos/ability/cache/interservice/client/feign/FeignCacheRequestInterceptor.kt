@@ -6,10 +6,6 @@ import io.kudos.ability.cache.interservice.client.core.ClientCacheHelper
 import io.kudos.ability.cache.interservice.common.ClientCacheKey
 import io.kudos.context.core.KudosContextHolder
 import org.apache.commons.codec.digest.Md5Crypt
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.beans.factory.annotation.Value
-import org.springframework.stereotype.Component
 
 /**
  * Feign缓存请求拦截器
@@ -43,15 +39,10 @@ import org.springframework.stereotype.Component
  * - 缓存key包含租户信息，确保多租户隔离
  * - UUID用于判断缓存是否过期
  */
-@Component
-class FeignCacheRequestInterceptor : RequestInterceptor {
-
-    @Autowired
-    @Qualifier("feignCacheHelper")
-    private lateinit var cacheHelper: ClientCacheHelper
-
-    @Value($$"${spring.application.name}")
-    private val applicationName: String? = null
+class FeignCacheRequestInterceptor(
+    private val cacheHelper: ClientCacheHelper,
+    private val applicationName: String?,
+) : RequestInterceptor {
 
     /**
      * 应用请求拦截，添加缓存相关的请求头

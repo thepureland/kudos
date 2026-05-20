@@ -1,5 +1,6 @@
 package io.kudos.ability.cache.interservice.client.init
 
+import feign.RequestInterceptor
 import feign.codec.Decoder
 import feign.optionals.OptionalDecoder
 import io.kudos.ability.cache.common.init.LinkableCacheAutoConfiguration
@@ -9,6 +10,8 @@ import io.kudos.ability.cache.interservice.client.feign.FeignCacheResponseInterc
 import io.kudos.base.logger.LogFactory
 import io.kudos.context.init.IComponentInitializer
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.cloud.openfeign.support.ResponseEntityDecoder
 import org.springframework.context.annotation.Bean
@@ -25,6 +28,7 @@ import tools.jackson.databind.ObjectMapper
  */
 @Configuration
 @AutoConfigureAfter(LinkableCacheAutoConfiguration::class)
+@ConditionalOnClass(RequestInterceptor::class)
 open class InterServiceCacheClientAutoConfiguration : IComponentInitializer {
 
     private val logger = LogFactory.getLog(this::class)
@@ -35,7 +39,10 @@ open class InterServiceCacheClientAutoConfiguration : IComponentInitializer {
 
     @Bean
     @ConditionalOnMissingBean
-    open fun feignCacheRequestInterceptor() = FeignCacheRequestInterceptor()
+    open fun feignCacheRequestInterceptor(
+        cacheHelper: ClientCacheHelper,
+        @Value("\${spring.application.name:}") applicationName: String?,
+    ) = FeignCacheRequestInterceptor(cacheHelper, applicationName)
 
     /**
      * 全局 Feign Decoder：

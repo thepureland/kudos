@@ -53,7 +53,7 @@ msg_receiver_group ── 独立 lookup 表，
 
 | dict_type | 字典项 | 对应 Kotlin 枚举 |
 |-----------|--------|------------------|
-| `publish_method` | `email` / `sms` / `siteMsg` / `all_user` | `MsgPublishMethodEnum`（仅 EMAIL / SMS / SITE_MSG）—— `all_user` 在 SQL 端有定义，枚举侧暂未覆盖 |
+| `publish_method` | `email` / `sms` / `siteMsg` / `all_user` | `MsgPublishMethodEnum` 完整对齐 |
 | `receiver_group_type` | `all_front` / `all_back` / `online_front` / `online_back` / `offline_front` / `offline_back` / `dept` / `role` / `tag` / `guest` / `user` (11 项) | （无独立枚举，运行时按字符串处理） |
 | `send_status` | `00` / `01` / `11` / `21` / `22` / `31` / `32` / `33` | `MsgSendStatusEnum` 完整对齐 |
 | `receive_status` | `01` / `11` / `12` / `21` | `MsgReceiveStatusEnum` 完整对齐 |
