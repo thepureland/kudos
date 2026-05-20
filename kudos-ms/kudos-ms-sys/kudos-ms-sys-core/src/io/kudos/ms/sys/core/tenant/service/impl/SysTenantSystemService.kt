@@ -148,8 +148,7 @@ open class SysTenantSystemService(
     override fun insert(any: Any): String {
         val id = super.insert(any)
         log.debug("新增id为${id}的租户-系统关系。")
-        val relation = dao.get(id)
-        if (relation != null) {
+        dao.get(id)?.let { relation ->
             eventPublisher.publishEvent(
                 SysTenantSystemBound(id = id, tenantId = relation.tenantId, systemCode = relation.systemCode)
             )
@@ -167,8 +166,7 @@ open class SysTenantSystemService(
      */
     @Transactional
     override fun deleteById(id: String): Boolean {
-        val relation = dao.get(id)
-        if (relation == null) {
+        val relation = dao.get(id) ?: run {
             log.warn("删除id为${id}的租户-系统关系时，发现其已不存在！")
             return false
         }

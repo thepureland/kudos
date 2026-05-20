@@ -53,14 +53,13 @@ open class SysTenantService(
     private val log = LogFactory.getLog(this::class)
 
     @Transactional(readOnly = true)
-    override fun <R : Any> get(id: String, returnType: KClass<R>): R? {
-        return if (returnType == SysTenantCacheEntry::class) {
+    override fun <R : Any> get(id: String, returnType: KClass<R>): R? =
+        if (returnType == SysTenantCacheEntry::class) {
             @Suppress("UNCHECKED_CAST")
             tenantByIdCache.getTenantById(id) as R?
         } else {
             enrichTenantDetail(super.get(id, returnType), id)
         }
-    }
 
     @Transactional(readOnly = true)
     override fun pagingSearch(listSearchPayload: ListSearchPayload): PagingSearchResult<*> {

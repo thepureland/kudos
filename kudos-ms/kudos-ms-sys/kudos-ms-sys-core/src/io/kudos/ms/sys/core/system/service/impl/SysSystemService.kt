@@ -41,14 +41,13 @@ open class SysSystemService(
     private val log = LogFactory.getLog(this::class)
 
     @Transactional(readOnly = true)
-    override fun <R : Any> get(id: String, returnType: KClass<R>): R? {
-        return if (returnType == SysSystemCacheEntry::class) {
+    override fun <R : Any> get(id: String, returnType: KClass<R>): R? =
+        if (returnType == SysSystemCacheEntry::class) {
             @Suppress("UNCHECKED_CAST")
             sysSystemHashCache.getSystemByCode(id) as R?
         } else {
             super.get(id, returnType)
         }
-    }
 
     @Transactional(readOnly = true)
     override fun getSystemFromCache(code: String): SysSystemCacheEntry? = sysSystemHashCache.getSystemByCode(code)
@@ -123,8 +122,7 @@ open class SysSystemService(
 
     @Transactional
     override fun deleteById(id: String): Boolean {
-        val sysSystem = dao.get(id)
-        if (sysSystem == null) {
+        dao.get(id) ?: run {
             log.warn("删除编码为${id}的系统时，发现其已不存在！")
             return false
         }
