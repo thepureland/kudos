@@ -31,13 +31,25 @@ import java.security.ProviderException
  */
 open class AccessTokenMinioClientBuilder : MinioClientBuilder<AccessTokenServerParam> {
 
+    /** 日志器，调试 OAuth2 token 端点交互时使用 */
     private val log = LogFactory.getLog(this::class)
 
+    /** MinIO 全局配置（endpoint） */
     private lateinit var minioProperties: MinioProperties
 
+    /** OAuth2 token 端点配置（authorization grant type / clientId / clientSecret / endpoint / headerName） */
     private lateinit var accessTokenServerProperties: AccessTokenServerProperties
 
+    /** 当前次请求携带的 token（业务上层透传） */
     private var authServerParam: AccessTokenServerParam? = null
+
+    /**
+     * 注入本次请求的 token 参数。
+     *
+     * @param authServerParam token 鉴权参数
+     * @author K
+     * @since 1.0.0
+     */
     override fun setAuthServerParam(authServerParam: AccessTokenServerParam) {
         this.authServerParam = authServerParam
     }
@@ -60,6 +72,19 @@ open class AccessTokenMinioClientBuilder : MinioClientBuilder<AccessTokenServerP
             .build()
     }
 
+    /**
+     * 调 OAuth2 token 端点拿 [Jwt]。
+     *
+     * 请求头：业务方透传的 `headerValue`（如用户的 access token）+ Basic clientId:clientSecret。
+     * 安全注意：旧实现曾在此 `log.info` 输出 `jwt.token()` 字符串——可重放的 access_token 落到聚合日志里
+     * 就是一个泄漏面，已改为 DEBUG 仅打过期秒数，不打 token 本身。
+     *
+     * @param authServerParam 业务侧透传的 token 鉴权参数
+     * @return 拿到的 [Jwt]；网络失败时抛 [ProviderException]
+     * @throws ProviderException IO 异常包装后抛出
+     * @author K
+     * @since 1.0.0
+     */
     protected fun accessToken(authServerParam: AccessTokenServerParam): Jwt? {
         val requestBody: RequestBody = FormBody.Builder()
             .add("grant_type", requireNotNull(accessTokenServerProperties.authorizationGrantType) { "authorizationGrantType is null" })
@@ -90,10 +115,24 @@ open class AccessTokenMinioClientBuilder : MinioClientBuilder<AccessTokenServerP
         }
     }
 
+    /**
+     * 注入 MinIO 全局配置。
+     *
+     * @param minioProperties 配置对象
+     * @author K
+     * @since 1.0.0
+     */
     fun setMinioProperties(minioProperties: MinioProperties) {
         this.minioProperties = minioProperties
     }
 
+    /**
+     * 注入 OAuth2 token 端点配置。
+     *
+     * @param accessTokenServerProperties token 端点配置
+     * @author K
+     * @since 1.0.0
+     */
     fun setAccessTokenServerProperties(accessTokenServerProperties: AccessTokenServerProperties) {
         this.accessTokenServerProperties = accessTokenServerProperties
     }

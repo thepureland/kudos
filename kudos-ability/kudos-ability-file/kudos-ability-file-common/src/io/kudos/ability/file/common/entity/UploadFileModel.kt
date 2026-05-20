@@ -7,8 +7,14 @@ import java.io.Serial
 import java.io.Serializable
 
 /**
- * 文件上传的model对象
- * 此文件会放在：{系统规划的路径}/{bucket}/{tenantId}/{catePath?}/{yyyy}/{mm}/{dd}/{uuid}.{fileSuffix}
+ * 文件上传的 model 对象。
+ *
+ * 最终落盘路径形态：`{系统规划的路径}/{bucket}/{tenantId}/{catePath?}/{yyyy}/{mm}/{dd}/{uuid}.{fileSuffix}`
+ * 实际目录由 [io.kudos.ability.file.common.AbstractUploadService.dispatchFileDir] 拼装，本类只承载入参。
+ *
+ * @param S 输入流类型；保留泛型让上层（如 Spring MultipartFile）能精确传入而无需 cast
+ * @author K
+ * @since 1.0.0
  */
 class UploadFileModel<S : InputStreamSource?> : Serializable {
     /**
@@ -46,9 +52,11 @@ class UploadFileModel<S : InputStreamSource?> : Serializable {
      */
     var fileName: String? = null
 
+    /** 图片压缩配置，留默认值表示不压缩 */
     var compressionConfig = CompressionConfig()
 
     companion object {
+        /** Serializable 版本号 */
         @Serial
         private val serialVersionUID = -8498350660950356072L
     }

@@ -3,6 +3,14 @@ package io.kudos.ability.file.common.entity
 import io.kudos.ability.file.common.auth.AuthServerParam
 import java.io.Serializable
 
+/**
+ * 文件删除请求模型。
+ *
+ * 三要素：存储桶名 + 文件路径 + 鉴权参数。一般由 [from] 静态方法从完整路径解析得到。
+ *
+ * @author K
+ * @since 1.0.0
+ */
 class DeleteFileModel : Serializable {
     /**
      * 自定义目录|存储空间名称
