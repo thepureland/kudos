@@ -70,8 +70,7 @@ open class SysAccessRuleService(
      */
     @Transactional
     override fun updateActive(id: String, active: Boolean): Boolean {
-        val existing = dao.get(id)
-        if (existing == null) {
+        val existing = dao.get(id) ?: run {
             log.error("更新id为${id}的访问规则的启用状态时，记录不存在！")
             return false
         }
@@ -152,8 +151,7 @@ open class SysAccessRuleService(
      */
     @Transactional
     override fun deleteById(id: String): Boolean {
-        val existing = dao.get(id)
-        if (existing == null) {
+        val existing = dao.get(id) ?: run {
             log.warn("删除id为${id}的访问规则时，发现其已不存在！")
             return false
         }

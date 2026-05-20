@@ -22,15 +22,14 @@ open class MsgSendService(
     dao: MsgSendDao
 ) : BaseCrudService<String, MsgSend, MsgSendDao>(dao), IMsgSendService {
 
-    override fun updateSendStatus(sendId: String, sendStatusDictCode: String): Boolean {
-        return dao.updateProperties(
+    override fun updateSendStatus(sendId: String, sendStatusDictCode: String): Boolean =
+        dao.updateProperties(
             sendId,
             mapOf(
                 MsgSend::sendStatusDictCode.name to sendStatusDictCode,
                 MsgSend::updateTime.name to LocalDateTime.now(),
             )
         )
-    }
 
     override fun finishSend(
         sendId: String,

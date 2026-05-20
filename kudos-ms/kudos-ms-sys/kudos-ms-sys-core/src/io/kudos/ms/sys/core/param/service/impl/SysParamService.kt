@@ -42,14 +42,13 @@ open class SysParamService(
     private val log = LogFactory.getLog(this::class)
 
     @Transactional(readOnly = true)
-    override fun <R : Any> get(id: String, returnType: KClass<R>): R? {
-        return if (returnType == SysParamCacheEntry::class) {
+    override fun <R : Any> get(id: String, returnType: KClass<R>): R? =
+        if (returnType == SysParamCacheEntry::class) {
             @Suppress("UNCHECKED_CAST")
             dao.get(id, SysParamCacheEntry::class) as R?
         } else {
             super.get(id, returnType)
         }
-    }
 
     @Transactional(readOnly = true)
     override fun getParamFromCache(atomicServiceCode: String, paramName: String): SysParamCacheEntry? =
@@ -105,8 +104,7 @@ open class SysParamService(
 
     @Transactional
     override fun deleteById(id: String): Boolean {
-        val param = dao.get(id)
-        if (param == null) {
+        val param = dao.get(id) ?: run {
             log.warn("删除id为${id}的参数时，发现其已不存在！")
             return false
         }
