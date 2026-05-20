@@ -48,6 +48,15 @@ open class Slf4jLogger : ILog {
     override fun error(e: Throwable) =
         logger.log(null, FQCN, LocationAwareLogger.ERROR_INT, getMsg(e.message), null, e)
 
+    /**
+     * 走 [MessageFormat] 占位符替换；无参数时跳过 format 直接返回原串，避免 `{0}` 之类的字符被误解。
+     *
+     * @param msg 模板
+     * @param args 替换参数
+     * @return 格式化后的消息（null 输入直接返回 null）
+     * @author K
+     * @since 1.0.0
+     */
     private fun getMsg(msg: String?, vararg args: Any?): String? {
         return if (msg != null && args.isNotEmpty()) {
             MessageFormat.format(msg, *args)

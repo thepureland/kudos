@@ -243,6 +243,16 @@ class Wizard(title: String = "") {
         validateActionState()
     }
 
+    /**
+     * 根据当前流程是否可继续 (`Flow.canAdvance`) 动态增删 Next / Finish 按钮。
+     *
+     * 把 Next 按钮插到 buttonTypes 列表首位让它成为默认按钮（回车响应），优先级高于 Cancel。
+     * 注册 BUTTON_NEXT_ACTION_HANDLER 事件过滤器：拦截 Next 按钮的 ACTION 事件交由本类处理，
+     * 避免 JavaFX Dialog 默认行为直接关闭对话框。
+     *
+     * @author K
+     * @since 1.0.0
+     */
     private fun validateActionState() {
         val pane = requireDialog().dialogPane
         val currentPaneButtons = pane.buttonTypes
@@ -267,7 +277,19 @@ class Wizard(title: String = "") {
         }
     }
 
+    /** 当前页内已记录的 setting 数量，用于给无 id 节点生成 `page_.setting_N` 形式的默认 key。 */
     private var settingCounter = 0
+
+    /**
+     * 把当前页上所有值型节点的值收集到 [settings] 里。
+     *
+     * 由于不知道 page 内部结构，从 page.content 起做 DFS 全遍历 [checkNode]，
+     * 遇到 [io.kudos.ability.ui.javafx.controls.wizard.ValueExtractor] 能取值的节点就记下来。
+     *
+     * @param page 当前向导页
+     * @author K
+     * @since 1.0.0
+     */
     private fun readSettings(page: WizardPane) {
         // for now, we cannot know the structure of the page, so we just drill down
         // through the entire scenegraph (from page.content down) until we get
@@ -278,6 +300,17 @@ class Wizard(title: String = "") {
         checkNode(page.content)
     }
 
+    /**
+     * 深度优先遍历节点：当前节点能取值就记下并递归；不能就继续往下走。
+     *
+     * 注意 `fold(false) { acc, child -> checkNode(child) || acc }`——这里**不能**短路（用 `||` 在
+     * acc 后面是关键），必须遍历每个孩子让所有 value-bearing 节点都被记录。
+     *
+     * @param n 当前节点；null 视为遍历到底
+     * @return 当前子树是否记录到任何 setting
+     * @author K
+     * @since 1.0.0
+     */
     private fun checkNode(n: Node?): Boolean {
         if (readSetting(n)) return true
         // we're doing a depth-first search; visit every child so that all
@@ -285,6 +318,16 @@ class Wizard(title: String = "") {
         return ImplUtils.getChildren(n).fold(false) { acc, child -> checkNode(child) || acc }
     }
 
+    /**
+     * 试图从单个节点取值并存入 settings map：
+     * - 节点带 id 用 id 作 key
+     * - 无 id 退化为 `page_.setting_<counter>` 命名
+     *
+     * @param n 节点；null 直接返回 false
+     * @return 是否成功取到值
+     * @author K
+     * @since 1.0.0
+     */
     private fun readSetting(n: Node?): Boolean {
         if (n == null) return false
         val setting = ValueExtractor.getValue(n) ?: return false

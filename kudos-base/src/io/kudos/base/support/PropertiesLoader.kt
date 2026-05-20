@@ -170,6 +170,15 @@ class PropertiesLoader {
         return props
     }
 
+    /**
+     * 把外部传入的资源路径归一化为 classpath 资源加载器认识的格式：
+     * 去掉 `classpath:` 前缀（Spring 风格）和起首的 `/`（让 ClassLoader.getResource 找得到）。
+     *
+     * @param path 原始路径
+     * @return 归一化后的路径
+     * @author K
+     * @since 1.0.0
+     */
     private fun normalizeResourcePath(path: String): String =
         path.removePrefix("classpath:").removePrefix("/")
 
