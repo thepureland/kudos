@@ -250,9 +250,21 @@ object HashCacheKit {
     @Volatile private var managerOverride: MixHashCacheManager? = null
     @Volatile private var configProviderOverride: ICacheConfigProvider? = null
 
+    /**
+     * 取 [MixHashCacheManager]：测试 override 优先；否则查 Spring bean。
+     * @return manager 实例；缺失时返回 null（仅在 Spring 上下文未就绪时出现）
+     * @author K
+     * @since 1.0.0
+     */
     private fun getManager(): MixHashCacheManager? =
         managerOverride ?: SpringKit.getBeanOrNull("mixHashCacheManager") as MixHashCacheManager?
 
+    /**
+     * 取 [ICacheConfigProvider]：测试 override 优先；否则查 Spring bean。
+     * @return provider 实例；缺失时返回 null
+     * @author K
+     * @since 1.0.0
+     */
     private fun getConfigProvider(): ICacheConfigProvider? =
         configProviderOverride ?: SpringKit.getBeanOrNull(ICacheConfigProvider::class)
 

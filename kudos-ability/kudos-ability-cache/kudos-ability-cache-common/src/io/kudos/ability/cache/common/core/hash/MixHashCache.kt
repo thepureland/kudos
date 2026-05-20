@@ -31,6 +31,15 @@ internal class MixHashCache(
     private val nodeId: String
 ) : IHashCache {
 
+    /**
+     * 取一个可用的底层 cache：远端优先（数据更全），无远端时退本地。
+     * 两者都为空时配置有误，直接抛异常便于早暴露。
+     *
+     * @return 可用的 [IHashCache]
+     * @throws IllegalStateException local + remote 都为 null 时
+     * @author K
+     * @since 1.0.0
+     */
     private fun remoteOrLocal(): IHashCache =
         remote ?: local ?: throw IllegalStateException("Hash cache '$cacheName' has no local or remote impl")
 
@@ -49,11 +58,32 @@ internal class MixHashCache(
         if (sortable.isNotEmpty()) indexedSortable = sortable
     }
 
+    /**
+     * 读路径模板：本地缓存存在就走 [block]，否则返回 null（让调用方继续走远端）。
+     * inline 不必（block 调用频率低，且 block 内可能涉及锁，避免内联引起问题）。
+     *
+     * @param T block 返回类型
+     * @param block 在本地缓存上执行的读操作
+     * @return block 返回值；本地缺失时 null
+     * @author K
+     * @since 1.0.0
+     */
     private fun <T> readFromLocalFirst(block: (IHashCache) -> T): T? {
         if (local == null) return null
         return block(local)
     }
 
+    /**
+     * 发本地缓存失效通知到集群其他节点：
+     * 1. 找出所有 [ICacheMessageHandler]（典型为基于 redis pubsub 的 NotifyHandler）
+     * 2. 携带 cacheType=hash + nodeId（自身节点）发送
+     *
+     * 自身 nodeId 让接收方过滤掉自身发的消息，避免自我清空死循环。
+     *
+     * @param key 失效的 key；null 表示整区失效
+     * @author K
+     * @since 1.0.0
+     */
     private fun pushHashNotify(key: Any?) {
         val handlers = SpringKit.getBeansOfType<ICacheMessageHandler>()
         if (handlers.isEmpty()) return
