@@ -117,34 +117,26 @@ class RedisKeyValueCacheManager(
     }
 
     /**
-     * 按模式删除某个缓存下的所有key
-     * 
-     * 使用SCAN命令替代KEYS命令，避免在生产环境阻塞Redis。
-     * 
+     * 按模式删除某个缓存下的所有 key。
+     *
      * 工作流程：
-     * 1. 获取缓存名称的key前缀（通过keyPrefixProvider计算）
-     * 2. 应用版本前缀，得到实际的缓存key前缀
-     * 3. 拼接完整的匹配模式：实际key前缀 + 业务模式
-     * 4. 将模式转换为字节数组
-     * 5. 调用cacheWriter.clear执行模式删除
-     * 
-     * 模式匹配：
-     * - 支持通配符模式，例如"user:*"会匹配所有以"user:"开头的key
-     * - 最终匹配模式 = 版本前缀 + 缓存名称前缀 + 业务模式
-     * - 例如：版本"v1"，缓存"user"，模式"*"，最终为"v1::user:*"
-     * 
-     * SCAN vs KEYS：
-     * - 使用SCAN命令替代KEYS，避免阻塞Redis服务器
-     * - SCAN是增量式遍历，不会一次性返回所有匹配的key
-     * - 适合生产环境使用，不会影响Redis性能
-     * 
-     * 注意事项：
-     * - 模式删除会删除所有匹配的key，需谨慎使用
-     * - 删除操作是异步的，不会立即生效
-     * - 会自动应用版本前缀和缓存名称前缀
-     * 
-     * @param cacheName Spring Cache名称
-     * @param pattern 业务key模式，支持通配符，例如"user:*"
+     * 1. `prefixProvider.compute(cacheName)` 得到缓存键前缀（默认 `"$cacheName::"`）
+     * 2. 经 [CacheVersionConfig.getFinalCacheName] 加上版本前缀
+     * 3. 拼接最终匹配模式：实际 key 前缀 + 业务模式（如 `*` / `user:*`）
+     * 4. 用 [RedisTemplate.keys] + [RedisTemplate.delete] 直接定位并删除
+     *
+     * 例如：版本 `v1`、缓存 `user`、模式 `*`，最终匹配 `v1::user::*`。
+     *
+     * **重要**：旧实现走 `cacheWriter.clear(name, pattern)`，但 Spring Boot 4.0.6 下
+     * 这条路径在本项目的 Redis 配置中根本不删 key（与 [ScanClearRedisCache] 修复的
+     * `RedisCache.clear()` 是同一个 bug，详见 [ScanClearRedisCache] KDoc）。已改为
+     * 直接走 `RedisTemplate` 的 keys/delete API。
+     *
+     * **限制**：[RedisTemplate.keys] 在大库上会阻塞 Redis；本项目缓存键数量级很小（百级），
+     * 可接受。如果未来增长很多，应改成 SCAN-based 迭代删除。
+     *
+     * @param cacheName Spring Cache 名称
+     * @param pattern 业务 key 模式，支持通配符
      */
     override fun evictByPattern(cacheName: String, pattern: String) {
         // 与 [ScanClearRedisCache.clear] 同样的原因：Spring Boot 4.0.6 的
