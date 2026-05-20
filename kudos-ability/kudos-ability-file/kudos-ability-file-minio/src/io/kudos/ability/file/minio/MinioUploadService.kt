@@ -29,9 +29,11 @@ import java.io.ByteArrayInputStream
  */
 open class MinioUploadService : AbstractUploadService() {
 
+    /** MinIO 配置（endpoint / accessKey / secretKey / publicEndpoint 等） */
     @Autowired
     private lateinit var properties: MinioProperties
 
+    /** 动态认证场景下用来构造对应类型的 MinioClient builder */
     @Autowired
     private lateinit var minioClientBuilderFactory: MinioClientBuilderFactory
 
@@ -77,6 +79,22 @@ open class MinioUploadService : AbstractUploadService() {
         }
     }
 
+    /**
+     * 上传文件到 MinIO/S3。
+     *
+     * 流程：选择客户端 → 必要时建桶 → 走压缩管道 → `putObject`。
+     * 流大小传 -1 表示未知，由 SDK 内部按 partSize（10MB）切片上传；这是 MinIO 客户端处理"未知大小流"的标准用法。
+     * 返回的路径包含 bucketName，便于业务侧直接存库后由前端拼 publicEndpoint 形成完整 URL。
+     *
+     * @param model 上传请求
+     * @param fileDir [AbstractUploadService.dispatchFileDir] 分配出来的相对目录
+     * @return `/{bucket}/{objectKey}` 形态的路径
+     * @throws ServiceException 失败时按错误类型分两个错误码：
+     *   - [FileErrorCode.FILE_ACCESS_DENY]：[io.minio.errors.ErrorResponseException]（鉴权/权限/桶不存在等）
+     *   - [FileErrorCode.FILE_ACCESS_ERROR]：其它本地或网络异常
+     * @author K
+     * @since 1.0.0
+     */
     override fun saveFile(model: UploadFileModel<*>, fileDir: String): String {
         try {
             val minioClient: MinioClient = getMinioClient(model)
@@ -110,10 +128,19 @@ open class MinioUploadService : AbstractUploadService() {
         }
     }
 
+    /**
+     * 返回 MinIO 公网域名，前端把它拼到 [saveFile] 的相对路径前形成完整 URL。
+     *
+     * @return [MinioProperties.publicEndpoint]
+     * @throws IllegalArgumentException 当配置中未指定 publicEndpoint 时
+     * @author K
+     * @since 1.0.0
+     */
     override fun pathPrefix(): String {
         return requireNotNull(properties.publicEndpoint) { "publicEndpoint is null" }
     }
 
+    /** 日志器 */
     private val LOG = LogFactory.getLog(this::class)
 
 }
