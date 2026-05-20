@@ -13,6 +13,13 @@ import io.kudos.context.kit.SpringKit
 import kotlinx.serialization.json.Json
 import kotlin.time.Duration.Companion.seconds
 
+/**
+ * Ktor 插件安装阶段使用的日志器。
+ *
+ * 命名故意避开 `log` —— Ktor 的 [io.ktor.server.application.Application.log] 是一个扩展属性，
+ * 在 `Application` 接收者作用域里用 `log` 会被它捕获，造成"我们以为在写 LogFactory，实际写到 slf4j"的歧义。
+ * 显式叫 `pluginsLog` 让两者井水不犯河水。
+ */
 // 命名为 pluginsLog 避开 Application.log 扩展属性（slf4j Logger）的隐式接收者冲突
 private val pluginsLog = LogFactory.getLog("io.kudos.ability.web.ktor.init.KtorPlugins")
 

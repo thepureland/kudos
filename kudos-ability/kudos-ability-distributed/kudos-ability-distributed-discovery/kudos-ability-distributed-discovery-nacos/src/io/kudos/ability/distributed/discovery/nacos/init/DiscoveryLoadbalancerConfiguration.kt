@@ -74,6 +74,12 @@ open class DiscoveryLoadbalancerConfiguration {
                 .build(context)
         }
 
+        /**
+         * 仅用于在日志里标记 blocking 分支已装配——便于运维一眼确认走哪条 LB 路径。
+         *
+         * @author K
+         * @since 1.0.0
+         */
         @PostConstruct
         fun init() {
             LogFactory.getLog(this::class).info("[blocking hint zone preference]初始化完成...")
@@ -97,6 +103,12 @@ open class DiscoveryLoadbalancerConfiguration {
                 .build(context)
         }
 
+        /**
+         * 仅用于在日志里标记 reactive 分支已装配——便于运维一眼确认走哪条 LB 路径。
+         *
+         * @author K
+         * @since 1.0.0
+         */
         @PostConstruct
         fun init() {
             LogFactory.getLog(this::class).info("[reactive hint zone preference]初始化完成...")

@@ -36,6 +36,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @RestControllerAdvice
 class BadRequestExceptionHandler : ResponseEntityExceptionHandler() {
 
+    /** 日志器，仅记 WARN 级别——参数错误属于客户端问题，不需要 ERROR 级别污染告警 */
     private val log = LogFactory.getLog(this::class)
 
     /**
@@ -113,7 +114,17 @@ class BadRequestExceptionHandler : ResponseEntityExceptionHandler() {
     }
 
     /**
-     * 构造统一格式的失败响应
+     * 构造统一格式的失败响应。
+     * 把错误码、消息、明细包装成 [ApiResponse.fail]，再带上原始 headers / status 一起返回。
+     *
+     * @param message 用户可读的错误消息
+     * @param errors 字段级错误明细，null 表示无明细
+     * @param headers 原始响应头
+     * @param status HTTP 状态码
+     * @param code 业务错误码（[CommonErrorCodeEnum] 派生）
+     * @return 统一格式的 ResponseEntity
+     * @author K
+     * @since 1.0.0
      */
     private fun createResponseEntity(
         message: String,
@@ -127,7 +138,14 @@ class BadRequestExceptionHandler : ResponseEntityExceptionHandler() {
     }
 
     /**
-     * 将Spring校验结果转换为结构化错误明细
+     * 将 Spring 校验结果转换为结构化错误明细列表。
+     * 字段级错误带上 [BindingResult] 的 rejectedValue，便于前端定位用户填错的具体值；
+     * 全局错误（对象层级断言）不带 rejectedValue。两类错误顺序为"字段错误优先"，与表单常见展示一致。
+     *
+     * @param bindingResult Spring 校验结果
+     * @return 字段错误 + 全局错误的合并列表
+     * @author K
+     * @since 1.0.0
      */
     private fun toErrorDetails(bindingResult: BindingResult): List<ErrorDetail> {
         val fieldErrors = bindingResult.fieldErrors.map {

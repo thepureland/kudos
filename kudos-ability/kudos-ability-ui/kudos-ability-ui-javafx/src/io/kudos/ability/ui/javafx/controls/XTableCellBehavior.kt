@@ -31,7 +31,10 @@ import javafx.scene.input.MouseButton
  * - so now we override the latter and try to terminate edits
  *
  *
+ * @param S 行数据类型
+ * @param T 列值类型
  * @author K
+ * @since 1.0.0
  */
 open class XTableCellBehavior<S, T>
 /**
@@ -50,8 +53,11 @@ open class XTableCellBehavior<S, T>
     //        super.simpleSelect(e);
     //    }
     /**
-     * Tries to terminate edits if containing table is of type
-     * XTableView.
+     * 仅当承载本 cell 的表为 [XTableView] 时调用 [XTableView.terminateEdit]，让其它正在编辑的 cell 先提交。
+     * 非 XTableView 没法做协调，静默跳过即可。
+     *
+     * @author K
+     * @since 1.0.0
      */
     private fun tryTerminateEdit() {
 //        val cell = control
@@ -62,12 +68,14 @@ open class XTableCellBehavior<S, T>
     }
 
     /**
-     * This method is introduced in jdk8_u20. It's the editing
-     * handling part of the former simpleSelect.
+     * 鼠标点击事件分发；先调 [tryTerminateEdit] 让其它 cell 提交编辑，再交给 super 处理选中/激活。
+     * 该方法是 jdk8_u20 从原 `simpleSelect` 拆出来的，签名也跟着变了，所以钩子改 override 这里。
      *
-     * Overridden to try terminating the edit before calling
-     * super.
-     *
+     * @param button 鼠标按钮
+     * @param clickCount 点击次数
+     * @param isAlreadySelected 该 cell 此前是否已被选中
+     * @author K
+     * @since 1.0.0
      */
     override fun handleClicks(
         button: MouseButton, clickCount: Int,

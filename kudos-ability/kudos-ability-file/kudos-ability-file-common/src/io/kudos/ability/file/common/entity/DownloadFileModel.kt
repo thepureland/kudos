@@ -5,6 +5,15 @@ import org.springframework.core.io.InputStreamSource
 import java.io.Serial
 import java.io.Serializable
 
+/**
+ * 文件下载请求模型。
+ *
+ * 与 [DeleteFileModel] 结构一致；额外的泛型参数 `S` 是为了让上传/下载共用同套 [InputStreamSource] 约束。
+ *
+ * @param S 输入流类型，默认是 [InputStreamSource]
+ * @author K
+ * @since 1.0.0
+ */
 class DownloadFileModel<S : InputStreamSource> : Serializable {
     /**
      * 自定义目录|存储空间名称
@@ -22,6 +31,7 @@ class DownloadFileModel<S : InputStreamSource> : Serializable {
     var authServerParam: AuthServerParam? = null
 
     companion object {
+        /** Serializable 版本号 */
         @Serial
         private val serialVersionUID = -8498350660950356072L
 

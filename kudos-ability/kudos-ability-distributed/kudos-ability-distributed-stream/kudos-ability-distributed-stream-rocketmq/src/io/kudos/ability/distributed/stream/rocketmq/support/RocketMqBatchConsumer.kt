@@ -230,6 +230,14 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
         }
     }
 
+    /**
+     * 把消费失败的批次落库到 `sys_mq_fail_msg`，避免 MQ 堆积。
+     * 仅当 RocketMQ 配置 `saveException = true` 时才真正落库；否则只 WARN 提醒未开启该能力。
+     *
+     * @param data 失败批次（一般是 [MessageExt] 列表）
+     * @author K
+     * @since 1.0.0
+     */
     private fun saveErrorData(data: Any) {
         if (!RocketMqProperties.instance.saveException) {
             log.warn("未开启异常消费记录功能...")
@@ -244,6 +252,19 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
         SpringKit.getBean<ISysMqFailMsgService>().save(exceptionMsg)
     }
 
+    /**
+     * 优雅停止消费者：
+     * 1. 设 `isRunning = false` 让 daemon 线程主循环退出；
+     * 2. join daemon 线程；
+     * 3. 调 `consumer.shutdown()` 释放 RocketMQ 客户端的 netty 连接和消费位点资源。
+     *
+     * 第 3 步是相对于"旧实现只置位然后等 JVM 退出"的关键修复——否则 consumer 内部
+     * 线程池 / netty selector 会持续占用资源直到进程终止。被注册到 [Runtime.addShutdownHook]
+     * 由 JVM 主动调用。
+     *
+     * @author K
+     * @since 1.0.0
+     */
     fun destroy() {
         this.isRunning = false
         try {
@@ -262,9 +283,20 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
     }
 
 
+    /**
+     * 批量消费项：业务消息体 + 原 [MessageExt] 的属性（attribute headers）。
+     * 把这两者一起带给业务回调，避免业务侧再去回查原 MessageExt。
+     *
+     * @param T 消息体类型
+     * @property data 反序列化后的消息体
+     * @property properties 原 MessageExt 上的属性 map
+     * @author K
+     * @since 1.0.0
+     */
     class BatchConsumerItem<T>(var data: T?, var properties: MutableMap<String?, String?>?)
 
     companion object {
+        /** 日志器 */
         private val log = LogFactory.getLog(this::class)
 
         /** 空轮询时 daemon 线程的休眠时长（ms），避免 CPU 100% 空转。 */

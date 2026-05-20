@@ -99,6 +99,15 @@ open class NotifyMqAutoConfiguration : NotifyCommonAutoConfiguration(), ICompone
             ?: log.info("[mqNotify] 命名空间: $namespace, 类型: $notifyType, 无 listener 配置")
     }
 
+    /**
+     * 解析当前应用的 listener namespace。
+     * 优先级：显式配置 `notifyCommonProperties.listenerNamespace` → `spring.application.name` → [NotifyListenerItem.DEFAULT_NAMESPACE]。
+     * 让多应用同 MQ topic 时各自的 listener 仍能按 namespace 隔离。
+     *
+     * @return namespace 字符串
+     * @author K
+     * @since 1.0.0
+     */
     private fun resolveListenerNamespace(): String =
         notifyCommonProperties?.listenerNamespace
             ?.takeIf { it.isNotBlank() }

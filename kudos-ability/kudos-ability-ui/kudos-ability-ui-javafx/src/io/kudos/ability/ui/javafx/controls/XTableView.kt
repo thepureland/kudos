@@ -19,10 +19,19 @@ import javafx.scene.control.TableView
  *
  * Note: all TableCells in this table need the extended behaviour.
  *
+ * @param S 行数据类型
  * @author K
+ * @since 1.0.0
  */
 open class XTableView<S> : TableView<S>() {
 
+    /**
+     * 显式触发"提交并终止当前编辑"。
+     * 通过把当前 editingCell 写入 [terminatingCell] 让监听该属性的 cell 自己 commitEdit，再清空回 null。
+     *
+     * @author K
+     * @since 1.0.0
+     */
     fun terminateEdit() {
         if (!editing) {
             return
@@ -44,29 +53,50 @@ open class XTableView<S> : TableView<S>() {
         get() = editingCell != null
 
     /**
-     * terminatingCell is the table position that is currently editing
-     * and should terminate. It is set in edit(row, column) to the currently editing cell
-     * before calling super and reset to null after calling super.
-     * TableCells that support terminating an edit
-     * can listen and commit as appropriate (at least that's the idea).
+     * 正在终止编辑的 cell 位置。被 `edit(row, column)` 调用前置为当前编辑 cell，
+     * super 之后清回 null。支持终止编辑的 TableCell 监听此属性即可在合适时机 commit。
      */
     private var terminatingCell: ReadOnlyObjectWrapper<TablePosition<S?, *>?>? = null
+
+    /**
+     * 写入 [terminatingCell]。
+     * 受保护以便子类配合扩展行为复用，业务侧不直接调用。
+     *
+     * @param terminatingPosition 当前要终止编辑的位置；null 表示终止流程结束
+     * @author K
+     * @since 1.0.0
+     */
     protected fun setTerminatingCell(terminatingPosition: TablePosition<S?, *>?) {
         terminatingCellPropertyImpl().set(terminatingPosition)
     }
 
     /**
-     * Represents the current cell being edited, or null if
-     * there is no cell being edited.
+     * 对外暴露的只读属性，cell 子类可监听以决定何时 commit。
+     *
+     * @return [terminatingCell] 的只读视图
+     * @author K
+     * @since 1.0.0
      */
     fun terminatingCellProperty(): ReadOnlyObjectProperty<TablePosition<S?, *>?> {
         return terminatingCellPropertyImpl().readOnlyProperty
     }
 
+    /**
+     * @return 当前正在终止编辑的位置；无则为 null
+     * @author K
+     * @since 1.0.0
+     */
     fun getTerminatingCell(): TablePosition<S?, *>? {
         return terminatingCellPropertyImpl().get()
     }
 
+    /**
+     * 惰性创建 [terminatingCell] 的 [ReadOnlyObjectWrapper]。
+     * 没有 cell 监听时不分配内存。
+     *
+     * @author K
+     * @since 1.0.0
+     */
     private fun terminatingCellPropertyImpl(): ReadOnlyObjectWrapper<TablePosition<S?, *>?> {
         if (terminatingCell == null) {
             terminatingCell = ReadOnlyObjectWrapper(this, "terminatingCell")

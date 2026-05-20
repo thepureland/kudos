@@ -24,11 +24,17 @@ import javafx.scene.input.KeyEvent
  *
  * 类型参数 `T` 是 items 真实元素类型；ComboBox 自身用 `<Any>` 是历史遗留——
  * `data[i].toString()` 拿显示串，不依赖 `T`。
+ *
+ * @author K
+ * @since 1.0.0
  */
 class AutoCompleteComboBoxListener<T>(private val comboBox: ComboBox<Any>) : EventHandler<KeyEvent> {
 
+    /** ComboBox 的原始 items 引用；过滤时按其副本展示，避免破坏原数据 */
     private val data: ObservableList<T>
+    /** BACK_SPACE/DELETE 后是否需要把光标移到 [caretPos]，避免回退后光标跳到末尾 */
     private var moveCaretToPos = false
+    /** 临时保存的光标位置，-1 表示无需保留，光标随文本长度走 */
     private var caretPos = 0
 
     init {
@@ -39,6 +45,17 @@ class AutoCompleteComboBoxListener<T>(private val comboBox: ComboBox<Any>) : Eve
         comboBox.onKeyReleased = this@AutoCompleteComboBoxListener
     }
 
+    /**
+     * 处理 `onKeyReleased` 事件：实施"输入即过滤"逻辑。
+     *
+     * 方向键 / Ctrl / HOME / END / TAB 立即返回（仅影响光标导航，不触发过滤）；
+     * BACK_SPACE / DELETE 先记下当前 caretPos 让 [moveCaret] 后续保留位置；
+     * 其它键按 editor 文本 startsWith 过滤 items，并在结果非空时显示下拉。
+     *
+     * @param event 键盘事件
+     * @author K
+     * @since 1.0.0
+     */
     override fun handle(event: KeyEvent) {
         when (event.code) {
             KeyCode.UP -> {
@@ -72,6 +89,14 @@ class AutoCompleteComboBoxListener<T>(private val comboBox: ComboBox<Any>) : Eve
         if (list.isNotEmpty()) comboBox.show()
     }
 
+    /**
+     * 把光标定位到合适位置：[caretPos] = -1 时移到末尾，否则保留删除前的位置。
+     * 最后把 [moveCaretToPos] 重置为 false，让下次 BACK_SPACE/DELETE 重新进入"保位"模式。
+     *
+     * @param textLength 当前文本长度，供"移到末尾"模式使用
+     * @author K
+     * @since 1.0.0
+     */
     private fun moveCaret(textLength: Int) {
         comboBox.editor.positionCaret(if (caretPos == -1) textLength else caretPos)
         moveCaretToPos = false

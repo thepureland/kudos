@@ -39,6 +39,16 @@ import javafx.scene.control.DialogPane
 import java.util.Optional
 import java.util.Stack
 
+/**
+ * 多步骤向导（Wizard）控件。
+ *
+ * 移植自 ControlsFX，按 [Flow] 决定页面流转顺序；维护 [pageHistory] 支持"上一步"，
+ * 自带"上一步/下一步/完成"按钮。通过 [WizardPane] 子类自定义每一页内容并实现进入/离开回调。
+ *
+ * @param title 对话框标题
+ * @author Oracle (原始) / K (适配)
+ * @since 1.0.0
+ */
 class Wizard(title: String = "") {
     /**************************************************************************
      *
@@ -53,6 +63,7 @@ class Wizard(title: String = "") {
     private var dialog: Dialog<ButtonType?>? = null
 
     // --- settings
+    /** 各页填写结果的共享存储，向导完成后由调用方读取 */
     val settings: ObservableMap<String, in Any> = FXCollections.observableHashMap()
     private val pageHistory = Stack<WizardPane>()
     private var currentPage: Optional<WizardPane> = Optional.empty()
@@ -87,12 +98,33 @@ class Wizard(title: String = "") {
      * Public API
      *
      */
+    /**
+     * 非阻塞展示向导对话框。
+     *
+     * @author K
+     * @since 1.0.0
+     */
     fun show() {
         requireDialog().show()
     }
 
+    /**
+     * 阻塞展示向导对话框直到关闭。
+     *
+     * @return 用户点击的 [ButtonType]（取消时为 empty）
+     * @author K
+     * @since 1.0.0
+     */
     fun showAndWait(): Optional<ButtonType?> = requireDialog().showAndWait()
 
+    /**
+     * 取已初始化的 dialog；未初始化时抛 [IllegalArgumentException]，避免后续 NPE 难定位。
+     *
+     * @return 当前 dialog
+     * @throws IllegalArgumentException dialog 未初始化时
+     * @author K
+     * @since 1.0.0
+     */
     private fun requireDialog(): Dialog<ButtonType?> = requireNotNull(dialog) { "dialog is null" }
 
     /**************************************************************************
@@ -272,17 +304,53 @@ class Wizard(title: String = "") {
     /**
      *
      */
+    /**
+     * 向导单页基类。继承本类并重写 [onEnteringPage]/[onExitingPage] 实现页面级回调。
+     *
+     * 注：目前还是基于 override 而非事件订阅；未来计划改为事件式 API。
+     *
+     * @author K
+     * @since 1.0.0
+     */
     // TODO this should just contain a ControlsFX Form, but for now it is hand-coded
     open class WizardPane : DialogPane() {
+        /**
+         * 进入本页时回调（点击"下一步"导航过来或首次进入）。
+         * @param wizard 关联的 [Wizard]，可为 null
+         */
         // TODO we want to change this to an event-based API eventually
         open fun onEnteringPage(wizard: Wizard?) {}
 
+        /**
+         * 离开本页时回调（点击"上一步/下一步"导航走时）。
+         * 注意 Wizard 控件有"从 N+1 回到 N 时再触发一次 N-1 的 onExitingPage"的已知 bug，
+         * 调用方需在子类内部用 try/catch 兜底。
+         * @param wizard 关联的 [Wizard]，可为 null
+         */
         // TODO same here - replace with events
         open fun onExitingPage(wizard: Wizard?) {}
     }
 
+    /**
+     * 向导流程控制器：决定"哪一页 → 下一页"以及"能否继续"。
+     * 框架提供 [LinearWizardFlow] 实现线性顺序；分支场景下用户自行实现。
+     *
+     * @author K
+     * @since 1.0.0
+     */
     interface Flow {
+        /**
+         * 由当前页推导出下一页。
+         * @param currentPage 当前页，可为 null（首次进入）
+         * @return 下一页；返回 empty 表示流程结束
+         */
         fun advance(currentPage: WizardPane?): Optional<WizardPane>
+
+        /**
+         * 判断"下一步"按钮是否应可点。
+         * @param currentPage 当前页
+         * @return true 表示允许前进
+         */
         fun canAdvance(currentPage: WizardPane?): Boolean
     }
 

@@ -124,6 +124,17 @@ class BatchCacheableAspect {
         return cacheName
     }
 
+    /**
+     * 解析 [BatchCacheable.keysGenerator] 指定的 keys 生成器。
+     *
+     * 先按类型从 Spring 容器拿 bean；缺失时降级到 [DefaultKeysGenerator]。
+     * 缺失场景：单元测试禁用了缓存导致配置类未加载，避免直接报错让测试跑不起来。
+     *
+     * @param batchCacheable 注解实例
+     * @return keys 生成器
+     * @author K
+     * @since 1.0.0
+     */
     private fun getKeysGenerator(batchCacheable: BatchCacheable): IKeysGenerator =
         (SpringKit.getBeanOrNull(batchCacheable.keysGenerator) as? IKeysGenerator)
             ?: DefaultKeysGenerator()

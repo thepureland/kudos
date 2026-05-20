@@ -22,6 +22,7 @@ import javax.sql.DataSource
  */
 object FlywayKit {
 
+    /** 日志器；失败一律向上抛，确保启动期发现 schema 错位 */
     private val log = LogFactory.getLog(this::class)
 
     /** SQL 脚本根目录的 classpath 名称（约定为 "sql"）。 */

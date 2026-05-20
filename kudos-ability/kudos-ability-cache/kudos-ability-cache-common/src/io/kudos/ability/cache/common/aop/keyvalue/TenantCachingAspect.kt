@@ -127,6 +127,7 @@ class TenantCachingAspect {
     }
 
     companion object {
+        /** 日志器，事务后失败时记 ERROR + 堆栈以便排查脏缓存 */
         private val log = LogFactory.getLog(TenantCachingAspect::class)
     }
 
