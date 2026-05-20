@@ -77,11 +77,46 @@
 
 ## 文档索引
 
+### 基础层 / 上下文层
+
 | 路径 | 内容 |
 |---|---|
 | [`kudos-base/README.md`](kudos-base/README.md) | 基础库子系统索引、关键设计约定、已知陷阱、测试约定 |
-| [`kudos-context/README.md`](kudos-context/README.md) | 运行时上下文层：上下文传播、锁框架、失败数据重试、Spring 集成 |
-| [`kudos-ms/kudos-ms-sys/README.md`](kudos-ms/kudos-ms-sys/README.md) | sys 原子服务的子模块边界与依赖关系 |
-| 其它模块 README | 计划中（按需补充） |
+| [`kudos-context/README.md`](kudos-context/README.md) | 运行时上下文层：上下文传播、锁框架、失败数据重试、Spring 集成、组件初始化 SPI |
+| [`kudos-dependencies/README.md`](kudos-dependencies/README.md) | BOM 与版本对齐策略 |
+| [`buildSrc/README.md`](buildSrc/README.md) | Gradle 约定插件 |
+
+### 横切能力 `kudos-ability/*`
+
+| 主题 | 顶层 README | 关键子模块 |
+|---|---|---|
+| 缓存 | [`cache`](kudos-ability/kudos-ability-cache/README.md) | [`-common`](kudos-ability/kudos-ability-cache/kudos-ability-cache-common/README.md) · [`-local-caffeine`](kudos-ability/kudos-ability-cache/kudos-ability-cache-local/kudos-ability-cache-local-caffeine/README.md) · [`-remote-redis`](kudos-ability/kudos-ability-cache/kudos-ability-cache-remote/kudos-ability-cache-remote-redis/README.md) · [`-interservice-client`](kudos-ability/kudos-ability-cache/kudos-ability-cache-interservice/kudos-ability-cache-interservice-client/README.md) |
+| 通信 | [`comm`](kudos-ability/kudos-ability-comm/README.md) | [`-common`](kudos-ability/kudos-ability-comm/kudos-ability-comm-common/README.md) · [`-email`](kudos-ability/kudos-ability-comm/kudos-ability-comm-email/README.md) · [`-sms-aliyun`](kudos-ability/kudos-ability-comm/kudos-ability-comm-sms/kudos-ability-comm-sms-aliyun/README.md) · [`-sms-aws`](kudos-ability/kudos-ability-comm/kudos-ability-comm-sms/kudos-ability-comm-sms-aws/README.md) · [`-websocket-ktor`](kudos-ability/kudos-ability-comm/kudos-ability-comm-websocket/kudos-ability-comm-websocket-ktor/README.md) |
+| 数据 | [`data`](kudos-ability/kudos-ability-data/README.md) | [`-rdb-ktorm`](kudos-ability/kudos-ability-data/kudos-ability-data-rdb/kudos-ability-data-rdb-ktorm/README.md) · [`-rdb-jdbc`](kudos-ability/kudos-ability-data/kudos-ability-data-rdb/kudos-ability-data-rdb-jdbc/README.md) · [`-rdb-flyway`](kudos-ability/kudos-ability-data/kudos-ability-data-rdb/kudos-ability-data-rdb-flyway/README.md) · [`-memdb-redis`](kudos-ability/kudos-ability-data/kudos-ability-data-memdb/kudos-ability-data-memdb-redis/README.md) |
+| 分布式 | [`distributed`](kudos-ability/kudos-ability-distributed/README.md) | [`-client-feign`](kudos-ability/kudos-ability-distributed/kudos-ability-distributed-client/kudos-ability-distributed-client-feign/README.md) · [`-config-nacos`](kudos-ability/kudos-ability-distributed/kudos-ability-distributed-config/kudos-ability-distributed-config-nacos/README.md) · [`-discovery-nacos`](kudos-ability/kudos-ability-distributed/kudos-ability-distributed-discovery/kudos-ability-distributed-discovery-nacos/README.md) · [`-lock-redisson`](kudos-ability/kudos-ability-distributed/kudos-ability-distributed-lock/kudos-ability-distributed-lock-redisson/README.md) · [`-stream-common`](kudos-ability/kudos-ability-distributed/kudos-ability-distributed-stream/kudos-ability-distributed-stream-common/README.md) · [`-tx-seata`](kudos-ability/kudos-ability-distributed/kudos-ability-distributed-tx/kudos-ability-distributed-tx-seata/README.md) |
+| 文件 | [`file`](kudos-ability/kudos-ability-file/README.md) | [`-common`](kudos-ability/kudos-ability-file/kudos-ability-file-common/README.md) · [`-local`](kudos-ability/kudos-ability-file/kudos-ability-file-local/README.md) · [`-minio`](kudos-ability/kudos-ability-file/kudos-ability-file-minio/README.md) |
+| 日志 | [`log`](kudos-ability/kudos-ability-log/README.md) | [`-audit-common`](kudos-ability/kudos-ability-log/kudos-ability-log-audit/kudos-ability-log-audit-common/README.md) · [`-audit-mq`](kudos-ability/kudos-ability-log/kudos-ability-log-audit/kudos-ability-log-audit-mq/README.md) · [`-audit-rdb-ktorm`](kudos-ability/kudos-ability-log/kudos-ability-log-audit/kudos-ability-log-audit-rdb/kudos-ability-log-audit-rdb-ktorm/README.md) |
+| UI | [`ui`](kudos-ability/kudos-ability-ui/README.md) | [`-javafx`](kudos-ability/kudos-ability-ui/kudos-ability-ui-javafx/README.md) |
+| Web | [`web`](kudos-ability/kudos-ability-web/README.md) | [`-common`](kudos-ability/kudos-ability-web/kudos-ability-web-common/README.md) · [`-springmvc`](kudos-ability/kudos-ability-web/kudos-ability-web-springmvc/README.md) · [`-ktor`](kudos-ability/kudos-ability-web/kudos-ability-web-ktor/README.md) |
+
+### 微服务 `kudos-ms/*`
+
+| 服务 | 顶层 README | core / common |
+|---|---|---|
+| auth | [`auth`](kudos-ms/kudos-ms-auth/README.md) | [`-core`](kudos-ms/kudos-ms-auth/kudos-ms-auth-core/README.md) · [`-common`](kudos-ms/kudos-ms-auth/kudos-ms-auth-common/README.md) · [`-client`](kudos-ms/kudos-ms-auth/kudos-ms-auth-client/README.md) |
+| msg | [`msg`](kudos-ms/kudos-ms-msg/README.md) | [`-core`](kudos-ms/kudos-ms-msg/kudos-ms-msg-core/README.md) · [`-common`](kudos-ms/kudos-ms-msg/kudos-ms-msg-common/README.md) · [`-client`](kudos-ms/kudos-ms-msg/kudos-ms-msg-client/README.md) |
+| sys | [`sys`](kudos-ms/kudos-ms-sys/README.md) | [`-core`](kudos-ms/kudos-ms-sys/kudos-ms-sys-core/README.md) · [`-common`](kudos-ms/kudos-ms-sys/kudos-ms-sys-common/README.md) · [`-client`](kudos-ms/kudos-ms-sys/kudos-ms-sys-client/README.md) |
+| user | [`user`](kudos-ms/kudos-ms-user/README.md) | [`-core`](kudos-ms/kudos-ms-user/kudos-ms-user-core/README.md) · [`-common`](kudos-ms/kudos-ms-user/kudos-ms-user-common/README.md) · [`-client`](kudos-ms/kudos-ms-user/kudos-ms-user-client/README.md) |
+
+### 测试 / 工具
+
+| 路径 | 内容 |
+|---|---|
+| [`kudos-test/README.md`](kudos-test/README.md) | 测试支持顶层索引 |
+| [`kudos-test/kudos-test-common/README.md`](kudos-test/kudos-test-common/README.md) | 通用测试 fixture |
+| [`kudos-test/kudos-test-container/README.md`](kudos-test/kudos-test-container/README.md) | TestContainers 封装（mysql / postgres / redis / minio / rocketmq / kafka 等） |
+| [`kudos-test/kudos-test-rdb/README.md`](kudos-test/kudos-test-rdb/README.md) | RDB 集成测试基类 |
+| [`kudos-test/kudos-test-api/kudos-test-api-contract/README.md`](kudos-test/kudos-test-api/kudos-test-api-contract/README.md) | Spring Cloud Contract 契约测试 |
+| [`kudos-tools/README.md`](kudos-tools/README.md) | 代码生成 / SQL 工具 |
 
 阅读源码时优先看对应模块的 README——核心设计约定与陷阱都集中在那里。
