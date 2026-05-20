@@ -68,9 +68,7 @@ open class UserAccountService(
     @Transactional(readOnly = true)
     override fun getUserOrgs(userId: String): List<UserOrgCacheEntry> {
         val orgIds = getUserOrgIds(userId)
-        if (orgIds.isEmpty()) {
-            return emptyList()
-        }
+        if (orgIds.isEmpty()) return emptyList()
         val orgsMap = userOrgHashCache.getOrgsByIds(orgIds)
         return orgIds.mapNotNull { orgsMap[it] }
     }
@@ -79,178 +77,106 @@ open class UserAccountService(
     override fun isUserInOrg(userId: String, orgId: String): Boolean = orgId in getUserOrgIds(userId)
 
     @Transactional(readOnly = true)
-    override fun getUserByTenantIdAndUsername(tenantId: String, username: String): UserAccountCacheEntry? {
-        val userId = userAccountHashCache.getUsersByTenantIdAndUsername(tenantId, username)?.id
-        return userId?.let { userAccountHashCache.getUserById(it) }
-    }
+    override fun getUserByTenantIdAndUsername(tenantId: String, username: String): UserAccountCacheEntry? =
+        userAccountHashCache.getUsersByTenantIdAndUsername(tenantId, username)?.id
+            ?.let { userAccountHashCache.getUserById(it) }
 
     @Transactional(readOnly = true)
     override fun getUserRecord(id: String): UserAccountRow? = dao.getAs<UserAccountRow>(id)
 
     @Transactional(readOnly = true)
-    override fun getUsersByTenantId(tenantId: String): List<UserAccountRow> {
-        val searchPayload = UserAccountQuery(tenantId = tenantId)
+    override fun getUsersByTenantId(tenantId: String): List<UserAccountRow> =
         @Suppress("UNCHECKED_CAST")
-        return dao.search(searchPayload, UserAccountRow::class)
-    }
+        dao.search(UserAccountQuery(tenantId = tenantId), UserAccountRow::class)
 
     @Transactional(readOnly = true)
-    override fun getUsersByOrgId(orgId: String): List<UserAccountRow> {
-        val searchPayload = UserAccountQuery(orgId = orgId)
+    override fun getUsersByOrgId(orgId: String): List<UserAccountRow> =
         @Suppress("UNCHECKED_CAST")
-        return dao.search(searchPayload, UserAccountRow::class)
-    }
+        dao.search(UserAccountQuery(orgId = orgId), UserAccountRow::class)
 
     @Transactional
-    override fun updateActive(id: String, active: Boolean): Boolean {
-        val user = UserAccount {
-            this.id = id
+    override fun updateActive(id: String, active: Boolean): Boolean =
+        updateAndPublish(id, "更新id为${id}的用户的启用状态为${active}") {
             this.active = active
         }
-        val success = dao.update(user)
-        if (success) {
-            log.debug("更新id为${id}的用户的启用状态为${active}。")
-            eventPublisher.publishEvent(UserAccountUpdated(id = id))
-        } else {
-            log.error("更新id为${id}的用户的启用状态为${active}失败！")
-        }
-        return success
-    }
 
     @Transactional
     override fun resetPassword(id: String, newPassword: String): Boolean {
         val encryptedPassword = PasswordKit.hash(newPassword)
-        val user = UserAccount {
-            this.id = id
+        return updateAndPublish(id, "重置id为${id}的用户的登录密码") {
             this.loginPassword = encryptedPassword
             this.loginErrorTimes = 0
         }
-        val success = dao.update(user)
-        if (success) {
-            log.debug("重置id为${id}的用户的登录密码。")
-            eventPublisher.publishEvent(UserAccountUpdated(id = id))
-        } else {
-            log.error("重置id为${id}的用户的登录密码失败！")
-        }
-        return success
     }
 
     @Transactional
     override fun resetSecurityPassword(id: String, newPassword: String): Boolean {
         val encryptedPassword = PasswordKit.hash(newPassword)
-        val user = UserAccount {
-            this.id = id
+        return updateAndPublish(id, "重置id为${id}的用户的安全密码") {
             this.securityPassword = encryptedPassword
             this.securityPasswordErrorTimes = 0
         }
-        val success = dao.update(user)
-        if (success) {
-            log.debug("重置id为${id}的用户的安全密码。")
-            eventPublisher.publishEvent(UserAccountUpdated(id = id))
-        } else {
-            log.error("重置id为${id}的用户的安全密码失败！")
-        }
-        return success
     }
 
     @Transactional
-    override fun updateLastLoginInfo(id: String, loginIp: Long, loginTime: LocalDateTime): Boolean {
-        val user = UserAccount {
-            this.id = id
+    override fun updateLastLoginInfo(id: String, loginIp: Long, loginTime: LocalDateTime): Boolean =
+        updateAndPublish(id, "更新id为${id}的用户的最后登录信息") {
             this.lastLoginIp = loginIp
             this.lastLoginTime = loginTime
             this.loginErrorTimes = 0
         }
-        val success = dao.update(user)
-        if (success) {
-            log.debug("更新id为${id}的用户的最后登录信息。")
-            eventPublisher.publishEvent(UserAccountUpdated(id = id))
-        } else {
-            log.error("更新id为${id}的用户的最后登录信息失败！")
-        }
-        return success
-    }
 
     @Transactional
-    override fun updateLastLogoutInfo(id: String, logoutTime: LocalDateTime): Boolean {
-        val user = UserAccount {
-            this.id = id
+    override fun updateLastLogoutInfo(id: String, logoutTime: LocalDateTime): Boolean =
+        updateAndPublish(id, "更新id为${id}的用户的最后登出信息") {
             this.lastLogoutTime = logoutTime
         }
-        val success = dao.update(user)
-        if (success) {
-            log.debug("更新id为${id}的用户的最后登出信息。")
-            eventPublisher.publishEvent(UserAccountUpdated(id = id))
-        } else {
-            log.error("更新id为${id}的用户的最后登出信息失败！")
-        }
-        return success
-    }
 
     @Transactional
     override fun incrementLoginErrorTimes(id: String): Boolean {
-        val existingUser = dao.get(id) ?: return false
-        val currentErrorTimes = existingUser.loginErrorTimes ?: 0
-        val user = UserAccount {
-            this.id = id
-            this.loginErrorTimes = currentErrorTimes + 1
+        val existing = dao.get(id) ?: return false
+        val current = existing.loginErrorTimes ?: 0
+        return updateAndPublish(id, "增加id为${id}的用户的登录错误次数") {
+            this.loginErrorTimes = current + 1
         }
-        val success = dao.update(user)
-        if (success) {
-            log.debug("增加id为${id}的用户的登录错误次数。")
-            eventPublisher.publishEvent(UserAccountUpdated(id = id))
-        } else {
-            log.error("增加id为${id}的用户的登录错误次数失败！")
-        }
-        return success
     }
 
     @Transactional
-    override fun resetLoginErrorTimes(id: String): Boolean {
-        val user = UserAccount {
-            this.id = id
+    override fun resetLoginErrorTimes(id: String): Boolean =
+        updateAndPublish(id, "重置id为${id}的用户的登录错误次数") {
             this.loginErrorTimes = 0
         }
-        val success = dao.update(user)
-        if (success) {
-            log.debug("重置id为${id}的用户的登录错误次数。")
-            eventPublisher.publishEvent(UserAccountUpdated(id = id))
-        } else {
-            log.error("重置id为${id}的用户的登录错误次数失败！")
-        }
-        return success
-    }
 
     @Transactional
     override fun incrementSecurityPasswordErrorTimes(id: String): Boolean {
-        val existingUser = dao.get(id) ?: return false
-        val currentErrorTimes = existingUser.securityPasswordErrorTimes ?: 0
-        val user = UserAccount {
-            this.id = id
-            this.securityPasswordErrorTimes = currentErrorTimes + 1
+        val existing = dao.get(id) ?: return false
+        val current = existing.securityPasswordErrorTimes ?: 0
+        return updateAndPublish(id, "增加id为${id}的用户的安全密码错误次数") {
+            this.securityPasswordErrorTimes = current + 1
         }
-        val success = dao.update(user)
-        if (success) {
-            log.debug("增加id为${id}的用户的安全密码错误次数。")
-            eventPublisher.publishEvent(UserAccountUpdated(id = id))
-        } else {
-            log.error("增加id为${id}的用户的安全密码错误次数失败！")
-        }
-        return success
     }
 
     @Transactional
-    override fun resetSecurityPasswordErrorTimes(id: String): Boolean {
-        val user = UserAccount {
-            this.id = id
+    override fun resetSecurityPasswordErrorTimes(id: String): Boolean =
+        updateAndPublish(id, "重置id为${id}的用户的安全密码错误次数") {
             this.securityPasswordErrorTimes = 0
         }
+
+    /**
+     * 共用模板：构造只含 id + 修改字段的 [UserAccount]，调用 [UserAccountDao.update]，
+     * 成功记录 debug + 发布 [UserAccountUpdated]，失败记录 error。
+     *
+     * 抽出来收口原本散布在 9 个 update 方法里的「build → update → log + event」三段式样板，
+     * 避免新增字段时漏发事件或日志措辞漂移。
+     */
+    private inline fun updateAndPublish(id: String, actionDesc: String, build: UserAccount.() -> Unit): Boolean {
+        val user = UserAccount { this.id = id }.apply(build)
         val success = dao.update(user)
         if (success) {
-            log.debug("重置id为${id}的用户的安全密码错误次数。")
+            log.debug("$actionDesc。")
             eventPublisher.publishEvent(UserAccountUpdated(id = id))
         } else {
-            log.error("重置id为${id}的用户的安全密码错误次数失败！")
+            log.error("${actionDesc}失败！")
         }
         return success
     }
@@ -278,8 +204,7 @@ open class UserAccountService(
 
     @Transactional
     override fun deleteById(id: String): Boolean {
-        val user = dao.get(id)
-        if (user == null) {
+        val user = dao.get(id) ?: run {
             log.warn("删除id为${id}的用户时，发现其已不存在！")
             return false
         }
@@ -324,7 +249,7 @@ open class UserAccountService(
             log.debug("清除 id 为 ${id} 的用户的 TOTP secret。")
             eventPublisher.publishEvent(UserAccountUpdated(id = id))
         } else {
-            log.warn("清除 TOTP secret 失败（用户不存在？）: userId=${id}")
+            log.warn("清除 TOTP secret 失败（用户不存在？）: userId=$id")
         }
         return success
     }
@@ -405,11 +330,8 @@ open class UserAccountService(
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {
         // 先 snapshot tenantId/username，AFTER_COMMIT 后下游 (tenantId, username) 缓存无法回查
-        val snapshots = if (ids.isNotEmpty()) {
-            dao.getByIds(ids).map {
-                UserAccountBatchDeleted.Item(it.id, it.tenantId, it.username)
-            }
-        } else emptyList()
+        val snapshots = if (ids.isEmpty()) emptyList()
+            else dao.getByIds(ids).map { UserAccountBatchDeleted.Item(it.id, it.tenantId, it.username) }
         val count = super.batchDelete(ids)
         log.debug("批量删除用户，期望删除${ids.size}条，实际删除${count}条。")
         if (snapshots.isNotEmpty()) {
