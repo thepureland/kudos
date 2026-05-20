@@ -150,6 +150,15 @@ open class SysI18NService(
         return count
     }
 
+    /**
+     * 标准化命名空间和 key：namespace 为空时退化为 `i18nTypeDictCode`（即把"类型"当默认命名空间）。
+     *
+     * @param payload 表单入参
+     * @return `(namespace, key)` 对
+     * @throws IllegalArgumentException key 或 i18nTypeDictCode 为空时
+     * @author K
+     * @since 1.0.0
+     */
     private fun resolveNamespaceAndKey(payload: SysI18nFormUpdate): Pair<String, String> {
         val key = requireNotNull(payload.key) { "key不能为空。" }
         val i18nTypeDictCode = requireNotNull(payload.i18nTypeDictCode) { "i18nTypeDictCode不能为空。" }
@@ -157,6 +166,16 @@ open class SysI18NService(
         return namespace to key
     }
 
+    /**
+     * upsert 入口：根据 `form.id` 是否为空切换"insert + 发 Inserted 事件" 或 "update + 发 Updated 事件"。
+     *
+     * 注意：update 路径成功时才发事件，否则不发——避免下游基于事件做缓存失效却没真改库。
+     *
+     * @param form 入参（含可选 id）
+     * @return 是否成功；insert 路径只要不抛异常即返回 true
+     * @author K
+     * @since 1.0.0
+     */
     private fun saveOrUpdateI18n(form: SysI18nFormUpdate): Boolean =
         if (form.id.isNullOrBlank()) {
             val id = dao.insert(toI18n(form, creating = true))
@@ -167,6 +186,18 @@ open class SysI18NService(
             dao.update(i18n).also { if (it) eventPublisher.publishEvent(SysI18nUpdated(id = i18n.id)) }
         }
 
+    /**
+     * 把 [SysI18nFormUpdate] 表单映射成 PO [SysI18n]：
+     * - creating=false 时强制要求 id 非空（更新场景必须知道目标行）
+     * - 其余字段统一校验非空，error message 区分"新增/更新"语境便于运维定位
+     *
+     * @param form 表单入参
+     * @param creating true=新增场景，false=更新场景
+     * @return PO 对象
+     * @throws IllegalArgumentException 必填字段为空时
+     * @author K
+     * @since 1.0.0
+     */
     private fun toI18n(form: SysI18nFormUpdate, creating: Boolean): SysI18n {
         val operation = if (creating) "新增" else "更新"
         val (namespace, key) = resolveNamespaceAndKey(form)
@@ -188,6 +219,15 @@ open class SysI18NService(
         }
     }
 
+    /**
+     * 从 update 入参抽 id；要求实现 [IIdEntity] 且 id 是 String。
+     *
+     * @param any 更新入参
+     * @return 国际化记录 id
+     * @throws IllegalStateException 入参类型不被支持
+     * @author K
+     * @since 1.0.0
+     */
     private fun requireI18nId(any: Any): String =
         (any as? IIdEntity<*>)?.id as? String
             ?: error("更新国际化内容时不支持的入参类型: ${any::class.qualifiedName}")

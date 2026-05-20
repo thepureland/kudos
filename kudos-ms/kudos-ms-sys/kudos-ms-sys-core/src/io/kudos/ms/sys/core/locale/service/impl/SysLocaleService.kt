@@ -111,6 +111,15 @@ open class SysLocaleService(
         return count
     }
 
+    /**
+     * 从 update 入参抽 id；要求实现 [IIdEntity] 且 id 是 String。
+     *
+     * @param any 更新入参
+     * @return 语言 id
+     * @throws IllegalStateException 入参类型不被支持
+     * @author K
+     * @since 1.0.0
+     */
     private fun requireLocaleId(any: Any): String =
         (any as? IIdEntity<*>)?.id as? String
             ?: error("更新语言时不支持的入参类型: ${any::class.qualifiedName}")

@@ -260,7 +260,18 @@ open class UserAccountService(
         return GoogleAuthenticator().checkCode(key, code, System.currentTimeMillis())
     }
 
-    // RFC 6238 / Google Authenticator 标签格式：`issuer:account`（整体再 URL 编码）
+    /**
+     * 按 RFC 6238 / Google Authenticator 规范拼出 `otpauth://` URI 的 label 段。
+     *
+     * 格式约定：`issuer:accountName` 整体做 URL 编码——冒号在编码后会变成 `%3A`，正符合 GA App 解析期望。
+     * 如果 issuer 或 accountName 含空格 / 特殊字符（中文用户名常见），不编码会破坏整个 URI。
+     *
+     * @param issuer 应用方标识（通常是产品名）
+     * @param accountName 账号名（用户登录名/邮箱）
+     * @return 编码后的 label 段
+     * @author K
+     * @since 1.0.0
+     */
     private fun encodeOtpAuthLabel(issuer: String, accountName: String): String =
         java.net.URLEncoder.encode("$issuer:$accountName", Charsets.UTF_8)
 
