@@ -7,6 +7,15 @@ import io.kudos.base.enums.impl.YesNotEnum
 import kotlin.reflect.KClass
 
 
+/**
+ * 审计日志注解。
+ *
+ * 给业务方法 / 属性 getter/setter 标注操作类型、所属模块与描述，由 [io.kudos.ability.log.audit.common.annotation.LogAuditAspect]
+ * 在方法执行前后拦截并落盘审计日志。
+ *
+ * @author K
+ * @since 1.0.0
+ */
 @Target(
     AnnotationTarget.FUNCTION,
     AnnotationTarget.PROPERTY_GETTER,
@@ -41,8 +50,8 @@ annotation class Audit(
      */
     val opTypeExt: String = "",
     /**
-     *
-     * @return
+     * 审计明细描述格式化器，决定 detail.description 的最终展示形式。
+     * 默认走 [DefaultAuditLogDetailDescriptionFormatter]；业务侧实现 [IAuditLogDetailDescriptionFormatter] 后填到这里即可定制。
      */
     val descriptionFormatter: KClass<out IAuditLogDetailDescriptionFormatter> = DefaultAuditLogDetailDescriptionFormatter::class
 )
