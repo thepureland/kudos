@@ -13,20 +13,15 @@ import io.kudos.tools.codegen.model.po.CodeGenFile
  */
 object CodeGenFileService {
 
-    fun read(): List<String> {
-        return CodeGenFileDao.searchCodeGenFileNames(CodeGeneratorContext.tableName)
-    }
+    fun read(): List<String> = CodeGenFileDao.searchCodeGenFileNames(CodeGeneratorContext.tableName)
 
     fun save(files: Collection<String>): Boolean {
-        val filesInDb = read()
-        val codeGenFileList = mutableListOf<CodeGenFile>()
-        files.filter { !filesInDb.contains(it) }.forEach { file ->
-            codeGenFileList.add(
-                CodeGenFile {
-                    filename = file
-                    objectName = CodeGeneratorContext.tableName
-                }
-            )
+        val filesInDb = read().toSet()
+        val codeGenFileList = files.filterNot { it in filesInDb }.map { file ->
+            CodeGenFile {
+                filename = file
+                objectName = CodeGeneratorContext.tableName
+            }
         }
         return CodeGenFileDao.batchInsert(codeGenFileList) == codeGenFileList.size
     }

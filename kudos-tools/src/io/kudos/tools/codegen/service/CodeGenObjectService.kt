@@ -17,47 +17,41 @@ object CodeGenObjectService {
 
     fun readTables(): Map<String, String?> {
         // from meta data
-        val tables = RdbMetadataKit.getTablesByType(TableTypeEnum.TABLE, TableTypeEnum.VIEW)
-        val nameAndComments = mutableMapOf<String, String?>()
-        tables.filter {
-            val n = it.name
-            n != null && n !in setOf("code_gen_file", "code_gen_object", "code_gen_column")
-                    && !n.startsWith("flyway_")
-        }.forEach { t -> t.name?.let { nameAndComments[it] = t.comment } }
+        val nameAndComments = RdbMetadataKit.getTablesByType(TableTypeEnum.TABLE, TableTypeEnum.VIEW)
+            .asSequence()
+            .mapNotNull { t -> t.name?.let { it to t.comment } }
+            .filter { (n, _) -> n !in EXCLUDED_TABLES && !n.startsWith("flyway_") }
+            .toMap(mutableMapOf())
 
-        // from code_gen_object
-        val codeGenObjects = CodeGenObjectDao.allSearch()
-        for (codeGenObject in codeGenObjects) {
-            if (nameAndComments.contains(codeGenObject.name)) {
-                nameAndComments[codeGenObject.name] = codeGenObject.comment
-            }
-        }
+        // from code_gen_object：覆盖元数据中已有条目的注释（用户自填注释优先）
+        CodeGenObjectDao.allSearch()
+            .filter { it.name in nameAndComments }
+            .forEach { nameAndComments[it.name] = it.comment }
         return nameAndComments
     }
 
+    private val EXCLUDED_TABLES = setOf("code_gen_file", "code_gen_object", "code_gen_column")
+
     fun saveOrUpdate(): Boolean {
-        val table = CodeGeneratorContext.tableName
-        val comment = CodeGeneratorContext.tableComment
+        val tableComment = CodeGeneratorContext.tableComment
         val author = CodeGeneratorContext.config.getAuthor()
-        val codeGenObject = CodeGenObjectDao.searchByName(table)
-        return if (codeGenObject == null) {
+        val existing = CodeGenObjectDao.searchByName(CodeGeneratorContext.tableName)
+        if (existing == null) {
             CodeGenObjectDao.insert(CodeGenObject {
-                name = table
-                this.comment = comment
+                name = CodeGeneratorContext.tableName
+                comment = tableComment
                 createTime = LocalDateTime.now()
                 createUser = author
                 genCount = 1
             })
-            true
-        } else {
-            with(codeGenObject) {
-                this.comment = comment
-                updateTime = LocalDateTime.now()
-                updateUser = author
-                genCount = codeGenObject.genCount + 1
-            }
-            CodeGenObjectDao.update(codeGenObject)
+            return true
         }
+        return CodeGenObjectDao.update(existing.apply {
+            comment = tableComment
+            updateTime = LocalDateTime.now()
+            updateUser = author
+            genCount += 1
+        })
     }
 
 }
