@@ -68,15 +68,11 @@ open class SysDataSourceService(
         return result
     }
 
+    @Suppress("UNCHECKED_CAST")
     @Transactional(readOnly = true)
-    override fun <R : Any> get(id: String, returnType: KClass<R>): R? {
-        return if (returnType == SysDataSourceCacheEntry::class) {
-            @Suppress("UNCHECKED_CAST")
-            sysDataSourceHashCache.getDataSourceById(id) as R?
-        } else {
-            enrichDataSourceDetail(super.get(id, returnType), returnType)
-        }
-    }
+    override fun <R : Any> get(id: String, returnType: KClass<R>): R? =
+        if (returnType == SysDataSourceCacheEntry::class) sysDataSourceHashCache.getDataSourceById(id) as R?
+        else enrichDataSourceDetail(super.get(id, returnType), returnType)
 
     @Transactional
     override fun insert(any: Any): String {
@@ -168,16 +164,13 @@ open class SysDataSourceService(
     override fun getDataSourcesBySubSystemCode(subSystemCode: String): List<SysDataSourceRow> =
         dao.searchAs(Criteria(SysDataSource::subSystemCode eq subSystemCode))
 
-    override fun testConnection(url: String, username: String, password: String?): Boolean {
-        return try {
+    override fun testConnection(url: String, username: String, password: String?): Boolean =
+        runCatching {
             io.kudos.ability.data.rdb.jdbc.kit.RdbKit.newConnection(url, username, password).use { conn ->
                 io.kudos.ability.data.rdb.jdbc.kit.RdbKit.testConnection(conn)
             }
-        } catch (e: Exception) {
-            log.warn("测试数据源连通性失败 url=${url} username=${username}: ${e.message}")
-            false
-        }
-    }
+        }.onFailure { log.warn("测试数据源连通性失败 url=$url username=$username: ${it.message}") }
+            .getOrDefault(false)
 
     private fun enrichTenantNames(records: List<SysDataSourceRow>) {
         if (records.isEmpty()) return
