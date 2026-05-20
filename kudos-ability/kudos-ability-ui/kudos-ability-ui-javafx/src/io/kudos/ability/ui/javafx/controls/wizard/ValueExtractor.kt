@@ -29,23 +29,45 @@ import javafx.scene.control.*
 import javafx.util.Callback
 
 
+/**
+ * 把 JavaFX 控件按类型映射到"读取当前值"的回调，向导各页用统一接口取值无需关心具体控件类型。
+ *
+ * 内置常见控件：CheckBox/ChoiceBox/ComboBox/DatePicker/PasswordField/RadioButton/Slider/TextArea/TextField/
+ * ListView/TreeView/TableView/TreeTableView。业务侧需要新控件时调 [addValueExtractor] 自行注册。
+ *
+ * @author Oracle (原始) / K (适配)
+ * @since 1.0.0
+ */
 object ValueExtractor {
 
+    /** 控件类 → 取值回调；按运行时 `n.javaClass` 精确匹配，不做继承体系扩展 */
     private val valueExtractors = mutableMapOf<Class<*>, Callback<Any, Any>>()
 
+    /**
+     * 注册一种控件类型的取值回调。
+     * 内部把 [Callback]'s 泛型擦除存为 `Callback<Any, Any>`，调用时再按 [Node.javaClass] 做精确分发。
+     *
+     * @param T 控件类型
+     * @param clazz 控件 Class 对象，决定 [getValue] 时的精确匹配 key
+     * @param extractor 把该类型控件转为业务值的回调
+     * @author K
+     * @since 1.0.0
+     */
     @Suppress("UNCHECKED_CAST")
     private fun <T : Any> addValueExtractor(clazz: Class<T>, extractor: Callback<T, Any>) {
         valueExtractors[clazz] = extractor as Callback<Any, Any>
     }
 
     /**
-     * Attempts to return a value for the given Node. This is done by checking
-     * the map of value extractors, contained within this class. This
-     * map contains value extractors for common UI controls, but more extractors
-     * can be added by calling [.addValueExtractor].
+     * 尝试从给定控件读取业务值。
+     * 通过 [valueExtractors] 精确匹配 `n.javaClass`；
+     * 未注册的控件类型返回 null（业务侧需自行调用 [addValueExtractor] 扩展支持）。
      *
-     * @param n The node from whom a value will hopefully be extracted.
-     * @return The value of the given node.
+     * @param n 待取值的控件
+     * @return 控件当前值；未注册类型返回 null
+     * @throws IllegalArgumentException 当 map 内已注册但回调被异常清空时（不应出现）
+     * @author K
+     * @since 1.0.0
      */
     fun getValue(n: Node): Any? {
         var value: Any? = null
