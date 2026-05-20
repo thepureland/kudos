@@ -13,10 +13,9 @@ import java.io.Serializable
  */
 class NotifyMessageVo<T : Serializable> : Serializable {
     /**
-     * 通知类型——派发依据。Java 序列化跨进程时如果 sender 没用三参构造器赋值，此处
-     * 会 deserialize 出 `lateinit not initialized` 状态；调用方读取前应自行判断。
+     * 通知类型——派发依据。默认为空串，让 producer / consumer 可以用 `isBlank()` 做统一防御。
      */
-    lateinit var notifyType: String
+    var notifyType: String = ""
 
     /**
      * 消息内容

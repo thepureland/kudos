@@ -28,11 +28,10 @@ kudos:
 
 ## 已知限制
 
-- ❗ `NotifyListenerItem.notifyListenerMap` 用普通 `mutableMapOf`——只在装配期写、运行期读，
-  依赖 Spring 装配完成的 happens-before。**业务侧若 runtime 动态注册 listener 需自行同步**
-- ❗ `NotifyMessageVo.notifyType` 是 `lateinit var`——Java 序列化跨进程时如果发送方用了无
-  notifyType 的构造器，反序列化端读 notifyType 会抛 `UninitializedPropertyAccessException`。
-  消费端应 try-catch 或先用反射检查
+- ✅ `NotifyListenerItem.notifyListenerMap` 已改为两级 `ConcurrentHashMap`，空白 namespace
+  回落 default namespace，并补单测锁住 namespace 隔离
+- ✅ `NotifyMessageVo.notifyType` 已从 `lateinit var` 改成默认空串，producer / consumer
+  可统一用 `isBlank()` 防御未设置类型的消息，并补构造器单测
 - ❗ `INotifyListener` 没有重试 / 失败补偿契约——投递语义全看 producer 实现（MQ at-least-once
   / fire-and-forget），业务侧必须自行做幂等
 
