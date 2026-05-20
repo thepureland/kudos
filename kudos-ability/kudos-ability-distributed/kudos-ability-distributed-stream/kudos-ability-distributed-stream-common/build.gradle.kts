@@ -6,4 +6,6 @@ dependencies {
     api(libs.spring.cloud.stream)
     // Spring Boot 4 使用 Jackson 3 (tools.jackson)，Spring Cloud Function 需要 Jackson 3 的 Kotlin 模块
     api(libs.jackson.module.kotlin)
+
+    testImplementation(project(":kudos-test:kudos-test-common"))
 }

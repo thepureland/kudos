@@ -130,8 +130,10 @@ kudos:
 - ❗ `StreamConsumerEnvironRegistrar` 扫描所有 kudos yml——业务方自有 yml 不在 `kudos.*` 命名
   下的 function.definition 不会被合并，需 spring 默认机制读取
 - ❗ 没有 producer-side 限流；高 QPS 业务可能把 StreamBridge 队列打爆
-- ❗ **零测试**——`@MqProducer` 切面 / `StreamGlobalExceptionHandler` 三入口 / 失败重试
-  / function.definition 聚合都靠手工 + 集成验证
+- ✅ 已补基础单测：`StreamMessageConverter` 序列化往返、`StreamHeader.toContextParam`
+  header 还原、`StreamFailHandlerItem` 精确匹配 / 默认 fallback
+- ❗ `@MqProducer` 切面 / `StreamGlobalExceptionHandler` 三入口 / 失败重试
+  / function.definition 聚合仍主要靠手工 + 集成验证
 
 ## 依赖
 
