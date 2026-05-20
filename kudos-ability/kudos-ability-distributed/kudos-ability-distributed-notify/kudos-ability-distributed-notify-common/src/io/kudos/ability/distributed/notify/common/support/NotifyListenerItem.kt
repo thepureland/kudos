@@ -1,14 +1,16 @@
 package io.kudos.ability.distributed.notify.common.support
 
 import io.kudos.ability.distributed.notify.common.api.INotifyListener
+import java.util.concurrent.ConcurrentHashMap
 
 
 /**
  * [INotifyListener] bean 注册表——按 `(namespace, type)` 索引。
  *
- * 并发约定：写入仅在 Spring `BeanPostProcessor` 阶段（单线程）；读取在 MQ 派发阶段
- * （多线程）。`mutableMapOf` 没有显式同步——依赖 Spring 装配完成后才有 MQ 流量到达
- * 的隐式 happens-before。如果业务侧在 runtime 动态注册 listener，需要自行 sync。
+ * 并发约定：写入主要发生在 Spring `BeanPostProcessor` 阶段（单线程），读取在 MQ 派发阶段
+ * （多线程）。改用 [ConcurrentHashMap] 把约束变成显式安全——即便业务侧在 runtime 动态注册
+ * listener 也不会触发 ConcurrentModificationException 或可见性问题。`getOrPut` 在 CHM 上仍
+ * 不是原子的，但本注册表"写入仅在装配期"是已知约束，这里的非原子 getOrPut 不会引入新风险。
  *
  * @author Younger
  * @author K
@@ -19,8 +21,8 @@ object NotifyListenerItem {
     /** 当 listener 没指定 namespace 时回落的默认值。 */
     const val DEFAULT_NAMESPACE: String = "default"
 
-    /** namespace → (key → listener) 两级索引；不显式同步，依赖 Spring 装配完毕的隐式 happens-before */
-    private val notifyListenerMap = mutableMapOf<String, MutableMap<String, INotifyListener>>()
+    /** namespace → (key → listener) 两级索引，两级都用 [ConcurrentHashMap]，读路径完全无锁。 */
+    private val notifyListenerMap = ConcurrentHashMap<String, ConcurrentHashMap<String, INotifyListener>>()
 
     /**
      * 在指定 namespace 下注册 listener；空白 namespace 自动回落 [DEFAULT_NAMESPACE]。
@@ -33,7 +35,7 @@ object NotifyListenerItem {
      */
     fun put(namespace: String, key: String, listener: INotifyListener) {
         val actualNamespace = namespace.ifBlank { DEFAULT_NAMESPACE }
-        notifyListenerMap.getOrPut(actualNamespace) { mutableMapOf() }[key] = listener
+        notifyListenerMap.getOrPut(actualNamespace) { ConcurrentHashMap() }[key] = listener
     }
 
     /**
