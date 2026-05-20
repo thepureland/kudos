@@ -150,6 +150,26 @@ class HashBatchCacheableByPrimaryAspect {
         return proceeded as Map<String, Any?>
     }
 
+    /**
+     * 把缓存未命中的 key 列表反算出"该走 DB 的入参"，再 proceed 到目标方法回源。
+     *
+     * 核心难点：业务方法的入参可能是 `Collection<T>` / `Array<T>`，且每个缓存 key 是多段组合
+     * （例：`tenantId:userId`），需要：
+     * 1. 把每个 noExistKey 按 [IKeysGenerator.getDelimiter] 拆段
+     * 2. 取第 `paramIndex` 段，用集合中第一个元素的类型作样本调 [toType] 反序列化回原类型
+     * 3. 按原参数声明类型（List/Set/Array<X>）重新装回集合并替换 args[paramIndex]
+     *
+     * 不能直接传 String 列表——目标方法的签名可能要求 `List<Long>` / `Array<Int>` 等具体类型，
+     * 不做类型还原会在 reflection invoke 时抛 ClassCastException。
+     *
+     * @param noExistKeys 缓存中未命中的 key 列表（已格式化为 `seg1:seg2:...`）
+     * @param joinPoint AOP 切入点（拿原始 args）
+     * @param function 目标 KFunction（拿参数索引元信息）
+     * @param keysGenerator key 生成器（提供 delimiter + paramIndexes 反查）
+     * @return 重新跑目标方法后的 key→value map；null 表示无需回源
+     * @author K
+     * @since 1.0.0
+     */
     private fun readUncachedData(
         noExistKeys: List<String>,
         joinPoint: ProceedingJoinPoint,
