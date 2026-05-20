@@ -1,10 +1,6 @@
 package io.kudos.context.kit
 
-import io.kudos.base.logger.LogFactory
-import org.springframework.aop.framework.AdvisedSupport
-import org.springframework.aop.framework.AopProxy
-import org.springframework.aop.support.AopUtils
-import java.lang.reflect.Field
+import org.springframework.aop.framework.AopProxyUtils
 import kotlin.reflect.KClass
 
 /**
@@ -15,56 +11,21 @@ import kotlin.reflect.KClass
  */
 object ProxyKit {
 
-    private val LOG = LogFactory.getLog(this::class)
-
     /**
-     * 取得JDK动态代理/CGLIB代理对象
+     * 取得 JDK 动态代理 / CGLIB 代理背后的真实目标类。非代理对象原样返回 `obj::class`。
      *
-     * @param proxy JDK动态代理/CGLIB代理对象
-     * @return 代理对象的真实类型, 如果出错将返回null
+     * 旧实现走反射读 `CGLIB$CALLBACK_0` / JDK `h` 字段 + `AdvisedSupport.targetSource.target`，
+     * 在 Spring Framework 6 / Spring Boot 4 内置 CGLib 重写后字段名/结构可能变，是潜在 bug
+     * 来源。改为调 Spring 公开 API [AopProxyUtils.ultimateTargetClass]——它穿透嵌套代理拿到
+     * 最终目标类，对 JDK 动态代理与 CGLib 代理都成立，且没有反射的 happy-path 风险。
+     *
+     * @param proxy 代理对象或普通对象
+     * @return 真实目标类型；任何异常路径返回 null（与旧契约一致）
      * @author K
      * @since 1.0.0
      */
-    fun getTargetClass(proxy: Any): KClass<*>? {
-        if (!AopUtils.isAopProxy(proxy)) {
-            return proxy::class //不是代理对象
-        }
-        if (AopUtils.isJdkDynamicProxy(proxy)) {
-            try {
-                return getJdkDynamicProxyTargetObject(proxy)::class
-            } catch (e: Exception) {
-                LOG.error(e, "获取jdk动态代理对象出错！")
-            }
-        } else { //cglib
-            try {
-                return getCglibProxyTargetObject(proxy)::class
-            } catch (e: Exception) {
-                LOG.error(e, "获取CGLIB代理对象出错！")
-            }
-        }
-        return null
-    }
-
-    private fun getCglibProxyTargetObject(proxy: Any): Any {
-        val h = proxy.javaClass.getDeclaredField($$"CGLIB$CALLBACK_0")
-        h.isAccessible = true
-        val dynamicAdvisedInterceptor = h[proxy]
-        val advised = dynamicAdvisedInterceptor.javaClass.getDeclaredField("advised")
-        advised.isAccessible = true
-        return requireNotNull((advised[dynamicAdvisedInterceptor] as AdvisedSupport).targetSource.target) {
-            "CGLIB proxy target is null"
-        }
-    }
-
-    private fun getJdkDynamicProxyTargetObject(proxy: Any): Any {
-        val h = proxy.javaClass.superclass.getDeclaredField("h")
-        h.isAccessible = true
-        val aopProxy: AopProxy = h[proxy] as AopProxy
-        val advised: Field = aopProxy.javaClass.getDeclaredField("advised")
-        advised.isAccessible = true
-        return requireNotNull((advised[aopProxy] as AdvisedSupport).targetSource.target) {
-            "JDK dynamic proxy target is null"
-        }
-    }
+    fun getTargetClass(proxy: Any): KClass<*>? = runCatching {
+        AopProxyUtils.ultimateTargetClass(proxy).kotlin
+    }.getOrNull()
 
 }
