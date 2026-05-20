@@ -98,3 +98,17 @@ kudos-ms-auth-api-public
 - 新增"当前用户视图"型接口（同样需要 RequestContext）：在 `controller/platform/` 下扩展，
   在 `auth-common.platform.api` 加对应接口契约，保持 controller 类只做"取上下文 + 委托
   `core` 实现"。
+
+## 已知限制 / 后续工作
+
+- ❗ **路径 `/api/internal/auth/permittedResource/...` 名义上是 internal 但实际在 public 暴露** —
+  这是有意为之（需取 RequestContext），但与"internal 仅集群内可达"约定冲突；运维容易误以为
+  本路径不需外网鉴权
+- ❗ **`getMenusForCurrentUser` 缺少 `@PreAuthorize`** — 只检查"有 userId"，不校验"会话有效"；
+  绕过 session filter 直接构造 RequestContext 可越权拿菜单
+- ❗ **菜单树没有缓存** — 每次请求都跑"用户 → 组 → 角色 → 资源"完整链路；高并发场景应在
+  `IPermittedResource` 实现侧加 user 级缓存（与 `ResourceIdsByUserIdCache` 配合）
+- ❗ **未提供 admin 视角下的"看他人菜单"** — admin 排查权限问题时无法通过 API 看到指定用户的
+  菜单视图；需要业务方自建 admin 接口走 service 层
+- ❗ **`AuthApiWebApplication` 单独运行无 admin 路径** — 与 sys-api-public 类似，
+  本模块单独 boot 仅得 `permittedResource` 一个端点；管理用户角色等仍需 admin 进程
