@@ -96,8 +96,10 @@ kudos:
   耦合 Spring 容器。改成 ctor 注入更好测
 - ❗ `RocketMqBatchConsumer` 业务异常时只调 `consumer.commit()`——没有死信队列概念，靠
   `sys_mq_fail_msg` 表替代 DLQ
-- ❗ `@Import(StreamConsumerEnvironRegistrar::class)` 注释停用——同 rabbit / kafka 模块
-- ❗ 默认 yml `name-server: localhost:9876` 仅本地开发可用；生产部署必须通过外部化配置覆盖
+- ✅ 已启用 `@Import(StreamConsumerEnvironRegistrar::class)`，RocketMQ 模块会参与 kudos yml
+  function.definition 自动聚合
+- ✅ 默认 yml 的 `name-server` 已改为 `${ROCKETMQ_NAME_SERVER:localhost:9876}`，生产部署
+  可直接通过环境变量覆盖；本地开发仍保留 localhost 默认值
 
 ## 依赖
 

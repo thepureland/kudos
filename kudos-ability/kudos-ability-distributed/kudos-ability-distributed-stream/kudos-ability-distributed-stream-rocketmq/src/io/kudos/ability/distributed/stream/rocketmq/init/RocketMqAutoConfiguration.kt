@@ -1,11 +1,13 @@
 package io.kudos.ability.distributed.stream.rocketmq.init
 
 import io.kudos.ability.distributed.stream.common.init.StreamCommonConfiguration
+import io.kudos.ability.distributed.stream.common.init.StreamConsumerEnvironRegistrar
 import io.kudos.context.config.YamlPropertySourceFactory
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Import
 import org.springframework.context.annotation.PropertySource
 
 
@@ -23,6 +25,8 @@ import org.springframework.context.annotation.PropertySource
  * [AutoConfigureAfter] 在 kudos 体系下有效：`ComponentInitializationDispatcher` 按依赖顺序
  * 调度，本模块在 [ContextAutoConfiguration] 之后初始化。
  *
+ * 通过 [StreamConsumerEnvironRegistrar] 启用 multi-binding function.definition 自动聚合。
+ *
  * @author K
  * @since 1.0.0
  */
@@ -35,7 +39,7 @@ import org.springframework.context.annotation.PropertySource
     ],
     factory = YamlPropertySourceFactory::class
 )
-//@Import(StreamConsumerEnvironRegistrar::class)
+@Import(StreamConsumerEnvironRegistrar::class)
 open class RocketMqAutoConfiguration : StreamCommonConfiguration(), IComponentInitializer {
 
     /** kudos 装配 SPI 用的组件名——务必全模块唯一，与 jar artifact 同名约定。 */
