@@ -148,6 +148,15 @@ open class SysSystemService(
         return count
     }
 
+    /**
+     * 从 update 入参抽 code（这里 id 即 code）；要求实现 [IIdEntity] 且 id 是 String。
+     *
+     * @param any 更新入参
+     * @return 系统 code
+     * @throws IllegalStateException 入参类型不被支持
+     * @author K
+     * @since 1.0.0
+     */
     private fun requireSystemCode(any: Any): String =
         (any as? IIdEntity<*>)?.id as? String
             ?: error("更新系统时不支持的入参类型: ${any::class.qualifiedName}")
