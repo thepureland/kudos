@@ -154,6 +154,20 @@ open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<
         return resultList.toList()
     }
 
+    /**
+     * 合并"直接绑定的角色"与"通过组继承的角色"为去重后的有效角色列表。
+     * 早返：两边都空时立刻返回空列表。
+     *
+     * 注：该 helper 在 RoleIdsByUserIdCache / ResourceIdsByUserIdCache 中也有完全相同的实现，
+     * 历史上没有提取为顶层 util 以避免引入跨模块依赖；如未来调用方再增多，建议下沉到 base 层。
+     *
+     * @param directRoleIds 用户直接持有的角色 id 集合
+     * @param groupIds 用户所属组 id 集合
+     * @param groupIdToRoleIds 组 id → 该组持有的角色 id 列表（批量预 load 避免 N+1）
+     * @return 去重后的有效角色 id 列表
+     * @author K
+     * @since 1.0.0
+     */
     private fun computeEffectiveRoleIds(
         directRoleIds: Collection<String>,
         groupIds: Collection<String>,

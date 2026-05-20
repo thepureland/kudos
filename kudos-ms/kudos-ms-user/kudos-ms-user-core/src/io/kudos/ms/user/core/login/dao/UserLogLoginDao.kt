@@ -93,6 +93,18 @@ open class UserLogLoginDao : BaseCrudDao<String, UserLogLogin, UserLogLogins>() 
         return count(criteria)
     }
 
+    /**
+     * 把可选过滤参数拼成 [Criteria]：每个非 null 字段追加一条 AND 条件。
+     * 给 count / search 调用复用，避免 if-not-null 模板代码散落。
+     *
+     * @param tenantId 租户 id 过滤；null 表示不限
+     * @param userId 用户 id 过滤；null 表示不限
+     * @param startTime loginTime 下界（闭区间 `>=`）
+     * @param endTime loginTime 上界（闭区间 `<=`）
+     * @return 拼好的 Criteria
+     * @author K
+     * @since 1.0.0
+     */
     private fun buildCriteria(
         tenantId: String?,
         userId: String?,
