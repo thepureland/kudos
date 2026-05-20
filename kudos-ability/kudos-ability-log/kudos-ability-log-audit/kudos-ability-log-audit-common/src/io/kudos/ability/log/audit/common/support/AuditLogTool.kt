@@ -80,6 +80,22 @@ object AuditLogTool {
         baseLog.paramArgs = joinPoint.args
     }
 
+    /**
+     * 解析当前 [BaseLog] 该用哪个 [IAuditLogDetailDescriptionFormatter]：
+     *
+     * - `formatterClazz == DefaultAuditLogDetailDescriptionFormatter::class`（业务没指定具体实现）：
+     *   走所有已注册的 formatter，挑首个 `needFormat=true` 的——业务可通过实现 [needFormat] 自动 opt-in
+     * - 否则：业务在 `@Audit(descriptionFormatter = MyFmt::class)` 显式指定，直接走 SpringKit.getBean
+     *
+     * 历史 bug 注：旧实现拿 KClass 与 ::class.java（Java Class）比，always false 导致自动选择路径
+     * 永远不进——已修正为 KClass vs KClass。
+     *
+     * @param baseLog 当前日志
+     * @param formatterClazz @Audit 注解上声明的 formatter 类
+     * @return 选中的 formatter；都不匹配时 null
+     * @author K
+     * @since 1.0.0
+     */
     private fun descriptionFormatter(
         baseLog: BaseLog,
         formatterClazz: KClass<out IAuditLogDetailDescriptionFormatter>
@@ -217,6 +233,16 @@ object AuditLogTool {
             return otherInfos[SysAuditDetailLogVo.AUDIT_LOG_DESC] as String?
         }
 
+    /**
+     * 取详情描述：先看 context 里业务方主动塞的 detailDescription，没有就走 [IAuditLogDetailDescriptionFormatter]。
+     * 二级降级：formatter 也找不到时回空串（不写日志而非抛错——保证审计不影响业务）。
+     *
+     * @param vo 当前日志
+     * @return 详情描述
+     * @throws IllegalArgumentException descriptionFormatterClass 为 null（注解未正确装配）
+     * @author K
+     * @since 1.0.0
+     */
     private fun detailDescription(vo: BaseLog): String? {
         detailDescription?.takeIf { it.isNotBlank() }?.let { return it }
         val formatterClass = requireNotNull(vo.descriptionFormatterClass) { "descriptionFormatterClass is null" }
@@ -256,6 +282,15 @@ object AuditLogTool {
     private val subSysCode: String?
         get() = KudosContextHolder.get().subSystemCode
 
+    /**
+     * 构造审计详情记录 (SysAuditDetailLogVo)：与 SysAuditLogVo 通过 auditId 关联，
+     * 把 web 请求的 url / referer / 表单数据等"非主表 metadata"放在这里，避免主表过宽。
+     *
+     * @param sysAuditLog 主审计记录
+     * @return 详情记录
+     * @author K
+     * @since 1.0.0
+     */
     private fun getAuditDetail(sysAuditLog: SysAuditLogVo): SysAuditDetailLogVo =
         SysAuditDetailLogVo().apply {
             id = RandomStringKit.uuid()
