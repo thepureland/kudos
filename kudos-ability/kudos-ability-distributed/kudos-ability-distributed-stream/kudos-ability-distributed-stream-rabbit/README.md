@@ -46,13 +46,11 @@ RabbitMqTestContainer.startIfNeeded(registry)
 
 - ❗ 模块自身仅装配类一个文件——本质上是 spring-cloud-starter-stream-rabbit 的 thin
   re-package + kudos yml 命名空间约定
-- ❗ build.gradle.kts 有一行 commented-out 注释依赖（flyway-database-postgresql）；与本模块
-  实际无关，可移除
-- ❗ `@Import(StreamConsumerEnvironRegistrar::class)` 注释停用了——三个 broker 模块（rabbit /
-  kafka / rocketmq）都注释着，等于 kudos.* yml function.definition 自动聚合特性**全局未启用**。
-  要启用 multi-consumer aggregation 需在对应 broker 模块取消注释
-- ❗ 默认 yml 把 `password: guest` 明文写在 resources 下——生产部署务必通过环境变量 /
-  外部化配置覆盖，否则 mvnrepository 抓取到默认配置等于裸奔
+- ✅ 已移除 build.gradle.kts 中与本模块无关的 commented-out PostgreSQL/Flyway 依赖
+- ✅ 已启用 `@Import(StreamConsumerEnvironRegistrar::class)`，rabbit 模块会参与 kudos yml
+  function.definition 自动聚合
+- ✅ 默认 yml 的 RabbitMQ password 已改为 `${RABBITMQ_PASSWORD:guest}`，生产部署可直接通过
+  环境变量覆盖；本地开发仍保留 guest 默认值
 
 ## 依赖
 
