@@ -73,3 +73,15 @@ kudos-ms-sys-api-admin
 - 新增管理接口：优先在 **core** 完成 `ISys*Service` 能力，再在本模块新增 `*AdminController`，保持 VO 仅来自 **common**。
 - **不要**把 `/api/admin/**` 端点放到 `common.ISys*Api` 接口里。`common` 中接口的 `@*Mapping` 仅用于 `/api/internal/**` 路径，是 admin / internal 双轨制的契约边界。
 - 管理路径首段使用 `camelCase`（与现有保持一致），不要混用 `kebab-case` 或 `snake_case`。
+
+## 已知限制 / 后续工作
+
+- ❗ **零 `@PreAuthorize`** — 15 个 admin 控制器全部依赖外部网关 + `UserContextWebFilter` 做鉴权；
+  网关漏配则 sys 全表 CRUD 直接暴露
+- ❗ **没有审计装饰** — admin 路径上的写操作（dict / param / accessRule 等）应当默认接入
+  `@Audit` 注解，但部分控制器漏标；改字典 / 参数等敏感数据当前可能不留审计
+- ❗ **批量端点缺幂等控制** — `batchDelete` 等没有 idempotencyKey；重试导致重复事件
+- ❗ **camelCase 路径与 RESTful 风格不一致** — `/api/admin/sys/dictItem` 而非 `dict-items`，
+  与外部 OpenAPI 约定可能冲突；改路径需同步控制台前端
+- ❗ **未与 `api-public` 默认合并** — admin 单独 boot 时本身已有 Web 栈，但若与 public 同进程
+  跑需要业务方在 build.gradle.kts 主动聚合；运维易混淆

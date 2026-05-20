@@ -85,3 +85,19 @@
   登记 / 参数 / i18n 文案——遵循"被写入方负责 DDL，写入方负责 INSERT"。
 
 具体类名与边界以各子模块源码为准。
+
+## 已知限制 / 后续工作
+
+- ❗ **生效权限算法分散** — "用户 → 直接角色 ∪ 组继承角色"的合并逻辑同时存在于
+  `RoleIdsByUserIdCache.computeEffectiveRoleIds` / `ResourceIdsByUserIdCache.computeEffectiveRoleIds` /
+  `ResourceIdsByTenantIdAndUsernameCache.computeEffectiveRoleIds` 三处，代码完全一样——
+  后续应下沉到 base 层 util，避免三处漂移
+- ❗ **只有 `role` 对外开 Feign** — `group` 域只暴露 admin HTTP，跨服务想查"用户所在组" /
+  "组的权限"必须走 admin 路径或自建 group Proxy
+- ❗ **组层级 path 字段未文档化** — `auth_group.path` 是字符串祖先链（如 `/g1/g2/g3`），
+  上级路径继承权限要靠 path LIKE 查询；README 提到"详见 path 字段"但没有具体格式说明
+- ❗ **资源 / 用户主数据跨服务一致性** — auth 只持 id 不持快照；`sys_resource` / `user_account`
+  被改名 / 删除时，auth 这边的 `auth_role_resource` / `auth_role_user` 会留死引用
+- ❗ **`/api/admin/auth/**` 零 `@PreAuthorize`** — 修改角色权限的接口仅靠网关守护
+- ❗ **fallback 只覆盖 `IAuthRoleApi`** — auth 客户端只有 1 个 Proxy 1 个 Fallback；group / 资源
+  绑定关系等其他接口若新增 Proxy，需补对应 Fallback

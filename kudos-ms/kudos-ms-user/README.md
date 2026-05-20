@@ -87,3 +87,16 @@
 - **`kudos-ms-auth`**：auth 引用本服务的 `user_account.id` 做角色 / 组的归属
 - **`kudos-ms-sys`**：user-core **同进程**依赖 `kudos-ms-sys-core`（不是 Feign 远调），
   拿子系统 / 租户元数据（active / accountTypeDictCode 等枚举）
+
+## 已知限制 / 后续工作
+
+- ❗ **user-core 直接依赖 sys-core 是耦合反模式** — 强同进程 jar 依赖让 user / sys 必须共部署，
+  违反"原子服务独立部署"目标；后续应迁移到 `sys-client` Feign 调用
+- ❗ **三个 `api-*` 模块不共享 controller / filter** — `UserContextWebFilter` 只在 `api-public`，
+  admin / internal 默认无 session→KudosContext 转换；切 admin 进程跑用户 API 会拿不到 context
+- ❗ **`api-admin` 当前是孤岛模块** — 未被任何 build 拉入，仅靠 `settings.gradle.kts` 注册；
+  CI 上能编译但生产部署需要业务方主动决定是否启用
+- ❗ **passport 内部状态机文档化不足** — 登录鉴权（密码 / OTP / 冻结判定 / 错误次数）的实际流程
+  分散在 `PassportService` + `UserAccountProtectionService`，README 仅提及"状态机"未图示
+- ❗ **组织树 path 列没有触发器维护** — `user_org.path` 为祖先链字符串，靠 service 层手动维护；
+  绕过 service 直接 DML 改 parent 不会同步 path，会导致树查询错乱

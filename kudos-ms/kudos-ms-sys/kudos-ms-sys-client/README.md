@@ -101,3 +101,18 @@ interface ISysTenantProxy : ISysTenantApi
 ## 扩展建议
 
 - 新增远程能力：先在 **common** 定义 `ISys*Api`，再在 **core** 实现，最后在本模块对应业务目录下增加 **`proxy/ISys*Proxy`** 与 **`fallback/Sys*Fallback`**，保持三者一一对应。
+
+## 已知限制 / 后续工作
+
+- ❗ **服务名命名风格不统一** — `sys-tenantsystem` / `sys-accessruleip` 无连字符，但 `sys-out-line`
+  有；调整需同步 Nacos / 网关路由映射，目前没有静态检查防止漂移
+- ❗ **fallback 缺新方法时编译不报错** — 新增 `ISys*Api` 方法时 fallback 不会被强制 override，
+  漏写会让降级路径走默认抛错而非业务安全返回
+- ❗ **`SysClientFallbackSupport` 是历史别名** — 保留它只是为了不动 17 个已落地 Fallback；
+  新代码应直接继承 `AbstractFeignFallbackSupport`，但缺少 lint 提示
+- ❗ **`Pair` 入参的批量端点 client 侧无代理** — `batchGetActiveDictItemsHttp` 仅在 server 侧暴露，
+  调用方需自行调用 `HTTP /api/internal/sys/dict/batchGetActiveDictItems`
+- ❗ **`FeignDictItemCodeFinder` 通过 `SpringKit.getBean` 拿 Proxy** — 启动期校验场景下 Spring
+  上下文未就绪时会失败；当前依赖 lazy 触发的时机
+- ❗ **熔断 / 超时配置缺统一开关** — 19 个 Feign client name 各自独立配置，运维想"全局禁 sys"
+  需逐个 name 设置

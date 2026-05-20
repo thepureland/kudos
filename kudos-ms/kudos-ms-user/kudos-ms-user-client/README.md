@@ -55,3 +55,16 @@ private val passportProxy: IPassportProxy
   返回 `null` 或安全默认值；登录类返回明确的失败枚举（`PassportLoginStatusEnum.SERVICE_UNAVAILABLE`
   之类）
 - 不在 fallback 里做"重试"——重试是上游 / `kudos-ability-distributed-client-feign` 配置项的事
+
+## 已知限制 / 后续工作
+
+- ❗ **Fallback 静默吞错** — 当 Feign 调用失败回落到 fallback 时，业务侧从返回值无法区分"远端真返回空"
+  和"服务不可达"两种语义。需结合 `kudos-ability-distributed-client-feign` 的统一监控埋点观察
+- ❗ **`PassportFallback.login` 返回 `SERVICE_UNAVAILABLE` 后无重试** — 上游业务（auth 网关）
+  需自行做指数退避，否则瞬时抖动会被用户感知为"登录失败"
+- ❗ **多 Feign client name 没有统一开关** — `user-account` / `user-org` 等 7 个 client name
+  各自独立配置熔断 / 超时；想统一禁用 user 服务调用需逐个 name 配置
+- ❗ **缺少接口契约测试** — 当前 client 与 `user-core` 的方法签名仅靠 `IUser*Api` 同源保证；
+  签名漂移（如参数顺序变动）需依赖编译期发现。建议接入 Spring Cloud Contract（`kudos-test-api-contract`）
+- ❗ **`AbstractFeignFallbackSupport.name` 字符串硬编码** — 各 Fallback 在 ctor 里塞自己的类名字符串，
+  类被重命名时易遗漏；可改为反射 `this::class.simpleName`

@@ -55,3 +55,18 @@ OR now < freeze_end_time)`" 时视为"当前冻结"，登录被拒（返回 `ACC
 
 `user-core` 的测试用例不直接走 Flyway，而是用 `test-resources/sql/h2/<domain>/<class>.sql`
 做精确的小批量初始化（每个测试一份脚本，互不污染）。
+
+## 已知限制 / 后续工作
+
+- ❗ **只有 H2 方言落地** — `resources/sql/user/h2/` 是唯一可用方言；切 MySQL / PG 需要业务侧
+  手动复制同名目录、按方言差异调整（如 H2 的 `IDENTITY` 自增、JSON 类型表达式）
+- ❗ **冻结时间字段无索引** — `user_account.freeze_end_time` / `freeze_start_time` 用于登录判定，
+  但 V1.0.0.28 没有给这两列加索引；用户量大且大量冻结记录时，登录判定的过滤性能会下降
+- ❗ **`built_in` 内置位无强约束保护** — DDL 没有约束防止业务误删 `built_in=true` 的系统账号；
+  仅靠 service 层 `BuiltInGuard` 拦截
+- ❗ **密码字段哈希算法迁移路径不明** — `login_password` / `security_password` 当前 BCrypt，
+  若未来切到 Argon2 等需要带 versioned hash 前缀，DDL 暂无迁移钩子
+- ❗ **跨方言 baseline 不一致** — Flyway V1.0.0.0~V1.0.0.6 元数据 DML 在 h2 是 INSERT；
+  MySQL / PG 引入时需要业务方手动复制 + 检查字符集 / 时区差异
+- ❗ **缺少 `R_*_*` repeatable 脚本** — 当前所有都是 `V_*` 一次性脚本；视图 / 函数 / 字典 seed
+  数据应改为可重复执行的 `R_*_*` 以便迭代

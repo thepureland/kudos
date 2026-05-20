@@ -55,3 +55,16 @@ admin public internal
 - `msg-api-public:8083` / `msg-api-internal:18083`
 
 public 出口走 Ingress / ALB；internal 出口仅集群内网 + Nacos 注册。
+
+## 已知限制 / 后续工作
+
+- ❗ **`*-api-admin` 在多数服务里是孤岛** — 仅 `settings.gradle.kts` 注册，未被任何上层模块依赖；
+  实际部署时 admin 控制器没有任何进程承载，需业务方主动决定挂到 `api-public` 还是独立部署
+- ❗ **跨服务调用未走 Feign 的反例** — `kudos-ms-user-core` 直接 jar 依赖 `kudos-ms-sys-core`（同进程
+  方法调用），违反"原子服务独立部署"目标；user 必须与 sys 共部署，后续应迁移到 `sys-client`
+- ❗ **`/api/admin/**` 鉴权全靠网关** — 4 个服务的 admin 控制器**零 `@PreAuthorize`**；
+  网关漏配会让所有 admin API 直接暴露
+- ❗ **缺幂等性约束** — 各服务的 `batch*` / `insert` 没有 idempotencyKey 参数；
+  网关重试或客户端重试会产生重复记录 + 重复审计 + 重复缓存失效
+- ❗ **8 个独立进程的运维成本** — 每服务 public/internal 各一个进程，4 服务共 8 个；
+  开发态本地起全套需要 8 个端口 + 8 个 Spring Context；建议提供 "all-in-one" dev profile

@@ -129,3 +129,19 @@
 - **路径前缀双轨制**：管理路径 `/api/admin/sys/**`（仅 `api-admin`） vs 内部 RPC 路径 `/api/internal/sys/**`（仅 `api-internal`，且来自 `common` 接口的方法注解）。这两条路径有不同的鉴权与可达性预期，新增端点时不要混淆。
 - **业务模块清单**（与 `common` / `core` 一级目录对齐）：`accessrule`、`cache`、`datasource`、`dict`、`domain`、`i18n`、`locale`、`microservice`、`outline`、`param`、`resource`、`system`、`tenant`，共 13 个。
 - **包结构对齐原则**：`common` / `core` / `client` / `api-admin` / `api-internal` 在 `<module>/` 一级目录上完全一致，便于跨模块对照阅读。`api-public` 不含业务子目录，只有 `init`。
+
+## 已知限制 / 后续工作
+
+- ❗ **api-public 进程几乎无价值** — 当前 `api-public` 不挂任何业务控制器，纯 Web 装配壳；
+  若没有业务方在外层补 controller，启动它只占进程不提供能力。建议合并到 `api-admin` 或干脆删除
+- ❗ **fallback 与 server 端不参与编译对齐** — `*Proxy` 与 `*InternalController` 通过 `ISys*Api`
+  绑定，但 `*Fallback` 是 `open class extends AbstractFeignFallbackSupport`，**新增接口方法**
+  需手动在 fallback 补 override；漏写时 Feign 调用降级路径走默认抛错而非业务安全返回值
+- ❗ **`/api/admin/sys/**` 零 `@PreAuthorize`** — 模块层无任何鉴权；上游网关漏配 = 13 个业务模块的
+  CRUD 全暴露
+- ❗ **缓存依赖 `sys.sys_cache` 表配置** — `CacheConfigProvider` 启动从 DB 加载缓存配置 + 懒加载
+  cacheConfigs；DB 未就绪或表为空时缓存装配静默失败（没有醒目报错）
+- ❗ **dict 没有版本号** — `sys_dict_item` 改动后下游字典枚举类需要 `BeanKit` 重新映射；
+  缓存版本失效靠 `DictKey.FEIGN_CACHE_PREFIX` 等 keyVersion，无法精确到单条 dict
+- ❗ **`SysConsts.DEFAULT_SUB_SYSTEM_CODE` 硬编码** — 业务定制子系统码时需全工程 grep 替换；
+  没有配置式接入点
