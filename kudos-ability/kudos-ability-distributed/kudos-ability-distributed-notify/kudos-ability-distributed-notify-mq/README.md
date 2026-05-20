@@ -27,7 +27,9 @@ no-op，通知静默丢失。
 - 从 `mqNotify-in-0` binding 收 `Message<StreamMessageVo<JSONObject>>`
 - payload 反序列化为 `NotifyMessageVo`
 - 按 `notifyType` 在 `NotifyListenerItem` 查找 listener
-- 先查"本应用 namespace"，没命中再查 default namespace
+- 先查"本应用 namespace"；只有显式开启
+  `kudos.ability.distributed.notify.fallback-to-default-namespace=true` 时，未命中才继续查 default
+  namespace
 - 找到就调 `notifyProcess`；没找到只打 info 日志（不报错）
 
 ### binding 启动期校验
@@ -56,8 +58,8 @@ spring:
 - ❗ 同 log-audit-mq："AOP 占位"模式对新人不友好；切面未装载时通知静默丢失。运维只能从
   `notifyMqProducerBindingVerifier` 的 warn 日志判断。建议加 health check 检查 binding 状态
 - ❗ consumer 反序列化失败只打 error 日志不抛错——丢失的消息无补偿
-- ❗ `NotifyListenerItem.get(notifyType)`（fallback to default namespace）在多个 namespace
-  各自注册了同 type listener 时会派发到 default 那个，可能不符合业务预期
+- ✅ `NotifyListenerItem.get(notifyType)` 的 default namespace fallback 已改为显式开关，
+  默认不跨 namespace 派发，避免多个 namespace 同 type listener 时误投
 - ❗ binding 名 `mqNotify-out-0` / `mqNotify-in-0` 硬编码
 
 ## 依赖

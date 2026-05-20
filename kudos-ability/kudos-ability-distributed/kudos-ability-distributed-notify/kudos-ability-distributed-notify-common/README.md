@@ -13,7 +13,7 @@
 | `support/NotifyListenerBeanPostProcessor` | 启动期自动登记 listener 到 `NotifyListenerItem` |
 | `support/NotifyListenerItem` | `(namespace, type) → listener` 全局注册表 |
 | `init/NotifyCommonAutoConfiguration` | 装配入口 |
-| `init/properties/NotifyCommonProperties` | `failOnMissingProducer` + `listenerNamespace` 配置 |
+| `init/properties/NotifyCommonProperties` | `failOnMissingProducer` + `listenerNamespace` + `fallbackToDefaultNamespace` 配置 |
 
 ## 配置
 

@@ -94,10 +94,19 @@ open class NotifyMqAutoConfiguration : NotifyCommonAutoConfiguration(), ICompone
 
         log.info("[mqNotify] 消费通知, 类型: $notifyType")
         val namespace = resolveListenerNamespace()
-        val listener = NotifyListenerItem.get(namespace, notifyType) ?: NotifyListenerItem.get(notifyType)
+        val listener = NotifyListenerItem.get(namespace, notifyType) ?: findDefaultNamespaceListener(namespace, notifyType)
         listener?.notifyProcess(simpleMsgVo)
             ?: log.info("[mqNotify] 命名空间: $namespace, 类型: $notifyType, 无 listener 配置")
     }
+
+    private fun findDefaultNamespaceListener(namespace: String, notifyType: String) =
+        if (notifyCommonProperties?.fallbackToDefaultNamespace == true &&
+            namespace != NotifyListenerItem.DEFAULT_NAMESPACE
+        ) {
+            NotifyListenerItem.get(notifyType)
+        } else {
+            null
+        }
 
     /**
      * 解析当前应用的 listener namespace。
