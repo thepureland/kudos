@@ -110,8 +110,8 @@ class UserClientFallback(...) : UserClient, AbstractFeignFallbackSupport("UserCl
   跨服务统一传递仍需要服务端的 `FeignContextWebFilter` 配合（默认已注册）
 - ❗ `GlobalFeignFallBackFactory` 用 `HttpResult(status, message)` 作为唯一返回类型——
   适合简单"成功 / 失败" Feign 接口；返回业务对象的接口需要业务方自己写 `@FeignClient.fallback`
-- ❗ `IFeignRequestContextProcess` 的扩展顺序未指定（Spring 容器返回顺序）。多个实现互相
-  覆盖 header 时行为未定义；按命名约定不要让两个 processor 写同一个 header
+- ✅ `IFeignRequestContextProcess` 已按 Spring `Ordered` / `@Order` 规则排序，多个实现
+  需要确定先后关系时可显式声明 order，并补单测锁住顺序
 
 ## 依赖
 

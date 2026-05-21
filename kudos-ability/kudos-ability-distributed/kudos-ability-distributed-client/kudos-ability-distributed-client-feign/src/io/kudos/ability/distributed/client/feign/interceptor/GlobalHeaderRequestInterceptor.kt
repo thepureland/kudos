@@ -6,6 +6,7 @@ import io.kudos.ability.distributed.client.feign.support.IFeignRequestContextPro
 import io.kudos.context.core.KudosContextHolder
 import io.kudos.context.kit.SpringKit
 import io.kudos.context.support.Consts
+import org.springframework.core.annotation.AnnotationAwareOrderComparator
 import java.util.UUID
 
 /**
@@ -107,9 +108,15 @@ class GlobalHeaderRequestInterceptor : RequestInterceptor {
         processors.forEach { it.processContext(requestTemplate, context) }
     }
 
-    /** 启动期一次性解析的 processor 列表——`by lazy` 确保首次访问时 Spring 已就绪。 */
-    private val processors: Collection<IFeignRequestContextProcess> by lazy {
+    /**
+     * 启动期一次性解析的 processor 列表——`by lazy` 确保首次访问时 Spring 已就绪。
+     *
+     * 使用 Spring 的通用排序规则支持 `Ordered` / `@Order`，避免多个 processor 写同一 header 时
+     * 行为依赖容器返回顺序。
+     */
+    private val processors: List<IFeignRequestContextProcess> by lazy {
         SpringKit.getBeansOfType<IFeignRequestContextProcess>().values
+            .sortedWith(AnnotationAwareOrderComparator.INSTANCE)
     }
 
 }

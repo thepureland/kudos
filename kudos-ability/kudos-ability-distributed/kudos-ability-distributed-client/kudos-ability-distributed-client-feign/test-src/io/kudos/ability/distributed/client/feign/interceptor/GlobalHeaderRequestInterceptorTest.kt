@@ -8,6 +8,7 @@ import io.kudos.context.core.KudosContext
 import io.kudos.context.core.KudosContextHolder
 import io.kudos.context.kit.SpringKit
 import io.kudos.context.support.Consts
+import org.springframework.core.Ordered
 import org.springframework.context.support.StaticApplicationContext
 import java.util.Locale
 import kotlin.test.AfterTest
@@ -161,6 +162,18 @@ internal class GlobalHeaderRequestInterceptorTest {
         assertSame(processor, processor)
     }
 
+    @Test
+    fun extensionProcessorsAreAppliedInSpringOrder() {
+        val calls = mutableListOf<String>()
+        ctx.beanFactory.registerSingleton("laterProcessor", OrderedRecordingProcessor("later", 20, calls))
+        ctx.beanFactory.registerSingleton("earlierProcessor", OrderedRecordingProcessor("earlier", 10, calls))
+
+        val interceptor = GlobalHeaderRequestInterceptor()
+        interceptor.apply(newTemplate("GET", "/ordered"))
+
+        assertEquals(listOf("earlier", "later"), calls)
+    }
+
     private fun newTemplate(method: String, url: String): RequestTemplate =
         RequestTemplate().apply {
             method(Request.HttpMethod.valueOf(method))
@@ -173,6 +186,18 @@ internal class GlobalHeaderRequestInterceptorTest {
         override fun processContext(requestTemplate: RequestTemplate, context: KudosContext) {
             calls++
             requestTemplate.header("X-Test-Processor", "fired-$calls")
+        }
+    }
+
+    private class OrderedRecordingProcessor(
+        private val name: String,
+        private val order: Int,
+        private val calls: MutableList<String>
+    ) : IFeignRequestContextProcess, Ordered {
+        override fun getOrder(): Int = order
+
+        override fun processContext(requestTemplate: RequestTemplate, context: KudosContext) {
+            calls += name
         }
     }
 }
