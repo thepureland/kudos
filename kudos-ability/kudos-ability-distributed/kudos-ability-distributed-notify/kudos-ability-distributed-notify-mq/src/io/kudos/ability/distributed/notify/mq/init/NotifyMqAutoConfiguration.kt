@@ -6,8 +6,11 @@ import io.kudos.ability.distributed.notify.common.init.NotifyCommonAutoConfigura
 import io.kudos.ability.distributed.notify.common.init.properties.NotifyCommonProperties
 import io.kudos.ability.distributed.notify.common.model.NotifyMessageVo
 import io.kudos.ability.distributed.notify.common.support.NotifyListenerItem
+import io.kudos.ability.distributed.notify.mq.init.properties.NotifyMqProperties
 import io.kudos.ability.distributed.notify.mq.producer.NotifyMqProducer
+import io.kudos.ability.distributed.notify.mq.support.NotifyMqBindings
 import io.kudos.ability.distributed.stream.common.annotations.MqConsumer
+import io.kudos.ability.distributed.stream.common.annotations.MqProducerAspect
 import io.kudos.ability.distributed.stream.common.model.vo.StreamMessageVo
 import io.kudos.base.logger.LogFactory
 import io.kudos.context.config.YamlPropertySourceFactory
@@ -18,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
+import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.cloud.stream.config.BindingServiceProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -52,6 +56,11 @@ open class NotifyMqAutoConfiguration : NotifyCommonAutoConfiguration(), ICompone
     @Autowired(required = false)
     private var environment: Environment? = null
 
+    @Bean
+    @ConditionalOnMissingBean
+    @ConfigurationProperties(prefix = "kudos.ability.distributed.notify.mq")
+    open fun notifyMqProperties() = NotifyMqProperties()
+
     @Bean(name = [INotifyProducer.BEAN_NAME])
     @ConditionalOnMissingBean
     open fun notifyMqProducer(): INotifyProducer = NotifyMqProducer()
@@ -59,17 +68,40 @@ open class NotifyMqAutoConfiguration : NotifyCommonAutoConfiguration(), ICompone
     @Bean
     @ConditionalOnMissingBean(name = ["notifyMqProducerBindingVerifier"])
     open fun notifyMqProducerBindingVerifier(
+        notifyMqProperties: NotifyMqProperties,
+        mqProducerAspectProvider: ObjectProvider<MqProducerAspect>,
         bindingServicePropertiesProvider: ObjectProvider<BindingServiceProperties>
     ): InitializingBean = InitializingBean {
-        val bindingName = "mqNotify-out-0"
+        if (mqProducerAspectProvider.ifAvailable == null) {
+            handleProducerVerifierFailure(
+                notifyMqProperties,
+                "[notify-mq] 未找到MqProducerAspect bean，NotifyMqProducer的AOP占位发送不会生效"
+            )
+        }
+        val bindingName = NotifyMqBindings.PRODUCER_BINDING
         val bindingProps = bindingServicePropertiesProvider.ifAvailable?.bindings
         if (bindingProps.isNullOrEmpty() || !bindingProps.containsKey(bindingName)) {
-            log.warn("[notify-mq] 未找到Stream生产者binding配置: {0}，通知发送可能不可用", bindingName)
+            handleProducerVerifierFailure(
+                notifyMqProperties,
+                "[notify-mq] 未找到Stream生产者binding配置: $bindingName，通知发送可能不可用"
+            )
         }
     }
 
-    @MqConsumer(topic = "mqNotify", bindingName = "mqNotify-in-0", beanName = ["mqNotify"])
-    open fun mqNotify(): Consumer<Message<StreamMessageVo<JSONObject>>?> = Consumer { msg ->
+    private fun handleProducerVerifierFailure(notifyMqProperties: NotifyMqProperties, message: String) {
+        if (notifyMqProperties.failOnMissingProducerBinding) {
+            error(message)
+        } else {
+            log.warn(message)
+        }
+    }
+
+    @MqConsumer(
+        topic = NotifyMqBindings.TOPIC,
+        bindingName = NotifyMqBindings.CONSUMER_BINDING,
+        beanName = [NotifyMqBindings.CONSUMER_BEAN]
+    )
+    open fun mqNotify(notifyMqProperties: NotifyMqProperties = NotifyMqProperties()): Consumer<Message<StreamMessageVo<JSONObject>>?> = Consumer { msg ->
         val streamMsgVo = msg?.payload ?: run {
             log.warn("[mqNotify] 收到空消息，忽略")
             return@Consumer
@@ -83,6 +115,7 @@ open class NotifyMqAutoConfiguration : NotifyCommonAutoConfiguration(), ICompone
         val simpleMsgVo = runCatching { socketMsgJson.toJavaObject(NotifyMessageVo::class.java) }
             .getOrElse {
                 log.error(it, "[mqNotify] 通知消息反序列化失败")
+                rethrowIfNeeded(notifyMqProperties, it)
                 return@Consumer
             }
 
@@ -95,8 +128,21 @@ open class NotifyMqAutoConfiguration : NotifyCommonAutoConfiguration(), ICompone
         log.info("[mqNotify] 消费通知, 类型: $notifyType")
         val namespace = resolveListenerNamespace()
         val listener = NotifyListenerItem.get(namespace, notifyType) ?: findDefaultNamespaceListener(namespace, notifyType)
-        listener?.notifyProcess(simpleMsgVo)
-            ?: log.info("[mqNotify] 命名空间: $namespace, 类型: $notifyType, 无 listener 配置")
+        if (listener == null) {
+            log.info("[mqNotify] 命名空间: $namespace, 类型: $notifyType, 无 listener 配置")
+            return@Consumer
+        }
+        runCatching { listener.notifyProcess(simpleMsgVo) }
+            .onFailure {
+                log.error(it, "[mqNotify] listener处理失败, namespace: {0}, 类型: {1}", namespace, notifyType)
+                rethrowIfNeeded(notifyMqProperties, it)
+            }
+    }
+
+    private fun rethrowIfNeeded(notifyMqProperties: NotifyMqProperties, throwable: Throwable) {
+        if (notifyMqProperties.rethrowConsumerException) {
+            throw throwable
+        }
     }
 
     private fun findDefaultNamespaceListener(namespace: String, notifyType: String) =
