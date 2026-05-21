@@ -8,6 +8,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.core.Ordered
 import org.springframework.web.filter.OncePerRequestFilter
 
 /**
@@ -40,7 +41,7 @@ open class SeataFeignXidAutoConfiguration : IComponentInitializer {
         FilterRegistrationBean<SeataXidServletFilter>().apply {
             setFilter(SeataXidServletFilter())
             addUrlPatterns("/*")
-            order = 0
+            order = Ordered.HIGHEST_PRECEDENCE
         }
 
     override fun getComponentName() = "kudos-ability-distributed-tx-seata-feign-xid"
