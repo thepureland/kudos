@@ -12,6 +12,11 @@ import java.util.concurrent.TimeUnit
  */
 class RedissonLocker : ILocker<RLock> {
 
+    companion object {
+        const val DEFAULT_WAIT_SECONDS: Long = 3
+        const val DEFAULT_LEASE_SECONDS: Long = 30
+    }
+
     @Autowired(required = false)
     private var redissonClient: RedissonClient? = null
 
@@ -39,8 +44,15 @@ class RedissonLocker : ILocker<RLock> {
      * @param lockKey 锁的key
      * @return RLock
      */
-    override fun lock(lockKey: String): RLock =
-        client().getLock(lockKey).also { it.lock() }
+    override fun lock(lockKey: String): RLock? {
+        val lock = client().getLock(lockKey)
+        return try {
+            if (lock.tryLock(DEFAULT_WAIT_SECONDS, DEFAULT_LEASE_SECONDS, TimeUnit.SECONDS)) lock else null
+        } catch (_: InterruptedException) {
+            Thread.currentThread().interrupt()
+            null
+        }
+    }
 
     /**
      * 获取分布式锁，并指定锁失效秒数

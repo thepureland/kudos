@@ -31,7 +31,8 @@ fun consumeQuota(userId: String) { ... }
 - ❗ 模块只定义契约，具体能力（含 SpEL key 解析、Redisson `RLock` 装配等）全在 lock-redisson
 - ✅ `DistributedLockContext` 用 `InheritableThreadLocal` 但 `childValue=null`——子线程不继承，
   并已补单测锁住；线程池场景仍要 finally 中 `clear()` 避免污染
-- ❗ `ILocker.lock(lockKey: String)`（无超时签名）等价于无限阻塞——避免在生产业务路径使用
+- ✅ `ILocker.lock(lockKey: String)` 已约定为默认等待窗口内获取锁，拿不到返回 null；
+  Redisson 实现默认最多等待 3 秒、租期 30 秒，不再无限阻塞
 
 ## 依赖
 
