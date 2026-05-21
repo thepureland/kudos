@@ -8,6 +8,8 @@ kudos:
           enabled: true
           # redis使用模式
           mode: single # 取值：single, cluster
+          # Redis lock key 前缀，可设为空字符串禁用
+          lockKeyPrefix: "REDISSON::"
           #### Config的属性
           config:
             # 线程池数量,默认值: 当前处理核数量 * 2

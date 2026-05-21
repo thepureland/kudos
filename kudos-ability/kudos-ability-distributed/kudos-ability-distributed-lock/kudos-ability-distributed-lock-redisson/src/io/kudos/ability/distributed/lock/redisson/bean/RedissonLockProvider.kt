@@ -16,7 +16,9 @@ class RedissonLockProvider : ILockProvider<RLock> {
 
     override fun unLock(lock: Lock, key: String) {
         if (lock is RLock) {
-            RedissonLockKit.unlock(lock)
+            if (lock.name == RedissonLockKit.getLockKey(key)) {
+                RedissonLockKit.unlock(lock)
+            }
         } else {
             lock.unlock()
         }

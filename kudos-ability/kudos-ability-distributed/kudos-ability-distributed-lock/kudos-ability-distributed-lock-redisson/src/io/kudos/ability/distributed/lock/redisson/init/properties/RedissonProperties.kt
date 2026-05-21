@@ -9,6 +9,11 @@ class RedissonProperties {
 
     var mode: String = "single"
 
+    /**
+     * RedissonLockKit 生成 Redis lock key 时追加的统一前缀。可设为空字符串禁用前缀。
+     */
+    var lockKeyPrefix: String = "REDISSON::"
+
     var config: RedissonConfigProperties? = null
 
     var baseConfig: RedissonBaseConfigProperties? = null

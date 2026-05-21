@@ -14,16 +14,23 @@ fun consumeQuota(userId: String) { ... }
 
 - `key = ""` → 自动生成 `serviceCode::tenantId::className::methodName::paramTypes`
 - `key = "..."` → SpEL 表达式，结果拼成 `tenantId::<spel result>`（**租户隔离**自动包含）
-- 拿不到锁 → 不执行业务方法，直接返回 null + 触发 `IDistributedLockCallback.doLockFail`
+- 拿不到锁 → 不执行业务方法 + 触发 `IDistributedLockCallback.doLockFail`；默认抛
+  `DistributedLockAcquireException`，显式 `throwOnFailure=false` 时兼容旧行为返回 null
 - 拿到锁 → finally 释放 + 触发 `doLockSuccess`
+- `lockerBeanName = "..."` → 指定 RedissonLocker bean，支持同进程多 RedissonClient 场景
 
 **异常处理**：业务方法抛出的任何 `Throwable` 会按原异常透传，避免破坏业务侧 typed
 catch；释放锁阶段的异常仅 warn，不影响业务异常 / 返回值。
 
 ### `RedissonLockKit` 单例 + 工厂分离
 
-`RedissonLockKit` 是静态工具入口；首次调用时通过 `SpringKit.getBean<RedissonLocker>()` 拿
-bean 并缓存到字段。`@Synchronized` 保护初始化竞态。**key 前缀**统一加 `REDISSON::`。
+`RedissonLockKit` 是静态工具入口；默认通过 `SpringKit.getBean("redissonLocker")` 拿 bean
+并按 beanName 缓存。需要多 Redis / 多 RedissonClient 时，可声明多个 `RedissonLocker` bean，
+并通过 `lockerBeanName` 或 `RedissonLockKit.*(..., lockerBeanName)` 选择。
+
+**key 前缀**默认 `REDISSON::`，可通过
+`kudos.ability.distributed.lock.redisson.lockKeyPrefix` 配置，或调用
+`RedissonLockKit.setLockKeyPrefix(...)` 调整；传空字符串表示不加前缀。
 
 无显式超时的 `RedissonLockKit.lock(lockKey)` / `RedissonLocker.lock(lockKey)` 不再调用
 Redisson 的无限阻塞 `RLock.lock()`；默认最多等待 3 秒，拿到锁后租期 30 秒，拿不到返回 null。
@@ -50,6 +57,7 @@ kudos:
         redisson:
           enabled: true
           mode: single   # single | cluster
+          lockKeyPrefix: "REDISSON::"
           config:
             nettyThreads: 32
             threads: 16
@@ -82,26 +90,30 @@ kudos:
 - `RedissonLockerTest` —— 纯 mock 单测覆盖无超时 `lock(lockKey)` 走 bounded `tryLock`，
   不再调用无限阻塞的 `RLock.lock()`
 - `RedissonLockProviderTest` —— 纯 mock 单测覆盖 `unLock(Lock, key)` 的 RLock 分支会走
-  `isHeldByCurrentThread` 守卫，非当前线程持有时不裸调 `unlock()`
+  key/name 校验与 `isHeldByCurrentThread` 守卫，key 不匹配或非当前线程持有时不裸调 `unlock()`
 - `DistributedLockAspectTest` —— 纯 mock 单测覆盖切面会按原异常透传业务 typed exception，
-  且异常路径仍执行 finally 解锁
+  异常路径仍执行 finally 解锁，拿锁失败默认抛 `DistributedLockAcquireException` 且可显式兼容
+  返回 null
+- `RedissonLockKitTest` —— 纯 mock 单测覆盖可配置 key 前缀、命名 locker 入口
 
 ## 已知限制 / 后续工作
 
 - ✅ `DistributedLockAspect.around` 已直接 rethrow 业务异常，不再包成 `RuntimeException`；
   业务侧 typed catch 可继续生效，并补单测锁住异常路径仍会解锁
-- ❗ `DistributedLockAspect.around` 拿锁失败时直接返回 null——返回值类型为非 nullable 的业务
-  方法会在调用方因 `NullPointerException` 崩溃。建议改成抛业务异常或显式 SpEL 模式声明默认值
-- ❗ `RedissonLockKit` 是全局 static——同进程只支持一个 RedissonClient bean。多 redis 集群
-  场景需自行包装
-- ❗ key 前缀 `REDISSON::` 硬编码，业务不能更改；不同应用部署到同一 Redis 实例时如有命名冲突
-  需要业务侧自己再加 namespace
-- ❗ `RedissonLockProvider.unLock(Lock, key)` 受 `ILockProvider` 接口限制，仍无法用 key 校验
-  传入 lock 是否同源；但 RLock 分支已改为走 `isHeldByCurrentThread` 守卫，避免裸 `unlock()`
+- ✅ `DistributedLockAspect.around` 拿锁失败默认抛 `DistributedLockAcquireException`，避免非
+  nullable 返回值在调用方延迟 NPE；旧调用方可显式 `throwOnFailure=false` 返回 null
+- ✅ `RedissonLockKit` 已支持按 locker beanName 缓存 / 调用，`@DistributedLock.lockerBeanName`
+  也可选择指定 locker；多 RedissonClient 场景可声明多个 `RedissonLocker` bean 后按名使用
+- ✅ key 前缀已从硬编码改为可配置：默认 `REDISSON::`，配置项
+  `kudos.ability.distributed.lock.redisson.lockKeyPrefix`，也可通过 `RedissonLockKit.setLockKeyPrefix`
+  调整
+- ✅ `RedissonLockProvider.unLock(Lock, key)` 的 RLock 分支已校验 `RLock.name` 与传入 key
+  是否匹配，匹配后才走 `isHeldByCurrentThread` 守卫解锁；非 RLock 仍按标准 `Lock.unlock()`
+  处理
 - ✅ `RedissonLocker.lock(lockKey)` 已从无限阻塞 `RLock.lock()` 改为默认 bounded `tryLock`
   （最多等待 3 秒，租期 30 秒），超时 / 中断返回 null，并补单测锁住
-- ❗ 删除了未使用的 `atom/AtomExecuteTask`（Thread 扩展类，全模块无引用），如果有外部反射依赖
-  需要恢复
+- ✅ `atom/AtomExecuteTask` 已恢复并标记 `@Deprecated`，仅为历史外部反射 / 二进制兼容保留；
+  模块内部仍无引用
 
 ## 依赖
 

@@ -1,6 +1,7 @@
 package io.kudos.ability.distributed.lock.redisson.annotations
 
 import io.kudos.ability.distributed.lock.common.annotations.DistributedLock
+import io.kudos.ability.distributed.lock.common.exception.DistributedLockAcquireException
 import io.kudos.ability.distributed.lock.redisson.kit.RedissonLockKit
 import io.kudos.ability.distributed.lock.redisson.locker.RedissonLocker
 import io.kudos.context.core.KudosContextHolder
@@ -23,15 +24,15 @@ internal class DistributedLockAspectTest {
 
     @AfterTest
     fun tearDown() {
-        RedissonLockKit.setPrivateField("lockBean", null)
+        RedissonLockKit.clearCachedLockers()
+        RedissonLockKit.setLockKeyPrefix(RedissonLockKit.DEFAULT_LOCK_KEY_PREFIX)
         KudosContextHolder.clear()
     }
 
     @Test
     fun around_rethrowsBusinessExceptionWithoutRuntimeExceptionWrapping() {
         val lock = RecordingRLock()
-        RedissonLockKit.setPrivateField(
-            "lockBean",
+        RedissonLockKit.bindLocker(
             RedissonLocker().apply {
                 setPrivateField("redissonClient", redissonClientReturning(lock.proxy))
             }
@@ -47,14 +48,61 @@ internal class DistributedLockAspectTest {
         assertEquals(1, lock.unlockCalls)
     }
 
+    @Test
+    fun around_lockFailureThrowsByDefaultInsteadOfReturningNull() {
+        val lock = RecordingRLock(tryLockResult = false)
+        RedissonLockKit.bindLocker(
+            RedissonLocker().apply {
+                setPrivateField("redissonClient", redissonClientReturning(lock.proxy))
+            }
+        )
+
+        assertFailsWith<DistributedLockAcquireException> {
+            DistributedLockAspect().around(
+                joinPoint(Target::class.java.getDeclaredMethod("locked")) {
+                    "should-not-run"
+                }
+            )
+        }
+
+        assertEquals(1, lock.tryLockCalls)
+        assertEquals(0, lock.unlockCalls)
+    }
+
+    @Test
+    fun around_lockFailureCanReturnNullForLegacyCallers() {
+        val lock = RecordingRLock(tryLockResult = false)
+        RedissonLockKit.bindLocker(
+            RedissonLocker().apply {
+                setPrivateField("redissonClient", redissonClientReturning(lock.proxy))
+            }
+        )
+
+        val result = DistributedLockAspect().around(
+            joinPoint(Target::class.java.getDeclaredMethod("legacyNull")) {
+                "should-not-run"
+            }
+        )
+
+        kotlin.test.assertNull(result)
+        assertEquals(1, lock.tryLockCalls)
+        assertEquals(0, lock.unlockCalls)
+    }
+
     private class Target {
         @DistributedLock(waitTime = 0, leaseTime = 30)
         fun fail() = Unit
+
+        @DistributedLock(waitTime = 0, leaseTime = 30)
+        fun locked(): String = "locked"
+
+        @DistributedLock(waitTime = 0, leaseTime = 30, throwOnFailure = false)
+        fun legacyNull(): String = "legacy"
     }
 
     private class TypedBusinessException : RuntimeException("typed")
 
-    private class RecordingRLock {
+    private class RecordingRLock(private val tryLockResult: Boolean = true) {
         var tryLockCalls = 0
         var unlockCalls = 0
 
@@ -62,7 +110,7 @@ internal class DistributedLockAspectTest {
             when (method.name) {
                 "tryLock" -> {
                     tryLockCalls++
-                    true
+                    tryLockResult
                 }
 
                 "isLocked" -> true
@@ -79,26 +127,30 @@ internal class DistributedLockAspectTest {
 
     companion object {
         private val target = Target()
-        private val targetMethod = Target::class.java.getDeclaredMethod("fail")
 
         private fun joinPointThatThrows(exception: Throwable): ProceedingJoinPoint =
-            proxy(ProceedingJoinPoint::class.java) { method, _ ->
-                when (method.name) {
-                    "getSignature" -> methodSignature()
+            joinPoint(Target::class.java.getDeclaredMethod("fail")) {
+                throw exception
+            }
+
+        private fun joinPoint(targetMethod: Method, proceed: () -> Any?): ProceedingJoinPoint =
+            proxy(ProceedingJoinPoint::class.java) { joinPointMethod, _ ->
+                when (joinPointMethod.name) {
+                    "getSignature" -> methodSignature(targetMethod)
                     "getTarget" -> target
                     "getArgs" -> emptyArray<Any>()
-                    "proceed" -> throw exception
-                    else -> defaultValue(method.returnType)
+                    "proceed" -> proceed()
+                    else -> defaultValue(joinPointMethod.returnType)
                 }
             }
 
-        private fun methodSignature(): MethodSignature =
-            proxy(MethodSignature::class.java) { method, _ ->
-                when (method.name) {
-                    "getMethod" -> targetMethod
-                    "getName" -> targetMethod.name
+        private fun methodSignature(method: Method): MethodSignature =
+            proxy(MethodSignature::class.java) { signatureMethod, _ ->
+                when (signatureMethod.name) {
+                    "getMethod" -> method
+                    "getName" -> method.name
                     "getParameterNames" -> emptyArray<String>()
-                    else -> defaultValue(method.returnType)
+                    else -> defaultValue(signatureMethod.returnType)
                 }
             }
 
