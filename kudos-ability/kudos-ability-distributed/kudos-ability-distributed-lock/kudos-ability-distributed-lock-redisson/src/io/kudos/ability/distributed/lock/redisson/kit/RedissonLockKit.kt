@@ -29,7 +29,7 @@ object RedissonLockKit {
      * @param lockKey 锁的key
      * @return RLock
      */
-    fun lock(lockKey: String): RLock = locker().lock(getLockKey(lockKey))
+    fun lock(lockKey: String): RLock? = locker().lock(getLockKey(lockKey))
 
     /**
      * 获取分布式锁，并指定锁失效秒数

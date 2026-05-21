@@ -17,7 +17,12 @@ interface ILocker<T : Lock?> {
     /** 仅返回锁对象引用（不获取锁）。返回 null 表示无法构造锁。 */
     fun getLock(lockKey: String): T?
 
-    /** 阻塞获取锁，无超时——慎用，调用方应明白这等价于无限等待。 */
+    /**
+     * 获取锁的便捷签名。
+     *
+     * 实现不应无限阻塞；无法在默认等待窗口内拿到锁时应返回 null。需要明确等待时间 / 租期的业务
+     * 应优先调用 [tryLock]。
+     */
     fun lock(lockKey: String): T?
 
     /** 阻塞获取锁，秒级超时。 */

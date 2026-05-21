@@ -25,6 +25,10 @@ cause）；释放锁阶段的异常仅 warn 不影响业务返回值。
 `RedissonLockKit` 是静态工具入口；首次调用时通过 `SpringKit.getBean<RedissonLocker>()` 拿
 bean 并缓存到字段。`@Synchronized` 保护初始化竞态。**key 前缀**统一加 `REDISSON::`。
 
+无显式超时的 `RedissonLockKit.lock(lockKey)` / `RedissonLocker.lock(lockKey)` 不再调用
+Redisson 的无限阻塞 `RLock.lock()`；默认最多等待 3 秒，拿到锁后租期 30 秒，拿不到返回 null。
+需要业务自定义等待时间 / 租期时优先用 `tryLock`。
+
 ### `unlock` 的 `isHeldByCurrentThread` 守卫
 
 Redisson `RLock.unlock()` 在线程没持有锁时抛 `IllegalMonitorStateException`。
@@ -75,6 +79,8 @@ kudos:
 ## 测试覆盖
 
 - `RedissonLockSingleTest` —— 单机 Redisson 集成测试（依赖 Redis testcontainer）
+- `RedissonLockerTest` —— 纯 mock 单测覆盖无超时 `lock(lockKey)` 走 bounded `tryLock`，
+  不再调用无限阻塞的 `RLock.lock()`
 
 ## 已知限制 / 后续工作
 
@@ -88,6 +94,8 @@ kudos:
   需要业务侧自己再加 namespace
 - ❗ `RedissonLockProvider.unLock(Lock, key)` 忽略 key 参数——直接 `lock.unlock()`，依赖调用方
   保证传入的 lock 对应 key
+- ✅ `RedissonLocker.lock(lockKey)` 已从无限阻塞 `RLock.lock()` 改为默认 bounded `tryLock`
+  （最多等待 3 秒，租期 30 秒），超时 / 中断返回 null，并补单测锁住
 - ❗ 删除了未使用的 `atom/AtomExecuteTask`（Thread 扩展类，全模块无引用），如果有外部反射依赖
   需要恢复
 
@@ -97,5 +105,6 @@ kudos:
 api(project(":kudos-ability:kudos-ability-distributed:kudos-ability-distributed-lock:kudos-ability-distributed-lock-common"))
 api(libs.redisson)
 
+testImplementation(project(":kudos-test:kudos-test-common"))
 testImplementation(project(":kudos-test:kudos-test-container"))
 ```
