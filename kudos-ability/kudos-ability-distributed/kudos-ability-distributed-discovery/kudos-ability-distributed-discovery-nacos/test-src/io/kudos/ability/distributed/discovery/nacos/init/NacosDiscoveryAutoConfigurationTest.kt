@@ -1,6 +1,7 @@
 package io.kudos.ability.distributed.discovery.nacos.init
 
 import io.kudos.ability.distributed.discovery.nacos.filter.FeignContextWebFilter
+import io.kudos.ability.distributed.discovery.nacos.init.properties.NacosDiscoveryProperties
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -15,7 +16,7 @@ internal class NacosDiscoveryAutoConfigurationTest {
 
         assertIs<FeignContextWebFilter>(registration.filter)
         assertEquals("feignContextWebFilter", registration.filterName)
-        assertEquals(FilterRegistrationBean.HIGHEST_PRECEDENCE + 1, registration.order)
+        assertEquals(NacosDiscoveryProperties.FILTER_ORDER, registration.order)
         assertEquals(setOf("/*"), registration.urlPatterns.toSet())
     }
 

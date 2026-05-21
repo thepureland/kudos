@@ -73,6 +73,21 @@ internal class FeignContextWebFilterTest {
     }
 
     @Test
+    fun doFilter_allowUnmarkedContextHeaders_writesHeadersWithoutMarker() {
+        val request = MockHttpServletRequest().apply {
+            addHeader(Consts.RequestHeader.TENANT_ID, "tenant-dev")
+            addHeader(Consts.RequestHeader.TRACE_KEY, "trace-dev")
+        }
+
+        FeignContextWebFilter(allowUnmarkedContextHeaders = true)
+            .doFilter(request, MockHttpServletResponse(), MockFilterChain())
+
+        val context = KudosContextHolder.get()
+        assertEquals("tenant-dev", context.tenantId)
+        assertEquals("trace-dev", context.traceKey)
+    }
+
+    @Test
     fun doFilter_invokesProviderContextProcessor() {
         val processor = RecordingProviderContextProcess()
         ctx.beanFactory.registerSingleton("recordingProviderContextProcess", processor)
