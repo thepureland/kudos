@@ -75,7 +75,7 @@ open class NacosConfigTest {
         // 监听
         var receiveConfig: String? = null
         NacosConfigServiceListener(serverAddr).addListener(dataId, group, object : AbstractConfigChangeListener() {
-            override fun receiveConfigInfo(configInfo: String?) {
+            override fun onConfigChanged(configInfo: String?) {
                 receiveConfig = configInfo
             }
         })

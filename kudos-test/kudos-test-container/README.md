@@ -103,7 +103,8 @@ class MyDbTest {
 
 - ❗ 镜像版本 hardcoded 在各 `*TestContainer` 文件——升级镜像要改代码、没法走配置。
   这是有意的：测试要可重现，不能让 `latest` 的漂移让今天通过的测试明天挂掉。
-- ❗ Nacos / Seata 等镜像首次拉取慢、启动也慢——CI 偶发超时。本地建议预拉。
+- ✅ `NacosTestContainer` 已改为探测 Nacos readiness API，并把 startup timeout 放宽到
+  90 秒，降低 Nacos 镜像启动慢导致的 CI 抖动；首次拉镜像仍建议本地 / CI 预拉。
 - ❗ `DockerKit.ensureDockerRunning()` 会**主动启动** Docker Desktop——在用户没期待 IDE
   弹应用的环境下（无人值守 CI 跑本地用例）可能有副作用。
 - ❗ `EnabledIfDockerInstalled` 只查 `docker --version` 退码，不能区分"已安装但 daemon

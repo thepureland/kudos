@@ -6,6 +6,7 @@ import io.kudos.test.container.kit.bindingPort
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.wait.strategy.Wait
+import java.time.Duration
 import java.security.SecureRandom
 import java.util.Base64
 
@@ -43,8 +44,12 @@ object NacosTestContainer {
         // 2. 再绑定宿主机端口 -> 容器端口
         bindingPort(Pair(PORT, 8848), Pair(29848, 9848), Pair(29849, 9849))
 
-        // 3. 等待容器内的 8848 端口就绪
-        waitingFor(Wait.forHttp("/nacos").forPort(8848))
+        // 3. Nacos 8848 早早会返回页面，但 naming/config gRPC 仍可能未就绪；探测 API 并放宽启动超时。
+        waitingFor(
+            Wait.forHttp("/nacos/v1/ns/instance/list?serviceName=__readiness")
+                .forPort(8848)
+                .withStartupTimeout(Duration.ofSeconds(90))
+        )
 
         withLabel(TestContainerKit.LABEL_KEY, LABEL)
     }
@@ -62,7 +67,11 @@ object NacosTestContainer {
         // Nacos 8848 早早就会回 200 给 `/nacos`，但内部 naming registry 还要再几秒才能接收注册写入。
         // 这里直接 probe v1 实例查询 API：响应到 200 才视为真正可用，避免 Seata server 起来就被
         // "server is DOWNnow, please try again later" 拒掉并整体启动失败。
-        waitingFor(Wait.forHttp("/nacos/v1/ns/instance/list?serviceName=__readiness").forPort(8848))
+        waitingFor(
+            Wait.forHttp("/nacos/v1/ns/instance/list?serviceName=__readiness")
+                .forPort(8848)
+                .withStartupTimeout(Duration.ofSeconds(90))
+        )
         withLabel(TestContainerKit.LABEL_KEY, LABEL_NACOS_FOR_SEATA)
     }
 

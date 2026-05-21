@@ -1,8 +1,11 @@
 package io.kudos.ability.distributed.config.nacos
 
 import com.alibaba.cloud.nacos.NacosPropertySourceRepository
+import io.kudos.ability.distributed.config.nacos.decrypt.NacosConfigValueDecryptor
 import io.kudos.context.config.IConfigDataFinder
+import org.springframework.core.env.MapPropertySource
 import org.springframework.core.env.PropertySource
+import java.util.ServiceLoader
 
 /**
  * 把 Spring Cloud Alibaba 的 [NacosPropertySourceRepository] 适配成 kudos 的 [IConfigDataFinder] SPI。
@@ -20,7 +23,27 @@ import org.springframework.core.env.PropertySource
  * @author K
  * @since 1.0.0
  */
-class NacosConfigDataFinder : IConfigDataFinder {
+class NacosConfigDataFinder(
+    private val decryptors: List<NacosConfigValueDecryptor> =
+        ServiceLoader.load(NacosConfigValueDecryptor::class.java).toList()
+) : IConfigDataFinder {
+
     override fun findConfigData(name: String?): PropertySource<*>? =
-        NacosPropertySourceRepository.getAll().firstOrNull { it.dataId == name }
+        NacosPropertySourceRepository.getAll()
+            .firstOrNull { it.dataId == name }
+            ?.let(::decryptIfNecessary)
+
+    private fun decryptIfNecessary(source: PropertySource<*>): PropertySource<*> {
+        if (decryptors.isEmpty() || source !is MapPropertySource) {
+            return source
+        }
+        val decrypted = source.source.mapValues { (_, value) ->
+            if (value is String) {
+                decryptors.firstOrNull { it.supports(value) }?.decrypt(value) ?: value
+            } else {
+                value
+            }
+        }
+        return MapPropertySource(source.name, decrypted)
+    }
 }
