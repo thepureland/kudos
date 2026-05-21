@@ -2,6 +2,7 @@ package io.kudos.ability.distributed.notify.mq.producer
 
 import io.kudos.ability.distributed.notify.common.api.INotifyProducer
 import io.kudos.ability.distributed.notify.common.model.NotifyMessageVo
+import io.kudos.ability.distributed.notify.mq.support.NotifyMqBindings
 import io.kudos.ability.distributed.stream.common.annotations.MqProducer
 import io.kudos.base.logger.LogFactory
 import java.io.Serializable
@@ -25,7 +26,7 @@ open class NotifyMqProducer : INotifyProducer {
 
     private val log = LogFactory.getLog(this::class)
 
-    @MqProducer(topic = "mqNotify", bindingName = "mqNotify-out-0")
+    @MqProducer(topic = NotifyMqBindings.TOPIC, bindingName = NotifyMqBindings.PRODUCER_BINDING)
     override fun notify(messageVo: NotifyMessageVo<out Serializable>): Boolean {
         if (messageVo.notifyType.isBlank()) {
             log.warn("notifyType 为空，取消发送通知")

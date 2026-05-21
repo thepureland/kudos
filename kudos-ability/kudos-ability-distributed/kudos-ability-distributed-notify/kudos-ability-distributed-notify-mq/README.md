@@ -35,11 +35,35 @@ no-op，通知静默丢失。
 ### binding 启动期校验
 
 `notifyMqProducerBindingVerifier` 在 InitializingBean 阶段查 `BindingServiceProperties`：
-找不到 `mqNotify-out-0` binding 时打 warn 提示运维。**不 fail-fast**——只是友好提醒。
+找不到 `mqNotify-out-0` binding 时默认打 warn 提示运维；可配置
+`kudos.ability.distributed.notify.mq.fail-on-missing-producer-binding=true` 改成启动失败。
+
+### 消费失败策略
+
+默认保持历史行为：反序列化失败或 listener 抛异常时记录日志并返回，消息会被底层 binder 当作
+已消费处理。生产环境建议打开：
+
+```yaml
+kudos:
+  ability:
+    distributed:
+      notify:
+        mq:
+          rethrow-consumer-exception: true
+```
+
+打开后异常会重新抛给 spring-cloud-stream binder，由 binder / MQ 的 retry、DLQ 或重投配置接管。
 
 ## 配置示例
 
 ```yaml
+kudos:
+  ability:
+    distributed:
+      notify:
+        mq:
+          fail-on-missing-producer-binding: true
+          rethrow-consumer-exception: true
 spring:
   cloud:
     stream:
@@ -55,12 +79,20 @@ spring:
 
 ## 已知限制
 
-- ❗ 同 log-audit-mq："AOP 占位"模式对新人不友好；切面未装载时通知静默丢失。运维只能从
-  `notifyMqProducerBindingVerifier` 的 warn 日志判断。建议加 health check 检查 binding 状态
-- ❗ consumer 反序列化失败只打 error 日志不抛错——丢失的消息无补偿
+- ✅ 同 log-audit-mq："AOP 占位"模式对新人不友好；切面 / binding 未装载时可能 no-op。
+  `notifyMqProducerBindingVerifier` 已支持
+  `kudos.ability.distributed.notify.mq.fail-on-missing-producer-binding=true` fail-fast；
+  另外可配合 stream-common 的 `kudos.ability.distributed.stream.binding-verify.*` 做统一 binding
+  自检
+- ✅ consumer 反序列化失败或 listener 抛异常时，已支持
+  `kudos.ability.distributed.notify.mq.rethrow-consumer-exception=true` 重新抛给 binder，由 MQ
+  retry / DLQ 接管；默认仍保持兼容模式，仅记录日志
 - ✅ `NotifyListenerItem.get(notifyType)` 的 default namespace fallback 已改为显式开关，
   默认不跨 namespace 派发，避免多个 namespace 同 type listener 时误投
-- ❗ binding 名 `mqNotify-out-0` / `mqNotify-in-0` 硬编码
+- ℹ️ binding 名 `mqNotify-out-0` / `mqNotify-in-0` 是 Spring Cloud Function 约定的一部分，
+  代码中已统一收敛到 `NotifyMqBindings` 常量；如需改实际 topic，用
+  `spring.cloud.stream.bindings.*.destination`，如需改 binding 别名，用 Spring Cloud Stream
+  的 function binding alias 配置，而不是改 kudos 代码
 
 ## 依赖
 

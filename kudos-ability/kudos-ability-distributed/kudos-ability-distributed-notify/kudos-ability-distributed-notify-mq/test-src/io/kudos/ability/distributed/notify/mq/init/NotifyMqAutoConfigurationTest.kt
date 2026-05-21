@@ -5,12 +5,14 @@ import io.kudos.ability.distributed.notify.common.api.INotifyListener
 import io.kudos.ability.distributed.notify.common.init.properties.NotifyCommonProperties
 import io.kudos.ability.distributed.notify.common.model.NotifyMessageVo
 import io.kudos.ability.distributed.notify.common.support.NotifyListenerItem
+import io.kudos.ability.distributed.notify.mq.init.properties.NotifyMqProperties
 import io.kudos.ability.distributed.stream.common.model.vo.StreamMessageVo
 import org.springframework.messaging.support.GenericMessage
 import java.io.Serializable
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 
 internal class NotifyMqAutoConfigurationTest {
@@ -54,6 +56,44 @@ internal class NotifyMqAutoConfigurationTest {
         assertEquals(1, defaultListener.count.get())
     }
 
+    @Test
+    fun mqNotify_swallowsListenerExceptionByDefault() {
+        val notifyType = "notify.mq.listener-error-swallowed"
+        NotifyListenerItem.put("app-error-default", notifyType, ThrowingListener(notifyType))
+
+        val consumer = NotifyMqAutoConfiguration()
+            .applyNotifyCommonProperties(
+                NotifyCommonProperties().apply {
+                    listenerNamespace = "app-error-default"
+                }
+            )
+            .mqNotify()
+
+        consumer.accept(GenericMessage(StreamMessageVo(notifyPayload(notifyType))))
+    }
+
+    @Test
+    fun mqNotify_rethrowsListenerExceptionWhenEnabled() {
+        val notifyType = "notify.mq.listener-error-rethrow"
+        NotifyListenerItem.put("app-error-rethrow", notifyType, ThrowingListener(notifyType))
+
+        val consumer = NotifyMqAutoConfiguration()
+            .applyNotifyCommonProperties(
+                NotifyCommonProperties().apply {
+                    listenerNamespace = "app-error-rethrow"
+                }
+            )
+            .mqNotify(
+                NotifyMqProperties().apply {
+                    rethrowConsumerException = true
+                }
+            )
+
+        assertFailsWith<IllegalStateException> {
+            consumer.accept(GenericMessage(StreamMessageVo(notifyPayload(notifyType))))
+        }
+    }
+
     private fun NotifyMqAutoConfiguration.applyNotifyCommonProperties(
         properties: NotifyCommonProperties
     ): NotifyMqAutoConfiguration {
@@ -75,6 +115,14 @@ internal class NotifyMqAutoConfigurationTest {
 
         override fun notifyProcess(notifyMessageVo: NotifyMessageVo<out Serializable>) {
             count.incrementAndGet()
+        }
+    }
+
+    private class ThrowingListener(private val type: String) : INotifyListener {
+        override fun notifyType(): String = type
+
+        override fun notifyProcess(notifyMessageVo: NotifyMessageVo<out Serializable>) {
+            error("listener failed")
         }
     }
 

@@ -7,6 +7,9 @@ kudos:
           fail-on-missing: false
           required-producer-bindings:
             - mqNotify-out-0
+      notify:
+        mq:
+          fail-on-missing-producer-binding: false
 
 spring:
   cloud:

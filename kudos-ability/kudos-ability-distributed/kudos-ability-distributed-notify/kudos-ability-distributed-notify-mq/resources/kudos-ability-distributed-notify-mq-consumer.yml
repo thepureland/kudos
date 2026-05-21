@@ -1,3 +1,10 @@
+kudos:
+  ability:
+    distributed:
+      notify:
+        mq:
+          rethrow-consumer-exception: false
+
 spring:
   cloud:
     function:
