@@ -77,7 +77,7 @@ class DistributedLockAspect {
      * 
      * 异常处理：
      * - 获取锁时如果抛出异常，会记录警告日志，但不中断流程，会触发失败回调
-     * - 方法执行时如果抛出异常，会包装为RuntimeException重新抛出
+     * - 方法执行时如果抛出异常，会按原异常重新抛出，避免破坏业务侧 typed catch
      * - 释放锁时如果抛出异常，会记录警告日志，但不影响方法返回值
      * 
      * 返回值：
@@ -106,7 +106,7 @@ class DistributedLockAspect {
         return try {
             joinPoint.proceed()
         } catch (e: Throwable) {
-            throw RuntimeException(e)
+            throw e
         } finally {
             log.debug("释放锁：key=$lockKey")
             runCatching { RedissonLockKit.unlock(lockKey) }

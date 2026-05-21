@@ -17,8 +17,8 @@ fun consumeQuota(userId: String) { ... }
 - 拿不到锁 → 不执行业务方法，直接返回 null + 触发 `IDistributedLockCallback.doLockFail`
 - 拿到锁 → finally 释放 + 触发 `doLockSuccess`
 
-**异常处理**：业务方法抛出的任何 `Throwable` 会被包成 `RuntimeException` 抛出（栈跟踪保留为
-cause）；释放锁阶段的异常仅 warn 不影响业务返回值。
+**异常处理**：业务方法抛出的任何 `Throwable` 会按原异常透传，避免破坏业务侧 typed
+catch；释放锁阶段的异常仅 warn，不影响业务异常 / 返回值。
 
 ### `RedissonLockKit` 单例 + 工厂分离
 
@@ -83,11 +83,13 @@ kudos:
   不再调用无限阻塞的 `RLock.lock()`
 - `RedissonLockProviderTest` —— 纯 mock 单测覆盖 `unLock(Lock, key)` 的 RLock 分支会走
   `isHeldByCurrentThread` 守卫，非当前线程持有时不裸调 `unlock()`
+- `DistributedLockAspectTest` —— 纯 mock 单测覆盖切面会按原异常透传业务 typed exception，
+  且异常路径仍执行 finally 解锁
 
 ## 已知限制 / 后续工作
 
-- ❗ `DistributedLockAspect.around` 包业务异常成 `RuntimeException` 抛出——业务侧的 typed
-  catch 会失效，需要时考虑 `Throwable` 直接 rethrow 或区分 checked / unchecked
+- ✅ `DistributedLockAspect.around` 已直接 rethrow 业务异常，不再包成 `RuntimeException`；
+  业务侧 typed catch 可继续生效，并补单测锁住异常路径仍会解锁
 - ❗ `DistributedLockAspect.around` 拿锁失败时直接返回 null——返回值类型为非 nullable 的业务
   方法会在调用方因 `NullPointerException` 崩溃。建议改成抛业务异常或显式 SpEL 模式声明默认值
 - ❗ `RedissonLockKit` 是全局 static——同进程只支持一个 RedissonClient bean。多 redis 集群
