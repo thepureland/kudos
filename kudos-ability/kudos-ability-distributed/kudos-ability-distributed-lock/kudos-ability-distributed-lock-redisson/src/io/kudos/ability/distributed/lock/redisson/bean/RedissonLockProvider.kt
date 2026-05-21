@@ -15,7 +15,11 @@ class RedissonLockProvider : ILockProvider<RLock> {
     override fun lock(key: String): RLock? = RedissonLockKit.lock(key)
 
     override fun unLock(lock: Lock, key: String) {
-        lock.unlock()
+        if (lock is RLock) {
+            RedissonLockKit.unlock(lock)
+        } else {
+            lock.unlock()
+        }
     }
 
     override fun unLock(key: String) {
