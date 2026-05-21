@@ -1,3 +1,11 @@
+kudos:
+  ability:
+    distributed:
+      stream:
+        rocketmq:
+          batch-consumer:
+            deserialization-filter: ${ROCKETMQ_BATCH_CONSUMER_DESERIALIZATION_FILTER:}
+
 spring:
   cloud:
     stream:

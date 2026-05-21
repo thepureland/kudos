@@ -62,6 +62,10 @@ kudos:
     distributed:
       stream:
         save-exception: true
+        rocketmq:
+          batch-consumer:
+            # ObjectInputFilter allowlist；为空时保持历史无限制 JDK 反序列化行为
+            deserialization-filter: "java.base/*;io.kudos.**;!*"
 ```
 
 ## 测试覆盖
@@ -69,8 +73,8 @@ kudos:
 `test-src/.../RocketMqTest.kt` 用 Testcontainers 启动 NameServer + Broker（`@EnabledIfDockerInstalled`）
 跑 send / receive / 异常路径 3 个集成测试。无 docker 环境跳过。
 
-`RocketMqBatchConsumer` 本身**没有单元测试**——批量阈值 / 时间窗 / 异常持久化都是
-集成验证。建议补 fake `DefaultLitePullConsumer` 单测，覆盖：
+`RocketMqBatchConsumer` 已补无容器单测覆盖 JDK 反序列化 allowlist；批量阈值 / 时间窗 /
+异常持久化仍主要靠集成验证。建议后续补 fake `DefaultLitePullConsumer` 单测，覆盖：
 - 数量阈值触发处理（batchProcessSize 命中）
 - 时间窗触发处理（pullTime 超时）
 - saveException=true 时失败仍 commit + 入表
@@ -86,16 +90,16 @@ kudos:
 
 ## 已知限制 / 后续工作
 
-- ❗ `RocketMqBatchConsumer.toProcessBizData` 反序列化用 JDK `ObjectInputStream`——要求消息
-  类实现 `Serializable`，且对反序列化漏洞链敏感。生产环境建议改成显式 JSON / protobuf。
-  改动是**wire-breaking**——需所有 producer + consumer 同步切换
-- ❗ `RocketMqBatchConsumer.start` 入参 `bizBatchProcess: (MutableList<BatchConsumerItem<T?>?>?) -> Unit`
-  —— 嵌套可空类型对业务侧不友好；过多 `?` 来源是 Java 互操作历史。可改成
-  `(List<BatchConsumerItem<T>>) -> Unit`，但需全部 callsite 配合
-- ❗ `RocketMqProperties.instance` 用 `SpringKit.getBean` 静态访问 bean——单测难替换，
-  耦合 Spring 容器。改成 ctor 注入更好测
-- ❗ `RocketMqBatchConsumer` 业务异常时只调 `consumer.commit()`——没有死信队列概念，靠
-  `sys_mq_fail_msg` 表替代 DLQ
+- ✅ `RocketMqBatchConsumer.toProcessBizData` 仍默认兼容 JDK `ObjectInputStream` wire format，
+  但已支持配置 `kudos.ability.distributed.stream.rocketmq.batch-consumer.deserialization-filter`
+  作为 `ObjectInputFilter` allowlist，生产可限制可反序列化类型；如需 JSON / protobuf 仍属于
+  wire-breaking 迁移，需要所有 producer + consumer 同步切换
+- ✅ `RocketMqBatchConsumer.start` 入参已收窄为
+  `(List<BatchConsumerItem<T>>) -> Unit`，业务侧不再面对嵌套可空集合 / item
+- ✅ `RocketMqBatchConsumer` 已支持构造注入 `RocketMqProperties` 与 `failMsgServiceProvider`，
+  默认仍回退到 `RocketMqProperties.instance` / `SpringKit.getBean` 以保持兼容，单测可直接替换
+- ℹ️ `RocketMqBatchConsumer` 业务异常时没有 broker 原生 DLQ 语义；`saveException=true` 时会把
+  失败批次写入 `sys_mq_fail_msg` 并提交位点，`saveException=false` 时不提交、下次重拉
 - ✅ 已启用 `@Import(StreamConsumerEnvironRegistrar::class)`，RocketMQ 模块会参与 kudos yml
   function.definition 自动聚合
 - ✅ 默认 yml 的 `name-server` 已改为 `${ROCKETMQ_NAME_SERVER:localhost:9876}`，生产部署
