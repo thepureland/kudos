@@ -90,9 +90,14 @@ spring:
 
 - `NacosServiceDiscoveryTest.test` —— 启 `MockMsApplication` 注册到 nacos，验证
   `discoveryClient.getInstances("discovery")` 非空
+- `HintZoneServiceInstanceListSupplierTest` —— 纯函数覆盖 hint 命中 / 未命中 fallback /
+  默认 zone / 自定义 metadata key
+- `FeignContextWebFilterTest` —— 不依赖 Nacos，覆盖无透传标记时不污染上下文、Feign 标记
+  请求的 header 回写、provider 扩展 SPI 调用
+- `NacosDiscoveryAutoConfigurationTest` —— 覆盖 `FeignContextWebFilter` 注册 bean 的 filter、
+  order、name、url pattern
 
-**该测试只验证 nacos discovery 客户端可用，不验证 `FeignContextWebFilter` 是否注册 / 工作**——
-这是为什么 filter 长期 dormant 没人发现的原因。
+Nacos 端到端测试仍只验证 discovery 客户端可用；filter / zone 逻辑已拆成无容器单测。
 
 ## 已知限制 / 后续工作
 
@@ -113,8 +118,8 @@ spring:
 - ❗ `FeignContextWebFilter` 的"无显式标记不修改上下文"是安全护栏，但**也意味着非 Feign 调用方
   (REST 客户端、Postman、curl) 无法手动指定租户 / trace 等**——开发期调试可能不便。需要时
   业务方可加 dev profile 下的兜底 filter
-- ❗ 测试只验证 nacos 可达，没覆盖 zone preference / FeignContextWebFilter / 上下文回写——
-  补测时需要 client + provider 两端都跑
+- ✅ 已补无容器单测覆盖 zone preference、`FeignContextWebFilter` 注册、上下文回写和 provider
+  扩展 SPI 调用；Nacos 端到端测试仍只覆盖 discovery 客户端可用
 
 ## 依赖
 
