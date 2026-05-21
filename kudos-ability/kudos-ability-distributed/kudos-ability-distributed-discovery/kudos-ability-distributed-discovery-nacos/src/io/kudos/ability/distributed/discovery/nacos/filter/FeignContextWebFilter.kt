@@ -51,7 +51,9 @@ import java.util.Locale
  * - 如果ClientInfo不存在，会自动创建
  * - 语言环境字符串会被解析为Locale对象
  */
-class FeignContextWebFilter : Filter {
+class FeignContextWebFilter(
+    private val allowUnmarkedContextHeaders: Boolean = false
+) : Filter {
 
     private val log = LogFactory.getLog(this::class)
 
@@ -95,7 +97,7 @@ class FeignContextWebFilter : Filter {
         }
         val isFeign = !request.getHeader(Consts.RequestHeader.FEIGN_REQUEST).isNullOrBlank()
         val isNotify = !request.getHeader(Consts.RequestHeader.NOTIFY_REQUEST).isNullOrBlank()
-        if (!isFeign && !isNotify) {
+        if (!isFeign && !isNotify && !allowUnmarkedContextHeaders) {
             filterChain.doFilter(servletRequest, servletResponse)
             return
         }

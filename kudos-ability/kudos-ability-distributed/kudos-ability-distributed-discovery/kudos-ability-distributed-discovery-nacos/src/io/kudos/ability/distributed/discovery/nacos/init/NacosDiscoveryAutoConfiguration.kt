@@ -1,11 +1,13 @@
 package io.kudos.ability.distributed.discovery.nacos.init
 
 import io.kudos.ability.distributed.discovery.nacos.filter.FeignContextWebFilter
+import io.kudos.ability.distributed.discovery.nacos.init.properties.NacosDiscoveryProperties
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
+import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -47,13 +49,19 @@ open class NacosDiscoveryAutoConfiguration : IComponentInitializer {
         havingValue = "true",
         matchIfMissing = true
     )
-    open fun feignContextWebFilterRegistration(): FilterRegistrationBean<FeignContextWebFilter> {
+    open fun feignContextWebFilterRegistration(
+        properties: NacosDiscoveryProperties = NacosDiscoveryProperties()
+    ): FilterRegistrationBean<FeignContextWebFilter> {
         val registration = FilterRegistrationBean<FeignContextWebFilter>()
-        registration.setFilter(FeignContextWebFilter())
+        registration.setFilter(FeignContextWebFilter(properties.feignContextFilter.allowUnmarkedContextHeaders))
         registration.addUrlPatterns("/*")
-        registration.order = FilterRegistrationBean.HIGHEST_PRECEDENCE + 1
+        registration.order = NacosDiscoveryProperties.FILTER_ORDER
         registration.setName("feignContextWebFilter")
         return registration
     }
+
+    @Bean
+    @ConfigurationProperties(prefix = "kudos.ability.distributed.discovery.nacos")
+    open fun nacosDiscoveryProperties() = NacosDiscoveryProperties()
 
 }

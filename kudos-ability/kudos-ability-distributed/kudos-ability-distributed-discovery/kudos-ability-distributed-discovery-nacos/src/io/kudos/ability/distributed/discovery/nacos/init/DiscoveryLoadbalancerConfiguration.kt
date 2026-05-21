@@ -10,6 +10,7 @@ import org.springframework.cloud.client.ConditionalOnBlockingDiscoveryEnabled
 import org.springframework.cloud.client.ConditionalOnReactiveDiscoveryEnabled
 import org.springframework.cloud.client.discovery.DiscoveryClient
 import org.springframework.cloud.client.discovery.ReactiveDiscoveryClient
+import org.springframework.cloud.client.loadbalancer.Request
 import org.springframework.cloud.loadbalancer.annotation.LoadBalancerClients
 import org.springframework.cloud.loadbalancer.config.LoadBalancerZoneConfig
 import org.springframework.cloud.loadbalancer.core.ServiceInstanceListSupplier
@@ -18,7 +19,8 @@ import org.springframework.cloud.loadbalancer.support.LoadBalancerClientFactory
 import org.springframework.context.ConfigurableApplicationContext
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.core.annotation.Order
+import org.springframework.core.Ordered
+import reactor.core.publisher.Flux
 
 /**
  * 自定义负载策略：当 `spring.cloud.loadbalancer.configurations=zone-preference` 时启用
@@ -36,14 +38,11 @@ open class DiscoveryLoadbalancerConfiguration {
 
 
     companion object {
-        /**
-         * Spring Cloud 内部 `ServiceInstanceListSupplier` 的 Order 常量约定值——必须比
-         * Spring Cloud 默认实现优先级低一点，让 Spring Cloud 内置 supplier 先注册再被本类覆盖。
-         * 选这个具体数字是历史遗留（保持与原 `NacosLoadBalancerClientConfiguration` 一致）。
-         */
-        private const val REACTIVE_SERVICE_INSTANCE_SUPPLIER_ORDER = 183827465
-
         private const val ZONE_METADATA_KEY_PROPERTY = "kudos.ability.distributed.discovery.nacos.zone-metadata-key"
+        const val SERVICE_INSTANCE_SUPPLIER_ORDER_PROPERTY =
+            "kudos.ability.distributed.discovery.nacos.loadbalancer.service-instance-supplier-order"
+        const val DEFAULT_BLOCKING_SERVICE_INSTANCE_SUPPLIER_ORDER = 183827463
+        const val DEFAULT_REACTIVE_SERVICE_INSTANCE_SUPPLIER_ORDER = 183827465
 
         private fun hintZone(): ServiceInstanceListSupplierBuilder.DelegateCreator {
             return ServiceInstanceListSupplierBuilder.DelegateCreator { context: ConfigurableApplicationContext, delegate: ServiceInstanceListSupplier ->
@@ -57,11 +56,20 @@ open class DiscoveryLoadbalancerConfiguration {
                 HintZoneServiceInstanceListSupplier(delegate, zoneConfig, loadBalancerClientFactory, zoneMetadataKey)
             }
         }
+
+        private fun configuredOrder(context: ConfigurableApplicationContext, defaultOrder: Int): Int =
+            context.environment.getProperty(SERVICE_INSTANCE_SUPPLIER_ORDER_PROPERTY, Int::class.java, defaultOrder)
+
+        private fun ordered(
+            delegate: ServiceInstanceListSupplier,
+            context: ConfigurableApplicationContext,
+            defaultOrder: Int
+        ): ServiceInstanceListSupplier =
+            OrderedServiceInstanceListSupplier(delegate, configuredOrder(context, defaultOrder))
     }
 
     @Configuration(proxyBeanMethods = false)
     @ConditionalOnBlockingDiscoveryEnabled
-    @Order(REACTIVE_SERVICE_INSTANCE_SUPPLIER_ORDER - 2)
     open class BlockingSupportConfiguration {
         @Bean
         @ConditionalOnBean(DiscoveryClient::class) //@ConditionalOnMissingBean
@@ -69,9 +77,10 @@ open class DiscoveryLoadbalancerConfiguration {
         open fun zonePreferenceDiscoveryClientServiceInstanceListSupplier(
             context: ConfigurableApplicationContext
         ): ServiceInstanceListSupplier? {
-            return ServiceInstanceListSupplier.builder().withBlockingDiscoveryClient()
+            val supplier = ServiceInstanceListSupplier.builder().withBlockingDiscoveryClient()
                 .with(hintZone()) //应用: 服务实例 Header提示策略
                 .build(context)
+            return ordered(supplier, context, DEFAULT_BLOCKING_SERVICE_INSTANCE_SUPPLIER_ORDER)
         }
 
         /**
@@ -88,9 +97,6 @@ open class DiscoveryLoadbalancerConfiguration {
 
     @Configuration(proxyBeanMethods = false)
     @ConditionalOnReactiveDiscoveryEnabled
-    @Order(
-        REACTIVE_SERVICE_INSTANCE_SUPPLIER_ORDER
-    )
     open class ReactiveSupportConfiguration {
         @Bean
         @ConditionalOnBean(ReactiveDiscoveryClient::class) //@ConditionalOnMissingBean
@@ -98,9 +104,10 @@ open class DiscoveryLoadbalancerConfiguration {
         open fun zonePreferenceDiscoveryClientServiceInstanceListSupplier(
             context: ConfigurableApplicationContext
         ): ServiceInstanceListSupplier? {
-            return ServiceInstanceListSupplier.builder().withDiscoveryClient()
+            val supplier = ServiceInstanceListSupplier.builder().withDiscoveryClient()
                 .with(hintZone()) //应用: 服务实例 Header提示策略
                 .build(context)
+            return ordered(supplier, context, DEFAULT_REACTIVE_SERVICE_INSTANCE_SUPPLIER_ORDER)
         }
 
         /**
@@ -113,5 +120,20 @@ open class DiscoveryLoadbalancerConfiguration {
         fun init() {
             LogFactory.getLog(this::class).info("[reactive hint zone preference]初始化完成...")
         }
+    }
+
+    private class OrderedServiceInstanceListSupplier(
+        private val delegate: ServiceInstanceListSupplier,
+        private val order: Int
+    ) : ServiceInstanceListSupplier, Ordered {
+        override fun getOrder(): Int = order
+
+        override fun getServiceId(): String = delegate.serviceId
+
+        override fun get(): Flux<MutableList<org.springframework.cloud.client.ServiceInstance>> =
+            delegate.get()
+
+        override fun get(request: Request<*>): Flux<MutableList<org.springframework.cloud.client.ServiceInstance>> =
+            delegate.get(request)
     }
 }
