@@ -2,6 +2,7 @@ package io.kudos.ability.distributed.client.feign.interceptor
 
 import feign.Request
 import feign.RequestTemplate
+import io.kudos.ability.distributed.client.feign.init.properties.OpenFeignProperties
 import io.kudos.ability.distributed.client.feign.support.IFeignRequestContextProcess
 import io.kudos.context.core.ClientInfo
 import io.kudos.context.core.KudosContext
@@ -10,6 +11,9 @@ import io.kudos.context.kit.SpringKit
 import io.kudos.context.support.Consts
 import org.springframework.core.Ordered
 import org.springframework.context.support.StaticApplicationContext
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
 import java.util.Locale
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -143,6 +147,46 @@ internal class GlobalHeaderRequestInterceptorTest {
         val template = newTemplate("GET", "/x")
         interceptor.apply(template)
         assertEquals(listOf("zh_CN"), template.headers()[Consts.RequestHeader.LOCAL]?.toList())
+    }
+
+    @Test
+    fun contextSignatureSecretBlank_doesNotWriteSignatureHeaders() {
+        val template = newTemplate("GET", "/x")
+
+        GlobalHeaderRequestInterceptor(OpenFeignProperties()).apply(template)
+
+        assertNull(template.headers()[FeignContextSignature.TIMESTAMP_HEADER])
+        assertNull(template.headers()[FeignContextSignature.NONCE_HEADER])
+        assertNull(template.headers()[FeignContextSignature.SIGNATURE_HEADER])
+    }
+
+    @Test
+    fun contextSignatureSecretPresent_writesStableHmacSignatureHeaders() {
+        KudosContextHolder.get().apply {
+            tenantId = "tenant-X"
+            subSystemCode = "sys-A"
+            traceKey = "trace-existing"
+            dataSourceId = "ds-1"
+            clientInfo = ClientInfo(ClientInfo.Builder()).apply { locale = Locale.US }
+        }
+        val properties = OpenFeignProperties().apply {
+            contextSignatureSecret = "secret"
+        }
+        val signedInterceptor = GlobalHeaderRequestInterceptor(
+            properties = properties,
+            clock = Clock.fixed(Instant.ofEpochMilli(123456789L), ZoneOffset.UTC),
+            nonceSupplier = { "nonce-1" }
+        )
+        val template = newTemplate("POST", "/users")
+
+        signedInterceptor.apply(template)
+
+        assertEquals(listOf("123456789"), template.headers()[FeignContextSignature.TIMESTAMP_HEADER]?.toList())
+        assertEquals(listOf("nonce-1"), template.headers()[FeignContextSignature.NONCE_HEADER]?.toList())
+        assertEquals(
+            listOf("ThwD6SWfxwc+u9IRzOhYhTic8ZQqh7ZdzOdcZU2CN2s="),
+            template.headers()[FeignContextSignature.SIGNATURE_HEADER]?.toList()
+        )
     }
 
     @Test

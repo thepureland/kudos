@@ -2,12 +2,18 @@ package io.kudos.ability.distributed.client.feign.interceptor
 
 import feign.RequestInterceptor
 import feign.RequestTemplate
+import io.kudos.ability.distributed.client.feign.init.properties.OpenFeignProperties
 import io.kudos.ability.distributed.client.feign.support.IFeignRequestContextProcess
 import io.kudos.context.core.KudosContextHolder
 import io.kudos.context.kit.SpringKit
 import io.kudos.context.support.Consts
 import org.springframework.core.annotation.AnnotationAwareOrderComparator
+import java.nio.charset.StandardCharsets
+import java.time.Clock
+import java.util.Base64
 import java.util.UUID
+import javax.crypto.Mac
+import javax.crypto.spec.SecretKeySpec
 
 /**
  * 全局Feign请求拦截器
@@ -43,7 +49,11 @@ import java.util.UUID
  * - 追踪键如果为空会自动生成，确保每次请求都有追踪标识
  * - 语言环境如果不存在，默认使用zh_CN
  */
-class GlobalHeaderRequestInterceptor : RequestInterceptor {
+class GlobalHeaderRequestInterceptor(
+    private val properties: OpenFeignProperties = OpenFeignProperties(),
+    private val clock: Clock = Clock.systemUTC(),
+    private val nonceSupplier: () -> String = { UUID.randomUUID().toString() }
+) : RequestInterceptor {
 
     /**
      * 应用请求拦截：添加上下文信息到Feign请求头
@@ -101,11 +111,46 @@ class GlobalHeaderRequestInterceptor : RequestInterceptor {
             requestTemplate.header(Consts.RequestHeader.DATASOURCE_ID, dataSourceId)
         }
         requestTemplate.header(Consts.RequestHeader.FEIGN_REQUEST, "true")
+        signContextHeadersIfNecessary(requestTemplate)
         // 旧实现每个请求 `SpringKit.getBeansOfType` 调一次——bean 数量少时开销有限但 Feign 在热
         // 路径上反复触发，反射 + map 构造仍可见。Spring bean 在启动后不变，缓存到 lazy 字段
         // 一次即可。`@Volatile` 是 Kotlin lazy 的默认线程安全保证；首次访问期间 SpringKit
         // 必须已就绪（与 LockTool 同款约束）。
         processors.forEach { it.processContext(requestTemplate, context) }
+    }
+
+    private fun signContextHeadersIfNecessary(requestTemplate: RequestTemplate) {
+        val secret = properties.contextSignatureSecret?.takeIf { it.isNotBlank() } ?: return
+        val timestamp = clock.millis().toString()
+        val nonce = nonceSupplier()
+        requestTemplate.header(FeignContextSignature.TIMESTAMP_HEADER, timestamp)
+        requestTemplate.header(FeignContextSignature.NONCE_HEADER, nonce)
+        requestTemplate.header(
+            FeignContextSignature.SIGNATURE_HEADER,
+            hmacSha256(secret, signaturePayload(requestTemplate, timestamp, nonce))
+        )
+    }
+
+    private fun signaturePayload(requestTemplate: RequestTemplate, timestamp: String, nonce: String): String =
+        listOf(
+            requestTemplate.method().orEmpty(),
+            requestTemplate.url().orEmpty(),
+            firstHeader(requestTemplate, Consts.RequestHeader.TENANT_ID),
+            firstHeader(requestTemplate, Consts.RequestHeader.SUB_SYS_CODE),
+            firstHeader(requestTemplate, Consts.RequestHeader.TRACE_KEY),
+            firstHeader(requestTemplate, Consts.RequestHeader.DATASOURCE_ID),
+            firstHeader(requestTemplate, Consts.RequestHeader.LOCAL),
+            timestamp,
+            nonce
+        ).joinToString("\n")
+
+    private fun firstHeader(requestTemplate: RequestTemplate, name: String): String =
+        requestTemplate.headers()[name]?.firstOrNull().orEmpty()
+
+    private fun hmacSha256(secret: String, payload: String): String {
+        val mac = Mac.getInstance("HmacSHA256")
+        mac.init(SecretKeySpec(secret.toByteArray(StandardCharsets.UTF_8), "HmacSHA256"))
+        return Base64.getEncoder().encodeToString(mac.doFinal(payload.toByteArray(StandardCharsets.UTF_8)))
     }
 
     /**
