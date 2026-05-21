@@ -47,8 +47,8 @@ Client                                                    Provider
 
 - 出站方向：`SeataFeignXidProcessor` 实现 `IFeignRequestContextProcess`，被
   `kudos-ability-distributed-client-feign` 的 `GlobalHeaderRequestInterceptor` 调用
-- 入站方向：`SeataXidServletFilter` `Ordered.HIGHEST_PRECEDENCE`——必须在 `@Transactional`
-  切面之前完成 bind
+- 入站方向：`SeataXidServletFilter` 通过 `FilterRegistrationBean` 使用
+  `Ordered.HIGHEST_PRECEDENCE`——必须在 `@Transactional` 切面之前完成 bind
 
 ### 条件激活
 
@@ -100,16 +100,24 @@ seata:
 保留 documented reason —— XA proxy 需要 XADataSource 实例（HikariCP 默认包装的是普通
 PgDataSource）。详见测试代码注释。
 
+无容器单测覆盖：
+- `SeataDataSourceProxyTest` —— mode 拼写校验和错误信息
+- `SeataFeignXidProcessorTest` —— 出站 XID header 写入 / 无 XID 不写
+- `SeataXidServletFilterTest` —— 入站 bind / unbind、不覆盖当前线程已有 XID
+- `SeataFeignXidAutoConfigurationTest` —— filter registration order 为 `HIGHEST_PRECEDENCE`
+
 ## 已知限制
 
-- ❗ XA mode 在 testcontainer 环境下未端到端验证——生产 XA 用法需自行用 PGXADataSource 等
+- ℹ️ XA mode 在 testcontainer 环境下未端到端验证——生产 XA 用法需自行用 PGXADataSource 等
+  XADataSource 实例验证
 - ✅ `data-source-proxy-mode` 拼写错误时会抛 `IllegalArgumentException`，错误信息已列出
   合法值 `AT | XA`，并补单测锁住提示内容
-- ❗ `SeataXidServletFilter` 只处理 servlet web；reactive web (WebFlux) 没有对应实现
-- ❗ Feign XID 透传依赖 `kudos-ability-distributed-client-feign` 装好
-  `GlobalHeaderRequestInterceptor`——没装就走不通；测试套件不专门测这套联调
-- ❗ `RootContext.getXID()` 只读 ThreadLocal——跨线程业务（`@Async`、`CompletableFuture` 等）
-  需要业务方自己显式 propagate
+- ℹ️ `SeataXidServletFilter` 只处理 servlet web；reactive web (WebFlux) 没有对应实现。
+  本模块通过 `@ConditionalOnClass(RequestInterceptor, OncePerRequestFilter)` 限定了装配边界
+- ✅ Feign XID 出站 / 入站处理器已补无容器单测；完整链路仍依赖
+  `kudos-ability-distributed-client-feign` 装好 `GlobalHeaderRequestInterceptor`，这是模块间装配契约
+- ℹ️ `RootContext.getXID()` 只读 ThreadLocal——跨线程业务（`@Async`、`CompletableFuture` 等）
+  仍需要业务方自己显式 propagate，避免把 Seata ThreadLocal 隐式扩散到线程池
 
 ## 依赖
 
