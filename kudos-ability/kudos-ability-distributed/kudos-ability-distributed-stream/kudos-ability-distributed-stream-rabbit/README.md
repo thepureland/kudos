@@ -44,8 +44,8 @@ RabbitMqTestContainer.startIfNeeded(registry)
 
 ## 已知限制
 
-- ❗ 模块自身仅装配类一个文件——本质上是 spring-cloud-starter-stream-rabbit 的 thin
-  re-package + kudos yml 命名空间约定
+- ℹ️ 模块自身仅装配类一个文件——本质上是 spring-cloud-starter-stream-rabbit 的 thin
+  re-package + kudos yml 命名空间约定；业务能力来自 stream-common 和 Spring Cloud Stream Rabbit
 - ✅ 已移除 build.gradle.kts 中与本模块无关的 commented-out PostgreSQL/Flyway 依赖
 - ✅ 已启用 `@Import(StreamConsumerEnvironRegistrar::class)`，rabbit 模块会参与 kudos yml
   function.definition 自动聚合

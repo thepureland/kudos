@@ -1,6 +1,10 @@
 spring:
+  kafka:
+    security:
+      protocol: ${KAFKA_SECURITY_PROTOCOL:PLAINTEXT}
   cloud:
     stream:
       kafka:
         binder:
-          brokers: localhost:9092
+          brokers: ${KAFKA_BROKERS:localhost:9092}
+          headers: ${KAFKA_BINDER_HEADERS:}
