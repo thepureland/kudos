@@ -35,15 +35,35 @@ companion object {
 - 历史背景：旧实现是 `@Volatile var configService` 单例 + 双重检查，首次胜出，后续 properties
   被静默忽略——同进程内挂两个 Nacos 集群直接错乱。本次修复改为分桶
 
-### `AbstractConfigChangeListener` 作为预留扩展点
+### `AbstractConfigChangeListener` 作为监听 hook
 
 ```kotlin
-abstract class AbstractConfigChangeListener : AbstractListener()
+abstract class AbstractConfigChangeListener : AbstractListener() {
+    override fun receiveConfigInfo(configInfo: String?) {
+        beforeConfigChanged(configInfo)
+        runCatching { onConfigChanged(configInfo) }
+            .onSuccess { afterConfigChanged(configInfo, null) }
+            .onFailure { afterConfigChanged(configInfo, it); throw it }
+    }
+}
 ```
 
-**没有添加任何行为**——纯转发 nacos SDK 的 `AbstractListener`。存在价值是给业务代码一个
-"kudos 命名空间下的基类"，**未来本模块要加埋点 / 上下文透传 / 重试时业务调用方不需要改动**。
-现在删了它没有损失；保留它是 API 稳定性投资。
+业务侧推荐覆盖 `onConfigChanged(configInfo)`；如需埋点 / 重试 / 上下文透传，可覆盖
+`beforeConfigChanged` / `afterConfigChanged`。为了兼容旧代码，仍可直接覆盖
+`receiveConfigInfo`，但这样会绕过基类 hook。
+
+### 配置值解密 hook
+
+`NacosConfigDataFinder` 支持通过 `ServiceLoader<NacosConfigValueDecryptor>` 处理配置值：
+
+```kotlin
+class KmsDecryptor : NacosConfigValueDecryptor {
+    override fun supports(value: String) = value.startsWith("ENC(")
+    override fun decrypt(value: String): String = ...
+}
+```
+
+模块不内置具体 KMS / 密钥管理实现，避免把云厂商和密钥生命周期强耦合到基础封装里。
 
 ### `NacosConfigAutoConfiguration` 不注册任何 bean
 
@@ -91,10 +111,12 @@ spring:
 
 - `NacosConfigTest.testPublishAndRead` —— 发布配置 + 客户端读取
 - `NacosConfigTest.testListener` —— 注册 listener + 接收变更回调
+- `NacosConfigDataFinderTest` —— 纯单测覆盖 SPI 注册、按 dataId 查找、解密 hook
+- `AbstractConfigChangeListenerTest` —— 纯单测覆盖配置变更前后 hook 与异常路径
 
 依赖 `NacosTestContainer`（启 nacos-server docker image）。**当前在本机环境 nacos
-testcontainer 启动可能不稳定**——非本模块代码问题，是 nacos server image 启动延迟敏感。
-预先 `docker pull nacos/nacos-server:v3.1.1-slim` + 跑几次预热可缓解。
+testcontainer 启动可能不稳定**——非本模块代码问题，是 nacos server image 启动延迟敏感；
+测试容器已改为探测 readiness API，并把 startup timeout 放宽到 90 秒。
 
 ## 已知限制 / 后续工作
 
@@ -104,14 +126,14 @@ testcontainer 启动可能不稳定**——非本模块代码问题，是 nacos 
   叠加在本地 yml 之上。要退出请在业务侧覆写 SPI 或排除本模块
 - ✅ `NacosConfigServiceListener` 已改为按 `(serverAddr, namespace)` 分桶缓存
   `ConfigService`——多 Nacos 集群可并存，同集群同 namespace 仍只创建一份重型对象
-- ❗ 模块自身**几乎不做任何事**——本质是 spring-cloud-alibaba 的 thin façade。如果业务方
+- ℹ️ 模块自身**仍是 thin façade**——核心配置中心能力来自 spring-cloud-alibaba。如果业务方
   愿意直接用 spring-cloud-alibaba 的 starter + nacos SDK，本模块可以删
-- ❗ `AbstractConfigChangeListener` 现在仅是空转发。要在不破坏业务调用的前提下加埋点 /
-  上下文透传 / 重试，本模块要先把这个 hook 利用起来。当前是占坑
-- ❗ 测试依赖 `NacosTestContainer`，本机 / CI 偶发启动失败——nacos server 启动慢 (~30s)
-  + 健康探测严格。需要时可以调大 `startupTimeout` 或换镜像
-- ❗ 没有"配置加密 / 解密 hook"——nacos 自身支持 KMS 加密，但本封装没有对应桥接，业务方
-  自行处理
+- ✅ `AbstractConfigChangeListener` 已提供 `beforeConfigChanged` / `onConfigChanged` /
+  `afterConfigChanged` hook，业务侧可在不包 listener 的情况下挂埋点 / 上下文透传 / 重试
+- ✅ `NacosTestContainer` 已从页面探测改为 readiness API 探测，并把 startup timeout 放宽到
+  90 秒，降低 nacos server 镜像启动慢导致的 CI 抖动
+- ✅ 已提供 `NacosConfigValueDecryptor` 解密 SPI；`NacosConfigDataFinder` 返回配置时会对
+  String 值逐项调用匹配的 decryptor，具体 KMS / 密钥实现由业务侧通过 ServiceLoader 接入
 
 ## 依赖
 

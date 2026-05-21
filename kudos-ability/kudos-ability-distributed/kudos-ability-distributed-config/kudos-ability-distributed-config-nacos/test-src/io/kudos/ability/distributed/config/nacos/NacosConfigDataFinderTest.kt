@@ -2,6 +2,7 @@ package io.kudos.ability.distributed.config.nacos
 
 import com.alibaba.cloud.nacos.NacosPropertySourceRepository
 import com.alibaba.cloud.nacos.client.NacosPropertySource
+import io.kudos.ability.distributed.config.nacos.decrypt.NacosConfigValueDecryptor
 import io.kudos.context.config.IConfigDataFinder
 import org.springframework.core.env.MapPropertySource
 import org.springframework.core.env.PropertySource
@@ -85,6 +86,22 @@ internal class NacosConfigDataFinderTest {
             loaded.any { it::class == NacosConfigDataFinder::class },
             "META-INF/services/io.kudos.context.config.IConfigDataFinder 应当注册 NacosConfigDataFinder，实际加载到: ${loaded.map { it::class.qualifiedName }}",
         )
+    }
+
+    @Test
+    fun findConfigData_appliesConfiguredDecryptorToStringValues() {
+        register(dataId = "secret.yaml", group = "DEFAULT_GROUP", payload = mapOf("password" to "ENC(cipher)"))
+        val finder = NacosConfigDataFinder(listOf(TestDecryptor()))
+
+        val source = finder.findConfigData("secret.yaml")
+
+        assertEquals("plain:cipher", source?.getProperty("password"))
+    }
+
+    private class TestDecryptor : NacosConfigValueDecryptor {
+        override fun supports(value: String): Boolean = value.startsWith("ENC(") && value.endsWith(")")
+
+        override fun decrypt(value: String): String = "plain:" + value.removePrefix("ENC(").removeSuffix(")")
     }
 
     /**

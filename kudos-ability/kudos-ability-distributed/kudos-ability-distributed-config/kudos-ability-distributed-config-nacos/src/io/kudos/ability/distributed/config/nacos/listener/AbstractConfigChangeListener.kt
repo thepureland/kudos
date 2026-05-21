@@ -6,14 +6,14 @@ import com.alibaba.nacos.api.config.listener.AbstractListener
 /**
  * Nacos 配置变更监听器基类。
  *
- * 直接继承 nacos SDK 自带的 [AbstractListener]，**没有添加任何额外行为**——本类的存在
- * 价值是让业务代码 `import` 时不需要再触碰 nacos SDK 的具体类型，方便未来在不破坏业务
- * 调用方的前提下挂额外能力（埋点 / 重试 / 上下文透传等）。
+ * 继承 nacos SDK 自带的 [AbstractListener]，并提供变更处理前后的 hook。业务侧实现
+ * [onConfigChanged] 即可；需要埋点 / 重试 / 上下文透传时可覆盖 [beforeConfigChanged] /
+ * [afterConfigChanged]，无需再包一层 listener。
  *
  * 业务侧典型用法：
  * ```kotlin
  * NacosConfigServiceListener(serverAddr).addListener(dataId, group, object : AbstractConfigChangeListener() {
- *     override fun receiveConfigInfo(configInfo: String?) { /* ... */ }
+ *     override fun onConfigChanged(configInfo: String?) { /* ... */ }
  * })
  * ```
  *
@@ -21,4 +21,23 @@ import com.alibaba.nacos.api.config.listener.AbstractListener
  * @author K
  * @since 1.0.0
  */
-abstract class AbstractConfigChangeListener : AbstractListener()
+abstract class AbstractConfigChangeListener : AbstractListener() {
+
+    override fun receiveConfigInfo(configInfo: String?) {
+        beforeConfigChanged(configInfo)
+        runCatching {
+            onConfigChanged(configInfo)
+        }.onSuccess {
+            afterConfigChanged(configInfo, null)
+        }.onFailure {
+            afterConfigChanged(configInfo, it)
+            throw it
+        }
+    }
+
+    protected open fun beforeConfigChanged(configInfo: String?) = Unit
+
+    protected open fun onConfigChanged(configInfo: String?) = Unit
+
+    protected open fun afterConfigChanged(configInfo: String?, cause: Throwable?) = Unit
+}
