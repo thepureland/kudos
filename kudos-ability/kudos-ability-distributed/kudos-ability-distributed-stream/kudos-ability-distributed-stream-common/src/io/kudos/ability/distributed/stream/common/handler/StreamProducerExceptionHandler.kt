@@ -11,6 +11,18 @@ import jakarta.annotation.Resource
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.messaging.MessageHeaders
 import org.springframework.messaging.support.GenericMessage
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.doubleOrNull
+import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.longOrNull
+import kotlin.reflect.KClass
+import kotlin.reflect.KClassifier
+import kotlin.reflect.full.primaryConstructor
 
 /**
  * 流式消息生产者异常处理器
@@ -87,11 +99,7 @@ class StreamProducerExceptionHandler : AbstractFailedDataHandler<StreamProducerM
         val bindName = requireNotNull(data.bindName) { "bindName 不能为空" }
         val msgBodyJson = requireNotNull(data.msgBodyJson) { "msgBodyJson 不能为空" }
         val msgHeaderJson = requireNotNull(data.msgHeaderJson) { "msgHeaderJson 不能为空" }
-        // 已知限制：`JsonKit.fromJson<Any>` 因泛型擦除会得到 LinkedHashMap 而非原始业务类——
-        // consumer 侧收到的是 Map<String, Any?>，不再是发送方的具体类。要恢复类型保真度需要
-        // 在 StreamProducerMsgVo 里额外持久化 className 并按它反序列化。当前用法适合"消息只用
-        // 来透传 JSON 数据"的场景；强类型业务对象重试场景请绕开本 handler 自定义实现
-        val obj = requireNotNull(JsonKit.fromJson<Any>(msgBodyJson)) { "msgBodyJson 反序列化失败" }
+        val obj = requireNotNull(readMessageBody(msgBodyJson, data.msgBodyClassName)) { "msgBodyJson 反序列化失败" }
         val streamMessageVo: StreamMessageVo<Any?> = StreamMessageVo(obj)
         val headMap = requireNotNull(JsonKit.fromJson<MutableMap<String, Any>>(msgHeaderJson)) { "msgHeaderJson 反序列化失败" }
         val messageHeaders = MessageHeaders(headMap)
@@ -99,6 +107,63 @@ class StreamProducerExceptionHandler : AbstractFailedDataHandler<StreamProducerM
         //如果本次发送为异步flush报错，则它会继续被异常拦截
         //如果本次直接返回false，它则没提交到mq的等待flush队列中，本地文件不做删除
         return streamProducerHelper.doRealSend(bindName, message, true)
+    }
+
+    private fun readMessageBody(msgBodyJson: String, className: String?): Any? {
+        if (!className.isNullOrBlank()) {
+            runCatching {
+                @Suppress("UNCHECKED_CAST")
+                val kClass = Class.forName(className).kotlin as KClass<Any>
+                return JsonKit.readValue(msgBodyJson.toByteArray(Charsets.UTF_8), kClass)
+            }
+            runCatching {
+                @Suppress("UNCHECKED_CAST")
+                val kClass = Class.forName(className).kotlin as KClass<Any>
+                val dynamicBody = readDynamicJson(msgBodyJson)
+                return restoreByPrimaryConstructor(dynamicBody, kClass)
+            }
+        }
+        return readDynamicJson(msgBodyJson)
+    }
+
+    private fun restoreByPrimaryConstructor(dynamicBody: Any?, kClass: KClass<Any>): Any? {
+        val values = dynamicBody as? Map<*, *> ?: return null
+        val constructor = kClass.primaryConstructor ?: return null
+        val args = constructor.parameters
+            .filter { values.containsKey(it.name) }
+            .associateWith { parameter ->
+                coerceConstructorValue(values[parameter.name], parameter.type.classifier)
+            }
+        return constructor.callBy(args)
+    }
+
+    private fun coerceConstructorValue(value: Any?, classifier: KClassifier?): Any? =
+        when (classifier) {
+            Int::class -> (value as? Number)?.toInt()
+            Long::class -> (value as? Number)?.toLong()
+            Double::class -> (value as? Number)?.toDouble()
+            Float::class -> (value as? Number)?.toFloat()
+            Short::class -> (value as? Number)?.toShort()
+            Byte::class -> (value as? Number)?.toByte()
+            Boolean::class -> value as? Boolean
+            String::class -> value?.toString()
+            else -> value
+        }
+
+    private fun readDynamicJson(msgBodyJson: String): Any? {
+        val element = JsonKit.defaultJson.parseToJsonElement(msgBodyJson)
+        return unwrapJsonElement(element)
+    }
+
+    private fun unwrapJsonElement(element: JsonElement): Any? = when (element) {
+        is JsonObject -> element.mapValues { unwrapJsonElement(it.value) }
+        is JsonArray -> element.map { unwrapJsonElement(it) }
+        is JsonPrimitive -> element.booleanOrNull
+            ?: element.intOrNull
+            ?: element.longOrNull
+            ?: element.doubleOrNull
+            ?: element.content
+        JsonNull -> null
     }
 
     override val businessType: String

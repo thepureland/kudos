@@ -30,26 +30,41 @@ open class MqProducerAspect {
 
     @AfterReturning(pointcut = "producerPointcut()", returning = "retVal")
     open fun afterReturning(joinPoint: JoinPoint, retVal: Any?) {
-        if (retVal is Boolean && !retVal) {
-            log.warn("MqProducer 方法返回false，跳过发送。method={0}", joinPoint.signature.toShortString())
-            return
-        }
-        if (joinPoint.args.isEmpty()) {
-            log.warn("Stream生产消息体为空，忽略本次消息")
-            return
-        }
         val signature = joinPoint.signature as MethodSignature
         val annotation = signature.method.getAnnotation(MqProducer::class.java)
             ?: run {
                 log.warn("MqProducer 注解缺失，method={0}", signature.toShortString())
                 return
             }
+        if (retVal is Boolean && !retVal && annotation.cancelOnFalse) {
+            log.warn("MqProducer 方法返回false，跳过发送。method={0}", joinPoint.signature.toShortString())
+            return
+        }
         val bindingName = annotation.bindingName
-        val data = joinPoint.args[0]
+        if (joinPoint.args.size > 1 && annotation.payloadParameterIndex == 0) {
+            log.warn(
+                "MqProducer 方法有多个参数但未显式指定payloadParameterIndex，默认发送第一个参数。method={0}",
+                signature.toShortString()
+            )
+        }
+        val data = selectPayload(joinPoint.args, annotation.payloadParameterIndex)
+            ?: run {
+                log.warn(
+                    "Stream生产消息体为空或payloadParameterIndex越界，忽略本次消息。method={0}, payloadParameterIndex={1}",
+                    signature.toShortString(),
+                    annotation.payloadParameterIndex
+                )
+                return
+            }
         val success = producerHelper.sendMessage(bindingName, data)
         if (!success) {
             log.warn("Stream生产消息发送结果:false, bindingName={0}", bindingName)
         }
+    }
+
+    companion object {
+        internal fun selectPayload(args: Array<Any?>, payloadParameterIndex: Int): Any? =
+            args.getOrNull(payloadParameterIndex)
     }
 
 }

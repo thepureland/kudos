@@ -19,12 +19,13 @@ fun publishUserEvent(event: UserEvent): Boolean = true
 ```
 
 切面 `MqProducerAspect` 在 `@AfterReturning` 阶段：
-- 检查方法返回 `Boolean false` → 跳过发送（业务侧的"取消发送"语义）
-- 取 `joinPoint.args[0]` 作为消息体
+- 检查方法返回 `Boolean false` 且 `cancelOnFalse=true` → 跳过发送（业务侧的"取消发送"语义）
+- 取 `payloadParameterIndex` 指定的方法参数作为消息体，默认 `0`
 - 调 `StreamProducerHelper.sendMessage(bindingName, data)`
 
 业务侧典型用法：方法体把"发送前校验"逻辑放上，校验失败返回 false 让切面跳过。
 **方法返回值的真实含义是"是否决定要发"，不是"是否发送成功"**。
+多参数 producer 方法必须显式指定 `payloadParameterIndex`。
 
 ### `StreamProducerHelper.doRealSend` 异步语义
 
@@ -77,6 +78,10 @@ kudos:
           required-producer-bindings:
             - userEvents-out-0
             - notifyMq-out-0
+        producer-limit:
+          enabled: true
+          max-in-flight: 1024
+          acquire-timeout-millis: 50
 ```
 
 `InitializingBean` 在装配末期跑 — 必需的 binding 缺失时按 `failOnMissing` 决定 warn 或抛错。
@@ -102,6 +107,7 @@ kudos:
 | `init/StreamConsumerEnvironRegistrar` | function.definition 聚合注册器 |
 | `init/properties/StreamAsyncSendExecutorProperties` | 异步发送线程池配置 |
 | `init/properties/StreamBindingVerifyProperties` | binding 启动校验配置 |
+| `init/properties/StreamProducerLimitProperties` | producer 侧本地 in-flight 限流配置 |
 
 ## 已修复（本轮 8 维度审计）
 
@@ -116,24 +122,28 @@ kudos:
 
 ## 已知限制
 
-- ❗ `@MqProducer` 方法返回值"`false` = 取消发送"的隐式约定不直观——切面层 warn 但业务侧
-  阅读代码不容易猜到。可以考虑显式 `@Cancellable` 子注解，或文档化
-- ❗ `StreamProducerHelper.sendMessage` 返回 true 不代表消息送达 broker——业务侧若以此判断
-  发送成功会被误导。真正的失败信号在 error channel 异步触发
-- ❗ `MqProducerAspect.afterReturning` 只取 `joinPoint.args[0]` 作消息体——多参数业务方法
-  只有第一个参数会被发送，其余被忽略且无 warn
-- ❗ `StreamProducerExceptionHandler.processFailedData` 因泛型擦除会得到 `LinkedHashMap`
-  而非原始业务类——消费端拿到的是 Map，不再是发送方的类型。强类型场景需自定义
-  handler 把 className 一起持久化
-- ❗ `SysMqFailMsg` 表用 Ktorm 写——本模块直接依赖 `kudos-ability-data-rdb-ktorm` 的隐式假设；
-  非 RDB 后端的部署需自行覆盖 DAO
-- ❗ `StreamConsumerEnvironRegistrar` 扫描所有 kudos yml——业务方自有 yml 不在 `kudos.*` 命名
-  下的 function.definition 不会被合并，需 spring 默认机制读取
-- ❗ 没有 producer-side 限流；高 QPS 业务可能把 StreamBridge 队列打爆
+- ✅ `@MqProducer` 方法返回值"`false` = 取消发送"已通过注解参数
+  `cancelOnFalse` 显式化，默认保持历史行为；业务代码可直接从注解读到语义
+- ℹ️ `StreamProducerHelper.sendMessage` 返回 true 仍表示"已提交给 StreamBridge"，不等价于
+  broker ack；这是 spring-cloud-stream 异步发送模型。真实失败仍通过 error channel 异步触发，
+  本模块负责接线和失败持久化
+- ✅ `MqProducerAspect.afterReturning` 已支持 `payloadParameterIndex`，多参数业务方法可以显式
+  指定要发送的参数；未指定且存在多参数时会打 warn
+- ✅ `StreamProducerExceptionHandler.processFailedData` 已在失败数据里保存 `msgBodyClassName`，
+  重试时优先按原 className 反序列化；无 serializer 时再尝试用 primary constructor 从 JSON Map
+  恢复，最后才回退为 Map / List 动态结构
+- ℹ️ `SysMqFailMsg` 表用 Ktorm 写是当前默认实现；`StreamCommonConfiguration.streamExceptionMsgDao`
+  已是 `@ConditionalOnMissingBean`，非 RDB / 非 Ktorm 部署可覆盖 DAO / service bean
+- ℹ️ `StreamConsumerEnvironRegistrar` 只扫描 `kudos.*` yml 是模块自动聚合范围；业务方自有 yml
+  仍按 Spring 默认机制读取，跨模块自动聚合需放在 kudos 命名资源下
+- ✅ 已增加 producer-side 本地 in-flight 限流：
+  `kudos.ability.distributed.stream.producer-limit.enabled=true`，可配置
+  `max-in-flight` 和 `acquire-timeout-millis`，默认关闭保持兼容
 - ✅ 已补基础单测：`StreamMessageConverter` 序列化往返、`StreamHeader.toContextParam`
-  header 还原、`StreamFailHandlerItem` 精确匹配 / 默认 fallback
-- ❗ `@MqProducer` 切面 / `StreamGlobalExceptionHandler` 三入口 / 失败重试
-  / function.definition 聚合仍主要靠手工 + 集成验证
+  header 还原、`StreamFailHandlerItem` 精确匹配 / 默认 fallback、`@MqProducer`
+  payload 参数选择、失败重试 payload 类型恢复
+- ℹ️ `StreamGlobalExceptionHandler` 三入口 / function.definition 聚合仍依赖集成验证；本轮补了
+  producer 切面与失败重试的无容器单测，后续可继续把 error channel 路由和 registrar 聚合抽成纯函数测试
 
 ## 依赖
 

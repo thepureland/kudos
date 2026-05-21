@@ -171,6 +171,7 @@ class StreamGlobalExceptionHandler {
             this.bindName = bindName
             msgHeaderJson = JsonKit.toJson(headers).ifEmpty { headers.toString() }
             msgBodyJson = JsonKit.toJson(body.data)
+            msgBodyClassName = body.data?.javaClass?.name
         }
         StreamFailHandlerItem.get(bindName)?.persistFailedData(producerMsgVo)
     }
