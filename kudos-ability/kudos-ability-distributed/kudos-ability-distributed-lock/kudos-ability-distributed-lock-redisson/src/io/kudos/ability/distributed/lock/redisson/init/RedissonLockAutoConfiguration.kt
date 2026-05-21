@@ -148,8 +148,11 @@ open class RedissonLockAutoConfiguration : IComponentInitializer {
     @Bean
     open fun distributedLockAspect() = DistributedLockAspect()
 
-    @Bean
-    open fun redissonLocker() = RedissonLocker()
+    @Bean(name = [RedissonLockKit.REDISSON_LOCKER_BEAN_NAME])
+    open fun redissonLocker(properties: RedissonProperties) =
+        RedissonLocker().also {
+            RedissonLockKit.setLockKeyPrefix(properties.lockKeyPrefix)
+        }
 
     override fun getComponentName() = "kudos-ability-distributed-lock-redisson"
 

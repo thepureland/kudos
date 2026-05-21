@@ -1,18 +1,29 @@
 package io.kudos.ability.distributed.lock.redisson.bean
 
+import io.kudos.ability.distributed.lock.redisson.kit.RedissonLockKit
 import org.redisson.api.RLock
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Proxy
 import java.util.concurrent.TimeUnit
+import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 
 internal class RedissonLockProviderTest {
 
+    @AfterTest
+    fun tearDown() {
+        RedissonLockKit.setLockKeyPrefix(RedissonLockKit.DEFAULT_LOCK_KEY_PREFIX)
+    }
+
     @Test
     fun unLock_rLockNotHeldByCurrentThread_doesNotCallUnlock() {
-        val lock = RecordingRLock(isLocked = true, isHeldByCurrentThread = false)
+        val lock = RecordingRLock(
+            name = "REDISSON::order:1",
+            isLocked = true,
+            isHeldByCurrentThread = false
+        )
 
         RedissonLockProvider().unLock(lock.proxy, "order:1")
 
@@ -23,14 +34,34 @@ internal class RedissonLockProviderTest {
 
     @Test
     fun unLock_rLockHeldByCurrentThread_callsUnlock() {
-        val lock = RecordingRLock(isLocked = true, isHeldByCurrentThread = true)
+        val lock = RecordingRLock(
+            name = "REDISSON::order:2",
+            isLocked = true,
+            isHeldByCurrentThread = true
+        )
 
         RedissonLockProvider().unLock(lock.proxy, "order:2")
 
         assertEquals(1, lock.unlockCalls)
     }
 
+    @Test
+    fun unLock_rLockKeyMismatch_doesNotCallUnlock() {
+        val lock = RecordingRLock(
+            name = "REDISSON::order:other",
+            isLocked = true,
+            isHeldByCurrentThread = true
+        )
+
+        RedissonLockProvider().unLock(lock.proxy, "order:3")
+
+        assertEquals(0, lock.isLockedCalls)
+        assertEquals(0, lock.isHeldByCurrentThreadCalls)
+        assertEquals(0, lock.unlockCalls)
+    }
+
     private class RecordingRLock(
+        private val name: String,
         private val isLocked: Boolean,
         private val isHeldByCurrentThread: Boolean
     ) {
@@ -40,6 +71,7 @@ internal class RedissonLockProviderTest {
 
         val proxy: RLock = proxy(RLock::class.java) { method, _ ->
             when (method.name) {
+                "getName" -> name
                 "isLocked" -> {
                     isLockedCalls++
                     isLocked

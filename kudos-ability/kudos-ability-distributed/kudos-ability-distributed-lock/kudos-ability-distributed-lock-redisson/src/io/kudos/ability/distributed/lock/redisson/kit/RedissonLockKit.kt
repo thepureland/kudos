@@ -4,6 +4,7 @@ import io.kudos.ability.distributed.lock.redisson.locker.RedissonLocker
 import io.kudos.context.kit.SpringKit
 import org.redisson.api.RLock
 import org.redisson.api.RedissonClient
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 
 /**
@@ -11,17 +12,12 @@ import java.util.concurrent.TimeUnit
  */
 object RedissonLockKit {
 
-    private var lockBean: RedissonLocker? = null
+    private val lockBeans = ConcurrentHashMap<String, RedissonLocker>()
 
-    private const val LOCK_KEY_PREFIX = "REDISSON::"
+    @Volatile
+    private var lockKeyPrefix: String = DEFAULT_LOCK_KEY_PREFIX
 
-    /**
-     * 获取分布式锁
-     *
-     * @param lockKey 锁的key
-     * @return RLock
-     */
-    fun getLock(lockKey: String): RLock = locker().getLock(getLockKey(lockKey))
+    const val DEFAULT_LOCK_KEY_PREFIX = "REDISSON::"
 
     /**
      * 获取分布式锁
@@ -29,7 +25,19 @@ object RedissonLockKit {
      * @param lockKey 锁的key
      * @return RLock
      */
-    fun lock(lockKey: String): RLock? = locker().lock(getLockKey(lockKey))
+    @JvmOverloads
+    fun getLock(lockKey: String, lockerBeanName: String = REDISSON_LOCKER_BEAN_NAME): RLock =
+        locker(lockerBeanName).getLock(getLockKey(lockKey))
+
+    /**
+     * 获取分布式锁
+     *
+     * @param lockKey 锁的key
+     * @return RLock
+     */
+    @JvmOverloads
+    fun lock(lockKey: String, lockerBeanName: String = REDISSON_LOCKER_BEAN_NAME): RLock? =
+        locker(lockerBeanName).lock(getLockKey(lockKey))
 
     /**
      * 获取分布式锁，并指定锁失效秒数
@@ -38,7 +46,9 @@ object RedissonLockKit {
      * @param timeOut timeOut
      * @return RLock
      */
-    fun lock(lockKey: String, timeOut: Long): RLock = locker().lock(getLockKey(lockKey), timeOut)
+    @JvmOverloads
+    fun lock(lockKey: String, timeOut: Long, lockerBeanName: String = REDISSON_LOCKER_BEAN_NAME): RLock =
+        locker(lockerBeanName).lock(getLockKey(lockKey), timeOut)
 
     /**
      * 获取分布式锁，并指定锁失效时间
@@ -48,8 +58,14 @@ object RedissonLockKit {
      * @param timeOut timeOut
      * @return RLock
      */
-    fun lock(lockKey: String, unit: TimeUnit, timeOut: Long): RLock =
-        locker().lock(getLockKey(lockKey), unit, timeOut)
+    @JvmOverloads
+    fun lock(
+        lockKey: String,
+        unit: TimeUnit,
+        timeOut: Long,
+        lockerBeanName: String = REDISSON_LOCKER_BEAN_NAME
+    ): RLock =
+        locker(lockerBeanName).lock(getLockKey(lockKey), unit, timeOut)
 
     /**
      * 尝试获取锁，如果获取成功返回true，否则返回false
@@ -59,16 +75,24 @@ object RedissonLockKit {
      * @param timeOut   获取锁等待时间
      * @param leaseTime 获取锁成功后，锁失效时间
      */
-    fun tryLock(lockKey: String, unit: TimeUnit, timeOut: Long, leaseTime: Long): Boolean =
-        locker().tryLock(getLockKey(lockKey), unit, timeOut, leaseTime)
+    @JvmOverloads
+    fun tryLock(
+        lockKey: String,
+        unit: TimeUnit,
+        timeOut: Long,
+        leaseTime: Long,
+        lockerBeanName: String = REDISSON_LOCKER_BEAN_NAME
+    ): Boolean =
+        locker(lockerBeanName).tryLock(getLockKey(lockKey), unit, timeOut, leaseTime)
 
     /**
      * 解除分布式锁
      *
      * @param lockKey lockKey
      */
-    fun unlock(lockKey: String) {
-        locker().unlock(getLockKey(lockKey))
+    @JvmOverloads
+    fun unlock(lockKey: String, lockerBeanName: String = REDISSON_LOCKER_BEAN_NAME) {
+        locker(lockerBeanName).unlock(getLockKey(lockKey))
     }
 
     /**
@@ -85,19 +109,20 @@ object RedissonLockKit {
         }
     }
 
-    /**
-     * 惰性初始化 [lockBean]。
-     * 加 `@Synchronized` 是因为 object 静态字段在多线程环境下首次访问可能并发命中——
-     * Spring 容器初始化前后切换的窗口期，单纯的 `?.let` 不够安全。
-     *
-     * @author K
-     * @since 1.0.0
-     */
-    @Synchronized
-    private fun initLockBean() {
-        if (lockBean == null) {
-            lockBean = SpringKit.getBean<RedissonLocker>()
+    /** 绑定指定名称的 locker。主要用于多 RedissonClient 场景和测试。 */
+    fun bindLocker(locker: RedissonLocker?, lockerBeanName: String = REDISSON_LOCKER_BEAN_NAME) {
+        if (locker == null) {
+            lockBeans.remove(lockerBeanName)
+        } else {
+            lockBeans[lockerBeanName] = locker
         }
+    }
+
+    /**
+     * 配置统一 lock key 前缀。传空字符串表示不加前缀。
+     */
+    fun setLockKeyPrefix(prefix: String) {
+        lockKeyPrefix = prefix
     }
 
     /**
@@ -108,9 +133,16 @@ object RedissonLockKit {
      * @author K
      * @since 1.0.0
      */
-    private fun locker(): RedissonLocker {
-        initLockBean()
-        return requireNotNull(lockBean) { "RedissonLocker 未就绪" }
+    private fun locker(lockerBeanName: String): RedissonLocker =
+        lockBeans.computeIfAbsent(lockerBeanName) {
+            SpringKit.getBean(it) as RedissonLocker
+        }
+
+    /**
+     * 清理缓存的 locker。主要用于测试或 Spring 容器重建场景。
+     */
+    fun clearCachedLockers() {
+        lockBeans.clear()
     }
 
     /** Spring 容器中 Redisson 客户端 bean 名 */
@@ -128,7 +160,7 @@ object RedissonLockKit {
         SpringKit.getBean(REDISSON_CLIENT_BEAN_NAME) as RedissonClient
 
     /**
-     * 把业务 key 拼上 [LOCK_KEY_PREFIX] 形成 Redis 中的完整锁 key。
+     * 把业务 key 拼上 [lockKeyPrefix] 形成 Redis 中的完整锁 key。
      * 集中前缀让运维通过 key 模式就能识别 redisson 锁。
      *
      * @param key 业务 key
@@ -136,5 +168,8 @@ object RedissonLockKit {
      * @author K
      * @since 1.0.0
      */
-    fun getLockKey(key: String): String = LOCK_KEY_PREFIX + key
+    fun getLockKey(key: String): String = lockKeyPrefix + key
+
+    /** 默认 RedissonLocker bean 名 */
+    const val REDISSON_LOCKER_BEAN_NAME: String = "redissonLocker"
 }

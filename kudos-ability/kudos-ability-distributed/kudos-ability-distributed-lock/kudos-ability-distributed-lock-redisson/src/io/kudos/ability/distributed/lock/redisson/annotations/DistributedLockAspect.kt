@@ -1,6 +1,7 @@
 package io.kudos.ability.distributed.lock.redisson.annotations
 
 import io.kudos.ability.distributed.lock.common.annotations.DistributedLock
+import io.kudos.ability.distributed.lock.common.exception.DistributedLockAcquireException
 import io.kudos.ability.distributed.lock.common.locker.DistributedLockContext
 import io.kudos.ability.distributed.lock.redisson.kit.RedissonLockKit
 import io.kudos.base.logger.LogFactory
@@ -76,7 +77,8 @@ class DistributedLockAspect {
      * 5. 锁的释放在finally块中执行，确保即使方法抛出异常也能正确释放
      * 
      * 异常处理：
-     * - 获取锁时如果抛出异常，会记录警告日志，但不中断流程，会触发失败回调
+     * - 获取锁时如果抛出异常，会记录警告日志，并按获取失败处理
+     * - 获取锁失败默认抛出 [DistributedLockAcquireException]；显式配置 `throwOnFailure=false` 时返回 null
      * - 方法执行时如果抛出异常，会按原异常重新抛出，避免破坏业务侧 typed catch
      * - 释放锁时如果抛出异常，会记录警告日志，但不影响方法返回值
      * 
@@ -95,12 +97,16 @@ class DistributedLockAspect {
         }
         val lockKey = genLockKey(joinPoint, signature, annotation)
         log.debug("尝试获取分布式锁：key=$lockKey")
+        val lockerBeanName = annotation.lockerBeanName.ifBlank { RedissonLockKit.REDISSON_LOCKER_BEAN_NAME }
         val acquired = runCatching {
-            RedissonLockKit.tryLock(lockKey, TimeUnit.SECONDS, annotation.waitTime, annotation.leaseTime)
+            RedissonLockKit.tryLock(lockKey, TimeUnit.SECONDS, annotation.waitTime, annotation.leaseTime, lockerBeanName)
         }.onFailure { log.warn("无法取得分布式锁，可能有任务还未完成：${it.message}") }.getOrDefault(false)
         lockCallback(acquired, lockKey)
         if (!acquired) {
             log.warn("无法取得分布式锁，可能有任务还未完成。key=$lockKey")
+            if (annotation.throwOnFailure) {
+                throw DistributedLockAcquireException(lockKey)
+            }
             return null
         }
         return try {
@@ -109,7 +115,7 @@ class DistributedLockAspect {
             throw e
         } finally {
             log.debug("释放锁：key=$lockKey")
-            runCatching { RedissonLockKit.unlock(lockKey) }
+            runCatching { RedissonLockKit.unlock(lockKey, lockerBeanName) }
                 .onFailure { log.warn("释放锁异常，可能超时被自动释放。message={0}", it.message) }
         }
     }

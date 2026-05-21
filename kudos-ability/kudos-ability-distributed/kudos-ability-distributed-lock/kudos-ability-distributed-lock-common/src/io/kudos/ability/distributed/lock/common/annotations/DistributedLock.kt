@@ -30,5 +30,18 @@ annotation class DistributedLock(
     /**
      * 分布式锁的租期：失效时间
      */
-    val leaseTime: Long = 20
+    val leaseTime: Long = 20,
+    /**
+     * 拿不到锁时是否抛出异常。
+     *
+     * 默认抛出 [io.kudos.ability.distributed.lock.common.exception.DistributedLockAcquireException]，
+     * 避免非 nullable 返回值业务方法在调用方因 null 产生延迟 NPE。需要兼容旧行为时可显式设为 false。
+     */
+    val throwOnFailure: Boolean = true,
+    /**
+     * 使用指定名称的 RedissonLocker bean。为空时使用默认 locker。
+     *
+     * 多 Redis / 多 RedissonClient 场景可自行声明多个 RedissonLocker bean，并在注解上指定 bean 名。
+     */
+    val lockerBeanName: String = ""
 )
