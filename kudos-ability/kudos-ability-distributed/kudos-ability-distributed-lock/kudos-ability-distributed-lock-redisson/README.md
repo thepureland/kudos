@@ -81,6 +81,8 @@ kudos:
 - `RedissonLockSingleTest` —— 单机 Redisson 集成测试（依赖 Redis testcontainer）
 - `RedissonLockerTest` —— 纯 mock 单测覆盖无超时 `lock(lockKey)` 走 bounded `tryLock`，
   不再调用无限阻塞的 `RLock.lock()`
+- `RedissonLockProviderTest` —— 纯 mock 单测覆盖 `unLock(Lock, key)` 的 RLock 分支会走
+  `isHeldByCurrentThread` 守卫，非当前线程持有时不裸调 `unlock()`
 
 ## 已知限制 / 后续工作
 
@@ -92,8 +94,8 @@ kudos:
   场景需自行包装
 - ❗ key 前缀 `REDISSON::` 硬编码，业务不能更改；不同应用部署到同一 Redis 实例时如有命名冲突
   需要业务侧自己再加 namespace
-- ❗ `RedissonLockProvider.unLock(Lock, key)` 忽略 key 参数——直接 `lock.unlock()`，依赖调用方
-  保证传入的 lock 对应 key
+- ❗ `RedissonLockProvider.unLock(Lock, key)` 受 `ILockProvider` 接口限制，仍无法用 key 校验
+  传入 lock 是否同源；但 RLock 分支已改为走 `isHeldByCurrentThread` 守卫，避免裸 `unlock()`
 - ✅ `RedissonLocker.lock(lockKey)` 已从无限阻塞 `RLock.lock()` 改为默认 bounded `tryLock`
   （最多等待 3 秒，租期 30 秒），超时 / 中断返回 null，并补单测锁住
 - ❗ 删除了未使用的 `atom/AtomExecuteTask`（Thread 扩展类，全模块无引用），如果有外部反射依赖
