@@ -1,11 +1,13 @@
 package io.kudos.ability.distributed.stream.common.support
 
 import io.kudos.ability.distributed.stream.common.handler.StreamFailHandlerItem
+import io.kudos.ability.distributed.stream.common.init.properties.StreamProducerLimitProperties
 import io.kudos.ability.distributed.stream.common.model.vo.StreamHeader
 import io.kudos.ability.distributed.stream.common.model.vo.StreamMessageVo
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import jakarta.annotation.Resource
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cloud.stream.config.BindingServiceProperties
 import org.springframework.cloud.stream.function.StreamBridge
 import org.springframework.messaging.Message
@@ -14,6 +16,8 @@ import org.springframework.messaging.MessageHandlingException
 import org.springframework.messaging.support.ErrorMessage
 import org.springframework.messaging.support.GenericMessage
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
+import java.util.concurrent.Semaphore
+import java.util.concurrent.TimeUnit
 
 /**
  * 流式消息生产者辅助类
@@ -45,6 +49,15 @@ class StreamProducerHelper {
     @Resource(name = "mqProducerChannel")
     private lateinit var mqProducerChannel: MessageChannel
 
+    @Autowired(required = false)
+    private var producerLimitProperties: StreamProducerLimitProperties? = null
+
+    @Volatile
+    private var producerLimiter: Semaphore? = null
+
+    @Volatile
+    private var producerLimiterSize: Int = 0
+
     /**
      * 发送消息
      *
@@ -57,13 +70,20 @@ class StreamProducerHelper {
             LOG.error("未找到Stream配置项{0}", bindingName)
             return false
         }
-        val msg = createMessage(bindingName, data)
-        @Suppress("UNCHECKED_CAST")
-        val success = doRealSend(bindingName, msg as Message<StreamMessageVo<Any?>>, false)
-        if (!success) {
-            LOG.warn("stream发送消息结果:false, bindingName:${bindingName}, msgId:${msg.headers.id}")
+        if (!acquireProducerPermit(bindingName)) {
+            return false
         }
-        return success
+        val msg = createMessage(bindingName, data)
+        try {
+            @Suppress("UNCHECKED_CAST")
+            val success = doRealSend(bindingName, msg as Message<StreamMessageVo<Any?>>, false)
+            if (!success) {
+                LOG.warn("stream发送消息结果:false, bindingName:${bindingName}, msgId:${msg.headers.id}")
+            }
+            return success
+        } finally {
+            releaseProducerPermit()
+        }
     }
 
     /**
@@ -78,13 +98,25 @@ class StreamProducerHelper {
             LOG.error("未找到Stream配置项{0}", bindingName)
             return
         }
+        if (!acquireProducerPermit(bindingName)) {
+            return
+        }
         val msg = createMessage(bindingName, data)
-        streamAsyncSendExecutor.execute {
-            @Suppress("UNCHECKED_CAST")
-            val success = doRealSend(bindingName, msg as Message<StreamMessageVo<Any?>>, false)
-            if (!success) {
-                LOG.warn("stream发送消息结果:false, bindingName:${bindingName}, msgId:${msg.headers.id}")
+        try {
+            streamAsyncSendExecutor.execute {
+                try {
+                    @Suppress("UNCHECKED_CAST")
+                    val success = doRealSend(bindingName, msg as Message<StreamMessageVo<Any?>>, false)
+                    if (!success) {
+                        LOG.warn("stream发送消息结果:false, bindingName:${bindingName}, msgId:${msg.headers.id}")
+                    }
+                } finally {
+                    releaseProducerPermit()
+                }
             }
+        } catch (e: RuntimeException) {
+            releaseProducerPermit()
+            throw e
         }
     }
 
@@ -145,6 +177,50 @@ class StreamProducerHelper {
             put(StreamHeader.SCST_BIND_NAME, bindingName)
         }
         return GenericMessage(StreamMessageVo(data), org.springframework.messaging.MessageHeaders(map))
+    }
+
+    private fun acquireProducerPermit(bindingName: String): Boolean {
+        val limitProperties = producerLimitProperties ?: return true
+        if (!limitProperties.enabled) return true
+        val limiter = getProducerLimiter(limitProperties.maxInFlight)
+        val acquired = try {
+            if (limitProperties.acquireTimeoutMillis <= 0) {
+                limiter.tryAcquire()
+            } else {
+                limiter.tryAcquire(limitProperties.acquireTimeoutMillis, TimeUnit.MILLISECONDS)
+            }
+        } catch (e: InterruptedException) {
+            Thread.currentThread().interrupt()
+            false
+        }
+        if (!acquired) {
+            LOG.warn("Stream producer本地限流触发，跳过发送。bindingName={0}", bindingName)
+        }
+        return acquired
+    }
+
+    private fun releaseProducerPermit() {
+        if (producerLimitProperties?.enabled == true) {
+            producerLimiter?.release()
+        }
+    }
+
+    private fun getProducerLimiter(maxInFlight: Int): Semaphore {
+        val size = maxInFlight.coerceAtLeast(1)
+        val existing = producerLimiter
+        if (existing != null && producerLimiterSize == size) {
+            return existing
+        }
+        synchronized(this) {
+            val current = producerLimiter
+            if (current != null && producerLimiterSize == size) {
+                return current
+            }
+            val created = Semaphore(size)
+            producerLimiter = created
+            producerLimiterSize = size
+            return created
+        }
     }
 
     private val LOG = LogFactory.getLog(this::class)

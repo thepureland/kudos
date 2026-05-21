@@ -12,6 +12,10 @@ kudos:
           enabled: false
           fail-on-missing: false
           required-producer-bindings: []
+        producer-limit:
+          enabled: false
+          max-in-flight: 1024
+          acquire-timeout-millis: 0
     flyway:
       datasource-config:
         mq: ds-master

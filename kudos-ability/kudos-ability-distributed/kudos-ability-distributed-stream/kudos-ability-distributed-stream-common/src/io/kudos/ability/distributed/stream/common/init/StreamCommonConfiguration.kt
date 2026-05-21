@@ -8,6 +8,7 @@ import io.kudos.ability.distributed.stream.common.handler.IStreamFailHandler
 import io.kudos.ability.distributed.stream.common.handler.StreamGlobalExceptionHandler
 import io.kudos.ability.distributed.stream.common.handler.StreamProducerExceptionHandler
 import io.kudos.ability.distributed.stream.common.init.properties.StreamBindingVerifyProperties
+import io.kudos.ability.distributed.stream.common.init.properties.StreamProducerLimitProperties
 import io.kudos.ability.distributed.stream.common.support.StreamMessageConverter
 import io.kudos.ability.distributed.stream.common.support.StreamProducerFailHandlerProcessor
 import io.kudos.ability.distributed.stream.common.support.StreamProducerHelper
@@ -39,6 +40,10 @@ open class StreamCommonConfiguration {
     @Bean
     @ConditionalOnMissingBean
     open fun streamBindingVerifyProperties() = StreamBindingVerifyProperties()
+
+    @Bean
+    @ConditionalOnMissingBean
+    open fun streamProducerLimitProperties() = StreamProducerLimitProperties()
 
     @Bean("streamAsyncSendExecutor")
     @ConditionalOnMissingBean
