@@ -10,6 +10,7 @@ import org.apache.rocketmq.client.consumer.DefaultLitePullConsumer
 import org.apache.rocketmq.client.exception.MQClientException
 import org.apache.rocketmq.common.message.MessageExt
 import java.io.ByteArrayInputStream
+import java.io.ObjectInputFilter
 import java.io.ObjectInputStream
 import java.time.LocalDateTime
 import kotlin.concurrent.thread
@@ -44,7 +45,9 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
     topic: String?,
     batchProcessSize: Int,
     pullTime: Long,
-    private val saveException: Boolean = false
+    private val saveException: Boolean = false,
+    private val rocketMqProperties: RocketMqProperties = RocketMqProperties.instance,
+    private val failMsgServiceProvider: () -> ISysMqFailMsgService = { SpringKit.getBean() }
 ) {
 
     private var isRunning = false
@@ -52,7 +55,7 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
     private val consumer: DefaultLitePullConsumer
     private var pullTime: Long = 5000
     private var batchProcessSize = 1000
-    private var bizBatchProcess: ((MutableList<BatchConsumerItem<T?>?>?) -> Unit)? = null
+    private var bizBatchProcess: ((List<BatchConsumerItem<T>>) -> Unit)? = null
     private val groupName: String?
     private val topic: String?
 
@@ -73,7 +76,7 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
         this.groupName = groupName
         this.topic = topic
         consumer = DefaultLitePullConsumer(groupName)
-        consumer.namesrvAddr = RocketMqProperties.instance.nameSrvAddr
+        consumer.namesrvAddr = rocketMqProperties.nameSrvAddr
         consumer.pullBatchSize = 32
         consumer.consumerPullTimeoutMillis = 5000
         consumer.isAutoCommit = false
@@ -119,7 +122,7 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
      * 
      * @param bizBatchProcess 业务处理方法，接收批量消息列表进行处理
      */
-    fun start(bizBatchProcess: (MutableList<BatchConsumerItem<T?>?>?) -> Unit) {
+    fun start(bizBatchProcess: (List<BatchConsumerItem<T>>) -> Unit) {
         this.bizBatchProcess = bizBatchProcess
         this.isRunning = true
         daemonThread = thread(
@@ -202,21 +205,24 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
      */
     @Suppress("UNCHECKED_CAST")
     private fun toProcessBizData(batchData: MutableList<MessageExt?>) {
+        if (batchData.isEmpty()) {
+            return
+        }
         val list = batchData.filterNotNull().map { s ->
             try {
-                val data = ObjectInputStream(ByteArrayInputStream(s.body)).use { it.readObject() as T? }
+                val data = decodeBody(s.body)
                 BatchConsumerItem(data, s.properties)
             } catch (e: Exception) {
                 throw RuntimeException(e)
             }
-        }.toMutableList()
+        }
         val processor = bizBatchProcess
         if (processor == null) {
             log.warn("业务消费处理器为空，跳过本批次消费。topic=$topic")
             return
         }
         try {
-            processor.invoke(list as MutableList<BatchConsumerItem<T?>?>?)
+            processor.invoke(list)
             consumer.commit()
         } catch (e: Exception) {
             if (!saveException) {
@@ -239,7 +245,7 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
      * @since 1.0.0
      */
     private fun saveErrorData(data: Any) {
-        if (!RocketMqProperties.instance.saveException) {
+        if (!rocketMqProperties.saveException) {
             log.warn("未开启异常消费记录功能...")
             return
         }
@@ -249,7 +255,12 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
             msgBodyJson = JSONObject.toJSONString(data)
             createTime = LocalDateTime.now()
         }
-        SpringKit.getBean<ISysMqFailMsgService>().save(exceptionMsg)
+        failMsgServiceProvider().save(exceptionMsg)
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun decodeBody(body: ByteArray): T {
+        return decodeJdkBody(body, rocketMqProperties.batchConsumerDeserializationFilter) as T
     }
 
     /**
@@ -293,7 +304,7 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
      * @author K
      * @since 1.0.0
      */
-    class BatchConsumerItem<T>(var data: T?, var properties: MutableMap<String?, String?>?)
+    class BatchConsumerItem<T>(var data: T, var properties: MutableMap<String?, String?>?)
 
     companion object {
         /** 日志器 */
@@ -301,6 +312,15 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
 
         /** 空轮询时 daemon 线程的休眠时长（ms），避免 CPU 100% 空转。 */
         private const val IDLE_POLL_SLEEP_MS = 100L
+
+        internal fun decodeJdkBody(body: ByteArray, deserializationFilter: String): Any? =
+            ObjectInputStream(ByteArrayInputStream(body)).use { input ->
+                val filter = deserializationFilter.takeIf { it.isNotBlank() }
+                if (filter != null) {
+                    input.setObjectInputFilter(ObjectInputFilter.Config.createFilter(filter))
+                }
+                input.readObject()
+            }
     }
 
 }
