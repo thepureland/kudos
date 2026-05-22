@@ -10,6 +10,8 @@ package io.kudos.ability.data.rdb.jdbc.datasource
  * 不实现时（容器里没有这个 bean），动态路由会回退到上下文里的 `dataSourceId`。
  *
  * @author damon
+ * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 interface IDataSourceFinder {

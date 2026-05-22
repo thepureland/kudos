@@ -19,6 +19,7 @@ import javax.sql.DataSource
  * 围绕单个 DataSource 的轻封装，无内部状态。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 object RdbKit {

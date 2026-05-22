@@ -9,6 +9,7 @@ import java.util.Locale
  * 关系型数据库元数据工具类
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 object RdbMetadataKit {

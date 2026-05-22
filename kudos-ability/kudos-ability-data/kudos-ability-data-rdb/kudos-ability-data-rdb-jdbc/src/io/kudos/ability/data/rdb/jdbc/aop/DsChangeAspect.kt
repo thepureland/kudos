@@ -1,6 +1,7 @@
 package io.kudos.ability.data.rdb.jdbc.aop
 
 import io.kudos.ability.data.rdb.jdbc.context.DbContext
+import io.kudos.ability.data.rdb.jdbc.context.DbParam
 import io.kudos.base.logger.LogFactory
 import org.aspectj.lang.ProceedingJoinPoint
 import org.aspectj.lang.annotation.Around
@@ -22,6 +23,7 @@ import org.springframework.stereotype.Component
  * `@Lazy` 让 bean 延迟到首次需要时才初始化，避免和早期 bean 形成循环依赖。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 @Component
@@ -40,26 +42,33 @@ class DsChangeAspect {
     }
 
     /**
-     * 环绕通知。写入 forcedDs / readonly，proceed 业务方法，finally 整体清空 `DbParam`
-     * （`DbContext.set(null)`，不是 `clear()` —— 保留 ThreadLocal slot，下一次 `get()` 再
-     * 自动创建一个空 `DbParam`）。
-     *
-     * 已知限制：嵌套调用场景下，内层方法 finally 把外层的 `DbParam` 也清掉了。当前实现
-     * **不支持嵌套保留**。
+     * 环绕通知。写入 forcedDs / readonly，proceed 业务方法，finally 恢复进入切面前的
+     * [DbParam] 快照；进入时无线程上下文则彻底 [DbContext.clear]。
      */
     @Around("cut()")
     fun around(joinPoint: ProceedingJoinPoint): Any? {
         val signature = joinPoint.signature as MethodSignature
         val dsChange: DsChange = signature.method.getAnnotation(DsChange::class.java)
+        val previous = DbContext.getOrNull()?.copy()
+        val current = previous?.copy() ?: DbParam()
         if (dsChange.value.isNotBlank()) {
-            DbContext.get().forcedDs = dsChange.value
+            current.forcedDs = dsChange.value
         }
-        DbContext.get().readonly = dsChange.readonly
-        log.debug("强制指定数据源:ds=${DbContext.get().forcedDs},readonly=${dsChange.readonly}")
+        current.readonly = dsChange.readonly
+        DbContext.set(current)
+        log.debug("强制指定数据源:ds=${current.forcedDs},readonly=${dsChange.readonly}")
         return try {
             joinPoint.proceed()
         } finally {
-            DbContext.set(null)
+            restore(previous)
+        }
+    }
+
+    private fun restore(previous: DbParam?) {
+        if (previous == null) {
+            DbContext.clear()
+        } else {
+            DbContext.set(previous)
         }
     }
 

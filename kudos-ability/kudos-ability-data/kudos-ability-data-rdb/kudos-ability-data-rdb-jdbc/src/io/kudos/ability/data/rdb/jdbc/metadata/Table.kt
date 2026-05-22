@@ -5,6 +5,7 @@ package io.kudos.ability.data.rdb.jdbc.metadata
  * JDBC `DatabaseMetaData` 读出来填充；不直接持有数据，仅描述结构。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 class Table {

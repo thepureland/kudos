@@ -7,6 +7,7 @@ package io.kudos.ability.data.rdb.jdbc.consts
  * `DatasourceConst.MODE_MASTER` 直接引用。新增常量请保持"字符串字面量 + kdoc 说明语义"。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 interface DatasourceConst {

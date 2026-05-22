@@ -8,6 +8,7 @@ import kotlin.reflect.KClass
  * 关系型数据库表的列信息
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 class Column {

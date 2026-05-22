@@ -16,6 +16,8 @@ import javax.sql.DataSource
  * 实例进容器；其它项目可以注册自己的代理（监控 / 加密 / 审计等）。
  *
  * @author damon
+ * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 interface IDataSourceProxy {

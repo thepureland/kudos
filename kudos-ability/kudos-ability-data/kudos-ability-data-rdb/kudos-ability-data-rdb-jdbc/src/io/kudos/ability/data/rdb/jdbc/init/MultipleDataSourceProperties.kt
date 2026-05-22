@@ -23,6 +23,7 @@ import kotlin.concurrent.Volatile
  *
  * @author hanson
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 class MultipleDataSourceProperties : InitializingBean {

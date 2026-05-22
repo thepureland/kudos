@@ -21,6 +21,7 @@ import kotlin.reflect.KClass
  * 主要用于代码生成器（POJO 字段类型推断）和 ORM 映射（Ktorm column 适配）。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 object JdbcTypeToKotlinType {
