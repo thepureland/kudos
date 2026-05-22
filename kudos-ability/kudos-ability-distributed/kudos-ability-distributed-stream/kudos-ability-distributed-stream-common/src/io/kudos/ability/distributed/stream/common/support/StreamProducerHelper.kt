@@ -34,6 +34,9 @@ import java.util.concurrent.TimeUnit
  * - MQ发送都是异步的，send方法返回true不代表消息已成功发送到MQ服务器
  * - 真实的发送错误会在flush时感知，此时会触发失败处理机制
  * - 支持通过StreamFailHandlerItem注册自定义的失败处理器
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 class StreamProducerHelper {
 

@@ -19,6 +19,7 @@ import com.alibaba.nacos.api.config.listener.AbstractListener
  *
  * @author hanson
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 abstract class AbstractConfigChangeListener : AbstractListener() {

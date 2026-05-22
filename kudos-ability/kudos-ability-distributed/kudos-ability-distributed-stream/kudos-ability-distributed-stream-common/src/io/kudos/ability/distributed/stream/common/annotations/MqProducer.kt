@@ -5,6 +5,7 @@ package io.kudos.ability.distributed.stream.common.annotations
  *
  * @author paul
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 @Target(AnnotationTarget.FUNCTION)

@@ -30,6 +30,9 @@ import kotlin.test.assertTrue
  *
  * `NacosPropertySourceRepository` 的静态 map 在整个 JVM 内共享、无 clear API——本测试
  * 用反射在每个用例前后清理，避免泄漏到同一 JVM 的其他测试。
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 internal class NacosConfigDataFinderTest {
 
@@ -98,6 +101,13 @@ internal class NacosConfigDataFinderTest {
         assertEquals("plain:cipher", source?.getProperty("password"))
     }
 
+    /**
+     * 将 `ENC(...)` 字符串转换为明文标记的测试解密器。
+     *
+     * @author K
+     * @author AI: Codex
+     * @since 1.0.0
+     */
     private class TestDecryptor : NacosConfigValueDecryptor {
         override fun supports(value: String): Boolean = value.startsWith("ENC(") && value.endsWith(")")
 

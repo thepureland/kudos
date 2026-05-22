@@ -6,6 +6,13 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 
+/**
+ * [StreamProducerExceptionHandler] 失败消息体反序列化测试。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
+ */
 internal class StreamProducerExceptionHandlerTest {
 
     @Test
@@ -41,6 +48,13 @@ internal class StreamProducerExceptionHandlerTest {
 
 }
 
+/**
+ * stream producer 重试 payload 测试 DTO。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
+ */
 @Serializable
 internal data class RetryPayload(
     val id: String,

@@ -4,6 +4,9 @@ package io.kudos.ability.distributed.lock.redisson.atom
  * 原子执行任务线程。
  *
  * @deprecated 模块内部已无引用，仅为历史外部反射 / 二进制兼容保留。
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 @Deprecated(
     message = "No internal usage remains; prefer explicit lock APIs instead.",

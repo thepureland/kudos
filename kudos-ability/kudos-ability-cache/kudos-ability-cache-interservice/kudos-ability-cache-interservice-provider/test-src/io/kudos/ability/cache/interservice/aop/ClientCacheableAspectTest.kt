@@ -9,6 +9,13 @@ import kotlin.test.Test
 import kotlin.test.assertSame
 import kotlin.test.assertFailsWith
 
+/**
+ * [ClientCacheableAspect] 异常传播契约测试。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
+ */
 internal class ClientCacheableAspectTest {
 
     @Test
@@ -59,6 +66,13 @@ internal class ClientCacheableAspectTest {
             }
     }
 
+    /**
+     * 切面目标测试 Controller。
+     *
+     * @author K
+     * @author AI: Codex
+     * @since 1.0.0
+     */
     @RestController
     private class Target {
         fun fail(): String = "unused"

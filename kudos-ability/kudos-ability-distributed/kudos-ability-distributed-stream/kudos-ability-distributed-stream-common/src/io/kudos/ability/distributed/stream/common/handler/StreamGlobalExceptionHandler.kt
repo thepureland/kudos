@@ -36,6 +36,7 @@ import java.util.Locale
  *
  * @author paul
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 class StreamGlobalExceptionHandler {

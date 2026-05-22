@@ -48,6 +48,9 @@ import javax.crypto.spec.SecretKeySpec
  * - 该拦截器会应用到所有Feign请求
  * - 追踪键如果为空会自动生成，确保每次请求都有追踪标识
  * - 语言环境如果不存在，默认使用zh_CN
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 class GlobalHeaderRequestInterceptor(
     private val properties: OpenFeignProperties = OpenFeignProperties(),

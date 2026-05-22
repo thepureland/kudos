@@ -50,6 +50,9 @@ import java.util.Locale
  * - 无上述标记的普通 HTTP 请求直接放行
  * - 如果ClientInfo不存在，会自动创建
  * - 语言环境字符串会被解析为Locale对象
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 class FeignContextWebFilter(
     private val allowUnmarkedContextHeaders: Boolean = false

@@ -43,6 +43,9 @@ import java.util.concurrent.TimeUnit
  * - 如果获取锁失败，方法不会被执行，直接返回null
  * - 锁的释放会在finally块中执行，确保即使方法抛出异常也能正确释放
  * - 支持通过DistributedLockContext设置锁获取成功/失败的回调处理
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 @Aspect
 @Lazy(false)

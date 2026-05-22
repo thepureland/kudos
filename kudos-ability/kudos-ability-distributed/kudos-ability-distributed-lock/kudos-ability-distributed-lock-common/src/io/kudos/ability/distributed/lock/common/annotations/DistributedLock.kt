@@ -7,6 +7,7 @@ import java.lang.annotation.Inherited
  *
  * @author K
  * @author hanson
+ * @author AI: Codex
  * @since 1.0.0
  */
 @Target(

@@ -8,6 +8,10 @@ import org.springframework.util.ConcurrentReferenceHashMap
  *
  * 默认每次按响应对象 JSON 重新计算 UID。热点接口如果反复返回同一个不可变对象实例，可打开
  * uid cache 复用计算结果；缓存使用弱引用 key，避免长期持有响应对象。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 class ClientCacheUidGenerator(
     private val cacheEnabled: Boolean = false

@@ -4,6 +4,10 @@ package io.kudos.ability.distributed.stream.common.init.properties
  * producer 侧本地 in-flight 限流配置。
  *
  * 绑定前缀：`kudos.ability.distributed.stream.producer-limit`
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 open class StreamProducerLimitProperties {
     var enabled: Boolean = false

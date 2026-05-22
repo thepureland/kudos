@@ -27,6 +27,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
  * Stream公共配置类
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 open class StreamCommonConfiguration {

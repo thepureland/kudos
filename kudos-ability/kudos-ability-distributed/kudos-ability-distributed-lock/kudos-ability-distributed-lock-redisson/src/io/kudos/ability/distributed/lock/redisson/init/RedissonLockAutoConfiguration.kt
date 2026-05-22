@@ -25,6 +25,7 @@ import java.time.temporal.ChronoUnit
  * redisson分布式锁自动配置类
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 @Configuration

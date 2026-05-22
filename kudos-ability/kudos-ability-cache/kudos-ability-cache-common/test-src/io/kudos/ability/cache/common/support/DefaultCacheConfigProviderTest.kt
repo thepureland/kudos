@@ -19,6 +19,10 @@ import kotlin.test.assertTrue
  *  - 空白行 / 空列表的安全处理
  *  - resolvedStrategyCode 兜底（仅 strategyDictCode 也能分组）—— 守护 round-5
  *    迁移的 raw-reader → derived prop 改动
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 internal class DefaultCacheConfigProviderTest {
 

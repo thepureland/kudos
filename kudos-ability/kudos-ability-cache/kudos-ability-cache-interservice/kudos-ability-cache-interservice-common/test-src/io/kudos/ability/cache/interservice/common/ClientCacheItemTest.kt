@@ -16,10 +16,29 @@ import kotlin.test.assertNotNull
  *
  * 已知风险（README 也说过）：DTO 含 `Map<*, *>` 且非 LinkedHashMap 时迭代顺序不稳——
  * 在本测试中刻意用 [LinkedHashMap] / data class 保证可重复。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 internal class ClientCacheItemTest {
 
+    /**
+     * UID 测试用用户 DTO。
+     *
+     * @author K
+     * @author AI: Codex
+     * @since 1.0.0
+     */
     private data class UserDto(val id: Int, val name: String)
+
+    /**
+     * UID 类型隔离测试用订单 DTO。
+     *
+     * @author K
+     * @author AI: Codex
+     * @since 1.0.0
+     */
     private data class OrderDto(val id: Int, val name: String)
 
     @Test

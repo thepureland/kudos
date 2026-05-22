@@ -17,6 +17,10 @@ import kotlin.reflect.full.memberProperties
  * - 旧实现把 cacheConfigs 放在 companion object 里（多实例会共享状态，跨测试上下文会"配置累积"），现在改成实例字段。
  * - 旧实现的 [getCacheConfig] 和 [getAllCacheConfigs] 每次都重建扁平 map（O(策略数 × 缓存项数)），
  *   而 Kit 在热路径上反复调它们；现在改成构建一次后只读，避免重复聚合开销。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 class DefaultCacheConfigProvider(itemsProperties: CacheItemsProperties) : ICacheConfigProvider {
 

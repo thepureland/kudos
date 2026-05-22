@@ -12,7 +12,13 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertSame
 
-
+/**
+ * [RedissonLockKit] 全局配置与 named locker 路由测试。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
+ */
 internal class RedissonLockKitTest {
 
     @AfterTest
@@ -46,6 +52,13 @@ internal class RedissonLockKitTest {
         assertEquals("REDISSON::order:2", reportClient.lastLockName)
     }
 
+    /**
+     * 记录 getLock 调用参数的 RedissonClient stub。
+     *
+     * @author K
+     * @author AI: Codex
+     * @since 1.0.0
+     */
     private class RecordingRedissonClient {
         var lastLockName: String? = null
 

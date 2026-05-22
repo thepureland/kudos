@@ -9,6 +9,9 @@ import java.util.concurrent.TimeUnit
 
 /**
  * 分布式锁工具类，目前使用redisson实现
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 object RedissonLockKit {
 

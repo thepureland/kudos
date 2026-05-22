@@ -39,6 +39,9 @@ import kotlin.concurrent.thread
  * - 消息体使用JDK序列化，需要确保消息体类实现Serializable接口
  *
  * @param T 消息体类型
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 class RocketMqBatchConsumer<T> @JvmOverloads constructor(
     groupName: String?,
@@ -302,6 +305,7 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
      * @property data 反序列化后的消息体
      * @property properties 原 MessageExt 上的属性 map
      * @author K
+ * @author AI: Codex
      * @since 1.0.0
      */
     class BatchConsumerItem<T>(var data: T, var properties: MutableMap<String?, String?>?)

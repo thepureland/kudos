@@ -9,6 +9,13 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
+/**
+ * [SeataXidServletFilter] 入站 XID 绑定与清理测试。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
+ */
 internal class SeataXidServletFilterTest {
 
     @AfterTest

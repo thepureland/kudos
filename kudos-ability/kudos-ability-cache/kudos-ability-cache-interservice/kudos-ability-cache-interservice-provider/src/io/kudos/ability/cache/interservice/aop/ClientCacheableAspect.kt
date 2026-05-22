@@ -39,6 +39,10 @@ import org.springframework.web.context.request.RequestContextHolder
  * - 仅支持在Controller类的方法上使用
  * - 需要配合CacheClientRequest使用，普通HTTP请求不会触发缓存逻辑
  * - 结果对象必须可序列化为JSON，用于生成uid
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 @Aspect
 @Lazy(false)

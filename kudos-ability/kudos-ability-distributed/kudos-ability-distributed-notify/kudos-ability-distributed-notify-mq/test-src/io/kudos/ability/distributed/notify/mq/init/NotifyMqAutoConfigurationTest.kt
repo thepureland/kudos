@@ -14,7 +14,13 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
-
+/**
+ * [NotifyMqAutoConfiguration] MQ 通知消费配置行为单测。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
+ */
 internal class NotifyMqAutoConfigurationTest {
 
     @Test
@@ -108,6 +114,13 @@ internal class NotifyMqAutoConfigurationTest {
         this["messageBody"] = "payload"
     }
 
+    /**
+     * 统计通知消费次数的测试监听器。
+     *
+     * @author K
+     * @author AI: Codex
+     * @since 1.0.0
+     */
     private class CountingListener(private val type: String) : INotifyListener {
         val count = AtomicInteger()
 
@@ -118,6 +131,13 @@ internal class NotifyMqAutoConfigurationTest {
         }
     }
 
+    /**
+     * 固定抛错的测试通知监听器。
+     *
+     * @author K
+     * @author AI: Codex
+     * @since 1.0.0
+     */
     private class ThrowingListener(private val type: String) : INotifyListener {
         override fun notifyType(): String = type
 

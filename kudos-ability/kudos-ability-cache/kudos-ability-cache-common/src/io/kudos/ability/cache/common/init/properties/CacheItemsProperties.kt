@@ -31,6 +31,7 @@ import io.kudos.ability.cache.common.support.CacheConfig
  * @property cacheItems 字符串列表，每条形如 `name=X&strategy=Y&...`
  * @property cacheItemConfigs 结构化缓存项列表，每项按 [CacheConfig] 字段绑定
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 class CacheItemsProperties {

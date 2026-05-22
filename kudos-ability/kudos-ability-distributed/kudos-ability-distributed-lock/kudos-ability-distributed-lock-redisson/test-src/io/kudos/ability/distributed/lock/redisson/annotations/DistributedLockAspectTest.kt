@@ -19,7 +19,13 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertSame
 
-
+/**
+ * [DistributedLockAspect] 切面加锁、解锁和异常传播行为单测。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
+ */
 internal class DistributedLockAspectTest {
 
     @AfterTest
@@ -89,6 +95,13 @@ internal class DistributedLockAspectTest {
         assertEquals(0, lock.unlockCalls)
     }
 
+    /**
+     * 承载 [DistributedLock] 注解方法的测试目标类。
+     *
+     * @author K
+     * @author AI: Codex
+     * @since 1.0.0
+     */
     private class Target {
         @DistributedLock(waitTime = 0, leaseTime = 30)
         fun fail() = Unit
@@ -100,8 +113,22 @@ internal class DistributedLockAspectTest {
         fun legacyNull(): String = "legacy"
     }
 
+    /**
+     * 用于验证业务异常类型不被切面包装的测试异常。
+     *
+     * @author K
+     * @author AI: Codex
+     * @since 1.0.0
+     */
     private class TypedBusinessException : RuntimeException("typed")
 
+    /**
+     * 记录 Redisson 锁调用次数的测试代理。
+     *
+     * @author K
+     * @author AI: Codex
+     * @since 1.0.0
+     */
     private class RecordingRLock(private val tryLockResult: Boolean = true) {
         var tryLockCalls = 0
         var unlockCalls = 0

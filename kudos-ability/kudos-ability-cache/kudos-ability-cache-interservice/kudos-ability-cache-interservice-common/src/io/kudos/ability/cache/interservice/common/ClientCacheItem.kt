@@ -8,6 +8,10 @@ import java.io.Serializable
 /**
  * 客户端缓存项
  * 封装服务间缓存的缓存项，包括唯一标识和缓存数据
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 class ClientCacheItem : Serializable {
 
@@ -80,6 +84,13 @@ class ClientCacheItem : Serializable {
     }
 }
 
+/**
+ * 跨服务缓存项的显式 JSON 传输快照。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
+ */
 data class ClientCacheItemSnapshot(
     val uuid: String?,
     val cacheDataType: String?,
