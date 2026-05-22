@@ -5,6 +5,10 @@ import java.text.MessageFormat
 
 /**
  * 文件错误代码
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 enum class FileErrorCode(
     override val code: String,

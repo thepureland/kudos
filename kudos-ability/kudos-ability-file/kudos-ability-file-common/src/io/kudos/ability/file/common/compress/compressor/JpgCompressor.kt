@@ -17,6 +17,7 @@ import javax.imageio.ImageIO
  * 标 `open` 是为了让 [PngCompressor] 复用其 [support]，PNG 压缩走另一条 com.xqlee 链路。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 open class JpgCompressor : ImageCompressor {

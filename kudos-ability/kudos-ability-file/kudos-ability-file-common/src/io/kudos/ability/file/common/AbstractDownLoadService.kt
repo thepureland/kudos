@@ -11,6 +11,7 @@ import java.io.InputStream
  * 让 Local / Minio / 云存储等子类只用关注怎么从底层读文件，异常日志与上抛模式由本类统一处理。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 abstract class AbstractDownLoadService : IDownLoadService {

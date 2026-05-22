@@ -8,6 +8,10 @@ import kotlin.test.assertEquals
  *
  * 历史 bug：`BMP("pdf", "application/x-bmp")` 后缀写错，PDF 被打成 BMP 的 contentType，
  * BMP 文件本身查不到——下面两个断言锁定修复后的行为，防止有人改回去。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 internal class UploadContentTypeEnumTest {
 

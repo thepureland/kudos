@@ -13,6 +13,7 @@ import java.io.InputStream
  * （Thumbnailator 对 PNG 的 quality 参数不友好，专用库压缩比更稳定）。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 class PngCompressor : JpgCompressor(), ImageCompressor {

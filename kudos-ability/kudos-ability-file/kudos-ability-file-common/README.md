@@ -108,12 +108,13 @@ WebP 模式下生成的文件名会被加上 `.webp` 后缀（即便原文件已
 | `compress/CompressionPipeline` | 压缩入口 |
 | `compress/compressor/*` | 4 个具体压缩器（Image / Jpg / Png / WebP） |
 | `compress/support/*` | 压缩配置 + 结果 + 工厂 |
-| `compress/utils/CompressUtil` | 后缀白名单 + MIME 探测 |
+| `compress/utils/CompressUtil` | 后缀白名单 + MIME 探测工具 |
 
 ## 测试覆盖
 
 - `UploadContentTypeEnumTest`（4 case）—— 锁定 BMP/PDF 修复后的行为
 - `DeleteFileModelTest`（5 case）—— 锁定前导 `/` 约束和错误路径拒绝
+- `ImageCompressorFactoryTest`（5 case）—— 锁定压缩器按后缀分发和 WebP 强制覆盖行为
 
 具体存储后端的端到端测试在 `file-local` / `file-minio` 子模块内。
 
@@ -130,9 +131,8 @@ WebP 模式下生成的文件名会被加上 `.webp` 后缀（即便原文件已
   在"以为压缩成功了"的前提下继续推进，需要时改抛
 - ❗ `WebPCompressor` 强制走有损模式（默认 quality 0.75），`CompressionConfig.quality`
   仅对 Jpg 生效；webp 模式下 quality 字段实际上被忽略，文档未说明
-- ❗ `ImageCompressorFactory.getCompressor(outputFilePath, webp)` 用
-  `Files.probeContentType` 探测——文件还**没存**时这个 API 在某些 JDK 上靠后缀判定，
-  跨平台行为不一致。建议显式按后缀分发
+- ✅ `ImageCompressorFactory.getCompressor(outputFilePath, webp)` 已改为按后缀显式分发，
+  不再依赖 `Files.probeContentType` 的跨平台行为
 - ❗ 没有"先存大小限制 / MIME 白名单 / 病毒扫描"的钩子；安全敏感场景上传需自行加 Aspect
 
 ## 依赖

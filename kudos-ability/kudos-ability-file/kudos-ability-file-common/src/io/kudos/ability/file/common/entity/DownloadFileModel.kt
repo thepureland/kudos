@@ -12,6 +12,7 @@ import java.io.Serializable
  *
  * @param S 输入流类型，默认是 [InputStreamSource]
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 class DownloadFileModel<S : InputStreamSource> : Serializable {

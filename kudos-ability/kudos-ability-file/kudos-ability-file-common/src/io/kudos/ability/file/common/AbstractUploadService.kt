@@ -11,6 +11,7 @@ import java.time.LocalDate
  * [dispatchFileDir] 给出默认按"租户/分类 或 年/月/日"的目录策略，子类可重写定制。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 abstract class AbstractUploadService : IUploadService {

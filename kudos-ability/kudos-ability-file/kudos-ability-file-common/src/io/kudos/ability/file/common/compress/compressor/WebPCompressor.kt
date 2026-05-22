@@ -16,6 +16,7 @@ import javax.imageio.ImageIO
  * 输出文件名追加 `.webp` 后缀，以便上层存储不会和原 JPG/PNG 文件覆盖。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 class WebPCompressor : ImageCompressor {

@@ -8,6 +8,7 @@ package io.kudos.ability.file.common.auth
  *
  * @property headerValue Authorization header 的完整值（含 `Bearer ` 前缀等格式由调用方负责）
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 class AccessTokenServerParam : AuthServerParam {

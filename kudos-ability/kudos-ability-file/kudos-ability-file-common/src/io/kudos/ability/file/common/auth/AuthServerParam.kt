@@ -11,6 +11,7 @@ package io.kudos.ability.file.common.auth
  * （如带 region 的 STS token、Azure SAS URL 等）。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 interface AuthServerParam

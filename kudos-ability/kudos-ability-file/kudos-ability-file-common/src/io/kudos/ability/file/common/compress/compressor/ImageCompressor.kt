@@ -11,6 +11,7 @@ import java.io.InputStream
  * 挑选合适的实现（Jpg / Png / WebP）。新增压缩格式时实现本接口并在工厂里登记即可。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 interface ImageCompressor {
