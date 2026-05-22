@@ -64,9 +64,10 @@ spring:
 
 ## 测试覆盖
 
-- `AuditMqTest.testLog`（1 case）—— 跑通 `@Audit` + `LogAuditAspect` + `MqAuditService` +
+- `AuditMqTest`（4）—— 跑通 `@Audit` + `LogAuditAspect` + `MqAuditService` +
   `@MqProducer` 切面的完整链路（spring-flyway 关掉避免无关初始化），**但没断言消息真发出去了**——
-  目前的测试本质是"compile + wire-up smoke test"
+  目前的测试本质是"compile + wire-up smoke test"；同时锁定 `MqAuditService` 是当前
+  `@Primary IAuditService`、`submit` 上的 `topic` / `bindingName` 元数据和占位返回值
 
 ## 已知限制 / 后续工作
 
@@ -80,7 +81,7 @@ spring:
   layer 看不到也管不了
 - ❗ 当前 binding 名 `logAudit-out-0` 硬编码在 `@MqProducer` 注解里——业务方需要换名只能
   通过覆盖整个 `MqAuditService` bean
-- ❗ `TestModuleEnum` 测试辅助类**未被任何测试引用**——遗留死代码，可删
+- ✅ 已删除未被任何测试引用的 `TestModuleEnum` 遗留辅助类
 
 ## 依赖
 
