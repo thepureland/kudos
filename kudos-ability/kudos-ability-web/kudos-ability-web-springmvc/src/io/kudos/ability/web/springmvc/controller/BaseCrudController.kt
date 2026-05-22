@@ -27,6 +27,7 @@ import kotlin.reflect.KClass
  * @param CF 新增页表单VO类(请求)
  * @param UF 编辑页表单VO类(请求)
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 open class BaseCrudController<

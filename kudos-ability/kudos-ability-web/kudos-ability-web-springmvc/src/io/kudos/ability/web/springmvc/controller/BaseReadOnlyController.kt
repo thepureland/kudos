@@ -21,6 +21,7 @@ import kotlin.reflect.KClass
  * @param R 列表行VO类(响应)
  * @param D 详情Vo类(响应)
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 open class BaseReadOnlyController<

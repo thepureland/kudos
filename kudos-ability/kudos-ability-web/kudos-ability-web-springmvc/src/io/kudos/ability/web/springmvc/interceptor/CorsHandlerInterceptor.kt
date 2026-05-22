@@ -11,6 +11,7 @@ import org.springframework.web.servlet.HandlerInterceptor
  * 一个基于 Spring MVC 的拦截器，用来在响应里塞 CORS 相关的响应头
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 open class CorsHandlerInterceptor : HandlerInterceptor {

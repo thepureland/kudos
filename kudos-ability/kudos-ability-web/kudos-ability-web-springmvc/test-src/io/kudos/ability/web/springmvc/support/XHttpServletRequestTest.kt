@@ -8,6 +8,10 @@ import kotlin.test.assertEquals
  * [jakarta.servlet.http.HttpServletRequest] 扩展函数的单元测试。
  *
  * UA 解析是启发式的，覆盖几条主流分支足以回归——发现误判后请增删 case。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 internal class XHttpServletRequestTest {
 
