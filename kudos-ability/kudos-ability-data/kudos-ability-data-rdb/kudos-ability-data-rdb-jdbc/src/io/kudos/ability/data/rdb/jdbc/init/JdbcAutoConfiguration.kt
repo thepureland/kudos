@@ -33,6 +33,7 @@ import org.springframework.context.annotation.Primary
  * 已就绪 —— 路由依赖租户上下文信息。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 @Configuration

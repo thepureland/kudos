@@ -39,7 +39,7 @@ JDBC 层基础设施模块。负责三件事：
 
 `DbContext` 用 `InheritableThreadLocal`，但 `childValue` 返回 null —— **子线程不继承父线程的路由意图**，防止线程池里的子任务串台。
 
-**线程池场景必须在请求/任务结束时调 `DbContext.clear()`**，否则线程被复用时会带着旧 `DbParam` 跑下个任务。切面（`DsChangeAspect` / `TenantDsChangeAspect`）的 finally 已做了 `DbContext.set(null)`（保留 ThreadLocal slot 但置空内容），手写代码场景调用方自负。
+**线程池场景必须在请求/任务结束时调 `DbContext.clear()`**，否则线程被复用时会带着旧 `DbParam` 跑下个任务。切面（`DsChangeAspect` / `TenantDsChangeAspect`）进入时会快照旧上下文，finally 恢复外层快照；进入时无线程上下文则调用 `DbContext.clear()`。手写代码场景调用方自负。
 
 `DbContext.get()` 取出为 null 时**会自动塞一个空 `DbParam` 进去**（历史 API 语义，方便链式赋值）—— 只读侦测请用新增的 `DbContext.getOrNull()`。
 
@@ -103,12 +103,13 @@ kudos:
 ## 已知限制 / 后续工作
 
 - ❗ `DynamicDataSourceAspect` 的 pointcut 写死 `within(*..biz..*)`，不可配置 —— 项目结构强约束
-- ❗ `DbContext.set(null)` 切面在嵌套调用场景下会清掉外层的 `DbParam`（不支持嵌套保留）
+- ✅ `DsChangeAspect` / `TenantDsChangeAspect` 已支持嵌套保留：内层调用结束后恢复外层 `DbParam`
 - ❗ `MultipleDataSourceProperties.lookDataSourceKey` 同时用 `ConcurrentHashMap.computeIfAbsent` + readLock，后者实际保护不了什么 —— 仅与 [forceChangeDataSource] 的 writeLock 形成"对仗"
 - ❗ `DataSourceKit.createDataSource` 不做 url 注入校验 —— 调用方应自行白名单
 - ❗ `DsContextProcessor` 紧耦合 baomidou `DynamicRoutingDataSource`；单数据源场景部分方法（`refreshDatasource`）会直接抛 ClassCastException
 - ❗ `JdbcTypeToKotlinType.getKotlinType` 200 行嵌套 `when`，每个 RDB 类型一段，可拆分成独立函数提升可读性
-- ❗ 测试覆盖：仅有 `RdbKit` / `RdbMetadataKit` 的单测；AOP（3 个 aspect）、DataSource 路由、`DatasourceKeyTool`、`JdbcTypeToKotlinType` 零测试
+- ❗ 测试覆盖：已有 `RdbKit` / `RdbMetadataKit` 单测和数据源注解切面的嵌套恢复测试；
+  `DynamicDataSourceAspect`、DataSource 路由、`DatasourceKeyTool`、`JdbcTypeToKotlinType` 仍缺测试
 
 ## 依赖
 

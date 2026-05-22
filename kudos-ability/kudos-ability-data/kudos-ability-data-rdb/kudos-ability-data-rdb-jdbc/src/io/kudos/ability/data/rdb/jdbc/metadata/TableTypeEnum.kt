@@ -4,6 +4,7 @@ package io.kudos.ability.data.rdb.jdbc.metadata
  * 关系型数据库表类型枚举
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 enum class TableTypeEnum {

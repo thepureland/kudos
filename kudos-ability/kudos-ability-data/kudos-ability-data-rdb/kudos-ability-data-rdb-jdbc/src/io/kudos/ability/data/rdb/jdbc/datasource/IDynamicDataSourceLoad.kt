@@ -13,6 +13,8 @@ import com.baomidou.dynamic.datasource.creator.DataSourceProperty
  * 态数据源加载未启用"，路由命中未配置项时会失败。
  *
  * @author damon
+ * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 interface IDynamicDataSourceLoad {

@@ -27,6 +27,8 @@ import javax.sql.DataSource
  * / [haveDataSource] / [currentDataSource] 都退化成"返回唯一数据源 / 始终为 true"。
  *
  * @author damon
+ * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 @Component

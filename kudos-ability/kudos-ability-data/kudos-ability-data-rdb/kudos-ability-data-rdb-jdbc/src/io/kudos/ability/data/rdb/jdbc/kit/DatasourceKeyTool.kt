@@ -12,6 +12,7 @@ import io.kudos.ability.data.rdb.jdbc.consts.DatasourceConst
  * 所有方法纯字符串处理，无副作用、线程安全。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 object DatasourceKeyTool {

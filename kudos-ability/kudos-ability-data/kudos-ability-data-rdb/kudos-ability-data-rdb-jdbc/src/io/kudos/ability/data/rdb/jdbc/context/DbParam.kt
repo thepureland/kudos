@@ -10,6 +10,7 @@ import java.io.Serializable
  * （比如序列化到 MQ 消息或缓存）的预留，目前主路径不依赖。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 class DbParam : Serializable {
@@ -22,6 +23,15 @@ class DbParam : Serializable {
 
     /** 是否走只读副本。某些路径（缓存预热、报表查询）开起来减轻主库压力。 */
     var readonly: Boolean = false
+
+    /** 创建当前路由参数的快照，用于切面嵌套调用后恢复外层上下文。 */
+    fun copy(): DbParam {
+        return DbParam().also {
+            it.forcedDs = forcedDs
+            it.enableLog = enableLog
+            it.readonly = readonly
+        }
+    }
 
     companion object {
         /** [Serializable] 兼容字段，避免 JDK 间反序列化失败。 */

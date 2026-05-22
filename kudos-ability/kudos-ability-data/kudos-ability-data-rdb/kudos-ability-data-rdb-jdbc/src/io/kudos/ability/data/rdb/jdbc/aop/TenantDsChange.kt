@@ -14,6 +14,7 @@ package io.kudos.ability.data.rdb.jdbc.aop
  * @property readonly true 表示走只读副本。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY_GETTER, AnnotationTarget.PROPERTY_SETTER)

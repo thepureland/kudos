@@ -10,6 +10,7 @@ package io.kudos.ability.data.rdb.jdbc.metadata
  * 通过 [ofProductName] / [ofJdbcDriverName] 双向查找；任何未在此声明的数据库类型都不被本框架支持。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 enum class RdbTypeEnum(val productName: String, val jdbcDriverName: String) {

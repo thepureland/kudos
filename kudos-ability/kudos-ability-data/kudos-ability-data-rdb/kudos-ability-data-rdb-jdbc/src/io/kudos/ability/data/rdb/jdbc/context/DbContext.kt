@@ -11,6 +11,7 @@ package io.kudos.ability.data.rdb.jdbc.context
  * [clear]，否则线程被复用时会带着旧的 [DbParam] 跑下一个请求，造成数据源串台。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 class DbContext {

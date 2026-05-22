@@ -15,6 +15,7 @@ import javax.sql.DataSource
  * 可造成文件读漏洞）。本工具默认假定调用方已对 url 做过白名单校验。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 object DataSourceKit {
