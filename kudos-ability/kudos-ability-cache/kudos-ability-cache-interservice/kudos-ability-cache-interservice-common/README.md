@@ -16,7 +16,8 @@
 
 | 路径 | 角色 |
 |---|---|
-| `common/ClientCacheItem` | 缓存条目 DTO：`uuid`（响应对象的内容指纹）+ `cacheData`（响应内容本体）。`genUid(obj)` 静态方法基于 `<FQN>#<JSON>` 算 MD5 |
+| `common/ClientCacheItem` | 缓存条目 DTO：`uuid`（响应对象的内容指纹）+ `cacheData`（响应内容本体）。`genUid(obj)` 静态方法基于 `<FQN>#<JSON>` 算 MD5；`toSnapshot()` / `toJsonSnapshot()` 提供显式 JSON envelope |
+| `common/ClientCacheItemSnapshot` | JSON 传输快照：`uuid` + `cacheDataType` + `cacheDataJson`，避免跨节点场景只能走 JVM 原生序列化 |
 | `common/ClientCacheKey` | 缓存键 DTO + 协议常量（`HEADER_KEY_CACHE_UID` / `HEADER_KEY_CACHE_KEY` / `HEADER_KEY_CACHE_STATUS` / `STATUS_USE_CACHE=304` / `STATUS_DO_CACHE=200`）。`toString()` 拼接 `url::method::body` 形成签名段 |
 
 ## 协议契约（client ↔ provider）
@@ -39,6 +40,28 @@
 **已知风险**：DTO 中带 `Map<*, *>` 且非 `LinkedHashMap` 时迭代顺序不稳定，会导致 JSON
 不稳 → UID 抖动。接口层应避免直接返回原始 `Map`，或显式用 `LinkedHashMap` / 排序后返回。
 
+## JSON 快照格式
+
+`ClientCacheItem` 仍保留 `Serializable`，兼容本地缓存实现和既有调用方；跨节点传输不建议依赖
+JVM 原生序列化。需要传输缓存项时使用显式快照：
+
+```json
+{
+  "uuid": "response-fingerprint",
+  "cacheDataType": "com.example.UserDto",
+  "cacheDataJson": "{\"id\":1,\"name\":\"Alice\"}"
+}
+```
+
+恢复时调用 `ClientCacheItem.fromJsonSnapshot(snapshotJson) { type, json -> ... }`，由调用方按
+自身 DTO 类型把 `cacheDataJson` 反序列化为业务对象。common 模块不注册全局多态反序列化器，
+避免在共享 DTO 层引入业务类依赖。
+
+## 测试覆盖
+
+- `ClientCacheItemTest` 覆盖 UID 稳定性、不同类型隔离、默认 / 显式构造、JSON snapshot
+  生成与恢复回调契约
+
 ## 依赖
 
 ```kotlin
@@ -50,7 +73,7 @@ api(project(":kudos-ability:kudos-ability-cache:kudos-ability-cache-common"))
 
 ## 已知限制
 
-- ❗ 模块名 `interservice` 中文术语未统一——"服务间缓存" / "跨服务缓存" / "跨应用缓存"
-  三种叫法并存，未来收敛到一种为好
-- ❗ `ClientCacheItem` 用 `Serializable` + 默认 JVM 序列化——若以后跨节点广播缓存项
-  需要切换到 JSON 序列化的话要同时调整 `serialVersionUID` 兼容策略
+- ✅ 中文术语已统一为"跨服务缓存"；源码包名 / Gradle 模块名继续保留 `interservice`
+  以避免破坏发布坐标
+- ✅ `ClientCacheItem` 已提供显式 JSON snapshot envelope。`Serializable` 仍保留作兼容，
+  但跨节点传输可走 `toJsonSnapshot()` / `fromJsonSnapshot(...)`，不再绑定 JVM 原生序列化

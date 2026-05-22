@@ -65,4 +65,43 @@ internal class ClientCacheItemTest {
         assertEquals(null, item.uuid)
         assertEquals(null, item.cacheData)
     }
+
+    @Test
+    fun toSnapshot_recordsTypeAndJsonPayload() {
+        val item = ClientCacheItem("uid-1", UserDto(7, "Bob"))
+
+        val snapshot = item.toSnapshot()
+
+        assertEquals("uid-1", snapshot.uuid)
+        assertEquals(UserDto::class.java.name, snapshot.cacheDataType)
+        assertEquals("""{"id":7,"name":"Bob"}""", snapshot.cacheDataJson)
+    }
+
+    @Test
+    fun jsonSnapshot_roundTripsThroughCallerDecoder() {
+        val item = ClientCacheItem("uid-1", UserDto(7, "Bob"))
+        val json = item.toJsonSnapshot()
+
+        val restored = ClientCacheItem.fromJsonSnapshot(json) { cacheDataType, cacheDataJson ->
+            assertEquals(UserDto::class.java.name, cacheDataType)
+            cacheDataJson
+        }
+
+        assertEquals("uid-1", restored.uuid)
+        assertEquals("""{"id":7,"name":"Bob"}""", restored.cacheData)
+    }
+
+    @Test
+    fun snapshot_nullPayload_staysNull() {
+        val snapshot = ClientCacheItem().apply { uuid = "uid-empty" }.toSnapshot()
+
+        val restored = ClientCacheItem.fromSnapshot(snapshot) { cacheDataType, cacheDataJson ->
+            assertEquals(null, cacheDataType)
+            assertEquals(null, cacheDataJson)
+            null
+        }
+
+        assertEquals("uid-empty", restored.uuid)
+        assertEquals(null, restored.cacheData)
+    }
 }

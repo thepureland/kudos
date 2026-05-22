@@ -21,6 +21,22 @@ class ClientCacheItem : Serializable {
         this.cacheData = cacheData
     }
 
+    /**
+     * 转成显式 JSON 快照 envelope，避免跨节点传输时只能依赖 JVM 原生序列化。
+     *
+     * [cacheData] 的 JSON 反序列化需要调用方按自身 DTO 类型完成，因此这里只记录类型名与 JSON 字符串。
+     */
+    fun toSnapshot(): ClientCacheItemSnapshot {
+        val data = cacheData
+        return ClientCacheItemSnapshot(
+            uuid = uuid,
+            cacheDataType = data?.javaClass?.name,
+            cacheDataJson = data?.let { JsonKit.toJson(it, preserveNull = true) }
+        )
+    }
+
+    fun toJsonSnapshot(): String = JsonKit.toJson(toSnapshot(), preserveNull = true)
+
     companion object {
         @Serial
         private const val serialVersionUID = 1112894179070136297L
@@ -41,5 +57,36 @@ class ClientCacheItem : Serializable {
             val md5 = DigestKit.getMD5(fingerprint.toByteArray(), "feignCache")
             return requireNotNull(md5) { "feignCache MD5 计算结果为空" }
         }
+
+        fun fromSnapshot(
+            snapshot: ClientCacheItemSnapshot,
+            decodeCacheData: (cacheDataType: String?, cacheDataJson: String?) -> Any?
+        ): ClientCacheItem = ClientCacheItem().apply {
+            uuid = snapshot.uuid
+            cacheData = decodeCacheData(snapshot.cacheDataType, snapshot.cacheDataJson)
+        }
+
+        fun fromJsonSnapshot(
+            snapshotJson: String,
+            decodeCacheData: (cacheDataType: String?, cacheDataJson: String?) -> Any?
+        ): ClientCacheItem {
+            val snapshot = ClientCacheItemSnapshot(
+                uuid = JsonKit.getPropertyValue(snapshotJson, "uuid") as? String,
+                cacheDataType = JsonKit.getPropertyValue(snapshotJson, "cacheDataType") as? String,
+                cacheDataJson = JsonKit.getPropertyValue(snapshotJson, "cacheDataJson") as? String
+            )
+            return fromSnapshot(snapshot, decodeCacheData)
+        }
+    }
+}
+
+data class ClientCacheItemSnapshot(
+    val uuid: String?,
+    val cacheDataType: String?,
+    val cacheDataJson: String?
+) : Serializable {
+    companion object {
+        @Serial
+        private const val serialVersionUID = 6045100851186086646L
     }
 }
