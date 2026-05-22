@@ -1,6 +1,5 @@
 package io.kudos.ability.cache.interservice.aop
 
-import io.kudos.ability.cache.interservice.common.ClientCacheItem
 import io.kudos.ability.cache.interservice.common.ClientCacheKey
 import io.kudos.ability.cache.interservice.provider.web.CacheClientRequest
 import jakarta.servlet.http.HttpServletRequest
@@ -44,7 +43,9 @@ import org.springframework.web.context.request.RequestContextHolder
 @Aspect
 @Lazy(false)
 @Order(100) // 跨服务 HTTP 响应级缓存：应当最外层包裹，确保拿到所有内层缓存读写后的最终 result 再计算 UID。
-class ClientCacheableAspect {
+class ClientCacheableAspect(
+    private val uidGenerator: ClientCacheUidGenerator = ClientCacheUidGenerator()
+) {
     /**
      * 定义切入点
      *
@@ -89,10 +90,11 @@ class ClientCacheableAspect {
      * @return 目标方法的返回值，缓存命中时返回null
      */
     @Around("cut()")
+    @Throws(Throwable::class)
     fun around(joinPoint: ProceedingJoinPoint): Any? {
         validateClass(joinPoint)
         //执行方法，得到结果
-        val result = doProceed(joinPoint)
+        val result = joinPoint.proceed()
         if (result == null) {
             return null
         }
@@ -103,7 +105,7 @@ class ClientCacheableAspect {
         }
         val response = request.getServletResponse() ?: return result
         val reqUid: String? = request.getHeader(ClientCacheKey.HEADER_KEY_CACHE_UID)
-        val resUid: String = ClientCacheItem.genUid(result)
+        val resUid: String = uidGenerator.generate(result)
         response.setHeader(ClientCacheKey.HEADER_KEY_CACHE_UID, resUid)
         response.setHeader(ClientCacheKey.HEADER_KEY_CACHE_STATUS, ClientCacheKey.STATUS_DO_CACHE)
         if (reqUid.isNullOrBlank()) {
@@ -114,20 +116,6 @@ class ClientCacheableAspect {
             return null
         }
         return result
-    }
-
-    /**
-     * 执行方法
-     *
-     * @param joinPoint joinPoint
-     * @return result
-     */
-    private fun doProceed(joinPoint: ProceedingJoinPoint): Any? {
-        try {
-            return joinPoint.proceed()
-        } catch (throwable: Throwable) {
-            throw RuntimeException(throwable)
-        }
     }
 
     /**
