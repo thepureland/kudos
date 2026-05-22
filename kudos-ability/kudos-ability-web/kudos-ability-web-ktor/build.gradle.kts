@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-    api(project(":kudos-context"))
+    api(project(":kudos-ability:kudos-ability-web:kudos-ability-web-common"))
 
     // 配置文件支持yaml
     api(libs.ktor.server.core)

@@ -1,7 +1,7 @@
 # kudos-ability-web-common
 
 Web 子模块共享 base 层。**当前为占位模块**——尚无独立代码，仅作为 `kudos-ability-web-springmvc`
-等具体 web 实现模块的公共依赖入口（间接传递 `kudos-context`）。
+和 `kudos-ability-web-ktor` 等具体 web 实现模块的公共依赖入口（间接传递 `kudos-context`）。
 
 ## 设计意图
 
@@ -20,10 +20,10 @@ Web 子模块共享 base 层。**当前为占位模块**——尚无独立代码
 
 ## 已知限制 / 后续工作
 
-- ❗ 空壳模块；可考虑：(a) 等到真有共享代码再保留，(b) 暂时删除模块并让
-  `kudos-ability-web-springmvc` 直接依赖 `:kudos-context`。当前选择保留是为给后续提取留位
-- ❗ `kudos-ability-web-ktor` 没有依赖本模块（不一致；未来 ktor 模块如果需要共享 web 抽象
-  时需补上）
+- ❗ 空壳模块；当前选择保留是为给后续提取留位。若长期没有跨 SpringMVC / Ktor 的共享抽象，
+  可删除本模块并让各实现模块直接依赖 `:kudos-context`
+- ✅ `kudos-ability-web-springmvc` 和 `kudos-ability-web-ktor` 已统一依赖本模块，避免同一 web
+  主题下公共入口不一致
 
 ## 依赖
 
