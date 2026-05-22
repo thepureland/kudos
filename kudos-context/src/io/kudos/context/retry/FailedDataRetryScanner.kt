@@ -22,6 +22,7 @@ import java.nio.file.Paths
  * 再扫描该 handler 对应目录下的失败数据文件，依次交还 handler 重试，成功则删除文件。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 @Component
@@ -68,12 +69,21 @@ class FailedDataRetryScanner {
         val handlers = SpringKit.getBeansOfType<IFailedDataHandler<*>>()
         handlers.values.forEach { handler ->
             taskScheduler.schedule(
-                { lockRetry(handler, KudosContextHolder.get().atomicServiceCode) },
+                { lockRetry(handler, currentAtomicServiceCode()) },
                 CronTrigger(handler.cronExpression)
             )
             logger.info("Scheduled retry for ${handler.businessType} [${handler.cronExpression}]")
         }
     }
+
+    /**
+     * 返回当前线程已绑定上下文中的原子服务编码。
+     *
+     * 启动期调度线程通常没有请求上下文，这里必须用 [KudosContextHolder.getOrNull]，
+     * 避免为了生成锁 key 而隐式创建一个空的 ThreadLocal 上下文。
+     */
+    internal fun currentAtomicServiceCode(): String? =
+        KudosContextHolder.getOrNull()?.atomicServiceCode
 
     /**
      * 加锁重试：使用分布式锁保护重试操作
