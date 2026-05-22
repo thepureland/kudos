@@ -141,7 +141,7 @@ plugins {
 }
 
 dependencies {
-    api(project(":kudos-context"))
+    api(project(":kudos-ability:kudos-ability-web:kudos-ability-web-common"))
 
     api(libs.ktor.server.core)
     api(libs.ktor.server.config.yaml)
