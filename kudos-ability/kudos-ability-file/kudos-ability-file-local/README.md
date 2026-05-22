@@ -90,8 +90,7 @@ if (!resolved.startsWith(baseDir)) {
   `${user.home}/fserver/upload`
 - ❗ `pathPrefix()` 返回空串，业务侧无法直接通过 HTTP URL 访问上传后的文件——需要
   Web 层挂载静态资源 mapping。本模块不提供（与 file-minio 直接返回 URL 的设计不一致）
-- ❗ `LocalUploadService.createBucket` 是冗余调用——`createFileDir` 会一并创建中间目录
-  含 bucket。可移除
+- ✅ 已移除 `LocalUploadService.createBucket` 冗余调用；`createFileDir` 会一并创建 bucket 和中间目录
 - ❗ 单文件大小没限制；上传超大文件可能耗尽 IO / 磁盘。生产侧应在网关 / 上传接口加上限
 - ❗ 文件落盘没有 sync/fsync 调用——`File.createNewFile` 后断电可能丢内容（kernel pagecache）。
   本地存储一致性要求不高的场景可以接受

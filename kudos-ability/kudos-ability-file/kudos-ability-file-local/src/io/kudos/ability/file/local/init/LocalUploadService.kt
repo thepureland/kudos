@@ -18,6 +18,7 @@ import java.nio.file.Path
  * 中间目录按需自动创建。`fileDir` 来自 [AbstractUploadService.dispatchFileDir]（含租户 / 分类 / 日期）。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 open class LocalUploadService : AbstractUploadService() {
@@ -25,16 +26,6 @@ open class LocalUploadService : AbstractUploadService() {
     /** 本地存储配置，提供 basePath 等参数 */
     @Autowired
     private lateinit var properties: LocalProperties
-
-    /** 按 [UploadFileModel.bucketName] 创建桶目录（已存在则无操作）。 */
-    protected fun createBucket(model: UploadFileModel<*>) {
-        val bucketPath = basePath().resolve(model.bucketName ?: "").normalize()
-        val bucketDir = bucketPath.toFile()
-        if (!bucketDir.exists()) {
-            log.debug("创建文件目录：{0}", bucketPath)
-            bucketDir.mkdirs()
-        }
-    }
 
     /**
      * 把上传流写到本地磁盘 `{basePath}/{bucket}/{fileDir}/{name}`。
@@ -50,10 +41,10 @@ open class LocalUploadService : AbstractUploadService() {
      * @return 不含 basePath 的相对路径（首字符是 `/`）
      * @throws ServiceException 写盘失败时，错误码 [FileErrorCode.FILE_UPLOAD_FAIL]
      * @author K
+     * @author AI: Codex
      * @since 1.0.0
      */
     override fun saveFile(model: UploadFileModel<*>, fileDir: String): String {
-        createBucket(model)
         val relativeDir = model.bucketName?.takeIf { it.isNotBlank() }
             ?.let { "$it${File.separator}$fileDir" }
             ?: fileDir
@@ -100,6 +91,7 @@ open class LocalUploadService : AbstractUploadService() {
      *
      * @param dirPath 目标目录绝对路径
      * @author K
+     * @author AI: Codex
      * @since 1.0.0
      */
     private fun createFileDir(dirPath: String) {
@@ -116,6 +108,7 @@ open class LocalUploadService : AbstractUploadService() {
      *
      * @return 始终为空串
      * @author K
+     * @author AI: Codex
      * @since 1.0.0
      */
     override fun pathPrefix(): String {

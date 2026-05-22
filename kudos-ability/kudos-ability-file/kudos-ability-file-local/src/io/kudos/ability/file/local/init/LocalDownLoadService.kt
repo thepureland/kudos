@@ -20,6 +20,7 @@ import java.io.InputStream
  * `IDeleteService.isValid` 只做粗粒度字符串包含 `..` 检查，不够；此处再加一道。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 class LocalDownLoadService : AbstractDownLoadService() {
