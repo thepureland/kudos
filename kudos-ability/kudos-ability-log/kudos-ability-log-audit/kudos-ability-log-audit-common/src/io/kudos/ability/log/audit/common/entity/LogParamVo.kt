@@ -11,6 +11,7 @@ import java.util.Locale
  * 业务侧通过 `BaseLog.addParam(LogParamVo(...))` 或 `addParam(name, value)` 添加。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 class LogParamVo : Serializable {

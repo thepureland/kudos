@@ -20,6 +20,7 @@ import org.springframework.context.annotation.Configuration
  * 旁路代理重新执行 bean 创建（虽然当前两个方法互不相调，但保留这个保护更稳）。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 @Configuration

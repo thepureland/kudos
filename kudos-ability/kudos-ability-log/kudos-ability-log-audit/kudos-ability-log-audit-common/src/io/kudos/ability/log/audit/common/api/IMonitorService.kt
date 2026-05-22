@@ -8,6 +8,7 @@ import io.kudos.ability.log.audit.common.entity.SysMonitorMsgVo
  * [MonitorMsgTool.pushErrMsg] 是最常用的上报入口；submit 由实现方决定走 DB / MQ / stdout 等通道。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 interface IMonitorService {

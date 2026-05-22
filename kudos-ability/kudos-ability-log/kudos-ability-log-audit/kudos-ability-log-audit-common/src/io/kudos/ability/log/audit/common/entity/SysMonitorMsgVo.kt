@@ -10,6 +10,7 @@ import java.util.Date
  * 监控服务侧消费后落入告警库或推送给告警通道。字段聚焦"哪个应用、什么环境、什么异常、何处发生、何时发生"。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 class SysMonitorMsgVo : Serializable {

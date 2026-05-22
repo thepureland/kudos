@@ -20,6 +20,7 @@ import kotlin.math.min
  * 异常堆栈按前 10 行截断，避免单条监控消息体过大压垮 MQ 或日志存储。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 object MonitorMsgTool {

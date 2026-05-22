@@ -12,6 +12,7 @@ import java.util.Date
  * （`kudos-ability-log-audit-rdb-ktorm` / `kudos-ability-log-audit-mq` 等）。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 class SysAuditLogVo : Serializable {

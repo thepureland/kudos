@@ -33,6 +33,7 @@ import kotlin.reflect.KClass
  * 描述格式化器分发逻辑：见 [descriptionFormatter] 的 kdoc（含历史 bug 说明）。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 object AuditLogTool {

@@ -10,6 +10,7 @@ import java.io.Serializable
  * 而 [SysAuditLogVo] 描述的是整次操作的元数据。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 class SysAuditDetailLogVo : Serializable {

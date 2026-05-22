@@ -7,6 +7,7 @@ package io.kudos.ability.log.audit.common.support
  * 实现方通常从字典服务 / 子系统配置查表，缓存命中后避免每次审计日志都走 DB。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 interface ISysAuditModule {

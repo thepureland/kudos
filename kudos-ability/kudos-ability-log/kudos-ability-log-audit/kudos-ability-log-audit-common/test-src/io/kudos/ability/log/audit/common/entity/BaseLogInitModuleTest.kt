@@ -24,6 +24,10 @@ import kotlin.test.assertNull
  *
  * 旧的 `init` 块 + `SpringKit.getBean()` 在 SpringKit 未就绪时无重试——本测试也作为
  * round-2 [io.kudos.ability.log.audit.common.support.AuditLogTool] 修复的间接守护。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 internal class BaseLogInitModuleTest {
 

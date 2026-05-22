@@ -7,6 +7,7 @@ import io.kudos.base.enums.ienums.IDictEnum
  * 在最终格式化时的处理方式（字符串原样 / 按 locale 货币 / 按 locale 日期）。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 enum class LogParamTypeEnum(
