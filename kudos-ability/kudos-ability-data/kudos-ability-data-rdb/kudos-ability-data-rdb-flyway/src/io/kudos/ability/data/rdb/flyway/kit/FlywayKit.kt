@@ -18,6 +18,7 @@ import javax.sql.DataSource
  * 目录名），其中 dbType 取自 `RdbTypeEnum::name` 的小写形式（h2 / postgresql / mysql 等）。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 object FlywayKit {
@@ -59,6 +60,10 @@ object FlywayKit {
                 .outOfOrder(flywayProperties.isOutOfOrder)
                 .validateOnMigrate(flywayProperties.isValidateOnMigrate)
                 .placeholderReplacement(flywayProperties.isPlaceholderReplacement)
+                .placeholders(flywayProperties.placeholders)
+                .placeholderPrefix(flywayProperties.placeholderPrefix)
+                .placeholderSuffix(flywayProperties.placeholderSuffix)
+                .placeholderSeparator(flywayProperties.placeholderSeparator)
                 .load()
             log.info(">>>>>>>>>>>>>  开始升级模块【$moduleName】的数据库...")
             val result = flyway.migrate()

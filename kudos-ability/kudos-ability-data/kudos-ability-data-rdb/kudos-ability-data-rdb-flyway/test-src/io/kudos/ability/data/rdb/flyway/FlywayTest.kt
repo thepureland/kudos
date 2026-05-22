@@ -12,8 +12,10 @@ import kotlin.test.assertFailsWith
  * [FlywayMultiDataSourceMigrator] 的集成测试。覆盖：
  * - happy path：全量迁移 → 表存在且初始数据已插入；同一进程内重复调用 migrate() 是幂等的
  * - 数据源 key 不存在的失败分支
+ * - Spring Boot `spring.flyway.placeholders` 能传递到 Flyway 脚本
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 @EnableKudosTest
@@ -39,6 +41,10 @@ class FlywayTest {
                 statement.executeQuery("select count(*) from test_table_flyway").use { rs ->
                     assert(rs.next())
                     assertEquals(2, rs.getInt(1))
+                }
+                statement.executeQuery("select name from test_table_flyway_placeholder").use { rs ->
+                    assert(rs.next())
+                    assertEquals("codex-placeholder", rs.getString(1))
                 }
             }
         }
