@@ -67,12 +67,21 @@ dependencies {
   调试输出移除
 - ✅ `XTableCellBehavior` 未使用的 `private val LOG = Logger.getLogger(...)` 字段移除
   + 删除 `import java.util.logging.Logger`
+- ✅ `LinearWizardFlow(Collection?)` 的可空参数现在按空列表处理，不再在构造时 NPE；
+  已补 headless 单测覆盖 null / empty flow
+
+## 测试覆盖
+
+- `LinearWizardFlowTest`（2）—— 不启动 JavaFX Stage，覆盖 null / empty flow 的 `canAdvance`
+  语义。
+
+2/2 测试全绿。
 
 ## 已知限制
 
-- ❗ **没有测试** —— UI 组件需要可见 stage 才能跑，集成测试成本高；该模块靠手工验证。
-  建议至少补 `AutoCompleteComboBoxListener` 的 headless 单测（Mockito 模拟 ComboBox /
-  TextField）
+- ❗ 控件级测试仍不足 —— TableView / ComboBox / Wizard 页面交互需要 JavaFX toolkit / 可见
+  stage，集成测试成本高；建议继续补 `AutoCompleteComboBoxListener` 的 headless 单测
+  （Mockito 模拟 ComboBox / TextField）或 TestFX 场景测试
 - ❗ `XTableView.terminatingCell` 用 `var` + 延迟初始化（`terminatingCellPropertyImpl()`）——
   非线程安全；JavaFX 单线程模型下不是问题，但加 `@FXThreadOnly` 注解更明确
 - ❗ `XTextFieldTableCell` 用 `findTextField()` lookup `.text-field` skin——依赖 JavaFX

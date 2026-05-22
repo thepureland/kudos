@@ -13,6 +13,7 @@ import javafx.util.Callback
  * @param S 行数据类型
  * @param T 列值类型（通常为 Boolean 或 ObservableValue<Boolean>）
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 class CheckBoxTableCellFactory<S, T> : Callback<TableColumn<S, T>?, TableCell<S, T>?> {

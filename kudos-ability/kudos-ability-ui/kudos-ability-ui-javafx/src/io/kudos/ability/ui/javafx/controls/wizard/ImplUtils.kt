@@ -33,6 +33,13 @@ import javafx.scene.control.Control
 import javafx.scene.control.SkinBase
 import javafx.scene.layout.Pane
 
+/**
+ * Wizard 内部节点遍历工具。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
+ */
 object ImplUtils {
     fun getChildren(n: Node?): List<Node?> {
         return if (n is Parent) getChildren(n as Parent?) else emptyList()

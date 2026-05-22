@@ -46,7 +46,9 @@ import java.util.Stack
  * 自带"上一步/下一步/完成"按钮。通过 [WizardPane] 子类自定义每一页内容并实现进入/离开回调。
  *
  * @param title 对话框标题
- * @author Oracle (原始) / K (适配)
+ * @author Oracle (原始)
+ * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 class Wizard(title: String = "") {
@@ -102,6 +104,7 @@ class Wizard(title: String = "") {
      * 非阻塞展示向导对话框。
      *
      * @author K
+     * @author AI: Codex
      * @since 1.0.0
      */
     fun show() {
@@ -113,6 +116,7 @@ class Wizard(title: String = "") {
      *
      * @return 用户点击的 [ButtonType]（取消时为 empty）
      * @author K
+     * @author AI: Codex
      * @since 1.0.0
      */
     fun showAndWait(): Optional<ButtonType?> = requireDialog().showAndWait()
@@ -123,6 +127,7 @@ class Wizard(title: String = "") {
      * @return 当前 dialog
      * @throws IllegalArgumentException dialog 未初始化时
      * @author K
+     * @author AI: Codex
      * @since 1.0.0
      */
     private fun requireDialog(): Dialog<ButtonType?> = requireNotNull(dialog) { "dialog is null" }
@@ -251,6 +256,7 @@ class Wizard(title: String = "") {
      * 避免 JavaFX Dialog 默认行为直接关闭对话框。
      *
      * @author K
+     * @author AI: Codex
      * @since 1.0.0
      */
     private fun validateActionState() {
@@ -288,6 +294,7 @@ class Wizard(title: String = "") {
      *
      * @param page 当前向导页
      * @author K
+     * @author AI: Codex
      * @since 1.0.0
      */
     private fun readSettings(page: WizardPane) {
@@ -309,6 +316,7 @@ class Wizard(title: String = "") {
      * @param n 当前节点；null 视为遍历到底
      * @return 当前子树是否记录到任何 setting
      * @author K
+     * @author AI: Codex
      * @since 1.0.0
      */
     private fun checkNode(n: Node?): Boolean {
@@ -353,6 +361,7 @@ class Wizard(title: String = "") {
      * 注：目前还是基于 override 而非事件订阅；未来计划改为事件式 API。
      *
      * @author K
+     * @author AI: Codex
      * @since 1.0.0
      */
     // TODO this should just contain a ControlsFX Form, but for now it is hand-coded
@@ -379,6 +388,7 @@ class Wizard(title: String = "") {
      * 框架提供 [LinearWizardFlow] 实现线性顺序；分支场景下用户自行实现。
      *
      * @author K
+     * @author AI: Codex
      * @since 1.0.0
      */
     interface Flow {

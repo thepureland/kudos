@@ -27,6 +27,7 @@ import javafx.util.StringConverter
  * @param S 行数据类型
  * @param T 列值类型
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 open class XTextFieldTableCell<S, T> @JvmOverloads constructor(converter: StringConverter<T?>? = null) :
