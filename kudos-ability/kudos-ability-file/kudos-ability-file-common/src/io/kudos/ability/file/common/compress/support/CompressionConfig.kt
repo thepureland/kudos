@@ -4,6 +4,10 @@ import java.io.Serializable
 
 /**
  * 玩家端传入的压缩配置信息
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 class CompressionConfig : Serializable {
 

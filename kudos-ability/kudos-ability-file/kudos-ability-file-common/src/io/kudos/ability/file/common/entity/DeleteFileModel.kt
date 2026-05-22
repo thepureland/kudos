@@ -9,6 +9,7 @@ import java.io.Serializable
  * 三要素：存储桶名 + 文件路径 + 鉴权参数。一般由 [from] 静态方法从完整路径解析得到。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 class DeleteFileModel : Serializable {

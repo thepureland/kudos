@@ -12,6 +12,7 @@ package io.kudos.ability.file.common.enums
  *    打上 `application/x-bmp` 的 contentType
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 enum class UploadContentTypeEnum(var fileSuffix: String, var contentType: String) {

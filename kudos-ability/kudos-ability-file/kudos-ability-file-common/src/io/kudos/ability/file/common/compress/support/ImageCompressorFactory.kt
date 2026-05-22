@@ -4,16 +4,16 @@ import io.kudos.ability.file.common.compress.compressor.ImageCompressor
 import io.kudos.ability.file.common.compress.compressor.JpgCompressor
 import io.kudos.ability.file.common.compress.compressor.PngCompressor
 import io.kudos.ability.file.common.compress.compressor.WebPCompressor
-import java.io.IOException
-import java.nio.file.Files
-import java.nio.file.Path
+import io.kudos.base.io.FilenameKit
+import java.util.Locale
 
 /**
  * 图片压缩器工厂。
  *
- * 提供两种构造入口：按 MIME 类型显式选择，或按文件后缀自动探测（可强制覆盖为 WebP）。
+ * 提供两种构造入口：按 MIME 类型显式选择，或按文件后缀选择（可强制覆盖为 WebP）。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 object ImageCompressorFactory {
@@ -37,29 +37,27 @@ object ImageCompressorFactory {
     }
 
     /**
-     * 按文件路径探测 MIME 自动选择压缩器；若 [webp] 为 true 则强制覆盖为 WebP。
+     * 按文件路径后缀选择压缩器；若 [webp] 为 true 则强制覆盖为 WebP。
      * `webp = true` 让业务侧"无论原图类型，统一压成 WebP"成为一行可配置开关。
      *
-     * @param outputFilePath 用于探测 MIME 的目标文件路径
+     * @param outputFilePath 用于解析后缀的目标文件路径
      * @param webp 是否强制走 WebP
      * @return 选中的 [ImageCompressor]
-     * @throws UnsupportedOperationException MIME 探测失败或不支持时
-     * @throws IOException IO 异常时
+     * @throws UnsupportedOperationException 后缀不支持时
      * @author K
      * @since 1.0.0
      */
-    @Throws(IOException::class)
     fun getCompressor(outputFilePath: String, webp: Boolean): ImageCompressor {
-        var mimeType = Files.probeContentType(Path.of(outputFilePath))
-        if (mimeType == null) {
-            throw UnsupportedOperationException("Unsupported or unknown MIME type for: $outputFilePath")
-        }
-
         if (webp) {
-            mimeType = "image/webp"
+            return WebPCompressor()
         }
 
-        return getCompressor(mimeType)
+        return when (FilenameKit.getExtension(outputFilePath).lowercase(Locale.ROOT)) {
+            "jpg", "jpeg" -> JpgCompressor()
+            "png" -> PngCompressor()
+            "webp" -> WebPCompressor()
+            else -> throw UnsupportedOperationException("Unsupported image extension for: $outputFilePath")
+        }
     }
 
 }

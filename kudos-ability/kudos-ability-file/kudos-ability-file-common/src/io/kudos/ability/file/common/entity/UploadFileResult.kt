@@ -10,6 +10,10 @@ import java.io.Serializable
  * 那么返回的内容：filepath=console/-99/boss/2022/11/09/123456789.jpg;pathPrefix=/var/file/upload/
  * 完整路径为：pathPrefix+filePath;
  * 基本上本地硬盘，则无需关注filePath。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 class UploadFileResult : Serializable {
     /**

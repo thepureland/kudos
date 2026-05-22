@@ -9,6 +9,10 @@ import kotlin.test.assertFailsWith
  *
  * 历史 bug：旧实现对无前导 `/` 的 `fullPath` 会把首段当 bucket、后段当 path 错位一格；
  * 修复后无前导 `/` 直接拒绝。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 internal class DeleteFileModelTest {
 

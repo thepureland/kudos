@@ -8,6 +8,7 @@ import io.kudos.ability.file.common.entity.UploadFileResult
  * 业务侧通过 `@Autowired IUploadService` 注入，框架按当前应用引入的子模块决定具体实现。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 interface IUploadService {

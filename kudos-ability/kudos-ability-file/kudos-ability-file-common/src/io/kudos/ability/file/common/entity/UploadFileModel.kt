@@ -14,6 +14,7 @@ import java.io.Serializable
  *
  * @param S 输入流类型；保留泛型让上层（如 Spring MultipartFile）能精确传入而无需 cast
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 class UploadFileModel<S : InputStreamSource?> : Serializable {

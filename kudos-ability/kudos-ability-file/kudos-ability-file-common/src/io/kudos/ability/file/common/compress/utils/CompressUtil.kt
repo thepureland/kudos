@@ -10,6 +10,7 @@ import java.util.Locale
  * 图像压缩相关的小工具集合。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 object CompressUtil {

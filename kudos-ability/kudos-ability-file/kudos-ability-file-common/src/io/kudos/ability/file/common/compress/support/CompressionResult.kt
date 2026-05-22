@@ -8,6 +8,7 @@ import java.io.FileOutputStream
  * 图像压缩结果。封装内存里的 [outputStream]、目标文件路径、最终 MIME 类型。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 class CompressionResult(val outputStream: ByteArrayOutputStream?, var mimeType: String?) {
