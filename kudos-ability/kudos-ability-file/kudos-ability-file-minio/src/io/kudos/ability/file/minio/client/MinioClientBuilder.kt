@@ -8,10 +8,13 @@ import io.minio.MinioClient
  * Minio STS 客户端获取接口
  * 通过此接口获取的 [MinioClient] 授权一定的权限控制
  *
- * @param <T>
+ * @param T 认证参数类型
  * @author Roger
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  * @see [Minio STS](https://min.io/docs/minio/linux/developers/security-token-service.html)
-</T> */
+ */
 interface MinioClientBuilder<T : AuthServerParam> {
     fun setAuthServerParam(authServerParam: T)
 

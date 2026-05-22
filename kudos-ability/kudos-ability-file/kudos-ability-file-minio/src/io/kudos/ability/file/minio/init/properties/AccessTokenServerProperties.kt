@@ -15,6 +15,7 @@ package io.kudos.ability.file.minio.init.properties
  * @property endpoint OAuth2 token 端点的完整 URL（POST 到这里换 JWT）
  * @property headerName 把业务侧的认证 token 透传给 OAuth2 服务器时使用的 header 名
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 class AccessTokenServerProperties : AuthServerProperties() {

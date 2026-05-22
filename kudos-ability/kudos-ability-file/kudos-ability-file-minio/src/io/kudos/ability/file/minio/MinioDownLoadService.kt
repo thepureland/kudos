@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Qualifier
  * 在这里更多是兼容形式而非安全屏障。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 open class MinioDownLoadService : AbstractDownLoadService() {

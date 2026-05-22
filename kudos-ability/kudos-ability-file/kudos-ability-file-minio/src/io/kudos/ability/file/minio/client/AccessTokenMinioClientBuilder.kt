@@ -27,6 +27,7 @@ import java.security.ProviderException
  *
  * @author Roger
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 open class AccessTokenMinioClientBuilder : MinioClientBuilder<AccessTokenServerParam> {

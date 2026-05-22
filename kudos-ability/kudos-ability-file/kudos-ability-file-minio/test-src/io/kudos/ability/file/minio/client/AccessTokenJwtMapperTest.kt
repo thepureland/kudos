@@ -20,6 +20,10 @@ import kotlin.test.assertNotNull
  * 之后这个路径理论上等价，但 Jackson 3 几乎重写了 builder/visibility API，等价性不能"看着像"就放过。
  * 任何回归（builder API 改名 / visibility 解析语义变化 / FAIL_ON_UNKNOWN 默认变化）都会让这条
  * STS 集成路径在线上启动后才挂。本测试在编译期 + 单测期就把它锁住。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 internal class AccessTokenJwtMapperTest {
 
