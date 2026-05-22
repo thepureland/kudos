@@ -26,6 +26,7 @@ import org.springframework.context.annotation.Configuration
  * `kudos-ability-data-rdb-flyway` 自动执行；不走 flyway 的部署需要手动执行。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 @Configuration

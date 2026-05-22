@@ -16,6 +16,7 @@ import org.ktorm.schema.varchar
  * FK 维护成本高），由应用层保证一致性。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 object SysAuditDetailLogTable : Table<Nothing>(AuditLogSchema.TABLE_AUDIT_DETAIL_LOG) {

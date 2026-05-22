@@ -105,11 +105,11 @@ spring:
 
 ## 测试覆盖
 
-**当前无单元测试**——审计落库走 `KudosContextHolder.currentDatabase()` 依赖 Spring 上下文，
-单测成本高。建议端到端测试在业务侧或 `kudos-ms-*` 集成测试里覆盖：
-- 启 H2 内存库
-- 通过 `kudos-ability-data-rdb-flyway` 自动建表
-- 触发一次带 `@Audit` 注解的方法，断言 `sys_audit_log` 行数 +1
+- `RdbKtormAuditServiceTest`（6）—— H2 in-memory + 真实 Ktorm 写入 / 读取，覆盖：
+  主表 + 详情表批量插入、顶层 tenant/subSys 兜底、entity 字段优先、空模型 no-op、
+  多 entity batch insert、重复主键异常返回 false 而非外抛。
+
+6/6 测试全绿。
 
 ## 依赖
 
@@ -130,7 +130,7 @@ testImplementation(project(":kudos-test:kudos-test-common"))
 - ❗ 没有审计专用数据源——共用业务数据源时，DBA 视角下"审计写"与"业务交易写"混在一起，
   分库时不便。需要时可在 `KudosContextHolder.currentDataSource()` 通过 thread-local
   切换 `audit` 数据源
-- ❗ `RdbKtormAuditService` 没有单测覆盖。Aspect → context → batchInsert 整条链都依赖
-  Spring 上下文初始化；考虑用 testcontainers + H2 写端到端测试
+- ✅ `RdbKtormAuditService` 已有 H2 端到端测试覆盖主表 / 详情表写入、tenant/subSys
+  兜底、空模型、批量插入和异常返回 false 语义
 - ❗ DDL 写在 `rdb-common` 模块的 `resources/db/migration/`——表 schema 演进时务必新增
   `V<date>N__*.sql`，不要改老版本，否则 flyway checksum 失败
