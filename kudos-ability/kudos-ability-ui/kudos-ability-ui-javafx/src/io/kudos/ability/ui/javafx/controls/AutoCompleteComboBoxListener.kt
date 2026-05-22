@@ -26,6 +26,7 @@ import javafx.scene.input.KeyEvent
  * `data[i].toString()` 拿显示串，不依赖 `T`。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 class AutoCompleteComboBoxListener<T>(private val comboBox: ComboBox<Any>) : EventHandler<KeyEvent> {

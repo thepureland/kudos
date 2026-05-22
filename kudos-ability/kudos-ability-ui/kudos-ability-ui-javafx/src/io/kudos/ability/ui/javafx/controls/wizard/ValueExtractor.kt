@@ -35,7 +35,9 @@ import javafx.util.Callback
  * 内置常见控件：CheckBox/ChoiceBox/ComboBox/DatePicker/PasswordField/RadioButton/Slider/TextArea/TextField/
  * ListView/TreeView/TableView/TreeTableView。业务侧需要新控件时调 [addValueExtractor] 自行注册。
  *
- * @author Oracle (原始) / K (适配)
+ * @author Oracle (原始)
+ * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 object ValueExtractor {

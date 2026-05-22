@@ -20,6 +20,7 @@ import javafx.util.StringConverter
  * @param T 列值类型
  * @param sc 把列值转字符串的 [StringConverter]；为 null 时直接 `as String`
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 class TextFieldCell<S, T> @JvmOverloads constructor(private val sc: StringConverter<Any>? = null) : TableCell<S, T>() {

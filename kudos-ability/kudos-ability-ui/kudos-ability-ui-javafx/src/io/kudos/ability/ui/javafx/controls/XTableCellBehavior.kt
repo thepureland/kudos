@@ -34,6 +34,7 @@ import javafx.scene.input.MouseButton
  * @param S 行数据类型
  * @param T 列值类型
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 open class XTableCellBehavior<S, T>

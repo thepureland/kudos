@@ -1,6 +1,8 @@
 dependencies {
     api(project(":kudos-base"))
     api(libs.controlsfx)
+
+    testImplementation(project(":kudos-test:kudos-test-common"))
 }
 
 plugins {
@@ -14,4 +16,3 @@ javafx {
     version = javafxVersion
     modules = listOf("javafx.controls", "javafx.fxml")
 }
-

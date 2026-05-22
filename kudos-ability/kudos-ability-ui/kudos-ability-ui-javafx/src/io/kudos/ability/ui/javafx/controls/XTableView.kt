@@ -21,6 +21,7 @@ import javafx.scene.control.TableView
  *
  * @param S 行数据类型
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 open class XTableView<S> : TableView<S>() {

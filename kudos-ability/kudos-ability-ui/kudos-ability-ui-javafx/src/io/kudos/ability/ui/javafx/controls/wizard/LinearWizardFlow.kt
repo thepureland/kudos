@@ -31,8 +31,9 @@ import java.util.Optional
  * 线性 [Wizard.Flow] 实现：按构造时给定的顺序串行前进。
  * 大多数"配置 → 选项 → 完成"式向导直接复用本实现即可。
  *
- * @param pages 顺序固定的页面集合（可能为 null 占位，advance 时直接通过）
+ * @param pages 顺序固定的页面集合；null 按空列表处理
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 class LinearWizardFlow(pages: Collection<Wizard.WizardPane?>?) : Wizard.Flow {
@@ -76,6 +77,6 @@ class LinearWizardFlow(pages: Collection<Wizard.WizardPane?>?) : Wizard.Flow {
     }
 
     init {
-        this.pages = ArrayList(pages)
+        this.pages = ArrayList(pages.orEmpty())
     }
 }
