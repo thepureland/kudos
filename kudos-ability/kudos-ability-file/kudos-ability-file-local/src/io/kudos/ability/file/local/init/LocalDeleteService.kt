@@ -17,6 +17,7 @@ import java.io.File
  * 不会真正落到 `file.delete()`。拒绝删目录（只支持文件级别）。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 class LocalDeleteService : IDeleteService {

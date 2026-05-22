@@ -19,6 +19,7 @@ import org.springframework.context.annotation.PropertySource
  * 生产部署务必通过 yml 覆盖到独立的存储挂载点，否则与系统其他文件混在一起。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 @Configuration
