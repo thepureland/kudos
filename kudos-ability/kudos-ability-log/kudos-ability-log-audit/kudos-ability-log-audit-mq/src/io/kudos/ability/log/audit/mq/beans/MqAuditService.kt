@@ -19,6 +19,7 @@ import io.kudos.ability.log.audit.common.entity.SysAuditLogModel
  *  - 在 yml 配好 `spring.cloud.stream.bindings.logAudit-out-0.destination`
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 class MqAuditService : IAuditService {
