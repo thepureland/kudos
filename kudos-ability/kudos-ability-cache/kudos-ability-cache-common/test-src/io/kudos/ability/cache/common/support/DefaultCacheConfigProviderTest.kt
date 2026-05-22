@@ -122,6 +122,55 @@ internal class DefaultCacheConfigProviderTest {
         assertEquals(true, provider.getCacheConfig("BOOT")?.isWriteOnBoot)
     }
 
+    @Test
+    fun structuredCacheItemConfigs_areLoadedWithSameDefaults() {
+        val props = CacheItemsProperties().apply {
+            cacheItemConfigs = mutableListOf(
+                CacheConfig().apply {
+                    name = "STRUCTURED"
+                    strategy = "LOCAL_REMOTE"
+                    ttl = 60
+                }
+            )
+        }
+
+        val provider = DefaultCacheConfigProvider(props)
+
+        val cfg = provider.getCacheConfig("STRUCTURED")!!
+        assertEquals("LOCAL_REMOTE", cfg.resolvedStrategyCode)
+        assertEquals(60, cfg.ttl)
+        assertEquals(false, cfg.isWriteOnBoot)
+        assertEquals(true, cfg.isActive)
+        assertEquals(setOf("STRUCTURED"), provider.getLocalRemoteCacheConfigs().keys)
+    }
+
+    @Test
+    fun stringCacheItem_unknownFieldFailsFast() {
+        val ex = assertFails { newProvider("name=USER&strategy=REMOTE&ttle=900") }
+        assertTrue(
+            ex.message?.contains("未知字段 'ttle'") == true,
+            "错误信息应明确指出未知字段，实际：${ex.message}"
+        )
+    }
+
+    @Test
+    fun stringCacheItem_malformedTokenFailsFast() {
+        val ex = assertFails { newProvider("name=USER&strategy=REMOTE&ttl") }
+        assertTrue(
+            ex.message?.contains("参数格式错误") == true,
+            "错误信息应明确指出参数格式错误，实际：${ex.message}"
+        )
+    }
+
+    @Test
+    fun invalidStrategy_failsFast() {
+        val ex = assertFails { newProvider("name=USER&strategy=NOT_A_STRATEGY") }
+        assertTrue(
+            ex.message?.contains("strategy 非法 'NOT_A_STRATEGY'") == true,
+            "错误信息应明确指出非法 strategy，实际：${ex.message}"
+        )
+    }
+
     private fun newProvider(vararg items: String): DefaultCacheConfigProvider {
         val props = CacheItemsProperties().apply { cacheItems = items.toMutableList() }
         return DefaultCacheConfigProvider(props)

@@ -12,7 +12,8 @@ Kudos 缓存框架的核心模块（60 个源文件）。提供：
 5. **批量缓存**：`@BatchCacheable` 一次性查多个 key，未命中部分回源后合并写回
 6. **跨节点失效广播**：`CacheMessage` + `ICacheMessageHandler` SPI（Redis pub/sub /
    MQ 各自子模块实现）
-7. **配置驱动**：`kudos.ability.cache.cache-items[]` 字符串列表声明各缓存项的策略 / ttl
+7. **配置驱动**：`kudos.ability.cache.cache-items[]` 字符串列表或
+   `cache-item-configs[]` 结构化列表声明各缓存项的策略 / ttl
 8. **版本隔离**：`CacheVersionConfig`——所有 key 自动加 `<version>:` 前缀，蓝绿 / 数据迁移可并存
 
 ## 设计要点
@@ -54,11 +55,16 @@ kudos:
       cache-items:
         - name=USER_CACHE&strategy=LOCAL_REMOTE&ttl=900
         - name=DEMO&strategy=REMOTE&ttl=1800&writeOnBoot=true
+      cache-item-configs:
+        - name: ORDER_CACHE
+          strategy: LOCAL_REMOTE
+          ttl: 900
 ```
 
-字符串列表而非嵌套 yml object 是经过权衡的——长列表更紧凑、好 diff，代价是失去 IDE 字段
-提示。解析见 `DefaultCacheConfigProvider.cacheItemToConfig`：按 `&` 拆 token、`=` 拆 kv、
-反射 set 到 `CacheConfig` 字段。
+`cache-items` 字符串列表保留用于兼容既有配置：长列表更紧凑、好 diff，但失去 IDE 字段提示。
+新配置建议优先用 `cache-item-configs` 结构化对象，让 Spring Boot binder 直接绑定到
+`CacheConfig` 字段。旧字符串解析会在启动期校验未知字段、缺 `name` / `strategy`、非法
+`strategy` 和错误 token 格式，避免错配字段静默生效。
 
 ### `CacheConfig.strategy` vs `strategyDictCode`
 
@@ -80,7 +86,7 @@ kudos:
 |---|---|
 | `init/LinkableCacheAutoConfiguration` | 装配入口（cacheManager / aspect / keyGenerator 等 12+ bean） |
 | `init/BaseCacheConfiguration` | 基础配置 mixin（业务可继承自定义） |
-| `init/properties/CacheItemsProperties` | `cache-items[]` 字符串列表配置类 |
+| `init/properties/CacheItemsProperties` | `cache-items[]` 字符串列表 + `cache-item-configs[]` 结构化配置类 |
 | `init/properties/CacheVersionConfig` | 缓存版本 + 失效广播 channel |
 | `core/AbstractCacheHandler` | 业务自定义 handler 基类（含 `getSelf()` 自代理解决方案） |
 | `core/keyvalue/MixCache` + `MixCacheManager` | 两级缓存核心 |
@@ -103,24 +109,82 @@ kudos:
 | `support/IHashCacheSync` | Hash 缓存"读未命中→回源→写回"模板接口 |
 | `enums/CacheStrategy` / `CacheHandleType` | 策略 / 操作类型枚举 |
 
+## 常用接入示例
+
+### 租户感知 K-V 缓存
+
+```kotlin
+@TenantCacheable(cacheNames = ["USER_CACHE"], suffix = "profile")
+open fun getUserProfile(id: Long): UserProfile? {
+    return userRepository.findProfile(id)
+}
+```
+
+`TenantCacheable` 默认使用 `tenantCacheKeyGenerator`，会把当前 `KudosContext.tenantId`
+纳入 key；业务方法不需要手动拼租户 ID。
+
+### 批量 K-V 缓存
+
+```kotlin
+@BatchCacheable(cacheNames = ["USER_CACHE"], valueClass = UserProfile::class)
+open fun listUserProfiles(ids: Collection<Long>): Map<String, UserProfile> {
+    return userRepository.findProfiles(ids).associateBy { it.id.toString() }
+}
+```
+
+返回值必须是 `Map`，key 为缓存 key；未命中部分回源后只写回新增结果。
+
+### 缓存穿透保护
+
+```kotlin
+@DistributedCacheGuard
+@TenantCacheable(cacheNames = ["USER_CACHE"])
+open fun getUserProfileGuarded(id: Long): UserProfile? {
+    return userRepository.findProfile(id)
+}
+```
+
+缓存未命中时同 key 调用会先竞争分布式锁；未拿到锁的调用等待持锁方写回后再读一次缓存，
+锁异常时回退为直接回源。
+
+### Hash 缓存
+
+```kotlin
+@HashCacheableByPrimary(
+    cacheNames = ["USER_HASH"],
+    key = "#id",
+    entityClass = UserEntity::class,
+    filterableProperties = ["status"],
+    sortableProperties = ["createdAt"]
+)
+open fun getUserEntity(id: Long): UserEntity? {
+    return userRepository.findEntity(id)
+}
+```
+
+对应缓存项必须配置 `hash=true`；主属性用于 `getById`，副属性用于等值筛选或范围 / 排序索引。
+
 ## 测试覆盖
 
-- `SpelExpressionCacheTest`（4 case）——新增，纯单元测试，回归 SpEL 缓存命中 / 不同表达式
-  独立 / 表达式求值正确性
-- 其余 60 个源文件**当前没有专门测试**；下游 cache-local-caffeine / cache-remote-redis 模块
-  的集成测试间接覆盖了 `MixCache` / `MixCacheManager` 大部分行为
+- `SpelExpressionCacheTest`——SpEL 缓存命中 / 表达式隔离 / 求值正确性
+- `DefaultCacheConfigProviderTest`——字符串配置、结构化 `cache-item-configs`、字段 / token /
+  strategy 启动期校验、策略分组、hash 视图、默认值
+- `CacheConfigTest` / `CacheVersionConfigTest`——派生策略和版本化 cache name 行为
+- `MixCacheTest`——LOCAL_REMOTE 写入顺序、远端 / 本地 / 广播失败语义、`putIfAbsent`
+- `DistributedCacheGuardAspectTest`——锁成功、锁失败回退、二次读缓存
+- `BatchCacheableAspectTest`——批量缓存半命中、回源合并、空 key 处理
+- `AbstractCacheHandlerTest`——`selfProxy` 默认按类型查找与 `selfBeanName()` 覆盖
 
-补齐测试是后续重点工作之一；先把"哪里没测"在 README 列出来，方便有空时按优先级补：
-- `MixCache` 各策略下 get / put / evict / putIfAbsent 的写入顺序与广播
-- `DistributedCacheGuardAspect` 锁失败的回退路径
-- `BatchCacheableAspect` / `HashBatchCacheableByPrimaryAspect` 的"半命中合并"
+仍需补齐的重点：
+- `HashBatchCacheableByPrimaryAspect` / Hash cache 注解族的"半命中合并"
 - `CriteriaRedisResolver` 同款的"组间 AND、组内 OR"在 `TenantCachingAspect` 的解析
-- `CacheVersionConfig.getFinalCacheName` / `.getRealCacheName` 的空版本 / 已带前缀回填行为
+- 租户感知 key 生成与 `TenantCacheable` / `TenantCachePut` / `TenantCacheEvict` 的组合行为
 
 ## 已知限制 / 后续工作
 
-- ❗ **测试覆盖率极低**：60 个源文件仅 1 个单测（本次补的）。Aspect 层 / Manager 层均
-  无单测，依赖下游模块的集成测试间接覆盖
+- ✅ **测试覆盖已提升**：本模块已有 8 个测试类，覆盖 Provider / Config / MixCache /
+  DistributedCacheGuardAspect / BatchCacheableAspect / AbstractCacheHandler 等核心行为。
+  Hash 注解族和租户组合场景仍需继续补
 - ✅ `MixCache.pushMsgRedis` 已改为 fire-and-forget——每个 handler 的 `sendMessage`
   入队到模块级共享的 daemon 线程池（core=1 / max=cpu / queue=1024 / `CallerRunsPolicy`），
   发送失败仅 WARN 日志、不重试（重复广播比偶发丢一条更危险，下游收到则只是丢本地副本）。
@@ -128,8 +192,9 @@ kudos:
 - ✅ `CacheConfig.strategy` / `.strategyDictCode` 双字段——所有读侧已收口到 `resolvedStrategy`/
   `resolvedStrategyCode` 派生属性（`DefaultCacheConfigProvider.initCacheConfig` 是最后一处
   raw reader，已迁移）。两个原始字段保留以支持 DB 反序列化 + yml 绑定两条写入路径
-- ❗ `cache-items` 用字符串列表 + 反射 setProperty 解析——失去 IDE 提示和编译期校验，
-  错配字段名要等到启动时才发现
+- ✅ `cache-items` 字符串列表已提供结构化替代：新增 `cache-item-configs[]`，可直接按
+  `CacheConfig` 字段写 yml；旧字符串格式继续兼容，并在启动期显式校验未知字段、缺
+  `name` / `strategy`、非法 `strategy` 和错误 token
 - ✅ `LOCAL_REMOTE` 写失败语义已显式定义并测试：
   - **远端失败** → 异常上抛 / 不写本地 / 不广播（整网保持原值，一致）
   - **本地失败** → catch + WARN 日志 / 广播仍发出（远端是真相源；其他节点 invalidate
@@ -137,8 +202,8 @@ kudos:
   - **广播失败** → fire-and-forget 异步，单 handler 失败不影响整体（同 [#1]）
 - ✅ `AbstractCacheHandler.selfProxy` 支持 `selfBeanName()` override——多 bean 场景子类
   override 该方法返回显式 bean 名即可避开 `NoUniqueBeanDefinitionException`，默认仍按类型唯一查
-- ❗ 文档大量集中在源码 kdoc 中（一些类的 kdoc 长达 50+ 行），适合配 KDoc 渲染工具
-  生成静态站点；README 仅做导航
+- ✅ README 已补充配置、核心行为、测试范围和常用接入示例；源码 KDoc 仍保留更完整的参数
+  细节，后续如需对外发布可再接入 KDoc 静态站点生成
 
 ## 依赖
 
