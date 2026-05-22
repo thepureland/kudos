@@ -16,6 +16,7 @@ package io.kudos.ability.data.memdb.redis.aop
  * @property count 窗口内允许的最大调用次数，默认 100
  * @property limitType 限流维度，默认 [LimitType.DEFAULT]（按方法签名）
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY_GETTER, AnnotationTarget.PROPERTY_SETTER)

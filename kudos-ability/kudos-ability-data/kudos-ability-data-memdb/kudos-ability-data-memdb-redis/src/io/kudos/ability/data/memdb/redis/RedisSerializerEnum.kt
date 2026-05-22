@@ -19,6 +19,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer
  * 新增序列化器需在此处加枚举值 + 给 `getSerializerByType` 加分支。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 enum class RedisSerializerEnum(

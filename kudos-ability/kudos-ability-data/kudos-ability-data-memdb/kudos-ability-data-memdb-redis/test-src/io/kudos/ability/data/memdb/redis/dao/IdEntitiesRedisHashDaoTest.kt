@@ -20,6 +20,7 @@ import kotlin.test.assertTrue
  * IdEntitiesRedisHashDao 测试用例（基于 RedisTestContainer）
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 @EnableKudosTest
@@ -310,14 +311,26 @@ internal class IdEntitiesRedisHashDaoTest {
     }
 }
 
-/** 简单测试行实体 */
+/**
+ * 简单测试行实体。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
+ */
 data class TestRow(
     override var id: String = "",
     var name: String? = null,
     var type: Int? = null
 ) : IIdEntity<String>
 
-/** 带 type 与 sortScore 的实体，用于二级索引测试 */
+/**
+ * 带 type 与 sortScore 的实体，用于二级索引测试。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
+ */
 data class TestRowWithTime(
     override var id: String = "",
     var type: Int? = null,

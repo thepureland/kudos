@@ -33,6 +33,8 @@ kudos:
             value-serializer: fastjson
             hashkey-serializer: string
             hashvalue-serializer: fastjson
+            ssl:
+              enabled: false
             max-active: 200
             max-idle: 20
             min-idle: 5
@@ -50,11 +52,10 @@ kudos:
 `RedisConnectFactory` 装配 `LettuceConnectionFactory` 时统一打开：
 - `autoReconnect=true`、`keepAlive=true`、`disconnectedBehavior=REJECT_COMMANDS`
 - `readFrom=REPLICA_PREFERRED`（读优先打从节点；单机模式无影响）
+- `ssl.enabled=true` 或配置 `ssl.bundle` 时调用 `LettucePoolingClientConfiguration.useSsl()`
+  启用 SSL 传输
 - 集群模式额外：60s 周期 topology 刷新、`ASK_REDIRECT` / `UNKNOWN_NODE` 自适应触发刷新、
   关闭 `validateClusterNodeMembership`（云上做了 NAT 的环境必须关掉）
-
-SSL 暂未接入；如有需要在 `RedisConnectFactory.newLettuceConnectionFactory` 内的
-`LettucePoolingClientConfiguration.builder()` 上加 `.useSsl()`。
 
 ### `IdEntitiesRedisHashDao` 索引模型
 
@@ -107,7 +108,8 @@ SSL 暂未接入；如有需要在 `RedisConnectFactory.newLettuceConnectionFact
 
 - `RedisTemplateTest`、`IdEntitiesRedisHashDaoTest` —— 基于 RedisTestContainer 的端到端集成，
   覆盖 RedisTemplate 用法 + Hash DAO 全部公共方法
-- `CacheKeyTest`、`RedisSerializerEnumTest` —— 新增，纯单元测试，无 Docker 依赖
+- `CacheKeyTest`、`RedisSerializerEnumTest`、`RedisConnectFactoryTest` —— 纯单元测试，无 Docker
+  依赖，覆盖 key 拼装、序列化器字面值、Lettuce SSL 开关
 
 未单测但被集成测试覆盖的：`CriteriaRedisResolver`、`RedisExtProperties.getSerializerByType`。
 仍未覆盖：`RateLimiterAspect`（依赖 Spring AOP + Redis 全量装配，未来加专门的集成测试）。
@@ -115,7 +117,9 @@ SSL 暂未接入；如有需要在 `RedisConnectFactory.newLettuceConnectionFact
 ## 已知限制 / 后续工作
 
 - ❗ 仅 `defaultRedisTemplate` 参与限流；多 redis 实例分别限流需自行扩展 Aspect
-- ❗ SSL 未实现，仅在源码中预留注释。需 SSL 时改 `RedisConnectFactory`
+- ✅ `ssl.enabled` / `ssl.bundle` 已接入 Lettuce SSL 开关；但 `ssl.bundle` 目前仅作为启用
+  SSL 的信号，未把自定义证书材料注入 Lettuce，双向 TLS / 私有 CA 场景仍需扩展连接工厂
+  并补专门集成测试
 - ❗ `IdEntitiesRedisHashDao.refreshAll` 重建索引时**逐条** `save()`，没有 pipeline——
   全量刷新 1w 条以上时会偏慢。可优化为 pipeline + scoreBatch
 - ❗ `IdEntitiesRedisHashDao.list` 仅第一个 Order 参与 Redis 排序；多字段排序需应用层兜底

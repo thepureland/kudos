@@ -9,6 +9,10 @@ import kotlin.test.assertNull
 
 /**
  * [RedisSerializerEnum] 字面值映射的回归测试。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 internal class RedisSerializerEnumTest {
 

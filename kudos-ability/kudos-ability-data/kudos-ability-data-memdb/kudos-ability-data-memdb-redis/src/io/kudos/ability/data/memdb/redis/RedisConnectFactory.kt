@@ -25,10 +25,10 @@ import java.time.Duration
  *  - 直接读取 kudos 自定义的 [RedisExtProperties]，支持每个 redis 实例独立的连接池参数
  *  - 默认开启 keepAlive、autoReconnect，集群模式下额外开启周期性 topology 刷新
  *  - 默认 [ReadFrom.REPLICA_PREFERRED]，读请求优先打从节点
- *
- * SSL 暂未接入——`DataRedisProperties` 上有 ssl 配置，需要时在此处装 `.useSsl()`。
+ *  - 当 `ssl.enabled=true` 或配置了 `ssl.bundle` 时启用 Lettuce SSL 连接
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 object RedisConnectFactory {
@@ -73,15 +73,29 @@ object RedisConnectFactory {
             maxTotal = if (redisProperties.maxActive > 0) redisProperties.maxActive else 200
         }
 
-        val poolClientConfig = LettucePoolingClientConfiguration.builder()
-            .poolConfig(poolConfig)
-            .clientOptions(clientOptions)
-            .readFrom(ReadFrom.REPLICA_PREFERRED)
-            .build()
+        val poolClientConfig = newLettuceClientConfiguration(redisProperties, clientOptions, poolConfig)
 
         return LettuceConnectionFactory(redisConfiguration, poolClientConfig).apply {
             afterPropertiesSet()
         }
+    }
+
+    /**
+     * 创建 Lettuce 客户端配置；拆出该方法便于覆盖 SSL / pool 等不需要真实 Redis 的配置分支。
+     */
+    internal fun newLettuceClientConfiguration(
+        redisProperties: RedisExtProperties,
+        clientOptions: ClientOptions,
+        poolConfig: GenericObjectPoolConfig<StatefulConnection<*, *>>
+    ): LettucePoolingClientConfiguration {
+        val builder = LettucePoolingClientConfiguration.builder()
+            .poolConfig(poolConfig)
+            .clientOptions(clientOptions)
+            .readFrom(ReadFrom.REPLICA_PREFERRED)
+        if (redisProperties.ssl.isEnabled) {
+            builder.useSsl()
+        }
+        return builder.build()
     }
 
     /**

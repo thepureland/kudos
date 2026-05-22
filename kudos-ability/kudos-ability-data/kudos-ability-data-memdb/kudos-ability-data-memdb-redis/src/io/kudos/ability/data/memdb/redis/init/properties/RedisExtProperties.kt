@@ -16,6 +16,7 @@ import java.time.Duration
  * 序列化器字段取值需匹配 [RedisSerializerEnum.type] 字面值；未匹配会启动时抛错。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 class RedisExtProperties : DataRedisProperties() {

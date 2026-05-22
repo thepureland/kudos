@@ -9,6 +9,7 @@ package io.kudos.ability.data.memdb.redis.consts
  * 选 `:` 是 Redis 生态约定；选 `,` 是为了和业务 id 中可能出现的 `:` / `-` 区分开。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 object CacheKey {

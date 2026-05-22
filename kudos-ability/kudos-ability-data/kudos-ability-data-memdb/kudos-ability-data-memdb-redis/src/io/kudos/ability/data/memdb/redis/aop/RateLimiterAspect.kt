@@ -27,6 +27,7 @@ import org.springframework.stereotype.Component
  * 注：所有限流都走 [RedisTemplates.defaultRedisTemplate]，目前不支持多 redis 实例分别限流。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 @Component
