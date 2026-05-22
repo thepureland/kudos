@@ -17,6 +17,7 @@ import kotlin.test.assertNotSame
  * 缓存关闭时：MixHashCacheManager 未注入、getHashCache 抛异常、走 Hash 注解的方法每次执行且返回不同结果。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 @EnableKudosTest

@@ -15,7 +15,7 @@ import org.springframework.cache.caffeine.CaffeineCache
  * 显式 `cleanUp()` 强制 Caffeine 立即处理待 pending 维护工作，让 invalidate 立即生效。
  *
  * @author K
- * @author AI: Cursor
+ * @author AI: Codex
  * @since 1.0.0
  */
 internal class DrainingCaffeineCache(

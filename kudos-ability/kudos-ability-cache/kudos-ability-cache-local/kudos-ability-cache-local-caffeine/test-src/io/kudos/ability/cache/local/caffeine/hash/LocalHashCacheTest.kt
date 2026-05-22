@@ -2,6 +2,7 @@ package io.kudos.ability.cache.local.caffeine.hash
 
 import io.kudos.ability.cache.common.enums.CacheStrategy
 import io.kudos.ability.cache.common.kit.HashCacheKit
+import io.kudos.ability.cache.local.caffeine.CaffeineHashCache
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.base.query.sort.Order
@@ -19,7 +20,7 @@ import kotlin.test.*
  * 通过 [HashCacheKit.getHashCache] 获取 "testHash" 缓存，覆盖 save/getById/deleteById/listAll/findByIds/listBySetIndex/listPageByZSetIndex/list/refreshAll 等。
  *
  * @author K
- * @author AI: Cursor
+ * @author AI: Codex
  * @since 1.0.0
  */
 @EnableKudosTest
@@ -167,6 +168,33 @@ internal class LocalHashCacheTest {
         assertNull(cache.getById(cacheName, "1", TestRowWithTime::class))
         assertEquals(1, cache.listBySetIndex(cacheName, TestRowWithTime::class, "type", 1).size)
         assertEquals("2", cache.listBySetIndex(cacheName, TestRowWithTime::class, "type", 1).first().id)
+    }
+
+    @Test
+    fun save_overwritesEntityAndRemovesStaleSecondaryIndexes() {
+        val cache = CaffeineHashCache()
+        cache.save(cacheName, TestRowWithTime(id = "1", type = 1, sortScore = 100.0), setIdx, zsetIdx)
+        cache.save(cacheName, TestRowWithTime(id = "1", type = 2, sortScore = 200.0), setIdx, zsetIdx)
+
+        assertTrue(cache.listBySetIndex(cacheName, TestRowWithTime::class, "type", 1).isEmpty())
+        assertEquals(listOf("1"), cache.listBySetIndex(cacheName, TestRowWithTime::class, "type", 2).map { it.id })
+        assertEquals(listOf("1"), cache.listPageByZSetIndex(cacheName, TestRowWithTime::class, "sortScore", 0, 10).map { it.id })
+    }
+
+    @Test
+    fun maximumSizeEviction_removesEntityFromSecondaryIndexes() {
+        val cache = CaffeineHashCache(maximumSize = 2)
+        cache.save(cacheName, TestRowWithTime(id = "1", type = 1, sortScore = 100.0), setIdx, zsetIdx)
+        cache.save(cacheName, TestRowWithTime(id = "2", type = 1, sortScore = 200.0), setIdx, zsetIdx)
+        cache.save(cacheName, TestRowWithTime(id = "3", type = 1, sortScore = 300.0), setIdx, zsetIdx)
+
+        val allIds = cache.listAll(cacheName, TestRowWithTime::class).map { it.id }.toSet()
+        val indexedIds = cache.listBySetIndex(cacheName, TestRowWithTime::class, "type", 1).map { it.id }.toSet()
+        val sortedIds = cache.listPageByZSetIndex(cacheName, TestRowWithTime::class, "sortScore", 0, 10).map { it.id }.toSet()
+
+        assertEquals(2, allIds.size)
+        assertEquals(allIds, indexedIds)
+        assertEquals(allIds, sortedIds)
     }
 
     @Test
@@ -366,7 +394,13 @@ internal class LocalHashCacheTest {
     }
 }
 
-/** 简单测试实体 */
+/**
+ * 简单测试实体。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
+ */
 data class TestRow(
     override var id: String = "",
     var name: String? = null,
@@ -374,7 +408,13 @@ data class TestRow(
     var status: Int? = null
 ) : IIdEntity<String>
 
-/** 带 type 与 sortScore 的实体，用于二级索引测试 */
+/**
+ * 带 type 与 sortScore 的实体，用于二级索引测试。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
+ */
 data class TestRowWithTime(
     override var id: String = "",
     var type: Int? = null,

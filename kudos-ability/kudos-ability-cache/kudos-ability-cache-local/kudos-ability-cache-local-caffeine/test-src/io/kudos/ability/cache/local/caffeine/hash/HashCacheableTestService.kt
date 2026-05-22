@@ -12,6 +12,10 @@ import org.springframework.stereotype.Service
 
 /**
  * Test service used to verify hash cache behavior against an in-memory data source.
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 @Service
 open class HashCacheableTestService {

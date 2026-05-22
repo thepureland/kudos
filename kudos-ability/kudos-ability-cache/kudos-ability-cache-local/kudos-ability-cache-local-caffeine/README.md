@@ -74,10 +74,22 @@ spring:
     type: caffeine
     caffeine:
       spec: maximumSize=150,expireAfterAccess=3600s,recordStats
+
+kudos:
+  ability:
+    cache:
+      local:
+        caffeine:
+          hash:
+            maximum-size: 10000
 ```
 
 `expireAfterWrite` 由每个 cache item 单独的 `ttl` 决定，spec 里的 `expireAfterAccess` /
 `expireAfterWrite` **会被覆盖**——这是有意的：单缓存级 TTL 才是业务侧最常调整的旋钮。
+
+`kudos.ability.cache.local.caffeine.hash.maximum-size` 控制单个 Hash cacheName 下的本地
+实体上限，默认 10000。主数据达到上限被 Caffeine 驱逐时，会同步清理 Set/ZSet 二级索引，
+避免索引返回已不存在的 id。
 
 ## 模块入口
 
@@ -90,16 +102,14 @@ spring:
 
 ## 测试覆盖
 
-- `LocalHashCacheTest`（23 case）+ `HashBatchCacheableTest`（4）+ `NoHashCacheTest`
+- `LocalHashCacheTest`（25 case）+ `HashBatchCacheableTest`（4）+ `NoHashCacheTest`
 - `LocalCacheTest`（2）+ `BatchCacheableTest`（1）+ `NoCacheTest`
-- 32 测试全绿；覆盖了 `MixCacheManager` 在本地 + caffeine 装配下的端到端行为
+- 34 测试全绿；覆盖了 `MixCacheManager` 在本地 + caffeine 装配下的端到端行为
 
 ## 已知限制 / 后续工作
 
-- ❗ **`CaffeineHashCache` 的内部结构裸 `ConcurrentHashMap`，没有 maximumSize 兜底**：
-  虽然 K-V 端用 Caffeine 自带的 LRU，Hash 端是手写索引，规模上去后存在被业务无界化的
-  风险。彻底治理需要把 `mainData` 换成 Caffeine LoadingCache 并同步驱逐两个索引；本轮
-  范围之外
+- ✅ `CaffeineHashCache` 主数据已改为按 cacheName 分桶的 Caffeine cache，并通过
+  `maximum-size` 配置兜底；驱逐、删除、覆盖写入都会清理 Set/ZSet 二级索引
 - ❗ `CaffeineHashCache.getPropertyValue` 用 Java 反射，对 Kotlin data class 性能不如
   KProperty.get；与 `IdEntitiesRedisHashDao.getPropertyValue` 重复实现——属于值得提到
   cache-common 的候选

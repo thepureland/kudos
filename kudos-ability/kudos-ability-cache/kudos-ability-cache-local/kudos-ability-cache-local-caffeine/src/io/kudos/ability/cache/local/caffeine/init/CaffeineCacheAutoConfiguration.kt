@@ -13,6 +13,7 @@ import org.springframework.boot.autoconfigure.AutoConfigureBefore
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.cache.autoconfigure.CacheProperties
+import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -31,6 +32,7 @@ import org.springframework.context.annotation.PropertySource
  * 识别这个注解（与 Spring Boot 默认 SPI 的 @AutoConfigureBefore 等价）。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 @Configuration
@@ -54,10 +56,19 @@ open class CaffeineCacheAutoConfiguration : BaseCacheConfiguration(), IComponent
     @ConditionalOnMissingBean
     open fun caffeineCacheManager(): IKeyValueCacheManager<*> = CaffeineKeyValueCacheManager()
 
+    /**
+     * 本地 Hash 缓存配置。
+     */
+    @Bean
+    @ConditionalOnMissingBean
+    @ConfigurationProperties(prefix = "kudos.ability.cache.local.caffeine.hash")
+    open fun caffeineHashCacheProperties(): CaffeineHashCacheProperties = CaffeineHashCacheProperties()
+
     /** 本地 Hash 缓存；bean 名 `caffeineIdEntitiesHashCache` 与远程版（如 `redisIdEntitiesHashCache`）配对存在。 */
     @Bean("caffeineIdEntitiesHashCache")
     @ConditionalOnMissingBean(name = ["caffeineIdEntitiesHashCache"])
-    open fun caffeineIdEntitiesHashCache(): CaffeineHashCache = CaffeineHashCache()
+    open fun caffeineIdEntitiesHashCache(properties: CaffeineHashCacheProperties): CaffeineHashCache =
+        CaffeineHashCache(properties.maximumSize)
 
     override fun getComponentName() = "kudos-ability-cache-local-caffeine"
 
