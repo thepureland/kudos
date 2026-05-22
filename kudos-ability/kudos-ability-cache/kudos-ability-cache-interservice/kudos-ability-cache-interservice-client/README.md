@@ -43,14 +43,14 @@ override fun afterPropertiesSet() {
     cacheManager!!.initCacheAfterSystemInit(mapOf(cacheName to CacheConfig().apply {
         name = cacheName
         ignoreVersion = true                     // Feign 缓存与业务缓存版本独立
-        ttl = 600                                // 10 分钟，写死
+        ttl = properties.ttlSeconds              // 默认 600s，可配置
     }))
 }
 ```
 
 `ignoreVersion = true`——本地 Feign 缓存项的 key 是请求指纹（含 tenantId、appName、url、
-body、method），跟业务侧的 `kudos.ability.cache.version` 无关。`ttl = 600` 当前是硬编码，
-未来要让业务侧可配的话见"已知限制"。
+body、method），跟业务侧的 `kudos.ability.cache.version` 无关。默认 TTL 是 600s，可通过
+`kudos.ability.cache.interservice.client.ttl-seconds` 调整。
 
 ### Key 生成中的 `tenantId` 注入
 
@@ -72,8 +72,9 @@ open fun feignDecoder(...): Decoder { /* ... */ }
 ```
 
 `@Primary` 强行覆盖 Spring Cloud OpenFeign 默认装配的 `SpringDecoder`——只要本模块在
-classpath，所有 `@FeignClient` 都走本模块的缓存装饰链。要退出请提供同名 `feignDecoder`
-bean（`@ConditionalOnMissingBean(name = ["feignDecoder"])` 让位）。
+classpath，所有 `@FeignClient` 都走本模块的缓存装饰链。要退出可提供同名 `feignDecoder`
+bean（`@ConditionalOnMissingBean(name = ["feignDecoder"])` 让位），或设置
+`kudos.ability.cache.interservice.client.decoder-enabled=false` 让本模块不注册 decoder。
 
 ## 模块入口
 
@@ -99,10 +100,29 @@ implementation(project(":kudos-ability:kudos-ability-distributed:kudos-ability-d
 `kudos-ability-cache-local-caffeine` 默认提供。没有的话本模块所有缓存行为整体退化为
 原 SpringDecoder 直通。
 
+可选配置：
+
+```yaml
+kudos:
+  ability:
+    cache:
+      interservice:
+        client:
+          ttl-seconds: 600
+          decoder-enabled: true
+```
+
 ## 测试覆盖
 
-本模块的端到端测试位于 `cache-interservice-provider/test-src/`，因为需要一对 JVM
-（client + provider）协作。见 provider README 的"测试覆盖"段。
+本模块有两类测试：
+
+- `FeignCacheInterceptorsTest`：直接构造 Feign `RequestTemplate` / `Response`，覆盖请求头注入、
+  304 复用本地缓存、200 decode 后回写、缺 header 直通等协议分支
+- `ClientCacheHelperTest`：覆盖 TTL 配置、非法 TTL 快速失败、缓存项类型不匹配时 evict +
+  miss 处理
+
+端到端测试位于 `cache-interservice-provider/test-src/`，因为需要一对 JVM（client + provider）
+协作。见 provider README 的"测试覆盖"段。
 
 ## 依赖
 
@@ -124,11 +144,11 @@ testImplementation(project(":kudos-test:kudos-test-container"))
 - ✅ `InterServiceCacheClientAutoConfiguration` 已标 `@Configuration`——CGLIB 代理 + bean
   方法互调保持同一实例语义
 - ✅ `FeignCacheRequestInterceptor` 已改为构造器注入，由 auto-configuration 显式创建
-- ❗ Feign 本地缓存 TTL = 600s 硬编码在 `ClientCacheHelper.afterPropertiesSet`；要可配
-  需要走 `@ConfigurationProperties` 暴露
-- ❗ `@Primary` 强行覆盖默认 Feign Decoder——同进程内业务方如果手动装了 `feignDecoder`
-  会被本模块抢占，需要在 README 中显式提醒
+- ✅ Feign 本地缓存 TTL 已通过 `InterServiceCacheClientProperties` 暴露为
+  `kudos.ability.cache.interservice.client.ttl-seconds`，默认仍是 600s；非正数启动期快速失败
+- ✅ `@Primary` decoder 已补退出开关：同名 `feignDecoder` bean 仍优先，另外可设置
+  `kudos.ability.cache.interservice.client.decoder-enabled=false` 完全禁用本模块 decoder 注册
 - ✅ `InterServiceCacheClientAutoConfiguration` 已加 `@ConditionalOnClass(feign.RequestInterceptor::class)`
-- ❗ `feignCache().get<ClientCacheItem>(cacheKey)` 用扩展函数依赖响应对象类型与 cache 实现一致；
-  Caffeine cache 当前能命中，但 Redis 反序列化路径上 `ClientCacheItem` 是 JDK Serializable，
-  与 RedisTemplate 默认 GenericJackson2 配置不兼容——只在 local cache 路径有验证
+- ✅ `ClientCacheHelper.loadFromLocalCache` 已改为 raw `Cache.get` + 类型检查；缓存实现返回
+  非 `ClientCacheItem` 时 WARN 并 evict 本地条目，按 miss 处理，避免泛型扩展函数直接
+  `ClassCastException`

@@ -3,16 +3,21 @@ package io.kudos.ability.cache.interservice.client.init
 import feign.RequestInterceptor
 import feign.codec.Decoder
 import feign.optionals.OptionalDecoder
+import io.kudos.ability.cache.common.core.keyvalue.IKeyValueCacheManager
 import io.kudos.ability.cache.common.init.LinkableCacheAutoConfiguration
 import io.kudos.ability.cache.interservice.client.core.ClientCacheHelper
 import io.kudos.ability.cache.interservice.client.feign.FeignCacheRequestInterceptor
 import io.kudos.ability.cache.interservice.client.feign.FeignCacheResponseInterceptor
 import io.kudos.base.logger.LogFactory
 import io.kudos.context.init.IComponentInitializer
-import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.beans.factory.ObjectProvider
+import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
+import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.cloud.openfeign.support.ResponseEntityDecoder
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -33,9 +38,17 @@ open class InterServiceCacheClientAutoConfiguration : IComponentInitializer {
 
     private val logger = LogFactory.getLog(this::class)
 
+    @Bean
+    @ConditionalOnMissingBean
+    @ConfigurationProperties(prefix = "kudos.ability.cache.interservice.client")
+    open fun interServiceCacheClientProperties() = InterServiceCacheClientProperties()
+
     @Bean("feignCacheHelper")
     @ConditionalOnMissingBean
-    open fun clientCacheHelper() = ClientCacheHelper()
+    open fun clientCacheHelper(
+        properties: InterServiceCacheClientProperties,
+        @Qualifier("localCacheManager") cacheManagerProvider: ObjectProvider<IKeyValueCacheManager<*>>
+    ) = ClientCacheHelper(properties, cacheManagerProvider.ifAvailable)
 
     @Bean
     @ConditionalOnMissingBean
@@ -54,6 +67,12 @@ open class InterServiceCacheClientAutoConfiguration : IComponentInitializer {
     @Bean("feignDecoder")
     @Primary
     @ConditionalOnMissingBean(name = ["feignDecoder"])
+    @ConditionalOnProperty(
+        prefix = "kudos.ability.cache.interservice.client",
+        name = ["decoder-enabled"],
+        havingValue = "true",
+        matchIfMissing = true
+    )
     open fun feignDecoder(
         objectMapper: ObjectMapper,
         cacheHelper: ClientCacheHelper
