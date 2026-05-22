@@ -9,6 +9,7 @@ import io.ktor.server.routing.*
  * 注：实现该接口的类必须注册为Spring的bean
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 interface IKtorRouteRegistrar {

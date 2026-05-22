@@ -31,6 +31,7 @@ private val pluginsLog = LogFactory.getLog("io.kudos.ability.web.ktor.init.KtorP
  * @param ktorProperties Ktor 配置；为 null 时通过 [SpringKit] 从容器拿（适用于运行期）。
  *   测试场景显式传入避免依赖 Spring 容器。
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 fun Application.installPlugins(ktorProperties: KtorProperties? = null) {
