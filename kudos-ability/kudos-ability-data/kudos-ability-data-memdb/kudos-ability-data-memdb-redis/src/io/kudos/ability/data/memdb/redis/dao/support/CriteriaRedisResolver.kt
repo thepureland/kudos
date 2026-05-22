@@ -15,7 +15,7 @@ import org.springframework.data.redis.core.RedisTemplate
  * @param indexKeyPrefix 二级索引 key 前缀
  * @param redisTemplate Redis 操作模板
  * @author K
- * @author AI: Cursor
+ * @author AI: Codex
  * @since 1.0.0
  */
 internal class CriteriaRedisResolver(

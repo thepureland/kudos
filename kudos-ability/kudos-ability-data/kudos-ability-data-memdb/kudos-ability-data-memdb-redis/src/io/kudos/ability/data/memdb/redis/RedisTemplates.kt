@@ -12,6 +12,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer
  * @property redisTemplateMap name → 模板实例
  * @property defaultRedisTemplate 默认 redis 实例
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 class RedisTemplates(

@@ -7,6 +7,10 @@ import kotlin.test.assertEquals
  * [CacheKey] 拼装规则的单元测试。
  *
  * 不需要 Redis 容器；纯字符串拼接逻辑的回归保护。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 internal class CacheKeyTest {
 

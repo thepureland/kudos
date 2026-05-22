@@ -16,6 +16,7 @@ import java.nio.charset.StandardCharsets
  * 同名，不同包；引用时务必区分。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 class StringRedisSerializer(prefix: String?) : RedisSerializer<String> {

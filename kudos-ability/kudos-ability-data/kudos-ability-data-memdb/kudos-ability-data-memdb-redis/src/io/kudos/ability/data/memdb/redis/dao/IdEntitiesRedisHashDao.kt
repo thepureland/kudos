@@ -35,7 +35,7 @@ import kotlin.reflect.KClass
  * 6.用 pipeline（Lettuce async 批量），提升写入性能
  *
  * @author K
- * @author AI: Cursor
+ * @author AI: Codex
  * @since 1.0.0
  */
 open class IdEntitiesRedisHashDao(

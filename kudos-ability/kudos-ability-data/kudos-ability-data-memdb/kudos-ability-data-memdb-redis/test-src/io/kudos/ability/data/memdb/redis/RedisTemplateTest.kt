@@ -18,6 +18,7 @@ import kotlin.test.assertEquals
  * redis测试用例
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 @EnableKudosTest
@@ -53,6 +54,13 @@ internal class RedisTemplateTest {
 
 }
 
+/**
+ * RedisTemplate 序列化测试对象。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
+ */
 data class TestObject(
     val module: String?,
     val age: Int?,

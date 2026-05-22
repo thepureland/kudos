@@ -5,6 +5,7 @@ package io.kudos.ability.data.memdb.redis.aop
  * `RateLimiterAspect.getCombineKey`）。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 enum class LimitType {
