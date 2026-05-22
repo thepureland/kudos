@@ -24,6 +24,7 @@ import java.util.concurrent.CompletableFuture
  * 将Ktor整合进SpringBoot
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 @Configuration

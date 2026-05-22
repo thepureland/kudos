@@ -7,6 +7,7 @@ package io.kudos.ability.web.ktor.init
  * @property engine 引擎选择 + 端口
  * @property plugins 各 ktor 插件的启用开关
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 data class KtorProperties(

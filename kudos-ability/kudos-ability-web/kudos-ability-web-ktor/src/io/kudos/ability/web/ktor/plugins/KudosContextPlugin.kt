@@ -7,14 +7,43 @@ import io.kudos.context.core.KudosContextElement
 import kotlinx.coroutines.withContext
 import java.util.UUID
 
+/**
+ * Ktor call attributes 中保存 [KudosContext] 的 key。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
+ */
+val KudosContextCallKey: AttributeKey<KudosContext> = AttributeKey("KudosContextCall")
 
 /**
- * 把 [KudosContext] 装到 Ktor `ApplicationCallPipeline.Setup` 阶段的协程上下文中。
+ * 读取当前 [ApplicationCall] 绑定的 [KudosContext]，不存在时返回 null。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
+ */
+fun ApplicationCall.kudosContextOrNull(): KudosContext? =
+    if (attributes.contains(KudosContextCallKey)) attributes[KudosContextCallKey] else null
+
+/**
+ * 读取当前 [ApplicationCall] 绑定的 [KudosContext]，不存在时抛错。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
+ */
+fun ApplicationCall.kudosContext(): KudosContext =
+    requireNotNull(kudosContextOrNull()) { "KudosContext is absent in ApplicationCall.attributes" }
+
+/**
+ * 把 [KudosContext] 装到 Ktor `ApplicationCallPipeline.Setup` 阶段。
  *
  * 与 servlet 版 `WebContextInitFilter` 的区别：servlet 用 ThreadLocal，因为请求-线程
  * 一一对应；Ktor 的请求处理是协程，途中可能被 dispatcher 切换线程，所以必须用
- * `CoroutineContext.Element`（即 [KudosContextElement]），由 `withContext` 装好后再
- * `proceed()`，下游 handler 才能通过 `coroutineContext[KudosContextElement]` 拿到上下文。
+ * `CoroutineContext.Element`（即 [KudosContextElement]）。同时，本插件会把上下文写入
+ * [ApplicationCall.attributes]，路由 handler 中可用 [ApplicationCall.kudosContext] 或
+ * [ApplicationCall.kudosContextOrNull] 稳定读取。
  *
  * 业务侧通过 [Configuration.factory] 自定义如何从 `ApplicationCall` 构造 `KudosContext`
  * （默认仅设置 `traceKey`，从 `X-Trace-Id` header 取，缺失则生成 UUID）。
@@ -35,13 +64,8 @@ import java.util.UUID
  * 业务代码若启动**独立**协程（如 `GlobalScope.launch`、未带 context 的 `launch`），
  * 这些协程拿不到 `KudosContext`，需手动 `withContext(currentCoroutineContext()) { ... }`。
  *
- * **已知问题**：当前用 `pipeline.intercept(Setup) { withContext(...) { proceed() } }`
- * 在 Ktor 路由 handler 内通过 `coroutineContext[KudosContextElement]` 取不到注入的 element
- * （routing 子管线 dispatch 时未沿用 Setup 阶段的 coroutine context）。
- * 修复方向：改用 `call.attributes.put(KudosContextKey, ctx)` 或注册到自定义 `RouteScopedPlugin`。
- * 该问题已在 [KudosContextPluginTest] 头注释中记录；目前本插件实际用途仅"占位"。
- *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 class KudosContextPlugin private constructor(
@@ -68,8 +92,8 @@ class KudosContextPlugin private constructor(
         override val key = AttributeKey<KudosContextPlugin>("KudosContext")
 
         /**
-         * 在 Setup 阶段拦截每个请求：调用 factory 构造 context、用 [withContext] 套入
-         * [KudosContextElement]、`proceed()` 走完后续 pipeline。
+         * 在 Setup 阶段拦截每个请求：调用 factory 构造 context、写入 call attributes，
+         * 再用 [withContext] 套入 [KudosContextElement]、`proceed()` 走完后续 pipeline。
          */
         override fun install(
             pipeline: ApplicationCallPipeline,
@@ -80,8 +104,8 @@ class KudosContextPlugin private constructor(
 
             pipeline.intercept(ApplicationCallPipeline.Setup) {
                 val ctx = plugin.factory(call)
-                val cc = KudosContextElement(ctx)
-                withContext(cc) {
+                call.attributes.put(KudosContextCallKey, ctx)
+                withContext(KudosContextElement(ctx)) {
                     proceed()
                 }
             }

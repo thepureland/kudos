@@ -14,6 +14,7 @@ import kotlin.test.assertEquals
  * Ktor不整合Spring的测试用例
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 class KtorWithoutSpringTest {

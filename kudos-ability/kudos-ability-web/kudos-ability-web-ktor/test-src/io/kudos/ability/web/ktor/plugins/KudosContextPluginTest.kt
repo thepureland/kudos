@@ -12,20 +12,11 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * [KudosContextPlugin] 安装路径的烟雾测试。
+ * [KudosContextPlugin] 安装路径测试。
  *
- * **已知限制（未解决）**：插件用
- * `pipeline.intercept(ApplicationCallPipeline.Setup) { withContext(KudosContextElement(...)) { proceed() } }`
- * 注入 `KudosContextElement`，但 Ktor 当前版本的 routing 子管线在分发到 handler 时似乎不会
- * 沿用 Setup 阶段 `withContext` 所设的 element，导致 handler 内 `coroutineContext[KudosContextElement]`
- * 取出来是 null。
- *
- * 因此本测试只验证：
- *  - 插件安装时不抛错
- *  - 自定义 [KudosContextPlugin.Configuration.factory] 能被执行（用 side-effect 反推）
- *  - 请求最终成功返回
- *
- * 深度的"handler 拿到 KudosContext"验证目前留作 README 中已知问题项。
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 class KudosContextPluginTest {
 
@@ -61,5 +52,22 @@ class KudosContextPluginTest {
         client.get("/")
         client.get("/")
         assertEquals(2, factoryCalls)
+    }
+
+    @Test
+    fun handlerReadsContextFromApplicationCallAttributes() = testApplication {
+        application {
+            install(KudosContextPlugin)
+            routing {
+                get("/") {
+                    call.respondText(requireNotNull(call.kudosContext().traceKey))
+                }
+            }
+        }
+
+        val response = client.get("/") { header("X-Trace-Id", "trace-from-header") }
+
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertEquals("trace-from-header", response.bodyAsText())
     }
 }

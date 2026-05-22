@@ -6,8 +6,8 @@ Ktor 服务端引擎接入 Spring Boot。给业务侧提供：
 2. **配置式插件装配**：`KtorProperties.plugins` 控制 ContentNegotiation / StatusPages /
    WebSockets 是否启用
 3. **路由 SPI**：业务实现 `IKtorRouteRegistrar` 并注册为 Spring bean，启动时统一挂到 routing
-4. **请求上下文协程元素**：`KudosContextPlugin` 把 `KudosContext` 装到 Ktor pipeline 的协程上下文里
-   （**注意：当前实现存在传播问题，见下方"已知限制"**）
+4. **请求上下文绑定**：`KudosContextPlugin` 把 `KudosContext` 写入 `ApplicationCall.attributes`，
+   并同时尝试装入协程上下文
 
 ## 设计要点
 
@@ -77,21 +77,22 @@ class UserRouteRegistrar : IKtorRouteRegistrar {
 
 所有 Spring 容器里的 `IKtorRouteRegistrar` bean 在 `routing { ... }` 块里被依次调用。
 
-### `KudosContextPlugin`（占位实现 — 见已知限制）
+### `KudosContextPlugin`
 
 设计意图：在 servlet 版的 `WebContextInitFilter` 里用 ThreadLocal 装 `KudosContext`；
-Ktor 是协程化的，需要换成协程 context element。当前实现：
+Ktor 是协程化的，请求上下文优先绑定到 `ApplicationCall.attributes`，路由 handler 里通过
+`call.kudosContext()` / `call.kudosContextOrNull()` 读取：
 
 ```kotlin
 pipeline.intercept(ApplicationCallPipeline.Setup) {
     val ctx = factory(call)
+    call.attributes.put(KudosContextCallKey, ctx)
     withContext(KudosContextElement(ctx)) { proceed() }
 }
 ```
 
-理论上 `proceed()` 内的所有后续 phase 都能通过 `coroutineContext[KudosContextElement]` 取到
-context。但实际测试发现路由 handler 内取出来是 null（Ktor 的 routing 子管线 dispatch 时
-没沿用 Setup 阶段 `withContext` 设的 element）。详见 [已知限制](#已知限制--后续工作)。
+`KudosContextElement` 仍会被装入当前 pipeline 协程，但 Ktor routing 子管线并不保证沿用
+Setup 阶段的 coroutine context；因此业务路由里应优先使用 `call.kudosContext()`。
 
 ## 模块入口
 
@@ -102,7 +103,7 @@ context。但实际测试发现路由 handler 内取出来是 null（Ktor 的 ro
 | `init/KtorPlugins` | `Application.installPlugins(...)` 扩展，按配置 install Ktor 插件 |
 | `core/KtorContext` | 全局 `application` / `properties` 引用（lateinit object，供 `installPlugins` 和关闭钩子使用） |
 | `core/IKtorRouteRegistrar` | 业务路由注册 SPI |
-| `plugins/KudosContextPlugin` | `KudosContext` 协程元素装配（占位） |
+| `plugins/KudosContextPlugin` | `KudosContext` 请求属性绑定 + 协程元素装配 |
 
 ## 测试覆盖
 
@@ -112,15 +113,15 @@ context。但实际测试发现路由 handler 内取出来是 null（Ktor 的 ro
 - `KtorWithoutSpringTest` —— Ktor 独立运行（无 Spring 容器）
 - `RouteRegistrarTest` —— `IKtorRouteRegistrar` SPI 端到端（含 JDK HttpClient + Ktor HttpClient
   两种调用方式）
-- `KudosContextPluginTest` —— 烟雾测试：插件 install 不抛错 + factory 被调用；不验证 element
-  propagation（见已知限制）
+- `KudosContextPluginTest` —— 插件 install 不抛错、factory 被调用、handler 可通过
+  `call.kudosContext()` 读取 traceKey
 
 ## 已知限制 / 后续工作
 
-- ❗ **`KudosContextPlugin` 协程上下文传播未生效**：`pipeline.intercept(Setup) { withContext { proceed() } }`
-  模式在 Ktor 当前版本下，routing 子管线 handler 内取不到 `KudosContextElement`。
-  修复方向：(a) 改用 `call.attributes.put(...)` + 配套 helper 函数，(b) 把插件改成
-  `RouteScopedPlugin` 在每个路由层装。当前用法仅占位
+- ✅ `KudosContextPlugin` 已改为把上下文写入 `ApplicationCall.attributes`，并提供
+  `call.kudosContext()` / `call.kudosContextOrNull()`；路由 handler 可稳定读取。协程
+  `KudosContextElement` 仍保留，但 routing 子管线不保证继承 Setup 阶段的 coroutine context，
+  业务路由不要依赖直接从 `coroutineContext[KudosContextElement]` 读取
 - ❗ `KtorAutoConfiguration.ktorEngine` 返回可为 null（`engine.name = test` 时）—— Spring
   bean 类型 `EmbeddedServer<*, *>?`，依赖此 bean 的代码需自行容忍 null
 - ❗ `KtorContext.application` 是 lateinit `object` 属性，多次启动 / 重启场景下不重置；

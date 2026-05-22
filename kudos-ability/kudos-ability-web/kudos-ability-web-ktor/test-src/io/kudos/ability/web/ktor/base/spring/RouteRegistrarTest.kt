@@ -25,6 +25,7 @@ import kotlin.test.assertEquals
  * 路由注册测试
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 @EnableKudosTest
