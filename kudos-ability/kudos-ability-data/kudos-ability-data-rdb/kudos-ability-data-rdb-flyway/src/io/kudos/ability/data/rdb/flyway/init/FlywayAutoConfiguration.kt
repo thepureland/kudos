@@ -23,6 +23,7 @@ import org.springframework.context.annotation.PropertySource
  * 可整体禁用（只读副本 / 离线运维场景）。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 @Configuration

@@ -42,6 +42,9 @@ spring:
     encoding: UTF-8
     out-of-order: false
     validate-on-migrate: true
+    placeholder-replacement: true
+    placeholders:
+      app_schema: public
 ```
 
 `kudos.ability.flyway.*` 和 `spring.flyway.*` 不重叠：前者只决定"哪个模块用哪个数据源"，
@@ -62,6 +65,8 @@ spring:
 - 配置里模块对应的数据源 key 不存在 —— 抛 `IllegalStateException`
 - 同一个模块名在多个 classpath URL 同时出现 —— 抛 `IllegalStateException`
 - 配置里声明的模块名磁盘上找不到 —— 仅打 warn 日志，继续
+- `spring.flyway.placeholders`、`placeholder-prefix`、`placeholder-suffix`、`placeholder-separator`
+  会透传给每个模块的 Flyway 实例
 
 设计原则：**宁可启动不来，也不让应用跑在不一致的 schema 上**。
 
@@ -79,10 +84,12 @@ api(libs.baomidou.dynamic.datasource.starter)
 ## 已知限制 / 后续工作
 
 - ❗ 没有 Flyway callback / hook 暴露（pre-migrate / post-migrate）
-- ❗ Flyway `placeholders` 替换表只是 `placeholderReplacement` 开关传过去了，真值表没暴露给配置
+- ✅ Flyway placeholders 已透传：支持 `spring.flyway.placeholders` 以及 placeholder 前缀 / 后缀 /
+  分隔符配置
 - ❗ 紧耦合 `DsContextProcessor` —— 不用 baomidou dynamic-datasource 就用不了本模块
 - ❗ 没有 dry-run / repair / clean 入口；运维脚本要绕过本模块直接用 Flyway CLI
-- ❗ 测试覆盖只到 happy path + 一个错误路径，jar 协议路径扫描、重复模块检测、Flyway 失败等分支未直接单测
+- ❗ 测试覆盖到 happy path、缺失数据源、placeholders 替换；jar 协议路径扫描、重复模块检测、
+  Flyway 失败等分支未直接单测
 
 ## 用法示例：脱离 Spring 跑迁移（代码生成器场景）
 

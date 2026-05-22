@@ -10,6 +10,7 @@ package io.kudos.ability.data.rdb.flyway.multidatasource
  * 便于处理"模块 A 的 schema 必须先于模块 B 落地"这类显式依赖。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 open class FlywayMultiDataSourceProperties {
