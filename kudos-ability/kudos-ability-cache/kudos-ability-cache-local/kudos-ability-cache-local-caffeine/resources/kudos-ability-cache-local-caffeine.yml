@@ -3,3 +3,11 @@ spring:
     type: caffeine
     caffeine:
       spec: maximumSize=150,expireAfterAccess=3600s,recordStats
+
+kudos:
+  ability:
+    cache:
+      local:
+        caffeine:
+          hash:
+            maximum-size: 10000

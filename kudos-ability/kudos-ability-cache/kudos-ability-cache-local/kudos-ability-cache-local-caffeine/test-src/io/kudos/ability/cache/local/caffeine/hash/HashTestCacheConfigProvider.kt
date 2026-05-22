@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Primary
  * 使用 @Primary 确保 CacheKit / MixHashCacheManager 在测试中均使用本配置（含 active、writeInTime）。
  *
  * @author K
- * @author AI: Cursor
+ * @author AI: Codex
  * @since 1.0.0
  */
 @Primary

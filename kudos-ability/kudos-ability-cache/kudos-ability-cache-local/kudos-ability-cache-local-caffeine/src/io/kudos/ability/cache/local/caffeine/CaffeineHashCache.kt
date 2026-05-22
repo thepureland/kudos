@@ -1,5 +1,7 @@
 package io.kudos.ability.cache.local.caffeine
 
+import com.github.benmanes.caffeine.cache.Cache
+import com.github.benmanes.caffeine.cache.Caffeine
 import io.kudos.ability.cache.common.core.hash.IHashCache
 import io.kudos.ability.cache.common.support.IHashCacheSync
 import io.kudos.base.query.Criteria
@@ -16,26 +18,42 @@ import kotlin.reflect.KClass
  * Hash 缓存的 Caffeine 本地实现，内存结构模拟 Redis Hash + Set + ZSet；
  * 同时实现 [IHashCacheSync] 供收到 Redis 通知后清理本地。
  *
- * 已知限制（待后续单独迭代）：mainData / setIndex / zsetIndex 是裸的 [ConcurrentHashMap]，
- * 没有像 KV 端那样的 Caffeine maximumSize 兜底。同一 cacheName 下条目数受限于业务数据规模，
- * 跑长之后存在被业务无界化的风险（典型场景：用户量大且全量缓存）。
- * 若要彻底治理，需要把 [mainData] 改成 Caffeine LoadingCache 并同步驱逐两个索引；本轮范围之外。
+ * 主数据用 Caffeine 承载，按 cacheName 分桶设置 [maximumSize]，驱逐、删除、覆盖写入时同步清理
+ * Set/ZSet 二级索引，避免主数据已不存在但索引仍返回旧 id。
  *
  * @author K
- * @author AI: Cursor
+ * @author AI: Codex
  * @since 1.0.0
  */
-class CaffeineHashCache : IHashCache, IHashCacheSync {
+class CaffeineHashCache(
+    private val maximumSize: Long = DEFAULT_MAXIMUM_SIZE
+) : IHashCache, IHashCacheSync {
 
-    /** 主数据：cacheName → (id → entity)；模拟 Redis hash */
-    private val mainData = ConcurrentHashMap<String, ConcurrentHashMap<String, Any>>()
+    init {
+        require(maximumSize > 0) { "maximumSize must be positive" }
+    }
+
+    /** 主数据：cacheName → Caffeine(id → entity)；模拟 Redis hash，并提供容量上限 */
+    private val mainData = ConcurrentHashMap<String, Cache<String, Any>>()
     /** Set 二级索引：cacheName → (propertyKey → ids)；模拟 Redis set，用于按属性等值查询 */
     private val setIndex = ConcurrentHashMap<String, ConcurrentHashMap<String, MutableSet<String>>>()
     /** ZSet 二级索引：cacheName → (propertyKey → (id → score))；模拟 Redis zset，用于按属性排序/范围 */
     private val zsetIndex = ConcurrentHashMap<String, ConcurrentHashMap<String, MutableMap<String, Double>>>()
 
     /** 取/惰性创建主数据空间 */
-    private fun main(cacheName: String) = mainData.getOrPut(cacheName) { ConcurrentHashMap() }
+    private fun main(cacheName: String): Cache<String, Any> =
+        mainData.computeIfAbsent(cacheName) {
+            Caffeine.newBuilder()
+                .maximumSize(maximumSize)
+                .executor(Runnable::run)
+                .removalListener<String, Any> { id, _, _ ->
+                    if (id != null) {
+                        removeFromIndexes(cacheName, id)
+                    }
+                }
+                .build()
+        }
+
     /** 取/惰性创建 Set 索引空间 */
     private fun setIdx(cacheName: String) = setIndex.getOrPut(cacheName) { ConcurrentHashMap() }
     /** 取/惰性创建 ZSet 索引空间 */
@@ -45,6 +63,20 @@ class CaffeineHashCache : IHashCache, IHashCacheSync {
     private fun setKey(property: String, value: String) = "set:$property:$value"
     /** ZSet 索引的复合 key：同上，单层 zset 按属性独立 */
     private fun zsetKey(property: String) = "zset:$property"
+
+    /**
+     * 从所有二级索引中移除指定 id，并清理空索引桶。
+     */
+    private fun removeFromIndexes(cacheName: String, id: String) {
+        setIndex[cacheName]?.entries?.removeIf { (_, ids) ->
+            ids.remove(id)
+            ids.isEmpty()
+        }
+        zsetIndex[cacheName]?.entries?.removeIf { (_, idToScore) ->
+            idToScore.remove(id)
+            idToScore.isEmpty()
+        }
+    }
 
     /**
      * 主键在 Hash field / 索引中的规范形式，避免 CHAR 等类型尾部空格与调用方传入的 trim 后主键不一致导致无法命中。
@@ -58,6 +90,7 @@ class CaffeineHashCache : IHashCache, IHashCacheSync {
      * @param value 任意值
      * @return Double score
      * @author K
+     * @author AI: Codex
      * @since 1.0.0
      */
     private fun toDouble(value: Any): Double = when (value) {
@@ -77,6 +110,7 @@ class CaffeineHashCache : IHashCache, IHashCacheSync {
      * @param propertyName 属性名
      * @return 属性值；查不到返回 null
      * @author K
+     * @author AI: Codex
      * @since 1.0.0
      */
     private fun getPropertyValue(entity: Any, propertyName: String): Any? {
@@ -100,26 +134,29 @@ class CaffeineHashCache : IHashCache, IHashCacheSync {
     }
 
     override fun clearLocal(cacheName: String) {
-        mainData.remove(cacheName)
+        mainData.remove(cacheName)?.let {
+            it.invalidateAll()
+            it.cleanUp()
+        }
         setIndex.remove(cacheName)
         zsetIndex.remove(cacheName)
     }
 
     override fun evictLocal(cacheName: String, id: Any) {
         val idStr = normalizePkField(id)
-        val map = mainData[cacheName] ?: return
-        map.remove(idStr) ?: return
-        setIdx(cacheName).entries.forEach { (_, ids) -> ids.remove(idStr) }
-        zsetIdx(cacheName).entries.forEach { (_, idToScore) -> idToScore.remove(idStr) }
+        val cache = mainData[cacheName] ?: return
+        cache.invalidate(idStr)
+        cache.cleanUp()
+        removeFromIndexes(cacheName, idStr)
     }
 
     override fun <PK, E : IIdEntity<PK>> getById(cacheName: String, id: PK, entityClass: KClass<E>): E? {
         @Suppress("UNCHECKED_CAST")
-        return main(cacheName)[normalizePkField(id)] as? E
+        return main(cacheName).getIfPresent(normalizePkField(id)) as? E
     }
 
     override fun existsById(cacheName: String, id: Any): Boolean =
-        main(cacheName).containsKey(normalizePkField(id))
+        main(cacheName).getIfPresent(normalizePkField(id)) != null
 
     override fun <PK, E : IIdEntity<PK>> save(
         cacheName: String,
@@ -129,7 +166,9 @@ class CaffeineHashCache : IHashCache, IHashCacheSync {
     ) {
         val id = entity.id ?: throw IllegalArgumentException("entity.id must not be null")
         val idStr = normalizePkField(id)
-        main(cacheName)[idStr] = entity
+        removeFromIndexes(cacheName, idStr)
+        val cache = main(cacheName)
+        cache.put(idStr, entity)
         filterableProperties.forEach { prop ->
             getPropertyValue(entity, prop)?.let { value ->
                 setIdx(cacheName).getOrPut(setKey(prop, value.toString())) { ConcurrentHashMap.newKeySet() }.add(idStr)
@@ -140,6 +179,7 @@ class CaffeineHashCache : IHashCache, IHashCacheSync {
                 zsetIdx(cacheName).getOrPut(zsetKey(prop)) { ConcurrentHashMap() }[idStr] = toDouble(value)
             }
         }
+        cache.cleanUp()
     }
 
     override fun <PK, E : IIdEntity<PK>> saveBatch(
@@ -159,29 +199,24 @@ class CaffeineHashCache : IHashCache, IHashCacheSync {
         sortableProperties: Set<String>
     ) {
         val idStr = normalizePkField(id)
-        val entity = main(cacheName).remove(idStr) ?: return
-        filterableProperties.forEach { prop ->
-            getPropertyValue(entity, prop)?.let { value ->
-                setIdx(cacheName)[setKey(prop, value.toString())]?.remove(idStr)
-            }
-        }
-        sortableProperties.forEach { prop ->
-            zsetIdx(cacheName)[zsetKey(prop)]?.remove(idStr)
-        }
+        val cache = mainData[cacheName] ?: return
+        cache.invalidate(idStr)
+        cache.cleanUp()
+        removeFromIndexes(cacheName, idStr)
     }
 
     override fun <E : IIdEntity<*>> findByIds(cacheName: String, ids: Collection<*>, entityClass: KClass<E>): List<E> {
         if (ids.isEmpty()) return emptyList()
-        val map = main(cacheName)
+        val cache = main(cacheName)
         return ids.mapNotNull {
             @Suppress("UNCHECKED_CAST")
-            map[normalizePkField(it)] as? E
+            cache.getIfPresent(normalizePkField(it)) as? E
         }
     }
 
     override fun <PK, E : IIdEntity<PK>> listAll(cacheName: String, entityClass: KClass<E>): List<E> {
         @Suppress("UNCHECKED_CAST")
-        return main(cacheName).values.toList().map { it as E }
+        return main(cacheName).asMap().values.toList().map { it as E }
     }
 
     override fun <PK, E : IIdEntity<PK>> listBySetIndex(
@@ -272,5 +307,9 @@ class CaffeineHashCache : IHashCache, IHashCacheSync {
 
     override fun clear(cacheName: String) {
         clearLocal(cacheName)
+    }
+
+    companion object {
+        const val DEFAULT_MAXIMUM_SIZE = 10_000L
     }
 }

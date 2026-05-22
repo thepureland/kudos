@@ -17,7 +17,7 @@ import kotlin.test.assertTrue
  * [io.kudos.ability.cache.common.batch.hash.HashBatchCacheableByPrimary] 注解测试用例（本地 Caffeine）。
  *
  * @author K
- * @author AI: Cursor
+ * @author AI: Codex
  * @since 1.0.0
  */
 @EnableKudosTest
@@ -98,7 +98,7 @@ internal class HashBatchCacheableTest {
         hashCacheableTestService.putTestData("s2", TestRow(id = "s2", name = "S2", type = 1))
         hashCacheableTestService.putTestData("s3", TestRow(id = "s3", name = "S3", type = 2))
         hashCacheableTestService.getTestRowsByIds(listOf("s1", "s2", "s3"))
-        val cache = HashCacheKit.getHashCache(cacheName)!!
+        val cache = HashCacheKit.getHashCache(cacheName)
         val byType1 = cache.listBySetIndex(cacheName, TestRow::class, "type", 1)
         assertEquals(2, byType1.size)
         assertTrue(byType1.any { it.id == "s1" && it.name == "S1" })

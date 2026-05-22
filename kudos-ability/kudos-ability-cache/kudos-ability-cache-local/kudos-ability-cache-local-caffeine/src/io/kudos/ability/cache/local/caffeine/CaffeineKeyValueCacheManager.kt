@@ -18,6 +18,7 @@ import java.util.regex.Pattern
  * 长跑 OOM——这是产线遇到过的真实问题，看到 warn 日志请补全 spec。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 class CaffeineKeyValueCacheManager : AbstractKeyValueCacheManager<CaffeineCache>() {
