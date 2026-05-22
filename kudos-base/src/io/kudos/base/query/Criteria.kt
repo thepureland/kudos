@@ -2,6 +2,7 @@ package io.kudos.base.query
 
 import io.kudos.base.query.enums.OperatorEnum
 import java.io.Serializable
+import java.lang.reflect.Array as JavaArray
 import java.util.Collections
 
 /**
@@ -29,7 +30,7 @@ import java.util.Collections
  * 条件过滤：
  * - null值：只有操作符acceptNull为true时才添加
  * - 空字符串：不添加（除非操作符acceptNull）
- * - 空集合/数组：不添加
+ * - 空集合/Map/数组：不添加
  * - 空的嵌套Criteria：不添加
  * 
  * 使用场景：
@@ -42,6 +43,8 @@ import java.util.Collections
  * - toString方法仅用于调试，不能直接作为SQL执行
  * - 支持静态工厂方法创建Criteria对象
  * 
+ * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 class Criteria : Serializable {
@@ -210,15 +213,15 @@ class Criteria : Serializable {
      * 2. 过滤条件：遍历所有条件，根据值是否有效决定是否添加
      * 3. 值有效性判断：
      *    - 非空且非空字符串：有效
-     *    - 集合非空：有效
-     *    - 数组非空：有效
+     *    - 集合/Map非空：有效
+     *    - 对象数组/原始类型数组非空：有效
      *    - 操作符接受null：有效（即使值为null）
      * 4. 添加到列表：将有效条件添加到列表
      * 
      * 值过滤规则：
      * - null值：只有操作符acceptNull为true时才添加
      * - 空字符串：不添加（除非操作符acceptNull）
-     * - 空集合/数组：不添加
+     * - 空集合/Map/数组：不添加
      * - 非空值：添加
      * 
      * 使用场景：
@@ -246,8 +249,9 @@ class Criteria : Serializable {
         return when (value) {
             is String -> value.isNotEmpty()
             is Collection<*> -> value.isNotEmpty()
+            is Map<*, *> -> value.isNotEmpty()
             is Array<*> -> value.isNotEmpty()
-            else -> true
+            else -> !value.javaClass.isArray || JavaArray.getLength(value) > 0
         }
     }
 

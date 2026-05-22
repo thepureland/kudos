@@ -11,6 +11,7 @@ import java.net.URLConnection
  * IO操作工具类
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 object IoKit {
@@ -852,8 +853,10 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun read(input: Reader, buffer: CharArray, offset: Int, length: Int): Int =
-        IOUtils.read(input, buffer, offset, length)
+    fun read(input: Reader, buffer: CharArray, offset: Int, length: Int): Int {
+        require(length >= 0) { "Length must not be negative: $length" }
+        return IOUtils.read(input, buffer, offset, length)
+    }
 
     /**
      * 从字符流中读取字符。该实现保证在放弃前尽可能多的读取字符。
@@ -881,8 +884,10 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun read(input: InputStream, buffer: ByteArray, offset: Int, length: Int): Int =
-        IOUtils.read(input, buffer, offset, length)
+    fun read(input: InputStream, buffer: ByteArray, offset: Int, length: Int): Int {
+        require(length >= 0) { "Length must not be negative: $length" }
+        return IOUtils.read(input, buffer, offset, length)
+    }
 
     /**
      * 从字节流中读取字符。该实现保证在放弃前尽可能多的读取字节。
@@ -914,8 +919,10 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun readFully(input: Reader, buffer: CharArray, offset: Int, length: Int): Int =
-        IOUtils.read(input, buffer, offset, length)
+    fun readFully(input: Reader, buffer: CharArray, offset: Int, length: Int): Int {
+        require(length >= 0) { "Length must not be negative: $length" }
+        return IOUtils.read(input, buffer, offset, length)
+    }
 
     /**
      * 读取请求数量的字符，或如果没有足够数量的字符时将失败
@@ -948,8 +955,10 @@ object IoKit {
      * @author K
      * @since 1.0.0
      */
-    fun readFully(input: InputStream, buffer: ByteArray, offset: Int, length: Int): Unit =
+    fun readFully(input: InputStream, buffer: ByteArray, offset: Int, length: Int) {
+        require(length >= 0) { "Length must not be negative: $length" }
         IOUtils.readFully(input, buffer, offset, length)
+    }
 
     /**
      * 读取请求数量的字节，或如果没有足够数量的字节时将失败
