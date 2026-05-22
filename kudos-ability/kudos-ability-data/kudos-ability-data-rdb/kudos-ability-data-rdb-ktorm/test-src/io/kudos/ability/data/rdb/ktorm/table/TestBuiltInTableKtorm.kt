@@ -6,6 +6,10 @@ import io.kudos.base.model.contract.common.IHasBuiltIn
 
 /**
  * 带 built_in 字段的测试表实体（用于 BaseCrudService 删除内置保护测试）
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 internal interface TestBuiltInTableKtorm : IDbEntity<Int, TestBuiltInTableKtorm>, IHasBuiltIn {
 

@@ -11,6 +11,7 @@ import java.time.LocalDateTime
  * [name]、[height] 带 [Sortable] 供 [io.kudos.ability.data.rdb.ktorm.support.BaseReadOnlyDaoTest] 校验 ListSearchPayload 排序规则；其余列未标注，用于测「未标注则忽略排序」。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 internal interface TestTableKtorm : IDbEntity<Int, TestTableKtorm> {

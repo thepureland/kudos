@@ -9,6 +9,7 @@ import org.ktorm.entity.Entity
  *
  * @param E 实体类型
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 abstract class  DbEntityFactory<E: Entity<E>>: Entity.Factory<E>()

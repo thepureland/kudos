@@ -7,6 +7,7 @@ import org.ktorm.schema.*
  * 测试表数据库表-实体关联对象
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 internal object TestTableKtorms : IntIdTable<TestTableKtorm>("test_table_ktorm") {

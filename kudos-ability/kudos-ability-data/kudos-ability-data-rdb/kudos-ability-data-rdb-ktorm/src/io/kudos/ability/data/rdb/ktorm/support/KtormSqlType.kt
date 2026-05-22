@@ -7,6 +7,7 @@ import kotlin.reflect.KClass
  * kotlin类型和Ktorm sql类型函数名(用于dao中作列绑定)的映射
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 object KtormSqlType {
@@ -41,9 +42,8 @@ object KtormSqlType {
             java.time.MonthDay::class -> "monthDay"
             java.time.YearMonth::class -> "yearMonth"
             java.time.Year::class -> "year"
-            Enum::class -> "enum"
             UUID::class -> "uuid"
-            else -> "" //should not reach here
+            else -> if (Enum::class.java.isAssignableFrom(clazz.java)) "enum" else ""
         }
 
 }
