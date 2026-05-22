@@ -11,8 +11,8 @@ import kotlin.test.*
 /**
  * test for IoKit
  *
- * @author AI: ChatGPT
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 class IoKitTest {

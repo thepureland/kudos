@@ -10,8 +10,8 @@ import kotlin.test.assertTrue
 /**
  * Criteria测试用例
  *
- * @author AI: cursor
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 internal class CriteriaTest {
@@ -472,24 +472,33 @@ internal class CriteriaTest {
     }
 
     @Test
-    fun testEmptyPrimitiveIntArrayBypassesFilter() {
-        // KNOWN BEHAVIOR：shouldAddCriterion 的 when 只匹配 Array<*>（即 Object[]），
-        // 不匹配 IntArray/LongArray 等原始数组——它们走 else -> true，所以即使为空也保留。
+    fun testEmptyPrimitiveIntArrayIsFiltered() {
         val criteria = Criteria().addAnd("ids", OperatorEnum.IN, intArrayOf())
-        assertFalse(
+        assertTrue(
             criteria.isEmpty(),
-            "原始类型空数组（IntArray 等）不会被过滤——这是已知行为，不是 bug"
+            "原始类型空数组（IntArray 等）应和对象数组一样被过滤"
         )
     }
 
     @Test
-    fun testEmptyMapBypassesFilter() {
-        // KNOWN BEHAVIOR：Map 不在 shouldAddCriterion 的 when 里，走 else -> true
+    fun testNonEmptyPrimitiveIntArrayIsAdded() {
+        val criteria = Criteria().addAnd("ids", OperatorEnum.IN, intArrayOf(1, 2))
+        assertFalse(criteria.isEmpty(), "非空原始类型数组应保留")
+    }
+
+    @Test
+    fun testEmptyMapIsFiltered() {
         val criteria = Criteria().addAnd("attrs", OperatorEnum.IN, emptyMap<String, String>())
-        assertFalse(
+        assertTrue(
             criteria.isEmpty(),
-            "空 Map 不被过滤——shouldAddCriterion 未处理 Map 类型"
+            "空 Map 应和空 Collection 一样被过滤"
         )
+    }
+
+    @Test
+    fun testNonEmptyMapIsAdded() {
+        val criteria = Criteria().addAnd("attrs", OperatorEnum.IN, mapOf("k" to "v"))
+        assertFalse(criteria.isEmpty(), "非空 Map 应保留")
     }
 
     // ============================================================
