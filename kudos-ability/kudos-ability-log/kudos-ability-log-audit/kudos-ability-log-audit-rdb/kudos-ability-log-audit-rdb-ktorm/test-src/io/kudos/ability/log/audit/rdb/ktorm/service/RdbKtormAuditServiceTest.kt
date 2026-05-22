@@ -36,6 +36,10 @@ import kotlin.test.assertTrue
  *
  * 用本地 H2 内存库（无 Docker 依赖）。DDL 走 baomidou dynamic-datasource 的 `init.schema`
  * 加载——比 flyway 集成更轻量、更适合单测。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 @EnableKudosTest(properties = ["spring.flyway.enabled=false"])
 internal open class RdbKtormAuditServiceTest {
@@ -147,6 +151,18 @@ internal open class RdbKtormAuditServiceTest {
             .filterNotNull()
             .sorted()
         assertEquals(listOf("e4-1", "e4-2", "e4-3"), ids)
+    }
+
+    @Test
+    fun submit_duplicatePrimaryKey_returnsFalseInsteadOfThrowing() {
+        val model = SysAuditLogModel().apply {
+            entities = mutableListOf(
+                makeEntity("dup-id", entityId = "u-A", desc = "first"),
+                makeEntity("dup-id", entityId = "u-B", desc = "second"),
+            )
+        }
+
+        assertEquals(false, auditService.submit(model), "落库异常应被捕获并转成 false")
     }
 
     private fun makeEntity(id: String, entityId: String, desc: String): SysAuditLogVo = SysAuditLogVo().apply {

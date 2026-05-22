@@ -36,6 +36,7 @@ import java.time.ZoneId
  *    "提交失败"，业务侧的切面可以据此决定是否兜底（如降级写本地文件）
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 open class RdbKtormAuditService : IAuditService {

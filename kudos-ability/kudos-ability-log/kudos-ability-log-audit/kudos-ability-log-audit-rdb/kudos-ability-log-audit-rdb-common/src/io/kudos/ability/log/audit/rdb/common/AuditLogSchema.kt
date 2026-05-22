@@ -11,6 +11,7 @@ package io.kudos.ability.log.audit.rdb.common
  * （`spring.flyway.locations` 默认包含 `classpath:db/migration`）。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 object AuditLogSchema {

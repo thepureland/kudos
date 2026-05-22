@@ -19,6 +19,7 @@ import org.ktorm.schema.varchar
  * 上游切面会用业务侧的 ID 生成器塞好。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 object SysAuditLogTable : Table<Nothing>(AuditLogSchema.TABLE_AUDIT_LOG) {
