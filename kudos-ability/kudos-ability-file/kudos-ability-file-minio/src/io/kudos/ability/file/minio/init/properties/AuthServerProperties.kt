@@ -7,6 +7,7 @@ package io.kudos.ability.file.minio.init.properties
  * 一个扩展点，将来增加新的认证服务器类型（如 LDAP、Kerberos）时各自继承。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 abstract class AuthServerProperties

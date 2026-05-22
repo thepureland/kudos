@@ -88,6 +88,7 @@ kudos:
         accessKey: admin
         secretKey: ${MINIO_SECRET}                # 通过环境变量注入
         public-endpoint: https://cdn.example.com  # 给前端拼 URL
+        part-size: 10485760                       # 未知大小流 multipart 分片，默认 10MiB，最小 5MiB
         sts:
           access-token:
             enabled: false                        # 不用 OAuth2 STS 时设为 false
@@ -104,7 +105,7 @@ kudos:
 | 路径 | 角色 |
 |---|---|
 | `init/MinioAutoConfiguration` | 装配入口；7 个 bean（client / properties / 3 个 service / builder factory） |
-| `init/properties/MinioProperties` | endpoint / AK / SK / publicEndpoint |
+| `init/properties/MinioProperties` | endpoint / AK / SK / publicEndpoint / partSize |
 | `init/properties/AccessTokenServerProperties` | OAuth2 STS 配置 |
 | `init/properties/AuthServerProperties` | 抽象基类（占位） |
 | `MinioUploadService` / `MinioDownLoadService` / `MinioDeleteService` | 三个 SPI 实现 |
@@ -119,16 +120,18 @@ kudos:
   —— 基于 `MinioTestContainer` 的端到端
 - `AccessTokenJwtMapperTest`（2）—— 锁定 Jackson 3 mapper 对 Minio `Jwt` 私有字段的反序列化
   能力，防止 Jackson API 升级悄悄破坏 STS 链路
+- `MinioPropertiesTest`（3）—— 锁定上传 multipart 分片大小的默认值、可配置性和最小值校验
 
-12/12 测试全绿。依赖 Docker 跑 testcontainer。
+15/15 测试全绿。依赖 Docker 跑 testcontainer。
 
 ## 已知限制 / 后续工作
 
 - ❗ `MinioDeleteService.isValid` 继承自 common 的字符串包含 `..` 检查——**对象存储里
   "filePath" 是 S3 key（任意字符串），不是文件系统路径**，不存在真正的"跳出 base-path"
   语义，该检查在这里更多是兼容形式。如果业务需要严格限制 key 字符集，应自行加白名单
-- ❗ `MinioUploadService.saveFile` 的 `.stream(input, -1, 10485760)` 把 part size 写死成
-  10 MB——大文件分片大小不可配。要调优时需自行 fork
+- ✅ `MinioUploadService.saveFile` 的 multipart part size 已改为
+  `kudos.ability.file.minio.part-size` 配置，默认 10MiB，并在属性层拒绝低于 MinIO/S3
+  最小 5MiB 的配置值
 - ❗ 动态客户端模式（`authServerParam != null`）每次调用都 build 新 MinioClient——MinioClient
   内部连接池随之新建。高并发动态场景可能成性能瓶颈，需要时可加按 (endpoint, principal) 维度
   的客户端缓存

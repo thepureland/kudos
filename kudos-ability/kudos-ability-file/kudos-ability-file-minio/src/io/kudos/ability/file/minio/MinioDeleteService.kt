@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Qualifier
  * 抛 `FILE_NO_EXISTS` 而不是返回 false——和 file-local 版语义对齐。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 open class MinioDeleteService : IDeleteService {

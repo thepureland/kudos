@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired
  * (b) 在 file-minio 增加对应 `MinioClientBuilder` 实现，(c) 在本工厂的 when 增加分支。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 class MinioClientBuilderFactory {

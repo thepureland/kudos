@@ -23,6 +23,7 @@ import java.net.URI
  *
  * @author unknown
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 @Configuration
