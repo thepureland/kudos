@@ -4,10 +4,13 @@ import io.kudos.ability.cache.common.enums.CacheStrategy
 import io.kudos.ability.cache.common.init.properties.CacheItemsProperties
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
+import kotlin.reflect.KMutableProperty1
+import kotlin.reflect.full.memberProperties
 
 
 /**
- * 缓存配置默认提供者：从 `kudos.cache.items` 这种字符串列表配置（item 形如 `name=xxx&strategy=REMOTE&...`）解析为 [CacheConfig]。
+ * 缓存配置默认提供者：从 `kudos.cache.items` 字符串列表配置（item 形如 `name=xxx&strategy=REMOTE&...`）
+ * 和 `cache-item-configs` 结构化配置解析为 [CacheConfig]。
  *
  * 关键点：
  * - 配置在 init 阶段一次性解析，运行期不变 → 所有查询都基于初始化后构建的扁平 map，O(1) 命中。
@@ -31,9 +34,13 @@ class DefaultCacheConfigProvider(itemsProperties: CacheItemsProperties) : ICache
 
     init {
         val cacheItems = itemsProperties.cacheItems
-        log.info("加载到cache-items配置：size=${cacheItems.size}")
+        val cacheItemConfigs = itemsProperties.cacheItemConfigs
+        log.info("加载到cache-items配置：size=${cacheItems.size}, cache-item-configs配置：size=${cacheItemConfigs.size}")
         if (cacheItems.isNotEmpty()) {
             initCacheConfig(cacheItems)
+        }
+        if (cacheItemConfigs.isNotEmpty()) {
+            initCacheConfigObjects(cacheItemConfigs)
         }
 
         flatConfigs = cacheConfigsByStrategy.values.flatMap { it.entries }
@@ -52,13 +59,13 @@ class DefaultCacheConfigProvider(itemsProperties: CacheItemsProperties) : ICache
     private fun initCacheConfig(cacheItems: MutableList<String>) {
         cacheItems.filter { it.isNotBlank() }.forEach { cacheItemStr ->
             val cacheConfig = cacheItemToConfig(cacheItemStr)
-            // 用派生属性 resolvedStrategyCode 而非裸 `.strategy`——README "新代码必须用派生属性"
-            // 契约的最后一处遗留 reader 收口。yml 解析路径只会设 `.strategy`，DB 字典码路径
-            // 只会设 `.strategyDictCode`；resolvedStrategyCode 把两条来源兜底集中到一处。
-            val strategy = cacheConfig.resolvedStrategyCode
-                ?: error("cache item 缺少 strategy: $cacheItemStr")
-            val name = cacheConfig.name ?: error("cache item 缺少 name: $cacheItemStr")
-            cacheConfigsByStrategy.getOrPut(strategy) { mutableMapOf() }[name] = cacheConfig
+            addCacheConfig(cacheConfig, cacheItemStr)
+        }
+    }
+
+    private fun initCacheConfigObjects(cacheItemConfigs: MutableList<CacheConfig>) {
+        cacheItemConfigs.forEachIndexed { index, cacheConfig ->
+            addCacheConfig(normalizeDefaults(cacheConfig), "cache-item-configs[$index]")
         }
     }
 
@@ -68,10 +75,43 @@ class DefaultCacheConfigProvider(itemsProperties: CacheItemsProperties) : ICache
             active = true
         }
         cacheItem.split("&").forEach { param ->
-            val (key, value) = param.split("=", limit = 2)
+            val (key, value) = parseParam(param, cacheItem)
+            require(key in writableConfigProperties) {
+                "cache item 包含未知字段 '$key': $cacheItem，可用字段：${writableConfigProperties.joinToString()}"
+            }
             BeanKit.setProperty<CacheConfig?>(config, key, value)
         }
         return config
+    }
+
+    private fun parseParam(param: String, cacheItem: String): Pair<String, String> {
+        val pair = param.split("=", limit = 2)
+        require(pair.size == 2 && pair[0].isNotBlank()) {
+            "cache item 参数格式错误，应为 key=value: '$param' in '$cacheItem'"
+        }
+        return pair[0] to pair[1]
+    }
+
+    private fun normalizeDefaults(config: CacheConfig): CacheConfig = config.apply {
+        if (writeOnBoot == null) {
+            writeOnBoot = false
+        }
+        if (active == null) {
+            active = true
+        }
+    }
+
+    private fun addCacheConfig(cacheConfig: CacheConfig, source: String) {
+        // 用派生属性 resolvedStrategyCode 而非裸 `.strategy`——README "新代码必须用派生属性"
+        // 契约的最后一处遗留 reader 收口。yml 解析路径只会设 `.strategy`，DB 字典码路径
+        // 只会设 `.strategyDictCode`；resolvedStrategyCode 把两条来源兜底集中到一处。
+        val strategy = cacheConfig.resolvedStrategyCode
+            ?: error("cache item 缺少 strategy: $source")
+        require(cacheConfig.resolvedStrategy != null) {
+            "cache item strategy 非法 '$strategy': $source，可用值：${CacheStrategy.values().joinToString { it.name }}"
+        }
+        val name = cacheConfig.name?.takeIf { it.isNotBlank() } ?: error("cache item 缺少 name: $source")
+        cacheConfigsByStrategy.getOrPut(strategy) { mutableMapOf() }[name] = cacheConfig
     }
 
     override fun getCacheConfig(name: String): CacheConfig? = flatConfigs[name]
@@ -88,5 +128,9 @@ class DefaultCacheConfigProvider(itemsProperties: CacheItemsProperties) : ICache
 
     companion object {
         private val log = LogFactory.getLog(this::class)
+        private val writableConfigProperties: Set<String> = CacheConfig::class.memberProperties
+            .filterIsInstance<KMutableProperty1<CacheConfig, *>>()
+            .map { it.name }
+            .toSortedSet()
     }
 }
