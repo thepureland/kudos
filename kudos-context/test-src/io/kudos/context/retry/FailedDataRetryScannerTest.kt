@@ -2,6 +2,8 @@ package io.kudos.context.retry
 
 import io.kudos.context.lock.ILeaseLockProvider
 import io.kudos.context.lock.NormalLockService
+import io.kudos.context.core.KudosContext
+import io.kudos.context.core.KudosContextHolder
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -30,6 +32,7 @@ import kotlin.test.assertTrue
  * - 锁注入 [FailedDataRetryScanner.lockProviderSupplier] 绕开 [LockTool] 的 Spring 依赖
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 internal class FailedDataRetryScannerTest {
@@ -39,12 +42,14 @@ internal class FailedDataRetryScannerTest {
 
     @BeforeTest
     fun setup() {
+        KudosContextHolder.clear()
         tempRoot = createTempDirectory("kudos-fdrs-test-")
         scanner = FailedDataRetryScanner()
     }
 
     @AfterTest
     fun cleanup() {
+        KudosContextHolder.clear()
         // 递归删除整个临时目录
         tempRoot.toFile().walkBottomUp().forEach { it.delete() }
     }
@@ -169,6 +174,19 @@ internal class FailedDataRetryScannerTest {
     // ============================================================
     // lockRetry —— 锁交互
     // ============================================================
+
+    @Test
+    fun currentAtomicServiceCodeDoesNotCreateContextWhenMissing() {
+        assertEquals(null, scanner.currentAtomicServiceCode())
+        assertEquals(null, KudosContextHolder.getOrNull(), "读取调度锁维度不应隐式创建 KudosContext")
+    }
+
+    @Test
+    fun currentAtomicServiceCodeReadsExistingContext() {
+        KudosContextHolder.set(KudosContext().apply { atomicServiceCode = "atomic-a" })
+
+        assertEquals("atomic-a", scanner.currentAtomicServiceCode())
+    }
 
     @Test
     fun lockRetryRunsRetryWhenLockAcquired() {
