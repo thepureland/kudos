@@ -150,8 +150,8 @@ server:
 
 ## 已知限制 / 后续工作
 
-- ❗ `commons-fileupload` 已经不再使用（源码中无引用，仅 audit 模块有注释残留）——可从
-  build.gradle 移除
+- ✅ 已移除未使用的 `commons-fileupload` 依赖；源码中无引用，multipart 处理继续沿用
+  Spring Boot / Servlet 容器默认能力
 - ❗ CORS 双套：`CorsHandlerInterceptor` 与 Spring `addCorsMappings` 重复处理同一 ResponseHeader，
   且 interceptor 用 `setHeader("Access-Control-Allow-Methods", "*")` 与 `addCorsMappings`
   的具体方法列表不一致。建议保留 Spring 框架版，废弃 interceptor
@@ -174,7 +174,6 @@ server:
 ```kotlin
 api(project(":kudos-ability:kudos-ability-web:kudos-ability-web-common"))
 api(libs.spring.boot.starter.web)
-api(libs.commons.fileupload)            // ⚠ 见上方"已知限制"
 api(libs.spring.session.core)
 api(libs.spring.session.data.redis)
 

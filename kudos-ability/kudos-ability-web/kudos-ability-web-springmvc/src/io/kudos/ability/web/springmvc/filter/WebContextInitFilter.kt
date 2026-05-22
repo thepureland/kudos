@@ -27,6 +27,7 @@ import java.util.UUID
  * 业务方有需要可继承本类覆盖 [doFilter] 或自实现 [IWebContextInitFilter] 取代。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 open class WebContextInitFilter : IWebContextInitFilter {

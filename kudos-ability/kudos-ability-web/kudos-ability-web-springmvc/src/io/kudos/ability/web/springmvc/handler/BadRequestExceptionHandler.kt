@@ -29,7 +29,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
  * 并统一转换为 ApiResponse。
  *
  * @author K
- * @author AI: ChatGPT
+ * @author AI: Codex
  * @since 1.0.0
  */
 @Order(Ordered.HIGHEST_PRECEDENCE)
