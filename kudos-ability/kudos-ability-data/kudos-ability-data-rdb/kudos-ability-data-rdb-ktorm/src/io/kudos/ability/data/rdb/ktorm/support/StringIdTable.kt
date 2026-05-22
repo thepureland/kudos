@@ -8,6 +8,7 @@ import org.ktorm.schema.varchar
  *
  * @param E 实体类型
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 open class StringIdTable<E : IDbEntity<String, E>>(tableName: String): Table<E>(tableName) {

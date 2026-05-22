@@ -11,6 +11,7 @@ import org.ktorm.database.Database
  *
  * @return 当前上下文的数据库对象
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 fun RdbKit.getDatabase(): Database = KudosContextHolder.currentDatabase()

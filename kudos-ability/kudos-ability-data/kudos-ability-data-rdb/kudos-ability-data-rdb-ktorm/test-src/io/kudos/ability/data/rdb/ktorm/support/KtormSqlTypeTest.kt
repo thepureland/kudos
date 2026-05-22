@@ -22,6 +22,10 @@ import kotlin.test.assertEquals
  *
  * 该映射是代码生成器 / Ktorm 适配器拼接列绑定函数名的基础——回归一次防止
  * 误改映射条目（如把 `BigDecimal` 写错成 `numeric` 之类）。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 internal class KtormSqlTypeTest {
 
@@ -68,14 +72,28 @@ internal class KtormSqlTypeTest {
 
     @Test
     fun enumDirectClass() {
-        // 直接拿 Enum::class 做参数才会命中 "enum" 分支；具体枚举子类（如 MyEnum::class）目前不会命中——
-        // 见 README 已知限制部分。
         assertEquals("enum", KtormSqlType.getFunName(Enum::class))
+    }
+
+    @Test
+    fun enumSubclass() {
+        assertEquals("enum", KtormSqlType.getFunName(TestEnum::class))
     }
 
     @Test
     fun unknownTypeReturnsEmpty() {
         // 未覆盖的类型走 else 分支，目前实现返回空字符串（非抛错）。代码生成场景一般用不到这种类型。
         assertEquals("", KtormSqlType.getFunName(Any::class))
+    }
+
+    /**
+     * 枚举子类映射测试对象。
+     *
+     * @author K
+     * @author AI: Codex
+     * @since 1.0.0
+     */
+    private enum class TestEnum {
+        ONE
     }
 }

@@ -38,7 +38,7 @@ import kotlin.reflect.full.primaryConstructor
  * @param E 实体类型
  * @param T 数据库表-实体关联对象的类型
  * @author K
- * @author AI: Cursor
+ * @author AI: Codex
  * @since 1.0.0
  */
 open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBaseReadOnlyDao<PK, E> {

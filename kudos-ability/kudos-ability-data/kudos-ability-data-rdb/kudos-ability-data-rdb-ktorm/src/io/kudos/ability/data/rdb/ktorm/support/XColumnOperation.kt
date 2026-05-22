@@ -21,6 +21,7 @@ import org.ktorm.schema.VarcharSqlType
  * 所有方法都是纯 Kotlin 扩展，无副作用、无状态。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 

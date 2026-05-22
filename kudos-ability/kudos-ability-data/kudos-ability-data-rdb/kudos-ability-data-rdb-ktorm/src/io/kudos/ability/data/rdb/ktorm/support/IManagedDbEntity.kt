@@ -12,6 +12,7 @@ import org.ktorm.entity.Entity
  * @param ID 主键类型
  * @param E 实体类型
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 interface IManagedDbEntity<ID, E : Entity<E>> :

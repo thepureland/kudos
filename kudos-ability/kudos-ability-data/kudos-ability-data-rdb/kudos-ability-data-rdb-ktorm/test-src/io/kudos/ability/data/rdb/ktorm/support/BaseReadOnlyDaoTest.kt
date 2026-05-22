@@ -23,6 +23,7 @@ import kotlin.test.assertEquals
  * BaseReadOnlyDao测试用例
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 @EnableKudosTest
@@ -44,6 +45,13 @@ internal open class BaseReadOnlyDaoTest {
 
     @Test
     fun getAs() {
+        /**
+         * getAs 测试用投影对象。
+         *
+         * @author K
+         * @author AI: Codex
+         * @since 1.0.0
+         */
         class Record {
             var name: String? = null
             var birthday: LocalDateTime? = null
@@ -545,6 +553,13 @@ internal open class BaseReadOnlyDaoTest {
     @Test
     fun searchBySearchPayload() {
         // 指定returnProperties, 多个属性
+        /**
+         * searchBySearchPayload 查询条件载体。
+         *
+         * @author K
+         * @author AI: Codex
+         * @since 1.0.0
+         */
         class SearchPayload1 : ListSearchPayload() {
             var name: String? = null
             var weight: Double? = null
@@ -603,6 +618,13 @@ internal open class BaseReadOnlyDaoTest {
         assertEquals(-1, (result.first() as TestTableKtorm).id)
 
         // 指定结果封装类
+        /**
+         * searchBySearchPayload 结果投影对象。
+         *
+         * @author K
+         * @author AI: Codex
+         * @since 1.0.0
+         */
         class Result {
             var id: Int? = null
             var name: String? = null
@@ -633,6 +655,13 @@ internal open class BaseReadOnlyDaoTest {
         assertEquals(3, result.size)
 
         // 自定义查询逻辑（通过工厂+通过SearchPayload，工厂方式优先）
+        /**
+         * 自定义查询逻辑测试载体。
+         *
+         * @author K
+         * @author AI: Codex
+         * @since 1.0.0
+         */
         class SearchPayload2 : ListSearchPayload() {
             var name: String? = null
             var weight: Double? = null
@@ -690,6 +719,13 @@ internal open class BaseReadOnlyDaoTest {
 
     @Test
     fun countByPayload() {
+        /**
+         * countByPayload 查询条件载体。
+         *
+         * @author K
+         * @author AI: Codex
+         * @since 1.0.0
+         */
         class SearchPayload1 : ListSearchPayload() {
             var name: String? = null
             var weight: Double? = null
@@ -740,6 +776,13 @@ internal open class BaseReadOnlyDaoTest {
 
     //region @Sortable（ListSearchPayload.orders：每项均须在表 PO 上有 @Sortable，否则 WARN 并忽略）
 
+    /**
+     * 暴露排序白名单内部方法的测试 DAO。
+     *
+     * @author K
+     * @author AI: Codex
+     * @since 1.0.0
+     */
     private class TestTableDaoForSortAccess : TestTableKtormDao() {
         fun sortWhitelistForTest() = sortWhitelistFromPo()
         fun filterOrdersForTest(raw: List<Order>?) = filterOrdersBySortWhitelist(raw, sortWhitelistFromPo())
@@ -769,6 +812,13 @@ internal open class BaseReadOnlyDaoTest {
      */
     @Test
     fun search_payloadOrders_keepsOnlySortableProperties() {
+        /**
+         * 排序白名单测试载体。
+         *
+         * @author K
+         * @author AI: Codex
+         * @since 1.0.0
+         */
         class P : ListSearchPayload() {
             var active: Boolean? = null
         }
@@ -792,6 +842,13 @@ internal open class BaseReadOnlyDaoTest {
      */
     @Test
     fun search_payloadOrders_whenOnlyNonSortableRequested_noOrderByFromPayload() {
+        /**
+         * 非白名单排序测试载体。
+         *
+         * @author K
+         * @author AI: Codex
+         * @since 1.0.0
+         */
         class P : ListSearchPayload() {
             var active: Boolean? = null
         }
@@ -812,6 +869,10 @@ internal open class BaseReadOnlyDaoTest {
 /**
  * 自定义缓存项 PO，用于 search(criteria, returnItemClass, orders) 的 returnItemClass 测试。
  * 属性与 test_table_ktorm 表列对应，便于结果映射。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 internal class TestTableCacheItem {
     var id: Int? = null
@@ -821,6 +882,13 @@ internal class TestTableCacheItem {
     val extraProp: String? = null
 }
 
+/**
+ * 不可变投影对象。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
+ */
 internal data class TestTableImmutableRecord(
     val id: Int,
     val name: String,

@@ -6,6 +6,10 @@ import org.ktorm.schema.varchar
 
 /**
  * 带 built_in 字段的测试表
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 internal object TestBuiltInTableKtorms : IntIdTable<TestBuiltInTableKtorm>("test_built_in_ktorm") {
 

@@ -8,6 +8,7 @@ import org.ktorm.schema.int
  *
  * @param E 实体类型
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 open class IntIdTable<E : IDbEntity<Int, E>>(tableName: String): Table<E>(tableName) {

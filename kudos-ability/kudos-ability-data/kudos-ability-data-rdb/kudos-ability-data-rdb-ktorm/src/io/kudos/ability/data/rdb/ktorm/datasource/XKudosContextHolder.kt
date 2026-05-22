@@ -24,6 +24,7 @@ import javax.sql.DataSource
  *
  * @return 当前线程关联的数据源
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 fun KudosContextHolder.currentDataSource(): DataSource {

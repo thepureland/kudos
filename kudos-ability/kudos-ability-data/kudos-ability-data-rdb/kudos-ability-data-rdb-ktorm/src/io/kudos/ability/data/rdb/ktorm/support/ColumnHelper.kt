@@ -23,6 +23,7 @@ import java.util.concurrent.ConcurrentHashMap
  * 引发的列名解析失败。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 object ColumnHelper {

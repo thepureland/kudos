@@ -8,6 +8,7 @@ import org.ktorm.schema.long
  *
  * @param E 实体类型
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 open class LongIdTable<E : IDbEntity<Long, E>>(tableName: String): Table<E>(tableName) {

@@ -22,6 +22,7 @@ import kotlin.test.assertNotNull
  * BaseDao测试用例
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 @EnableKudosTest
@@ -36,6 +37,13 @@ internal open class BaseCrudDaoTest {
     @Test
     @Transactional
     open fun insert() {
+        /**
+         * insert 测试用载体。
+         *
+         * @author K
+         * @author AI: Codex
+         * @since 1.0.0
+         */
         class InsertPayload {
             var id: Int? = null
             var name: String? = null
@@ -113,6 +121,13 @@ internal open class BaseCrudDaoTest {
         assertEquals(14, testTableDao.allSearch().size)
 
         // 插入项载体
+        /**
+         * batchInsert 测试用载体。
+         *
+         * @author K
+         * @author AI: Codex
+         * @since 1.0.0
+         */
         class InsertPayload {
             var id: Int? = null
             var name: String? = null
@@ -373,6 +388,13 @@ internal open class BaseCrudDaoTest {
     @Test
     @Transactional
     open fun batchUpdateWhenByUpdatePayload() {
+        /**
+         * batchUpdateWhenByUpdatePayload 查询条件载体。
+         *
+         * @author K
+         * @author AI: Codex
+         * @since 1.0.0
+         */
         class SearchPayload1 : ListSearchPayload() {
             var name: String? = null
             var weight: Double? = null
@@ -381,6 +403,13 @@ internal open class BaseCrudDaoTest {
             override fun getReturnProperties() = returnPropertiesField
         }
 
+        /**
+         * batchUpdateWhenByUpdatePayload 更新载体。
+         *
+         * @author K
+         * @author AI: Codex
+         * @since 1.0.0
+         */
         class UpdatePayload1 : UpdatePayload<SearchPayload1>() {
             var name: String? = null
             var birthday: LocalDateTime? = null
@@ -569,6 +598,13 @@ internal open class BaseCrudDaoTest {
     @Test
     @Transactional
     open fun batchDeleteWhen() {
+        /**
+         * batchDeleteWhen 查询条件载体。
+         *
+         * @author K
+         * @author AI: Codex
+         * @since 1.0.0
+         */
         class SearchPayload1 : ListSearchPayload() {
             var name: String? = null
             var weight: Double? = null

@@ -27,6 +27,7 @@ import kotlin.reflect.full.superclasses
  * @param E 实体类型
  * @param T 数据库表-实体关联对象的类型
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>

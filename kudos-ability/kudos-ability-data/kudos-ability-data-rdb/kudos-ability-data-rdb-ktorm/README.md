@@ -108,9 +108,7 @@ Seata 兼容请通过 `spring.datasource.dynamic.seata=true` 让 baomidou dynami
 
 ## 已知限制 / 后续工作
 
-- ❗ `KtormSqlType.getFunName()` 的 `Enum` 分支仅在传入 `Enum::class` 本身时命中——具体枚举
-  子类（`MyEnum::class`）走不到，会落到 `else -> ""`。代码生成场景目前未触发，但要支持
-  自定义枚举到 SQL 类型映射时需要先改这里
+- ✅ `KtormSqlType.getFunName()` 已支持具体枚举子类（如 `MyEnum::class`）映射到 `enum`
 - ❗ `Database.connectWithSpringSupport(..., alwaysQuoteIdentifiers = true)` 会把每个标识符
   都加引号——PostgreSQL 下意味着区分大小写，建表时务必全用小写下划线命名（kudos 约定如此），
   否则会出现 `column "MyCol" does not exist` 之类的错

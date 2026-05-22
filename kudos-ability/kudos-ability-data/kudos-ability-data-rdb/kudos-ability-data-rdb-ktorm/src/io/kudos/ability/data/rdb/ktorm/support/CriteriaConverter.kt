@@ -12,6 +12,7 @@ import org.ktorm.schema.Table
  * Criteria转换器，可将Criteria转换为Ktorm查询条件表达式
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 internal object CriteriaConverter {

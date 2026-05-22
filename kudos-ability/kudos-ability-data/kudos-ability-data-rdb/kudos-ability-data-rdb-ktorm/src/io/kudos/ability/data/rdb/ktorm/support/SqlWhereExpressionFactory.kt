@@ -9,6 +9,7 @@ import org.ktorm.schema.ColumnDeclaring
  * 查询条件表达式工厂
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 object SqlWhereExpressionFactory {
