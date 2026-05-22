@@ -35,6 +35,10 @@ import java.time.Duration
  * - 缓存创建时会应用版本前缀，确保不同版本的缓存相互隔离
  * - 支持自定义TTL，如果配置中未指定TTL，使用默认配置
  * - 缓存实例创建后会被添加到caches列表中，供后续使用
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 class RedisKeyValueCacheManager(
     private val cacheWriter: RedisCacheWriter,

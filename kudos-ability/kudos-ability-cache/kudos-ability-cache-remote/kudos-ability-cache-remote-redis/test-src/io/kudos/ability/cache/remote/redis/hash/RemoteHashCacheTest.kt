@@ -21,7 +21,7 @@ import kotlin.test.*
  * 通过 [HashCacheKit.getHashCache] 获取 "testHash" 缓存（REMOTE 策略），覆盖 save/getById/deleteById/listAll/findByIds/listBySetIndex/listPageByZSetIndex/list/refreshAll 等。
  *
  * @author K
- * @author AI: Cursor
+ * @author AI: Codex
  * @since 1.0.0
  */
 @EnableKudosTest

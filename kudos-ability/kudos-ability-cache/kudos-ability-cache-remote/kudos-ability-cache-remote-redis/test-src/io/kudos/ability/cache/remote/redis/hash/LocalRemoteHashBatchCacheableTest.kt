@@ -18,7 +18,7 @@ import kotlin.test.assertSame
  * [io.kudos.ability.cache.common.batch.hash.HashBatchCacheableByPrimary] 注解测试用例（本地+远程 LOCAL_REMOTE）。
  *
  * @author K
- * @author AI: Cursor
+ * @author AI: Codex
  * @since 1.0.0
  */
 @EnableKudosTest

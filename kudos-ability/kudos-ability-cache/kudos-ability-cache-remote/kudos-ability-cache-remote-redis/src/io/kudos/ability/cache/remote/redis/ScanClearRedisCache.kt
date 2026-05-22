@@ -52,6 +52,7 @@ internal fun findRedisTemplate(): RedisTemplate<String, Any>? =
  * 体量大了，可以改用 `SCAN`-based 迭代删除（见 [RedisKeyValueCacheManager.evictByPattern] 的写法）。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 internal class ScanClearRedisCache(

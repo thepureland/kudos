@@ -24,6 +24,7 @@ import kotlin.test.*
  * 通过 [HashCacheKit.getHashCache] 获取 "testHash" 缓存（LOCAL_REMOTE 策略），验证读写经 mix 时本地与远程一致。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 @EnableKudosTest

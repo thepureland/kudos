@@ -7,6 +7,13 @@ import org.springframework.cache.annotation.Cacheable
 import java.io.Serializable
 import java.time.LocalDateTime
 
+/**
+ * 批量缓存测试模拟服务。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
+ */
 @CacheConfig(cacheNames = ["test"])
 open class BatchCacheableTestService {
 
@@ -53,7 +60,13 @@ open class BatchCacheableTestService {
         return result
     }
 
-//    @XmlRootElement
+    /**
+     * 批量缓存测试值对象。
+     *
+     * @author K
+     * @author AI: Codex
+     * @since 1.0.0
+     */
     data class TestCacheObject(
         val module: String?,
         val age: Int?,
@@ -69,4 +82,3 @@ open class BatchCacheableTestService {
     }
 
 }
-
