@@ -8,6 +8,13 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 
+/**
+ * [SeataFeignXidProcessor] Feign XID 请求头透传测试。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
+ */
 internal class SeataFeignXidProcessorTest {
 
     @AfterTest

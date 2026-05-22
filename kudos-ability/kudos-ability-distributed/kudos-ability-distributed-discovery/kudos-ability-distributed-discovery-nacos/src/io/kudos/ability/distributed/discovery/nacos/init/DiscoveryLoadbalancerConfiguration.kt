@@ -30,6 +30,7 @@ import reactor.core.publisher.Flux
  *
  * @see com.alibaba.cloud.nacos.loadbalancer.NacosLoadBalancerClientConfiguration
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 @Configuration
@@ -68,6 +69,13 @@ open class DiscoveryLoadbalancerConfiguration {
             OrderedServiceInstanceListSupplier(delegate, configuredOrder(context, defaultOrder))
     }
 
+    /**
+     * Blocking discovery client 的 hint zone 负载均衡支持配置。
+     *
+     * @author K
+     * @author AI: Codex
+     * @since 1.0.0
+     */
     @Configuration(proxyBeanMethods = false)
     @ConditionalOnBlockingDiscoveryEnabled
     open class BlockingSupportConfiguration {
@@ -95,6 +103,13 @@ open class DiscoveryLoadbalancerConfiguration {
         }
     }
 
+    /**
+     * Reactive discovery client 的 hint zone 负载均衡支持配置。
+     *
+     * @author K
+     * @author AI: Codex
+     * @since 1.0.0
+     */
     @Configuration(proxyBeanMethods = false)
     @ConditionalOnReactiveDiscoveryEnabled
     open class ReactiveSupportConfiguration {
@@ -122,6 +137,13 @@ open class DiscoveryLoadbalancerConfiguration {
         }
     }
 
+    /**
+     * 为委托的 [ServiceInstanceListSupplier] 补充固定 Spring order 的包装器。
+     *
+     * @author K
+     * @author AI: Codex
+     * @since 1.0.0
+     */
     private class OrderedServiceInstanceListSupplier(
         private val delegate: ServiceInstanceListSupplier,
         private val order: Int

@@ -21,6 +21,9 @@ import kotlin.test.assertTrue
  *
  * @author will
  * @since 5.1.1
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 @EnableKudosTest
 @EnableFeignClients

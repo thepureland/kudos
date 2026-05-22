@@ -16,7 +16,13 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-
+/**
+ * [FeignContextWebFilter] 入站上下文还原行为单测。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
+ */
 internal class FeignContextWebFilterTest {
 
     private lateinit var ctx: StaticApplicationContext
@@ -101,6 +107,13 @@ internal class FeignContextWebFilterTest {
         assertEquals("from-processor", KudosContextHolder.get().subSystemCode)
     }
 
+    /**
+     * 记录 provider 上下文扩展点调用次数的测试实现。
+     *
+     * @author K
+     * @author AI: Codex
+     * @since 1.0.0
+     */
     private class RecordingProviderContextProcess : IFeignProviderContextProcess {
         var calls = 0
 

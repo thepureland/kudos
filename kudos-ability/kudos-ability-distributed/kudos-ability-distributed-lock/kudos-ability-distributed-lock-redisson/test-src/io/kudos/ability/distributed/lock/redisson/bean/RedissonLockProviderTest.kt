@@ -9,7 +9,13 @@ import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-
+/**
+ * [RedissonLockProvider] 解锁守卫行为单测。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
+ */
 internal class RedissonLockProviderTest {
 
     @AfterTest
@@ -60,6 +66,13 @@ internal class RedissonLockProviderTest {
         assertEquals(0, lock.unlockCalls)
     }
 
+    /**
+     * 记录 Redisson RLock 解锁相关调用的测试代理。
+     *
+     * @author K
+     * @author AI: Codex
+     * @since 1.0.0
+     */
     private class RecordingRLock(
         private val name: String,
         private val isLocked: Boolean,

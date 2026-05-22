@@ -4,6 +4,10 @@ package io.kudos.ability.distributed.notify.mq.init.properties
  * notify-mq 扩展配置。
  *
  * 绑定前缀：`kudos.ability.distributed.notify.mq`
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 open class NotifyMqProperties {
 

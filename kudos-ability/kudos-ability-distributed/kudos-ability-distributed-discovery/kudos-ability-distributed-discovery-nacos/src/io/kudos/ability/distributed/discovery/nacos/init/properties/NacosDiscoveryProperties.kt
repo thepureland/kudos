@@ -4,10 +4,21 @@ import org.springframework.boot.web.servlet.FilterRegistrationBean
 
 /**
  * kudos Nacos discovery 扩展配置。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 class NacosDiscoveryProperties {
     var feignContextFilter: FeignContextFilter = FeignContextFilter()
 
+    /**
+     * Feign 上下文 filter 配置。
+     *
+     * @author K
+     * @author AI: Codex
+     * @since 1.0.0
+     */
     class FeignContextFilter {
         /**
          * 是否允许未携带 FEIGN_REQUEST / NOTIFY_REQUEST 标记的请求也按 header 写入 KudosContext。

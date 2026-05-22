@@ -5,6 +5,13 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 
+/**
+ * [SeataFeignXidAutoConfiguration] filter registration 测试。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
+ */
 internal class SeataFeignXidAutoConfigurationTest {
 
     @Test

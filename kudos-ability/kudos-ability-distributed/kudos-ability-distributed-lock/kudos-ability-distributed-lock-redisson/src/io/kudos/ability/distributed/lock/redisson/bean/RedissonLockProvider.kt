@@ -9,6 +9,9 @@ import java.util.concurrent.locks.Lock
 /**
  * Redisson锁提供者
  * 实现ILockProvider接口，提供基于Redisson的分布式锁功能
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 class RedissonLockProvider : ILockProvider<RLock> {
     

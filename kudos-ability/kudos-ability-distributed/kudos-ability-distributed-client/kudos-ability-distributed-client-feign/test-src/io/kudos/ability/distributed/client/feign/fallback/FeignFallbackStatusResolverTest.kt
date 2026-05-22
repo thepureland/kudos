@@ -6,7 +6,13 @@ import java.util.concurrent.TimeoutException
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-
+/**
+ * [FeignFallbackStatusResolver] 状态码映射测试。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
+ */
 internal class FeignFallbackStatusResolverTest {
 
     @Test

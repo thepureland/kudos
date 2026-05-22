@@ -30,6 +30,10 @@ import tools.jackson.databind.ObjectMapper
  * `@Configuration` 让 Spring 把本类按完整的配置类处理（CGLIB 代理 + bean 方法间互调保持
  * 同一实例语义）。即使当前类内 bean 方法之间没有互调，加上 @Configuration 是更稳的形式，
  * 避免后续重构时踩坑。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 @Configuration
 @AutoConfigureAfter(LinkableCacheAutoConfiguration::class)

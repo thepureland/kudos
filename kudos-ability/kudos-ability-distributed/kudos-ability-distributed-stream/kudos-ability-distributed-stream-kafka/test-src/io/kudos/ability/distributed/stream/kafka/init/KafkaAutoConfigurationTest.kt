@@ -6,7 +6,13 @@ import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertTrue
 
-
+/**
+ * [KafkaAutoConfiguration] 自动配置导入和默认配置单测。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
+ */
 internal class KafkaAutoConfigurationTest {
 
     @Test

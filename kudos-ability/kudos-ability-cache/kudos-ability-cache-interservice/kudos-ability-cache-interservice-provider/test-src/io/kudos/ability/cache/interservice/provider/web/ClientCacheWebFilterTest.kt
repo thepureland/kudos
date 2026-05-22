@@ -10,6 +10,13 @@ import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
+/**
+ * [ClientCacheWebFilter] 请求包装策略测试。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
+ */
 internal class ClientCacheWebFilterTest {
 
     @Test
@@ -43,6 +50,13 @@ internal class ClientCacheWebFilterTest {
         assertTrue(chain.request is CacheClientRequest)
     }
 
+    /**
+     * 记录传入请求对象的 filter chain stub。
+     *
+     * @author K
+     * @author AI: Codex
+     * @since 1.0.0
+     */
     private class RecordingFilterChain : FilterChain {
         var request: ServletRequest? = null
             private set

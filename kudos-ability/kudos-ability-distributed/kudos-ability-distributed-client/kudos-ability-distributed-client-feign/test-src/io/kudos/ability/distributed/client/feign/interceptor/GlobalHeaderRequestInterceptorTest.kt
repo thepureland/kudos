@@ -37,6 +37,9 @@ import kotlin.test.assertTrue
  *  - **locale 缺失**时回退 `zh_CN`
  *  - **FEIGN_REQUEST 标记**始终写
  *  - **`IFeignRequestContextProcess` SPI 被调用**——验证 bean 缓存路径工作
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 internal class GlobalHeaderRequestInterceptorTest {
 
@@ -225,6 +228,13 @@ internal class GlobalHeaderRequestInterceptorTest {
             target("http://localhost")
         }
 
+    /**
+     * 记录请求上下文处理器调用次数的测试实现。
+     *
+     * @author K
+     * @author AI: Codex
+     * @since 1.0.0
+     */
     private class RecordingProcessor : IFeignRequestContextProcess {
         var calls: Int = 0
         override fun processContext(requestTemplate: RequestTemplate, context: KudosContext) {
@@ -233,6 +243,13 @@ internal class GlobalHeaderRequestInterceptorTest {
         }
     }
 
+    /**
+     * 带 Spring 顺序值的请求上下文处理器测试实现。
+     *
+     * @author K
+     * @author AI: Codex
+     * @since 1.0.0
+     */
     private class OrderedRecordingProcessor(
         private val name: String,
         private val order: Int,

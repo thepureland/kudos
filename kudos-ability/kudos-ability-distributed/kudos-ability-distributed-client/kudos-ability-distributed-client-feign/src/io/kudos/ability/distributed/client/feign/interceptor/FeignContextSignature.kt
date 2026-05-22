@@ -2,6 +2,10 @@ package io.kudos.ability.distributed.client.feign.interceptor
 
 /**
  * Feign 上下文透传签名头。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 object FeignContextSignature {
     const val TIMESTAMP_HEADER: String = "X-Kudos-Context-Timestamp"

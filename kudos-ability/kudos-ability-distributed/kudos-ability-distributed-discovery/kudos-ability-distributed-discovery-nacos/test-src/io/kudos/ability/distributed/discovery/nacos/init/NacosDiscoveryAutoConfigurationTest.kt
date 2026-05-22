@@ -7,7 +7,13 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 
-
+/**
+ * [NacosDiscoveryAutoConfiguration] 自动配置行为单测。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
+ */
 internal class NacosDiscoveryAutoConfigurationTest {
 
     @Test

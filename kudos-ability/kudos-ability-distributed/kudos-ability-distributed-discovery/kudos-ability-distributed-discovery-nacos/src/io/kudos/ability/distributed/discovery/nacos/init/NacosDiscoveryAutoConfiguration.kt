@@ -33,6 +33,7 @@ import org.springframework.context.annotation.Configuration
  *    把普通浏览器 / curl 请求挡掉，不需要在注册侧再做路径白名单
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 @Configuration

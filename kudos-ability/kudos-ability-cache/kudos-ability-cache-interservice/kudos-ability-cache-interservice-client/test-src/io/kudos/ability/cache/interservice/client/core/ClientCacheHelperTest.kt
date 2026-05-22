@@ -12,6 +12,13 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 
+/**
+ * [ClientCacheHelper] 配置化 TTL 与本地缓存读取容错测试。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
+ */
 internal class ClientCacheHelperTest {
 
     @Test
@@ -66,6 +73,13 @@ internal class ClientCacheHelperTest {
         assertEquals("payload", item?.cacheData)
     }
 
+    /**
+     * 记录初始化配置的内存 cache manager，用于隔离真实 Caffeine/Spring 容器。
+     *
+     * @author K
+     * @author AI: Codex
+     * @since 1.0.0
+     */
     private class RecordingCacheManager : IKeyValueCacheManager<ConcurrentMapCache> {
         val cache = ConcurrentMapCache(ClientCacheKey.FEIGN_CACHE_PREFIX)
         var initializedConfigs: Map<String, CacheConfig> = emptyMap()

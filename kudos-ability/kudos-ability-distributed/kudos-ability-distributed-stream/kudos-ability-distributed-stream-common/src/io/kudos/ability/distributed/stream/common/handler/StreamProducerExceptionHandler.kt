@@ -50,6 +50,9 @@ import kotlin.reflect.full.primaryConstructor
  * - 如果重试发送仍然失败，消息会继续保留在本地文件中
  * - 需要提供异常数据修复机制，避免失败消息堆积导致磁盘空间问题
  * - 定时任务执行频率可通过cronExpression配置调整
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 class StreamProducerExceptionHandler : AbstractFailedDataHandler<StreamProducerMsgVo>(), IStreamFailHandler {
 

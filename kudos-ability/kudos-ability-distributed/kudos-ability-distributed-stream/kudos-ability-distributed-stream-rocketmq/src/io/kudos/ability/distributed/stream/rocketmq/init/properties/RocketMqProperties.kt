@@ -7,6 +7,9 @@ import org.springframework.stereotype.Component
 /**
  * RocketMQ配置属性类
  * 封装RocketMQ相关的配置信息，包括NameServer地址和异常保存开关
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 @Component
 class RocketMqProperties {

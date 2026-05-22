@@ -7,6 +7,10 @@ import java.util.concurrent.TimeoutException
 
 /**
  * Feign fallback 状态码解析器。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 object FeignFallbackStatusResolver {
 

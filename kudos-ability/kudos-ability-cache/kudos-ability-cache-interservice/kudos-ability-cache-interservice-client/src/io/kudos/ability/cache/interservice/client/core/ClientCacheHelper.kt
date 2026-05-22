@@ -16,6 +16,7 @@ import org.springframework.cache.Cache
  * 没有本地 cache manager 时静默关闭——避免下游应用没引入 caffeine/redis 时启动失败。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 open class ClientCacheHelper(

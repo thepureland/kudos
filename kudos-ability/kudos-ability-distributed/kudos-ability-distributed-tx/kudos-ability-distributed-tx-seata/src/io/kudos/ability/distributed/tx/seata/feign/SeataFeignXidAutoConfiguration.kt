@@ -27,6 +27,9 @@ import org.springframework.web.filter.OncePerRequestFilter
  * 仅当 classpath 同时具备 Feign (`feign.RequestInterceptor`) 与 Spring MVC 的
  * [OncePerRequestFilter] 时这套装配才激活；纯 Seata（无 Feign / 无 servlet 容器）的
  * 部署不会被影响。
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 @Configuration
 @AutoConfigureAfter(SeataAutoConfiguration::class)

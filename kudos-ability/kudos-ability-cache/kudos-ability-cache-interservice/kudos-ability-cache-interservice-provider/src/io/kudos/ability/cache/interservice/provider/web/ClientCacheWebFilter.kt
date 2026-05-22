@@ -11,6 +11,10 @@ import io.kudos.ability.cache.interservice.common.ClientCacheKey
 /**
  * 客户端缓存Web过滤器
  * 包装HTTP请求为CacheClientRequest，支持服务间缓存的请求处理
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 class ClientCacheWebFilter(
     private val wrapAllRequests: Boolean = false

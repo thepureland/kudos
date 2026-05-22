@@ -4,7 +4,13 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
-
+/**
+ * [AbstractConfigChangeListener] hook 顺序与异常回调测试。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
+ */
 internal class AbstractConfigChangeListenerTest {
 
     @Test

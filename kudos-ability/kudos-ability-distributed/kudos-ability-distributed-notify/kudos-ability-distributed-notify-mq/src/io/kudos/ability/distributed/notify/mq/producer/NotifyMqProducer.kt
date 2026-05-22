@@ -20,6 +20,7 @@ import java.io.Serializable
  *
  * @author Younger
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 open class NotifyMqProducer : INotifyProducer {

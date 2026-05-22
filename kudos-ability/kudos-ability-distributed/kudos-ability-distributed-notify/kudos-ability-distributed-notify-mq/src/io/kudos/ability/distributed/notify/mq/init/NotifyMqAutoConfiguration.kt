@@ -35,6 +35,7 @@ import java.util.function.Consumer
  * 基于MQ的通知的自动配置类
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 @Configuration
