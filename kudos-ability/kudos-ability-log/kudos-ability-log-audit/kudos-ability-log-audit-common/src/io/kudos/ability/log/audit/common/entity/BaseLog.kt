@@ -48,6 +48,8 @@ import kotlin.reflect.KClass
  * - 模块信息会自动从ISysAuditModule中获取
  * - 参数分隔符使用"┼"符号
  * 
+ * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 class BaseLog : Serializable {

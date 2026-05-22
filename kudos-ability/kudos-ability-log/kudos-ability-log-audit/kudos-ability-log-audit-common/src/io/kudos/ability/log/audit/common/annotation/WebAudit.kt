@@ -15,6 +15,7 @@ import kotlin.reflect.KClass
  * [Audit] 处理通用方法，从方法参数取业务对象。Multipart 请求会被 WebAudit 切面跳过。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY_GETTER, AnnotationTarget.PROPERTY_SETTER)

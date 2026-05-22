@@ -9,6 +9,7 @@ import io.kudos.ability.log.audit.common.entity.SysAuditLogModel
  * 实现方按存储后端不同分化：RDB 走 ktorm（见 `RdbKtormAuditService`）、MQ 走 stream binder 异步堆积。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 interface IAuditService {

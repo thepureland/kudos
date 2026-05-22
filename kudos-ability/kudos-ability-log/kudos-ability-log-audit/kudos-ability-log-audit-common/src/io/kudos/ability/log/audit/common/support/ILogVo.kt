@@ -9,6 +9,7 @@ import java.io.Serializable
  * 没有方法 —— 仅作类型标记。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 interface ILogVo : Serializable

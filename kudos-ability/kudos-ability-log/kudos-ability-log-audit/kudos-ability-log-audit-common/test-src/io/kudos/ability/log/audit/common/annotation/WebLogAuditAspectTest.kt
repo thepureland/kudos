@@ -35,6 +35,10 @@ import kotlin.test.assertTrue
  *
  * 用 [MockHttpServletRequest] 通过 [RequestContextHolder] 设到当前线程，让切面以为
  * 处于 Web 请求路径中。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 @EnableKudosTest(properties = ["spring.flyway.enabled=false"])
 @Import(WebLogAuditAspectTest.TestBeans::class, WebAuditedController::class)
@@ -115,6 +119,13 @@ class WebLogAuditAspectTest @Autowired constructor(
     }
 }
 
+/**
+ * 测试用 Web controller。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
+ */
 @Component
 open class WebAuditedController {
     @WebAudit(opType = OperationTypeEnum.QUERY, moduleCode = "USER", desc = "list users")
@@ -127,6 +138,13 @@ open class WebAuditedController {
     open fun upload(): String = "uploaded"
 }
 
+/**
+ * Web 审计记录器。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
+ */
 open class WebRecordingAuditService : IAuditService {
     val captured: MutableList<SysAuditLogModel> = Collections.synchronizedList(mutableListOf())
     override fun submit(sysAuditLogVo: SysAuditLogModel): Boolean {

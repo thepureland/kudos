@@ -10,6 +10,7 @@ import io.kudos.base.enums.ienums.IDictTypeEnum
  * `SysAuditLogVo.operateTypeId`，非数字字符串会抛 NumberFormatException。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 enum class OperationTypeEnum(

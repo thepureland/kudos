@@ -122,13 +122,20 @@ class WebLogAuditFilter : OncePerRequestFilter() {
 
 ## 测试覆盖
 
-- **暂无测试**——24 个源文件全部依赖 Spring AOP + ThreadLocal + SpringKit，单测成本高、
-  端到端测试在下游 RDB / MQ 模块里间接覆盖
+- `LogAuditAspectTest`（6）—— Spring AOP 成功 / 失败审计、异常透传、上下文清理、
+  `modelArgIndex` 指定参数与越界回退
+- `WebLogAuditAspectTest`（5）—— Web AOP 成功 / 失败审计、multipart 跳过、上下文清理
+- `BaseLogStringParamsTest`（8）—— `stringParams` 拼接 / 转义 / 反解析 round-trip
+- `BaseLogInitModuleTest`（5）—— 多 `ISysAuditModule` 链式解析与空实现兜底
+- `LogAuditContextTest`（4）—— `get/getOrNull/clear` 语义与子线程不继承上下文
+
+28/28 测试全绿。
 
 ## 已知限制 / 后续工作
 
-- ❗ **无单元测试**——核心切面 / context / tool 没有专门测试，回归风险靠下游模块的集成测试间接
-  兜底。`AuditLogTool.descriptionFormatter` 比较 bug 能潜伏这么久就是缺测的反映
+- ✅ 已补核心测试：`LogAuditAspect` / `WebLogAuditAspect` 覆盖 Spring AOP 成功、失败、
+  multipart 跳过和上下文清理；`BaseLog` 覆盖参数转义和模块解析；`LogAuditContext`
+  覆盖 ThreadLocal 语义
 - ✅ `AuditLogTool.tenantProvider()` 已改为懒加载 + 缓存——首次访问时（通常 Spring 上下文
   未就绪）查不到就返回 null 走 `entity.tenantId` 兜底；上下文就绪后第一次成功查到立即
   缓存，后续不再反射查

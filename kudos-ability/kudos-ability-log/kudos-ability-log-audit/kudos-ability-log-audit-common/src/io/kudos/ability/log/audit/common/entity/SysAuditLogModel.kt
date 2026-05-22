@@ -11,6 +11,7 @@ import java.io.Serializable
  * 加上跨进程透传所需的子系统和租户 id。toString 直接走 JSON 序列化以便日志排查时打印完整结构。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 class SysAuditLogModel : Serializable {

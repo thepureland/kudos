@@ -7,6 +7,7 @@ package io.kudos.ability.log.audit.common.support
  * 例如平台租户代操作客户租户时，审计需归属客户租户。业务侧实现本接口决定映射规则。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 interface ILogSourceTenantProvider {

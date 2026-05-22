@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component
  * 注解中指定。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 @Component

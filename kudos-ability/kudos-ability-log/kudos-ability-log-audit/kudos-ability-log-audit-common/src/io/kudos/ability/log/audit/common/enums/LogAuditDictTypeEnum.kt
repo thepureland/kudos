@@ -9,6 +9,7 @@ import io.kudos.base.enums.impl.KudosModuleEnum
  * 日志审计字典类型枚举
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 enum class LogAuditDictTypeEnum(

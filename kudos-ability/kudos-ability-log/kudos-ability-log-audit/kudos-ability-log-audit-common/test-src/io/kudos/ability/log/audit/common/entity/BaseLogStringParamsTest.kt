@@ -21,6 +21,10 @@ import kotlin.test.assertEquals
  *
  * `BaseLog(Audit)` 构造时会查 Spring 里的 `ISysAuditModule` bean——这里用空的
  * [StaticApplicationContext] 喂给 [SpringKit] 让构造路径不抛 "applicationContext not initialized"。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 internal class BaseLogStringParamsTest {

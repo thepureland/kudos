@@ -9,6 +9,7 @@ import io.kudos.ability.log.audit.common.support.ILogVo
  * 主审计日志载体——一个方法调用可以产生 N 条 [BaseLog]（不同子系统 / 模块的关联记录）。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 class LogVo : ILogVo {

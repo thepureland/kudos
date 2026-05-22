@@ -14,6 +14,7 @@ import io.kudos.ability.log.audit.common.entity.BaseLog
  * 业务自定义实现按 Spring bean 注入由切面自动发现并调用。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 interface IAuditLogDetailDescriptionFormatter {

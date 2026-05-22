@@ -30,6 +30,10 @@ import kotlin.test.assertTrue
  *
  * 用 [RecordingAuditService] 取代真正的 RDB/MQ 落地——它仅记录每次 submit 的 model 到列表，
  * 测试断言比 mock 框架更直接。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 @EnableKudosTest(properties = ["spring.flyway.enabled=false"])
 @Import(LogAuditAspectTest.TestBeans::class, AuditedService::class)
@@ -110,7 +114,13 @@ class LogAuditAspectTest @Autowired constructor(
     }
 }
 
-/** 业务侧带 [Audit] 注解的服务——必须是 Spring bean 才能被切面拦下。 */
+/**
+ * 业务侧带 [Audit] 注解的服务——必须是 Spring bean 才能被切面拦下。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
+ */
 @Component
 open class AuditedService {
 
@@ -147,9 +157,22 @@ open class AuditedService {
     }
 }
 
+/**
+ * 测试用业务模型。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
+ */
 class Model(val name: String)
 
-/** 把每次 `submit` 的 [SysAuditLogModel] 记录下来供测试断言。 */
+/**
+ * 把每次 `submit` 的 [SysAuditLogModel] 记录下来供测试断言。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
+ */
 open class RecordingAuditService : IAuditService {
     val captured: MutableList<SysAuditLogModel> = Collections.synchronizedList(mutableListOf())
     override fun submit(sysAuditLogVo: SysAuditLogModel): Boolean {

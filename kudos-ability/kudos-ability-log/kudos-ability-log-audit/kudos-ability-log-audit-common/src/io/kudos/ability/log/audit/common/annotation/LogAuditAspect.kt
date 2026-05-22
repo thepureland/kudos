@@ -33,6 +33,7 @@ import org.springframework.stereotype.Component
  * - 异常仅记 ERROR 不重抛——审计是横切关注点，不应反向阻断业务流程
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 @Aspect
