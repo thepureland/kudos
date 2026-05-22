@@ -6,6 +6,13 @@ import io.kudos.context.kit.SpringKit
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.cache.annotation.Cacheable
 
+/**
+ * 远程 K-V 缓存测试服务。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
+ */
 open class CacheTestService {
 
 //    @Autowired

@@ -10,6 +10,7 @@ import io.kudos.ability.cache.remote.redis.keyvalue.TestCacheConfigProvider
  * TestRow 与 TestRowWithTime 分属不同缓存，避免同表混存导致类型转换异常。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 class LocalRemoteHashTestCacheConfigProvider : ICacheConfigProvider {

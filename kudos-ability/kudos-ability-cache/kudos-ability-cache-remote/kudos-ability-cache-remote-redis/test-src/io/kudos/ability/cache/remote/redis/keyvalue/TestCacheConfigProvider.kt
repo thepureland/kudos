@@ -4,6 +4,13 @@ import io.kudos.ability.cache.common.enums.CacheStrategy
 import io.kudos.ability.cache.common.support.CacheConfig
 import io.kudos.ability.cache.common.support.ICacheConfigProvider
 
+/**
+ * 远程 K-V 缓存测试配置提供者。
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
+ */
 class TestCacheConfigProvider: ICacheConfigProvider {
 
     private val CACHE_NAME = "test"

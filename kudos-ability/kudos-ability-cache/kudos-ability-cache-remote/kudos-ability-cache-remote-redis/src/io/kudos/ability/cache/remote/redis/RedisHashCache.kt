@@ -26,6 +26,7 @@ import kotlin.reflect.KClass
  * 业务侧总是通过 [io.kudos.ability.cache.common.kit.HashCacheKit] 拿到 MixHashCache，不直接持有此类。
  *
  * @author K
+     * @author AI: Codex
  * @since 1.0.0
  */
 class RedisHashCache(
@@ -43,6 +44,7 @@ class RedisHashCache(
      * @param cacheName 业务逻辑 cache 名
      * @return 加上版本前缀的最终 Redis key 前缀
      * @author K
+ * @author AI: Codex
      * @since 1.0.0
      */
     private fun dataKeyPrefix(cacheName: String): String = versionConfig.getFinalCacheName(cacheName)

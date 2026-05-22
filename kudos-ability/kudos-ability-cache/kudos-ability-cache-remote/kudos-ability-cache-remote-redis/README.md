@@ -114,6 +114,8 @@ kudos:
       enabled: true
       version: v2
       remoteStore: data
+      redis:
+        node-id: ${HOSTNAME:}   # 可选；为空时启动期自动生成 UUID
       cache-items:
         - name=USER_CACHE&strategy=LOCAL_REMOTE&ttl=900
         - name=DEMO&strategy=REMOTE&ttl=1800
@@ -143,8 +145,8 @@ kudos:
   动态加 cache 暂不支持
 - ❗ pub/sub 走 Redis 单连接订阅，连接抖动 / 网络中断时**消息会丢**——Redis pub/sub 是
   fire-and-forget，没有重传。需要严格一致性的场景应改用 Redis streams 或 MQ
-- ❗ `cacheNodeId` 是进程内 UUID，重启变化——日志里"上一次重启之前的某节点"无法关联。
-  如果需要跨重启追踪，可换成 `hostname:pid` 或外部下发 id
+- ✅ `cacheNodeId` 支持通过 `kudos.ability.cache.redis.node-id` 配置稳定节点标识；未配置或空白
+  时仍回退启动期 UUID
 - ❗ `RedisRemoteCacheProcessor.writeCacheData` 设的过期时间应用在整个 Hash key 上，
   不是单个 field——同 Hash 下多 field 共享 TTL，互相覆盖会改动其他 field 的过期
 - ❗ `RedisCacheMessageHandler` 对反序列化失败只 log error，不主动清空本地——目前的判断是

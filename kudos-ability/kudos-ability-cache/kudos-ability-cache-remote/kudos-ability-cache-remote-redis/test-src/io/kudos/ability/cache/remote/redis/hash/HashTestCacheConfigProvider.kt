@@ -9,7 +9,7 @@ import io.kudos.ability.cache.remote.redis.keyvalue.TestCacheConfigProvider
  * 为 Hash 缓存测试提供配置：在 [TestCacheConfigProvider] 基础上增加 hash 缓存 "testHash"（REMOTE 策略）。
  *
  * @author K
- * @author AI: Cursor
+ * @author AI: Codex
  * @since 1.0.0
  */
 class HashTestCacheConfigProvider : ICacheConfigProvider {

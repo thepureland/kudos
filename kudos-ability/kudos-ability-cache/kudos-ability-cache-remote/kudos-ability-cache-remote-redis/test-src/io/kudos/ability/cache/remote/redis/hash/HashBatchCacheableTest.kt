@@ -18,7 +18,7 @@ import kotlin.test.assertTrue
  * [io.kudos.ability.cache.common.batch.hash.HashBatchCacheableByPrimary] 注解测试用例（远程 Redis）。
  *
  * @author K
- * @author AI: Cursor
+ * @author AI: Codex
  * @since 1.0.0
  */
 @EnableKudosTest

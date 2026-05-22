@@ -44,6 +44,10 @@ import org.springframework.stereotype.Component
  * - 消息序列化失败时会记录警告日志，但不会中断处理流程
  * - 支持缓存版本隔离，消息中的缓存名称会经过版本转换
  * - 需要确保Redis连接正常，否则消息无法正常发送和接收
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 @Component
 open class RedisCacheMessageHandler(

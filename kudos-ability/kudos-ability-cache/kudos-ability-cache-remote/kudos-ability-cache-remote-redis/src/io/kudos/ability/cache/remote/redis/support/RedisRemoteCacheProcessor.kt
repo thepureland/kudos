@@ -7,6 +7,10 @@ import java.time.Duration
 /**
  * Redis远程缓存处理器
  * 实现IRemoteCacheProcessor接口，提供基于Redis Hash结构的远程缓存读写功能
+ *
+ * @author K
+ * @author AI: Codex
+ * @since 1.0.0
  */
 class RedisRemoteCacheProcessor(private val redisTemplates: RedisTemplates) : IRemoteCacheProcessor {
 

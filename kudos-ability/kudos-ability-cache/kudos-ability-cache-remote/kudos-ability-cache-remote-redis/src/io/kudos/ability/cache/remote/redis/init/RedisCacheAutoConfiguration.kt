@@ -21,6 +21,7 @@ import org.springframework.boot.autoconfigure.AutoConfigureBefore
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.cache.autoconfigure.CacheProperties
+import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.thread.Threading
 import org.springframework.cache.CacheManager
@@ -45,6 +46,7 @@ import java.util.UUID
  * 本类通过 [AutoConfigureAfter] 保证在其之后加载，运行时注入正常；IDE 可能因跨模块未解析而误报。
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 @Configuration
@@ -62,6 +64,13 @@ open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentIni
     @Autowired
     private lateinit var environment: Environment
 
+    /**
+     * Redis 缓存模块配置。
+     */
+    @Bean
+    @ConditionalOnMissingBean
+    @ConfigurationProperties(prefix = "kudos.ability.cache.redis")
+    open fun redisCacheProperties(): RedisCacheProperties = RedisCacheProperties()
 
     /**
      * 装配远程 K-V 缓存管理器：从 [RedisTemplates] 里挑出 `remoteStore` 配置指向的 redis 实例，
@@ -160,12 +169,13 @@ open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentIni
     }
 
     /**
-     * 节点身份标识：进程启动时生成的 UUID，仅在内存中存在，重启会变。
+     * 节点身份标识：优先使用业务配置的稳定 id；未配置时回退启动期 UUID。
      * 用于 [RedisCacheMessageHandler] 判断 pub/sub 消息是不是本节点自发的（避免回环清理）。
      */
     @Bean("cacheNodeId")
     @ConditionalOnMissingBean(name = ["cacheNodeId"])
-    open fun cacheNodeId(): String = UUID.randomUUID().toString()
+    open fun cacheNodeId(redisCacheProperties: RedisCacheProperties): String =
+        redisCacheProperties.nodeId?.trim()?.takeIf { it.isNotBlank() } ?: UUID.randomUUID().toString()
 
     /** 缓存消息 SPI 实现（发送 + 接收回环 + 反序列化失败的 error 日志）。 */
     @Bean
