@@ -3,6 +3,8 @@ package io.kudos.test.container.containers
 import com.github.dockerjava.api.model.Container
 import io.kudos.test.container.kit.TestContainerKit
 import io.kudos.test.container.kit.bindingPort
+import io.kudos.test.container.main.ManualTestContainerMainSupport
+import io.kudos.test.container.support.TestContainerCrossProcessLock
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.testcontainers.containers.BindMode
 import org.testcontainers.containers.GenericContainer
@@ -92,13 +94,13 @@ object PostgresTestContainer {
      * @return 当前运行中的 postgres 容器信息
      */
     fun startIfNeeded(registry: DynamicPropertyRegistry?, database: String): Container {
-        synchronized(this) {
+        return TestContainerCrossProcessLock.run(PostgresTestContainer::class.java, "postgres") {
             val runningContainer = TestContainerKit.startContainerIfNeeded(LABEL, getOrCreateContainer())
             ensureDatabaseExists(runningContainer, database)
             if (registry != null) {
                 registerProperties(registry, runningContainer, database)
             }
-            return runningContainer
+            runningContainer
         }
     }
 
@@ -244,6 +246,7 @@ object PostgresTestContainer {
 
     @JvmStatic
     fun main(args: Array<String>?) {
+        ManualTestContainerMainSupport.removeExistingContainers(LABEL, "Postgres")
         startIfNeeded(null)
         println("postgres localhost port: $PORT")
         Thread.sleep(Long.MAX_VALUE)

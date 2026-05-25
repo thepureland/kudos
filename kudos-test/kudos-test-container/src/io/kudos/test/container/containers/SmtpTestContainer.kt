@@ -2,6 +2,8 @@ package io.kudos.test.container.containers
 
 import com.github.dockerjava.api.model.Container
 import io.kudos.test.container.kit.TestContainerKit
+import io.kudos.test.container.main.ManualTestContainerMainSupport
+import io.kudos.test.container.support.TestContainerCrossProcessLock
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.utility.DockerImageName
@@ -41,12 +43,12 @@ object SmtpTestContainer {
      * @return 运行中的容器对象
      */
     fun startIfNeeded(registry: DynamicPropertyRegistry?): Container {
-        synchronized(this) {
+        return TestContainerCrossProcessLock.run(SmtpTestContainer::class.java, "smtp") {
             val runningContainer = TestContainerKit.startContainerIfNeeded(LABEL, container)
             if (registry != null) {
                 registerProperties(registry, runningContainer)
             }
-            return runningContainer
+            runningContainer
         }
     }
 
@@ -72,6 +74,7 @@ object SmtpTestContainer {
 
     @JvmStatic
     fun main(args: Array<String>?) {
+        ManualTestContainerMainSupport.removeExistingContainers(LABEL, "Smtp")
         startIfNeeded(null)
         println("smtp localhost port: ${container.firstMappedPort}")
         Thread.sleep(Long.MAX_VALUE)

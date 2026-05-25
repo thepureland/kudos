@@ -3,6 +3,8 @@ package io.kudos.test.container.containers
 import com.github.dockerjava.api.model.Container
 import io.kudos.test.container.kit.TestContainerKit
 import io.kudos.test.container.kit.bindingPort
+import io.kudos.test.container.main.ManualTestContainerMainSupport
+import io.kudos.test.container.support.TestContainerCrossProcessLock
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.testcontainers.containers.GenericContainer
 
@@ -47,12 +49,12 @@ object MySqlTestContainer {
      * @return 运行中的容器对象
      */
     fun startIfNeeded(registry: DynamicPropertyRegistry?): Container {
-        synchronized(this) {
+        return TestContainerCrossProcessLock.run(MySqlTestContainer::class.java, "mysql") {
             val runningContainer = TestContainerKit.startContainerIfNeeded(LABEL, container)
             if (registry != null) {
                 registerProperties(registry, runningContainer)
             }
-            return runningContainer
+            runningContainer
         }
     }
 
@@ -86,6 +88,7 @@ object MySqlTestContainer {
 
     @JvmStatic
     fun main(args: Array<String>?) {
+        ManualTestContainerMainSupport.removeExistingContainers(LABEL, "MySql")
         startIfNeeded(null)
         println("mysql localhost port: $PORT")
         Thread.sleep(Long.MAX_VALUE)
