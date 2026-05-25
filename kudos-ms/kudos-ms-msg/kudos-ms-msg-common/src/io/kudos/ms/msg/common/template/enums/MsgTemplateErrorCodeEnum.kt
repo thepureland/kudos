@@ -17,7 +17,13 @@ enum class MsgTemplateErrorCodeEnum(
 ) : IErrorCodeEnum {
 
     /** 未定义错误 */
-    UNSPECIFIED("UNSPECIFIED", "未定义错误");
+    UNSPECIFIED("UNSPECIFIED", "未定义错误"),
+
+    /** 按主键或 (tenant_id, event_type, msg_type, locale) 维度查找模板失败 */
+    TEMPLATE_NOT_FOUND("TEMPLATE_NOT_FOUND", "消息模板不存在"),
+
+    /** (tenant_id, event_type, msg_type, locale) 已被占用 */
+    DUPLICATE_TEMPLATE("DUPLICATE_TEMPLATE", "该租户下相同事件 / 消息类型 / 语言的模板已存在");
 
     override val i18nKeyPrefix: String
         get() = "msg.error-msg.template"
