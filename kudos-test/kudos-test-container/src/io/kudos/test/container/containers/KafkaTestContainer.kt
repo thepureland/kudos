@@ -2,6 +2,8 @@ package io.kudos.test.container.containers
 
 import com.github.dockerjava.api.model.Container
 import io.kudos.test.container.kit.TestContainerKit
+import io.kudos.test.container.main.ManualTestContainerMainSupport
+import io.kudos.test.container.support.TestContainerCrossProcessLock
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.testcontainers.kafka.KafkaContainer
 import org.testcontainers.utility.DockerImageName
@@ -38,12 +40,12 @@ object KafkaTestContainer {
      * @return 运行中的容器对象
      */
     fun startIfNeeded(registry: DynamicPropertyRegistry?): Container {
-        synchronized(this) {
+        return TestContainerCrossProcessLock.run(KafkaTestContainer::class.java, "kafka") {
             val runningContainer = TestContainerKit.startContainerIfNeeded(LABEL, container)
             if (registry != null) {
                 registerProperties(registry, runningContainer)
             }
-            return runningContainer
+            runningContainer
         }
     }
 
@@ -71,6 +73,7 @@ object KafkaTestContainer {
 
     @JvmStatic
     fun main(args: Array<String>?) {
+        ManualTestContainerMainSupport.removeExistingContainers(LABEL, "Kafka")
         startIfNeeded(null)
         println("kafka started.")
         Thread.sleep(Long.MAX_VALUE)

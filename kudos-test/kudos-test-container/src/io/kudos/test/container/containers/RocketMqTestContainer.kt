@@ -5,6 +5,8 @@ import io.kudos.base.net.IpKit
 import io.kudos.test.container.containers.H2TestContainer.LABEL
 import io.kudos.test.container.kit.TestContainerKit
 import io.kudos.test.container.kit.bindingPort
+import io.kudos.test.container.main.ManualTestContainerMainSupport
+import io.kudos.test.container.support.TestContainerCrossProcessLock
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.testcontainers.containers.GenericContainer
 
@@ -75,14 +77,14 @@ object RocketMqTestContainer {
      * @return 运行中的容器对象
      */
     fun startIfNeeded(registry: DynamicPropertyRegistry?): Pair<Container, Container> {
-        synchronized(this) {
+        return TestContainerCrossProcessLock.run(RocketMqTestContainer::class.java, "rocketmq") {
             val runningNameServerContainer = TestContainerKit.startContainerIfNeeded(LABEL_NANE_SERVER, nameServerContainer)
             val runningBrokerServerContainer = TestContainerKit.startContainerIfNeeded(LABEL_BROKER_SERVER, brokerServerContainer)
             // DASHBORD.start();
             if (registry != null) {
                 registerProperties(registry, runningNameServerContainer)
             }
-            return Pair(runningNameServerContainer, runningBrokerServerContainer)
+            Pair(runningNameServerContainer, runningBrokerServerContainer)
         }
     }
 
@@ -109,6 +111,8 @@ object RocketMqTestContainer {
 
     @JvmStatic
     fun main(args: Array<String>?) {
+        ManualTestContainerMainSupport.removeExistingContainers(LABEL_NANE_SERVER, "RocketMQ name server")
+        ManualTestContainerMainSupport.removeExistingContainers(LABEL_BROKER_SERVER, "RocketMQ broker server")
         startIfNeeded(null)
         println("RocketMQ name-server localhost port: $PORT")
         println("RocketMQ broker localhost ports: 10909,10911,10912")

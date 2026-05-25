@@ -3,6 +3,8 @@ package io.kudos.test.container.containers
 import com.github.dockerjava.api.model.Container
 import io.kudos.test.container.kit.TestContainerKit
 import io.kudos.test.container.kit.bindingPort
+import io.kudos.test.container.main.ManualTestContainerMainSupport
+import io.kudos.test.container.support.TestContainerCrossProcessLock
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.wait.strategy.Wait
@@ -90,22 +92,22 @@ object NacosTestContainer {
      * @return 运行中的容器对象
      */
     fun startIfNeeded(registry: DynamicPropertyRegistry?): Container {
-        synchronized(this) {
+        return TestContainerCrossProcessLock.run(NacosTestContainer::class.java, "nacos") {
             val runningContainer = TestContainerKit.startContainerIfNeeded(LABEL, container)
             if (registry != null) {
                 registerProperties(registry, runningContainer)
             }
-            return runningContainer
+            runningContainer
         }
     }
 
     fun startNacosForSeataIfNeeded(registry: DynamicPropertyRegistry?): Container {
-        synchronized(this) {
+        return TestContainerCrossProcessLock.run(NacosTestContainer::class.java, "nacos-seata") {
             val runningContainer = TestContainerKit.startContainerIfNeeded(LABEL_NACOS_FOR_SEATA, containerForSeata)
             if (registry != null) {
                 registerProperties(registry, runningContainer)
             }
-            return runningContainer
+            runningContainer
         }
     }
 
@@ -129,6 +131,8 @@ object NacosTestContainer {
 
     @JvmStatic
     fun main(args: Array<String>?) {
+        ManualTestContainerMainSupport.removeExistingContainers(LABEL, "Nacos")
+        ManualTestContainerMainSupport.removeExistingContainers(LABEL_NACOS_FOR_SEATA, "Nacos（for Seata）")
         startIfNeeded(null)
         println("nacos localhost port: $PORT")
         Thread.sleep(Long.MAX_VALUE)
