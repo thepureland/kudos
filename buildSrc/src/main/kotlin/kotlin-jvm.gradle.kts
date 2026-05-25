@@ -4,6 +4,11 @@ package buildsrc.convention
 
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 
+// 注意：这是 buildSrc 里的"约定插件"，但仓库根 build.gradle.kts 当前未通过 `apply(plugin = ...)`
+// 引入它，所以本文件实际处于未启用状态。kotlin-jvm 插件与 Test 任务相关的统一配置
+// （JUnitPlatform、测试日志、kotlin-spring allopen、Mockito javaagent 等）目前都放在
+// 根 build.gradle.kts 的 `subprojects { ... }` 块里直接应用。
+// 保留本文件以便后续真正切回约定插件方案时复用。
 plugins {
     // Apply the Kotlin JVM plugin to add support for Kotlin in JVM projects.
     kotlin("jvm")

@@ -53,6 +53,8 @@ servlet-api = "6.1.0"
 
 [libraries]
 kotlinGradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+# allopen 插件：让 `kotlin("plugin.spring")` 这类 preset 能在 buildSrc 约定插件中使用。
+kotlinAllOpenPlugin = { module = "org.jetbrains.kotlin:kotlin-allopen", version.ref = "kotlin" }
 kotlinxDatetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
 kotlinxSerialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJSON" }
 kotlin-test-junit5 = { module = "org.jetbrains.kotlin:kotlin-test-junit5", version.ref = "kotlin" }
@@ -164,6 +166,10 @@ ktor-server-tomcat-jakarta = { module = "io.ktor:ktor-server-tomcat-jakarta-jvm"
 ktor-server-cio = { module = "io.ktor:ktor-server-cio-jvm" }
 ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation-jvm" }
 commons-fileupload = { module = "commons-fileupload:commons-fileupload", version.ref = "commons-fileupload"}
+
+# macOS 上 Netty/Lettuce 的原生 DNS 解析器，避免运行时 fallback 警告与潜在 hosts 文件解析问题。
+# 版本由 Spring Boot BOM / Lettuce 自动对齐，这里只引坐标。
+netty-resolver-dns-native-macos = { module = "io.netty:netty-resolver-dns-native-macos" }
 
 # Libraries can be bundled together for easier import
 [bundles]

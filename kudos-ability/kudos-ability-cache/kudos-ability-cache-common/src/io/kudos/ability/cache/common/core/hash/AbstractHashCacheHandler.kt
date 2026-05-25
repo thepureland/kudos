@@ -20,8 +20,11 @@ abstract class AbstractHashCacheHandler<T : IIdEntity<*>> : AbstractCacheHandler
     /** 缓存实体类型，用于按 id 删除/回写时指定类型。 */
     protected abstract fun entityClass(): KClass<T>
 
-    /** 供 [HashCacheKit] 等按 cacheName 获取实体类型，用于无类型 getValue。 */
-    fun exposedEntityClass(): KClass<*> = entityClass()
+    /**
+     * 供 [HashCacheKit] 等按 cacheName 获取实体类型，用于无类型 getValue。
+     * 声明 `open`：让 Spring CGLIB 子类代理时能 override，避免 `Public final method cannot get proxied via CGLIB` 警告。
+     */
+    open fun exposedEntityClass(): KClass<*> = entityClass()
 
     /** 用于 Set 索引的副属性名集合，与写入/删除时一致。子类按需重写。 */
     protected open fun filterableProperties(): Set<String> = emptySet()

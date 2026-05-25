@@ -36,8 +36,11 @@ open class SysDictTypesStartupValidator(
 
     private val log = LogFactory.getLog(this::class)
 
+    // kotlin-spring (allopen) 默认会把 @Component 类的所有成员视为 open；带 `private set` 的 open 属性
+    // 是非法的（Kotlin 报错"Private setters for open properties are prohibited"）。这里显式 `final`
+    // 关闭这个属性的 open，避免被 allopen 影响。
     @Volatile
-    var lastResult: ValidationResult? = null
+    final var lastResult: ValidationResult? = null
         private set
 
     @EventListener(ApplicationReadyEvent::class)

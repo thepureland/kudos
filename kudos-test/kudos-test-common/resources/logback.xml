@@ -1,9 +1,9 @@
 <configuration>
 
     <!-- 控制台彩色输出（logback 自带转换器，Spring Boot 环境也常用） -->
-    <conversionRule conversionWord="clr" converterClass="org.springframework.boot.logging.logback.ColorConverter" />
-    <conversionRule conversionWord="wex" converterClass="org.springframework.boot.logging.logback.WhitespaceThrowableProxyConverter" />
-    <conversionRule conversionWord="wEx" converterClass="org.springframework.boot.logging.logback.ExtendedWhitespaceThrowableProxyConverter" />
+    <conversionRule conversionWord="clr" class="org.springframework.boot.logging.logback.ColorConverter" />
+    <conversionRule conversionWord="wex" class="org.springframework.boot.logging.logback.WhitespaceThrowableProxyConverter" />
+    <conversionRule conversionWord="wEx" class="org.springframework.boot.logging.logback.ExtendedWhitespaceThrowableProxyConverter" />
 
     <property name="CONSOLE_PATTERN"
               value="%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr([%15.15thread]){faint} %clr(%-5level) %clr(%-40.40logger{40}){cyan} %clr(:){faint} %msg%n%wex"/>
@@ -24,5 +24,15 @@
 
     <!-- Ktorm SQL 日志 -->
     <logger name="org.ktorm" level="DEBUG"/>
+
+    <!--
+        Spring 启动期 CGLIB 子类代理时，会对每个 final public 方法发一条 "cannot get proxied via CGLIB" 警告。
+        在 Kotlin 里，inline reified 函数（如 BaseReadOnlyDao.getAs / getByIdsAs / searchAs / pagingSearchAs
+        和 BaseReadOnlyService 同名方法）在 JVM 字节码里必然是 final——它们的调用在编译期已被内联，
+        运行时从不走代理路径，警告纯属噪音。其余非 inline 的 final 方法已通过 kotlin-spring (allopen) 插件
+        与显式 `open` 修饰自动解除 final，AOP / @Transactional 对项目类已正常生效。
+        这里把 CglibAopProxy 日志降到 ERROR 以消除剩余噪音；如需排查代理失效问题，临时改回 WARN 即可。
+    -->
+    <logger name="org.springframework.aop.framework.CglibAopProxy" level="ERROR"/>
 
 </configuration>

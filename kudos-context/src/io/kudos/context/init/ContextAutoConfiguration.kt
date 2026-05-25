@@ -1,10 +1,12 @@
 package io.kudos.context.init
 
+import org.springframework.beans.factory.config.BeanDefinition
 import org.springframework.boot.autoconfigure.AutoConfigureOrder
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
+import org.springframework.context.annotation.Role
 import org.springframework.core.Ordered
 import org.springframework.scheduling.TaskScheduler
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler
@@ -16,9 +18,16 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler
  * @author K
  * @since 1.0.0
  */
+/**
+ * `@Role(ROLE_INFRASTRUCTURE)`: 此 @Configuration 实现了 [IComponentInitializer]，由
+ * [ComponentInitializationDispatcher]（本身是 BPP）在很早期接管，因此一定会先于业务 BPP 完成创建。
+ * 没有这个标记时，Spring 会发 "is not eligible for getting processed by all BeanPostProcessors" 警告。
+ * 这里显式声明为基础设施 bean，告诉 Spring 不需要给它套业务 BPP/auto-proxy。
+ */
 @Configuration
 @AutoConfigureOrder(Ordered.HIGHEST_PRECEDENCE)
 @Import(ComponentInitializationDispatcher::class)
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 open class ContextAutoConfiguration : IComponentInitializer {
 
     /**

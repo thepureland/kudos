@@ -75,9 +75,10 @@ open class LinkableCacheAutoConfiguration : IComponentInitializer {
     @ConditionalOnMissingBean
     open fun mixCacheInitializing(): MixCacheInitializing = MixCacheInitializing()
 
-    @Bean
-    @ConditionalOnMissingBean
-    open fun cacheDataInitialize() = CacheDataInitializer()
+    /**
+     * 见 [companion object] 中的 `cacheDataInitialize`：返回 `BeanPostProcessor` 的 @Bean 必须 static，
+     * 否则强制配置类自身提前实例化，跳过其它 BPP 的处理。
+     */
 
     @Bean
     @ConditionalOnMissingBean
@@ -121,5 +122,18 @@ open class LinkableCacheAutoConfiguration : IComponentInitializer {
     open fun keysGenerator(): IKeysGenerator = DefaultKeysGenerator()
 
     override fun getComponentName() = "kudos-ability-cache-linkable"
+
+    companion object {
+        /**
+         * `CacheDataInitializer` 实现了 `BeanPostProcessor`。返回 BPP 的 @Bean 工厂方法
+         * 必须声明为 static（Kotlin 用 `companion object` + `@JvmStatic`），否则 Spring 强制
+         * 提前实例化 `LinkableCacheAutoConfiguration`，让该配置类自身跳过 BPP 处理，
+         * 同时拖累其它依赖它的 AutoConfiguration（日志中能看到 ContextAutoConfiguration / 各 CacheAutoConfiguration 被牵连）。
+         */
+        @Bean
+        @ConditionalOnMissingBean
+        @JvmStatic
+        fun cacheDataInitialize(): CacheDataInitializer = CacheDataInitializer()
+    }
 
 }
