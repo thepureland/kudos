@@ -3,21 +3,30 @@ package io.kudos.ms.msg.common.receiver.enums
 import io.kudos.base.enums.ienums.IErrorCodeEnum
 
 /**
- * 消息接收错误码
+ * Message receive error codes.
  *
  * @author K
  * @author AI: Codex
  * @since 1.0.0
  */
 enum class MsgReceiveErrorCodeEnum(
-    /** 错误码 */
+    /** Error code */
     override val code: String,
-    /** 默认展示文本 */
+    /** Default display text */
     override val defaultDisplayText: String,
 ) : IErrorCodeEnum {
 
-    /** 未定义错误 */
-    UNSPECIFIED("UNSPECIFIED", "未定义错误");
+    /** Unspecified error */
+    UNSPECIFIED("UNSPECIFIED", "Unspecified error"),
+
+    /** Lookup of receive record by primary key failed */
+    RECEIVE_NOT_FOUND("RECEIVE_NOT_FOUND", "Message receive record does not exist"),
+
+    /** Current user does not match receiverId; not authorized to operate on this record */
+    RECEIVE_NOT_OWNED("RECEIVE_NOT_OWNED", "Not authorized to operate on this message"),
+
+    /** On markRead the record is already in READ / DELETED status (idempotent case, treat as warn rather than error) */
+    ALREADY_READ("ALREADY_READ", "Message has already been read");
 
     override val i18nKeyPrefix: String
         get() = "msg.error-msg.receive"
