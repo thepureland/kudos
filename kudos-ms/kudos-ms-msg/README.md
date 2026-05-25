@@ -45,15 +45,15 @@
     ┌───────────────┼─────────────────────────┐
     ▼               ▼                         ▼
 ┌──────────┐   ┌──────────┐               ┌──────────────┐
-│ api-     │   │ api-     │               │ api-internal │
+│ api-     │◄──│ api-     │               │ api-internal │
 │ admin    │   │ public   │               │ +nacos       │
 │ (库)     │   │ (启动)   │               │ +interservice│
 └──────────┘   └──────────┘               └──────────────┘
 ```
 
-> ⚠️ **api-public / api-internal 并不 import api-admin**——三个 api-* 模块各自独立依赖
-> `msg-core`，互不交叉。这意味着 api-public 进程上**没有** admin controller 注册
-> （除非补依赖）。详见 `kudos-ms-msg-api-public/README.md` 的"已知限制"。
+> ⚠️ **api-internal 不 import api-admin**——内部 Feign provider 进程只挂 `/api/internal/msg/**`，
+> 不挂管理端 controller。api-public 已通过依赖 api-admin 同时承载 `/api/admin/msg/**`
+> （见 `kudos-ms-msg-api-public/build.gradle.kts`）。
 
 ---
 
@@ -114,10 +114,6 @@ status=CONSUMED_FROM_MQ
 
 详见各子模块 README。综合性问题：
 
-- ❗ **api-public 没有 admin 依赖**——三个 api-* 各自独立 boot，但 README 与 gradle
-  config 不一致，需要决定是补依赖还是改文档
-- ❗ **`IMsgReceiverGroupApi` 接口体空**——common / client / api-internal 三处都缺
-  接收组的跨服务读写
-- ❗ **SQL 只有 h2 方言**——生产 mysql / pg 移植尚未做；msg_template 索引也缺
-- ❗ **fallback 不区分 4xx / 5xx**——调用方拿到 null 时分不清是参数错还是对端挂
-- ❗ **错误码全是 `UNSPECIFIED`** —— 4 个 ErrorCodeEnum 占位待填
+- ✅ **SQL 方言已补 PG + MySQL**——`resources/sql/msg/{h2,postgresql,mysql}/` 三套并存，13 个迁移文件按 RdbTypeEnum 自动选择；DML 用 PG `on conflict do nothing` / MySQL `insert ignore` 保证幂等；`msg_template` 缺的 `idx_msg_template__tenant_event` 索引已补在 PG/MySQL 版本上（h2 暂未补，sys 表用 dict_code 做点查不依赖此索引）
+- ✅ **fallback 已区分 4xx / 5xx**——5 个 Fallback 改为 `FallbackFactory<*>` + `AbstractFeignFallbackSupport` 重载，日志按 `client-error-4xx` / `server-error-5xx` / `unreachable` 分类
+- ✅ **错误码占位已补**——5 个 ErrorCodeEnum（send/template/instance/receive/receiverGroup）按代码实际失败路径定义了核心码（NOT_FOUND / DUPLICATE / 业务条件）；UNSPECIFIED 保留作兜底
