@@ -3,6 +3,8 @@ package io.kudos.test.container.containers
 import com.github.dockerjava.api.model.Container
 import io.kudos.test.container.kit.TestContainerKit
 import io.kudos.test.container.kit.bindingPort
+import io.kudos.test.container.main.ManualTestContainerMainSupport
+import io.kudos.test.container.support.TestContainerCrossProcessLock
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.wait.strategy.Wait
@@ -60,12 +62,12 @@ object H2TestContainer {
      * @return 运行中的容器对象
      */
     fun startIfNeeded(registry: DynamicPropertyRegistry?): Container {
-        synchronized(this) {
+        return TestContainerCrossProcessLock.run(H2TestContainer::class.java, "h2") {
             val runningContainer = TestContainerKit.startContainerIfNeeded(LABEL, container)
             if (registry != null) {
                 registerProperties(registry, runningContainer)
             }
-            return runningContainer
+            runningContainer
         }
     }
 
@@ -97,6 +99,7 @@ object H2TestContainer {
 
     @JvmStatic
     fun main(args: Array<String>?) {
+        ManualTestContainerMainSupport.removeExistingContainers(LABEL, "H2")
         startIfNeeded(null)
         println("H2 ${container.host} port: $PORT")
         Thread.sleep(Long.MAX_VALUE)

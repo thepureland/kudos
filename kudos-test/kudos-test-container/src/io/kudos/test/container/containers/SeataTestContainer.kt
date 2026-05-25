@@ -4,6 +4,8 @@ import com.github.dockerjava.api.model.Container
 import io.kudos.base.net.IpKit
 import io.kudos.test.container.kit.TestContainerKit
 import io.kudos.test.container.kit.bindingPort
+import io.kudos.test.container.main.ManualTestContainerMainSupport
+import io.kudos.test.container.support.TestContainerCrossProcessLock
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.slf4j.LoggerFactory
 import org.testcontainers.containers.BindMode
@@ -78,13 +80,13 @@ object SeataTestContainer {
     fun startIfNeeded(registry: DynamicPropertyRegistry?): Container {
         runningNacosContainer = NacosTestContainer.startNacosForSeataIfNeeded(registry)
 
-        synchronized(this) {
+        return TestContainerCrossProcessLock.run(SeataTestContainer::class.java, "seata") {
             val runningContainer = TestContainerKit.startContainerIfNeeded(LABEL, CONTAINER)
             if (registry != null) {
                 registerProperties(registry, runningContainer)
                 waitForSeataRegisteredInNacos()
             }
-            return runningContainer
+            runningContainer
         }
     }
 
@@ -131,6 +133,9 @@ object SeataTestContainer {
 
     @JvmStatic
     fun main(args: Array<String>?) {
+        // Seata 依赖 Nacos：手动启动入口同时清理两边历史容器，避免旧实例残留干扰。
+        ManualTestContainerMainSupport.removeExistingContainers(LABEL, "Seata")
+        ManualTestContainerMainSupport.removeExistingContainers(NacosTestContainer.LABEL_NACOS_FOR_SEATA, "Nacos（for Seata）")
         startIfNeeded(null)
         println("nacos localhost web-port: ${runningNacosContainer.ports.first().publicPort}")
         println("seata localhost service-port：$SERVICE_PORT")
