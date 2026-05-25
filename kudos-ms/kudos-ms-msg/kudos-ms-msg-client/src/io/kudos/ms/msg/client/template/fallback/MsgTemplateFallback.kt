@@ -3,22 +3,24 @@ package io.kudos.ms.msg.client.template.fallback
 import io.kudos.ability.distributed.client.feign.fallback.AbstractFeignFallbackSupport
 import io.kudos.ms.msg.client.template.proxy.IMsgTemplateProxy
 import io.kudos.ms.msg.common.template.vo.MsgTemplateCacheEntry
-import org.springframework.stereotype.Component
 
 
 /**
  * 消息模板 Feign 容错降级实现。读接口不可达时返回 null。
  *
+ * 由 [MsgTemplateFallbackFactory] 在每次降级时构造一个实例并传入 [cause]，
+ * 让日志能区分 4xx / 5xx / unreachable。
+ *
  * @author K
  * @author AI: Codex
  * @since 1.0.0
  */
-@Component
-open class MsgTemplateFallback :
-    AbstractFeignFallbackSupport("MsgTemplateFallback"), IMsgTemplateProxy {
+open class MsgTemplateFallback(
+    private val cause: Throwable? = null,
+) : AbstractFeignFallbackSupport("MsgTemplateFallback"), IMsgTemplateProxy {
 
     override fun getTemplateById(id: String): MsgTemplateCacheEntry? {
-        warnRead("getTemplateById", id)
+        warnRead("getTemplateById", cause, id)
         return null
     }
 
@@ -28,7 +30,7 @@ open class MsgTemplateFallback :
         msgTypeDictCode: String,
         localeDictCode: String?,
     ): MsgTemplateCacheEntry? {
-        warnRead("getTemplateByEvent", tenantId, eventTypeDictCode, msgTypeDictCode, localeDictCode)
+        warnRead("getTemplateByEvent", cause, tenantId, eventTypeDictCode, msgTypeDictCode, localeDictCode)
         return null
     }
 }

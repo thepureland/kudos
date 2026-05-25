@@ -1,6 +1,6 @@
 package io.kudos.ms.msg.client.template.proxy
 
-import io.kudos.ms.msg.client.template.fallback.MsgTemplateFallback
+import io.kudos.ms.msg.client.template.fallback.MsgTemplateFallbackFactory
 import io.kudos.ms.msg.common.template.api.IMsgTemplateApi
 import org.springframework.cloud.openfeign.FeignClient
 
@@ -12,5 +12,5 @@ import org.springframework.cloud.openfeign.FeignClient
  * @author AI: Codex
  * @since 1.0.0
  */
-@FeignClient(name = "msg-template", fallback = MsgTemplateFallback::class)
+@FeignClient(name = "msg-template", fallbackFactory = MsgTemplateFallbackFactory::class)
 interface IMsgTemplateProxy : IMsgTemplateApi
