@@ -10,9 +10,11 @@ import io.kudos.context.init.IComponentInitializer
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.ConfigurationProperties
+import org.springframework.beans.factory.config.BeanDefinition
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.PropertySource
+import org.springframework.context.annotation.Role
 import org.springframework.data.redis.connection.RedisConnectionFactory
 import org.springframework.data.redis.core.RedisTemplate
 
@@ -30,6 +32,9 @@ import org.springframework.data.redis.core.RedisTemplate
     factory = YamlPropertySourceFactory::class
 )
 @AutoConfigureAfter(ContextAutoConfiguration::class)
+// 见 ContextAutoConfiguration：IComponentInitializer 配置类必须早于业务 BPP 实例化，
+// 加 ROLE_INFRASTRUCTURE 避免 Spring 的 BeanPostProcessorChecker 误报。
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 open class RedisAutoConfiguration : IComponentInitializer {
 
     @Bean

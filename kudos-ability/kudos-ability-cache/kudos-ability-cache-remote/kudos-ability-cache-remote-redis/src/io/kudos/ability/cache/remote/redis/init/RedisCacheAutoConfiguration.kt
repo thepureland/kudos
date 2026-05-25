@@ -25,9 +25,11 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.thread.Threading
 import org.springframework.cache.CacheManager
+import org.springframework.beans.factory.config.BeanDefinition
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.DependsOn
+import org.springframework.context.annotation.Role
 import org.springframework.core.env.Environment
 import org.springframework.core.task.SimpleAsyncTaskExecutor
 import org.springframework.data.redis.cache.RedisCacheConfiguration
@@ -54,6 +56,9 @@ import java.util.UUID
 @AutoConfigureAfter(RedisAutoConfiguration::class)
 @EnableConfigurationProperties(CacheProperties::class)
 @ConditionalOnProperty(prefix = "kudos.ability.cache", name = ["enabled"], havingValue = "true", matchIfMissing = true)
+// 见 ContextAutoConfiguration：IComponentInitializer 配置类必须早于业务 BPP 实例化，
+// 加 ROLE_INFRASTRUCTURE 避免 Spring 的 BeanPostProcessorChecker 误报。
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentInitializer {
 
     private val log = LogFactory.getLog(this::class)

@@ -21,6 +21,11 @@ subprojects {
 
     // 所有子模块都应用 Kotlin JVM 插件
     apply(plugin = "org.jetbrains.kotlin.jvm")
+    // kotlin-spring: 自动给标注了 @Component / @Service / @Repository / @Configuration / @Controller
+    // / @Transactional / @Async / @Cacheable / @SpringBootTest 的 Kotlin 类与方法加 `open`，否则
+    // Spring CGLIB 子类代理会在每个 final 方法上输出 "cannot get proxied via CGLIB"，并使
+    // @Transactional / AOP 切面对这些方法静默失效。
+    apply(plugin = "org.jetbrains.kotlin.plugin.spring")
 
     // Kotlin 源码目录
     extensions.configure<org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension> {
@@ -52,6 +57,25 @@ subprojects {
             showStandardStreams = true
             // 可选：更明确地把标准输出/错误也当作事件打印
             // events("passed", "failed", "skipped", "standardOut", "standardError")
+        }
+
+        // Mockito 自挂载 ByteBuddy agent 的方式在 JDK 21+ 已是 warn，未来版本将默认禁止。
+        // 若 testRuntimeClasspath 含 mockito-core，则显式以 -javaagent 形式挂载，规避将来失败。
+        //
+        // 兼容 Gradle 配置缓存：必须在「配置阶段」就把文件解析出来，闭包里只能闭合
+        // 已经定型的 Provider/值，不能再访问 `project.configurations`。
+        val mockitoAgentJar = project.configurations.findByName("testRuntimeClasspath")
+            ?.incoming
+            ?.artifactView { lenient(true) }
+            ?.files
+            ?.filter { it.name.startsWith("mockito-core-") && it.name.endsWith(".jar") }
+        if (mockitoAgentJar != null) {
+            jvmArgumentProviders.add(
+                CommandLineArgumentProvider {
+                    val jar = runCatching { mockitoAgentJar.singleOrNull() ?: mockitoAgentJar.firstOrNull() }.getOrNull()
+                    if (jar != null) listOf("-javaagent:${jar.absolutePath}") else emptyList()
+                }
+            )
         }
     }
 

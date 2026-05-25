@@ -166,7 +166,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
      * @since 1.0.0
      */
     @Suppress("UNCHECKED_CAST")
-    fun <A : Any> whereExpr(column: Column<A>, operator: OperatorEnum, value: A?): ColumnDeclaring<Boolean>? {
+    open fun <A : Any> whereExpr(column: Column<A>, operator: OperatorEnum, value: A?): ColumnDeclaring<Boolean>? {
         return SqlWhereExpressionFactory.create(column as Column<Any>, operator, value)
     }
 

@@ -15,9 +15,11 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.cache.autoconfigure.CacheProperties
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.EnableConfigurationProperties
+import org.springframework.beans.factory.config.BeanDefinition
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.PropertySource
+import org.springframework.context.annotation.Role
 
 
 /**
@@ -49,6 +51,9 @@ import org.springframework.context.annotation.PropertySource
 @AutoConfigureBefore(LinkableCacheAutoConfiguration::class)
 @AutoConfigureAfter(ContextAutoConfiguration::class)
 @EnableConfigurationProperties(CacheProperties::class)
+// 见 ContextAutoConfiguration：IComponentInitializer 配置类必须早于业务 BPP 实例化，
+// 加 ROLE_INFRASTRUCTURE 避免 Spring 的 BeanPostProcessorChecker 误报。
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 open class CaffeineCacheAutoConfiguration : BaseCacheConfiguration(), IComponentInitializer {
 
     /** 本地 K-V 缓存管理器；bean 名 `localCacheManager` 由 [io.kudos.ability.cache.common.core.keyvalue.MixCacheManager] 注入。 */

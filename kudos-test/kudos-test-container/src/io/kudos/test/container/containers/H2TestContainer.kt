@@ -15,7 +15,18 @@ import org.testcontainers.containers.wait.strategy.Wait
  */
 object H2TestContainer {
 
-    private const val IMAGE_NAME = "oscarfonts/h2:alpine"
+    /**
+     * H2 测试镜像。
+     *
+     * 默认 `oscarfonts/h2:alpine` 只发布 amd64 manifest，在 Apple Silicon 等 arm64 主机上
+     * 会触发 testcontainers 的架构不匹配警告并走 Rosetta/QEMU 模拟，启动较慢且偶发超时。
+     * 可通过 `-Dkudos.test.h2.image=<image>` 或环境变量 `KUDOS_TEST_H2_IMAGE` 覆盖为
+     * 本地构建或第三方多架构镜像（例如自建 `eclipse-temurin` + h2.jar 的镜像）。
+     */
+    private val IMAGE_NAME: String =
+        System.getProperty("kudos.test.h2.image")
+            ?: System.getenv("KUDOS_TEST_H2_IMAGE")
+            ?: "oscarfonts/h2:alpine"
 
     const val DATABASE = "test"
 
