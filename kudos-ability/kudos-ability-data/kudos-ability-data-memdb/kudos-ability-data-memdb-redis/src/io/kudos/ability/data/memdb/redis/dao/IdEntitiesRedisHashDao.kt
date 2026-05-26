@@ -18,21 +18,21 @@ import java.nio.charset.StandardCharsets
 import kotlin.reflect.KClass
 
 /**
- * 以Hash结构存储的带有id的实体的redis访问对象
+ * Redis access object for entities with an id stored in a Hash structure.
  *
- * 1.全表缓存（每行一个对象）
- * 2.支持按多个属性查询（id/type/active/time）
- * 3.支持排序
- * 4.支持分页
- * 5.支持更新/删除
+ * 1. Full-table cache (one object per row).
+ * 2. Supports querying by multiple properties (id/type/active/time).
+ * 3. Supports sorting.
+ * 4. Supports pagination.
+ * 5. Supports update/delete.
  *
- * 实现方式：
- * 1.主数据用 Hash（id → 对象JSON）
- * 2.查询用二级索引（Set/ZSet），组合索引 ZSet
- * 3.分页查询：ZREVRANGE 或 ZREVRANGEBYSCORE LIMIT + HMGET
- * 4.更新/删除时维护索引
- * 5.全表刷新：pipeline 批量写 + tmp key + rename（避免半刷新）
- * 6.用 pipeline（Lettuce async 批量），提升写入性能
+ * Implementation:
+ * 1. Main data uses a Hash (id → object JSON).
+ * 2. Queries use secondary indexes (Set/ZSet); composite indexes use ZSet.
+ * 3. Paged queries: ZREVRANGE or ZREVRANGEBYSCORE LIMIT + HMGET.
+ * 4. Indexes are maintained on update/delete.
+ * 5. Full-table refresh: pipeline batch write + tmp key + rename (to avoid a half-refreshed state).
+ * 6. Uses pipeline (Lettuce async batch) to improve write performance.
  *
  * @author K
  * @author AI: Codex
@@ -43,17 +43,18 @@ open class IdEntitiesRedisHashDao(
 ) {
 
     /**
-     * 主键作为 Hash field / Set·ZSet 成员时的规范形式，避免 CHAR 等类型尾部空格与调用方 trim 后的主键不一致。
+     * Canonical form of the primary key when used as a Hash field / Set or ZSet member, to avoid mismatches caused by
+     * trailing whitespace in CHAR-like types versus the caller's trimmed primary key.
      */
     protected open fun normalizePkField(id: Any?): String = (id ?: "").toString().trim()
 
-    // ---------- 单条 CRUD ----------
+    // ---------- Single-row CRUD ----------
 
     /**
-     * 保存或更新一行，并维护二级索引（根据传入的属性集合从实体取值建索引）。
+     * Saves or updates a single row, and maintains the secondary indexes (built from values taken from the entity using the supplied property sets).
      *
-     * @param filterableProperties 可筛选属性名（等值查询用 Set 索引），如 type、status；空则不建。例外：数值型范围查询条件放 sortableProperties
-     * @param sortableProperties 可排序/范围属性名（ZSet 索引），如 time、score；空则不建。数值型范围查询条件放本项
+     * @param filterableProperties Filterable property names (use Set index for equality queries) such as type, status; not built if empty. Note: numeric range query conditions should be placed in sortableProperties.
+     * @param sortableProperties Sortable / range property names (ZSet index) such as time, score; not built if empty. Numeric range query conditions go here.
      */
     open fun <PK, E : IIdEntity<PK>> save(
         dataKeyPrefix: String,
@@ -67,11 +68,11 @@ open class IdEntitiesRedisHashDao(
     }
 
     /**
-     * 批量保存或更新多行，并维护二级索引（根据传入的属性集合从实体取值建索引）。
-     * 主数据使用 pipeline 批量写入，减少网络往返。
+     * Batch save or update multiple rows and maintain the secondary indexes (built from values taken from the entities using the supplied property sets).
+     * Main data is written in batches via pipeline to reduce network round-trips.
      *
-     * @param filterableProperties 可筛选属性名（等值查询用 Set 索引）；空则不建。数值型范围查询条件放 sortableProperties
-     * @param sortableProperties 可排序/范围属性名（ZSet 索引）；空则不建。数值型范围查询条件放本项
+     * @param filterableProperties Filterable property names (use Set index for equality queries); not built if empty. Numeric range query conditions go in sortableProperties.
+     * @param sortableProperties Sortable / range property names (ZSet index); not built if empty. Numeric range query conditions go here.
      */
     open fun <PK, E : IIdEntity<PK>> saveBatch(
         dataKeyPrefix: String,
@@ -106,7 +107,7 @@ open class IdEntitiesRedisHashDao(
     }
 
     /**
-     * 按 id 查询一行。
+     * Query a single row by id.
      */
     open fun <PK, E : IIdEntity<PK>> getById(dataKeyPrefix: String, id: PK, entityClass: KClass<E>): E? {
         val raw = getRedisTemplate().opsForHash<String, Any>().get(dataKeyPrefix, normalizePkField(id)) ?: return null
@@ -114,16 +115,16 @@ open class IdEntitiesRedisHashDao(
     }
 
     /**
-     * 轻量级判断指定 id 是否存在于 Hash（使用 HEXISTS，不反序列化 value）。
+     * Lightweight check for whether the specified id exists in the Hash (uses HEXISTS, does not deserialize the value).
      */
     open fun existsById(dataKeyPrefix: String, id: Any): Boolean =
         getRedisTemplate().opsForHash<String, Any>().hasKey(dataKeyPrefix, normalizePkField(id))
 
     /**
-     * 按 id 删除一行，并从二级索引中移除。
+     * Delete a single row by id and remove it from the secondary indexes.
      *
-     * @param filterableProperties 建 Set 索引时用的属性名集合，需与保存时一致才能正确从索引移除
-     * @param sortableProperties 建 ZSet 索引时用的属性名集合，需与保存时一致才能正确从索引移除
+     * @param filterableProperties The set of property names used when building the Set index; must match the one used at save time so removal from the index works correctly.
+     * @param sortableProperties The set of property names used when building the ZSet index; must match the one used at save time so removal from the index works correctly.
      */
     open fun <PK, E : IIdEntity<PK>> deleteById(
         dataKeyPrefix: String,
@@ -141,7 +142,7 @@ open class IdEntitiesRedisHashDao(
     }
 
     /**
-     * 按 id 列表批量查询。
+     * Batch query by a list of ids.
      */
     open fun <E : IIdEntity<*>> findByIds(
         dataKeyPrefix: String,
@@ -155,10 +156,10 @@ open class IdEntitiesRedisHashDao(
         return rawList.mapNotNull { raw -> raw?.let { parseToEntity(it, entityClass) } }
     }
 
-    // ---------- 全表与分页 ----------
+    // ---------- Full table and pagination ----------
 
     /**
-     * 全表列表（不分页）。
+     * Full-table list (without pagination).
      */
     open fun <PK, E : IIdEntity<PK>> listAll(dataKeyPrefix: String, entityClass: KClass<E>): List<E> {
         val entries = getRedisTemplate().opsForHash<String, Any>().entries(dataKeyPrefix) ?: return emptyList()
@@ -166,11 +167,11 @@ open class IdEntitiesRedisHashDao(
     }
 
     /**
-     * 按某个 ZSet 二级索引分页查询（常用于按时间等排序分页）。
-     * @param zsetIndexName 索引名，对应二级索引 key 中 "zset:xxx" 的 xxx 部分
-     * @param offset 偏移
-     * @param limit 条数
-     * @param desc 是否倒序（默认 true，即最新/最大在前）
+     * Paged query by a ZSet secondary index (commonly used for paging sorted by time, etc.).
+     * @param zsetIndexName Index name, corresponding to the xxx part of "zset:xxx" in the secondary index key.
+     * @param offset Offset.
+     * @param limit Count.
+     * @param desc Whether to sort descending (default true, i.e. newest/largest first).
      */
     open fun <PK, E : IIdEntity<PK>> listPageByZSetIndex(
         dataKeyPrefix: String,
@@ -191,12 +192,12 @@ open class IdEntitiesRedisHashDao(
     }
 
     /**
-     * 按某个属性的等值条件查询：该属性下的所有 id，再查行（不分页）。
-     * 统一使用 Set 二级索引（set:property:value），与 save/saveBatch 时 filterableProperties 的写入一致；
-     * ZSet 仅用于 listPageByZSetIndex / 排序，不在此处使用。
+     * Equality query by a single property: collect all ids for the property, then fetch the rows (without pagination).
+     * Uses the Set secondary index (set:property:value) uniformly, consistent with the writes performed for filterableProperties in save/saveBatch;
+     * ZSet is used only for listPageByZSetIndex / sorting, not here.
      *
-     * @param property 属性名，对应二级索引 key 中的属性部分（如 "type"、"status"）
-     * @param value 属性值，转为字符串后作为 Set key 的一部分
+     * @param property Property name, corresponding to the property part of the secondary index key (e.g. "type", "status").
+     * @param value Property value, converted to a string and used as part of the Set key.
      */
     open fun <PK, E : IIdEntity<PK>> listBySetIndex(
         dataKeyPrefix: String,
@@ -211,32 +212,32 @@ open class IdEntitiesRedisHashDao(
     }
 
     /**
-     * 把任意值转 Double 用作 ZSet score。
-     * 非数值字符串回落到 `-Double.MAX_VALUE`——不是 `Double.MIN_VALUE`，后者是最小**正**数。
+     * Converts an arbitrary value to a Double for use as a ZSet score.
+     * Non-numeric strings fall back to `-Double.MAX_VALUE` — not `Double.MIN_VALUE`, which is the smallest **positive** number.
      *
-     * @param value 任意值
-     * @return Double score
+     * @param value Any value.
+     * @return Double score.
      * @author K
      * @since 1.0.0
      */
     private fun toDouble(value: Any): Double = when (value) {
         is Number -> value.toDouble()
-        // -Double.MAX_VALUE 是负方向最远；Double.MIN_VALUE 实为最小**正**数，绝不能当做下界 fallback
+        // -Double.MAX_VALUE is the most negative value; Double.MIN_VALUE is actually the smallest **positive** number and must never be used as the lower-bound fallback.
         is String -> value.toDoubleOrNull() ?: -Double.MAX_VALUE
         else -> -Double.MAX_VALUE
     }
 
     /**
-     * 按条件 + 分页 + 排序查询列表。
-     * - Criteria 中属性值为数值型的用 ZSet 索引，其他用 Set 索引；条件逻辑 组间 AND，组内数组 OR。
-     * - orders 中的属性全部用 ZSet 索引；仅第一个 Order 参与 Redis 排序，多字段排序需在应用层处理。
+     * Query a list by criteria + pagination + sorting.
+     * - In Criteria, numeric property values use the ZSet index; others use the Set index; condition logic is AND between groups and OR within an in-group array.
+     * - All properties in orders use the ZSet index; only the first Order participates in Redis sorting, multi-field sorting must be handled at the application layer.
      *
-     * @param dataKeyPrefix 表 key 前缀
-     * @param entityClass 行对象类型
-     * @param criteria 查询条件，可为空表示全表
-     * @param pageNo 页码，从 1 开始
-     * @param pageSize 每页条数
-     * @param orders 排序（ZSet 索引属性），如不传则按条件结果集顺序分页
+     * @param dataKeyPrefix Table key prefix.
+     * @param entityClass Row object type.
+     * @param criteria Query conditions; null means the entire table.
+     * @param pageNo Page number, starting at 1.
+     * @param pageSize Page size.
+     * @param orders Sort (ZSet-indexed property); if omitted, pages in the natural order of the condition result set.
      */
     open fun <PK, E : IIdEntity<PK>> list(
         dataKeyPrefix: String,
@@ -278,10 +279,10 @@ open class IdEntitiesRedisHashDao(
     }
 
     /**
-     * 全表刷新：先原子替换主数据（tmp + rename），再按传入的属性集合重建二级索引。
+     * Full-table refresh: atomically replace the main data first (tmp + rename), then rebuild the secondary indexes based on the supplied property sets.
      *
-     * @param filterableProperties 可筛选属性名（等值查询用 Set 索引）；空则不建。数值型范围查询条件放 sortableProperties
-     * @param sortableProperties 可排序/范围属性名（ZSet 索引）；空则不建。数值型范围查询条件放本项
+     * @param filterableProperties Filterable property names (use Set index for equality queries); not built if empty. Numeric range query conditions go in sortableProperties.
+     * @param sortableProperties Sortable / range property names (ZSet index); not built if empty. Numeric range query conditions go here.
      */
     open fun <PK, E : IIdEntity<PK>> refreshAll(
         dataKeyPrefix: String,
@@ -319,7 +320,7 @@ open class IdEntitiesRedisHashDao(
     }
 
     /**
-     * 清除该 Hash 的所有数据（主数据及二级索引）。
+     * Clear all data of this Hash (main data and secondary indexes).
      */
     open fun clear(dataKeyPrefix: String) {
         val dataKeyBytes = dataKeyPrefix.toByteArray(StandardCharsets.UTF_8)
@@ -331,8 +332,8 @@ open class IdEntitiesRedisHashDao(
     }
 
     /**
-     * 删除当前表相关的所有二级索引 key（按前缀匹配）。
-     * 使用 SCAN 替代 KEYS，兼容 Lettuce 7.x（KEYS 在 Lettuce 7 中 API 变更），且不阻塞。
+     * Delete all secondary index keys related to the current table (matched by prefix).
+     * Uses SCAN instead of KEYS to be compatible with Lettuce 7.x (the KEYS API changed in Lettuce 7) and to avoid blocking.
      */
     protected open fun deleteAllIndexKeys(dataKeyPrefix: String) {
         val pattern = "${getIndexKeyPrefix(dataKeyPrefix)}*"
@@ -347,23 +348,23 @@ open class IdEntitiesRedisHashDao(
         }
     }
 
-    // ---------- 内部 ----------
+    // ---------- Internal ----------
 
     /**
-     * 增量维护实体上的二级索引（Set + ZSet）。
+     * Incrementally maintains the entity's secondary indexes (Set + ZSet).
      *
-     * - filterableProperties → Set 索引（等值查询）
-     * - sortableProperties → ZSet 索引（排序/范围查询）
-     * - add=true 写入索引，add=false 从索引删除
+     * - filterableProperties → Set index (equality queries)
+     * - sortableProperties → ZSet index (sort / range queries)
+     * - add=true writes to the index; add=false removes from the index
      *
-     * 同一实体的两类索引"逐属性 + 双类型"写入，因此写性能与属性集大小成正比。
+     * Both index types are written "per property + per type" for the same entity, so write performance is proportional to the size of the property set.
      *
-     * @param dataKeyPrefix 主数据 key 前缀（用于推导索引 key 前缀）
-     * @param id 实体主键
-     * @param entity 实体对象
-     * @param filterableProperties 参与等值查询的属性集
-     * @param sortableProperties 参与排序/范围查询的属性集
-     * @param add true 写入索引，false 移除索引
+     * @param dataKeyPrefix Main data key prefix (used to derive the index key prefix).
+     * @param id Entity primary key.
+     * @param entity Entity object.
+     * @param filterableProperties Property set participating in equality queries.
+     * @param sortableProperties Property set participating in sort / range queries.
+     * @param add true writes to the index, false removes from the index.
      * @author K
      * @since 1.0.0
      */
@@ -395,18 +396,18 @@ open class IdEntitiesRedisHashDao(
     }
 
     /**
-     * 反射取实体上指定属性的值。
-     * 顺序：字段 → `getXxx` → `isXxx`；都查不到返回 null。
+     * Reflectively fetches the value of the specified property on the entity.
+     * Order: field → `getXxx` → `isXxx`; returns null if none is found.
      *
-     * TODO 后续考虑用属性元数据缓存替代每次反射。
+     * TODO Consider replacing per-call reflection with a property metadata cache.
      *
-     * @param entity 目标对象
-     * @param propertyName 属性名
-     * @return 属性值；查不到返回 null
+     * @param entity Target object.
+     * @param propertyName Property name.
+     * @return Property value, or null if not found.
      * @author K
      * @since 1.0.0
      */
-    //TODO 性能提升
+    //TODO Performance improvement
     private fun getPropertyValue(entity: Any, propertyName: String): Any? {
         val clazz = entity.javaClass
         try {
@@ -428,8 +429,9 @@ open class IdEntitiesRedisHashDao(
     }
 
     /**
-     * 把 Redis 取出的原始值（可能已被 Spring Data Redis 反序列化为对象，也可能仍是 JSON 字符串）
-     * 统一转成目标实体。解析失败返回 null 并打 warn，避免一行脏数据拖垮整个列表查询。
+     * Converts the raw value fetched from Redis (which may have already been deserialized to an object by Spring Data Redis,
+     * or may still be a JSON string) uniformly into the target entity. Returns null and logs a warn on parse failure,
+     * to prevent a single bad row from dragging down the entire list query.
      */
     private fun <E : IIdEntity<*>> parseToEntity(raw: Any, entityClass: KClass<E>): E? = try {
         when (raw) {
@@ -437,25 +439,25 @@ open class IdEntitiesRedisHashDao(
             else -> JSON.parseObject(JSON.toJSONString(raw), entityClass.java)
         }
     } catch (e: Exception) {
-        log.warn("redis hash 值反序列化失败，已跳过此条记录: type={0}, error={1}", entityClass.simpleName, e.message)
+        log.warn("Failed to deserialize redis hash value; skipping this record: type={0}, error={1}", entityClass.simpleName, e.message)
         null
     }
 
     /**
-     * 取默认 RedisTemplate；子类需自定义序列化或库选择时可重写本方法返回不同实例。
+     * Returns the default RedisTemplate; subclasses can override this method to return a different instance when custom serialization or library choice is needed.
      *
-     * @return 默认 RedisTemplate
+     * @return Default RedisTemplate.
      * @author K
      * @since 1.0.0
      */
     protected fun getRedisTemplate(): RedisTemplate<Any, Any?> = redisTemplates.defaultRedisTemplate
 
-    /** 二级索引 key 前缀 */
+    /** Secondary index key prefix. */
     protected fun getIndexKeyPrefix(dataKeyPrefix: String): String =
         CacheKey.getCacheKey(dataKeyPrefix, "idx")
 
     companion object {
-        /** 日志器；反序列化失败仅记 WARN 并跳过此条，避免单条脏数据拖垮整批查询 */
+        /** Logger; deserialization failures are only logged as WARN and the row is skipped, to prevent a single bad record from dragging down the whole batch query. */
         private val log = LogFactory.getLog(IdEntitiesRedisHashDao::class)
     }
 }

@@ -3,10 +3,10 @@ package io.kudos.ability.cache.common.init.properties
 import io.kudos.ability.cache.common.support.CacheConfig
 
 /**
- * 缓存项配置容器。兼容两种配置形式：
+ * Cache items configuration container. Supports two configuration forms:
  *
- * 1. `kudos.ability.cache.cache-items[]`：每项是一条字符串形式的查询串。
- * 2. `kudos.ability.cache.cache-item-configs[]`：每项是结构化的 [CacheConfig] 对象。
+ * 1. `kudos.ability.cache.cache-items[]`: each entry is a query-string-style string.
+ * 2. `kudos.ability.cache.cache-item-configs[]`: each entry is a structured [CacheConfig] object.
  *
  * ```yaml
  * kudos:
@@ -21,15 +21,16 @@ import io.kudos.ability.cache.common.support.CacheConfig
  *           ttl: 900
  * ```
  *
- * 字符串解析逻辑见 [io.kudos.ability.cache.common.support.DefaultCacheConfigProvider.cacheItemToConfig]：
- * 按 `&` 拆 token，按 `=` 拆 key/value，反射 set 到 `CacheConfig` 字段。
+ * String parsing is implemented in [io.kudos.ability.cache.common.support.DefaultCacheConfigProvider.cacheItemToConfig]:
+ * split tokens by `&`, split key/value by `=`, then reflectively set fields on `CacheConfig`.
  *
- * **设计权衡**：用扁平字符串而非嵌套 yml object，是为了让长列表在 yml 里更紧凑、好 diff；
- * 代价是失去 IDE 字段提示和编译期校验，所以解析期对未知字段会抛错。新配置建议优先使用
- * [cacheItemConfigs]，保留 [cacheItems] 是为了兼容既有 yml。
+ * **Design trade-off**: a flat string is used rather than a nested yml object so that long lists stay
+ * compact and diff-friendly in yml; the cost is losing IDE field hints and compile-time validation, so
+ * parsing throws on unknown fields. For new configurations, prefer [cacheItemConfigs]; [cacheItems] is
+ * retained for backward compatibility with existing yml.
  *
- * @property cacheItems 字符串列表，每条形如 `name=X&strategy=Y&...`
- * @property cacheItemConfigs 结构化缓存项列表，每项按 [CacheConfig] 字段绑定
+ * @property cacheItems list of strings, each of the form `name=X&strategy=Y&...`
+ * @property cacheItemConfigs structured list of cache items, each bound to [CacheConfig] fields
  * @author K
  * @author AI: Codex
  * @since 1.0.0

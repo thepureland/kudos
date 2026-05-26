@@ -9,13 +9,15 @@ import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 
 /**
- * K-V 本地缓存管理器的 Caffeine 实现。
+ * Caffeine implementation of the K-V local cache manager.
  *
- * 把 [CacheConfig] 翻译成 Caffeine spec + 单缓存级别的 `expireAfterWrite(ttl)`，
- * 包装成 [DrainingCaffeineCache] 以解决 `invalidateAll()` 异步生效引起的"清完还能读到"问题。
+ * Translates [CacheConfig] into a Caffeine spec plus per-cache `expireAfterWrite(ttl)`, then wraps
+ * the result in [DrainingCaffeineCache] to work around the "still readable after clear" issue
+ * caused by `invalidateAll()` being applied asynchronously.
  *
- * 通过 [ensureSizeBound] 给 caffeine spec 兜底 `maximumSize`，避免业务漏配上限导致
- * 长跑 OOM——这是产线遇到过的真实问题，看到 warn 日志请补全 spec。
+ * [ensureSizeBound] adds a safety-net `maximumSize` to the caffeine spec so a missing upper bound
+ * in business config cannot cause a long-running OOM — this is a real production issue we have hit;
+ * if you see the warn log, please fill in the spec.
  *
  * @author K
  * @author AI: Codex
@@ -24,9 +26,11 @@ import java.util.regex.Pattern
 class CaffeineKeyValueCacheManager : AbstractKeyValueCacheManager<CaffeineCache>() {
 
     /**
-     * 按 [cacheConfig] 构造单个 [CaffeineCache]：合并全局 spec、覆盖 ttl、按版本配置加前缀。
-     * 失败的前置条件用 `requireNotNull` 立刻抛——典型是 yml 缺 `spring.cache.caffeine.spec`
-     * 或 cache item 缺 `ttl`，启动期失败优于运行期发现缓存配错。
+     * Build a single [CaffeineCache] from [cacheConfig]: merge the global spec, override the ttl,
+     * and apply the versioned prefix.
+     * Failing preconditions throw immediately via `requireNotNull` — typically yml missing
+     * `spring.cache.caffeine.spec` or a cache item missing `ttl`; failing at startup is better
+     * than discovering misconfiguration at runtime.
      */
     override fun createCache(cacheConfig: CacheConfig): CaffeineCache {
         val spec = requireNotNull(properties.caffeine.spec) { "caffeine spec is required" }
@@ -40,20 +44,21 @@ class CaffeineKeyValueCacheManager : AbstractKeyValueCacheManager<CaffeineCache>
             name = versionConfig.getFinalCacheName(name)
         }
         val caffeineCache = DrainingCaffeineCache(name, cacheBuilder.build())
-        log.debug("初始化本地缓存【{0}】成功！", name)
+        log.debug("Initialized local cache [{0}] successfully!", name)
         return caffeineCache
     }
 
     /**
-     * 给 caffeine spec 兜底加上大小限制。
-     * 不要依赖业务方在每个环境的配置文件里都正确写出 maximumSize：
-     * 漏写一次 spec 就是无界 LinkedHashMap，长跑后必 OOM。这里在创建阶段静默兜底，并 warn 提示。
+     * Add a safety-net size bound to a caffeine spec.
+     * Do not rely on every business owner to set maximumSize correctly in every environment's
+     * config file: a single missing spec means an unbounded LinkedHashMap and an inevitable OOM
+     * over time. Silently add a fallback at creation time and emit a warn log.
      */
     private fun ensureSizeBound(spec: String): String {
         val hasSizeBound = SIZE_BOUND_REGEX.containsMatchIn(spec)
         if (hasSizeBound) return spec
         log.warn(
-            "Caffeine spec 未配置 maximumSize/maximumWeight，按 [{0}] 兜底以避免无界增长；建议显式在 caffeine.spec 里设置上限。原 spec=[{1}]",
+            "Caffeine spec does not configure maximumSize/maximumWeight; defaulting to [{0}] to prevent unbounded growth. Please set an explicit upper bound in caffeine.spec. Original spec=[{1}]",
             DEFAULT_MAX_SIZE,
             spec
         )
@@ -61,13 +66,16 @@ class CaffeineKeyValueCacheManager : AbstractKeyValueCacheManager<CaffeineCache>
     }
 
     /**
-     * 按通配符 `*` 模式清除缓存项。
+     * Evict cache entries by a wildcard `*` pattern.
      *
-     * 入参可能是逻辑模式（`user:*`）或已带版本前缀的实际模式（`v2:user:*`）——
-     * 统一先剥版本再加回版本，避免重复前缀。把 `*` 转为正则 `.*` 后扫整张 nativeMap，
-     * 命中的 key 走 `cache.evict(key)` 立即生效（[DrainingCaffeineCache] 会同步 cleanUp）。
+     * The argument may be a logical pattern (`user:*`) or an actual pattern that already carries a
+     * version prefix (`v2:user:*`) — uniformly strip the version and re-add it to avoid duplicated
+     * prefixes. Convert `*` into a regex `.*`, scan the entire nativeMap, and call
+     * `cache.evict(key)` on every hit so the eviction takes effect immediately
+     * ([DrainingCaffeineCache] performs a synchronous cleanUp).
      *
-     * **性能注意**：全表扫描 + 单 key evict；缓存条目数大时不便宜。生产使用前评估热点。
+     * **Performance note**: full scan plus per-key evict; not cheap when the cache holds many
+     * entries. Evaluate hot spots before using in production.
      */
     override fun evictByPattern(cacheName: String, pattern: String) {
         val cache = getCache(cacheName) ?: return
@@ -83,8 +91,9 @@ class CaffeineKeyValueCacheManager : AbstractKeyValueCacheManager<CaffeineCache>
     }
 
     /**
-     * 是否存在指定 key——通过 `nativeCache.asMap().containsKey` 直接判断，
-     * 不触发 Caffeine 的 LoadingCache 加载逻辑（与 [CaffeineCache.get] 的语义区分开）。
+     * Whether the given key exists — checked directly via `nativeCache.asMap().containsKey`,
+     * without triggering Caffeine's LoadingCache load logic (distinct from [CaffeineCache.get]
+     * semantics).
      */
     override fun existsKey(cacheName: String, key: Any): Boolean {
         val cache = getCache(cacheName) ?: return false
@@ -94,10 +103,10 @@ class CaffeineKeyValueCacheManager : AbstractKeyValueCacheManager<CaffeineCache>
     private val log = LogFactory.getLog(this::class)
 
     companion object {
-        /** 兜底大小：不严格科学，但比无界好；用户应在 spec 里显式覆盖以匹配自身工作负载。 */
+        /** Fallback size: not strictly scientific, but better than unbounded; users should override explicitly in their spec to match their workload. */
         private const val DEFAULT_MAX_SIZE = 10_000L
 
-        /** 匹配 caffeine spec 中的大小相关配置项（key 后必须紧跟 `=`，避免误匹配 maximumWeightXxx 之类）。 */
+        /** Match size-related options in a caffeine spec (`=` must follow the key directly to avoid matching things like maximumWeightXxx). */
         private val SIZE_BOUND_REGEX = Regex("\\b(maximumSize|maximumWeight)\\s*=")
     }
 

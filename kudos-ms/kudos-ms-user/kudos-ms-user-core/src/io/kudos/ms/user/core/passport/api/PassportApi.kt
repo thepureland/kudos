@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component
 
 
 /**
- * 登录通行证 API本地实现
+ * Login passport API local implementation.
  *
  * @author K
  * @since 1.0.0

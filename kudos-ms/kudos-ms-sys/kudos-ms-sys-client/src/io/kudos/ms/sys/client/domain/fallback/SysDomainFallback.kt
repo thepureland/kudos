@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component
 
 
 /**
- * 域名 Feign 容错降级实现。
+ * Domain Feign client fallback implementation.
  *
  * @author K
  * @since 1.0.0

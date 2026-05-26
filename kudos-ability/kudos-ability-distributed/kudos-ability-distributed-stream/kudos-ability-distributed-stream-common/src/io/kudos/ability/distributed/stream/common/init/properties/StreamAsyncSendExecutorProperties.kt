@@ -3,9 +3,10 @@ package io.kudos.ability.distributed.stream.common.init.properties
 import org.springframework.boot.context.properties.ConfigurationProperties
 
 /**
- * Stream 异步发送线程池（[io.kudos.ability.distributed.stream.common.init.StreamCommonConfiguration.streamAsyncSendExecutor]）配置。
+ * Configuration for the Stream asynchronous send thread pool
+ * ([io.kudos.ability.distributed.stream.common.init.StreamCommonConfiguration.streamAsyncSendExecutor]).
  *
- * 绑定前缀：`kudos.ability.distributed.stream.async-executor`
+ * Binding prefix: `kudos.ability.distributed.stream.async-executor`
  */
 @ConfigurationProperties(prefix = "kudos.ability.distributed.stream.async-executor")
 open class StreamAsyncSendExecutorProperties {

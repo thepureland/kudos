@@ -1,9 +1,10 @@
 package io.kudos.ability.cache.common.support
 
 /**
- * Hash 缓存“仅清理本地”扩展接口，用于收到 Redis 通知后清理本地存储，不暴露给业务写逻辑。
+ * Hash-cache "local-only cleanup" extension interface, used to evict local storage upon receiving a Redis notification.
+ * Not exposed to business write logic.
  *
- * 仅本地实现（如 CaffeineIdEntitiesHashCache）需要实现；远程实现不实现。
+ * Only local implementations (e.g., CaffeineIdEntitiesHashCache) need to implement this; remote implementations do not.
  *
  * @author K
  * @since 1.0.0
@@ -11,12 +12,12 @@ package io.kudos.ability.cache.common.support
 interface IHashCacheSync {
 
     /**
-     * 清空该 cacheName 下本地主数据与索引（对应远程 refreshAll）。
+     * Clears the local primary data and indexes under the given cacheName (corresponds to remote refreshAll).
      */
     fun clearLocal(cacheName: String)
 
     /**
-     * 仅从本地移除该 id（对应远程 deleteById 或 save 后失效该 id）。
+     * Removes the given id from local storage only (corresponds to remote deleteById, or to invalidating the id after save).
      */
     fun evictLocal(cacheName: String, id: Any)
 }

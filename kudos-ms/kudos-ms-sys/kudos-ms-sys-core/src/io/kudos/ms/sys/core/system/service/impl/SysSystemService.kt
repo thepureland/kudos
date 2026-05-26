@@ -24,7 +24,7 @@ import kotlin.reflect.KClass
 
 
 /**
- * 系统业务
+ * System service.
  *
  * @author K
  * @author AI: Cursor
@@ -79,8 +79,8 @@ open class SysSystemService(
         return completeCrudUpdate(
             success = dao.update(system),
             log = log,
-            successMessage = "更新编码为${code}的系统的启用状态为${active}。",
-            failureMessage = "更新编码为${code}的系统的启用状态为${active}失败！",
+            successMessage = "Updated active status of system [$code] to $active.",
+            failureMessage = "Failed to update active status of system [$code] to $active!",
         ) {
             eventPublisher.publishEvent(SysSystemUpdated(id = code))
         }
@@ -101,7 +101,7 @@ open class SysSystemService(
     @Transactional
     override fun insert(any: Any): String {
         val code = super.insert(any)
-        completeCrudInsert(log, "新增编码为${code}的系统。") {
+        completeCrudInsert(log, "Inserted system [$code].") {
             eventPublisher.publishEvent(SysSystemInserted(id = code))
         }
         return code
@@ -113,8 +113,8 @@ open class SysSystemService(
         return completeCrudUpdate(
             success = super.update(any),
             log = log,
-            successMessage = "更新编码为${code}的系统。",
-            failureMessage = "更新编码为${code}的系统失败！",
+            successMessage = "Updated system [$code].",
+            failureMessage = "Failed to update system [$code]!",
         ) {
             eventPublisher.publishEvent(SysSystemUpdated(id = code))
         }
@@ -123,14 +123,14 @@ open class SysSystemService(
     @Transactional
     override fun deleteById(id: String): Boolean {
         dao.get(id) ?: run {
-            log.warn("删除编码为${id}的系统时，发现其已不存在！")
+            log.warn("System [$id] no longer exists when attempting to delete!")
             return false
         }
         return completeCrudUpdate(
             success = super.deleteById(id),
             log = log,
-            successMessage = "删除编码为${id}的系统成功！",
-            failureMessage = "删除编码为${id}的系统失败！",
+            successMessage = "Deleted system [$id] successfully!",
+            failureMessage = "Failed to delete system [$id]!",
         ) {
             eventPublisher.publishEvent(SysSystemDeleted(id = id))
         }
@@ -139,7 +139,7 @@ open class SysSystemService(
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {
         val count = super.batchDelete(ids)
-        log.debug("批量删除系统，期望删除${ids.size}条，实际删除${count}条。")
+        log.debug("Batch delete systems: expected ${ids.size}, actually deleted $count.")
         if (count > 0) {
             eventPublisher.publishEvent(SysSystemBatchDeleted(ids = ids))
         }
@@ -147,15 +147,15 @@ open class SysSystemService(
     }
 
     /**
-     * 从 update 入参抽 code（这里 id 即 code）；要求实现 [IIdEntity] 且 id 是 String。
+     * Extracts the code from the update payload (here id equals code); requires [IIdEntity] with a String id.
      *
-     * @param any 更新入参
-     * @return 系统 code
-     * @throws IllegalStateException 入参类型不被支持
+     * @param any update payload
+     * @return system code
+     * @throws IllegalStateException when the payload type is not supported
      * @author K
      * @since 1.0.0
      */
     private fun requireSystemCode(any: Any): String =
         (any as? IIdEntity<*>)?.id as? String
-            ?: error("更新系统时不支持的入参类型: ${any::class.qualifiedName}")
+            ?: error("Unsupported payload type when updating system: ${any::class.qualifiedName}")
 }

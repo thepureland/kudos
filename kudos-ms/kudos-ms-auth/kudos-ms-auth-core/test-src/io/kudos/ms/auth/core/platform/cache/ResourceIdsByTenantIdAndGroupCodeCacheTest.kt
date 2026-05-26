@@ -25,7 +25,7 @@ import org.junit.jupiter.api.Disabled
 /**
  * junit test for ResourceIdsByTenantIdAndGroupCodeCacheHandler
  *
- * 测试数据来源：`ResourceIdsByTenantIdAndGroupCodeCacheTest.sql`
+ * Test data source: `ResourceIdsByTenantIdAndGroupCodeCacheTest.sql`
  *
  * @author K
  * @author AI: Codex
@@ -54,7 +54,7 @@ class ResourceIdsByTenantIdAndGroupCodeCacheTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun getResourceIds() {
-        // 存在的租户和用户组
+        // Existing tenant and group
         var tenantId = "tenant-001-7h2QGcPi"
         var groupCode = "GROUP_ADMIN"
         val resourceIds2 = cacheHandler.getResourceIds(tenantId, groupCode)
@@ -62,12 +62,12 @@ class ResourceIdsByTenantIdAndGroupCodeCacheTest : RdbAndRedisCacheTestBase() {
         assertTrue(resourceIds2.isNotEmpty())
         assertEquals(resourceIds2, resourceIds3)
 
-        // 不存在的用户组
+        // Non-existent group
         groupCode = "GROUP_NO_EXIST"
         val resourceIds4 = cacheHandler.getResourceIds(tenantId, groupCode)
         assertTrue(resourceIds4.isEmpty())
 
-        // 不存在的租户
+        // Non-existent tenant
         tenantId = "no_exist_tenant"
         groupCode = "GROUP_ADMIN"
         val resourceIds5 = cacheHandler.getResourceIds(tenantId, groupCode)
@@ -78,19 +78,19 @@ class ResourceIdsByTenantIdAndGroupCodeCacheTest : RdbAndRedisCacheTestBase() {
     fun syncOnGroupRoleInsert() {
         val tenantId = "tenant-001-7h2QGcPi"
         val groupCode = "GROUP_USER"
-        val groupId = "274d0234-2222-2222-2222-222222222222" // GROUP_USER 的 ID
-        val roleId = "274d0234-4444-4444-4444-444444444444" // 新角色ID
+        val groupId = "274d0234-2222-2222-2222-222222222222" // ID of GROUP_USER
+        val roleId = "274d0234-4444-4444-4444-444444444444" // New role ID
         val roleCode = "ROLE_TEST_GROUP_INSERT"
         val resourceId = "resource-new-group-role"
 
-        // 先清除可能存在的缓存，确保测试环境干净
+        // Clear any existing cache first to ensure a clean test environment
         cacheHandler.evict(cacheHandler.getKey(tenantId, groupCode))
 
-        // 先获取一次，记录初始资源数量
+        // Fetch once to record the initial resource count
         val resourceIdsBefore = cacheHandler.getResourceIds(tenantId, groupCode)
         val beforeSize = resourceIdsBefore.size
 
-        // 检查关系是否已存在，如果存在则先删除
+        // Check whether the relation already exists; if so, delete it first
         if (authGroupRoleDao.exists(groupId, roleId)) {
             val criteria = Criteria.of(AuthGroupRole::groupId.name, OperatorEnum.EQ, groupId)
                 .addAnd(AuthGroupRole::roleId.name, OperatorEnum.EQ, roleId)
@@ -104,7 +104,7 @@ class ResourceIdsByTenantIdAndGroupCodeCacheTest : RdbAndRedisCacheTestBase() {
         val authRole = AuthRole.Companion().apply {
             this.id = roleId
             this.code = roleCode
-            this.name = "测试角色_${roleCode}"
+            this.name = "Test role_${roleCode}"
             this.tenantId = tenantId
             this.subsysCode = "ams"
             this.active = true
@@ -116,26 +116,26 @@ class ResourceIdsByTenantIdAndGroupCodeCacheTest : RdbAndRedisCacheTestBase() {
         }
         val roleResourceId = authRoleResourceDao.insert(authRoleResource)
 
-        // 插入一条新的组-角色关系记录
+        // Insert a new group-role relation record
         val authGroupRole = AuthGroupRole.Companion().apply {
             this.groupId = groupId
             this.roleId = roleId
         }
         val id = authGroupRoleDao.insert(authGroupRole)
 
-        // 同步缓存（模拟组-角色关系新增）
+        // Sync cache (simulating group-role relation insertion)
         cacheHandler.syncOnGroupRoleInsert(tenantId, groupCode)
 
-        // 验证缓存已被清除并重新加载，应该包含新角色的资源
+        // Verify cache has been cleared and reloaded; should contain resources of the new role
         val resourceIdsAfter = cacheHandler.getResourceIds(tenantId, groupCode).map { it.trim() }
-        assertTrue(resourceIdsAfter.size > beforeSize, "同步后应该包含新插入的资源ID，之前：${beforeSize}，之后：${resourceIdsAfter.size}")
-        assertTrue(resourceIdsAfter.contains(resourceId), "应该包含新插入的资源ID：${resourceId}，实际返回：${resourceIdsAfter}")
+        assertTrue(resourceIdsAfter.size > beforeSize, "After sync, should contain the newly inserted resource ID; before: ${beforeSize}, after: ${resourceIdsAfter.size}")
+        assertTrue(resourceIdsAfter.contains(resourceId), "Should contain the newly inserted resource ID: ${resourceId}; actual returned: ${resourceIdsAfter}")
 
-        // 清理测试数据
+        // Clean up test data
         authGroupRoleDao.deleteById(id)
         authRoleResourceDao.deleteById(roleResourceId)
         authRoleDao.deleteById(roleId)
-        // 清理缓存，避免影响其他测试
+        // Clean up cache to avoid affecting other tests
         cacheHandler.evict(cacheHandler.getKey(tenantId, groupCode))
     }
 
@@ -143,8 +143,8 @@ class ResourceIdsByTenantIdAndGroupCodeCacheTest : RdbAndRedisCacheTestBase() {
     fun syncOnGroupRoleDelete() {
         val tenantId = "tenant-001-7h2QGcPi"
         val groupCode = "GROUP_USER"
-        val groupId = "274d0234-2222-2222-2222-222222222222" // GROUP_USER 的 ID
-        val roleId = "274d0234-3333-3333-3333-333333333333" // ROLE_GUEST 的 ID
+        val groupId = "274d0234-2222-2222-2222-222222222222" // ID of GROUP_USER
+        val roleId = "274d0234-3333-3333-3333-333333333333" // ID of ROLE_GUEST
 
         if (authGroupRoleDao.exists(groupId, roleId)) {
             val criteria = Criteria.of(AuthGroupRole::groupId.name, OperatorEnum.EQ, groupId)
@@ -152,49 +152,51 @@ class ResourceIdsByTenantIdAndGroupCodeCacheTest : RdbAndRedisCacheTestBase() {
             authGroupRoleDao.batchDeleteCriteria(criteria)
         }
 
-        // 先插入一条组-角色关系记录
+        // First insert a group-role relation record
         val authGroupRole = AuthGroupRole.Companion().apply {
             this.groupId = groupId
             this.roleId = roleId
         }
         val id = authGroupRoleDao.insert(authGroupRole)
 
-        // 先同步缓存，确保缓存中有新插入的数据
+        // Sync cache first to ensure the newly inserted data is in the cache
         cacheHandler.syncOnGroupRoleInsert(tenantId, groupCode)
 
-        // 获取一次，确保缓存中有数据
+        // Fetch once to ensure data is in the cache
         val resourceIdsBefore = cacheHandler.getResourceIds(tenantId, groupCode)
-        assertTrue(resourceIdsBefore.isNotEmpty(), "新插入的组-角色关系应该使缓存有数据")
+        assertTrue(resourceIdsBefore.isNotEmpty(), "The newly inserted group-role relation should make the cache contain data")
 
-        // 删除数据库记录
+        // Delete the database record
         val deleteSuccess = authGroupRoleDao.deleteById(id)
-        assertTrue(deleteSuccess, "删除应该成功")
+        assertTrue(deleteSuccess, "Deletion should succeed")
 
-        // 同步缓存（模拟组-角色关系删除）
+        // Sync cache (simulating group-role relation deletion)
         cacheHandler.syncOnGroupRoleDelete(tenantId, groupCode)
 
-        // 验证缓存已被清除并重新加载
+        // Verify cache has been cleared and reloaded
         val resourceIdsAfter = cacheHandler.getResourceIds(tenantId, groupCode)
-        assertTrue(resourceIdsAfter.size <= resourceIdsBefore.size, "删除后，资源数量不应增加")
+        assertTrue(resourceIdsAfter.size <= resourceIdsBefore.size, "After deletion, the resource count should not increase")
     }
 
     /**
-     * @Disabled — 该 test 在 `@Transactional` 自动回滚环境下不可靠地验证此缓存的 `clear()` 失效语义。深入诊断后
-     * 两层原因：
+     * @Disabled - This test cannot reliably verify the `clear()` invalidation semantics of this cache under a
+     * `@Transactional` auto-rollback environment. After deep diagnosis, there are two layers of cause:
      *
-     * 1. **Caffeine drainage**：本地 Caffeine 的 `invalidateAll()` 是 queued-for-async-maintenance；commit
-     *    `DrainingCaffeineCache`（kudos-ability-cache-local-caffeine）已在 `evict/clear` 后同步调用
-     *    `nativeCache.cleanUp()` 修复本地侧。
-     * 2. **Redis pub/sub 异步**：`MixCache.evict/clear` 在本地清完之后 `pushMsgRedis`；消息在另一线程
-     *    （`erContainer-*`）异步回到本节点跑 `RedisCacheMessageHandler.receiveMessage`，与测试线程后续的
-     *    `@Cacheable.get` 之间存在竞态。一次 `Thread.sleep(50)` 或一次 `KeyValueCacheKit.existsKey` 调用
-     *    （后者经 Caffeine `asMap` 路径触发额外 drainage）都可让测试稳定通过；但这两种方式都是 test-only 的
-     *    时序补偿，没有体现生产正确性，反而掩盖问题。
+     * 1. **Caffeine drainage**: The local Caffeine `invalidateAll()` is queued-for-async-maintenance; the commit
+     *    `DrainingCaffeineCache` (kudos-ability-cache-local-caffeine) has been fixed on the local side by
+     *    synchronously calling `nativeCache.cleanUp()` after `evict/clear`.
+     * 2. **Redis pub/sub async**: `MixCache.evict/clear` calls `pushMsgRedis` after the local clear; the message
+     *    asynchronously returns to this node in another thread (`erContainer-*`) to run
+     *    `RedisCacheMessageHandler.receiveMessage`, racing with the test thread's subsequent `@Cacheable.get`.
+     *    A single `Thread.sleep(50)` or a single `KeyValueCacheKit.existsKey` call (the latter triggers extra
+     *    drainage via Caffeine's `asMap` path) makes the test pass reliably; but both are test-only timing
+     *    compensations that do not reflect production correctness and instead mask the problem.
      *
-     * 生产路径走 `@TransactionalEventListener(AFTER_COMMIT)`，commit 完成后才触发清理 + 紧随的查询天然
-     * 间隔较远，此竞态不会暴露。生产代码逻辑由 `ResourceIdsByTenantIdAndGroupCodeCache.on
-     * (AuthRoleResourceRelationsChanged)` 实现，并通过 `AuthRoleResourceServiceTest.batchBind/unbind` 间接覆盖。
-     * 同 class 的其余 5 个测试覆盖了 cache 的其它路径。
+     * The production path goes through `@TransactionalEventListener(AFTER_COMMIT)`; the cleanup is triggered
+     * after the commit completes, and the subsequent query is naturally far apart, so this race does not surface.
+     * The production code logic is implemented by `ResourceIdsByTenantIdAndGroupCodeCache.on
+     * (AuthRoleResourceRelationsChanged)` and is indirectly covered by `AuthRoleResourceServiceTest.batchBind/unbind`.
+     * The other 5 tests in this class cover the cache's other paths.
      */
     @Test
     @Disabled("Async Redis pub/sub timing race in @Transactional rollback tests — see KDoc.")
@@ -235,29 +237,29 @@ class ResourceIdsByTenantIdAndGroupCodeCacheTest : RdbAndRedisCacheTestBase() {
         val oldGroupCode = "GROUP_USER"
         val newTenantId = "tenant-001-7h2QGcPi"
         val newGroupCode = "GROUP_USER_UPDATED"
-        val groupId = "274d0234-2222-2222-2222-222222222222" // GROUP_USER 的 ID
+        val groupId = "274d0234-2222-2222-2222-222222222222" // ID of GROUP_USER
 
-        // 先获取一次，确保缓存中有数据
+        // Fetch once to ensure data is in the cache
         val resourceIdsBefore = cacheHandler.getResourceIds(oldTenantId, oldGroupCode)
 
-        // 更新用户组编码
+        // Update group code
         val group = authGroupDao.get(groupId)
-        assertTrue(group != null, "用户组应该存在")
+        assertTrue(group != null, "Group should exist")
         val success = authGroupDao.updateProperties(groupId, mapOf(AuthGroup::code.name to newGroupCode))
-        assertTrue(success, "更新应该成功")
+        assertTrue(success, "Update should succeed")
 
-        // 同步缓存（模拟用户组信息更新）
+        // Sync cache (simulating group info update)
         cacheHandler.syncOnGroupUpdate(oldTenantId, oldGroupCode, newTenantId, newGroupCode)
 
-        // 验证旧缓存已被清除，新缓存可以获取数据
+        // Verify the old cache has been cleared and the new cache can fetch data
         val resourceIdsNew = cacheHandler.getResourceIds(newTenantId, newGroupCode)
         assertEquals(
             resourceIdsBefore.size,
             resourceIdsNew.size,
-            "新用户组编码应该能获取到相同的资源列表"
+            "The new group code should fetch the same resource list"
         )
 
-        // 恢复用户组编码
+        // Restore group code
         authGroupDao.updateProperties(groupId, mapOf(AuthGroup::code.name to oldGroupCode))
     }
 
@@ -266,22 +268,22 @@ class ResourceIdsByTenantIdAndGroupCodeCacheTest : RdbAndRedisCacheTestBase() {
         val tenantId = "tenant-001-7h2QGcPi"
         val groupCode = "GROUP_USER"
 
-        // 先获取一次，确保缓存中有数据（即使为空列表）
+        // Fetch once to ensure data is in the cache (even if empty list)
         cacheHandler.getResourceIds(tenantId, groupCode)
 
-        // 删除数据库中的用户组记录
-        val groupId = "274d0234-2222-2222-2222-222222222222" // GROUP_USER 的 ID
+        // Delete the group record from the database
+        val groupId = "274d0234-2222-2222-2222-222222222222" // ID of GROUP_USER
         authGroupDao.deleteById(groupId)
 
-        // 直接驱动两个 listener（AFTER_COMMIT 在 @Transactional 测试中不会触发）：
-        // 生产中 AuthGroupDeleted 事件会同时触发本缓存 + AuthGroupHashCache 的 on(...)。
+        // Directly drive both listeners (AFTER_COMMIT does not fire in @Transactional tests):
+        // In production, the AuthGroupDeleted event triggers both this cache and AuthGroupHashCache's on(...).
         val event = AuthGroupDeleted(groupId, tenantId, groupCode)
         cacheHandler.on(event)
         authGroupHashCache.on(event)
 
-        // 验证缓存已被清除，重新获取应该返回空列表（因为用户组已不存在）
+        // Verify cache has been cleared; fetching again should return an empty list (since the group no longer exists)
         val resourceIdsAfter = cacheHandler.getResourceIds(tenantId, groupCode)
-        assertTrue(resourceIdsAfter.isEmpty(), "删除用户组后，缓存应该被清除，重新获取应该返回空列表")
+        assertTrue(resourceIdsAfter.isEmpty(), "After deleting the group, the cache should be cleared and fetching again should return an empty list")
     }
 
 }

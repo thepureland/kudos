@@ -1,10 +1,10 @@
 package io.kudos.ms.sys.core.param.event
 
 /**
- * 参数（`sys_param`）领域事件。
+ * Domain events for parameters (`sys_param`).
  *
- * 参数缓存以 `(atomicServiceCode, paramName)` 为复合 key，所以删除事件需要携带该维度信息——
- * DB 删除后这两个字段无法回查。
+ * The parameter cache is keyed by the composite `(atomicServiceCode, paramName)`, so delete events
+ * must carry this dimension information — these two fields cannot be looked up after the DB row is deleted.
  *
  * @author K
  * @author AI: Cursor
@@ -17,14 +17,14 @@ sealed interface SysParamEvent {
 data class SysParamInserted(override val id: String) : SysParamEvent
 data class SysParamUpdated(override val id: String) : SysParamEvent
 
-/** 删除事件携带 (atomicServiceCode, paramName) 维度以支持缓存按复合 key 失效。 */
+/** Delete event carries the (atomicServiceCode, paramName) dimension to support cache invalidation by composite key. */
 data class SysParamDeleted(
     override val id: String,
     val atomicServiceCode: String,
     val paramName: String,
 ) : SysParamEvent
 
-/** 批量删除事件：携带每条记录的维度对，顺序与 ids 不必对齐。 */
+/** Batch delete event: carries the dimension pair for each record; ordering need not align with ids. */
 data class SysParamBatchDeleted(
     val ids: Collection<String>,
     val moduleAndNames: List<Pair<String, String>>,

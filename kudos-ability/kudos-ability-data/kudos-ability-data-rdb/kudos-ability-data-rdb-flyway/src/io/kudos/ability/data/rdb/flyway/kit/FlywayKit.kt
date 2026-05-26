@@ -8,14 +8,17 @@ import javax.sql.DataSource
 
 
 /**
- * Flyway 工具类（脱离 Spring 容器也能用）。
+ * Flyway utility (usable outside of a Spring container).
  *
- * 主要给"非 Spring 上下文"调用 —— 例如代码生成器、独立运维脚本 —— 直接拿到一个 [DataSource]
- * 就能用同一套规则跑 Flyway，不用引一套 Spring 上下文起来。Spring 容器内的常规迁移通过
- * [io.kudos.ability.data.rdb.flyway.multidatasource.FlywayMultiDataSourceMigrator] 调用本工具完成。
+ * Primarily intended for "non-Spring contexts" — e.g. code generators or standalone ops scripts —
+ * where you can run Flyway against a [DataSource] using the same rules, without bootstrapping a
+ * Spring context. Standard migrations inside a Spring container are performed via
+ * [io.kudos.ability.data.rdb.flyway.multidatasource.FlywayMultiDataSourceMigrator] which delegates
+ * to this utility.
  *
- * 约定：SQL 脚本按 `classpath:sql/<moduleName>/<dbType>/V*.sql` 组织（[SQL_ROOT_PATH] 是根
- * 目录名），其中 dbType 取自 `RdbTypeEnum::name` 的小写形式（h2 / postgresql / mysql 等）。
+ * Convention: SQL scripts are organized under `classpath:sql/<moduleName>/<dbType>/V*.sql`
+ * ([SQL_ROOT_PATH] is the root directory name), where dbType is the lowercase form of
+ * `RdbTypeEnum::name` (h2 / postgresql / mysql, etc.).
  *
  * @author K
  * @author AI: Codex
@@ -23,27 +26,28 @@ import javax.sql.DataSource
  */
 object FlywayKit {
 
-    /** 日志器；失败一律向上抛，确保启动期发现 schema 错位 */
+    /** Logger; any failure is rethrown to ensure schema mismatches surface at startup. */
     private val log = LogFactory.getLog(this::class)
 
-    /** SQL 脚本根目录的 classpath 名称（约定为 "sql"）。 */
+    /** Classpath name of the SQL script root directory (conventionally "sql"). */
     const val SQL_ROOT_PATH = "sql"
 
     /**
-     * 升级一个模块的数据库 schema。
+     * Upgrade the database schema of a single module.
      *
-     * 行为：
-     * - 探测 [dataSource] 的数据库类型并据此选择 `sql/<moduleName>/<dbType>` 子目录
-     * - 每个模块使用独立的 `flyway_history_<moduleName>` 元数据表，互不污染
-     * - [flywayProperties] 控制 baseline / encoding / outOfOrder 等 Flyway 通用行为
+     * Behavior:
+     * - Detects the database type of [dataSource] and selects the `sql/<moduleName>/<dbType>` subdirectory.
+     * - Each module uses its own `flyway_history_<moduleName>` metadata table, isolated from others.
+     * - [flywayProperties] controls Flyway common behavior such as baseline / encoding / outOfOrder.
      *
-     * 失败处理：**只要 Flyway 报告 success=false 或抛出任何异常，本方法都会向上抛出，调用方
-     * 据此应当中断整体启动流程**。把"失败但继续"作为默认行为是危险的（应用启动后跑在错位的
-     * schema 上），所以这里没有 swallow exception。
+     * Failure handling: **whenever Flyway reports success=false or throws any exception, this method
+     * rethrows; callers should abort the overall startup process**. Treating "fail but continue" as
+     * the default is dangerous (the app would run against a mismatched schema), so exceptions are
+     * not swallowed here.
      *
-     * @param moduleName 模块名（对应 SQL_ROOT_PATH 下的直接子目录）
-     * @param dataSource 数据源
-     * @param flywayProperties 复用 Spring Boot 的 [FlywayProperties] 暴露给用户调
+     * @param moduleName module name (matches the direct subdirectory under SQL_ROOT_PATH)
+     * @param dataSource data source
+     * @param flywayProperties reuses Spring Boot's [FlywayProperties] exposed to user configuration
      */
     fun migrate(moduleName: String, dataSource: DataSource, flywayProperties: FlywayProperties) {
         val dbType = dataSource.connection.use { conn ->
@@ -65,20 +69,20 @@ object FlywayKit {
                 .placeholderSuffix(flywayProperties.placeholderSuffix)
                 .placeholderSeparator(flywayProperties.placeholderSeparator)
                 .load()
-            log.info(">>>>>>>>>>>>>  开始升级模块【$moduleName】的数据库...")
+            log.info(">>>>>>>>>>>>>  Starting database upgrade for module [$moduleName]...")
             val result = flyway.migrate()
             if (!result.success) {
-                // 不再吞掉 —— Flyway 报失败时必须打断启动，否则会跑在错位 schema 上
-                error("flyway 升级模块【$moduleName】的数据库失败！warnings=${result.warnings}")
+                // Do not swallow — when Flyway reports failure, startup must be interrupted, otherwise we'd run against a mismatched schema
+                error("flyway failed to upgrade the database for module [$moduleName]! warnings=${result.warnings}")
             }
             val migrationCount = result.migrationsExecuted
             if (migrationCount == 0) {
-                log.info("<<<<<<<<<<<<<  模块【$moduleName】数据库已为最新，此次无更新任何 sql 文件。")
+                log.info("<<<<<<<<<<<<<  Module [$moduleName] database is already up to date; no sql files were applied.")
             } else {
-                log.info("<<<<<<<<<<<<<  模块【$moduleName】数据库升级完成，共执行了 ${migrationCount} 个 sql 文件，最新版本为：${result.targetSchemaVersion}")
+                log.info("<<<<<<<<<<<<<  Module [$moduleName] database upgrade completed; executed ${migrationCount} sql files, latest version: ${result.targetSchemaVersion}")
             }
         } catch (e: Exception) {
-            log.error(e, "flyway 升级模块【$moduleName】数据库出错！")
+            log.error(e, "flyway failed while upgrading the database for module [$moduleName]!")
             throw e
         }
     }

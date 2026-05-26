@@ -18,7 +18,7 @@ import kotlin.test.assertTrue
 /**
  * junit test for SysOutLineService
  *
- * 测试数据来源：`SysOutLineServiceTest.sql`
+ * Test data source: `SysOutLineServiceTest.sql`
  *
  * @author K
  * @since 1.0.0
@@ -38,28 +38,28 @@ class SysOutLineServiceTest : RdbAndRedisCacheTestBase() {
     private val seededSystemCode = "sys-outline-svc-test"
     private val seededTenantId = "30000000-0000-0000-0000-000000002001"
 
-    /** 按主键 `get(id)` 取到实体且 id 一致。 */
+    /** Fetch an entity via `get(id)`; the id matches. */
     @Test
     fun get_byId_entity() {
         val po = sysOutLineService.get(seededIdPlatform)
         assertNotNull(po)
         assertEquals(seededIdPlatform, po.id)
         assertEquals("example.com", po.host)
-        assertNull(po.tenantId) // 平台级
+        assertNull(po.tenantId) // platform-level
     }
 
-    /** 平台级（tenantId=null）列表读取：只命中 tenant_id IS NULL 的启用行。 */
+    /** Platform-level (tenantId=null) list read: only hits active rows where tenant_id IS NULL. */
     @Test
     fun listActiveOutLines_platformLevel() {
         outLineBySystemAndTenantCache.reloadAll(clear = true)
         val list = sysOutLineService.listActiveOutLines(seededSystemCode, tenantId = null)
         assertTrue(list.any { it.id == seededIdPlatform && it.host == "example.com" })
-        // 不应包含租户级或未启用
+        // Should not include tenant-level or inactive rows
         assertTrue(list.none { it.id == seededIdTenant })
         assertTrue(list.none { it.id == seededIdInactive })
     }
 
-    /** 租户级列表：仅命中匹配 tenantId 的启用行。 */
+    /** Tenant-level list: only hits active rows matching the tenantId. */
     @Test
     fun listActiveOutLines_tenantLevel() {
         outLineBySystemAndTenantCache.reloadAll(clear = true)
@@ -68,7 +68,7 @@ class SysOutLineServiceTest : RdbAndRedisCacheTestBase() {
         assertTrue(list.none { it.id == seededIdPlatform })
     }
 
-    /** 未启用规则不应出现在缓存返回中。 */
+    /** Inactive rules should not appear in cache results. */
     @Test
     fun listActiveOutLines_excludesInactive() {
         outLineBySystemAndTenantCache.reloadAll(clear = true)
@@ -76,7 +76,7 @@ class SysOutLineServiceTest : RdbAndRedisCacheTestBase() {
         assertTrue(list.none { it.id == seededIdInactive })
     }
 
-    /** updateActive：停用后缓存应不再命中，恢复启用后再次命中。 */
+    /** updateActive: after disabling, the cache should no longer hit; after re-enabling, it hits again. */
     @Test
     fun updateActive_syncsCache() {
         outLineBySystemAndTenantCache.reloadAll(clear = true)
@@ -91,19 +91,19 @@ class SysOutLineServiceTest : RdbAndRedisCacheTestBase() {
         assertTrue(sysOutLineService.listActiveOutLines(seededSystemCode, null).any { it.id == seededIdPlatform })
     }
 
-    /** updateActive 在主键不存在时返回 false。 */
+    /** updateActive returns false when the primary key does not exist. */
     @Test
     fun updateActive_whenIdNotExists_returnsFalse() {
         assertFalse(sysOutLineService.updateActive("00000000-0000-0000-0000-000000000001", true))
     }
 
-    /** 删除不存在的主键时返回 false。 */
+    /** Returns false when deleting a non-existent primary key. */
     @Test
     fun deleteById_returnsFalseWhenRowMissing() {
         assertFalse(sysOutLineService.deleteById("00000000-0000-0000-0000-000000000001"))
     }
 
-    /** insert + deleteById 同步缓存。 */
+    /** insert + deleteById sync the cache. */
     @Test
     fun insert_and_deleteById_syncCache() {
         outLineBySystemAndTenantCache.reloadAll(clear = true)
@@ -131,7 +131,7 @@ class SysOutLineServiceTest : RdbAndRedisCacheTestBase() {
         assertTrue(sysOutLineService.listActiveOutLines(seededSystemCode, null).none { it.host == host })
     }
 
-    /** 批量删除同步缓存。 */
+    /** Batch delete syncs the cache. */
     @Test
     fun batchDelete_syncCache() {
         outLineBySystemAndTenantCache.reloadAll(clear = true)

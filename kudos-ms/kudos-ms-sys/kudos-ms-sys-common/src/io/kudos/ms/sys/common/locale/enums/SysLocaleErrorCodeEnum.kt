@@ -3,26 +3,26 @@ package io.kudos.ms.sys.common.locale.enums
 import io.kudos.base.enums.ienums.IErrorCodeEnum
 
 /**
- * 语言/区域字典错误码
+ * Error codes for language/locale dictionary.
  *
  * @author K
  * @since 1.0.0
  */
 enum class SysLocaleErrorCodeEnum(
-    /** 错误码 */
+    /** Error code */
     override val code: String,
-    /** 默认展示文本 */
+    /** Default display text */
     override val defaultDisplayText: String,
 ) : IErrorCodeEnum {
 
-    /** 未定义错误 */
-    UNSPECIFIED("UNSPECIFIED", "未定义错误"),
+    /** Undefined error */
+    UNSPECIFIED("UNSPECIFIED", "Undefined error"),
 
-    /** 按主键或code查找失败 */
-    LOCALE_NOT_FOUND("LOCALE_NOT_FOUND", "语言代码不存在"),
+    /** Lookup by primary key or code failed */
+    LOCALE_NOT_FOUND("LOCALE_NOT_FOUND", "Language code does not exist"),
 
-    /** code 已存在 */
-    LOCALE_ALREADY_EXISTS("LOCALE_ALREADY_EXISTS", "该语言代码已存在");
+    /** Code already exists */
+    LOCALE_ALREADY_EXISTS("LOCALE_ALREADY_EXISTS", "Language code already exists");
 
     override val i18nKeyPrefix: String
         get() = "sys.error-msg.locale"

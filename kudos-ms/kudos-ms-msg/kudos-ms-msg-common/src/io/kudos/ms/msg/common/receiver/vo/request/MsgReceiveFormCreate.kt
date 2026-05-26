@@ -4,7 +4,7 @@ import java.time.LocalDateTime
 
 
 /**
- * 消息接收表单新建请求VO
+ * Create request VO for the message receive form.
  *
  * @author K
  * @since 1.0.0

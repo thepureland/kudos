@@ -9,7 +9,7 @@ import io.kudos.ms.sys.core.dict.model.po.SysDictItem
 
 
 /**
- * 字典项业务接口
+ * Dictionary item business interface.
  *
  * @author K
  * @author AI: Cursor
@@ -18,61 +18,61 @@ import io.kudos.ms.sys.core.dict.model.po.SysDictItem
 interface ISysDictItemService : IBaseCrudService<String, SysDictItem> {
 
     /**
-     * 按主键从 Hash 缓存加载单条字典项
+     * Load a single dictionary item from the Hash cache by primary key.
      */
     fun getDictItemFromCache(id: String): SysDictItemCacheEntry?
 
     /**
-     * 按字典类型 + 原子服务编码从 Hash 缓存加载字典项列表
+     * Load the dictionary item list from the Hash cache by dictionary type + atomic service code.
      */
     fun getDictItemsFromCache(dictType: String, atomicServiceCode: String): List<SysDictItemCacheEntry>
 
     /**
-     * 批量按「原子服务 → 字典类型集合」从缓存加载字典项
+     * Batch-load dictionary items from the cache by "atomic service -> dictionary type set".
      */
     fun batchGetDictItemsFromCache(
         dictTypesByAtomicServiceCode: Map<String, Collection<String>>
     ): Map<String, Map<String, List<SysDictItemCacheEntry>>>
 
     /**
-     * 字典项编码 → 名称（来自缓存列表）
+     * Dictionary item code -> name (from the cached list).
      */
     fun getDictItemMapFromCache(dictType: String, atomicServiceCode: String): LinkedHashMap<String, String>
 
     /**
-     * 批量字典项编码 → 名称映射
+     * Batch dictionary item code -> name mapping.
      */
     fun batchGetDictItemMapFromCache(
         dictTypesByAtomicServiceCode: Map<String, Collection<String>>,
     ): Map<String, Map<String, LinkedHashMap<String, String>>>
 
     /**
-     * 将字典项代码译为名称（查缓存列表）
+     * Translate a dictionary item code to its name (looking up the cached list).
      */
     fun transDictItemNameFromCache(dictType: String, itemCode: String, atomicServiceCode: String): String?
 
     /**
-     * 获取字典项的所有祖先 id（DAO 父链）
+     * Get all ancestor ids of a dictionary item (DAO parent chain).
      */
     fun fetchAllParentIds(itemId: String): List<String>
 
     /**
-     * 删除字典项并级联删除其所有孩子
+     * Delete the dictionary item and cascade-delete all of its children.
      */
     fun cascadeDeleteChildren(id: String): Boolean
 
     /**
-     * 更新启用状态，并同步缓存
+     * Update the active status and sync the cache.
      */
     fun updateActive(dictItemId: String, active: Boolean): Boolean
 
     /**
-     * 移动字典项（调整父节点和排序）
+     * Move the dictionary item (adjust parent node and ordering).
      */
     fun moveItem(id: String, newParentId: String?, newOrderNum: Int?): Boolean
 
     /**
-     * 指定字典类型下第一层字典项（parentId 为空）
+     * First-level dictionary items under the given dictionary type (parentId is null).
      */
     fun getDirectChildrenOfDictFromCache(
         atomicServiceCode: String,
@@ -81,7 +81,7 @@ interface ISysDictItemService : IBaseCrudService<String, SysDictItem> {
     ): List<SysDictItemCacheEntry>
 
     /**
-     * 指定字典项编码下的直接子项
+     * Direct children under the given dictionary item code.
      */
     fun getDirectChildrenOfItemFromCache(
         atomicServiceCode: String,
@@ -91,12 +91,12 @@ interface ISysDictItemService : IBaseCrudService<String, SysDictItem> {
     ): List<SysDictItemCacheEntry>
 
     /**
-     * 指定父字典项 id 下的直接子项
+     * Direct children under the given parent dictionary item id.
      */
     fun getDirectChildrenOfItemFromCache(parentId: String, activeOnly: Boolean = true): List<SysDictItemCacheEntry>
 
     /**
-     * 指定字典类型下第一层字典项的 id/code/name 投影。
+     * id/code/name projection of the first-level dictionary items under the given dictionary type.
      */
     fun getDirectChildrenOfDictAsNodes(
         atomicServiceCode: String,
@@ -105,7 +105,7 @@ interface ISysDictItemService : IBaseCrudService<String, SysDictItem> {
     ): List<SysDictItemNode>
 
     /**
-     * 指定字典项编码下直接子项的 id/code/name 投影。
+     * id/code/name projection of the direct children under the given dictionary item code.
      */
     fun getDirectChildrenOfItemAsNodes(
         atomicServiceCode: String,

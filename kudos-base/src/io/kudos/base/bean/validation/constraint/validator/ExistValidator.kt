@@ -8,7 +8,7 @@ import org.hibernate.validator.internal.engine.path.MutablePath
 import org.hibernate.validator.path.Path
 
 /**
- * Exist约束验证器
+ * Exist constraint validator.
  *
  * @author K
  * @since 1.0.0
@@ -34,7 +34,7 @@ class ExistValidator : ConstraintValidator<Exist, Any?> {
         val path = hvContext.constraintViolationCreationContexts.first().path
         if (path is Path) {
             val propName = path.leafNode.name
-            // 新建临时context对象的目的是为了避免context会有子约束的错误信息，子约束的message无意义，最终的错误信息是取主约束Exist的message
+            // Create a temporary context to avoid carrying sub-constraint error messages; the sub-constraint message is meaningless and the final error message comes from the parent Exist constraint's message.
             val tempContext = ConstraintValidatorContextImpl(
                 hvContext.clockProvider,
                 MutablePath.createPathFromString(propName),

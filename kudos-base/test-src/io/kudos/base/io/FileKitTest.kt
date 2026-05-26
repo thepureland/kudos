@@ -40,14 +40,14 @@ internal class FileKitTest {
         val tempDir = Files.createTempDirectory("testJar").toFile()
         val jarFile = File.createTempFile("test-", ".jar")
 
-        // 创建目录结构和文件
+        // Create the directory structure and files
         val assetsDir = File(tempDir, "assets").apply { mkdir() }
         File(assetsDir, "test1.txt").writeText("file1")
         File(assetsDir, "test2.txt").writeText("file2")
         val subDir = File(assetsDir, "subdir").apply { mkdir() }
         File(subDir, "test3.txt").writeText("file3")
 
-        // 写入 JAR
+        // Write to the JAR
         JarOutputStream(jarFile.outputStream()).use { jarOut ->
             fun addEntry(file: File, basePath: String) {
                 val entryName = basePath + file.name + if (file.isDirectory) "/" else ""
@@ -110,18 +110,18 @@ internal class FileKitTest {
         assertEquals(expected.sorted(), result.sorted())
     }
 
-    // ---------- zip 方法 ----------
+    // ---------- zip methods ----------
 
     @Test
     fun zipWithoutPasswordCreatesValidZip() {
-        // 准备一个简单文本文件
+        // Prepare a simple text file
         val src = File(tempDir, "plain.txt")
         src.writeText("hello")
-        // 不提供密码，fileName 为 null
+        // No password, fileName is null
         val zipped = FileKit.zip(src, null, null)
         assertNotNull(zipped)
         assertTrue(zipped.exists())
-        // ZIP 文件至少要比源文件大一些
+        // The ZIP file should be at least as large as the source file
         assertTrue(zipped.length() >= src.length())
         zipped.delete()
     }
@@ -130,12 +130,12 @@ internal class FileKitTest {
     fun zipWithPasswordAndCustomFileName() {
         val src = File(tempDir, "secret.txt")
         src.writeText("top secret")
-        // 提供密码，同时给 fileName 为空字符串
+        // Provide a password and pass an empty fileName
         val zipped = FileKit.zip(src, "", "mypassword")
-        // 由于 fileName 为空字符串，会取 file.getName()
+        // Since fileName is empty, file.getName() is used
         assertNotNull(zipped)
         assertTrue(zipped.exists())
-        // 使用加密库需要 BouncyCastle 实现，至少返回了一个非空文件
+        // The encryption library requires the BouncyCastle implementation; at minimum it returns a non-empty file
         assertTrue(zipped.length() > 0)
         zipped.delete()
     }
@@ -144,14 +144,14 @@ internal class FileKitTest {
     fun zipWithBlankPasswordTreatsAsNoEncryption() {
         val src = File(tempDir, "test.txt")
         src.writeText("data")
-        // 密码传入空白串，应当走未加密分支
+        // A blank password string should go through the unencrypted branch
         val zipped = FileKit.zip(src, "ignoredName", "   ")
         assertNotNull(zipped)
         assertTrue(zipped.exists())
         zipped.delete()
     }
 
-    // ---------- getFile 方法 ----------
+    // ---------- getFile methods ----------
 
     @Test
     fun getFileWithDirectoryAndNames() {
@@ -191,7 +191,7 @@ internal class FileKitTest {
     @Test
     fun openOutputStreamCreatesParentAndWrites() {
         val nested = File(tempDir, "p1/p2/out.txt")
-        // 父目录不存在时，openOutputStream 应自动创建
+        // openOutputStream should automatically create the parent directory when it does not exist
         val fos = FileKit.openOutputStream(nested)
         fos.write("hello".toByteArray())
         fos.close()
@@ -203,7 +203,7 @@ internal class FileKitTest {
     fun openOutputStreamOnDirectoryThrows() {
         val dir = File(tempDir, "mdir")
         dir.mkdirs()
-        // 当传入目录时，openOutputStream 会抛 IllegalArgumentException
+        // openOutputStream throws IllegalArgumentException when a directory is passed in
         assertFailsWith<IllegalArgumentException> {
             FileKit.openOutputStream(dir)
         }
@@ -216,7 +216,7 @@ internal class FileKitTest {
         assertEquals("0 bytes", FileKit.byteCountToDisplaySize(BigInteger.ZERO))
         assertEquals("1 KB", FileKit.byteCountToDisplaySize(1024L))
         assertEquals("1 MB", FileKit.byteCountToDisplaySize(BigInteger.valueOf(2_000_000)))
-        // 超过 1 GB 向下取整
+        // Floor when exceeding 1 GB
         val twoGB = BigInteger.valueOf(2L shl 30)
         assertTrue(FileKit.byteCountToDisplaySize(twoGB).endsWith(" GB"))
     }
@@ -278,9 +278,9 @@ internal class FileKitTest {
         d.mkdirs()
         FileKit.writeStringToFile(f1, "x")
         FileKit.writeStringToFile(f2, "y")
-        // 只过滤 .txt
+        // Filter only .txt
         val files = FileKit.listFiles(d, TrueFileFilter.INSTANCE, null)
-        // TrueFileFilter 可以匹配所有文件，因此 skip.log 也会包含
+        // TrueFileFilter matches all files, so skip.log is also included
         assertTrue(files.size >= 2)
     }
 
@@ -291,9 +291,9 @@ internal class FileKitTest {
         sub.parentFile.mkdirs()
         FileKit.writeStringToFile(sub, "t")
         val all = FileKit.listFilesAndDirs(d, TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE)
-        // 包含子目录 "subdir"
+        // Includes the subdirectory "subdir"
         assertTrue(all.any { it.name == "subdir" })
-        // 包含文件 "file1.txt"
+        // Includes the file "file1.txt"
         assertTrue(all.any { it.name == "file1.txt" })
     }
 
@@ -316,7 +316,7 @@ internal class FileKitTest {
         val f = File(sub, "f2.txt")
         FileKit.writeStringToFile(f, "w")
         val it = FileKit.iterateFilesAndDirs(d, TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE)
-        // 包含目录 "subdir2"
+        // Includes the directory "subdir2"
         assertTrue(it.asSequence().any { it.name == "subdir2" })
     }
 
@@ -372,17 +372,17 @@ internal class FileKitTest {
     fun toFilesOnlyFileProtocolReturnsFileOrNull() {
         val f = File(tempDir, "fileX.txt").apply { createNewFile() }
         val validUrl = f.toURI().toURL()
-        // 模拟一个 “无资源” 的 file URL，用一个本地不存在的 path
+        // Simulate a "no resource" file URL using a path that does not exist locally
         val missingFile = File(tempDir, "nope.txt")
         val missingUrl = missingFile.toURI().toURL()
         val arr = arrayOf(validUrl, missingUrl)
         val results = FileKit.toFiles(arr)
-        // 应当返回与输入数组等长的 File? 数组：
-        //   第一个是实际存在的 File，第二个由于文件不存在也要返回一个 File 对象（它只是指向本地不存在文件，不会再校验必须存在）
+        // Should return a File? array of the same length as the input:
+        //   The first is the actually existing File; the second still returns a File object even though the file does not exist (it just points to a non-existent local file; existence is not re-checked)
         assertEquals(2, results.size)
         assertNotNull(results[0])
         assertEquals(f.absolutePath, results[0]?.absolutePath)
-        // 第二个虽然文件不存在，但 toFiles 仍然会返回一个 File 实例，并不会抛异常
+        // Although the second file does not exist, toFiles still returns a File instance and does not throw
         assertNotNull(results[1])
         assertEquals(missingFile.absolutePath, results[1]?.absolutePath)
     }
@@ -393,7 +393,7 @@ internal class FileKitTest {
         val validUrl = f.toURI().toURL()
         val invalidHttpUrl = URI("https://example.com/foo.txt").toURL()
         val arr = arrayOf(validUrl, invalidHttpUrl)
-        // 因为第二个 URL 不是 file 协议，toFiles 会直接抛 IllegalArgumentException
+        // Because the second URL is not the file protocol, toFiles throws IllegalArgumentException directly
         assertFailsWith<IllegalArgumentException> {
             FileKit.toFiles(arr)
         }
@@ -414,7 +414,7 @@ internal class FileKitTest {
         val src = File(tempDir, "copySrc.txt")
         FileKit.writeStringToFile(src, "123")
         val destDir = File(tempDir, "destD")
-        // 目标目录不存在时应自动创建
+        // The destination directory should be created automatically when it does not exist
         FileKit.copyFileToDirectory(src, destDir)
         val copied = File(destDir, "copySrc.txt")
         assertTrue(copied.exists())
@@ -452,7 +452,7 @@ internal class FileKitTest {
         FileKit.writeStringToFile(f1, "txt")
         FileKit.writeStringToFile(f2, "log")
         val dest = File(tempDir, "destF")
-        // 只复制以 .txt 结尾的文件
+        // Copy only files ending with .txt
         FileKit.copyDirectory(srcDir, dest, { it.name.endsWith(".txt") }, true)
         assertTrue(File(dest, "x.txt").exists())
         assertFalse(File(dest, "y.log").exists())
@@ -560,7 +560,7 @@ internal class FileKitTest {
     fun cleanDirectoryWhenNotDirectoryThrows() {
         val f = File(tempDir, "notDir2.txt")
         f.writeText("z")
-        // cleanDirectory 对于非目录会抛 IllegalArgumentException
+        // cleanDirectory throws IllegalArgumentException for a non-directory
         assertFailsWith<IllegalArgumentException> {
             FileKit.cleanDirectory(f)
         }
@@ -692,7 +692,7 @@ internal class FileKitTest {
     @Test
     fun writeLinesWithNullCollectionWritesNothing() {
         val f = File(tempDir, "wlnull.txt")
-        // lines 参数为 null，被认为写入空集合，文件存在但无内容
+        // A null lines argument is treated as writing an empty collection; the file exists but has no content
         FileKit.writeLines(f, "UTF-8", null, "\n", false)
         assertTrue(f.exists() && f.readText().isEmpty())
     }
@@ -710,11 +710,11 @@ internal class FileKitTest {
         val child = File(dir, "c.txt")
         child.parentFile.mkdirs()
         child.writeText("y")
-        // 递归删除
+        // Recursive deletion
         FileKit.forceDelete(dir)
         assertFalse(dir.exists())
 
-        // 删除不存在时抛 FileNotFound
+        // Throws FileNotFound when deleting something that does not exist
         if (SystemKit.currentOs() == OsEnum.WINDOWS) {
             assertFailsWith<IOException> {
                 FileKit.forceDelete(File(tempDir, "nofd"))
@@ -731,7 +731,7 @@ internal class FileKitTest {
         val f = File(tempDir, "fde.txt")
         f.writeText("z")
         FileKit.forceDeleteOnExit(f)
-        // 无法在测试中立刻验证 JVM 退出时删除，至少不抛异常且文件依旧存在
+        // Cannot immediately verify deletion at JVM exit in this test; at least no exception is thrown and the file still exists
         assertTrue(f.exists())
     }
 
@@ -741,7 +741,7 @@ internal class FileKitTest {
         FileKit.forceMkdir(dir)
         assertTrue(dir.exists() && dir.isDirectory)
 
-        // 如果路径已经存在且是文件，抛 IOException
+        // If the path already exists and is a file, IOException is thrown
         val f = File(tempDir, "fmFile")
         f.writeText("a")
         assertFailsWith<IOException> {
@@ -784,9 +784,9 @@ internal class FileKitTest {
 
     @Test
     fun isFileNewerThrowsOnMissing() {
-        val f = File(tempDir, "nM.txt")                  // 这个文件并不存在
+        val f = File(tempDir, "nM.txt")                  // this file does not exist
         val ref = File(tempDir, "nRef.txt").apply { writeText("x") }
-        // f 不存在时，isFileNewer 应直接返回 false，而不是抛 IllegalArgumentException
+        // When f does not exist, isFileNewer should return false directly rather than throw IllegalArgumentException
         assertFalse(FileKit.isFileNewer(f, ref))
 
     }
@@ -795,7 +795,7 @@ internal class FileKitTest {
     fun isFileOlderReturnsFalseWhenMissing() {
         val f = File(tempDir, "nM2.txt")
         val ref = File(tempDir, "nRef2.txt").apply { writeText("x") }
-        // 文件 f 不存在，应返回 false，而不是抛异常
+        // The file f does not exist; should return false rather than throw
         assertFalse(FileKit.isFileOlder(f, ref))
     }
 
@@ -803,7 +803,7 @@ internal class FileKitTest {
     fun isFileNewerReturnsFalseWhenMissing() {
         val f = File(tempDir, "nM.txt")
         val ref = File(tempDir, "nRef.txt").apply { writeText("x") }
-        // 文件 f 不存在，应返回 false
+        // The file f does not exist; should return false
         assertFalse(FileKit.isFileNewer(f, ref))
     }
 
@@ -914,7 +914,7 @@ internal class FileKitTest {
                 Files.createSymbolicLink(link.toPath(), target.toPath())
                 assertTrue(FileKit.isSymlink(link))
             } catch (_: UnsupportedOperationException) {
-                // 如果此环境不支持符号链接，则其应返回 false
+                // If this environment does not support symbolic links, the result should be false
                 assertFalse(FileKit.isSymlink(link))
             }
         }

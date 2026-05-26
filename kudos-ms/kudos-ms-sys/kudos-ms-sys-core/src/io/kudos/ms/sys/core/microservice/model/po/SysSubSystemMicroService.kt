@@ -5,7 +5,7 @@ import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
 import java.time.LocalDateTime
 
 /**
- * 子系统-微服务关系数据库实体
+ * Sub-system to micro-service relation DB entity.
  *
  * @author K
  * @since 1.0.0
@@ -14,28 +14,28 @@ interface SysSubSystemMicroService : IDbEntity<String, SysSubSystemMicroService>
 
     companion object : DbEntityFactory<SysSubSystemMicroService>()
 
-    /** 子系统编码 */
+    /** Sub-system code */
     var subSystemCode: String
 
-    /** 微服务编码 */
+    /** Micro-service code */
     var microServiceCode: String
 
-    /** 创建者id */
+    /** Creator id */
     var createUserId: String?
 
-    /** 创建者名称 */
+    /** Creator name */
     var createUserName: String?
 
-    /** 创建时间 */
+    /** Create time */
     var createTime: LocalDateTime?
 
-    /** 更新者id */
+    /** Updater id */
     var updateUserId: String?
 
-    /** 更新者名称 */
+    /** Updater name */
     var updateUserName: String?
 
-    /** 更新时间 */
+    /** Update time */
     var updateTime: LocalDateTime?
 
 }

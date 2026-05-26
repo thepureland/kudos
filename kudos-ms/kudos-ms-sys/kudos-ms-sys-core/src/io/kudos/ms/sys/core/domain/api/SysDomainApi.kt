@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component
 
 
 /**
- * 域名 API本地实现
+ * Local implementation of the domain API
  *
  * @author K
  * @since 1.0.0

@@ -10,13 +10,13 @@ import jakarta.annotation.Resource
 import kotlin.test.*
 
 /**
- * [SysDataSourceHashCache] 单元测试（Hash 缓存，整合按 id 与按 tenantId+subSystemCode+microServiceCode）。
+ * Unit tests for [SysDataSourceHashCache] (hash cache, combining lookup by id and by tenantId + subSystemCode + microServiceCode).
  *
- * 覆盖：按 id 单条/批量、按 3 码列表、全量刷新、新增/更新/更新启用状态/删除后同步；
- * 本地缓存开启时二次取为同一对象引用。
+ * Covers: get by id single/batch, list by 3-code, full reload, sync after insert/update/active-toggle/delete;
+ * when the local cache is enabled, a second fetch returns the same object reference.
  *
- * 测试数据：`SysDataSourceHashCacheTest.sql`。
- * 需 Docker 运行 Redis，且 sys_cache 中已配置 SYS_DATA_SOURCE__HASH（hash=true）。
+ * Test data: `SysDataSourceHashCacheTest.sql`.
+ * Requires Docker-run Redis and SYS_DATA_SOURCE__HASH configured in sys_cache (hash=true).
  *
  * @author K
  * @since 1.0.0
@@ -34,7 +34,7 @@ class SysDataSourceHashCacheTest : RdbAndRedisCacheTestBase() {
 
     private val newName = "test_ds_hash_new_name"
 
-    // ---------- 按主键 id ----------
+    // ---------- By primary key id ----------
 
     @Test
     fun getDataSourceById() {
@@ -68,7 +68,7 @@ class SysDataSourceHashCacheTest : RdbAndRedisCacheTestBase() {
         assertTrue(cacheHandler.getDataSourcesByIds(emptyList()).isEmpty())
     }
 
-    // ---------- 按 tenantId + subSystemCode + microServiceCode ----------
+    // ---------- By tenantId + subSystemCode + microServiceCode ----------
 
     @Test
     fun getDataSources_byTenantIdAnd3Codes() {
@@ -98,7 +98,7 @@ class SysDataSourceHashCacheTest : RdbAndRedisCacheTestBase() {
         assert(list.any { it.id == "33333333-e828-43c5-a512-888888888888" })
     }
 
-    /** DAO 的 getDataSources 不过滤 active，故 (tenant-2, subSys-d, ms-c) 会返回 active=false 的那条 */
+    /** DAO's getDataSources does not filter by active, so (tenant-2, subSys-d, ms-c) returns the active=false row. */
     @Test
     fun getDataSources_inactiveRecord() {
         cacheHandler.reloadAll(true)
@@ -111,7 +111,7 @@ class SysDataSourceHashCacheTest : RdbAndRedisCacheTestBase() {
         assertEquals(false, list.first().active)
     }
 
-    // ---------- 全量刷新 ----------
+    // ---------- Full reload ----------
 
     @Test
     fun reloadAll() {
@@ -126,13 +126,13 @@ class SysDataSourceHashCacheTest : RdbAndRedisCacheTestBase() {
         sysDataSourceDao.updateProperties(idUpdate, mapOf(SysDataSource::name.name to newName))
         sysDataSourceDao.deleteById(idDelete)
 
-        // refreshAll 实现为先清空再写入 list，故 clear=false 时缓存仍为当前 DB 全量（已删 id 已不在 list 中）
+        // refreshAll is implemented as clear-then-write list, so with clear=false the cache still reflects the current full DB state (the deleted id is no longer in the list)
         cacheHandler.reloadAll(false)
         assertNotNull(cacheHandler.getDataSourceById(dsNew.id))
         assertEquals(newName, cacheHandler.getDataSourceById(idUpdate)?.name)
         assertNull(cacheHandler.getDataSourceById(idDelete))
 
-        // clear=true 后全量重载，已删 id 不在缓存，已更新 name 从 DB 加载（Mix 已同步写本地）
+        // After clear=true full reload, the deleted id is absent from cache and the updated name is loaded from DB (Mix syncs to local)
         cacheHandler.reloadAll(true)
         assertNull(sysDataSourceDao.getAs<SysDataSourceCacheEntry>(idDelete))
         assertNull(cacheHandler.getDataSourceById(idDelete))
@@ -140,7 +140,7 @@ class SysDataSourceHashCacheTest : RdbAndRedisCacheTestBase() {
         assertEquals(newName, cacheHandler.getDataSourceById(idUpdate)?.name)
     }
 
-    // ---------- 同步 ----------
+    // ---------- Sync ----------
 
     @Test
     fun syncOnInsert() {

@@ -25,18 +25,19 @@ import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 /**
- * [GlobalHeaderRequestInterceptor] 请求头注入单测。
+ * Unit tests for header injection in [GlobalHeaderRequestInterceptor].
  *
- * 覆盖：
- *  - **基础上下文头**：tenantId / subSysCode / dataSourceId / locale 都按
- *    [Consts.RequestHeader] 约定写入
- *  - **traceKey 缺失时生成 UUID 并反写回 [KudosContext]** ——同进程后续 Feign 调用
- *    共享同一 traceKey（修复 round-6 bug：旧实现只生成不反写）
- *  - **traceKey 已存在时原样使用**，不被覆盖
- *  - **dataSourceId 缺失**时不写对应 header（可选字段）
- *  - **locale 缺失**时回退 `zh_CN`
- *  - **FEIGN_REQUEST 标记**始终写
- *  - **`IFeignRequestContextProcess` SPI 被调用**——验证 bean 缓存路径工作
+ * Coverage:
+ *  - **Standard context headers**: tenantId / subSysCode / dataSourceId / locale written per the
+ *    [Consts.RequestHeader] convention.
+ *  - **When traceKey is missing**, a UUID is generated and written back to [KudosContext] so
+ *    subsequent Feign calls in the same process share the same traceKey (round-6 bug fix:
+ *    the old implementation generated without writing back).
+ *  - **When traceKey already exists**, it is reused unchanged.
+ *  - **When dataSourceId is missing**, the corresponding header is not written (optional field).
+ *  - **When locale is missing**, falls back to `zh_CN`.
+ *  - **FEIGN_REQUEST marker** is always written.
+ *  - **`IFeignRequestContextProcess` SPI is invoked** — verifies the bean-cache path works.
  * @author K
  * @author AI: Codex
  * @since 1.0.0
@@ -51,7 +52,7 @@ internal class GlobalHeaderRequestInterceptorTest {
         ctx = StaticApplicationContext().apply { refresh() }
         SpringKit.applicationContext = ctx
         interceptor = GlobalHeaderRequestInterceptor()
-        // 每个测试独立的上下文
+        // Isolate context per test
         KudosContextHolder.clear()
     }
 
@@ -80,7 +81,7 @@ internal class GlobalHeaderRequestInterceptorTest {
         assertEquals(listOf("ds-1"), template.headers()[Consts.RequestHeader.DATASOURCE_ID]?.toList())
         assertEquals(listOf("en_US"), template.headers()[Consts.RequestHeader.LOCAL]?.toList())
         assertEquals(listOf("true"), template.headers()[Consts.RequestHeader.FEIGN_REQUEST]?.toList())
-        // 已有 traceKey 应被保留
+        // Existing traceKey should be preserved
         assertEquals("trace-existing", context.traceKey)
     }
 
@@ -95,11 +96,11 @@ internal class GlobalHeaderRequestInterceptorTest {
 
         val generated = template.headers()[Consts.RequestHeader.TRACE_KEY]?.firstOrNull()
         assertNotNull(generated)
-        assertTrue(generated.isNotBlank(), "应当生成非空 UUID")
+        assertTrue(generated.isNotBlank(), "Should generate a non-empty UUID")
 
-        // 关键断言：生成的 UUID 已反写回 context.traceKey
+        // Key assertion: the generated UUID is written back to context.traceKey
         assertEquals(generated, context.traceKey,
-            "traceKey 缺失时生成的 UUID 应当反写回 KudosContext，使后续出站调用复用同一 traceKey")
+            "When traceKey is missing, the generated UUID should be written back to KudosContext so subsequent outbound calls reuse the same traceKey")
     }
 
     @Test
@@ -115,7 +116,7 @@ internal class GlobalHeaderRequestInterceptorTest {
         interceptor.apply(t2)
         val secondTrace = t2.headers()[Consts.RequestHeader.TRACE_KEY]!!.single()
 
-        assertEquals(firstTrace, secondTrace, "同一线程内后续 Feign 调用应复用第一次生成的 UUID")
+        assertEquals(firstTrace, secondTrace, "Subsequent Feign calls on the same thread should reuse the first generated UUID")
     }
 
     @Test
@@ -129,7 +130,7 @@ internal class GlobalHeaderRequestInterceptorTest {
         val generated = template.headers()[Consts.RequestHeader.TRACE_KEY]?.firstOrNull()
         assertNotNull(generated)
         assertTrue(generated.isNotBlank())
-        // 空白字符串被视为缺失，覆盖回 context
+        // Blank string is treated as missing and overwritten back into context
         assertEquals(generated, context.traceKey)
     }
 
@@ -142,7 +143,7 @@ internal class GlobalHeaderRequestInterceptorTest {
         val template = newTemplate("GET", "/x")
         interceptor.apply(template)
         assertNull(template.headers()[Consts.RequestHeader.DATASOURCE_ID],
-            "dataSourceId 为 null 时不应写对应 header")
+            "When dataSourceId is null, the corresponding header should not be written")
     }
 
     @Test
@@ -194,7 +195,7 @@ internal class GlobalHeaderRequestInterceptorTest {
 
     @Test
     fun extensionProcessorIsInvoked_andCached() {
-        // 注册一个 SPI 实现，调用 apply 两次——验证 lazy 缓存路径不丢调用
+        // Register one SPI implementation and call apply twice — verify the lazy cache path doesn't drop calls
         val processor = RecordingProcessor()
         ctx.beanFactory.registerSingleton("recordingProcessor", processor)
 
@@ -204,8 +205,8 @@ internal class GlobalHeaderRequestInterceptorTest {
         val t2 = newTemplate("GET", "/b")
         interceptor.apply(t2)
 
-        assertEquals(2, processor.calls, "processor 应当被每次 apply 调用一次")
-        // 第二次调用走 lazy 缓存而非 SpringKit 反射——但应当还是同一 processor 实例
+        assertEquals(2, processor.calls, "processor should be invoked once per apply call")
+        // The second call uses the lazy cache instead of SpringKit reflection — but should still be the same processor instance
         assertSame(processor, processor)
     }
 
@@ -229,7 +230,7 @@ internal class GlobalHeaderRequestInterceptorTest {
         }
 
     /**
-     * 记录请求上下文处理器调用次数的测试实现。
+     * Test implementation that records how many times the request-context processor was invoked.
      *
      * @author K
      * @author AI: Codex
@@ -244,7 +245,7 @@ internal class GlobalHeaderRequestInterceptorTest {
     }
 
     /**
-     * 带 Spring 顺序值的请求上下文处理器测试实现。
+     * Test implementation of the request-context processor with a Spring order value.
      *
      * @author K
      * @author AI: Codex

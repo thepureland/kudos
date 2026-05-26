@@ -24,10 +24,10 @@ internal class CryptoKitTest {
     fun isMacValid() {
         val input = "foo message"
 
-        //key可为任意字符串
+        //key can be an arbitrary string
         //byte[] key = "a foo key".getBytes();
 
-        //key可为任意字符串
+        //key can be an arbitrary string
         //byte[] key = "a foo key".getBytes();
         val key = CryptoKit.generateHmacSha1Key()
         assertEquals(20, key.size.toLong())
@@ -87,15 +87,15 @@ internal class CryptoKitTest {
         val password = "password123"
         val plaintext = "HelloKudosWorld"
 
-        // 1. 用显式密码加密成十六进制字符串
+        // 1. Encrypt with the explicit password into a hex string
         val cipherHex = CryptoKit.aesEncrypt(plaintext, password)
         assertNotNull(cipherHex)
         assertTrue(cipherHex.isNotBlank(), "Cipher text hex should not be blank")
 
-        // 2. 将十六进制字符串解码为密文字节数组
+        // 2. Decode the hex string into ciphertext bytes
         val cipherBytes = EncodeKit.decodeHex(cipherHex)
 
-        // 3. 用 aesDecrypt(ByteArray, password) 解码回原始明文字节
+        // 3. Decode back to the original plaintext bytes via aesDecrypt(ByteArray, password)
         val decryptedBytes = CryptoKit.aesDecrypt(cipherBytes, password)
         assertArrayEquals(
             plaintext.toByteArray(StandardCharsets.UTF_8),
@@ -103,7 +103,7 @@ internal class CryptoKitTest {
             "aesDecrypt(ByteArray, password) should return original plaintext bytes"
         )
 
-        // 4. 再直接调用 aesDecrypt(String, password) 得到明文字符串
+        // 4. Then call aesDecrypt(String, password) directly to get the plaintext string
         val roundTrip = CryptoKit.aesDecrypt(cipherHex, password)
         assertEquals(plaintext, roundTrip, "aesDecrypt(hexString, password) should return original plaintext string")
 
@@ -117,7 +117,7 @@ internal class CryptoKitTest {
         val result = CryptoKit.tryAesDecrypt("zz", "password123")
         assertTrue(result.isFailure, "tryAesDecrypt should return failure for invalid hex input")
 
-        // 兼容旧API：失败时仍返回空字符串
+        // Legacy API compatibility: on failure, still returns an empty string
         assertEquals("", CryptoKit.aesDecrypt("zz", "password123"))
     }
 
@@ -186,13 +186,14 @@ internal class CryptoKitTest {
         val password = "emptyTest"
         val emptyPlain = ""
 
-        // 使用显式密码加密，得到十六进制字符串
+        // Encrypt with the explicit password to get a hex string
         val cipherHex = CryptoKit.aesEncrypt(emptyPlain, password)
-        // 解密时直接调用 aesDecrypt(String, password)——它会自动把 hex 字符串 decode 回字节，再做解密
+        // For decryption, call aesDecrypt(String, password) directly — it automatically decodes the hex string
+        // back to bytes and then decrypts.
         val roundTripExplicit = CryptoKit.aesDecrypt(cipherHex, password)
         assertEquals("", roundTripExplicit, "Decrypting encryption of empty string should yield empty string")
 
-        // 使用默认 key 的重载
+        // Use the default-key overload
         val cipherWithPrefix = CryptoKit.aesEncrypt(emptyPlain)
         val roundTripDefault = CryptoKit.aesDecrypt(cipherWithPrefix)
         assertEquals("", roundTripDefault, "Default-key decrypt of empty input should yield empty string")

@@ -16,15 +16,15 @@ internal class Base36KitTest {
     private val defaultKey = Base36Kit.KEY
 
     /**
-     * 辅助方法：对 encryptIgnoreCase(...) 结果剥离掉第一个字符的“校验位”后调用底层 decrypt(...)。
-     * 由于现有 decryptIgnoreCase 在某些场景会返回“校验位不匹配！”，我们这里绕过它，
-     * 直接验证底层 decrypt/ encrypt 是否可逆。
+     * Helper: strip the first character (the checksum) from encryptIgnoreCase(...) output, then call the underlying decrypt(...).
+     * Because the existing decryptIgnoreCase may in some cases return "checksum mismatch!", we bypass it here
+     * and directly verify that the underlying decrypt / encrypt are reversible.
      */
     private fun decryptAfterStripCheck(cipher: String): String {
-        require(cipher.length >= 2) { "cipher 长度必须 >= 2" }
-        // 首字符是校验位，真正的“加密内容”从第二位开始
+        require(cipher.length >= 2) { "cipher length must be >= 2" }
+        // The first character is the checksum; the actual "encrypted content" starts at index 1
         val encryptedBody = cipher.substring(1)
-        // 调用 Base36Kit.decrypt(...)，capitalOnly = true
+        // Call Base36Kit.decrypt(...), capitalOnly = true
         return Base36Kit.decrypt(encryptedBody, defaultKey, true)
     }
 
@@ -53,7 +53,7 @@ internal class Base36KitTest {
     fun singleChar_encryptDecrypt_capitalOnlyFalse_roundTrip() {
         val key = 123456789012345678L
 
-        // 小写 'b'
+        // Lowercase 'b'
         run {
             val input = "b"
             val cipher = Base36Kit.encrypt(input, key, capitalOnly = false)
@@ -62,7 +62,7 @@ internal class Base36KitTest {
             assertEquals("b", recovered)
         }
 
-        // 大写 'X'
+        // Uppercase 'X'
         run {
             val input = "X"
             val cipher = Base36Kit.encrypt(input, key, capitalOnly = false)
@@ -71,7 +71,7 @@ internal class Base36KitTest {
             assertEquals("X", recovered)
         }
 
-        // 数字 '7'
+        // Digit '7'
         run {
             val input = "7"
             val cipher = Base36Kit.encrypt(input, key, capitalOnly = false)
@@ -82,7 +82,7 @@ internal class Base36KitTest {
     }
 
     /**
-     * 5. capitalOnly = true 时，对单字符 'c'（小写）加密⇒解密，应当输出大写 'C'。
+     * 5. When capitalOnly = true, encrypting/decrypting the single character 'c' (lowercase) should output uppercase 'C'.
      */
     @Test
     fun singleLetter_encryptDecrypt_capitalOnlyTrue_convertsToUppercase() {
@@ -97,7 +97,7 @@ internal class Base36KitTest {
     @Test
     fun tryDecryptIgnoreCase_checksumMismatch_returnsFailure() {
         val cipher = Base36Kit.encryptIgnoreCase("HELLO", defaultKey)
-        // 篡改校验位
+        // Tamper with the checksum
         val tampered = if (cipher.first() == '0') "1" + cipher.substring(1) else "0" + cipher.substring(1)
         val result = Base36Kit.tryDecryptIgnoreCase(tampered, defaultKey)
         assertTrue(result.isFailure)

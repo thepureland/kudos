@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration
 
 
 /**
- * ktorm自动配置类
+ * Ktorm auto-configuration class.
  *
  * @author K
  * @author AI: Codex

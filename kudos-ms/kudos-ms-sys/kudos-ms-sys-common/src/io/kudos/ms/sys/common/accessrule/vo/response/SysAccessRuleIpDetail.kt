@@ -6,7 +6,7 @@ import java.time.LocalDateTime
 
 
 /**
- * IP 访问规则详情响应 VO；字段语义与 [SysAccessRuleIpEdit] 一致。
+ * IP access rule detail response VO; field semantics match [SysAccessRuleIpEdit].
  *
  * @author K
  * @since 1.0.0
@@ -19,37 +19,37 @@ data class SysAccessRuleIpDetail (
 
     val ipEnd: BigDecimal? = null,
 
-    /** ip 类型字典代码 */
+    /** IP type dictionary code. */
     val ipTypeDictCode: String? = null,
 
-    /** 过期时间 */
+    /** Expiration time. */
     val expirationDate: LocalDateTime? = null,
 
-    /** 父规则id */
+    /** Parent rule id. */
     val parentRuleId: String? = null,
 
-    /** 备注 */
+    /** Remark. */
     val remark: String? = null,
 
-    /** 是否启用 */
+    /** Whether active. */
     val active: Boolean? = null,
 
-    /** 创建者id */
+    /** Creator id. */
     val createUserId: String? = null,
 
-    /** 创建者名称 */
+    /** Creator name. */
     val createUserName: String? = null,
 
-    /** 创建时间 */
+    /** Create time. */
     val createTime: LocalDateTime? = null,
 
-    /** 更新者id */
+    /** Updater id. */
     val updateUserId: String? = null,
 
-    /** 更新者名称 */
+    /** Updater name. */
     val updateUserName: String? = null,
 
-    /** 更新时间 */
+    /** Update time. */
     val updateTime: LocalDateTime? = null,
 
 ) : IIdEntity<String>, IIpBigDecimalToStringSupport {

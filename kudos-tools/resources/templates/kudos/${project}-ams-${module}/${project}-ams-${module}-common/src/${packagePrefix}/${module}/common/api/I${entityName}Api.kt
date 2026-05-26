@@ -1,7 +1,7 @@
 package ${packagePrefix}.${module}.common.api
 
 
-<@generateClassComment table.comment+" 对外API"/>
+<@generateClassComment table.comment+" public API"/>
 //region your codes 1
 interface I${entityName}Api {
 //endregion your codes 1

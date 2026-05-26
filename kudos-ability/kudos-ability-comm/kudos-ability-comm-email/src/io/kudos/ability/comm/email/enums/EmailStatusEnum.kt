@@ -4,10 +4,10 @@ import io.kudos.base.enums.ienums.IDictEnum
 
 
 /**
- * 邮件发送结果状态。来源于 JavaMail `SendFailedException` 的细分：
- *  - 全部发送出去 → [SUCCESS]
- *  - 有 `validSentAddresses` **且** 有 `validUnsentAddresses`/`invalidAddresses` → [SUCCESS_PART]
- *  - 没有任何收件人成功 → [FAIL]
+ * Email send result status. Derived from the breakdown of JavaMail `SendFailedException`:
+ *  - All messages sent successfully -> [SUCCESS]
+ *  - Has `validSentAddresses` **and** has `validUnsentAddresses`/`invalidAddresses` -> [SUCCESS_PART]
+ *  - No recipients succeeded -> [FAIL]
  *
  * @author paul
  * @author K
@@ -18,13 +18,13 @@ enum class EmailStatusEnum(
     override val displayText: String
 ) : IDictEnum {
 
-    /** 全部收件人都失败。 */
-    FAIL("0", "失败"),
+    /** All recipients failed. */
+    FAIL("0", "Failed"),
 
-    /** 部分收件人成功、部分失败——业务侧通常需要把失败列表入失败队列重发。 */
-    SUCCESS_PART("1", "部分成功"),
+    /** Some recipients succeeded and some failed; the business side typically needs to push the failed list to a retry queue. */
+    SUCCESS_PART("1", "Partial success"),
 
-    /** 全部收件人都成功。 */
-    SUCCESS("2", "成功");
+    /** All recipients succeeded. */
+    SUCCESS("2", "Success");
 
 }

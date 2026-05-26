@@ -2,10 +2,10 @@ package io.kudos.ability.web.ktor.init
 
 
 /**
- * Ktor 配置属性，对应 `kudos.ability.web.ktor.*`。
+ * Ktor configuration properties, corresponding to `kudos.ability.web.ktor.*`.
  *
- * @property engine 引擎选择 + 端口
- * @property plugins 各 ktor 插件的启用开关
+ * @property engine engine selection + port
+ * @property plugins enable switches for each ktor plugin
  * @author K
  * @author AI: Codex
  * @since 1.0.0
@@ -15,11 +15,11 @@ data class KtorProperties(
     val plugins: Plugins = Plugins()
 ) {
     /**
-     * 引擎配置。
+     * Engine configuration.
      *
-     * @property name 引擎名（大小写不敏感）：`cio` / `netty` / `jetty` / `tomcat` / `test`。
-     *   `test` 表示不启动真实引擎，由测试用例自行装配 [io.ktor.server.testing.testApplication]。
-     * @property port 监听端口；0 表示随机端口（注意：随机端口主要供测试使用，生产请指定）。
+     * @property name engine name (case-insensitive): `cio` / `netty` / `jetty` / `tomcat` / `test`.
+     *   `test` means no real engine is started; tests wire up [io.ktor.server.testing.testApplication] themselves.
+     * @property port listening port; 0 means a random port (note: random ports are mainly for testing, specify one in production).
      */
     data class Engine(
         var name: String = "test",
@@ -27,17 +27,18 @@ data class KtorProperties(
     )
 
     /**
-     * 插件开关合集。每个插件的 [Plugin.enabled] 默认 true；按需关闭以减少冷启动开销。
+     * Collection of plugin switches. Each plugin's [Plugin.enabled] defaults to true;
+     * disable as needed to reduce cold-start overhead.
      */
     data class Plugins(
-        /** Ktor [io.ktor.server.plugins.contentnegotiation.ContentNegotiation] —— JSON 序列化。 */
+        /** Ktor [io.ktor.server.plugins.contentnegotiation.ContentNegotiation] — JSON serialization. */
         var contentNegotiation: Plugin = Plugin(),
-        /** Ktor [io.ktor.server.plugins.statuspages.StatusPages] —— 状态码 / 异常统一响应。 */
+        /** Ktor [io.ktor.server.plugins.statuspages.StatusPages] — unified status code / exception responses. */
         var statusPages: Plugin = Plugin(),
-        /** Ktor [io.ktor.server.websocket.WebSockets] —— WebSocket 支持。 */
+        /** Ktor [io.ktor.server.websocket.WebSockets] — WebSocket support. */
         var webSocket: Plugin = Plugin()
     ) {
-        /** 单个插件开关。`enabled = false` 时本模块不会 `install` 该插件。 */
+        /** Switch for an individual plugin. When `enabled = false` this module will not `install` the plugin. */
         data class Plugin(
             var enabled: Boolean = true
         )

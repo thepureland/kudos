@@ -7,23 +7,23 @@ import kotlin.reflect.KProperty0
 
 
 /**
- * 系统列表查询条件请求VO
+ * System list query criteria request VO.
  *
  * @author K
  * @since 1.0.0
  */
 data class SysSystemQuery (
 
-    /** 编码 */
+    /** Code */
     val code: String? = null,
 
-    /** 名称 */
+    /** Name */
     val name: String? = null,
 
-    /** 是否子系统 */
+    /** Whether sub-system */
     val subSystem: Boolean? = null,
 
-    /** 是否启用 */
+    /** Whether active */
     val active: Boolean? = true,
 
 ) : ListSearchPayload() {

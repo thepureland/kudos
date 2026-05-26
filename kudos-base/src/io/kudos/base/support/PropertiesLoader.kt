@@ -6,39 +6,39 @@ import java.util.Properties
 
 
 /**
- * Properties文件加载工具类
- * 
- * 用于加载和管理多个properties文件，支持属性值的覆盖和优先级控制。
- * 
- * 加载规则：
- * 1. 多文件加载：可以加载多个properties文件
- * 2. 覆盖机制：后加载的文件会覆盖先加载文件中相同的属性
- * 3. 优先级：System Property > 文件中的属性（最高优先级）
- * 
- * 核心功能：
- * 1. 文件加载：支持加载多个properties文件（Spring Resource格式路径）
- * 2. 类型转换：提供String、Int、Double、Boolean等类型的属性获取方法
- * 3. 默认值：支持为属性提供默认值
- * 4. 优先级：自动优先使用System Property的值
- * 
- * 类型支持：
- * - String：字符串类型，支持默认值
- * - Int：整数类型，支持默认值，转换失败会抛出异常
- * - Double：浮点数类型，支持默认值，转换失败会抛出异常
- * - Boolean：布尔类型，支持默认值，非true/false返回false
- * 
- * 使用场景：
- * - 配置文件加载和管理
- * - 系统配置的读取
- * - 环境变量的覆盖
- * - 多环境配置支持
- * 
- * 注意事项：
- * - 文件路径使用Spring Resource格式（如classpath:config.properties）
- * - System Property优先级最高，适合用于环境变量覆盖
- * - 文件加载失败不会抛出异常，只会记录日志
- * - 类型转换失败会抛出异常，建议使用带默认值的方法
- * 
+ * Properties file loading utility class.
+ *
+ * Used to load and manage multiple properties files, supporting property value overrides and priority control.
+ *
+ * Loading rules:
+ * 1. Multi-file loading: multiple properties files can be loaded
+ * 2. Override mechanism: properties in later-loaded files override those of the same name in earlier-loaded files
+ * 3. Priority: System Property > file property (highest priority)
+ *
+ * Core features:
+ * 1. File loading: supports loading multiple properties files (Spring Resource path format)
+ * 2. Type conversion: provides methods to retrieve properties as String, Int, Double, Boolean, etc.
+ * 3. Default values: supports providing default values for properties
+ * 4. Priority: automatically prefers System Property values
+ *
+ * Type support:
+ * - String: string type, supports default values
+ * - Int: integer type, supports default values; throws an exception on conversion failure
+ * - Double: floating-point type, supports default values; throws an exception on conversion failure
+ * - Boolean: boolean type, supports default values; returns false for non-true/false values
+ *
+ * Use cases:
+ * - Configuration file loading and management
+ * - Reading system configuration
+ * - Environment variable overrides
+ * - Multi-environment configuration support
+ *
+ * Notes:
+ * - File paths use the Spring Resource format (e.g., classpath:config.properties)
+ * - System Property has the highest priority, suitable for environment variable overrides
+ * - File loading failures do not throw exceptions; they are only logged
+ * - Type conversion failures throw exceptions; using methods with default values is recommended
+ *
  * @since 1.0.0
  */
 class PropertiesLoader {
@@ -54,7 +54,7 @@ class PropertiesLoader {
     }
 
     /**
-     * 取出Property，但以System的Property优先.
+     * Retrieves a Property, with System Property taking precedence.
      *
      * @param key Key
      * @return Value
@@ -64,7 +64,7 @@ class PropertiesLoader {
     private fun getValue(key: String): String? = System.getProperty(key) ?: properties.getProperty(key)
 
     /**
-     * 取出String类型的Property，但以System的Property优先,如果都為Null则抛出异常.
+     * Retrieves a String Property, with System Property taking precedence. Throws an exception if both are null.
      *
      * @param key Key
      * @return Value
@@ -74,10 +74,10 @@ class PropertiesLoader {
     fun getProperty(key: String): String? = getValue(key)
 
     /**
-     * 取出String类型的Property，但以System的Property优先.如果都為Null則返回Default值.
+     * Retrieves a String Property, with System Property taking precedence. Returns the default value if both are null.
      *
      * @param key Key
-     * @param defaultValue 默认值
+     * @param defaultValue Default value
      * @return Value
      * @author K
      * @since 1.0.0
@@ -85,7 +85,7 @@ class PropertiesLoader {
     fun getProperty(key: String, defaultValue: String): String = getValue(key) ?: defaultValue
 
     /**
-     * 取出Integer类型的Property，但以System的Property优先.如果都為Null或内容错误则抛出异常.
+     * Retrieves an Integer Property, with System Property taking precedence. Throws an exception if both are null or the content is invalid.
      *
      * @param key Key
      * @return Value
@@ -95,10 +95,10 @@ class PropertiesLoader {
     fun getInt(key: String): Int? = getValue(key)?.toInt()
 
     /**
-     * 取出Integer类型的Property，但以System的Property优先.如果都為Null則返回Default值，如果内容错误则抛出异常
+     * Retrieves an Integer Property, with System Property taking precedence. Returns the default value if both are null; throws an exception if the content is invalid.
      *
      * @param key Key
-     * @param defaultValue 默认值
+     * @param defaultValue Default value
      * @return Value
      * @author K
      * @since 1.0.0
@@ -106,7 +106,7 @@ class PropertiesLoader {
     fun getInt(key: String, defaultValue: Int): Int = getValue(key)?.toInt() ?: defaultValue
 
     /**
-     * 取出Double类型的Property，但以System的Property优先.如果都為Null或内容错误则抛出异常.
+     * Retrieves a Double Property, with System Property taking precedence. Throws an exception if both are null or the content is invalid.
      *
      * @param key Key
      * @return Value
@@ -116,10 +116,10 @@ class PropertiesLoader {
     fun getDouble(key: String): Double? = getValue(key)?.toDouble()
 
     /**
-     * 取出Double类型的Property，但以System的Property优先.如果都為Null則返回Default值，如果内容错误则抛出异常
+     * Retrieves a Double Property, with System Property taking precedence. Returns the default value if both are null; throws an exception if the content is invalid.
      *
      * @param key Key
-     * @param defaultValue 默认值
+     * @param defaultValue Default value
      * @return Value
      * @author K
      * @since 1.0.0
@@ -127,7 +127,7 @@ class PropertiesLoader {
     fun getDouble(key: String, defaultValue: Double): Double = getValue(key)?.toDouble() ?: defaultValue
 
     /**
-     * 取出Boolean类型的Property，但以System的Property优先.如果都為Null抛出异常,如果内容不是true/false则返回false.
+     * Retrieves a Boolean Property, with System Property taking precedence. Throws an exception if both are null; returns false if the content is not true/false.
      *
      * @param key Key
      * @return Value
@@ -137,10 +137,10 @@ class PropertiesLoader {
     fun getBoolean(key: String): Boolean? = getValue(key)?.toBoolean()
 
     /**
-     * 取出Boolean类型的Property，但以System的Property优先.如果都為Null則返回Default值,如果内容不为true/false则返回false.
+     * Retrieves a Boolean Property, with System Property taking precedence. Returns the default value if both are null; returns false if the content is not true/false.
      *
      * @param key Key
-     * @param defaultValue 默认值
+     * @param defaultValue Default value
      * @return Value
      * @author K
      * @since 1.0.0
@@ -148,7 +148,7 @@ class PropertiesLoader {
     fun getBoolean(key: String, defaultValue: Boolean): Boolean = getValue(key)?.toBoolean() ?: defaultValue
 
     /**
-     * 载入多个文件, 文件路径使用Spring Resource格式.
+     * Loads multiple files; file paths use the Spring Resource format.
      */
     private fun loadProperties(vararg resourcesPaths: String): Properties {
         val props = Properties()
@@ -171,11 +171,11 @@ class PropertiesLoader {
     }
 
     /**
-     * 把外部传入的资源路径归一化为 classpath 资源加载器认识的格式：
-     * 去掉 `classpath:` 前缀（Spring 风格）和起首的 `/`（让 ClassLoader.getResource 找得到）。
+     * Normalizes an externally provided resource path into a format recognized by the classpath resource loader:
+     * removes the `classpath:` prefix (Spring style) and the leading `/` (so that ClassLoader.getResource can locate it).
      *
-     * @param path 原始路径
-     * @return 归一化后的路径
+     * @param path The original path
+     * @return The normalized path
      * @author K
      * @since 1.0.0
      */

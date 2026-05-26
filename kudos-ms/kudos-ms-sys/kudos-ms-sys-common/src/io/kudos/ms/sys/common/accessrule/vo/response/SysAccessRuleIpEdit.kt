@@ -6,7 +6,7 @@ import java.time.LocalDateTime
 
 
 /**
- * IP 访问规则编辑响应 VO：[ipStart]/[ipEnd] 为库内 `NUMERIC` 边界的十进制字符串；`ipv4*Str`/`ipv6*Str` 便于表单绑定。
+ * IP access rule edit response VO: [ipStart]/[ipEnd] are decimal strings for the in-DB `NUMERIC` boundary; `ipv4*Str`/`ipv6*Str` are provided for form binding.
  *
  * @author K
  * @since 1.0.0
@@ -19,37 +19,37 @@ data class SysAccessRuleIpEdit (
 
     val ipEnd: BigDecimal? = null,
 
-    /** ip 类型字典代码 */
+    /** IP type dictionary code. */
     val ipTypeDictCode: String? = null,
 
-    /** 过期时间 */
+    /** Expiration time. */
     val expirationDate: LocalDateTime? = null,
 
-    /** 父规则id */
+    /** Parent rule id. */
     val parentRuleId: String? = null,
 
-    /** 备注 */
+    /** Remark. */
     val remark: String? = null,
 
-    /** 是否启用 */
+    /** Whether active. */
     val active: Boolean? = null,
 
-    /** 创建者id */
+    /** Creator id. */
     val createUserId: String? = null,
 
-    /** 创建者名称 */
+    /** Creator name. */
     val createUserName: String? = null,
 
-    /** 创建时间 */
+    /** Create time. */
     val createTime: LocalDateTime? = null,
 
-    /** 更新者id */
+    /** Updater id. */
     val updateUserId: String? = null,
 
-    /** 更新者名称 */
+    /** Updater name. */
     val updateUserName: String? = null,
 
-    /** 更新时间 */
+    /** Update time. */
     val updateTime: LocalDateTime? = null,
 
 ) : IIdEntity<String>, IIpBigDecimalToStringSupport {

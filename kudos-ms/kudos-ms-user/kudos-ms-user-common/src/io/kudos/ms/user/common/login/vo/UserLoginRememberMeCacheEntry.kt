@@ -6,23 +6,23 @@ import java.time.LocalDateTime
 
 
 /**
- * 记住我登录缓存项
+ * Remember-me login cache entry
  *
  * @author K
  * @since 1.0.0
  */
 data class UserLoginRememberMeCacheEntry (
 
-    /** 主键 */
+    /** Primary key */
     override val id: String,
 
-    /** 用户名 */
+    /** Username */
     val username: String?,
 
-    /** 令牌 */
+    /** Token */
     val token: String?,
 
-    /** 最后使用时间 */
+    /** Last used time */
     val lastUsed: LocalDateTime?,
 
 ) : IIdEntity<String>, Serializable {

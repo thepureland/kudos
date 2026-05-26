@@ -11,7 +11,7 @@ import kotlin.test.assertTrue
 /**
  * junit test for SysTenantSystemDao
  *
- * 测试数据来源：`SysTenantSystemDaoTest.sql`
+ * Test data source: `SysTenantSystemDaoTest.sql`
  *
  * @author K
  * @author AI: Cursor
@@ -49,7 +49,7 @@ class SysTenantSystemDaoTest : RdbTestBase() {
         val groupedCodes = assertNotNull(grouping["40000000-0000-0000-0000-000000001699"])
         assertTrue(groupedCodes.size >= 2)
 
-        // 测试null参数（查询所有）
+        // Test null argument (query all)
         val allGrouping = sysTenantSystemDao.groupingSystemCodesByTenantIds(null)
         assertTrue(allGrouping.isNotEmpty())
     }
@@ -62,17 +62,17 @@ class SysTenantSystemDaoTest : RdbTestBase() {
         val groupedTenantIds = assertNotNull(grouping["svc-subsys-ts-dao-test-1_2315"])
         assertTrue(groupedTenantIds.size >= 2)
 
-        // 测试null参数（查询所有）
+        // Test null argument (query all)
         val allGrouping = sysTenantSystemDao.groupingTenantIdsBySystemCodes(null)
         assertTrue(allGrouping.isNotEmpty())
     }
 
     @Test
     fun exists() {
-        // 测试存在的关系
+        // Test an existing relation
         assertTrue(sysTenantSystemDao.exists("40000000-0000-0000-0000-000000001699", "svc-subsys-ts-dao-test-1_2315"))
 
-        // 测试不存在的关系
+        // Test a non-existing relation
         assertFalse(sysTenantSystemDao.exists("40000000-0000-0000-0000-000000001699", "non-existent-subsys"))
     }
 }

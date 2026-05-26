@@ -5,44 +5,44 @@ import io.kudos.base.query.sort.DirectionEnum
 import io.kudos.base.support.ICallback
 
 /**
- * 列表到树结构转换器
- * 
- * 将扁平的节点列表转换为树形结构，支持父子关系的建立、排序和回调处理。
- * 
- * 核心功能：
- * 1. 树结构构建：根据节点的父子关系构建树形结构
- * 2. 根节点识别：自动识别父ID为空或空字符串的节点作为根节点
- * 3. 排序支持：支持对树的所有层级进行排序（ASC/DESC）
- * 4. 回调机制：支持节点挂载后的回调处理
- * 
- * 工作流程：
- * 1. 构建节点映射：创建ID到节点的映射表，便于快速查找
- * 2. 识别根节点：找出父ID为空或空字符串的节点
- * 3. 建立父子关系：将子节点挂载到对应的父节点下
- * 4. 执行回调：对每个根节点执行回调函数
- * 5. 排序处理：如果指定了排序方向，对树进行递归排序
- * 
- * 节点要求：
- * - 节点必须实现ITreeNode接口
- * - 节点需要提供ID和父ID信息
- * - 如果指定排序，节点类型必须实现Comparable接口
- * 
- * 数据完整性：
- * - 如果节点的父节点不存在，会记录警告日志
- * - 该节点会被忽略，不会添加到树中
- * - 不会抛出异常，保证转换过程的健壮性
- * 
- * 使用场景：
- * - 菜单树、组织架构树等树形数据的构建
- * - 扁平数据到树形结构的转换
- * - 需要排序的树形数据展示
- * 
- * 注意事项：
- * - 父节点必须在列表中，否则子节点会被忽略
- * - 排序会递归应用到所有层级的节点
- * - 回调在节点挂载完成后执行
- * - 排序时会就地重排每个节点的children集合（有副作用）
- * 
+ * List-to-tree converter.
+ *
+ * Converts a flat node list into a tree structure, supporting parent-child relationship building, sorting, and callback handling.
+ *
+ * Core features:
+ * 1. Tree building: builds the tree based on parent-child relationships among nodes
+ * 2. Root node identification: automatically identifies nodes whose parent ID is null or empty as roots
+ * 3. Sorting support: supports sorting all levels of the tree (ASC/DESC)
+ * 4. Callback mechanism: supports callback handling after a node is attached
+ *
+ * Workflow:
+ * 1. Build the node map: create an ID-to-node map for fast lookups
+ * 2. Identify roots: find nodes whose parent ID is null or empty
+ * 3. Establish parent-child relationships: attach child nodes under their parents
+ * 4. Execute callbacks: invoke the callback for each root node
+ * 5. Sort: if a sort direction is specified, recursively sort the tree
+ *
+ * Node requirements:
+ * - Nodes must implement the ITreeNode interface
+ * - Nodes must provide ID and parent ID information
+ * - If sorting is specified, the node type must implement the Comparable interface
+ *
+ * Data integrity:
+ * - If a node's parent does not exist, a warning is logged
+ * - The node is ignored and not added to the tree
+ * - No exception is thrown, ensuring the robustness of the conversion process
+ *
+ * Use cases:
+ * - Building tree-shaped data such as menu trees and organizational hierarchies
+ * - Converting flat data into a tree structure
+ * - Displaying sorted tree data
+ *
+ * Notes:
+ * - Parent nodes must be present in the list; otherwise child nodes are ignored
+ * - Sorting is applied recursively to all node levels
+ * - Callbacks are executed after the node has been attached
+ * - Sorting reorders the children collection of each node in place (side effect)
+ *
  * @since 1.0.0
  */
 object ListToTreeConverter {
@@ -51,54 +51,54 @@ object ListToTreeConverter {
 
 
     /**
-     * 将列表结构转为树结构
-     * 
-     * 将扁平的节点列表转换为树形结构，支持排序和回调。
-     * 
-     * 工作流程：
-     * 1. 构建节点映射：创建ID到节点的映射表，便于快速查找
-     * 2. 识别根节点：遍历所有节点，找出父ID为空或空字符串的节点作为根节点
-     * 3. 构建树结构：
-     *    - 对于每个节点，查找其父节点
-     *    - 如果父节点存在，将当前节点添加到父节点的子节点列表
-     *    - 如果父节点不存在，记录警告日志（可能是数据不完整）
-     * 4. 执行回调：对于每个根节点，执行回调函数
-     * 5. 排序处理：如果指定了排序方向，对树进行排序
-     * 
-     * 节点识别：
-     * - 根节点：父ID为null或空字符串
-     * - 子节点：父ID不为空，且能在映射表中找到对应的父节点
-     * 
-     * 排序支持：
-     * - 如果指定了direction，会对树进行排序
-     * - 排序要求节点类型实现Comparable接口
-     * - 排序会递归应用到所有层级的节点
-     * 
-     * 回调机制：
-     * - 对于每个根节点，会调用callback.execute(node)
-     * - 回调在节点挂载完成后执行
-     * - 可以用于节点挂载后的额外处理
-     * 
-     * 数据完整性：
-     * - 如果节点的父节点不存在，会记录警告日志
-     * - 该节点会被忽略，不会添加到树中
-     * - 不会抛出异常，保证转换过程的健壮性
-     * 
-     * 注意事项：
-     * - 节点列表中的节点必须实现ITreeNode接口
-     * - 如果指定排序，节点类型必须实现Comparable接口
-     * - 父节点必须在列表中，否则子节点会被忽略
-     * 
-     * @param T 节点唯一标识的类型
-     * @param E 树节点类型，必须实现ITreeNode接口
-     * @param treeNodeList 节点对象列表
-     * @param direction 排序方向，如果指定则节点必须实现Comparable接口，为null则不排序
-     * @param callback 节点挂载后的回调函数，可以为null
-     * @param strict 严格模式：true 时遇到 parentId 在列表里找不到的"孤儿"节点会抛
-     *               [IllegalArgumentException]；false（默认）则按现有行为记 WARN 后静默丢弃，
-     *               保持向后兼容。需要确保输入数据完整的场景应显式传 true。
-     * @return 树根节点列表
-     * @throws IllegalArgumentException 当 strict=true 且存在孤儿节点时
+     * Converts a list structure into a tree structure.
+     *
+     * Converts a flat node list into a tree structure, with support for sorting and callbacks.
+     *
+     * Workflow:
+     * 1. Build the node map: create an ID-to-node map for fast lookups
+     * 2. Identify roots: iterate over all nodes and treat those with a null or empty parent ID as roots
+     * 3. Build the tree:
+     *    - For each node, look up its parent
+     *    - If the parent exists, append the current node to the parent's child list
+     *    - If the parent does not exist, log a warning (data may be incomplete)
+     * 4. Execute callbacks: invoke the callback for each root node
+     * 5. Sort: if a sort direction is specified, sort the tree
+     *
+     * Node identification:
+     * - Root node: parent ID is null or empty string
+     * - Child node: parent ID is not empty and the corresponding parent can be found in the map
+     *
+     * Sorting support:
+     * - If direction is specified, the tree is sorted
+     * - Sorting requires the node type to implement the Comparable interface
+     * - Sorting is applied recursively to all node levels
+     *
+     * Callback mechanism:
+     * - For each root node, callback.execute(node) is invoked
+     * - The callback is invoked after the node has been attached
+     * - Useful for additional processing after the node is attached
+     *
+     * Data integrity:
+     * - If a node's parent does not exist, a warning is logged
+     * - The node is ignored and not added to the tree
+     * - No exception is thrown, ensuring the robustness of the conversion process
+     *
+     * Notes:
+     * - Nodes in the node list must implement the ITreeNode interface
+     * - If sorting is specified, the node type must implement the Comparable interface
+     * - Parent nodes must be present in the list; otherwise child nodes are ignored
+     *
+     * @param T Node unique identifier type
+     * @param E Tree node type; must implement the ITreeNode interface
+     * @param treeNodeList List of node objects
+     * @param direction Sort direction; if specified, the node must implement Comparable; null means no sorting
+     * @param callback Callback invoked after a node is attached; may be null
+     * @param strict Strict mode: when true, an "orphan" node whose parentId cannot be found in the list throws
+     *               [IllegalArgumentException]; when false (default), it logs a WARN and silently drops the node,
+     *               preserving backward compatibility. Scenarios that need to guarantee complete input data should explicitly pass true.
+     * @return List of root tree nodes
+     * @throws IllegalArgumentException When strict=true and orphan nodes exist
      */
     fun <T, E : ITreeNode<T>> convert(
         treeNodeList: List<E>,
@@ -110,7 +110,7 @@ object ListToTreeConverter {
         val nodeList = mutableListOf<E>()
         for (node in treeNodeList) {
             val pId = node._getParentId()
-            if (pId == null || (pId is CharSequence && pId.isEmpty())) { // 根
+            if (pId == null || (pId is CharSequence && pId.isEmpty())) { // Root
                 nodeList.add(node)
                 callback?.execute(node)
                 continue
@@ -119,51 +119,51 @@ object ListToTreeConverter {
             if (pNode != null) {
                 pNode._getChildren().add(node)
             } else {
-                require(!strict) { "结点#${node._getId()}的父结点#${pId}不在输入列表中（strict 模式）" }
-                LOG.warn("结点#${node._getId()}的父结点#${pId}不存在！")
+                require(!strict) { "Parent node #${pId} of node #${node._getId()} is not in the input list (strict mode)" }
+                LOG.warn("Parent node #${pId} of node #${node._getId()} does not exist!")
             }
         }
 
-        // 排序
+        // Sort
         return if (direction != null && treeNodeList.isNotEmpty()) sort(nodeList, direction) else nodeList
     }
 
     /**
-     * 对树节点进行排序
-     * 
-     * 递归地对树的所有层级进行排序，支持升序和降序。
-     * 
-     * 工作流程：
-     * 1. 类型检查：检查节点类型是否实现Comparable接口
-     * 2. 排序根节点：对当前层级的节点进行排序
-     * 3. 递归排序：对每个节点的子节点递归调用sort方法
-     * 4. 更新子节点：将排序后的子节点列表更新回节点
-     * 
-     * 排序规则：
-     * - 使用节点的Comparable接口进行排序
-     * - ASC：升序排列
-     * - DESC：降序排列（通过取反实现）
-     * 
-     * 递归处理：
-     * - 对每个节点的子节点列表递归调用sort
-     * - 确保所有层级的节点都被排序
-     * - 排序后的子节点列表会替换原来的列表
-     * 
-     * 类型安全：
-     * - 在运行时检查节点是否实现Comparable接口
-     * - 如果未实现，会抛出异常
-     * 
-     * 注意事项：
-     * - 节点类型必须实现Comparable接口
-     * - 排序会修改原节点列表的顺序
-     * - 排序会递归应用到所有子节点
-     * 
-     * @param T 节点唯一标识的类型
-     * @param E 树节点类型
-     * @param nodes 待排序的节点列表
-     * @param direction 排序方向（ASC或DESC）
-     * @return 排序后的节点列表
-     * @throws IllegalStateException 如果节点类型未实现Comparable接口
+     * Sorts tree nodes.
+     *
+     * Recursively sorts all levels of the tree, supporting ascending and descending order.
+     *
+     * Workflow:
+     * 1. Type check: verify that the node type implements the Comparable interface
+     * 2. Sort the roots: sort the nodes at the current level
+     * 3. Recursive sort: recursively invoke sort on each node's child list
+     * 4. Update children: replace each node's child list with the sorted result
+     *
+     * Sorting rules:
+     * - Uses the node's Comparable interface for sorting
+     * - ASC: ascending order
+     * - DESC: descending order (implemented by reversing)
+     *
+     * Recursive processing:
+     * - Recursively invokes sort on each node's child list
+     * - Ensures that nodes at all levels are sorted
+     * - The sorted child list replaces the original list
+     *
+     * Type safety:
+     * - Checks at runtime whether the node implements the Comparable interface
+     * - If it does not, an exception is thrown
+     *
+     * Notes:
+     * - The node type must implement the Comparable interface
+     * - Sorting modifies the order of the original node list
+     * - Sorting is applied recursively to all child nodes
+     *
+     * @param T Node unique identifier type
+     * @param E Tree node type
+     * @param nodes List of nodes to sort
+     * @param direction Sort direction (ASC or DESC)
+     * @return Sorted node list
+     * @throws IllegalStateException If the node type does not implement the Comparable interface
      */
     private fun <T, E : ITreeNode<T>> sort(nodes: List<E>, direction: DirectionEnum): List<E> {
         if (nodes.isEmpty()) return nodes
@@ -181,25 +181,26 @@ object ListToTreeConverter {
     }
 
     /**
-     * 用元素自身的 [Comparable] 实现做排序，避免反射调用 compareTo。
+     * Sorts by each element's own [Comparable] implementation, avoiding reflective calls to compareTo.
      *
-     * 要求**所有元素都实现 Comparable**（用首元素做守卫检查就够——如果首元素都不是 Comparable，
-     * 整批必然异构，直接 [error] 早抛错；同质保证后续 cast 安全）。
+     * Requires **all elements to implement Comparable** (a guard check on the first element is sufficient — if the first
+     * element is not Comparable, the batch must be heterogeneous, so [error] is thrown early; the homogeneity guarantee
+     * makes the subsequent cast safe).
      *
-     * @param T 元素类型
-     * @param items 待排序集合
+     * @param T Element type
+     * @param items Collection to sort
      * @param direction ASC / DESC
-     * @return 已排序列表
-     * @throws IllegalStateException 元素未实现 Comparable
+     * @return Sorted list
+     * @throws IllegalStateException If an element does not implement Comparable
      * @author K
      * @since 1.0.0
      */
     private fun <T : Any> sortByComparable(items: List<T>, direction: DirectionEnum): List<T> {
         if (items.first() !is Comparable<*>) {
-            error("类${items.first()::class.simpleName}必须实现Comparable接口！")
+            error("Class ${items.first()::class.simpleName} must implement the Comparable interface!")
         }
-        // 通过 Comparable 的 JVM bridge 方法直接调用，避免反射；
-        // 上面已用 is Comparable<*> 守卫，cast 在运行时一定可用。
+        // Call directly via Comparable's JVM bridge method to avoid reflection;
+        // the cast is guarded above by `is Comparable<*>`, so it is guaranteed to be valid at runtime.
         @Suppress("UNCHECKED_CAST")
         val comparator = Comparator<T> { a, b -> (a as Comparable<Any>).compareTo(b) }
         return items.sortedWith(if (direction == DirectionEnum.ASC) comparator else comparator.reversed())

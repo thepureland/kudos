@@ -10,7 +10,7 @@ import java.util.EnumSet
 import kotlin.reflect.KClass
 
 /**
- * 枚举工具类
+ * Enum utility.
  *
  * @author K
  * @since 1.0.0
@@ -20,63 +20,63 @@ object EnumKit {
     private val LOG = LogFactory.getLog(this::class)
 
     /**
-     * 根据字典枚举全类名字符串和字典代码，取得对应的枚举元素的译文
+     * Returns the display text of the dictionary enum element identified by the given enum class FQN and dictionary code.
      *
-     * @param enumClassStr 字典枚举全类名字符串，不能为空白串, 且对应的类必须实现ICodeEnum接口
-     * @param code 字典代码
-     * @return 字典枚举元素的译文，不存在时返回null
-     * @throws IllegalArgumentException 参数不合法时
+     * @param enumClassStr the fully qualified name of the dictionary enum class; must not be blank, and must implement ICodeEnum
+     * @param code the dictionary code
+     * @return the display text of the dictionary enum element, or null if not found
+     * @throws IllegalArgumentException if the arguments are invalid
      * @author K
      * @since 1.0.0
      */
     fun displayText(enumClassStr: String, code: String): String? {
         enumOf(enumClassStr, code)?.let { return it.displayText }
-        LOG.warn("枚举类【${enumClassStr}】不存在code为【${code}】的枚举元素")
+        LOG.warn("Enum class [${enumClassStr}] has no element with code [${code}]")
         return null
     }
 
     /**
-     * 根据字典枚举类型和字典代码，取得对应的枚举元素
+     * Returns the dictionary enum element matching the given enum type and dictionary code.
      *
-     * @param E 枚举类型
-     * @param enumClass 字典枚举类型，该枚举类必须实现ICodeEnum接口
-     * @param code 字典代码
-     * @return 字典枚举元素，不存在时返回null
-     * @throws IllegalArgumentException 参数不合法时
+     * @param E the enum type
+     * @param enumClass the dictionary enum type; must implement ICodeEnum
+     * @param code the dictionary code
+     * @return the dictionary enum element, or null if not found
+     * @throws IllegalArgumentException if the arguments are invalid
      * @author K
      * @since 1.0.0
      */
     fun <E : IDictEnum> enumOf(enumClass: KClass<E>, code: String): E? {
-        require(enumClass.isEnum()) { "指定的类【${enumClass}】非枚举类" }
-        require(code.isNotBlank()) { "字典代码参数不能为空" }
+        require(enumClass.isEnum()) { "The given class [${enumClass}] is not an enum" }
+        require(code.isNotBlank()) { "The dictionary code argument must not be blank" }
 
         enumClass.java.enumConstants.firstOrNull { it.code == code }?.let { return it }
-        LOG.warn("枚举类【${enumClass}】不存在code为【$code】的枚举元素")
+        LOG.warn("Enum class [${enumClass}] has no element with code [$code]")
         return null
     }
 
     /**
-     * 根据枚举全类名和字典代码，取得对应的枚举元素
+     * Returns the dictionary enum element matching the given enum FQN and dictionary code.
      *
-     * @param enumClassStr 字典枚举全类名字符串，不能为空白串, 且对应的类必须实现ICodeEnum接口
-     * @param code 字典代码
-     * @return 字典枚举元素的译文，不存在时返回null
-     * @throws IllegalArgumentException 参数不合法时
+     * @param enumClassStr the fully qualified name of the dictionary enum class; must not be blank, and must implement ICodeEnum
+     * @param code the dictionary code
+     * @return the display text of the dictionary enum element, or null if not found
+     * @throws IllegalArgumentException if the arguments are invalid
      * @author K
      * @since 1.0.0
      */
     fun enumOf(enumClassStr: String, code: String): IDictEnum? {
-        require(code.isNotBlank()) { "字典代码参数不能为空" }
+        require(code.isNotBlank()) { "The dictionary code argument must not be blank" }
 
         val enumClazz = getCodeEnumClass(enumClassStr)
         return enumOf(enumClazz, code)
     }
 
     /**
-     * 取得字典枚举的所有字典项代码及其翻译信息
+     * Returns the codes and display texts of all items in the dictionary enum.
      *
-     * @param enumClass 字典枚举类
-     * @return Map(字典项代码，译文)
+     * @param enumClass the dictionary enum class
+     * @return a map of dictionary item code to display text
      * @author K
      * @since 1.0.0
      */
@@ -87,11 +87,11 @@ object EnumKit {
             .associate { it.code to it.displayText }
 
     /**
-     * 取得字典枚举的所有代码及其翻译信息
+     * Returns the codes and display texts of all items in the dictionary enum.
      *
-     * @param enumClassStr 字典枚举全类名字符串，不能为空白串, 且对应的类必须实现ICodeEnum接口
-     * @return Map(字典代码，译文)
-     * @throws IllegalArgumentException 参数不合法时
+     * @param enumClassStr the fully qualified name of the dictionary enum class; must not be blank, and must implement ICodeEnum
+     * @return a map of dictionary code to display text
+     * @throws IllegalArgumentException if the arguments are invalid
      * @author K
      * @since 1.0.0
      */
@@ -101,59 +101,59 @@ object EnumKit {
     }
 
     /**
-     * 根据枚举全类名，取得对应的枚举元素
+     * Returns the enum class for the given FQN.
      *
-     * @param enumClassStr 枚举全类名，不能为null或空串, 且对应的类必须实现ICodeEnum接口
-     * @return 枚举类
-     * @throws IllegalArgumentException 参数为空或根据参数查找失败时
+     * @param enumClassStr the FQN of the enum; must not be null or blank, and must implement ICodeEnum
+     * @return the enum class
+     * @throws IllegalArgumentException if the argument is blank or the lookup fails
      * @author K
      * @since 1.0.0
      */
     fun getCodeEnumClass(enumClassStr: String): KClass<out IDictEnum> {
-        require(enumClassStr.isNotBlank()) { "字典枚举全类名参数不能为空" }
+        require(enumClassStr.isNotBlank()) { "The dictionary enum FQN argument must not be blank" }
         val enumClazz = runCatching { Class.forName(enumClassStr) }
-            .getOrElse { throw IllegalArgumentException("类【$enumClassStr】不存在！") }
-        require(enumClazz.isEnum) { "类【$enumClassStr】不是枚举！" }
+            .getOrElse { throw IllegalArgumentException("Class [$enumClassStr] does not exist!") }
+        require(enumClazz.isEnum) { "Class [$enumClassStr] is not an enum!" }
         require(IDictEnum::class.java.isAssignableFrom(enumClazz)) {
-            "类【$enumClassStr】没有实现【${IDictEnum::class}】接口！"
+            "Class [$enumClassStr] does not implement the [${IDictEnum::class}] interface!"
         }
         return enumClazz.asSubclass(IDictEnum::class.java).kotlin
     }
 
 
     /**
-     * 将枚举中的元素放以Map的形式返回
+     * Returns the enum elements as a Map.
      *
-     * @param E 枚举类型
-     * @param enumClass 待查找的枚举类
-     * @return 可修改的map, 不会为null. Map(枚举元素name，枚举元素)
-     * @throws IllegalArgumentException enumClass参数为null时
+     * @param E the enum type
+     * @param enumClass the enum class to look up
+     * @return a mutable map, never null. Map(enum element name -> enum element)
+     * @throws IllegalArgumentException if the enumClass argument is null
      * @author K
      * @since 1.0.0
      */
     fun <E : Enum<E>> getEnumMap(enumClass: KClass<E>): Map<String, E> = EnumUtils.getEnumMap(enumClass.java)
 
     /**
-     * 将枚举中的元素放以List的形式返回
+     * Returns the enum elements as a List.
      *
      *
-     * @param E 枚举类型
-     * @param enumClass 待查找的枚举类
-     * @return 可修改的list, 不会为null. List<枚举元素>
-     * @throws IllegalArgumentException enumClass参数为null时
+     * @param E the enum type
+     * @param enumClass the enum class to look up
+     * @return a mutable list, never null. List of enum elements
+     * @throws IllegalArgumentException if the enumClass argument is null
      * @author K
      * @since 1.0.0
      */
     fun <E : Enum<E>> getEnumList(enumClass: KClass<E>): List<E> = EnumUtils.getEnumList(enumClass.java)
 
     /**
-     * 检查指定是名字是否为指定的枚举类的有效枚举元素
-     * 该方法與enum的valueOf方法不同，当枚举名无效时它不会抛出异常。
+     * Checks whether the given name is a valid enum element of the given enum class.
+     * Unlike enum's valueOf method, this method does not throw an exception when the enum name is invalid.
      *
-     * @param E 枚举类型
-     * @param enumClass  待查找的枚举类
-     * @param enumName   枚举元素名， null将返回false
-     * @return true 如果枚举元素名有效, 否则为 false
+     * @param E the enum type
+     * @param enumClass the enum class to look up
+     * @param enumName the enum element name; null returns false
+     * @return true if the enum element name is valid; otherwise false
      * @author K
      * @since 1.0.0
      */
@@ -161,29 +161,30 @@ object EnumKit {
         EnumUtils.isValidEnum(enumClass.java, enumName)
 
     /**
-     * 根据枚举元素名称获取对应的枚举元素，如果没找到返回null
-     * 该方法與enum的valueOf方法不同，当枚举名无效时它不会抛出异常。
+     * Returns the enum element with the given name, or null if not found.
+     * Unlike enum's valueOf method, this method does not throw an exception when the enum name is invalid.
      *
-     * @param E 枚举类型
-     * @param enumClass  待查找的枚举类
-     * @param enumName   枚举元素名， null将返回null
-     * @return 枚举元素, 如果没找到返回null
+     * @param E the enum type
+     * @param enumClass the enum class to look up
+     * @param enumName the enum element name; null returns null
+     * @return the enum element, or null if not found
      * @author K
      * @since 1.0.0
      */
     fun <E : Enum<E>> getEnum(enumClass: KClass<E>, enumName: String?): E? = EnumUtils.getEnum(enumClass.java, enumName)
 
     /**
-     * 创建一个long型位向量来表示指定的枚举子集。
-     * 该方法生成的值可以作为[processBitVector]的输入
-     * 当您的枚举中有超过64个值时不要使用该方法，因为这将创建一个超过long型所允许的最大值的值。
+     * Creates a long-typed bit vector representing the given enum subset.
+     * The value generated by this method can be used as input to [processBitVector].
+     * Do not use this method when your enum has more than 64 values, because it would create a value
+     * exceeding the maximum allowed for a long.
      *
-     * @param E       枚举类型
-     * @param enumClass 枚举类
-     * @param values    需要转换的枚举元素的迭代器
-     * @return 一个长整形值， 它的位值代表枚举元素的值
-     * @throws NullPointerException 如果 `enumClass` 或 `values` 为 `null`
-     * @throws IllegalArgumentException 如果 `enumClass` 不是一个枚举类或超过64个枚举元素
+     * @param E       the enum type
+     * @param enumClass the enum class
+     * @param values    iterable of enum elements to convert
+     * @return a long value whose bit values represent the enum elements
+     * @throws NullPointerException if `enumClass` or `values` is `null`
+     * @throws IllegalArgumentException if `enumClass` is not an enum class or has more than 64 enum elements
      * @author K
      * @since 1.0.0
      */
@@ -191,16 +192,17 @@ object EnumKit {
         EnumUtils.generateBitVector(enumClass.java, values)
 
     /**
-     * 创建一个long型位向量来表示指定的枚举数组
-     * 该方法生成的值可以作为[processBitVector]的输入
-     * 当您的枚举中有超过64个值时不要使用该方法，因为这将创建一个超过long型所允许的最大值的值。
+     * Creates a long-typed bit vector representing the given enum array.
+     * The value generated by this method can be used as input to [processBitVector].
+     * Do not use this method when your enum has more than 64 values, because it would create a value
+     * exceeding the maximum allowed for a long.
      *
-     * @param E       枚举类型
-     * @param enumClass 枚举类, 不能为 `null`
-     * @param values    需要转换的枚举元素的可变数组, 不能为 `null`
-     * @return 一个长整形值， 它的位值代表枚举元素的值
-     * @throws NullPointerException 如果 `enumClass` 或 `values` 为 `null`
-     * @throws IllegalArgumentException 如果 `enumClass` 不是一个枚举类或超过64个枚举元素
+     * @param E       the enum type
+     * @param enumClass the enum class; must not be `null`
+     * @param values    variable-length array of enum elements to convert; must not be `null`
+     * @return a long value whose bit values represent the enum elements
+     * @throws NullPointerException if `enumClass` or `values` is `null`
+     * @throws IllegalArgumentException if `enumClass` is not an enum class or has more than 64 enum elements
      * @author K
      * @since 1.0.0
      */
@@ -208,15 +210,15 @@ object EnumKit {
         EnumUtils.generateBitVector(enumClass.java, *values)
 
     /**
-     * 将[generateBitVector]创建的长整形值转换为它所表示的枚举元素集合
-     * 如果您存储了该值，谨防枚举任何更改会影响序号值。
+     * Converts the long value created by [generateBitVector] back into the set of enum elements it represents.
+     * If you store this value, beware that any changes to the enum may affect the ordinal values.
      *
-     * @param E       枚举类型
-     * @param enumClass 枚举类
-     * @param value     表示的枚举元素集合的长整形值
-     * @return 枚举元素集合
-     * @throws NullPointerException 如果 `enumClass` 为 `null`
-     * @throws IllegalArgumentException 如果 `enumClass` 不是一个枚举类或超过64个枚举元素
+     * @param E       the enum type
+     * @param enumClass the enum class
+     * @param value     the long value representing the set of enum elements
+     * @return the set of enum elements
+     * @throws NullPointerException if `enumClass` is `null`
+     * @throws IllegalArgumentException if `enumClass` is not an enum class or has more than 64 enum elements
      * @author K
      * @since 1.0.0
      */

@@ -5,7 +5,7 @@ import java.time.LocalDateTime
 
 
 /**
- * 未送达消息列表查询结果响应VO
+ * Undelivered message list query result response VO.
  *
  * @author K
  * @since 1.0.0

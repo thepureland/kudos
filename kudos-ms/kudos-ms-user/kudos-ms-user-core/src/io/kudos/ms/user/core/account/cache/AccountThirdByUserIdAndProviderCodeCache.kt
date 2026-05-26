@@ -15,12 +15,12 @@ import org.springframework.stereotype.Component
 
 
 /**
- * 用户第三方账号缓存处理器
+ * Third-party account cache handler.
  *
- * 1.数据来源表：user_account_third
- * 2.缓存所有active=true的第三方账号信息
- * 3.缓存的key为：user_id::account_provider_dict_code
- * 4.缓存的value为：UserAccountThirdCacheEntry对象
+ * 1. Source table: user_account_third
+ * 2. Caches all third-party accounts with active=true
+ * 3. Cache key: user_id::account_provider_dict_code
+ * 4. Cache value: UserAccountThirdCacheEntry instance
  *
  * @author K
  * @author AI: Codex
@@ -41,7 +41,7 @@ open class AccountThirdByUserIdAndProviderCodeCache : AbstractKeyValueCacheHandl
 
     override fun doReload(key: String): UserAccountThirdCacheEntry? {
         require(key.contains(Consts.CACHE_KEY_DEFAULT_DELIMITER)) {
-            "缓存${CACHE_NAME}的key格式必须是：userId${Consts.CACHE_KEY_DEFAULT_DELIMITER}accountProviderDictCode"
+            "Cache ${CACHE_NAME} key format must be: userId${Consts.CACHE_KEY_DEFAULT_DELIMITER}accountProviderDictCode"
         }
         val parts = key.split(Consts.CACHE_KEY_DEFAULT_DELIMITER)
         return getSelf<AccountThirdByUserIdAndProviderCodeCache>().getAccountThird(
@@ -51,14 +51,14 @@ open class AccountThirdByUserIdAndProviderCodeCache : AbstractKeyValueCacheHandl
 
     override fun reloadAll(clear: Boolean) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.info("缓存未开启，不加载和缓存所有启用状态的第三方账号信息！")
+            log.info("Cache disabled; not loading or caching active third-party accounts!")
             return
         }
 
         val searchPayload = UserAccountThirdQuery(active = true)
         @Suppress("UNCHECKED_CAST")
         val results = userAccountThirdDao.search(searchPayload, UserAccountThirdCacheEntry::class)
-        log.debug("从数据库加载了${results.size}条第三方账号信息。")
+        log.debug("Loaded ${results.size} third-party account records from the database.")
 
         if (clear) {
             clear()
@@ -69,15 +69,15 @@ open class AccountThirdByUserIdAndProviderCodeCache : AbstractKeyValueCacheHandl
             val providerCode = item.accountProviderDictCode ?: return@forEach
             KeyValueCacheKit.put(CACHE_NAME, getKey(userId, providerCode), item)
         }
-        log.debug("缓存了${results.size}条第三方账号信息。")
+        log.debug("Cached ${results.size} third-party account records.")
     }
 
     /**
-     * 根据用户ID和提供方代码获取第三方账号信息，如果缓存中不存在，则从数据库加载并写入缓存
+     * Get a third-party account by user id and provider code; on cache miss, load from DB and write back.
      *
-     * @param userId 用户ID
-     * @param accountProviderDictCode 第三方平台字典码
-     * @return UserAccountThirdCacheEntry，找不到返回null
+     * @param userId user id
+     * @param accountProviderDictCode third-party provider dict code
+     * @return UserAccountThirdCacheEntry, or null if not found
      */
     @Cacheable(
         cacheNames = [CACHE_NAME],
@@ -86,7 +86,7 @@ open class AccountThirdByUserIdAndProviderCodeCache : AbstractKeyValueCacheHandl
     )
     open fun getAccountThird(userId: String, accountProviderDictCode: String): UserAccountThirdCacheEntry? {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("缓存中不存在用户${userId}且提供方为${accountProviderDictCode}的第三方账号，从数据库中加载...")
+            log.debug("Third-party account for user=${userId} provider=${accountProviderDictCode} not in cache; loading from DB...")
         }
         val searchPayload = UserAccountThirdQuery(
             userId = userId,
@@ -96,7 +96,7 @@ open class AccountThirdByUserIdAndProviderCodeCache : AbstractKeyValueCacheHandl
         @Suppress("UNCHECKED_CAST")
         val results = userAccountThirdDao.search(searchPayload, UserAccountThirdCacheEntry::class)
         return if (results.isEmpty()) {
-            log.warn("数据库中不存在用户${userId}且提供方为${accountProviderDictCode}的active=true的第三方账号！")
+            log.warn("No active=true third-party account found for user=${userId} provider=${accountProviderDictCode}!")
             null
         } else {
             results.first()
@@ -104,55 +104,55 @@ open class AccountThirdByUserIdAndProviderCodeCache : AbstractKeyValueCacheHandl
     }
 
     /**
-     * 数据库插入记录后同步缓存
+     * Sync the cache after a DB insert.
      *
-     * @param any 包含必要属性的对象
-     * @param id 第三方账号id
+     * @param any object containing the required properties
+     * @param id third-party account id
      */
     open fun syncOnInsert(any: Any, id: String) {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("新增id为${id}的第三方账号后，同步${CACHE_NAME}缓存...")
+            log.debug("After inserting third-party account id=${id}, syncing ${CACHE_NAME} cache...")
             val userId = BeanKit.getProperty(any, UserAccountThird::userId.name) as String
             val providerCode = BeanKit.getProperty(any, UserAccountThird::accountProviderDictCode.name) as String
             KeyValueCacheKit.evict(CACHE_NAME, getKey(userId, providerCode))
             if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                 getSelf<AccountThirdByUserIdAndProviderCodeCache>().getAccountThird(userId, providerCode)
             }
-            log.debug("${CACHE_NAME}缓存同步完成。")
+            log.debug("${CACHE_NAME} cache sync complete.")
         }
     }
 
     /**
-     * 更新数据库记录后同步缓存
+     * Sync the cache after a DB update.
      *
-     * @param any 包含必要属性的对象
-     * @param id 第三方账号id
+     * @param any object containing the required properties
+     * @param id third-party account id
      */
     open fun syncOnUpdate(any: Any, id: String) {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("更新id为${id}的第三方账号后，同步${CACHE_NAME}缓存...")
+            log.debug("After updating third-party account id=${id}, syncing ${CACHE_NAME} cache...")
             val userId = BeanKit.getProperty(any, UserAccountThird::userId.name) as String
             val providerCode = BeanKit.getProperty(any, UserAccountThird::accountProviderDictCode.name) as String
             KeyValueCacheKit.evict(CACHE_NAME, getKey(userId, providerCode))
             if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                 getSelf<AccountThirdByUserIdAndProviderCodeCache>().getAccountThird(userId, providerCode)
             }
-            log.debug("${CACHE_NAME}缓存同步完成。")
+            log.debug("${CACHE_NAME} cache sync complete.")
         }
     }
 
     /**
-     * 更新启用状态后同步缓存
+     * Sync the cache after the active flag is updated.
      *
-     * @param id 第三方账号id
-     * @param active 是否启用
+     * @param id third-party account id
+     * @param active whether the account is active
      */
     open fun syncOnUpdateActive(id: String, active: Boolean) {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("更新id为${id}的第三方账号的启用状态后，同步缓存...")
+            log.debug("After updating active flag of third-party account id=${id}, syncing cache...")
             val accountThird = userAccountThirdDao.get(id)
             if (accountThird == null) {
-                log.warn("同步第三方账号缓存时未找到id为${id}的记录。")
+                log.warn("No third-party account found with id=${id} while syncing cache.")
                 return
             }
             val key = getKey(accountThird.userId, accountThird.accountProviderDictCode)
@@ -162,48 +162,48 @@ open class AccountThirdByUserIdAndProviderCodeCache : AbstractKeyValueCacheHandl
                     accountThird.userId, accountThird.accountProviderDictCode
                 )
             }
-            log.debug("缓存同步完成。")
+            log.debug("Cache sync complete.")
         }
     }
 
     /**
-     * 删除数据库记录后同步缓存
+     * Sync the cache after a DB delete.
      *
-     * @param any 包含必要属性的对象
-     * @param id 第三方账号id
+     * @param any object containing the required properties
+     * @param id third-party account id
      */
     open fun syncOnDelete(any: Any, id: String) {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             val userId = BeanKit.getProperty(any, UserAccountThird::userId.name) as String
             val providerCode = BeanKit.getProperty(any, UserAccountThird::accountProviderDictCode.name) as String
-            log.debug("删除id为${id}的第三方账号后，同步从${CACHE_NAME}缓存中踢除...")
+            log.debug("After deleting third-party account id=${id}, evicting from ${CACHE_NAME} cache...")
             KeyValueCacheKit.evict(CACHE_NAME, getKey(userId, providerCode))
-            log.debug("${CACHE_NAME}缓存同步完成。")
+            log.debug("${CACHE_NAME} cache sync complete.")
         }
     }
 
     /**
-     * 批量删除数据库记录后同步缓存
+     * Sync the cache after a batch DB delete.
      *
-     * @param ids 第三方账号id集合
-     * @param userIdAndProviderCodes List<Pair<用户ID，提供方字典码>>
+     * @param ids third-party account id collection
+     * @param userIdAndProviderCodes List<Pair<userId, providerDictCode>>
      */
     open fun syncOnBatchDelete(ids: Collection<String>, userIdAndProviderCodes: List<Pair<String, String>>) {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("批量删除id为${ids}的第三方账号后，同步从${CACHE_NAME}缓存中踢除...")
+            log.debug("After batch deleting third-party accounts ids=${ids}, evicting from ${CACHE_NAME} cache...")
             userIdAndProviderCodes.forEach {
                 KeyValueCacheKit.evict(CACHE_NAME, getKey(it.first, it.second))
             }
-            log.debug("${CACHE_NAME}缓存同步完成。")
+            log.debug("${CACHE_NAME} cache sync complete.")
         }
     }
 
     /**
-     * 返回参数拼接后的key
+     * Build the cache key by joining the given parameters.
      *
-     * @param userId 用户ID
-     * @param accountProviderDictCode 第三方平台字典码
-     * @return 缓存key
+     * @param userId user id
+     * @param accountProviderDictCode third-party provider dict code
+     * @return cache key
      */
     fun getKey(userId: String, accountProviderDictCode: String): String {
         return "${userId}${Consts.CACHE_KEY_DEFAULT_DELIMITER}${accountProviderDictCode}"

@@ -25,13 +25,13 @@ import org.springframework.transaction.event.TransactionalEventListener
 
 
 /**
- * ip 访问规则缓存处理器
+ * Cache handler for IP access rules.
  *
- * - 数据来源表：`sys_access_rule` & `sys_access_rule_ip`
- * - 仅缓存 `active=true` 的规则
- * - 缓存 key 形式：`系统编码::归一化租户id`。「归一化」即由 [AccessRuleTenantKey.normalize] 把 `null` / 空白统一转为空串，
- *   与 [SysAccessRuleHashCache] 中副属性索引取值保持一致。
- * - 缓存 value：[SysAccessRuleIpCacheEntry] 列表
+ * - Source tables: `sys_access_rule` & `sys_access_rule_ip`
+ * - Only caches rules with `active=true`
+ * - Cache key format: `systemCode::normalizedTenantId`. "Normalization" means [AccessRuleTenantKey.normalize]
+ *   converts `null` / blank values to empty string, consistent with the secondary index lookups in [SysAccessRuleHashCache].
+ * - Cache value: list of [SysAccessRuleIpCacheEntry]
  *
  * @author K
  * @since 1.0.0
@@ -53,33 +53,33 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
 
     override fun doReload(key: String): List<SysAccessRuleIpCacheEntry> {
         require(key.contains(Consts.CACHE_KEY_DEFAULT_DELIMITER)) {
-            "缓存${CACHE_NAME}的key格式非法!"
+            "Cache ${CACHE_NAME} key format is illegal!"
         }
         val parts = key.split(Consts.CACHE_KEY_DEFAULT_DELIMITER, limit = 2)
-        // 已归一化：空串即平台级，对应库中 `tenant_id IS NULL`；查询层仍以 null 表达
+        // Already normalized: empty string means platform-level, corresponding to `tenant_id IS NULL` in DB; the query layer still uses null
         val tenantId = parts.getOrNull(1)?.takeIf { it.isNotEmpty() }
         return getSelf<AccessRuleIpsBySubSysAndTenantIdCache>().getAccessRuleIps(parts[0], tenantId)
     }
 
     override fun reloadAll(clear: Boolean) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.info("缓存未开启，不加载和缓存所有启用状态的ip访问规则！")
+            log.info("Cache is not enabled; skipping load of all active IP access rules!")
             return
         }
 
-        // 关联查询
+        // Joined query
         val searchPayload = SysAccessRuleIpQuery(
             active = true,
             parentRuleActive = true
         )
         val results = sysAccessRuleIpDao.pagingSearch(searchPayload)
 
-        // 清除缓存
+        // Clear cache
         if (clear) {
             clear()
         }
 
-        // 缓存数据
+        // Cache data
         val ipRulesMap = results.mapNotNull { record ->
             val systemCode = record.systemCode ?: return@mapNotNull null
             AccessRuleTenantKey.compositeKey(systemCode, record.tenantId) to record
@@ -88,17 +88,18 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
             val cacheItems = mapToCacheItems(ipRules)
             KeyValueCacheKit.put(CACHE_NAME, key, cacheItems)
         }
-        log.debug("缓存了ip访问规则共${results.size}条。")
+        log.debug("Cached ${results.size} IP access rules in total.")
     }
 
     /**
-     * 从缓存中获取 ip 访问规则，未命中则查库回填。
+     * Get IP access rules from cache; on miss, load from DB and backfill.
      *
-     * 缓存 key 形式：`系统编码::归一化租户id`。`null` / 空白一律归一为空串（平台级），与库中 `tenant_id IS NULL` 对应。
+     * Cache key format: `systemCode::normalizedTenantId`. `null` / blank values are normalized to empty string
+     * (platform-level), corresponding to `tenant_id IS NULL` in the DB.
      *
-     * @param systemCode 系统编码
-     * @param tenantId 租户 id，传 `null`（或空白）表示平台级规则
-     * @return IP 缓存项列表，未匹配时返回空列表
+     * @param systemCode System code
+     * @param tenantId Tenant id; pass `null` (or blank) for platform-level rules
+     * @return List of IP cache entries; empty list if no match
      */
     @Cacheable(
         cacheNames = [CACHE_NAME],
@@ -108,10 +109,10 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
     open fun getAccessRuleIps(systemCode: String, tenantId: String? = null): List<SysAccessRuleIpCacheEntry> {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug(
-                "${CACHE_NAME}缓存中不存在系统编码为${systemCode}且租户id为${tenantId}的ip访问规则，从数据库中加载..."
+                "No IP access rules found in ${CACHE_NAME} cache for systemCode=${systemCode} and tenantId=${tenantId}; loading from database..."
             )
         }
-        require(systemCode.isNotBlank()) { "获取ip访问规则时，系统代码必须指定！" }
+        require(systemCode.isNotBlank()) { "systemCode must be specified when fetching IP access rules!" }
         val searchPayload = SysAccessRuleIpQuery(
             active = true,
             parentRuleActive = true,
@@ -126,21 +127,21 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
 
         val results = sysAccessRuleIpDao.pagingSearch(searchPayload)
         return if (results.isEmpty()) {
-            log.warn("数据库中找不到租户id为${tenantId}且系统编码为${systemCode}的ip访问规则！")
+            log.warn("No IP access rules found in database for tenantId=${tenantId} and systemCode=${systemCode}!")
             listOf()
         } else {
             mapToCacheItems(results)
         }
     }
 
-    // region 事件订阅：父规则（sys_access_rule）变更时联动 IP 缓存 ----------------------------------
+    // region Event subscription: parent rule (sys_access_rule) changes drive IP cache updates ----------------------------------
 
-    /** 父规则新增：刷新对应维度（此时尚无 IP，相当于建空槽位）。 */
+    /** Parent rule inserted: refresh the corresponding dimension (no IPs yet, just creates an empty slot). */
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     open fun onParentInserted(event: SysAccessRuleInserted): Unit =
         syncOnDeleteBySystemAndTenant(event.systemCode, event.tenantId)
 
-    /** 父规则更新：刷新新维度；若维度迁移则同时刷新旧维度。 */
+    /** Parent rule updated: refresh the new dimension; if the dimension changed, refresh the old one as well. */
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     open fun onParentUpdated(event: SysAccessRuleUpdated) {
         syncOnDeleteBySystemAndTenant(event.systemCode, event.tenantId)
@@ -149,12 +150,12 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
         }
     }
 
-    /** 父规则删除：刷新对应维度（清掉残留 IP 缓存）。 */
+    /** Parent rule deleted: refresh the corresponding dimension (clear residual IP cache). */
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     open fun onParentDeleted(event: SysAccessRuleDeleted): Unit =
         syncOnDeleteBySystemAndTenant(event.systemCode, event.tenantId)
 
-    /** 父规则批量删除：按事件附带的所有维度键逐一刷新。 */
+    /** Parent rule batch deleted: refresh each dimension key carried by the event. */
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     open fun onParentBatchDeleted(event: SysAccessRuleBatchDeleted) {
         event.dimensions.forEach { (sysCode, tid) -> syncOnDeleteBySystemAndTenant(sysCode, tid) }
@@ -162,13 +163,13 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
 
     // endregion
 
-    // region 事件订阅：IP 规则自身变更 -----------------------------------------------------------
+    // region Event subscription: IP rule's own changes -----------------------------------------------------------
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     open fun onIpInserted(event: SysAccessRuleIpInserted) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
         if (!event.active) {
-            log.debug("新增 IP 规则 ${event.id} active=false，跳过 ${CACHE_NAME} 同步。")
+            log.debug("Inserted IP rule ${event.id} has active=false; skipping ${CACHE_NAME} sync.")
             return
         }
         refreshDimension(event.parentSystemCode, event.parentTenantId)
@@ -190,16 +191,16 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
     // endregion
 
     /**
-     * 单个 `(systemCode, tenantId)` 维度的缓存失效 + 可选回填。
+     * Evict and optionally backfill the cache for a single `(systemCode, tenantId)` dimension.
      *
-     * 流程：
-     * 1. 失效该维度缓存（evict）
-     * 2. 若缓存策略要求"写时即刻回填"（[KeyValueCacheKit.isWriteInTime]），通过自代理 `getSelf` 触发
-     *    Spring AOP 重新走 `@Cacheable` 路径回填——直接调 this.getAccessRuleIps 不行，
-     *    那是 self-invocation，会绕过代理拿不到 cache 拦截。
+     * Flow:
+     * 1. Evict the cache entry for this dimension
+     * 2. If the cache policy requires write-through backfill ([KeyValueCacheKit.isWriteInTime]), invoke via
+     *    `getSelf` proxy so Spring AOP re-routes through the `@Cacheable` path for backfill -- a direct
+     *    `this.getAccessRuleIps` call is self-invocation and bypasses the proxy / cache interceptor.
      *
-     * @param systemCode 系统编码
-     * @param tenantId 租户 id；null = 平台级
+     * @param systemCode System code
+     * @param tenantId Tenant id; null = platform-level
      * @author K
      * @since 1.0.0
      */
@@ -212,7 +213,7 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
     }
 
     /**
-     * 依据系统编码与租户维度删除并回填缓存，适用于删除前已拿到维度键的场景。
+     * Evict and backfill cache by system code and tenant dimension; used when the dimension key is known before deletion.
      */
     open fun syncOnDeleteBySystemAndTenant(systemCode: String, tenantId: String?) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
@@ -224,11 +225,12 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
     }
 
     /**
-     * 把 DB 行 [SysAccessRuleIpRow] 拍扁成缓存 entry [SysAccessRuleIpCacheEntry]。
-     * 只保留鉴权时真正用到的字段（ip 范围 / 类型 / 失效时间），其它列不进入缓存以减小内存占用。
+     * Flatten DB row [SysAccessRuleIpRow] into cache entry [SysAccessRuleIpCacheEntry].
+     * Only keeps fields actually used during authorization (IP range / type / expiration time);
+     * other columns are excluded from the cache to reduce memory footprint.
      *
-     * @param ruleIpRecords DB 列表
-     * @return 缓存 entry 列表
+     * @param ruleIpRecords DB row list
+     * @return List of cache entries
      * @author K
      * @since 1.0.0
      */
@@ -245,11 +247,12 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
     }
 
     /**
-     * 返回参数拼接后的 key。`null` / 空白一律归一为空串（平台级），与 [@Cacheable] 中的 SpEL 表达式保持一致。
+     * Returns the composite key built from the parameters. `null` / blank values are normalized to empty string
+     * (platform-level), consistent with the SpEL expression in [@Cacheable].
      *
-     * @param systemCode 系统编码
-     * @param tenantId 租户 id；`null` / 空白视为平台级
-     * @return 缓存 key
+     * @param systemCode System code
+     * @param tenantId Tenant id; `null` / blank treated as platform-level
+     * @return Cache key
      */
     open fun getKey(systemCode: String, tenantId: String? = null): String =
         AccessRuleTenantKey.compositeKey(systemCode, tenantId)

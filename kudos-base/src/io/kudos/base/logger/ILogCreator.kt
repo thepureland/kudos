@@ -3,7 +3,7 @@ package io.kudos.base.logger
 import kotlin.reflect.KClass
 
 /**
- * 日志记录器创建者
+ * Logger creator.
  *
  * @author K
  * @since 1.0.0
@@ -11,10 +11,10 @@ import kotlin.reflect.KClass
 interface ILogCreator {
 
     /**
-     * 创建日志记录器
+     * Creates a logger.
      *
-     * @param clazz 日志记录器所处的类
-     * @return 日志记录器
+     * @param clazz the class the logger belongs to
+     * @return the logger
      * @author K
      * @since 1.0.0
      */

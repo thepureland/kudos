@@ -18,7 +18,7 @@ import kotlin.test.assertTrue
 /**
  * junit test for OutLineBySystemAndTenantCache
  *
- * 测试数据来源：`OutLineBySystemAndTenantCacheTest.sql`
+ * Test data source: `OutLineBySystemAndTenantCacheTest.sql`
  *
  * @author K
  * @since 1.0.0
@@ -35,18 +35,18 @@ class OutLineBySystemAndTenantCacheTest : RdbAndRedisCacheTestBase() {
     private val systemCode = "sys-outline-cache-test"
     private val tenantId = "30000000-0000-0000-0000-000000003001"
 
-    /** reloadAll 后能按 (systemCode, null) 取到平台级列表。 */
+    /** After reloadAll, the platform-level list can be retrieved by (systemCode, null). */
     @Test
     fun reloadAll_thenListPlatform() {
         cacheHandler.reloadAll(clear = true)
         val list = cacheHandler.listOutLines(systemCode, null)
         assertTrue(list.any { it.host == "platform.example.com" })
         assertTrue(list.none { it.host == "tenant.example.com" })
-        // 不应包含 active=false
+        // Should not include active=false rows
         assertTrue(list.none { it.host == "inactive.example.com" })
     }
 
-    /** reloadAll 后能按 (systemCode, tenantId) 取到租户级列表。 */
+    /** After reloadAll, the tenant-level list can be retrieved by (systemCode, tenantId). */
     @Test
     fun reloadAll_thenListTenant() {
         cacheHandler.reloadAll(clear = true)
@@ -55,7 +55,7 @@ class OutLineBySystemAndTenantCacheTest : RdbAndRedisCacheTestBase() {
         assertTrue(list.none { it.host == "platform.example.com" })
     }
 
-    /** refreshDimension 后底层 KV 存储被清空，下次读取按需回填。 */
+    /** After refreshDimension, the underlying KV store is cleared and the next read refills on demand. */
     @Test
     fun refreshDimension_evictsAndReloads() {
         cacheHandler.reloadAll(clear = true)
@@ -63,12 +63,12 @@ class OutLineBySystemAndTenantCacheTest : RdbAndRedisCacheTestBase() {
         assertTrue(before.any { it.host == "platform.example.com" })
 
         cacheHandler.refreshDimension(systemCode, null)
-        // 仍能查到（写时回填或下次读时回填）
+        // Still retrievable (refilled on write or on the next read)
         val after = cacheHandler.listOutLines(systemCode, null)
         assertTrue(after.any { it.host == "platform.example.com" })
     }
 
-    /** 直接通过 dao 插入并 refreshDimension 后能命中新行。 */
+    /** Insert directly via dao and after refreshDimension the new row is hit. */
     @Test
     fun refreshDimension_picksUpNewRowFromDb() {
         cacheHandler.reloadAll(clear = true)
@@ -90,7 +90,7 @@ class OutLineBySystemAndTenantCacheTest : RdbAndRedisCacheTestBase() {
         val list = cacheHandler.listOutLines(systemCode, null)
         assertTrue(list.any { it.host == newHost })
 
-        // 用底层 KV API 校验底层 key 也命中
+        // Verify via the low-level KV API that the underlying key also hits
         val key = OutLineSystemTenantKey.compositeKey(systemCode, null)
         @Suppress("UNCHECKED_CAST")
         val raw = KeyValueCacheKit.getValue(cacheHandler.cacheName(), key) as? List<SysOutLineCacheEntry>
@@ -98,13 +98,13 @@ class OutLineBySystemAndTenantCacheTest : RdbAndRedisCacheTestBase() {
         assertEquals(true, raw.any { it.host == newHost })
     }
 
-    /** 命中后再 reloadAll(clear=true) 会重置内容。 */
+    /** After a hit, reloadAll(clear=true) resets the contents. */
     @Test
     fun reloadAll_clearTrue_rewrites() {
         cacheHandler.reloadAll(clear = true)
         assertTrue(cacheHandler.listOutLines(systemCode, null).any { it.host == "platform.example.com" })
 
-        // 删除一条平台级启用的（host=platform.example.com）然后 reloadAll
+        // Delete an active platform-level row (host=platform.example.com), then reloadAll
         val toDelete = dao.searchAs<SysOutLineCacheEntry>().firstOrNull { it.host == "platform.example.com" }
         assertNotNull(toDelete)
         dao.deleteById(toDelete.id)

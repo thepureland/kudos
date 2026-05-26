@@ -1,7 +1,7 @@
 package io.kudos.base.lang
 
 /**
- * kotlin.Char扩展函数
+ * kotlin.Char extension functions.
  *
  * @author K
  * @since 1.0.0
@@ -10,14 +10,14 @@ package io.kudos.base.lang
 
 
 /**
- * 将char转化为其Unicode编码的字符串
+ * Convert a char to its Unicode-encoded string form.
  *
  * <pre>
- * ' '.unicodeEscaped() = "\u0020"
- * 'A'.unicodeEscaped() = "\u0041"
+ * ' '.unicodeEscaped() = " "
+ * 'A'.unicodeEscaped() = "A"
  * </pre>
  *
- * @return 字符对应Unicode编码的字符串
+ * @return the Unicode-encoded string of the character
  * @author K
  * @since 1.0.0
  */
@@ -25,7 +25,7 @@ fun Char.unicodeEscaped(): String = String.format("\\u%04x", code)
 
 
 /**
- * 检测给定的char是否为7位的ASCII码
+ * Check whether the given char is a 7-bit ASCII code.
  *
  * <pre>
  * 'a'.isAscii()  = true
@@ -35,14 +35,14 @@ fun Char.unicodeEscaped(): String = String.format("\\u%04x", code)
  * '\n'.isAscii() = true
  * </pre>
  *
- * @return true: 如果ASCII码值小于128
+ * @return true if the ASCII code value is less than 128
  * @author K
  * @since 1.0.0
  */
 fun Char.isAscii(): Boolean = code < 128
 
 /**
- * 检测给定的char是否为7位可打印的ASCII码
+ * Check whether the given char is a 7-bit printable ASCII code.
  *
  * <pre>
  * 'a'.isAsciiPrintable()  = true
@@ -52,14 +52,14 @@ fun Char.isAscii(): Boolean = code < 128
  * '\n'.isAsciiPrintable() = false
  * </pre>
  *
- * @return true: 如果ASCII码值介于32和126之间
+ * @return true if the ASCII code value is between 32 and 126
  * @author K
  * @since 1.0.0
  */
 fun Char.isAsciiPrintable(): Boolean = code in 32..126
 
 /**
- * 检测给定的char是否为7位ASCII码的控制字符
+ * Check whether the given char is a 7-bit ASCII control character.
  *
  * <pre>
  * 'a'.isAsciiControl()  = false
@@ -69,14 +69,14 @@ fun Char.isAsciiPrintable(): Boolean = code in 32..126
  * '\n'.isAsciiControl() = true
  * </pre>
  *
- * @return true: 如果ASCII码值介于32和127之间
+ * @return true if the ASCII code value is between 32 and 127
  * @author K
  * @since 1.0.0
  */
 fun Char.isAsciiControl(): Boolean = code < 32 || code == 127
 
 /**
- * 检测给定的char是否为7位ASCII码的字母
+ * Check whether the given char is a 7-bit ASCII letter.
  *
  * <pre>
  * 'a'.isAsciiAlpha()  = true
@@ -86,14 +86,14 @@ fun Char.isAsciiControl(): Boolean = code < 32 || code == 127
  * '\n'.isAsciiAlpha() = false
  * </pre>
  *
- * @return true: 如果ASCII码值介于65和90之间(大写字母)或97和122之间(小写字母)
+ * @return true if the ASCII code value is between 65 and 90 (uppercase letters) or 97 and 122 (lowercase letters)
  * @author K
  * @since 1.0.0
  */
 fun Char.isAsciiAlpha(): Boolean = code in 65..90 || code in 97..122
 
 /**
- * 检测给定的char是否为7位ASCII码的大写字母
+ * Check whether the given char is a 7-bit ASCII uppercase letter.
  *
  * <pre>
  * 'a'.isAsciiAlphaUpper()  = false
@@ -103,14 +103,14 @@ fun Char.isAsciiAlpha(): Boolean = code in 65..90 || code in 97..122
  * '\n'.isAsciiAlphaUpper() = false
  * </pre>
  *
- * @return true: 如果ASCII码值介于65和90
+ * @return true if the ASCII code value is between 65 and 90
  * @author K
  * @since 1.0.0
  */
 fun Char.isAsciiAlphaUpper(): Boolean = code in 65..90
 
 /**
- * 检测给定的char是否为7位ASCII码的大写字母
+ * Check whether the given char is a 7-bit ASCII lowercase letter.
  *
  * <pre>
  * 'a'.isAsciiAlphaLower()  = true
@@ -120,14 +120,14 @@ fun Char.isAsciiAlphaUpper(): Boolean = code in 65..90
  * '\n'.isAsciiAlphaLower() = false
  * </pre>
  *
- * @return true: 如果ASCII码值介于97和122之间
+ * @return true if the ASCII code value is between 97 and 122
  * @author K
  * @since 1.0.0
  */
 fun Char.isAsciiAlphaLower(): Boolean = code in 97..122
 
 /**
- * 检测给定的char是否为7位ASCII码的数字
+ * Check whether the given char is a 7-bit ASCII digit.
  *
  * <pre>
  * 'a'.isAsciiNumeric()  = false
@@ -137,14 +137,14 @@ fun Char.isAsciiAlphaLower(): Boolean = code in 97..122
  * '\n'.isAsciiNumeric() = false
  * </pre>
  *
- * @return true: 如果ASCII码值介于48和57之间
+ * @return true if the ASCII code value is between 48 and 57
  * @author K
  * @since 1.0.0
  */
 fun Char.isAsciiNumeric(): Boolean = code in 48..57
 
 /**
- * 检测给定的char是否为7位ASCII码的字母或数字
+ * Check whether the given char is a 7-bit ASCII alphanumeric character.
  *
  * <pre>
  * 'a'.isAsciiAlphanumeric()  = true
@@ -154,7 +154,7 @@ fun Char.isAsciiNumeric(): Boolean = code in 48..57
  * '\n'.isAsciiAlphanumeric() = false
  * </pre>
  *
- * @return true: 如果ASCII码值介于48和57之间(数字)或65和90之间(大写字母)或97和122之间(小写字母)
+ * @return true if the ASCII code value is between 48 and 57 (digits) or 65 and 90 (uppercase letters) or 97 and 122 (lowercase letters)
  * @author K
  * @since 1.0.0
  */

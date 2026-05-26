@@ -4,9 +4,9 @@ import io.ktor.server.routing.*
 
 
 /**
- * Ktor路由注册器接口
+ * Ktor route registrar interface.
  *
- * 注：实现该接口的类必须注册为Spring的bean
+ * Note: classes implementing this interface must be registered as Spring beans.
  *
  * @author K
  * @author AI: Codex
@@ -15,9 +15,9 @@ import io.ktor.server.routing.*
 interface IKtorRouteRegistrar {
 
     /**
-     * 注册路由
+     * Registers routes.
      *
-     * @param routing 路由对象
+     * @param routing routing object
      */
     fun register(routing: Routing)
 

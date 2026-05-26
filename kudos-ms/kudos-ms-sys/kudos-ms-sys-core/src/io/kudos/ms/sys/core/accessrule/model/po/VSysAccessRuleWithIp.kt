@@ -6,7 +6,7 @@ import java.math.BigDecimal
 import java.time.LocalDateTime
 
 /**
- * Ktorm 实体：数据库视图 `v_sys_access_rule_with_ip`（`sys_access_rule` 左连接 `sys_access_rule_ip`），只读。
+ * Ktorm entity: database view `v_sys_access_rule_with_ip` (`sys_access_rule` left join `sys_access_rule_ip`), read-only.
  *
  * @author K
  * @author AI: Cursor
@@ -16,7 +16,7 @@ interface VSysAccessRuleWithIp : IDbEntity<String, VSysAccessRuleWithIp> {
 
     companion object : DbEntityFactory<VSysAccessRuleWithIp>()
 
-    /** 父访问规则 id */
+    /** Parent access rule id */
     var parentId: String
 
     var tenantId: String?
@@ -48,10 +48,10 @@ interface VSysAccessRuleWithIp : IDbEntity<String, VSysAccessRuleWithIp> {
     /** sys_access_rule_ip.id */
     var ipId: String?
 
-    /** 来自 `sys_access_rule_ip.ip_start`（NUMERIC，语义同 [SysAccessRuleIp.ipStart]）。 */
+    /** From `sys_access_rule_ip.ip_start` (NUMERIC, same semantics as [SysAccessRuleIp.ipStart]). */
     var ipStart: BigDecimal?
 
-    /** 来自 `sys_access_rule_ip.ip_end`。 */
+    /** From `sys_access_rule_ip.ip_end`. */
     var ipEnd: BigDecimal?
 
     var ipTypeDictCode: String?

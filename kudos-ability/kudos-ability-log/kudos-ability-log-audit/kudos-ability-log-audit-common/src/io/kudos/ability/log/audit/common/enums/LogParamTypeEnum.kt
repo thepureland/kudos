@@ -3,8 +3,9 @@ package io.kudos.ability.log.audit.common.enums
 import io.kudos.base.enums.ienums.IDictEnum
 
 /**
- * [io.kudos.ability.log.audit.common.entity.LogParamVo.type] 取值枚举——决定描述参数
- * 在最终格式化时的处理方式（字符串原样 / 按 locale 货币 / 按 locale 日期）。
+ * Enum of values for [io.kudos.ability.log.audit.common.entity.LogParamVo.type] —
+ * determines how the description parameter is processed during final formatting
+ * (string as-is / locale-formatted currency / locale-formatted date).
  *
  * @author K
  * @author AI: Codex
@@ -15,9 +16,9 @@ enum class LogParamTypeEnum(
     override val displayText: String
 ) : IDictEnum {
 
-    STRING("1", "字符串"),
-    CURRENCY("2", "货币"),
-    DATE("3", "日期");
+    STRING("1", "String"),
+    CURRENCY("2", "Currency"),
+    DATE("3", "Date");
 
 }
 

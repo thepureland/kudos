@@ -5,7 +5,7 @@ import io.kudos.ms.auth.core.group.model.po.AuthGroup
 
 
 /**
- * 用户组业务接口
+ * User group service interface.
  *
  * @author K
  * @author AI: Codex

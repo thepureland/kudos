@@ -15,7 +15,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertSame
 
 /**
- * [io.kudos.ability.cache.common.batch.hash.HashBatchCacheableByPrimary] 注解测试用例（本地+远程 LOCAL_REMOTE）。
+ * Tests for the [io.kudos.ability.cache.common.batch.hash.HashBatchCacheableByPrimary] annotation (local + remote, LOCAL_REMOTE).
  *
  * @author K
  * @author AI: Codex
@@ -61,8 +61,8 @@ internal class LocalRemoteHashBatchCacheableTest {
         assertEquals("BatchA", fromCache["ba1"]?.name)
         assertEquals("BatchB", fromCache["ba2"]?.name)
         val fromCacheAgain = hashCacheableTestService.getTestRowsByIds(listOf("ba1", "ba2"))
-        assertSame(fromCache["ba1"], fromCacheAgain["ba1"], "LOCAL_REMOTE 下同一 id 再次从缓存获取应返回同一对象引用")
-        assertSame(fromCache["ba2"], fromCacheAgain["ba2"], "LOCAL_REMOTE 下同一 id 再次从缓存获取应返回同一对象引用")
+        assertSame(fromCache["ba1"], fromCacheAgain["ba1"], "Under LOCAL_REMOTE, fetching the same id from the cache again should return the same object reference")
+        assertSame(fromCache["ba2"], fromCacheAgain["ba2"], "Under LOCAL_REMOTE, fetching the same id from the cache again should return the same object reference")
     }
 
     @Test
@@ -75,11 +75,11 @@ internal class LocalRemoteHashBatchCacheableTest {
         assertEquals(1, byType1.size)
         assertEquals("bx1", byType1.first().id)
         val byType1Again = cache.listBySetIndex(cacheName, TestRow::class, "type", 1)
-        assertSame(byType1.first(), byType1Again.first(), "LOCAL_REMOTE 下同一维度再次从缓存获取应返回同一对象引用")
+        assertSame(byType1.first(), byType1Again.first(), "Under LOCAL_REMOTE, fetching the same dimension from the cache again should return the same object reference")
         val byType2 = cache.listBySetIndex(cacheName, TestRow::class, "type", 2)
         assertEquals(1, byType2.size)
         assertEquals("bx2", byType2.first().id)
         val byType2Again = cache.listBySetIndex(cacheName, TestRow::class, "type", 2)
-        assertSame(byType2.first(), byType2Again.first(), "LOCAL_REMOTE 下同一维度再次从缓存获取应返回同一对象引用")
+        assertSame(byType2.first(), byType2Again.first(), "Under LOCAL_REMOTE, fetching the same dimension from the cache again should return the same object reference")
     }
 }

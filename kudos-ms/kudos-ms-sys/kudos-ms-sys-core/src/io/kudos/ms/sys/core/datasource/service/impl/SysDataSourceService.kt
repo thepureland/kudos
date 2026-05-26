@@ -30,7 +30,7 @@ import kotlin.reflect.KClass
 
 
 /**
- * 数据源业务
+ * Data source service.
  *
  * @author K
  * @author AI: Cursor
@@ -77,7 +77,7 @@ open class SysDataSourceService(
     @Transactional
     override fun insert(any: Any): String {
         val id = super.insert(any)
-        completeCrudInsert(log, "新增id为${id}的数据源。") {
+        completeCrudInsert(log, "Inserted data source id=$id.") {
             eventPublisher.publishEvent(SysDataSourceInserted(id = id))
         }
         return id
@@ -85,12 +85,12 @@ open class SysDataSourceService(
 
     @Transactional
     override fun update(any: Any): Boolean {
-        val id = requireStringId(any, "数据源")
+        val id = requireStringId(any, "data source")
         return completeCrudUpdate(
             success = super.update(any),
             log = log,
-            successMessage = "更新id为${id}的数据源。",
-            failureMessage = "更新id为${id}的数据源失败！",
+            successMessage = "Updated data source id=$id.",
+            failureMessage = "Failed to update data source id=$id!",
         ) {
             eventPublisher.publishEvent(SysDataSourceUpdated(id = id))
         }
@@ -105,8 +105,8 @@ open class SysDataSourceService(
         return completeCrudUpdate(
             success = dao.update(dataSource),
             log = log,
-            successMessage = "更新id为${id}的数据源的启用状态为${active}。",
-            failureMessage = "更新id为${id}的数据源的启用状态为${active}失败！",
+            successMessage = "Updated data source id=$id active=$active.",
+            failureMessage = "Failed to update data source id=$id active=$active!",
         ) {
             eventPublisher.publishEvent(SysDataSourceUpdated(id = id))
         }
@@ -114,7 +114,7 @@ open class SysDataSourceService(
 
     @Transactional
     override fun resetPassword(id: String, newPassword: String) {
-        val newPwd = CryptoKit.aesEncrypt(newPassword) // 加密密码
+        val newPwd = CryptoKit.aesEncrypt(newPassword) // encrypt password
         val dataSource = SysDataSource {
             this.id = id
             this.password = newPwd
@@ -122,8 +122,8 @@ open class SysDataSourceService(
         completeCrudUpdate(
             success = dao.update(dataSource),
             log = log,
-            successMessage = "重置id为${id}的数据源密码。",
-            failureMessage = "重置id为${id}的数据源密码失败！",
+            successMessage = "Reset password for data source id=$id.",
+            failureMessage = "Failed to reset password for data source id=$id!",
         ) {
             eventPublisher.publishEvent(SysDataSourceUpdated(id = id))
         }
@@ -133,14 +133,14 @@ open class SysDataSourceService(
     override fun deleteById(id: String): Boolean {
         val existing = dao.get(id)
         if (existing == null) {
-            log.warn("删除id为${id}的数据源时，发现其已不存在！")
+            log.warn("Data source id=$id no longer exists when attempting delete!")
             return false
         }
         return completeCrudUpdate(
             success = super.deleteById(id),
             log = log,
-            successMessage = "删除id为${id}的数据源成功！",
-            failureMessage = "删除id为${id}的数据源失败！",
+            successMessage = "Deleted data source id=$id.",
+            failureMessage = "Failed to delete data source id=$id!",
         ) {
             eventPublisher.publishEvent(SysDataSourceDeleted(id = id))
         }
@@ -149,7 +149,7 @@ open class SysDataSourceService(
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {
         val count = super.batchDelete(ids)
-        log.debug("批量删除数据源，期望删除${ids.size}条，实际删除${count}条。")
+        log.debug("Batch delete data sources: expected ${ids.size}, actually deleted $count.")
         if (count > 0) {
             eventPublisher.publishEvent(SysDataSourceBatchDeleted(ids = ids))
         }
@@ -169,14 +169,14 @@ open class SysDataSourceService(
             io.kudos.ability.data.rdb.jdbc.kit.RdbKit.newConnection(url, username, password).use { conn ->
                 io.kudos.ability.data.rdb.jdbc.kit.RdbKit.testConnection(conn)
             }
-        }.onFailure { log.warn("测试数据源连通性失败 url=$url username=$username: ${it.message}") }
+        }.onFailure { log.warn("Data source connectivity test failed url=$url username=$username: ${it.message}") }
             .getOrDefault(false)
 
     /**
-     * 列表增强：批量从租户缓存补 tenantName 字段，避免逐行查询。
-     * 空列表直接返回，避免向缓存层传空集合。
+     * List enrichment: batch-load tenantName from the tenant cache to avoid per-row queries.
+     * Empty lists short-circuit so we never pass an empty collection to the cache layer.
      *
-     * @param records 待增强的数据源行列表（in-place 修改）
+     * @param records data source rows to enrich (modified in place)
      * @author K
      * @since 1.0.0
      */
@@ -189,13 +189,13 @@ open class SysDataSourceService(
     }
 
     /**
-     * 详情增强：仅当 returnType 是 [SysDataSourceDetail] 时填充 `tenantName`；
-     * 其他返回类型保持原样，不引入无关字段。
+     * Detail enrichment: only fills `tenantName` when returnType is [SysDataSourceDetail];
+     * other return types pass through unchanged so no unrelated fields are introduced.
      *
-     * @param R 返回类型
-     * @param result 待增强对象
-     * @param returnType 期望返回类型
-     * @return 增强后的对象（类型不匹配时未被修改）
+     * @param R return type
+     * @param result object to enrich
+     * @param returnType expected return type
+     * @return enriched object (unchanged when type does not match)
      * @author K
      * @since 1.0.0
      */

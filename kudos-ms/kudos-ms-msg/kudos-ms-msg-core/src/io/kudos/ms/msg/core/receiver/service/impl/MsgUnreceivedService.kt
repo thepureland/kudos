@@ -13,7 +13,7 @@ import java.time.LocalDateTime
 
 
 /**
- * 未送达消息业务
+ * Undelivered message business service.
  *
  * @author K
  * @since 1.0.0

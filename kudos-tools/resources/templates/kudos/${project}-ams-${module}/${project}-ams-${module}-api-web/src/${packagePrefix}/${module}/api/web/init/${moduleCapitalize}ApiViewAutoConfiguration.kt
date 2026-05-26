@@ -5,7 +5,7 @@ import org.springframework.context.annotation.ComponentScan
 import org.springframework.context.annotation.Configuration
 
 
-<@generateClassComment module+"-api-web自动配置类"/>
+<@generateClassComment module+"-api-web auto configuration class"/>
 @Configuration
 @ComponentScan(basePackages = ["${packagePrefix}.${module}.api.view"])
 //region your codes 1

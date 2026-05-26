@@ -6,7 +6,7 @@ import com.github.dockerjava.api.model.Ports
 import org.testcontainers.containers.GenericContainer
 
 /**
- * 扩展GenericContainer类
+ * Extensions for the GenericContainer class.
  *
  * @author K
  * @since 1.0.0
@@ -14,10 +14,10 @@ import org.testcontainers.containers.GenericContainer
 
 
 /**
- * 映射端口
+ * Map ports.
  *
- * @param ports Pair(宿主机端口，容器端口)
- * @return GenericContainer对象
+ * @param ports Pair(host port, container port)
+ * @return the GenericContainer instance
  */
 fun GenericContainer<*>.bindingPort(vararg ports: Pair<Int, Int>): GenericContainer<*> {
     this.withCreateContainerCmdModifier { cmd ->

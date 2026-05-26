@@ -16,16 +16,16 @@ import kotlin.reflect.KClass
 
 
 /**
- * 基础的增删改查Controller
+ * Base CRUD Controller.
  *
- * @param PK 主键类型
- * @param B 业务处理类
- * @param S 列表查询条件VO类(请求)
- * @param R 列表查询结果VO类(响应)
- * @param D 详情VO类(响应)
- * @param E 编辑VO类(响应)
- * @param CF 新增页表单VO类(请求)
- * @param UF 编辑页表单VO类(请求)
+ * @param PK primary key type
+ * @param B business service class
+ * @param S list query condition VO class (request)
+ * @param R list query result VO class (response)
+ * @param D detail VO class (response)
+ * @param E edit VO class (response)
+ * @param CF create-form VO class (request)
+ * @param UF update-form VO class (request)
  * @author K
  * @author AI: Codex
  * @since 1.0.0
@@ -48,9 +48,9 @@ open class BaseCrudController<
     private var editVoClass: KClass<E>? = null
 
     /**
-     * 返回新增页表单校验规则
+     * Return the validation rules for the create form.
      *
-     * @return WebResult(Map(属性名， LinkedHashMap(约束名，Array(Map(约束注解的属性名，约束注解的属性值)))))
+     * @return WebResult(Map(property name, LinkedHashMap(constraint name, Array(Map(constraint annotation attribute name, constraint annotation attribute value)))))
      */
     @GetMapping("/getCreateValidationRule")
     open fun getCreateValidationRule(): Map<String, LinkedHashMap<String, Array<Map<String, Any>>>> {
@@ -62,9 +62,9 @@ open class BaseCrudController<
     }
 
     /**
-     * 返回编辑页表单校验规则
+     * Return the validation rules for the edit form.
      *
-     * @return WebResult(Map(属性名， LinkedHashMap(约束名，Array(Map(约束注解的属性名，约束注解的属性值)))))
+     * @return WebResult(Map(property name, LinkedHashMap(constraint name, Array(Map(constraint annotation attribute name, constraint annotation attribute value)))))
      */
     @GetMapping("/getUpdateValidationRule")
     open fun getUpdateValidationRule(): Map<String, LinkedHashMap<String, Array<Map<String, Any>>>> {
@@ -76,10 +76,10 @@ open class BaseCrudController<
     }
 
     /**
-     * 返回指定主键的编辑记录
+     * Return the edit record for the given primary key.
      *
-     * @param id 主键
-     * @return 编辑VO
+     * @param id primary key
+     * @return edit VO
      */
     @GetMapping("/getEdit")
     open fun getEdit(id: PK): E {
@@ -87,22 +87,22 @@ open class BaseCrudController<
             @Suppress("UNCHECKED_CAST")
             editVoClass = GenericKit.getSuperClassGenricClass(this::class, 5) as KClass<E>
         }
-        return service.get(id, requireNotNull(editVoClass) { "editVoClass is null" }) ?: throw ObjectNotFoundException("找不到记录！")
+        return service.get(id, requireNotNull(editVoClass) { "editVoClass is null" }) ?: throw ObjectNotFoundException("Record not found!")
     }
 
     /**
-     * 保存新增的记录
+     * Save the newly created record.
      *
-     * @param formCreateVo 表单新增VO
-     * @return 主键
+     * @param formCreateVo create-form VO
+     * @return primary key
      */
     @PostMapping("/save")
     open fun save(@RequestBody @Valid formCreateVo: CF): PK = service.insert(formCreateVo)
 
     /**
-     * 更新记录
+     * Update a record.
      *
-     * @param formUpdateVo 表单更新VO
+     * @param formUpdateVo update-form VO
      */
     @PutMapping("/update")
     open fun update(@RequestBody @Valid formUpdateVo: UF) {
@@ -110,19 +110,19 @@ open class BaseCrudController<
     }
 
     /**
-     * 删除指定主键的记录
+     * Delete the record with the given primary key.
      *
-     * @param id 主键
-     * @return 是否删除成功
+     * @param id primary key
+     * @return whether deletion succeeded
      */
     @DeleteMapping("/delete")
     open fun delete(id: PK): Boolean = service.deleteById(id)
 
     /**
-     * 批量删除指定主键的记录
+     * Batch delete records with the given primary keys.
      *
-     * @param ids 主键列表
-     * @return 是否删除成功
+     * @param ids list of primary keys
+     * @return whether deletion succeeded
      */
     @PostMapping("/batchDelete")
     open fun batchDelete(@RequestBody ids: List<PK>): Boolean = service.batchDelete(ids) == ids.size

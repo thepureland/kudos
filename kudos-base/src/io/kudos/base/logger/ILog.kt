@@ -1,7 +1,7 @@
 package io.kudos.base.logger
 
 /**
- * 日志记录器，让使用者对实际使用的第三方的具体日志库透明
+ * Logger that keeps the underlying third-party logging library transparent to callers.
  *
  * @author K
  * @since 1.0.0
@@ -9,109 +9,109 @@ package io.kudos.base.logger
 interface ILog {
 
     /**
-     * 记录跟踪日志
-     * @param msg 日志内容，支持java字符串模板，如果不是基于模板参数计算性能考量(想推迟计算)，请使用kotlin的字符串模板
-     * @param args java字符串模板参数
+     * Logs a trace-level message.
+     * @param msg the log content; supports Java string templates. If parameters are computed eagerly and performance is a concern (i.e. you want to defer computation), use a Kotlin string template instead.
+     * @param args Java string template arguments
      * @author K
      * @since 1.0.0
      */
     fun trace(msg: String?, vararg args: Any?)
 
     /**
-     * 记录调试日志
-     * @param msg 日志内容，支持java字符串模板，如果不是基于模板参数计算性能考量(想推迟计算)，请使用kotlin的字符串模板
-     * @param args java字符串模板参数
+     * Logs a debug-level message.
+     * @param msg the log content; supports Java string templates. If parameters are computed eagerly and performance is a concern (i.e. you want to defer computation), use a Kotlin string template instead.
+     * @param args Java string template arguments
      * @author K
      * @since 1.0.0
      */
     fun debug(msg: String?, vararg args: Any?)
 
     /**
-     * 记录一般日志
-     * @param msg 日志内容，支持java字符串模板，如果不是基于模板参数计算性能考量(想推迟计算)，请使用kotlin的字符串模板
-     * @param args java字符串模板参数
+     * Logs an info-level message.
+     * @param msg the log content; supports Java string templates. If parameters are computed eagerly and performance is a concern (i.e. you want to defer computation), use a Kotlin string template instead.
+     * @param args Java string template arguments
      * @author K
      * @since 1.0.0
      */
     fun info(msg: String?, vararg args: Any?)
 
     /**
-     * 记录警告日志
-     * @param msg 日志内容，支持java字符串模板，如果不是基于模板参数计算性能考量(想推迟计算)，请使用kotlin的字符串模板
-     * @param args java字符串模板参数
+     * Logs a warning-level message.
+     * @param msg the log content; supports Java string templates. If parameters are computed eagerly and performance is a concern (i.e. you want to defer computation), use a Kotlin string template instead.
+     * @param args Java string template arguments
      * @author K
      * @since 1.0.0
      */
     fun warn(msg: String?, vararg args: Any?)
 
     /**
-     * 记录错误日志
-     * @param msg 日志内容，支持java字符串模板，如果不是基于模板参数计算性能考量(想推迟计算)，请使用kotlin的字符串模板
-     * @param args java字符串模板参数
+     * Logs an error-level message.
+     * @param msg the log content; supports Java string templates. If parameters are computed eagerly and performance is a concern (i.e. you want to defer computation), use a Kotlin string template instead.
+     * @param args Java string template arguments
      * @author K
      * @since 1.0.0
      */
     fun error(msg: String?, vararg args: Any?)
 
     /**
-     * 记录错误日志
-     * @param e 异常对象
-     * @param msg 日志内容，支持java字符串模板，如果不是基于模板参数计算性能考量(想推迟计算)，请使用kotlin的字符串模板
-     * @param args java字符串模板参数
+     * Logs an error-level message.
+     * @param e the throwable
+     * @param msg the log content; supports Java string templates. If parameters are computed eagerly and performance is a concern (i.e. you want to defer computation), use a Kotlin string template instead.
+     * @param args Java string template arguments
      * @author K
      * @since 1.0.0
      */
     fun error(e: Throwable, msg: String?, vararg args: Any?)
 
     /**
-     * 记录错误日志
+     * Logs an error-level message.
      *
-     * @param e 异常对象
+     * @param e the throwable
      * @author K
      * @since 1.0.0
      */
     fun error(e: Throwable)
 
     /**
-     * 是否记录跟踪级别及以上的日志
+     * Whether trace-level and higher logging is enabled.
      *
-     * @return true: 记录跟踪级别的日志，false：没有记录
+     * @return true: trace-level logging is enabled; false: it is not
      * @author K
      * @since 1.0.0
      */
     fun isTraceEnabled(): Boolean
 
     /**
-     * 是否记录调试级别及以上的日志
+     * Whether debug-level and higher logging is enabled.
      *
-     * @return true: 记录调试级别的日志，false：没有记录
+     * @return true: debug-level logging is enabled; false: it is not
      * @author K
      * @since 1.0.0
      */
     fun isDebugEnabled(): Boolean
 
     /**
-     * 是否记录一般级别及以上的日志
+     * Whether info-level and higher logging is enabled.
      *
-     * @return true: 记录一般级别的日志，false：没有记录
+     * @return true: info-level logging is enabled; false: it is not
      * @author K
      * @since 1.0.0
      */
     fun isInfoEnabled(): Boolean
 
     /**
-     * 是否记录警告级别及以上的日志
+     * Whether warn-level and higher logging is enabled.
      *
-     * @return true: 记录警告级别的日志，false：没有记录
+     * @return true: warn-level logging is enabled; false: it is not
      * @author K
      * @since 1.0.0
      */
     fun isWarnEnabled(): Boolean
 
     /**
-     * 是否记录错误级别的日志
+     * Whether error-level logging is enabled.
      *
-     * @return true: 记录错误级别的日志，false：没有记录
+     * @return true: error-level logging is enabled; false: it is not
      * @author K
      * @since 1.0.0
      */

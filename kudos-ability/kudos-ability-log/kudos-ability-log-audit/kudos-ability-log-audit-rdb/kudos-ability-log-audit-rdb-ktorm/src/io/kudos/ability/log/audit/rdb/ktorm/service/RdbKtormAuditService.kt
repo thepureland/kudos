@@ -16,24 +16,25 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 
 /**
- * 审计日志的 RDB Ktorm 落地实现。
+ * RDB Ktorm persistence implementation for audit logs.
  *
- * 关键设计：
+ * Key design points:
  *
- * 1. **不同时持久化主表 + 详情表**——业务侧的 `SysAuditLogModel` 已经把"主条目"与
- *    "详情条目"拆开放在 [SysAuditLogModel.entities] 与 [SysAuditLogModel.sysAuditDetailLogs]
- *    两个字段；本类各自批量 insert，避免做 N+1 query
+ * 1. **Persists the main table and detail table separately** — the business-side `SysAuditLogModel` already splits
+ *    "main entries" and "detail entries" into [SysAuditLogModel.entities] and [SysAuditLogModel.sysAuditDetailLogs];
+ *    this class batch-inserts each side, avoiding N+1 queries.
  *
- * 2. **事务边界 `REQUIRES_NEW`**——审计动作不应该挂在业务事务里：业务事务回滚不应该
- *    带走审计记录（"我们想知道这个操作失败过"），同时审计失败也不应该撞翻业务事务
- *    （本类 `submit` catch 全部异常，外层调用方看到 `false` 即可）
+ * 2. **Transaction boundary `REQUIRES_NEW`** — audit actions should not be attached to the business transaction:
+ *    a business rollback should not take audit records with it ("we want to know this operation failed"), and
+ *    similarly an audit failure should not bring down the business transaction (`submit` here catches all exceptions,
+ *    callers just see `false`).
  *
- * 3. **`tenantId` / `subSysCode` 兜底**——`SysAuditLogModel` 顶层带有 tenantId /
- *    subSysCode，但每条 entity 也可能各自带；优先用 entity 自身字段，缺失时用顶层兜底
+ * 3. **`tenantId` / `subSysCode` fallback** — `SysAuditLogModel` carries top-level tenantId / subSysCode, but each
+ *    entity may also carry its own; prefer the entity's own field, fall back to the top-level when missing.
  *
- * 4. **失败语义返回 false 而非抛出**——和 [io.kudos.ability.log.audit.mq.beans.MqAuditService]
- *    "永远返回 true"形成对比：RDB 路径是同步的，能感知 SQL 异常，所以可以如实回报
- *    "提交失败"，业务侧的切面可以据此决定是否兜底（如降级写本地文件）
+ * 4. **Failure returns false instead of throwing** — contrast with [io.kudos.ability.log.audit.mq.beans.MqAuditService]
+ *    which "always returns true": the RDB path is synchronous and can observe SQL exceptions, so it honestly reports
+ *    "submit failed", letting the business-side aspect decide on fallbacks (e.g., degrade to writing to a local file).
  *
  * @author K
  * @author AI: Codex
@@ -48,7 +49,7 @@ open class RdbKtormAuditService : IAuditService {
         val entities = sysAuditLogVo.entities.orEmpty().filterNotNull()
         val details = sysAuditLogVo.sysAuditDetailLogs.orEmpty().filterNotNull()
         if (entities.isEmpty() && details.isEmpty()) {
-            log.debug("审计日志模型为空，跳过落库")
+            log.debug("Audit log model is empty, skipping persistence")
             return true
         }
         return try {
@@ -73,7 +74,7 @@ open class RdbKtormAuditService : IAuditService {
             }
             true
         } catch (t: Throwable) {
-            log.error(t, "审计日志落库失败 tenant={0} subSys={1} entities={2} details={3}",
+            log.error(t, "Failed to persist audit log tenant={0} subSys={1} entities={2} details={3}",
                 sysAuditLogVo.tenantId, sysAuditLogVo.subSysCode, entities.size, details.size)
             false
         }
@@ -124,7 +125,7 @@ open class RdbKtormAuditService : IAuditService {
         }
     }
 
-    /** `java.util.Date` → `java.time.LocalDateTime`，按 JVM 默认时区。 */
+    /** `java.util.Date` → `java.time.LocalDateTime`, using the JVM default zone. */
     private fun java.util.Date.toLocalDateTime(): LocalDateTime =
         LocalDateTime.ofInstant(this.toInstant(), ZoneId.systemDefault())
 }

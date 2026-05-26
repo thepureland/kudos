@@ -6,7 +6,7 @@ import io.kudos.ms.sys.core.cache.model.po.SysCache
 
 
 /**
- * 缓存业务接口
+ * Cache service interface.
  *
  * @author K
  * @author AI: Cursor
@@ -15,74 +15,74 @@ import io.kudos.ms.sys.core.cache.model.po.SysCache
 interface ISysCacheService : IBaseCrudService<String, SysCache> {
 
     /**
-     * 按缓存配置主键 id 加载缓存配置，并缓存结果
+     * Load a cache configuration by primary key id and cache the result.
      *
-     * @param id 缓存配置主键，非空
-     * @return 缓存详情对象，找不到返回 null
+     * @param id cache configuration primary key, non-blank
+     * @return cache detail object, or null when not found
      */
     fun getCacheFromCache(id: String): SysCacheCacheEntry?
 
     /**
-     * 更新启用状态，并同步缓存
+     * Update the active flag and synchronize the cache.
      *
-     * @param id 主键
-     * @param active 是否启用
-     * @return 是否更新成功
+     * @param id primary key
+     * @param active whether to activate
+     * @return whether the update succeeded
      */
     fun updateActive(id: String, active: Boolean): Boolean
 
     /**
-     * 从缓存中获取原子服务的缓存配置列表
+     * Get the cache configuration list for an atomic service from the cache.
      *
-     * @param atomicServiceCode 原子服务编码
-     * @return 缓存记录列表
+     * @param atomicServiceCode atomic service code
+     * @return list of cache records
      */
     fun getCachesFromCache(atomicServiceCode: String): List<SysCacheCacheEntry>
 
     /**
-     * 重载指定缓存配置（按 id）下某 key 的缓存项
+     * Reload a single cache entry under the given cache configuration (by id) and key.
      *
-     * @param id 缓存配置主键，非空
-     * @param key 缓存 key
+     * @param id cache configuration primary key, non-blank
+     * @param key cache key
      */
     fun reload(id: String, key: String)
 
     /**
-     * 重载指定缓存配置（按 id）下的所有缓存项
+     * Reload all cache entries under the given cache configuration (by id).
      *
-     * @param id 缓存配置主键，非空
+     * @param id cache configuration primary key, non-blank
      */
     fun reloadAll(id: String)
 
     /**
-     * 踢除指定缓存配置（按 id）下某 key 的缓存项
+     * Evict a single cache entry under the given cache configuration (by id) and key.
      *
-     * @param id 缓存配置主键，非空
-     * @param key 缓存 key
+     * @param id cache configuration primary key, non-blank
+     * @param key cache key
      */
     fun evict(id: String, key: String)
 
     /**
-     * 踢除指定缓存配置（按 id）下的所有缓存项
+     * Evict all cache entries under the given cache configuration (by id).
      *
-     * @param id 缓存配置主键，非空
+     * @param id cache configuration primary key, non-blank
      */
     fun evictAll(id: String)
 
     /**
-     * 检测指定缓存配置（按 id）下某 key 是否存在
+     * Check whether a given key exists under the given cache configuration (by id).
      *
-     * @param id 缓存配置主键，非空
-     * @param key 缓存 key
+     * @param id cache configuration primary key, non-blank
+     * @param key cache key
      */
     fun existsKey(id: String, key: String): Boolean
 
     /**
-     * 获取指定缓存配置（按 id）下某 key 的值的 json 表示
+     * Get the JSON representation of the value of the given key under the given cache configuration (by id).
      *
-     * @param id 缓存配置主键，非空
-     * @param key 缓存 key
-     * @return value 的 json 串，value 为 null 或出错返回空串
+     * @param id cache configuration primary key, non-blank
+     * @param key cache key
+     * @return JSON string of the value; empty string when value is null or on error
      */
     fun getValueJson(id: String, key: String): String
 

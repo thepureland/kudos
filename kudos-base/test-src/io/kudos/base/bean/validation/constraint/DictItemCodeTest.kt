@@ -7,7 +7,7 @@ import kotlin.test.Test
 import kotlin.test.assertTrue
 
 /**
- * DictItemCode测试用例
+ * Test cases for DictItemCode.
  *
  * @author AI: cursor
  * @author K
@@ -19,7 +19,7 @@ internal class DictItemCodeTest {
     fun testIsValidWithNull() {
         val bean = TestDictCodeBean(null)
         val violations = ValidationKit.validateBean(bean)
-        // null值应该通过验证（根据实现，isNullOrBlank返回true）
+        // null values should pass validation (per the implementation, isNullOrBlank returns true)
         assertTrue(violations.isEmpty())
     }
 
@@ -27,7 +27,7 @@ internal class DictItemCodeTest {
     fun testIsValidWithEmpty() {
         val bean = TestDictCodeBean("")
         val violations = ValidationKit.validateBean(bean)
-        // 空字符串应该通过验证
+        // Empty strings should pass validation
         assertTrue(violations.isEmpty())
     }
 
@@ -35,24 +35,24 @@ internal class DictItemCodeTest {
     fun testIsValidWithBlank() {
         val bean = TestDictCodeBean("   ")
         val violations = ValidationKit.validateBean(bean)
-        // 空白字符串应该通过验证
+        // Blank strings should pass validation
         assertTrue(violations.isEmpty())
     }
 
     @Test
     fun testIsValidWithValidCode() {
-        // 注意：这个测试依赖于IDictCodeFinder的实现
-        // 如果没有找到DictCodeFinder，dictMap会是空的，验证会失败
+        // Note: this test depends on the IDictCodeFinder implementation.
+        // If no DictCodeFinder is found, dictMap will be empty and validation will fail.
         val bean = TestDictCodeBean("VALID_CODE")
         val violations = ValidationKit.validateBean(bean)
-        // 实际结果取决于ServiceLoader是否能找到IDictCodeFinder实现
+        // The actual result depends on whether ServiceLoader can find an IDictCodeFinder implementation
     }
 
     @Test
     fun testIsValidWithInvalidCode() {
         val bean = TestDictCodeBean("INVALID_CODE")
         val violations = ValidationKit.validateBean(bean)
-        // 如果找不到DictCodeFinder或代码不在字典中，验证应该失败
+        // If no DictCodeFinder is found or the code is not in the dictionary, validation should fail
     }
 
     @Test
@@ -62,12 +62,12 @@ internal class DictItemCodeTest {
             .getAnnotation(DictItemCode::class.java)
         if (annotation != null) {
             validator.initialize(annotation)
-            // 初始化应该成功
+            // Initialization should succeed
         }
     }
 
     data class TestDictCodeBean(
-        @get:DictItemCode(atomicServiceCode = "test", dictType = "test", message = "无效的字典码")
+        @get:DictItemCode(atomicServiceCode = "test", dictType = "test", message = "invalid dictionary code")
         val code: String?
     )
 }

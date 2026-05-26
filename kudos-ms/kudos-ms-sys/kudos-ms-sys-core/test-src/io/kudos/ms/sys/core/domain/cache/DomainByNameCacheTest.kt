@@ -15,7 +15,7 @@ import kotlin.test.assertNull
 /**
  * junit test for DomainByNameCacheHandler
  *
- * 测试数据来源：`DomainByNameCacheTest.sql`
+ * Test data source: `DomainByNameCacheTest.sql`
  *
  * @author K
  * @since 1.0.0
@@ -33,55 +33,55 @@ class DomainByNameCacheTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun reloadAll() {
-        // 清除并重载缓存，保证与数据库中的数据一致
+        // Clear and reload the cache so it matches the database
         cacheHandler.reloadAll(true)
 
-        // 获取当前缓存中的记录
+        // Get the currently cached record
         val cacheItem = cacheHandler.getDomain("domain1.com")
 
-        // 插入新的记录到数据库
+        // Insert a new record into the database
         val sysDomainNew = insertNewRecordToDb()
 
-        // 更新数据库的记录
+        // Update an existing database record
         val idUpdate = "8309fe9a-8810-4a79-9cff-222222225724"
         dao.updateProperties(idUpdate, mapOf(SysDomain::domain.name to newName))
 
-        // 从数据库中删除记录
+        // Delete a record from the database
         val idDelete = "8309fe9a-8810-4a79-9cff-333333335724"
         dao.deleteById(idDelete)
 
-        // 重载缓存，但不清除旧缓存
+        // Reload the cache without clearing the existing entries
         cacheHandler.reloadAll(false)
 
-        // 原来缓存中的记录内存地址会变
+        // The memory address of the previously cached record should change
         val cacheItem1 = cacheHandler.getDomain("domain1.com")
         assert(cacheItem !== cacheItem1)
 
-        // 数据库中新增的记录在缓存应该要存在
+        // Newly inserted database record should be present in the cache
         val cacheItemNew = cacheHandler.getDomain(sysDomainNew.domain)
         assertNotNull(cacheItemNew)
 
-        // 改名后，新的域名在缓存中应该要存在
+        // After rename, the new domain name should be present in the cache
         val cacheItemUpdate = cacheHandler.getDomain(newName)
         assertNotNull(cacheItemUpdate)
 
-        // 改名后，旧的域名在缓存中应该还存在
+        // After rename, the old domain name should still be present in the cache
         var cacheItemOld = cacheHandler.getDomain("domain2.com")
         assertNotNull(cacheItemOld)
 
-        // 数据库中删除的记录在缓存中应该还存在
+        // Records deleted from the database should still be in the cache
         var cacheItemDelete = cacheHandler.getDomain("domain3.com")
         assertNotNull(cacheItemDelete)
 
 
-        // 清除旧缓存，并重载缓存
+        // Clear old cache and reload
         cacheHandler.reloadAll(true)
 
-        // 改名后，旧的域名在缓存中应该还存在
+        // After rename, the old domain name should no longer be in the cache
         cacheItemOld = cacheHandler.getDomain("domain2.com")
         assertNull(cacheItemOld)
 
-        // 数据库中删除的记录在缓存中应该不存在
+        // Records deleted from the database should no longer be in the cache
         cacheItemDelete = cacheHandler.getDomain("domain3.com")
         assertNull(cacheItemDelete)
     }
@@ -91,20 +91,20 @@ class DomainByNameCacheTest : RdbAndRedisCacheTestBase() {
         var cacheItem = cacheHandler.getDomain("domain1.com")
         assertNotNull(cacheItem)
 
-        // active为false的应该没有在缓存中
+        // Records with active=false should not be in the cache
         cacheItem = cacheHandler.getDomain("domain0.com")
         assertNull(cacheItem)
     }
 
     @Test
     fun syncOnInsert() {
-        // 插入新的记录到数据库
+        // Insert a new record into the database
         val sysDomain = insertNewRecordToDb()
 
-        // 同步缓存
+        // Sync cache
         cacheHandler.syncOnInsert(sysDomain, sysDomain.id)
 
-        // 验证新记录是否在缓存中
+        // Verify the new record exists in the cache
         val cacheItem = KeyValueCacheKit.getValue(cacheHandler.cacheName(), sysDomain.domain)
         assertNotNull(cacheItem)
         val cacheItem2 = cacheHandler.getDomain(sysDomain.domain)
@@ -113,16 +113,16 @@ class DomainByNameCacheTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnUpdate() {
-        // 更新数据库中已存在的记录
+        // Update an existing record in the database
         val id = "8309fe9a-8810-4a79-9cff-444444445724"
         val success = dao.updateProperties(id, mapOf(SysDomain::domain.name to newName))
         assert(success)
 
 
-        // 同步缓存
+        // Sync cache
         cacheHandler.syncOnUpdate(null, id)
 
-        // 验证缓存中的记录
+        // Verify the cached record
         var cacheItem = KeyValueCacheKit.getValue(cacheHandler.cacheName(), newName) as SysDomainCacheEntry?
         assertNotNull(cacheItem)
         assertEquals(newName, cacheItem.domain)
@@ -136,14 +136,14 @@ class DomainByNameCacheTest : RdbAndRedisCacheTestBase() {
         val id = "8309fe9a-8810-4a79-9cff-555555555724"
         val sysDomain = assertNotNull(dao.get(id))
 
-        // 删除数据库中的记录
+        // Delete the record from the database
         val deleteSuccess = dao.deleteById(id)
         assert(deleteSuccess)
 
-        // 同步缓存
+        // Sync cache
         cacheHandler.syncOnDelete(sysDomain, id)
 
-        // 验证缓存中有没有
+        // Verify whether it still exists in the cache
         var cacheItem = KeyValueCacheKit.getValue(cacheHandler.cacheName(), sysDomain.domain)
         assertNull(cacheItem)
         cacheItem = cacheHandler.getDomain(sysDomain.domain)
@@ -159,14 +159,14 @@ class DomainByNameCacheTest : RdbAndRedisCacheTestBase() {
         val domain2 = "domain7.com"
         val domains = setOf(domain1, domain2)
 
-        // 批量删除数据库中的记录
+        // Batch delete records from the database
         val count = dao.batchDelete(ids)
         assertEquals(2, count)
 
-        // 同步缓存
+        // Sync cache
         cacheHandler.syncOnBatchDelete(ids, domains)
 
-        // 验证缓存中有没有
+        // Verify whether they still exist in the cache
         var cacheItem = KeyValueCacheKit.getValue(cacheHandler.cacheName(), domain1)
         assertNull(cacheItem)
         cacheItem = cacheHandler.getDomain(domain1)

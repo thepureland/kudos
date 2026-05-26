@@ -5,50 +5,50 @@ import java.time.LocalDateTime
 
 
 /**
- * 消息接收者群组详情响应VO
+ * Message receiver group detail response VO.
  *
  * @author K
  * @since 1.0.0
  */
 data class MsgReceiverGroupDetail (
 
-    /** 主键 */
+    /** Primary key. */
     override val id: String = "",
 
-    /** 接收者群组类型字典码 */
+    /** Receiver group type dict code. */
     val receiverGroupTypeDictCode: String? = null,
 
-    /** 群组定义的表 */
+    /** Table where the group is defined. */
     val defineTable: String? = null,
 
-    /** 群组名称在具体群组表中的字段名 */
+    /** Column name of the group name in the concrete group table. */
     val nameColumn: String? = null,
 
-    /** 备注 */
+    /** Remark. */
     val remark: String? = null,
 
-    /** 是否启用 */
+    /** Active flag. */
     val active: Boolean? = null,
 
-    /** 是否内置 */
+    /** Built-in flag. */
     val builtIn: Boolean? = null,
 
-    /** 创建者id */
+    /** Creator id. */
     val createUserId: String? = null,
 
-    /** 创建者名称 */
+    /** Creator name. */
     val createUserName: String? = null,
 
-    /** 创建时间 */
+    /** Create time. */
     val createTime: LocalDateTime? = null,
 
-    /** 更新者id */
+    /** Updater id. */
     val updateUserId: String? = null,
 
-    /** 更新者名称 */
+    /** Updater name. */
     val updateUserName: String? = null,
 
-    /** 更新时间 */
+    /** Update time. */
     val updateTime: LocalDateTime? = null,
 
 ) : IIdEntity<String>

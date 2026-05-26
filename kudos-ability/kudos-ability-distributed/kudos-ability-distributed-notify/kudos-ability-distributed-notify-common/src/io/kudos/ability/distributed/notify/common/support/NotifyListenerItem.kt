@@ -5,12 +5,13 @@ import java.util.concurrent.ConcurrentHashMap
 
 
 /**
- * [INotifyListener] bean 注册表——按 `(namespace, type)` 索引。
+ * Registry of [INotifyListener] beans—indexed by `(namespace, type)`.
  *
- * 并发约定：写入主要发生在 Spring `BeanPostProcessor` 阶段（单线程），读取在 MQ 派发阶段
- * （多线程）。改用 [ConcurrentHashMap] 把约束变成显式安全——即便业务侧在 runtime 动态注册
- * listener 也不会触发 ConcurrentModificationException 或可见性问题。`getOrPut` 在 CHM 上仍
- * 不是原子的，但本注册表"写入仅在装配期"是已知约束，这里的非原子 getOrPut 不会引入新风险。
+ * Concurrency contract: writes happen mainly during Spring's `BeanPostProcessor` phase (single-threaded);
+ * reads happen during MQ dispatch (multi-threaded). Switching to [ConcurrentHashMap] turns that constraint
+ * into explicit safety—even if callers register listeners dynamically at runtime, no
+ * ConcurrentModificationException or visibility issue occurs. `getOrPut` on CHM is still not atomic, but the
+ * "writes only at wiring time" constraint of this registry means the non-atomic getOrPut introduces no new risk.
  *
  * @author Younger
  * @author K
@@ -18,18 +19,18 @@ import java.util.concurrent.ConcurrentHashMap
  */
 object NotifyListenerItem {
 
-    /** 当 listener 没指定 namespace 时回落的默认值。 */
+    /** Fallback value used when a listener does not specify a namespace. */
     const val DEFAULT_NAMESPACE: String = "default"
 
-    /** namespace → (key → listener) 两级索引，两级都用 [ConcurrentHashMap]，读路径完全无锁。 */
+    /** Two-level namespace -> (key -> listener) index; both levels use [ConcurrentHashMap], the read path is fully lock-free. */
     private val notifyListenerMap = ConcurrentHashMap<String, ConcurrentHashMap<String, INotifyListener>>()
 
     /**
-     * 在指定 namespace 下注册 listener；空白 namespace 自动回落 [DEFAULT_NAMESPACE]。
+     * Registers a listener under the given namespace; blank namespaces fall back to [DEFAULT_NAMESPACE].
      *
-     * @param namespace 命名空间（业务上一般对应租户 / 子系统）
-     * @param key listener 业务 key
-     * @param listener listener 实例
+     * @param namespace namespace (typically corresponds to a tenant / subsystem in business terms)
+     * @param key the listener's business key
+     * @param listener the listener instance
      * @author K
      * @since 1.0.0
      */
@@ -39,10 +40,10 @@ object NotifyListenerItem {
     }
 
     /**
-     * 在 [DEFAULT_NAMESPACE] 下注册 listener 的快捷重载。
+     * Shortcut overload that registers a listener under [DEFAULT_NAMESPACE].
      *
-     * @param key listener 业务 key
-     * @param listener listener 实例
+     * @param key the listener's business key
+     * @param listener the listener instance
      * @author K
      * @since 1.0.0
      */
@@ -51,11 +52,11 @@ object NotifyListenerItem {
     }
 
     /**
-     * 按 namespace + key 取出 listener；命中 namespace 但 key 不存在时返回 null。
+     * Returns the listener for the given namespace + key; returns null if the namespace exists but the key is missing.
      *
-     * @param namespace 命名空间，空白回落 [DEFAULT_NAMESPACE]
-     * @param key listener 业务 key
-     * @return listener 实例，未注册时返回 null
+     * @param namespace the namespace; blank values fall back to [DEFAULT_NAMESPACE]
+     * @param key the listener's business key
+     * @return the listener instance, or null when not registered
      * @author K
      * @since 1.0.0
      */
@@ -65,10 +66,10 @@ object NotifyListenerItem {
     }
 
     /**
-     * 在 [DEFAULT_NAMESPACE] 下查找 listener 的快捷重载。
+     * Shortcut overload that looks up a listener under [DEFAULT_NAMESPACE].
      *
-     * @param key listener 业务 key
-     * @return listener 实例，未注册时返回 null
+     * @param key the listener's business key
+     * @return the listener instance, or null when not registered
      * @author K
      * @since 1.0.0
      */

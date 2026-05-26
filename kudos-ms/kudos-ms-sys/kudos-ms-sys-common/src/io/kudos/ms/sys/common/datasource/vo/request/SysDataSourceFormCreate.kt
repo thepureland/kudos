@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.common.datasource.vo.request
 
 /**
- * 数据源表单新建请求VO
+ * Data source form create request VO
  *
  * @author K
  * @since 1.0.0

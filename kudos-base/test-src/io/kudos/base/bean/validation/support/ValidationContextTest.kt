@@ -7,7 +7,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * ValidationContext测试用例
+ * Test cases for ValidationContext.
  *
  * @author AI: cursor
  * @author K
@@ -19,14 +19,14 @@ internal class ValidationContextTest {
     fun testSetFailFast() {
         ValidationContext.setFailFast(true)
         assertTrue(ValidationContext.isFailFast())
-        
+
         ValidationContext.setFailFast(false)
         assertFalse(ValidationContext.isFailFast())
     }
 
     @Test
     fun testIsFailFastHasDefaultValue() {
-        // 在未显式设置时应提供默认值，避免出现null语义
+        // A default value should be provided when not explicitly set, avoiding null semantics
         ValidationContext.setFailFast(true)
         assertTrue(ValidationContext.isFailFast())
     }
@@ -35,23 +35,23 @@ internal class ValidationContextTest {
     fun testSetAndGetValidator() {
         val validator = ValidationKit.getValidator()
         val testBean = TestBean("test", 25)
-        
+
         ValidationContext.set(validator, testBean)
-        // 验证上下文已设置
+        // Verify the context has been set
         assertNotNull(ValidationContext.validator)
     }
 
     @Test
     fun testGetHvInitCtx() {
-        // 先获取validator以初始化工厂
+        // First call getValidator to initialize the factory
         ValidationKit.getValidator()
-        
+
         try {
             val initCtx = ValidationContext.getHvInitCtx()
             assertNotNull(initCtx)
         } catch (e: IllegalStateException) {
-            // 如果尚未初始化，会抛出异常
-            // 这是正常的行为
+            // If not yet initialized, an exception is thrown
+            // This is expected behavior
         }
     }
 

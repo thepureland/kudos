@@ -4,41 +4,41 @@ import java.time.LocalDateTime
 
 
 /**
- * 域名列表查询结果响应VO
+ * Response VO for domain list query results.
  *
  * @author K
  * @since 1.0.0
  */
 data class SysDomainRow (
 
-    /** 主键 */
+    /** Primary key */
     val id: String = "",
 
-    /** 域名 */
+    /** Domain name */
     val domain: String = "",
 
-    /** 系统编码 */
+    /** System code */
     val systemCode: String = "",
 
-    /** 租户id */
+    /** Tenant id */
     val tenantId: String = "",
 
-    /** 备注 */
+    /** Remark */
     val remark: String? = null,
 
-    /** 是否启用 */
+    /** Whether active */
     val active: Boolean = true,
 
-    /** 是否内置 */
+    /** Whether built-in */
     val builtIn: Boolean = false,
 
-    /** 创建时间 */
+    /** Creation time */
     val createTime: LocalDateTime? = null,
 
 ) {
 
 
-    /** 租户名称 */
+    /** Tenant name */
     var tenantName: String = ""
 
 

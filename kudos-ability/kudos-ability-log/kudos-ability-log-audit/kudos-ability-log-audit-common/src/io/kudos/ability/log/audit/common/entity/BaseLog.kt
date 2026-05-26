@@ -15,46 +15,46 @@ import java.io.Serializable
 import kotlin.reflect.KClass
 
 /**
- * 审计日志基础信息值对象
- * 
- * 用于封装系统审计日志的基本信息，包括实体信息、操作类型、模块信息和参数信息。
- * 
- * 核心属性：
- * - entityId：被审计实体的唯一标识
- * - entityUserId：被审计实体的用户ID
- * - description：操作描述信息，支持国际化参数
- * - moduleCode/moduleName/moduleId：审计模块的编码、名称和ID
- * - opType：操作类型枚举（增删改查等）
- * - ignoreForm：是否忽略表单数据
- * 
- * 参数支持：
- * - stringParams：字符串类型国际化参数列表，对应{0}、{1}等占位符
- * - objectParams：对象类型国际化参数Map，对应${user.name}等表达式
- * - paramArgs：方法参数信息数组
- * - oldBizData：旧业务数据，用于记录变更前的数据
- * 
- * 描述格式化：
- * - 支持自定义描述格式化器（descriptionFormatterClass）
- * - 描述信息支持国际化参数替换
- * - 可以从WebAudit或Audit注解中初始化
- * 
- * 使用场景：
- * - 记录系统操作审计日志
- * - 支持操作记录的查询和追溯
- * - 支持国际化描述信息
- * 
- * 注意事项：
- * - 需要配合Audit或WebAudit注解使用
- * - 模块信息会自动从ISysAuditModule中获取
- * - 参数分隔符使用"┼"符号
- * 
+ * Audit log base-info value object.
+ *
+ * Wraps the basic information of system audit logs, including entity info, operation type, module info and parameters.
+ *
+ * Core properties:
+ * - entityId: unique identifier of the audited entity
+ * - entityUserId: user ID of the audited entity
+ * - description: operation description; supports i18n parameters
+ * - moduleCode/moduleName/moduleId: code, name and ID of the audit module
+ * - opType: operation-type enum (create/read/update/delete, etc.)
+ * - ignoreForm: whether to ignore form data
+ *
+ * Parameter support:
+ * - stringParams: list of string-type i18n parameters, matching {0}, {1} placeholders
+ * - objectParams: map of object-type i18n parameters, matching ${user.name} expressions
+ * - paramArgs: method parameter info array
+ * - oldBizData: previous business data used to record pre-change state
+ *
+ * Description formatting:
+ * - Supports a custom description formatter (descriptionFormatterClass)
+ * - Description text supports i18n parameter substitution
+ * - Can be initialized from a WebAudit or Audit annotation
+ *
+ * Use cases:
+ * - Recording system operation audit logs
+ * - Supporting query and traceability of operation records
+ * - Supporting i18n descriptions
+ *
+ * Notes:
+ * - Must be used with the Audit or WebAudit annotation
+ * - Module info is fetched automatically from ISysAuditModule
+ * - Parameter separator is the "┼" character
+ *
  * @author K
  * @author AI: Codex
  * @since 1.0.0
  */
 class BaseLog : Serializable {
     /**
-     * 被审计实体
+     * Audited entity
      */
     var entityId: String? = null
     var entityUserId: Int? = null
@@ -66,22 +66,22 @@ class BaseLog : Serializable {
     var ignoreForm: Boolean?
 
     /**
-     * 描述信息国际化参数值,对应参数类型:{0}
+     * i18n parameter values for description; matches placeholder type {0}.
      */
     private var stringParams: MutableList<String?>? = null
 
     /**
-     * 描述信息国际化参数值,${user.name}等
+     * i18n parameter values for description; matches ${user.name}-style expressions.
      */
     private var objectParams: MutableMap<String, LogParamVo>? = null
 
     /**
-     * 旧数据信息: 用于传输到明细转换
+     * Previous data; carried through to the detail conversion.
      */
     var oldBizData: Any? = null
 
     /**
-     * 方法的参数信息
+     * Method parameter info.
      */
     var paramArgs: Array<Any?>? = null
 
@@ -109,8 +109,10 @@ class BaseLog : Serializable {
         val beansOfType = SpringKit.getBeansOfType<ISysAuditModule>()
         if (beansOfType.isEmpty()) return
         val sysCode = subsysCode.ifBlank { KudosContextHolder.get().subSystemCode }
-        // 多 ISysAuditModule 实现按"链式"解析：第一个返回非空 id 或非空 name 的实现胜出。
-        // 既兼容"只有一个实现"的旧场景（first 直接命中），又支持业务侧按子系统拆分注册多个 module 解析器。
+        // Multiple ISysAuditModule implementations resolve in a chained manner: the first implementation that
+        // returns a non-null id or non-null name wins. This keeps the old single-implementation case working
+        // (the first hit short-circuits) while supporting the business side registering multiple module resolvers
+        // partitioned by subsystem.
         var resolvedId: Int? = null
         var resolvedName: String? = null
         for ((_, module) in beansOfType) {
@@ -132,20 +134,21 @@ class BaseLog : Serializable {
     }
 
     /**
-     * 把 stringParams 列表拼成单字符串。
+     * Joins the stringParams list into a single string.
      *
-     * **历史 bug**：旧实现直接 `sb.append(s)` + `sb.append(SEPERATOR)`，业务参数自身含
-     * `┼` 时反向解析（参考 [splitStringParams]）会错位。本次修复在拼接前对每个 segment
-     * 转义 `\\` 和 `┼`，使分隔符语义明确。
+     * **Historical bug**: the old implementation called `sb.append(s)` + `sb.append(SEPERATOR)` directly. When a
+     * business parameter itself contained `┼`, reverse parsing (see [splitStringParams]) would split incorrectly.
+     * This fix escapes `\\` and `┼` on each segment before joining, giving the separator unambiguous semantics.
      *
-     * 与历史数据的兼容：解析侧的 [splitStringParams] 同样按转义规则解；老数据（未转义）
-     * 在分隔符不出现于参数内容时**与新规则等价**，无破坏。
+     * Backward compatibility: the parser [splitStringParams] follows the same escape rules. Legacy unescaped data
+     * **behaves identically to the new rules** when the separator does not appear inside parameter content, so
+     * nothing is broken.
      */
     fun getStringParams(): String? =
         stringParams?.takeIf { it.isNotEmpty() }?.joinToString(SEPERATOR) { escapeSegment(it) }
 
     /**
-     * 返回JSON对象字符串
+     * Returns the JSON object string.
      */
     fun getObjectParams(): String? {
         if (this.objectParams.isNullOrEmpty()) {
@@ -155,7 +158,7 @@ class BaseLog : Serializable {
     }
 
     /**
-     * 添加字符串参数
+     * Adds a string parameter.
      *
      * @param param
      */
@@ -165,7 +168,7 @@ class BaseLog : Serializable {
     }
 
     /**
-     * 添加${}类型参数
+     * Adds a ${}-style parameter.
      *
      * @param param
      * @param value
@@ -177,7 +180,7 @@ class BaseLog : Serializable {
     }
 
     /**
-     * 添加${}类型参数
+     * Adds a ${}-style parameter.
      *
      * @param param
      */
@@ -189,7 +192,7 @@ class BaseLog : Serializable {
     }
 
     /**
-     * vo转化为实体
+     * Converts the VO into an entity.
      */
     fun toSysLogVo(): SysAuditLogVo {
         val sysLogVo = SysAuditLogVo()
@@ -216,20 +219,21 @@ class BaseLog : Serializable {
         private val LOG = LogFactory.getLog(BaseLog::class)
 
         /**
-         * 作为字符串参数stringParams中的分隔符。**业务参数自身含此字符时必须先转义**——
-         * 拼接走 [escapeSegment]，反向解析走 [splitStringParams]，二者配合保证 round-trip。
+         * Separator used inside the stringParams string. **If a business parameter contains this character, it
+         * must be escaped first** — joining uses [escapeSegment] and reverse parsing uses [splitStringParams];
+         * together they guarantee a round trip.
          */
         const val SEPERATOR: String = "┼"
 
-        /** 转义字符——保留给 SEPERATOR 自身在参数内容中出现的场景。 */
+        /** Escape character — reserved for the case where SEPERATOR itself appears inside parameter content. */
         private const val ESCAPE: String = "\\"
 
         /**
-         * 转义单条 segment。规则：
-         *  - `\` → `\\`（必须先于下面，否则 `\┼` 会被先替换成 `\\\┼`）
-         *  - `┼` → `\┼`
+         * Escapes a single segment. Rules:
+         *  - `\` -> `\\` (must come first; otherwise `\┼` would first be replaced to `\\\┼`)
+         *  - `┼` -> `\┼`
          *
-         * 把转义信息嵌进内容里，让 [splitStringParams] 可以按"非转义的 `┼`"切分。
+         * The escape information is embedded in the content so [splitStringParams] can split on "unescaped `┼`".
          */
         @JvmStatic
         fun escapeSegment(s: String?): String {
@@ -238,8 +242,8 @@ class BaseLog : Serializable {
         }
 
         /**
-         * 反向解析 [getStringParams] 拼出来的字符串。按**未转义的** `┼` 切分，再对每段
-         * 还原转义。空字符串返回空列表。
+         * Reverse-parses the string produced by [getStringParams]. Splits on **unescaped** `┼` and unescapes
+         * each segment. An empty string returns an empty list.
          */
         @JvmStatic
         fun splitStringParams(joined: String?): List<String> {
@@ -250,7 +254,7 @@ class BaseLog : Serializable {
             while (i < joined.length) {
                 val c = joined[i]
                 if (c == '\\' && i + 1 < joined.length) {
-                    // 转义序列：原样取下一个字符（无论是 `\` 还是 `┼`）
+                    // Escape sequence: take the next character as-is (either `\` or `┼`)
                     current.append(joined[i + 1])
                     i += 2
                 } else if (joined.startsWith(SEPERATOR, i)) {

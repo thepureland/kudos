@@ -3,46 +3,46 @@ package io.kudos.ms.msg.common.send.vo.request
 import java.time.LocalDateTime
 
 /**
- * 消息发送表单基础字段（新建 / 更新共用）
+ * Common fields for message send forms (shared by create / update).
  *
  * @author K
  * @since 1.0.0
  */
 interface IMsgSendFormBase {
 
-    /** 接收者群组类型字典码 */
+    /** Receiver group type dict code. */
     val receiverGroupTypeDictCode: String?
 
-    /** 接收者群组ID */
+    /** Receiver group id. */
     val receiverGroupId: String?
 
-    /** 消息实例ID */
+    /** Message instance id. */
     val instanceId: String?
 
-    /** 消息类型字典码 */
+    /** Message type dict code. */
     val msgTypeDictCode: String?
 
-    /** 国家-语言字典码 */
+    /** Country-language dict code. */
     val localeDictCode: String?
 
-    /** 发送状态字典码 */
+    /** Send status dict code. */
     val sendStatusDictCode: String?
 
-    /** 创建时间 */
+    /** Create time. */
     val createTime: LocalDateTime?
 
-    /** 更新时间 */
+    /** Update time. */
     val updateTime: LocalDateTime?
 
-    /** 发送成功数量 */
+    /** Successful send count. */
     val successCount: Int?
 
-    /** 发送失败数量 */
+    /** Failed send count. */
     val failCount: Int?
 
-    /** 定时任务ID */
+    /** Scheduled job id. */
     val jobId: String?
 
-    /** 租户ID */
+    /** Tenant id. */
     val tenantId: String?
 }

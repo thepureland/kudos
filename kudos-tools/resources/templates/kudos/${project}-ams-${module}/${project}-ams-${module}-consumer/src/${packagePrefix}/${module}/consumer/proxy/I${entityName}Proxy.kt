@@ -5,7 +5,7 @@ import ${packagePrefix}.${module}.consumer.fallback.${entityName}Fallback
 import org.springframework.cloud.openfeign.FeignClient
 
 
-<@generateClassComment table.comment+"客户端代理接口"/>
+<@generateClassComment table.comment+" client proxy interface"/>
 //region your codes 1
 @FeignClient(name = "${module}-${lowerShortEntityName}", fallback = ${entityName}Fallback::class)
 interface I${entityName}Proxy : I${entityName}Api {

@@ -9,7 +9,7 @@ import io.kudos.ms.user.common.account.vo.UserAccountCacheEntry
 
 
 /**
- * 角色业务接口
+ * Role business interface
  *
  * @author K
  * @author AI: Cursor
@@ -19,177 +19,177 @@ interface IAuthRoleService : IBaseCrudService<String, AuthRole> {
 
 
     /**
-     * 根据角色ID获取拥有该角色的所有用户ID列表
+     * Get the list of all user IDs that hold the given role
      *
-     * @param roleId 角色ID
-     * @return List<String> 用户ID列表，如果角色不存在或没有用户则返回空列表
+     * @param roleId Role ID
+     * @return List<String> List of user IDs; returns empty list if role does not exist or has no users
      */
     fun getRoleUserIds(roleId: String): List<String>
 
     /**
-     * 根据角色ID获取该角色拥有的所有资源ID列表
+     * Get the list of all resource IDs owned by the given role
      *
-     * @param roleId 角色ID
-     * @return Set<String> 资源ID列表，如果角色不存在或没有资源则返回空集合
+     * @param roleId Role ID
+     * @return Set<String> List of resource IDs; returns empty set if role does not exist or has no resources
      */
     fun getRoleResourceIds(roleId: String): Set<String>
 
     /**
-     * 根据租户ID获取该租户下所有激活角色的ID列表
-     * 只返回active=true的角色ID
+     * Get the list of all active role IDs under the given tenant.
+     * Only returns role IDs with active=true.
      *
-     * @param tenantId 租户ID
-     * @return List<String> 角色ID列表
+     * @param tenantId Tenant ID
+     * @return List<String> List of role IDs
      */
     fun getRoleIds(tenantId: String): List<String>
 
     /**
-     * 根据角色ID获取拥有该角色的所有用户列表
+     * Get the list of all users who hold the given role
      *
-     * @param roleId 角色ID
-     * @return List<UserAccountCacheEntry> 用户列表，如果角色不存在或没有用户则返回空列表
+     * @param roleId Role ID
+     * @return List<UserAccountCacheEntry> List of users; returns empty list if role does not exist or has no users
      */
     fun getRoleUsers(roleId: String): List<UserAccountCacheEntry>
 
     /**
-     * 根据角色ID获取该角色拥有的所有资源列表
+     * Get the list of all resources owned by the given role
      *
-     * @param roleId 角色ID
-     * @return List<SysResourceCacheEntry> 资源列表，如果角色不存在或没有资源则返回空列表
+     * @param roleId Role ID
+     * @return List<SysResourceCacheEntry> List of resources; returns empty list if role does not exist or has no resources
      */
     fun getRoleResources(roleId: String): List<SysResourceCacheEntry>
 
     /**
-     * 检查角色是否拥有指定资源
+     * Check whether the role owns the specified resource
      *
-     * @param roleId 角色ID
-     * @param resourceId 资源ID
-     * @return true表示角色拥有该资源，false表示不拥有
+     * @param roleId Role ID
+     * @param resourceId Resource ID
+     * @return true if the role owns the resource, false otherwise
      */
     fun hasResource(roleId: String, resourceId: String): Boolean
 
     /**
-     * 根据租户ID和角色编码获取角色信息
+     * Get role information by tenant ID and role code
      *
-     * @param tenantId 租户ID
-     * @param roleCode 角色编码
-     * @return 角色缓存项，找不到返回null
+     * @param tenantId Tenant ID
+     * @param roleCode Role code
+     * @return Role cache entry; returns null if not found
      * @author AI: Cursor
      * @since 1.0.0
      */
     fun getRoleByTenantIdAndCode(tenantId: String, roleCode: String): AuthRoleCacheEntry?
 
     /**
-     * 根据ID获取角色记录（非缓存）
+     * Get role record by ID (non-cached)
      *
-     * @param id 角色ID
-     * @return 角色记录，找不到返回null
+     * @param id Role ID
+     * @return Role record; returns null if not found
      * @author AI: Cursor
      * @since 1.0.0
      */
     fun getRoleRecord(id: String): AuthRoleRow?
 
     /**
-     * 根据租户ID获取角色列表
+     * Get role list by tenant ID
      *
-     * @param tenantId 租户ID
-     * @return 角色记录列表
+     * @param tenantId Tenant ID
+     * @return List of role records
      * @author AI: Cursor
      * @since 1.0.0
      */
     fun getRolesByTenantId(tenantId: String): List<AuthRoleRow>
 
     /**
-     * 根据子系统编码获取角色列表
+     * Get role list by subsystem code
      *
-     * @param tenantId 租户ID
-     * @param subsysCode 子系统编码
-     * @return 角色记录列表
+     * @param tenantId Tenant ID
+     * @param subsysCode Subsystem code
+     * @return List of role records
      * @author AI: Cursor
      * @since 1.0.0
      */
     fun getRolesBySubsysCode(tenantId: String, subsysCode: String): List<AuthRoleRow>
 
     /**
-     * 更新角色启用状态
+     * Update role active status
      *
-     * @param id 角色ID
-     * @param active 是否启用
-     * @return 是否更新成功
+     * @param id Role ID
+     * @param active Whether enabled
+     * @return Whether update succeeded
      * @author AI: Cursor
      * @since 1.0.0
      */
     fun updateActive(id: String, active: Boolean): Boolean
 
     /**
-     * 根据用户ID获取该用户拥有的所有角色ID列表
+     * Get the list of all role IDs owned by the given user
      *
-     * @param userId 用户ID
-     * @return List<String> 角色ID列表，如果用户不存在或没有角色则返回空列表
+     * @param userId User ID
+     * @return List<String> List of role IDs; returns empty list if user does not exist or has no roles
      */
     fun getUserRoleIds(userId: String): List<String>
 
     /**
-     * 检查用户是否拥有指定角色
+     * Check whether the user owns the specified role
      *
-     * @param userId 用户ID
-     * @param roleId 角色ID
-     * @return true表示用户拥有该角色，false表示不拥有
+     * @param userId User ID
+     * @param roleId Role ID
+     * @return true if the user owns the role, false otherwise
      */
     fun hasRole(userId: String, roleId: String): Boolean
 
     /**
-     * 检查用户是否拥有指定角色编码的角色
+     * Check whether the user owns the role with the specified role code
      *
-     * @param userId 用户ID
-     * @param tenantId 租户ID
-     * @param roleCode 角色编码
-     * @return true表示用户拥有该角色，false表示不拥有
+     * @param userId User ID
+     * @param tenantId Tenant ID
+     * @param roleCode Role code
+     * @return true if the user owns the role, false otherwise
      */
     fun hasRoleByCode(userId: String, tenantId: String, roleCode: String): Boolean
 
     /**
-     * 根据用户ID获取该用户拥有的所有角色列表
+     * Get the list of all roles owned by the given user
      *
-     * @param userId 用户ID
-     * @return List<AuthRoleCacheEntry> 角色列表，如果用户不存在或没有角色则返回空列表
+     * @param userId User ID
+     * @return List<AuthRoleCacheEntry> List of roles; returns empty list if user does not exist or has no roles
      */
     fun getUserRoles(userId: String): List<AuthRoleCacheEntry>
 
     /**
-     * 根据角色编码获取用户列表
+     * Get user list by role code
      *
-     * @param tenantId 租户ID
-     * @param roleCode 角色编码
-     * @return 用户记录列表
+     * @param tenantId Tenant ID
+     * @param roleCode Role code
+     * @return List of user records
      * @author AI: Cursor
      * @since 1.0.0
      */
     fun getUsersByRoleCode(tenantId: String, roleCode: String): List<UserAccountCacheEntry>
 
     /**
-     * 检查用户是否有指定资源的访问权限
+     * Check whether the user has access permission to the specified resource
      *
-     * @param userId 用户ID
-     * @param resourceId 资源ID
-     * @return true表示用户有该资源的访问权限，false表示没有
+     * @param userId User ID
+     * @param resourceId Resource ID
+     * @return true if the user has access permission to the resource, false otherwise
      */
     fun isUserHasResource(userId: String, resourceId: String): Boolean
 
     /**
-     * 根据用户ID获取该用户拥有的所有资源ID列表
+     * Get the list of all resource IDs owned by the given user
      *
-     * @param userId 用户ID
-     * @return Set<String> 资源ID列表，如果用户不存在或没有资源则返回空集合
+     * @param userId User ID
+     * @return Set<String> List of resource IDs; returns empty set if user does not exist or has no resources
      */
     fun getUserResourceIds(userId: String): Set<String>
 
     /**
-     * 根据用户ID获取该用户有权限访问的资源缓存对象列表
-     * 查询流程：用户 → 角色 → 资源（三级关联）
+     * Get the list of resource cache objects the given user has permission to access.
+     * Query flow: user -> role -> resource (three-level association)
      *
-     * @param userId 用户ID
-     * @return List<SysResourceCacheEntry> 资源缓存对象列表，如果用户不存在或没有资源则返回空列表
+     * @param userId User ID
+     * @return List<SysResourceCacheEntry> List of resource cache objects; returns empty list if user does not exist or has no resources
      */
     fun getResources(userId: String): List<SysResourceCacheEntry>
 

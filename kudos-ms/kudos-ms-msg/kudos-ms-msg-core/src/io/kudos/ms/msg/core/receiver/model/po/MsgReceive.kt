@@ -6,7 +6,7 @@ import java.time.LocalDateTime
 
 
 /**
- * 消息接收数据库实体
+ * Message receive database entity.
  *
  * @author K
  * @author AI: Codex
@@ -16,22 +16,22 @@ interface MsgReceive : IDbEntity<String, MsgReceive> {
 
     companion object : DbEntityFactory<MsgReceive>()
 
-    /** 接收者ID */
+    /** Receiver ID */
     var receiverId: String
 
-    /** 发送ID */
+    /** Send ID */
     var sendId: String
 
-    /** 接收状态字典码 */
+    /** Receive status dictionary code */
     var receiveStatusDictCode: String
 
-    /** 创建时间 */
+    /** Create time */
     var createTime: LocalDateTime
 
-    /** 更新时间 */
+    /** Update time */
     var updateTime: LocalDateTime?
 
-    /** 租户ID */
+    /** Tenant ID */
     var tenantId: String
 
 

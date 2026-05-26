@@ -2,7 +2,7 @@ package io.kudos.base.lang.collections
 
 
 /**
- * 数组操作工具类
+ * Array operation utility class.
  *
  * @author K
  * @since 1.0.0
@@ -10,170 +10,170 @@ package io.kudos.base.lang.collections
 object ArrayKit {
 
     /**
-     * 检测字节数组是否为null或空
+     * Checks whether a byte array is null or empty.
      *
-     * @param array 字节数组
-     * @return true: 字节数组为null或空，反之为false
+     * @param array the byte array
+     * @return true if the byte array is null or empty, false otherwise
      * @author K
      * @since 1.0.0
      */
     fun isByteArrayEmpty(array: ByteArray?): Boolean = array == null || array.isEmpty()
 
     /**
-     * 检测字符数组是否为null或空
+     * Checks whether a char array is null or empty.
      *
-     * @param array 字符数组
-     * @return true: 字符数组为null或空，反之为false
+     * @param array the char array
+     * @return true if the char array is null or empty, false otherwise
      * @author K
      * @since 1.0.0
      */
     fun isCharArrayEmpty(array: CharArray?): Boolean = array == null || array.isEmpty()
 
     /**
-     * 检测Short数组是否为null或空
+     * Checks whether a Short array is null or empty.
      *
-     * @param array Short数组
-     * @return true: Short数组为null或空，反之为false
+     * @param array the Short array
+     * @return true if the Short array is null or empty, false otherwise
      * @author K
      * @since 1.0.0
      */
     fun isShortArrayEmpty(array: ShortArray?): Boolean = array == null || array.isEmpty()
 
     /**
-     * 检测Int数组是否为null或空
+     * Checks whether an Int array is null or empty.
      *
-     * @param array Int数组
-     * @return true: Int数组为null或空，反之为false
+     * @param array the Int array
+     * @return true if the Int array is null or empty, false otherwise
      * @author K
      * @since 1.0.0
      */
     fun isIntArrayEmpty(array: IntArray?): Boolean = array == null || array.isEmpty()
 
     /**
-     * 检测Long数组是否为null或空
+     * Checks whether a Long array is null or empty.
      *
-     * @param array Long数组
-     * @return true: Long数组为null或空，反之为false
+     * @param array the Long array
+     * @return true if the Long array is null or empty, false otherwise
      * @author K
      * @since 1.0.0
      */
     fun isLongArrayEmpty(array: LongArray?): Boolean = array == null || array.isEmpty()
 
     /**
-     * 检测Float数组是否为null或空
+     * Checks whether a Float array is null or empty.
      *
-     * @param array Float数组
-     * @return true: Float数组为null或空，反之为false
+     * @param array the Float array
+     * @return true if the Float array is null or empty, false otherwise
      * @author K
      * @since 1.0.0
      */
     fun isFloatArrayEmpty(array: FloatArray?): Boolean = array == null || array.isEmpty()
 
     /**
-     * 检测Double数组是否为null或空
+     * Checks whether a Double array is null or empty.
      *
-     * @param array Double数组
-     * @return true: Double数组为null或空，反之为false
+     * @param array the Double array
+     * @return true if the Double array is null or empty, false otherwise
      * @author K
      * @since 1.0.0
      */
     fun isDoubleArrayEmpty(array: DoubleArray?): Boolean = array == null || array.isEmpty()
 
     /**
-     * 检测布尔数组是否为null或空
+     * Checks whether a boolean array is null or empty.
      *
-     * @param array 布尔数组
-     * @return true: 布尔数组为null或空，反之为false
+     * @param array the boolean array
+     * @return true if the boolean array is null or empty, false otherwise
      * @author K
      * @since 1.0.0
      */
     fun isBooleanArrayEmpty(array: BooleanArray?): Boolean = array == null || array.isEmpty()
 
     /**
-     * 检测数组是否不为null且不为空
+     * Checks whether an array is both non-null and non-empty.
      *
-     * @param array 数组
-     * @return true: 数组不为null且不为空，反之为false
+     * @param array the array
+     * @return true if the array is non-null and non-empty, false otherwise
      * @author K
      * @since 1.0.0
      */
     fun isNotEmpty(array: Array<*>?): Boolean = !array.isNullOrEmpty()
 
     /**
-     * 检测字节数组是否不为null且不为空
+     * Checks whether a byte array is both non-null and non-empty.
      *
-     * @param array 字节数组
-     * @return true: 字节数组不为null且不为空，反之为false
+     * @param array the byte array
+     * @return true if the byte array is non-null and non-empty, false otherwise
      * @author K
      * @since 1.0.0
      */
     fun isByteArrayNotEmpty(array: ByteArray?): Boolean = !isByteArrayEmpty(array)
 
     /**
-     * 检测字符数组是否不为null且不为空
+     * Checks whether a char array is both non-null and non-empty.
      *
-     * @param array 字符数组
-     * @return true: 字符数组不为null且不为空，反之为false
+     * @param array the char array
+     * @return true if the char array is non-null and non-empty, false otherwise
      * @author K
      * @since 1.0.0
      */
     fun isCharArrayNotEmpty(array: CharArray?): Boolean = !isCharArrayEmpty(array)
 
     /**
-     * 检测Short数组是否不为null且不为空
+     * Checks whether a Short array is both non-null and non-empty.
      *
-     * @param array Short数组
-     * @return true: Short数组不为null且不为空，反之为false
+     * @param array the Short array
+     * @return true if the Short array is non-null and non-empty, false otherwise
      * @author K
      * @since 1.0.0
      */
     fun isShortArrayNotEmpty(array: ShortArray?): Boolean = !isShortArrayEmpty(array)
 
     /**
-     * 检测Int数组是否不为null且不为空
+     * Checks whether an Int array is both non-null and non-empty.
      *
-     * @param array Int数组
-     * @return true: Int数组不为null且不为空，反之为false
+     * @param array the Int array
+     * @return true if the Int array is non-null and non-empty, false otherwise
      * @author K
      * @since 1.0.0
      */
     fun isIntArrayNotEmpty(array: IntArray?): Boolean = !isIntArrayEmpty(array)
 
     /**
-     * 检测Long数组是否不为null且不为空
+     * Checks whether a Long array is both non-null and non-empty.
      *
-     * @param array Long数组
-     * @return true: Long数组不为null且不为空，反之为false
+     * @param array the Long array
+     * @return true if the Long array is non-null and non-empty, false otherwise
      * @author K
      * @since 1.0.0
      */
     fun isLongArrayNotEmpty(array: LongArray?): Boolean = !isLongArrayEmpty(array)
 
     /**
-     * 检测Float数组是否不为null且不为空
+     * Checks whether a Float array is both non-null and non-empty.
      *
-     * @param array Float数组
-     * @return true: Float数组不为null且不为空，反之为false
+     * @param array the Float array
+     * @return true if the Float array is non-null and non-empty, false otherwise
      * @author K
      * @since 1.0.0
      */
     fun isFloatArrayNotEmpty(array: FloatArray?): Boolean = !isFloatArrayEmpty(array)
 
     /**
-     * 检测Double数组是否不为null且不为空
+     * Checks whether a Double array is both non-null and non-empty.
      *
-     * @param array Double数组
-     * @return true: Double数组不为null且不为空，反之为false
+     * @param array the Double array
+     * @return true if the Double array is non-null and non-empty, false otherwise
      * @author K
      * @since 1.0.0
      */
     fun isDoubleArrayNotEmpty(array: DoubleArray?): Boolean = !isDoubleArrayEmpty(array)
 
     /**
-     * 检测布尔数组是否不为null且不为空
+     * Checks whether a boolean array is both non-null and non-empty.
      *
-     * @param array 布尔数组
-     * @return true: 布尔数组不为null且不为空，反之为false
+     * @param array the boolean array
+     * @return true if the boolean array is non-null and non-empty, false otherwise
      * @author K
      * @since 1.0.0
      */

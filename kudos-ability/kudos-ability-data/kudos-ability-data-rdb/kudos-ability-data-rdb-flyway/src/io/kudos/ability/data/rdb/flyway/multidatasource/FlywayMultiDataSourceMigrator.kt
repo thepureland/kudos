@@ -11,20 +11,24 @@ import java.io.File
 
 
 /**
- * Flyway 多数据源脚本升级器。
+ * Multi-data-source Flyway script upgrader.
  *
- * 约定 / 行为：
- * 1. SQL 脚本按"模块名 + 数据库类型"分目录存放在 classpath 下，路径形如
- *    `sql/<moduleName>/<dbType>/V1.0.1__xxx.sql`，其中 `<dbType>` 是
- *    `io.kudos.ability.data.rdb.jdbc.consts.RdbTypeEnum#name` 的小写
- * 2. SQL 脚本文件名遵循 Flyway 规范（V_x__xxx.sql / R__xxx.sql ...）
- * 3. 模块升级顺序由 `kudos.ability.flyway.datasource-config` 的声明顺序决定
- * 4. 启动时若发现某模块名在 classpath 多次出现（例如分布在不同 jar），会直接报错中断
- * 5. 任意一个模块迁移失败，剩余模块的升级被中断（由 [FlywayKit] 抛异常向上传播）
- * 6. 支持一次性升级多个不同类型的关系型数据库（dbType 由各模块对应数据源的元数据决定）
+ * Conventions / behavior:
+ * 1. SQL scripts are organized on the classpath by "module name + database type", e.g.
+ *    `sql/<moduleName>/<dbType>/V1.0.1__xxx.sql`, where `<dbType>` is the lowercase form of
+ *    `io.kudos.ability.data.rdb.jdbc.consts.RdbTypeEnum#name`.
+ * 2. SQL script filenames follow the Flyway convention (V_x__xxx.sql / R__xxx.sql ...).
+ * 3. Module upgrade order is determined by the declaration order of `kudos.ability.flyway.datasource-config`.
+ * 4. If at startup a module name is found on the classpath more than once (e.g. spread across
+ *    multiple jars), startup aborts with an error.
+ * 5. If any module's migration fails, the remaining modules' upgrades are interrupted (the
+ *    exception thrown by [FlywayKit] propagates).
+ * 6. Supports upgrading multiple relational databases of different types in one pass (dbType is
+ *    detected from each module's data source metadata).
  *
- * 耦合点：通过 [DsContextProcessor] 拿到具体数据源实例，因此目前**依赖 baomidou
- * dynamic-datasource starter** 提供的动态路由数据源。
+ * Coupling point: concrete data source instances are obtained via [DsContextProcessor], so this
+ * currently **depends on the dynamic-routing data source provided by the baomidou
+ * dynamic-datasource starter**.
  *
  * @author K
  * @author AI: Codex
@@ -44,8 +48,9 @@ open class FlywayMultiDataSourceMigrator {
     private val log = LogFactory.getLog(this::class)
 
     /**
-     * 主入口：扫描 classpath、与 properties 中声明的模块对比、按顺序逐模块升级。
-     * 任何模块失败都会向上抛出（不 swallow），从而打断 Spring 启动。
+     * Main entry point: scan the classpath, reconcile with the modules declared in properties,
+     * and upgrade modules one by one in order. Any module failure propagates (no swallow), so
+     * Spring startup is interrupted.
      */
     fun migrate() {
         val moduleNamesOnDisk = scanModuleNamesFromClasspath()
@@ -53,7 +58,7 @@ open class FlywayMultiDataSourceMigrator {
 
         val orphanModules = configuredModules - moduleNamesOnDisk
         if (orphanModules.isNotEmpty()) {
-            log.warn("以下 kudos.ability.flyway.datasource-config 中配置的模块，实际并不存在于 sql 目录下：$orphanModules")
+            log.warn("The following modules configured in kudos.ability.flyway.datasource-config do not actually exist under the sql directory: $orphanModules")
         }
 
         val toMigrate = configuredModules - orphanModules
@@ -66,11 +71,13 @@ open class FlywayMultiDataSourceMigrator {
     }
 
     /**
-     * 扫 classpath 上 `sql/` 直接子目录，对照配置过滤出"既在磁盘又在 properties 里"的模块名。
+     * Scan direct subdirectories of `sql/` on the classpath and filter to module names that are
+     * both on disk and in properties.
      *
-     * 重复检测语义：若同名模块在多个 classpath URL（不同 jar / 不同 source set）都出现一次，
-     * 会抛 [IllegalStateException]。Flyway 不支持同一 schema 历史表来自两套不同 source，
-     * 这里把它当致命错误，避免运行期出现混乱迁移。
+     * Duplicate-detection semantics: if a module of the same name appears under multiple classpath
+     * URLs (different jars / different source sets), an [IllegalStateException] is thrown. Flyway
+     * does not support a single schema history table sourced from two different origins, so this
+     * is treated as a fatal error to avoid confused migrations at runtime.
      */
     private fun scanModuleNamesFromClasspath(): Set<String> {
         val sqlRootPath = FlywayKit.SQL_ROOT_PATH
@@ -80,13 +87,13 @@ open class FlywayMultiDataSourceMigrator {
             val childFolders = listChildFolders(url, sqlRootPath)
             childFolders.forEach { moduleName ->
                 if (moduleNames.contains(moduleName)) {
-                    error("存在名字为【$moduleName】的多个模块！请检查 classpath 上是否有重复的 sql/$moduleName 目录")
+                    error("Multiple modules named [$moduleName] exist! Please check whether the classpath contains duplicate sql/$moduleName directories.")
                 }
                 val datasourceKey = flywayMultiDatasourceProperties.getDataSourceKey(moduleName)
                 if (!datasourceKey.isNullOrBlank()) {
                     moduleNames.add(moduleName)
                 } else {
-                    log.warn("未配置模块【$moduleName】的数据源！忽略之。模块位置：${url.path}/$moduleName")
+                    log.warn("No data source configured for module [$moduleName]! Ignored. Module location: ${url.path}/$moduleName")
                 }
             }
         }
@@ -94,7 +101,8 @@ open class FlywayMultiDataSourceMigrator {
     }
 
     /**
-     * 返回某个 classpath URL 下 [sqlRootPath] 直接子目录的名字列表；自动区分 jar / 文件系统两种协议。
+     * Return the names of the direct subdirectories of [sqlRootPath] under a given classpath URL;
+     * automatically handles both jar and filesystem protocols.
      */
     private fun listChildFolders(url: java.net.URL, sqlRootPath: String): List<String> {
         return if (url.protocol == "jar") {
@@ -106,18 +114,19 @@ open class FlywayMultiDataSourceMigrator {
     }
 
     /**
-     * 单模块升级。先检查数据源 key 在动态路由表里真的存在，再委托给 [FlywayKit]。
-     * 数据源不存在会抛出 [IllegalStateException]，由调用方决定中断/重试策略。
+     * Single-module upgrade. First verifies that the data source key really exists in the dynamic
+     * routing table, then delegates to [FlywayKit]. If the data source does not exist an
+     * [IllegalStateException] is thrown; the caller decides whether to abort/retry.
      */
     internal fun migrateByModule(moduleName: String, datasourceKey: String) {
         if (!dsContextProcessor.haveDataSource(datasourceKey)) {
-            val errMsg = "模块【$moduleName】配置的数据源【$datasourceKey】不存在！后续所有数据库更新中断！"
+            val errMsg = "The data source [$datasourceKey] configured for module [$moduleName] does not exist! All subsequent database updates are aborted!"
             log.error(errMsg)
             error(errMsg)
         }
 
         val dataSource = checkNotNull(dsContextProcessor.getDataSource(datasourceKey)) {
-            "数据源【$datasourceKey】解析为 null"
+            "Data source [$datasourceKey] resolved to null"
         }
         FlywayKit.migrate(moduleName, dataSource, flywayProperties)
     }

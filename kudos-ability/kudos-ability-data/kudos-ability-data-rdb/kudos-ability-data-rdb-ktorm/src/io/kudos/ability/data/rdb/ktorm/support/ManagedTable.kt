@@ -5,40 +5,40 @@ import org.ktorm.schema.datetime
 import org.ktorm.schema.varchar
 
 /**
- * 带有管理字段的数据库实体（主键类型为字符串）
+ * Database entity with management fields (primary key type is string).
  *
- * @param E 实体类型
+ * @param E entity type
  * @author K
  * @author AI: Codex
  * @since 1.0.0
  */
 open class ManagedTable<E : IManagedDbEntity<String, E>>(tableName: String): StringIdTable<E>(tableName) {
 
-    /** 记录创建时间 */
+    /** Record creation time */
     val createTime = datetime("create_time").bindTo { it.createTime }
 
-    /** 记录创建者id */
+    /** ID of the record creator */
     val createUserId = varchar("create_user_id").bindTo { it.createUserId }
 
-    /** 记录创建者名称 */
+    /** Name of the record creator */
     val createUserName = varchar("create_user_name").bindTo { it.createUserName }
 
-    /** 记录更新时间 */
+    /** Record update time */
     val updateTime = datetime("update_time").bindTo { it.updateTime }
 
-    /** 记录更新者id */
+    /** ID of the last updater */
     val updateUserId = varchar("update_user_id").bindTo { it.updateUserId }
 
-    /** 记录更新者名称 */
+    /** Name of the last updater */
     val updateUserName = varchar("update_user_name").bindTo { it.updateUserName }
 
-    /** 是否启用 */
+    /** Whether enabled */
     val active = boolean("active").bindTo { it.active }
 
-    /** 是否内置 */
+    /** Whether built-in */
     val builtIn = boolean("built_in").bindTo { it.builtIn }
 
-    /** 备注 */
+    /** Remark */
     val remark = varchar("remark").bindTo { it.remark }
 
 }

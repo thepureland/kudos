@@ -2,7 +2,7 @@ package io.kudos.ability.distributed.stream.kafka.main
 
 
 /**
- * kafka测试服务接口
+ * Kafka test service interface.
  *
  * @author shane
  * @author K

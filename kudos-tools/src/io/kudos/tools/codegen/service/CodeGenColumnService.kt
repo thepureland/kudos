@@ -8,7 +8,7 @@ import io.kudos.tools.codegen.model.vo.ColumnInfo
 
 
 /**
- * 生成的列信息服务
+ * Service for generated column information.
  *
  * @author K
  * @since 1.0.0
@@ -40,18 +40,20 @@ object CodeGenColumnService {
     }
 
     /**
-     * 给新建列设默认开关：详情/缓存默认开；查询/列表/编辑按 SKIP_* 白名单"反向选择"开关。
+     * Apply default flags to a newly added column: detail/cache default on; search/list/edit are toggled
+     * via "reverse selection" against the SKIP_* allowlists.
      *
-     * 之所以走"白名单"模式（默认开 + 列在 skip 集合就关）是因为多数业务列都希望出现在查询/列表/编辑上，
-     * 仅审计字段（create_*, update_*）和不可改字段（id, built_in）应该排除。
+     * The "allowlist" approach (default on + off when the column is in the skip set) is used because most
+     * business columns are expected to appear in search/list/edit; only audit fields (create_*, update_*)
+     * and immutable fields (id, built_in) should be excluded.
      *
-     * @param it 列信息（in-place 修改其 setter）
-     * @throws IllegalArgumentException 列名为空时
+     * @param it column info (its setters are mutated in place)
+     * @throws IllegalArgumentException when the column name is null
      * @author K
      * @since 1.0.0
      */
     private fun applyDefaults(it: ColumnInfo) {
-        // 默认都为详情项 / 缓存项
+        // default to detail item / cache item
         it.setDetailItem(true)
         it.setCacheItem(true)
         val columnName = requireNotNull(it.getName()) { "column name is null" }.lowercase()

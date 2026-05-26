@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 /**
- * openFeign调用的微服务的Controller
+ * Microservice controller invoked via OpenFeign.
  *
  * @author K
  * @since 1.0.0
@@ -29,7 +29,7 @@ class MockMsController {
 
     @GetMapping("/exception")
     fun exception() {
-        throw RuntimeException("为了测试抛出的异常，可以忽略.")
+        throw RuntimeException("Exception thrown for testing purposes; can be ignored.")
     }
 
 }

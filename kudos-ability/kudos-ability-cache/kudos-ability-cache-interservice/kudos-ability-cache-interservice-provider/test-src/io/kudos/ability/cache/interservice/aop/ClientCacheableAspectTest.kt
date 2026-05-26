@@ -10,7 +10,7 @@ import kotlin.test.assertSame
 import kotlin.test.assertFailsWith
 
 /**
- * [ClientCacheableAspect] 异常传播契约测试。
+ * Exception-propagation contract test for [ClientCacheableAspect].
  *
  * @author K
  * @author AI: Codex
@@ -67,7 +67,7 @@ internal class ClientCacheableAspectTest {
     }
 
     /**
-     * 切面目标测试 Controller。
+     * Test target Controller for the aspect.
      *
      * @author K
      * @author AI: Codex

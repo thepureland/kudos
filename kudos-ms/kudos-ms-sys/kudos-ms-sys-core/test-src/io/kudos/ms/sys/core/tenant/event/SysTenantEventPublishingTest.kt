@@ -12,14 +12,15 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * 验证 SysTenantService 在 CRUD 完成后正确发布领域事件。
+ * Verifies that SysTenantService correctly publishes domain events after CRUD operations.
  *
- * 与 access rule 域的 `SysAccessRuleEventPublishingTest` 同一套路：
- * `SqlTestBase` 在测试方法事务结束时自动回滚，所以 `@TransactionalEventListener(AFTER_COMMIT)` 不会触发；
- * 这里改用普通 `@EventListener` 捕获 bean，验证「服务确实发布了事件」。
+ * Same pattern as `SysAccessRuleEventPublishingTest` in the access rule domain:
+ * `SqlTestBase` rolls back the transaction at the end of each test method, so
+ * `@TransactionalEventListener(AFTER_COMMIT)` will not fire; here a plain
+ * `@EventListener` capture bean is used to verify that the service actually publishes the events.
  *
- * Listener 内部对事件 → 缓存写入的转换由 [TenantByIdCacheTest][io.kudos.ms.sys.core.tenant.cache.TenantByIdCacheTest]
- * 等单元测试直接验证。
+ * The listener's event-to-cache write conversion is verified directly by unit tests such as
+ * [TenantByIdCacheTest][io.kudos.ms.sys.core.tenant.cache.TenantByIdCacheTest].
  *
  * @author K
  * @author AI: Cursor
@@ -41,22 +42,22 @@ class SysTenantEventPublishingTest : RdbAndRedisCacheTestBase() {
         captor.clear()
         val id = "20000000-0000-0000-0000-000000006144"
         assertTrue(sysTenantService.updateActive(id, true))
-        val event = assertNotNull(captor.lastOf<SysTenantUpdated>(), "应发布 SysTenantUpdated")
+        val event = assertNotNull(captor.lastOf<SysTenantUpdated>(), "should publish SysTenantUpdated")
         assertEquals(id, event.id)
     }
 
     @Test
     fun `deleteById publishes SysTenantDeleted when row exists`() {
         captor.clear()
-        // 使用一个测试数据 SQL 已存在的租户 id
+        // Use a tenant id that exists in the test data SQL
         val id = "20000000-0000-0000-0000-000000006144"
         assertTrue(sysTenantService.deleteById(id))
-        val event = assertNotNull(captor.lastOf<SysTenantDeleted>(), "应发布 SysTenantDeleted")
+        val event = assertNotNull(captor.lastOf<SysTenantDeleted>(), "should publish SysTenantDeleted")
         assertEquals(id, event.id)
     }
 }
 
-/** 测试期间捕获租户领域事件的辅助 bean。 */
+/** Helper bean that captures tenant domain events during tests. */
 @Component
 open class TenantEventCaptor {
     val raw: MutableList<Any> = mutableListOf()

@@ -5,44 +5,44 @@ import io.kudos.ms.msg.common.template.vo.response.MsgTemplateRow
 
 
 /**
- * 消息模板列表查询条件请求VO
+ * Message template list query criteria request VO.
  *
  * @author K
  * @since 1.0.0
  */
 data class MsgTemplateQuery (
 
-    /** 发送类型字典码 */
+    /** Send type dictionary code */
     val sendTypeDictCode: String? = null,
 
-    /** 事件类型字典码 */
+    /** Event type dictionary code */
     val eventTypeDictCode: String? = null,
 
-    /** 消息类型字典码 */
+    /** Message type dictionary code */
     val msgTypeDictCode: String? = null,
 
-    /** 模板分组编码 */
+    /** Template group code */
     val receiverGroupCode: String? = null,
 
-    /** 国家-语言字典码 */
+    /** Country-language dictionary code */
     val localeDictCode: String? = null,
 
-    /** 模板标题 */
+    /** Template title */
     val title: String? = null,
 
-    /** 模板内容 */
+    /** Template content */
     val content: String? = null,
 
-    /** 是否启用默认值 */
+    /** Whether default values are enabled */
     val defaultActive: Boolean? = null,
 
-    /** 模板标题默认值 */
+    /** Default template title */
     val defaultTitle: String? = null,
 
-    /** 模板内容默认值 */
+    /** Default template content */
     val defaultContent: String? = null,
 
-    /** 租户ID */
+    /** Tenant ID */
     val tenantId: String? = null,
 
 ) : ListSearchPayload() {

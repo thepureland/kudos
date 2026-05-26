@@ -8,7 +8,7 @@ import jakarta.annotation.Resource
 /**
  * junit test for UserLoginRememberMeService
  *
- * 测试数据来源：`UserLoginRememberMeServiceTest.sql`
+ * Test data source: `UserLoginRememberMeServiceTest.sql`
  *
  * @author K
  * @author AI: Codex

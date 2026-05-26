@@ -1,59 +1,59 @@
 package io.kudos.base.bean.validation.support
 
 /**
- * 数列类型
+ * Series type.
  *
  * @author K
  * @since 1.0.0
  */
 enum class SeriesTypeEnum {
     /**
-     * 递增且互不相等
+     * Strictly increasing and all distinct.
      */
     INC_DIFF,
 
     /**
-     * 递减且互不相等
+     * Strictly decreasing and all distinct.
      */
     DESC_DIFF,
 
     /**
-     * 先增后减且互不相等
+     * Increasing then decreasing, all distinct.
      */
     INC_DIFF_DESC_DIFF,
 
     /**
-     * 先减后增且互不相等
+     * Decreasing then increasing, all distinct.
      */
     DESC_DIFF_INC_DIFF,
 
     /**
-     * 互不相等
+     * All distinct.
      */
     DIFF,
 
     /**
-     * 递增或相等
+     * Non-strictly increasing (allows equal).
      */
     INC_EQ,
 
     /**
-     * 递减或相等
+     * Non-strictly decreasing (allows equal).
      */
     DESC_EQ,
 
     /**
-     * 先递增或相等，再递减或相等
+     * Non-strictly increasing then non-strictly decreasing.
      */
     INC_EQ_DESC_EQ,
 
     /**
-     * 先递减或相等，再递增或相等
+     * Non-strictly decreasing then non-strictly increasing.
      */
     DESC_EQ_INC_EQ,
 
     /**
-     * 全等
+     * All equal.
      */
     EQ
 }

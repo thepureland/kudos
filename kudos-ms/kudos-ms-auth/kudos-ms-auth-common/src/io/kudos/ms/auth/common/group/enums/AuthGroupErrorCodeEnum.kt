@@ -3,27 +3,27 @@ package io.kudos.ms.auth.common.group.enums
 import io.kudos.base.enums.ienums.IErrorCodeEnum
 
 /**
- * 组错误码
+ * Group error codes.
  *
  * @author K
  * @author AI: Codex
  * @since 1.0.0
  */
 enum class AuthGroupErrorCodeEnum(
-    /** 错误码 */
+    /** Error code. */
     override val code: String,
-    /** 默认展示文本 */
+    /** Default display text. */
     override val defaultDisplayText: String,
 ) : IErrorCodeEnum {
 
-    /** 未定义错误 */
-    UNSPECIFIED("UNSPECIFIED", "未定义错误"),
+    /** Unspecified error. */
+    UNSPECIFIED("UNSPECIFIED", "Unspecified error"),
 
-    /** 按主键或 (tenant_id, code) 维度查找用户组失败 */
-    GROUP_NOT_FOUND("GROUP_NOT_FOUND", "用户组不存在"),
+    /** Lookup of the user group by primary key or (tenant_id, code) failed. */
+    GROUP_NOT_FOUND("GROUP_NOT_FOUND", "User group does not exist"),
 
-    /** (tenant_id, code) 已被占用 */
-    GROUP_CODE_ALREADY_EXISTS("GROUP_CODE_ALREADY_EXISTS", "该租户下用户组编码已存在");
+    /** (tenant_id, code) is already taken. */
+    GROUP_CODE_ALREADY_EXISTS("GROUP_CODE_ALREADY_EXISTS", "Group code already exists under this tenant");
 
     override val i18nKeyPrefix: String
         get() = "auth.error-msg.group"

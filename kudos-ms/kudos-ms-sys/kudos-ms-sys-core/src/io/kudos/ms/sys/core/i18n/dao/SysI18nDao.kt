@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository
 
 
 /**
- * 国际化数据访问对象
+ * Data access object for i18n entries.
  *
  * @author K
  * @author AI: Codex
@@ -21,14 +21,14 @@ open class SysI18nDao : BaseCrudDao<String, SysI18n, SysI18ns>() {
 
 
     /**
-     * 根据语言、类型、命名空间、原子服务编码获取对应的启用的国际化内容（for cache）。
-     * namespace 传空时不过滤 namespace，仅按 locale、atomicServiceCode、i18nTypeDictCode 查询。
+     * Fetch enabled i18n entries by locale, type, namespace, and atomic service code (for cache).
+     * When namespace is blank, it is not used as a filter; the query uses only locale, atomicServiceCode, and i18nTypeDictCode.
      *
-     * @param locale 语言-地区
-     * @param atomicServiceCode 原子服务编码
-     * @param i18nTypeDictCode 国际化类型字典代码
-     * @param namespace 命名空间，缺省为null，为null不参与查询
-     * @return List<SysI18nCacheEntry>，找不到返回空列表
+     * @param locale language-region
+     * @param atomicServiceCode atomic service code
+     * @param i18nTypeDictCode i18n type dictionary code
+     * @param namespace namespace, defaults to null; when null it is not used in the query
+     * @return List<SysI18nCacheEntry>, empty list when nothing is found
      */
     open fun fetchActiveI18nsForCache(
         locale: String,
@@ -49,7 +49,7 @@ open class SysI18nDao : BaseCrudDao<String, SysI18n, SysI18ns>() {
     }
 
     /**
-     * 获取所有启用的国际化内容（for cache）
+     * Fetch all enabled i18n entries (for cache).
      *
      * @return List<SysI18nCacheEntry>
      */

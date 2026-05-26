@@ -7,7 +7,7 @@ import org.ktorm.schema.varchar
 
 
 /**
- * 消息实例数据库表-实体关联对象
+ * Message instance database table-entity binding object.
  *
  * @author K
  * @author AI: Codex
@@ -15,34 +15,34 @@ import org.ktorm.schema.varchar
  */
 object MsgInstances : StringIdTable<MsgInstance>("msg_instance") {
 
-    /** 国家-语言字典码 */
+    /** Country-language dictionary code */
     var localeDictCode = varchar("locale_dict_code").bindTo { it.localeDictCode }
 
-    /** 标题 */
+    /** Title */
     var title = varchar("title").bindTo { it.title }
 
-    /** 通知内容 */
+    /** Notification content */
     var content = varchar("content").bindTo { it.content }
 
-    /** 消息模板id */
+    /** Message template id */
     var templateId = varchar("template_id").bindTo { it.templateId }
 
-    /** 发送类型字典码 */
+    /** Send type dictionary code */
     var sendTypeDictCode = varchar("send_type_dict_code").bindTo { it.sendTypeDictCode }
 
-    /** 事件类型字典码 */
+    /** Event type dictionary code */
     var eventTypeDictCode = varchar("event_type_dict_code").bindTo { it.eventTypeDictCode }
 
-    /** 消息类型字典码 */
+    /** Message type dictionary code */
     var msgTypeDictCode = varchar("msg_type_dict_code").bindTo { it.msgTypeDictCode }
 
-    /** 有效期起 */
+    /** Valid period start */
     var validTimeStart = datetime("valid_time_start").bindTo { it.validTimeStart }
 
-    /** 有效期止 */
+    /** Valid period end */
     var validTimeEnd = datetime("valid_time_end").bindTo { it.validTimeEnd }
 
-    /** 租户ID */
+    /** Tenant ID */
     var tenantId = varchar("tenant_id").bindTo { it.tenantId }
 
 

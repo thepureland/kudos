@@ -5,32 +5,32 @@ import java.io.Serializable
 
 
 /**
- * 用户联系方式缓存项
+ * User contact way cache entry
  *
  * @author K
  * @since 1.0.0
  */
 data class UserContactWayCacheEntry (
 
-    /** 主键 */
+    /** Primary key */
     override val id: String,
 
-    /** 用户ID */
+    /** User ID */
     val userId: String?,
 
-    /** 联系方式字典码 */
+    /** Contact way dict code */
     val contactWayDictCode: String?,
 
-    /** 联系方式值 */
+    /** Contact way value */
     val contactWayValue: String?,
 
-    /** 联系方式状态字典码 */
+    /** Contact way status dict code */
     val contactWayStatusDictCode: String?,
 
-    /** 优先级（DB 列 `INT2`，但 Ktorm 绑定与 PO 均使用 Int；这里跟随 PO 类型，避免 Integer→Short 反射构造时的 ClassCastException） */
+    /** Priority (DB column `INT2`, but Ktorm binding and PO both use Int; follows PO type to avoid ClassCastException during Integer->Short reflection construction) */
     val priority: Int?,
 
-    /** 备注 */
+    /** Remark */
     val remark: String?,
 
 ) : IIdEntity<String>, Serializable {

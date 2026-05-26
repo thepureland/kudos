@@ -5,10 +5,12 @@ import io.kudos.base.logger.LogFactory
 import java.io.InputStream
 
 /**
- * 文件下载服务抽象基类。
+ * Abstract base class for file download services.
  *
- * 把"对外暴露的 [download]/[downloadStream] 接口"与"具体存储实现 ([readFileToByte]/[readFileToStream])"分离，
- * 让 Local / Minio / 云存储等子类只用关注怎么从底层读文件，异常日志与上抛模式由本类统一处理。
+ * Separates the "externally exposed [download]/[downloadStream] interfaces" from the "concrete storage
+ * implementations ([readFileToByte]/[readFileToStream])", so that subclasses such as Local / Minio / cloud
+ * storage only need to focus on how to read files from the underlying storage. Exception logging and
+ * rethrow patterns are handled uniformly by this class.
  *
  * @author K
  * @author AI: Codex
@@ -17,10 +19,10 @@ import java.io.InputStream
 abstract class AbstractDownLoadService : IDownLoadService {
 
     /**
-     * 下载文件为字节数组。异常先记日志再上抛，避免静默失败。
+     * Downloads a file as a byte array. Logs the exception before rethrowing to avoid silent failures.
      *
-     * @param downloadFileModel 下载请求模型
-     * @return 文件字节，可能为 null（具体实现决定）
+     * @param downloadFileModel download request model
+     * @return file bytes, may be null (decided by the concrete implementation)
      * @author K
      * @since 1.0.0
      */
@@ -35,10 +37,11 @@ abstract class AbstractDownLoadService : IDownLoadService {
     }
 
     /**
-     * 下载文件为流。大文件场景应优先用本方法避免把整个文件载入内存。
+     * Downloads a file as a stream. For large files, this method should be preferred to avoid loading the
+     * entire file into memory.
      *
-     * @param downloadFileModel 下载请求模型
-     * @return 文件输入流，可能为 null（具体实现决定）
+     * @param downloadFileModel download request model
+     * @return file input stream, may be null (decided by the concrete implementation)
      * @author K
      * @since 1.0.0
      */
@@ -53,22 +56,23 @@ abstract class AbstractDownLoadService : IDownLoadService {
     }
 
     /**
-     * 子类实现：把存储中的文件读到内存并以字节数组返回。
+     * Subclass implementation: reads a file from storage into memory and returns it as a byte array.
      *
-     * @param downloadFileModel 下载请求模型
-     * @return 文件字节，文件不存在时返回 null
+     * @param downloadFileModel download request model
+     * @return file bytes, returns null when the file does not exist
      */
     protected abstract fun readFileToByte(downloadFileModel: DownloadFileModel<*>): ByteArray?
 
     /**
-     * 子类实现：把存储中的文件以输入流返回。调用方负责关闭流。
+     * Subclass implementation: returns a file from storage as an input stream. The caller is responsible
+     * for closing the stream.
      *
-     * @param downloadFileModel 下载请求模型
-     * @return 输入流，文件不存在时返回 null
+     * @param downloadFileModel download request model
+     * @return input stream, returns null when the file does not exist
      */
     protected abstract fun readFileToStream(downloadFileModel: DownloadFileModel<*>): InputStream?
 
-    /** 日志器，子类异常统一记此处 */
+    /** Logger; subclass exceptions are uniformly logged here. */
     private val log = LogFactory.getLog(this::class)
 
 }

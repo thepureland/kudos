@@ -5,7 +5,7 @@ import java.nio.file.Files
 import kotlin.test.*
 
 /**
- * FileSystemResource测试用例
+ * FileSystemResource test cases
  *
  * @author AI: cursor
  * @author K

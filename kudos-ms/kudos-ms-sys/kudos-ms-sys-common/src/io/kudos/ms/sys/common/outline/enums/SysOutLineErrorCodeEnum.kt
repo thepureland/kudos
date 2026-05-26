@@ -3,26 +3,26 @@ package io.kudos.ms.sys.common.outline.enums
 import io.kudos.base.enums.ienums.IErrorCodeEnum
 
 /**
- * 出网白名单错误码
+ * Outbound whitelist error codes.
  *
  * @author K
  * @since 1.0.0
  */
 enum class SysOutLineErrorCodeEnum(
-    /** 错误码 */
+    /** Error code */
     override val code: String,
-    /** 默认展示文本 */
+    /** Default display text */
     override val defaultDisplayText: String,
 ) : IErrorCodeEnum {
 
-    /** 未定义错误 */
-    UNSPECIFIED("UNSPECIFIED", "未定义错误"),
+    /** Undefined error */
+    UNSPECIFIED("UNSPECIFIED", "Undefined error"),
 
-    /** 按主键查找失败 */
-    OUT_LINE_NOT_FOUND("OUT_LINE_NOT_FOUND", "出网白名单不存在"),
+    /** Lookup by primary key failed */
+    OUT_LINE_NOT_FOUND("OUT_LINE_NOT_FOUND", "Outbound whitelist entry does not exist"),
 
-    /** 同 (system_code, tenant_id, host, port, protocol) 已存在 */
-    OUT_LINE_ALREADY_EXISTS("OUT_LINE_ALREADY_EXISTS", "该出网白名单已存在");
+    /** Same (system_code, tenant_id, host, port, protocol) already exists */
+    OUT_LINE_ALREADY_EXISTS("OUT_LINE_ALREADY_EXISTS", "Outbound whitelist entry already exists");
 
     override val i18nKeyPrefix: String
         get() = "sys.error-msg.outline"

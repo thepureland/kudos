@@ -9,17 +9,22 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
 /**
- * 锁定 [AccessTokenMinioClientBuilder] 里那个 Jackson 3 mapper 配置对 [io.minio.credentials.Jwt]
- * 反序列化的行为。
+ * Locks in the deserialization behavior of the Jackson 3 mapper configuration in
+ * [AccessTokenMinioClientBuilder] against [io.minio.credentials.Jwt].
  *
- * 背景：Minio 的 `Jwt` 是一个 immutable 类（两个 private final 字段、无无参构造），Jackson
- * 默认按 getter/setter 找不到入口。OIDC token 解析能跑通的关键就是 mapper 上的
- * `changeDefaultVisibility { withFieldVisibility(ANY) }` —— 直接写私有字段。
+ * Background: Minio's `Jwt` is an immutable class (two private final fields, no
+ * no-arg constructor); Jackson finds no entry point via getters/setters by default.
+ * The key to making OIDC token parsing work is the
+ * `changeDefaultVisibility { withFieldVisibility(ANY) }` on the mapper — it writes
+ * the private fields directly.
  *
- * 把 Jackson 2 `ObjectMapper().setVisibility(...)` 改成 Jackson 3 `JsonMapper.builder().changeDefaultVisibility(...)`
- * 之后这个路径理论上等价，但 Jackson 3 几乎重写了 builder/visibility API，等价性不能"看着像"就放过。
- * 任何回归（builder API 改名 / visibility 解析语义变化 / FAIL_ON_UNKNOWN 默认变化）都会让这条
- * STS 集成路径在线上启动后才挂。本测试在编译期 + 单测期就把它锁住。
+ * After switching from Jackson 2 `ObjectMapper().setVisibility(...)` to Jackson 3
+ * `JsonMapper.builder().changeDefaultVisibility(...)`, the path is in theory
+ * equivalent, but Jackson 3 has nearly rewritten the builder/visibility API, so
+ * equivalence cannot be taken at face value. Any regression (builder API renamed,
+ * visibility-resolution semantics changed, FAIL_ON_UNKNOWN default changed) would
+ * cause this STS integration path to fail only after production startup. This test
+ * locks it down at compile time and unit-test time.
  *
  * @author K
  * @author AI: Codex
@@ -27,7 +32,7 @@ import kotlin.test.assertNotNull
  */
 internal class AccessTokenJwtMapperTest {
 
-    /** 与 AccessTokenMinioClientBuilder.accessToken() 内部完全相同的 mapper 构造。 */
+    /** The exact same mapper construction used inside AccessTokenMinioClientBuilder.accessToken(). */
     private val mapper = JsonMapper.builder()
         .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
         .changeDefaultVisibility { it.withFieldVisibility(JsonAutoDetect.Visibility.ANY) }
@@ -35,8 +40,8 @@ internal class AccessTokenJwtMapperTest {
 
     @Test
     fun deserializesMinioJwtFromStandardOAuthResponse() {
-        // Jwt 的两个字段通过 @ConstructorProperties + @JsonProperty 绑定到 OAuth2 标准键名
-        // access_token / expires_in（参见 io.minio.credentials.Jwt 字节码）。
+        // Jwt's two fields are bound via @ConstructorProperties + @JsonProperty to the
+        // OAuth2 standard keys access_token / expires_in (see the io.minio.credentials.Jwt bytecode).
         val json = """{"access_token":"eyJhbGciOiJIUzI1NiJ9.payload.sig","expires_in":3600}"""
 
         val jwt = mapper.readValue(json, Jwt::class.java)
@@ -48,8 +53,8 @@ internal class AccessTokenJwtMapperTest {
 
     @Test
     fun ignoresUnknownPropertiesFromTokenServer() {
-        // 真实 OIDC token server 顺带回 refresh_token / scope / token_type 等额外字段。
-        // mapper 必须放过它们，否则 Jwt 反序列化会因为 FAIL_ON_UNKNOWN_PROPERTIES 抛异常。
+        // Real OIDC token servers also return extra fields like refresh_token / scope / token_type.
+        // The mapper must let them through, otherwise Jwt deserialization would throw because of FAIL_ON_UNKNOWN_PROPERTIES.
         val json = """
             {
               "access_token": "abc",

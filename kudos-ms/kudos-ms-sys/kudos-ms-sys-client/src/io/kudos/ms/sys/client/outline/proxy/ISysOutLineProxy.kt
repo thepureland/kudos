@@ -6,7 +6,7 @@ import org.springframework.cloud.openfeign.FeignClient
 
 
 /**
- * 出网白名单客户端代理接口
+ * Outbound network whitelist client proxy interface.
  *
  * @author K
  * @since 1.0.0

@@ -24,15 +24,18 @@ import org.springframework.web.bind.annotation.RestController
 
 
 /**
- * 登录通行证 公开 HTTP 控制器（终端用户访问）。
+ * Passport public HTTP controller (accessed by end users).
  *
- * **会话模型**：登录成功时 `SessionUserPrincipal` 被写入 `HttpSession[SESSION_KEY_USER]`，
- * `UserContextWebFilter` 在后续请求里把它灌进 `KudosContext.user`。`CurrentUserKit` 是
- * 在控制器/服务里取当前用户的标准入口。
+ * **Session model**: on successful login a `SessionUserPrincipal` is written to
+ * `HttpSession[SESSION_KEY_USER]`, and `UserContextWebFilter` injects it into
+ * `KudosContext.user` on subsequent requests. `CurrentUserKit` is the standard
+ * entry point for reading the current user from controllers/services.
  *
- * **`@RequestParam userId` 的接口仍保留**（verifyPassword / changePassword / logout / 等）：
- * 既适配跨服务 RPC 调用（没有 session 上下文），也作为没启会话方案时的兜底；网关层应该保证
- * 这些接口在公开侧带 userId 时不能跨用户操作。
+ * **`@RequestParam userId` endpoints are still retained** (verifyPassword /
+ * changePassword / logout / etc.): they support cross-service RPC calls (which
+ * have no session context) and act as a fallback when no session scheme is
+ * active. The gateway layer must ensure these public endpoints, when invoked
+ * with a `userId`, cannot operate across users.
  *
  * @author K
  * @since 1.0.0
@@ -48,7 +51,7 @@ class PassportPublicController(
         val res = passportService.login(req)
         if (res.status == PassportLoginStatusEnum.SUCCESS) {
             val info = res.userInfo ?: return res
-            // 写入 HttpSession，后续请求由 UserContextWebFilter 读出并灌入 KudosContext.user
+            // Write into HttpSession; UserContextWebFilter reads it back into KudosContext.user on subsequent requests
             val principal = SessionUserPrincipal(
                 id = info.id,
                 tenantId = info.tenantId,
@@ -60,9 +63,11 @@ class PassportPublicController(
     }
 
     /**
-     * 登出：写最后登出时间作审计；同时 invalidate session 让 [UserContextWebFilter] 下次请求拿不到用户。
+     * Logout: writes the last-logout time for audit, and invalidates the session so
+     * [UserContextWebFilter] can no longer resolve the user on subsequent requests.
      *
-     * 如果 [userId] 没传，则尝试从当前会话取——这样前端可以"我登出我自己"不需要再传 id。
+     * If [userId] is not provided, it is resolved from the current session, allowing
+     * the frontend to "log myself out" without re-supplying the id.
      */
     @PostMapping("/logout")
     fun logout(
@@ -71,18 +76,19 @@ class PassportPublicController(
     ): Boolean {
         val effectiveUserId = userId ?: CurrentUserKit.currentUserIdOrNull() ?: return false
         val ok = passportService.logout(effectiveUserId)
-        // session 不管 service 调用成败都干掉——既然客户端要登出
+        // Drop the session regardless of service-call outcome — the client wants to log out
         request.getSession(false)?.invalidate()
         return ok
     }
 
     /**
-     * 返回当前登录用户的简要信息；未登录返回 null。前端常用于 "刷新页面后我还登录着吗?" 的判断。
+     * Returns a brief summary of the currently logged-in user; returns null if not logged in.
+     * Commonly used by the frontend for "am I still logged in after a page refresh?" checks.
      */
     @GetMapping("/me")
     fun me(): UserInfoModel? {
         val p = CurrentUserKit.currentPrincipalOrNull() ?: return null
-        // 这里只返回 session 里有的 3 个字段；要完整 profile 用 sysUserApi 再拉一次
+        // Only the 3 fields available in the session are returned; for the full profile, fetch from sysUserApi
         return UserInfoModel(
             id = p.id,
             username = p.username,
@@ -96,31 +102,31 @@ class PassportPublicController(
         )
     }
 
-    /** 校验当前用户的登录密码（不消耗错误次数）。用于敏感操作前的二次身份确认。 */
+    /** Verify the current user's login password (does not consume the error counter). Used for re-authentication before sensitive operations. */
     @PostMapping("/verifyPassword")
     fun verifyPassword(@RequestBody @Valid req: VerifyPasswordRequest): Boolean =
         passportService.verifyPassword(req)
 
-    /** 校验当前用户的安全密码（不消耗错误次数）。 */
+    /** Verify the current user's security password (does not consume the error counter). */
     @PostMapping("/verifySecurityPassword")
     fun verifySecurityPassword(@RequestBody @Valid req: VerifyPasswordRequest): Boolean =
         passportService.verifySecurityPassword(req)
 
-    /** 用户本人修改登录密码：先校验旧密码。 */
+    /** User changes their own login password: verifies the old password first. */
     @PostMapping("/changePassword")
     fun changePassword(@RequestBody @Valid req: ChangePasswordRequest): ChangePasswordResultEnum =
         passportService.changePassword(req)
 
-    /** 用户本人修改安全密码。 */
+    /** User changes their own security password. */
     @PostMapping("/changeSecurityPassword")
     fun changeSecurityPassword(@RequestBody @Valid req: ChangePasswordRequest): ChangePasswordResultEnum =
         passportService.changeSecurityPassword(req)
 
     /**
-     * 把任意短文本（典型如 `otpauth://...`）渲染为 PNG 二维码。
+     * Renders any short text (typically `otpauth://...`) as a PNG QR code.
      *
-     * 一般搭配 [io.kudos.ms.user.common.account.vo.response.AuthKeySetup.otpauthUrl] 使用：
-     * 前端拿到 otpauth URL 后 GET 本接口、把响应当 `<img>` 显示即可。
+     * Usually paired with [io.kudos.ms.user.common.account.vo.response.AuthKeySetup.otpauthUrl]:
+     * the frontend obtains the otpauth URL, then GETs this endpoint and displays the response as an `<img>`.
      */
     @GetMapping("/qrCode", produces = [MediaType.IMAGE_PNG_VALUE])
     fun qrCode(

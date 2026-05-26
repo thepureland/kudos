@@ -6,11 +6,16 @@ import io.kudos.base.model.contract.entity.IIdEntity
 import kotlin.reflect.KClass
 
 /**
- * 基于 Hash 的“带 id 对象集合”缓存接口（同一抽象，本地/远程均由策略封装层委托）。
+ * Hash-based "id-keyed entity collection" cache interface (a single abstraction; local and remote variants
+ * are delegated to by the strategy wrapper layer).
  *
- * 术语：**主属性**即实体唯一标识（id），用于 getById/save/deleteById；**副属性**为除 id 外参与二级索引、列表查询与排序的属性（如 type、status、sortScore）。
- * [filterableProperties] 为等值筛选用 Set 索引；[sortableProperties] 为排序/范围用 ZSet 索引。例外：数值型的范围查询条件要放 sortableProperties。
- * 数据不必来自数据库表，只要是 [IIdEntity] 即可；支持按主属性存取、按副属性建索引并查询、条件分页排序、全量刷新。
+ * Terminology: **primary property** is the entity's unique id, used for getById/save/deleteById;
+ * **secondary properties** are non-id properties used for secondary indexes, list queries, and ordering
+ * (e.g. type, status, sortScore). [filterableProperties] are Set indexes for equality filtering;
+ * [sortableProperties] are ZSet indexes for ordering/range queries. Exception: numeric range-query
+ * conditions must go into sortableProperties.
+ * The data does not have to come from a database table — any [IIdEntity] will do; supports access by
+ * the primary property, indexing/querying by secondary properties, conditional pagination/ordering, and full refresh.
  *
  * @author K
  * @author AI: Cursor
@@ -21,16 +26,17 @@ interface IHashCache {
     fun <PK, E : IIdEntity<PK>> getById(cacheName: String, id: PK, entityClass: KClass<E>): E?
 
     /**
-     * 轻量级判断指定 id 的实体是否存在于 Hash 缓存（不反序列化 value）。
+     * Lightweight check for whether the given id exists in the hash cache (does not deserialize the value).
      *
-     * @param cacheName 缓存名称
-     * @param id        实体 id
-     * @return true：存在，false：不存在
+     * @param cacheName cache name
+     * @param id        entity id
+     * @return true: present; false: absent
      */
     fun existsById(cacheName: String, id: Any): Boolean
 
     /**
-     * 保存实体；[filterableProperties]/[sortableProperties] 为副属性名集合，用于构建 Set/ZSet 二级索引。数值型范围查询条件放 sortableProperties。
+     * Saves an entity; [filterableProperties]/[sortableProperties] are secondary-property name sets used to
+     * build Set/ZSet secondary indexes. Numeric range-query conditions go into sortableProperties.
      */
     fun <PK, E : IIdEntity<PK>> save(
         cacheName: String,
@@ -40,7 +46,8 @@ interface IHashCache {
     )
 
     /**
-     * 批量保存；[filterableProperties]/[sortableProperties] 为副属性名集合，用于构建 Set/ZSet 二级索引。数值型范围查询条件放 sortableProperties。
+     * Batch save; [filterableProperties]/[sortableProperties] are secondary-property name sets used to
+     * build Set/ZSet secondary indexes. Numeric range-query conditions go into sortableProperties.
      */
     fun <PK, E : IIdEntity<PK>> saveBatch(
         cacheName: String,
@@ -50,7 +57,8 @@ interface IHashCache {
     )
 
     /**
-     * 按主属性 id 删除；[filterableProperties]/[sortableProperties] 需与写入时一致，以便从副属性索引中移除。
+     * Deletes by primary id; [filterableProperties]/[sortableProperties] must match those used on write
+     * so that the entry can be removed from secondary indexes.
      */
     fun <PK, E : IIdEntity<PK>> deleteById(
         cacheName: String,
@@ -61,10 +69,11 @@ interface IHashCache {
     )
 
     /**
-     * 批量按 id 删除。默认实现为循环 [deleteById]；
-     * 混合实现（MixHashCache）会覆盖此方法以合并为一条 Pub/Sub 通知，避免 N+1 风暴。
-     * 底层存储实现（Caffeine / Redis）保留默认循环实现即可，它们不负责广播。
-     * [filterableProperties]/[sortableProperties] 同 [deleteById]。
+     * Batch delete by id. The default implementation loops over [deleteById];
+     * the mixed implementation (MixHashCache) overrides this to collapse into a single Pub/Sub notification,
+     * avoiding an N+1 storm.
+     * The underlying storage implementations (Caffeine / Redis) can keep the default loop — they are not responsible for broadcasting.
+     * [filterableProperties]/[sortableProperties] are the same as in [deleteById].
      */
     fun <PK, E : IIdEntity<PK>> deleteByIds(
         cacheName: String,
@@ -84,7 +93,7 @@ interface IHashCache {
 
     fun <PK, E : IIdEntity<PK>> listAll(cacheName: String, entityClass: KClass<E>): List<E>
 
-    /** 按副属性等值查询（Set 索引）：[property] 为副属性名，[value] 为属性值。 */
+    /** Equality query by secondary property (Set index): [property] is the secondary property name, [value] is the property value. */
     fun <PK, E : IIdEntity<PK>> listBySetIndex(
         cacheName: String,
         entityClass: KClass<E>,
@@ -111,7 +120,8 @@ interface IHashCache {
     ): List<E>
 
     /**
-     * 全量刷新；[filterableProperties]/[sortableProperties] 为副属性名集合，用于重建 Set/ZSet 索引。
+     * Full refresh; [filterableProperties]/[sortableProperties] are secondary-property name sets used to
+     * rebuild Set/ZSet indexes.
      */
     fun <PK, E : IIdEntity<PK>> refreshAll(
         cacheName: String,
@@ -121,7 +131,7 @@ interface IHashCache {
     )
 
     /**
-     * 清除该缓存的所有数据（主数据及二级索引）。
+     * Clears all data for the cache (primary data and secondary indexes).
      */
     fun clear(cacheName: String)
 }

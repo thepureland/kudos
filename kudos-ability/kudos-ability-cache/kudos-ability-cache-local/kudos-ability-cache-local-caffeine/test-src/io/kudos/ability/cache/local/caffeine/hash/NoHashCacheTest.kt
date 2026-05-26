@@ -13,8 +13,9 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNotSame
 
 /**
- * 不启用 Hash 缓存测试用例（仿照 [io.kudos.ability.cache.local.caffeine.keyvalue.NoCacheTest]）。
- * 缓存关闭时：MixHashCacheManager 未注入、getHashCache 抛异常、走 Hash 注解的方法每次执行且返回不同结果。
+ * Hash cache disabled test cases (mirrors [io.kudos.ability.cache.local.caffeine.keyvalue.NoCacheTest]).
+ * When cache is off: MixHashCacheManager is not injected, getHashCache throws, and Hash-annotated methods
+ * execute every time and return different results.
  *
  * @author K
  * @author AI: Codex

@@ -7,57 +7,59 @@ import java.io.Serial
 import java.io.Serializable
 
 /**
- * 文件上传的 model 对象。
+ * Model object for file uploads.
  *
- * 最终落盘路径形态：`{系统规划的路径}/{bucket}/{tenantId}/{catePath?}/{yyyy}/{mm}/{dd}/{uuid}.{fileSuffix}`
- * 实际目录由 [io.kudos.ability.file.common.AbstractUploadService.dispatchFileDir] 拼装，本类只承载入参。
+ * Final on-disk path shape: `{system-planned path}/{bucket}/{tenantId}/{catePath?}/{yyyy}/{mm}/{dd}/{uuid}.{fileSuffix}`.
+ * The actual directory is assembled by [io.kudos.ability.file.common.AbstractUploadService.dispatchFileDir];
+ * this class only carries the input parameters.
  *
- * @param S 输入流类型；保留泛型让上层（如 Spring MultipartFile）能精确传入而无需 cast
+ * @param S input stream type; the generic is preserved so callers (e.g. Spring MultipartFile)
+ *          can pass concrete types without casting
  * @author K
  * @author AI: Codex
  * @since 1.0.0
  */
 class UploadFileModel<S : InputStreamSource?> : Serializable {
     /**
-     * 自定义目录|存储空间名称
+     * Custom directory | bucket name.
      */
     var bucketName: String? = null
 
     /**
-     * 租户id
+     * Tenant id.
      */
     var tenantId: String? = null
 
     /**
-     * 分类目录
+     * Category directory.
      */
     var category: String? = null
 
     /**
-     * 文件后缀
+     * File suffix.
      */
     var fileSuffix: String? = null
 
     /**
-     * 输入流
+     * Input stream.
      */
     var inputStreamSource: S? = null
 
     /**
-     * 认证参数
+     * Authentication parameters.
      */
     var authServerParam: AuthServerParam? = null
 
     /**
-     * 文件名, example: test.jpg
+     * File name, example: test.jpg
      */
     var fileName: String? = null
 
-    /** 图片压缩配置，留默认值表示不压缩 */
+    /** Image compression configuration; default value means no compression. */
     var compressionConfig = CompressionConfig()
 
     companion object {
-        /** Serializable 版本号 */
+        /** Serializable version id. */
         @Serial
         private val serialVersionUID = -8498350660950356072L
     }

@@ -10,7 +10,7 @@ import java.time.LocalDateTime
 
 
 /**
- * 用户业务接口
+ * User account service interface.
  *
  * @author K
  * @author AI: Cursor
@@ -20,81 +20,81 @@ interface IUserAccountService : IBaseCrudService<String, UserAccount> {
 
 
     /**
-     * 根据用户ID获取该用户所属的所有机构ID列表
+     * Get the ids of all organizations the user belongs to.
      *
-     * @param userId 用户ID
-     * @return List<String> 机构ID列表，如果用户不存在或没有机构则返回空列表
+     * @param userId user id
+     * @return List<String> organization ids, or an empty list if the user does not exist or has no organizations
      */
     fun getUserOrgIds(userId: String): List<String>
 
     /**
-     * 根据租户ID获取该租户下所有激活用户的ID列表
-     * 只返回active=true的用户ID
+     * Get the ids of all active users under the given tenant.
+     * Only ids of users with active=true are returned.
      *
-     * @param tenantId 租户ID
-     * @return List<String> 用户ID列表
+     * @param tenantId tenant id
+     * @return List<String> user ids
      */
     fun getUserIds(tenantId: String): List<String>
 
 
 
     /**
-     * 根据用户ID获取该用户所属的所有机构列表
+     * Get all organizations the user belongs to.
      *
-     * @param userId 用户ID
-     * @return List<UserOrgCacheEntry> 机构列表，如果用户不存在或没有机构则返回空列表
+     * @param userId user id
+     * @return List<UserOrgCacheEntry> organizations, or an empty list if the user does not exist or has none
      */
     fun getUserOrgs(userId: String): List<UserOrgCacheEntry>
 
 
 
     /**
-     * 检查用户是否属于指定机构
+     * Check whether a user belongs to a given organization.
      *
-     * @param userId 用户ID
-     * @param orgId 机构ID
-     * @return true表示用户属于该机构，false表示不属于
+     * @param userId user id
+     * @param orgId organization id
+     * @return true if the user belongs to the organization, false otherwise
      */
     fun isUserInOrg(userId: String, orgId: String): Boolean
 
 
 
     /**
-     * 根据租户ID和用户名获取用户信息
+     * Get user info by tenant id and username.
      *
-     * @param tenantId 租户ID
-     * @param username 用户名
-     * @return 用户缓存项，找不到返回null
+     * @param tenantId tenant id
+     * @param username username
+     * @return user cache entry, or null if not found
      * @author AI: Cursor
      * @since 1.0.0
      */
     fun getUserByTenantIdAndUsername(tenantId: String, username: String): UserAccountCacheEntry?
 
     /**
-     * 根据ID获取用户记录（非缓存）
+     * Get a user record by id (bypasses cache).
      *
-     * @param id 用户ID
-     * @return 用户记录，找不到返回null
+     * @param id user id
+     * @return user record, or null if not found
      * @author AI: Cursor
      * @since 1.0.0
      */
     fun getUserRecord(id: String): UserAccountRow?
 
     /**
-     * 根据租户ID获取用户列表
+     * Get the user list under the given tenant.
      *
-     * @param tenantId 租户ID
-     * @return 用户记录列表
+     * @param tenantId tenant id
+     * @return list of user records
      * @author AI: Cursor
      * @since 1.0.0
      */
     fun getUsersByTenantId(tenantId: String): List<UserAccountRow>
 
     /**
-     * 根据机构ID获取用户列表
+     * Get the user list under the given organization.
      *
-     * @param orgId 机构ID
-     * @return 用户记录列表
+     * @param orgId organization id
+     * @return list of user records
      * @author AI: Cursor
      * @since 1.0.0
      */
@@ -103,144 +103,145 @@ interface IUserAccountService : IBaseCrudService<String, UserAccount> {
 
 
     /**
-     * 更新用户启用状态
+     * Update the user's active flag.
      *
-     * @param id 用户ID
-     * @param active 是否启用
-     * @return 是否更新成功
+     * @param id user id
+     * @param active whether the user is active
+     * @return whether the update succeeded
      * @author AI: Cursor
      * @since 1.0.0
      */
     fun updateActive(id: String, active: Boolean): Boolean
 
     /**
-     * 重置登录密码
+     * Reset the login password.
      *
-     * @param id 用户ID
-     * @param newPassword 新密码（明文）
-     * @return 是否重置成功
+     * @param id user id
+     * @param newPassword new password (plain text)
+     * @return whether the reset succeeded
      * @author AI: Cursor
      * @since 1.0.0
      */
     fun resetPassword(id: String, newPassword: String): Boolean
 
     /**
-     * 重置安全密码
+     * Reset the security password.
      *
-     * @param id 用户ID
-     * @param newPassword 新密码（明文）
-     * @return 是否重置成功
+     * @param id user id
+     * @param newPassword new password (plain text)
+     * @return whether the reset succeeded
      * @author AI: Cursor
      * @since 1.0.0
      */
     fun resetSecurityPassword(id: String, newPassword: String): Boolean
 
     /**
-     * 更新最后登录信息
+     * Update last-login info.
      *
-     * @param id 用户ID
-     * @param loginIp 登录IP
-     * @param loginTime 登录时间
-     * @return 是否更新成功
+     * @param id user id
+     * @param loginIp login IP
+     * @param loginTime login time
+     * @return whether the update succeeded
      * @author AI: Cursor
      * @since 1.0.0
      */
     fun updateLastLoginInfo(id: String, loginIp: Long, loginTime: LocalDateTime): Boolean
 
     /**
-     * 更新最后登出信息
+     * Update last-logout info.
      *
-     * @param id 用户ID
-     * @param logoutTime 登出时间
-     * @return 是否更新成功
+     * @param id user id
+     * @param logoutTime logout time
+     * @return whether the update succeeded
      * @author AI: Cursor
      * @since 1.0.0
      */
     fun updateLastLogoutInfo(id: String, logoutTime: LocalDateTime): Boolean
 
     /**
-     * 增加登录错误次数
+     * Increment the login error count.
      *
-     * @param id 用户ID
-     * @return 是否更新成功
+     * @param id user id
+     * @return whether the update succeeded
      * @author AI: Cursor
      * @since 1.0.0
      */
     fun incrementLoginErrorTimes(id: String): Boolean
 
     /**
-     * 重置登录错误次数
+     * Reset the login error count.
      *
-     * @param id 用户ID
-     * @return 是否更新成功
+     * @param id user id
+     * @return whether the update succeeded
      * @author AI: Cursor
      * @since 1.0.0
      */
     fun resetLoginErrorTimes(id: String): Boolean
 
     /**
-     * 增加安全密码错误次数
+     * Increment the security-password error count.
      *
-     * @param id 用户ID
-     * @return 是否更新成功
+     * @param id user id
+     * @return whether the update succeeded
      * @author AI: Cursor
      * @since 1.0.0
      */
     fun incrementSecurityPasswordErrorTimes(id: String): Boolean
 
     /**
-     * 重置安全密码错误次数
+     * Reset the security-password error count.
      *
-     * @param id 用户ID
-     * @return 是否更新成功
+     * @param id user id
+     * @return whether the update succeeded
      * @author AI: Cursor
      * @since 1.0.0
      */
     fun resetSecurityPasswordErrorTimes(id: String): Boolean
 
     /**
-     * 为指定用户生成新的 TOTP secret 并落库（覆盖旧值），同时返回 secret + otpauth URL。
+     * Generate a new TOTP secret for the user, persist it (overwriting the old value),
+     * and return the secret plus an otpauth URL.
      *
-     * 用户用 Google Authenticator 等扫码后即可启用二次验证。
+     * After the user scans it in an OTP app (e.g. Google Authenticator), two-factor auth is enabled.
      *
-     * @param id 用户主键
-     * @param accountName 出现在 OTP App 里的账号显示名（一般用 username）
-     * @param issuer 出现在 OTP App 里的发行方显示名（一般用应用名，如 "kudos"）
-     * @return [AuthKeySetup] 含 secret + otpauthUrl；用户不存在或写库失败返回 null
+     * @param id user primary key
+     * @param accountName account display name shown in the OTP app (typically the username)
+     * @param issuer issuer display name shown in the OTP app (typically the application name, e.g. "kudos")
+     * @return [AuthKeySetup] containing secret + otpauthUrl; null when the user is missing or the DB write fails
      */
     fun resetAuthKey(id: String, accountName: String, issuer: String): AuthKeySetup?
 
     /**
-     * 清除用户的 TOTP secret（关闭二次验证）。
+     * Clear the user's TOTP secret (disable two-factor auth).
      *
-     * @param id 用户主键
-     * @return 是否更新成功
+     * @param id user primary key
+     * @return whether the update succeeded
      */
     fun cleanAuthKey(id: String): Boolean
 
     /**
-     * 校验用户提供的 6 位 TOTP 验证码。
+     * Verify a 6-digit TOTP code submitted by the user.
      *
-     * @param id 用户主键
-     * @param code 用户当前 OTP App 显示的 6 位数字（前导零可丢失，Long 表示）
-     * @return true 匹配；false 不匹配或用户未启用 OTP
+     * @param id user primary key
+     * @param code the 6-digit number currently shown by the user's OTP app (leading zeros may be dropped, hence Long)
+     * @return true on match; false on mismatch or when OTP is not enabled for the user
      */
     fun verifyAuthCode(id: String, code: Long): Boolean
 
     /**
-     * 冻结账号：写入 freeze_* 6 列。`freeze_time` 由实现取 [LocalDateTime.now]。
+     * Freeze an account: write the 6 freeze_* columns. `freeze_time` is set by the implementation to [LocalDateTime.now].
      *
-     * 登录判定逻辑：当 freeze_type IS NOT NULL 且
-     * (freeze_start_time IS NULL 或 now >= freeze_start_time) 且
-     * (freeze_end_time IS NULL 或 now < freeze_end_time) 时视为"当前冻结"，登录被拒。
+     * Login logic: when freeze_type IS NOT NULL and
+     * (freeze_start_time IS NULL or now >= freeze_start_time) and
+     * (freeze_end_time IS NULL or now < freeze_end_time), the account is considered "currently frozen" and login is denied.
      *
-     * @param id 用户主键
-     * @param freezeType 冻结类型字典码（manual / auto / admin / scheduled 等）
-     * @param freezeTitle 简短标题；可空
-     * @param freezeContent 详细说明；可空
-     * @param freezeStartTime 生效起点；null = 立即生效
-     * @param freezeEndTime 失效时刻；null = 永久冻结
-     * @return 是否更新成功
+     * @param id user primary key
+     * @param freezeType freeze type dict code (manual / auto / admin / scheduled, etc.)
+     * @param freezeTitle short title; nullable
+     * @param freezeContent detailed description; nullable
+     * @param freezeStartTime effective start time; null = effective immediately
+     * @param freezeEndTime expiration time; null = permanent freeze
+     * @return whether the update succeeded
      */
     fun freezeAccount(
         id: String,
@@ -252,25 +253,26 @@ interface IUserAccountService : IBaseCrudService<String, UserAccount> {
     ): Boolean
 
     /**
-     * 解除冻结：清空全部 freeze_* 6 列。
+     * Unfreeze an account: clear all 6 freeze_* columns.
      *
-     * @param id 用户主键
-     * @return 是否更新成功
+     * @param id user primary key
+     * @return whether the update succeeded
      */
     fun unfreezeAccount(id: String): Boolean
 
     /**
-     * 扫描并清理已过期的冻结记录：`freeze_end_time IS NOT NULL AND freeze_end_time < now()`。
+     * Scan and clean expired freeze records: `freeze_end_time IS NOT NULL AND freeze_end_time < now()`.
      *
-     * 注意：登录判定本身已经能识别"过期窗口外的冻结"放行（参见 `PassportService.isCurrentlyFrozen`），
-     * 所以此方法**仅作清理**，不影响功能正确性。意义在于：
-     *   - 让 admin 列表展示干净（不再看到"已过期但仍标记冻结"的脏数据）
-     *   - 避免缓存里的 freeze_* 字段长期持有无意义数据
+     * Note: the login logic itself already lets through "frozen outside the active window"
+     * (see `PassportService.isCurrentlyFrozen`), so this method is **cleanup only** and does not affect
+     * functional correctness. Its value is to:
+     *   - keep the admin list clean (no more "expired but still flagged as frozen" dirty data)
+     *   - avoid the freeze_* fields lingering in the cache with meaningless data
      *
-     * 调度策略由调用方决定——可由 `AutoUnfreezeScheduler` 自动跑（前提：消费方启用
-     * `@EnableScheduling`），也可由管理端手动触发。
+     * The scheduling strategy is up to the caller -- it can run automatically via `AutoUnfreezeScheduler`
+     * (provided the consumer enables `@EnableScheduling`) or be triggered manually from the admin side.
      *
-     * @return 清理掉的账号数量
+     * @return number of accounts cleaned up
      */
     fun cleanExpiredFreezes(): Int
 

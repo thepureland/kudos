@@ -13,13 +13,13 @@ import kotlin.reflect.KClass
 
 
 /**
- * 基础的只读Controller
+ * Base read-only Controller.
  *
- * @param PK 主键类型
- * @param B 业务处理类
- * @param S 列表查询条件VO类(请求)
- * @param R 列表行VO类(响应)
- * @param D 详情Vo类(响应)
+ * @param PK primary key type
+ * @param B business service class
+ * @param S list query condition VO class (request)
+ * @param R list row VO class (response)
+ * @param D detail VO class (response)
  * @author K
  * @author AI: Codex
  * @since 1.0.0
@@ -38,10 +38,10 @@ open class BaseReadOnlyController<
     private var detailVoClass: KClass<D>? = null
 
     /**
-     * 列表分页查询
+     * Paged list query.
      *
-     * @param searchPayload 列表查询条件VO
-     * @return 封装当前分页的结果记录和总记录数
+     * @param searchPayload list query condition VO
+     * @return wraps the current page's result records and the total record count
      */
     @PostMapping("/pagingSearch")
     open fun pagingSearch(@RequestBody searchPayload: S): PagingSearchResult<R> {
@@ -50,9 +50,9 @@ open class BaseReadOnlyController<
     }
 
     /**
-     * 返回指定主键的记录详情
+     * Return the detail of the record with the given primary key.
      *
-     * @return WebResult(记录详情)
+     * @return WebResult(record detail)
      */
     @GetMapping("/getDetail")
     open fun getDetail(id: PK): D {
@@ -60,7 +60,7 @@ open class BaseReadOnlyController<
             @Suppress("UNCHECKED_CAST")
             detailVoClass = GenericKit.getSuperClassGenricClass(this::class, 4) as KClass<D>
         }
-        return service.get(id, requireNotNull(detailVoClass) { "detailVoClass is null" }) ?: throw ObjectNotFoundException("找不到记录！")
+        return service.get(id, requireNotNull(detailVoClass) { "detailVoClass is null" }) ?: throw ObjectNotFoundException("Record not found!")
     }
 
 }

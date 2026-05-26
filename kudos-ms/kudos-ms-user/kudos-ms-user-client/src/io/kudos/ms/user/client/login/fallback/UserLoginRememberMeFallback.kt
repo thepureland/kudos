@@ -6,8 +6,8 @@ import org.springframework.stereotype.Component
 
 
 /**
- * 记住我登录 Feign 容错降级实现。`IUserLoginRememberMeApi` 当前未定义对外方法，
- * 保留类作为 `@FeignClient(fallback=...)` 的合法目标。
+ * Remember-me login Feign fallback. `IUserLoginRememberMeApi` currently exposes no methods;
+ * the class is kept as a valid target for `@FeignClient(fallback=...)`.
  *
  * @author K
  * @author AI: Codex

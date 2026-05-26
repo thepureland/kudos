@@ -24,7 +24,7 @@ import org.springframework.messaging.MessageChannel
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
 
 /**
- * Stream公共配置类
+ * Stream common configuration class.
  *
  * @author K
  * @author AI: Codex
@@ -107,12 +107,12 @@ open class StreamCommonConfiguration {
         val bindings = bindingPropsProvider.ifAvailable?.bindings?.keys ?: emptySet()
         val required = verifyProps.requiredProducerBindings.filter { it.isNotBlank() }
         if (required.isEmpty()) {
-            log.warn("Stream binding自检已启用，但未配置requiredProducerBindings")
+            log.warn("Stream binding self-check is enabled, but requiredProducerBindings is not configured")
             return@InitializingBean
         }
         val missing = required.filter { !bindings.contains(it) }
         if (missing.isNotEmpty()) {
-            val msg = "缺少必需的Stream producer bindings: $missing"
+            val msg = "Missing required Stream producer bindings: $missing"
             if (verifyProps.failOnMissing) {
                 error(msg)
             } else {

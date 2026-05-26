@@ -10,32 +10,32 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.thread
 
 /**
- * 普通锁服务实现
+ * Plain lock service implementation.
  *
- * **实现说明**：[tryLock]（租约键 + [DelayQueue] 过期）与 [lock]/[unLock]（[KeyLockRegistry] 内 [ReentrantLock]）
- * 为两套机制；[ILockProvider.lockExecute] 及 [LockTool] 常用路径只使用 [tryLock]，与「按 key 取 [ReentrantLock]」无联动。
+ * **Implementation notes**: [tryLock] (lease key + [DelayQueue] expiration) and [lock]/[unLock] ([ReentrantLock] inside [KeyLockRegistry])
+ * are two separate mechanisms; the common paths in [ILockProvider.lockExecute] and [LockTool] use only [tryLock], with no linkage to the "[ReentrantLock] per key" path.
  *
- * 基于内存的锁服务，支持锁的自动过期和清理。
- * 
- * 核心特性：
- * 1. 锁过期机制：使用DelayQueue实现锁的自动过期
- * 2. 守护线程清理：后台守护线程自动清理过期的锁
- * 3. 可重入锁：使用KeyLockRegistry提供可重入锁功能
- * 4. 过期时间：支持设置锁的过期时间（秒）
- * 
- * 锁存储：
- * - cacheKeyMap：存储锁key和过期时间戳的映射
- * - delayQueue：延迟队列，用于自动清理过期锁
- * 
- * 过期清理：
- * - 守护线程持续监听delayQueue
- * - 当锁过期时，自动从cacheKeyMap中移除
- * - 确保过期的锁不会一直占用内存
- * 
- * 注意事项：
- * - 使用守护线程，不会阻止JVM关闭
- * - 锁过期后会自动释放，无需手动解锁
- * - 支持并发访问，线程安全
+ * An in-memory lock service supporting automatic expiration and cleanup.
+ *
+ * Core features:
+ * 1. Lock expiration: uses DelayQueue for automatic lock expiration
+ * 2. Daemon-thread cleanup: a background daemon thread automatically cleans up expired locks
+ * 3. Reentrant locks: provides reentrant lock support via KeyLockRegistry
+ * 4. Expiration: supports setting an expiration (in seconds) for each lock
+ *
+ * Lock storage:
+ * - cacheKeyMap: maps the lock key to its expiration timestamp
+ * - delayQueue: delay queue used to automatically clean up expired locks
+ *
+ * Expiration cleanup:
+ * - The daemon thread continuously listens to delayQueue
+ * - When a lock expires, it is automatically removed from cacheKeyMap
+ * - Ensures expired locks do not retain memory indefinitely
+ *
+ * Notes:
+ * - Uses a daemon thread, which does not prevent the JVM from exiting
+ * - Locks are released automatically on expiration; no manual unlock required
+ * - Supports concurrent access; thread-safe
  */
 class NormalLockService : ILockProvider<ReentrantLock> {
 
@@ -47,28 +47,28 @@ class NormalLockService : ILockProvider<ReentrantLock> {
 
     init {
         /**
-         * 初始化守护线程，用于自动清理过期的锁
-         * 
-         * 工作流程：
-         * 1. 创建守护线程，设置为daemon线程
-         * 2. 持续监听delayQueue，等待过期的锁
-         * 3. 当有锁过期时，从cacheKeyMap中移除
-         * 4. 如果线程被中断，恢复中断状态并退出
-         * 
-         * 守护线程特性：
-         * - daemon线程不会阻止JVM关闭
-         * - 当所有非daemon线程结束时，JVM会关闭
-         * - 适合后台清理任务
-         * 
-         * 阻塞机制：
-         * - delayQueue.take()会阻塞直到有元素过期
-         * - 不会消耗CPU资源，高效等待
-         * 
-         * 异常处理：
-         * - 捕获InterruptedException，恢复中断状态
-         * - 确保线程能够正确响应中断信号
+         * Initializes a daemon thread that automatically cleans up expired locks.
+         *
+         * Flow:
+         * 1. Create the thread and mark it as a daemon
+         * 2. Continuously listen on delayQueue for expired locks
+         * 3. When a lock expires, remove it from cacheKeyMap
+         * 4. If interrupted, restore the interrupt status and exit
+         *
+         * Daemon thread characteristics:
+         * - Daemon threads do not prevent JVM shutdown
+         * - The JVM exits once all non-daemon threads finish
+         * - Suitable for background cleanup tasks
+         *
+         * Blocking mechanism:
+         * - delayQueue.take() blocks until an element expires
+         * - Consumes no CPU; an efficient wait
+         *
+         * Exception handling:
+         * - Catches InterruptedException and restores the interrupt status
+         * - Ensures the thread responds to interruption signals correctly
          */
-        // 守护线程删除过期 key（与文档一致：daemon 不阻止 JVM 退出）
+        // Daemon thread removes expired keys (consistent with the docs: daemon does not prevent JVM exit)
         thread(name = "kudos-normal-lock-expiry", isDaemon = true) {
             try {
                 while (true) {
@@ -82,112 +82,112 @@ class NormalLockService : ILockProvider<ReentrantLock> {
     }
 
     /**
-     * 缓存锁（设置过期时间）
-     * 
-     * 尝试获取锁并设置过期时间，如果获取成功则锁会在指定时间后自动过期。
-     * 
-     * @param key 锁的key
-     * @param seconds 过期时间（秒）
+     * Caches a lock (sets an expiration).
+     *
+     * Attempts to acquire the lock and set its expiration; on success, the lock will expire automatically after the specified time.
+     *
+     * @param key the lock key
+     * @param seconds the expiration in seconds
      */
     fun doCache(key: String, seconds: Int) {
         tryLock(key, seconds)
     }
 
     /**
-     * 检查key是否存在
-     * 
-     * 检查指定的key是否在锁映射中存在（即锁是否被持有）。
-     * 
-     * @param key 锁的key
-     * @return true表示锁存在，false表示锁不存在
+     * Checks whether a key exists.
+     *
+     * Checks whether the given key exists in the lock map (i.e. whether the lock is held).
+     *
+     * @param key the lock key
+     * @return true if the lock exists, false otherwise
      */
     fun hasKey(key: String?): Boolean = cacheKeyMap.containsKey(key)
 
     /**
-     * 获取锁对象
-     * 
-     * 尝试非阻塞地获取指定key的锁对象。
-     * 
-     * @param key 锁的key
-     * @return ReentrantLock对象，如果获取失败返回null
+     * Obtains the lock object.
+     *
+     * Non-blockingly attempts to acquire the lock object for the given key.
+     *
+     * @param key the lock key
+     * @return the ReentrantLock object, or null if acquisition fails
      */
     override fun lock(key: String): ReentrantLock? = reentrantLockManager.tryLock(key)
 
     /**
-     * 释放**可重入锁**（与 [lock] 配套）。
+     * Releases a **reentrant lock** (paired with [lock]).
      *
-     * 历史 bug：旧实现 `unLock(lock, key) = unLock(key)` 把它委托给租约锁释放路径，
-     * 但 [lock] 写入的是 [reentrantLockManager]、不是 [cacheKeyMap]——
-     * 走 [reentrantLockManager.unlock] 才是配对的释放方式。
+     * Historical bug: the old implementation `unLock(lock, key) = unLock(key)` delegated to the lease-lock release path,
+     * but [lock] writes into [reentrantLockManager], not [cacheKeyMap] —
+     * routing through [reentrantLockManager.unlock] is the proper paired release.
      */
     override fun unLock(lock: Lock, key: String) {
         this.reentrantLockManager.unlock(key)
     }
 
     /**
-     * 释放**租约锁**（与 [tryLock] 配套，对应 [lockExecute] 的 finally 释放路径）。
+     * Releases a **lease lock** (paired with [tryLock]; corresponds to the finally release path of [lockExecute]).
      *
-     * 历史 bug：旧实现 `unLock(key) = reentrantLockManager.unlock(key)`，但 [tryLock]
-     * 写入的是 [cacheKeyMap]——`reentrantLockManager` 里压根没条目，必抛
-     * "No lock found"。这导致 [lockExecute] 自创建以来一直 broken。
+     * Historical bug: the old implementation `unLock(key) = reentrantLockManager.unlock(key)`, but [tryLock]
+     * writes into [cacheKeyMap] — `reentrantLockManager` has no entry at all, so it always threw
+     * "No lock found". This caused [lockExecute] to be broken since its creation.
      *
-     * 现修复为：
-     * 1. 从 [cacheKeyMap] 移除 key
-     * 2. 显式从 [delayQueue] 撤掉对应条目，避免守护线程之后误清"同名 key 重新占用"
-     *    的新锁（依赖 [ExpiringKey.equals] 只比 key 不比 expireAtMillis 的设计）
+     * Now fixed to:
+     * 1. Remove the key from [cacheKeyMap]
+     * 2. Explicitly remove the corresponding entry from [delayQueue] to prevent the daemon thread from later mis-cleaning a new lock that
+     *    "reuses the same key" (relies on [ExpiringKey.equals] comparing only the key, not expireAtMillis)
      */
     override fun unLock(key: String) {
         cacheKeyMap.remove(key)?.let { previousExpire ->
-            // 守护线程之后处理这个旧条目时会再 remove 一次 cacheKeyMap[key]，
-            // 那时如果 key 已被同名新锁重新占用，会把新锁误清——所以主动撤掉
+            // When the daemon thread later processes the old entry it would remove cacheKeyMap[key] again;
+            // if the key has been reused by a new lock of the same name by then, the new lock would be wrongly cleared — so remove it proactively
             delayQueue.remove(ExpiringKey(key, previousExpire))
         }
     }
 
     /**
-     * 尝试获取锁（带过期时间）
-     * 
-     * 尝试获取指定key的锁，如果获取成功则设置过期时间。
-     * 
-     * 工作流程：
-     * 1. 检查锁是否存在：如果key已存在，说明锁已被持有，返回false
-     * 2. 计算过期时间：当前时间 + 过期秒数
-     * 3. 原子性放入：使用putIfAbsent原子性地放入key和过期时间
-     * 4. 判断结果：
-     *    - 如果old为null，说明是第一个线程，放入成功，加入延迟队列，返回true
-     *    - 如果old不为null，说明其他线程已先放入，返回false
-     * 
-     * 并发安全：
-     * - 使用ConcurrentHashMap保证线程安全
-     * - putIfAbsent是原子操作，确保只有一个线程能成功放入
-     * - 第一个成功的线程负责将key加入延迟队列
-     * 
-     * 过期机制：
-     * - 锁的过期时间存储在cacheKeyMap中
-     * - 过期时间到达后，守护线程会自动清理
-     * - 锁过期后，其他线程可以重新获取
-     * 
-     * 返回值：
-     * - true：成功获取锁
-     * - false：锁已被其他线程持有
-     * 
-     * 注意事项：
-     * - 锁会在指定时间后自动过期，无需手动释放
-     * - 如果锁已过期，可以重新获取
-     * - 使用putIfAbsent确保并发安全
-     * 
-     * @param lockKey 锁的key
-     * @param sec 锁的过期时间（秒）
-     * @return true表示成功获取锁，false表示锁已被持有
+     * Tries to acquire the lock (with expiration).
+     *
+     * Attempts to acquire the lock for the given key and, on success, sets its expiration.
+     *
+     * Flow:
+     * 1. Check whether the lock exists: if the key already exists, the lock is held, return false
+     * 2. Compute the expiration: current time + expiration seconds
+     * 3. Atomic put: use putIfAbsent to atomically insert the key and expiration
+     * 4. Decide the result:
+     *    - If old is null, this thread was the first; insertion succeeded; add to the delay queue; return true
+     *    - If old is non-null, another thread inserted first; return false
+     *
+     * Concurrency safety:
+     * - Uses ConcurrentHashMap for thread safety
+     * - putIfAbsent is atomic, ensuring only one thread can insert successfully
+     * - The first successful thread is responsible for adding the key to the delay queue
+     *
+     * Expiration mechanism:
+     * - The lock expiration is stored in cacheKeyMap
+     * - Once the expiration time is reached, the daemon thread cleans it up automatically
+     * - After expiration, other threads can acquire the lock again
+     *
+     * Return value:
+     * - true: lock acquired successfully
+     * - false: lock is already held by another thread
+     *
+     * Notes:
+     * - Locks expire automatically after the specified time; no manual release required
+     * - Expired locks can be reacquired
+     * - putIfAbsent ensures concurrency safety
+     *
+     * @param lockKey the lock key
+     * @param sec the lock expiration in seconds
+     * @return true if the lock was acquired, false if the lock is already held
      */
     override fun tryLock(lockKey: String, sec: Int): Boolean {
         val expireTime = System.currentTimeMillis() + (sec * 1000)
-        // 旧实现先 containsKey 再 putIfAbsent——前面那次检查冗余：
-        // putIfAbsent 本身原子地完成"检查+插入"，并通过返回值告知是否成功。
-        // 删掉冗余检查让逻辑更紧凑、并发下少一次 map 访问。
+        // The old implementation called containsKey first then putIfAbsent — the prior check was redundant:
+        // putIfAbsent already atomically performs "check + insert" and signals success via its return value.
+        // Removing the redundant check makes the logic tighter and saves one map access under concurrency.
         val old = cacheKeyMap.putIfAbsent(lockKey, expireTime)
         return if (old == null) {
-            // 本线程是首个成功插入者，加入延迟队列让守护线程到期清理
+            // This thread was the first successful inserter; add to the delay queue for the daemon thread to clean up on expiration
             delayQueue.put(ExpiringKey(lockKey, expireTime))
             true
         } else {
@@ -196,116 +196,116 @@ class NormalLockService : ILockProvider<ReentrantLock> {
     }
 
     /**
-     * 过期键包装类
-     * 
-     * 实现Delayed接口，用于DelayQueue中存储带过期时间的键。
-     * 
-     * 核心功能：
-     * 1. 存储键和过期时间：保存键对象和过期时间戳
-     * 2. 计算剩余时间：实现getDelay方法，计算距离过期的剩余时间
-     * 3. 比较排序：实现compareTo方法，用于DelayQueue排序
-     * 4. 相等判断：仅按key判断相等，用于remove操作
-     * 
-     * 过期时间：
-     * - 使用绝对时间戳（毫秒）
-     * - 计算公式：System.currentTimeMillis() + delayMillis
-     * - 存储在expireAtMillis字段中
-     * 
-     * DelayQueue使用：
-     * - DelayQueue会根据getDelay的返回值排序
-     * - 过期时间越早的元素越靠前
-     * - take()方法会阻塞直到有元素过期
-     * 
-     * 相等性：
-     * - equals和hashCode仅基于key
-     * - 允许同一个key有多个ExpiringKey实例（不同过期时间）
-     * - remove操作时可以通过key匹配删除
-     * 
-     * @param K 键的类型
-     * @param key 键对象
-     * @param expireAtMillis 到期的绝对时刻（毫秒）
+     * Wrapper class for an expiring key.
+     *
+     * Implements Delayed; used by DelayQueue to store keys with expiration.
+     *
+     * Core features:
+     * 1. Stores the key and expiration: holds the key object and the expiration timestamp
+     * 2. Computes remaining time: implements getDelay to compute time until expiration
+     * 3. Comparison/sorting: implements compareTo for DelayQueue ordering
+     * 4. Equality: equality is determined solely by key (used by remove)
+     *
+     * Expiration:
+     * - Uses an absolute timestamp in milliseconds
+     * - Formula: System.currentTimeMillis() + delayMillis
+     * - Stored in the expireAtMillis field
+     *
+     * DelayQueue usage:
+     * - DelayQueue orders by the value returned from getDelay
+     * - Earlier-expiring elements come first
+     * - take() blocks until an element has expired
+     *
+     * Equality:
+     * - equals and hashCode are based solely on key
+     * - Allows multiple ExpiringKey instances for the same key (with different expirations)
+     * - remove can match by key
+     *
+     * @param K the key type
+     * @param key the key object
+     * @param expireAtMillis the absolute expiration time in milliseconds
      */
     private class ExpiringKey<K>(
         val key: K?,
-        /** 到期的绝对时刻，单位毫秒（System.currentTimeMillis() + delayMillis）  */
+        /** Absolute expiration time in milliseconds (System.currentTimeMillis() + delayMillis). */
         private val expireAtMillis: Long
     ) : Delayed {
 
         /**
-         * 计算距离过期的剩余时间
-         * 
-         * 计算当前时间到过期时间的差值，并转换为指定的时间单位。
-         * 
-         * 计算方式：
-         * - 剩余毫秒 = 过期时间戳 - 当前时间戳
-         * - 将毫秒转换为指定的时间单位
-         * - 如果已过期，返回负数或0
-         * 
-         * 时间单位转换：
-         * - 使用TimeUnit.convert进行单位转换
-         * - 支持所有TimeUnit定义的时间单位
-         * 
-         * @param unit 时间单位
-         * @return 距离过期的剩余时间（指定单位），如果已过期则<=0
+         * Computes remaining time until expiration.
+         *
+         * Calculates the difference between the expiration time and the current time, converted into the specified time unit.
+         *
+         * Calculation:
+         * - remaining millis = expiration timestamp - current timestamp
+         * - Convert millis to the requested time unit
+         * - Returns negative or 0 if already expired
+         *
+         * Time-unit conversion:
+         * - Uses TimeUnit.convert
+         * - Supports all units defined by TimeUnit
+         *
+         * @param unit the time unit
+         * @return remaining time until expiration in the given unit; <= 0 if already expired
          */
         override fun getDelay(unit: TimeUnit): Long {
             val remainingMillis = expireAtMillis - System.currentTimeMillis()
-            // 将毫秒差值转换成调用者需要的时间单位
+            // Convert the millisecond difference into the unit requested by the caller
             return unit.convert(remainingMillis, TimeUnit.MILLISECONDS)
         }
 
         /**
-         * 比较两个Delayed对象的过期时间
-         * 
-         * 用于DelayQueue的排序，过期时间越早的元素越靠前。
-         * 
-         * 比较方式：
-         * - 统一转换为毫秒进行比较
-         * - 计算两个对象的剩余时间差值
-         * - 返回差值的符号（-1、0、1）
-         * 
-         * 排序规则：
-         * - 过期时间早的元素排在前面
-         * - 过期时间相同的元素顺序不确定
-         * - DelayQueue会优先取出过期时间早的元素
-         * 
-         * @param other 另一个Delayed对象
-         * @return 负数表示当前对象过期更早，0表示同时过期，正数表示当前对象过期更晚
+         * Compares two Delayed objects by expiration time.
+         *
+         * Used by DelayQueue for ordering; earlier-expiring elements come first.
+         *
+         * Comparison:
+         * - Both sides are converted to milliseconds for comparison
+         * - Compute the difference in remaining time
+         * - Returns the sign of the difference (-1, 0, 1)
+         *
+         * Ordering:
+         * - Earlier-expiring elements are placed in front
+         * - Elements with the same expiration are unordered with respect to each other
+         * - DelayQueue serves earlier-expiring elements first
+         *
+         * @param other the other Delayed object
+         * @return negative if this expires earlier; 0 if equal; positive if this expires later
          */
         override fun compareTo(other: Delayed): Int =
             getDelay(TimeUnit.MILLISECONDS).compareTo(other.getDelay(TimeUnit.MILLISECONDS))
 
         /**
-         * 判断两个ExpiringKey是否相等
-         * 
-         * 仅按key判断相等，不考虑过期时间。
-         * 
-         * 相等规则：
-         * - 如果是同一个对象，返回true
-         * - 如果类型不同，返回false
-         * - 如果key相等，返回true
-         * 
-         * 设计原因：
-         * - 允许同一个key有多个ExpiringKey实例
-         * - remove操作时可以通过key匹配删除
-         * - 简化过期键的管理
-         * 
-         * @param other 另一个对象
-         * @return true表示相等，false表示不相等
+         * Equality for two ExpiringKeys.
+         *
+         * Equality is determined solely by key, ignoring expiration.
+         *
+         * Rules:
+         * - Same object reference: true
+         * - Different type: false
+         * - Equal keys: true
+         *
+         * Rationale:
+         * - Allows multiple ExpiringKey instances for the same key
+         * - remove can match by key
+         * - Simplifies expiring-key management
+         *
+         * @param other the other object
+         * @return true if equal, false otherwise
          */
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
             if (other !is ExpiringKey<*>) return false
-            // 仅按 key 比较，以便 remove 时匹配
+            // Compare by key only so that remove can find matches
             return key == other.key
         }
 
         /**
-         * 计算哈希码
-         * 
-         * 仅基于key计算哈希码，与equals方法保持一致。
-         * 
-         * @return key的哈希码
+         * Computes the hash code.
+         *
+         * The hash code is based solely on key, consistent with equals.
+         *
+         * @return the key's hash code
          */
         override fun hashCode(): Int = key.hashCode()
     }

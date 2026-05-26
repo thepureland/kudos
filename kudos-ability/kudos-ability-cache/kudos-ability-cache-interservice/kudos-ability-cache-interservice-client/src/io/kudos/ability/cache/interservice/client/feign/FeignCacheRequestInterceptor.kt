@@ -8,36 +8,36 @@ import io.kudos.context.core.KudosContextHolder
 import org.apache.commons.codec.digest.Md5Crypt
 
 /**
- * Feign缓存请求拦截器
- * 
- * 在Feign请求中添加客户端缓存相关的请求头，实现服务间缓存的协商机制。
- * 
- * 核心功能：
- * 1. 缓存key生成：根据请求URL、方法、请求体生成唯一的缓存key
- * 2. 本地缓存查询：查询本地缓存，获取缓存数据的UUID
- * 3. 请求头设置：将缓存key和UUID设置到请求头，供服务端判断
- * 
- * 工作流程：
- * 1. 检查本地缓存：如果客户端没有本地缓存，直接返回
- * 2. 生成缓存key：根据请求信息生成MD5哈希的缓存key
- * 3. 设置缓存key头：将缓存key设置到请求头
- * 4. 查询本地缓存：从本地缓存中查询数据
- * 5. 设置缓存UID头：如果找到缓存数据，将UUID设置到请求头
- * 
- * 缓存协商：
- * - 服务端收到请求后，会比较请求头中的UID和服务端数据的UID
- * - 如果UID相同，返回304状态码，客户端使用本地缓存
- * - 如果UID不同，返回新数据和新的UID，客户端更新缓存
- * 
- * Key生成规则：
- * - 包含租户ID、应用名称、请求URL、HTTP方法、请求体
- * - 使用MD5加密生成固定长度的key
- * - 确保相同请求生成相同的key
- * 
- * 注意事项：
- * - 只有在客户端有本地缓存时才添加请求头
- * - 缓存key包含租户信息，确保多租户隔离
- * - UUID用于判断缓存是否过期
+ * Feign cache request interceptor.
+ *
+ * Adds client-side cache request headers to Feign requests to drive the inter-service cache negotiation.
+ *
+ * Core capabilities:
+ * 1. Cache key generation: builds a unique cache key from the request URL, method, and body.
+ * 2. Local cache lookup: queries the local cache and reads the UUID of the cached entry.
+ * 3. Header injection: sets the cache key and UUID as request headers for the server to inspect.
+ *
+ * Workflow:
+ * 1. Check the local cache: return immediately if the client has no local cache.
+ * 2. Build the cache key: produce an MD5-hashed cache key from the request information.
+ * 3. Set the cache key header.
+ * 4. Look up the local cache.
+ * 5. Set the cache UID header: if a cached entry is found, write its UUID into the request header.
+ *
+ * Cache negotiation:
+ * - On receiving the request the server compares the UID in the header with the UID of its data.
+ * - If they match, the server returns a 304 and the client uses its local cache.
+ * - If they differ, the server returns fresh data along with a new UID and the client updates its cache.
+ *
+ * Key generation rules:
+ * - Includes tenant id, application name, request URL, HTTP method, and request body.
+ * - Hashed with MD5 to produce a fixed-length key.
+ * - Ensures the same request produces the same key.
+ *
+ * Caveats:
+ * - Headers are only added when the client has a local cache.
+ * - The cache key includes tenant information for multi-tenant isolation.
+ * - The UUID is used to determine whether the cache is stale.
  */
 class FeignCacheRequestInterceptor(
     private val cacheHelper: ClientCacheHelper,
@@ -45,75 +45,75 @@ class FeignCacheRequestInterceptor(
 ) : RequestInterceptor {
 
     /**
-     * 应用请求拦截，添加缓存相关的请求头
-     * 
-     * 在Feign请求中添加缓存key和缓存UID，实现客户端缓存协商。
-     * 
-     * 工作流程：
-     * 1. 检查本地缓存：如果客户端没有本地缓存，直接返回
-     * 2. 生成缓存key：调用genCacheKey生成请求的唯一标识
-     * 3. 设置缓存key头：将key设置到请求头，供服务端识别
-     * 4. 查询本地缓存：从本地缓存中查询数据
-     * 5. 设置缓存UID头：如果找到缓存数据，将UUID设置到请求头
-     * 
-     * 请求头说明：
-     * - HEADER_KEY_CACHE_KEY：缓存key，用于服务端识别请求
-     * - HEADER_KEY_CACHE_UID：缓存UUID，用于判断缓存是否过期
-     * 
-     * 缓存协商：
-     * - 服务端比较请求头中的UID和当前数据的UID
-     * - 如果相同，返回304，客户端使用本地缓存
-     * - 如果不同，返回新数据和新的UID
-     * 
-     * @param requestTemplate Feign请求模板
+     * Applies request interception, adding cache-related headers.
+     *
+     * Adds the cache key and cache UID to the Feign request to drive client-side cache negotiation.
+     *
+     * Workflow:
+     * 1. Check the local cache: return immediately if the client has no local cache.
+     * 2. Build the cache key: call genCacheKey to derive a unique identifier for the request.
+     * 3. Set the cache key header: write the key into the request header so the server can recognize the request.
+     * 4. Look up the local cache.
+     * 5. Set the cache UID header: if cached data is found, write its UUID into the request header.
+     *
+     * Headers:
+     * - HEADER_KEY_CACHE_KEY: the cache key, used by the server to identify the request.
+     * - HEADER_KEY_CACHE_UID: the cache UUID, used to determine whether the cache is stale.
+     *
+     * Cache negotiation:
+     * - The server compares the UID in the header with the UID of its current data.
+     * - On match, returns 304 and the client uses its local cache.
+     * - On mismatch, returns fresh data along with a new UID.
+     *
+     * @param requestTemplate the Feign request template
      */
     override fun apply(requestTemplate: RequestTemplate) {
         if (!cacheHelper.hasLocalCache()) {
             return
         }
         val localCacheKey = genCacheKey(requestTemplate)
-        //拼装本次请求的key值
+        // Build the key value for this request.
         requestTemplate.header(ClientCacheKey.HEADER_KEY_CACHE_KEY, localCacheKey)
         val data = cacheHelper.loadFromLocalCache(localCacheKey)
         if (data != null) {
-            //去除本次请求的uid值
+            // Carry the uid value for this request.
             requestTemplate.header(ClientCacheKey.HEADER_KEY_CACHE_UID, data.uuid)
         }
     }
 
     /**
-     * 生成本地缓存key
-     * 
-     * 根据请求信息生成唯一的缓存key，用于标识和查找缓存数据。
-     * 
-     * 工作流程：
-     * 1. 获取请求信息：提取URL、HTTP方法、请求体
-     * 2. 获取租户ID：从KudosContext中获取当前租户ID
-     * 3. 构建key字符串：拼接分隔符、租户ID、应用名称、请求信息
-     * 4. MD5加密：使用Md5Crypt.apr1Crypt生成固定长度的哈希值
-     * 
-     * Key组成：
-     * - 分隔符 + 租户ID + 分隔符 + 应用名称 + 请求信息
-     * - 请求信息包括：URL、HTTP方法、请求体
-     * 
-     * 加密方式：
-     * - 使用MD5加密（apr1格式）
-     * - 固定salt："fCache"
-     * - 生成固定长度的哈希值
-     * 
-     * 唯一性保证：
-     * - 包含租户ID，确保多租户隔离
-     * - 包含应用名称，区分不同服务
-     * - 包含请求信息，区分不同请求
-     * - MD5加密确保key的唯一性和固定长度
-     * 
-     * 注意事项：
-     * - 相同请求会生成相同的key
-     * - 不同租户的相同请求会生成不同的key
-     * - key长度固定，便于存储和比较
-     * 
-     * @param requestTemplate Feign请求模板
-     * @return MD5加密后的缓存key
+     * Builds the local cache key.
+     *
+     * Produces a unique cache key from the request information for identifying and looking up cached data.
+     *
+     * Workflow:
+     * 1. Read request information: extract URL, HTTP method, and request body.
+     * 2. Read the tenant id from KudosContext.
+     * 3. Build the key string: concatenate delimiter, tenant id, application name, and request information.
+     * 4. MD5 hash: use Md5Crypt.apr1Crypt to derive a fixed-length hash.
+     *
+     * Key composition:
+     * - delimiter + tenant id + delimiter + application name + request information
+     * - Request information includes the URL, HTTP method, and request body.
+     *
+     * Hashing:
+     * - MD5 (apr1 variant).
+     * - Fixed salt "fCache".
+     * - Produces a fixed-length hash.
+     *
+     * Uniqueness guarantees:
+     * - Includes the tenant id for multi-tenant isolation.
+     * - Includes the application name to distinguish services.
+     * - Includes the request information to distinguish requests.
+     * - MD5 ensures key uniqueness and fixed length.
+     *
+     * Caveats:
+     * - The same request produces the same key.
+     * - The same request from different tenants produces different keys.
+     * - Keys have a fixed length, making them easy to store and compare.
+     *
+     * @param requestTemplate the Feign request template
+     * @return the MD5-hashed cache key
      */
     private fun genCacheKey(requestTemplate: RequestTemplate): String {
         val request = requestTemplate.request()

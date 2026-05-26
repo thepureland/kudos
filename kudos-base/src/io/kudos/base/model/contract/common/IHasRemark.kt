@@ -1,14 +1,14 @@
 package io.kudos.base.model.contract.common
 
 /**
- * 带有备注属性的模型接口
+ * Model interface carrying a remark property.
  *
  * @author K
  * @since 1.0.0
  */
 interface IHasRemark {
 
-    /** 备注 */
+    /** Remark */
     var remark: String?
 
 }

@@ -2,7 +2,7 @@ package io.kudos.ability.web.springmvc.controller
 
 
 /**
- * 基础的Controller
+ * Base Controller.
  *
  * @author K
  * @author AI: Codex

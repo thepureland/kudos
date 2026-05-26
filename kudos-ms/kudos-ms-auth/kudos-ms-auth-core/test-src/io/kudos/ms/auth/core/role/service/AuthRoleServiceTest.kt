@@ -9,7 +9,7 @@ import kotlin.test.*
 /**
  * junit test for AuthRoleService
  *
- * 测试数据来源：`AuthRoleServiceTest.sql`
+ * Test data source: `AuthRoleServiceTest.sql`
  *
  * @author K
  * @author AI: Cursor
@@ -29,7 +29,7 @@ class AuthRoleServiceTest : RdbAndRedisCacheTestBase() {
         assertNotNull(cacheItem)
         assertEquals(cacheItem.code, roleCode)
         
-        // 测试不存在的角色
+        // Test a non-existent role.
         val notExist = authRoleService.getRoleByTenantIdAndCode(tenantId, "non-existent")
         assertNull(notExist)
     }
@@ -41,7 +41,7 @@ class AuthRoleServiceTest : RdbAndRedisCacheTestBase() {
         assertNotNull(record)
         assertEquals(record.code, "svc-role-test-1-bq0Y0mrl")
         
-        // 测试不存在的角色
+        // Test a non-existent role.
         val notExist = authRoleService.getRoleRecord("non-existent-id")
         assertNull(notExist)
     }
@@ -64,7 +64,7 @@ class AuthRoleServiceTest : RdbAndRedisCacheTestBase() {
         assertTrue(roles.any { it.code == "svc-role-test-1-bq0Y0mrl" })
         assertTrue(roles.any { it.code == "svc-role-test-2-bq0Y0mrl" })
         
-        // 测试另一个子系统
+        // Test another subsystem.
         val subSystemCode2 = "svc-subsys-role-test-1-bq0Y0mrl"
         val roles2 = authRoleService.getRolesBySubsysCode(tenantId, subSystemCode2)
         assertTrue(roles2.any { it.code == "svc-role-test-3-bq0Y0mrl" })
@@ -73,13 +73,13 @@ class AuthRoleServiceTest : RdbAndRedisCacheTestBase() {
     @Test
     fun updateActive() {
         val id = "249363d1-0000-0000-0000-000000000025"
-        // 先设置为false
+        // First set to false
         assertTrue(authRoleService.updateActive(id, false))
         var role = authRoleService.getRoleRecord(id)
         assertNotNull(role)
         assertNotEquals(role.active, true)
         
-        // 再设置为true
+        // Then set to true
         assertTrue(authRoleService.updateActive(id, true))
         role = authRoleService.getRoleRecord(id)
         assertNotNull(role)

@@ -6,7 +6,7 @@ import org.ktorm.schema.boolean
 import org.ktorm.schema.varchar
 
 /**
- * 代码生成-列信息数据库表-实体关联对象
+ * Code generation - column info table - entity binding object.
  *
  * @author K
  * @since 1.0.0
@@ -15,28 +15,28 @@ import org.ktorm.schema.varchar
 object CodeGenColumns : StringIdTable<CodeGenColumn>("code_gen_column") {
 //endregion your codes 1
 
-    /** 字段名 */
+    /** Field name */
     var name = varchar("name").bindTo { it.name }
 
-    /** 对象名称 */
+    /** Object name */
     var objectName = varchar("object_name").bindTo { it.objectName }
 
-    /** 注释 */
+    /** Comment */
     var comment = varchar("comment").bindTo { it.comment }
 
-    /** 是否查询项 */
+    /** Whether it is a search item */
     var searchItem = boolean("search_item").bindTo { it.searchItem }
 
-    /** 是否列表项 */
+    /** Whether it is a list item */
     var listItem = boolean("list_item").bindTo { it.listItem }
 
-    /** 是否编辑项 */
+    /** Whether it is an edit item */
     var editItem = boolean("edit_item").bindTo { it.editItem }
 
-    /** 是否详情项 */
+    /** Whether it is a detail item */
     var detailItem = boolean("detail_item").bindTo { it.detailItem }
 
-    /** 是否缓存项 */
+    /** Whether it is a cache item */
     var cacheItem = boolean("cache_item").bindTo { it.cacheItem }
 
     //region your codes 2

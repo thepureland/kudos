@@ -17,36 +17,36 @@ class GoogleAuthenticatorTest {
     fun testSetWindowSize_valid_and_invalid() {
         val ga = GoogleAuthenticator()
 
-        // 默认 window_size = 3
-        assertEquals(3, ga.windowSize, "初始 window_size 应为 3")
+        // Default window_size = 3
+        assertEquals(3, ga.windowSize, "initial window_size should be 3")
 
-        // 设为合法值 1 - 17 之间
+        // Set to legal values between 1 and 17
         ga.windowSize = 1
-        assertEquals(1, ga.windowSize, "setWindowSize(1) 后，window_size 应改为 1")
+        assertEquals(1, ga.windowSize, "after setWindowSize(1), window_size should be 1")
 
         ga.windowSize = 17
-        assertEquals(17, ga.windowSize, "setWindowSize(17) 后，window_size 应改为 17")
+        assertEquals(17, ga.windowSize, "after setWindowSize(17), window_size should be 17")
 
-        // 设为非法值（<1、>17），不应该改变原有 window_size
+        // Set to illegal values (<1, >17) should not change the existing window_size
         ga.windowSize = 0
-        assertEquals(17, ga.windowSize, "setWindowSize(0) 无效，window_size 应保持为 17")
+        assertEquals(17, ga.windowSize, "setWindowSize(0) is invalid; window_size should remain 17")
 
         ga.windowSize = 18
-        assertEquals(17, ga.windowSize, "setWindowSize(18) 无效，window_size 应保持为 17")
+        assertEquals(17, ga.windowSize, "setWindowSize(18) is invalid; window_size should remain 17")
     }
 
     @Test
     fun testGenerateSecretKey_notNull_and_decodable() {
-        // GoogleAuthenticator.generateSecretKey 内部使用了固定的 SEED，对应的 SecureRandom 输出是确定的
+        // GoogleAuthenticator.generateSecretKey internally uses a fixed SEED, so the SecureRandom output is deterministic
         val secret = GoogleAuthenticator.generateSecretKey()
-        assertNotNull(secret, "generateSecretKey 不应返回 null")
+        assertNotNull(secret, "generateSecretKey should not return null")
 
-        // 用 Base32 解码后，byte 数组长度应该等于 SECRET_SIZE
+        // After Base32 decoding, the byte-array length should equal SECRET_SIZE
         val codec = Base32()
         val decoded = codec.decode(secret)
         assertEquals(
             GoogleAuthenticator.SECRET_SIZE, decoded.size,
-            "Base32.decode(generateSecretKey()) 后的长度应是 SECRET_SIZE = ${GoogleAuthenticator.SECRET_SIZE}"
+            "length of Base32.decode(generateSecretKey()) should be SECRET_SIZE = ${GoogleAuthenticator.SECRET_SIZE}"
         )
     }
 
@@ -54,47 +54,47 @@ class GoogleAuthenticatorTest {
     fun testGetQRBarcodeURL_format() {
         val user = "testUser"
         val host = "example.com"
-        val secret = "JBSWY3DPEHPK3PXP"  // 一个合法的 Base32 字符串
+        val secret = "JBSWY3DPEHPK3PXP"  // a valid Base32 string
         val url = GoogleAuthenticator.getQRBarcodeURL(user, host, secret)
 
-        // 格式化后应该为：
+        // The formatted URL should be:
         // https://www.google.com/chart?chs=200x200&chld=M%7C0&cht=qr&chl=otpauth://totp/testUser@example.com%3Fsecret%3DJBSWY3DPEHPK3PXP
         val expected =
             "https://www.google.com/chart?chs=200x200&chld=M%7C0&cht=qr&chl=otpauth://totp/" +
                     "${user}@${host}%3Fsecret%3D${secret}"
-        assertEquals(expected, url, "getQRBarcodeURL 返回的 URL 应当与预期格式一致")
+        assertEquals(expected, url, "the URL returned by getQRBarcodeURL should match the expected format")
     }
 
     @Test
     fun testCheckCode_withCorrectAndIncorrectValues() {
-        // 1）先用 generateSecretKey 生成一个“确定性”的 secret
+        // 1) First use generateSecretKey to generate a "deterministic" secret
         val secret = GoogleAuthenticator.generateSecretKey()!!
         val codec = Base32()
         val decodedKey = codec.decode(secret)
 
-        // 2）选一个固定时刻 timeMsec，比如 0（代表 Unix epoch），其对应的 TOTP 时间窗口 t = 0 / 1000 / 30 = 0
+        // 2) Pick a fixed instant timeMsec, e.g. 0 (the Unix epoch); the corresponding TOTP time window t = 0 / 1000 / 30 = 0
         val timeMsec = 0L
         val t = 0 / 30L
 
-        // 3）通过反射调用私有的 verify_code(decodedKey, t) 来生成“正确”的 six-digit code
+        // 3) Invoke the private verify_code(decodedKey, t) (via reflection) to generate the "correct" six-digit code
         val correctCodeObj = GoogleAuthenticator.verifyCode(decodedKey, t)
-        // correctCodeObj 是一个 0..999999 之间的整数
+        // correctCodeObj is an integer in [0..999999]
 
-        // 4）新建一个实例，默认 window_size = 3，可以在 [-3..3] 范围内校验
+        // 4) Create a new instance with the default window_size = 3, allowing validation in the [-3..3] window
         val ga = GoogleAuthenticator()
 
-        // 5.1）用正确的 code 去检查：应返回 true
+        // 5.1) Verify with the correct code: should return true
         val resultTrue = ga.checkCode(secret, correctCodeObj.toLong(), timeMsec)
-        assertTrue(resultTrue, "使用正确 code，在默认窗口大小下，check_code 应返回 true")
+        assertTrue(resultTrue, "using the correct code with the default window size, check_code should return true")
 
-        // 5.2）用错误的 code 去检查：应返回 false
-        val wrongCode = (correctCodeObj + 1) % 1000000  // 制造一个不同的验证码
+        // 5.2) Verify with an incorrect code: should return false
+        val wrongCode = (correctCodeObj + 1) % 1000000  // build a different verification code
         val resultFalse = ga.checkCode(secret, wrongCode.toLong(), timeMsec)
-        assertFalse(resultFalse, "使用错误 code，应返回 false")
+        assertFalse(resultFalse, "using an incorrect code should return false")
 
-        // 5.3）在超出 window 范围的偏移时间内也应返回 false
-        // 为避免极小概率的 TOTP 碰撞导致偶发失败，这里先收集窗口内合法 code，
-        // 再在窗口外寻找一个“不属于窗口内”的 code 进行断言。
+        // 5.3) A code at an offset outside the window range should also return false
+        // To avoid occasional flakiness due to a tiny-probability TOTP collision, first collect all valid in-window codes
+        // and then find an out-of-window code that does not belong to the window for the assertion.
         val validWindowCodes = (-ga.windowSize..ga.windowSize)
             .map { offset -> GoogleAuthenticator.verifyCode(decodedKey, t + offset.toLong()) }
             .toSet()
@@ -105,23 +105,23 @@ class GoogleAuthenticatorTest {
             outOfWindowCode = GoogleAuthenticator.verifyCode(decodedKey, outOfWindowT)
         }
         val resultOutOfWindow = ga.checkCode(secret, outOfWindowCode.toLong(), timeMsec)
-        assertFalse(resultOutOfWindow, "超出 window_size 范围的 code，应返回 false")
+        assertFalse(resultOutOfWindow, "a code outside window_size should return false")
     }
 
 
     @Test
     fun testVerifyCode_directInvocation_forConsistency() {
-        // 验证私有方法 verify_code 在不同时间窗口下行为合理。
-        // 使用一个固定 key, 例如：全 0 的 10 个字节
+        // Verify that the private method verify_code behaves reasonably across different time windows.
+        // Use a fixed key, e.g. 10 bytes of all zeros
         val key = ByteArray(10) { 0x00 }
-        // 在 t=0 时应该有一个确定值
+        // At t=0 there should be a deterministic value
         val codeAt0 = GoogleAuthenticator.verifyCode(key, 0L)
-        // 再次调用（同样 key、同样 t），值应该相同
+        // Invoking again (same key, same t) should return the same value
         val codeAt02 = GoogleAuthenticator.verifyCode(key, 0L)
-        assertEquals(codeAt0, codeAt02, "同一 key、同一 t，多次调用 verify_code 应返回相同值")
-        // 对不同 t 值，code 应该不同（极小概率碰撞不测试）
+        assertEquals(codeAt0, codeAt02, "multiple calls to verify_code with the same key and t should return the same value")
+        // For different t values, the code should differ (tiny-probability collisions are not tested)
         val codeAt1 = GoogleAuthenticator.verifyCode(key, 1L)
-        assertNotEquals(codeAt0, codeAt1, "同一 key，但 t 不同，codeAt0 和 codeAt1 应不同")
+        assertNotEquals(codeAt0, codeAt1, "same key but different t: codeAt0 and codeAt1 should differ")
     }
 
 }

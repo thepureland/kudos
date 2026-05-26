@@ -15,7 +15,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * [io.kudos.ability.cache.common.batch.hash.HashBatchCacheableByPrimary] 注解测试用例（远程 Redis）。
+ * Tests for the [io.kudos.ability.cache.common.batch.hash.HashBatchCacheableByPrimary] annotation (remote Redis).
  *
  * @author K
  * @author AI: Codex

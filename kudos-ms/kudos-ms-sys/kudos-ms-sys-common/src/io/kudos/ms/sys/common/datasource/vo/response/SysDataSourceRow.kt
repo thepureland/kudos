@@ -1,65 +1,65 @@
 package io.kudos.ms.sys.common.datasource.vo.response
 
 /**
- * 数据源列表查询结果响应VO
+ * Data source list query result response VO.
  *
  * @author K
  * @since 1.0.0
  */
 data class SysDataSourceRow (
 
-    /** 主键 */
+    /** Primary key. */
     val id: String = "",
 
-    /** 名称 */
+    /** Name. */
     val name: String = "",
 
-    /** 子系统编码 */
+    /** Sub-system code. */
     val subSystemCode: String = "",
 
-    /** 微服务编码 */
+    /** Microservice code. */
     val microServiceCode: String = "",
 
-    /** 租户id */
+    /** Tenant id. */
     val tenantId: String? = null,
 
-    /** 租房名称 */
+    /** Tenant name. */
     var tenantName: String? = null,
 
-    /** url */
+    /** URL. */
     val url: String = "",
 
-    /** 用户名 */
+    /** Username. */
     val username: String = "",
 
-    /** 密码 */
+    /** Password. */
     val password: String? = null,
 
-    /** 初始连接数。初始化发生在显示调用init方法，或者第一次getConnection时 */
+    /** Initial connection count. Initialization occurs on explicit init() call or the first getConnection(). */
     val initialSize: Int? = null,
 
-    /** 最大连接数 */
+    /** Maximum number of active connections. */
     val maxActive: Int? = null,
 
-    /** 最大空闲连接数 */
+    /** Maximum number of idle connections. */
     val maxIdle: Int? = null,
 
-    /** 最小空闲连接数。至少维持多少个空闲连接 */
+    /** Minimum number of idle connections to keep. */
     val minIdle: Int? = null,
 
-    /** 出借最长期限(毫秒)。客户端从连接池获取（借出）一个连接后，超时没有归还（return），则连接池会抛出异常 */
+    /** Maximum borrow duration (ms). If a connection borrowed from the pool is not returned in time, the pool throws an exception. */
     val maxWait: Int? = null,
 
-    /** 连接寿命(毫秒)。超时(相对于初始化时间)连接池将在出借或归还时删除这个连接 */
+    /** Connection lifetime (ms). After this timeout (relative to init time), the pool removes the connection on borrow or return. */
     val maxAge: Int? = null,
 
-    /** 备注 */
+    /** Remark. */
     val remark: String? = null,
 
-    /** 是否启用 */
+    /** Whether active. */
     val active: Boolean? = null,
 
-    /** 是否内置 */
+    /** Whether built-in. */
     val builtIn: Boolean? = null,
 
 )

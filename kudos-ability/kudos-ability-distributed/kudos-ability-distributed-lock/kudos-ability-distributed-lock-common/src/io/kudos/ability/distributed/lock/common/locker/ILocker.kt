@@ -4,43 +4,45 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.Lock
 
 /**
- * 分布式锁 SPI。具体实现见 `kudos-ability-distributed-lock-redisson`。
+ * Distributed lock SPI. See `kudos-ability-distributed-lock-redisson` for the concrete implementation.
  *
- * 设计意图：让业务代码 `@Autowired ILocker<*>` 后调用 `lock(key, ...)` / `unlock(key)`，
- * 不必接触 Redisson / Curator / Etcd 等具体客户端。
+ * Design intent: let business code `@Autowired ILocker<*>` and call `lock(key, ...)` / `unlock(key)`
+ * without touching specific clients such as Redisson / Curator / Etcd.
  *
- * @param T 锁类型，继承自标准 [Lock]——具体实现通常返回 `RLock`（Redisson）或类似可重入锁对象
+ * @param T lock type, extending the standard [Lock] — concrete implementations typically return an `RLock` (Redisson) or similar reentrant lock object
  * @author K
  * @since 1.0.0
  */
 interface ILocker<T : Lock?> {
-    /** 仅返回锁对象引用（不获取锁）。返回 null 表示无法构造锁。 */
+    /** Return only the lock object reference (does not acquire). Returns null if the lock cannot be constructed. */
     fun getLock(lockKey: String): T?
 
     /**
-     * 获取锁的便捷签名。
+     * Convenience signature for acquiring a lock.
      *
-     * 实现不应无限阻塞；无法在默认等待窗口内拿到锁时应返回 null。需要明确等待时间 / 租期的业务
-     * 应优先调用 [tryLock]。
+     * Implementations must not block forever; when the lock cannot be acquired within the default
+     * wait window they should return null. Code that needs explicit wait time / lease should
+     * prefer [tryLock].
      */
     fun lock(lockKey: String): T?
 
-    /** 阻塞获取锁，秒级超时。 */
+    /** Blocking acquisition with a timeout in seconds. */
     fun lock(lockKey: String, timeOut: Long): T?
 
-    /** 阻塞获取锁，自定义时间单位 + 超时。 */
+    /** Blocking acquisition with a custom time unit and timeout. */
     fun lock(lockKey: String, unit: TimeUnit, timeOut: Long): T?
 
     /**
-     * 非阻塞尝试获取锁，含租期（leaseTime）——超过租期自动释放，避免持锁线程挂掉导致永远不释放。
+     * Non-blocking acquisition attempt with a lease time — the lock is auto-released after the
+     * lease expires, preventing forever-held locks if the holding thread crashes.
      *
-     * @return true 表示获取成功；false 表示在 timeOut 内未取到
+     * @return true on success; false if the lock was not acquired within timeOut
      */
     fun tryLock(lockKey: String, unit: TimeUnit, timeOut: Long, leaseTime: Long): Boolean
 
-    /** 按 key 释放锁——调用方负责保证释放的是自己持有的锁。 */
+    /** Release the lock by key — the caller is responsible for ensuring it holds the lock being released. */
     fun unlock(lockKey: String)
 
-    /** 直接释放锁对象——避免 [unlock] 按 key 再查一次。 */
+    /** Release the lock object directly — avoids the extra by-key lookup in [unlock]. */
     fun unlock(lock: T)
 }

@@ -6,14 +6,15 @@ import java.net.InetAddress
 import java.net.UnknownHostException
 
 /**
- * [HttpServletRequest] 上的常用扩展函数集合。
+ * Common extension functions on [HttpServletRequest].
  *
- * 包含客户端 IP 解析（含 X-Forwarded-For 多级反向代理处理）、User-Agent → (浏览器 / OS / 终端)
- * 启发式解析、根 URL 拼装等。所有方法均为纯函数。
+ * Includes client IP resolution (with X-Forwarded-For multi-level reverse proxy handling),
+ * heuristic User-Agent -> (browser / OS / terminal) parsing, root URL assembly, etc. All methods are pure functions.
  *
- * **IP 解析安全提示**：[getRemoteIp] 信任客户端的 `x-forwarded-for` 等代理头——只能在
- * 应用已被可信反向代理（Nginx / ALB / Cloudflare）兜底过滤后使用。直接对外暴露的服务
- * 用本方法会被攻击者通过伪造头任意"修改"自身 IP。
+ * **IP resolution security note**: [getRemoteIp] trusts client proxy headers such as `x-forwarded-for`.
+ * It must only be used after the application is fronted by a trusted reverse proxy (Nginx / ALB / Cloudflare)
+ * that strips/normalises those headers. Using this method on a service directly exposed to the internet
+ * lets attackers spoof their own IP by forging the header.
  *
  * @author K
  * @author AI: Codex
@@ -21,9 +22,9 @@ import java.net.UnknownHostException
  */
 
 /**
- * 获取请求的真实ip地址，支持多级反向代理
+ * Obtain the real client IP of the request, supporting multi-level reverse proxies.
  *
- * @return ip地址
+ * @return IP address
  * @author K
  * @since 1.0.0
  */
@@ -40,9 +41,9 @@ fun HttpServletRequest.getRemoteIp(): String {
 }
 
 /**
- * 获取请求的浏览器信息
+ * Obtain the browser information of the request.
  *
- * @return Pair(浏览器名称，版本)
+ * @return Pair(browser name, version)
  * @author K
  * @since 1.0.0
  */
@@ -51,17 +52,17 @@ fun HttpServletRequest.getBrowserInfo(): Pair<String, String> {
     var name = "unknown"
     var version = "unknown"
     if (agent.isNullOrBlank()) {
-//        error("用户浏览器头未提供User-Agent信息，${this.requestURL}")
+//        error("Request did not provide a User-Agent header, ${this.requestURL}")
         return Pair(name, version)
     }
     var regex = """Version/([0-9.]+)"""
     when {
         agent.contains("MSIE") -> {
-            name = "MSIE" // 微软IE
+            name = "MSIE" // Microsoft IE
             regex = """$name\s([0-9.]+)"""
         }
         agent.contains("Firefox") -> {
-            name = "Firefox" // 火狐
+            name = "Firefox" // Mozilla Firefox
             regex = """$name/([0-9.]+)"""
         }
         agent.contains("Chrome") -> {
@@ -74,9 +75,9 @@ fun HttpServletRequest.getBrowserInfo(): Pair<String, String> {
         agent.contains("app_ios") -> name = "IOS App"
         agent.contains("Trident") -> name = "Trident"
         agent.contains("Edge") -> name = "Edge"
-        agent.contains("Maxthon") -> name = "Maxthon" // 遨游浏览器
+        agent.contains("Maxthon") -> name = "Maxthon" // Maxthon browser
         agent.contains("qqbrowser") -> name = "qqbrowser"
-        agent.contains("lbbrowser") -> name = "lbbrowser" // 猎豹浏览器
+        agent.contains("lbbrowser") -> name = "lbbrowser" // Cheetah browser
         agent.contains("UCBrowser") -> name = "UCBrowser"
         agent.contains("360SE") -> name = "360SE"
     }
@@ -86,9 +87,9 @@ fun HttpServletRequest.getBrowserInfo(): Pair<String, String> {
 
 
 /**
- * 获取请求的操作系统信息
+ * Obtain the operating system information of the request.
  *
- * @return Pair(操作系统名称，版本)
+ * @return Pair(OS name, version)
  * @author K
  * @since 1.0.0
  */
@@ -97,12 +98,12 @@ fun HttpServletRequest.getOsInfo(): Pair<String, String> {
     var name = "unknown"
     var version = "unknown"
     if (agent.isNullOrBlank()) {
-//        error("用户浏览器头未提供User-Agent信息，${this.requestURL}")
+//        error("Request did not provide a User-Agent header, ${this.requestURL}")
         return Pair(name, version)
     }
     when {
         agent.contains("Windows") -> {
-            name = "Windows" //如：win7 = Windows NT 6.1
+            name = "Windows" // e.g. Windows 7 = Windows NT 6.1
             Regex("""$name\s([a-zA-Z0-9]+\s[0-9.]+)""").find(agent)?.groupValues?.getOrNull(1)?.let { version = it }
         }
         agent.contains("FreeBSD") -> name = "FreeBSD"
@@ -124,9 +125,9 @@ fun HttpServletRequest.getOsInfo(): Pair<String, String> {
 }
 
 /**
- * 返回请求终端类型
+ * Return the terminal type of the request.
  *
- * @return 终端类型
+ * @return terminal type
  * @author K
  * @since 1.0.0
  */
@@ -134,7 +135,7 @@ fun HttpServletRequest.getClientTerminal(): String {
     val agent = this.getHeader("User-Agent")
     var name = "unknown"
     if (agent.isNullOrBlank()) {
-//        LOG.warn("请求日志{0},用户浏览器头未提供User-Agent信息", request.requestURL)
+//        LOG.warn("Request log {0}, request did not provide a User-Agent header", request.requestURL)
         return name
     }
     name = if (agent.contains("app_android") || agent.contains("app_ios")) {
@@ -150,9 +151,9 @@ fun HttpServletRequest.getClientTerminal(): String {
 }
 
 /**
- * 获取站点的根路径，即协议+主机+端口+上下文
+ * Obtain the site's root path, i.e. scheme + host + port + context.
  *
- * @return 站点的根路径
+ * @return site root path
  * @author K
  * @since 1.0.0
  */
@@ -164,9 +165,9 @@ fun HttpServletRequest.getRootPath(): String {
 }
 
 /**
- * 获取站点的根路径，即协议+主机+端口
+ * Obtain the site's root path, i.e. scheme + host + port.
  *
- * @return 站点的根路径
+ * @return site root path
  * @author K
  * @since 1.0.0
  */
@@ -177,14 +178,14 @@ fun HttpServletRequest.getDomainPath(): String {
 }
 
 /**
- * 多级反向代理场景下，从 `x-forwarded-for` 之类的逗号分隔列表中挑出第一个**非私网**地址；
- * IPv6 loopback `0:0:0:0:0:0:0:1` 翻译为本机 IPv4 hostAddress。
+ * In multi-level reverse proxy scenarios, pick the first **non-private** address from a comma-separated list such as `x-forwarded-for`;
+ * translate the IPv6 loopback `0:0:0:0:0:0:0:1` to the local IPv4 hostAddress.
  *
- * 私网段判定见 [isLocalA] / [isLocalB] / [isLocalC] / [isLocal0]。
+ * Private subnet checks: see [isLocalA] / [isLocalB] / [isLocalC] / [isLocal0].
  *
- * @param ip 可能含多个 IP（逗号分隔）的字符串
- * @return 第一个公网 IPv4；全为私网时返回最后一个非空段；IPv6 loopback 转为本机 hostAddress
- * @throws IllegalStateException IPv6 loopback 翻译失败时
+ * @param ip a string possibly containing multiple IPs (comma separated)
+ * @return the first public IPv4; if all addresses are private, returns the last non-empty segment; IPv6 loopback is converted to the local hostAddress
+ * @throws IllegalStateException when IPv6 loopback translation fails
  * @author K
  * @since 1.0.0
  */
@@ -197,66 +198,66 @@ private fun getIP(ip: String): String {
             break
         }
     }
-    // IPv6 本机回环：翻成 IPv4 主机地址，便于审计 / 日志展示
+    // IPv6 loopback: translate to the IPv4 host address for easier auditing / log display.
     if ("0:0:0:0:0:0:0:1" == ipAddress) {
         ipAddress = try {
             InetAddress.getLocalHost().hostAddress
         } catch (e: UnknownHostException) {
-            throw IllegalStateException("无法解析本机 IP（IPv6 loopback 翻译失败）", e)
+            throw IllegalStateException("Unable to resolve local IP (IPv6 loopback translation failed)", e)
         }
     }
     return ipAddress
 }
 
-// 私网段边界值预先转 Long 缓存，避免每个请求做 4 段字符串→long 计算
-/** A 类私网段起始：10.0.0.0 */
+// Pre-convert private subnet boundary values to Long and cache them, avoiding a 4-segment string -> long computation per request.
+/** Class A private subnet start: 10.0.0.0 */
 private val LOCAL_A_START = IpKit.ipv4StringToLong("10.0.0.0")
-/** A 类私网段结束：10.255.255.255 */
+/** Class A private subnet end: 10.255.255.255 */
 private val LOCAL_A_END = IpKit.ipv4StringToLong("10.255.255.255")
-/** B 类私网段起始：172.16.0.0 */
+/** Class B private subnet start: 172.16.0.0 */
 private val LOCAL_B_START = IpKit.ipv4StringToLong("172.16.0.0")
-/** B 类私网段结束：172.31.255.255 */
+/** Class B private subnet end: 172.31.255.255 */
 private val LOCAL_B_END = IpKit.ipv4StringToLong("172.31.255.255")
-/** C 类私网段起始：192.168.0.0 */
+/** Class C private subnet start: 192.168.0.0 */
 private val LOCAL_C_START = IpKit.ipv4StringToLong("192.168.0.0")
-/** C 类私网段结束：192.168.255.255 */
+/** Class C private subnet end: 192.168.255.255 */
 private val LOCAL_C_END = IpKit.ipv4StringToLong("192.168.255.255")
-/** 本机回环地址：127.0.0.1 */
+/** Local loopback address: 127.0.0.1 */
 private val LOCAL_LOOPBACK = IpKit.ipv4StringToLong("127.0.0.1")
-/** 占位地址：0.0.0.0 */
+/** Placeholder address: 0.0.0.0 */
 private val LOCAL_ZERO = IpKit.ipv4StringToLong("0.0.0.0")
 
 /**
- * 192.168.0.0/16 C 类私网段判定。
- * @param ip 待判定 IP 的 Long 表示
- * @return true 表示属于 C 类私网
+ * Determine whether the IP is in the 192.168.0.0/16 Class C private subnet.
+ * @param ip the Long representation of the IP to check
+ * @return true if it belongs to a Class C private subnet
  * @author K
  * @since 1.0.0
  */
 private fun isLocalC(ip: Long): Boolean = ip in LOCAL_C_START..LOCAL_C_END
 
 /**
- * 172.16.0.0/12 B 类私网段判定。
- * @param ip 待判定 IP 的 Long 表示
- * @return true 表示属于 B 类私网
+ * Determine whether the IP is in the 172.16.0.0/12 Class B private subnet.
+ * @param ip the Long representation of the IP to check
+ * @return true if it belongs to a Class B private subnet
  * @author K
  * @since 1.0.0
  */
 private fun isLocalB(ip: Long): Boolean = ip in LOCAL_B_START..LOCAL_B_END
 
 /**
- * 10.0.0.0/8 A 类私网段判定。
- * @param ip 待判定 IP 的 Long 表示
- * @return true 表示属于 A 类私网
+ * Determine whether the IP is in the 10.0.0.0/8 Class A private subnet.
+ * @param ip the Long representation of the IP to check
+ * @return true if it belongs to a Class A private subnet
  * @author K
  * @since 1.0.0
  */
 private fun isLocalA(ip: Long): Boolean = ip in LOCAL_A_START..LOCAL_A_END
 
 /**
- * 本机回环 / 占位地址判定（127.0.0.1 或 0.0.0.0）。
- * @param ip 待判定 IP 的 Long 表示
- * @return true 表示属于本机或占位地址
+ * Determine whether the IP is a local loopback / placeholder address (127.0.0.1 or 0.0.0.0).
+ * @param ip the Long representation of the IP to check
+ * @return true if it is a local or placeholder address
  * @author K
  * @since 1.0.0
  */

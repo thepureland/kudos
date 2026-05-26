@@ -7,26 +7,26 @@ import kotlin.reflect.KProperty0
 
 
 /**
- * 参数列表查询条件请求VO
+ * Parameter list query criteria request VO.
  *
  * @author K
  * @since 1.0.0
  */
 data class SysParamQuery (
 
-    /** 参数名称 */
+    /** Parameter name */
     val paramName: String? = null,
 
-    /** 参数值 */
+    /** Parameter value */
     val paramValue: String? = null,
 
-    /** 默认参数值 */
+    /** Default parameter value */
     val defaultValue: String? = null,
 
-    /** 模块 */
+    /** Module */
     val atomicServiceCode: String? = null,
 
-    /** 仅启用 */
+    /** Active only */
     val active: Boolean? = true,
 
 ) : ListSearchPayload() {

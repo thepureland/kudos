@@ -8,30 +8,30 @@ import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Positive
 
 /**
- * 缓存表单基础字段（新建 / 更新共用）
+ * Cache form base fields (shared by create / update)
  *
  * @author K
  * @since 1.0.0
  */
 interface ISysCacheFormBase {
 
-    /** 缓存策略代码 */
+    /** Cache strategy code */
     @get:NotBlank
     @get:DictItemCode(dictType = SysDictTypes.CACHE_STRATEGY, atomicServiceCode = SysConsts.ATOMIC_SERVICE_NAME)
     @get:MaxLength(16)
     val strategyDictCode: String
 
-    /** 是否启动时写缓存 */
+    /** Whether to write cache on startup */
     val writeOnBoot: Boolean
 
-    /** 是否及时回写缓存 */
+    /** Whether to write back cache in real time */
     val writeInTime: Boolean
 
-    /** 缓存生存时间(秒) */
+    /** Cache time-to-live (seconds) */
     @get:Positive
     val ttl: Int?
 
-    /** 备注 */
+    /** Remark */
     @get:MaxLength(128)
     val remark: String?
 }

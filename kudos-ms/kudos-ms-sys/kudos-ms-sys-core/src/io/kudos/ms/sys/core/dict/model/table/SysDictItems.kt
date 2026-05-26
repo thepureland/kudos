@@ -7,26 +7,26 @@ import org.ktorm.schema.varchar
 
 
 /**
- * 字典项数据库表-实体关联对象
+ * Dictionary item database table-entity binding object.
  *
  * @author K
  * @since 1.0.0
  */
 object SysDictItems : ManagedTable<SysDictItem>("sys_dict_item") {
 
-    /** 字典项代码 */
+    /** Dictionary item code */
     var itemCode = varchar("item_code").bindTo { it.itemCode }
 
-    /** 字典项名称 */
+    /** Dictionary item name */
     var itemName = varchar("item_name").bindTo { it.itemName }
 
-    /** 字典id */
+    /** Dictionary id */
     var dictId = varchar("dict_id").bindTo { it.dictId }
 
-    /** 字典项排序 */
+    /** Dictionary item order */
     var orderNum = int("order_num").bindTo { it.orderNum }
 
-    /** 父id */
+    /** Parent id */
     var parentId = varchar("parent_id").bindTo { it.parentId }
 
 

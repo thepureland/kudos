@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component
 
 
 /**
- * 语言/区域字典 API本地实现
+ * Local implementation of the language/locale dictionary API.
  *
  * @author K
  * @since 1.0.0

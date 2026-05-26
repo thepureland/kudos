@@ -13,7 +13,7 @@ import kotlin.test.Test
 
 
 /**
- * 不启用缓存测试用例
+ * Test cases with cache disabled.
  *
  * @author K
  * @author AI: Codex

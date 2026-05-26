@@ -3,30 +3,30 @@ package io.kudos.ms.user.common.account.enums
 import io.kudos.base.enums.ienums.IErrorCodeEnum
 
 /**
- * 账户保护错误码
+ * Account protection error codes
  *
  * @author K
  * @author AI: Codex
  * @since 1.0.0
  */
 enum class UserAccountProtectionErrorCodeEnum(
-    /** 错误码 */
+    /** Error code */
     override val code: String,
-    /** 默认展示文本 */
+    /** Default display text */
     override val defaultDisplayText: String,
 ) : IErrorCodeEnum {
 
-    /** 未定义错误 */
-    UNSPECIFIED("UNSPECIFIED", "未定义错误"),
+    /** Unspecified error */
+    UNSPECIFIED("UNSPECIFIED", "Unspecified error"),
 
-    /** 按 user_id 查找账户保护记录失败 */
-    PROTECTION_NOT_FOUND("PROTECTION_NOT_FOUND", "账户保护记录不存在"),
+    /** Lookup account protection record by user_id failed */
+    PROTECTION_NOT_FOUND("PROTECTION_NOT_FOUND", "Account protection record not found"),
 
-    /** 账户已被锁定 */
-    ACCOUNT_LOCKED("ACCOUNT_LOCKED", "账户已被锁定"),
+    /** Account is locked */
+    ACCOUNT_LOCKED("ACCOUNT_LOCKED", "Account is locked"),
 
-    /** 密码错误次数超出阈值 */
-    PASSWORD_RETRY_EXCEEDED("PASSWORD_RETRY_EXCEEDED", "密码错误次数超出阈值");
+    /** Password error count exceeded threshold */
+    PASSWORD_RETRY_EXCEEDED("PASSWORD_RETRY_EXCEEDED", "Password error count exceeded threshold");
 
     override val i18nKeyPrefix: String
         get() = "user.error-msg.protection"

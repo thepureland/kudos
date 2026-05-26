@@ -6,14 +6,14 @@ import jakarta.validation.constraints.NotBlank
 
 
 /**
- * 字典表单更新请求VO
+ * Dictionary form update request VO
  *
  * @author K
  * @since 1.0.0
  */
 data class ISysDictFormUpdate (
 
-    /** 主键 */
+    /** Primary key */
     @get:NotBlank
     @get:FixedLength(36)
     override val id: String?,

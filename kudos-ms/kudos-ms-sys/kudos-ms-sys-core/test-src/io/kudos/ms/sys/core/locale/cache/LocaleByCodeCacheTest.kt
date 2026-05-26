@@ -16,7 +16,7 @@ import kotlin.test.assertNull
 /**
  * junit test for LocaleByCodeCache
  *
- * 测试数据来源：`LocaleByCodeCacheTest.sql`
+ * Test data source: `LocaleByCodeCacheTest.sql`
  *
  * @author K
  * @since 1.0.0
@@ -38,7 +38,7 @@ class LocaleByCodeCacheTest : RdbAndRedisCacheTestBase() {
         assertEquals("ko_KR", item.code)
     }
 
-    /** active=false 的项不在缓存中。 */
+    /** Items with active=false should not be present in the cache. */
     @Test
     fun getLocale_inactive_returnsNull() {
         cacheHandler.reloadAll(clear = true)
@@ -51,7 +51,7 @@ class LocaleByCodeCacheTest : RdbAndRedisCacheTestBase() {
         val newCode = "test_locale_insert"
         val po = SysLocale().apply {
             code = newCode
-            displayName = "测试"
+            displayName = "Test"
             englishName = "Test Insert"
             sortNo = 9000
             active = true
@@ -72,7 +72,7 @@ class LocaleByCodeCacheTest : RdbAndRedisCacheTestBase() {
     fun syncOnUpdate() {
         cacheHandler.reloadAll(clear = true)
         val id = "30000000-0000-0000-0000-000000006001" // ko_KR seeded
-        val newDisplay = "韩国语-修改后"
+        val newDisplay = "Korean-Updated"
         val success = dao.updateProperties(id, mapOf(SysLocale::displayName.name to newDisplay))
         assert(success)
 
@@ -98,7 +98,7 @@ class LocaleByCodeCacheTest : RdbAndRedisCacheTestBase() {
     fun syncOnBatchDelete() {
         cacheHandler.reloadAll(clear = true)
         val codes = setOf("ko_KR", "it_IT")
-        // 二者起始都应启用
+        // Both should initially be active
         assertNotNull(cacheHandler.getLocale("ko_KR"))
         assertNotNull(cacheHandler.getLocale("it_IT"))
 

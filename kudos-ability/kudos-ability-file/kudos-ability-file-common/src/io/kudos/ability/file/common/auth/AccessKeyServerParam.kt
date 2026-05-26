@@ -1,7 +1,7 @@
 package io.kudos.ability.file.common.auth
 
 /**
- * 基于用户名 密码
+ * Username/password-based authentication parameters.
  *
  * @author K
  * @author AI: Codex
@@ -9,12 +9,12 @@ package io.kudos.ability.file.common.auth
  */
 class AccessKeyServerParam : AuthServerParam {
     /**
-     * 用户名
+     * Username.
      */
     var accessKey: String? = null
 
     /**
-     * 密码
+     * Password.
      */
     var secretKey: String? = null
 

@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.common.param.vo.request
 
 /**
- * 参数表单新建请求VO
+ * Request VO for creating a parameter form.
  *
  * @author K
  * @since 1.0.0

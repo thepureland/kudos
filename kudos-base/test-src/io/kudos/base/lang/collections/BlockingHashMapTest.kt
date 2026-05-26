@@ -23,9 +23,9 @@ internal class BlockingHashMapTest {
 
     @Test
     fun putThenTakeSingleValue() = runBlocking {
-        // 单生产单消费
+        // single producer / single consumer
         launch {
-            delay(50) // 确保 put 在 take 之前一小会儿发生
+            delay(50) // ensure put happens slightly after take
             map.put("key1", "hello")
         }
 
@@ -36,15 +36,15 @@ internal class BlockingHashMapTest {
     @Test
     fun takeBlocksUntilPut() = runBlocking {
         val job = launch {
-            // 先启动一个 take，会挂起，因为当前尚未调用 put
+            // start a take first; it will suspend because put has not been called yet
             val value = map.take("blockKey")
             assertEquals("world", value)
         }
 
-        // 确保 take 已经挂起
+        // ensure take has suspended
         delay(100)
 
-        // 然后再 put
+        // then put
         map.put("blockKey", "world")
         job.join()
     }
@@ -56,7 +56,7 @@ internal class BlockingHashMapTest {
         val elapsed = System.currentTimeMillis() - start
 
         assertNull(value)
-        // 大致超时在 200ms 左右
+        // approximately 200ms timeout
         assertTrue(elapsed >= 180, "Expected to wait ~200ms, but waited only $elapsed ms")
     }
 
@@ -72,7 +72,7 @@ internal class BlockingHashMapTest {
 
     @Test
     fun pollNegativeTimeoutThrows() {
-        // 负数超时应抛 IllegalArgumentException
+        // a negative timeout should throw IllegalArgumentException
         runBlocking {
             assertFailsWith<IllegalArgumentException> {
                 map.poll("any", -10)
@@ -82,8 +82,8 @@ internal class BlockingHashMapTest {
 
     @Test
     fun multipleWaitersEachGetOneValue() = runBlocking {
-        // 同一个 key 上有两个协程同时 take()，我们发送两次 put，
-        // 应该让这两个 take 分别各自拿到一次“不同的”值。
+        // Two coroutines call take() on the same key concurrently; we send two puts.
+        // Each take should receive a different value, exactly once.
         val results = mutableListOf<String>()
         val lock = Any()
 
@@ -96,30 +96,30 @@ internal class BlockingHashMapTest {
             synchronized(lock) { results.add(x) }
         }
 
-        // 等待两者都挂起
+        // wait for both to suspend
         delay(100)
 
-        // 先后两次 put，不同值
+        // put twice with different values
         map.put("multiKey", "one")
         map.put("multiKey", "two")
 
-        // 等待两个 take 都返回
+        // wait for both takes to return
         waiter1.join()
         waiter2.join()
 
-        // 结果里应当包含 "one" 和 "two"，且各自只被消费一次
+        // results should contain "one" and "two", each consumed only once
         assertEquals(2, results.size)
         assertTrue(results.containsAll(listOf("one", "two")))
     }
 
     @Test
     fun putAfterMultiplePollers() = runBlocking {
-        // 对 poll 也要支持相同的逻辑：如果超时足够大，第二个 poll 也能拿到第二个 put
+        // poll should support the same semantics: with a large enough timeout, the second poll can also receive the second put
         val r = mutableListOf<String>()
         val mtx = Any()
 
         val p1 = launch {
-            val x = map.poll("X", 1000)   // 应当一直等到 put
+            val x = map.poll("X", 1000)   // should wait for the put
             synchronized(mtx) { r.add(x!!) }
         }
         val p2 = launch {
@@ -139,7 +139,7 @@ internal class BlockingHashMapTest {
 
     @Test
     fun takeAndPollInterleave() = runBlocking {
-        // 当一个协程在 take，另一个在 poll 并带超时，两者都能正确接收
+        // When one coroutine is taking and another is polling with a timeout, both should receive correctly.
         val cResults = mutableListOf<String>()
         val m = Any()
 
@@ -154,14 +154,14 @@ internal class BlockingHashMapTest {
 
         delay(50)
         map.put("Z", "foo")
-        // 由于有一个 take，会先消费 "foo"。那么 poll 会等第二次 put
+        // Because one take exists, it consumes "foo" first. poll then waits for the second put.
         delay(50)
         map.put("Z", "bar")
 
         t1.join()
         t2.join()
 
-        // 最终顺序不一定是具体先哪个协程先拿到值，但要保证两条都被收到了
+        // The order of which coroutine receives first is not guaranteed, but both messages must be received.
         assertEquals(2, cResults.size)
         assertTrue(cResults.containsAll(listOf("T1:foo", "P1:bar")))
     }

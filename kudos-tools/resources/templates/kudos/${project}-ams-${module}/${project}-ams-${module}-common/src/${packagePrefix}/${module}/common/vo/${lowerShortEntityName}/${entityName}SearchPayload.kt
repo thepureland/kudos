@@ -31,7 +31,7 @@ import java.sql.SQLXML
 </#if>
 
 
-<@generateClassComment table.comment+"查询条件载体"/>
+<@generateClassComment table.comment+" search criteria payload"/>
 data class ${entityName}SearchPayload (
 
     //region your codes 1

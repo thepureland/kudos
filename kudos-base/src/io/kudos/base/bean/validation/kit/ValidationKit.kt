@@ -8,7 +8,7 @@ import org.hibernate.validator.HibernateValidator
 import kotlin.reflect.KClass
 
 /**
- * Bean验证工具类
+ * Bean validation utility.
  *
  * @author K
  * @since 1.0.0
@@ -16,12 +16,12 @@ import kotlin.reflect.KClass
 object ValidationKit {
 
     /**
-     * 校验Bean对象
+     * Validate a bean object.
      *
-     * @param T bean类型
-     * @param bean 要校验的bean对象
-     * @param groups 标识分组的Class数组，不为空将只校验指定分组的约束
-     * @param failFast 是否为快速失败模式
+     * @param T the bean type
+     * @param bean the bean to validate
+     * @param groups the array of group identifier classes; when non-empty, only constraints for the specified groups are validated
+     * @param failFast whether to use fail-fast mode
      * @return Set(ConstraintViolation(Bean))
      * @author K
      * @since 1.0.0
@@ -42,13 +42,13 @@ object ValidationKit {
     }
 
     /**
-     * 校验Bean对象的单个属性
+     * Validate a single property of a bean object.
      *
-     * @param T bean类型
-     * @param bean 要校验的bean对象
-     * @param property 要校验的属性
-     * @param groups 标识分组的Class数组，不为空将只校验指定分组的约束
-     * @param failFast 是否为快速失败模式
+     * @param T the bean type
+     * @param bean the bean to validate
+     * @param property the property to validate
+     * @param groups the array of group identifier classes; when non-empty, only constraints for the specified groups are validated
+     * @param failFast whether to use fail-fast mode
      * @return Set(ConstraintViolation(Bean))
      * @author K
      * @since 1.0.0
@@ -70,14 +70,14 @@ object ValidationKit {
     }
 
     /**
-     * 校验Bean类的单个属性
+     * Validate a single property of a bean class.
      *
-     * @param T bean类型
-     * @param beanClass 要校验的bean类
-     * @param property 要校验的属性
-     * @param value 要校验的属性值
-     * @param groups 标识分组的Class数组，不为空将只校验指定分组的约束
-     * @param failFast 是否为快速失败模式
+     * @param T the bean type
+     * @param beanClass the bean class to validate
+     * @param property the property to validate
+     * @param value the property value to validate
+     * @param groups the array of group identifier classes; when non-empty, only constraints for the specified groups are validated
+     * @param failFast whether to use fail-fast mode
      * @return Set(ConstraintViolation(Bean))
      * @author K
      * @since 1.0.0
@@ -98,10 +98,10 @@ object ValidationKit {
     }
 
     /**
-     * 得到验证器
+     * Get the validator.
      *
-     * @param failFast 是否为快速失败模式
-     * @return 验证器
+     * @param failFast whether to use fail-fast mode
+     * @return the validator
      * @author K
      * @since 1.0.0
      */
@@ -116,7 +116,7 @@ object ValidationKit {
             ValidationContext.setFactory(validatorFactory)
             ValidationContext.validator = validatorFactory.validator
         }
-        return requireNotNull(ValidationContext.validator) { "Validator 尚未初始化" }
+        return requireNotNull(ValidationContext.validator) { "Validator has not been initialized" }
     }
 
 

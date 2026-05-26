@@ -15,17 +15,17 @@ import kotlin.test.assertNull
 /**
  * junit test for ParamByModuleAndNameCacheHandler
  *
- * 测试数据来源：`ParamByModuleAndNameCacheTest.sql`
+ * Test data source: `ParamByModuleAndNameCacheTest.sql`
  *
  * @author K
  * @since 1.0.0
  */
 @EnabledIfDockerInstalled
 class ParamByModuleAndNameCacheTest : RdbAndRedisCacheTestBase() {
-    
+
     @Resource
     private lateinit var cacheHandler: ParamByModuleAndNameCache
-    
+
     @Resource
     private lateinit var dao: SysParamDao
 
@@ -33,49 +33,49 @@ class ParamByModuleAndNameCacheTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun reloadAll() {
-        // 清除并重载缓存，保证与数据库中的数据一致
+        // Clear and reload the cache so it matches the DB
         cacheHandler.reloadAll(true)
 
-        // 获取当前缓存中的记录
+        // Get current cached record
         var atomicServiceCode = "atomicServiceCode-a"
         var paramName = "paramName-1"
         val cacheItem = cacheHandler.getParam(atomicServiceCode, paramName)
 
-        // 插入新的记录到数据库
+        // Insert a new record into the DB
         val sysParamNew = insertNewRecordToDb()
 
-        // 更新数据库的记录
+        // Update an existing DB record
         val idUpdate = "9edc0327-99f1-4767-b42b-222222229755"
         dao.updateProperties(idUpdate, mapOf(SysParam::paramValue.name to newValue))
 
-        // 从数据库中删除记录
+        // Delete a record from the DB
         val idDelete = "9edc0327-99f1-4767-b42b-333333339755"
         dao.deleteById(idDelete)
 
-        // 重载缓存，但不清除旧缓存
+        // Reload the cache without clearing the old one
         cacheHandler.reloadAll(false)
 
-        // 原来缓存中的记录内存地址会变
+        // Cached object should be a new instance (different memory address)
         assert(cacheItem !== cacheHandler.getParam(atomicServiceCode, paramName))
 
-        // 数据库中新增的记录在缓存应该要存在
+        // The newly inserted DB record should be in the cache
         assertNotNull(cacheHandler.getParam(sysParamNew.atomicServiceCode, sysParamNew.paramName))
 
-        // 数据库中更新的记录在缓存中应该也更新了
+        // The DB-updated record should also be updated in the cache
         atomicServiceCode = "atomicServiceCode-a"
         paramName = "paramName-2"
         val cacheItemUpdate = assertNotNull(cacheHandler.getParam(atomicServiceCode, paramName))
         assertEquals(newValue, cacheItemUpdate.paramValue)
 
-        // 数据库中删除的记录在缓存中应该还存在
+        // The DB-deleted record should still remain in the cache (stale)
         atomicServiceCode = "atomicServiceCode-a"
         paramName = "paramName-3"
         assertNotNull(cacheHandler.getParam(atomicServiceCode, paramName))
 
-        // 清除旧缓存，并重载缓存
+        // Clear old cache and reload
         cacheHandler.reloadAll(true)
 
-        // 数据库中删除的记录在缓存中应该不存在
+        // Now the DB-deleted record should no longer be in the cache
         atomicServiceCode = "atomicServiceCode-a"
         paramName = "paramName-3"
         assertNull(cacheHandler.getParam(atomicServiceCode, paramName))
@@ -87,7 +87,7 @@ class ParamByModuleAndNameCacheTest : RdbAndRedisCacheTestBase() {
         var paramName = "paramName-1"
         assertNotNull(cacheHandler.getParam(atomicServiceCode, paramName))
 
-        // active为false的应该没有在缓存中
+        // Params with active=false should not be in the cache
         atomicServiceCode = "atomicServiceCode-d"
         paramName = "paramName-0"
         assertNull(cacheHandler.getParam(atomicServiceCode, paramName))
@@ -95,13 +95,13 @@ class ParamByModuleAndNameCacheTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnInsert() {
-        // 插入新的记录到数据库
+        // Insert a new record into the DB
         val sysParam = insertNewRecordToDb()
 
-        // 同步缓存
+        // Sync cache
         cacheHandler.syncOnInsert(sysParam, sysParam.id)
 
-        // 验证新记录是否在缓存中
+        // Verify the new record is in the cache
         val key = cacheHandler.getKey(sysParam.atomicServiceCode, sysParam.paramName)
         assertNotNull(KeyValueCacheKit.getValue(cacheHandler.cacheName(), key))
         assertNotNull(cacheHandler.getParam(sysParam.atomicServiceCode, sysParam.paramName))
@@ -109,17 +109,17 @@ class ParamByModuleAndNameCacheTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnUpdate() {
-        // 更新数据库中已存在的记录
+        // Update an existing DB record
         val id = "9edc0327-99f1-4767-b42b-444444449755"
         val success = dao.updateProperties(id, mapOf(SysParam::paramValue.name to newValue))
         assert(success)
 
         val sysParam = assertNotNull(dao.get(id))
 
-        // 同步缓存
+        // Sync cache
         cacheHandler.syncOnUpdate(sysParam, id)
 
-        // 验证缓存中的记录
+        // Verify the cached record
         val key = cacheHandler.getKey(sysParam.atomicServiceCode, sysParam.paramName)
         var cacheItem = KeyValueCacheKit.getValue(cacheHandler.cacheName(), key) as SysParamCacheEntry?
         assertNotNull(cacheItem)
@@ -131,7 +131,7 @@ class ParamByModuleAndNameCacheTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnUpdateActive() {
-        // 由true更新为false
+        // Update from true to false
         var id = "9edc0327-99f1-4767-b42b-555555559755"
         var success = dao.updateProperties(id, mapOf(SysParam::active.name to false))
         assert(success)
@@ -141,7 +141,7 @@ class ParamByModuleAndNameCacheTest : RdbAndRedisCacheTestBase() {
         assertNull(KeyValueCacheKit.getValue(cacheHandler.cacheName(), key))
         assertNull(cacheHandler.getParam(sysParam.atomicServiceCode, sysParam.paramName))
 
-        // 由false更新为true
+        // Update from false to true
         id = "9edc0327-99f1-4767-b42b-000000009755"
         success = dao.updateProperties(id, mapOf(SysParam::active.name to true))
         assert(success)
@@ -157,14 +157,14 @@ class ParamByModuleAndNameCacheTest : RdbAndRedisCacheTestBase() {
         val id = "9edc0327-99f1-4767-b42b-666666669755"
         val sysParam = assertNotNull(dao.get(id))
 
-        // 删除数据库中的记录
+        // Delete the DB record
         val deleteSuccess = dao.deleteById(id)
         assert(deleteSuccess)
 
-        // 同步缓存
+        // Sync cache
         cacheHandler.syncOnDelete(sysParam, id)
 
-        // 验证缓存中有没有
+        // Verify it's gone from the cache
         val key = cacheHandler.getKey(sysParam.atomicServiceCode, sysParam.paramName)
         assertNull(KeyValueCacheKit.getValue(cacheHandler.cacheName(), key))
         assertNull(cacheHandler.getParam(sysParam.atomicServiceCode, sysParam.paramName))
@@ -184,14 +184,14 @@ class ParamByModuleAndNameCacheTest : RdbAndRedisCacheTestBase() {
             Pair(atomicServiceCode2, paramName2)
         )
 
-        // 批量删除数据库中的记录
+        // Batch delete DB records
         val count = dao.batchDelete(ids)
         assertEquals(2, count)
 
-        // 同步缓存
+        // Sync cache
         cacheHandler.syncOnBatchDelete(ids, moduleAndNames)
 
-        // 验证缓存中有没有
+        // Verify they're gone from the cache
         var key = cacheHandler.getKey(atomicServiceCode1, paramName1)
         assertNull(KeyValueCacheKit.getValue(cacheHandler.cacheName(), key))
         assertNull(cacheHandler.getParam(atomicServiceCode1, paramName1))

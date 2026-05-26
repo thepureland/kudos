@@ -13,12 +13,12 @@ import org.hibernate.validator.constraints.*
 import kotlin.reflect.KClass
 
 /**
- * 组合约束注解，可以实现以下目的：
- * 1.按定义的注解顺序校验(可以替代@GroupSequence和@GroupSequenceProvider)
- * 2.支持其中一个约束通过就算校验通过(AndOr.Or)
+ * Composite constraint annotation. It can serve the following purposes:
+ * 1. Validate constraints in the declared order (a replacement for @GroupSequence and @GroupSequenceProvider).
+ * 2. Allow validation to pass as long as one of the constraints passes (AndOr.Or).
  *
- * 使用限制：
- * 1.尚不支持约束注解中的List规范
+ * Usage limitations:
+ * 1. The List specification inside constraint annotations is not yet supported.
  *
  * @author K
  * @since 1.0.0
@@ -35,188 +35,188 @@ import kotlin.reflect.KClass
 @Repeatable
 annotation class Constraints(
 
-    /** 子约束的校验顺序 */
+    /** Validation order of the sub-constraints. */
     val order: Array<KClass<out Annotation>> = [],
 
-    /** 各约束间的逻辑关系，为AND时所有约束校验通过才算通过，为OR时只要其中一个约束校验通过就算通过 */
+    /** Logical relationship between the constraints; when AND, all constraints must pass to pass overall; when OR, validation passes as long as any one constraint passes. */
     val andOr: AndOrEnum = AndOrEnum.AND,
 
-    // jakarta.validation定义的约束
-    /** 逻辑假约束，被校验对象类型必须为Boolean，且值为false */
+    // Constraints defined by jakarta.validation
+    /** Logical-false constraint; the validated object must be a Boolean and its value must be false. */
     val assertFalse: AssertFalse = AssertFalse(message = MESSAGE),
-    /** 逻辑真约束，被校验对象类型必须为Boolean，且值为true */
+    /** Logical-true constraint; the validated object must be a Boolean and its value must be true. */
     val assertTrue: AssertTrue = AssertTrue(message = MESSAGE),
     /**
-     * 最大值约束，通过String值来定义，可以指定包括或不包括，
-     * 被校验对象类型必须为以下之一或其子类：CharSequence、Double、Integer、Long、Float、Byte、Short、BigDecimal、BigInteger、Number、MonetaryAmount
+     * Maximum-value constraint, defined via a String value; inclusive or exclusive can be specified.
+     * The validated object's type must be one of the following or a subclass: CharSequence, Double, Integer, Long, Float, Byte, Short, BigDecimal, BigInteger, Number, MonetaryAmount.
      */
     val decimalMax: DecimalMax = DecimalMax("", message = MESSAGE),
     /**
-     * 最小值约束，通过String值来定义，可以指定包括或不包括，
-     * 被校验对象类型必须为以下之一或其子类：CharSequence、Double、Integer、Long、Float、Byte、Short、BigDecimal、BigInteger、Number、MonetaryAmount
+     * Minimum-value constraint, defined via a String value; inclusive or exclusive can be specified.
+     * The validated object's type must be one of the following or a subclass: CharSequence, Double, Integer, Long, Float, Byte, Short, BigDecimal, BigInteger, Number, MonetaryAmount.
      */
     val decimalMin: DecimalMin = DecimalMin("", message = MESSAGE),
-    /** 数值约束，可分别指定整数和小数部分位数，被校验对象类型必须为以下之一或其子类：CharSequence、Number、MonetaryAmount */
+    /** Numeric constraint; the integer and fractional digit counts can be specified separately. The validated object's type must be one of the following or a subclass: CharSequence, Number, MonetaryAmount. */
     val digits: Digits = Digits(integer = 0, fraction = 0, message = MESSAGE),
-    /** 电子邮箱账号约束，被校验对象类型必须为CharSequence或其子类。如无特殊情况，regexp不需要指定 */
+    /** Email constraint; the validated object's type must be CharSequence or a subclass. Unless there is something special, regexp need not be specified. */
     val email: Email = Email(message = MESSAGE),
     /**
-     * 未来日期时间约束，被校验对象类型必须为以下之一或其子类：LocalDate、LocalDateTime、LocalTime、Instant、Calendar、Date、HijrahDate、
-     * JapaneseDate、MinguoDate、MonthDay、OffsetDateTime、OffsetTime、ThaiBuddhistDate、Year、YearMonth、ZonedDateTime
+     * Future date-time constraint; the validated object's type must be one of the following or a subclass: LocalDate, LocalDateTime, LocalTime, Instant, Calendar, Date, HijrahDate,
+     * JapaneseDate, MinguoDate, MonthDay, OffsetDateTime, OffsetTime, ThaiBuddhistDate, Year, YearMonth, ZonedDateTime.
      */
     val future: Future = Future(message = MESSAGE),
     /**
-     * 未来或现在日期时间约束，被校验对象类型必须为以下之一或其子类：LocalDate、LocalDateTime、LocalTime、Instant、Calendar、Date、HijrahDate、
-     * JapaneseDate、MinguoDate、MonthDay、OffsetDateTime、OffsetTime、ThaiBuddhistDate、Year、YearMonth、ZonedDateTime
+     * Future-or-present date-time constraint; the validated object's type must be one of the following or a subclass: LocalDate, LocalDateTime, LocalTime, Instant, Calendar, Date, HijrahDate,
+     * JapaneseDate, MinguoDate, MonthDay, OffsetDateTime, OffsetTime, ThaiBuddhistDate, Year, YearMonth, ZonedDateTime.
      */
     val futureOrPresent: FutureOrPresent = FutureOrPresent(message = MESSAGE),
     /**
-     * 最大值约束，通过long值来定义，被校验对象类型必须为以下之一或其子类：
-     * CharSequence、Double、Integer、Long、Float、Byte、Short、BigDecimal、BigInteger、Number、MonetaryAmount
+     * Maximum-value constraint, defined via a long value. The validated object's type must be one of the following or a subclass:
+     * CharSequence, Double, Integer, Long, Float, Byte, Short, BigDecimal, BigInteger, Number, MonetaryAmount.
      */
     val max: Max = Max(0, message = MESSAGE),
     /**
-     * 最小值约束，通过long值来定义，被校验对象类型必须为以下之一或其子类：
-     * CharSequence、Double、Integer、Long、Float、Byte、Short、BigDecimal、BigInteger、Number、MonetaryAmount
+     * Minimum-value constraint, defined via a long value. The validated object's type must be one of the following or a subclass:
+     * CharSequence, Double, Integer, Long, Float, Byte, Short, BigDecimal, BigInteger, Number, MonetaryAmount.
      */
     val min: Min = Min(0, message = MESSAGE),
-    /** 负数约束，被校验对象类型必须为以下之一或其子类： CharSequence、Double、Integer、Long、Float、Byte、Short、BigDecimal、BigInteger、Number、MonetaryAmount */
+    /** Negative-number constraint; the validated object's type must be one of the following or a subclass: CharSequence, Double, Integer, Long, Float, Byte, Short, BigDecimal, BigInteger, Number, MonetaryAmount. */
     val negative: Negative = Negative(message = MESSAGE),
-    /** 负数或零约束，被校验对象类型必须为以下之一或其子类： CharSequence、Double、Integer、Long、Float、Byte、Short、BigDecimal、BigInteger、Number、MonetaryAmount */
+    /** Negative-or-zero constraint; the validated object's type must be one of the following or a subclass: CharSequence, Double, Integer, Long, Float, Byte, Short, BigDecimal, BigInteger, Number, MonetaryAmount. */
     val negativeOrZero: NegativeOrZero = NegativeOrZero(message = MESSAGE),
-    /** 非空白约束，被校验对象类型必须为CharSequence或其子类 */
+    /** Not-blank constraint; the validated object's type must be CharSequence or a subclass. */
     val notBlank: NotBlank = NotBlank(message = MESSAGE),
     /**
-     * 非空约束, 被校验对象类型必须为以下之一或其子类：
-     * CharSequence、Array<*>、Collection<*>、DoubleArray、IntArray、LongArray、CharArray、FloatArray、BooleanArray、ByteArray、ShortArray、Map<*, *>
+     * Not-empty constraint; the validated object's type must be one of the following or a subclass:
+     * CharSequence, Array<*>, Collection<*>, DoubleArray, IntArray, LongArray, CharArray, FloatArray, BooleanArray, ByteArray, ShortArray, Map<*, *>.
      */
     val notEmpty: NotEmpty = NotEmpty(message = MESSAGE),
-    /** 非null约束，被校验对象可以是任何类型 */
+    /** Not-null constraint; the validated object may be of any type. */
     val notNull: NotNull = NotNull(message = MESSAGE),
-    /** null约束，被校验对象可以是任何类型 */
+    /** Null constraint; the validated object may be of any type. */
     val beNull: Null = Null(message = MESSAGE),
     /**
-     * 过去日期时间约束，被校验对象类型必须为以下之一或其子类：LocalDate、LocalDateTime、LocalTime、Instant、Calendar、Date、HijrahDate、
-     * JapaneseDate、MinguoDate、MonthDay、OffsetDateTime、OffsetTime、ThaiBuddhistDate、Year、YearMonth、ZonedDateTime
+     * Past date-time constraint; the validated object's type must be one of the following or a subclass: LocalDate, LocalDateTime, LocalTime, Instant, Calendar, Date, HijrahDate,
+     * JapaneseDate, MinguoDate, MonthDay, OffsetDateTime, OffsetTime, ThaiBuddhistDate, Year, YearMonth, ZonedDateTime.
      */
     val past: Past = Past(message = MESSAGE),
     /**
-     * 过去或现在日期时间约束，被校验对象类型必须为以下之一或其子类：LocalDate、LocalDateTime、LocalTime、Instant、Calendar、Date、HijrahDate、
-     * JapaneseDate、MinguoDate、MonthDay、OffsetDateTime、OffsetTime、ThaiBuddhistDate、Year、YearMonth、ZonedDateTime
+     * Past-or-present date-time constraint; the validated object's type must be one of the following or a subclass: LocalDate, LocalDateTime, LocalTime, Instant, Calendar, Date, HijrahDate,
+     * JapaneseDate, MinguoDate, MonthDay, OffsetDateTime, OffsetTime, ThaiBuddhistDate, Year, YearMonth, ZonedDateTime.
      */
     val pastOrPresent: PastOrPresent = PastOrPresent(message = MESSAGE),
-    /** 正则约束，被校验对象类型必须为CharSequence或其子类 */
+    /** Regex constraint; the validated object's type must be CharSequence or a subclass. */
     val pattern: Pattern = Pattern(regexp = "", message = MESSAGE),
-    /** 正数约束，被校验对象类型必须为以下之一或其子类： CharSequence、Double、Integer、Long、Float、Byte、Short、BigDecimal、BigInteger、Number、MonetaryAmount */
+    /** Positive-number constraint; the validated object's type must be one of the following or a subclass: CharSequence, Double, Integer, Long, Float, Byte, Short, BigDecimal, BigInteger, Number, MonetaryAmount. */
     val positive: Positive = Positive(message = MESSAGE),
-    /** 非负数约束，被校验对象类型必须为以下之一或其子类： CharSequence、Double、Integer、Long、Float、Byte、Short、BigDecimal、BigInteger、Number、MonetaryAmount */
+    /** Non-negative constraint; the validated object's type must be one of the following or a subclass: CharSequence, Double, Integer, Long, Float, Byte, Short, BigDecimal, BigInteger, Number, MonetaryAmount. */
     val positiveOrZero: PositiveOrZero = PositiveOrZero(message = MESSAGE),
     /**
-     * 尺寸约束, 被校验对象类型必须为以下之一或其子类：
-     * CharSequence、Array<*>、Collection<*>、DoubleArray、IntArray、LongArray、CharArray、FloatArray、BooleanArray、ByteArray、ShortArray、Map<*, *>
+     * Size constraint; the validated object's type must be one of the following or a subclass:
+     * CharSequence, Array<*>, Collection<*>, DoubleArray, IntArray, LongArray, CharArray, FloatArray, BooleanArray, ByteArray, ShortArray, Map<*, *>.
      */
     val size: Size = Size(message = MESSAGE),
     /**
-     * 最大尺寸约束，等价于只指定 max 的 Size。
-     * 被校验对象类型必须为以下之一或其子类：
-     * CharSequence、Array<*>、Collection<*>、DoubleArray、IntArray、LongArray、CharArray、FloatArray、BooleanArray、ByteArray、ShortArray、Map<*, *>
+     * Maximum-size constraint, equivalent to a Size that only specifies max.
+     * The validated object's type must be one of the following or a subclass:
+     * CharSequence, Array<*>, Collection<*>, DoubleArray, IntArray, LongArray, CharArray, FloatArray, BooleanArray, ByteArray, ShortArray, Map<*, *>.
      */
     val maxSize: MaxSize = MaxSize(0, message = MESSAGE),
 
-    // hibernate定义的约束
-    /** 字符串代码点长度(实际字符数)约束，被校验对象类型必须为CharSequence或其子类 */
+    // Constraints defined by hibernate
+    /** String code-point length (actual character count) constraint; the validated object's type must be CharSequence or a subclass. */
     val codePointLength: CodePointLength = CodePointLength(message = MESSAGE),
-    /** 信用卡号约束，被校验对象类型必须为CharSequence或其子类 */
+    /** Credit card number constraint; the validated object's type must be CharSequence or a subclass. */
     val creditCardNumber: CreditCardNumber = CreditCardNumber(message = MESSAGE),
-    /** 货币金额约束，被校验对象类型必须为MonetaryAmount或其子类 */
+    /** Currency amount constraint; the validated object's type must be MonetaryAmount or a subclass. */
     val currency: Currency = Currency(message = MESSAGE),
-    /** EAN商品条码约束，被校验对象类型必须为CharSequence或其子类 */
+    /** EAN product barcode constraint; the validated object's type must be CharSequence or a subclass. */
     val ean: EAN = EAN(message = MESSAGE),
-    /** 书本条码约束，被校验对象类型必须为CharSequence或其子类 */
+    /** Book barcode constraint; the validated object's type must be CharSequence or a subclass. */
     val isbn: ISBN = ISBN(message = MESSAGE),
-    /** 字符串长度约束，被校验对象类型必须为CharSequence或其子类 */
+    /** String length constraint; the validated object's type must be CharSequence or a subclass. */
     val length: Length = Length(message = MESSAGE),
-    /** 最大长度约束，等价于只指定 max 的 Length，被校验对象类型必须为CharSequence或其子类 */
+    /** Maximum length constraint, equivalent to a Length that only specifies max; the validated object's type must be CharSequence or a subclass. */
     val maxLength: MaxLength = MaxLength(0, message = MESSAGE),
     /**
-     * 定长约束，等价于 min 与 max 相等的 Size。
-     * 被校验对象类型必须为以下之一或其子类：
-     * CharSequence、Array<*>、Collection<*>、DoubleArray、IntArray、LongArray、CharArray、FloatArray、BooleanArray、ByteArray、ShortArray、Map<*, *>
+     * Fixed-length constraint, equivalent to a Size with equal min and max.
+     * The validated object's type must be one of the following or a subclass:
+     * CharSequence, Array<*>, Collection<*>, DoubleArray, IntArray, LongArray, CharArray, FloatArray, BooleanArray, ByteArray, ShortArray, Map<*, *>.
      */
     val fixedLength: FixedLength = FixedLength(0, message = MESSAGE),
-    /** 字符串Luhn算法(模10算法)约束，可检测银行卡、信用卡。被校验对象类型必须为CharSequence或其子类 */
+    /** String Luhn-algorithm (mod-10) constraint; usable for detecting bank cards and credit cards. The validated object's type must be CharSequence or a subclass. */
     val luhnCheck: LuhnCheck = LuhnCheck(message = MESSAGE),
-    /** 字符串模10算法约束，可检测银行卡、信用卡。被校验对象类型必须为CharSequence或其子类 */
+    /** String mod-10 algorithm constraint; usable for detecting bank cards and credit cards. The validated object's type must be CharSequence or a subclass. */
     val mod10Check: Mod10Check = Mod10Check(message = MESSAGE),
-    /** 字符串模11算法约束，被校验对象类型必须为CharSequence或其子类 */
+    /** String mod-11 algorithm constraint; the validated object's type must be CharSequence or a subclass. */
     val mod11Check: Mod11Check = Mod11Check(message = MESSAGE),
-    /** 参数脚本断言约束，被校验对象类型必须为对象数组 */
+    /** Parameter script assertion constraint; the validated object's type must be an object array. */
     val parameterScriptAssert: ParameterScriptAssert = ParameterScriptAssert(lang = "", script = "", message = MESSAGE),
-    /** 区间约束，被校验对象类型必须为以下之一或其子类： CharSequence、Double、Integer、Long、Float、Byte、Short、BigDecimal、BigInteger、Number、MonetaryAmount */
+    /** Range constraint; the validated object's type must be one of the following or a subclass: CharSequence, Double, Integer, Long, Float, Byte, Short, BigDecimal, BigInteger, Number, MonetaryAmount. */
     val range: Range = Range(message = MESSAGE),
 //    /**  */
-//    val scriptAssert: ScriptAssert = ScriptAssert(lang = "", script = ""), //Kudos暂不支持
-    /** 集合元素惟一约束，被校验对象类型必须为Collection或其子类 */
+//    val scriptAssert: ScriptAssert = ScriptAssert(lang = "", script = ""), // Not yet supported by Kudos
+    /** Unique-elements collection constraint; the validated object's type must be Collection or a subclass. */
     val uniqueElements: UniqueElements = UniqueElements(message = MESSAGE),
-    /** 网址约束，被校验对象类型必须为CharSequence或其子类 */
+    /** URL constraint; the validated object's type must be CharSequence or a subclass. */
     val url: URL = URL(message = MESSAGE),
 
-    // kudos定义的约束
-    /** "至少需要几个"约束，被校验对象可以为任何类型 */
+    // Constraints defined by kudos
+    /** "At least N" constraint; the validated object may be of any type. */
     val atLeast: AtLeast = AtLeast([], message = MESSAGE),
-    /** 中国居民身份证号约束，被校验对象类型必须为CharSequence或其子类 */
+    /** Chinese resident ID card number constraint; the validated object's type must be CharSequence or a subclass. */
     val cnIdCardNo: CnIdCardNo = CnIdCardNo(message = MESSAGE),
-    /** 比较约束，比较的两者对象类型都必须实现Comparable接口且类型相同，支持Array<*>类型，但是两个数组的大小必须一致，且数组每个元素必须实现Comparable接口 */
+    /** Comparison constraint; both compared objects' types must implement the Comparable interface and be of the same type; supports Array<*> type, but the two arrays must be the same size and every array element must implement the Comparable interface. */
     val compare: Compare = Compare("", message = MESSAGE),
-    /** 自定义逻辑的约束，被校验对象可以为任何类型 */
+    /** Custom-logic constraint; the validated object may be of any type. */
     val custom: Custom = Custom(IBeanValidator::class, message = MESSAGE),
-    /** 字符串日期时间约束，被校验对象类型必须为CharSequence或其子类 */
+    /** String date-time constraint; the validated object's type must be CharSequence or a subclass. */
     val dateTime: DateTime = DateTime("", message = MESSAGE),
-    /** 字典枚举代码约束，被校验对象类型必须为CharSequence或其子类 */
+    /** Dictionary enum code constraint; the validated object's type must be CharSequence or a subclass. */
     val dictEnumItemCode: DictEnumItemCode = DictEnumItemCode(IDictEnum::class, message = MESSAGE),
-    /** 非null依赖约束，被校验对象可以为任何类型 */
+    /** Not-null-dependent constraint; the validated object may be of any type. */
     val notNullOn: NotNullOn = NotNullOn(Depends([]), message = MESSAGE),
-    /** 数列约束，被校验对象类型必须为以下之一或其子类: List<*>、Array<*> */
+    /** Series constraint; the validated object's type must be one of the following or a subclass: List<*>, Array<*>. */
     val series: Series = Series(message = MESSAGE),
-    /** 按内置 [RegExpEnum] 做模式匹配，被校验对象类型必须为 CharSequence 或其子类 */
+    /** Pattern match against a built-in [RegExpEnum]; the validated object's type must be CharSequence or a subclass. */
     val matches: Matches = Matches(value = RegExpEnum.VAR_NAME, message = MESSAGE),
 
-//  val each: Each = Each(Constraints(), message = MESSAGE),  // 会循环引用，而且本身就是组合约束，没必要作为Constraints的子约束了
-//  val exist: Exist = Exist(Constraints(), message = MESSAGE),  // 会循环引用，而且本身就是组合约束，没必要作为Constraints的子约束了
+//  val each: Each = Each(Constraints(), message = MESSAGE),  // Would cause circular reference, and it is itself a composite constraint, so there is no need to make it a sub-constraint of Constraints
+//  val exist: Exist = Exist(Constraints(), message = MESSAGE),  // Would cause circular reference, and it is itself a composite constraint, so there is no need to make it a sub-constraint of Constraints
 
 
     /**
-     * 错误提示消息，仅在andOr值为Or时有意义
+     * Error message; only meaningful when andOr is Or.
      */
     val message: String = "io.kudos.base.bean.validation.constraint.annotations.Constraints.message",
 
     /**
-     * 该校验规则所从属的分组类，通过分组可以过滤校验规则或排序校验顺序。默认值必须是空数组。
-     * 校验组能够让你在验证的时候选择应用哪些约束条件. 这样在某些情况下( 例如向导 ) 就可以对每一步进行校验的时候, 选取对应这步的那些约束条件进行验证了.
-     * 校验组是通过可变参数传递给validate, validateProperty 和 validateValue的.如果某个约束条件属于多个组,那么各个组在校验时候的顺序是不可预知的.
-     * 如果一个约束条件没有被指明属于哪个组,那么它就会被归类到默认组(jakarta.validation.groups.Default).
-     * @GroupSequence 定义组别之间校验的顺序，使用注意事项：
-     * 1.作用于类上时,不能包含jakarta.validation.groups.Default::class分组，作用于接口上可以
-     * 2.作用于类上时,不能没有待验证的Bean的Class的分组
-     * @GroupSequenceProvider 根据对象状态动态重定义默认分组，实现类返回的分组必须包含待验证的Bean的Class的分组(因为如果`Default`组对T进行验证，
-     * 则实际验证的实例将传递给此类以确定默认组序列)。
-     * 注：在使用组序列验证的时候，如果序列前边的组验证失败，则后面的组将不再给予验证！
-     * 注：同一分组间的约束校验是无序的
+     * The group classes this validation rule belongs to; groups allow filtering validation rules or ordering validation sequence. The default value must be an empty array.
+     * Validation groups let you choose which constraints to apply during validation. In some scenarios (such as a wizard) you can then pick the constraints relevant to each step for that step.
+     * Validation groups are passed as varargs to validate, validateProperty and validateValue. If a constraint belongs to multiple groups, the order in which those groups are validated is unpredictable.
+     * If a constraint is not assigned to any group, it is grouped into the default group (jakarta.validation.groups.Default).
+     * @GroupSequence defines the validation order between groups; usage notes:
+     * 1. When applied to a class, it must not contain the jakarta.validation.groups.Default::class group; this is allowed on an interface.
+     * 2. When applied to a class, it must include the group of the Class of the Bean to be validated.
+     * @GroupSequenceProvider dynamically redefines the default group based on object state; the groups returned by the implementation must contain the group of the Class of the Bean to be validated (because if the `Default` group validates T,
+     * the actual instance under validation is passed to this class to determine the default group sequence).
+     * Note: when validating with a group sequence, if a group earlier in the sequence fails validation, later groups are no longer validated!
+     * Note: constraint validation within the same group is unordered.
      */
     val groups: Array<KClass<*>> = [],
 
-    /** 约束注解的有效负载(通常用来将一些元数据信息与该约束注解相关联，常用的一种情况是用负载表示验证结果的严重程度) */
+    /** The payload of the constraint annotation (typically used to associate some metadata with the constraint; a common use is to express the severity of the validation result with the payload) */
     val payload: Array<KClass<out Payload>> = []
 
 ) {
 
     companion object {
         /**
-         * 子约束 `message` 字段的占位默认值。
-         * 校验器通过 `message == MESSAGE` 判断用户是否实际启用了该子约束，
-         * 因此各子约束未被显式声明时都共享此占位值。
+         * Placeholder default value for a sub-constraint's `message` field.
+         * The validator uses `message == MESSAGE` to determine whether the user has actually enabled the sub-constraint,
+         * so every sub-constraint shares this placeholder value when not explicitly declared.
          */
-        const val MESSAGE = "TEMP_MSG" // 利用该值来确定用户定义了哪些子约束
+        const val MESSAGE = "TEMP_MSG" // Used to determine which sub-constraints the user has defined
     }
 
 }

@@ -6,7 +6,7 @@ import org.springframework.cloud.openfeign.FeignClient
 
 
 /**
- * 国际化客户端代理接口
+ * I18n client proxy interface.
  *
  * @author K
  * @since 1.0.0

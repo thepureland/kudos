@@ -17,7 +17,7 @@ import kotlin.test.assertTrue
 /**
  * junit test for SysMicroServiceService
  *
- * 测试数据来源：`SysMicroServiceServiceTest.sql`
+ * Test data source: `SysMicroServiceServiceTest.sql`
  *
  * @author K
  * @author AI: Cursor
@@ -32,7 +32,7 @@ class SysMicroServiceServiceTest : RdbAndRedisCacheTestBase() {
     @Resource
     private lateinit var sysMicroServiceHashCache: SysMicroServiceHashCache
 
-    /** 种子数据中的微服务编码（物理主键列为 code，无 id 列；实体 id 与 code 等价） */
+    /** Microservice code in the seed data (physical primary key column is code, no id column; entity id is equivalent to code) */
     private val seededMicroServiceCode = "svc-microservice-test-1_2407"
 
     @Test
@@ -83,7 +83,7 @@ class SysMicroServiceServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun getAtomicServicesByParentCodeFromCache() {
-        // 测试 SQL 在库中 merge 了新行，但 Hash 全量列表在缓存非空时不会自动重载，需刷新后再断言
+        // The test SQL merges new rows into the DB, but the Hash full list does not auto-reload when the cache is non-empty; refresh before asserting
         sysMicroServiceHashCache.reloadAll(clear = true)
         val microServiceCode = seededMicroServiceCode
         val atomicServices = sysMicroServiceService.getAtomicServicesByParentCodeFromCache(microServiceCode)

@@ -7,7 +7,7 @@ import io.kudos.ms.sys.core.domain.model.po.SysDomain
 
 
 /**
- * 域名业务接口
+ * Domain service interface.
  *
  * @author K
  * @author AI: Cursor
@@ -16,33 +16,33 @@ import io.kudos.ms.sys.core.domain.model.po.SysDomain
 interface ISysDomainService : IBaseCrudService<String, SysDomain> {
 
     /**
-     * 按域名名称加载域名缓存项（仅 active=true 会写入/命中按名称缓存）
+     * Load a domain cache entry by domain name (only active=true is written to / hit in the by-name cache).
      *
-     * @param domainName 域名名称，非空
-     * @return 缓存项；找不到或未启用返回 null
+     * @param domainName domain name, non-blank
+     * @return cache entry; null if not found or inactive
      */
     fun getDomainFromCache(domainName: String): SysDomainCacheEntry?
 
     /**
-     * 获取租户的域名列表（直查库）
+     * Get the domain list for a tenant (direct DB query).
      *
-     * @param tenantId 租户 id
+     * @param tenantId tenant id
      */
     fun getDomainsByTenantId(tenantId: String): List<SysDomainRow>
 
     /**
-     * 获取系统的域名列表（直查库）
+     * Get the domain list for a system (direct DB query).
      *
-     * @param systemCode 系统编码
+     * @param systemCode system code
      */
     fun getDomainsBySystemCode(systemCode: String): List<SysDomainRow>
 
     /**
-     * 更新启用状态，并同步缓存
+     * Update the enabled state and sync the cache.
      *
-     * @param id 域名 id
-     * @param active 是否启用
-     * @return 是否更新成功
+     * @param id domain id
+     * @param active whether enabled
+     * @return whether the update succeeded
      */
     fun updateActive(id: String, active: Boolean): Boolean
 

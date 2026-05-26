@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 
 /**
- * RocketMQ生产者Feign客户端
+ * RocketMQ producer Feign client.
  *
  * @author shane
  * @author K

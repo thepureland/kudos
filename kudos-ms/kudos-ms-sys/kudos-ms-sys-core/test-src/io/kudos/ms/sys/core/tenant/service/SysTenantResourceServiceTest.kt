@@ -11,7 +11,7 @@ import kotlin.test.assertTrue
 /**
  * junit test for SysTenantResourceService
  *
- * 测试数据来源：`SysTenantResourceServiceTest.sql`
+ * Test data source: `SysTenantResourceServiceTest.sql`
  *
  * @author K
  * @author AI: Cursor
@@ -52,7 +52,7 @@ class SysTenantResourceServiceTest : RdbAndRedisCacheTestBase() {
         val result = sysTenantResourceService.unbind(tenantId, resourceId)
         assertTrue(result)
         
-        // 重新绑定
+        // Rebind
         val bindCount = sysTenantResourceService.batchBind(tenantId, listOf(resourceId))
         assertTrue(bindCount > 0)
     }

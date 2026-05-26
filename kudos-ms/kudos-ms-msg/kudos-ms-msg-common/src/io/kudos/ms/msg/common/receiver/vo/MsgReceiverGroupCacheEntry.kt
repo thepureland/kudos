@@ -6,50 +6,50 @@ import java.time.LocalDateTime
 
 
 /**
- * 消息接收者群组缓存项
+ * Message receiver group cache entry.
  *
  * @author K
  * @since 1.0.0
  */
 data class MsgReceiverGroupCacheEntry (
 
-    /** 主键 */
+    /** Primary key. */
     override val id: String,
 
-    /** 接收者群组类型字典码 */
+    /** Receiver group type dict code. */
     val receiverGroupTypeDictCode: String?,
 
-    /** 群组定义的表 */
+    /** Table where the group is defined. */
     val defineTable: String?,
 
-    /** 群组名称在具体群组表中的字段名 */
+    /** Column name of the group name in the concrete group table. */
     val nameColumn: String?,
 
-    /** 备注 */
+    /** Remark. */
     val remark: String?,
 
-    /** 是否启用 */
+    /** Active flag. */
     val active: Boolean?,
 
-    /** 是否内置 */
+    /** Built-in flag. */
     val builtIn: Boolean?,
 
-    /** 创建者id */
+    /** Creator id. */
     val createUserId: String?,
 
-    /** 创建者名称 */
+    /** Creator name. */
     val createUserName: String?,
 
-    /** 创建时间 */
+    /** Create time. */
     val createTime: LocalDateTime?,
 
-    /** 更新者id */
+    /** Updater id. */
     val updateUserId: String?,
 
-    /** 更新者名称 */
+    /** Updater name. */
     val updateUserName: String?,
 
-    /** 更新时间 */
+    /** Update time. */
     val updateTime: LocalDateTime?,
 
 ) : IIdEntity<String>, Serializable {

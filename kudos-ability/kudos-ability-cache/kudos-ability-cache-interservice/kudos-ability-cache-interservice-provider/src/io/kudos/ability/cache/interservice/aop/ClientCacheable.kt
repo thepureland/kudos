@@ -3,8 +3,8 @@ package io.kudos.ability.cache.interservice.aop
 import java.lang.annotation.Inherited
 
 /**
- * 服务端controller注解
- * 用于告知客户端此次请求是否需要缓存
+ * Server-side controller annotation.
+ * Tells the client whether this request needs to be cached.
  */
 @Target(
     AnnotationTarget.CLASS,

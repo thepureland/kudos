@@ -5,50 +5,50 @@ import java.time.LocalDateTime
 
 
 /**
- * 消息发送列表查询结果响应VO
+ * Message send list query result response VO.
  *
  * @author K
  * @since 1.0.0
  */
 data class MsgSendRow (
 
-    /** 主键 */
+    /** Primary key. */
     override val id: String = "",
 
-    /** 接收者群组类型字典码 */
+    /** Receiver group type dict code. */
     val receiverGroupTypeDictCode: String? = null,
 
-    /** 接收者群组ID */
+    /** Receiver group id. */
     val receiverGroupId: String? = null,
 
-    /** 消息实例ID */
+    /** Message instance id. */
     val instanceId: String? = null,
 
-    /** 消息类型字典码 */
+    /** Message type dict code. */
     val msgTypeDictCode: String? = null,
 
-    /** 国家-语言字典码 */
+    /** Country-language dict code. */
     val localeDictCode: String? = null,
 
-    /** 发送状态字典码 */
+    /** Send status dict code. */
     val sendStatusDictCode: String? = null,
 
-    /** 创建时间 */
+    /** Create time. */
     val createTime: LocalDateTime? = null,
 
-    /** 更新时间 */
+    /** Update time. */
     val updateTime: LocalDateTime? = null,
 
-    /** 发送成功数量 */
+    /** Successful send count. */
     val successCount: Int? = null,
 
-    /** 发送失败数量 */
+    /** Failed send count. */
     val failCount: Int? = null,
 
-    /** 定时任务ID */
+    /** Scheduled job id. */
     val jobId: String? = null,
 
-    /** 租户ID */
+    /** Tenant id. */
     val tenantId: String? = null,
 
 ) : IIdEntity<String>

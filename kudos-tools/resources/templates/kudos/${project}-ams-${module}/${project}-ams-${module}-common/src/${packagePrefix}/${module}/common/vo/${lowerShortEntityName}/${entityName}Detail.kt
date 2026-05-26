@@ -30,7 +30,7 @@ import java.sql.SQLXML
 </#if>
 
 
-<@generateClassComment table.comment+"查询记录"/>
+<@generateClassComment table.comment+" detail record"/>
 data class ${entityName}Detail (
 
     //region your codes 1

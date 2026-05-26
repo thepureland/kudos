@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository
 
 
 /**
- * 用户账号第三方绑定数据访问对象
+ * User account third-party binding DAO.
  *
  * @author K
  * @author AI: Codex
@@ -21,10 +21,10 @@ open class UserAccountThirdDao : BaseCrudDao<String, UserAccountThird, UserAccou
 
 
     /**
-     * 按用户ID查询第三方绑定记录
+     * Query third-party binding records by user id.
      *
-     * @param userId 用户ID
-     * @return 第三方绑定记录列表
+     * @param userId user id
+     * @return list of third-party binding records
      */
     fun searchByUserId(userId: String): List<UserAccountThird> {
         val criteria = Criteria(UserAccountThird::userId eq userId)
@@ -32,13 +32,13 @@ open class UserAccountThirdDao : BaseCrudDao<String, UserAccountThird, UserAccou
     }
 
     /**
-     * 按租户+平台+发行方+主体标识查询绑定记录
+     * Query a binding record by tenant + provider + issuer + subject.
      *
-     * @param tenantId 租户ID
-     * @param accountProviderDictCode 账号提供方字典码
-     * @param accountProviderIssuer 发行方，可为null
-     * @param subject 第三方主体标识
-     * @return 绑定记录，不存在返回null
+     * @param tenantId tenant id
+     * @param accountProviderDictCode account provider dict code
+     * @param accountProviderIssuer issuer; may be null
+     * @param subject third-party subject identifier
+     * @return binding record, or null if not found
      */
     fun fetchByProviderSubject(
         tenantId: String,

@@ -7,7 +7,7 @@ import jakarta.annotation.Resource
 /**
  * junit test for UserAccountThirdDao
  *
- * 测试数据来源：`UserAccountThirdDaoTest.sql`
+ * Test data source: `UserAccountThirdDaoTest.sql`.
  *
  * @author K
  * @author AI: Codex

@@ -6,37 +6,37 @@ import io.kudos.base.bean.validation.support.RegExpEnum
 import jakarta.validation.constraints.NotBlank
 
 /**
- * 参数表单基础字段（新建 / 更新共用）
+ * Base fields shared by parameter forms (create / update).
  *
  * @author K
  * @since 1.0.0
  */
 interface ISysParamFormBase {
 
-    /** 参数名称 */
+    /** Parameter name */
     @get:NotBlank
     @get:MaxLength(32)
     @get:Matches(RegExpEnum.RELAXED_VAR_NAME)
     val paramName: String
 
-    /** 参数值 */
+    /** Parameter value */
     @get:NotBlank
     @get:MaxLength(256)
     val paramValue: String
 
-    /** 默认参数值 */
+    /** Default parameter value */
     @get:MaxLength(256)
     val defaultValue: String?
 
-    /** 原子服务编码 */
+    /** Atomic service code */
     @get:NotBlank
     @get:Matches(RegExpEnum.VAR_NAME)
     val atomicServiceCode: String
 
-    /** 序号 */
+    /** Order number */
     val orderNum: Int?
 
-    /** 备注 */
+    /** Remark */
     @get:MaxLength(128)
     val remark: String?
 }

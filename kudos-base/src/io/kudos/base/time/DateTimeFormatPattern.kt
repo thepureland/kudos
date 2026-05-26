@@ -1,7 +1,7 @@
 package io.kudos.base.time
 
 /**
- * 日期/时间格式化模式常量
+ * Date/time format pattern constants.
  *
  * @author K
  * @since 1.0.0

@@ -11,7 +11,7 @@ import java.nio.file.StandardCopyOption
 import kotlin.reflect.KClass
 
 /**
- * 路径工具类
+ * Path utility class.
  *
  * @author K
  * @since 1.0.0
@@ -19,10 +19,11 @@ import kotlin.reflect.KClass
 object PathKit {
 
     /**
-     * 获取指定类的类路径，包括包名部分的路径。无论指定的类是否在zip/jar中
+     * Returns the classpath for the given class, including the package portion of the path. Works whether or not
+     * the class lives inside a zip/jar.
      *
-     * @param clazz kotlin类
-     * @return 类路径, 动态生成的类将返回空串
+     * @param clazz the kotlin class
+     * @return the classpath; an empty string for dynamically generated classes
      * @author K
      * @since 1.0.0
      */
@@ -39,7 +40,7 @@ object PathKit {
         val path = try {
             val className = """${c.simpleName}.class"""
             val thisClass = requireNotNull(c.getResource(className)) {
-                "无法定位类资源：${c.name}/$className"
+                "Unable to locate class resource: ${c.name}/$className"
             }.path
             thisClass.replace(className, "")
         } catch (_: IllegalArgumentException) {
@@ -51,10 +52,11 @@ object PathKit {
     }
 
     /**
-     *  获取指定类的类路径，不包括包名部分的路径。无论指定的类是否在zip/jar中
+     *  Returns the classpath for the given class, excluding the package portion of the path. Works whether or not
+     *  the class lives inside a zip/jar.
      *
-     *  @param clazz kotlin类
-     *  @return 类路径, 动态生成的类将返回空串
+     *  @param clazz the kotlin class
+     *  @return the classpath; an empty string for dynamically generated classes
      *  @author K
      *  @since 1.0.0
      */
@@ -73,30 +75,30 @@ object PathKit {
     }
 
     /**
-     * 获取资源的路径(支持jar中的资源)
+     * Gets the path of a resource (supports resources inside a jar).
      *
-     * @param name 资源名称
-     * @return 资源绝对路径
+     * @param name the resource name
+     * @return the absolute resource path
      */
     fun getResourcePath(name: String): String {
         val cl = Thread.currentThread().contextClassLoader ?: this::class.java.classLoader
-        val url = cl.getResource(name) ?: error("找不到资源：$name")
+        val url = cl.getResource(name) ?: error("Resource not found: $name")
 
-        // 能直接映射到文件系统就直接用（最理想）
+        // If it maps directly to the filesystem, use it directly (the ideal case)
         if (url.protocol == "file") {
             return File(url.toURI()).path
         }
 
-        // 其它协议（jar/jrt/vfs/bundle 等）一律抽取到临时文件，保证可用
+        // Other protocols (jar/jrt/vfs/bundle, etc.) are always extracted to a temp file to ensure usability
         return extractToTempDir(url, name).toAbsolutePath().toString()
     }
 
     /**
-     * 得到相对路径
+     * Returns the relative path.
      *
-     * @param baseDir 基础路径
-     * @param file 待操作路径
-     * @return 相对路径
+     * @param baseDir the base path
+     * @param file the target path
+     * @return the relative path
      * @author K
      * @since 1.0.0
      */
@@ -113,76 +115,77 @@ object PathKit {
     }
 
     /**
-     * 得到工程根目录，如果是web项目，得到的是如tomcat的bin目录
+     * Returns the project root directory; for a web project this is something like Tomcat's bin directory.
      *
-     * @return 绝对路径
+     * @return the absolute path
      * @author K
      * @since 1.0.0
      */
     fun getProjectRootPath(): String = System.getProperty("user.dir")
 
     /**
-     * 得到程序运行时的路径
+     * Returns the runtime path of the program.
      *
-     * @return 绝对路径
+     * @return the absolute path
      * @author K
      * @since 1.0.0
      */
     fun getRuntimePath(): String = requireNotNull(PathKit::class.java.classLoader.getResource(".")) {
-        "无法获取运行时路径资源: ."
+        "Unable to get runtime path resource: ."
     }.path
 
     /**
-     * 获取系统临时目录
+     * Returns the system temp directory.
      *
-     * @return 系统临时目录
+     * @return the system temp directory
      * @author K
      * @since 1.0.0
      */
     fun getTempDirectoryPath(): String = FileUtils.getTempDirectoryPath()
 
     /**
-     * 获取系统临时目录
+     * Returns the system temp directory.
      *
-     * @return 系统临时目录文件对象
+     * @return the system temp directory as a File
      * @author K
      * @since 1.0.0
      */
     fun getTempDirectory(): File = FileUtils.getTempDirectory()
 
     /**
-     * 获取系统用户根目录
+     * Returns the system user home directory.
      *
-     * @return 系统用户根目录
+     * @return the system user home directory
      * @author K
      * @since 1.0.0
      */
     fun getUserDirectoryPath(): String = FileUtils.getUserDirectoryPath()
 
     /**
-     * 获取系统用户根目录
+     * Returns the system user home directory.
      *
-     * @return 系统用户根目录文件对象
+     * @return the system user home directory as a File
      * @author K
      * @since 1.0.0
      */
     fun getUserDirectory(): File = FileUtils.getUserDirectory()
 
     /**
-     * 把非 `file:` 协议下的资源（如 `jar:`、`jrt:`）抽取到一个新建的临时目录中，
-     * 让上层调用方可以拿到一个可读的本地路径。临时目录与文件都注册 [File.deleteOnExit]。
+     * Extracts a resource served by a non-`file:` protocol (e.g. `jar:`, `jrt:`) into a newly created temporary
+     * directory so callers can obtain a readable local path. Both the temp directory and file are registered with
+     * [File.deleteOnExit].
      *
-     * 单独创建专用子目录而不是直接复制到系统 temp 根目录，是为了避免与其他工具
-     * 在 temp 根目录扫描时踩权限/竞态问题。
+     * A dedicated subdirectory is created (rather than copying directly under the system temp root) to avoid
+     * permission/race issues with other tools that scan the system temp root.
      *
-     * @param url 资源 URL
-     * @param name 资源原始名（仅用于命名临时文件，空白名会回退到 `resource.bin`）
-     * @return 抽取后的临时文件路径
+     * @param url the resource URL
+     * @param name the original resource name (used only to name the temp file; a blank name falls back to `resource.bin`)
+     * @return the path of the extracted temporary file
      * @author K
      * @since 1.0.0
      */
     private fun extractToTempDir(url: URL, name: String): Path {
-        // 关键：用“专用临时目录”，避免把系统 temp 根目录整个复制/扫描时踩权限坑
+        // Key: use a "dedicated temp directory" to avoid permission pitfalls when copying/scanning the whole system temp root
         val dir = Files.createTempDirectory("resource-").toFile().apply { deleteOnExit() }
 
         val fileName = name.substringAfterLast('/').ifBlank { "resource.bin" }

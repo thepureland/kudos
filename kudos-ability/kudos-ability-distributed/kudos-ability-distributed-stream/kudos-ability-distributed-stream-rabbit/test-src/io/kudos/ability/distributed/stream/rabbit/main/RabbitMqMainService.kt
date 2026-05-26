@@ -7,8 +7,8 @@ import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 
 /**
- * RabbitMq测试服务
- * 
+ * RabbitMQ test service.
+ *
  * @author shane
  * @author K
  * @since 1.0.0
@@ -38,12 +38,12 @@ class RabbitMqMainService : IRabbitMqMainService {
         while (flag) {
             Thread.sleep(1000)
             log.info("{0}", consumerHandler.flag)
-            // 待消费者接收信息后修改 flag 为 false
+            // Flip flag to false once the consumer has received the message
             if (consumerHandler.flag) {
                 flag = false
             }
         }
-        log.info("收到 mq 消息")
+        log.info("received mq message")
         return result
     }
 

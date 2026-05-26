@@ -3,32 +3,33 @@ package io.kudos.ability.distributed.stream.common.model.vo
 import java.io.Serializable
 
 /**
- * 流式消息生产者消息值对象
- * 用于封装发送失败的消息信息，包括绑定名称、消息头和消息体
+ * Stream producer message value object.
+ * Wraps failed message info, including the binding name, message header and message body.
  * @author K
  * @author AI: Codex
  * @since 1.0.0
  */
 class StreamProducerMsgVo : Serializable {
     /**
-     * 消息主题
+     * Message topic.
      */
     var bindName: String? = null
 
     /**
-     * 消息头json串
+     * Message header JSON string.
      */
     var msgHeaderJson: String? = null
 
     /**
-     * 消息体json串
+     * Message body JSON string.
      */
     var msgBodyJson: String? = null
 
     /**
-     * 消息体运行时类型名。
+     * Runtime type name of the message body.
      *
-     * 重试时会优先按该类型反序列化；为空或恢复失败时回退为 Map / List 等 JSON 动态结构。
+     * On retry, deserialization is attempted with this type first; when null or recovery
+     * fails, it falls back to a dynamic JSON structure such as Map / List.
      */
     var msgBodyClassName: String? = null
 }

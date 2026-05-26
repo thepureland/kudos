@@ -5,7 +5,7 @@ import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
 import java.time.LocalDateTime
 
 /**
- * 组-用户关系数据库实体
+ * Group-user relation database entity.
  *
  * @author K
  * @author AI: Codex
@@ -15,28 +15,28 @@ interface AuthGroupUser : IDbEntity<String, AuthGroupUser> {
 
     companion object : DbEntityFactory<AuthGroupUser>()
 
-    /** 组id */
+    /** Group id. */
     var groupId: String
 
-    /** 用户id */
+    /** User id. */
     var userId: String
 
-    /** 创建者id */
+    /** Creator id. */
     var createUserId: String?
 
-    /** 创建者名称 */
+    /** Creator name. */
     var createUserName: String?
 
-    /** 创建时间 */
+    /** Creation time. */
     var createTime: LocalDateTime?
 
-    /** 更新者id */
+    /** Updater id. */
     var updateUserId: String?
 
-    /** 更新者名称 */
+    /** Updater name. */
     var updateUserName: String?
 
-    /** 更新时间 */
+    /** Update time. */
     var updateTime: LocalDateTime?
 
 

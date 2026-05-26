@@ -9,9 +9,9 @@ import jakarta.annotation.Resource
 import kotlin.test.*
 
 /**
- * SysDictHashCache 测试。
+ * Tests for SysDictHashCache.
  *
- * 测试数据来源：`sql/h2/dict/cache/SysDictHashCacheTest.sql`
+ * Test data source: `sql/h2/dict/cache/SysDictHashCacheTest.sql`
  *
  * @author K
  * @since 1.0.0
@@ -29,7 +29,7 @@ class SysDictHashCacheTest : RdbAndRedisCacheTestBase() {
 
     private fun isLocalCacheEnabled(): Boolean = HashCacheKit.isLocalCacheEnabled(SysDictHashCache.CACHE_NAME)
 
-    // ---------- 按主键 id ----------
+    // ---------- By primary key id ----------
 
     @Test
     fun getDictById() {
@@ -41,7 +41,7 @@ class SysDictHashCacheTest : RdbAndRedisCacheTestBase() {
         assertEquals("sdch-ms-7f3e2d1c", item.atomicServiceCode)
         assertEquals("sdch-type-001", item.dictType)
         val itemAgain = cache.getDictById(id)
-        if (isLocalCacheEnabled()) assertSame(item, itemAgain, "同一 id 再次从缓存获取应返回同一对象引用")
+        if (isLocalCacheEnabled()) assertSame(item, itemAgain, "Fetching the same id from cache again should return the same object reference")
         assertNull(cache.getDictById("sdch-nonexistent-00000000000000000000"))
     }
 
@@ -58,26 +58,26 @@ class SysDictHashCacheTest : RdbAndRedisCacheTestBase() {
         map.forEach { (k, v) -> assertEquals(k, v.id) }
         val mapAgain = cache.getDictsByIds(ids)
         if (isLocalCacheEnabled()) ids.forEach { id ->
-            assertSame(map[id], mapAgain[id], "同一 id 再次从缓存获取应返回同一对象引用")
+            assertSame(map[id], mapAgain[id], "Fetching the same id from cache again should return the same object reference")
         }
         assertTrue(cache.getDictsByIds(emptySet()).isEmpty())
     }
 
-    // ---------- 按原子服务编码+字典类型 ----------
+    // ---------- By atomic service code + dict type ----------
 
     @Test
     fun getDictByAtomicServiceCodeAndDictType() {
         val atomicServiceCode = "sdch-ms-a1b2c3d4"
         val dictType = "sdch-type-a1"
         val idFromDao = sysDictDao.fetchDictByAtomicServiceCodeAndDictType(atomicServiceCode, dictType)?.id
-        assertNotNull(idFromDao, "测试数据未加载：sql/h2/dict/cache/SysDictHashCacheTest.sql 中应有 atomic_service_code=$atomicServiceCode, dict_type=$dictType, active=true 的记录")
+        assertNotNull(idFromDao, "Test data not loaded: sql/h2/dict/cache/SysDictHashCacheTest.sql should contain a row with atomic_service_code=$atomicServiceCode, dict_type=$dictType, active=true")
         assertEquals("sdch2001-4d5e-7f8a-1b2c-000000000011", idFromDao)
         val res1 = cache.getDictByAtomicServiceCodeAndDictType(atomicServiceCode, dictType)
         val id = res1?.id
         assertEquals("sdch2001-4d5e-7f8a-1b2c-000000000011", id)
         val res2 = cache.getDictByAtomicServiceCodeAndDictType(atomicServiceCode, dictType)
-        if (isLocalCacheEnabled()) assertSame(res1, res2, "local 启用时同一维度再次从缓存获取应返回同一对象引用")
-        // 注：sdch-type-a2 为 active=false，从 DB fetch 时不会返回；若此前执行过 reloadAll，缓存中可能含该条，按 secondary 查询会命中
+        if (isLocalCacheEnabled()) assertSame(res1, res2, "When local cache is enabled, fetching the same dimension again should return the same object reference")
+        // Note: sdch-type-a2 has active=false, so it won't be returned by a DB fetch; if reloadAll was run earlier, the cache may still contain it and a secondary query will hit
     }
 
     @Test
@@ -88,11 +88,11 @@ class SysDictHashCacheTest : RdbAndRedisCacheTestBase() {
         assertEquals(3, list.size)
         assertTrue(list.all { it.atomicServiceCode == atomicServiceCode })
         val listAgain = cache.getDictsByAtomicServiceCode(atomicServiceCode)
-        if (isLocalCacheEnabled()) assertSame(list.first(), listAgain.first(), "local 启用时同一维度再次从缓存获取应返回同一对象引用")
+        if (isLocalCacheEnabled()) assertSame(list.first(), listAgain.first(), "When local cache is enabled, fetching the same dimension again should return the same object reference")
         assertTrue(cache.getDictsByAtomicServiceCode("sdch-ms-nonexistent").isEmpty())
     }
 
-    // ---------- 全量刷新 ----------
+    // ---------- Full reload ----------
 
     @Test
     fun reloadAll() {
@@ -107,10 +107,10 @@ class SysDictHashCacheTest : RdbAndRedisCacheTestBase() {
         val item = cache.getDictById("sdch1001-1a2b-4c5d-8e9f-000000000001")
         assertNotNull(item)
         val itemAgain = cache.getDictById("sdch1001-1a2b-4c5d-8e9f-000000000001")
-        if (isLocalCacheEnabled()) assertSame(item, itemAgain, "同一 id 再次从缓存获取应返回同一对象引用")
+        if (isLocalCacheEnabled()) assertSame(item, itemAgain, "Fetching the same id from cache again should return the same object reference")
     }
 
-    // ---------- 同步 ----------
+    // ---------- Sync ----------
 
     @Test
     fun syncOnInsert() {
@@ -120,7 +120,7 @@ class SysDictHashCacheTest : RdbAndRedisCacheTestBase() {
         val item = cache.getDictById(newDict.id)
         assertNotNull(item)
         val itemAgain = cache.getDictById(newDict.id)
-        if (isLocalCacheEnabled()) assertSame(item, itemAgain, "同一 id 再次从缓存获取应返回同一对象引用")
+        if (isLocalCacheEnabled()) assertSame(item, itemAgain, "Fetching the same id from cache again should return the same object reference")
         assertNotNull(cache.getDictByAtomicServiceCodeAndDictType(newDict.atomicServiceCode, newDict.dictType))
     }
 
@@ -132,7 +132,7 @@ class SysDictHashCacheTest : RdbAndRedisCacheTestBase() {
         val item = cache.getDictById(newDict.id)
         assertNotNull(item)
         val itemAgain = cache.getDictById(newDict.id)
-        if (isLocalCacheEnabled()) assertTrue(item === itemAgain, "同一 id 再次从缓存获取应返回同一对象引用")
+        if (isLocalCacheEnabled()) assertTrue(item === itemAgain, "Fetching the same id from cache again should return the same object reference")
     }
 
     @Test
@@ -148,7 +148,7 @@ class SysDictHashCacheTest : RdbAndRedisCacheTestBase() {
         assertNotNull(updated)
         assertEquals(newDictName, updated.dictName)
         val updatedAgain = cache.getDictById(id)
-        if (isLocalCacheEnabled()) assertSame(updated, updatedAgain, "同一 id 再次从缓存获取应返回同一对象引用")
+        if (isLocalCacheEnabled()) assertSame(updated, updatedAgain, "Fetching the same id from cache again should return the same object reference")
     }
 
     @Test
@@ -160,7 +160,7 @@ class SysDictHashCacheTest : RdbAndRedisCacheTestBase() {
         val item = cache.getDictById(id)
         assertNotNull(item)
         val itemAgain = cache.getDictById(id)
-        if (isLocalCacheEnabled()) assertSame(item, itemAgain, "同一 id 再次从缓存获取应返回同一对象引用")
+        if (isLocalCacheEnabled()) assertSame(item, itemAgain, "Fetching the same id from cache again should return the same object reference")
     }
 
     @Test
@@ -181,7 +181,7 @@ class SysDictHashCacheTest : RdbAndRedisCacheTestBase() {
         val id = "sdch4003-5c6d-8e9f-2a3b-000000000033"
         sysDictDao.deleteById(id)
         cache.syncOnDelete(id)
-        assertNull(sysDictDao.get(id), "删除并 sync 后 DB 中该 id 应不存在")
+        assertNull(sysDictDao.get(id), "After delete + sync, the id should no longer exist in the DB")
     }
 
     @Test
@@ -193,10 +193,10 @@ class SysDictHashCacheTest : RdbAndRedisCacheTestBase() {
         )
         ids.forEach { sysDictDao.deleteById(it) }
         cache.syncOnBatchDelete(ids)
-        ids.forEach { assertNull(sysDictDao.get(it), "批量删除并 sync 后 DB 中该 id 应不存在") }
+        ids.forEach { assertNull(sysDictDao.get(it), "After batch delete + sync, the id should no longer exist in the DB") }
     }
 
-    // ---------- key 工具 ----------
+    // ---------- key helpers ----------
 
     @Test
     fun getKeyAtomicServiceCodeAndDictType() {

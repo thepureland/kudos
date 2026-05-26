@@ -9,11 +9,11 @@ import org.springframework.web.bind.annotation.RestController
 
 
 /**
- * 字典 内部 RPC 控制器。
+ * Dictionary internal RPC controller.
  *
- * 单条接口路径继承自 [ISysDictApi] 方法级注解；
- * 批量接口（入参为 `List<Pair>`、出参为 `Map<Pair, V>`）不便走 JSON 序列化，
- * 故额外提供本类自带的 `List<List<String>>` 适配端点供跨服务调用。
+ * Paths of single-record APIs are inherited from method-level annotations on [ISysDictApi];
+ * batch APIs (inputs of `List<Pair>` and outputs of `Map<Pair, V>`) are inconvenient for JSON serialization,
+ * so this class additionally exposes `List<List<String>>` adapter endpoints for cross-service calls.
  *
  * @author K
  * @since 1.0.0
@@ -43,7 +43,7 @@ class SysDictInternalController(
     ): Map<Pair<String, String>, LinkedHashMap<String, String>> =
         sysDictApi.batchGetActiveDictItemMap(dictTypeAndASCodePairs)
 
-    /** Pair 不便走 JSON 的批量适配：用 `List<List<String>>` 表示 `[dictType, atomicServiceCode]` 对，返回 key 拼成 `"dictType|atomicServiceCode"`。 */
+    /** Batch adapter for Pair, which is inconvenient over JSON: uses `List<List<String>>` to represent `[dictType, atomicServiceCode]` pairs and returns keys concatenated as `"dictType|atomicServiceCode"`. */
     @PostMapping("/api/internal/sys/dict/batchGetActiveDictItems")
     fun batchGetActiveDictItemsHttp(
         @RequestBody pairs: List<List<String>>,

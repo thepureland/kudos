@@ -7,13 +7,14 @@ import org.ktorm.schema.text
 import org.ktorm.schema.varchar
 
 /**
- * 审计日志详情表的 Ktorm `Table` 元数据。
+ * Ktorm `Table` metadata for the audit-log detail table.
  *
- * 一条主表记录（[SysAuditLogTable]）对应 0..1 条详情——切面在 `after` 阶段会把
- * URL / 描述 / 参数 JSON 等大字段塞到这里，避免主表行变得过宽影响热路径查询。
+ * Each main-table row ([SysAuditLogTable]) corresponds to 0..1 detail rows — during the `after` phase the aspect
+ * stuffs large fields like URL / description / params JSON in here, avoiding making the main-table row too wide and
+ * hurting hot-path queries.
  *
- * `audit_id` 外键指向 [SysAuditLogTable.id]——目前 DDL 不强制外键约束（业务量大时
- * FK 维护成本高），由应用层保证一致性。
+ * The `audit_id` foreign key points to [SysAuditLogTable.id] — the DDL currently does not enforce the FK constraint
+ * (FK maintenance is costly at high volume); consistency is guaranteed at the application layer.
  *
  * @author K
  * @author AI: Codex

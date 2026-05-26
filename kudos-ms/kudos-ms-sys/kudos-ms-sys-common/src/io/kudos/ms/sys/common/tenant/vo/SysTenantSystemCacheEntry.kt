@@ -4,17 +4,17 @@ import io.kudos.base.model.contract.entity.IIdEntity
 import java.io.Serializable
 
 /**
- * 租户-系统关系缓存项
+ * Tenant-system relation cache entry.
  *
  * @author K
  * @since 1.0.0
  */
 data class SysTenantSystemCacheEntry(
-    /** 主键 */
+    /** Primary key */
     override val id: String,
-    /** 租户id */
+    /** Tenant id */
     val tenantId: String,
-    /** 系统编码 */
+    /** System code */
     val systemCode: String
 ) : IIdEntity<String>, Serializable {
 

@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component
 import java.util.function.Consumer
 
 /**
- * RocketMQ测试消费者
+ * RocketMQ test consumer.
  *
  * @author shane
  * @author  K
@@ -27,20 +27,20 @@ open class RocketMqConsumerHandler {
     @MqConsumer(bindingName = "consumer-in-0")
     fun consumer(): Consumer<Message<StreamMessageVo<JSONObject>>?> {
         return Consumer { msg: Message<StreamMessageVo<JSONObject>>? ->
-            //获取消息体
+            // Get the message body
             val streamMsgVo = msg?.payload ?: return@Consumer
             val simpleMsgJson = streamMsgVo.data ?: return@Consumer
             val simpleMsg = simpleMsgJson.toJavaObject(RocketMqSimpleMsg::class.java)
             log.info("receive message: ${simpleMsg.msg}")
-            //记录日志
+            // Logging
             if (this.defaultMsg == simpleMsg.msg) {
                 flag = true
                 log.info("is Test Message: true")
             }
             log.info("before error: $errorFlag")
-            //模拟消费异常
+            // Simulate a consumption exception
             if (errorFlag) {
-                log.info("模拟消费异常: start up, true")
+                log.info("Simulated consumption exception: start up, true")
                 throw RuntimeException("mock consumer exception")
             }
         }

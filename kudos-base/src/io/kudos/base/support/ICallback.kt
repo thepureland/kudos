@@ -3,20 +3,20 @@ package io.kudos.base.support
 import java.io.Serializable
 
 /**
- * 回调接口
+ * Callback interface.
  *
- * @param P 参数类型
- * @param R 返回值类型
+ * @param P Parameter type
+ * @param R Return value type
  * @author K
  * @since 1.0.0
  */
 fun interface ICallback<P, R> : Serializable {
 
     /**
-     * 回调行为
+     * Callback behavior.
      *
-     * @param p 参数
-     * @return 返回值
+     * @param p Parameter
+     * @return Return value
      * @author K
      * @since 1.0.0
      */

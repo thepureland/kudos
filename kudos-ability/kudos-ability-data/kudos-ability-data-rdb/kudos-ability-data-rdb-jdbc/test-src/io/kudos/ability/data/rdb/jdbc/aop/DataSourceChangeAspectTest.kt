@@ -12,7 +12,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
 /**
- * 数据源切换注解切面的上下文恢复测试。
+ * Tests context restoration of the data-source-change annotation aspect.
  *
  * @author K
  * @author AI: Codex

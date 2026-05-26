@@ -1,7 +1,7 @@
 package io.kudos.base.error
 
 /**
- * 对象已存在异常
+ * Thrown when the target object already exists.
  *
  * @author K
  * @since 1.0.0

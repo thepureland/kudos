@@ -1,14 +1,16 @@
 package io.kudos.ability.data.rdb.jdbc.context
 
 /**
- * 数据库路由参数的线程局部上下文。
+ * Thread-local context for database routing parameters.
  *
- * 用 [InheritableThreadLocal] 存当前线程的 [DbParam]，AOP 切面据此选择数据源。
- * 子线程 **不** 继承父线程的值（`childValue` 返回 null）—— 避免线程池里的子任务
- * 意外继承上一个请求的路由意图。
+ * Uses [InheritableThreadLocal] to store the current thread's [DbParam], which AOP
+ * aspects use to select the data source. Child threads **do not** inherit the parent
+ * thread's value (`childValue` returns null) — preventing tasks in a thread pool
+ * from accidentally inheriting the routing intent of a previous request.
  *
- * 与 `KudosContextHolder` 同样的契约：使用线程池的场景**必须**在请求/任务结束时调用
- * [clear]，否则线程被复用时会带着旧的 [DbParam] 跑下一个请求，造成数据源串台。
+ * Same contract as `KudosContextHolder`: when using thread pools you **must** call
+ * [clear] at the end of each request/task, otherwise a reused thread will carry the
+ * old [DbParam] into the next request, causing data-source crossover.
  *
  * @author K
  * @author AI: Codex
@@ -17,7 +19,7 @@ package io.kudos.ability.data.rdb.jdbc.context
 class DbContext {
     private val contextParam: ThreadLocal<DbParam?> = object : InheritableThreadLocal<DbParam?>() {
         override fun childValue(parentValue: DbParam?): DbParam? {
-            // 子线程不继承父线程的值，杜绝线程池里"上一个 task 的路由意图被新 task 继承"
+            // Child threads do not inherit the parent's value; this prevents "the previous task's routing intent being inherited by a new task" in thread pools.
             return null
         }
     }
@@ -26,22 +28,25 @@ class DbContext {
         private val self = DbContext()
 
         /**
-         * 显式写入当前线程的 [DbParam]。传 `null` 等价于清空当前线程的绑定（但**不会**
-         * remove 掉 ThreadLocal slot，仅置 null —— 想真清掉用 [clear]）。
+         * Explicitly writes the current thread's [DbParam]. Passing `null` is
+         * equivalent to clearing the current thread's binding (but **does not**
+         * remove the ThreadLocal slot, only nulls it — use [clear] to truly remove).
          */
         fun set(param: DbParam?) {
             self.contextParam.set(param)
         }
 
         /**
-         * 取当前线程的 [DbParam]，**没绑定时会自动新建一个空 [DbParam] 并写回 ThreadLocal**。
+         * Returns the current thread's [DbParam]; **if not bound, automatically
+         * creates an empty [DbParam] and writes it back into the ThreadLocal**.
          *
-         * 这种"取的同时偷偷创建"的语义历史遗留下来 —— 切面要求 get() 永远返回非空，方便链
-         * 写 `DbContext.get().forcedDs = ...`。代价是：在不知情的代码路径里调用 get() 会
-         * 顺手把一个空 DbParam 塞进当前线程的 ThreadLocal slot，线程池场景里若忘记 [clear]
-         * 就是泄漏来源。
+         * This "create-on-read" semantic is historical — the aspects require get()
+         * to always return non-null so callers can chain `DbContext.get().forcedDs = ...`.
+         * The cost is that calling get() in an unaware code path silently inserts an
+         * empty DbParam into the current thread's ThreadLocal slot, which becomes a
+         * leak source in thread-pool scenarios if [clear] is forgotten.
          *
-         * **如果只是"看一眼当前是否有上下文"，请用 [getOrNull]。**
+         * **If you only want to "peek at whether there is currently a context", use [getOrNull].**
          */
         fun get(): DbParam {
             if (self.contextParam.get() == null) {
@@ -51,14 +56,16 @@ class DbContext {
         }
 
         /**
-         * 取当前线程已绑定的 [DbParam]，未绑定时返回 `null`，**不创建任何新对象**、**不写
-         * ThreadLocal**。供"只读侦测"路径使用，避免被 [get] 的副作用污染线程局部状态。
+         * Returns the current thread's bound [DbParam]; returns `null` when unbound,
+         * **without creating any new object** and **without writing to the ThreadLocal**.
+         * Used by "read-only inspection" paths to avoid being polluted by [get]'s side effects.
          */
         fun getOrNull(): DbParam? = self.contextParam.get()
 
         /**
-         * 彻底清除当前线程的 [DbParam] 绑定（`ThreadLocal.remove`）。**线程池场景每次任
-         * 务结束必须调用**，否则线程被复用时会带着旧 [DbParam] 跑下个任务。
+         * Completely clears the current thread's [DbParam] binding (`ThreadLocal.remove`).
+         * **Must be called at the end of every task in thread-pool scenarios**, otherwise
+         * a reused thread will carry the old [DbParam] into the next task.
          */
         fun clear() {
             self.contextParam.remove()

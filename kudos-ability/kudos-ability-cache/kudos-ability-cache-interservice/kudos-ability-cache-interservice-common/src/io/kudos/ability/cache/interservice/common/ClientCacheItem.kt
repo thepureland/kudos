@@ -6,8 +6,8 @@ import java.io.Serial
 import java.io.Serializable
 
 /**
- * 客户端缓存项
- * 封装服务间缓存的缓存项，包括唯一标识和缓存数据
+ * Client-side cache item.
+ * Wraps an inter-service cache item, including the unique identifier and cached data.
  *
  * @author K
  * @author AI: Codex
@@ -26,9 +26,11 @@ class ClientCacheItem : Serializable {
     }
 
     /**
-     * 转成显式 JSON 快照 envelope，避免跨节点传输时只能依赖 JVM 原生序列化。
+     * Converts to an explicit JSON snapshot envelope to avoid relying solely on JVM native serialization
+     * when transferring across nodes.
      *
-     * [cacheData] 的 JSON 反序列化需要调用方按自身 DTO 类型完成，因此这里只记录类型名与 JSON 字符串。
+     * JSON deserialization of [cacheData] must be performed by the caller against their own DTO type;
+     * this snapshot therefore records only the type name and the JSON string.
      */
     fun toSnapshot(): ClientCacheItemSnapshot {
         val data = cacheData
@@ -46,20 +48,24 @@ class ClientCacheItem : Serializable {
         private const val serialVersionUID = 1112894179070136297L
 
         /**
-         * 根据对象生成 uuid，用作跨服务 Feign 响应的内容指纹（客户端用它判断是否复用本地缓存）。
+         * Generates a uuid from an object, used as the content fingerprint of an inter-service Feign response
+         * (the client uses it to decide whether to reuse its local cache).
          *
-         * 稳定性约定：
-         * - 输入：同一类、同一字段值 → 同一 UID（依赖 kotlinx.serialization 按字段声明顺序输出，已是确定的）。
-         * - 类型隔离：FQN 与 JSON 之间用 `#` 分隔，杜绝"类名 + JSON 拼接出同一字符串"的边角碰撞。
-         * - 已知风险：DTO 里如果带 `Map<*, *>` 且不是 `LinkedHashMap`，迭代顺序可能不稳定 → JSON 不稳 → UID 抖动。
-         *   建议接口层避免直接返回原始 Map；如必须，使用 `LinkedHashMap` 或自行排序后再返回。
+         * Stability contract:
+         * - Input: same class, same field values → same UID (relies on kotlinx.serialization emitting fields in
+         *   declaration order, which is deterministic).
+         * - Type isolation: FQN and JSON are separated by `#`, eliminating edge collisions where "class name + JSON"
+         *   would concatenate into the same string.
+         * - Known risk: if the DTO contains a `Map<*, *>` that is not a `LinkedHashMap`, the iteration order may be
+         *   unstable → JSON unstable → UID jitter. Interface layers should avoid returning a raw Map; if necessary,
+         *   use `LinkedHashMap` or sort before returning.
          *
-         * 与"加密"无关，纯指纹用途。MD5 在此处足够低成本且离散性可接受。
+         * Not for encryption — fingerprinting only. MD5 is low-cost and provides acceptable dispersion here.
          */
         fun genUid(obj: Any): String {
             val fingerprint = obj::class.java.name + "#" + JsonKit.toJson(obj)
             val md5 = DigestKit.getMD5(fingerprint.toByteArray(), "feignCache")
-            return requireNotNull(md5) { "feignCache MD5 计算结果为空" }
+            return requireNotNull(md5) { "feignCache MD5 result is empty" }
         }
 
         fun fromSnapshot(
@@ -85,7 +91,7 @@ class ClientCacheItem : Serializable {
 }
 
 /**
- * 跨服务缓存项的显式 JSON 传输快照。
+ * Explicit JSON transport snapshot for an inter-service cache item.
  *
  * @author K
  * @author AI: Codex

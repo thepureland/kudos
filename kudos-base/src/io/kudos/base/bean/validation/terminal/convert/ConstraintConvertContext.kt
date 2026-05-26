@@ -3,7 +3,7 @@ package io.kudos.base.bean.validation.terminal.convert
 import kotlin.reflect.KClass
 
 /**
- * 约束转换上下文
+ * Constraint conversion context.
  *
  * @author admin
  * @since 1.0.0

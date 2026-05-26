@@ -6,7 +6,7 @@ import io.kudos.ms.sys.core.locale.model.po.SysLocale
 
 
 /**
- * 语言/区域字典业务接口
+ * Business interface for the language/locale dictionary.
  *
  * @author K
  * @since 1.0.0
@@ -14,24 +14,24 @@ import io.kudos.ms.sys.core.locale.model.po.SysLocale
 interface ISysLocaleService : IBaseCrudService<String, SysLocale> {
 
     /**
-     * 按语言代码查询启用的语言。
+     * Look up an active locale by code.
      *
-     * @param code 语言代码，非空
-     * @return 已启用的语言；查无结果或未启用返回 `null`
+     * @param code locale code, non-blank
+     * @return the active locale, or `null` if not found or not active
      */
     fun getLocaleByCode(code: String): SysLocaleCacheEntry?
 
     /**
-     * 列出所有启用的语言（按 sort_no 升序）。
+     * List all active locales (ordered by sort_no ascending).
      */
     fun listActiveLocales(): List<SysLocaleCacheEntry>
 
     /**
-     * 更新启用状态
+     * Update the active status.
      *
-     * @param id 主键
-     * @param active 是否启用
-     * @return 是否更新成功
+     * @param id primary key
+     * @param active whether to enable
+     * @return whether the update succeeded
      */
     fun updateActive(id: String, active: Boolean): Boolean
 

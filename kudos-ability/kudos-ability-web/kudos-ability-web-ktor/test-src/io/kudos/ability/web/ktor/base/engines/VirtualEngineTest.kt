@@ -11,7 +11,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * ktor自带内存虚拟引擎测试
+ * Test for Ktor's built-in in-memory virtual engine.
  *
  * @author K
  * @author AI: Codex

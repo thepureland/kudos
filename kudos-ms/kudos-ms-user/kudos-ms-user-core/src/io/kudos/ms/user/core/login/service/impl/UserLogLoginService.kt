@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 
 /**
- * 登录日志业务
+ * Login log service.
  *
  * @author K
  * @author AI: Cursor

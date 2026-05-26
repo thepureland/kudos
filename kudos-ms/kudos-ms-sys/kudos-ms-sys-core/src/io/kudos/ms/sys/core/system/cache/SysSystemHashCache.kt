@@ -18,10 +18,10 @@ import org.springframework.transaction.event.TransactionPhase
 import org.springframework.transaction.event.TransactionalEventListener
 
 /**
- * 系统（按 code）Hash 缓存处理器。
+ * Hash cache handler for systems (keyed by code).
  *
- * 数据来源表：sys_system；主键为 code，缓存的 key 即 code，value 为 [SysSystemCacheEntry]。
- * 使用 Hash 结构存储，通过 [HashCacheableByPrimary] / [HashBatchCacheableByPrimary] 按 code 存取。
+ * Source table: sys_system; primary key is code; the cache key is the code and the value is [SysSystemCacheEntry].
+ * Stored using a Hash structure; accessed by code via [HashCacheableByPrimary] / [HashBatchCacheableByPrimary].
  *
  * @author K
  * @since 1.0.0
@@ -37,7 +37,7 @@ open class SysSystemHashCache : AbstractHashCacheHandler<SysSystemCacheEntry>() 
     companion object {
         const val CACHE_NAME = "SYS_SYSTEM__HASH"
 
-        /** 可筛选副属性：按 subSystem 建二级索引，用于按是否子系统查询 */
+        /** Filterable secondary properties: secondary index on subSystem for sub-system flag queries. */
         val FILTERABLE_PROPERTIES = setOf(SysSystemCacheEntry::subSystem.name)
     }
 
@@ -50,10 +50,10 @@ open class SysSystemHashCache : AbstractHashCacheHandler<SysSystemCacheEntry>() 
     override fun doReload(id: Any): SysSystemCacheEntry? = sysSystemDao.getAs(id.toString())
 
     /**
-     * 根据 code 从缓存获取系统信息，未命中则查库并回写。
+     * Gets a system from cache by code; on miss, queries the database and writes back.
      *
-     * @param code 系统编码（主键），非空
-     * @return 系统缓存项，不存在时 null
+     * @param code system code (primary key), non-blank
+     * @return cached system entry, or null if not found
      */
     @HashCacheableByPrimary(
         cacheNames = [CACHE_NAME],
@@ -63,15 +63,15 @@ open class SysSystemHashCache : AbstractHashCacheHandler<SysSystemCacheEntry>() 
         filterableProperties = ["subSystem"]
     )
     open fun getSystemByCode(code: String): SysSystemCacheEntry? {
-        require(code.isNotBlank()) { "获取系统时 code 不能为空" }
+        require(code.isNotBlank()) { "code must not be blank when fetching a system" }
         return sysSystemDao.getAs<SysSystemCacheEntry>(code)
     }
 
     /**
-     * 根据多个 code 从缓存批量获取系统信息，未命中的从库加载并回写。
+     * Batch gets systems from cache by codes; misses are loaded from the database and written back.
      *
-     * @param codes 系统 code 集合，可为空
-     * @return code -> 实体 映射，仅包含能查到的 code
+     * @param codes system code collection, may be empty
+     * @return code -> entity map; only contains codes that were found
      */
     @HashBatchCacheableByPrimary(
         cacheNames = [CACHE_NAME],
@@ -85,10 +85,10 @@ open class SysSystemHashCache : AbstractHashCacheHandler<SysSystemCacheEntry>() 
     }
 
     /**
-     * 根据是否子系统从缓存获取系统列表，未命中则查库并回写。
+     * Gets the system list from cache by sub-system flag; on miss, queries the database and writes back.
      *
-     * @param subSystem true 表示只查子系统，false 表示只查非子系统
-     * @return 系统缓存项列表
+     * @param subSystem true to fetch only sub-systems, false to fetch only non-sub-systems
+     * @return list of cached system entries
      */
     @HashCacheableBySecondary(
         cacheNames = [CACHE_NAME],
@@ -100,13 +100,13 @@ open class SysSystemHashCache : AbstractHashCacheHandler<SysSystemCacheEntry>() 
         return sysSystemDao.fetchSystemsByType(subSystem)
     }
 
-    /** 获取所有子系统列表（subSystem=true）。 */
+    /** Returns all sub-systems (subSystem=true). */
     open fun listSubSystems(): List<SysSystemCacheEntry> = getSystemsByType(true)
 
     /**
-     * 获取所有系统（来自缓存）；若缓存为空则从库加载并回写后再返回。
+     * Returns all systems (from cache); if the cache is empty, loads from the database, writes back, and returns.
      *
-     * @return 系统缓存项列表，缓存未开启时直接从库查询返回
+     * @return list of cached system entries; queries directly from the database when caching is disabled
      */
     open fun getAllSystems(): List<SysSystemCacheEntry> {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
@@ -122,23 +122,23 @@ open class SysSystemHashCache : AbstractHashCacheHandler<SysSystemCacheEntry>() 
     }
 
     /**
-     * 从库全量加载系统并刷新 Hash 缓存。
+     * Loads all systems from the database and refreshes the Hash cache.
      *
-     * @param clear 为 true 时先清空再写入；为 false 时覆盖写入
+     * @param clear when true, clears before writing; when false, overwrites in place
      */
     override fun reloadAll(clear: Boolean) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.info("缓存未开启，不加载系统 Hash 缓存")
+            log.info("Cache is not enabled; skip loading system Hash cache.")
             return
         }
         val cache = hashCache()
         if (clear) cache.clear(CACHE_NAME)
         val list = sysSystemDao.searchAs<SysSystemCacheEntry>()
-        log.debug("从数据库加载 ${list.size} 条系统，刷新 Hash 缓存")
+        log.debug("Loaded ${list.size} systems from database; refreshing Hash cache.")
         cache.refreshAll(CACHE_NAME, list, FILTERABLE_PROPERTIES, emptySet())
     }
 
-    /** 新增系统后同步：将指定 code 的实体从库加载并写入缓存。 */
+    /** Syncs after system insert: loads the entity by code from the database and writes it to the cache. */
     open fun syncOnInsert(code: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME) || !KeyValueCacheKit.isWriteInTime(CACHE_NAME)) return
         val item = sysSystemDao.getAs<SysSystemCacheEntry>(code) ?: return
@@ -146,16 +146,16 @@ open class SysSystemHashCache : AbstractHashCacheHandler<SysSystemCacheEntry>() 
     }
 
     /**
-     * 新增系统后同步（重载，接收业务对象与 code）。行为同 [syncOnInsert]。
+     * Syncs after system insert (overload accepting a business object and code). Same behavior as [syncOnInsert].
      *
-     * @param any 业务对象，仅用于重载区分
-     * @param code 系统编码（主键）
+     * @param any business object, only used to distinguish the overload
+     * @param code system code (primary key)
      */
     open fun syncOnInsert(any: Any, code: String) {
         syncOnInsert(code)
     }
 
-    /** 更新系统后同步：从库重新加载并写入缓存。 */
+    /** Syncs after system update: reloads the entity from the database and writes it to the cache. */
     open fun syncOnUpdate(code: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
         val item = sysSystemDao.getAs<SysSystemCacheEntry>(code) ?: return
@@ -165,22 +165,22 @@ open class SysSystemHashCache : AbstractHashCacheHandler<SysSystemCacheEntry>() 
     }
 
     /**
-     * 更新系统后同步（重载，带业务对象）。行为同 [syncOnUpdate]。
+     * Syncs after system update (overload with business object). Same behavior as [syncOnUpdate].
      *
-     * @param any 业务对象
-     * @param code 系统编码（主键）
+     * @param any business object
+     * @param code system code (primary key)
      */
     open fun syncOnUpdate(any: Any, code: String) {
         syncOnUpdate(code)
     }
 
-    /** 删除系统后同步：从缓存中移除该 code。 */
+    /** Syncs after system delete: removes the code from the cache. */
     open fun syncOnDelete(code: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
         hashCache().deleteById(CACHE_NAME, code, SysSystemCacheEntry::class, FILTERABLE_PROPERTIES, emptySet())
     }
 
-    /** 批量删除系统后同步：从缓存中移除这些 code。 */
+    /** Syncs after batch system delete: removes the given codes from the cache. */
     open fun syncOnBatchDelete(codes: Collection<String>) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
         val cache = hashCache()

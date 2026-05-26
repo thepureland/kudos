@@ -6,7 +6,7 @@ import io.kudos.tools.codegen.model.po.CodeGenFile
 
 
 /**
- * 生成的文件历史信息服务
+ * Service for the history of generated files.
  *
  * @author K
  * @since 1.0.0

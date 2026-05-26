@@ -8,13 +8,13 @@ import org.springframework.context.annotation.Import
 import org.springframework.context.annotation.PropertySource
 
 /**
- * 微服务应用1
+ * Microservice application 1.
  *
  * @author K
  * @since 1.0.0
  */
 @EnableDiscoveryClient
-//@ActiveProfiles("ms1") // 在SpringApplication.run(Application1.class)方式下无效
+//@ActiveProfiles("ms1") // Has no effect when launched via SpringApplication.run(Application1.class)
 @PropertySource(
     value = ["classpath:application-ms1.yml"],
     factory = YamlPropertySourceFactory::class

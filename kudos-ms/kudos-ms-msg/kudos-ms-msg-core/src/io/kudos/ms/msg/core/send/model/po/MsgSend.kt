@@ -6,7 +6,7 @@ import java.time.LocalDateTime
 
 
 /**
- * 消息发送数据库实体
+ * Message send database entity.
  *
  * @author K
  * @author AI: Codex
@@ -16,40 +16,40 @@ interface MsgSend : IDbEntity<String, MsgSend> {
 
     companion object : DbEntityFactory<MsgSend>()
 
-    /** 接收者群组类型字典码 */
+    /** Receiver group type dictionary code */
     var receiverGroupTypeDictCode: String
 
-    /** 接收者群组ID */
+    /** Receiver group ID */
     var receiverGroupId: String?
 
-    /** 消息实例ID */
+    /** Message instance ID */
     var instanceId: String
 
-    /** 消息类型字典码 */
+    /** Message type dictionary code */
     var msgTypeDictCode: String
 
-    /** 国家-语言字典码 */
+    /** Country-language dictionary code */
     var localeDictCode: String?
 
-    /** 发送状态字典码 */
+    /** Send status dictionary code */
     var sendStatusDictCode: String
 
-    /** 创建时间 */
+    /** Create time */
     var createTime: LocalDateTime
 
-    /** 更新时间 */
+    /** Update time */
     var updateTime: LocalDateTime?
 
-    /** 发送成功数量 */
+    /** Send success count */
     var successCount: Int?
 
-    /** 发送失败数量 */
+    /** Send fail count */
     var failCount: Int?
 
-    /** 定时任务ID */
+    /** Scheduled job ID */
     var jobId: String?
 
-    /** 租户ID */
+    /** Tenant ID */
     var tenantId: String
 
 

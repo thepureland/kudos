@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Configuration
 
 
 /**
- * OpenFeign自动配置类
+ * OpenFeign auto-configuration class.
  *
  * @author K
  * @author AI: Codex
@@ -25,8 +25,8 @@ import org.springframework.context.annotation.Configuration
 open class OpenFeignAutoConfiguration : IComponentInitializer {
 
     /**
-     * 全局 Feign 请求拦截器——把 kudos 上下文（tenantId / subSysCode / traceKey 等）
-     * 自动塞进每个 Feign 请求头。详细行为见 [GlobalHeaderRequestInterceptor]。
+     * Global Feign request interceptor: automatically injects the kudos context (tenantId / subSysCode /
+     * traceKey, etc.) into every Feign request header. See [GlobalHeaderRequestInterceptor] for details.
      */
     @Bean("globalHeaderRequestInterceptor")
     open fun feignCacheRequestInterceptor(properties: OpenFeignProperties): RequestInterceptor =
@@ -37,7 +37,8 @@ open class OpenFeignAutoConfiguration : IComponentInitializer {
     open fun openFeignProperties() = OpenFeignProperties()
 
     /**
-     * 全局 Feign 降级工厂：按异常类型映射 HTTP 状态码，配合 `@FeignClient(fallbackFactory = ...)` 使用。
+     * Global Feign fallback factory: maps exception types to HTTP status codes, intended for use with
+     * `@FeignClient(fallbackFactory = ...)`.
      */
     @Bean
     @ConditionalOnMissingBean

@@ -11,7 +11,7 @@ import org.springframework.stereotype.Repository
 
 
 /**
- * 租户-系统关系数据访问对象
+ * Tenant-system relationship data access object.
  *
  * @author K
  * @author AI: Cursor
@@ -22,28 +22,28 @@ open class SysTenantSystemDao : BaseCrudDao<String, SysTenantSystem, SysTenantSy
 
 
     /**
-     * 根据租户id查找对应的系统编码
+     * Find the corresponding system codes by tenant id.
      *
-     * @param tenantId 租户id
-     * @return Set<系统编码>
+     * @param tenantId tenant id
+     * @return Set of system codes
      */
     fun searchSystemCodesByTenantId(tenantId: String): Set<String> =
         searchProperty(Criteria(SysTenantSystem::tenantId eq tenantId), SysTenantSystem::systemCode).toSet()
 
     /**
-     * 根据系统编码查找对应的租户id
+     * Find the corresponding tenant ids by system code.
      *
-     * @param systemCode 系统编码
-     * @return Set<租户id>
+     * @param systemCode system code
+     * @return Set of tenant ids
      */
     fun searchTenantIdsBySystemCode(systemCode: String): Set<String> =
         searchProperty(Criteria(SysTenantSystem::systemCode eq systemCode), SysTenantSystem::tenantId).toSet()
 
     /**
-     * 根据租户id对系统编码进行分组
+     * Group system codes by tenant id.
      *
-     * @param tenantIds 查询条件：租户id集合，为null时将查出所有记录，默认为null
-     * @return Map<租户id， List<系统编码>>
+     * @param tenantIds query condition: collection of tenant ids; when null, all records are returned; defaults to null
+     * @return Map of tenant id -> List of system codes
      */
     fun groupingSystemCodesByTenantIds(tenantIds: Collection<String>? = null): Map<String, List<String>> =
         groupRows(
@@ -53,10 +53,10 @@ open class SysTenantSystemDao : BaseCrudDao<String, SysTenantSystem, SysTenantSy
         )
 
     /**
-     * 根据系统编码对租户id进行分组
+     * Group tenant ids by system code.
      *
-     * @param systemCodes 查询条件：系统编码集合，为null时将查出所有记录，默认为null
-     * @return Map<系统编码， List<租户id>>
+     * @param systemCodes query condition: collection of system codes; when null, all records are returned; defaults to null
+     * @return Map of system code -> List of tenant ids
      */
     fun groupingTenantIdsBySystemCodes(systemCodes: Collection<String>? = null): Map<String, List<String>> =
         groupRows(
@@ -83,11 +83,11 @@ open class SysTenantSystemDao : BaseCrudDao<String, SysTenantSystem, SysTenantSy
     }
 
     /**
-     * 检查关系是否存在
+     * Check whether the relationship exists.
      *
-     * @param tenantId 租户id
-     * @param systemCode 系统编码
-     * @return 是否存在
+     * @param tenantId tenant id
+     * @param systemCode system code
+     * @return whether it exists
      * @author AI: Cursor
      */
     fun exists(tenantId: String, systemCode: String): Boolean = count(
@@ -95,21 +95,21 @@ open class SysTenantSystemDao : BaseCrudDao<String, SysTenantSystem, SysTenantSy
     ) > 0
 
     /**
-     * 按租户ID和系统编码删除关系
+     * Delete the relationship by tenant id and system code.
      *
-     * @param tenantId 租户ID
-     * @param systemCode 系统编码
-     * @return 删除条数
+     * @param tenantId tenant id
+     * @param systemCode system code
+     * @return number of deleted rows
      */
     fun deleteByTenantIdAndSystemCode(tenantId: String, systemCode: String): Int = batchDeleteCriteria(
         Criteria.and(SysTenantSystem::tenantId eq tenantId, SysTenantSystem::systemCode eq systemCode)
     )
 
     /**
-     * 按租户ID集合批量删除关系
+     * Batch delete relationships by a collection of tenant ids.
      *
-     * @param tenantIds 租户ID集合
-     * @return 删除条数
+     * @param tenantIds collection of tenant ids
+     * @return number of deleted rows
      */
     fun batchDeleteByTenantIds(tenantIds: Collection<String>): Int {
         if (tenantIds.isEmpty()) return 0
@@ -117,27 +117,27 @@ open class SysTenantSystemDao : BaseCrudDao<String, SysTenantSystem, SysTenantSy
     }
 
     /**
-     * 全量查询供 Hash 缓存加载
+     * Full query for loading the Hash cache.
      *
-     * @return 所有租户-系统关系缓存项
+     * @return all tenant-system relationship cache items
      */
     open fun fetchAllForCache(): List<SysTenantSystemCacheEntry> =
         searchAs<SysTenantSystemCacheEntry>(null)
 
     /**
-     * 按系统编码查询供 Hash 缓存按副属性回写
+     * Query by system code for the Hash cache to write back by secondary property.
      *
-     * @param systemCode 系统编码
-     * @return 该系统下的租户-系统关系缓存项列表
+     * @param systemCode system code
+     * @return list of tenant-system relationship cache items under this system
      */
     open fun fetchCacheItemsBySystemCode(systemCode: String): List<SysTenantSystemCacheEntry> =
         searchAs<SysTenantSystemCacheEntry>(Criteria(SysTenantSystem::systemCode eq systemCode))
 
     /**
-     * 按租户id查询供 Hash 缓存按副属性回写
+     * Query by tenant id for the Hash cache to write back by secondary property.
      *
-     * @param tenantId 租户id
-     * @return 该租户下的租户-系统关系缓存项列表
+     * @param tenantId tenant id
+     * @return list of tenant-system relationship cache items under this tenant
      */
     open fun fetchCacheItemsByTenantId(tenantId: String): List<SysTenantSystemCacheEntry> =
         searchAs<SysTenantSystemCacheEntry>(Criteria(SysTenantSystem::tenantId eq tenantId))

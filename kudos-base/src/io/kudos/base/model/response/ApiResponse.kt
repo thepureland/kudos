@@ -4,9 +4,10 @@ import io.kudos.base.enums.ienums.IErrorCodeEnum
 import io.kudos.base.enums.impl.CommonErrorCodeEnum
 
 /**
- * 用于返回给调用方的统一结构的数据。
+ * Unified-structure data returned to callers.
  *
- * 设计为 sealed class，消费端在 `when` 分支里可以让编译器强制处理 [Success] 与 [Failure]：
+ * Designed as a sealed class so that consumers can let the compiler force handling of both [Success] and
+ * [Failure] in a `when` branch:
  *
  * ```kotlin
  * when (response) {
@@ -15,37 +16,37 @@ import io.kudos.base.enums.impl.CommonErrorCodeEnum
  * }
  * ```
  *
- * 工厂方法 [Companion.success] / [Companion.fail] 仍按以前的签名提供（返回值仍声明为
- * `ApiResponse<T>`），生产端构造代码无需修改。
+ * The factory methods [Companion.success] / [Companion.fail] keep their previous signatures (still declared
+ * to return `ApiResponse<T>`), so producer-side construction code does not need to change.
  *
- * JSON 序列化形态保持稳定（配合 `explicitNulls = false` 的 Json 配置）：
- * - Success 输出：`{success, code, message, data, timestamp, traceId?}`
- * - Failure 输出：`{success, code, message, errors?, timestamp, traceId?}`
+ * The JSON serialization shape is kept stable (combined with `explicitNulls = false` Json configuration):
+ * - Success output: `{success, code, message, data, timestamp, traceId?}`
+ * - Failure output: `{success, code, message, errors?, timestamp, traceId?}`
  *
- * @param T 业务数据类型
+ * @param T the business-data type
  * @author K
  * @author ChatGPT
  * @since 1.0.0
  */
 sealed class ApiResponse<out T> {
 
-    /** 是否成功：[Success] 恒为 true，[Failure] 恒为 false */
+    /** Whether the response is successful: always true for [Success], always false for [Failure]. */
     abstract val success: Boolean
 
-    /** 响应码（如 "200" / "400" / "USER_1001"） */
+    /** Response code (e.g. "200" / "400" / "USER_1001"). */
     abstract val code: String
 
-    /** 响应消息（用于前端提示或开发调试） */
+    /** Response message (used for frontend display or development/debugging). */
     abstract val message: String?
 
-    /** 响应生成时间戳（毫秒） */
+    /** Response generation timestamp (milliseconds). */
     abstract val timestamp: Long
 
-    /** 链路追踪 ID（可选） */
+    /** Trace ID (optional). */
     abstract val traceId: String?
 
     /**
-     * 成功响应：携带业务数据 [data]。
+     * Successful response: carries business data [data].
      */
     data class Success<T>(
         override val code: String,
@@ -58,9 +59,10 @@ sealed class ApiResponse<out T> {
     }
 
     /**
-     * 失败响应：携带可选的细粒度错误列表 [errors]。
+     * Failure response: carries an optional fine-grained error list [errors].
      *
-     * 类型参数固定为 [Nothing]，借助外层 `out T` 的协变可赋值给任意 `ApiResponse<T>`。
+     * The type parameter is fixed to [Nothing]; thanks to the outer `out T` covariance it can be assigned to
+     * any `ApiResponse<T>`.
      */
     data class Failure(
         override val code: String,
@@ -74,14 +76,14 @@ sealed class ApiResponse<out T> {
 
     companion object {
 
-        /** 构造默认成功响应（使用 [CommonErrorCodeEnum.SUCCESS] 的 code 与 displayText） */
+        /** Build a default successful response (uses [CommonErrorCodeEnum.SUCCESS]'s code and displayText). */
         fun <T> success(data: T? = null): ApiResponse<T> = Success(
             code = CommonErrorCodeEnum.SUCCESS.code,
             message = CommonErrorCodeEnum.SUCCESS.displayText,
             data = data
         )
 
-        /** 构造带自定义消息的成功响应 */
+        /** Build a successful response with a custom message. */
         fun <T> success(message: String, data: T? = null): ApiResponse<T> = Success(
             code = CommonErrorCodeEnum.SUCCESS.code,
             message = message,
@@ -89,11 +91,12 @@ sealed class ApiResponse<out T> {
         )
 
         /**
-         * 构造失败响应（手动传 code/message）。
+         * Build a failure response (manually supplied code/message).
          *
-         * 历史签名包含一个 `data: T?` 参数，重构后移除——[Failure] 不携带业务数据，
-         * 旧实现里 `data` 在失败语义下从未被业务使用过。如有 caller 用第三个位置参数
-         * 传 `null`，它会自动绑定到本签名的 `errors`，行为等价。
+         * The historical signature contained a `data: T?` parameter; it was removed during refactoring — [Failure]
+         * does not carry business data, and in the legacy implementation `data` was never used by callers under
+         * failure semantics. If an existing caller passes `null` as the third positional argument, it now binds to
+         * the `errors` parameter of this signature, yielding equivalent behavior.
          */
         fun <T> fail(
             code: String,
@@ -101,7 +104,7 @@ sealed class ApiResponse<out T> {
             errors: List<ErrorDetail>? = null
         ): ApiResponse<T> = Failure(code, message, errors)
 
-        /** 构造失败响应（错误码枚举驱动） */
+        /** Build a failure response driven by an error-code enum. */
         fun <T> fail(
             resultCode: IErrorCodeEnum,
             errors: List<ErrorDetail>? = null

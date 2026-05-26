@@ -6,7 +6,7 @@ import org.springframework.cloud.openfeign.FeignClient
 
 
 /**
- * 子系统-微服务关系客户端代理接口
+ * SubSystem-Microservice relation client proxy interface.
  *
  * @author K
  * @since 1.0.0

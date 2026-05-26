@@ -7,7 +7,7 @@ import jakarta.annotation.Resource
 /**
  * junit test for SysResourceDao
  *
- * 测试数据来源：`SysResourceDaoTest.sql`
+ * Test data source: `SysResourceDaoTest.sql`
  *
  * @author K
  * @author AI: Cursor

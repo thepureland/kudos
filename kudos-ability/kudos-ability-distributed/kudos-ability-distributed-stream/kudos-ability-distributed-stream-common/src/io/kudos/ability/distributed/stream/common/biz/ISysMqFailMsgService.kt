@@ -5,12 +5,12 @@ import io.kudos.base.support.service.iservice.IBaseCrudService
 import java.time.LocalDateTime
 
 /**
- * Stream 异常消息持久化 / 查询 / 清理服务。
+ * Persist / query / clean service for stream failed messages.
  *
- * 配套表 `sys_mq_fail_msg`（[SysMqFailMsg]）；典型调用方：
+ * Backing table `sys_mq_fail_msg` ([SysMqFailMsg]). Typical callers:
  *  - [io.kudos.ability.distributed.stream.common.handler.StreamGlobalExceptionHandler.globalHandleError]
- *    consumer 端异常入表
- *  - 业务侧人工补救（按 topic + 时间窗口拉数据 / 重发 / 删除）
+ *    records consumer-side exceptions into the table
+ *  - business-side manual recovery (pull by topic + time window / resend / delete)
  *
  * @author paul
  * @author K
@@ -18,22 +18,22 @@ import java.time.LocalDateTime
  */
 interface ISysMqFailMsgService : IBaseCrudService<String, SysMqFailMsg> {
     /**
-     * 保存异常消息
+     * Save a failed message.
      *
      * @param exceptionMsg
      */
     fun save(exceptionMsg: SysMqFailMsg): Boolean
 
     /**
-     * 查询指定topic下的异常消息
+     * Query failed messages under the given topic.
      *
-     * @param topic     主题
-     * @param startTime 查询开始时间
+     * @param topic     topic
+     * @param startTime query start time
      */
     fun query(topic: String, startTime: LocalDateTime): List<SysMqFailMsg>
 
     /**
-     * 删除异常消息
+     * Delete failed messages.
      *
      * @param ids
      */

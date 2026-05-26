@@ -6,7 +6,7 @@ import org.springframework.cloud.openfeign.FeignClient
 
 
 /**
- * 消息接收客户端代理接口（收件箱 RPC 视图）
+ * Message receive client proxy interface (inbox RPC view).
  *
  * @author K
  * @author AI: Codex

@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 /**
- * 微服务应用2的service
+ * Service of microservice application 2.
  *
  * @author K
  * @since 1.0.0
@@ -22,22 +22,22 @@ open class Service2 : IService2 {
 
     private val log = LogFactory.getLog(this::class)
 
-    @Transactional // 可加可不加
+    @Transactional // optional
     override fun increase(id: Int, money: Double) {
-        log.info("seata全局事务id【${RootContext.getXID()}】")
+        log.info("Seata global transaction id [${RootContext.getXID()}]")
         val entity = requireNotNull(testTableDao.get(id)) { "TestTable not found: $id" }
-        log.info("用户【$id】当前余额【${entity.balance}】")
-        log.info("为用户【$id】增加余额【${money}】")
+        log.info("User [$id] current balance [${entity.balance}]")
+        log.info("Credit user [$id] balance by [${money}]")
         entity.balance = entity.balance.plus(money)
         testTableDao.update(entity)
         val after = requireNotNull(testTableDao.get(id)) { "TestTable not found: $id" }
-        log.info("用户【$id】当前余额【${after.balance}】")
+        log.info("User [$id] current balance [${after.balance}]")
     }
 
-    //    @Transactional // 可加可不加
+    //    @Transactional // optional
     override fun increaseFail(id: Int, money: Double) {
-        log.info("seata全局事务id【${RootContext.getXID()}】")
-        throw TxException("模拟加款时错误发生，事务回滚.")
+        log.info("Seata global transaction id [${RootContext.getXID()}]")
+        throw TxException("Simulated error while crediting; the transaction is rolled back.")
     }
 
 }

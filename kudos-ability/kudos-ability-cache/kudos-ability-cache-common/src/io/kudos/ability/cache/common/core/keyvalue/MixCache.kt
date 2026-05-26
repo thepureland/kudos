@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * 混合缓存(两级缓存: 本地+远程)
+ * Mixed cache (two-tier cache: local + remote).
  *
  * @author K
  * @since 1.0.0
@@ -74,9 +74,9 @@ class MixCache(
     }
 
     /**
-     * 两级缓存读：本地命中（含缓存的 null 值，用于防穿透）直接返回；
-     * 本地真正缺失才查远端；远端命中则回填本地（保留 null 语义）；
-     * 两级都缺失返回 null，不做任何写入。
+     * Two-tier cache read: a local hit (including a cached null, used to prevent cache penetration) is returned directly;
+     * only a true local miss queries the remote tier; a remote hit backfills the local tier (preserving null semantics);
+     * if both tiers miss, returns null without performing any write.
      */
     private fun mixGet(key: Any): Cache.ValueWrapper? {
         val local = requireLocal()
@@ -87,8 +87,8 @@ class MixCache(
     }
 
     /**
-     * 两级缓存读 + 缺失加载：与 [mixGet] 同语义；两级都未命中时调用 valueLoader 一次，
-     * 写入两级（不广播 evict —— 与 mixGet 的回填行为对齐，避免把读路径变成写路径）。
+     * Two-tier cache read + load-on-miss: same semantics as [mixGet]; when both tiers miss, invokes valueLoader once and
+     * writes into both tiers (does not broadcast evict — aligning with mixGet's backfill behavior, so the read path is not turned into a write path).
      */
     @Suppress("UNCHECKED_CAST")
     private fun <T : Any> mixGetOrLoad(key: Any, valueLoader: Callable<T>): T? {
@@ -105,10 +105,10 @@ class MixCache(
     }
 
     /**
-     * 取 [localCache]；按策略推断必应非空，缺失时报含 strategy 信息的错以便定位。
+     * Returns [localCache]; expected to be non-null based on strategy. If missing, throws an error containing the strategy info for diagnostics.
      *
-     * @return 本地 cache
-     * @throws IllegalArgumentException [localCache] 为 null 时
+     * @return local cache
+     * @throws IllegalArgumentException when [localCache] is null
      * @author K
      * @since 1.0.0
      */
@@ -116,10 +116,10 @@ class MixCache(
         requireNotNull(localCache) { "localCache is null for strategy $strategy" }
 
     /**
-     * 取 [remoteCache]；按策略推断必应非空，缺失时报含 strategy 信息的错以便定位。
+     * Returns [remoteCache]; expected to be non-null based on strategy. If missing, throws an error containing the strategy info for diagnostics.
      *
-     * @return 远端 cache
-     * @throws IllegalArgumentException [remoteCache] 为 null 时
+     * @return remote cache
+     * @throws IllegalArgumentException when [remoteCache] is null
      * @author K
      * @since 1.0.0
      */
@@ -127,24 +127,23 @@ class MixCache(
         requireNotNull(remoteCache) { "remoteCache is null for strategy $strategy" }
 
     /**
-     * 写穿透 + 广播的统一模板。
-     * - SINGLE_LOCAL：只动本地。
-     * - REMOTE：只动远端。
-     * - LOCAL_REMOTE：先远端再本地，最后广播给其他节点失效（[notifyKey] 用 null 表示整库清空）。
+     * Unified write-through + broadcast template.
+     * - SINGLE_LOCAL: only touches local.
+     * - REMOTE: only touches remote.
+     * - LOCAL_REMOTE: remote first, then local, then broadcasts invalidation to other nodes ([notifyKey] = null means "clear all").
      *
-     * **失败语义**（README 文档化的契约）：
+     * **Failure semantics** (contract documented in the README):
      *
-     *  | 阶段        | 异常处理                                                |
-     *  |-------------|--------------------------------------------------------|
-     *  | 远端写失败  | 异常上抛 → 不写本地、不广播。整网保持远端原值 → 一致      |
-     *  | 本地写失败  | 异常**吞掉** + WARN 日志 → 广播仍发出。语义："远端是真相  |
-     *  |             | 源，已经更新；本地写失败是降级，靠下次 miss 回源 / TTL 自愈"|
-     *  | 广播失败    | 已是 fire-and-forget（[pushMsgRedis] 内部 catch）         |
+     *  | Stage             | Exception handling                                                                |
+     *  |-------------------|----------------------------------------------------------------------------------|
+     *  | Remote write fails| Exception propagates -> no local write, no broadcast. Cluster keeps the old remote value -> consistent. |
+     *  | Local write fails | Exception is **swallowed** + WARN logged -> broadcast still fires. Semantics: "remote is the source of truth and has been updated; a local write failure is a degradation, self-healed by the next miss or TTL". |
+     *  | Broadcast fails   | Already fire-and-forget (caught inside [pushMsgRedis]).                          |
      *
-     * 写顺序"先远端后本地"——若广播 finally 链路出问题或被丢，本节点本地至少与远端版本一致，
-     * 而不是本地新、远端老（那种顺序在分布式失败语义下更难解释）。
+     * Write order "remote then local" — if the broadcast/finally link fails or the message is dropped, this node's local copy is at least
+     * consistent with the remote version, rather than local-new/remote-old (the latter ordering is much harder to reason about under distributed failure).
      *
-     * [opName] 仅用于 debug 日志；[notifyKey] 与 [action] 之间是调用方约定。
+     * [opName] is only used for debug logging; the relationship between [notifyKey] and [action] is a contract between callers.
      */
     private inline fun writeThrough(opName: String, notifyKey: Any?, action: (Cache) -> Unit) {
         when (strategy) {
@@ -152,18 +151,18 @@ class MixCache(
             CacheStrategy.REMOTE -> action(requireRemote())
             CacheStrategy.LOCAL_REMOTE -> {
                 action(requireRemote())
-                // 本地失败不应该把"远端已成功更新"的广播挡掉——否则其他节点的本地副本
-                // 会一直 stale。catch + warn 后继续广播，让全网最终与远端一致。
+                // A local failure must not block the "remote already updated" broadcast — otherwise other nodes' local
+                // copies would stay stale. Catch + warn, then continue broadcasting so the cluster eventually converges with remote.
                 try {
                     action(requireLocal())
                 } catch (t: Throwable) {
                     log.warn(
-                        "本地缓存写入失败（远端已成功），将继续广播让其他节点失效本地副本，本节点本地待下次 miss / TTL 自愈 op={0} key={1} cause={2}",
+                        "Local cache write failed (remote already succeeded); will continue broadcasting to invalidate local copies on other nodes; this node's local copy will self-heal on next miss / TTL op={0} key={1} cause={2}",
                         opName, notifyKey, t.message
                     )
                 }
                 val name = getName()
-                log.debug("{0}远程缓存{1}。key为{2}", opName, name, notifyKey)
+                log.debug("{0} remote cache {1}. key={2}", opName, name, notifyKey)
                 pushMsgRedis(name, notifyKey)
             }
         }
@@ -174,10 +173,10 @@ class MixCache(
     override fun put(key: Any, @Nullable value: Any?) = writeThrough("put", key) { it.put(key, value) }
 
     /**
-     * putIfAbsent 的 LOCAL_REMOTE 分支语义比一般写更细：
-     * - 远端 putIfAbsent 失败（已存在）→ 不广播失效，但回填本地以避免本节点后续再回源；
-     * - 远端 putIfAbsent 成功（新插入）→ 同步写本地 + 广播失效；
-     * 模板 [writeThrough] 无条件 action+broadcast，无法表达上面的分叉，所以这里保留显式 when。
+     * The LOCAL_REMOTE branch of putIfAbsent has finer semantics than ordinary writes:
+     * - Remote putIfAbsent fails (already present) -> do not broadcast invalidation, but backfill local to avoid going to the source again on this node.
+     * - Remote putIfAbsent succeeds (newly inserted) -> synchronously write local + broadcast invalidation.
+     * The [writeThrough] template performs action+broadcast unconditionally and cannot express the branching above, so an explicit `when` is preserved here.
      */
     @Nullable
     override fun putIfAbsent(key: Any, @Nullable value: Any?): Cache.ValueWrapper? = when (strategy) {
@@ -188,24 +187,24 @@ class MixCache(
             val local = requireLocal()
             val existed = remote.putIfAbsent(key, value)
             if (existed == null) {
-                // 远端 putIfAbsent 成功——按 [writeThrough] 同款失败语义：本地失败仍广播
+                // Remote putIfAbsent succeeded — same failure semantics as [writeThrough]: still broadcast on local failure.
                 try {
                     local.putIfAbsent(key, value)
                 } catch (t: Throwable) {
-                    log.warn("本地缓存写入失败（远端已成功），将继续广播 putIfAbsent key={0} cause={1}",
+                    log.warn("Local cache write failed (remote already succeeded); will continue broadcasting putIfAbsent key={0} cause={1}",
                         key, t.message)
                 }
                 val name = getName()
-                log.debug("putIfAbsent远程缓存{0}。key为{1}", name, key)
+                log.debug("putIfAbsent remote cache {0}. key={1}", name, key)
                 pushMsgRedis(name, key)
                 null
             } else {
-                // 远端已存在，回填本地，避免本节点后续再次回源。这是读取语义而非写入语义，不广播。
-                // 回填失败也只是降级，下次 miss 再次走远端即可。
+                // Remote already contains the value — backfill local to avoid hitting the source again on this node. This is read semantics, not write semantics; no broadcast.
+                // A backfill failure is just a degradation; the next miss will go remote again.
                 try {
                     local.put(key, existed.get())
                 } catch (t: Throwable) {
-                    log.warn("回填本地缓存失败 key={0} cause={1}", key, t.message)
+                    log.warn("Backfilling local cache failed key={0} cause={1}", key, t.message)
                 }
                 existed
             }
@@ -215,7 +214,7 @@ class MixCache(
     override fun clear() = writeThrough("clear", null) { it.clear() }
 
     /**
-     * 清理本地缓存
+     * Clears local cache.
      *
      * @param key key
      */
@@ -228,21 +227,22 @@ class MixCache(
     }
 
     /**
-     * 把 cache 失效消息广播给所有节点（fire-and-forget 异步）。
+     * Broadcasts a cache-invalidation message to all nodes (fire-and-forget, async).
      *
-     * 从 Spring 容器拿所有 [ICacheMessageHandler]（通常是 Redis pub/sub 实现），
-     * 让其他节点收到通知后清掉对应本地缓存。`key` 为 null 表示整库清空。
+     * Fetches all [ICacheMessageHandler] beans from the Spring container (typically Redis pub/sub implementations),
+     * so that other nodes evict the corresponding local cache upon receiving the notification. A null `key` means "clear all".
      *
-     * 异步派发原因：同步广播会让 Redis pub/sub 等传输的 RTT 落到写路径上（一次 put →
-     * 一次跨节点广播 → 至少一次网络往返）。改成异步后写路径只负责把消息塞进
-     * [broadcastExecutor] 的队列，实际发送在 daemon 线程里完成。
+     * Reason for asynchronous dispatch: synchronous broadcasts would push the RTT of Redis pub/sub (and similar) onto the write path
+     * (one put -> one cross-node broadcast -> at least one network round trip). Going async lets the write path only enqueue the
+     * message into [broadcastExecutor]; actual sending happens on a daemon thread.
      *
-     * 失败语义：每个 handler 的发送失败被单独捕获并 WARN 日志（**不会重试**——重复广播比
-     * 偶发丢一条危险得多；下游 `MixCache.clearLocal` 只是丢本地副本，下次回源会再生）。
-     * 队列满时退化为 caller-runs，等价于回到同步语义，宁可拖慢写也不丢消息。
+     * Failure semantics: each handler's send failure is caught individually and WARN-logged (**never retried** — duplicate broadcasts
+     * are more dangerous than occasionally dropping one; downstream `MixCache.clearLocal` simply drops a local copy, which will be
+     * regenerated by the next source fetch). When the queue is full, falls back to caller-runs, equivalent to synchronous semantics:
+     * it is better to slow writes than to drop messages.
      *
-     * @param name 缓存名（带版本前缀）
-     * @param key 要清除的 key；null 表示整库
+     * @param name cache name (with version prefix)
+     * @param key key to evict; null means "clear all"
      * @author K
      * @since 1.0.0
      */
@@ -257,7 +257,7 @@ class MixCache(
                 } catch (t: Throwable) {
                     log.error(
                         t,
-                        "缓存失效广播失败[handler={0}, cache={1}, key={2}]——其他节点本地副本可能滞留旧值，等待下次 TTL 或显式 evict 收敛",
+                        "Cache invalidation broadcast failed [handler={0}, cache={1}, key={2}] — other nodes' local copies may retain stale values until the next TTL or explicit evict converges them",
                         beanName, name, key
                     )
                 }
@@ -266,21 +266,21 @@ class MixCache(
     }
 
     companion object {
-        /** 日志器 */
+        /** Logger. */
         private val log = LogFactory.getLog(this::class)
 
-        /** 保留字段：未来用于跨版本失效通知；当前实现不依赖 */
+        /** Reserved field: intended for future cross-version invalidation notifications; not used by the current implementation. */
         private val cacheVersion: String? = null
 
         /**
-         * 缓存失效广播的 fire-and-forget 执行器。
+         * Fire-and-forget executor for cache-invalidation broadcasts.
          *
-         * 设计：
-         * - core=1 / max=Runtime cpu 数 / keep-alive 60s——绝大多数广播是 Redis pub 这种短任务，
-         *   并发瓶颈在网络 RTT 而非 CPU，1 个线程通常够；峰值时按 CPU 数扩
-         * - 队列容量 1024——失效消息丢失=节点本地副本滞留，宁愿短暂拖慢写也不丢消息，所以
-         *   满了用 [java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy] 回退到同步
-         * - daemon 线程——不阻碍 JVM 退出
+         * Design:
+         * - core=1 / max=Runtime CPU count / keep-alive 60s — the vast majority of broadcasts are short tasks like Redis publish,
+         *   whose concurrency bottleneck is network RTT rather than CPU, so 1 thread is usually enough; scales up to CPU count under peaks.
+         * - Queue capacity 1024 — losing invalidation messages equals stale local copies on nodes; prefer to slow writes briefly rather than drop messages,
+         *   so when full it falls back to [java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy] (synchronous).
+         * - Daemon thread — does not block JVM shutdown.
          */
         private val broadcastExecutor: Executor = ThreadPoolExecutor(
             1,

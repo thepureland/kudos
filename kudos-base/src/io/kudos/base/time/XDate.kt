@@ -5,16 +5,16 @@ import java.util.Date
 
 
 /**
- * 定义 java.util.Date 的扩展函数
+ * Defines extension functions for java.util.Date.
  *
  * @author K
  * @since 1.0.0
  */
 
 /**
- * 转换为LocalDateTime
+ * Converts to a LocalDateTime.
  *
- * @param zoneId 时区ID，缺省为系统默认时区
+ * @param zoneId Time zone ID; defaults to the system default time zone
  * @return LocalDateTime
  * @author K
  * @since 1.0.0
@@ -23,9 +23,9 @@ fun Date.toLocalDateTime(zoneId: ZoneId = ZoneId.systemDefault()): LocalDateTime
     toZonedDateTime(this, zoneId).toLocalDateTime()
 
 /**
- * 转换为LocalDate
+ * Converts to a LocalDate.
  *
- * @param zoneId 时区ID，缺省为系统默认时区
+ * @param zoneId Time zone ID; defaults to the system default time zone
  * @return LocalDate
  * @author K
  * @since 1.0.0
@@ -33,9 +33,9 @@ fun Date.toLocalDateTime(zoneId: ZoneId = ZoneId.systemDefault()): LocalDateTime
 fun Date.toLocalDate(zoneId: ZoneId = ZoneId.systemDefault()): LocalDate = toZonedDateTime(this, zoneId).toLocalDate()
 
 /**
- * 转换为LocalTime
+ * Converts to a LocalTime.
  *
- * @param zoneId 时区ID，缺省为系统默认时区
+ * @param zoneId Time zone ID; defaults to the system default time zone
  * @return LocalTime
  * @author K
  * @since 1.0.0

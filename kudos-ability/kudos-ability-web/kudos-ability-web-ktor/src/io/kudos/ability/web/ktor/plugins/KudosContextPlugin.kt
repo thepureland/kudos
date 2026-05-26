@@ -8,7 +8,7 @@ import kotlinx.coroutines.withContext
 import java.util.UUID
 
 /**
- * Ktor call attributes 中保存 [KudosContext] 的 key。
+ * Key used to store the [KudosContext] in Ktor call attributes.
  *
  * @author K
  * @author AI: Codex
@@ -17,7 +17,7 @@ import java.util.UUID
 val KudosContextCallKey: AttributeKey<KudosContext> = AttributeKey("KudosContextCall")
 
 /**
- * 读取当前 [ApplicationCall] 绑定的 [KudosContext]，不存在时返回 null。
+ * Returns the [KudosContext] bound to the current [ApplicationCall], or null if absent.
  *
  * @author K
  * @author AI: Codex
@@ -27,7 +27,7 @@ fun ApplicationCall.kudosContextOrNull(): KudosContext? =
     if (attributes.contains(KudosContextCallKey)) attributes[KudosContextCallKey] else null
 
 /**
- * 读取当前 [ApplicationCall] 绑定的 [KudosContext]，不存在时抛错。
+ * Returns the [KudosContext] bound to the current [ApplicationCall]; throws if absent.
  *
  * @author K
  * @author AI: Codex
@@ -37,32 +37,35 @@ fun ApplicationCall.kudosContext(): KudosContext =
     requireNotNull(kudosContextOrNull()) { "KudosContext is absent in ApplicationCall.attributes" }
 
 /**
- * 把 [KudosContext] 装到 Ktor `ApplicationCallPipeline.Setup` 阶段。
+ * Installs [KudosContext] at the `ApplicationCallPipeline.Setup` stage of Ktor.
  *
- * 与 servlet 版 `WebContextInitFilter` 的区别：servlet 用 ThreadLocal，因为请求-线程
- * 一一对应；Ktor 的请求处理是协程，途中可能被 dispatcher 切换线程，所以必须用
- * `CoroutineContext.Element`（即 [KudosContextElement]）。同时，本插件会把上下文写入
- * [ApplicationCall.attributes]，路由 handler 中可用 [ApplicationCall.kudosContext] 或
- * [ApplicationCall.kudosContextOrNull] 稳定读取。
+ * Difference from the servlet-era `WebContextInitFilter`: the servlet version uses ThreadLocal
+ * because request-to-thread is one-to-one; Ktor request handling is a coroutine that may switch
+ * dispatchers mid-flight, so a `CoroutineContext.Element` (i.e. [KudosContextElement]) is
+ * required. This plugin also writes the context into [ApplicationCall.attributes] so that
+ * route handlers can reliably read it via [ApplicationCall.kudosContext] or
+ * [ApplicationCall.kudosContextOrNull].
  *
- * 业务侧通过 [Configuration.factory] 自定义如何从 `ApplicationCall` 构造 `KudosContext`
- * （默认仅设置 `traceKey`，从 `X-Trace-Id` header 取，缺失则生成 UUID）。
+ * The business side customizes how a `KudosContext` is built from an `ApplicationCall` via
+ * [Configuration.factory] (the default only sets `traceKey`, read from the `X-Trace-Id` header,
+ * generating a UUID when missing).
  *
- * 安装：
+ * Installation:
  * ```kotlin
  * install(KudosContextPlugin) {
  *     factory = { call ->
  *         KudosContext().apply {
  *             traceKey = call.request.headers["X-Trace-Id"] ?: UUID.randomUUID().toString()
- *             // 其他自定义字段...
+ *             // other custom fields...
  *         }
  *     }
  * }
  * ```
  *
- * **范围限制**：context 只在当前调用协程及其子协程内有效；
- * 业务代码若启动**独立**协程（如 `GlobalScope.launch`、未带 context 的 `launch`），
- * 这些协程拿不到 `KudosContext`，需手动 `withContext(currentCoroutineContext()) { ... }`。
+ * **Scope limitation**: the context is only valid within the current call coroutine and its
+ * children. If business code launches **independent** coroutines (e.g. `GlobalScope.launch`,
+ * or `launch` without a context), those coroutines cannot see `KudosContext` and must use
+ * `withContext(currentCoroutineContext()) { ... }` manually.
  *
  * @author K
  * @author AI: Codex
@@ -72,13 +75,16 @@ class KudosContextPlugin private constructor(
     private val factory: (ApplicationCall) -> KudosContext
 ) {
     /**
-     * 插件配置：业务可覆盖 [factory] 决定每个请求的 [KudosContext] 构造逻辑。
-     * 默认 factory 仅设置 `traceKey`，其他字段（user / clientInfo 等）由业务侧补全。
+     * Plugin configuration: the business side can override [factory] to control the
+     * [KudosContext] construction logic for each request.
+     * The default factory only sets `traceKey`; the business side fills in the other fields
+     * (user / clientInfo etc.).
      */
     class Configuration {
         /**
-         * 由 [ApplicationCall] → [KudosContext] 的构造函数。默认从 `X-Trace-Id` 取 traceKey，
-         * 缺失则生成 UUID。业务侧通常会扩展此 factory 注入 user / clientInfo 等字段。
+         * Constructor from [ApplicationCall] to [KudosContext]. By default reads `traceKey` from
+         * `X-Trace-Id`, generating a UUID when missing. The business side usually extends this
+         * factory to inject user / clientInfo etc.
          */
         var factory: (ApplicationCall) -> KudosContext = { call ->
             KudosContext().apply {
@@ -92,8 +98,9 @@ class KudosContextPlugin private constructor(
         override val key = AttributeKey<KudosContextPlugin>("KudosContext")
 
         /**
-         * 在 Setup 阶段拦截每个请求：调用 factory 构造 context、写入 call attributes，
-         * 再用 [withContext] 套入 [KudosContextElement]、`proceed()` 走完后续 pipeline。
+         * Intercepts each request at the Setup stage: calls the factory to build the context,
+         * writes it to call attributes, then wraps it via [withContext] into
+         * [KudosContextElement] and calls `proceed()` to continue through the pipeline.
          */
         override fun install(
             pipeline: ApplicationCallPipeline,

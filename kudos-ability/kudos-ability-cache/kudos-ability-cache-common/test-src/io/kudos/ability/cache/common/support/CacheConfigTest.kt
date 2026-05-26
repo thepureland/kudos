@@ -7,16 +7,16 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * [CacheConfig] 派生属性的单测。
+ * Unit tests for [CacheConfig] derived properties.
  *
- * 守护 README 已声明的契约："新代码必须用派生属性 `resolvedStrategy{Code}` /
- * `isActive` / `isWriteOnBoot` / `isWriteInTime`，不要直接读裸字段"。
+ * Guards the contract documented in the README: "new code must use the derived properties
+ * `resolvedStrategy{Code}` / `isActive` / `isWriteOnBoot` / `isWriteInTime`, and must not read the raw fields directly".
  *
- * 覆盖：
- *  - **来源优先级**：yml/代码 `strategy` 胜过 DB 字典码 `strategyDictCode`（README 描述）
- *  - **`resolvedStrategy` enum 解析**：合法值返回 `CacheStrategy`，非法值返回 null（不抛）
- *  - **`isActive` 三态**：null = true（默认初始为 true，反序列化可能拿到 null），false = false
- *  - **`isWriteOnBoot` / `isWriteInTime`**：null = false
+ * Coverage:
+ *  - **Source precedence**: yml/code `strategy` wins over the DB dict code `strategyDictCode` (README).
+ *  - **`resolvedStrategy` enum parsing**: valid values return a `CacheStrategy`; invalid values return null (no throw).
+ *  - **`isActive` three states**: null = true (default initial is true; deserialization may yield null), false = false.
+ *  - **`isWriteOnBoot` / `isWriteInTime`**: null = false.
  */
 internal class CacheConfigTest {
 
@@ -26,7 +26,7 @@ internal class CacheConfigTest {
             strategy = "REMOTE"
             strategyDictCode = "LOCAL_REMOTE"
         }
-        assertEquals("REMOTE", cfg.resolvedStrategyCode, "strategy 优先于 strategyDictCode")
+        assertEquals("REMOTE", cfg.resolvedStrategyCode, "strategy takes precedence over strategyDictCode")
     }
 
     @Test
@@ -48,14 +48,14 @@ internal class CacheConfigTest {
         listOf("SINGLE_LOCAL", "REMOTE", "LOCAL_REMOTE").forEach { code ->
             val cfg = CacheConfig().apply { strategy = code }
             assertEquals(CacheStrategy.valueOf(code), cfg.resolvedStrategy,
-                "合法 enum 字符串应当解析成对应 CacheStrategy ($code)")
+                "A valid enum string should parse to the corresponding CacheStrategy ($code)")
         }
     }
 
     @Test
     fun resolvedStrategy_returnsNullForUnknownValue_doesNotThrow() {
         val cfg = CacheConfig().apply { strategy = "EXOTIC_STRATEGY" }
-        // 非法值返回 null 而非 IllegalArgumentException
+        // Invalid values return null instead of throwing IllegalArgumentException.
         assertNull(cfg.resolvedStrategy)
     }
 
@@ -68,7 +68,7 @@ internal class CacheConfigTest {
     @Test
     fun isActive_defaultTrue() {
         val cfg = CacheConfig()
-        assertTrue(cfg.isActive, "默认初始 active=true → isActive=true")
+        assertTrue(cfg.isActive, "Default initial active=true → isActive=true")
     }
 
     @Test
@@ -79,7 +79,7 @@ internal class CacheConfigTest {
 
     @Test
     fun isActive_nullTreatedAsTrue() {
-        // 反序列化场景：active 字段可能为 null。README 契约：null 视为 true
+        // Deserialization scenario: the active field may be null. README contract: null is treated as true.
         val cfg = CacheConfig().apply { active = null }
         assertTrue(cfg.isActive)
     }

@@ -5,7 +5,7 @@ import io.kudos.base.bean.validation.constraint.annotations.MaxLength
 import jakarta.validation.constraints.NotBlank
 
 /**
- * 访问规则表单新建请求 VO。
+ * Access rule create form request VO.
  *
  * @author K
  * @author AI: Cursor
@@ -13,12 +13,12 @@ import jakarta.validation.constraints.NotBlank
  */
 data class SysAccessRuleFormCreate (
 
-    /** 租户id */
+    /** Tenant id. */
     @get:NotBlank
     @get:FixedLength(36)
     val tenantId: String,
 
-    /** 系统编码 */
+    /** System code. */
     @get:NotBlank
     @get:MaxLength(32)
     val systemCode: String,

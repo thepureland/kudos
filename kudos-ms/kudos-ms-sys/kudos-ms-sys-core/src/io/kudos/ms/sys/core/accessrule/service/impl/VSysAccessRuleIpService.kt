@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 /**
- * 视图 `v_sys_access_rule_with_ip` 的只读服务实现，封装 [VSysAccessRuleWithIpDao] 的查询。
+ * Read-only service implementation for the view `v_sys_access_rule_with_ip`, wrapping queries of [VSysAccessRuleWithIpDao].
  *
  * @author K
  * @author AI: Cursor
@@ -22,11 +22,11 @@ open class VSysAccessRuleIpService(
 ) : BaseReadOnlyService<String, VSysAccessRuleWithIp, VSysAccessRuleWithIpDao>(dao),
     IVSysAccessRuleIpService {
 
-    /** 委托 [VSysAccessRuleWithIpDao.searchByParentId]。 */
+    /** Delegates to [VSysAccessRuleWithIpDao.searchByParentId]. */
     override fun searchByParentId(parentId: String): List<VSysAccessRuleWithIpRow> =
         dao.searchByParentId(parentId)
 
-    /** 委托 [VSysAccessRuleWithIpDao.searchBySystemCodeAndTenantId]；空串 tenantId 视同 null（平台级）。 */
+    /** Delegates to [VSysAccessRuleWithIpDao.searchBySystemCodeAndTenantId]; a blank tenantId is treated as null (platform level). */
     override fun searchBySystemCodeAndTenantId(
         systemCode: String,
         tenantId: String?,

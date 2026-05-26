@@ -1,11 +1,12 @@
 package io.kudos.ability.distributed.lock.common.locker
 
 /**
- * 分布式锁上下文
- * 
- * 使用 InheritableThreadLocal 存储线程上下文，支持父子线程间传递。
- * 注意：在使用线程池的场景下，必须在请求/任务结束后调用 clear() 方法清理上下文，
- * 避免内存泄漏。
+ * Distributed lock context.
+ *
+ * Uses InheritableThreadLocal to store thread context, supporting propagation from parent to
+ * child threads.
+ * Note: in thread-pool scenarios, clear() must be called at the end of every request/task to
+ * avoid memory leaks.
  *
  * @author K
  * @since 1.0.0
@@ -13,7 +14,7 @@ package io.kudos.ability.distributed.lock.common.locker
 class DistributedLockContext {
     private val contextParam: ThreadLocal<IDistributedLockCallback?> =
         object : InheritableThreadLocal<IDistributedLockCallback?>() {
-            // 返回 null 表示子线程不继承父线程的值
+            // Returning null means the child thread does not inherit the parent's value.
             override fun childValue(parentValue: IDistributedLockCallback?): IDistributedLockCallback? = null
         }
 
@@ -21,9 +22,9 @@ class DistributedLockContext {
         private val self = DistributedLockContext()
 
         /**
-         * 设置当前线程的分布式锁回调
+         * Set the distributed-lock callback for the current thread.
          *
-         * @param param 分布式锁回调接口
+         * @param param the distributed-lock callback
          * @author K
          * @since 1.0.0
          */
@@ -32,19 +33,20 @@ class DistributedLockContext {
         }
 
         /**
-         * 获取当前线程的分布式锁回调
+         * Get the distributed-lock callback for the current thread.
          *
-         * @return 分布式锁回调接口
+         * @return the distributed-lock callback
          * @author K
          * @since 1.0.0
          */
         fun get(): IDistributedLockCallback? = self.contextParam.get()
 
         /**
-         * 清除当前线程的分布式锁上下文
-         * 
-         * 建议在请求/任务结束时调用此方法，避免线程池复用线程时造成上下文污染和内存泄漏。
-         * 
+         * Clear the distributed-lock context for the current thread.
+         *
+         * Call this at the end of each request/task to avoid context pollution and memory leaks
+         * when threads are reused by a thread pool.
+         *
          * @author K
          * @since 1.0.0
          */

@@ -12,15 +12,15 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * NormalLockService 测试用例
+ * Tests for NormalLockService.
  *
- * 覆盖：
- * - 租约锁 [NormalLockService.tryLock]：成功 / 同 key 重入失败 / 不同 key 并行
- * - 过期自清理 —— 等待守护线程把过期 key 从内存里挪走
- * - 可重入锁 [NormalLockService.lock] / [NormalLockService.unLock] 的独立工作
- * - 与 [NormalLockService.lockExecute] 的 try-finally 释放
+ * Coverage:
+ * - Lease lock [NormalLockService.tryLock]: success / re-entrance on the same key fails / different keys in parallel
+ * - Automatic expiration cleanup — waits for the daemon thread to remove expired keys from memory
+ * - The independent behavior of the reentrant lock [NormalLockService.lock] / [NormalLockService.unLock]
+ * - The try-finally release in [NormalLockService.lockExecute]
  *
- * 与 LockTool / Spring 上下文解耦——直接 new NormalLockService() 测纯逻辑。
+ * Decoupled from LockTool / Spring context — directly instantiates NormalLockService() to test the pure logic.
  *
  * @author K
  * @since 1.0.0
@@ -28,7 +28,7 @@ import kotlin.test.assertTrue
 internal class NormalLockServiceTest {
 
     // ============================================================
-    // 租约锁基础语义
+    // Lease lock basic semantics
     // ============================================================
 
     @Test
@@ -41,7 +41,7 @@ internal class NormalLockServiceTest {
     fun tryLockFailsForLockedKey() {
         val svc = NormalLockService()
         assertTrue(svc.tryLock("k1", 10))
-        // 同一个 key 再次 tryLock：失败（租约锁不可重入）
+        // tryLock on the same key again: fails (lease lock is non-reentrant)
         assertFalse(svc.tryLock("k1", 10))
     }
 
@@ -49,7 +49,7 @@ internal class NormalLockServiceTest {
     fun tryLockSucceedsForDifferentKeys() {
         val svc = NormalLockService()
         assertTrue(svc.tryLock("k1", 10))
-        assertTrue(svc.tryLock("k2", 10), "不同 key 互不影响")
+        assertTrue(svc.tryLock("k2", 10), "different keys should not affect each other")
         assertTrue(svc.tryLock("k3", 10))
     }
 
@@ -57,32 +57,32 @@ internal class NormalLockServiceTest {
     fun unLockReleasesKey() {
         val svc = NormalLockService()
         assertTrue(svc.tryLock("k1", 60))
-        assertFalse(svc.tryLock("k1", 60), "未释放前应失败")
+        assertFalse(svc.tryLock("k1", 60), "should fail before release")
         svc.unLock("k1")
-        assertTrue(svc.tryLock("k1", 60), "释放后应能再次 tryLock")
+        assertTrue(svc.tryLock("k1", 60), "should be able to tryLock again after release")
     }
 
     // ============================================================
-    // 过期自清理：守护线程
+    // Expiration cleanup: daemon thread
     // ============================================================
 
     @Test
     fun expiredLeaseIsAutomaticallyReleased() {
         val svc = NormalLockService()
-        // 设置 1 秒过期
+        // Set 1-second expiration
         assertTrue(svc.tryLock("expiring-key", 1))
-        // 立即再试应失败
+        // Immediate retry should fail
         assertFalse(svc.tryLock("expiring-key", 1))
-        // 等过期后守护线程清理（给一定缓冲）
+        // Wait for the daemon thread to clean up after expiration (with some buffer)
         Thread.sleep(1500)
         assertTrue(
             svc.tryLock("expiring-key", 1),
-            "1 秒过期后守护线程应已清理，可重新获取"
+            "after 1-second expiration the daemon thread should have cleaned up and the key should be reacquirable"
         )
     }
 
     // ============================================================
-    // lockExecute 自动 try-finally 释放
+    // lockExecute automatic try-finally release
     // ============================================================
 
     @Test
@@ -95,8 +95,8 @@ internal class NormalLockServiceTest {
             errorCode = null
         )
         assertEquals("computed-value", result)
-        // supplier 完成后锁已释放，应能再次获取
-        assertTrue(svc.tryLock("lk", 30), "lockExecute 应在 supplier 后释放锁")
+        // The lock should be released after the supplier completes, so it can be acquired again
+        assertTrue(svc.tryLock("lk", 30), "lockExecute should release the lock after the supplier")
     }
 
     @Test
@@ -112,15 +112,15 @@ internal class NormalLockServiceTest {
         }
         assertTrue(outcome.isFailure)
         assertTrue(outcome.exceptionOrNull() is IllegalStateException)
-        // 即使异常，finally 也应释放
-        assertTrue(svc.tryLock("lk", 30), "异常路径下 lockExecute 也必须释放锁")
+        // Even on exception, the finally block must release
+        assertTrue(svc.tryLock("lk", 30), "lockExecute must release the lock even on the exception path")
     }
 
     @Test
     fun lockExecuteReturnsNullWhenAcquireFailsAndNoErrorCode() {
         val svc = NormalLockService()
-        assertTrue(svc.tryLock("k", 60), "先抢占")
-        // 别人已经持有，errorCode=null → 应返回 null 而不是抛
+        assertTrue(svc.tryLock("k", 60), "preempt first")
+        // Already held by someone else; errorCode=null -> should return null instead of throwing
         val result = svc.lockExecute(
             lockKey = "k",
             supplier = { "should-not-run" },
@@ -131,22 +131,22 @@ internal class NormalLockServiceTest {
     }
 
     // ============================================================
-    // 可重入锁 (lock/unLock(lock, key)) 与租约锁 (tryLock) 解耦
+    // Reentrant lock (lock/unLock(lock, key)) is decoupled from the lease lock (tryLock)
     // ============================================================
 
     @Test
     fun reentrantLockAndLeaseLockAreIndependentMechanisms() {
-        // 这条测试钉住"两套机制互不影响"的设计——同一个 key 同时
-        // 占用租约锁与可重入锁不冲突，因为它们各自走独立的数据结构
+        // This test pins down the design where the "two mechanisms do not affect each other" — holding both
+        // a lease lock and a reentrant lock on the same key does not conflict, because they use separate data structures.
         val svc = NormalLockService()
-        assertTrue(svc.tryLock("dual", 60), "拿租约锁")
+        assertTrue(svc.tryLock("dual", 60), "acquire the lease lock")
         val reentrant = svc.lock("dual")
-        assertNotNull(reentrant, "再拿可重入锁不应被租约锁挡")
+        assertNotNull(reentrant, "acquiring the reentrant lock should not be blocked by the lease lock")
         svc.unLock(reentrant, "dual")
     }
 
     // ============================================================
-    // 并发竞态：多线程同 key tryLock 应有且只有一个成功
+    // Concurrent contention: multiple threads tryLock the same key — exactly one should succeed
     // ============================================================
 
     @Test
@@ -170,6 +170,6 @@ internal class NormalLockServiceTest {
         barrier.countDown()
         assertTrue(done.await(5, TimeUnit.SECONDS))
         pool.shutdown()
-        assertEquals(1, successCount.get(), "同一 key 在并发下应只有一个线程拿到锁")
+        assertEquals(1, successCount.get(), "under contention, only one thread should acquire the lock on the same key")
     }
 }

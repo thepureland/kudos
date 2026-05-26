@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Configuration
 
 
 /**
- * sys-api-admin自动配置类
+ * sys-api-admin auto configuration class.
  *
  * @author K
  * @since 1.0.0

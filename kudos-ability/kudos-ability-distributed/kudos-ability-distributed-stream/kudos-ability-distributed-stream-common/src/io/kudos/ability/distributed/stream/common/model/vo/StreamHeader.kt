@@ -5,14 +5,15 @@ import io.kudos.context.core.KudosContextHolder
 import org.springframework.messaging.MessageHeaders
 
 /**
- * Stream 消息自定义 header——把 [KudosContext] 关键字段（tenantId / userId / dataSourceId
- * / _datasourceTenantId）随消息一起带到消费端，让消费端能重建调用方的上下文。
+ * Custom header for Stream messages — carries key [KudosContext] fields
+ * (tenantId / userId / dataSourceId / _datasourceTenantId) along with the message
+ * so the consumer side can rebuild the caller's context.
  *
  * @author K
  * @since 1.0.0
  */
 class StreamHeader {
-    /** 消息主题 / binding destination。 */
+    /** Message topic / binding destination. */
     var destination: String? = null
     var tenantId: String? = null
     var dataSourceId: Int? = null
@@ -20,12 +21,14 @@ class StreamHeader {
     var username: String? = null
 
     /**
-     * 数据源租户 id（kudos 多租户场景下的辅助路由字段）。
+     * Data source tenant id (auxiliary routing field for kudos multi-tenant scenarios).
      *
-     * **下划线前缀是历史 wire format 约定**——[KudosContext._datasourceTenantId] / jdbc 模块
-     * `DsContextProcessor` 都用这个名字；[StreamProducerHelper.createMessage] 通过
-     * `BeanKit.extract(header)` 按 property name 抽取到 MessageHeaders，与下方常量
-     * [DATASOURCE_TENANT_ID] 对齐。不要重命名，否则跨服务消息丢失这个字段。
+     * **The leading underscore is a legacy wire-format convention** —
+     * [KudosContext._datasourceTenantId] and the jdbc module `DsContextProcessor` both
+     * use this name; [StreamProducerHelper.createMessage] extracts it via
+     * `BeanKit.extract(header)` by property name into MessageHeaders, aligned with the
+     * [DATASOURCE_TENANT_ID] constant below. Do not rename, otherwise this field will
+     * be lost in cross-service messages.
      */
     @Suppress("PropertyName")
     var _datasourceTenantId: String? = null
@@ -39,7 +42,7 @@ class StreamHeader {
         const val DATASOURCE_TENANT_ID: String = "_datasourceTenantId"
         const val SCST_BIND_NAME: String = "scst_produce_bind_name_"
 
-        /** 用当前线程 [KudosContext] 初始化 [StreamHeader]，由 producer 端发送前调用。 */
+        /** Initializes a [StreamHeader] from the current thread's [KudosContext]; called by the producer side before send. */
         fun initHeader(destination: String?): StreamHeader {
             val context = KudosContextHolder.get()
             return StreamHeader().apply {
@@ -51,16 +54,17 @@ class StreamHeader {
         }
 
         /**
-         * 从 [MessageHeaders] 还原 [KudosContext]——consumer 端用。
+         * Restores a [KudosContext] from [MessageHeaders] — used on the consumer side.
          *
-         * 历史 bug（已修）：旧实现
-         * - `tenantId = headers.get(USER_ID_KEY)` 错把 userId 值赋给 tenantId
-         * - `dataSourceId = headers.get(DATA_SOURCE_ID_KEY) as String?` 类型与 StreamHeader.dataSourceId
-         *   声明的 `Int?` 不一致（虽然 KudosContext.dataSourceId 是 String? 所以没炸）
-         * - 注释里 `USERNAME_KEY = headers.get(USERNAME_KEY)` 是非法语法占位
+         * Historical bugs (fixed): the old implementation
+         * - `tenantId = headers.get(USER_ID_KEY)` mistakenly assigned the userId value to tenantId.
+         * - `dataSourceId = headers.get(DATA_SOURCE_ID_KEY) as String?` had a type mismatch with
+         *   StreamHeader.dataSourceId declared as `Int?` (it did not blow up only because
+         *   KudosContext.dataSourceId is String?).
+         * - The comment `USERNAME_KEY = headers.get(USERNAME_KEY)` was an invalid syntax placeholder.
          *
-         * 当前无任何 callsite——属于"未被使用、但被使用时会出错"的预埋 bug。修复并保留以备
-         * consumer 侧需要还原 context 时使用。
+         * There are currently no call sites — this is a latent bug that would surface if used.
+         * Fixed and retained for when the consumer side needs to restore the context.
          */
         fun toContextParam(headers: MessageHeaders): KudosContext = KudosContext().apply {
             tenantId = headers[TENANT_ID_KEY] as String?

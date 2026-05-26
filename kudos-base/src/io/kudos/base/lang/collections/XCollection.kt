@@ -1,7 +1,7 @@
 package io.kudos.base.lang.collections
 
 /**
- * kotlin.Collection扩展函数
+ * kotlin.Collection extension functions
  *
  * @author K
  * @since 1.0.0
@@ -9,16 +9,17 @@ package io.kudos.base.lang.collections
 
 
 ///**
-// * 转换Collection所有元素(通过toString())为String, 每个元素的前面加入prefix，后面加入postfix，如<div>mymessage</div>。
+// * Converts all elements of a Collection to String (via toString()), prepending each element with prefix
+// * and appending postfix, e.g. <div>mymessage</div>.
 // *
-// * @param prefix 要添加的前缀，默认为空串
-// * @param postfix 要添加的后缀，默认为空串
-// * @param seperator 每个元素间的分隔符，默认为空串
-// * @return 加上前缀和后缀的每个元素的toString值的连接串
+// * @param prefix prefix to prepend, defaults to empty string
+// * @param postfix postfix to append, defaults to empty string
+// * @param seperator separator between elements, defaults to empty string
+// * @return concatenated string of each element's toString value with prefix and postfix
 // * @author K
 // * @since 1.0.0
 // */
-//@Deprecated("直接用kotlin内置的joinToString()")
+//@Deprecated("Use kotlin's built-in joinToString() directly")
 //fun Collection<*>.joinEachToString(prefix: String = "", postfix: String = "", seperator: String = ""): String {
 //    if (this.isEmpty()) return ""
 //    val builder = StringBuilder()
@@ -33,27 +34,27 @@ package io.kudos.base.lang.collections
 //
 //
 ///**
-// * 返回容器中每一个相同的元素出现的次数
+// * Returns the number of occurrences of each identical element in the collection.
 // *
-// * @return Map(容器中的元素, 出现的次数)
+// * @return Map(element in collection, count of occurrences)
 // * @author K
 // * @since 1.0.0
 // */
-//@Deprecated("直接用kotlin的groupingBy { it }.eachCount()")
+//@Deprecated("Use kotlin's groupingBy { it }.eachCount() directly")
 //fun <T> Collection<T>.getCardinalityMap(): Map<T, Int> = CollectionUtils.getCardinalityMap(this) as Map<T, Int>
 
 /**
- * 检测两个容器的大小及其包含的元素是否全部相等
+ * Tests whether two collections have the same size and contain the same elements.
  *
- * @param other 第二个容器，为null会返回false
- * @return `true` 如果两个容器的大小及其包含的元素全部相等
+ * @param other the other collection; returns false if null
+ * @return `true` if the two collections have the same size and contain the same elements
  * @author K
  * @since 1.0.0
  */
 fun <T> Collection<T?>.isEqualCollection(other: Collection<T?>?): Boolean {
     if (other == null) return false
     if (size != other.size) return false
-    // 统计两个集合的频次 Map
+    // Build frequency maps for the two collections
     val map1 = groupingBy { it }.eachCount()
     val map2 = other.groupingBy { it }.eachCount()
     return map1 == map2

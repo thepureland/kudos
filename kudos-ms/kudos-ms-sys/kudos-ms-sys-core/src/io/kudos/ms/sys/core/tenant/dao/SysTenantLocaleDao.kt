@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository
 
 
 /**
- * 租户-语言关系数据访问对象
+ * Tenant-locale relationship data access object.
  *
  * @author K
  * @author AI: Cursor
@@ -20,10 +20,10 @@ open class SysTenantLocaleDao : BaseCrudDao<String, SysTenantLocale, SysTenantLo
 
 
     /**
-     * 根据租户id查找对应的语言代码
+     * Find the corresponding locale codes by tenant id.
      *
-     * @param tenantId 租户id
-     * @return Set<语言代码>
+     * @param tenantId tenant id
+     * @return Set of locale codes
      */
     fun searchLocaleCodesByTenantId(tenantId: String): Set<String> {
         val criteria = Criteria(SysTenantLocale::tenantId eq tenantId)
@@ -31,10 +31,10 @@ open class SysTenantLocaleDao : BaseCrudDao<String, SysTenantLocale, SysTenantLo
     }
 
     /**
-     * 根据语言代码查找对应的租户id
+     * Find the corresponding tenant ids by locale code.
      *
-     * @param localeCode 语言代码
-     * @return Set<租户id>
+     * @param localeCode locale code
+     * @return Set of tenant ids
      */
     fun searchTenantIdsByLocaleCode(localeCode: String): Set<String> {
         val criteria = Criteria(SysTenantLocale::localeCode eq localeCode)
@@ -42,11 +42,11 @@ open class SysTenantLocaleDao : BaseCrudDao<String, SysTenantLocale, SysTenantLo
     }
 
     /**
-     * 检查关系是否存在
+     * Check whether the relationship exists.
      *
-     * @param tenantId 租户id
-     * @param localeCode 语言代码
-     * @return 是否存在
+     * @param tenantId tenant id
+     * @param localeCode locale code
+     * @return whether it exists
      */
     fun exists(tenantId: String, localeCode: String): Boolean {
         val criteria = Criteria.and(
@@ -57,11 +57,11 @@ open class SysTenantLocaleDao : BaseCrudDao<String, SysTenantLocale, SysTenantLo
     }
 
     /**
-     * 按租户ID和语言代码删除关系
+     * Delete the relationship by tenant id and locale code.
      *
-     * @param tenantId 租户ID
-     * @param localeCode 语言代码
-     * @return 删除条数
+     * @param tenantId tenant id
+     * @param localeCode locale code
+     * @return number of deleted rows
      */
     fun deleteByTenantIdAndLocaleCode(tenantId: String, localeCode: String): Int {
         val criteria = Criteria.and(

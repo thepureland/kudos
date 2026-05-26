@@ -9,7 +9,7 @@ import java.util.jar.JarOutputStream
 import kotlin.test.*
 
 /**
- * JarFileClassPathLocationScanner测试用例
+ * JarFileClassPathLocationScanner test cases.
  *
  * @author AI: cursor
  * @author K
@@ -38,7 +38,7 @@ internal class JarFileClassPathLocationScannerTest {
 
     private fun createTestJar() {
         JarOutputStream(jarFile.outputStream()).use { jos ->
-            // 添加文件到JAR
+            // Add files to the JAR
             jos.putNextEntry(JarEntry("test/file1.txt"))
             jos.write("content1".toByteArray())
             jos.closeEntry()
@@ -54,7 +54,7 @@ internal class JarFileClassPathLocationScannerTest {
     }
 
     /**
-     * 构造合法的 `jar:` URL。Windows 下不可用 `jar:file:${absolutePath}` 直接拼路径（反斜杠会破坏 URI）。
+     * Construct a valid `jar:` URL. On Windows, `jar:file:${absolutePath}` cannot be concatenated directly (backslashes break the URI).
      */
     private fun jarUrl(entryPathInJar: String): URL {
         val fileUri = jarFile.toURI()
@@ -85,7 +85,7 @@ internal class JarFileClassPathLocationScannerTest {
         val locationUrl = jarUrl("test/")
         val resourceNames = scanner.findResourceNames("test/", locationUrl)
         
-        // 应该只包含test/目录下的文件
+        // Should only include files under the test/ directory
         assertTrue(resourceNames.all { it.startsWith("test/") })
     }
 
@@ -94,7 +94,7 @@ internal class JarFileClassPathLocationScannerTest {
         val locationUrl = jarUrl("test/")
         val resourceNames = scanner.findResourceNames("test/", locationUrl)
         
-        // 不应该包含other/目录下的文件
+        // Should not include any files under the other/ directory
         assertTrue(resourceNames.none { it.startsWith("other/") })
     }
 }

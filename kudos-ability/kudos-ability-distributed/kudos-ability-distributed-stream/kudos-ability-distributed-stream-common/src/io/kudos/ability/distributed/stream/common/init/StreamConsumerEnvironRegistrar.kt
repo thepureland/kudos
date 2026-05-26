@@ -13,28 +13,32 @@ import java.io.IOException
 import java.util.LinkedHashSet
 
 /**
- * 流式消息消费者环境注册器
- * 
- * 用于自动收集和合并Spring Cloud Function定义，支持从多个配置源加载函数定义。
- * 
- * 核心功能：
- * 1. 多源收集：从Environment默认配置和所有YAML配置文件中收集函数定义
- * 2. 定义合并：将收集到的所有函数定义合并为单个字符串，使用分号分隔
- * 3. 优先级设置：将合并后的定义注册到Environment的最前面，确保优先级最高
- * 
- * 工作流程：
- * - 从Environment中读取spring.cloud.function.definition默认值
- * - 扫描所有YAML配置文件，提取函数定义配置
- * - 将所有定义去重后合并为单个字符串
- * - 创建MapPropertySource并添加到Environment的最前面
- * 
- * 配置格式：
- * - 支持使用分号、逗号或空格分隔多个函数定义
- * - 例如："function1;function2" 或 "function1,function2"
- * 
- * 注意事项：
- * - 如果配置文件中不存在，会跳过该文件继续处理其他文件
- * - 合并后的定义会覆盖Environment中的原始配置
+ * Stream consumer environment registrar.
+ *
+ * Automatically collects and merges Spring Cloud Function definitions; supports
+ * loading function definitions from multiple configuration sources.
+ *
+ * Core features:
+ * 1. Multi-source collection: gathers function definitions from the Environment
+ *    defaults and all YAML configuration files.
+ * 2. Definition merging: merges all collected function definitions into a single
+ *    semicolon-separated string.
+ * 3. Priority handling: registers the merged definition at the front of the
+ *    Environment to ensure highest priority.
+ *
+ * Workflow:
+ * - Read the default spring.cloud.function.definition from the Environment.
+ * - Scan all YAML configuration files for function definition configuration.
+ * - Deduplicate all definitions and merge them into a single string.
+ * - Create a MapPropertySource and add it to the front of the Environment.
+ *
+ * Configuration format:
+ * - Multiple function definitions may be separated by semicolons, commas or spaces.
+ * - For example: "function1;function2" or "function1,function2".
+ *
+ * Notes:
+ * - If a configuration file does not exist, it is skipped and processing continues.
+ * - The merged definition overrides the original configuration in the Environment.
  */
 class StreamConsumerEnvironRegistrar : ImportBeanDefinitionRegistrar, EnvironmentAware {
 
@@ -45,40 +49,42 @@ class StreamConsumerEnvironRegistrar : ImportBeanDefinitionRegistrar, Environmen
     }
 
     /**
-     * 注册Bean定义：收集和合并Spring Cloud Function定义
-     * 
-     * 从多个配置源收集函数定义，合并后注册到Environment的最前面。
-     * 
-     * 收集来源：
-     * 1. Environment默认配置：从Environment中读取spring.cloud.function.definition属性
-     * 2. YAML配置文件：扫描所有YAML配置文件，提取函数定义配置
-     * 
-     * 处理流程：
-     * 1. 获取所有YAML配置文件路径（通过YamlPropertySourceFactory）
-     * 2. 从Environment读取默认配置值
-     * 3. 遍历所有YAML配置文件：
-     *    - 检查文件是否存在，不存在则跳过
-     *    - 使用YamlPropertySourceLoader加载配置
-     *    - 从每个PropertySource中提取函数定义
-     * 4. 将所有定义添加到LinkedHashSet（自动去重）
-     * 5. 合并为单个字符串，使用分号分隔
-     * 6. 创建MapPropertySource并添加到Environment的最前面
-     * 
-     * 配置格式：
-     * - 支持使用分号、逗号或空格分隔多个函数定义
-     * - 正则表达式："[;,\\s]+"匹配分隔符
-     * - 例如："function1;function2" 或 "function1,function2 function3"
-     * 
-     * 优先级：
-     * - 合并后的定义注册到Environment的最前面（addFirst）
-     * - 确保优先级最高，覆盖其他配置源的定义
-     * 
-     * 异常处理：
-     * - 如果YAML文件加载失败，会抛出IllegalStateException
-     * - 如果文件不存在，会跳过继续处理其他文件
-     * 
-     * @param importingClassMetadata 导入注解的元数据
-     * @param registry Bean定义注册表
+     * Registers bean definitions: collects and merges Spring Cloud Function definitions.
+     *
+     * Collects function definitions from multiple configuration sources, merges them,
+     * and registers them at the front of the Environment.
+     *
+     * Sources:
+     * 1. Environment defaults: read spring.cloud.function.definition from the Environment.
+     * 2. YAML configuration files: scan all YAML configuration files for function
+     *    definition configuration.
+     *
+     * Processing:
+     * 1. Obtain all YAML configuration file paths (via YamlPropertySourceFactory).
+     * 2. Read the default configuration value from the Environment.
+     * 3. Iterate over all YAML configuration files:
+     *    - Skip the file if it does not exist.
+     *    - Load it with YamlPropertySourceLoader.
+     *    - Extract the function definition from each PropertySource.
+     * 4. Add all definitions to a LinkedHashSet (automatic deduplication).
+     * 5. Merge into a single semicolon-separated string.
+     * 6. Create a MapPropertySource and add it to the front of the Environment.
+     *
+     * Configuration format:
+     * - Multiple function definitions may be separated by semicolons, commas or spaces.
+     * - Regex: "[;,\\s]+" matches the separators.
+     * - For example: "function1;function2" or "function1,function2 function3".
+     *
+     * Priority:
+     * - The merged definition is registered at the front of the Environment (addFirst).
+     * - This guarantees the highest priority, overriding definitions from other sources.
+     *
+     * Exception handling:
+     * - If a YAML file fails to load, IllegalStateException is thrown.
+     * - If a file does not exist, it is skipped and processing continues.
+     *
+     * @param importingClassMetadata metadata of the importing annotation
+     * @param registry the bean definition registry
      */
     override fun registerBeanDefinitions(importingClassMetadata: AnnotationMetadata, registry: BeanDefinitionRegistry) {
         val locations = YamlPropertySourceFactory.allSourcePath()
@@ -88,8 +94,10 @@ class StreamConsumerEnvironRegistrar : ImportBeanDefinitionRegistrar, Environmen
         val defSplitter = Regex("[;,\\s]+")
 
         /**
-         * 本地辅助函数：按分隔符 (`;` `,` 或空白) 切分原始字符串，去空白后加入 [allDefs] 去重集合。
-         * 提到顶层只为复用——下面 yaml 路径循环也需要再次调用同样的切分逻辑。
+         * Local helper: splits the raw string by separators (`;`, `,` or whitespace),
+         * trims each token and adds it to the [allDefs] deduplication set. Promoted
+         * to a top-level helper purely for reuse — the YAML loop below needs the same
+         * splitting logic.
          */
         fun addDefinitions(raw: String) {
             defSplitter.split(raw).map { it.trim() }.filter { it.isNotEmpty() }.forEach { allDefs.add(it) }

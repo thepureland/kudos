@@ -5,7 +5,7 @@ import java.io.Serializable
 
 
 /**
- * 系统缓存项
+ * System cache entry.
  *
  * @author K
  * @since 1.0.0
@@ -14,25 +14,25 @@ data class SysSystemCacheEntry (
 
     override val id: String,
 
-    /** 编码 */
+    /** Code */
     val code: String,
 
-    /** 名称 */
+    /** Name */
     val name: String,
 
-    /** 是否子系统 */
+    /** Whether sub-system */
     val subSystem: Boolean,
 
-    /** 父系统编号 */
+    /** Parent system code */
     val parentCode: String?,
 
-    /** 备注 */
+    /** Remark */
     val remark: String?,
 
-    /** 是否启用 */
+    /** Whether active */
     val active: Boolean,
 
-    /** 是否内置 */
+    /** Whether built-in */
     val builtIn: Boolean,
 
 ) : IIdEntity<String>, Serializable {

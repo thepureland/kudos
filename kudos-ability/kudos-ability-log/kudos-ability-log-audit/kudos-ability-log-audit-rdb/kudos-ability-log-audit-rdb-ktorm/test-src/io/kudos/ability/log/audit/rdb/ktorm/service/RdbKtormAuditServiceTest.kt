@@ -26,16 +26,17 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * [RdbKtormAuditService] 端到端测试——H2 in-memory + 真实 Ktorm 写入 / 读取。
+ * End-to-end test for [RdbKtormAuditService] — H2 in-memory + real Ktorm writes / reads.
  *
- * 覆盖：
- *  - 主表 + 详情表批量插入：一次 submit 写 N 条
- *  - 顶层 `tenantId` / `subSysCode` 兜底：entity 自身缺时用 model 顶层填
- *  - 空模型快速返回 true（无 SQL 发出）
- *  - 业务方法抛 SQLException 时返回 false 而非外抛——`REQUIRES_NEW` 事务边界 + try/catch
+ * Coverage:
+ *  - Batch insert into main + detail tables: one submit writes N rows
+ *  - Top-level `tenantId` / `subSysCode` fallback: filled from model when entity's own is missing
+ *  - Empty model returns true fast (no SQL emitted)
+ *  - When the business method throws SQLException, returns false instead of propagating — `REQUIRES_NEW` boundary
+ *    + try/catch
  *
- * 用本地 H2 内存库（无 Docker 依赖）。DDL 走 baomidou dynamic-datasource 的 `init.schema`
- * 加载——比 flyway 集成更轻量、更适合单测。
+ * Uses a local H2 in-memory database (no Docker dependency). DDL is loaded via baomidou dynamic-datasource's
+ * `init.schema` — lighter weight than flyway integration and better suited to unit tests.
  *
  * @author K
  * @author AI: Codex
@@ -49,7 +50,7 @@ internal open class RdbKtormAuditServiceTest {
 
     @BeforeTest
     fun cleanTables() {
-        // 每个测试方法跑前清表，避免互相干扰
+        // Clean tables before each test method to avoid interference
         val db = KudosContextHolder.currentDatabase()
         db.deleteAll(SysAuditLogTable)
         db.deleteAll(SysAuditDetailLogTable)
@@ -79,7 +80,7 @@ internal open class RdbKtormAuditServiceTest {
 
     @Test
     fun submit_propagatesTopLevelTenantAndSubSysCode_whenEntityMissing() {
-        // entity 自身不填 tenantId / subSysCode；顶层 model 提供——应当生效
+        // entity itself omits tenantId / subSysCode; top-level model provides them — should take effect
         val entity = makeEntity("e2", entityId = "u-200", desc = "x").apply {
             tenantId = null
             subSysCode = null
@@ -104,7 +105,7 @@ internal open class RdbKtormAuditServiceTest {
 
     @Test
     fun submit_entityOverridesTopLevel_whenBothPresent() {
-        // entity 自身有值时，不能被顶层兜底覆盖
+        // When the entity has its own value, the top-level fallback must not overwrite it
         val entity = makeEntity("e3", entityId = "u-300", desc = "x").apply {
             tenantId = "entity-tenant"
         }
@@ -120,7 +121,7 @@ internal open class RdbKtormAuditServiceTest {
             .where { SysAuditLogTable.id eq "e3" }
             .map { it[SysAuditLogTable.tenantId] }
             .single()
-        assertEquals("entity-tenant", tenant, "entity 自身的 tenantId 应当胜出，不能被顶层兜底覆盖")
+        assertEquals("entity-tenant", tenant, "The entity's own tenantId should win and not be overwritten by the top-level fallback")
     }
 
     @Test
@@ -129,7 +130,7 @@ internal open class RdbKtormAuditServiceTest {
             entities = mutableListOf()
             sysAuditDetailLogs = mutableListOf()
         }
-        assertTrue(auditService.submit(model), "空模型应当快速返回 true（视为 no-op）")
+        assertTrue(auditService.submit(model), "Empty model should return true fast (treated as no-op)")
     }
 
     @Test
@@ -162,7 +163,7 @@ internal open class RdbKtormAuditServiceTest {
             )
         }
 
-        assertEquals(false, auditService.submit(model), "落库异常应被捕获并转成 false")
+        assertEquals(false, auditService.submit(model), "Persistence exceptions should be caught and converted to false")
     }
 
     private fun makeEntity(id: String, entityId: String, desc: String): SysAuditLogVo = SysAuditLogVo().apply {

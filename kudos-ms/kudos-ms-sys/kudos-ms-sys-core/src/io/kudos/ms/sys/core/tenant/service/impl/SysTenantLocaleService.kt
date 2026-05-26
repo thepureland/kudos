@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional
 
 
 /**
- * 租户-语言关系业务
+ * Tenant-locale relation service.
  *
  * @author K
  * @since 1.0.0
@@ -33,11 +33,11 @@ open class SysTenantLocaleService(
     override fun batchBind(tenantId: String, localeCodes: Collection<String>): Int {
         if (localeCodes.isEmpty()) return 0
 
-        // 一次 SELECT 已存在的关系，差集对新增 ID 一次 batchInsert，把原 N+1 折叠到 2 次 SQL。
+        // One SELECT for existing relations, then a single batchInsert for the diff — collapses the original N+1 into 2 statements.
         val existing = dao.searchLocaleCodesByTenantId(tenantId)
         val newLocaleCodes = localeCodes.toSet() - existing
         if (newLocaleCodes.isEmpty()) {
-            log.debug("批量绑定租户${tenantId}与${localeCodes.size}种语言的关系，全部已存在，无新增。")
+            log.debug("Batch bind tenant=$tenantId to ${localeCodes.size} locales: all already exist, nothing to insert.")
             return 0
         }
         val relations = newLocaleCodes.map {
@@ -47,7 +47,7 @@ open class SysTenantLocaleService(
             }
         }
         dao.batchInsert(relations)
-        log.debug("批量绑定租户${tenantId}与${localeCodes.size}种语言的关系，成功绑定${newLocaleCodes.size}条。")
+        log.debug("Batch bind tenant=$tenantId to ${localeCodes.size} locales: successfully inserted ${newLocaleCodes.size}.")
         return newLocaleCodes.size
     }
 
@@ -56,9 +56,9 @@ open class SysTenantLocaleService(
         val count = dao.deleteByTenantIdAndLocaleCode(tenantId, localeCode)
         val success = count > 0
         if (success) {
-            log.debug("解绑租户${tenantId}与语言${localeCode}的关系。")
+            log.debug("Unbound tenant=$tenantId from locale=$localeCode.")
         } else {
-            log.warn("解绑租户${tenantId}与语言${localeCode}的关系失败，关系不存在。")
+            log.warn("Failed to unbind tenant=$tenantId from locale=$localeCode: relation does not exist.")
         }
         return success
     }

@@ -8,13 +8,13 @@ import jakarta.annotation.Resource
 import kotlin.test.*
 
 /**
- * [SysTenantSystemHashCache] 单元测试（Hash 缓存，按 subSystemCode / tenantId 查询）。
+ * Unit tests for [SysTenantSystemHashCache] (hash cache, queried by subSystemCode / tenantId).
  *
- * 覆盖：getTenantIdsBySubSystemCode、getSubSystemCodesByTenantId、全量刷新、
- * 新增/更新/删除/批量删除后同步。
+ * Covers: getTenantIdsBySubSystemCode, getSubSystemCodesByTenantId, full reload,
+ * sync after insert/update/delete/batch-delete.
  *
- * 测试数据：`sql/h2/tenant/cache/SysTenantSystemHashCacheTest.sql`。
- * 需 Docker 运行 Redis，且 sys_cache 中已配置 SYS_TENANT_SYSTEM__HASH（hash=true）。
+ * Test data: `sql/h2/tenant/cache/SysTenantSystemHashCacheTest.sql`.
+ * Requires Docker-run Redis and SYS_TENANT_SYSTEM__HASH configured in sys_cache (hash=true).
  *
  * @author K
  * @since 1.0.0
@@ -33,13 +33,13 @@ class SysTenantSystemHashCacheTest : RdbAndRedisCacheTestBase() {
     private val systemCodeA = "subSys-a"
     private val tenantId1 = "218772a0-c053-4634-a5e5-111111118781"
 
-    // ---------- 按子系统编码 ----------
+    // ---------- By sub-system code ----------
 
     @Test
     fun getTenantIdsBySubSystemCode() {
         cache.reloadAll(true)
         val tenantIds = cache.getTenantIdsBySubSystemCode(systemCodeA)
-        // subSys-a: tenant 111111, 333333, 444444 -> 3 个
+        // subSys-a: tenants 111111, 333333, 444444 -> 3 entries
         assertEquals(3, tenantIds.size)
         assertTrue(tenantIds.contains(tenantId1))
         assertTrue(tenantIds.contains("218772a0-c053-4634-a5e5-333333338781"))
@@ -53,13 +53,13 @@ class SysTenantSystemHashCacheTest : RdbAndRedisCacheTestBase() {
         assertFailsWith<IllegalArgumentException> { cache.getTenantIdsBySubSystemCode("") }
     }
 
-    // ---------- 按租户id ----------
+    // ---------- By tenant id ----------
 
     @Test
     fun getSubSystemCodesByTenantId() {
         cache.reloadAll(true)
         val systemCodes = cache.getSubSystemCodesByTenantId(tenantId1)
-        // tenant 111111: subSys-a, subSys-b, subSys-c -> 3 个
+        // tenant 111111: subSys-a, subSys-b, subSys-c -> 3 entries
         assertEquals(3, systemCodes.size)
         assertTrue(systemCodes.contains(systemCodeA))
         assertTrue(systemCodes.contains("subSys-b"))
@@ -71,7 +71,7 @@ class SysTenantSystemHashCacheTest : RdbAndRedisCacheTestBase() {
         assertFailsWith<IllegalArgumentException> { cache.getSubSystemCodesByTenantId("") }
     }
 
-    // ---------- 全量刷新 ----------
+    // ---------- Full reload ----------
 
     @Test
     fun reloadAll() {
@@ -85,7 +85,7 @@ class SysTenantSystemHashCacheTest : RdbAndRedisCacheTestBase() {
         assertEquals(3, cache.getTenantIdsBySubSystemCode(systemCodeA).size)
     }
 
-    // ---------- 同步 ----------
+    // ---------- Sync ----------
 
     @Test
     fun syncOnInsert() {

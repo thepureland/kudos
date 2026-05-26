@@ -6,7 +6,7 @@ import io.kudos.ms.msg.core.receiver.model.po.MsgReceive
 
 
 /**
- * 消息接收业务接口
+ * Message receive business service interface.
  *
  * @author K
  * @author AI: Codex
@@ -16,41 +16,42 @@ interface IMsgReceiveService : IBaseCrudService<String, MsgReceive> {
 
 
     /**
-     * 拉取某用户的所有接收记录（收件箱），按创建时间倒序。
+     * Fetches all receive records (inbox) for a user, in descending order by create time.
      *
-     * 不分页 —— 调用方若要分页应直接走 admin 的 BaseCrudController.search；这里专供
-     * "最近收件" 类小批量场景。
+     * Not paginated — callers that need pagination should go through the admin
+     * BaseCrudController.search directly; this is intended for small "recent inbox" use cases.
      *
-     * @param receiverId 接收者用户 id
-     * @return 接收记录列表（按 createTime DESC）
+     * @param receiverId receiver user id
+     * @return list of receive records (ordered by createTime DESC)
      */
     fun getReceivesByUserId(receiverId: String): List<MsgReceiveCacheEntry>
 
     /**
-     * 统计某用户的未读接收记录数。
-     * 未读 = [io.kudos.ms.msg.common.receiver.enums.MsgReceiveStatusEnum.UNREAD_CODES]
-     * 之一（包含 RECEIVED + UNREAD，但不含 READ / DELETED）。
+     * Counts the unread receive records for a user.
+     * Unread = one of [io.kudos.ms.msg.common.receiver.enums.MsgReceiveStatusEnum.UNREAD_CODES]
+     * (includes RECEIVED + UNREAD, but excludes READ / DELETED).
      *
-     * @param receiverId 接收者用户 id
-     * @return 未读数；用户从未收到过返回 0
+     * @param receiverId receiver user id
+     * @return unread count; returns 0 if the user has never received any messages
      */
     fun getUnreadCountByUserId(receiverId: String): Int
 
     /**
-     * 把单条接收记录标记为已读。
-     * 当前状态已经是 READ / DELETED 时不修改、返回 false（避免重复触发后续审计副作用）。
+     * Marks a single receive record as read.
+     * If the current status is already READ / DELETED, no change is made and false is returned
+     * (to avoid repeatedly triggering downstream audit side effects).
      *
-     * @param id 接收记录主键
-     * @return true 标记成功；false 记录不存在或当前状态不允许变更
+     * @param id receive record primary key
+     * @return true if marked successfully; false if the record does not exist or the current status disallows the change
      */
     fun markRead(id: String): Boolean
 
     /**
-     * 把某用户的所有未读接收记录批量标为已读。
-     * 仅对未读状态生效，已读 / 已删除记录跳过。
+     * Batch marks all unread receive records of a user as read.
+     * Only takes effect on unread status; read / deleted records are skipped.
      *
-     * @param receiverId 接收者用户 id
-     * @return 实际被更新的记录数
+     * @param receiverId receiver user id
+     * @return number of records actually updated
      */
     fun markAllReadByUserId(receiverId: String): Int
 

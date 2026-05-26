@@ -9,9 +9,9 @@ import jakarta.annotation.Resource
 import kotlin.test.*
 
 /**
- * SysResourceCacheHandler 测试。
+ * Tests for SysResourceCacheHandler.
  *
- * 测试数据来源：`sql/h2/resource/cache/SysResourceHashCacheTest.sql`
+ * Test data source: `sql/h2/resource/cache/SysResourceHashCacheTest.sql`
  *
  * @author K
  * @since 1.0.0
@@ -27,7 +27,7 @@ class SysResourceHashCacheTest : RdbAndRedisCacheTestBase() {
 
     private fun isLocalCacheEnabled(): Boolean = HashCacheKit.isLocalCacheEnabled(SysResourceHashCache.CACHE_NAME)
 
-    // ---------- 按主键 id ----------
+    // ---------- Lookup by primary id ----------
 
     @Test
     fun getResourceById() {
@@ -39,7 +39,7 @@ class SysResourceHashCacheTest : RdbAndRedisCacheTestBase() {
         assertEquals("srch-sys-7f3e2d1c", item.subSystemCode)
         assertEquals("/srch/url/1a2b4c5d/001", item.url)
         val itemAgain = cache.getResourceById(id)
-        if (isLocalCacheEnabled()) assertSame(item, itemAgain, "同一 id 再次从缓存获取应返回同一对象引用")
+        if (isLocalCacheEnabled()) assertSame(item, itemAgain, "Fetching the same id from cache again should return the same object reference")
         assertNull(cache.getResourceById("srch-nonexistent-00000000000000000000"))
     }
 
@@ -58,30 +58,30 @@ class SysResourceHashCacheTest : RdbAndRedisCacheTestBase() {
         if (isLocalCacheEnabled()) ids.forEach { assertSame(
             map[it],
             mapAgain[it],
-            "同一 id 再次从缓存获取应返回同一对象引用"
+            "Fetching the same id from cache again should return the same object reference"
         ) }
         assertTrue(cache.getResourcesByIds(emptySet()).isEmpty())
     }
 
-    // ---------- 按子系统+URL ----------
+    // ---------- Lookup by sub-system + URL ----------
 
     @Test
     fun getResourceBySubSystemCodeAndUrl() {
         val subSystemCode = "srch-sys-a1b2c3d4"
         val url = "/srch/suburl/a1b2/p01"
-        // 先确认测试数据已从 SQL 写入 DB（getResourceIdBySubSysAndUrl 仅查 active=true）
+        // Confirm test data has been written to DB from SQL (getResourceIdBySubSysAndUrl only queries active=true)
         val idFromDao = sysResourceDao.fetchResourceBySubSysAndUrl(subSystemCode, url)?.id
-        assertNotNull(idFromDao, "测试数据未加载：sql/h2/resource/cache/SysResourceHashCacheTest.sql 中应有 sub_system_code=$subSystemCode, url=$url, active=true 的记录")
+        assertNotNull(idFromDao, "Test data not loaded: sql/h2/resource/cache/SysResourceHashCacheTest.sql should contain a record with sub_system_code=$subSystemCode, url=$url, active=true")
         assertEquals("srch2001-4d5e-7f8a-1b2c-000000000011", idFromDao)
         val res1 = cache.getResourceBySubSystemCodeAndUrl(subSystemCode, url)
         val id = res1?.id
         assertEquals("srch2001-4d5e-7f8a-1b2c-000000000011", id)
         val res2 = cache.getResourceBySubSystemCodeAndUrl(subSystemCode, url)
-        if (isLocalCacheEnabled()) assertSame(res1, res2, "local 启用时同一维度再次从缓存获取应返回同一对象引用")
+        if (isLocalCacheEnabled()) assertSame(res1, res2, "When local cache is enabled, fetching the same dimension again should return the same object reference")
     }
 
 
-    // ---------- 按子系统+资源类型 ----------
+    // ---------- Lookup by sub-system + resource type ----------
 
     @Test
     fun getResourcesBySubSystemCodeAndType() {
@@ -89,16 +89,16 @@ class SysResourceHashCacheTest : RdbAndRedisCacheTestBase() {
         val list = cache.getResourcesBySubSystemCodeAndType("srch-sys-e5f6a7b8", "1")
         assertEquals(3, list.size)
         val listAgain = cache.getResourcesBySubSystemCodeAndType("srch-sys-e5f6a7b8", "1")
-        if (isLocalCacheEnabled()) assertSame(list.first(), listAgain.first(), "local 启用时同一维度再次从缓存获取应返回同一对象引用")
+        if (isLocalCacheEnabled()) assertSame(list.first(), listAgain.first(), "When local cache is enabled, fetching the same dimension again should return the same object reference")
         val list2 = cache.getResourcesBySubSystemCodeAndType("srch-sys-e5f6a7b8", "2")
         assertEquals(2, list2.size)
         assertEquals("srch3004-1e2f-4a5b-8c9d-000000000024", list2.first().id)
         val list2Again = cache.getResourcesBySubSystemCodeAndType("srch-sys-e5f6a7b8", "2")
-        if (isLocalCacheEnabled()) assertSame(list2.first(), list2Again.first(), "local 启用时同一维度再次从缓存获取应返回同一对象引用")
+        if (isLocalCacheEnabled()) assertSame(list2.first(), list2Again.first(), "When local cache is enabled, fetching the same dimension again should return the same object reference")
     }
 
 
-    // ---------- 全量刷新 ----------
+    // ---------- Full refresh ----------
 
     @Test
     fun reloadAll() {
@@ -114,10 +114,10 @@ class SysResourceHashCacheTest : RdbAndRedisCacheTestBase() {
         val item = cache.getResourceById("srch3001-8b9c-1d2e-5f6a-000000000021")
         assertNotNull(item)
         val itemAgain = cache.getResourceById("srch3001-8b9c-1d2e-5f6a-000000000021")
-        if (isLocalCacheEnabled()) assertSame(item, itemAgain, "同一 id 再次从缓存获取应返回同一对象引用")
+        if (isLocalCacheEnabled()) assertSame(item, itemAgain, "Fetching the same id from cache again should return the same object reference")
     }
 
-    // ---------- 同步 ----------
+    // ---------- Synchronization ----------
 
     @Test
     fun syncOnInsert() {
@@ -128,7 +128,7 @@ class SysResourceHashCacheTest : RdbAndRedisCacheTestBase() {
         val item = cache.getResourceById(newRes.id)
         assertNotNull(item)
         val itemAgain = cache.getResourceById(newRes.id)
-        if (isLocalCacheEnabled()) assertSame(item, itemAgain, "同一 id 再次从缓存获取应返回同一对象引用")
+        if (isLocalCacheEnabled()) assertSame(item, itemAgain, "Fetching the same id from cache again should return the same object reference")
         assertNotNull(cache.getResourceBySubSystemCodeAndUrl(newRes.subSystemCode, newUrl))
     }
 
@@ -140,7 +140,7 @@ class SysResourceHashCacheTest : RdbAndRedisCacheTestBase() {
         val item = cache.getResourceById(newRes.id)
         assertNotNull(item)
         val itemAgain = cache.getResourceById(newRes.id)
-        if (isLocalCacheEnabled()) assertTrue(item === itemAgain, "同一 id 再次从缓存获取应返回同一对象引用")
+        if (isLocalCacheEnabled()) assertTrue(item === itemAgain, "Fetching the same id from cache again should return the same object reference")
     }
 
     @Test
@@ -156,7 +156,7 @@ class SysResourceHashCacheTest : RdbAndRedisCacheTestBase() {
         assertNotNull(updated)
         assertEquals(newUrl, updated.url)
         val updatedAgain = cache.getResourceById(id)
-        if (isLocalCacheEnabled()) assertSame(updated, updatedAgain, "同一 id 再次从缓存获取应返回同一对象引用")
+        if (isLocalCacheEnabled()) assertSame(updated, updatedAgain, "Fetching the same id from cache again should return the same object reference")
     }
 
     @Test
@@ -168,7 +168,7 @@ class SysResourceHashCacheTest : RdbAndRedisCacheTestBase() {
         val item = cache.getResourceById(id)
         assertNotNull(item)
         val itemAgain = cache.getResourceById(id)
-        if (isLocalCacheEnabled()) assertSame(item, itemAgain, "同一 id 再次从缓存获取应返回同一对象引用")
+        if (isLocalCacheEnabled()) assertSame(item, itemAgain, "Fetching the same id from cache again should return the same object reference")
     }
 
     @Test
@@ -179,7 +179,7 @@ class SysResourceHashCacheTest : RdbAndRedisCacheTestBase() {
         res.active = false
         sysResourceDao.update(res)
         cache.syncOnUpdateActive(id, false)
-        // fetchResourceBySubSysAndUrl 只查 active=true，故改用 get 校验 DB 中已为 false
+        // fetchResourceBySubSysAndUrl only queries active=true, so use get to verify the DB row is now false
         val resource = assertNotNull(sysResourceDao.get(id))
         assertEquals(false, resource.active)
     }
@@ -192,7 +192,7 @@ class SysResourceHashCacheTest : RdbAndRedisCacheTestBase() {
         val subSystemCode = assertNotNull(item.subSystemCode)
         sysResourceDao.deleteById(id)
         cache.syncOnDelete(id, subSystemCode, item.url)
-        assertNull(sysResourceDao.get(id), "删除并 sync 后 DB 中该 id 应不存在")
+        assertNull(sysResourceDao.get(id), "After delete + sync, the id should no longer exist in the DB")
     }
 
     @Test
@@ -204,10 +204,10 @@ class SysResourceHashCacheTest : RdbAndRedisCacheTestBase() {
         )
         ids.forEach { sysResourceDao.deleteById(it) }
         cache.syncOnBatchDelete(ids)
-        ids.forEach { assertNull(sysResourceDao.get(it), "批量删除并 sync 后 DB 中该 id 应不存在") }
+        ids.forEach { assertNull(sysResourceDao.get(it), "After batch delete + sync, the id should no longer exist in the DB") }
     }
 
-    // ---------- key 工具 ----------
+    // ---------- Key utilities ----------
 
     @Test
     fun getKeySubSysAndUrl() {

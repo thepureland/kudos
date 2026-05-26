@@ -6,70 +6,70 @@ import io.kudos.base.model.payload.ISearchPayload
 import io.kudos.base.model.payload.UpdatePayload
 
 /**
- * 基础业务操作接口
- * 
- * 定义了业务层的完整操作，包括查询、插入、更新、删除等功能。
- * 继承自IBaseReadOnlyService，在只读操作基础上增加了数据修改能力。
- * 基于关系型数据库表，提供统一的业务接口，简化业务层代码。
- * 
- * 核心功能：
- * 1. 查询操作：继承自IBaseReadOnlyService的所有查询方法
- * 2. 插入操作：支持单个和批量插入，支持指定属性插入和排除属性插入
- * 3. 更新操作：支持单个和批量更新，支持条件更新、指定属性更新
- * 4. 删除操作：支持根据主键删除、条件删除、批量删除
- * 
- * 插入操作：
- * - insert：插入实体或插入载体对象，返回主键值
- * - insertOnly：只插入指定的属性
- * - insertExclude：插入除指定属性外的所有属性
- * - batchInsert：批量插入，支持分批处理
- * 
- * 更新操作：
- * - update：更新实体或更新载体对象，只更新有变更的属性
- * - updateWhen：条件更新，仅当满足附加查询条件时更新
- * - updateProperties：更新指定的属性（Map形式）
- * - updateOnly：只更新指定的属性
- * - updateExcludeProperties：更新除指定属性外的所有属性
- * - batchUpdate：批量更新，支持分批处理
- * 
- * 删除操作：
- * - deleteById：根据主键删除
- * - delete：删除实体对象
- * - batchDelete：批量删除，支持根据主键列表或条件删除
- * 
- * 属性控制：
- * - 支持只操作指定属性（Only系列方法）
- * - 支持排除指定属性（Exclude系列方法）
- * - 主键属性永远不会被更新
- * 
- * 条件更新：
- * - updateWhen系列方法支持附加查询条件
- * - 仅当满足条件时才执行更新操作
- * - 返回是否更新成功或更新的记录数
- * 
- * 批量处理：
- * - 所有批量操作都支持countOfEachBatch参数
- * - 默认每批1000条记录，避免内存溢出
- * - 基于JDBC的executeBatch实现，性能优化
- * 
- * 与DAO层的关系：
- * - 业务层接口，通常委托给DAO层实现
- * - 可以在业务层添加业务逻辑处理（如数据校验、事务控制等）
- * - 提供统一的业务接口，隐藏DAO层细节
- * 
- * 使用场景：
- * - 业务层的数据操作
- * - RESTful API的服务层
- * - 批量数据导入和更新
- * 
- * 注意事项：
- * - 插入操作返回主键值，更新和删除操作返回是否成功或记录数
- * - 批量操作支持分批处理，避免一次性处理大量数据
- * - 条件更新需要提供查询条件，否则会抛出异常
- * - 主键属性在更新操作中会被自动排除
- * 
- * @param PK 实体主键类型
- * @param E 实体类型，必须实现IIdEntity接口
+ * Basic business operation interface.
+ *
+ * Defines the complete set of business-layer operations, including query, insert, update, and delete.
+ * Extends IBaseReadOnlyService, adding data modification capabilities on top of read-only operations.
+ * Based on relational database tables, it provides a unified business interface to simplify business-layer code.
+ *
+ * Core features:
+ * 1. Query operations: all query methods inherited from IBaseReadOnlyService
+ * 2. Insert operations: support single and batch inserts; support inserting specified or excluded properties
+ * 3. Update operations: support single and batch updates; support conditional updates and updating specified properties
+ * 4. Delete operations: support deleting by primary key, by condition, and in batch
+ *
+ * Insert operations:
+ * - insert: insert an entity or an insert-payload object and return the primary key value
+ * - insertOnly: insert only the specified properties
+ * - insertExclude: insert all properties except the specified ones
+ * - batchInsert: batch insert with batching support
+ *
+ * Update operations:
+ * - update: update an entity or an update-payload object; only updates changed properties
+ * - updateWhen: conditional update; only updates when additional query conditions are met
+ * - updateProperties: update the specified properties (Map form)
+ * - updateOnly: update only the specified properties
+ * - updateExcludeProperties: update all properties except the specified ones
+ * - batchUpdate: batch update with batching support
+ *
+ * Delete operations:
+ * - deleteById: delete by primary key
+ * - delete: delete an entity object
+ * - batchDelete: batch delete by primary key list or by condition
+ *
+ * Property control:
+ * - Supports operating on specified properties only (Only methods)
+ * - Supports excluding specified properties (Exclude methods)
+ * - The primary key property is never updated
+ *
+ * Conditional updates:
+ * - updateWhen methods support additional query conditions
+ * - The update is performed only when the conditions are met
+ * - Returns whether the update succeeded or the number of updated records
+ *
+ * Batch processing:
+ * - All batch operations support a countOfEachBatch parameter
+ * - Defaults to 1000 records per batch to avoid out-of-memory issues
+ * - Implemented based on JDBC's executeBatch for performance
+ *
+ * Relationship with the DAO layer:
+ * - Business-layer interface, typically delegating to the DAO layer implementation
+ * - Business logic such as data validation and transaction control can be added at the business layer
+ * - Provides a unified business interface that hides DAO-layer details
+ *
+ * Use cases:
+ * - Business-layer data operations
+ * - Service layer of RESTful APIs
+ * - Batch data import and update
+ *
+ * Notes:
+ * - Insert operations return the primary key value; update and delete operations return success status or the number of records affected
+ * - Batch operations support batching to avoid handling large amounts of data at once
+ * - Conditional updates require query conditions; otherwise an exception will be thrown
+ * - The primary key property is automatically excluded from update operations
+ *
+ * @param PK Entity primary key type
+ * @param E Entity type; must implement the IIdEntity interface
  * @since 1.0.0
  */
 interface IBaseCrudService<PK : Any, E : IIdEntity<PK>> : IBaseReadOnlyService<PK, E> {
@@ -77,69 +77,69 @@ interface IBaseCrudService<PK : Any, E : IIdEntity<PK>> : IBaseReadOnlyService<P
     //region Insert
 
     /**
-     * 插入指定实体或“插入项载休”到当前表
+     * Inserts the specified entity or "insert-item payload" into the current table.
      *
-     * @param any 实体对象或插入项载休
-     * @return 主键值
+     * @param any Entity object or insert-item payload
+     * @return Primary key value
      * @author K
      * @since 1.0.0
      */
     fun insert(any: Any): PK
 
     /**
-     * 保存实体对象，只保存指定的属性
+     * Saves the entity object, persisting only the specified properties.
      *
-     * @param entity 实体对象
-     * @param propertyNames 要保存的属性的可变数组
-     * @return 主键值
+     * @param entity Entity object
+     * @param propertyNames Vararg of property names to save
+     * @return Primary key value
      * @author K
      * @since 1.0.0
      */
     fun insertOnly(entity: E, vararg propertyNames: String): PK
 
     /**
-     * 保存实体对象，不保存指定的属性
+     * Saves the entity object, excluding the specified properties.
      *
-     * @param entity 实体对象
-     * @param excludePropertyNames 不保存的属性的可变数组
-     * @return 主键值
+     * @param entity Entity object
+     * @param excludePropertyNames Vararg of property names to exclude
+     * @return Primary key value
      * @author K
      * @since 1.0.0
      */
     fun insertExclude(entity: E, vararg excludePropertyNames: String): PK
 
     /**
-     * 批量插入指定实体或“插入项载休”到当前表。
+     * Batch-inserts the specified entities or "insert-item payloads" into the current table.
      *
-     * ktorm底层该方法是基于原生 JDBC 提供的 executeBatch 函数实现
+     * Under the hood, ktorm implements this method based on the native JDBC executeBatch function.
      *
-     * @param objects 实体对象集合或“插入项载休”集合
-     * @param countOfEachBatch 每批大小，缺省为1000
-     * @return 成功插入的记录数
+     * @param objects Collection of entity objects or "insert-item payloads"
+     * @param countOfEachBatch Batch size; defaults to 1000
+     * @return Number of records successfully inserted
      * @author K
      * @since 1.0.0
      */
     fun batchInsert(objects: Collection<Any>, countOfEachBatch: Int = 1000): Int
 
     /**
-     * 批量保存实体对象，只保存指定的属性
+     * Batch-saves entity objects, persisting only the specified properties.
      *
-     * @param entities 实体对象列表
-     * @param countOfEachBatch 每批大小，缺省为1000
-     * @param propertyNames 要保存的属性的可变数组
-     * @return 保存的记录数
+     * @param entities List of entity objects
+     * @param countOfEachBatch Batch size; defaults to 1000
+     * @param propertyNames Vararg of property names to save
+     * @return Number of records saved
      * @author K
      * @since 1.0.0
      */
     fun batchInsertOnly(entities: Collection<E>, countOfEachBatch: Int = 1000, vararg propertyNames: String): Int
 
     /**
-     * 批量保存实体对象，不保存指定的属性
+     * Batch-saves entity objects, excluding the specified properties.
      *
-     * @param entities 实体对象列表
-     * @param countOfEachBatch 每批大小，缺省为1000
-     * @param excludePropertyNames 不保存的属性的可变数组
-     * @return 保存的记录数
+     * @param entities List of entity objects
+     * @param countOfEachBatch Batch size; defaults to 1000
+     * @param excludePropertyNames Vararg of property names to exclude
+     * @return Number of records saved
      * @author K
      * @since 1.0.0
      */
@@ -153,177 +153,177 @@ interface IBaseCrudService<PK : Any, E : IIdEntity<PK>> : IBaseReadOnlyService<P
     //region Update
 
     /**
-     * 更新指定实体或更新载体对应的记录
+     * Updates the record corresponding to the specified entity or update payload.
      *
-     * @param any 实体对象或更新载体（如果是实体对象，只会对有更改的属性作更新；如果是更新载体，将对载体的所有属性作更新）
-     * @return 是否更新成功
+     * @param any Entity object or update payload (if an entity object, only changed properties are updated; if an update payload, all of its properties are updated)
+     * @return Whether the update succeeded
      * @author K
      * @since 1.0.0
      */
     fun update(any: Any): Boolean
 
     /**
-     * 有条件的更新实体对象（仅当满足给定的附加查询条件时）
+     * Conditionally updates an entity object (only when the given additional query conditions are met).
      *
-     * @param entity 实体对象
-     * @param criteria 附加查询条件
-     * @return 记录是否有更新
-     * @throws IllegalArgumentException 条件为空时
+     * @param entity Entity object
+     * @param criteria Additional query conditions
+     * @return Whether the record was updated
+     * @throws IllegalArgumentException When the condition is empty
      * @author K
      * @since 1.0.0
      */
     fun updateWhen(entity: E, criteria: Criteria): Boolean
 
     /**
-     * 只更新实体的某几个属性
+     * Updates only the specified properties of the entity.
      *
-     * @param id         主键值
-     * @param properties Map(属性名，属性值)
-     * @return 是否更新成功
+     * @param id         Primary key value
+     * @param properties Map(propertyName, propertyValue)
+     * @return Whether the update succeeded
      * @author K
      * @since 1.0.0
      */
     fun updateProperties(id: PK, properties: Map<String, *>): Boolean
 
     /**
-     * 有条件的只更新实体的某几个属性（仅当满足给定的附加查询条件时）
-     * 注：id属性永远不会被更新
+     * Conditionally updates only the specified properties of the entity (only when the given additional query conditions are met).
+     * Note: the id property is never updated.
      *
-     * @param id         主键值
-     * @param properties Map(属性名，属性值)
-     * @param criteria 附加查询条件
-     * @return 记录是否有更新
-     * @throws IllegalArgumentException 无查询条件时
+     * @param id         Primary key value
+     * @param properties Map(propertyName, propertyValue)
+     * @param criteria Additional query conditions
+     * @return Whether the record was updated
+     * @throws IllegalArgumentException When no query conditions are provided
      * @author K
      * @since 1.0.0
      */
     fun updatePropertiesWhen(id: PK, properties: Map<String, *>, criteria: Criteria): Boolean
 
     /**
-     * 只更新实体的某几个属性
+     * Updates only the specified properties of the entity.
      *
-     * @param entity     实体对象
-     * @param propertyNames 更新的属性的可变数组
-     * @return 是否更新成功
+     * @param entity     Entity object
+     * @param propertyNames Vararg of property names to update
+     * @return Whether the update succeeded
      * @author K
      * @since 1.0.0
      */
     fun updateOnly(entity: E, vararg propertyNames: String): Boolean
 
     /**
-     * 有条件的只更新实体的某几个属性（仅当满足给定的附加查询条件时）
-     * 注：id属性永远不会被更新
+     * Conditionally updates only the specified properties of the entity (only when the given additional query conditions are met).
+     * Note: the id property is never updated.
      *
-     * @param entity     实体对象
-     * @param criteria 附加查询条件
-     * @param propertyNames 更新的属性的可变数组
-     * @return 记录是否有更新
-     * @throws IllegalArgumentException 无查询条件时
+     * @param entity     Entity object
+     * @param criteria Additional query conditions
+     * @param propertyNames Vararg of property names to update
+     * @return Whether the record was updated
+     * @throws IllegalArgumentException When no query conditions are provided
      * @author K
      * @since 1.0.0
      */
     fun updateOnlyWhen(entity: E, criteria: Criteria, vararg propertyNames: String): Boolean
 
     /**
-     * 有条件的更新实体除指定的几个属性外的所有属性（仅当满足给定的附加查询条件时）
-     * 注：id属性永远不会被更新
+     * Conditionally updates all properties of the entity except the specified ones (only when the given additional query conditions are met).
+     * Note: the id property is never updated.
      *
-     * @param entity            实体对象
-     * @param criteria 附加查询条件
-     * @param excludePropertyNames 不更新的属性的可变数组
-     * @return 记录是否有更新
-     * @throws IllegalArgumentException 无查询条件时
+     * @param entity            Entity object
+     * @param criteria Additional query conditions
+     * @param excludePropertyNames Vararg of property names to exclude from the update
+     * @return Whether the record was updated
+     * @throws IllegalArgumentException When no query conditions are provided
      * @author K
      * @since 1.0.0
      */
     fun updateExcludePropertiesWhen(entity: E, criteria: Criteria, vararg excludePropertyNames: String): Boolean
 
     /**
-     * 批量更新实体对应的记录
+     * Batch-updates the records corresponding to the entities.
      *
-     * ktorm底层该方法是基于原生 JDBC 提供的 executeBatch 函数实现
+     * Under the hood, ktorm implements this method based on the native JDBC executeBatch function.
      *
-     * @param entities 实体对象集合
-     * @param countOfEachBatch 每批大小，缺省为1000
-     * @return 更新成功的记录数
-     * @throws IllegalStateException 存在主键为null时
+     * @param entities Collection of entity objects
+     * @param countOfEachBatch Batch size; defaults to 1000
+     * @return Number of records successfully updated
+     * @throws IllegalStateException When a primary key is null
      * @author K
      * @since 1.0.0
      */
     fun batchUpdate(entities: Collection<E>, countOfEachBatch: Int = 1000): Int
 
     /**
-     * 有条件的批量更新指定属性
-     * 更新规则见 @see UpdatePayload 类，查询规则见 @see SearchPayload
+     * Conditionally batch-updates the specified properties.
+     * For update rules see @see UpdatePayload, and for query rules see @see SearchPayload.
      *
-     * @param S 查询项载体类型
-     * @param updatePayload 更新项载体
-     * @return 更新的记录数
-     * @throws IllegalArgumentException 无查询条件时
+     * @param S Search payload type
+     * @param updatePayload Update payload
+     * @return Number of updated records
+     * @throws IllegalArgumentException When no query conditions are provided
      * @author K
      * @since 1.0.0
      */
     fun <S : ISearchPayload> batchUpdateWhen(updatePayload: UpdatePayload<S>): Int
 
     /**
-     * 有条件的批量更新实体对象（仅当满足给定的附加查询条件时）
+     * Conditionally batch-updates entity objects (only when the given additional query conditions are met).
      *
-     * @param entities 实体对象集合
-     * @param criteria 附加查询条件
-     * @param countOfEachBatch 每批大小，缺省为1000
-     * @return 更新的记录数
-     * @throws IllegalArgumentException 无查询条件时
+     * @param entities Collection of entity objects
+     * @param criteria Additional query conditions
+     * @param countOfEachBatch Batch size; defaults to 1000
+     * @return Number of updated records
+     * @throws IllegalArgumentException When no query conditions are provided
      * @author K
      * @since 1.0.0
      */
     fun batchUpdateWhen(entities: Collection<E>, criteria: Criteria, countOfEachBatch: Int = 1000): Int
 
     /**
-     * 更新实体除指定的几个属性外的所有属性
-     * 注：id属性永远不会被更新
+     * Updates all properties of the entity except the specified ones.
+     * Note: the id property is never updated.
      *
-     * @param entity            实体对象
-     * @param excludePropertyNames 不更新的属性的可变数组
-     * @return 是否更新成功
+     * @param entity            Entity object
+     * @param excludePropertyNames Vararg of property names to exclude from the update
+     * @return Whether the update succeeded
      * @author K
      * @since 1.0.0
      */
     fun updateExcludeProperties(entity: E, vararg excludePropertyNames: String): Boolean
 
     /**
-     * 批量更新实体对象, 只更新实体的某几个属性
+     * Batch-updates entity objects, modifying only the specified properties.
      *
-     * @param criteria   查询条件
-     * @param properties Map(属性名，属性值)
-     * @return 是否更新成功
-     * @throws IllegalArgumentException 未指定要更新的属性或无查询条件时
+     * @param criteria   Query conditions
+     * @param properties Map(propertyName, propertyValue)
+     * @return Whether the update succeeded
+     * @throws IllegalArgumentException When no properties to update are specified or no query conditions are provided
      * @author K
      * @since 1.0.0
      */
     fun batchUpdateProperties(criteria: Criteria, properties: Map<String, *>): Int
 
     /**
-     * 批量更新实体对象指定的几个属性
+     * Batch-updates the specified properties of entity objects.
      *
-     * @param entities   实体对象列表
-     * @param countOfEachBatch 每批大小，缺省为1000
-     * @param propertyNames 更新的属性的可变数组
-     * @return 更新的记录数
+     * @param entities   List of entity objects
+     * @param countOfEachBatch Batch size; defaults to 1000
+     * @param propertyNames Vararg of property names to update
+     * @return Number of updated records
      * @author K
      * @since 1.0.0
      */
     fun batchUpdateOnly(entities: Collection<E>, countOfEachBatch: Int = 1000, vararg propertyNames: String): Int
 
     /**
-     * 有条件的批量更新实体对象指定的几个属性（仅当满足给定的附加查询条件时）
-     * 注：id属性永远不会被更新
+     * Conditionally batch-updates the specified properties of entity objects (only when the given additional query conditions are met).
+     * Note: the id property is never updated.
      *
-     * @param entities   实体对象列表
-     * @param criteria 附加查询条件
-     * @param countOfEachBatch 每批大小，缺省为1000
-     * @param propertyNames 更新的属性的可变数组
-     * @return 更新的记录数
-     * @throws IllegalArgumentException 无查询条件时
+     * @param entities   List of entity objects
+     * @param criteria Additional query conditions
+     * @param countOfEachBatch Batch size; defaults to 1000
+     * @param propertyNames Vararg of property names to update
+     * @return Number of updated records
+     * @throws IllegalArgumentException When no query conditions are provided
      * @author K
      * @since 1.0.0
      */
@@ -332,13 +332,13 @@ interface IBaseCrudService<PK : Any, E : IIdEntity<PK>> : IBaseReadOnlyService<P
     ): Int
 
     /**
-     * 批量更新实体除了指定几个属性外的所有属性
-     * 注：id属性永远不会被更新
+     * Batch-updates all properties of the entity except the specified ones.
+     * Note: the id property is never updated.
      *
-     * @param entities   实体对象列表
-     * @param countOfEachBatch 每批大小，缺省为1000
-     * @param excludePropertyNames 不更新的属性的可变数组
-     * @return 是否更新成功
+     * @param entities   List of entity objects
+     * @param countOfEachBatch Batch size; defaults to 1000
+     * @param excludePropertyNames Vararg of property names to exclude from the update
+     * @return Whether the update succeeded
      * @author K
      * @since 1.0.0
      */
@@ -347,15 +347,15 @@ interface IBaseCrudService<PK : Any, E : IIdEntity<PK>> : IBaseReadOnlyService<P
     ): Int
 
     /**
-     * 有条件的批量更新实体除了指定几个属性外的所有属性（仅当满足给定的附加查询条件时）
-     * 注：id属性永远不会被更新
+     * Conditionally batch-updates all properties of the entity except the specified ones (only when the given additional query conditions are met).
+     * Note: the id property is never updated.
      *
-     * @param entities   实体对象列表
-     * @param criteria 附加查询条件
-     * @param countOfEachBatch 每批大小，缺省为1000
-     * @param excludePropertyNames 不更新的属性的可变数组
-     * @return 是否更新成功
-     * @throws IllegalArgumentException 无查询条件时
+     * @param entities   List of entity objects
+     * @param criteria Additional query conditions
+     * @param countOfEachBatch Batch size; defaults to 1000
+     * @param excludePropertyNames Vararg of property names to exclude from the update
+     * @return Whether the update succeeded
+     * @throws IllegalArgumentException When no query conditions are provided
      * @author K
      * @since 1.0.0
      */
@@ -369,52 +369,52 @@ interface IBaseCrudService<PK : Any, E : IIdEntity<PK>> : IBaseReadOnlyService<P
     //region Delete
 
     /**
-     * 删除指定主键值对应的记录
+     * Deletes the record corresponding to the specified primary key value.
      *
-     * @param id 主键值，类型必须为以下之一：String、Int、Long
-     * @return 是否删除成功
+     * @param id Primary key value; the type must be one of: String, Int, Long
+     * @return Whether the deletion succeeded
      * @author K
      * @since 1.0.0
      */
     fun deleteById(id: PK): Boolean
 
     /**
-     * 批量删除指定主键对应的实体对象
+     * Batch-deletes entity objects by the specified primary keys.
      *
-     * @param ids 主键列表
-     * @return 删除的记录数
+     * @param ids List of primary keys
+     * @return Number of deleted records
      * @author K
      * @since 1.0.0
      */
     fun batchDelete(ids: Collection<PK>): Int
 
     /**
-     * 批量删除指定主键对应的实体对象
+     * Batch-deletes entity objects by the specified query conditions.
      *
-     * @param criteria 查询条件
-     * @return 删除的记录数
-     * @throws IllegalArgumentException 无查询条件时
+     * @param criteria Query conditions
+     * @return Number of deleted records
+     * @throws IllegalArgumentException When no query conditions are provided
      * @author K
      * @since 1.0.0
      */
     fun batchDeleteCriteria(criteria: Criteria): Int
 
     /**
-     * 批量删除指定条件的实体对象
+     * Batch-deletes entity objects matching the specified conditions.
      *
-     * @param searchPayload 查询项载体
-     * @return 删除的记录数
-     * @throws IllegalArgumentException 无查询条件时
+     * @param searchPayload Search payload
+     * @return Number of deleted records
+     * @throws IllegalArgumentException When no query conditions are provided
      * @author K
      * @since 1.0.0
      */
     fun batchDeleteWhen(searchPayload: ISearchPayload): Int
 
     /**
-     * 删除实体对应的记录
+     * Deletes the record corresponding to the entity.
      *
-     * @param entity 实体
-     * @return 是否删除成功
+     * @param entity Entity
+     * @return Whether the deletion succeeded
      * @author K
      * @since 1.0.0
      */

@@ -12,10 +12,11 @@ import org.springframework.stereotype.Service
 
 
 /**
- * [IPermittedResource] 本地实现。
+ * Local implementation of [IPermittedResource].
  *
- * 标 [Primary] 与 [io.kudos.ms.auth.core.role.api.AuthRoleApi] 同因：当对应 controller
- * 也实现接口注册为 bean 时，注入歧义由本类兜底。
+ * Marked [Primary] for the same reason as [io.kudos.ms.auth.core.role.api.AuthRoleApi]: when the
+ * corresponding controller also implements the interface and is registered as a bean, this class
+ * serves as the default to resolve the resulting injection ambiguity.
  *
  * @author K
  * @since 1.0.0
@@ -42,7 +43,7 @@ open class PermittedResourceApi : IPermittedResource {
         resources.sortedBy { it.orderNum ?: Int.MAX_VALUE }.forEach { item ->
             val node = nodeMap[item.id]!!
             val parentId = item.parentId
-            // 父节点未被授权时该菜单挂为根，避免出现"权限有孩子但隐藏父"的悬空层级
+            // When the parent is not permitted, attach this menu as a root to avoid an orphaned hierarchy where a permitted child has a hidden parent.
             if (parentId.isNullOrBlank() || parentId !in idSet) {
                 roots.add(node)
             } else {

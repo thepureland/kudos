@@ -9,7 +9,7 @@ import org.ktorm.schema.ColumnDeclaring
 import org.ktorm.schema.Table
 
 /**
- * Criteria转换器，可将Criteria转换为Ktorm查询条件表达式
+ * Criteria converter: turns a Criteria into a Ktorm query-condition expression.
  *
  * @author K
  * @author AI: Codex
@@ -18,20 +18,20 @@ import org.ktorm.schema.Table
 internal object CriteriaConverter {
 
     /**
-     * 将Criteria转换为Ktorm的表达式
+     * Converts a Criteria into a Ktorm expression.
      *
      * @param criteria Criteria
-     * @param table ktorm表对象
-     * @return Ktorm查询条件的表达式
+     * @param table Ktorm table object
+     * @return Ktorm query-condition expression
      * @author K
      * @since 1.0.0
      */
     fun convert(criteria: Criteria, table: Table<*>): ColumnDeclaring<Boolean> {
         val criterionGroups = criteria.getCriterionGroups()
         val andExpressions = mutableListOf<ColumnDeclaring<Boolean>>()
-        criterionGroups.forEach { criterionGroup -> // 第一层元素间是AND关系
+        criterionGroups.forEach { criterionGroup -> // Top-level elements combine with AND
             when (criterionGroup) {
-                is Array<*> -> { // 第二层元素间是OR关系
+                is Array<*> -> { // Second-level elements combine with OR
                     val orExpressions = mutableListOf<ColumnDeclaring<Boolean>>()
                     criterionGroup.forEach { groupElem ->
                         when (groupElem) {
@@ -42,7 +42,7 @@ internal object CriteriaConverter {
                                 orExpressions.add(convert(groupElem, table))
                             }
                             else -> {
-                                error("Criteria中的元素(数组中)不支持【${criterionGroup::class}】类型！")
+                                error("Unsupported element type [${criterionGroup::class}] inside Criteria array!")
                             }
                         }
                     }
@@ -55,7 +55,7 @@ internal object CriteriaConverter {
                     andExpressions.add(convert(criterionGroup, table))
                 }
                 else -> {
-                    error("Criteria中的元素不支持【${criterionGroup::class}】类型！")
+                    error("Unsupported element type [${criterionGroup::class}] in Criteria!")
                 }
             }
         }

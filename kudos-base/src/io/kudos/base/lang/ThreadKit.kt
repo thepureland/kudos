@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.reflect.KClass
 
 /**
- * 线程相关工具类
+ * Thread-related utility.
  *
  * @author K
  * @since 1.0.0
@@ -16,9 +16,9 @@ object ThreadKit {
     private val LOG = LogFactory.getLog(ThreadKit::class)
 
     /**
-     * 让当前线程休眠指定的毫秒数, 并忽略InterruptedException.
+     * Sleep the current thread for the specified number of milliseconds, ignoring InterruptedException.
      *
-     * @param millis 休眠的毫秒数
+     * @param millis number of milliseconds to sleep
      * @author K
      * @since 1.0.0
      */
@@ -32,10 +32,10 @@ object ThreadKit {
     }
 
     /**
-     * 让当前线程休眠指定的时间, 并忽略InterruptedException.
+     * Sleep the current thread for the specified duration, ignoring InterruptedException.
      *
-     * @param duration 休眠的时间值
-     * @param unit 休眠的时间单位
+     * @param duration the sleep duration value
+     * @param unit the sleep time unit
      * @author K
      * @since 1.0.0
      */
@@ -49,14 +49,14 @@ object ThreadKit {
     }
 
     /**
-     * 按照ExecutorService JavaDoc示例代码编写的Graceful Shutdown方法. 先使用shutdown, 停止接收新任务并尝试完成所有已存在任务.
-     * 如果超时, 则调用shutdownNow, 取消在workQueue中Pending的任务,并中断所有阻塞函数. 如果仍超時，則強制退出.
-     * 另对在shutdown时线程本身被调用中断做了处理.
+     * Graceful Shutdown implementation following the ExecutorService JavaDoc sample code. First calls shutdown to stop accepting new tasks and attempt to complete all existing tasks.
+     * On timeout, calls shutdownNow to cancel tasks pending in the workQueue and interrupt all blocking calls. If it still times out, force-exits.
+     * Additionally handles the case where the thread itself is interrupted while shutting down.
      *
-     * @param pool 线程池
-     * @param shutdownTimeout 关闭超时时间
-     * @param shutdownNowTimeout 现在关闭超时时间
-     * @param timeUnit 时间单位
+     * @param pool the thread pool
+     * @param shutdownTimeout shutdown timeout
+     * @param shutdownNowTimeout shutdownNow timeout
+     * @param timeUnit the time unit
      * @author K
      * @since 1.0.0
      */
@@ -68,7 +68,7 @@ object ThreadKit {
                 pool.shutdownNow() // Cancel currently executing tasks
                 // Wait a while for tasks to respond to being cancelled
                 if (!pool.awaitTermination(shutdownNowTimeout.toLong(), timeUnit)) {
-                    LOG.warn("线程池未结束!")
+                    LOG.warn("Thread pool did not terminate!")
                 }
             }
         } catch (ie: InterruptedException) {
@@ -81,11 +81,11 @@ object ThreadKit {
     }
 
     /**
-     * 直接调用shutdownNow的方法, 有timeout控制. 取消在workQueue中Pending的任务, 并中断所有阻塞函数.
+     * Calls shutdownNow directly, controlled by a timeout. Cancels tasks pending in the workQueue and interrupts all blocking calls.
      *
-     * @param pool 线程池
-     * @param timeout 超时时间
-     * @param timeUnit 时间单位
+     * @param pool the thread pool
+     * @param timeout timeout
+     * @param timeUnit the time unit
      * @author K
      * @since 1.0.0
      */
@@ -93,7 +93,7 @@ object ThreadKit {
         try {
             pool.shutdownNow()
             if (!pool.awaitTermination(timeout.toLong(), timeUnit)) {
-                LOG.warn("线程池未结束!")
+                LOG.warn("Thread pool did not terminate!")
             }
         } catch (ie: InterruptedException) {
             LOG.error(ie)
@@ -102,11 +102,11 @@ object ThreadKit {
     }
 
     /**
-     * 当调用的方法栈里不含指定类名时，把栈信息打印到日志中.
-     * 该方法可用于信息跟踪，如：跟踪资源是否被关闭。
-     * 该方法只有在日志级别为DEBUG时才有效
+     * Print the call stack to the log when it does not include the specified class name.
+     * This method can be used for tracing, for example to track whether a resource has been closed.
+     * Only effective when the log level is DEBUG.
      *
-     * @param clazz 类
+     * @param clazz the class
      * @author K
      * @since 1.0.0
      */
@@ -115,14 +115,14 @@ object ThreadKit {
         val stackTrace = getStackTrace()
         val found = stackTrace.any { it.className == clazz.java.name }
         if (!found) {
-            LOG.warn("方法栈里不含指定类: $clazz")
+            LOG.warn("The method stack does not contain the specified class: $clazz")
             stackTrace.forEach { LOG.warn(it.toString()) }
         }
     }
 
     /**
-     * 抛出异常，打印方法调用栈日志.
-     * 该方法只有在日志级别为DEBUG时才有效
+     * Print the call stack to the log without throwing an exception.
+     * Only effective when the log level is DEBUG.
      *
      * @author K
      * @since 1.0.0
@@ -133,9 +133,9 @@ object ThreadKit {
     }
 
     /**
-     * 获取调用栈
+     * Get the call stack.
      *
-     * @return 调用栈
+     * @return the call stack
      * @author K
      * @since 1.0.0
      */

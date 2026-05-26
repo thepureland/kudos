@@ -19,7 +19,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * 本地文件服务器上传操作测试用例
+ * Test cases for local file server upload operations.
  *
  * @author unknown
  * @author K

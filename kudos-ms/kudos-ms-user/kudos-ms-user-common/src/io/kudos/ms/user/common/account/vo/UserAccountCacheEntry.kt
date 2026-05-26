@@ -6,113 +6,113 @@ import java.time.LocalDateTime
 
 
 /**
- * 用户缓存项
+ * User cache entry
  *
  * @author K
  * @since 1.0.0
  */
 data class UserAccountCacheEntry (
 
-    /** 主键 */
+    /** Primary key */
     override val id: String,
 
-    /** 用户名 */
+    /** Username */
     val username: String?,
 
-    /** 租户ID */
+    /** Tenant ID */
     val tenantId: String?,
 
-    /** 登录密码 */
+    /** Login password */
     val loginPassword: String?,
 
-    /** 安全密码 */
+    /** Security password */
     val securityPassword: String?,
 
-    /** 用户类型字典码 */
+    /** Account type dict code */
     val accountTypeDictCode: String?,
 
-    /** 用户状态字典码 */
+    /** Account status dict code */
     val accountStatusDictCode: String?,
 
-    /** 默认语言环境 */
+    /** Default locale */
     val defaultLocale: String?,
 
-    /** 默认时区 */
+    /** Default timezone */
     val defaultTimezone: String?,
 
-    /** 默认货币 */
+    /** Default currency */
     val defaultCurrency: String?,
 
-    /** 最后登录时间 */
+    /** Last login time */
     val lastLoginTime: LocalDateTime?,
 
-    /** 最后登录IP */
+    /** Last login IP */
     val lastLoginIp: Long?,
 
-    /** 最后登出时间 */
+    /** Last logout time */
     val lastLogoutTime: LocalDateTime?,
 
-    /** 登录错误次数 */
+    /** Login error count */
     val loginErrorTimes: Int?,
 
-    /** 安全密码错误次数 */
+    /** Security password error count */
     val securityPasswordErrorTimes: Int?,
 
-    /** 会话密钥 */
+    /** Session key */
     val sessionKey: String?,
 
-    /** 认证密钥 */
+    /** Authentication key */
     val authenticationKey: String?,
 
-    /** 所属机构ID */
+    /** Owning organization ID */
     val orgId: String?,
 
-    /** 直属上级ID */
+    /** Direct supervisor ID */
     val supervisorId: String?,
 
-    /** 备注 */
+    /** Remark */
     val remark: String?,
 
-    /** 冻结类型字典码；非 null 表示存在冻结记录 */
+    /** Freeze type dict code; non-null means a freeze record exists */
     val freezeType: String? = null,
 
-    /** 冻结记录创建时刻 */
+    /** Freeze record creation time */
     val freezeTime: LocalDateTime? = null,
 
-    /** 冻结生效起点；null 视为立即生效 */
+    /** Freeze effective start time; null means effective immediately */
     val freezeStartTime: LocalDateTime? = null,
 
-    /** 冻结失效时刻；null 视为永久冻结 */
+    /** Freeze expiry time; null means permanently frozen */
     val freezeEndTime: LocalDateTime? = null,
 
-    /** 冻结原因标题 */
+    /** Freeze reason title */
     val freezeTitle: String? = null,
 
-    /** 冻结详细说明 */
+    /** Freeze detailed description */
     val freezeContent: String? = null,
 
-    /** 是否激活 */
+    /** Whether active */
     val active: Boolean?,
 
-    /** 是否内置 */
+    /** Whether built-in */
     val builtIn: Boolean?,
 
-    /** 创建者id */
+    /** Creator id */
     val createUserId: String?,
 
-    /** 创建者名称 */
+    /** Creator name */
     val createUserName: String?,
 
-    /** 创建时间 */
+    /** Create time */
     val createTime: LocalDateTime?,
 
-    /** 更新者id */
+    /** Updater id */
     val updateUserId: String?,
 
-    /** 更新者名称 */
+    /** Updater name */
     val updateUserName: String?,
 
-    /** 更新时间 */
+    /** Update time */
     val updateTime: LocalDateTime?,
 
 ) : IIdEntity<String>, Serializable {

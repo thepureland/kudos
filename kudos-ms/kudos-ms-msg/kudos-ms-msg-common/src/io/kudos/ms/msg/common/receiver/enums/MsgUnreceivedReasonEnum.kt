@@ -2,31 +2,32 @@ package io.kudos.ms.msg.common.receiver.enums
 
 
 /**
- * 未送达失败原因常量（写入 `msg_unreceived.fail_reason`）。
+ * Constants for undelivered failure reasons (written into `msg_unreceived.fail_reason`).
  *
- * 用枚举而非自由文本，避免每次失败一行就多写一种新拼写，给后续按原因聚合统计留口子。
- * admin 端展示时可以加 i18n key 翻译。
+ * Using an enum rather than free text avoids each failure row introducing a new spelling
+ * and leaves room for later aggregation/statistics by reason. The admin UI can attach an
+ * i18n key for translation when displaying.
  *
  * @author K
  * @since 1.0.0
  */
 enum class MsgUnreceivedReasonEnum(val code: String) {
 
-    /** 用户没配置对应渠道的联系方式（如要发邮件但用户没邮箱） */
+    /** User has no contact info configured for the target channel (e.g. sending email but the user has no email address) */
     NO_CONTACT("NO_CONTACT"),
 
-    /** 渠道服务端返回失败（SMTP 拒收、SMS 接口报错等） */
+    /** Channel server returned a failure (SMTP rejected, SMS API error, etc.) */
     CHANNEL_REJECT("CHANNEL_REJECT"),
 
-    /** 渠道调用超时 */
+    /** Channel call timed out */
     TIMEOUT("TIMEOUT"),
 
-    /** Listener 处理过程中抛了异常 */
+    /** Listener threw an exception during processing */
     LISTENER_ERROR("LISTENER_ERROR"),
 
-    /** 接收人 id 集合为空 */
+    /** Receiver id set is empty */
     EMPTY_RECEIVERS("EMPTY_RECEIVERS"),
 
-    /** 其它/未分类 */
+    /** Other / uncategorized */
     UNKNOWN("UNKNOWN");
 }

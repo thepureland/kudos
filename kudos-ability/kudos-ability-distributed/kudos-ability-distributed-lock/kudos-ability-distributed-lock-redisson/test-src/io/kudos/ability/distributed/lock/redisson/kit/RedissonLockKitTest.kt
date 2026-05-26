@@ -13,7 +13,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertSame
 
 /**
- * [RedissonLockKit] 全局配置与 named locker 路由测试。
+ * Tests for [RedissonLockKit] covering global configuration and named-locker routing.
  *
  * @author K
  * @author AI: Codex
@@ -53,7 +53,7 @@ internal class RedissonLockKitTest {
     }
 
     /**
-     * 记录 getLock 调用参数的 RedissonClient stub。
+     * RedissonClient stub that records getLock call arguments.
      *
      * @author K
      * @author AI: Codex

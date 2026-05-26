@@ -15,58 +15,58 @@ import org.springframework.expression.spel.support.StandardEvaluationContext
 import java.lang.reflect.Method
 
 /**
- * 租户缓存key生成器
- * 
- * 为TenantCacheable等注解生成包含租户ID的缓存key，实现多租户隔离。
- * 
- * 核心功能：
- * 1. 自动添加租户ID：在所有生成的key前自动添加租户ID前缀
- * 2. SpEL表达式支持：支持使用SpEL表达式动态生成key
- * 3. 注解提取：从方法注解中提取key配置（suffix属性）
- * 4. 上下文变量：提供method、tenantId等变量供SpEL使用
- * 
- * Key格式：
- * - 如果指定了suffix："{tenantId}::{suffix表达式结果}"
- * - 如果未指定suffix："{tenantId}"
- * 
- * 支持的注解：
- * - TenantCacheable、TenantCacheEvict、TenantCachePut
- * - CachePut、Cacheable、CacheEvict（兼容标准注解）
- * 
- * SpEL表达式：
- * - 支持引用方法参数（#argName或#p0）
- * - 支持引用方法对象（#method）
- * - 支持引用租户ID（#tenantId）
- * - 支持引用目标对象（#root.target）
- * 
- * 注意事项：
- * - 租户ID从KudosContext中获取
- * - 如果suffix为空，只返回租户ID
- * - 使用SpEL表达式解析，支持复杂的key生成逻辑
+ * Tenant-aware cache key generator.
+ *
+ * Generates cache keys that include the tenant ID for annotations such as TenantCacheable, providing multi-tenant isolation.
+ *
+ * Core responsibilities:
+ * 1. Auto tenant ID prefix: prefixes every generated key with the tenant ID.
+ * 2. SpEL expression support: dynamically generates keys via SpEL expressions.
+ * 3. Annotation extraction: extracts the key configuration (suffix attribute) from method annotations.
+ * 4. Context variables: exposes variables such as method and tenantId for use in SpEL.
+ *
+ * Key formats:
+ * - When suffix is specified: "{tenantId}::{result of the suffix expression}".
+ * - When suffix is not specified: "{tenantId}".
+ *
+ * Supported annotations:
+ * - TenantCacheable, TenantCacheEvict, TenantCachePut.
+ * - CachePut, Cacheable, CacheEvict (standard annotations for compatibility).
+ *
+ * SpEL expressions:
+ * - Reference method parameters (#argName or #p0).
+ * - Reference the method object (#method).
+ * - Reference the tenant ID (#tenantId).
+ * - Reference the target object (#root.target).
+ *
+ * Notes:
+ * - Tenant ID is taken from KudosContext.
+ * - If suffix is empty, only the tenant ID is returned.
+ * - SpEL parsing supports complex key generation logic.
  */
 class TenantCacheKeyGenerator : KeyGenerator {
-    /** SpEL 参数名发现器，让表达式能用 `#paramName` 引用方法形参 */
+    /** SpEL parameter name discoverer so expressions can reference method formal parameters via `#paramName`. */
     private val parameterNameDiscoverer: ParameterNameDiscoverer = SpelExpressionCache.parameterNameDiscoverer
 
     /**
-     * 生成普通key（带租户ID）
-     * 
-     * 根据提供的key字符串生成包含租户ID的缓存key。
-     * 
-     * 工作流程：
-     * 1. 检查key：如果key不为空，拼接租户ID和key
-     * 2. 如果key为空：只返回租户ID
-     * 3. 调用generateKey：使用SpEL表达式解析并生成最终key
-     * 
-     * Key拼接规则：
-     * - 如果key不为空：使用"#tenantId.concat('::').concat($key)"表达式
-     * - 如果key为空：使用"#tenantId"表达式
-     * 
-     * @param target 目标对象
-     * @param method 目标方法
-     * @param key 原始的key字符串（SpEL表达式）
-     * @param params 方法参数
-     * @return 生成的缓存key（包含租户ID）
+     * Generates a general key (with tenant ID).
+     *
+     * Builds a cache key that includes the tenant ID based on the provided key string.
+     *
+     * Workflow:
+     * 1. Check the key: if non-empty, concatenate the tenant ID and the key.
+     * 2. If empty: return only the tenant ID.
+     * 3. Invoke generateKey: resolve via SpEL and produce the final key.
+     *
+     * Concatenation rules:
+     * - If key is non-empty: use the expression "#tenantId.concat('::').concat($key)".
+     * - If key is empty: use the expression "#tenantId".
+     *
+     * @param target target object
+     * @param method target method
+     * @param key raw key string (SpEL expression)
+     * @param params method parameters
+     * @return generated cache key (including tenant ID)
      */
     fun generalNormalKey(target: Any, method: Method, key: String, vararg params: Any?): Any {
         val keyStr = if (key.isNotBlank()) {
@@ -78,24 +78,24 @@ class TenantCacheKeyGenerator : KeyGenerator {
     }
 
     /**
-     * 生成缓存key（实现KeyGenerator接口）
-     * 
-     * 从方法注解中提取key配置，生成包含租户ID的缓存key。
-     * 
-     * 工作流程：
-     * 1. 提取注解key：从方法注解中提取suffix属性
-     * 2. 拼接租户ID：如果suffix不为空，拼接租户ID和suffix
-     * 3. 调用generateKey：使用SpEL表达式解析并生成最终key
-     * 
-     * 注解查找顺序：
-     * - TenantCacheable、TenantCacheEvict、TenantCachePut
-     * - CachePut、Cacheable、CacheEvict
-     * - 找到第一个有suffix的注解即使用
-     * 
-     * @param target 目标对象
-     * @param method 目标方法
-     * @param params 方法参数
-     * @return 生成的缓存key（包含租户ID）
+     * Generates a cache key (implements the KeyGenerator interface).
+     *
+     * Extracts the key configuration from method annotations and produces a cache key containing the tenant ID.
+     *
+     * Workflow:
+     * 1. Extract the annotation key: read the suffix attribute from the method's annotations.
+     * 2. Concatenate the tenant ID: prepend the tenant ID to the suffix when non-empty.
+     * 3. Invoke generateKey: resolve via SpEL and produce the final key.
+     *
+     * Annotation lookup order:
+     * - TenantCacheable, TenantCacheEvict, TenantCachePut.
+     * - CachePut, Cacheable, CacheEvict.
+     * - The first annotation with a suffix wins.
+     *
+     * @param target target object
+     * @param method target method
+     * @param params method parameters
+     * @return generated cache key (including tenant ID)
      */
     override fun generate(target: Any, method: Method, vararg params: Any?): Any {
         var key = getAnnotationKey(method)
@@ -108,24 +108,23 @@ class TenantCacheKeyGenerator : KeyGenerator {
     }
 
     /**
-     * 从方法注解中提取key配置
-     * 
-     * 遍历支持的注解类型，查找第一个有suffix属性的注解并返回其值。
-     * 
-     * 查找顺序：
-     * 1. TenantCacheable
-     * 2. TenantCacheEvict
-     * 3. TenantCachePut
-     * 4. CachePut
-     * 5. Cacheable
-     * 6. CacheEvict
-     * 
-     * 返回值：
-     * - 如果找到有suffix的注解，返回suffix值
-     * - 如果所有注解都没有suffix或不存在，返回空字符串
-     * 
-     * @param method 目标方法
-     * @return 从注解中提取的key配置（suffix值），如果不存在则返回空字符串
+     * Extracts the key configuration from method annotations.
+     *
+     * Iterates the supported annotation types and returns the suffix attribute of the first one that defines it.
+     *
+     * Lookup order:
+     * 1. TenantCacheable.
+     * 2. TenantCacheEvict.
+     * 3. TenantCachePut.
+     * 4. CachePut.
+     * 5. Cacheable.
+     * 6. CacheEvict.
+     *
+     * Return value:
+     * - The first found suffix, or an empty string if none of the annotations provide one or are present.
+     *
+     * @param method target method
+     * @return the suffix extracted from the annotations, or an empty string if absent
      */
     private fun getAnnotationKey(method: Method): String =
         KEY_ANNOTATIONS.firstNotNullOfOrNull { type ->
@@ -134,40 +133,40 @@ class TenantCacheKeyGenerator : KeyGenerator {
         } ?: ""
 
     /**
-     * 使用SpEL表达式生成缓存key
-     * 
-     * 构建SpEL表达式上下文，解析cacheKey表达式并生成最终的缓存key。
-     * 
-     * 工作流程：
-     * 1. 创建评估上下文：使用MethodBasedEvaluationContext，包含方法参数信息
-     * 2. 设置根对象：将target设置为根对象
-     * 3. 设置变量：
-     *    - method：目标方法对象
-     *    - tenantId：从KudosContext获取的租户ID
-     * 4. 解析表达式：使用SpEL解析器解析cacheKey表达式
-     * 5. 获取值：从表达式中获取String类型的值
-     * 
-     * SpEL上下文变量：
-     * - #method：目标方法对象
-     * - #tenantId：当前租户ID
-     * - #root.target：目标对象
-     * - #argName或#p0：方法参数（通过parameterNameDiscoverer获取参数名）
-     * 
-     * 表达式示例：
-     * - "#tenantId"：只返回租户ID
-     * - "#tenantId.concat('::').concat(#id)"：返回"租户ID::参数id的值"
-     * - "#tenantId + '::' + #user.id"：返回"租户ID::用户ID"
-     * 
-     * 注意事项：
-     * - cacheKey必须是有效的SpEL表达式
-     * - 表达式必须返回String类型
-     * - 如果表达式解析失败，会抛出异常
-     * 
-     * @param target 目标对象
-     * @param method 目标方法
-     * @param cacheKey SpEL表达式字符串
-     * @param params 方法参数
-     * @return 解析后的缓存key字符串
+     * Generates a cache key using a SpEL expression.
+     *
+     * Builds the SpEL evaluation context, parses the cacheKey expression, and produces the final cache key.
+     *
+     * Workflow:
+     * 1. Build the evaluation context: use MethodBasedEvaluationContext with method parameter info.
+     * 2. Set the root object: use target as the root.
+     * 3. Set variables:
+     *    - method: target method object.
+     *    - tenantId: tenant ID fetched from KudosContext.
+     * 4. Parse the expression: use the SpEL parser on cacheKey.
+     * 5. Read the value: get the value as a String from the expression.
+     *
+     * SpEL context variables:
+     * - #method: target method object.
+     * - #tenantId: current tenant ID.
+     * - #root.target: target object.
+     * - #argName or #p0: method parameters (parameter names resolved via parameterNameDiscoverer).
+     *
+     * Expression examples:
+     * - "#tenantId": returns the tenant ID only.
+     * - "#tenantId.concat('::').concat(#id)": returns "<tenantId>::<id>".
+     * - "#tenantId + '::' + #user.id": returns "<tenantId>::<userId>".
+     *
+     * Notes:
+     * - cacheKey must be a valid SpEL expression.
+     * - The expression must return a String.
+     * - Parsing failures throw an exception.
+     *
+     * @param target target object
+     * @param method target method
+     * @param cacheKey SpEL expression string
+     * @param params method parameters
+     * @return the resolved cache key string
      */
     private fun generateKey(target: Any, method: Method, cacheKey: String, vararg params: Any?): String {
         val context: StandardEvaluationContext =
@@ -182,8 +181,8 @@ class TenantCacheKeyGenerator : KeyGenerator {
 
     companion object {
         /**
-         * 注解查找顺序：先 Tenant* 自定义，再 Spring 标准 [CachePut]/[Cacheable]/[CacheEvict]。
-         * 自定义优先是因为业务侧通常会用更高语义的注解，标准注解作为兼容兜底。
+         * Annotation lookup order: custom Tenant* annotations first, then Spring's standard [CachePut]/[Cacheable]/[CacheEvict].
+         * Custom ones take priority because business code typically uses the higher-semantics annotations; the standard ones serve as a compatibility fallback.
          */
         private val KEY_ANNOTATIONS = listOf(
             TenantCacheable::class.java,

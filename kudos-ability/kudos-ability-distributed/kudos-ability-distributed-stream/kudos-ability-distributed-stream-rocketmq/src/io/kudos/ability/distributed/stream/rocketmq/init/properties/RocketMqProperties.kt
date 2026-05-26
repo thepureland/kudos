@@ -5,8 +5,8 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 
 /**
- * RocketMQ配置属性类
- * 封装RocketMQ相关的配置信息，包括NameServer地址和异常保存开关
+ * RocketMQ configuration properties class.
+ * Wraps RocketMQ-related configuration, including the NameServer address and the exception-save switch.
  * @author K
  * @author AI: Codex
  * @since 1.0.0
@@ -21,10 +21,11 @@ class RocketMqProperties {
     var saveException: Boolean = true
 
     /**
-     * RocketMqBatchConsumer JDK 反序列化 allowlist。
+     * JDK deserialization allowlist for RocketMqBatchConsumer.
      *
-     * 语法同 [java.io.ObjectInputFilter.Config.createFilter]，为空时保持历史无限制行为。
-     * 示例可参考 JDK ObjectInputFilter 模式，配置 Java 基础类型、本项目消息类型，最后拒绝其他类型。
+     * Same syntax as [java.io.ObjectInputFilter.Config.createFilter]; empty preserves the historical unrestricted behavior.
+     * Refer to the JDK ObjectInputFilter pattern for examples: allow Java primitive types and this project's message
+     * types, then reject everything else.
      */
     @Value($$"${kudos.ability.distributed.stream.rocketmq.batch-consumer.deserialization-filter:}")
     var batchConsumerDeserializationFilter: String = ""

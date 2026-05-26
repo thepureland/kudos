@@ -8,7 +8,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
 /**
- * [RedisSerializerEnum] 字面值映射的回归测试。
+ * Regression tests for [RedisSerializerEnum] literal-value mapping.
  *
  * @author K
  * @author AI: Codex
@@ -32,7 +32,7 @@ internal class RedisSerializerEnumTest {
 
     @Test
     fun ofEnum_caseSensitive() {
-        // 上层 yml 的字面值约定使用全小写，大写不命中
+        // Upstream yml literal-value convention uses all lowercase; uppercase does not match
         assertNull(RedisSerializerEnum.ofEnum("STRING"))
         assertNull(RedisSerializerEnum.ofEnum("Jdk"))
     }

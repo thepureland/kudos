@@ -6,7 +6,7 @@ import io.kudos.base.query.sort.Sortable
 
 
 /**
- * 语言/区域字典实体
+ * Entity for the language/locale dictionary.
  *
  * @author K
  * @since 1.0.0
@@ -15,16 +15,16 @@ interface SysLocale : IManagedDbEntity<String, SysLocale> {
 
     companion object : DbEntityFactory<SysLocale>()
 
-    /** 语言代码(如 zh_CN, en_US) */
+    /** Language code (e.g. zh_CN, en_US). */
     var code: String
 
-    /** 显示名称(母语写法) */
+    /** Display name (in the native language). */
     var displayName: String
 
-    /** 英文名称 */
+    /** English name. */
     var englishName: String
 
-    /** 排序号 */
+    /** Sort order. */
     @get:Sortable
     var sortNo: Int
 

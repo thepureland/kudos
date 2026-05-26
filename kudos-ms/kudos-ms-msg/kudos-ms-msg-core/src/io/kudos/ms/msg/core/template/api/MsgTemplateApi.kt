@@ -9,10 +9,11 @@ import org.springframework.stereotype.Service
 
 
 /**
- * 消息模板API本地实现。
+ * Local implementation of the message template API.
  *
- * 标 [Primary] 与 auth/user/sys 模块同样原因：内部 RPC controller 也实现 [IMsgTemplateApi]
- * 注册为 bean，注入歧义由本地 bean 兜底。
+ * Marked [Primary] for the same reason as the auth/user/sys modules: the internal RPC controller
+ * also implements [IMsgTemplateApi] and is registered as a bean, and injection ambiguity is resolved
+ * by falling back to the local bean.
  *
  * @author K
  * @author AI: Codex

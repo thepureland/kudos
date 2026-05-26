@@ -1,10 +1,11 @@
 package io.kudos.ability.file.local.init.properties
 
 /**
- * 本地文件存储配置；对应 `kudos.ability.file.local.*`。
+ * Local file storage configuration; corresponds to `kudos.ability.file.local.*`.
  *
- * @property basePath 文件存储根目录的绝对路径。所有 bucket / file 都落在此目录下。
- *   留空 / 配置错误时上传 / 下载 / 删除会因找不到目录失败。生产部署强烈建议设到挂载点。
+ * @property basePath Absolute path to the file storage root directory. All buckets / files reside under this directory.
+ *   When left empty / misconfigured, upload / download / delete will fail due to missing directory. For production
+ *   deployment it is strongly recommended to set this to a dedicated mount point.
  * @author K
  * @author AI: Codex
  * @since 1.0.0

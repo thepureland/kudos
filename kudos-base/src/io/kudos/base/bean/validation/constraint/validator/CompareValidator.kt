@@ -8,7 +8,7 @@ import jakarta.validation.ConstraintValidator
 import jakarta.validation.ConstraintValidatorContext
 
 /**
- * Compare约束的验证器
+ * Validator for the Compare constraint.
  *
  * @author K
  * @since 1.0.0
@@ -22,10 +22,10 @@ class CompareValidator : ConstraintValidator<Compare, Any?> {
 
     override fun isValid(value: Any?, constraintValidatorContext: ConstraintValidatorContext): Boolean {
         val bean = requireNotNull(ValidationContext.get(constraintValidatorContext)) {
-            "CompareValidator 需要 ValidationContext 中存在 bean"
+            "CompareValidator requires a bean to be present in ValidationContext"
         }
 
-        // 依赖的前提条件不成立时，代表无须校验比较约束，直接放行
+        // When the dependency precondition is not met, the compare constraint is skipped and considered valid.
         val depends = compare.depends
         if (depends.properties.isNotEmpty()) {
             if (!DependsValidator.validate(depends, bean)) {
@@ -33,7 +33,7 @@ class CompareValidator : ConstraintValidator<Compare, Any?> {
             }
         }
 
-        // 比较
+        // Comparison
         val anotherValue = BeanKit.getProperty(bean, compare.anotherProperty)
         if (value == null && anotherValue == null) {
             return true
@@ -43,35 +43,35 @@ class CompareValidator : ConstraintValidator<Compare, Any?> {
         }
         if (value::class != anotherValue::class) {
             throw IllegalArgumentException(
-                "【Compare】约束注解校验的两个属性类型必须相同！" +
+                "The two properties validated by [Compare] must be of the same type! " +
                         "(${compare.anotherProperty}: ${anotherValue::class.qualifiedName}, " +
-                        "当前属性: ${value::class.qualifiedName})"
+                        "current property: ${value::class.qualifiedName})"
             )
         }
         if (value is Array<*> && anotherValue is Array<*>) {
-            // 数组长度不一致属于运行时数据问题（如用户两次输入的密码组长度不同），
-            // 按校验失败处理，让上层得到正常的 ConstraintViolation 而非异常。
+            // Array length mismatch is a runtime data issue (e.g. the user entered passwords of different lengths twice);
+            // treat it as a validation failure so callers receive a normal ConstraintViolation instead of an exception.
             if (value.size != anotherValue.size) {
                 return false
             }
             value.forEachIndexed { index, v ->
                 if (v !is Comparable<*> || anotherValue[index] !is Comparable<*>) {
                     throw IllegalArgumentException(
-                        "【Compare】约束注解校验的两个数组中的每个元素的类型必须都实现【Comparable】接口！"
+                        "Every element in both arrays validated by [Compare] must implement the [Comparable] interface!"
                     )
                 }
                 val result = compare.logic.compare(v, anotherValue[index])
-                if (!result) { // 只要数组中一对元素校验不通过，就当整个校验不过
+                if (!result) { // If any pair of elements fails the check, treat the entire validation as failed.
                     return false
                 }
             }
             return true
         } else {
-            // 处理值不是数组的情况
+            // Handle the non-array case
             if (value !is Comparable<*>) {
                 throw IllegalArgumentException(
-                    "【Compare】约束注解校验的两个属性类型必须都实现【Comparable】接口！" +
-                            "(实际类型: ${value::class.qualifiedName})"
+                    "Both properties validated by [Compare] must implement the [Comparable] interface! " +
+                            "(actual type: ${value::class.qualifiedName})"
                 )
             }
             return compare.logic.compare(value, anotherValue)

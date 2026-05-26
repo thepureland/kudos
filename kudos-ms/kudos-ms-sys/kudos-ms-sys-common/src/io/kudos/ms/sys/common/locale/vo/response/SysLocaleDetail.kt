@@ -5,53 +5,53 @@ import java.time.LocalDateTime
 
 
 /**
- * 语言字典详情响应VO
+ * Response VO for language dictionary details.
  *
  * @author K
  * @since 1.0.0
  */
 data class SysLocaleDetail(
 
-    /** 主键 */
+    /** Primary key */
     override val id: String = "",
 
-    /** 语言代码 */
+    /** Language code */
     val code: String = "",
 
-    /** 显示名称 */
+    /** Display name */
     val displayName: String = "",
 
-    /** 英文名称 */
+    /** English name */
     val englishName: String = "",
 
-    /** 排序号 */
+    /** Sort number */
     val sortNo: Int = 0,
 
-    /** 备注 */
+    /** Remark */
     val remark: String? = null,
 
-    /** 是否启用 */
+    /** Whether enabled */
     val active: Boolean = true,
 
-    /** 是否内置 */
+    /** Whether built-in */
     val builtIn: Boolean = false,
 
-    /** 创建者id */
+    /** Creator id */
     val createUserId: String? = null,
 
-    /** 创建者名称 */
+    /** Creator name */
     val createUserName: String? = null,
 
-    /** 创建时间 */
+    /** Creation time */
     val createTime: LocalDateTime? = null,
 
-    /** 更新者id */
+    /** Updater id */
     val updateUserId: String? = null,
 
-    /** 更新者名称 */
+    /** Updater name */
     val updateUserName: String? = null,
 
-    /** 更新时间 */
+    /** Update time */
     val updateTime: LocalDateTime? = null,
 
 ) : IIdEntity<String>

@@ -7,7 +7,7 @@ import jakarta.annotation.Resource
 /**
  * junit test for AuthRoleDao
  *
- * 测试数据来源：`AuthRoleDaoTest.sql`
+ * Test data source: `AuthRoleDaoTest.sql`
  *
  * @author K
  * @author AI: Cursor

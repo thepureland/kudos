@@ -8,7 +8,7 @@ import kotlin.test.assertTrue
 
 
 /**
- * 纯 JVM 单测 —— 渲染器只读模板对象、不依赖容器，足够覆盖。
+ * Pure JVM unit test — the renderer only reads template objects and does not depend on the container, which is sufficient coverage.
  *
  * @author K
  * @since 1.0.0
@@ -22,12 +22,12 @@ class MsgTemplateRendererTest {
 
     @Test
     fun renders_business_params_overriding_auto_params() {
-        // year 同名 → 业务方传入的应胜出
-        val t = template(title = "你好 \${user}, \${year}", content = "今天 \${date}")
+        // year name conflict -> the business-provided value should win
+        val t = template(title = "Hello \${user}, \${year}", content = "Today \${date}")
         val r = renderer.render(t, mapOf("user" to "Alice", "year" to "9999"), nowProvider)
 
-        assertEquals("你好 Alice, 9999", r.title)
-        assertEquals("今天 2026-05-18", r.content)
+        assertEquals("Hello Alice, 9999", r.title)
+        assertEquals("Today 2026-05-18", r.content)
         assertEquals("9999", r.paramsUsed["year"])
         assertEquals("Alice", r.paramsUsed["user"])
     }
@@ -43,11 +43,11 @@ class MsgTemplateRendererTest {
 
     @Test
     fun falls_back_to_defaults_when_main_blank() {
-        val t = template(title = "", content = null, defaultTitle = "默认标题", defaultContent = "默认正文")
+        val t = template(title = "", content = null, defaultTitle = "Default title", defaultContent = "Default body")
         val r = renderer.render(t, emptyMap(), nowProvider)
 
-        assertEquals("默认标题", r.title)
-        assertEquals("默认正文", r.content)
+        assertEquals("Default title", r.title)
+        assertEquals("Default body", r.content)
     }
 
     @Test
@@ -61,16 +61,16 @@ class MsgTemplateRendererTest {
 
     @Test
     fun handles_template_without_placeholders() {
-        val t = template(title = "纯文本", content = "no placeholders here")
+        val t = template(title = "Plain text", content = "no placeholders here")
         val r = renderer.render(t, mapOf("user" to "ignored"), nowProvider)
 
-        assertEquals("纯文本", r.title)
+        assertEquals("Plain text", r.title)
         assertEquals("no placeholders here", r.content)
     }
 
     @Test
     fun leaves_unknown_placeholder_unsubstituted() {
-        // 没传 fooBar 的话保留原样，让调用方/QA 能从输出里看出哪些占位符漏了
+        // If fooBar is not provided, keep it as-is so the caller/QA can see which placeholders were missed in the output
         val t = template(title = "\${fooBar}", content = "")
         val r = renderer.render(t, emptyMap(), nowProvider)
         assertTrue(r.title.contains("\${fooBar}"), "missing placeholders should remain visible, was: ${r.title}")

@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 /**
- * kafka测试 生產者 controller
+ * Kafka test producer controller.
  *
  * @author shane
  * @author K
@@ -24,7 +24,7 @@ open class KafkaProducerController {
     private lateinit var producerService: IKafkaProducerService
 
     /**
-     * 發送mq信息
+     * Send mq message.
      */
     @RequestMapping("/send")
     fun send(@RequestParam("message") message: String?) {

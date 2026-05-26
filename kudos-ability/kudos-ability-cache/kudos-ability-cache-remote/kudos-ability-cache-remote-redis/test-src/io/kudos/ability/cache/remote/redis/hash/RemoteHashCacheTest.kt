@@ -17,8 +17,9 @@ import org.springframework.test.context.DynamicPropertySource
 import kotlin.test.*
 
 /**
- * 基于 Hash 存储结构的远程（Redis）缓存测试用例。
- * 通过 [HashCacheKit.getHashCache] 获取 "testHash" 缓存（REMOTE 策略），覆盖 save/getById/deleteById/listAll/findByIds/listBySetIndex/listPageByZSetIndex/list/refreshAll 等。
+ * Remote (Redis) cache tests for the hash storage form.
+ * Looks up the "testHash" cache via [HashCacheKit.getHashCache] (REMOTE strategy), covering
+ * save/getById/deleteById/listAll/findByIds/listBySetIndex/listPageByZSetIndex/list/refreshAll and so on.
  *
  * @author K
  * @author AI: Codex
@@ -277,7 +278,7 @@ internal class RemoteHashCacheTest {
         assertEquals("c", page2[0].id)
     }
 
-    // ---------- 通过 Service 模拟二级索引/排序/分页，与缓存结果对比 ----------
+    // ---------- Use the Service to mirror secondary index / order / paging and compare with cached results ----------
 
     @Test
     fun serviceListByTypeMatchesCacheSetIndex() {
@@ -351,7 +352,7 @@ internal class RemoteHashCacheTest {
     }
 }
 
-/** 简单测试实体 */
+/** Simple test entity. */
 data class TestRow(
     override var id: String = "",
     var name: String? = null,
@@ -359,7 +360,7 @@ data class TestRow(
     var status: Int? = null
 ) : IIdEntity<String>
 
-/** 带 type 与 sortScore 的实体，用于二级索引测试 */
+/** Entity carrying `type` and `sortScore`, used in secondary index tests. */
 data class TestRowWithTime(
     override var id: String = "",
     var type: Int? = null,

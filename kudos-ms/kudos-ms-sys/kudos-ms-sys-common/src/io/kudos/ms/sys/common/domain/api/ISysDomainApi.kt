@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RequestParam
 
 
 /**
- * 域名 对外API
+ * External API for domains.
  *
  * @author K
  * @since 1.0.0
@@ -15,10 +15,10 @@ interface ISysDomainApi {
 
 
     /**
-     * 返回指定名称的域名信息
+     * Returns the domain information for the given name.
      *
-     * @param domainName 域名名称
-     * @return 域名信息缓存项，如果找不到返回null
+     * @param domainName domain name
+     * @return cached domain entry, or null if not found
      * @author K
      * @since 1.0.0
      */

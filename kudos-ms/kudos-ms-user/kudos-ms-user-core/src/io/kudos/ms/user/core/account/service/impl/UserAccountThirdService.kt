@@ -9,7 +9,7 @@ import org.springframework.transaction.annotation.Transactional
 
 
 /**
- * 用户账号第三方绑定业务
+ * User account third-party binding service implementation.
  *
  * @author K
  * @author AI: Codex

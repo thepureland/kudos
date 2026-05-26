@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository
 
 
 /**
- * 出网白名单数据访问对象
+ * Outbound whitelist data access object.
  *
  * @author K
  * @since 1.0.0

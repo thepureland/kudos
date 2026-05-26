@@ -5,7 +5,7 @@ import io.kudos.ability.cache.common.support.CacheConfig
 import io.kudos.ability.cache.common.support.ICacheConfigProvider
 
 /**
- * 远程 K-V 缓存测试配置提供者。
+ * Test cache config provider for remote K-V cache.
  *
  * @author K
  * @author AI: Codex

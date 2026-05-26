@@ -6,7 +6,7 @@ import java.net.SocketTimeoutException
 import java.util.concurrent.TimeoutException
 
 /**
- * Feign fallback 状态码解析器。
+ * Status-code resolver for Feign fallbacks.
  *
  * @author K
  * @author AI: Codex
@@ -15,7 +15,7 @@ import java.util.concurrent.TimeoutException
 object FeignFallbackStatusResolver {
 
     /**
-     * 把 Feign 异常映射为 HTTP 状态码用于 fallback。
+     * Maps a Feign exception to the HTTP status code used for the fallback.
      */
     fun resolve(cause: Throwable): Int {
         generateSequence(cause as Throwable?) { it.cause }

@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RestController
 
 
 /**
- * 消息接收 内部 RPC 控制器。路径继承自 [IMsgReceiveApi] 方法级注解。
+ * Internal RPC controller for message receive. Paths are inherited from [IMsgReceiveApi] method-level annotations.
  *
  * @author K
  * @since 1.0.0

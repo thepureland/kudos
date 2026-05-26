@@ -6,10 +6,10 @@ import io.kudos.ms.msg.common.receiver.vo.MsgReceiverGroupCacheEntry
 
 
 /**
- * 消息接收者群组 Feign 容错降级实现。
+ * Feign fallback implementation for message receiver groups.
  *
- * 由 [MsgReceiverGroupFallbackFactory] 在每次降级时构造一个实例并传入 [cause]，
- * 让日志能区分 4xx / 5xx / unreachable。
+ * Instantiated by [MsgReceiverGroupFallbackFactory] on each fallback with [cause] supplied,
+ * so logs can distinguish 4xx / 5xx / unreachable.
  *
  * @author K
  * @author AI: Codex

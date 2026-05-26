@@ -14,7 +14,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
 /**
- * Ktor整合Spring的测试用例
+ * Test cases for Ktor integration with Spring.
  *
  * @author K
  * @author AI: Codex

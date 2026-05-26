@@ -4,7 +4,7 @@ import jakarta.validation.ConstraintValidator
 import kotlin.reflect.KClass
 
 /**
- * 约束验证器提供者，关联约束注解及其验证器。子类必须为Spring Bean
+ * Constraint validator provider that associates constraint annotations with their validators. Implementations must be Spring beans.
  *
  * @author K
  * @since 1.0.0
@@ -12,9 +12,9 @@ import kotlin.reflect.KClass
 interface IConstraintValidatorProviderBean {
 
     /**
-     * 提供约束注解及其要关联的验证器
+     * Provide constraint annotations and the validators to associate with them.
      *
-     * @return Map(约束类，验证器类)
+     * @return Map(constraint class, validator class)
      * @author K
      * @since 1.0.0
      */

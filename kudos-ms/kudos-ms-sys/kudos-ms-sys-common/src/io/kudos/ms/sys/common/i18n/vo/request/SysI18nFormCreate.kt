@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.common.i18n.vo.request
 
 /**
- * 国际化表单新建请求VO
+ * Request VO for creating an i18n form.
  *
  * @author K
  * @since 1.0.0

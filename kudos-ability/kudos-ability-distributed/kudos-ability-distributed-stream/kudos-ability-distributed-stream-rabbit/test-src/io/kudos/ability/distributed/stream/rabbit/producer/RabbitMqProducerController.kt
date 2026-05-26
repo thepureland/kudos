@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 /**
- * RabbitMq测试 生產者 controller
+ * RabbitMQ test producer controller.
  *
  * @author shane
  * @author K
@@ -24,7 +24,7 @@ open class RabbitMqProducerController {
     private lateinit var producerService: IRabbitMqProducerService
 
     /**
-     * 發送mq信息
+     * Send an MQ message.
      */
     @RequestMapping("/send")
     fun send(@RequestParam("message") message: String?) {

@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotBlank
 
 
 /**
- * 微服务表单更新请求VO
+ * Request VO for updating a microservice form.
  *
  * @author K
  * @since 1.0.0

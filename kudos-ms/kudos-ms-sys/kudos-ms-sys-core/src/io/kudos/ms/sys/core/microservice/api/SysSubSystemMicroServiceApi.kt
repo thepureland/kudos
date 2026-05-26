@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service
 
 
 /**
- * 子系统-微服务关系 API本地实现
+ * Local implementation of the subsystem-microservice relationship API.
  *
  * @author K
  * @since 1.0.0

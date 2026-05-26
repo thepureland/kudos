@@ -3,7 +3,7 @@ package ${packagePrefix}.${module}.api.provider.init
 import io.kudos.context.init.EnableKudos
 import org.springframework.boot.SpringApplication
 
-<@generateClassComment module+"-api-provider启动入口"/>
+<@generateClassComment module+"-api-provider startup entry point"/>
 @EnableKudos
 //region your codes 1
 class ${module?cap_first}ApiProviderApplication

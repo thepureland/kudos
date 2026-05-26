@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 
-<@generateClassComment table.comment+"业务"/>
+<@generateClassComment table.comment+" business"/>
 @Service
 @Transactional
 //region your codes 1

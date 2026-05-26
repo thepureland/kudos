@@ -3,30 +3,30 @@ package io.kudos.ms.sys.common.resource.enums
 import io.kudos.base.enums.ienums.IErrorCodeEnum
 
 /**
- * 资源错误码
+ * Resource module error codes.
  *
  * @author K
  * @author AI: Codex
  * @since 1.0.0
  */
 enum class SysResourceErrorCodeEnum(
-    /** 错误码 */
+    /** Error code */
     override val code: String,
-    /** 默认展示文本 */
+    /** Default display text */
     override val defaultDisplayText: String,
 ) : IErrorCodeEnum {
 
-    /** 未定义错误 */
-    UNSPECIFIED("UNSPECIFIED", "未定义错误"),
+    /** Unspecified error */
+    UNSPECIFIED("UNSPECIFIED", "Unspecified error"),
 
-    /** 按主键查找资源失败 */
-    RESOURCE_NOT_FOUND("RESOURCE_NOT_FOUND", "资源不存在"),
+    /** Resource not found by primary key */
+    RESOURCE_NOT_FOUND("RESOURCE_NOT_FOUND", "Resource not found"),
 
-    /** (sub_system_code, url) 已存在对应资源 */
-    RESOURCE_URL_ALREADY_EXISTS("RESOURCE_URL_ALREADY_EXISTS", "该子系统下已存在相同 URL 的资源"),
+    /** A resource with the same (sub_system_code, url) already exists */
+    RESOURCE_URL_ALREADY_EXISTS("RESOURCE_URL_ALREADY_EXISTS", "A resource with the same URL already exists under this sub-system"),
 
-    /** 父资源不存在或被禁用，无法挂载子资源 */
-    PARENT_RESOURCE_NOT_FOUND("PARENT_RESOURCE_NOT_FOUND", "父资源不存在或已禁用");
+    /** Parent resource not found or disabled; cannot mount child resources */
+    PARENT_RESOURCE_NOT_FOUND("PARENT_RESOURCE_NOT_FOUND", "Parent resource not found or disabled");
 
     override val i18nKeyPrefix: String
         get() = "sys.error-msg.resource"

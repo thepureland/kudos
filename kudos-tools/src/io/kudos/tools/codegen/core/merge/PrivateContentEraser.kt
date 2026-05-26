@@ -4,7 +4,7 @@ import io.kudos.base.io.FileKit
 import java.io.File
 
 /**
- * 私有内容擦除器
+ * Private-content eraser.
  *
  * @author K
  * @since 1.0.0

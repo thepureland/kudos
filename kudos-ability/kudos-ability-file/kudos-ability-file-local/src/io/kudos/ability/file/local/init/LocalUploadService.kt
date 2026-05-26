@@ -14,8 +14,9 @@ import java.nio.file.Path
 
 
 /**
- * 本地磁盘文件上传服务。把上传的 InputStream 写到 `{basePath}/{bucket}/{fileDir}/{name}` 下，
- * 中间目录按需自动创建。`fileDir` 来自 [AbstractUploadService.dispatchFileDir]（含租户 / 分类 / 日期）。
+ * Local disk file upload service. Writes the uploaded InputStream to `{basePath}/{bucket}/{fileDir}/{name}`,
+ * creating intermediate directories on demand. `fileDir` comes from [AbstractUploadService.dispatchFileDir]
+ * (containing tenant / category / date).
  *
  * @author K
  * @author AI: Codex
@@ -23,23 +24,24 @@ import java.nio.file.Path
  */
 open class LocalUploadService : AbstractUploadService() {
 
-    /** 本地存储配置，提供 basePath 等参数 */
+    /** Local storage configuration, providing parameters such as basePath. */
     @Autowired
     private lateinit var properties: LocalProperties
 
     /**
-     * 把上传流写到本地磁盘 `{basePath}/{bucket}/{fileDir}/{name}`。
+     * Writes the upload stream to the local disk at `{basePath}/{bucket}/{fileDir}/{name}`.
      *
-     * 实现细节：
-     * - 文件名未指定时用 UUID + 后缀生成，避免 fileDir 内重名覆盖
-     * - 走 [CompressionPipeline] 一路，按 [UploadFileModel.compressionConfig] 决定是否压缩
-     * - 返回值用 `/` 替换平台分隔符——Windows 上落盘后路径仍能直接拼到 URL
-     * - 不把 basePath 暴露到返回值，让上层不依赖具体磁盘布局
+     * Implementation details:
+     * - When file name is unspecified, generates one using UUID + suffix to avoid name collisions within fileDir
+     * - Goes through [CompressionPipeline], with compression decided by [UploadFileModel.compressionConfig]
+     * - Return value replaces platform separators with `/` - on Windows the stored path can still be directly
+     *   concatenated into a URL
+     * - Does not expose basePath in the return value, so upper layers do not depend on the concrete disk layout
      *
-     * @param model 上传请求
-     * @param fileDir [AbstractUploadService.dispatchFileDir] 分配出来的相对目录
-     * @return 不含 basePath 的相对路径（首字符是 `/`）
-     * @throws ServiceException 写盘失败时，错误码 [FileErrorCode.FILE_UPLOAD_FAIL]
+     * @param model upload request
+     * @param fileDir relative directory allocated by [AbstractUploadService.dispatchFileDir]
+     * @return relative path without basePath (first character is `/`)
+     * @throws ServiceException error code [FileErrorCode.FILE_UPLOAD_FAIL] when writing to disk fails
      * @author K
      * @author AI: Codex
      * @since 1.0.0
@@ -69,7 +71,7 @@ open class LocalUploadService : AbstractUploadService() {
         } catch (e: Exception) {
             throw ServiceException(FileErrorCode.FILE_UPLOAD_FAIL, e)
         }
-        //隐藏basePath
+        // hide basePath
         val filePath = "$relativeDir${File.separator}$fName".replace('\\', '/')
         return "/$filePath"
     }
@@ -87,9 +89,9 @@ open class LocalUploadService : AbstractUploadService() {
     }
 
     /**
-     * 创建目录（含中间路径，已存在则无操作）。
+     * Creates a directory (including intermediate paths; no-op if already exists).
      *
-     * @param dirPath 目标目录绝对路径
+     * @param dirPath absolute path of the target directory
      * @author K
      * @author AI: Codex
      * @since 1.0.0
@@ -97,26 +99,26 @@ open class LocalUploadService : AbstractUploadService() {
     private fun createFileDir(dirPath: String) {
         val fileDir = File(dirPath)
         if (!fileDir.exists()) {
-            log.debug("创建文件目录：{0}", dirPath)
+            log.debug("create file directory: {0}", dirPath)
             fileDir.mkdirs()
         }
     }
 
     /**
-     * 本地存储不暴露绝对路径前缀，返回空串。
-     * 调用方拼接 URL 时需自行映射到一个静态资源 servlet/路由。
+     * Local storage does not expose an absolute path prefix; returns an empty string.
+     * When concatenating URLs, callers need to map it to a static resource servlet/route themselves.
      *
-     * @return 始终为空串
+     * @return always an empty string
      * @author K
      * @author AI: Codex
      * @since 1.0.0
      */
     override fun pathPrefix(): String {
-        //本地目录不对外暴露
+        // local directory is not exposed externally
         return ""
     }
 
-    /** 日志器 */
+    /** Logger. */
     private val log = LogFactory.getLog(this::class)
 
 }

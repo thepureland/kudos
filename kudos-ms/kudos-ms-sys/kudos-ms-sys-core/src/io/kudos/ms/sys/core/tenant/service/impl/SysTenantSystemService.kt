@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional
 
 
 /**
- * 租户-系统关系业务
+ * Tenant-system relation service.
  *
  * @author K
  * @author AI: Cursor
@@ -48,11 +48,11 @@ open class SysTenantSystemService(
         dao.groupingTenantIdsBySystemCodes(systemCodes)
 
     /**
-     * 批量绑定租户与系统的关系
+     * Batch bind tenant-system relations.
      *
-     * @param tenantId 租户id
-     * @param systemCodes 系统编码集合
-     * @return 成功绑定的数量
+     * @param tenantId tenant id
+     * @param systemCodes system code collection
+     * @return number of successfully bound relations
      * @author AI: Cursor
      * @since 1.0.0
      */
@@ -60,11 +60,11 @@ open class SysTenantSystemService(
     override fun batchBind(tenantId: String, systemCodes: Collection<String>): Int {
         if (systemCodes.isEmpty()) return 0
 
-        // 一次 SELECT 已存在的关系，差集对新增 ID 一次 batchInsert，把原 N+1 折叠到 2 次 SQL。
+        // One SELECT for existing relations, then a single batchInsert for the diff — collapses the original N+1 into 2 statements.
         val existing = dao.searchSystemCodesByTenantId(tenantId)
         val insertedSystemCodes = (systemCodes.toSet() - existing)
         if (insertedSystemCodes.isEmpty()) {
-            log.debug("批量绑定租户${tenantId}与${systemCodes.size}个系统的关系，全部已存在，无新增。")
+            log.debug("Batch bind tenant=$tenantId to ${systemCodes.size} systems: all already exist, nothing to insert.")
             return 0
         }
         val relations = insertedSystemCodes.map {
@@ -74,18 +74,18 @@ open class SysTenantSystemService(
             }
         }
         dao.batchInsert(relations)
-        log.debug("批量绑定租户${tenantId}与${systemCodes.size}个系统的关系，成功绑定${insertedSystemCodes.size}条。")
-        // 影响这些 system 维度的缓存；tenant 维度的下次按需 reload
+        log.debug("Batch bind tenant=$tenantId to ${systemCodes.size} systems: successfully inserted ${insertedSystemCodes.size}.")
+        // Affects system-dim caches; tenant-dim cache will reload on demand.
         eventPublisher.publishEvent(SysTenantSystemSystemsChanged(systemCodes = insertedSystemCodes))
         return insertedSystemCodes.size
     }
 
     /**
-     * 解绑租户与系统的关系
+     * Unbind a tenant-system relation.
      *
-     * @param tenantId 租户id
-     * @param systemCode 系统编码
-     * @return 是否解绑成功
+     * @param tenantId tenant id
+     * @param systemCode system code
+     * @return whether the unbind succeeded
      * @author AI: Cursor
      * @since 1.0.0
      */
@@ -94,20 +94,20 @@ open class SysTenantSystemService(
         val count = dao.deleteByTenantIdAndSystemCode(tenantId, systemCode)
         val success = count > 0
         if (success) {
-            log.debug("解绑租户${tenantId}与系统${systemCode}的关系。")
+            log.debug("Unbound tenant=$tenantId from system=$systemCode.")
             eventPublisher.publishEvent(SysTenantSystemTenantsChanged(tenantIds = listOf(tenantId)))
         } else {
-            log.warn("解绑租户${tenantId}与系统${systemCode}的关系失败，关系不存在。")
+            log.warn("Failed to unbind tenant=$tenantId from system=$systemCode: relation does not exist.")
         }
         return success
     }
 
     /**
-     * 检查关系是否存在
+     * Check whether the relation exists.
      *
-     * @param tenantId 租户id
-     * @param systemCode 系统编码
-     * @return 是否存在
+     * @param tenantId tenant id
+     * @param systemCode system code
+     * @return whether the relation exists
      * @author AI: Cursor
      * @since 1.0.0
      */
@@ -137,17 +137,17 @@ open class SysTenantSystemService(
     }
 
     /**
-     * 新增租户-系统关系
+     * Insert a tenant-system relation.
      *
-     * @param any 关系对象
-     * @return 主键
+     * @param any relation object
+     * @return primary key
      * @author AI: Cursor
      * @since 1.0.0
      */
     @Transactional
     override fun insert(any: Any): String {
         val id = super.insert(any)
-        log.debug("新增id为${id}的租户-系统关系。")
+        log.debug("Inserted tenant-system relation id=$id.")
         dao.get(id)?.let { relation ->
             eventPublisher.publishEvent(
                 SysTenantSystemBound(id = id, tenantId = relation.tenantId, systemCode = relation.systemCode)
@@ -157,34 +157,34 @@ open class SysTenantSystemService(
     }
 
     /**
-     * 删除租户-系统关系
+     * Delete a tenant-system relation.
      *
-     * @param id 主键
-     * @return 是否删除成功
+     * @param id primary key
+     * @return whether the delete succeeded
      * @author AI: Cursor
      * @since 1.0.0
      */
     @Transactional
     override fun deleteById(id: String): Boolean {
         val relation = dao.get(id) ?: run {
-            log.warn("删除id为${id}的租户-系统关系时，发现其已不存在！")
+            log.warn("Tenant-system relation id=$id no longer exists when attempting delete!")
             return false
         }
         val success = super.deleteById(id)
         if (success) {
-            log.debug("删除id为${id}的租户-系统关系。")
+            log.debug("Deleted tenant-system relation id=$id.")
             eventPublisher.publishEvent(SysTenantSystemTenantsChanged(tenantIds = listOf(relation.tenantId)))
         } else {
-            log.error("删除id为${id}的租户-系统关系失败！")
+            log.error("Failed to delete tenant-system relation id=$id!")
         }
         return success
     }
 
     /**
-     * 批量删除租户-系统关系
+     * Batch delete tenant-system relations.
      *
-     * @param ids 主键集合
-     * @return 删除的数量
+     * @param ids primary key collection
+     * @return number of relations deleted
      * @author AI: Cursor
      * @since 1.0.0
      */
@@ -194,7 +194,7 @@ open class SysTenantSystemService(
         val relations = dao.inSearchById(ids)
         val affectedTenantIds = relations.map { it.tenantId }.toSet()
         val count = super.batchDelete(ids)
-        log.debug("批量删除租户-系统关系，期望删除${ids.size}条，实际删除${count}条。")
+        log.debug("Batch delete tenant-system relations: expected ${ids.size}, actually deleted $count.")
         if (count > 0 && affectedTenantIds.isNotEmpty()) {
             eventPublisher.publishEvent(SysTenantSystemTenantsChanged(tenantIds = affectedTenantIds))
         }

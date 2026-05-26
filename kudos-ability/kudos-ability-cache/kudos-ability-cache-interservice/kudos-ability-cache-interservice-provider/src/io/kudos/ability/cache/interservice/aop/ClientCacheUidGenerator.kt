@@ -4,10 +4,11 @@ import io.kudos.ability.cache.interservice.common.ClientCacheItem
 import org.springframework.util.ConcurrentReferenceHashMap
 
 /**
- * provider 端响应 UID 生成器。
+ * Provider-side response UID generator.
  *
- * 默认每次按响应对象 JSON 重新计算 UID。热点接口如果反复返回同一个不可变对象实例，可打开
- * uid cache 复用计算结果；缓存使用弱引用 key，避免长期持有响应对象。
+ * By default, the UID is recomputed each time from the response object's JSON. For hot endpoints
+ * that repeatedly return the same immutable object instance, the uid cache can be enabled to reuse
+ * the computed result; the cache uses weak-reference keys to avoid retaining response objects.
  *
  * @author K
  * @author AI: Codex

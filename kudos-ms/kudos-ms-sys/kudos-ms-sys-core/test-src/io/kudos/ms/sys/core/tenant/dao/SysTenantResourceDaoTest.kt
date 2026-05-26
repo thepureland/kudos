@@ -10,7 +10,7 @@ import kotlin.test.assertTrue
 /**
  * junit test for SysTenantResourceDao
  *
- * 测试数据来源：`SysTenantResourceDaoTest.sql`
+ * Test data source: `SysTenantResourceDaoTest.sql`
  *
  * @author K
  * @author AI: Cursor
@@ -42,10 +42,10 @@ class SysTenantResourceDaoTest : RdbTestBase() {
 
     @Test
     fun exists() {
-        // 测试存在的关系
+        // Test an existing relation
         assertTrue(sysTenantResourceDao.exists("40000000-0000-0000-0000-000000004229", "40000000-0000-0000-0000-000000004229"))
-        
-        // 测试不存在的关系
+
+        // Test a non-existing relation
         assertFalse(sysTenantResourceDao.exists("40000000-0000-0000-0000-000000004229", "non-existent-resource-id"))
     }
 }

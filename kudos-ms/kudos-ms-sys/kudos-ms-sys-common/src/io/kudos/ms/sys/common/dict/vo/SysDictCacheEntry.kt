@@ -5,32 +5,32 @@ import java.io.Serializable
 
 
 /**
- * 字典缓存项
+ * Dictionary cache entry
  *
  * @author K
  * @since 1.0.0
  */
 data class SysDictCacheEntry (
 
-    /** 主键 */
+    /** Primary key */
     override val id: String,
 
-    /** 字典类型 */
+    /** Dictionary type */
     val dictType: String,
 
-    /** 字典名称 */
+    /** Dictionary name */
     val dictName: String,
 
-    /** 原子服务编码 */
+    /** Atomic service code */
     val atomicServiceCode: String,
 
-    /** 备注 */
+    /** Remark */
     val remark: String?,
 
-    /** 是否启用 */
+    /** Whether enabled */
     val active: Boolean,
 
-    /** 是否内置 */
+    /** Whether built-in */
     val builtIn: Boolean,
 
 ) : IIdEntity<String>, Serializable {

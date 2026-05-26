@@ -5,7 +5,7 @@ import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
 import java.time.LocalDateTime
 
 /**
- * 用户联系方式数据库实体
+ * User contact way database entity.
  *
  * @author K
  * @author AI: Codex
@@ -15,46 +15,46 @@ interface UserContactWay : IDbEntity<String, UserContactWay> {
 
     companion object : DbEntityFactory<UserContactWay>()
 
-    /** 用户ID */
+    /** User id. */
     var userId: String
 
-    /** 联系方式字典码 */
+    /** Contact way dict code. */
     var contactWayDictCode: String
 
-    /** 联系方式值 */
+    /** Contact way value. */
     var contactWayValue: String
 
-    /** 联系方式状态字典码 */
+    /** Contact way status dict code. */
     var contactWayStatusDictCode: String
 
-    /** 优先级 */
+    /** Priority. */
     var priority: Int?
 
-    /** 备注 */
+    /** Remark. */
     var remark: String?
 
-    /** 是否启用 */
+    /** Active flag. */
     var active: Boolean
 
-    /** 是否内置 */
+    /** Built-in flag. */
     var builtIn: Boolean
 
-    /** 创建者ID */
+    /** Creator id. */
     var createUserId: String?
 
-    /** 创建者名称 */
+    /** Creator name. */
     var createUserName: String?
 
-    /** 创建时间 */
+    /** Create time. */
     var createTime: LocalDateTime?
 
-    /** 更新者ID */
+    /** Updater id. */
     var updateUserId: String?
 
-    /** 更新者名称 */
+    /** Updater name. */
     var updateUserName: String?
 
-    /** 更新时间 */
+    /** Update time. */
     var updateTime: LocalDateTime?
 
 

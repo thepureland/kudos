@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestParam
 
 
 /**
- * 租户 对外API
+ * Tenant external API.
  *
  * @author K
  * @author AI: Cursor
@@ -17,19 +17,19 @@ import org.springframework.web.bind.annotation.RequestParam
 interface ISysTenantApi {
 
     /**
-     * 返回指定 id 的租户（从缓存，含未启用）
+     * Returns the tenant with the given id (from cache, including inactive).
      */
     @GetMapping("/api/internal/sys/tenant/getTenant")
     fun getTenantFromCache(@RequestParam id: String): SysTenantCacheEntry?
 
     /**
-     * 根据 id 集合取得对应租户信息并缓存（含未启用）
+     * Returns tenant info for the given set of ids and caches the results (including inactive).
      */
     @PostMapping("/api/internal/sys/tenant/getTenantsByIds")
     fun getTenantsFromCacheByIds(@RequestBody ids: Collection<String>): Map<String, SysTenantCacheEntry>
 
     /**
-     * 返回指定子系统下的租户（仅启用；内部先取子系统关联租户再按 `active` 过滤）
+     * Returns tenants under the given sub-system (active only; internally fetches sub-system-associated tenants and filters by `active`).
      */
     @GetMapping("/api/internal/sys/tenant/getTenantsBySubSystemCode")
     fun getTenantsBySubSystemCode(@RequestParam subSystemCode: String): List<SysTenantCacheEntry>

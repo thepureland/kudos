@@ -8,10 +8,11 @@ import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.javaField
 
 /**
- * 标记数据库表 PO（实体）上允许参与列表查询排序的属性。
+ * Marks a property on a database table PO (entity) that is allowed to participate in list query sorting.
  *
- * 客户端请求的排序属性名须与该成员在 PO 上的 **Kotlin 属性名** 一致；否则 DAO 会忽略该排序并打 WARN。
- * 与请求体中的 VO/PO 返回类型无关，仅看当前 DAO 绑定的表实体类型。
+ * The sort property name in client requests must match the member's **Kotlin property name** on the PO;
+ * otherwise the DAO ignores that sort and emits a WARN. Independent of the VO/PO return type in the request
+ * body — only the table entity type currently bound to the DAO is considered.
  *
  * @author K
  * @author AI: Cursor
@@ -28,9 +29,11 @@ import kotlin.reflect.jvm.javaField
 annotation class Sortable
 
 /**
- * 收集 **表实体 / PO** 类型上带有 [Sortable] 的排序属性名集合（即各成员的 Kotlin 属性名）。
+ * Collects the set of sortable property names (Kotlin property names of each member) annotated with [Sortable]
+ * on the **table entity / PO** type.
  *
- * 包含：主构造参数（data class）、以及 [memberProperties]（含接口 PO 继承链上的属性）。
+ * Includes: primary constructor parameters (data class) and [memberProperties] (including properties from the
+ * interface PO inheritance chain).
  */
 fun sortablePropertyNamesForEntity(entityClass: KClass<*>): Set<String> {
     val names = LinkedHashSet<String>()
@@ -49,12 +52,13 @@ fun sortablePropertyNamesForEntity(entityClass: KClass<*>): Set<String> {
 }
 
 /**
- * 在 KProperty 上三处可能位置查找 [Sortable]：getter → property 本体 → java field。
+ * Looks up [Sortable] in the three possible locations on a KProperty: getter -> property itself -> java field.
  *
- * Kotlin 注解位置敏感（FIELD vs PROPERTY vs GETTER 各自独立），定义方可能写在任意位置——
- * 全部尝试一遍取首个非 null 即可，三者语义都视为"该属性可排序"。
+ * Kotlin annotation sites are position-sensitive (FIELD vs PROPERTY vs GETTER are independent), and the
+ * declarer may place the annotation in any of them — try all three and take the first non-null. Semantically
+ * all three are treated as "this property is sortable".
  *
- * @return 找到的注解实例；都没有时返回 null
+ * @return the annotation instance if found; null otherwise
  * @author K
  * @since 1.0.0
  */

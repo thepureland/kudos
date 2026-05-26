@@ -5,7 +5,7 @@ import io.kudos.ms.sys.core.tenant.model.po.SysTenantResource
 
 
 /**
- * 租户-资源关系业务接口
+ * Tenant-resource relationship service interface.
  *
  * @author K
  * @since 1.0.0
@@ -14,53 +14,53 @@ interface ISysTenantResourceService : IBaseCrudService<String, SysTenantResource
 
 
     /**
-     * 根据租户id获取资源id列表
+     * Returns the resource id list for the given tenant.
      *
-     * @param tenantId 租户id
-     * @return 资源id集合
+     * @param tenantId tenant id
+     * @return resource id set
      * @author K
      * @since 1.0.0
      */
     fun getResourceIdsByTenantId(tenantId: String): Set<String>
 
     /**
-     * 根据资源id获取租户id列表
+     * Returns the tenant id list for the given resource.
      *
-     * @param resourceId 资源id
-     * @return 租户id集合
+     * @param resourceId resource id
+     * @return tenant id set
      * @author K
      * @since 1.0.0
      */
     fun getTenantIdsByResourceId(resourceId: String): Set<String>
 
     /**
-     * 批量绑定租户与资源的关系
+     * Batch binds the given resources to the tenant.
      *
-     * @param tenantId 租户id
-     * @param resourceIds 资源id集合
-     * @return 成功绑定的数量
+     * @param tenantId tenant id
+     * @param resourceIds resource id collection
+     * @return number of bindings successfully created
      * @author K
      * @since 1.0.0
      */
     fun batchBind(tenantId: String, resourceIds: Collection<String>): Int
 
     /**
-     * 解绑租户与资源的关系
+     * Unbinds the relationship between the tenant and the resource.
      *
-     * @param tenantId 租户id
-     * @param resourceId 资源id
-     * @return 是否解绑成功
+     * @param tenantId tenant id
+     * @param resourceId resource id
+     * @return whether the unbind succeeded
      * @author K
      * @since 1.0.0
      */
     fun unbind(tenantId: String, resourceId: String): Boolean
 
     /**
-     * 检查关系是否存在
+     * Checks whether the relationship exists.
      *
-     * @param tenantId 租户id
-     * @param resourceId 资源id
-     * @return 是否存在
+     * @param tenantId tenant id
+     * @param resourceId resource id
+     * @return whether it exists
      * @author K
      * @since 1.0.0
      */

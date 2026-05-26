@@ -3,27 +3,27 @@ package io.kudos.ms.msg.common.template.enums
 import io.kudos.base.enums.ienums.IErrorCodeEnum
 
 /**
- * 消息模板错误码
+ * Message template error codes.
  *
  * @author K
  * @author AI: Codex
  * @since 1.0.0
  */
 enum class MsgTemplateErrorCodeEnum(
-    /** 错误码 */
+    /** Error code. */
     override val code: String,
-    /** 默认展示文本 */
+    /** Default display text. */
     override val defaultDisplayText: String,
 ) : IErrorCodeEnum {
 
-    /** 未定义错误 */
-    UNSPECIFIED("UNSPECIFIED", "未定义错误"),
+    /** Unspecified error. */
+    UNSPECIFIED("UNSPECIFIED", "Unspecified error"),
 
-    /** 按主键或 (tenant_id, event_type, msg_type, locale) 维度查找模板失败 */
-    TEMPLATE_NOT_FOUND("TEMPLATE_NOT_FOUND", "消息模板不存在"),
+    /** Lookup of template by primary key or by (tenant_id, event_type, msg_type, locale) failed. */
+    TEMPLATE_NOT_FOUND("TEMPLATE_NOT_FOUND", "Message template not found"),
 
-    /** (tenant_id, event_type, msg_type, locale) 已被占用 */
-    DUPLICATE_TEMPLATE("DUPLICATE_TEMPLATE", "该租户下相同事件 / 消息类型 / 语言的模板已存在");
+    /** (tenant_id, event_type, msg_type, locale) is already taken. */
+    DUPLICATE_TEMPLATE("DUPLICATE_TEMPLATE", "A template with the same event / message type / locale already exists for this tenant");
 
     override val i18nKeyPrefix: String
         get() = "msg.error-msg.template"

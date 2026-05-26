@@ -4,7 +4,7 @@ import java.time.LocalDateTime
 
 
 /**
- * 用户第三方账号表单新建请求VO
+ * User third-party account form create request VO
  *
  * @author K
  * @since 1.0.0

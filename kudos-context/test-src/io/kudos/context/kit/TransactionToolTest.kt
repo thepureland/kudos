@@ -12,16 +12,16 @@ import org.springframework.transaction.support.TransactionSynchronization
 import org.springframework.transaction.support.TransactionSynchronizationManager
 
 /**
- * TransactionTool 测试用例
+ * Tests for TransactionTool.
  *
- * Spring 的 [TransactionSynchronizationManager] 是 ThreadLocal 静态 API，专为可测设计：
- * - `initSynchronization()` 让当前线程模拟"在事务里"
- * - `setActualTransactionActive(true)` 模拟"真实事务"
- * - `clear()` 清掉 ThreadLocal 状态
+ * Spring's [TransactionSynchronizationManager] is a ThreadLocal static API designed for testability:
+ * - `initSynchronization()` lets the current thread simulate "inside a transaction"
+ * - `setActualTransactionActive(true)` simulates a "real transaction"
+ * - `clear()` clears the ThreadLocal state
  *
- * 覆盖：
- * - [TransactionTool.doAfterTransactionCommit] 三种路径：事务里注册同步 / 无事务立即执行 / 同步回调中异常被吞
- * - [TransactionTool.hasTransaction] 真实事务标志的两种状态
+ * Coverage:
+ * - The three paths of [TransactionTool.doAfterTransactionCommit]: register a sync inside a transaction / execute immediately when there is no transaction / sync-callback exception is swallowed
+ * - Both states of [TransactionTool.hasTransaction]'s real-transaction flag
  *
  * @author K
  * @since 1.0.0
@@ -30,13 +30,13 @@ internal class TransactionToolTest {
 
     @BeforeTest
     fun setupSyncContext() {
-        // 每个用例独立模拟"事务同步处于激活态"
+        // Each test case independently simulates "transaction synchronization is active"
         TransactionSynchronizationManager.initSynchronization()
     }
 
     @AfterTest
     fun cleanup() {
-        // 测试结束清掉所有 ThreadLocal，避免污染下一个 case
+        // Clear all ThreadLocal state at the end of the test to avoid polluting the next case
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.clearSynchronization()
         }
@@ -49,44 +49,44 @@ internal class TransactionToolTest {
 
     @Test
     fun doAfterTransactionCommit_registersSynchronizationWhenActive() {
-        // 此时 isSynchronizationActive=true（由 @BeforeTest 初始化）
+        // At this point isSynchronizationActive=true (initialized by @BeforeTest)
         val ran = AtomicBoolean(false)
         TransactionTool.doAfterTransactionCommit { ran.set(true) }
 
-        // 注册时不应立即跑——要等事务提交后回调
-        assertFalse(ran.get(), "事务中：runnable 应延迟到 afterCommit")
+        // Registration should not run immediately — it should wait for the afterCommit callback
+        assertFalse(ran.get(), "inside a transaction: runnable should be deferred to afterCommit")
 
-        // 模拟事务提交：手动触发所有注册的同步对象的 afterCommit
+        // Simulate transaction commit: manually trigger afterCommit on all registered synchronizations
         val syncs = TransactionSynchronizationManager.getSynchronizations()
-        assertEquals(1, syncs.size, "应注册了一个 TransactionSynchronization")
+        assertEquals(1, syncs.size, "exactly one TransactionSynchronization should be registered")
         syncs.forEach { it.afterCommit() }
 
-        assertTrue(ran.get(), "afterCommit 触发后 runnable 才执行")
+        assertTrue(ran.get(), "the runnable should only run after afterCommit fires")
     }
 
     @Test
     fun doAfterTransactionCommit_runsImmediatelyWhenNoSync() {
-        // 关掉同步：模拟非事务上下文
+        // Turn off synchronization: simulate a non-transactional context
         TransactionSynchronizationManager.clearSynchronization()
         assertFalse(TransactionSynchronizationManager.isSynchronizationActive())
 
         val ran = AtomicBoolean(false)
         TransactionTool.doAfterTransactionCommit { ran.set(true) }
 
-        assertTrue(ran.get(), "非事务上下文：runnable 立即执行")
+        assertTrue(ran.get(), "non-transactional context: runnable should run immediately")
     }
 
     @Test
     fun doAfterTransactionCommit_swallowsRunnableException() {
-        // 同步路径下 runnable 抛异常应被吞掉（不影响其它同步对象）
+        // In the sync path, exceptions from the runnable should be swallowed (so they do not affect other syncs)
         TransactionTool.doAfterTransactionCommit { throw IllegalStateException("intentional") }
 
         val syncs = TransactionSynchronizationManager.getSynchronizations()
-        // 触发 afterCommit 不应向外抛
+        // Triggering afterCommit should not throw out
         val outcome = runCatching {
             syncs.forEach { it.afterCommit() }
         }
-        assertTrue(outcome.isSuccess, "runnable 异常应被 catch 不外抛：${outcome.exceptionOrNull()}")
+        assertTrue(outcome.isSuccess, "runnable exception should be caught and not propagate: ${outcome.exceptionOrNull()}")
     }
 
     @Test
@@ -97,16 +97,16 @@ internal class TransactionToolTest {
         }
 
         val syncs = TransactionSynchronizationManager.getSynchronizations()
-        assertEquals(3, syncs.size, "每次调用应注册独立的 synchronization")
+        assertEquals(3, syncs.size, "each call should register an independent synchronization")
 
         syncs.forEach { it.afterCommit() }
-        assertEquals(3, counter.get(), "三次回调应都被触发")
+        assertEquals(3, counter.get(), "all three callbacks should fire")
     }
 
     @Test
     fun doAfterTransactionCommit_oneFailureDoesNotBlockOthers() {
-        // 验证："其中一个 sync 抛异常不影响另一个 sync 的执行"——这是 TransactionTool
-        // 内部 try-catch 设计的核心价值。
+        // Verify: "an exception in one sync does not block the execution of another sync" — this is the core value
+        // of the try-catch inside TransactionTool.
         val ranAfterBadOne = AtomicBoolean(false)
         TransactionTool.doAfterTransactionCommit { throw RuntimeException("first one fails") }
         TransactionTool.doAfterTransactionCommit { ranAfterBadOne.set(true) }
@@ -114,7 +114,7 @@ internal class TransactionToolTest {
         val syncs = TransactionSynchronizationManager.getSynchronizations()
         syncs.forEach { runCatching { it.afterCommit() } }
 
-        assertTrue(ranAfterBadOne.get(), "前一个 sync 抛异常不应阻止后一个执行")
+        assertTrue(ranAfterBadOne.get(), "an exception in the previous sync should not prevent the next one from running")
     }
 
     // ============================================================
@@ -135,10 +135,10 @@ internal class TransactionToolTest {
 
     @Test
     fun hasTransaction_independentFromSyncActive() {
-        // synchronization 激活但没"真实事务"——hasTransaction 应返回 false
-        // 这是 Spring 区分 isSynchronizationActive vs isActualTransactionActive 的关键
+        // Synchronization is active but there is no "real transaction" — hasTransaction should return false.
+        // This is the key distinction between isSynchronizationActive and isActualTransactionActive in Spring.
         assertTrue(TransactionSynchronizationManager.isSynchronizationActive())
         TransactionSynchronizationManager.setActualTransactionActive(false)
-        assertFalse(TransactionTool.hasTransaction(), "sync 激活但无真实事务 → hasTransaction=false")
+        assertFalse(TransactionTool.hasTransaction(), "sync active but no real transaction -> hasTransaction=false")
     }
 }

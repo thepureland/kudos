@@ -31,40 +31,41 @@ import kotlin.reflect.KClass
 private typealias ValidatorBuilder = (annotation: Annotation, value: Any) -> List<ConstraintValidator<*, *>>
 
 /**
- * 验证器工厂
+ * Validator factory.
  *
- * 根据注解类型查找对应的 ConstraintValidator。内部基于一个 [BUILDERS] 注册表：
- * - 简单注解（无值类型分发）直接列在表里，一行一个
- * - 数值/日期/Size 这三类共享同一组按值类型分发的工厂函数（[numericBound] / [dateBound] / [sizeBound]），
- *   避免在每个注解里写一遍相同的 when 分支
- * - 复合注解（如 Range = Min + Max、CreditCardNumber → LuhnCheck）使用就地 lambda
+ * Looks up the corresponding ConstraintValidator by annotation type. Internally based on a [BUILDERS] registry:
+ * - Simple annotations (no dispatch by value type) are listed directly in the table, one per line
+ * - The numeric / date / Size groups share the same value-type-dispatched factory functions
+ *   ([numericBound] / [dateBound] / [sizeBound]) to avoid duplicating the same when-branches in every annotation
+ * - Composite annotations (e.g., Range = Min + Max, CreditCardNumber -> LuhnCheck) use inline lambdas
  *
- * 新增一种注解只需在 [BUILDERS] 加一项，无须修改一个 350 行的 when。
+ * To add a new annotation, simply add an entry to [BUILDERS] -- no need to modify a 350-line when block.
  *
- * ## 实例缓存
+ * ## Instance caching
  *
- * 返回的 validator 列表按 (annotation, value 的运行时 class) 缓存，依赖 JDK Annotation 的内容相等契约：
- * 相同 attribute 的两个 `@Min(10)` 命中同一个 cache key。
+ * The returned validator list is cached by (annotation, value's runtime class), relying on the JDK Annotation
+ * content-equality contract: two `@Min(10)` instances with the same attributes hit the same cache key.
  *
- * 这能消除重复的 `new XxxValidator()` 与 ValidatorFactory 层的 `initialize` 调用，对走反射构造内层
- * 注解的 Range / CreditCardNumber 收益尤为明显（短路 [createAnnotationByNamedArgs]）。
- * 注意调用方 ConstraintsValidator 仍会再次 initialize（用 HV 的 descriptor + initCtx 重载），
- * 缓存不影响其语义。
+ * This eliminates repeated `new XxxValidator()` calls and ValidatorFactory-level `initialize` invocations.
+ * The savings are especially significant for composite annotations like Range / CreditCardNumber that
+ * reflectively construct inner annotations (short-circuiting [createAnnotationByNamedArgs]).
+ * Note that the caller ConstraintsValidator will still call initialize again (using the HV descriptor + initCtx overload);
+ * the cache does not affect its semantics.
  *
  * @author K
  * @since 1.0.0
  */
 object ValidatorFactory {
 
-    /** validator 实例缓存：按 (annotation, value 的运行时 class) 命中，避免重复构造与 initialize */
+    /** Validator instance cache: keyed by (annotation, value's runtime class) to avoid duplicate construction and initialize */
     private val CACHE: MutableMap<CacheKey, List<ConstraintValidator<*, *>>> = ConcurrentHashMap()
 
     /**
-     * 返回校验规则注解对应的验证器实例。
+     * Return the validator instances corresponding to the validation rule annotation.
      *
-     * @param annotation 校验规则注解
-     * @param value 待校验的值
-     * @return 验证器列表；不支持的注解返回空列表（Range 等复合注解会返回多个）
+     * @param annotation the validation rule annotation
+     * @param value the value to validate
+     * @return the list of validators; returns an empty list for unsupported annotations (composite annotations like Range may return multiple)
      */
     fun getValidator(annotation: Annotation, value: Any): List<ConstraintValidator<*, *>> {
         val key = CacheKey(annotation, value::class.java)
@@ -72,18 +73,18 @@ object ValidatorFactory {
     }
 
     /**
-     * 仅用于测试：清空缓存。生产代码请不要依赖这个方法。
+     * For testing only: clear the cache. Production code must not depend on this method.
      */
     internal fun clearCacheForTest() {
         CACHE.clear()
     }
 
     /**
-     * 缓存未命中时的实际构造路径：在 [BUILDERS] 注册表里查 annotation 对应的工厂闭包并执行。
+     * The actual construction path on cache miss: look up the factory closure for the annotation in the [BUILDERS] registry and execute it.
      *
-     * @param annotation 当前注解
-     * @param value 被校验的值（用于按运行时类型分发）
-     * @return 该注解对应的 validator 列表，未注册的注解返回空列表
+     * @param annotation the current annotation
+     * @param value the value being validated (used for runtime-type dispatch)
+     * @return the list of validators for the annotation; returns an empty list for unregistered annotations
      * @author K
      * @since 1.0.0
      */
@@ -93,23 +94,23 @@ object ValidatorFactory {
     }
 
     /**
-     * validator 缓存的复合键。
-     * annotation 本身参与 hashCode/equals 依赖 JDK Annotation 的“同 attribute 即相等”契约。
+     * Composite key for the validator cache.
+     * The annotation itself participates in hashCode/equals via the JDK Annotation "same attributes implies equal" contract.
      *
-     * @property annotation 当前注解实例
-     * @property valueClass 被校验值的运行时类，用于不同类型分发的 validator 各自缓存
+     * @property annotation the current annotation instance
+     * @property valueClass the runtime class of the value being validated, so validators dispatched by different types are cached separately
      */
     private data class CacheKey(val annotation: Annotation, val valueClass: Class<*>)
 
     // ----------------------------- helpers -----------------------------
 
     /**
-     * 抹掉 ConstraintValidator 的泛型实参，统一调用 [ConstraintValidator.initialize] 并返回自身，
-     * 便于在工厂闭包里以链式风格构造列表。
+     * Erase the generic type parameters of ConstraintValidator, uniformly invoke [ConstraintValidator.initialize] and return itself,
+     * for chained-style list construction inside factory closures.
      *
-     * @param validator 已实例化的校验器
-     * @param annotation 用来初始化的注解
-     * @return 同一个 validator 实例
+     * @param validator the already instantiated validator
+     * @param annotation the annotation used to initialize
+     * @return the same validator instance
      * @author K
      * @since 1.0.0
      */
@@ -122,17 +123,17 @@ object ValidatorFactory {
         return validator
     }
 
-    /** 不依赖 value 类型、不需要 initialize 的单一校验器 */
+    /** Single validator that does not depend on the value type and needs no initialize */
     private fun raw(create: () -> ConstraintValidator<*, *>): ValidatorBuilder =
         { _, _ -> listOf(create()) }
 
-    /** 不依赖 value 类型、需要 initialize 的单一校验器 */
+    /** Single validator that does not depend on the value type but needs initialize */
     private fun simple(create: () -> ConstraintValidator<*, *>): ValidatorBuilder =
         { annotation, _ -> listOf(initialize(create(), annotation)) }
 
     /**
-     * 数值型约束的分发模板（DecimalMax / DecimalMin / Max / Min / Negative / NegativeOrZero / Positive / PositiveOrZero）。
-     * 按 value 的实际类型挑选对应的内置校验器，统一调用 initialize(annotation)。
+     * Dispatch template for numeric constraints (DecimalMax / DecimalMin / Max / Min / Negative / NegativeOrZero / Positive / PositiveOrZero).
+     * Selects the corresponding built-in validator based on the actual type of the value and uniformly calls initialize(annotation).
      */
     private fun numericBound(
         name: String,
@@ -158,12 +159,12 @@ object ValidatorFactory {
             is BigDecimal -> bigDecimal
             is BigInteger -> bigInteger
             is Number -> number
-            else -> error("${name}约束注解不支持【${value::class}】类型的校验！")
+            else -> error("The ${name} constraint annotation does not support validation of type [${value::class}]!")
         }
         listOf(initialize(factory(), annotation))
     }
 
-    /** 日期/时间型约束的分发模板（Future / FutureOrPresent / Past / PastOrPresent）。 */
+    /** Dispatch template for date/time constraints (Future / FutureOrPresent / Past / PastOrPresent). */
     private fun dateBound(
         name: String,
         localDate: () -> ConstraintValidator<*, *>,
@@ -200,12 +201,12 @@ object ValidatorFactory {
             is Year -> year
             is YearMonth -> yearMonth
             is ZonedDateTime -> zonedDateTime
-            else -> error("${name}约束注解不支持【${value::class}】类型的校验！")
+            else -> error("The ${name} constraint annotation does not support validation of type [${value::class}]!")
         }
         listOf(initialize(factory(), annotation))
     }
 
-    /** 集合/数组类约束的分发模板（NotEmpty / Size）。 */
+    /** Dispatch template for collection/array constraints (NotEmpty / Size). */
     private fun sizeBound(
         name: String,
         charSeq: () -> ConstraintValidator<*, *>,
@@ -234,20 +235,20 @@ object ValidatorFactory {
             is ByteArray -> byteArray
             is ShortArray -> shortArray
             is Map<*, *> -> map
-            else -> error("${name}约束注解不支持【${value::class}】类型的校验！")
+            else -> error("The ${name} constraint annotation does not support validation of type [${value::class}]!")
         }
         listOf(initialize(factory(), annotation))
     }
 
     /**
-     * 反射构造注解实例：按形参名匹配 [namedArgs]，没匹配上的参数使用默认值。
-     * 用于把复合约束（Range、CreditCardNumber）拆解成内部更小的约束（Min/Max、LuhnCheck）后转交对应 validator。
+     * Reflectively construct an annotation instance: match [namedArgs] by formal parameter name; use defaults for any parameters not matched.
+     * Used to split composite constraints (Range, CreditCardNumber) into smaller inner constraints (Min/Max, LuhnCheck) and dispatch to the corresponding validators.
      *
-     * @param A 目标注解类型
-     * @param annotationClass 目标注解的 KClass
-     * @param namedArgs 形参名到实参值的映射
-     * @return 实例化好的注解
-     * @throws IllegalStateException 找不到注解构造器时
+     * @param A the target annotation type
+     * @param annotationClass the KClass of the target annotation
+     * @param namedArgs mapping from formal parameter name to argument value
+     * @return the instantiated annotation
+     * @throws IllegalStateException when the annotation constructor cannot be found
      * @author K
      * @since 1.0.0
      */
@@ -256,7 +257,7 @@ object ValidatorFactory {
         namedArgs: Map<String, Any>
     ): A {
         val constructor = annotationClass.constructors.firstOrNull()
-            ?: error("无法找到注解【${annotationClass.qualifiedName}】的构造函数")
+            ?: error("Cannot find a constructor for annotation [${annotationClass.qualifiedName}]")
         val callArgs = constructor.parameters
             .mapNotNull { parameter ->
                 val name = parameter.name
@@ -273,9 +274,10 @@ object ValidatorFactory {
     // ----------------------------- registry -----------------------------
 
     /**
-     * 注解类型到 validator 构造闭包的注册表。
-     * 新增一种注解仅需在此表追加一项；按值类型分发的注解走 [numericBound] / [dateBound] / [sizeBound] 模板，
-     * 复合注解（Range = Min+Max、CreditCardNumber → LuhnCheck）使用就地 lambda 拆解。
+     * Registry from annotation types to validator construction closures.
+     * To add a new annotation, simply append an entry here; annotations dispatched by value type go through the
+     * [numericBound] / [dateBound] / [sizeBound] templates, while composite annotations (Range = Min+Max,
+     * CreditCardNumber -> LuhnCheck) are decomposed via inline lambdas.
      */
     private val BUILDERS: Map<KClass<out Annotation>, ValidatorBuilder> = buildMap {
         // ---- jakarta.validation ----
@@ -396,7 +398,7 @@ object ValidatorFactory {
             val factory: () -> ConstraintValidator<*, *> = when (value) {
                 is CharSequence -> { -> DigitsValidatorForCharSequence() }
                 is Number -> { -> DigitsValidatorForNumber() }
-                else -> error("Digits约束注解不支持【${value::class}】类型的校验！")
+                else -> error("The Digits constraint annotation does not support validation of type [${value::class}]!")
             }
             listOf(initialize(factory(), annotation))
         }
@@ -549,7 +551,7 @@ object ValidatorFactory {
         this[Series::class] = simple { SeriesValidator() }
         this[Matches::class] = { annotation, value ->
             if (value !is CharSequence) {
-                error("Matches约束注解不支持【${value::class}】类型的校验！")
+                error("The Matches constraint annotation does not support validation of type [${value::class}]!")
             }
             listOf(initialize(MatchesValidator(), annotation))
         }

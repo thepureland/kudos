@@ -1,12 +1,12 @@
 package io.kudos.ms.user.core.account.event
 
 /**
- * 用户账号（`user_account`）领域事件。由 `@TransactionalEventListener(AFTER_COMMIT)` 派发，
- * 与 sys 模块同套路（见 ms-sys 中 accessrule / tenant / dict 等域的 PoC）。
+ * User account (`user_account`) domain events. Dispatched via `@TransactionalEventListener(AFTER_COMMIT)`,
+ * following the same pattern as the sys module (see the accessrule / tenant / dict PoCs in ms-sys).
  *
- * 删除类事件 snapshot 模式：服务层在 `super.deleteById`/`batchDelete` 前先读取
- * `tenantId`/`username`，再随事件投递，方便按 (tenantId, username) 索引的下游缓存做精确失效
- * （AFTER_COMMIT 时数据库已无行可查）。
+ * Snapshot pattern for delete events: the service reads `tenantId`/`username` before `super.deleteById`/
+ * `batchDelete`, then carries them on the event so downstream caches indexed by (tenantId, username) can
+ * invalidate precisely (the DB row no longer exists at AFTER_COMMIT time).
  *
  * @author K
  * @author AI: Cursor
@@ -18,7 +18,7 @@ sealed interface UserAccountEvent {
 
 data class UserAccountInserted(override val id: String) : UserAccountEvent
 
-/** 涵盖一般 update、updateActive、各类部分字段更新（密码、登录错误次数、登录登出时间等）。 */
+/** Covers generic update, updateActive, and partial-field updates (password, login error count, login/logout time, etc.). */
 data class UserAccountUpdated(override val id: String) : UserAccountEvent
 
 data class UserAccountDeleted(
@@ -32,6 +32,6 @@ data class UserAccountBatchDeleted(val items: Collection<Item>) : UserAccountEve
 
     override val id: String get() = items.first().id
 
-    /** 兼容仅按 id 失效缓存的下游 listener。 */
+    /** Convenience for downstream listeners that invalidate caches by id only. */
     val ids: Collection<String> get() = items.map { it.id }
 }

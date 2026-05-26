@@ -5,11 +5,12 @@ import org.springframework.web.bind.annotation.GetMapping
 
 
 /**
- * 被允许访问的资源接口。
+ * Permitted-resource API.
  *
- * 当前实现读取 [io.kudos.ms.user.common.passport.CurrentUserKit] 中的登录态，结合
- * 角色↔资源链路返回该用户实际可访问的菜单树。未登录时返回空列表（HTTP 路径仍开放，
- * 调用方自行决定是否要求登录）。
+ * The current implementation reads the login state from [io.kudos.ms.user.common.passport.CurrentUserKit]
+ * and, by following the role to resource chain, returns the menu tree the user may actually access.
+ * Returns an empty list when not logged in (the HTTP path remains open; the caller decides whether
+ * authentication is required).
  *
  * @author K
  * @since 1.0.0
@@ -17,9 +18,9 @@ import org.springframework.web.bind.annotation.GetMapping
 interface IPermittedResource {
 
     /**
-     * 获取当前用户有权限访问的菜单
+     * Gets the menus the current user is permitted to access.
      *
-     * @return List<菜单树节点对象>
+     * @return List of menu tree node objects.
      */
     @GetMapping("/api/public/auth/permittedResource/getMenusForCurrentUser")
     fun getMenusForCurrentUser(): List<MenuTreeNode>

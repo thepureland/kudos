@@ -9,7 +9,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 /**
- * GenericKit测试用例
+ * Test cases for GenericKit.
  *
  * @author K
  * @since 1.0.0
@@ -18,19 +18,19 @@ internal class GenericKitTest {
 
     @Test
     fun getSuperClassGenricType() {
-        // 没有父类，取实现的第一个接口上的泛型参数
+        // No parent class; take the generic argument of the first implemented interface
         assertEquals(Int::class, GenericKit.getSuperClassGenricClass(TestGeneric1::class, 0))
         assertEquals(Map::class, GenericKit.getSuperClassGenricClass(TestGeneric1::class, 1))
 
-        // 有父类(在父类参数化，会递归往父类取)
+        // Has parent class (parameterized on the parent; the lookup recurses upward)
         assertEquals(Int::class, GenericKit.getSuperClassGenricClass(TestGeneric2::class, 0))
         assertEquals(Map::class, GenericKit.getSuperClassGenricClass(TestGeneric2::class, 1))
 
-        // 有父类(在当前类参数化)
+        // Has parent class (parameterized on the current class)
         assertEquals(String::class, GenericKit.getSuperClassGenricClass(TestGeneric3::class, 0))
         assertEquals(Double::class, GenericKit.getSuperClassGenricClass(TestGeneric3::class, 1))
 
-        // 索引越界
+        // Index out of bounds
         assertFailsWith<IllegalArgumentException> { GenericKit.getSuperClassGenricClass(TestGeneric3::class, 2) }
     }
 
@@ -38,57 +38,57 @@ internal class GenericKitTest {
     fun getParameterTypeGeneric() {
         val function = TestGeneric3::class.getMemberFunction("f")
 
-        // 第0个参数为TestGeneric2对象
+        // Parameter 0 is the TestGeneric2 object
         assertEquals(
             listOf(Nothing::class), GenericKit.getParameterTypeGenericClass(function, 0)
         )
 
-        // 不支持泛型参数的类型
+        // Type that does not support generic arguments
         assertEquals(listOf(Nothing::class), GenericKit.getParameterTypeGenericClass(function, 1))
 
-        // 有具体泛型参数
+        // Has concrete generic arguments
         assertEquals(listOf(String::class, Boolean::class), GenericKit.getParameterTypeGenericClass(function, 2))
 
-        // 指定为"*"
+        // Declared as "*"
         assertEquals(listOf(Any::class, Any::class), GenericKit.getParameterTypeGenericClass(function, 3))
 
-        // 越界
+        // Out of bounds
         assertFailsWith<IllegalArgumentException> { GenericKit.getParameterTypeGenericClass(function, 4) }
     }
 
     @Test
     fun getReturnTypeGeneric() {
-        // 属性对象，没有泛型参数
+        // Property, no generic arguments
         val prop0 = TestGeneric3::class.getMemberProperty("prop0")
         assertEquals(Nothing::class, GenericKit.getReturnTypeGenericClass(prop0, 0))
 
-        // 属性对象，有具体泛型参数
+        // Property with concrete generic arguments
         val prop1 = TestGeneric3::class.getMemberProperty("prop1")
         assertEquals(Int::class, GenericKit.getReturnTypeGenericClass(prop1, 0))
         assertEquals(Float::class, GenericKit.getReturnTypeGenericClass(prop1, 1))
-        assertFailsWith<IllegalArgumentException> { GenericKit.getReturnTypeGenericClass(prop1, 2) } // 越界
+        assertFailsWith<IllegalArgumentException> { GenericKit.getReturnTypeGenericClass(prop1, 2) } // out of bounds
 
-        // 属性对象，有泛型参数，但指定为"*"
+        // Property with generic arguments declared as "*"
         val prop2 = TestGeneric3::class.getMemberProperty("prop2")
         assertEquals(Any::class, GenericKit.getReturnTypeGenericClass(prop2, 0))
         assertEquals(Any::class, GenericKit.getReturnTypeGenericClass(prop2, 1))
-        assertFailsWith<IllegalArgumentException> { GenericKit.getReturnTypeGenericClass(prop2, 2) } // 越界
+        assertFailsWith<IllegalArgumentException> { GenericKit.getReturnTypeGenericClass(prop2, 2) } // out of bounds
 
-        // 函数对象，没有泛型参数
+        // Function, no generic arguments
         val fun0 = TestGeneric3::class.getMemberFunction("fun0")
         assertEquals(Nothing::class, GenericKit.getReturnTypeGenericClass(fun0, 0))
 
-        // 属性对象，有具体泛型参数
+        // Function with concrete generic arguments
         val fun1 = TestGeneric3::class.getMemberFunction("fun1")
         assertEquals(Int::class, GenericKit.getReturnTypeGenericClass(fun1, 0))
         assertEquals(Float::class, GenericKit.getReturnTypeGenericClass(fun1, 1))
-        assertFailsWith<IllegalArgumentException> { GenericKit.getReturnTypeGenericClass(fun1, 2) } // 越界
+        assertFailsWith<IllegalArgumentException> { GenericKit.getReturnTypeGenericClass(fun1, 2) } // out of bounds
 
-        // 属性对象，有泛型参数，但指定为"*"
+        // Function with generic arguments declared as "*"
         val fun2 = TestGeneric3::class.getMemberFunction("fun2")
         assertEquals(Any::class, GenericKit.getReturnTypeGenericClass(fun2, 0))
         assertEquals(Any::class, GenericKit.getReturnTypeGenericClass(fun2, 1))
-        assertFailsWith<IllegalArgumentException> { GenericKit.getReturnTypeGenericClass(fun2, 2) } // 越界
+        assertFailsWith<IllegalArgumentException> { GenericKit.getReturnTypeGenericClass(fun2, 2) } // out of bounds
     }
 
     internal class TestGeneric1 : ICallback<Int, Map<String, Boolean>>, Serializable {

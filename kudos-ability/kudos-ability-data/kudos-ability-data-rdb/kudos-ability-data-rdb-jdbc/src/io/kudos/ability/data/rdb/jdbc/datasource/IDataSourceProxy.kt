@@ -4,16 +4,20 @@ import com.baomidou.dynamic.datasource.enums.SeataMode
 import javax.sql.DataSource
 
 /**
- * 数据源代理扩展点。
+ * Extension point for data source proxying.
  *
- * 在 [DsDataSourceCreator] 创建每个动态数据源后调用 [proxyDatasource] 让外部"包"一层
- * 自己的代理（典型应用：Seata 的 `DataSourceProxy` 拦截 commit/rollback 实现 AT 模式）。
+ * After [DsDataSourceCreator] creates each dynamic data source, [proxyDatasource]
+ * is called to let an external component "wrap" its own proxy (typical use:
+ * Seata's `DataSourceProxy` intercepts commit/rollback to implement AT mode).
  *
- * - 不实现时（容器里没有 bean）：返回原 datasource，相当于无代理
- * - [isSeata] / [seataMode] 信号给 baomidou 内部用来决定 ItemDataSource 的标记位
+ * - When not implemented (no bean in the container): returns the original
+ *   datasource, equivalent to no proxy.
+ * - [isSeata] / [seataMode] signals are used internally by baomidou to set the
+ *   ItemDataSource flags.
  *
- * 当前只有 Seata 模块（kudos-ability-distributed-tx-seata）会注册 `SeataDataSourceProxy`
- * 实例进容器；其它项目可以注册自己的代理（监控 / 加密 / 审计等）。
+ * Currently only the Seata module (kudos-ability-distributed-tx-seata) registers
+ * a `SeataDataSourceProxy` instance into the container; other projects can
+ * register their own proxies (monitoring / encryption / auditing, etc.).
  *
  * @author damon
  * @author K
@@ -22,16 +26,17 @@ import javax.sql.DataSource
  */
 interface IDataSourceProxy {
     /**
-     * 代理 / 包装一个数据源。默认实现是直接返回原数据源（"无代理"）。
+     * Proxies / wraps a data source. The default implementation returns the original
+     * data source directly ("no proxy").
      */
     fun proxyDatasource(dataSource: DataSource): DataSource {
         return dataSource
     }
 
-    /** 是否启用 Seata 集成；baomidou 的 `ItemDataSource` 据此设置标记位。 */
+    /** Whether Seata integration is enabled; baomidou's `ItemDataSource` sets a flag accordingly. */
     fun isSeata(): Boolean = false
 
-    /** Seata 模式（AT / XA / TCC / SAGA），仅 [isSeata] 为 true 时有意义。 */
+    /** Seata mode (AT / XA / TCC / SAGA); only meaningful when [isSeata] is true. */
     fun seataMode(): SeataMode? {
         return null
     }

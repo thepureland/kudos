@@ -13,9 +13,9 @@ import kotlin.test.assertNull
 import kotlin.test.assertSame
 
 /**
- * [SysAccessRuleHashCache] 单元测试：按 id、按 systemCode+tenantKey（含平台级空串）查询与全量刷新。
+ * Unit tests for [SysAccessRuleHashCache]: query by id, by systemCode+tenantKey (including platform-level blank), and full reload.
  *
- * 测试数据来源：`SysAccessRuleHashCacheTest.sql`；`SYS_ACCESS_RULE__HASH` 由 Flyway `V1.0.0.20__sys_cache_access_rule_hash.sql` 注册。
+ * Test data source: `SysAccessRuleHashCacheTest.sql`; `SYS_ACCESS_RULE__HASH` is registered by Flyway `V1.0.0.20__sys_cache_access_rule_hash.sql`.
  *
  * @author K
  * @author AI: Cursor

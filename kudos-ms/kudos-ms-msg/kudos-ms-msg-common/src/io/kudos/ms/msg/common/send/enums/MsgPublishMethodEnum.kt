@@ -2,35 +2,35 @@ package io.kudos.ms.msg.common.send.enums
 
 
 /**
- * 发送渠道枚举（对应 SQL 字典 `publish_method` 的 itemCode）。
+ * Send channel enum (matches the itemCode of the SQL dict `publish_method`).
  *
- * 同时作为 [io.kudos.ability.distributed.notify.common.model.NotifyMessageVo] 的
- * `notifyType` —— [listenerType] 给出当前渠道的 listener key（如 `"msg.dispatch.email"`），
- * 每个渠道的 consumer (`INotifyListener`) 用它做 [INotifyListener.notifyType]。
+ * Also serves as the `notifyType` of [io.kudos.ability.distributed.notify.common.model.NotifyMessageVo].
+ * [listenerType] gives the listener key for the current channel (e.g. `"msg.dispatch.email"`);
+ * each channel's consumer (`INotifyListener`) uses it as [INotifyListener.notifyType].
  *
- * 加新渠道时：
- *   1. 在这里加一项 + listenerType
- *   2. 同步 V1.0.0.2__insert_sys_dict_item.sql 的 publish_method 字典
- *   3. 在 core 加一个 INotifyListener 实现，notifyType() 返回 listenerType
+ * When adding a new channel:
+ *   1. Add an entry here with its listenerType
+ *   2. Sync the publish_method dict in V1.0.0.2__insert_sys_dict_item.sql
+ *   3. Add an INotifyListener implementation in core whose notifyType() returns listenerType
  *
  * @author K
  * @since 1.0.0
  */
 enum class MsgPublishMethodEnum(val dictCode: String) {
 
-    /** 电子邮件 */
+    /** Email. */
     EMAIL("email"),
 
-    /** 手机短信 */
+    /** SMS text message. */
     SMS("sms"),
 
-    /** 站内信 */
+    /** In-site message. */
     SITE_MSG("siteMsg"),
 
-    /** 所有用户 */
+    /** All users. */
     ALL_USER("all_user");
 
-    /** 用于 [io.kudos.ability.distributed.notify.common.api.INotifyListener.notifyType] 的 key */
+    /** Key used for [io.kudos.ability.distributed.notify.common.api.INotifyListener.notifyType]. */
     val listenerType: String get() = "msg.dispatch.$dictCode"
 
     companion object {

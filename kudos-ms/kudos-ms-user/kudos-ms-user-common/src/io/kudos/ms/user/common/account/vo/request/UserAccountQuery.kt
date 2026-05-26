@@ -5,38 +5,38 @@ import io.kudos.ms.user.common.account.vo.response.UserAccountRow
 
 
 /**
- * 用户列表查询条件请求VO
+ * User account list query request VO
  *
  * @author K
  * @since 1.0.0
  */
 data class UserAccountQuery (
 
-    /** 用户名 */
+    /** Username */
     val username: String? = null,
 
-    /** 租户id */
+    /** Tenant id */
     val tenantId: String? = null,
 
-    /** 用户类型字典码 */
+    /** Account type dictionary code */
     val accountTypeDictCode: String? = null,
 
-    /** 用户状态字典码 */
+    /** Account status dictionary code */
     val accountStatusDictCode: String? = null,
 
-    /** 机构id */
+    /** Organization id */
     val orgId: String? = null,
 
-    /** 主管id */
+    /** Supervisor id */
     val supervisorId: String? = null,
 
-    /** 备注 */
+    /** Remark */
     val remark: String? = null,
 
-    /** 是否激活 */
+    /** Whether active */
     val active: Boolean? = null,
 
-    /** 是否内置 */
+    /** Whether built-in */
     val builtIn: Boolean? = null,
 
 ) : ListSearchPayload() {

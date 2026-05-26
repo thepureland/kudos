@@ -9,7 +9,7 @@ import org.ktorm.schema.varchar
 
 
 /**
- * 机构数据库表-实体关联对象
+ * Organization database table-entity binding object.
  *
  * @author K
  * @author AI: Cursor
@@ -17,49 +17,49 @@ import org.ktorm.schema.varchar
  */
 object UserOrgs : StringIdTable<UserOrg>("user_org") {
 
-    /** 机构名称 */
+    /** Organization name. */
     var name = varchar("name").bindTo { it.name }
 
-    /** 机构简称 */
+    /** Organization short name. */
     var shortName = varchar("short_name").bindTo { it.shortName }
 
-    /** 租户id */
+    /** Tenant id. */
     var tenantId = varchar("tenant_id").bindTo { it.tenantId }
 
-    /** 父机构id */
+    /** Parent organization id. */
     var parentId = varchar("parent_id").bindTo { it.parentId }
 
-    /** 机构类型字典码 */
+    /** Organization type dictionary code. */
     var orgTypeDictCode = varchar("org_type_dict_code").bindTo { it.orgTypeDictCode }
 
-    /** 排序号 */
+    /** Sort number. */
     var sortNum = int("sort_num").bindTo { it.sortNum }
 
-    /** 备注 */
+    /** Remark. */
     var remark = varchar("remark").bindTo { it.remark }
 
-    /** 是否激活 */
+    /** Whether active. */
     var active = boolean("active").bindTo { it.active }
 
-    /** 是否内置 */
+    /** Whether built-in. */
     var builtIn = boolean("built_in").bindTo { it.builtIn }
 
-    /** 创建者id */
+    /** Creator id. */
     var createUserId = varchar("create_user_id").bindTo { it.createUserId }
 
-    /** 创建者名称 */
+    /** Creator name. */
     var createUserName = varchar("create_user_name").bindTo { it.createUserName }
 
-    /** 创建时间 */
+    /** Create time. */
     var createTime = datetime("create_time").bindTo { it.createTime }
 
-    /** 更新者id */
+    /** Updater id. */
     var updateUserId = varchar("update_user_id").bindTo { it.updateUserId }
 
-    /** 更新者名称 */
+    /** Updater name. */
     var updateUserName = varchar("update_user_name").bindTo { it.updateUserName }
 
-    /** 更新时间 */
+    /** Update time. */
     var updateTime = datetime("update_time").bindTo { it.updateTime }
 
 

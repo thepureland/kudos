@@ -6,7 +6,7 @@ import org.springframework.cloud.openfeign.FeignClient
 
 
 /**
- * 角色客户端代理接口
+ * Client-side proxy interface for the role API.
  *
  * @author K
  * @author AI: Cursor

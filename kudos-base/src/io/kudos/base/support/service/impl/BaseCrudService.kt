@@ -19,16 +19,16 @@ import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
 
 /**
- * 基础可写业务操作：将 [IBaseCrudService] 委托给 [IBaseCrudDao]，仅依赖 base 中的 DAO 契约，不绑定 Ktorm。
- * 事务由 Spring 等容器在具体业务 Service 实现类上使用 `@Transactional` 等声明；本模块不依赖 Spring。
+ * Basic writable business operations: delegates [IBaseCrudService] to [IBaseCrudDao]; depends only on the DAO contract in the base module, with no binding to Ktorm.
+ * Transactions are declared by containers such as Spring on concrete business Service implementation classes using `@Transactional`; this module does not depend on Spring.
  *
- * 删除说明：当实体类型 [E] 实现 [IHasBuiltIn] 时，所有删除入口仅允许删除 `builtIn == false` 的行；
- * 若调用方针对内置行（`builtIn == true`）删除，将抛出 [ServiceException]（[CommonErrorCodeEnum.BUILTIN_NOT_DELETABLE]）。
- * 实现上在 Service 层拼接 `builtIn` 条件并委托现有 DAO，不修改 DAO；校验阶段尽量只查 `builtIn`（或 `id`+`builtIn`）列，避免 `get` 整行。
+ * Deletion notes: when entity type [E] implements [IHasBuiltIn], all deletion entry points only allow deletion of rows where `builtIn == false`;
+ * if a caller attempts to delete a built-in row (`builtIn == true`), a [ServiceException] ([CommonErrorCodeEnum.BUILTIN_NOT_DELETABLE]) is thrown.
+ * The implementation appends the `builtIn` condition at the Service layer and delegates to the existing DAO without modifying it; during validation, it tries to query only the `builtIn` column (or `id` + `builtIn`) to avoid full-row `get` calls.
  *
- * @param PK 实体主键类型
- * @param E 实体类型，须实现 [IIdEntity]
- * @param DAO 可写 DAO 实现类型（须同时满足只读能力，见 [IBaseCrudDao] 继承 [io.kudos.base.support.dao.IBaseReadOnlyDao]）
+ * @param PK Entity primary key type
+ * @param E Entity type; must implement [IIdEntity]
+ * @param DAO Writable DAO implementation type (must also provide read-only capabilities; see [IBaseCrudDao] extending [io.kudos.base.support.dao.IBaseReadOnlyDao])
  * @author K
  * @since 1.0.0
  */
@@ -101,11 +101,11 @@ open class BaseCrudService<PK : Any, E : IIdEntity<PK>, DAO : IBaseCrudDao<PK, E
         entities: Collection<E>, criteria: Criteria, countOfEachBatch: Int, vararg excludePropertyNames: String
     ): Int = dao.batchUpdateExcludePropertiesWhen(entities, criteria, countOfEachBatch, *excludePropertyNames)
 
-    //region Delete（含 IHasBuiltIn 内置行保护，仅 Service 层实现、不改 DAO）
+    //region Delete (with IHasBuiltIn built-in row protection; implemented only at the Service layer, without modifying the DAO)
 
     /**
-     * 当前具体 Service 子类上 [BaseCrudService] 的第二个泛型参数，即实体类型 [E]。
-     * 用于判断是否实现 [IHasBuiltIn] 以及解析 [builtIn] 列对应的属性反射。
+     * The second generic parameter of [BaseCrudService] on the current concrete Service subclass, i.e. the entity type [E].
+     * Used to determine whether it implements [IHasBuiltIn] and to resolve the property reflection corresponding to the [builtIn] column.
      */
     @Suppress("UNCHECKED_CAST")
     private val entityClass: KClass<E> by lazy {
@@ -113,41 +113,41 @@ open class BaseCrudService<PK : Any, E : IIdEntity<PK>, DAO : IBaseCrudDao<PK, E
     }
 
     /**
-     * 为 true 表示 [E] 带内置标记字段，删除方法走「仅 builtIn == false 可删」分支；否则与原生 [dao] 行为一致。
+     * When true, [E] carries the built-in marker field, and deletion methods take the "only builtIn == false can be deleted" branch; otherwise, the behavior is consistent with the native [dao].
      */
     private val hasBuiltInField: Boolean by lazy {
         IHasBuiltIn::class.java.isAssignableFrom(entityClass.java)
     }
 
     /**
-     * 实体上与 [IHasBuiltIn.builtIn] 同名的属性，用于 [searchProperty] / [searchProperties] 只拉取布尔列做失败原因判断。
+     * The property on the entity with the same name as [IHasBuiltIn.builtIn], used by [searchProperty] / [searchProperties] to pull only the boolean column for failure-reason judgment.
      */
     @Suppress("UNCHECKED_CAST")
     private val builtInProperty: KProperty1<E, Boolean?> by lazy {
         entityClass.memberProperties.first { it.name == IHasBuiltIn::builtIn.name } as KProperty1<E, Boolean?>
     }
 
-    /** 实体主键属性名（取自 [IIdEntity.id]，避免在条件构造中硬编码字符串） */
+    /** Entity primary key property name (taken from [IIdEntity.id]; avoids hard-coding strings when constructing conditions). */
     private val idPropertyName: String
         get() = IIdEntity<PK>::id.name
 
-    /** 内置标记属性名（取自 [IHasBuiltIn.builtIn]，避免在条件构造中硬编码字符串） */
+    /** Built-in marker property name (taken from [IHasBuiltIn.builtIn]; avoids hard-coding strings when constructing conditions). */
     private val builtInPropertyName: String
         get() = IHasBuiltIn::builtIn.name
 
-    /** 删除/排除内置行：等价于 SQL 条件 `built_in = false`（属性名以实体为准）。 */
+    /** Excludes built-in rows from deletion: equivalent to the SQL condition `built_in = false` (the property name follows the entity). */
     private fun builtInFalseCriteria(): Criteria =
         Criteria.of(builtInPropertyName, OperatorEnum.EQ, false)
 
-    /** 用于判断「给定业务条件下是否存在内置行」（仅探测，不删数据）。 */
+    /** Used to determine "whether built-in rows exist under the given business conditions" (probe only; does not delete data). */
     private fun builtInTrueCriteria(): Criteria =
         Criteria.of(builtInPropertyName, OperatorEnum.EQ, true)
 
     /**
-     * 统一抛出“内置行不可删除”的业务异常。
-     * 写成 [Nothing] 返回类型让调用处的类型推断保留 if/else 中另一分支的具体类型。
+     * Uniformly throws the business exception "built-in row is not deletable".
+     * Declaring the return type as [Nothing] allows the type inference at the call site to retain the concrete type from the other branch of if/else.
      *
-     * @throws ServiceException 总是抛出，errorCode 为 [CommonErrorCodeEnum.BUILTIN_NOT_DELETABLE]
+     * @throws ServiceException Always thrown; errorCode is [CommonErrorCodeEnum.BUILTIN_NOT_DELETABLE]
      * @author K
      * @since 1.0.0
      */
@@ -155,8 +155,8 @@ open class BaseCrudService<PK : Any, E : IIdEntity<PK>, DAO : IBaseCrudDao<PK, E
         throw ServiceException(CommonErrorCodeEnum.BUILTIN_NOT_DELETABLE)
 
     /**
-     * 复制 [ListSearchPayload] 的 WHERE/分页等语义，通过 [MutableListSearchPayload.setReturnProperties] 限定只 SELECT 主键与 [builtIn]。
-     * 供 [batchDeleteWhenForBuiltInEntity] 使用，避免加载完整 PO，并与原 payload 行为对齐。
+     * Copies the WHERE/pagination semantics of [ListSearchPayload], and restricts SELECT to only the primary key and [builtIn] via [MutableListSearchPayload.setReturnProperties].
+     * Used by [batchDeleteWhenForBuiltInEntity] to avoid loading the entire PO while staying aligned with the original payload behavior.
      */
     private fun toIdBuiltInProbePayload(source: ListSearchPayload): MutableListSearchPayload {
         val probe = MutableListSearchPayload()
@@ -166,9 +166,9 @@ open class BaseCrudService<PK : Any, E : IIdEntity<PK>, DAO : IBaseCrudDao<PK, E
     }
 
     /**
-     * 按主键删除（内置表）：`WHERE id = ? AND builtIn = false`。
-     * - 影响 1 行：成功。
-     * - 影响 0 行：仅查询该主键的 [builtIn]；若为 true 则抛内置不可删；否则视为记录不存在，返回 false。
+     * Deletes by primary key (built-in table): `WHERE id = ? AND builtIn = false`.
+     * - Affects 1 row: success.
+     * - Affects 0 rows: queries only the [builtIn] value for that primary key; if it is true, throws built-in-not-deletable; otherwise, treats the record as nonexistent and returns false.
      */
     private fun deleteByIdForBuiltInEntity(id: PK): Boolean {
         val deleteCriteria = Criteria(idPropertyName, OperatorEnum.EQ, id).addAnd(builtInFalseCriteria())
@@ -183,14 +183,14 @@ open class BaseCrudService<PK : Any, E : IIdEntity<PK>, DAO : IBaseCrudDao<PK, E
     }
 
     /**
-     * 按主键集合删除（内置表）：`WHERE id IN (...) AND builtIn = false`（入参先 [distinct]）。
-     * 若删除行数小于去重后主键个数，则一次 [inSearchPropertiesById] 拉取 `id`+`builtIn`：
-     * 仍存在 `builtIn == true` 的主键则抛异常；否则解释为部分主键本就不存在，返回实际删除行数。
+     * Deletes by a collection of primary keys (built-in table): `WHERE id IN (...) AND builtIn = false` (the input is first [distinct]).
+     * If the number of deleted rows is less than the number of distinct primary keys, [inSearchPropertiesById] is called once to fetch `id` + `builtIn`:
+     * if there are still primary keys with `builtIn == true`, an exception is thrown; otherwise, this is interpreted as some primary keys simply not existing, and the actual number of deleted rows is returned.
      *
-     * 注意：与内置行混删时，非内置行可能已在同一 DELETE 中删掉，再抛错；调用方需在事务语义下接受该行为。
+     * Note: when mixed with built-in rows, non-built-in rows may already have been deleted in the same DELETE before the error is thrown; the caller must accept this behavior under transactional semantics.
      */
     private fun batchDeleteForBuiltInEntity(ids: Collection<PK>): Int {
-        require(ids.isNotEmpty()) { "批量删除实体对象时，主键集合不能为空！" }
+        require(ids.isNotEmpty()) { "When batch-deleting entity objects, the primary key collection must not be empty!" }
         val distinctIds = ids.distinct()
         val deleteCriteria =
             Criteria(idPropertyName, OperatorEnum.IN, distinctIds.toList()).addAnd(builtInFalseCriteria())
@@ -206,12 +206,12 @@ open class BaseCrudService<PK : Any, E : IIdEntity<PK>, DAO : IBaseCrudDao<PK, E
     }
 
     /**
-     * 按 [Criteria] 删除（内置表）：在原条件上 AND `builtIn = false`。
-     * 若删除 0 行，再用「原条件 AND builtIn = true」仅 SELECT [builtIn] 列做探测：
-     * 有命中则说明范围内存在内置行、不允许按当前语义删除，抛异常；无命中则返回 0（无匹配）。
+     * Deletes by [Criteria] (built-in table): ANDs `builtIn = false` onto the original conditions.
+     * If 0 rows are deleted, then uses "original conditions AND builtIn = true" to SELECT only the [builtIn] column as a probe:
+     * any hit indicates that built-in rows exist in the range and deletion is not allowed under the current semantics, so an exception is thrown; no hit returns 0 (no match).
      */
     private fun batchDeleteCriteriaForBuiltInEntity(criteria: Criteria): Int {
-        require(!criteria.isEmpty()) { "批量删除实体对象时，查询条件不能为空！" }
+        require(!criteria.isEmpty()) { "When batch-deleting entity objects, the query conditions must not be empty!" }
         val safeCriteria = Criteria().addAnd(criteria).addAnd(builtInFalseCriteria())
         val deleted = dao.batchDeleteCriteria(safeCriteria)
         if (deleted > 0) {
@@ -226,13 +226,13 @@ open class BaseCrudService<PK : Any, E : IIdEntity<PK>, DAO : IBaseCrudDao<PK, E
     }
 
     /**
-     * 按查询载体删除（内置表）。不改 DAO 时无法向 `batchDeleteWhen` 追加表达式，故要求 [searchPayload] 为 [ListSearchPayload]。
+     * Deletes by search payload (built-in table). Without modifying the DAO, expressions cannot be appended to `batchDeleteWhen`, so [searchPayload] is required to be a [ListSearchPayload].
      *
-     * 流程：将载体复制为仅返回 `id`+[builtIn] 的探测查询 → 若结果中含内置行则抛异常 → 否则对筛出的主键调用 [batchDeleteForBuiltInEntity]。
+     * Flow: copy the payload into a probe query that returns only `id` + [builtIn] -> throw an exception if the results contain a built-in row -> otherwise call [batchDeleteForBuiltInEntity] for the filtered primary keys.
      */
     private fun batchDeleteWhenForBuiltInEntity(searchPayload: ISearchPayload): Int {
         require(searchPayload is ListSearchPayload) {
-            "实现IHasBuiltIn的实体执行batchDeleteWhen时，searchPayload必须是ListSearchPayload。"
+            "When an entity implementing IHasBuiltIn executes batchDeleteWhen, searchPayload must be a ListSearchPayload."
         }
         val probePayload = toIdBuiltInProbePayload(searchPayload)
         @Suppress("UNCHECKED_CAST")
@@ -248,25 +248,25 @@ open class BaseCrudService<PK : Any, E : IIdEntity<PK>, DAO : IBaseCrudDao<PK, E
         return batchDeleteForBuiltInEntity(ids)
     }
 
-    /** 按主键删除；若 [E] 实现 [IHasBuiltIn]，仅删除非内置行。 */
+    /** Deletes by primary key; if [E] implements [IHasBuiltIn], only non-built-in rows are deleted. */
     override fun deleteById(id: PK): Boolean =
         if (!hasBuiltInField) dao.deleteById(id) else deleteByIdForBuiltInEntity(id)
 
-    /** 批量按主键删除；若 [E] 实现 [IHasBuiltIn]，仅删除非内置行。 */
+    /** Batch-deletes by primary key; if [E] implements [IHasBuiltIn], only non-built-in rows are deleted. */
     override fun batchDelete(ids: Collection<PK>): Int =
         if (!hasBuiltInField) dao.batchDelete(ids) else batchDeleteForBuiltInEntity(ids)
 
-    /** 按条件批量删除；若 [E] 实现 [IHasBuiltIn]，自动附加 `builtIn = false`。 */
+    /** Batch-deletes by condition; if [E] implements [IHasBuiltIn], `builtIn = false` is automatically appended. */
     override fun batchDeleteCriteria(criteria: Criteria): Int =
         if (!hasBuiltInField) dao.batchDeleteCriteria(criteria) else batchDeleteCriteriaForBuiltInEntity(criteria)
 
     /**
-     * 按查询载体批量删除；若 [E] 实现 [IHasBuiltIn]，[searchPayload] 须为 [ListSearchPayload]（见 [batchDeleteWhenForBuiltInEntity]）。
+     * Batch-deletes by search payload; if [E] implements [IHasBuiltIn], [searchPayload] must be a [ListSearchPayload] (see [batchDeleteWhenForBuiltInEntity]).
      */
     override fun batchDeleteWhen(searchPayload: ISearchPayload): Int =
         if (!hasBuiltInField) dao.batchDeleteWhen(searchPayload) else batchDeleteWhenForBuiltInEntity(searchPayload)
 
-    /** 删除实体对应行；内置表等价于 [deleteById]（以数据库中 builtIn 为准）。 */
+    /** Deletes the row corresponding to the entity; for a built-in table, this is equivalent to [deleteById] (with builtIn in the database as the source of truth). */
     override fun delete(entity: E): Boolean =
         if (!hasBuiltInField) dao.delete(entity) else deleteByIdForBuiltInEntity(entity.id)
 

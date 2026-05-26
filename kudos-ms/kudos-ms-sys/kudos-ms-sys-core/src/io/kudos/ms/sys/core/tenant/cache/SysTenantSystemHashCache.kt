@@ -17,17 +17,18 @@ import org.springframework.transaction.event.TransactionPhase
 import org.springframework.transaction.event.TransactionalEventListener
 
 /**
- * 租户-系统关系统一缓存处理器，基于 Hash 结构存储。
+ * Unified cache handler for tenant-system relationships, stored using a Hash structure.
  *
- * 数据来源表：sys_tenant_system
+ * Source table: sys_tenant_system
  *
- * 提供按副属性查询与回写能力：
- *  1. 系统编码 -> Set<租户id>
- *  2. 租户id -> Set<系统编码>
+ * Provides query and write-back by secondary properties:
+ *  1. system code -> Set of tenant ids
+ *  2. tenant id -> Set of system codes
  *
- * 使用 [FILTERABLE_PROPERTIES] 中的副属性建立 Set 索引，支持多条件等值查询；所有写入、删除、全量刷新均需使用同一副属性集合以保持索引一致。
+ * Uses the secondary properties in [FILTERABLE_PROPERTIES] to build Set indexes, supporting multi-condition equality queries;
+ * all writes, deletes, and full refreshes must use the same secondary property set to keep the index consistent.
  *
- * 使用前需在缓存配置表 sys_cache 中增加名为 [CACHE_NAME] 的配置项且 hash=true。
+ * Before use, add a configuration named [CACHE_NAME] with hash=true in the sys_cache configuration table.
  *
  * @author K
  * @author AI: Cursor
@@ -44,7 +45,7 @@ open class SysTenantSystemHashCache : AbstractHashCacheHandler<SysTenantSystemCa
     companion object {
         const val CACHE_NAME = "SYS_TENANT_SYSTEM__HASH"
 
-        /** 可筛选副属性，用于按 tenantId / systemCode 建二级索引 */
+        /** Filterable secondary properties, used to build secondary indexes by tenantId / systemCode */
         val FILTERABLE_PROPERTIES = setOf(
             SysTenantSystemCacheEntry::tenantId.name,
             SysTenantSystemCacheEntry::systemCode.name
@@ -60,14 +61,14 @@ open class SysTenantSystemHashCache : AbstractHashCacheHandler<SysTenantSystemCa
     override fun doReload(id: Any): SysTenantSystemCacheEntry? =
         sysTenantSystemDao.get(id.toString(), SysTenantSystemCacheEntry::class)
 
-    // ---------- 按子系统编码 / 按租户id ----------
+    // ---------- By subsystem code / by tenant id ----------
 
     /**
-     * 按子系统编码获取租户id集合。
-     * 先按副属性索引查缓存，未命中则查库并回写。
+     * Get the set of tenant ids by subsystem code.
+     * Looks up the cache by secondary-property index first; on miss, queries the DB and writes back.
      *
-     * @param systemCode 系统编码，非空
-     * @return 该系统下的租户id集合
+     * @param systemCode system code, non-blank
+     * @return set of tenant ids under this system
      */
     @HashCacheableBySecondary(
         cacheNames = [CACHE_NAME],
@@ -77,7 +78,7 @@ open class SysTenantSystemHashCache : AbstractHashCacheHandler<SysTenantSystemCa
         returnProperty = "tenantId"
     )
     open fun getTenantIdsBySubSystemCode(systemCode: String): Set<String> {
-        require(systemCode.isNotBlank()) { "按子系统编码查询时 systemCode 不能为空" }
+        require(systemCode.isNotBlank()) { "systemCode must not be blank when querying by subsystem code" }
         val list = sysTenantSystemDao.fetchCacheItemsBySystemCode(systemCode)
         if (list.isNotEmpty() && KeyValueCacheKit.isCacheActive(CACHE_NAME) && KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
             hashCache().saveBatch(CACHE_NAME, list, FILTERABLE_PROPERTIES, emptySet())
@@ -86,11 +87,11 @@ open class SysTenantSystemHashCache : AbstractHashCacheHandler<SysTenantSystemCa
     }
 
     /**
-     * 按租户id获取系统编码集合。
-     * 先按副属性索引查缓存，未命中则查库并回写。
+     * Get the set of system codes by tenant id.
+     * Looks up the cache by secondary-property index first; on miss, queries the DB and writes back.
      *
-     * @param tenantId 租户id，非空
-     * @return 该租户下的系统编码集合
+     * @param tenantId tenant id, non-blank
+     * @return set of system codes under this tenant
      */
     @HashCacheableBySecondary(
         cacheNames = [CACHE_NAME],
@@ -100,7 +101,7 @@ open class SysTenantSystemHashCache : AbstractHashCacheHandler<SysTenantSystemCa
         returnProperty = "systemCode"
     )
     open fun getSubSystemCodesByTenantId(tenantId: String): Set<String> {
-        require(tenantId.isNotBlank()) { "按租户id查询时 tenantId 不能为空" }
+        require(tenantId.isNotBlank()) { "tenantId must not be blank when querying by tenant id" }
         val list = sysTenantSystemDao.fetchCacheItemsByTenantId(tenantId)
         if (list.isNotEmpty() && KeyValueCacheKit.isCacheActive(CACHE_NAME) && KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
             hashCache().saveBatch(CACHE_NAME, list, FILTERABLE_PROPERTIES, emptySet())
@@ -108,29 +109,29 @@ open class SysTenantSystemHashCache : AbstractHashCacheHandler<SysTenantSystemCa
         return list.map { it.systemCode }.toSet()
     }
 
-    // ---------- 全量刷新与同步 ----------
+    // ---------- Full refresh and sync ----------
 
     /**
-     * 从库全量加载租户-系统关系并刷新 Hash 缓存。
+     * Load all tenant-system relationships from the DB and refresh the Hash cache.
      *
-     * @param clear 为 true 时先清空再写入；为 false 时覆盖写入
+     * @param clear when true, clear before writing; when false, overwrite in place
      */
     override fun reloadAll(clear: Boolean) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.info("缓存未开启，不加载租户-系统关系 Hash 缓存")
+            log.info("Cache is not active; skipping tenant-system relation Hash cache load")
             return
         }
         val cache = hashCache()
         if (clear) cache.clear(CACHE_NAME)
         val list = sysTenantSystemDao.fetchAllForCache()
-        log.debug("从数据库加载 ${list.size} 条租户-系统关系，刷新 Hash 缓存")
+        log.debug("Loaded ${list.size} tenant-system relations from DB; refreshing Hash cache")
         cache.refreshAll(CACHE_NAME, list, FILTERABLE_PROPERTIES, emptySet())
     }
 
     /**
-     * 新增租户-系统关系后同步：将指定 id 的实体从库加载并写入缓存。
+     * Post-insert sync for a tenant-system relation: load the entity by id from the DB and write into the cache.
      *
-     * @param id 主键
+     * @param id primary key
      */
     open fun syncOnInsert(id: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME) || !KeyValueCacheKit.isWriteInTime(CACHE_NAME)) return
@@ -139,19 +140,19 @@ open class SysTenantSystemHashCache : AbstractHashCacheHandler<SysTenantSystemCa
     }
 
     /**
-     * 新增租户-系统关系后同步（重载，接收业务对象与 id）。
+     * Post-insert sync (overload taking a business object and id).
      *
-     * @param any 业务对象，仅用于重载区分
-     * @param id 主键
+     * @param any business object, used only to distinguish overloads
+     * @param id primary key
      */
     open fun syncOnInsert(any: Any, id: String) {
         syncOnInsert(id)
     }
 
     /**
-     * 更新租户-系统关系后同步：从库重新加载该 id 并写回缓存。
+     * Post-update sync: reload the entity by id from the DB and write back to the cache.
      *
-     * @param id 主键
+     * @param id primary key
      */
     open fun syncOnUpdate(id: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
@@ -162,19 +163,19 @@ open class SysTenantSystemHashCache : AbstractHashCacheHandler<SysTenantSystemCa
     }
 
     /**
-     * 更新租户-系统关系后同步（重载）。
+     * Post-update sync (overload).
      *
-     * @param any 业务对象，仅用于重载区分
-     * @param id 主键
+     * @param any business object, used only to distinguish overloads
+     * @param id primary key
      */
     open fun syncOnUpdate(any: Any, id: String) {
         syncOnUpdate(id)
     }
 
     /**
-     * 删除租户-系统关系后同步：从缓存中移除该 id 及其副属性索引。
+     * Post-delete sync: remove the id from the cache along with its secondary indexes.
      *
-     * @param id 主键
+     * @param id primary key
      */
     open fun syncOnDelete(id: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
@@ -182,21 +183,21 @@ open class SysTenantSystemHashCache : AbstractHashCacheHandler<SysTenantSystemCa
     }
 
     /**
-     * 批量删除后同步：从缓存中移除这些 id 及其副属性索引。
+     * Post-batch-delete sync: remove these ids from the cache along with their secondary indexes.
      *
-     * @param ids 主键集合
+     * @param ids primary key collection
      */
     open fun syncOnBatchDelete(ids: Collection<String>) {
         if (!KeyValueCacheKit.isCacheActive(cacheName())) return
-        log.debug("批量删除 id 为 $ids 的 sys_tenant_system 后，同步从 ${cacheName()} 缓存中踢除...")
+        log.debug("After batch-deleting sys_tenant_system ids=$ids, evicting from ${cacheName()} cache...")
         val cache = hashCache()
         ids.forEach {
             cache.deleteById(cacheName(), it, SysTenantSystemCacheEntry::class, FILTERABLE_PROPERTIES, emptySet())
         }
-        log.debug("${cacheName()} 缓存同步完成。")
+        log.debug("${cacheName()} cache sync complete.")
     }
 
-    // region 事件订阅 ------------------------------------------------------------------------
+    // region Event listeners ------------------------------------------------------------------------
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     open fun on(event: SysTenantSystemBound): Unit = syncOnInsert(event.id)

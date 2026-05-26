@@ -9,13 +9,13 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 
 /**
- * 混合缓存初始化器
+ * Mixed cache initializer.
  *
- * 在Spring容器初始化完成后，初始化所有配置的缓存项（key-value 与 Hash）。
+ * After the Spring context is initialized, initializes all configured cache items (key-value and Hash).
  *
- * 核心功能：
- * 1. 延迟初始化：实现SmartInitializingSingleton接口，在所有单例Bean初始化完成后执行
- * 2. 缓存初始化：调用MixCacheManager的initCacheAfterSystemInit，再调用MixHashCacheManager的initHashCacheAfterSystemInit
+ * Core responsibilities:
+ * 1. Deferred initialization: implements SmartInitializingSingleton to run after all singleton beans are initialized.
+ * 2. Cache initialization: invokes MixCacheManager.initCacheAfterSystemInit, then MixHashCacheManager.initHashCacheAfterSystemInit.
  *
  * @author K
  * @since 1.0.0
@@ -23,20 +23,20 @@ import org.springframework.stereotype.Component
 @Component
 class MixCacheInitializing : SmartInitializingSingleton {
 
-    // mixCacheManager 必需。用 lateinit 让 Spring 注入失败时报清晰的"未初始化"错误，而不是 NPE。
+    // mixCacheManager is required. Using lateinit so that a Spring injection failure yields a clear "not initialized" error instead of NPE.
     @Autowired
     @Qualifier("mixCacheManager")
     private lateinit var cacheManager: MixCacheManager
 
-    // mixHashCacheManager 可选：用户可能没启用 Hash 缓存。
+    // mixHashCacheManager is optional: users may not enable Hash caching.
     @Autowired(required = false)
     @Qualifier("mixHashCacheManager")
     private var hashCacheManager: MixHashCacheManager? = null
 
     override fun afterSingletonsInstantiated() {
-        log.info("缓存项初始化...")
+        log.info("Initializing cache items...")
         if (!::cacheManager.isInitialized) {
-            log.error("MixCacheManager 未注入，缓存项初始化跳过；请检查 mixCacheManager bean 是否被声明")
+            log.error("MixCacheManager is not injected; cache item initialization skipped. Please check whether the mixCacheManager bean is declared.")
             return
         }
         cacheManager.initCacheAfterSystemInit()

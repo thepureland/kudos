@@ -25,7 +25,7 @@ internal class StringEscapeKitTest {
     fun escapeJava_SimpleString_EscapesQuotesAndControlChars() {
         val input = "He didn't say,\n\"Stop!\"\tOK"
         val escaped = StringEscapeKit.escapeJava(input)
-        // 单引号不被转义；换行变成 \n；双引号和反斜杠被转义；制表符变成 \t
+        // single quotes are not escaped; newlines become \n; double quotes and backslashes are escaped; tabs become \t
         assertEquals("He didn't say,\\n\\\"Stop!\\\"\\tOK", escaped)
     }
 
@@ -50,7 +50,7 @@ internal class StringEscapeKitTest {
     fun escapeEcmaScript_SimpleString_EscapesForJavaScript() {
         val input = "He didn't say,\n/Stop!/"
         val escaped = StringEscapeKit.escapeEcmaScript(input)
-        // EcmaScript 中单引号、斜杠、换行都被转义
+        // In EcmaScript single quotes, slashes, and newlines are all escaped
         assertEquals("He didn\\'t say,\\n\\/Stop!\\/", escaped)
     }
 
@@ -79,7 +79,7 @@ internal class StringEscapeKitTest {
     fun escapeHtml4_Entities_EscapesCorrectly() {
         val input = "\"bread\" & \"butter\" <tag>"
         val escaped = StringEscapeKit.escapeHtml4(input)
-        // 双引号 → &quot;，& → &amp;，< → &lt;，> → &gt;
+        // double quote -> &quot;, & -> &amp;, < -> &lt;, > -> &gt;
         assertEquals("&quot;bread&quot; &amp; &quot;butter&quot; &lt;tag&gt;", escaped)
     }
 
@@ -104,7 +104,7 @@ internal class StringEscapeKitTest {
     fun escapeHtml3_BasicEntities_EscapesCorrectly() {
         val input = "<p>3 > 2 & 1 < 4</p>"
         val escaped = StringEscapeKit.escapeHtml3(input)
-        // HTML3 支持 &lt;、&gt;、&amp;
+        // HTML3 supports &lt;, &gt;, &amp;
         assertEquals("&lt;p&gt;3 &gt; 2 &amp; 1 &lt; 4&lt;/p&gt;", escaped)
     }
 
@@ -133,7 +133,7 @@ internal class StringEscapeKitTest {
     fun escapeXml10_BasicEntities_EscapesCorrectly() {
         val input = "\"bread\" & \"butter\" <xml>"
         val escaped = StringEscapeKit.escapeXml10(input)
-        // XML10 支持 &quot;、&amp;、&lt;、&gt;
+        // XML10 supports &quot;, &amp;, &lt;, &gt;
         assertEquals("&quot;bread&quot; &amp; &quot;butter&quot; &lt;xml&gt;", escaped)
     }
 
@@ -146,7 +146,7 @@ internal class StringEscapeKitTest {
     fun escapeXml11_BasicEntities_EscapesCorrectly() {
         val input = "'data' & <node>"
         val escaped = StringEscapeKit.escapeXml11(input)
-        // XML11 支持 &apos;、&amp;、&lt;、&gt;
+        // XML11 supports &apos;, &amp;, &lt;, &gt;
         assertEquals("&apos;data&apos; &amp; &lt;node&gt;", escaped)
     }
 
@@ -182,7 +182,7 @@ internal class StringEscapeKitTest {
     fun escapeCsv_ContainsCommaOrQuote_EscapesProperly() {
         val input = "He said, \"Hello, World\""
         val escaped = StringEscapeKit.escapeCsv(input)
-        // 包含逗号和双引号时，整个字段用双引号包裹，内部双引号加倍
+        // When a value contains a comma or double quote, the whole field is wrapped in double quotes and inner quotes are doubled
         assertEquals("\"He said, \"\"Hello, World\"\"\"", escaped)
     }
 
@@ -200,7 +200,7 @@ internal class StringEscapeKitTest {
 
     @Test
     fun unescapeCsv_QuotedValue_UnescapesProperly() {
-        // 直接给出带双引号并包含内部双引号的 CSV 字段
+        // Directly use a quoted CSV field that contains inner double quotes
         val field = "\"He said, \"\"Hi\"\"\""
         val unescaped = StringEscapeKit.unescapeCsv(field)
         assertEquals("He said, \"Hi\"", unescaped)
@@ -215,7 +215,7 @@ internal class StringEscapeKitTest {
 
     @Test
     fun unescapeCsv_EmbeddedEscapedQuotes() {
-        // 输入字符串："\"\"\"\"\"\""（六个双引号），表示解码后内容为两个双引号
+        // Input string: "\"\"\"\"\"\"" (six double quotes), which after decoding represents two double quotes
         val input = "\"\"\"\"\"\""
         val unescaped = StringEscapeKit.unescapeCsv(input)
         assertEquals("\"\"", unescaped)

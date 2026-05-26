@@ -6,24 +6,24 @@ import java.math.BigDecimal
 
 
 /**
- * 支持将BigDecimal表示的ip转为其人可读的String表示，以便用于页面展现，兼容ipv4和ipv6
+ * Supports converting a BigDecimal IP into its human-readable String representation for UI display; compatible with both IPv4 and IPv6.
  *
  * @author K
  * @since 1.0.0
  */
 interface IIpBigDecimalToStringSupport {
 
-    /** 返回起始ip(BigDecimal表达) */
+    /** Returns the start IP (BigDecimal representation). */
     fun getIpStartBigDecimal(): BigDecimal?
 
-    /** 返回结束ip(BigDecimal表达) */
+    /** Returns the end IP (BigDecimal representation). */
     fun getIpEndBigDecimal(): BigDecimal?
 
-    /** 返回 ip 类型字典代码 */
+    /** Returns the IP type dictionary code. */
     fun getIpTypeDictCodeStr(): String?
 
     /**
-     * 返回ip起始值的String表示，兼容ipv4和ipv6
+     * Returns the String representation of the start IP, compatible with IPv4 and IPv6.
      */
     fun getIpStartStr(): String? {
         if (getIpTypeDictCodeStr().isNullOrBlank() || getIpStartBigDecimal() == null)
@@ -36,7 +36,7 @@ interface IIpBigDecimalToStringSupport {
     }
 
     /**
-     * 返回ip结束值的String表示，兼容ipv4和ipv6
+     * Returns the String representation of the end IP, compatible with IPv4 and IPv6.
      */
     fun getIpEndStr(): String? {
         if (getIpTypeDictCodeStr().isNullOrBlank() || getIpEndBigDecimal() == null)

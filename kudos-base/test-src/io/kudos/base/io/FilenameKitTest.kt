@@ -136,7 +136,7 @@ internal class FilenameKitTest {
         assertFalse(FilenameKit.directoryContains("/a/b", "/a/b"))
         // null child → false
         assertFalse(FilenameKit.directoryContains("/a/b", null))
-        // invalid parent → 返回 false（不抛异常）
+        // invalid parent → returns false (no exception)
         assertFalse(FilenameKit.directoryContains("/not/exist/path", "/a"))
     }
 
@@ -165,10 +165,10 @@ internal class FilenameKitTest {
 
     @Test
     fun getPrefixLengthVariousInputs() {
-        // 空输入应返回 -1
+        // null input should return -1
         assertEquals(-1, FilenameKit.getPrefixLength(null))
 
-        // “C:folder/file.txt” 前缀应为 "C:"（drive-relative）
+        // "C:folder/file.txt" prefix should be "C:" (drive-relative)
         run {
             val input = "C:folder/file.txt"
             val prefixLen = FilenameKit.getPrefixLength(input)
@@ -176,7 +176,7 @@ internal class FilenameKitTest {
             assertEquals("C:", input.substring(0, prefixLen))
         }
 
-        // “C:/folder” 前缀应为 "C:/"
+        // "C:/folder" prefix should be "C:/"
         run {
             val input = "C:/folder"
             val prefixLen = FilenameKit.getPrefixLength(input)
@@ -184,7 +184,7 @@ internal class FilenameKitTest {
             assertEquals("C:/", input.substring(0, prefixLen))
         }
 
-        // "/usr/bin" 前缀应为 "/"
+        // "/usr/bin" prefix should be "/"
         run {
             val input = "/usr/bin"
             val prefixLen = FilenameKit.getPrefixLength(input)
@@ -192,14 +192,14 @@ internal class FilenameKitTest {
             assertEquals("/", input.substring(0, prefixLen))
         }
 
-        // "//server/share/path" 前缀应为 "//server/"
+        // "//server/share/path" prefix should be "//server/"
         run {
             val input = "//server/share/path"
             val prefixLen = FilenameKit.getPrefixLength(input)
             assertEquals("//server/", input.substring(0, prefixLen))
         }
 
-        // "~/folder" 前缀应为 "~/"
+        // "~/folder" prefix should be "~/"
         run {
             val input = "~/folder"
             val prefixLen = FilenameKit.getPrefixLength(input)
@@ -207,10 +207,10 @@ internal class FilenameKitTest {
             assertEquals("~/", input.substring(0, prefixLen))
         }
 
-        // “relative/path” 无前缀，应返回 0
+        // "relative/path" has no prefix, should return 0
         assertEquals(0, FilenameKit.getPrefixLength("relative/path"))
 
-        // 空字符串也视为无前缀
+        // Empty string also treated as no prefix
         assertEquals(0, FilenameKit.getPrefixLength(""))
     }
 
@@ -309,7 +309,7 @@ internal class FilenameKitTest {
         assertTrue(FilenameKit.equals("a.txt", "a.txt"))
         assertFalse(FilenameKit.equals("A.txt", "a.txt"))
 
-        // equalsOnSystem 应与 equals(..., normalized=false, caseSensitivity=null) 等价
+        // equalsOnSystem should be equivalent to equals(..., normalized=false, caseSensitivity=null)
         val a = "A.TXT"
         val b = "a.txt"
         val viaFlags = FilenameKit.equals(a, b, normalized = false, caseSensitivity = null)
@@ -319,7 +319,7 @@ internal class FilenameKitTest {
         // equalsNormalized: normalize then case-sensitive compare
         assertTrue(FilenameKit.equalsNormalized("/foo/../bar", "/bar"))
 
-        // equalsNormalizedOnSystem 应与 equals(..., normalized=true, caseSensitivity=null) 等价
+        // equalsNormalizedOnSystem should be equivalent to equals(..., normalized=true, caseSensitivity=null)
         val x = "/FOO/../bar"
         val y = "/bar"
         val viaNormFlags = FilenameKit.equals(x, y, normalized = true, caseSensitivity = null)
@@ -340,27 +340,27 @@ internal class FilenameKitTest {
     fun isExtensionSingleAndArray() {
         // null filename → false
         assertFalse(FilenameKit.isExtension(null, "txt"))
-        // 没有扩展名 → false（对于指定的非空扩展列表）
+        // No extension → false (for a specified non-empty extension list)
         assertFalse(FilenameKit.isExtension("foo", "txt"))
-        // 单个扩展名
+        // Single extension
         assertTrue(FilenameKit.isExtension("file.txt", "txt"))
         assertFalse(FilenameKit.isExtension("file.TXT", "txt"))
 
-        // 数组变体
+        // Array variant
         val exts: Array<String?> = arrayOf("txt", "jpg")
         assertTrue(FilenameKit.isExtension("a.jpg", exts))
         assertFalse(FilenameKit.isExtension("a.png", exts))
 
-        // 集合变体
+        // Collection variant
         val extList = listOf("mp3", "wav")
         assertTrue(FilenameKit.isExtension("song.wav", extList))
         assertFalse(FilenameKit.isExtension("song.txt", extList))
 
-        // 空数组或空集合意味着“只有没有扩展名的文件会匹配”，因此对没有扩展名的文件返回 true
+        // Empty array/collection means "only files without an extension match", so returns true for files with no extension
         assertTrue(FilenameKit.isExtension("file", arrayOf()))
         assertTrue(FilenameKit.isExtension("file", emptyList()))
 
-        // 单个 null 元素的数组也表示“只有没有扩展名的文件会匹配”，对没有扩展名的文件返回 true
+        // An array with a single null element also means "only files with no extension match"; returns true for files with no extension
         assertFalse(FilenameKit.isExtension(null, arrayOf("a.jpg")))
     }
 
@@ -381,13 +381,13 @@ internal class FilenameKitTest {
         assertFalse(FilenameKit.wildcardMatch("a", null))
         assertFalse(FilenameKit.wildcardMatch(null, "a"))
 
-        // wildcardMatchOnSystem 应与调用 wildcardMatch(..., null)（即使用 IOCase.SYSTEM）结果一致
+        // wildcardMatchOnSystem should match wildcardMatch(..., null) (using IOCase.SYSTEM)
         val onSystem = FilenameKit.wildcardMatchOnSystem("ABC.txt", "*.txt")
         val viaWildcard = FilenameKit.wildcardMatch("ABC.txt", "*.txt", null)
         assertEquals(viaWildcard, onSystem)
 
         // wildcardMatch with explicit caseSensitivity
-        assertTrue(FilenameKit.wildcardMatch("ABC.TXT", "*.txt", false))  // 忽略大小写
-        assertFalse(FilenameKit.wildcardMatch("ABC.TXT", "*.txt", true))   // 区分大小写
+        assertTrue(FilenameKit.wildcardMatch("ABC.TXT", "*.txt", false))  // case-insensitive
+        assertFalse(FilenameKit.wildcardMatch("ABC.TXT", "*.txt", true))   // case-sensitive
     }
 }

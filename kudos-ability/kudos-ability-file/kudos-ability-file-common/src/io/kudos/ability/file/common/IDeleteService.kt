@@ -4,7 +4,8 @@ import io.kudos.ability.file.common.entity.DeleteFileModel
 import java.io.File
 
 /**
- * 文件删除服务 SPI。具体存储后端（本地磁盘 / MinIO / OSS）各自实现。
+ * SPI for the file delete service. Each concrete storage backend
+ * (local disk / MinIO / OSS) provides its own implementation.
  *
  * @author K
  * @author AI: Codex
@@ -12,26 +13,31 @@ import java.io.File
  */
 interface IDeleteService {
     /**
-     * 删除文件
-     * @param model 请求路径
-     * @return 是否删除成功
-     * @throws ServiceException 文件不存在
+     * Deletes a file.
+     * @param model request path
+     * @return whether the deletion succeeded
+     * @throws ServiceException when the file does not exist
      */
     fun delete(model: DeleteFileModel): Boolean
 
     /**
-     * Path 是否合法——目前仅做粗粒度的 `..` 路径穿越防护。
+     * Whether the path is valid — currently only performs coarse-grained `..`
+     * path-traversal protection.
      *
-     * 历史 bug：旧实现拼接时用了 [File.pathSeparator]（环境变量 PATH 的分隔符，
-     * Unix `:` / Windows `;`），与"文件路径片段间的分隔"（[File.separator]：Unix `/` /
-     * Windows `\`）是两个不同的概念，会让拼接结果错误（如 `bucket:filePath` 而非
-     * `bucket/filePath`），进而让 `..` 检查检的不是真实即将被使用的路径形态。已修。
+     * Historical bug: the old implementation used [File.pathSeparator] (the PATH
+     * environment variable separator: Unix `:` / Windows `;`) when concatenating,
+     * which is a different concept from "separators between file path segments"
+     * ([File.separator]: Unix `/` / Windows `\`). That made the concatenation result
+     * wrong (e.g. `bucket:filePath` instead of `bucket/filePath`), causing the `..`
+     * check to inspect a string that did not match the actual path about to be used.
+     * Fixed.
      *
-     * 注意：本检查**远不足以替代真正的路径白名单 / 规范化**。生产部署应当在每个具体
-     * 后端的 `delete` 中再做 `Path.normalize() + startsWith(rootDir)` 等强校验。
+     * Note: this check is **far from sufficient to replace proper path allowlisting /
+     * normalization**. Production deployments should perform stronger validation such
+     * as `Path.normalize() + startsWith(rootDir)` inside each concrete backend's `delete`.
      *
-     * @param model 请求路径
-     * @return 是否合法路径
+     * @param model request path
+     * @return whether the path is valid
      */
     fun isValid(model: DeleteFileModel): Boolean {
         val relativePath = (model.bucketName ?: "") + File.separator + (model.filePath ?: "")

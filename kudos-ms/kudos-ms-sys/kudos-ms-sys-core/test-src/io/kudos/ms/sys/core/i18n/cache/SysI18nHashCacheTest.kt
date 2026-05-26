@@ -11,13 +11,13 @@ import jakarta.annotation.Resource
 import kotlin.test.*
 
 /**
- * [SysI18nHashCache] 单元测试（Hash 缓存，按 locale + atomicServiceCode + i18nTypeDictCode + namespace 查询）。
+ * [SysI18nHashCache] unit test (Hash cache, queried by locale + atomicServiceCode + i18nTypeDictCode + namespace).
  *
- * 覆盖：getI18ns（带 namespace / 不带 namespace）、全量刷新、新增/更新/删除/批量删除后同步；
- * 本地缓存开启时二次取为同一对象引用。
+ * Covers: getI18ns (with / without namespace), full reload, sync after insert/update/delete/batch delete;
+ * second retrieval returns the same object reference when local cache is enabled.
  *
- * 测试数据：`SysI18nHashCacheTest.sql`。
- * 需 Docker 运行 Redis，且 sys_cache 中已配置 SYS_I18N__HASH（hash=true）。
+ * Test data: `SysI18nHashCacheTest.sql`.
+ * Requires Docker to run Redis and SYS_I18N__HASH (hash=true) configured in sys_cache.
  *
  * @author K
  * @since 1.0.0
@@ -50,7 +50,7 @@ class SysI18nHashCacheTest : RdbAndRedisCacheTestBase() {
     fun getI18ns_withNamespace() {
         cacheHandler.reloadAll(true)
         val list = cacheHandler.getI18ns(locale, atomicServiceCode, i18nTypeDictCode, namespace)
-        // active=true 的为 key 1,2,4,5,6（3、7 为 active=false）
+        // keys 1, 2, 4, 5, 6 are active=true (3 and 7 are active=false)
         assertEquals(5, list.size)
         assertTrue(list.any { it.key == "1" && it.value == "value-1" })
         assertTrue(list.any { it.key == "4" })
@@ -67,9 +67,9 @@ class SysI18nHashCacheTest : RdbAndRedisCacheTestBase() {
     @Test
     fun getI18ns_withoutNamespace() {
         cacheHandler.reloadAll(true)
-        // namespace 传空：不按 namespace 过滤，应包含 i18n.key 与 msg.key 下所有 active 项
+        // Pass empty namespace: do not filter by namespace; should include all active items under i18n.key and msg.key
         val list = cacheHandler.getI18ns(locale, atomicServiceCode, i18nTypeDictCode, "")
-        // i18n.key: 1,2,4,5,6；msg.key: 1
+        // i18n.key: 1, 2, 4, 5, 6; msg.key: 1
         assertTrue(list.size >= 6)
         assertTrue(list.any { it.namespace == "i18n.key" && it.key == "1" })
         assertTrue(list.any { it.namespace == "msg.key" && it.key == "1" })

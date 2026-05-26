@@ -18,15 +18,17 @@ import org.springframework.web.context.request.RequestContextHolder
 
 
 /**
- * Web 审计切面（HTTP 调用路径）。
+ * Web audit aspect (HTTP call path).
  *
- * 拦截标注 [WebAudit] 的 Controller 方法，[before] 阶段从 [RequestContextHolder] 抓 [HttpServletRequest]，
- * 提取请求元信息（URL、IP、UA 等）写入 [LogAuditContext]。语义同 [LogAuditAspect]：
- *  - 成功 → [afterReturning]
- *  - 失败 → [afterThrowing]，把异常类名 + message 标记到 BaseLog.description
+ * Intercepts Controller methods annotated with [WebAudit]; during [before] it grabs the [HttpServletRequest] from
+ * [RequestContextHolder], extracts request metadata (URL, IP, UA, etc.) and writes a LogVo into [LogAuditContext].
+ * Same semantics as [LogAuditAspect]:
+ *  - success → [afterReturning]
+ *  - failure → [afterThrowing], tagging the exception class name + message onto BaseLog.description
  *
- * 二者都在 finally 调 [LogAuditContext.clear]，避免线程池场景下的 ThreadLocal 污染。
- * `multipart/form-data` 上传请求整体跳过——文件流写入审计库既臃肿又无成本-收益意义。
+ * Both paths call [LogAuditContext.clear] in finally to avoid ThreadLocal pollution under thread-pool scenarios.
+ * `multipart/form-data` upload requests are skipped entirely — writing file streams into the audit store is bulky
+ * and provides no cost-benefit.
  *
  * @author K
  * @author AI: Codex
@@ -36,12 +38,12 @@ import org.springframework.web.context.request.RequestContextHolder
 @Component
 class WebLogAuditAspect {
 
-    /** 审计服务实现，required = false 让无审计实现时切面退化为 no-op */
+    /** Audit-service implementation; required = false lets the aspect degrade to no-op when no audit impl is present */
     @Autowired(required = false)
     private val auditService: IAuditService? = null
 
     /**
-     * 切点：匹配所有标注了 [WebAudit] 注解的方法。
+     * Pointcut: matches all methods annotated with [WebAudit].
      *
      * @author K
      * @since 1.0.0
@@ -51,10 +53,11 @@ class WebLogAuditAspect {
     }
 
     /**
-     * 前置增强：从 [RequestContextHolder] 取当前 [HttpServletRequest]，结合 [WebAudit] 元信息生成 LogVo
-     * 写入 [LogAuditContext]。multipart 请求直接跳过避免污染审计库。
+     * Before advice: takes the current [HttpServletRequest] from [RequestContextHolder], combines it with [WebAudit]
+     * metadata to build a LogVo and writes it into [LogAuditContext]. Multipart requests are skipped directly to
+     * avoid polluting the audit store.
      *
-     * @param joinPoint 切入点
+     * @param joinPoint the join point
      * @author K
      * @since 1.0.0
      */
@@ -69,9 +72,9 @@ class WebLogAuditAspect {
     }
 
     /**
-     * 成功路径：方法正常返回后，把 LogVo 提交给审计服务。
+     * Success path: after the method returns normally, submits the LogVo to the audit service.
      *
-     * @param joinPoint 切入点
+     * @param joinPoint the join point
      * @author K
      * @since 1.0.0
      */
@@ -81,10 +84,11 @@ class WebLogAuditAspect {
     }
 
     /**
-     * 失败路径：方法抛异常后，把异常信息拼到 LogVo.description 再提交审计。
+     * Failure path: after the method throws, appends the exception info to
+     * LogVo.description and submits the audit.
      *
-     * @param joinPoint 切入点
-     * @param ex 抛出的异常
+     * @param joinPoint the join point
+     * @param ex the thrown exception
      * @author K
      * @since 1.0.0
      */
@@ -94,10 +98,12 @@ class WebLogAuditAspect {
     }
 
     /**
-     * 实际提交审计：取 request → 跳过 multipart → 取 LogVo → 失败时打 FAILED tag → 提交。
-     * 异常仅 ERROR 日志，finally 调 [LogAuditContext.clear] 避免线程池下的 ThreadLocal 泄漏。
+     * Actual audit submission: get request -> skip multipart -> get LogVo ->
+     * tag FAILED on failure -> submit. Exceptions are only ERROR-logged; the
+     * finally block calls [LogAuditContext.clear] to avoid ThreadLocal leaks
+     * in thread-pool scenarios.
      *
-     * @param error 异常对象，null 表示成功路径
+     * @param error exception object; null indicates the success path
      * @author K
      * @since 1.0.0
      */
@@ -114,17 +120,18 @@ class WebLogAuditAspect {
                 val requestBody = AuditLogTool.getRequestData(request)
                 AuditLogTool.createSysAuditLogModel(logVo, requestBody)
                     ?.let { auditService?.submit(it) }
-            }.onFailure { log.error(it, "审计日志组件,拦截器异常!") }
+            }.onFailure { log.error(it, "Audit log component, interceptor exception!") }
         } finally {
             LogAuditContext.clear()
         }
     }
 
     /**
-     * 从 Spring 的 [RequestContextHolder] 取当前 HTTP 请求。
-     * 非 HTTP 上下文（如内部调度任务）返回 null，让调用方静默跳过。
+     * Returns the current HTTP request from Spring's [RequestContextHolder].
+     * Returns null in non-HTTP contexts (e.g. internal scheduling tasks),
+     * letting the caller silently skip.
      *
-     * @return 当前 [HttpServletRequest]；非 HTTP 上下文返回 null
+     * @return the current [HttpServletRequest]; null in non-HTTP contexts
      * @author K
      * @since 1.0.0
      */
@@ -133,17 +140,18 @@ class WebLogAuditAspect {
             ?.resolveReference(RequestAttributes.REFERENCE_REQUEST) as? HttpServletRequest
 
     /**
-     * 判断请求是否为 `multipart/...` 上传请求。
-     * 之前依赖 commons-fileupload 的 `ServletFileUpload.isMultipartContent`，升级 Spring 3.0 后改为直接看 Content-Type 头。
+     * Determines whether the request is a `multipart/...` upload.
+     * Previously relied on commons-fileupload's `ServletFileUpload.isMultipartContent`;
+     * after upgrading Spring 3.0, switched to inspecting the Content-Type header directly.
      *
-     * @param request HTTP 请求
-     * @return true 表示 multipart 请求，调用方应跳过审计落盘
+     * @param request HTTP request
+     * @return true if it is a multipart request; the caller should skip writing the audit
      * @author K
      * @since 1.0.0
      */
     private fun isMultipartContent(request: HttpServletRequest): Boolean =
         request.contentType?.lowercase()?.startsWith("multipart/") == true
 
-    /** 日志器 */
+    /** Logger. */
     private val log = LogFactory.getLog(this::class)
 }

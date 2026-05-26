@@ -6,7 +6,7 @@ import io.kudos.ms.msg.core.receiver.model.po.MsgUnreceived
 
 
 /**
- * 未送达消息业务接口
+ * Undelivered message business service interface.
  *
  * @author K
  * @since 1.0.0
@@ -14,9 +14,10 @@ import io.kudos.ms.msg.core.receiver.model.po.MsgUnreceived
 interface IMsgUnreceivedService : IBaseCrudService<String, MsgUnreceived> {
 
     /**
-     * 批量登记一次发送中失败的接收人，状态 resolved=false。
-     * 调用方一般是渠道 listener 在 callback 里调；同一 (sendId, receiverId) 重复登记会再写一行
-     * （便于按重试批次审计），如需去重应由调用方先查 [findUnresolvedBySend]。
+     * Batch registers receivers that failed in one send, with resolved=false.
+     * Callers are usually channel listeners invoking this in their callback; registering the
+     * same (sendId, receiverId) again will write another row (for retry-batch auditing). For
+     * deduplication, callers should first query [findUnresolvedBySend].
      */
     fun recordFailures(
         sendId: String,
@@ -27,18 +28,18 @@ interface IMsgUnreceivedService : IBaseCrudService<String, MsgUnreceived> {
     ): Int
 
     /**
-     * 查询某次发送批次下未处理 (resolved=false) 的失败记录。
+     * Queries the unresolved (resolved=false) failure records for a given send batch.
      */
     fun findUnresolvedBySend(sendId: String): List<MsgUnreceived>
 
     /**
-     * 标记一条记录为已处理（重试成功 / admin 关闭）。
+     * Marks a record as resolved (retry succeeded / closed by admin).
      */
     fun resolve(id: String): Boolean
 
     /**
-     * 累加重试次数 + 记录重试时间。
-     * 不改 resolved；重试成功的最终调用方应再调 [resolve]。
+     * Increments the retry count and records the retry time.
+     * Does not change resolved; on retry success the caller should additionally call [resolve].
      */
     fun bumpRetry(id: String): Boolean
 

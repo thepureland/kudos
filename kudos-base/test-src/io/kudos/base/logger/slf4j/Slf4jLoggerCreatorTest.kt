@@ -4,7 +4,7 @@ import kotlin.test.Test
 import kotlin.test.assertNotNull
 
 /**
- * Slf4jLoggerCreator测试用例
+ * Test cases for Slf4jLoggerCreator.
  *
  * @author AI: cursor
  * @author K

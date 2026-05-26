@@ -16,7 +16,7 @@ import kotlin.test.assertTrue
 /**
  * junit test for SysResourceService
  *
- * 测试数据来源：`SysResourceServiceTest.sql`
+ * Test data source: `SysResourceServiceTest.sql`
  *
  * @author K
  * @author AI: Cursor
@@ -36,7 +36,7 @@ class SysResourceServiceTest : RdbAndRedisCacheTestBase() {
     private val seededSubSystemCode = "svc-subsys-res-test-1_1461"
     private val seededUrl = "/svc-res-test-1"
 
-    /** 按主键 `get(id)` 取实体。 */
+    /** Get the entity by primary key via `get(id)`. */
     @Test
     fun get_byId_entity() {
         val row = sysResourceService.get(seededParentId)
@@ -44,7 +44,7 @@ class SysResourceServiceTest : RdbAndRedisCacheTestBase() {
         assertEquals(seededParentId, row.id)
     }
 
-    /** `get(id, SysResourceCacheEntry::class)` 与 `getResourceFromCache` 在刷新 Hash 后一致。 */
+    /** `get(id, SysResourceCacheEntry::class)` is consistent with `getResourceFromCache` after refreshing the Hash. */
     @Test
     fun get_withCacheEntryReturnType_delegatesToHashCache() {
         sysResourceHashCache.reloadAll(clear = true)
@@ -56,7 +56,7 @@ class SysResourceServiceTest : RdbAndRedisCacheTestBase() {
         assertEquals(seededParentId, fromGet.id)
     }
 
-    /** 按 id 从 Hash 缓存读取缓存项。 */
+    /** Read a cache entry from the Hash cache by id. */
     @Test
     fun getResourceFromCache_byId() {
         sysResourceHashCache.reloadAll(clear = true)
@@ -65,7 +65,7 @@ class SysResourceServiceTest : RdbAndRedisCacheTestBase() {
         assertEquals(seededUrl, item.url)
     }
 
-    /** 子系统 + URL 解析资源 id。 */
+    /** Resolve resource id by subsystem + URL. */
     @Test
     fun getResourceIdFromCacheBySubSystemAndUrl() {
         sysResourceHashCache.reloadAll(clear = true)
@@ -73,7 +73,7 @@ class SysResourceServiceTest : RdbAndRedisCacheTestBase() {
         assertEquals(seededParentId, resourceId)
     }
 
-    /** 与 [getResourceIdFromCacheBySubSystemAndUrl] 等价的便捷方法。 */
+    /** Convenience method equivalent to [getResourceIdFromCacheBySubSystemAndUrl]. */
     @Test
     fun getResourceIdFromCache_alias() {
         sysResourceHashCache.reloadAll(clear = true)
@@ -83,7 +83,7 @@ class SysResourceServiceTest : RdbAndRedisCacheTestBase() {
         )
     }
 
-    /** 按子系统 + 资源类型字典码取 id 列表。 */
+    /** Get id list by subsystem + resource type dictionary code. */
     @Test
     fun getResourceIdsFromCacheBySubSystemAndType() {
         sysResourceHashCache.reloadAll(clear = true)
@@ -100,7 +100,7 @@ class SysResourceServiceTest : RdbAndRedisCacheTestBase() {
         assertTrue(functionIds.contains(seededChildId))
     }
 
-    /** 批量按 id 从缓存加载。 */
+    /** Batch load from cache by ids. */
     @Test
     fun getResourcesFromCacheByIds() {
         sysResourceHashCache.reloadAll(clear = true)
@@ -109,7 +109,7 @@ class SysResourceServiceTest : RdbAndRedisCacheTestBase() {
         assertEquals(seededParentId, map[seededParentId]?.id)
     }
 
-    /** 按资源类型 + 子系统从缓存加载列表。 */
+    /** Load list from cache by resource type + sub-system. */
     @Test
     fun getResourcesFromCacheBySubSystemAndType() {
         sysResourceHashCache.reloadAll(clear = true)
@@ -120,7 +120,7 @@ class SysResourceServiceTest : RdbAndRedisCacheTestBase() {
         assertTrue(menus.any { it.id == seededParentId })
     }
 
-    /** 菜单类型资源的直接子结点（第一层）。 */
+    /** Direct child nodes (first level) of menu-type resources. */
     @Test
     fun getDirectChildrenResourcesFromCache() {
         sysResourceHashCache.reloadAll(clear = true)
@@ -138,7 +138,7 @@ class SysResourceServiceTest : RdbAndRedisCacheTestBase() {
         assertTrue(underParent.any { it.id == seededChildId })
     }
 
-    /** 从缓存组装的菜单树非空。 */
+    /** Menu tree assembled from cache is non-empty. */
     @Test
     fun getSimpleMenusFromCache_and_getMenusFromCache() {
         sysResourceHashCache.reloadAll(clear = true)
@@ -146,21 +146,21 @@ class SysResourceServiceTest : RdbAndRedisCacheTestBase() {
         assertTrue(sysResourceService.getMenusFromCache(seededSubSystemCode).isNotEmpty())
     }
 
-    /** 按子系统编码查库列表行。 */
+    /** Query list rows from database by sub-system code. */
     @Test
     fun getResourcesBySubSystemCode() {
         val resources = sysResourceService.getResourcesBySubSystemCode(seededSubSystemCode)
         assertTrue(resources.isNotEmpty())
     }
 
-    /** 子资源列表。 */
+    /** Child resource list. */
     @Test
     fun getChildResources() {
         val children = sysResourceService.getChildResources(seededParentId)
         assertTrue(children.any { it.id == seededChildId })
     }
 
-    /** 资源树。 */
+    /** Resource tree. */
     @Test
     fun getResourceTree() {
         val tree = sysResourceService.getResourceTree(seededSubSystemCode, null)
@@ -170,7 +170,7 @@ class SysResourceServiceTest : RdbAndRedisCacheTestBase() {
         assertTrue(parent.children.orEmpty().any { it.id == seededChildId })
     }
 
-    /** 子结点的祖先链包含父 id。 */
+    /** Ancestor chain of a child node contains the parent id. */
     @Test
     fun fetchAllParentIds() {
         sysResourceHashCache.reloadAll(clear = true)
@@ -178,7 +178,7 @@ class SysResourceServiceTest : RdbAndRedisCacheTestBase() {
         assertTrue(parents.contains(seededParentId))
     }
 
-    /** 启用状态更新后，Hash 缓存中条目的 `active` 与库一致（资源 Hash 缓存含未启用记录）。 */
+    /** After updating active status, the Hash cache entry's `active` matches the database (the resource Hash cache contains disabled records). */
     @Test
     fun updateActive() {
         sysResourceHashCache.reloadAll(clear = true)
@@ -191,13 +191,13 @@ class SysResourceServiceTest : RdbAndRedisCacheTestBase() {
         assertEquals(true, requireNotNull(sysResourceService.getResourceFromCache(seededParentId)).active)
     }
 
-    /** 主键不存在时 `updateActive` 返回 false。 */
+    /** `updateActive` returns false when the primary key does not exist. */
     @Test
     fun updateActive_whenIdNotExists_returnsFalse() {
         assertFalse(sysResourceService.updateActive("00000000-0000-0000-0000-000000000001", true))
     }
 
-    /** 主键不存在时 `deleteById` 返回 false。 */
+    /** `deleteById` returns false when the primary key does not exist. */
     @Test
     fun deleteById_returnsFalseWhenRowMissing() {
         assertFalse(sysResourceService.deleteById("00000000-0000-0000-0000-000000000001"))

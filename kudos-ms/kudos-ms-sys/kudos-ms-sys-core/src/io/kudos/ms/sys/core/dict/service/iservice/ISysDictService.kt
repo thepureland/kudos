@@ -10,7 +10,7 @@ import io.kudos.ms.sys.core.dict.model.po.SysDict
 
 
 /**
- * 字典业务接口
+ * Dictionary business interface.
  *
  * @author K
  * @author AI: Cursor
@@ -19,54 +19,55 @@ import io.kudos.ms.sys.core.dict.model.po.SysDict
 interface ISysDictService : IBaseCrudService<String, SysDict> {
 
     /**
-     * 按字典主键从 Hash 缓存加载字典配置
+     * Load a dictionary configuration from the Hash cache by dictionary primary key.
      */
     fun getDictFromCache(dictId: String): SysDictCacheEntry?
 
     /**
-     * 按原子服务编码从缓存取字典列表；[activeOnly] 为 true 时仅保留启用项（内存过滤）
+     * Fetch the dictionary list from the cache by atomic service code; when [activeOnly] is true, only active entries
+     * are kept (in-memory filtering).
      */
     fun getDictsFromCacheByAtomicServiceCode(atomicServiceCode: String, activeOnly: Boolean = true): List<SysDictCacheEntry>
 
     /**
-     * 按原子服务编码取得字典 id 到字典类型的映射。
+     * Get the mapping from dictionary id to dictionary type by atomic service code.
      *
-     * @param atomicServiceCode 原子服务编码
-     * @param activeOnly true 时仅返回启用项
-     * @return Map<字典 id, 字典类型>
+     * @param atomicServiceCode atomic service code
+     * @param activeOnly when true, return only active entries
+     * @return Map<dictionary id, dictionary type>
      */
     fun getDictTypesByAtomicServiceCode(atomicServiceCode: String, activeOnly: Boolean = true): Map<String, String>
 
     /**
-     * 根据原子服务编码和字典类型直查库得到列表行
+     * Query the database directly by atomic service code and dictionary type to get the list row.
      */
     fun getDictByAtomicServiceAndType(atomicServiceCode: String, dictType: String): SysDictRow?
 
     /**
-     * 根据 id 直查库得到列表行
+     * Query the database directly by id to get the list row.
      */
     fun getRecord(id: String): SysDictRow?
 
     /**
-     * 删除字典或字典项
+     * Delete a dictionary or a dictionary item.
      *
-     * @param id 主键
-     * @param isDict true: 字典 id，false：字典项 id
+     * @param id primary key
+     * @param isDict true: dictionary id; false: dictionary item id
      */
     fun delete(id: String, isDict: Boolean): Boolean
 
     /**
-     * 更新启用状态，并同步缓存
+     * Update the active status and sync the cache.
      */
     fun updateActive(id: String, active: Boolean): Boolean
 
     /**
-     * 根据字典类型和原子服务编码取启用字典项（经字典项缓存）
+     * Get active dictionary items by dictionary type and atomic service code (via the dictionary item cache).
      */
     fun getActiveDictItemsFromCache(dictType: String, atomicServiceCode: String): List<SysDictItemCacheEntry>
 
     /**
-     * 根据字典类型和原子服务编码取启用字典项 code→name 映射
+     * Get the active dictionary items code->name mapping by dictionary type and atomic service code.
      */
     fun getActiveDictItemMapFromCache(
         dictType: String,
@@ -74,14 +75,14 @@ interface ISysDictService : IBaseCrudService<String, SysDict> {
     ): LinkedHashMap<String, String>
 
     /**
-     * 批量取启用字典项
+     * Batch-get active dictionary items.
      */
     fun batchGetActiveDictItemsFromCache(
         dictTypeAndASCodePairs: List<Pair<String, String>>
     ): Map<Pair<String, String>, List<SysDictItemCacheEntry>>
 
     /**
-     * 批量取启用字典项 code→name 映射
+     * Batch-get the active dictionary items code->name mapping.
      */
     fun batchGetActiveDictItemMapFromCache(
         dictTypeAndASCodePairs: List<Pair<String, String>>

@@ -11,9 +11,9 @@ import org.springframework.web.bind.annotation.RequestParam
 
 
 /**
- * 登录通行证 对外API
+ * Passport (login) external API
  *
- * 实现负责：用户查询、密码（BCrypt）校验、登录错误计数维护、最后登录信息写库。
+ * The implementation is responsible for: user lookup, password (BCrypt) verification, login error count maintenance, and persisting last-login info.
  *
  * @author K
  * @since 1.0.0
@@ -21,41 +21,41 @@ import org.springframework.web.bind.annotation.RequestParam
 interface IPassportApi {
 
     /**
-     * 校验凭据并完成登录。无论成功与否都返回 [PassportLoginResult]——HTTP 层始终 200。
+     * Verify credentials and complete login. Returns [PassportLoginResult] regardless of success — HTTP layer always returns 200.
      */
     @PostMapping("/api/internal/user/passport/login")
     fun login(@RequestBody req: PassportLoginRequest): PassportLoginResult
 
     /**
-     * 登出：写入最后登出时间。仅负责落库审计，不做会话/JWT 撤销。
+     * Logout: writes the last-logout time. Only responsible for audit persistence; does not perform session/JWT revocation.
      */
     @PostMapping("/api/internal/user/passport/logout")
     fun logout(@RequestParam userId: String): Boolean
 
     /**
-     * 校验当前用户的登录密码（不消耗错误次数，不更新登录时间）。
+     * Verify the current user's login password (does not consume error attempts, does not update login time).
      *
-     * 用于敏感操作前的二次身份确认（"are you really you?"）。
+     * Used for re-confirming identity before sensitive operations ("are you really you?").
      *
-     * @return true 匹配；false 用户不存在 / 密码错
+     * @return true if matched; false if user not found / password incorrect
      */
     @PostMapping("/api/internal/user/passport/verifyPassword")
     fun verifyPassword(@RequestBody req: VerifyPasswordRequest): Boolean
 
     /**
-     * 校验当前用户的安全密码（不消耗错误次数）。
+     * Verify the current user's security password (does not consume error attempts).
      */
     @PostMapping("/api/internal/user/passport/verifySecurityPassword")
     fun verifySecurityPassword(@RequestBody req: VerifyPasswordRequest): Boolean
 
     /**
-     * 用户本人修改登录密码：先校验旧密码，正确才覆盖新密码。
+     * User self-service login password change: verifies the old password first, only overwrites with the new password if correct.
      */
     @PostMapping("/api/internal/user/passport/changePassword")
     fun changePassword(@RequestBody req: ChangePasswordRequest): ChangePasswordResultEnum
 
     /**
-     * 用户本人修改安全密码。
+     * User self-service security password change.
      */
     @PostMapping("/api/internal/user/passport/changeSecurityPassword")
     fun changeSecurityPassword(@RequestBody req: ChangePasswordRequest): ChangePasswordResultEnum

@@ -16,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional
 
 
 /**
- * 机构-用户关系业务
+ * Organization-user association service implementation.
  *
  * @author K
  * @author AI: Cursor
@@ -51,11 +51,12 @@ open class UserOrgUserService(
     @Transactional
     override fun batchBind(orgId: String, userIds: Collection<String>, orgAdmin: Boolean): Int {
         if (userIds.isEmpty()) return 0
-        // 一次 SELECT 已存在的关系，差集对新增 ID 一次 batchInsert，把原 N+1 折叠到 2 次 SQL。
+        // One SELECT for existing associations, then one batchInsert for the new ids in the diff,
+        // collapsing the original N+1 down to 2 SQL statements.
         val existing = dao.searchUserIdsByOrgId(orgId).toSet()
         val boundUserIds = userIds.toSet() - existing
         if (boundUserIds.isEmpty()) {
-            log.debug("批量绑定机构${orgId}与${userIds.size}个用户的关系，全部已存在，无新增。")
+            log.debug("Batch binding organization ${orgId} with ${userIds.size} users; all already exist, no inserts.")
             return 0
         }
         val relations = boundUserIds.map { userId ->
@@ -66,7 +67,7 @@ open class UserOrgUserService(
             }
         }
         dao.batchInsert(relations)
-        log.debug("批量绑定机构${orgId}与${userIds.size}个用户的关系，成功绑定${boundUserIds.size}条。")
+        log.debug("Batch bound organization ${orgId} with ${userIds.size} users; ${boundUserIds.size} new bindings created.")
         eventPublisher.publishEvent(UserOrgUserRelationsChanged(orgId, boundUserIds.toList()))
         return boundUserIds.size
     }
@@ -76,10 +77,10 @@ open class UserOrgUserService(
         val count = dao.deleteByOrgIdAndUserId(orgId, userId)
         val success = count > 0
         if (success) {
-            log.debug("解绑机构${orgId}与用户${userId}的关系。")
+            log.debug("Unbound association between organization ${orgId} and user ${userId}.")
             eventPublisher.publishEvent(UserOrgUserRelationsChanged(orgId, listOf(userId)))
         } else {
-            log.warn("解绑机构${orgId}与用户${userId}的关系失败，关系不存在。")
+            log.warn("Failed to unbind organization ${orgId} and user ${userId}: association does not exist.")
         }
         return success
     }
@@ -90,7 +91,7 @@ open class UserOrgUserService(
     @Transactional
     override fun setOrgAdmin(orgId: String, userId: String, isAdmin: Boolean): Boolean {
         val relation = dao.searchByOrgIdAndUserId(orgId, userId).firstOrNull() ?: run {
-            log.warn("设置机构${orgId}的用户${userId}为管理员失败，关系不存在。")
+            log.warn("Failed to set user ${userId} as admin of organization ${orgId}: association does not exist.")
             return false
         }
         val updated = UserOrgUser {
@@ -101,11 +102,12 @@ open class UserOrgUserService(
         }
         val success = dao.update(updated)
         if (success) {
-            log.debug("设置机构${orgId}的用户${userId}为管理员：${isAdmin}。")
-            // 虽然缓存不包含 orgAdmin 字段，但仍发布事件以保持下游一致性扩展点
+            log.debug("Set user ${userId} as admin of organization ${orgId}: ${isAdmin}.")
+            // The cache does not include the orgAdmin field, but we still publish the event to provide
+            // a downstream consistency extension point.
             eventPublisher.publishEvent(UserOrgUserAdminUpdated(relation.id, orgId))
         } else {
-            log.error("设置机构${orgId}的用户${userId}为管理员失败！")
+            log.error("Failed to set user ${userId} as admin of organization ${orgId}!")
         }
         return success
     }

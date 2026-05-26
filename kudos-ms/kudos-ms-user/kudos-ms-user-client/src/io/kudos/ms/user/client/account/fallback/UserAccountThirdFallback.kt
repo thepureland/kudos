@@ -6,8 +6,8 @@ import org.springframework.stereotype.Component
 
 
 /**
- * 用户第三方账号 Feign 容错降级实现。`IUserAccountThirdApi` 当前未定义对外方法，
- * 保留类作为 `@FeignClient(fallback=...)` 的合法目标。
+ * Third-party user account Feign fallback. `IUserAccountThirdApi` currently exposes no methods;
+ * the class is kept as a valid target for `@FeignClient(fallback=...)`.
  *
  * @author K
  * @author AI: Codex

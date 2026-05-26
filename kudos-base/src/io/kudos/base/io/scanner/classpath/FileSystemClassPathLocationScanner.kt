@@ -85,8 +85,8 @@ class FileSystemClassPathLocationScanner : IClassPathLocationScanner {
         if (classPathRootOnDisk.isNullOrEmpty()) {
             return ""
         }
-        // 使用 Path 相对路径：在 Windows 上 File.path 为反斜杠，而 URL.file 为正斜杠，
-        // 旧实现用 substring 对齐两者会失败，导致资源名始终对不上。
+        // Use Path-based relativization: on Windows, File.path uses backslashes whereas URL.file uses forward
+        // slashes, so the old substring-based alignment would fail, causing resource names to never match.
         val root = Paths.get(classPathRootOnDisk.trimEnd('/', '\\')).normalize().toAbsolutePath()
         val absoluteFile = file.toPath().normalize().toAbsolutePath()
         return root.relativize(absoluteFile).toString().replace('\\', '/')

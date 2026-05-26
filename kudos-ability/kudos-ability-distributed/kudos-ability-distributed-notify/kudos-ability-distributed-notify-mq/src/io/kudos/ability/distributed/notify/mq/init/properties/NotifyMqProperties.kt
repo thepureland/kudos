@@ -1,9 +1,9 @@
 package io.kudos.ability.distributed.notify.mq.init.properties
 
 /**
- * notify-mq 扩展配置。
+ * notify-mq extension configuration.
  *
- * 绑定前缀：`kudos.ability.distributed.notify.mq`
+ * Binding prefix: `kudos.ability.distributed.notify.mq`
  *
  * @author K
  * @author AI: Codex
@@ -12,14 +12,15 @@ package io.kudos.ability.distributed.notify.mq.init.properties
 open class NotifyMqProperties {
 
     /**
-     * 为 true 时，启动期没有找到生产者 binding 配置会直接失败。
+     * When true, startup fails immediately if no producer binding configuration is found.
      */
     var failOnMissingProducerBinding: Boolean = false
 
     /**
-     * 消费端处理失败时是否重新抛出异常。
+     * Whether to rethrow exceptions on consumer-side failures.
      *
-     * 默认 false 保持历史行为：只记录日志并 ack；生产建议打开，让底层 MQ binder 按配置重试或进入 DLQ。
+     * Default false preserves historical behavior: log and ack only. Recommended to enable in
+     * production so the underlying MQ binder can retry per config or route to a DLQ.
      */
     var rethrowConsumerException: Boolean = false
 }

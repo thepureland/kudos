@@ -9,7 +9,7 @@ import org.testcontainers.containers.GenericContainer
 import org.testcontainers.utility.DockerImageName
 
 /**
- * smtp测试容器
+ * smtp test container.
  *
  * @author K
  * @since 1.0.0
@@ -22,25 +22,25 @@ object SmtpTestContainer {
 
     private val container = GenericContainer(DockerImageName.parse(IMAGE_NAME)).apply {
         withExposedPorts(25)
-        // Exim（namshi/smtp 里用的 MTA）默认不允许中继。这里开放中继给测试网络。
-        // 也可以改用专为测试设计的“收信黑洞/抓信”容器，如：axllent/mailpit容器。
-        withEnv("RELAY_NETWORKS", ":172.16.0.0/12:10.0.0.0/8:192.168.0.0/16") // 或 ":0.0.0.0/0"
+        // Exim (the MTA used by namshi/smtp) does not allow relaying by default. Open relaying to the test networks here.
+        // Alternatively, use a container designed for testing (e.g. a mail black-hole/capture container such as axllent/mailpit).
+        withEnv("RELAY_NETWORKS", ":172.16.0.0/12:10.0.0.0/8:192.168.0.0/16") // or ":0.0.0.0/0"
         withEnv("DISABLE_IPV6", "1")
-        withEnv("OTHER_HOSTNAMES", "test.local") // 可选：把本机当作 test.local 的最终收件域
+        withEnv("OTHER_HOSTNAMES", "test.local") // Optional: treat this host as the final destination domain for test.local
         withLabel(TestContainerKit.LABEL_KEY, LABEL)
     }
 
     /**
-     * 启动容器(若需要)
+     * Starts the container (if needed).
      *
-     * 保证批量测试时共享一个容器，避免多次开/停容器，浪费大量时间。
-     * 另外，亦可手动运行该clazz类的main方法来启动容器，跑测试用例时共享它。
-     * 并注册 JVM 关闭钩子，当批量测试结束时自动停止容器，
-     * 而不是每个测试用例结束时就关闭，前提条件是不要加@Testcontainers注解。
-     * 当docker没安装时想忽略测试用例，可以用@EnabledIfDockerInstalled
+     * Ensures a single container is shared across a batch of tests, avoiding the time wasted starting/stopping containers repeatedly.
+     * Alternatively, you can run this class's main method manually to start the container and share it while running tests.
+     * Registers a JVM shutdown hook to automatically stop the container when the batch finishes,
+     * rather than stopping after each test — provided the @Testcontainers annotation is not used.
+     * To skip tests when Docker is not installed, use @EnabledIfDockerInstalled.
      *
-     * @param registry spring的动态属性注册器，可用来注册或覆盖已注册的属性
-     * @return 运行中的容器对象
+     * @param registry Spring's dynamic property registry, used to register or override already-registered properties
+     * @return the running container instance
      */
     fun startIfNeeded(registry: DynamicPropertyRegistry?): Container {
         return TestContainerCrossProcessLock.run(SmtpTestContainer::class.java, "smtp") {
@@ -53,12 +53,12 @@ object SmtpTestContainer {
     }
 
     /**
-     * SMTP 容器目前不向 Spring 注册任何属性——保留方法只为和其他 TestContainer 形态对齐，
-     * 让 [startIfNeeded] 调用模板保持统一。后续如要透传 host/port 给业务配置（如 spring.mail.host），
-     * 在此处补 `registry.add(...)` 即可。
+     * The SMTP container currently registers no Spring properties — the method is kept to keep
+     * the [startIfNeeded] call template aligned with other TestContainer types. If host/port need to be
+     * passed into business config (e.g. spring.mail.host) later, add `registry.add(...)` calls here.
      *
-     * @param registry Spring 动态属性注册表（允许 null）
-     * @param runningContainer 运行中的容器
+     * @param registry the Spring dynamic property registry (null allowed)
+     * @param runningContainer the running container
      * @author K
      * @since 1.0.0
      */
@@ -66,9 +66,9 @@ object SmtpTestContainer {
     }
 
     /**
-     * 返回运行中的容器对象
+     * Returns the running container instance.
      *
-     * @return 容器对象，如果没有返回null
+     * @return the container instance, or null if none is running
      */
     fun getRunningContainer(): Container? = TestContainerKit.getRunningContainer(LABEL)
 

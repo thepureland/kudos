@@ -5,60 +5,60 @@ import java.time.LocalDateTime
 
 
 /**
- * 国际化详情响应VO
+ * Response VO for i18n details.
  *
  * @author K
  * @since 1.0.0
  */
 data class SysI18nDetail (
 
-    /** 主键 */
+    /** Primary key */
     override val id: String = "",
 
 
-    /** 语言_地区 */
+    /** Language_Region */
     val locale: String = "",
 
-    /** 原子服务编码 */
+    /** Atomic service code */
     val atomicServiceCode: String = "",
 
-    /** 国际化类型字典代码 */
+    /** I18n type dictionary code */
     val i18nTypeDictCode: String = "",
 
-    /** 国际化命名空间 */
+    /** I18n namespace */
     val namespace: String = "",
 
-    /** 国际化key */
+    /** I18n key */
     val key: String = "",
 
-    /** 国际化值 */
+    /** I18n value */
     val value: String = "",
 
-    /** 备注 */
+    /** Remark */
     val remark: String? = null,
 
-    /** 是否启用 */
+    /** Whether enabled */
     val active: Boolean = true,
 
-    /** 是否内置 */
+    /** Whether built-in */
     val builtIn: Boolean = true,
 
-    /** 创建者id */
+    /** Creator id */
     val createUserId: String? = null,
 
-    /** 创建者名称 */
+    /** Creator name */
     val createUserName: String? = null,
 
-    /** 创建时间 */
+    /** Creation time */
     val createTime: LocalDateTime? = null,
 
-    /** 更新者id */
+    /** Updater id */
     val updateUserId: String? = null,
 
-    /** 更新者名称 */
+    /** Updater name */
     val updateUserName: String? = null,
 
-    /** 更新时间 */
+    /** Update time */
     val updateTime: LocalDateTime? = null,
 
 ) : IIdEntity<String>

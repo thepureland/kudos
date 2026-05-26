@@ -6,7 +6,7 @@ import org.springframework.cloud.openfeign.FeignClient
 
 
 /**
- * 记住我登录客户端代理接口
+ * Remember-me login client proxy interface.
  *
  * @author K
  * @author AI: Codex

@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam
 
 
 /**
- * 角色 对外API
+ * Role public API.
  *
  * @author K
  * @author AI: Cursor
@@ -20,10 +20,10 @@ interface IAuthRoleApi {
 
 
     /**
-     * 根据id从缓存中获取角色信息，如果缓存中不存在，则从数据库中加载，并回写缓存
+     * Retrieves role info from the cache by id; if absent, loads from the database and writes back to the cache.
      *
-     * @param id 角色id
-     * @return AuthRoleCacheEntry, 找不到返回null
+     * @param id Role id.
+     * @return AuthRoleCacheEntry, or null if not found.
      * @author K
      * @since 1.0.0
      */
@@ -31,10 +31,11 @@ interface IAuthRoleApi {
     fun getRoleById(@RequestParam id: String): AuthRoleCacheEntry?
 
     /**
-     * 根据多个id从缓存中批量获取角色信息，缓存中不存在的，从数据库中加载，并回写缓存
+     * Batch-retrieves role info from the cache by multiple ids; entries missing from the cache are loaded from the
+     * database and written back to the cache.
      *
-     * @param ids 角色id集合
-     * @return Map<角色id，AuthRoleCacheEntry>
+     * @param ids Collection of role ids.
+     * @return Map of role id to AuthRoleCacheEntry.
      * @author K
      * @since 1.0.0
      */
@@ -42,12 +43,12 @@ interface IAuthRoleApi {
     fun getRolesByIds(@RequestBody ids: Collection<String>): Map<String, AuthRoleCacheEntry>
 
     /**
-     * 根据租户ID和角色编码从缓存获取对应的角色ID，如果缓存中不存在，则从数据库中加载，并写回缓存
-     * 只返回active=true的角色ID
+     * Retrieves the role id from the cache by tenant id and role code; if absent, loads from the database and writes
+     * back to the cache. Only returns the id of roles with active = true.
      *
-     * @param tenantId 租户ID
-     * @param code 角色编码
-     * @return 角色ID，找不到返回null
+     * @param tenantId Tenant id.
+     * @param code Role code.
+     * @return Role id, or null if not found.
      * @author K
      * @since 1.0.0
      */
@@ -55,10 +56,10 @@ interface IAuthRoleApi {
     fun getRoleId(@RequestParam tenantId: String, @RequestParam code: String): String?
 
     /**
-     * 根据角色ID获取拥有该角色的所有用户列表
+     * Retrieves all users that hold the given role id.
      *
-     * @param roleId 角色ID
-     * @return List<UserAccountCacheEntry> 用户列表，如果角色不存在或没有用户则返回空列表
+     * @param roleId Role id.
+     * @return List of UserAccountCacheEntry; empty list if the role does not exist or has no users.
      * @author K
      * @since 1.0.0
      */
@@ -66,11 +67,11 @@ interface IAuthRoleApi {
     fun getRoleUsers(@RequestParam roleId: String): List<UserAccountCacheEntry>
 
     /**
-     * 根据租户ID和角色编码获取拥有该角色的所有用户ID列表
+     * Retrieves all user ids that hold the role identified by tenant id and role code.
      *
-     * @param tenantId 租户ID
-     * @param roleCode 角色编码
-     * @return List<String> 用户ID列表，如果角色不存在或没有用户则返回空列表
+     * @param tenantId Tenant id.
+     * @param roleCode Role code.
+     * @return List of user ids; empty list if the role does not exist or has no users.
      * @author K
      * @since 1.0.0
      */
@@ -78,10 +79,10 @@ interface IAuthRoleApi {
     fun getUserIdsByRoleCode(@RequestParam tenantId: String, @RequestParam roleCode: String): List<String>
 
     /**
-     * 根据角色ID获取该角色拥有的所有资源列表
+     * Retrieves all resources held by the given role id.
      *
-     * @param roleId 角色ID
-     * @return List<SysResourceCacheEntry> 资源列表，如果角色不存在或没有资源则返回空列表
+     * @param roleId Role id.
+     * @return List of SysResourceCacheEntry; empty list if the role does not exist or has no resources.
      * @author K
      * @since 1.0.0
      */
@@ -89,11 +90,11 @@ interface IAuthRoleApi {
     fun getRoleResources(@RequestParam roleId: String): List<SysResourceCacheEntry>
 
     /**
-     * 检查角色是否拥有指定资源
+     * Checks whether a role holds the given resource.
      *
-     * @param roleId 角色ID
-     * @param resourceId 资源ID
-     * @return true表示角色拥有该资源，false表示不拥有
+     * @param roleId Role id.
+     * @param resourceId Resource id.
+     * @return true if the role holds the resource, false otherwise.
      * @author K
      * @since 1.0.0
      */
@@ -101,11 +102,11 @@ interface IAuthRoleApi {
     fun hasResource(@RequestParam roleId: String, @RequestParam resourceId: String): Boolean
 
     /**
-     * 根据租户ID获取该租户下所有激活角色的ID列表
-     * 只返回active=true的角色ID
+     * Retrieves the ids of all active roles under the given tenant.
+     * Only returns ids of roles with active = true.
      *
-     * @param tenantId 租户ID
-     * @return List<String> 角色ID列表
+     * @param tenantId Tenant id.
+     * @return List of role ids.
      * @author K
      * @since 1.0.0
      */
@@ -113,11 +114,11 @@ interface IAuthRoleApi {
     fun getRoleIds(@RequestParam tenantId: String): List<String>
 
     /**
-     * 根据用户ID获取该用户有权限访问的资源缓存对象列表
-     * 查询流程：用户 → 角色 → 资源（三级关联）
+     * Retrieves the resource cache entries the given user is permitted to access.
+     * Lookup path: user -> role -> resource (three-level join).
      *
-     * @param userId 用户ID
-     * @return List<SysResourceCacheEntry> 资源缓存对象列表，如果用户不存在或没有资源则返回空列表
+     * @param userId User id.
+     * @return List of SysResourceCacheEntry; empty list if the user does not exist or has no resources.
      * @author K
      * @since 1.0.0
      */
@@ -125,10 +126,10 @@ interface IAuthRoleApi {
     fun getResources(@RequestParam userId: String): List<SysResourceCacheEntry>
 
     /**
-     * 根据用户ID获取该用户拥有的所有角色列表
+     * Retrieves all roles held by the given user.
      *
-     * @param userId 用户ID
-     * @return List<AuthRoleCacheEntry> 角色列表，如果用户不存在或没有角色则返回空列表
+     * @param userId User id.
+     * @return List of AuthRoleCacheEntry; empty list if the user does not exist or has no roles.
      * @author K
      * @since 1.0.0
      */
@@ -136,11 +137,11 @@ interface IAuthRoleApi {
     fun getUserRoles(@RequestParam userId: String): List<AuthRoleCacheEntry>
 
     /**
-     * 检查用户是否拥有指定角色
+     * Checks whether the user holds the given role.
      *
-     * @param userId 用户ID
-     * @param roleId 角色ID
-     * @return true表示用户拥有该角色，false表示不拥有
+     * @param userId User id.
+     * @param roleId Role id.
+     * @return true if the user holds the role, false otherwise.
      * @author K
      * @since 1.0.0
      */
@@ -148,12 +149,12 @@ interface IAuthRoleApi {
     fun hasRole(@RequestParam userId: String, @RequestParam roleId: String): Boolean
 
     /**
-     * 检查用户是否拥有指定角色编码的角色
+     * Checks whether the user holds the role identified by the given role code.
      *
-     * @param userId 用户ID
-     * @param tenantId 租户ID
-     * @param roleCode 角色编码
-     * @return true表示用户拥有该角色，false表示不拥有
+     * @param userId User id.
+     * @param tenantId Tenant id.
+     * @param roleCode Role code.
+     * @return true if the user holds the role, false otherwise.
      * @author K
      * @since 1.0.0
      */
@@ -165,11 +166,11 @@ interface IAuthRoleApi {
     ): Boolean
 
     /**
-     * 检查用户是否有指定资源的访问权限
+     * Checks whether the user is permitted to access the given resource.
      *
-     * @param userId 用户ID
-     * @param resourceId 资源ID
-     * @return true表示用户有该资源的访问权限，false表示没有
+     * @param userId User id.
+     * @param resourceId Resource id.
+     * @return true if the user is permitted to access the resource, false otherwise.
      * @author K
      * @since 1.0.0
      */

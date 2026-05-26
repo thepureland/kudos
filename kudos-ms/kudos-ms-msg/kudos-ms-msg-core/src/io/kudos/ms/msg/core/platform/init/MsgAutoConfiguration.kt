@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration
 
 
 /**
- * msg原子服务自动配置类
+ * Auto-configuration class for the msg atomic service.
  *
  * @author K
  * @author AI: Codex

@@ -25,11 +25,12 @@ import org.springframework.context.annotation.Primary
 import tools.jackson.databind.ObjectMapper
 
 /**
- * 服务间缓存客户端自动配置。
+ * Auto-configuration for the inter-service cache client.
  *
- * `@Configuration` 让 Spring 把本类按完整的配置类处理（CGLIB 代理 + bean 方法间互调保持
- * 同一实例语义）。即使当前类内 bean 方法之间没有互调，加上 @Configuration 是更稳的形式，
- * 避免后续重构时踩坑。
+ * `@Configuration` makes Spring treat this class as a full configuration class (CGLIB proxy +
+ * cross bean-method calls keep single-instance semantics). Even though this class currently has no
+ * inter-bean-method calls, using @Configuration is the safer form and avoids surprises when the
+ * class is later refactored.
  *
  * @author K
  * @author AI: Codex
@@ -62,11 +63,11 @@ open class InterServiceCacheClientAutoConfiguration : IComponentInitializer {
     ) = FeignCacheRequestInterceptor(cacheHelper, applicationName)
 
     /**
-     * 全局 Feign Decoder：
-     *  - JacksonDecoder 负责真正反序列化
-     *  - ResponseEntityDecoder 支持 ResponseEntity
-     *  - OptionalDecoder 支持 Optional
-     *  - 最外层 FeignCacheResponseInterceptor 加缓存能力
+     * Global Feign Decoder:
+     *  - JacksonDecoder performs the actual deserialization
+     *  - ResponseEntityDecoder adds ResponseEntity support
+     *  - OptionalDecoder adds Optional support
+     *  - The outermost FeignCacheResponseInterceptor adds caching capability
      */
     @Bean("feignDecoder")
     @Primary

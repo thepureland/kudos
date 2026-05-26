@@ -7,8 +7,8 @@ import java.util.LinkedHashSet
 import java.util.Properties
 
 /**
- * 一个记录顺序的properties扩展适配器
- * 得到所有properties的时候重写entrySet
+ * An order-preserving Properties extension adapter.
+ * Overrides entrySet when retrieving all properties.
  *
  * @author hanson
  * @since 1.0.0

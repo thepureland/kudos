@@ -21,12 +21,12 @@ import java.time.LocalDateTime
 
 
 /**
- * [IMsgPublishService] 默认实现。
+ * Default implementation of [IMsgPublishService].
  *
- * INotifyProducer 注入用 ObjectProvider：notify-mq 在 deployment 模块里才被引入；
- * msg-core 单独跑（如在 kudos-ms-msg-core 测试上下文）时 producer 不可达 —— 此时
- * MQ 投递失败 → MsgSend.status = FAILED_TO_SEND_TO_MQ；service 仍能返回 sendId 让
- * 调用方知道记录已落库。
+ * INotifyProducer is injected via ObjectProvider: notify-mq is only imported in the deployment module;
+ * when msg-core is run standalone (e.g. in the kudos-ms-msg-core test context) the producer is unreachable —
+ * in that case MQ delivery fails → MsgSend.status = FAILED_TO_SEND_TO_MQ; the service still returns the sendId
+ * so the caller knows the record has been persisted.
  *
  * @author K
  * @since 1.0.0
@@ -53,7 +53,7 @@ open class MsgPublishService(
 
     override fun publish(request: MsgPublishRequest): String? {
         if (request.receiverIds.isEmpty()) {
-            log.warn("publish 入参 receiverIds 为空，忽略")
+            log.warn("publish input receiverIds is empty, ignoring")
             return null
         }
 
@@ -65,7 +65,7 @@ open class MsgPublishService(
         )
         if (template == null) {
             log.warn(
-                "找不到模板，发送取消：tenantId={0}, eventType={1}, msgType={2}, locale={3}",
+                "Template not found, send canceled: tenantId={0}, eventType={1}, msgType={2}, locale={3}",
                 request.tenantId, request.eventTypeDictCode, request.msgTypeDictCode, request.localeDictCode,
             )
             return null
@@ -73,7 +73,7 @@ open class MsgPublishService(
 
         val rendered = renderer.render(template, request.params)
 
-        // 落 MsgInstance 快照
+        // Persist MsgInstance snapshot
         val now = LocalDateTime.now()
         val instance = MsgInstance().apply {
             localeDictCode = request.localeDictCode
@@ -83,16 +83,16 @@ open class MsgPublishService(
             sendTypeDictCode = template.sendTypeDictCode
             eventTypeDictCode = request.eventTypeDictCode
             msgTypeDictCode = request.msgTypeDictCode
-            // 有效期：默认本次 publish 开始 ~ 30 天后；admin 可后续调整
+            // Validity: defaults to from the start of this publish ~ 30 days later; admin can adjust later
             validTimeStart = now
             validTimeEnd = now.plusDays(30)
             tenantId = request.tenantId
         }
         val instanceId = msgInstanceService.insert(instance)
 
-        // 落 MsgSend，status=PENDING
+        // Persist MsgSend, status=PENDING
         val send = MsgSend().apply {
-            receiverGroupTypeDictCode = "user" // 仅支持用户级派发；扩展时改为 request.receiverGroupType
+            receiverGroupTypeDictCode = "user" // Only supports user-level dispatch; switch to request.receiverGroupType when extending
             receiverGroupId = null
             this.instanceId = instanceId
             msgTypeDictCode = request.msgTypeDictCode
@@ -107,7 +107,7 @@ open class MsgPublishService(
         }
         val sendId = msgSendService.insert(send)
 
-        // 投 MQ
+        // Send to MQ
         val event = MsgDispatchEvent(
             sendId = sendId,
             instanceId = instanceId,
@@ -121,11 +121,11 @@ open class MsgPublishService(
         val notifyMsg = NotifyMessageVo(request.publishMethod.listenerType, event)
         val producer = notifyProducerProvider.ifAvailable
         val newStatus = if (producer == null) {
-            log.warn("notify producer 不可用（未引入 notify-mq？），消息 {0} 未投递", sendId)
+            log.warn("notify producer is unavailable (notify-mq not imported?), message {0} not dispatched", sendId)
             MsgSendStatusEnum.FAILED_TO_SEND_TO_MQ
         } else {
             val ok = runCatching { producer.notify(notifyMsg) }.getOrElse {
-                log.error(it, "投递 notify 异常：sendId={0}", sendId)
+                log.error(it, "Notify dispatch exception: sendId={0}", sendId)
                 false
             }
             if (ok) MsgSendStatusEnum.SENT_TO_MQ else MsgSendStatusEnum.FAILED_TO_SEND_TO_MQ

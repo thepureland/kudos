@@ -7,7 +7,7 @@ import io.kudos.ms.sys.core.i18n.model.po.SysI18n
 
 
 /**
- * 国际化业务接口
+ * Business interface for i18n entries.
  *
  * @author K
  * @author AI: Cursor
@@ -16,12 +16,12 @@ import io.kudos.ms.sys.core.i18n.model.po.SysI18n
 interface ISysI18nService : IBaseCrudService<String, SysI18n> {
 
     /**
-     * 按主键从 Hash 缓存加载单条国际化（未命中则回库并回写）
+     * Load a single i18n entry from the Hash cache by primary key (on miss, load from DB and write back).
      */
     fun getI18nFromCache(id: String): SysI18nCacheEntry?
 
     /**
-     * 在指定维度下获取某 key 的译文（来自 [getI18nsFromCache] 的 Map）
+     * Get the translation for a key in the given dimensions (from the map returned by [getI18nsFromCache]).
      */
     fun getI18nValueFromCache(
         locale: String,
@@ -32,7 +32,7 @@ interface ISysI18nService : IBaseCrudService<String, SysI18n> {
     ): String?
 
     /**
-     * 按 locale、类型、命名空间、原子服务从 Hash 缓存加载 key→译文 Map（仅启用条目参与索引）
+     * Load a key->translation map from the Hash cache by locale, type, namespace, and atomic service (only enabled entries participate in indexing).
      */
     fun getI18nsFromCache(
         locale: String,
@@ -42,7 +42,7 @@ interface ISysI18nService : IBaseCrudService<String, SysI18n> {
     ): Map<String, String>
 
     /**
-     * 按多种类型与命名空间批量从缓存合并译文
+     * Batch-merge translations from the cache for multiple types and namespaces.
      */
     fun batchGetI18nsFromCache(
         locale: String,
@@ -51,12 +51,12 @@ interface ISysI18nService : IBaseCrudService<String, SysI18n> {
     ): Map<String, Map<String, Map<String, String>>>
 
     /**
-     * 批量保存或更新国际化内容
+     * Batch save or update i18n entries.
      */
     fun batchSaveOrUpdate(i18ns: List<SysI18nFormUpdate>): Int
 
     /**
-     * 更新启用状态，并同步 Hash 缓存
+     * Update the active status and sync the Hash cache.
      */
     fun updateActive(id: String, active: Boolean): Boolean
 

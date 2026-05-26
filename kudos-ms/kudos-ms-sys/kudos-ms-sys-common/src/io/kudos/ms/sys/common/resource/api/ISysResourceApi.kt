@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam
 
 
 /**
- * 资源 对外API
+ * External resource API.
  *
  * @author K
  * @since 1.0.0
@@ -20,28 +20,28 @@ interface ISysResourceApi {
 
 
     /**
-     * 返回资源id对应的资源
+     * Return the resource matching the given resource id.
      *
-     * @param resourceId 资源id
-     * @return 资源对象
+     * @param resourceId resource id
+     * @return resource object
      */
     @GetMapping("/api/internal/sys/resource/getResource")
     fun getResource(@RequestParam resourceId: String): SysResourceCacheEntry?
 
     /**
-     * 返回资源id集合对应的资源
+     * Return the resources matching the given resource id collection.
      *
-     * @param resourceIds 资源id集合
-     * @return Map(id, 资源对象)
+     * @param resourceIds resource id collection
+     * @return Map(id, resource object)
      */
     @PostMapping("/api/internal/sys/resource/getResources")
     fun getResources(@RequestBody resourceIds: Collection<String>): Map<String, SysResourceCacheEntry>
 
     /**
-     * 根据子系统和资源类型，返回对应的资源
+     * Return resources matching the given sub-system and resource type.
      *
-     * @param resourceType 资源类型枚举
-     * @param subSystemCode 子系统编码
+     * @param resourceType resource type enum
+     * @param subSystemCode sub-system code
      */
     @GetMapping("/api/internal/sys/resource/getResourcesByType")
     fun getResources(
@@ -50,19 +50,19 @@ interface ISysResourceApi {
     ): List<SysResourceCacheEntry>
 
     /**
-     * 根据子系统，返回对应的基础菜单树
+     * Return the base menu tree for the given sub-system.
      */
     @GetMapping("/api/internal/sys/resource/getSimpleMenus")
     fun getSimpleMenus(@RequestParam subSystemCode: String): List<BaseMenuTreeNode>
 
     /**
-     * 根据子系统，返回对应的菜单树
+     * Return the full menu tree for the given sub-system.
      */
     @GetMapping("/api/internal/sys/resource/getMenus")
     fun getMenus(@RequestParam subSystemCode: String): List<MenuTreeNode>
 
     /**
-     * 返回指定子系统和url对应的资源的id
+     * Return the resource id matching the given sub-system and URL.
      */
     @GetMapping("/api/internal/sys/resource/getResourceId")
     fun getResourceId(
@@ -71,7 +71,7 @@ interface ISysResourceApi {
     ): String?
 
     /**
-     * 返回指定父菜单id的直接孩子菜单(active的)
+     * Return the direct (active) child menus of the given parent menu id.
      */
     @GetMapping("/api/internal/sys/resource/getDirectChildrenResources")
     fun getDirectChildrenResources(
@@ -81,7 +81,7 @@ interface ISysResourceApi {
     ): List<SysResourceCacheEntry>
 
     /**
-     * 返回指定参数的孩子资源
+     * Return the child resources for the given parameters.
      */
     @GetMapping("/api/internal/sys/resource/getChildrenResources")
     fun getChildrenResources(

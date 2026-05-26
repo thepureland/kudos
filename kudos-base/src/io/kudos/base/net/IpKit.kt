@@ -9,7 +9,7 @@ import java.net.UnknownHostException
 import java.util.Locale
 
 /**
- * IP工具类，支持ipv4和ipv6
+ * IP utility supporting both IPv4 and IPv6.
  *
  * @author K
  * @author AI: Cursor
@@ -17,40 +17,40 @@ import java.util.Locale
  */
 object IpKit {
 
-    /** 日志器 */
+    /** Logger. */
     private val LOG = LogFactory.getLog(this::class)
 
-    /** 32 位无符号最大值（即 2³²-1），用于 IPv4 长整型范围校验 */
+    /** 32-bit unsigned max value (2^32 - 1), used for IPv4 long-range validation. */
     private const val ALL32ONE = 4294967295L
 
-    /** 128 位无符号最大值（含），与 `NUMERIC(39,0)` 存 IPv6 整值时一致。 */
+    /** 128-bit unsigned max value (inclusive), matching the IPv6 integer stored as `NUMERIC(39,0)`. */
     private val UINT128_MAX: BigInteger = BigInteger.ONE.shiftLeft(128).subtract(BigInteger.ONE)
 
     /**
-     * 与库表 `NUMERIC(39,0)` 存 IP 整值时的解析策略（查询条件、表单入库等共用）。
+     * Parsing strategy used when interpreting IP integers stored as `NUMERIC(39,0)` (shared by query conditions, form persistence, etc.).
      */
     enum class IpStorageNumericMode {
         /**
-         * 纯十进制串优先；否则合法 IPv4 点分；否则合法 IPv6；再否则按十进制串兜底。
+         * Pure decimal string first; otherwise a valid dotted IPv4; otherwise a valid IPv6; otherwise fall back to a decimal string.
          */
         AUTO,
 
         /**
-         * 按 IPv4：纯十进制串，或经 [getNormalIpv4]/[getFixLengthIpv4] 与 [ipv4StringToLong] 转无符号 32 位；无法再解析时按十进制串兜底。
+         * Treat as IPv4: pure decimal string, or normalized via [getNormalIpv4]/[getFixLengthIpv4] and [ipv4StringToLong] to an unsigned 32-bit value; fall back to a decimal string when parsing is no longer possible.
          */
         IPV4,
 
         /**
-         * 按 IPv6：经 [toFullIpv6] 与 [fullIpv6ColonGroupsTextToBigInteger]；[toFullIpv6] 失败时按十进制串兜底。
+         * Treat as IPv6: via [toFullIpv6] and [fullIpv6ColonGroupsTextToBigInteger]; fall back to a decimal string when [toFullIpv6] fails.
          */
         IPV6,
     }
 
     /**
-     * 验证指定IP地址是否合法的ipv4
+     * Validates whether the given IP address is a valid IPv4 address.
      *
-     * @param ip 待验证的ip串
-     * @return true: 为合法的ipv4地址
+     * @param ip the IP string to validate
+     * @return true if it is a valid IPv4 address
      * @author K
      * @since 1.0.0
      */
@@ -64,10 +64,10 @@ object IpKit {
     }
 
     /**
-     * 将ipv4地址字符串转换为数字表示
+     * Converts an IPv4 address string to its numeric representation.
      *
-     * @param ipv4 ipv4地址
-     * @return ipv4的数值表示，非ipv4返回-1
+     * @param ipv4 the IPv4 address
+     * @return the numeric representation of the IPv4 address; -1 if not an IPv4 address
      * @author K
      * @since 1.0.0
      */
@@ -80,24 +80,24 @@ object IpKit {
     }
 
     /**
-     * 将IP地址数字转换成字符串表示
+     * Converts a numeric IP address back to a string representation.
      *
-     * @param ipv4Long ipv4长整型值, 小于0或大于4294967295将返回空串
-     * @return ipv4地址，参数小于0或大于4294967295将返回空串
+     * @param ipv4Long the IPv4 long value; values less than 0 or greater than 4294967295 return an empty string
+     * @return the IPv4 address; an empty string is returned when the argument is less than 0 or greater than 4294967295
      * @author K
      * @since 1.0.0
      */
     fun ipv4LongToString(ipv4Long: Long): String {
         if (ipv4Long !in 0..ALL32ONE) return ""
-        // 高字节在前：byte 0 = 第一个 octet，byte 3 = 最末 octet
+        // High byte first: byte 0 = first octet, byte 3 = last octet
         return (3 downTo 0).joinToString(".") { i -> ((ipv4Long shr (i * 8)) and 0xFFL).toString() }
     }
 
     /**
-     * 取得定长的ipv4地址(每个段不足三位在前面用0补足)。 例如: 1.2.13.224 => 001.002.013.224
+     * Returns the fixed-length IPv4 address (each segment is left-padded with 0 to 3 digits). For example: 1.2.13.224 => 001.002.013.224
      *
-     * @param ipv4 待处理的ipv4，如果ip非法返回空串
-     * @return 定长的ipv4地址
+     * @param ipv4 the IPv4 to process; returns an empty string if the IP is invalid
+     * @return the fixed-length IPv4 address
      * @author K
      * @since 1.0.0
      */
@@ -107,10 +107,10 @@ object IpKit {
     }
 
     /**
-     * 将定长的ipv4还原(每个段去掉左边的0). 例如: 001.002.013.224 => 1.2.13.224
+     * Restores a fixed-length IPv4 (removes leading zeros from each segment). For example: 001.002.013.224 => 1.2.13.224
      *
-     * @param ipv4 待处理的ipv4，如果ip非法返回空串
-     * @return 非定长的ipv4
+     * @param ipv4 the IPv4 to process; returns an empty string if the IP is invalid
+     * @return the non-fixed-length IPv4
      * @author K
      * @since 1.0.0
      */
@@ -120,11 +120,11 @@ object IpKit {
     }
 
     /**
-     * 检查指定的ipv4地址是否都在同一网段
+     * Checks whether the given IPv4 addresses all belong to the same subnet.
      *
-     * @param maskAddress 子网掩码地址，非法将返回false
-     * @param ipv4s ipv4地址可变数组，为空或其中某个ip非法都将返回false
-     * @return true: 指定的ipv4地址均在同一网段
+     * @param maskAddress the subnet mask address; returns false if invalid
+     * @param ipv4s a varargs array of IPv4 addresses; returns false if empty or if any IP is invalid
+     * @return true if the given IPv4 addresses all belong to the same subnet
      * @author K
      * @since 1.0.0
      */
@@ -141,14 +141,14 @@ object IpKit {
     }
 
     /**
-     * 返回指定的两个ipv4地址(大小不分先后)间的所有ipv4地址,
-     * 包括指定的两个ipv4地址，按从小到大的顺序, 两个ip一样将只返回一个
+     * Returns all IPv4 addresses between the two given IPv4 addresses (order does not matter),
+     * including both endpoints, in ascending order; returns only one IP if the two are identical.
      *
-     * 只支持最多65536个的ip地址，超过的话将返回空列表
+     * At most 65536 IP addresses are supported; an empty list is returned if exceeded.
      *
-     * @param beginIp 开始值，包括, 非法ip将返回空列表
-     * @param endIp 结束值，包括, 非法ip将返回空列表
-     * @return 一个包含指定的两个ipv4地址间的所有ipv4地址的列表, 两个参数任一个非法或超过65536个的ip地址将返回空列表
+     * @param beginIp the begin value, inclusive; an invalid IP returns an empty list
+     * @param endIp the end value, inclusive; an invalid IP returns an empty list
+     * @return a list containing all IPv4 addresses between the two given IPv4 addresses; an empty list is returned if either argument is invalid or the range exceeds 65536
      * @author K
      * @since 1.0.0
      */
@@ -158,7 +158,7 @@ object IpKit {
         if (rawBegin == -1L) return emptyList()
         val rawEnd = ipv4StringToLong(endIp.ifEmpty { "255.255.255.255" })
         if (rawEnd == -1L) return emptyList()
-        // 不管谁大谁小，对外约定按"从小到大"返回
+        // Regardless of which is larger, return values in ascending order by contract
         val (lo, hi) = if (rawBegin <= rawEnd) rawBegin to rawEnd else rawEnd to rawBegin
         val size = (hi - lo).toInt() + 1
         if (size !in 0..65536) return emptyList()
@@ -166,24 +166,24 @@ object IpKit {
     }
 
     /**
-     * 判断是否为本地ipv4地址。如：127.0.0.1、192.168.0.123
+     * Determines whether the address is a local IPv4 address. For example: 127.0.0.1, 192.168.0.123.
      *
-     * @param ipv4 待检查的ipv4地址
-     * @return true: 为本地ipv4地址
+     * @param ipv4 the IPv4 address to check
+     * @return true if it is a local IPv4 address
      * @author K
      * @since 1.0.0
      */
     fun isLocalIpv4(ipv4: String): Boolean {
         if (ipv4 == "127.0.0.1") return true
         val l = ipv4StringToLong(ipv4)
-        // 192.168.0.0–192.168.255.255 或 10.0.0.0–10.255.255.255
+        // 192.168.0.0–192.168.255.255 or 10.0.0.0–10.255.255.255
         return l in 3232235520L..3232301055L || l in 167772160L..184549375L
     }
 
     /**
-     * 返回本机的本地ip地址
+     * Returns the local IP address of this machine.
      *
-     * @return 本机的本地ip地址
+     * @return the local IP address of this machine
      * @author K
      * @since 1.0.0
      */
@@ -194,10 +194,10 @@ object IpKit {
         }
 
     /**
-     * 判断给定的字符串是否为有效的ipv6(包含冒分十六进制表示法、0位压缩表示法、内嵌IPv4地址表示法)
+     * Determines whether the given string is a valid IPv6 address (including colon-hex notation, zero-compression notation, and embedded-IPv4 notation).
      *
-     * @param ipStr ip串
-     * @return true: ipv6，false: 非ipv6
+     * @param ipStr the IP string
+     * @return true if it is IPv6; false otherwise
      * @author K
      * @since 1.0.0
      */
@@ -207,32 +207,32 @@ object IpKit {
         return try {
             val pure = ipStr.substringBefore('%')
             val a = InetAddress.getByName(pure)
-            a is Inet6Address || a.address.size == 16 || // 纯 IPv6
-                    a.address.size == 4  // 让嵌 IPv4 的形式也通过，再交给 toFullIpv6 统一
+            a is Inet6Address || a.address.size == 16 || // pure IPv6
+                    a.address.size == 4  // also allow embedded-IPv4 forms, normalized by toFullIpv6
         } catch (_: UnknownHostException) {
             false
         }
     }
 
     /**
-     * 将任意 IPv4/IPv6 统一标准化为“全格式 IPv6”：
-     * 8 组、每组 4 位十六进制（大写），组间冒号分隔。
+     * Normalizes any IPv4/IPv6 address to a "full-format IPv6":
+     * 8 groups, each 4 hexadecimal digits (uppercase), separated by colons.
      *
-     * @param ip 原始 IP（可为 IPv4、IPv6 缩写、含内嵌 IPv4、可带 zone-id）
-     * @return 形如 "0000:0000:0000:0000:0000:FFFF:C0A8:0001" 的全格式 IPv6
-     * @throws IllegalArgumentException ip非法时
+     * @param ip the raw IP (may be IPv4, abbreviated IPv6, IPv6 with embedded IPv4, or include a zone-id)
+     * @return a full-format IPv6 such as "0000:0000:0000:0000:0000:FFFF:C0A8:0001"
+     * @throws IllegalArgumentException if the ip is invalid
      * @author AI: ChatGPT
      * @author K
      * @since 1.0.0
      */
     fun toFullIpv6(ip: String): String {
         require(ip.isNotBlank()) { "ip is blank" }
-        // 去掉可能存在的 zone-id（如 fe80::1%eth0）
+        // Strip any zone-id present (e.g. fe80::1%eth0)
         val pure = ip.substringBefore('%')
         val addr = runCatching { InetAddress.getByName(pure) }
             .getOrElse { throw IllegalArgumentException("invalid IP: $ip", it) }
         val bytes = when (addr.address.size) {
-            // IPv4 -> 统一映射为 IPv6 的 16 字节
+            // IPv4 -> map to the 16 bytes of IPv6
             4 -> ByteArray(16).also {
                 it[10] = 0xFF.toByte()
                 it[11] = 0xFF.toByte()
@@ -241,7 +241,7 @@ object IpKit {
             16 -> addr.address
             else -> throw IllegalArgumentException("unexpected address length")
         }
-        // 16 字节 -> 8 组，每组 16 位；统一大写、每组补满 4 位
+        // 16 bytes -> 8 groups, 16 bits each; uppercase, zero-pad each group to 4 digits
         return (0 until 16 step 2).joinToString(":") { i ->
             val value = ((bytes[i].toInt() and 0xFF) shl 8) or (bytes[i + 1].toInt() and 0xFF)
             String.format(Locale.ROOT, "%04X", value)
@@ -249,32 +249,32 @@ object IpKit {
     }
 
     /**
-     * 将 [toFullIpv6] 输出的 8 段全大写十六进制文本转为 128 位**无符号**整数（大端组序），与 `NUMERIC(39,0)` 存值一致。
+     * Converts the 8-segment, all-uppercase hex text produced by [toFullIpv6] to a 128-bit **unsigned** integer (big-endian group order), matching the `NUMERIC(39,0)` storage value.
      *
-     * @param full 形如 `0000:0000:0000:0000:0000:FFFF:C0A8:0001`
-     * @throws IllegalArgumentException 段数不是 8、段值越界或整体超过 2¹²⁸−1
+     * @param full text such as `0000:0000:0000:0000:0000:FFFF:C0A8:0001`
+     * @throws IllegalArgumentException if the segment count is not 8, a segment value is out of range, or the overall value exceeds 2^128 - 1
      */
     fun fullIpv6ColonGroupsTextToBigInteger(full: String): BigInteger {
         val parts = full.split(':')
-        require(parts.size == 8) { "IPv6 须为全格式 8 段" }
+        require(parts.size == 8) { "IPv6 must be full-format 8 segments" }
         val acc = parts.fold(BigInteger.ZERO) { acc, p ->
             val n = p.toInt(16)
             require(n in 0..0xffff)
             acc.shiftLeft(16).add(BigInteger.valueOf(n.toLong()))
         }
-        require(acc.signum() >= 0 && acc <= UINT128_MAX) { "IPv6 数值越界" }
+        require(acc.signum() >= 0 && acc <= UINT128_MAX) { "IPv6 numeric value out of range" }
         return acc
     }
 
-    /** [fullIpv6ColonGroupsTextToBigInteger] 的 [BigDecimal] 形式，便于与 Ktorm/JDBC `NUMERIC` 列绑定。 */
+    /** [BigDecimal] form of [fullIpv6ColonGroupsTextToBigInteger], convenient for binding to Ktorm/JDBC `NUMERIC` columns. */
     fun fullIpv6ColonGroupsTextToUnsignedDecimal(full: String): BigDecimal =
         BigDecimal(fullIpv6ColonGroupsTextToBigInteger(full))
 
     /**
-     * 将库内 `NUMERIC(39,0)` / [fullIpv6ColonGroupsTextToUnsignedDecimal] 表示的无符号 128 位 IPv6 整值转为全格式 IPv6 文本（与 [toFullIpv6] 输出风格一致：8 段、每段 4 位大写十六进制）。
+     * Converts an unsigned 128-bit IPv6 integer value stored as `NUMERIC(39,0)` / [fullIpv6ColonGroupsTextToUnsignedDecimal] back to a full-format IPv6 text (in the same style as [toFullIpv6]: 8 segments, each 4 uppercase hex digits).
      *
-     * @param value 无符号整数；非整数、为负或大于 2¹²⁸−1 时无法表示为 IPv6 存储值
-     * @return 形如 `0000:0000:0000:0000:0000:FFFF:C0A8:0001` 的字符串；[value] 为 null 或非法时返回空串
+     * @param value an unsigned integer; non-integer, negative, or greater than 2^128 - 1 values cannot be represented as an IPv6 storage value
+     * @return a string such as `0000:0000:0000:0000:0000:FFFF:C0A8:0001`; returns an empty string when [value] is null or invalid
      */
     fun ipv6BigDecimalToFullString(value: BigDecimal?): String {
         if (value == null) return ""
@@ -288,11 +288,11 @@ object IpKit {
     }
 
     /**
-     * 将用户输入的 IP 文本转为与库内 `ip_start`/`ip_end`（`NUMERIC(39,0)`）一致的**无符号** [BigDecimal]。
+     * Converts user-supplied IP text to an **unsigned** [BigDecimal] consistent with the `ip_start`/`ip_end` (`NUMERIC(39,0)`) values stored in the database.
      *
-     * @param ip 点分 IPv4、缩写/全格式 IPv6、或纯十进制整数字符串
-     * @param mode 见 [IpStorageNumericMode]
-     * @return 无法解析且无法按十进制兜底时返回 null；[ip] 仅空白时返回 null
+     * @param ip a dotted IPv4, abbreviated/full-format IPv6, or pure decimal integer string
+     * @param mode see [IpStorageNumericMode]
+     * @return null when parsing fails and no decimal fallback is possible; null when [ip] is blank only
      */
     fun ipTextToUnsignedStorageDecimal(
         ip: String,
@@ -307,11 +307,11 @@ object IpKit {
     }
 
     /**
-     * 以 IPv6 优先的策略将文本解析为存储用 `BigDecimal`：
-     * 先尝试 [toFullIpv6] + [fullIpv6ColonGroupsTextToUnsignedDecimal]；失败时按十进制串兜底。
+     * Parses text into a storage `BigDecimal` with an IPv6-first strategy:
+     * try [toFullIpv6] + [fullIpv6ColonGroupsTextToUnsignedDecimal] first; on failure, fall back to a decimal string.
      *
-     * @param s 已 trim 的输入文本
-     * @return 解析结果，无法解析时返回 null
+     * @param s trimmed input text
+     * @return the parsed result, or null if parsing fails
      * @author K
      * @since 1.0.0
      */
@@ -320,11 +320,11 @@ object IpKit {
             .getOrElse { runCatching { BigDecimal(s) }.getOrNull() }
 
     /**
-     * 以 IPv4 优先的策略将文本解析为存储用 `BigDecimal`：
-     * 纯数字串直接当十进制处理；否则按点分/定长 IPv4 经 [ipv4DottedOrFixedToUnsignedDecimal] 转换。
+     * Parses text into a storage `BigDecimal` with an IPv4-first strategy:
+     * a pure-numeric string is treated as decimal directly; otherwise it is converted via dotted/fixed-length IPv4 through [ipv4DottedOrFixedToUnsignedDecimal].
      *
-     * @param s 已 trim 的输入文本
-     * @return 解析结果，无法解析时返回 null
+     * @param s trimmed input text
+     * @return the parsed result, or null if parsing fails
      * @author K
      * @since 1.0.0
      */
@@ -333,11 +333,12 @@ object IpKit {
         else ipv4DottedOrFixedToUnsignedDecimal(s)
 
     /**
-     * 把点分（含定长零补齐）形式 IPv4 转为存储用 `BigDecimal`：
-     * 先归一为非定长 IPv4 文本；归一失败时按十进制串兜底；归一成功后将无符号 32 位整数包成 `BigDecimal` 返回。
+     * Converts a dotted IPv4 (including fixed-length zero-padded form) to a storage `BigDecimal`:
+     * first normalizes to a non-fixed-length IPv4 text; if normalization fails, falls back to a decimal string;
+     * after successful normalization, wraps the unsigned 32-bit integer into a `BigDecimal`.
      *
-     * @param s 输入文本
-     * @return 转换结果，[ipv4StringToLong] 返回 -1 时返回 null
+     * @param s the input text
+     * @return the converted result, or null when [ipv4StringToLong] returns -1
      * @author K
      * @since 1.0.0
      */
@@ -353,11 +354,11 @@ object IpKit {
     }
 
     /**
-     * 自动判定输入类型并解析为存储用 `BigDecimal`：
-     * 优先级 — 纯十进制串 > 合法 IPv4 > 合法 IPv6 > 兜底按十进制串。
+     * Automatically determines the input type and parses it into a storage `BigDecimal`:
+     * priority order — pure decimal string > valid IPv4 > valid IPv6 > fall back to decimal string.
      *
-     * @param s 已 trim 的输入文本
-     * @return 解析结果，全部尝试失败时返回 null
+     * @param s trimmed input text
+     * @return the parsed result, or null if every attempt fails
      * @author K
      * @since 1.0.0
      */

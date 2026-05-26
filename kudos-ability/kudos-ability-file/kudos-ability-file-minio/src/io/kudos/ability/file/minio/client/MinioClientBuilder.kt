@@ -5,10 +5,10 @@ import io.minio.MinioClient
 
 
 /**
- * Minio STS 客户端获取接口
- * 通过此接口获取的 [MinioClient] 授权一定的权限控制
+ * Minio STS client acquisition interface.
+ * The [MinioClient] obtained through this interface is authorized with certain permission controls.
  *
- * @param T 认证参数类型
+ * @param T authentication parameter type
  * @author Roger
  * @author K
  * @author AI: Codex
@@ -19,7 +19,7 @@ interface MinioClientBuilder<T : AuthServerParam> {
     fun setAuthServerParam(authServerParam: T)
 
     /**
-     * 通过资源服务器(如:OpenId服务器)参数,获取带权限的 [MinioClient]
+     * Obtains a [MinioClient] with permissions, using resource server (e.g., OpenId server) parameters.
      *
      * @throws Exception
      */

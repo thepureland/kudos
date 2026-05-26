@@ -26,7 +26,7 @@ import javax.swing.JFrame
 import javax.swing.JPanel
 
 /**
- * 图片处理工具类
+ * Image processing utility.
  *
  * @author K
  * @since 1.0.0
@@ -34,51 +34,51 @@ import javax.swing.JPanel
 object ImageKit {
 
     /**
-     * 从文件读取图片
+     * Reads an image from a file.
      *
-     * @param imageFile 图片文件
-     * @return BufferedImage对象
+     * @param imageFile the image file
+     * @return a BufferedImage
      * @author K
      * @since 1.0.0
      */
     fun readImageFromFile(imageFile: File): BufferedImage = readImageFromFile(imageFile.path)
 
     /**
-     * 从文件读取图片
+     * Reads an image from a file.
      *
-     * @param imagePath 图片路径
-     * @return BufferedImage对象
+     * @param imagePath the image file path
+     * @return a BufferedImage
      * @author K
      * @since 1.0.0
      */
     fun readImageFromFile(imagePath: String): BufferedImage = ImageIO.read(Files.newInputStream(Paths.get(imagePath)))
 
     /**
-     * 从URI读取文件
+     * Reads an image from a URI.
      *
-     * @param imageUri 图片uri
-     * @return BufferedImage对象
+     * @param imageUri the image URI
+     * @return a BufferedImage
      * @author K
      * @since 1.0.0
      */
     fun readImageFromUri(imageUri: URI): BufferedImage = ImageIO.read(imageUri.toURL().openStream())
 
     /**
-     * 从URI读取文件
+     * Reads an image from a URI.
      *
-     * @param imageUriStr 图片网络地址
-     * @return BufferedImage对象
+     * @param imageUriStr the image network address
+     * @return a BufferedImage
      * @author K
      * @since 1.0.0
      */
     fun readImageFromUri(imageUriStr: String): BufferedImage = readImageFromUri(URI.create(imageUriStr))
 
     /**
-     * 写图片到文件
+     * Writes an image to a file.
      *
-     * @param bufferedImage BufferedImage对象
-     * @param imageFormat 图片类型(如png,jpg,gif等)
-     * @param imagePath 图片目标文件路径
+     * @param bufferedImage the BufferedImage
+     * @param imageFormat the image format (e.g. png, jpg, gif)
+     * @param imagePath the target image file path
      * @author K
      * @since 1.0.0
      */
@@ -86,11 +86,11 @@ object ImageKit {
         ImageIO.write(bufferedImage, imageFormat, Files.newOutputStream(Paths.get(imagePath)))
 
     /**
-     * 将图片转换为字符串表示
+     * Converts an image to a String representation.
      *
-     * @param imageFile 图片文件
-     * @param imageFormat 图片类型(如png,jpg,gif等)
-     * @return 图片的字符串表示
+     * @param imageFile the image file
+     * @param imageFormat the image format (e.g. png, jpg, gif)
+     * @return the string representation of the image
      * @author K
      * @since 1.0.0
      */
@@ -100,11 +100,11 @@ object ImageKit {
     }
 
     /**
-     * 将图片转换为字符串表示
+     * Converts an image to a String representation.
      *
-     * @param imageUri 图片uri
-     * @param imageFormat 图片类型(如png,jpg,gif等)
-     * @return 图片的字符串表示
+     * @param imageUri the image URI
+     * @param imageFormat the image format (e.g. png, jpg, gif)
+     * @return the string representation of the image
      * @author K
      * @since 1.0.0
      */
@@ -114,11 +114,11 @@ object ImageKit {
     }
 
     /**
-     * 将图片转换为字符串表示
+     * Converts an image to a String representation.
      *
-     * @param bufferedImage BufferedImage对象
-     * @param imageFormat 图片类型(如png,jpg,gif等)
-     * @return 图片的字符串表示(Base64编码)
+     * @param bufferedImage the BufferedImage
+     * @param imageFormat the image format (e.g. png, jpg, gif)
+     * @return the Base64-encoded string representation of the image
      * @author K
      * @since 1.0.0
      */
@@ -131,10 +131,10 @@ object ImageKit {
     }
 
     /**
-     * 将字符串表示转换为图片对象
+     * Converts a String representation to an image.
      *
-     * @param imgStr 图片的字符串表示(Base64编码)
-     * @return BufferedImage对象
+     * @param imgStr the Base64-encoded string representation of the image
+     * @return a BufferedImage
      * @author K
      * @since 1.0.0
      */
@@ -148,21 +148,21 @@ object ImageKit {
 
 
     /**
-     * 把传入的原始图像按高度和宽度进行缩放，生成符合要求的图标
+     * Scales the given source image to the requested height and width, producing an icon-sized image.
      *
-     * @param srcImageFile 源文件地址
-     * @param height       目标高度
-     * @param width        目标宽度
-     * @param hasFiller    比例不对时是否需要补白：true为补白（缺省值）; false为不补白;
+     * @param srcImageFile path to the source file
+     * @param height       target height
+     * @param width        target width
+     * @param hasFiller    whether to pad with whitespace when the aspect ratio does not match: true to pad (default); false otherwise
      * @author K
      * @since 1.0.0
      */
     fun scale(srcImageFile: String, height: Int, width: Int, hasFiller: Boolean = true): BufferedImage {
-        val ratio: Double // 缩放比例
+        val ratio: Double // scale ratio
         val file = File(srcImageFile)
         val srcImage: BufferedImage = ImageIO.read(file)
         var destImage = srcImage.getScaledInstance(width, height, BufferedImage.SCALE_SMOOTH)
-        // 计算比例
+        // compute the ratio
         if (srcImage.height > height || srcImage.width > width) {
             ratio = if (srcImage.height > srcImage.width) {
                 height.toDouble() / srcImage.height
@@ -172,7 +172,7 @@ object ImageKit {
             val op = AffineTransformOp(AffineTransform.getScaleInstance(ratio, ratio), null)
             destImage = op.filter(srcImage, null)
         }
-        if (hasFiller) { // 补白
+        if (hasFiller) { // pad
             val image = BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
             val graphic = image.createGraphics()
             graphic.color = Color.white
@@ -191,19 +191,19 @@ object ImageKit {
     }
 
     /**
-     * 从内存字节数组中读取图像
+     * Reads an image from an in-memory byte array.
      *
-     * @param imgBytes 未解码的图像数据
-     * @return 返回 [BufferedImage]
-     * @throws IOException 当读写错误或不识别的格式时抛出
+     * @param imgBytes undecoded image data
+     * @return a [BufferedImage]
+     * @throws IOException when a read/write error occurs or the format is unrecognized
      * @author https://blog.csdn.net/johnwaychan/article/details/79106983
      * @author K
      * @since 1.0.0
      */
     fun readMemoryImage(imgBytes: ByteArray, format: String? = null): BufferedImage {
-        // 将字节数组转为InputStream，再转为MemoryCacheImageInputStream
+        // Convert the byte array to an InputStream, and then to a MemoryCacheImageInputStream
         val imageInputStream = MemoryCacheImageInputStream(ByteArrayInputStream(imgBytes))
-        // 获取所有能识别数据流格式的ImageReader对象
+        // Get all ImageReader objects that recognize this stream format
         val it = if (format == null) {
             val imageReaders = ImageIO.getImageReaders(imageInputStream)
 //            if (!imageReaders.hasNext()) {
@@ -213,28 +213,28 @@ object ImageKit {
         } else {
             ImageIO.getImageReadersByFormatName(format)
         }
-        // 迭代器遍历尝试用ImageReader对象进行解码
+        // Iterate and try decoding with each ImageReader
         while (it.hasNext()) {
             val imageReader = it.next()
-            // 设置解码器的输入流
+            // Set the decoder's input stream
             imageReader.setInput(imageInputStream, true, true)
-            // 图像文件格式后缀
+            // Image format suffix
             val suffix: String = imageReader.formatName.trim().lowercase()
-            // 图像宽度
+            // Image width
             val width: Int = imageReader.getWidth(0)
-            // 图像高度
+            // Image height
             val height: Int = imageReader.getHeight(0)
             System.out.printf("format %s,%dx%d\n", suffix, width, height)
             try {
-                // 解码成功返回BufferedImage对象
-                // 0即为对第0张图像解码(gif格式会有多张图像),前面获取宽度高度的方法中的参数0也是同样的意思
+                // On success, return a BufferedImage
+                // 0 means decode the first image (gif format may have multiple); the 0 used when getting width/height has the same meaning
                 return imageReader.read(0, imageReader.defaultReadParam)
             } catch (_: IOException) {
                 imageReader.dispose()
-                // 如果解码失败尝试用下一个ImageReader解码
+                // If decoding fails, try the next ImageReader
             } catch (_: RuntimeException) {
                 imageReader.dispose()
-                // 如果解码失败尝试用下一个ImageReader解码
+                // If decoding fails, try the next ImageReader
             }
         }
         imageInputStream.close()
@@ -242,9 +242,9 @@ object ImageKit {
     }
 
     /**
-     * 图形化展现图片对象
+     * Displays the image graphically.
      *
-     * @param bufferedImage BufferedImage对象
+     * @param bufferedImage the BufferedImage
      * @author K
      * @since 1.0.0
      */
@@ -272,12 +272,12 @@ object ImageKit {
     }
 
     /**
-     * 将svg格式的xml渲染成图片
+     * Renders an SVG xml string to an image.
      *
-     * @param xmlContent svg格式的xml
-     * @param width 图片宽度
-     * @param height 图片高度
-     * @return BufferedImage
+     * @param xmlContent the SVG xml
+     * @param width the image width
+     * @param height the image height
+     * @return a BufferedImage
      * @author https://blog.csdn.net/do168/article/details/51564492
      * @author K
      * @since 1.0.0
@@ -287,17 +287,17 @@ object ImageKit {
     }
 
     /**
-     * SVG 渲染的内部实现，支持在渲染前按 id 正则替换颜色填充。
-     * 指定一个临时 URI 是 Batik 解析 SVG 片段引用（如 `#linearGradient1`）的前置条件，
-     * 否则带 URI fragment 的引用会解析失败。
+     * Internal implementation of SVG rendering, supporting fill-color replacement by id regex prior to rendering.
+     * Specifying a temporary URI is required for Batik to resolve SVG fragment references (e.g. `#linearGradient1`);
+     * otherwise references with a URI fragment fail to resolve.
      *
-     * @param xmlContent SVG 文本
-     * @param width 目标宽度
-     * @param height 目标高度
-     * @param stretch true 时按 X/Y 独立缩放充满，false 时保持比例
-     * @param idRegex 要替换填充色的元素 id 正则，可为 null
-     * @param replacementColor 新的填充色，可为 null
-     * @return 渲染后的位图
+     * @param xmlContent the SVG text
+     * @param width the target width
+     * @param height the target height
+     * @param stretch true to scale independently on X/Y to fill, false to preserve aspect ratio
+     * @param idRegex regex of element ids whose fill color should be replaced; may be null
+     * @param replacementColor the new fill color; may be null
+     * @return the rendered bitmap
      * @author K
      * @since 1.0.0
      */
@@ -321,14 +321,14 @@ object ImageKit {
     }
 
     /**
-     * 用 Batik 把已解析的 [SVGDocument] 渲染为 [BufferedImage]。
-     * 计算 X/Y 缩放比例并按 [stretch] 决定是否保持长宽比；非拉伸时居中输出。
+     * Uses Batik to render the parsed [SVGDocument] to a [BufferedImage].
+     * Computes the X/Y scale and, according to [stretch], chooses whether to preserve aspect ratio; when not stretching, output is centered.
      *
-     * @param document 已解析的 SVG 文档
-     * @param width 目标位图宽度
-     * @param height 目标位图高度
-     * @param stretch true 时按 X/Y 独立缩放充满，false 时保持比例并居中
-     * @return 渲染后的位图
+     * @param document the parsed SVG document
+     * @param width the target bitmap width
+     * @param height the target bitmap height
+     * @param stretch true to scale independently on X/Y to fill, false to preserve aspect ratio and center
+     * @return the rendered bitmap
      * @author K
      * @since 1.0.0
      */
@@ -363,13 +363,13 @@ object ImageKit {
     }
 
     /**
-     * 遍历文档中所有 SVG 元素，对 id 匹配 [idRegex] 的元素，
-     * 将其 `style` 属性中的 `fill:#XXXXXX` 替换为指定颜色。
-     * 仅修改 style 内联属性，不处理 CSS 类或外部样式表。
+     * Iterates over all SVG elements in the document and, for any element whose id matches [idRegex],
+     * replaces the `fill:#XXXXXX` value in its `style` attribute with the given color.
+     * Only inline style attributes are modified; CSS classes and external stylesheets are not handled.
      *
-     * @param document SVG 文档
-     * @param idRegex 目标元素 id 的正则
-     * @param color 新的填充色
+     * @param document the SVG document
+     * @param idRegex regex matching the target element ids
+     * @param color the new fill color
      * @author K
      * @since 1.0.0
      */

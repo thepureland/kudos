@@ -8,22 +8,26 @@ import javafx.scene.input.KeyCode
 import javafx.scene.input.KeyEvent
 
 /**
- * 给可编辑 [ComboBox] 加"输入即过滤"行为：
+ * Adds "filter as you type" behavior to an editable [ComboBox]:
  *
- * - 监听 `onKeyReleased`，按当前 editor 文本（不区分大小写）做 startsWith 过滤
- * - 方向键 / Ctrl / HOME / END / TAB 跳过过滤，仅移动光标位置
- * - BACK_SPACE / DELETE 后保留光标位置，避免每次按键都跳到末尾
+ * - Listens to `onKeyReleased` and performs a case-insensitive startsWith filter using the
+ *   current editor text.
+ * - Arrow keys / Ctrl / HOME / END / TAB skip filtering and only move the caret.
+ * - Preserves the caret position after BACK_SPACE / DELETE so it does not jump to the end on
+ *   every keystroke.
  *
- * **构造即注册**——`init` 块会把 ComboBox 设为 editable、装上 onKeyPressed (hide)
- * 与 onKeyReleased (本实例) 监听。所以业务侧只需：
+ * **Construction registers it** — the `init` block sets the ComboBox to editable and attaches
+ * the onKeyPressed (hide) and onKeyReleased (this instance) listeners. So the business side
+ * only needs:
  *
  * ```kotlin
  * val combo = ComboBox<Any>().apply { items = ... }
- * AutoCompleteComboBoxListener<String>(combo)  // 注册即生效
+ * AutoCompleteComboBoxListener<String>(combo)  // takes effect on construction
  * ```
  *
- * 类型参数 `T` 是 items 真实元素类型；ComboBox 自身用 `<Any>` 是历史遗留——
- * `data[i].toString()` 拿显示串，不依赖 `T`。
+ * The type parameter `T` is the actual element type of the items; the ComboBox itself is
+ * declared with `<Any>` for historical reasons — `data[i].toString()` provides the display
+ * string and does not depend on `T`.
  *
  * @author K
  * @author AI: Codex
@@ -31,11 +35,11 @@ import javafx.scene.input.KeyEvent
  */
 class AutoCompleteComboBoxListener<T>(private val comboBox: ComboBox<Any>) : EventHandler<KeyEvent> {
 
-    /** ComboBox 的原始 items 引用；过滤时按其副本展示，避免破坏原数据 */
+    /** Reference to the ComboBox's original items; filtering shows a copy to avoid mutating the source. */
     private val data: ObservableList<T>
-    /** BACK_SPACE/DELETE 后是否需要把光标移到 [caretPos]，避免回退后光标跳到末尾 */
+    /** Whether the caret needs to be moved to [caretPos] after BACK_SPACE/DELETE so it does not jump to the end. */
     private var moveCaretToPos = false
-    /** 临时保存的光标位置，-1 表示无需保留，光标随文本长度走 */
+    /** Temporary caret position; -1 means "no preservation needed; let the caret follow the text length". */
     private var caretPos = 0
 
     init {
@@ -47,13 +51,14 @@ class AutoCompleteComboBoxListener<T>(private val comboBox: ComboBox<Any>) : Eve
     }
 
     /**
-     * 处理 `onKeyReleased` 事件：实施"输入即过滤"逻辑。
+     * Handles the `onKeyReleased` event: implements the "filter as you type" logic.
      *
-     * 方向键 / Ctrl / HOME / END / TAB 立即返回（仅影响光标导航，不触发过滤）；
-     * BACK_SPACE / DELETE 先记下当前 caretPos 让 [moveCaret] 后续保留位置；
-     * 其它键按 editor 文本 startsWith 过滤 items，并在结果非空时显示下拉。
+     * Arrow keys / Ctrl / HOME / END / TAB return immediately (caret navigation only, no
+     * filtering). BACK_SPACE / DELETE first record the current caretPos so that [moveCaret]
+     * can preserve the position. Other keys filter items by startsWith on the editor text and
+     * show the dropdown when the result is non-empty.
      *
-     * @param event 键盘事件
+     * @param event keyboard event
      * @author K
      * @since 1.0.0
      */
@@ -78,8 +83,8 @@ class AutoCompleteComboBoxListener<T>(private val comboBox: ComboBox<Any>) : Eve
         }
         if (event.isControlDown || event.code in SKIP_CODES) return
         val prefix = comboBox.editor.text.lowercase()
-        // .lowercase() 不带 Locale 参数走 Locale.ROOT (Kotlin 1.5+)——避免 Turkish locale 的
-        // i→İ 误判，桌面 UI 输入比对依赖这一点
+        // .lowercase() without a Locale uses Locale.ROOT (Kotlin 1.5+) — avoids the Turkish
+        // locale i→İ false match, which desktop UI input comparison relies on.
         val matched = data.filter { it.toString().lowercase().startsWith(prefix) }
         val list: ObservableList<Any> = FXCollections.observableArrayList<Any>().apply { addAll(matched) }
         val t = comboBox.editor.text
@@ -91,10 +96,12 @@ class AutoCompleteComboBoxListener<T>(private val comboBox: ComboBox<Any>) : Eve
     }
 
     /**
-     * 把光标定位到合适位置：[caretPos] = -1 时移到末尾，否则保留删除前的位置。
-     * 最后把 [moveCaretToPos] 重置为 false，让下次 BACK_SPACE/DELETE 重新进入"保位"模式。
+     * Positions the caret appropriately: when [caretPos] is -1, move to the end; otherwise keep
+     * the position from before the deletion.
+     * Finally resets [moveCaretToPos] to false so the next BACK_SPACE/DELETE re-enters
+     * "preserve position" mode.
      *
-     * @param textLength 当前文本长度，供"移到末尾"模式使用
+     * @param textLength current text length; used by the "move to end" mode
      * @author K
      * @since 1.0.0
      */

@@ -3,27 +3,27 @@ package io.kudos.ms.msg.common.instance.enums
 import io.kudos.base.enums.ienums.IErrorCodeEnum
 
 /**
- * 消息实例错误码
+ * Message instance error codes.
  *
  * @author K
  * @author AI: Codex
  * @since 1.0.0
  */
 enum class MsgInstanceErrorCodeEnum(
-    /** 错误码 */
+    /** Error code. */
     override val code: String,
-    /** 默认展示文本 */
+    /** Default display text. */
     override val defaultDisplayText: String,
 ) : IErrorCodeEnum {
 
-    /** 未定义错误 */
-    UNSPECIFIED("UNSPECIFIED", "未定义错误"),
+    /** Unspecified error. */
+    UNSPECIFIED("UNSPECIFIED", "Unspecified error"),
 
-    /** 按主键查找消息实例失败 */
-    INSTANCE_NOT_FOUND("INSTANCE_NOT_FOUND", "消息实例不存在"),
+    /** Lookup of message instance by primary key failed. */
+    INSTANCE_NOT_FOUND("INSTANCE_NOT_FOUND", "Message instance not found"),
 
-    /** 当前时间不在 [validTimeStart, validTimeEnd] 区间内 */
-    INSTANCE_EXPIRED("INSTANCE_EXPIRED", "消息实例已过有效期");
+    /** Current time is outside the [validTimeStart, validTimeEnd] range. */
+    INSTANCE_EXPIRED("INSTANCE_EXPIRED", "Message instance has expired");
 
     override val i18nKeyPrefix: String
         get() = "msg.error-msg.instance"

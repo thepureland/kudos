@@ -3,47 +3,47 @@ package io.kudos.ms.user.common.account.vo.request
 import io.kudos.base.bean.validation.constraint.annotations.MaxLength
 
 /**
- * 用户账号保护表单基础字段（新建 / 更新共用）
+ * User account protection form base fields (shared between create and update)
  *
  * @author K
  * @since 1.0.0
  */
 interface IUserAccountProtectionFormBase {
 
-    /** 用户ID */
+    /** User ID */
     val userId: String?
 
-    /** 问题1 */
+    /** Question 1 */
     val question1: String?
 
-    /** 答案1 */
+    /** Answer 1 */
     val answer1: String?
 
-    /** 问题2 */
+    /** Question 2 */
     val question2: String?
 
-    /** 答案2 */
+    /** Answer 2 */
     val answer2: String?
 
-    /** 问题3 */
+    /** Question 3 */
     val question3: String?
 
-    /** 答案3 */
+    /** Answer 3 */
     val answer3: String?
 
-    /** 安全联系方式ID */
+    /** Safe contact way ID */
     val safeContactWayId: String?
 
-    /** 总的找回密码次数 */
+    /** Total password recovery attempts allowed */
     val totalValidateCount: Int?
 
-    /** 必须答对的问题数 */
+    /** Number of questions that must be answered correctly */
     val matchQuestionCount: Int?
 
-    /** 错误次数 */
+    /** Error count */
     val errorTimes: Int?
 
-    /** 备注 */
+    /** Remark */
     @get:MaxLength(128)
     val remark: String?
 }

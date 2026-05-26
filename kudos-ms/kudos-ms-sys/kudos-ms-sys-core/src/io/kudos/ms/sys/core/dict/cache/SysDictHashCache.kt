@@ -21,17 +21,18 @@ import org.springframework.transaction.event.TransactionPhase
 import org.springframework.transaction.event.TransactionalEventListener
 
 /**
- * 字典类型 Hash 缓存处理器，基于 Hash 结构存储 [SysDictCacheEntry]。
+ * Dictionary type Hash cache handler, storing [SysDictCacheEntry] in a Hash structure.
  *
- * 数据来源表：sys_dict。
+ * Data source table: sys_dict.
  *
- * 提供三类查询与回写能力：
- * - **按主键**：按 id 取单条或批量实体。
- * - **按原子服务编码+字典类型**：按 atomicServiceCode、dictType取单条字典实体。
+ * Provides three categories of read and write-back capabilities:
+ * - **By primary key**: get a single entity or batch by id.
+ * - **By atomic service code + dictionary type**: fetch a single dictionary entity by atomicServiceCode and dictType.
  *
- * 使用 [FILTERABLE_PROPERTIES] 中的副属性建立 Set 索引，支持多条件等值查询；所有写入、删除、全量刷新均需使用同一副属性集合以保持索引一致。
+ * Uses the secondary properties in [FILTERABLE_PROPERTIES] to build Set indexes, supporting multi-condition equality queries.
+ * All writes, deletes and full refreshes must use the same secondary property set to keep indexes consistent.
  *
- * 使用前需在缓存配置表 sys_cache 中增加名为 [CACHE_NAME] 的配置项（hash=true）。
+ * Before use, an entry named [CACHE_NAME] with hash=true must be added to the sys_cache configuration table.
  *
  * @author K
  * @since 1.0.0
@@ -47,7 +48,7 @@ open class SysDictHashCache : AbstractHashCacheHandler<SysDictCacheEntry>() {
     companion object {
         const val CACHE_NAME = "SYS_DICT__HASH"
 
-        /** 用于等值筛选与 Set 索引的副属性名集合，写入/删除/全量刷新时须与此一致 */
+        /** Secondary property names used for equality filtering and Set indexes; writes/deletes/full refreshes must match this set */
         val FILTERABLE_PROPERTIES = setOf(
             SysDictCacheEntry::atomicServiceCode.name,
             SysDictCacheEntry::dictType.name
@@ -62,14 +63,14 @@ open class SysDictHashCache : AbstractHashCacheHandler<SysDictCacheEntry>() {
 
     override fun doReload(id: Any): SysDictCacheEntry? = sysDictDao.getAs(id.toString())
 
-    // ---------- 1. 按主键 id ----------
+    // ---------- 1. By primary key id ----------
 
     /**
-     * 根据主键 id 获取单条字典实体。
-     * 先查缓存，未命中则查库并回写；回写时按 [FILTERABLE_PROPERTIES] 建立副属性索引。
+     * Get a single dictionary entity by primary key id.
+     * Queries the cache first; on miss, queries the database and writes back, building secondary indexes per [FILTERABLE_PROPERTIES].
      *
-     * @param id 字典主键，非空
-     * @return 字典缓存项，不存在时 null
+     * @param id dictionary primary key, non-blank
+     * @return the cache entry, or null when not found
      */
     @HashCacheableByPrimary(
         cacheNames = [CACHE_NAME],
@@ -79,16 +80,16 @@ open class SysDictHashCache : AbstractHashCacheHandler<SysDictCacheEntry>() {
         filterableProperties = ["atomicServiceCode", "dictType"]
     )
     open fun getDictById(id: String): SysDictCacheEntry? {
-        require(id.isNotBlank()) { "获取字典时 id 不能为空" }
+        require(id.isNotBlank()) { "id must not be blank when fetching dictionary" }
         return sysDictDao.getAs<SysDictCacheEntry>(id)
     }
 
     /**
-     * 根据主键 id 列表批量获取字典实体。
-     * 先查缓存，未命中的 id 再查库并回写；回写时按 [FILTERABLE_PROPERTIES] 建立副属性索引。
+     * Batch get dictionary entities by primary key id list.
+     * Queries the cache first; for any missing ids, queries the database and writes back, building secondary indexes per [FILTERABLE_PROPERTIES].
      *
-     * @param ids 字典主键列表，可为空
-     * @return id -> 实体 映射，仅包含能查到的 id
+     * @param ids list of dictionary primary keys, may be empty
+     * @return id -> entity map, only including found ids
      */
     @HashBatchCacheableByPrimary(
         cacheNames = [CACHE_NAME],
@@ -102,14 +103,14 @@ open class SysDictHashCache : AbstractHashCacheHandler<SysDictCacheEntry>() {
         return ids.mapNotNull { id -> byId[id]?.let { id to it } }.toMap()
     }
 
-    // ---------- 2. 按原子服务编码 ----------
+    // ---------- 2. By atomic service code ----------
 
     /**
-     * 按原子服务编码查询，返回匹配的字典实体列表。
-     * 先按副属性索引查缓存，未命中则查库并回写。
+     * Query the dictionary entity list matching the given atomic service code.
+     * Queries the cache via secondary indexes first; on miss, queries the database and writes back.
      *
-     * @param atomicServiceCode 原子服务编码，非空
-     * @return 匹配的字典实体列表
+     * @param atomicServiceCode atomic service code, non-blank
+     * @return list of matching dictionary entities
      */
     @HashCacheableBySecondary(
         cacheNames = [CACHE_NAME],
@@ -121,15 +122,15 @@ open class SysDictHashCache : AbstractHashCacheHandler<SysDictCacheEntry>() {
         return sysDictDao.searchDictsByAtomicServiceCode(atomicServiceCode)
     }
 
-    // ---------- 3. 按原子服务编码+字典类型 ----------
+    // ---------- 3. By atomic service code + dictionary type ----------
 
     /**
-     * 按原子服务编码、字典类型多条件等值查询，返回匹配的字典实体（0 或 1 条）。
-     * 先按副属性索引查缓存，未命中则查库并回写。
+     * Multi-condition equality query by atomic service code and dictionary type; returns 0 or 1 dictionary entity.
+     * Queries the cache via secondary indexes first; on miss, queries the database and writes back.
      *
-     * @param atomicServiceCode 原子服务编码，非空
-     * @param dictType 字典类型，非空
-     * @return 匹配的字典实体，不存在时 null
+     * @param atomicServiceCode atomic service code, non-blank
+     * @param dictType dictionary type, non-blank
+     * @return matching dictionary entity, or null when not found
      */
     @HashCacheableBySecondary(
         cacheNames = [CACHE_NAME],
@@ -141,31 +142,31 @@ open class SysDictHashCache : AbstractHashCacheHandler<SysDictCacheEntry>() {
         return sysDictDao.fetchDictByAtomicServiceCodeAndDictType(atomicServiceCode, dictType)
     }
 
-    // ---------- 全量刷新 ----------
+    // ---------- Full refresh ----------
 
     /**
-     * 从库全量加载字典并刷新 Hash 缓存。
+     * Load all dictionaries from the database and refresh the Hash cache.
      *
-     * @param clear 为 true 时先清空当前缓存再写入；为 false 时覆盖写入
+     * @param clear when true, clear the current cache before writing; when false, overwrite in place
      */
     override fun reloadAll(clear: Boolean) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.info("缓存未开启，不加载字典 Hash 缓存")
+            log.info("Cache is not active; skip loading dictionary Hash cache")
             return
         }
         val cache = hashCache()
         val list = sysDictDao.searchAs<SysDictCacheEntry>()
-        log.debug("从数据库加载 ${list.size} 条字典，刷新 Hash 缓存")
+        log.debug("Loaded ${list.size} dictionaries from database; refreshing Hash cache")
         cache.refreshAll(CACHE_NAME, list, FILTERABLE_PROPERTIES, emptySet())
-        log.debug("字典 Hash 缓存刷新完成")
+        log.debug("Dictionary Hash cache refresh completed")
     }
 
-    // ---------- 写库后同步（供业务在新增/更新/删除后调用） ----------
+    // ---------- Post-write sync (called by business after insert/update/delete) ----------
 
     /**
-     * 新增字典后同步：将指定 id 的实体从库加载并写入缓存，并建立副属性索引。
+     * Post-insert sync: load the entity for the given id from the database, write to cache, and build secondary indexes.
      *
-     * @param id 新增的字典主键
+     * @param id primary key of the inserted dictionary
      */
     open fun syncOnInsert(id: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME) || !KeyValueCacheKit.isWriteInTime(CACHE_NAME)) return
@@ -174,19 +175,19 @@ open class SysDictHashCache : AbstractHashCacheHandler<SysDictCacheEntry>() {
     }
 
     /**
-     * 新增字典后同步（重载，接收业务对象与 id）。行为同 [syncOnInsert(id)]。
+     * Post-insert sync (overload accepting a business object plus id). Behaves identically to [syncOnInsert(id)].
      *
-     * @param any 业务对象，仅用于重载区分
-     * @param id 新增的字典主键
+     * @param any business object, used only to differentiate the overload
+     * @param id primary key of the inserted dictionary
      */
     open fun syncOnInsert(any: Any, id: String) {
         syncOnInsert(id)
     }
 
     /**
-     * 更新字典后同步：将指定 id 的实体从库重新加载并写入缓存，更新副属性索引。
+     * Post-update sync: reload the entity for the given id from the database, write to cache, and update secondary indexes.
      *
-     * @param id 被更新的字典主键
+     * @param id primary key of the updated dictionary
      */
     open fun syncOnUpdate(id: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
@@ -197,26 +198,26 @@ open class SysDictHashCache : AbstractHashCacheHandler<SysDictCacheEntry>() {
     }
 
     /**
-     * 更新字典后同步（重载，带旧 atomicServiceCode、dictType 等参数）。行为同 [syncOnUpdate(id)]。
+     * Post-update sync (overload accepting previous atomicServiceCode, dictType, etc.). Behaves identically to [syncOnUpdate(id)].
      */
     open fun syncOnUpdate(any: Any, id: String, oldAtomicServiceCode: String?, oldDictType: String?) {
         syncOnUpdate(id)
     }
 
     /**
-     * 更新字典启用状态后同步。行为同 [syncOnUpdate(id)]。
+     * Post active-flag-update sync. Behaves identically to [syncOnUpdate(id)].
      *
-     * @param id 字典主键
-     * @param active 新的启用状态
+     * @param id dictionary primary key
+     * @param active new active flag
      */
     open fun syncOnUpdateActive(id: String, active: Boolean) {
         syncOnUpdate(id)
     }
 
     /**
-     * 删除字典后同步：从缓存中移除该 id，并从副属性 Set 索引中移除。
+     * Post-delete sync: remove the id from the cache and from the secondary property Set indexes.
      *
-     * @param id 被删除的字典主键
+     * @param id primary key of the deleted dictionary
      */
     open fun syncOnDelete(id: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
@@ -224,9 +225,9 @@ open class SysDictHashCache : AbstractHashCacheHandler<SysDictCacheEntry>() {
     }
 
     /**
-     * 批量删除字典后同步：从缓存中移除这些 id，并从副属性 Set 索引中移除。
+     * Post-batch-delete sync: remove the given ids from the cache and from the secondary property Set indexes.
      *
-     * @param ids 被删除的字典主键集合
+     * @param ids primary keys of the deleted dictionaries
      */
     open fun syncOnBatchDelete(ids: Collection<String>) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
@@ -234,7 +235,7 @@ open class SysDictHashCache : AbstractHashCacheHandler<SysDictCacheEntry>() {
         ids.forEach { cache.deleteById(CACHE_NAME, it, SysDictCacheEntry::class, FILTERABLE_PROPERTIES, emptySet()) }
     }
 
-    // region 事件订阅（由 SysDictService 在事务提交后派发） -----------------------------------
+    // region Event subscriptions (dispatched by SysDictService after transaction commit) -----------------------------------
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     open fun on(event: SysDictInserted): Unit = syncOnInsert(event.id)
@@ -251,8 +252,8 @@ open class SysDictHashCache : AbstractHashCacheHandler<SysDictCacheEntry>() {
     // endregion
 
     /**
-     * 生成「原子服务编码+字典类型」维度的组合 key，格式：atomicServiceCode + 分隔符 + dictType。
-     * 用于外部需要与缓存 key 约定一致的场景。
+     * Build a composite key for the "atomic service code + dictionary type" dimension; format: atomicServiceCode + delimiter + dictType.
+     * Used by callers that need to follow the same cache key convention.
      */
     fun getKeyAtomicServiceCodeAndDictType(atomicServiceCode: String, dictType: String): String {
         return "${atomicServiceCode}${Consts.CACHE_KEY_DEFAULT_DELIMITER}${dictType}"

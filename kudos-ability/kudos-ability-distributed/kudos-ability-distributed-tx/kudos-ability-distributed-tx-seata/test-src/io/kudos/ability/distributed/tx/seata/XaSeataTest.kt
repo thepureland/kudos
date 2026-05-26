@@ -10,7 +10,7 @@ import org.springframework.test.context.DynamicPropertySource
 import kotlin.test.Test
 
 /**
- * seata-XA模式测试用例
+ * Test cases for Seata XA mode.
  *
  * @author K
  * @since 1.0.0
@@ -19,10 +19,12 @@ import kotlin.test.Test
 @EnabledIfDockerInstalled
 @Import(Service::class)
 @Disabled(
-    "Seata XA 模式需要底层使用 XA-aware 驱动（org.postgresql.xa.PGXADataSource），" +
-            "当前测试栈用 HikariCP 包装的普通 PgDataSource — DataSourceProxyXA 无法走完两阶段 commit/rollback，" +
-            "事务始终被回滚。要让 XA 真正可用需要：(1) 改用 PGXADataSource，(2) 用支持 XA 的连接池或不走池，" +
-            "(3) 重做 baomidou dynamic-datasource 集成。AT 模式 (AtSeataTest) 已经覆盖了分布式事务核心场景。"
+    "Seata XA mode requires an XA-aware driver underneath (e.g. org.postgresql.xa.PGXADataSource). " +
+            "The current test stack uses a plain PgDataSource wrapped by HikariCP — DataSourceProxyXA cannot complete " +
+            "the two-phase commit/rollback, so transactions are always rolled back. To make XA truly usable: " +
+            "(1) switch to PGXADataSource, (2) use an XA-capable pool or run without pooling, " +
+            "(3) redo the baomidou dynamic-datasource integration. AT mode (AtSeataTest) already covers the core " +
+            "distributed-transaction scenarios."
 )
 open class XaSeataTest : SeataTestBase() {
 
@@ -52,11 +54,11 @@ open class XaSeataTest : SeataTestBase() {
             registry.add("seata.tx-service-group") { "default_tx_group" }
             registry.add("seata.data-source-proxy-mode") { "XA" }
             registry.add("spring.datasource.dynamic.seata-mode") { "XA" }
-            // XA 模式：autoCommit=false（详见 SeataTestBase.autoCommitForMode()）
+            // XA mode: autoCommit=false (see SeataTestBase.autoCommitForMode())
             registry.add("spring.datasource.dynamic.hikari.is-auto-commit") { "false" }
             registry.add("spring.datasource.dynamic.datasource.postgres.hikari.is-auto-commit") { "false" }
-            // baomidou dynamic-datasource 已经在 Bean 装配时通过 dynamic.seata=true 包装好 DS，
-            // 关掉 Seata 自身的 auto-proxy 避免 double-wrap（XA 下会 StackOverflowError）。
+            // baomidou dynamic-datasource already wraps the DS at bean wiring via dynamic.seata=true;
+            // disable Seata's own auto-proxy to avoid double-wrapping (which causes StackOverflowError under XA).
             registry.add("seata.enable-auto-data-source-proxy") { "false" }
             startContainer(registry)
         }

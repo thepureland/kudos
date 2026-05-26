@@ -16,37 +16,37 @@ import org.springframework.cache.support.AbstractCacheManager
 import java.util.Objects
 
 /**
- * 混合缓存管理器
+ * Mixed cache manager.
  *
- * 支持两级缓存（本地+远程）的统一管理，根据配置自动选择缓存策略。
+ * Provides unified management for two-tier caches (local + remote), automatically choosing a strategy based on configuration.
  *
- * 核心功能：
- * 1. 缓存策略管理：支持SINGLE_LOCAL、REMOTE、LOCAL_REMOTE三种策略
- * 2. 缓存初始化：在系统初始化完成后加载所有配置的缓存
- * 3. 缓存版本管理：通过CacheVersionConfig支持缓存版本隔离
- * 4. 模式匹配清除：支持按模式（通配符）清除缓存
+ * Core responsibilities:
+ * 1. Cache strategy management: supports SINGLE_LOCAL, REMOTE, and LOCAL_REMOTE strategies.
+ * 2. Cache initialization: loads all configured caches after system initialization.
+ * 3. Cache version management: supports cache version isolation via CacheVersionConfig.
+ * 4. Pattern-based eviction: supports evicting cache entries by pattern (wildcard).
  *
- * 缓存策略：
- * - SINGLE_LOCAL：仅使用本地缓存（如Caffeine）
- * - REMOTE：仅使用远程缓存（如Redis）
- * - LOCAL_REMOTE：两级缓存，先查本地，未命中再查远程
+ * Cache strategies:
+ * - SINGLE_LOCAL: uses local cache only (e.g., Caffeine).
+ * - REMOTE: uses remote cache only (e.g., Redis).
+ * - LOCAL_REMOTE: two-tier cache; checks local first, falls back to remote on miss.
  *
- * 初始化流程：
- * 1. 检查缓存是否启用
- * 2. 检查缓存管理器是否存在
- * 3. 从配置提供者获取三类配置：本地、远程、混合
- * 4. 初始化本地和远程缓存管理器
- * 5. 加载并注册所有缓存实例
+ * Initialization flow:
+ * 1. Check whether caching is enabled.
+ * 2. Check whether a cache manager is present.
+ * 3. Obtain three groups of configurations from the provider: local, remote, mixed.
+ * 4. Initialize the local and remote cache managers.
+ * 5. Load and register all cache instances.
  *
- * 缓存降级/升级：
- * - 如果配置了混合缓存但缺少本地管理器，降级为远程缓存
- * - 如果配置了混合缓存但缺少远程管理器，降级为本地缓存
- * - 自动记录降级/升级日志
+ * Cache downgrade/upgrade:
+ * - If mixed cache is configured but the local manager is missing, downgrades to remote cache.
+ * - If mixed cache is configured but the remote manager is missing, downgrades to local cache.
+ * - Downgrade/upgrade events are logged automatically.
  *
- * 注意事项：
- * - 必须在系统初始化完成后调用initCacheAfterSystemInit
- * - 缓存名称会自动添加版本前缀
- * - 模式清除可能影响性能，需谨慎使用
+ * Notes:
+ * - initCacheAfterSystemInit must be invoked after system initialization completes.
+ * - Cache names are automatically prefixed with the version.
+ * - Pattern-based eviction may impact performance and should be used carefully.
  */
 open class MixCacheManager : AbstractCacheManager() {
 
@@ -71,21 +71,21 @@ open class MixCacheManager : AbstractCacheManager() {
     private val caches: MutableList<Cache> = mutableListOf()
 
     /**
-     * 判断 `localCacheManager` 是否真的被注入。
-     * 用 `lateinit isInitialized` 而非 null 判断是因为它是 `@Resource(name = "localCacheManager")` 注入，
-     * 缺失时 Spring 不会写 null 进字段而是字段保持未初始化态。
+     * Determines whether `localCacheManager` was actually injected.
+     * Uses `lateinit isInitialized` instead of a null check because it is injected via `@Resource(name = "localCacheManager")`;
+     * when absent, Spring does not write null to the field but leaves it in an uninitialized state.
      *
-     * @return true 表示本地缓存管理器存在
+     * @return true if the local cache manager exists
      * @author K
      * @since 1.0.0
      */
     private fun hasLocalCacheManager(): Boolean = this::localCacheManager.isInitialized
 
     /**
-     * Spring `AbstractCacheManager` 模板方法：返回所有已加载的 cache 实例。
-     * [initCacheAfterSystemInit] 会预先把 cache 填到 [caches]，本方法直接返回。
+     * Spring `AbstractCacheManager` template method: returns all loaded cache instances.
+     * [initCacheAfterSystemInit] populates [caches] in advance; this method simply returns it.
      *
-     * @return cache 集合
+     * @return cache collection
      * @author K
      * @since 1.0.0
      */
@@ -94,52 +94,52 @@ open class MixCacheManager : AbstractCacheManager() {
     }
 
     /**
-     * 在系统初始化完成后初始化所有缓存
+     * Initializes all caches after system initialization completes.
      *
-     * 从配置提供者获取所有缓存配置，初始化缓存管理器，并注册所有缓存实例。
+     * Loads all cache configurations from the provider, initializes the cache managers, and registers all cache instances.
      *
-     * 工作流程：
-     * 1. 检查缓存是否启用：如果未启用，直接返回
-     * 2. 检查缓存管理器：如果本地和远程管理器都不存在，直接返回
-     * 3. 获取缓存配置：从配置提供者获取三类配置
-     *    - localCacheConfigs：仅本地缓存配置
-     *    - remoteCacheConfigs：仅远程缓存配置
-     *    - localRemoteCacheConfigs：混合缓存配置
-     * 4. 初始化缓存管理器：
-     *    - 如果本地管理器支持初始化，传入本地配置和混合配置
-     *    - 如果远程管理器支持初始化，传入远程配置和混合配置
-     * 5. 加载缓存实例：
-     *    - 加载本地缓存实例
-     *    - 加载远程缓存实例
-     *    - 加载混合缓存实例（可能降级）
-     * 6. 完成初始化：调用afterPropertiesSet完成Spring缓存管理器初始化
+     * Workflow:
+     * 1. Check whether caching is enabled: return immediately if not.
+     * 2. Check cache managers: return immediately if neither local nor remote manager exists.
+     * 3. Fetch cache configurations: obtain three groups from the provider:
+     *    - localCacheConfigs: local-only cache configurations.
+     *    - remoteCacheConfigs: remote-only cache configurations.
+     *    - localRemoteCacheConfigs: mixed cache configurations.
+     * 4. Initialize cache managers:
+     *    - If the local manager supports initialization, pass in local + mixed configs.
+     *    - If the remote manager supports initialization, pass in remote + mixed configs.
+     * 5. Load cache instances:
+     *    - Local cache instances.
+     *    - Remote cache instances.
+     *    - Mixed cache instances (may be downgraded).
+     * 6. Complete initialization: call afterPropertiesSet to finish Spring cache manager setup.
      *
-     * 配置合并：
-     * - 本地管理器接收：localCacheConfigs + localRemoteCacheConfigs
-     * - 远程管理器接收：remoteCacheConfigs + localRemoteCacheConfigs
-     * - 混合缓存需要同时初始化本地和远程缓存
+     * Configuration merging:
+     * - Local manager receives: localCacheConfigs + localRemoteCacheConfigs.
+     * - Remote manager receives: remoteCacheConfigs + localRemoteCacheConfigs.
+     * - Mixed caches require both local and remote caches to be initialized.
      *
-     * 调用时机：
-     * - 在所有Spring Bean初始化完成后
-     * - 由MixCacheInitializing调用
-     * - 确保数据库等依赖已准备就绪
+     * Invocation timing:
+     * - After all Spring beans are initialized.
+     * - Triggered by MixCacheInitializing.
+     * - Ensures dependencies (e.g., database) are ready.
      *
-     * 注意事项：
-     * - 必须在系统初始化完成后调用
-     * - 如果缓存未启用，不会加载任何配置
-     * - 混合缓存可能因缺少管理器而降级
+     * Notes:
+     * - Must be invoked after system initialization completes.
+     * - If caching is disabled, no configuration will be loaded.
+     * - Mixed caches may be downgraded due to missing managers.
      */
     fun initCacheAfterSystemInit() {
         if (this.isCacheEnabled != true) {
-            log.warn("缓存未开启,不加载缓存配置.")
+            log.warn("Caching is disabled; cache configuration will not be loaded.")
             return
         }
         if (!hasLocalCacheManager() && remoteCacheManager == null) {
-            log.warn("无法找到缓存策略,不加载缓存配置.")
+            log.warn("No cache strategy found; cache configuration will not be loaded.")
             return
         }
-        val provider = requireNotNull(cacheConfigProvider) { "缓存配置提供器未注入，无法加载缓存配置。" }
-        //查询一次数据，各个缓存组件加载
+        val provider = requireNotNull(cacheConfigProvider) { "Cache config provider is not injected; unable to load cache configuration." }
+        // Query once so each cache component can load its data.
         val localCacheConfigs = provider.getLocalCacheConfigs()
         val remoteCacheConfigs = provider.getRemoteCacheConfigs()
         val localRemoteCacheConfigs = provider.getLocalRemoteCacheConfigs()
@@ -160,11 +160,11 @@ open class MixCacheManager : AbstractCacheManager() {
     }
 
     /**
-     * 覆盖 super 的 `getCache`，在查找前给名字加上版本前缀 ([CacheVersionConfig.getFinalCacheName])。
-     * 这样调用方传入逻辑名（不带前缀）即可，无需自行处理版本。
+     * Overrides super's `getCache` to prefix the name with the version ([CacheVersionConfig.getFinalCacheName]) before lookup.
+     * Callers may simply pass the logical name (without prefix) and need not handle versioning themselves.
      *
-     * @param name 缓存逻辑名
-     * @return 加上版本前缀后命中的 cache；缺失返回 null
+     * @param name logical cache name
+     * @return the cache matched after applying the version prefix; null if missing
      * @author K
      * @since 1.0.0
      */
@@ -174,13 +174,13 @@ open class MixCacheManager : AbstractCacheManager() {
     }
 
     /**
-     * 加载本地缓存配置
+     * Loads local cache configurations.
      *
      * @return List<Cache>
     </Cache> */
     private fun loadLocalCacheConfig(localCacheConfigs: Map<String, CacheConfig>): MutableList<Cache> {
         val localCaches: MutableList<Cache> = mutableListOf()
-        //本地缓存
+        // local cache
         if (hasLocalCacheManager()) {
             if (localCacheConfigs.isNotEmpty()) {
                 localCacheConfigs.forEach { (key: String, _: CacheConfig?) ->
@@ -190,19 +190,19 @@ open class MixCacheManager : AbstractCacheManager() {
                 }
             }
         } else {
-            log.warn("找不到本地缓存策略，无法加载本地缓存配置！")
+            log.warn("Local cache strategy not found; unable to load local cache configuration!")
         }
         return localCaches
     }
 
     /**
-     * 加载远程缓存配置
+     * Loads remote cache configurations.
      *
      * @return remoteCaches
      */
     private fun loadRemoteCacheConfig(remoteCacheConfigs: Map<String, CacheConfig>): MutableList<Cache> {
         val remoteCaches: MutableList<Cache> = mutableListOf()
-        //远程二级缓存
+        // remote second-level cache
         if (remoteCacheManager != null) {
             if (remoteCacheConfigs.isNotEmpty()) {
                 remoteCacheConfigs.forEach { (key: String, _: CacheConfig?) ->
@@ -212,59 +212,59 @@ open class MixCacheManager : AbstractCacheManager() {
                 }
             }
         } else {
-            log.warn("找不远程二级缓存策略，无法加载远程二级缓存配置！")
+            log.warn("Remote second-level cache strategy not found; unable to load remote second-level cache configuration!")
         }
         return remoteCaches
     }
 
     /**
-     * 加载混合缓存配置
+     * Loads mixed cache configurations.
      *
-     * 加载本地-远程两级联动缓存配置，根据实际可用的缓存管理器自动降级或升级策略。
+     * Loads the local-remote two-tier cache configuration, automatically downgrading or upgrading the strategy based on which cache managers are available.
      *
-     * 工作流程：
-     * 1. 遍历所有混合缓存配置
-     * 2. 获取最终缓存名称（包含版本前缀）
-     * 3. 尝试获取本地和远程缓存实例
-     * 4. 根据可用的缓存管理器确定策略：
-     *    - 如果本地管理器不存在但远程存在：升级为REMOTE策略
-     *    - 如果远程管理器不存在但本地存在：降级为SINGLE_LOCAL策略
-     *    - 如果两者都存在：使用LOCAL_REMOTE策略
-     * 5. 创建MixCache实例并添加到列表
+     * Workflow:
+     * 1. Iterate all mixed cache configurations.
+     * 2. Compute the final cache name (with version prefix).
+     * 3. Try to obtain both local and remote cache instances.
+     * 4. Determine strategy from available managers:
+     *    - Local manager missing but remote present: upgrade to REMOTE strategy.
+     *    - Remote manager missing but local present: downgrade to SINGLE_LOCAL strategy.
+     *    - Both present: use LOCAL_REMOTE strategy.
+     * 5. Create MixCache instances and add them to the list.
      *
-     * 策略选择：
-     * - LOCAL_REMOTE：本地和远程管理器都存在（理想情况）
-     * - REMOTE：只有远程管理器（本地管理器缺失，自动升级）
-     * - SINGLE_LOCAL：只有本地管理器（远程管理器缺失，自动降级）
+     * Strategy selection:
+     * - LOCAL_REMOTE: both local and remote managers present (ideal case).
+     * - REMOTE: only the remote manager (local missing; auto-upgraded).
+     * - SINGLE_LOCAL: only the local manager (remote missing; auto-downgraded).
      *
-     * 降级/升级机制：
-     * - 自动适应可用的缓存管理器
-     * - 记录降级/升级日志，便于排查问题
-     * - 确保缓存功能可用，即使配置不完整
+     * Downgrade/upgrade mechanism:
+     * - Adapts to whichever cache managers are available.
+     * - Logs downgrade/upgrade events for troubleshooting.
+     * - Keeps caching functional even when configuration is incomplete.
      *
-     * 注意事项：
-     * - 如果两个管理器都不存在，不会创建缓存实例
-     * - 降级/升级会影响缓存性能，应确保配置完整
-     * - 缓存名称会自动添加版本前缀
+     * Notes:
+     * - If neither manager exists, no cache instance is created.
+     * - Downgrade/upgrade affects cache performance; complete configuration is recommended.
+     * - Cache names are automatically prefixed with the version.
      *
-     * @param localRemoteCacheConfigs 混合缓存配置映射
-     * @return 混合缓存实例列表
+     * @param localRemoteCacheConfigs mixed cache configuration map
+     * @return list of mixed cache instances
      */
     private fun loadMixCacheConfig(localRemoteCacheConfigs: Map<String, CacheConfig>): MutableList<Cache> {
         val mixCacheConfig: MutableList<Cache> = mutableListOf()
-        // 本地-远程两级联动缓存
+        // local-remote two-tier cache
         if (localRemoteCacheConfigs.isNotEmpty()) {
             localRemoteCacheConfigs.forEach { (key: String, _: CacheConfig?) ->
                 val realKey = requireVersionConfig().getFinalCacheName(key)
                 val localCache = if (hasLocalCacheManager()) localCacheManager.getCache(realKey) else null
                 val remoteCache = remoteCacheManager?.getCache(realKey)
                 val strategy = if (!hasLocalCacheManager()) {
-                    log.warn("mix缓存,key={0}升级为远程缓存", key)
+                    log.warn("mix cache, key={0} upgraded to remote cache", key)
                     CacheStrategy.REMOTE
                 } else if (remoteCacheManager != null) {
                     CacheStrategy.LOCAL_REMOTE
                 } else {
-                    log.warn("mix缓存,key={0}降级为远程本地缓存", key)
+                    log.warn("mix cache, key={0} downgraded to local cache", key)
                     CacheStrategy.SINGLE_LOCAL
                 }
                 mixCacheConfig.add(MixCache(strategy, localCache, remoteCache))
@@ -274,28 +274,30 @@ open class MixCacheManager : AbstractCacheManager() {
     }
 
     /**
-     * 取 [versionConfig]；未注入时立即抛错给出可定位的错误信息。
+     * Returns [versionConfig]; if not injected, throws immediately with a locatable error message.
      *
-     * @return 缓存版本配置
-     * @throws IllegalArgumentException 配置未注入时
+     * @return cache version configuration
+     * @throws IllegalArgumentException when the config is not injected
      * @author K
      * @since 1.0.0
      */
     private fun requireVersionConfig(): CacheVersionConfig {
-        return requireNotNull(versionConfig) { "缓存版本配置未注入，无法生成缓存名。" }
+        return requireNotNull(versionConfig) { "Cache version config is not injected; unable to build cache name." }
     }
 
     /**
-     * 清理本地缓存
+     * Clears the local cache.
      *
      * @param cacheName
      * @param key
      */
     fun clearLocal(cacheName: String, key: Any?) {
-        // 调用方可能传逻辑名（如 test），也可能传已带版本前缀的名（如 MixCache.getName() / 分布式消息里的名）。
-        // 旧实现一次 `getCache` 自动加前缀，一次 `super.getCache` 不加，最后 `evictByPattern(cacheName,...)` 又用
-        // 没规范化的 cacheName。三处对前缀的处理不一致，导致：逻辑名入参时 evictByPattern 会查不到 Caffeine 内
-        // 按前缀注册的 cache，模式清除变成 no-op。这里统一一次规范化，下游全部用 realName。
+        // Callers may pass either a logical name (e.g., "test") or a name that already has the version prefix
+        // (e.g., MixCache.getName() / names in distributed messages). The previous implementation called `getCache`
+        // once (which auto-applies the prefix), `super.getCache` once (which does not), and then `evictByPattern(cacheName,...)`
+        // with the un-normalized name. The three sites handled the prefix inconsistently: when called with a logical name,
+        // evictByPattern could not find the prefixed Caffeine cache, turning pattern-eviction into a no-op. Normalize once
+        // here and use realName everywhere downstream.
         val realName = requireVersionConfig().run {
             getFinalCacheName(getRealCacheName(cacheName))
         }
@@ -309,39 +311,39 @@ open class MixCacheManager : AbstractCacheManager() {
         } else {
             mixCache.clearLocal(key)
         }
-        log.debug("清除本地缓存：{0}::{1}", realName, Objects.toString(key, ""))
+        log.debug("Evicted local cache: {0}::{1}", realName, Objects.toString(key, ""))
     }
 
     /**
-     * 按模式清除缓存
+     * Evicts cache entries by pattern.
      *
-     * 根据缓存策略和模式（支持通配符）清除匹配的缓存项。
+     * Evicts matching cache entries based on the cache strategy and pattern (wildcard supported).
      *
-     * 工作流程：
-     * 1. 获取缓存实例：根据缓存名称获取MixCache实例
-     * 2. 规范化模式：如果模式不以"*"结尾，自动添加"*"
-     * 3. 根据策略清除：
-     *    - SINGLE_LOCAL：在本地缓存管理器中按模式清除
-     *    - REMOTE：在远程缓存管理器中按模式清除
-     *    - LOCAL_REMOTE：在远程缓存管理器中按模式清除，并推送Redis消息通知其他节点
+     * Workflow:
+     * 1. Fetch the cache instance: get the MixCache instance by cache name.
+     * 2. Normalize the pattern: append "*" if it does not already end with one.
+     * 3. Evict by strategy:
+     *    - SINGLE_LOCAL: evict by pattern in the local cache manager.
+     *    - REMOTE: evict by pattern in the remote cache manager.
+     *    - LOCAL_REMOTE: evict by pattern in the remote cache manager and push a Redis message to notify other nodes.
      *
-     * 模式匹配：
-     * - 支持通配符"*"，例如"user:*"会匹配所有以"user:"开头的key
-     * - 如果模式不以"*"结尾，会自动添加"*"进行前缀匹配
-     * - 模式匹配可能影响性能，需谨慎使用
+     * Pattern matching:
+     * - Supports the wildcard "*"; e.g., "user:*" matches all keys starting with "user:".
+     * - If the pattern does not end with "*", one is appended for prefix matching.
+     * - Pattern matching may impact performance and should be used carefully.
      *
-     * 分布式同步：
-     * - 对于LOCAL_REMOTE策略，清除远程缓存后会推送Redis消息
-     * - 其他节点收到消息后会清除本地缓存，保证一致性
-     * - 使用pushMsgRedis方法发送通知消息
+     * Distributed synchronization:
+     * - For the LOCAL_REMOTE strategy, a Redis message is pushed after evicting the remote cache.
+     * - Other nodes evict their local cache upon receiving the message to maintain consistency.
+     * - Notification is sent via pushMsgRedis.
      *
-     * 注意事项：
-     * - 模式匹配可能需要扫描所有key，性能开销较大
-     * - 对于LOCAL_REMOTE策略，只清除远程缓存，本地缓存通过消息通知清除
-     * - 如果缓存不存在，直接返回，不执行任何操作
+     * Notes:
+     * - Pattern matching may require scanning all keys and incur significant overhead.
+     * - For the LOCAL_REMOTE strategy, only the remote cache is evicted directly; local caches are evicted via the notification message.
+     * - If the cache does not exist, returns immediately without action.
      *
-     * @param cacheName 缓存名称
-     * @param pattern 匹配模式，支持通配符"*"
+     * @param cacheName cache name
+     * @param pattern matching pattern; wildcard "*" supported
      */
     fun evictByPattern(cacheName: String, pattern: String) {
         val cache = getCache(cacheName) ?: return
@@ -363,12 +365,12 @@ open class MixCacheManager : AbstractCacheManager() {
     }
 
     /**
-     * 缓存中是否存在指定的 key（不依赖 value 是否为 null）
-     * 按策略委托本地/远程管理器；LOCAL_REMOTE 时任一级存在即视为存在。
+     * Checks whether the given key exists in the cache (independent of whether the value is null).
+     * Delegates to the local/remote manager by strategy; under LOCAL_REMOTE, existence in either tier counts as present.
      *
-     * @param cacheName 缓存名称（逻辑名，内部会加版本前缀）
-     * @param key       缓存 key
-     * @return true：存在，false：不存在或缓存未配置
+     * @param cacheName cache name (logical name; the version prefix is applied internally)
+     * @param key       cache key
+     * @return true if present; false if absent or the cache is not configured
      */
     fun existsKey(cacheName: String, key: Any): Boolean {
         val realName = requireVersionConfig().getFinalCacheName(cacheName)
@@ -381,7 +383,7 @@ open class MixCacheManager : AbstractCacheManager() {
         }
     }
 
-    /** 日志器 */
+    /** Logger. */
     private val log = LogFactory.getLog(this::class)
 
 }

@@ -20,7 +20,7 @@ import kotlin.test.assertTrue
 /**
  * junit test for UserIdsByOrgIdCacheHandler
  *
- * 测试数据来源：`UserIdsByOrgIdCacheTest.sql`
+ * Test data source: `UserIdsByOrgIdCacheTest.sql`
  *
  * @author K
  * @author AI: Cursor
@@ -40,14 +40,14 @@ class UserIdsByOrgIdCacheTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun getUserIds() {
-        // 存在的机构（有多个用户）
+        // Existing org (with multiple users)
         var orgId = "84c558fe-1111-1111-1111-111111111111"
         val userIds2 = cacheHandler.getUserIds(orgId)
         val userIds3 = cacheHandler.getUserIds(orgId)
         assertTrue(userIds2.isNotEmpty())
         assertEquals(userIds2, userIds3)
 
-        // 不存在的机构
+        // Non-existent org
         orgId = "no_exist_org"
         val userIds4 = cacheHandler.getUserIds(orgId)
         assertTrue(userIds4.isEmpty())
@@ -63,16 +63,16 @@ class UserIdsByOrgIdCacheTest : RdbAndRedisCacheTestBase() {
         }
         val id = userOrgUserDao.insert(orgUser)
 
-        // 先获取一次，记录用户数量
+        // Fetch once first to record the user count
         val userIdsBefore = cacheHandler.getUserIds(orgId)
         val beforeSize = userIdsBefore.size
 
-        // 同步缓存
+        // Sync cache
         cacheHandler.syncOnInsert(orgUser, id)
 
-        // 验证缓存已被清除并重新加载
+        // Verify the cache has been cleared and reloaded
         val userIdsAfter = cacheHandler.getUserIds(orgId)
-        assertTrue(userIdsAfter.size >= beforeSize, "用户数量应该增加或保持不变")
+        assertTrue(userIdsAfter.size >= beforeSize, "User count should increase or remain unchanged")
     }
 
     @Test
@@ -85,23 +85,23 @@ class UserIdsByOrgIdCacheTest : RdbAndRedisCacheTestBase() {
         }
         val id = userOrgUserDao.insert(orgUser)
 
-        // 先同步插入缓存
+        // Sync insert into the cache first
         cacheHandler.syncOnInsert(orgUser, id)
 
-        // 先获取一次，确保缓存中有数据
+        // Fetch once to make sure the cache has data
         val userIdsBefore = cacheHandler.getUserIds(orgId)
-        assertTrue(userIdsBefore.contains(orgUser.userId), "新用户应该在缓存中")
+        assertTrue(userIdsBefore.contains(orgUser.userId), "The new user should be in the cache")
 
-        // 更新数据库记录
+        // Update the database record
         val success = userOrgUserDao.updateProperties(id, mapOf(UserOrgUser::orgAdmin.name to true))
         assert(success)
 
-        // 同步缓存
+        // Sync cache
         cacheHandler.syncOnUpdate(null, id)
 
-        // 验证缓存已被清除并重新加载
+        // Verify the cache has been cleared and reloaded
         val userIdsAfter = cacheHandler.getUserIds(orgId)
-        assertTrue(userIdsAfter.contains(orgUser.userId), "更新后的用户应该仍在缓存中")
+        assertTrue(userIdsAfter.contains(orgUser.userId), "The updated user should still be in the cache")
     }
 
     @Test
@@ -114,36 +114,36 @@ class UserIdsByOrgIdCacheTest : RdbAndRedisCacheTestBase() {
         }
         val id = userOrgUserDao.insert(orgUser)
 
-        // 先同步插入缓存
+        // Sync insert into the cache first
         cacheHandler.syncOnInsert(orgUser, id)
 
-        // 先获取一次，确保缓存中有数据
+        // Fetch once to make sure the cache has data
         val userIdsBefore = cacheHandler.getUserIds(orgId)
-        assertTrue(userIdsBefore.contains(orgUser.userId), "新用户应该在缓存中")
+        assertTrue(userIdsBefore.contains(orgUser.userId), "The new user should be in the cache")
 
-        // 删除数据库记录
+        // Delete the database record
         val deleteSuccess = userOrgUserDao.deleteById(id)
         assert(deleteSuccess)
 
-        // 同步缓存
+        // Sync cache
         cacheHandler.syncOnDelete(orgUser, id)
 
-        // 验证缓存已被清除并重新加载
+        // Verify the cache has been cleared and reloaded
         val userIdsAfter = cacheHandler.getUserIds(orgId)
-        assertTrue(!userIdsAfter.contains(orgUser.userId), "删除后的用户不应该包含在缓存中")
+        assertTrue(!userIdsAfter.contains(orgUser.userId), "The deleted user should not be in the cache")
     }
 
     @Test
     fun syncOnBatchDelete() {
         val orgId = "84c558fe-1111-1111-1111-111111111111"
-        
+
         val orgUser1 = UserOrgUser().apply {
             this.orgId = orgId
             this.userId = "84c558fe-3333-3333-3333-333333333333"
             this.orgAdmin = false
         }
         val id1 = userOrgUserDao.insert(orgUser1)
-        
+
         val orgUser2 = UserOrgUser().apply {
             this.orgId = orgId
             this.userId = "84c558fe-4444-4444-4444-444444444444"
@@ -151,36 +151,36 @@ class UserIdsByOrgIdCacheTest : RdbAndRedisCacheTestBase() {
         }
         val id2 = userOrgUserDao.insert(orgUser2)
 
-        // 先同步插入缓存
+        // Sync insert into the cache first
         cacheHandler.syncOnInsert(orgUser1, id1)
         cacheHandler.syncOnInsert(orgUser2, id2)
 
-        // 先获取一次，确保缓存中有数据
+        // Fetch once to make sure the cache has data
         val userIdsBefore = cacheHandler.getUserIds(orgId)
-        assertTrue(userIdsBefore.contains(orgUser1.userId), "新用户1应该在缓存中")
-        assertTrue(userIdsBefore.contains(orgUser2.userId), "新用户2应该在缓存中")
+        assertTrue(userIdsBefore.contains(orgUser1.userId), "New user 1 should be in the cache")
+        assertTrue(userIdsBefore.contains(orgUser2.userId), "New user 2 should be in the cache")
 
-        // 批量删除数据库记录
+        // Batch delete database records
         val ids = listOf(id1, id2)
         val count = userOrgUserDao.batchDelete(ids)
         assert(count == 2)
 
-        // 同步缓存
+        // Sync cache
         cacheHandler.syncOnBatchDelete(ids, listOf(orgId, orgId))
 
-        // 验证缓存已被清除并重新加载
+        // Verify the cache has been cleared and reloaded
         val userIdsAfter = cacheHandler.getUserIds(orgId)
-        assertTrue(!userIdsAfter.contains(orgUser1.userId), "删除后的用户1不应该包含在缓存中")
-        assertTrue(!userIdsAfter.contains(orgUser2.userId), "删除后的用户2不应该包含在缓存中")
+        assertTrue(!userIdsAfter.contains(orgUser1.userId), "Deleted user 1 should not be in the cache")
+        assertTrue(!userIdsAfter.contains(orgUser2.userId), "Deleted user 2 should not be in the cache")
     }
 
-    // -------------------- 子机构成员展开（含父→子树）的覆盖 --------------------
+    // -------------------- Coverage for descendant org member expansion (parent -> subtree) --------------------
 
     @Test
     fun getUserIds_includesUsersInDescendantOrgs() {
-        // 建一棵：parent → child；分别给两层挂用户。问 parent 应当含两层用户。
-        val parentOrgId = insertOrg(name = "销售部", parentId = null)
-        val childOrgId = insertOrg(name = "华东销售", parentId = parentOrgId)
+        // Build a tree: parent -> child; attach a user at each level. Querying parent should include users from both levels.
+        val parentOrgId = insertOrg(name = "Sales Dept", parentId = null)
+        val childOrgId = insertOrg(name = "East China Sales", parentId = parentOrgId)
         val parentUserId = "84c558fe-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
         val childUserId = "84c558fe-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
         val rel1 = insertOrgUser(parentOrgId, parentUserId)
@@ -188,14 +188,14 @@ class UserIdsByOrgIdCacheTest : RdbAndRedisCacheTestBase() {
         try {
             cacheHandler.evict(parentOrgId)
             val users = cacheHandler.getUserIds(parentOrgId)
-            assertTrue(users.contains(parentUserId), "应含父机构直接用户，实际：${users}")
-            assertTrue(users.contains(childUserId), "应含子机构用户，实际：${users}")
+            assertTrue(users.contains(parentUserId), "Should include the parent org's direct user, actual: ${users}")
+            assertTrue(users.contains(childUserId), "Should include the child org's user, actual: ${users}")
 
-            // 子机构单独查时应当只看到自己的用户
+            // When querying the child org alone, should only see its own users
             cacheHandler.evict(childOrgId)
             val childUsers = cacheHandler.getUserIds(childOrgId)
             assertTrue(childUsers.contains(childUserId))
-            assertTrue(!childUsers.contains(parentUserId), "子机构不应反向包含父机构用户")
+            assertTrue(!childUsers.contains(parentUserId), "Child org should not include parent org's user in reverse")
         } finally {
             userOrgUserDao.deleteById(rel1)
             userOrgUserDao.deleteById(rel2)
@@ -208,15 +208,15 @@ class UserIdsByOrgIdCacheTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun getUserIds_excludesUsersInInactiveDescendants() {
-        // 子机构 active=false → 不算在子树范围内。
-        val parentOrgId = insertOrg(name = "销售部", parentId = null)
-        val childOrgId = insertOrg(name = "华东(停)", parentId = parentOrgId, active = false)
+        // Child org active=false -> not counted as part of the subtree.
+        val parentOrgId = insertOrg(name = "Sales Dept", parentId = null)
+        val childOrgId = insertOrg(name = "East China (Inactive)", parentId = parentOrgId, active = false)
         val userInActive = "84c558fe-cccc-cccc-cccc-cccccccccccc"
         val rel = insertOrgUser(childOrgId, userInActive)
         try {
             cacheHandler.evict(parentOrgId)
             val users = cacheHandler.getUserIds(parentOrgId)
-            assertTrue(!users.contains(userInActive), "禁用子机构的用户不应出现在父机构视图，实际：${users}")
+            assertTrue(!users.contains(userInActive), "Users from a disabled child org should not appear in the parent org view, actual: ${users}")
         } finally {
             userOrgUserDao.deleteById(rel)
             userOrgDao.deleteById(childOrgId)
@@ -227,27 +227,27 @@ class UserIdsByOrgIdCacheTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun on_UserOrgUserRelationsChanged_invalidatesAncestorChain() {
-        // 给子机构加新用户 + fire 事件 → 父机构缓存也应被失效。
-        val parentOrgId = insertOrg(name = "销售部", parentId = null)
-        val childOrgId = insertOrg(name = "华东销售", parentId = parentOrgId)
+        // Add a new user to the child org + fire the event -> the parent org cache should also be invalidated.
+        val parentOrgId = insertOrg(name = "Sales Dept", parentId = null)
+        val childOrgId = insertOrg(name = "East China Sales", parentId = parentOrgId)
         val initialUser = "84c558fe-dddd-dddd-dddd-dddddddddddd"
         val initialRel = insertOrgUser(childOrgId, initialUser)
         cacheHandler.evict(parentOrgId)
         cacheHandler.evict(childOrgId)
         try {
-            // 预热父机构缓存
+            // Warm up the parent org cache
             val before = cacheHandler.getUserIds(parentOrgId)
             assertTrue(before.contains(initialUser))
 
-            // 给子机构加新用户
+            // Add a new user to the child org
             val newUserId = "84c558fe-eeee-eeee-eeee-eeeeeeeeeeee"
             val newRel = insertOrgUser(childOrgId, newUserId)
             try {
                 cacheHandler.on(UserOrgUserRelationsChanged(orgId = childOrgId, userIds = listOf(newUserId)))
                 cacheHandler.evict(parentOrgId)
                 val after = cacheHandler.getUserIds(parentOrgId)
-                assertTrue(after.contains(initialUser), "失效重算后原用户仍应在")
-                assertTrue(after.contains(newUserId), "新用户应通过子树传播到父机构视图，实际：${after}")
+                assertTrue(after.contains(initialUser), "Original user should remain after invalidation and recompute")
+                assertTrue(after.contains(newUserId), "New user should propagate through the subtree to the parent org view, actual: ${after}")
             } finally {
                 userOrgUserDao.deleteById(newRel)
             }
@@ -260,42 +260,42 @@ class UserIdsByOrgIdCacheTest : RdbAndRedisCacheTestBase() {
         }
     }
 
-    // -------------------- org tree mutation 精确失效 --------------------
+    // -------------------- Precise invalidation on org tree mutation --------------------
 
     @Test
     fun on_UserOrgUpdated_moveOrg_invalidatesOldAndNewAncestorChains() {
-        // 起始树：oldParent <- child  +  newParent (空)；child 里有用户
-        val oldParentId = insertOrg("旧部门", parentId = null)
-        val newParentId = insertOrg("新部门", parentId = null)
-        val childOrgId = insertOrg("华东", parentId = oldParentId)
+        // Initial tree: oldParent <- child  +  newParent (empty); child has a user
+        val oldParentId = insertOrg("Old Dept", parentId = null)
+        val newParentId = insertOrg("New Dept", parentId = null)
+        val childOrgId = insertOrg("East China", parentId = oldParentId)
         val movingUser = "84c558fe-1111-aaaa-aaaa-aaaaaaaaaaaa"
         val rel = insertOrgUser(childOrgId, movingUser)
         cacheHandler.evict(oldParentId)
         cacheHandler.evict(newParentId)
         cacheHandler.evict(childOrgId)
         try {
-            // 预热：oldParent 视图含 movingUser，newParent 视图空
-            assertTrue(cacheHandler.getUserIds(oldParentId).contains(movingUser), "起点 oldParent 应含 child 用户")
-            assertTrue(!cacheHandler.getUserIds(newParentId).contains(movingUser), "起点 newParent 不应含")
+            // Warm-up: oldParent view contains movingUser, newParent view is empty
+            assertTrue(cacheHandler.getUserIds(oldParentId).contains(movingUser), "Initially oldParent should include the child user")
+            assertTrue(!cacheHandler.getUserIds(newParentId).contains(movingUser), "Initially newParent should not include it")
 
-            // 实际 reparent：直接改 DB 表示移动
+            // Actual reparent: modify DB directly to represent the move
             userOrgDao.updateProperties(childOrgId, mapOf(UserOrg::parentId.name to newParentId))
-            // 触发事件
+            // Trigger event
             cacheHandler.on(
                 UserOrgUpdated(id = childOrgId, oldParentId = oldParentId, newParentId = newParentId)
             )
-            // 双 evict 保险（与 fd2e425e 中现有测试的兼容写法一致）
+            // Double evict as a safety net (consistent with the existing tests in fd2e425e)
             cacheHandler.evict(oldParentId)
             cacheHandler.evict(newParentId)
             cacheHandler.evict(childOrgId)
 
             assertTrue(
                 !cacheHandler.getUserIds(oldParentId).contains(movingUser),
-                "移动后 oldParent 视图应失去 child 用户，实际：${cacheHandler.getUserIds(oldParentId)}",
+                "After the move, oldParent view should lose the child user, actual: ${cacheHandler.getUserIds(oldParentId)}",
             )
             assertTrue(
                 cacheHandler.getUserIds(newParentId).contains(movingUser),
-                "移动后 newParent 视图应获得 child 用户，实际：${cacheHandler.getUserIds(newParentId)}",
+                "After the move, newParent view should gain the child user, actual: ${cacheHandler.getUserIds(newParentId)}",
             )
         } finally {
             userOrgUserDao.deleteById(rel)
@@ -310,18 +310,19 @@ class UserIdsByOrgIdCacheTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun on_UserOrgDeleted_invalidatesAncestorChain() {
-        // parent -> child；child 里有用户。删 child → parent 视图应失去这些用户。
-        val parentOrgId = insertOrg("销售部", parentId = null)
-        val childOrgId = insertOrg("华东", parentId = parentOrgId)
+        // parent -> child; child has a user. Delete child -> parent view should lose these users.
+        val parentOrgId = insertOrg("Sales Dept", parentId = null)
+        val childOrgId = insertOrg("East China", parentId = parentOrgId)
         val userInChild = "84c558fe-2222-bbbb-bbbb-bbbbbbbbbbbb"
         val rel = insertOrgUser(childOrgId, userInChild)
         cacheHandler.evict(parentOrgId)
         cacheHandler.evict(childOrgId)
         try {
-            assertTrue(cacheHandler.getUserIds(parentOrgId).contains(userInChild), "起点应含子机构用户")
+            assertTrue(cacheHandler.getUserIds(parentOrgId).contains(userInChild), "Initially should include the child org's user")
 
-            // 模拟先删 user_org_user，再删 child org（生产真删时也是这个顺序：先关系后实体；
-            // 此处主要验证 listener 用 event.parentId 失效）
+            // Simulate deleting user_org_user first, then deleting the child org (this is also the
+            // order used in real production deletions: relation first, entity second; the main
+            // purpose here is to verify the listener invalidates via event.parentId)
             userOrgUserDao.deleteById(rel)
             userOrgDao.deleteById(childOrgId)
 
@@ -330,10 +331,10 @@ class UserIdsByOrgIdCacheTest : RdbAndRedisCacheTestBase() {
 
             assertTrue(
                 !cacheHandler.getUserIds(parentOrgId).contains(userInChild),
-                "删除后 parent 视图不应包含 child 已离场的用户，实际：${cacheHandler.getUserIds(parentOrgId)}",
+                "After deletion, parent view should not contain users that left the child, actual: ${cacheHandler.getUserIds(parentOrgId)}",
             )
         } finally {
-            // child/rel 已删；只剩 parent
+            // child/rel already deleted; only parent remains
             userOrgDao.deleteById(parentOrgId)
             cacheHandler.evict(parentOrgId)
         }
@@ -341,10 +342,10 @@ class UserIdsByOrgIdCacheTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun on_UserOrgBatchDeleted_invalidatesAllAncestorChains() {
-        // parent -> [childA, childB]；各自有用户。批量删两个 child。
-        val parentOrgId = insertOrg("销售部", parentId = null)
-        val childA = insertOrg("华东", parentId = parentOrgId)
-        val childB = insertOrg("华南", parentId = parentOrgId)
+        // parent -> [childA, childB]; each has a user. Batch delete both children.
+        val parentOrgId = insertOrg("Sales Dept", parentId = null)
+        val childA = insertOrg("East China", parentId = parentOrgId)
+        val childB = insertOrg("South China", parentId = parentOrgId)
         val userA = "84c558fe-3333-cccc-aaaa-aaaaaaaaaaaa"
         val userB = "84c558fe-3333-cccc-bbbb-bbbbbbbbbbbb"
         val relA = insertOrgUser(childA, userA)
@@ -352,7 +353,7 @@ class UserIdsByOrgIdCacheTest : RdbAndRedisCacheTestBase() {
         cacheHandler.evict(parentOrgId)
         try {
             val before = cacheHandler.getUserIds(parentOrgId)
-            assertTrue(before.contains(userA) && before.contains(userB), "起点 parent 应含两个 child 的用户")
+            assertTrue(before.contains(userA) && before.contains(userB), "Initially parent should include users from both children")
 
             userOrgUserDao.deleteById(relA)
             userOrgUserDao.deleteById(relB)
@@ -369,8 +370,8 @@ class UserIdsByOrgIdCacheTest : RdbAndRedisCacheTestBase() {
             )
             cacheHandler.evict(parentOrgId)
             val after = cacheHandler.getUserIds(parentOrgId)
-            assertTrue(!after.contains(userA), "parent 应失去 childA 的用户")
-            assertTrue(!after.contains(userB), "parent 应失去 childB 的用户")
+            assertTrue(!after.contains(userA), "Parent should lose childA's user")
+            assertTrue(!after.contains(userB), "Parent should lose childB's user")
         } finally {
             userOrgDao.deleteById(parentOrgId)
             cacheHandler.evict(parentOrgId)

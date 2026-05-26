@@ -3,9 +3,11 @@ package io.kudos.ability.log.audit.common.api
 import io.kudos.ability.log.audit.common.entity.SysMonitorMsgVo
 
 /**
- * 监控消息生产接口：与 [IAuditService] 平级，专门承载"异常/告警"类消息（区别于业务操作审计）。
+ * Monitor-message producer interface: a peer of [IAuditService], dedicated to "exception/alert" messages (distinct
+ * from business-operation auditing).
  *
- * [MonitorMsgTool.pushErrMsg] 是最常用的上报入口；submit 由实现方决定走 DB / MQ / stdout 等通道。
+ * [MonitorMsgTool.pushErrMsg] is the most common reporting entry point; the implementation chooses whether `submit`
+ * goes over DB / MQ / stdout, etc.
  *
  * @author K
  * @author AI: Codex
@@ -13,7 +15,7 @@ import io.kudos.ability.log.audit.common.entity.SysMonitorMsgVo
  */
 interface IMonitorService {
     /**
-     * 审计日志生产方法
+     * Audit-log producer method
      *
      * @param monitorMsgVo
      */

@@ -4,7 +4,7 @@ import ${packagePrefix}.${module}.common.api.I${entityName}Api
 import org.springframework.stereotype.Service
 
 
-<@generateClassComment table.comment+" API本地实现"/>
+<@generateClassComment table.comment+" API local implementation"/>
 //region your codes 1
 @Service
 open class ${entityName}Api : I${entityName}Api {

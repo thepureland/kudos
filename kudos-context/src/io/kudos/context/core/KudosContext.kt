@@ -3,7 +3,7 @@ package io.kudos.context.core
 import io.kudos.base.model.contract.entity.IIdEntity
 
 /**
- * Kudos上下文
+ * Kudos context.
  *
  * @author K
  * @since 1.0.0
@@ -11,67 +11,68 @@ import io.kudos.base.model.contract.entity.IIdEntity
 class KudosContext {
 
     companion object {
-        /** [otherInfos] 中"指定数据源"的标准 key */
+        /** Standard key for "specified data source" in [otherInfos] */
         const val OTHER_INFO_KEY_DATA_SOURCE = "_DATA_SOURCE_"
-        /** [otherInfos] 中"指定数据库"的标准 key */
+        /** Standard key for "specified database" in [otherInfos] */
         const val OTHER_INFO_KEY_DATABASE = "_DATABASE_"
-        /** [otherInfos] 中"验证码"的标准 key */
+        /** Standard key for "verification code" in [otherInfos] */
         const val OTHER_INFO_KEY_VERIFY_CODE = "_VERIFY_CODE_"
-        /** [sessionAttributes] 中"当前用户"的标准 key */
+        /** Standard key for "current user" in [sessionAttributes] */
         const val SESSION_KEY_USER = "_USER_"
     }
 
-    /** 门户编码 */
+    /** Portal code */
     var portalCode: String? = null
 
-    /** 子系统编码 */
+    /** Subsystem code */
     var subSystemCode: String? = null
 
-    /** 微服务编码 */
+    /** Microservice code */
     var microServiceCode: String? = null
 
-    /** 原子服务编码 */
+    /** Atomic service code */
     var atomicServiceCode: String? = null
 
-    /** 租户id */
+    /** Tenant id */
     var tenantId: String? = null
 
-    /** 数据源id，为null将根据路由策略决定 */
+    /** Data source id; when null, it is determined by the routing strategy */
     var dataSourceId: String? = null
 
-    /** 备库数据源id */
+    /** Read-only (standby) data source id */
     var readOnlyDataSourceId: String? = null
 
-    /** 内部：数据源粒度的租户 id（与 [tenantId] 区分，前者用于分库分表路由） */
+    /** Internal: data-source-level tenant id (distinct from [tenantId]; the former is used for sharding routing) */
     var _datasourceTenantId: String? = null
 
-    /** 用户 */
+    /** User */
     var user: IIdEntity<String>? = null
 
-    /** 日志跟踪关键词串，格式可自定义 */
+    /** Log trace keyword string; the format can be customized */
     var traceKey: String? = null
 
-    /** 客户端信息对象 */
+    /** Client information object */
     var clientInfo: ClientInfo? = null
 
-    /** Session属性信息 */
+    /** Session attribute information */
     var sessionAttributes: MutableMap<String, Any?>? = null
 
-    /** Cookie属性信息 */
+    /** Cookie attribute information */
     var cookieAttributes: MutableMap<String, String?>? = null
 
-    /** Header属性信息 */
+    /** Header attribute information */
     var headerAttributes: MutableMap<String, String?>? = null
 
-    /** 其他信息 */
+    /** Other information */
     var otherInfos: MutableMap<String, Any?>? = null
 
     /**
-     * 追加 Session 属性。
-     * 首次调用时惰性创建底层 [MutableMap]，避免空上下文一直持有空集合。
+     * Append Session attributes.
+     * Lazily creates the underlying [MutableMap] on the first call, avoiding an empty context permanently holding an
+     * empty collection.
      *
-     * @param sessionAttributes 待追加的键值对
-     * @return 当前 [KudosContext] 自身，便于链式调用
+     * @param sessionAttributes Key-value pairs to append
+     * @return The current [KudosContext] itself, for chaining
      * @author K
      * @since 1.0.0
      */
@@ -82,11 +83,11 @@ class KudosContext {
     }
 
     /**
-     * 追加 Cookie 属性。
-     * 首次调用时惰性创建底层 [MutableMap]。
+     * Append Cookie attributes.
+     * Lazily creates the underlying [MutableMap] on the first call.
      *
-     * @param cookieAttributes 待追加的键值对
-     * @return 当前 [KudosContext] 自身，便于链式调用
+     * @param cookieAttributes Key-value pairs to append
+     * @return The current [KudosContext] itself, for chaining
      * @author K
      * @since 1.0.0
      */
@@ -97,11 +98,11 @@ class KudosContext {
     }
 
     /**
-     * 追加 Header 属性。
-     * 首次调用时惰性创建底层 [MutableMap]。
+     * Append Header attributes.
+     * Lazily creates the underlying [MutableMap] on the first call.
      *
-     * @param headerAttributes 待追加的键值对
-     * @return 当前 [KudosContext] 自身，便于链式调用
+     * @param headerAttributes Key-value pairs to append
+     * @return The current [KudosContext] itself, for chaining
      * @author K
      * @since 1.0.0
      */
@@ -112,11 +113,12 @@ class KudosContext {
     }
 
     /**
-     * 追加其它扩展信息。
-     * 首次调用时惰性创建底层 [MutableMap]；标准 key 见 [OTHER_INFO_KEY_DATA_SOURCE] 等。
+     * Append other extension information.
+     * Lazily creates the underlying [MutableMap] on the first call; see [OTHER_INFO_KEY_DATA_SOURCE] and friends for
+     * standard keys.
      *
-     * @param otherInfos 待追加的键值对
-     * @return 当前 [KudosContext] 自身，便于链式调用
+     * @param otherInfos Key-value pairs to append
+     * @return The current [KudosContext] itself, for chaining
      * @author K
      * @since 1.0.0
      */

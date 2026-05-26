@@ -23,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional
 
 
 /**
- * 语言/区域字典业务
+ * Business service for the language/locale dictionary.
  *
  * @author K
  * @since 1.0.0
@@ -55,8 +55,8 @@ open class SysLocaleService(
         return completeCrudUpdate(
             success = dao.update(locale),
             log = log,
-            successMessage = "更新id为${id}的语言的启用状态为${active}。",
-            failureMessage = "更新id为${id}的语言的启用状态为${active}失败！",
+            successMessage = "Updated active status of locale with id $id to $active.",
+            failureMessage = "Failed to update active status of locale with id $id to $active!",
         ) {
             eventPublisher.publishEvent(SysLocaleUpdated(id = id))
         }
@@ -65,7 +65,7 @@ open class SysLocaleService(
     @Transactional
     override fun insert(any: Any): String {
         val id = super.insert(any)
-        completeCrudInsert(log, "新增id为${id}的语言。") {
+        completeCrudInsert(log, "Inserted locale with id $id.") {
             eventPublisher.publishEvent(SysLocaleInserted(id = id))
         }
         return id
@@ -73,12 +73,12 @@ open class SysLocaleService(
 
     @Transactional
     override fun update(any: Any): Boolean {
-        val id = requireStringId(any, "语言")
+        val id = requireStringId(any, "locale")
         return completeCrudUpdate(
             success = super.update(any),
             log = log,
-            successMessage = "更新id为${id}的语言。",
-            failureMessage = "更新id为${id}的语言失败！",
+            successMessage = "Updated locale with id $id.",
+            failureMessage = "Failed to update locale with id $id!",
         ) {
             eventPublisher.publishEvent(SysLocaleUpdated(id = id))
         }
@@ -87,14 +87,14 @@ open class SysLocaleService(
     @Transactional
     override fun deleteById(id: String): Boolean {
         val po = dao.get(id) ?: run {
-            log.warn("删除id为${id}的语言时，发现其已不存在！")
+            log.warn("Tried to delete locale with id $id, but it no longer exists!")
             return false
         }
         return completeCrudUpdate(
             success = super.deleteById(id),
             log = log,
-            successMessage = "删除id为${id}的语言。",
-            failureMessage = "删除id为${id}的语言失败！",
+            successMessage = "Deleted locale with id $id.",
+            failureMessage = "Failed to delete locale with id $id!",
         ) {
             eventPublisher.publishEvent(SysLocaleDeleted(id = id, code = po.code))
         }
@@ -104,7 +104,7 @@ open class SysLocaleService(
     override fun batchDelete(ids: Collection<String>): Int {
         val codes = dao.inSearchById(ids).map { it.code }.toSet()
         val count = super.batchDelete(ids)
-        log.debug("批量删除语言，期望删除${ids.size}条，实际删除${count}条。")
+        log.debug("Batch delete of locales: expected ${ids.size}, actually deleted $count.")
         if (count > 0) {
             eventPublisher.publishEvent(SysLocaleBatchDeleted(ids = ids, codes = codes))
         }

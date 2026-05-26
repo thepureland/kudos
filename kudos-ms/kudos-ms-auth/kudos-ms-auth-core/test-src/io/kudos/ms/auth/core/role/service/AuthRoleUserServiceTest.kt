@@ -11,7 +11,7 @@ import kotlin.test.assertTrue
 /**
  * junit test for AuthRoleUserService
  *
- * 测试数据来源：`AuthRoleUserServiceTest.sql`
+ * Test data source: `AuthRoleUserServiceTest.sql`
  *
  * @author K
  * @author AI: Cursor
@@ -45,10 +45,10 @@ class AuthRoleUserServiceTest : RdbAndRedisCacheTestBase() {
         val roleId = "7817d37f-0000-0000-0000-000000000043"
         val userId = "7817d37f-0000-0000-0000-000000000040"
         
-        // 测试存在的关系
+        // Test an existing relation
         assertTrue(authRoleUserService.exists(roleId, userId))
-        
-        // 测试不存在的关系
+
+        // Test a non-existent relation
         assertFalse(authRoleUserService.exists(roleId, "non-existent-user-id"))
     }
 
@@ -61,17 +61,17 @@ class AuthRoleUserServiceTest : RdbAndRedisCacheTestBase() {
             "7817d37f-0000-0000-0000-000000000042"
         )
         
-        // 批量绑定
+        // Batch bind
         val count = authRoleUserService.batchBind(roleId, userIds)
         assertTrue(count >= 3)
-        
-        // 验证绑定成功
+
+        // Verify the binding succeeded
         val boundUserIds = authRoleUserService.getUserIdsByRoleId(roleId)
         assertTrue(boundUserIds.containsAll(userIds))
-        
-        // 测试重复绑定（应该跳过已存在的）
+
+        // Test duplicate binding (existing entries should be skipped)
         val count2 = authRoleUserService.batchBind(roleId, userIds)
-        assertTrue(count2 == 0) // 应该返回0，因为都已存在
+        assertTrue(count2 == 0) // should return 0 since all already exist
     }
 
     @Test
@@ -79,16 +79,16 @@ class AuthRoleUserServiceTest : RdbAndRedisCacheTestBase() {
         val roleId = "7817d37f-0000-0000-0000-000000000043"
         val userId = "7817d37f-0000-0000-0000-000000000041"
         
-        // 验证关系存在
+        // Verify the relation exists
         assertTrue(authRoleUserService.exists(roleId, userId))
-        
-        // 解绑
+
+        // Unbind
         assertTrue(authRoleUserService.unbind(roleId, userId))
-        
-        // 验证关系已不存在
+
+        // Verify the relation no longer exists
         assertFalse(authRoleUserService.exists(roleId, userId))
-        
-        // 重新绑定以便后续测试
+
+        // Rebind so subsequent tests can run
         authRoleUserService.batchBind(roleId, listOf(userId))
     }
 }

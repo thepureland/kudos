@@ -1,9 +1,9 @@
 package io.kudos.ability.cache.remote.redis.init
 
 /**
- * Redis 缓存模块配置。
+ * Redis cache module properties.
  *
- * @property nodeId 缓存失效广播中的节点标识；为空时启动期自动生成 UUID。
+ * @property nodeId Node identifier used in cache-invalidation broadcasts; auto-generated as a UUID at startup if blank.
  * @author K
  * @author AI: Codex
  * @since 1.0.0

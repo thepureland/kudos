@@ -3,70 +3,71 @@ package io.kudos.base.security
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 
 /**
- * 密码哈希工具：基于 BCrypt 的单向哈希 + 验证。
+ * Password hashing utility: BCrypt-based one-way hashing and verification.
  *
- * 适用于**用户登录密码**类需要长期存储的凭据，**不要**用 [CryptoKit] 的 AES 来存密码——
- * AES 是可逆的，密钥一旦泄露则全表明文。BCrypt 含随机 salt、不可逆，且 cost 因子可在硬件
- * 增强后通过 [strength] 上调而不影响旧 hash 的可验证性。
+ * Use this for credentials that must be stored long-term, such as **user login passwords**. **Do not**
+ * use [CryptoKit]'s AES to store passwords — AES is reversible, so a key leak exposes the entire table
+ * in plaintext. BCrypt includes a random salt, is irreversible, and the cost factor can be raised via
+ * [strength] as hardware improves without breaking verification of older hashes.
  *
- * 形态：
- * - hash 输出形如 `$2a$10$...`（60 字符固定长度）
- * - 含算法版本 + cost + salt + hash，自描述；后续 [matches] 不需要单独传 salt
+ * Format:
+ * - Hash output looks like `$2a$10$...` (60-character fixed length).
+ * - Encodes algorithm version + cost + salt + hash — self-describing; [matches] does not require a separate salt.
  *
- * 线程安全：[BCryptPasswordEncoder] 实例本身线程安全；这里保留单例。
+ * Thread safety: [BCryptPasswordEncoder] instances are themselves thread-safe; a singleton is kept here.
  *
  * @author K
  * @since 1.0.0
  */
 object PasswordKit {
 
-    /** BCrypt cost 因子；10 是 2026 年合理的服务端默认（约 100ms/hash on modern CPU）。 */
+    /** BCrypt cost factor; 10 is a reasonable 2026 server-side default (~100ms/hash on a modern CPU). */
     const val DEFAULT_STRENGTH = 10
 
     private val DEFAULT_ENCODER = BCryptPasswordEncoder(DEFAULT_STRENGTH)
 
     /**
-     * 计算明文密码的 BCrypt hash。每次调用产生不同输出（salt 随机）。
+     * Computes the BCrypt hash of a plaintext password. Each call produces a different output (random salt).
      *
-     * @param plainPassword 明文密码，非空
-     * @return BCrypt hash 字符串（60 字符），可直接落库
+     * @param plainPassword plaintext password, must not be empty
+     * @return BCrypt hash string (60 characters), ready to be persisted
      */
     fun hash(plainPassword: String): String {
-        require(plainPassword.isNotEmpty()) { "明文密码不能为空" }
-        return DEFAULT_ENCODER.encode(plainPassword) ?: error("BCryptPasswordEncoder.encode 返回 null")
+        require(plainPassword.isNotEmpty()) { "Plaintext password must not be empty" }
+        return DEFAULT_ENCODER.encode(plainPassword) ?: error("BCryptPasswordEncoder.encode returned null")
     }
 
     /**
-     * 用指定 cost 因子计算 hash。仅在迁移或测试场景下需要显式覆盖。
+     * Computes a hash using the specified cost factor. Should only be overridden explicitly in migration or test scenarios.
      */
     fun hash(plainPassword: String, strength: Int): String {
-        require(plainPassword.isNotEmpty()) { "明文密码不能为空" }
-        return BCryptPasswordEncoder(strength).encode(plainPassword) ?: error("BCryptPasswordEncoder.encode 返回 null")
+        require(plainPassword.isNotEmpty()) { "Plaintext password must not be empty" }
+        return BCryptPasswordEncoder(strength).encode(plainPassword) ?: error("BCryptPasswordEncoder.encode returned null")
     }
 
     /**
-     * 校验明文密码是否匹配存储的 hash。
+     * Verifies whether a plaintext password matches the stored hash.
      *
-     * @param plainPassword 用户提供的明文密码
-     * @param storedHash 数据库中存储的 BCrypt hash 字符串
-     * @return true 匹配；false 不匹配或 hash 格式不合法（不抛异常）
+     * @param plainPassword the plaintext password supplied by the user
+     * @param storedHash the BCrypt hash string stored in the database
+     * @return true if it matches; false on mismatch or invalid hash format (no exception is thrown)
      */
     fun matches(plainPassword: String, storedHash: String?): Boolean {
         if (storedHash.isNullOrEmpty()) return false
         return try {
             DEFAULT_ENCODER.matches(plainPassword, storedHash)
         } catch (e: IllegalArgumentException) {
-            // BCryptPasswordEncoder 对非法 hash 格式会抛 IAE；这里吞掉并返回 false，方便登录流统一处理
+            // BCryptPasswordEncoder throws IAE on malformed hash strings; swallow it and return false so login flow can handle it uniformly
             false
         }
     }
 
     /**
-     * 判断给定字符串是否看起来像 BCrypt hash（用于鉴别历史的非 BCrypt 数据）。
+     * Returns whether the given string looks like a BCrypt hash (used to distinguish legacy non-BCrypt data).
      */
     fun looksLikeBcryptHash(value: String?): Boolean {
         if (value == null) return false
-        // BCrypt 输出：$2a$ / $2b$ / $2y$ 前缀 + cost + salt + hash，总长 60
+        // BCrypt output: $2a$ / $2b$ / $2y$ prefix + cost + salt + hash, total length 60
         return value.length == 60 && value.matches(Regex("""^\$2[abxy]\$\d{2}\$.{53}$"""))
     }
 }

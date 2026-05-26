@@ -7,7 +7,7 @@ import jakarta.annotation.Resource
 /**
  * junit test for SysMicroServiceDao
  *
- * 测试数据来源：`SysMicroServiceDaoTest.sql`
+ * Test data source: `SysMicroServiceDaoTest.sql`
  *
  * @author K
  * @author AI: Cursor
@@ -19,5 +19,5 @@ class SysMicroServiceDaoTest : RdbTestBase() {
     @Resource
     private lateinit var sysMicroServiceDao: SysMicroServiceDao
 
-    // 此Dao类没有自定义方法，只测试基础CRUD功能（由父类提供）
+    // This DAO has no custom methods; only basic CRUD functionality (provided by parent class) is tested
 }

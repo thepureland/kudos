@@ -7,7 +7,7 @@ import kotlin.reflect.KProperty0
 
 
 /**
- * 字典列表查询条件请求VO
+ * Dictionary list query criteria request VO.
  *
  * @author K
  * @since 1.0.0
@@ -16,19 +16,19 @@ data class SysDictQuery (
 
     val id: String? = null,
 
-    /** 字典类型 */
+    /** Dictionary type */
     val dictType: String? = null,
 
-    /** 字典名称 */
+    /** Dictionary name */
     val dictName: String? = null,
 
-    /** 原子服务编码 */
+    /** Atomic service code */
     val atomicServiceCode: String? = null,
 
-    /** 是否启用 */
+    /** Whether active */
     val active: Boolean? = null,
 
-    /** 是否内置 */
+    /** Whether built-in */
     val builtIn: Boolean? = null,
 
 ) : ListSearchPayload() {

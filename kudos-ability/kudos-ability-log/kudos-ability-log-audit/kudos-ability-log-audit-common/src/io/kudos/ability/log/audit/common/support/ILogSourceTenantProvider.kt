@@ -1,10 +1,13 @@
 package io.kudos.ability.log.audit.common.support
 
 /**
- * 审计来源租户解析协议。
+ * Resolution protocol for the audit source tenant.
  *
- * 多租户场景下，业务请求里的 `tenantId` 可能与"审计日志应归属的租户"不一致——
- * 例如平台租户代操作客户租户时，审计需归属客户租户。业务侧实现本接口决定映射规则。
+ * In multi-tenant scenarios, the `tenantId` in a business request may differ from
+ * the "tenant the audit log should be attributed to" — for example, when a
+ * platform tenant operates on behalf of a customer tenant, audits must be
+ * attributed to the customer tenant. The business side implements this interface
+ * to define the mapping rule.
  *
  * @author K
  * @author AI: Codex
@@ -12,11 +15,13 @@ package io.kudos.ability.log.audit.common.support
  */
 interface ILogSourceTenantProvider {
     /**
-     * 根据请求上下文中的租户与用户 id 反查"日志应归属的租户"。
+     * Resolves "the tenant the log should be attributed to" by the tenant and user
+     * id from the request context.
      *
-     * @param tenantId 请求上下文中的租户 id
-     * @param userId 当前操作用户 id
-     * @return 审计日志应归属的源租户 id；返回 null 表示走默认（沿用 tenantId）
+     * @param tenantId tenant id in the request context
+     * @param userId current operating user id
+     * @return source tenant id the audit log should be attributed to;
+     *         null means use the default (fall back to tenantId)
      * @author K
      * @since 1.0.0
      */

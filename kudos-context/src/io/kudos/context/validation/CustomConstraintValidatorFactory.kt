@@ -12,33 +12,38 @@ import java.time.Clock
 
 
 /**
- * 自定义约束的验证器工厂，用于为自定义的约束注解指定验证器
+ * Custom constraint validator factory used to associate validators with custom constraint annotations.
  *
  * @author K
  * @since 1.0.0
  */
 open class CustomConstraintValidatorFactory: LocalValidatorFactoryBean(), ApplicationContextAware {
 
-    /** Spring 上下文，由 [setApplicationContext] 注入；用于解析所有 [IConstraintValidatorProviderBean] */
+    /** Spring context, injected via [setApplicationContext]; used to resolve all [IConstraintValidatorProviderBean] instances. */
     private lateinit var applicationContext: ApplicationContext
 
     /**
-     * 覆盖默认 [ClockProvider]，让 `@Future` / `@Past` 等时间相关约束使用系统默认时区时钟。
+     * Overrides the default [ClockProvider] so that time-related constraints such as `@Future` / `@Past`
+     * use the system-default-zone clock.
      *
-     * @return 始终返回系统默认时区的 [Clock]
+     * @return always a [Clock] using the system default time zone
      * @author K
      * @since 1.0.0
      */
     override fun getClockProvider(): ClockProvider = ClockProvider { Clock.systemDefaultZone() }
 
     /**
-     * Hibernate Validator 配置后处理：收集容器里所有 [IConstraintValidatorProviderBean]，
-     * 把它们声明的「约束注解 → 校验器」关系注册到 [HibernateValidatorConfiguration.createConstraintMapping]。
+     * Post-processes the Hibernate Validator configuration: collects all
+     * [IConstraintValidatorProviderBean] instances from the container and registers their declared
+     * "constraint annotation -> validator" mappings into
+     * [HibernateValidatorConfiguration.createConstraintMapping].
      *
-     * `includeExistingValidators(false)` 是为了完全替换默认实现——业务侧通过 provider 显式声明的
-     * 校验器会胜过 jakarta 自带的同名约束实现，方便对内置注解做定制（如改 @Pattern 报错语义等）。
+     * `includeExistingValidators(false)` is used to fully replace the default implementations: validators
+     * explicitly declared by the business side via a provider win over the jakarta built-in implementations
+     * for the same constraint, making it easy to customize built-in annotations (for example to change the
+     * error semantics of @Pattern).
      *
-     * @param configuration HV 注入的可配置项
+     * @param configuration the configurable items injected by HV
      * @author K
      * @since 1.0.0
      */
@@ -59,10 +64,11 @@ open class CustomConstraintValidatorFactory: LocalValidatorFactoryBean(), Applic
     }
 
     /**
-     * 由 Spring 通过 [ApplicationContextAware] 注入上下文。
-     * 先调父类逻辑（让 LocalValidatorFactoryBean 也能用到 context），再缓存一份到本类供 [postProcessConfiguration] 使用。
+     * The context is injected by Spring via [ApplicationContextAware].
+     * First calls the parent logic (so LocalValidatorFactoryBean can also use the context), then caches
+     * a reference here for [postProcessConfiguration].
      *
-     * @param applicationContext Spring 上下文
+     * @param applicationContext the Spring application context
      * @author K
      * @since 1.0.0
      */

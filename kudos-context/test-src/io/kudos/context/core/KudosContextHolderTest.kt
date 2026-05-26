@@ -15,14 +15,14 @@ import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 /**
- * KudosContextHolder 测试用例
+ * Tests for KudosContextHolder.
  *
- * 覆盖：
- * - [KudosContextHolder.get] 自动创建语义（"懒初始化"，文档已注明）
- * - [KudosContextHolder.getOrNull] 与之相反，未初始化返回 null
- * - [KudosContextHolder.clear] 清理 ThreadLocal
- * - `InheritableThreadLocal` 传播到子线程
- * - 线程间相互隔离
+ * Coverage:
+ * - [KudosContextHolder.get] auto-creation semantics ("lazy initialization", as documented)
+ * - [KudosContextHolder.getOrNull] returns null when uninitialized (opposite of get)
+ * - [KudosContextHolder.clear] clears the ThreadLocal
+ * - `InheritableThreadLocal` propagation to child threads
+ * - Isolation between threads
  *
  * @author K
  * @since 1.0.0
@@ -36,28 +36,28 @@ internal class KudosContextHolderTest {
     fun resetAfter() = KudosContextHolder.clear()
 
     // ============================================================
-    // get vs getOrNull 语义差别
+    // get vs getOrNull semantic differences
     // ============================================================
 
     @Test
     fun getOrNullReturnsNullWhenUninitialized() {
-        assertNull(KudosContextHolder.getOrNull(), "未 set 前 getOrNull 应是 null")
+        assertNull(KudosContextHolder.getOrNull(), "getOrNull should be null before set")
     }
 
     @Test
     fun getCreatesContextOnFirstCallAndCachesIt() {
-        // KDoc 明确：get() 在未初始化时自动创建并写入 ThreadLocal
+        // KDoc is explicit: get() auto-creates and writes to ThreadLocal when uninitialized
         val first = KudosContextHolder.get()
         assertNotNull(first)
         val second = KudosContextHolder.get()
-        assertSame(first, second, "二次调用应返回同一实例（已缓存）")
+        assertSame(first, second, "the second call should return the same instance (cached)")
     }
 
     @Test
     fun getOrNullReturnsExistingAfterGetCreatesIt() {
         val created = KudosContextHolder.get()
         val read = KudosContextHolder.getOrNull()
-        assertSame(created, read, "get() 创建后，getOrNull 能读到")
+        assertSame(created, read, "after get() creates it, getOrNull should read it back")
     }
 
     // ============================================================
@@ -78,11 +78,11 @@ internal class KudosContextHolderTest {
         KudosContextHolder.get()
         assertNotNull(KudosContextHolder.getOrNull())
         KudosContextHolder.clear()
-        assertNull(KudosContextHolder.getOrNull(), "clear 后应回到未初始化")
+        assertNull(KudosContextHolder.getOrNull(), "after clear, the state should be uninitialized")
     }
 
     // ============================================================
-    // 跨线程行为：InheritableThreadLocal 应传播到子线程
+    // Cross-thread behavior: InheritableThreadLocal should propagate to child threads
     // ============================================================
 
     @Test
@@ -90,24 +90,24 @@ internal class KudosContextHolderTest {
         val parentCtx = KudosContextHolder.get()
         val childCtx = AtomicReference<KudosContext?>()
 
-        // 直接 new Thread，让 InheritableThreadLocal 在创建时拷贝
+        // Use `new Thread` directly so InheritableThreadLocal copies on creation
         val t = Thread {
             childCtx.set(KudosContextHolder.getOrNull())
         }
         t.start()
         t.join(2000)
 
-        assertSame(parentCtx, childCtx.get(), "InheritableThreadLocal 应把父线程上下文传给子线程")
+        assertSame(parentCtx, childCtx.get(), "InheritableThreadLocal should propagate the parent thread's context to the child thread")
     }
 
     @Test
     fun contextIsIsolatedAcrossThreadsThatDontInherit() {
-        // 用 ExecutorService 复用的现有线程：上下文不会被传过去
+        // Use an existing thread reused by ExecutorService: the context will not be propagated
         val pool = Executors.newSingleThreadExecutor()
-        // 先让 pool 的工作线程被创建（此时主线程 ThreadLocal 还是空的）
+        // Force the pool's worker thread to be created first (the main-thread ThreadLocal is still empty at this point)
         pool.submit { /* warmup */ }.get(1, TimeUnit.SECONDS)
 
-        // 现在主线程才创建上下文
+        // Now the main thread creates the context
         val parentCtx = KudosContextHolder.get()
         val workerCtx = AtomicReference<KudosContext?>()
         val done = CountDownLatch(1)
@@ -118,12 +118,12 @@ internal class KudosContextHolderTest {
         assertTrue(done.await(2, TimeUnit.SECONDS))
         pool.shutdown()
 
-        // 关键：worker 线程已存在（warmup 时创建），其 InheritableThreadLocal
-        // 没有继承到主线程后来才 set 的值。这是已知陷阱——线程池场景下必须显式传递。
+        // Key point: the worker thread already exists (created during warmup), and its InheritableThreadLocal
+        // did not inherit the value set later by the main thread. This is a well-known pitfall — in pool scenarios, propagation must be explicit.
         assertNotSame(
             parentCtx,
             workerCtx.get(),
-            "线程池里已存在的 worker 不会自动看到主线程后来 set 的上下文"
+            "an already-existing worker in a thread pool will not automatically see context set later by the main thread"
         )
     }
 
@@ -135,19 +135,19 @@ internal class KudosContextHolderTest {
         val phase2 = CountDownLatch(1)
 
         val t = Thread {
-            // 子线程继承到 mainCtx
+            // Child thread inherits mainCtx
             val inherited = KudosContextHolder.getOrNull()
             otherSeen.set(inherited)
             phase1.countDown()
-            // 等主线程 clear 后再看：子线程的引用不应被清掉
+            // Wait until the main thread has cleared, then check: the child thread's reference must not be cleared
             assertTrue(phase2.await(2, TimeUnit.SECONDS))
             val afterMainClear = KudosContextHolder.getOrNull()
-            assertSame(mainCtx, afterMainClear, "主线程 clear 不影响子线程")
+            assertSame(mainCtx, afterMainClear, "clear on the main thread should not affect the child thread")
         }
         t.start()
         assertTrue(phase1.await(2, TimeUnit.SECONDS))
         KudosContextHolder.clear()
-        assertNull(KudosContextHolder.getOrNull(), "主线程已清")
+        assertNull(KudosContextHolder.getOrNull(), "main thread cleared")
         phase2.countDown()
         t.join(2000)
 

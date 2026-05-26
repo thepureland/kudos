@@ -5,7 +5,7 @@ import io.kudos.ms.user.core.account.model.po.UserAccountProtection
 
 
 /**
- * 用户账号保护业务接口
+ * User account protection service interface.
  *
  * @author K
  * @author AI: Codex

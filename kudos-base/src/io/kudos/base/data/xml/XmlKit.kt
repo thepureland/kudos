@@ -15,54 +15,54 @@ import javax.xml.transform.sax.SAXSource
 import kotlin.reflect.KClass
 
 /**
- * XML工具类
- * 
- * 基于JAXB（Java Architecture for XML Binding）实现XML和Java对象的相互转换。
- * JAXB使用OXM（Object XML Mapping）技术，底层使用StAX（JSR 173）处理XML文档。
- * 
- * 核心功能：
- * 1. 对象序列化：将Java对象转换为XML字符串（编组）
- * 2. 对象反序列化：将XML字符串转换为Java对象（解组）
- * 3. 集合支持：支持根元素为Collection的XML序列化
- * 4. 编码控制：支持指定XML编码格式（默认UTF-8）
- * 5. 命名空间：支持忽略命名空间的解析
- * 
- * 类要求：
- * - 支持数据类和普通类
- * - 必须有空构造函数
- * - 要映射的属性必须是可读可写的（var）
- * - 可以使用JAXB注解控制序列化行为
- * 
- * 性能优化：
- * - 使用ConcurrentHashMap缓存JAXBContext，避免重复创建
- * - Marshaller和Unmarshaller每次创建（线程不安全）
- * 
- * 使用场景：
- * - Web服务的数据交换（SOAP、REST）
- * - 配置文件解析
- * - 数据持久化
- * - 系统间数据传递
- * 
- * 注意事项：
- * - XML编码必须为UTF-8（默认）
- * - 集合作为根元素时需要使用CollectionWrapper包装
- * - 命名空间处理需要根据实际情况配置
- * - 线程安全：JAXBContext缓存是线程安全的，但Marshaller/Unmarshaller不是
+ * XML utility class.
+ *
+ * Performs XML <-> Java object conversion based on JAXB (Java Architecture for XML Binding).
+ * JAXB uses OXM (Object XML Mapping) and is backed by StAX (JSR 173) for XML document processing.
+ *
+ * Core features:
+ * 1. Object serialization: converts Java objects to XML strings (marshalling).
+ * 2. Object deserialization: converts XML strings to Java objects (unmarshalling).
+ * 3. Collection support: serializes XML whose root element is a Collection.
+ * 4. Encoding control: supports specifying the XML encoding (default UTF-8).
+ * 5. Namespaces: supports namespace-agnostic parsing.
+ *
+ * Class requirements:
+ * - Supports data classes and plain classes.
+ * - Must have a no-argument constructor.
+ * - Mapped properties must be readable and writable (var).
+ * - JAXB annotations can be used to control serialization behavior.
+ *
+ * Performance optimizations:
+ * - Caches JAXBContext in a ConcurrentHashMap to avoid repeated creation.
+ * - Marshaller / Unmarshaller are created on each call (they are not thread-safe).
+ *
+ * Use cases:
+ * - Web-service data exchange (SOAP, REST).
+ * - Configuration parsing.
+ * - Data persistence.
+ * - Inter-system data transfer.
+ *
+ * Notes:
+ * - XML encoding must be UTF-8 (the default).
+ * - When a Collection is the root element, wrap it with CollectionWrapper.
+ * - Namespace handling must be configured according to the actual scenario.
+ * - Thread safety: the JAXBContext cache is thread-safe, but Marshaller / Unmarshaller are not.
  *
  * @author K
  * @since 1.0.0
  */
 object XmlKit {
 
-    /** [JAXBContext] 缓存：按目标 [KClass] 复用，避免重复构建（[JAXBContext] 本身线程安全） */
+    /** [JAXBContext] cache: reused by target [KClass] to avoid repeated construction ([JAXBContext] itself is thread-safe). */
     private val jaxbContexts = ConcurrentHashMap<KClass<*>, JAXBContext>()
 
     /**
-     * 序列化(编组)，按指定编码将bean转为xml
+     * Serialization (marshalling): converts the bean to XML with the specified encoding.
      *
-     * @param root 待序列化的根对象
-     * @param encoding 编码名称,缺省为UTF-8
-     * @return 序列化后的xml字符串
+     * @param root root object to serialize
+     * @param encoding encoding name; defaults to UTF-8
+     * @return the serialized XML string
      * @author K
      * @since 1.0.0
      */
@@ -73,14 +73,14 @@ object XmlKit {
     }
 
     /**
-     * 序列化(编组)，特别支持Root Element是Collection的情形.
+     * Serialization (marshalling), specifically for the case where the root element is a Collection.
      *
-     * @param T 集合元素类型
-     * @param root 待序列化的根容器对象
-     * @param rootName 根的名称
-     * @param clazz 类
-     * @param encoding 编码名称,缺省为UTF-8
-     * @return 序列化后的xml字符串
+     * @param T element type of the collection
+     * @param root root container object to serialize
+     * @param rootName root element name
+     * @param clazz class
+     * @param encoding encoding name; defaults to UTF-8
+     * @return the serialized XML string
      * @author K
      * @since 1.0.0
      */
@@ -93,13 +93,13 @@ object XmlKit {
     }
 
     /**
-     * 反序列化(解组)，将xml转为指定类的实例
+     * Deserialization (unmarshalling): converts the XML string into an instance of the specified class.
      *
-     * @param T 目标类型
-     * @param xml xml字符串
-     * @param clazz 实例的类型
-     * @param ignoreNameSpace 是否忽略命名空间
-     * @return 指定类的实例
+     * @param T target type
+     * @param xml XML string
+     * @param clazz target class
+     * @param ignoreNameSpace whether to ignore namespaces
+     * @return an instance of the specified class
      * @author K
      * @since 1.0.0
      */
@@ -114,19 +114,19 @@ object XmlKit {
     }
 
     /**
-     * 创建Marshaller并设定encoding. 线程不安全，需要每次创建或pooling。
+     * Creates a Marshaller and sets the encoding. Not thread-safe; create one per call or use pooling.
      *
-     * @param clazz 类
-     * @param encoding 编码名称,缺省为UTF-8
-     * @return Marshaller
+     * @param clazz class
+     * @param encoding encoding name; defaults to UTF-8
+     * @return the Marshaller
      * @author K
      * @since 1.0.0
      */
     private fun createMarshaller(clazz: KClass<*>, encoding: String = "UTF-8"): Marshaller {
         val jaxbContext: JAXBContext = getJaxbContext(clazz)
         val marshaller: Marshaller = jaxbContext.createMarshaller()
-        marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true) //格式化输出，即按标签自动换行，否则就是一行输出
-        marshaller.setProperty(Marshaller.JAXB_FRAGMENT, false) //是否省略xml头信息，默认不省略（false）
+        marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true) // Formatted output with automatic newlines per element; otherwise everything is on a single line.
+        marshaller.setProperty(Marshaller.JAXB_FRAGMENT, false) // Whether to omit the XML header; defaults to false (do not omit).
 //        marshaller.setProperty(Marshaller.JAXB_NO_NAMESPACE_SCHEMA_LOCATION, "")
         if (encoding.isNotBlank()) {
             marshaller.setProperty(Marshaller.JAXB_ENCODING, encoding)
@@ -135,25 +135,25 @@ object XmlKit {
     }
 
     /**
-     * 创建UnMarshaller. 线程不安全，需要每次创建或pooling。
+     * Creates an Unmarshaller. Not thread-safe; create one per call or use pooling.
      *
-     * @param clazz 类
-     * @return UnMarshaller
+     * @param clazz class
+     * @return the Unmarshaller
      * @author K
      * @since 1.0.0
      */
     private fun createUnmarshaller(clazz: KClass<*>): Unmarshaller = getJaxbContext(clazz).createUnmarshaller()
 
     /**
-     * 获取或创建指定类的 [JAXBContext]。
-     * 同时注册 [CollectionWrapper]，以便处理 Collection 作根元素的情况。
+     * Gets or creates a [JAXBContext] for the specified class.
+     * Also registers [CollectionWrapper] so that Collection-as-root cases can be handled.
      *
-     * 注意：当前实现每次都新建 context，再 `putIfAbsent` 写入缓存，
-     * 等于缓存只保留首次构建的实例但仍每次构建一份；后续如需进一步降低开销，
-     * 可改为先查缓存、缺失时再构建。
+     * Note: the current implementation builds a new context every call and writes it to the cache via
+     * `putIfAbsent`. The cache therefore retains only the first instance but a new one is still built
+     * each call; to reduce overhead further, switch to a check-then-build pattern.
      *
-     * @param clazz 目标类
-     * @return 对应的 [JAXBContext]
+     * @param clazz target class
+     * @return the corresponding [JAXBContext]
      * @author K
      * @since 1.0.0
      */
@@ -164,13 +164,13 @@ object XmlKit {
     }
 
     /**
-     * 封装Root Element 是 Collection的情况.
+     * Wrapper for the case where the root element is a Collection.
      *
      * @author K
      * @since 1.0.0
      */
     class CollectionWrapper(
-        /** 被包装的集合内容；JAXB 通过 `@XmlAnyElement` 自动按元素类型展开输出 */
+        /** Wrapped collection contents; JAXB automatically expands each element by type via `@XmlAnyElement`. */
         @set:XmlAnyElement
         var item: Collection<*>
     )

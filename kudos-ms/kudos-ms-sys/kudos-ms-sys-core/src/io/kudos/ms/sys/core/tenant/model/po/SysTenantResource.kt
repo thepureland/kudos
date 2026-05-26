@@ -4,7 +4,7 @@ import io.kudos.ability.data.rdb.ktorm.support.DbEntityFactory
 import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
 
 /**
- * 租户-资源关系数据库实体
+ * Tenant-resource relationship database entity
  *
  * @author K
  * @since 1.0.0
@@ -13,10 +13,10 @@ interface SysTenantResource : IDbEntity<String, SysTenantResource> {
 
     companion object : DbEntityFactory<SysTenantResource>()
 
-    /** 租户id */
+    /** Tenant id */
     var tenantId: String
 
-    /** 资源id */
+    /** Resource id */
     var resourceId: String
 
 }

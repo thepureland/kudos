@@ -15,7 +15,7 @@ import kotlin.test.assertNull
 /**
  * junit test for TenantByIdCacheHandler
  *
- * 测试数据来源：`TenantByIdCacheTest.sql`
+ * Test data source: `TenantByIdCacheTest.sql`
  *
  * @author K
  * @since 1.0.0
@@ -29,25 +29,25 @@ class TenantByIdCacheTest : RdbAndRedisCacheTestBase() {
     @Resource
     private lateinit var sysTenantDao: SysTenantDao
 
-    private val newTenantName = "新租户名称"
+    private val newTenantName = "New tenant name"
 
     @Test
     fun getTenantById() {
-        // 存在的
+        // Existing
         var id = "118772a0-c053-4634-a5e5-111111115282"
         val cacheItem2 = cacheHandler.getTenantById(id)
         val cacheItem3 = cacheHandler.getTenantById(id)
         assertNotNull(cacheItem2)
         assert(cacheItem3 === cacheItem2)
 
-        // 不存在的
+        // Non-existing
         id = "no_exist_id"
         assertNull(cacheHandler.getTenantById(id))
     }
 
     @Test
     fun getTenantsByIds() {
-        // 都存在的
+        // All existing
         var id1 = "118772a0-c053-4634-a5e5-111111115282"
         var id2 = "118772a0-c053-4634-a5e5-222222225282"
         val result2 = cacheHandler.getTenantsByIds(listOf(id1, id2))
@@ -55,12 +55,12 @@ class TenantByIdCacheTest : RdbAndRedisCacheTestBase() {
         assert(result2.isNotEmpty())
         assert(result3 == result2)
 
-        // 部分存在的
+        // Partially existing
         id1 = "no_exist_id-1"
         var cacheItems = cacheHandler.getTenantsByIds(listOf(id1, id2))
         assertEquals(1, cacheItems.size)
 
-        // 都不存在的
+        // None existing
         id2 = "no_exist_id-2"
         cacheItems = cacheHandler.getTenantsByIds(listOf(id1, id2))
         assert(cacheItems.isEmpty())
@@ -68,13 +68,13 @@ class TenantByIdCacheTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnInsert() {
-        // 插入新的记录到数据库
+        // Insert a new record into the database
         val id = insertNewRecordToDb()
 
-        // 同步缓存
+        // Sync cache
         cacheHandler.syncOnInsert(id)
 
-        // 验证新记录是否在缓存中
+        // Verify the new record is in the cache
         val cacheItem1 = KeyValueCacheKit.getValue(cacheHandler.cacheName(), id)
         assertNotNull(cacheItem1)
         val cacheItem2 = cacheHandler.getTenantById(id)
@@ -85,15 +85,15 @@ class TenantByIdCacheTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnUpdate() {
-        // 更新数据库中已存在的记录
+        // Update an existing record in the database
         val id = "118772a0-c053-4634-a5e5-222222225282"
         val success = sysTenantDao.updateProperties(id, mapOf(SysTenant::name.name to newTenantName))
         assert(success)
 
-        // 同步缓存
+        // Sync cache
         cacheHandler.syncOnUpdate(id)
 
-        // 验证缓存中的记录
+        // Verify the cached record
         val cacheItem1 = KeyValueCacheKit.getValue(cacheHandler.cacheName(), id) as SysTenantCacheEntry?
         assertNotNull(cacheItem1)
         assertEquals(newTenantName, cacheItem1.name)
@@ -104,15 +104,15 @@ class TenantByIdCacheTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnDelete() {
-        // 删除数据库中的记录
+        // Delete a record from the database
         val id = insertNewRecordToDb()
         val deleteSuccess = sysTenantDao.deleteById(id)
         assert(deleteSuccess)
 
-        // 同步缓存
+        // Sync cache
         cacheHandler.syncOnDelete(id)
 
-        // 验证缓存中有没有
+        // Verify whether it is in the cache
         val cacheItem1 = KeyValueCacheKit.getValue(cacheHandler.cacheName(), id)
         assertNull(cacheItem1)
         val cacheItem2 = cacheHandler.getTenantById(id)
@@ -121,17 +121,17 @@ class TenantByIdCacheTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun syncOnBatchDelete() {
-        // 批量删除数据库中的记录
+        // Batch-delete records from the database
         val id1 = insertNewRecordToDb()
         val id2 = insertNewRecordToDb()
         val ids = listOf(id1, id2)
         val count = sysTenantDao.batchDelete(ids)
         assert(count == 2)
 
-        // 同步缓存
+        // Sync cache
         cacheHandler.syncOnBatchDelete(ids)
 
-        // 验证缓存中有没有
+        // Verify whether they are in the cache
         var cacheItem = KeyValueCacheKit.getValue(cacheHandler.cacheName(), id1)
         assertNull(cacheItem)
         cacheItem = cacheHandler.getTenantById(id1)
@@ -144,7 +144,7 @@ class TenantByIdCacheTest : RdbAndRedisCacheTestBase() {
 
     private fun insertNewRecordToDb(): String {
         val sysTenant = SysTenant().apply {
-            name = "测试租户_${System.currentTimeMillis()}"
+            name = "test_tenant_${System.currentTimeMillis()}"
         }
         return sysTenantDao.insert(sysTenant)
     }

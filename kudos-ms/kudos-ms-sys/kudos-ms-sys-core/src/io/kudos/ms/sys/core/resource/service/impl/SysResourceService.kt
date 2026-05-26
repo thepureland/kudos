@@ -38,7 +38,7 @@ import kotlin.reflect.KClass
 
 
 /**
- * 资源业务
+ * Resource service.
  *
  * @author K
  * @since 1.0.0
@@ -96,8 +96,8 @@ open class SysResourceService(
         return completeCrudUpdate(
             success = dao.update(resource),
             log = log,
-            successMessage = "更新id为${id}的资源的启用状态为${active}。",
-            failureMessage = "更新id为${id}的资源的启用状态为${active}失败！",
+            successMessage = "Updated resource id=$id active=$active.",
+            failureMessage = "Failed to update resource id=$id active=$active!",
         ) {
             eventPublisher.publishEvent(SysResourceUpdated(id = id))
         }
@@ -113,8 +113,8 @@ open class SysResourceService(
         return completeCrudUpdate(
             success = dao.update(resource),
             log = log,
-            successMessage = "移动资源${id}到父节点${newParentId}，排序号${newOrderNum}。",
-            failureMessage = "移动资源${id}失败！",
+            successMessage = "Moved resource $id under parent=$newParentId, orderNum=$newOrderNum.",
+            failureMessage = "Failed to move resource $id!",
         ) {
             eventPublisher.publishEvent(SysResourceUpdated(id = id))
         }
@@ -123,7 +123,7 @@ open class SysResourceService(
     @Transactional
     override fun insert(any: Any): String {
         val id = super.insert(any)
-        completeCrudInsert(log, "新增id为${id}的资源。") {
+        completeCrudInsert(log, "Inserted resource id=$id.") {
             eventPublisher.publishEvent(SysResourceInserted(id = id))
         }
         return id
@@ -131,13 +131,13 @@ open class SysResourceService(
 
     @Transactional
     override fun update(any: Any): Boolean {
-        val id = requireStringId(any, "资源")
+        val id = requireStringId(any, "resource")
         val oldResource = dao.get(id)
         return completeCrudUpdate(
             success = super.update(any),
             log = log,
-            successMessage = "更新id为${id}的资源。",
-            failureMessage = "更新id为${id}的资源失败！",
+            successMessage = "Updated resource id=$id.",
+            failureMessage = "Failed to update resource id=$id!",
         ) {
             syncResourceUpdate(any, id, oldResource)
         }
@@ -147,14 +147,14 @@ open class SysResourceService(
     override fun deleteById(id: String): Boolean {
         val resource = dao.get(id)
         if (resource == null) {
-            log.warn("删除id为${id}的资源时，发现其已不存在！")
+            log.warn("Resource id=$id no longer exists when attempting delete!")
             return false
         }
         return completeCrudUpdate(
             success = super.deleteById(id),
             log = log,
-            successMessage = "删除id为${id}的资源。",
-            failureMessage = "删除id为${id}的资源失败！",
+            successMessage = "Deleted resource id=$id.",
+            failureMessage = "Failed to delete resource id=$id!",
         ) {
             syncResourceDelete(resource)
         }
@@ -163,7 +163,7 @@ open class SysResourceService(
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {
         val count = super.batchDelete(ids)
-        log.debug("批量删除资源，期望删除${ids.size}条，实际删除${count}条。")
+        log.debug("Batch delete resources: expected ${ids.size}, actually deleted $count.")
         if (count > 0) {
             eventPublisher.publishEvent(SysResourceBatchDeleted(ids = ids))
         }
@@ -233,7 +233,7 @@ open class SysResourceService(
     }
 
     /**
-     * 递归地过滤孩子资源
+     * Recursively filter child resources.
      */
     private fun filterChildrenRecursively(
         parentId: String,
@@ -246,7 +246,7 @@ open class SysResourceService(
     }
 
     /**
-     * 将资源列表组装为树，返回根节点列表（parentId 为 null 或空的节点，或父节点不在列表中的节点）。
+     * Assemble a flat resource list into a tree; returns the list of root nodes (nodes whose parentId is null/blank, or whose parent is not in the list).
      */
     private fun <T : BaseMenuTreeNode> buildMenuTree(
         resources: List<SysResourceCacheEntry>,
@@ -273,7 +273,7 @@ open class SysResourceService(
     @Transactional(readOnly = true)
     override fun loadDirectChildrenForTree(sysResourceQuery: SysResourceQuery): List<IdAndNameTreeNode<String>> {
         return when (if (sysResourceQuery.level == null) Int.MAX_VALUE else sysResourceQuery.level) {
-            0 -> { // 资源类型
+            0 -> { // resource type
                 val dictItems = sysDictItemHashCache.getDictItems(
                     SysConsts.ATOMIC_SERVICE_NAME, SysDictTypes.RESOURCE_TYPE
                 )
@@ -282,14 +282,14 @@ open class SysResourceService(
                 }
             }
 
-            1 -> { // 子系统
+            1 -> { // sub-system
                 val cacheEntries = sysSystemHashCache.getAllSystems()
                 cacheEntries.map {
                     IdAndNameTreeNode(it.code, it.name)
                 }
             }
 
-            else -> { // 资源
+            else -> { // resource
                 val searchPayload = sysResourceQuery.copy(
                     active = sysResourceQuery.active.takeUnless { it == false }
                 ).apply {
@@ -301,7 +301,7 @@ open class SysResourceService(
                 dao.search(
                     searchPayload,
                     whereConditionFactory = { column, _ ->
-                        if (column.name == SysResources.parentId.name && searchPayload.level == 2) { // 1层是资源类型，2层是子系统，从第3层开始才是SysResource
+                        if (column.name == SysResources.parentId.name && searchPayload.level == 2) { // level 1 = resource type, level 2 = sub-system, SysResource starts from level 3
                             column.isNull()
                         } else null
                     },
@@ -332,12 +332,12 @@ open class SysResourceService(
     }
 
     /**
-     * 走资源 hash 缓存按子系统编码 + 资源类型取列表。
-     * 给多个 `*FromCache` overrides 复用，避免在每处重复"枚举 → code"的转换。
+     * Fetch from the resource hash cache by sub-system code + resource type.
+     * Shared by multiple `*FromCache` overrides to avoid repeating the "enum → code" conversion at every call site.
      *
-     * @param subSystemCode 子系统编码
-     * @param resourceType 资源类型枚举
-     * @return 资源缓存条目列表
+     * @param subSystemCode sub-system code
+     * @param resourceType resource type enum
+     * @return list of resource cache entries
      * @author K
      * @since 1.0.0
      */
@@ -348,14 +348,14 @@ open class SysResourceService(
         sysResourceHashCache.getResourcesBySubSystemCodeAndType(subSystemCode, resourceType.code)
 
     /**
-     * 把扁平的 [SysResourceRow] 列表按 parentId 装配成树。
+     * Assemble a flat [SysResourceRow] list into a tree by parentId.
      *
-     * 算法：先把每行映射为 [SysResourceTreeRow] 并按 id 做 map → 再遍历挂到父节点的 children；
-     * 父节点不在列表里则视为根。最后按 orderNum 递归排序。
+     * Algorithm: map each row to [SysResourceTreeRow] and index by id, then walk and attach each node under its parent's children;
+     * nodes whose parent is not in the list are treated as roots. Finally sort recursively by orderNum.
      *
-     * @param records 待装配的扁平资源列表
-     * @param parentId 指定根：非空时只返回该节点的子树
-     * @return 根节点列表（或指定 parentId 的子节点）
+     * @param records flat resource list to assemble
+     * @param parentId optional root selector: when non-null, returns only that node's subtree
+     * @return list of root nodes (or children of the specified parentId)
      * @author K
      * @since 1.0.0
      */
@@ -374,10 +374,10 @@ open class SysResourceService(
     }
 
     /**
-     * 把 [SysResourceRow] 浅拷贝成 [SysResourceTreeRow]，初始 children 为空容器以备后续挂载。
+     * Shallow-copy a [SysResourceRow] into a [SysResourceTreeRow]; initial children is an empty container ready for attachment.
      *
-     * @param record 单条资源记录
-     * @return 树节点
+     * @param record single resource record
+     * @return tree node
      * @author K
      * @since 1.0.0
      */
@@ -398,9 +398,9 @@ open class SysResourceService(
         )
 
     /**
-     * 递归按 orderNum 升序排序节点列表及其子树；null orderNum 排到最末（按 Int.MAX_VALUE 处理）。
+     * Recursively sort the node list and its subtrees by ascending orderNum; null orderNum sorts last (treated as Int.MAX_VALUE).
      *
-     * @param nodes 待排序节点列表（in-place 排序）
+     * @param nodes node list to sort (in-place)
      * @author K
      * @since 1.0.0
      */
@@ -412,14 +412,14 @@ open class SysResourceService(
     }
 
     /**
-     * 资源更新后的同步动作：当前只发 [SysResourceUpdated] 事件，由各级缓存订阅者自行刷新。
+     * Post-update sync: currently publishes a [SysResourceUpdated] event; cache subscribers refresh themselves.
      *
-     * 入参 `any` / `oldResource` 暂未使用——保留参数是为给后续做"差量缓存清理"留扩展点
-     * （例如旧 parentId 变化时需要同时清新旧父节点的子树缓存）。
+     * `any` / `oldResource` are not currently used — they remain as parameters to leave room for future "differential cache invalidation"
+     * (e.g. when parentId changes we may need to invalidate both old and new parents' subtree caches).
      *
-     * @param any 更新入参（含新字段值）
-     * @param id 资源 id
-     * @param oldResource 更新前的资源快照，可为 null
+     * @param any update payload (with new field values)
+     * @param id resource id
+     * @param oldResource snapshot of the resource before update, may be null
      * @author K
      * @since 1.0.0
      */
@@ -428,9 +428,9 @@ open class SysResourceService(
     }
 
     /**
-     * 资源删除后的同步动作：发 [SysResourceDeleted] 事件由订阅者清理缓存/外链。
+     * Post-delete sync: publishes a [SysResourceDeleted] event so subscribers can clean up caches / external references.
      *
-     * @param resource 已被删除的资源对象（带 id）
+     * @param resource the deleted resource object (with id)
      * @author K
      * @since 1.0.0
      */
@@ -439,12 +439,12 @@ open class SysResourceService(
     }
 
     /**
-     * 自底向上沿 parentId 链收集所有祖先 id；链上某节点不存在或 parentId 为空即终止。
+     * Walk bottom-up along the parentId chain to collect all ancestor ids; stops when a node is missing or its parentId is blank.
      *
-     * 注意：调用方 [fetchAllParentIds] 会再 `reverse()`，所以结果是"从近到远"。
+     * Note: the caller [fetchAllParentIds] then `reverse()`s the result, so this method yields "nearest to furthest".
      *
-     * @param itemId 起点节点 id
-     * @param results 累积容器（追加）
+     * @param itemId starting node id
+     * @param results accumulator (appended in place)
      * @author K
      * @since 1.0.0
      */

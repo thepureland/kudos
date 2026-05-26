@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component
 
 
 /**
- * 字典项 Feign 容错降级实现。`ISysDictItemApi` 当前未定义任何对外方法，保留类作为 `@FeignClient(fallback=...)` 的合法目标。
+ * Dictionary item Feign fallback implementation. `ISysDictItemApi` currently defines no public methods; the class is kept as a valid `@FeignClient(fallback=...)` target.
  *
  * @author K
  * @since 1.0.0

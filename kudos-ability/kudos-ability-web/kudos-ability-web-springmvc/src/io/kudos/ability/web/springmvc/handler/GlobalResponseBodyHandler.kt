@@ -15,10 +15,10 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice
 import tools.jackson.databind.ObjectMapper
 
 /**
- * 全局响应体处理器。
+ * Global response body handler.
  *
- * 负责将控制器返回结果统一包装为 ApiResponse，
- * 并支持通过 IgnoreApiResponseWrap 注解跳过包装。
+ * Responsible for uniformly wrapping controller return values into ApiResponse,
+ * and supports skipping the wrapping via the IgnoreApiResponseWrap annotation.
  *
  * @author K
  * @author AI: Codex
@@ -26,12 +26,12 @@ import tools.jackson.databind.ObjectMapper
  */
 @ControllerAdvice
 class GlobalResponseBodyHandler(
-    /** Spring 注入的 Jackson [ObjectMapper]，仅用于 [StringHttpMessageConverter] 分支手工序列化 */
+    /** Jackson [ObjectMapper] injected by Spring, used only for manual serialization in the [StringHttpMessageConverter] branch */
     private val objectMapper: ObjectMapper
 ) : ResponseBodyAdvice<Any> {
 
     /**
-     * 判断当前返回结果是否需要统一包装
+     * Determines whether the current return value needs to be uniformly wrapped.
      */
     override fun supports(
         returnType: MethodParameter,
@@ -41,7 +41,7 @@ class GlobalResponseBodyHandler(
             !returnType.hasMethodAnnotation(IgnoreApiResponseWrap::class.java)
 
     /**
-     * 对返回结果进行统一包装，并兼容String类型响应
+     * Uniformly wraps the return value and is compatible with String-type responses.
      */
     override fun beforeBodyWrite(
         body: Any?,
@@ -66,12 +66,14 @@ class GlobalResponseBodyHandler(
     }
 
     /**
-     * 回填 traceId；若成功响应的 message 仍为未解析的 [CommonErrorCodeEnum.SUCCESS] 的 [io.kudos.base.enums.ienums.IErrorCodeEnum.displayText]
-     *（即 `sys.error-msg.default.200`），则将 message 置为空串，避免对外暴露占位 key。
+     * Backfills the traceId; if the message of a successful response is still the unresolved
+     * [io.kudos.base.enums.ienums.IErrorCodeEnum.displayText] of [CommonErrorCodeEnum.SUCCESS]
+     * (i.e. `sys.error-msg.default.200`), clears the message to an empty string to avoid
+     * exposing the placeholder key externally.
      *
-     * @param T 响应载荷类型
-     * @param response 待处理的响应
-     * @return 已注入 traceId 且清理过占位 message 的响应
+     * @param T response payload type
+     * @param response the response to process
+     * @return the response with traceId injected and placeholder message cleared
      * @author K
      * @since 1.0.0
      */
@@ -81,12 +83,13 @@ class GlobalResponseBodyHandler(
     }
 
     /**
-     * 将当前请求上下文中的 traceKey 回填到响应 traceId。
-     * traceId 已与上下文一致时直接返回原对象，避免 [data class.copy] 带来的多余分配。
+     * Backfills the traceKey from the current request context into the response traceId.
+     * Returns the original object directly when traceId already matches the context,
+     * to avoid extra allocations from [data class.copy].
      *
-     * @param T 响应载荷类型
-     * @param response 待处理的响应
-     * @return 若需更新则返回 copy，否则返回原对象
+     * @param T response payload type
+     * @param response the response to process
+     * @return a copy if updating is needed, otherwise the original object
      * @author K
      * @since 1.0.0
      */
@@ -100,17 +103,19 @@ class GlobalResponseBodyHandler(
     }
 
     /**
-     * 清理"成功响应"中未被 i18n 解析的占位 message（避免把 `sys.error-msg.default.200` 这种 key 暴露到前端）。
-     * 只对 success 响应生效；失败响应保留原 message（其常常包含真实错因）。
+     * Clears the placeholder message that was not resolved by i18n in a "success response"
+     * (to avoid exposing keys like `sys.error-msg.default.200` to the frontend).
+     * Only applies to success responses; failure responses keep their original message
+     * (which often contains the real cause).
      *
-     * @param T 响应载荷类型
-     * @param response 待处理的响应
-     * @return 占位被替换为空串的响应；非命中场景原样返回
+     * @param T response payload type
+     * @param response the response to process
+     * @return the response with placeholder replaced by empty string; returns as-is when not matched
      * @author K
      * @since 1.0.0
      */
     private fun <T> clearUnresolvedSuccessPlaceholderMessage(response: ApiResponse<T>): ApiResponse<T> {
-        // 占位 message 清理只针对成功响应；is Success 同时把 success 检查和子类型 narrow 一起做了
+        // Placeholder message cleanup only applies to success responses; `is Success` narrows the type and checks success at once
         if (response !is ApiResponse.Success || response.code != CommonErrorCodeEnum.SUCCESS.code) {
             return response
         }

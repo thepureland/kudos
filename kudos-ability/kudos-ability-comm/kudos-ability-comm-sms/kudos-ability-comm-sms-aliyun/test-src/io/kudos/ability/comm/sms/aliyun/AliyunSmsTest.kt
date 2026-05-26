@@ -14,7 +14,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * 阿里云发送短信测试用例，用WireMock模拟aliyun短信服务
+ * Aliyun SMS send test case; uses WireMock to mock the Aliyun SMS service.
  *
  * @author K
  * @author AI: ChatGPT
@@ -60,7 +60,7 @@ class AliyunSmsTest {
             region = "cn-hangzhou"
             accessKeyId = "fake-ak"
             accessKeySecret = "fake-sk"
-            phoneNumbers = "13000000000" // 命中限流桩
+            phoneNumbers = "13000000000" // hit the rate-limit stub
             signName = "SIGN"
             templateCode = "SMS_123456"
             templateParam = """{"code":"9999"}"""
@@ -77,10 +77,10 @@ class AliyunSmsTest {
         assertEquals("isv.BUSINESS_LIMIT_CONTROL", codeBox[0])
     }
 
-    // ---------------- WireMock Admin API：注册桩 ----------------
+    // ---------------- WireMock Admin API: register stubs ----------------
 
     private fun stubSendSmsOK() {
-        // GET/POST + QueryString 形式
+        // GET/POST + QueryString form
         postJson("$baseUrl/__admin/mappings", """
           {
             "request": {
@@ -97,7 +97,7 @@ class AliyunSmsTest {
           }
         """.trimIndent())
 
-        // x-www-form-urlencoded（SDK 可能用表单）：匹配 body contains
+        // x-www-form-urlencoded (the SDK may use a form): match body contains
         postJson("$baseUrl/__admin/mappings", """
           {
             "request": {
@@ -116,7 +116,7 @@ class AliyunSmsTest {
     }
 
     private fun stubSendSmsRateLimitedFor(phone: String) {
-        // QueryString 形式：特定手机号命中限流
+        // QueryString form: specific phone number hits rate limit
         postJson("$baseUrl/__admin/mappings", """
           {
             "request": {
@@ -140,7 +140,7 @@ class AliyunSmsTest {
           }
         """.trimIndent())
 
-        // x-www-form-urlencoded 形式
+        // x-www-form-urlencoded form
         postJson("$baseUrl/__admin/mappings", """
           {
             "request": {

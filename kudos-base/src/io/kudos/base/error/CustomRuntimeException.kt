@@ -6,43 +6,45 @@ import java.text.MessageFormat
 import kotlin.math.min
 
 /**
- * 自定义运行时异常基类
- * 
- * 扩展RuntimeException，提供更丰富的异常处理功能，包括消息格式化、堆栈跟踪控制和日志记录。
- * 
- * 核心功能：
- * 1. 消息格式化：支持MessageFormat格式的消息，支持参数替换
- * 2. 堆栈控制：支持根据错误码配置决定是否输出完整堆栈
- * 3. 日志记录：自动记录异常日志，支持控制是否记录
- * 4. 错误码支持：支持使用IErrorCodeEnum错误码枚举
- * 
- * 消息格式化：
- * - 支持MessageFormat格式，如"用户{0}不存在"
- * - 支持可变参数，自动替换占位符
- * - 如果消息为空，直接使用原消息
- * 
- * 堆栈控制：
- * - 根据 printAllStackTrace 参数决定是否输出完整堆栈
- * - 精简模式：保留 JVM 自动捕获堆栈的前 20 帧（旧版为 5 帧，常切掉关键业务栈）
- * - 完整模式：输出所有堆栈信息
- * - 使用@Synchronized确保线程安全
- * 
- * 日志记录：
- * - 默认自动记录异常日志
- * - 支持通过构造函数参数控制是否记录日志
- * - 记录异常信息和堆栈跟踪
- * 
- * 使用场景：
- * - 业务异常的统一处理
- * - 需要格式化错误消息的场景
- * - 需要控制堆栈输出的场景
- * - 需要自动日志记录的异常
- * 
- * 注意事项：
- * - 这是一个open类，可以被继承
- * - 消息格式化使用MessageFormat，注意参数顺序
- * - 精简模式下若业务栈帧数超过 20 仍会丢失尾部信息，关键场景请使用完整模式
- * 
+ * Base class for custom runtime exceptions.
+ *
+ * Extends RuntimeException with richer exception handling, including message formatting,
+ * stack-trace control, and logging.
+ *
+ * Core features:
+ * 1. Message formatting: supports MessageFormat-style messages with parameter substitution.
+ * 2. Stack control: optionally outputs the full stack based on the error code configuration.
+ * 3. Logging: automatically records exception logs, with the option to disable.
+ * 4. Error-code support: works with the IErrorCodeEnum error-code enum.
+ *
+ * Message formatting:
+ * - Supports MessageFormat templates such as "User {0} does not exist".
+ * - Supports vararg arguments that automatically replace placeholders.
+ * - If the message is blank, uses the original message as-is.
+ *
+ * Stack control:
+ * - The printAllStackTrace parameter decides whether to output the full stack.
+ * - Compact mode: keeps the first 20 frames of the JVM-captured stack (the old version kept 5,
+ *   which often cut off critical business frames).
+ * - Full mode: outputs the entire stack.
+ * - Uses @Synchronized to guarantee thread safety.
+ *
+ * Logging:
+ * - Records exception logs automatically by default.
+ * - Logging can be toggled via a constructor parameter.
+ * - Records both the exception message and the stack trace.
+ *
+ * Use cases:
+ * - Unified handling of business exceptions.
+ * - Scenarios that require formatted error messages.
+ * - Scenarios that need to control stack output.
+ * - Exceptions that should be logged automatically.
+ *
+ * Notes:
+ * - This is an open class and can be inherited.
+ * - Message formatting uses MessageFormat; mind the parameter order.
+ * - In compact mode, when business frames exceed 20 the tail is still lost; use full mode for critical scenarios.
+ *
  * @since 1.0.0
  */
 open class CustomRuntimeException : RuntimeException {
@@ -67,9 +69,10 @@ open class CustomRuntimeException : RuntimeException {
     }
 
     /**
-     * 基于错误码的最简异常处理：精简栈 + 用 errorCode.displayText 作消息 + ERROR 日志。
+     * Minimal error-code-based exception handling: compact stack + errorCode.displayText as the
+     * message + ERROR-level log.
      *
-     * @param errorCode 错误码枚举
+     * @param errorCode error-code enum
      * @author K
      * @since 1.0.0
      */
@@ -80,12 +83,13 @@ open class CustomRuntimeException : RuntimeException {
     }
 
     /**
-     * 错误码 + 可控堆栈深度版本：[printAllStackTrace]=true 时保留完整栈，
-     * false 时按 [MAX_STACK_LINES] 截断（参考 [fillCustomStackTrace] 的设计说明）。
+     * Error-code variant with configurable stack depth: when [printAllStackTrace] is true the full
+     * stack is preserved; when false the stack is truncated to [MAX_STACK_LINES]
+     * (see the design notes on [fillCustomStackTrace]).
      *
-     * @param errorCode 错误码枚举
-     * @param printAllStackTrace 是否完整堆栈
-     * @param args MessageFormat 用的格式化参数
+     * @param errorCode error-code enum
+     * @param printAllStackTrace whether to keep the full stack
+     * @param args MessageFormat arguments
      * @author K
      * @since 1.0.0
      */
@@ -100,10 +104,10 @@ open class CustomRuntimeException : RuntimeException {
     }
 
     /**
-     * 自定义消息版本（不走错误码）：保留完整栈 + 格式化消息 + ERROR 日志。
+     * Custom-message variant (no error code): keeps the full stack, formats the message, and logs at ERROR.
      *
-     * @param message MessageFormat 模板
-     * @param args 模板参数
+     * @param message MessageFormat template
+     * @param args template arguments
      * @author K
      * @since 1.0.0
      */
@@ -114,21 +118,23 @@ open class CustomRuntimeException : RuntimeException {
     }
 
     /**
-     * 填充自定义堆栈跟踪信息
+     * Fills the custom stack trace.
      *
-     * - printAllStackTrace=true：在当前位置重新调用 fillInStackTrace，保留完整堆栈
-     * - printAllStackTrace=false（精简模式）：保留 JVM 自动捕获的栈的前 [MAX_STACK_LINES] 帧
+     * - printAllStackTrace=true: calls fillInStackTrace again at the current location, preserving the full stack.
+     * - printAllStackTrace=false (compact mode): keeps the first [MAX_STACK_LINES] frames of the JVM-captured stack.
      *
-     * 设计说明：
-     * - 旧实现固定截到前 5 帧。生产中如果业务调用链稍深（DAO → Service → Controller →
-     *   AOP 切面 → 网关过滤器…），关键的上层调用方常被切掉，难以定位。
-     * - 提升为 20 是经验值，覆盖典型 Spring MVC 全链路而仍避免日志爆炸。
+     * Design notes:
+     * - The old implementation hard-coded a cap of 5 frames. In production, if the business call chain is
+     *   slightly deep (DAO -> Service -> Controller -> AOP aspect -> gateway filter ...), the key upstream
+     *   callers were often truncated, making issues hard to locate.
+     * - Raising the cap to 20 is an empirical value that covers a typical Spring MVC chain while still
+     *   avoiding log explosion.
      *
-     * 线程安全：使用 @Synchronized 避免并发修改堆栈数组。
+     * Thread safety: uses @Synchronized to avoid concurrent modification of the stack array.
      *
-     * @param errorCode 错误码枚举（保留供子类使用，本实现未读取）
-     * @param printAllStackTrace true 时不裁剪堆栈
-     * @return 当前异常对象
+     * @param errorCode error-code enum (kept for subclass use; not read by this implementation)
+     * @param printAllStackTrace true to skip trimming
+     * @return the current exception
      */
     @Synchronized
     protected fun fillCustomStackTrace(
@@ -147,11 +153,12 @@ open class CustomRuntimeException : RuntimeException {
     }
 
     /**
-     * 包装外部异常作为 cause：日志带原 cause + 自身格式化消息，便于排错时还原原始堆栈。
+     * Wraps an external exception as cause: logs the original cause together with the formatted self-message,
+     * so the original stack can be reconstructed during troubleshooting.
      *
-     * @param cause 底层异常
-     * @param message MessageFormat 模板
-     * @param args 模板参数
+     * @param cause underlying exception
+     * @param message MessageFormat template
+     * @param args template arguments
      * @author K
      * @since 1.0.0
      */
@@ -162,13 +169,13 @@ open class CustomRuntimeException : RuntimeException {
     }
 
     /**
-     * 包装外部异常并可选择是否打日志——`shouldLog=false` 用于"业务上能处理的可预期异常"，
-     * 避免日志噪声把真正的 ERROR 淹没。
+     * Wraps an external exception with optional logging: `shouldLog=false` is for "expected business
+     * exceptions that can be handled", preventing log noise from drowning out genuine ERRORs.
      *
-     * @param cause 底层异常
-     * @param shouldLog 是否真的写日志
-     * @param message MessageFormat 模板
-     * @param args 模板参数
+     * @param cause underlying exception
+     * @param shouldLog whether to actually write the log
+     * @param message MessageFormat template
+     * @param args template arguments
      * @author K
      * @since 1.0.0
      */
@@ -181,13 +188,14 @@ open class CustomRuntimeException : RuntimeException {
     }
 
     /**
-     * 只填 message，不写日志——日志的事交给外层 [resolveException] / [resolveCauseException]
-     * 决定，避免重复打。
+     * Fills the message only and does not write a log -- logging is left to the caller in
+     * [resolveException] / [resolveCauseException] to avoid duplicate entries.
      *
-     * 空 pattern 直接当 message（不走 MessageFormat 避免 `{0}` 之类的特殊字符意外破坏）。
+     * An empty pattern is treated as the literal message (skipping MessageFormat to avoid issues with
+     * special characters such as `{0}`).
      *
-     * @param pattern MessageFormat 模板；空白时按字面 message 处理
-     * @param args 模板参数
+     * @param pattern MessageFormat template; treated as a literal message when blank
+     * @param args template arguments
      * @author K
      * @since 1.0.0
      */
@@ -202,7 +210,7 @@ open class CustomRuntimeException : RuntimeException {
     private val log = LogFactory.getLog(this::class)
 
     companion object {
-        /** 精简堆栈模式下保留的栈帧数上限 */
+        /** Upper bound on retained stack frames in compact mode. */
         private const val MAX_STACK_LINES = 20
     }
 

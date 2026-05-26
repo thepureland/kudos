@@ -21,15 +21,16 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * [LogAuditAspect] 的 Spring AOP 集成测试。
+ * Spring AOP integration tests for [LogAuditAspect].
  *
- * 验证 round-2 修复：
- *  - **`@AfterReturning`** 在正常返回时 submit 审计；description 不带 `[FAILED:..]` 前缀
- *  - **`@AfterThrowing`** 在业务方法抛异常时也 submit 审计，且 description 带 `[FAILED:..]` 前缀
- *  - 两条路径都在 finally [LogAuditContext.clear]，避免线程池 ThreadLocal 泄漏
+ * Verifies the round-2 fixes:
+ *  - **`@AfterReturning`** submits the audit on normal return; description does not carry the `[FAILED:..]` prefix
+ *  - **`@AfterThrowing`** also submits the audit when the business method throws, and the description carries the
+ *    `[FAILED:..]` prefix
+ *  - Both paths call [LogAuditContext.clear] in finally to avoid thread-pool ThreadLocal leaks
  *
- * 用 [RecordingAuditService] 取代真正的 RDB/MQ 落地——它仅记录每次 submit 的 model 到列表，
- * 测试断言比 mock 框架更直接。
+ * Uses [RecordingAuditService] in place of real RDB/MQ persistence — it merely records each submit's model into a
+ * list, which makes test assertions more direct than using a mock framework.
  *
  * @author K
  * @author AI: Codex
@@ -53,57 +54,57 @@ class LogAuditAspectTest @Autowired constructor(
         service.create(Model("alice"))
 
         val submitted = recorder.captured
-        assertEquals(1, submitted.size, "成功路径应当 submit 一次")
+        assertEquals(1, submitted.size, "Success path should submit once")
         val firstEntityDescription = submitted.single().entities?.firstOrNull()?.description ?: ""
-        assertTrue(!firstEntityDescription.startsWith("[FAILED:"), "成功路径 description 不应带 FAILED 前缀: $firstEntityDescription")
+        assertTrue(!firstEntityDescription.startsWith("[FAILED:"), "Success path description should not carry the FAILED prefix: $firstEntityDescription")
     }
 
     @Test
     fun failure_submitsAuditWithFailedPrefix_andRethrows() {
         val ex = assertFails { service.fail(Model("bob")) }
-        assertEquals("boom", ex.message, "原始异常应当被重新抛出，不被切面吞掉")
+        assertEquals("boom", ex.message, "Original exception should be rethrown, not swallowed by the aspect")
 
         val submitted = recorder.captured
-        assertEquals(1, submitted.size, "失败路径仍应 submit 一次（业务方记得到失败动作）")
+        assertEquals(1, submitted.size, "Failure path should still submit once (so the business side records the failed action)")
         val description = submitted.single().entities?.firstOrNull()?.description
         assertNotNull(description)
-        assertTrue(description.startsWith("[FAILED:IllegalStateException:boom]"), "失败前缀应包含异常类型 + message: $description")
+        assertTrue(description.startsWith("[FAILED:IllegalStateException:boom]"), "Failure prefix should include exception type + message: $description")
     }
 
     @Test
     fun success_clearsContext_afterReturn() {
         service.create(Model("c"))
-        // 切面在 finally 调 LogAuditContext.clear()——之后只读侦测应当看到 null
-        assertNull(LogAuditContext.getOrNull(), "成功路径完成后应当 clear 上下文")
+        // The aspect calls LogAuditContext.clear() in finally — afterwards a read-only probe should see null
+        assertNull(LogAuditContext.getOrNull(), "Context should be cleared after the success path completes")
     }
 
     @Test
     fun failure_clearsContext_afterThrow() {
         assertFails { service.fail(Model("d")) }
-        assertNull(LogAuditContext.getOrNull(), "失败路径完成后应当 clear 上下文")
+        assertNull(LogAuditContext.getOrNull(), "Context should be cleared after the failure path completes")
     }
 
     @Test
     fun modelArgIndex_picksConfiguredArgInsteadOfFirst() {
-        // updateForTenant(tenantId, user) —— model 不在 args[0]，应当被注解里的 modelArgIndex=1 修正
+        // updateForTenant(tenantId, user) — model is not at args[0], should be corrected by modelArgIndex=1 in the annotation
         service.updateForTenant("tenant-T", Model("specified"))
 
         val submitted = recorder.captured
         assertEquals(1, submitted.size)
-        // 切面把 Model 作为 model 序列化进 requestFormData——能看到 name=specified 即说明 index 生效
+        // The aspect serializes Model into requestFormData — seeing name=specified proves the index took effect
         val detail = submitted.single().sysAuditDetailLogs?.firstOrNull()
         assertNotNull(detail)
         assertTrue(
             detail.requestFormData?.contains("specified") == true,
-            "modelArgIndex=1 应使切面取 args[1] (Model)，而非 args[0] (String tenantId)。实际 requestFormData=${detail.requestFormData}"
+            "modelArgIndex=1 should cause the aspect to pick args[1] (Model) instead of args[0] (String tenantId). Actual requestFormData=${detail.requestFormData}"
         )
     }
 
     @Test
     fun modelArgIndex_outOfBounds_fallsBackToFirstArg() {
-        // updateBadIndex 注解指了一个越界的 modelArgIndex；应当回退到 args[0] 而非抛 IndexOutOfBoundsException
+        // updateBadIndex points at an out-of-bounds modelArgIndex; should fall back to args[0] rather than throw IndexOutOfBoundsException
         service.updateBadIndex(Model("fallback"))
-        assertEquals(1, recorder.captured.size, "越界 modelArgIndex 应当 silently 回退到 args[0]")
+        assertEquals(1, recorder.captured.size, "Out-of-bounds modelArgIndex should silently fall back to args[0]")
     }
 
     @TestConfiguration
@@ -115,7 +116,7 @@ class LogAuditAspectTest @Autowired constructor(
 }
 
 /**
- * 业务侧带 [Audit] 注解的服务——必须是 Spring bean 才能被切面拦下。
+ * Business-side service with [Audit] annotations — must be a Spring bean for the aspect to intercept it.
  *
  * @author K
  * @author AI: Codex
@@ -142,7 +143,7 @@ open class AuditedService {
         modelArgIndex = 1,
     )
     open fun updateForTenant(tenantId: String, user: Model) {
-        // 业务方法签名 model 不在第一个位置——注解显式指定 args[1]
+        // The business method signature does not have model at the first position — the annotation explicitly indicates args[1]
     }
 
     @Audit(
@@ -153,12 +154,12 @@ open class AuditedService {
         modelArgIndex = 99,
     )
     open fun updateBadIndex(model: Model) {
-        // 越界——切面应当回退到 args[0]，不抛
+        // Out of bounds — the aspect should fall back to args[0] and not throw
     }
 }
 
 /**
- * 测试用业务模型。
+ * Business model used for tests.
  *
  * @author K
  * @author AI: Codex
@@ -167,7 +168,7 @@ open class AuditedService {
 class Model(val name: String)
 
 /**
- * 把每次 `submit` 的 [SysAuditLogModel] 记录下来供测试断言。
+ * Records the [SysAuditLogModel] of every `submit` call for test assertions.
  *
  * @author K
  * @author AI: Codex

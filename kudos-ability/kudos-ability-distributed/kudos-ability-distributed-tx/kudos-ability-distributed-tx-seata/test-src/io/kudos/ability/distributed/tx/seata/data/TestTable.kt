@@ -5,7 +5,7 @@ import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
 
 
 /**
- * 测试表数据库实体
+ * Test-table database entity.
  *
  * @author K
  * @since 1.0.0

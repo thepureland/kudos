@@ -5,14 +5,15 @@ import java.io.File
 import java.sql.DriverManager
 
 /**
- * 用于批量执行文件中的sql语句。
- * SQL 来源于本地文件（非用户输入），为可信内容，故对 addBatch(line) 的“不安全 SQL 字符串”告警予以抑制。
+ * Batch-executes SQL statements from a file.
+ * The SQL comes from a local file (not user input) and is treated as trusted content, so the
+ * "unsafe SQL string" warning for addBatch(line) is suppressed.
  *
  * @author K
  * @since 1.0.0
  */
 fun main() {
-    val file = "C:\\Users\\hanfei\\Desktop\\area2019.sql" // 文件编码一定要是UTF8无签名，不然会出现莫名其妙的错误
+    val file = "C:\\Users\\hanfei\\Desktop\\area2019.sql" // File encoding must be UTF-8 without BOM; otherwise strange errors occur.
     val lineIterator = FileKit.lineIterator(File(file), "UTF-8")
 
 
@@ -35,7 +36,7 @@ fun main() {
         if (i % 5000 == 0) {
             stm.executeBatch()
             conne.commit()
-            println("共提交${i}条")
+            println("Committed ${i} rows in total")
         }
     }
 
@@ -45,7 +46,7 @@ fun main() {
     }
 
     val end = System.currentTimeMillis()
-    println("添加${i}条数据总共耗时：${end - start}ms")
+    println("Inserted ${i} rows, total elapsed: ${end - start}ms")
     stm.close()
     conne.close()
 

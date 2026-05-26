@@ -3,7 +3,7 @@ package io.kudos.ability.distributed.stream.rocketmq.data
 import java.io.Serializable
 
 /**
- * RocketMQ测试简单消息封装
+ * Simple message wrapper for RocketMQ tests.
  *
  * @author shane
  * @author K

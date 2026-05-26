@@ -4,10 +4,10 @@ import io.kudos.base.model.contract.entity.IMutableIdEntity
 import org.ktorm.entity.Entity
 
 /**
- * 数据库表记录实体接口
+ * Database-table record entity interface.
  *
- * @param ID 主键类型
- * @param E 实体类型
+ * @param ID Primary key type
+ * @param E Entity type
  * @author K
  * @author AI: Codex
  * @since 1.0.0

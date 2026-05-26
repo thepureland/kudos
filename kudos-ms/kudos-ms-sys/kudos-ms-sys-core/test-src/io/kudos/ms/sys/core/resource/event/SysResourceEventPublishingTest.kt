@@ -12,7 +12,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * 验证 SysResourceService 在 CRUD 完成后正确发布资源领域事件。
+ * Verifies that SysResourceService publishes the proper resource domain events after CRUD operations.
  *
  * @author K
  * @author AI: Cursor
@@ -34,7 +34,7 @@ class SysResourceEventPublishingTest : RdbAndRedisCacheTestBase() {
         captor.clear()
         val id = "20000000-0000-0000-0000-000000001461"
         assertTrue(sysResourceService.updateActive(id, true))
-        val event = assertNotNull(captor.lastOf<SysResourceUpdated>(), "应发布 SysResourceUpdated")
+        val event = assertNotNull(captor.lastOf<SysResourceUpdated>(), "should publish SysResourceUpdated")
         assertEquals(id, event.id)
     }
 
@@ -43,7 +43,7 @@ class SysResourceEventPublishingTest : RdbAndRedisCacheTestBase() {
         captor.clear()
         val id = "20000000-0000-0000-0000-000000001461"
         assertTrue(sysResourceService.deleteById(id))
-        val event = assertNotNull(captor.lastOf<SysResourceDeleted>(), "应发布 SysResourceDeleted")
+        val event = assertNotNull(captor.lastOf<SysResourceDeleted>(), "should publish SysResourceDeleted")
         assertEquals(id, event.id)
     }
 }

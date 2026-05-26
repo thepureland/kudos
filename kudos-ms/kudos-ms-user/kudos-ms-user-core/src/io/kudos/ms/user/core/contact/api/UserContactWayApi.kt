@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service
 
 
 /**
- * 用户联系方式 API本地实现
+ * User contact way API local implementation
  *
  * @author K
  * @author AI: Codex

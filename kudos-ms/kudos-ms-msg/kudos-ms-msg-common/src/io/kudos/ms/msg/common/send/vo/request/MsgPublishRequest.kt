@@ -4,37 +4,38 @@ import io.kudos.ms.msg.common.send.enums.MsgPublishMethodEnum
 
 
 /**
- * 业务方调 [io.kudos.ms.msg.common.send.api.IMsgSendApi.publish] 的入参。
+ * Request payload for callers of [io.kudos.ms.msg.common.send.api.IMsgSendApi.publish].
  *
- * 路由模型：业务方传 (tenantId, eventTypeDictCode, msgTypeDictCode, locale?)，
- * publish service 用这四元组去匹配模板；找不到模板视作配置缺失、不发送、返回 null。
+ * Routing model: the caller passes (tenantId, eventTypeDictCode, msgTypeDictCode, locale?);
+ * the publish service uses this four-tuple to match a template. Missing template is treated as a missing
+ * configuration -- nothing is sent and null is returned.
  *
  * @author K
  * @since 1.0.0
  */
 data class MsgPublishRequest(
 
-    /** 租户 id */
+    /** Tenant id. */
     val tenantId: String,
 
-    /** 事件类型字典码（如 user_registered / order_paid / password_reset） */
+    /** Event type dict code (e.g. user_registered / order_paid / password_reset). */
     val eventTypeDictCode: String,
 
-    /** 消息类型字典码（业务自定义） */
+    /** Message type dict code (business-defined). */
     val msgTypeDictCode: String,
 
-    /** 发送渠道 —— 一次 publish 走一个渠道；多渠道由调用方分别 publish */
+    /** Send channel -- one channel per publish call; multi-channel requires the caller to publish each separately. */
     val publishMethod: MsgPublishMethodEnum,
 
-    /** 接收者用户 id 集合 */
+    /** Set of recipient user ids. */
     val receiverIds: Set<String>,
 
     /**
-     * 业务参数，将填入模板的 `${name}` 占位符。
-     * 与自动参数 (time/date/year/...) 同名时业务参数胜出。
+     * Business parameters to substitute into the template's `${name}` placeholders.
+     * Business parameters win over auto parameters (time/date/year/...) when names collide.
      */
     val params: Map<String, String> = emptyMap(),
 
-    /** 语言；null 表示不限定 locale，让 publish service 拿到首条匹配 */
+    /** Locale; null leaves it unconstrained and lets the publish service pick the first match. */
     val localeDictCode: String? = null,
 )

@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Configuration
 
 
 /**
- * 服务间缓存服务端自动配置类
+ * Auto-configuration for the inter-service cache provider (server) side.
  *
  * @author K
  * @author AI: Codex
@@ -35,13 +35,13 @@ open class InterServiceCacheProviderAutoConfiguration : IComponentInitializer {
         properties: InterServiceCacheProviderProperties
     ): FilterRegistrationBean<ClientCacheWebFilter> {
         val registration = FilterRegistrationBean<ClientCacheWebFilter>()
-        //注入过滤器
+        // Inject the filter
         registration.setFilter(ClientCacheWebFilter(properties.wrapAllRequests))
-        //拦截规则
+        // URL patterns
         registration.addUrlPatterns("/*")
-        //过滤器名称
+        // Filter name
         registration.setName("clientCacheWebFilter")
-        //过滤器顺序
+        // Filter order
         registration.order = FilterRegistrationBean.HIGHEST_PRECEDENCE
         return registration
     }

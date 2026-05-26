@@ -13,11 +13,12 @@ import java.io.FileNotFoundException
 import java.io.InputStream
 
 /**
- * 本地磁盘文件下载服务。从 `{basePath}/{bucket}/{filePath}` 读取文件。
+ * Local disk file download service. Reads files from `{basePath}/{bucket}/{filePath}`.
  *
- * 路径穿越防御：所有调用都先通过 [resolveSafePath] 做 `Path.normalize() +
- * startsWith(basePath)` 校验——拒绝 `../etc/passwd` 之类穿越企图。`common` 层的
- * `IDeleteService.isValid` 只做粗粒度字符串包含 `..` 检查，不够；此处再加一道。
+ * Path traversal defense: all calls first go through [resolveSafePath], which performs `Path.normalize() +
+ * startsWith(basePath)` validation - rejecting traversal attempts such as `../etc/passwd`. The
+ * `IDeleteService.isValid` in the `common` layer only does a coarse-grained string `..` contains check,
+ * which is not enough; an additional layer is added here.
  *
  * @author K
  * @author AI: Codex
@@ -46,8 +47,9 @@ class LocalDownLoadService : AbstractDownLoadService() {
     }
 
     /**
-     * 把 (bucketName, filePath) 解析成实际 [File]，并保证解析后路径仍位于 [LocalProperties.basePath]
-     * 之下——拒绝 `..` / 绝对路径等穿越企图。命中穿越时抛 [FileErrorCode.FILE_ACCESS_DENY]。
+     * Resolves (bucketName, filePath) into an actual [File], ensuring that the resolved path remains under
+     * [LocalProperties.basePath] - rejecting traversal attempts such as `..` / absolute paths. Throws
+     * [FileErrorCode.FILE_ACCESS_DENY] when traversal is detected.
      */
     private fun resolveSafePath(model: DownloadFileModel<*>): File {
         val base = requireNotNull(properties.basePath) { "kudos.ability.file.local.base-path is not set" }

@@ -4,29 +4,29 @@ import io.kudos.base.model.contract.entity.IIdEntity
 
 
 /**
- * 角色编辑响应VO
+ * Response VO for editing a role.
  *
  * @author K
  * @since 1.0.0
  */
 data class AuthRoleEdit (
 
-    /** 主键 */
+    /** Primary key. */
     override val id: String = "",
 
-    /** 角色编码 */
+    /** Role code. */
     val code: String? = null,
 
-    /** 角色名称 */
+    /** Role name. */
     val name: String? = null,
 
-    /** 租户id */
+    /** Tenant id. */
     val tenantId: String? = null,
 
-    /** 子系统编码 */
+    /** Subsystem code. */
     val subsysCode: String? = null,
 
-    /** 备注 */
+    /** Remark. */
     val remark: String? = null,
 
 ) : IIdEntity<String>

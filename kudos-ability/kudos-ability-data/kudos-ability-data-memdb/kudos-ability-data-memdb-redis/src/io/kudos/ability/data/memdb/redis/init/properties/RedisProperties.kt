@@ -1,10 +1,10 @@
 package io.kudos.ability.data.memdb.redis.init.properties
 
 /**
- * Redis 总配置容器；对应 `kudos.ability.data.redis.*`。
+ * Aggregate configuration container for Redis; corresponds to `kudos.ability.data.redis.*`.
  *
- * @property defaultRedis 默认使用的 redis 实例 name（必须存在于 [redisMap]）
- * @property redisMap name → 单实例配置，业务侧通过 name 索引拿对应 RedisTemplate
+ * @property defaultRedis name of the default redis instance to use (must exist in [redisMap])
+ * @property redisMap name -> per-instance configuration; business code retrieves the corresponding RedisTemplate by name
  * @author K
  * @author AI: Codex
  * @since 1.0.0

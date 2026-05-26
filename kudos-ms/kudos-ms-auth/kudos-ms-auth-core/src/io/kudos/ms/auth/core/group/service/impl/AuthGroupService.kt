@@ -17,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional
 
 
 /**
- * 用户组业务
+ * User group service.
  *
  * @author K
  * @author AI: Codex
@@ -38,7 +38,7 @@ open class AuthGroupService(
     @Transactional
     override fun insert(any: Any): String {
         val id = super.insert(any)
-        log.debug("新增id为${id}的用户组。")
+        log.debug("Inserted user group with id ${id}.")
         eventPublisher.publishEvent(AuthGroupInserted(id))
         return id
     }
@@ -48,10 +48,10 @@ open class AuthGroupService(
         val success = super.update(any)
         val id = BeanKit.getProperty(any, AuthGroup::id.name) as String
         if (success) {
-            log.debug("更新id为${id}的用户组。")
+            log.debug("Updated user group with id ${id}.")
             eventPublisher.publishEvent(AuthGroupUpdated(id))
         } else {
-            log.error("更新id为${id}的用户组失败！")
+            log.error("Failed to update user group with id ${id}!")
         }
         return success
     }
@@ -59,26 +59,26 @@ open class AuthGroupService(
     @Transactional
     override fun deleteById(id: String): Boolean {
         val group = dao.get(id) ?: return run {
-            log.warn("删除id为${id}的用户组时，发现其已不存在！")
+            log.warn("Attempted to delete user group with id ${id}, but it no longer exists!")
             false
         }
         val success = super.deleteById(id)
         if (success) {
-            log.debug("删除id为${id}的用户组。")
+            log.debug("Deleted user group with id ${id}.")
             eventPublisher.publishEvent(AuthGroupDeleted(id, group.tenantId, group.code))
         } else {
-            log.warn("删除id为${id}的用户组失败！")
+            log.warn("Failed to delete user group with id ${id}!")
         }
         return success
     }
 
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {
-        // 先 snapshot tenantId/code，AFTER_COMMIT 后下游 (tenantId, code) 缓存无法回查
+        // Snapshot tenantId/code up front; downstream (tenantId, code) caches cannot look these up after AFTER_COMMIT.
         val snapshots = if (ids.isEmpty()) emptyList()
             else dao.getByIds(ids).map { AuthGroupBatchDeleted.Item(it.id, it.tenantId, it.code) }
         val count = super.batchDelete(ids)
-        log.debug("批量删除用户组，期望删除${ids.size}条，实际删除${count}条。")
+        log.debug("Batch-deleted user groups: expected ${ids.size}, actually deleted ${count}.")
         if (snapshots.isNotEmpty()) {
             eventPublisher.publishEvent(AuthGroupBatchDeleted(snapshots))
         }

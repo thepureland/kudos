@@ -1,11 +1,11 @@
 package io.kudos.context.core
 
 /**
- * Kudos的上下文持有者
+ * Holder of the Kudos context.
  *
- * 使用 InheritableThreadLocal 存储线程上下文，支持父子线程间传递。
- * 注意：在使用线程池的场景下，必须在请求/任务结束后调用 clear() 方法清理上下文，
- * 避免内存泄漏。
+ * Uses InheritableThreadLocal to store thread context, supporting propagation between parent and child threads.
+ * Note: in scenarios that use thread pools, you must call clear() after a request/task completes to clean up the
+ * context and avoid memory leaks.
  *
  * @author K
  * @since 1.0.0
@@ -15,22 +15,22 @@ object KudosContextHolder {
     private val contextThreadLocal = InheritableThreadLocal<KudosContext>()
 
     /**
-     * 返回当前线程关联的 KudosContext。
-     * 若当前线程尚未绑定上下文，会 **新建** [KudosContext] 并写入 ThreadLocal（不会返回 null）。
-     * 若需区分「未初始化」与「已存在」，请使用 [getOrNull]。
+     * Return the KudosContext associated with the current thread.
+     * If the current thread has no context bound, **create** a new [KudosContext] and write it into the ThreadLocal
+     * (it will never return null). To distinguish "uninitialized" from "already present", use [getOrNull].
      */
     fun get(): KudosContext =
         contextThreadLocal.get() ?: KudosContext().also { contextThreadLocal.set(it) }
 
     /**
-     * 返回当前线程已绑定的上下文；若尚未 [set]，返回 null（**不会**自动创建）。
+     * Return the context bound to the current thread; returns null if it has not been [set] (will **not** auto-create).
      */
     fun getOrNull(): KudosContext? = contextThreadLocal.get()
 
     /**
-     * 设置当前线程的KudosContext
+     * Set the current thread's KudosContext.
      *
-     * @param context Kudos上下文对象
+     * @param context The Kudos context object
      * @author K
      * @since 1.0.0
      */
@@ -39,10 +39,11 @@ object KudosContextHolder {
     }
 
     /**
-     * 清除当前线程的KudosContext
-     * 
-     * 建议在请求/任务结束时调用此方法，避免线程池复用线程时造成上下文污染和内存泄漏。
-     * 
+     * Clear the current thread's KudosContext.
+     *
+     * It is recommended to call this method at the end of a request/task to avoid context pollution and memory leaks
+     * when threads are reused by a thread pool.
+     *
      * @author K
      * @since 1.0.0
      */

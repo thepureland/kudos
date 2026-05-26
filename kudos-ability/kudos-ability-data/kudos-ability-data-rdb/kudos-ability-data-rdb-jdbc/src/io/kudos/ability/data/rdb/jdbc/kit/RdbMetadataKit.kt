@@ -6,7 +6,7 @@ import java.sql.DatabaseMetaData
 import java.util.Locale
 
 /**
- * 关系型数据库元数据工具类
+ * Utility class for relational database metadata.
  *
  * @author K
  * @author AI: Codex
@@ -15,11 +15,13 @@ import java.util.Locale
 object RdbMetadataKit {
 
     /**
-     * 根据表类型取得所有表信息
+     * Returns all table information matching the given table types.
      *
-     * @param tableTypes 表类型枚举的可变数组
-     * @param conn 数据库连接。为null将用当前上下文数据源新建一个连接，在使用完关掉。不为null时由用户自行处理连接的关闭。
-     * @return List(表对象信息)
+     * @param tableTypes vararg of table type enums
+     * @param conn database connection. When null, a new connection is created from
+     *   the current context data source and closed after use. When non-null, the
+     *   caller is responsible for closing the connection.
+     * @return List of table info objects
      * @author K
      * @since 1.0.0
      */
@@ -27,11 +29,13 @@ object RdbMetadataKit {
         withConn(conn) { _getTablesByType(it, *tableTypes) }
 
     /**
-     * 根据表名取得对应表信息
+     * Returns the table info for the given table name.
      *
-     * @param tableName 表名
-     * @param conn 数据库连接。为null将用当前上下文数据源新建一个连接，在使用完关掉。不为null时由用户自行处理连接的关闭。
-     * @return 表对象信息，找不到是返回null
+     * @param tableName table name
+     * @param conn database connection. When null, a new connection is created from
+     *   the current context data source and closed after use. When non-null, the
+     *   caller is responsible for closing the connection.
+     * @return table info object; null if not found
      * @author K
      * @since 1.0.0
      */
@@ -39,11 +43,13 @@ object RdbMetadataKit {
         withConn(conn) { _getTableByName(it, tableName) }
 
     /**
-     * 根据表名取得对应表的所有列信息
+     * Returns all column info for the given table name.
      *
-     * @param tableName 表名
-     * @param conn 数据库连接。为null将用当前上下文数据源新建一个连接，在使用完关掉。不为null时由用户自行处理连接的关闭。
-     * @return Map(列名, 列对象信息)
+     * @param tableName table name
+     * @param conn database connection. When null, a new connection is created from
+     *   the current context data source and closed after use. When non-null, the
+     *   caller is responsible for closing the connection.
+     * @return Map of (column name, column info object)
      * @author K
      * @since 1.0.0
      */
@@ -54,8 +60,9 @@ object RdbMetadataKit {
         if (conn != null) action(conn) else RdbKit.getDataSource().connection.use(action)
 
     /**
-     * 内部实现：用 JDBC [DatabaseMetaData.getTables] 拉所有匹配类型的表，组装成 [Table] 列表。
-     * 把 `"BASE TABLE"`（部分 JDBC 驱动返回此字符串）映射回标准的 `TABLE`。
+     * Internal implementation: uses JDBC [DatabaseMetaData.getTables] to fetch all
+     * tables of matching types and assembles them into a [Table] list. Maps
+     * `"BASE TABLE"` (returned by some JDBC drivers) back to the standard `TABLE`.
      */
     private fun _getTablesByType(conn: Connection, vararg tableTypes: TableTypeEnum?): List<Table> {
         val dbMetaData = conn.metaData
@@ -79,7 +86,8 @@ object RdbMetadataKit {
     }
 
     /**
-     * 内部实现：JDBC [DatabaseMetaData.getTables] 按表名精确查；返回首条或 null。
+     * Internal implementation: looks up the table by name via JDBC
+     * [DatabaseMetaData.getTables]; returns the first row or null.
      */
     private fun _getTableByName(conn: Connection, tableName: String): Table? {
         val dbMetaData = conn.metaData
@@ -99,19 +107,22 @@ object RdbMetadataKit {
     }
 
     /**
-     * 内部实现：用 JDBC `DatabaseMetaData` 拉列、主键、外键、索引、唯一约束 5 个查询，
-     * 按列名为 key 汇总到 [linkedMapOf]（保留 DB 返回顺序）。约定：列名以 `__CODE` 结尾的
-     * 被标 `dictCode=true`（kudos 字典编码列约定）。
+     * Internal implementation: runs 5 queries via JDBC `DatabaseMetaData` (columns,
+     * primary keys, foreign keys, indexes, unique constraints) and aggregates the
+     * results into a [linkedMapOf] keyed by column name (preserving the order
+     * returned by the DB). Convention: columns whose names end with `__CODE` are
+     * marked `dictCode=true` (kudos dictionary-code column convention).
      *
-     * 注意：5 个 `ResultSet.use{}` 块连续打开，对部分 JDBC 驱动 / 大表可能开销不小；
-     * 代码生成场景一次性调用尚可，热路径请缓存结果。
+     * Note: the 5 consecutive `ResultSet.use{}` blocks can be costly for some JDBC
+     * drivers / large tables; one-off calls in code-generation scenarios are fine,
+     * but hot paths should cache the result.
      */
     private fun _getColumnsByTableName(conn: Connection, tableName: String): Map<String, Column> {
         val dbMetaData = conn.metaData
         val rdbType = RdbTypeEnum.ofProductName(dbMetaData.databaseProductName)
         val linkedMap = linkedMapOf<String, Column>()
 
-        // 获取所有列
+        // Fetch all columns.
         val columnRs = dbMetaData.getColumns(conn.catalog, conn.schema, tableName, null)
         columnRs.use {
             while (columnRs.next()) {
@@ -132,7 +143,7 @@ object RdbMetadataKit {
             }
         }
 
-        // 主键
+        // Primary keys.
         val primaryKeyRs = dbMetaData.getPrimaryKeys(conn.catalog, conn.schema, tableName)
         primaryKeyRs.use {
             while (primaryKeyRs.next()) {
@@ -141,7 +152,7 @@ object RdbMetadataKit {
             }
         }
 
-        // 外键
+        // Foreign keys.
         val foreignKeyRs = dbMetaData.getImportedKeys(conn.catalog, conn.schema, tableName)
         foreignKeyRs.use {
             while (foreignKeyRs.next()) {
@@ -150,7 +161,7 @@ object RdbMetadataKit {
             }
         }
 
-        // 索引
+        // Indexes.
         val indexInfoRs = dbMetaData.getIndexInfo(conn.catalog, conn.schema, tableName, false, false)
         indexInfoRs.use {
             while (indexInfoRs.next()) {
@@ -160,7 +171,7 @@ object RdbMetadataKit {
         }
 
 
-        // 惟一约束
+        // Unique constraints.
         val uniqueInfoRs = dbMetaData.getIndexInfo(conn.catalog, conn.schema, tableName, true, false)
         uniqueInfoRs.use {
             while (uniqueInfoRs.next()) {

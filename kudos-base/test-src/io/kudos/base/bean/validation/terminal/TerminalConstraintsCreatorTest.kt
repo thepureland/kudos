@@ -19,7 +19,7 @@ import kotlin.test.assertContains
 import kotlin.test.Test
 
 /**
- * TerminalConstraintsCreator测试用例
+ * Test cases for TerminalConstraintsCreator.
  *
  * @author K
  * @since 1.0.0
@@ -48,8 +48,8 @@ internal class TerminalConstraintsCreatorTest {
         assertContains(requireNotNull(result["name"]), "Length")
     }
 
-    @AtLeast(properties = ["mobile", "email"], message = "必须至少提供一种联系方式")
-//    @ScriptAssert(lang = "javascript", script = "1==1") //Kudos暂不支持
+    @AtLeast(properties = ["mobile", "email"], message = "At least one contact method must be provided")
+//    @ScriptAssert(lang = "javascript", script = "1==1") // Not yet supported by Kudos
     internal data class TestRegisterBean(
 
         @get:AssertTrue
@@ -62,12 +62,12 @@ internal class TerminalConstraintsCreatorTest {
         val error: String?,
 
         @get:NotBlank
-        @get:CodePointLength(min = 6, max = 32, message = "用户名字符数必须在6-32之间")
-        @get:Remote(checkClass = UsernameValidator::class, requestUrl = "/isUserAvailable", message = "用户名已存在")
+        @get:CodePointLength(min = 6, max = 32, message = "Username length must be between 6 and 32 characters")
+        @get:Remote(checkClass = UsernameValidator::class, requestUrl = "/isUserAvailable", message = "Username already exists")
         val username: String?,
 
         @get:NotNull
-        @get:Length(min = 8, max = 32, message = "密码长度必须在8到32之间")
+        @get:Length(min = 8, max = 32, message = "Password length must be between 8 and 32 characters")
         val password: String?,
 
         @get:Compare.List(
@@ -78,25 +78,25 @@ internal class TerminalConstraintsCreatorTest {
                 ),
                 anotherProperty = "password",
                 logic = LogicOperatorEnum.EQ,
-                message = "两次密码不同"
+                message = "Passwords do not match"
             ),
             Compare(
                 anotherProperty = "username",
                 logic = LogicOperatorEnum.IN,
-                message = "密码不能包含用户名"
+                message = "Password must not contain the username"
             )
 
         )
         val confirmPassword: String?,
 
-        @get:Pattern(regexp = RegExps.Communication.CN_MAINLAND_MOBILE, message = "手机号码格式错误")
+        @get:Pattern(regexp = RegExps.Communication.CN_MAINLAND_MOBILE, message = "Invalid mobile number format")
         val mobile: String?,
 
         @get:Email
         val email: String?,
 
-        @get:Min(18, message = "未满18周岁不能注册")
-        @get:Max(60, message = "超过60周岁不能注册")
+        @get:Min(18, message = "Users under 18 cannot register")
+        @get:Max(60, message = "Users over 60 cannot register")
         val age: Int?,
 
         @get:Past
@@ -117,15 +117,15 @@ internal class TerminalConstraintsCreatorTest {
         @get:DurationMin
         val time2: Duration?,
 
-        @get:DecimalMin("50.0", message = "体重必须大于50.0KG")
-        @get:DecimalMax("100.0", message = "体重必须小于100.0KG")
+        @get:DecimalMin("50.0", message = "Weight must be greater than 50.0KG")
+        @get:DecimalMax("100.0", message = "Weight must be less than 100.0KG")
         val weight: Double?,
 
-        @get:Range(min = 30, max = 270, message = "身高值必须在30cm到270cm之间")
+        @get:Range(min = 30, max = 270, message = "Height must be between 30cm and 270cm")
         val height: Double?,
 
-        @get:Positive(message = "视力必须为正数")
-        @get:Digits(integer = 1, fraction = 1, message = "视力值必须是1位整数和1位小数组成")
+        @get:Positive(message = "Eyesight value must be positive")
+        @get:Digits(integer = 1, fraction = 1, message = "Eyesight value must have 1 integer digit and 1 fractional digit")
         val eyesight: Double?,
 
         @get:Negative
@@ -164,14 +164,14 @@ internal class TerminalConstraintsCreatorTest {
         @get:URL
         val photo: String?,
 
-        @get:Size(min = 3, max = 6, message = "业余爱好必须选3到6项")
+        @get:Size(min = 3, max = 6, message = "You must select between 3 and 6 hobbies")
         val hobbies: Array<String>?,
 
-        @get:DictEnumItemCode(enumClass = SexEnum::class, message = "性别错误")
+        @get:DictEnumItemCode(enumClass = SexEnum::class, message = "Invalid gender")
         val sex: String,
 
         @get:NotEmpty
-        @get:Series(type = SeriesTypeEnum.INC_DIFF, step = 2.0, message = "机器人识别问题回答错误")
+        @get:Series(type = SeriesTypeEnum.INC_DIFF, step = 2.0, message = "Incorrect answer to bot-detection question")
         val question: Array<Int>?,
 
         @get:NotNullOn(Depends(properties = ["age"], logics = [LogicOperatorEnum.GE], values = ["18"]))
@@ -180,23 +180,23 @@ internal class TerminalConstraintsCreatorTest {
         @get:Each(
             Constraints(
                 order = [NotBlank::class, Pattern::class],
-                notBlank = NotBlank(), message = "特长都不能为空",
-                pattern = Pattern(regexp = "[a-zA-Z]+", message = "特长必须为英文字母")
+                notBlank = NotBlank(), message = "No ability may be blank",
+                pattern = Pattern(regexp = "[a-zA-Z]+", message = "Ability must consist of English letters")
             )
         )
         val abilities: Array<String>?,
 
         @get:Exist(
             Constraints(notBlank = NotBlank()),
-            message = "安全问题至少要填写一个"
+            message = "At least one security question must be filled in"
         )
         @get:UniqueElements
         val safeQuestions: List<String?>?,
 
         @get:Constraints(
             order = [NotBlank::class, Pattern::class],
-            notBlank = NotBlank(message = "备注不能为空"),
-            pattern = Pattern(regexp = "[a-zA-Z0-9]+", message = "备注不能包含特殊字符")
+            notBlank = NotBlank(message = "Remark must not be blank"),
+            pattern = Pattern(regexp = "[a-zA-Z0-9]+", message = "Remark must not contain special characters")
         )
         val remark: String?,
 
@@ -224,7 +224,7 @@ internal class TerminalConstraintsCreatorTest {
     internal class UsernameValidator: IBeanValidator<TestRegisterBean> {
 
         override fun validate(bean: TestRegisterBean): Boolean {
-            // 校验用户名是否可用
+            // Check whether the username is available
             return true
         }
 

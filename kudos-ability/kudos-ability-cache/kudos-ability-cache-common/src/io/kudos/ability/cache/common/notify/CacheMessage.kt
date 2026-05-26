@@ -4,7 +4,7 @@ import java.io.Serial
 import java.io.Serializable
 
 /**
- * 缓存通知消息对象
+ * Cache notification message object.
  *
  * @author K
  * @since 1.0.0
@@ -15,7 +15,7 @@ class CacheMessage : Serializable {
     var nodeId: String? = null
 
     /**
-     * 缓存类型：不设或 "kv" 表示 key-value；"hash" 表示 Hash 缓存（带 id 对象集合）。
+     * Cache type: unset or "kv" denotes key-value; "hash" denotes a hash cache (an id-keyed entity collection).
      */
     var cacheType: String? = null
 

@@ -11,7 +11,7 @@ import kotlin.test.assertTrue
 /**
  * junit test for SysSubSystemMicroServiceService
  *
- * 测试数据来源：`SysSubSystemMicroServiceServiceTest.sql`
+ * Test data source: `SysSubSystemMicroServiceServiceTest.sql`
  *
  * @author K
  * @author AI: Cursor
@@ -52,7 +52,7 @@ class SysSubSystemMicroServiceServiceTest : RdbAndRedisCacheTestBase() {
         val result = sysSubSystemMicroServiceService.unbind(subSystemCode, microServiceCode)
         assertTrue(result)
         
-        // 重新绑定
+        // Rebind
         val bindCount = sysSubSystemMicroServiceService.batchBind(subSystemCode, listOf(microServiceCode))
         assertTrue(bindCount > 0)
     }

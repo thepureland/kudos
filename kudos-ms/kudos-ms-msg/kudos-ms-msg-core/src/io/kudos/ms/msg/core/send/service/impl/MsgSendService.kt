@@ -10,7 +10,7 @@ import java.time.LocalDateTime
 
 
 /**
- * 消息发送业务
+ * Message send business service.
  *
  * @author K
  * @author AI: Codex
@@ -37,7 +37,7 @@ open class MsgSendService(
         failDelta: Int,
         finalStatusDictCode: String,
     ): Boolean {
-        // 读 → 改 → 写。读不到（被删了）返回 false。
+        // Read → modify → write. Returns false if not found (was deleted).
         val current = dao.get(sendId) ?: return false
         val newSuccess = (current.successCount ?: 0) + successDelta
         val newFail = (current.failCount ?: 0) + failDelta

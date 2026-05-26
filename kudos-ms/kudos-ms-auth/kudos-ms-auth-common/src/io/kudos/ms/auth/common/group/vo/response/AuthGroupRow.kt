@@ -5,53 +5,53 @@ import java.time.LocalDateTime
 
 
 /**
- * 用户组列表查询结果响应VO
+ * Response VO representing a row in the user group list query result.
  *
  * @author K
  * @since 1.0.0
  */
 data class AuthGroupRow (
 
-    /** 主键 */
+    /** Primary key. */
     override val id: String = "",
 
-    /** 用户组编码 */
+    /** User group code. */
     val code: String? = null,
 
-    /** 用户组名称 */
+    /** User group name. */
     val name: String? = null,
 
-    /** 租户id */
+    /** Tenant id. */
     val tenantId: String? = null,
 
-    /** 子系统编码 */
+    /** Subsystem code. */
     val subsysCode: String? = null,
 
-    /** 备注 */
+    /** Remark. */
     val remark: String? = null,
 
-    /** 是否激活 */
+    /** Whether the group is active. */
     val active: Boolean? = null,
 
-    /** 是否内置 */
+    /** Whether the group is built-in. */
     val builtIn: Boolean? = null,
 
-    /** 创建者id */
+    /** Creator id. */
     val createUserId: String? = null,
 
-    /** 创建者名称 */
+    /** Creator name. */
     val createUserName: String? = null,
 
-    /** 创建时间 */
+    /** Creation time. */
     val createTime: LocalDateTime? = null,
 
-    /** 更新者id */
+    /** Updater id. */
     val updateUserId: String? = null,
 
-    /** 更新者名称 */
+    /** Updater name. */
     val updateUserName: String? = null,
 
-    /** 更新时间 */
+    /** Update time. */
     val updateTime: LocalDateTime? = null,
 
 ) : IIdEntity<String>

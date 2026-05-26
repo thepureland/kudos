@@ -4,14 +4,14 @@ import io.kudos.base.model.contract.entity.IIdEntity
 
 
 /**
- * 用户联系方式表单更新请求VO
+ * User contact way form update request VO
  *
  * @author K
  * @since 1.0.0
  */
 data class UserContactWayFormUpdate (
 
-    /** 主键 */
+    /** Primary key */
     override val id: String,
 
     override val userId: String?,

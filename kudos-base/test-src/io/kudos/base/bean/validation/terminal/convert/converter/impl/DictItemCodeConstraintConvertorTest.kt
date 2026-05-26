@@ -6,7 +6,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * DictCodeConstraintConvertor测试用例
+ * Test cases for DictCodeConstraintConvertor.
  *
  * @author AI: cursor
  * @author K
@@ -22,7 +22,7 @@ internal class DictItemCodeConstraintConvertorTest {
             val convertor = DictCodeConstraintConvertor(annotation)
             val rule = convertor.getRule(annotation)
             assertNotNull(rule)
-            // 应该包含values属性
+            // Should contain the `values` attribute
             assertTrue(rule.containsKey("values"))
         }
     }
@@ -34,14 +34,14 @@ internal class DictItemCodeConstraintConvertorTest {
         if (annotation != null) {
             val convertor = DictCodeConstraintConvertor(annotation)
             val rule = convertor.getRule(annotation)
-            // values应该是从IDictCodeFinder获取的字典码集合
+            // `values` should be the set of dictionary codes obtained from IDictCodeFinder
             val values = rule["values"]
             assertNotNull(values)
         }
     }
 
     data class TestBean(
-        @get:DictItemCode(atomicServiceCode = "test", dictType = "test", message = "无效的字典码")
+        @get:DictItemCode(atomicServiceCode = "test", dictType = "test", message = "invalid dictionary code")
         val code: String?
     )
 }

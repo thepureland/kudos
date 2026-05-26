@@ -3,7 +3,7 @@ package io.kudos.test.common.init
 import io.kudos.context.init.EnableKudos
 
 /**
- * 单元测试的springboot启动类
+ * Spring Boot startup class for unit tests.
  *
  * @author K
  * @since 1.0.0

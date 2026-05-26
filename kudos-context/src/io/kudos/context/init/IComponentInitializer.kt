@@ -4,7 +4,7 @@ import io.kudos.base.logger.LogFactory
 
 
 /**
- * 组件初始化器接口
+ * Component initializer interface.
  *
  * @author K
  * @since 1.0.0
@@ -12,32 +12,32 @@ import io.kudos.base.logger.LogFactory
 interface IComponentInitializer {
 
     /**
-     * 获取组件的名称
+     * Get the component name.
      *
-     * @return 组件名称
+     * @return component name
      * @author K
      * @since 1.0.0
      */
     fun getComponentName(): String
 
     /**
-     * 组件初始化工作开始前
+     * Called before component initialization starts.
      *
      * @author K
      * @since 1.0.0
      */
     fun beforeInit() {
-        LogFactory.getLog(this::class).info(">>>>>>>>>>>>>>>>>>>>  组件【${getComponentName()}】开始初始化...")
+        LogFactory.getLog(this::class).info(">>>>>>>>>>>>>>>>>>>>  Component [${getComponentName()}] initialization starting...")
     }
 
     /**
-     * 组件初始化工作完成后
+     * Called after component initialization completes.
      *
      * @author K
      * @since 1.0.0
      */
     fun afterInit() {
-        LogFactory.getLog(this::class).info("<<<<<<<<<<<<<<<<<<<<  组件【${getComponentName()}】初始化完成.")
+        LogFactory.getLog(this::class).info("<<<<<<<<<<<<<<<<<<<<  Component [${getComponentName()}] initialization complete.")
     }
 
 }

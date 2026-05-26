@@ -6,14 +6,14 @@ import jakarta.validation.constraints.NotBlank
 
 
 /**
- * 参数表单更新请求VO
+ * Param update form request VO.
  *
  * @author K
  * @since 1.0.0
  */
 data class SysParamFormUpdate (
 
-    /** 主键 */
+    /** Primary key */
     @get:NotBlank
     @get:FixedLength(36)
     override val id: String,

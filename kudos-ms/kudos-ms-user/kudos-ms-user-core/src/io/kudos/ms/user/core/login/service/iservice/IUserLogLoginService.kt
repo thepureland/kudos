@@ -5,7 +5,7 @@ import io.kudos.ms.user.core.login.model.po.UserLogLogin
 import java.time.LocalDateTime
 
 /**
- * 登录日志业务接口
+ * Login log service interface.
  *
  * @author K
  * @author AI: Cursor
@@ -15,86 +15,86 @@ interface IUserLogLoginService : IBaseCrudService<String, UserLogLogin> {
 
 
     /**
-     * 根据用户ID查询登录日志
+     * Query login logs by user id.
      *
-     * @param userId 用户ID
-     * @param limit 限制条数，默认100
-     * @return 登录日志列表（按时间倒序）
+     * @param userId user id
+     * @param limit row cap, default 100
+     * @return login log list (descending by time)
      * @author AI: Cursor
      * @since 1.0.0
      */
     fun getLoginsByUserId(userId: String, limit: Int = 100): List<UserLogLogin>
 
     /**
-     * 根据租户ID查询登录日志
+     * Query login logs by tenant id.
      *
-     * @param tenantId 租户ID
-     * @param limit 限制条数，默认100
-     * @return 登录日志列表（按时间倒序）
+     * @param tenantId tenant id
+     * @param limit row cap, default 100
+     * @return login log list (descending by time)
      * @author AI: Cursor
      * @since 1.0.0
      */
     fun getLoginsByTenantId(tenantId: String, limit: Int = 100): List<UserLogLogin>
 
     /**
-     * 根据时间范围查询登录日志
+     * Query login logs in a time range.
      *
-     * @param tenantId 租户ID，可为null
-     * @param userId 用户ID，可为null
-     * @param startTime 开始时间
-     * @param endTime 结束时间
-     * @return 登录日志列表（按时间倒序）
+     * @param tenantId tenant id, nullable
+     * @param userId user id, nullable
+     * @param startTime start time
+     * @param endTime end time
+     * @return login log list (descending by time)
      * @author AI: Cursor
      * @since 1.0.0
      */
     fun getLoginsByTimeRange(tenantId: String?, userId: String?, startTime: LocalDateTime, endTime: LocalDateTime): List<UserLogLogin>
 
     /**
-     * 查询最近登录记录
+     * Query the most recent login records.
      *
-     * @param tenantId 租户ID，可为null
-     * @param userId 用户ID，可为null
-     * @param limit 限制条数，默认10
-     * @return 登录日志列表（按时间倒序）
+     * @param tenantId tenant id, nullable
+     * @param userId user id, nullable
+     * @param limit row cap, default 10
+     * @return login log list (descending by time)
      * @author AI: Cursor
      * @since 1.0.0
      */
     fun getRecentLogins(tenantId: String?, userId: String?, limit: Int = 10): List<UserLogLogin>
 
     /**
-     * 统计登录次数
+     * Count login attempts.
      *
-     * @param tenantId 租户ID，可为null
-     * @param userId 用户ID，可为null
-     * @param startTime 开始时间，可为null
-     * @param endTime 结束时间，可为null
-     * @return 登录次数
+     * @param tenantId tenant id, nullable
+     * @param userId user id, nullable
+     * @param startTime start time, nullable
+     * @param endTime end time, nullable
+     * @return login count
      * @author AI: Cursor
      * @since 1.0.0
      */
     fun countLogins(tenantId: String?, userId: String?, startTime: LocalDateTime?, endTime: LocalDateTime?): Long
 
     /**
-     * 统计成功登录次数
+     * Count successful logins.
      *
-     * @param tenantId 租户ID，可为null
-     * @param userId 用户ID，可为null
-     * @param startTime 开始时间，可为null
-     * @param endTime 结束时间，可为null
-     * @return 成功登录次数
+     * @param tenantId tenant id, nullable
+     * @param userId user id, nullable
+     * @param startTime start time, nullable
+     * @param endTime end time, nullable
+     * @return successful login count
      * @author AI: Cursor
      * @since 1.0.0
      */
     fun countSuccessLogins(tenantId: String?, userId: String?, startTime: LocalDateTime?, endTime: LocalDateTime?): Long
 
     /**
-     * 统计失败登录次数
+     * Count failed logins.
      *
-     * @param tenantId 租户ID，可为null
-     * @param userId 用户ID，可为null
-     * @param startTime 开始时间，可为null
-     * @param endTime 结束时间，可为null
-     * @return 失败登录次数
+     * @param tenantId tenant id, nullable
+     * @param userId user id, nullable
+     * @param startTime start time, nullable
+     * @param endTime end time, nullable
+     * @return failed login count
      * @author AI: Cursor
      * @since 1.0.0
      */

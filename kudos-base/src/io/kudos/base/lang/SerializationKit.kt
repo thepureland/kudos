@@ -6,7 +6,7 @@ import java.io.OutputStream
 import java.io.Serializable
 
 /**
- * 序列化工具类
+ * Serialization utility.
  *
  * @author K
  * @since 1.0.0
@@ -14,73 +14,73 @@ import java.io.Serializable
 object SerializationKit {
 
     // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-    // 封装org.apache.commons.lang3.SerializationUtils
+    // Wrapper for org.apache.commons.lang3.SerializationUtils
     // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
     /**
-     * 对指定的对象深度克隆
-     * 该方法比直接在对象图中的所有对象重写克隆方法慢很多倍. 但是, 对于复杂的对象图, 或那些不支持深底克隆的对象, 这提供了另一种实现. 当然, 所有对象都必须实现 `Serializable`接口.
+     * Deep-clone the specified object.
+     * This method is many times slower than overriding clone on every object in the object graph. However, for complex object graphs, or objects that do not support deep cloning, this offers an alternative. Of course, all objects must implement the `Serializable` interface.
      *
-     * @param T 待克隆的对象的类型
-     * @param obj 要克隆的Serializable对象
-     * @return 克隆后的对象
-     * @throws org.apache.commons.lang3.SerializationException (运行时) 如果序列化失败
+     * @param T the type of the object to clone
+     * @param obj the Serializable object to clone
+     * @return the cloned object
+     * @throws org.apache.commons.lang3.SerializationException (runtime) if serialization fails
      * @author K
      * @since 1.0.0
      */
     fun <T : Serializable?> clone(obj: T): T = SerializationUtils.clone(obj)
 
     /**
-     * 序列化一个对象到指定的输出流
-     * 输出流将在对象写完时关闭.这就避免了在应用程序代码中需要的finally子句，或异常处理。
-     * 传入的流没有在方法内部缓存. 如果需要的话这是你的应用程序的责任.
+     * Serialize an object to the specified output stream.
+     * The output stream is closed when the object has been written, eliminating the need for a finally clause or exception handling in application code.
+     * The supplied stream is not buffered inside the method. That is your application's responsibility if needed.
      *
-     * @param obj 要序列化为字节的对象, 可以为 null
-     * @param outputStream 要写入的流, 不能为 null
-     * @throws IllegalArgumentException 如果 `outputStream` 为 `null`
-     * @throws org.apache.commons.lang3.SerializationException (运行时) 如果序列化失败
+     * @param obj the object to serialize to bytes, may be null
+     * @param outputStream the stream to write to, must not be null
+     * @throws IllegalArgumentException if `outputStream` is `null`
+     * @throws org.apache.commons.lang3.SerializationException (runtime) if serialization fails
      * @author K
      * @since 1.0.0
      */
     fun serialize(obj: Serializable?, outputStream: OutputStream?) = SerializationUtils.serialize(obj, outputStream)
 
     /**
-     * 将一个对象序列化为字节数组
+     * Serialize an object to a byte array.
      *
-     * @param obj 要序列化为字节的对象, 可以为 null
-     * @return 字节数组
-     * @throws org.apache.commons.lang3.SerializationException (运行时) 如果序列化失败
+     * @param obj the object to serialize to bytes, may be null
+     * @return the byte array
+     * @throws org.apache.commons.lang3.SerializationException (runtime) if serialization fails
      * @author K
      * @since 1.0.0
      */
     fun serialize(obj: Serializable?): ByteArray = SerializationUtils.serialize(obj)
 
     /**
-     * 从输入流中反序列化一个对象
-     * 输入流将在对象读完时关闭.这就避免了在应用程序代码中需要的finally子句，或异常处理。
-     * 传入的流没有在方法内部缓存. 如果需要的话这是你的应用程序的责任.
+     * Deserialize an object from an input stream.
+     * The input stream is closed when the object has been read, eliminating the need for a finally clause or exception handling in application code.
+     * The supplied stream is not buffered inside the method. That is your application's responsibility if needed.
      *
-     * @param inputStream 输入流, 不能为 null
-     * @return 反序列化后的对象
-     * @throws IllegalArgumentException 如果 `inputStream` 为 `null`
-     * @throws org.apache.commons.lang3.SerializationException (运行时) 如果反序列化失败
+     * @param inputStream the input stream, must not be null
+     * @return the deserialized object
+     * @throws IllegalArgumentException if `inputStream` is `null`
+     * @throws org.apache.commons.lang3.SerializationException (runtime) if deserialization fails
      * @author K
      * @since 1.0.0
      */
     fun deserialize(inputStream: InputStream?): Any = SerializationUtils.deserialize(inputStream)
 
     /**
-     * 从字节数组中反序列化一个对象
+     * Deserialize an object from a byte array.
      *
-     * @param objectData 字节数组, 不能为 null
-     * @return 反序列化后的对象
-     * @throws org.apache.commons.lang3.SerializationException (运行时) 如果反序列化失败
+     * @param objectData the byte array, must not be null
+     * @return the deserialized object
+     * @throws org.apache.commons.lang3.SerializationException (runtime) if deserialization fails
      * @author K
      * @since 1.0.0
      */
     fun deserialize(objectData: ByteArray): Any? = SerializationUtils.deserialize(objectData)
 
     // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    // 封装org.apache.commons.lang3.SerializationUtils
+    // Wrapper for org.apache.commons.lang3.SerializationUtils
     // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 }

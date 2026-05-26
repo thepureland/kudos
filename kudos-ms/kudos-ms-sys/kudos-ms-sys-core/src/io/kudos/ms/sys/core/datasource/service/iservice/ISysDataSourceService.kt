@@ -7,7 +7,7 @@ import io.kudos.ms.sys.core.datasource.model.po.SysDataSource
 
 
 /**
- * 数据源业务接口
+ * Data source service interface.
  *
  * @author K
  * @author AI: Cursor
@@ -16,15 +16,15 @@ import io.kudos.ms.sys.core.datasource.model.po.SysDataSource
 interface ISysDataSourceService : IBaseCrudService<String, SysDataSource> {
 
     /**
-     * 按主键 id 加载数据源缓存项，并缓存结果
+     * Load a data source cache entry by primary key id and cache the result.
      *
-     * @param id 数据源主键，非空
-     * @return 缓存项，找不到返回 null
+     * @param id data source primary key, non-blank
+     * @return cache entry, or null if not found
      */
     fun getDataSourceFromCache(id: String): SysDataSourceCacheEntry?
 
     /**
-     * 按租户 id、子系统编码、微服务编码从缓存查询数据源列表（含未启用）
+     * Query the data source list from cache by tenant id, sub-system code and micro-service code (includes inactive).
      */
     fun getDataSourcesFromCache(
         tenantId: String,
@@ -33,51 +33,52 @@ interface ISysDataSourceService : IBaseCrudService<String, SysDataSource> {
     ): List<SysDataSourceCacheEntry>
 
     /**
-     * 按租户 id 与原子服务编码从缓存取一条数据源（内部按 tenantId + subSystem=null + microService=atomicServiceCode 查询后取首条）
+     * Fetch a single data source from cache by tenant id and atomic service code
+     * (internally queries by tenantId + subSystem=null + microService=atomicServiceCode and takes the first match).
      */
     fun getDataSourceFromCache(tenantId: String, atomicServiceCode: String?): SysDataSourceCacheEntry?
 
     /**
-     * 更新启用状态，并同步缓存
+     * Update the enabled state and sync the cache.
      *
-     * @param id 主键
-     * @param active 是否启用
-     * @return 是否更新成功
+     * @param id primary key
+     * @param active whether enabled
+     * @return whether the update succeeded
      */
     fun updateActive(id: String, active: Boolean): Boolean
 
     /**
-     * 重置密码
+     * Reset password.
      *
-     * @param id 主键
-     * @param newPassword 新密码
+     * @param id primary key
+     * @param newPassword new password
      */
     fun resetPassword(id: String, newPassword: String)
 
     /**
-     * 获取租户的数据源列表
+     * Get the data source list for a tenant.
      *
-     * @param tenantId 租户id
-     * @return 数据源记录列表
+     * @param tenantId tenant id
+     * @return list of data source records
      */
     fun getDataSourcesByTenantId(tenantId: String): List<SysDataSourceRow>
 
     /**
-     * 获取子系统的数据源列表
+     * Get the data source list for a sub-system.
      *
-     * @param subSystemCode 子系统编码
-     * @return 数据源记录列表
+     * @param subSystemCode sub-system code
+     * @return list of data source records
      */
     fun getDataSourcesBySubSystemCode(subSystemCode: String): List<SysDataSourceRow>
 
     /**
-     * 测试 JDBC 连通性：用给定的 url/username/password 临时建一条连接并执行 ping 语句。
-     * 连接在方法返回前关闭；不会持久化任何状态。
+     * Test JDBC connectivity: opens a temporary connection with the given url/username/password and runs a ping statement.
+     * The connection is closed before this method returns; no state is persisted.
      *
      * @param url JDBC URL
-     * @param username 用户名
-     * @param password 密码；可为 null（部分驱动允许）
-     * @return true 表示连接 + ping 成功；false 表示任意环节失败（异常被吞掉转化为 false）
+     * @param username username
+     * @param password password; may be null (some drivers allow it)
+     * @return true if connect + ping succeeded; false if any step failed (exceptions are swallowed and converted to false)
      */
     fun testConnection(url: String, username: String, password: String?): Boolean
 

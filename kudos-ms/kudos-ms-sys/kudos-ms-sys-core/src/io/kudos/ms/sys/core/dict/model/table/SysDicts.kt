@@ -6,20 +6,20 @@ import org.ktorm.schema.varchar
 
 
 /**
- * 字典数据库表-实体关联对象
+ * Dictionary database table-entity binding object.
  *
  * @author K
  * @since 1.0.0
  */
 object SysDicts : ManagedTable<SysDict>("sys_dict") {
 
-    /** 字典类型 */
+    /** Dictionary type */
     var dictType = varchar("dict_type").bindTo { it.dictType }
 
-    /** 字典名称 */
+    /** Dictionary name */
     var dictName = varchar("dict_name").bindTo { it.dictName }
 
-    /** 原子服务编码 */
+    /** Atomic service code */
     var atomicServiceCode = varchar("atomic_service_code").bindTo { it.atomicServiceCode }
 
 

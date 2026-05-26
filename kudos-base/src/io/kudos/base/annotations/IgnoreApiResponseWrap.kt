@@ -1,10 +1,10 @@
 package io.kudos.base.annotations
 
 /**
- * 标记该 controller / 方法**跳过**全局 `ApiResponse` 统一包装。
+ * Marks the controller / method to **skip** the global `ApiResponse` unified wrapping.
  *
- * 用于流式响应（文件下载、SSE）或第三方协议（OAuth callback、Webhook）等场景——
- * 这些响应体不能被改写成 `{code, message, data}` 结构，否则破坏对端解析。
+ * Used for streaming responses (file downloads, SSE) or third-party protocols (OAuth callback, Webhook), etc. -
+ * these response bodies cannot be rewritten into the `{code, message, data}` structure, otherwise it breaks the peer's parsing.
  *
  * @author K
  * @since 1.0.0

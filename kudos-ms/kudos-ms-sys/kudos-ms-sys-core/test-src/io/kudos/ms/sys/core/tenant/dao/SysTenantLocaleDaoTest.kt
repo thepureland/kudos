@@ -10,7 +10,7 @@ import kotlin.test.assertTrue
 /**
  * junit test for SysTenantLocaleDao
  *
- * 测试数据来源：`SysTenantLocaleDaoTest.sql`
+ * Test data source: `SysTenantLocaleDaoTest.sql`
  *
  * @author K
  * @author AI: Cursor
@@ -42,10 +42,10 @@ class SysTenantLocaleDaoTest : RdbTestBase() {
 
     @Test
     fun exists() {
-        // 测试存在的关系
+        // Test an existing relation
         assertTrue(sysTenantLocaleDao.exists("40000000-0000-0000-0000-000000003459", "zh-CN"))
-        
-        // 测试不存在的关系
+
+        // Test a non-existing relation
         assertFalse(sysTenantLocaleDao.exists("40000000-0000-0000-0000-000000003459", "non-existent-lang"))
     }
 }
