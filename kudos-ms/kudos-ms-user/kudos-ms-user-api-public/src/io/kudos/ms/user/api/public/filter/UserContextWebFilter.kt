@@ -13,15 +13,15 @@ import org.springframework.web.filter.OncePerRequestFilter
 
 
 /**
- * 把 `HttpSession[SESSION_KEY_USER]` 里的 [SessionUserPrincipal] 灌进 [KudosContext.user]。
+ * Pushes the [SessionUserPrincipal] stored in `HttpSession[SESSION_KEY_USER]` into [KudosContext.user].
  *
- * 必须排在 `io.kudos.ability.web.springmvc.filter.WebContextInitFilter` **之后**——后者负责
- * 创建 [KudosContext] 实例并写入 ThreadLocal；本类只补 `user` 字段。
- * 顺序通过 [Order]：`WebContextInitFilter` 默认是 Spring 自动配置的非主优先级（≥0），
- * 这里取 `Ordered.LOWEST_PRECEDENCE - 100` 一个相对靠后的值。
+ * Must run **after** `io.kudos.ability.web.springmvc.filter.WebContextInitFilter`, which creates the
+ * [KudosContext] instance and writes it into ThreadLocal; this filter only fills in the `user` field.
+ * Ordering uses [Order]: `WebContextInitFilter` defaults to a non-primary Spring auto-configured order (>=0),
+ * so we use `Ordered.LOWEST_PRECEDENCE - 100` for a relatively late position.
  *
- * **不会自动 invalidate session**：登出策略由 `PassportPublicController.logout` 显式触发；
- * 本过滤器只是单向"读 session → 写 context"。
+ * **Does not auto-invalidate session**: logout policy is triggered explicitly by `PassportPublicController.logout`;
+ * this filter only does a one-way "read session -> write context".
  *
  * @author K
  * @since 1.0.0
@@ -35,12 +35,12 @@ open class UserContextWebFilter : OncePerRequestFilter() {
         response: HttpServletResponse,
         filterChain: FilterChain,
     ) {
-        // session=false：不要为本次请求强行创建空会话；只有已登录过的会有 session
+        // session=false: do not force-create an empty session for this request; only existing logged-in sessions are read
         val session = request.getSession(false)
         val raw = session?.getAttribute(KudosContext.SESSION_KEY_USER)
         if (raw is SessionUserPrincipal) {
-            // KudosContextHolder.get() 自动创建空 context 写入 ThreadLocal（若 WebContextInitFilter
-            // 未先跑也兼容）；我们只补 user 字段。
+            // KudosContextHolder.get() auto-creates an empty context and writes it into ThreadLocal (compatible
+            // even if WebContextInitFilter did not run first); we only fill in the user field.
             KudosContextHolder.get().user = raw
         }
         filterChain.doFilter(request, response)

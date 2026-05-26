@@ -6,13 +6,13 @@ import org.springframework.boot.test.context.SpringBootTest
 
 
 /**
- * undertow容器测试用例
+ * Test cases for the Undertow container.
  *
  * @author K
  * @author AI: Codex
  * @since 1.0.0
  */
-@Disabled("springboot4不再支持undertow")
+@Disabled("Spring Boot 4 no longer supports Undertow")
 @EnableKudosTest(
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
     properties = ["kudos.ability.web.springmvc.server=UNDERTOW"]

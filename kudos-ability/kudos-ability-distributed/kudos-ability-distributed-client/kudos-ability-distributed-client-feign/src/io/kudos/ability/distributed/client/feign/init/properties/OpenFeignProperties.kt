@@ -1,7 +1,7 @@
 package io.kudos.ability.distributed.client.feign.init.properties
 
 /**
- * kudos OpenFeign 扩展配置。
+ * kudos OpenFeign extension configuration.
  *
  * @author K
  * @author AI: Codex
@@ -10,7 +10,7 @@ package io.kudos.ability.distributed.client.feign.init.properties
 class OpenFeignProperties {
 
     /**
-     * 上下文透传头 HMAC 签名密钥。为空时不签名，保持历史行为。
+     * HMAC signing secret for context-propagation headers. Empty disables signing, preserving legacy behavior.
      */
     var contextSignatureSecret: String? = null
 

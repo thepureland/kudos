@@ -16,7 +16,7 @@ import kotlin.test.assertTrue
 /**
  * junit test for SysAccessRuleService
  *
- * 测试数据来源：`SysAccessRuleServiceTest.sql`
+ * Test data source: `SysAccessRuleServiceTest.sql`
  *
  * @author K
  * @author AI: Cursor
@@ -32,7 +32,7 @@ class SysAccessRuleServiceTest : RdbAndRedisCacheTestBase() {
     fun getAccessRuleByTenantAndSystem() {
         val tenantId = "20000000-0000-0000-0000-000000009316"
         val systemCode = "svc-system-ar-test-0_8662"
-        // 接口约定为 (systemCode, tenantId)，与方法名「ByTenantAndSystem」字面顺序不同，勿按名传参
+        // The interface contract is (systemCode, tenantId), different from the literal order in the method name "ByTenantAndSystem"; don't pass args by name
         val rule = sysAccessRuleService.getAccessRuleByTenantAndSystem(systemCode, tenantId)
         assertNotNull(rule)
     }

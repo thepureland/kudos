@@ -5,7 +5,7 @@ import io.kudos.ability.data.rdb.ktorm.support.IManagedDbEntity
 import io.kudos.base.query.sort.Sortable
 
 /**
- * 租户数据库实体
+ * Tenant database entity
  *
  * @author K
  * @since 1.0.0
@@ -14,14 +14,14 @@ interface SysTenant : IManagedDbEntity<String, SysTenant> {
 
     companion object : DbEntityFactory<SysTenant>()
 
-    /** 名称 */
+    /** Name */
     @get:Sortable
     var name: String
 
-    /** 时区 */
+    /** Timezone */
     var timezone: String?
 
-    /** 默认语言编码 */
+    /** Default language code */
     var defaultLanguageCode: String?
 
 }

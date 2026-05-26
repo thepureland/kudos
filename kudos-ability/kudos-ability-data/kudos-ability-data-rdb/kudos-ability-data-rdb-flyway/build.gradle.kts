@@ -4,7 +4,7 @@ dependencies {
     api(libs.baomidou.dynamic.datasource.starter)
 
     // h2
-    // h2可以用PostgreSqlDialect来实现分页
+    // h2 can use PostgreSqlDialect to implement pagination
     testImplementation(libs.h2database.h2)
 
     // postgres

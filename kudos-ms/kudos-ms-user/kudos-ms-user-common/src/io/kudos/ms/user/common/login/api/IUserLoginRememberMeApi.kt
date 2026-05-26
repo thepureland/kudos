@@ -1,7 +1,7 @@
 package io.kudos.ms.user.common.login.api
 
 /**
- * 记住我登录 对外API
+ * Remember-me login external API
  *
  * @author K
  * @author AI: Codex

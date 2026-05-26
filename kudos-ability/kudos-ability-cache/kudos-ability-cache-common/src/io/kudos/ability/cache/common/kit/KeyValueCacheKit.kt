@@ -15,7 +15,7 @@ import kotlin.reflect.KClass
 
 
 /**
- * 缓存工具类
+ * Cache utility.
  *
  * @author K
  * @since 1.0.0
@@ -26,10 +26,10 @@ object KeyValueCacheKit {
     private val log = LogFactory.getLog(this::class)
 
     /**
-     * 是否开启缓存。必须是全局开关和指定的缓存开关都开启，才算开启
+     * Whether caching is enabled. Both the global switch and the cache-specific switch must be on.
      *
-     * @param cacheName 缓存名称
-     * @return true: 开启缓存，false：未开启缓存
+     * @param cacheName cache name
+     * @return true: enabled; false: disabled
      * @author K
      * @since 1.0.0
      */
@@ -37,27 +37,27 @@ object KeyValueCacheKit {
         getCacheConfigProvider().getCacheConfig(cacheName)?.isActive ?: false
 
     /**
-     * 根据名称获取缓存
+     * Returns the cache by name.
      *
-     * @param name 缓存名称
-     * @return 缓存对象
+     * @param name cache name
+     * @return the cache object
      * @author K
      * @since 1.0.0
      */
     fun getCache(name: String): Cache? {
         val cacheManager = getCacheManager() ?: return null
         return cacheManager.getCache(name).also {
-            if (it == null) log.error("缓存【$name】不存在！")
+            if (it == null) log.error("Cache [$name] does not exist!")
         }
     }
 
     /**
-     * 获取缓存中指定key的值
+     * Returns the value of the given key in the specified cache.
      *
-     * @param cacheName  缓存名称
-     * @param key        缓存key
-     * @param valueClass 缓存key对应的值的类型
-     * @return 缓存key对应的值
+     * @param cacheName  cache name
+     * @param key        cache key
+     * @param valueClass type of the value for the cache key
+     * @return the value associated with the cache key
      * @author K
      * @since 1.0.0
      */
@@ -67,22 +67,22 @@ object KeyValueCacheKit {
     }
 
     /**
-     * 获取缓存中指定key的值
+     * Returns the value of the given key in the specified cache.
      *
-     * @param cacheName 缓存名称
-     * @param key       缓存key
-     * @return 缓存key对应的值
+     * @param cacheName cache name
+     * @param key       cache key
+     * @return the value associated with the cache key
      * @author K
      * @since 1.0.0
      */
     fun getValue(cacheName: String, key: Any): Any? = getCache(cacheName)?.get(key)?.get()
 
     /**
-     * 写入缓存
+     * Writes a value to the cache.
      *
-     * @param cacheName 缓存名称
-     * @param key       缓存key
-     * @param value     要缓存的值
+     * @param cacheName cache name
+     * @param key       cache key
+     * @param value     value to cache
      * @author K
      * @since 1.0.0
      */
@@ -92,11 +92,11 @@ object KeyValueCacheKit {
     }
 
     /**
-     * 如果不存在，就写入缓存
+     * Writes a value to the cache if absent.
      *
-     * @param cacheName 缓存名称
-     * @param key       缓存key
-     * @param value     要缓存的值
+     * @param cacheName cache name
+     * @param key       cache key
+     * @param value     value to cache
      * @author K
      * @since 1.0.0
      */
@@ -106,17 +106,18 @@ object KeyValueCacheKit {
     }
 
     /**
-     * 踢除缓存依赖消息通知
+     * Evicts a cache entry and triggers a dependency notification.
      *
-     * @param cacheName 缓存名称
-     * @param key       缓存key
+     * @param cacheName cache name
+     * @param key       cache key
      * @author K
      * @since 1.0.0
      */
     fun evict(cacheName: String, key: Any) {
         if (!isCacheActive(cacheName)) return
         val cache = getCache(cacheName) as? MixCache ?: return
-        // 单机本地缓存（SINGLE_LOCAL）跨进程不可达，发通知让各节点自行 evict；其他策略远端权威，直接 evict
+        // Single-node local cache (SINGLE_LOCAL) is unreachable across processes, so broadcast a notification
+        // and let each node evict locally; for other strategies the remote layer is authoritative, evict directly.
         if (cache.strategy == CacheStrategy.SINGLE_LOCAL) {
             CacheOperatorVo(CacheOperatorVo.TYPE_EVICT, cacheName, key).doNotify()
         } else {
@@ -125,10 +126,10 @@ object KeyValueCacheKit {
     }
 
     /**
-     * 踢除缓存
+     * Evicts a cache entry.
      *
-     * @param cacheName 缓存名称
-     * @param key       缓存key
+     * @param cacheName cache name
+     * @param key       cache key
      * @author K
      * @since 1.0.0
      */
@@ -138,9 +139,9 @@ object KeyValueCacheKit {
     }
 
     /**
-     * 清空缓存，发送消息通知
+     * Clears the cache, broadcasting a notification.
      *
-     * @param cacheName 缓存名称
+     * @param cacheName cache name
      * @author K
      * @since 1.0.0
      */
@@ -155,9 +156,9 @@ object KeyValueCacheKit {
     }
 
     /**
-     * 清空缓存
+     * Clears the cache.
      *
-     * @param cacheName 缓存名称
+     * @param cacheName cache name
      * @author K
      * @since 1.0.0
      */
@@ -167,10 +168,10 @@ object KeyValueCacheKit {
     }
 
     /**
-     * 是否在新增或更新后，立即回写缓存
+     * Whether the cache is written back immediately after an insert or update.
      *
-     * @param cacheName 缓存名称
-     * @return true: 立即回写缓存, 反之为false。缓存不存在也返回false
+     * @param cacheName cache name
+     * @return true: write back immediately; otherwise false. Returns false when the cache does not exist.
      * @author K
      * @since 1.0.0
      */
@@ -180,24 +181,24 @@ object KeyValueCacheKit {
     }
 
     /**
-     * 返回指定名称的缓存配置信息
+     * Returns the cache configuration by name.
      *
-     * @param cacheName 缓存名称
-     * @return 缓存配置信息。找不到返回null
+     * @param cacheName cache name
+     * @return the cache configuration; null if not found
      * @author K
      * @since 1.0.0
      */
     fun getCacheConfig(cacheName: String): CacheConfig? {
         if (!isCacheActive(cacheName)) return null
         return getCacheConfigProvider().getCacheConfig(cacheName).also {
-            if (it == null) log.warn("缓存【$cacheName】不存在！")
+            if (it == null) log.warn("Cache [$cacheName] does not exist!")
         }
     }
 
     /**
-     * 重新加载缓存
+     * Reloads a cache entry.
      *
-     * @param cacheName 缓存名
+     * @param cacheName cache name
      * @param key       key
      */
     fun reload(cacheName: String, key: String) {
@@ -211,9 +212,9 @@ object KeyValueCacheKit {
     }
 
     /**
-     * 重新加载所有缓存
+     * Reloads all entries in the cache.
      *
-     * @param cacheName 缓存名
+     * @param cacheName cache name
      */
     fun reloadAll(cacheName: String) {
         if (!isCacheActive(cacheName)) return
@@ -226,11 +227,12 @@ object KeyValueCacheKit {
     }
 
     /**
-     * 收口「按 cacheName 找 Handler」的样板（与 [HashCacheKit.handlersFor] 同思路）。
+     * Centralizes the "look up Handler by cacheName" boilerplate (same idea as [HashCacheKit.handlersFor]).
      *
-     * 索引使用 double-checked locking 懒建：首次调用扫一次 + groupBy 落到 [handlerIndex]，
-     * 后续调用直接 map 查；新增 handler bean 不会被自动感知，由 [resetForTesting]
-     * 或重启上下文触发重建。避免每次 reload / reloadAll 都走 Spring bean 扫描。
+     * The index is lazily built with double-checked locking: the first call scans once and groupBy is stored
+     * in [handlerIndex], and subsequent calls do a direct map lookup. Newly added handler beans will not be
+     * picked up automatically; the index is rebuilt by [resetForTesting] or by restarting the context. This
+     * avoids scanning Spring beans on every reload / reloadAll.
      */
     @Volatile private var handlerIndex: Map<String, List<AbstractKeyValueCacheHandler<*>>>? = null
 
@@ -244,9 +246,9 @@ object KeyValueCacheKit {
     }
 
     /**
-     * 清理缓存开头的key
-     * @param cacheName 缓存name
-     * @param keyPattern key开头
+     * Evicts cache entries whose keys start with the given prefix.
+     * @param cacheName cache name
+     * @param keyPattern key prefix
      */
     fun evictByPattern(cacheName: String, keyPattern: String) {
         if (!isCacheActive(cacheName)) return
@@ -255,11 +257,12 @@ object KeyValueCacheKit {
     }
 
     /**
-     * 缓存中是否存在指定的key（不依赖 value 是否为 null）,LOCAL_REMOTE 时任一级存在即视为存在。
+     * Whether the specified key exists in the cache (independent of whether the value is null);
+     * under LOCAL_REMOTE, presence at either layer counts as present.
      *
-     * @param cacheName 缓存名称
-     * @param key 缓存key
-     * @return true：存在， false: 不存在
+     * @param cacheName cache name
+     * @param key cache key
+     * @return true: present; false: absent
      */
     fun existsKey(cacheName: String, key: String): Boolean {
         if (!isCacheActive(cacheName)) return false
@@ -267,35 +270,37 @@ object KeyValueCacheKit {
     }
 
     /**
-     * 获取缓存管理器
+     * Returns the cache manager.
      *
-     * 如果缓存未启用（kudos.ability.cache.enabled=false），mixCacheManager Bean 不会被创建，
-     * 此时返回 null，调用方需要处理 null 的情况。
+     * When caching is disabled (kudos.ability.cache.enabled=false), the mixCacheManager bean is not created,
+     * and this method returns null; callers must handle null.
      *
-     * @return MixCacheManager，如果缓存未启用则返回 null
+     * @return MixCacheManager, or null if caching is disabled
      */
     private fun getCacheManager(): MixCacheManager? =
         cacheManagerOverride ?: (SpringKit.getBeanOrNull("mixCacheManager") as? MixCacheManager)
 
     /**
-     * 获取缓存配置服务
+     * Returns the cache config provider.
      *
      * @return ICacheConfigProvider
      */
     private fun getCacheConfigProvider(): ICacheConfigProvider =
         configProviderOverride ?: SpringKit.getBean<ICacheConfigProvider>()
 
-    // ---- 测试注入钩子 ----------------------------------------------------------
-    // Kit 是 `object` 单例，生产路径仍走 SpringKit.getBean 查找，行为完全不变。
-    // 单元测试若不想拉起 Spring 上下文，可通过下面的 override 注入 mock，再用 resetForTesting 还原。
+    // ---- Test injection hooks --------------------------------------------------
+    // Kit is an `object` singleton; the production path still resolves via SpringKit.getBean and behavior is unchanged.
+    // Unit tests that do not want to bring up a Spring context can inject mocks via the overrides below and
+    // call resetForTesting afterwards.
 
     @Volatile private var cacheManagerOverride: MixCacheManager? = null
     @Volatile private var configProviderOverride: ICacheConfigProvider? = null
 
     /**
-     * 测试专用：临时注入依赖，避免单测启动完整 Spring 上下文。
-     * 任一参数为 null 表示该依赖回退到默认的 [SpringKit] 查找路径。
-     * 测试结束必须调用 [resetForTesting] 还原，否则会污染同 JVM 后续测试。
+     * Test-only: injects dependencies temporarily so unit tests do not need to start a full Spring context.
+     * Passing null for any parameter falls back to the default [SpringKit] lookup path.
+     * [resetForTesting] must be called at the end of the test to restore state; otherwise it will contaminate
+     * subsequent tests in the same JVM.
      */
     fun overrideForTesting(
         cacheManager: MixCacheManager? = null,
@@ -306,7 +311,7 @@ object KeyValueCacheKit {
     }
 
     /**
-     * 测试专用：清掉 [overrideForTesting] 注入的 mock，回到 Spring 查找。
+     * Test-only: clears the mocks injected by [overrideForTesting] and restores Spring lookup.
      */
     fun resetForTesting() {
         cacheManagerOverride = null

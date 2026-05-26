@@ -82,7 +82,7 @@ internal class EncodeKitTest {
 
     @Test
     fun decodeBase64_InvalidInput_DoesNotThrow() {
-        // 对于非法 Base64 字符，Decode 不应抛出异常
+        // Decode must not throw for invalid Base64 characters
         EncodeKit.decodeBase64("invalid***")
     }
 

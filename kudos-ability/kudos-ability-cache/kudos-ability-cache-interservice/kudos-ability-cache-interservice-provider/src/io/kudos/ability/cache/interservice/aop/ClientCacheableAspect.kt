@@ -15,30 +15,33 @@ import org.springframework.web.context.request.RequestAttributes
 import org.springframework.web.context.request.RequestContextHolder
 
 /**
- * 客户端缓存切面
- * 
- * 通过AOP方式实现服务间缓存功能，支持基于请求的缓存命中判断和数据返回。
- * 
- * 核心功能：
- * 1. 缓存命中判断：通过比较请求头中的cache-uid和响应结果的uid来判断缓存是否命中
- * 2. 缓存状态通知：通过HTTP响应头告知客户端缓存使用状态
- *    - STATUS_USE_CACHE(304)：缓存命中，客户端应使用本地缓存
- *    - STATUS_DO_CACHE(200)：缓存未命中，返回新数据，客户端应缓存
- * 3. 结果UID生成：基于方法返回结果生成唯一标识（MD5哈希），用于缓存一致性判断
- * 
- * 工作流程：
- * - 拦截标注@ClientCacheable的Controller方法
- * - 执行方法获取返回结果
- * - 从请求头获取客户端传递的cache-uid
- * - 计算返回结果的uid（基于类名和JSON序列化内容）
- * - 比较请求uid和结果uid：
- *   - 相同：返回null，设置响应头为304，告知客户端使用缓存
- *   - 不同：返回结果，设置响应头为200，告知客户端缓存新数据
- * 
- * 注意事项：
- * - 仅支持在Controller类的方法上使用
- * - 需要配合CacheClientRequest使用，普通HTTP请求不会触发缓存逻辑
- * - 结果对象必须可序列化为JSON，用于生成uid
+ * Client cache aspect.
+ *
+ * Implements inter-service caching via AOP, supporting request-based cache-hit detection
+ * and conditional data return.
+ *
+ * Core features:
+ * 1. Cache-hit detection: compares the cache-uid in request headers with the uid of the
+ *    response result to determine whether the cache is hit.
+ * 2. Cache status notification: informs the client of the cache state via HTTP response headers.
+ *    - STATUS_USE_CACHE(304): cache hit, the client should use its local cache.
+ *    - STATUS_DO_CACHE(200): cache miss, fresh data is returned and the client should cache it.
+ * 3. Result UID generation: produces a unique identifier (MD5 hash) from the method return value,
+ *    used to validate cache consistency.
+ *
+ * Workflow:
+ * - Intercept Controller methods annotated with @ClientCacheable.
+ * - Execute the method to obtain the return value.
+ * - Read the cache-uid the client sent in the request header.
+ * - Compute the uid of the result (based on class name and JSON-serialized content).
+ * - Compare request uid and result uid:
+ *   - Equal: return null, set response header to 304, instruct the client to use its cache.
+ *   - Different: return the result, set response header to 200, instruct the client to cache the new data.
+ *
+ * Notes:
+ * - May only be used on methods of Controller classes.
+ * - Must be used together with CacheClientRequest; plain HTTP requests do not trigger cache logic.
+ * - The result object must be JSON-serializable so a uid can be generated.
  *
  * @author K
  * @author AI: Codex
@@ -46,12 +49,12 @@ import org.springframework.web.context.request.RequestContextHolder
  */
 @Aspect
 @Lazy(false)
-@Order(100) // 跨服务 HTTP 响应级缓存：应当最外层包裹，确保拿到所有内层缓存读写后的最终 result 再计算 UID。
+@Order(100) // Cross-service HTTP response-level cache: must wrap outermost so the final result after all inner cache reads/writes is used when computing the UID.
 class ClientCacheableAspect(
     private val uidGenerator: ClientCacheUidGenerator = ClientCacheUidGenerator()
 ) {
     /**
-     * 定义切入点
+     * Define the pointcut.
      *
      * @author K
      * @since 1.0.0
@@ -61,43 +64,43 @@ class ClientCacheableAspect(
     }
 
     /**
-     * 环绕通知：实现服务间缓存的核心逻辑
-     * 
-     * 工作流程：
-     * 1. 验证目标类是否为Controller（RestController或Controller注解）
-     * 2. 执行目标方法，获取返回结果
-     * 3. 如果结果为null，直接返回null
-     * 4. 从RequestContextHolder获取HTTP请求对象
-     * 5. 判断请求是否为CacheClientRequest（Feign客户端请求）：
-     *    - 是：执行缓存命中判断逻辑
-     *    - 否：直接返回结果，不进行缓存处理
-     * 
-     * 缓存命中判断逻辑：
-     * 1. 从请求头获取客户端传递的cache-uid（客户端缓存的唯一标识）
-     * 2. 计算服务端返回结果的uid（基于类名和JSON序列化内容的MD5哈希）
-     * 3. 将结果uid设置到响应头，供客户端缓存使用
-     * 4. 如果请求uid为空，直接返回结果，设置状态为200（需要缓存）
-     * 5. 比较请求uid和结果uid：
-     *    - 相同：缓存命中，返回null，设置响应头为304（使用缓存）
-     *    - 不同：缓存未命中，返回结果，设置响应头为200（需要缓存）
-     * 
-     * 响应头说明：
-     * - cache-uid：服务端返回结果的唯一标识
-     * - cache-status：缓存状态，304表示使用缓存，200表示需要缓存
-     * 
-     * 注意事项：
-     * - 只有CacheClientRequest类型的请求才会触发缓存逻辑
-     * - 缓存命中时返回null，客户端应使用本地缓存数据
-     * - 结果对象必须可序列化为JSON，用于生成uid
-     * 
-     * @param joinPoint 连接点，包含目标方法的信息和参数
-     * @return 目标方法的返回值，缓存命中时返回null
+     * Around advice: implements the core inter-service caching logic.
+     *
+     * Workflow:
+     * 1. Validate that the target class is a Controller (annotated with RestController or Controller).
+     * 2. Invoke the target method and capture the return value.
+     * 3. If the result is null, return null directly.
+     * 4. Obtain the HTTP request object from RequestContextHolder.
+     * 5. Check whether the request is a CacheClientRequest (Feign client request):
+     *    - Yes: run the cache-hit detection logic.
+     *    - No: return the result directly, with no cache processing.
+     *
+     * Cache-hit detection logic:
+     * 1. Read the cache-uid the client sent in the request header (unique identifier of the client's cache).
+     * 2. Compute the uid of the server's result (MD5 hash of class name and JSON-serialized content).
+     * 3. Write the result uid into the response header for the client's cache to use.
+     * 4. If the request uid is empty, return the result directly with status 200 (needs to cache).
+     * 5. Compare request uid and result uid:
+     *    - Equal: cache hit, return null and set the response header to 304 (use cache).
+     *    - Different: cache miss, return the result and set the response header to 200 (needs to cache).
+     *
+     * Response headers:
+     * - cache-uid: unique identifier of the server's result.
+     * - cache-status: cache status; 304 means use cache, 200 means needs to cache.
+     *
+     * Notes:
+     * - Only CacheClientRequest-typed requests trigger the cache logic.
+     * - On a cache hit, null is returned and the client should use its local cached data.
+     * - The result object must be JSON-serializable so a uid can be generated.
+     *
+     * @param joinPoint the join point, containing target method info and arguments.
+     * @return the target method's return value; null on cache hit.
      */
     @Around("cut()")
     @Throws(Throwable::class)
     fun around(joinPoint: ProceedingJoinPoint): Any? {
         validateClass(joinPoint)
-        //执行方法，得到结果
+        // Invoke the method and capture the result
         val result = joinPoint.proceed()
         if (result == null) {
             return null
@@ -123,14 +126,14 @@ class ClientCacheableAspect(
     }
 
     /**
-     * 验证class是否为controller
+     * Validate that the class is a controller.
      *
      * @param joinPoint
      */
     private fun validateClass(joinPoint: ProceedingJoinPoint) {
         val clazz: Class<*> = joinPoint.target.javaClass
         require(clazz.isAnnotationPresent(RestController::class.java) || clazz.isAnnotationPresent(Controller::class.java)) {
-            "类${clazz.name}必须是Controller才可使用ClientCacheable！"
+            "Class ${clazz.name} must be a Controller to use ClientCacheable!"
         }
     }
 

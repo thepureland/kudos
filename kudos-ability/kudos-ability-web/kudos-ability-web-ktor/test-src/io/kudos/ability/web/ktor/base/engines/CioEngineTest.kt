@@ -14,7 +14,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * cio引擎ktor测试
+ * Ktor test for the CIO engine.
  *
  * @author K
  * @author AI: Codex

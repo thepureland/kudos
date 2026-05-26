@@ -26,20 +26,23 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 /**
- * minio下载操作测试用例
+ * Test cases for MinIO upload operations.
  *
- * 说明：
- * 1) 不使用 OIDC / STS，仅通过 AccessKey/Secret 与 MinIO 交互，避免 503/初始化时序问题
- * 2) Admin 账户在启动时创建两个测试用户：
- *    - uploader         ：全局读写 + 建桶（作为 Spring 默认凭证）
- *    - upload_only_user ：仅上传 + 桶元操作 + 建桶（用于“指定 AccessKey 成功上传”的场景）
- * 3) 为避免“The specified bucket does not exist”，所有用例统一使用固定桶：docs，
- *    并在初始化时用 root 账号确保 docs 已创建（同 MinioDeleteServiceTest 的思路）。
+ * Notes:
+ * 1) Does not use OIDC / STS; interacts with MinIO only via AccessKey/Secret to
+ *    avoid 503 / initialization-timing issues.
+ * 2) The admin account creates two test users at startup:
+ *    - uploader:         global read/write + create-bucket (used as Spring's default credentials).
+ *    - upload_only_user: upload-only + bucket metadata operations + create-bucket
+ *      (used in the "successful upload with a specified AccessKey" scenario).
+ * 3) To avoid "The specified bucket does not exist", all tests use the fixed
+ *    bucket `docs`, and the initialization uses the root account to ensure `docs`
+ *    is created (same idea as MinioDeleteServiceTest).
  *
- * 测试项：
- * - fileUpload_with_default_minio_client           ：默认凭证上传成功（bucket=docs）
- * - fileUpload_with_specify_access_key_without_auth：指定错误凭证被拒绝（FILE_ACCESS_DENY）
- * - fileUpload_with_specify_access_key_with_auth   ：指定写入账号上传成功（bucket=docs）
+ * Tests:
+ * - fileUpload_with_default_minio_client:            default credentials upload successfully (bucket=docs).
+ * - fileUpload_with_specify_access_key_without_auth: incorrect credentials are rejected (FILE_ACCESS_DENY).
+ * - fileUpload_with_specify_access_key_with_auth:    upload-capable account uploads successfully (bucket=docs).
  *
  * @author AI: Codex
  * @author water
@@ -55,13 +58,13 @@ internal class MinioUploadServiceTest {
     private lateinit var uploadService: IUploadService
 
     /**
-     * 测试条件
-     * 1) minioClient 使用默认高级用户
+     * Test conditions
+     * 1) minioClient uses the default admin-level user.
      *
      *
-     * 测试参数:
-     * 1) 固定 bucket name = docs（已在初始化时创建）
-     * 2) 随机商户ID
+     * Test parameters:
+     * 1) Fixed bucket name = docs (created during initialization).
+     * 2) Random tenant id.
      */
     @Test
     fun fileUpload_with_default_minio_client() {
@@ -87,13 +90,13 @@ internal class MinioUploadServiceTest {
     }
 
     /**
-     * 测试条件
-     * 1) minioClient 使用未存在的 test用户
+     * Test conditions
+     * 1) minioClient uses a non-existent test user.
      *
      *
-     * 测试参数:
-     * 1) 固定 bucket name = docs（已在初始化时创建）
-     * 2) 随机商户ID
+     * Test parameters:
+     * 1) Fixed bucket name = docs (created during initialization).
+     * 2) Random tenant id.
      */
     @Test
     fun fileUpload_with_specify_access_key_without_auth() {
@@ -111,7 +114,7 @@ internal class MinioUploadServiceTest {
             this.inputStreamSource = InputStreamResource(resourceAsStream)
         }
 
-        // 故意给错的 accessKey/secretKey
+        // Intentionally use incorrect accessKey/secretKey.
         uploadFileModel.authServerParam = AccessKeyServerParam("test", "test")
 
         val se = assertFailsWith<ServiceException> { uploadService.fileUpload(uploadFileModel) }
@@ -119,13 +122,13 @@ internal class MinioUploadServiceTest {
     }
 
     /**
-     * 测试条件
-     * 1) 指定具备上传权限的 AccessKey/Secret（upload_only_user）
+     * Test conditions
+     * 1) Use an AccessKey/Secret with upload permission (upload_only_user).
      *
      *
-     * 测试参数:
-     * 1) 固定 bucket name = docs（已在初始化时创建）
-     * 2) 随机 tenantId
+     * Test parameters:
+     * 1) Fixed bucket name = docs (created during initialization).
+     * 2) Random tenantId.
      */
     @Test
     fun fileUpload_with_specify_access_key_with_auth() {
@@ -143,7 +146,7 @@ internal class MinioUploadServiceTest {
             this.inputStreamSource = InputStreamResource(resourceAsStream)
         }
 
-        // 指定“仅上传用户”的 AccessKey/Secret
+        // Use the "upload-only user"'s AccessKey/Secret.
         uploadFileModel.authServerParam = AccessKeyServerParam(UPLOAD_ONLY_USER, UPLOAD_ONLY_USER_SECRET)
 
         val uploadFileResult = uploadService.fileUpload(uploadFileModel)
@@ -153,15 +156,15 @@ internal class MinioUploadServiceTest {
     }
 
     companion object {
-        // ---- Root 管理员（来自 MinioTestContainer 的缺省 root）----
+        // ---- Root administrator (the default root from MinioTestContainer) ----
         private const val ROOT_USER = "admin"
         private const val ROOT_USER_SECRET = "12345678"
 
-        // ---- 默认上传用户（用于 Spring 默认配置）----
+        // ---- Default uploader user (used for Spring's default configuration) ----
         private const val DEFAULT_UPLOADER = "uploader"
         private const val DEFAULT_UPLOADER_SECRET = "uploader_secret"
 
-        // ---- 仅上传用户（用于“指定 AccessKey 成功上传”）----
+        // ---- Upload-only user (used for "successful upload with a specified AccessKey") ----
         private const val UPLOAD_ONLY_USER = "upload_only_user"
         private const val UPLOAD_ONLY_USER_SECRET = "upload_only_user_secret"
 
@@ -171,13 +174,13 @@ internal class MinioUploadServiceTest {
             val minio = MinioTestContainer.startIfNeeded(registry)
             val endpoint = "http://${minio.ports.first().ip}:${minio.ports.first().publicPort}"
 
-            // 让 Spring 使用我们创建的默认上传用户
+            // Make Spring use the default uploader user we created.
             registry.add("kudos.ability.file.minio.endpoint") { endpoint }
             registry.add("kudos.ability.file.minio.public-endpoint") { endpoint }
             registry.add("kudos.ability.file.minio.accessKey") { DEFAULT_UPLOADER }
             registry.add("kudos.ability.file.minio.secretKey") { DEFAULT_UPLOADER_SECRET }
 
-            // 1) 先确保固定桶 docs 已存在（避免 The specified bucket does not exist）
+            // 1) First ensure the fixed bucket docs exists (avoids "The specified bucket does not exist").
             val rootClient = MinioClient.builder()
                 .endpoint(endpoint)
                 .credentials(ROOT_USER, ROOT_USER_SECRET)
@@ -190,13 +193,13 @@ internal class MinioUploadServiceTest {
                 rootClient.makeBucket(MakeBucketArgs.builder().bucket(bucket).build())
             }
 
-            // 2) 用 root 管理员创建策略 + 用户
+            // 2) Use the root administrator to create policies and users.
             val admin = MinioAdminClient.builder()
                 .endpoint(endpoint)
                 .credentials(ROOT_USER, ROOT_USER_SECRET)
                 .build()
 
-            // 默认上传用户：全桶读写 + 建桶（便于扩展）
+            // Default uploader user: full read/write on all buckets + create-bucket (room to extend).
             val uploaderPolicy = """
             {
               "Version": "2012-10-17",
@@ -227,7 +230,7 @@ internal class MinioUploadServiceTest {
             }
             """.trimIndent()
 
-            // 仅上传用户：允许建桶 + 桶元操作 + PutObject（本用例只需 docs 已存在，但策略保留）
+            // Upload-only user: allows create-bucket + bucket metadata operations + PutObject (this test only needs docs to already exist, but the policy is retained).
             val uploadOnlyPolicy = """
             {
               "Version": "2012-10-17",
@@ -254,11 +257,11 @@ internal class MinioUploadServiceTest {
             }
             """.trimIndent()
 
-            // 创建策略（若已存在可忽略异常）
+            // Create policies (ignore exceptions if they already exist).
             runCatching { admin.addCannedPolicy("uploader-rw-all", uploaderPolicy) }
             runCatching { admin.addCannedPolicy("upload-only-all", uploadOnlyPolicy) }
 
-            // 创建用户（若已存在可忽略异常）
+            // Create users (ignore exceptions if they already exist).
             runCatching {
                 admin.addUser(DEFAULT_UPLOADER, Status.ENABLED, DEFAULT_UPLOADER_SECRET, null, null)
             }
@@ -266,7 +269,7 @@ internal class MinioUploadServiceTest {
                 admin.addUser(UPLOAD_ONLY_USER, Status.ENABLED, UPLOAD_ONLY_USER_SECRET, null, null)
             }
 
-            // 绑定策略
+            // Bind policies.
             admin.setPolicy(DEFAULT_UPLOADER, false, "uploader-rw-all")
             admin.setPolicy(UPLOAD_ONLY_USER, false, "upload-only-all")
         }

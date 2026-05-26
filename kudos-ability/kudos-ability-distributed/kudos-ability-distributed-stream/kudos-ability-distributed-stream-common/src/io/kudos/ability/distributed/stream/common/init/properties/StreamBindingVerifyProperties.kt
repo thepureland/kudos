@@ -1,24 +1,24 @@
 package io.kudos.ability.distributed.stream.common.init.properties
 
 /**
- * Stream 绑定自检配置。
+ * Stream binding self-check configuration.
  *
- * 绑定前缀：`kudos.ability.distributed.stream.binding-verify`
+ * Binding prefix: `kudos.ability.distributed.stream.binding-verify`
  */
 open class StreamBindingVerifyProperties {
 
     /**
-     * 是否启用生产者 binding 自检。
+     * Whether the producer binding self-check is enabled.
      */
     var enabled: Boolean = false
 
     /**
-     * 缺失必需 binding 时是否启动失败（fail-fast）。
+     * Whether startup should fail (fail-fast) when required bindings are missing.
      */
     var failOnMissing: Boolean = false
 
     /**
-     * 必需的生产者 binding 名称列表。
+     * List of required producer binding names.
      */
     var requiredProducerBindings: List<String> = emptyList()
 }

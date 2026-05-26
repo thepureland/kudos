@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestParam
 
 
 /**
- * 子系统-微服务关系 对外API
+ * External API for subsystem-microservice relationship.
  *
  * @author K
  * @since 1.0.0

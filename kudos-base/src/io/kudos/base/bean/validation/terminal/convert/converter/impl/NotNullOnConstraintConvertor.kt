@@ -4,7 +4,7 @@ import io.kudos.base.bean.validation.constraint.annotations.NotNullOn
 
 
 /**
- * NotNullOn注解约束->终端约束的转换器
+ * Converter from the NotNullOn annotation constraint to a terminal constraint.
  *
  * @author K
  * @since 1.0.0
@@ -13,7 +13,7 @@ class NotNullOnConstraintConvertor(annotation: Annotation) : DefaultConstraintCo
 
     override fun getRule(constraintAnnotation: Annotation): LinkedHashMap<String, Any> {
         val map = super.getRule(constraintAnnotation)
-        require(constraintAnnotation is NotNullOn) { "NotNullOnConstraintConvertor 仅支持 NotNullOn 注解" }
+        require(constraintAnnotation is NotNullOn) { "NotNullOnConstraintConvertor only supports the NotNullOn annotation" }
         val depends = constraintAnnotation.depends
         map["depends"] = super.getRule(depends)
         return map

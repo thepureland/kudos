@@ -5,7 +5,7 @@ import java.nio.file.Files
 import kotlin.test.*
 
 /**
- * FileSystemScanner测试用例
+ * FileSystemScanner test cases
  *
  * @author AI: cursor
  * @author K

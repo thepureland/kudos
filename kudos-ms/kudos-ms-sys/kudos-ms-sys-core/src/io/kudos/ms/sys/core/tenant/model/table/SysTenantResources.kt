@@ -6,17 +6,17 @@ import org.ktorm.schema.varchar
 
 
 /**
- * 租户-资源关系数据库表-实体关联对象
+ * Tenant-resource relation table-to-entity binding.
  *
  * @author K
  * @since 1.0.0
  */
 object SysTenantResources : StringIdTable<SysTenantResource>("sys_tenant_resource") {
 
-    /** 租户id */
+    /** Tenant id */
     var tenantId = varchar("tenant_id").bindTo { it.tenantId }
 
-    /** 资源id */
+    /** Resource id */
     var resourceId = varchar("resource_id").bindTo { it.resourceId }
 
 

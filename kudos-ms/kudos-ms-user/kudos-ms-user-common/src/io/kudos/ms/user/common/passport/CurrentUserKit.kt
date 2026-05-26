@@ -5,33 +5,33 @@ import io.kudos.ms.user.common.passport.vo.SessionUserPrincipal
 
 
 /**
- * "当前登录用户"读取工具。
+ * Utility for reading the "current logged-in user".
  *
- * 数据源是 [io.kudos.context.core.KudosContext.user]，由
- * [io.kudos.ms.user.api.public.filter.UserContextWebFilter] 从 HttpSession 填进来。
- * 因此只在以下场景能读到非空值：
- *   1) 请求经过 web 过滤器链
- *   2) 用户已通过 `POST /api/public/user/passport/login` 登录（写入了 session）
+ * The data source is [io.kudos.context.core.KudosContext.user], populated from HttpSession by
+ * [io.kudos.ms.user.api.public.filter.UserContextWebFilter].
+ * Therefore non-null values are only readable in the following scenarios:
+ *   1) The request goes through the web filter chain
+ *   2) The user has logged in via `POST /api/public/user/passport/login` (which writes the session)
  *
- * RPC / 后台任务 / 测试里上下文是空的，调用 [currentUserIdOrNull] 会返回 null。
+ * In RPC / background tasks / tests the context is empty, so [currentUserIdOrNull] returns null.
  *
  * @author K
  * @since 1.0.0
  */
 object CurrentUserKit {
 
-    /** 当前线程绑定的登录用户；未登录 / 无上下文返回 null。 */
+    /** Logged-in user bound to the current thread; returns null if not logged in / no context. */
     fun currentPrincipalOrNull(): SessionUserPrincipal? =
         KudosContextHolder.getOrNull()?.user as? SessionUserPrincipal
 
-    /** 当前线程绑定的登录用户 id；未登录 / 无上下文返回 null。 */
+    /** Logged-in user id bound to the current thread; returns null if not logged in / no context. */
     fun currentUserIdOrNull(): String? = currentPrincipalOrNull()?.id
 
-    /** 当前线程绑定的登录用户 id；未登录抛 [IllegalStateException]。用于明确"必须登录"的代码路径。 */
+    /** Logged-in user id bound to the current thread; throws [IllegalStateException] if not logged in. For code paths that explicitly require login. */
     fun currentUserId(): String =
-        currentUserIdOrNull() ?: error("当前线程未绑定登录用户：未登录或未经过 UserContextWebFilter")
+        currentUserIdOrNull() ?: error("No logged-in user bound to the current thread: not logged in or not passed through UserContextWebFilter")
 
-    /** 当前线程绑定的租户 id；未登录返回 null。 */
+    /** Tenant id bound to the current thread; returns null if not logged in. */
     fun currentTenantIdOrNull(): String? = currentPrincipalOrNull()?.tenantId
 
 }

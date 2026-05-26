@@ -7,7 +7,7 @@ import kotlin.reflect.full.starProjectedType
 
 
 /**
- * Compare注解约束->终端约束的转换器
+ * Converter from the Compare annotation constraint to a terminal constraint.
  *
  * @author K
  * @since 1.0.0
@@ -21,7 +21,7 @@ class CompareConstraintConvertor(annotation: Annotation) : DefaultConstraintConv
         if (returnType.isSubtypeOf(Number::class.starProjectedType)) {
             map["isNumber"] = "true"
         }
-        require(constraintAnnotation is Compare) { "CompareConstraintConvertor 仅支持 Compare 注解" }
+        require(constraintAnnotation is Compare) { "CompareConstraintConvertor only supports the Compare annotation" }
         val depends = constraintAnnotation.depends
         if (depends.properties.isNotEmpty()) {
             map["depends"] = super.getRule(depends)

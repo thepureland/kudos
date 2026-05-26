@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository
 
 
 /**
- * 语言/区域字典数据访问对象
+ * Data access object for the language/locale dictionary.
  *
  * @author K
  * @since 1.0.0

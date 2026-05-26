@@ -6,8 +6,9 @@ import io.kudos.ability.cache.common.support.ICacheConfigProvider
 import io.kudos.ability.cache.remote.redis.keyvalue.TestCacheConfigProvider
 
 /**
- * 为 Hash 两级缓存（本地+远程）测试提供配置：在 [TestCacheConfigProvider] 基础上增加 hash 缓存 "testHash"、"testHashWithTime"（LOCAL_REMOTE 策略）。
- * TestRow 与 TestRowWithTime 分属不同缓存，避免同表混存导致类型转换异常。
+ * Provides configuration for two-level hash cache tests (local + remote): extends [TestCacheConfigProvider]
+ * by adding the hash caches "testHash" and "testHashWithTime" (LOCAL_REMOTE strategy).
+ * TestRow and TestRowWithTime belong to separate caches to avoid type-conversion errors caused by mixing them in one map.
  *
  * @author K
  * @author AI: Codex

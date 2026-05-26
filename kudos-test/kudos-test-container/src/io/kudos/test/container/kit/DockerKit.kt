@@ -9,7 +9,7 @@ import kotlin.concurrent.thread
 
 
 /**
- * docker操作工具类
+ * Docker operations utility.
  *
  * @author AI: ChatGPT
  * @author K
@@ -18,9 +18,9 @@ import kotlin.concurrent.thread
 object DockerKit {
 
     /**
-     * 在运行 Testcontainers 之前调用：
-     * - 如果 Docker 已经可用：直接返回
-     * - 如果不可用：尝试启动 Docker，并等待其就绪
+     * Call before running Testcontainers:
+     * - If Docker is already available: return immediately
+     * - If not available: attempt to start Docker and wait until it is ready
      */
     @JvmStatic
     fun ensureDockerRunning(
@@ -32,13 +32,13 @@ object DockerKit {
             throw IllegalStateException(buildNotInstalledMessage(install))
         }
 
-        // 已安装：优先用 docker info 判断 daemon 是否可用
+        // Already installed: prefer `docker info` to check whether the daemon is available
         if (isDockerRunning()) return
 
-        // 尝试启动
+        // Attempt to start
         startDockerForCurrentOs(install)
 
-        // 等待就绪
+        // Wait until ready
         val deadline = System.nanoTime() + waitTimeout.toNanos()
         while (System.nanoTime() < deadline) {
             if (isDockerRunning()) return
@@ -46,14 +46,14 @@ object DockerKit {
         }
 
         throw IllegalStateException(
-            "检测到 Docker 已安装，但在 ${waitTimeout.seconds}s 内仍不可用。可能原因：\n" +
-                    "- Docker Desktop 正在初始化/卡住\n" +
-                    "- 权限弹窗未确认\n" +
-                    "- Linux 下 docker 服务未启动或当前用户无权限访问 /var/run/docker.sock\n"
+            "Docker is installed but still unavailable after ${waitTimeout.seconds}s. Possible causes:\n" +
+                    "- Docker Desktop is initializing or hung\n" +
+                    "- A permission dialog has not been confirmed\n" +
+                    "- On Linux, the docker service is not started or the current user has no permission to access /var/run/docker.sock\n"
         )
     }
 
-    // ---------- 安装检测 ----------
+    // ---------- Installation detection ----------
 
     private data class InstallInfo(
         val installed: Boolean,
@@ -63,15 +63,15 @@ object DockerKit {
     )
 
     /**
-     * 按当前操作系统嗅探 Docker 安装情况。
+     * Sniffs the Docker installation per the current OS.
      *
-     * 判定规则按平台差异：
-     * - **macOS/Windows**：CLI 可用 **或** Desktop 应用存在即视为已安装（Desktop 常被 IDE 启动）
-     * - **Linux**：仅看 CLI 是否能 exec（Linux 无 Desktop 概念，dockerd 是后台服务）
+     * Detection rules vary by platform:
+     * - **macOS/Windows**: considered installed if the CLI is available **or** the Desktop application exists (Desktop is often started by the IDE)
+     * - **Linux**: only checks whether the CLI can be exec'd (Linux has no Desktop concept; dockerd is a background service)
      *
-     * 同时按平台给出 `hints` 修复建议，让 [buildNotInstalledMessage] 直接拼出运维 actionable 的错误。
+     * Also emits `hints` for remediation per platform, so [buildNotInstalledMessage] can directly produce an ops-actionable error message.
      *
-     * @return [InstallInfo] 含 installed / cliAvailable / desktopAppFound / hints
+     * @return [InstallInfo] containing installed / cliAvailable / desktopAppFound / hints
      * @author K
      * @since 1.0.0
      */
@@ -82,30 +82,30 @@ object DockerKit {
         val desktopFound = when (os) {
             OsEnum.MAC -> File("/Applications/Docker.app").exists()
             OsEnum.WINDOWS -> windowsDockerDesktopExeCandidates().any { File(it).exists() }
-            OsEnum.LINUX -> false // Linux 通常不是 Desktop，主要看 CLI/daemon
+            OsEnum.LINUX -> false // Linux usually has no Desktop; rely mainly on CLI/daemon
             else -> false
         }
 
         val installed = when (os) {
             OsEnum.MAC -> cliAvailable || desktopFound
             OsEnum.WINDOWS -> cliAvailable || desktopFound
-            OsEnum.LINUX -> cliAvailable // Linux 以 docker CLI 是否存在为主
+            OsEnum.LINUX -> cliAvailable // On Linux, the presence of the docker CLI is the primary criterion
             else -> cliAvailable
         }
 
         val hints = when (os) {
-            OsEnum.MAC -> listOf("macOS：安装 Docker Desktop（Applications 里应出现 Docker.app）。")
+            OsEnum.MAC -> listOf("macOS: install Docker Desktop (Docker.app should appear in Applications).")
             OsEnum.WINDOWS -> listOf(
-                "Windows：安装 Docker Desktop（或使用 WSL2 + Docker）。",
-                "若公司环境限制安装，可让管理员协助。"
+                "Windows: install Docker Desktop (or use WSL2 + Docker).",
+                "If installation is restricted in your corporate environment, ask an administrator for help."
             )
 
             OsEnum.LINUX -> listOf(
-                "Linux：安装 Docker Engine（docker CLI + dockerd）。",
-                "安装后通常需要启动服务：systemctl start docker，并把用户加入 docker 组。"
+                "Linux: install Docker Engine (docker CLI + dockerd).",
+                "After installation, you typically need to start the service: systemctl start docker, and add the user to the docker group."
             )
 
-            else -> listOf("请先安装 Docker。")
+            else -> listOf("Please install Docker first.")
         }
 
         return InstallInfo(
@@ -117,35 +117,35 @@ object DockerKit {
     }
 
     /**
-     * 把 [detectDockerInstall] 的结果拼成给运维/开发者看的提示消息：
-     * 包含检测细节 + 平台修复 hints + IDE PATH 提醒（最常踩坑：终端能跑测试不行）。
+     * Formats the [detectDockerInstall] result into a message for ops/developers:
+     * contains detection details + platform-specific remediation hints + an IDE PATH reminder (the most common pitfall: tests pass in the terminal but not in the IDE).
      *
-     * @param info 安装检测结果
-     * @return 多行可读消息
+     * @param info the installation detection result
+     * @return a multi-line, human-readable message
      * @author K
      * @since 1.0.0
      */
     private fun buildNotInstalledMessage(info: InstallInfo): String {
         return buildString {
-            appendLine("未检测到 Docker 已安装，因此无法自动启动。")
-            appendLine("检测结果：")
-            appendLine("- docker CLI 可用：${info.cliAvailable}")
-            appendLine("- Docker Desktop 应用存在：${info.desktopAppFound}")
+            appendLine("Docker is not installed; cannot start it automatically.")
+            appendLine("Detection result:")
+            appendLine("- docker CLI available: ${info.cliAvailable}")
+            appendLine("- Docker Desktop application present: ${info.desktopAppFound}")
             appendLine()
-            appendLine("处理建议：")
+            appendLine("Suggested actions:")
             info.hints.forEach { appendLine("- $it") }
             appendLine()
-            appendLine("（提示：如果你是通过 IDE 运行测试，确认 IDE 的 PATH/环境变量与终端一致。）")
+            appendLine("(Tip: if running tests via an IDE, verify the IDE's PATH/environment variables match the terminal's.)")
         }
     }
 
-    // ---------- 运行检测 ----------
+    // ---------- Runtime detection ----------
 
     /**
-     * 用 `docker info` 探测 daemon 是否真的就绪。
-     * `--version` 只验 CLI 二进制存在，而 `info` 会真的连 daemon，能识别"CLI 装了但 dockerd 没起来"的情况。
+     * Probes whether the daemon is actually ready via `docker info`.
+     * `--version` only verifies the CLI binary exists, while `info` actually connects to the daemon and can detect the "CLI installed but dockerd not running" case.
      *
-     * @return true 表示 daemon 可用
+     * @return true if the daemon is available
      * @author K
      * @since 1.0.0
      */
@@ -155,9 +155,9 @@ object DockerKit {
     }
 
     /**
-     * 探测 docker CLI 是否在 PATH 中可用（不验 daemon）。
+     * Probes whether the docker CLI is available on PATH (does not verify the daemon).
      *
-     * @return true 表示 `docker --version` 能执行成功
+     * @return true if `docker --version` runs successfully
      * @author K
      * @since 1.0.0
      */
@@ -166,13 +166,13 @@ object DockerKit {
         return r.exitCode == 0
     }
 
-    // ---------- 启动逻辑 ----------
+    // ---------- Startup logic ----------
 
     /**
-     * 按当前 OS dispatch 到对应的启动实现：mac/windows/linux 各走各的路径，其他 OS 不支持。
+     * Dispatches to the appropriate startup implementation for the current OS: mac/windows/linux each have their own path; other OSes are unsupported.
      *
-     * @param install 检测信息，传给子例程做"Desktop 路径"等判定
-     * @throws IllegalStateException 当前 OS 不在支持列表中
+     * @param install detection info passed to subroutines for things like "Desktop path" checks
+     * @throws IllegalStateException if the current OS is not in the supported list
      * @author K
      * @since 1.0.0
      */
@@ -181,52 +181,52 @@ object DockerKit {
             OsEnum.MAC -> startDockerOnMac(install)
             OsEnum.WINDOWS -> startDockerOnWindows(install)
             OsEnum.LINUX -> startDockerOnLinux()
-            else -> throw IllegalStateException("不支持的操作系统，无法自动启动 Docker。")
+            else -> throw IllegalStateException("Unsupported OS; cannot start Docker automatically.")
         }
     }
 
     /**
-     * macOS：用 `open -g -a Docker` 后台启动 Docker.app；少数机器 bundle 名是 "Docker Desktop"，做一次兜底。
-     * `-g` 避免抢前台焦点，跑 CI 时体验更好。
+     * macOS: launches Docker.app in the background via `open -g -a Docker`; some machines have a bundle named "Docker Desktop", which is handled as a fallback.
+     * `-g` avoids stealing foreground focus, which improves the experience on CI.
      *
-     * @param install 检测信息（虽然分支差异不大，保留参数以备后续扩展）
+     * @param install detection info (although the branches differ little, the parameter is kept for future extension)
      * @author K
      * @since 1.0.0
      */
     private fun startDockerOnMac(install: InstallInfo) {
-        // 如果 Desktop 存在，直接 open
+        // If Desktop is present, just `open` it
         if (install.desktopAppFound) {
             runCommand(listOf("open", "-g", "-a", "Docker"), timeoutMillis = 10_000)
         } else {
-            // 只有 CLI 的情况很少见；仍然尝试 open，失败也没关系
+            // CLI-only is rare; still try `open`, it does not matter if it fails
             runCommand(listOf("open", "-g", "-a", "Docker"), timeoutMillis = 10_000)
         }
 
-        // 兜底：少数机器 App 名可能不同
+        // Fallback: a few machines have a different App name
         if (!isDockerRunning()) {
             runCommand(listOf("open", "-g", "-a", "Docker Desktop"), timeoutMillis = 10_000)
         }
     }
 
     /**
-     * Windows：两段式启动
-     * 1. `sc start com.docker.service` 尝试启动服务（Docker Desktop 安装时注册的）
-     * 2. 服务不在/不可启则用 PowerShell `Start-Process` 直接拉 Desktop exe
+     * Windows: two-step startup
+     * 1. `sc start com.docker.service` tries to start the service (registered by Docker Desktop on install)
+     * 2. If the service is missing or fails to start, use PowerShell `Start-Process` to launch the Desktop exe directly
      *
-     * exe 路径里可能含空格，所以走 PowerShell + `-FilePath` 比 cmd.exe 更稳；
-     * 单引号转义 `'` → `''` 防止用户名带单引号时命令解析失败。
+     * The exe path may contain spaces, so PowerShell + `-FilePath` is more reliable than cmd.exe;
+     * single quotes are escaped `'` -> `''` to avoid command parsing failures when the user name contains a single quote.
      *
-     * @param install 检测信息（用于复用 [windowsDockerDesktopExeCandidates]）
-     * @throws IllegalStateException 服务起不来又找不到 exe 时
+     * @param install detection info (used to reuse [windowsDockerDesktopExeCandidates])
+     * @throws IllegalStateException when the service fails to start and the exe cannot be found
      * @author K
      * @since 1.0.0
      */
     private fun startDockerOnWindows(install: InstallInfo) {
-        // 1) 先尝试启动服务（若存在）
+        // 1) First, try to start the service (if it exists)
         val sc = runCommand(listOf("sc", "start", "com.docker.service"), timeoutMillis = 15_000)
         if (sc.exitCode == 0) return
 
-        // 2) 找 Desktop exe 直接启动
+        // 2) Find the Desktop exe and launch it directly
         val exe = windowsDockerDesktopExeCandidates().firstOrNull { File(it).exists() }
         if (exe != null) {
             runCommand(
@@ -239,36 +239,36 @@ object DockerKit {
                 timeoutMillis = 15_000
             )
         } else {
-            // 理论上 install 已判定存在，这里再兜底一次
-            throw IllegalStateException("检测到 Docker 已安装，但找不到 Docker Desktop 可执行文件，无法自动启动。")
+            // In theory install was already determined to exist; fall back once more here
+            throw IllegalStateException("Docker is installed but the Docker Desktop executable cannot be found; cannot start automatically.")
         }
     }
 
     /**
-     * Linux：三级降级启动
-     * 1. `systemctl start docker`（systemd 主流发行版）
-     * 2. `service docker start`（SysV / 老发行版）
-     * 3. 直接 nohup 启 dockerd（极端兜底，把日志重定向到 /tmp 便于事后排错）
+     * Linux: three-level fallback startup
+     * 1. `systemctl start docker` (systemd mainstream distributions)
+     * 2. `service docker start` (SysV / older distributions)
+     * 3. Start dockerd directly via nohup (extreme fallback; redirects logs to /tmp for post-mortem analysis)
      *
      * @author K
      * @since 1.0.0
      */
     private fun startDockerOnLinux() {
-        // Linux 主要是启动服务
+        // On Linux, this is primarily about starting the service
         val systemctl = runCommand(listOf("systemctl", "start", "docker"), timeoutMillis = 15_000)
         if (systemctl.exitCode == 0) return
 
         val service = runCommand(listOf("service", "docker", "start"), timeoutMillis = 15_000)
         if (service.exitCode == 0) return
 
-        // 再兜底：尝试启动 dockerd
+        // Final fallback: try to start dockerd
         runCommand(listOf("sh", "-lc", "nohup dockerd >/tmp/dockerd.log 2>&1 &"), timeoutMillis = 8_000)
     }
 
     /**
-     * Windows 下 Docker Desktop 常见安装路径候选；64-bit / 32-bit Program Files 都覆盖。
+     * Candidate paths where Docker Desktop is commonly installed on Windows; covers both 64-bit and 32-bit Program Files.
      *
-     * @return 完整路径字符串列表（按"更可能存在"优先排序）
+     * @return a list of full path strings (ordered by "more likely to exist" first)
      * @author K
      * @since 1.0.0
      */
@@ -280,16 +280,16 @@ object DockerKit {
     private data class CmdResult(val exitCode: Int, val stdout: String, val stderr: String)
 
     /**
-     * 通用外部命令执行：异步收 stdout/stderr，带超时强杀，捕获所有异常。
+     * Generic external command execution: collects stdout/stderr asynchronously, force-kills on timeout, catches all exceptions.
      *
-     * 关键设计：
-     * - 用 daemon 线程读流，避免主线程被 4K pipe buffer 阻塞
-     * - 超时后 `destroyForcibly` 防止僵尸子进程
-     * - 异常路径返回 exitCode=127（约定"命令不存在"），便于上游统一判定
+     * Key design points:
+     * - Use daemon threads to read streams, avoiding the main thread being blocked by the 4K pipe buffer
+     * - `destroyForcibly` after timeout to prevent zombie subprocesses
+     * - On the exception path, returns exitCode=127 (the conventional "command not found"), making upstream classification uniform
      *
-     * @param cmd 命令 + 参数列表
-     * @param timeoutMillis 超时（毫秒）
-     * @return 结果含 exitCode / stdout / stderr
+     * @param cmd command + argument list
+     * @param timeoutMillis timeout in milliseconds
+     * @return a result containing exitCode / stdout / stderr
      * @author K
      * @since 1.0.0
      */
@@ -318,7 +318,7 @@ object DockerKit {
 
             CmdResult(p.exitValue(), stdout.toString(), stderr.toString())
         } catch (e: Exception) {
-            // 127 类似“命令不存在”
+            // 127 is the conventional "command not found"
             CmdResult(127, "", e.toString())
         }
     }

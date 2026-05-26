@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository
 
 
 /**
- * 系统数据访问对象
+ * System DAO.
  *
  * @author K
  * @since 1.0.0
@@ -19,9 +19,9 @@ import org.springframework.stereotype.Repository
 open class SysSystemDao : BaseCrudDao<String, SysSystem, SysSystems>() {
 
     /**
-     * 按是否子系统查询，返回缓存用 VO 列表
+     * Queries by sub-system flag and returns the cache VO list.
      *
-     * @param isSubSystem 是否为子系统
+     * @param isSubSystem whether to fetch sub-systems
      * @return List<SysSystemCacheEntry>
      */
     open fun fetchSystemsByType(isSubSystem: Boolean): List<SysSystemCacheEntry> {

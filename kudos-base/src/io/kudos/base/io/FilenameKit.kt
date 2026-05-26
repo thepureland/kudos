@@ -4,7 +4,7 @@ import org.apache.commons.io.FilenameUtils
 import org.apache.commons.io.IOCase
 
 /**
- * 文件名工具类
+ * Filename utility.
  *
  * @author K
  * @since 1.0.0
@@ -12,16 +12,18 @@ import org.apache.commons.io.IOCase
 object FilenameKit {
 
     // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-    // 封装org.apache.commons.io.FilenameUtils
+    // Wraps org.apache.commons.io.FilenameUtils
     // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
     //region normalize
     /**
-     * 标准化文件路径，移除两个和一个点的部分
-     * 该方法将路径标准化。输入的分隔符有可能是Unix或Windows操作系统的格式， 输出的路径的分隔符将取决于当前的操作系统。
-     * 结尾斜杠将被保留。双斜杠将被合并为单个斜杠（但处理UNC名称）。 一个圆点路径段将被删除。双点会导致这条路径段和前一个要删除的。
-     * 如果双点没有父路径段，则返回null。
-     * 输出内容除了分隔符外，在Unix和Windows操作系统上将是一致的
+     * Normalizes a file path, removing double and single dot segments.
+     * This method normalizes a path. The input separators can be in either Unix or Windows format, while the output
+     * separator depends on the current operating system.
+     * Trailing slashes are preserved. Double slashes are merged into single slashes (but UNC names are handled).
+     * Single dot segments are removed. Double dots cause this segment and the previous one to be removed.
+     * If the double dot has no parent segment, null is returned.
+     * The output is consistent across Unix and Windows operating systems, except for the separator.
      *
      * <pre>
      * /foo//               -->   /foo/
@@ -43,21 +45,23 @@ object FilenameKit {
      * ~/../bar             -->   null
      * </pre>
      *
-     * (注意：输出的路径的分隔符将取决于当前的操作系统)
+     * (Note: the output path separator depends on the current operating system.)
      *
-     * @param filename 要标准化的文件路径，null将返回null
-     * @return 标准化后的文件路径，无效路径将返回null
+     * @param filename the file path to normalize; null returns null
+     * @return the normalized file path; null for invalid paths
      * @author K
      * @since 1.0.0
      */
     fun normalize(filename: String?): String? = FilenameUtils.normalize(filename)
 
     /**
-     * 标准化文件路径，移除两个和一个点的部分。能够指定要使用的分隔符
-     * 该方法将路径标准化。输入的分隔符有可能是Unix或Windows操作系统的格式， 输出的路径的分隔符由参数指定。
-     * 结尾斜杠将被保留。双斜杠将被合并为单个斜杠（但处理UNC名称）。 一个圆点路径段将被删除。双点会导致这条路径段和前一个要删除的。
-     * 如果双点没有父路径段，则返回null。
-     * 输出内容除了分隔符外，在Unix和Windows操作系统上将是一致的
+     * Normalizes a file path, removing double and single dot segments. The separator to use can be specified.
+     * This method normalizes a path. The input separators can be in either Unix or Windows format, and the output
+     * separator is specified by the parameter.
+     * Trailing slashes are preserved. Double slashes are merged into single slashes (but UNC names are handled).
+     * Single dot segments are removed. Double dots cause this segment and the previous one to be removed.
+     * If the double dot has no parent segment, null is returned.
+     * The output is consistent across Unix and Windows operating systems, except for the separator.
      *
      * <pre>
      * /foo//               -->   /foo/
@@ -79,22 +83,24 @@ object FilenameKit {
      * ~/../bar             -->   null
      * </pre>
      *
-     * 输出的路径在Unix和Windows操作系统下将一致
+     * The output path is consistent across Unix and Windows operating systems.
      *
-     * @param filename 要标准化的文件路径
-     * @param unixSeparator true: 是否使用unix格式的分隔符。false: 使用windows格式的分隔符
-     * @return 标准化后的文件路径，无效路径将返回null
+     * @param filename the file path to normalize
+     * @param unixSeparator true to use Unix-style separators; false to use Windows-style separators
+     * @return the normalized file path; null for invalid paths
      * @author K
      * @since 1.0.0
      */
     fun normalize(filename: String, unixSeparator: Boolean): String = FilenameUtils.normalize(filename, unixSeparator)
 
     /**
-     * 标准化文件路径，移除两个和一个点的部分，并移除结尾的任何分隔符
-     * 该方法将路径标准化。输入的分隔符有可能是Unix或Windows操作系统的格式， 输出的路径的分隔符将取决于当前的操作系统。
-     * 结尾斜杠将被保留。双斜杠将被合并为单个斜杠（但处理UNC名称）。 一个圆点路径段将被删除。双点会导致这条路径段和前一个要删除的。
-     * 如果双点没有父路径段，则返回null。
-     * 输出内容除了分隔符外，在Unix和Windows操作系统上将是一致的
+     * Normalizes a file path, removing double and single dot segments, and removes any trailing separator.
+     * This method normalizes a path. The input separators can be in either Unix or Windows format, while the output
+     * separator depends on the current operating system.
+     * Trailing slashes are preserved. Double slashes are merged into single slashes (but UNC names are handled).
+     * Single dot segments are removed. Double dots cause this segment and the previous one to be removed.
+     * If the double dot has no parent segment, null is returned.
+     * The output is consistent across Unix and Windows operating systems, except for the separator.
      *
      * <pre>
      * /foo//               -->   /foo
@@ -116,21 +122,23 @@ object FilenameKit {
      * ~/../bar             -->   null
      * </pre>
      *
-     * (注意：输出的路径的分隔符将取决于当前的操作系统)
+     * (Note: the output path separator depends on the current operating system.)
      *
-     * @param filename 要标准化的文件路径，null将返回null
-     * @return 标准化后的文件路径，无效路径将返回null
+     * @param filename the file path to normalize; null returns null
+     * @return the normalized file path; null for invalid paths
      * @author K
      * @since 1.0.0
      */
     fun normalizeNoEndSeparator(filename: String?): String? = FilenameUtils.normalizeNoEndSeparator(filename)
 
     /**
-     * 标准化文件路径，移除两个和一个点的部分，并移除结尾的任何分隔符. 能够指定要使用的分隔符
-     * 该方法将路径标准化。输入的分隔符有可能是Unix或Windows操作系统的格式， 输出的路径的分隔符由参数指定。
-     * 结尾斜杠将被保留。双斜杠将被合并为单个斜杠（但处理UNC名称）。 一个圆点路径段将被删除。双点会导致这条路径段和前一个要删除的。
-     * 如果双点没有父路径段，则返回null。
-     * 输出内容除了分隔符外，在Unix和Windows操作系统上将是一致的
+     * Normalizes a file path, removing double and single dot segments and any trailing separator. The separator to use can be specified.
+     * This method normalizes a path. The input separators can be in either Unix or Windows format, and the output
+     * separator is specified by the parameter.
+     * Trailing slashes are preserved. Double slashes are merged into single slashes (but UNC names are handled).
+     * Single dot segments are removed. Double dots cause this segment and the previous one to be removed.
+     * If the double dot has no parent segment, null is returned.
+     * The output is consistent across Unix and Windows operating systems, except for the separator.
      *
      * <pre>
      * /foo//               -->   /foo
@@ -152,9 +160,9 @@ object FilenameKit {
      * ~/../bar             -->   null
      * </pre>
      *
-     * @param filename 要标准化的文件路径，null将返回null
-     * @param unixSeparator true: 是否使用unix格式的分隔符。false: 使用windows格式的分隔符
-     * @return 标准化后的文件路径，无效路径将返回null
+     * @param filename the file path to normalize; null returns null
+     * @param unixSeparator true to use Unix-style separators; false to use Windows-style separators
+     * @return the normalized file path; null for invalid paths
      * @author K
      * @since 1.0.0
      */
@@ -163,11 +171,12 @@ object FilenameKit {
     //endregion normalize
 
     /**
-     * 将一个子路径连接到一个基础路径，使用标准命令行样式规则。
-     * 第一个参数为基础路径，第二个参数为要连接的路径。返回的路径总是通过 [.normalize]标准化的， 这样
-     * `..`能够被正确地处理。
-     * 如果要连接的路径是一个绝对路径(有绝对路径的前缀)，那么它将被标准化后返回。 否则，该路径将被连接到基础路径后，将标准化后返回。
-     * 输出内容除了分隔符外，在Unix和Windows操作系统上将是一致的
+     * Concatenates a child path to a base path using standard command-line rules.
+     * The first argument is the base path and the second is the path to concatenate. The returned path is always
+     * normalized via [.normalize], so that `..` is handled correctly.
+     * If the path to concatenate is absolute (has an absolute path prefix), it is normalized and returned. Otherwise,
+     * the path is concatenated to the base path and returned normalized.
+     * The output is consistent across Unix and Windows operating systems, except for the separator.
      *
      * <pre>
      * /foo/ + bar          -->   /foo/bar
@@ -183,13 +192,13 @@ object FilenameKit {
      * /foo/c.txt + bar     -->   /foo/c.txt/bar (!)
      * </pre>
      *
-     * 注意： (*)使用该方法时，带有Windows操作系统盘符的相对路径是不可靠的。
-     * (!)第一个参数必须是一个路径，如果它以一个文件名结尾，该文件名将被连接到结果中。 如果这是个问题，请对第一个参数使用
-     * [.getFullPath]方法。
+     * Note: (*) Relative paths with a Windows drive letter are unreliable when using this method.
+     * (!) The first argument must be a path; if it ends with a filename, the filename is concatenated into the result.
+     * If this is a problem, use the [.getFullPath] method on the first argument.
      *
-     * @param basePath 要被连接的基础路径, 总是被当作路径
-     * @param fullFilenameToAdd 要连接到基础路径的文件名（或路径）
-     * @return 连接后的路径, 无效路径将返回null
+     * @param basePath the base path to concatenate to; always treated as a path
+     * @param fullFilenameToAdd the filename (or path) to concatenate to the base path
+     * @return the concatenated path; null for invalid paths
      * @author K
      * @since 1.0.0
      */
@@ -197,15 +206,15 @@ object FilenameKit {
         FilenameUtils.concat(basePath, fullFilenameToAdd)
 
     /**
-     * 检查父目录是否包含指定的子目录或文件
-     * 文件名将被标准化。
-     * 边缘情况:
-     *  一个目录不会包含它自己: 将返回false
-     *  文件或子目录为null将返回false
+     * Checks whether the parent directory contains the given child directory or file.
+     * The filenames are normalized.
+     * Edge cases:
+     *  A directory does not contain itself: returns false
+     *  A null file or sub-directory returns false
      *
-     * @param canonicalParent 父目录
-     * @param canonicalChild 文件或子目录
-     * @return true: 父目录包含指定的子目录或文件，否则返回false
+     * @param canonicalParent the parent directory
+     * @param canonicalChild the file or sub-directory
+     * @return true if the parent directory contains the given child directory or file; otherwise false
      * @author K
      * @since 1.0.0
      */
@@ -214,30 +223,30 @@ object FilenameKit {
 
     //region separatorsTo
     /**
-     * 将所有分隔符转换为unix格式的分隔符
+     * Converts all separators to Unix-style separators.
      *
-     * @param path 待处理的路径, 为null将返回null
-     * @return 更新后的路径
+     * @param path the path to process; null returns null
+     * @return the updated path
      * @author K
      * @since 1.0.0
      */
     fun separatorsToUnix(path: String?): String? = FilenameUtils.separatorsToUnix(path)
 
     /**
-     * 将所有分隔符转换为Windows格式的分隔符
+     * Converts all separators to Windows-style separators.
      *
-     * @param path 待处理的路径, 为null将返回null
-     * @return 更新后的路径
+     * @param path the path to process; null returns null
+     * @return the updated path
      * @author K
      * @since 1.0.0
      */
     fun separatorsToWindows(path: String?): String? = FilenameUtils.separatorsToWindows(path)
 
     /**
-     * 将所有分隔符转换为当前系统格式的分隔符
+     * Converts all separators to the current system separator.
      *
-     * @param path 待处理的路径, 为null将返回null
-     * @return 更新后的路径
+     * @param path the path to process; null returns null
+     * @return the updated path
      * @author K
      * @since 1.0.0
      */
@@ -245,31 +254,32 @@ object FilenameKit {
     //endregion separatorsTo
 
     /**
-     * 返回路径前缀，如`C:/` 或 `~/`
-     * 该方法将以Unix或Windows的格式来处理文件。
-     * 前缀的长度包括完整路径中的第一个斜杠(如果适用的话)。 因此，有可能返回的长度大于输入路径的长度。
+     * Returns the path prefix, such as `C:/` or `~/`.
+     * This method handles files in either Unix or Windows format.
+     * The length of the prefix includes the first slash in the full path (if applicable). Therefore, it is possible
+     * for the returned length to be greater than the length of the input path.
      *
      * <pre>
      * Windows:
-     * a\b\c.txt           --> ""          --> 相对路径
-     * \a\b\c.txt          --> "\"         --> 当前盘符绝对路径
-     * C:a\b\c.txt         --> "C:"        --> 盘符相对路径
-     * C:\a\b\c.txt        --> "C:\"       --> 绝对路径
+     * a\b\c.txt           --> ""          --> relative path
+     * \a\b\c.txt          --> "\"         --> current drive absolute path
+     * C:a\b\c.txt         --> "C:"        --> drive-relative path
+     * C:\a\b\c.txt        --> "C:\"       --> absolute path
      * \\server\a\b\c.txt  --> "\\server\" --> UNC
      *
      * Unix:
-     * a/b/c.txt           --> ""          --> 相对路径
-     * /a/b/c.txt          --> "/"         --> 绝对路径
-     * ~/a/b/c.txt         --> "~/"        --> 当前用户目录
-     * ~                   --> "~/"        --> 前用户目录 (后面有带斜杠)
-     * ~user/a/b/c.txt     --> "~user/"    --> 用户目录
-     * ~user               --> "~user/"    --> 用户目录 (后面有带斜杠)
+     * a/b/c.txt           --> ""          --> relative path
+     * /a/b/c.txt          --> "/"         --> absolute path
+     * ~/a/b/c.txt         --> "~/"        --> current user directory
+     * ~                   --> "~/"        --> current user directory (with trailing slash)
+     * ~user/a/b/c.txt     --> "~user/"    --> user directory
+     * ~user               --> "~user/"    --> user directory (with trailing slash)
      * </pre>
      *
-     * 输出结果在不同操作系统上将是一致的。如：无论Unix还是Windows，都不管前缀的匹配
+     * The output is consistent across operating systems. For example, both Unix and Windows ignore prefix matching.
      *
-     * @param filename 要查找前缀的路径, null将返回-1
-     * @return 路径前缀的长度, 路径无效或null将返回-1
+     * @param filename the path whose prefix to find; null returns -1
+     * @return the length of the prefix; -1 if the path is invalid or null
      * @author K
      * @since 1.0.0
      */
@@ -277,25 +287,25 @@ object FilenameKit {
 
     //region indexOf
     /**
-     * 返回最后一个目录分隔符的下标
-     * 该方法将以Unix或Windows的格式来处理文件。 最后一个斜杠或反斜杠的下标将被返回。
-     * 输出结果在不同操作系统上将是一致的。
+     * Returns the index of the last directory separator.
+     * This method handles files in either Unix or Windows format. The index of the last slash or backslash is returned.
+     * The output is consistent across operating systems.
      *
-     * @param filename 待查找的路径, null将返回-1
-     * @return 最后一个目录分隔符的下标, 找不到或路径为null将返回-1
+     * @param filename the path to search; null returns -1
+     * @return the index of the last directory separator; -1 if none found or the path is null
      * @author K
      * @since 1.0.0
      */
     fun indexOfLastSeparator(filename: String?): Int = FilenameUtils.indexOfLastSeparator(filename)
 
     /**
-     * 返回最后一个扩展分隔符(一个.)的下标
-     * 该方法同样检查在最后一个点后有没有目录分隔符。执行该动作将使用 [.indexOfLastSeparator]
-     * 方法，它将以Unix或Windows的格式来处理文件。
-     * 输出结果在不同操作系统上将是一致的。
+     * Returns the index of the last extension separator (a dot).
+     * This method also checks that there is no directory separator after the last dot. It uses [.indexOfLastSeparator]
+     * for this, which handles files in either Unix or Windows format.
+     * The output is consistent across operating systems.
      *
-     * @param filename 待查找的路径, null将返回-1
-     * @return 最后一个扩展分隔符的下标, 找不到或路径为null将返回-1
+     * @param filename the path to search; null returns -1
+     * @return the index of the last extension separator; -1 if none found or the path is null
      * @author K
      * @since 1.0.0
      */
@@ -303,38 +313,38 @@ object FilenameKit {
     //endregion indexOf
 
     /**
-     * 从一个完整的路径返回它的前缀，如`C:/` 或 `~/`.
-     * 该方法将以Unix或Windows的格式来处理文件。 完整路径中如果有第一个斜杠将被包含在返回的前缀中
+     * Returns the prefix from a full path, such as `C:/` or `~/`.
+     * This method handles files in either Unix or Windows format. The first slash in the full path (if any) is included in the returned prefix.
      *
      * <pre>
      * Windows:
-     * a\b\c.txt           --> ""          --> 相对路径
-     * \a\b\c.txt          --> "\"         --> 当前盘符绝对路径
-     * C:a\b\c.txt         --> "C:"        --> 盘符相对路径
-     * C:\a\b\c.txt        --> "C:\"       --> 绝对路径
+     * a\b\c.txt           --> ""          --> relative path
+     * \a\b\c.txt          --> "\"         --> current drive absolute path
+     * C:a\b\c.txt         --> "C:"        --> drive-relative path
+     * C:\a\b\c.txt        --> "C:\"       --> absolute path
      * \\server\a\b\c.txt  --> "\\server\" --> UNC
      *
      * Unix:
-     * a/b/c.txt           --> ""          --> 相对路径
-     * /a/b/c.txt          --> "/"         --> 绝对路径
-     * ~/a/b/c.txt         --> "~/"        --> 当前用户目录
-     * ~                   --> "~/"        --> 当前用户目录 (后面带有斜杠)
-     * //	 * ~user/a/b/c.txt     --> "~user/"    --> 用户目录
-     * ~user               --> "~user/"    --> 用户目录 (后面带有斜杠)
+     * a/b/c.txt           --> ""          --> relative path
+     * /a/b/c.txt          --> "/"         --> absolute path
+     * ~/a/b/c.txt         --> "~/"        --> current user directory
+     * ~                   --> "~/"        --> current user directory (with trailing slash)
+     * //	 * ~user/a/b/c.txt     --> "~user/"    --> user directory
+     * ~user               --> "~user/"    --> user directory (with trailing slash)
      * </pre>
      *
-     *  输出结果在不同操作系统上将是一致的。如：无论Unix还是Windows，都不管前缀的匹配
+     *  The output is consistent across operating systems. For example, both Unix and Windows ignore prefix matching.
      *
-     * @param filename 待查找的路径, null将返回null
-     * @return 路径的前缀
+     * @param filename the path to search; null returns null
+     * @return the prefix of the path
      * @author K
      * @since 1.0.0
      */
     fun getPrefix(filename: String): String? = FilenameUtils.getPrefix(filename)
 
     /**
-     * 返回文件名的扩展名
-     * 该方法返回文件名中点符后的文本。该点后面必须没有目录分隔符。
+     * Returns the extension of a filename.
+     * This method returns the text after the dot symbol in the filename. There must be no directory separator after that dot.
      *
      * <pre>
      * foo.txt      --> "txt"
@@ -343,10 +353,10 @@ object FilenameKit {
      * a/b/c        --> ""
      * </pre>
      *
-     * 输出结果在不同操作系统上将是一致的。
+     * The output is consistent across operating systems.
      *
-     * @param filename 要获取扩展名的文件名
-     * @return 文件的扩展名，没有将返回空串
+     * @param filename the filename to get the extension of
+     * @return the extension of the file; an empty string if none
      * @author K
      * @since 1.0.0
      */
@@ -354,8 +364,8 @@ object FilenameKit {
 
     //region getPath
     /**
-     * 返回完整路径的不带前缀的路径
-     * 该方法将以Unix或Windows的格式来处理文件。 该方法完全基于文本，它返回最后一个斜杠或反斜杠前(包括)的文本
+     * Returns the path of a full path excluding the prefix.
+     * This method handles files in either Unix or Windows format. It is purely text-based and returns the text up to (and including) the last slash or backslash.
      *
      *  <pre>
      * C:\a\b\c.txt --> a\b\
@@ -365,19 +375,19 @@ object FilenameKit {
      * a/b/c/       --> a/b/c/
      * </pre>
      *
-     * 输出结果在不同操作系统上将是一致的。
-     * 该方法丢弃结果中的前缀。要保留前缀，请查看[.getFullPath]方法。
+     * The output is consistent across operating systems.
+     * This method discards the prefix from the result. To retain the prefix, see the [.getFullPath] method.
      *
-     * @param filename 待查找的路径, null将返回null
-     * @return 不带前缀的路径, 没有将返回空串，路径无效或为null将返回null
+     * @param filename the path to search; null returns null
+     * @return the path excluding the prefix; an empty string if none; null if the path is invalid or null
      * @author K
      * @since 1.0.0
      */
     fun getPath(filename: String?): String? = FilenameUtils.getPath(filename)
 
     /**
-     * 返回完整路径的不带前缀的路径, 它同样不包括末尾的目录分隔符
-     * 该方法将以Unix或Windows的格式来处理文件。 该方法完全基于文本，它返回最后一个斜杠或反斜杠前(包括)的文本
+     * Returns the path of a full path excluding the prefix, and also excludes any trailing directory separator.
+     * This method handles files in either Unix or Windows format. It is purely text-based and returns the text up to (and including) the last slash or backslash.
      *
      * <pre>
      * C:\a\b\c.txt --> a\b
@@ -387,19 +397,19 @@ object FilenameKit {
      * a/b/c/       --> a/b/c
      * </pre>
      *
-     * 输出结果在不同操作系统上将是一致的。
-     * 该方法丢弃结果中的前缀。要保留前缀，请查看[.getFullPathNoEndSeparator]方法。
+     * The output is consistent across operating systems.
+     * This method discards the prefix from the result. To retain the prefix, see the [.getFullPathNoEndSeparator] method.
      *
-     * @param filename 待查找的路径, null将返回null
-     * @return 不带前缀的路径, 没有将返回空串，路径无效或为null将返回null
+     * @param filename the path to search; null returns null
+     * @return the path excluding the prefix; an empty string if none; null if the path is invalid or null
      * @author K
      * @since 1.0.0
      */
     fun getPathNoEndSeparator(filename: String?): String? = FilenameUtils.getPathNoEndSeparator(filename)
 
     /**
-     * 返回指定文件的完整路径，它包含前缀和路径
-     * 该方法将以Unix或Windows的格式来处理文件。 该方法完全基于文本，它返回最后一个斜杠或反斜杠前(包括)的文本
+     * Returns the full path of the given file, including the prefix and the path.
+     * This method handles files in either Unix or Windows format. It is purely text-based and returns the text up to (and including) the last slash or backslash.
      *
      * <pre>
      * C:\a\b\c.txt --> C:\a\b\
@@ -415,18 +425,18 @@ object FilenameKit {
      * ~user/       --> ~user/
      * </pre>
      *
-     * 输出结果在不同操作系统上将是一致的。
+     * The output is consistent across operating systems.
      *
-     * @param filename 待查找的路径, null将返回null
-     * @return 不带前缀的路径, 没有将返回空串，路径无效或为null将返回null
+     * @param filename the path to search; null returns null
+     * @return the path excluding the prefix; an empty string if none; null if the path is invalid or null
      * @author K
      * @since 1.0.0
      */
     fun getFullPath(filename: String?): String? = FilenameUtils.getFullPath(filename)
 
     /**
-     * 返回指定文件的完整路径，它包含前缀和路径, 并且不包括末尾的目录分隔符
-     * 该方法将以Unix或Windows的格式来处理文件。 该方法完全基于文本，它返回最后一个斜杠或反斜杠前(包括)的文本
+     * Returns the full path of the given file, including the prefix and the path, and excludes the trailing directory separator.
+     * This method handles files in either Unix or Windows format. It is purely text-based and returns the text up to (and including) the last slash or backslash.
      *
      * <pre>
      * C:\a\b\c.txt --> C:\a\b
@@ -442,10 +452,10 @@ object FilenameKit {
      * ~user/       --> ~user
      * </pre>
      *
-     * 输出结果在不同操作系统上将是一致的。
+     * The output is consistent across operating systems.
      *
-     * @param filename 待查找的路径, null将返回null
-     * @return 带前缀的路径, 没有将返回空串，路径无效或为null将返回null
+     * @param filename the path to search; null returns null
+     * @return the path including the prefix; an empty string if none; null if the path is invalid or null
      * @author K
      * @since 1.0.0
      */
@@ -454,8 +464,8 @@ object FilenameKit {
 
     //region getName
     /**
-     * 返回完整文件名去掉路径后的名称
-     * 该方法将以Unix或Windows的格式来处理文件。 该方法完全基于文本，它返回最后一个斜杠或反斜杠前(包括)的文本
+     * Returns the name from a full filename, after removing the path.
+     * This method handles files in either Unix or Windows format. It is purely text-based and returns the text after the last slash or backslash.
      *
      * <pre>
      * a/b/c.txt --> c.txt
@@ -464,18 +474,18 @@ object FilenameKit {
      * a/b/c/    --> ""
      * </pre>
      *
-     * 输出结果在不同操作系统上将是一致的。
+     * The output is consistent across operating systems.
      *
-     * @param filename 待查找的路径, null将返回null
-     * @return 去掉路径的文件名, 没有将返回空串，路径无效或为null将返回null
+     * @param filename the path to search; null returns null
+     * @return the filename after removing the path; an empty string if none; null if the path is invalid or null
      * @author K
      * @since 1.0.0
      */
     fun getName(filename: String?): String? = FilenameUtils.getName(filename)
 
     /**
-     * 返回完整文件名去掉路径和扩展名后的名称
-     * 该方法将以Unix或Windows的格式来处理文件。 最后一个斜杠或反斜杠后，最后一个点之前的文本将被返回。
+     * Returns the name from a full filename, after removing the path and extension.
+     * This method handles files in either Unix or Windows format. The text after the last slash or backslash, and before the last dot, is returned.
      *
      * <pre>
      * a/b/c.txt --> c
@@ -484,10 +494,10 @@ object FilenameKit {
      * a/b/c/    --> ""
      * </pre>
      *
-     * 输出结果在不同操作系统上将是一致的。
+     * The output is consistent across operating systems.
      *
-     * @param filename 待查找的路径, null将返回null
-     * @return 去掉路径和扩展名后的文件名, 没有将返回空串，路径无效或为null将返回null
+     * @param filename the path to search; null returns null
+     * @return the filename after removing the path and extension; an empty string if none; null if the path is invalid or null
      * @author K
      * @since 1.0.0
      */
@@ -495,8 +505,8 @@ object FilenameKit {
     //endregion getName
 
     /**
-     * 移除扩展名
-     * 该方法返回文件名中点符前的文本。该点后面必须没有目录分隔符。
+     * Removes the extension.
+     * This method returns the text before the dot in the filename. There must be no directory separator after that dot.
      *
      * <pre>
      * foo.txt    --> foo
@@ -505,10 +515,10 @@ object FilenameKit {
      * a.b\c      --> a.b\c
      * </pre>
      *
-     * 输出结果在不同操作系统上将是一致的。
+     * The output is consistent across operating systems.
      *
-     * @param filename 待查找的路径, null将返回null
-     * @return 去掉扩展名后的文件名, 路径为null将返回null
+     * @param filename the path to search; null returns null
+     * @return the filename without the extension; null if the path is null
      * @author K
      * @since 1.0.0
      */
@@ -516,12 +526,12 @@ object FilenameKit {
 
     //region equals
     /**
-     * 检查两个文件名是否精确相等。
-     * 该方法除了比较操作之外没有对两个文件名作任何处理， 仅仅是一个空安全、大小写敏感的equals操作。
+     * Checks whether two filenames are exactly equal.
+     * This method does no processing of the two filenames apart from the comparison; it is simply a null-safe, case-sensitive equals operation.
      *
-     * @param filename1 要比较的第一个文件名, 可以为null
-     * @param filename2 要比较的第二个文件名, 可以为null
-     * @return true：如果两个文件名相等， 都为null将作相等
+     * @param filename1 the first filename to compare; may be null
+     * @param filename2 the second filename to compare; may be null
+     * @return true if the two filenames are equal; both null are considered equal
      * @see IOCase.SENSITIVE
      * @author K
      * @since 1.0.0
@@ -529,12 +539,12 @@ object FilenameKit {
     fun equals(filename1: String?, filename2: String?): Boolean = FilenameUtils.equals(filename1, filename2)
 
     /**
-     * 检查两个文件名是否相等, 依赖于操作系统的大小写规则。
-     * 该方法除了比较操作之外没有对两个文件名作任何处理。 Unix下为大小写敏感的比较，Windows则是大小写不敏感的比较。
+     * Checks whether two filenames are equal, depending on the case rules of the operating system.
+     * This method does no processing of the two filenames apart from the comparison. Comparison is case-sensitive on Unix and case-insensitive on Windows.
      *
-     *  @param filename1 要比较的第一个文件名, 可以为null
-     * @param filename2 要比较的第二个文件名, 可以为null
-     * @return true：如果两个文件名相等， 都为null将作相等
+     *  @param filename1 the first filename to compare; may be null
+     * @param filename2 the second filename to compare; may be null
+     * @return true if the two filenames are equal; both null are considered equal
      * @see IOCase.SYSTEM
      * @author K
      * @since 1.0.0
@@ -543,12 +553,12 @@ object FilenameKit {
         FilenameUtils.equalsOnSystem(filename1, filename2)
 
     /**
-     * 标准化两个文件名后，比较它们是否相等
-     * 两个文件名都首先用[.normalize]处理， 然后进行大小写敏感的比较操作，
+     * Normalizes two filenames and then compares them for equality.
+     * Both filenames are first processed by [.normalize], then compared in a case-sensitive manner.
      *
-     * @param filename1 要比较的第一个文件名, 可以为null
-     * @param filename2 要比较的第二个文件名, 可以为null
-     * @return true：如果两个文件名相等， 都为null将作相等
+     * @param filename1 the first filename to compare; may be null
+     * @param filename2 the second filename to compare; may be null
+     * @return true if the two filenames are equal; both null are considered equal
      * @see IOCase.SENSITIVE
      * @author K
      * @since 1.0.0
@@ -557,13 +567,13 @@ object FilenameKit {
         FilenameUtils.equalsNormalized(filename1, filename2)
 
     /**
-     * 标准化两个文件名后，比较它们是否相等, 依赖于操作系统的大小写规则。
-     * 两个文件名都首先用[.normalize]处理，然后进行比较操作，
-     * Unix下为大小写敏感的比较，Windows则是大小写不敏感的比较。
+     * Normalizes two filenames and then compares them for equality, depending on the case rules of the operating system.
+     * Both filenames are first processed by [.normalize], then compared.
+     * Comparison is case-sensitive on Unix and case-insensitive on Windows.
      *
-     * @param filename1 要比较的第一个文件名, 可以为null
-     * @param filename2 要比较的第二个文件名, 可以为null
-     * @return true：如果两个文件名相等， 都为null将作相等
+     * @param filename1 the first filename to compare; may be null
+     * @param filename2 the second filename to compare; may be null
+     * @return true if the two filenames are equal; both null are considered equal
      * @see IOCase.SYSTEM
      * @author K
      * @since 1.0.0
@@ -572,13 +582,13 @@ object FilenameKit {
         FilenameUtils.equalsNormalizedOnSystem(filename1, filename2)
 
     /**
-     * 检查是否两个文件名相等， 可以选择是否标准化和大小写比较规则。
+     * Checks whether two filenames are equal, optionally normalizing them and choosing the case-comparison rule.
      *
-     * @param filename1 要比较的第一个文件名, 可以为null
-     * @param filename2 要比较的第二个文件名, 可以为null
-     * @param normalized 是否对文件名进行标准化
-     * @param caseSensitivity 大小写比较规则, null将依赖于系统
-     * @return true：如果两个文件名相等， 都为null将作相等
+     * @param filename1 the first filename to compare; may be null
+     * @param filename2 the second filename to compare; may be null
+     * @param normalized whether to normalize the filenames
+     * @param caseSensitivity the case-comparison rule; null depends on the system
+     * @return true if the two filenames are equal; both null are considered equal
      * @author K
      * @since 1.0.0
      */
@@ -588,24 +598,26 @@ object FilenameKit {
 
     //region isExtension
     /**
-     * 检查文件的扩展名是否为指定的扩展名
-     * 该方法将文件名中“.”后面的文本部分当作扩展名。"."后不能有目录分隔符。 在所有平台上的扩展符检查都是大小写敏感的。
+     * Checks whether the file's extension matches the given extension.
+     * This method treats the text after the "." in the filename as the extension. There must be no directory separator after the ".".
+     * The extension check is case-sensitive on all platforms.
      *
-     * @param filename 要检查的文件名, 可以为null
-     * @param extension 扩展名, null或空串代表对没有扩展名的检查
-     * @return true：如果文件名的扩展名为指定的扩展名
+     * @param filename the filename to check; may be null
+     * @param extension the extension; null or empty string checks for no extension
+     * @return true if the filename's extension matches the given extension
      * @author K
      * @since 1.0.0
      */
     fun isExtension(filename: String?, extension: String?): Boolean = FilenameUtils.isExtension(filename, extension)
 
     /**
-     * 检查文件的扩展名是否为指定的扩展名数组中的一个
-     * 该方法将文件名中“.”后面的文本部分当作扩展名。"."后不能有目录分隔符。 在所有平台上的扩展符检查都是大小写敏感的。
+     * Checks whether the file's extension matches one of the given extensions.
+     * This method treats the text after the "." in the filename as the extension. There must be no directory separator after the ".".
+     * The extension check is case-sensitive on all platforms.
      *
-     * @param filename 要检查的文件名, 可以为null
-     * @param extension 扩展名数组, null或空串代表对没有扩展名的检查
-     * @return true：如果文件名的扩展名为指定的扩展名数组中的一个
+     * @param filename the filename to check; may be null
+     * @param extensions the array of extensions; null or empty string checks for no extension
+     * @return true if the filename's extension matches one of the given extensions
      * @author K
      * @since 1.0.0
      */
@@ -613,12 +625,13 @@ object FilenameKit {
         FilenameUtils.isExtension(filename, *extensions)
 
     /**
-     * 检查文件的扩展名是否为指定的扩展名容器中的一个
-     * 该方法将文件名中“.”后面的文本部分当作扩展名。"."后不能有目录分隔符。 在所有平台上的扩展符检查都是大小写敏感的。
+     * Checks whether the file's extension matches one of the given extensions.
+     * This method treats the text after the "." in the filename as the extension. There must be no directory separator after the ".".
+     * The extension check is case-sensitive on all platforms.
      *
-     * @param filename 要检查的文件名, 可以为null
-     * @param extension 扩展名容器, null或空串代表对没有扩展名的检查
-     * @return true：如果文件名的扩展名为指定的扩展名容器中的一个
+     * @param filename the filename to check; may be null
+     * @param extensions the collection of extensions; null or empty string checks for no extension
+     * @return true if the filename's extension matches one of the given extensions
      * @author K
      * @since 1.0.0
      */
@@ -629,11 +642,12 @@ object FilenameKit {
     //region wildcard
     /**
      * <p>
-     * 判断文件名是匹配指定的可能带有通配符的字符串，大小写敏感
+     * Determines whether a filename matches the given string, which may contain wildcards. Case-sensitive.
      * </p>
      *
      * <p>
-     * 使用'?' 和 '*'来代表单个和多个(0或多个)字符。这和Dos/Unix的命令行是一样的。 该检查总是大小写敏感的。
+     * Use '?' and '*' to represent a single character and multiple characters (zero or more) respectively. This works
+     * the same way as the Dos/Unix command line. The check is always case-sensitive.
      * </p>
      *
      * <pre>
@@ -644,11 +658,11 @@ object FilenameKit {
      * wildcardMatch("c.txt", "*.????")     --> false
      * </pre>
      *
-     * 注意："*?"序列在当前的字符串比较里不能正确工作。
+     * Note: "*?" sequences do not work correctly in the current string comparison.
      *
-     * @param filename 待检查的文件名，可以为null
-     * @param wildcardMatcher 带有通配符的字符串，可以为null
-     * @return true：如果匹配，两者都null当作匹配
+     * @param filename the filename to check; may be null
+     * @param wildcardMatcher the string with wildcards; may be null
+     * @return true if it matches; both null are considered a match
      * @see IOCase#SENSITIVE
      * @author K
      * @since 1.0.0
@@ -658,12 +672,12 @@ object FilenameKit {
 
     /**
      * <p>
-     * 判断文件名是匹配指定的可能带有通配符的字符串，大小写敏感性依赖于当前系统
+     * Determines whether a filename matches the given string, which may contain wildcards. The case sensitivity depends on the current system.
      * </p>
      *
      * <p>
-     * 使用'?' 和 '*'来代表单个和多个(0或多个)字符。这和Dos/Unix的命令行是一样的。
-     * Unix下为大小写敏感的比较，Windows则是大小写不敏感的比较。
+     * Use '?' and '*' to represent a single character and multiple characters (zero or more) respectively. This works the same way as the Dos/Unix command line.
+     * Comparison is case-sensitive on Unix and case-insensitive on Windows.
      * </p>
      *
      * <pre>
@@ -674,11 +688,11 @@ object FilenameKit {
      * wildcardMatch("c.txt", "*.????")     --> false
      * </pre>
      *
-     * 注意："*?"序列在当前的字符串比较里不能正确工作。
+     * Note: "*?" sequences do not work correctly in the current string comparison.
      *
-     * @param filename 待检查的文件名，可以为null
-     * @param wildcardMatcher 带有通配符的字符串，可以为null
-     * @return true：如果匹配，两者都null当作匹配
+     * @param filename the filename to check; may be null
+     * @param wildcardMatcher the string with wildcards; may be null
+     * @return true if it matches; both null are considered a match
      * @see IOCase#SYSTEM
      * @author K
      * @since 1.0.0
@@ -687,13 +701,13 @@ object FilenameKit {
         FilenameUtils.wildcardMatchOnSystem(filename, wildcardMatcher)
 
     /**
-     * 判断文件名是匹配指定的可能带有通配符的字符串，可以指定大小写敏感规则
-     * 使用'?' 和 '*'来代表单个和多个(0或多个)字符。 注意："*?"序列在当前的字符串比较里不能正确工作。
+     * Determines whether a filename matches the given string, which may contain wildcards. The case-sensitivity rule can be specified.
+     * Use '?' and '*' to represent a single character and multiple characters (zero or more) respectively. Note: "*?" sequences do not work correctly in the current string comparison.
      *
-     * @param filename 待检查的文件名，可以为null
-     * @param wildcardMatcher 带有通配符的字符串，可以为null
-     * @param caseSensitivity 大小写比较规则, null将取决于系统
-     * @return true：如果匹配，两者都null当作匹配
+     * @param filename the filename to check; may be null
+     * @param wildcardMatcher the string with wildcards; may be null
+     * @param caseSensitivity the case-comparison rule; null depends on the system
+     * @return true if it matches; both null are considered a match
      * @author K
      * @since 1.0.0
      */
@@ -709,7 +723,7 @@ object FilenameKit {
         }
 
     // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    // 封装org.apache.commons.io.FilenameUtils
+    // Wraps org.apache.commons.io.FilenameUtils
     // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 }

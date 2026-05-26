@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component
 
 
 /**
- * 资源 API本地实现
+ * Local implementation of the resource API
  *
  * @author K
  * @since 1.0.0

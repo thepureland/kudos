@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration
 
 
 /**
- * msg Feign 客户端自动配置。
+ * msg Feign client auto-configuration.
  *
  * @author K
  * @author AI: Codex

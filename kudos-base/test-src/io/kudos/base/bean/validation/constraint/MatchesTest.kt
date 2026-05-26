@@ -7,7 +7,7 @@ import kotlin.test.Test
 import kotlin.test.assertTrue
 
 /**
- * [Matches] 校验测试
+ * [Matches] validation tests
  *
  * @author K
  * @since 1.0.0

@@ -5,43 +5,43 @@ import java.io.Serializable
 import java.util.function.Supplier
 
 /**
- * 缓存值包装器——表达"已查询但值为 null"与"未查询"的区别。
+ * Cache value wrapper — distinguishes "queried, value is null" from "not queried".
  *
- * Spring `Cache.ValueWrapper` 在 cache API 内部使用类似语义，但本类是 cache **业务侧**的
- * 表达：业务调用 `KeyValueCacheKit.get(...)` 时若希望区分"key 不在缓存"和"key 在但 value 是 null"，
- * 用本包装器比直接返回 `T?` 更明确。
+ * Spring's `Cache.ValueWrapper` uses similar semantics inside the cache API, but this class is the
+ * cache **business-side** representation: when callers of `KeyValueCacheKit.get(...)` need to distinguish
+ * "key is absent from the cache" from "key is present but value is null", this wrapper is clearer than returning `T?`.
  *
- * 实现采用 [Optional] 风格的 [orElse] / [orElseGet] / [orElseThrow] API；
- * 通过工厂 [of] / [empty] 构造，构造器私有。
+ * Provides an [Optional]-style [orElse] / [orElseGet] / [orElseThrow] API;
+ * constructed via the [of] / [empty] factories, with a private constructor.
  *
  * @author K
  * @since 1.0.0
  */
 class CacheValueWrapper<T> private constructor(
     /**
-     * 返回包装的实际值
+     * The wrapped actual value.
      */
     val value: T?
 ) : Serializable {
 
     val isPresent: Boolean
         /**
-         * 检查包装器是否包含值
+         * Checks whether the wrapper contains a value.
          */
         get() = value != null
 
     /**
-     * 获取包装的值，如果值不存在则返回指定的默认值
+     * Returns the wrapped value, or the given default value if absent.
      */
     fun orElse(defaultValue: T?): T? = value ?: defaultValue
 
     /**
-     * 获取包装的值，如果值不存在则从提供的 Supplier 获取默认值
+     * Returns the wrapped value, or the value supplied by the given Supplier if absent.
      */
     fun orElseGet(supplier: Supplier<out T?>): T? = value ?: supplier.get()
 
     /**
-     * 获取包装的值，如果值不存在则抛出指定的异常
+     * Returns the wrapped value, or throws the exception supplied by the given Supplier if absent.
      */
     fun <X : Throwable?> orElseThrow(exceptionSupplier: Supplier<out X?>): T =
         value ?: throw exceptionSupplier.get()!!
@@ -51,12 +51,12 @@ class CacheValueWrapper<T> private constructor(
         private const val serialVersionUID = 7369716185425581870L
 
         /**
-         * 静态方法创建包装器，支持空值
+         * Static factory to create a wrapper, supporting null values.
          */
         fun <T> of(value: T?): CacheValueWrapper<T?> = CacheValueWrapper(value)
 
         /**
-         * 静态方法创建空包装器
+         * Static factory to create an empty wrapper.
          */
         fun <T> empty(): CacheValueWrapper<T?> = CacheValueWrapper(null)
     }

@@ -10,11 +10,11 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * Polymorphic 序列化测试用例
+ * Polymorphic serialization test cases.
  *
- * 覆盖两种多态：
- * - Sealed 层级——kotlinx 自动处理，无需通过 JsonKit 注册
- * - Open 多态——需要通过 [JsonKit.registerSerializersModule] 注册
+ * Covers two kinds of polymorphism:
+ * - Sealed hierarchies: kotlinx handles them automatically, no JsonKit registration required.
+ * - Open polymorphism: requires registration via [JsonKit.registerSerializersModule].
  *
  * @author K
  * @since 1.0.0
@@ -22,7 +22,7 @@ import kotlin.test.assertTrue
 internal class JsonKitPolymorphicTest {
 
     // ============================================================
-    // Sealed：直接 toJson 应输出多态 JSON（带 type 字段）
+    // Sealed: calling toJson directly should emit polymorphic JSON (with a type field)
     // ============================================================
 
     @Serializable
@@ -38,13 +38,13 @@ internal class JsonKitPolymorphicTest {
 
     @Test
     fun sealedPolymorphismWorksWithoutRegistration() {
-        // 用编译期已知类型 List<Shape> 让 kotlinx 走 sealed 多态路径
+        // Use the compile-time-known type List<Shape> so kotlinx takes the sealed polymorphism path
         val shapes: List<Shape> = listOf(Shape.Circle(1.0), Shape.Square(2.0))
         val json = JsonKit.toJson(shapes)
 
-        // 应包含两个 type 标识；具体格式由 kotlinx 决定（type 字段名默认是 "type"）
-        assertTrue(json.contains("\"type\":\"circle\""), "应含 circle discriminator：$json")
-        assertTrue(json.contains("\"type\":\"square\""), "应含 square discriminator：$json")
+        // Should contain both type identifiers; exact format determined by kotlinx (default type field name is "type")
+        assertTrue(json.contains("\"type\":\"circle\""), "Should contain circle discriminator: $json")
+        assertTrue(json.contains("\"type\":\"square\""), "Should contain square discriminator: $json")
         assertTrue(json.contains("\"r\":1.0"))
         assertTrue(json.contains("\"side\":2.0"))
     }
@@ -58,7 +58,7 @@ internal class JsonKitPolymorphicTest {
     }
 
     // ============================================================
-    // Open 多态：需要 registerSerializersModule 注册
+    // Open polymorphism: requires registerSerializersModule
     // ============================================================
 
     @Serializable
@@ -75,7 +75,7 @@ internal class JsonKitPolymorphicTest {
     data class Cat(override val name: String, val livesLeft: Int) : Animal()
 
     /**
-     * 注册的 module 全局共享，多 case 之间不重复注册——用 companion + 一次性 init。
+     * The registered module is globally shared and should not be re-registered across cases — done via companion + one-time init.
      */
     companion object {
         init {
@@ -92,8 +92,8 @@ internal class JsonKitPolymorphicTest {
     fun openPolymorphismWorksAfterRegistration() {
         val animals: List<Animal> = listOf(Dog("Rex", 3), Cat("Whiskers", 9))
         val json = JsonKit.toJson(animals)
-        assertTrue(json.contains("\"type\":\"dog\""), "应含 dog discriminator：$json")
-        assertTrue(json.contains("\"type\":\"cat\""), "应含 cat discriminator：$json")
+        assertTrue(json.contains("\"type\":\"dog\""), "Should contain dog discriminator: $json")
+        assertTrue(json.contains("\"type\":\"cat\""), "Should contain cat discriminator: $json")
         assertTrue(json.contains("\"name\":\"Rex\""))
         assertTrue(json.contains("\"livesLeft\":9"))
     }

@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Size
 
 
 /**
- * 访问规则表单更新请求 VO。
+ * Access rule form update request VO.
  *
  * @author K
  * @author AI: Cursor
@@ -15,7 +15,7 @@ import jakarta.validation.constraints.Size
  */
 data class SysAccessRuleFormUpdate (
 
-    /** 主键 */
+    /** Primary key */
     @get:NotBlank
     @get:FixedLength(36)
     override val id: String,

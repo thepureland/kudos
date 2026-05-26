@@ -16,7 +16,7 @@ import org.springframework.core.env.Environment
 
 
 /**
- * notify公共自动配置类
+ * Common auto-configuration for notify.
  *
  * @author K
  * @since 1.0.0
@@ -60,7 +60,7 @@ open class NotifyCommonAutoConfiguration {
     ): InitializingBean = InitializingBean {
         if (properties.failOnMissingProducer && notifyProducerProvider.ifAvailable == null) {
             error(
-                "未找到 INotifyProducer 实现，且已开启 kudos.ability.distributed.notify.fail-on-missing-producer"
+                "No INotifyProducer implementation found, and kudos.ability.distributed.notify.fail-on-missing-producer is enabled"
             )
         }
     }

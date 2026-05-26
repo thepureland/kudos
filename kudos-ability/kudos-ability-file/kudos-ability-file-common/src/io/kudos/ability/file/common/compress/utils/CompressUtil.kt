@@ -7,7 +7,7 @@ import java.nio.file.Path
 import java.util.Locale
 
 /**
- * 图像压缩相关的小工具集合。
+ * Small utility set related to image compression.
  *
  * @author K
  * @author AI: Codex
@@ -15,19 +15,19 @@ import java.util.Locale
  */
 object CompressUtil {
 
-    /** 当前框架认作"可压缩图片"的后缀白名单。新增类型时一并加这里 + [io.kudos.ability.file.common.compress.support.ImageCompressorFactory]。 */
+    /** Allowlist of suffixes the current framework treats as "compressible images". When adding new types, also update [io.kudos.ability.file.common.compress.support.ImageCompressorFactory]. */
     private val EXTENSIONS = setOf("jpg", "jpeg", "png")
 
-    /** 文件名是否对应"可压缩图片"（按后缀判定，不读文件头）。 */
+    /** Whether the file name corresponds to a "compressible image" (determined by suffix, does not read file header). */
     fun isPic(fileName: String): Boolean = validExtension(FilenameKit.getExtension(fileName))
 
-    /** 后缀是否在 [EXTENSIONS] 白名单内；大小写转换走 [Locale.ROOT] 规避 Turkish locale 偏差。 */
+    /** Whether the suffix is in the [EXTENSIONS] allowlist; case conversion uses [Locale.ROOT] to avoid Turkish-locale deviations. */
     fun validExtension(extension: String): Boolean {
         if (extension.isBlank()) return false
         return EXTENSIONS.contains(extension.lowercase(Locale.ROOT))
     }
 
-    /** JDK [Files.probeContentType] 的简单转发；返回 null 表示无法识别。 */
+    /** Thin forwarder over JDK [Files.probeContentType]; returns null when the type cannot be identified. */
     @Throws(IOException::class)
     fun mimeType(fileName: String): String? = Files.probeContentType(Path.of(fileName))
 

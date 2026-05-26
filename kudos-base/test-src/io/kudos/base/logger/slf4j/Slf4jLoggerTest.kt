@@ -6,7 +6,7 @@ import kotlin.test.Test
 import kotlin.test.assertNotNull
 
 /**
- * Slf4jLogger测试用例
+ * Test cases for Slf4jLogger.
  *
  * @author AI: cursor
  * @author K
@@ -25,7 +25,7 @@ internal class Slf4jLoggerTest {
 
     @Test
     fun testTrace() {
-        // 只是验证不会抛出异常
+        // Only verifies that no exception is thrown
         logger.trace("trace message")
         logger.trace("trace message with args: {0}", "arg1")
     }
@@ -69,7 +69,7 @@ internal class Slf4jLoggerTest {
 
     @Test
     fun testIsTraceEnabled() {
-        // 验证方法不会抛出异常
+        // Verify the method does not throw
         val enabled = logger.isTraceEnabled()
         assertNotNull(enabled)
     }

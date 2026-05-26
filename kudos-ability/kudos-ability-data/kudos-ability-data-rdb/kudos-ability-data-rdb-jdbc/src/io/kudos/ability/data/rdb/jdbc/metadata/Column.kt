@@ -5,7 +5,7 @@ import java.sql.Types
 import kotlin.reflect.KClass
 
 /**
- * 关系型数据库表的列信息
+ * Column information for a relational database table.
  *
  * @author K
  * @author AI: Codex
@@ -13,59 +13,60 @@ import kotlin.reflect.KClass
  */
 class Column {
 
-    /** 列名 */
+    /** Column name. */
     lateinit var name: String
 
-    /** 注释 */
+    /** Comment. */
     var comment: String? = null
 
-    /** JDBC类型 */
+    /** JDBC type. */
     var jdbcType: Int = Types.VARCHAR
 
-    /** JDBC类型名称 */
+    /** JDBC type name. */
     lateinit var jdbcTypeName: String
 
-    /** JDBC类型对应的kotlin中的类 */
+    /** Kotlin class corresponding to the JDBC type. */
     lateinit var kotlinType: KClass<*>
 
-    /** 长度 */
+    /** Length. */
     var length: Int? = null
 
-    /** 小数位数 */
+    /** Number of decimal digits. */
     var decimalDigits: Int? = null
 
-    /** 默认值 */
+    /** Default value. */
     var defaultValue: String? = null
 
-    /** 是否可以为null */
+    /** Whether the column is nullable. */
     var nullable: Boolean = true
 
-    /** 是否为主键 */
+    /** Whether the column is a primary key. */
     var primaryKey: Boolean = false
 
-    /** 是否为外键 */
+    /** Whether the column is a foreign key. */
     var foreignKey: Boolean = false
 
-    /** 是否有索引 */
+    /** Whether the column is indexed. */
     var indexed: Boolean = false
 
-    /** 是否惟一 */
+    /** Whether the column is unique. */
     var unique: Boolean = false
 
-    /** 是否为字典代码 */
+    /** Whether the column is a dictionary code. */
     var dictCode: Boolean = false
 
-    /** 是否为乍增长 */
+    /** Whether the column is auto-incrementing. */
     var autoIncrement: String? = null
 
     /**
-     * 返回 [kotlinType] 的 simpleName。匿名 / 局部类的 simpleName 为 null，这里直接抛错。
-     * 代码生成场景常用此值拼 Kotlin 源码字符串。
+     * Returns the simpleName of [kotlinType]. The simpleName of anonymous / local classes is null,
+     * in which case this throws. Commonly used in code-generation scenarios to build Kotlin source strings.
      */
     fun getKotlinTypeName(): String = requireNotNull(kotlinType.simpleName) { "kotlinType.simpleName is null" }
 
     /**
-     * 把 snake_case 的 [name] 转成 camelCase。代码生成场景常用此值拼 Kotlin 字段 / 属性名。
+     * Converts the snake_case [name] to camelCase. Commonly used in code-generation scenarios to
+     * build Kotlin field / property names.
      */
     fun getColumnHumpName(): String = name.underscoreToHump()
 

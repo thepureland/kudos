@@ -13,10 +13,11 @@ import org.springframework.stereotype.Service
 
 
 /**
- * 角色 API本地实现
+ * Local implementation of the role API.
  *
- * 标 [Primary]：当 [io.kudos.ms.auth.api.internal.controller.role.AuthRoleInternalController]
- * 也实现 [IAuthRoleApi] 时，Spring 注入歧义由本 bean 兜底；controller 仅做 HTTP 入口转发。
+ * Marked [Primary]: when [io.kudos.ms.auth.api.internal.controller.role.AuthRoleInternalController] also
+ * implements [IAuthRoleApi], Spring's injection ambiguity is resolved in favor of this bean; the controller
+ * is just an HTTP entry-point that forwards.
  *
  * @author K
  * @author AI: Cursor

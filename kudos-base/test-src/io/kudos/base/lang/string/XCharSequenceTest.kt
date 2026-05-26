@@ -7,7 +7,7 @@ import kotlin.test.assertNotEquals
 
 
 /**
- * XString单元测试类
+ * XString unit test class.
  *
  * @author K
  * @since 1.0.0
@@ -16,8 +16,8 @@ internal class XCharSequenceTest {
 
     @Test
     fun replaceEach() {
-        val map = mapOf("1" to "壹", "2" to "贰", "3" to "叁", null to "*", "" to "*")
-        assertEquals("壹贰叁.壹", "123.1".replaceEach(map))
+        val map = mapOf("1" to "one", "2" to "two", "3" to "three", null to "*", "" to "*")
+        assertEquals("onetwothree.one", "123.1".replaceEach(map))
     }
 
     @Test

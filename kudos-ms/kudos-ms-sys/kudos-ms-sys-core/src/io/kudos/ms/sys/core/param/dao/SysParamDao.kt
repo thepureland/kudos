@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository
 
 
 /**
- * 参数数据访问对象
+ * Parameter data access object
  *
  * @author K
  * @since 1.0.0
@@ -19,11 +19,11 @@ open class SysParamDao : BaseCrudDao<String, SysParam, SysParams>() {
 
 
     /**
-     * 根据模块和参数名获取对应的启用的参数（for cache）
+     * Gets the active parameter by module and parameter name (for cache).
      *
-     * @param atomicServiceCode 原子服务编码
-     * @param paramName 参数名称
-     * @return SysParamCacheEntry，找不到返回null
+     * @param atomicServiceCode atomic service code
+     * @param paramName parameter name
+     * @return SysParamCacheEntry, or null if not found
      */
     open fun getActiveParamsForCache(atomicServiceCode: String, paramName: String): SysParamCacheEntry? {
         return querySource()

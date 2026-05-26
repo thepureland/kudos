@@ -7,8 +7,8 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.Lock
 
 /**
- * Redisson锁提供者
- * 实现ILockProvider接口，提供基于Redisson的分布式锁功能
+ * Redisson lock provider.
+ * Implements ILockProvider to expose Redisson-backed distributed lock functionality.
  * @author K
  * @author AI: Codex
  * @since 1.0.0

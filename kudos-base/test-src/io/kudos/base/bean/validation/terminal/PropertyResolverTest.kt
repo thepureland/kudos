@@ -6,7 +6,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * PropertyResolver测试用例
+ * Test cases for PropertyResolver.
  *
  * @author AI: cursor
  * @author K
@@ -46,17 +46,17 @@ internal class PropertyResolverTest {
 
     @Test
     fun testToPotQuoteWithPrefixAndSpecialChars() {
-        // 如果属性名已经包含下划线或点，不添加前缀
+        // If the property name already contains an underscore or dot, do not prepend a prefix
         assertEquals("'user_name'", PropertyResolver.toPotQuote("user_name", "prefix"))
         assertEquals("'user.name'", PropertyResolver.toPotQuote("user.name", "prefix"))
-        
-        // 如果属性名以$开头，不添加前缀
+
+        // If the property name starts with $, do not prepend a prefix
 //        assertEquals($$"$name", PropertyResolver.toPotQuote($$"$name", "prefix"))
-        
-        // 如果属性名以'开头，不添加前缀
+
+        // If the property name starts with ', do not prepend a prefix
         assertEquals("'name'", PropertyResolver.toPotQuote("'name'", "prefix"))
-        
-//        // 如果属性名已经包含前缀，不添加
+
+//        // If the property name already contains the prefix, do not add it again
 //        assertEquals("prefix.name", PropertyResolver.toPotQuote("prefix.name", "prefix"))
     }
 

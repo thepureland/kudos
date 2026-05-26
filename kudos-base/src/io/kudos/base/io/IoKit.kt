@@ -8,7 +8,7 @@ import java.net.URL
 import java.net.URLConnection
 
 /**
- * IO操作工具类
+ * IO operation utility.
  *
  * @author K
  * @author AI: Codex
@@ -17,13 +17,13 @@ import java.net.URLConnection
 object IoKit {
 
     // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-    // 封装org.apache.commons.io.IOUtils
+    // Wraps org.apache.commons.io.IOUtils
     // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
     /**
-     * 关闭一个URLConnection
+     * Closes a URLConnection.
      *
-     * @param conn 要关闭的连接
+     * @param conn the connection to close
      * @author K
      * @since 1.0.0
      */
@@ -31,30 +31,30 @@ object IoKit {
 
     //region toBuffered
     /**
-     * 获取整个`InputStream`的内容，并用相同的数据当作结果InputStream
-     * 该方法在以下的地方有用：
-     *  源InputStream很慢.
-     *  它关联网络资源，因此我们不能让它打开太久
-     *  它关联可能超时网络.
+     * Fetches the entire contents of an `InputStream` and returns the same data as a result InputStream.
+     * This method is useful in cases where:
+     *  the source InputStream is slow.
+     *  it has associated network resources, so we can't keep it open for too long.
+     *  it has associated network timeouts.
      *
-     * 它可以作为[.toByteArray]的参数，因为它避免不必要的资源分配和字节数组拷贝。
+     * It can be used as input for [.toByteArray], because it avoids unnecessary allocation and copy of byte[].
      *
-     * 该方法内容有缓存，所以没有必要在使用`BufferedInputStream`
+     * This method buffers the input internally, so there is no need to use a `BufferedInputStream`.
      *
-     * @param input 要被完全缓存的Stream
-     * @return 被完全缓存的Stream
-     * @throws IOException io错误发生时
+     * @param input the Stream to be fully buffered
+     * @return a fully buffered Stream
+     * @throws IOException when an I/O error occurs
      * @author K
      * @since 1.0.0
      */
     fun toBufferedInputStream(input: InputStream): InputStream? = IOUtils.toBufferedInputStream(input)
 
     /**
-     * 如果指定的reader是[BufferedReader]，直接返回，否则，
-     * 为指定的reader创建一个BufferedReader并返回
+     * Returns the given reader if it is a [BufferedReader]; otherwise creates a BufferedReader
+     * for the given reader and returns it.
      *
-     * @param reader 要被包装或直接返回的Reader
-     * @return 指定的Reader 或 指定的Reader的一个新的 [BufferedReader]
+     * @param reader the reader to wrap or return
+     * @return the given Reader or a new [BufferedReader] for the given Reader
      * @author K
      * @since 1.0.0
      */
@@ -64,30 +64,30 @@ object IoKit {
     //region read toByteArray
     // -----------------------------------------------------------------------
     /**
-     * 读取`InputStream`的内容为`byte[]`
+     * Reads the contents of an `InputStream` as a `byte[]`.
      *
-     * 该方法内部有对输入进行缓存，因此没有必要使用`BufferedInputStream`.
+     * This method buffers the input internally, so there is no need to use a `BufferedInputStream`.
      *
-     * @param input 要读取的 `InputStream`
-     * @return 字节数组
-     * @throws IOException io错误发生时
+     * @param input the `InputStream` to read
+     * @return the requested byte array
+     * @throws IOException when an I/O error occurs
      * @author K
      * @since 1.0.0
      */
     fun toByteArray(input: InputStream): ByteArray = IOUtils.toByteArray(input)
 
     /**
-     * 读取`InputStream`的内容为`byte[]`.
-     * 当知道`InputStream`的大小时，使用该方法代替`toByteArray(InputStream)`方法。
+     * Reads the contents of an `InputStream` as a `byte[]`.
+     * Use this method instead of `toByteArray(InputStream)` when the size of the `InputStream` is known.
      *
-     * **注意:** 该方法在使用[IoKit.toByteArray]读入
-     * 字节数组前， 检查长度能否被安全地转为int型(毕竟数组的长度不能超过Integer.MAX_VALUE)
+     * **Note:** this method checks that the length can be safely cast to int (because array length
+     * cannot exceed Integer.MAX_VALUE) before allocating via [IoKit.toByteArray].
      *
-     * @param input 要读取的 `InputStream`
-     * @param size `InputStream`的大小
-     * @return 请求的字节数组
-     * @throws IOException io错误发生或`InputStream`的大小与size参数不一致时
-     * @throws IllegalArgumentException 如果size参数小于0或大于Integer.MAX_VALUE
+     * @param input the `InputStream` to read
+     * @param size the size of the `InputStream`
+     * @return the requested byte array
+     * @throws IOException when an I/O error occurs or the size of `InputStream` differs from the size parameter
+     * @throws IllegalArgumentException if the size parameter is negative or greater than Integer.MAX_VALUE
      * @see IoKit.toByteArray
      * @author K
      * @since 1.0.0
@@ -95,62 +95,62 @@ object IoKit {
     fun toByteArray(input: InputStream, size: Long): ByteArray = IOUtils.toByteArray(input, size)
 
     /**
-     * 读取`InputStream`的内容为`byte[]`.
-     * 当知道`InputStream`的大小时，使用该方法代替`toByteArray(InputStream)`方法。
+     * Reads the contents of an `InputStream` as a `byte[]`.
+     * Use this method instead of `toByteArray(InputStream)` when the size of the `InputStream` is known.
      *
-     * @param input 要读取的 `InputStream`
-     * @param size `InputStream`的大小
-     * @return 请求的字节数组
-     * @throws IOException io错误发生或`InputStream`的大小与size参数不一致时
-     * @throws IllegalArgumentException 如果size参数小于0
+     * @param input the `InputStream` to read
+     * @param size the size of the `InputStream`
+     * @return the requested byte array
+     * @throws IOException when an I/O error occurs or the size of `InputStream` differs from the size parameter
+     * @throws IllegalArgumentException if the size parameter is negative
      * @author K
      * @since 1.0.0
      */
     fun toByteArray(input: InputStream, size: Int): ByteArray = IOUtils.toByteArray(input, size)
 
     /**
-     * 读取`Reader`的内容为`byte[]`，使用指定的编码
-     * 字符编码名称可以在这里找到： [IANA](http://www.iana.org/assignments/character-sets).
-     * 该方法内部有对输入进行缓存，因此没有必要使用`BufferedReader`.
+     * Reads the contents of a `Reader` as a `byte[]` using the specified character encoding.
+     * Character encoding names can be found at [IANA](http://www.iana.org/assignments/character-sets).
+     * This method buffers the input internally, so there is no need to use a `BufferedReader`.
      *
-     * @param input 要读取的 `Reader`
-     * @param encoding 编码
-     * @return 字节数组
-     * @throws IOException io错误发生时
-     * @throws java.nio.charset.UnsupportedCharsetException 如果指定的编码不被支持
+     * @param input the `Reader` to read
+     * @param encoding the encoding
+     * @return the requested byte array
+     * @throws IOException when an I/O error occurs
+     * @throws java.nio.charset.UnsupportedCharsetException if the specified encoding is not supported
      * @author K
      * @since 1.0.0
      */
     fun toByteArray(input: Reader, encoding: String? = null): ByteArray = IOUtils.toByteArray(input, encoding)
 
     /**
-     * 读取`URI`指向的内容为`byte[]`
+     * Reads the contents pointed to by the `URI` as a `byte[]`.
      *
-     * @param uri 要读取的内容的`URI`
-     * @return 请求的字节数组
-     * @throws IOException io错误发生时
+     * @param uri the `URI` whose content to read
+     * @return the requested byte array
+     * @throws IOException when an I/O error occurs
      * @author K
      * @since 1.0.0
      */
     fun toByteArray(uri: URI): ByteArray = IOUtils.toByteArray(uri)
 
     /**
-     * 读取`URL`指向的内容为`byte[]`
+     * Reads the contents pointed to by the `URL` as a `byte[]`.
      *
-     * @param url 要读取的内容的`URL`
-     * @return 请求的字节数组
-     * @throws IOException io错误发生时
+     * @param url the `URL` whose content to read
+     * @return the requested byte array
+     * @throws IOException when an I/O error occurs
      * @author K
      * @since 1.0.0
      */
     fun toByteArray(url: URL): ByteArray = IOUtils.toByteArray(url)
 
     /**
-     * 读取`URLConnection`指向的内容为`byte[]`
+     * Reads the contents pointed to by the `URLConnection` as a `byte[]`.
      *
-     * @param urlConn 要读取的内容的`URLConnection`
-     * @return 请求的字节数组
-     * @throws IOException io错误发生时
+     * @param urlConn the `URLConnection` whose content to read
+     * @return the requested byte array
+     * @throws IOException when an I/O error occurs
      * @author K
      * @since 1.0.0
      */
@@ -159,31 +159,30 @@ object IoKit {
 
     //region read char[]
     /**
-     * 读取`InputStream`的内容为`char[]`.
-     * 使用指定的编码。
+     * Reads the contents of an `InputStream` as a `char[]`, using the specified character encoding.
      *
-     * 字符编码可以在这里找到：
+     * Character encoding names can be found at
      * [IANA](http://www.iana.org/assignments/character-sets).
      *
-     * 该方法内部有对输入进行缓存，因此没有必要使用`BufferedInputStream`.
+     * This method buffers the input internally, so there is no need to use a `BufferedInputStream`.
      *
-     * @param is 要读取的 `InputStream`
-     * @param encoding 使用的编码，null表示平台默认的编码
-     * @return 字节数组
-     * @throws IOException io错误发生时
-     * @throws java.nio.charset.UnsupportedCharsetException 指定编码不被支持时
+     * @param is the `InputStream` to read
+     * @param encoding the encoding to use; null means the platform default encoding
+     * @return the requested character array
+     * @throws IOException when an I/O error occurs
+     * @throws java.nio.charset.UnsupportedCharsetException if the specified encoding is not supported
      * @author K
      * @since 1.0.0
      */
     fun toCharArray(`is`: InputStream, encoding: String? = null): CharArray = IOUtils.toCharArray(`is`, encoding)
 
     /**
-     * 读取`Reader`的内容为`char[]`.
-     * 该方法内部有对输入进行缓存，因此没有必要使用`BufferedReader`.
+     * Reads the contents of a `Reader` as a `char[]`.
+     * This method buffers the input internally, so there is no need to use a `BufferedReader`.
      *
-     * @param input 要读取的 `Reader`
-     * @return 字节数组
-     * @throws IOException io错误发生时
+     * @param input the `Reader` to read
+     * @return the requested character array
+     * @throws IOException when an I/O error occurs
      * @author K
      * @since 1.0.0
      */
@@ -192,71 +191,70 @@ object IoKit {
 
     //region read toString
     /**
-     * 读取`InputStream`的内容为字符串.
-     * 使用指定的编码。
-     * 字符编码可以在这里找到：
+     * Reads the contents of an `InputStream` as a String, using the specified character encoding.
+     * Character encoding names can be found at
      * [IANA](http://www.iana.org/assignments/character-sets).
      *
-     * 该方法内部有对输入进行缓存，因此没有必要使用`BufferedInputStream`.
+     * This method buffers the input internally, so there is no need to use a `BufferedInputStream`.
      *
-     * @param input 要读取的`InputStream`
-     * @param encoding 使用的编码，null表示平台默认的编码
-     * @return 请求的字符串
-     * @throws IOException io错误发生时
-     * @throws java.nio.charset.UnsupportedCharsetException 指定的编码不被支持时
+     * @param input the `InputStream` to read
+     * @param encoding the encoding to use; null means the platform default encoding
+     * @return the requested String
+     * @throws IOException when an I/O error occurs
+     * @throws java.nio.charset.UnsupportedCharsetException if the specified encoding is not supported
      * @author K
      * @since 1.0.0
      */
     fun toString(input: InputStream, encoding: String? = null): String = IOUtils.toString(input, encoding)
 
     /**
-     * 读取`Reader`的内容为字符串.
-     * 该方法内部有对输入进行缓存，因此没有必要使用`BufferedReader`.
+     * Reads the contents of a `Reader` as a String.
+     * This method buffers the input internally, so there is no need to use a `BufferedReader`.
      *
-     * @param input 要读取的`Reader`
-     * @return 请求的字符串
-     * @throws IOException io错误发生时
+     * @param input the `Reader` to read
+     * @return the requested String
+     * @throws IOException when an I/O error occurs
      * @author K
      * @since 1.0.0
      */
     fun toString(input: Reader): String = IOUtils.toString(input)
 
     /**
-     * 读取`URI`指向的内容为字符串.
+     * Reads the contents pointed to by the `URI` as a String.
      *
-     * @param uri URI源
-     * @param encoding URL指向的内容的编码名称
-     * @return URI指向的内容的字符串表示
-     * @throws IOException io错误发生时
-     * @throws java.nio.charset.UnsupportedCharsetException 如果指定的编码不被支持
+     * @param uri the URI source
+     * @param encoding the encoding name of the content pointed to by the URL
+     * @return the String representation of the content pointed to by the URI
+     * @throws IOException when an I/O error occurs
+     * @throws java.nio.charset.UnsupportedCharsetException if the specified encoding is not supported
      * @author K
      * @since 1.0.0
      */
     fun toString(uri: URI, encoding: String? = null): String = IOUtils.toString(uri, encoding)
 
     /**
-     * 读取`URL`指向的内容为字符串.
+     * Reads the contents pointed to by the `URL` as a String.
      *
-     * @param url URL源
-     * @param encoding URL指向的内容的编码名称
-     * @return URI指向的内容的字符串表示
+     * @param url the URL source
+     * @param encoding the encoding name of the content pointed to by the URL
+     * @return the String representation of the content pointed to by the URI
      * @if an I/O exception occurs.
-     * @throws IOException io错误发生时
-     * @throws java.nio.charset.UnsupportedCharsetException 如果指定的编码不被支持
+     * @throws IOException when an I/O error occurs
+     * @throws java.nio.charset.UnsupportedCharsetException if the specified encoding is not supported
      * @author K
      * @since 1.0.0
      */
     fun toString(url: URL, encoding: String? = null): String = IOUtils.toString(url, encoding)
 
     /**
-     * 读取`byte[]`的内容为字符串，使用指定的编码
+     * Reads the contents of a `byte[]` as a String, using the specified character encoding.
      *
-     * 字符编码名称可以在这里找到： [IANA](http://www.iana.org/assignments/character-sets).
+     * Character encoding names can be found at [IANA](http://www.iana.org/assignments/character-sets).
      *
-     * @param input 要读取的字节数组
-     * @param encoding 使用的编码，null表示平台默认的编码
-     * @return 请求的字符串
-     * @throws IOException io错误发生时
+     * @param input the byte array to read
+     * @param encoding the encoding to use; null means the platform default encoding
+     * @return the requested String
+     * @throws IOException when an I/O error occurs
      * @author K
      * @since 1.0.0
      */
@@ -265,28 +263,28 @@ object IoKit {
 
     //region readLines
     /**
-     * 读取`InputStream`的内容为字符串列表，
-     * 每行一个实体，使用指定的编码
-     * 字符编码名称可以在这里找到： [IANA](http://www.iana.org/assignments/character-sets).
-     * 该方法内部有对输入进行缓存，因此没有必要使用`BufferedInputStream`.
+     * Reads the contents of an `InputStream` as a list of Strings, one entry per line,
+     * using the specified character encoding.
+     * Character encoding names can be found at [IANA](http://www.iana.org/assignments/character-sets).
+     * This method buffers the input internally, so there is no need to use a `BufferedInputStream`.
      *
-     * @param input 要读取的`InputStream`, 不能为null
-     * @param encoding 使用的编码，null表示平台默认的编码
-     * @return 字符串列表，不会为null
-     * @throws IOException io错误发生时
-     * @throws java.nio.charset.UnsupportedCharsetException 如果指定的编码不被支持
+     * @param input the `InputStream` to read, not null
+     * @param encoding the encoding to use; null means the platform default encoding
+     * @return the list of Strings, never null
+     * @throws IOException when an I/O error occurs
+     * @throws java.nio.charset.UnsupportedCharsetException if the specified encoding is not supported
      * @author K
      * @since 1.0.0
      */
     fun readLines(input: InputStream, encoding: String? = null): List<String> = IOUtils.readLines(input, encoding)
 
     /**
-     * 读取`InputStream`的内容为字符串列表，每行一个实体
-     * 该方法内部有对输入进行缓存，因此没有必要使用`BufferedReader`.
+     * Reads the contents of a `Reader` as a list of Strings, one entry per line.
+     * This method buffers the input internally, so there is no need to use a `BufferedReader`.
      *
-     * @param input 要读取的`Reader`, 不能为null
-     * @return 字符串列表，不会为null
-     * @throws IOException io错误发生时
+     * @param input the `Reader` to read, not null
+     * @return the list of Strings, never null
+     * @throws IOException when an I/O error occurs
      * @author K
      * @since 1.0.0
      */
@@ -295,59 +293,60 @@ object IoKit {
 
     //region lineIterator
     /**
-     * 返回`Reader`的一个行迭代器
+     * Returns an Iterator for the lines in a `Reader`.
      *
-     * `LineIterator` 持有的打开的`Reader`的引用。
-     * 当您完成迭代时，您必须关闭`Reader`以便释放内部的资源。
-     * 这可以通过直接关闭`Reader`，或调用[LineIterator.close]，
-     * 或调用[LineIterator.closeQuietly]方法。
+     * `LineIterator` holds a reference to the open `Reader`.
+     * When you have finished iterating, you should close the `Reader` to free internal resources.
+     * This can be done by closing the `Reader` directly, by calling [LineIterator.close],
+     * or by calling [LineIterator.closeQuietly].
      *
-     * 建议的使用模式为：
+     * Recommended usage pattern:
      *
      * <pre>
      * try {
      * LineIterator it = IOUtils.lineIterator(reader);
      * while (it.hasNext()) {
      * String line = it.nextLine();
-     * // / 对line的处理
+     * // / do something with line
      * }
      * } finally {
      * IOUtils.closeQuietly(reader);
      * }
      * </pre>
-     * @param reader 要读取的`Reader`
-     * @return 行迭代器
+     * @param reader the `Reader` to read
+     * @return an iterator of the lines
      * @author K
      * @since 1.0.0
      */
     fun lineIterator(reader: Reader): LineIterator = IOUtils.lineIterator(reader)
 
     /**
-     * 返回`InputStream`的一个行迭代器，使用指定的编码(null为平台默认编码)
+     * Returns an Iterator for the lines in an `InputStream`, using the specified encoding
+     * (null means platform default encoding).
      *
-     * `LineIterator` 持有的打开的`InputStream`的引用。
-     * 当您完成迭代时，您必须关闭`InputStream`以便释放内部的资源。
-     * 这可以通过直接关闭`InputStream`，或调用[LineIterator.close]，
-     * 或调用[LineIterator.closeQuietly]方法。
+     * `LineIterator` holds a reference to the open `InputStream`.
+     * When you have finished iterating, you should close the `InputStream` to free internal resources.
+     * This can be done by closing the `InputStream` directly, by calling [LineIterator.close],
+     * or by calling [LineIterator.closeQuietly].
      *
-     * 建议的使用模式为：
+     * Recommended usage pattern:
      *
      * <pre>
      * try {
      * LineIterator it = IOUtils.lineIterator(stream, &quot;UTF-8&quot;);
      * while (it.hasNext()) {
      * String line = it.nextLine();
-     * // / 对line的处理
+     * // / do something with line
      * }
      * } finally {
      * IOUtils.closeQuietly(stream);
      * }
      * </pre>
-     * @param input 要读取的`InputStream`, 不能为null
-     * @param encoding 使用的编码，null表示平台默认的编码
-     * @return 行迭代器
-     * @throws IOException io错误发生时
-     * @throws java.nio.charset.UnsupportedCharsetException 如果指定的编码不被支持
+     * @param input the `InputStream` to read, not null
+     * @param encoding the encoding to use; null means the platform default encoding
+     * @return an iterator of the lines
+     * @throws IOException when an I/O error occurs
+     * @throws java.nio.charset.UnsupportedCharsetException if the specified encoding is not supported
      * @author K
      * @since 1.0.0
      */
@@ -356,14 +355,14 @@ object IoKit {
 
     //region toInputStream
     /**
-     * 转换指定的CharSequence为InputStream，使用指定的编码
-     * 字符编码名称可以在这里找到： [IANA](http://www.iana.org/assignments/character-sets).
+     * Converts the specified CharSequence to an InputStream using the specified character encoding.
+     * Character encoding names can be found at [IANA](http://www.iana.org/assignments/character-sets).
      *
-     * @param input 待转换的CharSequence
-     * @param encoding 使用的编码，null表示平台默认的编码
-     * @return 输入流
-     * @throws IOException io错误发生时
-     * @throws java.nio.charset.UnsupportedCharsetException 如果指定的编码不被支持
+     * @param input the CharSequence to convert
+     * @param encoding the encoding to use; null means the platform default encoding
+     * @return an input stream
+     * @throws IOException when an I/O error occurs
+     * @throws java.nio.charset.UnsupportedCharsetException if the specified encoding is not supported
      * @author K
      * @since 1.0.0
      */
@@ -371,14 +370,14 @@ object IoKit {
         IOUtils.toInputStream(input, encoding)
 
     /**
-     * 转换指定的字符串为InputStream，使用指定的编码
-     * 字符编码名称可以在这里找到： [IANA](http://www.iana.org/assignments/character-sets).
+     * Converts the specified String to an InputStream using the specified character encoding.
+     * Character encoding names can be found at [IANA](http://www.iana.org/assignments/character-sets).
      *
-     * @param input 待转换的字符串
-     * @param encoding 使用的编码，null表示平台默认的编码
-     * @return 输入流
-     * @throws IOException io错误发生时
-     * @throws java.nio.charset.UnsupportedCharsetException 如果指定的编码不被支持
+     * @param input the String to convert
+     * @param encoding the encoding to use; null means the platform default encoding
+     * @return an input stream
+     * @throws IOException when an I/O error occurs
+     * @throws java.nio.charset.UnsupportedCharsetException if the specified encoding is not supported
      * @author K
      * @since 1.0.0
      */
@@ -387,26 +386,25 @@ object IoKit {
 
     //region write byte[]
     /**
-     * 将一个`byte[]`的内容写入一个`OutputStream`
+     * Writes the contents of a `byte[]` to an `OutputStream`.
      *
-     * @param data 待写入的字节数组, 在输出时不会被修改
-     * @param output 要写入的 `OutputStream`
-     * @throws IOException io错误发生时
+     * @param data the byte array to write, not modified during output
+     * @param output the `OutputStream` to write to
+     * @throws IOException when an I/O error occurs
      * @author K
      * @since 1.0.0
      */
     fun write(data: ByteArray, output: OutputStream): Unit = IOUtils.write(data, output)
 
     /**
-     * 将一个`byte[]`的内容写入一个`Writer`,
-     * 使用指定的默认编码
-     * 字符编码名称可以在这里找到： [IANA](http://www.iana.org/assignments/character-sets).
+     * Writes the contents of a `byte[]` to a `Writer`, using the specified default character encoding.
+     * Character encoding names can be found at [IANA](http://www.iana.org/assignments/character-sets).
      *
-     * @param data 待写入的字节数组, 在输出时不会被修改
-     * @param output 要写入的`Writer`
-     * @param encoding 使用的编码，null表示平台默认的编码
-     * @throws IOException io错误发生时
-     * @throws java.nio.charset.UnsupportedCharsetException 如果指定的编码不被支持
+     * @param data the byte array to write, not modified during output
+     * @param output the `Writer` to write to
+     * @param encoding the encoding to use; null means the platform default encoding
+     * @throws IOException when an I/O error occurs
+     * @throws java.nio.charset.UnsupportedCharsetException if the specified encoding is not supported
      * @author K
      * @since 1.0.0
      */
@@ -415,26 +413,24 @@ object IoKit {
 
     //region write char[]
     /**
-     * 将一个`char[]`的内容写入一个`Writer`,
-     * 使用平台的默认编码
-     * @param data 待写入的字符数组, 在输出时不会被修改
-     * @param output 要写入的`Writer`
-     * @throws IOException io错误发生时
+     * Writes the contents of a `char[]` to a `Writer`, using the platform default character encoding.
+     * @param data the character array to write, not modified during output
+     * @param output the `Writer` to write to
+     * @throws IOException when an I/O error occurs
      * @author K
      * @since 1.0.0
      */
     fun write(data: CharArray, output: Writer): Unit = IOUtils.write(data, output)
 
     /**
-     * 将一个`char[]`的内容写入一个`OutputStream`,
-     * 使用指定的编码
-     * 字符编码名称可以在这里找到： [IANA](http://www.iana.org/assignments/character-sets).
+     * Writes the contents of a `char[]` to an `OutputStream`, using the specified character encoding.
+     * Character encoding names can be found at [IANA](http://www.iana.org/assignments/character-sets).
      *
-     * @param data 待写入的字符数组, 在输出时不会被修改
-     * @param output 要写入的`OutputStream`
-     * @param encoding 使用的编码，null表示平台默认的编码
-     * @throws IOException io错误发生时
-     * @throws java.nio.charset.UnsupportedCharsetException 如果指定的编码不被支持
+     * @param data the character array to write, not modified during output
+     * @param output the `OutputStream` to write to
+     * @param encoding the encoding to use; null means the platform default encoding
+     * @throws IOException when an I/O error occurs
+     * @throws java.nio.charset.UnsupportedCharsetException if the specified encoding is not supported
      * @author K
      * @since 1.0.0
      */
@@ -445,27 +441,26 @@ object IoKit {
 
     //region write CharSequence
     /**
-     * 将一个`CharSequence`的内容写入一个`Writer`
+     * Writes the contents of a `CharSequence` to a `Writer`.
      *
-     * @param data 待写入的`CharSequence`
-     * @param output 要写入的`Writer`
-     * @throws IOException io错误发生时
+     * @param data the `CharSequence` to write
+     * @param output the `Writer` to write to
+     * @throws IOException when an I/O error occurs
      * @author K
      * @since 1.0.0
      */
     fun write(data: CharSequence, output: Writer): Unit = IOUtils.write(data, output)
 
     /**
-     * 将一个`CharSequence`的内容写入一个`OutputStream`,
-     * 使用指定的编码
-     * 字符编码名称可以在这里找到： [IANA](http://www.iana.org/assignments/character-sets).
+     * Writes the contents of a `CharSequence` to an `OutputStream`, using the specified character encoding.
+     * Character encoding names can be found at [IANA](http://www.iana.org/assignments/character-sets).
      *
      *
-     * @param data 待写入的`CharSequence`
-     * @param output 要写入的`OutputStream`
-     * @param encoding 使用的编码，null表示平台默认的编码
-     * @throws IOException io错误发生时
-     * @throws java.nio.charset.UnsupportedCharsetException 如果指定的编码不被支持
+     * @param data the `CharSequence` to write
+     * @param output the `OutputStream` to write to
+     * @param encoding the encoding to use; null means the platform default encoding
+     * @throws IOException when an I/O error occurs
+     * @throws java.nio.charset.UnsupportedCharsetException if the specified encoding is not supported
      * @author K
      * @since 1.0.0
      */
@@ -475,26 +470,25 @@ object IoKit {
 
     //region write String
     /**
-     * 将一个`String`的内容写入一个`Writer`
+     * Writes the contents of a `String` to a `Writer`.
      *
-     * @param data 待写入的`String`
-     * @param output 要写入的`Writer`
-     * @throws IOException io错误发生时
+     * @param data the `String` to write
+     * @param output the `Writer` to write to
+     * @throws IOException when an I/O error occurs
      * @author K
      * @since 1.0.0
      */
     fun write(data: String, output: Writer): Unit = IOUtils.write(data, output)
 
     /**
-     * 将一个`CharSequence`的内容写入一个`OutputStream`,
-     * 使用指定的编码
-     * 字符编码名称可以在这里找到： [IANA](http://www.iana.org/assignments/character-sets).
+     * Writes the contents of a `CharSequence` to an `OutputStream`, using the specified character encoding.
+     * Character encoding names can be found at [IANA](http://www.iana.org/assignments/character-sets).
      *
-     * @param data 待写入的`String`
-     * @param output 要写入的`OutputStream`
-     * @param encoding 使用的编码，null表示平台默认的编码
-     * @throws IOException io错误发生时
-     * @throws java.nio.charset.UnsupportedCharsetException 如果指定的编码不被支持
+     * @param data the `String` to write
+     * @param output the `OutputStream` to write to
+     * @param encoding the encoding to use; null means the platform default encoding
+     * @throws IOException when an I/O error occurs
+     * @throws java.nio.charset.UnsupportedCharsetException if the specified encoding is not supported
      * @author K
      * @since 1.0.0
      */
@@ -504,17 +498,17 @@ object IoKit {
 
     //region writeLines
     /**
-     * 将容器中的每个一元素的toString()结果逐行写入到`OutputStream`中，
-     * 使用指定的行分隔符和编码。
+     * Writes the toString() result of each element in a collection line by line to an `OutputStream`,
+     * using the specified line separator and character encoding.
      *
-     * 字符编码名称可以在这里找到： [IANA](http://www.iana.org/assignments/character-sets).
+     * Character encoding names can be found at [IANA](http://www.iana.org/assignments/character-sets).
      *
-     * @param lines 要写入的行，null的实体产生空白行
-     * @param lineEnding 要使用的行分隔符，null将用系统默认行分隔符
-     * @param output 要写入的`OutputStream`, 不能为null, 不能是已关闭的
-     * @param encoding 使用的编码，null表示平台默认的编码
-     * @throws IOException io错误发生时
-     * @throws java.nio.charset.UnsupportedCharsetException 如果指定的编码不被支持
+     * @param lines the lines to write; null entries produce blank lines
+     * @param lineEnding the line separator to use; null uses the system default line separator
+     * @param output the `OutputStream` to write to; not null and not closed
+     * @param encoding the encoding to use; null means the platform default encoding
+     * @throws IOException when an I/O error occurs
+     * @throws java.nio.charset.UnsupportedCharsetException if the specified encoding is not supported
      * @author K
      * @since 1.0.0
      */
@@ -523,12 +517,12 @@ object IoKit {
     ): Unit = IOUtils.writeLines(lines, lineEnding, output, encoding)
 
     /**
-     * 将容器中的每个一元素的toString()结果逐行写入到`Writer`中
+     * Writes the toString() result of each element in a collection line by line to a `Writer`.
      *
-     * @param lines 要写入的行，null的实体产生空白行
-     * @param lineEnding 要使用的行分隔符，null将用系统默认行分隔符
-     * @param writer 要写入的`Writer`, 不能为null, 不能是已关闭的
-     * @throws IOException io错误发生时
+     * @param lines the lines to write; null entries produce blank lines
+     * @param lineEnding the line separator to use; null uses the system default line separator
+     * @param writer the `Writer` to write to; not null and not closed
+     * @throws IOException when an I/O error occurs
      * @author K
      * @since 1.0.0
      */
@@ -538,44 +532,44 @@ object IoKit {
 
     //region copy from InputStream
     /**
-     * 从`InputStream`中拷贝字节到`OutputStream`中
-     * 该方法内部有对输入进行缓存，因此没有必要使用`BufferedInputStream`.
+     * Copies bytes from an `InputStream` to an `OutputStream`.
+     * This method buffers the input internally, so there is no need to use a `BufferedInputStream`.
      *
-     * 大的流(超过2GB)在完成拷贝后，将返回一个`-1`的字节拷贝值，
-     * 因为无法返回正确的整型字节数。大的流对象的拷贝应该使用
-     * `copyLarge(InputStream, OutputStream)` 方法.
+     * Large streams (over 2GB) will return a byte copy count of `-1` after the copy completes,
+     * because the correct number of bytes cannot be returned as an int. For large streams,
+     * use the `copyLarge(InputStream, OutputStream)` method.
      *
-     * @param input 要读取的`InputStream`
-     * @param output 要写入的`OutputStream`
-     * @return 拷贝的字节数, 如果大于Integer.MAX_VALUE返回-1
-     * @throws IOException io错误发生时
+     * @param input the `InputStream` to read
+     * @param output the `OutputStream` to write to
+     * @return the number of bytes copied; -1 if greater than Integer.MAX_VALUE
+     * @throws IOException when an I/O error occurs
      * @author K
      * @since 1.0.0
      */
     fun copy(input: InputStream, output: OutputStream): Int = IOUtils.copy(input, output)
 
     /**
-     * 从一个大的(超过2GB)`InputStream`中拷贝字节到`OutputStream`中
-     * 该方法内部有对输入进行缓存，因此没有必要使用`BufferedInputStream`.
+     * Copies bytes from a large (over 2GB) `InputStream` to an `OutputStream`.
+     * This method buffers the input internally, so there is no need to use a `BufferedInputStream`.
      *
-     * @param input 要读取的`InputStream`
-     * @param output 要写入的`OutputStream`
-     * @return 拷贝的字节数
-     * @throws IOException io错误发生时
+     * @param input the `InputStream` to read
+     * @param output the `OutputStream` to write to
+     * @return the number of bytes copied
+     * @throws IOException when an I/O error occurs
      * @author K
      * @since 1.0.0
      */
     fun copyLarge(input: InputStream, output: OutputStream): Long = IOUtils.copyLarge(input, output)
 
     /**
-     * 从一个大的(超过2GB)`InputStream`中拷贝字节到`OutputStream`中
-     * 该方法使用提供的缓存, 因此没有必要使用`BufferedInputStream`.
+     * Copies bytes from a large (over 2GB) `InputStream` to an `OutputStream`.
+     * This method uses the provided buffer, so there is no need to use a `BufferedInputStream`.
      *
-     * @param input 要读取的`InputStream`
-     * @param output 要写入的`OutputStream`
-     * @param buffer 拷贝时要使用的缓存
-     * @return 拷贝的字节数
-     * @throws IOException io错误发生时
+     * @param input the `InputStream` to read
+     * @param output the `OutputStream` to write to
+     * @param buffer the buffer to use for the copy
+     * @return the number of bytes copied
+     * @throws IOException when an I/O error occurs
      * @author K
      * @since 1.0.0
      */
@@ -583,16 +577,16 @@ object IoKit {
         IOUtils.copyLarge(input, output, buffer)
 
     /**
-     * 从一个大的(超过2GB)`InputStream`中拷贝所有或部分字节到`OutputStream`中，
-     * 可以选择跳过某些输入的字节
-     * 该方法内部有对输入进行缓存，因此没有必要使用`BufferedInputStream`.
+     * Copies all or part of the bytes from a large (over 2GB) `InputStream` to an `OutputStream`,
+     * optionally skipping some input bytes.
+     * This method buffers the input internally, so there is no need to use a `BufferedInputStream`.
      *
-     * @param input 要读取的`InputStream`
-     * @param output 要写入的`OutputStream`
-     * @param inputOffset : 拷贝前从输入跳过的字节数，负数将拷贝所有
-     * @param length : 要拷贝的字节数. 负数将拷贝所有
-     * @return 拷贝的字节数
-     * @throws IOException io错误发生时
+     * @param input the `InputStream` to read
+     * @param output the `OutputStream` to write to
+     * @param inputOffset the number of bytes to skip from the input before copying; negative copies all
+     * @param length the number of bytes to copy; negative copies all
+     * @return the number of bytes copied
+     * @throws IOException when an I/O error occurs
      * @author K
      * @since 1.0.0
      */
@@ -600,17 +594,17 @@ object IoKit {
         IOUtils.copyLarge(input, output, inputOffset, length)
 
     /**
-     * 从一个大的(超过2GB)`InputStream`中拷贝所有或部分字节到`OutputStream`中，
-     * 可以选择跳过某些输入的字节
-     * 该方法使用提供的缓存, 因此没有必要使用`BufferedInputStream`.
+     * Copies all or part of the bytes from a large (over 2GB) `InputStream` to an `OutputStream`,
+     * optionally skipping some input bytes.
+     * This method uses the provided buffer, so there is no need to use a `BufferedInputStream`.
      *
-     * @param input 要读取的`InputStream`
-     * @param output 要写入的`OutputStream`
-     * @param inputOffset 拷贝前从输入跳过的字节数，负数将拷贝所有
-     * @param length 要拷贝的字节数. 负数将拷贝所有
-     * @param buffer 拷贝时要使用的缓存
-     * @return 拷贝的字节数
-     * @throws IOException io错误发生时
+     * @param input the `InputStream` to read
+     * @param output the `OutputStream` to write to
+     * @param inputOffset the number of bytes to skip from the input before copying; negative copies all
+     * @param length the number of bytes to copy; negative copies all
+     * @param buffer the buffer to use for the copy
+     * @return the number of bytes copied
+     * @throws IOException when an I/O error occurs
      * @author K
      * @since 1.0.0
      */
@@ -618,16 +612,16 @@ object IoKit {
         IOUtils.copyLarge(input, output, inputOffset, length, buffer)
 
     /**
-     * 将`InputStream`的内容拷贝到`Writer`，使用指定的编码
-     * 该方法内部有对输入进行缓存，因此没有必要使用`BufferedInputStream`.
-     * 字符编码名称可以在这里找到： [IANA](http://www.iana.org/assignments/character-sets).
-     * 该方法使用 [InputStreamReader].
+     * Copies the contents of an `InputStream` to a `Writer`, using the specified character encoding.
+     * This method buffers the input internally, so there is no need to use a `BufferedInputStream`.
+     * Character encoding names can be found at [IANA](http://www.iana.org/assignments/character-sets).
+     * This method uses [InputStreamReader].
      *
-     * @param input 要读取的`InputStream`
-     * @param output 要写入的`Writer`
-     * @param encoding 使用的编码，null表示平台默认的编码
-     * @throws IOException io错误发生时
-     * @throws java.nio.charset.UnsupportedCharsetException 如果指定的编码不被支持
+     * @param input the `InputStream` to read
+     * @param output the `Writer` to write to
+     * @param encoding the encoding to use; null means the platform default encoding
+     * @throws IOException when an I/O error occurs
+     * @throws java.nio.charset.UnsupportedCharsetException if the specified encoding is not supported
      * @author K
      * @since 1.0.0
      */
@@ -637,60 +631,60 @@ object IoKit {
 
     //region copy from Reader
     /**
-     * 将字符从`Reader` 拷贝到 `Writer`.
-     * 该方法内部有对输入进行缓存，因此没有必要使用`BufferedReader`.
+     * Copies characters from a `Reader` to a `Writer`.
+     * This method buffers the input internally, so there is no need to use a `BufferedReader`.
      *
-     * 大的流(超过2GB)在完成拷贝后，将返回一个`-1`的字节拷贝值，
-     * 因为无法返回正确的整型字节数。大的流对象的拷贝应该使用
-     * `copyLarge(Reader, Writer)` 方法.
+     * Large streams (over 2GB) will return a byte copy count of `-1` after the copy completes,
+     * because the correct number of bytes cannot be returned as an int. For large streams,
+     * use the `copyLarge(Reader, Writer)` method.
      *
-     * @param input 要读取的`Reader`
-     * @param output 要写入的`Writer`
-     * @return 拷贝的字符数，如果大于Integer.MAX_VALUE将返回-1
-     * @throws IOException io错误发生时
+     * @param input the `Reader` to read
+     * @param output the `Writer` to write to
+     * @return the number of characters copied; -1 if greater than Integer.MAX_VALUE
+     * @throws IOException when an I/O error occurs
      * @author K
      * @since 1.0.0
      */
     fun copy(input: Reader, output: Writer): Int = IOUtils.copy(input, output)
 
     /**
-     * 将字符从大的(超过2GB)`Reader` 拷贝到 `Writer`.
-     * 该方法内部有对输入进行缓存，因此没有必要使用`BufferedReader`.
+     * Copies characters from a large (over 2GB) `Reader` to a `Writer`.
+     * This method buffers the input internally, so there is no need to use a `BufferedReader`.
      *
-     * @param input 要读取的`Reader`
-     * @param output 要写入的`Writer`
-     * @return 拷贝的字符数
-     * @throws IOException io错误发生时
+     * @param input the `Reader` to read
+     * @param output the `Writer` to write to
+     * @return the number of characters copied
+     * @throws IOException when an I/O error occurs
      * @author K
      * @since 1.0.0
      */
     fun copyLarge(input: Reader, output: Writer): Long = IOUtils.copyLarge(input, output)
 
     /**
-     * 将字符从大的(超过2GB)`Reader` 拷贝到 `Writer`.
-     * 该方法使用提供的缓存, 因此没有必要使用`BufferedReader`.
+     * Copies characters from a large (over 2GB) `Reader` to a `Writer`.
+     * This method uses the provided buffer, so there is no need to use a `BufferedReader`.
      *
-     * @param input 要读取的`Reader`
-     * @param output 要写入的`Writer`
-     * @param buffer 拷贝时使用的缓存
-     * @return 拷贝的字符数
-     * @throws IOException io错误发生时
+     * @param input the `Reader` to read
+     * @param output the `Writer` to write to
+     * @param buffer the buffer to use for the copy
+     * @return the number of characters copied
+     * @throws IOException when an I/O error occurs
      * @author K
      * @since 1.0.0
      */
     fun copyLarge(input: Reader, output: Writer, buffer: CharArray): Long = IOUtils.copyLarge(input, output, buffer)
 
     /**
-     * 将所有或部分字符从大的(超过2GB)`Reader` 拷贝到 `Writer`，
-     * 可以选择跳过部分字符。
-     * 该方法内部有对输入进行缓存，因此没有必要使用`BufferedReader`.
+     * Copies all or part of the characters from a large (over 2GB) `Reader` to a `Writer`,
+     * optionally skipping some characters.
+     * This method buffers the input internally, so there is no need to use a `BufferedReader`.
      *
-     * @param input 要读取的`Reader`
-     * @param output 要写入的`Writer`
-     * @param inputOffset : 拷贝前从输入跳过的字符数，负数将拷贝所有
-     * @param length : 要拷贝的字符数. 负数将拷贝所有
-     * @return 拷贝的字符数
-     * @throws IOException io错误发生时
+     * @param input the `Reader` to read
+     * @param output the `Writer` to write to
+     * @param inputOffset the number of characters to skip from the input before copying; negative copies all
+     * @param length the number of characters to copy; negative copies all
+     * @return the number of characters copied
+     * @throws IOException when an I/O error occurs
      * @author K
      * @since 1.0.0
      */
@@ -698,17 +692,17 @@ object IoKit {
         IOUtils.copyLarge(input, output, inputOffset, length)
 
     /**
-     * 将所有或部分字符从大的(超过2GB)`Reader` 拷贝到 `Writer`，
-     * 可以选择跳过部分字符。
+     * Copies all or part of the characters from a large (over 2GB) `Reader` to a `Writer`,
+     * optionally skipping some characters.
      *
-     * 该方法使用提供的缓存, 因此没有必要使用`BufferedReader`.
-     * @param input 要读取的`Reader`
-     * @param output 要写入的`Writer`
-     * @param inputOffset : 拷贝前从输入跳过的字符数，负数将拷贝所有
-     * @param length : 要拷贝的字符数. 负数将拷贝所有
-     * @param buffer 拷贝时使用的缓存
-     * @return 拷贝的字符数
-     * @throws IOException io错误发生时
+     * This method uses the provided buffer, so there is no need to use a `BufferedReader`.
+     * @param input the `Reader` to read
+     * @param output the `Writer` to write to
+     * @param inputOffset the number of characters to skip from the input before copying; negative copies all
+     * @param length the number of characters to copy; negative copies all
+     * @param buffer the buffer to use for the copy
+     * @return the number of characters copied
+     * @throws IOException when an I/O error occurs
      * @author K
      * @since 1.0.0
      */
@@ -716,18 +710,18 @@ object IoKit {
         IOUtils.copyLarge(input, output, inputOffset, length, buffer)
 
     /**
-     * 将`Reader` 的内容拷贝到 `OutputStream`，
-     * 使用指定的编码，并调用flush
-     * 该方法内部有对输入进行缓存，因此没有必要使用`BufferedReader`.
-     * 字符编码名称可以在这里找到： [IANA](http://www.iana.org/assignments/character-sets).
-     * 由于OutputStreamWriter的实现，该方法可以执行flush
-     * 该方法使用 [OutputStreamWriter].
+     * Copies the contents of a `Reader` to an `OutputStream`,
+     * using the specified character encoding, and calls flush.
+     * This method buffers the input internally, so there is no need to use a `BufferedReader`.
+     * Character encoding names can be found at [IANA](http://www.iana.org/assignments/character-sets).
+     * Because of the implementation of OutputStreamWriter, this method can perform a flush.
+     * This method uses [OutputStreamWriter].
      *
-     * @param input 要读取的`Reader`
-     * @param output 要写入的`OutputStream`
-     * @param encoding 使用的编码，null表示平台默认的编码
-     * @throws IOException io错误发生时
-     * @throws java.nio.charset.UnsupportedCharsetException 如果指定的编码不被支持
+     * @param input the `Reader` to read
+     * @param output the `OutputStream` to write to
+     * @param encoding the encoding to use; null means the platform default encoding
+     * @throws IOException when an I/O error occurs
+     * @throws java.nio.charset.UnsupportedCharsetException if the specified encoding is not supported
      * @author K
      * @since 1.0.0
      */
@@ -737,39 +731,39 @@ object IoKit {
 
     //region content equals
     /**
-     * 检查两个输入流的内容是否相等
-     * 如果输入没有缓存，该方法将在内部使用`BufferedInputStream`对输入进行缓存
+     * Checks whether the contents of two input streams are equal.
+     * If the inputs are not buffered, this method internally uses `BufferedInputStream` to buffer the inputs.
      *
-     * @param input1 第一个输入流
-     * @param input2 第二个输入流
-     * @return true：两个输入流的内容相等，或它们都不存在，否则返回false
-     * @throws IOException io错误发生时
+     * @param input1 the first input stream
+     * @param input2 the second input stream
+     * @return true if the contents of both input streams are equal, or if they both do not exist; otherwise false
+     * @throws IOException when an I/O error occurs
      * @author K
      * @since 1.0.0
      */
     fun contentEquals(input1: InputStream, input2: InputStream): Boolean = IOUtils.contentEquals(input1, input2)
 
     /**
-     * 检查两个Reader的内容是否相等
-     * 如果输入没有缓存，该方法将在内部使用`BufferedReader`对输入进行缓存
+     * Checks whether the contents of two Readers are equal.
+     * If the inputs are not buffered, this method internally uses `BufferedReader` to buffer the inputs.
      *
-     * @param input1 第一个reader
-     * @param input2 第二个reader
-     * @return true：两个reader的内容相等，或它们都不存在，否则返回false
-     * @throws IOException io错误发生时
+     * @param input1 the first reader
+     * @param input2 the second reader
+     * @return true if the contents of both readers are equal, or if they both do not exist; otherwise false
+     * @throws IOException when an I/O error occurs
      * @author K
      * @since 1.0.0
      */
     fun contentEquals(input1: Reader, input2: Reader): Boolean = IOUtils.contentEquals(input1, input2)
 
     /**
-     * 检查两个Reader的内容是否相等，忽略EOL字符
-     * 如果输入没有缓存，该方法将在内部使用`BufferedReader`对输入进行缓存
+     * Checks whether the contents of two Readers are equal, ignoring EOL characters.
+     * If the inputs are not buffered, this method internally uses `BufferedReader` to buffer the inputs.
      *
-     * @param input1 第一个reader
-     * @param input2 第二个reader
-     * @return true：两个reader的内容相等(忽略EOL字符)，或它们都不存在，否则返回false
-     * @throws IOException io错误发生时
+     * @param input1 the first reader
+     * @param input2 the second reader
+     * @return true if the contents of both readers are equal (ignoring EOL characters), or if they both do not exist; otherwise false
+     * @throws IOException when an I/O error occurs
      * @author K
      * @since 1.0.0
      */
@@ -778,61 +772,61 @@ object IoKit {
 
     //region skip
     /**
-     * 从字节流中跳过部分字节。该实现保证会在放弃之前读取尽可能多的字节，
-     * 这与它的子类[Reader]不同。
+     * Skips bytes from a byte stream. This implementation guarantees that it will read as many bytes
+     * as possible before giving up, unlike its subclass [Reader].
      *
-     * @param input 待跳过的字节流
-     * @param toSkip 跳过的字节数
-     * @return 实际跳过的字节数
-     * @throws IllegalArgumentException 如果toSkip参数为负数
-     * @throws IOException io错误发生时
+     * @param input the byte stream to skip
+     * @param toSkip the number of bytes to skip
+     * @return the actual number of bytes skipped
+     * @throws IllegalArgumentException if the toSkip parameter is negative
+     * @throws IOException when an I/O error occurs
      * @author K
      * @since 1.0.0
      */
     fun skip(input: InputStream, toSkip: Long): Long = IOUtils.skip(input, toSkip)
 
     /**
-     * 从字符流中跳过部分字符。该实现保证会在放弃之前读取尽可能多的字符，
-     * 这与它的子类[Reader]不同。
+     * Skips characters from a character stream. This implementation guarantees that it will read as many characters
+     * as possible before giving up, unlike its subclass [Reader].
      *
-     * @param input 待跳过的字节流
-     * @param toSkip 跳过的字节数
-     * @return 实际跳过的字节数
+     * @param input the byte stream to skip
+     * @param toSkip the number of bytes to skip
+     * @return the actual number of bytes skipped
      * @see Reader.skip
-     * @throws IllegalArgumentException 如果toSkip参数为负数
-     * @throws IOException io错误发生时
+     * @throws IllegalArgumentException if the toSkip parameter is negative
+     * @throws IOException when an I/O error occurs
      * @author K
      * @since 1.0.0
      */
     fun skip(input: Reader, toSkip: Long): Long = IOUtils.skip(input, toSkip)
 
     /**
-     * 跳过请求的字节数，或如果没有足够的字节数将失败
-     * 该方法允许[InputStream.skip]可以不跳过指定的参数那么多的字节
-     * (最可能的原因是到达文件末尾)
+     * Skips the requested number of bytes, or fails if there are not enough bytes.
+     * This method allows [InputStream.skip] not to skip as many bytes as specified by the argument
+     * (most likely because of reaching the end of the file).
      *
-     * @param input 要跳过的流
-     * @param toSkip 要跳过的字节数，不能为负数
+     * @param input the stream to skip
+     * @param toSkip the number of bytes to skip; must not be negative
      * @see InputStream.skip
-     * @throws IOException 读取时发生错误
-     * @throws IllegalArgumentException 如果指定的字节数为负数
-     * @throws EOFException 如果要跳过的字节数不正确
+     * @throws IOException if an error occurs while reading
+     * @throws IllegalArgumentException if the specified number of bytes is negative
+     * @throws EOFException if the number of bytes to skip is incorrect
      * @author K
      * @since 1.0.0
      */
     fun skipFully(input: InputStream, toSkip: Long): Unit = IOUtils.skipFully(input, toSkip)
 
     /**
-     * 跳过请求的字符数，或如果没有足够的字符数将失败
-     * 该方法允许[Reader.skip]可以不跳过指定的参数那么多的字符
-     * (最可能的原因是到达文件末尾)
+     * Skips the requested number of characters, or fails if there are not enough characters.
+     * This method allows [Reader.skip] not to skip as many characters as specified by the argument
+     * (most likely because of reaching the end of the file).
      *
-     * @param input 要跳过的流
-     * @param toSkip 要跳过的字符数，不能为负数
+     * @param input the stream to skip
+     * @param toSkip the number of characters to skip; must not be negative
      * @see Reader.skip
-     * @throws IOException 读取时发生错误
-     * IllegalArgumentException 如果指定的字符数为负数
-     * EOFException 如果要跳过的字符数不正确
+     * @throws IOException if an error occurs while reading
+     * IllegalArgumentException if the specified number of characters is negative
+     * EOFException if the number of characters to skip is incorrect
      * @author K
      * @since 1.0.0
      */
@@ -841,15 +835,15 @@ object IoKit {
 
     //region read
     /**
-     * 从字符流中读取字符。该实现保证在放弃前尽可能多的读取字符。
-     * 这与它的子类[Reader]不同。
+     * Reads characters from a character stream. This implementation guarantees that it will read as many characters
+     * as possible before giving up, unlike its subclass [Reader].
      *
-     * @param input 要读入字符的字符流
-     * @param buffer 目标
-     * @param offset 初始读入缓冲区的偏移量
-     * @param length 要读取的长度, 必须 >= 0
-     * @return 实际读取的长度; 可能比请求的小(如果到达文件末尾)
-     * @throws IOException 读取时发生错误
+     * @param input the character stream to read into characters
+     * @param buffer the destination
+     * @param offset the initial offset into the buffer
+     * @param length the length to read; must be >= 0
+     * @return the actual length read; may be smaller than requested if the end of file is reached
+     * @throws IOException if an error occurs while reading
      * @author K
      * @since 1.0.0
      */
@@ -859,28 +853,28 @@ object IoKit {
     }
 
     /**
-     * 从字符流中读取字符。该实现保证在放弃前尽可能多的读取字符。
-     * 这与它的子类[Reader]不同。
+     * Reads characters from a character stream. This implementation guarantees that it will read as many characters
+     * as possible before giving up, unlike its subclass [Reader].
      *
-     * @param input 要读入字符的字符流
-     * @param buffer 目标
-     * @return 实际读取的长度; 可能比请求的小(如果到达文件末尾)
-     * @throws IOException 读取时发生错误
+     * @param input the character stream to read into characters
+     * @param buffer the destination
+     * @return the actual length read; may be smaller than requested if the end of file is reached
+     * @throws IOException if an error occurs while reading
      * @author K
      * @since 1.0.0
      */
     fun read(input: Reader, buffer: CharArray): Int = IOUtils.read(input, buffer)
 
     /**
-     * 从字节流中读取字节。该实现保证在放弃前尽可能多的读取字节。
-     * 这与它的子类[InputStream]不同。
+     * Reads bytes from a byte stream. This implementation guarantees that it will read as many bytes
+     * as possible before giving up, unlike its subclass [InputStream].
      *
-     * @param input 要读入字符的字节流
-     * @param buffer 目标
-     * @param offset 初始读入缓冲区的偏移量
-     * @param length 要读取的长度, 必须 >= 0
-     * @return 实际读取的长度; 可能比请求的小(如果到达文件末尾)
-     * @throws IOException 读取时发生错误
+     * @param input the byte stream to read into characters
+     * @param buffer the destination
+     * @param offset the initial offset into the buffer
+     * @param length the length to read; must be >= 0
+     * @return the actual length read; may be smaller than requested if the end of file is reached
+     * @throws IOException if an error occurs while reading
      * @author K
      * @since 1.0.0
      */
@@ -890,32 +884,32 @@ object IoKit {
     }
 
     /**
-     * 从字节流中读取字符。该实现保证在放弃前尽可能多的读取字节。
-     * 这与它的子类[InputStream]不同。
+     * Reads characters from a byte stream. This implementation guarantees that it will read as many bytes
+     * as possible before giving up, unlike its subclass [InputStream].
      *
-     * @param input 要读入字符的字节流
-     * @param buffer 目标
-     * @return 实际读取的长度; 可能比请求的小(如果到达文件末尾)
-     * @throws IOException 读取时发生错误
+     * @param input the byte stream to read into characters
+     * @param buffer the destination
+     * @return the actual length read; may be smaller than requested if the end of file is reached
+     * @throws IOException if an error occurs while reading
      * @author K
      * @since 1.0.0
      */
     fun read(input: InputStream, buffer: ByteArray): Int = IOUtils.read(input, buffer)
 
     /**
-     * 读取请求数量的字符，或如果没有足够数量的字符时将失败
+     * Reads the requested number of characters, or fails if there are not enough characters.
      *
-     * 该方法允许[Reader.read]可以不跳过指定的参数那么多的字符
-     * (最可能的原因是到达文件末尾)
+     * This method allows [Reader.read] not to skip as many characters as specified by the argument
+     * (most likely because of reaching the end of the file).
      *
-     * @param input 要读入字符的字节流
-     * @param buffer 目标
-     * @param offset 初始读入缓冲区的偏移量
-     * @param length 要读取的长度, 必须 >= 0
-     * @return 实际读取的长度
-     * @throws IOException 读取时发生错误
-     * @throws IllegalArgumentException 如果指定的字符数为负数
-     * @throws EOFException 如果要跳过的字符数不正确
+     * @param input the byte stream to read into characters
+     * @param buffer the destination
+     * @param offset the initial offset into the buffer
+     * @param length the length to read; must be >= 0
+     * @return the actual length read
+     * @throws IOException if an error occurs while reading
+     * @throws IllegalArgumentException if the specified number of characters is negative
+     * @throws EOFException if the number of characters to skip is incorrect
      * @author K
      * @since 1.0.0
      */
@@ -925,33 +919,33 @@ object IoKit {
     }
 
     /**
-     * 读取请求数量的字符，或如果没有足够数量的字符时将失败
+     * Reads the requested number of characters, or fails if there are not enough characters.
      *
-     * 该方法允许[Reader.read]可以不跳过指定的参数那么多的字符
-     * (最可能的原因是到达文件末尾)
+     * This method allows [Reader.read] not to skip as many characters as specified by the argument
+     * (most likely because of reaching the end of the file).
      *
-     * @param input 要读入字符的字节流
-     * @param buffer 目标
-     * @throws IOException 读取时发生错误
-     * @throws IllegalArgumentException 如果指定的字符数为负数
-     * @throws EOFException 如果要跳过的字符数不正确
+     * @param input the byte stream to read into characters
+     * @param buffer the destination
+     * @throws IOException if an error occurs while reading
+     * @throws IllegalArgumentException if the specified number of characters is negative
+     * @throws EOFException if the number of characters to skip is incorrect
      * @author K
      * @since 1.0.0
      */
     fun readFully(input: Reader, buffer: CharArray): Unit = IOUtils.readFully(input, buffer)
 
     /**
-     * 读取请求数量的字节，或如果没有足够数量的字节时将失败
-     * 该方法允许[InputStream.read]可以不跳过指定的参数那么多的字节
-     * (最可能的原因是到达文件末尾)
+     * Reads the requested number of bytes, or fails if there are not enough bytes.
+     * This method allows [InputStream.read] not to skip as many bytes as specified by the argument
+     * (most likely because of reaching the end of the file).
      *
-     * @param input 要读入字节的字节流
-     * @param buffer 目标
-     * @param offset 初始读入缓冲区的偏移量
-     * @param length 要读取的长度, 必须 >= 0
-     * @throws IOException 读取时发生错误
-     * @throws IllegalArgumentException 如果指定的字节数为负数
-     * @throws EOFException 如果要跳过的字节数不正确
+     * @param input the byte stream to read into bytes
+     * @param buffer the destination
+     * @param offset the initial offset into the buffer
+     * @param length the length to read; must be >= 0
+     * @throws IOException if an error occurs while reading
+     * @throws IllegalArgumentException if the specified number of bytes is negative
+     * @throws EOFException if the number of bytes to skip is incorrect
      * @author K
      * @since 1.0.0
      */
@@ -961,15 +955,15 @@ object IoKit {
     }
 
     /**
-     * 读取请求数量的字节，或如果没有足够数量的字节时将失败
-     * 该方法允许[InputStream.read]可以不跳过指定的参数那么多的字节
-     * (最可能的原因是到达文件末尾)
+     * Reads the requested number of bytes, or fails if there are not enough bytes.
+     * This method allows [InputStream.read] not to skip as many bytes as specified by the argument
+     * (most likely because of reaching the end of the file).
      *
-     * @param input 要读入字节的字节流
-     * @param buffer 目标
-     * @throws IOException 读取时发生错误
-     * @throws IllegalArgumentException 如果指定的字节数为负数
-     * @throws EOFException 如果要跳过的字节数不正确
+     * @param input the byte stream to read into bytes
+     * @param buffer the destination
+     * @throws IOException if an error occurs while reading
+     * @throws IllegalArgumentException if the specified number of bytes is negative
+     * @throws EOFException if the number of bytes to skip is incorrect
      * @author K
      * @since 1.0.0
      */
@@ -977,7 +971,7 @@ object IoKit {
     //endregion read
 
     // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    // 封装org.apache.commons.io.IOUtils
+    // Wraps org.apache.commons.io.IOUtils
     // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 }

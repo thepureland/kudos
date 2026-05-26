@@ -8,7 +8,7 @@ import org.ktorm.schema.varchar
 
 
 /**
- * 用户账号第三方绑定数据库表-实体关联对象
+ * Third-party account binding table-entity binding object
  *
  * @author K
  * @author AI: Codex
@@ -16,61 +16,61 @@ import org.ktorm.schema.varchar
  */
 object UserAccountThirds : StringIdTable<UserAccountThird>("user_account_third") {
 
-    /** 关联用户账号ID */
+    /** Associated user account ID */
     var userId = varchar("user_id").bindTo { it.userId }
 
-    /** 第三方平台字典码 */
+    /** Third-party provider dict code */
     var accountProviderDictCode = varchar("account_provider_dict_code").bindTo { it.accountProviderDictCode }
 
-    /** 发行方/平台租户 */
+    /** Issuer / provider tenant */
     var accountProviderIssuer = varchar("account_provider_issuer").bindTo { it.accountProviderIssuer }
 
-    /** 第三方用户唯一标识 */
+    /** Third-party user unique identifier */
     var subject = varchar("subject").bindTo { it.subject }
 
-    /** 跨应用统一标识 */
+    /** Cross-application unified identifier */
     var unionId = varchar("union_id").bindTo { it.unionId }
 
-    /** 第三方展示名 */
+    /** Third-party display name */
     var externalDisplayName = varchar("external_display_name").bindTo { it.externalDisplayName }
 
-    /** 第三方邮箱 */
+    /** Third-party email */
     var externalEmail = varchar("external_email").bindTo { it.externalEmail }
 
-    /** 头像URL */
+    /** Avatar URL */
     var avatarUrl = varchar("avatar_url").bindTo { it.avatarUrl }
 
-    /** 最后登录时间 */
+    /** Last login time */
     var lastLoginTime = datetime("last_login_time").bindTo { it.lastLoginTime }
 
-    /** 租户ID */
+    /** Tenant ID */
     var tenantId = varchar("tenant_id").bindTo { it.tenantId }
 
-    /** 备注 */
+    /** Remark */
     var remark = varchar("remark").bindTo { it.remark }
 
-    /** 是否激活 */
+    /** Whether active */
     var active = boolean("active").bindTo { it.active }
 
-    /** 是否内置 */
+    /** Whether built-in */
     var builtIn = boolean("built_in").bindTo { it.builtIn }
 
-    /** 创建用户ID */
+    /** Creator user ID */
     var createUserId = varchar("create_user_id").bindTo { it.createUserId }
 
-    /** 创建用户名称 */
+    /** Creator user name */
     var createUserName = varchar("create_user_name").bindTo { it.createUserName }
 
-    /** 创建时间 */
+    /** Create time */
     var createTime = datetime("create_time").bindTo { it.createTime }
 
-    /** 更新用户ID */
+    /** Updater user ID */
     var updateUserId = varchar("update_user_id").bindTo { it.updateUserId }
 
-    /** 更新用户名称 */
+    /** Updater user name */
     var updateUserName = varchar("update_user_name").bindTo { it.updateUserName }
 
-    /** 更新时间 */
+    /** Update time */
     var updateTime = datetime("update_time").bindTo { it.updateTime }
 
 

@@ -12,7 +12,7 @@ import javax.imageio.ImageIO
 
 
 /**
- * 二维码工具类
+ * QR-code utility class.
  *
  * @author https://www.cnblogs.com/demon7715/p/10984160.html
  * @author K
@@ -20,18 +20,18 @@ import javax.imageio.ImageIO
  */
 object QrCodeKit {
 
-    /** ZXing 二维码写码器，[MultiFormatWriter] 线程安全可单例复用 */
+    /** ZXing QR-code writer; [MultiFormatWriter] is thread-safe and can be reused as a singleton. */
     private val mutiWriter = MultiFormatWriter()
 
     /**
-     * 生成二维码(正方形)，并保存到指定文件
+     * Generate a (square) QR code and save it to the specified file.
      *
-     * @param content 二维码所表示的内容，一般为URL
-     * @param destImagePath 目标文件路径
-     * @param logoImagePath logo图片路径
-     * @param sideLength 二维码图片(正文形)边长，缺省为300像素
-     * @param logoSideLength logo图片(正方形)的边长，缺省为二维码图片边长的1/5
-     * @param margin 页边空白宽度(像素)，缺省为2像素
+     * @param content the content encoded in the QR code, typically a URL
+     * @param destImagePath the destination file path
+     * @param logoImagePath the logo image path
+     * @param sideLength side length of the (square) QR-code image, default 300 pixels
+     * @param logoSideLength side length of the (square) logo image, default is 1/5 of the QR-code side length
+     * @param margin page margin width in pixels, default 2 pixels
      * @author K
      * @since 1.0.0
      */
@@ -48,14 +48,14 @@ object QrCodeKit {
 
 
     /**
-     * 生成二维码(正方形)
+     * Generate a (square) QR code.
      *
-     * @param content 二维码所表示的内容，一般为URL
-     * @param logoImagePath logo图片路径
-     * @param sideLength 二维码图片(正文形)边长，缺省为300像素
-     * @param logoSideLength logo图片(正方形)的边长，缺省为二维码图片边长的1/5
-     * @param margin 页边空白宽度(像素)，缺省为2像素
-     * @return 二维码BufferedImage对象
+     * @param content the content encoded in the QR code, typically a URL
+     * @param logoImagePath the logo image path
+     * @param sideLength side length of the (square) QR-code image, default 300 pixels
+     * @param logoSideLength side length of the (square) logo image, default is 1/5 of the QR-code side length
+     * @param margin page margin width in pixels, default 2 pixels
+     * @return the QR-code BufferedImage
      * @author K
      * @since 1.0.0
      */
@@ -68,19 +68,19 @@ object QrCodeKit {
     }
 
     /**
-     * 生成二维码(正方形)
+     * Generate a (square) QR code.
      *
-     * @param content 二维码所表示的内容，一般为URL
-     * @param logoImage logo图片对象
-     * @param sideLength 二维码图片(正文形)边长，缺省为300像素
-     * @param margin 页边空白宽度(像素)，缺省为2像素
-     * @return 二维码BufferedImage对象
+     * @param content the content encoded in the QR code, typically a URL
+     * @param logoImage the logo image
+     * @param sideLength side length of the (square) QR-code image, default 300 pixels
+     * @param margin page margin width in pixels, default 2 pixels
+     * @return the QR-code BufferedImage
      * @author https://www.cnblogs.com/demon7715/p/10984160.html
      * @author K
      * @since 1.0.0
      */
     fun genQrCode(content: String, logoImage: BufferedImage, sideLength: Int = 300, margin: Int = 0): BufferedImage {
-        // 读取源图像
+        // Read the source image
         val logoPixels = Array(logoImage.width) { IntArray(logoImage.height) }
         for (i in 0 until logoImage.width) {
             for (j in 0 until logoImage.height) {
@@ -88,13 +88,13 @@ object QrCodeKit {
             }
         }
 
-        //设置二维码的纠错级别 编码
+        // Set the error-correction level and encoding of the QR code
         val hint =
             mapOf(EncodeHintType.CHARACTER_SET to "utf-8", EncodeHintType.ERROR_CORRECTION to ErrorCorrectionLevel.H)
-        // 生成二维码
+        // Generate the QR code
         val matrix = mutiWriter.encode(content, BarcodeFormat.QR_CODE, sideLength, sideLength, hint)
 
-        // 二维矩阵转为一维像素数组
+        // Convert the 2D matrix to a 1D pixel array
         val halfW = matrix.width / 2
         val halfH = matrix.height / 2
         val logoHalfWidth = logoImage.width / 2
@@ -109,7 +109,7 @@ object QrCodeKit {
         val pixels = IntArray(sideLength * sideLength)
         for (y in 0 until matrix.height) {
             for (x in 0 until matrix.width) {
-                // 读取图片
+                // Read pixels from the logo image
                 if (x > halfW - logoHalfWidth && x < halfW + logoHalfWidth && y > halfH - logoHalfWidth && y < halfH + logoHalfWidth) {
                     pixels[y * sideLength + x] = logoPixels[x - halfW + logoHalfWidth][y - halfH + logoHalfWidth]
                 } else if (x in (value1 + 1) until value2 && y > value5 && y < value7
@@ -119,7 +119,7 @@ object QrCodeKit {
                 ) {
                     pixels[y * sideLength + x] = 0xfffffff
                 } else {
-                    // 此处可以修改二维码的颜色，可以分别制定二维码和背景的颜色；
+                    // The QR code color can be customized here; foreground and background colors may be specified separately
                     pixels[y * sideLength + x] = if (matrix[x, y]) -0x1000000 else 0xfffffff
                 }
             }

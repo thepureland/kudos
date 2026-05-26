@@ -6,34 +6,36 @@ import javafx.beans.property.StringProperty
 import javafx.scene.control.SingleSelectionModel
 
 /**
- * 配置信息值对象。
+ * Configuration value object.
  *
- * 代码生成器的全局配置；每个字段都用 JavaFX 的 `SimpleStringProperty`/`SimpleObjectProperty`
- * 持有，对应一组标准三件套：`getX()` / `xProperty()` / `setX()` —— 前者拿值、中间用于 UI 双向绑定、
- * 后者写值。该约定来自 JavaBeans + JavaFX，IDE/FXML 工具默认按这三个方法名探测属性。
+ * Global configuration for the code generator. Each field is held by JavaFX's `SimpleStringProperty`/
+ * `SimpleObjectProperty`, exposing the standard triad: `getX()` / `xProperty()` / `setX()` — the first
+ * reads the value, the middle is used for UI two-way binding, and the last writes the value. This
+ * convention comes from JavaBeans + JavaFX, and IDE/FXML tools detect properties via these three method
+ * names by default.
  *
  * @author K
  * @since 1.0.0
  */
 class Config {
 
-    /** 数据库 JDBC URL（用于反向读取表/列元数据） */
+    /** Database JDBC URL (used to read table/column metadata via reverse engineering) */
     private val dbUrl = SimpleStringProperty()
-    /** 数据库连接用户名 */
+    /** Database connection username */
     private val dbUser = SimpleStringProperty()
-    /** 数据库连接密码 */
+    /** Database connection password */
     private val dbPassword = SimpleStringProperty()
-    /** 当前选中的模板（名 + 根目录），绑定到下拉框的 [SingleSelectionModel] */
+    /** Currently selected template (name + root directory), bound to the dropdown's [SingleSelectionModel] */
     private val templateInfo = SimpleObjectProperty<SingleSelectionModel<TemplateNameAndRootDir>>()
-    /** 生成代码的包前缀，例如 `io.kudos.ms.user` */
+    /** Package prefix for generated code, e.g. `io.kudos.ms.user` */
     private val packagePrefix = SimpleStringProperty()
-    /** 生成代码归属的模块名 */
+    /** Module name to which the generated code belongs */
     private val moduleName = SimpleStringProperty()
-    /** 生成的代码输出根目录（注意：历史拼写沿用 `codeLoaction`，未修正以保持配置兼容） */
+    /** Root output directory for generated code (note: historical spelling `codeLoaction` is kept for config compatibility) */
     private val codeLoaction = SimpleStringProperty()
-    /** 模板内 `@author` 占位符的填充值 */
+    /** Fill value for the `@author` placeholder in templates */
     private val author = SimpleStringProperty()
-    /** 模板内 `@since` 占位符的填充值 */
+    /** Fill value for the `@since` placeholder in templates */
     private val version = SimpleStringProperty()
 
     fun getDbUrl(): String = dbUrl.get()
@@ -91,36 +93,37 @@ class Config {
     fun setVersion(version: String) = this.version.set(version)
 
     companion object {
-        /** 持久化到 properties 文件时使用的 key 集合；命名与字段名保持一致，便于配置文件可读 */
+        /** Keys used when persisting to the properties file; names match the field names for readability */
         const val PROP_KEY_DB_URL = "dbUrl"
-        /** properties key：数据库用户名 */
+        /** properties key: database username */
         const val PROP_KEY_DB_USER = "dbUser"
-        /** properties key：数据库密码（明文落盘，仅供开发工具使用，勿写入生产配置） */
+        /** properties key: database password (stored in plaintext, for dev tooling only; do not use in production config) */
         const val PROP_KEY_DB_PASSWORD = "dbPassword"
-        /** properties key：模板名 */
+        /** properties key: template name */
         const val PROP_KEY_TEMPLATE_NAME = "templateName"
-        /** properties key：模板根目录 */
+        /** properties key: template root directory */
         const val PROP_KEY_TEMPLATE_ROOT_DIR = "templateRootDir"
-        /** properties key：代码包前缀 */
+        /** properties key: code package prefix */
         const val PROP_KEY_PACKAGE_PREFIX = "packagePrefix"
-        /** properties key：模块名 */
+        /** properties key: module name */
         const val PROP_KEY_MODULE_NAME = "module"
-        /** properties key：模块名候选建议（多个值时按分隔符切分） */
+        /** properties key: module name suggestions (split by separator when multiple) */
         const val PROP_KEY_MODULE_SUGGESTIONS = "moduleNameSuggestions"
-        /** properties key：代码输出根目录（保留历史拼写） */
+        /** properties key: code output root directory (historical spelling preserved) */
         const val PROP_KEY_CODE_LOACTION = "codeLoaction"
-        /** properties key：作者 */
+        /** properties key: author */
         const val PROP_KEY_AUTHOR = "author"
-        /** properties key：版本 */
+        /** properties key: version */
         const val PROP_KEY_VERSION = "version"
     }
 
     /**
-     * 模板名 + 模板根目录的二元组。
-     * 重写 [toString] 仅返回 name，让 [SingleSelectionModel] 在下拉框中默认显示模板名。
+     * Pair of template name and template root directory.
+     * Overrides [toString] to return only the name so [SingleSelectionModel] displays the template name
+     * in the dropdown by default.
      *
-     * @property name 模板名（人类可读）
-     * @property rootDir 模板根目录（文件系统路径）
+     * @property name template name (human-readable)
+     * @property rootDir template root directory (filesystem path)
      * @author K
      * @since 1.0.0
      */

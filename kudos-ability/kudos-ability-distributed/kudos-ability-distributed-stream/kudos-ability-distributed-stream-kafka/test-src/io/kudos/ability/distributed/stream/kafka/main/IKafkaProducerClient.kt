@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 
 /**
- * kafka生产者Feign客户端
+ * Feign client for the Kafka producer.
  *
  * @author shane
  * @author K

@@ -1,46 +1,46 @@
 package io.kudos.ability.distributed.lock.redisson.init.properties
 
 /**
- * 集群模式配置
+ * Cluster mode configuration.
  */
 class RedissonClusterServersProperties {
     /**
-     * 负载均衡算法类的选择  默认轮询调度算法RoundRobinLoadBalancer
+     * Load balancer class. Defaults to the round-robin RoundRobinLoadBalancer.
      */
     var loadBalancer: String? = "!<org.redisson.connection.balancer.RoundRobinLoadBalancer> {}"
 
     /**
-     * 从节点最小空闲连接数
+     * Minimum number of idle connections to slave nodes.
      */
     var slaveConnectionMinimumIdleSize: Int = 32
 
     /**
-     * 从节点连接池大小
+     * Slave node connection pool size.
      */
     var slaveConnectionPoolSize: Int = 64
 
     /**
-     * 主节点最小空闲连接数
+     * Minimum number of idle connections to master nodes.
      */
     var masterConnectionMinimumIdleSize: Int = 32
 
     /**
-     * 主节点连接池大小
+     * Master node connection pool size.
      */
     var masterConnectionPoolSize: Int = 64
 
     /**
-     * 只在从服务节点里读取
+     * Read only from slave nodes.
      */
     var readMode: String = "SLAVE"
 
     /**
-     * 主节点信息
+     * Master node addresses.
      */
     var nodeAddresses: Array<String> = arrayOf("")
 
     /**
-     * 集群扫描间隔时间 单位毫秒
+     * Cluster scan interval, in milliseconds.
      */
     var scanInterval: Int = 1000
 }

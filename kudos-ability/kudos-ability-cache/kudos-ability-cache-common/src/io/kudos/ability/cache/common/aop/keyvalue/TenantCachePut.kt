@@ -4,8 +4,8 @@ import org.springframework.cache.annotation.CachePut
 import org.springframework.core.annotation.AliasFor
 
 /**
- * 租户隔离版本的 [CachePut]——`@AliasFor` 直通 Spring 注解，仅把
- * `keyGenerator` 默认值预置为 `tenantCacheKeyGenerator`，让 put 进去的 key 自带租户维度。
+ * Tenant-isolated version of [CachePut] — directly aliased to the Spring annotation via `@AliasFor`, simply presetting
+ * the default value of `keyGenerator` to `tenantCacheKeyGenerator` so that the put key carries the tenant dimension.
  *
  * @author K
  * @since 1.0.0

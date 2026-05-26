@@ -5,38 +5,38 @@ import java.io.Serializable
 
 
 /**
- * 参数缓存项
+ * Cache entry for parameters.
  *
  * @author K
  * @since 1.0.0
  */
 data class SysParamCacheEntry (
 
-    /** 主键 */
+    /** Primary key */
     override val id: String,
 
-    /** 参数名称 */
+    /** Parameter name */
     val paramName: String,
 
-    /** 参数值 */
+    /** Parameter value */
     val paramValue: String,
 
-    /** 默认参数值 */
+    /** Default parameter value */
     val defaultValue: String?,
 
-    /** 原子服务编码 */
+    /** Atomic service code */
     val atomicServiceCode: String,
 
-    /** 序号 */
+    /** Order number */
     val orderNum: Int?,
 
-    /** 备注 */
+    /** Remark */
     val remark: String?,
 
-    /** 是否启用 */
+    /** Whether enabled */
     val active: Boolean,
 
-    /** 是否内置 */
+    /** Whether built-in */
     val builtIn: Boolean,
 
 ) : IIdEntity<String>, Serializable {

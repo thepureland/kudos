@@ -4,10 +4,12 @@ import java.io.Serializable
 import java.util.Date
 
 /**
- * 监控告警消息 VO。
+ * Monitoring/alert message VO.
  *
- * 业务侧通过 [io.kudos.ability.log.audit.common.support.MonitorMsgTool] 投递异常信息时使用本结构，
- * 监控服务侧消费后落入告警库或推送给告警通道。字段聚焦"哪个应用、什么环境、什么异常、何处发生、何时发生"。
+ * Used by the business side via [io.kudos.ability.log.audit.common.support.MonitorMsgTool] to send
+ * exception information; the monitoring service consumes it and persists it to an alert store or
+ * pushes it to an alert channel. Fields focus on "which app, which environment, what exception,
+ * where it occurred, when it occurred".
  *
  * @author K
  * @author AI: Codex
@@ -15,42 +17,42 @@ import java.util.Date
  */
 class SysMonitorMsgVo : Serializable {
     /**
-     * 租户id
+     * Tenant id
      */
     var tenantId: String? = null
 
     /**
-     * 异常类型，业务自由定义
+     * Exception type, freely defined by business
      */
     var exceptionType: String? = null
 
     /**
-     * 应用名
+     * Application name
      */
     var applicationName: String? = null
 
     /**
-     * 异常信息
+     * Exception message
      */
     var exceptionMsg: String? = null
 
     /**
-     * 所属环境
+     * Environment
      */
     var environment: String? = null
 
     /**
-     * 异常产生来源：类路径+方法名
+     * Exception source: class path + method name
      */
     var callSource: String? = null
 
     /**
-     * 异常生成时间
+     * Time the exception was generated
      */
     var createTime: Date? = null
 
     companion object {
-        /** Serializable 版本号 */
+        /** Serializable version uid */
         private const val serialVersionUID = 1L
     }
 }

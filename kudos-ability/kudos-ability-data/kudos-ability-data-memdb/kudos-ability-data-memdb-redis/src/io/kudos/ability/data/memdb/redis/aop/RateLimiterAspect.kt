@@ -20,11 +20,11 @@ import org.springframework.stereotype.Component
 
 
 /**
- * [RateLimiter] 注解的实现切面。在被注解方法执行前调用一次 `limit.lua` 脚本：
- *  - 脚本对 `combineKey` 做 `INCR`；首次设置 `EXPIRE time`
- *  - 返回 0 表示已超阈值，本切面将其翻译为 `ServiceException(SC_REQUEST_FREQUENTLY)`
+ * Aspect implementing the [RateLimiter] annotation. Invokes the `limit.lua` script once before the annotated method executes:
+ *  - The script performs `INCR` on `combineKey`; on the first hit it sets `EXPIRE time`.
+ *  - A return value of 0 indicates the threshold has been exceeded; this aspect translates it into `ServiceException(SC_REQUEST_FREQUENTLY)`.
  *
- * 注：所有限流都走 [RedisTemplates.defaultRedisTemplate]，目前不支持多 redis 实例分别限流。
+ * Note: All rate-limiting goes through [RedisTemplates.defaultRedisTemplate]; separate rate-limiting per Redis instance is not currently supported.
  *
  * @author K
  * @author AI: Codex
@@ -40,8 +40,8 @@ class RateLimiterAspect {
     private lateinit var redisTemplates: RedisTemplates
 
     /**
-     * 进方法前调用一次 lua 计数脚本；超阈值抛 `ServiceException(SC_REQUEST_FREQUENTLY)`。
-     * 非业务异常（Redis 故障等）统一包成 `RuntimeException` 透出，避免吞掉问题。
+     * Invokes the lua counter script once before entering the method; throws `ServiceException(SC_REQUEST_FREQUENTLY)` when the threshold is exceeded.
+     * Non-business exceptions (Redis failures, etc.) are uniformly wrapped as `RuntimeException` and propagated to avoid swallowing the problem.
      */
     @Before("@annotation(rateLimiter)")
     fun doBefore(point: JoinPoint, rateLimiter: RateLimiter) {
@@ -62,21 +62,21 @@ class RateLimiterAspect {
             if (number == 0L) {
                 throw ServiceException(ErrorStatusEnum.SC_REQUEST_FREQUENTLY)
             }
-            log.debug("限制请求'${count}',当前请求'${number}',缓存key'${combineKey}'")
+            log.debug("Request limit '${count}', current requests '${number}', cache key '${combineKey}'")
         } catch (e: ServiceException) {
             throw e
         } catch (e: Exception) {
             val className: String? = point.target.javaClass.getName()
             val signature: MethodSignature = point.signature as MethodSignature
             val methodName: String? = signature.method.name
-            log.error("服务器限流异常。${className}.${methodName}")
-            throw RuntimeException("服务器限流异常，请稍候再试.", e)
+            log.error("Server rate-limit exception. ${className}.${methodName}")
+            throw RuntimeException("Server rate-limit exception; please try again later.", e)
         }
     }
 
     /**
-     * 拼接 Redis 限流计数 key。结构 `rate.limit[<id>-]<class>-<method>`，其中 `<id>` 仅在
-     * [LimitType.IP] / [LimitType.USER] 时存在；[LimitType.DEFAULT] 整个进程共享 key。
+     * Assembles the Redis rate-limit counter key. The structure is `rate.limit[<id>-]<class>-<method>`, where `<id>`
+     * is only present for [LimitType.IP] / [LimitType.USER]; for [LimitType.DEFAULT] the key is shared across the entire process.
      */
     fun getCombineKey(rateLimiter: RateLimiter, point: JoinPoint): String {
         val signature = point.signature as MethodSignature
@@ -85,10 +85,10 @@ class RateLimiterAspect {
             append("rate.limit")
             when (rateLimiter.limitType) {
                 LimitType.IP -> append(
-                    requireNotNull(KudosContextHolder.get().clientInfo?.ip) { "限流(IP)需要 clientInfo.ip" }
+                    requireNotNull(KudosContextHolder.get().clientInfo?.ip) { "Rate-limit (IP) requires clientInfo.ip" }
                 ).append("-")
                 LimitType.USER -> append(
-                    requireNotNull(KudosContextHolder.get().user?.id) { "限流(USER)需要 user.id" }
+                    requireNotNull(KudosContextHolder.get().user?.id) { "Rate-limit (USER) requires user.id" }
                 ).append("-")
                 LimitType.DEFAULT -> Unit
             }
@@ -103,29 +103,29 @@ class RateLimiterAspect {
         private val resultSerializer: RedisSerializer<Long> = resultSerializer()
 
         /**
-         * 从 classpath 加载 `limit.lua` 并构造 `RedisScript<Long>`。
-         * 加载失败立即抛错（启动期失败优于运行期才发现 lua 缺失）。
+         * Loads `limit.lua` from the classpath and constructs a `RedisScript<Long>`.
+         * Throws immediately on load failure (failing at startup is preferable to discovering the missing lua at runtime).
          */
         fun buildLuaScript(): RedisScript<Long> {
             val classPathResource = org.springframework.core.io.ClassPathResource("limit.lua")
             try {
                 val redisScript: DefaultRedisScript<Long> = DefaultRedisScript()
                 redisScript.resultType = Long::class.java
-                classPathResource.inputStream.use { /* 仅探测资源存在 */ }
+                classPathResource.inputStream.use { /* Only probe whether the resource exists */ }
                 redisScript.setScriptSource(ResourceScriptSource(classPathResource))
                 return redisScript
             } catch (e: Exception) {
-                throw RuntimeException("未找到限流lua", e)
+                throw RuntimeException("Rate-limit lua not found", e)
             }
         }
 
-        /** lua 脚本入参序列化器（key / arg 均为字符串）。 */
+        /** Argument serializer for the lua script (both key and arg are strings). */
         private fun argSerializer() = StringRedisSerializer()
 
         /**
-         * lua 脚本返回值序列化器：Long ↔ ASCII 字符串。
-         * 注：不能用 [org.springframework.data.redis.serializer.GenericToStringSerializer]，
-         * 因为 RedisScript 的结果类型由本序列化器单独控制，需精确解码为 Long。
+         * Return-value serializer for the lua script: Long ↔ ASCII string.
+         * Note: [org.springframework.data.redis.serializer.GenericToStringSerializer] cannot be used,
+         * because the result type of RedisScript is controlled independently by this serializer and must be decoded precisely as Long.
          */
         private fun resultSerializer(): RedisSerializer<Long> {
             return object : RedisSerializer<Long> {

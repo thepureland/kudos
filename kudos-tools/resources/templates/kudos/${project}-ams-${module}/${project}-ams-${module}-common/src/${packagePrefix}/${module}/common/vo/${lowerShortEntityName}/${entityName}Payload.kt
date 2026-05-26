@@ -30,7 +30,7 @@ import java.sql.SQLXML
 </#if>
 
 
-<@generateClassComment table.comment+"表单载体"/>
+<@generateClassComment table.comment+" form payload"/>
 data class ${entityName}Payload (
 
     //region your codes 1

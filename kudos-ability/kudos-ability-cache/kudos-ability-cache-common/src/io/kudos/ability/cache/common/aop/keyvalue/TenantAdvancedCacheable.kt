@@ -3,15 +3,16 @@ package io.kudos.ability.cache.common.aop.keyvalue
 import java.lang.annotation.Inherited
 
 /**
- * 进阶租户缓存注解：与 [TenantCacheable] 走 Spring 标准缓存抽象不同，
- * 本注解由专门的 `TenantAdvancedCacheableAspect` 处理，把缓存写到**远程缓存**
- * （通常是 Redis），且租户维度通过 `cacheKey::tenantId` 显式拼装。
+ * Advanced tenant cache annotation: unlike [TenantCacheable] which goes through Spring's standard cache abstraction,
+ * this annotation is handled by a dedicated `TenantAdvancedCacheableAspect` that writes the cache directly to the
+ * **remote cache** (typically Redis), with the tenant dimension explicitly assembled via `cacheKey::tenantId`.
  *
- * 适用场景：跨服务共享的缓存条目，需要绕过 Spring 本地 CacheManager 直接走远端。
+ * Use case: cache entries shared across services that need to bypass Spring's local CacheManager and go directly to the
+ * remote cache.
  *
- * @property timeOut 缓存过期毫秒数；默认 1800000 ms (30 min)
- * @property cacheKey 缓存键基名；运行时会拼接为 `cacheKey::tenantId`
- * @property dataKey 数据键（远端 hash 的 field 或子路径）
+ * @property timeOut cache expiration in milliseconds; default 1800000 ms (30 min)
+ * @property cacheKey base name of the cache key; assembled at runtime as `cacheKey::tenantId`
+ * @property dataKey data key (the field or sub-path of the remote hash)
  * @author K
  * @since 1.0.0
  */

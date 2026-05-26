@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 /**
- * 数据源管理控制器
+ * Data source management controller.
  *
  * @author K
  * @since 1.0.0
@@ -31,26 +31,26 @@ class SysDataSourceAdminController:
     BaseCrudController<String, ISysDataSourceService, SysDataSourceQuery, SysDataSourceRow, SysDataSourceDetail, SysDataSourceEdit, SysDataSourceFormCreate, SysDataSourceFormUpdate>() {
 
     /**
-     * 获取指定租户的数据源列表
+     * Get the data source list for the given tenant.
      *
-     * @param tenantId 租户id
+     * @param tenantId tenant id
      */
     @GetMapping("/listByTenantId")
     fun listByTenantId(tenantId: String): List<SysDataSourceRow> =
         service.getDataSourcesByTenantId(tenantId)
 
     /**
-     * 获取指定子系统的数据源列表
+     * Get the data source list for the given sub-system.
      */
     @GetMapping("/listBySubSystemCode")
     fun listBySubSystemCode(subSystemCode: String): List<SysDataSourceRow> =
         service.getDataSourcesBySubSystemCode(subSystemCode)
 
     /**
-     * 重置密码
+     * Reset the password.
      *
-     * @param id 主键
-     * @param newPassword 新密码
+     * @param id primary key
+     * @param newPassword new password
      */
     @PostMapping("/resetPassword")
     fun resetPassword(@RequestParam id: String, @RequestParam newPassword: String) {
@@ -58,30 +58,30 @@ class SysDataSourceAdminController:
     }
 
     /**
-     * 测试数据源连通性（不写库）。
+     * Test data source connectivity (no DB writes).
      *
      * @param req JDBC url/username/password
-     * @return true 连接 + ping 成功
+     * @return true if connection + ping succeed
      */
     @PostMapping("/datasourceTest")
     fun datasourceTest(@RequestBody @Valid req: SysDataSourceTestRequest): Boolean =
         service.testConnection(req.url, req.username, req.password)
 
     /**
-     * 加密敏感字段（AES-GCM）。返回密文前缀含「┼」标识。
+     * Encrypt a sensitive field (AES-GCM). The returned ciphertext is prefixed with the "┼" marker.
      *
-     * @param plain 待加密明文
-     * @return 加密结果
+     * @param plain plaintext to encrypt
+     * @return encrypted result
      */
     @PostMapping("/encrypt")
     fun encrypt(@RequestParam plain: String): String = CryptoKit.aesEncrypt(plain)
 
     /**
-     * 更新active状态
+     * Update the active status.
      *
-     * @param id 主键
-     * @param active 是否启用
-     * @return 是否更新成功
+     * @param id primary key
+     * @param active whether enabled
+     * @return whether the update succeeded
      */
     @PutMapping("/updateActive")
     fun updateActive(id: String, active: Boolean): Boolean {

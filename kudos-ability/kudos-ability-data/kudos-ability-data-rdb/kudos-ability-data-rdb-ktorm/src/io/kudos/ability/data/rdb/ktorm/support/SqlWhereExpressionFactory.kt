@@ -6,7 +6,7 @@ import org.ktorm.schema.Column
 import org.ktorm.schema.ColumnDeclaring
 
 /**
- * 查询条件表达式工厂
+ * Factory for query criteria expressions.
  *
  * @author K
  * @author AI: Codex
@@ -17,12 +17,12 @@ object SqlWhereExpressionFactory {
     private val NULLABLE_OPERATORS = setOf(OperatorEnum.IS_NULL, OperatorEnum.IS_NOT_NULL)
 
     /**
-     * 创建查询条件表达式
+     * Create a query criteria expression.
      *
-     * @param column 列对象
-     * @param operator 操作符
-     * @param value 要查询的值
-     * @return 列申明对象
+     * @param column the column
+     * @param operator the operator
+     * @param value the value to match against
+     * @return the column declaring object
      * @author K
      * @since 1.0.0
      */
@@ -32,8 +32,8 @@ object SqlWhereExpressionFactory {
             return null
         }
         return when (operator) {
-            OperatorEnum.EQ -> column.eq(requireNotNull(value) { "操作符[$operator]对应的查询值不能为空。" })
-            OperatorEnum.NE, OperatorEnum.LG -> column.notEq(requireNotNull(value) { "操作符[$operator]对应的查询值不能为空。" })
+            OperatorEnum.EQ -> column.eq(requireNotNull(value) { "Query value for operator [$operator] must not be null." })
+            OperatorEnum.NE, OperatorEnum.LG -> column.notEq(requireNotNull(value) { "Query value for operator [$operator] must not be null." })
             OperatorEnum.GT -> (column as Column<Comparable<Any>>).greater(value as Comparable<Any>)
             OperatorEnum.GE -> (column as Column<Comparable<Any>>).greaterEq(value as Comparable<Any>)
             OperatorEnum.LT -> (column as Column<Comparable<Any>>).less(value as Comparable<Any>)
@@ -57,14 +57,14 @@ object SqlWhereExpressionFactory {
             OperatorEnum.LT_P -> column.columnLt(
                 ColumnHelper.columnOf(column.table, value as String)[value] as Column<String>
             )
-            OperatorEnum.LIKE -> column.like("%${requireNotNull(value) { "操作符[$operator]对应的查询值不能为空。" }}%")
-            OperatorEnum.LIKE_S -> column.like("${requireNotNull(value) { "操作符[$operator]对应的查询值不能为空。" }}%")
-            OperatorEnum.LIKE_E -> column.like("%${requireNotNull(value) { "操作符[$operator]对应的查询值不能为空。" }}")
-            OperatorEnum.ILIKE -> column.ilike("%${requireNotNull(value) { "操作符[$operator]对应的查询值不能为空。" }}%")
-            OperatorEnum.ILIKE_S -> column.ilike("${requireNotNull(value) { "操作符[$operator]对应的查询值不能为空。" }}%")
-            OperatorEnum.ILIKE_E -> column.ilike("%${requireNotNull(value) { "操作符[$operator]对应的查询值不能为空。" }}")
-            OperatorEnum.IN -> handleIn(true, requireNotNull(value) { "操作符[$operator]对应的查询值不能为空。" }, column)
-            OperatorEnum.NOT_IN -> handleIn(false, requireNotNull(value) { "操作符[$operator]对应的查询值不能为空。" }, column)
+            OperatorEnum.LIKE -> column.like("%${requireNotNull(value) { "Query value for operator [$operator] must not be null." }}%")
+            OperatorEnum.LIKE_S -> column.like("${requireNotNull(value) { "Query value for operator [$operator] must not be null." }}%")
+            OperatorEnum.LIKE_E -> column.like("%${requireNotNull(value) { "Query value for operator [$operator] must not be null." }}")
+            OperatorEnum.ILIKE -> column.ilike("%${requireNotNull(value) { "Query value for operator [$operator] must not be null." }}%")
+            OperatorEnum.ILIKE_S -> column.ilike("${requireNotNull(value) { "Query value for operator [$operator] must not be null." }}%")
+            OperatorEnum.ILIKE_E -> column.ilike("%${requireNotNull(value) { "Query value for operator [$operator] must not be null." }}")
+            OperatorEnum.IN -> handleIn(true, requireNotNull(value) { "Query value for operator [$operator] must not be null." }, column)
+            OperatorEnum.NOT_IN -> handleIn(false, requireNotNull(value) { "Query value for operator [$operator] must not be null." }, column)
             OperatorEnum.IS_NULL -> column.isNull()
             OperatorEnum.IS_NOT_NULL -> column.isNotNull()
             OperatorEnum.IS_EMPTY -> column.eq("")
@@ -75,11 +75,11 @@ object SqlWhereExpressionFactory {
     }
 
     /**
-     * 列 vs 列等值。
+     * Column-vs-column equality.
      *
-     * 本方法存在的唯一目的：用一个本地具化的泛型参数 [T] 套住
-     * `<T : Any> ColumnDeclaring<T>.eq(expr: ColumnDeclaring<T>)`，
-     * 让上层用 `Column<Any>` 调用时不被泛型擦除拒绝。
+     * This method exists solely to wrap `<T : Any> ColumnDeclaring<T>.eq(expr: ColumnDeclaring<T>)`
+     * with a locally reified generic parameter [T] so that callers using `Column<Any>` are not
+     * rejected by generic type erasure.
      */
     @Suppress("UNCHECKED_CAST")
     private fun <T : Any> columnEq(
@@ -87,30 +87,30 @@ object SqlWhereExpressionFactory {
     ): ColumnDeclaring<Boolean> =
         column.eq(anotherColumn as Column<T>)
 
-    /** 列 vs 列不等。原因同 [columnEq]：绕过 Ktorm `notEq` 的同型约束。 */
+    /** Column-vs-column inequality. Same rationale as [columnEq]: bypasses Ktorm's same-type constraint on `notEq`. */
     @Suppress("UNCHECKED_CAST")
     private fun <T : Any> columnNotEq(
         column: ColumnDeclaring<T>, anotherColumn: Column<*>
     ): ColumnDeclaring<Boolean> =
         column.notEq(anotherColumn as Column<T>)
 
-    /** 列 IN 集合。原因同 [columnEq]：绕过 Ktorm `inList` 的同型约束。 */
+    /** Column IN collection. Same rationale as [columnEq]: bypasses Ktorm's same-type constraint on `inList`. */
     @Suppress("UNCHECKED_CAST")
     private fun <T : Any> columnIn(column: ColumnDeclaring<T>, values: Collection<T>): ColumnDeclaring<Boolean> =
         column.inList(values)
 
-    /** 列 NOT IN 集合。原因同 [columnEq]：绕过 Ktorm `notInList` 的同型约束。 */
+    /** Column NOT IN collection. Same rationale as [columnEq]: bypasses Ktorm's same-type constraint on `notInList`. */
     @Suppress("UNCHECKED_CAST")
     private fun <T : Any> columnNotIn(column: ColumnDeclaring<T>, values: Collection<T>): ColumnDeclaring<Boolean> =
         column.notInList(values)
 
     /**
-     * 把 IN / NOT IN 的"参数"归一化成 [Collection]：
-     *  - 单个非集合 / 非数组值 → 包成单元素列表
-     *  - 数组 → toList
-     *  - 集合 → 原样使用
+     * Normalize the "argument" of IN / NOT IN into a [Collection]:
+     *  - single non-collection / non-array value → wrap into a single-element list
+     *  - array → toList
+     *  - collection → use as-is
      *
-     * 然后委托给 [columnIn] / [columnNotIn]。
+     * Then delegate to [columnIn] / [columnNotIn].
      */
     @Suppress("UNCHECKED_CAST")
     private fun handleIn(isIn: Boolean, value: Any, column: ColumnDeclaring<Any>): ColumnDeclaring<Boolean> {

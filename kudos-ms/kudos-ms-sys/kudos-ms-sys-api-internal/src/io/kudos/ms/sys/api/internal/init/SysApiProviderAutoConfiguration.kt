@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Configuration
 
 
 /**
- * sys-api-provider自动配置类
+ * sys-api-provider auto configuration class.
  *
  * @author K
  * @since 1.0.0

@@ -8,7 +8,7 @@ import io.kudos.ms.sys.core.tenant.model.po.SysTenant
 
 
 /**
- * 租户业务接口
+ * Tenant service interface.
  *
  * @author K
  * @author AI: Cursor
@@ -17,50 +17,50 @@ import io.kudos.ms.sys.core.tenant.model.po.SysTenant
 interface ISysTenantService : IBaseCrudService<String, SysTenant> {
 
     /**
-     * 按租户 id 加载租户缓存项，并缓存结果（含未启用）
+     * Load tenant cache entry by id and cache the result (includes inactive).
      */
     fun getTenantFromCache(id: String): SysTenantCacheEntry?
 
     /**
-     * 按 id 集合批量加载租户缓存项（含未启用）
+     * Batch load tenant cache entries by id set (includes inactive).
      */
     fun getTenantsFromCacheByIds(ids: Collection<String>): Map<String, SysTenantCacheEntry>
 
     /**
-     * 按子系统编码从缓存解析租户列表（含未启用；绑定关系来自租户-系统 Hash 缓存）
+     * Resolve tenant list from cache by sub-system code (includes inactive; binding relationships sourced from the tenant-system Hash cache).
      */
     fun getTenantsForSubSystemFromCache(subSystemCode: String): List<SysTenantCacheEntry>
 
     /**
-     * 从数据库加载全部租户为缓存载体类型（与库里一致；用于需全量列表场景，非 Spring Cache 全量扫描）
+     * Load all tenants from database as cache entry type (matches the DB; used for full-list scenarios, not a Spring Cache full scan).
      */
     fun getAllTenantsFromCache(): List<SysTenantCacheEntry>
 
     /**
-     * 更新启用状态，并同步缓存
+     * Update active flag and sync cache.
      */
     fun updateActive(id: String, active: Boolean): Boolean
 
     /**
-     * 根据 id 获取租户列表行（直查库，非缓存）
+     * Get tenant list row by id (direct DB query, not cached).
      */
     fun getTenantRecord(id: String): SysTenantRow?
 
     /**
-     * 根据名称获取租户记录
+     * Get tenant record by name.
      */
     fun getTenantByName(name: String): SysTenantRow?
 
     /**
-     * 从缓存获取租户已绑定的子系统编码集合
+     * Get the set of sub-system codes bound to the tenant from cache.
      */
     fun getSubSystemCodesFromCache(tenantId: String): Set<String>
 
     /**
-     * 从缓存获取指定子系统下所有启用租户的 id/name 投影。
+     * Get id/name projections of all active tenants under the given sub-system from cache.
      *
-     * @param subSystemCode 子系统编码
-     * @return id 与 name 列表（仅 active=true）
+     * @param subSystemCode Sub-system code
+     * @return List of id and name (only active=true)
      */
     fun getActiveTenantIdAndNamesForSubSystem(subSystemCode: String): List<IdAndName<String>>
 

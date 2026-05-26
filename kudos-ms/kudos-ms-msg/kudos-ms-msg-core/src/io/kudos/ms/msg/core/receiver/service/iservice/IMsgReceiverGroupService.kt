@@ -6,7 +6,7 @@ import io.kudos.ms.msg.core.receiver.model.po.MsgReceiverGroup
 
 
 /**
- * 消息接收者群组业务接口
+ * Message receiver group business service interface.
  *
  * @author K
  * @author AI: Codex

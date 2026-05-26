@@ -9,7 +9,7 @@ import java.time.LocalDate
 
 
 /**
- * 人物信息(for test)
+ * Person information (for test).
  *
  * @author K
  * @since 1.0.0

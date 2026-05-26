@@ -6,8 +6,8 @@ import org.ktorm.schema.datetime
 import org.ktorm.schema.varchar
 
 /**
- * 消息队列失败消息表
- * 用于持久化发送失败的消息，支持后续重试处理
+ * Message queue failed message table.
+ * Persists send-failed messages to support subsequent retry processing.
  */
 object SysMqFailMsgs : StringIdTable<SysMqFailMsg>("sys_mq_fail_msg") {
 

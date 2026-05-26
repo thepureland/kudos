@@ -1,7 +1,7 @@
 package io.kudos.base.logger
 
 /**
- * 日志参数
+ * Log parameter.
  *
  * @author K
  * @since 1.0.0

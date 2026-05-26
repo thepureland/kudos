@@ -7,8 +7,8 @@ import org.springframework.web.bind.annotation.RestController
 
 
 /**
- * 参数 内部 RPC 控制器。
- * 路径与 HTTP 方法直接继承自 [ISysParamApi] 的方法级注解。
+ * Parameter internal RPC controller.
+ * Paths and HTTP methods are inherited directly from method-level annotations on [ISysParamApi].
  *
  * @author K
  * @since 1.0.0

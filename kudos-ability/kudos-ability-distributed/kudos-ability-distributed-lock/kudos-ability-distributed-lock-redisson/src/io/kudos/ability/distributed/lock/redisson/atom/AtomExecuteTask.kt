@@ -1,9 +1,9 @@
 package io.kudos.ability.distributed.lock.redisson.atom
 
 /**
- * 原子执行任务线程。
+ * Atomic execution task thread.
  *
- * @deprecated 模块内部已无引用，仅为历史外部反射 / 二进制兼容保留。
+ * @deprecated No internal usage remains; kept only for historical external reflection / binary compatibility.
  * @author K
  * @author AI: Codex
  * @since 1.0.0

@@ -5,35 +5,35 @@ import java.security.NoSuchAlgorithmException
 import java.util.Locale
 
 /**
- * 目的：根据输入的秘钥，对提供的字符串进行加密，和对以此加密规则生成的密文解密
- * 说明：encrypt和decrypt为完全对称的设计，你也可以把decrypt作为加密函数，使用
- *      encrypt函数来还原。
- * 用法：myEncrypt为一个使用例子，实际使用可以根据需要多次调用encrypt、outOrder；
- *      解密时，使用相同的顺序调用decrypt、deOutOrder即可还原。
- * 要求：输入的字符串只能包含数字和字母，key为不超过18位的正整数
+ * Purpose: encrypt the provided string with a supplied key, and decrypt the ciphertext produced under the same rules.
+ * Notes: encrypt and decrypt are perfectly symmetric, so you can also treat decrypt as the encryption function and
+ *        use encrypt to restore the original.
+ * Usage: myEncrypt is an example; in practice you can invoke encrypt/outOrder multiple times as needed;
+ *        when decrypting, invoke decrypt/deOutOrder in the same order to restore the original.
+ * Requirements: the input string may contain only digits and letters; the key is a positive integer no longer than 18 digits.
  *
- * 修订记录
- * 版本  时间        作者     操作
- * 1.00  2016/04/22  Leisure  创建此类，包括加密，解密函数
- * 1.10  2016/04/22  Leisure  增加字符转换功能，生成的密文不再是有意义的字符组合
- * 1.11  2016/04/22  Leisure  秘钥由int改为Long类型，秘钥长度由最高9位升级为18位
- * 1.12  2016/04/23  Leisure  重构字符串排序方法
- * 1.20  2016/04/23  Leisure  增加MD5校验位
- * 1.21  2016/04/23  Leisure  修正了一个bug，使用自定义编码保证密文的格式与原文兼容
- * 1.22  2016/04/23  Leisure  字符转换功能兼容大小写
- * 1.23  2016/04/25  Leisure  校验位提取到myEncrypt,myDecrypt.原加密解密函数对称
- * 1.24  2016/04/25  Leisure  支持大写字母和数字组合转换后仍为大写字母和数字组合
- * 2.00  2013/04/26  Leisure  修改函数名，避免歧义；修改函数的作用域。撒手不管版
+ * Revision history
+ * Version  Date        Author    Operation
+ * 1.00    2016/04/22  Leisure   Created this class, including encrypt and decrypt functions
+ * 1.10    2016/04/22  Leisure   Added character-conversion; the ciphertext is no longer a meaningful combination of characters
+ * 1.11    2016/04/22  Leisure   Changed key from int to Long; key length raised from a maximum of 9 digits to 18 digits
+ * 1.12    2016/04/23  Leisure   Refactored the string-sorting method
+ * 1.20    2016/04/23  Leisure   Added MD5 check bit
+ * 1.21    2016/04/23  Leisure   Fixed a bug: use a custom encoding to keep the ciphertext format compatible with the source
+ * 1.22    2016/04/23  Leisure   Character conversion handles both upper and lower case
+ * 1.23    2016/04/25  Leisure   Moved the check bit into myEncrypt/myDecrypt; the original encrypt/decrypt functions remain symmetric
+ * 1.24    2016/04/25  Leisure   A combination of uppercase letters and digits still maps back to uppercase letters and digits
+ * 2.00    2013/04/26  Leisure   Renamed functions to avoid ambiguity; changed function scope. Hands-off version
  */
 object Base36Kit {
 
-    /** 默认加密 Key（18 位正整数），未显式传入 key 时使用 */
+    /** Default encryption key (18-digit positive integer), used when no key is explicitly supplied. */
     const val KEY = 999966699996669999L
 
     /**
-     * 对源字符串进行加密，并在头部增加一个字符作为源字符串的校验码
-     * 要求源字符串只包含大写字母和数字，小写字母将按大写字母处理
-     * 使用默认的加密Key
+     * Encrypts the source string and prepends a single check character.
+     * The source string must contain only uppercase letters and digits; lowercase letters are treated as uppercase.
+     * Uses the default key.
      * @param src
      * @return
      */
@@ -42,114 +42,114 @@ object Base36Kit {
     }
 
     /**
-     * 对源字符串进行加密，并在头部增加一个字符作为源字符串的校验码
-     * 要求源字符串只包含大写字母和数字，小写字母将按大写字母处理
+     * Encrypts the source string and prepends a single check character.
+     * The source string must contain only uppercase letters and digits; lowercase letters are treated as uppercase.
      * @param src
      * @param key
      * @return
      */
-    fun encryptIgnoreCase(src: String, key: Long): String { //小写字母以大写字母来处理
+    fun encryptIgnoreCase(src: String, key: Long): String { // treat lowercase letters as uppercase
         var srcString = src
         srcString = srcString.uppercase(Locale.getDefault())
-        //生成校验位
-        val checkBit = requireNotNull(getMD5(srcString)) { "MD5计算失败" }.substring(0, 1)
-        //加密
+        // generate the check bit
+        val checkBit = requireNotNull(getMD5(srcString)) { "MD5 computation failed" }.substring(0, 1)
+        // encrypt
         val targStr = encrypt(srcString, key, true)
-        //增加校验位
+        // prepend the check bit
         return checkBit + targStr
     }
 
     /**
-     * 接收含有校验位的加密字符串，对其解密，并验证与校验位是否匹配
-     * 使用默认的加密Key
+     * Decrypts an encrypted string that includes a check bit, and verifies it against the check bit.
+     * Uses the default key.
      * @param srcString
      * @return
      */
     @Deprecated(
-        message = "请优先使用tryDecryptIgnoreCase，显式处理校验失败语义",
+        message = "Prefer tryDecryptIgnoreCase to handle check-bit failure semantics explicitly",
         replaceWith = ReplaceWith("tryDecryptIgnoreCase(srcString, KEY).getOrThrow()")
     )
     fun decryptIgnoreCase(srcString: String): String {
         return tryDecryptIgnoreCase(srcString, KEY).getOrElse { ex ->
-            if (ex.message == "校验位不匹配！") "校验位不匹配！" else throw ex
+            if (ex.message == "Check bit mismatch!") "Check bit mismatch!" else throw ex
         }
     }
 
     /**
-     * 接收含有校验位的加密字符串，对其解密，并验证与校验位是否匹配
+     * Decrypts an encrypted string that includes a check bit, and verifies it against the check bit.
      * @param src
      * @param key
      * @return
      */
     @Deprecated(
-        message = "请优先使用tryDecryptIgnoreCase，显式处理校验失败语义",
+        message = "Prefer tryDecryptIgnoreCase to handle check-bit failure semantics explicitly",
         replaceWith = ReplaceWith("tryDecryptIgnoreCase(src, key).getOrThrow()")
     )
-    fun decryptIgnoreCase(src: String, key: Long): String { //取校验位
+    fun decryptIgnoreCase(src: String, key: Long): String { // extract the check bit
         var srcString = src
         val checkBit = srcString.substring(0, 1)
-        //取密文
+        // extract the ciphertext
         srcString = srcString.substring(1, srcString.length)
-        //解密
+        // decrypt
         val targStr = decrypt(srcString, key, true)
-        //验证校验位
-        return if (checkBit != requireNotNull(getMD5(targStr)) { "MD5计算失败" }.substring(0, 1)) {
-            "校验位不匹配！"
+        // verify the check bit
+        return if (checkBit != requireNotNull(getMD5(targStr)) { "MD5 computation failed" }.substring(0, 1)) {
+            "Check bit mismatch!"
         } else targStr
     }
 
     /**
-     * 接收含有校验位的加密字符串，对其解密并返回Result。
+     * Decrypts an encrypted string with a check bit and returns a Result.
      *
-     * 与 `decryptIgnoreCase` 的区别在于：校验位不匹配时返回Failure，而不是固定错误字符串。
+     * The difference from `decryptIgnoreCase` is that a check-bit mismatch returns Failure rather than a fixed error string.
      */
     fun tryDecryptIgnoreCase(src: String, key: Long = KEY): Result<String> = runCatching {
         var srcString = src
         val checkBit = srcString.substring(0, 1)
         srcString = srcString.substring(1, srcString.length)
         val targStr = decrypt(srcString, key, true)
-        require(checkBit == requireNotNull(getMD5(targStr)) { "MD5计算失败" }.substring(0, 1)) { "校验位不匹配！" }
+        require(checkBit == requireNotNull(getMD5(targStr)) { "MD5 computation failed" }.substring(0, 1)) { "Check bit mismatch!" }
         targStr
     }
 
     /**
-     * 加密函数
+     * Encryption function.
      * @param src
      * @param key
      * @param capitalOnly
      * @return
      */
-    fun encrypt(src: String, key: Long, capitalOnly: Boolean): String { //乱序
+    fun encrypt(src: String, key: Long, capitalOnly: Boolean): String { // shuffle
         val targStr = outOrder(src, key)
-        //字符串转换
+        // string conversion
         return transStr(targStr, key, true, capitalOnly)
     }
 
     /**
-     * 解密函数
+     * Decryption function.
      * @param src
      * @param key
      * @param capitalOnly
      * @return
      */
-    fun decrypt(src: String, key: Long, capitalOnly: Boolean): String { //字符串转换
+    fun decrypt(src: String, key: Long, capitalOnly: Boolean): String { // string conversion
         var srcString = src
         srcString = transStr(srcString, key, false, capitalOnly)
-        //恢复排序
+        // restore the order
         return deOutOrder(srcString, key)
     }
 
     /**
-     * 按 key 对源字符串做“乱序”：
-     * 1. 先按 (key % 100 % len) 做循环左移；
-     * 2. 用 key 的每一位生成排序权重，对前 min(srcLen, keyLen) 个字符按权重重排；
-     * 3. 超出 key 长度的尾部字符保持移位后的相对顺序。
+     * "Shuffles" the source string by key:
+     * 1. Rotate left by (key % 100 % len) positions;
+     * 2. Use each digit of the key to produce sort weights and reorder the first min(srcLen, keyLen) characters by weight;
+     * 3. Tail characters past the key length retain the relative order after the rotation.
      *
-     * 与 [deOutOrder] 严格互逆。
+     * Strictly inverse to [deOutOrder].
      *
-     * @param src 待乱序的字符串
-     * @param key 加密 Key
-     * @return 乱序后的字符串
+     * @param src the string to shuffle
+     * @param key the encryption key
+     * @return the shuffled string
      * @author K
      * @since 1.0.0
      */
@@ -162,9 +162,9 @@ object Base36Kit {
         val skipNum = (key % 100 % len1).toInt()
         val len = if (len1 < len2) len1 else len2
         var num = Array(len) { arrayOfNulls<String>(3) }
-        //字符串移位
+        // rotate the string
         srcString = (srcString + srcString).substring(skipNum, skipNum + len1)
-        //秘钥转换
+        // key conversion
         val keyArr = IntArray(keyStr.length)
         for (i in keyStr.indices) {
             keyArr[i] = keyStr.substring(i, i + 1).toInt()
@@ -175,7 +175,7 @@ object Base36Kit {
             num[i][1] = keyArr[i].toString()
             num[i][2] = srcString.substring(i, i + 1)
         }
-        //对数组按秘钥列重新排序
+        // reorder the array by the key column
         num = sortArr(num, 1)
         var targStr = String()
         for (i in 0 until len) {
@@ -186,12 +186,13 @@ object Base36Kit {
     }
 
     /**
-     * [outOrder] 的逆运算：先按 key 权重排序得到位置映射，
-     * 再把密文字符放回原位置，最后做反向循环移位，恢复原始字符串。
+     * Inverse of [outOrder]: first sort by key weight to obtain the position mapping,
+     * then place ciphertext characters back into their original positions, and finally
+     * apply the reverse rotation to restore the original string.
      *
-     * @param srcString 已乱序的字符串
-     * @param key 加密 Key（须与加密时相同）
-     * @return 恢复原顺序后的字符串
+     * @param srcString the shuffled string
+     * @param key the encryption key (must match the one used for encryption)
+     * @return the string restored to the original order
      * @author K
      * @since 1.0.0
      */
@@ -203,7 +204,7 @@ object Base36Kit {
         val skipNum = (key % 100 % len1).toInt()
         val len = if (len1 < len2) len1 else len2
         var num = Array(len) { arrayOfNulls<String>(3) }
-        //秘钥转换
+        // key conversion
         val keyArr = IntArray(keyStr.length)
         for (i in keyStr.indices) {
             keyArr[i] = keyStr.substring(i, i + 1).toInt()
@@ -214,31 +215,31 @@ object Base36Kit {
             num[i][1] = keyArr[i].toString()
             //num[i][2] = srcString.substring(i, i+1);
         }
-        //先对数组按秘钥列重新排序
+        // first reorder the array by the key column
         num = sortArr(num, 1)
-        //将字符插入数组
+        // insert characters into the array
         for (i in 0 until len) {
             num[i][2] = srcString.substring(i, i + 1)
         }
-        //对数组按索引列重新排序
+        // reorder the array by the index column
         num = sortArr(num, 0)
         var targStr = String()
         for (i in 0 until len) {
             targStr += num[i][2]
         }
         targStr += srcString.substring(len, len1)
-        //字符串移位
+        // rotate the string
         targStr = (targStr + targStr).substring(len1 - skipNum, 2 * len1 - skipNum)
         return targStr
     }
 
     /**
-     * 对二维字符串数组按指定列做升序冒泡排序（原地修改）。
-     * 排序键为字符串解析后的整型，列值为空会触发 [IllegalArgumentException]。
+     * Performs an in-place ascending bubble sort on a 2D string array by a given column.
+     * The sort key is the integer parsed from the string; an empty column value triggers [IllegalArgumentException].
      *
-     * @param arr 待排序数组，行表示元素，列表示属性
-     * @param col 用于比较大小的列下标
-     * @return 排序完成的数组（与入参为同一引用）
+     * @param arr the array to sort; rows are elements, columns are properties
+     * @param col the column index used for comparison
+     * @return the sorted array (same reference as the input)
      * @author K
      * @since 1.0.0
      */
@@ -246,8 +247,8 @@ object Base36Kit {
         var temp: Array<String?>
         for (i in 0 until arr.size - 1) {
             for (j in arr.size - 1 downTo i + 1) {
-                val left = requireNotNull(arr[j][col]) { "排序列值为空" }.toInt()
-                val right = requireNotNull(arr[j - 1][col]) { "排序列值为空" }.toInt()
+                val left = requireNotNull(arr[j][col]) { "Sort column value is empty" }.toInt()
+                val right = requireNotNull(arr[j - 1][col]) { "Sort column value is empty" }.toInt()
                 if (left < right) {
                     temp = arr[j]
                     arr[j] = arr[j - 1]
@@ -259,15 +260,15 @@ object Base36Kit {
     }
 
     /**
-     * 在自定义编码（36 进制或 62 进制）空间内对字符串前缀做加法/减法位移。
-     * 流程：ASCII -> 自定义编码 -> 加或减 key 的对应位 -> 回到 ASCII。
-     * band36=true 时小写字母按大写处理，保证“纯大写+数字”输入输出仍为纯大写+数字。
+     * Performs additive/subtractive shifts on the string prefix within a custom encoding space (base 36 or base 62).
+     * Flow: ASCII -> custom encoding -> add or subtract the corresponding key digit -> back to ASCII.
+     * When band36=true, lowercase letters are treated as uppercase so that a "pure uppercase+digits" input still maps back to pure uppercase+digits.
      *
-     * @param inStr 待转换的字符串
-     * @param transNum 用于位移的数字（即加密 Key）
-     * @param plusMinus true 代表加密（加法），false 代表解密（减法）
-     * @param band36 true 走 36 进制（仅大写+数字），false 走 62 进制（含小写）
-     * @return 转换后的字符串
+     * @param inStr the string to convert
+     * @param transNum the number used for the shift (i.e. the encryption key)
+     * @param plusMinus true for encryption (addition), false for decryption (subtraction)
+     * @param band36 true to use base 36 (uppercase + digits only), false to use base 62 (includes lowercase)
+     * @return the converted string
      * @author K
      * @since 1.0.0
      */
@@ -276,7 +277,7 @@ object Base36Kit {
         var band = 62
         if (band36) {
             band = 36
-            //36进制不包括小写字母，小写字母以大写字母来处理
+            // base 36 excludes lowercase letters, so they are treated as uppercase
             s = s.uppercase(Locale.getDefault())
         }
         val len1 = s.length
@@ -286,7 +287,7 @@ object Base36Kit {
         val ch = s.toCharArray()
         for (i in 0 until len) {
             val j = len1 - 1 - i
-            //转为自定义的36位或/62位编码
+            // convert to the custom base-36 or base-62 encoding
             ch[j] = asciiToDiy(ch[j].code).toChar()
             if (plusMinus) { //System.out.print((int)ch[j] + " " + ch[j] + " ");
                 ch[j] = ((ch[j].code + transNum.toString().substring(i, i + 1).toInt()) % band).toChar()
@@ -296,23 +297,23 @@ object Base36Kit {
                     ((ch[j].code - transNum.toString().substring(i, i + 1).toInt() + band) % band).toChar()
                 //System.out.print((int)ch[j] + " " + ch[j] + " ");
             }
-            //把自定义编码转回ASCII码
+            // convert the custom encoding back to ASCII
             ch[j] = diyToAscii(ch[j].code).toChar()
         }
         return String(ch)
     }
 
     /**
-     * 把 ASCII 编码映射到自定义紧凑编码：
-     * 数字 `0-9` -> 0..9，大写字母 `A-Z` -> 10..35，小写字母 `a-z` -> 36..61，
-     * 其余字符保持原值不变。
+     * Maps an ASCII code to the custom compact encoding:
+     * digits `0-9` -> 0..9, uppercase letters `A-Z` -> 10..35, lowercase letters `a-z` -> 36..61,
+     * other characters are left unchanged.
      *
-     * @param codeNum 输入字符的 ASCII 码
-     * @return 自定义编码值
+     * @param codeNum the ASCII code of the input character
+     * @return the custom encoding value
      * @author K
      * @since 1.0.0
      */
-    private fun asciiToDiy(codeNum: Int): Int { //如果n的ASCII码在48~57，则n是数字, 65~90则是大写字母
+    private fun asciiToDiy(codeNum: Int): Int { // if n's ASCII is in 48..57 it's a digit; 65..90 is an uppercase letter
         return when(codeNum) {
             in 48..57 -> codeNum - 48
             in 65..90 -> codeNum - 65 + 10
@@ -322,16 +323,16 @@ object Base36Kit {
     }
 
     /**
-     * [asciiToDiy] 的逆映射：把自定义紧凑编码映射回 ASCII。
-     * 注意：减法位运算可能让 codeNum 临时为 -1（band 取模溢出），
-     * 此时落入 `-1..9` 分支映射为数字 `0-9` 区段，保持互逆。
+     * Inverse of [asciiToDiy]: maps the custom compact encoding back to ASCII.
+     * Note: subtraction may leave codeNum temporarily at -1 (band-modulo underflow),
+     * in which case it falls into the `-1..9` branch and maps into the `0-9` digit range, preserving inversion.
      *
-     * @param codeNum 自定义编码值
-     * @return 对应的 ASCII 码
+     * @param codeNum the custom encoding value
+     * @return the corresponding ASCII code
      * @author K
      * @since 1.0.0
      */
-    private fun diyToAscii(codeNum: Int): Int { //把自定义编码转回ASCII码
+    private fun diyToAscii(codeNum: Int): Int { // convert custom encoding back to ASCII
         return when(codeNum) {
             in -1..9 -> codeNum + 48
             in 10..36 -> codeNum - 10 + 65
@@ -341,11 +342,11 @@ object Base36Kit {
     }
 
     /**
-     * 计算字符串的 MD5 摘要并返回大写十六进制字符串。
-     * 仅用于在加密结果头部生成 1 位校验位，不作通用安全用途。
+     * Computes the MD5 digest of a string and returns an uppercase hex string.
+     * Used only to generate a one-character check bit at the head of the encryption result; not for general security use.
      *
-     * @param s 待摘要的字符串
-     * @return 32 位大写十六进制 MD5；JDK 不支持 MD5 算法时返回 null
+     * @param s the string to digest
+     * @return 32-character uppercase hex MD5; returns null if the JDK does not support MD5
      * @author K
      * @since 1.0.0
      */
@@ -354,13 +355,13 @@ object Base36Kit {
             charArrayOf('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F')
         return try {
             val btInput = s.toByteArray()
-            // 获得MD5摘要算法的 MessageDigest 对象
+            // Obtain a MessageDigest object for the MD5 algorithm
             val mdInst = MessageDigest.getInstance("MD5")
-            // 使用指定的字节更新摘要
+            // Update the digest with the given bytes
             mdInst.update(btInput)
-            // 获得密文
+            // Obtain the ciphertext
             val md = mdInst.digest()
-            // 把密文转换成十六进制的字符串形式
+            // Convert the ciphertext to a hexadecimal string
             val j = md.size
             val str = CharArray(j * 2)
             var k = 0

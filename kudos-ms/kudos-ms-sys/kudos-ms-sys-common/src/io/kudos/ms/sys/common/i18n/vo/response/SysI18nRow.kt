@@ -1,41 +1,41 @@
 package io.kudos.ms.sys.common.i18n.vo.response
 
 /**
- * 国际化列表查询结果响应VO
+ * Response VO for i18n list query result.
  *
  * @author K
  * @since 1.0.0
  */
 data class SysI18nRow (
 
-    /** 主键 */
+    /** Primary key */
     val id: String = "",
 
-    /** 语言_地区 */
+    /** Language_Region */
     val locale: String = "",
 
-    /** 原子服务编码 */
+    /** Atomic service code */
     val atomicServiceCode: String = "",
 
-    /** 国际化类型字典代码 */
+    /** I18n type dictionary code */
     val i18nTypeDictCode: String = "",
 
-    /** 国际化命名空间 */
+    /** I18n namespace */
     val namespace: String = "",
 
-    /** 国际化key */
+    /** I18n key */
     val key: String = "",
 
-    /** 国际化值 */
+    /** I18n value */
     val value: String = "",
 
-    /** 备注 */
+    /** Remark */
     val remark: String? = null,
 
-    /** 是否启用 */
+    /** Whether enabled */
     val active: Boolean = true,
 
-    /** 是否内置 */
+    /** Whether built-in */
     val builtIn: Boolean = true,
 
 )

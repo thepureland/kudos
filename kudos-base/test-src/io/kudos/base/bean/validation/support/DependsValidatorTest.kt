@@ -5,7 +5,7 @@ import io.kudos.base.support.logic.LogicOperatorEnum
 import kotlin.test.Test
 
 /**
- * DependsValidator测试用例
+ * Test cases for DependsValidator.
  *
  * @author K
  * @since 1.0.0
@@ -14,17 +14,17 @@ internal class DependsValidatorTest {
 
     @Test
     fun testValidate() {
-        // 单条件
+        // Single condition
         assert(DependsValidator.validate(arrayOf("name1"), arrayOf("name1"), arrayOf(LogicOperatorEnum.EQ)))
 
-        // 多条件"与"
+        // Multi-condition "AND"
         assert(
             DependsValidator.validate(
                 arrayOf("name1", "name2"), arrayOf("name1", "NAME2"), arrayOf(LogicOperatorEnum.EQ, LogicOperatorEnum.IEQ)
             )
         )
 
-        // 多条件"或"
+        // Multi-condition "OR"
         assert(
             DependsValidator.validate(
                 arrayOf("name1", "name3"), arrayOf("name1", "NAME2"), arrayOf(LogicOperatorEnum.EQ, LogicOperatorEnum.IEQ),
@@ -32,7 +32,7 @@ internal class DependsValidatorTest {
             )
         )
 
-        // 含数组
+        // With an array
         assert(DependsValidator.validate(arrayOf("name1"), arrayOf("[name2,name1,name3]"), arrayOf(LogicOperatorEnum.IN)))
     }
 

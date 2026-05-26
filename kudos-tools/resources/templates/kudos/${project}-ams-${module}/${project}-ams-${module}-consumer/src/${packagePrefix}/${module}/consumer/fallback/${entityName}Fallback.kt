@@ -4,7 +4,7 @@ import ${packagePrefix}.${module}.client.proxy.I${entityName}Proxy
 import org.springframework.stereotype.Component
 
 
-<@generateClassComment table.comment+"容错处理"/>
+<@generateClassComment table.comment+" fallback handler"/>
 @Component
 //region your codes 1
 interface ${entityName}Fallback : I${entityName}Proxy {

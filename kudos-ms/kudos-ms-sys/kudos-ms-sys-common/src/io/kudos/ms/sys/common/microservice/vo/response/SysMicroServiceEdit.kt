@@ -5,7 +5,7 @@ import java.time.LocalDateTime
 
 
 /**
- * 微服务编辑响应VO
+ * Response VO for microservice edit.
  *
  * @author K
  * @since 1.0.0
@@ -14,46 +14,46 @@ data class SysMicroServiceEdit (
 
     override val id: String = "",
 
-    /** 编码 */
+    /** Code */
     val code: String = "",
 
-    /** 名称 */
+    /** Name */
     val name: String = "",
 
-    /** 上下文 */
+    /** Context */
     val context: String = "",
 
-    /** 是否为原子服务 */
+    /** Whether atomic service */
     val atomicService: Boolean = true,
 
-    /** 父服务编码 */
+    /** Parent service code */
     val parentCode: String? = null,
 
-    /** 备注 */
+    /** Remark */
     val remark: String? = null,
 
-    /** 是否启用 */
+    /** Whether enabled */
     val active: Boolean = true,
 
-    /** 是否内置 */
+    /** Whether built-in */
     val builtIn: Boolean = true,
 
-    /** 创建者id */
+    /** Creator id */
     val createUserId: String? = null,
 
-    /** 创建者名称 */
+    /** Creator name */
     val createUserName: String? = null,
 
-    /** 创建时间 */
+    /** Creation time */
     val createTime: LocalDateTime? = null,
 
-    /** 更新者id */
+    /** Updater id */
     val updateUserId: String? = null,
 
-    /** 更新者名称 */
+    /** Updater name */
     val updateUserName: String? = null,
 
-    /** 更新时间 */
+    /** Update time */
     val updateTime: LocalDateTime? = null,
 
 ) : IIdEntity<String>

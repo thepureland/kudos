@@ -6,7 +6,7 @@ import org.springframework.cache.Cache
 import org.springframework.cache.CacheManager
 
 /**
- * 缓存管理器接口
+ * Cache manager interface.
  *
  * @author K
  * @since 1.0.0
@@ -14,29 +14,29 @@ import org.springframework.cache.CacheManager
 interface IKeyValueCacheManager<T : Cache> : CacheManager, CacheItemInitializing {
 
     /**
-     * 根据缓存配置创建缓存实例
+     * Creates a cache instance from the given cache configuration.
      *
-     * @param cacheConfig 缓存配置
-     * @return 缓存实例
+     * @param cacheConfig cache configuration
+     * @return cache instance
      * @author K
      * @since 1.0.0
      */
     fun createCache(cacheConfig: CacheConfig): T
 
     /**
-     * 按模式删除某个 cacheName 下的所有 key（用 SCAN 替代 KEYS）
+     * Deletes all keys matching the pattern under the given cacheName (uses SCAN instead of KEYS).
      *
-     * @param cacheName Spring Cache 名称
-     * @param pattern   业务 key 模式，比如 "user:*"
+     * @param cacheName Spring Cache name
+     * @param pattern   business key pattern, e.g., "user:*"
      */
     fun evictByPattern(cacheName: String, pattern: String)
 
     /**
-     * 缓存中是否存在指定的 key（不依赖 value 是否为 null）
+     * Checks whether the given key exists in the cache (independent of whether the value is null).
      *
-     * @param cacheName Spring Cache 名称
-     * @param key       缓存 key
-     * @return true：存在，false：不存在
+     * @param cacheName Spring Cache name
+     * @param key       cache key
+     * @return true if present; false otherwise
      */
     fun existsKey(cacheName: String, key: Any): Boolean
 

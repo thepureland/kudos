@@ -5,7 +5,8 @@ import java.io.ByteArrayOutputStream
 import java.io.FileOutputStream
 
 /**
- * 图像压缩结果。封装内存里的 [outputStream]、目标文件路径、最终 MIME 类型。
+ * Image compression result. Wraps the in-memory [outputStream], the target file path,
+ * and the final MIME type.
  *
  * @author K
  * @author AI: Codex
@@ -26,12 +27,15 @@ class CompressionResult(val outputStream: ByteArrayOutputStream?, var mimeType: 
     }
 
     /**
-     * 把内存里的压缩结果落盘到 [outputFilePath]。
+     * Flushes the in-memory compression result to disk at [outputFilePath].
      *
-     * 历史问题：旧实现 `catch (ignored: Exception) { }` 默默吞掉所有 IO 错误——
-     * 压缩失败时调用方完全不知道，文件可能根本没写成功。改为 log error 让事故可见。
-     * 仍不向上抛是为了兼容旧调用方（[io.kudos.ability.file.common.compress.CompressionPipeline.compressAndOutputFile]
-     * 不声明 IOException），后续可考虑改为抛出。
+     * Historical issue: the old implementation `catch (ignored: Exception) { }`
+     * silently swallowed all IO errors — when compression failed, the caller had
+     * no idea, and the file may not have been written successfully at all. Changed
+     * to log error to make incidents visible. We still do not rethrow in order to
+     * stay compatible with the old caller
+     * ([io.kudos.ability.file.common.compress.CompressionPipeline.compressAndOutputFile]
+     * does not declare IOException); switching to throw can be considered later.
      */
     fun writeTo() {
         if (outputStream != null) {
@@ -40,7 +44,7 @@ class CompressionResult(val outputStream: ByteArrayOutputStream?, var mimeType: 
                     outputStream.writeTo(out)
                 }
             } catch (e: Exception) {
-                log.error(e, "图像压缩结果写入文件失败：path={0}", outputFilePath)
+                log.error(e, "Failed to write image compression result to file: path={0}", outputFilePath)
             }
         }
     }

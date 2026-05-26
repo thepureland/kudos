@@ -5,63 +5,63 @@ import java.io.Serializable
 
 
 /**
- * 数据源缓存项
+ * Data source cache entry.
  *
  * @author K
  * @since 1.0.0
  */
 data class SysDataSourceCacheEntry (
 
-    /** 主键 */
+    /** Primary key. */
     override val id: String,
 
 
-    /** 名称 */
+    /** Name. */
     val name: String,
 
-    /** 子系统编码 */
+    /** Sub-system code. */
     val subSystemCode: String,
 
-    /** 微服务编码；`null` 表示未指定（与库表 `micro_service_code` nullable 一致） */
+    /** Microservice code; `null` means unspecified (matches the nullable `micro_service_code` column). */
     val microServiceCode: String?,
 
-    /** 租户id */
+    /** Tenant id. */
     val tenantId: String?,
 
-    /** url */
+    /** URL. */
     val url: String,
 
-    /** 用户名 */
+    /** Username. */
     val username: String,
 
-    /** 密码 */
+    /** Password. */
     val password: String?,
 
-    /** 初始连接数。初始化发生在显示调用init方法，或者第一次getConnection时 */
+    /** Initial connection count. Initialization occurs on explicit init() call or the first getConnection(). */
     val initialSize: Int?,
 
-    /** 最大连接数 */
+    /** Maximum number of active connections. */
     val maxActive: Int?,
 
-    /** 最大空闲连接数 */
+    /** Maximum number of idle connections. */
     val maxIdle: Int?,
 
-    /** 最小空闲连接数。至少维持多少个空闲连接 */
+    /** Minimum number of idle connections to keep. */
     val minIdle: Int?,
 
-    /** 出借最长期限(毫秒)。客户端从连接池获取（借出）一个连接后，超时没有归还（return），则连接池会抛出异常 */
+    /** Maximum borrow duration (ms). If a connection borrowed from the pool is not returned in time, the pool throws an exception. */
     val maxWait: Int?,
 
-    /** 连接寿命(毫秒)。超时(相对于初始化时间)连接池将在出借或归还时删除这个连接 */
+    /** Connection lifetime (ms). After this timeout (relative to init time), the pool removes the connection on borrow or return. */
     val maxAge: Int?,
 
-    /** 备注 */
+    /** Remark. */
     val remark: String?,
 
-    /** 是否启用 */
+    /** Whether active. */
     val active: Boolean?,
 
-    /** 是否内置 */
+    /** Whether built-in. */
     val builtIn: Boolean?,
 
 ) : IIdEntity<String>, Serializable {

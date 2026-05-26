@@ -7,7 +7,7 @@ import org.ktorm.schema.varchar
 
 
 /**
- * 记住我登录数据库表-实体关联对象
+ * Remember-me login table-entity binding.
  *
  * @author K
  * @author AI: Codex
@@ -15,19 +15,19 @@ import org.ktorm.schema.varchar
  */
 object UserLoginRememberMes : StringIdTable<UserLoginRememberMe>("user_login_remember_me") {
 
-    /** 用户ID */
+    /** User id */
     var userId = varchar("user_id").bindTo { it.userId }
 
-    /** 租户ID */
+    /** Tenant id */
     var tenantId = varchar("tenant_id").bindTo { it.tenantId }
 
-    /** 用户名 */
+    /** Username */
     var username = varchar("username").bindTo { it.username }
 
-    /** 令牌 */
+    /** Token */
     var token = varchar("token").bindTo { it.token }
 
-    /** 最后使用时间 */
+    /** Last used time */
     var lastUsed = datetime("last_used").bindTo { it.lastUsed }
 
 

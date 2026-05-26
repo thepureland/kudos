@@ -1,23 +1,23 @@
 package io.kudos.ms.sys.common.dict.vo.response
 
 /**
- * 字典列表查询结果响应VO
+ * Response VO for dict list query results.
  *
  * @author K
  * @since 1.0.0
  */
 data class SysDictRow (
 
-    /** 主键 */
+    /** Primary key */
     val id: String = "",
 
-    /** 字典类型 */
+    /** Dict type */
     val dictType: String = "",
 
-    /** 字典名称 */
+    /** Dict name */
     val dictName: String = "",
 
-    /** 原子服务编码 */
+    /** Atomic service code */
     val atomicServiceCode: String = "",
 
     val parentId: String? = null,
@@ -26,13 +26,13 @@ data class SysDictRow (
 
     val parentIds: List<String>? = null,
 
-    /** 备注 */
+    /** Remark */
     val remark: String? = null,
 
-    /** 是否启用 */
+    /** Whether enabled */
     val active: Boolean = true,
 
-    /** 是否内置 */
+    /** Whether built-in */
     val builtIn: Boolean = true,
 
     val itemId: String? = null, //TODO

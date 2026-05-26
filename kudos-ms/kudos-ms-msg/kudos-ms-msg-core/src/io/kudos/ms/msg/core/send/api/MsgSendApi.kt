@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service
 
 
 /**
- * 消息发送API本地实现。
+ * Local implementation of the message send API.
  *
  * @author K
  * @author AI: Codex

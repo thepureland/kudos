@@ -30,7 +30,7 @@ import kotlin.reflect.KClass
 
 
 /**
- * 域名业务
+ * Domain service.
  *
  * @author K
  * @since 1.0.0
@@ -68,7 +68,7 @@ open class SysDomainService(
             val tenantIds = sysDomainRows.map { it.tenantId }
             val idAndNameMap = tenantByIdCache.getTenantsByIds(tenantIds).mapValues { it.value.name }
             sysDomainRows.forEach { row ->
-                row.tenantName = requireNotNull(idAndNameMap[row.tenantId]) { "tenantId=${row.tenantId} 未在缓存中" }
+                row.tenantName = requireNotNull(idAndNameMap[row.tenantId]) { "tenantId=${row.tenantId} not in cache" }
             }
         }
         return result
@@ -94,8 +94,8 @@ open class SysDomainService(
         return completeCrudUpdate(
             success = dao.update(domain),
             log = log,
-            successMessage = "更新id为${id}的域名的启用状态为${active}。",
-            failureMessage = "更新id为${id}的域名的启用状态为${active}失败！",
+            successMessage = "Updated domain id=$id active=$active.",
+            failureMessage = "Failed to update domain id=$id active=$active!",
         ) {
             eventPublisher.publishEvent(SysDomainUpdated(id = id))
         }
@@ -104,7 +104,7 @@ open class SysDomainService(
     @Transactional
     override fun insert(any: Any): String {
         val id = super.insert(any)
-        completeCrudInsert(log, "新增id为${id}的域名。") {
+        completeCrudInsert(log, "Inserted domain id=$id.") {
             eventPublisher.publishEvent(SysDomainInserted(id = id))
         }
         return id
@@ -112,12 +112,12 @@ open class SysDomainService(
 
     @Transactional
     override fun update(any: Any): Boolean {
-        val id = requireStringId(any, "域名")
+        val id = requireStringId(any, "domain")
         return completeCrudUpdate(
             success = super.update(any),
             log = log,
-            successMessage = "更新id为${id}的域名。",
-            failureMessage = "更新id为${id}的域名失败！",
+            successMessage = "Updated domain id=$id.",
+            failureMessage = "Failed to update domain id=$id!",
         ) {
             eventPublisher.publishEvent(SysDomainUpdated(id = id))
         }
@@ -126,14 +126,14 @@ open class SysDomainService(
     @Transactional
     override fun deleteById(id: String): Boolean {
         val domain = dao.get(id) ?: run {
-            log.warn("删除id为${id}的域名时，发现其已不存在！")
+            log.warn("Domain id=$id no longer exists when attempting delete!")
             return false
         }
         return completeCrudUpdate(
             success = super.deleteById(id),
             log = log,
-            successMessage = "删除id为${id}的域名。",
-            failureMessage = "删除id为${id}的域名失败！",
+            successMessage = "Deleted domain id=$id.",
+            failureMessage = "Failed to delete domain id=$id!",
         ) {
             eventPublisher.publishEvent(SysDomainDeleted(id = id, domain = domain.domain))
         }
@@ -145,7 +145,7 @@ open class SysDomainService(
         val domains = dao.inSearchById(ids)
         val domainNames = domains.map { it.domain }.toSet()
         val count = super.batchDelete(ids)
-        log.debug("批量删除域名，期望删除${ids.size}条，实际删除${count}条。")
+        log.debug("Batch delete domains: expected ${ids.size}, actually deleted $count.")
         if (count > 0) {
             eventPublisher.publishEvent(SysDomainBatchDeleted(ids = ids, domains = domainNames))
         }

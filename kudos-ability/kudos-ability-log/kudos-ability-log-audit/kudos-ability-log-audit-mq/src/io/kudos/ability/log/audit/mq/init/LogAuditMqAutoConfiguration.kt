@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Primary
 import org.springframework.context.annotation.PropertySource
 
 /**
- * 日志审计-mq自动配置类
+ * Auto-configuration class for log audit MQ.
  *
  * @author K
  * @author AI: Codex
@@ -27,11 +27,11 @@ import org.springframework.context.annotation.PropertySource
 open class LogAuditMqAutoConfiguration : IComponentInitializer {
 
     /**
-     * MQ 投递的 [IAuditService] 实现。
+     * MQ-delivery [IAuditService] implementation.
      *
-     * `@Primary` 让本 bean 在多个 `IAuditService` 实现（MQ + RDB 同时引入）的情况下胜出——
-     * 业务侧的 LogAuditAspect 通过 `@Autowired(required=false)` 拿到的就是这个 MQ 版本。
-     * 想反过来（RDB 优先）的话需要业务方自己覆盖 bean。
+     * `@Primary` makes this bean win when multiple `IAuditService` implementations exist (MQ + RDB both included) —
+     * the business-side LogAuditAspect picks up this MQ version via `@Autowired(required=false)`.
+     * To reverse priority (RDB first), the business side must override the bean itself.
      */
     @Bean
     @Primary

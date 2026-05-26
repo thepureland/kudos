@@ -115,15 +115,15 @@ internal class PathKitTest {
 
     @Test
     fun getTempDirectoryPathAndObject() {
-        // 从 PathKit 获取的临时目录路径，和 Apache FileUtils 返回的应该一致
+        // The temp directory path returned by PathKit should match the one returned by Apache FileUtils
         val fromKit = PathKit.getTempDirectoryPath().trimEnd(File.separatorChar)
         val fromSystem = FileUtils.getTempDirectoryPath().trimEnd(File.separatorChar)
         assertEquals(fromSystem, fromKit)
 
-        // getTempDirectory 应返回与路径对应的目录，并且目录确实存在
+        // getTempDirectory should return the directory corresponding to the path, and the directory must actually exist
         val tempDir = PathKit.getTempDirectory()
         assertTrue(tempDir.isDirectory, "getTempDirectory must return an existing directory")
-        // 目录本身的绝对路径去除尾部分隔符后，应该与 fromKit 一致
+        // After trimming the trailing separator, the directory's own absolute path should match fromKit
         assertEquals(fromKit, tempDir.absolutePath.trimEnd(File.separatorChar))
     }
 
@@ -140,13 +140,13 @@ internal class PathKitTest {
 
     @Test
     fun getResourcePath() {
-        // resources中
+        // in resources
         assert(File(PathKit.getResourcePath("logo.png")).exists())
 
-        // testresources中
+        // in testresources
         assert(File(PathKit.getResourcePath("TestExcelImporter.xls")).exists())
 
-        // 目录
+        // directory
         assert(File(PathKit.getResourcePath("i18n")).exists())
     }
 }

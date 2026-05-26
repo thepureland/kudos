@@ -4,7 +4,7 @@ import io.ktor.server.routing.Routing
 import io.kudos.ability.web.ktor.core.IKtorRouteRegistrar
 import org.springframework.stereotype.Component
 
-<@generateClassComment table.comment+"服务路由注册器"/>
+<@generateClassComment table.comment+" service route registrar"/>
 @Component
 //region your codes 1
 class ${entityName}ServiceRouteRegistrar : IKtorRouteRegistrar {

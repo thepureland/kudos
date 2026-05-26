@@ -30,28 +30,31 @@ import javafx.util.Callback
 
 
 /**
- * 把 JavaFX 控件按类型映射到"读取当前值"的回调，向导各页用统一接口取值无需关心具体控件类型。
+ * Maps JavaFX controls by type to a "read current value" callback so that each wizard page can
+ * extract values through a single interface without knowing the concrete control type.
  *
- * 内置常见控件：CheckBox/ChoiceBox/ComboBox/DatePicker/PasswordField/RadioButton/Slider/TextArea/TextField/
- * ListView/TreeView/TableView/TreeTableView。业务侧需要新控件时调 [addValueExtractor] 自行注册。
+ * Built-in controls: CheckBox/ChoiceBox/ComboBox/DatePicker/PasswordField/RadioButton/Slider/TextArea/TextField/
+ * ListView/TreeView/TableView/TreeTableView. The business side calls [addValueExtractor] to register
+ * additional control types as needed.
  *
- * @author Oracle (原始)
+ * @author Oracle (original)
  * @author K
  * @author AI: Codex
  * @since 1.0.0
  */
 object ValueExtractor {
 
-    /** 控件类 → 取值回调；按运行时 `n.javaClass` 精确匹配，不做继承体系扩展 */
+    /** Control class -> value-reading callback; exact match by runtime `n.javaClass`, no class-hierarchy expansion. */
     private val valueExtractors = mutableMapOf<Class<*>, Callback<Any, Any>>()
 
     /**
-     * 注册一种控件类型的取值回调。
-     * 内部把 [Callback]'s 泛型擦除存为 `Callback<Any, Any>`，调用时再按 [Node.javaClass] 做精确分发。
+     * Registers a value-reading callback for a control type.
+     * Internally stores the [Callback] with type erasure as `Callback<Any, Any>` and dispatches by
+     * an exact [Node.javaClass] match at call time.
      *
-     * @param T 控件类型
-     * @param clazz 控件 Class 对象，决定 [getValue] 时的精确匹配 key
-     * @param extractor 把该类型控件转为业务值的回调
+     * @param T control type
+     * @param clazz control Class object; this is the key used for the exact match in [getValue]
+     * @param extractor callback that converts a control of this type to the business value
      * @author K
      * @since 1.0.0
      */
@@ -61,13 +64,14 @@ object ValueExtractor {
     }
 
     /**
-     * 尝试从给定控件读取业务值。
-     * 通过 [valueExtractors] 精确匹配 `n.javaClass`；
-     * 未注册的控件类型返回 null（业务侧需自行调用 [addValueExtractor] 扩展支持）。
+     * Attempts to read the business value from the given control.
+     * Performs an exact match on `n.javaClass` via [valueExtractors]; returns null for unregistered
+     * control types (the business side should register support via [addValueExtractor]).
      *
-     * @param n 待取值的控件
-     * @return 控件当前值；未注册类型返回 null
-     * @throws IllegalArgumentException 当 map 内已注册但回调被异常清空时（不应出现）
+     * @param n control to read the value from
+     * @return current value of the control; null for an unregistered type
+     * @throws IllegalArgumentException when the entry is registered in the map but the callback was
+     *  unexpectedly cleared (should never happen)
      * @author K
      * @since 1.0.0
      */

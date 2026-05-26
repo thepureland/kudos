@@ -13,16 +13,16 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler
 
 
 /**
- * 上下文自动配置类
+ * Context auto-configuration class.
  *
  * @author K
  * @since 1.0.0
  */
 /**
- * `@Role(ROLE_INFRASTRUCTURE)`: 此 @Configuration 实现了 [IComponentInitializer]，由
- * [ComponentInitializationDispatcher]（本身是 BPP）在很早期接管，因此一定会先于业务 BPP 完成创建。
- * 没有这个标记时，Spring 会发 "is not eligible for getting processed by all BeanPostProcessors" 警告。
- * 这里显式声明为基础设施 bean，告诉 Spring 不需要给它套业务 BPP/auto-proxy。
+ * `@Role(ROLE_INFRASTRUCTURE)`: this @Configuration implements [IComponentInitializer] and is taken over very early by
+ * [ComponentInitializationDispatcher] (itself a BPP), so it is guaranteed to be created before business BPPs.
+ * Without this marker, Spring emits the "is not eligible for getting processed by all BeanPostProcessors" warning.
+ * Declaring it explicitly as an infrastructure bean tells Spring not to apply business BPPs / auto-proxy to it.
  */
 @Configuration
 @AutoConfigureOrder(Ordered.HIGHEST_PRECEDENCE)
@@ -31,21 +31,22 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler
 open class ContextAutoConfiguration : IComponentInitializer {
 
     /**
-     * 默认的 failData 任务调度器。
+     * Default failData task scheduler.
      *
-     * [io.kudos.context.retry.FailedDataRetryScanner] 通过 `@Qualifier("failDataTaskScheduler")`
-     * 注入此 Bean。之前此 Bean **未在 kudos-context 提供**，应用必须自己声明同名 Bean 才能启动，
-     * 否则报 `NoSuchBeanDefinitionException`。
+     * [io.kudos.context.retry.FailedDataRetryScanner] injects this bean via `@Qualifier("failDataTaskScheduler")`.
+     * Previously this bean was **not provided in kudos-context**, so the application had to declare a bean of the
+     * same name to start, otherwise a `NoSuchBeanDefinitionException` was thrown.
      *
-     * 现在 kudos-context 默认提供单线程 [ThreadPoolTaskScheduler]，应用如需更高并发可声明
-     * 同名 Bean 覆盖（被 [ConditionalOnMissingBean] 自动让位）。
+     * Now kudos-context provides a single-thread [ThreadPoolTaskScheduler] by default; applications that need higher
+     * concurrency can override by declaring a bean of the same name (automatically yielding via
+     * [ConditionalOnMissingBean]).
      */
     @Bean("failDataTaskScheduler")
     @ConditionalOnMissingBean(name = ["failDataTaskScheduler"])
     open fun failDataTaskScheduler(): TaskScheduler = ThreadPoolTaskScheduler().apply {
         poolSize = 1
         setThreadNamePrefix("kudos-failed-data-retry-")
-        // daemon=true：JVM 关闭不被该线程池阻塞
+        // daemon=true: JVM shutdown is not blocked by this thread pool
         setDaemon(true)
         setWaitForTasksToCompleteOnShutdown(false)
         initialize()

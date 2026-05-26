@@ -7,26 +7,26 @@ import org.ktorm.schema.varchar
 
 
 /**
- * 参数数据库表-实体关联对象
+ * Parameter database table-entity binding object
  *
  * @author K
  * @since 1.0.0
  */
 object SysParams : ManagedTable<SysParam>("sys_param") {
 
-    /** 参数名称 */
+    /** Parameter name */
     var paramName = varchar("param_name").bindTo { it.paramName }
 
-    /** 参数值 */
+    /** Parameter value */
     var paramValue = varchar("param_value").bindTo { it.paramValue }
 
-    /** 默认参数值 */
+    /** Default parameter value */
     var defaultValue = varchar("default_value").bindTo { it.defaultValue }
 
-    /** 模块 */
+    /** Module */
     var atomicServiceCode = varchar("atomic_service_code").bindTo { it.atomicServiceCode }
 
-    /** 序号 */
+    /** Order number */
     var orderNum = int("order_num").bindTo { it.orderNum }
 
 

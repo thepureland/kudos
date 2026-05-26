@@ -15,7 +15,7 @@ import kotlin.test.assertTrue
 /**
  * junit test for SysI18NService
  *
- * 测试数据来源：`SysI18NServiceTest.sql`
+ * Test data source: `SysI18NServiceTest.sql`
  *
  * @author K
  * @author AI: Cursor
@@ -44,7 +44,7 @@ class SysI18NServiceTest : RdbAndRedisCacheTestBase() {
         assertEquals(seededIdZh, row.id)
     }
 
-    /** `get(id, SysI18nCacheEntry::class)` 与 `getI18nFromCache` 在刷新 Hash 后一致。 */
+    /** `get(id, SysI18nCacheEntry::class)` should be consistent with `getI18nFromCache` after refreshing the Hash. */
     @Test
     fun get_withCacheEntryReturnType_delegatesToHashCache() {
         sysI18nHashCache.reloadAll(clear = true)

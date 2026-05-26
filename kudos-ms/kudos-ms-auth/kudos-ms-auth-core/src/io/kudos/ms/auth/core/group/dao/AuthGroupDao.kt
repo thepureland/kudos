@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository
 
 
 /**
- * 用户组数据访问对象
+ * User group DAO.
  *
  * @author K
  * @author AI: Codex
@@ -21,9 +21,9 @@ open class AuthGroupDao : BaseCrudDao<String, AuthGroup, AuthGroups>() {
 
 
     /**
-     * 查询所有 active=true 的用户组
+     * Returns all user groups with active=true.
      *
-     * @return List<AuthGroupCacheEntry>
+     * @return list of AuthGroupCacheEntry
      */
     open fun searchActiveGroupsForCache(): List<AuthGroupCacheEntry> {
         val criteria = Criteria(AuthGroup::active eq true)
@@ -31,7 +31,7 @@ open class AuthGroupDao : BaseCrudDao<String, AuthGroup, AuthGroups>() {
     }
 
     /**
-     * 按租户、用户组编码查询（不区分 active），返回单条缓存用 VO
+     * Looks up a single cache VO by tenant and group code (regardless of active flag).
      */
     open fun searchGroupByTenantIdAndGroupCode(tenantId: String, code: String): AuthGroupCacheEntry? {
         val criteria = Criteria.and(

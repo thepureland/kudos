@@ -11,7 +11,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * Ktor不整合Spring的测试用例
+ * Test cases for Ktor without Spring integration.
  *
  * @author K
  * @author AI: Codex

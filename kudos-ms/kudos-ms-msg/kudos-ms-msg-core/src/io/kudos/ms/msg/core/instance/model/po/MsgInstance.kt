@@ -6,7 +6,7 @@ import java.time.LocalDateTime
 
 
 /**
- * 消息实例数据库实体
+ * Message instance database entity.
  *
  * @author K
  * @author AI: Codex
@@ -16,34 +16,34 @@ interface MsgInstance : IDbEntity<String, MsgInstance> {
 
     companion object : DbEntityFactory<MsgInstance>()
 
-    /** 国家-语言字典码 */
+    /** Country-language dictionary code */
     var localeDictCode: String?
 
-    /** 标题 */
+    /** Title */
     var title: String?
 
-    /** 通知内容 */
+    /** Notification content */
     var content: String?
 
-    /** 消息模板id */
+    /** Message template id */
     var templateId: String?
 
-    /** 发送类型字典码 */
+    /** Send type dictionary code */
     var sendTypeDictCode: String?
 
-    /** 事件类型字典码 */
+    /** Event type dictionary code */
     var eventTypeDictCode: String?
 
-    /** 消息类型字典码 */
+    /** Message type dictionary code */
     var msgTypeDictCode: String?
 
-    /** 有效期起 */
+    /** Valid period start */
     var validTimeStart: LocalDateTime
 
-    /** 有效期止 */
+    /** Valid period end */
     var validTimeEnd: LocalDateTime
 
-    /** 租户ID */
+    /** Tenant ID */
     var tenantId: String
 
 

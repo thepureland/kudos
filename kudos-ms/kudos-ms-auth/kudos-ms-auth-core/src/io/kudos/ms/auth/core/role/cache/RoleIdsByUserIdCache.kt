@@ -20,17 +20,19 @@ import org.springframework.transaction.event.TransactionalEventListener
 
 
 /**
- * 角色ID列表（by user id）缓存处理器。
+ * Cache handler for role-ID lists keyed by user id.
  *
- * **语义为"有效角色集合"**：
- * - 数据来源表：`auth_role_user`（直接授权）∪ `auth_group_user` + `auth_group_role`（通过组继承）
- * - 缓存的 value 是这两条路径 union + 去重后的角色 ID 列表
+ * **Semantically the "effective role set"**:
+ * - Data sources: `auth_role_user` (direct grants) ∪ `auth_group_user` + `auth_group_role` (inherited via groups)
+ * - The cached value is the deduplicated union of role IDs from both paths
  *
- * 之所以把"组继承"也算进来，是因为本 cache 的下游调用方（[io.kudos.ms.auth.core.role.service.impl.AuthRoleService.hasRole]
- * / [getUserRoles] / [getUserRoleIds] / 资源缓存）问的都是"该用户在权限判定时拥有哪些角色"，而不是"直接绑定了哪些角色"。
- * 需要后者的调用方应直接走 [io.kudos.ms.auth.core.role.dao.AuthRoleUserDao.searchRoleIdsByUserId]。
+ * Group inheritance is included because the downstream consumers of this cache
+ * ([io.kudos.ms.auth.core.role.service.impl.AuthRoleService.hasRole] / [getUserRoles] / [getUserRoleIds] /
+ * resource caches) ask "which roles does this user effectively have for permission checks", not
+ * "which roles are directly bound". Callers that need the latter should call
+ * [io.kudos.ms.auth.core.role.dao.AuthRoleUserDao.searchRoleIdsByUserId] directly.
  *
- * 缓存 key：userId；value：List<String>。
+ * Cache key: userId; value: List<String>.
  *
  * @author K
  * @author AI: Cursor
@@ -61,7 +63,7 @@ open class RoleIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() {
 
     override fun reloadAll(clear: Boolean) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.info("缓存未开启，不加载和缓存所有用户的角色ID！")
+            log.info("Cache is not enabled; skipping load and cache of all users' role IDs!")
             return
         }
 
@@ -71,8 +73,8 @@ open class RoleIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() {
         val groupIdToRoleIds = authGroupRoleDao.searchAllGroupIdToRoleIdsForCache()
 
         log.debug(
-            "从数据库加载了${users.size}条用户、直接角色分组${userIdToDirectRoleIds.size}、" +
-                "用户-组分组${userIdToGroupIds.size}、组-角色分组${groupIdToRoleIds.size}。"
+            "Loaded from DB: ${users.size} users, direct-role groups ${userIdToDirectRoleIds.size}, " +
+                "user-group groups ${userIdToGroupIds.size}, group-role groups ${groupIdToRoleIds.size}."
         )
 
         if (clear) {
@@ -89,17 +91,17 @@ open class RoleIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() {
             )
             if (effectiveRoleIds.isNotEmpty()) {
                 KeyValueCacheKit.put(CACHE_NAME, userId, effectiveRoleIds)
-                log.debug("缓存了用户${userId}的${effectiveRoleIds.size}条有效角色ID。")
+                log.debug("Cached ${effectiveRoleIds.size} effective role IDs for user ${userId}.")
             }
         }
     }
 
     /**
-     * 根据用户ID从缓存中获取该用户的有效角色 ID 列表，缓存不存在时从数据库加载并回写。
-     * 有效 = 直接授权 ∪ 通过用户组继承
+     * Returns the effective role-ID list for a user from the cache, loading from the DB and writing back on a miss.
+     * Effective = direct grants ∪ inherited via user groups.
      *
-     * @param userId 用户ID
-     * @return List<角色ID>
+     * @param userId User ID
+     * @return List<roleId>
      */
     @Cacheable(
         cacheNames = [CACHE_NAME],
@@ -108,7 +110,7 @@ open class RoleIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() {
     )
     open fun getRoleIds(userId: String): List<String> {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("缓存中不存在用户${userId}的角色ID，从数据库中加载...")
+            log.debug("Cache miss for user ${userId}'s role IDs; loading from DB...")
         }
         val direct = authRoleUserDao.searchRoleIdsByUserId(userId)
         val groupIds = authGroupUserDao.searchGroupIdsByUserId(userId)
@@ -117,20 +119,21 @@ open class RoleIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() {
         }
         val effective = (direct + groupDerived).distinct()
         log.debug(
-            "从数据库加载了用户${userId}的有效角色：直接${direct.size}，组继承${groupDerived.size}，去重${effective.size}。"
+            "Loaded effective roles for user ${userId} from DB: direct=${direct.size}, group-inherited=${groupDerived.size}, distinct=${effective.size}."
         )
         return effective
     }
 
     /**
-     * 合并"直接绑定的角色"与"通过组继承的角色"为去重后的有效角色列表。
+     * Merges "directly bound roles" and "roles inherited via groups" into a deduplicated effective role list.
      *
-     * 早返路径：两边都空时立刻返回空列表，避免无谓的 flatMap/distinct 开销。
+     * Early-return path: when both sides are empty, return an empty list immediately to avoid unnecessary
+     * flatMap/distinct overhead.
      *
-     * @param directRoleIds 用户直接持有的角色 id 集合
-     * @param groupIds 用户所属组 id 集合
-     * @param groupIdToRoleIds 组 id → 该组持有的角色 id 列表（批量预 load 出来，避免在 flatMap 里 N+1）
-     * @return 去重后的有效角色 id 列表
+     * @param directRoleIds Role IDs directly held by the user
+     * @param groupIds Group IDs the user belongs to
+     * @param groupIdToRoleIds Group ID -> role ID list held by that group (preloaded in bulk to avoid N+1 inside flatMap)
+     * @return Deduplicated effective role IDs
      * @author K
      * @since 1.0.0
      */
@@ -145,17 +148,18 @@ open class RoleIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() {
     }
 
     /**
-     * @deprecated 保留单用户公开入口做向后兼容；新代码请走事件机制（[AuthRoleUserRelationsChanged] 等）。
+     * @deprecated Public single-user entry kept for backward compatibility; new code should use the event mechanism
+     *   ([AuthRoleUserRelationsChanged], etc.).
      */
     open fun syncOnRoleUserChange(userId: String): Unit = syncByUserIds(listOf(userId))
 
     /**
-     * @deprecated 保留批量公开入口做向后兼容；新代码请走事件机制。
+     * @deprecated Public batch entry kept for backward compatibility; new code should use the event mechanism.
      */
     open fun syncOnBatchRoleUserChange(userIds: Collection<String>): Unit = syncByUserIds(userIds)
 
     /**
-     * 用户-角色 / 用户-组 / 组-角色 关系变更后同步缓存：直接按 userIds 失效即可。
+     * Syncs the cache after a user-role / user-group / group-role relation change: simply invalidate by userIds.
      */
     private fun syncByUserIds(userIds: Collection<String>) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
@@ -165,10 +169,10 @@ open class RoleIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() {
                 getSelf<RoleIdsByUserIdCache>().getRoleIds(userId)
             }
         }
-        log.debug("${CACHE_NAME}缓存同步完成，共影响${userIds.size}个用户。")
+        log.debug("${CACHE_NAME} cache sync complete; ${userIds.size} users affected.")
     }
 
-    /** 用户删除后清掉该 userId 下的 roleId 列表。 */
+    /** Clears the role-ID list for the given userId after the user is deleted. */
     private fun evictByUserId(userId: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
         KeyValueCacheKit.evict(CACHE_NAME, userId)
@@ -177,13 +181,13 @@ open class RoleIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     open fun on(event: AuthRoleUserRelationsChanged): Unit = syncByUserIds(event.userIds)
 
-    /** 用户被加进 / 移出一个组，等价于直接角色集合变化。 */
+    /** A user added to or removed from a group is equivalent to a direct role-set change. */
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     open fun on(event: AuthGroupUserRelationsChanged): Unit = syncByUserIds(event.userIds)
 
     /**
-     * 组关联的角色变了 → 该组下所有用户的有效角色集合都要重算。
-     * 把 groupId 展开为 userIds 后走统一失效路径。
+     * When the roles bound to a group change, every user in that group has their effective role set recomputed.
+     * Expand the groupId into userIds and reuse the unified invalidation path.
      */
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     open fun on(event: AuthGroupRoleRelationsChanged) {

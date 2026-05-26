@@ -4,7 +4,7 @@ import io.kudos.ability.distributed.tx.seata.data.TestTable
 
 
 /**
- * 主应用的service接口
+ * Service interface of the main application.
  *
  * @author K
  * @since 1.0.0
@@ -16,32 +16,32 @@ interface IService {
     fun getGlobalTxId(): String?
 
     /**
-     * 本地依赖时，正常执行
+     * Happy path with local dependencies.
      */
     fun normalLocal()
 
     /**
-     * 本地依赖时，分支事务异常
+     * Branch-transaction failure with local dependencies.
      */
     fun onBranchErrorLocal()
 
     /**
-     * 本地依赖时，全局事务异常
+     * Global-transaction failure with local dependencies.
      */
     fun onGlobalErrorLocal()
 
     /**
-     * 远程依赖时，正常执行
+     * Happy path with remote dependencies.
      */
     fun normalRemote()
 
     /**
-     * 远程依赖时，分支事务异常
+     * Branch-transaction failure with remote dependencies.
      */
     fun onBranchErrorRemote()
 
     /**
-     * 本地依赖时，全局事务异常
+     * Global-transaction failure with remote dependencies.
      */
     fun onGlobalErrorRemote()
 

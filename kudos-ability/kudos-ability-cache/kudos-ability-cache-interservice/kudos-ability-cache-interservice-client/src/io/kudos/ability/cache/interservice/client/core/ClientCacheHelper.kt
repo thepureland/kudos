@@ -10,10 +10,11 @@ import org.springframework.beans.factory.InitializingBean
 import org.springframework.cache.Cache
 
 /**
- * Feign 跨服务缓存辅助器（client 侧）。
+ * Feign inter-service cache helper (client side).
  *
- * 调用 Feign 远端服务时把响应缓存到本地（默认 TTL 600s），减少跨服务调用频次。
- * 没有本地 cache manager 时静默关闭——避免下游应用没引入 caffeine/redis 时启动失败。
+ * Caches Feign responses locally (default TTL 600s) when invoking remote services, reducing cross-service
+ * call frequency. Silently disables itself when no local cache manager is available — avoiding startup
+ * failures in downstream applications that have not pulled in caffeine/redis.
  *
  * @author K
  * @author AI: Codex
@@ -25,8 +26,8 @@ open class ClientCacheHelper(
 ) : InitializingBean {
 
     /**
-     * 判断是否存在本地缓存实现。
-     * @return true 表示有本地 cache manager，可正常缓存
+     * Tells whether a local cache implementation is available.
+     * @return true if a local cache manager is present and caching can operate
      * @author K
      * @since 1.0.0
      */
@@ -35,7 +36,7 @@ open class ClientCacheHelper(
     }
 
     /**
-     * 历史拼写遗留，已废弃，请用 [hasLocalCache]。
+     * Legacy misspelling, deprecated; use [hasLocalCache].
      * @author K
      * @since 1.0.0
      */
@@ -43,23 +44,24 @@ open class ClientCacheHelper(
     fun havaLocalCache(): Boolean = hasLocalCache()
 
     /**
-     * Spring 容器装配完毕后初始化 Feign 缓存空间。
+     * Initializes the Feign cache region after the Spring container is assembled.
      *
-     * - 配置 `ignoreVersion = true`：跨服务缓存不参与版本前缀，避免上下游版本不同步导致 key miss
-     * - 默认 TTL 600s 平衡 freshness 与缓存命中率，可通过
-     *   `kudos.ability.cache.interservice.client.ttl-seconds` 调整
+     * - Sets `ignoreVersion = true`: inter-service caches do not participate in version prefixing,
+     *   avoiding key misses caused by upstream/downstream version drift.
+     * - Default TTL of 600s balances freshness against hit ratio; configurable via
+     *   `kudos.ability.cache.interservice.client.ttl-seconds`.
      *
-     * @throws Exception 缓存初始化失败时由 Spring 接管
+     * @throws Exception forwarded to Spring on cache initialization failure
      * @author K
      * @since 1.0.0
      */
     @Throws(Exception::class)
     override fun afterPropertiesSet() {
         if (!hasLocalCache()) {
-            log.info("未找到本地缓存实现，功能不开启...")
+            log.info("No local cache implementation found; feature disabled...")
             return
         }
-        log.info("初始化Feign缓存空间...")
+        log.info("Initializing Feign cache region...")
         val cacheName = ClientCacheKey.FEIGN_CACHE_PREFIX
         require(properties.ttlSeconds > 0) {
             "kudos.ability.cache.interservice.client.ttl-seconds must be greater than 0"
@@ -71,17 +73,17 @@ open class ClientCacheHelper(
         }
         requireNotNull(cacheManager) { "localCacheManager not available" }
             .initCacheAfterSystemInit(mapOf(cacheName to cacheConfig))
-        log.debug("初始化Feign缓存空间{0}完成", ClientCacheKey.FEIGN_CACHE_PREFIX)
+        log.debug("Feign cache region {0} initialized", ClientCacheKey.FEIGN_CACHE_PREFIX)
     }
 
     /**
-     * 加载本地缓存数据
+     * Loads data from the local cache.
      *
      * @param cacheKey cacheKey
      * @return Object
      */
     open fun loadFromLocalCache(cacheKey: String): ClientCacheItem? {
-        //可以考虑换成CacheKit
+        // Consider switching to CacheKit.
         val value = feignCache().get(cacheKey)?.get()
         return when (value) {
             null -> null
@@ -99,22 +101,22 @@ open class ClientCacheHelper(
     }
 
     /**
-     * 加载本地缓存数据
+     * Writes data into the local cache.
      *
-     * @param cacheKey 本地缓存key值
-     * @param data     缓存数据
+     * @param cacheKey local cache key
+     * @param data     cache data
      */
     open fun writeToLocalCache(cacheKey: String, data: ClientCacheItem?) {
-        //可以考虑换成CacheKit
+        // Consider switching to CacheKit.
         feignCache().put(cacheKey, data)
     }
 
     /**
-     * 取 Feign 专用缓存区。
-     * 缓存管理器或缓存区未初始化时立即抛错，避免后续 NPE 难定位。
+     * Returns the Feign-dedicated cache region.
+     * Fails fast if the cache manager or region is uninitialized, avoiding hard-to-trace NPEs downstream.
      *
-     * @return Feign 缓存区
-     * @throws IllegalStateException 缓存未初始化时
+     * @return the Feign cache region
+     * @throws IllegalStateException when the cache is uninitialized
      * @author K
      * @since 1.0.0
      */
@@ -124,7 +126,7 @@ open class ClientCacheHelper(
             ?: error("Feign cache region ${ClientCacheKey.FEIGN_CACHE_PREFIX} not initialized")
     }
 
-    /** 日志器 */
+    /** Logger. */
     private val log = LogFactory.getLog(this::class)
 
 }

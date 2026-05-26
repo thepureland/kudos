@@ -7,11 +7,12 @@ import javafx.util.Callback
 
 
 /**
- * 复选框 [TableCell] 工厂——直接代理给 JavaFX 自带的 [CheckBoxTableCell]。
- * 单独抽工厂是为了让业务侧用 `cellFactory = CheckBoxTableCellFactory()` 的写法和本模块其它工厂统一。
+ * Checkbox [TableCell] factory -- simply delegates to the built-in JavaFX [CheckBoxTableCell].
+ * Extracting a dedicated factory lets business code use the `cellFactory = CheckBoxTableCellFactory()`
+ * style consistently with the other factories in this module.
  *
- * @param S 行数据类型
- * @param T 列值类型（通常为 Boolean 或 ObservableValue<Boolean>）
+ * @param S Row data type
+ * @param T Column value type (typically Boolean or ObservableValue<Boolean>)
  * @author K
  * @author AI: Codex
  * @since 1.0.0
@@ -19,10 +20,10 @@ import javafx.util.Callback
 class CheckBoxTableCellFactory<S, T> : Callback<TableColumn<S, T>?, TableCell<S, T>?> {
 
     /**
-     * 为列创建一个新的复选框 cell 实例。
+     * Create a new checkbox cell instance for the column.
      *
-     * @param param 当前列
-     * @return [CheckBoxTableCell] 实例
+     * @param param The current column
+     * @return A [CheckBoxTableCell] instance
      * @author K
      * @since 1.0.0
      */

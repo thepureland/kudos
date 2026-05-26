@@ -13,7 +13,7 @@ import kotlin.test.Test
 import kotlin.test.assertFalse
 
 /**
- * nacos服务发现测试
+ * Nacos service discovery test.
  *
  * @author K
  * @since 1.0.0
@@ -29,9 +29,9 @@ open class NacosServiceDiscoveryTest @Autowired constructor(
     @BeforeAll
     fun setup() {
         NacosTestContainer.startIfNeeded(null)
-        println("########## 启动模拟的微服务...")
+        println("########## starting mock microservice...")
         SpringApplication.run(MockMsApplication::class.java)
-        println("########## 启动模拟的微服务成功.")
+        println("########## mock microservice started successfully.")
     }
 
     @Test

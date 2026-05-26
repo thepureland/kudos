@@ -5,11 +5,15 @@ import org.springframework.stereotype.Component
 
 
 /**
- * [IAuditLogDetailDescriptionFormatter] 的默认实现：始终返回空串。
+ * Default implementation of [IAuditLogDetailDescriptionFormatter]: always returns
+ * an empty string.
  *
- * 业务侧无显式 formatter 时由本类兜底，保证 [io.kudos.ability.log.audit.common.annotation.Audit.descriptionFormatter]
- * 默认值有意义。需要个性化描述的业务请自行实现 [IAuditLogDetailDescriptionFormatter] 并在 [io.kudos.ability.log.audit.common.annotation.Audit]
- * 注解中指定。
+ * Serves as the fallback when business code does not provide an explicit
+ * formatter, keeping the default value of
+ * [io.kudos.ability.log.audit.common.annotation.Audit.descriptionFormatter]
+ * meaningful. Business code that needs a customized description should implement
+ * [IAuditLogDetailDescriptionFormatter] and specify it in the
+ * [io.kudos.ability.log.audit.common.annotation.Audit] annotation.
  *
  * @author K
  * @author AI: Codex
@@ -19,10 +23,11 @@ import org.springframework.stereotype.Component
 class DefaultAuditLogDetailDescriptionFormatter : IAuditLogDetailDescriptionFormatter {
 
     /**
-     * 默认实现：永远返回空字符串，等价于"不生成描述"。
+     * Default implementation: always returns an empty string, equivalent to
+     * "do not generate a description".
      *
-     * @param baseLog 审计日志主体
-     * @return 空串
+     * @param baseLog audit log body
+     * @return empty string
      * @author K
      * @since 1.0.0
      */

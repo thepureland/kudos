@@ -4,14 +4,14 @@ import io.kudos.base.model.contract.entity.IIdEntity
 
 
 /**
- * 用户组表单更新请求VO
+ * Request VO for user group form update.
  *
  * @author K
  * @since 1.0.0
  */
 data class AuthGroupFormUpdate (
 
-    /** 主键 */
+    /** Primary key. */
     override val id: String,
 
     override val code: String?,

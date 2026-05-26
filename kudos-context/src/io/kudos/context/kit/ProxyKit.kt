@@ -8,7 +8,7 @@ import java.lang.reflect.Field
 import kotlin.reflect.KClass
 
 /**
- * 代理操作工具类
+ * Utility for proxy operations.
  *
  * @author K
  * @since 1.0.0
@@ -18,42 +18,42 @@ object ProxyKit {
     private val LOG = LogFactory.getLog(this::class)
 
     /**
-     * 取得JDK动态代理/CGLIB代理对象
+     * Obtains the real target class of a JDK dynamic proxy / CGLIB proxy object.
      *
-     * @param proxy JDK动态代理/CGLIB代理对象
-     * @return 代理对象的真实类型, 如果出错将返回null
+     * @param proxy a JDK dynamic proxy or CGLIB proxy object
+     * @return the real type of the proxy target, or null on error
      * @author K
      * @since 1.0.0
      */
     fun getTargetClass(proxy: Any): KClass<*>? {
         if (!AopUtils.isAopProxy(proxy)) {
-            return proxy::class //不是代理对象
+            return proxy::class // not a proxy object
         }
         if (AopUtils.isJdkDynamicProxy(proxy)) {
             try {
                 return getJdkDynamicProxyTargetObject(proxy)::class
             } catch (e: Exception) {
-                LOG.error(e, "获取jdk动态代理对象出错！")
+                LOG.error(e, "failed to obtain the JDK dynamic proxy target object")
             }
-        } else { //cglib
+        } else { // cglib
             try {
                 return getCglibProxyTargetObject(proxy)::class
             } catch (e: Exception) {
-                LOG.error(e, "获取CGLIB代理对象出错！")
+                LOG.error(e, "failed to obtain the CGLIB proxy target object")
             }
         }
         return null
     }
 
     /**
-     * 从 CGLIB 生成的代理对象中反射拿到真实 target。
+     * Reflectively obtains the real target from a CGLIB-generated proxy object.
      *
-     * 字段链：`CGLIB$CALLBACK_0` → DynamicAdvisedInterceptor → `advised` ([AdvisedSupport]) → `targetSource.target`。
-     * 反射依赖 CGLIB 内部布局，Spring 升级时可能失效——届时按新版字段名调整即可。
+     * Field chain: `CGLIB$CALLBACK_0` -> DynamicAdvisedInterceptor -> `advised` ([AdvisedSupport]) -> `targetSource.target`.
+     * The reflection relies on CGLIB's internal layout and may break on Spring upgrades — in that case, adjust to the new field names.
      *
-     * @param proxy CGLIB 代理对象
-     * @return 被代理的真实对象
-     * @throws IllegalArgumentException target 为 null（极少见，表示代理状态异常）
+     * @param proxy the CGLIB proxy object
+     * @return the real target object being proxied
+     * @throws IllegalArgumentException if the target is null (very rare, indicating an abnormal proxy state)
      * @author K
      * @since 1.0.0
      */
@@ -69,13 +69,13 @@ object ProxyKit {
     }
 
     /**
-     * 从 JDK 动态代理对象中反射拿到真实 target。
+     * Reflectively obtains the real target from a JDK dynamic proxy object.
      *
-     * 字段链：父类 `h` 字段 ([AopProxy]) → `advised` ([AdvisedSupport]) → `targetSource.target`。
+     * Field chain: superclass `h` field ([AopProxy]) -> `advised` ([AdvisedSupport]) -> `targetSource.target`.
      *
-     * @param proxy JDK 动态代理对象
-     * @return 被代理的真实对象
-     * @throws IllegalArgumentException target 为 null
+     * @param proxy the JDK dynamic proxy object
+     * @return the real target object being proxied
+     * @throws IllegalArgumentException if the target is null
      * @author K
      * @since 1.0.0
      */

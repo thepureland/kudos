@@ -1,59 +1,59 @@
 package io.kudos.base.bean.validation.support
 
 /**
- * 校验分组
+ * Validation group.
  *
  * @author K
  * @since 1.0.0
  */
 interface Group {
     /**
-     * 第1优先级分组
+     * Priority 1 group.
      */
     interface First
 
     /**
-     * 第2优先级分组
+     * Priority 2 group.
      */
     interface Second
 
     /**
-     * 第3优先级分组
+     * Priority 3 group.
      */
     interface Third
 
     /**
-     * 第4优先级分组
+     * Priority 4 group.
      */
     interface Forth
 
     /**
-     * 第5优先级分组
+     * Priority 5 group.
      */
     interface Fifth
 
     /**
-     * 第6优先级分组
+     * Priority 6 group.
      */
     interface Sixth
 
     /**
-     * 第7优先级分组
+     * Priority 7 group.
      */
     interface Seventh
 
     /**
-     * 第8优先级分组
+     * Priority 8 group.
      */
     interface Eighth
 
     /**
-     * 第9优先级分组
+     * Priority 9 group.
      */
     interface Ninth
 
     /**
-     * 第10优先级分组
+     * Priority 10 group.
      */
     interface Tenth
 }

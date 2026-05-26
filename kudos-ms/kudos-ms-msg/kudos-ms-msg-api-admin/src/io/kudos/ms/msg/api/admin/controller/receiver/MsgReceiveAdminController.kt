@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController
 
 
 /**
- * 消息接收记录管理控制器
+ * Message receive record admin controller.
  *
  * @author K
  * @since 1.0.0

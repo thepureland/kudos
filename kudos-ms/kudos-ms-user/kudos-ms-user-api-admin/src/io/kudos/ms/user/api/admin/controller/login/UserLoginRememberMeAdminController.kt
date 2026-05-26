@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController
 
 
 /**
- * "记住我" 登录管理控制器
+ * Remember-me login admin controller.
  *
  * @author K
  * @since 1.0.0

@@ -12,12 +12,12 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
 /**
- * AbstractRdbTestBase的测试用例
+ * Tests for AbstractRdbTestBase.
  *
- * 测试AbstractRdbTestBase的核心功能：
- * - SQL文件加载和执行
- * - 事务回滚
- * - 数据源获取
+ * Verifies the core functionality of AbstractRdbTestBase:
+ * - SQL file loading and execution
+ * - Transaction rollback
+ * - Data source retrieval
  *
  * @author K
  * @since 1.0.0
@@ -39,76 +39,76 @@ class RdbTestBaseTest : SqlTestBase() {
     private lateinit var dsContextProcessor: DsContextProcessor
 
     /**
-     * 测试SQL文件中的数据是否被正确加载
+     * Tests that data in the SQL file is loaded correctly.
      */
     @Test
     fun testSqlFileDataLoaded() {
         val count = jdbcTemplate.queryForObject<Int>("SELECT COUNT(*) FROM test_table")
-        assertEquals(1, count, "应该有一条测试数据")
+        assertEquals(1, count, "expected exactly one test data row")
 
         val name = jdbcTemplate.queryForObject<String>(
             "SELECT name FROM test_table WHERE id = ?",
             "abstract-rdb-test"
         )
-        assertEquals("abstract-rdb-test", name, "数据应该正确")
+        assertEquals("abstract-rdb-test", name, "data should be correct")
     }
 
     /**
-     * 测试在测试方法中插入的数据会在事务回滚后消失
+     * Tests that data inserted within a test method disappears after the transaction rolls back.
      */
     @Test
     fun testTransactionRollback() {
-        // 在测试方法中插入数据
+        // Insert data within the test method
         jdbcTemplate.update(
             "INSERT INTO test_table (id, name) VALUES (?, ?)",
             "rollback-test",
             "rollback"
         )
 
-        // 在同一个事务中应该能看到插入的数据
+        // The inserted data should be visible within the same transaction
         val count = jdbcTemplate.queryForObject<Int>(
             "SELECT COUNT(*) FROM test_table WHERE id = ?",
             "rollback-test"
         )
-        assertEquals(1, count, "测试方法中应该能看到插入的数据")
+        assertEquals(1, count, "inserted data should be visible in the test method")
 
-        // 测试方法结束后，由于@Transactional，数据应该被回滚
-        // 这个验证需要在另一个测试方法中进行
+        // After the test method ends, the data should be rolled back due to @Transactional.
+        // This assertion needs to be performed in another test method.
     }
 
     /**
-     * 测试事务回滚后的数据清理
+     * Tests that data is cleaned up after transaction rollback.
      */
     @Test
     fun testDataRolledBack() {
-        // 查询之前测试插入的数据应该不存在（因为事务回滚了）
+        // Data previously inserted by another test should not exist (because the transaction was rolled back)
         val count = jdbcTemplate.queryForObject<Int>(
             "SELECT COUNT(*) FROM test_table WHERE id = ?",
             "rollback-test"
         )
-        assertEquals(0, count, "回滚后数据应该不存在")
+        assertEquals(0, count, "data should not exist after rollback")
 
-        // 但是测试数据SQL文件中的数据应该存在
+        // But the data from the test data SQL file should exist
         val testDataCount = jdbcTemplate.queryForObject<Int>("SELECT COUNT(*) FROM test_table")
-        assertEquals(1, testDataCount, "测试数据应该存在")
+        assertEquals(1, testDataCount, "test data should exist")
     }
 
     /**
-     * 测试能够获取到数据源
+     * Tests that the data source can be retrieved.
      */
     @Test
     fun testDataSourceRetrieval() {
         val dataSource = dsContextProcessor.getDataSource(null)
-        assertNotNull(dataSource, "应该能获取到数据源")
+        assertNotNull(dataSource, "should be able to retrieve a data source")
     }
 
     /**
-     * 测试能够通过指定的key获取数据源
+     * Tests that a data source can be retrieved by a specified key.
      */
     @Test
     fun testDataSourceRetrievalWithKey() {
         val dataSource = dsContextProcessor.getDataSource("primary")
-        assertNotNull(dataSource, "应该能通过key获取到数据源")
+        assertNotNull(dataSource, "should be able to retrieve a data source by key")
     }
 
 

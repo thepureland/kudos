@@ -18,18 +18,18 @@ import java.time.LocalDateTime
 
 
 /**
- * 登录通行证业务实现
+ * Login passport business implementation.
  *
- * 流程：
- *   1) 按 (tenantId, username) 取用户缓存项
- *   2) 不存在 → USER_NOT_FOUND
- *   3) active != true → INACTIVE
- *   4) BCrypt 校验明文密码
- *      - 失败 → incrementLoginErrorTimes，返回 WRONG_PASSWORD + 当前错误次数
- *   5) 若 authentication_key 非空（已启用 OTP）：
- *      - 请求未带 authCode → 返回 OTP_REQUIRED（不动错误计数）
- *      - authCode 不通过 GoogleAuthenticator 校验 → incrementLoginErrorTimes，返回 OTP_WRONG
- *   6) 全部通过 → resetLoginErrorTimes + updateLastLoginInfo（若有 IP），返回 SUCCESS + UserInfoModel
+ * Flow:
+ *   1) Fetch the user cache entry by (tenantId, username).
+ *   2) If it does not exist -> USER_NOT_FOUND.
+ *   3) If active != true -> INACTIVE.
+ *   4) BCrypt-verify the plaintext password.
+ *      - On failure -> incrementLoginErrorTimes, return WRONG_PASSWORD + current error count.
+ *   5) If authentication_key is not empty (OTP enabled):
+ *      - Request does not carry authCode -> return OTP_REQUIRED (does not touch the error count).
+ *      - authCode fails GoogleAuthenticator verification -> incrementLoginErrorTimes, return OTP_WRONG.
+ *   6) All passes -> resetLoginErrorTimes + updateLastLoginInfo (if IP is present), return SUCCESS + UserInfoModel.
  *
  * @author K
  * @since 1.0.0
@@ -46,19 +46,19 @@ open class PassportService(
     override fun login(req: PassportLoginRequest): PassportLoginResult {
         val user = userAccountService.getUserByTenantIdAndUsername(req.tenantId, req.username)
             ?: run {
-                log.debug("登录失败 - 用户不存在: tenantId=${req.tenantId} username=${req.username}")
+                log.debug("Login failed - user not found: tenantId=${req.tenantId} username=${req.username}")
                 return PassportLoginResult.userNotFound()
             }
 
         if (user.active != true) {
-            log.debug("登录失败 - 账号未启用: userId=${user.id}")
+            log.debug("Login failed - account not enabled: userId=${user.id}")
             return PassportLoginResult.inactive()
         }
 
-        // 冻结判定：freeze_type 非空 + 当前在生效窗口内
+        // Freeze check: freeze_type is not null + currently within the effective window.
         if (isCurrentlyFrozen(user.freezeType, user.freezeStartTime, user.freezeEndTime)) {
             log.debug(
-                "登录失败 - 账号已冻结: userId=${user.id} type=${user.freezeType} " +
+                "Login failed - account frozen: userId=${user.id} type=${user.freezeType} " +
                     "window=[${user.freezeStartTime}, ${user.freezeEndTime})"
             )
             return PassportLoginResult.accountFrozen(user.freezeTitle)
@@ -67,18 +67,19 @@ open class PassportService(
         val passwordMatches = PasswordKit.matches(req.plainPassword, user.loginPassword)
         if (!passwordMatches) {
             userAccountService.incrementLoginErrorTimes(user.id)
-            // 用 DAO 直查的 Row 拿到刚自增后的真实计数；不依赖缓存（缓存可能因事件未提交而滞后）
+            // Use the Row queried directly via DAO to get the actual count after the increment;
+            // do not rely on the cache (the cache may lag due to the event not being committed).
             val accumulated = userAccountService.getUserRecord(user.id)?.loginErrorTimes ?: ((user.loginErrorTimes ?: 0) + 1)
-            log.debug("登录失败 - 密码错误: userId=${user.id} 累计错误次数=${accumulated}")
+            log.debug("Login failed - wrong password: userId=${user.id} accumulated error count=${accumulated}")
             return PassportLoginResult.wrongPassword(accumulated)
         }
 
-        // 密码正确，检查是否启用 OTP 二次验证
+        // Password correct, check whether OTP secondary verification is enabled.
         val authKey = user.authenticationKey
         if (!authKey.isNullOrBlank()) {
             val authCode = req.authCode
             if (authCode == null) {
-                log.debug("登录待定 - 需要 OTP: userId=${user.id}")
+                log.debug("Login pending - OTP required: userId=${user.id}")
                 return PassportLoginResult.otpRequired()
             }
             val otpOk = GoogleAuthenticator().checkCode(authKey, authCode, System.currentTimeMillis())
@@ -86,17 +87,17 @@ open class PassportService(
                 userAccountService.incrementLoginErrorTimes(user.id)
                 val accumulated = userAccountService.getUserRecord(user.id)?.loginErrorTimes
                     ?: ((user.loginErrorTimes ?: 0) + 1)
-                log.debug("登录失败 - OTP 错误: userId=${user.id} 累计错误次数=${accumulated}")
+                log.debug("Login failed - OTP wrong: userId=${user.id} accumulated error count=${accumulated}")
                 return PassportLoginResult.otpWrong(accumulated)
             }
         }
 
-        // 验证全部通过：清零错误计数 + 记录最后登录信息
+        // All verifications pass: reset the error count + record last login info.
         userAccountService.resetLoginErrorTimes(user.id)
         val now = LocalDateTime.now()
         req.loginIp?.let { userAccountService.updateLastLoginInfo(user.id, it, now) }
 
-        log.debug("登录成功: userId=${user.id} username=${user.username}")
+        log.debug("Login succeeded: userId=${user.id} username=${user.username}")
         return PassportLoginResult.success(
             UserInfoModel(
                 id = user.id,
@@ -114,14 +115,14 @@ open class PassportService(
 
     override fun logout(userId: String): Boolean {
         val success = userAccountService.updateLastLogoutInfo(userId, LocalDateTime.now())
-        if (success) log.debug("登出成功: userId=${userId}")
-        else log.debug("登出失败（用户不存在？）: userId=${userId}")
+        if (success) log.debug("Logout succeeded: userId=${userId}")
+        else log.debug("Logout failed (user does not exist?): userId=${userId}")
         return success
     }
 
     @Transactional(readOnly = true)
     override fun verifyPassword(req: VerifyPasswordRequest): Boolean {
-        // 直查 DAO：拿到最新的 loginPassword 哈希（不走缓存，避免落后于 changePassword 写操作）
+        // Query the DAO directly: get the latest loginPassword hash (does not go through cache to avoid lagging behind changePassword write).
         val storedHash = userAccountDao.get(req.userId)?.loginPassword ?: return false
         return PasswordKit.matches(req.plainPassword, storedHash)
     }
@@ -138,7 +139,7 @@ open class PassportService(
         if (!PasswordKit.matches(req.oldPlainPassword, po.loginPassword)) {
             return ChangePasswordResultEnum.OLD_PASSWORD_WRONG
         }
-        // 旧密码正确——直接调既有的 resetPassword（它会 hash 新密码并清错误计数）
+        // Old password correct -- directly call the existing resetPassword (it will hash the new password and reset the error count).
         userAccountService.resetPassword(req.userId, req.newPlainPassword)
         return ChangePasswordResultEnum.SUCCESS
     }
@@ -154,11 +155,11 @@ open class PassportService(
     }
 
     /**
-     * 当前时刻是否落在冻结生效窗口内。
+     * Whether the current moment falls within the freeze effective window.
      *
-     * - freezeType 为 null/空 → 没有冻结记录，永远 false
-     * - freezeStartTime 为 null → 视为"立即生效"，下界永远满足
-     * - freezeEndTime 为 null → 视为"永久冻结"，上界永远满足
+     * - freezeType is null/empty -> no freeze record, always false.
+     * - freezeStartTime is null -> treated as "immediately effective", the lower bound is always satisfied.
+     * - freezeEndTime is null -> treated as "permanently frozen", the upper bound is always satisfied.
      */
     private fun isCurrentlyFrozen(
         freezeType: String?,

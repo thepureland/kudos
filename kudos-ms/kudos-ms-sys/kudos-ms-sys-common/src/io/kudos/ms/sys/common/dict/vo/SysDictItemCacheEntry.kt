@@ -5,47 +5,47 @@ import java.io.Serializable
 
 
 /**
- * 字典项缓存项
+ * Dictionary item cache entry.
  *
  * @author K
  * @since 1.0.0
  */
 data class SysDictItemCacheEntry (
 
-    /** 主键 */
+    /** Primary key */
     override val id: String,
 
-    /** 字典项代码 */
+    /** Dictionary item code */
     val itemCode: String,
 
-    /** 字典项名称 */
+    /** Dictionary item name */
     val itemName: String,
 
-    /** 字典id */
+    /** Dictionary id */
     val dictId: String,
 
-    /** 字典项排序 */
+    /** Dictionary item order number */
     val orderNum: Int?,
 
-    /** 父id */
+    /** Parent id */
     val parentId: String?,
 
-    /** 备注 */
+    /** Remark */
     val remark: String?,
 
-    /** 是否启用 */
+    /** Whether active */
     val active: Boolean,
 
-    /** 是否内置 */
+    /** Whether built-in */
     val builtIn: Boolean,
 
-    /** 字典类型（来自 v_sys_dict_item 视图，用于 Hash 缓存副属性索引） */
+    /** Dictionary type (from the v_sys_dict_item view; used as a secondary index for the Hash cache) */
     val dictType: String,
 
-    /** 字典名称或其国际化key */
+    /** Dictionary name or its i18n key */
     val dictName: String,
 
-    /** 原子服务编码（来自 v_sys_dict_item 视图，用于 Hash 缓存副属性索引） */
+    /** Atomic service code (from the v_sys_dict_item view; used as a secondary index for the Hash cache) */
     val atomicServiceCode: String,
 
 ) : IIdEntity<String>, Serializable {

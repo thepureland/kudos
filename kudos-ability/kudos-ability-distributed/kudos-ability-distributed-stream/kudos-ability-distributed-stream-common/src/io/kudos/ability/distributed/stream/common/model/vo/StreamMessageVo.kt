@@ -3,13 +3,13 @@ package io.kudos.ability.distributed.stream.common.model.vo
 import java.io.Serializable
 
 /**
- * 消息对象
+ * Message object.
  *
  * @param <T>
 </T> */
 class StreamMessageVo<T> : Serializable {
     /**
-     * 消息体数据
+     * Message body data.
      */
     var data: T? = null
 

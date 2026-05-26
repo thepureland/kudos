@@ -5,7 +5,7 @@ import io.kudos.ability.data.rdb.ktorm.table.TestTableKtorm
 import io.kudos.ability.data.rdb.ktorm.table.TestTableKtormDao
 import org.springframework.stereotype.Service
 
-/** 无 IHasBuiltIn 的对照用 Service */
+/** Control Service that does not implement IHasBuiltIn. */
 @Service
 internal open class TestTableCrudService(
     dao: TestTableKtormDao

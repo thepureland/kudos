@@ -12,15 +12,20 @@ import java.io.IOException
 import java.io.InputStream
 
 /**
- * 文件压缩管道：根据文件类型和配置选择合适的压缩器并执行压缩。
+ * File compression pipeline: selects an appropriate compressor based on file type and
+ * configuration and runs the compression.
  *
- * 决策树：
- * 1. config.enabled=false 或非图片 → 短路返回原始流（构造一个"未压缩"的 result 让上游照常处理）
- * 2. 是图片 → 通过 [ImageCompressorFactory] 按扩展名 + webp 配置选实现，再压缩
+ * Decision tree:
+ * 1. config.enabled=false or non-image -> short-circuit, return the original stream
+ *    (construct an "uncompressed" result so the upstream handles it as usual)
+ * 2. Image -> pick an implementation via [ImageCompressorFactory] based on the
+ *    extension and the webp setting, then compress
  *
- * 提供两种使用形态：
- * - [compress] 返回 [CompressionResult]，由调用方决定如何处置输出流（典型：minio/oss 上传走这条）
- * - [compressAndOutputFile] 直接落地到目标路径（典型：本地文件存储走这条）
+ * Two usage forms are provided:
+ * - [compress] returns [CompressionResult], leaving the caller to decide how to handle
+ *   the output stream (typical for minio/oss uploads)
+ * - [compressAndOutputFile] writes directly to the target path (typical for local
+ *   file storage)
  *
  * @author K
  * @author AI: Codex
@@ -29,14 +34,16 @@ import java.io.InputStream
 object CompressionPipeline {
 
     /**
-     * 压缩到内存 result：调用方拿到 [CompressionResult] 后可读取 `outputStream` 自行处理。
-     * 非图片或禁用压缩时返回带原始 metadata 的"透传 result"（不真压）。
+     * Compresses to an in-memory result: the caller can read `outputStream` from the
+     * returned [CompressionResult] and process it themselves. For non-images or when
+     * compression is disabled, returns a "passthrough result" carrying the original
+     * metadata (no actual compression).
      *
-     * @param inputStream 输入流
-     * @param outputFilePath 期望输出文件路径（用于推断扩展名和 contentType）
-     * @param config 压缩配置（含 enabled / webp / 质量等）
-     * @return 压缩结果
-     * @throws IOException 读写或压缩过程中失败
+     * @param inputStream input stream
+     * @param outputFilePath expected output file path (used to infer extension and contentType)
+     * @param config compression configuration (enabled / webp / quality, etc.)
+     * @return compression result
+     * @throws IOException on read/write or compression failure
      * @author K
      * @since 1.0.0
      */
@@ -54,13 +61,14 @@ object CompressionPipeline {
     }
 
     /**
-     * 压缩并直接落地到 `outputFilePath`。
-     * 非图片或禁用压缩时走 [FileKit.copyInputStreamToFile] 原样拷贝，避免无意义解码/编码。
+     * Compresses and writes directly to `outputFilePath`.
+     * For non-images or when compression is disabled, uses [FileKit.copyInputStreamToFile]
+     * to copy as-is and avoid pointless decode/encode.
      *
-     * @param inputStream 输入流
-     * @param outputFilePath 实际写入的文件路径
-     * @param config 压缩配置
-     * @throws IOException 读写或压缩过程中失败
+     * @param inputStream input stream
+     * @param outputFilePath the file path actually written
+     * @param config compression configuration
+     * @throws IOException on read/write or compression failure
      * @author K
      * @since 1.0.0
      */

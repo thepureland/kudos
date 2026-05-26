@@ -21,17 +21,18 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * [kudosWebSocket] 路由扩展函数的端到端测试。
+ * End-to-end tests for the [kudosWebSocket] route extension function.
  *
- * 用 `testApplication { ... }`（[io.ktor.server.testing.testApplication]）在内存中起一份
- * Ktor 应用，挂上路由 + 用同 application 上下文的 ktor client 反向连接。
+ * Uses `testApplication { ... }` ([io.ktor.server.testing.testApplication]) to spin up a
+ * Ktor application in memory, mount the route, and connect back with a ktor client sharing
+ * the same application context.
  *
- * 覆盖：
- *  - **连接生命周期**：register 在 onConnect 之前；unregister 在 onDisconnect 之后
- *  - **消息收发**：客户端发 text → handler.onText 收到
- *  - **服务端主动 send**：handler 内调 `session.sendText` → 客户端 incoming 收到
- *  - **sessionFactory 接入业务元数据**：userId / tenantId 透传到注册中心
- *  - **优雅关闭**：连接关闭后注册中心计数回零
+ * Covers:
+ *  - **Connection lifecycle**: register before onConnect; unregister after onDisconnect.
+ *  - **Message send/receive**: client sends text → handler.onText receives it.
+ *  - **Server-initiated send**: handler calls `session.sendText` → client incoming receives it.
+ *  - **sessionFactory carries business metadata**: userId / tenantId are propagated to the registry.
+ *  - **Graceful close**: the registry count returns to zero after the connection is closed.
  */
 internal class KudosWebSocketRoutingTest {
 
@@ -60,9 +61,9 @@ internal class KudosWebSocketRoutingTest {
             assertEquals("echo:hello", response.readText())
         }
 
-        // 客户端连接已断开，等服务端跑完 finally 把 session 从注册中心剔除
+        // Client connection is closed; wait for the server's finally block to remove the session from the registry.
         waitFor { registry.size == 0 }
-        assertEquals(0, registry.size, "正常关闭后注册中心计数应回零")
+        assertEquals(0, registry.size, "Registry count should return to zero after a normal close")
         assertEquals("hello", received.tryReceive().getOrNull())
     }
 
@@ -98,12 +99,12 @@ internal class KudosWebSocketRoutingTest {
                 headers.append("X-Tenant-Id", "tenant-1")
             },
         ) {
-            // 服务端 onConnect 完会主动 close，无需 send 内容；等连接关闭即可
-            try { incoming.receive() } catch (_: Throwable) { /* 期望关闭 */ }
+            // The server actively closes once onConnect completes; no need to send anything — just wait for the connection to close.
+            try { incoming.receive() } catch (_: Throwable) { /* expected close */ }
         }
 
         val info = captured.tryReceive().getOrNull()
-        requireNotNull(info) { "onConnect 应记录一次 session" }
+        requireNotNull(info) { "onConnect should record one session" }
         assertTrue(info.first.isNotBlank())
         assertEquals("alice", info.second)
         assertEquals("tenant-1", info.third)
@@ -119,7 +120,7 @@ internal class KudosWebSocketRoutingTest {
             override suspend fun onConnect(session: KudosWebSocketSession) { order.add("connect:${session.sessionId}") }
             override suspend fun onText(session: KudosWebSocketSession, text: String) { order.add("text:$text") }
             override suspend fun onDisconnect(session: KudosWebSocketSession, cause: Throwable?) {
-                // 此时 registry 仍持有 session（finally 顺序：先 onDisconnect 后 unregister）
+                // At this point the registry still holds the session (finally order: onDisconnect first, then unregister).
                 order.add("disconnect:sizeBeforeUnregister=${registry.size}")
             }
         }
@@ -132,32 +133,32 @@ internal class KudosWebSocketRoutingTest {
         val client = createClient { install(ClientWebSockets) { contentConverter = null } }
         client.webSocket("/ws") {
             send(Frame.Text("hi"))
-            // 给服务端一点时间收到 frame 并处理
+            // Give the server a moment to receive and process the frame.
             delay(100)
         }
 
         waitFor { registry.size == 0 }
         val snapshot = order.toList()
-        // connect 必须在 text 之前；text 必须在 disconnect 之前
+        // connect must come before text; text must come before disconnect.
         val connectIdx = snapshot.indexOfFirst { it.startsWith("connect:") }
         val textIdx = snapshot.indexOf("text:hi")
         val disconnectIdx = snapshot.indexOfFirst { it.startsWith("disconnect:") }
         assertTrue(connectIdx >= 0 && textIdx > connectIdx && disconnectIdx > textIdx,
-            "钩子顺序应为 connect → text → disconnect，实际：$snapshot")
-        // onDisconnect 时 registry 应当还看得到这次会话（unregister 在 finally 顺序里靠后）
+            "Hook order should be connect -> text -> disconnect, actual: $snapshot")
+        // During onDisconnect the registry should still see this session (unregister runs later in the finally block).
         assertEquals("disconnect:sizeBeforeUnregister=1",
             snapshot.first { it.startsWith("disconnect:") })
     }
 
 
 
-    /** 简易轮询等待——服务端 finally 里的 unregister 是异步发生的（coroutine 让出）。 */
+    /** Simple polling wait — the unregister in the server's finally block happens asynchronously (coroutine yield). */
     private suspend fun waitFor(timeoutMs: Long = 2000, condition: () -> Boolean) {
         val deadline = System.currentTimeMillis() + timeoutMs
         while (System.currentTimeMillis() < deadline) {
             if (condition()) return
             delay(20)
         }
-        // 超时不抛——具体断言由调用方完成，本函数只尽力等
+        // Do not throw on timeout — the actual assertion is up to the caller; this function only best-effort waits.
     }
 }

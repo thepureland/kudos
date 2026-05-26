@@ -5,29 +5,29 @@ import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
 import java.time.LocalDateTime
 
 /**
- * stream异常消息实体
+ * Stream exception message entity.
  */
 interface SysMqFailMsg : IDbEntity<String, SysMqFailMsg> {
 
     companion object Companion : DbEntityFactory<SysMqFailMsg>()
 
     /**
-     * 消息主题
+     * Message topic.
      */
     var topic: String
 
     /**
-     * 消息头json串
+     * Message header JSON string.
      */
     var msgHeaderJson: String
 
     /**
-     * 消息体json串
+     * Message body JSON string.
      */
     var msgBodyJson: String
 
     /**
-     * 创建时间
+     * Creation time.
      */
     var createTime: LocalDateTime
 }

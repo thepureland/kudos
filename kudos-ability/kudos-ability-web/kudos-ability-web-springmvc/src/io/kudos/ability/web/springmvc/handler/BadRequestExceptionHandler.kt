@@ -23,10 +23,11 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler
 
 /**
- * 非法参数请求异常处理。
+ * Bad request exception handler.
  *
- * 负责拦截 Spring MVC 在请求绑定、参数转换、请求体解析、Bean Validation 校验阶段抛出的 bad request 异常，
- * 并统一转换为 ApiResponse。
+ * Intercepts bad request exceptions thrown by Spring MVC during request binding,
+ * parameter conversion, request body parsing, and Bean Validation, and uniformly
+ * converts them into ApiResponse.
  *
  * @author K
  * @author AI: Codex
@@ -36,11 +37,11 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @RestControllerAdvice
 class BadRequestExceptionHandler : ResponseEntityExceptionHandler() {
 
-    /** 日志器，仅记 WARN 级别——参数错误属于客户端问题，不需要 ERROR 级别污染告警 */
+    /** Logger; only logs at WARN level — parameter errors are client-side issues and do not warrant ERROR-level alert noise. */
     private val log = LogFactory.getLog(this::class)
 
     /**
-     * 处理@RequestBody配合@Valid触发的参数校验异常
+     * Handles parameter validation exceptions triggered by @RequestBody combined with @Valid.
      */
     override fun handleMethodArgumentNotValid(
         ex: MethodArgumentNotValidException,
@@ -55,7 +56,7 @@ class BadRequestExceptionHandler : ResponseEntityExceptionHandler() {
     }
 
     /**
-     * 处理表单绑定、query/path参数绑定阶段的校验异常
+     * Handles validation exceptions during form binding and query/path parameter binding.
      */
     @ExceptionHandler(BindException::class)
     fun handleBindException(
@@ -68,7 +69,7 @@ class BadRequestExceptionHandler : ResponseEntityExceptionHandler() {
     }
 
     /**
-     * 处理缺少必填请求参数的异常
+     * Handles exceptions for missing required request parameters.
      */
     override fun handleMissingServletRequestParameter(
         ex: MissingServletRequestParameterException,
@@ -76,13 +77,13 @@ class BadRequestExceptionHandler : ResponseEntityExceptionHandler() {
         status: HttpStatusCode,
         request: WebRequest
     ): ResponseEntity<Any> {
-        val message = "缺少请求参数：${ex.parameterName}"
+        val message = "Missing request parameter: ${ex.parameterName}"
         log.warn("MissingServletRequestParameterException: $message")
         return createResponseEntity(message, null, headers, status, CommonErrorCodeEnum.BAD_REQUEST.code)
     }
 
     /**
-     * 处理请求体无法解析的异常，例如非法JSON
+     * Handles exceptions when the request body cannot be parsed, e.g. invalid JSON.
      */
     override fun handleHttpMessageNotReadable(
         ex: HttpMessageNotReadableException,
@@ -90,13 +91,13 @@ class BadRequestExceptionHandler : ResponseEntityExceptionHandler() {
         status: HttpStatusCode,
         request: WebRequest
     ): ResponseEntity<Any> {
-        val message = "请求体格式错误"
+        val message = "Malformed request body"
         log.warn("HttpMessageNotReadableException: ${ex.message}")
         return createResponseEntity(message, null, headers, status, CommonErrorCodeEnum.BAD_REQUEST.code)
     }
 
     /**
-     * 处理参数类型转换失败的异常
+     * Handles exceptions for parameter type conversion failures.
      */
     override fun handleTypeMismatch(
         ex: TypeMismatchException,
@@ -105,7 +106,7 @@ class BadRequestExceptionHandler : ResponseEntityExceptionHandler() {
         request: WebRequest
     ): ResponseEntity<Any> {
         val message = if (ex is MethodArgumentTypeMismatchException) {
-            "参数类型错误：${ex.name}"
+            "Invalid parameter type: ${ex.name}"
         } else {
             CommonErrorCodeEnum.BAD_REQUEST.displayText
         }
@@ -114,15 +115,16 @@ class BadRequestExceptionHandler : ResponseEntityExceptionHandler() {
     }
 
     /**
-     * 构造统一格式的失败响应。
-     * 把错误码、消息、明细包装成 [ApiResponse.fail]，再带上原始 headers / status 一起返回。
+     * Builds a failure response in a unified format.
+     * Wraps the error code, message, and details into [ApiResponse.fail], returning it with
+     * the original headers / status.
      *
-     * @param message 用户可读的错误消息
-     * @param errors 字段级错误明细，null 表示无明细
-     * @param headers 原始响应头
-     * @param status HTTP 状态码
-     * @param code 业务错误码（[CommonErrorCodeEnum] 派生）
-     * @return 统一格式的 ResponseEntity
+     * @param message human-readable error message
+     * @param errors field-level error details; null means no details
+     * @param headers original response headers
+     * @param status HTTP status code
+     * @param code business error code (derived from [CommonErrorCodeEnum])
+     * @return ResponseEntity in unified format
      * @author K
      * @since 1.0.0
      */
@@ -138,12 +140,14 @@ class BadRequestExceptionHandler : ResponseEntityExceptionHandler() {
     }
 
     /**
-     * 将 Spring 校验结果转换为结构化错误明细列表。
-     * 字段级错误带上 [BindingResult] 的 rejectedValue，便于前端定位用户填错的具体值；
-     * 全局错误（对象层级断言）不带 rejectedValue。两类错误顺序为"字段错误优先"，与表单常见展示一致。
+     * Converts the Spring validation result into a structured list of error details.
+     * Field-level errors include the rejectedValue from [BindingResult], helping the
+     * frontend locate the specific user-entered value; global errors (object-level
+     * assertions) do not include a rejectedValue. The two categories are ordered
+     * "field errors first", consistent with common form displays.
      *
-     * @param bindingResult Spring 校验结果
-     * @return 字段错误 + 全局错误的合并列表
+     * @param bindingResult Spring validation result
+     * @return combined list of field errors plus global errors
      * @author K
      * @since 1.0.0
      */

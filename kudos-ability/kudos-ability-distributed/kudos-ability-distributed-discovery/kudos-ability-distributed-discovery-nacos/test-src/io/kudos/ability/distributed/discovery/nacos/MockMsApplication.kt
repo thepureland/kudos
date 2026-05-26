@@ -7,7 +7,7 @@ import org.springframework.context.annotation.PropertySource
 
 
 /**
- * 模拟微服务Application
+ * Mock microservice Application.
  *
  * @author K
  * @since 1.0.0
@@ -18,5 +18,5 @@ import org.springframework.context.annotation.PropertySource
     value = ["classpath:application-ms.yml"
     ], factory = YamlPropertySourceFactory::class
 )
-//@ActiveProfiles("ms") // 在SpringApplication.run(ServiceApplication.class)方式下无效!!!
+//@ActiveProfiles("ms") // Has no effect when launching via SpringApplication.run(ServiceApplication.class)!!!
 open class MockMsApplication

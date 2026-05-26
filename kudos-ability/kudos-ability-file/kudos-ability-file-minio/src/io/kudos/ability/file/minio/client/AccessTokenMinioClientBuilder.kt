@@ -21,9 +21,9 @@ import java.nio.charset.StandardCharsets
 import java.security.ProviderException
 
 /**
- * Minio 请求认证（STS 简化版）：调用配置的 OAuth2 token 端点拿 access_token，
- * 包装成 [Jwt] 喂给 Minio 的 [WebIdentityProvider] —— 业务侧只需把已有的认证 Token 通过
- * [AccessTokenServerParam.headerValue] 透传过来。
+ * Minio request authentication (simplified STS): calls the configured OAuth2 token endpoint to obtain an
+ * access_token, wraps it as a [Jwt] and feeds it to Minio's [WebIdentityProvider] - the business side only
+ * needs to pass through an existing authentication token via [AccessTokenServerParam.headerValue].
  *
  * @author Roger
  * @author K
@@ -32,22 +32,22 @@ import java.security.ProviderException
  */
 open class AccessTokenMinioClientBuilder : MinioClientBuilder<AccessTokenServerParam> {
 
-    /** 日志器，调试 OAuth2 token 端点交互时使用 */
+    /** Logger, used when debugging OAuth2 token endpoint interactions. */
     private val log = LogFactory.getLog(this::class)
 
-    /** MinIO 全局配置（endpoint） */
+    /** Global MinIO configuration (endpoint). */
     private lateinit var minioProperties: MinioProperties
 
-    /** OAuth2 token 端点配置（authorization grant type / clientId / clientSecret / endpoint / headerName） */
+    /** OAuth2 token endpoint configuration (authorization grant type / clientId / clientSecret / endpoint / headerName). */
     private lateinit var accessTokenServerProperties: AccessTokenServerProperties
 
-    /** 当前次请求携带的 token（业务上层透传） */
+    /** Token carried in the current request (passed through from the business layer). */
     private var authServerParam: AccessTokenServerParam? = null
 
     /**
-     * 注入本次请求的 token 参数。
+     * Injects the token parameter for the current request.
      *
-     * @param authServerParam token 鉴权参数
+     * @param authServerParam token authentication parameters
      * @author K
      * @since 1.0.0
      */
@@ -74,15 +74,16 @@ open class AccessTokenMinioClientBuilder : MinioClientBuilder<AccessTokenServerP
     }
 
     /**
-     * 调 OAuth2 token 端点拿 [Jwt]。
+     * Calls the OAuth2 token endpoint to obtain a [Jwt].
      *
-     * 请求头：业务方透传的 `headerValue`（如用户的 access token）+ Basic clientId:clientSecret。
-     * 安全注意：旧实现曾在此 `log.info` 输出 `jwt.token()` 字符串——可重放的 access_token 落到聚合日志里
-     * 就是一个泄漏面，已改为 DEBUG 仅打过期秒数，不打 token 本身。
+     * Request headers: business-side passed-through `headerValue` (e.g., the user's access token) +
+     * Basic clientId:clientSecret. Security note: the old implementation used to `log.info` the
+     * `jwt.token()` string here - a replayable access_token landing in aggregated logs is a real leak
+     * surface, now changed to DEBUG and only the expiry seconds, not the token itself.
      *
-     * @param authServerParam 业务侧透传的 token 鉴权参数
-     * @return 拿到的 [Jwt]；网络失败时抛 [ProviderException]
-     * @throws ProviderException IO 异常包装后抛出
+     * @param authServerParam token authentication parameters passed through from the business side
+     * @return the obtained [Jwt]; throws [ProviderException] on network failure
+     * @throws ProviderException thrown after wrapping an IO exception
      * @author K
      * @since 1.0.0
      */
@@ -104,8 +105,9 @@ open class AccessTokenMinioClientBuilder : MinioClientBuilder<AccessTokenServerP
             httpClient.newCall(request).execute().use { response ->
                 val rs = String(response.body.bytes())
                 val jwt = mapper.readValue(rs, Jwt::class.java)
-                // 历史问题：旧实现在这里 log.info 输出 jwt.token() —— 把可重放的 access_token
-                // 写进进程日志 / 日志聚合，是真实泄漏面。这里只 debug 记录 expiry 不打 token 字符串。
+                // Historical issue: the old implementation used to log.info jwt.token() here -
+                // writing a replayable access_token into process logs / log aggregation is a real
+                // leak surface. Here we only debug-log the expiry, not the token string itself.
                 jwt?.let { log.debug("Minio oauth2 server token acquired, expires_in={0}s", it.expiry()) }
                 return jwt
             }
@@ -115,9 +117,9 @@ open class AccessTokenMinioClientBuilder : MinioClientBuilder<AccessTokenServerP
     }
 
     /**
-     * 注入 MinIO 全局配置。
+     * Injects the global MinIO configuration.
      *
-     * @param minioProperties 配置对象
+     * @param minioProperties configuration object
      * @author K
      * @since 1.0.0
      */
@@ -126,9 +128,9 @@ open class AccessTokenMinioClientBuilder : MinioClientBuilder<AccessTokenServerP
     }
 
     /**
-     * 注入 OAuth2 token 端点配置。
+     * Injects the OAuth2 token endpoint configuration.
      *
-     * @param accessTokenServerProperties token 端点配置
+     * @param accessTokenServerProperties token endpoint configuration
      * @author K
      * @since 1.0.0
      */
@@ -138,15 +140,16 @@ open class AccessTokenMinioClientBuilder : MinioClientBuilder<AccessTokenServerP
 
     companion object {
         /**
-         * OkHttp 客户端共享单例。旧实现每次 `accessToken()` 调用都 `OkHttpClient()` 新建 —— 重型对象
-         * （线程池 + 连接池 + dispatcher），每请求一次实例化是显著的资源浪费。
+         * Shared OkHttp client singleton. The old implementation instantiated `OkHttpClient()` on every
+         * `accessToken()` call - a heavy object (thread pool + connection pool + dispatcher); instantiating
+         * one per request is a significant resource waste.
          */
         private val httpClient = OkHttpClient()
 
         /**
-         * Jackson 3 mapper 共享单例。`changeDefaultVisibility { withFieldVisibility(ANY) }` 是为了
-         * 反序列化 Minio [Jwt] 的私有 final 字段（无 getter / 无无参构造）。详见
-         * [io.kudos.ability.file.minio.client.AccessTokenJwtMapperTest]。
+         * Shared Jackson 3 mapper singleton. `changeDefaultVisibility { withFieldVisibility(ANY) }` is
+         * required to deserialize the private final fields of Minio [Jwt] (no getter / no no-arg
+         * constructor). See [io.kudos.ability.file.minio.client.AccessTokenJwtMapperTest] for details.
          */
         private val mapper = JsonMapper.builder()
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)

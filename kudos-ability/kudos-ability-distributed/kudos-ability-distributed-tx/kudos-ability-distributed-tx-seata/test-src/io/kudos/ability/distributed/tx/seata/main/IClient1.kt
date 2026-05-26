@@ -12,7 +12,7 @@ interface IClient1 {
     fun getById(@RequestParam("id") id: Int): TestTable
 
     /**
-     * 扣减账户余额
+     * Decrease the account balance.
      */
     @GetMapping("/controller1/decrease")
     fun decrease(@RequestParam("id") id: Int, @RequestParam("money") money: Double)

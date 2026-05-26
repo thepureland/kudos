@@ -5,9 +5,10 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * [jakarta.servlet.http.HttpServletRequest] 扩展函数的单元测试。
+ * Unit tests for [jakarta.servlet.http.HttpServletRequest] extension functions.
  *
- * UA 解析是启发式的，覆盖几条主流分支足以回归——发现误判后请增删 case。
+ * UA parsing is heuristic; covering a few mainstream branches is enough for regression —
+ * add/remove cases when misclassifications are found.
  *
  * @author K
  * @author AI: Codex
@@ -36,8 +37,8 @@ internal class XHttpServletRequestTest {
 
     @Test
     fun browser_edge_currentlyDetectedAsChrome() {
-        // Edge UA 也含 "Chrome"，当前 when 顺序会优先匹配 Chrome——记录在此防止悄悄改坏；
-        // 如果将来调整 when 顺序（让 Edge 先匹配），请同步更新此 assertion
+        // The Edge UA also contains "Chrome"; the current `when` ordering matches Chrome first — recorded here to prevent silent regressions.
+        // If the `when` ordering is changed in the future (so that Edge matches first), update this assertion accordingly.
         val ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edge/120.0"
         val (name, _) = reqWithUA(ua).getBrowserInfo()
         assertEquals("Chrome", name)

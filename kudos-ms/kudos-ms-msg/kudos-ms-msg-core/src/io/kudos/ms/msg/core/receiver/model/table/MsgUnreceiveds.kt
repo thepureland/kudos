@@ -9,7 +9,7 @@ import org.ktorm.schema.varchar
 
 
 /**
- * 未送达消息数据库表-实体关联对象
+ * Undelivered message database table-entity binding object.
  *
  * @author K
  * @since 1.0.0

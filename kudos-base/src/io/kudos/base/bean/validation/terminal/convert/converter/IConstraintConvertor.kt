@@ -5,7 +5,7 @@ import io.kudos.base.bean.validation.terminal.convert.ConstraintConvertContext
 
 
 /**
- * 约束转换器接口，负责将注解约束转换为终端约束
+ * Constraint converter interface; responsible for converting annotation-based constraints into terminal constraints.
  *
  * @author K
  * @since 1.0.0
@@ -13,10 +13,10 @@ import io.kudos.base.bean.validation.terminal.convert.ConstraintConvertContext
 interface IConstraintConvertor {
 
     /**
-     * 将注解约束转换为终端约束
+     * Converts an annotation-based constraint into a terminal constraint.
      *
-     * @param context 上下文
-     * @return 终端约束
+     * @param context the context
+     * @return the terminal constraint
      * @author K
      * @since 1.0.0
      */

@@ -3,27 +3,27 @@ package io.kudos.ms.sys.common.system.enums
 import io.kudos.base.enums.ienums.IErrorCodeEnum
 
 /**
- * 系统错误码
+ * System module error codes.
  *
  * @author K
  * @author AI: Codex
  * @since 1.0.0
  */
 enum class SysSystemErrorCodeEnum(
-    /** 错误码 */
+    /** Error code */
     override val code: String,
-    /** 默认展示文本 */
+    /** Default display text */
     override val defaultDisplayText: String,
 ) : IErrorCodeEnum {
 
-    /** 未定义错误 */
-    UNSPECIFIED("UNSPECIFIED", "未定义错误"),
+    /** Unspecified error */
+    UNSPECIFIED("UNSPECIFIED", "Unspecified error"),
 
-    /** 按主键查找系统失败（注：系统 PK 即 code） */
-    SYSTEM_NOT_FOUND("SYSTEM_NOT_FOUND", "系统不存在"),
+    /** System not found by primary key (note: the system PK is code) */
+    SYSTEM_NOT_FOUND("SYSTEM_NOT_FOUND", "System not found"),
 
-    /** 系统编码已被占用 */
-    SYSTEM_CODE_ALREADY_EXISTS("SYSTEM_CODE_ALREADY_EXISTS", "系统编码已存在");
+    /** System code already taken */
+    SYSTEM_CODE_ALREADY_EXISTS("SYSTEM_CODE_ALREADY_EXISTS", "System code already exists");
 
     override val i18nKeyPrefix: String
         get() = "sys.error-msg.system"

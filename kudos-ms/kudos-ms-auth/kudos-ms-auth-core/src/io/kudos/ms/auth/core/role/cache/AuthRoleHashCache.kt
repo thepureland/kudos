@@ -19,15 +19,15 @@ import org.springframework.transaction.event.TransactionPhase
 import org.springframework.transaction.event.TransactionalEventListener
 
 /**
- * 角色 Hash 缓存处理器
+ * Role hash-cache handler.
  *
- * 数据来源表：auth_role；主键为 id，缓存的 key 即 id，value 为 [AuthRoleCacheEntry]。
- * 使用 Hash 结构存储，支持按 id 存取、按 tenantId+code 二级索引查询
+ * Source table: auth_role; primary key is id, the cache key is the id, the value is [AuthRoleCacheEntry].
+ * Stored as a Hash, supports get-by-id access and tenantId+code secondary-index queries.
  *
- * - 按 id：getRoleById、getRolesByIds
- * - 按租户+角色编码：getRoleByTenantIdAndRoleCode
+ * - By id: getRoleById, getRolesByIds
+ * - By tenant + role code: getRoleByTenantIdAndRoleCode
  *
- * 使用前需在缓存配置表 sys_cache 中增加名为 [CACHE_NAME] 的配置项且 hash=true。
+ * Before use, add a config row named [CACHE_NAME] with hash=true to the sys_cache configuration table.
  *
  * @author K
  * @since 1.0.0
@@ -43,7 +43,7 @@ open class AuthRoleHashCache : AbstractHashCacheHandler<AuthRoleCacheEntry>() {
     companion object {
         const val CACHE_NAME = "AUTH_ROLE__HASH"
 
-        /** 可筛选副属性：按 tenantId、code 建二级索引（不包含 active） */
+        /** Filterable secondary attributes: secondary indexes on tenantId and code (active excluded) */
         val FILTERABLE_PROPERTIES = setOf(
             AuthRoleCacheEntry::tenantId.name,
             AuthRoleCacheEntry::code.name
@@ -59,10 +59,10 @@ open class AuthRoleHashCache : AbstractHashCacheHandler<AuthRoleCacheEntry>() {
     override fun doReload(id: Any): AuthRoleCacheEntry? = authRoleDao.getAs(id.toString())
 
     /**
-     * 根据 id 从缓存获取角色，未命中则查库并回写。
+     * Returns a role by id from the cache; falls through to the DB and writes back on a miss.
      *
-     * @param id 角色 id（主键），非空
-     * @return 角色缓存项，不存在时 null
+     * @param id role id (primary key), non-blank
+     * @return cache entry, or null when not found
      */
     @HashCacheableByPrimary(
         cacheNames = [CACHE_NAME],
@@ -72,15 +72,15 @@ open class AuthRoleHashCache : AbstractHashCacheHandler<AuthRoleCacheEntry>() {
         filterableProperties = ["tenantId", "code"]
     )
     open fun getRoleById(id: String): AuthRoleCacheEntry? {
-        require(id.isNotBlank()) { "获取角色时 id 不能为空" }
+        require(id.isNotBlank()) { "id must not be blank when fetching a role" }
         return authRoleDao.getAs<AuthRoleCacheEntry>(id)
     }
 
     /**
-     * 根据多个 id 从缓存批量获取角色，未命中的从库加载并回写。
+     * Batch-fetches roles by ids from the cache; loads misses from the DB and writes them back.
      *
-     * @param ids 角色 id 集合，可为空
-     * @return id -> 实体 映射，仅包含能查到的 id
+     * @param ids collection of role ids, may be empty
+     * @return id -> entity map, containing only ids that were found
      */
     @HashBatchCacheableByPrimary(
         cacheNames = [CACHE_NAME],
@@ -94,11 +94,12 @@ open class AuthRoleHashCache : AbstractHashCacheHandler<AuthRoleCacheEntry>() {
     }
 
     /**
-     * 根据租户、角色编码从缓存获取角色，未命中则查库并回写（不区分 active）。
+     * Returns a role by tenant and role code from the cache; falls through to the DB and writes back
+     * on a miss (regardless of active state).
      *
-     * @param tenantId 租户 id
-     * @param code 角色编码
-     * @return 角色缓存项，不存在时 null
+     * @param tenantId tenant id
+     * @param code role code
+     * @return cache entry, or null when not found
      */
     @HashCacheableBySecondary(
         cacheNames = [CACHE_NAME],
@@ -111,30 +112,31 @@ open class AuthRoleHashCache : AbstractHashCacheHandler<AuthRoleCacheEntry>() {
     }
 
     /**
-     * 从库全量加载角色并刷新 Hash 缓存（含 active=false，等价原 RoleByIdCache 全量）。
+     * Fully loads roles from the DB and refreshes the hash cache (includes active=false; equivalent
+     * to the full reload in the legacy RoleByIdCache).
      *
-     * @param clear 为 true 时先清空再写入；为 false 时覆盖写入
+     * @param clear when true, clear first then write; when false, overwrite in place
      */
     override fun reloadAll(clear: Boolean) {
         if (!HashCacheKit.isCacheActive(CACHE_NAME)) {
-            log.info("缓存未开启，不加载角色 Hash 缓存")
+            log.info("Cache not enabled; skip loading role hash cache")
             return
         }
         val cache = hashCache()
         if (clear) cache.clear(CACHE_NAME)
         val list = authRoleDao.searchAs<AuthRoleCacheEntry>()
-        log.debug("从数据库加载 ${list.size} 条角色，刷新 Hash 缓存")
+        log.debug("Loaded ${list.size} roles from DB; refreshing hash cache")
         cache.refreshAll(CACHE_NAME, list, FILTERABLE_PROPERTIES, emptySet())
     }
 
-    /** 新增角色后同步：将指定 id 的实体从库加载并写入缓存。 */
+    /** Post-insert sync: loads the entity by id from the DB and writes it into the cache. */
     open fun syncOnInsert(id: String) {
         if (!HashCacheKit.isCacheActive(CACHE_NAME) || !HashCacheKit.isWriteInTime(CACHE_NAME)) return
         val item = authRoleDao.getAs<AuthRoleCacheEntry>(id) ?: return
         hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
     }
 
-    /** 更新角色后同步：从库重新加载并写入缓存。 */
+    /** Post-update sync: reloads from the DB and writes into the cache. */
     open fun syncOnUpdate(id: String) {
         if (!HashCacheKit.isCacheActive(CACHE_NAME)) return
         val item = authRoleDao.getAs<AuthRoleCacheEntry>(id) ?: return
@@ -143,13 +145,13 @@ open class AuthRoleHashCache : AbstractHashCacheHandler<AuthRoleCacheEntry>() {
         }
     }
 
-    /** 删除角色后同步：从缓存中移除该 id。 */
+    /** Post-delete sync: removes the id from the cache. */
     open fun syncOnDelete(id: String) {
         if (!HashCacheKit.isCacheActive(CACHE_NAME)) return
         hashCache().deleteById(CACHE_NAME, id, AuthRoleCacheEntry::class, FILTERABLE_PROPERTIES, emptySet())
     }
 
-    /** 批量删除角色后同步：从缓存中移除这些 id（单条 Pub/Sub 通知，避免 N+1 风暴）。 */
+    /** Post-batch-delete sync: removes the given ids from the cache (single Pub/Sub message, avoids N+1 storm). */
     open fun syncOnBatchDelete(ids: Collection<String>) {
         if (!HashCacheKit.isCacheActive(CACHE_NAME) || ids.isEmpty()) return
         hashCache().deleteByIds(CACHE_NAME, ids, AuthRoleCacheEntry::class, FILTERABLE_PROPERTIES, emptySet())

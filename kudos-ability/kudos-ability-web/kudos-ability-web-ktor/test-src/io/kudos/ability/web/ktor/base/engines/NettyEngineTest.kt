@@ -17,7 +17,7 @@ import kotlin.test.assertEquals
 
 
 /**
- * netty引擎ktor测试
+ * Ktor test for the Netty engine.
  *
  * @author K
  * @author AI: Codex

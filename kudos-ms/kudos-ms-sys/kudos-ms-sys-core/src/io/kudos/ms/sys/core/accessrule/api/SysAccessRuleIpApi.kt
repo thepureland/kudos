@@ -10,7 +10,7 @@ import java.math.BigDecimal
 
 
 /**
- * ip访问规则 API本地实现
+ * Local implementation of the IP access rule API.
  *
  * @author K
  * @since 1.0.0

@@ -3,11 +3,12 @@ package io.kudos.ms.sys.client.support
 import io.kudos.ability.distributed.client.feign.fallback.AbstractFeignFallbackSupport
 
 /**
- * sys 模块 Feign Fallback 的命名空间别名，沿用上游
- * [AbstractFeignFallbackSupport][AbstractFeignFallbackSupport] 的全部能力。
+ * Namespace alias for the sys module Feign Fallback, inheriting all capabilities
+ * of upstream [AbstractFeignFallbackSupport][AbstractFeignFallbackSupport].
  *
- * 保留这一层是为了不修改已落地的 17 个 sys-client Fallback 类的父类引用；
- * 新模块的 Fallback 建议直接继承 [AbstractFeignFallbackSupport]。
+ * This layer is retained to avoid modifying the parent references of the 17 sys-client
+ * Fallback classes already in place; new modules' Fallbacks are recommended to extend
+ * [AbstractFeignFallbackSupport] directly.
  *
  * @author K
  * @author AI: Cursor

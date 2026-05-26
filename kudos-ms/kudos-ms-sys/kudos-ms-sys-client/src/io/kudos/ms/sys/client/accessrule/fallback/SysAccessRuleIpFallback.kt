@@ -9,9 +9,9 @@ import java.math.BigDecimal
 
 
 /**
- * IP 访问规则 Feign 容错降级实现。
+ * IP access rule Feign fallback implementation.
  *
- * 注意：[checkIpAccess] 在远端不可达时返回 `false`（拒绝），属于安全侧默认 —— 宁可错杀也不放过。
+ * Note: [checkIpAccess] returns `false` (deny) when the remote is unreachable, which is a security-side default — better safe than sorry.
  *
  * @author K
  * @since 1.0.0
@@ -30,7 +30,7 @@ open class SysAccessRuleIpFallback : SysClientFallbackSupport("SysAccessRuleIpFa
     }
 
     override fun checkIpAccess(ip: BigDecimal, systemCode: String, tenantId: String?): Boolean {
-        // 安全默认：拒绝；若调用方需要在 sys 不可达时放行，请在自己侧做 fail-open 旁路。
+        // Secure default: deny; if a caller needs to allow when sys is unreachable, implement a fail-open bypass on its own side.
         warnRead("checkIpAccess", ip, systemCode, tenantId)
         return false
     }

@@ -1,7 +1,7 @@
 dependencies {
     api(project(":kudos-context"))
     api(project(":kudos-base"))
-    // 使用 Spring Boot BOM 管理的 lettuce 版本，避免与 Spring Data Redis 的 reactive API 不兼容导致 NoSuchMethodError
+    // Use the lettuce version managed by the Spring Boot BOM to avoid NoSuchMethodError caused by incompatibility with the Spring Data Redis reactive API.
     api(libs.spring.boot.starter.data.redis)
     api(libs.alibaba.fastjson2)
     api(libs.alibaba.fastjson2.spring)

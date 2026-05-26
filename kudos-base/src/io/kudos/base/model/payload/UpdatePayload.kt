@@ -1,24 +1,27 @@
 package io.kudos.base.model.payload
 
 /**
- * 更新数据项载体父类
+ * Base class for update-data-item payloads.
  *
- * 注意：该类不应该被开放给不受信任的源，如：客户端 !!!
+ * Note: this class must NOT be exposed to untrusted sources such as the client!
  *
- * 更新规则:
- *    1. id属性不会被更新
- *    2. nullProperties的所有属性的值都更新为null
- *    3. 其它属性的值不为null时才更新该属性
+ * Update rules:
+ *    1. The `id` property is not updated.
+ *    2. All properties listed in `nullProperties` are updated to null.
+ *    3. Other properties are updated only when their value is non-null.
  *
  * @author K
  * @since 1.0.0
  */
 open class UpdatePayload<S: ISearchPayload> {
 
-    /** 值要设置为null的属性的列表 */
+    /** List of properties whose value should be set to null. */
     open var nullProperties: List<String>? = null
 
-    /** 查询项载体，为null时，查询条件也可通过where条件表达式工厂函数自定义，此时各条件间的查询逻辑为AND */
+    /**
+     * The query-item payload. If null, the query conditions can also be customized via a where-expression factory
+     * function; in that case, conditions are combined with AND.
+     */
     open var searchPayload: S? = null
 
 }

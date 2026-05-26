@@ -9,15 +9,16 @@ import org.springframework.beans.factory.annotation.Autowired
 
 
 /**
- * 按 [AuthServerParam] 子类型分发到对应的 [MinioClientBuilder] 实现。
+ * Dispatches to the corresponding [MinioClientBuilder] implementation based on the [AuthServerParam] subtype.
  *
- * 已知子类型 → builder 映射：
- *  - [AccessKeyServerParam] → [AccessKeyMinioClientBuilder]（AK/SK 直连）
- *  - [AccessTokenServerParam] → [AccessTokenMinioClientBuilder]（OAuth2 token → MinIO STS）
- *  - 未知类型 → null（调用方需自行决定回退到默认客户端 / 抛错）
+ * Known subtype -> builder mapping:
+ *  - [AccessKeyServerParam] -> [AccessKeyMinioClientBuilder] (AK/SK direct connection)
+ *  - [AccessTokenServerParam] -> [AccessTokenMinioClientBuilder] (OAuth2 token -> MinIO STS)
+ *  - Unknown type -> null (the caller decides whether to fall back to a default client / throw an error)
  *
- * 业务侧扩展新认证形式时：(a) 在 file-common 增加 `AuthServerParam` 子类，
- * (b) 在 file-minio 增加对应 `MinioClientBuilder` 实现，(c) 在本工厂的 when 增加分支。
+ * When the business side adds a new authentication form: (a) add an `AuthServerParam` subclass in file-common,
+ * (b) add the corresponding `MinioClientBuilder` implementation in file-minio, (c) add a branch to the `when`
+ * in this factory.
  *
  * @author K
  * @author AI: Codex
@@ -31,7 +32,7 @@ class MinioClientBuilderFactory {
     @Autowired
     private lateinit var accessTokenServer: AccessTokenServerProperties
 
-    /** 按 [authServerParam] 实际类型返回组装好属性的 builder；未知类型返回 null。 */
+    /** Returns a fully-initialized builder based on the actual type of [authServerParam]; returns null for unknown types. */
     fun getInstance(authServerParam: AuthServerParam): MinioClientBuilder<*>? = when (authServerParam) {
         is AccessKeyServerParam -> AccessKeyMinioClientBuilder().apply {
             setMinioProperties(minioProperties)

@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service
 
 
 /**
- * 用户账号保护 API本地实现
+ * Local implementation of the user account protection API.
  *
  * @author K
  * @author AI: Codex

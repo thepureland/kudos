@@ -10,13 +10,13 @@ import java.util.UUID
 import kotlin.test.*
 
 /**
- * [SysSystemHashCache] 单元测试（Hash 缓存实现）。
+ * [SysSystemHashCache] unit tests (Hash cache implementation).
  *
- * 覆盖按 code 单条/批量获取、全量刷新、新增/更新/删除/批量删除后同步；
- * LOCAL_REMOTE/SINGLE_LOCAL 策略下二次取为同一对象引用。
+ * Covers single/batch get by code, full refresh, and sync after insert/update/delete/batch delete;
+ * under LOCAL_REMOTE/SINGLE_LOCAL strategies, a second fetch returns the same object reference.
  *
- * 测试数据：`sql/h2/system/cache/SystemByCodeCacheTest.sql`。
- * 需 Docker 运行 Redis，且 sys_cache 中已配置 SYS_SYSTEM__HASH（hash=true）。
+ * Test data: `sql/h2/system/cache/SystemByCodeCacheTest.sql`.
+ * Requires Docker to run Redis, and SYS_SYSTEM__HASH (hash=true) configured in sys_cache.
  *
  * @author K
  * @since 1.0.0
@@ -34,7 +34,7 @@ class SysSystemHashCacheTest : RdbAndRedisCacheTestBase() {
 
     private fun isLocalCacheEnabled(): Boolean = HashCacheKit.isLocalCacheEnabled(SysSystemHashCache.CACHE_NAME)
 
-    private val newSystemName = "新系统名称"
+    private val newSystemName = "new system name"
 
     @Test
     fun getSystemByCode() {
@@ -45,7 +45,7 @@ class SysSystemHashCacheTest : RdbAndRedisCacheTestBase() {
         assertEquals(code, cacheItem.code)
         assertEquals("SbcCH-name-1", cacheItem.name)
         val cacheItemAgain = cacheHandler.getSystemByCode(code)
-        if (isLocalCacheEnabled()) assertSame(cacheItem, cacheItemAgain, "同一 code 再次从缓存获取应返回同一对象引用")
+        if (isLocalCacheEnabled()) assertSame(cacheItem, cacheItemAgain, "A second fetch of the same code from cache should return the same object reference")
         assertNull(cacheHandler.getSystemByCode("no_exist_code"))
     }
 
@@ -58,8 +58,8 @@ class SysSystemHashCacheTest : RdbAndRedisCacheTestBase() {
         assertTrue(result.isNotEmpty())
         val resultAgain = cacheHandler.getSystemsByCodes(listOf(code1, code2))
         if (isLocalCacheEnabled()) {
-            assertSame(result[code1], resultAgain[code1], "同一 code 再次从缓存获取应返回同一对象引用")
-            assertSame(result[code2], resultAgain[code2], "同一 code 再次从缓存获取应返回同一对象引用")
+            assertSame(result[code1], resultAgain[code1], "A second fetch of the same code from cache should return the same object reference")
+            assertSame(result[code2], resultAgain[code2], "A second fetch of the same code from cache should return the same object reference")
         }
         val partial = cacheHandler.getSystemsByCodes(listOf("no_exist_code-1_8400", code2))
         assertEquals(1, partial.size)
@@ -70,19 +70,19 @@ class SysSystemHashCacheTest : RdbAndRedisCacheTestBase() {
     fun getSystemsByType() {
         cacheHandler.reloadAll(true)
         val subSystems = cacheHandler.getSystemsByType(true)
-        assertTrue(subSystems.size >= 3, "测试数据中 sub_system=true 至少包含 _3/_4/_5")
+        assertTrue(subSystems.size >= 3, "Test data should contain at least _3/_4/_5 with sub_system=true")
         assertTrue(subSystems.all { it.subSystem == true })
         val expectedSubCodes = setOf("SbcCH_7a3f9b2c4e5f6_3", "SbcCH_7a3f9b2c4e5f6_4", "SbcCH_7a3f9b2c4e5f6_5")
         assertTrue(subSystems.mapNotNull { it.code }.toSet().containsAll(expectedSubCodes))
         val nonSubSystems = cacheHandler.getSystemsByType(false)
-        assertTrue(nonSubSystems.size >= 7, "测试数据中 sub_system=false 至少 7 条")
+        assertTrue(nonSubSystems.size >= 7, "Test data should contain at least 7 rows with sub_system=false")
         assertTrue(nonSubSystems.all { it.subSystem == false })
         val subAgain = cacheHandler.getSystemsByType(true)
         if (isLocalCacheEnabled()) {
             val code = "SbcCH_7a3f9b2c4e5f6_3"
             val a = subSystems.find { it.code == code }
             val b = subAgain.find { it.code == code }
-            assertSame(a, b, "二次按 subSystem 查询命中缓存应返回同一对象引用")
+            assertSame(a, b, "A second query by subSystem hitting the cache should return the same object reference")
         }
     }
 
@@ -90,7 +90,7 @@ class SysSystemHashCacheTest : RdbAndRedisCacheTestBase() {
     fun listSubSystems() {
         cacheHandler.reloadAll(true)
         val list = cacheHandler.listSubSystems()
-        assertTrue(list.size >= 3, "子系统列表至少包含测试数据 _3/_4/_5")
+        assertTrue(list.size >= 3, "Subsystem list should contain at least test data _3/_4/_5")
         assertTrue(list.all { it.subSystem == true })
         val codes = list.mapNotNull { it.code }.toSet()
         assertTrue(codes.contains("SbcCH_7a3f9b2c4e5f6_3"))
@@ -106,7 +106,7 @@ class SysSystemHashCacheTest : RdbAndRedisCacheTestBase() {
         val cacheItem = cacheHandler.getSystemByCode(code)
         assertNotNull(cacheItem)
         val cacheItemAgain = cacheHandler.getSystemByCode(code)
-        if (isLocalCacheEnabled()) assertSame(cacheItem, cacheItemAgain, "同一 code 再次从缓存获取应返回同一对象引用")
+        if (isLocalCacheEnabled()) assertSame(cacheItem, cacheItemAgain, "A second fetch of the same code from cache should return the same object reference")
     }
 
     @Test
@@ -120,7 +120,7 @@ class SysSystemHashCacheTest : RdbAndRedisCacheTestBase() {
         assertNotNull(cacheItem)
         assertEquals(newSystemName, cacheItem.name)
         val cacheItemAgain = cacheHandler.getSystemByCode(code)
-        if (isLocalCacheEnabled()) assertSame(cacheItem, cacheItemAgain, "同一 code 再次从缓存获取应返回同一对象引用")
+        if (isLocalCacheEnabled()) assertSame(cacheItem, cacheItemAgain, "A second fetch of the same code from cache should return the same object reference")
     }
 
     @Test
@@ -150,7 +150,7 @@ class SysSystemHashCacheTest : RdbAndRedisCacheTestBase() {
         val unique = UUID.randomUUID().toString().replace("-", "").take(12)
         val sysSystem = SysSystem().apply {
             code = "tc_${unique}"
-            name = "测试系统_${unique}"
+            name = "test system_${unique}"
             active = true
         }
         return sysSystemDao.insert(sysSystem)

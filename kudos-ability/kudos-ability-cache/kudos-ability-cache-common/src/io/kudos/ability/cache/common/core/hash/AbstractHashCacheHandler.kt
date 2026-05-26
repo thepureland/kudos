@@ -7,9 +7,9 @@ import io.kudos.base.model.contract.entity.IIdEntity
 import kotlin.reflect.KClass
 
 /**
- * hash型缓存处理器抽象类
+ * Abstract base class for hash-type cache handlers.
  *
- * @param T 缓存项类型（需为 [IIdEntity] 子类）
+ * @param T cache entry type (must be a subtype of [IIdEntity])
  * @author K
  * @since 1.0.0
  */
@@ -17,26 +17,28 @@ abstract class AbstractHashCacheHandler<T : IIdEntity<*>> : AbstractCacheHandler
 
     private val log = LogFactory.getLog(this::class)
 
-    /** 缓存实体类型，用于按 id 删除/回写时指定类型。 */
+    /** Cache entity type, used to specify the type when deleting/writing back by id. */
     protected abstract fun entityClass(): KClass<T>
 
     /**
-     * 供 [HashCacheKit] 等按 cacheName 获取实体类型，用于无类型 getValue。
-     * 声明 `open`：让 Spring CGLIB 子类代理时能 override，避免 `Public final method cannot get proxied via CGLIB` 警告。
+     * Exposes the entity type for callers such as [HashCacheKit] that look up by cacheName, for use in untyped getValue.
+     * Declared `open` so that Spring CGLIB subclass proxies can override it, avoiding the
+     * `Public final method cannot get proxied via CGLIB` warning.
      */
     open fun exposedEntityClass(): KClass<*> = entityClass()
 
-    /** 用于 Set 索引的副属性名集合，与写入/删除时一致。子类按需重写。 */
+    /** Secondary property names used for Set indexes; must match those used on write/delete. Override as needed. */
     protected open fun filterableProperties(): Set<String> = emptySet()
 
-    /** 用于 ZSet 索引的副属性名集合，与写入/删除时一致。子类按需重写。 */
+    /** Secondary property names used for ZSet indexes; must match those used on write/delete. Override as needed. */
     protected open fun sortableProperties(): Set<String> = emptySet()
 
     /**
-     * 按 id 重新加载一条缓存：先从 Hash 中删除该 id，再若 [doReload] 返回非 null 则回写。
-     * 子类可重写 [doReload] 实现从库/源加载；默认仅删除不回写。
+     * Reloads a single cache entry by id: first removes the id from the hash, then writes it back if [doReload]
+     * returns a non-null value. Subclasses can override [doReload] to load from a database/source; the default
+     * only deletes without writing back.
      *
-     * @param id 实体主键
+     * @param id entity primary key
      */
     @Suppress("UNCHECKED_CAST")
     open fun reload(id: Any) {
@@ -49,10 +51,10 @@ abstract class AbstractHashCacheHandler<T : IIdEntity<*>> : AbstractCacheHandler
             filterableProperties(),
             sortableProperties()
         )
-        log.info("手动重载 Hash 缓存【${cacheName()}】，id=$id ...")
+        log.info("Manually reloading hash cache [${cacheName()}], id=$id ...")
         val entity = doReload(id)
         if (entity == null) {
-            log.info("数据源中已不存在对应数据。")
+            log.info("The corresponding entry no longer exists in the data source.")
         } else {
             cache.saveBatch(
                 cacheName(),
@@ -60,22 +62,22 @@ abstract class AbstractHashCacheHandler<T : IIdEntity<*>> : AbstractCacheHandler
                 filterableProperties(),
                 sortableProperties()
             )
-            log.info("重载成功。")
+            log.info("Reload succeeded.")
         }
     }
 
     /**
-     * 按 id 从数据源加载实体，供 [reload] 回写。默认返回 null（仅做删除）。
+     * Loads an entity from the data source by id for [reload] to write back. Returns null by default (delete only).
      *
-     * @param id 实体主键
-     * @return 加载到的实体，不存在时返回 null
+     * @param id entity primary key
+     * @return the loaded entity, or null if not present
      */
     protected open fun doReload(id: Any): T? = null
 
     /**
-     * 踢除指定 id 的 Hash 缓存（仅删除，不回写）。
+     * Evicts the hash cache entry for the given id (delete only, no write-back).
      *
-     * @param id 实体主键
+     * @param id entity primary key
      */
     @Suppress("UNCHECKED_CAST")
     open fun evict(id: Any) {
@@ -90,10 +92,11 @@ abstract class AbstractHashCacheHandler<T : IIdEntity<*>> : AbstractCacheHandler
     }
 
     /**
-     * 取当前 handler 对应的 hash 缓存区（按 [cacheName] 子类自报）。
-     * 子类的批量/单条访问方法都基于这个 cache 实例工作；分离出来便于子类需要时直接拿到底层缓存对象。
+     * Returns the hash cache region associated with this handler (as reported by [cacheName] in the subclass).
+     * The subclass's batch/single accessors all work against this cache instance; it is exposed separately so
+     * subclasses can obtain the underlying cache object directly when needed.
      *
-     * @return 当前 cacheName 绑定的 hash cache
+     * @return the hash cache bound to the current cacheName
      * @author K
      * @since 1.0.0
      */

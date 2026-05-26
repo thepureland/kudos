@@ -1,12 +1,13 @@
 package io.kudos.ms.user.core.org.event
 
 /**
- * 机构（`user_org`）领域事件。由 `@TransactionalEventListener(AFTER_COMMIT)` 派发。
+ * Organization (`user_org`) domain events. Dispatched by `@TransactionalEventListener(AFTER_COMMIT)`.
  *
- * 关键：在 update / delete 类事件中携带 parentId 的"事前快照"，让需要按祖先链
- * 失效缓存的下游（如 [io.kudos.ms.user.core.org.cache.UserIdsByOrgIdCache]）
- * 能在事务提交之后仍精确知道"应该清哪些祖先"。AFTER_COMMIT 时数据库的旧 parentId
- * 已经被覆盖 / 行已删除，listener 自己查不回去。
+ * Key point: update / delete events carry a "pre-event snapshot" of parentId, so downstream consumers
+ * that need to invalidate caches by ancestor chain (e.g. [io.kudos.ms.user.core.org.cache.UserIdsByOrgIdCache])
+ * can still precisely know "which ancestors to clear" after the transaction is committed. At AFTER_COMMIT,
+ * the old parentId in the database has already been overwritten / the row has been deleted, so the listener
+ * itself cannot query it back.
  *
  * @author K
  * @author AI: Cursor
@@ -19,12 +20,12 @@ sealed interface UserOrgEvent {
 data class UserOrgInserted(override val id: String) : UserOrgEvent
 
 /**
- * 涵盖一般 update、updateActive、moveOrg 等部分字段更新。
+ * Covers general update, updateActive, moveOrg and other partial field updates.
  *
- * `oldParentId` / `newParentId` 在 publish 前由 service 双 SELECT 得到（事前 + 事后）。
- * - 非移动类更新（updateActive / 改 name 等）：两者相等。
- * - 移动类更新（moveOrg）：两者不等，listener 应分别 evict 旧链和新链。
- * - 默认值 null 保留对未传 snapshot 的旧 publisher 的源码兼容；新代码应总是传。
+ * `oldParentId` / `newParentId` are obtained by the service via dual SELECT before publish (before + after).
+ * - Non-move updates (updateActive / name change, etc.): the two are equal.
+ * - Move updates (moveOrg): the two differ; the listener should evict the old chain and the new chain separately.
+ * - Default value null retains source compatibility with old publishers that do not pass the snapshot; new code should always pass it.
  */
 data class UserOrgUpdated(
     override val id: String,
@@ -33,7 +34,7 @@ data class UserOrgUpdated(
 ) : UserOrgEvent
 
 /**
- * 删除单个机构。`parentId` 是删除前的快照（删除后 dao.get(id) 是 null）。
+ * Deletes a single organization. `parentId` is a pre-deletion snapshot (after deletion dao.get(id) is null).
  */
 data class UserOrgDeleted(
     override val id: String,
@@ -41,14 +42,14 @@ data class UserOrgDeleted(
 ) : UserOrgEvent
 
 /**
- * 批量删除机构。`items` 是每个被删除机构的 (id, parentId) 快照。
- * `ids` 作为计算属性保留，旧 listener `event.ids` 不变。
+ * Batch deletes organizations. `items` is the (id, parentId) snapshot of each deleted organization.
+ * `ids` is retained as a computed property; the old listener's `event.ids` is unchanged.
  */
 data class UserOrgBatchDeleted(val items: Collection<Item>) : UserOrgEvent {
     data class Item(val id: String, val parentId: String?)
 
     override val id: String get() = items.first().id
 
-    /** 兼容仅按 id 失效缓存的下游 listener。 */
+    /** For compatibility with downstream listeners that invalidate caches by id only. */
     val ids: Collection<String> get() = items.map { it.id }
 }

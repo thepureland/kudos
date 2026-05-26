@@ -5,7 +5,7 @@ import io.kudos.ability.data.rdb.ktorm.support.IManagedDbEntity
 import io.kudos.base.query.sort.Sortable
 
 /**
- * 参数数据库实体
+ * Parameter database entity
  *
  * @author K
  * @since 1.0.0
@@ -14,20 +14,20 @@ interface SysParam : IManagedDbEntity<String, SysParam> {
 
     companion object : DbEntityFactory<SysParam>()
 
-    /** 参数名称 */
+    /** Parameter name */
     @get:Sortable
     var paramName: String
 
-    /** 参数值 */
+    /** Parameter value */
     var paramValue: String
 
-    /** 默认参数值 */
+    /** Default parameter value */
     var defaultValue: String?
 
-    /** 原子服务编码 */
+    /** Atomic service code */
     var atomicServiceCode: String
 
-    /** 序号 */
+    /** Order number */
     var orderNum: Int?
 
 }

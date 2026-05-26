@@ -1,7 +1,7 @@
 package io.kudos.base.tree
 
 /**
- * 测试用数结点
+ * Tree node used for tests.
  *
  * @author K
  * @since 1.0.0

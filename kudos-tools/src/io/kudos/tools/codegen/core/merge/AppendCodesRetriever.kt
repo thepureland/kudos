@@ -1,7 +1,7 @@
 package io.kudos.tools.codegen.core.merge
 
 /**
- * 拼接代码抓取器
+ * Append-code retriever.
  *
  * @author K
  * @since 1.0.0

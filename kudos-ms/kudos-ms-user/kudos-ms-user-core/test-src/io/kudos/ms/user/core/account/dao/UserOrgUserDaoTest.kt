@@ -10,7 +10,7 @@ import kotlin.test.assertTrue
 /**
  * junit test for UserOrgUserDao
  *
- * 测试数据来源：`UserOrgUserDaoTest.sql`
+ * Test data source: `UserOrgUserDaoTest.sql`.
  *
  * @author K
  * @author AI: Cursor
@@ -24,10 +24,10 @@ class UserOrgUserDaoTest : RdbTestBase() {
 
     @Test
     fun exists() {
-        // 测试存在的关系
+        // Test an existing relation.
         assertTrue(userOrgUserDao.exists("952bb1b3-0000-0000-0000-000000000042", "952bb1b3-0000-0000-0000-000000000040"))
-        
-        // 测试不存在的关系
+
+        // Test a non-existent relation.
         assertFalse(userOrgUserDao.exists("952bb1b3-0000-0000-0000-000000000042", "non-existent-user"))
         assertFalse(userOrgUserDao.exists("non-existent-org", "952bb1b3-0000-0000-0000-000000000040"))
     }

@@ -3,7 +3,7 @@ package io.kudos.base.logger
 import kotlin.test.Test
 
 /**
- * 日志单元测试
+ * Unit tests for logging.
  *
  * @author K
  * @since 1.0.0

@@ -18,7 +18,7 @@ import kotlin.test.assertTrue
 /**
  * junit test for SysLocaleService
  *
- * 测试数据来源：`SysLocaleServiceTest.sql`
+ * Test data source: `SysLocaleServiceTest.sql`
  *
  * @author K
  * @since 1.0.0
@@ -45,7 +45,7 @@ class SysLocaleServiceTest : RdbAndRedisCacheTestBase() {
         assertEquals(seededCodeActive, po.code)
     }
 
-    /** 启用项可从按 code 缓存读到。 */
+    /** Active items can be read from the by-code cache. */
     @Test
     fun getLocaleByCode_active() {
         localeByCodeCache.reloadAll(clear = true)
@@ -55,27 +55,27 @@ class SysLocaleServiceTest : RdbAndRedisCacheTestBase() {
         assertEquals(seededCodeActive, entry.code)
     }
 
-    /** 未启用项不应在按 code 缓存中命中。 */
+    /** Inactive items should not be hit in the by-code cache. */
     @Test
     fun getLocaleByCode_inactive_returnsNull() {
         localeByCodeCache.reloadAll(clear = true)
         assertNull(sysLocaleService.getLocaleByCode(seededCodeInactive))
     }
 
-    /** listActiveLocales 按 sort_no 升序返回启用项。 */
+    /** listActiveLocales returns active items ordered by sort_no ascending. */
     @Test
     fun listActiveLocales_orderBySortNo() {
         val list = sysLocaleService.listActiveLocales()
-        // 至少包含本测试种子的启用项
+        // Should at least contain the active seed for this test
         assertTrue(list.any { it.code == seededCodeActive })
-        // 不应包含未启用
+        // Should not include the inactive seed
         assertTrue(list.none { it.code == seededCodeInactive })
-        // 升序检查
+        // Verify ascending order
         val sorted = list.sortedBy { it.sortNo }
         assertEquals(sorted.map { it.id }, list.map { it.id })
     }
 
-    /** updateActive：停用后按 code 缓存不应命中；恢复后再次命中。 */
+    /** updateActive: after disabling, the by-code cache should miss; after re-enabling, it should hit again. */
     @Test
     fun updateActive_syncsCache() {
         localeByCodeCache.reloadAll(clear = true)

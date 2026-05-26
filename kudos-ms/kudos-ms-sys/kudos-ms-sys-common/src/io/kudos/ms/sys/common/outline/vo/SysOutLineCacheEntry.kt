@@ -5,41 +5,41 @@ import java.io.Serializable
 
 
 /**
- * 出网白名单缓存项
+ * Cache entry for outbound whitelist.
  *
  * @author K
  * @since 1.0.0
  */
 data class SysOutLineCacheEntry(
 
-    /** 主键 */
+    /** Primary key */
     override val id: String,
 
-    /** 名称 */
+    /** Name */
     val name: String,
 
-    /** 主机名或通配符 */
+    /** Hostname or wildcard */
     val host: String,
 
-    /** 端口；`null` 表示任意端口 */
+    /** Port; `null` means any port */
     val port: Int?,
 
-    /** 协议(http/https/tcp/any) */
+    /** Protocol (http/https/tcp/any) */
     val protocol: String,
 
-    /** 系统编码 */
+    /** System code */
     val systemCode: String,
 
-    /** 租户id；`null` 表示平台级 */
+    /** Tenant id; `null` means platform-level */
     val tenantId: String?,
 
-    /** 备注 */
+    /** Remark */
     val remark: String?,
 
-    /** 是否启用 */
+    /** Whether enabled */
     val active: Boolean,
 
-    /** 是否内置 */
+    /** Whether built-in */
     val builtIn: Boolean,
 
 ) : IIdEntity<String>, Serializable {

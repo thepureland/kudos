@@ -17,85 +17,85 @@ import kotlin.test.assertTrue
  */
 internal class ThreadKitTest {
 
-    // 1) 测试 sleep(millis: Long) 在不被中断时能够正确返回
+    // 1) Verify that sleep(millis: Long) returns normally when not interrupted
     @Test
     fun sleep_Millis_NoException() {
-        // 测量睡眠时间，确保调用不会抛出异常且大致睡眠了预期时长
+        // Measure sleep duration to ensure the call does not throw and sleeps roughly the expected time
         val elapsed = measureTimeMillis {
             ThreadKit.sleep(100)
         }
-        assertTrue(elapsed >= 90, "ThreadKit.sleep(100) 应至少睡眠接近 100ms，而实际: $elapsed ms")
+        assertTrue(elapsed >= 90, "ThreadKit.sleep(100) should sleep close to 100ms, actual: $elapsed ms")
     }
 
-    // 2) 测试 sleep(duration: Long, unit: TimeUnit) 在不被中断时能够正确返回
+    // 2) Verify that sleep(duration: Long, unit: TimeUnit) returns normally when not interrupted
     @Test
     fun sleep_DurationUnit_NoException() {
         val elapsed = measureTimeMillis {
             ThreadKit.sleep(200, TimeUnit.MILLISECONDS)
         }
-        assertTrue(elapsed >= 180, "ThreadKit.sleep(200, MILLISECONDS) 应至少睡眠接近 200ms，而实际: $elapsed ms")
+        assertTrue(elapsed >= 180, "ThreadKit.sleep(200, MILLISECONDS) should sleep close to 200ms, actual: $elapsed ms")
     }
 
-    // 3) 测试 sleep 时如果线程被中断，能够捕获并忽略 InterruptedException
+    // 3) Verify that sleep catches and ignores InterruptedException when the thread is interrupted
     @Test
     fun sleep_WhenInterrupted_IgnoredInternally() {
-        // 启动一个线程，马上中断，然后调用 sleep(…)：
+        // Start a thread, immediately interrupt it, then call sleep(...):
         val thread = Thread {
-            // 在子线程中打断它自己
+            // Interrupt itself in the child thread
             Thread.currentThread().interrupt()
-            // 由于已经被打断，调用 sleep 会抛出 InterruptedException，
-            // 再被 ThreadKit 捕获并忽略，不应抛到外面
+            // Since it is already interrupted, sleep will throw InterruptedException,
+            // which ThreadKit catches and ignores; it should not propagate outward.
             ThreadKit.sleep(50)
         }
         thread.start()
         thread.join(500)
-        // 如果子线程没有抛出未捕获异常，就说明忽略机制生效了
-        assertFalse(thread.isAlive, "线程应已正常结束")
+        // If the child thread did not throw an uncaught exception, the ignore mechanism worked
+        assertFalse(thread.isAlive, "Thread should have terminated normally")
     }
 
-    // 4) 测试 gracefulShutdown：当线程池中没有任务时，应快速返回且不抛异常
+    // 4) Verify gracefulShutdown: with no tasks in the pool it should return quickly and not throw
     @Test
     fun gracefulShutdown_EmptyExecutor_NoException() {
         val pool = Executors.newSingleThreadExecutor()
-        // 冲突：先 shutdown，再调用
+        // Conflict: shutdown first, then invoke
         ThreadKit.gracefulShutdown(pool, 1, 1, TimeUnit.SECONDS)
-        assertTrue(pool.isShutdown, "执行 gracefulShutdown 之后，线程池应处于已 shutdown 状态")
+        assertTrue(pool.isShutdown, "After gracefulShutdown the pool should be in the shutdown state")
     }
 
-    // 5) 测试 gracefulShutdown：当线程池中有一个长期运行任务、且第一个 awaitTermination 超时触发 shutdownNow，再次 awaitTermination 超时
+    // 5) Verify gracefulShutdown: with a long-running task, the first awaitTermination times out triggering shutdownNow, then the second awaitTermination also times out
     @Test
     fun gracefulShutdown_WithLongTask_TriggersShutdownNow() {
         val pool = Executors.newSingleThreadExecutor()
-        // 提交一个会一直阻塞的任务
+        // Submit a task that blocks indefinitely
         pool.submit {
             try {
                 Thread.sleep(5000)
             } catch (_: InterruptedException) {
-                // 被 cancel 之后，我们也忽略
+                // Ignored after being cancelled
             }
         }
-        // 设置超时时间都为 100ms：第一次 awaitTermination 超时后会调用 shutdownNow，
-        // 第二次 awaitTermination 也超时，则会走到 “线程池未结束!” 的 warn 分支
-        // 这里只验证不抛异常
+        // Set both timeouts to 100ms: after the first awaitTermination times out, shutdownNow is called;
+        // when the second awaitTermination also times out, it falls into the "thread pool did not terminate!" warn branch.
+        // Here we only verify no exception is thrown.
         ThreadKit.gracefulShutdown(pool, 100, 100, TimeUnit.MILLISECONDS)
-        // 此时线程池肯定已经关闭（shutdown 或 shutdownNow 都已经调用）
-        assertTrue(pool.isShutdown, "执行 gracefulShutdown 后，线程池应处于 shutdown 状态")
+        // At this point the pool is definitely shut down (shutdown or shutdownNow has been called)
+        assertTrue(pool.isShutdown, "After gracefulShutdown the pool should be in the shutdown state")
     }
 
-    // 6) 测试 normalShutdown：立即调用 shutdownNow，并等待超时
+    // 6) Verify normalShutdown: calls shutdownNow immediately and waits for the timeout
     @Test
     fun normalShutdown_WithRunningTask_NoException() {
         val pool = Executors.newFixedThreadPool(2)
-        // 提交一个长期任务
+        // Submit a long-running task
         pool.submit {
             try {
                 Thread.sleep(2000)
             } catch (_: InterruptedException) {
             }
         }
-        // 调用 normalShutdown，timeout 很短
+        // Call normalShutdown with a very short timeout
         ThreadKit.normalShutdown(pool, 50, TimeUnit.MILLISECONDS)
-        assertTrue(pool.isShutdown, "执行 normalShutdown 后，线程池应处于 shutdown 状态")
+        assertTrue(pool.isShutdown, "After normalShutdown the pool should be in the shutdown state")
     }
 
 }

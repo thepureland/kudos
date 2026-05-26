@@ -1,7 +1,7 @@
 package io.kudos.base.enums.ienums
 
 /**
- * 字典枚举的接口
+ * Dict enum interface.
  *
  * @author K
  * @since 1.0.0
@@ -9,12 +9,12 @@ package io.kudos.base.enums.ienums
 interface IDictEnum {
 
     /**
-     * 代码
+     * Code.
      */
     val code: String
 
     /**
-     * 展示文本（可为描述文本或国际化key）
+     * Display text (either descriptive text or an i18n key).
      */
     val displayText: String
 

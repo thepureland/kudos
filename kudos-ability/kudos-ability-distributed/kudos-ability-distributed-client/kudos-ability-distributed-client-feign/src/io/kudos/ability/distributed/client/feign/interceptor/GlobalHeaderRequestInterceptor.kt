@@ -16,38 +16,39 @@ import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
 /**
- * 全局Feign请求拦截器
- * 
- * 自动将KudosContext中的上下文信息（租户ID、子系统代码、追踪键等）添加到Feign请求头中。
- * 
- * 核心功能：
- * 1. 上下文传递：将当前线程的KudosContext信息传递到Feign请求头，实现跨服务上下文传递
- * 2. 追踪键生成：如果上下文中没有追踪键，会自动生成UUID作为追踪键
- * 3. 扩展支持：通过 [IFeignRequestContextProcess] SPI 扩展请求头处理逻辑 ——
- *    适用于"跨服务必须传，但状态不在 KudosContext 里"的数据。当前有一个生产中实现：
- *    `SeataFeignXidProcessor`（在 `kudos-ability-distributed-tx-seata` 模块）把 Seata 的
- *    `RootContext.getXID()` 写入 `TX_XID` 请求头，让被调用方能 bind 回同一个全局事务
- *    上下文。这两端配合，分布式事务的 `@GlobalTransactional` 才能正确发起分支注册和回滚。
- * 
- * 添加的请求头：
- * - TENANT_ID：租户ID
- * - SUB_SYS_CODE：子系统代码
- * - TRACE_KEY：追踪键，用于分布式链路追踪
- * - DATASOURCE_ID：数据源ID（如果存在）
- * - LOCAL：语言环境，默认zh_CN
- * - FEIGN_REQUEST：标识为Feign请求，值为"true"
- * 
- * 工作流程：
- * - 从KudosContextHolder获取当前上下文
- * - 提取上下文中的各种信息
- * - 如果追踪键为空，生成UUID作为追踪键
- * - 将所有信息添加到请求头
- * - 调用扩展处理器进行额外的请求头处理
- * 
- * 注意事项：
- * - 该拦截器会应用到所有Feign请求
- * - 追踪键如果为空会自动生成，确保每次请求都有追踪标识
- * - 语言环境如果不存在，默认使用zh_CN
+ * Global Feign request interceptor.
+ *
+ * Automatically adds KudosContext data (tenant id, subsystem code, trace key, etc.) to Feign request headers.
+ *
+ * Core features:
+ * 1. Context propagation: forwards the current thread's KudosContext through Feign headers for cross-service propagation.
+ * 2. Trace key generation: if the context has no trace key, a UUID is generated and used.
+ * 3. Extensibility: header handling can be extended through the [IFeignRequestContextProcess] SPI —
+ *    designed for data that "must cross services but lives outside KudosContext". One production implementation today:
+ *    `SeataFeignXidProcessor` (in the `kudos-ability-distributed-tx-seata` module) writes Seata's
+ *    `RootContext.getXID()` into the `TX_XID` header so the callee can bind back to the same global
+ *    transaction context. With both ends cooperating, `@GlobalTransactional` distributed transactions
+ *    can register branches and roll back correctly.
+ *
+ * Headers added:
+ * - TENANT_ID: tenant id
+ * - SUB_SYS_CODE: subsystem code
+ * - TRACE_KEY: trace key for distributed tracing
+ * - DATASOURCE_ID: data source id (if present)
+ * - LOCAL: locale, defaults to zh_CN
+ * - FEIGN_REQUEST: marker for Feign requests, value "true"
+ *
+ * Workflow:
+ * - Read the current context from KudosContextHolder.
+ * - Extract context data.
+ * - Generate a UUID trace key if none is present.
+ * - Write the data to request headers.
+ * - Invoke extension processors for additional header handling.
+ *
+ * Notes:
+ * - This interceptor applies to all Feign requests.
+ * - A trace key is auto-generated when empty so every request carries a trace identifier.
+ * - The locale defaults to zh_CN when not set.
  * @author K
  * @author AI: Codex
  * @since 1.0.0
@@ -59,49 +60,50 @@ class GlobalHeaderRequestInterceptor(
 ) : RequestInterceptor {
 
     /**
-     * 应用请求拦截：添加上下文信息到Feign请求头
-     * 
-     * 从KudosContext中提取上下文信息，添加到Feign请求头中，实现跨服务上下文传递。
-     * 
-     * 工作流程：
-     * 1. 获取当前线程的KudosContext
-     * 2. 提取上下文信息：租户ID、子系统代码、追踪键、数据源ID、语言环境
-     * 3. 追踪键处理：如果追踪键为空，自动生成UUID作为追踪键
-     * 4. 添加请求头：将所有上下文信息添加到请求头
-     * 5. 扩展处理：调用所有IFeignRequestContextProcess实现类进行额外的请求头处理
-     * 
-     * 添加的请求头：
-     * - TENANT_ID：租户ID（转换为字符串）
-     * - SUB_SYS_CODE：子系统代码
-     * - TRACE_KEY：追踪键，用于分布式链路追踪（如果为空则生成UUID）
-     * - DATASOURCE_ID：数据源ID（如果存在）
-     * - LOCAL：语言环境，格式为"语言代码_国家代码"（如果不存在则默认zh_CN）
-     * - FEIGN_REQUEST：标识为Feign请求，值为"true"
-     * 
-     * 扩展机制：
-     * - 通过 [IFeignRequestContextProcess] SPI 扩展请求头处理逻辑
-     * - 所有实现类都会被调用，可以添加额外的请求头信息
-     * - 主要使用场景：跨服务需要传递的状态不在 [io.kudos.context.core.KudosContext] 内部，
-     *   而是放在别的线程局部变量里（例如 Seata 的 `RootContext` 持有全局事务 XID）。
-     *   现有实现：`SeataFeignXidProcessor`（`kudos-ability-distributed-tx-seata` 模块）
-     *   注入 `TX_XID` 头，配套服务端 `SeataXidServletFilter` 把它 bind 回 RootContext。
-     * 
-     * 注意事项：
-     * - 该拦截器会应用到所有Feign请求
-     * - 追踪键如果为空会自动生成，确保每次请求都有追踪标识
-     * - 语言环境如果不存在，默认使用zh_CN
-     * - 数据源ID是可选的，只有存在时才会添加到请求头
-     * 
-     * @param requestTemplate Feign请求模板，用于添加请求头
+     * Apply the interceptor: add context information to Feign request headers.
+     *
+     * Extracts context from KudosContext and writes it to the Feign headers to propagate context across services.
+     *
+     * Workflow:
+     * 1. Read the current thread's KudosContext.
+     * 2. Extract context fields: tenant id, subsystem code, trace key, data source id, locale.
+     * 3. Trace key handling: if empty, generate a UUID as the trace key.
+     * 4. Header injection: write all context fields into request headers.
+     * 5. Extension hook: invoke every IFeignRequestContextProcess implementation for extra header handling.
+     *
+     * Headers added:
+     * - TENANT_ID: tenant id (string form)
+     * - SUB_SYS_CODE: subsystem code
+     * - TRACE_KEY: trace key for distributed tracing (UUID is generated when empty)
+     * - DATASOURCE_ID: data source id (when present)
+     * - LOCAL: locale in "language_country" form (defaults to zh_CN when missing)
+     * - FEIGN_REQUEST: Feign-request marker, value "true"
+     *
+     * Extension mechanism:
+     * - Header handling can be extended via the [IFeignRequestContextProcess] SPI.
+     * - Every implementation is invoked and may add extra headers.
+     * - Primary use case: state that must cross services but lives outside [io.kudos.context.core.KudosContext]
+     *   in another thread-local (e.g. Seata's `RootContext` holds the global transaction XID).
+     *   Existing implementation: `SeataFeignXidProcessor` (`kudos-ability-distributed-tx-seata` module)
+     *   injects the `TX_XID` header; the server-side `SeataXidServletFilter` binds it back into RootContext.
+     *
+     * Notes:
+     * - This interceptor applies to all Feign requests.
+     * - A trace key is auto-generated when empty so every request carries a trace identifier.
+     * - The locale defaults to zh_CN when not set.
+     * - The data source id is optional and is only added when present.
+     *
+     * @param requestTemplate the Feign request template used to add headers
      */
     override fun apply(requestTemplate: RequestTemplate) {
-        //从当前上下文中获取tenantId和subSysCode
+        // Read tenantId and subSysCode from the current context.
         val context = KudosContextHolder.get()
         val tenantId = context.tenantId
         val subSysCode = context.subSystemCode
-        // traceKey 缺失时主动生成并**反写回 context**——同一逻辑请求里后续的所有出站 Feign
-        // 调用共享同一个 traceKey，下游链路追踪能 stitch 成一棵完整 trace。旧实现只生成不反写，
-        // 每次出站都会拿到新的 UUID，链路被切碎。
+        // When traceKey is missing, generate one and **write it back to context** — every subsequent
+        // outbound Feign call within the same logical request shares the same traceKey so downstream
+        // tracing can stitch them into one trace. The previous implementation only generated without
+        // writing back, producing a new UUID per outbound call and fragmenting the trace.
         val traceKey = context.traceKey?.takeIf { it.isNotBlank() }
             ?: UUID.randomUUID().toString().also { context.traceKey = it }
         val dataSourceId = context.dataSourceId
@@ -115,10 +117,11 @@ class GlobalHeaderRequestInterceptor(
         }
         requestTemplate.header(Consts.RequestHeader.FEIGN_REQUEST, "true")
         signContextHeadersIfNecessary(requestTemplate)
-        // 旧实现每个请求 `SpringKit.getBeansOfType` 调一次——bean 数量少时开销有限但 Feign 在热
-        // 路径上反复触发，反射 + map 构造仍可见。Spring bean 在启动后不变，缓存到 lazy 字段
-        // 一次即可。`@Volatile` 是 Kotlin lazy 的默认线程安全保证；首次访问期间 SpringKit
-        // 必须已就绪（与 LockTool 同款约束）。
+        // The previous implementation called `SpringKit.getBeansOfType` per request — overhead is small
+        // when there are few beans, but Feign repeatedly hits the hot path, so reflection + map building
+        // still shows up. Spring beans do not change after startup; cache once into a lazy field.
+        // `@Volatile` is the default thread-safety guarantee of Kotlin lazy; SpringKit must already be
+        // ready by the first access (same constraint as LockTool).
         processors.forEach { it.processContext(requestTemplate, context) }
     }
 
@@ -157,10 +160,10 @@ class GlobalHeaderRequestInterceptor(
     }
 
     /**
-     * 启动期一次性解析的 processor 列表——`by lazy` 确保首次访问时 Spring 已就绪。
+     * Processor list resolved once at startup — `by lazy` ensures Spring is ready on first access.
      *
-     * 使用 Spring 的通用排序规则支持 `Ordered` / `@Order`，避免多个 processor 写同一 header 时
-     * 行为依赖容器返回顺序。
+     * Uses Spring's standard ordering rules to honour `Ordered` / `@Order`, so that when multiple
+     * processors write to the same header the behaviour does not depend on container return order.
      */
     private val processors: List<IFeignRequestContextProcess> by lazy {
         SpringKit.getBeansOfType<IFeignRequestContextProcess>().values

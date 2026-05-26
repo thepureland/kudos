@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestParam
 
 
 /**
- * 微服务 对外API
+ * External API for microservices.
  *
  * @author K
  * @author AI: Cursor

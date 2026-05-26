@@ -34,7 +34,7 @@ import java.sql.RowId
 import java.sql.SQLXML
 </#if>
 
-<@generateClassComment table.comment+"数据库实体"/>
+<@generateClassComment table.comment+" database entity"/>
 //region your codes 1
 interface ${entityName} : ${poSuperClass}<${pkColumn.kotlinTypeName}, ${entityName}> {
 //endregion your codes 1

@@ -9,7 +9,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * Each测试用例
+ * Test cases for Each.
  *
  * @author K
  * @since 1.0.0
@@ -18,21 +18,21 @@ internal class EachTest {
 
     @Test
     fun validate() {
-        // 数组类型，存在某些元素对于其中一个规则不满足
+        // Array type with some elements failing one rule
         var violations = ValidationKit.validateValue(TestEachBean::class, "contactWays", arrayOf("", null, "123"))
-        assertEquals("联系方式都不能为空", violations.first().message)
+        assertEquals("contact ways must not be blank", violations.first().message)
 
-        // 数组类型，存在某些元素对于另一个规则不满足
+        // Array type with some elements failing another rule
         violations = ValidationKit.validateValue(TestEachBean::class, "contactWays", arrayOf("123"))
-        assertEquals("联系方式的长度都必须在8到32之间", violations.first().message)
+        assertEquals("contact way length must be between 8 and 32", violations.first().message)
 
-        // 数组类型，返回值为null，直接校验通过
+        // Array type with null value; validation passes directly
         assert(ValidationKit.validateValue(TestEachBean::class, "contactWays", null).isEmpty())
 
-        // 数组类型，每个元素都满足所有规则
+        // Array type with every element satisfying all rules
         assert(ValidationKit.validateValue(TestEachBean::class, "contactWays", arrayOf("12345678", "abcdefghi")).isEmpty())
 
-        // 字符串类型，等效于直接用Constraints约束
+        // String type: equivalent to using Constraints directly
         assert(ValidationKit.validateValue(TestEachBean::class, "name", " ").isNotEmpty())
     }
 
@@ -40,14 +40,14 @@ internal class EachTest {
 
         @get:Each(
             Constraints(
-                notBlank = NotBlank(message = "联系方式都不能为空"),
-                length = Length(min = 8, max = 32, message = "联系方式的长度都必须在8到32之间")
+                notBlank = NotBlank(message = "contact ways must not be blank"),
+                length = Length(min = 8, max = 32, message = "contact way length must be between 8 and 32")
             )
         )
         val contactWays: Array<String>?,
 
         @get:Each(
-            Constraints(notBlank = NotBlank(message = "姓名不能为空"))
+            Constraints(notBlank = NotBlank(message = "name must not be blank"))
         )
         val name: String?
 

@@ -22,12 +22,12 @@ import org.springframework.transaction.event.TransactionalEventListener
 
 
 /**
- * 出网白名单缓存处理器
+ * Outbound whitelist cache handler.
  *
- * - 数据来源表：`sys_out_line`
- * - 仅缓存 `active=true` 的规则
- * - 缓存 key 形式：`systemCode::归一化 tenantId`（参见 [OutLineSystemTenantKey]）
- * - 缓存 value：`List<SysOutLineCacheEntry>`
+ * - Source table: `sys_out_line`
+ * - Caches only rules with `active=true`
+ * - Cache key format: `systemCode::normalized tenantId` (see [OutLineSystemTenantKey])
+ * - Cache value: `List<SysOutLineCacheEntry>`
  *
  * @author K
  * @since 1.0.0
@@ -46,7 +46,7 @@ open class OutLineBySystemAndTenantCache : AbstractKeyValueCacheHandler<List<Sys
 
     override fun doReload(key: String): List<SysOutLineCacheEntry> {
         require(key.contains(Consts.CACHE_KEY_DEFAULT_DELIMITER)) {
-            "缓存${CACHE_NAME}的key格式非法!"
+            "Illegal key format for cache ${CACHE_NAME}!"
         }
         val parts = key.split(Consts.CACHE_KEY_DEFAULT_DELIMITER, limit = 2)
         val tenantId = parts.getOrNull(1)?.takeIf { it.isNotEmpty() }
@@ -55,23 +55,23 @@ open class OutLineBySystemAndTenantCache : AbstractKeyValueCacheHandler<List<Sys
 
     override fun reloadAll(clear: Boolean) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.info("缓存未开启，不加载出网白名单！")
+            log.info("Cache is disabled; skip loading outbound whitelist!")
             return
         }
         val all = dao.searchAs<SysOutLineCacheEntry>(Criteria(SysOutLine::active eq true))
-        log.debug("从数据库加载了${all.size}条出网白名单。")
+        log.debug("Loaded ${all.size} outbound whitelist rules from database.")
         if (clear) clear()
         val grouped = all.groupBy { OutLineSystemTenantKey.compositeKey(it.systemCode, it.tenantId) }
         grouped.forEach { (k, list) -> KeyValueCacheKit.put(CACHE_NAME, k, list) }
-        log.debug("出网白名单缓存写入 ${grouped.size} 个维度。")
+        log.debug("Outbound whitelist cache populated with ${grouped.size} dimensions.")
     }
 
     /**
-     * 按 (systemCode, tenantId) 取启用的出网白名单。`tenantId == null` 表示平台级。
+     * Fetch active outbound whitelist by (systemCode, tenantId). `tenantId == null` means platform level.
      *
-     * @param systemCode 系统编码
-     * @param tenantId 租户 id；`null` / 空白视为平台级
-     * @return 缓存项列表；查无结果返回空列表
+     * @param systemCode system code
+     * @param tenantId tenant id; `null` / blank is treated as platform level
+     * @return list of cache entries; empty list when nothing matches
      */
     @Cacheable(
         cacheNames = [CACHE_NAME],
@@ -80,9 +80,9 @@ open class OutLineBySystemAndTenantCache : AbstractKeyValueCacheHandler<List<Sys
     )
     open fun listOutLines(systemCode: String, tenantId: String? = null): List<SysOutLineCacheEntry> {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("缓存中不存在 systemCode=${systemCode} 且 tenantId=${tenantId} 的出网白名单，从数据库中加载...")
+            log.debug("Outbound whitelist for systemCode=${systemCode}, tenantId=${tenantId} not in cache, loading from database...")
         }
-        require(systemCode.isNotBlank()) { "获取出网白名单时 systemCode 不能为空" }
+        require(systemCode.isNotBlank()) { "systemCode must not be blank when fetching outbound whitelist" }
         val tenantCriterion = if (tenantId == null) {
             SysOutLine::tenantId.isNull()
         } else {
@@ -94,7 +94,7 @@ open class OutLineBySystemAndTenantCache : AbstractKeyValueCacheHandler<List<Sys
         return dao.searchAs(criteria)
     }
 
-    /** 失效指定 (systemCode, tenantId) 维度并按需回填 */
+    /** Invalidate the given (systemCode, tenantId) dimension and refill on demand. */
     open fun refreshDimension(systemCode: String, tenantId: String?) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
         val key = OutLineSystemTenantKey.compositeKey(systemCode, tenantId)
@@ -114,7 +114,7 @@ open class OutLineBySystemAndTenantCache : AbstractKeyValueCacheHandler<List<Sys
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     open fun on(event: SysOutLineUpdated) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
-        // 更新后行仍可查；如发生跨维度迁移则旧维度缓存可能轻微滞后到下次启动 reloadAll 时纠正
+        // After update, the row is still queryable; if it migrated across dimensions the old dimension cache may lag slightly until the next reloadAll at startup
         val po = dao.get(event.id) ?: return
         refreshDimension(po.systemCode, po.tenantId)
     }

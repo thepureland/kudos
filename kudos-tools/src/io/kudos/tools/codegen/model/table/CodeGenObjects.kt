@@ -7,7 +7,7 @@ import org.ktorm.schema.int
 import org.ktorm.schema.varchar
 
 /**
- * 代码生成-对象信息数据库表-实体关联对象
+ * Code generation - object info table - entity binding object.
  *
  * @author K
  * @since 1.0.0
@@ -16,25 +16,25 @@ import org.ktorm.schema.varchar
 object CodeGenObjects : StringIdTable<CodeGenObject>("code_gen_object") {
 //endregion your codes 1
 
-    /** 对象名称 */
+    /** Object name */
     var name = varchar("name").bindTo { it.name }
 
-    /** 注释 */
+    /** Comment */
     var comment = varchar("comment").bindTo { it.comment }
 
-    /** 创建时间 */
+    /** Create time */
     var createTime = datetime("create_time").bindTo { it.createTime }
 
-    /** 创建用户 */
+    /** Create user */
     var createUser = varchar("create_user").bindTo { it.createUser }
 
-    /** 更新时间 */
+    /** Update time */
     var updateTime = datetime("update_time").bindTo { it.updateTime }
 
-    /** 更新用户 */
+    /** Update user */
     var updateUser = varchar("update_user").bindTo { it.updateUser }
 
-    /** 生成次数 */
+    /** Generation count */
     var genCount = int("gen_count").bindTo { it.genCount }
 
 

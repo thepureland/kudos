@@ -1,7 +1,7 @@
 package io.kudos.tools.codegen.core.merge
 
 /**
- * 用户自定义代码抓取器
+ * User-customized code retriever.
  *
  * @author K
  * @since 1.0.0

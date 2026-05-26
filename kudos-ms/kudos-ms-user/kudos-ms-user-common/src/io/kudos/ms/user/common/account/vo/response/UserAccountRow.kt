@@ -5,89 +5,89 @@ import java.time.LocalDateTime
 
 
 /**
- * 用户列表查询结果响应VO
+ * User list query result response VO
  *
  * @author K
  * @since 1.0.0
  */
 data class UserAccountRow (
 
-    /** 主键 */
+    /** Primary key */
     override val id: String = "",
 
-    /** 用户名 */
+    /** Username */
     val username: String? = null,
 
-    /** 租户id */
+    /** Tenant id */
     val tenantId: String? = null,
 
-    /** 用户类型字典码 */
+    /** Account type dict code */
     val accountTypeDictCode: String? = null,
 
-    /** 用户状态字典码 */
+    /** Account status dict code */
     val accountStatusDictCode: String? = null,
 
-    /** 默认语言 */
+    /** Default locale */
     val defaultLocale: String? = null,
 
-    /** 默认时区 */
+    /** Default timezone */
     val defaultTimezone: String? = null,
 
-    /** 默认货币 */
+    /** Default currency */
     val defaultCurrency: String? = null,
 
-    /** 最后登录时间 */
+    /** Last login time */
     val lastLoginTime: LocalDateTime? = null,
 
-    /** 最后登录IP */
+    /** Last login IP */
     val lastLoginIp: Long? = null,
 
-    /** 最后登出时间 */
+    /** Last logout time */
     val lastLogoutTime: LocalDateTime? = null,
 
-    /** 登录错误次数 */
+    /** Login error count */
     val loginErrorTimes: Int? = null,
 
-    /** 安全密码错误次数 */
+    /** Security password error count */
     val securityPasswordErrorTimes: Int? = null,
 
-    /** 会话密钥 */
+    /** Session key */
     val sessionKey: String? = null,
 
-    /** 认证密钥 */
+    /** Authentication key */
     val authenticationKey: String? = null,
 
-    /** 机构id */
+    /** Organization id */
     val orgId: String? = null,
 
-    /** 主管id */
+    /** Supervisor id */
     val supervisorId: String? = null,
 
-    /** 备注 */
+    /** Remark */
     val remark: String? = null,
 
-    /** 是否激活 */
+    /** Whether active */
     val active: Boolean? = null,
 
-    /** 是否内置 */
+    /** Whether built-in */
     val builtIn: Boolean? = null,
 
-    /** 创建者id */
+    /** Creator id */
     val createUserId: String? = null,
 
-    /** 创建者名称 */
+    /** Creator name */
     val createUserName: String? = null,
 
-    /** 创建时间 */
+    /** Create time */
     val createTime: LocalDateTime? = null,
 
-    /** 更新者id */
+    /** Updater id */
     val updateUserId: String? = null,
 
-    /** 更新者名称 */
+    /** Updater name */
     val updateUserName: String? = null,
 
-    /** 更新时间 */
+    /** Update time */
     val updateTime: LocalDateTime? = null,
 
 ) : IIdEntity<String>

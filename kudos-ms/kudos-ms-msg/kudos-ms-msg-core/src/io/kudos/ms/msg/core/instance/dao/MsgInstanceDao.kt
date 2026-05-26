@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository
 
 
 /**
- * 消息实例数据访问对象
+ * Message instance data access object.
  *
  * @author K
  * @author AI: Codex

@@ -4,11 +4,11 @@ import jakarta.validation.constraints.NotBlank
 
 
 /**
- * 校验用户当前密码（不消耗错误次数）。
+ * Verify the user's current password (does not consume error attempts).
  *
- * 用于"敏感操作前再次确认身份"之类的场景，与 [PassportLoginRequest] 的差别：
- * - 已知 userId（不查 username/tenant），免去重新查找
- * - 不更新 last_login_*，不动 loginErrorTimes
+ * Used for scenarios such as "re-confirming identity before sensitive operations". Differences from [PassportLoginRequest]:
+ * - userId is known (no username/tenant lookup), avoiding re-lookup
+ * - Does not update last_login_*, does not change loginErrorTimes
  *
  * @author K
  * @since 1.0.0

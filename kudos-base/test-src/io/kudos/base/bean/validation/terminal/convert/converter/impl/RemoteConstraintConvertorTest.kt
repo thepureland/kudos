@@ -8,7 +8,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * RemoteConstraintConvertor测试用例
+ * Test cases for RemoteConstraintConvertor.
  *
  * @author AI: cursor
  * @author K
@@ -24,7 +24,7 @@ internal class RemoteConstraintConvertorTest {
             val convertor = RemoteConstraintConvertor(annotation)
             val rule = convertor.getRule(annotation)
             assertNotNull(rule)
-            // checkClass应该被移除
+            // checkClass should be removed
             assertFalse(rule.containsKey("checkClass"))
         }
     }
@@ -36,9 +36,9 @@ internal class RemoteConstraintConvertorTest {
         if (annotation != null) {
             val convertor = RemoteConstraintConvertor(annotation)
             val rule = convertor.getRule(annotation)
-            // checkClass不应该在规则中
+            // checkClass should not appear in the rule
             assertFalse(rule.containsKey("checkClass"))
-            // 应该包含其他属性如message
+            // Other attributes such as message should be present
             assertTrue(rule.containsKey("message"))
         }
     }
@@ -47,7 +47,7 @@ internal class RemoteConstraintConvertorTest {
         @get:Remote(
             requestUrl = "",
             checkClass = TestRemoteValidator::class,
-            message = "远程验证失败",
+            message = "remote validation failed",
         )
         val value: String?
     )

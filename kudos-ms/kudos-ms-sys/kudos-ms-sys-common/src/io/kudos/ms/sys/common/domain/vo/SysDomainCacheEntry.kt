@@ -5,32 +5,32 @@ import java.io.Serializable
 
 
 /**
- * 域名缓存项
+ * Domain cache entry.
  *
  * @author K
  * @since 1.0.0
  */
 data class SysDomainCacheEntry (
 
-    /** 主键 */
+    /** Primary key */
     override val id: String,
 
-    /** 域名 */
+    /** Domain */
     val domain: String,
 
-    /** 系统编码 */
+    /** System code */
     val systemCode: String,
 
-    /** 租户id；`null` 表示平台级（与库表 `tenant_id IS NULL` 对应） */
+    /** Tenant id; `null` means platform-level (maps to `tenant_id IS NULL` in the DB) */
     val tenantId: String?,
 
-    /** 备注 */
+    /** Remark */
     val remark: String?,
 
-    /** 是否启用 */
+    /** Whether active */
     val active: Boolean,
 
-    /** 是否内置 */
+    /** Whether built-in */
     val builtIn: Boolean,
 
 ) : IIdEntity<String>, Serializable {

@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.core.i18n.event
 
 /**
- * 国际化（`sys_i18n`）领域事件。
+ * Domain events for i18n entries (`sys_i18n`).
  *
  * @author K
  * @author AI: Cursor

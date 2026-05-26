@@ -1,11 +1,11 @@
 plugins {
-    alias(libs.plugins.ktor) // 自动带入 BOM
+    alias(libs.plugins.ktor) // Pulls in the BOM automatically.
 }
 
 dependencies {
     api(project(":kudos-ability:kudos-ability-web:kudos-ability-web-common"))
 
-    // 配置文件支持yaml
+    // Configuration files support YAML.
     api(libs.ktor.server.core)
 //    api("io.ktor:ktor-server-test-host-jvm")
     api(libs.ktor.server.config.yaml)
@@ -13,20 +13,20 @@ dependencies {
     api(libs.ktor.server.status.pages)
     api(libs.ktor.server.websockets)
 
-    // 日志
+    // Logging
 //    api("io.ktor:ktor-server-call-logging-jvm")
-//    // CORS 插件示例
+//    // CORS plugin example
 //    api("io.ktor:ktor-server-cors-jvm")
-//    // 服务端推送SSE
+//    // Server-Sent Events (SSE)
 //    api("io.ktor:ktor-server-sse-jvm")
-//    // CSRF保护
+//    // CSRF protection
 //    api("io.ktor:ktor-server-csrf-jvm")
 
 //    api("ch.qos.logback:logback-classic:1.5.18")
 //    api("commons-logging:commons-logging:1.3.5")
 
 
-    // 测试相关
+    // Test dependencies
 //    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:${libs.versions.kotlin.get()}")
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.ktor.client.content.negotiation)
@@ -39,6 +39,6 @@ dependencies {
 }
 
 application {
-    // 指定 application 插件的主类，这样打包后，Jar 的 Manifest 会把 Main-Class: io.ktor.server.netty.EngineMain 写进去
+    // Sets the main class for the application plugin so that the packaged jar's Manifest includes Main-Class: io.ktor.server.netty.EngineMain.
     mainClass.set("io.ktor.server.netty.EngineMain")
 }

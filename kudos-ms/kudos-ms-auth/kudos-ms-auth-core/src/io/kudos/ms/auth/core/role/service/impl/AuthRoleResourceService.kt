@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional
 
 
 /**
- * 角色-资源关系业务
+ * Role-Resource relation business
  *
  * @author K
  * @author AI: Cursor
@@ -47,11 +47,11 @@ open class AuthRoleResourceService(
     @Transactional
     override fun batchBind(roleId: String, resourceIds: Collection<String>): Int {
         if (resourceIds.isEmpty()) return 0
-        // 一次 SELECT 已存在的关系（resource_id 为 character(N)，DB 返回的字符串可能带 padding，统一 trim）。
+        // SELECT existing relations once (resource_id is character(N); DB may return strings with padding, trim uniformly).
         val existing = dao.searchResourceIdsByRoleIds(listOf(roleId)).mapTo(mutableSetOf()) { it.trim() }
         val boundResourceIds = resourceIds.mapTo(mutableSetOf()) { it.trim() } - existing
         if (boundResourceIds.isEmpty()) {
-            log.debug("批量绑定角色${roleId}与${resourceIds.size}个资源的关系，全部已存在，无新增。")
+            log.debug("Batch binding relations between role ${roleId} and ${resourceIds.size} resources; all already exist, nothing added.")
             return 0
         }
         val relations = boundResourceIds.map { trimmed ->
@@ -61,7 +61,7 @@ open class AuthRoleResourceService(
             }
         }
         dao.batchInsert(relations)
-        log.debug("批量绑定角色${roleId}与${resourceIds.size}个资源的关系，成功绑定${boundResourceIds.size}条。")
+        log.debug("Batch binding relations between role ${roleId} and ${resourceIds.size} resources; successfully bound ${boundResourceIds.size} entries.")
         eventPublisher.publishEvent(AuthRoleResourceRelationsChanged(roleId, boundResourceIds.toList()))
         return boundResourceIds.size
     }
@@ -72,10 +72,10 @@ open class AuthRoleResourceService(
         val count = dao.deleteByRoleIdAndResourceId(roleId, trimmed)
         val success = count > 0
         if (success) {
-            log.debug("解绑角色${roleId}与资源${resourceId}的关系。")
+            log.debug("Unbinding relation between role ${roleId} and resource ${resourceId}.")
             eventPublisher.publishEvent(AuthRoleResourceRelationsChanged(roleId, listOf(trimmed)))
         } else {
-            log.warn("解绑角色${roleId}与资源${resourceId}的关系失败，关系不存在。")
+            log.warn("Failed to unbind relation between role ${roleId} and resource ${resourceId}; relation does not exist.")
         }
         return success
     }

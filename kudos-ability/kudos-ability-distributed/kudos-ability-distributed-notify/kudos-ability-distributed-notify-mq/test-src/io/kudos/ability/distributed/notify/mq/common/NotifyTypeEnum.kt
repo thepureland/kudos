@@ -8,6 +8,6 @@ enum class NotifyTypeEnum(
     override val displayText: String
 ) : IDictEnum {
 
-    DS("DS", "数据源");
+    DS("DS", "DataSource");
 
 }

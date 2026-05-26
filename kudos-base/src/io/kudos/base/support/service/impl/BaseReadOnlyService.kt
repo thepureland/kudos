@@ -12,11 +12,11 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
 /**
- * 基础只读业务操作：将 [IBaseReadOnlyService] 委托给 [IBaseReadOnlyDao]，与具体持久化实现（如 Ktorm）解耦。
+ * Basic read-only business operations: delegates [IBaseReadOnlyService] to [IBaseReadOnlyDao], decoupled from any specific persistence implementation (such as Ktorm).
  *
- * @param PK 实体主键类型
- * @param E 实体类型，须实现 [IIdEntity]
- * @param DAO 只读 DAO 实现类型
+ * @param PK Entity primary key type
+ * @param E Entity type; must implement [IIdEntity]
+ * @param DAO Read-only DAO implementation type
  * @author K
  * @since 1.0.0
  */

@@ -11,7 +11,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * [ClientCacheWebFilter] 请求包装策略测试。
+ * Request-wrapping strategy tests for [ClientCacheWebFilter].
  *
  * @author K
  * @author AI: Codex
@@ -51,7 +51,7 @@ internal class ClientCacheWebFilterTest {
     }
 
     /**
-     * 记录传入请求对象的 filter chain stub。
+     * Filter chain stub that records the inbound request object.
      *
      * @author K
      * @author AI: Codex

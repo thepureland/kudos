@@ -19,19 +19,24 @@ import java.util.concurrent.locks.ReadWriteLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
 /**
- * 动态数据源路由切面：拦截 `*..biz..*` 包路径下所有方法，根据 [DbContext] 里的
- * forcedDs / [KudosContextHolder] 的租户上下文 / [MultipleDataSourceProperties]
- * 配置的包路径映射，决定本次方法走哪个数据源。
+ * Dynamic data source routing aspect: intercepts all methods under `*..biz..*` package paths and
+ * decides which data source the current method should use based on `forcedDs` in [DbContext], the
+ * tenant context from [KudosContextHolder], and the package-path mapping configured in
+ * [MultipleDataSourceProperties].
  *
- * 决策优先级：
- *  1. `DbContext.forcedDs` 非空且不是只读、不是 `_context` 前缀 → 直接切到 forcedDs
- *  2. 切面命中的 service 类的包路径在 `dataSourceProperties.lookDataSourceKey` 里有配置
- *     a. 配置以 `_context` 开头 → 走"租户 + 服务 + 模式"动态解析（见 [DsContextProcessor]）
- *     b. 否则配置即数据源 key
- *  3. 都不匹配 → 不切换，沿用上层调用栈已经设的数据源
+ * Decision priority:
+ *  1. `DbContext.forcedDs` is non-empty and not read-only and not `_context`-prefixed -> switch
+ *     directly to forcedDs.
+ *  2. The package path of the service class hit by the aspect has a config in
+ *     `dataSourceProperties.lookDataSourceKey`:
+ *     a. config starts with `_context` -> use "tenant + service + mode" dynamic resolution
+ *        (see [DsContextProcessor]).
+ *     b. otherwise the config is the data source key itself.
+ *  3. Neither matches -> do not switch; inherit whatever data source the upper call stack already set.
  *
- * 已知限制：pointcut `within(*..biz..*)` 写死要求业务代码必须在 `biz` 子包下；非该
- * 结构的项目此切面不会生效（不可配置）。
+ * Known limitation: the pointcut `within(*..biz..*)` is hardcoded and requires business code to
+ * live under a `biz` sub-package; projects not following this structure will not get this aspect
+ * activated (not configurable).
  *
  * @author hanson
  * @author K
@@ -49,16 +54,16 @@ class DynamicDataSourceAspect {
     private lateinit var dsContextProcessor: DsContextProcessor
 
     /**
-     * pointcut：所有 `*..biz..*` 包路径下的类的方法。
+     * Pointcut: methods on all classes under the `*..biz..*` package path.
      */
     @Pointcut("within(*..biz..*)")
     fun aspService() {
     }
 
     /**
-     * 环绕通知。根据上下文计算是否需要 push 数据源到 baomidou 的
-     * [DynamicDataSourceContextHolder]，proceed 后 finally 阶段 pop 回去；不抛额外异常，
-     * 原始异常直接向上传播。
+     * Around advice. Based on context, decides whether to push the data source onto baomidou's
+     * [DynamicDataSourceContextHolder], proceeds, and pops it back in the `finally` block. Does
+     * not throw any extra exceptions; original exceptions propagate up unchanged.
      */
     @Around("aspService()")
     fun around(joinPoint: ProceedingJoinPoint): Any? {
@@ -68,33 +73,35 @@ class DynamicDataSourceAspect {
         } finally {
             if (changeDatasource) {
                 DynamicDataSourceContextHolder.poll()
-                log.debug("回退数据源,{0}", joinPoint.target.javaClass.packageName)
+                log.debug("Reverting data source, {0}", joinPoint.target.javaClass.packageName)
             }
         }
     }
 
     /**
-     * 决定本次调用是否切换数据源，并把决定写入 baomidou 的 ThreadLocal 栈。
-     * 返回值：true 表示已 push，本切面 finally 需要 pop；false 表示没动栈。
+     * Decides whether this invocation should switch data sources and writes the decision into
+     * baomidou's ThreadLocal stack. Return value: true means it has been pushed and this aspect's
+     * `finally` needs to pop it; false means the stack was not touched.
      */
     private fun changeDatasource(serviceClazz: Class<*>): Boolean {
         if (forceChangeMain()) {
             return true
         }
-        //找不到包所对应的数据源配置，则适用默认
+        // Falls back to default if no data source config is found for the package.
         val dsKeyConfig: String = dataSourceProperties.lookDataSourceKey(serviceClazz)
         if (dsKeyConfig.isBlank()) {
             return false
         }
-        //约定 指定_context则为数据源表，_context无需配置数据源，自动会从datasource里获取
+        // Convention: specifying _context indicates a data source table; _context itself does not
+        // require a datasource config, it is automatically fetched from datasource.
         if (dsKeyConfig.startsWith(CONTEXT_DATASOURCE)) {
             val datasourcePair = convertDatasourceConfig(dsKeyConfig)
-            //兼容多租户，不同上下文的数据源不同
+            // Compatible with multi-tenancy: different contexts use different data sources.
             val mapKey: String = DatasourceKeyTool.convertCacheMapKey(
                 checkNotNull(datasourcePair.first) { "datasource config first must not be null" },
                 KudosContextHolder.get().dataSourceId, datasourcePair.second
             )
-            //如果已经切换过了数据源，则缓存起来
+            // Cache the result if the data source has already been switched.
             var dsKey: String? = dsCacheMap[mapKey]
             if (dsKey.isNullOrBlank()) {
                 READ_WRITE_LOCK.readLock().lock()
@@ -109,22 +116,25 @@ class DynamicDataSourceAspect {
                 }
             }
             DynamicDataSourceContextHolder.push(dsKey)
-            log.debug("动态切换数据源,{0}={1}", serviceClazz.getPackageName(), dsKey)
+            log.debug("Dynamically switching data source, {0}={1}", serviceClazz.getPackageName(), dsKey)
         } else {
             DynamicDataSourceContextHolder.push(dsKeyConfig)
-            log.debug("动态切换数据源,{0}={1}", serviceClazz.getPackageName(), dsKeyConfig)
+            log.debug("Dynamically switching data source, {0}={1}", serviceClazz.getPackageName(), dsKeyConfig)
         }
         return true
     }
 
     /**
-     * 处理 `DbContext.forcedDs` 这一类"显式强制切换"的快速路径。返回 true 表示已切换
-     * 并完成 push，调用方不需要再走包路径匹配；false 表示这条路径不适用，继续后续路由。
+     * Fast path for "explicit forced switch" via `DbContext.forcedDs`. Returns true if the switch
+     * has been done and pushed, in which case the caller does not need to fall through to
+     * package-path matching; false means this path does not apply and routing should continue.
      *
-     * 跳过条件：
-     *  - forcedDs 为空 → 没有强制意图
-     *  - 是 readonly 或 `_context` 前缀 → 这类语义不在本快速路径里处理，留给后续动态解析
-     *  - forcedDs 指向的数据源在路由表里不存在 → 跳过，避免 push 不可达 key
+     * Skip conditions:
+     *  - forcedDs is empty -> no force intent.
+     *  - is readonly or `_context`-prefixed -> these semantics are not handled in this fast path
+     *    and are left for subsequent dynamic resolution.
+     *  - forcedDs points to a data source that does not exist in the routing table -> skip to
+     *    avoid pushing an unreachable key.
      */
     private fun forceChangeMain(): Boolean {
         val forcedDs = DbContext.get().forcedDs
@@ -137,37 +147,37 @@ class DynamicDataSourceAspect {
         if (!dsContextProcessor.haveDataSource(forcedDs)) {
             return false
         }
-        //适配：DsChange
+        // Adaptation: DsChange
         DynamicDataSourceContextHolder.push(forcedDs)
         if (DbContext.get().enableLog) {
-            log.info("强制指定数据源：{0}", forcedDs)
+            log.info("Forcibly specifying data source: {0}", forcedDs)
         }
         return true
     }
 
 
     /**
-     * 把 `_context` 前缀的数据源配置 + 当前 `DbParam` 拆成一个 (key, suffix) 二元组，
-     * 供 [DatasourceKeyTool.convertCacheMapKey] 生成最终的缓存 key。
-     * - readonly 强制时：suffix = MODE_READONLY，key 仍是原配置
-     * - 非 readonly 但有 forcedDs：把 forcedDs 当 key 用（适配 TenantDsChange）
-     * - 都没有：默认走 master
+     * Splits a `_context`-prefixed data source config + the current `DbParam` into a (key, suffix)
+     * pair for [DatasourceKeyTool.convertCacheMapKey] to produce the final cache key.
+     * - readonly forced: suffix = MODE_READONLY, key remains the original config.
+     * - not readonly but forcedDs is set: use forcedDs as the key (adapted for TenantDsChange).
+     * - neither: default to master.
      */
     private fun convertDatasourceConfig(dsKeyConfig: String?): Pair<String?, String?> {
         val mapKeySuffix = DatasourceConst.MODE_MASTER
         val forceDs = DbContext.get().forcedDs
-        //动态数据源才需要去判断强制切换
+        // Forced switching only needs to be evaluated for dynamic data sources.
         if (!DbContext.get().forcedDs.isNullOrBlank()) {
             return if (DbContext.get().readonly) {
-                //只读库设置
+                // Read-only database setting.
                 Pair(dsKeyConfig, DatasourceConst.MODE_READONLY)
             } else {
-                //如果不是readOnly，则将forceDs当作数据源key。因为非context开头的在第一步就被匹配走了
-                //适配：TenantDsChange
+                // If not readOnly, treat forceDs as the data source key. Non-context-prefixed
+                // values are matched in the first step. Adaptation: TenantDsChange.
                 Pair(forceDs, mapKeySuffix)
             }
         }
-        //没有强制指定数据源，则返回默认主库
+        // No forced data source specified: return the default master.
         return Pair(dsKeyConfig, DatasourceConst.MODE_MASTER)
     }
 
@@ -179,10 +189,12 @@ class DynamicDataSourceAspect {
         private val READ_WRITE_LOCK: ReadWriteLock = ReentrantReadWriteLock()
 
         /**
-         * 清空"包路径 → 真实数据源 key"的解析缓存。在租户数据源动态变更（增 / 改）后调用，
-         * 让下次调用重新跑 [DsContextProcessor.doDetermineDatasource]。
-         * `@Synchronized` + writeLock 双重保护是历史遗留，writeLock 已经够；
-         * synchronized 是冗余的，留着不删避免对外行为变。
+         * Clears the "package path -> real data source key" resolution cache. Call this after a
+         * tenant's data source is dynamically changed (added / modified) so the next invocation
+         * re-runs [DsContextProcessor.doDetermineDatasource].
+         * The `@Synchronized` + writeLock double protection is a historical artifact; writeLock
+         * alone is sufficient and `synchronized` is redundant, but it is kept to avoid changing
+         * externally visible behavior.
          */
         @Synchronized
         fun cacheDsCache() {

@@ -5,24 +5,24 @@ import java.io.Serializable
 
 
 /**
- * 登录结果。所有结局（成功 / 用户不存在 / 密码错 / 禁用）都通过本类回传，
- * HTTP 层一律 200，由 [status] 区分。
+ * Login result. All outcomes (success / user not found / wrong password / inactive) are returned
+ * via this class; the HTTP layer always returns 200, with [status] distinguishing the result.
  *
  * @author K
  * @since 1.0.0
  */
 data class PassportLoginResult(
 
-    /** 登录结果状态 */
+    /** Login result status */
     val status: PassportLoginStatusEnum,
 
-    /** 用户信息，仅 [status]=SUCCESS 时有值 */
+    /** User info, populated only when [status]=SUCCESS */
     val userInfo: UserInfoModel? = null,
 
-    /** 累计登录错误次数（含本次失败），仅 [status]=WRONG_PASSWORD 时有值 */
+    /** Cumulative login error count (including the current failure), populated only when [status]=WRONG_PASSWORD */
     val loginErrorTimes: Int? = null,
 
-    /** 附加错误说明，可为 null */
+    /** Additional error description, may be null */
     val message: String? = null,
 
 ) : Serializable {
@@ -34,39 +34,39 @@ data class PassportLoginResult(
             PassportLoginResult(status = PassportLoginStatusEnum.SUCCESS, userInfo = userInfo)
 
         fun userNotFound(): PassportLoginResult =
-            PassportLoginResult(status = PassportLoginStatusEnum.USER_NOT_FOUND, message = "用户不存在")
+            PassportLoginResult(status = PassportLoginStatusEnum.USER_NOT_FOUND, message = "User does not exist")
 
         fun wrongPassword(loginErrorTimes: Int): PassportLoginResult =
             PassportLoginResult(
                 status = PassportLoginStatusEnum.WRONG_PASSWORD,
                 loginErrorTimes = loginErrorTimes,
-                message = "密码错误"
+                message = "Incorrect password"
             )
 
         fun inactive(): PassportLoginResult =
-            PassportLoginResult(status = PassportLoginStatusEnum.INACTIVE, message = "账号已禁用")
+            PassportLoginResult(status = PassportLoginStatusEnum.INACTIVE, message = "Account is disabled")
 
-        /** 用户已启用 OTP 但未提供 authCode；客户端应弹出 OTP 输入框后重试。 */
+        /** The user has enabled OTP but did not provide authCode; the client should prompt for the OTP and retry. */
         fun otpRequired(): PassportLoginResult =
-            PassportLoginResult(status = PassportLoginStatusEnum.OTP_REQUIRED, message = "请输入动态验证码")
+            PassportLoginResult(status = PassportLoginStatusEnum.OTP_REQUIRED, message = "Please enter the dynamic verification code")
 
-        /** OTP 验证码错误；服务端已累加 login_error_times。 */
+        /** OTP code is incorrect; the server has incremented login_error_times. */
         fun otpWrong(loginErrorTimes: Int): PassportLoginResult =
             PassportLoginResult(
                 status = PassportLoginStatusEnum.OTP_WRONG,
                 loginErrorTimes = loginErrorTimes,
-                message = "动态验证码错误",
+                message = "Incorrect dynamic verification code",
             )
 
         /**
-         * 账号被冻结。
+         * Account is frozen.
          *
-         * @param freezeTitle 来自 user_account.freeze_title，透传给前端展示；空时给默认文案
+         * @param freezeTitle from user_account.freeze_title, passed through to the frontend; default text is used when blank
          */
         fun accountFrozen(freezeTitle: String?): PassportLoginResult =
             PassportLoginResult(
                 status = PassportLoginStatusEnum.ACCOUNT_FROZEN,
-                message = freezeTitle?.takeIf { it.isNotBlank() } ?: "账号已被冻结",
+                message = freezeTitle?.takeIf { it.isNotBlank() } ?: "Account is frozen",
             )
     }
 }

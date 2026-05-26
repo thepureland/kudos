@@ -20,8 +20,9 @@ import java.util.concurrent.CountDownLatch
 import kotlin.test.*
 
 /**
- * 混合 Hash 缓存（两级：本地 Caffeine + 远程 Redis）测试用例。
- * 通过 [HashCacheKit.getHashCache] 获取 "testHash" 缓存（LOCAL_REMOTE 策略），验证读写经 mix 时本地与远程一致。
+ * Mixed hash cache (two-level: local Caffeine + remote Redis) test cases.
+ * Looks up the "testHash" cache via [HashCacheKit.getHashCache] (LOCAL_REMOTE strategy) and verifies that
+ * reads/writes through mix keep local and remote consistent.
  *
  * @author K
  * @author AI: Codex
@@ -43,7 +44,7 @@ internal class LocalRemoteHashCacheTest {
     private lateinit var versionConfig: CacheVersionConfig
 
     private val cacheName = "testHash"
-    /** 专用于 TestRowWithTime，与 testHash 分离避免与 TestRow 混存导致 ClassCastException */
+    /** Dedicated to TestRowWithTime; kept separate from testHash to avoid ClassCastException when mixing with TestRow. */
     private val cacheNameWithTime = "testHashWithTime"
     private val setIdx = setOf("type")
     private val zsetIdx = setOf("type", "sortScore")
@@ -83,7 +84,7 @@ internal class LocalRemoteHashCacheTest {
             assertEquals("LocalRemote", found.name)
             assertEquals(1, found.type)
             val foundAgain = cache.getById(cacheName, key, TestRow::class)
-            assertSame(found, foundAgain, "LOCAL_REMOTE 下同一 id 再次从缓存获取应返回同一对象引用")
+            assertSame(found, foundAgain, "Under LOCAL_REMOTE, fetching the same id from the cache again should return the same object reference")
 
             val all = cache.listAll(cacheName, TestRow::class)
             assertTrue(all.any { it.id == key && it.name == "LocalRemote" })
@@ -103,7 +104,7 @@ internal class LocalRemoteHashCacheTest {
         val fromCache = hashCacheableTestService.getTestRowById("lr1")
         assertEquals("LocalRemote", fromCache?.name)
         val fromCacheAgain = hashCacheableTestService.getTestRowById("lr1")
-        assertSame(fromCache, fromCacheAgain, "LOCAL_REMOTE 下同一 id 再次从缓存获取应返回同一对象引用")
+        assertSame(fromCache, fromCacheAgain, "Under LOCAL_REMOTE, fetching the same id from the cache again should return the same object reference")
     }
 
     @Test
@@ -116,10 +117,10 @@ internal class LocalRemoteHashCacheTest {
         assertEquals("lr2", byType2.first().id)
         assertEquals("SetIdx", byType2.first().name)
         val byType2Again = cache.listBySetIndex(cacheName, TestRow::class, "type", 2)
-        assertSame(byType2.first(), byType2Again.first(), "LOCAL_REMOTE 下同一维度再次从缓存获取应返回同一对象引用")
+        assertSame(byType2.first(), byType2Again.first(), "Under LOCAL_REMOTE, fetching the same dimension from the cache again should return the same object reference")
     }
 
-    // ---------- 通过 Service 模拟二级索引/排序/分页，与缓存结果对比 ----------
+    // ---------- Use the Service to mirror secondary index / order / paging and compare with cached results ----------
 
     @Test
     fun serviceListByTypeMatchesCacheSetIndexInLocalRemoteMode() {
@@ -152,27 +153,29 @@ internal class LocalRemoteHashCacheTest {
     }
 
     /**
-     * 验证从远端回填本地时副属性索引不丢失。
-     * 旧逻辑：所有读路径回填都传 emptySet()，本地永远没有 Set/ZSet 索引，按副属性查询永远 miss 本地、反复打远端。
+     * Verifies that secondary-property indexes are not lost when backfilling local from remote.
+     * Old behavior: all read-path backfills passed emptySet(), so the local layer never built Set/ZSet
+     * indexes, secondary-property queries always missed locally, and remote was hit repeatedly.
      */
     @Test
     fun backfillFromRemoteRebuildsSecondaryIndex() {
         val cache = HashCacheKit.getHashCache(cacheName)
-        // 1. 通过 mixCache 写入带索引的数据；MixHashCache 会记录 filterable=["type"]
+        // 1. Write indexed data via mixCache; MixHashCache will record filterable=["type"].
         cache.save(cacheName, TestRow(id = "br1", name = "BR1", type = 7), setOf("type"), emptySet())
         cache.save(cacheName, TestRow(id = "br2", name = "BR2", type = 7), setOf("type"), emptySet())
 
-        // 2. 直接清空本地 caffeine（模拟本地缓存被驱逐或本节点冷启动），远程仍然有数据与索引
+        // 2. Clear local caffeine directly (simulating local eviction or a cold start for this node); remote still has data and indexes.
         val realName = versionConfig.getFinalCacheName(cacheName)
         caffeineHashCache.clear(realName)
 
-        // 3. mixCache.getById 触发回填本地（用 indexedFilterable=["type"] 重建索引）
+        // 3. mixCache.getById triggers local backfill (rebuilds the index using indexedFilterable=["type"]).
         val backfilled = cache.getById(cacheName, "br1", TestRow::class)
         assertNotNull(backfilled)
 
-        // 4. 直接走本地 caffeine 按副属性查询：旧 bug 下本地没有索引应当返回空；修复后能查到回填的 br1
+        // 4. Query local caffeine directly by the secondary property: with the old bug the local layer
+        //    had no index and would return empty; after the fix it should find the backfilled br1.
         val byTypeLocal = caffeineHashCache.listBySetIndex(realName, TestRow::class, "type", 7)
-        assertTrue(byTypeLocal.any { it.id == "br1" }, "回填后本地应能按 type 索引找到 br1")
+        assertTrue(byTypeLocal.any { it.id == "br1" }, "After backfill, local should find br1 via the type index")
     }
 
     @Test

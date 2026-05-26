@@ -13,7 +13,7 @@ import io.kudos.ms.sys.core.dict.service.iservice.ISysDictService
 import org.springframework.web.bind.annotation.*
 
 /**
- * 字典管理控制器
+ * Dictionary management controller.
  *
  * @author K
  * @since 1.0.0
@@ -24,10 +24,10 @@ class SysDictAdminController :
     BaseCrudController<String, ISysDictService, SysDictQuery, SysDictRow, SysDictDetail, SysDictEdit, ISysDictFormCreate, ISysDictFormUpdate>() {
 
     /**
-     * 返回指定id的字典
+     * Return the dictionary for the given id.
      *
-     * @param id 主键
-     * @return SysDictItemRow，找不到返回null
+     * @param id primary key
+     * @return SysDictItemRow; returns null if not found
      */
     @GetMapping("/getDict")
     fun getDict(id: String): SysDictCacheEntry? {
@@ -35,9 +35,9 @@ class SysDictAdminController :
     }
 
     /**
-     * 分页查询
+     * Paged query.
      *
-     * @param sysDictQuery 查询参数载体
+     * @param sysDictQuery query parameter container
      * @return PagingSearchResult<SysDictRow>
      */
     @PostMapping("/pagingSearchDict")
@@ -47,22 +47,22 @@ class SysDictAdminController :
     }
 
     /**
-     * 返回原子服务编码对应的所有字典类型
+     * Return all dictionary types for the given atomic service code.
      *
-     * @param atomicServiceCode 原子服务编码
-     * @param activeOnly 仅启用，为null或false将包含未启用的
-     * @return Map<主键，字典类型>
+     * @param atomicServiceCode atomic service code
+     * @param activeOnly active only; null or false includes inactive ones
+     * @return Map<primary key, dictionary type>
      */
     @GetMapping("/getDictTypesByAtomicServiceCode")
     fun getDictTypesByAtomicServiceCode(atomicServiceCode: String, activeOnly: Boolean = true): Map<String, String> =
         service.getDictTypesByAtomicServiceCode(atomicServiceCode, activeOnly)
 
     /**
-     * 更新active状态
+     * Update the active status.
      *
-     * @param id 主键
-     * @param active 是否启用
-     * @return 是否更新成功
+     * @param id primary key
+     * @param active whether enabled
+     * @return whether the update succeeded
      */
     @PutMapping("/updateActive")
     fun updateActive(id: String, active: Boolean): Boolean {

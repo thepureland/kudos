@@ -28,33 +28,34 @@ import java.util.ArrayList
 import java.util.Optional
 
 /**
- * 线性 [Wizard.Flow] 实现：按构造时给定的顺序串行前进。
- * 大多数"配置 → 选项 → 完成"式向导直接复用本实现即可。
+ * Linear [Wizard.Flow] implementation: advances serially in the order given at construction.
+ * Most "config -> options -> finish" style wizards can reuse this implementation directly.
  *
- * @param pages 顺序固定的页面集合；null 按空列表处理
+ * @param pages Page collection with a fixed order; null is treated as an empty list
  * @author K
  * @author AI: Codex
  * @since 1.0.0
  */
 class LinearWizardFlow(pages: Collection<Wizard.WizardPane?>?) : Wizard.Flow {
 
-    /** 内部不可变拷贝，避免外部修改原集合影响向导流程 */
+    /** Internal immutable copy, so external mutation of the original collection cannot affect the wizard flow. */
     private val pages: List<Wizard.WizardPane?>
 
     /**
-     * 便捷构造：vararg 形式直接传入若干页。
+     * Convenience constructor: pass pages directly in vararg form.
      *
-     * @param pages 页面顺序列表
+     * @param pages Ordered list of pages
      * @author K
      * @since 1.0.0
      */
     constructor(vararg pages: Wizard.WizardPane) : this(listOf(*pages))
 
     /**
-     * 推进到下一页：取当前页在列表中的位置 +1。
+     * Advance to the next page: take the current page's position in the list + 1.
      *
-     * @param currentPage 当前页（null 视为索引 -1，会推进到第一页）
-     * @return 下一页；若已是最后一页，会抛 [IndexOutOfBoundsException]——由 [canAdvance] 兜底判断
+     * @param currentPage Current page (null is treated as index -1, advancing to the first page)
+     * @return The next page; if already on the last page, throws [IndexOutOfBoundsException] --
+     *         [canAdvance] is expected to guard this.
      * @author K
      * @since 1.0.0
      */
@@ -64,10 +65,10 @@ class LinearWizardFlow(pages: Collection<Wizard.WizardPane?>?) : Wizard.Flow {
     }
 
     /**
-     * 判断是否还有下一页。
+     * Tell whether there is still a next page.
      *
-     * @param currentPage 当前页
-     * @return true 表示后面仍有页面可用
+     * @param currentPage Current page
+     * @return true if more pages are still available after it
      * @author K
      * @since 1.0.0
      */

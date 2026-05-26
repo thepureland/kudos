@@ -1,38 +1,38 @@
 package io.kudos.ms.sys.common.param.vo.response
 
 /**
- * 参数列表查询结果响应VO
+ * Parameter list query result response VO.
  *
  * @author K
  * @since 1.0.0
  */
 data class SysParamRow (
 
-    /** 主键 */
+    /** Primary key */
     val id: String = "",
 
-    /** 参数名称 */
+    /** Parameter name */
     val paramName: String = "",
 
-    /** 参数值 */
+    /** Parameter value */
     val paramValue: String = "",
 
-    /** 默认参数值 */
+    /** Default parameter value */
     val defaultValue: String? = null,
 
-    /** 原子服务编码  */
+    /** Atomic service code */
     val atomicServiceCode: String = "",
 
-    /** 序号 */
+    /** Order number */
     val orderNum: Int? = null,
 
-    /** 备注 */
+    /** Remark */
     val remark: String? = null,
 
-    /** 是否启用 */
+    /** Whether active */
     val active: Boolean = true,
 
-    /** 是否内置 */
+    /** Whether built-in */
     val builtIn: Boolean = true,
 
 )

@@ -8,9 +8,10 @@ import io.kudos.base.io.FilenameKit
 import java.util.Locale
 
 /**
- * 图片压缩器工厂。
+ * Image compressor factory.
  *
- * 提供两种构造入口：按 MIME 类型显式选择，或按文件后缀选择（可强制覆盖为 WebP）。
+ * Provides two construction entry points: select explicitly by MIME type, or select
+ * by file suffix (with the option to force-override to WebP).
  *
  * @author K
  * @author AI: Codex
@@ -19,11 +20,11 @@ import java.util.Locale
 object ImageCompressorFactory {
 
     /**
-     * 按 MIME 类型选择压缩器。
+     * Selects a compressor by MIME type.
      *
-     * @param mimeType `image/jpeg` / `image/png` / `image/webp` 之一
-     * @return 对应的 [ImageCompressor] 实例
-     * @throws UnsupportedOperationException 当 MIME 不在支持列表中
+     * @param mimeType one of `image/jpeg` / `image/png` / `image/webp`
+     * @return the corresponding [ImageCompressor] instance
+     * @throws UnsupportedOperationException when the MIME is not in the supported list
      * @author K
      * @since 1.0.0
      */
@@ -37,13 +38,14 @@ object ImageCompressorFactory {
     }
 
     /**
-     * 按文件路径后缀选择压缩器；若 [webp] 为 true 则强制覆盖为 WebP。
-     * `webp = true` 让业务侧"无论原图类型，统一压成 WebP"成为一行可配置开关。
+     * Selects a compressor by file path suffix; if [webp] is true, force-overrides to WebP.
+     * `webp = true` lets business code turn "always compress to WebP regardless of source
+     * image type" into a single configurable switch.
      *
-     * @param outputFilePath 用于解析后缀的目标文件路径
-     * @param webp 是否强制走 WebP
-     * @return 选中的 [ImageCompressor]
-     * @throws UnsupportedOperationException 后缀不支持时
+     * @param outputFilePath target file path used to resolve the suffix
+     * @param webp whether to force WebP
+     * @return the selected [ImageCompressor]
+     * @throws UnsupportedOperationException when the suffix is unsupported
      * @author K
      * @since 1.0.0
      */

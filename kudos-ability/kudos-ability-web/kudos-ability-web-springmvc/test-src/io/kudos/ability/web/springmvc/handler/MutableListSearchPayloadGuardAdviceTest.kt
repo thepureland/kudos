@@ -30,7 +30,7 @@ class MutableListSearchPayloadGuardAdviceTest {
     private val converterType: Class<out HttpMessageConverter<*>> = JacksonJsonHttpMessageConverter::class.java
 
     @Test
-    /** ListSearchPayload 参数应被纳入 Advice 处理范围 */
+    /** ListSearchPayload parameters should be in scope of the Advice. */
     fun supports_listSearchPayloadParameter_returnsTrue() {
         val parameter = methodParameter("acceptMutable", MutableListSearchPayload::class.java)
         val targetType = parameter.parameterType
@@ -38,7 +38,7 @@ class MutableListSearchPayloadGuardAdviceTest {
     }
 
     @Test
-    /** 非 ListSearchPayload 参数不应触发 Advice */
+    /** Non-ListSearchPayload parameters should not trigger the Advice. */
     fun supports_nonListSearchPayloadParameter_returnsFalse() {
         val parameter = methodParameter("acceptPlain", String::class.java)
         val targetType = parameter.parameterType
@@ -46,7 +46,7 @@ class MutableListSearchPayloadGuardAdviceTest {
     }
 
     @Test
-    /** 外部请求体若为 MutableListSearchPayload 必须被拒绝 */
+    /** External request bodies of type MutableListSearchPayload must be rejected. */
     fun afterBodyRead_rejectsMutableListSearchPayload() {
         val parameter = methodParameter("acceptMutable", MutableListSearchPayload::class.java)
         val ex = assertThrows(ServiceException::class.java) {
@@ -62,7 +62,7 @@ class MutableListSearchPayloadGuardAdviceTest {
     }
 
     @Test
-    /** 业务查询载体（ListSearchPayload 子类）应允许通过 */
+    /** Business query payloads (ListSearchPayload subclasses) should be allowed through. */
     fun afterBodyRead_allowsBusinessQueryPayload() {
         val parameter = methodParameter("acceptQuery", Query::class.java)
         val payload = Query()

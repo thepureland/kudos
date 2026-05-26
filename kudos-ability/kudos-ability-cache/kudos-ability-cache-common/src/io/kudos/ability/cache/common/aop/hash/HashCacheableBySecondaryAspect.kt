@@ -24,13 +24,17 @@ import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.jvm.kotlinFunction
 
 /**
- * [HashCacheableBySecondary] 切面：先按副属性等值（listBySetIndex）查缓存，未命中则执行方法并将结果 saveBatch 回写。
- * 支持四种方法返回类型：
- * - [List]&lt;[IIdEntity]&gt;：命中返回列表，未命中将方法返回的列表 saveBatch 回写。
- * - [String]（可空）：命中返回首个实体的 id，未命中仅执行方法（回写由方法体内完成）。
- * - [List]&lt;[String]&gt;：命中返回 id 列表，未命中仅执行方法（回写由方法体内完成）。
- * - 单个对象（可空）：命中返回缓存列表的首个元素，未命中将方法返回的单个实体（若为 [IIdEntity]）saveBatch 回写后返回。
- * 适用于 Caffeine、Redis 等任意 Hash 缓存实现。
+ * [HashCacheableBySecondary] aspect: first queries the cache by secondary-property equality (listBySetIndex); on a miss,
+ * executes the method and writes the result back via saveBatch.
+ * Supports four method return types:
+ * - [List]&lt;[IIdEntity]&gt;: on hit returns the list; on miss writes the returned list back via saveBatch.
+ * - [String] (nullable): on hit returns the first entity's id; on miss only executes the method (write-back is handled
+ *   inside the method body).
+ * - [List]&lt;[String]&gt;: on hit returns the id list; on miss only executes the method (write-back is handled inside
+ *   the method body).
+ * - Single object (nullable): on hit returns the first element of the cached list; on miss writes back the single
+ *   returned entity (if it is an [IIdEntity]) via saveBatch and returns it.
+ * Works with any Hash cache implementation such as Caffeine or Redis.
  *
  * @author K
  * @author AI: Cursor
@@ -40,7 +44,7 @@ import kotlin.reflect.jvm.kotlinFunction
 @Component
 @Lazy(false)
 @ConditionalOnBean(MixHashCacheManager::class)
-@Order(0) // 同 [HashCacheableByPrimaryAspect]。Cacheable 类切面一律标 0。
+@Order(0) // Same as [HashCacheableByPrimaryAspect]. All Cacheable-class aspects are marked 0.
 class HashCacheableBySecondaryAspect {
 
     private val nameDiscoverer = SpelExpressionCache.parameterNameDiscoverer
@@ -67,7 +71,7 @@ class HashCacheableBySecondaryAspect {
         if (keyExpressions.isEmpty()) return joinPoint.proceed()
         val propertyValues = keyExpressions.map { expr ->
             val prop = derivePropertyFromKey(expr.trim())
-                ?: throw IllegalArgumentException("HashCacheableBySecondary: filterExpressions 每项须为单参数 SpEL（如 #type），当前: $expr")
+                ?: throw IllegalArgumentException("HashCacheableBySecondary: each filterExpressions element must be a single-parameter SpEL (e.g. #type); current: $expr")
             val value = SpelExpressionCache.get(expr.trim()).getValue(context) ?: return joinPoint.proceed()
             prop to value
         }
@@ -131,22 +135,23 @@ class HashCacheableBySecondaryAspect {
     }
 
     /**
-     * 标注方法返回值的形态，决定切面如何与 hash 缓存交互（取/存）。
+     * Annotates the shape of the method's return value; determines how the aspect interacts with the hash cache (read/write).
      */
     private enum class ReturnMode { SINGLE_ID, LIST_IDS, LIST_ENTITIES, SINGLE_ENTITY }
 
     /**
-     * 按反射出来的 Java 返回类型判定 [ReturnMode]。
+     * Determines the [ReturnMode] based on the reflected Java return type.
      *
-     * - `String` → SINGLE_ID
-     * - `Set<String>` / `List<String>` → LIST_IDS
-     * - `List<...其它>` → LIST_ENTITIES
-     * - 其它 → SINGLE_ENTITY
+     * - `String` -> SINGLE_ID
+     * - `Set<String>` / `List<String>` -> LIST_IDS
+     * - `List<...other>` -> LIST_ENTITIES
+     * - other -> SINGLE_ENTITY
      *
-     * 走泛型类型擦除后能拿到 `ParameterizedType`，因此通过反射访问 `genericReturnType`。
+     * After generic type erasure, `ParameterizedType` is still available, so the type is accessed via reflection on
+     * `genericReturnType`.
      *
-     * @param method 目标方法
-     * @return 推断出的返回形态
+     * @param method target method
+     * @return inferred return shape
      * @author K
      * @since 1.0.0
      */
@@ -171,11 +176,11 @@ class HashCacheableBySecondaryAspect {
     }
 
     /**
-     * 解析 cache 名：注解 cacheNames > 类上 `@CacheConfig.cacheNames` > null。
+     * Resolve the cache name: annotation cacheNames > class-level `@CacheConfig.cacheNames` > null.
      *
-     * @param joinPoint AOP 切入点
-     * @param ann 注解实例
-     * @return cache 名；都未配置返回 null
+     * @param joinPoint AOP join point
+     * @param ann annotation instance
+     * @return cache name, or null if neither is configured
      * @author K
      * @since 1.0.0
      */
@@ -186,13 +191,16 @@ class HashCacheableBySecondaryAspect {
         return null
     }
 
-    /** "#paramName" → paramName，否则 null */
+    /** "#paramName" -> paramName, otherwise null. */
     private fun derivePropertyFromKey(keyExpr: String): String? =
         Regex("^#(\\w+)$").find(keyExpr)?.groupValues?.get(1)
 
     /**
-     * 单 key：一次 listBySetIndex；多 key：多次 listBySetIndex 后按 id 取交集，再按 id 从缓存 getById 取实体。
-     * 多 key 时用 getById 保证 LOCAL_REMOTE 下返回本地同一引用（避免第二次 listBySetIndex 回写远程实例覆盖本地后与 firstList 引用不一致）。
+     * Single key: one listBySetIndex call; multiple keys: multiple listBySetIndex calls intersected by id, then getById
+     * from the cache to fetch each entity.
+     * For multiple keys, getById is used to ensure the same local reference is returned under LOCAL_REMOTE (otherwise a
+     * second listBySetIndex would write the remote instance back over the local copy, leaving its references inconsistent
+     * with firstList).
      */
     private fun queryByKeys(
         hashCache: IHashCache,
@@ -216,10 +224,10 @@ class HashCacheableBySecondaryAspect {
     }
 
     /**
-     * 把通配的 `KClass<out IIdEntity<*>>` 强转为 `KClass<out IIdEntity<Any?>>`，集中放置 unchecked cast 警告。
+     * Cast the wildcard `KClass<out IIdEntity<*>>` to `KClass<out IIdEntity<Any?>>`, localizing the unchecked cast warning.
      *
-     * @param entityClass 通配实体类型
-     * @return 已收窄的实体类型
+     * @param entityClass wildcard entity type
+     * @return narrowed entity type
      * @author K
      * @since 1.0.0
      */

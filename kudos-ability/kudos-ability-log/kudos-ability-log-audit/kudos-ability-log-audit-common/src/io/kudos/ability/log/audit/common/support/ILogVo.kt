@@ -3,10 +3,11 @@ package io.kudos.ability.log.audit.common.support
 import java.io.Serializable
 
 /**
- * 审计日志 VO 的标记接口。
+ * Marker interface for audit log VOs.
  *
- * 主要用于在跨进程 / MQ 序列化时统一基类约束（强制实现 [Serializable]），并便于通过该接口做泛型约束。
- * 没有方法 —— 仅作类型标记。
+ * Used primarily to enforce a unified base-class constraint during cross-process /
+ * MQ serialization (requiring [Serializable]), and to constrain generics via this
+ * interface. No methods — type marker only.
  *
  * @author K
  * @author AI: Codex

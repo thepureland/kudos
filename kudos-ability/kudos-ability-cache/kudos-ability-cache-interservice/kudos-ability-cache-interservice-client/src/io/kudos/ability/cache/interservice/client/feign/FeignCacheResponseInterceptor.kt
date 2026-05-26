@@ -11,51 +11,51 @@ import java.io.IOException
 import java.lang.reflect.Type
 
 /**
- * Feign 请求返回拦截器：
- * 当请求为 304 时，直接获取本地缓存结果
+ * Feign response interceptor:
+ * when the response is 304, returns the local cache result directly.
  */
 class FeignCacheResponseInterceptor(
-    private val delegate: Decoder,               // 真实的 Feign Decoder，由 Spring Cloud 配置好
-    private val cacheHelper: ClientCacheHelper   // 直接构造注入，不再使用字段注入
+    private val delegate: Decoder,               // the real Feign Decoder, configured by Spring Cloud
+    private val cacheHelper: ClientCacheHelper   // constructor-injected; no field injection
 ) : Decoder {
 
     @Throws(IOException::class, FeignException::class)
     override fun decode(response: Response, type: Type): Any? {
-        // 没开本地缓存，直接走原始 decoder
+        // Local cache is disabled: fall through to the original decoder.
         if (!cacheHelper.hasLocalCache()) {
             return delegate.decode(response, type)
         }
 
         val headers = response.headers()
 
-        // 如果 header 没有 cache-id 或 cache-status，就不走缓存逻辑
+        // Skip the cache flow if the headers lack cache-id or cache-status.
         if (!headers.containsKey(ClientCacheKey.HEADER_KEY_CACHE_UID) ||
             !headers.containsKey(ClientCacheKey.HEADER_KEY_CACHE_STATUS)
         ) {
             return delegate.decode(response, type)
         }
 
-        // 获取本次请求的本地缓存 key：url+method+params
+        // Local cache key for this request: url+method+params
         val cacheKeys = response.request().headers()[ClientCacheKey.HEADER_KEY_CACHE_KEY]
         val cacheKey = cacheKeys?.firstOrNull()
         if (cacheKey.isNullOrEmpty()) {
             return delegate.decode(response, type)
         }
 
-        log.info("缓存Key：$cacheKey")
+        log.info("Cache key: $cacheKey")
 
-        // 获取 response 的 cache-status
+        // Read the response cache-status.
         val status = headers[ClientCacheKey.HEADER_KEY_CACHE_STATUS]
         val cacheStatus = status?.firstOrNull()
-        log.info("服务返回状态：$cacheStatus")
+        log.info("Service response status: $cacheStatus")
 
-        // 真正的结果
+        // The actual result.
         val result: Any? = if (ClientCacheKey.STATUS_USE_CACHE == cacheStatus) {
-            // header 状态为 304，从本地缓存获取数据并返回
+            // Header status is 304: load and return the data from the local cache.
             val cacheItem = cacheHelper.loadFromLocalCache(cacheKey)
             cacheItem?.cacheData
         } else {
-            // 否则，将本次数据放入本地缓存
+            // Otherwise, put the fresh data into the local cache.
             val decoded = delegate.decode(response, type)
 
             val cacheUids = headers[ClientCacheKey.HEADER_KEY_CACHE_UID]

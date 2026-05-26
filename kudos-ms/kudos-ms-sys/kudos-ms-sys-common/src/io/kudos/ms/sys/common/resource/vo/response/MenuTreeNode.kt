@@ -1,17 +1,17 @@
 package io.kudos.ms.sys.common.resource.vo.response
 
 /**
- * 系统菜单树结点响应VO
+ * System menu tree node response VO
  *
  * @author K
  * @since 1.0.0
  */
 open class MenuTreeNode : BaseMenuTreeNode() {
 
-    /** url */
+    /** URL */
     var index: String? = null
 
-    /** 图标 */
+    /** Icon */
     var icon: String? = null
 
 }

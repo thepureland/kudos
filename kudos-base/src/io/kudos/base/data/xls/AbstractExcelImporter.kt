@@ -19,71 +19,72 @@ import kotlin.reflect.KProperty1
 import kotlin.reflect.full.primaryConstructor
 
 /**
- * excel数据导入器抽象类
- * 注意事项：
- * 1. Excel第一行为列描述信息，并非要导入的数据，在导入时第一行会被忽略
- * 2. 行对象类支持数据类和普通类。
- *    为数据类时，属性必须全部定义在主构造函数中，可以是只读的(val);为普通类时，必须存在空构造函数，属性只能是可读可写的(var)。
- * 3. 数据校验的默认实现是Kudos的bean校验方式(ValidationKit)
- * 4. 错误消息全部通过IllegalStateException异常抛出
- * 5. 如果需要对单元格的值作特殊处理，可重写getPropertyValue方法
- * 6. 如果需要复杂的校验逻辑，可重写validate方法
+ * Abstract base class for Excel data importers.
+ * Notes:
+ * 1. The first row of the Excel file is the column header (description), not data; it is skipped during import.
+ * 2. Row-object classes may be data classes or plain classes.
+ *    For data classes all properties must be declared in the primary constructor and may be read-only (val);
+ *    for plain classes a no-argument constructor is required and properties must be read-write (var).
+ * 3. The default validation implementation uses Kudos's bean validation (ValidationKit).
+ * 4. All error messages are reported through IllegalStateException.
+ * 5. To customize cell-value handling, override getPropertyValue.
+ * 6. To implement more sophisticated validation, override validate.
  *
  * @author K
  * @since 1.0.0
  */
 abstract class AbstractExcelImporter<T : Any> : IExcelImporter<T> {
 
-    /** 日志器 */
+    /** Logger. */
     private val log = LogFactory.getLog(AbstractExcelImporter::class)
 
     /**
-     * 上传的excel文件的输入流
+     * Input stream of the uploaded Excel file.
      */
     private lateinit var inputStream: InputStream
 
     /**
-     * 第一个sheet页
+     * The first sheet.
      */
     private lateinit var sheet: Sheet
 
-    /** 属性反射缓存：按属性名缓存 [KProperty1]，避免每行重新反射 */
+    /** Property reflection cache: caches [KProperty1] by property name to avoid re-reflecting on each row. */
     private val propertyMap = mutableMapOf<String, KProperty1<T, Any?>>()
 
-    /** 按 Excel 列顺序排列的属性名列表（由 [getPropertyNames] 提供） */
+    /** Property names ordered to match the Excel columns (provided by [getPropertyNames]). */
     private lateinit var propertyNames: List<String>
 
     /**
-     * 按excel中的列顺序返回对应的属性名列表
+     * Returns the property names in Excel column order.
      *
-     * @return List(属性名)
+     * @return list of property names
      * @author K
      * @since 1.0.0
      */
     protected abstract fun getPropertyNames(): List<String>
 
     /**
-     * 返回数据所在sheet页的名称
+     * Returns the name of the sheet that contains the data.
      *
-     * @return sheet页的名称
+     * @return sheet name
      * @author K
      * @since 1.0.0
      */
     protected abstract fun getSheetName(): String
 
     /**
-     * 保存数据
+     * Saves the data.
      *
-     * @param rowObjects 行对象列表
+     * @param rowObjects list of row objects
      * @author K
      * @since 1.0.0
      */
     protected abstract fun save(rowObjects: List<T>)
 
     /**
-     * 检查数据合法性
+     * Validates the data.
      *
-     * @param rowObjects 行对象列表
+     * @param rowObjects list of row objects
      * @author K
      * @since 1.0.0
      */
@@ -91,41 +92,41 @@ abstract class AbstractExcelImporter<T : Any> : IExcelImporter<T> {
         for (rowObject in rowObjects) {
             val violations = ValidationKit.validateBean(rowObject)
             if (violations.isNotEmpty()) {
-                error("导入的数据校验不通过：${violations.first().message}")
+                error("Imported data failed validation: ${violations.first().message}")
             }
         }
     }
 
     /**
-     * 导入Excel文件
-     * 
-     * 执行完整的Excel导入流程：检查模板、解析数据、验证数据、保存数据。
-     * 
-     * 工作流程：
-     * 1. 打开文件输入流：使用FileKit.openInputStream打开文件
-     * 2. 检查模板：验证Excel文件格式和Sheet页是否存在
-     * 3. 包装行对象：将Excel的每一行数据转换为Java对象
-     * 4. 验证数据：对转换后的对象进行数据校验
-     * 5. 保存数据：调用子类实现的save方法保存数据
-     * 6. 返回结果：返回导入的行对象列表
-     * 
-     * 资源管理：
-     * - 使用use扩展函数确保输入流会被正确关闭
-     * - 即使发生异常，资源也会被正确释放
-     * 
-     * 异常处理：
-     * - 如果模板检查失败，会抛出IllegalStateException
-     * - 如果数据解析失败，会抛出IllegalStateException
-     * - 如果数据验证失败，会抛出IllegalStateException
-     * 
-     * 注意事项：
-     * - Excel第一行会被忽略（作为列头）
-     * - 数据从第二行开始解析
-     * - 所有错误都会通过异常抛出，不会静默失败
-     * 
-     * @param xlsFile Excel文件对象
-     * @return 导入的行对象列表
-     * @throws IllegalStateException 如果导入过程中发生任何错误
+     * Imports an Excel file.
+     *
+     * Executes the full import flow: check the template, parse data, validate, and save.
+     *
+     * Workflow:
+     * 1. Open the file input stream via FileKit.openInputStream.
+     * 2. Check the template: verify the Excel format and that the sheet exists.
+     * 3. Wrap row objects: convert each Excel row to a Java object.
+     * 4. Validate: run validation against the converted objects.
+     * 5. Save: invoke the subclass's save implementation.
+     * 6. Return: return the list of imported row objects.
+     *
+     * Resource management:
+     * - Uses the `use` extension to ensure the input stream is closed correctly.
+     * - Resources are released even if an exception is thrown.
+     *
+     * Exception handling:
+     * - Template check failures throw IllegalStateException.
+     * - Data-parse failures throw IllegalStateException.
+     * - Validation failures throw IllegalStateException.
+     *
+     * Notes:
+     * - The first Excel row is skipped (treated as the header).
+     * - Data is parsed starting from the second row.
+     * - All errors are propagated via exceptions -- never silently swallowed.
+     *
+     * @param xlsFile Excel file
+     * @return list of imported row objects
+     * @throws IllegalStateException when any error occurs during import
      */
     override fun import(xlsFile: File): List<T> {
         return FileKit.openInputStream(xlsFile).use {
@@ -139,74 +140,74 @@ abstract class AbstractExcelImporter<T : Any> : IExcelImporter<T> {
     }
 
     /**
-     * 检查Excel模板是否正确
-     * 
-     * 验证Excel文件格式和指定的Sheet页是否存在。
-     * 
-     * 工作流程：
-     * 1. 打开工作簿：使用Workbook.getWorkbook读取Excel文件
-     * 2. 获取Sheet名称：调用子类实现的getSheetName方法
-     * 3. 查找Sheet页：在工作簿中查找指定名称的Sheet页
-     * 4. 验证结果：如果找不到Sheet页，抛出异常
-     * 
-     * 验证内容：
-     * - Excel文件格式是否正确
-     * - 指定的Sheet页是否存在
-     * 
-     * 异常处理：
-     * - 如果文件格式错误，会抛出相应的异常
-     * - 如果Sheet页不存在，会抛出IllegalStateException
-     * 
-     * 注意事项：
-     * - 使用use扩展函数确保工作簿资源被正确释放
-     * - Sheet页名称必须完全匹配（区分大小写）
-     * 
-     * @throws IllegalStateException 如果模板不正确或Sheet页不存在
+     * Checks whether the Excel template is correct.
+     *
+     * Verifies the Excel file format and that the configured sheet exists.
+     *
+     * Workflow:
+     * 1. Open the workbook with Workbook.getWorkbook.
+     * 2. Get the sheet name from the subclass via getSheetName.
+     * 3. Look up the sheet in the workbook.
+     * 4. If the sheet is missing, throw an exception.
+     *
+     * What is verified:
+     * - The Excel file format is correct.
+     * - The configured sheet exists.
+     *
+     * Exception handling:
+     * - File-format errors raise the corresponding exception.
+     * - Missing sheets raise IllegalStateException.
+     *
+     * Notes:
+     * - Uses the `use` extension to ensure the workbook is released properly.
+     * - Sheet name matching is case-sensitive and must match exactly.
+     *
+     * @throws IllegalStateException when the template is invalid or the sheet does not exist
      */
     protected open fun checkTemplate() {
         inputStream.use {
             val workbook = Workbook.getWorkbook(it)
             val sheetName = getSheetName()
-            sheet = workbook.getSheet(sheetName) ?: error("找不到名称【$sheetName】对应的Sheet页！")
+            sheet = workbook.getSheet(sheetName) ?: error("Sheet named [$sheetName] not found!")
         }
     }
 
     /**
-     * 将Excel的每行数据包装成对象
-     * 
-     * 遍历Excel的每一行（跳过第一行列头），将单元格数据转换为Java对象。
-     * 
-     * 工作流程：
-     * 1. 获取属性名列表：调用子类实现的getPropertyNames方法
-     * 2. 获取行对象类型：通过反射获取泛型参数的实际类型
-     * 3. 遍历数据行：从第二行开始（第一行是列头）
-     * 4. 处理每行数据：
-     *    - 获取行中的所有单元格
-     *    - 根据列索引获取对应的属性名
-     *    - 调用getPropertyValue获取属性值
-     *    - 根据对象类型（数据类或普通类）设置属性值
-     * 5. 添加到列表：将创建的对象添加到结果列表
-     * 
-     * 对象创建方式：
-     * - 数据类：先收集所有属性值，然后通过主构造函数创建对象
-     * - 普通类：先创建空对象，然后逐个设置属性值
-     * 
-     * 属性映射：
-     * - 列索引对应属性名列表的索引
-     * - 第一列对应第一个属性，第二列对应第二个属性，以此类推
-     * 
-     * 异常处理：
-     * - 如果读取数据出错，会记录错误日志并抛出IllegalStateException
-     * - 如果属性值类型转换失败，会在getPropertyValue中处理
-     * 
-     * 注意事项：
-     * - 第一行（索引0）会被跳过，作为列头
-     * - 属性名列表的大小必须与Excel列数匹配
-     * - 数据类要求所有属性都在主构造函数中
-     * - 普通类要求有空构造函数且属性为var
-     * 
-     * @return 导入的行对象列表
-     * @throws IllegalStateException 如果读取数据出错
+     * Wraps each Excel row into an object.
+     *
+     * Walks every row of the Excel sheet (skipping the header) and converts cell data into Java objects.
+     *
+     * Workflow:
+     * 1. Get the property names from the subclass via getPropertyNames.
+     * 2. Resolve the row-object type via reflection on the generic parameter.
+     * 3. Walk data rows starting at row index 1 (row 0 is the header).
+     * 4. For each row:
+     *    - Read all cells in the row.
+     *    - Map the column index to a property name.
+     *    - Call getPropertyValue to obtain the value.
+     *    - Assign the value based on whether the type is a data class or plain class.
+     * 5. Append the constructed object to the result list.
+     *
+     * Object construction:
+     * - Data class: collect all property values first, then invoke the primary constructor.
+     * - Plain class: create an empty instance, then set each property.
+     *
+     * Property mapping:
+     * - Column index maps directly to the property-name list index.
+     * - Column 1 -> property 1, column 2 -> property 2, and so on.
+     *
+     * Exception handling:
+     * - Read errors are logged and re-thrown as IllegalStateException.
+     * - Type-conversion failures are handled inside getPropertyValue.
+     *
+     * Notes:
+     * - Row 0 is skipped as the header.
+     * - The property-name list size must equal the Excel column count.
+     * - Data classes must declare all properties in the primary constructor.
+     * - Plain classes must provide a no-argument constructor and `var` properties.
+     *
+     * @return list of imported row objects
+     * @throws IllegalStateException when reading data fails
      */
     protected open fun wrapRowObjects(): List<T> {
         val rowObjectList = mutableListOf<T>()
@@ -215,7 +216,7 @@ abstract class AbstractExcelImporter<T : Any> : IExcelImporter<T> {
             val rows = sheet.rows
             val rowObjectClass = resolveRowObjectClass()
             lateinit var rowObject: T
-            for (row in 1 until rows) { // 扣掉列头
+            for (row in 1 until rows) { // Skip the header.
                 val rowCells = sheet.getRow(row)
                 val propNameValueMap = mutableMapOf<String, Any>()
                 if (!rowObjectClass.isData) {
@@ -229,20 +230,20 @@ abstract class AbstractExcelImporter<T : Any> : IExcelImporter<T> {
                         propNameValueMap[propertyName] = value
                     } else {
                         val mutableProp = propertyMap[propertyName] as? KMutableProperty1<*, *>
-                            ?: error("属性【$propertyName】必须是可写属性(var)")
+                            ?: error("Property [$propertyName] must be writable (var)")
                         mutableProp.setter.call(rowObject, value)
                     }
                 }
                 if (rowObjectClass.isData) {
                     val constructor = requireNotNull(rowObjectClass.primaryConstructor) {
-                        "数据类必须存在主构造函数: ${rowObjectClass.qualifiedName}"
+                        "Data class must have a primary constructor: ${rowObjectClass.qualifiedName}"
                     }
                     val values = constructor.parameters.map { parameter ->
                         val paramName = requireNotNull(parameter.name) {
-                            "主构造函数参数名为空: ${rowObjectClass.qualifiedName}"
+                            "Primary constructor parameter name is null: ${rowObjectClass.qualifiedName}"
                         }
                         requireNotNull(propNameValueMap[paramName]) {
-                            "缺少数据类构造参数值: ${rowObjectClass.qualifiedName}.$paramName"
+                            "Missing value for data class constructor parameter: ${rowObjectClass.qualifiedName}.$paramName"
                         }
                     }
                     rowObject = rowObjectClass.newInstance(*values.toTypedArray())
@@ -251,58 +252,57 @@ abstract class AbstractExcelImporter<T : Any> : IExcelImporter<T> {
             }
         } catch (ex: IllegalArgumentException) {
             log.error(ex)
-            error("读取excel数据出错!")
+            error("Error reading Excel data!")
         } catch (ex: IllegalStateException) {
             log.error(ex)
-            error("读取excel数据出错!")
+            error("Error reading Excel data!")
         } catch (ex: ClassCastException) {
             log.error(ex)
-            error("读取excel数据出错!")
+            error("Error reading Excel data!")
         } catch (ex: IndexOutOfBoundsException) {
             log.error(ex)
-            error("读取excel数据出错!")
+            error("Error reading Excel data!")
         }
         return rowObjectList
     }
 
     /**
-     * 获取属性值
-     * 
-     * 从Excel单元格中提取值，并根据属性类型进行类型转换。
-     * 
-     * 工作流程：
-     * 1. 获取属性名：根据列索引从属性名列表中获取对应的属性名
-     * 2. 获取属性对象：从缓存中获取或通过反射获取属性对象
-     * 3. 提取单元格内容：获取单元格的字符串内容
-     * 4. 类型转换：如果单元格类型是数字，根据属性类型进行转换
-     * 5. 返回结果：返回转换后的属性值
-     * 
-     * 属性缓存：
-     * - 使用propertyMap缓存已获取的属性对象，避免重复反射
-     * - 提高性能，减少反射开销
-     * 
-     * 类型转换：
-     * - 如果单元格类型是NUMBER，会根据属性的实际类型进行转换
-     * - 使用toType扩展函数进行类型转换
-     * - 支持基本类型和包装类型的转换
-     * 
-     * 返回值：
-     * - 数字类型：转换为对应的数值类型（Int、Long、Double等）
-     * - 其他类型：返回字符串内容
-     * 
-     * 扩展点：
-     * - 子类可以重写此方法，实现自定义的类型转换逻辑
-     * - 例如：日期格式转换、枚举值转换等
-     * 
-     * 注意事项：
-     * - 属性名列表必须与Excel列顺序一致
-     * - 数字类型转换失败会抛出异常
-     * - 非数字类型的单元格直接返回字符串内容
-     * 
-     * @param rowObjectClass 行对象类
-     * @param columnIndex 列索引（从0开始）
-     * @param cell Excel单元格对象
-     * @return 转换后的属性值
+     * Returns the property value.
+     *
+     * Extracts the value from an Excel cell and converts it to the property's type.
+     *
+     * Workflow:
+     * 1. Look up the property name by column index.
+     * 2. Get the property object from the cache or via reflection.
+     * 3. Read the cell's string content.
+     * 4. If the cell is numeric, convert the value to the property's actual type.
+     * 5. Return the converted value.
+     *
+     * Property cache:
+     * - propertyMap caches property objects to avoid repeated reflection.
+     * - Reduces reflection overhead and improves performance.
+     *
+     * Type conversion:
+     * - For NUMBER cells, the value is converted to match the property's runtime type.
+     * - Conversion is performed via the toType extension.
+     * - Supports primitive and boxed types.
+     *
+     * Return value:
+     * - Numeric cells: converted to the appropriate numeric type (Int, Long, Double, ...).
+     * - Other cells: the string content is returned.
+     *
+     * Extension point:
+     * - Override this method to add custom conversion logic, such as date formatting or enum conversion.
+     *
+     * Notes:
+     * - The property-name list must match the Excel column order.
+     * - Numeric conversion failures throw an exception.
+     * - Non-numeric cells return the string content directly.
+     *
+     * @param rowObjectClass row-object class
+     * @param columnIndex column index (0-based)
+     * @param cell Excel cell object
+     * @return the converted property value
      */
     protected open fun getPropertyValue(rowObjectClass: KClass<T>, columnIndex: Int, cell: Cell): Any {
         val propertyName = propertyNames[columnIndex]
@@ -322,18 +322,19 @@ abstract class AbstractExcelImporter<T : Any> : IExcelImporter<T> {
     }
 
     /**
-     * 通过反射解析子类声明的泛型实参 [T]，得到行对象的实际类。
-     * 当子类擦除了泛型实参（解析为 [Nothing]）时立即抛错，避免后续按反射构造对象时静默失败。
+     * Resolves the actual row-object class from the subclass's generic argument [T] via reflection.
+     * Throws immediately when the subclass erased the type argument (resolved to [Nothing]) to avoid
+     * silent failures during reflective construction.
      *
-     * @return 行对象的 [KClass]
-     * @throws IllegalArgumentException 当无法解析泛型实参时
+     * @return [KClass] of the row object
+     * @throws IllegalArgumentException when the generic argument cannot be resolved
      * @author K
      * @since 1.0.0
      */
     @Suppress("UNCHECKED_CAST")
     private fun resolveRowObjectClass(): KClass<T> {
         val rowObjectClass = GenericKit.getSuperClassGenricClass(this::class)
-        require(rowObjectClass != Nothing::class) { "无法解析导入行对象类型: ${this::class.qualifiedName}" }
+        require(rowObjectClass != Nothing::class) { "Cannot resolve imported row-object type: ${this::class.qualifiedName}" }
         return rowObjectClass as KClass<T>
     }
 

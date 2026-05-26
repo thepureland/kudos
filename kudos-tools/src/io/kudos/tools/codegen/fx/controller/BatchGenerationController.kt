@@ -19,48 +19,49 @@ import java.net.URL
 import java.util.ResourceBundle
 
 /**
- * 多表批量生成界面的 JavaFX 控制器。
+ * JavaFX controller for the multi-table batch-generation screen.
  *
- * 上一步配置完后跳到本页：列出所有表，用户勾选要生成的表与"仅生成表相关文件"开关，
- * 触发 [generate] 后依次对每张表跑 [CodeGenerator]。
+ * Reached after the configuration page: lists all tables, lets the user pick which tables to generate and
+ * toggle "generate only table-related files", then runs [CodeGenerator] for each selected table on [generate].
  *
  * @author K
  * @since 1.0.0
  */
 class BatchGenerationController : Initializable {
 
-    /** 从配置页带过来的 [Config] */
+    /** [Config] handed off from the configuration page */
     private lateinit var config: Config
 
-    /** 表清单 TableView，绑定 [DbTable] 列表 */
+    /** Table-listing TableView, bound to a [DbTable] list */
     @FXML
     lateinit var entityTable: TableView<DbTable>
 
-    /** 数据库表名 → 表注释，进入页面时一次性读取 */
+    /** DB table name -> table comment, read once when entering the page */
     private lateinit var tableMap: Map<String, String?>
 
-    /** "仅生成表相关文件"复选框 */
+    /** "Only generate table-related files" checkbox */
     @FXML
     private lateinit var onlyEntityRelativeFilesCheckBox: CheckBox
 
-    /** [onlyEntityRelativeFilesCheckBox] 的支撑属性，便于在程序里读 boolean */
+    /** Backing property for [onlyEntityRelativeFilesCheckBox]; provides a boolean for programmatic reads */
     private val onlyEntityRelativeFilesProperty = SimpleBooleanProperty()
 
     /**
-     * FXML 加载完成回调：把"仅生成表相关文件"复选框与 [onlyEntityRelativeFilesProperty] 双向绑定，
-     * 并默认勾选——批量场景下生成无关文件容易把全局基类等覆盖掉，默认排除更安全。
+     * FXML-loaded callback: bidirectionally binds the "only table-related files" checkbox to
+     * [onlyEntityRelativeFilesProperty] and defaults it to checked — generating non-related files in batch mode
+     * can easily overwrite global base classes; excluding them by default is safer.
      *
      * @author K
      * @since 1.0.0
      */
     override fun initialize(p0: URL?, p1: ResourceBundle?) {
-        // 双向绑定
+        // Bidirectional binding
         onlyEntityRelativeFilesCheckBox.selectedProperty().bindBidirectional(onlyEntityRelativeFilesProperty)
         onlyEntityRelativeFilesProperty.set(true)
     }
 
     /**
-     * 读取所有表名/注释并填入 [entityTable]，默认都不勾选生成。
+     * Reads all table names/comments and fills [entityTable]; nothing is checked for generation by default.
      *
      * @author K
      * @since 1.0.0
@@ -71,9 +72,9 @@ class BatchGenerationController : Initializable {
     }
 
     /**
-     * 表头"全选/全不选"复选框回调；批量改写所有 [DbTable.setGenerate]。
+     * Callback for the header "select all / select none" checkbox; updates all [DbTable.setGenerate] entries.
      *
-     * @param e 触发事件
+     * @param e Triggering event
      * @author K
      * @since 1.0.0
      */
@@ -84,15 +85,15 @@ class BatchGenerationController : Initializable {
     }
 
     /**
-     * "生成"按钮回调。
+     * "Generate" button callback.
      *
-     * 流程：
-     * 1. 校验有勾选；
-     * 2. 先用基础模型生成"表无关"文件（若用户没勾选"仅表相关"）；
-     * 3. 再对每张选中的表把上下文切换好，跑实体相关模板；
-     * 4. 弹 Alert 反馈成败。
+     * Flow:
+     * 1. Validate that something is selected;
+     * 2. Generate the "table-independent" files first using the base model (unless the user picked "table-related only");
+     * 3. For each selected table, switch the context and run the entity-related templates;
+     * 4. Show an Alert with success/failure feedback.
      *
-     * 实体相关文件集合是用「全部文件 - 表无关文件」差集得到的，避免重复生成。
+     * The entity-related file set is computed as "all files - table-independent files" to avoid duplicate generation.
      *
      * @author K
      * @since 1.0.0
@@ -101,24 +102,24 @@ class BatchGenerationController : Initializable {
     fun generate() {
         val selectTables = entityTable.items.filter { it.getGenerate() }
         if (selectTables.isEmpty()) {
-            Alert(Alert.AlertType.ERROR, "未选择任何表！").show()
+            Alert(Alert.AlertType.ERROR, "No table selected!").show()
             return
         }
 
         try {
             CodeGeneratorContext.config = config
 
-            // 先生成表无关的文件
+            // Generate the table-independent files first
             val nonEntityRelativeFilePaths = TemplatePathProcessor.readPaths(false)
             if (!onlyEntityRelativeFilesProperty.get()) {
                 val templateBaseModel = CodeGeneratorContext.templateModelCreator.createBaseModel()
                 CodeGenerator(templateBaseModel, nonEntityRelativeFilePaths).generate(false)
             }
 
-            // 预计算一次：表无关模板路径，作为 Set 给后面循环内做 O(1) 差集
+            // Precompute once: the table-independent template paths as a Set so the loop below can do O(1) diffing
             val nonEntityRelativeFilePathnames = nonEntityRelativeFilePaths.mapTo(mutableSetOf()) { it.templateFileRelativePath }
 
-            // 再生成表相关的文件
+            // Then generate the table-related files
             selectTables.forEach {
                 CodeGeneratorContext.tableName = it.getTableName()
                 CodeGeneratorContext.tableComment = it.getTableComment() ?: ""
@@ -130,17 +131,17 @@ class BatchGenerationController : Initializable {
             }
 
             Alert(
-                Alert.AlertType.INFORMATION, "生成成功，请查看目录：${CodeGeneratorContext.config.getCodeLoaction()}".trimIndent()
+                Alert.AlertType.INFORMATION, "Generation succeeded; see directory: ${CodeGeneratorContext.config.getCodeLoaction()}".trimIndent()
             ).show()
         } catch (e: Exception) {
             e.printStackTrace()
-            Alert(Alert.AlertType.ERROR, "生成失败！").show()
+            Alert(Alert.AlertType.ERROR, "Generation failed!").show()
         }
     }
 
     /**
-     * 从上一步注入配置。
-     * @param config 配置 VO
+     * Injects the configuration from the previous step.
+     * @param config Configuration VO
      * @author K
      * @since 1.0.0
      */
@@ -148,7 +149,7 @@ class BatchGenerationController : Initializable {
         this.config = config
     }
 
-    /** @return 当前持有的 [Config] */
+    /** @return The currently held [Config] */
     fun getConfig() = config
 
 }

@@ -6,9 +6,10 @@ import io.kudos.base.query.sort.Sortable
 import java.time.LocalDateTime
 
 /**
- * 测试表数据库实体
+ * Database entity for the test table.
  *
- * [name]、[height] 带 [Sortable] 供 [io.kudos.ability.data.rdb.ktorm.support.BaseReadOnlyDaoTest] 校验 ListSearchPayload 排序规则；其余列未标注，用于测「未标注则忽略排序」。
+ * [name] and [height] carry [Sortable] so [io.kudos.ability.data.rdb.ktorm.support.BaseReadOnlyDaoTest] can verify
+ * the ListSearchPayload sort rules; the remaining columns are unannotated, used to test "unannotated = sort ignored".
  *
  * @author K
  * @author AI: Codex
@@ -18,20 +19,20 @@ internal interface TestTableKtorm : IDbEntity<Int, TestTableKtorm> {
 
     companion object Companion : DbEntityFactory<TestTableKtorm>()
 
-    /** 名字 */
+    /** Name */
     @get:Sortable
     var name: String
 
-    /** 生日 */
+    /** Birthday */
     var birthday: LocalDateTime?
 
-    /** 是否生效 */
+    /** Whether active */
     var active: Boolean?
 
-    /** 体重 */
+    /** Weight */
     var weight: Double?
 
-    /** 身高 */
+    /** Height */
     @get:Sortable
     var height: Int?
 

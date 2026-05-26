@@ -8,16 +8,16 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNull
 
 /**
- * IdCardNoKit测试用例
+ * IdCardNoKit test cases
  *
  * @author K
  * @since 1.0.0
  */
 internal class IdCardNoKitTest {
 
-    private val MAIN_F_18 = "210502198412020944" // 大陆，辽宁，女, 18位
+    private val MAIN_F_18 = "210502198412020944" // Mainland, Liaoning, Female, 18-digit
 
-    private val MAIN_F_15 = "210502841202094" // 大陆，辽宁，女, 15位
+    private val MAIN_F_15 = "210502841202094" // Mainland, Liaoning, Female, 15-digit
 
 
     private val HK = "R6728757"

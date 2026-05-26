@@ -5,14 +5,14 @@ import java.time.LocalDateTime
 
 
 /**
- * 用户第三方账号表单更新请求VO
+ * User third-party account form update request VO
  *
  * @author K
  * @since 1.0.0
  */
 data class UserAccountThirdFormUpdate (
 
-    /** 主键 */
+    /** Primary key */
     override val id: String,
 
     override val userId: String?,

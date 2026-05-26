@@ -5,7 +5,7 @@ import io.kudos.ms.sys.core.tenant.model.po.SysTenantLocale
 
 
 /**
- * 租户-语言关系业务接口
+ * Tenant-locale relationship service interface.
  *
  * @author K
  * @since 1.0.0
@@ -14,53 +14,53 @@ interface ISysTenantLocaleService : IBaseCrudService<String, SysTenantLocale> {
 
 
     /**
-     * 根据租户id获取语言代码列表
+     * Returns the locale code list for the given tenant.
      *
-     * @param tenantId 租户id
-     * @return 语言代码集合
+     * @param tenantId tenant id
+     * @return locale code set
      * @author K
      * @since 1.0.0
      */
     fun getLocaleCodesByTenantId(tenantId: String): Set<String>
 
     /**
-     * 根据语言代码获取租户id列表
+     * Returns the tenant id list for the given locale.
      *
-     * @param localeCode 语言代码
-     * @return 租户id集合
+     * @param localeCode locale code
+     * @return tenant id set
      * @author K
      * @since 1.0.0
      */
     fun getTenantIdsByLocaleCode(localeCode: String): Set<String>
 
     /**
-     * 批量绑定租户与语言的关系
+     * Batch binds the given locales to the tenant.
      *
-     * @param tenantId 租户id
-     * @param localeCodes 语言代码集合
-     * @return 成功绑定的数量
+     * @param tenantId tenant id
+     * @param localeCodes locale code collection
+     * @return number of bindings successfully created
      * @author K
      * @since 1.0.0
      */
     fun batchBind(tenantId: String, localeCodes: Collection<String>): Int
 
     /**
-     * 解绑租户与语言的关系
+     * Unbinds the relationship between the tenant and the locale.
      *
-     * @param tenantId 租户id
-     * @param localeCode 语言代码
-     * @return 是否解绑成功
+     * @param tenantId tenant id
+     * @param localeCode locale code
+     * @return whether the unbind succeeded
      * @author K
      * @since 1.0.0
      */
     fun unbind(tenantId: String, localeCode: String): Boolean
 
     /**
-     * 检查关系是否存在
+     * Checks whether the relationship exists.
      *
-     * @param tenantId 租户id
-     * @param localeCode 语言代码
-     * @return 是否存在
+     * @param tenantId tenant id
+     * @param localeCode locale code
+     * @return whether it exists
      * @author K
      * @since 1.0.0
      */

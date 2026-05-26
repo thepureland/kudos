@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component
 
 
 /**
- * 语言/区域字典 Feign 容错降级实现
+ * Locale dictionary Feign client fallback implementation.
  *
  * @author K
  * @since 1.0.0

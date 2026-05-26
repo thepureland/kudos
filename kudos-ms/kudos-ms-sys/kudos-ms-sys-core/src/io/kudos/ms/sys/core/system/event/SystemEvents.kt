@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.core.system.event
 
 /**
- * 系统（`sys_system`）领域事件。`id` 即 code（PK 为业务编码）。
+ * System (`sys_system`) domain events. `id` is the code (the PK is a business code).
  *
  * @author K
  * @author AI: Cursor

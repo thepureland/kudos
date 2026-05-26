@@ -10,7 +10,7 @@ import kotlin.test.assertNull
 /**
  * junit test for SysParamDao
  *
- * 测试数据来源：`SysParamDaoTest.sql`
+ * Test data source: `SysParamDaoTest.sql`
  *
  * @author K
  * @author AI: Cursor
@@ -24,19 +24,19 @@ class SysParamDaoTest : RdbTestBase() {
 
     @Test
     fun getActiveParamsForCache() {
-        // 测试有atomicServiceCode的情况
+        // Case: atomicServiceCode provided
         val cacheItem1 = sysParamDao.getActiveParamsForCache("svc-module-param-dao-test-1", "svc-param-dao-test-1")
         assertNotNull(cacheItem1)
         
-        // 测试atomicServiceCode为空字符串的情况
+        // Case: atomicServiceCode is an empty string
         val cacheItem2 = sysParamDao.getActiveParamsForCache("", "svc-param-dao-test-3")
         assertNotNull(cacheItem2)
         
-        // 测试不存在的参数
+        // Case: parameter does not exist
         val cacheItem3 = sysParamDao.getActiveParamsForCache("svc-module-param-dao-test-1", "non-existent-param")
         assertNull(cacheItem3)
         
-        // 测试非启用的参数（应该找不到）
+        // Case: inactive parameter (should not be found)
         val cacheItem4 = sysParamDao.getActiveParamsForCache("svc-module-param-dao-test-1", "svc-param-dao-test-4")
         assertNull(cacheItem4)
     }

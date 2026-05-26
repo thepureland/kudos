@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository
 
 
 /**
- * 缓存数据访问对象
+ * Cache configuration DAO.
  *
  * @author K
  * @since 1.0.0
@@ -19,11 +19,11 @@ import org.springframework.stereotype.Repository
 open class SysCacheDao : BaseCrudDao<String, SysCache, SysCaches>() {
 
     /**
-     * 按原子服务编码、名称及启用状态查询单条缓存配置（供 Hash 缓存按 atomicServiceCode+name 回源）。
+     * Query a single cache configuration by atomic service code, name and active state (back-source for Hash cache by atomicServiceCode+name).
      *
-     * @param atomicServiceCode 原子服务编码，非空
-     * @param name 缓存名称，非空
-     * @return 匹配的缓存项，不存在时 null
+     * @param atomicServiceCode atomic service code, non-blank
+     * @param name cache name, non-blank
+     * @return matching cache entry, or null if not found
      */
     open fun fetchCacheEntryByNameAndAtomicServiceCode(atomicServiceCode: String, name: String): SysCacheCacheEntry? {
         val criteria = Criteria.and(
@@ -35,10 +35,10 @@ open class SysCacheDao : BaseCrudDao<String, SysCache, SysCaches>() {
     }
 
     /**
-     * 按原子服务编码查询缓存配置列表（供 Hash 缓存按 atomicServiceCode 回源）。
+     * Query the cache configuration list by atomic service code (back-source for Hash cache by atomicServiceCode).
      *
-     * @param atomicServiceCode 原子服务编码，非空
-     * @return 匹配的缓存项列表
+     * @param atomicServiceCode atomic service code, non-blank
+     * @return list of matching cache entries
      */
     open fun fetchCachesByAtomicServiceCode(atomicServiceCode: String): List<SysCacheCacheEntry> {
         val criteria = Criteria(SysCache::atomicServiceCode eq atomicServiceCode)

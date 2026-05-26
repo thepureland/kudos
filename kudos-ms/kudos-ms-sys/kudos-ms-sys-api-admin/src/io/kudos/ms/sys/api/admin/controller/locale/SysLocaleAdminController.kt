@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController
 
 
 /**
- * 语言/区域字典管理控制器
+ * Language/locale dictionary management controller.
  *
  * @author K
  * @since 1.0.0
@@ -27,17 +27,17 @@ class SysLocaleAdminController :
     BaseCrudController<String, ISysLocaleService, SysLocaleQuery, SysLocaleRow, SysLocaleDetail, SysLocaleEdit, SysLocaleFormCreate, SysLocaleFormUpdate>() {
 
     /**
-     * 列出所有启用的语言（按 sort_no 升序）
+     * List all enabled languages (in ascending order of sort_no).
      */
     @GetMapping("/listActive")
     fun listActive(): List<SysLocaleCacheEntry> = service.listActiveLocales()
 
     /**
-     * 更新active状态
+     * Update the active status.
      *
-     * @param id 主键
-     * @param active 是否启用
-     * @return 是否更新成功
+     * @param id primary key
+     * @param active whether enabled
+     * @return whether the update succeeded
      */
     @PutMapping("/updateActive")
     fun updateActive(id: String, active: Boolean): Boolean {

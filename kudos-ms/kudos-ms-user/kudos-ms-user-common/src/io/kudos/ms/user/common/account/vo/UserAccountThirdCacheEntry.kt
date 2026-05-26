@@ -6,71 +6,71 @@ import java.time.LocalDateTime
 
 
 /**
- * 用户第三方账号缓存项
+ * User third-party account cache entry
  *
  * @author K
  * @since 1.0.0
  */
 data class UserAccountThirdCacheEntry (
 
-    /** 主键 */
+    /** Primary key */
     override val id: String,
 
-    /** 关联用户账号ID */
+    /** Linked user account ID */
     val userId: String?,
 
-    /** 第三方平台字典码 */
+    /** Third-party platform dict code */
     val accountProviderDictCode: String?,
 
-    /** 发行方/平台租户 */
+    /** Issuer / platform tenant */
     val accountProviderIssuer: String?,
 
-    /** 第三方用户唯一标识 */
+    /** Third-party user unique identifier */
     val subject: String?,
 
-    /** 跨应用统一标识 */
+    /** Cross-application unified identifier */
     val unionId: String?,
 
-    /** 第三方展示名 */
+    /** Third-party display name */
     val externalDisplayName: String?,
 
-    /** 第三方邮箱 */
+    /** Third-party email */
     val externalEmail: String?,
 
-    /** 头像URL */
+    /** Avatar URL */
     val avatarUrl: String?,
 
-    /** 最后登录时间 */
+    /** Last login time */
     val lastLoginTime: LocalDateTime?,
 
-    /** 租户ID */
+    /** Tenant ID */
     val tenantId: String?,
 
-    /** 备注 */
+    /** Remark */
     val remark: String?,
 
-    /** 是否激活 */
+    /** Whether active */
     val active: Boolean?,
 
-    /** 是否内置 */
+    /** Whether built-in */
     val builtIn: Boolean?,
 
-    /** 创建用户ID */
+    /** Creator user ID */
     val createUserId: String?,
 
-    /** 创建用户名称 */
+    /** Creator user name */
     val createUserName: String?,
 
-    /** 创建时间 */
+    /** Create time */
     val createTime: LocalDateTime?,
 
-    /** 更新用户ID */
+    /** Updater user ID */
     val updateUserId: String?,
 
-    /** 更新用户名称 */
+    /** Updater user name */
     val updateUserName: String?,
 
-    /** 更新时间 */
+    /** Update time */
     val updateTime: LocalDateTime?,
 
 ) : IIdEntity<String>, Serializable {

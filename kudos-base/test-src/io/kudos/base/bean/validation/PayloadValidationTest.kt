@@ -11,7 +11,7 @@ import org.hibernate.validator.constraints.Length
 import kotlin.test.Test
 
 /**
- * 负载验证测试用例
+ * Payload validation test cases.
  *
  * @author K
  * @since 1.0.0
@@ -39,7 +39,7 @@ internal class PayloadValidationTest {
                         handler.onError(it)
                     }
                     else -> {
-                        error("未支持的Payload: $p")
+                        error("Unsupported Payload: $p")
                     }
                 }
             }
@@ -49,12 +49,12 @@ internal class PayloadValidationTest {
 
     internal data class TestPayloadBean(
 
-        @get:Length(min = 6, max = 32, message = "name长度必须在6到32之间", payload = [Severity.Info::class])
-        @get:Pattern(regexp = "[a-zA-Z]+", message = "name必须为字母", payload = [Severity.Error::class])
+        @get:Length(min = 6, max = 32, message = "name length must be between 6 and 32", payload = [Severity.Info::class])
+        @get:Pattern(regexp = "[a-zA-Z]+", message = "name must consist of letters", payload = [Severity.Error::class])
         val name: String?,
 
-        @get:Max(60, message = "必须60岁以下", payload = [ErrorLogHandler::class])
-        @get:Min(18, message = "必须满18岁")
+        @get:Max(60, message = "Must be under 60 years old", payload = [ErrorLogHandler::class])
+        @get:Min(18, message = "Must be at least 18 years old")
         val age: Int?
 
     )

@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RequestParam
 
 
 /**
- * 消息实例对外API
+ * Public API for message instances.
  *
  * @author K
  * @author AI: Codex
@@ -16,10 +16,10 @@ interface IMsgInstanceApi {
 
 
     /**
-     * 根据id获取消息实例。
+     * Get a message instance by id.
      *
-     * @param id 实例主键
-     * @return MsgInstanceCacheEntry，找不到返回 null
+     * @param id instance primary key
+     * @return MsgInstanceCacheEntry, or null if not found
      */
     @GetMapping("/api/internal/msg/instance/getInstanceById")
     fun getInstanceById(@RequestParam id: String): MsgInstanceCacheEntry?

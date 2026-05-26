@@ -42,10 +42,11 @@ import java.util.UUID
 
 
 /**
- * redis缓存自动配置类
+ * Redis cache auto-configuration.
  *
- * RedisTemplates 由 [RedisAutoConfiguration]（kudos-ability-data-memdb-redis）提供，
- * 本类通过 [AutoConfigureAfter] 保证在其之后加载，运行时注入正常；IDE 可能因跨模块未解析而误报。
+ * RedisTemplates is provided by [RedisAutoConfiguration] (kudos-ability-data-memdb-redis); this class uses
+ * [AutoConfigureAfter] to ensure it loads after that, so runtime injection works. IDEs may flag false positives
+ * because cross-module references are unresolved.
  *
  * @author K
  * @author AI: Codex
@@ -56,8 +57,8 @@ import java.util.UUID
 @AutoConfigureAfter(RedisAutoConfiguration::class)
 @EnableConfigurationProperties(CacheProperties::class)
 @ConditionalOnProperty(prefix = "kudos.ability.cache", name = ["enabled"], havingValue = "true", matchIfMissing = true)
-// 见 ContextAutoConfiguration：IComponentInitializer 配置类必须早于业务 BPP 实例化，
-// 加 ROLE_INFRASTRUCTURE 避免 Spring 的 BeanPostProcessorChecker 误报。
+// See ContextAutoConfiguration: IComponentInitializer configuration classes must be instantiated before
+// business BPPs; ROLE_INFRASTRUCTURE avoids false positives from Spring's BeanPostProcessorChecker.
 @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentInitializer {
 
@@ -70,7 +71,7 @@ open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentIni
     private lateinit var environment: Environment
 
     /**
-     * Redis 缓存模块配置。
+     * Redis cache module properties.
      */
     @Bean
     @ConditionalOnMissingBean
@@ -78,12 +79,12 @@ open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentIni
     open fun redisCacheProperties(): RedisCacheProperties = RedisCacheProperties()
 
     /**
-     * 装配远程 K-V 缓存管理器：从 [RedisTemplates] 里挑出 `remoteStore` 配置指向的 redis 实例，
-     * 用对应 redis 的 key / value 序列化器构造默认 `RedisCacheConfiguration`，最终包成
-     * [RedisKeyValueCacheManager] 给 `MixCacheManager` 取作 `remoteCacheManager`。
+     * Wires the remote K-V cache manager: picks the redis instance pointed at by `remoteStore` from
+     * [RedisTemplates], builds a default `RedisCacheConfiguration` using that redis's key/value serializers,
+     * and wraps it in a [RedisKeyValueCacheManager] for `MixCacheManager` to consume as `remoteCacheManager`.
      *
-     * `remoteStore` 与 `defaultRedis` 都没配时启动期抛错——缓存配错应启动失败，而不是
-     * 跑起来后才发现"缓存其实是 no-op"。
+     * Throws at startup when both `remoteStore` and `defaultRedis` are blank — misconfigured caches should fail fast,
+     * not silently become no-ops at runtime.
      */
     @Bean(name = ["remoteCacheManager"])
     @Suppress("SpringJavaInjectionPointsAutowiringInspection")
@@ -97,12 +98,12 @@ open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentIni
             configuredStore.isNotBlank() -> configuredStore
             defaultStore.isNotBlank() -> defaultStore
             else -> throw IllegalStateException(
-                "kudos.ability.cache.remoteStore 与 kudos.ability.data.redis.defaultRedis 同时为空，无法初始化 remoteCacheManager"
+                "Both kudos.ability.cache.remoteStore and kudos.ability.data.redis.defaultRedis are blank; cannot initialize remoteCacheManager"
             )
         }
         var redisTemplate = redisTemplates.getRedisTemplate(selectedStore)
         if (redisTemplate == null) {
-            log.warn("找不到{0}对应的redis配置，使用默认的redis模板", selectedStore)
+            log.warn("No redis configuration found for [{0}], falling back to the default redis template", selectedStore)
             redisTemplate = redisTemplates.defaultRedisTemplate
         }
         val keySerializationPair =
@@ -110,14 +111,14 @@ open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentIni
         val extProps = redisProperties.redisMap[selectedStore]
             ?: redisProperties.redisMap[defaultStore]
             ?: throw IllegalStateException(
-                "找不到redis序列化配置: selectedStore=$selectedStore, defaultStore=$defaultStore"
+                "Redis serialization configuration not found: selectedStore=$selectedStore, defaultStore=$defaultStore"
             )
         val valueSerializationPair =
             RedisSerializationContext.SerializationPair.fromSerializer(extProps.valueSerializer())
         val defaultRedisCacheConfiguration = RedisCacheConfiguration
             .defaultCacheConfig()
             .disableCachingNullValues()
-            .entryTtl(Duration.ofSeconds(900)) //默认15分钟
+            .entryTtl(Duration.ofSeconds(900)) // default 15 minutes
             .serializeKeysWith(keySerializationPair)
             .serializeValuesWith(valueSerializationPair)
         val connectionFactory = redisTemplate.connectionFactory!!
@@ -126,14 +127,14 @@ open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentIni
     }
 
     /**
-     * Redis pub/sub 监听容器，订阅 [CacheVersionConfig.realMsgChannel] 通道，
-     * 把消息转发给 [RedisCacheMessageHandler]。
+     * Redis pub/sub listener container; subscribes to [CacheVersionConfig.realMsgChannel] and forwards
+     * messages to [RedisCacheMessageHandler].
      *
-     * 自定义 ErrorHandler 把异常抬到 error 级别——Spring 默认 ErrorHandler 走
-     * `java.util.logging` 且 silent，连接抖动 / 重订阅失败的事故信号会被吞掉。
+     * A custom ErrorHandler raises exceptions to ERROR level — Spring's default ErrorHandler uses
+     * `java.util.logging` silently and swallows connection-jitter / resubscribe-failure signals.
      *
-     * 虚拟线程：当 `spring.threads.virtual.enabled=true` 时改用虚拟线程执行器，
-     * pub/sub 监听不再独占平台线程。
+     * Virtual threads: when `spring.threads.virtual.enabled=true`, switches to a virtual-thread executor so
+     * the pub/sub listener no longer occupies a platform thread.
      */
     @Bean
     @DependsOn("redisCacheMessageHandler")
@@ -146,10 +147,11 @@ open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentIni
         container.setConnectionFactory(redisCacheMessageHandler.redisTemplate.connectionFactory!!)
         container.addMessageListener(redisCacheMessageHandler, ChannelTopic(versionConfig.realMsgChannel))
 
-        // 缺省 ErrorHandler 走 java.util.logging 且 silent，连接抖动/订阅恢复异常会消失在日志里。
-        // 这里挂一个把异常抬到 error 级别的 handler，便于运维感知 pub/sub 通道断连或重订阅失败。
+        // The default ErrorHandler uses java.util.logging silently and disappears connection-jitter
+        // / resubscribe exceptions from the log. Install a handler that raises them to ERROR level so
+        // operators can detect pub/sub channel disconnections or resubscribe failures.
         container.setErrorHandler { t ->
-            log.error(t, "Redis 缓存通知监听异常 (channel={0})", versionConfig.realMsgChannel)
+            log.error(t, "Redis cache notification listener error (channel={0})", versionConfig.realMsgChannel)
         }
 
         if (Threading.VIRTUAL.isActive(environment)) {
@@ -162,8 +164,8 @@ open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentIni
     }
 
     /**
-     * 远程缓存读写处理器（Hash 结构）。被 `TenantAdvancedCacheableAspect` 等用作"租户级 hash 缓存"
-     * 的存储后端，区别于 [RedisHashCache] 的"带 id 实体集合 hash 缓存"。
+     * Remote cache read/write processor (Hash structure). Used by `TenantAdvancedCacheableAspect` etc. as the
+     * storage backend for "tenant-level hash cache"; distinct from [RedisHashCache]'s "id-keyed entity-set hash cache".
      */
     @Bean(name = ["remoteCacheProcessor"])
     @DependsOn("kudosRedisTemplate")
@@ -174,15 +176,15 @@ open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentIni
     }
 
     /**
-     * 节点身份标识：优先使用业务配置的稳定 id；未配置时回退启动期 UUID。
-     * 用于 [RedisCacheMessageHandler] 判断 pub/sub 消息是不是本节点自发的（避免回环清理）。
+     * Node identity: prefers the stable id from business configuration; falls back to a startup UUID when unset.
+     * Used by [RedisCacheMessageHandler] to detect whether a pub/sub message originated from this node (avoids self-loop clears).
      */
     @Bean("cacheNodeId")
     @ConditionalOnMissingBean(name = ["cacheNodeId"])
     open fun cacheNodeId(redisCacheProperties: RedisCacheProperties): String =
         redisCacheProperties.nodeId?.trim()?.takeIf { it.isNotBlank() } ?: UUID.randomUUID().toString()
 
-    /** 缓存消息 SPI 实现（发送 + 接收回环 + 反序列化失败的 error 日志）。 */
+    /** Cache message SPI implementation (send + receive loopback + error log on deserialization failure). */
     @Bean
     @ConditionalOnMissingBean
     open fun redisCacheMessageHandler(
@@ -190,8 +192,9 @@ open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentIni
     ): ICacheMessageHandler = RedisCacheMessageHandler(cacheNodeId)
 
     /**
-     * Hash 缓存的 Redis 存储后端。**不带广播**——广播由 [io.kudos.ability.cache.common.core.hash.MixHashCache]
-     * 统一处理，避免出现"远程 + 上层各发一条"的双倍 pub/sub 流量。
+     * Redis storage backend for the Hash cache. **No broadcasting** — broadcasts are centralized in
+     * [io.kudos.ability.cache.common.core.hash.MixHashCache] to avoid the "remote + upper layer each send one"
+     * doubled pub/sub traffic.
      */
     @Bean("redisIdEntitiesHashCache")
     @ConditionalOnMissingBean(name = ["redisIdEntitiesHashCache"])

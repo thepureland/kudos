@@ -1,9 +1,11 @@
 package io.kudos.base.bean.validation.support
 
 /**
- * 常用正则表达式常量。命名尽量表达「匹配什么」而非历史缩写；与 [RegExpEnum] 一一对应。
+ * Common regular expression constants. Names aim to express "what is matched" rather than historic abbreviations;
+ * one-to-one correspondence with [RegExpEnum].
  *
- * 按用途拆分到内部对象中，便于查找和维护；同时保留同名平铺常量，避免现有调用方被迫迁移。
+ * Split into inner objects by purpose for ease of lookup and maintenance; flat constants with the same names are
+ * preserved to avoid forcing existing callers to migrate.
  *
  * @author K
  * @author AI: Cursor
@@ -12,8 +14,8 @@ package io.kudos.base.bean.validation.support
 object RegExps {
 
     /**
-     * 通信与联系方式相关正则。
-     * 包含手机号、固定电话、QQ、邮箱、微信号等场景。
+     * Regexes related to communication and contact information.
+     * Covers mobile numbers, landline phones, QQ, email, WeChat ID and similar scenarios.
      *
      * @author K
      * @since 1.0.0
@@ -21,12 +23,12 @@ object RegExps {
     object Communication {
 
         /**
-         * 规则：
-         * 中国大陆 11 位手机号
-         * 以 `1` 开头
-         * 第二、三位需落在当前规则列出的号段内
+         * Rules:
+         * 11-digit mainland China mobile number
+         * Starts with `1`
+         * The second and third digits must fall within the prefixes listed in this rule
          *
-         * 例如：
+         * Examples:
          * `13800138000`
          * `15912345678`
          * `19912345678`
@@ -34,12 +36,12 @@ object RegExps {
         const val CN_MAINLAND_MOBILE = "^1(3[0-9]|4[579]|5[0-35-9]|6[0-9]|7[0-9]|8[0-9]|9[0-9])\\d{8}$"
 
         /**
-         * 规则：
-         * QQ 号
-         * 只允许数字
-         * 长度 5～11 位
+         * Rules:
+         * QQ number
+         * Digits only
+         * Length 5 to 11
          *
-         * 例如：
+         * Examples:
          * `12345`
          * `10000`
          * `12345678901`
@@ -47,12 +49,12 @@ object RegExps {
         const val QQ_NUMBER = "^\\d{5,11}$"
 
         /**
-         * 规则：
-         * 手机或电话的纯数字串
-         * 不区分手机、固话、分机
-         * 只校验数字和长度 7～20 位
+         * Rules:
+         * Pure-digit string for mobile or landline phone
+         * Does not distinguish between mobile, landline or extension
+         * Only validates digits and length 7 to 20
          *
-         * 例如：
+         * Examples:
          * `1234567`
          * `02012345678`
          * `12345678901234567890`
@@ -60,12 +62,12 @@ object RegExps {
         const val PHONE_DIGITS_7_20 = "^\\d{7,20}$"
 
         /**
-         * 规则：
-         * 国内固话或手机号
-         * 固话支持区号、连字符和可选分机
-         * 手机号按规则内列出的号段匹配
+         * Rules:
+         * Domestic landline or mobile number
+         * Landline supports area code, hyphens and optional extension
+         * Mobile number is matched against the prefixes listed in the rule
          *
-         * 例如：
+         * Examples:
          * `010-12345678`
          * `010-12345678-123`
          * `13800138000`
@@ -74,12 +76,12 @@ object RegExps {
             "^0\\d{2,3}-?\\d{7,8}$|^(0\\d{2,3})-?(\\d{7,8})-?(\\d{1,4})$|^1(3[0-9]|4[57]|5[0-35-9]|7[0-9]|8[0-35-9])\\d{8}$"
 
         /**
-         * 规则：
-         * 电子邮箱
-         * 本地部分支持字母数字及 `.`、`_`、`-`
-         * 域名部分按常见邮箱域名形态宽松匹配
+         * Rules:
+         * Email address
+         * Local part supports letters, digits and `.`, `_`, `-`
+         * Domain part loosely matches the common email domain forms
          *
-         * 例如：
+         * Examples:
          * `user@example.com`
          * `user.name@example.com`
          * `abc-123@test-mail.com`
@@ -87,11 +89,11 @@ object RegExps {
         const val EMAIL = "^[a-zA-Z0-9]+([._\\-]*[a-zA-Z0-9])*@([a-z0-9]+[-a-z0-9]*[a-z0-9]+.){1,63}[a-z0-9]+$"
 
         /**
-         * 规则：
-         * 电子邮箱或中国大陆手机号
-         * 只要满足两者之一即可
+         * Rules:
+         * Email address or mainland China mobile number
+         * Either one is sufficient
          *
-         * 例如：
+         * Examples:
          * `user@example.com`
          * `abc_01@test.com`
          * `13800138000`
@@ -100,12 +102,12 @@ object RegExps {
             "^([a-z0-9]+([._\\-]*[a-z0-9])*@([a-z0-9]+[-a-z0-9]*[a-z0-9]+.){1,63}[a-z0-9]+)|(1(3[0-9]|5[0-35-9]|7[0-9]|8[0-35-9])\\d{8})$"
 
         /**
-         * 规则：
-         * 国内固定电话
-         * 支持 2 位或 3 位区号
-         * 支持主号码和分机号，使用 `-` 连接
+         * Rules:
+         * Domestic landline phone
+         * Supports 2 or 3 digit area codes
+         * Supports main number and extension joined with `-`
          *
-         * 例如：
+         * Examples:
          * `010-12345678`
          * `021-1234567`
          * `010-12345678-123`
@@ -114,13 +116,13 @@ object RegExps {
             "^(((0\\d{2})[-](\\d{8})$)|(^(0\\d{3})[-](\\d{7,8})$)|(^(0\\d{2})[-](\\d{8})-(\\d+)$)|(^(0\\d{3})[-](\\d{7,8})-(\\d+)))$"
 
         /**
-         * 规则：
-         * 微信号
-         * 首字符必须是字母或数字
-         * 后续可含字母、数字、`-`、`_`
-         * 总长度 6～20
+         * Rules:
+         * WeChat ID
+         * First character must be a letter or digit
+         * Subsequent characters may include letters, digits, `-`, `_`
+         * Total length 6 to 20
          *
-         * 例如：
+         * Examples:
          * `wechat1`
          * `wx_123456`
          * `abc-def_01`
@@ -129,8 +131,8 @@ object RegExps {
     }
 
     /**
-     * 人名 / 显示名相关正则。
-     * 包含真实姓名、银行账户户名、昵称等限制更严格的姓名字段。
+     * Regexes related to personal / display names.
+     * Includes real names, bank account holder names, nicknames and other more strictly constrained name fields.
      *
      * @author K
      * @since 1.0.0
@@ -138,43 +140,43 @@ object RegExps {
     object Name {
 
         /**
-         * 规则：
-         * 简短姓名
-         * 允许汉字、拉丁字母和 `·`
-         * 长度 2～30
+         * Rules:
+         * Short personal name
+         * Allows Han characters, Latin letters and `·`
+         * Length 2 to 30
          *
-         * 例如：
-         * `张三`
-         * `王小明`
+         * Examples:
+         * `Zhang San`
+         * `Wang Xiaoming`
          * `John·Doe`
          */
         const val SHORT_PERSON_NAME = "^[a-z\\u4E00-\\u9FA5\\u0800-\\u4e00\\\\A-Z\\·]{2,30}$"
 
         /**
-         * 规则：
-         * 真实姓名
-         * 首尾必须是字母、汉字、空格规则允许的姓名字符
-         * 中间可含数字、空格、`·`、`.`、`*`
-         * 不能为纯数字
+         * Rules:
+         * Real personal name
+         * First and last characters must be letters, Han characters or other allowed name characters
+         * Middle may contain digits, spaces, `·`, `.`, `*`
+         * Cannot be all digits
          *
-         * 例如：
-         * `张三`
+         * Examples:
+         * `Zhang San`
          * `John Smith`
-         * `李 四`
+         * `Li Si`
          */
         const val REAL_PERSON_NAME = ("^[a-zA-Z\\u0020\\u4E00-\\u9FA5\\u0800-\\u4e00\\*]"
                 + "[a-zA-Z0-9\\u0020\\u4E00-\\u9FA5\\u0800-\\u4e00\\·\\.\\* ]{0,28}"
                 + "[a-zA-Z\\u0020\\u4E00-\\u9FA5\\u0800-\\u4e00\\*]$")
 
         /**
-         * 规则：
-         * 银行账户户名
-         * 允许中英文、数字、空格、`·`、`.`、括号、`*`
-         * 适用于个人或公司名称展示
+         * Rules:
+         * Bank account holder name
+         * Allows Chinese and English characters, digits, spaces, `·`, `.`, parentheses, `*`
+         * Suitable for displaying personal or company names
          *
-         * 例如：
-         * `张三`
-         * `王五（公司）`
+         * Examples:
+         * `Zhang San`
+         * `Wang Wu (Company)`
          * `ABC Trading Co.`
          */
         const val BANK_ACCOUNT_HOLDER_NAME = ("^[a-zA-Z\\u4E00-\\u9FA5\\u0800-\\u4e00\\*]"
@@ -182,13 +184,13 @@ object RegExps {
                 + "[a-zA-Z\\u4E00-\\u9FA5\\u0800-\\u4e00\\*()（）]$")
 
         /**
-         * 规则：
-         * 存款人姓名
-         * 首尾必须是中英文字符
-         * 中间允许空格、`.`、`·`
+         * Rules:
+         * Payer (depositor) display name
+         * First and last characters must be Chinese or English letters
+         * Middle allows spaces, `.`, `·`
          *
-         * 例如：
-         * `张三`
+         * Examples:
+         * `Zhang San`
          * `Jane Doe`
          * `Li Lei`
          */
@@ -196,22 +198,22 @@ object RegExps {
             "^[a-zA-Z\\u4E00-\\u9FA5\\u0800-\\u4e00][a-zA-Z\\u4E00-\\u9FA5\\u0800-\\u4e00\\·\\. ]{0,28}[a-zA-Z\\u4E00-\\u9FA5\\u0800-\\u4e00]$"
 
         /**
-         * 规则：
-         * 昵称
-         * 允许中文、英文、数字
-         * 长度 3～15
+         * Rules:
+         * Nickname
+         * Allows Chinese, English and digits
+         * Length 3 to 15
          *
-         * 例如：
-         * `小明007`
+         * Examples:
+         * `Xiaoming007`
          * `Alice88`
-         * `玩家123`
+         * `Player123`
          */
         const val NICK_NAME = "^[a-zA-Z0-9\\u4E00-\\u9FA5\\u0800-\\u4e00]{3,15}$"
     }
 
     /**
-     * 通用文本相关正则。
-     * 主要约束字符集、长度与首字符等，不针对具体业务字段。
+     * Regexes related to general text.
+     * Mainly constrain character sets, length and leading characters; not targeted at a specific business field.
      *
      * @author K
      * @since 1.0.0
@@ -219,36 +221,36 @@ object RegExps {
     object Text {
 
         /**
-         * 规则：
-         * 文本不得包含 `&`、`*`、`=`、`|`、`{}`、`<>`、`/`、`…`、`—`
-         * 未列出的普通字符不受此规则限制
+         * Rules:
+         * Text must not contain `&`, `*`, `=`, `|`, `{}`, `<>`, `/`, `…`, `—`
+         * Any ordinary characters not listed are not restricted by this rule
          *
-         * 例如：
+         * Examples:
          * `hello world`
-         * `备注信息`
+         * `note info`
          * `A_B-C.1`
          */
         const val TEXT_WITHOUT_SPECIAL_CHARS = "^[^&*=|{}<>/\\…—]*$"
 
         /**
-         * 规则：
-         * 任意字符
-         * 长度 1～30
-         * 常用于密保答案、自由文本短字段
+         * Rules:
+         * Arbitrary characters
+         * Length 1 to 30
+         * Commonly used for security-question answers and short free-text fields
          *
-         * 例如：
+         * Examples:
          * `a`
          * `my answer`
-         * `答案123`
+         * `answer123`
          */
         const val TEXT_1_TO_30_CHARS = "^(.){1,30}$"
 
         /**
-         * 规则：
-         * 首字符必须是数字
-         * 后续字符不受此规则限制
+         * Rules:
+         * First character must be a digit
+         * Subsequent characters are unrestricted by this rule
          *
-         * 例如：
+         * Examples:
          * `1`
          * `1abc`
          * `9-xyz`
@@ -256,12 +258,12 @@ object RegExps {
         const val TEXT_STARTS_WITH_DIGIT = "^[0-9].*$"
 
         /**
-         * 规则：
-         * 仅含数字
-         * 允许空串
-         * 常用于“只输数字”的可选字段
+         * Rules:
+         * Digits only
+         * Empty string allowed
+         * Commonly used for optional "digits-only" fields
          *
-         * 例如：
+         * Examples:
          * ``
          * `12345`
          * `0001`
@@ -269,29 +271,29 @@ object RegExps {
         const val DIGITS_ONLY_OPTIONAL_EMPTY = "^[0-9]*$"
 
         /**
-         * 规则：
-         * 仅中文、拉丁字母与数字
-         * 不允许空格和符号
+         * Rules:
+         * Only Han characters, Latin letters and digits
+         * Spaces and symbols not allowed
          *
-         * 例如：
+         * Examples:
          * `abc123`
-         * `中国123`
-         * `Kudos中国123`
+         * `Zhongguo123`
+         * `KudosZhongguo123`
          */
         const val HAN_LATIN_ALNUM = "^[0-9a-zA-Z\\u4e00-\\u9fa5]+$"
 
         /**
-         * 上下文
+         * Context path
          *
-         * 规则：
-         * 必须以 `/` 开头
-         * 只用小写字母、数字、短横线 `-`
-         * 多级路径用 `/` 分隔
-         * 每一段不能为空
-         * 不用空格、中文、下划线、连续斜杠
-         * 不把 query、fragment 风格的内容塞进 path 里
+         * Rules:
+         * Must start with `/`
+         * Only lowercase letters, digits and hyphens `-`
+         * Multi-level paths are separated by `/`
+         * Each segment cannot be empty
+         * No spaces, Chinese characters, underscores or consecutive slashes
+         * Do not stuff query- or fragment-style content into the path
          *
-         * 例如：
+         * Examples:
          * `/`
          * `/kudos-base`
          * `/kudos-base/api/v1`
@@ -301,8 +303,8 @@ object RegExps {
     }
 
     /**
-     * 字符集合相关正则。
-     * 用于校验字符串只包含特定字符种类（字母、数字、连字符、下划线等）。
+     * Regexes related to character sets.
+     * Used to validate that a string contains only certain kinds of characters (letters, digits, hyphens, underscores, etc.).
      *
      * @author K
      * @since 1.0.0
@@ -310,11 +312,11 @@ object RegExps {
     object CharacterSet {
 
         /**
-         * 规则：
-         * 整个字符串由同一个字符重复组成
-         * 重复次数至少 2 次
+         * Rules:
+         * The whole string is the same character repeated
+         * Repeated at least twice
          *
-         * 例如：
+         * Examples:
          * `aaa`
          * `1111`
          * `%%%%`
@@ -322,11 +324,11 @@ object RegExps {
         const val SINGLE_CHAR_REPEATED = "^(.)\\1+$"
 
         /**
-         * 规则：
-         * 至少一位数字
-         * 只允许数字
+         * Rules:
+         * At least one digit
+         * Digits only
          *
-         * 例如：
+         * Examples:
          * `0`
          * `123`
          * `987654321`
@@ -334,12 +336,12 @@ object RegExps {
         const val DIGITS_NON_EMPTY = "^\\d+$"
 
         /**
-         * 规则：
-         * 仅拉丁字母
-         * 允许大写和小写
-         * 不允许数字和符号
+         * Rules:
+         * Latin letters only
+         * Both upper and lower case allowed
+         * Digits and symbols not allowed
          *
-         * 例如：
+         * Examples:
          * `abc`
          * `ABC`
          * `AbCd`
@@ -347,11 +349,11 @@ object RegExps {
         const val LATIN_LETTERS_ONLY = "^[a-zA-Z]+$"
 
         /**
-         * 规则：
-         * 仅小写拉丁字母
-         * 不允许大写字母、数字、符号
+         * Rules:
+         * Lowercase Latin letters only
+         * Uppercase letters, digits and symbols not allowed
          *
-         * 例如：
+         * Examples:
          * `abc`
          * `kudos`
          * `username`
@@ -359,12 +361,12 @@ object RegExps {
         const val LATIN_LOWERCASE_ONLY = "^[a-z]+$"
 
         /**
-         * 规则：
-         * 仅小写字母与数字
-         * 不能是纯数字
-         * 至少包含一个小写字母
+         * Rules:
+         * Lowercase letters and digits only
+         * Cannot be all digits
+         * Must contain at least one lowercase letter
          *
-         * 例如：
+         * Examples:
          * `abc123`
          * `a1`
          * `user2026`
@@ -372,12 +374,12 @@ object RegExps {
         const val LOWERCASE_ALNUM_NOT_ALL_DIGITS = "^(?!\\d+$)[\\da-z]+$"
 
         /**
-         * 规则：
-         * 仅 ASCII 数字
-         * 至少一位
-         * 不接受全角数字
+         * Rules:
+         * ASCII digits only
+         * At least one digit
+         * Full-width digits not accepted
          *
-         * 例如：
+         * Examples:
          * `0`
          * `123456`
          * `987654321`
@@ -385,11 +387,11 @@ object RegExps {
         const val ASCII_DIGITS_ONLY = "^[0-9]+$"
 
         /**
-         * 规则：
-         * 仅拉丁字母与数字
-         * 不允许空格、下划线、连字符和其他符号
+         * Rules:
+         * Latin letters and digits only
+         * Spaces, underscores, hyphens and other symbols not allowed
          *
-         * 例如：
+         * Examples:
          * `abc`
          * `ABC123`
          * `Abc123`
@@ -397,11 +399,11 @@ object RegExps {
         const val LATIN_ALNUM_ONLY = "^[a-zA-Z0-9]+$"
 
         /**
-         * 规则：
-         * 仅拉丁字母、数字、连字符、下划线
-         * 至少 1 位
+         * Rules:
+         * Latin letters, digits, hyphens and underscores only
+         * At least 1 character
          *
-         * 例如：
+         * Examples:
          * `user`
          * `user_name`
          * `user-name_01`
@@ -409,13 +411,13 @@ object RegExps {
         const val LATIN_ALNUM_DASH_UNDERSCORE = "^[a-zA-Z0-9_-]+$"
 
         /**
-         * 规则：
-         * 宽松标识符/变量名
-         * 允许大小写字母、数字、下划线、短横线
-         * 首字符只能是字母或下划线
-         * 后续字符允许字母、数字、下划线、短横线
+         * Rules:
+         * Relaxed identifier / variable name
+         * Allows upper and lower case letters, digits, underscores and hyphens
+         * First character may only be a letter or underscore
+         * Subsequent characters allow letters, digits, underscores and hyphens
          *
-         * 例如：
+         * Examples:
          * `name`
          * `_user-name`
          * `Abc_123-x`
@@ -423,12 +425,12 @@ object RegExps {
         const val RELAXED_VAR_NAME = "^[A-Za-z_][A-Za-z0-9_-]*$"
 
         /**
-         * 规则：
-         * 标识符
-         * 首字符必须是字母或下划线
-         * 后续允许字母、数字、下划线
+         * Rules:
+         * Identifier
+         * First character must be a letter or underscore
+         * Subsequent characters allow letters, digits and underscores
          *
-         * 例如：
+         * Examples:
          * `name`
          * `_value`
          * `user_name1`
@@ -436,12 +438,12 @@ object RegExps {
         const val VAR_NAME = "^[A-Za-z_][A-Za-z0-9_]*$"
 
         /**
-         * 规则：
-         * 小写 slug
-         * 只允许小写字母、数字、连字符
-         * 不允许连续连字符分段为空
+         * Rules:
+         * Lowercase slug
+         * Only lowercase letters, digits and hyphens allowed
+         * Consecutive hyphens producing empty segments are not allowed
          *
-         * 例如：
+         * Examples:
          * `article`
          * `user-profile`
          * `user-profile-01`
@@ -450,8 +452,8 @@ object RegExps {
     }
 
     /**
-     * 安全相关正则。
-     * 包含登录密码、PIN 码、以及密码强度判定使用的规则集。
+     * Regexes related to security.
+     * Includes login passwords, PIN codes and the rule set used for password strength judgement.
      *
      * @author K
      * @since 1.0.0
@@ -459,12 +461,12 @@ object RegExps {
     object Security {
 
         /**
-         * 规则：
-         * 登录密码
-         * 长度 6～20
-         * 允许字母、数字和常见 ASCII 符号
+         * Rules:
+         * Login password
+         * Length 6 to 20
+         * Allows letters, digits and common ASCII symbols
          *
-         * 例如：
+         * Examples:
          * `Abc123`
          * `Abc123!`
          * `Pass_word#1`
@@ -472,12 +474,12 @@ object RegExps {
         const val LOGIN_PASSWORD = "^[A-Za-z0-9~\\\\\\-!@#$%^&*()_+\\{\\}\\[\\]|\\:;'\"<>,./?]{6,20}$"
 
         /**
-         * 规则：
-         * 6 位数字安全码 / PIN
-         * 只允许数字
-         * 长度固定为 6
+         * Rules:
+         * 6-digit security code / PIN
+         * Digits only
+         * Fixed length of 6
          *
-         * 例如：
+         * Examples:
          * `123456`
          * `000001`
          * `987654`
@@ -485,11 +487,11 @@ object RegExps {
         const val SECURITY_PIN_SIX_DIGITS = "^[0-9]{6}$"
 
         /**
-         * 规则：
-         * 密码强度分类中的“仅字母”
-         * 规则与 [CharacterSet.LATIN_LETTERS_ONLY] 完全一致
+         * Rules:
+         * "Letters only" category used in password strength classification
+         * Identical to [CharacterSet.LATIN_LETTERS_ONLY]
          *
-         * 例如：
+         * Examples:
          * `abc`
          * `OnlyText`
          * `Password`
@@ -497,11 +499,11 @@ object RegExps {
         const val PASSWORD_STRENGTH_LETTERS_ONLY = CharacterSet.LATIN_LETTERS_ONLY
 
         /**
-         * 规则：
-         * 密码强度分类中的“仅数字”
-         * 规则与 [CharacterSet.ASCII_DIGITS_ONLY] 完全一致
+         * Rules:
+         * "Digits only" category used in password strength classification
+         * Identical to [CharacterSet.ASCII_DIGITS_ONLY]
          *
-         * 例如：
+         * Examples:
          * `123456`
          * `987654`
          * `20260403`
@@ -509,12 +511,12 @@ object RegExps {
         const val PASSWORD_STRENGTH_DIGITS_ONLY = CharacterSet.ASCII_DIGITS_ONLY
 
         /**
-         * 规则：
-         * 密码强度分类中的“字母与数字”
-         * 允许大小写字母和数字
-         * 不允许符号
+         * Rules:
+         * "Letters and digits" category used in password strength classification
+         * Allows upper and lower case letters and digits
+         * Symbols not allowed
          *
-         * 例如：
+         * Examples:
          * `Abc123`
          * `abc999`
          * `PASS2026`
@@ -522,11 +524,11 @@ object RegExps {
         const val PASSWORD_STRENGTH_LETTERS_AND_DIGITS = "^[0-9a-zA-Z]+$"
 
         /**
-         * 规则：
-         * 密码强度分类中的“字母、数字与常用符号”
-         * 允许大小写字母、数字和 ASCII 常见符号
+         * Rules:
+         * "Letters, digits and common symbols" category used in password strength classification
+         * Allows upper and lower case letters, digits and common ASCII symbols
          *
-         * 例如：
+         * Examples:
          * `Abc123!`
          * `P@ssw0rd#`
          * `A1_b2-C3`
@@ -536,8 +538,8 @@ object RegExps {
     }
 
     /**
-     * 数值文本相关正则。
-     * 包含整数、正数、金额、百分比、比分等以字符串形式表达的数字格式。
+     * Regexes related to numeric text.
+     * Includes integers, positive numbers, amounts, percentages and scores expressed as strings.
      *
      * @author K
      * @since 1.0.0
@@ -545,12 +547,12 @@ object RegExps {
     object Numeric {
 
         /**
-         * 规则：
-         * 正整数文本
-         * 不允许负号、小数
-         * 不允许以 `0` 开头
+         * Rules:
+         * Positive integer text
+         * Negative sign and decimal point not allowed
+         * Cannot start with `0`
          *
-         * 例如：
+         * Examples:
          * `1`
          * `42`
          * `999999`
@@ -558,12 +560,12 @@ object RegExps {
         const val POSITIVE_INT_TEXT = "^[1-9]\\d*$"
 
         /**
-         * 规则：
-         * 让分或比分类比分串
-         * 支持可选负号
-         * 支持整数、小数、`/` 或 `-` 作为分隔形式
+         * Rules:
+         * Handicap- or score-style string
+         * Supports an optional negative sign
+         * Supports integers, decimals and `/` or `-` as separators
          *
-         * 例如：
+         * Examples:
          * `1.5`
          * `1.5/2`
          * `-0.5`
@@ -572,13 +574,13 @@ object RegExps {
             "^(\\-?)((?:[0-9]{1,4})(?:\\.\\d{1,2})?)(\\/?|\\-?)((?:[0-9]{1,4}|0)(?:\\.\\d{1,2})?)?$"
 
         /**
-         * 规则：
-         * 正数文本
-         * 允许整数或小数
-         * 不允许负号
-         * 禁止多余前导零
+         * Rules:
+         * Positive number text
+         * Allows integers or decimals
+         * Negative sign not allowed
+         * Redundant leading zeros not allowed
          *
-         * 例如：
+         * Examples:
          * `1`
          * `12`
          * `12.5`
@@ -586,12 +588,12 @@ object RegExps {
         const val POSITIVE_DECIMAL_TEXT = "^(?!(0[0-9]{0,}$))[0-9]{1,}[.]{0,}[0-9]{0,}$"
 
         /**
-         * 规则：
-         * 正数
-         * 可以是大于 0 的整数
-         * 也可以是 `0.xxx` 且小数部分至少有一个非零位
+         * Rules:
+         * Positive number
+         * Can be an integer greater than 0
+         * Or `0.xxx` where the fractional part contains at least one non-zero digit
          *
-         * 例如：
+         * Examples:
          * `8`
          * `10.5`
          * `0.25`
@@ -599,12 +601,12 @@ object RegExps {
         const val POSITIVE_NUMBER_TEXT = "^([1-9]\\d*\\.?\\d*)|(0\\.\\d*[1-9])$"
 
         /**
-         * 规则：
-         * 整数文本
-         * 可带 `+` 或 `-`
-         * 不允许小数点
+         * Rules:
+         * Integer text
+         * May carry `+` or `-`
+         * Decimal point not allowed
          *
-         * 例如：
+         * Examples:
          * `0`
          * `-10`
          * `+8`
@@ -612,13 +614,13 @@ object RegExps {
         const val SIGNED_INTEGER_TEXT = "^(-|\\+)?\\d+$"
 
         /**
-         * 规则：
-         * 比特币数量
-         * 不允许全零
-         * 整数部分可为正整数
-         * 小数部分最多 8 位
+         * Rules:
+         * Bitcoin amount
+         * All zeros not allowed
+         * Integer part may be a positive integer
+         * Fractional part up to 8 digits
          *
-         * 例如：
+         * Examples:
          * `1`
          * `0.12345`
          * `1.00000001`
@@ -626,11 +628,11 @@ object RegExps {
         const val BTC_AMOUNT_TEXT = "^(?!0+(?:\\.0+)?$)(((?:[1-9]\\d*(\\.\\d{1,8})?))|(0\\.\\d{1,5}))?$"
 
         /**
-         * 规则：
-         * 空串或正整数
-         * 如果有值，则必须是大于 0 的整数
+         * Rules:
+         * Empty string or positive integer
+         * If a value is present, it must be an integer greater than 0
          *
-         * 例如：
+         * Examples:
          * ``
          * `1`
          * `25`
@@ -638,12 +640,12 @@ object RegExps {
         const val EMPTY_OR_POSITIVE_INT_TEXT = "^([0-9]*[1-9][0-9]*)?$"
 
         /**
-         * 规则：
-         * 最多 9 位数字
-         * 可为空
-         * 不允许其他字符
+         * Rules:
+         * Up to 9 digits
+         * May be empty
+         * No other characters allowed
          *
-         * 例如：
+         * Examples:
          * ``
          * `1`
          * `123456789`
@@ -651,13 +653,13 @@ object RegExps {
         const val DIGITS_AT_MOST_9 = "^\\d{0,9}$"
 
         /**
-         * 规则：
-         * 金额
-         * 可带负号
-         * 整数部分 0 或非零开头整数
-         * 小数部分最多 2 位
+         * Rules:
+         * Amount
+         * May carry a negative sign
+         * Integer part is `0` or starts with a non-zero digit
+         * Fractional part up to 2 digits
          *
-         * 例如：
+         * Examples:
          * `0`
          * `12.5`
          * `-12.50`
@@ -665,12 +667,12 @@ object RegExps {
         const val SIGNED_AMOUNT_LOOSE = "^\\-?([1-9]\\d{0,9}|0)([.]?|(\\.\\d{1,2})?)$"
 
         /**
-         * 规则：
-         * 非零金额
-         * 金额不能为 `0` 或 `0.00`
-         * 小数部分最多 2 位
+         * Rules:
+         * Non-zero amount
+         * Amount cannot be `0` or `0.00`
+         * Fractional part up to 2 digits
          *
-         * 例如：
+         * Examples:
          * `0.01`
          * `1`
          * `99.99`
@@ -678,12 +680,12 @@ object RegExps {
         const val AMOUNT_NONZERO_TWO_DECIMALS = "^(?!0+(?:\\.0+)?$)(?:[1-9]\\d*|0)(?:\\.\\d{1,2})?$"
 
         /**
-         * 规则：
-         * 整数百分比
-         * 只允许整数
-         * 取值范围 0～100
+         * Rules:
+         * Integer percentage
+         * Integers only
+         * Value range 0 to 100
          *
-         * 例如：
+         * Examples:
          * `0`
          * `85`
          * `100`
@@ -692,8 +694,8 @@ object RegExps {
     }
 
     /**
-     * 网络与协议相关正则。
-     * 包含 IPv4、IPv6、URL、JDBC、MAC、端口、域名、CIDR 等表达。
+     * Regexes related to networking and protocols.
+     * Covers IPv4, IPv6, URL, JDBC, MAC, port, domain, CIDR and the like.
      *
      * @author K
      * @since 1.0.0
@@ -701,12 +703,12 @@ object RegExps {
     object Network {
 
         /**
-         * 规则：
-         * IPv4 点分十进制地址
-         * 共 4 段
-         * 每段取值范围 0～255
+         * Rules:
+         * IPv4 dotted-decimal address
+         * 4 octets in total
+         * Each octet ranges from 0 to 255
          *
-         * 例如：
+         * Examples:
          * `127.0.0.1`
          * `192.168.1.1`
          * `255.255.255.255`
@@ -714,12 +716,12 @@ object RegExps {
         const val IPV4 = "^(25[0-5]|2[0-4]\\d|[0-1]?\\d?\\d)(\\.(25[0-5]|2[0-4]\\d|[0-1]?\\d?\\d)){3}$"
 
         /**
-         * 规则：
-         * IPv4 点分十进制完整(零补齐)地址
-         * 共 4 段
-         * 每段取值范围 000～255
+         * Rules:
+         * IPv4 dotted-decimal full (zero-padded) address
+         * 4 octets in total
+         * Each octet ranges from 000 to 255
          *
-         * 例如：
+         * Examples:
          * `127.000.000.001`
          * `192.168.001.001`
          * `255.255.255.255`
@@ -727,12 +729,12 @@ object RegExps {
         const val IPV4_FULL = "^(?:(?:25[0-5]|2[0-4]\\d|1\\d\\d|0\\d\\d)\\.){3}(?:25[0-5]|2[0-4]\\d|1\\d\\d|0\\d\\d)$"
 
         /**
-         * 规则：
-         * URL，支持 `http`、`https`、`ftp`、`sftp`
-         * 允许域名、IPv4、端口、路径、query、fragment
-         * 属于宽松匹配，不等同完整 RFC 严格校验
+         * Rules:
+         * URL, supporting `http`, `https`, `ftp`, `sftp`
+         * Allows domain, IPv4, port, path, query and fragment
+         * Loose match; not equivalent to full strict RFC validation
          *
-         * 例如：
+         * Examples:
          * `https://example.com`
          * `http://example.com:8080/api`
          * `https://example.com/search?q=test#top`
@@ -750,12 +752,12 @@ object RegExps {
                 + "|@)|[\\uE000-\\uF8FF]|\\/|\\?)*)?(#((([A-Za-z]|\\d|-|\\.|_|~|[\\u00A0-\\uD7FF\\uF900-\\uFDCF\\uFDF0-\\uFFEF])|(%[\\da-f]{2})|[!\\$&'\\(\\)\\*\\+,;=]|:|@)|\\/|\\?)*)?$"))
 
         /**
-         * 规则：
-         * 多个 IPv4 地址
-         * 使用英文分号 `;` 分隔
-         * 每个成员都必须是合法 IPv4
+         * Rules:
+         * Multiple IPv4 addresses
+         * Separated by ASCII semicolon `;`
+         * Every member must be a valid IPv4 address
          *
-         * 例如：
+         * Examples:
          * `10.0.0.1`
          * `10.0.0.1;192.168.1.1`
          * `127.0.0.1;8.8.8.8;1.1.1.1`
@@ -764,24 +766,24 @@ object RegExps {
             "^((25[0-5]|2[0-4]\\d|[0-1]?\\d?\\d)(\\.(25[0-5]|2[0-4]\\d|[0-1]?\\d?\\d)){3})(;((25[0-5]|2[0-4]\\d|[0-1]?\\d?\\d)(\\.(25[0-5]|2[0-4]\\d|[0-1]?\\d?\\d)){3}))*$"
 
         /**
-         * 规则：
-         * IPv6 全展开地址
-         * 共 8 组十六进制段
-         * 每组 1～4 位十六进制字符
+         * Rules:
+         * Fully expanded IPv6 address
+         * 8 hexadecimal groups in total
+         * Each group has 1 to 4 hexadecimal characters
          *
-         * 例如：
+         * Examples:
          * `2001:0db8:0000:0000:0000:ff00:0042:8329`
          * `fe80:0000:0000:0000:0202:b3ff:fe1e:8329`
          */
         const val IPV6_FULL = "^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$"
 
         /**
-         * 规则：
-         * IPv6 压缩地址
-         * 必须包含 `::`
-         * `::` 左右允许省略若干段
+         * Rules:
+         * Compressed IPv6 address
+         * Must contain `::`
+         * Either side of `::` may omit groups
          *
-         * 例如：
+         * Examples:
          * `2001:db8::1`
          * `::1`
          * `fe80::abcd`
@@ -790,12 +792,12 @@ object RegExps {
             "^((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)::((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)$"
 
         /**
-         * 规则：
-         * 逗号分隔域名列表
-         * 每个成员都必须是标准点分域名
-         * 使用英文逗号 `,` 分隔
+         * Rules:
+         * Comma-separated list of domain names
+         * Every member must be a standard dotted domain name
+         * Separated by ASCII comma `,`
          *
-         * 例如：
+         * Examples:
          * `a.example.com`
          * `a.example.com,b.example.com`
          * `api.test.com,cdn.test.com`
@@ -804,24 +806,24 @@ object RegExps {
             "^(([a-zA-Z0-9]+\\.)+([a-zA-Z0-9]+){1}\\,)*(([a-zA-Z0-9]+\\.)+([a-zA-Z0-9]+){1}){1}$"
 
         /**
-         * 规则：
-         * MAC 地址
-         * 6 组十六进制字符
-         * 组之间允许 `:` 或 `-`
+         * Rules:
+         * MAC address
+         * 6 groups of hexadecimal characters
+         * Groups may be separated by `:` or `-`
          *
-         * 例如：
+         * Examples:
          * `00:1A:2B:3C:4D:5E`
          * `AA-BB-CC-DD-EE-FF`
          */
         const val MAC_ADDRESS_COLON_OR_HYPHEN = "^(?:[0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}$"
 
         /**
-         * 规则：
-         * 网络端口号
-         * 只允许十进制数字
-         * 取值范围 1～65535
+         * Rules:
+         * Network port number
+         * Decimal digits only
+         * Value range 1 to 65535
          *
-         * 例如：
+         * Examples:
          * `80`
          * `443`
          * `65535`
@@ -830,12 +832,12 @@ object RegExps {
             "^(?:[1-9]\\d{0,3}|[1-5]\\d{4}|6[0-4]\\d{3}|65[0-4]\\d{2}|655[0-2]\\d|6553[0-5])$"
 
         /**
-         * 规则：
-         * IPv4 CIDR 表示法
-         * 前半部分必须是 IPv4
-         * 前缀长度范围 0～32
+         * Rules:
+         * IPv4 CIDR notation
+         * Leading part must be a valid IPv4 address
+         * Prefix length ranges from 0 to 32
          *
-         * 例如：
+         * Examples:
          * `192.168.1.0/24`
          * `10.0.0.1/32`
          * `0.0.0.0/0`
@@ -844,13 +846,13 @@ object RegExps {
             "^(25[0-5]|2[0-4]\\d|[0-1]?\\d?\\d)(\\.(25[0-5]|2[0-4]\\d|[0-1]?\\d?\\d)){3}\\/(?:3[0-2]|[12]?\\d)$"
 
         /**
-         * 规则：
+         * Rules:
          * JDBC URL
-         * 必须以 `jdbc:` 开头
-         * 协议名后可跟驱动类型和连接信息
-         * 后续不允许空白字符
+         * Must start with `jdbc:`
+         * The protocol name may be followed by a driver type and connection information
+         * No whitespace characters allowed in the remainder
          *
-         * 例如：
+         * Examples:
          * `jdbc:mysql://localhost:3306/kudos`
          * `jdbc:postgresql://db:5432/app`
          * `jdbc:h2:mem:test`
@@ -858,13 +860,13 @@ object RegExps {
         const val JDBC_URL = "^jdbc:[a-zA-Z0-9][a-zA-Z0-9+._-]*:\\S+$"
 
         /**
-         * 规则：
-         * 域名
-         * 支持 `localhost`
-         * 或标准点分域名
-         * 总长度和每段首尾连字符规则受限
+         * Rules:
+         * Domain name
+         * Supports `localhost`
+         * Or a standard dotted domain name
+         * Total length and per-label leading/trailing hyphen rules are constrained
          *
-         * 例如：
+         * Examples:
          * `localhost`
          * `example.com`
          * `api.example.com`
@@ -873,8 +875,8 @@ object RegExps {
     }
 
     /**
-     * 业务专用正则。
-     * 含银行卡号、玩家账号、站点 ID 列表等明显与领域绑定的字段。
+     * Business-specific regexes.
+     * Contains fields obviously tied to the business domain such as bank card numbers, player accounts and site ID lists.
      *
      * @author K
      * @since 1.0.0
@@ -882,12 +884,12 @@ object RegExps {
     object Business {
 
         /**
-         * 规则：
-         * 银行卡号
-         * 只允许数字
-         * 长度 10～25
+         * Rules:
+         * Bank card number
+         * Digits only
+         * Length 10 to 25
          *
-         * 例如：
+         * Examples:
          * `6222021234567890`
          * `6222021234567890123`
          * `1234567890123456789012345`
@@ -895,13 +897,13 @@ object RegExps {
         const val BANK_CARD_NUMBER = "^[0-9]{10,25}$"
 
         /**
-         * 规则：
-         * 站点 ID 列表
-         * 支持单个数字
-         * 支持英文逗号分隔多个数字
-         * 也允许全空白
+         * Rules:
+         * Site ID list
+         * Supports a single number
+         * Supports multiple numbers separated by ASCII commas
+         * Also allows an all-whitespace value
          *
-         * 例如：
+         * Examples:
          * `42`
          * `1,2,3`
          * `   `
@@ -909,13 +911,13 @@ object RegExps {
         const val SITE_IDS_COMMA_SEPARATED = "^\\d+(,\\d+)*$|^\\d+$|^(\\s)*$"
 
         /**
-         * 规则：
-         * 玩家账号
-         * 首字符允许字母、数字、下划线、`$`
-         * 后续只允许字母、数字、下划线
-         * 总长度 4～15
+         * Rules:
+         * Game player account
+         * First character may be a letter, digit, underscore or `$`
+         * Subsequent characters allow only letters, digits and underscores
+         * Total length 4 to 15
          *
-         * 例如：
+         * Examples:
          * `user1`
          * `guest_01`
          * `$abc_123`
@@ -924,8 +926,8 @@ object RegExps {
     }
 
     /**
-     * 通用格式相关正则。
-     * 含 UUID、日期、时间、邮编、十六进制颜色等可复用的标准化格式。
+     * Regexes related to common formats.
+     * Includes UUID, date, time, postal code, hex color and other reusable standardized formats.
      *
      * @author K
      * @since 1.0.0
@@ -933,24 +935,24 @@ object RegExps {
     object Format {
 
         /**
-         * 规则：
-         * 带连字符的 UUID
-         * 形如 `8-4-4-4-12`
-         * 每段由字母数字下划线字符类 `\\w` 匹配
+         * Rules:
+         * Hyphenated UUID
+         * Shaped as `8-4-4-4-12`
+         * Each segment is matched by the alphanumeric/underscore character class `\\w`
          *
-         * 例如：
+         * Examples:
          * `123e4567-e89b-12d3-a456-426614174000`
          * `aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee`
          */
         const val UUID_HYPHENATED = "^\\w{8}(-\\w{4}){3}-\\w{12}$"
 
         /**
-         * 规则：
-         * 日期格式 `yyyy-MM-dd`
-         * 仅校验年月日格式
-         * 不保证闰年和大小月绝对正确
+         * Rules:
+         * Date format `yyyy-MM-dd`
+         * Only validates the year-month-day format
+         * Does not guarantee absolute correctness of leap years or month lengths
          *
-         * 例如：
+         * Examples:
          * `2026-04-03`
          * `1999-12-31`
          * `2024-02-29`
@@ -958,12 +960,12 @@ object RegExps {
         const val DATE_ISO_YYYY_MM_DD = "^(?:\\d{4})-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\\d|3[01])$"
 
         /**
-         * 规则：
-         * 24 小时制时间
-         * 基础格式 `HH:mm`
-         * 可追加秒 `:ss`
+         * Rules:
+         * 24-hour time
+         * Base format `HH:mm`
+         * Seconds `:ss` may be appended
          *
-         * 例如：
+         * Examples:
          * `09:30`
          * `23:59`
          * `23:59:59`
@@ -971,12 +973,12 @@ object RegExps {
         const val TIME_24H_MM_OPTIONAL_SS = "^(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d)?$"
 
         /**
-         * 规则：
-         * 中国大陆邮政编码
-         * 只允许数字
-         * 长度固定 6 位
+         * Rules:
+         * Mainland China postal code
+         * Digits only
+         * Fixed length of 6
          *
-         * 例如：
+         * Examples:
          * `100000`
          * `200120`
          * `518000`
@@ -984,13 +986,13 @@ object RegExps {
         const val CN_MAINLAND_POSTAL_CODE = "^\\d{6}$"
 
         /**
-         * 规则：
-         * CSS 十六进制颜色值
-         * 支持 `#RGB`
-         * 支持 `#RRGGBB`
-         * 支持 `#RRGGBBAA`
+         * Rules:
+         * CSS hexadecimal color value
+         * Supports `#RGB`
+         * Supports `#RRGGBB`
+         * Supports `#RRGGBBAA`
          *
-         * 例如：
+         * Examples:
          * `#fff`
          * `#FF8800`
          * `#11223344`

@@ -3,15 +3,15 @@ package io.kudos.ms.sys.common.resource.enums
 import io.kudos.base.enums.ienums.IDictEnum
 
 /**
- * 资源类型枚举
+ * Resource type enum.
  *
  * @author K
  * @since 1.0.0
  */
 enum class ResourceTypeEnum(override val code: String, override val displayText: String): IDictEnum {
 
-    MENU("1", "菜单"),
-    FUNCTION("2", "功能"),
-    ACTION("3", "请求")
+    MENU("1", "Menu"),
+    FUNCTION("2", "Function"),
+    ACTION("3", "Action")
 
 }

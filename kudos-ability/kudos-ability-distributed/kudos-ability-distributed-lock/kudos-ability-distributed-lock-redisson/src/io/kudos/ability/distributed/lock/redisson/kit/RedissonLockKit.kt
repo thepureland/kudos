@@ -8,7 +8,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 
 /**
- * 分布式锁工具类，目前使用redisson实现
+ * Distributed lock utility, currently backed by Redisson.
  * @author K
  * @author AI: Codex
  * @since 1.0.0
@@ -23,9 +23,9 @@ object RedissonLockKit {
     const val DEFAULT_LOCK_KEY_PREFIX = "REDISSON::"
 
     /**
-     * 获取分布式锁
+     * Obtain the distributed lock object.
      *
-     * @param lockKey 锁的key
+     * @param lockKey lock key
      * @return RLock
      */
     @JvmOverloads
@@ -33,9 +33,9 @@ object RedissonLockKit {
         locker(lockerBeanName).getLock(getLockKey(lockKey))
 
     /**
-     * 获取分布式锁
+     * Acquire a distributed lock.
      *
-     * @param lockKey 锁的key
+     * @param lockKey lock key
      * @return RLock
      */
     @JvmOverloads
@@ -43,7 +43,7 @@ object RedissonLockKit {
         locker(lockerBeanName).lock(getLockKey(lockKey))
 
     /**
-     * 获取分布式锁，并指定锁失效秒数
+     * Acquire a distributed lock with the given lease in seconds.
      *
      * @param lockKey lockKey
      * @param timeOut timeOut
@@ -54,7 +54,7 @@ object RedissonLockKit {
         locker(lockerBeanName).lock(getLockKey(lockKey), timeOut)
 
     /**
-     * 获取分布式锁，并指定锁失效时间
+     * Acquire a distributed lock with the given lease duration.
      *
      * @param lockKey lockKey
      * @param unit    unit
@@ -71,12 +71,12 @@ object RedissonLockKit {
         locker(lockerBeanName).lock(getLockKey(lockKey), unit, timeOut)
 
     /**
-     * 尝试获取锁，如果获取成功返回true，否则返回false
+     * Try to acquire the lock. Returns true on success, false otherwise.
      *
      * @param lockKey   lockKey
      * @param unit      unit
-     * @param timeOut   获取锁等待时间
-     * @param leaseTime 获取锁成功后，锁失效时间
+     * @param timeOut   wait time for acquiring the lock
+     * @param leaseTime lease time once the lock is held
      */
     @JvmOverloads
     fun tryLock(
@@ -89,7 +89,7 @@ object RedissonLockKit {
         locker(lockerBeanName).tryLock(getLockKey(lockKey), unit, timeOut, leaseTime)
 
     /**
-     * 解除分布式锁
+     * Release the distributed lock.
      *
      * @param lockKey lockKey
      */
@@ -99,12 +99,13 @@ object RedissonLockKit {
     }
 
     /**
-     * 解除分布式锁。
+     * Release the distributed lock.
      *
-     * 与 [unlock] 字符串版的差异：直接释放传入的 [RLock] 对象，少一次按 key 查锁的 RTT；
-     * **但必须确认本线程持有该锁**，否则 Redisson 会抛 `IllegalMonitorStateException`。
-     * 旧实现只检查 `isLocked`，对"别的线程持有这把锁"的场景会报错。已加上
-     * `isHeldByCurrentThread` 双重检查与 [RedissonLocker.unlock] 行为对齐。
+     * Differs from the string-based [unlock]: releases the supplied [RLock] directly,
+     * saving one key-lookup RTT, **but only when the current thread actually holds it** —
+     * otherwise Redisson throws `IllegalMonitorStateException`.
+     * The previous implementation only checked `isLocked`, which raised when another thread held the lock.
+     * The `isHeldByCurrentThread` check is added to match [RedissonLocker.unlock].
      */
     fun unlock(lock: RLock) {
         if (lock.isLocked && lock.isHeldByCurrentThread) {
@@ -112,7 +113,7 @@ object RedissonLockKit {
         }
     }
 
-    /** 绑定指定名称的 locker。主要用于多 RedissonClient 场景和测试。 */
+    /** Bind a locker under the given bean name. Used mainly for multi-RedissonClient setups and tests. */
     fun bindLocker(locker: RedissonLocker?, lockerBeanName: String = REDISSON_LOCKER_BEAN_NAME) {
         if (locker == null) {
             lockBeans.remove(lockerBeanName)
@@ -122,17 +123,18 @@ object RedissonLockKit {
     }
 
     /**
-     * 配置统一 lock key 前缀。传空字符串表示不加前缀。
+     * Configure the global lock key prefix. Pass an empty string to disable the prefix.
      */
     fun setLockKeyPrefix(prefix: String) {
         lockKeyPrefix = prefix
     }
 
     /**
-     * 取已初始化的 [RedissonLocker]；未就绪时立即报错（说明 Spring 容器还没装好就被调用）。
+     * Returns the initialized [RedissonLocker]; fails fast when not ready
+     * (indicating the Spring container is not fully built yet).
      *
-     * @return [RedissonLocker] 单例
-     * @throws IllegalArgumentException Spring 容器尚未注入 [RedissonLocker] 时
+     * @return the [RedissonLocker] singleton
+     * @throws IllegalArgumentException when the Spring container has not injected [RedissonLocker] yet
      * @author K
      * @since 1.0.0
      */
@@ -142,20 +144,20 @@ object RedissonLockKit {
         }
 
     /**
-     * 清理缓存的 locker。主要用于测试或 Spring 容器重建场景。
+     * Clear cached lockers. Used mainly for tests or when the Spring container is rebuilt.
      */
     fun clearCachedLockers() {
         lockBeans.clear()
     }
 
-    /** Spring 容器中 Redisson 客户端 bean 名 */
+    /** Bean name of the Redisson client in the Spring container. */
     const val REDISSON_CLIENT_BEAN_NAME: String = "redissonClient"
 
     /**
-     * 从 Spring 容器拿 [RedissonClient] bean。
-     * 业务侧需要原生 Redisson API（如 `RBucket` / `RBlockingQueue`）时使用。
+     * Fetch the [RedissonClient] bean from the Spring container.
+     * Use this when callers need the native Redisson API (e.g. `RBucket` / `RBlockingQueue`).
      *
-     * @return Redisson 客户端
+     * @return Redisson client
      * @author K
      * @since 1.0.0
      */
@@ -163,16 +165,16 @@ object RedissonLockKit {
         SpringKit.getBean(REDISSON_CLIENT_BEAN_NAME) as RedissonClient
 
     /**
-     * 把业务 key 拼上 [lockKeyPrefix] 形成 Redis 中的完整锁 key。
-     * 集中前缀让运维通过 key 模式就能识别 redisson 锁。
+     * Concatenate the business key with [lockKeyPrefix] to form the full lock key in Redis.
+     * The centralized prefix lets operators recognize redisson locks by key pattern.
      *
-     * @param key 业务 key
-     * @return 带 `REDISSON::` 前缀的最终 key
+     * @param key business key
+     * @return final key with the `REDISSON::` prefix
      * @author K
      * @since 1.0.0
      */
     fun getLockKey(key: String): String = lockKeyPrefix + key
 
-    /** 默认 RedissonLocker bean 名 */
+    /** Default RedissonLocker bean name. */
     const val REDISSON_LOCKER_BEAN_NAME: String = "redissonLocker"
 }

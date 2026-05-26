@@ -1,11 +1,11 @@
 package io.kudos.ms.auth.core.role.event
 
 /**
- * 角色（`auth_role`）领域事件。由 `@TransactionalEventListener(AFTER_COMMIT)` 派发。
+ * Role (`auth_role`) domain events. Dispatched via `@TransactionalEventListener(AFTER_COMMIT)`.
  *
- * 删除类事件 snapshot 模式：服务层在 `super.deleteById`/`batchDelete` 前先读取
- * `tenantId`/`code`，再随事件投递，方便按 (tenantId, code) 索引的下游缓存做精确失效
- * （AFTER_COMMIT 时数据库已无行可查）。
+ * Snapshot pattern for delete events: the service reads `tenantId`/`code` before `super.deleteById`/
+ * `batchDelete`, then carries them on the event so downstream caches indexed by (tenantId, code) can
+ * invalidate precisely (the DB row no longer exists at AFTER_COMMIT time).
  *
  * @author K
  * @author AI: Cursor
@@ -17,7 +17,7 @@ sealed interface AuthRoleEvent {
 
 data class AuthRoleInserted(override val id: String) : AuthRoleEvent
 
-/** 涵盖一般 update、updateActive 等部分字段更新。 */
+/** Covers generic update, updateActive, and other partial-field updates. */
 data class AuthRoleUpdated(override val id: String) : AuthRoleEvent
 
 data class AuthRoleDeleted(
@@ -31,6 +31,6 @@ data class AuthRoleBatchDeleted(val items: Collection<Item>) : AuthRoleEvent {
 
     override val id: String get() = items.first().id
 
-    /** 兼容仅按 id 失效缓存的下游 listener。 */
+    /** Convenience for downstream listeners that invalidate caches by id only. */
     val ids: Collection<String> get() = items.map { it.id }
 }

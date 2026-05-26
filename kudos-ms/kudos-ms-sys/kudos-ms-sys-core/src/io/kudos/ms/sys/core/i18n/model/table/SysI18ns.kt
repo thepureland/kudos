@@ -6,29 +6,29 @@ import org.ktorm.schema.varchar
 
 
 /**
- * 国际化数据库表-实体关联对象
+ * Table-entity binding for i18n entries.
  *
  * @author K
  * @since 1.0.0
  */
 object SysI18ns : ManagedTable<SysI18n>("sys_i18n") {
 
-    /** 语言_地区 */
+    /** Language_region. */
     var locale = varchar("locale").bindTo { it.locale }
 
-    /** 原子服务编码 */
+    /** Atomic service code. */
     var atomicServiceCode = varchar("atomic_service_code").bindTo { it.atomicServiceCode }
 
-    /** 国际化类型字典代码 */
+    /** I18n type dictionary code. */
     var i18nTypeDictCode = varchar("i18n_type_dict_code").bindTo { it.i18nTypeDictCode }
 
-    /** 国际化命名空间 */
+    /** I18n namespace. */
     var namespace = varchar("namespace").bindTo { it.namespace }
 
-    /** 国际化key */
+    /** I18n key. */
     var key = varchar("key").bindTo { it.key }
 
-    /** 国际化值 */
+    /** I18n value. */
     var value = varchar("value").bindTo { it.value }
 
 

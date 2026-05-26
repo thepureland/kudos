@@ -12,7 +12,7 @@ import org.springframework.test.context.ActiveProfiles
 import kotlin.test.Test
 
 /**
- * 服务间缓存测试用例
+ * Inter-service cache test cases.
  *
  * @author K
  * @since 1.0.0
@@ -28,9 +28,9 @@ open class InterServiceCacheTest {
 
     @BeforeAll
     fun setup() {
-        println("########## 启动模拟的微服务...")
+        println("########## Starting the mock microservice...")
         SpringApplication.run(MockMsApplication::class.java)
-        println("########## 启动模拟的微服务成功.")
+        println("########## Mock microservice started successfully.")
     }
 
     @Test

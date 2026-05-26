@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RequestBody
 
 
 /**
- * 消息发送对外API
+ * Public API for message sending.
  *
  * @author K
  * @author AI: Codex
@@ -15,11 +15,12 @@ import org.springframework.web.bind.annotation.RequestBody
 interface IMsgSendApi {
 
     /**
-     * 发布一条消息：选模板 → 渲染 → 落 instance/send 记录 → 投 MQ。
+     * Publish a message: select template -> render -> persist instance/send records -> dispatch to MQ.
      *
-     * 返回 [io.kudos.ms.msg.core.send.model.po.MsgSend] 的 id；模板缺失或入参不合法时返回 null。
-     * 投 MQ 失败不会使方法返回 null —— 记录仍然落库，status 标为 FAILED_TO_SEND_TO_MQ，
-     * 调用方可据此重试（重试机制见 Batch 4 的 MsgUnreceived）。
+     * Returns the id of [io.kudos.ms.msg.core.send.model.po.MsgSend]; returns null when the template is missing
+     * or the request is invalid. MQ dispatch failure does not cause null to be returned -- the record is still
+     * persisted with status FAILED_TO_SEND_TO_MQ, and the caller may retry based on it (see Batch 4's
+     * MsgUnreceived for the retry mechanism).
      */
     @PostMapping("/api/internal/msg/send/publish")
     fun publish(@RequestBody request: MsgPublishRequest): String?

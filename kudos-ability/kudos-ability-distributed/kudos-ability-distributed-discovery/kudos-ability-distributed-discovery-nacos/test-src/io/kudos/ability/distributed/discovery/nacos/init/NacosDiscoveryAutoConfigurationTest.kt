@@ -8,7 +8,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 
 /**
- * [NacosDiscoveryAutoConfiguration] 自动配置行为单测。
+ * Unit tests for [NacosDiscoveryAutoConfiguration] auto-configuration behavior.
  *
  * @author K
  * @author AI: Codex

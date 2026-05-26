@@ -4,14 +4,14 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * [CacheVersionConfig] 命名变换的单元测试。
+ * Unit tests for [CacheVersionConfig] naming transformations.
  *
- * 核心契约：
- *  - `getFinalCacheName("USER")` 应返回 `<version>::USER`
- *  - `getRealCacheName("v2::USER")` 应反向剥回 `USER`
- *  - 版本为空串时 [CacheVersionConfig.getFinalCacheName] 返回原名（不加 `::`）
- *  - `getRealCacheName` 对前缀不匹配的名字原样返回——兼容历史无前缀数据
- *  - 版本为空串时 [CacheVersionConfig.getRealCacheName] 对任何字符串都不应剥前缀
+ * Core contract:
+ *  - `getFinalCacheName("USER")` should return `<version>::USER`.
+ *  - `getRealCacheName("v2::USER")` should strip back to `USER`.
+ *  - When the version is blank, [CacheVersionConfig.getFinalCacheName] returns the original name (without `::`).
+ *  - `getRealCacheName` returns names with non-matching prefixes unchanged — back-compat with legacy unprefixed data.
+ *  - When the version is blank, [CacheVersionConfig.getRealCacheName] should not strip any prefix from any string.
  */
 internal class CacheVersionConfigTest {
 
@@ -42,14 +42,14 @@ internal class CacheVersionConfigTest {
     @Test
     fun getRealCacheName_unprefixed_returnsAsIs() {
         val cfg = CacheVersionConfig().apply { cacheVersion = "v2" }
-        // 兼容历史无前缀数据：前缀不匹配时原样返回
+        // Back-compat with legacy unprefixed data: returns names with non-matching prefixes unchanged.
         assertEquals("USER", cfg.getRealCacheName("USER"))
     }
 
     @Test
     fun getRealCacheName_differentVersionPrefix_returnsAsIs() {
         val cfg = CacheVersionConfig().apply { cacheVersion = "v3" }
-        // 不是当前 version 的前缀——按合约原样返回（业务侧负责区分新老数据）
+        // Not the prefix of the current version — per contract, returned unchanged (business code is responsible for distinguishing old vs. new data).
         assertEquals("v2::USER", cfg.getRealCacheName("v2::USER"))
     }
 

@@ -1,15 +1,15 @@
 package io.kudos.base.model.contract.entity
 
 /**
- * id不可变的实体接口
+ * Entity interface with an immutable id.
  *
- * @param T 实体类型
+ * @param T the entity type
  * @author K
  * @since 1.0.0
  */
 interface IIdEntity<T> {
 
-    /** 惟一标识 */
+    /** Unique identifier */
     val id: T
 
 }

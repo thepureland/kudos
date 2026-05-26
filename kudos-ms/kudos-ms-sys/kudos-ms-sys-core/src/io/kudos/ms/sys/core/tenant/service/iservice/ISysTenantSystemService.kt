@@ -5,7 +5,7 @@ import io.kudos.ms.sys.core.tenant.model.po.SysTenantSystem
 
 
 /**
- * 租户-系统关系业务接口
+ * Tenant-system relationship service interface.
  *
  * @author K
  * @author AI: Cursor
@@ -15,83 +15,83 @@ interface ISysTenantSystemService : IBaseCrudService<String, SysTenantSystem> {
 
 
     /**
-     * 根据租户id查找对应的系统编码
+     * Returns the system codes associated with the given tenant.
      *
-     * @param tenantId 租户id
-     * @return Set<系统编码>
+     * @param tenantId tenant id
+     * @return Set<systemCode>
      */
     fun searchSystemCodesByTenantId(tenantId: String): Set<String>
 
     /**
-     * 根据系统编码查找对应的租户id
+     * Returns the tenant ids associated with the given system code.
      *
-     * @param systemCode 系统编码
-     * @return Set<租户id>
+     * @param systemCode system code
+     * @return Set<tenantId>
      */
     fun searchTenantIdsBySystemCode(systemCode: String): Set<String>
 
     /**
-     * 根据租户id对系统编码进行分组
+     * Groups system codes by tenant id.
      *
-     * @param tenantIds 查询条件：租户id集合，为null时将查出所有记录，默认为null
-     * @return Map<租户id， List<系统编码>>
+     * @param tenantIds tenant id collection; when null, queries all records (default null)
+     * @return Map<tenantId, List<systemCode>>
      */
     fun groupingSystemCodesByTenantIds(tenantIds: Collection<String>? = null): Map<String, List<String>>
 
     /**
-     * 根据系统编码对租户id进行分组
+     * Groups tenant ids by system code.
      *
-     * @param systemCodes 查询条件：系统编码集合，为null时将查出所有记录，默认为null
-     * @return Map<系统编码， List<租户id>>
+     * @param systemCodes system code collection; when null, queries all records (default null)
+     * @return Map<systemCode, List<tenantId>>
      */
     fun groupingTenantIdsBySystemCodes(systemCodes: Collection<String>? = null): Map<String, List<String>>
 
     /**
-     * 批量绑定租户与系统的关系
+     * Batch binds the given systems to the tenant.
      *
-     * @param tenantId 租户id
-     * @param systemCodes 系统编码集合
-     * @return 成功绑定的数量
+     * @param tenantId tenant id
+     * @param systemCodes system code collection
+     * @return number of bindings successfully created
      * @author AI: Cursor
      * @since 1.0.0
      */
     fun batchBind(tenantId: String, systemCodes: Collection<String>): Int
 
     /**
-     * 解绑租户与系统的关系
+     * Unbinds the relationship between the tenant and the system.
      *
-     * @param tenantId 租户id
-     * @param systemCode 系统编码
-     * @return 是否解绑成功
+     * @param tenantId tenant id
+     * @param systemCode system code
+     * @return whether the unbind succeeded
      * @author AI: Cursor
      * @since 1.0.0
      */
     fun unbind(tenantId: String, systemCode: String): Boolean
 
     /**
-     * 检查关系是否存在
+     * Checks whether the relationship exists.
      *
-     * @param tenantId 租户id
-     * @param systemCode 系统编码
-     * @return 是否存在
+     * @param tenantId tenant id
+     * @param systemCode system code
+     * @return whether it exists
      * @author AI: Cursor
      * @since 1.0.0
      */
     fun exists(tenantId: String, systemCode: String): Boolean
 
     /**
-     * 按租户ID删除其全部租户-系统关系
+     * Deletes all tenant-system relationships for the given tenant.
      *
-     * @param tenantId 租户ID
-     * @return 删除条数
+     * @param tenantId tenant id
+     * @return number of rows deleted
      */
     fun deleteByTenantId(tenantId: String): Int
 
     /**
-     * 按租户ID集合批量删除租户-系统关系
+     * Batch deletes tenant-system relationships for the given tenant ids.
      *
-     * @param tenantIds 租户ID集合
-     * @return 删除条数
+     * @param tenantIds tenant id collection
+     * @return number of rows deleted
      */
     fun batchDeleteByTenantIds(tenantIds: Collection<String>): Int
 

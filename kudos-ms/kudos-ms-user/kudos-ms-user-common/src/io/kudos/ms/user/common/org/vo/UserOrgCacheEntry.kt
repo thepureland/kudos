@@ -6,59 +6,59 @@ import java.time.LocalDateTime
 
 
 /**
- * 机构缓存项
+ * Organization cache entry
  *
  * @author K
  * @since 1.0.0
  */
 data class UserOrgCacheEntry (
 
-    /** 主键 */
+    /** Primary key */
     override val id: String,
 
-    /** 机构名称 */
+    /** Organization name */
     val name: String?,
 
-    /** 机构简称 */
+    /** Organization short name */
     val shortName: String?,
 
-    /** 租户id */
+    /** Tenant id */
     val tenantId: String?,
 
-    /** 父机构id */
+    /** Parent organization id */
     val parentId: String?,
 
-    /** 机构类型字典码 */
+    /** Organization type dict code */
     val orgTypeDictCode: String?,
 
-    /** 排序号 */
+    /** Sort number */
     val sortNum: Int?,
 
-    /** 备注 */
+    /** Remark */
     val remark: String?,
 
-    /** 是否激活 */
+    /** Whether active */
     val active: Boolean?,
 
-    /** 是否内置 */
+    /** Whether built-in */
     val builtIn: Boolean?,
 
-    /** 创建者id */
+    /** Creator id */
     val createUserId: String?,
 
-    /** 创建者名称 */
+    /** Creator name */
     val createUserName: String?,
 
-    /** 创建时间 */
+    /** Create time */
     val createTime: LocalDateTime?,
 
-    /** 更新者id */
+    /** Updater id */
     val updateUserId: String?,
 
-    /** 更新者名称 */
+    /** Updater name */
     val updateUserName: String?,
 
-    /** 更新时间 */
+    /** Update time */
     val updateTime: LocalDateTime?,
 
 ) : IIdEntity<String>, Serializable {

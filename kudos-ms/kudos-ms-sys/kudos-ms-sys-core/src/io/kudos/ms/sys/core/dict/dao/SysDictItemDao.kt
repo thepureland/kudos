@@ -12,7 +12,7 @@ import org.springframework.stereotype.Repository
 
 
 /**
- * 字典项数据访问对象
+ * Dictionary item data access object.
  *
  * @author K
  * @since 1.0.0

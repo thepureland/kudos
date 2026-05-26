@@ -15,7 +15,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * redis测试用例
+ * Redis test cases.
  *
  * @author K
  * @author AI: Codex
@@ -38,7 +38,7 @@ internal class RedisTemplateTest {
         redisTemplate.opsForValue().set("obj", obj)
         assertEquals(redisTemplate.opsForValue().get("obj"), obj)
 
-        // 只有jdk序列化方式才可以
+        // Only the JDK serialization mode supports this
 //        val map = mapOf(obj to "value")
 //        redisTemplate.opsForValue().set("map", map)
 //        assertTrue((redisTemplate.opsForValue().get("map") as Map<*, *>)[obj] == "value")
@@ -55,7 +55,7 @@ internal class RedisTemplateTest {
 }
 
 /**
- * RedisTemplate 序列化测试对象。
+ * Test object for RedisTemplate serialization.
  *
  * @author K
  * @author AI: Codex

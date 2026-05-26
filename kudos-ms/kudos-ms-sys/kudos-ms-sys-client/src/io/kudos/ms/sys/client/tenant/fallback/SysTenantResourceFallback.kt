@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component
 
 
 /**
- * 租户-资源关系 Feign 容错降级实现。
+ * Tenant-resource relationship Feign fallback implementation.
  *
  * @author K
  * @since 1.0.0
@@ -35,7 +35,7 @@ open class SysTenantResourceFallback : SysClientFallbackSupport("SysTenantResour
     }
 
     override fun exists(tenantId: String, resourceId: String): Boolean {
-        // 安全默认：远端不可达时按「未授权」处理
+        // Safe default: treat as "unauthorized" when remote is unreachable
         warnRead("exists", tenantId, resourceId)
         return false
     }

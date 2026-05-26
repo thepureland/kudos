@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository
 
 
 /**
- * 微服务数据访问对象
+ * Micro-service DAO.
  *
  * @author K
  * @since 1.0.0
@@ -19,9 +19,9 @@ import org.springframework.stereotype.Repository
 open class SysMicroServiceDao : BaseCrudDao<String, SysMicroService, SysMicroServices>() {
 
     /**
-     * 按类型返回微服务，返回缓存用 VO 列表
+     * Return micro-services by type as a list of cache VOs.
      *
-     * @param atomicService 是否原子服务
+     * @param atomicService whether it is an atomic service
      * @return List<SysMicroServiceCacheEntry>
      */
     open fun fetchMicroServiceByTypeForCache(atomicService: Boolean): List<SysMicroServiceCacheEntry> {

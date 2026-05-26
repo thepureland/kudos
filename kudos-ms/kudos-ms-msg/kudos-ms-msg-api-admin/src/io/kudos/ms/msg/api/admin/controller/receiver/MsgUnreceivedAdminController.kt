@@ -10,10 +10,11 @@ import org.springframework.web.bind.annotation.RestController
 
 
 /**
- * 未送达消息管理控制器。
+ * Undelivered message admin controller.
  *
- * 故意不继承 BaseCrudController：本表是运营/审计用，create/update/delete 由 listener 写入和
- * resolve / bumpRetry 推进，没有"管理员手工新增一条未送达"的合理场景。
+ * Intentionally does not extend BaseCrudController: this table is for ops/audit use; create/update/delete
+ * are written by listeners and advanced via resolve / bumpRetry. There is no legitimate scenario for an
+ * administrator to manually add an undelivered record.
  *
  * @author K
  * @since 1.0.0
@@ -24,17 +25,17 @@ class MsgUnreceivedAdminController(
     private val service: IMsgUnreceivedService,
 ) {
 
-    /** 列出某次发送批次下尚未处理的失败记录 */
+    /** List unresolved failed records under a given send batch. */
     @GetMapping("/listUnresolvedBySend")
     fun listUnresolvedBySend(@RequestParam sendId: String): List<MsgUnreceivedRow> {
         return service.findUnresolvedBySend(sendId).map { it.toRow() }
     }
 
-    /** 标记一条为已处理 */
+    /** Mark a record as resolved. */
     @PostMapping("/resolve")
     fun resolve(@RequestParam id: String): Boolean = service.resolve(id)
 
-    /** 累加重试次数（实际重发动作由调用方自行 publish 一次，再来调本接口记账） */
+    /** Increment retry count (the caller must publish once for the actual resend, then call this endpoint to record it). */
     @PostMapping("/bumpRetry")
     fun bumpRetry(@RequestParam id: String): Boolean = service.bumpRetry(id)
 

@@ -7,9 +7,10 @@ import kotlin.reflect.KClass
 
 
 /**
- * Kudos赋能注解
+ * Kudos enablement annotation.
  *
- * 将该注解添加到应用的启动类上,将使应用获得Kudos的某些能力或服务,具体哪些能力或服务,取决于应用依赖Kudos的情况.
+ * Adding this annotation to the application's bootstrap class lets the application acquire certain Kudos capabilities
+ * or services; exactly which capabilities or services are enabled depends on how the application depends on Kudos.
  *
  * @author K
  * @since 1.0.0
@@ -24,7 +25,7 @@ import kotlin.reflect.KClass
 annotation class EnableKudos(
 
     /**
-     * 要排除的初始化器类
+     * Initializer classes to exclude.
      *
      * @author K
      * @since 1.0.0

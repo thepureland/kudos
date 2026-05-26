@@ -5,7 +5,7 @@ import jakarta.validation.ConstraintValidator
 import jakarta.validation.ConstraintValidatorContext
 
 /**
- * Remote约束验证器
+ * Validator for the Remote constraint.
  *
  * @author K
  * @since 1.0.0

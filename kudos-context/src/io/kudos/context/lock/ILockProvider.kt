@@ -5,15 +5,15 @@ import io.kudos.base.error.ServiceException
 import java.util.concurrent.locks.Lock
 
 /**
- * 租约式（lease-based）锁接口。
+ * Lease-based lock interface.
  *
- * 行为：[tryLock] 在 `sec` 秒内尝试获取锁，**取到后自动过期**，调用方一般用 [lockExecute]
- * 拿到自动 try-finally 释放；也可显式 [unLock] 提前释放。
+ * Behavior: [tryLock] attempts to acquire the lock within `sec` seconds and **expires automatically once acquired**. Callers typically use [lockExecute]
+ * to get automatic try-finally release; an explicit [unLock] can also release the lock early.
  *
- * 与 [IReentrantLockProvider] 的差别：
- * - 租约锁通过过期时间保护，**忘记释放不会导致永久死锁**
- * - 不支持可重入（同一线程二次 [tryLock] 同一 key 会失败）
- * - [lockExecute] 仅在此接口上提供
+ * Differences from [IReentrantLockProvider]:
+ * - The lease lock is protected by expiration time, so **forgetting to release does not cause permanent deadlock**
+ * - Reentrance is not supported (a second [tryLock] on the same key from the same thread will fail)
+ * - [lockExecute] is provided only on this interface
  *
  * @author K
  * @since 1.0.0
@@ -21,20 +21,20 @@ import java.util.concurrent.locks.Lock
 interface ILeaseLockProvider {
 
     /**
-     * 在 `sec` 秒窗口内尝试获取 [lockKey] 的租约锁。租约到期后自动失效。
-     * @return true 表示获取成功，false 表示该 key 已被占用
+     * Attempts to acquire the lease lock on [lockKey] within a `sec`-second window. The lease expires automatically once elapsed.
+     * @return true on success, false if the key is already held
      */
     fun tryLock(lockKey: String, sec: Int): Boolean
 
-    /** 释放租约锁。当 lockExecute 自动释放就不需要再调用 */
+    /** Releases the lease lock. Not needed when lockExecute releases automatically. */
     fun unLock(key: String)
 
     /**
-     * 上锁执行，执行完毕后自动释放锁。
+     * Executes under a lock and releases it automatically when done.
      *
-     * - 取到锁 → 执行 [supplier]，finally 中 [unLock]
-     * - 取锁失败 + [errorCode] != null → 抛 [ServiceException]
-     * - 取锁失败 + [errorCode] == null → 返回 null
+     * - Lock acquired -> execute [supplier]; [unLock] in finally
+     * - Lock acquisition failed + [errorCode] != null -> throws [ServiceException]
+     * - Lock acquisition failed + [errorCode] == null -> returns null
      */
     fun <T> lockExecute(
         lockKey: String,
@@ -53,7 +53,7 @@ interface ILeaseLockProvider {
         }
     }
 
-    /** Runnable 重载，无返回值。语义与上面相同。 */
+    /** Runnable overload with no return value. Semantics identical to the above. */
     fun lockExecute(lockKey: String, runnable: Runnable, sec: Int, errorCode: IErrorCodeEnum?) {
         if (!tryLock(lockKey, sec)) {
             errorCode?.let { throw ServiceException(it) }
@@ -68,43 +68,42 @@ interface ILeaseLockProvider {
 }
 
 /**
- * 可重入（reentrant）锁接口。
+ * Reentrant lock interface.
  *
- * 行为：[lock] 返回一个 [Lock] 实例，调用方需 **手动** [unLock]。同一线程对同一 key 可重入。
+ * Behavior: [lock] returns a [Lock] instance; the caller must **manually** [unLock]. The same thread can reenter on the same key.
  *
- * 与 [ILeaseLockProvider] 的差别：
- * - **不带超时**——忘记释放就死锁
- * - 支持可重入
- * - 适合"双重检查锁"等需要在锁内做条件判断的场景
+ * Differences from [ILeaseLockProvider]:
+ * - **No timeout** — forgetting to release causes deadlock
+ * - Supports reentrance
+ * - Suitable for "double-checked locking" and other scenarios that require condition checks inside the lock
  *
  * @author K
  * @since 1.0.0
  */
 interface IReentrantLockProvider<L : Lock> {
 
-    /** 获取 [key] 对应的可重入锁。null 表示获取失败（实现自行决定语义） */
+    /** Acquires the reentrant lock for [key]. null indicates acquisition failure (semantics determined by the implementation). */
     fun lock(key: String): L?
 
-    /** 释放可重入锁。[lock] 参数仅用于配合需要持锁对象的实现（如 RedissonLock）；本地实现可忽略 */
+    /** Releases the reentrant lock. The [lock] parameter is for implementations that require the lock object (e.g. RedissonLock); local implementations can ignore it. */
     fun unLock(lock: Lock, key: String)
 }
 
 /**
- * 同时提供租约锁与可重入锁的复合锁提供者。
+ * Composite lock provider that exposes both the lease lock and the reentrant lock.
  *
- * **历史背景**：原 ILockProvider 把两套语义糅在一个接口里，KDoc 注明"两套机制；
- * lockExecute 仅用 tryLock，不走 lock 返回的锁对象"——很容易被误用。重构后两套
- * 语义拆为 [ILeaseLockProvider] 与 [IReentrantLockProvider]，这里把两者并起来
- * 作为兼容 marker：[NormalLockService] / [RedissonLockProvider] 等现有实现继续
- * 实现 [ILockProvider]，老调用方（如 LockTool / DistributedCacheGuardAspect）
- * 无需改动；**新代码**应优先依赖具体的子接口表达意图。
+ * **Historical background**: the original ILockProvider lumped both semantics into a single interface, with the KDoc noting "two mechanisms;
+ * lockExecute uses only tryLock and does not route through the lock object returned by lock" — easy to misuse. After refactoring, the two
+ * semantics are split into [ILeaseLockProvider] and [IReentrantLockProvider]; this interface combines them as a compatibility marker:
+ * existing implementations such as [NormalLockService] / [RedissonLockProvider] continue to implement [ILockProvider], so legacy callers
+ * (like LockTool / DistributedCacheGuardAspect) need no change; **new code** should prefer the specific sub-interface to express intent.
  *
  * @author K
  * @since 1.0.0
  */
 interface ILockProvider<L : Lock> : ILeaseLockProvider, IReentrantLockProvider<L> {
 
-    /** 优先级顺序，值越小顺序越大 */
+    /** Priority ordering; smaller values come first. */
     fun order(): Int = 99
 
     companion object {

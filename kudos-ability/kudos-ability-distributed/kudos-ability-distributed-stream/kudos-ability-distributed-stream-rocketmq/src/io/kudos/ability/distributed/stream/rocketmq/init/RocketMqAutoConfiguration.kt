@@ -12,20 +12,21 @@ import org.springframework.context.annotation.PropertySource
 
 
 /**
- * RocketMQ stream broker 接入装配。
+ * RocketMQ stream broker auto-configuration.
  *
- * 继承 [StreamCommonConfiguration]——`@MqProducer` / 失败重试 / binding 校验全部走父类 bean。
- * 跟 rabbit / kafka 的 AutoConfiguration 同形态；本模块额外引入：
- * - [io.kudos.ability.distributed.stream.rocketmq.init.properties.RocketMqProperties]——
- *   暴露 `nameSrvAddr` + `saveException` 给 [RocketMqBatchConsumer] 用
- * - [io.kudos.ability.distributed.stream.rocketmq.support.RocketMqBatchConsumer]——
- *   原生 `DefaultLitePullConsumer` 包装的批量拉取消费者（与 stream consumer 并行的另一路径，
- *   业务需要批量 size + 提交时机控制时用）
+ * Extends [StreamCommonConfiguration] so `@MqProducer`, failure retries, and binding validation all
+ * share the parent's beans. Same shape as the rabbit / kafka AutoConfiguration; this module
+ * additionally pulls in:
+ * - [io.kudos.ability.distributed.stream.rocketmq.init.properties.RocketMqProperties] — exposes
+ *   `nameSrvAddr` and `saveException` for [RocketMqBatchConsumer].
+ * - [io.kudos.ability.distributed.stream.rocketmq.support.RocketMqBatchConsumer] — a batch-pull
+ *   consumer wrapping the native `DefaultLitePullConsumer` (a separate path alongside the stream
+ *   consumer, useful when the business needs batch-size + commit-timing control).
  *
- * [AutoConfigureAfter] 在 kudos 体系下有效：`ComponentInitializationDispatcher` 按依赖顺序
- * 调度，本模块在 [ContextAutoConfiguration] 之后初始化。
+ * [AutoConfigureAfter] is honored in the kudos system: `ComponentInitializationDispatcher`
+ * schedules in dependency order, and this module is initialized after [ContextAutoConfiguration].
  *
- * 通过 [StreamConsumerEnvironRegistrar] 启用 multi-binding function.definition 自动聚合。
+ * [StreamConsumerEnvironRegistrar] enables automatic multi-binding function.definition aggregation.
  *
  * @author K
  * @since 1.0.0
@@ -42,7 +43,7 @@ import org.springframework.context.annotation.PropertySource
 @Import(StreamConsumerEnvironRegistrar::class)
 open class RocketMqAutoConfiguration : StreamCommonConfiguration(), IComponentInitializer {
 
-    /** kudos 装配 SPI 用的组件名——务必全模块唯一，与 jar artifact 同名约定。 */
+    /** Component name used by the kudos auto-configuration SPI — must be unique across modules; by convention matches the jar artifact name. */
     override fun getComponentName() = "kudos-ability-distributed-stream-rocketmq"
 
 }

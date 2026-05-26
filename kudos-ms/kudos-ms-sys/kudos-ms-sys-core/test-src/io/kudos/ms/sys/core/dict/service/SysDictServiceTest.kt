@@ -15,7 +15,7 @@ import kotlin.test.assertTrue
 /**
  * junit test for SysDictService
  *
- * 测试数据来源：`SysDictServiceTest.sql`
+ * Test data source: `SysDictServiceTest.sql`
  *
  * @author K
  * @author AI: Cursor
@@ -34,7 +34,7 @@ class SysDictServiceTest : RdbAndRedisCacheTestBase() {
     private val atomicServiceCode = "svc-module-dict-test-1"
     private val dictType = "svc-dict-type-1"
 
-    /** `get(id, SysDictCacheEntry::class)` 与 `getDictFromCache` 在刷新 Hash 后一致。 */
+    /** `get(id, SysDictCacheEntry::class)` and `getDictFromCache` are consistent after refreshing the Hash cache. */
     @Test
     fun get_withCacheEntryReturnType_delegatesToHashCache() {
         sysDictHashCache.reloadAll(clear = true)
@@ -46,7 +46,7 @@ class SysDictServiceTest : RdbAndRedisCacheTestBase() {
         assertEquals(seededId, fromGet.id)
     }
 
-    /** 按主键从 Hash 读取缓存项。 */
+    /** Read cache entry from Hash by primary key. */
     @Test
     fun getDictFromCache_byId() {
         sysDictHashCache.reloadAll(clear = true)
@@ -55,7 +55,7 @@ class SysDictServiceTest : RdbAndRedisCacheTestBase() {
         assertEquals(dictType, item.dictType)
     }
 
-    /** 按原子服务编码从缓存取字典列表。 */
+    /** Get the dictionary list from cache by atomic service code. */
     @Test
     fun getDictsFromCacheByAtomicServiceCode() {
         sysDictHashCache.reloadAll(clear = true)
@@ -63,7 +63,7 @@ class SysDictServiceTest : RdbAndRedisCacheTestBase() {
         assertTrue(dicts.any { it.id == seededId })
     }
 
-    /** 直查库的列表行与主键一致。 */
+    /** Direct DB queries by list and by primary key return the same row. */
     @Test
     fun getDictByAtomicServiceAndType_and_getRecord() {
         val row = sysDictService.getDictByAtomicServiceAndType(atomicServiceCode, dictType)
@@ -76,7 +76,7 @@ class SysDictServiceTest : RdbAndRedisCacheTestBase() {
         assertEquals(dictType, byId.dictType)
     }
 
-    /** 启用状态更新后缓存侧 `active` 与库一致。 */
+    /** After updating the active flag, the cache-side `active` matches the database. */
     @Test
     fun updateActive() {
         sysDictHashCache.reloadAll(clear = true)
@@ -89,19 +89,19 @@ class SysDictServiceTest : RdbAndRedisCacheTestBase() {
         assertTrue(requireNotNull(sysDictService.getDictFromCache(seededId)).active)
     }
 
-    /** 主键不存在时 `updateActive` 返回 false。 */
+    /** `updateActive` returns false when the primary key does not exist. */
     @Test
     fun updateActive_whenIdNotExists_returnsFalse() {
         assertFalse(sysDictService.updateActive("00000000-0000-0000-0000-000000000001", true))
     }
 
-    /** 主键不存在时 `deleteById` 返回 false。 */
+    /** `deleteById` returns false when the primary key does not exist. */
     @Test
     fun deleteById_returnsFalseWhenRowMissing() {
         assertFalse(sysDictService.deleteById("00000000-0000-0000-0000-000000000001"))
     }
 
-    /** 种子数据无字典项时，启用字典项查询为空列表（链路可调用）。 */
+    /** With seed data containing no dictionary items, active item queries return empty lists (call chain still works). */
     @Test
     fun getActiveDictItemsFromCache_emptyWhenNoItems() {
         val items = sysDictService.getActiveDictItemsFromCache(dictType, atomicServiceCode)

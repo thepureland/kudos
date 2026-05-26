@@ -4,12 +4,15 @@ import java.io.Serial
 import java.io.Serializable
 
 /**
- * 阿里云短信发送请求体。
+ * Aliyun SMS send request body.
  *
- * 字段对应阿里云 SDK `SendSmsRequest` 的入参；同时携带本次调用使用的凭证（[accessKeyId] /
- * [accessKeySecret]）—— 凭证不放配置文件而是随请求一起传，是为了支持"多租户各自一套 AK"的场景。
+ * Fields correspond to the input parameters of the Aliyun SDK `SendSmsRequest`; it also carries
+ * the credentials ([accessKeyId] / [accessKeySecret]) used for the call. Credentials are passed
+ * along with the request rather than placed in a config file in order to support the
+ * "multi-tenant, each with its own AK" scenario.
  *
- * **不要把本类实例输出到日志** —— `accessKeySecret` 是明文，[Serializable] 让对象被序列化到日志 / 缓存时密钥外泄。
+ * **Do not log instances of this class** - `accessKeySecret` is plaintext; [Serializable] allows
+ * the object to be serialized to logs / caches and leak the secret.
  *
  * @author paul
  * @author K
@@ -17,42 +20,43 @@ import java.io.Serializable
  */
 class AliyunSmsRequest : Serializable {
     /**
-     * 区域
+     * Region.
      */
     var region: String? = null
 
     /**
-     * accessKeyId
+     * accessKeyId.
      */
     var accessKeyId: String? = null
 
     /**
-     * accessKeySecret
+     * accessKeySecret.
      */
     var accessKeySecret: String? = null
 
     /**
-     * 接收短信的手机号码。手机号码格式：
-     * 国内短信：+/+86/0086/86或无任何前缀的11位手机号码，例如1390000****
-     * 国际/港澳台消息：国际区号+号码，例如852000012****
-     * 支持对多个手机号码发送短信，手机号码之间以半角逗号（,）分隔。上限为1000个手机号码
-     * 批量调用相对于单条调用及时性稍有延迟
+     * Phone number(s) to receive the SMS. Phone number format:
+     * Domestic SMS: +/+86/0086/86 or an 11-digit phone number without any prefix, e.g. 1390000****
+     * International / HK / Macau / Taiwan messages: international area code + number, e.g. 852000012****
+     * Supports sending SMS to multiple phone numbers, separated by half-width commas (,). Limit is
+     * 1000 phone numbers.
+     * Batch calls have slightly higher latency compared to single calls.
      */
     var phoneNumbers: String? = null
 
     /**
-     * 短信签名名称
+     * SMS signature name.
      */
     var signName: String? = null
 
     /**
-     * 短信模板CODE
+     * SMS template CODE.
      */
     var templateCode: String? = null
 
     /**
-     * 短信模板变量对应的实际值
-     * 支持传入多个参数，示例：{"name":"张三","number":"1390000****"}
+     * Actual values corresponding to the SMS template variables.
+     * Supports passing multiple parameters, e.g.: {"name":"Zhang San","number":"1390000****"}
      */
     var templateParam: String? = null
 

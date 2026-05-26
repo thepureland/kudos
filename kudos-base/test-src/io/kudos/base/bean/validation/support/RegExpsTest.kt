@@ -6,7 +6,7 @@ import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 /**
- * [RegExps] 各常量的匹配行为回归测试
+ * Regression tests for the matching behavior of each constant in [RegExps].
  *
  * @author K
  * @author AI: Cursor
@@ -53,7 +53,7 @@ internal class RegExpsTest {
             "+8613800138000",
             "138 0013 8000",
             "24800138000",
-            // JVM \\d 不含全角数字，与常见「复制粘贴」号码形态
+            // JVM \\d does not include full-width digits, a common "copy-paste" number form
             "１３８００１３８０００",
         )
     }
@@ -110,7 +110,7 @@ internal class RegExpsTest {
             "10.0.0.1",
             "172.16.0.1",
             "1.2.3.4",
-            // 段内写法宽松：01 仍被底层 \d? 形态接受
+            // Lenient per-octet form: "01" is still accepted by the underlying \d? pattern
             "192.168.01.1",
         )
         assertNotMatches(
@@ -155,7 +155,7 @@ internal class RegExpsTest {
             "http://example.com/",
             "https://api.example.com/v1/resource",
             "https://example.com/search?q=test&lang=zh",
-            // 路径与 query 在宽松 URL 正则中可为 BMP Unicode（含中文）
+            // Path and query in this lenient URL regex may be BMP Unicode (including CJK)
             "https://example.com/中文路径",
             "https://example.com/search?q=中文",
         )
@@ -164,7 +164,7 @@ internal class RegExpsTest {
             "",
             "not-a-url",
             "://missing-scheme",
-            // 当前宽松 URL 正则对纯 localhost 主机等形式可能不匹配，以实际为准
+            // The current lenient URL regex may not match bare hosts like localhost; behavior reflects actual implementation
             "http://localhost:8080/",
             "https:// example.com/",
         )
@@ -189,7 +189,7 @@ internal class RegExpsTest {
             "abc-def-ghij",
             "138-0013-8000",
             "+8613800138000",
-            // 全角连字符 U+FF0D，非 ASCII '-'
+            // Full-width hyphen U+FF0D, not ASCII '-'
             "010－12345678",
         )
     }
@@ -230,7 +230,7 @@ internal class RegExpsTest {
             "",
             "12345",
             "999",
-            // 中间连字符不在允许字符集中
+            // Hyphen in the middle is not in the allowed character set
             "Mary-Jane",
         )
     }
@@ -291,7 +291,7 @@ internal class RegExpsTest {
 
     @Test
     fun email() {
-        // [RegExps.Communication.EMAIL] 实现对域名段形态较严，样例以实际匹配为准
+        // [RegExps.Communication.EMAIL] is fairly strict about the domain portion; examples reflect actual matching behavior
         assertMatches(
             RegExps.Communication.EMAIL,
             "user@example.com",
@@ -305,7 +305,7 @@ internal class RegExpsTest {
             "no-at",
             "a@b.co",
             " user@example.com",
-            // 本地部分与域名段均为 [a-zA-Z0-9] 系，不含中文
+            // Both local-part and domain segments use [a-zA-Z0-9] families; no CJK allowed
             "用户@example.com",
             "a@邮箱.cn",
         )
@@ -325,7 +325,7 @@ internal class RegExpsTest {
             "12345",
             "user@",
             "24800138000",
-            // [MAIL_OR_CN_MOBILE] 手机号分支比 [CN_MAINLAND_MOBILE] 窄，不含 19x 等号段
+            // [MAIL_OR_CN_MOBILE]'s mobile branch is narrower than [CN_MAINLAND_MOBILE]; does not include 19x prefixes
             "19812345678",
             "用户@example.com",
         )
@@ -625,7 +625,7 @@ internal class RegExpsTest {
             "a.com,",
             ",a.com",
             "a..com",
-            // 标签仅 [a-zA-Z0-9]+：无连字符，Punycode 与 Unicode 域名均不匹配当前实现
+            // Labels are only [a-zA-Z0-9]+: no hyphens, so both Punycode and Unicode domains fail to match the current implementation
             "例子.cn",
             "xn--fiqs8s.cn",
         )
@@ -764,20 +764,20 @@ internal class RegExpsTest {
     fun jdbcUrl() {
         assertMatches(
             RegExps.Network.JDBC_URL,
-            // 单实例
+            // Single instance
             "jdbc:mysql://localhost:3306/db",
             "jdbc:h2:mem:testdb",
             "jdbc:postgresql://pg.example.com:5432/myapp",
-            // MySQL 多主机（复制 / Router / 集群常用写法：逗号分隔 host:port）
+            // MySQL multi-host (replication / Router / cluster: comma-separated host:port)
             "jdbc:mysql://db1.example.com:3306,db2.example.com:3306,db3.example.com:3306/order_db",
             "jdbc:mysql://10.0.0.11:3306,10.0.0.12:3306/inventory?useSSL=false&failOverReadOnly=false",
-            // PostgreSQL 多主机（驱动支持列表或故障转移）
+            // PostgreSQL multi-host (driver supports host list or failover)
             "jdbc:postgresql://primary.db:5432,standby.db:5432/analytics?targetServerType=primary",
-            // Oracle RAC / 多地址（thin 常含括号与逗号，整体仍为单 JDBC URl 串）
+            // Oracle RAC / multi-address (thin often contains parens and commas; still a single JDBC URL string)
             "jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(HOST=rac1)(PORT=1521))(ADDRESS=(HOST=rac2)(PORT=1521)))(CONNECT_DATA=(SERVICE_NAME=orcl)))",
-            // H2 / 其他基于 TCP 的多节点示例
+            // H2 / other TCP-based multi-node examples
             "jdbc:h2:tcp://node-a:9092,node-b:9092/~/cluster-db;MODE=MySQL",
-            // \\S+ 段可含非 ASCII（如库名中文）
+            // The \\S+ segment may contain non-ASCII (e.g. CJK database name)
             "jdbc:mysql://localhost:3306/用户库",
         )
         assertNotMatches(
@@ -785,7 +785,7 @@ internal class RegExpsTest {
             "",
             "jdbc:",
             "mysql://localhost",
-            // 含空白则 \S+ 无法整段匹配
+            // Any whitespace prevents \S+ from matching as a whole
             "jdbc:mysql:// host1:3306,host2:3306/db",
         )
     }
@@ -797,7 +797,7 @@ internal class RegExpsTest {
             "localhost",
             "example.com",
             "sub.example.co.uk",
-            // Punycode 标签可含连字符，单域名正则支持
+            // Punycode labels may contain hyphens; the single-domain regex supports them
             "xn--fiqs8s.cn",
         )
         assertNotMatches(
@@ -806,7 +806,7 @@ internal class RegExpsTest {
             "-bad.com",
             "example",
             "..com",
-            // 明文 IDN（中文标签）不匹配 ASCII 域名段
+            // Plaintext IDN (CJK labels) does not match an ASCII domain pattern
             "例子.cn",
         )
     }

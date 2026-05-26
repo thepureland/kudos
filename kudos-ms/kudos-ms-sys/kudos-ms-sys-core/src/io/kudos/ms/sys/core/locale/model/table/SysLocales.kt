@@ -7,23 +7,23 @@ import org.ktorm.schema.varchar
 
 
 /**
- * 语言/区域字典数据库表-实体关联对象
+ * Table-entity binding for the language/locale dictionary.
  *
  * @author K
  * @since 1.0.0
  */
 object SysLocales : ManagedTable<SysLocale>("sys_locale") {
 
-    /** 语言代码 */
+    /** Language code. */
     var code = varchar("code").bindTo { it.code }
 
-    /** 显示名称 */
+    /** Display name. */
     var displayName = varchar("display_name").bindTo { it.displayName }
 
-    /** 英文名称 */
+    /** English name. */
     var englishName = varchar("english_name").bindTo { it.englishName }
 
-    /** 排序号 */
+    /** Sort order. */
     var sortNo = int("sort_no").bindTo { it.sortNo }
 
 }

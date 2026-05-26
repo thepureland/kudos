@@ -1,17 +1,17 @@
 package io.kudos.base.model.vo
 
 /**
- * id和name的封装类
+ * Wrapper class for id and name.
  *
  * @author K
  * @since 1.0.0
  */
 data class IdAndName<T> (
 
-    /** 惟一标识 */
+    /** Unique identifier */
     val id: T,
 
-    /** 名称 */
+    /** Name */
     val name: String
 
 )

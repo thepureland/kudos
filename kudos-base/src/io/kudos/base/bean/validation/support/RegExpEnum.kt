@@ -1,22 +1,24 @@
 package io.kudos.base.bean.validation.support
 
-/** 校验失败默认提示文案 i18n key 的统一前缀。 */
+/** Unified prefix for the i18n keys of the default validation-failure messages. */
 private const val REG_EXP_DEFAULT_MSG_PREFIX = "sys.valid-msg.default.Pattern::"
 
 /**
- * 把短后缀（如 `cn-mainland-mobile`）拼成完整 i18n key（`sys.valid-msg.default.Pattern::cn-mainland-mobile`）。
- * 给每个枚举条目的 `defaultMessageKey` 字段使用，避免在每行重复前缀。
+ * Concatenates a short suffix (e.g. `cn-mainland-mobile`) into a full i18n key
+ * (`sys.valid-msg.default.Pattern::cn-mainland-mobile`).
+ * Used by the `defaultMessageKey` field of each enum entry to avoid repeating the prefix on every line.
  *
- * @param suffix 由各条目自定义的短后缀
- * @return 完整 i18n key
+ * @param suffix the short suffix customized by each entry
+ * @return the full i18n key
  * @author K
  * @since 1.0.0
  */
 private fun regExpMsg(suffix: String) = REG_EXP_DEFAULT_MSG_PREFIX + suffix
 
 /**
- * 与 [RegExps] 一一对应的内置分类正则，供 [io.kudos.base.bean.validation.constraint.annotations.Matches] 使用。
- * 业务自定义规则请使用 [@Pattern][jakarta.validation.constraints.Pattern] 并引用 [RegExps] 中的常量。
+ * Built-in categorized regexes corresponding one-to-one with [RegExps], for use by
+ * [io.kudos.base.bean.validation.constraint.annotations.Matches].
+ * For business-specific rules, use [@Pattern][jakarta.validation.constraints.Pattern] and reference the constants in [RegExps].
  *
  * @author K
  * @author AI: Cursor
@@ -29,12 +31,12 @@ enum class RegExpEnum(
 
     //region Communication
     /**
-     * 规则：
-     * 中国大陆 11 位手机号
-     * 以 `1` 开头
-     * 第二、三位需落在当前规则列出的号段内
+     * Rules:
+     * 11-digit mainland China mobile number
+     * Starts with `1`
+     * The second and third digits must fall within the prefixes listed in this rule
      *
-     * 例如：
+     * Examples:
      * `13800138000`
      * `15912345678`
      * `19912345678`
@@ -42,12 +44,12 @@ enum class RegExpEnum(
     CN_MAINLAND_MOBILE(RegExps.Communication.CN_MAINLAND_MOBILE, regExpMsg("cn-mainland-mobile")),
 
     /**
-     * 规则：
-     * QQ 号
-     * 只允许数字
-     * 长度 5～11 位
+     * Rules:
+     * QQ number
+     * Digits only
+     * Length 5 to 11
      *
-     * 例如：
+     * Examples:
      * `12345`
      * `10000`
      * `12345678901`
@@ -55,12 +57,12 @@ enum class RegExpEnum(
     QQ_NUMBER(RegExps.Communication.QQ_NUMBER, regExpMsg("qq-number")),
 
     /**
-     * 规则：
-     * 手机或电话的纯数字串
-     * 不区分手机、固话、分机
-     * 只校验数字和长度 7～20 位
+     * Rules:
+     * Pure-digit string for mobile or landline phone
+     * Does not distinguish between mobile, landline or extension
+     * Only validates digits and length 7 to 20
      *
-     * 例如：
+     * Examples:
      * `1234567`
      * `02012345678`
      * `12345678901234567890`
@@ -68,12 +70,12 @@ enum class RegExpEnum(
     PHONE_DIGITS_7_20(RegExps.Communication.PHONE_DIGITS_7_20, regExpMsg("phone-digits-7-20")),
 
     /**
-     * 规则：
-     * 国内固话或手机号
-     * 固话支持区号、连字符和可选分机
-     * 手机号按规则内列出的号段匹配
+     * Rules:
+     * Domestic landline or mobile number
+     * Landline supports area code, hyphens and optional extension
+     * Mobile number is matched against the prefixes listed in the rule
      *
-     * 例如：
+     * Examples:
      * `010-12345678`
      * `010-12345678-123`
      * `13800138000`
@@ -81,12 +83,12 @@ enum class RegExpEnum(
     TEL_OR_CN_MOBILE(RegExps.Communication.TEL_OR_CN_MOBILE, regExpMsg("tel-or-cn-mobile")),
 
     /**
-     * 规则：
-     * 电子邮箱
-     * 本地部分支持字母数字及 `.`、`_`、`-`
-     * 域名部分按常见邮箱域名形态宽松匹配
+     * Rules:
+     * Email address
+     * Local part supports letters, digits and `.`, `_`, `-`
+     * Domain part loosely matches the common email domain forms
      *
-     * 例如：
+     * Examples:
      * `user@example.com`
      * `user.name@example.com`
      * `abc-123@test-mail.com`
@@ -94,11 +96,11 @@ enum class RegExpEnum(
     EMAIL(RegExps.Communication.EMAIL, regExpMsg("email")),
 
     /**
-     * 规则：
-     * 电子邮箱或中国大陆手机号
-     * 只要满足两者之一即可
+     * Rules:
+     * Email address or mainland China mobile number
+     * Either one is sufficient
      *
-     * 例如：
+     * Examples:
      * `user@example.com`
      * `abc_01@test.com`
      * `13800138000`
@@ -106,12 +108,12 @@ enum class RegExpEnum(
     MAIL_OR_CN_MOBILE(RegExps.Communication.MAIL_OR_CN_MOBILE, regExpMsg("mail-or-cn-mobile")),
 
     /**
-     * 规则：
-     * 国内固定电话
-     * 支持 2 位或 3 位区号
-     * 支持主号码和分机号，使用 `-` 连接
+     * Rules:
+     * Domestic landline phone
+     * Supports 2 or 3 digit area codes
+     * Supports main number and extension joined with `-`
      *
-     * 例如：
+     * Examples:
      * `010-12345678`
      * `021-1234567`
      * `010-12345678-123`
@@ -119,13 +121,13 @@ enum class RegExpEnum(
     CN_LANDLINE_PHONE(RegExps.Communication.CN_LANDLINE_PHONE, regExpMsg("cn-landline-phone")),
 
     /**
-     * 规则：
-     * 微信号
-     * 首字符必须是字母或数字
-     * 后续可含字母、数字、`-`、`_`
-     * 总长度 6～20
+     * Rules:
+     * WeChat ID
+     * First character must be a letter or digit
+     * Subsequent characters may include letters, digits, `-`, `_`
+     * Total length 6 to 20
      *
-     * 例如：
+     * Examples:
      * `wechat1`
      * `wx_123456`
      * `abc-def_01`
@@ -135,104 +137,104 @@ enum class RegExpEnum(
 
     //region Name
     /**
-     * 规则：
-     * 简短姓名
-     * 允许汉字、拉丁字母和 `·`
-     * 长度 2～30
+     * Rules:
+     * Short personal name
+     * Allows Han characters, Latin letters and `·`
+     * Length 2 to 30
      *
-     * 例如：
-     * `张三`
-     * `王小明`
+     * Examples:
+     * `Zhang San`
+     * `Wang Xiaoming`
      * `John·Doe`
      */
     SHORT_PERSON_NAME(RegExps.Name.SHORT_PERSON_NAME, regExpMsg("short-person-name")),
 
     /**
-     * 规则：
-     * 真实姓名
-     * 首尾必须是字母、汉字、空格规则允许的姓名字符
-     * 中间可含数字、空格、`·`、`.`、`*`
-     * 不能为纯数字
+     * Rules:
+     * Real personal name
+     * First and last characters must be letters, Han characters or other allowed name characters
+     * Middle may contain digits, spaces, `·`, `.`, `*`
+     * Cannot be all digits
      *
-     * 例如：
-     * `张三`
+     * Examples:
+     * `Zhang San`
      * `John Smith`
-     * `李 四`
+     * `Li Si`
      */
     REAL_PERSON_NAME(RegExps.Name.REAL_PERSON_NAME, regExpMsg("real-person-name")),
 
     /**
-     * 规则：
-     * 银行账户户名
-     * 允许中英文、数字、空格、`·`、`.`、括号、`*`
-     * 适用于个人或公司名称展示
+     * Rules:
+     * Bank account holder name
+     * Allows Chinese and English characters, digits, spaces, `·`, `.`, parentheses, `*`
+     * Suitable for displaying personal or company names
      *
-     * 例如：
-     * `张三`
-     * `王五（公司）`
+     * Examples:
+     * `Zhang San`
+     * `Wang Wu (Company)`
      * `ABC Trading Co.`
      */
     BANK_ACCOUNT_HOLDER_NAME(RegExps.Name.BANK_ACCOUNT_HOLDER_NAME, regExpMsg("bank-account-holder-name")),
 
     /**
-     * 规则：
-     * 存款人姓名
-     * 首尾必须是中英文字符
-     * 中间允许空格、`.`、`·`
+     * Rules:
+     * Payer (depositor) display name
+     * First and last characters must be Chinese or English letters
+     * Middle allows spaces, `.`, `·`
      *
-     * 例如：
-     * `张三`
+     * Examples:
+     * `Zhang San`
      * `Jane Doe`
      * `Li Lei`
      */
     PAYER_DISPLAY_NAME(RegExps.Name.PAYER_DISPLAY_NAME, regExpMsg("payer-display-name")),
 
     /**
-     * 规则：
-     * 昵称
-     * 允许中文、英文、数字
-     * 长度 3～15
+     * Rules:
+     * Nickname
+     * Allows Chinese, English and digits
+     * Length 3 to 15
      *
-     * 例如：
-     * `小明007`
+     * Examples:
+     * `Xiaoming007`
      * `Alice88`
-     * `玩家123`
+     * `Player123`
      */
     NICK_NAME(RegExps.Name.NICK_NAME, regExpMsg("nick-name")),
     //endregion
 
     //region Text
     /**
-     * 规则：
-     * 文本不得包含 `&`、`*`、`=`、`|`、`{}`、`<>`、`/`、`…`、`—`
-     * 未列出的普通字符不受此规则限制
+     * Rules:
+     * Text must not contain `&`, `*`, `=`, `|`, `{}`, `<>`, `/`, `…`, `—`
+     * Any ordinary characters not listed are not restricted by this rule
      *
-     * 例如：
+     * Examples:
      * `hello world`
-     * `备注信息`
+     * `note info`
      * `A_B-C.1`
      */
     TEXT_WITHOUT_SPECIAL_CHARS(RegExps.Text.TEXT_WITHOUT_SPECIAL_CHARS, regExpMsg("text-without-special-chars")),
 
     /**
-     * 规则：
-     * 任意字符
-     * 长度 1～30
-     * 常用于密保答案、自由文本短字段
+     * Rules:
+     * Arbitrary characters
+     * Length 1 to 30
+     * Commonly used for security-question answers and short free-text fields
      *
-     * 例如：
+     * Examples:
      * `a`
      * `my answer`
-     * `答案123`
+     * `answer123`
      */
     TEXT_1_TO_30_CHARS(RegExps.Text.TEXT_1_TO_30_CHARS, regExpMsg("text-1-to-30-chars")),
 
     /**
-     * 规则：
-     * 首字符必须是数字
-     * 后续字符不受此规则限制
+     * Rules:
+     * First character must be a digit
+     * Subsequent characters are unrestricted by this rule
      *
-     * 例如：
+     * Examples:
      * `1`
      * `1abc`
      * `9-xyz`
@@ -240,12 +242,12 @@ enum class RegExpEnum(
     TEXT_STARTS_WITH_DIGIT(RegExps.Text.TEXT_STARTS_WITH_DIGIT, regExpMsg("text-starts-with-digit")),
 
     /**
-     * 规则：
-     * 仅含数字
-     * 允许空串
-     * 常用于“只输数字”的可选字段
+     * Rules:
+     * Digits only
+     * Empty string allowed
+     * Commonly used for optional "digits-only" fields
      *
-     * 例如：
+     * Examples:
      * ``
      * `12345`
      * `0001`
@@ -253,29 +255,29 @@ enum class RegExpEnum(
     DIGITS_ONLY_OPTIONAL_EMPTY(RegExps.Text.DIGITS_ONLY_OPTIONAL_EMPTY, regExpMsg("digits-only-optional-empty")),
 
     /**
-     * 规则：
-     * 仅中文、拉丁字母与数字
-     * 不允许空格和符号
+     * Rules:
+     * Only Han characters, Latin letters and digits
+     * Spaces and symbols not allowed
      *
-     * 例如：
+     * Examples:
      * `abc123`
-     * `中国123`
-     * `Kudos中国123`
+     * `Zhongguo123`
+     * `KudosZhongguo123`
      */
     HAN_LATIN_ALNUM(RegExps.Text.HAN_LATIN_ALNUM, regExpMsg("han-latin-alnum")),
 
     /**
-     * 上下文
+     * Context path
      *
-     * 规则：
-     * 必须以 `/` 开头
-     * 只用小写字母、数字、短横线 `-`
-     * 多级路径用 `/` 分隔
-     * 每一段不能为空
-     * 不用空格、中文、下划线、连续斜杠
-     * 不把 query、fragment 风格的内容塞进 path 里
+     * Rules:
+     * Must start with `/`
+     * Only lowercase letters, digits and hyphens `-`
+     * Multi-level paths are separated by `/`
+     * Each segment cannot be empty
+     * No spaces, Chinese characters, underscores or consecutive slashes
+     * Do not stuff query- or fragment-style content into the path
      *
-     * 例如：
+     * Examples:
      * `/`
      * `/api`
      * `/user-center`
@@ -287,11 +289,11 @@ enum class RegExpEnum(
 
     //region CharacterSet
     /**
-     * 规则：
-     * 整个字符串由同一个字符重复组成
-     * 重复次数至少 2 次
+     * Rules:
+     * The whole string is the same character repeated
+     * Repeated at least twice
      *
-     * 例如：
+     * Examples:
      * `aaa`
      * `1111`
      * `%%%%`
@@ -299,11 +301,11 @@ enum class RegExpEnum(
     SINGLE_CHAR_REPEATED(RegExps.CharacterSet.SINGLE_CHAR_REPEATED, regExpMsg("single-char-repeated")),
 
     /**
-     * 规则：
-     * 至少一位数字
-     * 只允许数字
+     * Rules:
+     * At least one digit
+     * Digits only
      *
-     * 例如：
+     * Examples:
      * `0`
      * `123`
      * `987654321`
@@ -311,12 +313,12 @@ enum class RegExpEnum(
     DIGITS_NON_EMPTY(RegExps.CharacterSet.DIGITS_NON_EMPTY, regExpMsg("digits-non-empty")),
 
     /**
-     * 规则：
-     * 仅拉丁字母
-     * 允许大写和小写
-     * 不允许数字和符号
+     * Rules:
+     * Latin letters only
+     * Both upper and lower case allowed
+     * Digits and symbols not allowed
      *
-     * 例如：
+     * Examples:
      * `abc`
      * `ABC`
      * `AbCd`
@@ -324,11 +326,11 @@ enum class RegExpEnum(
     LATIN_LETTERS_ONLY(RegExps.CharacterSet.LATIN_LETTERS_ONLY, regExpMsg("latin-letters-only")),
 
     /**
-     * 规则：
-     * 仅小写拉丁字母
-     * 不允许大写字母、数字、符号
+     * Rules:
+     * Lowercase Latin letters only
+     * Uppercase letters, digits and symbols not allowed
      *
-     * 例如：
+     * Examples:
      * `abc`
      * `kudos`
      * `username`
@@ -336,12 +338,12 @@ enum class RegExpEnum(
     LATIN_LOWERCASE_ONLY(RegExps.CharacterSet.LATIN_LOWERCASE_ONLY, regExpMsg("latin-lowercase-only")),
 
     /**
-     * 规则：
-     * 仅小写字母与数字
-     * 不能是纯数字
-     * 至少包含一个小写字母
+     * Rules:
+     * Lowercase letters and digits only
+     * Cannot be all digits
+     * Must contain at least one lowercase letter
      *
-     * 例如：
+     * Examples:
      * `abc123`
      * `a1`
      * `user2026`
@@ -349,12 +351,12 @@ enum class RegExpEnum(
     LOWERCASE_ALNUM_NOT_ALL_DIGITS(RegExps.CharacterSet.LOWERCASE_ALNUM_NOT_ALL_DIGITS, regExpMsg("lowercase-alnum-not-all-digits")),
 
     /**
-     * 规则：
-     * 仅 ASCII 数字
-     * 至少一位
-     * 不接受全角数字
+     * Rules:
+     * ASCII digits only
+     * At least one digit
+     * Full-width digits not accepted
      *
-     * 例如：
+     * Examples:
      * `0`
      * `123456`
      * `987654321`
@@ -362,11 +364,11 @@ enum class RegExpEnum(
     ASCII_DIGITS_ONLY(RegExps.CharacterSet.ASCII_DIGITS_ONLY, regExpMsg("ascii-digits-only")),
 
     /**
-     * 规则：
-     * 仅拉丁字母与数字
-     * 不允许空格、下划线、连字符和其他符号
+     * Rules:
+     * Latin letters and digits only
+     * Spaces, underscores, hyphens and other symbols not allowed
      *
-     * 例如：
+     * Examples:
      * `abc`
      * `ABC123`
      * `Abc123`
@@ -374,11 +376,11 @@ enum class RegExpEnum(
     LATIN_ALNUM_ONLY(RegExps.CharacterSet.LATIN_ALNUM_ONLY, regExpMsg("latin-alnum-only")),
 
     /**
-     * 规则：
-     * 仅拉丁字母、数字、连字符、下划线
-     * 至少 1 位
+     * Rules:
+     * Latin letters, digits, hyphens and underscores only
+     * At least 1 character
      *
-     * 例如：
+     * Examples:
      * `user`
      * `user_name`
      * `user-name_01`
@@ -386,13 +388,13 @@ enum class RegExpEnum(
     LATIN_ALNUM_DASH_UNDERSCORE(RegExps.CharacterSet.LATIN_ALNUM_DASH_UNDERSCORE, regExpMsg("latin-alnum-dash-underscore")),
 
     /**
-     * 规则：
-     * 宽松标识符/变量名
-     * 允许大小写字母、数字、下划线、短横线
-     * 首字符只能是字母或下划线
-     * 后续字符允许字母、数字、下划线、短横线
+     * Rules:
+     * Relaxed identifier / variable name
+     * Allows upper and lower case letters, digits, underscores and hyphens
+     * First character may only be a letter or underscore
+     * Subsequent characters allow letters, digits, underscores and hyphens
      *
-     * 例如：
+     * Examples:
      * `name`
      * `_user-name`
      * `Abc_123-x`
@@ -403,12 +405,12 @@ enum class RegExpEnum(
     ),
 
     /**
-     * 规则：
-     * 标识符
-     * 首字符必须是字母或下划线
-     * 后续允许字母、数字、下划线
+     * Rules:
+     * Identifier
+     * First character must be a letter or underscore
+     * Subsequent characters allow letters, digits and underscores
      *
-     * 例如：
+     * Examples:
      * `name`
      * `_value`
      * `user_name1`
@@ -416,12 +418,12 @@ enum class RegExpEnum(
     VAR_NAME(RegExps.CharacterSet.VAR_NAME, regExpMsg("var-name")),
 
     /**
-     * 规则：
-     * 小写 slug
-     * 只允许小写字母、数字、连字符
-     * 不允许连续连字符分段为空
+     * Rules:
+     * Lowercase slug
+     * Only lowercase letters, digits and hyphens allowed
+     * Consecutive hyphens producing empty segments are not allowed
      *
-     * 例如：
+     * Examples:
      * `article`
      * `user-profile`
      * `user-profile-01`
@@ -431,12 +433,12 @@ enum class RegExpEnum(
 
     //region Security
     /**
-     * 规则：
-     * 登录密码
-     * 长度 6～20
-     * 允许字母、数字和常见 ASCII 符号
+     * Rules:
+     * Login password
+     * Length 6 to 20
+     * Allows letters, digits and common ASCII symbols
      *
-     * 例如：
+     * Examples:
      * `Abc123`
      * `Abc123!`
      * `Pass_word#1`
@@ -444,12 +446,12 @@ enum class RegExpEnum(
     LOGIN_PASSWORD(RegExps.Security.LOGIN_PASSWORD, regExpMsg("login-password")),
 
     /**
-     * 规则：
-     * 6 位数字安全码 / PIN
-     * 只允许数字
-     * 长度固定为 6
+     * Rules:
+     * 6-digit security code / PIN
+     * Digits only
+     * Fixed length of 6
      *
-     * 例如：
+     * Examples:
      * `123456`
      * `000001`
      * `987654`
@@ -457,11 +459,11 @@ enum class RegExpEnum(
     SECURITY_PIN_SIX_DIGITS(RegExps.Security.SECURITY_PIN_SIX_DIGITS, regExpMsg("security-pin-six-digits")),
 
     /**
-     * 规则：
-     * 密码强度分类中的“仅字母”
-     * 规则与 [LATIN_LETTERS_ONLY] 完全一致
+     * Rules:
+     * "Letters only" category used in password strength classification
+     * Identical to [LATIN_LETTERS_ONLY]
      *
-     * 例如：
+     * Examples:
      * `abc`
      * `OnlyText`
      * `Password`
@@ -469,11 +471,11 @@ enum class RegExpEnum(
     PASSWORD_STRENGTH_LETTERS_ONLY(RegExps.Security.PASSWORD_STRENGTH_LETTERS_ONLY, regExpMsg("password-strength-letters-only")),
 
     /**
-     * 规则：
-     * 密码强度分类中的“仅数字”
-     * 规则与 [ASCII_DIGITS_ONLY] 完全一致
+     * Rules:
+     * "Digits only" category used in password strength classification
+     * Identical to [ASCII_DIGITS_ONLY]
      *
-     * 例如：
+     * Examples:
      * `123456`
      * `987654`
      * `20260403`
@@ -481,12 +483,12 @@ enum class RegExpEnum(
     PASSWORD_STRENGTH_DIGITS_ONLY(RegExps.Security.PASSWORD_STRENGTH_DIGITS_ONLY, regExpMsg("password-strength-digits-only")),
 
     /**
-     * 规则：
-     * 密码强度分类中的“字母与数字”
-     * 允许大小写字母和数字
-     * 不允许符号
+     * Rules:
+     * "Letters and digits" category used in password strength classification
+     * Allows upper and lower case letters and digits
+     * Symbols not allowed
      *
-     * 例如：
+     * Examples:
      * `Abc123`
      * `abc999`
      * `PASS2026`
@@ -494,11 +496,11 @@ enum class RegExpEnum(
     PASSWORD_STRENGTH_LETTERS_AND_DIGITS(RegExps.Security.PASSWORD_STRENGTH_LETTERS_AND_DIGITS, regExpMsg("password-strength-letters-and-digits")),
 
     /**
-     * 规则：
-     * 密码强度分类中的“字母、数字与常用符号”
-     * 允许大小写字母、数字和 ASCII 常见符号
+     * Rules:
+     * "Letters, digits and common symbols" category used in password strength classification
+     * Allows upper and lower case letters, digits and common ASCII symbols
      *
-     * 例如：
+     * Examples:
      * `Abc123!`
      * `P@ssw0rd#`
      * `A1_b2-C3`
@@ -508,12 +510,12 @@ enum class RegExpEnum(
 
     //region Numeric
     /**
-     * 规则：
-     * 正整数文本
-     * 不允许负号、小数
-     * 不允许以 `0` 开头
+     * Rules:
+     * Positive integer text
+     * Negative sign and decimal point not allowed
+     * Cannot start with `0`
      *
-     * 例如：
+     * Examples:
      * `1`
      * `42`
      * `999999`
@@ -521,12 +523,12 @@ enum class RegExpEnum(
     POSITIVE_INT_TEXT(RegExps.Numeric.POSITIVE_INT_TEXT, regExpMsg("positive-int-text")),
 
     /**
-     * 规则：
-     * 让分或比分类比分串
-     * 支持可选负号
-     * 支持整数、小数、`/` 或 `-` 作为分隔形式
+     * Rules:
+     * Handicap- or score-style string
+     * Supports an optional negative sign
+     * Supports integers, decimals and `/` or `-` as separators
      *
-     * 例如：
+     * Examples:
      * `1.5`
      * `1.5/2`
      * `-0.5`
@@ -534,13 +536,13 @@ enum class RegExpEnum(
     SCORE_OR_HANDICAP_TEXT(RegExps.Numeric.SCORE_OR_HANDICAP_TEXT, regExpMsg("score-or-handicap-text")),
 
     /**
-     * 规则：
-     * 正数文本
-     * 允许整数或小数
-     * 不允许负号
-     * 禁止多余前导零
+     * Rules:
+     * Positive number text
+     * Allows integers or decimals
+     * Negative sign not allowed
+     * Redundant leading zeros not allowed
      *
-     * 例如：
+     * Examples:
      * `1`
      * `12`
      * `12.5`
@@ -548,12 +550,12 @@ enum class RegExpEnum(
     POSITIVE_DECIMAL_TEXT(RegExps.Numeric.POSITIVE_DECIMAL_TEXT, regExpMsg("positive-decimal-text")),
 
     /**
-     * 规则：
-     * 正数
-     * 可以是大于 0 的整数
-     * 也可以是 `0.xxx` 且小数部分至少有一个非零位
+     * Rules:
+     * Positive number
+     * Can be an integer greater than 0
+     * Or `0.xxx` where the fractional part contains at least one non-zero digit
      *
-     * 例如：
+     * Examples:
      * `8`
      * `10.5`
      * `0.25`
@@ -561,12 +563,12 @@ enum class RegExpEnum(
     POSITIVE_NUMBER_TEXT(RegExps.Numeric.POSITIVE_NUMBER_TEXT, regExpMsg("positive-number-text")),
 
     /**
-     * 规则：
-     * 整数文本
-     * 可带 `+` 或 `-`
-     * 不允许小数点
+     * Rules:
+     * Integer text
+     * May carry `+` or `-`
+     * Decimal point not allowed
      *
-     * 例如：
+     * Examples:
      * `0`
      * `-10`
      * `+8`
@@ -574,13 +576,13 @@ enum class RegExpEnum(
     SIGNED_INTEGER_TEXT(RegExps.Numeric.SIGNED_INTEGER_TEXT, regExpMsg("signed-integer-text")),
 
     /**
-     * 规则：
-     * 比特币数量
-     * 不允许全零
-     * 整数部分可为正整数
-     * 小数部分最多 8 位
+     * Rules:
+     * Bitcoin amount
+     * All zeros not allowed
+     * Integer part may be a positive integer
+     * Fractional part up to 8 digits
      *
-     * 例如：
+     * Examples:
      * `1`
      * `0.12345`
      * `1.00000001`
@@ -588,11 +590,11 @@ enum class RegExpEnum(
     BTC_AMOUNT_TEXT(RegExps.Numeric.BTC_AMOUNT_TEXT, regExpMsg("btc-amount-text")),
 
     /**
-     * 规则：
-     * 空串或正整数
-     * 如果有值，则必须是大于 0 的整数
+     * Rules:
+     * Empty string or positive integer
+     * If a value is present, it must be an integer greater than 0
      *
-     * 例如：
+     * Examples:
      * ``
      * `1`
      * `25`
@@ -600,12 +602,12 @@ enum class RegExpEnum(
     EMPTY_OR_POSITIVE_INT_TEXT(RegExps.Numeric.EMPTY_OR_POSITIVE_INT_TEXT, regExpMsg("empty-or-positive-int-text")),
 
     /**
-     * 规则：
-     * 最多 9 位数字
-     * 可为空
-     * 不允许其他字符
+     * Rules:
+     * Up to 9 digits
+     * May be empty
+     * No other characters allowed
      *
-     * 例如：
+     * Examples:
      * ``
      * `1`
      * `123456789`
@@ -613,13 +615,13 @@ enum class RegExpEnum(
     DIGITS_AT_MOST_9(RegExps.Numeric.DIGITS_AT_MOST_9, regExpMsg("digits-at-most-9")),
 
     /**
-     * 规则：
-     * 金额
-     * 可带负号
-     * 整数部分 0 或非零开头整数
-     * 小数部分最多 2 位
+     * Rules:
+     * Amount
+     * May carry a negative sign
+     * Integer part is `0` or starts with a non-zero digit
+     * Fractional part up to 2 digits
      *
-     * 例如：
+     * Examples:
      * `0`
      * `12.5`
      * `-12.50`
@@ -627,12 +629,12 @@ enum class RegExpEnum(
     SIGNED_AMOUNT_LOOSE(RegExps.Numeric.SIGNED_AMOUNT_LOOSE, regExpMsg("signed-amount-loose")),
 
     /**
-     * 规则：
-     * 非零金额
-     * 金额不能为 `0` 或 `0.00`
-     * 小数部分最多 2 位
+     * Rules:
+     * Non-zero amount
+     * Amount cannot be `0` or `0.00`
+     * Fractional part up to 2 digits
      *
-     * 例如：
+     * Examples:
      * `0.01`
      * `1`
      * `99.99`
@@ -640,12 +642,12 @@ enum class RegExpEnum(
     AMOUNT_NONZERO_TWO_DECIMALS(RegExps.Numeric.AMOUNT_NONZERO_TWO_DECIMALS, regExpMsg("amount-nonzero-two-decimals")),
 
     /**
-     * 规则：
-     * 整数百分比
-     * 只允许整数
-     * 取值范围 0～100
+     * Rules:
+     * Integer percentage
+     * Integers only
+     * Value range 0 to 100
      *
-     * 例如：
+     * Examples:
      * `0`
      * `85`
      * `100`
@@ -655,12 +657,12 @@ enum class RegExpEnum(
 
     //region Network
     /**
-     * 规则：
-     * IPv4 点分十进制地址
-     * 共 4 段
-     * 每段取值范围 0～255
+     * Rules:
+     * IPv4 dotted-decimal address
+     * 4 octets in total
+     * Each octet ranges from 0 to 255
      *
-     * 例如：
+     * Examples:
      * `127.0.0.1`
      * `192.168.1.1`
      * `255.255.255.255`
@@ -668,12 +670,12 @@ enum class RegExpEnum(
     IPV4(RegExps.Network.IPV4, regExpMsg("ipv4")),
 
     /**
-     * 规则：
-     * IPv4 点分十进制完整(零补齐)地址
-     * 共 4 段
-     * 每段取值范围 000～255
+     * Rules:
+     * IPv4 dotted-decimal full (zero-padded) address
+     * 4 octets in total
+     * Each octet ranges from 000 to 255
      *
-     * 例如：
+     * Examples:
      * `127.000.000.001`
      * `192.168.001.001`
      * `255.255.255.255`
@@ -681,12 +683,12 @@ enum class RegExpEnum(
     IPV4_FULL(RegExps.Network.IPV4_FULL, regExpMsg("ipv4-full")),
 
     /**
-     * 规则：
-     * URL，支持 `http`、`https`、`ftp`、`sftp`
-     * 允许域名、IPv4、端口、路径、query、fragment
-     * 属于宽松匹配，不等同完整 RFC 严格校验
+     * Rules:
+     * URL, supporting `http`, `https`, `ftp`, `sftp`
+     * Allows domain, IPv4, port, path, query and fragment
+     * Loose match; not equivalent to full strict RFC validation
      *
-     * 例如：
+     * Examples:
      * `https://example.com`
      * `http://example.com:8080/api`
      * `https://example.com/search?q=test#top`
@@ -694,12 +696,12 @@ enum class RegExpEnum(
     HTTP_URL(RegExps.Network.HTTP_URL, regExpMsg("http-url")),
 
     /**
-     * 规则：
-     * 多个 IPv4 地址
-     * 使用英文分号 `;` 分隔
-     * 每个成员都必须是合法 IPv4
+     * Rules:
+     * Multiple IPv4 addresses
+     * Separated by ASCII semicolon `;`
+     * Every member must be a valid IPv4 address
      *
-     * 例如：
+     * Examples:
      * `10.0.0.1`
      * `10.0.0.1;192.168.1.1`
      * `127.0.0.1;8.8.8.8;1.1.1.1`
@@ -707,24 +709,24 @@ enum class RegExpEnum(
     IPV4_SEMICOLON_LIST(RegExps.Network.IPV4_SEMICOLON_LIST, regExpMsg("ipv4-semicolon-list")),
 
     /**
-     * 规则：
-     * IPv6 全展开地址
-     * 共 8 组十六进制段
-     * 每组 1～4 位十六进制字符
+     * Rules:
+     * Fully expanded IPv6 address
+     * 8 hexadecimal groups in total
+     * Each group has 1 to 4 hexadecimal characters
      *
-     * 例如：
+     * Examples:
      * `2001:0db8:0000:0000:0000:ff00:0042:8329`
      * `fe80:0000:0000:0000:0202:b3ff:fe1e:8329`
      */
     IPV6_FULL(RegExps.Network.IPV6_FULL, regExpMsg("ipv6-full")),
 
     /**
-     * 规则：
-     * IPv6 压缩地址
-     * 必须包含 `::`
-     * `::` 左右允许省略若干段
+     * Rules:
+     * Compressed IPv6 address
+     * Must contain `::`
+     * Either side of `::` may omit groups
      *
-     * 例如：
+     * Examples:
      * `2001:db8::1`
      * `::1`
      * `fe80::abcd`
@@ -732,12 +734,12 @@ enum class RegExpEnum(
     IPV6_COMPACT(RegExps.Network.IPV6_COMPACT, regExpMsg("ipv6-compact")),
 
     /**
-     * 规则：
-     * 逗号分隔域名列表
-     * 每个成员都必须是标准点分域名
-     * 使用英文逗号 `,` 分隔
+     * Rules:
+     * Comma-separated list of domain names
+     * Every member must be a standard dotted domain name
+     * Separated by ASCII comma `,`
      *
-     * 例如：
+     * Examples:
      * `a.example.com`
      * `a.example.com,b.example.com`
      * `api.test.com,cdn.test.com`
@@ -745,24 +747,24 @@ enum class RegExpEnum(
     DOMAIN_LIST_COMMA_SEPARATED(RegExps.Network.DOMAIN_LIST_COMMA_SEPARATED, regExpMsg("domain-list-comma-separated")),
 
     /**
-     * 规则：
-     * MAC 地址
-     * 6 组十六进制字符
-     * 组之间允许 `:` 或 `-`
+     * Rules:
+     * MAC address
+     * 6 groups of hexadecimal characters
+     * Groups may be separated by `:` or `-`
      *
-     * 例如：
+     * Examples:
      * `00:1A:2B:3C:4D:5E`
      * `AA-BB-CC-DD-EE-FF`
      */
     MAC_ADDRESS_COLON_OR_HYPHEN(RegExps.Network.MAC_ADDRESS_COLON_OR_HYPHEN, regExpMsg("mac-address-colon-or-hyphen")),
 
     /**
-     * 规则：
-     * 网络端口号
-     * 只允许十进制数字
-     * 取值范围 1～65535
+     * Rules:
+     * Network port number
+     * Decimal digits only
+     * Value range 1 to 65535
      *
-     * 例如：
+     * Examples:
      * `80`
      * `443`
      * `65535`
@@ -770,12 +772,12 @@ enum class RegExpEnum(
     NETWORK_PORT_1_65535(RegExps.Network.NETWORK_PORT_1_65535, regExpMsg("network-port-1-65535")),
 
     /**
-     * 规则：
-     * IPv4 CIDR 表示法
-     * 前半部分必须是 IPv4
-     * 前缀长度范围 0～32
+     * Rules:
+     * IPv4 CIDR notation
+     * Leading part must be a valid IPv4 address
+     * Prefix length ranges from 0 to 32
      *
-     * 例如：
+     * Examples:
      * `192.168.1.0/24`
      * `10.0.0.1/32`
      * `0.0.0.0/0`
@@ -783,13 +785,13 @@ enum class RegExpEnum(
     IPV4_CIDR_NOTATION(RegExps.Network.IPV4_CIDR_NOTATION, regExpMsg("ipv4-cidr-notation")),
 
     /**
-     * 规则：
+     * Rules:
      * JDBC URL
-     * 必须以 `jdbc:` 开头
-     * 协议名后可跟驱动类型和连接信息
-     * 后续不允许空白字符
+     * Must start with `jdbc:`
+     * The protocol name may be followed by a driver type and connection information
+     * No whitespace characters allowed in the remainder
      *
-     * 例如：
+     * Examples:
      * `jdbc:mysql://localhost:3306/kudos`
      * `jdbc:postgresql://db:5432/app`
      * `jdbc:h2:mem:test`
@@ -797,13 +799,13 @@ enum class RegExpEnum(
     JDBC_URL(RegExps.Network.JDBC_URL, regExpMsg("jdbc-url")),
 
     /**
-     * 规则：
-     * 域名
-     * 支持 `localhost`
-     * 或标准点分域名
-     * 总长度和每段首尾连字符规则受限
+     * Rules:
+     * Domain name
+     * Supports `localhost`
+     * Or a standard dotted domain name
+     * Total length and per-label leading/trailing hyphen rules are constrained
      *
-     * 例如：
+     * Examples:
      * `localhost`
      * `example.com`
      * `api.example.com`
@@ -813,12 +815,12 @@ enum class RegExpEnum(
 
     //region Business
     /**
-     * 规则：
-     * 银行卡号
-     * 只允许数字
-     * 长度 10～25
+     * Rules:
+     * Bank card number
+     * Digits only
+     * Length 10 to 25
      *
-     * 例如：
+     * Examples:
      * `6222021234567890`
      * `6222021234567890123`
      * `1234567890123456789012345`
@@ -826,13 +828,13 @@ enum class RegExpEnum(
     BANK_CARD_NUMBER(RegExps.Business.BANK_CARD_NUMBER, regExpMsg("bank-card-number")),
 
     /**
-     * 规则：
-     * 站点 ID 列表
-     * 支持单个数字
-     * 支持英文逗号分隔多个数字
-     * 也允许全空白
+     * Rules:
+     * Site ID list
+     * Supports a single number
+     * Supports multiple numbers separated by ASCII commas
+     * Also allows an all-whitespace value
      *
-     * 例如：
+     * Examples:
      * `42`
      * `1,2,3`
      * `   `
@@ -840,13 +842,13 @@ enum class RegExpEnum(
     SITE_IDS_COMMA_SEPARATED(RegExps.Business.SITE_IDS_COMMA_SEPARATED, regExpMsg("site-ids-comma-separated")),
 
     /**
-     * 规则：
-     * 玩家账号
-     * 首字符允许字母、数字、下划线、`$`
-     * 后续只允许字母、数字、下划线
-     * 总长度 4～15
+     * Rules:
+     * Game player account
+     * First character may be a letter, digit, underscore or `$`
+     * Subsequent characters allow only letters, digits and underscores
+     * Total length 4 to 15
      *
-     * 例如：
+     * Examples:
      * `user1`
      * `guest_01`
      * `$abc_123`
@@ -856,24 +858,24 @@ enum class RegExpEnum(
 
     //region Format
     /**
-     * 规则：
-     * 带连字符的 UUID
-     * 形如 `8-4-4-4-12`
-     * 每段由字母数字下划线字符类 `\\w` 匹配
+     * Rules:
+     * Hyphenated UUID
+     * Shaped as `8-4-4-4-12`
+     * Each segment is matched by the alphanumeric/underscore character class `\\w`
      *
-     * 例如：
+     * Examples:
      * `123e4567-e89b-12d3-a456-426614174000`
      * `aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee`
      */
     UUID_HYPHENATED(RegExps.Format.UUID_HYPHENATED, regExpMsg("uuid-hyphenated")),
 
     /**
-     * 规则：
-     * 日期格式 `yyyy-MM-dd`
-     * 仅校验年月日格式
-     * 不保证闰年和大小月绝对正确
+     * Rules:
+     * Date format `yyyy-MM-dd`
+     * Only validates the year-month-day format
+     * Does not guarantee absolute correctness of leap years or month lengths
      *
-     * 例如：
+     * Examples:
      * `2026-04-03`
      * `1999-12-31`
      * `2024-02-29`
@@ -881,12 +883,12 @@ enum class RegExpEnum(
     DATE_ISO_YYYY_MM_DD(RegExps.Format.DATE_ISO_YYYY_MM_DD, regExpMsg("date-iso-yyyy-mm-dd")),
 
     /**
-     * 规则：
-     * 24 小时制时间
-     * 基础格式 `HH:mm`
-     * 可追加秒 `:ss`
+     * Rules:
+     * 24-hour time
+     * Base format `HH:mm`
+     * Seconds `:ss` may be appended
      *
-     * 例如：
+     * Examples:
      * `09:30`
      * `23:59`
      * `23:59:59`
@@ -894,12 +896,12 @@ enum class RegExpEnum(
     TIME_24H_MM_OPTIONAL_SS(RegExps.Format.TIME_24H_MM_OPTIONAL_SS, regExpMsg("time-24h-mm-optional-ss")),
 
     /**
-     * 规则：
-     * 中国大陆邮政编码
-     * 只允许数字
-     * 长度固定 6 位
+     * Rules:
+     * Mainland China postal code
+     * Digits only
+     * Fixed length of 6
      *
-     * 例如：
+     * Examples:
      * `100000`
      * `200120`
      * `518000`
@@ -907,13 +909,13 @@ enum class RegExpEnum(
     CN_MAINLAND_POSTAL_CODE(RegExps.Format.CN_MAINLAND_POSTAL_CODE, regExpMsg("cn-mainland-postal-code")),
 
     /**
-     * 规则：
-     * CSS 十六进制颜色值
-     * 支持 `#RGB`
-     * 支持 `#RRGGBB`
-     * 支持 `#RRGGBBAA`
+     * Rules:
+     * CSS hexadecimal color value
+     * Supports `#RGB`
+     * Supports `#RRGGBB`
+     * Supports `#RRGGBBAA`
      *
-     * 例如：
+     * Examples:
      * `#fff`
      * `#FF8800`
      * `#11223344`
@@ -921,7 +923,7 @@ enum class RegExpEnum(
     HEX_COLOR_CSS(RegExps.Format.HEX_COLOR_CSS, regExpMsg("hex-color-css")),
     //endregion
 
-    /* 与邮箱规则相同（历史 MSN）；新代码请用 [EMAIL] */
+    /* Same as the email rule (historical MSN); use [EMAIL] in new code. */
     MSN(RegExps.Communication.EMAIL, regExpMsg("msn")),
 
     ;

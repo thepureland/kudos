@@ -22,7 +22,7 @@ import kotlin.test.assertEquals
 
 
 /**
- * 路由注册测试
+ * Route registration test.
  *
  * @author K
  * @author AI: Codex

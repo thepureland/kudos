@@ -19,12 +19,12 @@ import org.springframework.transaction.event.TransactionPhase
 import org.springframework.transaction.event.TransactionalEventListener
 
 /**
- * 微服务（按 code）Hash 缓存处理器
+ * Hash cache handler for microservices (keyed by code).
  *
- * 数据来源表：sys_micro_service；主键为 code，缓存的 key 即 code，value 为 [SysMicroServiceCacheEntry]。
- * 使用 Hash 结构存储，通过 [HashCacheableByPrimary] / [HashBatchCacheableByPrimary] 按 code 存取。
+ * Source table: sys_micro_service; primary key is code, the cache key is the code, and the value is [SysMicroServiceCacheEntry].
+ * Stored using a Hash structure, accessed by code through [HashCacheableByPrimary] / [HashBatchCacheableByPrimary].
  *
- * 使用前需在缓存配置表 sys_cache 中增加名为 [CACHE_NAME] 的配置项且 hash=true。
+ * Before use, add a configuration named [CACHE_NAME] with hash=true in the sys_cache configuration table.
  *
  * @author K
  * @author AI: Cursor
@@ -41,7 +41,7 @@ open class SysMicroServiceHashCache : AbstractHashCacheHandler<SysMicroServiceCa
     companion object {
         const val CACHE_NAME = "SYS_MICRO_SERVICE__HASH"
 
-        /** 可筛选副属性：按 atomicService 建二级索引，用于按是否原子服务查询 */
+        /** Filterable secondary properties: build a secondary index by atomicService for querying by whether it is an atomic service. */
         val FILTERABLE_PROPERTIES = setOf(SysMicroServiceCacheEntry::atomicService.name)
     }
 
@@ -54,10 +54,10 @@ open class SysMicroServiceHashCache : AbstractHashCacheHandler<SysMicroServiceCa
     override fun doReload(id: Any): SysMicroServiceCacheEntry? = sysMicroServiceDao.getAs(id.toString())
 
     /**
-     * 根据 code 从缓存获取微服务信息，未命中则查库并回写。
+     * Get a microservice from the cache by code. On miss, load from DB and write back.
      *
-     * @param code 微服务编码（主键），非空
-     * @return 微服务缓存项，不存在时 null
+     * @param code microservice code (primary key), non-blank
+     * @return microservice cache entry, or null if not found
      */
     @HashCacheableByPrimary(
         cacheNames = [CACHE_NAME],
@@ -67,15 +67,15 @@ open class SysMicroServiceHashCache : AbstractHashCacheHandler<SysMicroServiceCa
         filterableProperties = ["atomicService"]
     )
     open fun getMicroServiceByCode(code: String): SysMicroServiceCacheEntry? {
-        require(code.isNotBlank()) { "获取微服务时 code 不能为空" }
+        require(code.isNotBlank()) { "code must not be blank when fetching microservice" }
         return sysMicroServiceDao.get(code, SysMicroServiceCacheEntry::class)
     }
 
     /**
-     * 根据多个 code 从缓存批量获取微服务信息，未命中的从库加载并回写。
+     * Batch fetch microservices from the cache by multiple codes. On miss, load from DB and write back.
      *
-     * @param codes 微服务 code 集合，可为空
-     * @return code -> 实体 映射，仅包含能查到的 code
+     * @param codes collection of microservice codes, may be empty
+     * @return code -> entity map, containing only codes that were found
      */
     @HashBatchCacheableByPrimary(
         cacheNames = [CACHE_NAME],
@@ -89,10 +89,10 @@ open class SysMicroServiceHashCache : AbstractHashCacheHandler<SysMicroServiceCa
     }
 
     /**
-     * 根据是否原子服务从缓存获取微服务列表，未命中则查库并回写。
+     * Get the list of microservices from the cache by whether they are atomic services. On miss, load from DB and write back.
      *
-     * @param atomicService true 表示只查原子服务，false 表示只查非原子服务
-     * @return 微服务缓存项列表
+     * @param atomicService true to query only atomic services, false to query only non-atomic services
+     * @return list of microservice cache entries
      */
     @HashCacheableBySecondary(
         cacheNames = [CACHE_NAME],
@@ -104,13 +104,13 @@ open class SysMicroServiceHashCache : AbstractHashCacheHandler<SysMicroServiceCa
         return sysMicroServiceDao.fetchMicroServiceByTypeForCache(atomicService)
     }
 
-    /** 获取所有原子服务列表（atomicService=true）。 */
+    /** Get the list of all atomic services (atomicService=true). */
     open fun listAtomicServices(): List<SysMicroServiceCacheEntry> = getMicroServicesByType(true)
 
     /**
-     * 获取所有微服务；若缓存为空则从库加载并回写后再返回。
+     * Get all microservices; if the cache is empty, load from DB and write back, then return.
      *
-     * @return 微服务缓存项列表，缓存未开启时直接从库查询返回
+     * @return list of microservice cache entries; when the cache is disabled, queries directly from the DB
      */
     open fun getAllMicroServices(): List<SysMicroServiceCacheEntry> {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
@@ -126,23 +126,23 @@ open class SysMicroServiceHashCache : AbstractHashCacheHandler<SysMicroServiceCa
     }
 
     /**
-     * 从库全量加载微服务并刷新 Hash 缓存。
+     * Load all microservices from DB and refresh the Hash cache.
      *
-     * @param clear 为 true 时先清空再写入；为 false 时覆盖写入
+     * @param clear when true, clear before writing; when false, overwrite in place
      */
     override fun reloadAll(clear: Boolean) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.info("缓存未开启，不加载微服务 Hash 缓存")
+            log.info("Cache is disabled; skipping microservice Hash cache load")
             return
         }
         val cache = hashCache()
         if (clear) cache.clear(CACHE_NAME)
         val list = sysMicroServiceDao.searchAs<SysMicroServiceCacheEntry>()
-        log.debug("从数据库加载 ${list.size} 条微服务，刷新 Hash 缓存")
+        log.debug("Loaded ${list.size} microservices from the database; refreshing Hash cache")
         cache.refreshAll(CACHE_NAME, list, FILTERABLE_PROPERTIES, emptySet())
     }
 
-    /** 新增微服务后同步：将指定 code 的实体从库加载并写入缓存。 */
+    /** Sync after microservice insert: load the entity with the given code from DB and write it into the cache. */
     open fun syncOnInsert(code: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME) || !KeyValueCacheKit.isWriteInTime(CACHE_NAME)) return
         val item = sysMicroServiceDao.get(code, SysMicroServiceCacheEntry::class) ?: return
@@ -150,16 +150,16 @@ open class SysMicroServiceHashCache : AbstractHashCacheHandler<SysMicroServiceCa
     }
 
     /**
-     * 新增微服务后同步（重载，接收业务对象与 code）。行为同 [syncOnInsert]。
+     * Sync after microservice insert (overload taking business object and code). Behaves like [syncOnInsert].
      *
-     * @param any 业务对象，仅用于重载区分
-     * @param code 微服务编码（主键）
+     * @param any business object, used only to differentiate the overload
+     * @param code microservice code (primary key)
      */
     open fun syncOnInsert(any: Any, code: String) {
         syncOnInsert(code)
     }
 
-    /** 更新微服务后同步：从库重新加载并写入缓存。 */
+    /** Sync after microservice update: reload from DB and write into the cache. */
     open fun syncOnUpdate(code: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
         val item = sysMicroServiceDao.get(code, SysMicroServiceCacheEntry::class) ?: return
@@ -169,22 +169,22 @@ open class SysMicroServiceHashCache : AbstractHashCacheHandler<SysMicroServiceCa
     }
 
     /**
-     * 更新微服务后同步（重载，带业务对象）。行为同 [syncOnUpdate]。
+     * Sync after microservice update (overload taking business object). Behaves like [syncOnUpdate].
      *
-     * @param any 业务对象
-     * @param code 微服务编码（主键）
+     * @param any business object
+     * @param code microservice code (primary key)
      */
     open fun syncOnUpdate(any: Any, code: String) {
         syncOnUpdate(code)
     }
 
-    /** 删除微服务后同步：从缓存中移除该 code。 */
+    /** Sync after microservice delete: remove the code from the cache. */
     open fun syncOnDelete(code: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
         hashCache().deleteById(CACHE_NAME, code, SysMicroServiceCacheEntry::class, FILTERABLE_PROPERTIES, emptySet())
     }
 
-    /** 批量删除微服务后同步：从缓存中移除这些 code。 */
+    /** Sync after batch delete of microservices: remove these codes from the cache. */
     open fun syncOnBatchDelete(codes: Collection<String>) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
         val cache = hashCache()

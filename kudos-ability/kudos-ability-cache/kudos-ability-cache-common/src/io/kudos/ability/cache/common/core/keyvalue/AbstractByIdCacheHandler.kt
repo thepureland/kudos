@@ -12,9 +12,9 @@ import org.springframework.beans.factory.annotation.Autowired
 import kotlin.reflect.KClass
 
 /**
- * key为id的缓存处理器抽象类
+ * Abstract cache handler whose key is an id.
  *
- * @param T 值类型
+ * @param T value type
  * @author K
  * @since 1.0.0
  */
@@ -25,37 +25,37 @@ abstract class AbstractByIdCacheHandler<PK : Any, T : IIdEntity<*>, DAO : IBaseR
     protected lateinit var dao: DAO
 
     /**
-     * 根据主键从数据库中加载对应的记录
+     * Loads the corresponding record from the database by primary key.
      *
-     * @param id 主键
-     * @return 缓存对象
+     * @param id primary key
+     * @return cached object
      */
     protected fun getById(id: PK): T? {
         if (id is CharSequence) {
-            require(id.isNotEmpty()) { log.error("从${cacheName()}缓存中获取${itemDesc()}时，id不能为空！") }
+            require(id.isNotEmpty()) { log.error("When fetching ${itemDesc()} from cache ${cacheName()}, id must not be empty!") }
         }
         if (KeyValueCacheKit.isCacheActive(cacheName())) {
-            log.debug("缓存中不存在id为${id}的${itemDesc()}，从数据库中加载...")
+            log.debug("${itemDesc()} with id ${id} not found in cache; loading from database...")
         }
         val result = dao.get(id, getCacheItemClass())
         if (result == null) {
-            log.warn("数据库中不存在id为${id}的${itemDesc()}！")
+            log.warn("${itemDesc()} with id ${id} does not exist in the database!")
         } else {
-            log.debug("数据库加载到id为${id}的${itemDesc()}.")
+            log.debug("Loaded ${itemDesc()} with id ${id} from database.")
         }
         return result
     }
 
     /**
-     * 根据主键集合批量从数据库加载对应记录
+     * Batch-loads records from the database by a collection of primary keys.
      *
-     * @param ids 主键集合
-     * @return Map<主键，缓存对象>
+     * @param ids primary key collection
+     * @return Map<primary key, cached object>
      */
     protected fun getByIds(ids: Collection<PK>): Map<String, T> {
-        require(ids.isNotEmpty()) { log.error("批量从${cacheName()}缓存中获取${itemDesc()}时，id集合不能为空！") }
+        require(ids.isNotEmpty()) { log.error("When batch-fetching ${itemDesc()} from cache ${cacheName()}, id collection must not be empty!") }
         if (KeyValueCacheKit.isCacheActive(cacheName())) {
-            log.debug("${cacheName()}缓存中没有找到所有这些id为${ids}的${itemDesc()}，从数据库中加载...")
+            log.debug("Not all ${itemDesc()} with ids ${ids} were found in cache ${cacheName()}; loading from database...")
         }
         val searchPayload = MutableListSearchPayload().apply {
             setReturnEntityClass(getCacheItemClass())
@@ -63,7 +63,7 @@ abstract class AbstractByIdCacheHandler<PK : Any, T : IIdEntity<*>, DAO : IBaseR
         }
 
         val results = dao.search(searchPayload, getCacheItemClass())
-        log.debug("数据库中加载到${results.size}条${itemDesc()}.")
+        log.debug("Loaded ${results.size} ${itemDesc()} record(s) from database.")
         return results
             .mapNotNull { item ->
                 val usableId = toUsableId(item.id) ?: return@mapNotNull null
@@ -74,97 +74,97 @@ abstract class AbstractByIdCacheHandler<PK : Any, T : IIdEntity<*>, DAO : IBaseR
 
     override fun reloadAll(clear: Boolean) {
         if (!KeyValueCacheKit.isCacheActive(cacheName())) {
-            log.info("缓存未开启，不加载和缓存所有${itemDesc()}信息！")
+            log.info("Cache is disabled; will not load and cache all ${itemDesc()} entries!")
             return
         }
 
-        // 加载所有
+        // load all
         val searchPayload = MutableListSearchPayload().apply {
             setReturnEntityClass(getCacheItemClass())
         }
 
         val results = dao.search(searchPayload, getCacheItemClass())
-        log.debug("从数据库加载了${results.size}条${itemDesc()}信息。")
+        log.debug("Loaded ${results.size} ${itemDesc()} entries from database.")
 
-        // 先清除缓存
+        // clear the cache first
         if (clear) {
             clear()
         }
 
-        // 放入缓存
+        // put into cache
         results.forEach {
             val usableId = toUsableId(it.id)
             if (usableId != null) {
                 KeyValueCacheKit.put(cacheName(), usableId, it)
             } else {
-                log.warn("跳过缓存空白id的${itemDesc()}记录: $it")
+                log.warn("Skipping caching of ${itemDesc()} record with blank id: $it")
             }
         }
 
-        log.debug("缓存了${results.size}条${itemDesc()}信息。")
+        log.debug("Cached ${results.size} ${itemDesc()} entries.")
     }
 
     /**
-     * 数据库插入新记录后，同步缓存
+     * Synchronizes the cache after inserting a new database record.
      *
-     * @param id 主键
+     * @param id primary key
      */
     open fun syncOnInsert(id: PK) {
         if (KeyValueCacheKit.isCacheActive(cacheName()) && KeyValueCacheKit.isWriteInTime(cacheName())) {
-            log.debug("新增id为${id}的${itemDesc()}后，同步${cacheName()}缓存...")
-            doReload(id.toString()) // 缓存
-            log.debug("${cacheName()}缓存同步完成。")
+            log.debug("After inserting ${itemDesc()} with id ${id}, syncing cache ${cacheName()}...")
+            doReload(id.toString()) // cache
+            log.debug("Cache ${cacheName()} sync completed.")
         }
     }
 
     /**
-     * 更新数据库记录后，同步缓存
+     * Synchronizes the cache after updating a database record.
      *
-     * @param id 主键
+     * @param id primary key
      */
     open fun syncOnUpdate(id: PK) {
         if (KeyValueCacheKit.isCacheActive(cacheName())) {
-            log.debug("更新id为${id}的${itemDesc()}后，同步${cacheName()}缓存...")
-            KeyValueCacheKit.evict(cacheName(), id) // 踢除缓存
+            log.debug("After updating ${itemDesc()} with id ${id}, syncing cache ${cacheName()}...")
+            KeyValueCacheKit.evict(cacheName(), id) // evict from cache
             if (KeyValueCacheKit.isWriteInTime(cacheName())) {
-                doReload(id.toString()) // 缓存
+                doReload(id.toString()) // cache
             }
-            log.debug("${cacheName()}缓存同步完成。")
+            log.debug("Cache ${cacheName()} sync completed.")
         }
     }
 
     /**
-     * 删除数据库记录后，同步缓存
+     * Synchronizes the cache after deleting a database record.
      *
-     * @param id 主键
+     * @param id primary key
      */
     open fun syncOnDelete(id: PK) {
         if (KeyValueCacheKit.isCacheActive(cacheName())) {
-            log.debug("删除id为${id}的${itemDesc()}后，同步${cacheName()}缓存...")
-            KeyValueCacheKit.evict(cacheName(), id) // 踢除缓存
-            log.debug("${cacheName()}缓存同步完成。")
+            log.debug("After deleting ${itemDesc()} with id ${id}, syncing cache ${cacheName()}...")
+            KeyValueCacheKit.evict(cacheName(), id) // evict from cache
+            log.debug("Cache ${cacheName()} sync completed.")
         }
     }
 
     /**
-     * 批量删除数据库对象后，同步缓存
+     * Synchronizes the cache after batch-deleting database objects.
      *
-     * @param ids 主键集合
+     * @param ids primary key collection
      */
     open fun syncOnBatchDelete(ids: Collection<String>) {
         if (KeyValueCacheKit.isCacheActive(cacheName())) {
-            log.debug("批量删除id为${ids}的${itemDesc()}后，同步从${cacheName()}缓存中踢除...")
+            log.debug("After batch-deleting ${itemDesc()} with ids ${ids}, syncing eviction from cache ${cacheName()}...")
             ids.forEach {
-                KeyValueCacheKit.evict(cacheName(), it) // 踢除角色缓存
+                KeyValueCacheKit.evict(cacheName(), it) // evict cache entry
             }
-            log.debug("${cacheName()}缓存同步完成。")
+            log.debug("Cache ${cacheName()} sync completed.")
         }
     }
 
     /**
-     * 返回缓存项类型
+     * Returns the cache item type.
      *
-     * @return 缓存项类型
+     * @return cache item type
      */
     protected fun getCacheItemClass(): KClass<T> {
         @Suppress("UNCHECKED_CAST")
@@ -172,9 +172,9 @@ abstract class AbstractByIdCacheHandler<PK : Any, T : IIdEntity<*>, DAO : IBaseR
     }
 
     /**
-     * 返回缓存项描述
+     * Returns the cache item description.
      *
-     * @return 缓存项描述
+     * @return cache item description
      */
     protected abstract fun itemDesc(): String
 

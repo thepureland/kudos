@@ -17,7 +17,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * 本地文件服务器删除操作测试用例
+ * Test cases for local file server delete operations.
  *
  * @author unknown
  * @author K

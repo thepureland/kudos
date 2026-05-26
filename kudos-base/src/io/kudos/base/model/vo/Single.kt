@@ -1,9 +1,9 @@
 package io.kudos.base.model.vo
 
 /**
- * 一个只包装单个值的轻量容器（类似 Pair 的“单值版本”）。
+ * A lightweight container that wraps a single value (like a "single-value version" of Pair).
  *
- * - 提供常用函数式操作：map / flatMap / filter / fold / getOrElse 等。
+ * - Provides common functional operations: map / flatMap / filter / fold / getOrElse, etc.
  *
  * @author K
  * @author AI: ChatGPT
@@ -13,17 +13,17 @@ class Single<T>(var value: T) {
 
     operator fun component1(): T = value
 
-    /** 把 value 原地更新 */
+    /** Update value in place */
     inline fun update(block: (T) -> T): Single<T> {
         value = block(value)
         return this
     }
 
-    /** 只读映射：生成新的 Single */
+    /** Read-only map: produces a new Single */
     inline fun <R> map(transform: (T) -> R): Single<R> =
         Single(transform(value))
 
-    /** 原地映射：直接修改自己 */
+    /** In-place map: modifies this instance directly */
     inline fun mapInPlace(transform: (T) -> T): Single<T> {
         value = transform(value)
         return this

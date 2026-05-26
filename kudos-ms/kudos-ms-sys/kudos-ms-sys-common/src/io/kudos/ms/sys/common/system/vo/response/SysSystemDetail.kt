@@ -5,7 +5,7 @@ import java.time.LocalDateTime
 
 
 /**
- * 系统详情响应VO
+ * System detail response VO.
  *
  * @author K
  * @since 1.0.0
@@ -14,43 +14,43 @@ data class SysSystemDetail (
 
     override val id: String = "",
 
-    /** 编码 */
+    /** Code */
     val code: String = "",
 
-    /** 名称 */
+    /** Name */
     val name: String = "",
 
-    /** 是否子系统 */
+    /** Whether it is a subsystem */
     val subSystem: Boolean = true,
 
-    /** 父系统编号 */
+    /** Parent system code */
     val parentCode: String? = null,
 
-    /** 备注 */
+    /** Remark */
     val remark: String? = null,
 
-    /** 是否启用 */
+    /** Whether active */
     val active: Boolean = true,
 
-    /** 是否内置 */
+    /** Whether built-in */
     val builtIn: Boolean = false,
 
-    /** 创建者id */
+    /** Creator id */
     val createUserId: String? = null,
 
-    /** 创建者名称 */
+    /** Creator name */
     val createUserName: String? = null,
 
-    /** 创建时间 */
+    /** Create time */
     val createTime: LocalDateTime? = null,
 
-    /** 更新者id */
+    /** Updater id */
     val updateUserId: String? = null,
 
-    /** 更新者名称 */
+    /** Updater name */
     val updateUserName: String? = null,
 
-    /** 更新时间 */
+    /** Update time */
     val updateTime: LocalDateTime? = null,
 
 ) : IIdEntity<String>

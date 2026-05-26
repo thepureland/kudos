@@ -4,9 +4,10 @@ import io.kudos.ability.file.common.auth.AuthServerParam
 import java.io.Serializable
 
 /**
- * 文件删除请求模型。
+ * File deletion request model.
  *
- * 三要素：存储桶名 + 文件路径 + 鉴权参数。一般由 [from] 静态方法从完整路径解析得到。
+ * Three components: bucket name + file path + auth parameters. Typically parsed from a
+ * full path via the [from] static method.
  *
  * @author K
  * @author AI: Codex
@@ -14,27 +15,29 @@ import java.io.Serializable
  */
 class DeleteFileModel : Serializable {
     /**
-     * 自定义目录|存储空间名称
+     * Custom directory | bucket name.
      */
     var bucketName: String? = null
 
     /**
-     * 完整文件路径
+     * Full file path.
      */
     var filePath: String? = null
 
     /**
-     * 认证参数
+     * Authentication parameters.
      */
     var authServerParam: AuthServerParam? = null
 
     companion object {
         /**
-         * 从形如 `/<bucket>/<file/path>` 的完整路径拆出 [bucketName] / [filePath]。
+         * Splits [bucketName] / [filePath] from a full path of the form `/<bucket>/<file/path>`.
          *
-         * **要求 `fullPath` 以 `/` 开头**——这是历史约定（split 后 segments[0] 是空串、
-         * segments[1] 是 bucket）。无前导 `/` 时旧实现会把首段当 bucket 后段当 path（错位
-         * 一格），这里改成显式 require 拒绝。
+         * **Requires `fullPath` to start with `/`** — this is a historical convention
+         * (after split, segments[0] is empty and segments[1] is the bucket). Without
+         * the leading `/`, the old implementation would treat the first segment as the
+         * bucket and the rest as the path (off by one); this is now explicitly rejected
+         * via require.
          */
         fun from(fullPath: String): DeleteFileModel {
             require(fullPath.isNotBlank()) { "fullPath must not be blank" }

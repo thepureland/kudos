@@ -5,7 +5,7 @@ import kotlin.reflect.KClass
 
 
 /**
- * 类和资源查找工具类
+ * Class and resource lookup utility.
  *
  * @author K
  * @since 1.0.0
@@ -13,12 +13,12 @@ import kotlin.reflect.KClass
 object ScanKit {
 
     /**
-     * 查找带有指定注解的类。
+     * Finds classes annotated with the given annotation.
      *
-     * @param basePackage 需要扫描的包名
-     * @param annotationClass 要查找的注解类。
-     * @param recursive 是否递归扫描其子包,默认递归
-     * @return 带有指定注解的类列表。
+     * @param basePackage the package to scan
+     * @param annotationClass the annotation class to look for
+     * @param recursive whether to recursively scan subpackages; defaults to true
+     * @return the list of classes annotated with the given annotation
      * @author K
      * @since 1.0.0
      */
@@ -40,12 +40,13 @@ object ScanKit {
     }
 
     /**
-     * 查找指定父类的子类。
+     * Finds subclasses of the given superclass.
      *
-     * @param basePackage 需要扫描的包名
-     * @param superclass 要查找子类的父类,不能为接口,接口请用findImplementations方法.
-     * @param recursive 是否递归扫描其子包,默认递归
-     * @return 指定父类的子类列表。
+     * @param basePackage the package to scan
+     * @param superclass the superclass whose subclasses are sought; must not be an interface (use `findImplementations`
+     *                    for interfaces)
+     * @param recursive whether to recursively scan subpackages; defaults to true
+     * @return the list of subclasses of the given superclass
      * @author K
      * @since 1.0.0
      */
@@ -63,12 +64,13 @@ object ScanKit {
     }
 
     /**
-     * 查找实现了指定接口的类。
+     * Finds classes that implement the given interface.
      *
-     * @param basePackage 需要扫描的包名
-     * @param interfaceClass 要查找实现类的接口,不能为类,类请用findSubclassesOf方法.
-     * @param recursive 是否递归扫描其子包,默认递归
-     * @return 实现了指定接口的类列表。
+     * @param basePackage the package to scan
+     * @param interfaceClass the interface whose implementations are sought; must not be a class (use `findSubclassesOf`
+     *                       for classes)
+     * @param recursive whether to recursively scan subpackages; defaults to true
+     * @return the list of classes implementing the given interface
      * @author K
      * @since 1.0.0
      */
@@ -90,12 +92,12 @@ object ScanKit {
     }
 
     /**
-     * 查找类名匹配指定模式的类。
+     * Finds classes whose simple name matches the given pattern.
      *
-     * @param basePackage 需要扫描的包名
-     * @param pattern 要匹配的类名模式（正则表达式）。
-     * @param recursive 是否递归扫描其子包,默认递归
-     * @return 类名匹配指定模式的类列表。
+     * @param basePackage the package to scan
+     * @param pattern the class-name pattern to match (regular expression)
+     * @param recursive whether to recursively scan subpackages; defaults to true
+     * @return the list of classes whose name matches the given pattern
      * @author K
      * @since 1.0.0
      */
@@ -116,12 +118,12 @@ object ScanKit {
     }
 
     /**
-     * 查找资源文件名匹配指定模式的资源。
+     * Finds resources whose filename matches the given pattern.
      *
-     * @param basePackage 需要扫描的包名
-     * @param pattern 要匹配的资源文件名模式（正则表达式）。
-     * @param recursive 是否递归扫描其子包,默认递归
-     * @return 资源文件名匹配指定模式的资源列表（路径）。
+     * @param basePackage the package to scan
+     * @param pattern the resource filename pattern to match (regular expression)
+     * @param recursive whether to recursively scan subpackages; defaults to true
+     * @return the list of paths of resources whose filename matches the given pattern
      * @author K
      * @since 1.0.0
      */

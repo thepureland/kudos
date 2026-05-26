@@ -5,14 +5,14 @@ import io.kudos.context.kit.SpringKit
 import io.kudos.ms.sys.client.dict.proxy.ISysDictProxy
 
 /**
- * 字典项编码查找器（Feign 实现）。
+ * Dictionary item code finder (Feign implementation).
  *
- * 服务于**不部署 sys-core** 的下游微服务：当其 VO 上有 `@DictItemCode` 校验时，通过 Feign 远程拿活跃字典码。
+ * Serves downstream microservices that **do not deploy sys-core**: when their VOs carry `@DictItemCode` validation, active dictionary codes are fetched remotely via Feign.
  *
- * **与 sys-core 的 `DictItemCodeFinder`（基于 Hash 缓存）互斥：** 两者均通过 `ServiceLoader` 暴露 `IDictItemCodeFinder`，
- * 同一 deployment 通常只会加载到其中一个（sys 部署侧依赖 core，下游服务依赖 client），不会同时上线。
+ * **Mutually exclusive with sys-core's `DictItemCodeFinder` (based on the hash cache):** both expose `IDictItemCodeFinder` via `ServiceLoader`,
+ * and a given deployment typically only loads one (the sys deployment side depends on core, while downstream services depend on the client); they are never online at the same time.
  *
- * 通过 `ServiceLoader` 加载，**不能**用构造注入，bean 仅在首次校验时按需 lazy 取。
+ * Loaded via `ServiceLoader`; constructor injection **cannot** be used, so the bean is lazily fetched on first validation.
  *
  * @author K
  * @author AI: Cursor

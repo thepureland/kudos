@@ -4,13 +4,13 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 
 
 /**
- * Email 渠道 SMTP 配置。
+ * SMTP configuration for the Email channel.
  *
- * **当前阶段实现是单租户单 SMTP**：所有租户共享同一份发送账号。soul-ms-msg 的多
- * NoticeEmailInterface（每个租户 / 每个业务一个配置）属于 Batch 4+ 的范围 —— 暂用 yml
- * 配置满足首条可用的发送闭环。
+ * **Current implementation is single-tenant single-SMTP**: all tenants share the same sender account.
+ * soul-ms-msg's multi-NoticeEmailInterface (one config per tenant / per business) belongs to Batch 4+ —
+ * for now, yml configuration satisfies the first usable end-to-end send loop.
  *
- * 用法 (application.yml)：
+ * Usage (application.yml):
  * ```
  * kudos.msg.email:
  *   server-host: smtp.qq.com
@@ -27,36 +27,36 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 @ConfigurationProperties(prefix = "kudos.msg.email")
 data class MsgEmailProperties(
 
-    /** SMTP 服务器地址；未配置时 listener 拒绝发送 */
+    /** SMTP server address; the listener refuses to send if not configured */
     val serverHost: String? = null,
 
-    /** SMTP 端口（SSL 通常 465，STARTTLS 通常 587） */
+    /** SMTP port (SSL is usually 465, STARTTLS is usually 587) */
     val serverPort: Int? = null,
 
-    /** 发送者账号 */
+    /** Sender account */
     val senderAccount: String? = null,
 
-    /** 发送者密码 / app token */
+    /** Sender password / app token */
     val senderPassword: String? = null,
 
-    /** From 显示地址；不填则默认 senderAccount */
+    /** From display address; defaults to senderAccount if not set */
     val fromMailAddress: String? = null,
 
-    /** 是否启用 SSL（false 走 STARTTLS） */
+    /** Whether SSL is enabled (false uses STARTTLS) */
     val ssl: Boolean = true,
 
-    /** 协议；通常无需改 */
+    /** Protocol; usually does not need to be changed */
     val protocol: String = "smtp",
 
-    /** 是否 SMTP 鉴权 */
+    /** Whether SMTP authentication is enabled */
     val smtpAuth: Boolean = true,
 
-    /** 编码 */
+    /** Encoding */
     val encoding: String = "UTF-8",
 
-    /** HTML 格式 */
+    /** HTML format */
     val htmlFormat: Boolean = true,
 
-    /** 部分收件人地址错误时仍尽量投递有效者 */
+    /** Still attempt to deliver to valid recipients when some recipient addresses are invalid */
     val sendpartial: Boolean = true,
 )

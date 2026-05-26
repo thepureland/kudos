@@ -10,7 +10,7 @@ import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.wait.strategy.Wait
 
 /**
- * h2测试容器
+ * h2 test container.
  *
  * @author K
  * @since 1.0.0
@@ -18,12 +18,12 @@ import org.testcontainers.containers.wait.strategy.Wait
 object H2TestContainer {
 
     /**
-     * H2 测试镜像。
+     * H2 test image.
      *
-     * 默认 `oscarfonts/h2:alpine` 只发布 amd64 manifest，在 Apple Silicon 等 arm64 主机上
-     * 会触发 testcontainers 的架构不匹配警告并走 Rosetta/QEMU 模拟，启动较慢且偶发超时。
-     * 可通过 `-Dkudos.test.h2.image=<image>` 或环境变量 `KUDOS_TEST_H2_IMAGE` 覆盖为
-     * 本地构建或第三方多架构镜像（例如自建 `eclipse-temurin` + h2.jar 的镜像）。
+     * The default `oscarfonts/h2:alpine` only publishes an amd64 manifest. On arm64 hosts such as Apple Silicon,
+     * this triggers testcontainers' architecture-mismatch warning and falls back to Rosetta/QEMU emulation, which is slow to start and occasionally times out.
+     * Override with `-Dkudos.test.h2.image=<image>` or the `KUDOS_TEST_H2_IMAGE` environment variable
+     * to use a local build or a third-party multi-arch image (e.g. a custom `eclipse-temurin` + h2.jar image).
      */
     private val IMAGE_NAME: String =
         System.getProperty("kudos.test.h2.image")
@@ -41,7 +41,7 @@ object H2TestContainer {
     const val LABEL = "H2"
 
     private val container = GenericContainer(IMAGE_NAME).apply {
-        // 通过环境变量指定 H2 启动参数：TCP 模式，允许外部访问，不存在时创建数据库
+        // Specify H2 startup args via env var: TCP mode, allow external access, create database if it does not exist
         withEnv("H2_OPTIONS", "-tcp -tcpAllowOthers -ifNotExists")
         withExposedPorts(PORT)
         bindingPort(Pair(PORT, PORT))
@@ -50,16 +50,16 @@ object H2TestContainer {
     }
 
     /**
-     * 启动容器(若需要)
+     * Starts the container (if needed).
      *
-     * 保证批量测试时共享一个容器，避免多次开/停容器，浪费大量时间。
-     * 另外，亦可手动运行该clazz类的main方法来启动容器，跑测试用例时共享它。
-     * 并注册 JVM 关闭钩子，当批量测试结束时自动停止容器，
-     * 而不是每个测试用例结束时就关闭，前提条件是不要加@Testcontainers注解。
-     * 当docker没安装时想忽略测试用例，可以用@EnabledIfDockerInstalled
+     * Ensures a single container is shared across a batch of tests, avoiding the time wasted starting/stopping containers repeatedly.
+     * Alternatively, you can run this class's main method manually to start the container and share it while running tests.
+     * Registers a JVM shutdown hook to automatically stop the container when the batch finishes,
+     * rather than stopping after each test — provided the @Testcontainers annotation is not used.
+     * To skip tests when Docker is not installed, use @EnabledIfDockerInstalled.
      *
-     * @param registry spring的动态属性注册器，可用来注册或覆盖已注册的属性
-     * @return 运行中的容器对象
+     * @param registry Spring's dynamic property registry, used to register or override already-registered properties
+     * @return the running container instance
      */
     fun startIfNeeded(registry: DynamicPropertyRegistry?): Container {
         return TestContainerCrossProcessLock.run(H2TestContainer::class.java, "h2") {
@@ -72,11 +72,11 @@ object H2TestContainer {
     }
 
     /**
-     * 拼 H2 远程 in-memory JDBC URL（`DB_CLOSE_DELAY=-1` 防止最后一个连接断开就把内存库释放掉）
-     * 并注册到 Spring 动态属性；用 `add` 让配置解析时再求值，避免容器未起就读到陈旧值。
+     * Builds the H2 remote in-memory JDBC URL (`DB_CLOSE_DELAY=-1` prevents the in-memory DB from being released when the last connection closes)
+     * and registers it as a Spring dynamic property. Uses `add` so the value is evaluated lazily during config resolution, avoiding stale reads before the container starts.
      *
-     * @param registry Spring 动态属性注册表
-     * @param runningContainer 运行中的容器
+     * @param registry the Spring dynamic property registry
+     * @param runningContainer the running container
      * @author K
      * @since 1.0.0
      */
@@ -91,9 +91,9 @@ object H2TestContainer {
     }
 
     /**
-     * 返回运行中的容器对象
+     * Returns the running container instance.
      *
-     * @return 容器对象，如果没有返回null
+     * @return the container instance, or null if none is running
      */
     fun getRunningContainer() : Container? = TestContainerKit.getRunningContainer(LABEL)
 

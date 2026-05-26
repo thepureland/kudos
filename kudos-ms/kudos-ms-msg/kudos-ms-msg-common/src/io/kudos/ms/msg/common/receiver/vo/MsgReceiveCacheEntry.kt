@@ -6,32 +6,32 @@ import java.time.LocalDateTime
 
 
 /**
- * 消息接收缓存项
+ * Message receive cache entry.
  *
  * @author K
  * @since 1.0.0
  */
 data class MsgReceiveCacheEntry (
 
-    /** 主键 */
+    /** Primary key */
     override val id: String,
 
-    /** 接收者ID */
+    /** Receiver ID */
     val receiverId: String?,
 
-    /** 发送ID */
+    /** Send ID */
     val sendId: String?,
 
-    /** 接收状态字典码 */
+    /** Receive status dictionary code */
     val receiveStatusDictCode: String?,
 
-    /** 创建时间 */
+    /** Create time */
     val createTime: LocalDateTime?,
 
-    /** 更新时间 */
+    /** Update time */
     val updateTime: LocalDateTime?,
 
-    /** 租户ID */
+    /** Tenant ID */
     val tenantId: String?,
 
 ) : IIdEntity<String>, Serializable {

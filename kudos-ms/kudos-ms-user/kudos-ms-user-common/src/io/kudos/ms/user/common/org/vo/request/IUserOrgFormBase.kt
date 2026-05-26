@@ -3,32 +3,32 @@ package io.kudos.ms.user.common.org.vo.request
 import io.kudos.base.bean.validation.constraint.annotations.MaxLength
 
 /**
- * 机构表单基础字段（新建 / 更新共用）
+ * Organization form base fields (shared between create and update)
  *
  * @author K
  * @since 1.0.0
  */
 interface IUserOrgFormBase {
 
-    /** 机构名称 */
+    /** Organization name */
     val name: String?
 
-    /** 机构简称 */
+    /** Organization short name */
     val shortName: String?
 
-    /** 租户id */
+    /** Tenant id */
     val tenantId: String?
 
-    /** 父机构id */
+    /** Parent organization id */
     val parentId: String?
 
-    /** 机构类型字典码 */
+    /** Organization type dict code */
     val orgTypeDictCode: String?
 
-    /** 排序号 */
+    /** Sort number */
     val sortNum: Int?
 
-    /** 备注 */
+    /** Remark */
     @get:MaxLength(128)
     val remark: String?
 }

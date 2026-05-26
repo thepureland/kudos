@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Configuration
 
 
 /**
- * auth-api-provider自动配置类
+ * auth-api-provider auto-configuration class.
  *
  * @author K
  * @author AI: Cursor

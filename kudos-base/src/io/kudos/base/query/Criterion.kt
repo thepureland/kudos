@@ -4,64 +4,67 @@ import io.kudos.base.query.enums.OperatorEnum
 import java.io.Serializable
 
 /**
- * 单个查询条件封装类
- * 
- * 用于封装一个查询条件，由属性名、操作符和属性值三部分组成。
- * 
- * 核心组成：
- * - property：要查询的属性名（字段名）
- * - operator：逻辑操作符枚举（如等于、大于、LIKE等）
- * - value：属性值（查询条件的目标值）
- * 
- * 扩展属性：
- * - alias：别名，用于同一属性名多个条件时的区分
- * - encrypt：标识条件值是否已加密
- * 
- * 使用场景：
- * - 动态构建查询条件
- * - ORM框架的查询构建
- * - 复杂查询条件的封装
- * 
- * 注意事项：
- * - 属性值可以为null（取决于操作符是否acceptNull）
- * - 别名用于区分同一属性的多个条件
- * - 加密标识用于标记敏感数据的查询条件
- * - toString方法仅用于调试，不能直接作为SQL执行
- * 
+ * Single query-condition container.
+ *
+ * Wraps a single query condition composed of a property name, an operator, and a value.
+ *
+ * Core fields:
+ * - property: the property (field) name being queried.
+ * - operator: logical operator enum (e.g. equals, greater-than, LIKE).
+ * - value: the property value (target value of the condition).
+ *
+ * Additional fields:
+ * - alias: alias used to distinguish multiple conditions on the same property name.
+ * - encrypt: flag indicating whether the condition value is already encrypted.
+ *
+ * Use cases:
+ * - Dynamic query construction.
+ * - Query building in ORM frameworks.
+ * - Encapsulating complex query conditions.
+ *
+ * Notes:
+ * - The value may be null (depending on whether the operator accepts null).
+ * - The alias distinguishes multiple conditions on the same property.
+ * - The encryption flag marks conditions over sensitive data.
+ * - toString is for debugging only and cannot be executed as SQL directly.
+ *
  * @since 1.0.0
  */
 data class Criterion(
     /**
-     * 要查询的属性名
+     * Property name being queried.
      */
     val property: String,
     /**
-     * 查询条件逻辑操作符枚举
+     * Logical operator enum for the query condition.
      */
     val operator: OperatorEnum,
     /**
-     * 要查询的属性名对应的值
+     * Value corresponding to the property name being queried.
      */
     val value: Any? = null,
     /**
-     * 别名，用于同一属性名多个条件时
+     * Alias, used when multiple conditions share the same property name.
      */
     val alias: String? = null,
     /**
-     * 条件是否已经加密过了。
+     * Whether the condition value has already been encrypted.
      *
-     * 历史上这是个构造器外的 `var` 字段——因此既不在 [equals]/[hashCode] 内、也不会被 [copy] 复制，
-     * 是个隐蔽陷阱。现移入主构造器后语义对齐：两个 attribute 完全相同的 Criterion 才 equals；
-     * `copy()` 也正确保留 encrypt 状态。需要改值时用 `copy(encrypt = true)`。
+     * Historically this was a `var` field outside the constructor -- it therefore was not included in
+     * [equals]/[hashCode] and was not copied by [copy], a subtle trap. Now that it has been moved into
+     * the primary constructor, the semantics are aligned: two Criterion instances are only equal when
+     * all attributes match; `copy()` also preserves the encrypt state correctly. Use
+     * `copy(encrypt = true)` when you need to change the value.
      */
     val encrypt: Boolean = false
 ) : Serializable {
 
     /**
-     * 操作符的字符串代码。计算属性，由 [operator] 派生。
+     * String code of the operator. A computed property derived from [operator].
      *
-     * 历史上这里曾有 setter（通过 [OperatorEnum.enumOf] 反向解析然后赋给 `operator`），
-     * 已随 [operator] 变为 `val` 一并移除。改变操作符请用 `criterion.copy(operator = ...)`。
+     * Historically there was a setter here (resolving via [OperatorEnum.enumOf] and assigning back to
+     * `operator`); it has been removed together with the switch of [operator] to `val`. To change the
+     * operator, use `criterion.copy(operator = ...)`.
      */
     val operatorCode: String
         get() = operator.code
@@ -83,10 +86,10 @@ data class Criterion(
 //    }
 
     /**
-     * 输出查询条件 <br></br>
-     * 注：输出内容仅作为查询条件的确认，并非真正执行的sql条件表达式！
+     * Outputs the query condition. <br></br>
+     * Note: the output only serves to confirm the condition structure and is not an executable SQL expression!
      *
-     * @return　查询条件字符串
+     * @return string representation of the condition
      */
     override fun toString(): String {
         return "$property ${operator.code} ${value ?: ""}".trim()

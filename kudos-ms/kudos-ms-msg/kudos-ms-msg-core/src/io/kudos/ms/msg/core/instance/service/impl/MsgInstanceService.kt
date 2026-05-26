@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional
 
 
 /**
- * 消息实例业务
+ * Message instance business service.
  *
  * @author K
  * @author AI: Codex

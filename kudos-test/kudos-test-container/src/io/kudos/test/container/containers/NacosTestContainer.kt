@@ -13,7 +13,7 @@ import java.security.SecureRandom
 import java.util.Base64
 
 /**
- * nacos-server测试容器
+ * nacos-server test container.
  *
  * @author K
  * @author AI: Codex
@@ -27,7 +27,7 @@ object NacosTestContainer {
 
     const val LABEL = "Nacos"
 
-    const val LABEL_NACOS_FOR_SEATA = "Nacos（for Seata）"
+    const val LABEL_NACOS_FOR_SEATA = "Nacos (for Seata)"
 
     val tokenBytes = ByteArray(32).also { SecureRandom().nextBytes(it) }
 
@@ -36,18 +36,18 @@ object NacosTestContainer {
     private val container = GenericContainer(IMAGE_NAME).apply {
         withEnv("MODE", "standalone")
         withEnv("PREFER_HOST_MODE", "ip")
-        withEnv("NACOS_AUTH_ENABLE", "false")             // 不开启鉴权（3.x 默认基本就是要）
-        withEnv("NACOS_AUTH_TOKEN", tokenBase64)  // ★ 必填：Base64 字符串
+        withEnv("NACOS_AUTH_ENABLE", "false")             // Disable auth (3.x essentially requires it by default)
+        withEnv("NACOS_AUTH_TOKEN", tokenBase64)  // Required: Base64 string
         withEnv("NACOS_AUTH_IDENTITY_KEY", "nacos")
         withEnv("NACOS_AUTH_IDENTITY_VALUE", "nacos")
 
-        // 1. 声明容器要“暴露”的端口（必须和镜像 Dockerfile EXPOSE 一致）
+        // 1. Declare ports the container will "expose" (must match the image's Dockerfile EXPOSE)
         exposedPorts = listOf(8848, 9848, 9849)
 
-        // 2. 再绑定宿主机端口 -> 容器端口
+        // 2. Bind host ports -> container ports
         bindingPort(Pair(PORT, 8848), Pair(29848, 9848), Pair(29849, 9849))
 
-        // 3. Nacos 8848 早早会返回页面，但 naming/config gRPC 仍可能未就绪；探测 API 并放宽启动超时。
+        // 3. Nacos 8848 returns a page early, but naming/config gRPC may not be ready yet; probe the API and relax the startup timeout.
         waitingFor(
             Wait.forHttp("/nacos/v1/ns/instance/list?serviceName=__readiness")
                 .forPort(8848)
@@ -59,17 +59,17 @@ object NacosTestContainer {
 
     val containerForSeata = GenericContainer(IMAGE_NAME).apply {
         withEnv("MODE", "standalone")
-        withEnv("NACOS_AUTH_ENABLE", "false")             // 开启鉴权（3.x 默认基本就是要）
-        withEnv("NACOS_AUTH_TOKEN", tokenBase64)  // ★ 必填：Base64 字符串
+        withEnv("NACOS_AUTH_ENABLE", "false")             // Disable auth (3.x essentially requires it by default)
+        withEnv("NACOS_AUTH_TOKEN", tokenBase64)  // Required: Base64 string
         withEnv("NACOS_AUTH_IDENTITY_KEY", "nacos")
         withEnv("NACOS_AUTH_IDENTITY_VALUE", "nacos")
         withNetwork(TestContainerKit.DEFAULT_DOCKER_NETWORK)
         withNetworkAliases("nacos")
         exposedPorts = listOf(8848, 9848, 9849)
         bindingPort(Pair(38848, 8848), Pair(39848, 9848), Pair(39849, 9849))
-        // Nacos 8848 早早就会回 200 给 `/nacos`，但内部 naming registry 还要再几秒才能接收注册写入。
-        // 这里直接 probe v1 实例查询 API：响应到 200 才视为真正可用，避免 Seata server 起来就被
-        // "server is DOWNnow, please try again later" 拒掉并整体启动失败。
+        // Nacos 8848 returns 200 for `/nacos` early on, but the internal naming registry still needs a few more seconds to accept registration writes.
+        // Probe the v1 instance-query API directly here: only treat it as truly available after a 200 response, to avoid the Seata server starting up and being
+        // rejected with "server is DOWNnow, please try again later", which would fail the overall startup.
         waitingFor(
             Wait.forHttp("/nacos/v1/ns/instance/list?serviceName=__readiness")
                 .forPort(8848)
@@ -80,16 +80,16 @@ object NacosTestContainer {
 
 
     /**
-     * 启动容器(若需要)
+     * Starts the container (if needed).
      *
-     * 保证批量测试时共享一个容器，避免多次开/停容器，浪费大量时间。
-     * 另外，亦可手动运行该clazz类的main方法来启动容器，跑测试用例时共享它。
-     * 并注册 JVM 关闭钩子，当批量测试结束时自动停止容器，
-     * 而不是每个测试用例结束时就关闭，前提条件是不要加@Testcontainers注解。
-     * 当docker没安装时想忽略测试用例，可以用@EnabledIfDockerInstalled
+     * Ensures a single container is shared across a batch of tests, avoiding the time wasted starting/stopping containers repeatedly.
+     * Alternatively, you can run this class's main method manually to start the container and share it while running tests.
+     * Registers a JVM shutdown hook to automatically stop the container when the batch finishes,
+     * rather than stopping after each test — provided the @Testcontainers annotation is not used.
+     * To skip tests when Docker is not installed, use @EnabledIfDockerInstalled.
      *
-     * @param registry spring的动态属性注册器，可用来注册或覆盖已注册的属性
-     * @return 运行中的容器对象
+     * @param registry Spring's dynamic property registry, used to register or override already-registered properties
+     * @return the running container instance
      */
     fun startIfNeeded(registry: DynamicPropertyRegistry?): Container {
         return TestContainerCrossProcessLock.run(NacosTestContainer::class.java, "nacos") {
@@ -123,16 +123,16 @@ object NacosTestContainer {
     }
 
     /**
-     * 返回运行中的容器对象
+     * Returns the running container instance.
      *
-     * @return 容器对象，如果没有返回null
+     * @return the container instance, or null if none is running
      */
     fun getRunningContainer() : Container? = TestContainerKit.getRunningContainer(LABEL)
 
     @JvmStatic
     fun main(args: Array<String>?) {
         ManualTestContainerMainSupport.removeExistingContainers(LABEL, "Nacos")
-        ManualTestContainerMainSupport.removeExistingContainers(LABEL_NACOS_FOR_SEATA, "Nacos（for Seata）")
+        ManualTestContainerMainSupport.removeExistingContainers(LABEL_NACOS_FOR_SEATA, "Nacos (for Seata)")
         startIfNeeded(null)
         println("nacos localhost port: $PORT")
         Thread.sleep(Long.MAX_VALUE)

@@ -10,7 +10,7 @@ import kotlin.test.assertTrue
 /**
  * junit test for SysAccessRuleIpService
  *
- * 测试数据来源：`SysAccessRuleIpServiceTest.sql`
+ * Test data source: `SysAccessRuleIpServiceTest.sql`
  *
  * @author K
  * @author AI: Cursor

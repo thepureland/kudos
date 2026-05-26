@@ -33,7 +33,7 @@ import java.util.EventListener
 
 
 /**
- * SpringMvc自动配置类
+ * Spring MVC auto-configuration class.
  *
  * @author K
  * @author AI: Codex
@@ -48,33 +48,33 @@ import java.util.EventListener
 open class SpringMvcAutoConfiguration : WebMvcConfigurer, IComponentInitializer {
 
     /**
-     * 用项目级 Validator（来自 kudos-context 的 [io.kudos.context.init.ValidatorAutoConfiguration]）
-     * 替换 Spring MVC 默认 mvcValidator。required = false 是为了万一上层裁掉了 ValidatorAutoConfiguration
-     * 时仍能启动，回落到 Spring 默认 validator。
+     * Replace Spring MVC's default mvcValidator with the project-level Validator (from kudos-context's
+     * [io.kudos.context.init.ValidatorAutoConfiguration]). `required = false` ensures that if the upstream removes
+     * ValidatorAutoConfiguration, the app can still start and fall back to Spring's default validator.
      */
     @Autowired(required = false)
     private var kudosValidator: LocalValidatorFactoryBean? = null
 
     /**
-     * 覆盖 [WebMvcConfigurer.getValidator]，把 MVC 默认 validator 替换为 [kudosValidator]。
-     * 返回 null 等价于"沿用 Spring 默认"，因此与 [kudosValidator] 的 `required = false` 配合得当。
+     * Override [WebMvcConfigurer.getValidator] to replace the MVC default validator with [kudosValidator].
+     * Returning null is equivalent to "use Spring's default", which pairs well with `required = false` on [kudosValidator].
      *
-     * @return 项目级 validator；未配置时为 null（Spring MVC 自行兜底）
+     * @return the project-level validator; null when unconfigured (Spring MVC falls back on its own)
      * @author K
      * @since 1.0.0
      */
     override fun getValidator(): Validator? = kudosValidator
 
-    /** 内嵌容器工厂——按 `kudos.ability.web.springmvc.server` 决定走 Tomcat / Jetty。 */
+    /** Embedded container factory: pick Tomcat / Jetty based on `kudos.ability.web.springmvc.server`. */
     @Bean
     @ConditionalOnMissingBean
     open fun webServerFactory(env: Environment): ServletWebServerFactory = SwitchingServletWebServerFactory(env)
 
-    /** 提供 `RequestContextHolder` 在 ServletRequestListener 触发时所需的 listener。 */
+    /** Provides the listener required by `RequestContextHolder` when ServletRequestListener fires. */
     @Bean
     open fun requestContextListener(): RequestContextListener = RequestContextListener()
 
-    /** 把 [RequestContextListener] 显式注册到 servlet 容器（顺序 1，紧跟容器初始化之后）。 */
+    /** Explicitly register [RequestContextListener] with the servlet container (order 1, right after container initialization). */
     @Bean
     open fun servletListenerRegistration(requestContextListener: RequestContextListener): ServletListenerRegistrationBean<EventListener> {
         val registrationBean = ServletListenerRegistrationBean<EventListener>()
@@ -83,14 +83,14 @@ open class SpringMvcAutoConfiguration : WebMvcConfigurer, IComponentInitializer 
         return registrationBean
     }
 
-    /** kudos 上下文初始化过滤器（业务方可通过自定义 [IWebContextInitFilter] bean 覆盖）。 */
+    /** Kudos context initialization filter (business code can override via a custom [IWebContextInitFilter] bean). */
     @Bean
     @ConditionalOnMissingBean
     open fun webContextInitFilter(): IWebContextInitFilter = WebContextInitFilter()
 
     /**
-     * 注册 [IWebContextInitFilter]：order 比 [SessionRepositoryFilter.DEFAULT_ORDER] 大 1，
-     * 即 session 已加载后才让 kudos 上下文 filter 抓 sessionAttributes。
+     * Register [IWebContextInitFilter]: order is [SessionRepositoryFilter.DEFAULT_ORDER] + 1,
+     * so the kudos context filter only captures sessionAttributes after the session is loaded.
      */
     @Bean
     @ConditionalOnMissingBean
@@ -103,33 +103,33 @@ open class SpringMvcAutoConfiguration : WebMvcConfigurer, IComponentInitializer 
         return registration
     }
 
-    /** CORS 头注入拦截器（与下方 [addCorsMappings] 提供的 Spring CORS 支持互补）。 */
+    /** CORS header injection interceptor (complements the Spring CORS support provided by [addCorsMappings] below). */
     @Bean
     @ConditionalOnMissingBean
     open fun corsHandlerInterceptor(): HandlerInterceptor = CorsHandlerInterceptor()
 
-    /** Jackson 3 默认 [ObjectMapper]，业务可自定义 bean 覆盖以接入自定义 module / 时区策略。 */
+    /** Default Jackson 3 [ObjectMapper]; business code may override via a custom bean to inject custom modules / time-zone strategies. */
     @Bean
     @ConditionalOnMissingBean
     open fun objectMapper(): ObjectMapper = ObjectMapper()
 
-    /** Bad request（参数 / 绑定 / Bean Validation 错误）统一响应处理器。 */
+    /** Unified response handler for bad request errors (parameter / binding / Bean Validation errors). */
     @Bean
     @ConditionalOnMissingBean
     open fun badRequestExceptionHandler(): BadRequestExceptionHandler = BadRequestExceptionHandler()
 
-    /** 业务异常 / 未捕获异常统一响应处理器（与 [badRequestExceptionHandler] 互补，覆盖余下场景）。 */
+    /** Unified response handler for business exceptions / uncaught exceptions (complements [badRequestExceptionHandler] and covers the remaining cases). */
     @Bean
     @ConditionalOnMissingBean
     open fun globalExceptionHandler(): GlobalExceptionHandler = GlobalExceptionHandler()
 
-    /** 把控制器返回值统一包装为 `ApiResponse` 的 ResponseBodyAdvice。 */
+    /** ResponseBodyAdvice that wraps controller return values uniformly into `ApiResponse`. */
     @Bean
     @ConditionalOnMissingBean
     open fun globalResponseBodyHandler(objectMapper: ObjectMapper): GlobalResponseBodyHandler =
         GlobalResponseBodyHandler(objectMapper)
 
-    /** 拒绝以 [io.kudos.base.model.payload.MutableListSearchPayload] 作为请求体的安全护栏。 */
+    /** Security guard that rejects [io.kudos.base.model.payload.MutableListSearchPayload] as a request body. */
     @Bean
     @ConditionalOnMissingBean
     open fun mutableListSearchPayloadGuardAdvice(): MutableListSearchPayloadGuardAdvice =
@@ -140,11 +140,12 @@ open class SpringMvcAutoConfiguration : WebMvcConfigurer, IComponentInitializer 
     }
 
     /**
-     * 默认开放 CORS：所有 origin pattern + 凭证。
+     * Open CORS by default: all origin patterns + credentials.
      *
-     * **生产部署应通过自定义 [WebMvcConfigurer] 覆盖**——`allowedOriginPatterns("*") +
-     * allowCredentials(true)` 在 Spring 中虽合法，但等同于"反射任意来源 + 携带 Cookie"，
-     * 实际上是个开放门户。框架默认放宽是为了让开发期不被 CORS 卡住；生产收紧为具体域名。
+     * **Production deployments should override this via a custom [WebMvcConfigurer]**: `allowedOriginPatterns("*") +
+     * allowCredentials(true)` is legal in Spring, but it is equivalent to "reflect any origin + allow Cookies",
+     * which is effectively an open gate. The framework loosens the defaults so that CORS does not block development;
+     * tighten to specific domains in production.
      */
     override fun addCorsMappings(registry: CorsRegistry) {
         registry.addMapping("/**")

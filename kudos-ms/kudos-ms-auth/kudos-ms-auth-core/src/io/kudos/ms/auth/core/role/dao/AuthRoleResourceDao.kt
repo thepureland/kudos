@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository
 
 
 /**
- * 角色-资源关系数据访问对象
+ * Role-resource relation DAO.
  *
  * @author K
  * @author AI: Cursor
@@ -21,11 +21,11 @@ open class AuthRoleResourceDao : BaseCrudDao<String, AuthRoleResource, AuthRoleR
 
 
     /**
-     * 检查关系是否存在
+     * Checks whether the relation exists.
      *
-     * @param roleId 角色ID
-     * @param resourceId 资源ID
-     * @return 是否存在
+     * @param roleId role id
+     * @param resourceId resource id
+     * @return true if it exists
      * @author AI: Cursor
      * @since 1.0.0
      */
@@ -36,10 +36,10 @@ open class AuthRoleResourceDao : BaseCrudDao<String, AuthRoleResource, AuthRoleR
     }
 
     /**
-     * 根据资源ID查询角色ID集合
+     * Queries role IDs by resource id.
      *
-     * @param resourceId 资源ID
-     * @return 角色ID集合
+     * @param resourceId resource id
+     * @return set of role IDs
      * @author AI: Cursor
      * @since 1.0.0
      */
@@ -50,10 +50,10 @@ open class AuthRoleResourceDao : BaseCrudDao<String, AuthRoleResource, AuthRoleR
     }
 
     /**
-     * 按角色ID列表查询资源ID列表（去重）
+     * Queries deduplicated resource IDs for a list of role IDs.
      *
-     * @param roleIds 角色id集合
-     * @return Set<资源ID>
+     * @param roleIds collection of role ids
+     * @return Set<resource id>
      */
     fun searchResourceIdsByRoleIds(roleIds: Collection<String>): Set<String> {
         if (roleIds.isEmpty()) return emptySet()
@@ -63,9 +63,9 @@ open class AuthRoleResourceDao : BaseCrudDao<String, AuthRoleResource, AuthRoleR
     }
 
     /**
-     * 全量角色-资源关系，按角色ID分组为「角色ID -> 资源ID列表」
+     * Returns all role-resource relations grouped by role id as "role id -> list of resource ids".
      *
-     * @return Map<角色ID, List<资源ID>>
+     * @return Map<role id, List<resource id>>
      */
     fun searchAllRoleIdToResourceIdsForCache(): Map<String, List<String>> {
         val all = allSearch()
@@ -73,11 +73,11 @@ open class AuthRoleResourceDao : BaseCrudDao<String, AuthRoleResource, AuthRoleR
     }
 
     /**
-     * 按角色ID和资源ID删除关系
+     * Deletes a relation by role id and resource id.
      *
-     * @param roleId 角色ID
-     * @param resourceId 资源ID
-     * @return 删除条数
+     * @param roleId role id
+     * @param resourceId resource id
+     * @return number of rows deleted
      */
     fun deleteByRoleIdAndResourceId(roleId: String, resourceId: String): Int {
         val criteria = Criteria(AuthRoleResource::roleId eq roleId)

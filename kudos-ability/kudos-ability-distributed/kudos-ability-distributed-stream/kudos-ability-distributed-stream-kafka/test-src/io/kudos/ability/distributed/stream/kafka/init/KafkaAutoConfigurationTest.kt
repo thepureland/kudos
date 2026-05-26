@@ -7,7 +7,7 @@ import kotlin.test.assertContains
 import kotlin.test.assertTrue
 
 /**
- * [KafkaAutoConfiguration] 自动配置导入和默认配置单测。
+ * Unit tests for [KafkaAutoConfiguration] auto-configuration imports and defaults.
  *
  * @author K
  * @author AI: Codex

@@ -22,17 +22,18 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * [FeignCacheRequestInterceptor] / [FeignCacheResponseInterceptor] 协议契约单测。
+ * Protocol-contract unit tests for [FeignCacheRequestInterceptor] / [FeignCacheResponseInterceptor].
  *
- * 不启动 Spring / 不发起真正 HTTP 调用——直接构造 Feign 的 [RequestTemplate] / [Response] 对象，
- * 验证：
- *  - **请求侧**：本地有缓存 → 头部塞 `cache-key` + `cache-uid`
- *  - **请求侧**：无本地缓存（hasLocalCache 返回 false）→ 不塞任何 header
- *  - **响应侧 304**：从本地缓存取数据，原 decoder 不被调用
- *  - **响应侧 200**：原 decoder 解 body + 写本地缓存（带新 UID）
- *  - **响应侧无 cache-uid/cache-status 头**：原样 delegate 解码，不触缓存路径
+ * Does not start Spring or issue real HTTP calls — directly constructs Feign's [RequestTemplate] /
+ * [Response] objects and asserts:
+ *  - **Request side**: local cache hit -> inject `cache-key` + `cache-uid` headers.
+ *  - **Request side**: no local cache (hasLocalCache returns false) -> inject no headers.
+ *  - **Response side 304**: read data from local cache, original decoder is not invoked.
+ *  - **Response side 200**: original decoder decodes body + write to local cache (with new UID).
+ *  - **Response side missing cache-uid/cache-status header**: delegate decoding as-is, do not enter cache path.
  *
- * 用内存中的 [StubClientCacheHelper] 替代真实 [ClientCacheHelper]——避免拉起 Spring + Caffeine。
+ * Uses the in-memory [StubClientCacheHelper] in place of the real [ClientCacheHelper] — avoids
+ * bringing up Spring + Caffeine.
  */
 internal class FeignCacheInterceptorsTest {
 
@@ -41,7 +42,7 @@ internal class FeignCacheInterceptorsTest {
     @BeforeTest
     fun setup() {
         helper = StubClientCacheHelper()
-        // KudosContextHolder 是 InheritableThreadLocal，每个测试方法独立；设 tenant 让 key 算出来稳定
+        // KudosContextHolder is an InheritableThreadLocal independent per test; setting tenant stabilizes the computed key
         KudosContextHolder.get().tenantId = "tenant-X"
     }
 
@@ -61,9 +62,9 @@ internal class FeignCacheInterceptorsTest {
         interceptor.apply(template)
 
         assertNull(template.headers()[ClientCacheKey.HEADER_KEY_CACHE_KEY],
-            "没本地缓存时不应往请求头塞 cache-key")
+            "When there is no local cache, cache-key must not be added to the request headers")
         assertNull(template.headers()[ClientCacheKey.HEADER_KEY_CACHE_UID],
-            "没本地缓存时不应往请求头塞 cache-uid")
+            "When there is no local cache, cache-uid must not be added to the request headers")
     }
 
     @Test
@@ -74,7 +75,7 @@ internal class FeignCacheInterceptorsTest {
 
         interceptor.apply(template)
 
-        // 缓存为空——cache-key 应当被塞（让服务端识别），但 cache-uid 没有
+        // Cache is empty -- cache-key should be added (so the server can identify it), but cache-uid should not
         assertNotNull(template.headers()[ClientCacheKey.HEADER_KEY_CACHE_KEY])
         assertNull(template.headers()[ClientCacheKey.HEADER_KEY_CACHE_UID])
     }
@@ -84,11 +85,11 @@ internal class FeignCacheInterceptorsTest {
         helper.localCacheEnabled = true
         val interceptor = newRequestInterceptor(appName = "svc-A")
 
-        // 先调一次 apply 拿到生成的 cacheKey
+        // Call apply once first to obtain the generated cacheKey
         val firstTemplate = newRequestTemplate(method = "GET", url = "/users/1")
         interceptor.apply(firstTemplate)
         val cacheKey = firstTemplate.headers()[ClientCacheKey.HEADER_KEY_CACHE_KEY]!!.first()
-        // 模拟本地已有该 key 的缓存项
+        // Simulate that a cache entry for this key already exists locally
         helper.writeToLocalCache(cacheKey, ClientCacheItem("uid-existing", "cached-payload"))
 
         val template = newRequestTemplate(method = "GET", url = "/users/1")
@@ -112,7 +113,7 @@ internal class FeignCacheInterceptorsTest {
         val result = interceptor.decode(response, String::class.java)
 
         assertEquals("decoded-value", result)
-        assertEquals(1, delegate.callCount, "无本地缓存时应直接走原始 decoder")
+        assertEquals(1, delegate.callCount, "Without a local cache the original decoder should be used directly")
     }
 
     @Test
@@ -121,7 +122,7 @@ internal class FeignCacheInterceptorsTest {
         val delegate = RecordingDecoder("decoded-value")
         val interceptor = FeignCacheResponseInterceptor(delegate, helper)
 
-        // 响应缺 cache-uid/cache-status 头 → 视为"服务端没启用 @ClientCacheable"，走 delegate
+        // Response is missing cache-uid/cache-status headers -> treat as "server has not enabled @ClientCacheable" and go through delegate
         val response = newResponse(200, headers = emptyMap(), body = "body")
         val result = interceptor.decode(response, String::class.java)
 
@@ -148,7 +149,7 @@ internal class FeignCacheInterceptorsTest {
         val result = interceptor.decode(response, String::class.java)
 
         assertEquals("cached-data", result)
-        assertEquals(0, delegate.callCount, "304 路径不应调原 decoder")
+        assertEquals(0, delegate.callCount, "304 path must not invoke the original decoder")
     }
 
     @Test
@@ -171,7 +172,7 @@ internal class FeignCacheInterceptorsTest {
         assertEquals("freshly-decoded", result)
         assertEquals(1, delegate.callCount)
         val cached = helper.loadFromLocalCache("cache-1")
-        assertNotNull(cached, "200 路径应当把 decode 后的值写入本地缓存")
+        assertNotNull(cached, "200 path must write the decoded value into local cache")
         assertEquals("uid-NEW", cached.uuid)
         assertEquals("freshly-decoded", cached.cacheData)
     }
@@ -182,7 +183,7 @@ internal class FeignCacheInterceptorsTest {
         val delegate = RecordingDecoder("decoded")
         val interceptor = FeignCacheResponseInterceptor(delegate, helper)
 
-        // 服务端发回了 cache-uid/cache-status 但客户端的 request 头没有 cache-key（不应该发生但 defensive）
+        // Server returned cache-uid/cache-status but the client's request headers lack cache-key (should not happen, defensive)
         val response = newResponse(
             200,
             headers = mapOf(
@@ -194,7 +195,7 @@ internal class FeignCacheInterceptorsTest {
         )
         val result = interceptor.decode(response, String::class.java)
 
-        assertEquals("decoded", result, "缺 cache-key 时仍能正常 decode")
+        assertEquals("decoded", result, "decoding still works when cache-key is missing")
         assertEquals(1, delegate.callCount)
     }
 
@@ -207,8 +208,8 @@ internal class FeignCacheInterceptorsTest {
     }
 
     private fun newRequestTemplate(method: String, url: String, body: ByteArray? = null): RequestTemplate {
-        // 生产环境 Feign 在调用 interceptor 之前会自己 `resolve` 一遍；这里手工模拟。
-        // [RequestTemplate.resolve] 返回**新对象**，原对象的 resolved 标志不变——务必接住返回值。
+        // In production Feign calls `resolve` itself before invoking interceptors; simulate that here manually.
+        // [RequestTemplate.resolve] returns a **new object** — the original's resolved flag stays unchanged, so capture the return value.
         val template = RequestTemplate()
         template.method(Request.HttpMethod.valueOf(method))
         template.uri(url)
@@ -238,7 +239,7 @@ internal class FeignCacheInterceptorsTest {
             .build()
     }
 
-    /** 把每次 decode 调用记录次数，供测试断言"是否被调用"。 */
+    /** Records each decode invocation so tests can assert "was it called". */
     private class RecordingDecoder(private val toReturn: Any?) : Decoder {
         var callCount: Int = 0
             private set
@@ -248,7 +249,7 @@ internal class FeignCacheInterceptorsTest {
         }
     }
 
-    /** 用内存 Map 模拟 [ClientCacheHelper]——跳过 IKeyValueCacheManager 装配。 */
+    /** In-memory Map stub for [ClientCacheHelper] — bypasses IKeyValueCacheManager wiring. */
     open class StubClientCacheHelper : ClientCacheHelper() {
         @Volatile var localCacheEnabled: Boolean = true
         private val store = ConcurrentHashMap<String, ClientCacheItem>()

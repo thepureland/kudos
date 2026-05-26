@@ -1,14 +1,14 @@
 package io.kudos.base.model.response
 
 /**
- * 错误明细
+ * Error detail.
  *
- * 用于承载一次请求失败时的结构化错误信息。
- * 适用于：
- * 1. 参数校验失败
- * 2. 字段级错误提示
- * 3. 批量操作失败明细
- * 4. 复杂业务校验失败
+ * Carries structured error information for a failed request.
+ * Suitable for:
+ * 1. Parameter validation failures
+ * 2. Field-level error messages
+ * 3. Per-item failures of batch operations
+ * 4. Complex business validation failures
  *
  * @author K
  * @author AI: ChatGPT
@@ -17,85 +17,85 @@ package io.kudos.base.model.response
 data class ErrorDetail(
 
     /**
-     * 明细错误码
+     * Detail error code.
      *
-     * 用于标识这一条具体错误的类型。
-     * 与外层 ApiResponse.code 不同，外层 code 表示本次请求整体失败类型，
-     * 这里的 code 表示某一条具体错误的细分类别。
+     * Identifies the type of this specific error.
+     * Distinct from the outer ApiResponse.code, which represents the overall failure type of the request;
+     * this code represents a finer-grained category of a single error.
      *
-     * 例如：
+     * Examples:
      * - REQUIRED
      * - INVALID_FORMAT
      * - VALUE_TOO_LARGE
      * - USERNAME_EXISTS
      *
-     * 可为空：
-     * - 如果当前场景只需要 message，不需要更细粒度的错误分类，则可不填。
+     * Nullable:
+     * - May be omitted when the current scenario only needs message and no finer-grained error categorization is required.
      */
     val code: String? = null,
 
     /**
-     * 出错字段名
+     * Name of the field in error.
      *
-     * 主要用于字段级校验失败场景，便于前端将错误绑定到具体表单项。
+     * Mainly used for field-level validation failures, allowing the frontend to bind the error to a specific form field.
      *
-     * 例如：
+     * Examples:
      * - name
      * - age
      * - address.city
      * - items[0].price
      *
-     * 可为空：
-     * - 如果不是字段错误，而是某条记录、某个业务对象、某行数据出错，则可不填。
+     * Nullable:
+     * - May be omitted when the error is not a field error but pertains to a record, business object, or data row.
      */
     val field: String? = null,
 
     /**
-     * 出错目标
+     * Target of the error.
      *
-     * 用于描述当前错误所针对的对象、记录、行、元素或业务目标。
-     * 当 field 不足以表达错误位置时，可以用 target 补充说明。
+     * Describes the object, record, row, element, or business target that this error pertains to.
+     * When field alone cannot express the error location, target can be used as a supplement.
      *
-     * 例如：
+     * Examples:
      * - row[3]
      * - user:1001
      * - order:20260001
      * - items[2]
      *
-     * 可为空：
-     * - 如果 field 已足够表达错误位置，或者无需标识具体目标，则可不填。
+     * Nullable:
+     * - May be omitted when field already conveys the error location, or when a specific target is unnecessary.
      */
     val target: String? = null,
 
     /**
-     * 错误消息
+     * Error message.
      *
-     * 对当前这一条错误的文字说明。
-     * 这是给前端或调用方直接展示的核心文案。
+     * Textual description of this specific error.
+     * This is the primary message displayed to the frontend or caller.
      *
-     * 例如：
-     * - 名称不能为空
-     * - 年龄不能小于0
-     * - 第3行手机号格式错误
-     * - 订单状态不允许支付
+     * Examples:
+     * - Name cannot be empty
+     * - Age cannot be less than 0
+     * - Invalid phone number format on row 3
+     * - Order status does not allow payment
      *
-     * 一般不建议为空。
+     * Generally not recommended to be empty.
      */
     val message: String,
 
     /**
-     * 被拒绝的值
+     * Rejected value.
      *
-     * 用于记录导致本次错误的原始输入值，便于排查问题或前端展示。
+     * Records the original input value that caused this error, useful for troubleshooting or frontend display.
      *
-     * 例如：
-     * - ""                // 空字符串
-     * - -1                // 非法数值
-     * - "abc@@"           // 格式错误的输入
-     * - map/list/object   // 某些复杂请求体片段
+     * Examples:
+     * - ""                // empty string
+     * - -1                // invalid numeric value
+     * - "abc@@"           // malformed input
+     * - map/list/object   // complex request body fragment
      *
-     * 可为空：
-     * - 某些场景下不方便返回，或者出于安全考虑不应回显原值。
+     * Nullable:
+     * - May be omitted in scenarios where returning the value is inconvenient or echoing the original value would be unsafe.
      */
     val rejectedValue: Any? = null
 )

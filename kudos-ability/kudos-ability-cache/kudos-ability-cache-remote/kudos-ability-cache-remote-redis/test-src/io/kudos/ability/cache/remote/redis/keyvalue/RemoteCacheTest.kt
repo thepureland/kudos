@@ -21,7 +21,7 @@ import kotlin.test.assertTrue
 
 
 /**
- * 远程缓存测试用例
+ * Remote cache test cases.
  *
  * @author K
  * @author AI: Codex

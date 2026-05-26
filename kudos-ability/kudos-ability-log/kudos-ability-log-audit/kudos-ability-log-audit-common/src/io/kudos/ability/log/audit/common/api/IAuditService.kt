@@ -4,9 +4,11 @@ import io.kudos.ability.log.audit.common.entity.SysAuditLogModel
 
 
 /**
- * 审计日志生产接口：[LogAuditAspect] / [WebLogAuditAspect] 在拦截到 @Audit 方法后调本接口落盘。
+ * Audit-log producer interface: [LogAuditAspect] / [WebLogAuditAspect] call this interface to persist after
+ * intercepting an @Audit method.
  *
- * 实现方按存储后端不同分化：RDB 走 ktorm（见 `RdbKtormAuditService`）、MQ 走 stream binder 异步堆积。
+ * Implementations differ by storage backend: RDB goes through ktorm (see `RdbKtormAuditService`), MQ goes through the
+ * stream binder asynchronously.
  *
  * @author K
  * @author AI: Codex
@@ -14,7 +16,7 @@ import io.kudos.ability.log.audit.common.entity.SysAuditLogModel
  */
 interface IAuditService {
     /**
-     * 审计日志生产方法
+     * Audit-log producer method
      *
      * @param sysAuditLogVo
      */

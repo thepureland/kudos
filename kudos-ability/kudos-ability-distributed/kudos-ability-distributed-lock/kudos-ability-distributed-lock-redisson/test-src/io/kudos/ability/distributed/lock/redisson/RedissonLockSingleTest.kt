@@ -16,7 +16,7 @@ import kotlin.test.Test
 
 
 /**
- * 分布式锁单结点测试用例
+ * Single-node distributed lock test case.
  *
  * @author K
  * @since 1.0.0
@@ -31,16 +31,16 @@ open class RedissonLockSingleTest {
 
     val log = LogFactory.getLog(this::class)
 
-    /** 锁测试共享变量 */
+    /** Shared variable for the locked test. */
     private var lockCount = 10
 
-    /** 锁测试共享变量(使用注解加锁的方式) */
+    /** Shared variable for the annotation-based locked test. */
     var lockCountByAnnotation = 10
 
-    /** 无锁测试共享变量 */
+    /** Shared variable for the unlocked test. */
     private var count = 10
 
-    /** 模拟线程数 */
+    /** Number of simulated threads. */
     private val threadNum = 10
 
     companion object {
@@ -60,11 +60,11 @@ open class RedissonLockSingleTest {
 
         for (i in 0 until threadNum) {
             Thread {
-                // 无锁操作
+                // Lock-free operation
                 testCount()
-                // 加锁操作
+                // Lock-based operation
                 testLockCount()
-                // 加锁操作(使用注解加锁的方式)
+                // Lock-based operation (annotation style)
                 testLockByAnnotation.execute(this)
                 countDownLatch.countDown()
             }.start()
@@ -74,25 +74,25 @@ open class RedissonLockSingleTest {
     }
 
     /**
-     * 加锁测试
+     * Lock-based test.
      */
     private fun testLockCount() {
         val lockKey = "lock-test"
         try {
-            // 加锁，设置超时时间2s
+            // Acquire lock with a 2s timeout
             RedissonLockKit.lock(lockKey, TimeUnit.SECONDS, 2)
             lockCount--
             log.info("lockCount: $lockCount")
         } catch (e: Exception) {
             log.error(e, e.message)
         } finally {
-            // 释放锁
+            // Release the lock
             RedissonLockKit.unlock(lockKey)
         }
     }
 
     /**
-     * 无锁测试
+     * Lock-free test.
      */
     private fun testCount() {
         count--
@@ -102,7 +102,7 @@ open class RedissonLockSingleTest {
 }
 
 /**
- * 测试使用注解加锁的方式
+ * Tests the annotation-based locking style.
  */
 open class TestLockByAnnotation {
 

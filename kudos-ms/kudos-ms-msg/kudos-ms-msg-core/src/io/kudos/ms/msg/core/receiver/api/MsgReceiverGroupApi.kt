@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service
 
 
 /**
- * 消息接收者群组API本地实现
+ * Local implementation of the message receiver group API.
  *
  * @author K
  * @author AI: Codex

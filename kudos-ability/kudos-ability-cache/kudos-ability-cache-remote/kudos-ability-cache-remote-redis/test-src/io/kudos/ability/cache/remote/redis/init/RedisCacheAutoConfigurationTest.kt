@@ -6,7 +6,7 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 /**
- * [RedisCacheAutoConfiguration] 配置行为单测。
+ * Unit tests for [RedisCacheAutoConfiguration] configuration behavior.
  *
  * @author K
  * @author AI: Codex

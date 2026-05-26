@@ -20,7 +20,7 @@ import org.springframework.data.redis.core.RedisTemplate
 
 
 /**
- * Redis自动配置类
+ * Redis auto-configuration class.
  *
  * @author K
  * @author AI: Codex
@@ -32,8 +32,8 @@ import org.springframework.data.redis.core.RedisTemplate
     factory = YamlPropertySourceFactory::class
 )
 @AutoConfigureAfter(ContextAutoConfiguration::class)
-// 见 ContextAutoConfiguration：IComponentInitializer 配置类必须早于业务 BPP 实例化，
-// 加 ROLE_INFRASTRUCTURE 避免 Spring 的 BeanPostProcessorChecker 误报。
+// See ContextAutoConfiguration: IComponentInitializer configuration classes must be instantiated before business BPPs;
+// ROLE_INFRASTRUCTURE is added to avoid false warnings from Spring's BeanPostProcessorChecker.
 @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 open class RedisAutoConfiguration : IComponentInitializer {
 
@@ -67,7 +67,7 @@ open class RedisAutoConfiguration : IComponentInitializer {
         redisTemplateMap.defaultRedisTemplate
 
     /**
-     * 根据redis连接工厂创建redisTemplate
+     * Creates a redisTemplate from the given Redis connection factory.
      *
      * @param redisConnectionFactory redisConnectionFactory
      * @return RedisTemplate<Any, Any?>

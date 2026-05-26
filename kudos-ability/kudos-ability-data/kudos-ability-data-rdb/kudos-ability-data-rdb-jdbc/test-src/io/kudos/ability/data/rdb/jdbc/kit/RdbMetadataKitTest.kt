@@ -8,7 +8,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
 /**
- * RdbMetadataKit测试用例
+ * Test cases for RdbMetadataKit.
  *
  * @author K
  * @author AI: Codex

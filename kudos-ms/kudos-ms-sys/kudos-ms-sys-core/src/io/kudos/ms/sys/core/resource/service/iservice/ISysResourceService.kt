@@ -13,7 +13,7 @@ import io.kudos.ms.sys.core.resource.model.po.SysResource
 
 
 /**
- * 资源业务接口
+ * Resource service interface.
  *
  * @author K
  * @author AI: Cursor
@@ -22,27 +22,27 @@ import io.kudos.ms.sys.core.resource.model.po.SysResource
 interface ISysResourceService : IBaseCrudService<String, SysResource> {
 
     /**
-     * 按资源主键从 Hash 缓存加载资源（未命中则回库并回写）
+     * Loads a resource from the Hash cache by primary key (queries the database and writes back on miss).
      */
     fun getResourceFromCache(id: String): SysResourceCacheEntry?
 
     /**
-     * 按子系统编码 + URL 从缓存解析资源主键
+     * Resolves the resource primary key from cache by sub-system code + URL.
      */
     fun getResourceIdFromCacheBySubSystemAndUrl(subSystemCode: String, url: String): String?
 
     /**
-     * 按子系统编码 + 资源类型字典码从缓存解析资源 id 列表
+     * Resolves the resource id list from cache by sub-system code + resource-type dict code.
      */
     fun getResourceIdsFromCacheBySubSystemAndType(subSystemCode: String, resourceTypeDictCode: String): List<String>
 
     /**
-     * 按主键集合批量从 Hash 缓存加载资源
+     * Batch loads resources from the Hash cache by id collection.
      */
     fun getResourcesFromCacheByIds(ids: Collection<String>): Map<String, SysResourceCacheEntry>
 
     /**
-     * 按资源类型枚举 + 子系统编码从缓存加载资源列表
+     * Loads the resource list from cache by resource-type enum + sub-system code.
      */
     fun getResourcesFromCacheBySubSystemAndType(
         resourceType: ResourceTypeEnum,
@@ -50,22 +50,22 @@ interface ISysResourceService : IBaseCrudService<String, SysResource> {
     ): List<SysResourceCacheEntry>
 
     /**
-     * 从缓存菜单资源组装基础菜单树
+     * Assembles a basic menu tree from menu resources in the cache.
      */
     fun getSimpleMenusFromCache(subSystemCode: String): List<BaseMenuTreeNode>
 
     /**
-     * 从缓存菜单资源组装菜单树（含 url、icon）
+     * Assembles a menu tree from menu resources in the cache (including url and icon).
      */
     fun getMenusFromCache(subSystemCode: String): List<MenuTreeNode>
 
     /**
-     * 按子系统 + URL 从缓存解析资源 id（与 [getResourceIdFromCacheBySubSystemAndUrl] 一致）
+     * Resolves the resource id from cache by sub-system + URL (alias of [getResourceIdFromCacheBySubSystemAndUrl]).
      */
     fun getResourceIdFromCache(subSysDictCode: String, url: String): String?
 
     /**
-     * 指定父结点下的直接子资源（缓存命中启用资源）
+     * Returns the direct child resources of the given parent node (enabled resources hit in cache).
      */
     fun getDirectChildrenResourcesFromCache(
         resourceType: ResourceTypeEnum,
@@ -74,7 +74,7 @@ interface ISysResourceService : IBaseCrudService<String, SysResource> {
     ): List<SysResourceCacheEntry>
 
     /**
-     * 递归收集指定父结点下的子资源（缓存）
+     * Recursively collects descendant resources under the given parent node (from cache).
      */
     fun getChildrenResourcesFromCache(
         subSystemCode: String,
@@ -83,45 +83,45 @@ interface ISysResourceService : IBaseCrudService<String, SysResource> {
     ): List<SysResourceCacheEntry>
 
     /**
-     * 获取子系统的资源列表（直查库）
+     * Returns the resource list of the sub-system (queried directly from the database).
      */
     fun getResourcesBySubSystemCode(subSystemCode: String): List<SysResourceRow>
 
     /**
-     * 获取子资源列表（直查库）
+     * Returns the child resource list (queried directly from the database).
      */
     fun getChildResources(parentId: String): List<SysResourceRow>
 
     /**
-     * 获取资源树（递归结构，直查库组装）
+     * Returns the resource tree (recursive structure assembled directly from the database).
      */
     fun getResourceTree(subSystemCode: String, parentId: String? = null): List<SysResourceTreeRow>
 
     /**
-     * 按资源类型 / 子系统 / 资源层加载资源树直接孩子结点
+     * Loads the direct children of the resource tree by resource type / sub-system / resource layer.
      */
     fun loadDirectChildrenForTree(sysResourceQuery: SysResourceQuery): List<IdAndNameTreeNode<String>>
 
     /**
-     * 更新启用状态，并同步缓存
+     * Updates active status and synchronizes the cache.
      */
     fun updateActive(id: String, active: Boolean): Boolean
 
     /**
-     * 移动资源（调整父节点和排序）
+     * Moves a resource (adjusts parent node and order).
      */
     fun moveResource(id: String, newParentId: String?, newOrderNum: Int?): Boolean
 
     /**
-     * 获取所有祖先 id（依赖缓存中的 parent 链）
+     * Returns all ancestor ids (depends on the parent chain in cache).
      */
     fun fetchAllParentIds(id: String): List<String>
 
     /**
-     * 获取资源详情；可选地在 `includeParents = true` 时回填 `parentIds`。
+     * Returns the resource detail; when `includeParents = true`, also populates `parentIds`.
      *
-     * 把 admin controller 之前的「getDetail → if includeParents → 二次调用 fetchAllParentIds」
-     * 组装逻辑下沉到 service，让 controller 只需一次调用。
+     * Moves the admin controller's previous composition ("getDetail -> if includeParents -> a second call to fetchAllParentIds")
+     * down into the service, so the controller only needs to make a single call.
      */
     fun getDetailWithOptionalParents(
         id: String,

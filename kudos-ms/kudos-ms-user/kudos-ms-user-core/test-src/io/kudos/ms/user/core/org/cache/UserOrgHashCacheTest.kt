@@ -9,13 +9,14 @@ import jakarta.annotation.Resource
 import kotlin.test.*
 
 /**
- * [UserOrgHashCache] 单元测试（Hash 缓存，按 id 存取、按 tenantId 查询）。
+ * [UserOrgHashCache] unit tests (Hash cache, accessed by id, queried by tenantId).
  *
- * 覆盖：按 id 单条/批量获取、按租户获取机构列表、全量刷新、新增/更新/删除/批量删除后同步；
- * 本地缓存开启时二次取为同一对象引用。
+ * Coverage: single/batch fetch by id, fetching org list by tenant, full reload, sync after
+ * insert/update/delete/batch delete; when local cache is enabled the second fetch returns the same
+ * object reference.
  *
- * 测试数据：`UserOrgHashCacheTest.sql`。
- * 需 Docker 运行 Redis，且 sys_cache 中已配置 USER_ORG__HASH（hash=true）。
+ * Test data: `UserOrgHashCacheTest.sql`.
+ * Requires Docker to run Redis, and USER_ORG__HASH (hash=true) must be configured in sys_cache.
  *
  * @author K
  * @since 1.0.0
@@ -31,7 +32,7 @@ class UserOrgHashCacheTest : RdbAndRedisCacheTestBase() {
 
     private fun isLocalCacheEnabled(): Boolean = HashCacheKit.isLocalCacheEnabled(UserOrgHashCache.CACHE_NAME)
 
-    private val newOrgName = "新机构名称"
+    private val newOrgName = "New org name"
 
     private val tenant001 = "tenant-001-lVeGsiPZ"
     private val tenant002 = "tenant-002-lVeGsiPZ"
@@ -44,7 +45,7 @@ class UserOrgHashCacheTest : RdbAndRedisCacheTestBase() {
         val item = cacheHandler.getOrgById(orgId1)
         assertNotNull(item)
         assertEquals(orgId1, item.id)
-        assertEquals("技术部", item.name)
+        assertEquals("Tech Dept", item.name)
         assertEquals(tenant001, item.tenantId)
         val itemAgain = cacheHandler.getOrgById(orgId1)
         if (isLocalCacheEnabled()) assertSame(item, itemAgain)
@@ -58,8 +59,8 @@ class UserOrgHashCacheTest : RdbAndRedisCacheTestBase() {
         assertEquals(2, result.size)
         assertNotNull(result[orgId1])
         assertNotNull(result[orgId2])
-        assertEquals("技术部", result[orgId1]?.name)
-        assertEquals("产品部", result[orgId2]?.name)
+        assertEquals("Tech Dept", result[orgId1]?.name)
+        assertEquals("Product Dept", result[orgId2]?.name)
         val resultAgain = cacheHandler.getOrgsByIds(listOf(orgId1, orgId2))
         if (isLocalCacheEnabled()) {
             assertSame(result[orgId1], resultAgain[orgId1])
@@ -74,11 +75,11 @@ class UserOrgHashCacheTest : RdbAndRedisCacheTestBase() {
     fun getOrgsByTenantId() {
         cacheHandler.reloadAll(true)
         val list001 = cacheHandler.getOrgsByTenantId(tenant001)
-        assertTrue(list001.size >= 7, "tenant-001 应至少有 7 个机构")
-        assertTrue(list001.any { it.id == orgId1 }, "应包含技术部")
-        assertTrue(list001.any { it.id == orgId2 }, "应包含产品部")
+        assertTrue(list001.size >= 7, "tenant-001 should have at least 7 orgs")
+        assertTrue(list001.any { it.id == orgId1 }, "Should include Tech Dept")
+        assertTrue(list001.any { it.id == orgId2 }, "Should include Product Dept")
         val list002 = cacheHandler.getOrgsByTenantId(tenant002)
-        assertEquals(1, list002.size, "tenant-002 应有 1 个机构（总部）")
+        assertEquals(1, list002.size, "tenant-002 should have 1 org (headquarters)")
         assertEquals("4637af03-9999-9999-9999-999999999999", list002.first().id)
         val listEmpty = cacheHandler.getOrgsByTenantId("no_exist_tenant")
         assertTrue(listEmpty.isEmpty())
@@ -133,7 +134,7 @@ class UserOrgHashCacheTest : RdbAndRedisCacheTestBase() {
 
     private fun insertNewRecordToDb(): String {
         val userOrg = UserOrg().apply {
-            name = "测试机构_${System.currentTimeMillis()}"
+            name = "Test org_${System.currentTimeMillis()}"
             tenantId = tenant001
             orgTypeDictCode = "ORG_TYPE_DEFAULT"
             active = true

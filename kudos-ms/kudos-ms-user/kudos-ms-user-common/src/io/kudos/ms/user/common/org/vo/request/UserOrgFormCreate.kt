@@ -1,7 +1,7 @@
 package io.kudos.ms.user.common.org.vo.request
 
 /**
- * 机构表单新建请求VO
+ * Organization form create request VO
  *
  * @author K
  * @since 1.0.0

@@ -9,7 +9,7 @@ import org.springframework.transaction.annotation.Transactional
 
 
 /**
- * 记住我登录业务
+ * Remember-me login service.
  *
  * @author K
  * @author AI: Codex

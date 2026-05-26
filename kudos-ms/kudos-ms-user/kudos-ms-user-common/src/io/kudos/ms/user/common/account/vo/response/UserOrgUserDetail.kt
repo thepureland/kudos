@@ -5,41 +5,41 @@ import java.time.LocalDateTime
 
 
 /**
- * 机构-用户关系详情响应VO
+ * Organization-user relationship detail response VO
  *
  * @author K
  * @since 1.0.0
  */
 data class UserOrgUserDetail (
 
-    /** 主键 */
+    /** Primary key */
     override val id: String = "",
 
-    /** 机构id */
+    /** Organization id */
     val orgId: String? = null,
 
-    /** 用户id */
+    /** User id */
     val userId: String? = null,
 
-    /** 是否为机构管理员 */
+    /** Whether this is the organization administrator */
     val orgAdmin: Boolean? = null,
 
-    /** 创建者id */
+    /** Creator id */
     val createUserId: String? = null,
 
-    /** 创建者名称 */
+    /** Creator name */
     val createUserName: String? = null,
 
-    /** 创建时间 */
+    /** Create time */
     val createTime: LocalDateTime? = null,
 
-    /** 更新者id */
+    /** Updater id */
     val updateUserId: String? = null,
 
-    /** 更新者名称 */
+    /** Updater name */
     val updateUserName: String? = null,
 
-    /** 更新时间 */
+    /** Update time */
     val updateTime: LocalDateTime? = null,
 
 ) : IIdEntity<String>

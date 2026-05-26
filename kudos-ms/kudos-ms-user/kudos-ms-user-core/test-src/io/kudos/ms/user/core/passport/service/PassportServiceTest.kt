@@ -29,10 +29,11 @@ import kotlin.test.assertTrue
 /**
  * junit test for PassportService
  *
- * 测试数据来源：`PassportServiceTest.sql`
+ * Test data source: `PassportServiceTest.sql`
  *
- * 用户表里种 active=true 用户 + active=false 用户各一名。`@BeforeEach` 把密码就地
- * BCrypt 哈希（cost=4 加速测试），随后通过 [IPassportService.login] 走完整链路。
+ * Seeds one active=true user and one active=false user in the user table. `@BeforeEach`
+ * BCrypt-hashes the password in place (cost=4 to speed up tests), then exercises the full
+ * pipeline via [IPassportService.login].
  *
  * @author K
  * @since 1.0.0
@@ -61,14 +62,14 @@ class PassportServiceTest : RdbAndRedisCacheTestBase() {
 
     @BeforeEach
     fun hashSeededPasswords() {
-        // 计算一次 BCrypt 哈希（cost=4 用于测试，~5ms），更新两条种子用户
+        // Compute the BCrypt hash once (cost=4 for testing, ~5ms) and update both seed users
         val hash = PasswordKit.hash(plainPassword, strength = 4)
         userAccountDao.updateProperties(activeUserId, mapOf(UserAccount::loginPassword.name to hash))
         userAccountDao.updateProperties(inactiveUserId, mapOf(UserAccount::loginPassword.name to hash))
-        // 清零错误计数，避免上轮残留
+        // Reset error counters to avoid leftovers from the previous round
         userAccountDao.updateProperties(activeUserId, mapOf(UserAccount::loginErrorTimes.name to 0))
         userAccountDao.updateProperties(inactiveUserId, mapOf(UserAccount::loginErrorTimes.name to 0))
-        // 让缓存看到新的密码字段
+        // Let the cache see the new password field
         userAccountHashCache.reloadAll(clear = true)
     }
 
@@ -101,7 +102,7 @@ class PassportServiceTest : RdbAndRedisCacheTestBase() {
         assertEquals(PassportLoginStatusEnum.WRONG_PASSWORD, res.status)
         assertNull(res.userInfo)
         assertEquals(1, res.loginErrorTimes)
-        // 库里也应该加 1
+        // The DB should also be incremented by 1
         val after = assertNotNull(userAccountDao.get(activeUserId))
         assertEquals(1, after.loginErrorTimes)
     }
@@ -120,16 +121,16 @@ class PassportServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun login_correctAfterWrong_resetsErrorCount() {
-        // 先错一次
+        // Fail once first
         passportService.login(PassportLoginRequest(tenantId, activeUsername, "wrong"))
         assertEquals(1, userAccountDao.get(activeUserId)?.loginErrorTimes)
 
-        // 然后用对的密码
+        // Then use the correct password
         val res = passportService.login(
             PassportLoginRequest(tenantId, activeUsername, plainPassword)
         )
         assertEquals(PassportLoginStatusEnum.SUCCESS, res.status)
-        // 错误计数已被重置
+        // The error counter has been reset
         assertEquals(0, userAccountDao.get(activeUserId)?.loginErrorTimes)
     }
 
@@ -150,7 +151,7 @@ class PassportServiceTest : RdbAndRedisCacheTestBase() {
         )
         assertEquals(PassportLoginStatusEnum.INACTIVE, res.status)
         assertNull(res.userInfo)
-        // 不应该消耗错误次数（账号已停用，不进入密码校验路径）
+        // Should not consume error attempts (account is inactive, never enters the password check path)
         assertEquals(0, userAccountDao.get(inactiveUserId)?.loginErrorTimes)
     }
 
@@ -173,7 +174,7 @@ class PassportServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun login_withoutLoginIp_doesNotUpdateLastLoginInfo() {
-        // 取登录前的 lastLoginIp（fixture 里设为 null）
+        // Capture lastLoginIp before login (fixture sets it to null)
         val before = userAccountDao.get(activeUserId)?.lastLoginIp
         passportService.login(
             PassportLoginRequest(tenantId, activeUsername, plainPassword)
@@ -185,7 +186,7 @@ class PassportServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun logout_writesLastLogoutTime() {
-        // fixture 里 last_logout_time 为 null
+        // last_logout_time is null in the fixture
         assertNull(userAccountDao.get(activeUserId)?.lastLogoutTime)
 
         val ok = passportService.logout(activeUserId)
@@ -206,7 +207,7 @@ class PassportServiceTest : RdbAndRedisCacheTestBase() {
     fun verifyPassword_correct_returnsTrue() {
         val ok = passportService.verifyPassword(VerifyPasswordRequest(activeUserId, plainPassword))
         assertTrue(ok)
-        // 不消耗错误次数
+        // Does not consume error attempts
         assertEquals(0, userAccountDao.get(activeUserId)?.loginErrorTimes)
     }
 
@@ -214,7 +215,7 @@ class PassportServiceTest : RdbAndRedisCacheTestBase() {
     fun verifyPassword_wrong_returnsFalseAndDoesNotIncrementCounter() {
         val ok = passportService.verifyPassword(VerifyPasswordRequest(activeUserId, "wrong"))
         assertFalse(ok)
-        // 关键：不消耗错误次数（与 login 不同）
+        // Key point: does not consume error attempts (unlike login)
         assertEquals(0, userAccountDao.get(activeUserId)?.loginErrorTimes)
     }
 
@@ -236,9 +237,9 @@ class PassportServiceTest : RdbAndRedisCacheTestBase() {
         )
         assertEquals(ChangePasswordResultEnum.SUCCESS, res)
 
-        // 旧密码不再有效
+        // Old password no longer works
         assertFalse(passportService.verifyPassword(VerifyPasswordRequest(activeUserId, plainPassword)))
-        // 新密码有效
+        // New password works
         assertTrue(passportService.verifyPassword(VerifyPasswordRequest(activeUserId, newPlain)))
     }
 
@@ -249,7 +250,7 @@ class PassportServiceTest : RdbAndRedisCacheTestBase() {
             ChangePasswordRequest(activeUserId, "wrong-old", "doesnt-matter")
         )
         assertEquals(ChangePasswordResultEnum.OLD_PASSWORD_WRONG, res)
-        // 数据库里 hash 没动
+        // The hash in the database is unchanged
         assertEquals(originalHash, userAccountDao.get(activeUserId)?.loginPassword)
     }
 
@@ -269,7 +270,7 @@ class PassportServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun login_noOtpEnabled_authCodeIgnored() {
-        // 用户没启用 OTP（authentication_key=null），authCode 是否带都行
+        // User has not enabled OTP (authentication_key=null), authCode is optional
         val res = passportService.login(
             PassportLoginRequest(tenantId, activeUsername, plainPassword, authCode = 999999L)
         )
@@ -278,7 +279,7 @@ class PassportServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun login_otpEnabledButCodeMissing_returnsOtpRequired() {
-        // 启用 OTP
+        // Enable OTP
         userAccountService.resetAuthKey(activeUserId, activeUsername, "kudos")
         userAccountHashCache.reloadAll(clear = true)
 
@@ -286,7 +287,7 @@ class PassportServiceTest : RdbAndRedisCacheTestBase() {
             PassportLoginRequest(tenantId, activeUsername, plainPassword)
         )
         assertEquals(PassportLoginStatusEnum.OTP_REQUIRED, res.status)
-        // 注意：OTP_REQUIRED 不增加错误计数
+        // Note: OTP_REQUIRED does not increment the error counter
         assertEquals(0, userAccountDao.get(activeUserId)?.loginErrorTimes)
     }
 
@@ -313,15 +314,15 @@ class PassportServiceTest : RdbAndRedisCacheTestBase() {
             PassportLoginRequest(tenantId, activeUsername, plainPassword, authCode = code)
         )
         assertEquals(PassportLoginStatusEnum.SUCCESS, res.status)
-        // 验证全部通过后错误计数清零
+        // Error counter is cleared once all checks pass
         assertEquals(0, userAccountDao.get(activeUserId)?.loginErrorTimes)
     }
 
     /**
-     * 计算当前 30s 窗口的 6 位 TOTP 验证码（RFC 6238 dynamic truncation）。
+     * Compute the 6-digit TOTP code for the current 30s window (RFC 6238 dynamic truncation).
      *
-     * 与 [io.kudos.base.security.GoogleAuthenticator.verifyCode] 同算法，后者是 `internal` 跨
-     * 模块拿不到，于是这里复刻一份。
+     * Same algorithm as [io.kudos.base.security.GoogleAuthenticator.verifyCode], which is
+     * `internal` and not reachable across modules, so it is reimplemented here.
      */
     private fun currentTotpCode(base32Secret: String): Long {
         val key = Base32().decode(base32Secret)
@@ -350,7 +351,7 @@ class PassportServiceTest : RdbAndRedisCacheTestBase() {
     fun login_currentlyFrozen_returnsAccountFrozen() {
         userAccountService.freezeAccount(
             activeUserId, "manual",
-            freezeTitle = "维护中",
+            freezeTitle = "Under maintenance",
             freezeContent = null,
             freezeStartTime = null,
             freezeEndTime = java.time.LocalDateTime.now().plusHours(1),
@@ -361,15 +362,15 @@ class PassportServiceTest : RdbAndRedisCacheTestBase() {
             PassportLoginRequest(tenantId, activeUsername, plainPassword)
         )
         assertEquals(PassportLoginStatusEnum.ACCOUNT_FROZEN, res.status)
-        assertEquals("维护中", res.message) // 冻结标题透传
-        // 不动错误计数（冻结优先于密码校验）
+        assertEquals("Under maintenance", res.message) // Freeze title is passed through
+        // Does not affect the error counter (freeze takes precedence over password check)
         assertEquals(0, userAccountDao.get(activeUserId)?.loginErrorTimes)
     }
 
     @Test
     fun login_frozenButOutsideWindow_allowsLogin() {
         userAccountService.freezeAccount(
-            activeUserId, "manual", "过期的冻结", null,
+            activeUserId, "manual", "Expired freeze", null,
             freezeStartTime = java.time.LocalDateTime.now().minusDays(2),
             freezeEndTime = java.time.LocalDateTime.now().minusDays(1),
         )
@@ -384,7 +385,7 @@ class PassportServiceTest : RdbAndRedisCacheTestBase() {
     @Test
     fun login_frozenStartInFuture_allowsLogin() {
         userAccountService.freezeAccount(
-            activeUserId, "scheduled", "明天才冻结", null,
+            activeUserId, "scheduled", "Freeze starts tomorrow", null,
             freezeStartTime = java.time.LocalDateTime.now().plusDays(1),
             freezeEndTime = java.time.LocalDateTime.now().plusDays(2),
         )
@@ -399,7 +400,7 @@ class PassportServiceTest : RdbAndRedisCacheTestBase() {
     @Test
     fun login_permanentlyFrozen_returnsAccountFrozen() {
         userAccountService.freezeAccount(
-            activeUserId, "admin", "封号", "违反 ToS",
+            activeUserId, "admin", "Account banned", "Violation of ToS",
             freezeStartTime = null, freezeEndTime = null,
         )
         userAccountHashCache.reloadAll(clear = true)

@@ -22,9 +22,9 @@ import org.springframework.web.bind.annotation.RestController
 
 
 /**
- * 角色管理控制器。
+ * Role administration controller.
  *
- * 在标准 CRUD 之外，还代理两类关系：角色↔用户、角色↔资源。
+ * In addition to standard CRUD, this proxies two relationship types: role-to-user and role-to-resource.
  *
  * @author K
  * @since 1.0.0
@@ -40,47 +40,47 @@ class AuthRoleAdminController :
     @Resource
     private lateinit var authRoleResourceService: IAuthRoleResourceService
 
-    /** 更新角色启用状态 */
+    /** Update the active state of a role. */
     @PutMapping("/updateActive")
     fun updateActive(@RequestParam id: String, @RequestParam active: Boolean): Boolean =
         service.updateActive(id, active)
 
-    /** 列出指定角色下的用户 ID */
+    /** List the user IDs belonging to a given role. */
     @GetMapping("/listUserIds")
     fun listUserIds(@RequestParam roleId: String): Set<String> =
         authRoleUserService.getUserIdsByRoleId(roleId)
 
-    /** 列出指定用户拥有的角色 ID */
+    /** List the role IDs held by a given user. */
     @GetMapping("/listRoleIdsByUser")
     fun listRoleIdsByUser(@RequestParam userId: String): Set<String> =
         authRoleUserService.getRoleIdsByUserId(userId)
 
-    /** 批量给角色授予用户。返回新增的关系数。 */
+    /** Batch-assign users to a role. Returns the number of newly created relations. */
     @PostMapping("/bindUsers")
     fun bindUsers(@RequestParam roleId: String, @RequestBody userIds: Collection<String>): Int =
         authRoleUserService.batchBind(roleId, userIds)
 
-    /** 解绑角色↔用户关系。 */
+    /** Unbind a role-to-user relation. */
     @DeleteMapping("/unbindUser")
     fun unbindUser(@RequestParam roleId: String, @RequestParam userId: String): Boolean =
         authRoleUserService.unbind(roleId, userId)
 
-    /** 列出指定角色的资源 ID */
+    /** List the resource IDs granted to a given role. */
     @GetMapping("/listResourceIds")
     fun listResourceIds(@RequestParam roleId: String): Set<String> =
         authRoleResourceService.getResourceIdsByRoleId(roleId)
 
-    /** 列出引用了指定资源的角色 ID */
+    /** List the role IDs that reference a given resource. */
     @GetMapping("/listRoleIdsByResource")
     fun listRoleIdsByResource(@RequestParam resourceId: String): Set<String> =
         authRoleResourceService.getRoleIdsByResourceId(resourceId)
 
-    /** 批量给角色授权资源。返回新增的关系数。 */
+    /** Batch-grant resources to a role. Returns the number of newly created relations. */
     @PostMapping("/bindResources")
     fun bindResources(@RequestParam roleId: String, @RequestBody resourceIds: Collection<String>): Int =
         authRoleResourceService.batchBind(roleId, resourceIds)
 
-    /** 解绑角色↔资源关系。 */
+    /** Unbind a role-to-resource relation. */
     @DeleteMapping("/unbindResource")
     fun unbindResource(@RequestParam roleId: String, @RequestParam resourceId: String): Boolean =
         authRoleResourceService.unbind(roleId, resourceId)

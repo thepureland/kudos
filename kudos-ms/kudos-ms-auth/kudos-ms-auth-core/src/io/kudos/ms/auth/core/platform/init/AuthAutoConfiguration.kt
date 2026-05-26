@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration
 
 
 /**
- * auth原子服务自动配置类
+ * Auto-configuration class for the auth atomic service.
  *
  * @author K
  * @author AI: Cursor

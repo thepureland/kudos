@@ -7,12 +7,12 @@ import io.kudos.base.enums.impl.YesNotEnum
 import kotlin.reflect.KClass
 
 /**
- * Web controller 方法上的审计注解。
+ * Audit annotation for web controller methods.
  *
- * 与 [Audit] 的区别：[WebAudit] 由
- * [io.kudos.ability.log.audit.common.annotation.WebLogAuditAspect] 处理，
- * 会从 [org.springframework.web.context.request.RequestContextHolder] 拿 HTTP 请求；
- * [Audit] 处理通用方法，从方法参数取业务对象。Multipart 请求会被 WebAudit 切面跳过。
+ * Difference from [Audit]: [WebAudit] is handled by
+ * [io.kudos.ability.log.audit.common.annotation.WebLogAuditAspect], which obtains the HTTP request from
+ * [org.springframework.web.context.request.RequestContextHolder]; [Audit] handles general methods and takes the
+ * business object from the method parameters. Multipart requests are skipped by the WebAudit aspect.
  *
  * @author K
  * @author AI: Codex
@@ -22,33 +22,33 @@ import kotlin.reflect.KClass
 @Retention(AnnotationRetention.RUNTIME)
 annotation class WebAudit(
     /**
-     * 操作类型
+     * Operation type
      */
     val opType: OperationTypeEnum,
     /**
-     * 所属子系统
+     * Owning sub-system
      */
     val subsysCode: String = "",
     /**
-     * 日志所属模块
+     * Module to which the log belongs
      */
     val moduleCode: String,
     /**
-     * 操作描述
+     * Operation description
      */
     val desc: String = "",
     /**
-     * 是否忽略表单数据
-     * 是	: request提交表单数据将不被存储
-     * 否	: request提交表单数据将被存储
+     * Whether to ignore form data.
+     * YES: form data submitted by the request will not be stored
+     * NO : form data submitted by the request will be stored
      */
     val ignoreForm: YesNotEnum = YesNotEnum.YES,
     /**
-     * 操作类型(扩展)
+     * Operation type (extension)
      */
     val opTypeExt: String = "",
     /**
-     * 详情日志处理器
+     * Detail-log handler
      *
      * @return
      */

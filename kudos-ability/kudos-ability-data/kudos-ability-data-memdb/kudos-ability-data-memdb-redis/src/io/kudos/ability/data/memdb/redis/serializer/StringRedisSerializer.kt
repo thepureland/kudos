@@ -5,15 +5,18 @@ import org.springframework.data.redis.serializer.StringRedisSerializer
 import java.nio.charset.StandardCharsets
 
 /**
- * 给 String key 自动加 / 去前缀的 UTF-8 序列化器。
+ * UTF-8 serializer that automatically adds/removes a prefix for String keys.
  *
- * 用途：业务希望全部 key 都带 namespace（如 `tenant1:`），把本序列化器装到 RedisTemplate 的
- * `keySerializer` 上即可，业务代码继续用裸 key，落到 Redis 时自动拼前缀，读出时再剥掉。
+ * Use case: when business requires all keys to carry a namespace (e.g. `tenant1:`), install this
+ * serializer on the RedisTemplate's `keySerializer`. Business code can continue to use bare keys;
+ * the prefix is added automatically on write to Redis and stripped on read.
  *
- * 反序列化时 `removePrefix` 不命中（[prefix] 不存在）保留原值——为了兼容历史无前缀数据。
+ * On deserialization, if `removePrefix` does not match (the [prefix] is absent), the original
+ * value is preserved to remain compatible with legacy unprefixed data.
  *
- * 注：本类与 Spring 自带的 [org.springframework.data.redis.serializer.StringRedisSerializer]
- * 同名，不同包；引用时务必区分。
+ * Note: this class shares its name with Spring's built-in
+ * [org.springframework.data.redis.serializer.StringRedisSerializer] but lives in a different
+ * package; be careful when importing.
  *
  * @author K
  * @author AI: Codex
@@ -25,10 +28,10 @@ class StringRedisSerializer(prefix: String?) : RedisSerializer<String> {
 
     private val delegate: StringRedisSerializer = StringRedisSerializer(StandardCharsets.UTF_8)
 
-    /** 序列化：自动拼上 [prefix]。 */
+    /** Serialize: automatically prepends [prefix]. */
     override fun serialize(key: String?): ByteArray = delegate.serialize(prefix + key)
 
-    /** 反序列化：命中 [prefix] 则剥掉，否则保留原值（兼容旧无前缀数据）。 */
+    /** Deserialize: strips [prefix] if present, otherwise preserves the original value (compatible with legacy unprefixed data). */
     override fun deserialize(bytes: ByteArray?): String? {
         val key = delegate.deserialize(bytes) ?: return null
         return key.removePrefix(prefix).takeIf { it.length < key.length } ?: key

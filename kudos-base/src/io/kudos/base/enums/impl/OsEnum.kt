@@ -1,29 +1,29 @@
 package io.kudos.base.enums.impl
 
 /**
- * 操作系统枚举
+ * Operating system enum.
  *
  * @author K
  * @since 1.0.0
  */
 enum class OsEnum {
 
-    // 桌面/服务器
+    // Desktop/Server
     MAC, WINDOWS, LINUX,
 
-    // 移动
+    // Mobile
     ANDROID, IOS, HARMONY,
 
-    // BSD家族
+    // BSD family
     FREEBSD, OPENBSD, NETBSD, DRAGONFLYBSD,
 
     // Solaris / Illumos
     SOLARIS, ILLUMOS,
 
-    // IBM / UNIX 系
+    // IBM / UNIX family
     AIX, HPUX,
 
-    // Apple 其他平台
+    // Other Apple platforms
     TVOS, WATCHOS,
 
     OTHER

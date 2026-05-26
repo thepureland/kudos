@@ -7,10 +7,10 @@ import jakarta.validation.Payload
 import kotlin.reflect.KClass
 
 /**
- * 仅支持框架内置 [RegExpEnum] 与 [io.kudos.base.bean.validation.support.RegExps] 的分类正则；
- * 行为与 [jakarta.validation.constraints.Pattern] 一致（含 null 视为合法，与 [NotBlank] 等组合使用）。
- * 业务自定义规则请使用 [@Pattern][jakarta.validation.constraints.Pattern] 并引用 [io.kudos.base.bean.validation.support.RegExps] 中的常量。
- * 终端约束通过 [io.kudos.base.bean.validation.terminal.convert.converter.impl.MatchesConstraintConvertor] 转为 `Pattern` 的规则描述。
+ * Only supports the categorized regexes built into the framework via [RegExpEnum] and [io.kudos.base.bean.validation.support.RegExps];
+ * the behavior is consistent with [jakarta.validation.constraints.Pattern] (null is treated as valid, intended to be combined with [NotBlank] and similar).
+ * For business-specific custom rules, use [@Pattern][jakarta.validation.constraints.Pattern] and reference the constants in [io.kudos.base.bean.validation.support.RegExps].
+ * The terminal constraint is converted into a `Pattern` rule description via [io.kudos.base.bean.validation.terminal.convert.converter.impl.MatchesConstraintConvertor].
  *
  * @author K
  * @author AI: Cursor
@@ -22,19 +22,19 @@ import kotlin.reflect.KClass
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY_GETTER, AnnotationTarget.PROPERTY_SETTER)
 annotation class Matches(
     /**
-     * 内置正则种类（与 [RegExps][io.kudos.base.bean.validation.support.RegExps] 一一对应）。
+     * Built-in regex category (one-to-one with [RegExps][io.kudos.base.bean.validation.support.RegExps]).
      */
     val value: RegExpEnum,
     /**
-     * 校验不通过时的提示或其国际化 key；为空时使用 [RegExpEnum.defaultMessageKey]。
+     * Message to show when validation fails or its i18n key; when empty, [RegExpEnum.defaultMessageKey] is used.
      */
     val message: String = "",
     /**
-     * 该校验规则所从属的分组类
+     * The group classes this validation rule belongs to.
      */
     val groups: Array<KClass<*>> = [],
     /**
-     * 约束注解的有效负载
+     * The payload of the constraint annotation.
      */
     val payload: Array<KClass<out Payload>> = [],
 )

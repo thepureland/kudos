@@ -16,7 +16,7 @@ import org.springframework.context.annotation.Import
 import org.springframework.stereotype.Service
 
 /**
- * 主应用的service
+ * Service of the main application.
  *
  * @author K
  * @since 1.0.0
@@ -57,40 +57,40 @@ open class Service : IService {
 
     @GlobalTransactional
     override fun normalLocal() {
-        service1.decrease(1, 50.0) // 扣款
-        service2.increase(2, 50.0) // 加款
+        service1.decrease(1, 50.0) // debit
+        service2.increase(2, 50.0) // credit
     }
 
     @GlobalTransactional
     override fun onBranchErrorLocal() {
-        service1.decrease(1, 50.0) // 扣款
-        service2.increaseFail(2, 50.0) // 模拟加款失败
+        service1.decrease(1, 50.0) // debit
+        service2.increaseFail(2, 50.0) // simulate a credit failure
     }
 
     @GlobalTransactional
     override fun onGlobalErrorLocal() {
-        service1.decrease(1, 50.0) // 扣款
-        service2.increase(2, 50.0) // 加款
-        throw TxException("模拟全局事务最后错误发生，事务应回滚.")
+        service1.decrease(1, 50.0) // debit
+        service2.increase(2, 50.0) // credit
+        throw TxException("Simulated terminal global-transaction error; the transaction must roll back.")
     }
 
     @GlobalTransactional
     override fun normalRemote() {
-        requireNotNull(client1) { "Feign 客户端未配置: dataSourceProxyMode=$dataSourceProxyMode" }.decrease(1, 50.0) // 扣款
-        requireNotNull(client2) { "Feign 客户端未配置: dataSourceProxyMode=$dataSourceProxyMode" }.increase(2, 50.0) // 加款
+        requireNotNull(client1) { "Feign client not configured: dataSourceProxyMode=$dataSourceProxyMode" }.decrease(1, 50.0) // debit
+        requireNotNull(client2) { "Feign client not configured: dataSourceProxyMode=$dataSourceProxyMode" }.increase(2, 50.0) // credit
     }
 
     @GlobalTransactional
     override fun onBranchErrorRemote() {
-        requireNotNull(client1) { "Feign 客户端未配置: dataSourceProxyMode=$dataSourceProxyMode" }.decrease(1, 50.0) // 扣款
-        requireNotNull(client2) { "Feign 客户端未配置: dataSourceProxyMode=$dataSourceProxyMode" }.increaseFail(2, 50.0) // 模拟加款失败
+        requireNotNull(client1) { "Feign client not configured: dataSourceProxyMode=$dataSourceProxyMode" }.decrease(1, 50.0) // debit
+        requireNotNull(client2) { "Feign client not configured: dataSourceProxyMode=$dataSourceProxyMode" }.increaseFail(2, 50.0) // simulate a credit failure
     }
 
     @GlobalTransactional
     override fun onGlobalErrorRemote() {
-        requireNotNull(client1) { "Feign 客户端未配置: dataSourceProxyMode=$dataSourceProxyMode" }.decrease(1, 50.0) // 扣款
-        requireNotNull(client2) { "Feign 客户端未配置: dataSourceProxyMode=$dataSourceProxyMode" }.increase(2, 50.0) // 加款
-        throw TxException("模拟全局事务最后错误发生，事务应回滚.")
+        requireNotNull(client1) { "Feign client not configured: dataSourceProxyMode=$dataSourceProxyMode" }.decrease(1, 50.0) // debit
+        requireNotNull(client2) { "Feign client not configured: dataSourceProxyMode=$dataSourceProxyMode" }.increase(2, 50.0) // credit
+        throw TxException("Simulated terminal global-transaction error; the transaction must roll back.")
     }
 
     private val client1: IClient1?

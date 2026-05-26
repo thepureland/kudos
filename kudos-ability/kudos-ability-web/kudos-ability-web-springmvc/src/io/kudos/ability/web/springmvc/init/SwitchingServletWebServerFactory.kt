@@ -12,14 +12,14 @@ import org.springframework.core.env.getProperty
 import org.springframework.stereotype.Component
 
 /**
- * servlet容器工厂
+ * Servlet container factory.
  *
  *
- * 解决当同时存在多种servlet容器依赖时，可根据配置文件决定使用哪一种。
- * 可方便切换使用不同的容器，进行测试。
+ * Solves the case where multiple servlet container dependencies are present: the configuration file decides which one to use.
+ * Makes it easy to switch between different containers for testing.
  *
  *
- * 非单元测试环境，建议保证只存在一种servlet容器依赖！
+ * Outside unit-test environments, it is recommended to keep only a single servlet container dependency!
  *
  * @author K
  * @author AI: Codex
@@ -32,8 +32,8 @@ class SwitchingServletWebServerFactory(
 ) : ServletWebServerFactory {
 
     /**
-     * 按 yml 配置选择具体的容器工厂；未识别值回落 Tomcat。流程：读配置 → 建工厂 →
-     * 反射设置 contextPath（不同工厂签名不同）→ 委托真正的 [WebServer] 构建。
+     * Pick the concrete container factory based on yml configuration; unrecognised values fall back to Tomcat. Flow:
+     * read config -> build factory -> set contextPath via reflection (factory signatures differ) -> delegate the actual [WebServer] construction.
      */
     override fun getWebServer(vararg initializers: ServletContextInitializer): WebServer {
         val serverTypeStr = env.getProperty("kudos.ability.web.springmvc.server", "TOMCAT")
@@ -55,7 +55,7 @@ class SwitchingServletWebServerFactory(
                 val method = serverFactory.javaClass.getMethod("setContextPath", String::class.java)
                 method.invoke(serverFactory, contextPath)
             } catch (_: NoSuchMethodException) {
-                // 部分工厂实现无此方法，忽略即可
+                // Some factory implementations do not have this method; ignore.
             }
         }
 
@@ -63,11 +63,11 @@ class SwitchingServletWebServerFactory(
     }
 
     /**
-     * 构造 [TomcatServletWebServerFactory]，并放宽 Connector 的 relaxedPathChars /
-     * relaxedQueryChars，避免 GET 请求带 `"<>[]\^` `{|}` 等字符时 Tomcat 直接 400。
+     * Construct a [TomcatServletWebServerFactory] and relax the Connector's relaxedPathChars /
+     * relaxedQueryChars to avoid Tomcat returning 400 for GET requests containing characters like `"<>[]\^` `{|}`.
      *
-     * @param port 监听端口
-     * @return 配置完的 Tomcat 工厂
+     * @param port listening port
+     * @return the configured Tomcat factory
      * @author K
      * @since 1.0.0
      */
@@ -82,12 +82,13 @@ class SwitchingServletWebServerFactory(
     }
 
     /**
-     * 反射加载 Jetty 工厂——本模块依赖里只 testImplementation 了 spring-boot-starter-jetty，
-     * 直接 import 会让生产侧没有 Jetty 时编译/启动失败。改用 `Class.forName` 走运行期解析。
+     * Load the Jetty factory via reflection: this module only `testImplementation`s spring-boot-starter-jetty,
+     * so a direct import would cause compile/start-up failures in production where Jetty is absent. Use `Class.forName`
+     * for runtime resolution instead.
      *
-     * @param port 监听端口
-     * @return 配置完的 Jetty 工厂
-     * @throws ClassNotFoundException 类路径下没有 Jetty 时（仅当配置选择 JETTY 时才会触发）
+     * @param port listening port
+     * @return the configured Jetty factory
+     * @throws ClassNotFoundException when Jetty is not on the classpath (only triggered if the configuration selects JETTY)
      * @author K
      * @since 1.0.0
      */

@@ -6,7 +6,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * ClassPathResource测试用例
+ * ClassPathResource test cases.
  *
  * @author AI: cursor
  * @author K
@@ -41,16 +41,16 @@ internal class ClassPathResourceTest {
 
     @Test
     fun testExists() {
-        // 测试存在的资源（使用项目中实际存在的资源）
+        // Test an existing resource (using a resource that actually exists in the project)
         val resource = ClassPathResource("logback.xml")
-        // 如果资源存在，exists应该返回true
-        // 注意：这个测试依赖于实际资源是否存在
+        // If the resource exists, exists should return true.
+        // Note: this test depends on whether the actual resource exists.
     }
 
     @Test
     fun testExistsNonExistent() {
         val resource = ClassPathResource("non-existent-file-12345.txt")
-        // 如果资源不存在，exists应该返回false
+        // If the resource does not exist, exists should return false.
     }
 
     @Test
@@ -90,8 +90,8 @@ internal class ClassPathResourceTest {
 
     @Test
     fun testLoadAsString() {
-        // 测试加载资源为字符串
-        // 注意：需要实际存在的资源文件
+        // Test loading a resource as a string.
+        // Note: requires the resource file to actually exist.
         try {
             val resource = ClassPathResource("logback.xml")
             if (resource.exists()) {
@@ -99,13 +99,13 @@ internal class ClassPathResourceTest {
                 assertNotNull(content)
             }
         } catch (e: Exception) {
-            // 如果资源不存在，忽略测试
+            // Ignore the test if the resource does not exist
         }
     }
 
     @Test
     fun testLoadAsBytes() {
-        // 测试加载资源为字节数组
+        // Test loading a resource as a byte array
         try {
             val resource = ClassPathResource("logback.xml")
             if (resource.exists()) {
@@ -113,7 +113,7 @@ internal class ClassPathResourceTest {
                 assertNotNull(bytes)
             }
         } catch (e: Exception) {
-            // 如果资源不存在，忽略测试
+            // Ignore the test if the resource does not exist
         }
     }
 }

@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional
 
 
 /**
- * 组-角色关系业务
+ * Group-role relation service.
  *
  * @author K
  * @author AI: Codex
@@ -43,11 +43,11 @@ open class AuthGroupRoleService(
     @Transactional
     override fun batchBind(groupId: String, roleIds: Collection<String>): Int {
         if (roleIds.isEmpty()) return 0
-        // 一次 SELECT 已存在的关系，差集对新增 ID 一次 batchInsert，把原 N+1 折叠到 2 次 SQL。
+        // One SELECT for existing relations, then a single batchInsert for the delta — collapses the original N+1 into 2 SQL calls.
         val existing = dao.searchRoleIdsByGroupId(groupId)
         val newRoleIds = roleIds.toSet() - existing
         if (newRoleIds.isEmpty()) {
-            log.debug("批量绑定组${groupId}与${roleIds.size}个角色的关系，全部已存在，无新增。")
+            log.debug("Batch-binding group ${groupId} to ${roleIds.size} roles: all already exist, nothing inserted.")
             return 0
         }
         val relations = newRoleIds.map { roleId ->
@@ -57,7 +57,7 @@ open class AuthGroupRoleService(
             }
         }
         dao.batchInsert(relations)
-        log.debug("批量绑定组${groupId}与${roleIds.size}个角色的关系，成功绑定${newRoleIds.size}条。")
+        log.debug("Batch-bound group ${groupId} to ${roleIds.size} roles, ${newRoleIds.size} new bindings inserted.")
         eventPublisher.publishEvent(AuthGroupRoleRelationsChanged(groupId, newRoleIds.toList()))
         return newRoleIds.size
     }
@@ -67,10 +67,10 @@ open class AuthGroupRoleService(
         val count = dao.deleteByGroupIdAndRoleId(groupId, roleId)
         val success = count > 0
         if (success) {
-            log.debug("解绑组${groupId}与角色${roleId}的关系。")
+            log.debug("Unbound group ${groupId} from role ${roleId}.")
             eventPublisher.publishEvent(AuthGroupRoleRelationsChanged(groupId, listOf(roleId)))
         } else {
-            log.warn("解绑组${groupId}与角色${roleId}的关系失败，关系不存在。")
+            log.warn("Failed to unbind group ${groupId} from role ${roleId}: relation does not exist.")
         }
         return success
     }

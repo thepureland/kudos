@@ -20,19 +20,21 @@ import java.time.LocalDateTime
 import java.util.Locale
 
 /**
- * Stream 全局异常处理——监听 spring-integration error channel + 自定义 producer error channel。
+ * Stream global exception handler — listens on the spring-integration error channel
+ * plus a custom producer error channel.
  *
- * **多个 @ServiceActivator 在同一 ERROR_CHANNEL 上是有意为之**：
- *  - [globalHandleError] 负责 **consumer 端**异常（通过 `isFromConsumer` 识别 kafka_/amqp_/rocket_
- *    前缀的 headers）→ 持久化到 `sys_mq_fail_msg` 表
- *  - [handleProducerError] 负责 **producer 端**异常 → 调 `IStreamFailHandler.persistFailedData`
- *    走文件持久化（典型实现 [StreamProducerExceptionHandler]）
- *  - [handSyncChannelError] 监听自定义的 [IStreamFailHandler.CHANNEL_BEN_NAME]
- *    （`mqProducerChannel`）—— 同步发送失败时由 `StreamProducerHelper.doRealSend` 主动塞
- *    错误消息到这个通道
+ * **Multiple @ServiceActivator on the same ERROR_CHANNEL is intentional**:
+ *  - [globalHandleError] handles **consumer-side** exceptions (identified via `isFromConsumer`
+ *    by headers prefixed with kafka_/amqp_/rocket_) → persists to the `sys_mq_fail_msg` table.
+ *  - [handleProducerError] handles **producer-side** exceptions → calls
+ *    `IStreamFailHandler.persistFailedData` for file persistence (typical implementation
+ *    [StreamProducerExceptionHandler]).
+ *  - [handSyncChannelError] listens on the custom [IStreamFailHandler.CHANNEL_BEN_NAME]
+ *    (`mqProducerChannel`) — error messages are actively pushed into this channel by
+ *    `StreamProducerHelper.doRealSend` when a synchronous send fails.
  *
- * 两条 ERROR_CHANNEL 上的 listener 不是 bug——各自的 `isFromConsumer` / `containsKey(SCST_BIND_NAME)`
- * 守卫做了分流。
+ * The two listeners on ERROR_CHANNEL are not a bug — each `isFromConsumer` /
+ * `containsKey(SCST_BIND_NAME)` guard performs routing.
  *
  * @author paul
  * @author K
@@ -48,7 +50,7 @@ class StreamGlobalExceptionHandler {
     private lateinit var streamExceptionService: ISysMqFailMsgService
 
     /**
-     * 监听全局异常消息
+     * Listens for global exception messages.
      *
      * @param errorMessage
      */
@@ -60,7 +62,7 @@ class StreamGlobalExceptionHandler {
             val message = handlingException.failedMessage ?: return
             val headers = message.headers
             if (!isFromConsumer(headers)) return
-            LOG.warn("收到stream异常消息,开始持久化...")
+            LOG.warn("Received stream exception message, starting persistence...")
             val body = SerializationKit.deserialize(message.getPayload() as ByteArray)
 
             val exceptionMsg = SysMqFailMsg().apply {
@@ -70,21 +72,23 @@ class StreamGlobalExceptionHandler {
                 createTime = LocalDateTime.now()
             }
             val success = streamExceptionService.save(exceptionMsg)
-            LOG.info("stream异常消息持久化结果:{0},id:{1}", success, headers.id)
+            LOG.info("Stream exception message persistence result: {0}, id: {1}", success, headers.id)
         } catch (e: Exception) {
-            LOG.error(e, "stream异常消息持久化失败")
+            LOG.error(e, "Failed to persist stream exception message")
         }
     }
 
     /**
-     * Producer 端异常分支：消费者端异常被 [globalHandleError] 拦下，剩余的 producer 端
-     * 异常被本方法捕获后委托给 [doRealChannelErrorHandle]。
+     * Producer-side exception branch: consumer-side exceptions are intercepted by
+     * [globalHandleError]; remaining producer-side exceptions are caught here and
+     * delegated to [doRealChannelErrorHandle].
      *
-     * 两个 listener 同绑 ERROR_CHANNEL 看起来重复，但由各自的 [isFromConsumer]
-     * / `containsKey(SCST_BIND_NAME)` 守卫做了路由——重复挂监听是为了让 producer
-     * 异常也能进入持久化路径，否则只会 print stack 然后丢失。
+     * The two listeners bound to ERROR_CHANNEL look redundant, but each
+     * [isFromConsumer] / `containsKey(SCST_BIND_NAME)` guard performs routing — the
+     * duplicate listener is required so that producer exceptions also enter the
+     * persistence path; otherwise they would only print the stack and be lost.
      *
-     * @param errorMessage spring-integration 派发过来的 [ErrorMessage]
+     * @param errorMessage the [ErrorMessage] dispatched by spring-integration
      * @author K
      * @since 1.0.0
      */
@@ -94,11 +98,12 @@ class StreamGlobalExceptionHandler {
     }
 
     /**
-     * 同步发送失败的 producer 异常分支：[IStreamFailHandler.CHANNEL_BEN_NAME]
-     * （即 `mqProducerChannel`）专门给 `StreamProducerHelper.doRealSend` 同步发送失败时
-     * 主动 push 的错误消息使用。
+     * Producer exception branch for synchronous send failures:
+     * [IStreamFailHandler.CHANNEL_BEN_NAME] (i.e. `mqProducerChannel`) is dedicated
+     * to error messages actively pushed by `StreamProducerHelper.doRealSend` when a
+     * synchronous send fails.
      *
-     * @param errorMessage 主动塞过来的 [ErrorMessage]
+     * @param errorMessage the actively pushed [ErrorMessage]
      * @author K
      * @since 1.0.0
      */
@@ -108,14 +113,16 @@ class StreamGlobalExceptionHandler {
     }
 
     /**
-     * 通过 header 前缀判定该消息是否来自 consumer 端。
+     * Determines whether a message originates from the consumer side via header prefixes.
      *
-     * Spring Cloud Stream 各 binder 都会把内置元数据写到 `kafka_*` / `amqp_*` / `rocket_*` 头里，
-     * 只要消息含其一就视为消费侧异常。比对前显式 `Locale.ROOT` 是为了避免 Turkish locale
-     * `i → İ` 大小写映射把 `"kafka_*"` 误判为不匹配。
+     * Each Spring Cloud Stream binder writes built-in metadata into headers prefixed
+     * with `kafka_*` / `amqp_*` / `rocket_*`; presence of any one of them is treated
+     * as a consumer-side exception. Explicit `Locale.ROOT` before comparison avoids
+     * the Turkish locale `i → İ` case-mapping mistakenly treating `"kafka_*"` as a
+     * non-match.
      *
-     * @param headers 待检查的消息头
-     * @return true 表示来自 consumer
+     * @param headers message headers to inspect
+     * @return true if the message comes from a consumer
      * @author K
      * @since 1.0.0
      */
@@ -126,11 +133,13 @@ class StreamGlobalExceptionHandler {
         }
 
     /**
-     * 实际处理 producer 异常：尽量取出失败前的原始 Message 再交给 [processProducerError]。
-     * 优先取 [MessageHandlingException.failedMessage]；它为空时退回 `errorMessage.originalMessage`，
-     * 兼容不同 binder 在异常路径上传递消息的差异。
+     * Actual handling of a producer exception: tries to obtain the original Message
+     * prior to failure and hands it to [processProducerError]. Prefers
+     * [MessageHandlingException.failedMessage]; falls back to
+     * `errorMessage.originalMessage` when null, to accommodate differences in how
+     * binders propagate messages along the error path.
      *
-     * @param errorMessage 进入 error channel 的错误消息
+     * @param errorMessage the error message arriving on the error channel
      * @author K
      * @since 1.0.0
      */
@@ -141,29 +150,32 @@ class StreamGlobalExceptionHandler {
                 ?: return
             processProducerError(message)
         } catch (e: Exception) {
-            LOG.error(e, "文件持久化失败！")
+            LOG.error(e, "File persistence failed!")
         }
     }
 
     /**
-     * 真正处理 producer 端失败：
-     * 1. 再次 `isFromConsumer` 防御，避免兼容历史路由时把消费端异常误进 producer 分支；
-     * 2. 没有 `SCST_BIND_NAME` 头就忽略——没绑定信息无法定位到具体 fail handler；
-     * 3. 反序列化 payload 为 [StreamMessageVo] 后构造 [StreamProducerMsgVo]，
-     *    交给 [StreamFailHandlerItem] 注册的对应 handler 持久化。
+     * Actual handling of producer-side failure:
+     * 1. Defensive `isFromConsumer` re-check to avoid misrouting consumer-side
+     *    exceptions into the producer branch under legacy routing compatibility.
+     * 2. Ignore when the `SCST_BIND_NAME` header is missing — without binding info
+     *    we cannot locate the specific fail handler.
+     * 3. Deserialize the payload as [StreamMessageVo], build a [StreamProducerMsgVo],
+     *    and hand it to the handler registered with [StreamFailHandlerItem] for
+     *    persistence.
      *
-     * @param message 失败消息
+     * @param message the failed message
      * @author K
      * @since 1.0.0
      */
     private fun processProducerError(message: Message<*>) {
-        //比较恶心的兼容全局异常问题。
+        // Awkward but necessary compatibility for the global exception issue.
         if (isFromConsumer(message.headers)) return
         if (!message.headers.containsKey(StreamHeader.SCST_BIND_NAME)) {
-            LOG.debug("找不到异常的绑定信息，忽略...")
+            LOG.debug("No binding info found for the exception, ignoring...")
             return
         }
-        LOG.warn("收到stream异常消息,开始持久化...")
+        LOG.warn("Received stream exception message, starting persistence...")
         val headers = message.headers
         val body = SerializationKit.deserialize(message.getPayload() as ByteArray) as? StreamMessageVo<*>
             ?: return
@@ -177,7 +189,7 @@ class StreamGlobalExceptionHandler {
         StreamFailHandlerItem.get(bindName)?.persistFailedData(producerMsgVo)
     }
 
-    /** 日志器 */
+    /** Logger */
     private val LOG = LogFactory.getLog(this::class)
 
 }

@@ -1,7 +1,7 @@
 package io.kudos.ability.web.springmvc.support.enums
 
 /**
- * springboot所支持的内嵌servlet容器枚举
+ * Enum of embedded servlet containers supported by Spring Boot.
  *
  * @author K
  * @author AI: Codex
@@ -10,5 +10,5 @@ package io.kudos.ability.web.springmvc.support.enums
 enum class ServletServerEnum {
     TOMCAT,
     JETTY,
-//    UNDERTOW  // 不支持servlet6.1,被springboot4排除支持
+//    UNDERTOW  // Does not support servlet 6.1; excluded by Spring Boot 4
 }

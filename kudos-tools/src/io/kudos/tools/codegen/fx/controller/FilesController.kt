@@ -18,42 +18,44 @@ import java.net.URL
 import java.util.ResourceBundle
 
 /**
- * 生成的文件选择界面JavaFx控制器
+ * JavaFX controller for the generated-file selection UI.
  *
  * @author K
  * @since 1.0.0
  */
 class FilesController : Initializable {
 
-    /** 待生成文件列表 TableView，绑定 [GenFile] 列表 */
+    /** TableView listing files to be generated, bound to a list of [GenFile] */
     @FXML
     lateinit var fileTable: TableView<GenFile>
 
-    /** 当次生成使用的模板填充模型；首次 generate 时按需创建 */
+    /** Template fill model used in the current generation pass; created on demand on first generate */
     private lateinit var templateModel: Map<String, Any?>
 
-    /** "仅勾选表相关文件"复选框，避免误触发覆盖无关文件 */
+    /** "Only select entity-related files" checkbox, to avoid accidentally overwriting unrelated files */
     @FXML
     private lateinit var selectEntityRelativeFilesCheckBox: CheckBox
 
-    /** [selectEntityRelativeFilesCheckBox] 的支撑属性，供外部代码（wizard）以编程方式改写 */
+    /** Backing property for [selectEntityRelativeFilesCheckBox]; lets external code (the wizard) toggle it programmatically */
     val selectEntityRelativeFilesProperty = SimpleBooleanProperty()
 
     /**
-     * 把"仅勾选表相关文件"复选框与支撑属性绑定。
-     * 默认勾选状态由 wizard 在进入本页时显式赋值，避免本控制器和上层 UI 各自定义默认值冲突。
+     * Binds the "only entity-related files" checkbox to its backing property.
+     * The default check state is set explicitly by the wizard on page entry, to avoid this controller
+     * and the upper-level UI each defining conflicting defaults.
      *
      * @author K
      * @since 1.0.0
      */
     override fun initialize(location: URL?, resources: ResourceBundle?) {
-        // 双向绑定
+        // bidirectional binding
         selectEntityRelativeFilesCheckBox.selectedProperty().bindBidirectional(selectEntityRelativeFilesProperty)
     }
 
     /**
-     * 读取本次会生成的所有文件，按"上次生成过的同名文件"自动勾选——重复生成时默认只刷新历史已有文件，
-     * 减少误覆盖。
+     * Reads every file that will be generated this run and auto-selects ones matching previously-generated
+     * file names. On repeat generations this defaults to refreshing only files that already exist,
+     * reducing accidental overwrites.
      *
      * @author K
      * @since 1.0.0
@@ -68,8 +70,9 @@ class FilesController : Initializable {
     }
 
     /**
-     * "生成"按钮回调；按勾选项调 [CodeGenerator]，弹 Alert 反馈成败。
-     * 没勾选任何文件时早退给出错误提示，避免空操作。
+     * Callback for the "Generate" button; invokes [CodeGenerator] with the selected files and
+     * shows an Alert with the outcome. Early-returns with an error alert when nothing is selected,
+     * to avoid a no-op run.
      *
      * @author K
      * @since 1.0.0
@@ -79,7 +82,7 @@ class FilesController : Initializable {
     fun generate() {
         val filePathModel = createFilePathModel()
         if (filePathModel.isEmpty()) {
-            Alert(Alert.AlertType.ERROR, "未选择任何文件！").show()
+            Alert(Alert.AlertType.ERROR, "No files selected!").show()
             return
         }
 
@@ -87,17 +90,18 @@ class FilesController : Initializable {
             templateModel = CodeGeneratorContext.templateModelCreator.create()
             CodeGenerator(templateModel, filePathModel).generate()
             Alert(
-                Alert.AlertType.INFORMATION, "生成成功，请查看目录：${CodeGeneratorContext.config.getCodeLoaction()}".trimIndent()
+                Alert.AlertType.INFORMATION, "Generation succeeded, see directory: ${CodeGeneratorContext.config.getCodeLoaction()}".trimIndent()
             ).show()
         } catch (e: Exception) {
             e.printStackTrace()
-            Alert(Alert.AlertType.ERROR, "生成失败！").show()
+            Alert(Alert.AlertType.ERROR, "Generation failed!").show()
         }
     }
 
     /**
-     * "全部生成"按钮回调；强制取消"仅勾选表相关"开关、勾全所有文件、直接跑生成。
-     * 关闭"仅表相关"是为了避免随后再 [generate] 时被该过滤逻辑反向取消勾选。
+     * Callback for the "Generate All" button; forces the "only entity-related" toggle off,
+     * checks every file, and runs generation. The toggle is disabled so that a subsequent
+     * [generate] call does not have its selection inverted by that filter.
      *
      * @author K
      * @since 1.0.0
@@ -110,18 +114,18 @@ class FilesController : Initializable {
     }
 
     /**
-     * 把 UI 表格里勾选了 generate 的项摘出来，作为 [CodeGenerator] 的入参。
+     * Extracts the entries marked for generation in the UI table to pass into [CodeGenerator].
      *
-     * @return 勾选了"生成"的文件列表
+     * @return list of files whose "generate" flag is checked
      * @author K
      * @since 1.0.0
      */
     private fun createFilePathModel(): List<GenFile> = fileTable.items.filter { it.getGenerate() }
 
     /**
-     * 表头"全选/全不选"复选框回调；批量同步所有 [GenFile.setGenerate]。
+     * Header "select-all / select-none" checkbox callback; batch-syncs every [GenFile.setGenerate].
      *
-     * @param e 触发事件
+     * @param e source event
      * @author K
      * @since 1.0.0
      */
@@ -132,11 +136,12 @@ class FilesController : Initializable {
     }
 
     /**
-     * "仅勾选表相关文件"复选框回调，也可在 wizard 进入页面时编程触发。
-     * 勾选：只把模板路径或正文里出现 `${entityName}` 的文件标记为生成；
-     * 取消勾选：把所有 generate 设为 false（让用户自行手选）。
+     * Callback for the "only select entity-related files" checkbox; may also be triggered
+     * programmatically when the wizard enters this page.
+     * Checked: only files whose template path or body contains `${entityName}` are marked for generation.
+     * Unchecked: sets all generate flags to false (the user has to pick manually).
      *
-     * @param e 触发事件，编程调用时可传 null
+     * @param e source event; may be null when invoked programmatically
      * @author K
      * @since 1.0.0
      */
@@ -154,11 +159,12 @@ class FilesController : Initializable {
     }
 
     /**
-     * 判断字符串中是否包含 `${entityName}` 占位符，作为"实体相关"的判定条件。
-     * 与 [TemplatePathProcessor.isEntityRelative] 同义但作用域独立，避免跨模块循环依赖。
+     * Tests whether a string contains the `${entityName}` placeholder, used as the "entity-related"
+     * criterion. Equivalent to [TemplatePathProcessor.isEntityRelative] but scoped locally to avoid
+     * cross-module circular dependency.
      *
-     * @param content 待检测的字符串
-     * @return true 表示文本中引用了实体名占位符
+     * @param content string to test
+     * @return true if the text references the entity-name placeholder
      * @author K
      * @since 1.0.0
      */

@@ -16,7 +16,7 @@ import kotlin.test.assertTrue
 /**
  * junit test for SysParamService
  *
- * 测试数据来源：`SysParamServiceTest.sql`
+ * Test data source: `SysParamServiceTest.sql`
  *
  * @author K
  * @author AI: Cursor
@@ -35,7 +35,7 @@ class SysParamServiceTest : RdbAndRedisCacheTestBase() {
     private val atomicServiceCode = "svc-module-param-test-1"
     private val paramName = "svc-param-name-1"
 
-    /** 按主键 `get(id)` 取实体。 */
+    /** Fetch entity via primary-key `get(id)`. */
     @Test
     fun get_byId_entity() {
         val row = sysParamService.get(seededId)
@@ -43,7 +43,7 @@ class SysParamServiceTest : RdbAndRedisCacheTestBase() {
         assertEquals(seededId, row.id)
     }
 
-    /** `get(id, SysParamCacheEntry::class)` 按主键映射缓存载体（含未启用记录；与模块名缓存语义不同）。 */
+    /** `get(id, SysParamCacheEntry::class)` returns the cache VO by primary key (includes inactive rows; differs from the by-module-name cache). */
     @Test
     fun get_withCacheEntryReturnType_usesDao() {
         val entry = sysParamService.get(seededId, SysParamCacheEntry::class)
@@ -52,7 +52,7 @@ class SysParamServiceTest : RdbAndRedisCacheTestBase() {
         assertEquals(paramName, entry.paramName)
     }
 
-    /** 模块 + 参数名从 SYS_PARAM_BY_MODULE_AND_NAME 读取启用参数。 */
+    /** Read active parameters from SYS_PARAM_BY_MODULE_AND_NAME by module + parameter name. */
     @Test
     fun getParamFromCache_byModuleAndName() {
         paramByModuleAndNameCache.reloadAll(clear = true)
@@ -61,7 +61,7 @@ class SysParamServiceTest : RdbAndRedisCacheTestBase() {
         assertEquals(seededId, cacheItem.id)
     }
 
-    /** 启用行下，按 id 的 [SysParamCacheEntry] 与按模块缓存项主键一致。 */
+    /** For active rows, the by-id [SysParamCacheEntry] has the same primary key as the by-module cache entry. */
     @Test
     fun getParamFromCache_matchesGetByIdForActiveRow() {
         paramByModuleAndNameCache.reloadAll(clear = true)
@@ -72,14 +72,14 @@ class SysParamServiceTest : RdbAndRedisCacheTestBase() {
         assertEquals(byId.id, byKey.id)
     }
 
-    /** 按原子服务编码查库列表行。 */
+    /** Query DB list rows by atomic service code. */
     @Test
     fun getParamsByAtomicServiceCode() {
         val params = sysParamService.getParamsByAtomicServiceCode(atomicServiceCode)
         assertTrue(params.any { it.paramName == paramName })
     }
 
-    /** 参数取值链：paramValue、defaultValue、入参默认值。 */
+    /** Parameter value chain: paramValue, defaultValue, then the call-site default. */
     @Test
     fun getParamValueFromCache() {
         paramByModuleAndNameCache.reloadAll(clear = true)
@@ -90,7 +90,7 @@ class SysParamServiceTest : RdbAndRedisCacheTestBase() {
         assertEquals("default", defaultValue)
     }
 
-    /** 停用后按模块缓存应取不到；恢复启用后可再命中。 */
+    /** After disabling, the by-module cache should miss; after re-enabling, it should hit again. */
     @Test
     fun updateActive_syncsModuleNameCache() {
         paramByModuleAndNameCache.reloadAll(clear = true)
@@ -105,13 +105,13 @@ class SysParamServiceTest : RdbAndRedisCacheTestBase() {
         assertNotNull(sysParamService.getParamFromCache(atomicServiceCode, paramName))
     }
 
-    /** 主键不存在时 `updateActive` 返回 false。 */
+    /** `updateActive` returns false when the primary key does not exist. */
     @Test
     fun updateActive_whenIdNotExists_returnsFalse() {
         assertFalse(sysParamService.updateActive("00000000-0000-0000-0000-000000000001", true))
     }
 
-    /** 主键不存在时 `deleteById` 返回 false。 */
+    /** `deleteById` returns false when the primary key does not exist. */
     @Test
     fun deleteById_returnsFalseWhenRowMissing() {
         assertFalse(sysParamService.deleteById("00000000-0000-0000-0000-000000000001"))

@@ -9,7 +9,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * [RedisConnectFactory] 客户端连接配置的单元测试。
+ * Unit tests for [RedisConnectFactory] client connection configuration.
  *
  * @author K
  * @author AI: Codex

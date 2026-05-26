@@ -21,11 +21,11 @@ import java.time.LocalDateTime
 import kotlin.reflect.full.superclasses
 
 /**
- * 基础数据访问对象，封装某数据库表的通用操作
+ * Base data access object that encapsulates common operations for a database table.
  *
- * @param PK 实体主键类型
- * @param E 实体类型
- * @param T 数据库表-实体关联对象的类型
+ * @param PK entity primary key type
+ * @param E entity type
+ * @param T database table-entity association type
  * @author K
  * @author AI: Codex
  * @since 1.0.0
@@ -42,20 +42,22 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
         val entity = if (any is IDbEntity<*, *>) {
             any
         } else {
-            val entityClass = requireNotNull(table().entityClass) { "表未绑定实体类型，无法创建实体实例。" }
+            val entityClass = requireNotNull(table().entityClass) { "Table has no bound entity type; cannot create entity instance." }
             val entity = Entity.create(entityClass)
             BeanKit.copyProperties(any, entity)
             entity
         } as E
         val idPropName = getPkColumn().name.underscoreToHump()
-        // 用户在实体里显式设过 id 时按用户值插入（兼容非自增主键，如 string/uuid 或预先生成的 int）；
-        // 未设时则排除 id 让 DB 自增。Ktorm Entity.properties 只在 setter 被调用过时收录该 key。
+        // When the user has explicitly set id on the entity, insert with that value (supports non-auto-increment
+        // primary keys such as string/uuid or pre-generated ints); otherwise exclude id so the DB auto-increments.
+        // Ktorm Entity.properties only records a key after its setter has been invoked.
         val id = if (entity.properties.containsKey(idPropName)) {
             insertOnly(entity, *entity.properties.keys.toTypedArray())
         } else {
             insertExclude(entity, idPropName)
         }
-        // 按主键列对应的实体属性名回写，避免 Ktorm 代理下通过 entity.id 触发 interface 的 default setId 导致 IllegalStateException（如 SysSystem.id 委托给 code）
+        // Write back via the entity property name corresponding to the PK column to avoid triggering the interface's
+        // default setId through entity.id under Ktorm's proxy, which can throw IllegalStateException (e.g. SysSystem.id delegates to code).
         BeanKit.setProperty(entity, idPropName, id)
         return id
     }
@@ -92,7 +94,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
                             val propMap = BeanKit.extract(insertPayload)
                             for ((name, value) in propMap) {
                                 if (name in propertyNames) {
-                                    val column = requireNotNull(columnMap[name]) { "未找到属性[$name]对应的数据库列。" }
+                                    val column = requireNotNull(columnMap[name]) { "No database column found for property [$name]." }
                                     set(column, value)
                                 }
                             }
@@ -114,7 +116,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
                     item {
                         for ((name, value) in entity.properties) {
                             if (name in propertyNames) {
-                                val column = requireNotNull(columnMap[name]) { "未找到属性[$name]对应的数据库列。" }
+                                val column = requireNotNull(columnMap[name]) { "No database column found for property [$name]." }
                                 set(column, value)
                             }
                         }
@@ -144,7 +146,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
             setDefault(any as E)
             entitySequence().update(any) == 1
         } else {
-            val entityClass = requireNotNull(table().entityClass) { "表未绑定实体类型，无法创建实体实例。" }
+            val entityClass = requireNotNull(table().entityClass) { "Table has no bound entity type; cannot create entity instance." }
             val entity = Entity.create(entityClass)
             BeanKit.copyProperties(any, entity)
             setDefault(entity as E)
@@ -153,7 +155,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
     }
 
     override fun updateWhen(entity: E, criteria: Criteria): Boolean {
-        require(!criteria.isEmpty()) { "有条件的更新实体对象时，查询条件不能为空！" }
+        require(!criteria.isEmpty()) { "Conditional entity update requires a non-empty query criteria!" }
         setDefault(entity)
         return updateByCriteria(entity.id, entity.properties, criteria)
     }
@@ -165,7 +167,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
         val columnMap = ColumnHelper.columnOf(table(), *propertyNames)
         return database().update(table()) {
             props.forEach { (name, value) ->
-                val column = requireNotNull(columnMap[name]) { "未找到属性[$name]对应的数据库列。" }
+                val column = requireNotNull(columnMap[name]) { "No database column found for property [$name]." }
                 set(column, value)
             }
             where { getPkColumn() eq id }
@@ -173,7 +175,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
     }
 
     override fun updatePropertiesWhen(id: PK, properties: Map<String, *>, criteria: Criteria): Boolean {
-        require(!criteria.isEmpty()) { "有条件的更新实体对象时，查询条件不能为空！" }
+        require(!criteria.isEmpty()) { "Conditional entity update requires a non-empty query criteria!" }
         return updateByCriteria(id, properties, criteria)
     }
 
@@ -183,7 +185,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
     }
 
     override fun updateOnlyWhen(entity: E, criteria: Criteria, vararg propertyNames: String): Boolean {
-        require(!criteria.isEmpty()) { "有条件的更新实体对象时，查询条件不能为空！" }
+        require(!criteria.isEmpty()) { "Conditional entity update requires a non-empty query criteria!" }
         val properties = entity.properties.filter { it.key in propertyNames }
         return updateByCriteria(entity.id, properties, criteria)
     }
@@ -198,7 +200,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
         criteria: Criteria,
         vararg excludePropertyNames: String
     ): Boolean {
-        require(!criteria.isEmpty()) { "有条件的更新实体对象时，查询条件不能为空！" }
+        require(!criteria.isEmpty()) { "Conditional entity update requires a non-empty query criteria!" }
         val properties = entity.properties.filter { it.key !in excludePropertyNames }
         return updateByCriteria(entity.id, properties, criteria)
     }
@@ -208,7 +210,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
     }
 
     override fun batchUpdateWhen(entities: Collection<E>, criteria: Criteria, countOfEachBatch: Int): Int {
-        require(!criteria.isEmpty()) { "批量更新实体对象时，查询条件不能为空！" }
+        require(!criteria.isEmpty()) { "Batch entity update requires a non-empty query criteria!" }
         return batchUpdateByCriteria(entities, countOfEachBatch, criteria)
     }
 
@@ -217,16 +219,16 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
     }
 
     /**
-     * 有条件的批量更新指定属性
-     * 更新规则见 @see UpdatePayload 类，查询规则见 @see SearchPayload
+     * Conditional batch update of the specified properties.
+     * For update rules see @see UpdatePayload, for query rules see @see SearchPayload.
      *
-     * 同一属性的查询逻辑在 updatePayload.searchPayload 和 whereConditionFactory 都有指定时，以 whereConditionFactory 为准！
+     * When the query logic for the same property is specified in both updatePayload.searchPayload and whereConditionFactory, whereConditionFactory takes precedence!
      *
-     * @param S 查询项载体类型
-     * @param updatePayload 更新项载体，当 whereConditionFactory 为null时，updatePayload.searchPayload不能为null。updatePayload.searchPayload为null时，条件间的查询逻辑为AND
-     * @param whereConditionFactory where条件表达式工厂函数，可对updatePayload.searchPayload的项定义操作符，也可完全自定义查询逻辑，函数返回null时将按“等于”操作处理updatePayload.searchPayload的项。该参数为null时，updatePayload.searchPayload 必须指定，默认为null
-     * @return 更新的记录数
-     * @throws IllegalArgumentException 无查询条件时
+     * @param S search payload type
+     * @param updatePayload update payload; when whereConditionFactory is null, updatePayload.searchPayload must not be null. When updatePayload.searchPayload is null, the inter-condition logic is AND.
+     * @param whereConditionFactory factory function for where expressions; can define operators on items of updatePayload.searchPayload or fully customize the query logic. When the function returns null, items of updatePayload.searchPayload are treated as "equals". When this parameter is null, updatePayload.searchPayload must be specified; defaults to null.
+     * @return number of updated records
+     * @throws IllegalArgumentException when no query criteria is supplied
      * @author K
      * @since 1.0.0
      */
@@ -261,12 +263,12 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
         val updateColumnMap = ColumnHelper.columnOf(table(), *updatePropertyMap.keys.toTypedArray())
         val andOr = searchPayload?.getAndOr() ?: AndOrEnum.AND
         val whereExpression = processWhere(wherePropertyMap, andOr, true, whereConditionFactory)
-        whereExpression ?: throw IllegalArgumentException("不能做无条件的数据库表的更新操作！")
+        whereExpression ?: throw IllegalArgumentException("Unconditional database table update is not allowed!")
 
         return database().batchUpdate(table()) {
             item {
                 updatePropertyMap.forEach { (name, value) ->
-                    val column = requireNotNull(updateColumnMap[name]) { "未找到属性[$name]对应的数据库列。" }
+                    val column = requireNotNull(updateColumnMap[name]) { "No database column found for property [$name]." }
                     set(column, value)
                 }
                 where {
@@ -277,8 +279,8 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
     }
 
     override fun batchUpdateProperties(criteria: Criteria, properties: Map<String, *>): Int {
-        require(properties.isNotEmpty()) { "未指定要更新的属性Map！" }
-        require(!criteria.isEmpty()) { "批量更新实体对象时，查询条件不能为空！" }
+        require(properties.isNotEmpty()) { "The property map to update is not specified!" }
+        require(!criteria.isEmpty()) { "Batch entity update requires a non-empty query criteria!" }
 
         val props = properties.toMutableMap()
         setDefault(props)
@@ -287,7 +289,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
         return database().batchUpdate(table()) {
             item {
                 props.forEach { (name, value) ->
-                    val column = requireNotNull(columnMap[name]) { "未找到属性[$name]对应的数据库列。" }
+                    val column = requireNotNull(columnMap[name]) { "No database column found for property [$name]." }
                     set(column, value)
                 }
                 where { whereExpression }
@@ -302,7 +304,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
     override fun batchUpdateOnlyWhen(
         entities: Collection<E>, criteria: Criteria, countOfEachBatch: Int, vararg propertyNames: String
     ): Int {
-        require(!criteria.isEmpty()) { "批量更新实体对象时，查询条件不能为空！" }
+        require(!criteria.isEmpty()) { "Batch entity update requires a non-empty query criteria!" }
         return batchUpdateByCriteria(entities, countOfEachBatch, criteria, false, *propertyNames)
     }
 
@@ -315,7 +317,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
     override fun batchUpdateExcludePropertiesWhen(
         entities: Collection<E>, criteria: Criteria, countOfEachBatch: Int, vararg excludePropertyNames: String
     ): Int {
-        require(!criteria.isEmpty()) { "有条件的批量更新实体对象时，查询条件不能为空！" }
+        require(!criteria.isEmpty()) { "Conditional batch entity update requires a non-empty query criteria!" }
         return batchUpdateByCriteria(entities, countOfEachBatch, criteria, true, *excludePropertyNames)
     }
 
@@ -325,9 +327,10 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
     //region Delete
 
     override fun deleteById(id: PK): Boolean {
-        // Ktorm 实体未给 id 赋值时，其代理在非空主键属性上返回 `java.lang.Object` 占位符
-        // 而非抛错；这里先按支持的主键类型守住，避免下游绑参时降级为 ClassCastException。
-        check(id is String || id is Int || id is Long) { "不支持的主键类型【${id::class}】" }
+        // When a Ktorm entity has no id assigned, its proxy returns a `java.lang.Object` placeholder
+        // on the non-null PK property rather than throwing; guard by supported PK types here to avoid
+        // a downstream ClassCastException when binding parameters.
+        check(id is String || id is Int || id is Long) { "Unsupported primary key type [${id::class}]" }
         val count = entitySequence().removeIf { getPkColumn() eq id }
         return count == 1
     }
@@ -337,13 +340,13 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
     }
 
     override fun batchDelete(ids: Collection<PK>): Int {
-        require(!ids.isEmpty()) { "批量删除实体对象时，主键集合不能为空！" }
+        require(!ids.isEmpty()) { "Batch entity delete requires a non-empty primary key collection!" }
         val criteria = Criteria.of(IDbEntity<PK, E>::id.name, OperatorEnum.IN, ids.toList())
         return entitySequence().removeIf { CriteriaConverter.convert(criteria, table()) }
     }
 
     override fun batchDeleteCriteria(criteria: Criteria): Int {
-        require(!criteria.isEmpty()) { "批量删除实体对象时，查询条件不能为空！" }
+        require(!criteria.isEmpty()) { "Batch entity delete requires a non-empty query criteria!" }
         return entitySequence().removeIf { CriteriaConverter.convert(criteria, table()) }
     }
 
@@ -352,14 +355,14 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
     }
 
     /**
-     * 批量删除指定条件的实体对象
+     * Batch delete entities that match the given criteria.
      *
-     * 同一属性的查询逻辑在 listSearchPayload 和 whereConditionFactory 都有指定时，以 whereConditionFactory 为准！
+     * When the query logic for the same property is specified in both listSearchPayload and whereConditionFactory, whereConditionFactory takes precedence!
      *
-     * @param searchPayload 查询项载体，为null时 whereConditionFactory 必须指定，此时条件间的查询逻辑为AND，默认为null
-     * @param whereConditionFactory where条件表达式工厂函数，可对searchPayload的项定义操作符，也可完全自定义查询逻辑，函数返回null时将按“等于”操作处理searchPayload的项。该参数为null时，searchPayload 必须指定，默认为null
-     * @return 删除的记录数
-     * @throws IllegalArgumentException 无查询条件时
+     * @param searchPayload search payload; when null, whereConditionFactory must be specified and the inter-condition logic is AND; defaults to null
+     * @param whereConditionFactory factory function for where expressions; can define operators on items of searchPayload or fully customize the query logic. When the function returns null, items of searchPayload are treated as "equals". When this parameter is null, searchPayload must be specified; defaults to null
+     * @return number of deleted records
+     * @throws IllegalArgumentException when no query criteria is supplied
      * @author K
      * @since 1.0.0
      */
@@ -376,21 +379,21 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
 
         val andOr = searchPayload?.getAndOr() ?: AndOrEnum.AND
         val whereExpression = processWhere(wherePropertyMap, andOr, true, whereConditionFactory)
-        whereExpression ?: throw IllegalArgumentException("不能做无条件的数据库表的删除操作！")
+        whereExpression ?: throw IllegalArgumentException("Unconditional database table delete is not allowed!")
         return entitySequence().removeIf { whereExpression }
     }
 
     //endregion Delete
 
     private fun updateByCriteria(id: PK?, propertyMap: Map<String, *>, criteria: Criteria?): Boolean {
-        require(id != null) { "更新操作时，数据库实体主键不能为空！" }
+        require(id != null) { "Database entity primary key must not be null on update operations!" }
         val props = propertyMap.toMutableMap()
         setDefault(props)
         val propertyNames = props.keys.toTypedArray()
         val columnMap = ColumnHelper.columnOf(table(), *propertyNames)
         return database().update(table()) {
             props.filter { it.key != IDbEntity<PK, E>::id.name }.forEach { (name, value) ->
-                val column = requireNotNull(columnMap[name]) { "未找到属性[$name]对应的数据库列。" }
+                val column = requireNotNull(columnMap[name]) { "No database column found for property [$name]." }
                 set(column, value)
             }
             where {
@@ -408,7 +411,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
         exclude: Boolean = false,
         vararg propertyNames: String = emptyArray()
     ): Int {
-        require(entities.isNotEmpty()) { "实体集合参数不能为空集合！" }
+        require(entities.isNotEmpty()) { "Entity collection argument must not be empty!" }
         var totalCount = 0
         entities.forEach { setDefault(it) }
         var columnMap = ColumnHelper.columnOf(table(), *entities.first().properties.keys.toTypedArray())
@@ -426,7 +429,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
                     item {
                         entity.properties.filter { it.key != IDbEntity<PK, E>::id.name }.forEach { (name, value) ->
                             if (columnMap.containsKey(name)) {
-                                val column = requireNotNull(columnMap[name]) { "未找到属性[$name]对应的数据库列。" }
+                                val column = requireNotNull(columnMap[name]) { "No database column found for property [$name]." }
                                 set(column, value)
                             }
                         }
@@ -444,9 +447,9 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
     }
 
     /**
-     * 设置要自动更新的字段
+     * Set the fields that are auto-updated.
      *
-     * @param e 数据库表实体
+     * @param e database table entity
      */
     private fun setDefault(e: E) {
         if (e is IAuditable && e.updateTime == null) {
@@ -455,9 +458,9 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
     }
 
     /**
-     * 设置要自动更新的字段
+     * Set the fields that are auto-updated.
      *
-     * @param properties Map(属性名，属性值)
+     * @param properties Map(property name, property value)
      */
     private fun setDefault(properties: MutableMap<String, Any?>) {
         val key = IAuditable::updateTime.name

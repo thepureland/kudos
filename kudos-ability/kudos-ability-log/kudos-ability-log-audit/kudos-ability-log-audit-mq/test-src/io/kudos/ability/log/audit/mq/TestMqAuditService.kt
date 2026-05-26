@@ -6,7 +6,7 @@ import io.kudos.base.model.contract.entity.IIdEntity
 import org.springframework.stereotype.Component
 
 /**
- * 审计 MQ 测试用业务服务。
+ * Business service used by the audit MQ tests.
  *
  * @author K
  * @author AI: Codex
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component
 @Component
 open class TestMqAuditService {
 
-    @Audit(opType = OperationTypeEnum.CREATE, moduleCode = "AAA：sys_module表的code")
+    @Audit(opType = OperationTypeEnum.CREATE, moduleCode = "AAA: code of the sys_module table")
     open fun saveLog() {
         println(1111)
     }
@@ -25,7 +25,7 @@ open class TestMqAuditService {
     }
 
     /**
-     * 测试用保存模型。
+     * Save model used for testing.
      *
      * @author K
      * @author AI: Codex

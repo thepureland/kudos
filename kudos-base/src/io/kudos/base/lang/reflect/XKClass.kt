@@ -6,7 +6,7 @@ import kotlin.reflect.full.*
 import kotlin.reflect.jvm.jvmErasure
 
 /**
- * kotlin.KClass扩展函数
+ * kotlin.KClass extension functions.
  *
  * @author K
  * @since 1.0.0
@@ -14,28 +14,28 @@ import kotlin.reflect.jvm.jvmErasure
 
 
 /**
- * 返回空构造器，如果没有返回null
+ * Return the no-arg constructor, or null if it does not exist.
  *
- * @param T 当前类型
- * @return 空构造器
+ * @param T the current type
+ * @return the no-arg constructor
  * @author K
  * @since 1.0.0
  */
 fun <T : Any> KClass<T>.getEmptyConstructor(): KFunction<T>? = constructors.firstOrNull { it.parameters.isEmpty() }
 
 /**
- * 实例化类
+ * Instantiate the class.
  *
- * @param T 当前类型
- * @param args 构造函数参数可变数组
- * @return 类对象
+ * @param T the current type
+ * @param args varargs of constructor arguments
+ * @return the class instance
  * @author K
  * @since 1.0.0
  */
 fun <T : Any> KClass<T>.newInstance(vararg args: Any?): T {
-    require(!isAbstract) { "抽象类 $simpleName 无法被实例化" }
-    require(!isCompanion) { "Companion 对象 $simpleName 无法被实例化" }
-    // 寻找参数数量和类型都匹配的构造函数
+    require(!isAbstract) { "Abstract class $simpleName cannot be instantiated" }
+    require(!isCompanion) { "Companion object $simpleName cannot be instantiated" }
+    // Find a constructor whose parameter count and types match
     val ctor = constructors.firstOrNull { ctor ->
         ctor.parameters.size == args.size &&
             ctor.parameters.zip(args.toList()).all { (param, arg) ->
@@ -45,53 +45,53 @@ fun <T : Any> KClass<T>.newInstance(vararg args: Any?): T {
                 }
             }
     } ?: throw IllegalArgumentException(
-        "无法实例化 $simpleName：未找到参数类型与 ${args.map { it?.let { a -> a::class.simpleName } ?: "null" }} 匹配的构造函数"
+        "Cannot instantiate $simpleName: no constructor found matching parameter types ${args.map { it?.let { a -> a::class.simpleName } ?: "null" }}"
     )
     return ctor.call(*args)
 }
 
 /**
- * 当前类是否为枚举
+ * Whether the current class is an enum.
  *
- * @return true: 当前类是为枚举，false：当前类不是枚举
+ * @return true if the current class is an enum, false otherwise
  * @author K
  * @since 1.0.0
  */
 fun KClass<*>.isEnum(): Boolean = java.isEnum
 
 /**
- * 当前类是否为接口
+ * Whether the current class is an interface.
  *
- * @return true: 当前类是为接口，false：当前类不是接口
+ * @return true if the current class is an interface, false otherwise
  * @author K
  * @since 1.0.0
  */
 fun KClass<*>.isInterface(): Boolean = isAbstract && constructors.isEmpty()
 
 /**
- * 当前类是否为抽象类
+ * Whether the current class is abstract.
  *
- * @return true: 当前类是为抽象类，false：当前类不是抽象类
+ * @return true if the current class is abstract, false otherwise
  * @author K
  * @since 1.0.0
  */
 fun KClass<*>.isAbstractClass(): Boolean = isAbstract && !java.isInterface
 
 /**
- * 当前类是否为注解
+ * Whether the current class is an annotation.
  *
- * @return true: 当前类是为注解，false：当前类不是注解
+ * @return true if the current class is an annotation, false otherwise
  * @author K
  * @since 1.0.0
  */
 fun KClass<*>.isAnnotation(): Boolean = java.isAnnotation
 
 /**
- * 是否指定的注解类出现在该类上。
- * 注意：对于像SinceKotlin的注解无效!
+ * Whether the specified annotation class is present on this class.
+ * Note: ineffective for annotations such as SinceKotlin!
  *
- * @param annotationClass 注解类
- * @return true: 指定的注解类出现在该类上, false: 指定的注解类没有出现在该类上
+ * @param annotationClass the annotation class
+ * @return true if the specified annotation class is present on this class, false otherwise
  * @author K
  * @since 1.0.0
  */
@@ -100,12 +100,12 @@ fun KClass<*>.isAnnotationPresent(annotationClass: KClass<out Annotation>): Bool
 
 
 /**
- * 返回给定属性名的属性对象
+ * Return the property object for the given property name.
  *
- * @param T 当前类型
- * @param propertyName 属性名
- * @return 属性对象
- * @throws NoSuchElementException 当不存在时
+ * @param T the current type
+ * @param propertyName the property name
+ * @return the property object
+ * @throws NoSuchElementException when it does not exist
  * @author K
  * @since 1.0.0
  */
@@ -113,12 +113,12 @@ fun <T : Any> KClass<T>.getMemberProperty(propertyName: String): KProperty1<T, A
     memberProperties.first { it.name == propertyName }
 
 /**
- * 返回属性值
+ * Return the property value.
  *
- * @param target 目标对象
- * @param propertyName 属性名
- * @return 属性的值
- * @throws NoSuchElementException 当不存在时
+ * @param target the target object
+ * @param propertyName the property name
+ * @return the property value
+ * @throws NoSuchElementException when it does not exist
  * @author K
  * @since 1.0.0
  */
@@ -126,30 +126,30 @@ fun KClass<*>.getMemberPropertyValue(target: Any, propertyName: String): Any? =
     getMemberProperty(propertyName).call(target)
 
 /**
- * 返回给定名称和参数的成员函数对象
+ * Return the member function object with the given name and parameters.
  *
- * @param functionName 成员函数名
- * @param parameters 函数参数可变数组
- * @return 成员函数对象
- * @throws NoSuchElementException 当不存在时
+ * @param functionName the member function name
+ * @param parameters varargs of function parameters
+ * @return the member function object
+ * @throws NoSuchElementException when it does not exist
  * @author K
  * @since 1.0.0
  */
 fun KClass<*>.getMemberFunction(functionName: String, vararg parameters: KParameter): KFunction<*> {
     val functions = memberFunctions.filter { it.name == functionName }
     return when (functions.size) {
-        0 -> throw NoSuchElementException("类【${this}】中找不到命名为【${functionName}】的方法！")
+        0 -> throw NoSuchElementException("Method named [${functionName}] not found in class [${this}]!")
         1 -> functions.first()
         else -> functions.firstOrNull { fn ->
             fn.parameters.indices.all { i -> fn.parameters[i].type == parameters[i].type }
-        } ?: throw NoSuchElementException("类【${this}】中找不到命名为【${functionName}】且匹配参数类型的方法！")
+        } ?: throw NoSuchElementException("Method named [${functionName}] with matching parameter types not found in class [${this}]!")
     }
 }
 
 /**
- * 返回当前类的直接父类
+ * Return the direct superclass of the current class.
  *
- * @return 直接父类，当前类为Any时返回null
+ * @return the direct superclass, or null if the current class is Any
  * @author K
  * @since 1.0.0
  */
@@ -160,55 +160,55 @@ fun KClass<*>.getSuperClass(): KClass<*>? {
 
 
 /**
- * 返回当前类的直接父接口
+ * Return the direct super-interfaces of the current class.
  *
- * @return 直接父接口列表
+ * @return the list of direct super-interfaces
  * @author K
  * @since 1.0.0
  */
 fun KClass<*>.getSuperInterfaces(): List<KClass<*>> = java.interfaces.map { it.kotlin }
 
 /**
- * 返回当前类实现的所有接口
+ * Return all interfaces implemented by the current class.
  *
- * @return 所有接口
+ * @return all interfaces
  * @author K
  * @since 1.0.0
  */
 fun KClass<*>.getAllInterfaces(): List<KClass<*>> = allSuperclasses.filter { it.java.isInterface }
 
 /**
- * 匹配第一个与代表当前类的Type
+ * Match the first Type that represents the current class.
  *
- * @param types 待搜索的type集合
- * @return 第一个与代表当前类的Type
+ * @param types the collection of types to search
+ * @return the first Type representing the current class
  * @author K
  * @since 1.0.0
  */
 fun KClass<*>.firstMatchTypeOf(types: Collection<KType>): KType = types.first { it.classifier == this }
 
 /**
- * 返回在指定类的类体系(向上)中，匹配类注解的类
- * 注意：对于像SinceKotlin的注解无效!
+ * Return the set of classes in the type hierarchy (upwards) of the specified class that carry the given annotation.
+ * Note: ineffective for annotations such as SinceKotlin!
  *
- * @param annoClass 注解类
- * @return 匹配的类的Set
+ * @param annoClass the annotation class
+ * @return the set of matching classes
  * @author K
  * @since 1.0.0
  */
 fun KClass<*>.getClassUpThatPresentAnnotation(annoClass: KClass<out Annotation>): Set<KClass<*>>
     = sequenceOf(this)
-    // 包含所有直接和间接父类/父接口
+    // Include all direct and indirect superclasses/super-interfaces
     .plus(allSuperclasses.asSequence())
-    // 只保留带有指定注解的类
+    // Keep only classes carrying the specified annotation
     .filter { k -> k.annotations.any { it.annotationClass == annoClass } }
     .toSet()
 
 
 /**
- * 获取类在磁盘上的物理位置
+ * Get the physical location of the class on disk.
  *
- * @return 类文件的绝对路径
+ * @return the absolute path to the class file
  * @since 1.0.0
  * @author K
  * @since 1.0.0

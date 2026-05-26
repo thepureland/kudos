@@ -9,7 +9,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * Remote测试用例
+ * Test cases for Remote.
  *
  * @author AI: cursor
  * @author K
@@ -22,7 +22,7 @@ internal class RemoteTest {
     fun testIsValidWithNull() {
         val bean = TestRemoteBean(null)
         val violations = ValidationKit.validateBean(bean)
-        // null值应该通过验证（CustomValidator会处理null）
+        // Null values should pass validation (CustomValidator handles null)
         assertTrue(violations.isEmpty())
     }
 
@@ -30,7 +30,7 @@ internal class RemoteTest {
     fun testIsValidWithValidValue() {
         val bean = TestRemoteBean("valid")
         val violations = ValidationKit.validateBean(bean)
-        // 根据TestRemoteValidator的实现，应该通过验证
+        // Per TestRemoteValidator's implementation, this should pass
         assertTrue(violations.isEmpty())
     }
 
@@ -38,7 +38,7 @@ internal class RemoteTest {
     fun testIsValidWithInvalidValue() {
         val bean = TestRemoteBean("invalid")
         val violations = ValidationKit.validateBean(bean)
-        // 根据TestRemoteValidator的实现，应该失败
+        // Per TestRemoteValidator's implementation, this should fail
         assertFalse(violations.isEmpty())
     }
 
@@ -49,12 +49,12 @@ internal class RemoteTest {
             .getAnnotation(Remote::class.java)
         if (annotation != null) {
             validator.initialize(annotation)
-            // 初始化应该成功
+            // Initialization should succeed
         }
     }
 
     data class TestRemoteBean(
-        @get:Remote(checkClass = TestRemoteValidator::class, message = "远程验证失败", requestUrl = "")
+        @get:Remote(checkClass = TestRemoteValidator::class, message = "remote validation failed", requestUrl = "")
         val value: String?
     )
 

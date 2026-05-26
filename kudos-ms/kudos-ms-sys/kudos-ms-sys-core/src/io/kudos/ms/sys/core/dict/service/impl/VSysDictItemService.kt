@@ -13,9 +13,9 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 /**
- * 字典项视图（v_sys_dict_item）只读服务实现。
+ * Read-only service implementation for the dictionary item view (v_sys_dict_item).
  *
- * 数据来源：视图 v_sys_dict_item，仅提供只读查询，无写操作。
+ * Data source: view v_sys_dict_item; provides read-only queries with no write operations.
  *
  * @author K
  * @since 1.0.0

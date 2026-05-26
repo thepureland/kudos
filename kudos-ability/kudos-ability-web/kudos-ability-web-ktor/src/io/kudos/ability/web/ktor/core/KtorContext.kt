@@ -4,7 +4,7 @@ import io.ktor.server.application.*
 import io.kudos.ability.web.ktor.init.KtorProperties
 
 /**
- * Ktor上下文
+ * Ktor context.
  *
  * @author K
  * @author AI: Codex
@@ -13,15 +13,15 @@ import io.kudos.ability.web.ktor.init.KtorProperties
 object KtorContext {
 
     /**
-     * Ktor的application对象
+     * Ktor application object.
      */
     lateinit var application: Application
 
     /**
-     * kudos的Ktor配置
+     * Kudos Ktor configuration.
      */
     lateinit var properties: KtorProperties
 
-    /** 供 Spring 关闭等场景判断：test 模式或未启动时不会赋值 [application] */
+    /** For scenarios such as Spring shutdown to decide: test mode or "not started" does not assign [application]. */
     fun isApplicationInitialized(): Boolean = ::application.isInitialized
 }

@@ -13,10 +13,10 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * 验证 SysDictService / SysDictItemService 在 CRUD 完成后正确发布领域事件。
+ * Verify that SysDictService / SysDictItemService publish domain events correctly after CRUD operations.
  *
- * 与 access rule / tenant 域同套路：用普通 `@EventListener` 捕获，绕过 SqlTestBase
- * 事务回滚导致 `@TransactionalEventListener(AFTER_COMMIT)` 不触发的问题。
+ * Same approach as the access rule / tenant domains: use a plain `@EventListener` to capture events,
+ * bypassing the issue where SqlTestBase's transaction rollback prevents `@TransactionalEventListener(AFTER_COMMIT)` from firing.
  *
  * @author K
  * @author AI: Cursor
@@ -41,7 +41,7 @@ class SysDictEventPublishingTest : RdbAndRedisCacheTestBase() {
         captor.clear()
         val id = "20000000-0000-0000-0000-000000004968"
         assertTrue(sysDictService.updateActive(id, true))
-        val event = assertNotNull(captor.lastOf<SysDictUpdated>(), "应发布 SysDictUpdated")
+        val event = assertNotNull(captor.lastOf<SysDictUpdated>(), "SysDictUpdated should be published")
         assertEquals(id, event.id)
     }
 
@@ -50,24 +50,24 @@ class SysDictEventPublishingTest : RdbAndRedisCacheTestBase() {
         captor.clear()
         val id = "20000000-0000-0000-0000-000000004968"
         assertTrue(sysDictItemService.updateActive(id, true))
-        val event = assertNotNull(captor.lastOf<SysDictItemUpdated>(), "应发布 SysDictItemUpdated")
+        val event = assertNotNull(captor.lastOf<SysDictItemUpdated>(), "SysDictItemUpdated should be published")
         assertEquals(id, event.id)
     }
 
     @Test
     fun `dictItem deleteById publishes SysDictItemDeleted with dimensions`() {
         captor.clear()
-        // SQL 里 active=true 的字典项，dim 信息会被 service 在删除前预取并放进事件
+        // For an active=true dictionary item in the SQL fixture, the service pre-fetches dim info before delete and attaches it to the event
         val id = "20000000-0000-0000-0000-000000004968"
         assertTrue(sysDictItemService.deleteById(id))
-        val event = assertNotNull(captor.lastOf<SysDictItemDeleted>(), "应发布 SysDictItemDeleted")
+        val event = assertNotNull(captor.lastOf<SysDictItemDeleted>(), "SysDictItemDeleted should be published")
         assertEquals(id, event.id)
-        // dim 信息允许为 null（缓存未命中场景），但若命中应有值
-        // 这里只断言 id 和事件类型；具体 dim 值由 cache 集成测试覆盖
+        // dim info may be null (cache miss scenario), but should be present on hit.
+        // Here we only assert the id and event type; specific dim values are covered by the cache integration tests.
     }
 }
 
-/** 测试期间捕获字典 + 字典项领域事件的辅助 bean。 */
+/** Helper bean that captures dictionary and dictionary item domain events during tests. */
 @Component
 open class DictEventCaptor {
     val raw: MutableList<Any> = mutableListOf()

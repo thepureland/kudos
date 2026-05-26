@@ -1,20 +1,20 @@
 package io.kudos.ms.sys.common.dict.vo.response
 
 /**
- * 字典项树结点响应VO
+ * Response VO for a dict item tree node.
  *
  * @author K
  * @since 1.0.0
  */
 data class SysDictItemNode(
 
-    /** 主键 */
+    /** Primary key */
     val id: String,
 
-    /** 字典项代码 */
+    /** Dict item code */
     val itemCode: String = "",
 
-    /** 字典项名称 */
+    /** Dict item name */
     val itemName: String = "",
 
 )

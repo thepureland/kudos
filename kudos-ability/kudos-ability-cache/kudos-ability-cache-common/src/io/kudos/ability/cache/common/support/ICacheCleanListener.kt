@@ -3,20 +3,22 @@ package io.kudos.ability.cache.common.support
 import org.springframework.beans.factory.InitializingBean
 
 /**
- * 缓存清除事件监听器：实现该接口并注册为 bean，每次本地/远程缓存条目失效都会回调 [cleanCache]。
+ * Cache clean event listener: implement this interface and register it as a bean; [cleanCache]
+ * is invoked whenever a local/remote cache entry is evicted.
  *
- * 典型用途：同步通知集群其他节点失效本地副本（避免脏读）、或写审计日志记录失效原因。
- * 继承 [InitializingBean] 是为了在 `afterPropertiesSet` 中注册到全局 listener 列表。
+ * Typical uses: synchronously notify other cluster nodes to invalidate their local copies (avoiding dirty reads),
+ * or write an audit log recording the eviction reason.
+ * It extends [InitializingBean] so that `afterPropertiesSet` can register the listener with the global listener list.
  *
  * @author K
  * @since 1.0.0
  */
 interface ICacheCleanListener : InitializingBean {
     /**
-     * 缓存清除回调。
+     * Cache clean callback.
      *
-     * @param cacheName 被清的缓存区名
-     * @param key 被清的 key；`null` 表示整区清空
+     * @param cacheName name of the cache region that was cleaned
+     * @param key the cleaned key; `null` means the whole region was cleared
      * @author K
      * @since 1.0.0
      */

@@ -7,7 +7,7 @@ import io.kudos.ms.sys.core.system.model.po.SysSystem
 
 
 /**
- * 系统业务接口
+ * System service interface.
  *
  * @author K
  * @author AI: Cursor
@@ -16,62 +16,62 @@ import io.kudos.ms.sys.core.system.model.po.SysSystem
 interface ISysSystemService : IBaseCrudService<String, SysSystem> {
 
     /**
-     * 按系统编码加载系统信息，并缓存结果
+     * Load system info by system code and cache the result.
      *
-     * @param code 系统编码（主键），非空
-     * @return 缓存项，找不到返回 null
+     * @param code system code (primary key), non-blank
+     * @return cache entry, or null if not found
      */
     fun getSystemFromCache(code: String): SysSystemCacheEntry?
 
     /**
-     * 从缓存获取全部系统（含未启用）
+     * Fetch all systems from cache (including inactive).
      *
-     * @return 系统缓存项列表
+     * @return list of system cache entries
      */
     fun getAllSystemsFromCache(): List<SysSystemCacheEntry>
 
     /**
-     * 从缓存获取非子系统（顶级系统）列表，即 `subSystem == false`（含未启用）
+     * Fetch the list of top-level (non sub-) systems from cache, i.e. `subSystem == false` (including inactive).
      *
-     * @return 系统缓存项列表
+     * @return list of system cache entries
      */
     fun getSystemsExcludeSubSystemFromCache(): List<SysSystemCacheEntry>
 
     /**
-     * 更新启用状态，并同步缓存
+     * Update the enabled state and sync the cache.
      *
-     * @param code 系统编码（主键）
-     * @param active 是否启用
-     * @return 是否更新成功
+     * @param code system code (primary key)
+     * @param active whether enabled
+     * @return whether the update succeeded
      */
     fun updateActive(code: String, active: Boolean): Boolean
 
     /**
-     * 从缓存获取指定父系统下的子系统列表（按 parentCode 匹配，含未启用）
+     * Fetch the list of child systems for a given parent system from cache (matched by parentCode, including inactive).
      *
-     * @param systemCode 父系统编码
-     * @return 子系统缓存项列表
+     * @param systemCode parent system code
+     * @return list of child system cache entries
      */
     fun getSubSystemsFromCache(systemCode: String): List<SysSystemCacheEntry>
 
     /**
-     * 返回整棵系统树（含层级关系）。
+     * Return the full system tree (with hierarchy).
      *
-     * @return 系统树节点列表（根节点及其 children）
+     * @return list of system tree nodes (roots and their children)
      */
     fun getFullSystemTree(): List<IdAndNameTreeNode<String>>
 
     /**
-     * 从缓存获取所有启用的子系统编码（active=true 且 subSystem=true）。
+     * Fetch all active sub-system codes from cache (active=true and subSystem=true).
      *
-     * @return 子系统编码列表
+     * @return list of sub-system codes
      */
     fun getActiveSubSystemCodes(): List<String>
 
     /**
-     * 从缓存获取所有启用的顶级系统编码（active=true 且 subSystem=false）。
+     * Fetch all active top-level system codes from cache (active=true and subSystem=false).
      *
-     * @return 顶级系统编码列表
+     * @return list of top-level system codes
      */
     fun getActiveSystemCodes(): List<String>
 

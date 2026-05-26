@@ -12,14 +12,14 @@ import jakarta.validation.constraints.Positive
 import jakarta.validation.constraints.PositiveOrZero
 
 /**
- * 资源表单基础字段（新建 / 更新共用）
+ * Resource form base fields (shared by create / update).
  *
  * @author K
  * @since 1.0.0
  */
 interface ISysResourceFormBase {
 
-    /** 名称 */
+    /** Name */
     @get:NotBlank
     @get:MaxLength(64)
     val name: String
@@ -29,29 +29,29 @@ interface ISysResourceFormBase {
     @get:Matches(RegExpEnum.CONTEXT)
     val url: String?
 
-    /** 资源类型字典代码 */
+    /** Resource type dict code */
     @get:NotBlank
     @get:FixedLength(1)
     @get:DictItemCode(dictType = SysDictTypes.RESOURCE_TYPE, atomicServiceCode = SysConsts.ATOMIC_SERVICE_NAME)
     val resourceTypeDictCode: String
 
-    /** 父id */
+    /** Parent id */
     @get:FixedLength(36)
     val parentId: String?
 
-    /** 在同父节点下的排序号 */
+    /** Order number among siblings under the same parent */
     val orderNum: Int?
 
-    /** 图标 */
+    /** Icon */
     @get:MaxLength(256)
     val icon: String?
 
-    /** 子系统编码 */
+    /** Sub-system code */
     @get:NotBlank
     @get:MaxLength(32)
     val subSystemCode: String
 
-    /** 备注 */
+    /** Remark */
     @get:MaxLength(128)
     val remark: String?
 }

@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component
 
 
 /**
- * 子系统-微服务关系 Feign 容错降级实现。
+ * SubSystem-Microservice relation Feign client fallback implementation.
  *
  * @author K
  * @since 1.0.0

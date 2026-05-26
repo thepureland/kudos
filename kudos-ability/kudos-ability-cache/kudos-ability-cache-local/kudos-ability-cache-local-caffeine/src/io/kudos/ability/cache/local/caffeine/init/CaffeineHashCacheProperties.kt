@@ -3,9 +3,9 @@ package io.kudos.ability.cache.local.caffeine.init
 import io.kudos.ability.cache.local.caffeine.CaffeineHashCache
 
 /**
- * Caffeine Hash 本地缓存配置。
+ * Caffeine Hash local cache properties.
  *
- * @property maximumSize 单个 cacheName 下最多保留的 Hash 实体数量。
+ * @property maximumSize Maximum number of Hash entries retained per cacheName.
  * @author K
  * @author AI: Codex
  * @since 1.0.0

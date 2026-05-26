@@ -5,7 +5,7 @@ import io.kudos.ms.user.core.account.model.po.UserOrgUser
 
 
 /**
- * 机构-用户关系业务接口
+ * Organization-user association service interface.
  *
  * @author K
  * @author AI: Cursor
@@ -15,66 +15,66 @@ interface IUserOrgUserService : IBaseCrudService<String, UserOrgUser> {
 
 
     /**
-     * 根据机构ID获取用户ID集合
+     * Get the set of user ids for the given organization id.
      *
-     * @param orgId 机构ID
-     * @return 用户ID集合
+     * @param orgId organization id
+     * @return user id set
      * @author AI: Cursor
      * @since 1.0.0
      */
     fun getUserIdsByOrgId(orgId: String): Set<String>
 
     /**
-     * 根据用户ID获取机构ID集合
+     * Get the set of organization ids for the given user id.
      *
-     * @param userId 用户ID
-     * @return 机构ID集合
+     * @param userId user id
+     * @return organization id set
      * @author AI: Cursor
      * @since 1.0.0
      */
     fun getOrgIdsByUserId(userId: String): Set<String>
 
     /**
-     * 批量绑定机构和用户关系
+     * Batch-bind users to an organization.
      *
-     * @param orgId 机构ID
-     * @param userIds 用户ID集合
-     * @param orgAdmin 是否为机构管理员，默认为false
-     * @return 成功绑定的数量
+     * @param orgId organization id
+     * @param userIds user id collection
+     * @param orgAdmin whether the users are organization admins; defaults to false
+     * @return number of bindings successfully created
      * @author AI: Cursor
      * @since 1.0.0
      */
     fun batchBind(orgId: String, userIds: Collection<String>, orgAdmin: Boolean = false): Int
 
     /**
-     * 解绑机构和用户关系
+     * Unbind a user from an organization.
      *
-     * @param orgId 机构ID
-     * @param userId 用户ID
-     * @return 是否解绑成功
+     * @param orgId organization id
+     * @param userId user id
+     * @return whether the unbind succeeded
      * @author AI: Cursor
      * @since 1.0.0
      */
     fun unbind(orgId: String, userId: String): Boolean
 
     /**
-     * 检查关系是否存在
+     * Check whether the association exists.
      *
-     * @param orgId 机构ID
-     * @param userId 用户ID
-     * @return 是否存在
+     * @param orgId organization id
+     * @param userId user id
+     * @return true if it exists
      * @author AI: Cursor
      * @since 1.0.0
      */
     fun exists(orgId: String, userId: String): Boolean
 
     /**
-     * 设置/取消机构管理员
+     * Set or clear the organization admin flag.
      *
-     * @param orgId 机构ID
-     * @param userId 用户ID
-     * @param isAdmin 是否为管理员
-     * @return 是否更新成功
+     * @param orgId organization id
+     * @param userId user id
+     * @param isAdmin whether the user is an admin
+     * @return whether the update succeeded
      * @author AI: Cursor
      * @since 1.0.0
      */

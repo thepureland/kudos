@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component
 
 
 /**
- * [MsgReceiveFallback] 的 FallbackFactory。
+ * FallbackFactory for [MsgReceiveFallback].
  *
  * @author K
  * @since 1.0.0

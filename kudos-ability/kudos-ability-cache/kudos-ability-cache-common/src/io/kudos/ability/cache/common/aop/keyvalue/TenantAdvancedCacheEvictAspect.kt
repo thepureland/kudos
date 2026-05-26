@@ -13,10 +13,11 @@ import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
 
 /**
- * [TenantAdvancedCacheEvict] 的切面：方法返回后按 `cacheKey::tenantId` 拼装远端 key
- * 调 [IRemoteCacheProcessor.clearCache] 清缓存。
+ * Aspect for [TenantAdvancedCacheEvict]: after the method returns, assembles the remote key as `cacheKey::tenantId`
+ * and calls [IRemoteCacheProcessor.clearCache] to clear the cache.
  *
- * 没注入 `remoteCacheProcess` 实现时（`required=false`）直接 no-op——支持单元测试 / 本地模式跑通流程。
+ * When no `remoteCacheProcess` implementation is injected (`required=false`), it is a no-op — this lets unit tests and
+ * local-mode flows still work end-to-end.
  *
  * @author K
  * @since 1.0.0
@@ -24,14 +25,15 @@ import org.springframework.stereotype.Component
 @Aspect
 @Lazy(false)
 @Component
-@Order(-100) // 与 [TenantCachingAspect] 同语义（写后 evict），保持同序，避免 evict 路径之间相对顺序不可预期。
+@Order(-100) // Same semantics as [TenantCachingAspect] (evict after write); kept at the same order so that the relative
+             // order among evict paths is not unpredictable.
 class TenantAdvancedCacheEvictAspect {
 
     @Autowired(required = false)
     private val remoteCacheProcess: IRemoteCacheProcessor? = null
 
     /**
-     * 定义切入点
+     * Defines the pointcut.
      *
      * @author K
      * @since 1.0.0

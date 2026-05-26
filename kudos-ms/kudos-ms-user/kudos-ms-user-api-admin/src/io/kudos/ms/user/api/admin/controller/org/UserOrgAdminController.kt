@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController
 
 
 /**
- * 机构管理控制器
+ * Organization admin controller.
  *
  * @author K
  * @since 1.0.0
@@ -30,12 +30,12 @@ import org.springframework.web.bind.annotation.RestController
 class UserOrgAdminController :
     BaseCrudController<String, IUserOrgService, UserOrgQuery, UserOrgRow, UserOrgDetail, UserOrgEdit, UserOrgFormCreate, UserOrgFormUpdate>() {
 
-    /** 更新启用状态 */
+    /** Update the active flag. */
     @PutMapping("/updateActive")
     fun updateActive(@RequestParam id: String, @RequestParam active: Boolean): Boolean =
         service.updateActive(id, active)
 
-    /** 移动机构（改父或调序） */
+    /** Move an organization (reparent or reorder). */
     @PostMapping("/moveOrg")
     fun moveOrg(
         @RequestParam id: String,
@@ -43,29 +43,29 @@ class UserOrgAdminController :
         @RequestParam(required = false) newSortNum: Int?,
     ): Boolean = service.moveOrg(id, newParentId, newSortNum)
 
-    /** 获取机构树（按租户，可指定根） */
+    /** Get the organization tree (by tenant, optional root). */
     @GetMapping("/getOrgTree")
     fun getOrgTree(
         @RequestParam tenantId: String,
         @RequestParam(required = false) parentId: String?,
     ): List<UserOrgTreeRow> = service.getOrgTree(tenantId, parentId)
 
-    /** 按机构 ID 取所有用户（含管理员） */
+    /** Get all users by organization id (including admins). */
     @GetMapping("/getOrgUsers")
     fun getOrgUsers(@RequestParam orgId: String): List<UserAccountCacheEntry> =
         service.getOrgUsers(orgId)
 
-    /** 按机构 ID 取管理员用户 */
+    /** Get admin users by organization id. */
     @GetMapping("/getOrgAdmins")
     fun getOrgAdmins(@RequestParam orgId: String): List<UserAccountCacheEntry> =
         service.getOrgAdmins(orgId)
 
-    /** 按机构 ID 取直接子机构 */
+    /** Get direct child organizations by organization id. */
     @GetMapping("/getChildOrgs")
     fun getChildOrgs(@RequestParam orgId: String): List<UserOrgCacheEntry> =
         service.getChildOrgs(orgId)
 
-    /** 按机构 ID 取父机构 */
+    /** Get the parent organization by organization id. */
     @GetMapping("/getParentOrg")
     fun getParentOrg(@RequestParam orgId: String): UserOrgCacheEntry? =
         service.getParentOrg(orgId)

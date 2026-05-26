@@ -7,19 +7,19 @@ import kotlin.reflect.KProperty0
 
 
 /**
- * 租户列表查询条件请求VO
+ * Tenant list query condition request VO.
  *
  * @author K
  * @since 1.0.0
  */
 data class SysTenantQuery (
 
-    /** 名称 */
+    /** Name. */
     val name: String? = null,
 
     val subSystemCode: String? = null,
 
-    /** 仅启用 */
+    /** Active only. */
     val active: Boolean? = true,
 
 ) : ListSearchPayload() {

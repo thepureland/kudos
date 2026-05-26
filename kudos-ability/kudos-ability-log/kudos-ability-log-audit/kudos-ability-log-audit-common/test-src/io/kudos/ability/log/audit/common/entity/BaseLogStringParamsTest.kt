@@ -11,16 +11,18 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * [BaseLog.getStringParams] / [BaseLog.splitStringParams] 的 round-trip 单测。
+ * Round-trip unit tests for [BaseLog.getStringParams] / [BaseLog.splitStringParams].
  *
- * 覆盖：
- *  - 普通参数（不含 `┼`）拼接 + 解析回原值
- *  - 参数自身含 `┼` → 转义后拼接 + 解析回原值（修复历史 bug：旧实现反向解析会错位）
- *  - 参数含 `\` → 转义后拼接 + 解析回原值
- *  - 空字符串 / null / 单段 / 边界场景
+ * Coverage:
+ *  - Plain params (no `┼`): join + parse back to original.
+ *  - Params containing `┼`: escape + join + parse back (fixes a historic bug where the old
+ *    implementation misaligned during parsing).
+ *  - Params containing `\`: escape + join + parse back.
+ *  - Empty string / null / single segment / edge cases.
  *
- * `BaseLog(Audit)` 构造时会查 Spring 里的 `ISysAuditModule` bean——这里用空的
- * [StaticApplicationContext] 喂给 [SpringKit] 让构造路径不抛 "applicationContext not initialized"。
+ * `BaseLog(Audit)` looks up the `ISysAuditModule` bean from Spring during construction — an empty
+ * [StaticApplicationContext] is supplied to [SpringKit] so the constructor does not throw
+ * "applicationContext not initialized".
  *
  * @author K
  * @author AI: Codex
@@ -63,7 +65,7 @@ internal class BaseLogStringParamsTest {
         }
 
         val joined = log.getStringParams()
-        // 中间的 ┼ 应当被转义为 \┼，外层 ┼ 仍然作为分隔符
+        // Inner ┼ should be escaped to \┼ while the outer ┼ remains the separator
         assertEquals("""path\┼with\┼sep┼other""", joined)
         assertEquals(listOf("path┼with┼sep", "other"), BaseLog.splitStringParams(joined))
     }
@@ -76,7 +78,7 @@ internal class BaseLogStringParamsTest {
         }
 
         val joined = log.getStringParams()
-        // 反斜杠应当被转义成 \\，避免与 \┼ 混淆
+        // Backslashes should be escaped to \\ to avoid confusion with \┼
         assertEquals("""C:\\Users\\test┼x""", joined)
         assertEquals(listOf("""C:\Users\test""", "x"), BaseLog.splitStringParams(joined))
     }
@@ -91,13 +93,13 @@ internal class BaseLogStringParamsTest {
 
     @Test
     fun roundTrip_paramContainsBackslashFollowedBySeparator() {
-        // 输入: "a\┼b" + "c" —— 反斜杠和 ┼ 都在第一个 segment 里，转义须能区分
+        // Input: "a\┼b" + "c" — backslash and ┼ are both in the first segment, escaping must distinguish them
         val log = newBaseLog().apply {
             addParam("""a\┼b""")
             addParam("c")
         }
         val joined = log.getStringParams()
-        // a\┼b 中：\ → \\，┼ → \┼，所以 segment 输出 a\\\┼b，全字符串 a\\\┼b┼c
+        // In a\┼b: \ -> \\, ┼ -> \┼, so the segment becomes a\\\┼b, full string a\\\┼b┼c
         assertEquals("""a\\\┼b┼c""", joined)
         assertEquals(listOf("""a\┼b""", "c"), BaseLog.splitStringParams(joined))
     }
@@ -116,7 +118,7 @@ internal class BaseLogStringParamsTest {
 
     @Test
     fun split_legacyDataWithoutEscape_compatibleWhenNoSeparatorInContent() {
-        // 旧版本数据：参数自身不含 ┼ 时，转义版与旧版结果一致——历史 stringParams 字段可正常解析回
+        // Legacy data: when params contain no ┼, the escaped and legacy outputs are identical — historic stringParams values still parse back correctly
         val legacy = "alice┼admin┼create"
         assertEquals(listOf("alice", "admin", "create"), BaseLog.splitStringParams(legacy))
     }

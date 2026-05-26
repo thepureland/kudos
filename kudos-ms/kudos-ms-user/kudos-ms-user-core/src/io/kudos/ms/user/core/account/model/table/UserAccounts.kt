@@ -6,7 +6,7 @@ import org.ktorm.schema.*
 
 
 /**
- * 用户基本信息数据库表-实体关联对象
+ * User account table-entity binding object
  *
  * @author K
  * @author AI: Cursor
@@ -14,103 +14,103 @@ import org.ktorm.schema.*
  */
 object UserAccounts : StringIdTable<UserAccount>("user_account") {
 
-    /** 用户名 */
+    /** Username */
     var username = varchar("username").bindTo { it.username }
 
-    /** 租户ID */
+    /** Tenant ID */
     var tenantId = varchar("tenant_id").bindTo { it.tenantId }
 
-    /** 登录密码 */
+    /** Login password */
     var loginPassword = varchar("login_password").bindTo { it.loginPassword }
 
-    /** 安全密码 */
+    /** Security password */
     var securityPassword = varchar("security_password").bindTo { it.securityPassword }
 
-    /** 用户类型字典码 */
+    /** Account type dict code */
     var accountTypeDictCode = varchar("account_type_dict_code").bindTo { it.accountTypeDictCode }
 
-    /** 用户状态字典码 */
+    /** Account status dict code */
     var accountStatusDictCode = varchar("account_status_dict_code").bindTo { it.accountStatusDictCode }
 
-    /** 默认语言环境 */
+    /** Default locale */
     var defaultLocale = varchar("default_locale").bindTo { it.defaultLocale }
 
-    /** 默认时区 */
+    /** Default timezone */
     var defaultTimezone = varchar("default_timezone").bindTo { it.defaultTimezone }
 
-    /** 默认货币 */
+    /** Default currency */
     var defaultCurrency = varchar("default_currency").bindTo { it.defaultCurrency }
 
-    /** 最后登录时间 */
+    /** Last login time */
     var lastLoginTime = datetime("last_login_time").bindTo { it.lastLoginTime }
 
-    /** 最后登录IP */
+    /** Last login IP */
     var lastLoginIp = long("last_login_ip").bindTo { it.lastLoginIp }
 
-    /** 最后登出时间 */
+    /** Last logout time */
     var lastLogoutTime = datetime("last_logout_time").bindTo { it.lastLogoutTime }
 
-    /** 登录错误次数 */
+    /** Login error count */
     var loginErrorTimes = int("login_error_times").bindTo { it.loginErrorTimes }
 
-    /** 安全密码错误次数 */
+    /** Security password error count */
     var securityPasswordErrorTimes = int("security_password_error_times").bindTo { it.securityPasswordErrorTimes }
 
-    /** 会话密钥 */
+    /** Session key */
     var sessionKey = varchar("session_key").bindTo { it.sessionKey }
 
-    /** 认证密钥 */
+    /** Authentication key */
     var authenticationKey = varchar("authentication_key").bindTo { it.authenticationKey }
 
-    /** 所属机构ID */
+    /** Owning org ID */
     var orgId = varchar("org_id").bindTo { it.orgId }
 
-    /** 直属上级ID */
+    /** Direct supervisor ID */
     var supervisorId = varchar("supervisor_id").bindTo { it.supervisorId }
 
-    /** 备注 */
+    /** Remark */
     var remark = varchar("remark").bindTo { it.remark }
 
-    /** 冻结类型字典码 */
+    /** Freeze type dict code */
     var freezeType = varchar("freeze_type").bindTo { it.freezeType }
 
-    /** 冻结记录创建时刻 */
+    /** Time the freeze record was created */
     var freezeTime = datetime("freeze_time").bindTo { it.freezeTime }
 
-    /** 冻结生效起点 */
+    /** Freeze effective start */
     var freezeStartTime = datetime("freeze_start_time").bindTo { it.freezeStartTime }
 
-    /** 冻结失效时刻 */
+    /** Freeze expiration time */
     var freezeEndTime = datetime("freeze_end_time").bindTo { it.freezeEndTime }
 
-    /** 冻结原因标题 */
+    /** Freeze reason title */
     var freezeTitle = varchar("freeze_title").bindTo { it.freezeTitle }
 
-    /** 冻结详细说明 */
+    /** Freeze detailed description */
     var freezeContent = varchar("freeze_content").bindTo { it.freezeContent }
 
-    /** 是否激活 */
+    /** Whether active */
     var active = boolean("active").bindTo { it.active }
 
-    /** 是否内置 */
+    /** Whether built-in */
     var builtIn = boolean("built_in").bindTo { it.builtIn }
 
-    /** 创建者id */
+    /** Creator id */
     var createUserId = varchar("create_user_id").bindTo { it.createUserId }
 
-    /** 创建者名称 */
+    /** Creator name */
     var createUserName = varchar("create_user_name").bindTo { it.createUserName }
 
-    /** 创建时间 */
+    /** Create time */
     var createTime = datetime("create_time").bindTo { it.createTime }
 
-    /** 更新者id */
+    /** Updater id */
     var updateUserId = varchar("update_user_id").bindTo { it.updateUserId }
 
-    /** 更新者名称 */
+    /** Updater name */
     var updateUserName = varchar("update_user_name").bindTo { it.updateUserName }
 
-    /** 更新时间 */
+    /** Update time */
     var updateTime = datetime("update_time").bindTo { it.updateTime }
 
 

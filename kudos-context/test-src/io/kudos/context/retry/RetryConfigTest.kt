@@ -8,12 +8,13 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * RetryConfig 测试用例
+ * Test cases for RetryConfig.
  *
- * 覆盖路径解析优先级、空白处理、跨平台默认值。
+ * Covers path resolution priority, whitespace handling, and cross-platform default values.
  *
- * 注意：[RetryConfig.baseFailedDataPath] 是 `by lazy`，整个 JVM 生命周期只解析一次。
- * 测试时只能验证 [RetryConfig.resolveBasePath] 这个 internal 方法（每次调用都重读优先级）。
+ * Note: [RetryConfig.baseFailedDataPath] is `by lazy` and is resolved only once for the JVM lifetime.
+ * Tests can only verify the internal [RetryConfig.resolveBasePath] method (which re-evaluates the
+ * priority on every call).
  *
  * @author K
  * @since 1.0.0
@@ -34,7 +35,7 @@ internal class RetryConfigTest {
     @Test
     fun resolveBasePathFallsBackToTmpDirWhenNothingSet() {
         System.clearProperty(RetryConfig.SYS_PROP_BASE_PATH)
-        // 环境变量在测试进程里通常没设，所以应回到 tmpdir 兜底
+        // Env vars are usually unset in the test process, so should fall back to tmpdir
         val resolved = RetryConfig.resolveBasePath()
         val tmp = System.getProperty("java.io.tmpdir").trimEnd('/', '\\')
         assertEquals(tmp + File.separator + "kudos-failed-data", resolved)
@@ -42,17 +43,17 @@ internal class RetryConfigTest {
 
     @Test
     fun resolveBasePathIgnoresBlankSystemProperty() {
-        // 空白字符串不应被识别为有效配置
+        // A blank string must not be treated as a valid configuration
         System.setProperty(RetryConfig.SYS_PROP_BASE_PATH, "   ")
         val resolved = RetryConfig.resolveBasePath()
-        assertTrue(resolved.endsWith("kudos-failed-data"), "空白应被忽略，落到默认值：$resolved")
+        assertTrue(resolved.endsWith("kudos-failed-data"), "Blank should be ignored and fall back to the default: $resolved")
     }
 
     @Test
     fun pathForUsesProvidedServiceCode() {
         System.setProperty(RetryConfig.SYS_PROP_BASE_PATH, "/base")
-        // baseFailedDataPath 是 lazy，已被首次访问冻结，所以这里 pathFor 用的是首次解析的值。
-        // 测试只检查 pathFor 的拼接逻辑——使用 resolveBasePath 而非 baseFailedDataPath 来构造期望值。
+        // baseFailedDataPath is lazy and has been frozen on first access, so pathFor here uses the value resolved on first access.
+        // The test only checks pathFor's concatenation logic — use resolveBasePath rather than baseFailedDataPath to build the expected value.
         val expected = RetryConfig.baseFailedDataPath + File.separator + "sys"
         assertEquals(expected, RetryConfig.pathFor("sys"))
     }
@@ -63,9 +64,9 @@ internal class RetryConfigTest {
         val withBlank = RetryConfig.pathFor("   ")
         val withEmpty = RetryConfig.pathFor("")
 
-        assertTrue(withNull.endsWith(File.separator + "default"), "null serviceCode 应用 'default'")
-        assertTrue(withBlank.endsWith(File.separator + "default"), "空白 serviceCode 应用 'default'")
-        assertTrue(withEmpty.endsWith(File.separator + "default"), "空字符串 serviceCode 应用 'default'")
+        assertTrue(withNull.endsWith(File.separator + "default"), "null serviceCode should use 'default'")
+        assertTrue(withBlank.endsWith(File.separator + "default"), "Blank serviceCode should use 'default'")
+        assertTrue(withEmpty.endsWith(File.separator + "default"), "Empty serviceCode should use 'default'")
     }
 
     @Test

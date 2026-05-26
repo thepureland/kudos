@@ -11,7 +11,7 @@ import org.springframework.test.context.DynamicPropertyRegistry
 import org.testcontainers.containers.GenericContainer
 
 /**
- * rocket mq测试容器
+ * rocket mq test container.
  *
  * @author K
  * @since 1.0.0
@@ -21,7 +21,7 @@ object RocketMqTestContainer {
     private const val IMAGE_NAME = "apache/rocketmq:"
     private const val IMAGE_DASHBORD = "apacherocketmq/rocketmq-dashboard:1.0.0"
 
-    // 注意rocketmq 5.0.0 以上版本，有时会发生topic不会自动建立问题，即使有配置 autoCreateTopicEnable=true，也会发生。
+    // Note: in RocketMQ versions >= 5.0.0, topics may sometimes fail to auto-create even with autoCreateTopicEnable=true configured.
     private const val IMAGE_VERSION = "4.9.7"
     private const val IMAGE = IMAGE_NAME + IMAGE_VERSION
 
@@ -65,16 +65,16 @@ object RocketMqTestContainer {
 //        .withEnv("JAVA_OPTS", "-Drocketmq.namesrv.addr=$host")
 
     /**
-     * 启动容器(若需要)。同时启动RocketMQ的name server和broker。
+     * Starts the containers (if needed). Starts both the RocketMQ name server and the broker.
      *
-     * 保证批量测试时共享一个容器，避免多次开/停容器，浪费大量时间。
-     * 另外，亦可手动运行该clazz类的main方法来启动容器，跑测试用例时共享它。
-     * 并注册 JVM 关闭钩子，当批量测试结束时自动停止容器，
-     * 而不是每个测试用例结束时就关闭，前提条件是不要加@Testcontainers注解。
-     * 当docker没安装时想忽略测试用例，可以用@EnabledIfDockerInstalled
+     * Ensures a single container is shared across a batch of tests, avoiding the time wasted starting/stopping containers repeatedly.
+     * Alternatively, you can run this class's main method manually to start the container and share it while running tests.
+     * Registers a JVM shutdown hook to automatically stop the container when the batch finishes,
+     * rather than stopping after each test — provided the @Testcontainers annotation is not used.
+     * To skip tests when Docker is not installed, use @EnabledIfDockerInstalled.
      *
-     * @param registry spring的动态属性注册器，可用来注册或覆盖已注册的属性
-     * @return 运行中的容器对象
+     * @param registry Spring's dynamic property registry, used to register or override already-registered properties
+     * @return the running container instances
      */
     fun startIfNeeded(registry: DynamicPropertyRegistry?): Pair<Container, Container> {
         return TestContainerCrossProcessLock.run(RocketMqTestContainer::class.java, "rocketmq") {
@@ -89,12 +89,12 @@ object RocketMqTestContainer {
     }
 
     /**
-     * 把 RocketMQ name-server 地址注册到 Spring Cloud Stream 配置。
-     * 直接用常量 `NAMESRV_ADDR` 而非从 `runningNameServerContainer` 算端口——
-     * 容器侧已用 `bindingPort` 把固定 PORT 映射到容器，避免每次启动端口漂移。
+     * Registers the RocketMQ name-server address into Spring Cloud Stream configuration.
+     * Uses the constant `NAMESRV_ADDR` directly rather than computing the port from `runningNameServerContainer` —
+     * the container side already uses `bindingPort` to map a fixed PORT, avoiding port drift across startups.
      *
-     * @param registry Spring 动态属性注册表
-     * @param runningNameServerContainer name-server 容器（保留参数以便后续扩展用动态端口）
+     * @param registry the Spring dynamic property registry
+     * @param runningNameServerContainer the name-server container (parameter kept for future extensions using a dynamic port)
      * @author K
      * @since 1.0.0
      */
@@ -103,9 +103,9 @@ object RocketMqTestContainer {
     }
 
     /**
-     * 返回运行中的容器对象
+     * Returns the running container instance.
      *
-     * @return 容器对象，如果没有返回null
+     * @return the container instance, or null if none is running
      */
     fun getRunningContainer() : Container? = TestContainerKit.getRunningContainer(LABEL)
 

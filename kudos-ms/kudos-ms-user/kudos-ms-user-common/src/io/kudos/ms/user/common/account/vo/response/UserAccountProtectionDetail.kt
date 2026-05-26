@@ -5,74 +5,74 @@ import java.time.LocalDateTime
 
 
 /**
- * 用户账号保护详情响应VO
+ * User account protection detail response VO
  *
  * @author K
  * @since 1.0.0
  */
 data class UserAccountProtectionDetail (
 
-    /** 主键 */
+    /** Primary key */
     override val id: String = "",
 
-    /** 用户ID */
+    /** User ID */
     val userId: String? = null,
 
-    /** 问题1 */
+    /** Question 1 */
     val question1: String? = null,
 
-    /** 答案1 */
+    /** Answer 1 */
     val answer1: String? = null,
 
-    /** 问题2 */
+    /** Question 2 */
     val question2: String? = null,
 
-    /** 答案2 */
+    /** Answer 2 */
     val answer2: String? = null,
 
-    /** 问题3 */
+    /** Question 3 */
     val question3: String? = null,
 
-    /** 答案3 */
+    /** Answer 3 */
     val answer3: String? = null,
 
-    /** 安全联系方式ID */
+    /** Safe contact way ID */
     val safeContactWayId: String? = null,
 
-    /** 总的找回密码次数 */
+    /** Total password recovery attempts allowed */
     val totalValidateCount: Int? = null,
 
-    /** 必须答对的问题数 */
+    /** Number of questions that must be answered correctly */
     val matchQuestionCount: Int? = null,
 
-    /** 错误次数 */
+    /** Error count */
     val errorTimes: Int? = null,
 
-    /** 备注 */
+    /** Remark */
     val remark: String? = null,
 
-    /** 是否启用 */
+    /** Whether enabled */
     val active: Boolean? = null,
 
-    /** 是否内置 */
+    /** Whether built-in */
     val builtIn: Boolean? = null,
 
-    /** 创建者ID */
+    /** Creator ID */
     val createUserId: String? = null,
 
-    /** 创建者名称 */
+    /** Creator name */
     val createUserName: String? = null,
 
-    /** 创建时间 */
+    /** Create time */
     val createTime: LocalDateTime? = null,
 
-    /** 更新者ID */
+    /** Updater ID */
     val updateUserId: String? = null,
 
-    /** 更新者名称 */
+    /** Updater name */
     val updateUserName: String? = null,
 
-    /** 更新时间 */
+    /** Update time */
     val updateTime: LocalDateTime? = null,
 
 ) : IIdEntity<String>

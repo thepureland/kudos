@@ -11,7 +11,7 @@ import org.springframework.stereotype.Repository
 import java.time.LocalDateTime
 
 /**
- * 登录日志数据访问对象
+ * Login log data access object
  *
  * @author K
  * @author AI: Cursor
@@ -22,31 +22,31 @@ open class UserLogLoginDao : BaseCrudDao<String, UserLogLogin, UserLogLogins>() 
 
 
     /**
-     * 按用户ID查询登录日志
+     * Search login logs by user ID
      *
-     * @param userId 用户ID
-     * @return 登录日志列表
+     * @param userId user ID
+     * @return list of login logs
      */
     fun searchByUserId(userId: String): List<UserLogLogin> =
         search(Criteria(UserLogLogin::userId eq userId))
 
     /**
-     * 按租户ID查询登录日志
+     * Search login logs by tenant ID
      *
-     * @param tenantId 租户ID
-     * @return 登录日志列表
+     * @param tenantId tenant ID
+     * @return list of login logs
      */
     fun searchByTenantId(tenantId: String): List<UserLogLogin> =
         search(Criteria(UserLogLogin::tenantId eq tenantId))
 
     /**
-     * 按可选条件查询登录日志
+     * Search login logs by optional filters
      *
-     * @param tenantId 租户ID，可为null
-     * @param userId 用户ID，可为null
-     * @param startTime 起始时间，可为null
-     * @param endTime 结束时间，可为null
-     * @return 登录日志列表
+     * @param tenantId tenant ID, may be null
+     * @param userId user ID, may be null
+     * @param startTime start time, may be null
+     * @param endTime end time, may be null
+     * @return list of login logs
      */
     fun searchByFilters(
         tenantId: String?,
@@ -56,13 +56,13 @@ open class UserLogLoginDao : BaseCrudDao<String, UserLogLogin, UserLogLogins>() 
     ): List<UserLogLogin> = search(buildCriteria(tenantId, userId, startTime, endTime))
 
     /**
-     * 按可选条件统计登录日志数量
+     * Count login logs by optional filters
      *
-     * @param tenantId 租户ID，可为null
-     * @param userId 用户ID，可为null
-     * @param startTime 起始时间，可为null
-     * @param endTime 结束时间，可为null
-     * @return 日志数量
+     * @param tenantId tenant ID, may be null
+     * @param userId user ID, may be null
+     * @param startTime start time, may be null
+     * @param endTime end time, may be null
+     * @return log count
      */
     fun countByFilters(
         tenantId: String?,
@@ -72,14 +72,14 @@ open class UserLogLoginDao : BaseCrudDao<String, UserLogLogin, UserLogLogins>() 
     ): Int = count(buildCriteria(tenantId, userId, startTime, endTime))
 
     /**
-     * 按登录结果和可选条件统计日志数量
+     * Count logs by login result and optional filters
      *
-     * @param loginSuccess 登录是否成功
-     * @param tenantId 租户ID，可为null
-     * @param userId 用户ID，可为null
-     * @param startTime 起始时间，可为null
-     * @param endTime 结束时间，可为null
-     * @return 日志数量
+     * @param loginSuccess whether the login succeeded
+     * @param tenantId tenant ID, may be null
+     * @param userId user ID, may be null
+     * @param startTime start time, may be null
+     * @param endTime end time, may be null
+     * @return log count
      */
     fun countByLoginSuccess(
         loginSuccess: Boolean,
@@ -94,14 +94,14 @@ open class UserLogLoginDao : BaseCrudDao<String, UserLogLogin, UserLogLogins>() 
     }
 
     /**
-     * 把可选过滤参数拼成 [Criteria]：每个非 null 字段追加一条 AND 条件。
-     * 给 count / search 调用复用，避免 if-not-null 模板代码散落。
+     * Build optional filter parameters into a [Criteria]: each non-null field appends an AND condition.
+     * Reused by count / search calls to avoid scattering if-not-null boilerplate.
      *
-     * @param tenantId 租户 id 过滤；null 表示不限
-     * @param userId 用户 id 过滤；null 表示不限
-     * @param startTime loginTime 下界（闭区间 `>=`）
-     * @param endTime loginTime 上界（闭区间 `<=`）
-     * @return 拼好的 Criteria
+     * @param tenantId tenant id filter; null means no restriction
+     * @param userId user id filter; null means no restriction
+     * @param startTime loginTime lower bound (inclusive `>=`)
+     * @param endTime loginTime upper bound (inclusive `<=`)
+     * @return the assembled Criteria
      * @author K
      * @since 1.0.0
      */

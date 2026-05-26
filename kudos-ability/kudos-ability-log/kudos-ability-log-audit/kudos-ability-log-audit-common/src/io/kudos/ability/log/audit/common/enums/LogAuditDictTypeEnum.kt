@@ -6,7 +6,7 @@ import io.kudos.base.enums.impl.KudosModuleEnum
 
 
 /**
- * 日志审计字典类型枚举
+ * Log-audit dictionary-type enum.
  *
  * @author K
  * @author AI: Codex
@@ -19,7 +19,7 @@ enum class LogAuditDictTypeEnum(
     override val parentType: IDictTypeEnum? = null
 ) : IDictTypeEnum {
 
-    /** 操作类型 */
-    OPERATION_TYPE(KudosModuleEnum.LOG_AUDIT, "operation_type", "操作类型")
+    /** Operation type. */
+    OPERATION_TYPE(KudosModuleEnum.LOG_AUDIT, "operation_type", "Operation type")
 
 }

@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController
 
 
 /**
- * 用户账号保护管理控制器
+ * User account protection admin controller.
  *
  * @author K
  * @since 1.0.0

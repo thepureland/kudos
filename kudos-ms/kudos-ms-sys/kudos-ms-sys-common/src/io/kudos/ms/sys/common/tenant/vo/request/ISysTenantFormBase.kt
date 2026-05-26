@@ -6,31 +6,31 @@ import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
 
 /**
- * 租户表单基础字段（新建 / 更新共用）
+ * Tenant form base fields (shared by create / update).
  *
  * @author K
  * @since 1.0.0
  */
 interface ISysTenantFormBase {
 
-    /** 名称 */
+    /** Name */
     @get:NotBlank
     @get:MaxLength(128)
     val name: String
 
-    /** 所属子系统 */
+    /** Owning subsystems */
     @get:NotEmpty
     var subSystemCodes: Set<String>
 
-    /** 时区 */
+    /** Timezone */
     @get:MaxLength(128)
     val timezone: String?
 
-    /** 默认语言编码 */
+    /** Default language code */
     @get:FixedLength(5)
     val defaultLanguageCode: String?
 
-    /** 备注 */
+    /** Remark */
     @get:MaxLength(128)
     val remark: String?
 }

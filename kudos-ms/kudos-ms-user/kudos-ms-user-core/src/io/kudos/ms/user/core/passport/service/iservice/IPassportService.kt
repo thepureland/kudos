@@ -8,7 +8,7 @@ import io.kudos.ms.user.common.passport.vo.response.PassportLoginResult
 
 
 /**
- * 登录通行证业务接口
+ * Login passport business interface.
  *
  * @author K
  * @since 1.0.0
@@ -16,35 +16,35 @@ import io.kudos.ms.user.common.passport.vo.response.PassportLoginResult
 interface IPassportService {
 
     /**
-     * 校验登录凭据，处理登录副作用（错误计数 / 最后登录信息）。
+     * Verifies login credentials and handles login side effects (error count / last login info).
      */
     fun login(req: PassportLoginRequest): PassportLoginResult
 
     /**
-     * 登出：写入最后登出时间。
+     * Logout: writes the last logout time.
      *
-     * 不做会话/JWT 撤销——上层会话清理由调用方在本方法之外完成。
+     * Does not perform session / JWT revocation -- upper-layer session cleanup is performed by the caller outside this method.
      */
     fun logout(userId: String): Boolean
 
     /**
-     * 校验当前用户的登录密码（不消耗错误次数，不更新登录时间）。
-     * 用于敏感操作前的二次身份确认。
+     * Verifies the current user's login password (does not consume the error count, does not update the login time).
+     * Used for secondary identity confirmation before sensitive operations.
      */
     fun verifyPassword(req: VerifyPasswordRequest): Boolean
 
     /**
-     * 校验当前用户的安全密码（不消耗错误次数）。
+     * Verifies the current user's security password (does not consume the error count).
      */
     fun verifySecurityPassword(req: VerifyPasswordRequest): Boolean
 
     /**
-     * 用户本人修改登录密码：先校验旧密码，正确才覆盖新密码。
+     * The user changes the login password themselves: verify the old password first, only overwrite with the new password if correct.
      */
     fun changePassword(req: ChangePasswordRequest): ChangePasswordResultEnum
 
     /**
-     * 用户本人修改安全密码。
+     * The user changes the security password themselves.
      */
     fun changeSecurityPassword(req: ChangePasswordRequest): ChangePasswordResultEnum
 

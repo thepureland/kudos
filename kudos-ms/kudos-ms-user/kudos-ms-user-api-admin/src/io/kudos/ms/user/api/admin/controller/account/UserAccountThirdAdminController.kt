@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController
 
 
 /**
- * 用户第三方账号管理控制器
+ * User third-party account admin controller.
  *
  * @author K
  * @since 1.0.0
@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.RestController
 class UserAccountThirdAdminController :
     BaseCrudController<String, IUserAccountThirdService, UserAccountThirdQuery, UserAccountThirdRow, UserAccountThirdDetail, UserAccountThirdEdit, UserAccountThirdFormCreate, UserAccountThirdFormUpdate>() {
 
-    /** 列出指定用户的所有第三方绑定 */
+    /** List all third-party bindings of the specified user. */
     @GetMapping("/listByUserId")
     fun listByUserId(@RequestParam userId: String): List<UserAccountThird> =
         service.getByUserAccountId(userId)

@@ -4,7 +4,7 @@ import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import org.springframework.stereotype.Repository
 
 /**
- * 测试表数据访问对象
+ * DAO for the test table.
  *
  * @author K
  * @author AI: Codex

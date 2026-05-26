@@ -7,7 +7,7 @@ import jakarta.annotation.Resource
 /**
  * junit test for UserLoginRememberMeDao
  *
- * 测试数据来源：`UserLoginRememberMeDaoTest.sql`
+ * Test data source: `UserLoginRememberMeDaoTest.sql`
  *
  * @author K
  * @author AI: Codex

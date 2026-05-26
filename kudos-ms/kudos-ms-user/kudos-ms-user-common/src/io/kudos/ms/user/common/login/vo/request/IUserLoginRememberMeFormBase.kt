@@ -3,19 +3,19 @@ package io.kudos.ms.user.common.login.vo.request
 import java.time.LocalDateTime
 
 /**
- * 记住我登录表单基础字段（新建 / 更新共用）
+ * Remember-me login form base fields (shared between create and update)
  *
  * @author K
  * @since 1.0.0
  */
 interface IUserLoginRememberMeFormBase {
 
-    /** 用户名 */
+    /** Username */
     val username: String?
 
-    /** 令牌 */
+    /** Token */
     val token: String?
 
-    /** 最后使用时间 */
+    /** Last used time */
     val lastUsed: LocalDateTime?
 }

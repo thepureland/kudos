@@ -6,118 +6,118 @@ import io.kudos.base.query.enums.OperatorEnum
 import java.util.Locale
 
 /**
- * 逻辑操作符枚举
- * 
- * 定义了各种逻辑比较操作符，用于属性值的逻辑判断。
- * 与OperatorEnum功能类似，但主要用于DependsValidator等验证场景。
- * 
- * 支持的操作符类型：
- * 1. 相等比较：EQ（等于）、IEQ（忽略大小写等于）、NE/LG（不等于）
- * 2. 大小比较：GE（大于等于）、LE（小于等于）、GT（大于）、LT（小于）
- * 3. 字符串匹配：LIKE（任意位置）、LIKE_S（匹配前面）、LIKE_E（匹配后面）
- * 4. 忽略大小写匹配：ILIKE、ILIKE_S、ILIKE_E
- * 5. 集合操作：IN（包含）、NOT_IN（不包含）
- * 6. 空值判断：IS_NULL（为null）、IS_NOT_NULL（不为null）
- * 7. 空串判断：IS_EMPTY（为空串）、IS_NOT_EMPTY（不为空串）
- * 
- * 属性说明：
- * - code：操作符代码，用于序列化和传输
- * - displayText：操作符的中文描述
- * - acceptNull：是否接受null值，true表示null值也是有效的比较值
- * - stringOnly：是否只接受字符串类型，true表示只能用于字符串比较
- * 
- * 实现方式：
- * - compare方法内部委托给OperatorEnum的对应方法执行实际比较
- * - 保持与OperatorEnum的一致性，便于统一维护
- * 
- * 使用场景：
- * - DependsValidator中的依赖条件验证
- * - 动态查询条件的构建
- * - 属性值的逻辑判断
- * 
- * 注意事项：
- * - 某些操作符（如IS_NULL、IS_EMPTY）的v2参数无意义
- * - stringOnly为true的操作符只能用于字符串类型
- * - acceptNull为true的操作符可以接受null值作为有效比较值
- * 
+ * Logical operator enumeration.
+ *
+ * Defines various logical comparison operators used for property value comparisons.
+ * Similar in functionality to OperatorEnum, but mainly used in validation scenarios such as DependsValidator.
+ *
+ * Supported operator categories:
+ * 1. Equality comparison: EQ (equal), IEQ (case-insensitive equal), NE/LG (not equal)
+ * 2. Magnitude comparison: GE (greater than or equal), LE (less than or equal), GT (greater than), LT (less than)
+ * 3. String matching: LIKE (anywhere), LIKE_S (starts with), LIKE_E (ends with)
+ * 4. Case-insensitive matching: ILIKE, ILIKE_S, ILIKE_E
+ * 5. Set operations: IN (contained), NOT_IN (not contained)
+ * 6. Null checks: IS_NULL (is null), IS_NOT_NULL (is not null)
+ * 7. Empty string checks: IS_EMPTY (is empty string), IS_NOT_EMPTY (is not empty string)
+ *
+ * Property descriptions:
+ * - code: operator code, used for serialization and transmission
+ * - displayText: display description of the operator
+ * - acceptNull: whether null values are accepted; true means null is also a valid comparison value
+ * - stringOnly: whether only string types are accepted; true means it can only be used for string comparisons
+ *
+ * Implementation:
+ * - The compare method internally delegates to the corresponding method of OperatorEnum to perform the actual comparison
+ * - Stays consistent with OperatorEnum for easy unified maintenance
+ *
+ * Use cases:
+ * - Dependency condition validation in DependsValidator
+ * - Building dynamic query conditions
+ * - Logical comparisons of property values
+ *
+ * Notes:
+ * - The v2 parameter is meaningless for some operators (such as IS_NULL and IS_EMPTY)
+ * - Operators with stringOnly set to true can only be used with string types
+ * - Operators with acceptNull set to true can accept null values as valid comparison values
+ *
  * @since 1.0.0
  */
 enum class LogicOperatorEnum(
     override val code: String,
     override val displayText: String,
-    // 值是否可接受null
+    // Whether the value can be null
     val acceptNull: Boolean = false,
-    // 操作值只接收字符串类型
+    // The operand only accepts string types
     val stringOnly: Boolean = false
 ) : IDictEnum {
 
-    /** 等于 */
-    EQ("=", "等于"),
+    /** Equal */
+    EQ("=", "Equal"),
 
-    /** 忽略大小写等于 */
-    IEQ("I=", "忽略大小写等于", false, true),
+    /** Case-insensitive equal */
+    IEQ("I=", "Case-insensitive equal", false, true),
 
-    /** 不等于 */
-    NE("!=", "不等于", false, false),
+    /** Not equal */
+    NE("!=", "Not equal", false, false),
 
-    /** 小于大于(不等于) */
-    LG("<>", "小于大于(不等于)"),
+    /** Less than or greater than (not equal) */
+    LG("<>", "Less than or greater than (not equal)"),
 
-    /** 大于等于 */
-    GE(">=", "大于等于"),
+    /** Greater than or equal */
+    GE(">=", "Greater than or equal"),
 
-    /** 小于等于 */
-    LE("<=", "小于等于"),
+    /** Less than or equal */
+    LE("<=", "Less than or equal"),
 
-    /** 大于 */
-    GT(">", "大于"),
+    /** Greater than */
+    GT(">", "Greater than"),
 
-    /** 小于 */
-    LT("<", "小于"),
+    /** Less than */
+    LT("<", "Less than"),
 
-    /** 匹配字符串任意位置 */
-    LIKE("LIKE", "任意位置匹配", false, true),
+    /** Match anywhere in the string */
+    LIKE("LIKE", "Match anywhere", false, true),
 
-    /** 匹配字符串前面 */
-    LIKE_S("LIKE_S", "匹配前面", false, true),
+    /** Match at the start of the string */
+    LIKE_S("LIKE_S", "Match start", false, true),
 
-    /** 匹配字符串后面 */
-    LIKE_E("LIKE_E", "匹配后面", false, true),
+    /** Match at the end of the string */
+    LIKE_E("LIKE_E", "Match end", false, true),
 
-    /** 忽略大小写匹配字符串任意位置 */
-    ILIKE("ILIKE", "忽略大小写任意位置匹配", false, true),
+    /** Case-insensitive match anywhere in the string */
+    ILIKE("ILIKE", "Case-insensitive match anywhere", false, true),
 
-    /** 忽略大小写匹配字符串前面 */
-    ILIKE_S("ILIKE_S", "忽略大小写匹配前面", false, true),
+    /** Case-insensitive match at the start of the string */
+    ILIKE_S("ILIKE_S", "Case-insensitive match start", false, true),
 
-    /** 忽略大小写匹配字符串后面 */
-    ILIKE_E("ILIKE_E", "忽略大小写匹配后面", false, true),
+    /** Case-insensitive match at the end of the string */
+    ILIKE_E("ILIKE_E", "Case-insensitive match end", false, true),
 
-    /** in查询 */
-    IN("IN", "in查询"),
+    /** IN query */
+    IN("IN", "IN query"),
 
-    /** not in查询 */
-    NOT_IN("NOT IN", "not in查询"),
+    /** NOT IN query */
+    NOT_IN("NOT IN", "NOT IN query"),
 
-    /** 是否为null */
-    IS_NULL("IS NULL", "判空", true, false),
+    /** Whether the value is null */
+    IS_NULL("IS NULL", "Is null", true, false),
 
-    /** 是否不为null */
-    IS_NOT_NULL("IS NOT NULL", "非空", true, false),
+    /** Whether the value is not null */
+    IS_NOT_NULL("IS NOT NULL", "Is not null", true, false),
 
-    /** 是否为空串 */
-    IS_EMPTY("=''", "等于空串", true, true),
+    /** Whether the value is an empty string */
+    IS_EMPTY("=''", "Equal to empty string", true, true),
 
-    /** 是否不为空串 */
-    IS_NOT_EMPTY("!=''", "不等于空串", true, true);
+    /** Whether the value is not an empty string */
+    IS_NOT_EMPTY("!=''", "Not equal to empty string", true, true);
 
 
     /**
-     * 根据当前操作符作断言
+     * Performs an assertion based on the current operator.
      *
-     * @param v1 左值
-     * @param v2 右值 (对于IS_NULL、IS_NOT_NULL、IS_EMPTY、IS_NOT_EMPTY来说无意义)
-     * @return 是否满足逻辑关系
+     * @param v1 Left value
+     * @param v2 Right value (meaningless for IS_NULL, IS_NOT_NULL, IS_EMPTY, IS_NOT_EMPTY)
+     * @return Whether the logical relationship is satisfied
      * @author K
      * @since 1.0.0
      */

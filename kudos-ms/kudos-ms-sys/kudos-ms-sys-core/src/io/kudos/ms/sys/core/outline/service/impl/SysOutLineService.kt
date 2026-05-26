@@ -20,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional
 
 
 /**
- * 出网白名单业务
+ * Outbound allowlist service.
  *
  * @author K
  * @since 1.0.0
@@ -48,8 +48,8 @@ open class SysOutLineService(
         return completeCrudUpdate(
             success = dao.update(outLine),
             log = log,
-            successMessage = "更新id为${id}的出网白名单的启用状态为${active}。",
-            failureMessage = "更新id为${id}的出网白名单的启用状态为${active}失败！",
+            successMessage = "Updated outbound allowlist id=$id active=$active.",
+            failureMessage = "Failed to update outbound allowlist id=$id active=$active!",
         ) {
             eventPublisher.publishEvent(SysOutLineUpdated(id = id))
         }
@@ -58,7 +58,7 @@ open class SysOutLineService(
     @Transactional
     override fun insert(any: Any): String {
         val id = super.insert(any)
-        completeCrudInsert(log, "新增id为${id}的出网白名单。") {
+        completeCrudInsert(log, "Inserted outbound allowlist id=$id.") {
             eventPublisher.publishEvent(SysOutLineInserted(id = id))
         }
         return id
@@ -66,12 +66,12 @@ open class SysOutLineService(
 
     @Transactional
     override fun update(any: Any): Boolean {
-        val id = requireStringId(any, "出网白名单")
+        val id = requireStringId(any, "outbound allowlist")
         return completeCrudUpdate(
             success = super.update(any),
             log = log,
-            successMessage = "更新id为${id}的出网白名单。",
-            failureMessage = "更新id为${id}的出网白名单失败！",
+            successMessage = "Updated outbound allowlist id=$id.",
+            failureMessage = "Failed to update outbound allowlist id=$id!",
         ) {
             eventPublisher.publishEvent(SysOutLineUpdated(id = id))
         }
@@ -81,14 +81,14 @@ open class SysOutLineService(
     override fun deleteById(id: String): Boolean {
         val po = dao.get(id)
         if (po == null) {
-            log.warn("删除id为${id}的出网白名单时，发现其已不存在！")
+            log.warn("Outbound allowlist id=$id no longer exists when attempting delete!")
             return false
         }
         return completeCrudUpdate(
             success = super.deleteById(id),
             log = log,
-            successMessage = "删除id为${id}的出网白名单。",
-            failureMessage = "删除id为${id}的出网白名单失败！",
+            successMessage = "Deleted outbound allowlist id=$id.",
+            failureMessage = "Failed to delete outbound allowlist id=$id!",
         ) {
             eventPublisher.publishEvent(
                 SysOutLineDeleted(id = id, systemCode = po.systemCode, tenantId = po.tenantId)
@@ -101,7 +101,7 @@ open class SysOutLineService(
         val pos = dao.inSearchById(ids)
         val dimensions = pos.map { it.systemCode to it.tenantId }.toSet()
         val count = super.batchDelete(ids)
-        log.debug("批量删除出网白名单，期望删除${ids.size}条，实际删除${count}条。")
+        log.debug("Batch delete outbound allowlist: expected ${ids.size}, actually deleted $count.")
         if (count > 0) {
             eventPublisher.publishEvent(SysOutLineBatchDeleted(ids = ids, dimensions = dimensions))
         }

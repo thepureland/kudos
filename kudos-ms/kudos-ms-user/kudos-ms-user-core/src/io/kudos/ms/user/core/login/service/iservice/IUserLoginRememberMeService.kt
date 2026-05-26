@@ -5,7 +5,7 @@ import io.kudos.ms.user.core.login.model.po.UserLoginRememberMe
 
 
 /**
- * 记住我登录业务接口
+ * Remember-me login service interface.
  *
  * @author K
  * @author AI: Codex

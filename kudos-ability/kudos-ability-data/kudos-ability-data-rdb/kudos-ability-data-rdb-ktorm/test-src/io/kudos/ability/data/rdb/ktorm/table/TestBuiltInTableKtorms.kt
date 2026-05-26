@@ -5,7 +5,7 @@ import org.ktorm.schema.boolean
 import org.ktorm.schema.varchar
 
 /**
- * 带 built_in 字段的测试表
+ * Test table that includes a built_in field.
  *
  * @author K
  * @author AI: Codex

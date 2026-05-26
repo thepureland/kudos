@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional
 
 
 /**
- * 子系统-微服务关系业务
+ * Sub-system to microservice relationship service.
  *
  * @author K
  * @since 1.0.0
@@ -39,11 +39,11 @@ open class SysSubSystemMicroServiceService(
         if (microServiceCodes.isEmpty()) {
             return 0
         }
-        // 一次 SELECT 已存在的关系，差集对新增 ID 一次 batchInsert，把原 N+1 折叠到 2 次 SQL。
+        // One SELECT for existing relationships, then a single batchInsert on the diff; collapses the original N+1 to 2 SQL statements.
         val existing = dao.searchMicroServiceCodesBySubSystemCode(subSystemCode)
         val newMicroServiceCodes = microServiceCodes.toSet() - existing
         if (newMicroServiceCodes.isEmpty()) {
-            log.debug("批量绑定子系统${subSystemCode}与${microServiceCodes.size}个微服务的关系，全部已存在，无新增。")
+            log.debug("Batch bind for sub-system ${subSystemCode} with ${microServiceCodes.size} microservices: all already exist, nothing to insert.")
             return 0
         }
         val relations = newMicroServiceCodes.map {
@@ -53,7 +53,7 @@ open class SysSubSystemMicroServiceService(
             }
         }
         dao.batchInsert(relations)
-        log.debug("批量绑定子系统${subSystemCode}与${microServiceCodes.size}个微服务的关系，成功绑定${newMicroServiceCodes.size}条。")
+        log.debug("Batch bind for sub-system ${subSystemCode} with ${microServiceCodes.size} microservices: successfully bound ${newMicroServiceCodes.size} relationships.")
         return newMicroServiceCodes.size
     }
 
@@ -62,9 +62,9 @@ open class SysSubSystemMicroServiceService(
         val count = dao.deleteBySubSystemCodeAndMicroServiceCode(subSystemCode, microServiceCode)
         val success = count > 0
         if (success) {
-            log.debug("解绑子系统${subSystemCode}与微服务${microServiceCode}的关系。")
+            log.debug("Unbound sub-system ${subSystemCode} from microservice ${microServiceCode}.")
         } else {
-            log.warn("解绑子系统${subSystemCode}与微服务${microServiceCode}的关系失败，关系不存在。")
+            log.warn("Failed to unbind sub-system ${subSystemCode} from microservice ${microServiceCode}: relationship does not exist.")
         }
         return success
     }

@@ -4,35 +4,35 @@ import io.kudos.base.model.contract.entity.IIdEntity
 
 
 /**
- * 机构编辑响应VO
+ * Organization edit response VO
  *
  * @author K
  * @since 1.0.0
  */
 data class UserOrgEdit (
 
-    /** 主键 */
+    /** Primary key */
     override val id: String = "",
 
-    /** 机构名称 */
+    /** Organization name */
     val name: String? = null,
 
-    /** 机构简称 */
+    /** Organization short name */
     val shortName: String? = null,
 
-    /** 租户id */
+    /** Tenant id */
     val tenantId: String? = null,
 
-    /** 父机构id */
+    /** Parent organization id */
     val parentId: String? = null,
 
-    /** 机构类型字典码 */
+    /** Organization type dict code */
     val orgTypeDictCode: String? = null,
 
-    /** 排序号 */
+    /** Sort number */
     val sortNum: Int? = null,
 
-    /** 备注 */
+    /** Remark */
     val remark: String? = null,
 
 ) : IIdEntity<String>

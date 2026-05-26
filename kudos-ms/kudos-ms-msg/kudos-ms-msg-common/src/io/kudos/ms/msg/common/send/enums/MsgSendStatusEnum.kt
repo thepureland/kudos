@@ -2,17 +2,17 @@ package io.kudos.ms.msg.common.send.enums
 
 
 /**
- * `msg_send.send_status_dict_code` 取值。
+ * Values for `msg_send.send_status_dict_code`.
  *
- * 字典码对齐 `V1.0.0.2__insert_sys_dict_item.sql` 中的 send_status 字典项；改这里要同步 SQL 端。
+ * Dict codes match the send_status entries in `V1.0.0.2__insert_sys_dict_item.sql`; keep both sides in sync.
  *
- * 状态机：
+ * State machine:
  *   PENDING (00)
- *     ↓ Publish service 投 MQ 成功
- *   SENT_TO_MQ (11) ─→ Publish service 投 MQ 失败时直接置 FAILED_TO_SEND_TO_MQ (21)
- *     ↓ Consumer 拉到消息
+ *     | Publish service dispatched to MQ successfully
+ *   SENT_TO_MQ (11) -> Set directly to FAILED_TO_SEND_TO_MQ (21) when Publish service fails to dispatch
+ *     | Consumer pulled the message
  *   CONSUMED_FROM_MQ (31)
- *     ↓ Consumer 完成发送
+ *     | Consumer finished sending
  *   SUCCESS (33) / SUCCESS_PARTIAL (32) / FAILED_FINAL (22)
  *
  * @author K
@@ -20,27 +20,27 @@ package io.kudos.ms.msg.common.send.enums
  */
 enum class MsgSendStatusEnum(val dictCode: String) {
 
-    /** 等待发送，刚落表还没投 MQ */
+    /** Pending: record persisted but not yet dispatched to MQ. */
     PENDING("00"),
 
-    /** 取消发送（admin 主动止损） */
+    /** Cancelled (admin stopped delivery proactively). */
     CANCELLED("01"),
 
-    /** 已发送给消息队列（Publish service 投 MQ 成功） */
+    /** Sent to the message queue (Publish service dispatched to MQ successfully). */
     SENT_TO_MQ("11"),
 
-    /** 发送给消息队列失败 */
+    /** Failed to send to the message queue. */
     FAILED_TO_SEND_TO_MQ("21"),
 
-    /** 最终发送失败（consumer 处理失败 / 所有用户都失败） */
+    /** Final send failure (consumer processing failed / all recipients failed). */
     FAILED_FINAL("22"),
 
-    /** 已从消息队列消费（consumer 拉到消息，未执行完） */
+    /** Consumed from the message queue (consumer pulled the message but has not finished processing). */
     CONSUMED_FROM_MQ("31"),
 
-    /** 发送完成，但部分用户失败 */
+    /** Send completed but some recipients failed. */
     SUCCESS_PARTIAL("32"),
 
-    /** 发送成功 */
+    /** Send succeeded. */
     SUCCESS("33");
 }

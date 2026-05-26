@@ -4,34 +4,35 @@ import io.kudos.base.logger.ILog
 import io.kudos.base.model.contract.entity.IIdEntity
 
 /**
- * 从 update 入参中抽取主键。约 13 个 service 里的 `requireXxxId(any)` 私有 helper 完全一致——只是
- * `entityLabel` 不同——抽出统一收口；要求入参实现 [IIdEntity] 且 `id` 是 `String`。
+ * Extract the primary key from an update parameter. About 13 services have an identical
+ * private `requireXxxId(any)` helper, differing only by `entityLabel`; this is the unified entry point.
+ * The argument must implement [IIdEntity] with `id` of type `String`.
  *
- * @param any update 入参（通常是 service 的 VO / form 对象）
- * @param entityLabel 实体的中文显示名，用于失败时的 error 消息（如 "租户"、"域名"）
- * @return 主键
- * @throws IllegalStateException 入参未实现 [IIdEntity] 或 id 不是 String
+ * @param any update parameter (typically the service's VO / form object)
+ * @param entityLabel human-readable entity label, used in error messages (e.g. "tenant", "domain")
+ * @return the primary key
+ * @throws IllegalStateException when the argument does not implement [IIdEntity] or id is not a String
  */
 internal fun requireStringId(any: Any, entityLabel: String): String =
     (any as? IIdEntity<*>)?.id as? String
-        ?: error("更新${entityLabel}时不支持的入参类型: ${any::class.qualifiedName}")
+        ?: error("Unsupported argument type when updating ${entityLabel}: ${any::class.qualifiedName}")
 
 /**
- * 收尾 update / delete 类操作：按 [success] 分两路打日志，成功路径再触发 [onSuccess]
- *（典型用途：发事件、写 ThreadLocal cache 之类的副作用）。
+ * Finalize an update / delete operation: log according to [success], then invoke [onSuccess]
+ * on the success path (typical use: publish events, write to a ThreadLocal cache, and similar side effects).
  *
- * 抽出来是因为 ms-sys-core 各 Service 的 update / delete 普遍是
- * "if (success) { log.debug + 发事件 } else { log.error }" 模板——
- * 行内重复一遍既丑也容易漏 log 等级。
+ * Extracted because update / delete methods across ms-sys-core services share the
+ * "if (success) { log.debug + publish event } else { log.error }" template; duplicating it inline
+ * is ugly and prone to dropping a log level.
  *
- * inline 是为避免 lambda 在调用点产生额外 [Function0] 对象（高频调用路径上的微优化）。
+ * inline avoids allocating an extra [Function0] object at the call site (micro-optimization for hot paths).
  *
- * @param success DAO 层返回的成功标志
- * @param log 调用方 service 自己的 logger（沿用调用方分类名）
- * @param successMessage 成功时的 debug 消息
- * @param failureMessage 失败时的 error 消息
- * @param onSuccess 仅在 [success]=true 时触发的副作用（如发 event、更新缓存）
- * @return [success] 原值，便于链式 `return completeCrudUpdate(...)`
+ * @param success success flag returned by the DAO layer
+ * @param log the caller service's own logger (preserves the caller's category name)
+ * @param successMessage debug message on success
+ * @param failureMessage error message on failure
+ * @param onSuccess side effect triggered only when [success] is true (e.g. publish event, update cache)
+ * @return original [success] value, allowing chained `return completeCrudUpdate(...)`
  * @author K
  * @since 1.0.0
  */
@@ -52,13 +53,14 @@ internal inline fun completeCrudUpdate(
 }
 
 /**
- * 收尾 insert 操作：直接打 debug 日志 + 触发 [onSuccess]（通常是发"已新建"事件）。
+ * Finalize an insert operation: log debug message and invoke [onSuccess] (typically publishing an "inserted" event).
  *
- * 没有"失败分支"——insert 失败由上游 BaseCrudService 抛异常处理，不会走到这里。
+ * There is no "failure branch" — insert failures are raised as exceptions by the upstream BaseCrudService,
+ * so this method is never reached on failure.
  *
- * @param log 调用方 service 自己的 logger
- * @param successMessage 成功时的 debug 消息
- * @param onSuccess 副作用回调
+ * @param log the caller service's own logger
+ * @param successMessage debug message on success
+ * @param onSuccess side effect callback
  * @author K
  * @since 1.0.0
  */

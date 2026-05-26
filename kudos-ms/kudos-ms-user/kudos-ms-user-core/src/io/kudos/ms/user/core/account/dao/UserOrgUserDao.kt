@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository
 
 
 /**
- * 机构-用户关系数据访问对象
+ * Organization-user association DAO.
  *
  * @author K
  * @author AI: Cursor
@@ -21,11 +21,11 @@ open class UserOrgUserDao : BaseCrudDao<String, UserOrgUser, UserOrgUsers>() {
 
 
     /**
-     * 检查关系是否存在
+     * Check whether the association exists.
      *
-     * @param orgId 机构ID
-     * @param userId 用户ID
-     * @return 是否存在
+     * @param orgId organization id
+     * @param userId user id
+     * @return true if it exists
      * @author AI: Cursor
      * @since 1.0.0
      */
@@ -38,7 +38,7 @@ open class UserOrgUserDao : BaseCrudDao<String, UserOrgUser, UserOrgUsers>() {
     }
 
     /**
-     * 按用户ID查询其所属机构ID列表
+     * Query the organization ids a user belongs to.
      */
     fun searchOrgIdsByUserId(userId: String): List<String> {
         val criteria = Criteria(UserOrgUser::userId eq userId)
@@ -46,7 +46,7 @@ open class UserOrgUserDao : BaseCrudDao<String, UserOrgUser, UserOrgUsers>() {
     }
 
     /**
-     * 按机构ID查询其下用户ID列表
+     * Query the user ids under an organization.
      */
     fun searchUserIdsByOrgId(orgId: String): List<String> {
         val criteria = Criteria(UserOrgUser::orgId eq orgId)
@@ -54,8 +54,8 @@ open class UserOrgUserDao : BaseCrudDao<String, UserOrgUser, UserOrgUsers>() {
     }
 
     /**
-     * 按多个机构ID批量查询其下用户ID列表（不去重；调用方按需 distinct）。
-     * 给"父机构含子机构成员"类查询的 IN-list 展开用。
+     * Batch-query user ids under multiple organization ids (no dedup; callers should distinct as needed).
+     * Used by IN-list expansion for "parent org includes child org members" queries.
      */
     fun searchUserIdsByOrgIds(orgIds: Collection<String>): List<String> {
         if (orgIds.isEmpty()) return emptyList()
@@ -64,7 +64,7 @@ open class UserOrgUserDao : BaseCrudDao<String, UserOrgUser, UserOrgUsers>() {
     }
 
     /**
-     * 全量机构-用户关系，按用户ID分组为「用户ID -> 机构ID列表」
+     * All organization-user associations, grouped by userId as "userId -> list of orgIds".
      */
     fun searchAllUserIdToOrgIds(): Map<String, List<String>> {
         val all = allSearch()
@@ -72,7 +72,7 @@ open class UserOrgUserDao : BaseCrudDao<String, UserOrgUser, UserOrgUsers>() {
     }
 
     /**
-     * 全量机构-用户关系，按机构ID分组为「机构ID -> 用户ID列表」
+     * All organization-user associations, grouped by orgId as "orgId -> list of userIds".
      */
     fun searchAllOrgIdToUserIds(): Map<String, List<String>> {
         val all = allSearch()
@@ -80,11 +80,11 @@ open class UserOrgUserDao : BaseCrudDao<String, UserOrgUser, UserOrgUsers>() {
     }
 
     /**
-     * 按机构ID和用户ID删除关系
+     * Delete the association by orgId and userId.
      *
-     * @param orgId 机构ID
-     * @param userId 用户ID
-     * @return 删除条数
+     * @param orgId organization id
+     * @param userId user id
+     * @return number of rows deleted
      */
     fun deleteByOrgIdAndUserId(orgId: String, userId: String): Int {
         val criteria = Criteria.and(
@@ -95,11 +95,11 @@ open class UserOrgUserDao : BaseCrudDao<String, UserOrgUser, UserOrgUsers>() {
     }
 
     /**
-     * 按机构ID和用户ID查询关系列表
+     * Query association records by orgId and userId.
      *
-     * @param orgId 机构ID
-     * @param userId 用户ID
-     * @return 关系记录列表
+     * @param orgId organization id
+     * @param userId user id
+     * @return list of association records
      */
     fun searchByOrgIdAndUserId(orgId: String, userId: String): List<UserOrgUser> {
         val criteria = Criteria.and(
@@ -110,10 +110,10 @@ open class UserOrgUserDao : BaseCrudDao<String, UserOrgUser, UserOrgUsers>() {
     }
 
     /**
-     * 按机构ID查询管理员用户ID列表
+     * Query the admin user ids of an organization.
      *
-     * @param orgId 机构ID
-     * @return 管理员用户ID列表
+     * @param orgId organization id
+     * @return list of admin user ids
      */
     fun searchAdminUserIdsByOrgId(orgId: String): List<String> {
         val criteria = Criteria(UserOrgUser::orgId eq orgId)

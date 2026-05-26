@@ -18,10 +18,10 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * [KtormSqlType] 映射函数单元测试。
+ * Unit tests for the [KtormSqlType] mapping function.
  *
- * 该映射是代码生成器 / Ktorm 适配器拼接列绑定函数名的基础——回归一次防止
- * 误改映射条目（如把 `BigDecimal` 写错成 `numeric` 之类）。
+ * This mapping underpins how the code generator / Ktorm adapter assembles column-binding function names —
+ * regression test once so changes (such as renaming `BigDecimal` to `numeric`) don't slip through.
  *
  * @author K
  * @author AI: Codex
@@ -82,12 +82,12 @@ internal class KtormSqlTypeTest {
 
     @Test
     fun unknownTypeReturnsEmpty() {
-        // 未覆盖的类型走 else 分支，目前实现返回空字符串（非抛错）。代码生成场景一般用不到这种类型。
+        // Uncovered types fall through to the else branch; the current implementation returns an empty string (not an error). Code-generation scenarios usually don't hit this type.
         assertEquals("", KtormSqlType.getFunName(Any::class))
     }
 
     /**
-     * 枚举子类映射测试对象。
+     * Test target for enum-subclass mapping.
      *
      * @author K
      * @author AI: Codex

@@ -8,7 +8,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * DictEnumCodeConstraintConvertor测试用例
+ * Test cases for DictEnumCodeConstraintConvertor.
  *
  * @author AI: cursor
  * @author K
@@ -24,9 +24,9 @@ internal class DictEnumItemCodeConstraintConvertorTest {
             val convertor = DictEnumCodeConstraintConvertor(annotation)
             val rule = convertor.getRule(annotation)
             assertNotNull(rule)
-            // 应该包含values属性
+            // Should include the `values` attribute
             assertTrue(rule.containsKey("values"))
-            // enumClass应该被移除
+            // enumClass should be removed
             assertFalse(rule.containsKey("enumClass"))
         }
     }
@@ -40,12 +40,12 @@ internal class DictEnumItemCodeConstraintConvertorTest {
             val rule = convertor.getRule(annotation)
             val values = rule["values"]
             assertNotNull(values)
-            // values应该是枚举的code集合
+            // `values` should be the set of enum codes
         }
     }
 
     data class TestBean(
-        @get:DictEnumItemCode(enumClass = SexEnum::class, message = "无效的性别")
+        @get:DictEnumItemCode(enumClass = SexEnum::class, message = "invalid sex")
         val sex: String?
     )
 }

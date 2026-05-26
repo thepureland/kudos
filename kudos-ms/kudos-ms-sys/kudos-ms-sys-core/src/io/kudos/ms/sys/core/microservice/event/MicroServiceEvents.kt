@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.core.microservice.event
 
 /**
- * 微服务（`sys_micro_service`）领域事件。`id` 即 code。
+ * Microservice (`sys_micro_service`) domain events. `id` is the code.
  *
  * @author K
  * @author AI: Cursor

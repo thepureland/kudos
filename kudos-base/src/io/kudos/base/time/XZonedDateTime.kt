@@ -4,7 +4,7 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
 /**
- * 定义 java.time.ZonedDateTime 的扩展函数
+ * Defines extension functions for java.time.ZonedDateTime.
  *
  * @author K
  * @since 1.0.0
@@ -12,10 +12,10 @@ import java.time.format.DateTimeFormatter
 
 
 /**
- * 格式化
+ * Formats the value.
  *
- * @param pattern 格式模式串，常见的可用DateTimeFormatPattern类中的常量
- * @return 格式化后的字符串
+ * @param pattern Format pattern string; common patterns are available as constants in the DateTimeFormatPattern class
+ * @return The formatted string
  * @author K
  * @since 1.0.0
  */
@@ -24,9 +24,9 @@ fun ZonedDateTime.format(pattern: String): String = this.format(DateTimeFormatte
 
 
 /**
- * 返回当前时间对应的quartz的cron表达式
+ * Returns the Quartz cron expression corresponding to the current time.
  *
- * @return quartz的cron表达式
+ * @return Quartz cron expression
  * @author K
  * @since 1.0.0
  */

@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RestController
 
 
 /**
- * 租户-资源 关联 内部 RPC 控制器。路径继承自 [ISysTenantResourceApi] 方法级注解。
+ * Tenant-resource association internal RPC controller. Paths are inherited from method-level annotations on [ISysTenantResourceApi].
  *
  * @author K
  * @since 1.0.0

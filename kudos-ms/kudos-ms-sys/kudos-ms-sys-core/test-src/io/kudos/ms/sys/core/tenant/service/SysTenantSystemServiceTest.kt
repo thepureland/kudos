@@ -11,7 +11,7 @@ import kotlin.test.assertTrue
 /**
  * junit test for SysTenantSystemService
  *
- * 测试数据来源：`SysTenantSystemServiceTest.sql`
+ * Test data source: `SysTenantSystemServiceTest.sql`
  *
  * @author K
  * @author AI: Cursor
@@ -50,14 +50,14 @@ class SysTenantSystemServiceTest : RdbAndRedisCacheTestBase() {
         val tenantId = "20000000-0000-0000-0000-000000003675"
         val systemCode = "svc-subsys-ts-test-1_7901"
         
-        // 先创建新的系统
-        // 注意：这里假设系统已存在，实际测试中可能需要先创建
-        // 为了简化，我们测试解绑
+        // Create the new system first
+        // Note: this assumes the system already exists; in real tests it may need to be created
+        // For simplicity, we test unbind here
         val systemCodeToUnbind = "svc-subsys-ts-test-1_7901"
         val unbindResult = sysTenantSystemService.unbind(tenantId, systemCodeToUnbind)
         assertTrue(unbindResult)
 
-        // 重新绑定
+        // Rebind
         val bindCount = sysTenantSystemService.batchBind(tenantId, listOf(systemCode))
         assertTrue(bindCount > 0)
     }

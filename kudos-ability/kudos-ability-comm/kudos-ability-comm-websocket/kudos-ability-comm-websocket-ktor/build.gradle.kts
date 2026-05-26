@@ -1,5 +1,5 @@
 plugins {
-    alias(libs.plugins.ktor) // 自带 Ktor BOM；与 kudos-ability-web-ktor 一致，无需在测试 dep 上声明版本号
+    alias(libs.plugins.ktor) // Brings the Ktor BOM; consistent with kudos-ability-web-ktor, no need to declare a version on test deps.
 }
 
 dependencies {

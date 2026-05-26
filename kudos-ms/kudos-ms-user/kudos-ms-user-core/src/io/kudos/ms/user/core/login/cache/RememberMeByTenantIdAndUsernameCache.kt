@@ -17,11 +17,11 @@ import java.time.LocalDateTime
 
 
 /**
- * 记住我登录缓存处理器
+ * Remember-me login cache handler
  *
- * 1.数据来源表：user_login_remember_me
- * 2.缓存的key为：tenant_id::username
- * 3.缓存的value为：UserLoginRememberMeCacheEntry对象
+ * 1. Source table: user_login_remember_me
+ * 2. Cache key: tenant_id::username
+ * 3. Cache value: UserLoginRememberMeCacheEntry object
  *
  * @author K
  * @author AI: Codex
@@ -42,18 +42,18 @@ open class RememberMeByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<U
 
     override fun doReload(key: String): UserLoginRememberMeCacheEntry? {
         require(key.contains(Consts.CACHE_KEY_DEFAULT_DELIMITER)) {
-            "缓存${CACHE_NAME}的key格式必须是：tenantId${Consts.CACHE_KEY_DEFAULT_DELIMITER}username"
+            "The key format of cache ${CACHE_NAME} must be: tenantId${Consts.CACHE_KEY_DEFAULT_DELIMITER}username"
         }
         val parts = key.split(Consts.CACHE_KEY_DEFAULT_DELIMITER)
         require(parts.size == 2) {
-            "缓存${CACHE_NAME}的key格式必须是：tenantId${Consts.CACHE_KEY_DEFAULT_DELIMITER}username"
+            "The key format of cache ${CACHE_NAME} must be: tenantId${Consts.CACHE_KEY_DEFAULT_DELIMITER}username"
         }
         return getSelf<RememberMeByTenantIdAndUsernameCache>().getRememberMe(parts[0], parts[1])
     }
 
     override fun reloadAll(clear: Boolean) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.info("缓存未开启，不加载和缓存所有记住我登录信息！")
+            log.info("Cache is not enabled; skip loading and caching all remember-me login records!")
             return
         }
 
@@ -66,7 +66,7 @@ open class RememberMeByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<U
                 UserLoginRememberMe::id
             )
         )
-        log.debug("从数据库加载了${rows.size}条记住我登录信息。")
+        log.debug("Loaded ${rows.size} remember-me login records from the database.")
 
         if (clear) {
             clear()
@@ -78,15 +78,16 @@ open class RememberMeByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<U
             val cacheItem = buildCacheItem(row, username)
             KeyValueCacheKit.put(CACHE_NAME, getKey(tenantId, username), cacheItem)
         }
-        log.debug("缓存了${rows.size}条记住我登录信息。")
+        log.debug("Cached ${rows.size} remember-me login records.")
     }
 
     /**
-     * 根据租户ID和用户名从缓存获取记住我登录信息，如果缓存中不存在，则从数据库加载并写入缓存
+     * Get the remember-me login record by tenant ID and username from the cache;
+     * if missing, load from the database and write back to the cache.
      *
-     * @param tenantId 租户ID
-     * @param username 用户名
-     * @return UserLoginRememberMeCacheEntry，找不到返回null
+     * @param tenantId tenant ID
+     * @param username username
+     * @return UserLoginRememberMeCacheEntry, or null if not found
      */
     @Cacheable(
         cacheNames = [CACHE_NAME],
@@ -95,7 +96,7 @@ open class RememberMeByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<U
     )
     open fun getRememberMe(tenantId: String, username: String): UserLoginRememberMeCacheEntry? {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("缓存中不存在租户${tenantId}且用户名为${username}的记住我登录信息，从数据库中加载...")
+            log.debug("No remember-me login record for tenant ${tenantId} and username ${username} in cache; loading from the database...")
         }
         val trimmedTenantId = tenantId.trim()
         val trimmedUsername = username.trim()
@@ -111,7 +112,7 @@ open class RememberMeByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<U
             )
         )
         return if (rows.isEmpty()) {
-            log.warn("数据库中不存在租户${trimmedTenantId}且用户名为${trimmedUsername}的记住我登录信息！")
+            log.warn("No remember-me login record for tenant ${trimmedTenantId} and username ${trimmedUsername} in the database!")
             null
         } else {
             buildCacheItem(rows.first(), trimmedUsername)
@@ -119,78 +120,78 @@ open class RememberMeByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<U
     }
 
     /**
-     * 数据库插入记录后同步缓存
+     * Sync the cache after inserting a database record
      *
-     * @param any 包含必要属性的对象
-     * @param id 记住我登录id
+     * @param any object containing the required properties
+     * @param id remember-me login id
      */
     open fun syncOnInsert(any: Any, id: String) {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("新增id为${id}的记住我登录信息后，同步${CACHE_NAME}缓存...")
+            log.debug("Remember-me login record with id ${id} inserted; syncing ${CACHE_NAME} cache...")
             val (tenantId, username) = resolveKeyParts(any, id) ?: return
             KeyValueCacheKit.evict(CACHE_NAME, getKey(tenantId, username))
             if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                 getSelf<RememberMeByTenantIdAndUsernameCache>().getRememberMe(tenantId, username)
             }
-            log.debug("${CACHE_NAME}缓存同步完成。")
+            log.debug("${CACHE_NAME} cache sync completed.")
         }
     }
 
     /**
-     * 更新数据库记录后同步缓存
+     * Sync the cache after updating a database record
      *
-     * @param any 包含必要属性的对象
-     * @param id 记住我登录id
+     * @param any object containing the required properties
+     * @param id remember-me login id
      */
     open fun syncOnUpdate(any: Any, id: String) {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("更新id为${id}的记住我登录信息后，同步${CACHE_NAME}缓存...")
+            log.debug("Remember-me login record with id ${id} updated; syncing ${CACHE_NAME} cache...")
             val (tenantId, username) = resolveKeyParts(any, id) ?: return
             KeyValueCacheKit.evict(CACHE_NAME, getKey(tenantId, username))
             if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                 getSelf<RememberMeByTenantIdAndUsernameCache>().getRememberMe(tenantId, username)
             }
-            log.debug("${CACHE_NAME}缓存同步完成。")
+            log.debug("${CACHE_NAME} cache sync completed.")
         }
     }
 
     /**
-     * 删除数据库记录后同步缓存
+     * Sync the cache after deleting a database record
      *
-     * @param any 包含必要属性的对象
-     * @param id 记住我登录id
+     * @param any object containing the required properties
+     * @param id remember-me login id
      */
     open fun syncOnDelete(any: Any, id: String) {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("删除id为${id}的记住我登录信息后，同步从${CACHE_NAME}缓存中踢除...")
+            log.debug("Remember-me login record with id ${id} deleted; evicting from ${CACHE_NAME} cache...")
             val (tenantId, username) = resolveKeyParts(any, id) ?: return
             KeyValueCacheKit.evict(CACHE_NAME, getKey(tenantId, username))
-            log.debug("${CACHE_NAME}缓存同步完成。")
+            log.debug("${CACHE_NAME} cache sync completed.")
         }
     }
 
     /**
-     * 批量删除数据库记录后同步缓存
+     * Sync the cache after batch deleting database records
      *
-     * @param ids 记住我登录id集合
-     * @param tenantIdAndUsernames List<Pair<租户ID，用户名>>
+     * @param ids remember-me login id collection
+     * @param tenantIdAndUsernames List<Pair<tenantId, username>>
      */
     open fun syncOnBatchDelete(ids: Collection<String>, tenantIdAndUsernames: List<Pair<String, String>>) {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("批量删除id为${ids}的记住我登录信息后，同步从${CACHE_NAME}缓存中踢除...")
+            log.debug("Remember-me login records with ids ${ids} batch-deleted; evicting from ${CACHE_NAME} cache...")
             tenantIdAndUsernames.forEach {
                 KeyValueCacheKit.evict(CACHE_NAME, getKey(it.first, it.second))
             }
-            log.debug("${CACHE_NAME}缓存同步完成。")
+            log.debug("${CACHE_NAME} cache sync completed.")
         }
     }
 
     /**
-     * 返回参数拼接后的key
+     * Return the key built from the parameters
      *
-     * @param tenantId 租户ID
-     * @param username 用户名
-     * @return 缓存key
+     * @param tenantId tenant ID
+     * @param username username
+     * @return cache key
      */
     fun getKey(tenantId: String, username: String): String {
         return "${tenantId.trim()}${Consts.CACHE_KEY_DEFAULT_DELIMITER}${username.trim()}"
@@ -206,17 +207,19 @@ open class RememberMeByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<U
     }
 
     /**
-     * 拿到 `(tenantId, username)` 二元组用于缓存 key 重建。
+     * Resolve the `(tenantId, username)` pair used to rebuild the cache key.
      *
-     * 双路径策略：
-     * 1. 优先从 `any`（通常是事件 payload / PO）反射读字段——无 DB 往返、最快
-     * 2. 缺字段时按 id 回查 DB 补；查不到记 WARN 后返回 null（调用方按 null 跳过 sync 即可）
+     * Two-path strategy:
+     * 1. Prefer reflective reads from `any` (usually an event payload / PO) — no DB round trip, fastest
+     * 2. If fields are missing, look up the DB by id; if still not found, log WARN and return null
+     *    (callers should skip sync on null)
      *
-     * 反射前 trim 字符串：DB 里可能存在带尾空格的脏数据，避免脏数据漂入缓存 key 段。
+     * Trim strings after reflection: the DB may contain dirty data with trailing spaces; avoid
+     * leaking dirty data into the cache key segment.
      *
-     * @param any 事件 payload 或 PO
-     * @param id  记录 id（兜底查 DB 用）
-     * @return `(tenantId, username)`；记录不存在返回 null
+     * @param any event payload or PO
+     * @param id  record id (used as a DB fallback)
+     * @return `(tenantId, username)`; null if the record does not exist
      * @author K
      * @since 1.0.0
      */
@@ -232,14 +235,14 @@ open class RememberMeByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<U
             listOf(UserLoginRememberMe::tenantId, UserLoginRememberMe::username)
         )
         if (rows.isEmpty()) {
-            log.warn("同步记住我登录缓存时未找到id为${id}的记录。")
+            log.warn("Record with id ${id} not found while syncing the remember-me login cache.")
             return null
         }
         val row = rows.first()
         val dbTenantId = (row[UserLoginRememberMe::tenantId.name] as String?)?.trim()
         val dbUsername = (row[UserLoginRememberMe::username.name] as String?)?.trim()
         if (dbTenantId.isNullOrBlank() || dbUsername.isNullOrBlank()) {
-            log.warn("同步记住我登录缓存时无法获取id为${id}的tenantId或username。")
+            log.warn("Unable to obtain tenantId or username for id ${id} while syncing the remember-me login cache.")
             return null
         }
         return dbTenantId to dbUsername

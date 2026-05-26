@@ -5,7 +5,7 @@ import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
 import java.time.LocalDateTime
 
 /**
- * 用户账号保护数据库实体
+ * User account protection database entity.
  *
  * @author K
  * @author AI: Codex
@@ -15,64 +15,64 @@ interface UserAccountProtection : IDbEntity<String, UserAccountProtection> {
 
     companion object : DbEntityFactory<UserAccountProtection>()
 
-    /** 用户ID */
+    /** User id. */
     var userId: String
 
-    /** 问题1 */
+    /** Question 1. */
     var question1: String
 
-    /** 答案1 */
+    /** Answer 1. */
     var answer1: String
 
-    /** 问题2 */
+    /** Question 2. */
     var question2: String?
 
-    /** 答案2 */
+    /** Answer 2. */
     var answer2: String?
 
-    /** 问题3 */
+    /** Question 3. */
     var question3: String?
 
-    /** 答案3 */
+    /** Answer 3. */
     var answer3: String?
 
-    /** 安全联系方式ID */
+    /** Safe contact way id. */
     var safeContactWayId: String?
 
-    /** 总的找回密码次数 */
+    /** Total password recovery attempts allowed. */
     var totalValidateCount: Int
 
-    /** 必须答对的问题数 */
+    /** Required number of correct answers. */
     var matchQuestionCount: Int
 
-    /** 错误次数 */
+    /** Error count. */
     var errorTimes: Int
 
-    /** 备注 */
+    /** Remark. */
     var remark: String?
 
-    /** 是否启用 */
+    /** Active flag. */
     var active: Boolean
 
-    /** 是否内置 */
+    /** Built-in flag. */
     var builtIn: Boolean
 
-    /** 创建者ID */
+    /** Creator id. */
     var createUserId: String?
 
-    /** 创建者名称 */
+    /** Creator name. */
     var createUserName: String?
 
-    /** 创建时间 */
+    /** Create time. */
     var createTime: LocalDateTime?
 
-    /** 更新者ID */
+    /** Updater id. */
     var updateUserId: String?
 
-    /** 更新者名称 */
+    /** Updater name. */
     var updateUserName: String?
 
-    /** 更新时间 */
+    /** Update time. */
     var updateTime: LocalDateTime?
 
 

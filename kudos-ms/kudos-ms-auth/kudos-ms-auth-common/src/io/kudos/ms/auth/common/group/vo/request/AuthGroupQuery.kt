@@ -5,29 +5,29 @@ import io.kudos.ms.auth.common.group.vo.response.AuthGroupRow
 
 
 /**
- * 用户组列表查询条件请求VO
+ * Request VO with query conditions for the user group list.
  *
  * @author K
  * @since 1.0.0
  */
 data class AuthGroupQuery (
 
-    /** 用户组编码 */
+    /** User group code. */
     val code: String? = null,
 
-    /** 用户组名称 */
+    /** User group name. */
     val name: String? = null,
 
-    /** 租户id */
+    /** Tenant id. */
     val tenantId: String? = null,
 
-    /** 子系统编码 */
+    /** Subsystem code. */
     val subsysCode: String? = null,
 
-    /** 是否激活 */
+    /** Whether the group is active. */
     val active: Boolean? = null,
 
-    /** 是否内置 */
+    /** Whether the group is built-in. */
     val builtIn: Boolean? = null,
 
 ) : ListSearchPayload() {

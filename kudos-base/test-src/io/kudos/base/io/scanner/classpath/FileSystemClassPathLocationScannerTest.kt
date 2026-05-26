@@ -6,7 +6,7 @@ import java.nio.file.Files
 import kotlin.test.*
 
 /**
- * FileSystemClassPathLocationScanner测试用例
+ * FileSystemClassPathLocationScanner test cases
  *
  * @author AI: cursor
  * @author K
@@ -75,7 +75,7 @@ internal class FileSystemClassPathLocationScannerTest {
         val locationUrl = testFile.toURI().toURL()
         val resourceNames = scanner.findResourceNames("", locationUrl)
         
-        // 如果不是目录，应该返回空集合
+        // If not a directory, should return an empty set
         assertTrue(resourceNames.isEmpty())
     }
 

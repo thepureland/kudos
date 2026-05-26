@@ -4,10 +4,11 @@ import io.kudos.ability.distributed.notify.common.api.INotifyListener
 import org.springframework.beans.factory.config.BeanPostProcessor
 
 /**
- * 自动注册 [INotifyListener] bean 到 [NotifyListenerItem]。
+ * Automatically registers [INotifyListener] beans into [NotifyListenerItem].
  *
- * 装配时 Spring 调每个 bean 一次 `postProcessAfterInitialization`，本类按 `notifyType()` 把
- * listener 实例登记进 namespace 下的注册表，后续 MQ 收到消息时按 type → namespace 派发。
+ * During wiring Spring calls `postProcessAfterInitialization` once per bean; this class registers each
+ * listener instance into the per-namespace registry keyed by `notifyType()`, so subsequent MQ messages can
+ * be dispatched by type within their namespace.
  *
  * @author Younger
  * @author K

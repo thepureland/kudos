@@ -24,7 +24,7 @@ import kotlin.test.Test
 
 
 /**
- * RocketMQ测试用例
+ * RocketMQ test cases.
  *
  * @author shane
  * @author K
@@ -53,7 +53,7 @@ open class RocketMqTest {
 
 
     /**
-     * 发送与接收测试
+     * Send/receive test.
      */
     @Test
     fun sendAndReceiveMessageTest() {
@@ -62,14 +62,14 @@ open class RocketMqTest {
         try {
             future.get(30, TimeUnit.SECONDS)
         } catch (e: TimeoutException) {
-            throw RuntimeException("等待时间超过30秒，mq接收异常", e)
+            throw RuntimeException("Wait exceeded 30 seconds; MQ receive failed", e)
         } finally {
             future.cancel(true)
         }
     }
 
     /**
-     * 消费信息异常测试
+     * Consumption exception test.
      */
     @Test
     fun streamExceptionTest() {
@@ -78,7 +78,7 @@ open class RocketMqTest {
         try {
             future.get(15, TimeUnit.SECONDS)
         } catch (_: TimeoutException) {
-            println("消费信息时异常，造成获取结果超时！")
+            println("Exception during consumption caused the result fetch to time out!")
         } finally {
             future.cancel(true)
         }

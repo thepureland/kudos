@@ -12,7 +12,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * XmlKit测试用例
+ * XmlKit test cases
  *
  * @author K
  * @since 1.0.0
@@ -71,11 +71,11 @@ internal class XmlKitTest {
         assertEquals(person.contact, p.contact)
     }
 
-    @XmlRootElement // 必须要有
+    @XmlRootElement // required
     internal data class Person(
         var name: String?,
         var sex: String?,
-        @set:XmlElement(nillable = true, namespace = "") // 会被映射为xml元素
+        @set:XmlElement(nillable = true, namespace = "") // will be mapped to an xml element
         var weight: Double?,
         @set:XmlJavaTypeAdapter(DateAdapter::class)
         var birthday: LocalDate?,
@@ -87,21 +87,21 @@ internal class XmlKitTest {
     }
 
     @XmlRootElement(name = "student")
-    @XmlAccessorType(XmlAccessType.PUBLIC_MEMBER) // 仅public的属性会被映射为xml元素
-    @XmlAccessorOrder(XmlAccessOrder.ALPHABETICAL) // 按字母顺序
+    @XmlAccessorType(XmlAccessType.PUBLIC_MEMBER) // only public properties are mapped to xml elements
+    @XmlAccessorOrder(XmlAccessOrder.ALPHABETICAL) // alphabetical order
     internal class Student {
         var name: String? = null
         var sex: String? = null
 
-        @set:XmlAttribute(required = true) // 同样未被映射为xml元素
+        @set:XmlAttribute(required = true) // also not mapped to an xml element
         var weight: Double? = null
         var birthday: LocalDate? = null
         var address: Address? = null
 
-        @set:XmlElementWrapper(name = "goodses") // 同名的元素被包装为goodses的子元素
+        @set:XmlElementWrapper(name = "goodses") // elements with the same name are wrapped as children of goodses
         var goods: List<String>? = null
 
-        @set:XmlTransient  // 不映射为xml元素
+        @set:XmlTransient  // not mapped to an xml element
         var contact: Map<String, String>? = null
     }
 

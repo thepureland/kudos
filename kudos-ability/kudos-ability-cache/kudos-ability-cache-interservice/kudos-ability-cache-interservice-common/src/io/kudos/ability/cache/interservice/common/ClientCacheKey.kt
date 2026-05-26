@@ -4,8 +4,8 @@ import java.io.Serial
 import java.io.Serializable
 
 /**
- * 客户端缓存键
- * 用于生成服务间缓存的唯一键，基于URL、HTTP方法和请求参数
+ * Client-side cache key.
+ * Generates a unique key for inter-service caching based on URL, HTTP method, and request parameters.
  */
 class ClientCacheKey : Serializable {
     private var url: String? = null
@@ -30,25 +30,25 @@ class ClientCacheKey : Serializable {
         @Serial
         private const val serialVersionUID: Long = -5550889928680327059L
 
-        //feign缓存的主key
+        // primary key for feign cache
         const val FEIGN_CACHE_PREFIX: String = "FEIGN-CACHE"
 
-        //feign缓存分隔符
+        // feign cache delimiter
         const val FEIGN_CACHE_DELIMITER: String = "::"
 
-        //feign请求，header的uid值
+        // feign request header: uid value
         const val HEADER_KEY_CACHE_UID: String = "cache-uid"
 
-        //feign请求，当前请求的本地缓存cachekey
+        // feign request header: cache key of the current request's local cache
         const val HEADER_KEY_CACHE_KEY: String = "cache-key"
 
-        //feign响应时，header的状态字段
+        // feign response header: status field
         const val HEADER_KEY_CACHE_STATUS: String = "cache-status"
 
-        //feign响应时，告知客户端使用缓存数据
+        // feign response status: tells the client to use the cached data
         const val STATUS_USE_CACHE: String = "304"
 
-        //feign响应时，告知客户端使用返回数据，并缓存本地
+        // feign response status: tells the client to use the returned data and cache it locally
         const val STATUS_DO_CACHE: String = "200"
     }
 }

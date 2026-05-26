@@ -1,10 +1,12 @@
 package io.kudos.ability.cache.interservice.provider.init
 
 /**
- * 跨服务缓存 provider 端配置。
+ * Cross-service cache provider-side configuration.
  *
- * @property uidCacheEnabled 是否缓存响应对象到 UID 的映射。默认关闭，避免可变对象导致旧 UID 复用。
- * @property wrapAllRequests 是否让 filter 包装所有请求。默认只包装带跨服务缓存请求头的请求。
+ * @property uidCacheEnabled Whether to cache the response-object-to-UID mapping. Disabled by
+ *   default to avoid reusing a stale UID for mutable objects.
+ * @property wrapAllRequests Whether the filter wraps every request. By default only requests that
+ *   carry cross-service cache headers are wrapped.
  * @author K
  * @author AI: Codex
  * @since 1.0.0

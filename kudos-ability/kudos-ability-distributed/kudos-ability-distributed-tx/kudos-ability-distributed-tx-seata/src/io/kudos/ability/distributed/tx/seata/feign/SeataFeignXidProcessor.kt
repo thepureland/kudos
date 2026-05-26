@@ -6,15 +6,16 @@ import io.kudos.context.core.KudosContext
 import org.apache.seata.core.context.RootContext
 
 /**
- * 把当前线程的 Seata 全局事务 XID 注入到 Feign 出站请求头里。
+ * Inject the current thread's Seata global transaction XID into outbound Feign request headers.
  *
- * 没有这个处理器时，跨服务调用的对端（ms12 / ms22）拿不到 XID，[RootContext.getXID]
- * 是 null，Seata client 会以为自己不在全局事务里 → 各自开自己的局部 commit，
- * 主侧 `@GlobalTransactional` rollback 时找不到分支可回滚，导致 AtSeataTest.remoteTx
- * 的"分支异常应当全部回滚"断言失败（实际余额被改但没还原）。
+ * Without this processor, the remote side of a cross-service call (ms12 / ms22) cannot obtain the
+ * XID, [RootContext.getXID] is null, and the Seata client thinks it is outside a global transaction —
+ * each side performs its own local commit, and when the upstream `@GlobalTransactional` rolls back
+ * there are no branches to roll back. AtSeataTest.remoteTx's "all branches must roll back on
+ * exception" assertion then fails (balances are mutated but not restored).
  *
- * 头名沿用 Seata 约定 [RootContext.KEY_XID]（值 = `"TX_XID"`），服务端
- * [SeataXidServletFilter] 解析回写到 `RootContext`。
+ * The header name follows the Seata convention [RootContext.KEY_XID] (value = `"TX_XID"`); the
+ * server-side [SeataXidServletFilter] parses it back into `RootContext`.
  */
 class SeataFeignXidProcessor : IFeignRequestContextProcess {
 

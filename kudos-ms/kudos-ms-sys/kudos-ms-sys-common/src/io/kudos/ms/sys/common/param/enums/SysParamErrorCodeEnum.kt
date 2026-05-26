@@ -3,27 +3,27 @@ package io.kudos.ms.sys.common.param.enums
 import io.kudos.base.enums.ienums.IErrorCodeEnum
 
 /**
- * 参数错误码
+ * Parameter error codes.
  *
  * @author K
  * @author AI: Codex
  * @since 1.0.0
  */
 enum class SysParamErrorCodeEnum(
-    /** 错误码 */
+    /** Error code */
     override val code: String,
-    /** 默认展示文本 */
+    /** Default display text */
     override val defaultDisplayText: String,
 ) : IErrorCodeEnum {
 
-    /** 未定义错误 */
-    UNSPECIFIED("UNSPECIFIED", "未定义错误"),
+    /** Undefined error */
+    UNSPECIFIED("UNSPECIFIED", "Undefined error"),
 
-    /** 按主键或 (module, name) 维度查找参数失败 */
-    PARAM_NOT_FOUND("PARAM_NOT_FOUND", "参数不存在"),
+    /** Lookup of parameter by primary key or (module, name) failed */
+    PARAM_NOT_FOUND("PARAM_NOT_FOUND", "Parameter does not exist"),
 
-    /** (module, name) 已存在对应参数 */
-    PARAM_ALREADY_EXISTS("PARAM_ALREADY_EXISTS", "该模块下已存在同名参数");
+    /** A parameter with the same (module, name) already exists */
+    PARAM_ALREADY_EXISTS("PARAM_ALREADY_EXISTS", "A parameter with the same name already exists in this module");
 
     override val i18nKeyPrefix: String
         get() = "sys.error-msg.param"

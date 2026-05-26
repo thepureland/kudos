@@ -1,26 +1,26 @@
 package io.kudos.base.tree
 
 /**
- * id和name组成的树节点
+ * Tree node composed of an id and a name.
  *
  * @author K
  * @since 1.0.0
  */
 data class IdAndNameTreeNode<T>(
 
-    /** 惟一标识 */
+    /** Unique identifier */
     val id: T? = null,
 
-    /** 名称 */
+    /** Name */
     val name: String,
 
-    /** 父id */
+    /** Parent id */
     val parentId: T? = null,
 
-    /** 序号 */
+    /** Order number */
     val orderNum: Int? = null,
 
-    /** 孩子结点 */
+    /** Child nodes */
     val children: MutableList<ITreeNode<T>> = mutableListOf()
 
 ) : ITreeNode<T>,Comparable<IdAndNameTreeNode<T>> {

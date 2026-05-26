@@ -5,7 +5,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * XCollection测试用例
+ * XCollection test cases.
  *
  * @author AI: cursor
  * @author K

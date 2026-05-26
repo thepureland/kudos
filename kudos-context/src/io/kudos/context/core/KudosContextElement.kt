@@ -9,28 +9,29 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
 /**
- * 协程上下文元素，用于把 [KudosContext] 透传给挂起函数链。
+ * Coroutine context element used to propagate [KudosContext] through a chain of suspending functions.
  *
- * Spring MVC 经由 ThreadLocal 跨方法传上下文，但在协程中切线程会丢失；
- * 把上下文塞进 [CoroutineContext.Key] 后，`withContext` / `launch` 自动随协程跳跃。
+ * Spring MVC propagates context across methods via ThreadLocal, but switching threads inside coroutines loses it;
+ * once the context is placed into a [CoroutineContext.Key], `withContext` / `launch` automatically carry it across
+ * coroutine hops.
  *
- * @property value 当前协程持有的 [KudosContext]
+ * @property value The [KudosContext] held by the current coroutine
  * @author K
  * @since 1.0.0
  */
 class KudosContextElement(val value: KudosContext) : AbstractCoroutineContextElement(Key) {
-    /** [KudosContextElement] 在 [CoroutineContext] 中的 key */
+    /** Key for [KudosContextElement] in a [CoroutineContext] */
     companion object Key : CoroutineContext.Key<KudosContextElement>
 }
 
-/** ========== 保留：协程侧获取与包装 ========== */
+/** ========== Retained: coroutine-side retrieval and wrapping ========== */
 
 /**
- * 在 suspend 函数里取当前协程绑定的 [KudosContext]。
- * 协程中未设置上下文时抛错，确保业务代码不会拿到 fallback 的空上下文。
+ * Retrieve the [KudosContext] bound to the current coroutine inside a suspend function.
+ * Throws when no context is set on the coroutine, ensuring business code never receives a fallback empty context.
  *
- * @return 当前协程上的 [KudosContext]
- * @throws IllegalStateException 协程上下文不含 [KudosContextElement] 时
+ * @return The [KudosContext] on the current coroutine
+ * @throws IllegalStateException When the coroutine context does not contain [KudosContextElement]
  * @author K
  * @since 1.0.0
  */
@@ -39,15 +40,16 @@ suspend fun currentKudosContext(): KudosContext =
         ?: error("KudosContext is absent in coroutineContext")
 
 /**
- * 如果当前协程已经带 [KudosContext]，直接执行 [block]；
- * 否则用 [provider] 生成一个并包到 [withContext] 中再执行。
+ * If the current coroutine already carries a [KudosContext], run [block] directly; otherwise generate one with
+ * [provider] and run [block] wrapped in [withContext].
  *
- * 适合"网关入口"或"消息消费入口"——已有上下文则继承，没有就兜底创建。
+ * Suitable for "gateway entry points" or "message consumer entry points" — inherit the context if present, otherwise
+ * create one as a fallback.
  *
- * @param T [block] 的返回类型
- * @param provider 缺省上下文生成函数，默认构造空 [KudosContext]
- * @param block 待执行的挂起逻辑
- * @return [block] 的返回值
+ * @param T The return type of [block]
+ * @param provider Function producing the default context; by default constructs an empty [KudosContext]
+ * @param block The suspending logic to execute
+ * @return The return value of [block]
  * @author K
  * @since 1.0.0
  */
@@ -61,13 +63,13 @@ suspend inline fun <T> withKudosContextIfAbsent(
 }
 
 /**
- * 用显式 [ctx] 覆盖当前协程的 [KudosContext] 并执行 [block]。
- * 适合"模拟另一个用户/租户"等需要替换整段上下文的场景。
+ * Override the current coroutine's [KudosContext] with the explicit [ctx] and run [block].
+ * Suitable for scenarios that need to replace the entire context, such as "simulating another user/tenant".
  *
- * @param T [block] 的返回类型
- * @param ctx 显式上下文
- * @param block 待执行的挂起逻辑
- * @return [block] 的返回值
+ * @param T The return type of [block]
+ * @param ctx The explicit context
+ * @param block The suspending logic to execute
+ * @return The return value of [block]
  * @author K
  * @since 1.0.0
  */
@@ -77,13 +79,13 @@ suspend inline fun <T> withKudosContext(
 ): T = withContext(KudosContextElement(ctx)) { block() }
 
 /**
- * 在已有 [CoroutineScope] 上启动协程时显式附带 [KudosContext]。
- * 等价于 `scope.launch(extraContext + KudosContextElement(ctx)) { ... }` 的便捷封装。
+ * Launch a coroutine on an existing [CoroutineScope] while explicitly attaching a [KudosContext].
+ * A convenience wrapper equivalent to `scope.launch(extraContext + KudosContextElement(ctx)) { ... }`.
  *
- * @param ctx 要附带的 [KudosContext]
- * @param context 其它 [CoroutineContext] 元素，默认空
- * @param block 协程体
- * @return 新启动的 [kotlinx.coroutines.Job]
+ * @param ctx The [KudosContext] to attach
+ * @param context Additional [CoroutineContext] elements; empty by default
+ * @param block The coroutine body
+ * @return The newly started [kotlinx.coroutines.Job]
  * @author K
  * @since 1.0.0
  */

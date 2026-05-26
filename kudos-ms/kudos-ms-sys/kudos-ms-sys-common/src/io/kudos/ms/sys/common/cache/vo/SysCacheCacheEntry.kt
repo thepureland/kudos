@@ -6,62 +6,62 @@ import java.time.LocalDateTime
 
 
 /**
- * 缓存缓存项
+ * Cache-configuration cache entry.
  *
  * @author K
  * @since 1.0.0
  */
 data class SysCacheCacheEntry (
 
-    /** 主键 */
+    /** Primary key */
     override val id: String,
 
-    /** 名称 */
+    /** Name */
     val name: String,
 
-    /** 原子服务编码 */
+    /** Atomic service code */
     val atomicServiceCode: String,
 
-    /** 缓存策略代码 */
+    /** Cache strategy code */
     val strategyDictCode: String,
 
-    /** 是否启动时写缓存 */
+    /** Write to cache on boot */
     val writeOnBoot: Boolean,
 
-    /** 是否及时回写缓存 */
+    /** Write back to cache in real time */
     val writeInTime: Boolean,
 
-    /** 缓存生存时间(秒) */
+    /** Cache time-to-live (seconds) */
     val ttl: Int?,
 
-    /** 备注 */
+    /** Remark */
     val remark: String?,
 
-    /** 是否启用 */
+    /** Whether enabled */
     val active: Boolean,
 
-    /** 是否内置 */
+    /** Whether built-in */
     val builtIn: Boolean,
 
-    /** 是否为 Hash 缓存 */
+    /** Whether it is a Hash cache */
     val hash: Boolean,
 
-    /** 创建者id */
+    /** Creator id */
     val createUserId: String?,
 
-    /** 创建者名称 */
+    /** Creator name */
     val createUserName: String?,
 
-    /** 创建时间 */
+    /** Create time */
     val createTime: LocalDateTime?,
 
-    /** 更新者id */
+    /** Updater id */
     val updateUserId: String?,
 
-    /** 更新者名称 */
+    /** Updater name */
     val updateUserName: String?,
 
-    /** 更新时间 */
+    /** Update time */
     val updateTime: LocalDateTime?,
 
 ) : IIdEntity<String>, Serializable {

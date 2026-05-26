@@ -12,11 +12,13 @@ import org.springframework.beans.factory.annotation.Value
 import java.net.URI
 
 /**
- * 阿里云短信发送处理器（支持可配置 endpoint，便于测试注入 WireMock）
+ * Aliyun SMS send handler (supports a configurable endpoint, convenient for injecting WireMock in tests).
  *
- * 配置项（优先 `kudos.ability.comm.sms.aliyun.endpoint`，兼容旧键 `kudos.ability.comm.sms.aliyun`）：
- * - 生产可留空（SDK 按 region 使用官方域名）
- * - 测试填完整 URI，例如 `http://<wiremock-host>:<port>`（勿省略 scheme，本地 Mock 需显式 `http`）
+ * Configuration (prefers `kudos.ability.comm.sms.aliyun.endpoint`, falls back to legacy key
+ * `kudos.ability.comm.sms.aliyun`):
+ * - Production may leave it empty (the SDK uses the official domain based on region)
+ * - Tests should set a full URI such as `http://<wiremock-host>:<port>` (do not omit the scheme;
+ *   local Mocks require an explicit `http`)
  *
  * @author K
  * @since 1.0.0
@@ -24,74 +26,76 @@ import java.net.URI
 class AliyunSmsHandler {
 
     /**
-     * 自定义 SDK endpoint，仅供测试/特殊网络环境使用。
-     * 配置语法：`${kudos.ability.comm.sms.aliyun.endpoint}` 优先，缺失时回退到旧键 `${kudos.ability.comm.sms.aliyun}` 以兼容历史配置；
-     * 都未配置则空串，SDK 按 region 走官方域名。
+     * Custom SDK endpoint, only for use in test / special network environments.
+     * Configuration syntax: `${kudos.ability.comm.sms.aliyun.endpoint}` takes precedence; when
+     * missing, it falls back to the legacy key `${kudos.ability.comm.sms.aliyun}` for historical
+     * compatibility. If neither is set, the value is an empty string and the SDK uses the official
+     * domain based on the region.
      */
     @Value("\${kudos.ability.comm.sms.aliyun.endpoint:\${kudos.ability.comm.sms.aliyun:}}")
     private lateinit var endpointOverrideStr: String
 
     /**
-     * 异步发送短信
-     * 
-     * 使用虚拟线程异步发送短信，完成后通过回调返回结果。
-     * 
-     * 工作流程：
-     * 1. 创建虚拟线程：使用Thread.ofVirtual()创建轻量级虚拟线程
-     * 2. 异步执行：在虚拟线程中执行doSend方法
-     * 3. 非阻塞：调用线程立即返回，不等待发送完成
-     * 
-     * 虚拟线程优势：
-     * - 轻量级：相比传统线程，虚拟线程资源消耗更少
-     * - 高并发：可以创建大量虚拟线程处理并发请求
-     * - 适合IO密集型任务：短信发送是网络IO操作，适合使用虚拟线程
-     * 
-     * 注意事项：
-     * - 发送结果通过回调函数返回，不会阻塞调用线程
-     * - 即使发送失败，也会通过回调返回错误信息
-     * 
-     * @param smsRequest 短信发送请求对象
-     * @param callback 发送完成后的回调函数，接收SendSmsResponseBody结果
+     * Asynchronously send an SMS.
+     *
+     * Sends the SMS asynchronously on a virtual thread and returns the result via a callback when done.
+     *
+     * Workflow:
+     * 1. Create a virtual thread: use Thread.ofVirtual() to create a lightweight virtual thread.
+     * 2. Asynchronous execution: run doSend inside the virtual thread.
+     * 3. Non-blocking: the calling thread returns immediately and does not wait for the send to complete.
+     *
+     * Advantages of virtual threads:
+     * - Lightweight: virtual threads consume fewer resources than traditional threads.
+     * - High concurrency: a large number of virtual threads can be created to handle concurrent requests.
+     * - Suitable for IO-bound tasks: SMS sending is a network IO operation, ideal for virtual threads.
+     *
+     * Notes:
+     * - The send result is returned via the callback; it does not block the calling thread.
+     * - Even if the send fails, the error information is returned via the callback.
+     *
+     * @param smsRequest the SMS send request object
+     * @param callback callback invoked after the send completes; receives the SendSmsResponseBody result
      */
     fun send(smsRequest: AliyunSmsRequest, callback: (SendSmsResponseBody) -> Unit) {
         Thread.ofVirtual().start { doSend(smsRequest, callback) }
     }
 
     /**
-     * 执行短信发送
-     * 
-     * 构建阿里云客户端，发送短信请求，并确保资源正确释放。
-     * 
-     * 工作流程：
-     * 1. 构建客户端：根据请求参数构建AsyncClient
-     * 2. 构建请求：创建SendSmsRequest对象，设置手机号、签名、模板等
-     * 3. 发送请求：调用client.sendSms发送短信
-     * 4. 获取结果：等待响应并获取响应体
-     * 5. 资源释放：在finally块中关闭客户端
-     * 6. 回调通知：无论成功或失败，都通过回调返回结果
-     * 
-     * 异常处理：
-     * - 捕获所有异常，记录错误日志
-     * - 即使发生异常，也会构建安全的响应体并回调
-     * - 确保客户端资源在finally块中正确释放
-     * 
-     * 安全响应体：
-     * - 如果发送成功，返回实际的响应体
-     * - 如果发送失败，构建一个包含错误信息的响应体
-     * - 响应体code为"EXCEPTION"，message为异常信息
-     * - 确保回调函数始终能收到有效的响应体
-     * 
-     * 资源管理：
-     * - 使用try-finally确保客户端一定会被关闭
-     * - 客户端关闭异常会被忽略，不影响主流程
-     * 
-     * 注意事项：
-     * - response.get()是阻塞调用，会等待异步请求完成
-     * - 客户端关闭操作在finally块中执行，确保资源释放
-     * - 回调函数始终会被调用，即使发生异常
-     * 
-     * @param smsRequest 短信发送请求对象
-     * @param callback 发送完成后的回调函数
+     * Execute the SMS send.
+     *
+     * Builds the Aliyun client, sends the SMS request, and ensures resources are properly released.
+     *
+     * Workflow:
+     * 1. Build the client: construct an AsyncClient based on the request parameters.
+     * 2. Build the request: create a SendSmsRequest object and set the phone number, sign, template, etc.
+     * 3. Send the request: call client.sendSms to send the SMS.
+     * 4. Get the result: await the response and obtain the response body.
+     * 5. Release resources: close the client in a finally block.
+     * 6. Callback notification: regardless of success or failure, return the result via the callback.
+     *
+     * Exception handling:
+     * - Catch all exceptions and log the error.
+     * - Even when an exception occurs, build a safe response body and invoke the callback.
+     * - Ensure client resources are properly released in the finally block.
+     *
+     * Safe response body:
+     * - On success, return the actual response body.
+     * - On failure, build a response body that contains the error information.
+     * - The response body's code is "EXCEPTION" and the message is the exception information.
+     * - Ensure the callback always receives a valid response body.
+     *
+     * Resource management:
+     * - Use try-finally to ensure the client is always closed.
+     * - Exceptions during client close are ignored and do not affect the main flow.
+     *
+     * Notes:
+     * - response.get() is a blocking call that waits for the async request to complete.
+     * - The client close operation is executed in the finally block to ensure resource release.
+     * - The callback is always invoked, even when an exception occurs.
+     *
+     * @param smsRequest the SMS send request object
+     * @param callback callback invoked after the send completes
      */
     private fun doSend(smsRequest: AliyunSmsRequest, callback: (SendSmsResponseBody) -> Unit) {
         var client: AsyncClient? = null
@@ -112,17 +116,17 @@ class AliyunSmsHandler {
                 .templateParam(smsRequest.templateParam)
                 .build()
 
-            LOG.info("[aliyun] 开始发送短信...")
+            LOG.info("[aliyun] Starting to send SMS...")
             val response = client.sendSms(request)
             result = response.get()?.body
-            LOG.debug("[aliyun] 发送短信成功, code={0}, requestId={1}", result?.code, result?.requestId)
+            LOG.debug("[aliyun] SMS sent successfully, code={0}, requestId={1}", result?.code, result?.requestId)
         } catch (e: Exception) {
             lastError = e
-            LOG.error(e, "[aliyun] 发送短信失败")
+            LOG.error(e, "[aliyun] Failed to send SMS")
         } finally {
             try { client?.close() } catch (_: Exception) { /* ignore */ }
 
-            // 始终回调：异常分支返回一个安全的响应体，避免 lateinit 未初始化
+            // Always invoke the callback: the exception branch returns a safe response body to avoid an uninitialized lateinit.
             val safe = result ?: SendSmsResponseBody.builder()
                 .code("EXCEPTION")
                 .message(lastError?.message ?: "unknown error")
@@ -134,48 +138,50 @@ class AliyunSmsHandler {
     }
 
     /**
-     * 构建阿里云短信异步客户端
-     * 
-     * 根据配置构建AsyncClient，支持自定义endpoint（用于测试环境如WireMock）。
-     * 
-     * 工作流程：
-     * 1. 创建凭证提供者：使用AccessKey ID和Secret创建StaticCredentialProvider
-     * 2. 构建客户端Builder：设置region和凭证提供者
-     * 3. 处理自定义Endpoint（如果配置）：
-     *    - 解析endpointOverrideStr（支持多种格式）
-     *    - 提取协议（http/https）
-     *    - 提取主机和端口
-     *    - 创建ClientOverrideConfiguration并应用
-     * 4. 构建并返回客户端
-     * 
-     * Endpoint格式支持：
-     * - 完整URI："http://localhost:8080" 或 "https://dysmsapi.aliyuncs.com"
-     * - 主机端口："localhost:8080"
-     * - 纯域名："dysmsapi.aliyuncs.com"
-     * 
-     * 协议处理：
-     * - 若 URI 含 scheme，使用该 scheme（转大写）
-     * - 若无 scheme（仅 host[:port]），默认 **https**；本地 WireMock 等请写全量 `http://...`
-     * 
-     * 端口处理：
-     * - 如果URI包含端口，使用该端口
-     * - 如果URI不包含端口（port=-1），只使用主机名
-     * - 如果无法解析URI，使用原始字符串（去除空格）
-     * 
-     * 使用场景：
-     * - 生产环境：使用阿里云默认endpoint
-     * - 测试环境：使用WireMock等Mock服务
-     * - 开发环境：可以使用本地代理
-     * 
-     * 注意事项：
-     * - endpointOverrideStr 为空时，使用阿里云默认 endpoint
-     * - 无 scheme 时默认 https；测试请使用带 `http://` 的完整 URI
-     * - URI解析失败时会fallback到原始字符串
-     * 
-     * @param region 区域代码（如"cn-hangzhou"）
-     * @param accessKeyId 阿里云AccessKey ID
-     * @param accessKeySecret 阿里云AccessKey Secret
-     * @return 配置好的AsyncClient实例
+     * Build the Aliyun SMS async client.
+     *
+     * Builds an AsyncClient based on configuration, supporting a custom endpoint (for test
+     * environments such as WireMock).
+     *
+     * Workflow:
+     * 1. Create the credentials provider: build a StaticCredentialProvider from the AccessKey ID and Secret.
+     * 2. Build the client builder: set the region and the credentials provider.
+     * 3. Process the custom endpoint (if configured):
+     *    - Parse endpointOverrideStr (supports multiple formats)
+     *    - Extract the protocol (http/https)
+     *    - Extract the host and port
+     *    - Create a ClientOverrideConfiguration and apply it
+     * 4. Build and return the client.
+     *
+     * Supported endpoint formats:
+     * - Full URI: "http://localhost:8080" or "https://dysmsapi.aliyuncs.com"
+     * - Host:port: "localhost:8080"
+     * - Pure domain: "dysmsapi.aliyuncs.com"
+     *
+     * Protocol handling:
+     * - If the URI contains a scheme, use that scheme (uppercased).
+     * - If there is no scheme (only host[:port]), default to **https**; local WireMock and similar
+     *   should use a full `http://...`.
+     *
+     * Port handling:
+     * - If the URI contains a port, use that port.
+     * - If the URI does not contain a port (port=-1), use only the host name.
+     * - If the URI cannot be parsed, use the original string (trimmed).
+     *
+     * Usage scenarios:
+     * - Production: use the Aliyun default endpoint.
+     * - Test: use Mock services such as WireMock.
+     * - Development: can use a local proxy.
+     *
+     * Notes:
+     * - When endpointOverrideStr is empty, the Aliyun default endpoint is used.
+     * - When there is no scheme, defaults to https; tests should use a full URI with `http://`.
+     * - On URI parse failure, falls back to the original string.
+     *
+     * @param region region code (such as "cn-hangzhou")
+     * @param accessKeyId Aliyun AccessKey ID
+     * @param accessKeySecret Aliyun AccessKey Secret
+     * @return a configured AsyncClient instance
      */
     private fun buildClient(
         region: String?,
@@ -193,9 +199,9 @@ class AliyunSmsHandler {
             .region(region)
             .credentialsProvider(provider)
 
-        // 如果配置了自定义 endpoint（例如 WireMock），则覆盖
+        // If a custom endpoint is configured (e.g. WireMock), override it.
         if (endpointOverrideStr.isNotBlank()) {
-            // 既兼容 "http://host:port" 也支持 "host:port"/纯域名
+            // Supports both "http://host:port" and "host:port" / a bare domain.
             val uri = runCatching { URI(endpointOverrideStr) }.getOrNull()
             val protocol = (uri?.scheme ?: "https").uppercase()
             val hostPort = when {
@@ -205,8 +211,8 @@ class AliyunSmsHandler {
             }
 
             val override = ClientOverrideConfiguration.create()
-                .setEndpointOverride(hostPort) // 例："localhost:8080" 或 "dysmsapi.aliyuncs.com"
-                .setProtocol(protocol)         // "HTTP" 或 "HTTPS"
+                .setEndpointOverride(hostPort) // e.g. "localhost:8080" or "dysmsapi.aliyuncs.com"
+                .setProtocol(protocol)         // "HTTP" or "HTTPS"
 
             builder.overrideConfiguration(override)
         }
@@ -214,6 +220,6 @@ class AliyunSmsHandler {
         return builder.build()
     }
 
-    /** 日志器 */
+    /** Logger. */
     private val LOG = LogFactory.getLog(this::class)
 }

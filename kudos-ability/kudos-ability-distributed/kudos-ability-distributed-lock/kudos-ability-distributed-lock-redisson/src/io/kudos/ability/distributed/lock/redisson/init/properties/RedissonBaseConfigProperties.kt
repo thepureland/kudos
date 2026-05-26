@@ -1,68 +1,69 @@
 package io.kudos.ability.distributed.lock.redisson.init.properties
 
 /**
- * Redisson基础配置属性类
- * 封装Redisson客户端的基础连接配置，包括连接超时、命令超时、重试次数等
+ * Redisson base config properties.
+ * Encapsulates the base Redisson client connection settings: connect timeout, command timeout, retry attempts, etc.
  */
 class RedissonBaseConfigProperties {
     /**
-     * ping命令发送间隔，设置0为禁用，默认为0
+     * Ping command interval. Set to 0 to disable. Default is 0.
      */
     var pingConnectionInterval: Int = 0
 
     /**
-     * 连接空闲超时 如果当前连接池里的连接数量超过了最小空闲连接数，而同时有连接空闲时间超过了该数值，那么这些连接将会自动被关闭，并从连接池里去掉。时间单位是毫秒。
+     * Idle connection timeout. If the connection pool size exceeds the minimum idle size and a connection has been idle
+     * longer than this value, it is closed and removed from the pool. In milliseconds.
      */
     var idleConnectionTimeout: Int = 10000
 
     /**
-     * 连接超时，单位：毫秒
+     * Connect timeout, in milliseconds.
      */
     var connectTimeout: Int = 10000
 
     /**
-     * 命令等待超时，单位：毫秒
+     * Command wait timeout, in milliseconds.
      */
     var timeout: Int = 3000
 
     /**
-     * 命令失败重试次数,如果尝试达到 retryAttempts（命令失败重试次数） 仍然不能将命令发送至某个指定的节点时，将抛出错误。
-     * 如果尝试在此限制之内发送成功，则开始启用 timeout（命令等待超时） 计时。
+     * Command retry count. If retryAttempts is reached without successfully sending the command to a node, an error is
+     * thrown. If sending succeeds within the limit, the timeout (command wait timeout) timer starts.
      */
     var retryAttempts: Int = 3
 
     /**
-     * 命令重试发送时间间隔，单位：毫秒
+     * Command retry interval, in milliseconds.
      */
     var retryInterval: Int = 1500
 
     /**
-     * 密码
+     * Password.
      */
     var password: String? = null
 
     /**
-     * 单个连接最大订阅数量
+     * Maximum subscriptions per connection.
      */
     var subscriptionsPerConnection: Int = 5
 
     /**
-     * 客户端名称
+     * Client name.
      */
     var clientName: String? = ""
 
     /**
-     * 发布和订阅连接的最小空闲连接数
+     * Minimum idle connections for the pub/sub pool.
      */
     var subscriptionConnectionMinimumIdleSize: Int = 1
 
     /**
-     * 发布和订阅连接池大小
+     * Pub/sub connection pool size.
      */
     var subscriptionConnectionPoolSize: Int = 50
 
     /**
-     * DNS监测时间间隔，单位：毫秒
+     * DNS monitoring interval, in milliseconds.
      */
     var dnsMonitoringInterval: Long = 5000L
 }

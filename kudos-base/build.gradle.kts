@@ -1,5 +1,5 @@
 plugins {
-    // 启用 Kotlin Serialization 插件，使编译期能生成序列化器
+    // Enable the Kotlin Serialization plugin so serializers can be generated at compile time.
     alias(libs.plugins.kotlinPluginSerialization)
 }
 
@@ -13,7 +13,7 @@ dependencies {
     // codec
     api(libs.apache.commons.codec)
 
-    // BCrypt 密码哈希（PasswordKit 使用）；只引 spring-security-crypto 一个 jar，不引入 spring-security 全套
+    // BCrypt password hashing (used by PasswordKit); only pull in the spring-security-crypto jar, not the full spring-security stack.
     api(platform(libs.spring.boot.bom))
     api(libs.spring.security.crypto)
 
@@ -68,38 +68,38 @@ dependencies {
 // ./gradlew dependencySizes
 tasks.register("dependencySizes") {
     group = "help"
-    description = "列出 runtimeClasspath 下所有依赖 Jar 的大小（KB），按大小从大到小排序，并输出格式对齐"
+    description = "List the size (KB) of every dependency Jar on the runtimeClasspath, sorted from largest to smallest with aligned formatting."
     doLast {
         val config = configurations.getByName("runtimeClasspath")
         val artifacts = config.resolvedConfiguration.resolvedArtifacts
 
-        // 先收集坐标和大小
+        // Collect coordinates and sizes first.
         val artifactSizes = artifacts.map { art ->
             val sizeKb = art.file.length() / 1024
             val coord = "${art.moduleVersion.id.group}:${art.name}:${art.moduleVersion.id.version}"
             coord to sizeKb
         }
 
-        // 按大小倒序
+        // Sort by size in descending order.
         val sorted = artifactSizes.sortedByDescending { it.second }
 
-        // 计算列宽（coord 列最大长度，不超过 80）
+        // Compute column width (max length of coord column, capped at 80).
         val coordWidth = (sorted.maxOfOrNull { it.first.length } ?: 0).coerceAtMost(80)
-        val sizeHeader = "大小(KB)"
-        val headerCoord = "依赖坐标".padEnd(coordWidth)
+        val sizeHeader = "Size(KB)"
+        val headerCoord = "Dependency Coordinate".padEnd(coordWidth)
         println("$headerCoord    $sizeHeader")
         println("-".repeat(coordWidth + 4 + sizeHeader.length))
 
-        // 输出每条
+        // Print each row.
         var totalKb = 0L
         sorted.forEach { (coord, sizeKb) ->
             totalKb += sizeKb
             println(coord.padEnd(coordWidth) + "    " + sizeKb.toString().padStart(sizeHeader.length))
         }
 
-        // 输出合计
+        // Print the total.
         println("-".repeat(coordWidth + 4 + sizeHeader.length))
-        val totalLabel = "总计".padEnd(coordWidth)
+        val totalLabel = "Total".padEnd(coordWidth)
         println(totalLabel + "    " + totalKb.toString().padStart(sizeHeader.length) + " KB")
     }
 }

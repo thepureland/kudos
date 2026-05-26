@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component
 
 
 /**
- * 机构 Feign 容错降级实现。
+ * Organization Feign fallback.
  *
  * @author K
  * @author AI: Cursor

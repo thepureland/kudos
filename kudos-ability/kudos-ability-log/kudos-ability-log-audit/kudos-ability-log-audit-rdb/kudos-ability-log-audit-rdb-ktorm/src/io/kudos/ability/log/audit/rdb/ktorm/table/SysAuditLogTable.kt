@@ -9,14 +9,14 @@ import org.ktorm.schema.long
 import org.ktorm.schema.varchar
 
 /**
- * 审计日志主表的 Ktorm `Table` 元数据。
+ * Ktorm `Table` metadata for the audit-log main table.
  *
- * 这里没有走 `IDbEntity` / `IntIdTable` 抽象——`SysAuditLogVo` 是上游
- * `log-audit-common` 模块的 POJO（非 Ktorm Entity），所以本表直接持列引用，
- * 用 `database.insert(SysAuditLogTable) { set(column, value) }` 写入。
+ * No `IDbEntity` / `IntIdTable` abstraction is used here — `SysAuditLogVo` is a POJO from the upstream
+ * `log-audit-common` module (not a Ktorm Entity), so this table simply holds column references and writes via
+ * `database.insert(SysAuditLogTable) { set(column, value) }`.
  *
- * 主键由调用方提供（[io.kudos.ability.log.audit.common.entity.SysAuditLogVo.id]）；
- * 上游切面会用业务侧的 ID 生成器塞好。
+ * The primary key is supplied by the caller ([io.kudos.ability.log.audit.common.entity.SysAuditLogVo.id]); the
+ * upstream aspect fills it in using the business-side ID generator.
  *
  * @author K
  * @author AI: Codex

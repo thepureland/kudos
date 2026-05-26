@@ -1,12 +1,12 @@
 package io.kudos.ms.sys.core.cache.event
 
 /**
- * 缓存配置（`sys_cache`）领域事件。
+ * Cache configuration (`sys_cache`) domain events.
  *
- * **使用 plain `@EventListener`（非 `@TransactionalEventListener`）**：本域
- * 的服务测试断言 `service.mutation(...)` 后立即可读到新缓存状态。Spring
- * `@Transactional` 自动回滚的单测中 AFTER_COMMIT 不会触发，故此域改用
- * 同步事件以保留旧的直 sync 语义，同时让 service 不再直接依赖 cache 实现。
+ * **Uses a plain `@EventListener` (not `@TransactionalEventListener`)**: this domain's service tests
+ * assert that the new cache state is immediately readable after `service.mutation(...)`. In Spring
+ * `@Transactional` auto-rollback unit tests, AFTER_COMMIT does not fire, so this domain uses synchronous
+ * events to preserve the old direct-sync semantics while removing the service's direct dependency on the cache implementation.
  *
  * @author K
  * @author AI: Cursor
@@ -18,7 +18,7 @@ sealed interface SysCacheEvent {
 
 data class SysCacheInserted(override val id: String) : SysCacheEvent
 
-/** 涵盖一般 update、updateActive。 */
+/** Covers general update and updateActive operations. */
 data class SysCacheUpdated(override val id: String) : SysCacheEvent
 
 data class SysCacheDeleted(override val id: String) : SysCacheEvent

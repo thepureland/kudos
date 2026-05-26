@@ -12,7 +12,7 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 /**
- * Criterion测试用例
+ * Criterion test cases
  *
  * @author AI: cursor
  * @author K
@@ -132,23 +132,24 @@ internal class CriterionTest {
 
     @Test
     fun testFieldsAreImmutable_useCopyToCreateModifiedVersion() {
-        // Criterion 已经全 val。要"改"字段就 copy()
+        // Criterion is all val. To "change" a field, use copy()
         val original = Criterion("oldName", OperatorEnum.EQ, "oldValue")
         val renamed = original.copy(property = "newName")
         val revalued = original.copy(value = "newValue")
-        // 原对象不变
+        // Original object is unchanged
         assertEquals("oldName", original.property)
         assertEquals("oldValue", original.value)
-        // copy 出来的有新值
+        // The copy has new values
         assertEquals("newName", renamed.property)
         assertEquals("newValue", revalued.value)
     }
 
     // ============================================================
-    // data class 自动生成的 equals / hashCode / copy / componentN
+    // data class auto-generated equals / hashCode / copy / componentN
     //
-    // 注意 Criterion 主构造器只有 property/operator/value/alias 四个字段，
-    // `encrypt` 是构造体外的 var，不在 data class 生成方法里
+    // Note: the Criterion primary constructor used to have only four fields
+    // (property/operator/value/alias); `encrypt` was a var outside the constructor
+    // and not part of the data class generated methods.
     // ============================================================
 
     @Test
@@ -162,18 +163,18 @@ internal class CriterionTest {
     @Test
     fun testEqualsDistinguishesEachPrimaryField() {
         val base = Criterion("x", OperatorEnum.EQ, "1", "a")
-        assertNotEquals(base, Criterion("y", OperatorEnum.EQ, "1", "a"), "property 不同")
-        assertNotEquals(base, Criterion("x", OperatorEnum.NE, "1", "a"), "operator 不同")
-        assertNotEquals(base, Criterion("x", OperatorEnum.EQ, "2", "a"), "value 不同")
-        assertNotEquals(base, Criterion("x", OperatorEnum.EQ, "1", "b"), "alias 不同")
+        assertNotEquals(base, Criterion("y", OperatorEnum.EQ, "1", "a"), "different property")
+        assertNotEquals(base, Criterion("x", OperatorEnum.NE, "1", "a"), "different operator")
+        assertNotEquals(base, Criterion("x", OperatorEnum.EQ, "2", "a"), "different value")
+        assertNotEquals(base, Criterion("x", OperatorEnum.EQ, "1", "b"), "different alias")
     }
 
     @Test
     fun testEqualsIncludesEncrypt() {
-        // 历史上 encrypt 在构造器外，不参与 equals/hashCode——已修。现在 encrypt 不同 → not equal
+        // Historically encrypt sat outside the constructor and did not participate in equals/hashCode - fixed. Now differing encrypt -> not equal.
         val encrypted = Criterion("x", OperatorEnum.EQ, "1", encrypt = true)
         val plain = Criterion("x", OperatorEnum.EQ, "1", encrypt = false)
-        assertNotEquals(encrypted, plain, "encrypt 应参与 equals")
+        assertNotEquals(encrypted, plain, "encrypt should participate in equals")
         assertNotEquals(encrypted.hashCode(), plain.hashCode())
     }
 
@@ -189,15 +190,15 @@ internal class CriterionTest {
 
     @Test
     fun testCopyCarriesEncrypt() {
-        // 历史上 encrypt 在构造器外被 copy 丢弃——已修。现在 encrypt 跟随 copy
+        // Historically encrypt sat outside the constructor and was dropped by copy - fixed. Now encrypt is preserved by copy.
         val original = Criterion("x", OperatorEnum.EQ, "1", encrypt = true)
         val copied = original.copy()
-        assertTrue(copied.encrypt, "copy() 应保留 encrypt")
+        assertTrue(copied.encrypt, "copy() should preserve encrypt")
     }
 
     @Test
     fun testDestructuringExposesAllFiveFields() {
-        // 现在主构造器有 5 个字段：property/operator/value/alias/encrypt
+        // The primary constructor now has 5 fields: property/operator/value/alias/encrypt
         val (property, operator, value, alias, encrypt) =
             Criterion("x", OperatorEnum.EQ, "1", "a", true)
         assertEquals("x", property)
@@ -208,20 +209,20 @@ internal class CriterionTest {
     }
 
     // ============================================================
-    // operatorCode 只读 + copy 改 operator
+    // operatorCode read-only + change operator via copy
     // ============================================================
 
     @Test
     fun testOperatorCodeIsReadOnlyDerivedProperty() {
-        // 历史上的 setter 已移除。要改 operator 请用 copy
+        // The historical setter has been removed. Use copy to change operator.
         val original = Criterion("x", OperatorEnum.EQ, "1")
         val changed = original.copy(operator = OperatorEnum.LIKE)
         assertEquals(OperatorEnum.LIKE.code, changed.operatorCode)
-        assertEquals(OperatorEnum.EQ, original.operator, "原对象不变")
+        assertEquals(OperatorEnum.EQ, original.operator, "Original object unchanged")
     }
 
     // ============================================================
-    // toString 精确格式
+    // toString exact format
     // ============================================================
 
     @Test
@@ -234,7 +235,7 @@ internal class CriterionTest {
 
     @Test
     fun testToStringTrimsTrailingSpaceWhenValueIsNull() {
-        // null value → "${value ?: ""}" → ""，整串末尾空格被 trim
+        // null value -> "${value ?: ""}" -> "", trailing whitespace of the whole string is trimmed
         assertEquals(
             "x IS NULL",
             Criterion("x", OperatorEnum.IS_NULL, null).toString()
@@ -251,7 +252,7 @@ internal class CriterionTest {
 
     @Test
     fun testToStringRendersCollectionViaToString() {
-        // value.toString() 用集合默认的 "[a, b, c]" 形式拼到字符串里
+        // value.toString() uses the collection's default "[a, b, c]" form when concatenated into the string
         assertEquals(
             "ids IN [1, 2, 3]",
             Criterion("ids", OperatorEnum.IN, listOf(1, 2, 3)).toString()
@@ -259,12 +260,12 @@ internal class CriterionTest {
     }
 
     // ============================================================
-    // 可变性 / 引用语义
+    // Mutability / reference semantics
     // ============================================================
 
     @Test
     fun testValueIsStoredByReferenceForMutableCollections() {
-        // val 字段只阻止 *重新赋值*，被引用对象的内部状态仍可外部修改
+        // A val field only prevents *reassignment*; the internal state of the referenced object can still be modified externally
         val list = mutableListOf(1, 2, 3)
         val criterion = Criterion("ids", OperatorEnum.IN, list)
         list.add(4)
@@ -273,17 +274,17 @@ internal class CriterionTest {
 
     @Test
     fun testCriterionIsSafeAsHashMapKey() {
-        // 历史上字段是 var，放进 HashMap 后改字段会破坏哈希契约——已修
-        // 现在全 val，equals/hashCode 在对象生命周期内稳定
+        // Historically the fields were var; mutating a field after placing it in a HashMap broke the hash contract - fixed.
+        // Now all val, equals/hashCode are stable across the object's lifetime
         val key = Criterion("x", OperatorEnum.EQ, "1")
         val map = hashMapOf(key to "value-1")
-        // 用一个内容等价的新 Criterion 查找，应能命中
+        // Looking up with a content-equivalent new Criterion should hit
         val lookup = Criterion("x", OperatorEnum.EQ, "1")
         assertEquals("value-1", map[lookup])
     }
 
     // ============================================================
-    // Serializable 契约：JDK 序列化往返
+    // Serializable contract: JDK serialization round-trip
     // ============================================================
 
     @Test
@@ -296,7 +297,7 @@ internal class CriterionTest {
             it.readObject() as Criterion
         }
 
-        // encrypt 已在主构造器内 → data class equals 直接覆盖
+        // encrypt is now in the primary constructor -> data class equals covers it
         assertEquals(original, restored)
     }
 }

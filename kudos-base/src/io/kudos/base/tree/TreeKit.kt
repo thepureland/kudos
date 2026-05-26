@@ -4,7 +4,7 @@ import io.kudos.base.query.sort.DirectionEnum
 import io.kudos.base.support.ICallback
 
 /**
- * 树操作工具类
+ * Tree operation utility class.
  *
  * @author K
  * @since 1.0.0
@@ -12,17 +12,17 @@ import io.kudos.base.support.ICallback
 object TreeKit {
 
     /**
-     * 将列表结构转为树结构
+     * Converts a list structure into a tree structure.
      *
-     * @param T 树结点惟一标识的类型
-     * @param E 树结点类型
-     * @param treeNodeList 结点对象列表
-     * @param direction 排序，指定排序时E必须实现Comparable接口，为null将不做排序，默认为null
-     * @param callback 结点挂载后的回调
-     * @param strict 严格模式：true 时遇到孤儿结点（parentId 在列表里找不到）会抛
-     *               [IllegalArgumentException]；false（默认）按现有行为记 WARN 静默丢弃
-     * @return List(树根结点)
-     * @throws IllegalArgumentException 当 strict=true 且存在孤儿结点时
+     * @param T Tree node unique identifier type
+     * @param E Tree node type
+     * @param treeNodeList List of node objects
+     * @param direction Sort order; when specified, E must implement the Comparable interface; null means no sorting; defaults to null
+     * @param callback Callback invoked after a node is attached
+     * @param strict Strict mode: when true, an orphan node (whose parentId cannot be found in the list) causes
+     *               [IllegalArgumentException] to be thrown; when false (default), it logs a WARN and silently drops the node
+     * @return List(tree root nodes)
+     * @throws IllegalArgumentException When strict=true and orphan nodes exist
      * @author K
      * @since 1.0.0
      */
@@ -34,12 +34,12 @@ object TreeKit {
     ): List<E> = ListToTreeConverter.convert(treeNodeList, direction, callback, strict)
 
     /**
-     * 深度优先遍历树，并执行回调
+     * Depth-first traverses the tree and invokes the callback.
      *
-     * @param T 树结点惟一标识的类型
-     * @param R 回调返回值类型
-     * @param rootNode 树的根结点
-     * @param callback 回调函数
+     * @param T Tree node unique identifier type
+     * @param R Callback return value type
+     * @param rootNode Root node of the tree
+     * @param callback Callback function
      * @author K
      * @since 1.0.0
      */
@@ -48,37 +48,37 @@ object TreeKit {
     }
 
     /**
-     * 广度优先遍历树，并执行回调（不收集返回值）
+     * Breadth-first traverses the tree and invokes the callback (return values are not collected).
      *
-     * @param T 树结点惟一标识的类型
-     * @param R 回调返回值类型（此方法不返回；仅执行回调）
-     * @param rootNode 根结点
-     * @param callback 每访问到一个结点就调用一次
+     * @param T Tree node unique identifier type
+     * @param R Callback return value type (this method does not return; it only invokes the callback)
+     * @param rootNode Root node
+     * @param callback Invoked once for each visited node
      * @author AI: ChatGPT
      * @author K
      * @since 1.0.0
      */
     fun <T, R> breadthTraverse(rootNode: ITreeNode<T>, callback: ICallback<ITreeNode<T>, R>) {
         val queue = ArrayDeque<ITreeNode<T>>().apply { addLast(rootNode) }
-        val visited = mutableSetOf<T>() // 防御“伪树”里可能出现的环
+        val visited = mutableSetOf<T>() // Guard against cycles that may appear in "pseudo-trees"
         while (queue.isNotEmpty()) {
             val node = queue.removeFirst()
             if (!visited.add(node._getId())) continue
-            // 执行回调；忽略其返回值
+            // Invoke the callback; ignore its return value
             callback.execute(node)
-            // 按当前顺序把孩子入队，保证同层从左到右
+            // Enqueue children in their current order to keep the same-level order left-to-right
             queue.addAll(node._getChildren())
         }
     }
 
     /**
-     * 深度优先递归：先对当前节点执行 callback，再 DFS 进入每个孩子。
-     * 与广度优先版本（[breadth]）相对——树形 print / 拷贝场景用 DFS 更直观。
+     * Depth-first recursion: first invoke the callback on the current node, then DFS into each child.
+     * The counterpart of the breadth-first version ([breadth]); DFS is more intuitive for tree-shaped print/copy scenarios.
      *
-     * @param T 树节点的载荷类型
-     * @param R callback 的返回类型（被忽略，仅作签名占位）
-     * @param node 当前节点
-     * @param callback 每个节点上的回调
+     * @param T Tree node payload type
+     * @param R Callback return type (ignored; only serves as a signature placeholder)
+     * @param node Current node
+     * @param callback Callback to invoke at each node
      * @author K
      * @since 1.0.0
      */

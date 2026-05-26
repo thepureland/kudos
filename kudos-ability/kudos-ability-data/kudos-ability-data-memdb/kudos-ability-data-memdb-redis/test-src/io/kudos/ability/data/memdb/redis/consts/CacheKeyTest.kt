@@ -4,9 +4,9 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * [CacheKey] 拼装规则的单元测试。
+ * Unit tests for [CacheKey] assembly rules.
  *
- * 不需要 Redis 容器；纯字符串拼接逻辑的回归保护。
+ * Does not require a Redis container; regression protection for pure string concatenation logic.
  *
  * @author K
  * @author AI: Codex

@@ -11,7 +11,7 @@ import kotlin.reflect.KClass
 
 
 /**
- * 消息接收者群组业务
+ * Message receiver group business service.
  *
  * @author K
  * @author AI: Codex

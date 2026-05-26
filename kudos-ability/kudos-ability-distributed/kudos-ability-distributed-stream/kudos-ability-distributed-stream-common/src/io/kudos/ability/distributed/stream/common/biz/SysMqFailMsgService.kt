@@ -12,10 +12,10 @@ import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 
 /**
- * [ISysMqFailMsgService] 的默认 Ktorm 实现。
+ * Default Ktorm implementation of [ISysMqFailMsgService].
  *
- * `@Transactional(REQUIRES_NEW)` 让 [save] 即使在外部事务回滚的场景下也能独立提交——
- * 异常日志不能因为业务失败而一起丢失。
+ * `@Transactional(REQUIRES_NEW)` makes [save] commit independently even when an outer
+ * transaction rolls back — failure logs must not be lost together with business failures.
  *
  * @author paul
  * @author K
@@ -28,7 +28,7 @@ open class SysMqFailMsgService(
     ISysMqFailMsgService {
 
     /**
-     * 保存异常消息
+     * Save a failed message.
      *
      * @param exceptionMsg
      */
@@ -39,10 +39,10 @@ open class SysMqFailMsgService(
     }
 
     /**
-     * 查询指定topic下的异常消息
+     * Query failed messages under the given topic.
      *
-     * @param topic     主题
-     * @param startTime 查询开始时间
+     * @param topic     topic
+     * @param startTime query start time
      */
     override fun query(topic: String, startTime: LocalDateTime): List<SysMqFailMsg> = dao.search(
         Criteria(SysMqFailMsgs.topic.name, OperatorEnum.EQ, topic)
@@ -50,14 +50,14 @@ open class SysMqFailMsgService(
     )
 
     /**
-     * 删除异常消息
+     * Delete failed messages.
      *
      * @param ids
      */
     @Transactional(rollbackFor = [Exception::class])
     override fun delete(ids: List<String>) {
         val count = dao.batchDelete(ids)
-        LOG.info("删除stream异常消息条数:{0}", count)
+        LOG.info("deleted stream failed message count:{0}", count)
     }
 
     private val LOG = LogFactory.getLog(this::class)

@@ -5,7 +5,7 @@ import io.kudos.ms.auth.core.role.model.po.AuthRoleResource
 
 
 /**
- * 角色-资源关系业务接口
+ * Role-Resource relation business interface
  *
  * @author K
  * @author AI: Cursor
@@ -15,53 +15,53 @@ interface IAuthRoleResourceService : IBaseCrudService<String, AuthRoleResource> 
 
 
     /**
-     * 根据角色ID获取资源ID集合
+     * Get the set of resource IDs by role ID
      *
-     * @param roleId 角色ID
-     * @return 资源ID集合
+     * @param roleId Role ID
+     * @return Set of resource IDs
      * @author AI: Cursor
      * @since 1.0.0
      */
     fun getResourceIdsByRoleId(roleId: String): Set<String>
 
     /**
-     * 根据资源ID获取角色ID集合
+     * Get the set of role IDs by resource ID
      *
-     * @param resourceId 资源ID
-     * @return 角色ID集合
+     * @param resourceId Resource ID
+     * @return Set of role IDs
      * @author AI: Cursor
      * @since 1.0.0
      */
     fun getRoleIdsByResourceId(resourceId: String): Set<String>
 
     /**
-     * 批量绑定角色和资源关系
+     * Batch bind role-resource relations
      *
-     * @param roleId 角色ID
-     * @param resourceIds 资源ID集合
-     * @return 成功绑定的数量
+     * @param roleId Role ID
+     * @param resourceIds Set of resource IDs
+     * @return Number of successfully bound entries
      * @author AI: Cursor
      * @since 1.0.0
      */
     fun batchBind(roleId: String, resourceIds: Collection<String>): Int
 
     /**
-     * 解绑角色和资源关系
+     * Unbind role-resource relation
      *
-     * @param roleId 角色ID
-     * @param resourceId 资源ID
-     * @return 是否解绑成功
+     * @param roleId Role ID
+     * @param resourceId Resource ID
+     * @return Whether unbinding succeeded
      * @author AI: Cursor
      * @since 1.0.0
      */
     fun unbind(roleId: String, resourceId: String): Boolean
 
     /**
-     * 检查关系是否存在
+     * Check whether the relation exists
      *
-     * @param roleId 角色ID
-     * @param resourceId 资源ID
-     * @return 是否存在
+     * @param roleId Role ID
+     * @param resourceId Resource ID
+     * @return Whether it exists
      * @author AI: Cursor
      * @since 1.0.0
      */

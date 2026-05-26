@@ -4,48 +4,48 @@ import io.kudos.base.enums.ienums.IErrorCodeEnum
 import io.kudos.base.enums.ienums.IModuleEnum
 
 /**
- * 公共错误码枚举
+ * Common error-code enumeration.
  *
  * @author K
  * @since 1.0.0
  */
 enum class CommonErrorCodeEnum(
-    /** 错误码 */
+    /** Error code. */
     override val code: String,
 
-    /** 默认展示文本 */
+    /** Default display text. */
     override val defaultDisplayText: String,
 ) : IErrorCodeEnum {
 
-    /** 请求成功 */
-    SUCCESS("200", "操作成功"),
+    /** Request succeeded. */
+    SUCCESS("200", "Operation succeeded"),
 
-    /** 参数错误 */
-    BAD_REQUEST("400", "请求有误，请检查后重试"),
+    /** Bad request. */
+    BAD_REQUEST("400", "The request is invalid; please check and try again"),
 
-    /** 未登录 */
-    UNAUTHORIZED("401", "请先登录"),
+    /** Not logged in. */
+    UNAUTHORIZED("401", "Please log in first"),
 
-    /** 无权限 */
-    FORBIDDEN("403", "抱歉，您暂无权限执行此操作"),
+    /** No permission. */
+    FORBIDDEN("403", "Sorry, you do not have permission to perform this operation"),
 
-    /** 资源不存在 */
-    NOT_FOUND("404", "抱歉，您访问的内容不存在"),
+    /** Resource not found. */
+    NOT_FOUND("404", "Sorry, the content you requested does not exist"),
 
-    /** 请求方法不支持 */
-    METHOD_NOT_ALLOWED("405", "当前请求方式不支持，请换一种方式再试"),
+    /** HTTP method not supported. */
+    METHOD_NOT_ALLOWED("405", "The current request method is not supported; please try a different method"),
 
-    /** 参数校验失败 */
-    VALIDATION_ERROR("4001", "您填写的信息有误，请检查后重试"),
+    /** Parameter validation failed. */
+    VALIDATION_ERROR("4001", "The information you provided is invalid; please check and try again"),
 
-    /** 业务处理失败 */
-    BUSINESS_ERROR("4002", "操作未完成，请稍后再试"),
+    /** Business processing failed. */
+    BUSINESS_ERROR("4002", "Operation incomplete; please try again later"),
 
-    /** 内置记录不可删除 */
-    BUILTIN_NOT_DELETABLE("4003", "内置记录不可删除"),
+    /** Built-in record cannot be deleted. */
+    BUILTIN_NOT_DELETABLE("4003", "Built-in records cannot be deleted"),
 
-    /** 系统异常 */
-    SYSTEM_ERROR("500", "系统开小差了，请稍后再试");
+    /** System exception. */
+    SYSTEM_ERROR("500", "The system is taking a break; please try again later");
 
     override val i18nKeyPrefix: String
         get() = "sys.error-msg.default"

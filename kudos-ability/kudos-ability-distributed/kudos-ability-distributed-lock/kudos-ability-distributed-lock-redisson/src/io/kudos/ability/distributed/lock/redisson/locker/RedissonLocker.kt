@@ -7,8 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired
 import java.util.concurrent.TimeUnit
 
 /**
- * Redisson分布式锁实现
- * 基于Redisson实现分布式锁功能，提供获取锁、加锁、解锁等操作
+ * Redisson distributed lock implementation.
+ * Provides acquire, lock and unlock operations backed by Redisson.
  */
 class RedissonLocker : ILocker<RLock> {
 
@@ -21,27 +21,28 @@ class RedissonLocker : ILocker<RLock> {
     private var redissonClient: RedissonClient? = null
 
     /**
-     * 取已注入的 [RedissonClient]；缺失时抛错而非静默使用 null，避免业务侧后续看到 NullPointerException 难以定位。
+     * Returns the injected [RedissonClient]; throws when missing rather than silently using null,
+     * so callers do not later see a hard-to-trace NullPointerException.
      *
-     * @return Redisson 客户端
-     * @throws IllegalArgumentException 当 [redissonClient] 未注入时
+     * @return Redisson client
+     * @throws IllegalArgumentException when [redissonClient] is not injected
      * @author K
      * @since 1.0.0
      */
     private fun client(): RedissonClient =
-        requireNotNull(redissonClient) { "RedissonClient未初始化，请检查redisson配置是否启用并注入成功" }
+        requireNotNull(redissonClient) { "RedissonClient is not initialized; check that the redisson configuration is enabled and injected successfully" }
 
     /**
-     * 获取分布式锁对象
+     * Obtain the distributed lock object.
      *
      * @param lockKey
      */
     override fun getLock(lockKey: String): RLock = client().getLock(lockKey)
 
     /**
-     * 获取分布式锁
+     * Acquire a distributed lock.
      *
-     * @param lockKey 锁的key
+     * @param lockKey lock key
      * @return RLock
      */
     override fun lock(lockKey: String): RLock? {
@@ -55,7 +56,7 @@ class RedissonLocker : ILocker<RLock> {
     }
 
     /**
-     * 获取分布式锁，并指定锁失效秒数
+     * Acquire a distributed lock with the given lease in seconds.
      *
      * @param lockKey lockKey
      * @param timeOut timeOut
@@ -65,7 +66,7 @@ class RedissonLocker : ILocker<RLock> {
         client().getLock(lockKey).also { it.lock(timeOut, TimeUnit.SECONDS) }
 
     /**
-     * 获取分布式锁，并指定锁失效时间
+     * Acquire a distributed lock with the given lease duration.
      *
      * @param lockKey lockKey
      * @param unit    unit
@@ -76,37 +77,37 @@ class RedissonLocker : ILocker<RLock> {
         client().getLock(lockKey).also { it.lock(timeOut, unit) }
 
     /**
-     * 尝试获取分布式锁
-     * 
-     * 在指定时间内尝试获取锁，如果获取成功则设置锁的租约时间。
-     * 
-     * 工作流程：
-     * 1. 获取RLock对象
-     * 2. 调用tryLock方法尝试获取锁：
-     *    - 在timeOut时间内等待获取锁
-     *    - 如果获取成功，设置锁的租约时间为leaseTime
-     *    - 如果获取失败或超时，返回false
-     * 3. 处理中断异常：如果线程被中断，返回false
-     * 
-     * 参数说明：
-     * - timeOut：获取锁的等待时间，在此时长内会持续尝试获取锁
-     * - leaseTime：获取锁成功后的租约时间，超过此时长锁会自动释放
-     * - unit：时间单位，同时应用于timeOut和leaseTime
-     * 
-     * 返回值：
-     * - true：成功获取锁
-     * - false：获取锁失败（超时、被中断或其他原因）
-     * 
-     * 注意事项：
-     * - 如果线程在等待过程中被中断，会捕获InterruptedException并返回false
-     * - 获取锁成功后，需要在leaseTime内完成业务逻辑并释放锁
-     * - 如果业务逻辑执行时间超过leaseTime，锁会自动释放，可能导致并发问题
-     * 
-     * @param lockKey 锁的key
-     * @param unit 时间单位
-     * @param timeOut 获取锁等待时间
-     * @param leaseTime 获取锁成功后的租约时间（锁失效时间）
-     * @return true表示成功获取锁，false表示获取锁失败
+     * Try to acquire the distributed lock.
+     *
+     * Attempts to acquire the lock within the given wait time, setting the lease on success.
+     *
+     * Workflow:
+     * 1. Obtain the RLock instance.
+     * 2. Call tryLock to attempt acquisition:
+     *    - Wait up to timeOut for the lock.
+     *    - On success, set the lease time to leaseTime.
+     *    - On failure or timeout, return false.
+     * 3. Handle interruption: if the thread is interrupted, return false.
+     *
+     * Parameters:
+     * - timeOut: how long to wait for the lock; acquisition is retried during this period.
+     * - leaseTime: lease time once acquired; the lock auto-releases after this duration.
+     * - unit: time unit applied to both timeOut and leaseTime.
+     *
+     * Returns:
+     * - true: lock acquired successfully.
+     * - false: failed to acquire (timeout, interruption or other reason).
+     *
+     * Notes:
+     * - If the thread is interrupted while waiting, InterruptedException is caught and false is returned.
+     * - After acquisition, complete the business logic and release the lock within leaseTime.
+     * - If business execution exceeds leaseTime the lock will auto-release, which may cause concurrency issues.
+     *
+     * @param lockKey lock key
+     * @param unit time unit
+     * @param timeOut wait time for the lock
+     * @param leaseTime lease time after acquisition (lock expiry)
+     * @return true if the lock was acquired, false otherwise
      */
     override fun tryLock(
         lockKey: String,
@@ -121,7 +122,7 @@ class RedissonLocker : ILocker<RLock> {
         }
 
     /**
-     * 解除分布式锁
+     * Release the distributed lock.
      *
      * @param lockKey lockKey
      */
@@ -130,7 +131,7 @@ class RedissonLocker : ILocker<RLock> {
     }
 
     /**
-     * 解除分布式锁
+     * Release the distributed lock.
      *
      * @param lock lockKey
      */

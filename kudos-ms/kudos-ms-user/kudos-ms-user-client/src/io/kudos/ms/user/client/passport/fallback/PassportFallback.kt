@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component
 
 
 /**
- * 登录通行证 Feign 容错降级实现。
+ * Login passport Feign fallback.
  *
  * @author K
  * @since 1.0.0
@@ -24,7 +24,7 @@ open class PassportFallback : AbstractFeignFallbackSupport("PassportFallback"), 
         errorWrite("login", req.tenantId, req.username)
         return PassportLoginResult(
             status = PassportLoginStatusEnum.LOCKED,
-            message = "登录服务不可达，请稍后重试",
+            message = "Login service is unreachable, please retry later",
         )
     }
 
@@ -45,7 +45,7 @@ open class PassportFallback : AbstractFeignFallbackSupport("PassportFallback"), 
 
     override fun changePassword(req: ChangePasswordRequest): ChangePasswordResultEnum {
         errorWrite("changePassword", req.userId)
-        // 用 USER_NOT_FOUND 作为"上游不可用"的占位——比 OLD_PASSWORD_WRONG 误导小一些。
+        // Use USER_NOT_FOUND as a placeholder for "upstream unavailable" — less misleading than OLD_PASSWORD_WRONG.
         return ChangePasswordResultEnum.USER_NOT_FOUND
     }
 

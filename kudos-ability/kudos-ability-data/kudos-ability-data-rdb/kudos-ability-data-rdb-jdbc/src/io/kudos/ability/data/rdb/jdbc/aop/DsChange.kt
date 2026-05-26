@@ -1,17 +1,19 @@
 package io.kudos.ability.data.rdb.jdbc.aop
 
 /**
- * 方法级数据源强制切换注解。被 [DsChangeAspect] 拦截：在方法执行前把 [value]
- * 写入当前线程的 `DbParam.forcedDs`，[readonly] 写入 `DbParam.readonly`；执行
- * 完成（成功或异常）后恢复进入切面前的 `DbParam`。
+ * Method-level annotation that forces a data source switch. Intercepted by [DsChangeAspect]:
+ * before method execution it writes [value] into the current thread's `DbParam.forcedDs` and
+ * [readonly] into `DbParam.readonly`; after execution (success or exception) it restores the
+ * `DbParam` snapshot captured before entering the aspect.
  *
- * 适用场景：单个方法需要临时跑在某个特定数据源上（比如全局配置只读副本扫描），
- * 不想污染整个 service 的常规路由。
+ * Use case: a single method temporarily needs to run on a specific data source (e.g. global config
+ * scanning on a read-only replica) without polluting the routine routing of the entire service.
  *
- * 嵌套调用时内层方法只临时覆盖上下文，返回后会恢复外层 `DbParam` 快照。
+ * For nested calls, the inner method only temporarily overrides the context; after returning it
+ * restores the outer `DbParam` snapshot.
  *
- * @property value 数据源 key；空串表示不切换、仅设置 readonly 标记。
- * @property readonly true 表示只读，由切面据此选择只读副本。
+ * @property value the data source key; an empty string means do not switch, only set the readonly flag.
+ * @property readonly true means read-only; the aspect uses this to select a read-only replica.
  *
  * @author K
  * @author AI: Codex

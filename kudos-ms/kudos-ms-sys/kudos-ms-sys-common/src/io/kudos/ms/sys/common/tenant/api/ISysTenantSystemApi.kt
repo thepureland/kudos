@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestParam
 
 
 /**
- * 租户-系统关系 对外API
+ * Tenant-system relation external API.
  *
  * @author K
  * @since 1.0.0

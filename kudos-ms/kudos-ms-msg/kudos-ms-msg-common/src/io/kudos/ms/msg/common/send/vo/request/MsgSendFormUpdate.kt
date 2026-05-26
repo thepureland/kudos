@@ -5,14 +5,14 @@ import java.time.LocalDateTime
 
 
 /**
- * 消息发送表单更新请求VO
+ * Message send update form request VO.
  *
  * @author K
  * @since 1.0.0
  */
 data class MsgSendFormUpdate (
 
-    /** 主键 */
+    /** Primary key. */
     override val id: String,
 
     override val receiverGroupTypeDictCode: String?,

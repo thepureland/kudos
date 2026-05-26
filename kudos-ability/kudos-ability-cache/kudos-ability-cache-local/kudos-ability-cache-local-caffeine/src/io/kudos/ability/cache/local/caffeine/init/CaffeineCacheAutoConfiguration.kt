@@ -23,15 +23,15 @@ import org.springframework.context.annotation.Role
 
 
 /**
- * Caffeine 本地缓存装配入口。
+ * Caffeine local cache wiring entry point.
  *
- * 注册两个 bean：
- *  - `localCacheManager` → [CaffeineKeyValueCacheManager]，给 `MixCacheManager` 用作"本地缓存层"
- *  - `caffeineIdEntitiesHashCache` → [CaffeineHashCache]，Hash 缓存的本地实现
+ * Registers two beans:
+ *  - `localCacheManager` → [CaffeineKeyValueCacheManager], used by `MixCacheManager` as the "local cache layer"
+ *  - `caffeineIdEntitiesHashCache` → [CaffeineHashCache], the local implementation of Hash cache
  *
- * 通过 `@AutoConfigureBefore(LinkableCacheAutoConfiguration::class)` 保证 `MixCacheManager`
- * 装配时已经能拿到 `localCacheManager`——kudos 自定义的 SPI 调度器 `ComponentInitializationDispatcher`
- * 识别这个注解（与 Spring Boot 默认 SPI 的 @AutoConfigureBefore 等价）。
+ * `@AutoConfigureBefore(LinkableCacheAutoConfiguration::class)` ensures `localCacheManager` is available
+ * by the time `MixCacheManager` is wired — kudos's custom SPI dispatcher `ComponentInitializationDispatcher`
+ * recognizes this annotation (equivalent to Spring Boot's default SPI `@AutoConfigureBefore`).
  *
  * @author K
  * @author AI: Codex
@@ -51,25 +51,25 @@ import org.springframework.context.annotation.Role
 @AutoConfigureBefore(LinkableCacheAutoConfiguration::class)
 @AutoConfigureAfter(ContextAutoConfiguration::class)
 @EnableConfigurationProperties(CacheProperties::class)
-// 见 ContextAutoConfiguration：IComponentInitializer 配置类必须早于业务 BPP 实例化，
-// 加 ROLE_INFRASTRUCTURE 避免 Spring 的 BeanPostProcessorChecker 误报。
+// See ContextAutoConfiguration: IComponentInitializer configuration classes must be instantiated before
+// business BPPs; ROLE_INFRASTRUCTURE avoids false positives from Spring's BeanPostProcessorChecker.
 @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 open class CaffeineCacheAutoConfiguration : BaseCacheConfiguration(), IComponentInitializer {
 
-    /** 本地 K-V 缓存管理器；bean 名 `localCacheManager` 由 [io.kudos.ability.cache.common.core.keyvalue.MixCacheManager] 注入。 */
+    /** Local K-V cache manager; bean name `localCacheManager` is injected by [io.kudos.ability.cache.common.core.keyvalue.MixCacheManager]. */
     @Bean(name = ["localCacheManager"])
     @ConditionalOnMissingBean
     open fun caffeineCacheManager(): IKeyValueCacheManager<*> = CaffeineKeyValueCacheManager()
 
     /**
-     * 本地 Hash 缓存配置。
+     * Local Hash cache properties.
      */
     @Bean
     @ConditionalOnMissingBean
     @ConfigurationProperties(prefix = "kudos.ability.cache.local.caffeine.hash")
     open fun caffeineHashCacheProperties(): CaffeineHashCacheProperties = CaffeineHashCacheProperties()
 
-    /** 本地 Hash 缓存；bean 名 `caffeineIdEntitiesHashCache` 与远程版（如 `redisIdEntitiesHashCache`）配对存在。 */
+    /** Local Hash cache; bean name `caffeineIdEntitiesHashCache` pairs with the remote counterpart (e.g. `redisIdEntitiesHashCache`). */
     @Bean("caffeineIdEntitiesHashCache")
     @ConditionalOnMissingBean(name = ["caffeineIdEntitiesHashCache"])
     open fun caffeineIdEntitiesHashCache(properties: CaffeineHashCacheProperties): CaffeineHashCache =

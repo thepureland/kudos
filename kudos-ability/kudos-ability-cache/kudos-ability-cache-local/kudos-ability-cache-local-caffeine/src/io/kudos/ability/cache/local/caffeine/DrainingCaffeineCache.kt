@@ -4,15 +4,18 @@ import com.github.benmanes.caffeine.cache.Cache as NativeCaffeineCache
 import org.springframework.cache.caffeine.CaffeineCache
 
 /**
- * Spring [CaffeineCache] 的薄包装，在 [evict] / [clear] 后**同步**调用 Caffeine 的 `cleanUp()`，
- * 立即处理待生效的 invalidate/invalidateAll 队列。
+ * Thin wrapper over Spring [CaffeineCache] that **synchronously** invokes Caffeine's `cleanUp()`
+ * after [evict] / [clear], processing the pending invalidate/invalidateAll queue immediately.
  *
- * Caffeine 设计中 `invalidate(key)` 会立即 `asMap().remove(key)`（同步），但 `invalidateAll()`
- * 仅将清理标记入队列、依赖后续 maintenance 周期执行（异步）。这导致 `clear()` 后的紧随读取仍可能
- * 命中刚被标记失效的副本——尤其是 Spring `@Cacheable.get` 路径走 `nativeCache.asMap()` 时表现明显
- * （参见 0f645e8e 对 `ResourceIdsByTenantIdAndGroupCodeCacheTest.syncOnRoleResourceChange` 的诊断）。
+ * In Caffeine's design `invalidate(key)` performs `asMap().remove(key)` immediately (synchronous),
+ * but `invalidateAll()` only enqueues a cleanup marker and relies on a later maintenance cycle
+ * (asynchronous). This means a read shortly after `clear()` may still hit a copy that has just
+ * been marked invalid — especially visible on Spring's `@Cacheable.get` path that goes through
+ * `nativeCache.asMap()` (see 0f645e8e for the diagnosis of
+ * `ResourceIdsByTenantIdAndGroupCodeCacheTest.syncOnRoleResourceChange`).
  *
- * 显式 `cleanUp()` 强制 Caffeine 立即处理待 pending 维护工作，让 invalidate 立即生效。
+ * An explicit `cleanUp()` forces Caffeine to process pending maintenance work immediately so
+ * invalidates take effect right away.
  *
  * @author K
  * @author AI: Codex

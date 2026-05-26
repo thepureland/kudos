@@ -19,7 +19,7 @@ import javafx.scene.control.TableView
  *
  * Note: all TableCells in this table need the extended behaviour.
  *
- * @param S 行数据类型
+ * @param S Row data type
  * @author K
  * @author AI: Codex
  * @since 1.0.0
@@ -27,8 +27,9 @@ import javafx.scene.control.TableView
 open class XTableView<S> : TableView<S>() {
 
     /**
-     * 显式触发"提交并终止当前编辑"。
-     * 通过把当前 editingCell 写入 [terminatingCell] 让监听该属性的 cell 自己 commitEdit，再清空回 null。
+     * Explicitly trigger "commit and terminate the current edit".
+     * Writes the current editingCell into [terminatingCell] so cells listening on that property
+     * commit themselves, then clears it back to null.
      *
      * @author K
      * @since 1.0.0
@@ -54,16 +55,19 @@ open class XTableView<S> : TableView<S>() {
         get() = editingCell != null
 
     /**
-     * 正在终止编辑的 cell 位置。被 `edit(row, column)` 调用前置为当前编辑 cell，
-     * super 之后清回 null。支持终止编辑的 TableCell 监听此属性即可在合适时机 commit。
+     * Position of the cell whose edit is being terminated. Set to the current editing cell before
+     * `edit(row, column)` is invoked, then cleared back to null after super. TableCells that
+     * support edit termination listen on this property to commit at the right moment.
      */
     private var terminatingCell: ReadOnlyObjectWrapper<TablePosition<S?, *>?>? = null
 
     /**
-     * 写入 [terminatingCell]。
-     * 受保护以便子类配合扩展行为复用，业务侧不直接调用。
+     * Write to [terminatingCell].
+     * Protected so subclasses can reuse it together with extended behavior; not called directly
+     * by business code.
      *
-     * @param terminatingPosition 当前要终止编辑的位置；null 表示终止流程结束
+     * @param terminatingPosition The position whose edit is being terminated; null marks the end
+     *                            of the termination flow
      * @author K
      * @since 1.0.0
      */
@@ -72,9 +76,9 @@ open class XTableView<S> : TableView<S>() {
     }
 
     /**
-     * 对外暴露的只读属性，cell 子类可监听以决定何时 commit。
+     * Read-only property exposed to the outside; cell subclasses can listen to decide when to commit.
      *
-     * @return [terminatingCell] 的只读视图
+     * @return A read-only view of [terminatingCell]
      * @author K
      * @since 1.0.0
      */
@@ -83,7 +87,7 @@ open class XTableView<S> : TableView<S>() {
     }
 
     /**
-     * @return 当前正在终止编辑的位置；无则为 null
+     * @return The position whose edit is currently being terminated; null if none
      * @author K
      * @since 1.0.0
      */
@@ -92,8 +96,8 @@ open class XTableView<S> : TableView<S>() {
     }
 
     /**
-     * 惰性创建 [terminatingCell] 的 [ReadOnlyObjectWrapper]。
-     * 没有 cell 监听时不分配内存。
+     * Lazily create the [ReadOnlyObjectWrapper] for [terminatingCell].
+     * No memory is allocated when no cell is listening.
      *
      * @author K
      * @since 1.0.0

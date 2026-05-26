@@ -8,7 +8,7 @@ import jakarta.validation.ConstraintValidatorContext
 import kotlin.reflect.KClass
 
 /**
- * Custom约束验证器
+ * Validator for the Custom constraint.
  *
  * @author K
  * @since 1.0.0
@@ -33,15 +33,15 @@ class CustomValidator : ConstraintValidator<Custom, Any?> {
             }
 
             val bean = requireNotNull(ValidationContext.get(context)) {
-                "CustomValidator 需要 ValidationContext 中存在 bean"
+                "CustomValidator requires a bean to be present in ValidationContext"
             }
             val validator = checkClass.java.getDeclaredConstructor().newInstance()
             val validateMethod = validator.javaClass.methods.firstOrNull {
                 it.name == "validate" && it.parameterCount == 1
-            } ?: error("校验器【${checkClass.qualifiedName}】缺少 validate(bean) 方法")
+            } ?: error("Validator [${checkClass.qualifiedName}] is missing a validate(bean) method")
             val result = validateMethod.invoke(validator, bean)
             return result as? Boolean
-                ?: error("校验器【${checkClass.qualifiedName}】validate 返回值必须为 Boolean")
+                ?: error("Validator [${checkClass.qualifiedName}] validate return value must be Boolean")
         }
     }
 
